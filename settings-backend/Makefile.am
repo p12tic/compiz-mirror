@@ -5,9 +5,9 @@ INCLUDES = @GLIB_CFLAGS@ \
 	   @BSETTINGS_CFLAGS@ 
 
 libgconf_la_LDFLAGS = -module -avoid-version -no-undefined $(all_libraries)
-libgconf_la_LIBADD = $(BSETTINGS_LIBS) $(LIB_GCONF) $(LIB_GLIB)
+libgconf_la_LIBADD = @BSETTINGS_LIBS@ @GCONF_LIBS@ @GLIB_LIBS@
 libgconf_la_SOURCES = gconf.c
-backenddir = $(BACKENDDIR)/backends
+backenddir = $(libdir)/bsettings/backends
 
 METASOURCES = AUTO
 
