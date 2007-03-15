@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include <bsettings.h>
+#include "option.h"
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -59,7 +60,7 @@
 
 #define PATHNAME    char *pathName = malloc(BUFSIZE * sizeof(char)); \
 					snprintf(pathName, BUFSIZE, "%s/%s/%s%s%s/%s", COMPIZ_BS, currentProfile, \
-							 setting->parent->name ? "plugins" : "general", \ 
+							 setting->parent->name ? "plugins" : "general", \
 							 setting->parent->name ? "/" : "", \
 							 setting->parent->name ? setting->parent->name : "", \
 							 keyName);
@@ -74,27 +75,6 @@ static char *currentProfile = NULL;
 static Bool readInit(BSContext * context);
 static void readSetting(BSContext * context, BSSetting * setting);
 static void readDone(BSContext * context);
-
-struct _Modifier
-{
-	gchar *name;
-	gint modifier;
-} const static modifiers[] = {
-	{"<Shift>", ShiftMask},
-	{"<Control>", ControlMask},
-	{"<Mod1>", Mod1Mask},
-	{"<Mod2>", Mod2Mask},
-	{"<Mod3>", Mod3Mask},
-	{"<Mod4>", Mod4Mask},
-	{"<Mod5>", Mod5Mask},
-	{"<Alt>", CompAltMask},
-	{"<Meta>", CompMetaMask},
-	{"<Super>", CompSuperMask},
-	{"<Hyper>", CompHyperMask},
-	{"<ModeSwitch>", CompModeSwitchMask},
-};
-
-#define N_MODIFIERS (sizeof (modifiers) / sizeof (struct _Modifier))
 
 typedef enum {
 	OptionInt,
@@ -226,35 +206,6 @@ struct _SpecialOption {
 
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOption))
 
-static Bool stringToBSColor(const char *color, BSSettingColorValue *rgba)
-{
-	int c[4];
-
-	if (sscanf(color, "#%2x%2x%2x%2x", &c[0], &c[1], &c[2], &c[3]) == 4)
-	{
-			rgba->array.array[0] = c[0] << 8 | c[0];
-			rgba->array.array[1] = c[1] << 8 | c[1];
-			rgba->array.array[2] = c[2] << 8 | c[2];
-			rgba->array.array[3] = c[3] << 8 | c[3];
-
-			return TRUE;
-	}
-
-	return FALSE;
-}
-
-static gchar *BSColorToString(BSSettingColorValue *rgba)
-{
-	char tmp[256];
-
-	snprintf(tmp, 256, "#%.2x%.2x%.2x%.2x", rgba->array.array[0] >> 8,
-			 rgba->array.array[1] >> 8, rgba->array.array[2] >> 8,
-			 rgba->array.array[3] >> 8);
-
-	return strdup(tmp);
-}
-
-
 static Bool isIntegratedOption(BSSetting * setting)
 {
 	unsigned int i;
@@ -364,6 +315,75 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 	readDone(context);
 }
 
+static Bool readActionValue(BSSetting * setting, char * pathName)
+{
+	char itemPath[BUFSIZE];
+	GError *err = NULL;
+	char *buffer;
+	Bool boolVal;
+	int intVal;
+	Bool ret = FALSE;
+
+	BSSettingActionValue action;
+	memset(&action, 0, sizeof(BSSettingActionValue));
+
+	/* bell, edge, edgebutton, key, button */
+	snprintf(itemPath, 512, "%s/bell", pathName);
+	boolVal = gconf_client_get_bool(client, itemPath, &err);
+	if (!err) {
+		action.onBell = boolVal;
+		ret = TRUE;
+	} else {
+		g_error_free(err);
+	}
+
+	snprintf(itemPath, 512, "%s/edge", pathName);
+	buffer = gconf_client_get_string(client, itemPath, &err);
+	if (!err && buffer) {
+		stringToEdge(buffer, &action);
+		ret = TRUE;
+		g_free(buffer);
+	} else if (err) {
+		g_error_free(err);
+	}
+	snprintf(itemPath, 512, "%s/edgebutton", pathName);
+	intVal = gconf_client_get_int(client, itemPath, &err);
+	if (!err) {
+		action.edgeButton = intVal;
+		ret = TRUE;
+	} else {
+		g_error_free(err);
+	}
+	snprintf(itemPath, 512, "%s/key", pathName);
+	buffer = gconf_client_get_string(client, itemPath, &err);
+	if (!err && buffer) {
+		stringToKeyBinding(buffer, &action);
+		ret = TRUE;
+		g_free(buffer);
+	} else if (err) {
+		g_error_free(err);
+	}
+	snprintf(itemPath, 512, "%s/button", pathName);
+	buffer = gconf_client_get_string(client, itemPath, &err);
+	if (!err && buffer) {
+		stringToButtonBinding(buffer, &action);
+		ret = TRUE;
+		g_free(buffer);
+	} else if (err) {
+		g_error_free(err);
+	}
+
+	if (ret) 
+	{
+		BSSettingValueList list =
+			bsGetValueListFromActionArray(&action, 1, setting);
+		bsSetList(setting, list);
+		bsSettingValueListFree(list, FALSE);
+	}
+
+	return ret;
+}
+
 static Bool readIntegratedOption(BSSetting * setting)
 {
 	/* TODO */
@@ -462,6 +482,7 @@ static Bool readOption(BSSetting * setting)
 			/* TODO */
 			break;
 		case TypeAction:
+			ret = readActionValue(setting, pathName);
 			/* TODO */
 			break;
 		default:
