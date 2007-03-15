@@ -327,7 +327,6 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	BSSettingActionValue action;
 	memset(&action, 0, sizeof(BSSettingActionValue));
 
-	/* bell, edge, edgebutton, key, button */
 	snprintf(itemPath, 512, "%s/bell", pathName);
 	boolVal = gconf_client_get_bool(client, itemPath, &err);
 	if (!err) {
@@ -346,6 +345,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	} else if (err) {
 		g_error_free(err);
 	}
+
 	snprintf(itemPath, 512, "%s/edgebutton", pathName);
 	intVal = gconf_client_get_int(client, itemPath, &err);
 	if (!err) {
@@ -354,6 +354,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	} else {
 		g_error_free(err);
 	}
+
 	snprintf(itemPath, 512, "%s/key", pathName);
 	buffer = gconf_client_get_string(client, itemPath, &err);
 	if (!err && buffer) {
@@ -363,6 +364,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	} else if (err) {
 		g_error_free(err);
 	}
+
 	snprintf(itemPath, 512, "%s/button", pathName);
 	buffer = gconf_client_get_string(client, itemPath, &err);
 	if (!err && buffer) {
@@ -537,6 +539,7 @@ static void writeActionValue(BSSetting * setting, char * pathName)
 
 static void writeIntegratedOption(BSSetting * setting)
 {
+	/* TODO */
 }
 
 static void resetOptionToDefault(BSSetting * setting)
@@ -612,6 +615,7 @@ static void writeOption(BSSetting * setting)
 			writeActionValue(setting, pathName);
 			break;
 		case TypeList:
+			/* TODO */
 			break;
 		default:
 			printf("GConf backend: attempt to write unsupported setting type %d\n", setting->type);
