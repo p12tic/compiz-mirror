@@ -58,8 +58,11 @@
                         snprintf(keyName, BUFSIZE, "allscreens/%s", setting->name);
 
 #define PATHNAME    char *pathName = malloc(BUFSIZE * sizeof(char)); \
-					snprintf(pathName, BUFSIZE, "%s/%s/%s/%s", COMPIZ_BS, currentProfile, \
-							 setting->parent->name ? setting->parent->name : "general", keyName);
+					snprintf(pathName, BUFSIZE, "%s/%s/%s%s%s/%s", COMPIZ_BS, currentProfile, \
+							 setting->parent->name ? "plugins" : "general", \ 
+							 setting->parent->name ? "/" : "", \
+							 setting->parent->name ? setting->parent->name : "", \
+							 keyName);
 
 GConfClient *client = NULL;
 
@@ -553,7 +556,7 @@ static void readSetting(BSContext * context, BSSetting * setting)
 		status = readOption(setting);
 
 	if (status)
-		if (strcmp(setting->name, "___plugin_enabled") == 0)
+		if (strcmp(setting->name, "____plugin_enabled") == 0)
 			context->pluginsChanged = TRUE;
 		context->changedSettings = bsSettingListAppend(context->changedSettings, setting);
 }
