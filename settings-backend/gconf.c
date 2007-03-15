@@ -225,7 +225,7 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 {
 	BSContext *context = (BSContext *)user_data;
 
-	char *keyName = gconf_entry_get_key(entry);
+	char *keyName = (char*) gconf_entry_get_key(entry);
 	char *pluginName;
 	char *screenName;
 	char *settingName;
@@ -281,7 +281,7 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 					  		  gpointer user_data)
 {
 	BSContext *context = (BSContext *)user_data;
-	char *keyName = gconf_entry_get_key(entry);
+	char *keyName = (char*) gconf_entry_get_key(entry);
 	int i,num = -1;
 
 	for (i = 0; i < N_SOPTIONS; i++)
@@ -297,14 +297,14 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 		return;
 
 	BSPlugin * plugin = NULL;
-	plugin = bsFindPlugin(context, specialOptions[num].pluginName);
+	plugin = bsFindPlugin(context, (char*) specialOptions[num].pluginName);
 
 	if (!plugin)
 		return;
 
 	BSSetting * setting = NULL;
 	/* FIXME: where should we get the screen num from? */
-	setting = bsFindSetting(plugin, specialOptions[num].settingName, 
+	setting = bsFindSetting(plugin, (char*) specialOptions[num].settingName, 
 							specialOptions[num].screen, 0);
 
 	if (!setting)
@@ -468,7 +468,7 @@ static Bool readOption(BSSetting * setting)
 				BSSettingColorValue color;
 				value = gconf_client_get_string(client, pathName, &err);
 
-				if (!err && value && stringToBSColor(value, &color))
+				if (!err && value && stringToColor(value, &color.array))
 				{
 					bsSetColor(setting, color);
 					ret = TRUE;
@@ -483,7 +483,6 @@ static Bool readOption(BSSetting * setting)
 			break;
 		case TypeAction:
 			ret = readActionValue(setting, pathName);
-			/* TODO */
 			break;
 		default:
 			printf("GConf backend: attempt to read unsupported setting type %d!\n", setting->type);
@@ -499,16 +498,128 @@ static Bool readOption(BSSetting * setting)
 	return ret;
 }
 
+static void writeActionValue(BSSetting * setting, char * pathName)
+{
+	char *buffer;
+	char itemPath[BUFSIZE];
+	BSSettingActionValue *action = &setting->value->value.asAction;
+
+	snprintf(itemPath, BUFSIZE, "%s/edge", pathName);
+	buffer = edgeToString(action->edgeMask);
+	if (buffer)
+	{
+		gconf_client_set_string(client, itemPath, buffer, NULL);
+		free(buffer);
+	}
+
+	snprintf(itemPath, BUFSIZE, "%s/bell", pathName);
+	gconf_client_set_bool(client, itemPath, action->onBell, NULL);
+
+	snprintf(itemPath, BUFSIZE, "%s/edgebutton", pathName);
+	gconf_client_set_int(client, itemPath, action->edgeButton, NULL);
+
+	snprintf(itemPath, BUFSIZE, "%s/button", pathName);
+	buffer = buttonBindingToString(action);
+	if (buffer)
+	{
+		gconf_client_set_string(client, itemPath, buffer, NULL);
+		free(buffer);
+	}
+
+	snprintf(itemPath, BUFSIZE, "%s/key", pathName);
+	buffer = keyBindingToString(action);
+	if (buffer)
+	{
+		gconf_client_set_string(client, itemPath, buffer, NULL);
+		free(buffer);
+	}
+}
+
 static void writeIntegratedOption(BSSetting * setting)
 {
 }
 
 static void resetOptionToDefault(BSSetting * setting)
 {
+	KEYNAME;
+	PATHNAME;
+
+	gconf_client_recursive_unset(client, pathName, 0, NULL);
+	gconf_client_suggest_sync(client,NULL);
+
+	free(keyName);
+	free(pathName);
 }
 
 static void writeOption(BSSetting * setting)
 {
+	KEYNAME;
+	PATHNAME;
+
+	switch (setting->type)
+	{
+		case TypeString:
+			{
+				char *value;
+				if (bsGetString(setting, &value))
+					gconf_client_set_string(client, pathName, value, NULL);
+			}
+			break;
+		case TypeMatch:
+			{
+				char *value;
+				if (bsGetMatch(setting, &value))
+					gconf_client_set_string(client, pathName, value, NULL);
+			}
+		case TypeFloat:
+			{
+				float value;
+				if (bsGetFloat(setting, &value))
+					gconf_client_set_float(client, pathName, value, NULL);
+			}
+			break;
+		case TypeInt:
+			{
+				int value;
+				if (bsGetInt(setting, &value))
+					gconf_client_set_int(client, pathName, value, NULL);
+			}
+			break;
+		case TypeBool:
+			{
+				Bool value;
+				if (bsGetBool(setting, &value))
+					gconf_client_set_bool(client, pathName, value, NULL);
+			}
+			break;
+		case TypeColor:
+			{
+				BSSettingColorValue value;
+				char *colString;
+
+				if (!bsGetColor(setting, &value))
+					break;
+
+				colString = colorToString(&value.array);
+				if (!colString)
+					break;
+
+				gconf_client_set_string(client, pathName, colString, NULL);
+				free(colString);
+			}
+			break;
+		case TypeAction:
+			writeActionValue(setting, pathName);
+			break;
+		case TypeList:
+			break;
+		default:
+			printf("GConf backend: attempt to write unsupported setting type %d\n", setting->type);
+			break;
+	}
+
+	free(keyName);
+	free(pathName);
 }
 
 static void processEvents(void)
@@ -662,7 +773,7 @@ static Bool deleteProfile(char * profile)
 	gboolean status = FALSE;
 	if (gconf_client_dir_exists(client, path, NULL))
 	{
-		status = gconf_client_recursive_unset(client, path, 1, NULL);
+		status = gconf_client_recursive_unset(client, path, 0, NULL);
 		gconf_client_suggest_sync(client,NULL);
 	}
 
