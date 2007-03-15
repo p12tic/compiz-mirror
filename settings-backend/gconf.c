@@ -1,0 +1,675 @@
+/**
+ *
+ * Beryl gconf settings backend
+ *
+ * gconf.c
+ *
+ * Copyright (c) 2006 Robert Carr <racarr@beryl-project.org>
+ * Copyright (c) 2007 Dennis Kasprzyk <onestone@beryl-project.org>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ **/
+
+
+
+#define _GNU_SOURCE
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <malloc.h>
+#include <string.h>
+
+#include <bsettings.h>
+
+#include <X11/X.h>
+#include <X11/Xlib.h>
+
+#include <gconf/gconf.h>
+#include <gconf/gconf-client.h>
+#include <gconf/gconf-value.h>
+
+#define CompAltMask        (1 << 16)
+#define CompMetaMask       (1 << 17)
+#define CompSuperMask      (1 << 18)
+#define CompHyperMask      (1 << 19)
+#define CompModeSwitchMask (1 << 20)
+#define CompNumLockMask    (1 << 21)
+#define CompScrollLockMask (1 << 22)
+
+#define METACITY    "/apps/metacity"
+#define COMPIZ_BS   "/apps/compiz/bSettings"
+#define DEFAULTPROF "Default"
+
+#define BUFSIZE 512
+
+#define KEYNAME     char *keyName = malloc(BUFSIZE * sizeof(char)); \
+                    if (setting->isScreen) \
+                        snprintf(keyName, BUFSIZE, "screen%d/%s", setting->screenNum, setting->name); \
+                    else \
+                        snprintf(keyName, BUFSIZE, "allscreens/%s", setting->name);
+
+#define PATHNAME    char *pathName = malloc(BUFSIZE * sizeof(char)); \
+					snprintf(pathName, BUFSIZE, "%s/%s/%s/%s", COMPIZ_BS, currentProfile, \
+							 setting->parent->name ? setting->parent->name : "general", keyName);
+
+GConfClient *client = NULL;
+
+static guint backendNotifyId = 0;
+static guint gnomeNotifyId = 0;
+static char *currentProfile = NULL;
+
+/* some forward declarations */
+static Bool readInit(BSContext * context);
+static void readSetting(BSContext * context, BSSetting * setting);
+static void readDone(BSContext * context);
+
+struct _Modifier
+{
+	gchar *name;
+	gint modifier;
+} const static modifiers[] = {
+	{"<Shift>", ShiftMask},
+	{"<Control>", ControlMask},
+	{"<Mod1>", Mod1Mask},
+	{"<Mod2>", Mod2Mask},
+	{"<Mod3>", Mod3Mask},
+	{"<Mod4>", Mod4Mask},
+	{"<Mod5>", Mod5Mask},
+	{"<Alt>", CompAltMask},
+	{"<Meta>", CompMetaMask},
+	{"<Super>", CompSuperMask},
+	{"<Hyper>", CompHyperMask},
+	{"<ModeSwitch>", CompModeSwitchMask},
+};
+
+#define N_MODIFIERS (sizeof (modifiers) / sizeof (struct _Modifier))
+
+typedef enum {
+	OptionInt,
+	OptionBool,
+	OptionKey,
+	OptionString,
+	OptionSpecial,
+} SpecialOptionType;
+
+struct _SpecialOption {
+	const char* settingName;
+	const char* pluginName;
+	Bool		screen;
+	const char* gnomeName;
+	SpecialOptionType type;
+} const specialOptions[] = {
+	{"run", NULL, FALSE, METACITY "/global_keybindings/panel_run_dialog", OptionKey},
+	{"main_menu", NULL, FALSE, METACITY "/global_keybindings/panel_main_menu", OptionKey},
+	{"window_menu", NULL, FALSE, METACITY "/window_keybindings/activate_window_menu", OptionKey},
+	{"run_command_screenshot", NULL, FALSE, METACITY "/global_keybindings/run_command_screenshot", OptionKey},
+
+	{"toggle_window_maximized", NULL, FALSE, METACITY "/window_keybindings/toggle_maximized", OptionKey},
+	{"minimize_window", NULL, FALSE, METACITY "/window_keybindings/minimize", OptionKey},
+	{"maximize_window", NULL, FALSE, METACITY "/window_keybindings/maximize", OptionKey},
+	{"unmaximize_window", NULL, FALSE, METACITY "/window_keybindings/unmaximize", OptionKey},
+	{"toggle_window_maximized_horizontally", NULL, FALSE, METACITY "/window_keybindings/maximize_horizontally", OptionKey},
+	{"toggle_window_maximized_vertically", NULL, FALSE, METACITY "/window_keybindings/maximize_vertically", OptionKey},
+	{"raise_window", NULL, FALSE, METACITY "/window_keybindings/raise", OptionKey},
+	{"lower_window", NULL, FALSE, METACITY "/window_keybindings/lower", OptionKey},
+	{"close_window", NULL, FALSE, METACITY "/window_keybindings/close", OptionKey},
+	{"toggle_window_shaded", NULL, FALSE, METACITY "/window_keybindings/toggle_shaded", OptionKey},
+
+	{"show_desktop", NULL, FALSE, METACITY "/global_keybindings/show_desktop", OptionKey},
+
+	{"initiate", "move", FALSE, METACITY "/window_keybindings/begin_move", OptionKey},
+	{"initiate", "resize", FALSE, METACITY "/window_keybindings/begin_resize", OptionKey},
+
+	{"next", "switcher", FALSE, METACITY "/global_keybindings/switch_windows", OptionKey},
+	{"prev", "switcher", FALSE, METACITY "/global_keybindings/switch_windows_backward", OptionKey},
+
+	{"command1", NULL, FALSE, METACITY "/keybinding_commands/command_1", OptionString},
+	{"command2", NULL, FALSE, METACITY "/keybinding_commands/command_2", OptionString},
+	{"command3", NULL, FALSE, METACITY "/keybinding_commands/command_3", OptionString},
+	{"command4", NULL, FALSE, METACITY "/keybinding_commands/command_4", OptionString},
+	{"command5", NULL, FALSE, METACITY "/keybinding_commands/command_5", OptionString},
+	{"command6", NULL, FALSE, METACITY "/keybinding_commands/command_6", OptionString},
+	{"command7", NULL, FALSE, METACITY "/keybinding_commands/command_7", OptionString},
+	{"command8", NULL, FALSE, METACITY "/keybinding_commands/command_8", OptionString},
+	{"command9", NULL, FALSE, METACITY "/keybinding_commands/command_9", OptionString},
+	{"command10", NULL, FALSE, METACITY "/keybinding_commands/command_10", OptionString},
+	{"command11", NULL, FALSE, METACITY "/keybinding_commands/command_11", OptionString},
+	{"command12", NULL, FALSE, METACITY "/keybinding_commands/command_12", OptionString},
+
+	{"run_command1", NULL, FALSE, METACITY "/global_keybindings/run_command_1", OptionKey},
+	{"run_command2", NULL, FALSE, METACITY "/global_keybindings/run_command_2", OptionKey},
+	{"run_command3", NULL, FALSE, METACITY "/global_keybindings/run_command_3", OptionKey},
+	{"run_command4", NULL, FALSE, METACITY "/global_keybindings/run_command_4", OptionKey},
+	{"run_command5", NULL, FALSE, METACITY "/global_keybindings/run_command_5", OptionKey},
+	{"run_command6", NULL, FALSE, METACITY "/global_keybindings/run_command_6", OptionKey},
+	{"run_command7", NULL, FALSE, METACITY "/global_keybindings/run_command_7", OptionKey},
+	{"run_command8", NULL, FALSE, METACITY "/global_keybindings/run_command_8", OptionKey},
+	{"run_command9", NULL, FALSE, METACITY "/global_keybindings/run_command_9", OptionKey},
+	{"run_command10", NULL, FALSE, METACITY "/global_keybindings/run_command_10", OptionKey},
+	{"run_command11", NULL, FALSE, METACITY "/global_keybindings/run_command_11", OptionKey},
+	{"run_command12", NULL, FALSE, METACITY "/global_keybindings/run_command_12", OptionKey},
+
+	{"rotate_to_1", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_1", OptionKey},
+	{"rotate_to_2", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_2", OptionKey},
+	{"rotate_to_3", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_3", OptionKey},
+	{"rotate_to_4", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_4", OptionKey},
+	{"rotate_to_5", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_5", OptionKey},
+	{"rotate_to_6", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_6", OptionKey},
+	{"rotate_to_7", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_7", OptionKey},
+	{"rotate_to_8", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_8", OptionKey},
+	{"rotate_to_9", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_9", OptionKey},
+	{"rotate_to_10", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_10", OptionKey},
+	{"rotate_to_11", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_11", OptionKey},
+	{"rotate_to_12", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_12", OptionKey},
+
+	{"rotate_left", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_left", OptionKey},
+	{"rotate_right", "rotate", FALSE, METACITY "/global_keybindings/switch_to_workspace_right", OptionKey},
+
+	{"plane_to_1", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_1", OptionKey},
+	{"plane_to_2", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_2", OptionKey},
+	{"plane_to_3", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_3", OptionKey},
+	{"plane_to_4", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_4", OptionKey},
+	{"plane_to_5", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_5", OptionKey},
+	{"plane_to_6", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_6", OptionKey},
+	{"plane_to_7", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_7", OptionKey},
+	{"plane_to_8", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_8", OptionKey},
+	{"plane_to_9", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_9", OptionKey},
+	{"plane_to_10", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_10", OptionKey},
+	{"plane_to_11", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_11", OptionKey},
+	{"plane_to_12", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_12", OptionKey},
+
+	{"plane_up", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_up", OptionKey},
+	{"plane_down", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_down", OptionKey},
+	{"plane_left", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_left", OptionKey},
+	{"plane_right", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_right", OptionKey},
+
+	{"rotate_to_1_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_1", OptionKey},
+	{"rotate_to_2_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_2", OptionKey},
+	{"rotate_to_3_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_3", OptionKey},
+	{"rotate_to_4_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_4", OptionKey},
+	{"rotate_to_5_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_5", OptionKey},
+	{"rotate_to_6_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_6", OptionKey},
+	{"rotate_to_7_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_7", OptionKey},
+	{"rotate_to_8_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_8", OptionKey},
+	{"rotate_to_9_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_9", OptionKey},
+	{"rotate_to_10_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_10", OptionKey},
+	{"rotate_to_11_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_11", OptionKey},
+	{"rotate_to_12_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_12", OptionKey},
+
+	{"rotate_left_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_left", OptionKey},
+	{"rotate_right_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_right", OptionKey},
+
+	{"command_screenshot", NULL, FALSE, METACITY "/keybinding_commands/command_screenshot", OptionString},
+	{"command_window_screenshot", NULL, FALSE, METACITY "/keybinding_commands/command_window_screenshot", OptionString},
+
+	{"autoraise", NULL, FALSE, METACITY "/general/auto_raise", OptionBool},
+	{"autoraise_delay", NULL, FALSE, METACITY "/general/auto_raise_delay", OptionInt},
+	{"raise_on_click", NULL, FALSE, METACITY "/general/raise_on_click", OptionBool},
+	{"click_to_focus", NULL, FALSE, METACITY "/general/focus_mode", OptionSpecial},
+	{"fsp_level", NULL, FALSE, METACITY "/general/focus_new_windows", OptionSpecial},
+	
+	{"audible_bell", NULL, FALSE, METACITY "/general/audible_bell", OptionBool},
+	{"size", NULL, TRUE, METACITY "/general/num_workspaces", OptionInt},
+};
+
+#define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOption))
+
+static Bool stringToBSColor(const char *color, BSSettingColorValue *rgba)
+{
+	int c[4];
+
+	if (sscanf(color, "#%2x%2x%2x%2x", &c[0], &c[1], &c[2], &c[3]) == 4)
+	{
+			rgba->array.array[0] = c[0] << 8 | c[0];
+			rgba->array.array[1] = c[1] << 8 | c[1];
+			rgba->array.array[2] = c[2] << 8 | c[2];
+			rgba->array.array[3] = c[3] << 8 | c[3];
+
+			return TRUE;
+	}
+
+	return FALSE;
+}
+
+static gchar *BSColorToString(BSSettingColorValue *rgba)
+{
+	char tmp[256];
+
+	snprintf(tmp, 256, "#%.2x%.2x%.2x%.2x", rgba->array.array[0] >> 8,
+			 rgba->array.array[1] >> 8, rgba->array.array[2] >> 8,
+			 rgba->array.array[3] >> 8);
+
+	return strdup(tmp);
+}
+
+
+static Bool isIntegratedOption(BSSetting * setting)
+{
+	unsigned int i;
+	for (i = 0; i < N_SOPTIONS; i++)
+	{
+		if ((strcmp(setting->name, specialOptions[i].settingName) == 0) &&
+			(strcmp(setting->parent->name, specialOptions[i].pluginName) == 0) &&
+			((setting->isScreen && specialOptions[i].screen) || 
+			 (!setting->isScreen && !specialOptions[i].screen)))
+			return TRUE;
+	}
+	return FALSE;
+}
+
+static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
+				 		 gpointer user_data)
+{
+	BSContext *context = (BSContext *)user_data;
+
+	char *keyName = gconf_entry_get_key(entry);
+	char *pluginName;
+	char *screenName;
+	char *settingName;
+	Bool isScreen;
+	unsigned int screenNum;
+
+	keyName += strlen(COMPIZ_BS) + 1;
+
+	pluginName = keyName;
+	keyName = strchr(keyName, '/');
+	*keyName = 0;
+	keyName++;
+
+	if (strcmp(pluginName, "general") == 0)
+	{
+		pluginName = NULL;
+	} else {
+		pluginName = keyName;
+	}
+
+	screenName = keyName;
+	keyName = strchr(keyName, '/');
+	*keyName = 0;
+	keyName++;
+
+	settingName = keyName;
+
+	BSPlugin *plugin = bsFindPlugin(context, pluginName);
+	if (!plugin)
+		return;
+
+	if (strcmp(screenName, "allscreens") == 0)
+		isScreen = FALSE;
+	else
+	{
+		isScreen = TRUE;
+		sscanf(screenName, "screen%d", &screenNum);
+	}
+
+	BSSetting *setting = bsFindSetting(plugin, settingName, isScreen, screenNum);
+	if (!setting)
+		return;
+
+	if (bsGetIntegrationEnabled(context) && !isIntegratedOption(setting))
+	{
+		readInit(context);
+		readSetting(context, setting);
+		readDone(context);
+	}
+}
+
+static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
+					  		  gpointer user_data)
+{
+	BSContext *context = (BSContext *)user_data;
+	char *keyName = gconf_entry_get_key(entry);
+	int i,num = -1;
+
+	for (i = 0; i < N_SOPTIONS; i++)
+	{
+		if (strcmp(specialOptions[i].gnomeName, keyName) == 0)
+		{
+			num = i;
+			break;
+		}
+	}
+
+	if (num < 0)
+		return;
+
+	BSPlugin * plugin = NULL;
+	plugin = bsFindPlugin(context, specialOptions[num].pluginName);
+
+	if (!plugin)
+		return;
+
+	BSSetting * setting = NULL;
+	/* FIXME: where should we get the screen num from? */
+	setting = bsFindSetting(plugin, specialOptions[num].settingName, 
+							specialOptions[num].screen, 0);
+
+	if (!setting)
+		return;
+
+	readInit(context);
+	readSetting(context, setting);
+	readDone(context);
+}
+
+static Bool readIntegratedOption(BSSetting * setting)
+{
+	/* TODO */
+	return FALSE;
+}
+
+static Bool readOption(BSSetting * setting)
+{
+	GError *err = NULL;
+	Bool ret = FALSE;
+	KEYNAME;
+	PATHNAME;
+
+	if (!gconf_client_get(client, pathName, NULL))
+		return FALSE;
+
+	switch (setting->type)
+	{
+		case TypeString:
+			{
+				gchar *value;
+				value = gconf_client_get_string(client, pathName, &err);
+
+				if (!err && value) 
+				{
+					bsSetString(setting, value);
+					ret = TRUE;
+				}
+			}
+			break;
+		case TypeMatch:
+			{
+				gchar * value;
+				value = gconf_client_get_string(client, pathName, &err);
+
+				if (!err && value)
+				{
+					bsSetMatch(setting, value);
+					ret = TRUE;
+				}
+			}
+			break;
+		case TypeInt:
+			{
+				int value;
+				value = gconf_client_get_int(client, pathName, &err);
+
+				if (!err)
+				{
+					bsSetInt(setting, value);
+					ret = TRUE;
+				}
+			}
+			break;
+		case TypeBool:
+			{
+				gboolean value;
+				value = gconf_client_get_bool(client, pathName, &err);
+
+				if (!err)
+				{
+					bsSetBool(setting, value ? TRUE : FALSE);
+					ret = TRUE;
+				}
+			}
+			break;
+		case TypeFloat:
+			{
+				float value;
+				value = gconf_client_get_float(client, pathName, &err);
+
+				if (!err)
+				{
+					bsSetFloat(setting, value);
+					ret = TRUE;
+				}
+			}
+			break;
+		case TypeColor:
+			{
+				gchar *value;
+				BSSettingColorValue color;
+				value = gconf_client_get_string(client, pathName, &err);
+
+				if (!err && value && stringToBSColor(value, &color))
+				{
+					bsSetColor(setting, color);
+					ret = TRUE;
+				}
+
+				if (value)
+					g_free(value);
+			}
+			break;
+		case TypeList:
+			/* TODO */
+			break;
+		case TypeAction:
+			/* TODO */
+			break;
+		default:
+			printf("GConf backend: attempt to read unsupported setting type %d!\n", setting->type);
+			break;
+	}
+
+	if (err)
+		g_error_free(err);
+
+	free(keyName);
+	free(pathName);
+
+	return ret;
+}
+
+static void writeIntegratedOption(BSSetting * setting)
+{
+}
+
+static void resetOptionToDefault(BSSetting * setting)
+{
+}
+
+static void writeOption(BSSetting * setting)
+{
+}
+
+static void processEvents(void)
+{
+	while (g_main_context_pending(NULL))
+		g_main_context_iteration(NULL, FALSE);
+}
+
+static Bool initBackend(BSContext * context)
+{
+	g_type_init();
+
+	client = gconf_client_get_default();
+
+	backendNotifyId = gconf_client_notify_add(client, COMPIZ_BS, valueChanged,
+											  context, NULL, NULL);
+
+	if (bsGetIntegrationEnabled(context))
+		gnomeNotifyId = gconf_client_notify_add(client, METACITY,
+												gnomeValueChanged, context, NULL,NULL);
+
+	gconf_client_add_dir(client, COMPIZ_BS, GCONF_CLIENT_PRELOAD_NONE, NULL);
+	gconf_client_add_dir(client, METACITY, GCONF_CLIENT_PRELOAD_NONE, NULL);
+
+	return TRUE;
+}
+
+static Bool finiBackend(BSContext * context)
+{
+	if (backendNotifyId)
+	{
+		gconf_client_notify_remove(client, backendNotifyId);
+		backendNotifyId = 0;
+	}
+	if (gnomeNotifyId)
+	{
+		gconf_client_notify_remove(client, gnomeNotifyId);
+		gnomeNotifyId = 0;
+	}
+
+	gconf_client_remove_dir(client, COMPIZ_BS, NULL);
+	gconf_client_remove_dir(client, METACITY, NULL);
+
+	g_object_unref(client);
+	client = NULL;
+
+	return TRUE;
+}
+
+static Bool readInit(BSContext * context)
+{
+	currentProfile = bsGetProfile(context);
+	if (!currentProfile)
+		currentProfile = DEFAULTPROF;
+
+	return TRUE;
+}
+
+static void readSetting(BSContext * context, BSSetting * setting)
+{
+	Bool status;
+
+	if (bsGetIntegrationEnabled(context) && isIntegratedOption(setting))
+		status = readIntegratedOption(setting);
+	else
+		status = readOption(setting);
+
+	if (status)
+		if (strcmp(setting->name, "___plugin_enabled") == 0)
+			context->pluginsChanged = TRUE;
+		context->changedSettings = bsSettingListAppend(context->changedSettings, setting);
+}
+
+static void readDone(BSContext * context)
+{
+}
+
+static Bool writeInit(BSContext * context)
+{
+	currentProfile = bsGetProfile(context);
+	if (!currentProfile)
+		currentProfile = DEFAULTPROF;
+
+	return TRUE;
+}
+
+static void writeSetting(BSContext * context, BSSetting * setting)
+{
+	if (bsGetIntegrationEnabled(context) && isIntegratedOption(setting))
+		writeIntegratedOption(setting);
+	else if (setting->isDefault)
+		resetOptionToDefault(setting);
+	else
+		writeOption(setting);
+
+}
+
+static void writeDone(BSContext * context)
+{
+}
+
+static Bool getSettingIsIntegrated(BSSetting * setting)
+{
+	if (!bsGetIntegrationEnabled(setting->parent->context))
+		return FALSE;
+
+	if (!isIntegratedOption(setting))
+		return FALSE;
+
+	return TRUE;
+}
+
+static Bool getSettingIsReadOnly(BSSetting * setting)
+{
+	/* FIXME */
+	return FALSE;
+}
+
+static BSStringList getExistingProfiles(void)
+{
+	gconf_client_suggest_sync(client,NULL);
+	GSList * data = gconf_client_all_dirs(client, COMPIZ_BS, NULL);
+	BSStringList ret = NULL;
+	GSList * tmp = data;
+	char *name;
+
+	for (;tmp;tmp = g_slist_next(tmp))
+	{
+		if (0)
+		{
+			name = strrchr(tmp->data, '/');
+			if (name)
+				ret = bsStringListAppend(ret, name+1);
+		}
+		g_free(tmp->data);
+	}
+	g_slist_free(data);
+
+	return ret;
+}
+
+static Bool deleteProfile(char * profile)
+{
+	char path[BUFSIZE];
+
+	if (profile && strlen(profile))
+		snprintf(path, BUFSIZE, "%s/%s", COMPIZ_BS, profile);
+	else
+		snprintf(path, BUFSIZE, "%s/Default", COMPIZ_BS);
+
+	gboolean status = FALSE;
+	if (gconf_client_dir_exists(client, path, NULL))
+	{
+		status = gconf_client_recursive_unset(client, path, 1, NULL);
+		gconf_client_suggest_sync(client,NULL);
+	}
+
+	return status;
+}
+
+
+static BSBackendVTable gconfVTable = {
+    "gconf",
+    "GConf Configuration Backend",
+    "GConf Configuration Backend for bsettings",
+    TRUE,
+    TRUE,
+    processEvents,
+    initBackend,
+    finiBackend,
+	readInit,
+	readSetting,
+	readDone,
+	writeInit,
+	writeSetting,
+	writeDone,
+	getSettingIsIntegrated,
+	getSettingIsReadOnly,
+	getExistingProfiles,
+	deleteProfile
+};
+
+BSBackendVTable *
+getBackendInfo (void)
+{
+    return &gconfVTable;
+}
+
