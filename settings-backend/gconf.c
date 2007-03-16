@@ -386,6 +386,133 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	return ret;
 }
 
+static Bool readListValue(BSSetting * setting, char * pathName)
+{
+	GSList *valueList = NULL;
+	GError *err = NULL;
+	GConfValueType valueType;
+	unsigned int nItems, i = 0;
+	BSSettingValueList list = NULL;
+
+	switch (setting->info.forList.listType)
+	{
+		case TypeString:
+		case TypeMatch:
+		case TypeColor:
+			valueType = GCONF_VALUE_STRING;
+			break;
+		case TypeBool:
+			valueType = GCONF_VALUE_BOOL;
+			break;
+		case TypeInt:
+			valueType = GCONF_VALUE_INT;
+			break;
+		case TypeFloat:
+			valueType = GCONF_VALUE_FLOAT;
+			break;
+		default:
+			valueType = GCONF_VALUE_INVALID;
+			break;
+	}
+
+	if (valueType == GCONF_VALUE_INVALID)
+		return FALSE;
+
+	valueList = gconf_client_get_list(client, pathName, valueType, &err);
+	if (err)
+	{
+		g_error_free(err);
+		return FALSE;
+	}
+
+	/* FIXME: distinguish between unset value and empty list */
+	if (!valueList)
+		return FALSE;
+
+	nItems = g_slist_length(valueList);
+
+	switch (setting->info.forList.listType)
+	{
+		case TypeBool:
+			{
+				Bool *array = malloc(nItems * sizeof(Bool));
+				GSList *tmpList = valueList;
+				for (; tmpList; tmpList = tmpList->next, i++)
+					array[i] = (GPOINTER_TO_INT(tmpList->data)) ? TRUE : FALSE;
+				list = bsGetValueListFromBoolArray(array, nItems, setting);
+				free(array);
+			}
+			break;
+		case TypeInt:
+			{
+				int *array = malloc(nItems * sizeof(int));
+				GSList *tmpList = valueList;
+				for (; tmpList; tmpList = tmpList->next, i++)
+					array[i] = GPOINTER_TO_INT(tmpList->data);
+				list = bsGetValueListFromIntArray(array, nItems, setting);
+				free(array);
+			}
+			break;
+		case TypeFloat:
+			{
+				float *array = malloc(nItems * sizeof(float));
+				GSList *tmpList = valueList;
+				for (; tmpList; tmpList = tmpList->next, i++)
+				{
+					array[i] = *((gdouble*)tmpList->data);
+					g_free(tmpList->data);
+				}
+				list = bsGetValueListFromFloatArray(array, nItems, setting);
+				free(array);
+			}
+			break;
+		case TypeString:
+		case TypeMatch:
+			{
+				char **array = malloc(nItems * sizeof(char*));
+				GSList *tmpList = valueList;
+				for (; tmpList; tmpList = tmpList->next, i++)
+				{
+					array[i] = strdup(tmpList->data);
+					g_free(tmpList->data);
+				}
+				list = bsGetValueListFromStringArray(array, nItems, setting);
+				for (i = 0; i < nItems; i++)
+					free(array[i]);
+				free(array);
+			}
+			break;
+		case TypeColor:
+			{
+				BSSettingColorValue *array = malloc(nItems * sizeof(BSSettingColorValue));
+				GSList *tmpList = valueList;
+				for (; tmpList; tmpList = tmpList->next, i++)
+				{
+					memset(&array[i], 0, sizeof(BSSettingColorValue));
+					stringToColor(tmpList->data, &array[i]);
+					g_free(tmpList->data);
+				}
+				list = bsGetValueListFromColorArray(array, nItems, setting);
+				free(array);
+			}
+			break;
+		default:
+			break;
+	}
+
+	if (valueList)
+		g_slist_free(valueList);
+
+	if (list)
+	{
+		bsSetList(setting, list);
+		bsSettingValueListFree(list, TRUE);
+		return TRUE;
+	}
+
+	return FALSE;
+}
+
 static Bool readIntegratedOption(BSSetting * setting)
 {
 	/* TODO */
@@ -478,7 +605,7 @@ static Bool readOption(BSSetting * setting)
 			}
 			break;
 		case TypeList:
-			/* TODO */
+			ret = readListValue(setting, pathName);
 			break;
 		case TypeAction:
 			ret = readActionValue(setting, pathName);
@@ -538,6 +665,7 @@ static void writeListValue(BSSetting * setting, char * pathName)
 {
 	GSList *valueList = NULL;
 	GConfValueType valueType;
+	Bool freeItems = FALSE;
 
 	BSSettingValueList list;
 	if (!bsGetList(setting, &list))
@@ -547,12 +675,10 @@ static void writeListValue(BSSetting * setting, char * pathName)
 	{
 		case TypeBool:
 			{
-				Bool *item;
 				while (list)
 				{
-					item = malloc(sizeof(Bool));
-					*item = list->data->value.asBool;
-					valueList = g_slist_append(valueList, item);
+					valueList = g_slist_append(valueList, 
+									GINT_TO_POINTER(list->data->value.asBool));
 					list = list->next;
 				}
 				valueType = GCONF_VALUE_BOOL;
@@ -560,12 +686,10 @@ static void writeListValue(BSSetting * setting, char * pathName)
 			break;
 		case TypeInt:
 			{
-				int *item;
 				while (list)
 				{
-					item = malloc(sizeof(int));
-					*item = list->data->value.asInt;
-					valueList = g_slist_append(valueList, item);
+					valueList = g_slist_append(valueList, 
+									GINT_TO_POINTER(list->data->value.asInt));
 					list = list->next;
 				}
 				valueType = GCONF_VALUE_INT;
@@ -581,16 +705,16 @@ static void writeListValue(BSSetting * setting, char * pathName)
 					valueList = g_slist_append(valueList, item);
 					list = list->next;
 				}
+				freeItems = TRUE;
 				valueType = GCONF_VALUE_FLOAT;
 			}
 			break;
 		case TypeString:
 			{
-				char *item;
 				while (list)
 				{
-					item = strdup(list->data->value.asString);
-					valueList = g_slist_append(valueList, item);
+					valueList = g_slist_append(valueList, 
+									list->data->value.asString);
 					list = list->next;
 				}
 				valueType = GCONF_VALUE_STRING;
@@ -598,11 +722,10 @@ static void writeListValue(BSSetting * setting, char * pathName)
 			break;
 		case TypeMatch:
 			{
-				char *item;
 				while (list)
 				{
-					item = strdup(list->data->value.asMatch);
-					valueList = g_slist_append(valueList, item);
+					valueList = g_slist_append(valueList, 
+									list->data->value.asMatch);
 					list = list->next;
 				}
 				valueType = GCONF_VALUE_STRING;
@@ -617,6 +740,7 @@ static void writeListValue(BSSetting * setting, char * pathName)
 					valueList = g_slist_append(valueList, item);
 					list = list->next;
 				}
+				freeItems = TRUE;
 				valueType = GCONF_VALUE_STRING;
 			}
 			break;
@@ -628,13 +752,15 @@ static void writeListValue(BSSetting * setting, char * pathName)
 
 	if (valueType != GCONF_VALUE_INVALID)
 	{
-		GSList *tmpList = valueList;
-	
 		gconf_client_set_list(client, pathName, valueType, valueList, NULL);
 		
-		for (; tmpList; tmpList = tmpList->next)
-			if (tmpList->data)
-				free(tmpList->data);
+		if (freeItems) 
+		{
+			GSList *tmpList = valueList;
+			for (; tmpList; tmpList = tmpList->next)
+				if (tmpList->data)
+					free(tmpList->data);
+		}
 	}
 	if (valueList)
 		g_slist_free(valueList);
