@@ -57,13 +57,13 @@
 
 #define BUFSIZE 512
 
-#define KEYNAME     char *keyName = malloc(BUFSIZE * sizeof(char)); \
+#define KEYNAME     char keyName[BUFSIZE]; \
                     if (setting->isScreen) \
                         snprintf(keyName, BUFSIZE, "screen%d/%s", setting->screenNum, setting->name); \
                     else \
                         snprintf(keyName, BUFSIZE, "allscreens/%s", setting->name);
 
-#define PATHNAME    char *pathName = malloc(BUFSIZE * sizeof(char)); \
+#define PATHNAME    char pathName[BUFSIZE]; \
 					snprintf(pathName, BUFSIZE, "%s/%s/%s%s%s/%s", COMPIZ_BS, currentProfile, \
 							 setting->parent->name ? "plugins" : "general", \
 							 setting->parent->name ? "/" : "", \
@@ -700,9 +700,6 @@ static Bool readOption(BSSetting * setting)
 	if (err)
 		g_error_free(err);
 
-	free(keyName);
-	free(pathName);
-
 	return ret;
 }
 
@@ -955,9 +952,6 @@ static void resetOptionToDefault(BSSetting * setting)
 
 	gconf_client_recursive_unset(client, pathName, 0, NULL);
 	gconf_client_suggest_sync(client,NULL);
-
-	free(keyName);
-	free(pathName);
 }
 
 static void writeOption(BSSetting * setting)
@@ -1027,9 +1021,6 @@ static void writeOption(BSSetting * setting)
 			printf("GConf backend: attempt to write unsupported setting type %d\n", setting->type);
 			break;
 	}
-
-	free(keyName);
-	free(pathName);
 }
 
 static void processEvents(void)
