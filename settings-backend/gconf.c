@@ -1,8 +1,13 @@
 /**
  *
- * Beryl gconf settings backend
+ * GConf bsettings backend
  *
  * gconf.c
+ *
+ * Copyright (c) 2007 Danny Baumann <maniac@beryl-project.org>
+ *
+ * Parts of this code are taken from libberylsettings 
+ * gconf backend, written by:
  *
  * Copyright (c) 2006 Robert Carr <racarr@beryl-project.org>
  * Copyright (c) 2007 Dennis Kasprzyk <onestone@beryl-project.org>
@@ -198,7 +203,6 @@ struct _SpecialOption {
 	{"autoraise_delay", NULL, FALSE, METACITY "/general/auto_raise_delay", OptionInt},
 	{"raise_on_click", NULL, FALSE, METACITY "/general/raise_on_click", OptionBool},
 	{"click_to_focus", NULL, FALSE, METACITY "/general/focus_mode", OptionSpecial},
-	{"fsp_level", NULL, FALSE, METACITY "/general/focus_new_windows", OptionSpecial},
 	
 	{"audible_bell", NULL, FALSE, METACITY "/general/audible_bell", OptionBool},
 	{"size", NULL, TRUE, METACITY "/general/num_workspaces", OptionInt},
@@ -206,7 +210,7 @@ struct _SpecialOption {
 
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOption))
 
-static Bool isIntegratedOption(BSSetting * setting)
+static Bool isIntegratedOption(BSSetting * setting, int * index)
 {
 	unsigned int i;
 	for (i = 0; i < N_SOPTIONS; i++)
@@ -215,7 +219,11 @@ static Bool isIntegratedOption(BSSetting * setting)
 			(strcmp(setting->parent->name, specialOptions[i].pluginName) == 0) &&
 			((setting->isScreen && specialOptions[i].screen) || 
 			 (!setting->isScreen && !specialOptions[i].screen)))
+		{
+			if (index)
+				*index = i;
 			return TRUE;
+		}
 	}
 	return FALSE;
 }
@@ -269,7 +277,7 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 	if (!setting)
 		return;
 
-	if (bsGetIntegrationEnabled(context) && !isIntegratedOption(setting))
+	if (bsGetIntegrationEnabled(context) && !isIntegratedOption(setting, NULL))
 	{
 		readInit(context);
 		readSetting(context, setting);
@@ -376,12 +384,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	}
 
 	if (ret) 
-	{
-		BSSettingValueList list =
-			bsGetValueListFromActionArray(&action, 1, setting);
-		bsSetList(setting, list);
-		bsSettingValueListFree(list, FALSE);
-	}
+		bsSetAction(setting, action);
 
 	return ret;
 }
@@ -513,10 +516,89 @@ static Bool readListValue(BSSetting * setting, char * pathName)
 	return FALSE;
 }
 
-static Bool readIntegratedOption(BSSetting * setting)
+static Bool readIntegratedOption(BSSetting * setting, int index)
 {
-	/* TODO */
-	return FALSE;
+	GError *err = NULL;
+	Bool ret = FALSE;
+
+	switch (specialOptions[index].type)
+	{
+		case OptionInt:
+			{
+				guint value;
+				value = gconf_client_get_int(client, specialOptions[index].gnomeName, &err);
+
+				if (!err)
+				{
+					bsSetInt(setting, value);
+					ret = TRUE;
+				}
+			}
+			break;
+		case OptionBool:
+			{
+				gboolean value;
+				value = gconf_client_get_bool(client, specialOptions[index].gnomeName, &err);
+
+				if (!err)
+				{
+					bsSetBool(setting, value ? TRUE : FALSE);
+					ret = TRUE;
+				}
+			}
+			break;
+		case OptionString:
+			{
+				char *value;
+				value = gconf_client_get_string(client, specialOptions[index].gnomeName, &err);
+
+				if (!err && value)
+				{
+					bsSetString(setting, value);
+					ret = TRUE;
+					g_free(value);
+				}
+			}
+			break;
+		case OptionKey:
+			{
+				char *value;
+				value = gconf_client_get_string(client, specialOptions[index].gnomeName, &err);
+
+				if (!err && value)
+				{
+					BSSettingActionValue action;
+					if (stringToKeyBinding(value, &action))
+					{
+						bsSetAction(setting, action);
+						ret = TRUE;
+					}
+					g_free(value);
+				}
+			}
+			break;
+		case OptionSpecial:
+			if (strcmp(specialOptions[index].settingName, "click_to_focus") == 0)
+			{
+				char *focusMode;
+				focusMode = gconf_client_get_string(client, specialOptions[index].gnomeName, &err);
+
+				if (!err && focusMode)
+				{
+					Bool clickToFocus = (strcmp(focusMode, "click") == 0);
+					bsSetBool(setting, clickToFocus);
+					g_free(focusMode);
+				}
+			}
+			break;
+		default:
+			break;
+	}
+
+	if (err)
+		g_error_free(err);
+
+	return ret;
 }
 
 static Bool readOption(BSSetting * setting)
@@ -766,9 +848,104 @@ static void writeListValue(BSSetting * setting, char * pathName)
 		g_slist_free(valueList);
 }
 
-static void writeIntegratedOption(BSSetting * setting)
+static void writeIntegratedOption(BSSetting * setting, int index)
 {
-	/* TODO */
+	GError *err = NULL;
+
+	switch (specialOptions[index].type)
+	{
+		case OptionInt:
+			{
+				int newValue, currentValue;
+				if (!bsGetInt(setting, &newValue))
+					break;
+				currentValue = gconf_client_get_int(client, 
+													specialOptions[index].gnomeName, &err);
+
+				if (!err && (currentValue != newValue))
+					gconf_client_set_int(client, specialOptions[index].gnomeName, 
+										 newValue, NULL);
+			}
+			break;
+		case OptionBool:
+			{
+				Bool newValue;
+				gboolean currentValue;
+				if (!bsGetBool(setting, &newValue))
+					break;
+				currentValue = gconf_client_get_bool(client, 
+													 specialOptions[index].gnomeName, &err);
+
+				if (!err && ((currentValue && !newValue) || (!currentValue && newValue)))
+					gconf_client_set_bool(client, specialOptions[index].gnomeName,
+										  newValue, NULL);
+			}
+			break;
+		case OptionString:
+			{
+				char *newValue;
+				gchar *currentValue;
+				if (!bsGetString(setting, &newValue))
+					break;
+				currentValue = gconf_client_get_string(client,
+													   specialOptions[index].gnomeName, &err);
+
+				if (!err && currentValue)
+				{
+					if (strcmp(currentValue, newValue) != 0)
+						gconf_client_set_string(client, specialOptions[index].gnomeName, 
+												newValue, NULL);
+					g_free(currentValue);
+				}
+			}
+			break;
+		case OptionKey:
+			{
+				char *newValue;
+				gchar *currentValue;
+
+				newValue = keyBindingToString(&setting->value->value.asAction);
+				if (newValue)
+				{
+					currentValue = gconf_client_get_string(client, 
+														   specialOptions[index].gnomeName, &err);
+
+					if (!err && currentValue)
+					{
+						if (strcmp(currentValue, newValue) != 0)
+							gconf_client_set_string(client, specialOptions[index].gnomeName,
+													newValue, NULL);
+						g_free(currentValue);
+					}
+					free(newValue);
+				}
+			}
+			break;
+		case OptionSpecial:
+			if (strcmp(specialOptions[index].settingName, "click_to_focus") == 0)
+			{
+				Bool clickToFocus;
+				gchar *newValue, *currentValue;
+				if (!bsGetBool(setting, &clickToFocus))
+					break;
+
+				newValue = clickToFocus ? "click" : "mouse";
+				currentValue = gconf_client_get_string(client, 
+													   specialOptions[index].gnomeName, &err);
+
+				if (!err && currentValue)
+				{
+					if (strcmp(currentValue, newValue) != 0)
+						gconf_client_set_string(client, specialOptions[index].gnomeName, 
+												newValue,NULL);
+					g_free(currentValue);
+				}
+			}
+			break;
+	}
+
+	if (err)
+		g_error_free(err);
 }
 
 static void resetOptionToDefault(BSSetting * setting)
@@ -914,9 +1091,10 @@ static Bool readInit(BSContext * context)
 static void readSetting(BSContext * context, BSSetting * setting)
 {
 	Bool status;
+	int index;
 
-	if (bsGetIntegrationEnabled(context) && isIntegratedOption(setting))
-		status = readIntegratedOption(setting);
+	if (bsGetIntegrationEnabled(context) && isIntegratedOption(setting, &index))
+		status = readIntegratedOption(setting, index);
 	else
 		status = readOption(setting);
 
@@ -941,8 +1119,10 @@ static Bool writeInit(BSContext * context)
 
 static void writeSetting(BSContext * context, BSSetting * setting)
 {
-	if (bsGetIntegrationEnabled(context) && isIntegratedOption(setting))
-		writeIntegratedOption(setting);
+	int index;
+
+	if (bsGetIntegrationEnabled(context) && isIntegratedOption(setting, &index))
+		writeIntegratedOption(setting, index);
 	else if (setting->isDefault)
 		resetOptionToDefault(setting);
 	else
@@ -959,7 +1139,7 @@ static Bool getSettingIsIntegrated(BSSetting * setting)
 	if (!bsGetIntegrationEnabled(setting->parent->context))
 		return FALSE;
 
-	if (!isIntegratedOption(setting))
+	if (!isIntegratedOption(setting, NULL))
 		return FALSE;
 
 	return TRUE;
