@@ -399,9 +399,6 @@ static Bool readOption(BSSetting * setting)
 	KEYNAME;
 	PATHNAME;
 
-	if (!gconf_client_get(client, pathName, NULL))
-		return FALSE;
-
 	switch (setting->type)
 	{
 		case TypeString:
@@ -537,6 +534,112 @@ static void writeActionValue(BSSetting * setting, char * pathName)
 	}
 }
 
+static void writeListValue(BSSetting * setting, char * pathName)
+{
+	GSList *valueList = NULL;
+	GConfValueType valueType;
+
+	BSSettingValueList list;
+	if (!bsGetList(setting, &list))
+		return;
+
+	switch (setting->info.forList.listType)
+	{
+		case TypeBool:
+			{
+				Bool *item;
+				while (list)
+				{
+					item = malloc(sizeof(Bool));
+					*item = list->data->value.asBool;
+					valueList = g_slist_append(valueList, item);
+					list = list->next;
+				}
+				valueType = GCONF_VALUE_BOOL;
+			}
+			break;
+		case TypeInt:
+			{
+				int *item;
+				while (list)
+				{
+					item = malloc(sizeof(int));
+					*item = list->data->value.asInt;
+					valueList = g_slist_append(valueList, item);
+					list = list->next;
+				}
+				valueType = GCONF_VALUE_INT;
+			}
+			break;
+		case TypeFloat:
+			{
+				float *item;
+				while (list)
+				{
+					item = malloc(sizeof(float));
+					*item = list->data->value.asFloat;
+					valueList = g_slist_append(valueList, item);
+					list = list->next;
+				}
+				valueType = GCONF_VALUE_FLOAT;
+			}
+			break;
+		case TypeString:
+			{
+				char *item;
+				while (list)
+				{
+					item = strdup(list->data->value.asString);
+					valueList = g_slist_append(valueList, item);
+					list = list->next;
+				}
+				valueType = GCONF_VALUE_STRING;
+			}
+			break;
+		case TypeMatch:
+			{
+				char *item;
+				while (list)
+				{
+					item = strdup(list->data->value.asMatch);
+					valueList = g_slist_append(valueList, item);
+					list = list->next;
+				}
+				valueType = GCONF_VALUE_STRING;
+			}
+			break;
+		case TypeColor:
+			{
+				char *item;
+				while (list)
+				{
+					item = colorToString(&list->data->value.asColor.array);
+					valueList = g_slist_append(valueList, item);
+					list = list->next;
+				}
+				valueType = GCONF_VALUE_STRING;
+			}
+			break;
+		default:
+			printf("GConf backend: attempt to write unsupported list type %d!\n", setting->info.forList.listType);
+			valueType = GCONF_VALUE_INVALID;
+			break;
+	}
+
+	if (valueType != GCONF_VALUE_INVALID)
+	{
+		GSList *tmpList = valueList;
+	
+		gconf_client_set_list(client, pathName, valueType, valueList, NULL);
+		
+		for (; tmpList; tmpList = tmpList->next)
+			if (tmpList->data)
+				free(tmpList->data);
+	}
+	if (valueList)
+		g_slist_free(valueList);
+}
+
 static void writeIntegratedOption(BSSetting * setting)
 {
 	/* TODO */
@@ -615,7 +718,7 @@ static void writeOption(BSSetting * setting)
 			writeActionValue(setting, pathName);
 			break;
 		case TypeList:
-			/* TODO */
+			writeListValue(setting, pathName);
 			break;
 		default:
 			printf("GConf backend: attempt to write unsupported setting type %d\n", setting->type);
