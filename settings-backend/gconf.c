@@ -703,11 +703,10 @@ static Bool readOption(BSSetting * setting)
 	return ret;
 }
 
-static void writeActionValue(BSSetting * setting, char * pathName)
+static void writeActionValue(BSSettingActionValue * action, char * pathName)
 {
 	char *buffer;
 	char itemPath[BUFSIZE];
-	BSSettingActionValue *action = &setting->value->value.asAction;
 
 	snprintf(itemPath, BUFSIZE, "%s/edge", pathName);
 	buffer = edgeToString(action->edgeMask);
@@ -1012,7 +1011,13 @@ static void writeOption(BSSetting * setting)
 			}
 			break;
 		case TypeAction:
-			writeActionValue(setting, pathName);
+			{
+			    BSSettingActionValue value;
+			    if (!bsGetAction(setting, &value))
+					break;
+
+				writeActionValue(&value, pathName);
+			}
 			break;
 		case TypeList:
 			writeListValue(setting, pathName);
