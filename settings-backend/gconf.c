@@ -34,7 +34,6 @@
 #include <string.h>
 
 #include <bsettings.h>
-#include "option.h"
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -347,7 +346,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	snprintf(itemPath, 512, "%s/edge", pathName);
 	buffer = gconf_client_get_string(client, itemPath, &err);
 	if (!err && buffer) {
-		stringToEdge(buffer, &action);
+		bsStringToEdge(buffer, &action);
 		ret = TRUE;
 		g_free(buffer);
 	} else if (err) {
@@ -366,7 +365,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	snprintf(itemPath, 512, "%s/key", pathName);
 	buffer = gconf_client_get_string(client, itemPath, &err);
 	if (!err && buffer) {
-		stringToKeyBinding(buffer, &action);
+		bsStringToKeyBinding(buffer, &action);
 		ret = TRUE;
 		g_free(buffer);
 	} else if (err) {
@@ -376,7 +375,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	snprintf(itemPath, 512, "%s/button", pathName);
 	buffer = gconf_client_get_string(client, itemPath, &err);
 	if (!err && buffer) {
-		stringToButtonBinding(buffer, &action);
+		bsStringToButtonBinding(buffer, &action);
 		ret = TRUE;
 		g_free(buffer);
 	} else if (err) {
@@ -492,7 +491,7 @@ static Bool readListValue(BSSetting * setting, char * pathName)
 				for (; tmpList; tmpList = tmpList->next, i++)
 				{
 					memset(&array[i], 0, sizeof(BSSettingColorValue));
-					stringToColor(tmpList->data, &array[i]);
+					bsStringToColor(tmpList->data, &array[i]);
 					g_free(tmpList->data);
 				}
 				list = bsGetValueListFromColorArray(array, nItems, setting);
@@ -568,7 +567,7 @@ static Bool readIntegratedOption(BSSetting * setting, int index)
 				if (!err && value)
 				{
 					BSSettingActionValue action;
-					if (stringToKeyBinding(value, &action))
+					if (bsStringToKeyBinding(value, &action))
 					{
 						bsSetAction(setting, action);
 						ret = TRUE;
@@ -676,7 +675,7 @@ static Bool readOption(BSSetting * setting)
 				BSSettingColorValue color;
 				value = gconf_client_get_string(client, pathName, &err);
 
-				if (!err && value && stringToColor(value, &color.array))
+				if (!err && value && bsStringToColor(value, &color))
 				{
 					bsSetColor(setting, color);
 					ret = TRUE;
@@ -709,7 +708,7 @@ static void writeActionValue(BSSettingActionValue * action, char * pathName)
 	char itemPath[BUFSIZE];
 
 	snprintf(itemPath, BUFSIZE, "%s/edge", pathName);
-	buffer = edgeToString(action->edgeMask);
+	buffer = bsEdgeToString(action);
 	if (buffer)
 	{
 		gconf_client_set_string(client, itemPath, buffer, NULL);
@@ -723,7 +722,7 @@ static void writeActionValue(BSSettingActionValue * action, char * pathName)
 	gconf_client_set_int(client, itemPath, action->edgeButton, NULL);
 
 	snprintf(itemPath, BUFSIZE, "%s/button", pathName);
-	buffer = buttonBindingToString(action);
+	buffer = bsButtonBindingToString(action);
 	if (buffer)
 	{
 		gconf_client_set_string(client, itemPath, buffer, NULL);
@@ -731,7 +730,7 @@ static void writeActionValue(BSSettingActionValue * action, char * pathName)
 	}
 
 	snprintf(itemPath, BUFSIZE, "%s/key", pathName);
-	buffer = keyBindingToString(action);
+	buffer = bsKeyBindingToString(action);
 	if (buffer)
 	{
 		gconf_client_set_string(client, itemPath, buffer, NULL);
@@ -814,7 +813,7 @@ static void writeListValue(BSSetting * setting, char * pathName)
 				char *item;
 				while (list)
 				{
-					item = colorToString(&list->data->value.asColor.array);
+					item = bsColorToString(&list->data->value.asColor);
 					valueList = g_slist_append(valueList, item);
 					list = list->next;
 				}
@@ -900,7 +899,7 @@ static void writeIntegratedOption(BSSetting * setting, int index)
 				char *newValue;
 				gchar *currentValue;
 
-				newValue = keyBindingToString(&setting->value->value.asAction);
+				newValue = bsKeyBindingToString(&setting->value->value.asAction);
 				if (newValue)
 				{
 					currentValue = gconf_client_get_string(client, 
@@ -1002,7 +1001,7 @@ static void writeOption(BSSetting * setting)
 				if (!bsGetColor(setting, &value))
 					break;
 
-				colString = colorToString(&value.array);
+				colString = bsColorToString(&value);
 				if (!colString)
 					break;
 
