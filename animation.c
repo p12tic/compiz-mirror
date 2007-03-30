@@ -3998,13 +3998,6 @@ tessellateIntoBricks(CompWindow * w,
 {
 }
 
-// Tessellates window into extruded hexagon objects
-static Bool
-tessellateIntoHexagons(CompWindow * w,
-                     int gridSizeX, int gridSizeY, float thickness)
-{
-}
-
 // Tessellates window into Voronoi segments
 static Bool
 tessellateVoronoi(CompWindow * w,
@@ -4279,6 +4272,319 @@ tessellateIntoRectangles(CompWindow * w,
 		}
 	}
 	return TRUE;
+}
+
+// Tessellates window into extruded hexagon objects
+static Bool
+tessellateIntoHexagons(CompWindow * w,
+                     int gridSizeX, int gridSizeY, float thickness)
+{
+
+	ANIM_WINDOW(w);
+
+	PolygonSet *pset = aw->polygonSet;
+
+	if (!pset)
+		return FALSE;
+
+	int winLimitsX;				// boundaries of polygon tessellation
+	int winLimitsY;
+	int winLimitsW;
+	int winLimitsH;
+
+	if (pset->includeShadows)
+	{
+		winLimitsX = WIN_X(w);
+		winLimitsY = WIN_Y(w);
+		winLimitsW = WIN_W(w) - 1; // avoid artifact on right edge
+		winLimitsH = WIN_H(w);
+	}
+	else
+	{
+		winLimitsX = BORDER_X(w);
+		winLimitsY = BORDER_Y(w);
+		winLimitsW = BORDER_W(w);
+		winLimitsH = BORDER_H(w);
+	}
+	float minSize = 20;
+	float hexW = winLimitsW / (float)gridSizeX;
+	float hexH = winLimitsH / (float)gridSizeY;
+
+	if (hexW < minSize)
+		gridSizeX = winLimitsW / minSize;	// int div.
+	if (hexH < minSize)
+		gridSizeY = winLimitsH / minSize;	// int div.
+
+	int nPolygons = (gridSizeY + 1) * (gridSizeX + gridSizeY/2 + gridSizeY%2);
+	if (pset->nPolygons != nPolygons)
+	{
+		if (pset->nPolygons > 0)
+			freePolygonObjects(pset);
+
+		pset->nPolygons = nPolygons;
+
+		pset->polygons = calloc(1, sizeof(PolygonObject) * pset->nPolygons);
+		if (!pset->polygons)
+		{
+			fprintf(stderr, "%s: Not enough memory at line %d!\n",
+					__FILE__, __LINE__);
+			pset->nPolygons = 0;
+			return FALSE;
+		}
+	}
+
+	thickness /= w->screen->width;
+	pset->thickness = thickness;
+	pset->nTotalFrontVertices = 0;
+
+	float cellW = (float)winLimitsW / gridSizeX;
+	float cellH = (float)winLimitsH / gridSizeY;
+	float halfW = cellW / 2;
+	float twoThirdsH = 2*cellH / 3;
+	float thirdH = cellH / 3;
+
+	float halfThick = pset->thickness / 2;
+	PolygonObject *p = pset->polygons;
+	int x, y;
+
+	for (y = 0; y < gridSizeY+1; y++)
+	{
+		float posY = winLimitsY + cellH * (y);
+		int numPolysinRow = (y%2==0) ? gridSizeX : (gridSizeX + 1);
+		// Clip polygons to the window dimensions
+		float topY, topRightY, topLeftY, bottomY, bottomLeftY, bottomRightY;
+		if(y == 0){
+			topY = topRightY = topLeftY = 0;
+			bottomY = twoThirdsH;
+			bottomLeftY = bottomRightY = thirdH;
+		} else if(y == gridSizeY){
+			bottomY = bottomLeftY = bottomRightY = 0;
+			topY = -twoThirdsH;
+			topLeftY = topRightY = -thirdH;
+		} else {
+			topY = -twoThirdsH;
+			topLeftY = topRightY = -thirdH;
+			bottomLeftY = bottomRightY = thirdH;
+			bottomY = twoThirdsH;
+		}
+
+		for (x = 0; x < numPolysinRow; x++, p++)
+		{
+			// Clip odd rows when necessary
+			float topLeftX, topRightX, bottomLeftX, bottomRightX;
+			if(y%2 == 1){
+				if(x == 0){
+					topLeftX = bottomLeftX = 0;
+					topRightX = halfW;
+					bottomRightX = halfW;
+				} else if(x == numPolysinRow-1){
+					topRightX = bottomRightX = 0;
+					topLeftX = -halfW;
+					bottomLeftX = -halfW;
+				} else {
+					topLeftX = bottomLeftX = -halfW;
+					topRightX = bottomRightX = halfW;
+				}
+			} else {
+				topLeftX = bottomLeftX = -halfW;
+				topRightX = bottomRightX = halfW;
+			}
+			
+			p->centerPos.x = p->centerPosStart.x =
+					winLimitsX + cellW * (x + (y%2 ? 0.0 : 0.5));
+			p->centerPos.y = p->centerPosStart.y = posY;
+			p->centerPos.z = p->centerPosStart.z = -halfThick;
+			p->rotAngle = p->rotAngleStart = 0;
+
+			p->centerRelPos.x = (x + 0.5) / gridSizeX;
+			p->centerRelPos.y = (y + 0.5) / gridSizeY;
+
+			p->nSides = 6;
+			p->nVertices = 2 * 6;
+			pset->nTotalFrontVertices += 6;
+
+			// 6 front, 6 back vertices
+			if (!p->vertices)
+			{
+				p->vertices = calloc(1, sizeof(GLfloat) * 6 * 2 * 3);
+				if (!p->vertices)
+				{
+					fprintf(stderr, "%s: Not enough memory at line %d!\n",
+							__FILE__, __LINE__);
+					freePolygonObjects(pset);
+					return FALSE;
+				}
+			}
+
+			GLfloat *pv = p->vertices;
+
+			// Determine 6 front vertices in ccw direction
+			// Starting at top
+			pv[0] = 0;
+			pv[1] = topY;
+			pv[2] = halfThick;
+
+			pv[3] = topLeftX;
+			pv[4] = topLeftY;
+			pv[5] = halfThick;
+
+			pv[6] = bottomLeftX;
+			pv[7] = bottomLeftY;
+			pv[8] = halfThick;
+
+			pv[9] = 0;
+			pv[10] = bottomY;
+			pv[11] = halfThick;
+
+			pv[12] = bottomRightX;
+			pv[13] = bottomRightY;
+			pv[14] = halfThick;
+
+			pv[15] = topRightX;
+			pv[16] = topRightY;
+			pv[17] = halfThick;
+			
+			// Determine 6 back vertices in cw direction
+			pv[18] = topRightX;
+			pv[19] = topRightY;
+			pv[20] = -halfThick;
+
+			pv[21] = bottomRightX;
+			pv[22] = bottomRightY;
+			pv[23] = -halfThick;
+			
+			pv[24] = 0;
+			pv[25] = bottomY;
+			pv[26] = -halfThick;
+
+			pv[27] = bottomLeftX;
+			pv[28] = bottomLeftY;
+			pv[29] = -halfThick;
+			
+			pv[30] = topLeftX;
+			pv[31] = topLeftY;
+			pv[32] = -halfThick;
+
+			pv[33] = 0;
+			pv[34] = topY;
+			pv[35] = -halfThick;
+
+			// 4 indices per 6 sides (for quad strip)
+			if (!p->sideIndices)
+			{
+				//p->sideIndices = calloc(1, sizeof(GLushort) * 2 * (4 + 1));
+				p->sideIndices = calloc(1, sizeof(GLushort) * 4*6);
+			}
+			if (!p->sideIndices)
+			{
+				fprintf(stderr, "%s: Not enough memory at line %d!\n",
+						__FILE__, __LINE__);
+				freePolygonObjects(pset);
+				return FALSE;
+			}
+
+			GLushort *ind = p->sideIndices;
+
+			int id = 0;
+			// upper left side face
+			ind[id++] = 0;
+			ind[id++] = 11;
+			ind[id++] = 10;
+			ind[id++] = 1;
+			// left side face
+			ind[id++] = 1;
+			ind[id++] = 10;
+			ind[id++] = 9;
+			ind[id++] = 2;
+			// lower left side face
+			ind[id++] = 2;
+			ind[id++] = 9;
+			ind[id++] = 8;
+			ind[id++] = 3;
+			// lower right side face
+			ind[id++] = 3;
+			ind[id++] = 8;
+			ind[id++] = 7;
+			ind[id++] = 4;
+			// right side face
+			ind[id++] = 4;
+			ind[id++] = 7;
+			ind[id++] = 6;
+			ind[id++] = 5;
+			// upper right side face
+			ind[id++] = 5;
+			ind[id++] = 6;
+			ind[id++] = 11;
+			ind[id++] = 0;			
+
+			// 6 front, 6 back vertex normals
+			if (!p->normals)
+			{
+				p->normals = calloc(1, sizeof(GLfloat) * 30);
+			}
+			if (!p->normals)
+			{
+				fprintf(stderr, "%s: Not enough memory at line %d!\n",
+						__FILE__, __LINE__);
+				freePolygonObjects(pset);
+				return FALSE;
+			}
+
+			// Surface normals
+			GLfloat *nor = p->normals;
+
+			// Front
+			nor[0] = 0;
+			nor[1] = 0;
+			nor[2] = -1;
+			
+			nor[3] = 0;
+			nor[4] = 0;
+			nor[5] = -1;
+			
+			// Back
+			nor[6] = 0;
+			nor[7] = 0;
+			nor[8] = 1;
+			
+			nor[9] = 0;
+			nor[10] = 0;
+			nor[11] = 1;
+			
+			// Sides
+			nor[12] = -1;
+			nor[13] = 1;
+			nor[14] = 0;
+			
+			nor[15] = -1;
+			nor[16] = 0;
+			nor[17] = 0;
+			
+			nor[18] = -1;
+			nor[19] = -1;
+			nor[20] = 0;
+
+			nor[21] = 1;
+			nor[22] = -1;
+			nor[23] = 0;
+
+			nor[24] = 1;
+			nor[25] = 0;
+			nor[26] = 0;
+
+			nor[27] = 1;
+			nor[28] = 1;
+			nor[29] = 0;			
+
+			// Determine bounding box (to test intersection with clips)
+			p->boundingBox.x1 = topLeftX + p->centerPos.x;
+			p->boundingBox.y1 = topY + p->centerPos.y;
+			p->boundingBox.x2 = ceil(bottomRightX + p->centerPos.x);
+			p->boundingBox.y2 = ceil(bottomY + p->centerPos.y);
+		}
+	}
+	return TRUE;
+
 }
 
 static void
