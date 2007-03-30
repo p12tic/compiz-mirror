@@ -1,0 +1,2769 @@
+        <!-- animation options -->
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/info</key>
+            <applyto>/apps/compiz/plugins/animation/info</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default></default>
+            <locale name="C">
+                <short>Animations</short>
+                <long>Use various animations as window effects</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/load_before</key>
+            <applyto>/apps/compiz/plugins/animation/load_before</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Plugins that this must load before</short>
+                <long>Do not modify</long>
+            </locale>
+            <locale name="cs">
+                <short>Moduly, které musí být tímto předem načteny</short>
+                <long>Neměnit</long>
+            </locale>
+            <locale name="de">
+                <short>Plugins, die zuvor geladen werden müssen</short>
+                <long>Nicht ändern</long>
+            </locale>
+            <locale name="es">
+                <short>Complementos que esto debe cargar antes</short>
+                <long>No modificar</long>
+            </locale>
+            <locale name="fi">
+                <short>Etukäteen tätä varten ladattavat liitännäiset</short>
+                <long>Älä muuta</long>
+            </locale>
+            <locale name="fr">
+                <short>Plug-ins à charger avant</short>
+                <long>Ne pas modifier</long>
+            </locale>
+            <locale name="hu">
+                <short>Kötelezően betöltendő beépülő modulok </short>
+                <long>Nem módosít</long>
+            </locale>
+            <locale name="it">
+                <short>Plug-in da caricare per primi</short>
+                <long>Non modificare</long>
+            </locale>
+            <locale name="ja">
+                <short>これを前にロードする必要のあるプラグイン</short>
+                <long>変更しないでください</long>
+            </locale>
+            <locale name="pl">
+                <short>Wtyczki, które muszą zostać załadowane przed</short>
+                <long>Bez zmian</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Plug-ins que devem ser carregados antes de</short>
+                <long>Não modificar</long>
+            </locale>
+            <locale name="sv">
+                <short>Insticksmoduler som måste läsas in före</short>
+                <long>Ändra inte</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>必须先装载的插件</short>
+                <long>不修改</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>在此之前必須先載入的外掛程式</short>
+                <long>不要修改</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/requires</key>
+            <applyto>/apps/compiz/plugins/animation/requires</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[decoration]</default>
+            <locale name="C">
+                <short>Plugins that this requires</short>
+                <long>Do not modify</long>
+            </locale>
+            <locale name="cs">
+                <short>Moduly, které jsou tímto vyžadovány</short>
+                <long>Neměnit</long>
+            </locale>
+            <locale name="de">
+                <short>Erforderliche Plugins</short>
+                <long>Nicht ändern</long>
+            </locale>
+            <locale name="es">
+                <short>Complementos que esto requiere</short>
+                <long>No modificar</long>
+            </locale>
+            <locale name="fi">
+                <short>Tähän vaadittavat liitännäiset</short>
+                <long>Älä muuta</long>
+            </locale>
+            <locale name="fr">
+                <short>Plug-ins requis</short>
+                <long>Ne pas modifier</long>
+            </locale>
+            <locale name="hu">
+                <short>Szükséges beépülő modulok</short>
+                <long>Nem módosít</long>
+            </locale>
+            <locale name="it">
+                <short>Plug-in necessari</short>
+                <long>Non modificare</long>
+            </locale>
+            <locale name="ja">
+                <short>これが必要なプラグイン</short>
+                <long>変更しないでください</long>
+            </locale>
+            <locale name="pl">
+                <short>Wtyczki wymagane przez ten element</short>
+                <long>Bez zmian</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Plug-ins necessários</short>
+                <long>Não modificar</long>
+            </locale>
+            <locale name="sv">
+                <short>Insticksmoduler som den här kräver</short>
+                <long>Ändra inte</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>需要的插件</short>
+                <long>不修改</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>這時需要的外掛程式</short>
+                <long>不要修改</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/minimize_effect</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/minimize_effect</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Magic Lamp 2</default>
+            <locale name="C">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="de">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None [Keiner], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="es">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None [ninguno], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="fi">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None [ei mitään], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="fr">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None [Aucun], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="hu">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None [Nincs], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="it">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None [Nessuna], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="ja">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None [Nenhuma], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Minimize Animation</short>
+                <long>The animation shown when minimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/minimize_window_types</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/minimize_window_types</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Normal,Dialog,ModalDialog,Utility]</default>
+            <locale name="C">
+                <short>Window Types</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="cs">
+                <short>Typy oken</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="de">
+                <short>Fenstertypen</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar [Symbolleiste], Menu [Menü], Utility [Dienstprogramm], Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Vollbild], Unknown [Unbekannt])</long>
+            </locale>
+            <locale name="es">
+                <short>Tipos de ventana</short>
+                <long>The window types that will be animated. (Desktop [Escritorio], Dock, Toolbar [Barra de herramientas], Menu [Menús], Utility [Utilidades], Splash [Inicial], Dialog [Diálogos], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Diálogo de modos], Fullscreen [Pantalla completa], Unknown [Desconocidas])</long>
+            </locale>
+            <locale name="fi">
+                <short>Ikkunatyypit</short>
+                <long>The window types that will be animated. (Desktop [työpöytä], Dock [paneeli], Toolbar [työkalupalkki], Menu [valikko], Utility [työkalu], Splash [käynnistysikkuna], Dialog [valintaikkuna], Normal [ikkuna], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [pakotettu valintaikkuna], Fullscreen [kokoruutuikkuna], Unknown [tuntematon])</long>
+            </locale>
+            <locale name="fr">
+                <short>Types de fenêtres</short>
+                <long>The window types that will be animated. (Desktop [bureau], Dock [accueil], Toolbar [barre d'outils], Menu [menu], Utility [utilitaire], Splash [démarrage], Dialog [boîte de dialogue], Normal [normal], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [boîte de dialogue modale], Fullscreen [plein écran], Unknown [inconnu])</long>
+            </locale>
+            <locale name="hu">
+                <short>Ablaktípusok</short>
+                <long>The window types that will be animated. (Desktop [Munkaasztal], Dock [Dokk], Toolbar [Eszköztár], Menu [Menü], Utility [Segédprogram], Splash [Párbeszéd], Dialog, Normal [Normál], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Teljes képernyős], Unknown [Ismeretlen])</long>
+            </locale>
+            <locale name="it">
+                <short>Tipi di finestre</short>
+                <long>The window types that will be animated. (Desktop, Dock [Agganciata], Toolbar [Barra degli strumenti], Menu, Utility [Utlity], Splash [Schermata iniziale], Dialog [Finestra di dialogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Modale], Fullscreen [Schermo intero], Unknown [Sconosciuta])</long>
+            </locale>
+            <locale name="ja">
+                <short>ウィンドウタイプ</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pl">
+                <short>Rodzaje okien</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Tipos de Janelas</short>
+                <long>The window types that will be animated. (Desktop [Área de Trabalho], Dock [Âncora], Toolbar [Barra de Ferramentas], Menu, Utility [Utilitário], Splash [Tela de Apresentação], Dialog [Caixa de Diálogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Caixa de Diálogo Modal], Fullscreen [Tela Inteira], Unknown [Desconhecido])</long>
+            </locale>
+            <locale name="sv">
+                <short>Fönstertyper</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>窗口类型</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>視窗類型</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/minimize_duration</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/minimize_duration</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.300000</default>
+            <locale name="C">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Minimize animation will last. (0.1-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Minimize animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Minimize animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Minimize animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Minimize animation will last. (0,1-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/minimize_random_effects</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/minimize_random_effects</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Beam Up,Burn,Curved Fold,Domino,Dream,Explode,Fade,Glide 1,Glide 2,Horizontal Folds,Leaf Spread,Magic Lamp 1,Magic Lamp 2,Razr,Sidekick,Zoom]</default>
+            <locale name="C">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="es">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="hu">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="ja">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/unminimize_effect</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/unminimize_effect</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Magic Lamp 2</default>
+            <locale name="C">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="de">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None [Keiner], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="es">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None [ninguno], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="fi">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None [ei mitään], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="fr">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None [Aucun], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="hu">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None [Nincs], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="it">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None [Nessuna], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="ja">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None [Nenhuma], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Unminimize Animation</short>
+                <long>The animation shown when unminimizing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/unminimize_window_types</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/unminimize_window_types</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Normal,Dialog,ModalDialog,Utility]</default>
+            <locale name="C">
+                <short>Window Types</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="cs">
+                <short>Typy oken</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="de">
+                <short>Fenstertypen</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar [Symbolleiste], Menu [Menü], Utility [Dienstprogramm], Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Vollbild], Unknown [Unbekannt])</long>
+            </locale>
+            <locale name="es">
+                <short>Tipos de ventana</short>
+                <long>The window types that will be animated. (Desktop [Escritorio], Dock, Toolbar [Barra de herramientas], Menu [Menús], Utility [Utilidades], Splash [Inicial], Dialog [Diálogos], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Diálogo de modos], Fullscreen [Pantalla completa], Unknown [Desconocidas])</long>
+            </locale>
+            <locale name="fi">
+                <short>Ikkunatyypit</short>
+                <long>The window types that will be animated. (Desktop [työpöytä], Dock [paneeli], Toolbar [työkalupalkki], Menu [valikko], Utility [työkalu], Splash [käynnistysikkuna], Dialog [valintaikkuna], Normal [ikkuna], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [pakotettu valintaikkuna], Fullscreen [kokoruutuikkuna], Unknown [tuntematon])</long>
+            </locale>
+            <locale name="fr">
+                <short>Types de fenêtres</short>
+                <long>The window types that will be animated. (Desktop [bureau], Dock [accueil], Toolbar [barre d'outils], Menu [menu], Utility [utilitaire], Splash [démarrage], Dialog [boîte de dialogue], Normal [normal], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [boîte de dialogue modale], Fullscreen [plein écran], Unknown [inconnu])</long>
+            </locale>
+            <locale name="hu">
+                <short>Ablaktípusok</short>
+                <long>The window types that will be animated. (Desktop [Munkaasztal], Dock [Dokk], Toolbar [Eszköztár], Menu [Menü], Utility [Segédprogram], Splash [Párbeszéd], Dialog, Normal [Normál], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Teljes képernyős], Unknown [Ismeretlen])</long>
+            </locale>
+            <locale name="it">
+                <short>Tipi di finestre</short>
+                <long>The window types that will be animated. (Desktop, Dock [Agganciata], Toolbar [Barra degli strumenti], Menu, Utility [Utlity], Splash [Schermata iniziale], Dialog [Finestra di dialogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Modale], Fullscreen [Schermo intero], Unknown [Sconosciuta])</long>
+            </locale>
+            <locale name="ja">
+                <short>ウィンドウタイプ</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pl">
+                <short>Rodzaje okien</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Tipos de Janelas</short>
+                <long>The window types that will be animated. (Desktop [Área de Trabalho], Dock [Âncora], Toolbar [Barra de Ferramentas], Menu, Utility [Utilitário], Splash [Tela de Apresentação], Dialog [Caixa de Diálogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Caixa de Diálogo Modal], Fullscreen [Tela Inteira], Unknown [Desconhecido])</long>
+            </locale>
+            <locale name="sv">
+                <short>Fönstertyper</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>窗口类型</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>視窗類型</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/unminimize_duration</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/unminimize_duration</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.300000</default>
+            <locale name="C">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Unminimize animation will last. (0.1-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Unminimize animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Unminimize animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Unminimize animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Unminimize animation will last. (0,1-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/unminimize_random_effects</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/unminimize_random_effects</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Beam Up,Burn,Curved Fold,Domino,Dream,Explode,Fade,Glide 1,Glide 2,Horizontal Folds,Leaf Spread,Magic Lamp 1,Magic Lamp 2,Razr,Sidekick,Zoom]</default>
+            <locale name="C">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="es">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="hu">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="ja">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Razr, Sidekick, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/close1_effect</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/close1_effect</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Zoom</default>
+            <locale name="C">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="de">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None [Keiner], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="es">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None [ninguno], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="fi">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None [ei mitään], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="fr">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None [Aucun], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="hu">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None [Nincs], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="it">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None [Nessuna], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="ja">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None [Nenhuma], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Close #1 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/close1_window_types</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/close1_window_types</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Normal,Dialog,ModalDialog,Utility]</default>
+            <locale name="C">
+                <short>Window Types</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="cs">
+                <short>Typy oken</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="de">
+                <short>Fenstertypen</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar [Symbolleiste], Menu [Menü], Utility [Dienstprogramm], Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Vollbild], Unknown [Unbekannt])</long>
+            </locale>
+            <locale name="es">
+                <short>Tipos de ventana</short>
+                <long>The window types that will be animated. (Desktop [Escritorio], Dock, Toolbar [Barra de herramientas], Menu [Menús], Utility [Utilidades], Splash [Inicial], Dialog [Diálogos], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Diálogo de modos], Fullscreen [Pantalla completa], Unknown [Desconocidas])</long>
+            </locale>
+            <locale name="fi">
+                <short>Ikkunatyypit</short>
+                <long>The window types that will be animated. (Desktop [työpöytä], Dock [paneeli], Toolbar [työkalupalkki], Menu [valikko], Utility [työkalu], Splash [käynnistysikkuna], Dialog [valintaikkuna], Normal [ikkuna], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [pakotettu valintaikkuna], Fullscreen [kokoruutuikkuna], Unknown [tuntematon])</long>
+            </locale>
+            <locale name="fr">
+                <short>Types de fenêtres</short>
+                <long>The window types that will be animated. (Desktop [bureau], Dock [accueil], Toolbar [barre d'outils], Menu [menu], Utility [utilitaire], Splash [démarrage], Dialog [boîte de dialogue], Normal [normal], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [boîte de dialogue modale], Fullscreen [plein écran], Unknown [inconnu])</long>
+            </locale>
+            <locale name="hu">
+                <short>Ablaktípusok</short>
+                <long>The window types that will be animated. (Desktop [Munkaasztal], Dock [Dokk], Toolbar [Eszköztár], Menu [Menü], Utility [Segédprogram], Splash [Párbeszéd], Dialog, Normal [Normál], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Teljes képernyős], Unknown [Ismeretlen])</long>
+            </locale>
+            <locale name="it">
+                <short>Tipi di finestre</short>
+                <long>The window types that will be animated. (Desktop, Dock [Agganciata], Toolbar [Barra degli strumenti], Menu, Utility [Utlity], Splash [Schermata iniziale], Dialog [Finestra di dialogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Modale], Fullscreen [Schermo intero], Unknown [Sconosciuta])</long>
+            </locale>
+            <locale name="ja">
+                <short>ウィンドウタイプ</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pl">
+                <short>Rodzaje okien</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Tipos de Janelas</short>
+                <long>The window types that will be animated. (Desktop [Área de Trabalho], Dock [Âncora], Toolbar [Barra de Ferramentas], Menu, Utility [Utilitário], Splash [Tela de Apresentação], Dialog [Caixa de Diálogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Caixa de Diálogo Modal], Fullscreen [Tela Inteira], Unknown [Desconhecido])</long>
+            </locale>
+            <locale name="sv">
+                <short>Fönstertyper</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>窗口类型</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>視窗類型</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/close1_duration</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/close1_duration</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.200000</default>
+            <locale name="C">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #1 animation will last. (0.1-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #1 animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #1 animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #1 animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #1 animation will last. (0,1-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/close1_random_effects</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/close1_random_effects</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Beam Up,Burn,Curved Fold,Domino,Dream,Explode,Fade,Glide 1,Glide 2,Horizontal Folds,Leaf Spread,Magic Lamp 1,Magic Lamp 2,Magic Lamp 3 (Vacuum),Razr,Sidekick,Wave,Zoom]</default>
+            <locale name="C">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="es">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="hu">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="ja">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/create1_effect</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/create1_effect</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Zoom</default>
+            <locale name="C">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="de">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None [Keiner], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="es">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None [ninguno], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="fi">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None [ei mitään], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="fr">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None [Aucun], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="hu">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None [Nincs], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="it">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None [Nessuna], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="ja">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None [Nenhuma], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Create #1 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/create1_window_types</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/create1_window_types</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Normal,Dialog,ModalDialog,Utility]</default>
+            <locale name="C">
+                <short>Window Types</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="cs">
+                <short>Typy oken</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="de">
+                <short>Fenstertypen</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar [Symbolleiste], Menu [Menü], Utility [Dienstprogramm], Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Vollbild], Unknown [Unbekannt])</long>
+            </locale>
+            <locale name="es">
+                <short>Tipos de ventana</short>
+                <long>Window types that should animate with this effect when created. (Desktop [Escritorio], Dock, Toolbar [Barra de herramientas], Menu [Menús], Utility [Utilidades], Splash [Inicial], Dialog [Diálogos], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Diálogo de modos], Fullscreen [Pantalla completa], Unknown [Desconocidas])</long>
+            </locale>
+            <locale name="fi">
+                <short>Ikkunatyypit</short>
+                <long>Window types that should animate with this effect when created. (Desktop [työpöytä], Dock [paneeli], Toolbar [työkalupalkki], Menu [valikko], Utility [työkalu], Splash [käynnistysikkuna], Dialog [valintaikkuna], Normal [ikkuna], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [pakotettu valintaikkuna], Fullscreen [kokoruutuikkuna], Unknown [tuntematon])</long>
+            </locale>
+            <locale name="fr">
+                <short>Types de fenêtres</short>
+                <long>Window types that should animate with this effect when created. (Desktop [bureau], Dock [accueil], Toolbar [barre d'outils], Menu [menu], Utility [utilitaire], Splash [démarrage], Dialog [boîte de dialogue], Normal [normal], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [boîte de dialogue modale], Fullscreen [plein écran], Unknown [inconnu])</long>
+            </locale>
+            <locale name="hu">
+                <short>Ablaktípusok</short>
+                <long>Window types that should animate with this effect when created. (Desktop [Munkaasztal], Dock [Dokk], Toolbar [Eszköztár], Menu [Menü], Utility [Segédprogram], Splash [Párbeszéd], Dialog, Normal [Normál], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Teljes képernyős], Unknown [Ismeretlen])</long>
+            </locale>
+            <locale name="it">
+                <short>Tipi di finestre</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock [Agganciata], Toolbar [Barra degli strumenti], Menu, Utility [Utlity], Splash [Schermata iniziale], Dialog [Finestra di dialogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Modale], Fullscreen [Schermo intero], Unknown [Sconosciuta])</long>
+            </locale>
+            <locale name="ja">
+                <short>ウィンドウタイプ</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pl">
+                <short>Rodzaje okien</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Tipos de Janelas</short>
+                <long>Window types that should animate with this effect when created. (Desktop [Área de Trabalho], Dock [Âncora], Toolbar [Barra de Ferramentas], Menu, Utility [Utilitário], Splash [Tela de Apresentação], Dialog [Caixa de Diálogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Caixa de Diálogo Modal], Fullscreen [Tela Inteira], Unknown [Desconhecido])</long>
+            </locale>
+            <locale name="sv">
+                <short>Fönstertyper</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>窗口类型</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>視窗類型</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/create1_duration</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/create1_duration</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.200000</default>
+            <locale name="C">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #1. (0.1-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #1. (0,1-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #1. (0,1-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #1. (0,1-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #1. (0,1-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/create1_random_effects</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/create1_random_effects</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Beam Up,Burn,Curved Fold,Domino,Dream,Explode,Fade,Glide 1,Glide 2,Horizontal Folds,Leaf Spread,Magic Lamp 1,Magic Lamp 2,Magic Lamp 3 (Vacuum),Razr,Sidekick,Wave,Zoom]</default>
+            <locale name="C">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="es">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="hu">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="ja">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/close2_effect</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/close2_effect</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Fade</default>
+            <locale name="C">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="de">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None [Keiner], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="es">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None [ninguno], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="fi">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None [ei mitään], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="fr">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None [Aucun], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="hu">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None [Nincs], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="it">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None [Nessuna], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="ja">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None [Nenhuma], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Close #2 Animation</short>
+                <long>The animation shown when closing a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/close2_window_types</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/close2_window_types</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Unknown,Menu,PopupMenu,DropdownMenu,Tooltip]</default>
+            <locale name="C">
+                <short>Window Types</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="cs">
+                <short>Typy oken</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="de">
+                <short>Fenstertypen</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar [Symbolleiste], Menu [Menü], Utility [Dienstprogramm], Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Vollbild], Unknown [Unbekannt])</long>
+            </locale>
+            <locale name="es">
+                <short>Tipos de ventana</short>
+                <long>The window types that will be animated. (Desktop [Escritorio], Dock, Toolbar [Barra de herramientas], Menu [Menús], Utility [Utilidades], Splash [Inicial], Dialog [Diálogos], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Diálogo de modos], Fullscreen [Pantalla completa], Unknown [Desconocidas])</long>
+            </locale>
+            <locale name="fi">
+                <short>Ikkunatyypit</short>
+                <long>The window types that will be animated. (Desktop [työpöytä], Dock [paneeli], Toolbar [työkalupalkki], Menu [valikko], Utility [työkalu], Splash [käynnistysikkuna], Dialog [valintaikkuna], Normal [ikkuna], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [pakotettu valintaikkuna], Fullscreen [kokoruutuikkuna], Unknown [tuntematon])</long>
+            </locale>
+            <locale name="fr">
+                <short>Types de fenêtres</short>
+                <long>The window types that will be animated. (Desktop [bureau], Dock [accueil], Toolbar [barre d'outils], Menu [menu], Utility [utilitaire], Splash [démarrage], Dialog [boîte de dialogue], Normal [normal], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [boîte de dialogue modale], Fullscreen [plein écran], Unknown [inconnu])</long>
+            </locale>
+            <locale name="hu">
+                <short>Ablaktípusok</short>
+                <long>The window types that will be animated. (Desktop [Munkaasztal], Dock [Dokk], Toolbar [Eszköztár], Menu [Menü], Utility [Segédprogram], Splash [Párbeszéd], Dialog, Normal [Normál], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Teljes képernyős], Unknown [Ismeretlen])</long>
+            </locale>
+            <locale name="it">
+                <short>Tipi di finestre</short>
+                <long>The window types that will be animated. (Desktop, Dock [Agganciata], Toolbar [Barra degli strumenti], Menu, Utility [Utlity], Splash [Schermata iniziale], Dialog [Finestra di dialogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Modale], Fullscreen [Schermo intero], Unknown [Sconosciuta])</long>
+            </locale>
+            <locale name="ja">
+                <short>ウィンドウタイプ</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pl">
+                <short>Rodzaje okien</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Tipos de Janelas</short>
+                <long>The window types that will be animated. (Desktop [Área de Trabalho], Dock [Âncora], Toolbar [Barra de Ferramentas], Menu, Utility [Utilitário], Splash [Tela de Apresentação], Dialog [Caixa de Diálogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Caixa de Diálogo Modal], Fullscreen [Tela Inteira], Unknown [Desconhecido])</long>
+            </locale>
+            <locale name="sv">
+                <short>Fönstertyper</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>窗口类型</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>視窗類型</short>
+                <long>The window types that will be animated. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/close2_duration</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/close2_duration</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.150000</default>
+            <locale name="C">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #2 animation will last. (0.1-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #2 animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #2 animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #2 animation will last. (0,1-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation Duration</short>
+                <long>The number of seconds that the Close #2 animation will last. (0,1-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/close2_random_effects</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/close2_random_effects</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Beam Up,Burn,Curved Fold,Domino,Dream,Explode,Fade,Glide 1,Glide 2,Horizontal Folds,Leaf Spread,Magic Lamp 1,Magic Lamp 2,Magic Lamp 3 (Vacuum),Razr,Sidekick,Wave,Zoom]</default>
+            <locale name="C">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="es">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="hu">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="ja">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/create2_effect</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/create2_effect</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Fade</default>
+            <locale name="C">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="de">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None [Keiner], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="es">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None [ninguno], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="fi">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None [ei mitään], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="fr">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None [Aucun], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="hu">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None [Nincs], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="it">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None [Nessuna], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="ja">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None [Nenhuma], Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Create #2 Animation</short>
+                <long>The animation shown when creating a window. (None, Random, Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/create2_window_types</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/create2_window_types</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Unknown,Menu,PopupMenu,DropdownMenu,Tooltip]</default>
+            <locale name="C">
+                <short>Window Types</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="cs">
+                <short>Typy oken</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="de">
+                <short>Fenstertypen</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar [Symbolleiste], Menu [Menü], Utility [Dienstprogramm], Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Vollbild], Unknown [Unbekannt])</long>
+            </locale>
+            <locale name="es">
+                <short>Tipos de ventana</short>
+                <long>Window types that should animate with this effect when created. (Desktop [Escritorio], Dock, Toolbar [Barra de herramientas], Menu [Menús], Utility [Utilidades], Splash [Inicial], Dialog [Diálogos], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Diálogo de modos], Fullscreen [Pantalla completa], Unknown [Desconocidas])</long>
+            </locale>
+            <locale name="fi">
+                <short>Ikkunatyypit</short>
+                <long>Window types that should animate with this effect when created. (Desktop [työpöytä], Dock [paneeli], Toolbar [työkalupalkki], Menu [valikko], Utility [työkalu], Splash [käynnistysikkuna], Dialog [valintaikkuna], Normal [ikkuna], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [pakotettu valintaikkuna], Fullscreen [kokoruutuikkuna], Unknown [tuntematon])</long>
+            </locale>
+            <locale name="fr">
+                <short>Types de fenêtres</short>
+                <long>Window types that should animate with this effect when created. (Desktop [bureau], Dock [accueil], Toolbar [barre d'outils], Menu [menu], Utility [utilitaire], Splash [démarrage], Dialog [boîte de dialogue], Normal [normal], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [boîte de dialogue modale], Fullscreen [plein écran], Unknown [inconnu])</long>
+            </locale>
+            <locale name="hu">
+                <short>Ablaktípusok</short>
+                <long>Window types that should animate with this effect when created. (Desktop [Munkaasztal], Dock [Dokk], Toolbar [Eszköztár], Menu [Menü], Utility [Segédprogram], Splash [Párbeszéd], Dialog, Normal [Normál], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Teljes képernyős], Unknown [Ismeretlen])</long>
+            </locale>
+            <locale name="it">
+                <short>Tipi di finestre</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock [Agganciata], Toolbar [Barra degli strumenti], Menu, Utility [Utlity], Splash [Schermata iniziale], Dialog [Finestra di dialogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Modale], Fullscreen [Schermo intero], Unknown [Sconosciuta])</long>
+            </locale>
+            <locale name="ja">
+                <short>ウィンドウタイプ</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pl">
+                <short>Rodzaje okien</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Tipos de Janelas</short>
+                <long>Window types that should animate with this effect when created. (Desktop [Área de Trabalho], Dock [Âncora], Toolbar [Barra de Ferramentas], Menu, Utility [Utilitário], Splash [Tela de Apresentação], Dialog [Caixa de Diálogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Caixa de Diálogo Modal], Fullscreen [Tela Inteira], Unknown [Desconhecido])</long>
+            </locale>
+            <locale name="sv">
+                <short>Fönstertyper</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>窗口类型</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>視窗類型</short>
+                <long>Window types that should animate with this effect when created. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/create2_duration</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/create2_duration</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.150000</default>
+            <locale name="C">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #2. (0.1-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #2. (0,1-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #2. (0,1-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #2. (0,1-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation Duration</short>
+                <long>Animation duration in seconds for create effect #2. (0,1-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/create2_random_effects</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/create2_random_effects</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Beam Up,Burn,Curved Fold,Domino,Dream,Explode,Fade,Glide 1,Glide 2,Horizontal Folds,Leaf Spread,Magic Lamp 1,Magic Lamp 2,Magic Lamp 3 (Vacuum),Razr,Sidekick,Wave,Zoom]</default>
+            <locale name="C">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom)</long>
+            </locale>
+            <locale name="cs">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Zvětšení])</long>
+            </locale>
+            <locale name="es">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Ampliar/reducir])</long>
+            </locale>
+            <locale name="hu">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Nagyítás])</long>
+            </locale>
+            <locale name="ja">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [ズーム])</long>
+            </locale>
+            <locale name="pl">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [Powiększenie])</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [缩放])</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Beam Up, Burn, Curved Fold, Domino, Dream, Explode, Fade, Glide 1, Glide 2, Horizontal Folds, Leaf Spread, Magic Lamp 1, Magic Lamp 2, Magic Lamp 3 (Vacuum), Razr, Sidekick, Wave, Zoom [縮放])</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/focus_effect</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/focus_effect</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>None</default>
+            <locale name="C">
+                <short>Animation</short>
+                <long>Focus window effect. (None, Fade, Wave)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation</short>
+                <long>Focus window effect. (None [Keiner], Fade, Wave)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation</short>
+                <long>Focus window effect. (None [ninguno], Fade, Wave)</long>
+            </locale>
+            <locale name="fi">
+                <short>Animation</short>
+                <long>Focus window effect. (None [ei mitään], Fade, Wave)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation</short>
+                <long>Focus window effect. (None [Aucun], Fade, Wave)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation</short>
+                <long>Focus window effect. (None [Nincs], Fade, Wave)</long>
+            </locale>
+            <locale name="it">
+                <short>Animation</short>
+                <long>Focus window effect. (None [Nessuna], Fade, Wave)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Animation</short>
+                <long>Focus window effect. (None [Nenhuma], Fade, Wave)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/focus_window_types</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/focus_window_types</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Normal,Dialog,ModalDialog,Dnd]</default>
+            <locale name="C">
+                <short>Window Types</short>
+                <long>Window types that should animate with this effect when focused. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="cs">
+                <short>Typy oken</short>
+                <long>Window types that should animate with this effect when focused. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="de">
+                <short>Fenstertypen</short>
+                <long>Window types that should animate with this effect when focused. (Desktop, Dock, Toolbar [Symbolleiste], Menu [Menü], Utility [Dienstprogramm], Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Vollbild], Unknown [Unbekannt])</long>
+            </locale>
+            <locale name="es">
+                <short>Tipos de ventana</short>
+                <long>Window types that should animate with this effect when focused. (Desktop [Escritorio], Dock, Toolbar [Barra de herramientas], Menu [Menús], Utility [Utilidades], Splash [Inicial], Dialog [Diálogos], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Diálogo de modos], Fullscreen [Pantalla completa], Unknown [Desconocidas])</long>
+            </locale>
+            <locale name="fi">
+                <short>Ikkunatyypit</short>
+                <long>Window types that should animate with this effect when focused. (Desktop [työpöytä], Dock [paneeli], Toolbar [työkalupalkki], Menu [valikko], Utility [työkalu], Splash [käynnistysikkuna], Dialog [valintaikkuna], Normal [ikkuna], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [pakotettu valintaikkuna], Fullscreen [kokoruutuikkuna], Unknown [tuntematon])</long>
+            </locale>
+            <locale name="fr">
+                <short>Types de fenêtres</short>
+                <long>Window types that should animate with this effect when focused. (Desktop [bureau], Dock [accueil], Toolbar [barre d'outils], Menu [menu], Utility [utilitaire], Splash [démarrage], Dialog [boîte de dialogue], Normal [normal], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [boîte de dialogue modale], Fullscreen [plein écran], Unknown [inconnu])</long>
+            </locale>
+            <locale name="hu">
+                <short>Ablaktípusok</short>
+                <long>Window types that should animate with this effect when focused. (Desktop [Munkaasztal], Dock [Dokk], Toolbar [Eszköztár], Menu [Menü], Utility [Segédprogram], Splash [Párbeszéd], Dialog, Normal [Normál], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Teljes képernyős], Unknown [Ismeretlen])</long>
+            </locale>
+            <locale name="it">
+                <short>Tipi di finestre</short>
+                <long>Window types that should animate with this effect when focused. (Desktop, Dock [Agganciata], Toolbar [Barra degli strumenti], Menu, Utility [Utlity], Splash [Schermata iniziale], Dialog [Finestra di dialogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Modale], Fullscreen [Schermo intero], Unknown [Sconosciuta])</long>
+            </locale>
+            <locale name="ja">
+                <short>ウィンドウタイプ</short>
+                <long>Window types that should animate with this effect when focused. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pl">
+                <short>Rodzaje okien</short>
+                <long>Window types that should animate with this effect when focused. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Tipos de Janelas</short>
+                <long>Window types that should animate with this effect when focused. (Desktop [Área de Trabalho], Dock [Âncora], Toolbar [Barra de Ferramentas], Menu, Utility [Utilitário], Splash [Tela de Apresentação], Dialog [Caixa de Diálogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Caixa de Diálogo Modal], Fullscreen [Tela Inteira], Unknown [Desconhecido])</long>
+            </locale>
+            <locale name="sv">
+                <short>Fönstertyper</short>
+                <long>Window types that should animate with this effect when focused. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>窗口类型</short>
+                <long>Window types that should animate with this effect when focused. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>視窗類型</short>
+                <long>Window types that should animate with this effect when focused. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/focus_duration</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/focus_duration</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.300000</default>
+            <locale name="C">
+                <short>Animation Duration</short>
+                <long>Focus animation duration in seconds. (0.1-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation Duration</short>
+                <long>Focus animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation Duration</short>
+                <long>Focus animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation Duration</short>
+                <long>Focus animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation Duration</short>
+                <long>Focus animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/shade_effect</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/shade_effect</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Roll Up</default>
+            <locale name="C">
+                <short>Shade Animation</short>
+                <long>Shade window effect. (None, Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="de">
+                <short>Shade Animation</short>
+                <long>Shade window effect. (None [Keiner], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="es">
+                <short>Shade Animation</short>
+                <long>Shade window effect. (None [ninguno], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="fi">
+                <short>Shade Animation</short>
+                <long>Shade window effect. (None [ei mitään], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="fr">
+                <short>Shade Animation</short>
+                <long>Shade window effect. (None [Aucun], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="hu">
+                <short>Shade Animation</short>
+                <long>Shade window effect. (None [Nincs], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="it">
+                <short>Shade Animation</short>
+                <long>Shade window effect. (None [Nessuna], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Shade Animation</short>
+                <long>Shade window effect. (None [Nenhuma], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/shade_window_types</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/shade_window_types</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Normal,Dialog,ModalDialog,Utility]</default>
+            <locale name="C">
+                <short>Window Types</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="cs">
+                <short>Typy oken</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="de">
+                <short>Fenstertypen</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop, Dock, Toolbar [Symbolleiste], Menu [Menü], Utility [Dienstprogramm], Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Vollbild], Unknown [Unbekannt])</long>
+            </locale>
+            <locale name="es">
+                <short>Tipos de ventana</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop [Escritorio], Dock, Toolbar [Barra de herramientas], Menu [Menús], Utility [Utilidades], Splash [Inicial], Dialog [Diálogos], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Diálogo de modos], Fullscreen [Pantalla completa], Unknown [Desconocidas])</long>
+            </locale>
+            <locale name="fi">
+                <short>Ikkunatyypit</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop [työpöytä], Dock [paneeli], Toolbar [työkalupalkki], Menu [valikko], Utility [työkalu], Splash [käynnistysikkuna], Dialog [valintaikkuna], Normal [ikkuna], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [pakotettu valintaikkuna], Fullscreen [kokoruutuikkuna], Unknown [tuntematon])</long>
+            </locale>
+            <locale name="fr">
+                <short>Types de fenêtres</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop [bureau], Dock [accueil], Toolbar [barre d'outils], Menu [menu], Utility [utilitaire], Splash [démarrage], Dialog [boîte de dialogue], Normal [normal], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [boîte de dialogue modale], Fullscreen [plein écran], Unknown [inconnu])</long>
+            </locale>
+            <locale name="hu">
+                <short>Ablaktípusok</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop [Munkaasztal], Dock [Dokk], Toolbar [Eszköztár], Menu [Menü], Utility [Segédprogram], Splash [Párbeszéd], Dialog, Normal [Normál], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Teljes képernyős], Unknown [Ismeretlen])</long>
+            </locale>
+            <locale name="it">
+                <short>Tipi di finestre</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop, Dock [Agganciata], Toolbar [Barra degli strumenti], Menu, Utility [Utlity], Splash [Schermata iniziale], Dialog [Finestra di dialogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Modale], Fullscreen [Schermo intero], Unknown [Sconosciuta])</long>
+            </locale>
+            <locale name="ja">
+                <short>ウィンドウタイプ</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pl">
+                <short>Rodzaje okien</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Tipos de Janelas</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop [Área de Trabalho], Dock [Âncora], Toolbar [Barra de Ferramentas], Menu, Utility [Utilitário], Splash [Tela de Apresentação], Dialog [Caixa de Diálogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Caixa de Diálogo Modal], Fullscreen [Tela Inteira], Unknown [Desconhecido])</long>
+            </locale>
+            <locale name="sv">
+                <short>Fönstertyper</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>窗口类型</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>視窗類型</short>
+                <long>Window types that should animate with this effect when shaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/shade_duration</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/shade_duration</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.500000</default>
+            <locale name="C">
+                <short>Animation Duration</short>
+                <long>Shade animation duration in seconds. (0.1-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation Duration</short>
+                <long>Shade animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation Duration</short>
+                <long>Shade animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation Duration</short>
+                <long>Shade animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation Duration</short>
+                <long>Shade animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/shade_random_effects</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/shade_random_effects</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Curved Fold,Horizontal Folds,Roll Up]</default>
+            <locale name="C">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/unshade_effect</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/unshade_effect</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Roll Up</default>
+            <locale name="C">
+                <short>Unshade Animation</short>
+                <long>Unshade window effect. (None, Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="de">
+                <short>Unshade Animation</short>
+                <long>Unshade window effect. (None [Keiner], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="es">
+                <short>Unshade Animation</short>
+                <long>Unshade window effect. (None [ninguno], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="fi">
+                <short>Unshade Animation</short>
+                <long>Unshade window effect. (None [ei mitään], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="fr">
+                <short>Unshade Animation</short>
+                <long>Unshade window effect. (None [Aucun], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="hu">
+                <short>Unshade Animation</short>
+                <long>Unshade window effect. (None [Nincs], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="it">
+                <short>Unshade Animation</short>
+                <long>Unshade window effect. (None [Nessuna], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Unshade Animation</short>
+                <long>Unshade window effect. (None [Nenhuma], Random, Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/unshade_window_types</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/unshade_window_types</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Normal,Dialog,ModalDialog,Utility]</default>
+            <locale name="C">
+                <short>Window Types</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="cs">
+                <short>Typy oken</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="de">
+                <short>Fenstertypen</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop, Dock, Toolbar [Symbolleiste], Menu [Menü], Utility [Dienstprogramm], Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Vollbild], Unknown [Unbekannt])</long>
+            </locale>
+            <locale name="es">
+                <short>Tipos de ventana</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop [Escritorio], Dock, Toolbar [Barra de herramientas], Menu [Menús], Utility [Utilidades], Splash [Inicial], Dialog [Diálogos], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Diálogo de modos], Fullscreen [Pantalla completa], Unknown [Desconocidas])</long>
+            </locale>
+            <locale name="fi">
+                <short>Ikkunatyypit</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop [työpöytä], Dock [paneeli], Toolbar [työkalupalkki], Menu [valikko], Utility [työkalu], Splash [käynnistysikkuna], Dialog [valintaikkuna], Normal [ikkuna], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [pakotettu valintaikkuna], Fullscreen [kokoruutuikkuna], Unknown [tuntematon])</long>
+            </locale>
+            <locale name="fr">
+                <short>Types de fenêtres</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop [bureau], Dock [accueil], Toolbar [barre d'outils], Menu [menu], Utility [utilitaire], Splash [démarrage], Dialog [boîte de dialogue], Normal [normal], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [boîte de dialogue modale], Fullscreen [plein écran], Unknown [inconnu])</long>
+            </locale>
+            <locale name="hu">
+                <short>Ablaktípusok</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop [Munkaasztal], Dock [Dokk], Toolbar [Eszköztár], Menu [Menü], Utility [Segédprogram], Splash [Párbeszéd], Dialog, Normal [Normál], DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen [Teljes képernyős], Unknown [Ismeretlen])</long>
+            </locale>
+            <locale name="it">
+                <short>Tipi di finestre</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop, Dock [Agganciata], Toolbar [Barra degli strumenti], Menu, Utility [Utlity], Splash [Schermata iniziale], Dialog [Finestra di dialogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Modale], Fullscreen [Schermo intero], Unknown [Sconosciuta])</long>
+            </locale>
+            <locale name="ja">
+                <short>ウィンドウタイプ</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pl">
+                <short>Rodzaje okien</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="pt_BR">
+                <short>Tipos de Janelas</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop [Área de Trabalho], Dock [Âncora], Toolbar [Barra de Ferramentas], Menu, Utility [Utilitário], Splash [Tela de Apresentação], Dialog [Caixa de Diálogo], Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog [Caixa de Diálogo Modal], Fullscreen [Tela Inteira], Unknown [Desconhecido])</long>
+            </locale>
+            <locale name="sv">
+                <short>Fönstertyper</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_CN">
+                <short>窗口类型</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+            <locale name="zh_TW">
+                <short>視窗類型</short>
+                <long>Window types that should animate with this effect when unshaded. (Desktop, Dock, Toolbar, Menu, Utility, Splash, Dialog, Normal, DropdownMenu, PopupMenu, Tooltip, Notification, Combo, Dnd, ModalDialog, Fullscreen, Unknown)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/unshade_duration</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/unshade_duration</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.500000</default>
+            <locale name="C">
+                <short>Animation Duration</short>
+                <long>Unshade animation duration in seconds. (0.1-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Animation Duration</short>
+                <long>Unshade animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Animation Duration</short>
+                <long>Unshade animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Animation Duration</short>
+                <long>Unshade animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Animation Duration</short>
+                <long>Unshade animation duration in seconds. (0,1-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/unshade_random_effects</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/unshade_random_effects</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[Curved Fold,Horizontal Folds,Roll Up]</default>
+            <locale name="C">
+                <short>Random Effect Pool</short>
+                <long>Pool of effects to be chosen from if Random effect is selected. Click reset to restore full list. If the list is empty, the default effect will be used. (Curved Fold, Horizontal Folds, Roll Up)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/rollup_fixed_interior</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/rollup_fixed_interior</applyto>
+            <owner>compiz</owner>
+            <type>bool</type>
+            <default>false</default>
+            <locale name="C">
+                <short>Rollup Fixed Interior</short>
+                <long>Fixed window interior during the Rollup animation.</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/all_random</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/all_random</applyto>
+            <owner>compiz</owner>
+            <type>bool</type>
+            <default>false</default>
+            <locale name="C">
+                <short>Random Animations For All Events</short>
+                <long>All effects are chosen randomly, ignoring the selected effect. If None is selected for an event, that event won't be animated.</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/disable_pp_fx</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/disable_pp_fx</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Animated window</default>
+            <locale name="C">
+                <short>Disable Post-processing Effects During Animation</short>
+                <long>Disables blur effect during animations. (No disabling, Animated window, All windows only on (un)minimize events, All windows)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/time_step</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/time_step</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>10</default>
+            <locale name="C">
+                <short>Animation Time Step</short>
+                <long>The amount of time in milliseconds between each render of the animation. The higher the number, the jerkier the movements become. (1-400)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/time_step_intense</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/time_step_intense</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>30</default>
+            <locale name="C">
+                <short>Animation Time Step For Intense Effects</short>
+                <long>The amount of time in milliseconds between each render of the intense animation (Ex. Burn, Beam). The higher the number, the jerkier the movements become. (1-400)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/beam_size</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/beam_size</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>8.000000</default>
+            <locale name="C">
+                <short>Beam Width</short>
+                <long>Beam width. (0.0-20.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Beam Width</short>
+                <long>Beam width. (0,0-20,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Beam Width</short>
+                <long>Beam width. (0,0-20,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Beam Width</short>
+                <long>Beam width. (0,0-20,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Beam Width</short>
+                <long>Beam width. (0,0-20,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/beam_spacing</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/beam_spacing</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>5</default>
+            <locale name="C">
+                <short>Beam spacing</short>
+                <long>Spacing between beams. (1-20)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/beam_color</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/beam_color</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>#7f7f7fff</default>
+            <locale name="C">
+                <short>Beam Color</short>
+                <long>Beam color.</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/beam_slowdown</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/beam_slowdown</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>1.000000</default>
+            <locale name="C">
+                <short>Beam Slowdown</short>
+                <long>Beam slowdown. (0.0-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Beam Slowdown</short>
+                <long>Beam slowdown. (0,0-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Beam Slowdown</short>
+                <long>Beam slowdown. (0,0-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Beam Slowdown</short>
+                <long>Beam slowdown. (0,0-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Beam Slowdown</short>
+                <long>Beam slowdown. (0,0-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/beam_life</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/beam_life</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.700000</default>
+            <locale name="C">
+                <short>Beam Life</short>
+                <long>Beam life. (0.0-1.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Beam Life</short>
+                <long>Beam life. (0,0-1,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Beam Life</short>
+                <long>Beam life. (0,0-1,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Beam Life</short>
+                <long>Beam life. (0,0-1,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Beam Life</short>
+                <long>Beam life. (0,0-1,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/curved_fold_amp</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/curved_fold_amp</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.150000</default>
+            <locale name="C">
+                <short>Curved Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the curved fold relative to window width. Negative values fold outward. (0.-50-0.50)</long>
+            </locale>
+            <locale name="de">
+                <short>Curved Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the curved fold relative to window width. Negative values fold outward. (0,-50-0,50)</long>
+            </locale>
+            <locale name="es">
+                <short>Curved Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the curved fold relative to window width. Negative values fold outward. (0,-50-0,50)</long>
+            </locale>
+            <locale name="fr">
+                <short>Curved Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the curved fold relative to window width. Negative values fold outward. (0,-50-0,50)</long>
+            </locale>
+            <locale name="hu">
+                <short>Curved Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the curved fold relative to window width. Negative values fold outward. (0,-50-0,50)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/domino_direction</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/domino_direction</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Automatic</default>
+            <locale name="C">
+                <short>Domino Piece Falling Direction</short>
+                <long>Falling direction for Domino pieces. (Down, Up, Left, Right, Random, Automatic)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/razr_direction</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/razr_direction</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Automatic</default>
+            <locale name="C">
+                <short>Razr Fold Opening Direction</short>
+                <long>Fold opening direction for pieces in Razr effect. (Down, Up, Left, Right, Random, Automatic)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/explode_thickness</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/explode_thickness</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>15.000000</default>
+            <locale name="C">
+                <short>Thickness of Exploded Polygons</short>
+                <long>Thickness of exploded window pieces. (0.0-100.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Thickness of Exploded Polygons</short>
+                <long>Thickness of exploded window pieces. (0,0-100,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Thickness of Exploded Polygons</short>
+                <long>Thickness of exploded window pieces. (0,0-100,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Thickness of Exploded Polygons</short>
+                <long>Thickness of exploded window pieces. (0,0-100,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Thickness of Exploded Polygons</short>
+                <long>Thickness of exploded window pieces. (0,0-100,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/explode_gridx</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/explode_gridx</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>13</default>
+            <locale name="C">
+                <short>Window grid width</short>
+                <long>The exploding window will be split into pieces along a grid.  Specify the width, in pixels, of the columns in the grid. (1-200)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/explode_gridy</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/explode_gridy</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>10</default>
+            <locale name="C">
+                <short>Window grid height</short>
+                <long>The exploding window will be split into pieces along a grid.  Specify the height, in pixels, of the rows in the grid. (1-200)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/fire_particles</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/fire_particles</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>1000</default>
+            <locale name="C">
+                <short>Number Of Fire Particles</short>
+                <long>Number of fire particles. (100-10000)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/fire_size</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/fire_size</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>5.000000</default>
+            <locale name="C">
+                <short>Fire Particle Size</short>
+                <long>Fire particle size. (0.0-20.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Fire Particle Size</short>
+                <long>Fire particle size. (0,0-20,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Fire Particle Size</short>
+                <long>Fire particle size. (0,0-20,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Fire Particle Size</short>
+                <long>Fire particle size. (0,0-20,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Fire Particle Size</short>
+                <long>Fire particle size. (0,0-20,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/fire_slowdown</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/fire_slowdown</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.500000</default>
+            <locale name="C">
+                <short>Fire Particle Slowdown</short>
+                <long>Fire particle slowdown. (0.0-10.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Fire Particle Slowdown</short>
+                <long>Fire particle slowdown. (0,0-10,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Fire Particle Slowdown</short>
+                <long>Fire particle slowdown. (0,0-10,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Fire Particle Slowdown</short>
+                <long>Fire particle slowdown. (0,0-10,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Fire Particle Slowdown</short>
+                <long>Fire particle slowdown. (0,0-10,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/fire_life</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/fire_life</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.700000</default>
+            <locale name="C">
+                <short>Fire Particle Life</short>
+                <long>Fire particle life. (0.0-1.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Fire Particle Life</short>
+                <long>Fire particle life. (0,0-1,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Fire Particle Life</short>
+                <long>Fire particle life. (0,0-1,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Fire Particle Life</short>
+                <long>Fire particle life. (0,0-1,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Fire Particle Life</short>
+                <long>Fire particle life. (0,0-1,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/fire_color</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/fire_color</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>#ff3305ff</default>
+            <locale name="C">
+                <short>Fire Particle Color</short>
+                <long>Fire particle color.</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/fire_direction</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/fire_direction</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Down</default>
+            <locale name="C">
+                <short>Fire direction</short>
+                <long>Fire direction. (Down, Up, Left, Right, Random, Automatic)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/fire_constant_speed</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/fire_constant_speed</applyto>
+            <owner>compiz</owner>
+            <type>bool</type>
+            <default>false</default>
+            <locale name="C">
+                <short>Fire constant speed</short>
+                <long>Make fire effect duration be dependent on window height.</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/fire_smoke</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/fire_smoke</applyto>
+            <owner>compiz</owner>
+            <type>bool</type>
+            <default>false</default>
+            <locale name="C">
+                <short>Fire Smoke</short>
+                <long>Fire smoke.</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/fire_mystical</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/fire_mystical</applyto>
+            <owner>compiz</owner>
+            <type>bool</type>
+            <default>false</default>
+            <locale name="C">
+                <short>Randomly Colored Fire</short>
+                <long>Have random colors for the fire effect, also known as Mystical Fire.</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/glide1_away_position</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/glide1_away_position</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>1.000000</default>
+            <locale name="C">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2.0-1.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2,0-1,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2,0-1,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2,0-1,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2,0-1,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/glide1_away_angle</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/glide1_away_angle</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.000000</default>
+            <locale name="C">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540.0-540.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540,0-540,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540,0-540,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540,0-540,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540,0-540,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/glide1_thickness</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/glide1_thickness</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.000000</default>
+            <locale name="C">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0.0-100.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0,0-100,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0,0-100,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0,0-100,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0,0-100,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/glide2_away_position</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/glide2_away_position</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>-0.400000</default>
+            <locale name="C">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2.0-1.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2,0-1,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2,0-1,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2,0-1,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Away Position</short>
+                <long>Closeness of window to camera at the end of the animation (1.0: Close to camera, -2.0: Away from camera). (-2,0-1,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/glide2_away_angle</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/glide2_away_angle</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>-45.000000</default>
+            <locale name="C">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540.0-540.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540,0-540,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540,0-540,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540,0-540,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Away Angle</short>
+                <long>Angle of window at the end of the animation. (-540,0-540,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/glide2_thickness</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/glide2_thickness</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.000000</default>
+            <locale name="C">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0.0-100.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0,0-100,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0,0-100,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0,0-100,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Thickness</short>
+                <long>Window thickness in pixels. Setting this to larger than 0 will disable shadow, blur, and reflection during the animation. (0,0-100,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/horizontal_folds_amp</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/horizontal_folds_amp</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.070000</default>
+            <locale name="C">
+                <short>Horizontal Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the Horizontal Folds relative to the window width. Negative values fold outward. (0.-50-0.50)</long>
+            </locale>
+            <locale name="de">
+                <short>Horizontal Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the Horizontal Folds relative to the window width. Negative values fold outward. (0,-50-0,50)</long>
+            </locale>
+            <locale name="es">
+                <short>Horizontal Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the Horizontal Folds relative to the window width. Negative values fold outward. (0,-50-0,50)</long>
+            </locale>
+            <locale name="fr">
+                <short>Horizontal Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the Horizontal Folds relative to the window width. Negative values fold outward. (0,-50-0,50)</long>
+            </locale>
+            <locale name="hu">
+                <short>Horizontal Fold Amplitude</short>
+                <long>Amplitude (size of the waves in the fold) of the Horizontal Folds relative to the window width. Negative values fold outward. (0,-50-0,50)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/horizontal_folds_num_folds</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/horizontal_folds_num_folds</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>5</default>
+            <locale name="C">
+                <short>Number of Horizontal Folds</short>
+                <long>The number of horizontal folds that occur in the Horizontal Fold animation. (1-50)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp1_grid_res</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp1_grid_res</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>100</default>
+            <locale name="C">
+                <short>Magic Lamp #1 Grid Y Resolution</short>
+                <long>Vertex grid resolution for Magic Lamp #1 (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases). (4-200)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp1_max_waves</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp1_max_waves</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>5</default>
+            <locale name="C">
+                <short>Magic Lamp #1 Max Waves</short>
+                <long>The maximum number of waves for Magic Lamp #1. (3-20)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp1_wave_amp_min</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp1_wave_amp_min</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>200.000000</default>
+            <locale name="C">
+                <short>Magic Lamp #1 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #1 will have. (200.0-2000.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Magic Lamp #1 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #1 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Magic Lamp #1 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #1 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Magic Lamp #1 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #1 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Magic Lamp #1 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #1 will have. (200,0-2000,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp1_wave_amp_max</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp1_wave_amp_max</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>300.000000</default>
+            <locale name="C">
+                <short>Magic Lamp #1 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #1 will have. (200.0-2000.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Magic Lamp #1 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #1 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Magic Lamp #1 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #1 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Magic Lamp #1 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #1 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Magic Lamp #1 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #1 will have. (200,0-2000,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp1_create_start_width</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp1_create_start_width</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>30</default>
+            <locale name="C">
+                <short>Magic Lamp #1 Create Start Width</short>
+                <long>Starting width of create effect and ending width of close effect for Magic Lamp #1. (0-500)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp2_grid_res</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp2_grid_res</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>100</default>
+            <locale name="C">
+                <short>Magic Lamp #2 Grid Y Resolution</short>
+                <long>Vertex grid resolution for Magic Lamp #2 (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases). (2-200)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp2_max_waves</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp2_max_waves</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>3</default>
+            <locale name="C">
+                <short>Magic Lamp #2 Max Waves</short>
+                <long>The maximum number of waves for Magic Lamp #2. (3-20)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp2_wave_amp_min</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp2_wave_amp_min</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>200.000000</default>
+            <locale name="C">
+                <short>Magic Lamp #2 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #2 will have. (200.0-2000.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Magic Lamp #2 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #2 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Magic Lamp #2 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #2 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Magic Lamp #2 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #2 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Magic Lamp #2 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #2 will have. (200,0-2000,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp2_wave_amp_max</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp2_wave_amp_max</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>300.000000</default>
+            <locale name="C">
+                <short>Magic Lamp #2 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #2 will have. (200.0-2000.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Magic Lamp #2 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #2 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Magic Lamp #2 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #2 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Magic Lamp #2 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #2 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Magic Lamp #2 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #2 will have. (200,0-2000,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp2_create_start_width</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp2_create_start_width</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>30</default>
+            <locale name="C">
+                <short>Magic Lamp #2 Create Start Width</short>
+                <long>Starting width of create effect and ending width of close effect for Magic Lamp #2. (0-500)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp3_grid_res</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp3_grid_res</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>100</default>
+            <locale name="C">
+                <short>Magic Lamp #3 Grid Y Resolution</short>
+                <long>Vertex grid resolution for Magic Lamp #3 (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases). (2-200)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp3_max_waves</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp3_max_waves</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>0</default>
+            <locale name="C">
+                <short>Magic Lamp #3 Max Waves</short>
+                <long>The maximum number of waves for Magic Lamp #3. (0-20)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp3_wave_amp_min</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp3_wave_amp_min</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>200.000000</default>
+            <locale name="C">
+                <short>Magic Lamp #3 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #3 will have. (200.0-2000.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Magic Lamp #3 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #3 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Magic Lamp #3 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #3 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Magic Lamp #3 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #3 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Magic Lamp #3 Wave Min Amplitude</short>
+                <long>The minimum amplitude (size of the waves) Magic Lamp #3 will have. (200,0-2000,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp3_wave_amp_max</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp3_wave_amp_max</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>300.000000</default>
+            <locale name="C">
+                <short>Magic Lamp #3 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #3 will have. (200.0-2000.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Magic Lamp #3 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #3 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Magic Lamp #3 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #3 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Magic Lamp #3 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #3 will have. (200,0-2000,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Magic Lamp #3 Wave Max Amplitude</short>
+                <long>The maxmimum amplitude (size of the waves) Magic Lamp #3 will have. (200,0-2000,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/magic_lamp3_create_start_width</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/magic_lamp3_create_start_width</applyto>
+            <owner>compiz</owner>
+            <type>int</type>
+            <default>30</default>
+            <locale name="C">
+                <short>Magic Lamp #3 Create Start Width</short>
+                <long>Starting width of create effect and ending width of close effect for Magic Lamp #3. (0-500)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/sidekick_num_rotations</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/sidekick_num_rotations</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.500000</default>
+            <locale name="C">
+                <short>Sidekick Number of Rotations</short>
+                <long>The number of rotations plus or minus 10% (for randomness) that Sidekick has. (0.00-5.00)</long>
+            </locale>
+            <locale name="de">
+                <short>Sidekick Number of Rotations</short>
+                <long>The number of rotations plus or minus 10% (for randomness) that Sidekick has. (0,00-5,00)</long>
+            </locale>
+            <locale name="es">
+                <short>Sidekick Number of Rotations</short>
+                <long>The number of rotations plus or minus 10% (for randomness) that Sidekick has. (0,00-5,00)</long>
+            </locale>
+            <locale name="fr">
+                <short>Sidekick Number of Rotations</short>
+                <long>The number of rotations plus or minus 10% (for randomness) that Sidekick has. (0,00-5,00)</long>
+            </locale>
+            <locale name="hu">
+                <short>Sidekick Number of Rotations</short>
+                <long>The number of rotations plus or minus 10% (for randomness) that Sidekick has. (0,00-5,00)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/wave_width</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/wave_width</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.700000</default>
+            <locale name="C">
+                <short>Wave Width</short>
+                <long>The width of the wave relative to the window height. (0.0-3.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Wave Width</short>
+                <long>The width of the wave relative to the window height. (0,0-3,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Wave Width</short>
+                <long>The width of the wave relative to the window height. (0,0-3,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Wave Width</short>
+                <long>The width of the wave relative to the window height. (0,0-3,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Wave Width</short>
+                <long>The width of the wave relative to the window height. (0,0-3,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/wave_amp</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/wave_amp</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.030000</default>
+            <locale name="C">
+                <short>Wave Amplitude</short>
+                <long>The wave amplitude (size of the waves) relative to the window height. (0.00-1.00)</long>
+            </locale>
+            <locale name="de">
+                <short>Wave Amplitude</short>
+                <long>The wave amplitude (size of the waves) relative to the window height. (0,00-1,00)</long>
+            </locale>
+            <locale name="es">
+                <short>Wave Amplitude</short>
+                <long>The wave amplitude (size of the waves) relative to the window height. (0,00-1,00)</long>
+            </locale>
+            <locale name="fr">
+                <short>Wave Amplitude</short>
+                <long>The wave amplitude (size of the waves) relative to the window height. (0,00-1,00)</long>
+            </locale>
+            <locale name="hu">
+                <short>Wave Amplitude</short>
+                <long>The wave amplitude (size of the waves) relative to the window height. (0,00-1,00)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/zoom_curvature</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/zoom_curvature</applyto>
+            <owner>compiz</owner>
+            <type>float</type>
+            <default>0.500000</default>
+            <locale name="C">
+                <short>Zoom Curvature</short>
+                <long>The amount of curvedness of the zoom motion. (0.0-1.0)</long>
+            </locale>
+            <locale name="de">
+                <short>Zoom Curvature</short>
+                <long>The amount of curvedness of the zoom motion. (0,0-1,0)</long>
+            </locale>
+            <locale name="es">
+                <short>Zoom Curvature</short>
+                <long>The amount of curvedness of the zoom motion. (0,0-1,0)</long>
+            </locale>
+            <locale name="fr">
+                <short>Zoom Curvature</short>
+                <long>The amount of curvedness of the zoom motion. (0,0-1,0)</long>
+            </locale>
+            <locale name="hu">
+                <short>Zoom Curvature</short>
+                <long>The amount of curvedness of the zoom motion. (0,0-1,0)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/zoom_from_center</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/zoom_from_center</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Off</default>
+            <locale name="C">
+                <short>Zoom from Center</short>
+                <long>Zoom from center when playing the Zoom and Sidekick animations. (Off, Minimize/Unminimize Only, Create/Close Only, On)</long>
+            </locale>
+        </schema>
+
