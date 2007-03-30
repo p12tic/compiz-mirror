@@ -1960,24 +1960,24 @@
             <type>float</type>
             <default>15.000000</default>
             <locale name="C">
-                <short>Thickness of Exploded Polygons</short>
-                <long>Thickness of exploded window pieces. (0.0-100.0)</long>
+                <short>Thickness of Exploding Polygons</short>
+                <long>Thickness of exploding window pieces. (0.0-100.0)</long>
             </locale>
             <locale name="de">
-                <short>Thickness of Exploded Polygons</short>
-                <long>Thickness of exploded window pieces. (0,0-100,0)</long>
+                <short>Thickness of Exploding Polygons</short>
+                <long>Thickness of exploding window pieces. (0,0-100,0)</long>
             </locale>
             <locale name="es">
-                <short>Thickness of Exploded Polygons</short>
-                <long>Thickness of exploded window pieces. (0,0-100,0)</long>
+                <short>Thickness of Exploding Polygons</short>
+                <long>Thickness of exploding window pieces. (0,0-100,0)</long>
             </locale>
             <locale name="fr">
-                <short>Thickness of Exploded Polygons</short>
-                <long>Thickness of exploded window pieces. (0,0-100,0)</long>
+                <short>Thickness of Exploding Polygons</short>
+                <long>Thickness of exploding window pieces. (0,0-100,0)</long>
             </locale>
             <locale name="hu">
-                <short>Thickness of Exploded Polygons</short>
-                <long>Thickness of exploded window pieces. (0,0-100,0)</long>
+                <short>Thickness of Exploding Polygons</short>
+                <long>Thickness of exploding window pieces. (0,0-100,0)</long>
             </locale>
         </schema>
 
@@ -1988,7 +1988,7 @@
             <type>int</type>
             <default>13</default>
             <locale name="C">
-                <short>Window grid width</short>
+                <short>Window Grid Width</short>
                 <long>The exploding window will be split into pieces along a grid.  Specify the width, in pixels, of the columns in the grid. (1-200)</long>
             </locale>
         </schema>
@@ -2000,8 +2000,20 @@
             <type>int</type>
             <default>10</default>
             <locale name="C">
-                <short>Window grid height</short>
+                <short>Window Grid Height</short>
                 <long>The exploding window will be split into pieces along a grid.  Specify the height, in pixels, of the rows in the grid. (1-200)</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/animation/screen0/options/explode_tessellation</key>
+            <applyto>/apps/compiz/plugins/animation/screen0/options/explode_tessellation</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>Down</default>
+            <locale name="C">
+                <short>Tessellation Type</short>
+                <long>Tessellation type for exploding window pieces. (Rectangular, Hexagonal)</long>
             </locale>
         </schema>
 

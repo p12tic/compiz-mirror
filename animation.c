@@ -910,6 +910,26 @@ static void finiParticles(ParticleSystem * ps)
 
 // =====================  END: Particle engine  =========================
 
+
+#define LIST_SIZE(l) (sizeof (l) / sizeof (l[0]))
+
+// Polygon tesselation type: Rectangular, Hexagonal
+typedef enum
+{
+	PolygonTessRect = 0,
+	PolygonTessHex
+} PolygonTess;
+
+static char *polygonTessName[] = {
+	N_("Rectangular"),
+	N_("Hexagonal"),
+};
+
+#define NUM_TESS LIST_SIZE(polygonTessName)
+
+#define ANIM_EXPLODE3D_TESS_DEFAULT PolygonTessRect
+
+
 static char *allEffectName[] = {
 	N_("None"),
 	N_("Random"),
@@ -1014,7 +1034,7 @@ static AnimEffect minimizeEffectType[] = {
 	AnimEffectZoom
 };
 
-#define NUM_MINIMIZE_EFFECT (sizeof (minimizeEffectType) / sizeof (minimizeEffectType[0]))
+#define NUM_MINIMIZE_EFFECT LIST_SIZE(minimizeEffectType)
 
 static char *closeEffectName[] = {
 	N_("None"),
@@ -1062,7 +1082,7 @@ static AnimEffect closeEffectType[] = {
 	AnimEffectZoom
 };
 
-#define NUM_CLOSE_EFFECT (sizeof (closeEffectType) / sizeof (closeEffectType[0]))
+#define NUM_CLOSE_EFFECT LIST_SIZE(closeEffectType)
 
 static char *focusEffectName[] = {
 	N_("None"),
@@ -1076,7 +1096,7 @@ static AnimEffect focusEffectType[] = {
 	AnimEffectWave
 };
 
-#define NUM_FOCUS_EFFECT (sizeof (focusEffectType) / sizeof (focusEffectType[0]))
+#define NUM_FOCUS_EFFECT LIST_SIZE(focusEffectType)
 
 static char *shadeEffectName[] = {
 	N_("None"),
@@ -1094,7 +1114,7 @@ static AnimEffect shadeEffectType[] = {
 	AnimEffectRollUp
 };
 
-#define NUM_SHADE_EFFECT (sizeof (shadeEffectType) / sizeof (shadeEffectType[0]))
+#define NUM_SHADE_EFFECT LIST_SIZE(shadeEffectType)
 
 static char *minimizeDefaultWinType[] = {
 	N_("Normal"),
@@ -1103,7 +1123,7 @@ static char *minimizeDefaultWinType[] = {
 	N_("Utility")
 };
 
-#define N_MINIMIZE_DEFAULT_WIN_TYPE (sizeof (minimizeDefaultWinType) / sizeof (minimizeDefaultWinType[0]))
+#define N_MINIMIZE_DEFAULT_WIN_TYPE LIST_SIZE(minimizeDefaultWinType)
 
 static char *close1DefaultWinType[] = {
 	N_("Normal"),
@@ -1112,7 +1132,7 @@ static char *close1DefaultWinType[] = {
 	N_("Utility")
 };
 
-#define N_CLOSE1_DEFAULT_WIN_TYPE (sizeof (close1DefaultWinType) / sizeof (close1DefaultWinType[0]))
+#define N_CLOSE1_DEFAULT_WIN_TYPE LIST_SIZE(close1DefaultWinType)
 
 static char *close2DefaultWinType[] = {
 	N_("Unknown"),
@@ -1122,7 +1142,7 @@ static char *close2DefaultWinType[] = {
 	N_("Tooltip")
 };
 
-#define N_CLOSE2_DEFAULT_WIN_TYPE (sizeof (close2DefaultWinType) / sizeof (close2DefaultWinType[0]))
+#define N_CLOSE2_DEFAULT_WIN_TYPE LIST_SIZE(close2DefaultWinType)
 
 static char *focusDefaultWinType[] = {
 	N_("Normal"),
@@ -1131,7 +1151,7 @@ static char *focusDefaultWinType[] = {
 	N_("Dnd")
 };
 
-#define N_FOCUS_DEFAULT_WIN_TYPE (sizeof (focusDefaultWinType) / sizeof (focusDefaultWinType[0]))
+#define N_FOCUS_DEFAULT_WIN_TYPE LIST_SIZE(focusDefaultWinType)
 
 static char *shadeDefaultWinType[] = {
 	N_("Normal"),
@@ -1140,7 +1160,7 @@ static char *shadeDefaultWinType[] = {
 	N_("Utility")
 };
 
-#define N_SHADE_DEFAULT_WIN_TYPE (sizeof (shadeDefaultWinType) / sizeof (shadeDefaultWinType[0]))
+#define N_SHADE_DEFAULT_WIN_TYPE LIST_SIZE(shadeDefaultWinType)
 
 typedef struct RestackInfo
 {
@@ -1215,6 +1235,7 @@ typedef enum
 	ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS,
 	ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X,
 	ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y,
+	ANIM_SCREEN_OPTION_EXPLODE3D_TESS,
 	ANIM_SCREEN_OPTION_FIRE_PARTICLES,
 	ANIM_SCREEN_OPTION_FIRE_SIZE,
 	ANIM_SCREEN_OPTION_FIRE_SLOWDOWN,
@@ -1290,6 +1311,8 @@ typedef struct _AnimScreen
 	int markAllWinCreatedCountdown;
 	// to mark windows as "created" if they were opened before compiz
 	// was started
+
+	PolygonTess explodePolygonTess; // explode polygon tesselation type
 
 	Bool animInProgress;
 	AnimEffect minimizeEffect;
@@ -1431,8 +1454,6 @@ AnimEffectProperties *animEffectPropertiesTmp;
                 GET_ANIM_DISPLAY (w->screen->display)))
 
 #define NUM_OPTIONS(s) (sizeof ((s)->opt) / sizeof (CompOption))
-
-#define LIST_SIZE(l) (sizeof (l) / sizeof (l[0]))
 
 
 // iterate over given list
@@ -5452,10 +5473,24 @@ static void fxExplode3DInit(CompScreen * s, CompWindow * w)
 {
 	ANIM_WINDOW(w);
 	ANIM_SCREEN(s);
-	if (!tessellateIntoRectangles(w, 
-		as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X].value.i,
-		as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y].value.i,
-		as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS].value.f))
+
+	if (as->explodePolygonTess == PolygonTessRect)
+	{
+		if (!tessellateIntoRectangles(w, 
+			as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X].value.i,
+			as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y].value.i,
+			as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS].value.f))
+			return;
+	}
+	else if (as->explodePolygonTess == PolygonTessHex)
+	{
+		if (!tessellateIntoHexagons(w, 
+			as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X].value.i,
+			as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y].value.i,
+			as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS].value.f))
+			return;
+	}
+	else
 		return;
 
 	PolygonSet *pset = aw->polygonSet;
@@ -6591,6 +6626,21 @@ animSetScreenOption(CompScreen * screen, char *name, CompOptionValue * value)
 		if (compSetIntOption(o, value))
 		{
 			return TRUE;
+		}
+		break;
+	case ANIM_SCREEN_OPTION_EXPLODE3D_TESS:
+		if (compSetStringOption(o, value))
+		{
+			int i;
+
+			for (i = 0; i < NUM_TESS; i++)
+			{
+				if (strcmp(o->value.s, polygonTessName[i]) == 0)
+				{
+					as->explodePolygonTess = i;
+					return TRUE;
+				}
+			}
 		}
 		break;
 	case ANIM_SCREEN_OPTION_GLIDE1_AWAY_POS:
@@ -7928,8 +7978,8 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Explode");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Thickness of Exploded Polygons");
-	o->longDesc = N_("Thickness of exploded window pieces.");
+	o->shortDesc = N_("Thickness of Exploding Polygons");
+	o->longDesc = N_("Thickness of exploding window pieces.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_EXPLODE3D_THICKNESS_DEFAULT;
@@ -7942,7 +7992,7 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Explode");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Window grid width");
+	o->shortDesc = N_("Window Grid Width");
 	o->longDesc = N_("The exploding window will be split into pieces along a grid.  Specify the width, in pixels, of the columns in the grid.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
@@ -7955,13 +8005,26 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Explode");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Window grid height");
+	o->shortDesc = N_("Window Grid Height");
 	o->longDesc = N_("The exploding window will be split into pieces along a grid.  Specify the height, in pixels, of the rows in the grid.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_EXPLODE3D_GRIDSIZE_Y_DEFAULT;
 	o->rest.i.min = ANIM_EXPLODE3D_GRIDSIZE_Y_MIN;
 	o->rest.i.max = ANIM_EXPLODE3D_GRIDSIZE_Y_MAX;
+
+	o = &as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_TESS];
+	o->name = "explode_tessellation";
+	//o->group = N_("Explode");
+	//o->subGroup = N_("");
+	//o->advanced = False;
+	o->shortDesc = N_("Tessellation Type");
+	o->longDesc = N_("Tessellation type for exploding window pieces.");
+	//o->displayHints = "";
+	o->type = CompOptionTypeString;
+	o->value.s = strdup(animDirectionName[ANIM_EXPLODE3D_TESS_DEFAULT]);
+	o->rest.s.string = polygonTessName;
+	o->rest.s.nString = LIST_SIZE(polygonTessName);
 
 	// Glide 1
 
