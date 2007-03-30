@@ -1,5 +1,7 @@
         <!-- animation options -->
 
+<gconfschemafile>
+    <schemalist>
         <schema>
             <key>/schemas/apps/compiz/plugins/animation/info</key>
             <applyto>/apps/compiz/plugins/animation/info</applyto>
@@ -2767,3 +2769,5 @@
             </locale>
         </schema>
 
+    </schemalist>
+</gconfschemafile>
