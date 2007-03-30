@@ -1510,6 +1510,14 @@ AnimEffectProperties *animEffectPropertiesTmp;
 #define sigmoid(fx) (1.0f/(1.0f+exp(-5.0f*2*((fx)-0.5))))
 #define sigmoid2(fx, s) (1.0f/(1.0f+exp(-(s)*2*((fx)-0.5))))
 
+// Menu fix hack for mozilla apps. It can be removed
+// once the bug is fixed in mozilla code base.
+#define GET_WINDOW_TYPE(w) \
+	(((w)->type == CompWindowTypeNormalMask && \
+	  (w)->attrib.override_redirect) \
+	 ? CompWindowTypeUnknownMask \
+	 : (w)->type)
+
 static void modelCalcBounds(Model * model)
 {
 	int i;
@@ -8129,7 +8137,7 @@ initiateFocusAnimation
 	if (aw->curWindowEvent != WindowEventNone || as->switcherActive)
 		return;
 
-	if ((as->focusWMask & w->type) && as->focusEffect &&
+	if ((as->focusWMask & GET_WINDOW_TYPE(w)) && as->focusEffect &&
 		// On unminimization, focus event is fired first.
 		// When this happens and minimize is in progress,
 		// don't prevent rewinding of minimize when unminimize is fired
@@ -9410,7 +9418,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 
 					aw->nowShaded = TRUE;
 
-					if (as->shadeEffect && (as->shadeWMask & w->type))
+					if (as->shadeEffect && (as->shadeWMask & GET_WINDOW_TYPE(w)))
 					{
 						//IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, TRUE);
 						Bool startingNew = TRUE;
@@ -9483,7 +9491,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 				}
 				else if (w->minimized
 						 && as->minimizeEffect
-						 && (as->minimizeWMask & w->type))
+						 && (as->minimizeWMask & GET_WINDOW_TYPE(w)))
 				{
 					// MINIMIZE event!
 
@@ -9592,9 +9600,9 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 				AnimEffect windowsCloseEffect = AnimEffectNone;
 				int whichClose = 1;	// either 1 or 2
 
-				if (as->close1Effect && (as->close1WMask & w->type))
+				if (as->close1Effect && (as->close1WMask & GET_WINDOW_TYPE(w)))
 					windowsCloseEffect = as->close1Effect;
-				else if (as->close2Effect && (as->close2WMask & w->type))
+				else if (as->close2Effect && (as->close2WMask & GET_WINDOW_TYPE(w)))
 				{
 					windowsCloseEffect = as->close2Effect;
 					whichClose = 2;
@@ -9773,9 +9781,9 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 					}
 				}
 				else if ((as->create1Effect
-						  && (as->create1WMask & w->type))
+						  && (as->create1WMask & GET_WINDOW_TYPE(w)))
 						 || (as->create2Effect
-							 && (as->create2WMask & w->type)))
+							 && (as->create2WMask & GET_WINDOW_TYPE(w))))
 				{
 					// stop the current animation and prevent it from rewinding
 
@@ -9968,7 +9976,7 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 		if (aw->state == IconicState)
 		{
 			if (!w->invisible && as->unminimizeEffect
-				&& (as->unminimizeWMask & w->type))
+				&& (as->unminimizeWMask & GET_WINDOW_TYPE(w)))
 			{
 				// UNMINIMIZE event!
 
@@ -10067,7 +10075,7 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 			//IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, TRUE);
 			aw->nowShaded = FALSE;
 
-			if (as->unshadeEffect && (as->unshadeWMask & w->type))
+			if (as->unshadeEffect && (as->unshadeWMask & GET_WINDOW_TYPE(w)))
 			{
 				Bool startingNew = TRUE;
 
@@ -10135,9 +10143,9 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 			int whichCreate = 1;	// either 1 or 2
 
-			if (as->create1Effect && (as->create1WMask & w->type))
+			if (as->create1Effect && (as->create1WMask & GET_WINDOW_TYPE(w)))
 				windowsCreateEffect = as->create1Effect;
-			else if (as->create2Effect && (as->create2WMask & w->type))
+			else if (as->create2Effect && (as->create2WMask & GET_WINDOW_TYPE(w)))
 			{
 				windowsCreateEffect = as->create2Effect;
 				whichCreate = 2;
