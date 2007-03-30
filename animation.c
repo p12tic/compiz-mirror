@@ -1,10 +1,10 @@
 /*
- * Animation plugin for beryl
+ * Animation plugin for compiz/beryl
  *
  * animation.c
  *
  * Copyright : (C) 2006 Erkin Bahceci
- * E-mail    : cornelius@beryl-project.org
+ * E-mail    : erkinbah@gmail.com
  *
  * Based on Wobbly and Minimize plugins by
  *           : David Reveman
