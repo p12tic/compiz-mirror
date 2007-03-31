@@ -13,9 +13,11 @@
  * Particle system added by : (C) 2006 Dennis Kasprzyk
  * E-mail                   : onestone@beryl-project.org
  *
- * Added Beam-Up : Florencio Guimaraes
- * E-mail        : florencio@nexcorp.com.br
+ * Beam-Up added by : Florencio Guimaraes
+ * E-mail           : florencio@nexcorp.com.br
  *
+ * Hexagon tessellator added by : Mike Slegeir
+ * E-mail                       : mikeslegeir@mail.utexas.edu>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
