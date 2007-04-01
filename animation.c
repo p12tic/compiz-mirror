@@ -11072,7 +11072,8 @@ static void animFini(CompPlugin * p)
 }
 
 CompPluginDep animDeps[] = {
-	{CompPluginRuleAfter, "decoration"}
+	{CompPluginRuleAfter, "decoration"},
+	{CompPluginRuleBefore, "fade"}
 };
 
 static int
