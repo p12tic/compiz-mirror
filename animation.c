@@ -1179,6 +1179,7 @@ typedef struct _AnimDisplay
 	Atom winIconGeometryAtom;
 	HandleEventProc handleEvent;
 	HandleCompizEventProc handleCompizEvent;
+	int activeWindow;
 } AnimDisplay;
 
 typedef enum
@@ -9729,7 +9730,6 @@ updateLastClientListStacking(CompScreen *s)
 
 static void animHandleEvent(CompDisplay * d, XEvent * event)
 {
-	Window activeWindow = 0;
 	CompWindow *w;
 
 	ANIM_DISPLAY(d);
@@ -9737,9 +9737,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 	switch (event->type)
 	{
 	case PropertyNotify:
-		if (event->xproperty.atom == d->winActiveAtom)
-			activeWindow = d->activeWindow;
-		else if (event->xproperty.atom == d->clientListStackingAtom)
+		if (event->xproperty.atom == d->clientListStackingAtom)
 		{
 			CompScreen *s = findScreenAtDisplay (d, event->xproperty.window);
 			updateLastClientListStacking(s);
@@ -10304,7 +10302,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 			}
 			updateLastClientListStacking(s);
 		}
-
+		break;
 	default:
 		break;
 	}
@@ -10317,15 +10315,16 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 	{
 	case PropertyNotify:
 		if (event->xproperty.atom == d->winActiveAtom &&
-			d->activeWindow != activeWindow)
+			d->activeWindow != ad->activeWindow)
 		{
+			ad->activeWindow = d->activeWindow;
 			w = findWindowAtDisplay(d, d->activeWindow);
 			
 			if (w)
 			{
-			    ANIM_SCREEN(w->screen);
-			    if (as->focusEffect != AnimEffectFocusFade)
-				initiateFocusAnimationNonFade(w);
+				ANIM_SCREEN(w->screen);
+				if (as->focusEffect != AnimEffectFocusFade)
+					initiateFocusAnimationNonFade(w);
 			}
 		}
 		break;
