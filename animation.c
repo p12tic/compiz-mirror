@@ -4173,7 +4173,7 @@ tessellateIntoRectangles(CompWindow * w,
 			pv[22] = -halfH;
 			pv[23] = -halfThick;
 
-			// 10 indices for 4 sides (for quad strip)
+			// 16 indices for 4 sides (for quad strip)
 			if (!p->sideIndices)
 			{
 				//p->sideIndices = calloc(1, sizeof(GLushort) * 2 * (4 + 1));
@@ -4223,7 +4223,7 @@ tessellateIntoRectangles(CompWindow * w,
 			ind[id++] = 7;
 			ind[id++] = 0;
 
-			// 4 front, 4 back vertex normals
+			// Surface normals
 			if (!p->normals)
 			{
 				p->normals = calloc(1, sizeof(GLfloat) * (2 + 4) * 3);
@@ -4236,7 +4236,6 @@ tessellateIntoRectangles(CompWindow * w,
 				return FALSE;
 			}
 
-			// Surface normals
 			GLfloat *nor = p->normals;
 
 			// Front
@@ -4303,7 +4302,6 @@ static Bool
 tessellateIntoHexagons(CompWindow * w,
                      int gridSizeX, int gridSizeY, float thickness)
 {
-
 	ANIM_WINDOW(w);
 
 	PolygonSet *pset = aw->polygonSet;
@@ -4339,7 +4337,8 @@ tessellateIntoHexagons(CompWindow * w,
 	if (hexH < minSize)
 		gridSizeY = winLimitsH / minSize;	// int div.
 
-	int nPolygons = (gridSizeY + 1) * (gridSizeX + gridSizeY/2 + gridSizeY%2);
+	int nPolygons = (gridSizeY + 1) * gridSizeX + (gridSizeY + 1) / 2;
+
 	if (pset->nPolygons != nPolygons)
 	{
 		if (pset->nPolygons > 0)
@@ -4493,10 +4492,9 @@ tessellateIntoHexagons(CompWindow * w,
 			pv[34] = topY;
 			pv[35] = -halfThick;
 
-			// 4 indices per 6 sides (for quad strip)
+			// 24 indices per 6 sides (for quad strip)
 			if (!p->sideIndices)
 			{
-				//p->sideIndices = calloc(1, sizeof(GLushort) * 2 * (4 + 1));
 				p->sideIndices = calloc(1, sizeof(GLushort) * 4*6);
 			}
 			if (!p->sideIndices)
@@ -4541,10 +4539,10 @@ tessellateIntoHexagons(CompWindow * w,
 			ind[id++] = 11;
 			ind[id++] = 0;			
 
-			// 6 front, 6 back vertex normals
+			// Surface normals
 			if (!p->normals)
 			{
-				p->normals = calloc(1, sizeof(GLfloat) * 30);
+				p->normals = calloc(1, sizeof(GLfloat) * (2 + 6) * 3);
 			}
 			if (!p->normals)
 			{
@@ -4554,7 +4552,6 @@ tessellateIntoHexagons(CompWindow * w,
 				return FALSE;
 			}
 
-			// Surface normals
 			GLfloat *nor = p->normals;
 
 			// Front
@@ -4562,43 +4559,35 @@ tessellateIntoHexagons(CompWindow * w,
 			nor[1] = 0;
 			nor[2] = -1;
 			
+			// Back
 			nor[3] = 0;
 			nor[4] = 0;
-			nor[5] = -1;
-			
-			// Back
-			nor[6] = 0;
-			nor[7] = 0;
-			nor[8] = 1;
-			
-			nor[9] = 0;
-			nor[10] = 0;
-			nor[11] = 1;
+			nor[5] = 1;
 			
 			// Sides
+			nor[6] = -1;
+			nor[7] = 1;
+			nor[8] = 0;
+			
+			nor[9] = -1;
+			nor[10] = 0;
+			nor[11] = 0;
+			
 			nor[12] = -1;
-			nor[13] = 1;
+			nor[13] = -1;
 			nor[14] = 0;
-			
-			nor[15] = -1;
-			nor[16] = 0;
+
+			nor[15] = 1;
+			nor[16] = -1;
 			nor[17] = 0;
-			
-			nor[18] = -1;
-			nor[19] = -1;
+
+			nor[18] = 1;
+			nor[19] = 0;
 			nor[20] = 0;
 
 			nor[21] = 1;
-			nor[22] = -1;
-			nor[23] = 0;
-
-			nor[24] = 1;
-			nor[25] = 0;
-			nor[26] = 0;
-
-			nor[27] = 1;
-			nor[28] = 1;
-			nor[29] = 0;			
+			nor[22] = 1;
+			nor[23] = 0;			
 
 			// Determine bounding box (to test intersection with clips)
 			p->boundingBox.x1 = topLeftX + p->centerPos.x;
@@ -4607,6 +4596,9 @@ tessellateIntoHexagons(CompWindow * w,
 			p->boundingBox.y2 = ceil(bottomY + p->centerPos.y);
 		}
 	}
+	if (pset->nPolygons != p - pset->polygons)
+		fprintf(stderr, "%s: Error in tessellateIntoHexagons at line %d!\n",
+				__FILE__, __LINE__);
 	return TRUE;
 
 }
