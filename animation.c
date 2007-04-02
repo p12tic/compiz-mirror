@@ -5514,20 +5514,21 @@ static void fxExplode3DInit(CompScreen * s, CompWindow * w)
 		float xx = 2 * (p->centerRelPos.x - 0.5);
 		float yy = 2 * (p->centerRelPos.y - 0.5);
 
-		float x = speed * (xx + 0.5 * (RAND_FLOAT() - 0.5));
-		float y = speed * (yy + 0.5 * (RAND_FLOAT() - 0.5));
+		float x = speed * 2 * (xx + 0.5 * (RAND_FLOAT() - 0.5));
+		float y = speed * 2 * (yy + 0.5 * (RAND_FLOAT() - 0.5));
 
-		float zbias = 0.3;
-		float z =
-				speed * 10 * (zbias +
-							  (sqrt2 - sqrt(xx * xx + yy * yy)) / sqrt2);
+		float distToCenter = (sqrt2 - sqrt(xx * xx + yy * yy)) / sqrt2;
+		float zbias = 0.1;
+		float z = speed * 10 *
+			(zbias + RAND_FLOAT() *
+			 pow(distToCenter, 0.5));
 
 		p->finalRelPos.x = x;
 		p->finalRelPos.y = y;
 		p->finalRelPos.z = z;
-		p->finalRotAng = 270;
+		p->finalRotAng = RAND_FLOAT() * 540 - 270;
 	}
-	pset->allFadeDuration = 0.2f;
+	pset->allFadeDuration = 0.3f;
 	pset->doDepthTest = TRUE;
 	pset->doLighting = TRUE;
 	pset->correctPerspective = TRUE;
