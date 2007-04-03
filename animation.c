@@ -6071,7 +6071,10 @@ static int animGetWindowState(CompWindow * w)
 }
 
 static Bool
-animSetScreenOption(CompScreen * screen, char *name, CompOptionValue * value)
+animSetScreenOption(CompPlugin *plugin,
+					CompScreen * screen,
+					char *name,
+					CompOptionValue * value)
 {
 	CompOption *o;
 	int index;
@@ -8119,7 +8122,8 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.f.precision = ANIM_GLIDE2_THICKNESS_PRECISION;
 }
 
-static CompOption *animGetScreenOptions(CompScreen * screen, int *count)
+static CompOption *
+animGetScreenOptions(CompPlugin *plugin, CompScreen * screen, int *count)
 {
 	if (screen)
 	{
