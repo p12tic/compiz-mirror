@@ -5490,7 +5490,7 @@ static void fxExplode3DInit(CompScreen * s, CompWindow * w)
 
 	PolygonSet *pset = aw->polygonSet;
 	PolygonObject *p = pset->polygons;
-	float sqrt2 = sqrt(2);
+	double sqrt2 = sqrt(2);
 
 	int i;
 
@@ -5509,11 +5509,13 @@ static void fxExplode3DInit(CompScreen * s, CompWindow * w)
 		float x = speed * 2 * (xx + 0.5 * (RAND_FLOAT() - 0.5));
 		float y = speed * 2 * (yy + 0.5 * (RAND_FLOAT() - 0.5));
 
-		float distToCenter = (sqrt2 - sqrt(xx * xx + yy * yy)) / sqrt2;
+		float distToCenter = sqrt(xx * xx + yy * yy) / sqrt2;
+		float moveMult = 1 - distToCenter;
+		moveMult = moveMult < 0 ? 0 : moveMult;
 		float zbias = 0.1;
 		float z = speed * 10 *
 			(zbias + RAND_FLOAT() *
-			 pow(distToCenter, 0.5));
+			 pow(moveMult, 0.5));
 
 		p->finalRelPos.x = x;
 		p->finalRelPos.y = y;
