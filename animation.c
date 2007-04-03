@@ -10211,23 +10211,38 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 				// compare first changed win. of row 1 with last
 				// changed win. of row 2, and vica versa
 				// the matching one is the restacked one
-				Window restackedOne = 0;
 				CompWindow *wRestacked = 0;
 				CompWindow *wStart = 0;
 				CompWindow *wEnd = 0;
 				CompWindow *wOldAbove = 0;
+				CompWindow *wChangeStart = 0;
+				CompWindow *wChangeEnd = 0;
+
 				Bool raised = FALSE;
 				int changeStart = -1;
 				int changeEnd = -1;
 				for (i = 0; i < n; i++)
 				{
+					CompWindow *wi =
+						findWindowAtScreen (s, clientListStacking[i]);
+
+					// skip if minimized (prevents flashing problem)
+					if (!isWinVisible(wi))
+						continue;
+
 					if (clientListStacking[i] !=
 					    as->lastClientListStacking[i])
 					{
 						if (changeStart < 0)
+						{
 							changeStart = i;
+							wChangeStart = wi; // make use of already found w
+						}
 						else
+						{
 							changeEnd = i;
+							wChangeEnd = wi;
+						}
 					}
 					else if (changeStart >= 0) // found some change earlier
 						break;
@@ -10250,10 +10265,8 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 					{
 						// raised
 						raised = TRUE;
-						restackedOne = clientListStacking[changeEnd];
-						wRestacked = findWindowAtScreen (s, restackedOne);
-						wStart = findWindowAtScreen
-							(s, clientListStacking[changeStart]);
+						wRestacked = wChangeEnd;
+						wStart = wChangeStart;
 						wEnd = wRestacked;
 						wOldAbove = wStart;
 					}
@@ -10261,11 +10274,9 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 					    as->lastClientListStacking[changeEnd])
 					{
 						// lowered
-						restackedOne = clientListStacking[changeStart];
-						wRestacked = findWindowAtScreen (s, restackedOne);
+						wRestacked = wChangeStart;
 						wStart = wRestacked;
-						wEnd = findWindowAtScreen
-							(s, clientListStacking[changeEnd]);
+						wEnd = wChangeEnd;
 						wOldAbove = findWindowAtScreen
 							(s, as->lastClientListStacking[changeEnd+1]);
 					}
