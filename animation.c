@@ -11115,4 +11115,3 @@ CompPluginVTable *getCompPluginInfo(void)
 {
 	return &animVTable;
 }
-
