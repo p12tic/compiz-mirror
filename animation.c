@@ -8446,11 +8446,7 @@ static void postAnimationCleanup(CompWindow * w, Bool resetAnimation)
 		int i = 0;
 
 		for (i = 0; i < aw->numPs; i++)
-		{
-			free(aw->ps[i].particles);
-			if (aw->ps[i].tex)
-				glDeleteTextures(1, &aw->ps[i].tex);
-		}
+			finiParticles(aw->ps + i);
 		free(aw->ps);
 		aw->ps = NULL;
 		aw->numPs = 0;
