@@ -10229,7 +10229,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						findWindowAtScreen (s, clientListStacking[i]);
 
 					// skip if minimized (prevents flashing problem)
-					if (!isWinVisible(wi))
+					if (!wi || !isWinVisible(wi))
 						continue;
 
 					if (clientListStacking[i] !=
