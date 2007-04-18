@@ -573,24 +573,6 @@ static char *animDirectionName[] = {
 
 typedef enum
 {
-	PostprocessDisablingNone = 0,
-	PostprocessDisablingWindow,
-	PostprocessDisablingScreenOnlyMin,
-	PostprocessDisablingScreen
-} PostprocessDisabling;
-
-static char *ppDisablingName[] = {
-	N_("No disabling"),
-	N_("Animated window"),
-	N_("All windows only on (un)minimize events"),
-	N_("All windows")
-};
-
-#define N_ANIM_DISABLE_PP_FX (sizeof (ppDisablingName) / sizeof (ppDisablingName[0]))
-#define ANIM_DISABLE_PP_FX_DEFAULT PostprocessDisablingWindow
-
-typedef enum
-{
 	ZoomFromCenterOff = 0,
 	ZoomFromCenterMin,
 	ZoomFromCenterCreate,
@@ -1223,7 +1205,6 @@ typedef enum
 	ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR,
 	// Misc. settings
 	ANIM_SCREEN_OPTION_ALL_RANDOM,
-	ANIM_SCREEN_OPTION_DISABLE_PP_FX,
 	ANIM_SCREEN_OPTION_TIME_STEP,
 	ANIM_SCREEN_OPTION_TIME_STEP_INTENSE,
 	// Effect settings
@@ -1299,8 +1280,6 @@ typedef struct _AnimScreen
 	WindowUngrabNotifyProc windowUngrabNotify;
 
 	CompOption opt[ANIM_SCREEN_OPTION_NUM];
-
-	PostprocessDisabling ppDisabling;
 
 	ZoomFromCenter zoomFC;
 
@@ -2184,12 +2163,6 @@ static void fxDreamModelStep(CompScreen * s, CompWindow * w, float time)
 	{
 		float forwardProgress = defaultAnimProgress(aw);
 
-		/* For blurfx
-		if (!screenGrabExist(s, "rotate", "scale", "wall", "expo", 0))
-			IPCS_SetFloatN(IPCS_OBJECT(w), "BLUR_OPACITY_FACTOR",
-						   1 - forwardProgress);
-		*/
-
 		for (i = 0; i < model->numObjects; i++)
 		{
 			fxDreamModelStepObject(w,
@@ -2480,12 +2453,6 @@ static void fxZoomModelStep(CompScreen * s, CompWindow * w, float time)
 		float yProgress = fxZoomAnimProgressDirCustom(aw, yMaxSig);
 		float progress = (xProgress + yProgress) / 2;
 
-		/* For blurfx
-		if (!screenGrabExist(s, "rotate", "scale", "wall", "expo", 0))
-			IPCS_SetFloatN(IPCS_OBJECT(w), "BLUR_OPACITY_FACTOR",
-						   1 - progress);
-		*/
-
 		Point currentCenter =
 			{(1 - xProgress) * winCenter.x + xProgress * iconCenter.x,
 			 (1 - yProgress) * winCenter.y + yProgress * iconCenter.y};
@@ -2634,12 +2601,6 @@ static void fxGlideAnimStep(CompScreen * s, CompWindow * w, float time)
 	for (j = 0; j < steps; j++)
 	{
 		float forwardProgress = fxGlideAnimProgress(aw);
-
-		/* For blurfx
-		if (!screenGrabExist(s, "rotate", "scale", "wall", "expo", 0))
-			IPCS_SetFloatN(IPCS_OBJECT(w), "BLUR_OPACITY_FACTOR",
-						   1 - forwardProgress);
-		*/
 
 		float finalz = finalDistFac * 0.8 * DEFAULT_Z_CAMERA * s->width;
 
@@ -3139,13 +3100,6 @@ static void fxFadeModelStep(CompScreen * s, CompWindow * w, float time)
 			break;
 		}
 	}
-
-	/* For blurfx
-	float progress = defaultAnimProgress(aw);
-
-	if (!screenGrabExist(s, "rotate", "scale", "wall", "expo", 0))
-		IPCS_SetFloatN(IPCS_OBJECT(w), "BLUR_OPACITY_FACTOR", 1 - progress);
-	*/
 }
 
 static void
@@ -3164,21 +3118,6 @@ fxFadeUpdateWindowAttrib(AnimScreen * as,
 static void fxFocusFadeModelStep(CompScreen * s, CompWindow * w, float time)
 {
 	fxFadeModelStep(s, w, time);
-
-	/* For blurfx
-	ANIM_WINDOW(w);
-
-	float progress = defaultAnimProgress(aw);
-
-	// Reduce blurring in the middle of the animation
-	// to avoid over-blurred window (because of painting 2 copies of
-	// the window during focus fade)
-
-	if (!screenGrabExist(s, "rotate", "scale", "wall", "expo", 0))
-		IPCS_SetFloatN(IPCS_OBJECT(w), "BLUR_OPACITY_FACTOR",
-					   1 - sin(acos(1 - 2 * acos(1 - 2 * progress)/M_PI)) *
-						   0.6);
-	*/
 }
 
 static void
@@ -6128,21 +6067,6 @@ animSetScreenOption(CompPlugin *plugin,
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_DISABLE_PP_FX:
-		if (compSetStringOption(o, value))
-		{
-			int i;
-
-			for (i = 0; i < N_ANIM_DISABLE_PP_FX; i++)
-			{
-				if (strcmp(o->value.s, ppDisablingName[i]) == 0)
-				{
-					as->ppDisabling = i;
-					return TRUE;
-				}
-			}
-		}
-		break;
 	case ANIM_SCREEN_OPTION_MAGIC_LAMP1_GRID_RES:
 		if (compSetIntOption(o, value))
 		{
@@ -6890,19 +6814,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->value.i = ANIM_TIME_STEP_INTENSE_DEFAULT;
 	o->rest.i.min = ANIM_TIME_STEP_INTENSE_MIN;
 	o->rest.i.max = ANIM_TIME_STEP_INTENSE_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_DISABLE_PP_FX];
-	o->name = "disable_pp_fx";
-	//o->group = N_("Misc. Settings");
-	//o->subGroup = N_("Advanced");
-	//o->advanced = False;
-	o->shortDesc = N_("Disable Post-processing Effects During Animation");
-	o->longDesc = N_("Disables blur effect during animations.");
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(ppDisablingName[ANIM_DISABLE_PP_FX_DEFAULT]);
-	o->rest.s.string = ppDisablingName;
-	o->rest.s.nString = N_ANIM_DISABLE_PP_FX;
 
 	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_GRID_RES];
 	o->name = "magic_lamp1_grid_res";
@@ -8386,31 +8297,8 @@ static void postAnimationCleanup(CompWindow * w, Bool resetAnimation)
 	ANIM_WINDOW(w);
 	ANIM_SCREEN(w->screen);
 
-	//if (!screenGrabExist(w->screen, "wall", "expo", 0))
-	//	IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, FALSE);
-
 	if (resetAnimation)
 	{
-		/*
-		if (!screenGrabExist(w->screen, "wall", "expo", 0))
-		{
-			// if 3d polygon fx
-			if (playingPolygonEffect(as, aw))
-			{
-				IPCS_SetBoolN(IPCS_OBJECT(w), "DISABLE_BLUR", FALSE);
-				IPCS_SetBoolN(IPCS_OBJECT(w), "DISABLE_REFLECTION", FALSE);
-			}
-			if (as->ppDisabling == PostprocessDisablingWindow)
-				IPCS_SetBoolN(IPCS_OBJECT(w), "DISABLE_BLUR", FALSE);
-			if ((!as->animInProgress &&
-				 as->ppDisabling == PostprocessDisablingScreen) ||
-				(as->ppDisabling == PostprocessDisablingScreenOnlyMin &&
-				 (aw->curWindowEvent == WindowEventMinimize ||
-				  aw->curWindowEvent == WindowEventUnminimize)))
-				IPCS_SetBoolN(IPCS_OBJECT(w->screen), "DISABLE_BLUR", FALSE);
-		}
-		IPCS_SetFloatN(IPCS_OBJECT(w), "BLUR_OPACITY_FACTOR", 1);
-		*/
 		aw->curWindowEvent = WindowEventNone;
 		aw->curAnimEffect = AnimEffectNone;
 		aw->animOverrideProgressDir = 0;
@@ -8552,8 +8440,6 @@ initiateFocusAnimation
 
 		//printf("FOCUS event! %X\n", (unsigned)aw);
 
-		//if (!screenGrabExist(s, "wall", "expo", 0))
-		//	IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, TRUE);
 		if (aw->curWindowEvent != WindowEventNone)
 		{
 			postAnimationCleanup(w, TRUE);
@@ -8663,15 +8549,6 @@ static void animPreparePaintScreen(CompScreen * s, int msSinceLastPaint)
 		BoxRec box;
 		Point topLeft, bottomRight;
 
-		/*
-		if (!screenGrabExist(s, "wall", "expo", 0))
-		{
-			if (as->ppDisabling == PostprocessDisablingScreen)
-				IPCS_SetBoolN(IPCS_OBJECT(s), "DISABLE_BLUR", TRUE);
-			else
-				IPCS_SetBoolN(IPCS_OBJECT(s), "DISABLE_BLUR", FALSE);
-		}
-		*/
 		as->animInProgress = FALSE;
 		for (w = s->windows; w; w = w->next)
 		{
@@ -8723,31 +8600,11 @@ static void animPreparePaintScreen(CompScreen * s, int msSinceLastPaint)
 					}
 				}
 
-				/*
-				if (!screenGrabExist(s, "wall", "expo", 0))
-				{
-					if (as->ppDisabling == PostprocessDisablingWindow)
-						IPCS_SetBoolN(IPCS_OBJECT(w), "DISABLE_BLUR", TRUE);
-					else
-						IPCS_SetBoolN(IPCS_OBJECT(w), "DISABLE_BLUR", FALSE);
-					if (as->ppDisabling == PostprocessDisablingScreenOnlyMin &&
-						(aw->curWindowEvent == WindowEventMinimize ||
-						 aw->curWindowEvent == WindowEventUnminimize))
-						IPCS_SetBoolN(IPCS_OBJECT(s), "DISABLE_BLUR", TRUE);
-				}
-				*/
 				// if 3d polygon fx
 				if (playingPolygonEffect(as, aw))
 				{
 					aw->nClipsPassed = 0;
 					aw->clipsUpdated = FALSE;
-					/*
-					if (!screenGrabExist(s, "wall", "expo", 0))
-					{
-						IPCS_SetBoolN(IPCS_OBJECT(w), "DISABLE_BLUR", TRUE);
-						IPCS_SetBoolN(IPCS_OBJECT(w), "DISABLE_REFLECTION", TRUE);
-					}
-					*/
 				}
 				if (aw->model)
 				{
@@ -8845,14 +8702,6 @@ static void animDonePaintScreen(CompScreen * s)
 	{
 		damageScreen(s);
 	}
-	/*
-	if (!(as->animInProgress) &&
-		as->ppDisabling == PostprocessDisablingScreen &&
-		!screenGrabExist(s, "wall", "expo", 0))
-	{
-		IPCS_SetBoolN(IPCS_OBJECT(s), "DISABLE_BLUR", FALSE);
-	}
-	*/
 	UNWRAP(as, s, donePaintScreen);
 	(*s->donePaintScreen) (s);
 	WRAP(as, s, donePaintScreen, animDonePaintScreen);
@@ -9975,8 +9824,6 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 
 				if (windowsCloseEffect)
 				{
-					//if (!screenGrabExist(w->screen, "wall", "expo", 0))
-					//	IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, TRUE);
 					int tmpSteps = 0;
 
 					//printf("CLOSE event! %X\n", (unsigned)aw);
@@ -10534,8 +10381,6 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 				//printf("CREATE event! %X\n", (unsigned)aw);
 
-				//if (!screenGrabExist(w->screen, "wall", "expo", 0))
-				//	IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, TRUE);
 				Bool startingNew = TRUE;
 
 				if (aw->curWindowEvent != WindowEventNone)
@@ -10919,8 +10764,6 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 
 	as->zoomFC = ANIM_ZOOM_FROM_CENTER_DEFAULT;
 
-	as->ppDisabling = ANIM_DISABLE_PP_FX_DEFAULT;
-
 	as->switcherActive = FALSE;
 	as->scaleActive = FALSE;
 
@@ -10993,8 +10836,6 @@ static Bool animInitWindow(CompPlugin * p, CompWindow * w)
 
 	//aw->animatedAtom = IPCS_GetAtom(IPCS_OBJECT(w), IPCS_BOOL,
 	//								"IS_ANIMATED", TRUE);
-	//if (!screenGrabExist(w->screen, "wall", "expo", 0))
-	//	IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, FALSE);
 	aw->model = 0;
 	aw->state = w->state;
 	aw->animRemainingTime = 0;
@@ -11093,6 +10934,7 @@ CompPluginVTable animVTable = {
 	N_("Animations"),
 	N_("Use various animations as window effects"),
 	animGetVersion,
+	0,
 	animInit,
 	animFini,
 	animInitDisplay,
