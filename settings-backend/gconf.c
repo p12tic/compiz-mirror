@@ -1065,6 +1065,12 @@ static Bool finiBackend(BSContext * context)
 		gnomeNotifyId = 0;
 	}
 
+	if (currentProfile)
+	{
+		free (currentProfile);
+		currentProfile = NULL;
+	}
+
 	gconf_client_remove_dir(client, COMPIZ_BS, NULL);
 	gconf_client_remove_dir(client, METACITY, NULL);
 
@@ -1076,9 +1082,17 @@ static Bool finiBackend(BSContext * context)
 
 static Bool readInit(BSContext * context)
 {
+	if (currentProfile)
+		free (currentProfile);
+
 	currentProfile = bsGetProfile(context);
 	if (!currentProfile)
-		currentProfile = DEFAULTPROF;
+		currentProfile = strdup (DEFAULTPROF);
+	else if (!strlen(currentProfile))
+	{
+		free (currentProfile);
+		currentProfile = strdup (DEFAULTPROF);
+	}
 
 	return TRUE;
 }
@@ -1105,9 +1119,17 @@ static void readDone(BSContext * context)
 
 static Bool writeInit(BSContext * context)
 {
+	if (currentProfile)
+		free (currentProfile);
+
 	currentProfile = bsGetProfile(context);
 	if (!currentProfile)
-		currentProfile = DEFAULTPROF;
+		currentProfile = strdup (DEFAULTPROF);
+	else if (!strlen(currentProfile))
+	{
+		free (currentProfile);
+		currentProfile = strdup (DEFAULTPROF);
+	}
 
 	return TRUE;
 }
