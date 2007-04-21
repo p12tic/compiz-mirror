@@ -35,11 +35,11 @@
 #define WINRULES_SCREEN_OPTION_STICKY_MATCH       4
 #define WINRULES_SCREEN_OPTION_FULLSCREEN_MATCH   5
 #define WINRULES_SCREEN_OPTION_WIDGET_MATCH       6
-#define WINRULES_SCREEN_OPTION_MOVE_MATCH         7
-#define WINRULES_SCREEN_OPTION_RESIZE_MATCH       8
-#define WINRULES_SCREEN_OPTION_MINIMIZE_MATCH     9
-#define WINRULES_SCREEN_OPTION_MAXIMIZE_MATCH     10
-#define WINRULES_SCREEN_OPTION_CLOSE_MATCH        11
+#define WINRULES_SCREEN_OPTION_NOMOVE_MATCH       7
+#define WINRULES_SCREEN_OPTION_NORESIZE_MATCH     8
+#define WINRULES_SCREEN_OPTION_NOMINIMIZE_MATCH   9
+#define WINRULES_SCREEN_OPTION_NOMAXIMIZE_MATCH   10
+#define WINRULES_SCREEN_OPTION_NOCLOSE_MATCH      11
 #define WINRULES_SCREEN_OPTION_NOFOCUS_MATCH      12
 #define WINRULES_SCREEN_OPTION_SIZE_MATCHES	  13
 #define WINRULES_SCREEN_OPTION_SIZE_WIDTH_VALUES  14
@@ -361,7 +361,7 @@ winrulesScreenInitOptions (WinrulesScreen *ws)
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
-    o = &ws->opt[WINRULES_SCREEN_OPTION_MOVE_MATCH];
+    o = &ws->opt[WINRULES_SCREEN_OPTION_NOMOVE_MATCH];
     o->name	         = "no_move_match";
     o->shortDesc         = N_("Non movable windows");
     o->longDesc	         = N_("Set window as non movable");
@@ -369,7 +369,7 @@ winrulesScreenInitOptions (WinrulesScreen *ws)
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
-    o = &ws->opt[WINRULES_SCREEN_OPTION_RESIZE_MATCH];
+    o = &ws->opt[WINRULES_SCREEN_OPTION_NORESIZE_MATCH];
     o->name	         = "no_resize_match";
     o->shortDesc         = N_("Non resizable windows");
     o->longDesc	         = N_("Set window as non resizable");
@@ -377,7 +377,7 @@ winrulesScreenInitOptions (WinrulesScreen *ws)
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
-    o = &ws->opt[WINRULES_SCREEN_OPTION_MINIMIZE_MATCH];
+    o = &ws->opt[WINRULES_SCREEN_OPTION_NOMINIMIZE_MATCH];
     o->name	         = "no_minimize_match";
     o->shortDesc         = N_("Non minimizable windows");
     o->longDesc	         = N_("Set window as non minimizable");
@@ -385,7 +385,7 @@ winrulesScreenInitOptions (WinrulesScreen *ws)
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
-    o = &ws->opt[WINRULES_SCREEN_OPTION_MAXIMIZE_MATCH];
+    o = &ws->opt[WINRULES_SCREEN_OPTION_NOMAXIMIZE_MATCH];
     o->name	         = "no_maximize_match";
     o->shortDesc         = N_("Non maximizable windows");
     o->longDesc	         = N_("Set window as non maximizable");
@@ -393,7 +393,7 @@ winrulesScreenInitOptions (WinrulesScreen *ws)
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
-    o = &ws->opt[WINRULES_SCREEN_OPTION_CLOSE_MATCH];
+    o = &ws->opt[WINRULES_SCREEN_OPTION_NOCLOSE_MATCH];
     o->name	         = "no_close_match";
     o->shortDesc         = N_("Non closable windows");
     o->longDesc	         = N_("Set window as non closable");
@@ -596,7 +596,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	}
 	break;
 
-    case WINRULES_SCREEN_OPTION_MOVE_MATCH:
+    case WINRULES_SCREEN_OPTION_NOMOVE_MATCH:
 	if (compSetMatchOption (o, value))
 	{
 	    for (w = screen->windows; w; w = w->next)
@@ -605,14 +605,14 @@ winrulesSetScreenOption (CompPlugin *plugin,
 		    continue;
 
 		winrulesSetAllowedActions (w,
-					   WINRULES_SCREEN_OPTION_MOVE_MATCH,
+					   WINRULES_SCREEN_OPTION_NOMOVE_MATCH,
 					   CompWindowActionMoveMask);
 	    }
 	    return TRUE;
 	}
 	break;
 
-    case WINRULES_SCREEN_OPTION_RESIZE_MATCH:
+    case WINRULES_SCREEN_OPTION_NORESIZE_MATCH:
 	if (compSetMatchOption (o, value))
 	{
 	    for (w = screen->windows; w; w = w->next)
@@ -621,14 +621,14 @@ winrulesSetScreenOption (CompPlugin *plugin,
 		    continue;
 
 		winrulesSetAllowedActions (w,
-					   WINRULES_SCREEN_OPTION_RESIZE_MATCH,
+					   WINRULES_SCREEN_OPTION_NORESIZE_MATCH,
 					   CompWindowActionResizeMask);
 	    }
 	    return TRUE;
 	}
 	break;
 
-    case WINRULES_SCREEN_OPTION_MINIMIZE_MATCH:
+    case WINRULES_SCREEN_OPTION_NOMINIMIZE_MATCH:
 	if (compSetMatchOption (o, value))
 	{
 	    for (w = screen->windows; w; w = w->next)
@@ -637,14 +637,14 @@ winrulesSetScreenOption (CompPlugin *plugin,
 		    continue;
 
 		winrulesSetAllowedActions (w, 
-					   WINRULES_SCREEN_OPTION_MINIMIZE_MATCH,
+					   WINRULES_SCREEN_OPTION_NOMINIMIZE_MATCH,
 					   CompWindowActionMinimizeMask);
 	    }
 	    return TRUE;
 	}
 	break;
 
-    case WINRULES_SCREEN_OPTION_MAXIMIZE_MATCH:
+    case WINRULES_SCREEN_OPTION_NOMAXIMIZE_MATCH:
 	if (compSetMatchOption (o, value))
 	{
 	    for (w = screen->windows; w; w = w->next)
@@ -653,7 +653,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 		    continue;
 
 		winrulesSetAllowedActions (w, 
-					   WINRULES_SCREEN_OPTION_MAXIMIZE_MATCH,
+					   WINRULES_SCREEN_OPTION_NOMAXIMIZE_MATCH,
 					   CompWindowActionMaximizeVertMask|
 					   CompWindowActionMaximizeHorzMask);
 	    }
@@ -661,7 +661,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	}
 	break;
 
-    case WINRULES_SCREEN_OPTION_CLOSE_MATCH:
+    case WINRULES_SCREEN_OPTION_NOCLOSE_MATCH:
 	if (compSetMatchOption (o, value))
 	{
 	    for (w = screen->windows; w; w = w->next)
@@ -670,7 +670,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 		    continue;
 
 		winrulesSetAllowedActions (w, 
-					   WINRULES_SCREEN_OPTION_CLOSE_MATCH,
+					   WINRULES_SCREEN_OPTION_NOCLOSE_MATCH,
 					   CompWindowActionCloseMask);
 	    }
 	    return TRUE;
@@ -787,27 +787,27 @@ winrulesHandleEvent (CompDisplay *d,
 
 
 		winrulesSetAllowedActions (w,
-					   WINRULES_SCREEN_OPTION_MOVE_MATCH,
+					   WINRULES_SCREEN_OPTION_NOMOVE_MATCH,
 					   CompWindowActionMoveMask);
 
 
 		winrulesSetAllowedActions (w,
-					   WINRULES_SCREEN_OPTION_RESIZE_MATCH,
+					   WINRULES_SCREEN_OPTION_NORESIZE_MATCH,
 					   CompWindowActionResizeMask);
 
 
 		winrulesSetAllowedActions (w,
-					   WINRULES_SCREEN_OPTION_MINIMIZE_MATCH,
+					   WINRULES_SCREEN_OPTION_NOMINIMIZE_MATCH,
 					   CompWindowActionMinimizeMask);
 
 
 		winrulesSetAllowedActions (w,
-					   WINRULES_SCREEN_OPTION_MAXIMIZE_MATCH,
+					   WINRULES_SCREEN_OPTION_NOMAXIMIZE_MATCH,
 					   CompWindowActionMaximizeVertMask|
 					   CompWindowActionMaximizeHorzMask);
 	
 		winrulesSetAllowedActions (w,
-					   WINRULES_SCREEN_OPTION_CLOSE_MATCH,
+					   WINRULES_SCREEN_OPTION_NOCLOSE_MATCH,
 					   CompWindowActionCloseMask);
 		
 		if (winrulesMatchSize (w, &width, &height))
