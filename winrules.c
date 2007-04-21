@@ -1,5 +1,5 @@
 /*
- * winrules plugins for compiz
+ * winrules plugin for compiz
  *
  * Copyright (C) 2007 Bellegarde Cedric (gnumdk (at) gmail.com)
  * This program is free software; you can redistribute it and/or
@@ -17,8 +17,6 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include <stdlib.h>
-#include <stdio.h>
 #include <compiz.h>
 
 #include <X11/Xatom.h>
