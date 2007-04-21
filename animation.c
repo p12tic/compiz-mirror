@@ -291,6 +291,9 @@ postAnimationCleanup(CompWindow * w, Bool resetAnimation);
 static void
 animDrawWindowGeometry(CompWindow * w);
 
+#define ANIM_WINDOW_MATCH1 "Normal | Dialog | ModalDialog | Utility"
+#define ANIM_WINDOW_MATCH2 "Unknown | Menu | PopupMenu | DropdownMenu | Tooltip"
+
 #define ANIM_MAGIC_LAMP1_GRID_RES_DEFAULT  100
 #define ANIM_MAGIC_LAMP1_GRID_RES_MIN      4
 #define ANIM_MAGIC_LAMP1_GRID_RES_MAX      200
@@ -1100,52 +1103,6 @@ static AnimEffect shadeEffectType[] = {
 
 #define NUM_SHADE_EFFECT LIST_SIZE(shadeEffectType)
 
-static char *minimizeDefaultWinType[] = {
-	N_("Normal"),
-	N_("Dialog"),
-	N_("ModalDialog"),
-	N_("Utility")
-};
-
-#define N_MINIMIZE_DEFAULT_WIN_TYPE LIST_SIZE(minimizeDefaultWinType)
-
-static char *close1DefaultWinType[] = {
-	N_("Normal"),
-	N_("Dialog"),
-	N_("ModalDialog"),
-	N_("Utility")
-};
-
-#define N_CLOSE1_DEFAULT_WIN_TYPE LIST_SIZE(close1DefaultWinType)
-
-static char *close2DefaultWinType[] = {
-	N_("Unknown"),
-	N_("Menu"),
-	N_("PopupMenu"),
-	N_("DropdownMenu"),
-	N_("Tooltip")
-};
-
-#define N_CLOSE2_DEFAULT_WIN_TYPE LIST_SIZE(close2DefaultWinType)
-
-static char *focusDefaultWinType[] = {
-	N_("Normal"),
-	N_("Dialog"),
-	N_("ModalDialog"),
-	N_("Dnd")
-};
-
-#define N_FOCUS_DEFAULT_WIN_TYPE LIST_SIZE(focusDefaultWinType)
-
-static char *shadeDefaultWinType[] = {
-	N_("Normal"),
-	N_("Dialog"),
-	N_("ModalDialog"),
-	N_("Utility")
-};
-
-#define N_SHADE_DEFAULT_WIN_TYPE LIST_SIZE(shadeDefaultWinType)
-
 typedef struct RestackInfo
 {
 	CompWindow *wRestacked, *wStart, *wEnd, *wOldAbove;
@@ -1164,42 +1121,46 @@ typedef struct _AnimDisplay
 	int activeWindow;
 } AnimDisplay;
 
+// FIXME? A more elegant way to do this?
+#define ANIM_SCREEN_MATCH_OPTION_NUM 9
+
 typedef enum
 {
+	// Match settings
+	ANIM_SCREEN_OPTION_MINIMIZE_MATCH = 0,
+	ANIM_SCREEN_OPTION_UNMINIMIZE_MATCH,
+	ANIM_SCREEN_OPTION_CLOSE1_MATCH,
+	ANIM_SCREEN_OPTION_CLOSE2_MATCH,
+	ANIM_SCREEN_OPTION_CREATE1_MATCH,
+	ANIM_SCREEN_OPTION_CREATE2_MATCH,
+	ANIM_SCREEN_OPTION_FOCUS_MATCH,
+	ANIM_SCREEN_OPTION_SHADE_MATCH,
+	ANIM_SCREEN_OPTION_UNSHADE_MATCH,
 	// Event settings
-	ANIM_SCREEN_OPTION_MINIMIZE_EFFECT = 0,
-	ANIM_SCREEN_OPTION_MINIMIZE_WINDOW_TYPE,
+	ANIM_SCREEN_OPTION_MINIMIZE_EFFECT,
 	ANIM_SCREEN_OPTION_MINIMIZE_DURATION,
 	ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_UNMINIMIZE_EFFECT,
-	ANIM_SCREEN_OPTION_UNMINIMIZE_WINDOW_TYPE,
 	ANIM_SCREEN_OPTION_UNMINIMIZE_DURATION,
 	ANIM_SCREEN_OPTION_UNMINIMIZE_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_CLOSE1_EFFECT,
-	ANIM_SCREEN_OPTION_CLOSE1_WINDOW_TYPE,
 	ANIM_SCREEN_OPTION_CLOSE1_DURATION,
 	ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_CREATE1_EFFECT,
-	ANIM_SCREEN_OPTION_CREATE1_WINDOW_TYPE,
 	ANIM_SCREEN_OPTION_CREATE1_DURATION,
 	ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_CLOSE2_EFFECT,
-	ANIM_SCREEN_OPTION_CLOSE2_WINDOW_TYPE,
 	ANIM_SCREEN_OPTION_CLOSE2_DURATION,
 	ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_CREATE2_EFFECT,
-	ANIM_SCREEN_OPTION_CREATE2_WINDOW_TYPE,
 	ANIM_SCREEN_OPTION_CREATE2_DURATION,
 	ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_FOCUS_EFFECT,
-	ANIM_SCREEN_OPTION_FOCUS_WINDOW_TYPE,
 	ANIM_SCREEN_OPTION_FOCUS_DURATION,
 	ANIM_SCREEN_OPTION_SHADE_EFFECT,
-	ANIM_SCREEN_OPTION_SHADE_WINDOW_TYPE,
 	ANIM_SCREEN_OPTION_SHADE_DURATION,
 	ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_UNSHADE_EFFECT,
-	ANIM_SCREEN_OPTION_UNSHADE_WINDOW_TYPE,
 	ANIM_SCREEN_OPTION_UNSHADE_DURATION,
 	ANIM_SCREEN_OPTION_UNSHADE_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR,
@@ -1306,15 +1267,6 @@ typedef struct _AnimScreen
 	AnimEffect focusEffect;
 	AnimEffect shadeEffect;
 	AnimEffect unshadeEffect;
-	unsigned int minimizeWMask;
-	unsigned int unminimizeWMask;
-	unsigned int create1WMask;
-	unsigned int create2WMask;
-	unsigned int close1WMask;
-	unsigned int close2WMask;
-	unsigned int focusWMask;
-	unsigned int shadeWMask;
-	unsigned int unshadeWMask;
 
 	AnimEffect close1RandomEffects[NUM_CLOSE_EFFECT];
 	AnimEffect close2RandomEffects[NUM_CLOSE_EFFECT];
@@ -6330,67 +6282,18 @@ animSetScreenOption(CompPlugin *plugin,
 			}
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MINIMIZE_WINDOW_TYPE:
-		if (compSetOptionList(o, value))
+	case ANIM_SCREEN_OPTION_MINIMIZE_MATCH:
+	case ANIM_SCREEN_OPTION_UNMINIMIZE_MATCH:
+	case ANIM_SCREEN_OPTION_CLOSE1_MATCH:
+	case ANIM_SCREEN_OPTION_CLOSE2_MATCH:
+	case ANIM_SCREEN_OPTION_CREATE1_MATCH:
+	case ANIM_SCREEN_OPTION_CREATE2_MATCH:
+	case ANIM_SCREEN_OPTION_FOCUS_MATCH:
+	case ANIM_SCREEN_OPTION_SHADE_MATCH:
+	case ANIM_SCREEN_OPTION_UNSHADE_MATCH:
+		if (compSetMatchOption (o, value))
 		{
-			as->minimizeWMask = compWindowTypeMaskFromStringList(&o->value);
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_UNMINIMIZE_WINDOW_TYPE:
-		if (compSetOptionList(o, value))
-		{
-			as->unminimizeWMask = compWindowTypeMaskFromStringList(&o->value);
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_CLOSE1_WINDOW_TYPE:
-		if (compSetOptionList(o, value))
-		{
-			as->close1WMask = compWindowTypeMaskFromStringList(&o->value);
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_CLOSE2_WINDOW_TYPE:
-		if (compSetOptionList(o, value))
-		{
-			as->close2WMask = compWindowTypeMaskFromStringList(&o->value);
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_CREATE1_WINDOW_TYPE:
-		if (compSetOptionList(o, value))
-		{
-			as->create1WMask = compWindowTypeMaskFromStringList(&o->value);
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_CREATE2_WINDOW_TYPE:
-		if (compSetOptionList(o, value))
-		{
-			as->create2WMask = compWindowTypeMaskFromStringList(&o->value);
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_FOCUS_WINDOW_TYPE:
-		if (compSetOptionList(o, value))
-		{
-			as->focusWMask = compWindowTypeMaskFromStringList(&o->value);
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_SHADE_WINDOW_TYPE:
-		if (compSetOptionList(o, value))
-		{
-			as->shadeWMask = compWindowTypeMaskFromStringList(&o->value);
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_UNSHADE_WINDOW_TYPE:
-		if (compSetOptionList(o, value))
-		{
-			as->unshadeWMask = compWindowTypeMaskFromStringList(&o->value);
-			return TRUE;
+	    		return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_MINIMIZE_DURATION:
@@ -7133,25 +7036,17 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.s.string = minimizeEffectName;
 	o->rest.s.nString = NUM_MINIMIZE_EFFECT;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MINIMIZE_WINDOW_TYPE];
-	o->name = "minimize_window_types";
+	o = &as->opt[ANIM_SCREEN_OPTION_MINIMIZE_MATCH];
+	o->name = "minimize_match";
 	//o->group = N_("(Un)Minimize");
 	//o->subGroup = N_("Minimize");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Types");
-	o->longDesc = N_("The window types that will be animated.");
+	o->shortDesc = N_("Window match");
+	o->longDesc = N_("The windows that will be animated.");
 	//o->displayHints = "";
-	o->type = CompOptionTypeList;
-	o->value.list.type = CompOptionTypeString;
-	o->value.list.nValue = N_MINIMIZE_DEFAULT_WIN_TYPE;
-	o->value.list.value =
-			malloc(sizeof(CompOptionValue) * N_MINIMIZE_DEFAULT_WIN_TYPE);
-	for (i = 0; i < N_MINIMIZE_DEFAULT_WIN_TYPE; i++)
-		o->value.list.value[i].s = strdup(minimizeDefaultWinType[i]);
-	o->rest.s.string = (char **)windowTypeString;
-	o->rest.s.nString = nWindowTypeString;
-
-	as->minimizeWMask = compWindowTypeMaskFromStringList(&o->value);
+	o->type	= CompOptionTypeMatch;
+	matchInit (&o->value.match);
+	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
 
 	o = &as->opt[ANIM_SCREEN_OPTION_MINIMIZE_DURATION];
 	o->name = "minimize_duration";
@@ -7195,25 +7090,17 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.s.string = minimizeEffectName;
 	o->rest.s.nString = NUM_MINIMIZE_EFFECT;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_WINDOW_TYPE];
-	o->name = "unminimize_window_types";
+	o = &as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_MATCH];
+	o->name = "unminimize_match";
 	//o->group = N_("(Un)Minimize");
 	//o->subGroup = N_("Unminimize");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Types");
-	o->longDesc = N_("The window types that will be animated.");
+	o->shortDesc = N_("Window match");
+	o->longDesc = N_("The windows that will be animated.");
 	//o->displayHints = "";
-	o->type = CompOptionTypeList;
-	o->value.list.type = CompOptionTypeString;
-	o->value.list.nValue = N_MINIMIZE_DEFAULT_WIN_TYPE;
-	o->value.list.value =
-			malloc(sizeof(CompOptionValue) * N_MINIMIZE_DEFAULT_WIN_TYPE);
-	for (i = 0; i < N_MINIMIZE_DEFAULT_WIN_TYPE; i++)
-		o->value.list.value[i].s = strdup(minimizeDefaultWinType[i]);
-	o->rest.s.string = (char **)windowTypeString;
-	o->rest.s.nString = nWindowTypeString;
-
-	as->unminimizeWMask = compWindowTypeMaskFromStringList(&o->value);
+	o->type	= CompOptionTypeMatch;
+	matchInit (&o->value.match);
+	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
 
 	o = &as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_DURATION];
 	o->name = "unminimize_duration";
@@ -7257,25 +7144,17 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.s.string = closeEffectName;
 	o->rest.s.nString = NUM_CLOSE_EFFECT;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE1_WINDOW_TYPE];
-	o->name = "close1_window_types";
+	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE1_MATCH];
+	o->name = "close1_match";
 	//o->group = N_("Close");
 	//o->subGroup = N_("Close #1");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Types");
-	o->longDesc = N_("The window types that will be animated.");
+	o->shortDesc = N_("Window match");
+	o->longDesc = N_("The windows that will be animated.");
 	//o->displayHints = "";
-	o->type = CompOptionTypeList;
-	o->value.list.type = CompOptionTypeString;
-	o->value.list.nValue = N_CLOSE1_DEFAULT_WIN_TYPE;
-	o->value.list.value =
-			malloc(sizeof(CompOptionValue) * N_CLOSE1_DEFAULT_WIN_TYPE);
-	for (i = 0; i < N_CLOSE1_DEFAULT_WIN_TYPE; i++)
-		o->value.list.value[i].s = strdup(close1DefaultWinType[i]);
-	o->rest.s.string = (char **)windowTypeString;
-	o->rest.s.nString = nWindowTypeString;
-
-	as->close1WMask = compWindowTypeMaskFromStringList(&o->value);
+	o->type	= CompOptionTypeMatch;
+	matchInit (&o->value.match);
+	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
 
 	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE1_DURATION];
 	o->name = "close1_duration";
@@ -7319,25 +7198,17 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.s.string = closeEffectName;
 	o->rest.s.nString = NUM_CLOSE_EFFECT;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE2_WINDOW_TYPE];
-	o->name = "close2_window_types";
+	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE2_MATCH];
+	o->name = "close2_match";
 	//o->group = N_("Close");
 	//o->subGroup = N_("Close #2");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Types");
-	o->longDesc = N_("The window types that will be animated.");
+	o->shortDesc = N_("Window match");
+	o->longDesc = N_("The windows that will be animated.");
 	//o->displayHints = "";
-	o->type = CompOptionTypeList;
-	o->value.list.type = CompOptionTypeString;
-	o->value.list.nValue = N_CLOSE2_DEFAULT_WIN_TYPE;
-	o->value.list.value =
-			malloc(sizeof(CompOptionValue) * N_CLOSE2_DEFAULT_WIN_TYPE);
-	for (i = 0; i < N_CLOSE2_DEFAULT_WIN_TYPE; i++)
-		o->value.list.value[i].s = strdup(close2DefaultWinType[i]);
-	o->rest.s.string = (char **)windowTypeString;
-	o->rest.s.nString = nWindowTypeString;
-
-	as->close2WMask = compWindowTypeMaskFromStringList(&o->value);
+	o->type	= CompOptionTypeMatch;
+	matchInit (&o->value.match);
+	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH2);
 
 	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE2_DURATION];
 	o->name = "close2_duration";
@@ -7381,27 +7252,19 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.s.string = closeEffectName;
 	o->rest.s.nString = NUM_CLOSE_EFFECT;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_CREATE1_WINDOW_TYPE];
-	o->name = "create1_window_types";
+	o = &as->opt[ANIM_SCREEN_OPTION_CREATE1_MATCH];
+	o->name = "create1_match";
 	//o->group = N_("Create");
 	//o->subGroup = N_("Create #1");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Types");
+	o->shortDesc = N_("Window match");
 	o->longDesc =
 			N_
-			("Window types that should animate with this effect when created.");
+			("Window that should animate with this effect when created.");
 	//o->displayHints = "";
-	o->type = CompOptionTypeList;
-	o->value.list.type = CompOptionTypeString;
-	o->value.list.nValue = N_CLOSE1_DEFAULT_WIN_TYPE;
-	o->value.list.value =
-			malloc(sizeof(CompOptionValue) * N_CLOSE1_DEFAULT_WIN_TYPE);
-	for (i = 0; i < N_CLOSE1_DEFAULT_WIN_TYPE; i++)
-		o->value.list.value[i].s = strdup(close1DefaultWinType[i]);
-	o->rest.s.string = (char **)windowTypeString;
-	o->rest.s.nString = nWindowTypeString;
-
-	as->create1WMask = compWindowTypeMaskFromStringList(&o->value);
+	o->type	= CompOptionTypeMatch;
+	matchInit (&o->value.match);
+	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
 
 	o = &as->opt[ANIM_SCREEN_OPTION_CREATE1_DURATION];
 	o->name = "create1_duration";
@@ -7443,27 +7306,19 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.s.string = closeEffectName;
 	o->rest.s.nString = NUM_CLOSE_EFFECT;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_CREATE2_WINDOW_TYPE];
-	o->name = "create2_window_types";
+	o = &as->opt[ANIM_SCREEN_OPTION_CREATE2_MATCH];
+	o->name = "create2_match";
 	//o->group = N_("Create");
 	//o->subGroup = N_("Create #2");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Types");
+	o->shortDesc = N_("Window match");
 	o->longDesc =
 			N_
-			("Window types that should animate with this effect when created.");
+			("Window that should animate with this effect when created.");
 	//o->displayHints = "";
-	o->type = CompOptionTypeList;
-	o->value.list.type = CompOptionTypeString;
-	o->value.list.nValue = N_CLOSE2_DEFAULT_WIN_TYPE;
-	o->value.list.value =
-			malloc(sizeof(CompOptionValue) * N_CLOSE2_DEFAULT_WIN_TYPE);
-	for (i = 0; i < N_CLOSE2_DEFAULT_WIN_TYPE; i++)
-		o->value.list.value[i].s = strdup(close2DefaultWinType[i]);
-	o->rest.s.string = (char **)windowTypeString;
-	o->rest.s.nString = nWindowTypeString;
-
-	as->create2WMask = compWindowTypeMaskFromStringList(&o->value);
+	o->type	= CompOptionTypeMatch;
+	matchInit (&o->value.match);
+	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH2);
 
 	o = &as->opt[ANIM_SCREEN_OPTION_CREATE2_DURATION];
 	o->name = "create2_duration";
@@ -7505,27 +7360,19 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.s.string = focusEffectName;
 	o->rest.s.nString = NUM_FOCUS_EFFECT;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_FOCUS_WINDOW_TYPE];
-	o->name = "focus_window_types";
+	o = &as->opt[ANIM_SCREEN_OPTION_FOCUS_MATCH];
+	o->name = "focus_match";
 	//o->group = N_("Focus");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Types");
+	o->shortDesc = N_("Window match");
 	o->longDesc =
 			N_
-			("Window types that should animate with this effect when focused.");
+			("Window that should animate with this effect when focused.");
 	//o->displayHints = "";
-	o->type = CompOptionTypeList;
-	o->value.list.type = CompOptionTypeString;
-	o->value.list.nValue = N_FOCUS_DEFAULT_WIN_TYPE;
-	o->value.list.value =
-			malloc(sizeof(CompOptionValue) * N_FOCUS_DEFAULT_WIN_TYPE);
-	for (i = 0; i < N_FOCUS_DEFAULT_WIN_TYPE; i++)
-		o->value.list.value[i].s = strdup(focusDefaultWinType[i]);
-	o->rest.s.string = (char **)windowTypeString;
-	o->rest.s.nString = nWindowTypeString;
-
-	as->focusWMask = compWindowTypeMaskFromStringList(&o->value);
+	o->type	= CompOptionTypeMatch;
+	matchInit (&o->value.match);
+	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
 
 	o = &as->opt[ANIM_SCREEN_OPTION_FOCUS_DURATION];
 	o->name = "focus_duration";
@@ -7556,27 +7403,19 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.s.string = shadeEffectName;
 	o->rest.s.nString = NUM_SHADE_EFFECT;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_SHADE_WINDOW_TYPE];
-	o->name = "shade_window_types";
+	o = &as->opt[ANIM_SCREEN_OPTION_SHADE_MATCH];
+	o->name = "shade_match";
 	//o->group = N_("(Un)Shade");
 	//o->subGroup = N_("Shade");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Types");
+	o->shortDesc = N_("Window match");
 	o->longDesc =
 			N_
-			("Window types that should animate with this effect when shaded.");
+			("Window that should animate with this effect when shaded.");
 	//o->displayHints = "";
-	o->type = CompOptionTypeList;
-	o->value.list.type = CompOptionTypeString;
-	o->value.list.nValue = N_SHADE_DEFAULT_WIN_TYPE;
-	o->value.list.value =
-			malloc(sizeof(CompOptionValue) * N_SHADE_DEFAULT_WIN_TYPE);
-	for (i = 0; i < N_SHADE_DEFAULT_WIN_TYPE; i++)
-		o->value.list.value[i].s = strdup(shadeDefaultWinType[i]);
-	o->rest.s.string = (char **)windowTypeString;
-	o->rest.s.nString = nWindowTypeString;
-
-	as->shadeWMask = compWindowTypeMaskFromStringList(&o->value);
+	o->type	= CompOptionTypeMatch;
+	matchInit (&o->value.match);
+	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
 
 	o = &as->opt[ANIM_SCREEN_OPTION_SHADE_DURATION];
 	o->name = "shade_duration";
@@ -7618,27 +7457,19 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.s.string = shadeEffectName;
 	o->rest.s.nString = NUM_SHADE_EFFECT;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_UNSHADE_WINDOW_TYPE];
-	o->name = "unshade_window_types";
+	o = &as->opt[ANIM_SCREEN_OPTION_UNSHADE_MATCH];
+	o->name = "unshade_match";
 	//o->group = N_("(Un)Shade");
 	//o->subGroup = N_("Unshade");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Types");
+	o->shortDesc = N_("Window match");
 	o->longDesc =
 			N_
-			("Window types that should animate with this effect when unshaded.");
+			("Window that should animate with this effect when unshaded.");
 	//o->displayHints = "";
-	o->type = CompOptionTypeList;
-	o->value.list.type = CompOptionTypeString;
-	o->value.list.nValue = N_SHADE_DEFAULT_WIN_TYPE;
-	o->value.list.value =
-			malloc(sizeof(CompOptionValue) * N_SHADE_DEFAULT_WIN_TYPE);
-	for (i = 0; i < N_SHADE_DEFAULT_WIN_TYPE; i++)
-		o->value.list.value[i].s = strdup(shadeDefaultWinType[i]);
-	o->rest.s.string = (char **)windowTypeString;
-	o->rest.s.nString = nWindowTypeString;
-
-	as->unshadeWMask = compWindowTypeMaskFromStringList(&o->value);
+	o->type	= CompOptionTypeMatch;
+	matchInit (&o->value.match);
+	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
 
 	o = &as->opt[ANIM_SCREEN_OPTION_UNSHADE_DURATION];
 	o->name = "unshade_duration";
@@ -8392,7 +8223,8 @@ initiateFocusAnimation
 	if (aw->curWindowEvent != WindowEventNone || as->switcherActive)
 		return;
 
-	if ((as->focusWMask & GET_WINDOW_TYPE(w)) && as->focusEffect &&
+	if (matchEval (&as->opt[ANIM_SCREEN_OPTION_FOCUS_MATCH].value.match, w) &&
+		as->focusEffect &&
 		// On unminimization, focus event is fired first.
 		// When this happens and minimize is in progress,
 		// don't prevent rewinding of minimize when unminimize is fired
@@ -9631,7 +9463,8 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 
 					aw->nowShaded = TRUE;
 
-					if (as->shadeEffect && (as->shadeWMask & GET_WINDOW_TYPE(w)))
+					if (as->shadeEffect && 
+					    matchEval (&as->opt[ANIM_SCREEN_OPTION_SHADE_MATCH].value.match, w))
 					{
 						//IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, TRUE);
 						Bool startingNew = TRUE;
@@ -9704,7 +9537,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 				}
 				else if (w->minimized
 						 && as->minimizeEffect
-						 && (as->minimizeWMask & GET_WINDOW_TYPE(w)))
+						 && matchEval (&as->opt[ANIM_SCREEN_OPTION_MINIMIZE_MATCH].value.match, w))
 				{
 					// MINIMIZE event!
 
@@ -9813,9 +9646,11 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 				AnimEffect windowsCloseEffect = AnimEffectNone;
 				int whichClose = 1;	// either 1 or 2
 
-				if (as->close1Effect && (as->close1WMask & GET_WINDOW_TYPE(w)))
+				if (as->close1Effect && 
+				    matchEval (&as->opt[ANIM_SCREEN_OPTION_CLOSE1_MATCH].value.match, w))
 					windowsCloseEffect = as->close1Effect;
-				else if (as->close2Effect && (as->close2WMask & GET_WINDOW_TYPE(w)))
+				else if (as->close2Effect && 
+					 matchEval (&as->opt[ANIM_SCREEN_OPTION_CLOSE2_MATCH].value.match, w))
 				{
 					windowsCloseEffect = as->close2Effect;
 					whichClose = 2;
@@ -9991,10 +9826,10 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						addWindowDamage(w);
 					}
 				}
-				else if ((as->create1Effect
-						  && (as->create1WMask & GET_WINDOW_TYPE(w)))
-						 || (as->create2Effect
-							 && (as->create2WMask & GET_WINDOW_TYPE(w))))
+				else if ((as->create1Effect &&
+					  matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE1_MATCH].value.match, w))
+					|| (as->create2Effect &&
+					  matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE2_MATCH].value.match, w)))
 				{
 					// stop the current animation and prevent it from rewinding
 
@@ -10198,8 +10033,8 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 		if (aw->state == IconicState)
 		{
-			if (!w->invisible && as->unminimizeEffect
-				&& (as->unminimizeWMask & GET_WINDOW_TYPE(w)))
+			if (!w->invisible && as->unminimizeEffect &&
+			    matchEval (&as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_MATCH].value.match, w))
 			{
 				// UNMINIMIZE event!
 
@@ -10298,7 +10133,8 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 			//IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, TRUE);
 			aw->nowShaded = FALSE;
 
-			if (as->unshadeEffect && (as->unshadeWMask & GET_WINDOW_TYPE(w)))
+			if (as->unshadeEffect && 
+			    matchEval (&as->opt[ANIM_SCREEN_OPTION_UNSHADE_MATCH].value.match, w))
 			{
 				Bool startingNew = TRUE;
 
@@ -10366,9 +10202,11 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 			int whichCreate = 1;	// either 1 or 2
 
-			if (as->create1Effect && (as->create1WMask & GET_WINDOW_TYPE(w)))
+			if (as->create1Effect &&
+			    matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE1_MATCH].value.match, w))
 				windowsCreateEffect = as->create1Effect;
-			else if (as->create2Effect && (as->create2WMask & GET_WINDOW_TYPE(w)))
+			else if (as->create2Effect &&
+			    matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE2_MATCH].value.match, w))
 			{
 				windowsCreateEffect = as->create2Effect;
 				whichCreate = 2;
@@ -10738,7 +10576,8 @@ static void animFiniDisplay(CompPlugin * p, CompDisplay * d)
 static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 {
 	AnimScreen *as;
-
+	int i;
+	
 	ANIM_DISPLAY(s->display);
 
 	as = calloc(1, sizeof(AnimScreen));
@@ -10768,6 +10607,10 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 	as->scaleActive = FALSE;
 
 	animScreenInitOptions(as);
+	for (i=0; i< ANIM_SCREEN_MATCH_OPTION_NUM; i++)
+	{
+		matchUpdate (s->display, &as->opt[i].value.match);
+	}
 
 	WRAP(as, s, preparePaintScreen, animPreparePaintScreen);
 	WRAP(as, s, donePaintScreen, animDonePaintScreen);
@@ -10791,10 +10634,17 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 
 static void animFiniScreen(CompPlugin * p, CompScreen * s)
 {
+	int i;
+	
 	ANIM_SCREEN(s);
 
 	freeWindowPrivateIndex(s, as->windowPrivateIndex);
 
+	for (i=0; i< ANIM_SCREEN_MATCH_OPTION_NUM; i++)
+	{
+		matchFini (&as->opt[i].value.match);
+	}
+	
 	free(as->opt[ANIM_SCREEN_OPTION_MINIMIZE_EFFECT].value.s);
 	free(as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_EFFECT].value.s);
 	free(as->opt[ANIM_SCREEN_OPTION_CREATE1_EFFECT].value.s);
