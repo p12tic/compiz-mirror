@@ -195,6 +195,44 @@
                 <long>Set window as widget</long>
             </locale>
         </schema>
-
+        
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/size_matches</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/size_matches</applyto>
+            <owner>compiz</owner>
+	    <type>list</type>
+            <list_type>string</list_type>
+            <default>[]</default>
+            <locale name="C">
+                <short>sized windows</short>
+                <long>Windows that should be resized by default</long>
+            </locale>
+        </schema>
+        
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/size_width_values</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/size_width_values</applyto>
+            <owner>compiz</owner>
+	    <type>list</type>
+            <list_type>int</list_type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Width</short>
+                <long>Width values</long>
+            </locale>
+        </schema>
+        
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/size_height_values</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/size_height_values</applyto>
+            <owner>compiz</owner>
+	    <type>list</type>
+            <list_type>int</list_type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Height</short>
+                <long>Height values</long>
+            </locale>
+        </schema>
     </schemalist>
 </gconfschemafile>

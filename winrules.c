@@ -41,7 +41,12 @@
 #define WINRULES_SCREEN_OPTION_MAXIMIZE_MATCH     10
 #define WINRULES_SCREEN_OPTION_CLOSE_MATCH        11
 #define WINRULES_SCREEN_OPTION_NOFOCUS_MATCH      12
-#define WINRULES_SCREEN_OPTION_NUM		  13
+#define WINRULES_SCREEN_OPTION_SIZE_MATCHES	  13
+#define WINRULES_SCREEN_OPTION_SIZE_WIDTH_VALUES  14
+#define WINRULES_SCREEN_OPTION_SIZE_HEIGHT_VALUES 15
+#define WINRULES_SCREEN_OPTION_NUM		  16
+
+#define WINRULES_SIMPLE_MATCH_OPTION_NUM	  12
 
 static int displayPrivateIndex;
 
@@ -222,8 +227,8 @@ winrulesUpdateWidget (CompWindow *w)
 
 static void
 winrulesSetAllowedActions (CompWindow *w,
-			 int optNum,
-			 int action)
+			   int optNum,
+			   int action)
 {
     WINRULES_SCREEN (w->screen);
     WINRULES_WINDOW (w);
@@ -235,6 +240,73 @@ winrulesSetAllowedActions (CompWindow *w,
 
     recalcWindowActions (w);
 }
+
+static Bool
+winrulesMatchSizeValue (CompWindow *w,
+			CompOption *matches,
+			CompOption *widthValues,
+			CompOption *heightValues,
+			int	   *width,
+			int	   *height)
+{
+    int i, min;
+
+    if (w->type & CompWindowTypeDesktopMask)
+	return FALSE;
+
+    min = MIN (matches->value.list.nValue, widthValues->value.list.nValue);
+    min = MIN (min, heightValues->value.list.nValue);
+
+    for (i = 0; i < min; i++)
+    {
+	if (matchEval (&matches->value.list.value[i].match, w))
+	{
+	    *width = widthValues->value.list.value[i].i;
+	    *height = heightValues->value.list.value[i].i;
+	
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
+static Bool
+winrulesMatchSize (CompWindow *w,
+		   int	      *width,
+		   int	      *height)
+{
+    WINRULES_SCREEN (w->screen);
+
+    return winrulesMatchSizeValue (w,
+				   &ws->opt[WINRULES_SCREEN_OPTION_SIZE_MATCHES],
+				   &ws->opt[WINRULES_SCREEN_OPTION_SIZE_WIDTH_VALUES],
+				   &ws->opt[WINRULES_SCREEN_OPTION_SIZE_HEIGHT_VALUES],
+				   width,
+				   height);
+}
+
+static void
+winrulesUpdateWindowSize (CompWindow *w,
+			  int width,
+			  int height)
+{
+    XWindowChanges xwc;
+    unsigned int xwcm = 0;
+
+    if (width != w->serverWidth)
+	xwcm |= CWWidth;
+    if (height != w->serverHeight)
+	xwcm |= CWHeight;
+
+    xwc.x = w->attrib.x;
+    xwc.y = w->attrib.y;
+    xwc.width = width;
+    xwc.height = height;
+
+    configureXWindow (w, xwcm, &xwc);
+}
+
 
 static void
 winrulesScreenInitOptions (WinrulesScreen *ws)
@@ -344,6 +416,39 @@ winrulesScreenInitOptions (WinrulesScreen *ws)
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
+    
+    o = &ws->opt[WINRULES_SCREEN_OPTION_SIZE_MATCHES];
+    o->name	         = "size_matches";
+    o->shortDesc         = N_("sized windows");
+    o->longDesc	         = N_("Windows that should be resized by default");
+    o->type	         = CompOptionTypeList;
+    o->value.list.type   = CompOptionTypeMatch;
+    o->value.list.nValue = 0;
+    o->value.list.value  = NULL;
+    o->rest.s.string     = NULL;
+    o->rest.s.nString    = 0;
+
+    o = &ws->opt[WINRULES_SCREEN_OPTION_SIZE_WIDTH_VALUES];
+    o->name	         = "size_width_values";
+    o->shortDesc         = N_("Width");
+    o->longDesc	         = N_("Width values");
+    o->type	         = CompOptionTypeList;
+    o->value.list.type   = CompOptionTypeInt;
+    o->value.list.nValue = 0;
+    o->value.list.value  = NULL;
+    o->rest.i.min	 = MINSHORT;
+    o->rest.i.max	 = MAXSHORT;
+
+    o = &ws->opt[WINRULES_SCREEN_OPTION_SIZE_HEIGHT_VALUES];
+    o->name	         = "size_height_values";
+    o->shortDesc         = N_("Height");
+    o->longDesc	         = N_("Height values");
+    o->type	         = CompOptionTypeList;
+    o->value.list.type   = CompOptionTypeInt;
+    o->value.list.nValue = 0;
+    o->value.list.value  = NULL;
+    o->rest.i.min	 = MINSHORT;
+    o->rest.i.max	 = MAXSHORT;
 }
 
 static CompOption *
@@ -600,8 +705,20 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	    return TRUE;
 	}
 	break;
+    case WINRULES_SCREEN_OPTION_SIZE_MATCHES:
+	if (compSetOptionList (o, value))
+	{
+	    int i;
 
+	    for (i = 0; i < o->value.list.nValue; i++)
+		matchUpdate (screen->display, &o->value.list.value[i].match);
+
+	    return TRUE;
+	}
+	break;
     default:
+	if (compSetOption (o, value))
+	    return TRUE;
         break;
     }
 
@@ -627,6 +744,8 @@ winrulesHandleEvent (CompDisplay *d,
 	     */
 	    if (ww->firstMap)
 	    {
+		int width, height;
+		
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_SKIPTASKBAR_MATCH,
 				     CompWindowStateSkipTaskbarMask,
@@ -691,7 +810,8 @@ winrulesHandleEvent (CompDisplay *d,
 					   WINRULES_SCREEN_OPTION_CLOSE_MATCH,
 					   CompWindowActionCloseMask);
 		
-		
+		if (winrulesMatchSize (w, &width, &height))
+		    winrulesUpdateWindowSize (w, width, height);
 	    }
 
 	    ww->firstMap = FALSE;
@@ -787,7 +907,7 @@ winrulesInitScreen (CompPlugin *p,
 
 
     winrulesScreenInitOptions (ws);
-    for (i=0; i< WINRULES_SCREEN_OPTION_NUM; i++)
+    for (i=0; i< WINRULES_SIMPLE_MATCH_OPTION_NUM; i++)
     {
 	matchUpdate (s->display, &ws->opt[i].value.match);
     }
@@ -806,7 +926,7 @@ winrulesFiniScreen (CompPlugin *p,
     int i;
     WINRULES_SCREEN (s);
 
-    for (i=0; i< WINRULES_SCREEN_OPTION_NUM; i++)
+    for (i=0; i< WINRULES_SIMPLE_MATCH_OPTION_NUM; i++)
     {
 	matchFini (&ws->opt[i].value.match);
     }
