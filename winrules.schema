@@ -1,0 +1,200 @@
+<gconfschemafile>
+    <schemalist>
+        <!-- winrules options -->
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/info</key>
+            <applyto>/apps/compiz/plugins/winrules/info</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default></default>
+            <locale name="C">
+                <short>Windows rules</short>
+                <long>Set windows rules</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/load_before</key>
+            <applyto>/apps/compiz/plugins/winrules/load_before</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[widget]</default>
+            <locale name="C">
+                <short>Plugins that this must load before</short>
+                <long>Do not modify</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/requires</key>
+            <applyto>/apps/compiz/plugins/winrules/requires</applyto>
+            <owner>compiz</owner>
+            <type>list</type>
+            <list_type>string</list_type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Plugins that this requires</short>
+                <long>Do not modify</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/skiptaskbar_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/skiptaskbar_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Skip taskbar</short>
+                <long>Don't show application in taskbar</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/skippager_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/skippager_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Skip pager</short>
+                <long>Don't show application in pager</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/above_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/above_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Above</short>
+                <long>Above others windows</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/below_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/below_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Below</short>
+                <long>Below others windows</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/sticky_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/sticky_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Sticky</short>
+                <long>Sticky windows</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/fullscreen_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/fullscreen_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Fullscreen</short>
+                <long>Fullscreen windows</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/no_move_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/no_move_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Non movable windows</short>
+                <long>Set window as non movable</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/no_resize_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/no_resize_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Non resizable windows</short>
+                <long>Set window as non resizable</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/no_minimize_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/no_minimize_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Non minimizable windows</short>
+                <long>Set window as non minimizable</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/no_maximize_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/no_maximize_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Non maximizable windows</short>
+                <long>Set window as non maximizable</long>
+            </locale>
+        </schema>
+
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/no_close_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/no_close_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Non closable windows</short>
+                <long>Set window as non closable</long>
+            </locale>
+        </schema>
+        
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/no_focus_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/no_focus_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>No focus</short>
+                <long>Windows will not have focus</long>
+            </locale>
+        </schema>
+        
+        <schema>
+            <key>/schemas/apps/compiz/plugins/winrules/screen0/options/widget_match</key>
+            <applyto>/apps/compiz/plugins/winrules/screen0/options/widget_match</applyto>
+            <owner>compiz</owner>
+            <type>string</type>
+            <default>[]</default>
+            <locale name="C">
+                <short>Widget</short>
+                <long>Set window as widget</long>
+            </locale>
+        </schema>
+
+    </schemalist>
+</gconfschemafile>
