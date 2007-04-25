@@ -1107,13 +1107,7 @@ static void readSetting(BSContext * context, BSSetting * setting)
 	else
 		status = readOption(setting);
 
-	if (status)
-	{
-		if (strcmp(setting->name, "____plugin_enabled") == 0)
-			context->pluginsChanged = TRUE;
-		context->changedSettings = bsSettingListAppend(context->changedSettings, setting);
-	}
-	else
+	if (!status)
 		bsResetToDefault(setting);
 }
 
