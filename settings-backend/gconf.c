@@ -1182,12 +1182,10 @@ static BSStringList getExistingProfiles(void)
 
 	for (;tmp;tmp = g_slist_next(tmp))
 	{
-		if (0)
-		{
-			name = strrchr(tmp->data, '/');
-			if (name)
-				ret = bsStringListAppend(ret, name+1);
-		}
+		name = strrchr(tmp->data, '/');
+		if (name && (strcmp(name, DEFAULTPROF) != 0))
+			ret = bsStringListAppend(ret, name+1);
+
 		g_free(tmp->data);
 	}
 	g_slist_free(data);
