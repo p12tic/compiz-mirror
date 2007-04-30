@@ -1,6 +1,6 @@
 AC_PREREQ(2.57)
 
-AC_INIT([bsettings-gconf],esyscmd(. ./VERSION;echo -n $VERSION), [maniac@beryl-project.org])
+AC_INIT([ccs-backend-gconf],esyscmd(. ./VERSION;echo -n $VERSION), [maniac@beryl-project.org])
 
 AC_DEFINE_UNQUOTED(VERSION,"$VERSION",[Version])
 
@@ -75,7 +75,7 @@ AC_C_BIGENDIAN
 
 PKG_CHECK_MODULES(GLIB, "glib-2.0")
 PKG_CHECK_MODULES(GCONF, "gconf-2.0")
-PKG_CHECK_MODULES(BSETTINGS, "bsettings")
+PKG_CHECK_MODULES(CCS, "libccs")
 
 AC_CONFIG_FILES([
 Makefile

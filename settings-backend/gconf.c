@@ -1,6 +1,6 @@
 /**
  *
- * GConf bsettings backend
+ * GConf libccs backend
  *
  * gconf.c
  *
@@ -33,7 +33,7 @@
 #include <malloc.h>
 #include <string.h>
 
-#include <bsettings.h>
+#include <ccs.h>
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
@@ -51,7 +51,7 @@
 #define CompScrollLockMask (1 << 22)
 
 #define METACITY    "/apps/metacity"
-#define COMPIZ_BS   "/apps/compiz/bSettings"
+#define COMPIZ_CCS   "/apps/compiz/ccs"
 #define DEFAULTPROF "Default"
 
 #define BUFSIZE 512
@@ -63,7 +63,7 @@
                         snprintf(keyName, BUFSIZE, "allscreens/%s", setting->name);
 
 #define PATHNAME    char pathName[BUFSIZE]; \
-					snprintf(pathName, BUFSIZE, "%s/%s/%s%s%s/%s", COMPIZ_BS, currentProfile, \
+					snprintf(pathName, BUFSIZE, "%s/%s/%s%s%s/%s", COMPIZ_CCS, currentProfile, \
 							 setting->parent->name ? "plugins" : "general", \
 							 setting->parent->name ? "/" : "", \
 							 setting->parent->name ? setting->parent->name : "", \
@@ -76,9 +76,9 @@ static guint gnomeNotifyId = 0;
 static char *currentProfile = NULL;
 
 /* some forward declarations */
-static Bool readInit(BSContext * context);
-static void readSetting(BSContext * context, BSSetting * setting);
-static void readDone(BSContext * context);
+static Bool readInit(CCSContext * context);
+static void readSetting(CCSContext * context, CCSSetting * setting);
+static void readDone(CCSContext * context);
 
 typedef enum {
 	OptionInt,
@@ -209,7 +209,7 @@ struct _SpecialOption {
 
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOption))
 
-static Bool isIntegratedOption(BSSetting * setting, int * index)
+static Bool isIntegratedOption(CCSSetting * setting, int * index)
 {
 	unsigned int i;
 	for (i = 0; i < N_SOPTIONS; i++)
@@ -230,7 +230,7 @@ static Bool isIntegratedOption(BSSetting * setting, int * index)
 static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 				 		 gpointer user_data)
 {
-	BSContext *context = (BSContext *)user_data;
+	CCSContext *context = (CCSContext *)user_data;
 
 	char *keyName = (char*) gconf_entry_get_key(entry);
 	char *pluginName;
@@ -239,7 +239,7 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 	Bool isScreen;
 	unsigned int screenNum;
 
-	keyName += strlen(COMPIZ_BS) + 1;
+	keyName += strlen(COMPIZ_CCS) + 1;
 
 	pluginName = keyName;
 	keyName = strchr(keyName, '/');
@@ -260,7 +260,7 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 
 	settingName = keyName;
 
-	BSPlugin *plugin = bsFindPlugin(context, pluginName);
+	CCSPlugin *plugin = ccsFindPlugin(context, pluginName);
 	if (!plugin)
 		return;
 
@@ -272,11 +272,11 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 		sscanf(screenName, "screen%d", &screenNum);
 	}
 
-	BSSetting *setting = bsFindSetting(plugin, settingName, isScreen, screenNum);
+	CCSSetting *setting = ccsFindSetting(plugin, settingName, isScreen, screenNum);
 	if (!setting)
 		return;
 
-	if (bsGetIntegrationEnabled(context) && !isIntegratedOption(setting, NULL))
+	if (ccsGetIntegrationEnabled(context) && !isIntegratedOption(setting, NULL))
 	{
 		readInit(context);
 		readSetting(context, setting);
@@ -287,7 +287,7 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 					  		  gpointer user_data)
 {
-	BSContext *context = (BSContext *)user_data;
+	CCSContext *context = (CCSContext *)user_data;
 	char *keyName = (char*) gconf_entry_get_key(entry);
 	int i,num = -1;
 
@@ -303,15 +303,15 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 	if (num < 0)
 		return;
 
-	BSPlugin * plugin = NULL;
-	plugin = bsFindPlugin(context, (char*) specialOptions[num].pluginName);
+	CCSPlugin * plugin = NULL;
+	plugin = ccsFindPlugin(context, (char*) specialOptions[num].pluginName);
 
 	if (!plugin)
 		return;
 
-	BSSetting * setting = NULL;
+	CCSSetting * setting = NULL;
 	/* FIXME: where should we get the screen num from? */
-	setting = bsFindSetting(plugin, (char*) specialOptions[num].settingName, 
+	setting = ccsFindSetting(plugin, (char*) specialOptions[num].settingName, 
 							specialOptions[num].screen, 0);
 
 	if (!setting)
@@ -322,7 +322,7 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 	readDone(context);
 }
 
-static Bool readActionValue(BSSetting * setting, char * pathName)
+static Bool readActionValue(CCSSetting * setting, char * pathName)
 {
 	char itemPath[BUFSIZE];
 	GError *err = NULL;
@@ -331,8 +331,8 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	int intVal;
 	Bool ret = FALSE;
 
-	BSSettingActionValue action;
-	memset(&action, 0, sizeof(BSSettingActionValue));
+	CCSSettingActionValue action;
+	memset(&action, 0, sizeof(CCSSettingActionValue));
 
 	snprintf(itemPath, 512, "%s/bell", pathName);
 	boolVal = gconf_client_get_bool(client, itemPath, &err);
@@ -346,7 +346,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	snprintf(itemPath, 512, "%s/edge", pathName);
 	buffer = gconf_client_get_string(client, itemPath, &err);
 	if (!err && buffer) {
-		bsStringToEdge(buffer, &action);
+		ccsStringToEdge(buffer, &action);
 		ret = TRUE;
 		g_free(buffer);
 	} else if (err) {
@@ -365,7 +365,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	snprintf(itemPath, 512, "%s/key", pathName);
 	buffer = gconf_client_get_string(client, itemPath, &err);
 	if (!err && buffer) {
-		bsStringToKeyBinding(buffer, &action);
+		ccsStringToKeyBinding(buffer, &action);
 		ret = TRUE;
 		g_free(buffer);
 	} else if (err) {
@@ -375,7 +375,7 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	snprintf(itemPath, 512, "%s/button", pathName);
 	buffer = gconf_client_get_string(client, itemPath, &err);
 	if (!err && buffer) {
-		bsStringToButtonBinding(buffer, &action);
+		ccsStringToButtonBinding(buffer, &action);
 		ret = TRUE;
 		g_free(buffer);
 	} else if (err) {
@@ -383,18 +383,18 @@ static Bool readActionValue(BSSetting * setting, char * pathName)
 	}
 
 	if (ret) 
-		bsSetAction(setting, action);
+		ccsSetAction(setting, action);
 
 	return ret;
 }
 
-static Bool readListValue(BSSetting * setting, char * pathName)
+static Bool readListValue(CCSSetting * setting, char * pathName)
 {
 	GSList *valueList = NULL;
 	GError *err = NULL;
 	GConfValueType valueType;
 	unsigned int nItems, i = 0;
-	BSSettingValueList list = NULL;
+	CCSSettingValueList list = NULL;
 
 	switch (setting->info.forList.listType)
 	{
@@ -441,7 +441,7 @@ static Bool readListValue(BSSetting * setting, char * pathName)
 				GSList *tmpList = valueList;
 				for (; tmpList; tmpList = tmpList->next, i++)
 					array[i] = (GPOINTER_TO_INT(tmpList->data)) ? TRUE : FALSE;
-				list = bsGetValueListFromBoolArray(array, nItems, setting);
+				list = ccsGetValueListFromBoolArray(array, nItems, setting);
 				free(array);
 			}
 			break;
@@ -451,7 +451,7 @@ static Bool readListValue(BSSetting * setting, char * pathName)
 				GSList *tmpList = valueList;
 				for (; tmpList; tmpList = tmpList->next, i++)
 					array[i] = GPOINTER_TO_INT(tmpList->data);
-				list = bsGetValueListFromIntArray(array, nItems, setting);
+				list = ccsGetValueListFromIntArray(array, nItems, setting);
 				free(array);
 			}
 			break;
@@ -464,7 +464,7 @@ static Bool readListValue(BSSetting * setting, char * pathName)
 					array[i] = *((gdouble*)tmpList->data);
 					g_free(tmpList->data);
 				}
-				list = bsGetValueListFromFloatArray(array, nItems, setting);
+				list = ccsGetValueListFromFloatArray(array, nItems, setting);
 				free(array);
 			}
 			break;
@@ -478,7 +478,7 @@ static Bool readListValue(BSSetting * setting, char * pathName)
 					array[i] = strdup(tmpList->data);
 					g_free(tmpList->data);
 				}
-				list = bsGetValueListFromStringArray(array, nItems, setting);
+				list = ccsGetValueListFromStringArray(array, nItems, setting);
 				for (i = 0; i < nItems; i++)
 					free(array[i]);
 				free(array);
@@ -486,15 +486,15 @@ static Bool readListValue(BSSetting * setting, char * pathName)
 			break;
 		case TypeColor:
 			{
-				BSSettingColorValue *array = malloc(nItems * sizeof(BSSettingColorValue));
+				CCSSettingColorValue *array = malloc(nItems * sizeof(CCSSettingColorValue));
 				GSList *tmpList = valueList;
 				for (; tmpList; tmpList = tmpList->next, i++)
 				{
-					memset(&array[i], 0, sizeof(BSSettingColorValue));
-					bsStringToColor(tmpList->data, &array[i]);
+					memset(&array[i], 0, sizeof(CCSSettingColorValue));
+					ccsStringToColor(tmpList->data, &array[i]);
 					g_free(tmpList->data);
 				}
-				list = bsGetValueListFromColorArray(array, nItems, setting);
+				list = ccsGetValueListFromColorArray(array, nItems, setting);
 				free(array);
 			}
 			break;
@@ -507,15 +507,15 @@ static Bool readListValue(BSSetting * setting, char * pathName)
 
 	if (list)
 	{
-		bsSetList(setting, list);
-		bsSettingValueListFree(list, TRUE);
+		ccsSetList(setting, list);
+		ccsSettingValueListFree(list, TRUE);
 		return TRUE;
 	}
 
 	return FALSE;
 }
 
-static Bool readIntegratedOption(BSSetting * setting, int index)
+static Bool readIntegratedOption(CCSSetting * setting, int index)
 {
 	GError *err = NULL;
 	Bool ret = FALSE;
@@ -529,7 +529,7 @@ static Bool readIntegratedOption(BSSetting * setting, int index)
 
 				if (!err)
 				{
-					bsSetInt(setting, value);
+					ccsSetInt(setting, value);
 					ret = TRUE;
 				}
 			}
@@ -541,7 +541,7 @@ static Bool readIntegratedOption(BSSetting * setting, int index)
 
 				if (!err)
 				{
-					bsSetBool(setting, value ? TRUE : FALSE);
+					ccsSetBool(setting, value ? TRUE : FALSE);
 					ret = TRUE;
 				}
 			}
@@ -553,7 +553,7 @@ static Bool readIntegratedOption(BSSetting * setting, int index)
 
 				if (!err && value)
 				{
-					bsSetString(setting, value);
+					ccsSetString(setting, value);
 					ret = TRUE;
 					g_free(value);
 				}
@@ -566,10 +566,10 @@ static Bool readIntegratedOption(BSSetting * setting, int index)
 
 				if (!err && value)
 				{
-					BSSettingActionValue action;
-					if (bsStringToKeyBinding(value, &action))
+					CCSSettingActionValue action;
+					if (ccsStringToKeyBinding(value, &action))
 					{
-						bsSetAction(setting, action);
+						ccsSetAction(setting, action);
 						ret = TRUE;
 					}
 					g_free(value);
@@ -585,7 +585,7 @@ static Bool readIntegratedOption(BSSetting * setting, int index)
 				if (!err && focusMode)
 				{
 					Bool clickToFocus = (strcmp(focusMode, "click") == 0);
-					bsSetBool(setting, clickToFocus);
+					ccsSetBool(setting, clickToFocus);
 					g_free(focusMode);
 				}
 			}
@@ -600,7 +600,7 @@ static Bool readIntegratedOption(BSSetting * setting, int index)
 	return ret;
 }
 
-static Bool readOption(BSSetting * setting)
+static Bool readOption(CCSSetting * setting)
 {
 	GError *err = NULL;
 	Bool ret = FALSE;
@@ -616,7 +616,7 @@ static Bool readOption(BSSetting * setting)
 
 				if (!err && value) 
 				{
-					bsSetString(setting, value);
+					ccsSetString(setting, value);
 					ret = TRUE;
 				}
 			}
@@ -628,7 +628,7 @@ static Bool readOption(BSSetting * setting)
 
 				if (!err && value)
 				{
-					bsSetMatch(setting, value);
+					ccsSetMatch(setting, value);
 					ret = TRUE;
 				}
 			}
@@ -640,7 +640,7 @@ static Bool readOption(BSSetting * setting)
 
 				if (!err)
 				{
-					bsSetInt(setting, value);
+					ccsSetInt(setting, value);
 					ret = TRUE;
 				}
 			}
@@ -652,7 +652,7 @@ static Bool readOption(BSSetting * setting)
 
 				if (!err)
 				{
-					bsSetBool(setting, value ? TRUE : FALSE);
+					ccsSetBool(setting, value ? TRUE : FALSE);
 					ret = TRUE;
 				}
 			}
@@ -664,7 +664,7 @@ static Bool readOption(BSSetting * setting)
 
 				if (!err)
 				{
-					bsSetFloat(setting, value);
+					ccsSetFloat(setting, value);
 					ret = TRUE;
 				}
 			}
@@ -672,12 +672,12 @@ static Bool readOption(BSSetting * setting)
 		case TypeColor:
 			{
 				gchar *value;
-				BSSettingColorValue color;
+				CCSSettingColorValue color;
 				value = gconf_client_get_string(client, pathName, &err);
 
-				if (!err && value && bsStringToColor(value, &color))
+				if (!err && value && ccsStringToColor(value, &color))
 				{
-					bsSetColor(setting, color);
+					ccsSetColor(setting, color);
 					ret = TRUE;
 				}
 
@@ -702,13 +702,13 @@ static Bool readOption(BSSetting * setting)
 	return ret;
 }
 
-static void writeActionValue(BSSettingActionValue * action, char * pathName)
+static void writeActionValue(CCSSettingActionValue * action, char * pathName)
 {
 	char *buffer;
 	char itemPath[BUFSIZE];
 
 	snprintf(itemPath, BUFSIZE, "%s/edge", pathName);
-	buffer = bsEdgeToString(action);
+	buffer = ccsEdgeToString(action);
 	if (buffer)
 	{
 		gconf_client_set_string(client, itemPath, buffer, NULL);
@@ -722,7 +722,7 @@ static void writeActionValue(BSSettingActionValue * action, char * pathName)
 	gconf_client_set_int(client, itemPath, action->edgeButton, NULL);
 
 	snprintf(itemPath, BUFSIZE, "%s/button", pathName);
-	buffer = bsButtonBindingToString(action);
+	buffer = ccsButtonBindingToString(action);
 	if (buffer)
 	{
 		gconf_client_set_string(client, itemPath, buffer, NULL);
@@ -730,7 +730,7 @@ static void writeActionValue(BSSettingActionValue * action, char * pathName)
 	}
 
 	snprintf(itemPath, BUFSIZE, "%s/key", pathName);
-	buffer = bsKeyBindingToString(action);
+	buffer = ccsKeyBindingToString(action);
 	if (buffer)
 	{
 		gconf_client_set_string(client, itemPath, buffer, NULL);
@@ -738,14 +738,14 @@ static void writeActionValue(BSSettingActionValue * action, char * pathName)
 	}
 }
 
-static void writeListValue(BSSetting * setting, char * pathName)
+static void writeListValue(CCSSetting * setting, char * pathName)
 {
 	GSList *valueList = NULL;
 	GConfValueType valueType;
 	Bool freeItems = FALSE;
 
-	BSSettingValueList list;
-	if (!bsGetList(setting, &list))
+	CCSSettingValueList list;
+	if (!ccsGetList(setting, &list))
 		return;
 
 	switch (setting->info.forList.listType)
@@ -813,7 +813,7 @@ static void writeListValue(BSSetting * setting, char * pathName)
 				char *item;
 				while (list)
 				{
-					item = bsColorToString(&list->data->value.asColor);
+					item = ccsColorToString(&list->data->value.asColor);
 					valueList = g_slist_append(valueList, item);
 					list = list->next;
 				}
@@ -843,7 +843,7 @@ static void writeListValue(BSSetting * setting, char * pathName)
 		g_slist_free(valueList);
 }
 
-static void writeIntegratedOption(BSSetting * setting, int index)
+static void writeIntegratedOption(CCSSetting * setting, int index)
 {
 	GError *err = NULL;
 
@@ -852,7 +852,7 @@ static void writeIntegratedOption(BSSetting * setting, int index)
 		case OptionInt:
 			{
 				int newValue, currentValue;
-				if (!bsGetInt(setting, &newValue))
+				if (!ccsGetInt(setting, &newValue))
 					break;
 				currentValue = gconf_client_get_int(client, 
 													specialOptions[index].gnomeName, &err);
@@ -866,7 +866,7 @@ static void writeIntegratedOption(BSSetting * setting, int index)
 			{
 				Bool newValue;
 				gboolean currentValue;
-				if (!bsGetBool(setting, &newValue))
+				if (!ccsGetBool(setting, &newValue))
 					break;
 				currentValue = gconf_client_get_bool(client, 
 													 specialOptions[index].gnomeName, &err);
@@ -880,7 +880,7 @@ static void writeIntegratedOption(BSSetting * setting, int index)
 			{
 				char *newValue;
 				gchar *currentValue;
-				if (!bsGetString(setting, &newValue))
+				if (!ccsGetString(setting, &newValue))
 					break;
 				currentValue = gconf_client_get_string(client,
 													   specialOptions[index].gnomeName, &err);
@@ -899,7 +899,7 @@ static void writeIntegratedOption(BSSetting * setting, int index)
 				char *newValue;
 				gchar *currentValue;
 
-				newValue = bsKeyBindingToString(&setting->value->value.asAction);
+				newValue = ccsKeyBindingToString(&setting->value->value.asAction);
 				if (newValue)
 				{
 					currentValue = gconf_client_get_string(client, 
@@ -921,7 +921,7 @@ static void writeIntegratedOption(BSSetting * setting, int index)
 			{
 				Bool clickToFocus;
 				gchar *newValue, *currentValue;
-				if (!bsGetBool(setting, &clickToFocus))
+				if (!ccsGetBool(setting, &clickToFocus))
 					break;
 
 				newValue = clickToFocus ? "click" : "mouse";
@@ -943,7 +943,7 @@ static void writeIntegratedOption(BSSetting * setting, int index)
 		g_error_free(err);
 }
 
-static void resetOptionToDefault(BSSetting * setting)
+static void resetOptionToDefault(CCSSetting * setting)
 {
 	KEYNAME;
 	PATHNAME;
@@ -952,7 +952,7 @@ static void resetOptionToDefault(BSSetting * setting)
 	gconf_client_suggest_sync(client,NULL);
 }
 
-static void writeOption(BSSetting * setting)
+static void writeOption(CCSSetting * setting)
 {
 	KEYNAME;
 	PATHNAME;
@@ -962,46 +962,46 @@ static void writeOption(BSSetting * setting)
 		case TypeString:
 			{
 				char *value;
-				if (bsGetString(setting, &value))
+				if (ccsGetString(setting, &value))
 					gconf_client_set_string(client, pathName, value, NULL);
 			}
 			break;
 		case TypeMatch:
 			{
 				char *value;
-				if (bsGetMatch(setting, &value))
+				if (ccsGetMatch(setting, &value))
 					gconf_client_set_string(client, pathName, value, NULL);
 			}
 		case TypeFloat:
 			{
 				float value;
-				if (bsGetFloat(setting, &value))
+				if (ccsGetFloat(setting, &value))
 					gconf_client_set_float(client, pathName, value, NULL);
 			}
 			break;
 		case TypeInt:
 			{
 				int value;
-				if (bsGetInt(setting, &value))
+				if (ccsGetInt(setting, &value))
 					gconf_client_set_int(client, pathName, value, NULL);
 			}
 			break;
 		case TypeBool:
 			{
 				Bool value;
-				if (bsGetBool(setting, &value))
+				if (ccsGetBool(setting, &value))
 					gconf_client_set_bool(client, pathName, value, NULL);
 			}
 			break;
 		case TypeColor:
 			{
-				BSSettingColorValue value;
+				CCSSettingColorValue value;
 				char *colString;
 
-				if (!bsGetColor(setting, &value))
+				if (!ccsGetColor(setting, &value))
 					break;
 
-				colString = bsColorToString(&value);
+				colString = ccsColorToString(&value);
 				if (!colString)
 					break;
 
@@ -1011,8 +1011,8 @@ static void writeOption(BSSetting * setting)
 			break;
 		case TypeAction:
 			{
-			    BSSettingActionValue value;
-			    if (!bsGetAction(setting, &value))
+			    CCSSettingActionValue value;
+			    if (!ccsGetAction(setting, &value))
 					break;
 
 				writeActionValue(&value, pathName);
@@ -1033,26 +1033,26 @@ static void processEvents(void)
 		g_main_context_iteration(NULL, FALSE);
 }
 
-static Bool initBackend(BSContext * context)
+static Bool initBackend(CCSContext * context)
 {
 	g_type_init();
 
 	client = gconf_client_get_default();
 
-	backendNotifyId = gconf_client_notify_add(client, COMPIZ_BS, valueChanged,
+	backendNotifyId = gconf_client_notify_add(client, COMPIZ_CCS, valueChanged,
 											  context, NULL, NULL);
 
-	if (bsGetIntegrationEnabled(context))
+	if (ccsGetIntegrationEnabled(context))
 		gnomeNotifyId = gconf_client_notify_add(client, METACITY,
 												gnomeValueChanged, context, NULL,NULL);
 
-	gconf_client_add_dir(client, COMPIZ_BS, GCONF_CLIENT_PRELOAD_NONE, NULL);
+	gconf_client_add_dir(client, COMPIZ_CCS, GCONF_CLIENT_PRELOAD_NONE, NULL);
 	gconf_client_add_dir(client, METACITY, GCONF_CLIENT_PRELOAD_NONE, NULL);
 
 	return TRUE;
 }
 
-static Bool finiBackend(BSContext * context)
+static Bool finiBackend(CCSContext * context)
 {
 	if (backendNotifyId)
 	{
@@ -1071,7 +1071,7 @@ static Bool finiBackend(BSContext * context)
 		currentProfile = NULL;
 	}
 
-	gconf_client_remove_dir(client, COMPIZ_BS, NULL);
+	gconf_client_remove_dir(client, COMPIZ_CCS, NULL);
 	gconf_client_remove_dir(client, METACITY, NULL);
 
 	g_object_unref(client);
@@ -1080,12 +1080,12 @@ static Bool finiBackend(BSContext * context)
 	return TRUE;
 }
 
-static Bool readInit(BSContext * context)
+static Bool readInit(CCSContext * context)
 {
 	if (currentProfile)
 		free (currentProfile);
 
-	currentProfile = bsGetProfile(context);
+	currentProfile = ccsGetProfile(context);
 	if (!currentProfile)
 		currentProfile = strdup (DEFAULTPROF);
 	else if (!strlen(currentProfile))
@@ -1097,30 +1097,30 @@ static Bool readInit(BSContext * context)
 	return TRUE;
 }
 
-static void readSetting(BSContext * context, BSSetting * setting)
+static void readSetting(CCSContext * context, CCSSetting * setting)
 {
 	Bool status;
 	int index;
 
-	if (bsGetIntegrationEnabled(context) && isIntegratedOption(setting, &index))
+	if (ccsGetIntegrationEnabled(context) && isIntegratedOption(setting, &index))
 		status = readIntegratedOption(setting, index);
 	else
 		status = readOption(setting);
 
 	if (!status)
-		bsResetToDefault(setting);
+		ccsResetToDefault(setting);
 }
 
-static void readDone(BSContext * context)
+static void readDone(CCSContext * context)
 {
 }
 
-static Bool writeInit(BSContext * context)
+static Bool writeInit(CCSContext * context)
 {
 	if (currentProfile)
 		free (currentProfile);
 
-	currentProfile = bsGetProfile(context);
+	currentProfile = ccsGetProfile(context);
 	if (!currentProfile)
 		currentProfile = strdup (DEFAULTPROF);
 	else if (!strlen(currentProfile))
@@ -1132,11 +1132,11 @@ static Bool writeInit(BSContext * context)
 	return TRUE;
 }
 
-static void writeSetting(BSContext * context, BSSetting * setting)
+static void writeSetting(CCSContext * context, CCSSetting * setting)
 {
 	int index;
 
-	if (bsGetIntegrationEnabled(context) && isIntegratedOption(setting, &index))
+	if (ccsGetIntegrationEnabled(context) && isIntegratedOption(setting, &index))
 		writeIntegratedOption(setting, index);
 	else if (setting->isDefault)
 		resetOptionToDefault(setting);
@@ -1145,13 +1145,13 @@ static void writeSetting(BSContext * context, BSSetting * setting)
 
 }
 
-static void writeDone(BSContext * context)
+static void writeDone(CCSContext * context)
 {
 }
 
-static Bool getSettingIsIntegrated(BSSetting * setting)
+static Bool getSettingIsIntegrated(CCSSetting * setting)
 {
-	if (!bsGetIntegrationEnabled(setting->parent->context))
+	if (!ccsGetIntegrationEnabled(setting->parent->context))
 		return FALSE;
 
 	if (!isIntegratedOption(setting, NULL))
@@ -1160,17 +1160,17 @@ static Bool getSettingIsIntegrated(BSSetting * setting)
 	return TRUE;
 }
 
-static Bool getSettingIsReadOnly(BSSetting * setting)
+static Bool getSettingIsReadOnly(CCSSetting * setting)
 {
 	/* FIXME */
 	return FALSE;
 }
 
-static BSStringList getExistingProfiles(void)
+static CCSStringList getExistingProfiles(void)
 {
 	gconf_client_suggest_sync(client,NULL);
-	GSList * data = gconf_client_all_dirs(client, COMPIZ_BS, NULL);
-	BSStringList ret = NULL;
+	GSList * data = gconf_client_all_dirs(client, COMPIZ_CCS, NULL);
+	CCSStringList ret = NULL;
 	GSList * tmp = data;
 	char *name;
 
@@ -1178,7 +1178,7 @@ static BSStringList getExistingProfiles(void)
 	{
 		name = strrchr(tmp->data, '/');
 		if (name && (strcmp(name, DEFAULTPROF) != 0))
-			ret = bsStringListAppend(ret, name+1);
+			ret = ccsStringListAppend(ret, name+1);
 
 		g_free(tmp->data);
 	}
@@ -1192,9 +1192,9 @@ static Bool deleteProfile(char * profile)
 	char path[BUFSIZE];
 
 	if (profile && strlen(profile))
-		snprintf(path, BUFSIZE, "%s/%s", COMPIZ_BS, profile);
+		snprintf(path, BUFSIZE, "%s/%s", COMPIZ_CCS, profile);
 	else
-		snprintf(path, BUFSIZE, "%s/Default", COMPIZ_BS);
+		snprintf(path, BUFSIZE, "%s/Default", COMPIZ_CCS);
 
 	gboolean status = FALSE;
 	if (gconf_client_dir_exists(client, path, NULL))
@@ -1207,10 +1207,10 @@ static Bool deleteProfile(char * profile)
 }
 
 
-static BSBackendVTable gconfVTable = {
+static CCSBackendVTable gconfVTable = {
     "gconf",
     "GConf Configuration Backend",
-    "GConf Configuration Backend for bsettings",
+    "GConf Configuration Backend for libccs",
     TRUE,
     TRUE,
     processEvents,
@@ -1228,7 +1228,7 @@ static BSBackendVTable gconfVTable = {
 	deleteProfile
 };
 
-BSBackendVTable *
+CCSBackendVTable *
 getBackendInfo (void)
 {
     return &gconfVTable;
