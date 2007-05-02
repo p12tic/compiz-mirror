@@ -375,11 +375,6 @@ animDrawWindowGeometry(CompWindow * w);
 #define ANIM_MINIMIZE_DURATION_MAX       10
 #define ANIM_MINIMIZE_DURATION_PRECISION 0.05
 
-#define ANIM_UNMINIMIZE_DURATION_DEFAULT   0.3
-#define ANIM_UNMINIMIZE_DURATION_MIN       0.1
-#define ANIM_UNMINIMIZE_DURATION_MAX       10
-#define ANIM_UNMINIMIZE_DURATION_PRECISION 0.05
-
 #define ANIM_CREATE1_DURATION_DEFAULT   0.2
 #define ANIM_CREATE1_DURATION_MIN       0.1
 #define ANIM_CREATE1_DURATION_MAX       10
@@ -409,11 +404,6 @@ animDrawWindowGeometry(CompWindow * w);
 #define ANIM_SHADE_DURATION_MIN       0.1
 #define ANIM_SHADE_DURATION_MAX       10
 #define ANIM_SHADE_DURATION_PRECISION 0.05
-
-#define ANIM_UNSHADE_DURATION_DEFAULT   0.5
-#define ANIM_UNSHADE_DURATION_MIN       0.1
-#define ANIM_UNSHADE_DURATION_MAX       10
-#define ANIM_UNSHADE_DURATION_PRECISION 0.05
 
 #define ANIM_WAVE_WIDTH_DEFAULT   0.7
 #define ANIM_WAVE_WIDTH_MIN       0.02
@@ -970,14 +960,12 @@ typedef enum
 } AnimEffect;
 
 #define ANIM_MINIMIZE_DEFAULT   AnimEffectMagicLamp2
-#define ANIM_UNMINIMIZE_DEFAULT AnimEffectMagicLamp2
 #define ANIM_CLOSE1_DEFAULT     AnimEffectZoom
 #define ANIM_CREATE1_DEFAULT    AnimEffectZoom
 #define ANIM_CLOSE2_DEFAULT     AnimEffectFade
 #define ANIM_CREATE2_DEFAULT    AnimEffectFade
 #define ANIM_FOCUS_DEFAULT      AnimEffectNone
 #define ANIM_SHADE_DEFAULT      AnimEffectRollUp
-#define ANIM_UNSHADE_DEFAULT    AnimEffectRollUp
 
 static char *minimizeEffectName[] = {
 	N_("None"),
@@ -1122,27 +1110,22 @@ typedef struct _AnimDisplay
 } AnimDisplay;
 
 // FIXME? A more elegant way to do this?
-#define ANIM_SCREEN_MATCH_OPTION_NUM 9
+#define ANIM_SCREEN_MATCH_OPTION_NUM 7
 
 typedef enum
 {
 	// Match settings
 	ANIM_SCREEN_OPTION_MINIMIZE_MATCH = 0,
-	ANIM_SCREEN_OPTION_UNMINIMIZE_MATCH,
 	ANIM_SCREEN_OPTION_CLOSE1_MATCH,
 	ANIM_SCREEN_OPTION_CLOSE2_MATCH,
 	ANIM_SCREEN_OPTION_CREATE1_MATCH,
 	ANIM_SCREEN_OPTION_CREATE2_MATCH,
 	ANIM_SCREEN_OPTION_FOCUS_MATCH,
 	ANIM_SCREEN_OPTION_SHADE_MATCH,
-	ANIM_SCREEN_OPTION_UNSHADE_MATCH,
 	// Event settings
 	ANIM_SCREEN_OPTION_MINIMIZE_EFFECT,
 	ANIM_SCREEN_OPTION_MINIMIZE_DURATION,
 	ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS,
-	ANIM_SCREEN_OPTION_UNMINIMIZE_EFFECT,
-	ANIM_SCREEN_OPTION_UNMINIMIZE_DURATION,
-	ANIM_SCREEN_OPTION_UNMINIMIZE_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_CLOSE1_EFFECT,
 	ANIM_SCREEN_OPTION_CLOSE1_DURATION,
 	ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS,
@@ -1160,9 +1143,6 @@ typedef enum
 	ANIM_SCREEN_OPTION_SHADE_EFFECT,
 	ANIM_SCREEN_OPTION_SHADE_DURATION,
 	ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS,
-	ANIM_SCREEN_OPTION_UNSHADE_EFFECT,
-	ANIM_SCREEN_OPTION_UNSHADE_DURATION,
-	ANIM_SCREEN_OPTION_UNSHADE_RANDOM_EFFECTS,
 	ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR,
 	// Misc. settings
 	ANIM_SCREEN_OPTION_ALL_RANDOM,
@@ -1259,31 +1239,25 @@ typedef struct _AnimScreen
 
 	Bool animInProgress;
 	AnimEffect minimizeEffect;
-	AnimEffect unminimizeEffect;
 	AnimEffect create1Effect;
 	AnimEffect create2Effect;
 	AnimEffect close1Effect;
 	AnimEffect close2Effect;
 	AnimEffect focusEffect;
 	AnimEffect shadeEffect;
-	AnimEffect unshadeEffect;
 
 	AnimEffect close1RandomEffects[NUM_CLOSE_EFFECT];
 	AnimEffect close2RandomEffects[NUM_CLOSE_EFFECT];
 	AnimEffect create1RandomEffects[NUM_CLOSE_EFFECT];
 	AnimEffect create2RandomEffects[NUM_CLOSE_EFFECT];
 	AnimEffect minimizeRandomEffects[NUM_MINIMIZE_EFFECT];
-	AnimEffect unminimizeRandomEffects[NUM_MINIMIZE_EFFECT];
 	AnimEffect shadeRandomEffects[NUM_SHADE_EFFECT];
-	AnimEffect unshadeRandomEffects[NUM_SHADE_EFFECT];
 	unsigned int nClose1RandomEffects;
 	unsigned int nClose2RandomEffects;
 	unsigned int nCreate1RandomEffects;
 	unsigned int nCreate2RandomEffects;
 	unsigned int nMinimizeRandomEffects;
-	unsigned int nUnminimizeRandomEffects;
 	unsigned int nShadeRandomEffects;
-	unsigned int nUnshadeRandomEffects;
 } AnimScreen;
 
 typedef struct _AnimWindow
@@ -6162,21 +6136,6 @@ animSetScreenOption(CompPlugin *plugin,
 			}
 		}
 		break;
-	case ANIM_SCREEN_OPTION_UNMINIMIZE_EFFECT:
-		if (compSetStringOption(o, value))
-		{
-			int i;
-
-			for (i = 0; i < NUM_MINIMIZE_EFFECT; i++)
-			{
-				if (strcmp(o->value.s, minimizeEffectName[i]) == 0)
-				{
-					as->unminimizeEffect = minimizeEffectType[i];
-					return TRUE;
-				}
-			}
-		}
-		break;
 	case ANIM_SCREEN_OPTION_CLOSE1_EFFECT:
 		if (compSetStringOption(o, value))
 		{
@@ -6267,42 +6226,19 @@ animSetScreenOption(CompPlugin *plugin,
 			}
 		}
 		break;
-	case ANIM_SCREEN_OPTION_UNSHADE_EFFECT:
-		if (compSetStringOption(o, value))
-		{
-			int i;
-
-			for (i = 0; i < NUM_SHADE_EFFECT; i++)
-			{
-				if (strcmp(o->value.s, shadeEffectName[i]) == 0)
-				{
-					as->unshadeEffect = shadeEffectType[i];
-					return TRUE;
-				}
-			}
-		}
-		break;
 	case ANIM_SCREEN_OPTION_MINIMIZE_MATCH:
-	case ANIM_SCREEN_OPTION_UNMINIMIZE_MATCH:
 	case ANIM_SCREEN_OPTION_CLOSE1_MATCH:
 	case ANIM_SCREEN_OPTION_CLOSE2_MATCH:
 	case ANIM_SCREEN_OPTION_CREATE1_MATCH:
 	case ANIM_SCREEN_OPTION_CREATE2_MATCH:
 	case ANIM_SCREEN_OPTION_FOCUS_MATCH:
 	case ANIM_SCREEN_OPTION_SHADE_MATCH:
-	case ANIM_SCREEN_OPTION_UNSHADE_MATCH:
 		if (compSetMatchOption (o, value))
 		{
 	    		return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_MINIMIZE_DURATION:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_UNMINIMIZE_DURATION:
 		if (compSetFloatOption(o, value))
 		{
 			return TRUE;
@@ -6339,12 +6275,6 @@ animSetScreenOption(CompPlugin *plugin,
 		}
 		break;
 	case ANIM_SCREEN_OPTION_SHADE_DURATION:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_UNSHADE_DURATION:
 		if (compSetFloatOption(o, value))
 		{
 			return TRUE;
@@ -6520,19 +6450,6 @@ animSetScreenOption(CompPlugin *plugin,
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_UNMINIMIZE_RANDOM_EFFECTS:
-		if (compSetOptionList(o, value))
-		{
-			STORE_RANDOM_EFFECT_LIST
-					(ANIM_SCREEN_OPTION_UNMINIMIZE_RANDOM_EFFECTS,
-					 NUM_MINIMIZE_EFFECT,
-					 ANIM_UNMINIMIZE_DEFAULT,
-					 nUnminimizeRandomEffects,
-					 unminimizeRandomEffects,
-					 minimizeEffectName, minimizeEffectType);
-			return TRUE;
-		}
-		break;
 	case ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS:
 		if (compSetOptionList(o, value))
 		{
@@ -6590,18 +6507,6 @@ animSetScreenOption(CompPlugin *plugin,
 					 ANIM_SHADE_DEFAULT,
 					 nShadeRandomEffects,
 					 shadeRandomEffects, shadeEffectName, shadeEffectType);
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_UNSHADE_RANDOM_EFFECTS:
-		if (compSetOptionList(o, value))
-		{
-			STORE_RANDOM_EFFECT_LIST
-					(ANIM_SCREEN_OPTION_UNSHADE_RANDOM_EFFECTS,
-					 NUM_SHADE_EFFECT,
-					 ANIM_UNSHADE_DEFAULT,
-					 nUnshadeRandomEffects,
-					 unshadeRandomEffects, shadeEffectName, shadeEffectType);
 			return TRUE;
 		}
 		break;
@@ -7075,60 +6980,6 @@ static void animScreenInitOptions(AnimScreen * as)
 			 nMinimizeRandomEffects,
 			 minimizeRandomEffects, minimizeEffectName, minimizeEffectType);
 
-	// Unminimize
-
-	o = &as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_EFFECT];
-	o->name = "unminimize_effect";
-	//o->group = N_("(Un)Minimize");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	o->shortDesc = N_("Unminimize Animation");
-	o->longDesc = N_("The animation shown when unminimizing a window.");
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(allEffectName[ANIM_UNMINIMIZE_DEFAULT]);
-	o->rest.s.string = minimizeEffectName;
-	o->rest.s.nString = NUM_MINIMIZE_EFFECT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_MATCH];
-	o->name = "unminimize_match";
-	//o->group = N_("(Un)Minimize");
-	//o->subGroup = N_("Unminimize");
-	//o->advanced = False;
-	o->shortDesc = N_("Window match");
-	o->longDesc = N_("The windows that will be animated.");
-	//o->displayHints = "";
-	o->type	= CompOptionTypeMatch;
-	matchInit (&o->value.match);
-	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_DURATION];
-	o->name = "unminimize_duration";
-	//o->group = N_("(Un)Minimize");
-	//o->subGroup = N_("Unminimize");
-	//o->advanced = False;
-	o->shortDesc = N_("Animation Duration");
-	o->longDesc =
-			N_
-			("The number of seconds that the Unminimize animation will last.");
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_UNMINIMIZE_DURATION_DEFAULT;
-	o->rest.f.min = ANIM_UNMINIMIZE_DURATION_MIN;
-	o->rest.f.max = ANIM_UNMINIMIZE_DURATION_MAX;
-	o->rest.f.precision = ANIM_UNMINIMIZE_DURATION_PRECISION;
-
-	INIT_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_UNMINIMIZE_RANDOM_EFFECTS,
-			 "unminimize", "(Un)Minimize", "Unminimize", NUM_MINIMIZE_EFFECT,
-			 minimizeEffectName);
-	STORE_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_UNMINIMIZE_RANDOM_EFFECTS,
-			 NUM_MINIMIZE_EFFECT,
-			 ANIM_UNMINIMIZE_DEFAULT,
-			 nUnminimizeRandomEffects,
-			 unminimizeRandomEffects, minimizeEffectName, minimizeEffectType);
-
 	// Close 1
 
 	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE1_EFFECT];
@@ -7441,60 +7292,6 @@ static void animScreenInitOptions(AnimScreen * as)
 			 ANIM_SHADE_DEFAULT,
 			 nShadeRandomEffects,
 			 shadeRandomEffects, shadeEffectName, shadeEffectType);
-
-	// Unshade
-
-	o = &as->opt[ANIM_SCREEN_OPTION_UNSHADE_EFFECT];
-	o->name = "unshade_effect";
-	//o->group = N_("(Un)Shade");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	o->shortDesc = N_("Unshade Animation");
-	o->longDesc = N_("Unshade window effect.");
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(allEffectName[ANIM_UNSHADE_DEFAULT]);
-	o->rest.s.string = shadeEffectName;
-	o->rest.s.nString = NUM_SHADE_EFFECT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_UNSHADE_MATCH];
-	o->name = "unshade_match";
-	//o->group = N_("(Un)Shade");
-	//o->subGroup = N_("Unshade");
-	//o->advanced = False;
-	o->shortDesc = N_("Window match");
-	o->longDesc =
-			N_
-			("Window that should animate with this effect when unshaded.");
-	//o->displayHints = "";
-	o->type	= CompOptionTypeMatch;
-	matchInit (&o->value.match);
-	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_UNSHADE_DURATION];
-	o->name = "unshade_duration";
-	//o->group = N_("(Un)Shade");
-	//o->subGroup = N_("Unshade");
-	//o->advanced = False;
-	o->shortDesc = N_("Animation Duration");
-	o->longDesc = N_("Unshade animation duration in seconds.");
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_UNSHADE_DURATION_DEFAULT;
-	o->rest.f.min = ANIM_UNSHADE_DURATION_MIN;
-	o->rest.f.max = ANIM_UNSHADE_DURATION_MAX;
-	o->rest.f.precision = ANIM_UNSHADE_DURATION_PRECISION;
-
-	INIT_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_UNSHADE_RANDOM_EFFECTS,
-			 "unshade", "(Un)Shade", "Unshade", NUM_SHADE_EFFECT,
-			 shadeEffectName);
-	STORE_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_UNSHADE_RANDOM_EFFECTS,
-			 NUM_SHADE_EFFECT,
-			 ANIM_UNSHADE_DEFAULT,
-			 nUnshadeRandomEffects,
-			 unshadeRandomEffects, shadeEffectName, shadeEffectType);
 
 	// Fire (Burn)
 
@@ -10033,8 +9830,8 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 		if (aw->state == IconicState)
 		{
-			if (!w->invisible && as->unminimizeEffect &&
-			    matchEval (&as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_MATCH].value.match, w))
+			if (!w->invisible && as->minimizeEffect &&
+			    matchEval (&as->opt[ANIM_SCREEN_OPTION_MINIMIZE_MATCH].value.match, w))
 			{
 				// UNMINIMIZE event!
 
@@ -10069,23 +9866,23 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 				if (startingNew)
 				{
-					if (as->unminimizeEffect ==
+					if (as->minimizeEffect ==
 						AnimEffectRandom
 						|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
 						aw->curAnimEffect =	// choose a random effect
-								as->unminimizeRandomEffects[(int)
+								as->minimizeRandomEffects[(int)
 															(as->
-															 nUnminimizeRandomEffects
+															 nMinimizeRandomEffects
 															 *
 															 (double)rand() /
 															 RAND_MAX)];
 					else
-						aw->curAnimEffect = as->unminimizeEffect;
+						aw->curAnimEffect = as->minimizeEffect;
 
 					aw->animTotalTime =
 							as->
 							opt
-							[ANIM_SCREEN_OPTION_UNMINIMIZE_DURATION].
+							[ANIM_SCREEN_OPTION_MINIMIZE_DURATION].
 							value.f * 1000;
 					aw->animRemainingTime = aw->animTotalTime;
 				}
@@ -10133,8 +9930,8 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 			//IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, TRUE);
 			aw->nowShaded = FALSE;
 
-			if (as->unshadeEffect && 
-			    matchEval (&as->opt[ANIM_SCREEN_OPTION_UNSHADE_MATCH].value.match, w))
+			if (as->shadeEffect && 
+			    matchEval (&as->opt[ANIM_SCREEN_OPTION_SHADE_MATCH].value.match, w))
 			{
 				Bool startingNew = TRUE;
 
@@ -10164,22 +9961,22 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 				if (startingNew)
 				{
-					if (as->unshadeEffect ==
+					if (as->shadeEffect ==
 						AnimEffectRandom
 						|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
 						aw->curAnimEffect =	// choose a random effect
-								as->unshadeRandomEffects[(int)
+								as->shadeRandomEffects[(int)
 														 (as->
-														  nUnshadeRandomEffects
+														  nShadeRandomEffects
 														  * (double)rand() /
 														  RAND_MAX)];
 					else
-						aw->curAnimEffect = as->unshadeEffect;
+						aw->curAnimEffect = as->shadeEffect;
 
 					aw->animTotalTime =
 							as->
 							opt
-							[ANIM_SCREEN_OPTION_UNSHADE_DURATION].value.f *
+							[ANIM_SCREEN_OPTION_SHADE_DURATION].value.f *
 							1000;
 					aw->animRemainingTime = aw->animTotalTime;
 				}
@@ -10592,14 +10389,12 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 	}
 	as->animInProgress = FALSE;
 	as->minimizeEffect = ANIM_MINIMIZE_DEFAULT;
-	as->unminimizeEffect = ANIM_UNMINIMIZE_DEFAULT;
 	as->create1Effect = ANIM_CREATE1_DEFAULT;
 	as->create2Effect = ANIM_CREATE2_DEFAULT;
 	as->close1Effect = ANIM_CLOSE1_DEFAULT;
 	as->close2Effect = ANIM_CLOSE2_DEFAULT;
 	as->focusEffect = ANIM_FOCUS_DEFAULT;
 	as->shadeEffect = ANIM_SHADE_DEFAULT;
-	as->unshadeEffect = ANIM_UNSHADE_DEFAULT;
 
 	as->zoomFC = ANIM_ZOOM_FROM_CENTER_DEFAULT;
 
@@ -10646,14 +10441,12 @@ static void animFiniScreen(CompPlugin * p, CompScreen * s)
 	}
 	
 	free(as->opt[ANIM_SCREEN_OPTION_MINIMIZE_EFFECT].value.s);
-	free(as->opt[ANIM_SCREEN_OPTION_UNMINIMIZE_EFFECT].value.s);
 	free(as->opt[ANIM_SCREEN_OPTION_CREATE1_EFFECT].value.s);
 	free(as->opt[ANIM_SCREEN_OPTION_CREATE2_EFFECT].value.s);
 	free(as->opt[ANIM_SCREEN_OPTION_CLOSE1_EFFECT].value.s);
 	free(as->opt[ANIM_SCREEN_OPTION_CLOSE2_EFFECT].value.s);
 	free(as->opt[ANIM_SCREEN_OPTION_FOCUS_EFFECT].value.s);
 	free(as->opt[ANIM_SCREEN_OPTION_SHADE_EFFECT].value.s);
-	free(as->opt[ANIM_SCREEN_OPTION_UNSHADE_EFFECT].value.s);
 
 	if (as->lastClientListStacking)
 		free(as->lastClientListStacking);
