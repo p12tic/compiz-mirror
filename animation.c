@@ -291,8 +291,8 @@ postAnimationCleanup(CompWindow * w, Bool resetAnimation);
 static void
 animDrawWindowGeometry(CompWindow * w);
 
-#define ANIM_WINDOW_MATCH1 "Normal | Dialog | ModalDialog | Utility"
-#define ANIM_WINDOW_MATCH2 "Unknown | Menu | PopupMenu | DropdownMenu | Tooltip"
+#define ANIM_WINDOW_MATCH1 "(type=Normal | Dialog | ModalDialog | Utility) & override_redirect=0"
+#define ANIM_WINDOW_MATCH2 "(type=Unknown | Menu | PopupMenu | DropdownMenu | Tooltip) | override_redirect=1"
 
 #define ANIM_MAGIC_LAMP1_GRID_RES_DEFAULT  100
 #define ANIM_MAGIC_LAMP1_GRID_RES_MIN      4
