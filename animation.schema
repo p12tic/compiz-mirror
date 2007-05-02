@@ -173,7 +173,7 @@
             <applyto>/apps/compiz/plugins/animation/screen0/options/minimize_match</applyto>
             <owner>compiz</owner>
             <type>string</type>
-            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; override_redirect=0</default>
+            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; !(type=Normal &amp; override_redirect=1)</default>
             <locale name="C">
                 <short>Window match</short>
                 <long>The windows that will be animated. (match)</long>
@@ -185,7 +185,7 @@
             <applyto>/apps/compiz/plugins/animation/screen0/options/close1_match</applyto>
             <owner>compiz</owner>
             <type>string</type>
-            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; override_redirect=0</default>
+            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; !(type=Normal &amp; override_redirect=1)</default>
             <locale name="C">
                 <short>Window match</short>
                 <long>The windows that will be animated. (match)</long>
@@ -197,7 +197,7 @@
             <applyto>/apps/compiz/plugins/animation/screen0/options/close2_match</applyto>
             <owner>compiz</owner>
             <type>string</type>
-            <default>(type=Unknown | Menu | PopupMenu | DropdownMenu | Tooltip) | override_redirect=1</default>
+            <default>(type=Unknown | Menu | PopupMenu | DropdownMenu | Tooltip) | (type=Normal &amp; override_redirect=1)</default>
             <locale name="C">
                 <short>Window match</short>
                 <long>The windows that will be animated. (match)</long>
@@ -209,7 +209,7 @@
             <applyto>/apps/compiz/plugins/animation/screen0/options/create1_match</applyto>
             <owner>compiz</owner>
             <type>string</type>
-            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; override_redirect=0</default>
+            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; !(type=Normal &amp; override_redirect=1)</default>
             <locale name="C">
                 <short>Window match</short>
                 <long>Window that should animate with this effect when created. (match)</long>
@@ -221,7 +221,7 @@
             <applyto>/apps/compiz/plugins/animation/screen0/options/create2_match</applyto>
             <owner>compiz</owner>
             <type>string</type>
-            <default>(type=Unknown | Menu | PopupMenu | DropdownMenu | Tooltip) | override_redirect=1</default>
+            <default>(type=Unknown | Menu | PopupMenu | DropdownMenu | Tooltip) | (type=Normal &amp; override_redirect=1)</default>
             <locale name="C">
                 <short>Window match</short>
                 <long>Window that should animate with this effect when created. (match)</long>
@@ -233,7 +233,7 @@
             <applyto>/apps/compiz/plugins/animation/screen0/options/focus_match</applyto>
             <owner>compiz</owner>
             <type>string</type>
-            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; override_redirect=0</default>
+            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; !(type=Normal &amp; override_redirect=1)</default>
             <locale name="C">
                 <short>Window match</short>
                 <long>Window that should animate with this effect when focused. (match)</long>
@@ -245,7 +245,7 @@
             <applyto>/apps/compiz/plugins/animation/screen0/options/shade_match</applyto>
             <owner>compiz</owner>
             <type>string</type>
-            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; override_redirect=0</default>
+            <default>(type=Normal | Dialog | ModalDialog | Utility) &amp; !(type=Normal &amp; override_redirect=1)</default>
             <locale name="C">
                 <short>Window match</short>
                 <long>Window that should animate with this effect when shaded. (match)</long>
