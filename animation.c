@@ -294,71 +294,49 @@ animDrawWindowGeometry(CompWindow * w);
 #define ANIM_WINDOW_MATCH1 "(type=Normal | Dialog | ModalDialog | Utility) & override_redirect=0"
 #define ANIM_WINDOW_MATCH2 "(type=Unknown | Menu | PopupMenu | DropdownMenu | Tooltip) | override_redirect=1"
 
-#define ANIM_MAGIC_LAMP1_GRID_RES_DEFAULT  100
-#define ANIM_MAGIC_LAMP1_GRID_RES_MIN      4
-#define ANIM_MAGIC_LAMP1_GRID_RES_MAX      200
+#define ANIM_MAGIC_LAMP_GRID_RES_DEFAULT  100
+#define ANIM_MAGIC_LAMP_GRID_RES_MIN      2
+#define ANIM_MAGIC_LAMP_GRID_RES_MAX      200
 
-#define ANIM_MAGIC_LAMP1_MAX_WAVES_DEFAULT  5
-#define ANIM_MAGIC_LAMP1_MAX_WAVES_MIN      3
-#define ANIM_MAGIC_LAMP1_MAX_WAVES_MAX      20
+#define ANIM_MAGIC_LAMP_MAX_WAVES_DEFAULT  3
+#define ANIM_MAGIC_LAMP_MAX_WAVES_MIN      3
+#define ANIM_MAGIC_LAMP_MAX_WAVES_MAX      20
 
-#define ANIM_MAGIC_LAMP1_WAVE_AMP_MIN_DEFAULT  200
-#define ANIM_MAGIC_LAMP1_WAVE_AMP_MIN_MIN      200
-#define ANIM_MAGIC_LAMP1_WAVE_AMP_MIN_MAX      2000
-#define ANIM_MAGIC_LAMP1_WAVE_AMP_MIN_PRECISION 5
+#define ANIM_MAGIC_LAMP_WAVE_AMP_MIN_DEFAULT  200
+#define ANIM_MAGIC_LAMP_WAVE_AMP_MIN_MIN      200
+#define ANIM_MAGIC_LAMP_WAVE_AMP_MIN_MAX      2000
+#define ANIM_MAGIC_LAMP_WAVE_AMP_MIN_PRECISION 5
 
-#define ANIM_MAGIC_LAMP1_WAVE_AMP_MAX_DEFAULT  300
-#define ANIM_MAGIC_LAMP1_WAVE_AMP_MAX_MIN      200
-#define ANIM_MAGIC_LAMP1_WAVE_AMP_MAX_MAX      2000
-#define ANIM_MAGIC_LAMP1_WAVE_AMP_MAX_PRECISION 5
+#define ANIM_MAGIC_LAMP_WAVE_AMP_MAX_DEFAULT  300
+#define ANIM_MAGIC_LAMP_WAVE_AMP_MAX_MIN      200
+#define ANIM_MAGIC_LAMP_WAVE_AMP_MAX_MAX      2000
+#define ANIM_MAGIC_LAMP_WAVE_AMP_MAX_PRECISION 5
 
-#define ANIM_MAGIC_LAMP1_CREATE_START_WIDTH_DEFAULT  30
-#define ANIM_MAGIC_LAMP1_CREATE_START_WIDTH_MIN      0
-#define ANIM_MAGIC_LAMP1_CREATE_START_WIDTH_MAX      500
+#define ANIM_MAGIC_LAMP_CREATE_START_WIDTH_DEFAULT  30
+#define ANIM_MAGIC_LAMP_CREATE_START_WIDTH_MIN      0
+#define ANIM_MAGIC_LAMP_CREATE_START_WIDTH_MAX      500
 
-#define ANIM_MAGIC_LAMP2_GRID_RES_DEFAULT  100
-#define ANIM_MAGIC_LAMP2_GRID_RES_MIN      2
-#define ANIM_MAGIC_LAMP2_GRID_RES_MAX      200
+#define ANIM_MAGIC_LAMP_VACUUM_GRID_RES_DEFAULT  100
+#define ANIM_MAGIC_LAMP_VACUUM_GRID_RES_MIN      2
+#define ANIM_MAGIC_LAMP_VACUUM_GRID_RES_MAX      200
 
-#define ANIM_MAGIC_LAMP2_MAX_WAVES_DEFAULT  3
-#define ANIM_MAGIC_LAMP2_MAX_WAVES_MIN      3
-#define ANIM_MAGIC_LAMP2_MAX_WAVES_MAX      20
+#define ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_DEFAULT  0
+#define ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_MIN      0
+#define ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_MAX      20
 
-#define ANIM_MAGIC_LAMP2_WAVE_AMP_MIN_DEFAULT  200
-#define ANIM_MAGIC_LAMP2_WAVE_AMP_MIN_MIN      200
-#define ANIM_MAGIC_LAMP2_WAVE_AMP_MIN_MAX      2000
-#define ANIM_MAGIC_LAMP2_WAVE_AMP_MIN_PRECISION 5
+#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_DEFAULT  200
+#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_MIN      200
+#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_MAX      2000
+#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_PRECISION 5
 
-#define ANIM_MAGIC_LAMP2_WAVE_AMP_MAX_DEFAULT  300
-#define ANIM_MAGIC_LAMP2_WAVE_AMP_MAX_MIN      200
-#define ANIM_MAGIC_LAMP2_WAVE_AMP_MAX_MAX      2000
-#define ANIM_MAGIC_LAMP2_WAVE_AMP_MAX_PRECISION 5
+#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_DEFAULT  300
+#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_MIN      200
+#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_MAX      2000
+#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_PRECISION 5
 
-#define ANIM_MAGIC_LAMP2_CREATE_START_WIDTH_DEFAULT  30
-#define ANIM_MAGIC_LAMP2_CREATE_START_WIDTH_MIN      0
-#define ANIM_MAGIC_LAMP2_CREATE_START_WIDTH_MAX      500
-
-#define ANIM_MAGIC_LAMP3_GRID_RES_DEFAULT  100
-#define ANIM_MAGIC_LAMP3_GRID_RES_MIN      2
-#define ANIM_MAGIC_LAMP3_GRID_RES_MAX      200
-
-#define ANIM_MAGIC_LAMP3_MAX_WAVES_DEFAULT  0
-#define ANIM_MAGIC_LAMP3_MAX_WAVES_MIN      0
-#define ANIM_MAGIC_LAMP3_MAX_WAVES_MAX      20
-
-#define ANIM_MAGIC_LAMP3_WAVE_AMP_MIN_DEFAULT  200
-#define ANIM_MAGIC_LAMP3_WAVE_AMP_MIN_MIN      200
-#define ANIM_MAGIC_LAMP3_WAVE_AMP_MIN_MAX      2000
-#define ANIM_MAGIC_LAMP3_WAVE_AMP_MIN_PRECISION 5
-
-#define ANIM_MAGIC_LAMP3_WAVE_AMP_MAX_DEFAULT  300
-#define ANIM_MAGIC_LAMP3_WAVE_AMP_MAX_MIN      200
-#define ANIM_MAGIC_LAMP3_WAVE_AMP_MAX_MAX      2000
-#define ANIM_MAGIC_LAMP3_WAVE_AMP_MAX_PRECISION 5
-
-#define ANIM_MAGIC_LAMP3_CREATE_START_WIDTH_DEFAULT  30
-#define ANIM_MAGIC_LAMP3_CREATE_START_WIDTH_MIN      0
-#define ANIM_MAGIC_LAMP3_CREATE_START_WIDTH_MAX      500
+#define ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_DEFAULT  30
+#define ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_MIN      0
+#define ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_MAX      500
 
 #define ANIM_SIDEKICK_NUM_ROTATIONS_DEFAULT      0.5
 #define ANIM_SIDEKICK_NUM_ROTATIONS_MIN          0
@@ -922,9 +900,8 @@ static char *allEffectName[] = {
 	N_("Glide 2"),
 	N_("Horizontal Folds"),
 	N_("Leaf Spread"),
-	N_("Magic Lamp 1"),
-	N_("Magic Lamp 2"),
-	N_("Magic Lamp 3 (Vacuum)"),
+	N_("Magic Lamp"),
+	N_("Magic Lamp Vacuum"),
 	N_("Razr"),
 	N_("Roll Up"),
 	N_("Sidekick"),
@@ -948,9 +925,8 @@ typedef enum
 	AnimEffectGlide3D2,
 	AnimEffectHorizontalFolds,
 	AnimEffectLeafSpread3D,
-	AnimEffectMagicLamp1,
-	AnimEffectMagicLamp2,
-	AnimEffectMagicLamp3,
+	AnimEffectMagicLamp,
+	AnimEffectMagicLampVacuum,
 	AnimEffectRazr3D,
 	AnimEffectRollUp,
 	AnimEffectSidekick,
@@ -959,7 +935,7 @@ typedef enum
 	AnimEffectNum
 } AnimEffect;
 
-#define ANIM_MINIMIZE_DEFAULT   AnimEffectMagicLamp2
+#define ANIM_MINIMIZE_DEFAULT   AnimEffectMagicLamp
 #define ANIM_CLOSE1_DEFAULT     AnimEffectZoom
 #define ANIM_CREATE1_DEFAULT    AnimEffectZoom
 #define ANIM_CLOSE2_DEFAULT     AnimEffectFade
@@ -981,8 +957,7 @@ static char *minimizeEffectName[] = {
 	N_("Glide 2"),
 	N_("Horizontal Folds"),
 	N_("Leaf Spread"),
-	N_("Magic Lamp 1"),
-	N_("Magic Lamp 2"),
+	N_("Magic Lamp"),
 	N_("Razr"),
 	N_("Sidekick"),
 	N_("Zoom")
@@ -1002,8 +977,7 @@ static AnimEffect minimizeEffectType[] = {
 	AnimEffectGlide3D2,
 	AnimEffectHorizontalFolds,
 	AnimEffectLeafSpread3D,
-	AnimEffectMagicLamp1,
-	AnimEffectMagicLamp2,
+	AnimEffectMagicLamp,
 	AnimEffectRazr3D,
 	AnimEffectSidekick,
 	AnimEffectZoom
@@ -1025,9 +999,8 @@ static char *closeEffectName[] = {
 	N_("Glide 2"),
 	N_("Horizontal Folds"),
 	N_("Leaf Spread"),
-	N_("Magic Lamp 1"),
-	N_("Magic Lamp 2"),
-	N_("Magic Lamp 3 (Vacuum)"),
+	N_("Magic Lamp"),
+	N_("Magic Lamp Vacuum"),
 	N_("Razr"),
 	N_("Sidekick"),
 	N_("Wave"),
@@ -1048,9 +1021,8 @@ static AnimEffect closeEffectType[] = {
 	AnimEffectGlide3D2,
 	AnimEffectHorizontalFolds,
 	AnimEffectLeafSpread3D,
-	AnimEffectMagicLamp1,
-	AnimEffectMagicLamp2,
-	AnimEffectMagicLamp3,
+	AnimEffectMagicLamp,
+	AnimEffectMagicLampVacuum,
 	AnimEffectRazr3D,
 	AnimEffectSidekick,
 	AnimEffectWave,
@@ -1178,21 +1150,16 @@ typedef enum
 	ANIM_SCREEN_OPTION_GLIDE2_THICKNESS,
 	ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_AMP,
 	ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP1_GRID_RES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP1_MAX_WAVES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP1_WAVE_AMP_MIN,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP1_WAVE_AMP_MAX,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP1_CREATE_START_WIDTH,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP2_GRID_RES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP2_MAX_WAVES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP2_WAVE_AMP_MIN,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP2_WAVE_AMP_MAX,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP2_CREATE_START_WIDTH,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP3_GRID_RES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP3_MAX_WAVES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP3_WAVE_AMP_MIN,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP3_WAVE_AMP_MAX,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP3_CREATE_START_WIDTH,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_GRID_RES,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_MAX_WAVES,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH,
 	ANIM_SCREEN_OPTION_SIDEKICK_NUM_ROTATIONS,
 	ANIM_SCREEN_OPTION_WAVE_WIDTH,
 	ANIM_SCREEN_OPTION_WAVE_AMP,
@@ -1709,28 +1676,19 @@ static void polygonsAnimStep(CompScreen * s, CompWindow * w, float time)
 // =====================  Effect: Magic Lamp  =========================
 
 static void
-fxMagicLamp1InitGrid(AnimScreen * as,
+fxMagicLampInitGrid(AnimScreen * as,
 					 WindowEvent forWindowEvent,
 					 int *gridWidth, int *gridHeight)
 {
 	*gridWidth = 2;
-	*gridHeight = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_GRID_RES].value.i;
+	*gridHeight = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES].value.i;
 }
-
 static void
-fxMagicLamp2InitGrid(AnimScreen * as,
-					 WindowEvent forWindowEvent,
+fxMagicLampVacuumInitGrid(AnimScreen * as, WindowEvent forWindowEvent,
 					 int *gridWidth, int *gridHeight)
 {
 	*gridWidth = 2;
-	*gridHeight = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP2_GRID_RES].value.i;
-}
-static void
-fxMagicLamp3InitGrid(AnimScreen * as, WindowEvent forWindowEvent,
-					 int *gridWidth, int *gridHeight)
-{
-	*gridWidth = 2;
-	*gridHeight = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP3_GRID_RES].value.i;
+	*gridHeight = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_GRID_RES].value.i;
 }
 
 static void fxMagicLampInit(CompScreen * s, CompWindow * w)
@@ -1746,29 +1704,21 @@ static void fxMagicLampInit(CompScreen * s, CompWindow * w)
 	int maxWaves;
 	float waveAmpMin, waveAmpMax;
 
-	if (aw->curAnimEffect == AnimEffectMagicLamp1)
+	if (aw->curAnimEffect == AnimEffectMagicLamp)
 	{
-		maxWaves = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_MAX_WAVES].value.i;
+		maxWaves = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES].value.i;
 		waveAmpMin =
-				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_WAVE_AMP_MIN].value.f;
+				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN].value.f;
 		waveAmpMax =
-				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_WAVE_AMP_MAX].value.f;
-	}
-	else if (aw->curAnimEffect == AnimEffectMagicLamp2)
-	{
-		maxWaves = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP2_MAX_WAVES].value.i;
-		waveAmpMin =
-				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP2_WAVE_AMP_MIN].value.f;
-		waveAmpMax =
-				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP2_WAVE_AMP_MAX].value.f;
+				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX].value.f;
 	}
 	else
 	{
-		maxWaves = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP3_MAX_WAVES].value.i;
+		maxWaves = as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_MAX_WAVES].value.i;
 		waveAmpMin =
-				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP3_WAVE_AMP_MIN].value.f;
+				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN].value.f;
 		waveAmpMax =
-				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP3_WAVE_AMP_MAX].value.f;
+				as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX].value.f;
 	}
 	if (waveAmpMax < waveAmpMin)
 		waveAmpMax = waveAmpMin;
@@ -5817,7 +5767,7 @@ AnimEffectProperties animEffectProperties[AnimEffectNum] = {
 	{0, 0, drawParticleSystems, fxBurnModelStep, fxBurnInit, 0, 0, 0, 1, 0, 0, 0}
 	,
 	// AnimEffectCurvedFold
-	{0, 0, 0, fxCurvedFoldModelStep, 0, fxMagicLamp1InitGrid, 0, 0, 0, 0, 0, 0}
+	{0, 0, 0, fxCurvedFoldModelStep, 0, fxMagicLampInitGrid, 0, 0, 0, 0, 0, 0}
 	,
 	// AnimEffectDomino3D
 	{0, polygonsPrePaintWindow, polygonsPostPaintWindow, polygonsAnimStep,
@@ -5826,7 +5776,7 @@ AnimEffectProperties animEffectProperties[AnimEffectNum] = {
 	,
 	// AnimEffectDream
 	{fxDreamUpdateWindowAttrib, 0, 0, fxDreamModelStep, fxDreamInit,
-	 fxMagicLamp1InitGrid, 0, 0, 0, 0, 0, 0}
+	 fxMagicLampInitGrid, 0, 0, 0, 0, 0, 0}
 	,
 	// AnimEffectExplode3D
 	{0, polygonsPrePaintWindow, polygonsPostPaintWindow, polygonsAnimStep,
@@ -5862,17 +5812,13 @@ AnimEffectProperties animEffectProperties[AnimEffectNum] = {
 	 fxLeafSpread3DInit, 0, polygonsStoreClips, polygonsDrawCustomGeometry, 0,
 	 polygonsLinearAnimStepPolygon, 0, 0}
 	,
-	// AnimEffectMagicLamp1
-	{0, 0, 0, fxMagicLampModelStep, fxMagicLampInit, fxMagicLamp1InitGrid,
+	// AnimEffectMagicLamp
+	{0, 0, 0, fxMagicLampModelStep, fxMagicLampInit, fxMagicLampInitGrid,
 	 0, 0, 0, 0, 0, 0}
 	,
-	// AnimEffectMagicLamp2
-	{0, 0, 0, fxMagicLampModelStep, fxMagicLampInit, fxMagicLamp2InitGrid,
-	 0, 0, 0, 0, 0, 0}
-	,
-	// AnimEffectMagicLamp3
+	// AnimEffectMagicLampVacuum
 	{0, 0, 0, fxMagicLampModelStep, fxMagicLampInit,
-	 fxMagicLamp3InitGrid, 0, 0}
+	 fxMagicLampVacuumInitGrid, 0, 0}
 	,
 	// AnimEffectRazr3D
 	{0, polygonsPrePaintWindow, polygonsPostPaintWindow, polygonsAnimStep,
@@ -5887,7 +5833,7 @@ AnimEffectProperties animEffectProperties[AnimEffectNum] = {
 	 0, 0, 0, 1, 0, 0, 0}
 	,
 	// AnimEffectWave
-	{0, 0, 0, fxWaveModelStep, 0, fxMagicLamp1InitGrid, 0, 0, 0, 0, 0, 0}
+	{0, 0, 0, fxWaveModelStep, 0, fxMagicLampInitGrid, 0, 0, 0, 0, 0, 0}
 	,
 	// AnimEffectZoom
 	{fxZoomUpdateWindowAttrib, 0, 0, fxZoomModelStep, fxZoomInit, 0, 0, 0, 1,
@@ -5993,91 +5939,61 @@ animSetScreenOption(CompPlugin *plugin,
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP1_GRID_RES:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES:
 		if (compSetIntOption(o, value))
 		{
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP1_MAX_WAVES:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES:
 		if (compSetIntOption(o, value))
 		{
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP1_WAVE_AMP_MIN:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN:
 		if (compSetFloatOption(o, value))
 		{
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP1_WAVE_AMP_MAX:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX:
 		if (compSetFloatOption(o, value))
 		{
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP1_CREATE_START_WIDTH:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH:
 		if (compSetIntOption(o, value))
 		{
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP2_GRID_RES:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_GRID_RES:
 		if (compSetIntOption(o, value))
 		{
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP2_MAX_WAVES:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_MAX_WAVES:
 		if (compSetIntOption(o, value))
 		{
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP2_WAVE_AMP_MIN:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN:
 		if (compSetFloatOption(o, value))
 		{
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP2_WAVE_AMP_MAX:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX:
 		if (compSetFloatOption(o, value))
 		{
 			return TRUE;
 		}
 		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP2_CREATE_START_WIDTH:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP3_GRID_RES:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP3_MAX_WAVES:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP3_WAVE_AMP_MIN:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP3_WAVE_AMP_MAX:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP3_CREATE_START_WIDTH:
+	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH:
 		if (compSetIntOption(o, value))
 		{
 			return TRUE;
@@ -6623,230 +6539,155 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->rest.i.min = ANIM_TIME_STEP_INTENSE_MIN;
 	o->rest.i.max = ANIM_TIME_STEP_INTENSE_MAX;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_GRID_RES];
-	o->name = "magic_lamp1_grid_res";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES];
+	o->name = "magic_lamp_grid_res";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #1");
+	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #1 Grid Y Resolution");
+	o->shortDesc = N_("Magic Lamp Grid Y Resolution");
 	o->longDesc =
 			N_
-			("Vertex grid resolution for Magic Lamp #1 (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases).");
+			("Vertex grid resolution for Magic Lamp (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases).");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP1_GRID_RES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP1_GRID_RES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP1_GRID_RES_MAX;
+	o->value.i = ANIM_MAGIC_LAMP_GRID_RES_DEFAULT;
+	o->rest.i.min = ANIM_MAGIC_LAMP_GRID_RES_MIN;
+	o->rest.i.max = ANIM_MAGIC_LAMP_GRID_RES_MAX;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_MAX_WAVES];
-	o->name = "magic_lamp1_max_waves";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES];
+	o->name = "magic_lamp_max_waves";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #1");
+	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #1 Max Waves");
-	o->longDesc = N_("The maximum number of waves for Magic Lamp #1.");
+	o->shortDesc = N_("Magic Lamp Max Waves");
+	o->longDesc = N_("The maximum number of waves for Magic Lamp.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP1_MAX_WAVES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP1_MAX_WAVES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP1_MAX_WAVES_MAX;
+	o->value.i = ANIM_MAGIC_LAMP_MAX_WAVES_DEFAULT;
+	o->rest.i.min = ANIM_MAGIC_LAMP_MAX_WAVES_MIN;
+	o->rest.i.max = ANIM_MAGIC_LAMP_MAX_WAVES_MAX;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_WAVE_AMP_MIN];
-	o->name = "magic_lamp1_wave_amp_min";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN];
+	o->name = "magic_lamp_amp_min";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #1");
+	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #1 Wave Min Amplitude");
+	o->shortDesc = N_("Magic Lamp Min Wave Amplitude");
 	o->longDesc =
 			N_
-			("The minimum amplitude (size of the waves) Magic Lamp #1 will have.");
+			("The minimum amplitude (size of the waves) Magic Lamp will have.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP1_WAVE_AMP_MIN_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP1_WAVE_AMP_MIN_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP1_WAVE_AMP_MIN_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP1_WAVE_AMP_MIN_PRECISION;
+	o->value.f = ANIM_MAGIC_LAMP_WAVE_AMP_MIN_DEFAULT;
+	o->rest.f.min = ANIM_MAGIC_LAMP_WAVE_AMP_MIN_MIN;
+	o->rest.f.max = ANIM_MAGIC_LAMP_WAVE_AMP_MIN_MAX;
+	o->rest.f.precision = ANIM_MAGIC_LAMP_WAVE_AMP_MIN_PRECISION;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_WAVE_AMP_MAX];
-	o->name = "magic_lamp1_wave_amp_max";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX];
+	o->name = "magic_lamp_amp_max";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #1");
+	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #1 Wave Max Amplitude");
+	o->shortDesc = N_("Magic Lamp Max Wave Amplitude");
 	o->longDesc =
 			N_
-			("The maxmimum amplitude (size of the waves) Magic Lamp #1 will have.");
+			("The maximum amplitude (size of the waves) Magic Lamp will have.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP1_WAVE_AMP_MAX_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP1_WAVE_AMP_MAX_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP1_WAVE_AMP_MAX_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP1_WAVE_AMP_MAX_PRECISION;
+	o->value.f = ANIM_MAGIC_LAMP_WAVE_AMP_MAX_DEFAULT;
+	o->rest.f.min = ANIM_MAGIC_LAMP_WAVE_AMP_MAX_MIN;
+	o->rest.f.max = ANIM_MAGIC_LAMP_WAVE_AMP_MAX_MAX;
+	o->rest.f.precision = ANIM_MAGIC_LAMP_WAVE_AMP_MAX_PRECISION;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_CREATE_START_WIDTH];
-	o->name = "magic_lamp1_create_start_width";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH];
+	o->name = "magic_lamp_create_start_width";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #1");
+	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #1 Create Start Width");
+	o->shortDesc = N_("Magic Lamp Create Start Width");
 	o->longDesc =
 			N_
-			("Starting width of create effect and ending width of close effect for Magic Lamp #1.");
+			("Starting width of create effect and ending width of close effect for Magic Lamp.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP1_CREATE_START_WIDTH_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP1_CREATE_START_WIDTH_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP1_CREATE_START_WIDTH_MAX;
+	o->value.i = ANIM_MAGIC_LAMP_CREATE_START_WIDTH_DEFAULT;
+	o->rest.i.min = ANIM_MAGIC_LAMP_CREATE_START_WIDTH_MIN;
+	o->rest.i.max = ANIM_MAGIC_LAMP_CREATE_START_WIDTH_MAX;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP2_GRID_RES];
-	o->name = "magic_lamp2_grid_res";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_GRID_RES];
+	o->name = "magic_lamp_vacuum_grid_res";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #2");
+	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #2 Grid Y Resolution");
+	o->shortDesc = N_("Magic Lamp Vacuum Grid Y Resolution");
 	o->longDesc =
 			N_
-			("Vertex grid resolution for Magic Lamp #2 (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases).");
+			("Vertex grid resolution for Magic Lamp Vacuum (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases).");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP2_GRID_RES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP2_GRID_RES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP2_GRID_RES_MAX;
+	o->value.i = ANIM_MAGIC_LAMP_VACUUM_GRID_RES_DEFAULT;
+	o->rest.i.min = ANIM_MAGIC_LAMP_VACUUM_GRID_RES_MIN;
+	o->rest.i.max = ANIM_MAGIC_LAMP_VACUUM_GRID_RES_MAX;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP2_MAX_WAVES];
-	o->name = "magic_lamp2_max_waves";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_MAX_WAVES];
+	o->name = "magic_lamp_vacuum_max_waves";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #2");
+	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #2 Max Waves");
-	o->longDesc = N_("The maximum number of waves for Magic Lamp #2.");
+	o->shortDesc = N_("Magic Lamp Vacuum Max Waves");
+	o->longDesc = N_("The maximum number of waves for Magic Lamp Vacuum.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP2_MAX_WAVES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP2_MAX_WAVES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP2_MAX_WAVES_MAX;
+	o->value.i = ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_DEFAULT;
+	o->rest.i.min = ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_MIN;
+	o->rest.i.max = ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_MAX;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP2_WAVE_AMP_MIN];
-	o->name = "magic_lamp2_wave_amp_min";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN];
+	o->name = "magic_lamp_vacuum_amp_min";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #2");
+	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #2 Wave Min Amplitude");
+	o->shortDesc = N_("Magic Lamp Vacuum Min Wave Amplitude");
 	o->longDesc =
 			N_
-			("The minimum amplitude (size of the waves) Magic Lamp #2 will have.");
+			("The minimum amplitude (size of the waves) Magic Lamp Vacuum will have.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP2_WAVE_AMP_MIN_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP2_WAVE_AMP_MIN_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP2_WAVE_AMP_MIN_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP2_WAVE_AMP_MIN_PRECISION;
+	o->value.f = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_DEFAULT;
+	o->rest.f.min = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_MIN;
+	o->rest.f.max = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_MAX;
+	o->rest.f.precision = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_PRECISION;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP2_WAVE_AMP_MAX];
-	o->name = "magic_lamp2_wave_amp_max";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX];
+	o->name = "magic_lamp_vacuum_amp_max";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #2");
+	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #2 Wave Max Amplitude");
+	o->shortDesc = N_("Magic Lamp Vacuum Max Wave Amplitude");
 	o->longDesc =
 			N_
-			("The maxmimum amplitude (size of the waves) Magic Lamp #2 will have.");
+			("The maximum amplitude (size of the waves) Magic Lamp Vacuum will have.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP2_WAVE_AMP_MAX_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP2_WAVE_AMP_MAX_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP2_WAVE_AMP_MAX_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP2_WAVE_AMP_MAX_PRECISION;
+	o->value.f = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_DEFAULT;
+	o->rest.f.min = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_MIN;
+	o->rest.f.max = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_MAX;
+	o->rest.f.precision = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_PRECISION;
 
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP2_CREATE_START_WIDTH];
-	o->name = "magic_lamp2_create_start_width";
+	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH];
+	o->name = "magic_lamp_vacuum_create_start_width";
 	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #2");
+	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #2 Create Start Width");
+	o->shortDesc = N_("Magic Lamp Vacuum Create Start Width");
 	o->longDesc =
 			N_
-			("Starting width of create effect and ending width of close effect for Magic Lamp #2.");
+			("Starting width of create effect and ending width of close effect for Magic Lamp Vacuum.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP2_CREATE_START_WIDTH_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP2_CREATE_START_WIDTH_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP2_CREATE_START_WIDTH_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP3_GRID_RES];
-	o->name = "magic_lamp3_grid_res";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #3");
-	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #3 Grid Y Resolution");
-	o->longDesc =
-			N_
-			("Vertex grid resolution for Magic Lamp #3 (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases).");
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP3_GRID_RES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP3_GRID_RES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP3_GRID_RES_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP3_MAX_WAVES];
-	o->name = "magic_lamp3_max_waves";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #3");
-	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #3 Max Waves");
-	o->longDesc = N_("The maximum number of waves for Magic Lamp #3.");
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP3_MAX_WAVES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP3_MAX_WAVES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP3_MAX_WAVES_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP3_WAVE_AMP_MIN];
-	o->name = "magic_lamp3_wave_amp_min";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #3");
-	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #3 Wave Min Amplitude");
-	o->longDesc =
-			N_
-			("The minimum amplitude (size of the waves) Magic Lamp #3 will have.");
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP3_WAVE_AMP_MIN_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP3_WAVE_AMP_MIN_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP3_WAVE_AMP_MIN_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP3_WAVE_AMP_MIN_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP3_WAVE_AMP_MAX];
-	o->name = "magic_lamp3_wave_amp_max";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #3");
-	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #3 Wave Max Amplitude");
-	o->longDesc =
-			N_
-			("The maxmimum amplitude (size of the waves) Magic Lamp #3 will have.");
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP3_WAVE_AMP_MAX_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP3_WAVE_AMP_MAX_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP3_WAVE_AMP_MAX_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP3_WAVE_AMP_MAX_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP3_CREATE_START_WIDTH];
-	o->name = "magic_lamp3_create_start_width";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp #3");
-	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp #3 Create Start Width");
-	o->longDesc =
-			N_
-			("Starting width of create effect and ending width of close effect for Magic Lamp #3.");
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP3_CREATE_START_WIDTH_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP3_CREATE_START_WIDTH_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP3_CREATE_START_WIDTH_MAX;
+	o->value.i = ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_DEFAULT;
+	o->rest.i.min = ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_MIN;
+	o->rest.i.max = ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_MAX;
 
 	o = &as->opt[ANIM_SCREEN_OPTION_WAVE_WIDTH];
 	o->name = "wave_width";
@@ -7562,7 +7403,7 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->longDesc = N_("Tessellation type for exploding window pieces.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
-	o->value.s = strdup(animDirectionName[ANIM_EXPLODE3D_TESS_DEFAULT]);
+	o->value.s = strdup(polygonTessName[ANIM_EXPLODE3D_TESS_DEFAULT]);
 	o->rest.s.string = polygonTessName;
 	o->rest.s.nString = LIST_SIZE(polygonTessName);
 
@@ -9559,44 +9400,31 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						aw->icon.width = FAKE_ICON_SIZE;
 						aw->icon.height = FAKE_ICON_SIZE;
 
-						if (aw->curAnimEffect == AnimEffectMagicLamp1 &&
-							aw->icon.width <
-							as->
-							opt
-							[ANIM_SCREEN_OPTION_MAGIC_LAMP1_CREATE_START_WIDTH].
-							value.i)
-						{
-							aw->icon.width =
-									as->
-									opt
-									[ANIM_SCREEN_OPTION_MAGIC_LAMP1_CREATE_START_WIDTH].
-									value.i;
-						}
-						else if (aw->curAnimEffect == AnimEffectMagicLamp2 &&
+						if (aw->curAnimEffect == AnimEffectMagicLamp &&
 								 aw->icon.width <
 								 as->
 								 opt
-								 [ANIM_SCREEN_OPTION_MAGIC_LAMP2_CREATE_START_WIDTH].
+								 [ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
 								 value.i)
 						{
 							aw->icon.width =
 									as->
 									opt
-									[ANIM_SCREEN_OPTION_MAGIC_LAMP2_CREATE_START_WIDTH].
+									[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
 									value.i;
 						}
 
-						else if (aw->curAnimEffect == AnimEffectMagicLamp3 &&
+						else if (aw->curAnimEffect == AnimEffectMagicLampVacuum &&
 								 aw->icon.width <
 								 as->
 								 opt
-								 [ANIM_SCREEN_OPTION_MAGIC_LAMP3_CREATE_START_WIDTH].
+								 [ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
 								 value.i)
 						{
 							aw->icon.width =
 									as->
 									opt
-									[ANIM_SCREEN_OPTION_MAGIC_LAMP3_CREATE_START_WIDTH].
+									[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
 									value.i;
 						}
 
@@ -10080,42 +9908,30 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 				aw->icon.width = FAKE_ICON_SIZE;
 				aw->icon.height = FAKE_ICON_SIZE;
 
-				if (aw->curAnimEffect == AnimEffectMagicLamp1 &&
-					aw->icon.width <
-					as->
-					opt[ANIM_SCREEN_OPTION_MAGIC_LAMP1_CREATE_START_WIDTH].
-					value.i)
-				{
-					aw->icon.width =
-							as->
-							opt
-							[ANIM_SCREEN_OPTION_MAGIC_LAMP1_CREATE_START_WIDTH].
-							value.i;
-				}
-				else if (aw->curAnimEffect == AnimEffectMagicLamp2 &&
+				if (aw->curAnimEffect == AnimEffectMagicLamp &&
 						 aw->icon.width <
 						 as->
 						 opt
-						 [ANIM_SCREEN_OPTION_MAGIC_LAMP2_CREATE_START_WIDTH].
+						 [ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
 						 value.i)
 				{
 					aw->icon.width =
 							as->
 							opt
-							[ANIM_SCREEN_OPTION_MAGIC_LAMP2_CREATE_START_WIDTH].
+							[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
 							value.i;
 				}
-				else if (aw->curAnimEffect == AnimEffectMagicLamp3 &&
+				else if (aw->curAnimEffect == AnimEffectMagicLampVacuum &&
 						 aw->icon.width <
 						 as->
 						 opt
-						 [ANIM_SCREEN_OPTION_MAGIC_LAMP3_CREATE_START_WIDTH].
+						 [ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
 						 value.i)
 				{
 					aw->icon.width =
 							as->
 							opt
-							[ANIM_SCREEN_OPTION_MAGIC_LAMP3_CREATE_START_WIDTH].
+							[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
 							value.i;
 				}
 				aw->icon.x -= aw->icon.width / 2;
