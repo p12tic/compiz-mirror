@@ -9177,7 +9177,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						addWindowDamage(w);
 					}
 				}
-				else if (w->minimized
+				else if (!w->invisible
 						 && as->minimizeEffect
 						 && matchEval (&as->opt[ANIM_SCREEN_OPTION_MINIMIZE_MATCH].value.match, w))
 				{
