@@ -9543,6 +9543,11 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 					if (!wi || !isWinVisible(wi))
 						continue;
 
+					// skip if shaded
+					AnimWindow *awi = GET_ANIM_WINDOW(wi, as);
+					if (awi && awi->nowShaded)
+						continue;
+
 					if (clientListStacking[i] !=
 					    as->lastClientListStacking[i])
 					{
