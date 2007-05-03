@@ -8618,9 +8618,13 @@ animAddWindowGeometry(CompWindow * w,
 							float offsetY = 0;
 
 							if (applyOffsets && y < y2)
-								offsetY =
-										objToTopLeft->
-										offsetTexCoordForQuadAfter.y;
+							{
+								// FIXME:
+								// the correct value below doesn't work for some reason
+								offsetY = 0;
+								//		objToTopLeft->
+								//		offsetTexCoordForQuadAfter.y;
+							}
 
 							*v++ = COMP_TEX_COORD_XY
 									(&matrix[it], x, y + offsetY);
