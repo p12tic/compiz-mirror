@@ -19,6 +19,7 @@
 ##
 
 DESTDIR = $(HOME)/.compiz/plugins
+XMLDIR = $(HOME)/.compiz/metadata
 PLUGIN = winrules
 SHADER = yes
 
@@ -91,35 +92,21 @@ install: all
 	@if [ '$(color)' != 'no' ]; then \
 	    echo -e "\r\033[0minstall   : \033[34m$(DESTDIR)/lib$(PLUGIN).so\033[0m"; \
 	fi
+	@if [ -e $(PLUGIN).xml ]; then \
+	    if [ '$(color)' != 'no' ]; then \
+		echo -n -e "\033[0;1;5minstall   \033[0;1;37m: \033[0;31m$(XMLDIR)/$(PLUGIN).xml\033[0m"; \
+	    else \
+		echo "install   : $(XMLDIR)/$(PLUGIN).xml"; \
+	    fi; \
+	    mkdir -p $(XMLDIR); \
+	    cp $(PLUGIN).xml $(XMLDIR)/$(PLUGIN).xml; \
+	    if [ '$(color)' != 'no' ]; then \
+		echo -e "\r\033[0minstall   : \033[34m$(XMLDIR)/$(PLUGIN).xml\033[0m"; \
+	    fi; \
+	fi
 
 clean:
 	rm -rf $(BUILDDIR)
-
-csm: $(BUILDDIR) $(BUILDDIR)/compiz_$(PLUGIN).csm
-
-
-csm-install: csm
-	@if [ '$(color)' != 'no' ]; then \
-	    echo -n -e "\033[0;1;5minstall   \033[0;1;37m: \033[0;31m$(DESTDIR)/compiz_$(PLUGIN).csm\033[0m"; \
-	else \
-	    echo "install   : $(DESTDIR)/lib$(PLUGIN).so"; \
-	fi
-	@mkdir -p $(DESTDIR)
-	@$(INSTALL) $(BUILDDIR)/compiz_$(PLUGIN).csm $(DESTDIR)/compiz_$(PLUGIN).csm
-	@if [ '$(color)' != 'no' ]; then \
-	    echo -e "\r\033[0minstall   : \033[34m$(DESTDIR)/compiz_$(PLUGIN).csm\033[0m"; \
-	fi
-
-$(BUILDDIR)/compiz_$(PLUGIN).csm:
-	@if [ '$(color)' != 'no' ]; then \
-	    echo -n -e "\033[0;1;5mcreating  \033[0;1;37m: \033[0;31m$(DESTDIR)/compiz_$(PLUGIN).csm\033[0m"; \
-	else \
-	    echo "creating  : $(DESTDIR)/compiz_$(PLUGIN).csm"; \
-	fi
-	@COMPIZ_SCHEMA_PLUGINS="$(PLUGIN)" COMPIZ_SCHEMA_FILE="$(BUILDDIR)/compiz_$(PLUGIN).csm" compiz --replace $(PLUGIN) csm-dump &> /dev/null
-	@if [ '$(color)' != 'no' ]; then \
-	    echo -e "\r\033[0mcreating  : \033[34m$(DESTDIR)/compiz_$(PLUGIN).csm\033[0m"; \
-	fi
 
 $(BUILDDIR)/%.vert: %.vcg
 	@if [ '$(color)' != 'no' ]; then \

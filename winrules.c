@@ -46,7 +46,7 @@
 #define WINRULES_SCREEN_OPTION_SIZE_HEIGHT_VALUES 15
 #define WINRULES_SCREEN_OPTION_NUM		  16
 
-#define WINRULES_SIMPLE_MATCH_OPTION_NUM	  12
+static CompMetadata winrulesMetadata;
 
 static int displayPrivateIndex;
 
@@ -311,118 +311,6 @@ winrulesUpdateWindowSize (CompWindow *w,
     xwc.height = height;
 
     configureXWindow (w, xwcm, &xwc);
-}
-
-
-static void
-winrulesScreenInitOptions (WinrulesScreen *ws)
-{
-    CompOption *o;
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_SKIPTASKBAR_MATCH];
-    o->name	         = "skiptaskbar_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_SKIPPAGER_MATCH];
-    o->name	         = "skippager_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_ABOVE_MATCH];
-    o->name	         = "above_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_BELOW_MATCH];
-    o->name	         = "below_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_STICKY_MATCH];
-    o->name	         = "sticky_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_FULLSCREEN_MATCH];
-    o->name	         = "fullscreen_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_NOMOVE_MATCH];
-    o->name	         = "no_move_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_NORESIZE_MATCH];
-    o->name	         = "no_resize_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_NOMINIMIZE_MATCH];
-    o->name	         = "no_minimize_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_NOMAXIMIZE_MATCH];
-    o->name	         = "no_maximize_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_NOCLOSE_MATCH];
-    o->name	         = "no_close_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_NOFOCUS_MATCH];
-    o->name	         = "no_focus_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-    
-    o = &ws->opt[WINRULES_SCREEN_OPTION_WIDGET_MATCH];
-    o->name	         = "widget_match";
-    o->type	         = CompOptionTypeMatch;
-    matchInit (&o->value.match);
-    matchAddFromString (&o->value.match, "");
-    
-    o = &ws->opt[WINRULES_SCREEN_OPTION_SIZE_MATCHES];
-    o->name	         = "size_matches";
-    o->type	         = CompOptionTypeList;
-    o->value.list.type   = CompOptionTypeMatch;
-    o->value.list.nValue = 0;
-    o->value.list.value  = NULL;
-    o->rest.s.string     = NULL;
-    o->rest.s.nString    = 0;
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_SIZE_WIDTH_VALUES];
-    o->name	         = "size_width_values";
-    o->type	         = CompOptionTypeList;
-    o->value.list.type   = CompOptionTypeInt;
-    o->value.list.nValue = 0;
-    o->value.list.value  = NULL;
-    o->rest.i.min	 = MINSHORT;
-    o->rest.i.max	 = MAXSHORT;
-
-    o = &ws->opt[WINRULES_SCREEN_OPTION_SIZE_HEIGHT_VALUES];
-    o->name	         = "size_height_values";
-    o->type	         = CompOptionTypeList;
-    o->value.list.type   = CompOptionTypeInt;
-    o->value.list.nValue = 0;
-    o->value.list.value  = NULL;
-    o->rest.i.min	 = MINSHORT;
-    o->rest.i.max	 = MAXSHORT;
 }
 
 static CompOption *
@@ -814,12 +702,30 @@ winrulesFiniDisplay (CompPlugin  *p,
     free (wd);
 }
 
+static const CompMetadataOptionInfo winrulesScreenOptionInfo[] = {
+    { "skiptaskbar_match", "match", 0, 0, 0 },
+    { "skippager_match", "match", 0, 0, 0 },
+    { "above_match", "match", 0, 0, 0 },
+    { "below_match", "match", 0, 0, 0 },
+    { "sticky_match", "match", 0, 0, 0 },
+    { "fullscreen_match", "match", 0, 0, 0 },
+    { "widget_match", "match", 0, 0, 0 },
+    { "no_move_match", "match", 0, 0, 0 },
+    { "no_resize_match", "match", 0, 0, 0 },
+    { "no_minimize_match", "match", 0, 0, 0 },
+    { "no_maximize_match", "match", 0, 0, 0 },
+    { "no_close_match", "match", 0, 0, 0 },
+    { "no_focus_match", "match", 0, 0, 0 },
+    { "size_matches", "list", "<type>match</type>", 0, 0 },
+    { "size_width_values", "list", "<type>int</type>", 0, 0 },
+    { "size_height_values", "list", "<type>int</type>", 0, 0 }
+};
+
 static Bool
 winrulesInitScreen (CompPlugin *p, 
 		    CompScreen *s)
 {
     WinrulesScreen *ws;
-    int i;
 
     WINRULES_DISPLAY (s->display);
 
@@ -827,21 +733,27 @@ winrulesInitScreen (CompPlugin *p,
     if (!ws)
         return FALSE;
 
-    ws->windowPrivateIndex = allocateWindowPrivateIndex(s);
-    if (ws->windowPrivateIndex < 0)
+    if (!compInitScreenOptionsFromMetadata (s,
+					    &winrulesMetadata,
+					    winrulesScreenOptionInfo,
+					    ws->opt,
+					    WINRULES_SCREEN_OPTION_NUM))
     {
-	free(ws);
+	free (ws);
 	return FALSE;
     }
 
-    winrulesScreenInitOptions (ws);
-    for (i=0; i< WINRULES_SIMPLE_MATCH_OPTION_NUM; i++)
+    ws->windowPrivateIndex = allocateWindowPrivateIndex(s);
+    if (ws->windowPrivateIndex < 0)
     {
-	matchUpdate (s->display, &ws->opt[i].value.match);
+	compFiniScreenOptions (s, ws->opt, WINRULES_SCREEN_OPTION_NUM);
+	free (ws);
+	return FALSE;
     }
 
     WRAP (ws, s, getAllowedActionsForWindow,
 	  winrulesGetAllowedActionsForWindow);
+
     s->privates[wd->screenPrivateIndex].ptr = ws;
 
     return TRUE;
@@ -851,17 +763,13 @@ static void
 winrulesFiniScreen (CompPlugin *p, 
                     CompScreen *s)
 {
-    int i;
     WINRULES_SCREEN (s);
-
-    for (i=0; i< WINRULES_SIMPLE_MATCH_OPTION_NUM; i++)
-    {
-	matchFini (&ws->opt[i].value.match);
-    }
 
     UNWRAP (ws, s, getAllowedActionsForWindow);
 
     freeWindowPrivateIndex(s, ws->windowPrivateIndex);
+
+    compFiniScreenOptions (s, ws->opt, WINRULES_SCREEN_OPTION_NUM);
 
     free (ws);
 }
@@ -903,9 +811,21 @@ winrulesFiniWindow (CompPlugin *p,
 static Bool
 winrulesInit (CompPlugin *p)
 {
+    if (!compInitPluginMetadataFromInfo (&winrulesMetadata,
+					 p->vTable->name,
+					 0, 0,
+					 winrulesScreenOptionInfo,
+					 WINRULES_SCREEN_OPTION_NUM))
+	return FALSE;
+
     displayPrivateIndex = allocateDisplayPrivateIndex ();
     if (displayPrivateIndex < 0)
+    {
+	compFiniMetadata (&winrulesMetadata);
         return FALSE;
+    }
+
+    compAddMetadataFromFile (&winrulesMetadata, p->vTable->name);
 
     return TRUE;
 }
@@ -913,8 +833,9 @@ winrulesInit (CompPlugin *p)
 static void
 winrulesFini (CompPlugin *p)
 {
-    if (displayPrivateIndex >= 0)
-	freeDisplayPrivateIndex (displayPrivateIndex);
+    freeDisplayPrivateIndex (displayPrivateIndex);
+
+    compFiniMetadata (&winrulesMetadata);
 }
 
 CompPluginDep winrulesDeps[] = {
@@ -928,10 +849,16 @@ winrulesGetVersion (CompPlugin *plugin,
     return ABIVERSION;
 }
 
+static CompMetadata *
+winrulesGetMetadata (CompPlugin *plugin)
+{
+    return &winrulesMetadata;
+}
+
 static CompPluginVTable winrulesVTable = {
     "winrules",
     winrulesGetVersion,
-    0,
+    winrulesGetMetadata,
     winrulesInit,
     winrulesFini,
     winrulesInitDisplay,
