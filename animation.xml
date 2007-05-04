@@ -12,11 +12,6 @@
 			<long>The windows that will be animated.</long>
 			<default>(type=Normal | Dialog | ModalDialog | Utility) &amp; !(type=Normal &amp; override_redirect=1)</default>
 	    </option>
-	    <option name="unminimize_match" type="match">
-			<short>Window match</short>
-			<long>The windows that will be animated.</long>
-			<default>(type=Normal | Dialog | ModalDialog | Utility) &amp; !(type=Normal &amp; override_redirect=1)</default>
-	    </option>
 	    <option name="close1_match" type="match">
 			<short>Window match</short>
 			<long>The windows that will be animated.</long>
@@ -48,11 +43,6 @@
 			<default>(type=Normal | Dialog | ModalDialog | Utility) &amp; !(type=Normal &amp; override_redirect=1)</default>
 		<default>Normal | Dialog | ModalDialog | Utility</default>
 	    </option>
-	    <option name="unshade_match" type="match">
-			<short>Window match</short>
-			<long>Window that should animate with this effect when unshaded.</long>
-			<default>(type=Normal | Dialog | ModalDialog | Utility) &amp; !(type=Normal &amp; override_redirect=1)</default>
-	    </option>
 	    <option name="minimize_effect" type="string">
 			<short>Minimize Animation</short>
 			<long>The animation shown when minimizing a window.</long>
@@ -60,18 +50,18 @@
 			<allowed>
 			    <value>None</value>
 			    <value>Random</value>
-				<value>Beam Up</value>
+			    <value>Beam Up</value>
 			    <value>Burn</value>
 			    <value>Curved Fold</value>
 			    <value>Domino</value>
 			    <value>Dream</value>
 			    <value>Explode</value>
 			    <value>Fade</value>
-				<value>Glide 1</value>
+			    <value>Glide 1</value>
 			    <value>Glide 2</value>
 			    <value>Horizontal Folds</value>
 			    <value>Leaf Spread</value>
-				<value>Magic Lamp</value>
+			    <value>Magic Lamp</value>
 			    <value>Razr</value>
 			    <value>Sidekick</value>
 			    <value>Zoom</value>
@@ -143,7 +133,7 @@
 		    <value>Horizontal Folds</value>
 		    <value>Leaf Spread</value>
 		    <value>Magic Lamp</value>
-			<value>Magic Lamp Vacuum</value>
+		    <value>Magic Lamp Vacuum</value>
 		    <value>Razr</value>
 		    <value>Sidekick</value>
 		    <value>Wave</value>
@@ -761,16 +751,16 @@
 		<min>3</min>
 		<max>20</max>
 	    </option>
-	    <option name="magic_lamp_wave_amp_min" type="float">
-		<short>Magic Lamp Wave Min Amplitude</short>
+	    <option name="magic_lamp_amp_min" type="float">
+		<short>Magic Lamp Min Wave Amplitude</short>
 		<long>The minimum amplitude (size of the waves) Magic Lamp will have.</long>
 		<default>200</default>
 		<min>200</min>
 		<max>2000</max>
 		<precision>5</precision>
 	    </option>
-	    <option name="magic_lamp_wave_amp_max" type="float">
-		<short>Magic Lamp Wave Max Amplitude</short>
+	    <option name="magic_lamp_amp_max" type="float">
+		<short>Magic Lamp Max Wave Amplitude</short>
 		<long>The maxmimum amplitude (size of the waves) Magic Lamp will have.</long>
 		<default>300</default>
 		<min>200</min>
@@ -798,16 +788,16 @@
 		<min>0</min>
 		<max>20</max>
 	    </option>
-	    <option name="magic_lamp_vacuum_wave_amp_min" type="float">
-		<short>Magic Lamp Vacuum Wave Min Amplitude</short>
+	    <option name="magic_lamp_vacuum_amp_min" type="float">
+		<short>Magic Lamp Vacuum Min Wave Amplitude</short>
 		<long>The minimum amplitude (size of the waves) Magic Lamp Vacuum will have.</long>
 		<default>200</default>
 		<min>200</min>
 		<max>2000</max>
 		<precision>5</precision>
 	    </option>
-	    <option name="magic_lamp_vacuum_wave_amp_max" type="float">
-		<short>Magic Lamp Vacuum Wave Max Amplitude</short>
+	    <option name="magic_lamp_vacuum_amp_max" type="float">
+		<short>Magic Lamp Vacuum Max Wave Amplitude</short>
 		<long>The maxmimum amplitude (size of the waves) Magic Lamp Vacuum will have.</long>
 		<default>300</default>
 		<min>200</min>
