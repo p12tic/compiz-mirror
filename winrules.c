@@ -315,112 +315,84 @@ winrulesScreenInitOptions (WinrulesScreen *ws)
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_SKIPTASKBAR_MATCH];
     o->name	         = "skiptaskbar_match";
-    o->shortDesc         = N_("Skip taskbar");
-    o->longDesc	         = N_("Don't show application in taskbar");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_SKIPPAGER_MATCH];
     o->name	         = "skippager_match";
-    o->shortDesc         = N_("Skip pager");
-    o->longDesc	         = N_("Don't show application in pager");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_ABOVE_MATCH];
     o->name	         = "above_match";
-    o->shortDesc         = N_("Above");
-    o->longDesc	         = N_("Above others windows");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_BELOW_MATCH];
     o->name	         = "below_match";
-    o->shortDesc         = N_("Below");
-    o->longDesc	         = N_("Below others windows");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_STICKY_MATCH];
     o->name	         = "sticky_match";
-    o->shortDesc         = N_("Sticky");
-    o->longDesc	         = N_("Sticky windows");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_FULLSCREEN_MATCH];
     o->name	         = "fullscreen_match";
-    o->shortDesc         = N_("Fullscreen");
-    o->longDesc	         = N_("Fullscreen windows");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_NOMOVE_MATCH];
     o->name	         = "no_move_match";
-    o->shortDesc         = N_("Non movable windows");
-    o->longDesc	         = N_("Set window as non movable");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_NORESIZE_MATCH];
     o->name	         = "no_resize_match";
-    o->shortDesc         = N_("Non resizable windows");
-    o->longDesc	         = N_("Set window as non resizable");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_NOMINIMIZE_MATCH];
     o->name	         = "no_minimize_match";
-    o->shortDesc         = N_("Non minimizable windows");
-    o->longDesc	         = N_("Set window as non minimizable");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_NOMAXIMIZE_MATCH];
     o->name	         = "no_maximize_match";
-    o->shortDesc         = N_("Non maximizable windows");
-    o->longDesc	         = N_("Set window as non maximizable");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_NOCLOSE_MATCH];
     o->name	         = "no_close_match";
-    o->shortDesc         = N_("Non closable windows");
-    o->longDesc	         = N_("Set window as non closable");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_NOFOCUS_MATCH];
     o->name	         = "no_focus_match";
-    o->shortDesc         = N_("No focus");
-    o->longDesc	         = N_("Windows will not have focus");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
     
     o = &ws->opt[WINRULES_SCREEN_OPTION_WIDGET_MATCH];
     o->name	         = "widget_match";
-    o->shortDesc         = N_("Widget");
-    o->longDesc	         = N_("Set window as widget");
     o->type	         = CompOptionTypeMatch;
     matchInit (&o->value.match);
     matchAddFromString (&o->value.match, "");
     
     o = &ws->opt[WINRULES_SCREEN_OPTION_SIZE_MATCHES];
     o->name	         = "size_matches";
-    o->shortDesc         = N_("sized windows");
-    o->longDesc	         = N_("Windows that should be resized by default");
     o->type	         = CompOptionTypeList;
     o->value.list.type   = CompOptionTypeMatch;
     o->value.list.nValue = 0;
@@ -430,8 +402,6 @@ winrulesScreenInitOptions (WinrulesScreen *ws)
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_SIZE_WIDTH_VALUES];
     o->name	         = "size_width_values";
-    o->shortDesc         = N_("Width");
-    o->longDesc	         = N_("Width values");
     o->type	         = CompOptionTypeList;
     o->value.list.type   = CompOptionTypeInt;
     o->value.list.nValue = 0;
@@ -441,8 +411,6 @@ winrulesScreenInitOptions (WinrulesScreen *ws)
 
     o = &ws->opt[WINRULES_SCREEN_OPTION_SIZE_HEIGHT_VALUES];
     o->name	         = "size_height_values";
-    o->shortDesc         = N_("Height");
-    o->longDesc	         = N_("Height values");
     o->type	         = CompOptionTypeList;
     o->value.list.type   = CompOptionTypeInt;
     o->value.list.nValue = 0;
@@ -1007,8 +975,6 @@ winrulesGetVersion (CompPlugin *plugin,
 
 static CompPluginVTable winrulesVTable = {
     "winrules",
-    "Window Rules",
-    "Set windows rules",
     winrulesGetVersion,
     0,
     winrulesInit,
