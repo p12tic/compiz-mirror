@@ -53,16 +53,9 @@ static int displayPrivateIndex;
 typedef struct _WinrulesWindow {
 
     unsigned int allowedActions;
-
-    /* only remove if set by us*/
-    Bool shouldRemoveSkipTaskbar;
-    Bool shouldRemoveSkipPager;
-    Bool shouldRemoveAbove;
-    Bool shouldRemoveBelow;
-    Bool shouldRemoveSticky;
-    Bool shouldRemoveFullscreen;
-    Bool shouldRemoveNofocus;
-    Bool shouldRemoveWidget;
+    unsigned int stateSetMask;
+    unsigned int protocolSetMask;
+    Bool widgetSet;
 
     Bool firstMap;
 } WinrulesWindow;
@@ -140,57 +133,70 @@ winrulesSetProtocols (CompDisplay *display,
 /* FIXME? Directly set inputHint, not a problem for now */
 static void
 winrulesSetNoFocus (CompWindow *w,
-		    int optNum,
-		    Bool *shouldRemove)
+		    int optNum)
 {
-    Bool protocolRemoved = FALSE;
+    unsigned int newProtocol = w->protocols;
 
     WINRULES_SCREEN (w->screen);
+    WINRULES_WINDOW (w);
 
     if (matchEval (&ws->opt[optNum].value.match, w))
     {
-	w->protocols &= ~CompWindowProtocolTakeFocusMask;
-	w->inputHint = FALSE;
-	protocolRemoved = TRUE;
+	if (w->protocols & CompWindowProtocolTakeFocusMask)
+	{
+    	    newProtocol = w->protocols & ~CompWindowProtocolTakeFocusMask;
+    	    ww->protocolSetMask |= CompWindowProtocolTakeFocusMask;
+    	    w->inputHint = FALSE;
+	}
     }
-    else if (*shouldRemove)
+    else if (ww->protocolSetMask & CompWindowProtocolTakeFocusMask)
     {
-	w->protocols |= CompWindowProtocolTakeFocusMask;
+	newProtocol = w->protocols & CompWindowProtocolTakeFocusMask;
+	ww->protocolSetMask &= ~CompWindowProtocolTakeFocusMask;
 	w->inputHint = TRUE;
     }
 
-   if (protocolRemoved || *shouldRemove)
-   {
+   if (newProtocol != w->protocols)
 	winrulesSetProtocols (w->screen->display,
 		      w->protocols,
 		      w->id);
-	
-	*shouldRemove = protocolRemoved;
-   }
 }
 
 static void
 winrulesUpdateState (CompWindow *w,
 		     int optNum,
-		     int mask,
-		     Bool *shouldRemove)
+		     int mask)
 {
-    Bool stateRemoved = FALSE;
+    unsigned int newState = w->state;
 
     WINRULES_SCREEN (w->screen);
+    WINRULES_WINDOW (w);
 
     if (matchEval (&ws->opt[optNum].value.match, w))
     {
-	w->state |= mask;
-	stateRemoved = TRUE;
+	newState |= mask;
+	newState = constrainWindowState (newState, w->actions);
+	ww->stateSetMask |= (newState & mask);
     }
-    else if (*shouldRemove)
-	w->state &= ~mask;
-
-    if (stateRemoved || shouldRemove)
+    else if (ww->stateSetMask & mask)
     {
-	changeWindowState (w, w->state);
-	*shouldRemove = stateRemoved;
+	newState &= ~mask;
+	ww->stateSetMask &= ~mask;
+    }
+
+    if (newState != w->state)
+    {
+	changeWindowState (w, newState);
+
+	recalcWindowType (w);
+	recalcWindowActions (w);
+
+	if (mask & (CompWindowStateFullscreenMask |
+		    CompWindowStateAboveMask      |
+		    CompWindowStateBelowMask       ))
+	    updateWindowAttributes (w, CompStackingUpdateModeNormal);
+	else
+	    updateWindowAttributes (w, CompStackingUpdateModeNone);
     }
 }
 
@@ -215,13 +221,13 @@ winrulesUpdateWidget (CompWindow *w)
 	    XChangeProperty (w->screen->display->display, w->id, compizWidget,
 			     XA_STRING, 8, PropModeReplace,
 			     (unsigned char *)(int[]){-2}, 1);
-	    ww->shouldRemoveWidget = TRUE;
+	    ww->widgetSet = TRUE;
 	}
     }
-    else if (ww->shouldRemoveWidget)
+    else if (ww->widgetSet)
     {
 	XDeleteProperty (w->screen->display->display, w->id, compizWidget);
-	ww->shouldRemoveWidget = FALSE;
+	ww->widgetSet = FALSE;
     }
 }
 
@@ -299,8 +305,8 @@ winrulesUpdateWindowSize (CompWindow *w,
     if (height != w->serverHeight)
 	xwcm |= CWHeight;
 
-    xwc.x = w->attrib.x;
-    xwc.y = w->attrib.y;
+    xwc.x = w->serverX;
+    xwc.y = w->serverY;
     xwc.width = width;
     xwc.height = height;
 
@@ -453,14 +459,12 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
-		WINRULES_WINDOW (w);
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_SKIPTASKBAR_MATCH,
-				     CompWindowStateSkipTaskbarMask,
-				     &ww->shouldRemoveSkipTaskbar);
+				     CompWindowStateSkipTaskbarMask);
 	    }
 				
 	    return TRUE;
@@ -472,14 +476,12 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
-		WINRULES_WINDOW (w);
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_SKIPPAGER_MATCH,
-				     CompWindowStateSkipPagerMask,
-				     &ww->shouldRemoveSkipPager);
+				     CompWindowStateSkipPagerMask);
 	    }
 	    return TRUE;
 	}
@@ -490,17 +492,12 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
-		WINRULES_WINDOW (w);
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_ABOVE_MATCH,
-				     CompWindowStateAboveMask,
-				     &ww->shouldRemoveAbove);
-		if (ww->shouldRemoveAbove)
-		    raiseWindow (w);
-		
+				     CompWindowStateAboveMask);
 	    }
 	    return TRUE;
 	}
@@ -511,16 +508,12 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
-		WINRULES_WINDOW (w);
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_BELOW_MATCH,
-				     CompWindowStateBelowMask,
-				     &ww->shouldRemoveBelow);
-		if (ww->shouldRemoveBelow)
-		    lowerWindow (w);
+				     CompWindowStateBelowMask);
 	    }
 	    return TRUE;
 	}
@@ -531,14 +524,12 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
-		WINRULES_WINDOW (w);
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_STICKY_MATCH,
-				     CompWindowStateStickyMask,
-				     &ww->shouldRemoveSticky);
+				     CompWindowStateStickyMask);
 	    }
 	    return TRUE;
 	}
@@ -549,16 +540,12 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
-		WINRULES_WINDOW (w);
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_FULLSCREEN_MATCH,
-				     CompWindowStateFullscreenMask,
-				     &ww->shouldRemoveFullscreen);
-		if (ww->shouldRemoveFullscreen)
-		    maximizeWindow (w, MAXIMIZE_STATE);
+				     CompWindowStateFullscreenMask);
 	    }
 	    return TRUE;
 	}
@@ -569,7 +556,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
 		winrulesSetAllowedActions (w,
@@ -585,7 +572,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
 		winrulesSetAllowedActions (w,
@@ -601,7 +588,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
 		winrulesSetAllowedActions (w, 
@@ -617,7 +604,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
 		winrulesSetAllowedActions (w, 
@@ -634,7 +621,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
 		winrulesSetAllowedActions (w, 
@@ -649,13 +636,10 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 		
-		WINRULES_WINDOW (w);
-		winrulesSetNoFocus (w,
-				    WINRULES_SCREEN_OPTION_NOFOCUS_MATCH,
-				    &ww->shouldRemoveNofocus);
+		winrulesSetNoFocus (w, WINRULES_SCREEN_OPTION_NOFOCUS_MATCH);
 	    }
 	    return TRUE;
 	}
@@ -665,7 +649,7 @@ winrulesSetScreenOption (CompPlugin *plugin,
 	{
 	    for (w = screen->windows; w; w = w->next)
 	    {
-		if (! w->type & WINRULES_TARGET_WINDOWS)
+		if (!w->type & WINRULES_TARGET_WINDOWS)
 		    continue;
 
 	    	winrulesUpdateWidget (w);
@@ -716,58 +700,41 @@ winrulesHandleEvent (CompDisplay *d,
 		
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_SKIPTASKBAR_MATCH,
-				     CompWindowStateSkipTaskbarMask,
-				     &ww->shouldRemoveSkipTaskbar);
+				     CompWindowStateSkipTaskbarMask);
 
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_SKIPPAGER_MATCH,
-				     CompWindowStateSkipPagerMask,
-				     &ww->shouldRemoveSkipPager);
+				     CompWindowStateSkipPagerMask);
 
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_ABOVE_MATCH,
-				     CompWindowStateAboveMask,
-				     &ww->shouldRemoveAbove);
+				     CompWindowStateAboveMask);
 
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_BELOW_MATCH,
-				     CompWindowStateBelowMask,
-				     &ww->shouldRemoveBelow);
+				     CompWindowStateBelowMask);
 
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_STICKY_MATCH,
-				     CompWindowStateStickyMask,
-				     &ww->shouldRemoveSticky);
+				     CompWindowStateStickyMask);
 
 		winrulesUpdateState (w,
 				     WINRULES_SCREEN_OPTION_FULLSCREEN_MATCH,
-				     CompWindowStateFullscreenMask,
-				     &ww->shouldRemoveFullscreen);
+				     CompWindowStateFullscreenMask);
 
 		winrulesUpdateWidget (w);
-
-		if (ww->shouldRemoveAbove)
-		    raiseWindow (w);
-		if (ww->shouldRemoveBelow)
-		    lowerWindow (w);
-		if (ww->shouldRemoveFullscreen)
-		    maximizeWindow (w, MAXIMIZE_STATE);
-
 
 		winrulesSetAllowedActions (w,
 					   WINRULES_SCREEN_OPTION_NOMOVE_MATCH,
 					   CompWindowActionMoveMask);
 
-
 		winrulesSetAllowedActions (w,
 					   WINRULES_SCREEN_OPTION_NORESIZE_MATCH,
 					   CompWindowActionResizeMask);
 
-
 		winrulesSetAllowedActions (w,
 					   WINRULES_SCREEN_OPTION_NOMINIMIZE_MATCH,
 					   CompWindowActionMinimizeMask);
-
 
 		winrulesSetAllowedActions (w,
 					   WINRULES_SCREEN_OPTION_NOMAXIMIZE_MATCH,
@@ -789,15 +756,9 @@ winrulesHandleEvent (CompDisplay *d,
     {
 	w = findWindowAtDisplay (d, event->xmap.window);
 	if (w && w->type & WINRULES_TARGET_WINDOWS)
-	{
-
-	    WINRULES_WINDOW (w);
-	    winrulesSetNoFocus (w,
-		                WINRULES_SCREEN_OPTION_NOFOCUS_MATCH,
-			        &ww->shouldRemoveNofocus);
-
-	}
+	    winrulesSetNoFocus (w,WINRULES_SCREEN_OPTION_NOFOCUS_MATCH);
     }
+
     UNWRAP (wd, d, handleEvent);
     (*d->handleEvent) (d, event);
     WRAP (wd, d, handleEvent, winrulesHandleEvent);
@@ -873,7 +834,6 @@ winrulesInitScreen (CompPlugin *p,
 	return FALSE;
     }
 
-
     winrulesScreenInitOptions (ws);
     for (i=0; i< WINRULES_SIMPLE_MATCH_OPTION_NUM; i++)
     {
@@ -918,14 +878,9 @@ winrulesInitWindow (CompPlugin *p,
         return FALSE;
     }
 
-    ww->shouldRemoveSkipTaskbar  = FALSE;
-    ww->shouldRemoveSkipPager    = FALSE;
-    ww->shouldRemoveAbove        = FALSE;
-    ww->shouldRemoveBelow        = FALSE;
-    ww->shouldRemoveSticky       = FALSE;
-    ww->shouldRemoveFullscreen   = FALSE;
-    ww->shouldRemoveNofocus	 = FALSE;
-    ww->shouldRemoveWidget       = FALSE;
+    ww->widgetSet       = FALSE;
+    ww->stateSetMask    = 0;
+    ww->protocolSetMask = 0;
 
     ww->allowedActions = ~0;
 
