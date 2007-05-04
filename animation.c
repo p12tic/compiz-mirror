@@ -1387,11 +1387,6 @@ AnimEffectProperties *animEffectPropertiesTmp;
 { \
 	o = &as->opt[(poption)]; \
 	o->name = pname "_random_effects"; \
-	o->shortDesc = N_("Random Effect Pool"); \
-	o->longDesc = \
-			N_("Pool of effects to be chosen from if Random effect is " \
-			   "selected. Click reset to restore full list. If the list " \
-			   "is empty, the default effect will be used."); \
 	o->type = CompOptionTypeList; \
 	o->value.list.type = CompOptionTypeString; \
 	o->value.list.nValue = (nFxChoices) - 2; \
@@ -6442,11 +6437,7 @@ static void animScreenInitOptions(AnimScreen * as)
 	o->name = "all_random";
 	//o->group = N_("Misc. Settings");
 	//o->subGroup = N_("");
-	o->shortDesc = N_("Random Animations For All Events");
 	//o->advanced = False;
-	o->longDesc =
-			N_
-			("All effects are chosen randomly, ignoring the selected effect. If None is selected for an event, that event won't be animated.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeBool;
 	o->value.b = ANIM_ALL_RANDOM_DEFAULT;
@@ -6456,8 +6447,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("(Un)Shade");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Rollup Fixed Interior");
-	o->longDesc = N_("Fixed window interior during the Rollup animation.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeBool;
 	o->value.b = ANIM_ROLLUP_FIXED_INTERIOR_DEFAULT;
@@ -6467,10 +6456,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Horizontal Folds");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Number of Horizontal Folds");
-	o->longDesc =
-			N_
-			("The number of horizontal folds that occur in the Horizontal Fold animation.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_HORIZONTAL_FOLDS_NUM_FOLDS_DEFAULT;
@@ -6482,10 +6467,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Horizontal Folds");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Horizontal Fold Amplitude");
-	o->longDesc =
-			N_
-			("Amplitude (size of the waves in the fold) of the Horizontal Folds relative to the window width. Negative values fold outward.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_HORIZONTAL_FOLDS_AMP_DEFAULT;
@@ -6498,10 +6479,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Curved Folds");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Curved Fold Amplitude");
-	o->longDesc =
-			N_
-			("Amplitude (size of the waves in the fold) of the curved fold relative to window width. Negative values fold outward.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_CURVED_FOLD_AMP_DEFAULT;
@@ -6514,10 +6491,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Misc. Settings");
 	//o->subGroup = N_("Advanced");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation Time Step");
-	o->longDesc =
-			N_
-			("The amount of time in milliseconds between each render of the animation. The higher the number, the jerkier the movements become.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_TIME_STEP_DEFAULT;
@@ -6529,10 +6502,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Misc. Settings");
 	//o->subGroup = N_("Advanced");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation Time Step For Intense Effects");
-	o->longDesc =
-			N_
-			("The amount of time in milliseconds between each render of the intense animation (Ex. Burn, Beam). The higher the number, the jerkier the movements become.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_TIME_STEP_INTENSE_DEFAULT;
@@ -6544,10 +6513,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Grid Y Resolution");
-	o->longDesc =
-			N_
-			("Vertex grid resolution for Magic Lamp (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases).");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_MAGIC_LAMP_GRID_RES_DEFAULT;
@@ -6559,8 +6524,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Max Waves");
-	o->longDesc = N_("The maximum number of waves for Magic Lamp.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_MAGIC_LAMP_MAX_WAVES_DEFAULT;
@@ -6572,10 +6535,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Min Wave Amplitude");
-	o->longDesc =
-			N_
-			("The minimum amplitude (size of the waves) Magic Lamp will have.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_MAGIC_LAMP_WAVE_AMP_MIN_DEFAULT;
@@ -6588,10 +6547,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Max Wave Amplitude");
-	o->longDesc =
-			N_
-			("The maximum amplitude (size of the waves) Magic Lamp will have.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_MAGIC_LAMP_WAVE_AMP_MAX_DEFAULT;
@@ -6604,10 +6559,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Create Start Width");
-	o->longDesc =
-			N_
-			("Starting width of create effect and ending width of close effect for Magic Lamp.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_MAGIC_LAMP_CREATE_START_WIDTH_DEFAULT;
@@ -6619,10 +6570,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Vacuum Grid Y Resolution");
-	o->longDesc =
-			N_
-			("Vertex grid resolution for Magic Lamp Vacuum (Y dimension only). This is the number of points used to define the curves. The higher the number, the smoother the curves. However there will be a loss of performance (CPU usage increases).");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_MAGIC_LAMP_VACUUM_GRID_RES_DEFAULT;
@@ -6634,8 +6581,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Vacuum Max Waves");
-	o->longDesc = N_("The maximum number of waves for Magic Lamp Vacuum.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_DEFAULT;
@@ -6647,10 +6592,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Vacuum Min Wave Amplitude");
-	o->longDesc =
-			N_
-			("The minimum amplitude (size of the waves) Magic Lamp Vacuum will have.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_DEFAULT;
@@ -6663,10 +6604,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Vacuum Max Wave Amplitude");
-	o->longDesc =
-			N_
-			("The maximum amplitude (size of the waves) Magic Lamp Vacuum will have.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_DEFAULT;
@@ -6679,10 +6616,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Magic Lamp");
 	//o->subGroup = N_("Magic Lamp Vacuum");
 	//o->advanced = False;
-	o->shortDesc = N_("Magic Lamp Vacuum Create Start Width");
-	o->longDesc =
-			N_
-			("Starting width of create effect and ending width of close effect for Magic Lamp Vacuum.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_DEFAULT;
@@ -6694,9 +6627,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Wave");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Wave Width");
-	o->longDesc =
-			N_("The width of the wave relative to the window height.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_WAVE_WIDTH_DEFAULT;
@@ -6709,10 +6639,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Wave");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Wave Amplitude");
-	o->longDesc =
-			N_
-			("The wave amplitude (size of the waves) relative to the window height.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_WAVE_AMP_DEFAULT;
@@ -6725,10 +6651,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Zoom/Sidekick");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Sidekick Number of Rotations");
-	o->longDesc =
-			N_
-			("The number of rotations plus or minus 10% (for randomness) that Sidekick has.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_SIDEKICK_NUM_ROTATIONS_DEFAULT;
@@ -6741,10 +6663,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Zoom/Sidekick");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Zoom from Center");
-	o->longDesc =
-			N_
-			("Zoom from center when playing the Zoom and Sidekick animations.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(zoomFromCenterOption[ANIM_ZOOM_FROM_CENTER_DEFAULT]);
@@ -6756,10 +6674,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Zoom/Sidekick");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Zoom Curvature");
-	o->longDesc =
-			N_
-			("The amount of curvedness of the zoom motion.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_ZOOM_CURVATURE_DEFAULT;
@@ -6774,8 +6688,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("(Un)Minimize");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Minimize Animation");
-	o->longDesc = N_("The animation shown when minimizing a window.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(allEffectName[ANIM_MINIMIZE_DEFAULT]);
@@ -6787,8 +6699,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("(Un)Minimize");
 	//o->subGroup = N_("Minimize");
 	//o->advanced = False;
-	o->shortDesc = N_("Window match");
-	o->longDesc = N_("The windows that will be animated.");
 	//o->displayHints = "";
 	o->type	= CompOptionTypeMatch;
 	matchInit (&o->value.match);
@@ -6799,10 +6709,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("(Un)Minimize");
 	//o->subGroup = N_("Minimize");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation Duration");
-	o->longDesc =
-			N_
-			("The number of seconds that the Minimize animation will last.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_MINIMIZE_DURATION_DEFAULT;
@@ -6828,8 +6734,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Close");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Close #1 Animation");
-	o->longDesc = N_("The animation shown when closing a window.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(allEffectName[ANIM_CLOSE1_DEFAULT]);
@@ -6841,8 +6745,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Close");
 	//o->subGroup = N_("Close #1");
 	//o->advanced = False;
-	o->shortDesc = N_("Window match");
-	o->longDesc = N_("The windows that will be animated.");
 	//o->displayHints = "";
 	o->type	= CompOptionTypeMatch;
 	matchInit (&o->value.match);
@@ -6853,10 +6755,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Close");
 	//o->subGroup = N_("Close #1");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation Duration");
-	o->longDesc =
-			N_
-			("The number of seconds that the Close #1 animation will last.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_CLOSE1_DURATION_DEFAULT;
@@ -6882,8 +6780,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Close");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Close #2 Animation");
-	o->longDesc = N_("The animation shown when closing a window.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(allEffectName[ANIM_CLOSE2_DEFAULT]);
@@ -6895,8 +6791,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Close");
 	//o->subGroup = N_("Close #2");
 	//o->advanced = False;
-	o->shortDesc = N_("Window match");
-	o->longDesc = N_("The windows that will be animated.");
 	//o->displayHints = "";
 	o->type	= CompOptionTypeMatch;
 	matchInit (&o->value.match);
@@ -6907,10 +6801,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Close");
 	//o->subGroup = N_("Close #2");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation Duration");
-	o->longDesc =
-			N_
-			("The number of seconds that the Close #2 animation will last.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_CLOSE2_DURATION_DEFAULT;
@@ -6936,8 +6826,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Create");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Create #1 Animation");
-	o->longDesc = N_("The animation shown when creating a window.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(allEffectName[ANIM_CREATE1_DEFAULT]);
@@ -6949,10 +6837,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Create");
 	//o->subGroup = N_("Create #1");
 	//o->advanced = False;
-	o->shortDesc = N_("Window match");
-	o->longDesc =
-			N_
-			("Window that should animate with this effect when created.");
 	//o->displayHints = "";
 	o->type	= CompOptionTypeMatch;
 	matchInit (&o->value.match);
@@ -6963,8 +6847,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Create");
 	//o->subGroup = N_("Create #1");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation Duration");
-	o->longDesc = N_("Animation duration in seconds for create effect #1.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_CREATE1_DURATION_DEFAULT;
@@ -6990,8 +6872,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Create");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Create #2 Animation");
-	o->longDesc = N_("The animation shown when creating a window.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(allEffectName[ANIM_CREATE2_DEFAULT]);
@@ -7003,10 +6883,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Create");
 	//o->subGroup = N_("Create #2");
 	//o->advanced = False;
-	o->shortDesc = N_("Window match");
-	o->longDesc =
-			N_
-			("Window that should animate with this effect when created.");
 	//o->displayHints = "";
 	o->type	= CompOptionTypeMatch;
 	matchInit (&o->value.match);
@@ -7017,8 +6893,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Create");
 	//o->subGroup = N_("Create #2");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation Duration");
-	o->longDesc = N_("Animation duration in seconds for create effect #2.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_CREATE2_DURATION_DEFAULT;
@@ -7044,8 +6918,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Focus");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation");
-	o->longDesc = N_("Focus window effect.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(allEffectName[ANIM_FOCUS_DEFAULT]);
@@ -7057,10 +6929,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Focus");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Window match");
-	o->longDesc =
-			N_
-			("Window that should animate with this effect when focused.");
 	//o->displayHints = "";
 	o->type	= CompOptionTypeMatch;
 	matchInit (&o->value.match);
@@ -7071,8 +6939,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Focus");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation Duration");
-	o->longDesc = N_("Focus animation duration in seconds.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_FOCUS_DURATION_DEFAULT;
@@ -7087,8 +6953,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("(Un)Shade");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Shade Animation");
-	o->longDesc = N_("Shade window effect.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(allEffectName[ANIM_SHADE_DEFAULT]);
@@ -7100,10 +6964,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("(Un)Shade");
 	//o->subGroup = N_("Shade");
 	//o->advanced = False;
-	o->shortDesc = N_("Window match");
-	o->longDesc =
-			N_
-			("Window that should animate with this effect when shaded.");
 	//o->displayHints = "";
 	o->type	= CompOptionTypeMatch;
 	matchInit (&o->value.match);
@@ -7114,8 +6974,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("(Un)Shade");
 	//o->subGroup = N_("Shade");
 	//o->advanced = False;
-	o->shortDesc = N_("Animation Duration");
-	o->longDesc = N_("Shade animation duration in seconds.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_SHADE_DURATION_DEFAULT;
@@ -7141,8 +6999,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Fire (A.K.A Burn)");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Number Of Fire Particles");
-	o->longDesc = N_("Number of fire particles.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_FIRE_PARTICLES_DEFAULT;
@@ -7154,8 +7010,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Fire (A.K.A Burn)");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Fire Particle Size");
-	o->longDesc = N_("Fire particle size.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_FIRE_SIZE_DEFAULT;
@@ -7168,8 +7022,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Fire (A.K.A Burn)");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Fire Particle Slowdown");
-	o->longDesc = N_("Fire particle slowdown.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_FIRE_SLOWDOWN_DEFAULT;
@@ -7182,8 +7034,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Fire (A.K.A Burn)");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Fire Particle Life");
-	o->longDesc = N_("Fire particle life.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_FIRE_LIFE_DEFAULT;
@@ -7196,8 +7046,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Fire (A.K.A Burn)");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Fire Particle Color");
-	o->longDesc = N_("Fire particle color.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeColor;
 	o->value.c[0] = ANIM_FIRE_COLOR_RED_DEFAULT;
@@ -7210,8 +7058,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Fire (A.K.A Burn)");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Fire direction");
-	o->longDesc = N_("Fire direction.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(animDirectionName[ANIM_FIRE_DIRECTION_DEFAULT]);
@@ -7223,9 +7069,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Fire (A.K.A Burn)");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Fire constant speed");
-	o->longDesc =
-			N_("Make fire effect duration be dependent on window height.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeBool;
 	o->value.b = ANIM_FIRE_CONSTANT_SPEED_DEFAULT;
@@ -7235,8 +7078,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Fire (A.K.A Burn)");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Fire Smoke");
-	o->longDesc = N_("Fire smoke.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeBool;
 	o->value.b = ANIM_FIRE_SMOKE_DEFAULT;
@@ -7246,10 +7087,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Fire (A.K.A Burn)");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Randomly Colored Fire");
-	o->longDesc =
-			N_
-			("Have random colors for the fire effect, also known as Mystical Fire.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeBool;
 	o->value.b = ANIM_FIRE_MYSTICAL_DEFAULT;
@@ -7261,8 +7098,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Beam");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Beam Width");
-	o->longDesc = N_("Beam width.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_BEAMUP_SIZE_DEFAULT;
@@ -7275,8 +7110,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Beam");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Beam spacing");
-	o->longDesc = N_("Spacing between beams.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_BEAMUP_SPACING_DEFAULT;
@@ -7288,8 +7121,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Beam");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Beam Color");
-	o->longDesc = N_("Beam color.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeColor;
 	o->value.c[0] = ANIM_BEAMUP_COLOR_RED_DEFAULT;
@@ -7302,8 +7133,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Beam");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Beam Slowdown");
-	o->longDesc = N_("Beam slowdown.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_BEAMUP_SLOWDOWN_DEFAULT;
@@ -7316,8 +7145,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Beam");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Beam Life");
-	o->longDesc = N_("Beam life.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_BEAMUP_LIFE_DEFAULT;
@@ -7332,8 +7159,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Domino/Razr");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Domino Piece Falling Direction");
-	o->longDesc = N_("Falling direction for Domino pieces.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(animDirectionName[ANIM_DOMINO_DIRECTION_DEFAULT]);
@@ -7345,8 +7170,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Domino/Razr");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Razr Fold Opening Direction");
-	o->longDesc = N_("Fold opening direction for pieces in Razr effect.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(animDirectionName[ANIM_RAZR_DIRECTION_DEFAULT]);
@@ -7359,8 +7182,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Explode");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Thickness of Exploding Polygons");
-	o->longDesc = N_("Thickness of exploding window pieces.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_EXPLODE3D_THICKNESS_DEFAULT;
@@ -7373,8 +7194,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Explode");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Grid Width");
-	o->longDesc = N_("The exploding window will be split into pieces along a grid.  Specify the width, in pixels, of the columns in the grid.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_EXPLODE3D_GRIDSIZE_X_DEFAULT;
@@ -7386,8 +7205,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Explode");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Window Grid Height");
-	o->longDesc = N_("The exploding window will be split into pieces along a grid.  Specify the height, in pixels, of the rows in the grid.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeInt;
 	o->value.i = ANIM_EXPLODE3D_GRIDSIZE_Y_DEFAULT;
@@ -7399,8 +7216,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Explode");
 	//o->subGroup = N_("");
 	//o->advanced = False;
-	o->shortDesc = N_("Tessellation Type");
-	o->longDesc = N_("Tessellation type for exploding window pieces.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeString;
 	o->value.s = strdup(polygonTessName[ANIM_EXPLODE3D_TESS_DEFAULT]);
@@ -7414,10 +7229,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Glide");
 	//o->subGroup = N_("Glide 1");
 	//o->advanced = False;
-	o->shortDesc = N_("Away Position");
-	o->longDesc = N_("Closeness of window to camera at the end of the "
-					 "animation "
-					 "(1.0: Close to camera, -2.0: Away from camera).");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_GLIDE1_AWAY_POS_DEFAULT;
@@ -7430,8 +7241,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Glide");
 	//o->subGroup = N_("Glide 1");
 	//o->advanced = False;
-	o->shortDesc = N_("Away Angle");
-	o->longDesc = N_("Angle of window at the end of the animation.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_GLIDE1_AWAY_ANGLE_DEFAULT;
@@ -7444,10 +7253,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Glide");
 	//o->subGroup = N_("Glide 1");
 	//o->advanced = False;
-	o->shortDesc = N_("Thickness");
-	o->longDesc = N_("Window thickness in pixels. Setting this to larger "
-					 "than 0 will disable shadow, blur, and reflection "
-					 "during the animation.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_GLIDE1_THICKNESS_DEFAULT;
@@ -7462,10 +7267,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Glide");
 	//o->subGroup = N_("Glide 2");
 	//o->advanced = False;
-	o->shortDesc = N_("Away Position");
-	o->longDesc = N_("Closeness of window to camera at the end of the "
-					 "animation "
-					 "(1.0: Close to camera, -2.0: Away from camera).");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_GLIDE2_AWAY_POS_DEFAULT;
@@ -7478,8 +7279,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Glide");
 	//o->subGroup = N_("Glide 2");
 	//o->advanced = False;
-	o->shortDesc = N_("Away Angle");
-	o->longDesc = N_("Angle of window at the end of the animation.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_GLIDE2_AWAY_ANGLE_DEFAULT;
@@ -7492,10 +7291,6 @@ static void animScreenInitOptions(AnimScreen * as)
 	//o->group = N_("Glide");
 	//o->subGroup = N_("Glide 2");
 	//o->advanced = False;
-	o->shortDesc = N_("Thickness");
-	o->longDesc = N_("Window thickness in pixels. Setting this to larger "
-					 "than 0 will disable shadow, blur, and reflection "
-					 "during the animation.");
 	//o->displayHints = "";
 	o->type = CompOptionTypeFloat;
 	o->value.f = ANIM_GLIDE2_THICKNESS_DEFAULT;
@@ -10399,8 +10194,6 @@ animGetVersion (CompPlugin *plugin,
 
 CompPluginVTable animVTable = {
 	"animation",
-	N_("Animations"),
-	N_("Use various animations as window effects"),
 	animGetVersion,
 	0,
 	animInit,
