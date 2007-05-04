@@ -843,8 +843,6 @@ fireGetVersion (CompPlugin * plugin, int version)
 
 CompPluginVTable fireVTable = {
 	"firepaint",
-	N_("Firepaint"),
-	N_("Firepaint"),
 	fireGetVersion,
 	0,
 	fireInit,
