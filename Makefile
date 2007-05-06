@@ -43,7 +43,7 @@ shader_files += $(shell find -name '*.fcg' 2> /dev/null | sed -e 's/^.\///')
 headers := $(shell find -name '$(PLUGIN)*.h' 2> /dev/null | sed -e 's/^.\///')
 headers := $(filter-out $(PLUGIN)_shader.h,$(headers))
 
-shader_header := $(shell if [ -x $(CGC) -a '$(SHADER)' == 'yes' ]; then echo "$(PLUGIN)_shader.h"; fi )
+shader_header := $(shell if [ -x $(CGC) -a '$(SHADER)' = 'yes' ]; then echo "$(PLUGIN)_shader.h"; fi )
 
 
 shaders := $(addprefix $(BUILDDIR)/,$(vert-shaders))
