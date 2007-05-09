@@ -95,13 +95,6 @@
 
 #include "animation_tex.h"
 
-/* beryl core weird function */
-REGION emptyRegion;
-REGION * getEmptyRegion(void)
-{
-    return &emptyRegion;
-}
-
 #define FAKE_ICON_SIZE 4
 
 #define ANIM_TEXTURE_LIST_INCREMENT 5
@@ -3062,11 +3055,11 @@ static void fxBurnModelStep(CompScreen * s, CompWindow * w, float time)
 			rect.height = WIN_H(w) - (old * WIN_H(w));
 			break;
 		}
-		XUnionRectWithRegion(&rect, getEmptyRegion(), aw->drawRegion);
+		XUnionRectWithRegion(&rect, &emptyRegion, aw->drawRegion);
 	}
 	else
 	{
-		XUnionRegion(getEmptyRegion(), getEmptyRegion(), aw->drawRegion);
+		XUnionRegion(&emptyRegion, &emptyRegion, aw->drawRegion);
 	}
 	if (new != 0)
 		aw->useDrawRegion = TRUE;
@@ -3381,11 +3374,11 @@ static void fxBeamUpModelStep(CompScreen * s, CompWindow * w, float time)
 		rect.width = WIN_W(w) - (old * WIN_W(w));
 		rect.y = ((old / 2) * WIN_H(w));
 		rect.height = WIN_H(w) - (old * WIN_H(w));
-		XUnionRectWithRegion(&rect, getEmptyRegion(), aw->drawRegion);
+		XUnionRectWithRegion(&rect, &emptyRegion, aw->drawRegion);
 	}
 	else
 	{
-		XUnionRegion(getEmptyRegion(), getEmptyRegion(), aw->drawRegion);
+		XUnionRegion(&emptyRegion, &emptyRegion, aw->drawRegion);
 	}
 	if (new != 0)
 		aw->useDrawRegion = TRUE;
@@ -6228,13 +6221,13 @@ initiateFocusAnimation
 				rect.width = WIN_W(nw);
 				rect.height = WIN_H(nw);
 				XUnionRectWithRegion(&rect, fadeRegion, tmpRegion);
-				XUnionRegion(getEmptyRegion(), tmpRegion, fadeRegion);
+				XUnionRegion(&emptyRegion, tmpRegion, fadeRegion);
 			}
 			rect.x = WIN_X(wEnd);
 			rect.y = WIN_Y(wEnd);
 			rect.width = WIN_W(wEnd);
 			rect.height = WIN_H(wEnd);
-			XUnionRectWithRegion(&rect, getEmptyRegion(), tmpRegion);
+			XUnionRectWithRegion(&rect, &emptyRegion, tmpRegion);
 			XIntersectRegion(fadeRegion, tmpRegion, finalFadeRegion);
 
 			if (finalFadeRegion->numRects == 0)
