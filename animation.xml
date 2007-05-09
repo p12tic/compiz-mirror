@@ -3,7 +3,7 @@
     <plugin name="animation">
 	<short>Animations</short>
 	<long>Use various animations as window effects</long>
-	<category>Visual Effects</category>
+	<category>Effects</category>
 	<rule type="after">decoration</rule>
 	<rule type="require">decoration</rule>
 	<rule type="before">fade</rule>
