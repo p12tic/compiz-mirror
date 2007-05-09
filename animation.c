@@ -121,7 +121,6 @@ REGION * getEmptyRegion(void)
 #define RAND_FLOAT() ((float)rand() / RAND_MAX)
 #define MIN_WINDOW_GRID_SIZE 10
 
-
 typedef struct _xy_pair
 {
 	float x, y;
@@ -282,285 +281,6 @@ typedef struct _Model
 	float bottomHeight;
 } Model;
 
-static void
-modelInitObjects(Model * model, int x, int y, int width, int height);
-
-static void
-postAnimationCleanup(CompWindow * w, Bool resetAnimation);
-
-static void
-animDrawWindowGeometry(CompWindow * w);
-
-#define ANIM_WINDOW_MATCH1 "(type=Normal | Dialog | ModalDialog | Utility) & !(type=Normal & override_redirect=1)"
-#define ANIM_WINDOW_MATCH2 "(type=Unknown | Menu | PopupMenu | DropdownMenu | Tooltip) | (type=Normal & override_redirect=1)"
-
-#define ANIM_MAGIC_LAMP_GRID_RES_DEFAULT  100
-#define ANIM_MAGIC_LAMP_GRID_RES_MIN      2
-#define ANIM_MAGIC_LAMP_GRID_RES_MAX      200
-
-#define ANIM_MAGIC_LAMP_MAX_WAVES_DEFAULT  3
-#define ANIM_MAGIC_LAMP_MAX_WAVES_MIN      3
-#define ANIM_MAGIC_LAMP_MAX_WAVES_MAX      20
-
-#define ANIM_MAGIC_LAMP_WAVE_AMP_MIN_DEFAULT  200
-#define ANIM_MAGIC_LAMP_WAVE_AMP_MIN_MIN      200
-#define ANIM_MAGIC_LAMP_WAVE_AMP_MIN_MAX      2000
-#define ANIM_MAGIC_LAMP_WAVE_AMP_MIN_PRECISION 5
-
-#define ANIM_MAGIC_LAMP_WAVE_AMP_MAX_DEFAULT  300
-#define ANIM_MAGIC_LAMP_WAVE_AMP_MAX_MIN      200
-#define ANIM_MAGIC_LAMP_WAVE_AMP_MAX_MAX      2000
-#define ANIM_MAGIC_LAMP_WAVE_AMP_MAX_PRECISION 5
-
-#define ANIM_MAGIC_LAMP_CREATE_START_WIDTH_DEFAULT  30
-#define ANIM_MAGIC_LAMP_CREATE_START_WIDTH_MIN      0
-#define ANIM_MAGIC_LAMP_CREATE_START_WIDTH_MAX      500
-
-#define ANIM_MAGIC_LAMP_VACUUM_GRID_RES_DEFAULT  100
-#define ANIM_MAGIC_LAMP_VACUUM_GRID_RES_MIN      2
-#define ANIM_MAGIC_LAMP_VACUUM_GRID_RES_MAX      200
-
-#define ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_DEFAULT  0
-#define ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_MIN      0
-#define ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_MAX      20
-
-#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_DEFAULT  200
-#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_MIN      200
-#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_MAX      2000
-#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_PRECISION 5
-
-#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_DEFAULT  300
-#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_MIN      200
-#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_MAX      2000
-#define ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_PRECISION 5
-
-#define ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_DEFAULT  30
-#define ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_MIN      0
-#define ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_MAX      500
-
-#define ANIM_SIDEKICK_NUM_ROTATIONS_DEFAULT      0.5
-#define ANIM_SIDEKICK_NUM_ROTATIONS_MIN          0
-#define ANIM_SIDEKICK_NUM_ROTATIONS_MAX          5.0
-#define ANIM_SIDEKICK_NUM_ROTATIONS_PRECISION    0.01
-
-#define ANIM_ZOOM_CURVATURE_DEFAULT      0.5
-#define ANIM_ZOOM_CURVATURE_MIN          0
-#define ANIM_ZOOM_CURVATURE_MAX          1.0
-#define ANIM_ZOOM_CURVATURE_PRECISION    0.05
-
-#define ANIM_MINIMIZE_DURATION_DEFAULT   0.3
-#define ANIM_MINIMIZE_DURATION_MIN       0.1
-#define ANIM_MINIMIZE_DURATION_MAX       10
-#define ANIM_MINIMIZE_DURATION_PRECISION 0.05
-
-#define ANIM_CREATE1_DURATION_DEFAULT   0.2
-#define ANIM_CREATE1_DURATION_MIN       0.1
-#define ANIM_CREATE1_DURATION_MAX       10
-#define ANIM_CREATE1_DURATION_PRECISION 0.05
-
-#define ANIM_CLOSE1_DURATION_DEFAULT   0.2
-#define ANIM_CLOSE1_DURATION_MIN       0.1
-#define ANIM_CLOSE1_DURATION_MAX       10
-#define ANIM_CLOSE1_DURATION_PRECISION 0.05
-
-#define ANIM_CREATE2_DURATION_DEFAULT   0.15
-#define ANIM_CREATE2_DURATION_MIN       0.1
-#define ANIM_CREATE2_DURATION_MAX       10
-#define ANIM_CREATE2_DURATION_PRECISION 0.05
-
-#define ANIM_CLOSE2_DURATION_DEFAULT   0.15
-#define ANIM_CLOSE2_DURATION_MIN       0.1
-#define ANIM_CLOSE2_DURATION_MAX       10
-#define ANIM_CLOSE2_DURATION_PRECISION 0.05
-
-#define ANIM_FOCUS_DURATION_DEFAULT   0.3
-#define ANIM_FOCUS_DURATION_MIN       0.1
-#define ANIM_FOCUS_DURATION_MAX       10
-#define ANIM_FOCUS_DURATION_PRECISION 0.05
-
-#define ANIM_SHADE_DURATION_DEFAULT   0.5
-#define ANIM_SHADE_DURATION_MIN       0.1
-#define ANIM_SHADE_DURATION_MAX       10
-#define ANIM_SHADE_DURATION_PRECISION 0.05
-
-#define ANIM_WAVE_WIDTH_DEFAULT   0.7
-#define ANIM_WAVE_WIDTH_MIN       0.02
-#define ANIM_WAVE_WIDTH_MAX       3
-#define ANIM_WAVE_WIDTH_PRECISION 0.02
-
-#define ANIM_WAVE_AMP_DEFAULT   0.03
-#define ANIM_WAVE_AMP_MIN       0
-#define ANIM_WAVE_AMP_MAX       1
-#define ANIM_WAVE_AMP_PRECISION 0.01
-
-#define ANIM_CURVED_FOLD_AMP_DEFAULT   0.15
-#define ANIM_CURVED_FOLD_AMP_MIN      -0.5
-#define ANIM_CURVED_FOLD_AMP_MAX       0.5
-#define ANIM_CURVED_FOLD_AMP_PRECISION 0.01
-
-#define ANIM_HORIZONTAL_FOLDS_NUM_FOLDS_DEFAULT  5
-#define ANIM_HORIZONTAL_FOLDS_NUM_FOLDS_MIN      1
-#define ANIM_HORIZONTAL_FOLDS_NUM_FOLDS_MAX      50
-
-#define ANIM_HORIZONTAL_FOLDS_AMP_DEFAULT   0.07
-#define ANIM_HORIZONTAL_FOLDS_AMP_MIN      -0.5
-#define ANIM_HORIZONTAL_FOLDS_AMP_MAX       0.5
-#define ANIM_HORIZONTAL_FOLDS_AMP_PRECISION 0.01
-
-#define ANIM_TIME_STEP_DEFAULT   10
-#define ANIM_TIME_STEP_MIN       1
-#define ANIM_TIME_STEP_MAX       400
-
-#define ANIM_TIME_STEP_INTENSE_DEFAULT   30
-#define ANIM_TIME_STEP_INTENSE_MIN       1
-#define ANIM_TIME_STEP_INTENSE_MAX       400
-
-#define ANIM_ROLLUP_FIXED_INTERIOR_DEFAULT  FALSE
-
-#define ANIM_ALL_RANDOM_DEFAULT  FALSE
-
-#define ANIM_FIRE_SIZE_DEFAULT          5.0
-#define ANIM_FIRE_SIZE_MIN              0.1
-#define ANIM_FIRE_SIZE_MAX              20.0
-#define ANIM_FIRE_SIZE_PRECISION        0.1
-
-#define ANIM_FIRE_SLOWDOWN_DEFAULT      0.5
-#define ANIM_FIRE_SLOWDOWN_MIN          0.1
-#define ANIM_FIRE_SLOWDOWN_MAX          10.0
-#define ANIM_FIRE_SLOWDOWN_PRECISION    0.1
-
-#define ANIM_FIRE_LIFE_DEFAULT          0.7
-#define ANIM_FIRE_LIFE_MIN              0.1
-#define ANIM_FIRE_LIFE_MAX              1.0
-#define ANIM_FIRE_LIFE_PRECISION        0.1
-
-#define ANIM_FIRE_PARTICLES_DEFAULT     1000
-#define ANIM_FIRE_PARTICLES_MIN         100
-#define ANIM_FIRE_PARTICLES_MAX         10000
-
-#define ANIM_FIRE_COLOR_RED_DEFAULT     0xffff
-#define ANIM_FIRE_COLOR_GREEN_DEFAULT   0x3333
-#define ANIM_FIRE_COLOR_BLUE_DEFAULT    0x0555
-#define ANIM_FIRE_COLOR_ALPHA_DEFAULT   0xffff
-
-#define ANIM_FIRE_CONSTANT_SPEED_DEFAULT FALSE
-
-#define ANIM_FIRE_SMOKE_DEFAULT         FALSE
-#define ANIM_FIRE_MYSTICAL_DEFAULT         FALSE
-
-#define ANIM_BEAMUP_SIZE_DEFAULT          8.0
-#define ANIM_BEAMUP_SIZE_MIN              0.1
-#define ANIM_BEAMUP_SIZE_MAX              20.0
-#define ANIM_BEAMUP_SIZE_PRECISION        0.1
-
-#define ANIM_BEAMUP_LIFE_DEFAULT          0.7
-#define ANIM_BEAMUP_LIFE_MIN              0.1
-#define ANIM_BEAMUP_LIFE_MAX              1.0
-#define ANIM_BEAMUP_LIFE_PRECISION        0.1
-
-
-#define ANIM_BEAMUP_SLOWDOWN_DEFAULT      1.0
-#define ANIM_BEAMUP_SLOWDOWN_MIN          0.1
-#define ANIM_BEAMUP_SLOWDOWN_MAX          10.0
-#define ANIM_BEAMUP_SLOWDOWN_PRECISION    0.1
-
-#define ANIM_BEAMUP_SPACING_DEFAULT     5
-#define ANIM_BEAMUP_SPACING_MIN         1
-#define ANIM_BEAMUP_SPACING_MAX         20
-
-#define ANIM_BEAMUP_COLOR_RED_DEFAULT   0x7fff
-#define ANIM_BEAMUP_COLOR_GREEN_DEFAULT 0x7fff
-#define ANIM_BEAMUP_COLOR_BLUE_DEFAULT  0x7fff
-#define ANIM_BEAMUP_COLOR_ALPHA_DEFAULT 0xffff
-
-
-#define ANIM_GLIDE1_AWAY_POS_DEFAULT      1.0
-#define ANIM_GLIDE1_AWAY_POS_MIN          -2.0
-#define ANIM_GLIDE1_AWAY_POS_MAX          1.0
-#define ANIM_GLIDE1_AWAY_POS_PRECISION    0.05
-
-#define ANIM_GLIDE1_AWAY_ANGLE_DEFAULT      0.0
-#define ANIM_GLIDE1_AWAY_ANGLE_MIN          -540.0
-#define ANIM_GLIDE1_AWAY_ANGLE_MAX          540.0
-#define ANIM_GLIDE1_AWAY_ANGLE_PRECISION    5.0
-
-#define ANIM_GLIDE1_THICKNESS_DEFAULT      0.0
-#define ANIM_GLIDE1_THICKNESS_MIN          0.0
-#define ANIM_GLIDE1_THICKNESS_MAX          100.0
-#define ANIM_GLIDE1_THICKNESS_PRECISION    1.0
-
-#define ANIM_GLIDE2_AWAY_POS_DEFAULT      -0.4
-#define ANIM_GLIDE2_AWAY_POS_MIN          -2.0
-#define ANIM_GLIDE2_AWAY_POS_MAX          1.0
-#define ANIM_GLIDE2_AWAY_POS_PRECISION    0.05
-
-#define ANIM_GLIDE2_AWAY_ANGLE_DEFAULT      -45.0
-#define ANIM_GLIDE2_AWAY_ANGLE_MIN          -540.0
-#define ANIM_GLIDE2_AWAY_ANGLE_MAX          540.0
-#define ANIM_GLIDE2_AWAY_ANGLE_PRECISION    5.0
-
-#define ANIM_GLIDE2_THICKNESS_DEFAULT      0.0
-#define ANIM_GLIDE2_THICKNESS_MIN          0.0
-#define ANIM_GLIDE2_THICKNESS_MAX          100.0
-#define ANIM_GLIDE2_THICKNESS_PRECISION    1.0
-
-
-#define ANIM_EXPLODE3D_THICKNESS_DEFAULT     15.0
-#define ANIM_EXPLODE3D_THICKNESS_MIN         0.0
-#define ANIM_EXPLODE3D_THICKNESS_MAX         100.0
-#define ANIM_EXPLODE3D_THICKNESS_PRECISION   1.0
-
-#define ANIM_EXPLODE3D_GRIDSIZE_X_DEFAULT    13
-#define ANIM_EXPLODE3D_GRIDSIZE_X_MIN        1
-#define ANIM_EXPLODE3D_GRIDSIZE_X_MAX        200
-
-#define ANIM_EXPLODE3D_GRIDSIZE_Y_DEFAULT    10
-#define ANIM_EXPLODE3D_GRIDSIZE_Y_MIN        1
-#define ANIM_EXPLODE3D_GRIDSIZE_Y_MAX        200
-
-
-typedef enum
-{
-	AnimDirectionDown = 0,
-	AnimDirectionUp,
-	AnimDirectionLeft,
-	AnimDirectionRight,
-	AnimDirectionRandom,
-	AnimDirectionAuto
-} AnimDirection;
-
-static char *animDirectionName[] = {
-	N_("Down"),
-	N_("Up"),
-	N_("Left"),
-	N_("Right"),
-	N_("Random"),
-	N_("Automatic")
-};
-
-#define ANIM_FIRE_DIRECTION_DEFAULT AnimDirectionDown
-#define ANIM_DOMINO_DIRECTION_DEFAULT AnimDirectionAuto
-#define ANIM_RAZR_DIRECTION_DEFAULT AnimDirectionAuto
-
-typedef enum
-{
-	ZoomFromCenterOff = 0,
-	ZoomFromCenterMin,
-	ZoomFromCenterCreate,
-	ZoomFromCenterOn
-} ZoomFromCenter;
-
-static char *zoomFromCenterOption[] = {
-	N_("Off"),
-	N_("Minimize/Unminimize Only"),
-	N_("Create/Close Only"),
-	N_("On")
-};
-
-#define ANIM_ZOOM_FROM_CENTER_DEFAULT 0
-
-// =====================  Particle engine  =========================
-
 typedef struct _Particle
 {
 	float life;					// particle life
@@ -609,6 +329,554 @@ typedef struct _ParticleSystem
 	int dcolors_cache_count;
 } ParticleSystem;
 
+static void
+modelInitObjects(Model * model, int x, int y, int width, int height);
+
+static void
+postAnimationCleanup(CompWindow * w, Bool resetAnimation);
+
+static void
+animDrawWindowGeometry(CompWindow * w);
+
+typedef enum
+{
+	AnimDirectionDown = 0,
+	AnimDirectionUp,
+	AnimDirectionLeft,
+	AnimDirectionRight,
+	AnimDirectionRandom,
+	AnimDirectionAuto
+} AnimDirection;
+
+typedef enum
+{
+	ZoomFromCenterOff = 0,
+	ZoomFromCenterMin,
+	ZoomFromCenterCreate,
+	ZoomFromCenterOn
+} ZoomFromCenter;
+
+// Polygon tesselation type: Rectangular, Hexagonal
+typedef enum
+{
+	PolygonTessRect = 0,
+	PolygonTessHex
+} PolygonTess;
+
+typedef enum
+{
+	AnimEffectNone = 0,
+	AnimEffectRandom,
+	AnimEffectBeamUp,
+	AnimEffectBurn,
+	AnimEffectCurvedFold,
+	AnimEffectDomino3D,
+	AnimEffectDream,
+	AnimEffectExplode3D,
+	AnimEffectFade,
+	AnimEffectFocusFade,
+	AnimEffectGlide3D1,
+	AnimEffectGlide3D2,
+	AnimEffectHorizontalFolds,
+	AnimEffectLeafSpread3D,
+	AnimEffectMagicLamp,
+	AnimEffectMagicLampVacuum,
+	AnimEffectRazr3D,
+	AnimEffectRollUp,
+	AnimEffectSidekick,
+	AnimEffectWave,
+	AnimEffectZoom,
+	AnimEffectNum
+} AnimEffect;
+
+static AnimEffect minimizeEffectType[] = {
+	AnimEffectNone,
+	AnimEffectRandom,
+	AnimEffectBeamUp,
+	AnimEffectBurn,
+	AnimEffectCurvedFold,
+	AnimEffectDomino3D,
+	AnimEffectDream,
+	AnimEffectExplode3D,
+	AnimEffectFade,
+	AnimEffectGlide3D1,
+	AnimEffectGlide3D2,
+	AnimEffectHorizontalFolds,
+	AnimEffectLeafSpread3D,
+	AnimEffectMagicLamp,
+	AnimEffectRazr3D,
+	AnimEffectSidekick,
+	AnimEffectZoom
+};
+#define NUM_MINIMIZE_EFFECT 17
+
+static AnimEffect closeEffectType[] = {
+	AnimEffectNone,
+	AnimEffectRandom,
+	AnimEffectBeamUp,
+	AnimEffectBurn,
+	AnimEffectCurvedFold,
+	AnimEffectDomino3D,
+	AnimEffectDream,
+	AnimEffectExplode3D,
+	AnimEffectFade,
+	AnimEffectGlide3D1,
+	AnimEffectGlide3D2,
+	AnimEffectHorizontalFolds,
+	AnimEffectLeafSpread3D,
+	AnimEffectMagicLamp,
+	AnimEffectMagicLampVacuum,
+	AnimEffectRazr3D,
+	AnimEffectSidekick,
+	AnimEffectWave,
+	AnimEffectZoom
+};
+#define NUM_CLOSE_EFFECT 19
+
+static AnimEffect focusEffectType[] = {
+	AnimEffectNone,
+	AnimEffectFocusFade,
+	AnimEffectWave
+};
+#define NUM_FOCUS_EFFECT 3
+
+static AnimEffect shadeEffectType[] = {
+	AnimEffectNone,
+	AnimEffectRandom,
+	AnimEffectCurvedFold,
+	AnimEffectHorizontalFolds,
+	AnimEffectRollUp
+};
+#define NUM_SHADE_EFFECT 5
+
+typedef struct RestackInfo
+{
+	CompWindow *wRestacked, *wStart, *wEnd, *wOldAbove;
+	Bool raised;
+} RestackInfo;
+
+static CompMetadata animMetadata;
+static int displayPrivateIndex;
+
+typedef struct _AnimDisplay
+{
+	int screenPrivateIndex;
+	Atom wmHintsAtom;
+	Atom winIconGeometryAtom;
+	HandleEventProc handleEvent;
+	HandleCompizEventProc handleCompizEvent;
+	int activeWindow;
+} AnimDisplay;
+
+typedef enum
+{
+	// Match settings
+	ANIM_SCREEN_OPTION_MINIMIZE_MATCH = 0,
+	ANIM_SCREEN_OPTION_CLOSE1_MATCH,
+	ANIM_SCREEN_OPTION_CLOSE2_MATCH,
+	ANIM_SCREEN_OPTION_CREATE1_MATCH,
+	ANIM_SCREEN_OPTION_CREATE2_MATCH,
+	ANIM_SCREEN_OPTION_FOCUS_MATCH,
+	ANIM_SCREEN_OPTION_SHADE_MATCH,
+	// Event settings
+	ANIM_SCREEN_OPTION_MINIMIZE_EFFECT,
+	ANIM_SCREEN_OPTION_MINIMIZE_DURATION,
+	ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS,
+	ANIM_SCREEN_OPTION_CLOSE1_EFFECT,
+	ANIM_SCREEN_OPTION_CLOSE1_DURATION,
+	ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS,
+	ANIM_SCREEN_OPTION_CREATE1_EFFECT,
+	ANIM_SCREEN_OPTION_CREATE1_DURATION,
+	ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS,
+	ANIM_SCREEN_OPTION_CLOSE2_EFFECT,
+	ANIM_SCREEN_OPTION_CLOSE2_DURATION,
+	ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS,
+	ANIM_SCREEN_OPTION_CREATE2_EFFECT,
+	ANIM_SCREEN_OPTION_CREATE2_DURATION,
+	ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS,
+	ANIM_SCREEN_OPTION_FOCUS_EFFECT,
+	ANIM_SCREEN_OPTION_FOCUS_DURATION,
+	ANIM_SCREEN_OPTION_SHADE_EFFECT,
+	ANIM_SCREEN_OPTION_SHADE_DURATION,
+	ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS,
+	ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR,
+	// Misc. settings
+	ANIM_SCREEN_OPTION_ALL_RANDOM,
+	ANIM_SCREEN_OPTION_TIME_STEP,
+	ANIM_SCREEN_OPTION_TIME_STEP_INTENSE,
+	// Effect settings
+	ANIM_SCREEN_OPTION_BEAMUP_SIZE,
+	ANIM_SCREEN_OPTION_BEAMUP_SPACING,
+	ANIM_SCREEN_OPTION_BEAMUP_COLOR,
+	ANIM_SCREEN_OPTION_BEAMUP_SLOWDOWN,
+	ANIM_SCREEN_OPTION_BEAMUP_LIFE,
+	ANIM_SCREEN_OPTION_CURVED_FOLD_AMP,
+	ANIM_SCREEN_OPTION_DOMINO_DIRECTION,
+	ANIM_SCREEN_OPTION_RAZR_DIRECTION,
+	ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS,
+	ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X,
+	ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y,
+	ANIM_SCREEN_OPTION_EXPLODE3D_TESS,
+	ANIM_SCREEN_OPTION_FIRE_PARTICLES,
+	ANIM_SCREEN_OPTION_FIRE_SIZE,
+	ANIM_SCREEN_OPTION_FIRE_SLOWDOWN,
+	ANIM_SCREEN_OPTION_FIRE_LIFE,
+	ANIM_SCREEN_OPTION_FIRE_COLOR,
+	ANIM_SCREEN_OPTION_FIRE_DIRECTION,
+	ANIM_SCREEN_OPTION_FIRE_CONSTANT_SPEED,
+	ANIM_SCREEN_OPTION_FIRE_SMOKE,
+	ANIM_SCREEN_OPTION_FIRE_MYSTICAL,
+	ANIM_SCREEN_OPTION_GLIDE1_AWAY_POS,
+	ANIM_SCREEN_OPTION_GLIDE1_AWAY_ANGLE,
+	ANIM_SCREEN_OPTION_GLIDE1_THICKNESS,
+	ANIM_SCREEN_OPTION_GLIDE2_AWAY_POS,
+	ANIM_SCREEN_OPTION_GLIDE2_AWAY_ANGLE,
+	ANIM_SCREEN_OPTION_GLIDE2_THICKNESS,
+	ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_AMP,
+	ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_GRID_RES,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_MAX_WAVES,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX,
+	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH,
+	ANIM_SCREEN_OPTION_SIDEKICK_NUM_ROTATIONS,
+	ANIM_SCREEN_OPTION_WAVE_WIDTH,
+	ANIM_SCREEN_OPTION_WAVE_AMP,
+	ANIM_SCREEN_OPTION_ZOOM_CURVATURE,
+	ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER,
+
+	ANIM_SCREEN_OPTION_NUM
+} AnimScreenOptions;
+
+typedef struct _AnimScreen
+{
+	int windowPrivateIndex;
+
+	PreparePaintScreenProc preparePaintScreen;
+	DonePaintScreenProc donePaintScreen;
+	PaintScreenProc paintScreen;
+	PaintWindowProc paintWindow;
+	DamageWindowRectProc damageWindowRect;
+	AddWindowGeometryProc addWindowGeometry;
+	//DrawWindowGeometryProc drawWindowGeometry;
+	DrawWindowTextureProc drawWindowTexture;
+
+	WindowResizeNotifyProc windowResizeNotify;
+	WindowMoveNotifyProc windowMoveNotify;
+	WindowGrabNotifyProc windowGrabNotify;
+	WindowUngrabNotifyProc windowUngrabNotify;
+
+	CompOption opt[ANIM_SCREEN_OPTION_NUM];
+
+	ZoomFromCenter zoomFC;
+
+	Bool aWinWasRestackedJustNow; // a window was restacked this paint round
+
+	Bool switcherActive;
+	Bool scaleActive;
+
+	Window *lastClientListStacking; // to store last known stacking order
+	int nLastClientListStacking;
+	int markAllWinCreatedCountdown;
+	// to mark windows as "created" if they were opened before compiz
+	// was started
+
+	PolygonTess explodePolygonTess; // explode polygon tesselation type
+
+	Bool animInProgress;
+	AnimEffect minimizeEffect;
+	AnimEffect create1Effect;
+	AnimEffect create2Effect;
+	AnimEffect close1Effect;
+	AnimEffect close2Effect;
+	AnimEffect focusEffect;
+	AnimEffect shadeEffect;
+
+	AnimEffect close1RandomEffects[NUM_CLOSE_EFFECT];
+	AnimEffect close2RandomEffects[NUM_CLOSE_EFFECT];
+	AnimEffect create1RandomEffects[NUM_CLOSE_EFFECT];
+	AnimEffect create2RandomEffects[NUM_CLOSE_EFFECT];
+	AnimEffect minimizeRandomEffects[NUM_MINIMIZE_EFFECT];
+	AnimEffect shadeRandomEffects[NUM_SHADE_EFFECT];
+	unsigned int nClose1RandomEffects;
+	unsigned int nClose2RandomEffects;
+	unsigned int nCreate1RandomEffects;
+	unsigned int nCreate2RandomEffects;
+	unsigned int nMinimizeRandomEffects;
+	unsigned int nShadeRandomEffects;
+} AnimScreen;
+
+typedef struct _AnimWindow
+{
+	Model *model;
+	int numPs;
+	ParticleSystem *ps;
+	unsigned int state;
+	unsigned int newState;
+
+	PolygonSet *polygonSet;
+	float mvm[16];
+
+	Region drawRegion;
+	Bool useDrawRegion;
+
+	XRectangle icon;
+	XRectangle origWindowRect;
+
+	XRectangle lastKnownCoords;	// used to determine if paintWindow is drawing
+								// on the viewport that the animation started
+
+	float numZoomRotations;
+	GLushort storedOpacity;
+	float timestep;				// to be used in updateWindowAttribFunc
+
+	int nDrawGeometryCalls;
+
+	Bool animInitialized;		// whether the animation effect (not the window) is initialized
+	float animTotalTime;
+	float animRemainingTime;
+	int animOverrideProgressDir;	// 0: default dir, 1: forward, 2: backward
+
+	Bool nowShaded;
+	Bool grabbed;
+
+	WindowEvent curWindowEvent;
+	AnimEffect curAnimEffect;
+
+	int unmapCnt;
+	int destroyCnt;
+
+	int nClipsPassed;			// # of clips passed to animAddWindowGeometry so far
+	// in this draw step
+	Bool clipsUpdated;          // whether stored clips are updated in this anim step
+	FragmentAttrib curPaintAttrib;
+	CompTexture *curTexture;
+	int curTextureFilter;
+	int animatedAtom;
+
+	int animFireDirection;
+	int subEffectNo;			// For effects that share same functions
+	Bool deceleratingMotion;	// For effects that have decel. motion
+
+	// for focus fade effect:
+	RestackInfo *restackInfo;   // restack info if window was restacked this paint round
+	CompWindow *winToBePaintedBeforeThis; // Window which should be painted before this
+	CompWindow *winThisIsPaintedBefore; // the inverse relation of the above
+	CompWindow *moreToBePaintedPrev; // doubly linked list for windows underneath that
+	CompWindow *moreToBePaintedNext; //   raise together with this one
+	Bool created;
+} AnimWindow;
+
+typedef struct _AnimEffectProperties
+{
+	void (*updateWindowAttribFunc) (AnimScreen *, AnimWindow *,
+									WindowPaintAttrib *);
+	void (*prePaintWindowFunc) (CompScreen *, CompWindow *);
+	void (*postPaintWindowFunc) (CompScreen *, CompWindow *);
+	void (*animStepFunc) (CompScreen *, CompWindow *, float time);
+	void (*initFunc) (CompScreen *, CompWindow *);
+	void (*initGridFunc) (AnimScreen *, WindowEvent, int *, int *);
+	void (*addCustomGeometryFunc) (CompScreen *, CompWindow *, int, Box *,
+								   int, CompMatrix *);
+	void (*drawCustomGeometryFunc) (CompScreen *, CompWindow *);
+	Bool dontUseQTexCoord;		// TRUE if effect doesn't need Q coord.
+	void (*animStepPolygonFunc) (CompWindow *, PolygonObject *, float);
+	int subEffectNo;			// For effects that share same functions
+	Bool letOthersDrawGeoms;	// TRUE if we won't draw geometries
+} AnimEffectProperties;
+
+AnimEffectProperties *animEffectPropertiesTmp;
+
+#define GET_ANIM_DISPLAY(d)                                       \
+    ((AnimDisplay *) (d)->privates[displayPrivateIndex].ptr)
+
+#define ANIM_DISPLAY(d)                       \
+    AnimDisplay *ad = GET_ANIM_DISPLAY (d)
+
+#define GET_ANIM_SCREEN(s, ad)                                   \
+    ((AnimScreen *) (s)->privates[(ad)->screenPrivateIndex].ptr)
+
+#define ANIM_SCREEN(s)                                                      \
+    AnimScreen *as = GET_ANIM_SCREEN (s, GET_ANIM_DISPLAY (s->display))
+
+#define GET_ANIM_WINDOW(w, as)                                   \
+    ((AnimWindow *) (w)->privates[(as)->windowPrivateIndex].ptr)
+
+#define ANIM_WINDOW(w)                                         \
+    AnimWindow *aw = GET_ANIM_WINDOW  (w,                         \
+            GET_ANIM_SCREEN  (w->screen,                 \
+                GET_ANIM_DISPLAY (w->screen->display)))
+
+#define NUM_OPTIONS(s) (sizeof ((s)->opt) / sizeof (CompOption))
+
+
+
+static AnimEffect
+animEffectFromString (CompOptionValue *value, 
+					  AnimEffect *allowedEffects,
+					  unsigned int allowedEffectsNum)
+{
+	AnimEffect effect;
+	int i;
+
+	/* first check if string is valid */
+	if (strcasecmp (value->s, "random") == 0)
+		effect = AnimEffectRandom;
+	else if (strcasecmp (value->s, "beam up") == 0)
+		effect = AnimEffectBeamUp;
+	else if (strcasecmp (value->s, "burn") == 0)
+		effect = AnimEffectBurn;
+	else if (strcasecmp (value->s, "curved fold") == 0)
+		effect = AnimEffectCurvedFold;
+	else if (strcasecmp (value->s, "domino") == 0)
+		effect = AnimEffectDomino3D;
+	else if (strcasecmp (value->s, "dream") == 0)
+		effect = AnimEffectDream;
+	else if (strcasecmp (value->s, "explode") == 0)
+		effect = AnimEffectExplode3D;
+	else if (strcasecmp (value->s, "fade") == 0)
+	{
+		if (allowedEffects == focusEffectType)
+			effect = AnimEffectFocusFade;
+		else
+			effect = AnimEffectFade;
+	}
+	else if (strcasecmp (value->s, "glide 1") == 0)
+		effect = AnimEffectGlide3D1;
+	else if (strcasecmp (value->s, "glide 2") == 0)
+		effect = AnimEffectGlide3D2;
+	else if (strcasecmp (value->s, "horizontal folds") == 0)
+		effect = AnimEffectHorizontalFolds;
+	else if (strcasecmp (value->s, "leaf spread") == 0)
+		effect = AnimEffectLeafSpread3D;
+	else if (strcasecmp (value->s, "magic lamp") == 0)
+		effect = AnimEffectMagicLamp;
+	else if (strcasecmp (value->s, "magic lamp vacuum") == 0)
+		effect = AnimEffectMagicLampVacuum;
+	else if (strcasecmp (value->s, "razr") == 0)
+		effect = AnimEffectRazr3D;
+	else if (strcasecmp (value->s, "roll up") == 0)
+		effect = AnimEffectRollUp;
+	else if (strcasecmp (value->s, "sidekick") == 0)
+		effect = AnimEffectSidekick;
+	else if (strcasecmp (value->s, "wave") == 0)
+		effect = AnimEffectWave;
+	else if (strcasecmp (value->s, "zoom") == 0)
+		effect = AnimEffectZoom;
+	else
+		effect = AnimEffectNone;
+
+	/* and check if this effect is allowed for
+	   the current animation */
+	for (i = 0; i < allowedEffectsNum; i++)
+		if (effect == allowedEffects[i])
+			break;
+
+	if (i == allowedEffectsNum)
+		return AnimEffectNone;
+	else
+		return effect;
+}
+
+static AnimDirection
+animDirectionFromString (CompOptionValue *value)
+{
+	if (strcasecmp (value->s, "down") == 0)
+		return AnimDirectionDown;
+	else if (strcasecmp (value->s, "up") == 0)
+		return AnimDirectionUp;
+	else if (strcasecmp (value->s, "left") == 0)
+		return AnimDirectionLeft;
+	else if (strcasecmp (value->s, "right") == 0)
+		return AnimDirectionRight;
+	else if (strcasecmp (value->s, "random") == 0)
+		return AnimDirectionRandom;
+	else
+		return AnimDirectionAuto;
+}
+
+static PolygonTess
+polygonTessFromString (CompOptionValue *value)
+{
+	if (strcasecmp (value->s, "hexagonal") == 0)
+		return PolygonTessHex;
+	else
+		return PolygonTessRect;
+}
+
+static ZoomFromCenter
+zoomFromCenterFromString (CompOptionValue *value)
+{
+	if (strcasecmp (value->s, "on") == 0)
+		return ZoomFromCenterOn;
+	else if (strcasecmp (value->s, "create/close only") == 0)
+		return ZoomFromCenterCreate;
+	else if (strcasecmp (value->s, "minimize/unminimize only") == 0)
+		return ZoomFromCenterMin;
+	else
+		return ZoomFromCenterOff;
+}
+
+// iterate over given list
+// check if given effect name matches any implemented effect
+// Check if it was already in the stored list
+// if not, store the effect
+// if no valid effect is given, use the default effect
+static void
+animStoreRandomEffectList (CompOptionValue *value,
+						   AnimEffect *allowedEffects,
+						   unsigned int numAllowedEffects,
+						   AnimEffect *targetList,
+						   unsigned int *targetCount,
+						   AnimEffect defaultValue)
+{
+	CompOptionValue *effect = value->list.value;
+	AnimEffect listEffect;
+	int nItems = value->list.nValue;
+	int i, j, count;
+
+	count = 0;
+
+	for (i = 0; i < nItems; i++, effect++)
+	{
+		listEffect = animEffectFromString (effect,
+										   allowedEffects,
+										   numAllowedEffects);
+
+		if (listEffect == AnimEffectNone)
+			continue;
+
+		for (j = 0; j < count; j++)
+		{
+			if (targetList[j] == listEffect)
+				break;
+		}
+
+		if (j < count)
+			continue;
+
+		targetList[count] = listEffect;
+		count++;
+	}
+
+	if (count == 0)
+	{
+		targetList[0] = defaultValue;
+		count = 1;
+	}
+
+	*targetCount = count;
+}
+
+#define sigmoid(fx) (1.0f/(1.0f+exp(-5.0f*2*((fx)-0.5))))
+#define sigmoid2(fx, s) (1.0f/(1.0f+exp(-(s)*2*((fx)-0.5))))
+
+// =====================  Particle engine  =========================
 
 static void initParticles(int numParticles, ParticleSystem * ps)
 {
@@ -866,549 +1134,6 @@ static void finiParticles(ParticleSystem * ps)
 // =====================  END: Particle engine  =========================
 
 
-#define LIST_SIZE(l) (sizeof (l) / sizeof (l[0]))
-
-// Polygon tesselation type: Rectangular, Hexagonal
-typedef enum
-{
-	PolygonTessRect = 0,
-	PolygonTessHex
-} PolygonTess;
-
-static char *polygonTessName[] = {
-	N_("Rectangular"),
-	N_("Hexagonal"),
-};
-
-#define NUM_TESS LIST_SIZE(polygonTessName)
-
-#define ANIM_EXPLODE3D_TESS_DEFAULT PolygonTessRect
-
-
-static char *allEffectName[] = {
-	N_("None"),
-	N_("Random"),
-	N_("Beam Up"),
-	N_("Burn"),
-	N_("Curved Fold"),
-	N_("Domino"),
-	N_("Dream"),
-	N_("Explode"),
-	N_("Fade"),
-	N_("Fade"),		// intentionally named AnimEffectFocusFade as "Fade"
-	N_("Glide 1"),
-	N_("Glide 2"),
-	N_("Horizontal Folds"),
-	N_("Leaf Spread"),
-	N_("Magic Lamp"),
-	N_("Magic Lamp Vacuum"),
-	N_("Razr"),
-	N_("Roll Up"),
-	N_("Sidekick"),
-	N_("Wave"),
-	N_("Zoom")
-};
-
-typedef enum
-{
-	AnimEffectNone = 0,
-	AnimEffectRandom,
-	AnimEffectBeamUp,
-	AnimEffectBurn,
-	AnimEffectCurvedFold,
-	AnimEffectDomino3D,
-	AnimEffectDream,
-	AnimEffectExplode3D,
-	AnimEffectFade,
-	AnimEffectFocusFade,
-	AnimEffectGlide3D1,
-	AnimEffectGlide3D2,
-	AnimEffectHorizontalFolds,
-	AnimEffectLeafSpread3D,
-	AnimEffectMagicLamp,
-	AnimEffectMagicLampVacuum,
-	AnimEffectRazr3D,
-	AnimEffectRollUp,
-	AnimEffectSidekick,
-	AnimEffectWave,
-	AnimEffectZoom,
-	AnimEffectNum
-} AnimEffect;
-
-#define ANIM_MINIMIZE_DEFAULT   AnimEffectMagicLamp
-#define ANIM_CLOSE1_DEFAULT     AnimEffectZoom
-#define ANIM_CREATE1_DEFAULT    AnimEffectZoom
-#define ANIM_CLOSE2_DEFAULT     AnimEffectFade
-#define ANIM_CREATE2_DEFAULT    AnimEffectFade
-#define ANIM_FOCUS_DEFAULT      AnimEffectNone
-#define ANIM_SHADE_DEFAULT      AnimEffectRollUp
-
-static char *minimizeEffectName[] = {
-	N_("None"),
-	N_("Random"),
-	N_("Beam Up"),
-	N_("Burn"),
-	N_("Curved Fold"),
-	N_("Domino"),
-	N_("Dream"),
-	N_("Explode"),
-	N_("Fade"),
-	N_("Glide 1"),
-	N_("Glide 2"),
-	N_("Horizontal Folds"),
-	N_("Leaf Spread"),
-	N_("Magic Lamp"),
-	N_("Razr"),
-	N_("Sidekick"),
-	N_("Zoom")
-};
-
-static AnimEffect minimizeEffectType[] = {
-	AnimEffectNone,
-	AnimEffectRandom,
-	AnimEffectBeamUp,
-	AnimEffectBurn,
-	AnimEffectCurvedFold,
-	AnimEffectDomino3D,
-	AnimEffectDream,
-	AnimEffectExplode3D,
-	AnimEffectFade,
-	AnimEffectGlide3D1,
-	AnimEffectGlide3D2,
-	AnimEffectHorizontalFolds,
-	AnimEffectLeafSpread3D,
-	AnimEffectMagicLamp,
-	AnimEffectRazr3D,
-	AnimEffectSidekick,
-	AnimEffectZoom
-};
-
-#define NUM_MINIMIZE_EFFECT LIST_SIZE(minimizeEffectType)
-
-static char *closeEffectName[] = {
-	N_("None"),
-	N_("Random"),
-	N_("Beam Up"),
-	N_("Burn"),
-	N_("Curved Fold"),
-	N_("Domino"),
-	N_("Dream"),
-	N_("Explode"),
-	N_("Fade"),
-	N_("Glide 1"),
-	N_("Glide 2"),
-	N_("Horizontal Folds"),
-	N_("Leaf Spread"),
-	N_("Magic Lamp"),
-	N_("Magic Lamp Vacuum"),
-	N_("Razr"),
-	N_("Sidekick"),
-	N_("Wave"),
-	N_("Zoom")
-};
-
-static AnimEffect closeEffectType[] = {
-	AnimEffectNone,
-	AnimEffectRandom,
-	AnimEffectBeamUp,
-	AnimEffectBurn,
-	AnimEffectCurvedFold,
-	AnimEffectDomino3D,
-	AnimEffectDream,
-	AnimEffectExplode3D,
-	AnimEffectFade,
-	AnimEffectGlide3D1,
-	AnimEffectGlide3D2,
-	AnimEffectHorizontalFolds,
-	AnimEffectLeafSpread3D,
-	AnimEffectMagicLamp,
-	AnimEffectMagicLampVacuum,
-	AnimEffectRazr3D,
-	AnimEffectSidekick,
-	AnimEffectWave,
-	AnimEffectZoom
-};
-
-#define NUM_CLOSE_EFFECT LIST_SIZE(closeEffectType)
-
-static char *focusEffectName[] = {
-	N_("None"),
-	N_("Fade"), // intentional
-	N_("Wave")
-};
-
-static AnimEffect focusEffectType[] = {
-	AnimEffectNone,
-	AnimEffectFocusFade,
-	AnimEffectWave
-};
-
-#define NUM_FOCUS_EFFECT LIST_SIZE(focusEffectType)
-
-static char *shadeEffectName[] = {
-	N_("None"),
-	N_("Random"),
-	N_("Curved Fold"),
-	N_("Horizontal Folds"),
-	N_("Roll Up")
-};
-
-static AnimEffect shadeEffectType[] = {
-	AnimEffectNone,
-	AnimEffectRandom,
-	AnimEffectCurvedFold,
-	AnimEffectHorizontalFolds,
-	AnimEffectRollUp
-};
-
-#define NUM_SHADE_EFFECT LIST_SIZE(shadeEffectType)
-
-typedef struct RestackInfo
-{
-	CompWindow *wRestacked, *wStart, *wEnd, *wOldAbove;
-	Bool raised;
-} RestackInfo;
-
-static int displayPrivateIndex;
-
-typedef struct _AnimDisplay
-{
-	int screenPrivateIndex;
-	Atom wmHintsAtom;
-	Atom winIconGeometryAtom;
-	HandleEventProc handleEvent;
-	HandleCompizEventProc handleCompizEvent;
-	int activeWindow;
-} AnimDisplay;
-
-// FIXME? A more elegant way to do this?
-#define ANIM_SCREEN_MATCH_OPTION_NUM 7
-
-typedef enum
-{
-	// Match settings
-	ANIM_SCREEN_OPTION_MINIMIZE_MATCH = 0,
-	ANIM_SCREEN_OPTION_CLOSE1_MATCH,
-	ANIM_SCREEN_OPTION_CLOSE2_MATCH,
-	ANIM_SCREEN_OPTION_CREATE1_MATCH,
-	ANIM_SCREEN_OPTION_CREATE2_MATCH,
-	ANIM_SCREEN_OPTION_FOCUS_MATCH,
-	ANIM_SCREEN_OPTION_SHADE_MATCH,
-	// Event settings
-	ANIM_SCREEN_OPTION_MINIMIZE_EFFECT,
-	ANIM_SCREEN_OPTION_MINIMIZE_DURATION,
-	ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS,
-	ANIM_SCREEN_OPTION_CLOSE1_EFFECT,
-	ANIM_SCREEN_OPTION_CLOSE1_DURATION,
-	ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS,
-	ANIM_SCREEN_OPTION_CREATE1_EFFECT,
-	ANIM_SCREEN_OPTION_CREATE1_DURATION,
-	ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS,
-	ANIM_SCREEN_OPTION_CLOSE2_EFFECT,
-	ANIM_SCREEN_OPTION_CLOSE2_DURATION,
-	ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS,
-	ANIM_SCREEN_OPTION_CREATE2_EFFECT,
-	ANIM_SCREEN_OPTION_CREATE2_DURATION,
-	ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS,
-	ANIM_SCREEN_OPTION_FOCUS_EFFECT,
-	ANIM_SCREEN_OPTION_FOCUS_DURATION,
-	ANIM_SCREEN_OPTION_SHADE_EFFECT,
-	ANIM_SCREEN_OPTION_SHADE_DURATION,
-	ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS,
-	ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR,
-	// Misc. settings
-	ANIM_SCREEN_OPTION_ALL_RANDOM,
-	ANIM_SCREEN_OPTION_TIME_STEP,
-	ANIM_SCREEN_OPTION_TIME_STEP_INTENSE,
-	// Effect settings
-	ANIM_SCREEN_OPTION_BEAMUP_SIZE,
-	ANIM_SCREEN_OPTION_BEAMUP_SPACING,
-	ANIM_SCREEN_OPTION_BEAMUP_COLOR,
-	ANIM_SCREEN_OPTION_BEAMUP_SLOWDOWN,
-	ANIM_SCREEN_OPTION_BEAMUP_LIFE,
-	ANIM_SCREEN_OPTION_CURVED_FOLD_AMP,
-	ANIM_SCREEN_OPTION_DOMINO_DIRECTION,
-	ANIM_SCREEN_OPTION_RAZR_DIRECTION,
-	ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS,
-	ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X,
-	ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y,
-	ANIM_SCREEN_OPTION_EXPLODE3D_TESS,
-	ANIM_SCREEN_OPTION_FIRE_PARTICLES,
-	ANIM_SCREEN_OPTION_FIRE_SIZE,
-	ANIM_SCREEN_OPTION_FIRE_SLOWDOWN,
-	ANIM_SCREEN_OPTION_FIRE_LIFE,
-	ANIM_SCREEN_OPTION_FIRE_COLOR,
-	ANIM_SCREEN_OPTION_FIRE_DIRECTION,
-	ANIM_SCREEN_OPTION_FIRE_CONSTANT_SPEED,
-	ANIM_SCREEN_OPTION_FIRE_SMOKE,
-	ANIM_SCREEN_OPTION_FIRE_MYSTICAL,
-	ANIM_SCREEN_OPTION_GLIDE1_AWAY_POS,
-	ANIM_SCREEN_OPTION_GLIDE1_AWAY_ANGLE,
-	ANIM_SCREEN_OPTION_GLIDE1_THICKNESS,
-	ANIM_SCREEN_OPTION_GLIDE2_AWAY_POS,
-	ANIM_SCREEN_OPTION_GLIDE2_AWAY_ANGLE,
-	ANIM_SCREEN_OPTION_GLIDE2_THICKNESS,
-	ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_AMP,
-	ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_GRID_RES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_MAX_WAVES,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX,
-	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH,
-	ANIM_SCREEN_OPTION_SIDEKICK_NUM_ROTATIONS,
-	ANIM_SCREEN_OPTION_WAVE_WIDTH,
-	ANIM_SCREEN_OPTION_WAVE_AMP,
-	ANIM_SCREEN_OPTION_ZOOM_CURVATURE,
-	ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER,
-
-	ANIM_SCREEN_OPTION_NUM
-} AnimScreenOptions;
-
-typedef struct _AnimScreen
-{
-	int windowPrivateIndex;
-
-	PreparePaintScreenProc preparePaintScreen;
-	DonePaintScreenProc donePaintScreen;
-	PaintScreenProc paintScreen;
-	PaintWindowProc paintWindow;
-	DamageWindowRectProc damageWindowRect;
-	AddWindowGeometryProc addWindowGeometry;
-	//DrawWindowGeometryProc drawWindowGeometry;
-	DrawWindowTextureProc drawWindowTexture;
-
-	WindowResizeNotifyProc windowResizeNotify;
-	WindowMoveNotifyProc windowMoveNotify;
-	WindowGrabNotifyProc windowGrabNotify;
-	WindowUngrabNotifyProc windowUngrabNotify;
-
-	CompOption opt[ANIM_SCREEN_OPTION_NUM];
-
-	ZoomFromCenter zoomFC;
-
-	Bool aWinWasRestackedJustNow; // a window was restacked this paint round
-
-	Bool switcherActive;
-	Bool scaleActive;
-
-	Window *lastClientListStacking; // to store last known stacking order
-	int nLastClientListStacking;
-	int markAllWinCreatedCountdown;
-	// to mark windows as "created" if they were opened before compiz
-	// was started
-
-	PolygonTess explodePolygonTess; // explode polygon tesselation type
-
-	Bool animInProgress;
-	AnimEffect minimizeEffect;
-	AnimEffect create1Effect;
-	AnimEffect create2Effect;
-	AnimEffect close1Effect;
-	AnimEffect close2Effect;
-	AnimEffect focusEffect;
-	AnimEffect shadeEffect;
-
-	AnimEffect close1RandomEffects[NUM_CLOSE_EFFECT];
-	AnimEffect close2RandomEffects[NUM_CLOSE_EFFECT];
-	AnimEffect create1RandomEffects[NUM_CLOSE_EFFECT];
-	AnimEffect create2RandomEffects[NUM_CLOSE_EFFECT];
-	AnimEffect minimizeRandomEffects[NUM_MINIMIZE_EFFECT];
-	AnimEffect shadeRandomEffects[NUM_SHADE_EFFECT];
-	unsigned int nClose1RandomEffects;
-	unsigned int nClose2RandomEffects;
-	unsigned int nCreate1RandomEffects;
-	unsigned int nCreate2RandomEffects;
-	unsigned int nMinimizeRandomEffects;
-	unsigned int nShadeRandomEffects;
-} AnimScreen;
-
-typedef struct _AnimWindow
-{
-	Model *model;
-	int numPs;
-	ParticleSystem *ps;
-	unsigned int state;
-	unsigned int newState;
-
-	PolygonSet *polygonSet;
-	float mvm[16];
-
-	Region drawRegion;
-	Bool useDrawRegion;
-
-	XRectangle icon;
-	XRectangle origWindowRect;
-
-	XRectangle lastKnownCoords;	// used to determine if paintWindow is drawing
-								// on the viewport that the animation started
-
-	float numZoomRotations;
-	GLushort storedOpacity;
-	float timestep;				// to be used in updateWindowAttribFunc
-
-	int nDrawGeometryCalls;
-
-	Bool animInitialized;		// whether the animation effect (not the window) is initialized
-	float animTotalTime;
-	float animRemainingTime;
-	int animOverrideProgressDir;	// 0: default dir, 1: forward, 2: backward
-
-	Bool nowShaded;
-	Bool grabbed;
-
-	WindowEvent curWindowEvent;
-	AnimEffect curAnimEffect;
-
-	int unmapCnt;
-	int destroyCnt;
-
-	int nClipsPassed;			// # of clips passed to animAddWindowGeometry so far
-	// in this draw step
-	Bool clipsUpdated;          // whether stored clips are updated in this anim step
-	FragmentAttrib curPaintAttrib;
-	CompTexture *curTexture;
-	int curTextureFilter;
-	int animatedAtom;
-
-	int animFireDirection;
-	int subEffectNo;			// For effects that share same functions
-	Bool deceleratingMotion;	// For effects that have decel. motion
-
-	// for focus fade effect:
-	RestackInfo *restackInfo;   // restack info if window was restacked this paint round
-	CompWindow *winToBePaintedBeforeThis; // Window which should be painted before this
-	CompWindow *winThisIsPaintedBefore; // the inverse relation of the above
-	CompWindow *moreToBePaintedPrev; // doubly linked list for windows underneath that
-	CompWindow *moreToBePaintedNext; //   raise together with this one
-	Bool created;
-} AnimWindow;
-
-typedef struct _AnimEffectProperties
-{
-	void (*updateWindowAttribFunc) (AnimScreen *, AnimWindow *,
-									WindowPaintAttrib *);
-	void (*prePaintWindowFunc) (CompScreen *, CompWindow *);
-	void (*postPaintWindowFunc) (CompScreen *, CompWindow *);
-	void (*animStepFunc) (CompScreen *, CompWindow *, float time);
-	void (*initFunc) (CompScreen *, CompWindow *);
-	void (*initGridFunc) (AnimScreen *, WindowEvent, int *, int *);
-	void (*addCustomGeometryFunc) (CompScreen *, CompWindow *, int, Box *,
-								   int, CompMatrix *);
-	void (*drawCustomGeometryFunc) (CompScreen *, CompWindow *);
-	Bool dontUseQTexCoord;		// TRUE if effect doesn't need Q coord.
-	void (*animStepPolygonFunc) (CompWindow *, PolygonObject *, float);
-	int subEffectNo;			// For effects that share same functions
-	Bool letOthersDrawGeoms;	// TRUE if we won't draw geometries
-} AnimEffectProperties;
-
-AnimEffectProperties *animEffectPropertiesTmp;
-
-#define GET_ANIM_DISPLAY(d)                                       \
-    ((AnimDisplay *) (d)->privates[displayPrivateIndex].ptr)
-
-#define ANIM_DISPLAY(d)                       \
-    AnimDisplay *ad = GET_ANIM_DISPLAY (d)
-
-#define GET_ANIM_SCREEN(s, ad)                                   \
-    ((AnimScreen *) (s)->privates[(ad)->screenPrivateIndex].ptr)
-
-#define ANIM_SCREEN(s)                                                      \
-    AnimScreen *as = GET_ANIM_SCREEN (s, GET_ANIM_DISPLAY (s->display))
-
-#define GET_ANIM_WINDOW(w, as)                                   \
-    ((AnimWindow *) (w)->privates[(as)->windowPrivateIndex].ptr)
-
-#define ANIM_WINDOW(w)                                         \
-    AnimWindow *aw = GET_ANIM_WINDOW  (w,                         \
-            GET_ANIM_SCREEN  (w->screen,                 \
-                GET_ANIM_DISPLAY (w->screen->display)))
-
-#define NUM_OPTIONS(s) (sizeof ((s)->opt) / sizeof (CompOption))
-
-
-// iterate over given list
-// check if given effect name matches any implemented effect
-// Check if it was already in the stored list
-// if not, store the effect
-// if no valid effect is given, use the default effect
-
-#define STORE_RANDOM_EFFECT_LIST(option, nFxChoices, defaultValue, nStoredRandomFx, storedRandomFx, fxNames, fxIds) \
-{ \
-	CompOptionValue *effect = as->opt[(option)].value.list.value; \
-	int nListItems = as->opt[(option)].value.list.nValue; \
-	\
-	as->nStoredRandomFx = 0; \
-	int j; \
-	for (j = 0; j < nListItems; j++, effect++) \
-	{ \
-		int i; \
-		for (i = 2; i < (nFxChoices); i++) \
-		{ \
-			if (strcmp(effect->s, fxNames[i]) == 0) \
-			{ \
-				Bool duplicate = FALSE; \
-				int k; \
-				for (k = 0; k < as->nStoredRandomFx; k++) \
-					if (as->storedRandomFx[k] == \
-						fxIds[i]) \
-					{ \
-						duplicate = TRUE; \
-						break; \
-					} \
-				if (!duplicate) \
-				{ \
-					as->storedRandomFx[as->nStoredRandomFx] \
-						= fxIds[i]; \
-					as->nStoredRandomFx++; \
-				} \
-				break; \
-			} \
-		} \
-	} \
-	if (nListItems == 0 || as->nStoredRandomFx == 0) \
-	{ \
-		as->storedRandomFx[0] = (defaultValue); \
-		as->nStoredRandomFx = 1; \
-	} \
-}
-	/*
-	o->group = N_(pgroup); \
-	o->subGroup = N_(psubgroup); \
-	o->advanced = False; \
-	o->displayHints = ""; \
-	*/
-
-#define INIT_RANDOM_EFFECT_LIST(poption, pname, pgroup, psubgroup, nFxChoices, fxNames) \
-{ \
-	o = &as->opt[(poption)]; \
-	o->name = pname "_random_effects"; \
-	o->type = CompOptionTypeList; \
-	o->value.list.type = CompOptionTypeString; \
-	o->value.list.nValue = (nFxChoices) - 2; \
-	o->value.list.value = \
-		malloc(sizeof(CompOptionValue) * ((nFxChoices) - 2)); \
-	for (i = 2; i < (nFxChoices); i++) \
-		o->value.list.value[i - 2].s = strdup(fxNames[i]); \
-	o->rest.s.string = fxNames+2; \
-	o->rest.s.nString = (nFxChoices) - 2; \
-}
-
-#define sigmoid(fx) (1.0f/(1.0f+exp(-5.0f*2*((fx)-0.5))))
-#define sigmoid2(fx, s) (1.0f/(1.0f+exp(-(s)*2*((fx)-0.5))))
-
-// Menu fix hack for mozilla apps. It can be removed
-// once the bug is fixed in mozilla code base.
-#define GET_WINDOW_TYPE(w) \
-	(((w)->type == CompWindowTypeNormalMask && \
-	  (w)->attrib.override_redirect) \
-	 ? CompWindowTypeUnknownMask \
-	 : (w)->type)
-
 static void modelCalcBounds(Model * model)
 {
 	int i;
@@ -1486,20 +1211,15 @@ static float defaultAnimProgress(AnimWindow * aw)
 // Converts animation direction string to an integer direction
 // (up, down, left, or right)
 static AnimDirection getAnimationDirection(CompWindow * w,
-										   char *optionValue, Bool openDir)
+										   CompOptionValue *value, 
+										   Bool openDir)
 {
 	ANIM_WINDOW(w);
 
-	AnimDirection dir = AnimDirectionUp;
-	int i;
+	AnimDirection dir;
 
-	for (i = 0; i < LIST_SIZE(animDirectionName); i++)
-	{
-		if (strcmp(optionValue, animDirectionName[i]) == 0)
-		{
-			dir = i;
-		}
-	}
+	dir = animDirectionFromString (value);
+
 	if (dir == AnimDirectionRandom)
 	{
 		dir = rand() % 4;
@@ -3078,7 +2798,7 @@ static void fxBurnInit(CompScreen * s, CompWindow * w)
 	glBindTexture(GL_TEXTURE_2D, 0);
 
 	aw->animFireDirection = getAnimationDirection
-			(w, as->opt[ANIM_SCREEN_OPTION_FIRE_DIRECTION].value.s, FALSE);
+			(w, &as->opt[ANIM_SCREEN_OPTION_FIRE_DIRECTION].value, FALSE);
 
 	if (as->opt[ANIM_SCREEN_OPTION_FIRE_CONSTANT_SPEED].value.b)
 	{
@@ -5413,10 +5133,10 @@ static void fxDomino3DInit(CompScreen * s, CompWindow * w)
 
 	if (subEffectNo == 2)
 		fallDir = getAnimationDirection
-				(w, as->opt[ANIM_SCREEN_OPTION_RAZR_DIRECTION].value.s, TRUE);
+				(w, &as->opt[ANIM_SCREEN_OPTION_RAZR_DIRECTION].value, TRUE);
 	else
 		fallDir = getAnimationDirection
-				(w, as->opt[ANIM_SCREEN_OPTION_DOMINO_DIRECTION].value.s,
+				(w, &as->opt[ANIM_SCREEN_OPTION_DOMINO_DIRECTION].value,
 				 TRUE);
 
 	int defaultGridSize = 20;
@@ -5895,1428 +5615,248 @@ animSetScreenOption(CompPlugin *plugin,
 
 	switch (index)
 	{
-	case ANIM_SCREEN_OPTION_SIDEKICK_NUM_ROTATIONS:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_ZOOM_CURVATURE:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
 	case ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER:
 		if (compSetStringOption(o, value))
 		{
-			int i;
-
-			for (i = 0; i < 4; i++)
-			{
-				if (strcmp(o->value.s, zoomFromCenterOption[i]) == 0)
-				{
-					as->zoomFC = i;
-					return TRUE;
-				}
-			}
-		}
-		break;
-	case ANIM_SCREEN_OPTION_TIME_STEP:
-		if (compSetIntOption(o, value))
-		{
+			as->zoomFC = zoomFromCenterFromString (&o->value);
 			return TRUE;
 		}
-		break;
-	case ANIM_SCREEN_OPTION_TIME_STEP_INTENSE:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_GRID_RES:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_MAX_WAVES:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_WAVE_WIDTH:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_WAVE_AMP:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_CURVED_FOLD_AMP:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_AMP:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR:
-		if (compSetBoolOption(o, value))
-			return TRUE;
-		break;
-	case ANIM_SCREEN_OPTION_ALL_RANDOM:
-		if (compSetBoolOption(o, value))
-			return TRUE;
 		break;
 	case ANIM_SCREEN_OPTION_MINIMIZE_EFFECT:
 		if (compSetStringOption(o, value))
 		{
-			int i;
-
-			for (i = 0; i < NUM_MINIMIZE_EFFECT; i++)
-			{
-				if (strcmp(o->value.s, minimizeEffectName[i]) == 0)
-				{
-					as->minimizeEffect = minimizeEffectType[i];
-					return TRUE;
-				}
-			}
+			as->minimizeEffect = animEffectFromString (&o->value,
+													   minimizeEffectType,
+													   NUM_MINIMIZE_EFFECT);
+			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_CLOSE1_EFFECT:
 		if (compSetStringOption(o, value))
 		{
-			int i;
-
-			for (i = 0; i < NUM_CLOSE_EFFECT; i++)
-			{
-				if (strcmp(o->value.s, closeEffectName[i]) == 0)
-				{
-					as->close1Effect = closeEffectType[i];
-					return TRUE;
-				}
-			}
+			as->close1Effect = animEffectFromString (&o->value,
+													 closeEffectType,
+													 NUM_CLOSE_EFFECT);
+			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_CLOSE2_EFFECT:
 		if (compSetStringOption(o, value))
 		{
-			int i;
-
-			for (i = 0; i < NUM_CLOSE_EFFECT; i++)
-			{
-				if (strcmp(o->value.s, closeEffectName[i]) == 0)
-				{
-					as->close2Effect = closeEffectType[i];
-					return TRUE;
-				}
-			}
+			as->close2Effect = animEffectFromString (&o->value,
+													 closeEffectType,
+													 NUM_CLOSE_EFFECT);
+			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_CREATE1_EFFECT:
 		if (compSetStringOption(o, value))
 		{
-			int i;
-
-			for (i = 0; i < NUM_CLOSE_EFFECT; i++)
-			{
-				if (strcmp(o->value.s, closeEffectName[i]) == 0)
-				{
-					as->create1Effect = closeEffectType[i];
-					return TRUE;
-				}
-			}
+			as->create1Effect = animEffectFromString (&o->value,
+					 								  closeEffectType,
+					 								  NUM_CLOSE_EFFECT);
+			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_CREATE2_EFFECT:
 		if (compSetStringOption(o, value))
 		{
-			int i;
-
-			for (i = 0; i < NUM_CLOSE_EFFECT; i++)
-			{
-				if (strcmp(o->value.s, closeEffectName[i]) == 0)
-				{
-					as->create2Effect = closeEffectType[i];
-					return TRUE;
-				}
-			}
+			as->create2Effect = animEffectFromString (&o->value,
+					 								  closeEffectType,
+					 								  NUM_CLOSE_EFFECT);
+			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_FOCUS_EFFECT:
 		if (compSetStringOption(o, value))
 		{
-			int i;
-
-			for (i = 0; i < NUM_FOCUS_EFFECT; i++)
-			{
-				if (strcmp(o->value.s, focusEffectName[i]) == 0)
-				{
-					as->focusEffect = focusEffectType[i];
-					return TRUE;
-				}
-			}
+			as->focusEffect = animEffectFromString (&o->value,
+													focusEffectType,
+													NUM_FOCUS_EFFECT);
+			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_SHADE_EFFECT:
 		if (compSetStringOption(o, value))
 		{
-			int i;
-
-			for (i = 0; i < NUM_SHADE_EFFECT; i++)
-			{
-				if (strcmp(o->value.s, shadeEffectName[i]) == 0)
-				{
-					as->shadeEffect = shadeEffectType[i];
-					return TRUE;
-				}
-			}
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MINIMIZE_MATCH:
-	case ANIM_SCREEN_OPTION_CLOSE1_MATCH:
-	case ANIM_SCREEN_OPTION_CLOSE2_MATCH:
-	case ANIM_SCREEN_OPTION_CREATE1_MATCH:
-	case ANIM_SCREEN_OPTION_CREATE2_MATCH:
-	case ANIM_SCREEN_OPTION_FOCUS_MATCH:
-	case ANIM_SCREEN_OPTION_SHADE_MATCH:
-		if (compSetMatchOption (o, value))
-		{
-	    		return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_MINIMIZE_DURATION:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_CLOSE1_DURATION:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_CLOSE2_DURATION:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_CREATE1_DURATION:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_CREATE2_DURATION:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_FOCUS_DURATION:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_SHADE_DURATION:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_FIRE_PARTICLES:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_FIRE_SIZE:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_FIRE_SLOWDOWN:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_FIRE_LIFE:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_FIRE_COLOR:
-		if (compSetColorOption(o, value))
-		{
-			return TRUE;
-		}
-	case ANIM_SCREEN_OPTION_FIRE_DIRECTION:
-		if (compSetStringOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_FIRE_CONSTANT_SPEED:
-		if (compSetBoolOption(o, value))
-			return TRUE;
-		break;
-	case ANIM_SCREEN_OPTION_FIRE_SMOKE:
-		if (compSetBoolOption(o, value))
-			return TRUE;
-		break;
-	case ANIM_SCREEN_OPTION_FIRE_MYSTICAL:
-		if (compSetBoolOption(o, value))
-			return TRUE;
-		break;
-	case ANIM_SCREEN_OPTION_BEAMUP_SIZE:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_BEAMUP_SPACING:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-	case ANIM_SCREEN_OPTION_BEAMUP_COLOR:
-		if (compSetColorOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_BEAMUP_SLOWDOWN:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_BEAMUP_LIFE:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_DOMINO_DIRECTION:
-		if (compSetStringOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_RAZR_DIRECTION:
-		if (compSetStringOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X:
-		if (compSetIntOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y:
-		if (compSetIntOption(o, value))
-		{
+			as->shadeEffect = animEffectFromString (&o->value,
+													shadeEffectType,
+													NUM_SHADE_EFFECT);
 			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_EXPLODE3D_TESS:
 		if (compSetStringOption(o, value))
 		{
-			int i;
-
-			for (i = 0; i < NUM_TESS; i++)
-			{
-				if (strcmp(o->value.s, polygonTessName[i]) == 0)
-				{
-					as->explodePolygonTess = i;
-					return TRUE;
-				}
-			}
-		}
-		break;
-	case ANIM_SCREEN_OPTION_GLIDE1_AWAY_POS:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_GLIDE1_AWAY_ANGLE:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_GLIDE1_THICKNESS:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_GLIDE2_AWAY_POS:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_GLIDE2_AWAY_ANGLE:
-		if (compSetFloatOption(o, value))
-		{
-			return TRUE;
-		}
-		break;
-	case ANIM_SCREEN_OPTION_GLIDE2_THICKNESS:
-		if (compSetFloatOption(o, value))
-		{
+			as->explodePolygonTess = polygonTessFromString (&o->value);
 			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS:
 		if (compSetOptionList(o, value))
 		{
-			STORE_RANDOM_EFFECT_LIST
-					(ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS,
-					 NUM_MINIMIZE_EFFECT,
-					 ANIM_MINIMIZE_DEFAULT,
-					 nMinimizeRandomEffects,
-					 minimizeRandomEffects,
-					 minimizeEffectName, minimizeEffectType);
+			animStoreRandomEffectList (&o->value,
+									   minimizeEffectType,
+									   NUM_MINIMIZE_EFFECT,
+									   as->minimizeRandomEffects,
+									   &as->nMinimizeRandomEffects,
+									   AnimEffectNone /* FIXME */);
 			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS:
 		if (compSetOptionList(o, value))
 		{
-			STORE_RANDOM_EFFECT_LIST
-					(ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS,
-					 NUM_CLOSE_EFFECT,
-					 ANIM_CLOSE1_DEFAULT,
-					 nClose1RandomEffects,
-					 close1RandomEffects, closeEffectName, closeEffectType);
+			animStoreRandomEffectList (&o->value,
+									   closeEffectType,
+									   NUM_CLOSE_EFFECT,
+									   as->close1RandomEffects,
+									   &as->nClose1RandomEffects,
+									   AnimEffectNone /* FIXME */);
 			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS:
 		if (compSetOptionList(o, value))
 		{
-			STORE_RANDOM_EFFECT_LIST
-					(ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS,
-					 NUM_CLOSE_EFFECT,
-					 ANIM_CLOSE2_DEFAULT,
-					 nClose2RandomEffects,
-					 close2RandomEffects, closeEffectName, closeEffectType);
+			animStoreRandomEffectList (&o->value,
+									   closeEffectType,
+									   NUM_CLOSE_EFFECT,
+									   as->close2RandomEffects,
+									   &as->nClose2RandomEffects,
+									   AnimEffectNone /* FIXME */);
 			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS:
 		if (compSetOptionList(o, value))
 		{
-			STORE_RANDOM_EFFECT_LIST
-					(ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS,
-					 NUM_CLOSE_EFFECT,
-					 ANIM_CREATE1_DEFAULT,
-					 nCreate1RandomEffects,
-					 create1RandomEffects, closeEffectName, closeEffectType);
+			animStoreRandomEffectList (&o->value,
+									   closeEffectType,
+									   NUM_CLOSE_EFFECT,
+									   as->create1RandomEffects,
+									   &as->nCreate1RandomEffects,
+									   AnimEffectNone /* FIXME */);
 			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS:
 		if (compSetOptionList(o, value))
 		{
-			STORE_RANDOM_EFFECT_LIST
-					(ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS,
-					 NUM_CLOSE_EFFECT,
-					 ANIM_CREATE2_DEFAULT,
-					 nCreate2RandomEffects,
-					 create2RandomEffects, closeEffectName, closeEffectType);
+			animStoreRandomEffectList (&o->value,
+									   closeEffectType,
+									   NUM_CLOSE_EFFECT,
+									   as->create2RandomEffects,
+									   &as->nCreate2RandomEffects,
+									   AnimEffectNone /* FIXME */);
 			return TRUE;
 		}
 		break;
 	case ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS:
 		if (compSetOptionList(o, value))
 		{
-			STORE_RANDOM_EFFECT_LIST
-					(ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS,
-					 NUM_SHADE_EFFECT,
-					 ANIM_SHADE_DEFAULT,
-					 nShadeRandomEffects,
-					 shadeRandomEffects, shadeEffectName, shadeEffectType);
+			animStoreRandomEffectList (&o->value,
+									   shadeEffectType,
+									   NUM_SHADE_EFFECT,
+									   as->shadeRandomEffects,
+									   &as->nShadeRandomEffects,
+									   AnimEffectNone /* FIXME */);
 			return TRUE;
 		}
 		break;
 	default:
+		return compSetScreenOption (screen, o, value);
 		break;
 	}
 
 	return FALSE;
 }
 
-static void animScreenInitOptions(AnimScreen * as)
-{
-	CompOption *o;
-	int i;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM];
-	o->name = "all_random";
-	//o->group = N_("Misc. Settings");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeBool;
-	o->value.b = ANIM_ALL_RANDOM_DEFAULT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR];
-	o->name = "rollup_fixed_interior";
-	//o->group = N_("(Un)Shade");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeBool;
-	o->value.b = ANIM_ROLLUP_FIXED_INTERIOR_DEFAULT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS];
-	o->name = "horizontal_folds_num_folds";
-	//o->group = N_("Horizontal Folds");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_HORIZONTAL_FOLDS_NUM_FOLDS_DEFAULT;
-	o->rest.i.min = ANIM_HORIZONTAL_FOLDS_NUM_FOLDS_MIN;
-	o->rest.i.max = ANIM_HORIZONTAL_FOLDS_NUM_FOLDS_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_AMP];
-	o->name = "horizontal_folds_amp";
-	//o->group = N_("Horizontal Folds");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_HORIZONTAL_FOLDS_AMP_DEFAULT;
-	o->rest.f.min = ANIM_HORIZONTAL_FOLDS_AMP_MIN;
-	o->rest.f.max = ANIM_HORIZONTAL_FOLDS_AMP_MAX;
-	o->rest.f.precision = ANIM_HORIZONTAL_FOLDS_AMP_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CURVED_FOLD_AMP];
-	o->name = "curved_fold_amp";
-	//o->group = N_("Curved Folds");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_CURVED_FOLD_AMP_DEFAULT;
-	o->rest.f.min = ANIM_CURVED_FOLD_AMP_MIN;
-	o->rest.f.max = ANIM_CURVED_FOLD_AMP_MAX;
-	o->rest.f.precision = ANIM_CURVED_FOLD_AMP_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_TIME_STEP];
-	o->name = "time_step";
-	//o->group = N_("Misc. Settings");
-	//o->subGroup = N_("Advanced");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_TIME_STEP_DEFAULT;
-	o->rest.i.min = ANIM_TIME_STEP_MIN;
-	o->rest.i.max = ANIM_TIME_STEP_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_TIME_STEP_INTENSE];
-	o->name = "time_step_intense";
-	//o->group = N_("Misc. Settings");
-	//o->subGroup = N_("Advanced");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_TIME_STEP_INTENSE_DEFAULT;
-	o->rest.i.min = ANIM_TIME_STEP_INTENSE_MIN;
-	o->rest.i.max = ANIM_TIME_STEP_INTENSE_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES];
-	o->name = "magic_lamp_grid_res";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP_GRID_RES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP_GRID_RES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP_GRID_RES_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES];
-	o->name = "magic_lamp_max_waves";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP_MAX_WAVES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP_MAX_WAVES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP_MAX_WAVES_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN];
-	o->name = "magic_lamp_amp_min";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP_WAVE_AMP_MIN_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP_WAVE_AMP_MIN_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP_WAVE_AMP_MIN_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP_WAVE_AMP_MIN_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX];
-	o->name = "magic_lamp_amp_max";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP_WAVE_AMP_MAX_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP_WAVE_AMP_MAX_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP_WAVE_AMP_MAX_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP_WAVE_AMP_MAX_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH];
-	o->name = "magic_lamp_create_start_width";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP_CREATE_START_WIDTH_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP_CREATE_START_WIDTH_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP_CREATE_START_WIDTH_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_GRID_RES];
-	o->name = "magic_lamp_vacuum_grid_res";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp Vacuum");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP_VACUUM_GRID_RES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP_VACUUM_GRID_RES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP_VACUUM_GRID_RES_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_MAX_WAVES];
-	o->name = "magic_lamp_vacuum_max_waves";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp Vacuum");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP_VACUUM_MAX_WAVES_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN];
-	o->name = "magic_lamp_vacuum_amp_min";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp Vacuum");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MIN_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX];
-	o->name = "magic_lamp_vacuum_amp_max";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp Vacuum");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_DEFAULT;
-	o->rest.f.min = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_MIN;
-	o->rest.f.max = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_MAX;
-	o->rest.f.precision = ANIM_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH];
-	o->name = "magic_lamp_vacuum_create_start_width";
-	//o->group = N_("Magic Lamp");
-	//o->subGroup = N_("Magic Lamp Vacuum");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_DEFAULT;
-	o->rest.i.min = ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_MIN;
-	o->rest.i.max = ANIM_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_WAVE_WIDTH];
-	o->name = "wave_width";
-	//o->group = N_("Wave");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_WAVE_WIDTH_DEFAULT;
-	o->rest.f.min = ANIM_WAVE_WIDTH_MIN;
-	o->rest.f.max = ANIM_WAVE_WIDTH_MAX;
-	o->rest.f.precision = ANIM_WAVE_WIDTH_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_WAVE_AMP];
-	o->name = "wave_amp";
-	//o->group = N_("Wave");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_WAVE_AMP_DEFAULT;
-	o->rest.f.min = ANIM_WAVE_AMP_MIN;
-	o->rest.f.max = ANIM_WAVE_AMP_MAX;
-	o->rest.f.precision = ANIM_WAVE_AMP_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_SIDEKICK_NUM_ROTATIONS];
-	o->name = "sidekick_num_rotations";
-	//o->group = N_("Zoom/Sidekick");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_SIDEKICK_NUM_ROTATIONS_DEFAULT;
-	o->rest.f.min = ANIM_SIDEKICK_NUM_ROTATIONS_MIN;
-	o->rest.f.max = ANIM_SIDEKICK_NUM_ROTATIONS_MAX;
-	o->rest.f.precision = ANIM_SIDEKICK_NUM_ROTATIONS_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER];
-	o->name = "zoom_from_center";
-	//o->group = N_("Zoom/Sidekick");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(zoomFromCenterOption[ANIM_ZOOM_FROM_CENTER_DEFAULT]);
-	o->rest.s.string = zoomFromCenterOption;
-	o->rest.s.nString = 4;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_ZOOM_CURVATURE];
-	o->name = "zoom_curvature";
-	//o->group = N_("Zoom/Sidekick");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_ZOOM_CURVATURE_DEFAULT;
-	o->rest.f.min = ANIM_ZOOM_CURVATURE_MIN;
-	o->rest.f.max = ANIM_ZOOM_CURVATURE_MAX;
-	o->rest.f.precision = ANIM_ZOOM_CURVATURE_PRECISION;
-
-	// Minimize
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MINIMIZE_EFFECT];
-	o->name = "minimize_effect";
-	//o->group = N_("(Un)Minimize");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(allEffectName[ANIM_MINIMIZE_DEFAULT]);
-	o->rest.s.string = minimizeEffectName;
-	o->rest.s.nString = NUM_MINIMIZE_EFFECT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MINIMIZE_MATCH];
-	o->name = "minimize_match";
-	//o->group = N_("(Un)Minimize");
-	//o->subGroup = N_("Minimize");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type	= CompOptionTypeMatch;
-	matchInit (&o->value.match);
-	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_MINIMIZE_DURATION];
-	o->name = "minimize_duration";
-	//o->group = N_("(Un)Minimize");
-	//o->subGroup = N_("Minimize");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_MINIMIZE_DURATION_DEFAULT;
-	o->rest.f.min = ANIM_MINIMIZE_DURATION_MIN;
-	o->rest.f.max = ANIM_MINIMIZE_DURATION_MAX;
-	o->rest.f.precision = ANIM_MINIMIZE_DURATION_PRECISION;
-
-	INIT_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS,
-			 "minimize", "(Un)Minimize", "Minimize", NUM_MINIMIZE_EFFECT,
-			 minimizeEffectName);
-	STORE_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS,
-			 NUM_MINIMIZE_EFFECT,
-			 ANIM_MINIMIZE_DEFAULT,
-			 nMinimizeRandomEffects,
-			 minimizeRandomEffects, minimizeEffectName, minimizeEffectType);
-
-	// Close 1
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE1_EFFECT];
-	o->name = "close1_effect";
-	//o->group = N_("Close");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(allEffectName[ANIM_CLOSE1_DEFAULT]);
-	o->rest.s.string = closeEffectName;
-	o->rest.s.nString = NUM_CLOSE_EFFECT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE1_MATCH];
-	o->name = "close1_match";
-	//o->group = N_("Close");
-	//o->subGroup = N_("Close #1");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type	= CompOptionTypeMatch;
-	matchInit (&o->value.match);
-	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE1_DURATION];
-	o->name = "close1_duration";
-	//o->group = N_("Close");
-	//o->subGroup = N_("Close #1");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_CLOSE1_DURATION_DEFAULT;
-	o->rest.f.min = ANIM_CLOSE1_DURATION_MIN;
-	o->rest.f.max = ANIM_CLOSE1_DURATION_MAX;
-	o->rest.f.precision = ANIM_CLOSE1_DURATION_PRECISION;
-
-	INIT_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS,
-			 "close1", "Close", "Close #1", NUM_CLOSE_EFFECT,
-			 closeEffectName);
-	STORE_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS,
-			 NUM_CLOSE_EFFECT,
-			 ANIM_CLOSE1_DEFAULT,
-			 nClose1RandomEffects,
-			 close1RandomEffects, closeEffectName, closeEffectType);
-
-	// Close 2
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE2_EFFECT];
-	o->name = "close2_effect";
-	//o->group = N_("Close");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(allEffectName[ANIM_CLOSE2_DEFAULT]);
-	o->rest.s.string = closeEffectName;
-	o->rest.s.nString = NUM_CLOSE_EFFECT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE2_MATCH];
-	o->name = "close2_match";
-	//o->group = N_("Close");
-	//o->subGroup = N_("Close #2");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type	= CompOptionTypeMatch;
-	matchInit (&o->value.match);
-	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH2);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CLOSE2_DURATION];
-	o->name = "close2_duration";
-	//o->group = N_("Close");
-	//o->subGroup = N_("Close #2");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_CLOSE2_DURATION_DEFAULT;
-	o->rest.f.min = ANIM_CLOSE2_DURATION_MIN;
-	o->rest.f.max = ANIM_CLOSE2_DURATION_MAX;
-	o->rest.f.precision = ANIM_CLOSE2_DURATION_PRECISION;
-
-	INIT_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS,
-			 "close2", "Close", "Close #2", NUM_CLOSE_EFFECT,
-			 closeEffectName);
-	STORE_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS,
-			 NUM_CLOSE_EFFECT,
-			 ANIM_CLOSE2_DEFAULT,
-			 nClose2RandomEffects,
-			 close2RandomEffects, closeEffectName, closeEffectType);
-
-	// Create 1
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CREATE1_EFFECT];
-	o->name = "create1_effect";
-	//o->group = N_("Create");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(allEffectName[ANIM_CREATE1_DEFAULT]);
-	o->rest.s.string = closeEffectName;
-	o->rest.s.nString = NUM_CLOSE_EFFECT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CREATE1_MATCH];
-	o->name = "create1_match";
-	//o->group = N_("Create");
-	//o->subGroup = N_("Create #1");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type	= CompOptionTypeMatch;
-	matchInit (&o->value.match);
-	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CREATE1_DURATION];
-	o->name = "create1_duration";
-	//o->group = N_("Create");
-	//o->subGroup = N_("Create #1");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_CREATE1_DURATION_DEFAULT;
-	o->rest.f.min = ANIM_CREATE1_DURATION_MIN;
-	o->rest.f.max = ANIM_CREATE1_DURATION_MAX;
-	o->rest.f.precision = ANIM_CREATE1_DURATION_PRECISION;
-
-	INIT_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS,
-			 "create1", "Create", "Create #1", NUM_CLOSE_EFFECT,
-			 closeEffectName);
-	STORE_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS,
-			 NUM_CLOSE_EFFECT,
-			 ANIM_CREATE1_DEFAULT,
-			 nCreate1RandomEffects,
-			 create1RandomEffects, closeEffectName, closeEffectType);
-
-	// Create 2
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CREATE2_EFFECT];
-	o->name = "create2_effect";
-	//o->group = N_("Create");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(allEffectName[ANIM_CREATE2_DEFAULT]);
-	o->rest.s.string = closeEffectName;
-	o->rest.s.nString = NUM_CLOSE_EFFECT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CREATE2_MATCH];
-	o->name = "create2_match";
-	//o->group = N_("Create");
-	//o->subGroup = N_("Create #2");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type	= CompOptionTypeMatch;
-	matchInit (&o->value.match);
-	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH2);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_CREATE2_DURATION];
-	o->name = "create2_duration";
-	//o->group = N_("Create");
-	//o->subGroup = N_("Create #2");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_CREATE2_DURATION_DEFAULT;
-	o->rest.f.min = ANIM_CREATE2_DURATION_MIN;
-	o->rest.f.max = ANIM_CREATE2_DURATION_MAX;
-	o->rest.f.precision = ANIM_CREATE2_DURATION_PRECISION;
-
-	INIT_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS,
-			 "create2", "Create", "Create #2", NUM_CLOSE_EFFECT,
-			 closeEffectName);
-	STORE_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS,
-			 NUM_CLOSE_EFFECT,
-			 ANIM_CREATE2_DEFAULT,
-			 nCreate2RandomEffects,
-			 create2RandomEffects, closeEffectName, closeEffectType);
-
-	// Focus
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FOCUS_EFFECT];
-	o->name = "focus_effect";
-	//o->group = N_("Focus");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(allEffectName[ANIM_FOCUS_DEFAULT]);
-	o->rest.s.string = focusEffectName;
-	o->rest.s.nString = NUM_FOCUS_EFFECT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FOCUS_MATCH];
-	o->name = "focus_match";
-	//o->group = N_("Focus");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type	= CompOptionTypeMatch;
-	matchInit (&o->value.match);
-	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FOCUS_DURATION];
-	o->name = "focus_duration";
-	//o->group = N_("Focus");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_FOCUS_DURATION_DEFAULT;
-	o->rest.f.min = ANIM_FOCUS_DURATION_MIN;
-	o->rest.f.max = ANIM_FOCUS_DURATION_MAX;
-	o->rest.f.precision = ANIM_FOCUS_DURATION_PRECISION;
-
-	// Shade
-
-	o = &as->opt[ANIM_SCREEN_OPTION_SHADE_EFFECT];
-	o->name = "shade_effect";
-	//o->group = N_("(Un)Shade");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(allEffectName[ANIM_SHADE_DEFAULT]);
-	o->rest.s.string = shadeEffectName;
-	o->rest.s.nString = NUM_SHADE_EFFECT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_SHADE_MATCH];
-	o->name = "shade_match";
-	//o->group = N_("(Un)Shade");
-	//o->subGroup = N_("Shade");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type	= CompOptionTypeMatch;
-	matchInit (&o->value.match);
-	matchAddFromString (&o->value.match, ANIM_WINDOW_MATCH1);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_SHADE_DURATION];
-	o->name = "shade_duration";
-	//o->group = N_("(Un)Shade");
-	//o->subGroup = N_("Shade");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_SHADE_DURATION_DEFAULT;
-	o->rest.f.min = ANIM_SHADE_DURATION_MIN;
-	o->rest.f.max = ANIM_SHADE_DURATION_MAX;
-	o->rest.f.precision = ANIM_SHADE_DURATION_PRECISION;
-
-	INIT_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS,
-			 "shade", "(Un)Shade", "Shade", NUM_SHADE_EFFECT,
-			 shadeEffectName);
-	STORE_RANDOM_EFFECT_LIST
-			(ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS,
-			 NUM_SHADE_EFFECT,
-			 ANIM_SHADE_DEFAULT,
-			 nShadeRandomEffects,
-			 shadeRandomEffects, shadeEffectName, shadeEffectType);
-
-	// Fire (Burn)
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FIRE_PARTICLES];
-	o->name = "fire_particles";
-	//o->group = N_("Fire (A.K.A Burn)");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_FIRE_PARTICLES_DEFAULT;
-	o->rest.i.min = ANIM_FIRE_PARTICLES_MIN;
-	o->rest.i.max = ANIM_FIRE_PARTICLES_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FIRE_SIZE];
-	o->name = "fire_size";
-	//o->group = N_("Fire (A.K.A Burn)");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_FIRE_SIZE_DEFAULT;
-	o->rest.f.min = ANIM_FIRE_SIZE_MIN;
-	o->rest.f.max = ANIM_FIRE_SIZE_MAX;
-	o->rest.f.precision = ANIM_FIRE_SIZE_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FIRE_SLOWDOWN];
-	o->name = "fire_slowdown";
-	//o->group = N_("Fire (A.K.A Burn)");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_FIRE_SLOWDOWN_DEFAULT;
-	o->rest.f.min = ANIM_FIRE_SLOWDOWN_MIN;
-	o->rest.f.max = ANIM_FIRE_SLOWDOWN_MAX;
-	o->rest.f.precision = ANIM_FIRE_SLOWDOWN_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FIRE_LIFE];
-	o->name = "fire_life";
-	//o->group = N_("Fire (A.K.A Burn)");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_FIRE_LIFE_DEFAULT;
-	o->rest.f.min = ANIM_FIRE_LIFE_MIN;
-	o->rest.f.max = ANIM_FIRE_LIFE_MAX;
-	o->rest.f.precision = ANIM_FIRE_LIFE_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR];
-	o->name = "fire_color";
-	//o->group = N_("Fire (A.K.A Burn)");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeColor;
-	o->value.c[0] = ANIM_FIRE_COLOR_RED_DEFAULT;
-	o->value.c[1] = ANIM_FIRE_COLOR_GREEN_DEFAULT;
-	o->value.c[2] = ANIM_FIRE_COLOR_BLUE_DEFAULT;
-	o->value.c[3] = ANIM_FIRE_COLOR_ALPHA_DEFAULT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FIRE_DIRECTION];
-	o->name = "fire_direction";
-	//o->group = N_("Fire (A.K.A Burn)");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(animDirectionName[ANIM_FIRE_DIRECTION_DEFAULT]);
-	o->rest.s.string = animDirectionName;
-	o->rest.s.nString = LIST_SIZE(animDirectionName);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FIRE_CONSTANT_SPEED];
-	o->name = "fire_constant_speed";
-	//o->group = N_("Fire (A.K.A Burn)");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeBool;
-	o->value.b = ANIM_FIRE_CONSTANT_SPEED_DEFAULT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FIRE_SMOKE];
-	o->name = "fire_smoke";
-	//o->group = N_("Fire (A.K.A Burn)");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeBool;
-	o->value.b = ANIM_FIRE_SMOKE_DEFAULT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_FIRE_MYSTICAL];
-	o->name = "fire_mystical";
-	//o->group = N_("Fire (A.K.A Burn)");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeBool;
-	o->value.b = ANIM_FIRE_MYSTICAL_DEFAULT;
-
-	// Beam Up
-
-	o = &as->opt[ANIM_SCREEN_OPTION_BEAMUP_SIZE];
-	o->name = "beam_size";
-	//o->group = N_("Beam");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_BEAMUP_SIZE_DEFAULT;
-	o->rest.f.min = ANIM_BEAMUP_SIZE_MIN;
-	o->rest.f.max = ANIM_BEAMUP_SIZE_MAX;
-	o->rest.f.precision = ANIM_BEAMUP_SIZE_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_BEAMUP_SPACING];
-	o->name = "beam_spacing";
-	//o->group = N_("Beam");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_BEAMUP_SPACING_DEFAULT;
-	o->rest.i.min = ANIM_BEAMUP_SPACING_MIN;
-	o->rest.i.max = ANIM_BEAMUP_SPACING_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR];
-	o->name = "beam_color";
-	//o->group = N_("Beam");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeColor;
-	o->value.c[0] = ANIM_BEAMUP_COLOR_RED_DEFAULT;
-	o->value.c[1] = ANIM_BEAMUP_COLOR_GREEN_DEFAULT;
-	o->value.c[2] = ANIM_BEAMUP_COLOR_BLUE_DEFAULT;
-	o->value.c[3] = ANIM_BEAMUP_COLOR_ALPHA_DEFAULT;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_BEAMUP_SLOWDOWN];
-	o->name = "beam_slowdown";
-	//o->group = N_("Beam");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_BEAMUP_SLOWDOWN_DEFAULT;
-	o->rest.f.min = ANIM_BEAMUP_SLOWDOWN_MIN;
-	o->rest.f.max = ANIM_BEAMUP_SLOWDOWN_MAX;
-	o->rest.f.precision = ANIM_BEAMUP_SLOWDOWN_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_BEAMUP_LIFE];
-	o->name = "beam_life";
-	//o->group = N_("Beam");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_BEAMUP_LIFE_DEFAULT;
-	o->rest.f.min = ANIM_BEAMUP_LIFE_MIN;
-	o->rest.f.max = ANIM_BEAMUP_LIFE_MAX;
-	o->rest.f.precision = ANIM_BEAMUP_LIFE_PRECISION;
-
-	// Domino / Razr
-
-	o = &as->opt[ANIM_SCREEN_OPTION_DOMINO_DIRECTION];
-	o->name = "domino_direction";
-	//o->group = N_("Domino/Razr");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(animDirectionName[ANIM_DOMINO_DIRECTION_DEFAULT]);
-	o->rest.s.string = animDirectionName;
-	o->rest.s.nString = LIST_SIZE(animDirectionName);
-
-	o = &as->opt[ANIM_SCREEN_OPTION_RAZR_DIRECTION];
-	o->name = "razr_direction";
-	//o->group = N_("Domino/Razr");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(animDirectionName[ANIM_RAZR_DIRECTION_DEFAULT]);
-	o->rest.s.string = animDirectionName;
-	o->rest.s.nString = LIST_SIZE(animDirectionName);
-
-	// Explode3d
-	o = &as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS];
-	o->name = "explode_thickness";
-	//o->group = N_("Explode");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_EXPLODE3D_THICKNESS_DEFAULT;
-	o->rest.f.min = ANIM_EXPLODE3D_THICKNESS_MIN;
-	o->rest.f.max = ANIM_EXPLODE3D_THICKNESS_MAX;
-	o->rest.f.precision = ANIM_EXPLODE3D_THICKNESS_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X];
-	o->name = "explode_gridx";
-	//o->group = N_("Explode");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_EXPLODE3D_GRIDSIZE_X_DEFAULT;
-	o->rest.i.min = ANIM_EXPLODE3D_GRIDSIZE_X_MIN;
-	o->rest.i.max = ANIM_EXPLODE3D_GRIDSIZE_X_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y];
-	o->name = "explode_gridy";
-	//o->group = N_("Explode");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeInt;
-	o->value.i = ANIM_EXPLODE3D_GRIDSIZE_Y_DEFAULT;
-	o->rest.i.min = ANIM_EXPLODE3D_GRIDSIZE_Y_MIN;
-	o->rest.i.max = ANIM_EXPLODE3D_GRIDSIZE_Y_MAX;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_TESS];
-	o->name = "explode_tessellation";
-	//o->group = N_("Explode");
-	//o->subGroup = N_("");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeString;
-	o->value.s = strdup(polygonTessName[ANIM_EXPLODE3D_TESS_DEFAULT]);
-	o->rest.s.string = polygonTessName;
-	o->rest.s.nString = LIST_SIZE(polygonTessName);
-
-	// Glide 1
-
-	o = &as->opt[ANIM_SCREEN_OPTION_GLIDE1_AWAY_POS];
-	o->name = "glide1_away_position";
-	//o->group = N_("Glide");
-	//o->subGroup = N_("Glide 1");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_GLIDE1_AWAY_POS_DEFAULT;
-	o->rest.f.min = ANIM_GLIDE1_AWAY_POS_MIN;
-	o->rest.f.max = ANIM_GLIDE1_AWAY_POS_MAX;
-	o->rest.f.precision = ANIM_GLIDE1_AWAY_POS_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_GLIDE1_AWAY_ANGLE];
-	o->name = "glide1_away_angle";
-	//o->group = N_("Glide");
-	//o->subGroup = N_("Glide 1");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_GLIDE1_AWAY_ANGLE_DEFAULT;
-	o->rest.f.min = ANIM_GLIDE1_AWAY_ANGLE_MIN;
-	o->rest.f.max = ANIM_GLIDE1_AWAY_ANGLE_MAX;
-	o->rest.f.precision = ANIM_GLIDE1_AWAY_ANGLE_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_GLIDE1_THICKNESS];
-	o->name = "glide1_thickness";
-	//o->group = N_("Glide");
-	//o->subGroup = N_("Glide 1");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_GLIDE1_THICKNESS_DEFAULT;
-	o->rest.f.min = ANIM_GLIDE1_THICKNESS_MIN;
-	o->rest.f.max = ANIM_GLIDE1_THICKNESS_MAX;
-	o->rest.f.precision = ANIM_GLIDE1_THICKNESS_PRECISION;
-
-	// Glide 2
-
-	o = &as->opt[ANIM_SCREEN_OPTION_GLIDE2_AWAY_POS];
-	o->name = "glide2_away_position";
-	//o->group = N_("Glide");
-	//o->subGroup = N_("Glide 2");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_GLIDE2_AWAY_POS_DEFAULT;
-	o->rest.f.min = ANIM_GLIDE2_AWAY_POS_MIN;
-	o->rest.f.max = ANIM_GLIDE2_AWAY_POS_MAX;
-	o->rest.f.precision = ANIM_GLIDE2_AWAY_POS_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_GLIDE2_AWAY_ANGLE];
-	o->name = "glide2_away_angle";
-	//o->group = N_("Glide");
-	//o->subGroup = N_("Glide 2");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_GLIDE2_AWAY_ANGLE_DEFAULT;
-	o->rest.f.min = ANIM_GLIDE2_AWAY_ANGLE_MIN;
-	o->rest.f.max = ANIM_GLIDE2_AWAY_ANGLE_MAX;
-	o->rest.f.precision = ANIM_GLIDE2_AWAY_ANGLE_PRECISION;
-
-	o = &as->opt[ANIM_SCREEN_OPTION_GLIDE2_THICKNESS];
-	o->name = "glide2_thickness";
-	//o->group = N_("Glide");
-	//o->subGroup = N_("Glide 2");
-	//o->advanced = False;
-	//o->displayHints = "";
-	o->type = CompOptionTypeFloat;
-	o->value.f = ANIM_GLIDE2_THICKNESS_DEFAULT;
-	o->rest.f.min = ANIM_GLIDE2_THICKNESS_MIN;
-	o->rest.f.max = ANIM_GLIDE2_THICKNESS_MAX;
-	o->rest.f.precision = ANIM_GLIDE2_THICKNESS_PRECISION;
-}
+static const CompMetadataOptionInfo animScreenOptionInfo[] = {
+	{ "minimize_match", "match", 0, 0, 0 },
+	{ "close1_match", "match", 0, 0, 0 },
+	{ "close2_match", "match", 0, 0, 0 },
+	{ "create1_match", "match", 0, 0, 0 },
+	{ "create2_match", "match", 0, 0, 0 },
+	{ "focus_match", "match", 0, 0, 0 },
+	{ "shade_match", "match", 0, 0, 0 },
+	{ "minimize_effect", "string", 0, 0, 0 },
+	{ "minimize_duration", "float", "<min>0.1</min>", 0, 0 },
+	{ "minimize_random_effects", "list", "<type>string</type>", 0, 0 },
+	{ "close1_effect", "string", 0, 0, 0 },
+	{ "close1_duration", "float", "<min>0.1</min>", 0, 0 },
+	{ "close1_random_effects", "list", "<type>string</type>", 0, 0 },
+	{ "create1_effect", "string", 0, 0, 0 },
+	{ "create1_duration", "float", "<min>0.1</min>", 0, 0 },
+	{ "create1_random_effects", "list", "<type>string</type>", 0, 0 },
+	{ "close2_effect", "string", 0, 0, 0 },
+	{ "close2_duration", "float", "<min>0.1</min>", 0, 0 },
+	{ "close2_random_effects", "list", "<type>string</type>", 0, 0 },
+	{ "create2_effect", "string", 0, 0, 0 },
+	{ "create2_duration", "float", "<min>0.1</min>", 0, 0 },
+	{ "create2_random_effects", "list", "<type>string</type>", 0, 0 },
+	{ "focus_effect", "string", 0, 0, 0 },
+	{ "focus_duration", "float", "<min>0.1</min>", 0, 0 },
+	{ "shade_effect", "string", 0, 0, 0 },
+	{ "shade_duration", "float", "<min>0.1</min>", 0, 0 },
+	{ "shade_random_effects", "list", "<type>string</type>", 0, 0 },
+	{ "rollup_fixed_interior", "bool", 0, 0, 0 },
+	{ "all_random", "bool", 0, 0, 0 },
+	{ "time_step", "int", "<min>1</min>", 0, 0 },
+	{ "time_step_intense", "int", "<min>1</min>", 0, 0 },
+	{ "beam_size", "float", "<min>0.1</min>", 0, 0 },
+	{ "beam_spacing", "int", "<min>1</min>", 0, 0 },
+	{ "beam_color", "color", 0, 0, 0 },
+	{ "beam_slowdown", "float", "<min>0.1</min>", 0, 0 },
+	{ "beam_life", "float", "<min>0.1</min>", 0, 0 },
+	{ "curved_fold_amp", "float", "<min>-0.5</min><max>0.5</max>", 0, 0 },
+	{ "domino_direction", "string", 0, 0, 0 },
+	{ "razr_direction", "string", 0, 0, 0 },
+	{ "explode_thickness", "float", "<min>0</min>", 0, 0 },
+	{ "explode_gridx", "int", "<min>1</min>", 0, 0 },
+	{ "explode_gridy", "int", "<min>1</min>", 0, 0 },
+	{ "explode_tesselation", "string", 0, 0, 0 },
+	{ "fire_particles", "int", "<min>0</min>", 0, 0 },
+	{ "fire_size", "float", "<min>0.1</min>", 0, 0 },
+	{ "fire_slowdown", "float", "<min>0.1</min>", 0, 0 },
+	{ "fire_life", "float", "<min>0.1</min>", 0, 0 },
+	{ "fire_color", "color", 0, 0, 0 },
+	{ "fire_direction", "string", 0, 0, 0 },
+	{ "fire_constant_speed", "bool", 0, 0, 0 },
+	{ "fire_smoke", "bool", 0, 0, 0 },
+	{ "fire_mystical", "bool", 0, 0, 0 },
+	{ "glide1_away_position", "float", 0, 0, 0 },
+	{ "glide1_away_angle", "float", 0, 0, 0 },
+	{ "glide1_thickness", "float", "<min>0</min>", 0, 0 },
+	{ "glide2_away_position", "float", 0, 0, 0 },
+	{ "glide2_away_angle", "float", 0, 0, 0 },
+	{ "glide2_thickness", "float", "<min>0</min>", 0, 0 },
+	{ "horizontal_folds_amp", "float", "<min>-0.5</min><max>0.5</max>", 0, 0 },
+	{ "horizontal_folds_num", "int", "<min>1</min>", 0, 0 },
+	{ "magic_lamp_grid_res", "int", "<min>4</min>", 0, 0 },
+	{ "magic_lamp_max_waves", "int", "<min>0</min>", 0, 0 },
+	{ "magic_lamp_amp_min", "float", "<min>0</min>", 0, 0 },
+	{ "magic_lamp_amp_max", "float", "<min>0</min>", 0, 0 },
+	{ "magic_lamp_create_start_width", "int", "<min>0</min>", 0, 0 },
+	{ "magic_lamp_vacuum_grid_res", "int", "<min>4</min>", 0, 0 },
+	{ "magic_lamp_vacuum_max_waves", "int", "<min>0</min>", 0, 0 },
+	{ "magic_lamp_vacuum_amp_min", "float", "<min>0</min>", 0, 0 },
+	{ "magic_lamp_vacuum_amp_max", "float", "<min>0</min>", 0, 0 },
+	{ "magic_lamp_vacuum_create_start_width", "int", "<min>0</min>", 0, 0 },
+	{ "sidekick_num_rotations", "float", "<min>0</min>", 0, 0 },
+	{ "wave_width", "float", "<min>0</min>", 0, 0 },
+	{ "wave_amp", "float", "<min>0</min>", 0, 0 },
+	{ "zoom_curvature", "float", "<min>0</min><max>1</max>", 0, 0 },
+	{ "zoom_from_center", "string", 0, 0, 0 }
+};
 
 static CompOption *
 animGetScreenOptions(CompPlugin *plugin, CompScreen * screen, int *count)
 {
-	if (screen)
-	{
-		ANIM_SCREEN(screen);
+	ANIM_SCREEN(screen);
 
-		*count = NUM_OPTIONS(as);
-		return as->opt;
-	}
-	else
-	{
-		AnimScreen *as = calloc(1, sizeof(AnimScreen));
-
-		animScreenInitOptions(as);
-		*count = NUM_OPTIONS(as);
-		return as->opt;
-	}
+	*count = NUM_OPTIONS(as);
+	return as->opt;
 }
 
 static void
@@ -8972,7 +7512,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						addWindowDamage(w);
 					}
 				}
-				else if (!w->invisible
+				else if (w->minimized
 						 && as->minimizeEffect
 						 && matchEval (&as->opt[ANIM_SCREEN_OPTION_MINIMIZE_MATCH].value.match, w))
 				{
@@ -9993,7 +8533,6 @@ static void animFiniDisplay(CompPlugin * p, CompDisplay * d)
 static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 {
 	AnimScreen *as;
-	int i;
 	
 	ANIM_DISPLAY(s->display);
 
@@ -10001,31 +8540,52 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 	if (!as)
 		return FALSE;
 
+	if (!compInitScreenOptionsFromMetadata (s,
+											&animMetadata,
+											animScreenOptionInfo,
+											as->opt,
+											ANIM_SCREEN_OPTION_NUM))
+	{
+		free (as);
+		return FALSE;
+	}
+
 	as->windowPrivateIndex = allocateWindowPrivateIndex(s);
 	if (as->windowPrivateIndex < 0)
 	{
+		compFiniScreenOptions (s, as->opt, ANIM_SCREEN_OPTION_NUM);
 		free(as);
 		return FALSE;
 	}
-	as->animInProgress = FALSE;
-	as->minimizeEffect = ANIM_MINIMIZE_DEFAULT;
-	as->create1Effect = ANIM_CREATE1_DEFAULT;
-	as->create2Effect = ANIM_CREATE2_DEFAULT;
-	as->close1Effect = ANIM_CLOSE1_DEFAULT;
-	as->close2Effect = ANIM_CLOSE2_DEFAULT;
-	as->focusEffect = ANIM_FOCUS_DEFAULT;
-	as->shadeEffect = ANIM_SHADE_DEFAULT;
 
-	as->zoomFC = ANIM_ZOOM_FROM_CENTER_DEFAULT;
+	as->animInProgress = FALSE;
+	as->minimizeEffect = animEffectFromString (
+			&as->opt[ANIM_SCREEN_OPTION_MINIMIZE_EFFECT].value,
+			minimizeEffectType, NUM_MINIMIZE_EFFECT);
+	as->create1Effect = animEffectFromString (
+			&as->opt[ANIM_SCREEN_OPTION_CREATE1_EFFECT].value,
+			closeEffectType, NUM_CLOSE_EFFECT);
+	as->create2Effect = animEffectFromString (
+			&as->opt[ANIM_SCREEN_OPTION_CREATE2_EFFECT].value,
+			closeEffectType, NUM_CLOSE_EFFECT);
+	as->close1Effect = animEffectFromString (
+			&as->opt[ANIM_SCREEN_OPTION_CLOSE1_EFFECT].value,
+			closeEffectType, NUM_CLOSE_EFFECT);
+	as->close2Effect = animEffectFromString (
+			&as->opt[ANIM_SCREEN_OPTION_CLOSE2_EFFECT].value,
+			closeEffectType, NUM_CLOSE_EFFECT);
+	as->focusEffect = animEffectFromString (
+			&as->opt[ANIM_SCREEN_OPTION_FOCUS_EFFECT].value,
+			focusEffectType, NUM_FOCUS_EFFECT);
+	as->shadeEffect = animEffectFromString (
+			&as->opt[ANIM_SCREEN_OPTION_SHADE_EFFECT].value,
+			shadeEffectType, NUM_SHADE_EFFECT);
+	
+	as->zoomFC = zoomFromCenterFromString (
+			&as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value);
 
 	as->switcherActive = FALSE;
 	as->scaleActive = FALSE;
-
-	animScreenInitOptions(as);
-	for (i=0; i< ANIM_SCREEN_MATCH_OPTION_NUM; i++)
-	{
-		matchUpdate (s->display, &as->opt[i].value.match);
-	}
 
 	WRAP(as, s, preparePaintScreen, animPreparePaintScreen);
 	WRAP(as, s, donePaintScreen, animDonePaintScreen);
@@ -10049,24 +8609,9 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 
 static void animFiniScreen(CompPlugin * p, CompScreen * s)
 {
-	int i;
-	
 	ANIM_SCREEN(s);
 
 	freeWindowPrivateIndex(s, as->windowPrivateIndex);
-
-	for (i=0; i< ANIM_SCREEN_MATCH_OPTION_NUM; i++)
-	{
-		matchFini (&as->opt[i].value.match);
-	}
-	
-	free(as->opt[ANIM_SCREEN_OPTION_MINIMIZE_EFFECT].value.s);
-	free(as->opt[ANIM_SCREEN_OPTION_CREATE1_EFFECT].value.s);
-	free(as->opt[ANIM_SCREEN_OPTION_CREATE2_EFFECT].value.s);
-	free(as->opt[ANIM_SCREEN_OPTION_CLOSE1_EFFECT].value.s);
-	free(as->opt[ANIM_SCREEN_OPTION_CLOSE2_EFFECT].value.s);
-	free(as->opt[ANIM_SCREEN_OPTION_FOCUS_EFFECT].value.s);
-	free(as->opt[ANIM_SCREEN_OPTION_SHADE_EFFECT].value.s);
 
 	if (as->lastClientListStacking)
 		free(as->lastClientListStacking);
@@ -10083,6 +8628,8 @@ static void animFiniScreen(CompPlugin * p, CompScreen * s)
 	UNWRAP(as, s, windowMoveNotify);
 	UNWRAP(as, s, windowGrabNotify);
 	UNWRAP(as, s, windowUngrabNotify);
+
+	compFiniScreenOptions (s, as->opt, ANIM_SCREEN_OPTION_NUM);
 
 	free(as);
 }
@@ -10166,9 +8713,21 @@ static void animFiniWindow(CompPlugin * p, CompWindow * w)
 
 static Bool animInit(CompPlugin * p)
 {
+	if (!compInitPluginMetadataFromInfo (&animMetadata,
+										  p->vTable->name,
+										   0, 0,
+										    animScreenOptionInfo,
+											 ANIM_SCREEN_OPTION_NUM))
+		return FALSE;
+		
 	displayPrivateIndex = allocateDisplayPrivateIndex();
 	if (displayPrivateIndex < 0)
+	{
+		compFiniMetadata (&animMetadata);
 		return FALSE;
+	}
+
+	compAddMetadataFromFile (&animMetadata, p->vTable->name);
 
 	animEffectPropertiesTmp = animEffectProperties;
 	return TRUE;
@@ -10176,8 +8735,8 @@ static Bool animInit(CompPlugin * p)
 
 static void animFini(CompPlugin * p)
 {
-	if (displayPrivateIndex >= 0)
-		freeDisplayPrivateIndex(displayPrivateIndex);
+	freeDisplayPrivateIndex(displayPrivateIndex);
+	compFiniMetadata (&animMetadata);
 }
 
 CompPluginDep animDeps[] = {
@@ -10192,10 +8751,16 @@ animGetVersion (CompPlugin *plugin,
     return ABIVERSION;
 }
 
+static CompMetadata *
+animGetMetadata (CompPlugin *plugin)
+{
+	return &animMetadata;
+}
+
 CompPluginVTable animVTable = {
 	"animation",
 	animGetVersion,
-	0,
+	animGetMetadata,
 	animInit,
 	animFini,
 	animInitDisplay,
