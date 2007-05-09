@@ -7507,6 +7507,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 				}
 				else if (w->minimized
 						 && as->minimizeEffect
+						 && animGetWindowIconGeometry(w, &aw->icon)
 						 && matchEval (&as->opt[ANIM_SCREEN_OPTION_MINIMIZE_MATCH].value.match, w))
 				{
 					// MINIMIZE event!
@@ -7577,6 +7578,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 					}
 					else
 					{
+						/*
 						if (!animGetWindowIconGeometry(w, &aw->icon))
 						{
 							// minimize to bottom-center if there is no window list
@@ -7585,6 +7587,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 							aw->icon.width = 100;
 							aw->icon.height = 20;
 						}
+						*/
 						if ((aw->curAnimEffect ==
 							 AnimEffectZoom
 							 || aw->
