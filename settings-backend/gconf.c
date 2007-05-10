@@ -174,10 +174,10 @@ struct _SpecialOption {
 	{"plane_to_11", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_11", OptionKey},
 	{"plane_to_12", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_12", OptionKey},
 
-	{"plane_up", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_up", OptionKey},
-	{"plane_down", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_down", OptionKey},
-	{"plane_left", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_left", OptionKey},
-	{"plane_right", "plane", FALSE, METACITY "/global_keybindings/switch_to_workspace_right", OptionKey},
+	{"up", "wall", FALSE, METACITY "/global_keybindings/switch_to_workspace_up", OptionKey},
+	{"down", "wall", FALSE, METACITY "/global_keybindings/switch_to_workspace_down", OptionKey},
+	{"left", "wall", FALSE, METACITY "/global_keybindings/switch_to_workspace_left", OptionKey},
+	{"right", "wall", FALSE, METACITY "/global_keybindings/switch_to_workspace_right", OptionKey},
 
 	{"rotate_to_1_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_1", OptionKey},
 	{"rotate_to_2_window", "rotate", FALSE, METACITY "/window_keybindings/move_to_workspace_2", OptionKey},
