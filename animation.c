@@ -825,8 +825,7 @@ animStoreRandomEffectList (CompOptionValue *value,
 						   AnimEffect *allowedEffects,
 						   unsigned int numAllowedEffects,
 						   AnimEffect *targetList,
-						   unsigned int *targetCount,
-						   AnimEffect defaultValue)
+						   unsigned int *targetCount)
 {
 	CompOptionValue *effect = value->list.value;
 	AnimEffect listEffect;
@@ -857,13 +856,28 @@ animStoreRandomEffectList (CompOptionValue *value,
 		count++;
 	}
 
-	if (count == 0)
-	{
-		targetList[0] = defaultValue;
-		count = 1;
-	}
-
 	*targetCount = count;
+}
+
+static inline AnimEffect
+animGetAnimEffect (AnimEffect effect,
+				   AnimEffect *randomEffects,
+				   unsigned int nRandomEffects,
+				   Bool allRandom)
+{
+	if ((effect == AnimEffectRandom) || allRandom)
+	{
+		if (nRandomEffects == 0)
+			return AnimEffectNone;
+		else
+		{
+			unsigned int index;
+			index = (unsigned int)(nRandomEffects * (double)rand() / RAND_MAX);
+			return randomEffects[index];
+		}
+	}
+	else
+		return effect;
 }
 
 #define sigmoid(fx) (1.0f/(1.0f+exp(-5.0f*2*((fx)-0.5))))
@@ -5692,8 +5706,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   minimizeEffectType,
 									   NUM_MINIMIZE_EFFECT,
 									   as->minimizeRandomEffects,
-									   &as->nMinimizeRandomEffects,
-									   AnimEffectNone);
+									   &as->nMinimizeRandomEffects);
 			return TRUE;
 		}
 		break;
@@ -5704,8 +5717,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   closeEffectType,
 									   NUM_CLOSE_EFFECT,
 									   as->close1RandomEffects,
-									   &as->nClose1RandomEffects,
-									   AnimEffectNone);
+									   &as->nClose1RandomEffects);
 			return TRUE;
 		}
 		break;
@@ -5716,8 +5728,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   closeEffectType,
 									   NUM_CLOSE_EFFECT,
 									   as->close2RandomEffects,
-									   &as->nClose2RandomEffects,
-									   AnimEffectNone);
+									   &as->nClose2RandomEffects);
 			return TRUE;
 		}
 		break;
@@ -5728,8 +5739,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   closeEffectType,
 									   NUM_CLOSE_EFFECT,
 									   as->create1RandomEffects,
-									   &as->nCreate1RandomEffects,
-									   AnimEffectNone);
+									   &as->nCreate1RandomEffects);
 			return TRUE;
 		}
 		break;
@@ -5740,8 +5750,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   closeEffectType,
 									   NUM_CLOSE_EFFECT,
 									   as->create2RandomEffects,
-									   &as->nCreate2RandomEffects,
-									   AnimEffectNone);
+									   &as->nCreate2RandomEffects);
 			return TRUE;
 		}
 		break;
@@ -5752,8 +5761,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   shadeEffectType,
 									   NUM_SHADE_EFFECT,
 									   as->shadeRandomEffects,
-									   &as->nShadeRandomEffects,
-									   AnimEffectNone);
+									   &as->nShadeRandomEffects);
 			return TRUE;
 		}
 		break;
@@ -7464,24 +7472,17 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 
 						if (startingNew)
 						{
-							AnimEffect effectToBePlayed = as->shadeEffect;
+							AnimEffect effectToBePlayed;
+							effectToBePlayed = animGetAnimEffect(
+								as->shadeEffect,
+								as->shadeRandomEffects,
+								as->nShadeRandomEffects,
+								as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b);
 
-							if (effectToBePlayed == AnimEffectRandom
-								|| as->
-								opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-							{
-								effectToBePlayed =	// choose a random effect
-										as->shadeRandomEffects[(int)
-															   (as->
-																nShadeRandomEffects
-																*
-																(double)rand()
-																/ RAND_MAX)];
-
-								// handle empty random effect list
-								if (effectToBePlayed == AnimEffectNone)
-									break;
-							}
+							// handle empty random effect list
+							if (effectToBePlayed == AnimEffectNone)
+								break;
+						
 							aw->curAnimEffect = effectToBePlayed;
 
 							aw->animTotalTime =
@@ -7548,24 +7549,18 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 
 					if (startingNew)
 					{
-						AnimEffect effectToBePlayed = as->minimizeEffect;
+						AnimEffect effectToBePlayed;
+						
+						effectToBePlayed = animGetAnimEffect(
+							as->minimizeEffect,
+							as->minimizeRandomEffects,
+							as->nMinimizeRandomEffects,
+							as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b);
 
-						if (effectToBePlayed ==
-							AnimEffectRandom
-							|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-						{
-							effectToBePlayed =	// choose a random effect
-									as->minimizeRandomEffects[(int)
-															  (as->
-															   nMinimizeRandomEffects
-															   *
-															   (double)rand()
-															   / RAND_MAX)];
+						// handle empty random effect list
+						if (effectToBePlayed == AnimEffectNone)
+							break;
 
-							// handle empty random effect list
-							if (effectToBePlayed == AnimEffectNone)
-								break;
-						}
 						aw->curAnimEffect = effectToBePlayed;
 
 						aw->animTotalTime =
@@ -7692,34 +7687,19 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 
 					if (startingNew)
 					{
-						AnimEffect effectToBePlayed = windowsCloseEffect;
+						AnimEffect effectToBePlayed;
+						effectToBePlayed = animGetAnimEffect(
+							windowsCloseEffect,
+							(whichClose == 1) ? as->close1RandomEffects : 
+							                    as->close2RandomEffects,
+							(whichClose == 1) ? as->nClose1RandomEffects :
+							                    as->nClose2RandomEffects,
+							as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b);
 
-						if (effectToBePlayed == AnimEffectRandom
-							|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-						{
-							if (whichClose == 1)
-								effectToBePlayed =	// choose a random effect
-										as->close1RandomEffects[(int)
-																(as->
-																 nClose1RandomEffects
-																 *
-																 (double)
-																 rand() /
-																 RAND_MAX)];
-							else
-								effectToBePlayed =	// choose a random effect
-										as->close2RandomEffects[(int)
-																(as->
-																 nClose2RandomEffects
-																 *
-																 (double)
-																 rand() /
-																 RAND_MAX)];
-
-							// handle empty random effect list
-							if (effectToBePlayed == AnimEffectNone)
-								break;
-						}
+						// handle empty random effect list
+						if (effectToBePlayed == AnimEffectNone)
+							break;
+					
 						aw->curAnimEffect = effectToBePlayed;
 
 						aw->animTotalTime =
@@ -8052,23 +8032,17 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 				if (startingNew)
 				{
-					AnimEffect effectToBePlayed = as->minimizeEffect;
+					AnimEffect effectToBePlayed;
+					effectToBePlayed = animGetAnimEffect(
+						as->minimizeEffect,
+						as->minimizeRandomEffects,
+						as->nMinimizeRandomEffects,
+						as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b);
 
-					if (effectToBePlayed == AnimEffectRandom
-						|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-					{
-						effectToBePlayed =	// choose a random effect
-								as->minimizeRandomEffects[(int)
-															(as->
-															 nMinimizeRandomEffects
-															 *
-															 (double)rand() /
-															 RAND_MAX)];
+					// handle empty random effect list
+					if (effectToBePlayed == AnimEffectNone)
+						playEffect = FALSE;
 
-						// handle empty random effect list
-						if (effectToBePlayed == AnimEffectNone)
-							playEffect = FALSE;
-					}
 					if (playEffect)
 					{
 						aw->curAnimEffect = effectToBePlayed;
@@ -8162,23 +8136,17 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 				if (startingNew)
 				{
-					AnimEffect effectToBePlayed = as->shadeEffect;
+					AnimEffect effectToBePlayed;
+					effectToBePlayed = animGetAnimEffect(
+						as->shadeEffect,
+						as->shadeRandomEffects,
+						as->nShadeRandomEffects,
+						as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b);
 
-					if (effectToBePlayed ==
-						AnimEffectRandom
-						|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-					{
-						effectToBePlayed =	// choose a random effect
-								as->shadeRandomEffects[(int)
-														 (as->
-														  nShadeRandomEffects
-														  * (double)rand() /
-														  RAND_MAX)];
+					// handle empty random effect list
+					if (effectToBePlayed == AnimEffectNone)
+						playEffect = FALSE;
 
-						// handle empty random effect list
-						if (effectToBePlayed == AnimEffectNone)
-							playEffect = FALSE;
-					}
 					if (playEffect)
 					{
 						aw->curAnimEffect = effectToBePlayed;
@@ -8261,33 +8229,19 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 				if (startingNew)
 				{
-					AnimEffect effectToBePlayed = windowsCreateEffect;
+					AnimEffect effectToBePlayed;
+					effectToBePlayed = animGetAnimEffect(
+						windowsCreateEffect,
+						(whichCreate == 1) ? as->create1RandomEffects :
+						                     as->create2RandomEffects,
+						(whichCreate == 1) ? as->nCreate1RandomEffects :
+						                     as->nCreate2RandomEffects,
+						as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b);
 
-					if (effectToBePlayed ==
-						AnimEffectRandom
-						|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-					{
-						if (whichCreate == 1)
-							effectToBePlayed =	// choose a random effect
-									as->create1RandomEffects[(int)
-															 (as->
-															  nCreate1RandomEffects
-															  *
-															  (double)rand() /
-															  RAND_MAX)];
-						else
-							effectToBePlayed =	// choose a random effect
-									as->create2RandomEffects[(int)
-															 (as->
-															  nCreate2RandomEffects
-															  *
-															  (double)rand() /
-															  RAND_MAX)];
+					// handle empty random effect list
+					if (effectToBePlayed == AnimEffectNone)
+						playEffect = FALSE;
 
-						// handle empty random effect list
-						if (effectToBePlayed == AnimEffectNone)
-							playEffect = FALSE;
-					}
 					if (playEffect)
 					{
 						aw->curAnimEffect = effectToBePlayed;
@@ -8645,38 +8599,32 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 							   minimizeEffectType,
 							   NUM_MINIMIZE_EFFECT,
 							   as->minimizeRandomEffects,
-							   &as->nMinimizeRandomEffects,
-							   AnimEffectNone);
+							   &as->nMinimizeRandomEffects);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS].value,
 							   closeEffectType,
 							   NUM_CLOSE_EFFECT,
 							   as->close1RandomEffects,
-							   &as->nClose1RandomEffects,
-							   AnimEffectNone);
+							   &as->nClose1RandomEffects);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS].value,
 							   closeEffectType,
 							   NUM_CLOSE_EFFECT,
 							   as->close2RandomEffects,
-							   &as->nClose2RandomEffects,
-							   AnimEffectNone);
+							   &as->nClose2RandomEffects);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS].value,
 							   closeEffectType,
 							   NUM_CLOSE_EFFECT,
 							   as->create1RandomEffects,
-							   &as->nCreate1RandomEffects,
-							   AnimEffectNone);
+							   &as->nCreate1RandomEffects);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS].value,
 							   closeEffectType,
 							   NUM_CLOSE_EFFECT,
 							   as->create2RandomEffects,
-							   &as->nCreate2RandomEffects,
-							   AnimEffectNone);
+							   &as->nCreate2RandomEffects);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS].value,
 							   shadeEffectType,
 							   NUM_SHADE_EFFECT,
 							   as->shadeRandomEffects,
-							   &as->nShadeRandomEffects,
-							   AnimEffectNone);
+							   &as->nShadeRandomEffects);
 
 	as->zoomFC = zoomFromCenterFromString (
 			&as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value);
