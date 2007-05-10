@@ -5825,7 +5825,7 @@ static const CompMetadataOptionInfo animScreenOptionInfo[] = {
 	{ "glide2_away_angle", "float", 0, 0, 0 },
 	{ "glide2_thickness", "float", "<min>0</min>", 0, 0 },
 	{ "horizontal_folds_amp", "float", "<min>-0.5</min><max>0.5</max>", 0, 0 },
-	{ "horizontal_folds_num", "int", "<min>1</min>", 0, 0 },
+	{ "horizontal_folds_num_folds", "int", "<min>1</min>", 0, 0 },
 	{ "magic_lamp_grid_res", "int", "<min>4</min>", 0, 0 },
 	{ "magic_lamp_max_waves", "int", "<min>0</min>", 0, 0 },
 	{ "magic_lamp_amp_min", "float", "<min>0</min>", 0, 0 },
