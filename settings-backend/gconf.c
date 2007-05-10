@@ -1180,17 +1180,18 @@ static Bool finiBackend(CCSContext * context)
 
 static Bool readInit(CCSContext * context)
 {
+	char *profile;
+
 	if (currentProfile)
 		free (currentProfile);
 
-	currentProfile = ccsGetProfile(context);
-	if (!currentProfile)
+	profile = ccsGetProfile(context);
+	if (!profile)
 		currentProfile = strdup (DEFAULTPROF);
-	else if (!strlen(currentProfile))
-	{
-		free (currentProfile);
+	else if (!strlen(profile))
 		currentProfile = strdup (DEFAULTPROF);
-	}
+	else
+		currentProfile = strdup (profile);
 
 	return TRUE;
 }
@@ -1215,17 +1216,18 @@ static void readDone(CCSContext * context)
 
 static Bool writeInit(CCSContext * context)
 {
+	char *profile;
+
 	if (currentProfile)
 		free (currentProfile);
 
-	currentProfile = ccsGetProfile(context);
-	if (!currentProfile)
+	profile = ccsGetProfile(context);
+	if (!profile)
 		currentProfile = strdup (DEFAULTPROF);
-	else if (!strlen(currentProfile))
-	{
-		free (currentProfile);
+	else if (!strlen(profile))
 		currentProfile = strdup (DEFAULTPROF);
-	}
+	else
+		currentProfile = strdup (profile);
 
 	return TRUE;
 }
