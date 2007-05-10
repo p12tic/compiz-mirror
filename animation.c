@@ -8618,6 +8618,9 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 	as->zoomFC = zoomFromCenterFromString (
 			&as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value);
 
+	as->explodePolygonTess = polygonTessFromString (
+			&as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_TESS].value);
+
 	as->switcherActive = FALSE;
 	as->scaleActive = FALSE;
 
