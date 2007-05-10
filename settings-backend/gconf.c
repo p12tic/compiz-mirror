@@ -1277,8 +1277,8 @@ static CCSStringList getExistingProfiles(void)
 	for (;tmp;tmp = g_slist_next(tmp))
 	{
 		name = strrchr(tmp->data, '/');
-		if (name && (strcmp(name, DEFAULTPROF) != 0))
-			ret = ccsStringListAppend(ret, name+1);
+		if (name && (strcmp(name+1, DEFAULTPROF) != 0))
+			ret = ccsStringListAppend(ret, strdup(name+1));
 
 		g_free(tmp->data);
 	}
