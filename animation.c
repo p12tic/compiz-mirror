@@ -1545,23 +1545,22 @@ fxMagicLampModelStepObject(CompWindow * w,
 								 w->output.top) * model->scale.y;
 
 	float iconShadowLeft =
-			((float)(w->output.left - w->input.left)) * aw->icon.width /
-			w->width;
+			((float)(w->output.left - w->input.left)) * 
+			aw->icon.width / w->width;
 	float iconShadowRight =
-			((float)(w->output.right - w->input.right)) * aw->icon.width /
-			w->width;
+			((float)(w->output.right - w->input.right)) * 
+			aw->icon.width / w->width;
 	float iconx =
-			(aw->icon.x - iconShadowLeft) + (aw->icon.width + iconShadowLeft +
-											 iconShadowRight) *
+			(aw->icon.x - iconShadowLeft) + 
+			(aw->icon.width + iconShadowLeft + iconShadowRight) *
 			object->gridPosition.x;
 	float icony = aw->icon.y + aw->icon.height * object->gridPosition.y;
 
 	if (forwardProgress < preShapePhaseEnd)
 	{
 		float preShapeProgress = forwardProgress / preShapePhaseEnd;
-		float fx =
-				(iconCloseEndY - object->position.y) / (iconCloseEndY -
-														winFarEndY);
+		float fx = (iconCloseEndY - object->position.y) / 
+			       (iconCloseEndY - winFarEndY);
 		float fy = (sigmoid(fx) - sigmoid(0)) / (sigmoid(1) - sigmoid(0));
 		int i;
 		float targetx = fy * (origx - iconx) + iconx;
@@ -1857,15 +1856,9 @@ static void fxWaveModelStep(CompScreen * s, CompWindow * w, float time)
 								  &model->objects[i],
 								  forwardProgress,
 								  WIN_H(w) * model->scale.y *
-								  as->
-								  opt
-								  [ANIM_SCREEN_OPTION_WAVE_AMP].
-								  value.f,
+								  as->opt[ANIM_SCREEN_OPTION_WAVE_AMP].value.f,
 								  WIN_H(w) * model->scale.y *
-								  as->
-								  opt
-								  [ANIM_SCREEN_OPTION_WAVE_WIDTH].
-								  value.f / 2);
+								  as->opt[ANIM_SCREEN_OPTION_WAVE_WIDTH].value.f / 2);
 		}
 		aw->animRemainingTime -= timestep;
 		if (aw->animRemainingTime <= 0)
@@ -2065,8 +2058,7 @@ static void fxZoomModelStep(CompScreen * s, CompWindow * w, float time)
 
 			for (i = 0; i < model->numObjects; i++)
 				fxSidekickModelStepObject(w, model,
-										  &model->
-										  objects[i],
+										  &model->objects[i],
 										  currentCenter, currentSize,
 										  sinRot, cosRot);
 		}
@@ -2287,18 +2279,16 @@ fxCurvedFoldModelStepObject(CompWindow * w,
 		else if (object->gridPosition.y == 1)
 		{
 			object->position.x = origx;
-			object->position.y =
-					(1 - forwardProgress) *
-					origy +
-					forwardProgress *
-					(WIN_Y(w) + model->topHeight + model->bottomHeight);
+			object->position.y = 
+				(1 - forwardProgress) * origy +
+				forwardProgress *
+				(WIN_Y(w) + model->topHeight + model->bottomHeight);
 		}
 		else
 		{
 			object->position.x =
 					origx + sin(forwardProgress * M_PI / 2) *
-					(0.5 -
-					 object->gridPosition.x) * 2 * model->scale.x *
+					(0.5 - object->gridPosition.x) * 2 * model->scale.x *
 					(curveMaxAmp -
 					 curveMaxAmp * 4 * relDistToCenter * relDistToCenter);
 			object->position.y =
@@ -2361,13 +2351,11 @@ static void fxCurvedFoldModelStep(CompScreen * s, CompWindow * w, float time)
 			forwardProgress = 1 - forwardProgress;
 
 		for (i = 0; i < model->numObjects; i++)
-			fxCurvedFoldModelStepObject(w, model,
-										&model->objects[i],
-										forwardProgress,
-										as->
-										opt
-										[ANIM_SCREEN_OPTION_CURVED_FOLD_AMP].
-										value.f * WIN_W(w));
+			fxCurvedFoldModelStepObject(w, 
+				model,
+				&model->objects[i],
+				forwardProgress,
+				as->opt[ANIM_SCREEN_OPTION_CURVED_FOLD_AMP].value.f * WIN_W(w));
 
 		aw->animRemainingTime -= timestep;
 		if (aw->animRemainingTime <= 0)
@@ -2391,15 +2379,11 @@ fxHorizontalFoldsInitGrid(AnimScreen * as,
 	*gridWidth = 2;
 	if (forWindowEvent == WindowEventShade ||
 		forWindowEvent == WindowEventUnshade)
-		*gridHeight =
-				3 + 2 *
-				as->opt[ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS].value.
-				i;
+		*gridHeight = 3 + 2 *	
+			as->opt[ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS].value.i;
 	else
-		*gridHeight =
-				1 + 2 *
-				as->opt[ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS].value.
-				i;
+		*gridHeight = 1 + 2 *
+			as->opt[ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS].value.i;
 }
 
 static void
@@ -2498,15 +2482,12 @@ fxHorizontalFoldsModelStep(CompScreen * s, CompWindow * w, float time)
 			forwardProgress = 1 - forwardProgress;
 
 		for (i = 0; i < model->numObjects; i++)
-			fxHorizontalFoldsModelStepObject(w, model,
-											 &model->
-											 objects[i],
-											 forwardProgress,
-											 as->
-											 opt
-											 [ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_AMP].
-											 value.f *
-											 WIN_W(w), i / model->gridWidth);
+			fxHorizontalFoldsModelStepObject(w, 
+				model,
+				&model->objects[i],
+				forwardProgress,
+				as->opt[ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_AMP].value.f * WIN_W(w), 
+				i / model->gridWidth);
 
 		aw->animRemainingTime -= timestep;
 		if (aw->animRemainingTime <= 0)
@@ -2634,13 +2615,11 @@ static void fxRollUpModelStep(CompScreen * s, CompWindow * w, float time)
 			forwardProgress = 1 - forwardProgress;
 
 		for (i = 0; i < model->numObjects; i++)
-			fxRollUpModelStepObject(w, model,
-									&model->objects[i],
-									forwardProgress,
-									as->
-									opt
-									[ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR].
-									value.b);
+			fxRollUpModelStepObject(w, 
+				model,
+				&model->objects[i],
+				forwardProgress,
+				as->opt[ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR].value.b);
 
 		aw->animRemainingTime -= timestep;
 		if (aw->animRemainingTime <= 0)
@@ -2838,12 +2817,12 @@ fxBurnGenNewFire(CompScreen * s, ParticleSystem * ps, int x, int y,
 			// give gt new life
 			rVal = (float)(random() & 0xff) / 255.0;
 			part->life = 1.0f;
-			part->fade = (rVal * (1 - as->opt[ANIM_SCREEN_OPTION_FIRE_LIFE].value.f)) + (0.2f * (1.01 - as->opt[ANIM_SCREEN_OPTION_FIRE_LIFE].value.f));	// Random Fade Value
+			part->fade = (rVal * (1 - as->opt[ANIM_SCREEN_OPTION_FIRE_LIFE].value.f)) + 
+				         (0.2f * (1.01 - as->opt[ANIM_SCREEN_OPTION_FIRE_LIFE].value.f));	// Random Fade Value
 
 			// set size
 			part->width = as->opt[ANIM_SCREEN_OPTION_FIRE_SIZE].value.f;
-			part->height =
-					as->opt[ANIM_SCREEN_OPTION_FIRE_SIZE].value.f * 1.5;
+			part->height = as->opt[ANIM_SCREEN_OPTION_FIRE_SIZE].value.f * 1.5;
 			rVal = (float)(random() & 0xff) / 255.0;
 			part->w_mod = size * rVal;
 			part->h_mod = size * rVal;
@@ -2879,31 +2858,15 @@ fxBurnGenNewFire(CompScreen * s, ParticleSystem * ps, int x, int y,
 			else
 			{
 				// set color ABAB as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.f
-				part->r =
-						(float)as->
-						opt[ANIM_SCREEN_OPTION_FIRE_COLOR].
-						value.c[0] / 0xffff -
-						(rVal / 1.7 *
-						 (float)as->
-						 opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.c[0] /
-						 0xffff);
-				part->g =
-						(float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.
-						c[1] / 0xffff -
-						(rVal / 1.7 *
-						 (float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.
-						 c[1] / 0xffff);
-				part->b =
-						(float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.
-						c[2] / 0xffff -
-						(rVal / 1.7 *
-						 (float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.
-						 c[2] / 0xffff);
+				part->r = (float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.c[0] / 0xffff -
+						  (rVal / 1.7 * (float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.c[0] / 0xffff);
+				part->g = (float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.c[1] / 0xffff -
+						  (rVal / 1.7 * (float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.c[1] / 0xffff);
+				part->b = (float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.c[2] / 0xffff -
+						  (rVal / 1.7 * (float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.c[2] / 0xffff);
 			}
 			// set transparancy
-			part->a =
-					(float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].
-					value.c[3] / 0xffff;
+			part->a = (float)as->opt[ANIM_SCREEN_OPTION_FIRE_COLOR].value.c[3] / 0xffff;
 
 			// set gravity
 			part->xg = (part->x < part->xo) ? 1.0 : -1.0;
@@ -2945,13 +2908,12 @@ fxBurnGenNewSmoke(CompScreen * s, ParticleSystem * ps, int x, int y,
 			// give gt new life
 			rVal = (float)(random() & 0xff) / 255.0;
 			part->life = 1.0f;
-			part->fade = (rVal * (1 - as->opt[ANIM_SCREEN_OPTION_FIRE_LIFE].value.f)) + (0.2f * (1.01 - as->opt[ANIM_SCREEN_OPTION_FIRE_LIFE].value.f));	// Random Fade Value
+			part->fade = (rVal * (1 - as->opt[ANIM_SCREEN_OPTION_FIRE_LIFE].value.f)) + 
+				         (0.2f * (1.01 - as->opt[ANIM_SCREEN_OPTION_FIRE_LIFE].value.f));	// Random Fade Value
 
 			// set size
-			part->width =
-					as->opt[ANIM_SCREEN_OPTION_FIRE_SIZE].value.f * size * 5;
-			part->height =
-					as->opt[ANIM_SCREEN_OPTION_FIRE_SIZE].value.f * size * 5;
+			part->width = as->opt[ANIM_SCREEN_OPTION_FIRE_SIZE].value.f * size * 5;
+			part->height = as->opt[ANIM_SCREEN_OPTION_FIRE_SIZE].value.f * size * 5;
 			rVal = (float)(random() & 0xff) / 255.0;
 			part->w_mod = -0.8;
 			part->h_mod = -0.8;
@@ -3087,8 +3049,7 @@ static void fxBurnModelStep(CompScreen * s, CompWindow * w, float time)
 		case AnimDirectionUp:
 			if (smoke)
 				fxBurnGenNewSmoke(s, &aw->ps[0], WIN_X(w),
-								  WIN_Y(w) +
-								  ((1 - old) * WIN_H(w)),
+								  WIN_Y(w) + ((1 - old) * WIN_H(w)),
 								  WIN_W(w), 1, WIN_W(w) / 40.0, time);
 			fxBurnGenNewFire(s, &aw->ps[1], WIN_X(w),
 							 WIN_Y(w) + ((1 - old) * WIN_H(w)),
@@ -3098,8 +3059,7 @@ static void fxBurnModelStep(CompScreen * s, CompWindow * w, float time)
 		case AnimDirectionLeft:
 			if (smoke)
 				fxBurnGenNewSmoke(s, &aw->ps[0],
-								  WIN_X(w) +
-								  ((1 - old) * WIN_W(w)),
+								  WIN_X(w) + ((1 - old) * WIN_W(w)),
 								  WIN_Y(w),
 								  (stepSize) * WIN_W(w),
 								  WIN_H(w), WIN_H(w) / 40.0, time);
@@ -3111,8 +3071,7 @@ static void fxBurnModelStep(CompScreen * s, CompWindow * w, float time)
 		case AnimDirectionRight:
 			if (smoke)
 				fxBurnGenNewSmoke(s, &aw->ps[0],
-								  WIN_X(w) +
-								  (old * WIN_W(w)),
+								  WIN_X(w) + (old * WIN_W(w)),
 								  WIN_Y(w),
 								  (stepSize) * WIN_W(w),
 								  WIN_H(w), WIN_H(w) / 40.0, time);
@@ -3125,8 +3084,7 @@ static void fxBurnModelStep(CompScreen * s, CompWindow * w, float time)
 		default:
 			if (smoke)
 				fxBurnGenNewSmoke(s, &aw->ps[0], WIN_X(w),
-								  WIN_Y(w) +
-								  (old * WIN_H(w)),
+								  WIN_Y(w) + (old * WIN_H(w)),
 								  WIN_W(w), 1, WIN_W(w) / 40.0, time);
 			fxBurnGenNewFire(s, &aw->ps[1], WIN_X(w),
 							 WIN_Y(w) + (old * WIN_H(w)),
@@ -3274,11 +3232,11 @@ fxBeamUpGenNewFire(CompScreen * s, ParticleSystem * ps, int x, int y,
 			// give gt new life
 			rVal = (float)(random() & 0xff) / 255.0;
 			part->life = 1.0f;
-			part->fade = (rVal * (1 - as->opt[ANIM_SCREEN_OPTION_BEAMUP_LIFE].value.f)) + (0.2f * (1.01 - as->opt[ANIM_SCREEN_OPTION_BEAMUP_LIFE].value.f));	// Random Fade Value
+			part->fade = (rVal * (1 - as->opt[ANIM_SCREEN_OPTION_BEAMUP_LIFE].value.f)) + 
+				         (0.2f * (1.01 - as->opt[ANIM_SCREEN_OPTION_BEAMUP_LIFE].value.f));	// Random Fade Value
 
 			// set size
-			part->width =
-					2.5 * as->opt[ANIM_SCREEN_OPTION_BEAMUP_SIZE].value.f;
+			part->width = 2.5 * as->opt[ANIM_SCREEN_OPTION_BEAMUP_SIZE].value.f;
 			part->height = height;
 			part->w_mod = size * 0.2;
 			part->h_mod = size * 0.02;
@@ -3298,29 +3256,13 @@ fxBeamUpGenNewFire(CompScreen * s, ParticleSystem * ps, int x, int y,
 			part->zi = 0.0f;
 
 			// set color ABAB as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.f
-			part->r =
-					(float)as->
-					opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.
-					c[0] / 0xffff -
-					(rVal / 1.7 *
-					 (float)as->
-					 opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.c[0] /
-					 0xffff);
-			part->g =
-					(float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.
-					c[1] / 0xffff -
-					(rVal / 1.7 *
-					 (float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.
-					 c[1] / 0xffff);
-			part->b =
-					(float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.
-					c[2] / 0xffff -
-					(rVal / 1.7 *
-					 (float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.
-					 c[2] / 0xffff);;
-			part->a =
-					(float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.
-					c[3] / 0xffff;
+			part->r = (float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.c[0] / 0xffff -
+					  (rVal / 1.7 * (float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.c[0] / 0xffff);
+			part->g = (float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.c[1] / 0xffff -
+					  (rVal / 1.7 * (float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.c[1] / 0xffff);
+			part->b = (float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.c[2] / 0xffff -
+					  (rVal / 1.7 * (float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.c[2] / 0xffff);
+			part->a = (float)as->opt[ANIM_SCREEN_OPTION_BEAMUP_COLOR].value.c[3] / 0xffff;
 
 			// set gravity
 			part->xg = 0.0f;
@@ -3401,13 +3343,11 @@ static void fxBeamUpModelStep(CompScreen * s, CompWindow * w, float time)
 
 	if (aw->animRemainingTime > 0 && aw->ps)
 	{
-		fxBeamUpGenNewFire(s, &aw->ps[1], WIN_X(w),
-						   WIN_Y(w) + (WIN_H(w) / 2), WIN_W(w),
-						   creating ? WIN_H(w) -
-						   (old / 2 * WIN_H(w)) : (WIN_H(w) -
-												   (old *
-													WIN_H(w))),
-						   WIN_W(w) / 40.0, time);
+		fxBeamUpGenNewFire(s, &aw->ps[1], 
+			WIN_X(w), WIN_Y(w) + (WIN_H(w) / 2), WIN_W(w),
+			creating ? WIN_H(w) - (old / 2 * WIN_H(w)) : 
+			           (WIN_H(w) -   (old * WIN_H(w))),
+		    WIN_W(w) / 40.0, time);
 
 	}
 	if (aw->animRemainingTime <= 0 && aw->numPs
@@ -5476,87 +5416,67 @@ polygonsDeceleratingAnimStepPolygon(CompWindow * w,
 
 AnimEffectProperties animEffectProperties[AnimEffectNum] = {
 	// AnimEffectNone
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	,
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	// AnimEffectRandom
-	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0}
-	,
+	{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
 	// AnimEffectBeamUp
 	{fxBeamupUpdateWindowAttrib, 0, drawParticleSystems, fxBeamUpModelStep,
-	 fxBeamUpInit, 0, 0, 0, 1, 0, 0, 0}
-	,
+	 fxBeamUpInit, 0, 0, 0, 1, 0, 0, 0},
 	// AnimEffectBurn
-	{0, 0, drawParticleSystems, fxBurnModelStep, fxBurnInit, 0, 0, 0, 1, 0, 0, 0}
-	,
+	{0, 0, drawParticleSystems, fxBurnModelStep, fxBurnInit, 0, 0, 0, 1, 0, 0, 0},
 	// AnimEffectCurvedFold
-	{0, 0, 0, fxCurvedFoldModelStep, 0, fxMagicLampInitGrid, 0, 0, 0, 0, 0, 0}
-	,
+	{0, 0, 0, fxCurvedFoldModelStep, 0, fxMagicLampInitGrid, 0, 0, 0, 0, 0, 0},
 	// AnimEffectDomino3D
 	{0, polygonsPrePaintWindow, polygonsPostPaintWindow, polygonsAnimStep,
 	 fxDomino3DInit, 0, polygonsStoreClips, polygonsDrawCustomGeometry, 0,
-	 polygonsLinearAnimStepPolygon, 1, 0}
-	,
+	 polygonsLinearAnimStepPolygon, 1, 0},
 	// AnimEffectDream
 	{fxDreamUpdateWindowAttrib, 0, 0, fxDreamModelStep, fxDreamInit,
-	 fxMagicLampInitGrid, 0, 0, 0, 0, 0, 0}
-	,
+	 fxMagicLampInitGrid, 0, 0, 0, 0, 0, 0},
 	// AnimEffectExplode3D
 	{0, polygonsPrePaintWindow, polygonsPostPaintWindow, polygonsAnimStep,
 	 fxExplode3DInit, 0, polygonsStoreClips, polygonsDrawCustomGeometry, 0,
-	 polygonsLinearAnimStepPolygon, 0, 0}
-	,
+	 polygonsLinearAnimStepPolygon, 0, 0},
 	// AnimEffectFade
 	{fxFadeUpdateWindowAttrib, 0, 0, fxFadeModelStep, fxFadeInit, 0, 0, 0, 0,
-	 0, 0, TRUE}
-	,
+	 0, 0, TRUE},
 	// AnimEffectFocusFade
 	{fxFocusFadeUpdateWindowAttrib, 0, 0, fxFocusFadeModelStep, fxFadeInit, 0, 0, 0, 0,
-	 0, 0, TRUE}
-	,
+	 0, 0, TRUE},
 	// AnimEffectGlide3D1
 	{fxGlideUpdateWindowAttrib, polygonsPrePaintWindow,
 	 polygonsPostPaintWindow, fxGlideAnimStep,
 	 fxGlideInit, 0, polygonsStoreClips, polygonsDrawCustomGeometry, 0,
-	 polygonsDeceleratingAnimStepPolygon, 1, 0}
-	,
+	 polygonsDeceleratingAnimStepPolygon, 1, 0},
 	// AnimEffectGlide3D2
 	{fxGlideUpdateWindowAttrib, polygonsPrePaintWindow,
 	 polygonsPostPaintWindow, fxGlideAnimStep,
 	 fxGlideInit, 0, polygonsStoreClips, polygonsDrawCustomGeometry, 0,
-	 polygonsDeceleratingAnimStepPolygon, 2, 0}
-	,
+	 polygonsDeceleratingAnimStepPolygon, 2, 0},
 	// AnimEffectHorizontalFolds
 	{0, 0, 0, fxHorizontalFoldsModelStep, 0, fxHorizontalFoldsInitGrid,
-	 0, 0, 0, 0, 0, 0}
-	,
+	 0, 0, 0, 0, 0, 0},
 	// AnimEffectLeafSpread3D
 	{0, polygonsPrePaintWindow, polygonsPostPaintWindow, polygonsAnimStep,
 	 fxLeafSpread3DInit, 0, polygonsStoreClips, polygonsDrawCustomGeometry, 0,
-	 polygonsLinearAnimStepPolygon, 0, 0}
-	,
+	 polygonsLinearAnimStepPolygon, 0, 0},
 	// AnimEffectMagicLamp
 	{0, 0, 0, fxMagicLampModelStep, fxMagicLampInit, fxMagicLampInitGrid,
-	 0, 0, 0, 0, 0, 0}
-	,
+	 0, 0, 0, 0, 0, 0},
 	// AnimEffectMagicLampVacuum
 	{0, 0, 0, fxMagicLampModelStep, fxMagicLampInit,
-	 fxMagicLampVacuumInitGrid, 0, 0}
-	,
+	 fxMagicLampVacuumInitGrid, 0, 0},
 	// AnimEffectRazr3D
 	{0, polygonsPrePaintWindow, polygonsPostPaintWindow, polygonsAnimStep,
 	 fxDomino3DInit, 0, polygonsStoreClips, polygonsDrawCustomGeometry, 0,
-	 polygonsLinearAnimStepPolygon, 2, 0}
-	,
+	 polygonsLinearAnimStepPolygon, 2, 0},
 	// AnimEffectRollUp
-	{0, 0, 0, fxRollUpModelStep, 0, fxRollUpInitGrid, 0, 0, 1, 0, 0, 0}
-	,
+	{0, 0, 0, fxRollUpModelStep, 0, fxRollUpInitGrid, 0, 0, 1, 0, 0, 0},
 	// AnimEffectSidekick
 	{fxZoomUpdateWindowAttrib, 0, 0, fxZoomModelStep, fxSidekickInit,
-	 0, 0, 0, 1, 0, 0, 0}
-	,
+	 0, 0, 0, 1, 0, 0, 0},
 	// AnimEffectWave
-	{0, 0, 0, fxWaveModelStep, 0, fxMagicLampInitGrid, 0, 0, 0, 0, 0, 0}
-	,
+	{0, 0, 0, fxWaveModelStep, 0, fxMagicLampInitGrid, 0, 0, 0, 0, 0, 0},
 	// AnimEffectZoom
 	{fxZoomUpdateWindowAttrib, 0, 0, fxZoomModelStep, fxZoomInit, 0, 0, 0, 1,
 	 0, 0, 0}
@@ -5905,8 +5825,8 @@ modelInitObjects(Model * model, int x, int y, int width, int height)
 		for (gridX = 0; gridX < model->gridWidth; gridX++)
 		{
 			objectInit(&model->objects[gridX],
-					   x + ((gridX * width / nGridCellsX) -
-							x0) * model->scale.x + x0, objectY,
+					   x + ((gridX * width / nGridCellsX) - x0) * 
+					   model->scale.x + x0, objectY,
 					   (float)gridX / nGridCellsX, 0);
 		}
 
@@ -5922,13 +5842,9 @@ modelInitObjects(Model * model, int x, int y, int width, int height)
 
 			for (gridX = 0; gridX < model->gridWidth; gridX++)
 			{
-				objectInit(&model->
-						   objects[gridY *
-								   model->gridWidth +
-								   gridX],
-						   x +
-						   ((gridX * width / nGridCellsX) -
-							x0) * model->scale.x + x0,
+				objectInit(&model->objects[gridY * model->gridWidth + gridX],
+						   x + ((gridX * width / nGridCellsX) - x0) * 
+						   model->scale.x + x0,
 						   objectY, (float)gridX / nGridCellsX, gridPosY);
 			}
 		}
@@ -5938,11 +5854,9 @@ modelInitObjects(Model * model, int x, int y, int width, int height)
 
 		for (gridX = 0; gridX < model->gridWidth; gridX++)
 		{
-			objectInit(&model->
-					   objects[gridY * model->gridWidth +
-							   gridX],
-					   x + ((gridX * width / nGridCellsX) -
-							x0) * model->scale.x + x0, objectY,
+			objectInit(&model->objects[gridY * model->gridWidth + gridX],
+					   x + ((gridX * width / nGridCellsX) - x0) * 
+					   model->scale.x + x0, objectY,
 					   (float)gridX / nGridCellsX, 1);
 		}
 	}
@@ -5961,9 +5875,8 @@ modelInitObjects(Model * model, int x, int y, int width, int height)
 			for (gridX = 0; gridX < model->gridWidth; gridX++)
 			{
 				objectInit(&model->objects[i],
-						   x +
-						   ((gridX * width / nGridCellsX) -
-							x0) * model->scale.x + x0,
+						   x + ((gridX * width / nGridCellsX) - x0) * 
+						   model->scale.x + x0,
 						   objectY,
 						   (float)gridX / nGridCellsX,
 						   (float)gridY / nGridCellsY);
@@ -6203,9 +6116,8 @@ initiateFocusAnimation
 		// When this happens and minimize is in progress,
 		// don't prevent rewinding of minimize when unminimize is fired
 		// right after this focus event.
-		aw->curWindowEvent !=
-		WindowEventMinimize
-		&& animEnsureModel(w, WindowEventFocus, as->focusEffect))
+		aw->curWindowEvent != WindowEventMinimize &&
+		animEnsureModel(w, WindowEventFocus, as->focusEffect))
 	{
 		if (as->focusEffect == AnimEffectFocusFade)
 		{
@@ -6255,10 +6167,7 @@ initiateFocusAnimation
 		aw->curWindowEvent = WindowEventFocus;
 		aw->curAnimEffect = as->focusEffect;
 		aw->animTotalTime =
-				as->
-				opt
-				[ANIM_SCREEN_OPTION_FOCUS_DURATION].
-				value.f * 1000;
+			as->opt[ANIM_SCREEN_OPTION_FOCUS_DURATION].value.f * 1000;
 		aw->animRemainingTime = aw->animTotalTime;
 
 		// Store coords in this viewport to omit 3d effect
@@ -6768,18 +6677,15 @@ animAddWindowGeometry(CompWindow * w,
 					else if (y2 > w->attrib.y + w->height)	// if at bottom
 					{
 						topiyFloat = (model->gridHeight - 2) +
-								(model->
-								 bottomHeight ? (y - winContentsY -
-												 winContentsHeight) /
-								 model->bottomHeight : 0);
+							         (model->bottomHeight ? (y - winContentsY -
+															 winContentsHeight) /
+									                         model->bottomHeight : 0);
 						applyOffsets = FALSE;
 					}
 					else		// in window contents (only in Y coords)
 					{
-						topiyFloat =
-								(model->gridHeight -
-								 3) * (y - winContentsY) / winContentsHeight +
-								1;
+						topiyFloat = (model->gridHeight - 3) * 
+							         (y - winContentsY) / winContentsHeight + 1;
 					}
 				}
 				else
@@ -6812,41 +6718,29 @@ animAddWindowGeometry(CompWindow * w,
 
 					// Objects that are at top, bottom, left, right corners of quad
 					Object *objToTopLeft =
-							&(model->
-							  objects[topiy * model->gridWidth + leftix]);
+							&(model->objects[topiy * model->gridWidth + leftix]);
 					Object *objToTopRight =
-							&(model->
-							  objects[topiy * model->gridWidth + rightix]);
+							&(model->objects[topiy * model->gridWidth + rightix]);
 					Object *objToBottomLeft =
-							&(model->
-							  objects[bottomiy * model->gridWidth + leftix]);
+							&(model->objects[bottomiy * model->gridWidth + leftix]);
 					Object *objToBottomRight =
-							&(model->
-							  objects[bottomiy * model->gridWidth + rightix]);
+							&(model->objects[bottomiy * model->gridWidth + rightix]);
 
 					// find position in cell by taking remainder of flooring
 					float inx = leftixFloat - leftix;
 
 					// Interpolate to find deformed coordinates
 
-					float hor1x =
-							(1 -
-							 inx) *
-							objToTopLeft->position.x +
+					float hor1x = (1 - inx) *
+						    objToTopLeft->position.x +
 							inx * objToTopRight->position.x;
-					float hor1y =
-							(1 -
-							 inx) *
+					float hor1y = (1 - inx) *
 							objToTopLeft->position.y +
 							inx * objToTopRight->position.y;
-					float hor2x =
-							(1 -
-							 inx) *
+					float hor2x = (1 - inx) *
 							objToBottomLeft->position.x +
 							inx * objToBottomRight->position.x;
-					float hor2y =
-							(1 -
-							 inx) *
+					float hor2y = (1 - inx) *
 							objToBottomLeft->position.y +
 							inx * objToBottomRight->position.y;
 
@@ -6874,9 +6768,7 @@ animAddWindowGeometry(CompWindow * w,
 							float offsetY = 0;
 
 							if (applyOffsets && y < y2)
-								offsetY =
-										objToTopLeft->
-										offsetTexCoordForQuadAfter.y;
+								offsetY = objToTopLeft->offsetTexCoordForQuadAfter.y;
 
 							*v++ = COMP_TEX_COORD_X(&matrix[it], x);
 							*v++ = COMP_TEX_COORD_Y(&matrix[it], y + offsetY);
@@ -6888,13 +6780,8 @@ animAddWindowGeometry(CompWindow * w,
 								if (0 < jy && jy < nVertY - 1)
 								{
 									// copy first 3 texture coords to duplicate row
-									memcpy(v
-										   -
-										   4
-										   +
-										   nVertX
-										   *
-										   vSize, v - 4, 3 * sizeof(GLfloat));
+									memcpy(v - 4 + nVertX * vSize, 
+										   v - 4, 3 * sizeof(GLfloat));
 									*(v - 1 + nVertX * vSize) = 1;	// Q texture coordinate
 								}
 								if (applyOffsets &&	/*0 < jy && */
@@ -6903,11 +6790,8 @@ animAddWindowGeometry(CompWindow * w,
 								{
 									// After copying to next row, update texture y coord
 									// by following object's offset
-									offsetY =
-											objToTopLeft->
-											offsetTexCoordForQuadBefore.y;
-									v[-3] = COMP_TEX_COORD_Y(&matrix[it],
-															 y + offsetY);
+									offsetY = objToTopLeft-> offsetTexCoordForQuadBefore.y;
+									v[-3] = COMP_TEX_COORD_Y(&matrix[it], y + offsetY);
 								}
 								if (jx > 0)	// since column 0 is updated when jx == 1
 								{
@@ -6922,27 +6806,18 @@ animAddWindowGeometry(CompWindow * w,
 								if (0 < jy && jy < nVertY - 1)
 								{
 									// copy first 3 texture coords to duplicate row
-									memcpy(v
-										   -
-										   4
-										   +
-										   nVertX
-										   *
-										   vSize, v - 4, 3 * sizeof(GLfloat));
+									memcpy(v - 4 + nVertX * vSize, 
+										   v - 4, 3 * sizeof(GLfloat));
 
 									*(v - 1 + nVertX * vSize) = 1;	// Q texture coordinate
 								}
-								if (applyOffsets
-									&& objToTopLeft->
-									offsetTexCoordForQuadBefore.y != 0)
+								if (applyOffsets && 
+									objToTopLeft->offsetTexCoordForQuadBefore.y != 0)
 								{
 									// After copying to next row, update texture y coord
 									// by following object's offset
-									offsetY =
-											objToTopLeft->
-											offsetTexCoordForQuadBefore.y;
-									v[-3] = COMP_TEX_COORD_Y(&matrix[it],
-															 y + offsetY);
+									offsetY = objToTopLeft->offsetTexCoordForQuadBefore.y;
+									v[-3] = COMP_TEX_COORD_Y(&matrix[it], y + offsetY);
 								}
 							}
 						}
@@ -6962,10 +6837,8 @@ animAddWindowGeometry(CompWindow * w,
 								//		offsetTexCoordForQuadAfter.y;
 							}
 
-							*v++ = COMP_TEX_COORD_XY
-									(&matrix[it], x, y + offsetY);
-							*v++ = COMP_TEX_COORD_YX
-									(&matrix[it], x, y + offsetY);
+							*v++ = COMP_TEX_COORD_XY(&matrix[it], x, y + offsetY);
+							*v++ = COMP_TEX_COORD_YX(&matrix[it], x, y + offsetY);
 							*v++ = 0;
 							if (useTextureQ)
 							{
@@ -6974,24 +6847,16 @@ animAddWindowGeometry(CompWindow * w,
 								if (0 < jy && jy < nVertY - 1)
 								{
 									// copy first 3 texture coords to duplicate row
-									memcpy(v
-										   -
-										   4
-										   +
-										   nVertX
-										   *
-										   vSize, v - 4, 3 * sizeof(GLfloat));
+									memcpy(v - 4 + nVertX * vSize, 
+										   v - 4, 3 * sizeof(GLfloat));
 									*(v - 1 + nVertX * vSize) = 1;	// Q texture coordinate
 								}
-								if (applyOffsets
-									&& objToTopLeft->
-									offsetTexCoordForQuadBefore.y != 0)
+								if (applyOffsets && 
+									objToTopLeft->offsetTexCoordForQuadBefore.y != 0)
 								{
 									// After copying to next row, update texture y coord
 									// by following object's offset
-									offsetY =
-											objToTopLeft->
-											offsetTexCoordForQuadBefore.y;
+									offsetY = objToTopLeft->offsetTexCoordForQuadBefore.y;
 									v[-4] = COMP_TEX_COORD_XY(&matrix[it], x,
 															  y + offsetY);
 									v[-3] = COMP_TEX_COORD_YX(&matrix[it], x,
@@ -7010,18 +6875,12 @@ animAddWindowGeometry(CompWindow * w,
 								if (0 < jy && jy < nVertY - 1)
 								{
 									// copy first 3 texture coords to duplicate row
-									memcpy(v
-										   -
-										   4
-										   +
-										   nVertX
-										   *
-										   vSize, v - 4, 3 * sizeof(GLfloat));
+									memcpy(v - 4 + nVertX * vSize, 
+										   v - 4, 3 * sizeof(GLfloat));
 									*(v - 1 + nVertX * vSize) = 1;	// Q texture coordinate
 								}
-								if (applyOffsets
-									&& objToTopLeft->
-									offsetTexCoordForQuadBefore.y != 0)
+								if (applyOffsets && 
+									objToTopLeft->offsetTexCoordForQuadBefore.y != 0)
 								{
 									// After copying to next row, update texture y coord
 									// by following object's offset
@@ -7040,8 +6899,7 @@ animAddWindowGeometry(CompWindow * w,
 					*v++ = deformedY;
 
 					if (0 < jy && jy < nVertY - 1)
-						memcpy(v - 2 +
-							   nVertX * vSize, v - 2, 2 * sizeof(GLfloat));
+						memcpy(v - 2 + nVertX * vSize, v - 2, 2 * sizeof(GLfloat));
 
 					nVertices++;
 
@@ -7122,8 +6980,7 @@ animDrawWindowGeometry(CompWindow * w)
 	if (playingPolygonEffect(as, aw) &&
 		animEffectProperties[aw->curAnimEffect].drawCustomGeometryFunc)
 	{
-		animEffectProperties[aw->curAnimEffect].drawCustomGeometryFunc
-				(w->screen, w);
+		animEffectProperties[aw->curAnimEffect].drawCustomGeometryFunc (w->screen, w);
 		return;
 	}
 	int texUnit = w->texUnits;
@@ -7486,10 +7343,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 							aw->curAnimEffect = effectToBePlayed;
 
 							aw->animTotalTime =
-									as->
-									opt
-									[ANIM_SCREEN_OPTION_SHADE_DURATION].
-									value.f * 1000;
+									as->opt[ANIM_SCREEN_OPTION_SHADE_DURATION].value.f * 1000;
 							aw->animRemainingTime = aw->animTotalTime;
 						}
 
@@ -7522,7 +7376,6 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 
 					//printf("MINIMIZE event! %X\n", (unsigned)aw);
 
-					//IPCS_SetBool(IPCS_OBJECT(w), aw->animatedAtom, TRUE);
 					Bool startingNew = TRUE;
 
 					if (aw->curWindowEvent != WindowEventNone)
@@ -7564,10 +7417,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						aw->curAnimEffect = effectToBePlayed;
 
 						aw->animTotalTime =
-								as->
-								opt
-								[ANIM_SCREEN_OPTION_MINIMIZE_DURATION].
-								value.f * 1000;
+								as->opt[ANIM_SCREEN_OPTION_MINIMIZE_DURATION].value.f * 1000;
 						aw->animRemainingTime = aw->animTotalTime;
 					}
 
@@ -7597,12 +7447,8 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 							aw->icon.height = 20;
 						}
 						*/
-						if ((aw->curAnimEffect ==
-							 AnimEffectZoom
-							 || aw->
-							 curAnimEffect ==
-							 AnimEffectSidekick)
-							&&
+						if ((aw->curAnimEffect == AnimEffectZoom || 
+							 aw->curAnimEffect == AnimEffectSidekick) &&
 							(as->zoomFC == ZoomFromCenterOn ||
 							 as->zoomFC == ZoomFromCenterMin))
 						{
@@ -7702,13 +7548,10 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 					
 						aw->curAnimEffect = effectToBePlayed;
 
-						aw->animTotalTime =
-								as->opt[whichClose ==
-										1 ?
-										ANIM_SCREEN_OPTION_CLOSE1_DURATION
-										:
-										ANIM_SCREEN_OPTION_CLOSE2_DURATION].
-								value.f * 1000;
+						aw->animTotalTime =	
+							as->opt[whichClose == 1 ?
+									ANIM_SCREEN_OPTION_CLOSE1_DURATION :
+									ANIM_SCREEN_OPTION_CLOSE2_DURATION].value.f * 1000;
 						aw->animRemainingTime = aw->animTotalTime;
 					}
 
@@ -7733,40 +7576,17 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						aw->icon.width = FAKE_ICON_SIZE;
 						aw->icon.height = FAKE_ICON_SIZE;
 
-						if (aw->curAnimEffect == AnimEffectMagicLamp &&
-								 aw->icon.width <
-								 as->
-								 opt
-								 [ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
-								 value.i)
-						{
+						if (aw->curAnimEffect == AnimEffectMagicLamp)
+							aw->icon.width = 
+								MAX(aw->icon.width,
+									as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].value.i);
+						else if (aw->curAnimEffect == AnimEffectMagicLampVacuum)
 							aw->icon.width =
-									as->
-									opt
-									[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
-									value.i;
-						}
+								MAX(aw->icon.width,
+									as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].value.i)
 
-						else if (aw->curAnimEffect == AnimEffectMagicLampVacuum &&
-								 aw->icon.width <
-								 as->
-								 opt
-								 [ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
-								 value.i)
-						{
-							aw->icon.width =
-									as->
-									opt
-									[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
-									value.i;
-						}
-
-						if ((aw->curAnimEffect ==
-							 AnimEffectZoom
-							 || aw->
-							 curAnimEffect ==
-							 AnimEffectSidekick)
-							&&
+						if ((aw->curAnimEffect == AnimEffectZoom || 
+							 aw->curAnimEffect == AnimEffectSidekick) &&
 							(as->zoomFC == ZoomFromCenterOn ||
 							 as->zoomFC == ZoomFromCenterCreate))
 						{
@@ -7785,9 +7605,9 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 					}
 				}
 				else if ((as->create1Effect &&
-					  matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE1_MATCH].value.match, w))
-					|| (as->create2Effect &&
-					  matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE2_MATCH].value.match, w)))
+						  matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE1_MATCH].value.match, w)) ||
+						 (as->create2Effect &&
+						  matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE2_MATCH].value.match, w)))
 				{
 					// stop the current animation and prevent it from rewinding
 
@@ -7796,9 +7616,8 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 					{
 						aw->animRemainingTime = 0;
 					}
-					if ((aw->curWindowEvent !=
-						 WindowEventNone)
-						&& (aw->curWindowEvent != WindowEventClose))
+					if ((aw->curWindowEvent != WindowEventNone) &&
+						(aw->curWindowEvent != WindowEventClose))
 					{
 						postAnimationCleanup(w, TRUE);
 					}
@@ -8048,10 +7867,7 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 						aw->curAnimEffect = effectToBePlayed;
 
 						aw->animTotalTime =
-								as->
-								opt
-								[ANIM_SCREEN_OPTION_MINIMIZE_DURATION].
-								value.f * 1000;
+							as->opt[ANIM_SCREEN_OPTION_MINIMIZE_DURATION].value.f * 1000;
 						aw->animRemainingTime = aw->animTotalTime;
 					}
 				}
@@ -8077,11 +7893,8 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 							aw->icon.width = 100;
 							aw->icon.height = 20;
 						}
-						if ((aw->curAnimEffect ==
-							 AnimEffectZoom
-							 || aw->curAnimEffect ==
-							 AnimEffectSidekick)
-							&&
+						if ((aw->curAnimEffect == AnimEffectZoom || 
+							 aw->curAnimEffect == AnimEffectSidekick) &&
 							(as->zoomFC == ZoomFromCenterOn ||
 							 as->zoomFC == ZoomFromCenterMin))
 						{
@@ -8152,10 +7965,7 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 						aw->curAnimEffect = effectToBePlayed;
 
 						aw->animTotalTime =
-								as->
-								opt
-								[ANIM_SCREEN_OPTION_SHADE_DURATION].value.f *
-								1000;
+							as->opt[ANIM_SCREEN_OPTION_SHADE_DURATION].value.f * 1000;
 						aw->animRemainingTime = aw->animTotalTime;
 					}
 				}
@@ -8188,7 +7998,7 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 			    matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE1_MATCH].value.match, w))
 				windowsCreateEffect = as->create1Effect;
 			else if (as->create2Effect &&
-			    matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE2_MATCH].value.match, w))
+					 matchEval (&as->opt[ANIM_SCREEN_OPTION_CREATE2_MATCH].value.match, w))
 			{
 				windowsCreateEffect = as->create2Effect;
 				whichCreate = 2;
@@ -8247,11 +8057,9 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 						aw->curAnimEffect = effectToBePlayed;
 
 						aw->animTotalTime =
-								as->opt[whichCreate == 1 ?
-										ANIM_SCREEN_OPTION_CREATE1_DURATION
-										:
-										ANIM_SCREEN_OPTION_CREATE2_DURATION].
-								value.f * 1000;
+							as->opt[whichCreate == 1 ?
+									ANIM_SCREEN_OPTION_CREATE1_DURATION	:
+									ANIM_SCREEN_OPTION_CREATE2_DURATION].value.f * 1000;
 						aw->animRemainingTime = aw->animTotalTime;
 					}
 				}
@@ -8264,32 +8072,15 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 					aw->icon.width = FAKE_ICON_SIZE;
 					aw->icon.height = FAKE_ICON_SIZE;
 
-					if (aw->curAnimEffect == AnimEffectMagicLamp &&
-							 aw->icon.width <
-							 as->
-							 opt
-							 [ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
-							 value.i)
-					{
+					if (aw->curAnimEffect == AnimEffectMagicLamp)
+						aw->icon.width = 
+							MAX(aw->icon.width,
+								as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].value.i);
+					else if (aw->curAnimEffect == AnimEffectMagicLampVacuum)
 						aw->icon.width =
-								as->
-								opt
-								[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
-								value.i;
-					}
-					else if (aw->curAnimEffect == AnimEffectMagicLampVacuum &&
-							 aw->icon.width <
-							 as->
-							 opt
-							 [ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
-							 value.i)
-					{
-						aw->icon.width =
-								as->
-								opt
-								[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
-								value.i;
-					}
+							MAX(aw->icon.width,
+								as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].value.i)
+
 					aw->icon.x -= aw->icon.width / 2;
 					aw->icon.y -= aw->icon.height / 2;
 
@@ -8299,8 +8090,7 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 						 as->zoomFC == ZoomFromCenterCreate))
 					{
 						aw->icon.x = WIN_X(w) + WIN_W(w) / 2 - aw->icon.width / 2;
-						aw->icon.y =
-								WIN_Y(w) + WIN_H(w) / 2 - aw->icon.height / 2;
+						aw->icon.y = WIN_Y(w) + WIN_H(w) / 2 - aw->icon.height / 2;
 					}
 					aw->state = IconicState;	// we're doing this as a hack, it may not be necessary
 
@@ -8350,8 +8140,9 @@ static void animWindowResizeNotify(CompWindow * w, int dx, int dy, int dwidth, i
 
 	if (aw->model)
 	{
-		modelInitObjects(aw->model, WIN_X(w), WIN_Y(w), WIN_W(w),
-						 WIN_H(w));
+		modelInitObjects(aw->model, 
+						 WIN_X(w), WIN_Y(w), 
+						 WIN_W(w), WIN_H(w));
 	}
 	//}
 
