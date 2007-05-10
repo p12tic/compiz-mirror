@@ -53,6 +53,7 @@
 #define METACITY    "/apps/metacity"
 #define COMPIZ_CCS   "/apps/compiz/ccs"
 #define DEFAULTPROF "Default"
+#define CORE_NAME   "core"
 
 #define BUFSIZE 512
 
@@ -63,11 +64,12 @@
                         snprintf(keyName, BUFSIZE, "allscreens/%s", setting->name);
 
 #define PATHNAME    char pathName[BUFSIZE]; \
-					snprintf(pathName, BUFSIZE, "%s/%s/%s%s%s/%s", COMPIZ_CCS, currentProfile, \
-							 setting->parent->name ? "plugins" : "general", \
-							 setting->parent->name ? "/" : "", \
-							 setting->parent->name ? setting->parent->name : "", \
-							 keyName);
+					if (!setting->parent->name || strcmp(setting->parent->name, "core") == 0) \
+						snprintf(pathName, BUFSIZE, "%s/%s/general/%s", COMPIZ_CCS, \
+							 currentProfile, keyName); \
+					else \
+						snprintf(pathName, BUFSIZE, "%s/%s/plugins/%s/%s", COMPIZ_CCS, \
+							 currentProfile, setting->parent->name, keyName);
 
 GConfClient *client = NULL;
 
