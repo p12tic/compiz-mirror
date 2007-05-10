@@ -202,7 +202,11 @@ struct _SpecialOption {
 	{"autoraise_delay", NULL, FALSE, METACITY "/general/auto_raise_delay", OptionInt},
 	{"raise_on_click", NULL, FALSE, METACITY "/general/raise_on_click", OptionBool},
 	{"click_to_focus", NULL, FALSE, METACITY "/general/focus_mode", OptionSpecial},
-	
+
+	{"initiate", "move", FALSE, METACITY "/general/mouse_button_modifier", OptionSpecial},
+	{"initiate", "resize", FALSE, METACITY "/general/mouse_button_modifier", OptionSpecial},
+	{"window_menu", NULL, FALSE, METACITY "/general/mouse_button_modifier", OptionSpecial},
+
 	{"audible_bell", NULL, FALSE, METACITY "/general/audible_bell", OptionBool},
 	{"size", NULL, TRUE, METACITY "/general/num_workspaces", OptionInt},
 };
@@ -515,7 +519,7 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 	return FALSE;
 }
 
-static Bool readIntegratedOption(CCSSetting * setting, int index)
+static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int index)
 {
 	GError *err = NULL;
 	Bool ret = FALSE;
@@ -587,6 +591,39 @@ static Bool readIntegratedOption(CCSSetting * setting, int index)
 					Bool clickToFocus = (strcmp(focusMode, "click") == 0);
 					ccsSetBool(setting, clickToFocus);
 					g_free(focusMode);
+				}
+			}
+			else if (strcmp(specialOptions[index].gnomeName, METACITY "/general/mouse_button_modifier") == 0)
+			{
+				char *modifier;
+				modifier = gconf_client_get_string(client, specialOptions[index].gnomeName, &err);
+
+				if (!err && modifier)
+				{
+					unsigned int i;
+					CCSPlugin *p;
+					CCSSetting *s;
+
+					for (i = 0; i < N_SOPTIONS; i++)
+					{
+						if (strcmp(METACITY "/general/mouse_button_modifier", 
+									specialOptions[i].gnomeName) == 0)
+						{
+							p = ccsFindPlugin (context, (char*) specialOptions[i].pluginName);
+							if (p)
+							{
+								s = ccsFindSetting (p, (char*) specialOptions[i].settingName,
+													specialOptions[i].screen, 0);
+								if (s && (s != setting))
+								{
+									CCSSettingActionValue action;
+									action = s->value->value.asAction;
+									action.buttonModMask = setting->value->value.asAction.buttonModMask;
+									ccsSetAction (s, action);
+								}
+							}
+						}
+					}
 				}
 			}
 			break;
@@ -843,7 +880,7 @@ static void writeListValue(CCSSetting * setting, char * pathName)
 		g_slist_free(valueList);
 }
 
-static void writeIntegratedOption(CCSSetting * setting, int index)
+static void writeIntegratedOption(CCSContext * context, CCSSetting * setting, int index)
 {
 	GError *err = NULL;
 
@@ -934,6 +971,64 @@ static void writeIntegratedOption(CCSSetting * setting, int index)
 						gconf_client_set_string(client, specialOptions[index].gnomeName, 
 												newValue,NULL);
 					g_free(currentValue);
+				}
+			}
+			else if (strcmp(specialOptions[index].gnomeName, METACITY "/general/mouse_button_modifier") == 0)
+			{
+				char *newBinding;
+
+				newBinding = ccsKeyBindingToString(&setting->value->value.asAction);
+				if (newBinding)
+				{
+					char *modsEnd;
+					gchar *currentValue;
+					modsEnd = strrchr(newBinding, '>');
+					if (modsEnd)
+					{
+						*(modsEnd+1) = 0;
+						/* newBinding now only contains the modifiers */
+
+						currentValue = gconf_client_get_string(client, 
+															   specialOptions[index].gnomeName, &err);
+
+						/* write it to GConf */
+						if (!err && currentValue)
+						{
+							unsigned int i;
+							CCSPlugin *p;
+							CCSSetting *s;
+
+							if (strcmp(currentValue, newBinding) != 0)
+								gconf_client_set_string(client, 
+														specialOptions[index].gnomeName, 
+														newBinding, NULL);
+							g_free(currentValue);
+
+							/* and set the other two options */
+
+							for (i = 0; i < N_SOPTIONS; i++)
+							{
+								if (strcmp(METACITY "/general/mouse_button_modifier", 
+										   specialOptions[i].gnomeName) == 0)
+								{
+									p = ccsFindPlugin (context, (char*) specialOptions[i].pluginName);
+									if (p)
+									{
+										s = ccsFindSetting (p, (char*) specialOptions[i].settingName,
+															specialOptions[i].screen, 0);
+										if (s && (s != setting))
+										{
+											CCSSettingActionValue action;
+											action = s->value->value.asAction;
+											action.buttonModMask = setting->value->value.asAction.buttonModMask;
+											ccsSetAction (s, action);
+										}
+									}
+								}
+							}
+						}
+					}
+					free(newBinding);
 				}
 			}
 			break;
@@ -1103,7 +1198,7 @@ static void readSetting(CCSContext * context, CCSSetting * setting)
 	int index;
 
 	if (ccsGetIntegrationEnabled(context) && isIntegratedOption(setting, &index))
-		status = readIntegratedOption(setting, index);
+		status = readIntegratedOption(context, setting, index);
 	else
 		status = readOption(setting);
 
@@ -1137,7 +1232,7 @@ static void writeSetting(CCSContext * context, CCSSetting * setting)
 	int index;
 
 	if (ccsGetIntegrationEnabled(context) && isIntegratedOption(setting, &index))
-		writeIntegratedOption(setting, index);
+		writeIntegratedOption(context, setting, index);
 	else if (setting->isDefault)
 		resetOptionToDefault(setting);
 	else
