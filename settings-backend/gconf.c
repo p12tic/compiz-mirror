@@ -216,10 +216,13 @@ struct _SpecialOption {
 static Bool isIntegratedOption(CCSSetting * setting, int * index)
 {
 	unsigned int i;
+
 	for (i = 0; i < N_SOPTIONS; i++)
 	{
 		if ((strcmp(setting->name, specialOptions[i].settingName) == 0) &&
-			(strcmp(setting->parent->name, specialOptions[i].pluginName) == 0) &&
+			((!setting->parent->name && !specialOptions[i].pluginName) ||
+			 (setting->parent->name && specialOptions[i].pluginName &&
+			  (strcmp(setting->parent->name, specialOptions[i].pluginName) == 0))) &&
 			((setting->isScreen && specialOptions[i].screen) || 
 			 (!setting->isScreen && !specialOptions[i].screen)))
 		{
