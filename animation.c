@@ -8555,6 +8555,7 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 	}
 
 	as->animInProgress = FALSE;
+
 	as->minimizeEffect = animEffectFromString (
 			&as->opt[ANIM_SCREEN_OPTION_MINIMIZE_EFFECT].value,
 			minimizeEffectType, NUM_MINIMIZE_EFFECT);
@@ -8577,6 +8578,43 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 			&as->opt[ANIM_SCREEN_OPTION_SHADE_EFFECT].value,
 			shadeEffectType, NUM_SHADE_EFFECT);
 	
+	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS].value,
+							   minimizeEffectType,
+							   NUM_MINIMIZE_EFFECT,
+							   as->minimizeRandomEffects,
+							   &as->nMinimizeRandomEffects,
+							   AnimEffectNone /* FIXME */);
+	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS].value,
+							   closeEffectType,
+							   NUM_CLOSE_EFFECT,
+							   as->close1RandomEffects,
+							   &as->nClose1RandomEffects,
+							   AnimEffectNone /* FIXME */);
+	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS].value,
+							   closeEffectType,
+							   NUM_CLOSE_EFFECT,
+							   as->close2RandomEffects,
+							   &as->nClose2RandomEffects,
+							   AnimEffectNone /* FIXME */);
+	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS].value,
+							   closeEffectType,
+							   NUM_CLOSE_EFFECT,
+							   as->create1RandomEffects,
+							   &as->nCreate1RandomEffects,
+							   AnimEffectNone /* FIXME */);
+	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS].value,
+							   closeEffectType,
+							   NUM_CLOSE_EFFECT,
+							   as->create2RandomEffects,
+							   &as->nCreate2RandomEffects,
+							   AnimEffectNone /* FIXME */);
+	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS].value,
+							   shadeEffectType,
+							   NUM_SHADE_EFFECT,
+							   as->shadeRandomEffects,
+							   &as->nShadeRandomEffects,
+							   AnimEffectNone /* FIXME */);
+
 	as->zoomFC = zoomFromCenterFromString (
 			&as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value);
 
