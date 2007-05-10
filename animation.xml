@@ -600,7 +600,7 @@
 	    <option name="explode_tessellation" type="string">
 		<short>Tessellation Type</short>
 		<long>Tessellation type for exploding window pieces.</long>
-		<default>Down</default>
+		<default>Rectangular</default>
 		<allowed>
 		    <value>Rectangular</value>
 		    <value>Hexagonal</value>
