@@ -5693,7 +5693,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   NUM_MINIMIZE_EFFECT,
 									   as->minimizeRandomEffects,
 									   &as->nMinimizeRandomEffects,
-									   AnimEffectNone /* FIXME */);
+									   AnimEffectNone);
 			return TRUE;
 		}
 		break;
@@ -5705,7 +5705,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   NUM_CLOSE_EFFECT,
 									   as->close1RandomEffects,
 									   &as->nClose1RandomEffects,
-									   AnimEffectNone /* FIXME */);
+									   AnimEffectNone);
 			return TRUE;
 		}
 		break;
@@ -5717,7 +5717,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   NUM_CLOSE_EFFECT,
 									   as->close2RandomEffects,
 									   &as->nClose2RandomEffects,
-									   AnimEffectNone /* FIXME */);
+									   AnimEffectNone);
 			return TRUE;
 		}
 		break;
@@ -5729,7 +5729,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   NUM_CLOSE_EFFECT,
 									   as->create1RandomEffects,
 									   &as->nCreate1RandomEffects,
-									   AnimEffectNone /* FIXME */);
+									   AnimEffectNone);
 			return TRUE;
 		}
 		break;
@@ -5741,7 +5741,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   NUM_CLOSE_EFFECT,
 									   as->create2RandomEffects,
 									   &as->nCreate2RandomEffects,
-									   AnimEffectNone /* FIXME */);
+									   AnimEffectNone);
 			return TRUE;
 		}
 		break;
@@ -5753,7 +5753,7 @@ animSetScreenOption(CompPlugin *plugin,
 									   NUM_SHADE_EFFECT,
 									   as->shadeRandomEffects,
 									   &as->nShadeRandomEffects,
-									   AnimEffectNone /* FIXME */);
+									   AnimEffectNone);
 			return TRUE;
 		}
 		break;
@@ -7462,23 +7462,27 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 							}
 						}
 
-						as->animInProgress = TRUE;
-						aw->curWindowEvent = WindowEventShade;
-
 						if (startingNew)
 						{
-							if (as->shadeEffect == AnimEffectRandom
+							AnimEffect effectToBePlayed = as->shadeEffect;
+
+							if (effectToBePlayed == AnimEffectRandom
 								|| as->
 								opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-								aw->curAnimEffect =	// choose a random effect
+							{
+								effectToBePlayed =	// choose a random effect
 										as->shadeRandomEffects[(int)
 															   (as->
 																nShadeRandomEffects
 																*
 																(double)rand()
 																/ RAND_MAX)];
-							else
-								aw->curAnimEffect = as->shadeEffect;
+
+								// handle empty random effect list
+								if (effectToBePlayed == AnimEffectNone)
+									break;
+							}
+							aw->curAnimEffect = effectToBePlayed;
 
 							aw->animTotalTime =
 									as->
@@ -7487,6 +7491,9 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 									value.f * 1000;
 							aw->animRemainingTime = aw->animTotalTime;
 						}
+
+						as->animInProgress = TRUE;
+						aw->curWindowEvent = WindowEventShade;
 
 						// Store coords in this viewport to omit 3d effect
 						// painting in other viewports
@@ -7539,24 +7546,27 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						}
 					}
 
-					aw->newState = IconicState;
-					as->animInProgress = TRUE;
-					aw->curWindowEvent = WindowEventMinimize;
-
 					if (startingNew)
 					{
-						if (as->minimizeEffect ==
+						AnimEffect effectToBePlayed = as->minimizeEffect;
+
+						if (effectToBePlayed ==
 							AnimEffectRandom
 							|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-							aw->curAnimEffect =	// choose a random effect
+						{
+							effectToBePlayed =	// choose a random effect
 									as->minimizeRandomEffects[(int)
 															  (as->
 															   nMinimizeRandomEffects
 															   *
 															   (double)rand()
 															   / RAND_MAX)];
-						else
-							aw->curAnimEffect = as->minimizeEffect;
+
+							// handle empty random effect list
+							if (effectToBePlayed == AnimEffectNone)
+								break;
+						}
+						aw->curAnimEffect = effectToBePlayed;
 
 						aw->animTotalTime =
 								as->
@@ -7565,6 +7575,10 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 								value.f * 1000;
 						aw->animRemainingTime = aw->animTotalTime;
 					}
+
+					aw->newState = IconicState;
+					as->animInProgress = TRUE;
+					aw->curWindowEvent = WindowEventMinimize;
 
 					// Store coords in this viewport to omit 3d effect
 					// painting in other viewports
@@ -7676,19 +7690,15 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						}
 					}
 
-					aw->state = NormalState;
-					aw->newState = WithdrawnState;
-					as->animInProgress = TRUE;
-					aw->curWindowEvent = WindowEventClose;
-
 					if (startingNew)
 					{
-						if (windowsCloseEffect ==
-							AnimEffectRandom
+						AnimEffect effectToBePlayed = windowsCloseEffect;
+
+						if (effectToBePlayed == AnimEffectRandom
 							|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
 						{
 							if (whichClose == 1)
-								aw->curAnimEffect =	// choose a random effect
+								effectToBePlayed =	// choose a random effect
 										as->close1RandomEffects[(int)
 																(as->
 																 nClose1RandomEffects
@@ -7697,7 +7707,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 																 rand() /
 																 RAND_MAX)];
 							else
-								aw->curAnimEffect =	// choose a random effect
+								effectToBePlayed =	// choose a random effect
 										as->close2RandomEffects[(int)
 																(as->
 																 nClose2RandomEffects
@@ -7705,9 +7715,12 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 																 (double)
 																 rand() /
 																 RAND_MAX)];
+
+							// handle empty random effect list
+							if (effectToBePlayed == AnimEffectNone)
+								break;
 						}
-						else
-							aw->curAnimEffect = windowsCloseEffect;
+						aw->curAnimEffect = effectToBePlayed;
 
 						aw->animTotalTime =
 								as->opt[whichClose ==
@@ -7718,6 +7731,11 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 								value.f * 1000;
 						aw->animRemainingTime = aw->animTotalTime;
 					}
+
+					aw->state = NormalState;
+					aw->newState = WithdrawnState;
+					as->animInProgress = TRUE;
+					aw->curWindowEvent = WindowEventClose;
 
 					// Store coords in this viewport to omit 3d effect
 					// painting in other viewports
@@ -8029,65 +8047,80 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 							aw->animOverrideProgressDir = 0;
 					}
 				}
-				as->animInProgress = TRUE;
-				aw->curWindowEvent = WindowEventUnminimize;
+
+				Bool playEffect = TRUE;
 
 				if (startingNew)
 				{
-					if (as->minimizeEffect ==
-						AnimEffectRandom
+					AnimEffect effectToBePlayed = as->minimizeEffect;
+
+					if (effectToBePlayed == AnimEffectRandom
 						|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-						aw->curAnimEffect =	// choose a random effect
+					{
+						effectToBePlayed =	// choose a random effect
 								as->minimizeRandomEffects[(int)
 															(as->
 															 nMinimizeRandomEffects
 															 *
 															 (double)rand() /
 															 RAND_MAX)];
-					else
-						aw->curAnimEffect = as->minimizeEffect;
 
-					aw->animTotalTime =
-							as->
-							opt
-							[ANIM_SCREEN_OPTION_MINIMIZE_DURATION].
-							value.f * 1000;
-					aw->animRemainingTime = aw->animTotalTime;
+						// handle empty random effect list
+						if (effectToBePlayed == AnimEffectNone)
+							playEffect = FALSE;
+					}
+					if (playEffect)
+					{
+						aw->curAnimEffect = effectToBePlayed;
+
+						aw->animTotalTime =
+								as->
+								opt
+								[ANIM_SCREEN_OPTION_MINIMIZE_DURATION].
+								value.f * 1000;
+						aw->animRemainingTime = aw->animTotalTime;
+					}
 				}
 
-				// Store coords in this viewport to omit 3d effect
-				// painting in other viewports
-				aw->lastKnownCoords.x = w->attrib.x;
-				aw->lastKnownCoords.y = w->attrib.y;
-
-				if (animEnsureModel
-					(w, WindowEventUnminimize, aw->curAnimEffect))
+				if (playEffect)
 				{
-					if (!animGetWindowIconGeometry(w, &aw->icon))
+					as->animInProgress = TRUE;
+					aw->curWindowEvent = WindowEventUnminimize;
+
+					// Store coords in this viewport to omit 3d effect
+					// painting in other viewports
+					aw->lastKnownCoords.x = w->attrib.x;
+					aw->lastKnownCoords.y = w->attrib.y;
+
+					if (animEnsureModel
+						(w, WindowEventUnminimize, aw->curAnimEffect))
 					{
-						// minimize to bottom-center if there is no window list
-						aw->icon.x = w->screen->width / 2;
-						aw->icon.y = w->screen->height;
-						aw->icon.width = 100;
-						aw->icon.height = 20;
+						if (!animGetWindowIconGeometry(w, &aw->icon))
+						{
+							// minimize to bottom-center if there is no window list
+							aw->icon.x = w->screen->width / 2;
+							aw->icon.y = w->screen->height;
+							aw->icon.width = 100;
+							aw->icon.height = 20;
+						}
+						if ((aw->curAnimEffect ==
+							 AnimEffectZoom
+							 || aw->curAnimEffect ==
+							 AnimEffectSidekick)
+							&&
+							(as->zoomFC == ZoomFromCenterOn ||
+							 as->zoomFC == ZoomFromCenterMin))
+						{
+							aw->icon.x =
+									WIN_X(w) + WIN_W(w) / 2 - aw->icon.width / 2;
+							aw->icon.y =
+									WIN_Y(w) + WIN_H(w) / 2 - aw->icon.height / 2;
+						}
+						addWindowDamage(w);
 					}
-					if ((aw->curAnimEffect ==
-						 AnimEffectZoom
-						 || aw->curAnimEffect ==
-						 AnimEffectSidekick)
-						&&
-						(as->zoomFC == ZoomFromCenterOn ||
-						 as->zoomFC == ZoomFromCenterMin))
-					{
-						aw->icon.x =
-								WIN_X(w) + WIN_W(w) / 2 - aw->icon.width / 2;
-						aw->icon.y =
-								WIN_Y(w) + WIN_H(w) / 2 - aw->icon.height / 2;
-					}
-					addWindowDamage(w);
+					else
+						postAnimationCleanup(w, TRUE);
 				}
-				else
-					postAnimationCleanup(w, TRUE);
 			}
 		}
 		else if (aw->nowShaded)
@@ -8124,40 +8157,56 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 							aw->animOverrideProgressDir = 0;
 					}
 				}
-				as->animInProgress = TRUE;
-				aw->curWindowEvent = WindowEventUnshade;
+
+				Bool playEffect = TRUE;
 
 				if (startingNew)
 				{
-					if (as->shadeEffect ==
+					AnimEffect effectToBePlayed = as->shadeEffect;
+
+					if (effectToBePlayed ==
 						AnimEffectRandom
 						|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
-						aw->curAnimEffect =	// choose a random effect
+					{
+						effectToBePlayed =	// choose a random effect
 								as->shadeRandomEffects[(int)
 														 (as->
 														  nShadeRandomEffects
 														  * (double)rand() /
 														  RAND_MAX)];
-					else
-						aw->curAnimEffect = as->shadeEffect;
 
-					aw->animTotalTime =
-							as->
-							opt
-							[ANIM_SCREEN_OPTION_SHADE_DURATION].value.f *
-							1000;
-					aw->animRemainingTime = aw->animTotalTime;
+						// handle empty random effect list
+						if (effectToBePlayed == AnimEffectNone)
+							playEffect = FALSE;
+					}
+					if (playEffect)
+					{
+						aw->curAnimEffect = effectToBePlayed;
+
+						aw->animTotalTime =
+								as->
+								opt
+								[ANIM_SCREEN_OPTION_SHADE_DURATION].value.f *
+								1000;
+						aw->animRemainingTime = aw->animTotalTime;
+					}
 				}
 
-				// Store coords in this viewport to omit 3d effect
-				// painting in other viewports
-				aw->lastKnownCoords.x = w->attrib.x;
-				aw->lastKnownCoords.y = w->attrib.y;
+				if (playEffect)
+				{
+					as->animInProgress = TRUE;
+					aw->curWindowEvent = WindowEventUnshade;
 
-				if (animEnsureModel(w, WindowEventUnshade, aw->curAnimEffect))
-					addWindowDamage(w);
-				else
-					postAnimationCleanup(w, TRUE);
+					// Store coords in this viewport to omit 3d effect
+					// painting in other viewports
+					aw->lastKnownCoords.x = w->attrib.x;
+					aw->lastKnownCoords.y = w->attrib.y;
+
+					if (animEnsureModel(w, WindowEventUnshade, aw->curAnimEffect))
+						addWindowDamage(w);
+					else
+						postAnimationCleanup(w, TRUE);
+				}
 			}
 		}
 		else if (aw->state != NormalState && !w->invisible)
@@ -8207,17 +8256,19 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 							aw->animOverrideProgressDir = 0;
 					}
 				}
-				as->animInProgress = TRUE;
-				aw->curWindowEvent = WindowEventCreate;
+
+				Bool playEffect = TRUE;
 
 				if (startingNew)
 				{
-					if (windowsCreateEffect ==
+					AnimEffect effectToBePlayed = windowsCreateEffect;
+
+					if (effectToBePlayed ==
 						AnimEffectRandom
 						|| as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b)
 					{
 						if (whichCreate == 1)
-							aw->curAnimEffect =	// choose a random effect
+							effectToBePlayed =	// choose a random effect
 									as->create1RandomEffects[(int)
 															 (as->
 															  nCreate1RandomEffects
@@ -8225,80 +8276,92 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 															  (double)rand() /
 															  RAND_MAX)];
 						else
-							aw->curAnimEffect =	// choose a random effect
+							effectToBePlayed =	// choose a random effect
 									as->create2RandomEffects[(int)
 															 (as->
 															  nCreate2RandomEffects
 															  *
 															  (double)rand() /
 															  RAND_MAX)];
+
+						// handle empty random effect list
+						if (effectToBePlayed == AnimEffectNone)
+							playEffect = FALSE;
 					}
+					if (playEffect)
+					{
+						aw->curAnimEffect = effectToBePlayed;
+
+						aw->animTotalTime =
+								as->opt[whichCreate == 1 ?
+										ANIM_SCREEN_OPTION_CREATE1_DURATION
+										:
+										ANIM_SCREEN_OPTION_CREATE2_DURATION].
+								value.f * 1000;
+						aw->animRemainingTime = aw->animTotalTime;
+					}
+				}
+
+				if (playEffect)
+				{
+					as->animInProgress = TRUE;
+					aw->curWindowEvent = WindowEventCreate;
+
+					aw->icon.width = FAKE_ICON_SIZE;
+					aw->icon.height = FAKE_ICON_SIZE;
+
+					if (aw->curAnimEffect == AnimEffectMagicLamp &&
+							 aw->icon.width <
+							 as->
+							 opt
+							 [ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
+							 value.i)
+					{
+						aw->icon.width =
+								as->
+								opt
+								[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
+								value.i;
+					}
+					else if (aw->curAnimEffect == AnimEffectMagicLampVacuum &&
+							 aw->icon.width <
+							 as->
+							 opt
+							 [ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
+							 value.i)
+					{
+						aw->icon.width =
+								as->
+								opt
+								[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
+								value.i;
+					}
+					aw->icon.x -= aw->icon.width / 2;
+					aw->icon.y -= aw->icon.height / 2;
+
+					if ((aw->curAnimEffect == AnimEffectZoom ||
+						 aw->curAnimEffect == AnimEffectSidekick) &&
+						(as->zoomFC == ZoomFromCenterOn ||
+						 as->zoomFC == ZoomFromCenterCreate))
+					{
+						aw->icon.x = WIN_X(w) + WIN_W(w) / 2 - aw->icon.width / 2;
+						aw->icon.y =
+								WIN_Y(w) + WIN_H(w) / 2 - aw->icon.height / 2;
+					}
+					aw->state = IconicState;	// we're doing this as a hack, it may not be necessary
+
+					// Store coords in this viewport to omit 3d effect
+					// painting in other viewports
+					if (aw->lastKnownCoords.x != NOT_INITIALIZED)
+					{
+						aw->lastKnownCoords.x = w->attrib.x;
+						aw->lastKnownCoords.y = w->attrib.y;
+					}
+					if (animEnsureModel(w, WindowEventCreate, aw->curAnimEffect))
+						addWindowDamage(w);
 					else
-						aw->curAnimEffect = windowsCreateEffect;
-
-					aw->animTotalTime =
-							as->opt[whichCreate == 1 ?
-									ANIM_SCREEN_OPTION_CREATE1_DURATION
-									:
-									ANIM_SCREEN_OPTION_CREATE2_DURATION].
-							value.f * 1000;
-					aw->animRemainingTime = aw->animTotalTime;
+						postAnimationCleanup(w, TRUE);
 				}
-
-				aw->icon.width = FAKE_ICON_SIZE;
-				aw->icon.height = FAKE_ICON_SIZE;
-
-				if (aw->curAnimEffect == AnimEffectMagicLamp &&
-						 aw->icon.width <
-						 as->
-						 opt
-						 [ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
-						 value.i)
-				{
-					aw->icon.width =
-							as->
-							opt
-							[ANIM_SCREEN_OPTION_MAGIC_LAMP_CREATE_START_WIDTH].
-							value.i;
-				}
-				else if (aw->curAnimEffect == AnimEffectMagicLampVacuum &&
-						 aw->icon.width <
-						 as->
-						 opt
-						 [ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
-						 value.i)
-				{
-					aw->icon.width =
-							as->
-							opt
-							[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].
-							value.i;
-				}
-				aw->icon.x -= aw->icon.width / 2;
-				aw->icon.y -= aw->icon.height / 2;
-
-				if ((aw->curAnimEffect == AnimEffectZoom ||
-					 aw->curAnimEffect == AnimEffectSidekick) &&
-					(as->zoomFC == ZoomFromCenterOn ||
-					 as->zoomFC == ZoomFromCenterCreate))
-				{
-					aw->icon.x = WIN_X(w) + WIN_W(w) / 2 - aw->icon.width / 2;
-					aw->icon.y =
-							WIN_Y(w) + WIN_H(w) / 2 - aw->icon.height / 2;
-				}
-				aw->state = IconicState;	// we're doing this as a hack, it may not be necessary
-
-				// Store coords in this viewport to omit 3d effect
-				// painting in other viewports
-				if (aw->lastKnownCoords.x != NOT_INITIALIZED)
-				{
-					aw->lastKnownCoords.x = w->attrib.x;
-					aw->lastKnownCoords.y = w->attrib.y;
-				}
-				if (animEnsureModel(w, WindowEventCreate, aw->curAnimEffect))
-					addWindowDamage(w);
-				else
-					postAnimationCleanup(w, TRUE);
 			}
 		}
 
@@ -8583,37 +8646,37 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 							   NUM_MINIMIZE_EFFECT,
 							   as->minimizeRandomEffects,
 							   &as->nMinimizeRandomEffects,
-							   AnimEffectNone /* FIXME */);
+							   AnimEffectNone);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CLOSE1_RANDOM_EFFECTS].value,
 							   closeEffectType,
 							   NUM_CLOSE_EFFECT,
 							   as->close1RandomEffects,
 							   &as->nClose1RandomEffects,
-							   AnimEffectNone /* FIXME */);
+							   AnimEffectNone);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CLOSE2_RANDOM_EFFECTS].value,
 							   closeEffectType,
 							   NUM_CLOSE_EFFECT,
 							   as->close2RandomEffects,
 							   &as->nClose2RandomEffects,
-							   AnimEffectNone /* FIXME */);
+							   AnimEffectNone);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CREATE1_RANDOM_EFFECTS].value,
 							   closeEffectType,
 							   NUM_CLOSE_EFFECT,
 							   as->create1RandomEffects,
 							   &as->nCreate1RandomEffects,
-							   AnimEffectNone /* FIXME */);
+							   AnimEffectNone);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_CREATE2_RANDOM_EFFECTS].value,
 							   closeEffectType,
 							   NUM_CLOSE_EFFECT,
 							   as->create2RandomEffects,
 							   &as->nCreate2RandomEffects,
-							   AnimEffectNone /* FIXME */);
+							   AnimEffectNone);
 	animStoreRandomEffectList (&as->opt[ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS].value,
 							   shadeEffectType,
 							   NUM_SHADE_EFFECT,
 							   as->shadeRandomEffects,
 							   &as->nShadeRandomEffects,
-							   AnimEffectNone /* FIXME */);
+							   AnimEffectNone);
 
 	as->zoomFC = zoomFromCenterFromString (
 			&as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value);
