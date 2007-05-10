@@ -7583,7 +7583,7 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 						else if (aw->curAnimEffect == AnimEffectMagicLampVacuum)
 							aw->icon.width =
 								MAX(aw->icon.width,
-									as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].value.i)
+									as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].value.i);
 
 						if ((aw->curAnimEffect == AnimEffectZoom || 
 							 aw->curAnimEffect == AnimEffectSidekick) &&
@@ -8079,7 +8079,7 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 					else if (aw->curAnimEffect == AnimEffectMagicLampVacuum)
 						aw->icon.width =
 							MAX(aw->icon.width,
-								as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].value.i)
+								as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].value.i);
 
 					aw->icon.x -= aw->icon.width / 2;
 					aw->icon.y -= aw->icon.height / 2;
