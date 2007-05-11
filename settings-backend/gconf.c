@@ -335,61 +335,101 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 {
 	char itemPath[BUFSIZE];
 	GError *err = NULL;
-	char *buffer;
-	Bool boolVal;
-	int intVal;
 	Bool ret = FALSE;
+	GConfValue *gconfValue;
 
 	CCSSettingActionValue action;
 	memset(&action, 0, sizeof(CCSSettingActionValue));
 
 	snprintf(itemPath, 512, "%s/bell", pathName);
-	boolVal = gconf_client_get_bool(client, itemPath, &err);
-	if (!err) {
-		action.onBell = boolVal;
+	gconfValue = gconf_client_get(client, itemPath, &err);
+	if (!err && gconfValue)
+	{
+		action.onBell = gconf_value_get_bool(gconfValue);
 		ret = TRUE;
-	} else {
-		g_error_free(err);
 	}
+	if (err)
+	{
+		g_error_free(err);
+		err = NULL;
+	}
+	if (gconfValue)
+		gconf_value_free(gconfValue);
 
 	snprintf(itemPath, 512, "%s/edge", pathName);
-	buffer = gconf_client_get_string(client, itemPath, &err);
-	if (!err && buffer) {
-		ccsStringToEdge(buffer, &action);
-		ret = TRUE;
-		g_free(buffer);
-	} else if (err) {
-		g_error_free(err);
+	gconfValue = gconf_client_get(client, itemPath, &err);
+	if (!err && gconfValue)
+	{
+		const char* buffer;
+		buffer = gconf_value_get_string(gconfValue);
+		if (buffer)
+		{
+			ccsStringToEdge(buffer, &action);
+			ret = TRUE;
+		}
 	}
+	if (err)
+	{
+		g_error_free(err);
+		err = NULL;
+	}
+	if (gconfValue)
+		gconf_value_free(gconfValue);
 
 	snprintf(itemPath, 512, "%s/edgebutton", pathName);
-	intVal = gconf_client_get_int(client, itemPath, &err);
-	if (!err) {
-		action.edgeButton = intVal;
+	gconfValue = gconf_client_get(client, itemPath, &err);
+	if (!err && gconfValue) 
+	{
+		action.edgeButton = gconf_value_get_int(gconfValue);
 		ret = TRUE;
-	} else {
-		g_error_free(err);
 	}
+	if (err)
+	{
+		g_error_free(err);
+		err = NULL;
+	}
+	if (gconfValue)
+		gconf_value_free(gconfValue);
 
 	snprintf(itemPath, 512, "%s/key", pathName);
-	buffer = gconf_client_get_string(client, itemPath, &err);
-	if (!err && buffer) {
-		ccsStringToKeyBinding(buffer, &action);
-		ret = TRUE;
-		g_free(buffer);
-	} else if (err) {
-		g_error_free(err);
+	gconfValue = gconf_client_get(client, itemPath, &err);
+	if (!err && gconfValue) 
+	{
+		const char* buffer;
+		buffer = gconf_value_get_string(gconfValue);
+		if (buffer)
+		{
+			ccsStringToKeyBinding(buffer, &action);
+			ret = TRUE;
+		}
 	}
+	if (err)
+	{
+		g_error_free(err);
+		err = NULL;
+	}
+	if (gconfValue)
+		gconf_value_free(gconfValue);
 
 	snprintf(itemPath, 512, "%s/button", pathName);
-	buffer = gconf_client_get_string(client, itemPath, &err);
-	if (!err && buffer) {
-		ccsStringToButtonBinding(buffer, &action);
-		ret = TRUE;
-		g_free(buffer);
-	} else if (err) {
-		g_error_free(err);
+	gconfValue = gconf_client_get(client, itemPath, &err);
+	if (!err && gconfValue) 
+	{
+		const char* buffer;
+		buffer = gconf_value_get_string(gconfValue);
+		if (buffer)
+		{
+			ccsStringToButtonBinding(buffer, &action);
+			ret = TRUE;
+		}
 	}
+	if (err)
+	{
+		g_error_free(err);
+		err = NULL;
+	}
+	if (gconfValue)
+		gconf_value_free(gconfValue);
 
 	if (ret) 
 		ccsSetAction(setting, action);
@@ -397,13 +437,12 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 	return ret;
 }
 
-static Bool readListValue(CCSSetting * setting, char * pathName)
+static Bool readListValue(CCSSetting * setting, GConfValue * gconfValue)
 {
-	GSList *valueList = NULL;
-	GError *err = NULL;
 	GConfValueType valueType;
 	unsigned int nItems, i = 0;
 	CCSSettingValueList list = NULL;
+	GSList *valueList = NULL;
 
 	switch (setting->info.forList.listType)
 	{
@@ -429,12 +468,10 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 	if (valueType == GCONF_VALUE_INVALID)
 		return FALSE;
 
-	valueList = gconf_client_get_list(client, pathName, valueType, &err);
-	if (err)
-	{
-		g_error_free(err);
+	if (valueType != gconf_value_get_list_type(gconfValue))
 		return FALSE;
-	}
+
+	valueList = gconf_value_get_list(gconfValue);
 
 	if (!valueList)
 		return FALSE;
@@ -446,9 +483,8 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 		case TypeBool:
 			{
 				Bool *array = malloc(nItems * sizeof(Bool));
-				GSList *tmpList = valueList;
-				for (; tmpList; tmpList = tmpList->next, i++)
-					array[i] = (GPOINTER_TO_INT(tmpList->data)) ? TRUE : FALSE;
+				for (; valueList; valueList = valueList->next, i++)
+					array[i] = (GPOINTER_TO_INT(valueList->data)) ? TRUE : FALSE;
 				list = ccsGetValueListFromBoolArray(array, nItems, setting);
 				free(array);
 			}
@@ -456,9 +492,8 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 		case TypeInt:
 			{
 				int *array = malloc(nItems * sizeof(int));
-				GSList *tmpList = valueList;
-				for (; tmpList; tmpList = tmpList->next, i++)
-					array[i] = GPOINTER_TO_INT(tmpList->data);
+				for (; valueList; valueList = valueList->next, i++)
+					array[i] = GPOINTER_TO_INT(valueList->data);
 				list = ccsGetValueListFromIntArray(array, nItems, setting);
 				free(array);
 			}
@@ -466,12 +501,8 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 		case TypeFloat:
 			{
 				float *array = malloc(nItems * sizeof(float));
-				GSList *tmpList = valueList;
-				for (; tmpList; tmpList = tmpList->next, i++)
-				{
-					array[i] = *((gdouble*)tmpList->data);
-					g_free(tmpList->data);
-				}
+				for (; valueList; valueList = valueList->next, i++)
+					array[i] = *((gdouble*)valueList->data);
 				list = ccsGetValueListFromFloatArray(array, nItems, setting);
 				free(array);
 			}
@@ -480,12 +511,8 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 		case TypeMatch:
 			{
 				char **array = malloc(nItems * sizeof(char*));
-				GSList *tmpList = valueList;
-				for (; tmpList; tmpList = tmpList->next, i++)
-				{
-					array[i] = strdup(tmpList->data);
-					g_free(tmpList->data);
-				}
+				for (; valueList; valueList = valueList->next, i++)
+					array[i] = strdup(valueList->data);
 				list = ccsGetValueListFromStringArray(array, nItems, setting);
 				for (i = 0; i < nItems; i++)
 					free(array[i]);
@@ -495,12 +522,10 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 		case TypeColor:
 			{
 				CCSSettingColorValue *array = malloc(nItems * sizeof(CCSSettingColorValue));
-				GSList *tmpList = valueList;
-				for (; tmpList; tmpList = tmpList->next, i++)
+				for (; valueList; valueList = valueList->next, i++)
 				{
 					memset(&array[i], 0, sizeof(CCSSettingColorValue));
-					ccsStringToColor(tmpList->data, &array[i]);
-					g_free(tmpList->data);
+					ccsStringToColor(valueList->data, &array[i]);
 				}
 				list = ccsGetValueListFromColorArray(array, nItems, setting);
 				free(array);
@@ -509,9 +534,6 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 		default:
 			break;
 	}
-
-	if (valueList)
-		g_slist_free(valueList);
 
 	if (list)
 	{
@@ -649,27 +671,29 @@ static Bool readOption(CCSSetting * setting)
 	KEYNAME;
 	PATHNAME;
 
-	/* first check if the key is set */
-	gconfValue = gconf_client_get_without_default(client, pathName, &err);
-	if (err)
+	/* first check if the key is set, but only if the setting
+	   type is not action - actions are in a subtree and handled
+	   separately */
+	if (setting->type != TypeAction)
 	{
-		g_error_free(err);
-		return FALSE;
+		gconfValue = gconf_client_get_without_default(client, pathName, &err);
+		if (err)
+		{
+			g_error_free(err);
+			return FALSE;
+		}
+		if (!gconfValue)
+			/* value is not set */
+			return FALSE;
 	}
-	if (!gconfValue)
-		/* value is not set */
-		return FALSE;
-
-	gconf_value_free(gconfValue);
 
 	switch (setting->type)
 	{
 		case TypeString:
 			{
-				gchar *value;
-				value = gconf_client_get_string(client, pathName, &err);
-
-				if (!err && value) 
+				const char *value;
+				value = gconf_value_get_string(gconfValue);
+				if (value)
 				{
 					ccsSetString(setting, value);
 					ret = TRUE;
@@ -678,10 +702,9 @@ static Bool readOption(CCSSetting * setting)
 			break;
 		case TypeMatch:
 			{
-				gchar * value;
-				value = gconf_client_get_string(client, pathName, &err);
-
-				if (!err && value)
+				const char * value;
+				value = gconf_value_get_string(gconfValue);
+				if (value)
 				{
 					ccsSetMatch(setting, value);
 					ret = TRUE;
@@ -691,57 +714,45 @@ static Bool readOption(CCSSetting * setting)
 		case TypeInt:
 			{
 				int value;
-				value = gconf_client_get_int(client, pathName, &err);
+				value = gconf_value_get_int(gconfValue);
 
-				if (!err)
-				{
-					ccsSetInt(setting, value);
-					ret = TRUE;
-				}
+				ccsSetInt(setting, value);
+				ret = TRUE;
 			}
 			break;
 		case TypeBool:
 			{
 				gboolean value;
-				value = gconf_client_get_bool(client, pathName, &err);
+				value = gconf_value_get_bool(gconfValue);
 
-				if (!err)
-				{
-					ccsSetBool(setting, value ? TRUE : FALSE);
-					ret = TRUE;
-				}
+				ccsSetBool(setting, value ? TRUE : FALSE);
+				ret = TRUE;
 			}
 			break;
 		case TypeFloat:
 			{
-				float value;
-				value = gconf_client_get_float(client, pathName, &err);
+				double value;
+				value = gconf_value_get_float(gconfValue);
 
-				if (!err)
-				{
-					ccsSetFloat(setting, value);
-					ret = TRUE;
-				}
+				ccsSetFloat(setting, (float)value);
+				ret = TRUE;
 			}
 			break;
 		case TypeColor:
 			{
-				gchar *value;
+				const char *value;
 				CCSSettingColorValue color;
-				value = gconf_client_get_string(client, pathName, &err);
+				value = gconf_value_get_string(gconfValue);
 
-				if (!err && value && ccsStringToColor(value, &color))
+				if (value && ccsStringToColor(value, &color))
 				{
 					ccsSetColor(setting, color);
 					ret = TRUE;
 				}
-
-				if (value)
-					g_free(value);
 			}
 			break;
 		case TypeList:
-			ret = readListValue(setting, pathName);
+			ret = readListValue(setting, gconfValue);
 			break;
 		case TypeAction:
 			ret = readActionValue(setting, pathName);
@@ -751,8 +762,8 @@ static Bool readOption(CCSSetting * setting)
 			break;
 	}
 
-	if (err)
-		g_error_free(err);
+	if (gconfValue)
+		gconf_value_free(gconfValue);
 
 	return ret;
 }
