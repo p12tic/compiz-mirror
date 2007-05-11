@@ -436,9 +436,25 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 		return FALSE;
 	}
 
-	/* FIXME: distinguish between unset value and empty list */
 	if (!valueList)
-		return FALSE;
+	{
+		GConfValue *rawList;
+		rawList = gconf_client_get(client, pathName, &err);
+		if (err)
+		{
+			/* unset value */
+			g_error_free(err);
+			return FALSE;
+		}
+		else
+		{
+			/* empty list */
+			if (rawList)
+				g_free(rawList);
+			ccsSetList(setting, NULL);
+			return TRUE;
+		}
+	}
 
 	nItems = g_slist_length(valueList);
 
