@@ -437,24 +437,7 @@ static Bool readListValue(CCSSetting * setting, char * pathName)
 	}
 
 	if (!valueList)
-	{
-		GConfValue *rawList;
-		rawList = gconf_client_get(client, pathName, &err);
-		if (err)
-		{
-			/* unset value */
-			g_error_free(err);
-			return FALSE;
-		}
-		else
-		{
-			/* empty list */
-			if (rawList)
-				g_free(rawList);
-			ccsSetList(setting, NULL);
-			return TRUE;
-		}
-	}
+		return FALSE;
 
 	nItems = g_slist_length(valueList);
 
@@ -660,10 +643,24 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 
 static Bool readOption(CCSSetting * setting)
 {
+	GConfValue *gconfValue = NULL;
 	GError *err = NULL;
 	Bool ret = FALSE;
 	KEYNAME;
 	PATHNAME;
+
+	/* first check if the key is set */
+	gconfValue = gconf_client_get_without_default(client, pathName, &err);
+	if (err)
+	{
+		g_error_free(err);
+		return FALSE;
+	}
+	if (!gconfValue)
+		/* value is not set */
+		return FALSE;
+
+	gconf_value_free(gconfValue);
 
 	switch (setting->type)
 	{
