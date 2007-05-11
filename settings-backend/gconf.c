@@ -626,9 +626,11 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 
 				if (!err && modifier)
 				{
-					unsigned int i;
+					unsigned int i, modMask;
 					CCSPlugin *p;
 					CCSSetting *s;
+
+					modMask = ccsStringToModifiers(modifier);
 
 					for (i = 0; i < N_SOPTIONS; i++)
 					{
@@ -644,12 +646,13 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 								{
 									CCSSettingActionValue action;
 									action = s->value->value.asAction;
-									action.buttonModMask = setting->value->value.asAction.buttonModMask;
+									action.buttonModMask = modMask;
 									ccsSetAction (s, action);
 								}
 							}
 						}
 					}
+					g_free (modifier);
 				}
 			}
 			break;
