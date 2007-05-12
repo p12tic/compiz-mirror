@@ -7219,7 +7219,7 @@ static void animHandleCompizEvent(CompDisplay * d, char *pluginName,
 			if (s)
 			{
 				ANIM_SCREEN(s);
-				as->switcherActive = getBoolOptionNamed(option, nOption, "active", FALSE);
+				as->groupTabChangeActive = getBoolOptionNamed(option, nOption, "active", FALSE);
 			}
 		}
 	}
