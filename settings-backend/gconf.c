@@ -115,8 +115,8 @@ struct _SpecialOption {
 
 	{"show_desktop", "core", FALSE, METACITY "/global_keybindings/show_desktop", OptionKey},
 
-	{"initiate", "move", FALSE, METACITY "/window_keybindings/begin_move", OptionKey},
-	{"initiate", "resize", FALSE, METACITY "/window_keybindings/begin_resize", OptionKey},
+	{"initiate", "move", FALSE, METACITY "/window_keybindings/begin_move", OptionSpecial},
+	{"initiate", "resize", FALSE, METACITY "/window_keybindings/begin_resize", OptionSpecial},
 
 	{"next", "switcher", FALSE, METACITY "/global_keybindings/switch_windows", OptionKey},
 	{"prev", "switcher", FALSE, METACITY "/global_keybindings/switch_windows_backward", OptionKey},
@@ -619,40 +619,90 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 					g_free(focusMode);
 				}
 			}
-			else if (strcmp(specialOptions[index].gnomeName, METACITY "/general/mouse_button_modifier") == 0)
+			else if ((strcmp(specialOptions[index].gnomeName, METACITY "/general/mouse_button_modifier") == 0) ||
+				 ((strcmp(specialOptions[index].settingName, "initiate") == 0) &&
+				  ((strcmp(specialOptions[index].pluginName, "move") == 0) || 
+				   (strcmp(specialOptions[index].pluginName, "resize") == 0))))
 			{
-				char *modifier;
-				modifier = gconf_client_get_string(client, specialOptions[index].gnomeName, &err);
+				char *modifier = NULL, *moveBinding = NULL, *resizeBinding = NULL;
+				int modIndex = -1, moveIndex = -1, resizeIndex = -1, i;
 
-				if (!err && modifier)
+				for (i = 0; i < N_SOPTIONS; i++)
 				{
-					unsigned int i, modMask;
-					CCSPlugin *p;
-					CCSSetting *s;
+					if (strcmp(METACITY "/general/mouse_button_modifier", specialOptions[i].gnomeName) == 0)
+						modIndex = i;
+					if (strcmp(METACITY "/window_keybindings/begin_move", specialOptions[i].gnomeName) == 0)
+						moveIndex = i;
+					if (strcmp(METACITY "/window_keybindings/begin_resize", specialOptions[i].gnomeName) == 0)
+						resizeIndex = i;
+				}
 
-					modMask = ccsStringToModifiers(modifier);
+				if ((modIndex != -1) && (moveIndex != -1) && (resizeIndex != -1))
+				{
+					modifier = gconf_client_get_string(client, specialOptions[modIndex].gnomeName, &err);
+					if (!err)
+						moveBinding = gconf_client_get_string(client, specialOptions[moveIndex].gnomeName, &err);
+					if (!err)
+						resizeBinding = gconf_client_get_string(client, specialOptions[resizeIndex].gnomeName, &err);
 
-					for (i = 0; i < N_SOPTIONS; i++)
+					if (!err)
 					{
-						if (strcmp(METACITY "/general/mouse_button_modifier", 
-									specialOptions[i].gnomeName) == 0)
+						unsigned int modMask;
+						CCSPlugin *p;
+						CCSSetting *s;
+						CCSSettingActionValue action;
+
+						modMask = (modifier) ? ccsStringToModifiers(modifier) : 0;
+
+						/* set move binding */
+						p = ccsFindPlugin (context, "move");
+						if (p)
 						{
-							p = ccsFindPlugin (context, (char*) specialOptions[i].pluginName);
-							if (p)
+							s = ccsFindSetting (p, "initiate", FALSE, 0);
+							if (s)
 							{
-								s = ccsFindSetting (p, (char*) specialOptions[i].settingName,
-													specialOptions[i].screen, 0);
-								if (s && (s != setting))
-								{
-									CCSSettingActionValue action;
-									action = s->value->value.asAction;
-									action.buttonModMask = modMask;
-									ccsSetAction (s, action);
-								}
+								action = s->value->value.asAction;
+								if (moveBinding)
+									ccsStringToKeyBinding (moveBinding, &action);
+								action.buttonModMask = modMask;
+								ccsSetAction (s, action);
+							}
+						}
+	
+						/* set resize binding */
+						p = ccsFindPlugin (context, "resize");
+						if (p)
+						{
+							s = ccsFindSetting (p, "initiate", FALSE, 0);
+							if (s)
+							{
+								action = s->value->value.asAction;
+								if (resizeBinding)
+									ccsStringToKeyBinding (resizeBinding, &action);
+								action.buttonModMask = modMask;
+								ccsSetAction (s, action);
+							}
+						}
+	
+						/* set window menu binding */
+						p = ccsFindPlugin (context, "core");	
+						if (p)
+						{
+							s = ccsFindSetting (p, "window_menu", FALSE, 0);
+							if (s)
+							{
+								action = s->value->value.asAction;
+								action.buttonModMask = modMask;
+								ccsSetAction (s, action);
 							}
 						}
 					}
-					g_free (modifier);
+					if (modifier)
+						g_free (modifier);
+					if (moveBinding)
+						g_free (moveBinding);
+					if (resizeBinding)
+						g_free (resizeBinding);
 				}
 			}
 			break;
