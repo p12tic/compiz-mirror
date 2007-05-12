@@ -114,6 +114,8 @@
 #define RAND_FLOAT() ((float)rand() / RAND_MAX)
 #define MIN_WINDOW_GRID_SIZE 10
 
+#define LIST_SIZE(l) (sizeof (l) / sizeof (l[0]))
+
 typedef struct _xy_pair
 {
 	float x, y;
@@ -401,7 +403,7 @@ static AnimEffect minimizeEffectType[] = {
 	AnimEffectSidekick,
 	AnimEffectZoom
 };
-#define NUM_MINIMIZE_EFFECT 17
+#define NUM_MINIMIZE_EFFECT (LIST_SIZE(minimizeEffectType))
 
 static AnimEffect closeEffectType[] = {
 	AnimEffectNone,
@@ -424,14 +426,14 @@ static AnimEffect closeEffectType[] = {
 	AnimEffectWave,
 	AnimEffectZoom
 };
-#define NUM_CLOSE_EFFECT 19
+#define NUM_CLOSE_EFFECT (LIST_SIZE(closeEffectType))
 
 static AnimEffect focusEffectType[] = {
 	AnimEffectNone,
 	AnimEffectFocusFade,
 	AnimEffectWave
 };
-#define NUM_FOCUS_EFFECT 3
+#define NUM_FOCUS_EFFECT (LIST_SIZE(focusEffectType))
 
 static AnimEffect shadeEffectType[] = {
 	AnimEffectNone,
@@ -440,7 +442,7 @@ static AnimEffect shadeEffectType[] = {
 	AnimEffectHorizontalFolds,
 	AnimEffectRollUp
 };
-#define NUM_SHADE_EFFECT 5
+#define NUM_SHADE_EFFECT (LIST_SIZE(shadeEffectType))
 
 typedef struct RestackInfo
 {
@@ -5526,7 +5528,7 @@ static int animGetWindowState(CompWindow * w)
 }
 
 static Bool
-animSetScreenOption(CompPlugin *plugin,
+animSetScreenOptions(CompPlugin *plugin,
 					CompScreen * screen,
 					char *name,
 					CompOptionValue * value)
@@ -8611,7 +8613,7 @@ CompPluginVTable animVTable = {
 	0,
 	0,
 	animGetScreenOptions,
-	animSetScreenOption,
+	animSetScreenOptions,
 	animDeps,
 	sizeof(animDeps) / sizeof(animDeps[0]),
 	0,
