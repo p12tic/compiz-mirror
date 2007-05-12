@@ -7717,6 +7717,11 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 					if (!wi || !isWinVisible(wi))
 						continue;
 
+					// skip if (tabbed and) hidden by Group plugin
+					if (wi->state & (CompWindowStateSkipPagerMask |
+									 CompWindowStateSkipTaskbarMask))
+						continue;
+
 					// skip if shaded
 					AnimWindow *awi = GET_ANIM_WINDOW(wi, as);
 					if (awi && awi->nowShaded)
