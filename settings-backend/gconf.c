@@ -117,6 +117,7 @@ struct _SpecialOption {
 
 	{"initiate", "move", FALSE, METACITY "/window_keybindings/begin_move", OptionSpecial},
 	{"initiate", "resize", FALSE, METACITY "/window_keybindings/begin_resize", OptionSpecial},
+	{"window_menu", "core", FALSE, METACITY "/general/mouse_button_modifier", OptionSpecial},
 
 	{"next", "switcher", FALSE, METACITY "/global_keybindings/switch_windows", OptionKey},
 	{"prev", "switcher", FALSE, METACITY "/global_keybindings/switch_windows_backward", OptionKey},
@@ -204,10 +205,6 @@ struct _SpecialOption {
 	{"autoraise_delay", "core", FALSE, METACITY "/general/auto_raise_delay", OptionInt},
 	{"raise_on_click", "core", FALSE, METACITY "/general/raise_on_click", OptionBool},
 	{"click_to_focus", "core", FALSE, METACITY "/general/focus_mode", OptionSpecial},
-
-	{"initiate", "move", FALSE, METACITY "/general/mouse_button_modifier", OptionSpecial},
-	{"initiate", "resize", FALSE, METACITY "/general/mouse_button_modifier", OptionSpecial},
-	{"window_menu", "core", FALSE, METACITY "/general/mouse_button_modifier", OptionSpecial},
 
 	{"audible_bell", "core", FALSE, METACITY "/general/audible_bell", OptionBool},
 	{"size", "core", TRUE, METACITY "/general/num_workspaces", OptionInt},
@@ -545,6 +542,30 @@ static Bool readListValue(CCSSetting * setting, GConfValue * gconfValue)
 	return FALSE;
 }
 
+static unsigned int
+getGnomeMouseButtonModifier(void)
+{
+	unsigned int modMask = 0;
+	GError *err = NULL;
+	char *value;
+
+	value = gconf_client_get_string(client, METACITY "/general/mouse_button_modifier", &err);
+
+	if (err)
+	{
+		g_error_free(err);
+		return 0;
+	}
+
+	if (!value)
+		return 0;
+
+	modMask = ccsStringToModifiers(value);
+	g_free(value);
+
+	return modMask;
+}
+
 static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int index)
 {
 	GError *err = NULL;
@@ -597,6 +618,8 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 				if (!err && value)
 				{
 					CCSSettingActionValue action;
+					memset(&action, 0, sizeof(CCSSettingActionValue));
+					ccsGetAction(setting, &action);
 					if (ccsStringToKeyBinding(value, &action))
 					{
 						ccsSetAction(setting, action);
@@ -619,90 +642,58 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 					g_free(focusMode);
 				}
 			}
-			else if ((strcmp(specialOptions[index].gnomeName, METACITY "/general/mouse_button_modifier") == 0) ||
-				 ((strcmp(specialOptions[index].settingName, "initiate") == 0) &&
-				  ((strcmp(specialOptions[index].pluginName, "move") == 0) || 
-				   (strcmp(specialOptions[index].pluginName, "resize") == 0))))
+			else if (strcmp(specialOptions[index].settingName, "window_menu") == 0)
 			{
-				char *modifier = NULL, *moveBinding = NULL, *resizeBinding = NULL;
-				int modIndex = -1, moveIndex = -1, resizeIndex = -1, i;
+				CCSSettingActionValue action;
 
-				for (i = 0; i < N_SOPTIONS; i++)
+				memset(&action, 0, sizeof(CCSSettingActionValue));
+				ccsGetAction(setting, &action);
+				action.buttonModMask = getGnomeMouseButtonModifier();
+				action.button = 3;
+				ccsSetAction(setting, action);
+				ret = TRUE;
+			}
+			else if (strcmp(specialOptions[index].settingName, "initiate") == 0)
+			{
+				if (strcmp(specialOptions[index].pluginName, "move") == 0)
 				{
-					if (strcmp(METACITY "/general/mouse_button_modifier", specialOptions[i].gnomeName) == 0)
-						modIndex = i;
-					if (strcmp(METACITY "/window_keybindings/begin_move", specialOptions[i].gnomeName) == 0)
-						moveIndex = i;
-					if (strcmp(METACITY "/window_keybindings/begin_resize", specialOptions[i].gnomeName) == 0)
-						resizeIndex = i;
-				}
+					char *value;
+					value = gconf_client_get_string(client, specialOptions[index].gnomeName, &err);
 
-				if ((modIndex != -1) && (moveIndex != -1) && (resizeIndex != -1))
-				{
-					modifier = gconf_client_get_string(client, specialOptions[modIndex].gnomeName, &err);
-					if (!err)
-						moveBinding = gconf_client_get_string(client, specialOptions[moveIndex].gnomeName, &err);
-					if (!err)
-						resizeBinding = gconf_client_get_string(client, specialOptions[resizeIndex].gnomeName, &err);
-
-					if (!err)
+					if (!err && value)
 					{
-						unsigned int modMask;
-						CCSPlugin *p;
-						CCSSetting *s;
 						CCSSettingActionValue action;
-
-						modMask = (modifier) ? ccsStringToModifiers(modifier) : 0;
-
-						/* set move binding */
-						p = ccsFindPlugin (context, "move");
-						if (p)
+						memset(&action, 0, sizeof(CCSSettingActionValue));
+						ccsGetAction(setting, &action);
+						if (ccsStringToKeyBinding(value, &action))
 						{
-							s = ccsFindSetting (p, "initiate", FALSE, 0);
-							if (s)
-							{
-								action = s->value->value.asAction;
-								if (moveBinding)
-									ccsStringToKeyBinding (moveBinding, &action);
-								action.buttonModMask = modMask;
-								ccsSetAction (s, action);
-							}
+							action.buttonModMask = getGnomeMouseButtonModifier();
+							action.button = 1;
+							ccsSetAction(setting, action);
+							ret = TRUE;
 						}
-	
-						/* set resize binding */
-						p = ccsFindPlugin (context, "resize");
-						if (p)
-						{
-							s = ccsFindSetting (p, "initiate", FALSE, 0);
-							if (s)
-							{
-								action = s->value->value.asAction;
-								if (resizeBinding)
-									ccsStringToKeyBinding (resizeBinding, &action);
-								action.buttonModMask = modMask;
-								ccsSetAction (s, action);
-							}
-						}
-	
-						/* set window menu binding */
-						p = ccsFindPlugin (context, "core");	
-						if (p)
-						{
-							s = ccsFindSetting (p, "window_menu", FALSE, 0);
-							if (s)
-							{
-								action = s->value->value.asAction;
-								action.buttonModMask = modMask;
-								ccsSetAction (s, action);
-							}
-						}
+						g_free(value);
 					}
-					if (modifier)
-						g_free (modifier);
-					if (moveBinding)
-						g_free (moveBinding);
-					if (resizeBinding)
-						g_free (resizeBinding);
+				}
+				else if (strcmp(specialOptions[index].pluginName, "resize") == 0)
+				{
+					char *value;
+					value = gconf_client_get_string(client, specialOptions[index].gnomeName, &err);
+
+					if (!err && value)
+					{
+						CCSSettingActionValue action;
+						memset(&action, 0, sizeof(CCSSettingActionValue));
+						ccsGetAction(setting, &action);
+						if (ccsStringToKeyBinding(value, &action))
+						{
+							action.buttonModMask = getGnomeMouseButtonModifier();
+							action.button = 2;
+							ccsSetAction(setting, action);
+							ret = TRUE;
+						}
+						g_free(value);
+					}
 				}
 			}
 			break;
