@@ -5467,7 +5467,7 @@ AnimEffectProperties animEffectProperties[AnimEffectNum] = {
 	 0, 0, 0, 0, 0, 0},
 	// AnimEffectMagicLampVacuum
 	{0, 0, 0, fxMagicLampModelStep, fxMagicLampInit,
-	 fxMagicLampVacuumInitGrid, 0, 0},
+	 fxMagicLampVacuumInitGrid, 0, 0, 0, 0, 0, 0},
 	// AnimEffectRazr3D
 	{0, polygonsPrePaintWindow, polygonsPostPaintWindow, polygonsAnimStep,
 	 fxDomino3DInit, 0, polygonsStoreClips, polygonsDrawCustomGeometry, 0,
