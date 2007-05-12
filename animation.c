@@ -1782,7 +1782,9 @@ static void
 fxDreamUpdateWindowAttrib(AnimScreen * as,
 						  AnimWindow * aw, WindowPaintAttrib * wAttrib)
 {
-	float forwardProgress =
+	float forwardProgress = 0;
+	if (aw->animTotalTime - aw->timestep != 0)
+		forwardProgress =
 			1 - (aw->animRemainingTime - aw->timestep) /
 			(aw->animTotalTime - aw->timestep);
 	forwardProgress = MIN(forwardProgress, 1);
@@ -2704,7 +2706,9 @@ fxFocusFadeUpdateWindowAttrib(AnimScreen * as,
 							  AnimWindow * aw,
 							  WindowPaintAttrib * wAttrib)
 {
-	float forwardProgress =
+	float forwardProgress = 0;
+	if (aw->animTotalTime - aw->timestep != 0)
+		forwardProgress =
 			1 - (aw->animRemainingTime - aw->timestep) /
 			(aw->animTotalTime - aw->timestep);
 	forwardProgress = MIN(forwardProgress, 1);
@@ -2720,7 +2724,9 @@ fxFocusFadeUpdateWindowAttrib2(AnimScreen * as,
 							   AnimWindow * aw,
 							   WindowPaintAttrib * wAttrib)
 {
-	float forwardProgress =
+	float forwardProgress = 0;
+	if (aw->animTotalTime - aw->timestep != 0)
+		forwardProgress =
 			1 - (aw->animRemainingTime - aw->timestep) /
 			(aw->animTotalTime - aw->timestep);
 	forwardProgress = MIN(forwardProgress, 1);
@@ -3388,7 +3394,9 @@ static void
 fxBeamupUpdateWindowAttrib(AnimScreen * as,
 						   AnimWindow * aw, WindowPaintAttrib * wAttrib)
 {
-	float forwardProgress =
+	float forwardProgress = 0;
+	if (aw->animTotalTime - aw->timestep != 0)
+		forwardProgress =
 			1 - (aw->animRemainingTime - aw->timestep) /
 			(aw->animTotalTime - aw->timestep);
 	forwardProgress = MIN(forwardProgress, 1);
