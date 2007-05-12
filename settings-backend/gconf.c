@@ -953,6 +953,63 @@ static void writeListValue(CCSSetting * setting, char * pathName)
 		g_slist_free(valueList);
 }
 
+static void
+setGnomeMouseButtonModifier(unsigned int modMask)
+{
+	char *modifiers, *currentValue;
+	GError *err = NULL;
+
+	modifiers = ccsModifiersToString(modMask);
+
+	if (!modifiers)
+		modifiers = strdup("");
+
+	currentValue = gconf_client_get_string(client, METACITY "/general/mouse_button_modifier", &err);
+	if (err)
+	{
+		g_error_free(err);
+		return;
+	}
+
+	if (!currentValue || (strcmp(currentValue, modifiers) != 0))
+		gconf_client_set_string(client, METACITY "/general/mouse_button_modifier", modifiers, NULL);
+
+	if (currentValue)
+		g_free(currentValue);
+
+	free(modifiers);
+}
+
+static void
+setButtonBindingForSetting(CCSContext *context, const char *plugin, const char *setting, 
+			   unsigned int button, unsigned int buttonModMask)
+{
+	CCSPlugin *p;
+	CCSSetting *s;
+	CCSSettingActionValue action;
+
+	p = ccsFindPlugin (context, (char*) plugin);
+	if (!p)
+		return;
+
+	s = ccsFindSetting (p, (char*) setting, FALSE, 0);
+	if (!s)
+		return;
+
+	if (s->type != TypeAction)
+		return;
+
+	action = s->value->value.asAction;
+
+	if ((action.button != button) || (action.buttonModMask != buttonModMask))
+	{
+		action.button = button;
+		action.buttonModMask = buttonModMask;
+
+		ccsSetAction (s, action);
+	}
+}
+
 static void writeIntegratedOption(CCSContext * context, CCSSetting * setting, int index)
 {
 	GError *err = NULL;
@@ -1046,62 +1103,45 @@ static void writeIntegratedOption(CCSContext * context, CCSSetting * setting, in
 					g_free(currentValue);
 				}
 			}
-			else if (strcmp(specialOptions[index].gnomeName, METACITY "/general/mouse_button_modifier") == 0)
+			else if (strcmp(specialOptions[index].settingName, "window_menu") == 0)
 			{
-				char *newBinding;
+				unsigned int modMask = setting->value->value.asAction.buttonModMask;
 
-				newBinding = ccsKeyBindingToString(&setting->value->value.asAction);
-				if (newBinding)
+				setGnomeMouseButtonModifier(modMask);
+				setButtonBindingForSetting(context, "move", "initiate", 1, modMask);
+				setButtonBindingForSetting(context, "resize", "initiate", 2, modMask);
+				setButtonBindingForSetting(context, "core", "window_menu", 3, modMask);
+			}
+			else if (strcmp(specialOptions[index].settingName, "initiate") == 0)
+			{
+				if ((strcmp(specialOptions[index].pluginName, "move") == 0) ||
+				    (strcmp(specialOptions[index].pluginName, "resize") == 0))
 				{
-					char *modsEnd;
+					char *newValue;
 					gchar *currentValue;
-					modsEnd = strrchr(newBinding, '>');
-					if (modsEnd)
+					unsigned int modMask;
+
+					modMask = setting->value->value.asAction.buttonModMask;
+					newValue = ccsKeyBindingToString(&setting->value->value.asAction);
+					if (newValue)
 					{
-						*(modsEnd+1) = 0;
-						/* newBinding now only contains the modifiers */
-
 						currentValue = gconf_client_get_string(client, 
-															   specialOptions[index].gnomeName, &err);
+										       specialOptions[index].gnomeName, &err);
 
-						/* write it to GConf */
 						if (!err && currentValue)
 						{
-							unsigned int i;
-							CCSPlugin *p;
-							CCSSetting *s;
-
-							if (strcmp(currentValue, newBinding) != 0)
-								gconf_client_set_string(client, 
-														specialOptions[index].gnomeName, 
-														newBinding, NULL);
+							if (strcmp(currentValue, newValue) != 0)
+								gconf_client_set_string(client, specialOptions[index].gnomeName,
+											newValue, NULL);
 							g_free(currentValue);
-
-							/* and set the other two options */
-
-							for (i = 0; i < N_SOPTIONS; i++)
-							{
-								if (strcmp(METACITY "/general/mouse_button_modifier", 
-										   specialOptions[i].gnomeName) == 0)
-								{
-									p = ccsFindPlugin (context, (char*) specialOptions[i].pluginName);
-									if (p)
-									{
-										s = ccsFindSetting (p, (char*) specialOptions[i].settingName,
-															specialOptions[i].screen, 0);
-										if (s && (s != setting))
-										{
-											CCSSettingActionValue action;
-											action = s->value->value.asAction;
-											action.buttonModMask = setting->value->value.asAction.buttonModMask;
-											ccsSetAction (s, action);
-										}
-									}
-								}
-							}
 						}
+						free(newValue);
 					}
-					free(newBinding);
+
+					setGnomeMouseButtonModifier(modMask);
+					setButtonBindingForSetting(context, "move", "initiate", 1, modMask);
+					setButtonBindingForSetting(context, "resize", "initiate", 2, modMask);
+					setButtonBindingForSetting(context, "core", "window_menu", 3, modMask);
 				}
 			}
 			break;
