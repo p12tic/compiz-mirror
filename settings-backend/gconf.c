@@ -655,7 +655,8 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 			}
 			else if (strcmp(specialOptions[index].settingName, "initiate") == 0)
 			{
-				if (strcmp(specialOptions[index].pluginName, "move") == 0)
+				if ((strcmp(specialOptions[index].pluginName, "move") == 0) ||
+				    (strcmp(specialOptions[index].pluginName, "resize") == 0))
 				{
 					char *value;
 					value = gconf_client_get_string(client, specialOptions[index].gnomeName, &err);
@@ -668,27 +669,10 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 						if (ccsStringToKeyBinding(value, &action))
 						{
 							action.buttonModMask = getGnomeMouseButtonModifier();
-							action.button = 1;
-							ccsSetAction(setting, action);
-							ret = TRUE;
-						}
-						g_free(value);
-					}
-				}
-				else if (strcmp(specialOptions[index].pluginName, "resize") == 0)
-				{
-					char *value;
-					value = gconf_client_get_string(client, specialOptions[index].gnomeName, &err);
-
-					if (!err && value)
-					{
-						CCSSettingActionValue action;
-						memset(&action, 0, sizeof(CCSSettingActionValue));
-						ccsGetAction(setting, &action);
-						if (ccsStringToKeyBinding(value, &action))
-						{
-							action.buttonModMask = getGnomeMouseButtonModifier();
-							action.button = 2;
+							if (strcmp(specialOptions[index].pluginName, "resize") == 0)
+								action.button = 2;
+							else
+								action.button = 1;
 							ccsSetAction(setting, action);
 							ret = TRUE;
 						}
