@@ -573,7 +573,8 @@ typedef struct _AnimScreen
 	Bool aWinWasRestackedJustNow; // a window was restacked this paint round
 
 	Bool switcherActive;
-	Bool scaleActive;
+	Bool groupTabChangeActive;
+	//Bool scaleActive;
 
 	Window *lastClientListStacking; // to store last known stacking order
 	int nLastClientListStacking;
@@ -6117,7 +6118,8 @@ initiateFocusAnimation
 	ANIM_WINDOW(w);
 	ANIM_SCREEN(s);
 
-	if (aw->curWindowEvent != WindowEventNone || as->switcherActive)
+	if (aw->curWindowEvent != WindowEventNone ||
+		as->switcherActive || as->groupTabChangeActive)
 		return;
 
 	if (matchEval (&as->opt[ANIM_SCREEN_OPTION_FOCUS_MATCH].value.match, w) &&
@@ -7196,6 +7198,20 @@ static void animHandleCompizEvent(CompDisplay * d, char *pluginName,
 	if (strcmp(pluginName, "switcher") == 0)
 	{
 		if (strcmp(eventName, "activate") == 0)
+		{
+			Window xid = getIntOptionNamed(option, nOption, "root", 0);
+			CompScreen *s = findScreenAtDisplay(d, xid);
+
+			if (s)
+			{
+				ANIM_SCREEN(s);
+				as->switcherActive = getBoolOptionNamed(option, nOption, "active", FALSE);
+			}
+		}
+	}
+	else if (strcmp(pluginName, "group") == 0)
+	{
+		if (strcmp(eventName, "tabChangeActivate") == 0)
 		{
 			Window xid = getIntOptionNamed(option, nOption, "root", 0);
 			CompScreen *s = findScreenAtDisplay(d, xid);
@@ -8434,7 +8450,8 @@ static Bool animInitScreen(CompPlugin * p, CompScreen * s)
 			&as->opt[ANIM_SCREEN_OPTION_EXPLODE3D_TESS].value);
 
 	as->switcherActive = FALSE;
-	as->scaleActive = FALSE;
+	as->groupTabChangeActive = FALSE;
+	//as->scaleActive = FALSE;
 
 	WRAP(as, s, preparePaintScreen, animPreparePaintScreen);
 	WRAP(as, s, donePaintScreen, animDonePaintScreen);
