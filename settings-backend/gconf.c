@@ -212,6 +212,24 @@ struct _SpecialOption {
 
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOption))
 
+static CCSSetting *
+findDisplaySettingForPlugin (CCSContext *context, char *plugin, char *setting)
+{
+	CCSPlugin *p;
+	CCSSetting *s;
+
+	p = ccsFindPlugin (context, plugin);
+	if (!p)
+		return NULL;
+
+	s = ccsFindSetting (p, setting, FALSE, 0);
+	if (!s)
+		return NULL;
+
+	return s;	
+}
+
+
 static Bool isIntegratedOption(CCSSetting * setting, int * index)
 {
 	unsigned int i;
@@ -297,6 +315,9 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 	char *keyName = (char*) gconf_entry_get_key(entry);
 	int i,num = -1;
 
+	if (!ccsGetIntegrationEnabled(context))
+		return;
+
 	for (i = 0; i < N_SOPTIONS; i++)
 	{
 		if (strcmp(specialOptions[i].gnomeName, keyName) == 0)
@@ -309,23 +330,46 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 	if (num < 0)
 		return;
 
-	CCSPlugin * plugin = NULL;
-	plugin = ccsFindPlugin(context, (char*) specialOptions[num].pluginName);
+	if (strcmp(specialOptions[num].settingName, "mouse_button_modifier") == 0)
+	{
+		CCSSetting *s;
 
-	if (!plugin)
-		return;
+		readInit(context);
 
-	CCSSetting * setting = NULL;
-	/* FIXME: where should we get the screen num from? */
-	setting = ccsFindSetting(plugin, (char*) specialOptions[num].settingName, 
-							specialOptions[num].screen, 0);
+		s = findDisplaySettingForPlugin (context, "core", "window_menu");
+		if (s)
+			readSetting (context, s);
 
-	if (!setting)
-		return;
+		s = findDisplaySettingForPlugin (context, "move", "initiate");
+		if (s)
+			readSetting (context, s);
 
-	readInit(context);
-	readSetting(context, setting);
-	readDone(context);
+		s = findDisplaySettingForPlugin (context, "resize", "initiate");
+		if (s)
+			readSetting (context, s);
+
+		readDone(context);
+	}
+	else
+	{
+		CCSPlugin * plugin = NULL;
+		plugin = ccsFindPlugin(context, (char*) specialOptions[num].pluginName);
+
+		if (!plugin)
+			return;
+
+		CCSSetting * setting = NULL;
+		/* FIXME: where should we get the screen num from? */
+		setting = ccsFindSetting(plugin, (char*) specialOptions[num].settingName, 
+					 specialOptions[num].screen, 0);
+
+		if (!setting)
+			return;
+
+		readInit(context);
+		readSetting(context, setting);
+		readDone(context);
+	}
 }
 
 static Bool readActionValue(CCSSetting * setting, char * pathName)
@@ -566,27 +610,6 @@ getGnomeMouseButtonModifier(void)
 	return modMask;
 }
 
-static CCSSetting *
-findDisplaySettingForPlugin (CCSContext *context, char *plugin, char *setting, int *index)
-{
-	CCSPlugin *p;
-	CCSSetting *s;
-	int i = -1;
-
-	p = ccsFindPlugin (context, plugin);
-	if (!p)
-		return NULL;
-
-	s = ccsFindSetting (p, setting, FALSE, 0);
-	if (!s)
-		return NULL;
-
-	if (index && isIntegratedOption (s, &i))
-		*index = i;
-
-	return s;	
-}
-
 static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int index)
 {
 	GError *err = NULL;
@@ -662,23 +685,6 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 					ccsSetBool(setting, clickToFocus);
 					g_free(focusMode);
 				}
-			}
-			else if (strcmp(specialOptions[index].settingName, "mouse_button_modifier") == 0)
-			{
-				CCSSetting *s;
-				int i;
-
-				s = findDisplaySettingForPlugin (context, "core", "window_menu", &i);
-				if (s)
-					readIntegratedOption (context, s, i);
-
-				s = findDisplaySettingForPlugin (context, "move", "initiate", &i);
-				if (s)
-					readIntegratedOption (context, s, i);
-
-				s = findDisplaySettingForPlugin (context, "resize", "initiate", &i);
-				if (s)
-					readIntegratedOption (context, s, i);
 			}
 			else if (((strcmp(specialOptions[index].settingName, "initiate") == 0) &&
 				  ((strcmp(specialOptions[index].pluginName, "move") == 0) ||
@@ -998,7 +1004,7 @@ setButtonBindingForSetting(CCSContext *context, const char *plugin, const char *
 	CCSSetting *s;
 	CCSSettingActionValue action;
 
-	s = findDisplaySettingForPlugin (context, (char*) plugin, (char*) setting, NULL);
+	s = findDisplaySettingForPlugin (context, (char*) plugin, (char*) setting);
 	if (!s)
 		return;
 
@@ -1246,9 +1252,8 @@ static Bool initBackend(CCSContext * context)
 	backendNotifyId = gconf_client_notify_add(client, COMPIZ_CCS, valueChanged,
 											  context, NULL, NULL);
 
-	if (ccsGetIntegrationEnabled(context))
-		gnomeNotifyId = gconf_client_notify_add(client, METACITY,
-												gnomeValueChanged, context, NULL,NULL);
+	gnomeNotifyId = gconf_client_notify_add(client, METACITY,
+											gnomeValueChanged, context, NULL,NULL);
 
 	gconf_client_add_dir(client, COMPIZ_CCS, GCONF_CLIENT_PRELOAD_NONE, NULL);
 	gconf_client_add_dir(client, METACITY, GCONF_CLIENT_PRELOAD_NONE, NULL);
