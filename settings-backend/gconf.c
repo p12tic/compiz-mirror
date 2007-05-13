@@ -265,14 +265,15 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 
 	keyName += strlen(COMPIZ_CCS) + 1;
 
-	pluginName = keyName;
 	keyName = strchr(keyName, '/');
+	pluginName = keyName + 1;
+	keyName = strchr(keyName + 1, '/'); /* skip profile */
 	*keyName = 0;
 	keyName++;
 
 	if (strcmp(pluginName, "general") == 0)
 	{
-		pluginName = NULL;
+		pluginName = "core";
 	} else {
 		pluginName = keyName;
 	}
@@ -300,12 +301,9 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 	if (!setting)
 		return;
 
-	if (ccsGetIntegrationEnabled(context) && !isIntegratedOption(setting, NULL))
-	{
-		readInit(context);
-		readSetting(context, setting);
-		readDone(context);
-	}
+	readInit(context);
+	readSetting(context, setting);
+	readDone(context);
 }
 
 static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
