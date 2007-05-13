@@ -59,17 +59,17 @@
 
 #define KEYNAME     char keyName[BUFSIZE]; \
                     if (setting->isScreen) \
-                        snprintf(keyName, BUFSIZE, "screen%d/%s", setting->screenNum, setting->name); \
+                        snprintf(keyName, BUFSIZE, "screen%d", setting->screenNum); \
                     else \
-                        snprintf(keyName, BUFSIZE, "allscreens/%s", setting->name);
+                        snprintf(keyName, BUFSIZE, "allscreens");
 
 #define PATHNAME    char pathName[BUFSIZE]; \
 					if (!setting->parent->name || strcmp(setting->parent->name, "core") == 0) \
-						snprintf(pathName, BUFSIZE, "%s/%s/general/%s", COMPIZ_CCS, \
-							 currentProfile, keyName); \
+						snprintf(pathName, BUFSIZE, "%s/%s/general/%s/options/%s", COMPIZ_CCS, \
+							 currentProfile, keyName, setting->name); \
 					else \
-						snprintf(pathName, BUFSIZE, "%s/%s/plugins/%s/%s", COMPIZ_CCS, \
-							 currentProfile, setting->parent->name, keyName);
+						snprintf(pathName, BUFSIZE, "%s/%s/plugins/%s/%s/options/%s", COMPIZ_CCS, \
+							 currentProfile, setting->parent->name, keyName, setting->name);
 
 GConfClient *client = NULL;
 
@@ -258,49 +258,43 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 
 	char *keyName = (char*) gconf_entry_get_key(entry);
 	char *pluginName;
-	char *screenName;
-	char *settingName;
+	char *token;
 	Bool isScreen;
 	unsigned int screenNum;
 
 	keyName += strlen(COMPIZ_CCS) + 1;
 
-	keyName = strchr(keyName, '/');
-	pluginName = keyName + 1;
-	keyName = strchr(keyName + 1, '/'); /* skip profile */
-	*keyName = 0;
-	keyName++;
-
-	if (strcmp(pluginName, "general") == 0)
+	token = strsep(&keyName, "/"); /* profile */
+	token = strsep(&keyName, "/"); /* plugin */
+	if (strcmp(token, "general") == 0)
 	{
 		pluginName = "core";
 	} else {
-		pluginName = keyName;
+		token = strsep(&keyName, "/");
+		pluginName = token;
 	}
-
-	screenName = keyName;
-	keyName = strchr(keyName, '/');
-	*keyName = 0;
-	keyName++;
-
-	settingName = keyName;
 
 	CCSPlugin *plugin = ccsFindPlugin(context, pluginName);
 	if (!plugin)
 		return;
 
-	if (strcmp(screenName, "allscreens") == 0)
+	token = strsep(&keyName, "/");
+
+	if (strcmp(token, "allscreens") == 0)
 		isScreen = FALSE;
 	else
 	{
 		isScreen = TRUE;
-		sscanf(screenName, "screen%d", &screenNum);
+		sscanf(token, "screen%d", &screenNum);
 	}
 
-	CCSSetting *setting = ccsFindSetting(plugin, settingName, isScreen, screenNum);
+	token = strsep(&keyName, "/");
+	token = strsep(&keyName, "/");
+
+	CCSSetting *setting = ccsFindSetting(plugin, token, isScreen, screenNum);
 	if (!setting)
 		return;
-
+	
 	readInit(context);
 	readSetting(context, setting);
 	readDone(context);
@@ -380,7 +374,7 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 	CCSSettingActionValue action;
 	memset(&action, 0, sizeof(CCSSettingActionValue));
 
-	snprintf(itemPath, 512, "%s/bell", pathName);
+	snprintf(itemPath, 512, "%s_bell", pathName);
 	gconfValue = gconf_client_get(client, itemPath, &err);
 	if (!err && gconfValue)
 	{
@@ -395,7 +389,7 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 	if (gconfValue)
 		gconf_value_free(gconfValue);
 
-	snprintf(itemPath, 512, "%s/edge", pathName);
+	snprintf(itemPath, 512, "%s_edge", pathName);
 	gconfValue = gconf_client_get(client, itemPath, &err);
 	if (!err && gconfValue)
 	{
@@ -423,7 +417,7 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 	if (gconfValue)
 		gconf_value_free(gconfValue);
 
-	snprintf(itemPath, 512, "%s/edgebutton", pathName);
+	snprintf(itemPath, 512, "%s_edgebutton", pathName);
 	gconfValue = gconf_client_get(client, itemPath, &err);
 	if (!err && gconfValue) 
 	{
@@ -438,7 +432,7 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 	if (gconfValue)
 		gconf_value_free(gconfValue);
 
-	snprintf(itemPath, 512, "%s/key", pathName);
+	snprintf(itemPath, 512, "%s_key", pathName);
 	gconfValue = gconf_client_get(client, itemPath, &err);
 	if (!err && gconfValue) 
 	{
@@ -458,7 +452,7 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 	if (gconfValue)
 		gconf_value_free(gconfValue);
 
-	snprintf(itemPath, 512, "%s/button", pathName);
+	snprintf(itemPath, 512, "%s_button", pathName);
 	gconfValue = gconf_client_get(client, itemPath, &err);
 	if (!err && gconfValue) 
 	{
@@ -843,7 +837,7 @@ static void writeActionValue(CCSSettingActionValue * action, char * pathName)
 	CCSStringList edgeList, l;
 	GSList *list = NULL;
 
-	snprintf(itemPath, BUFSIZE, "%s/edge", pathName);
+	snprintf(itemPath, BUFSIZE, "%s_edge", pathName);
 	edgeList = ccsEdgesToStringList (action);
 	for (l = edgeList; l; l = l->next)
 		list = g_slist_append(list, l->data);
@@ -854,13 +848,13 @@ static void writeActionValue(CCSSettingActionValue * action, char * pathName)
 	if (list)
 		g_slist_free (list);
 
-	snprintf(itemPath, BUFSIZE, "%s/bell", pathName);
+	snprintf(itemPath, BUFSIZE, "%s_bell", pathName);
 	gconf_client_set_bool(client, itemPath, action->onBell, NULL);
 
-	snprintf(itemPath, BUFSIZE, "%s/edgebutton", pathName);
+	snprintf(itemPath, BUFSIZE, "%s_edgebutton", pathName);
 	gconf_client_set_int(client, itemPath, action->edgeButton, NULL);
 
-	snprintf(itemPath, BUFSIZE, "%s/button", pathName);
+	snprintf(itemPath, BUFSIZE, "%s_button", pathName);
 	buffer = ccsButtonBindingToString(action);
 	if (buffer)
 	{
@@ -868,7 +862,7 @@ static void writeActionValue(CCSSettingActionValue * action, char * pathName)
 		free(buffer);
 	}
 
-	snprintf(itemPath, BUFSIZE, "%s/key", pathName);
+	snprintf(itemPath, BUFSIZE, "%s_key", pathName);
 	buffer = ccsKeyBindingToString(action);
 	if (buffer)
 	{
