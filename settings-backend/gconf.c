@@ -399,12 +399,20 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 	gconfValue = gconf_client_get(client, itemPath, &err);
 	if (!err && gconfValue)
 	{
-		const char* buffer;
-		buffer = gconf_value_get_string(gconfValue);
-		if (buffer)
+		if ((gconfValue->type == GCONF_VALUE_LIST ) &&
+		    (gconf_value_get_list_type(gconfValue) == GCONF_VALUE_STRING))
 		{
-			ccsStringToEdge(buffer, &action);
-			ret = TRUE;
+			GSList *list;
+			CCSStringList edgeList = NULL;
+
+			list = gconf_value_get_list(gconfValue);
+			for ( ; list; list = list->next)
+				edgeList = ccsStringListAppend (edgeList, list->data);
+
+			ccsStringListToEdges (edgeList, &action);
+
+			if (edgeList)
+				ccsStringListFree (edgeList, FALSE);
 		}
 	}
 	if (err)
@@ -832,14 +840,19 @@ static void writeActionValue(CCSSettingActionValue * action, char * pathName)
 {
 	char *buffer;
 	char itemPath[BUFSIZE];
+	CCSStringList edgeList, l;
+	GSList *list = NULL;
 
 	snprintf(itemPath, BUFSIZE, "%s/edge", pathName);
-	buffer = ccsEdgeToString(action);
-	if (buffer)
-	{
-		gconf_client_set_string(client, itemPath, buffer, NULL);
-		free(buffer);
-	}
+	edgeList = ccsEdgesToStringList (action);
+	for (l = edgeList; l; l = l->next)
+		list = g_slist_append(list, l->data);
+
+	gconf_client_set_list(client, itemPath, GCONF_VALUE_STRING, list, NULL);
+	if (edgeList)
+		ccsStringListFree (edgeList, TRUE);
+	if (list)
+		g_slist_free (list);
 
 	snprintf(itemPath, BUFSIZE, "%s/bell", pathName);
 	gconf_client_set_bool(client, itemPath, action->onBell, NULL);
