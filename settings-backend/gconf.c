@@ -1448,7 +1448,6 @@ static CCSStringList getExistingProfiles(void)
 		{
 			buffer = calloc (1, (len + 1) * sizeof (char));
 			strncpy (buffer, nameList[i]->d_name, len);
-		printf("buffer: %s\n", buffer);
 			if (strcmp(buffer, DEFAULTPROF) != 0) 
 				ret = ccsStringListAppend (ret, buffer);
 			else
