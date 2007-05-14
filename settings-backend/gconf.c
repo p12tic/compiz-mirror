@@ -32,6 +32,7 @@
 #include <string.h>
 #include <malloc.h>
 #include <string.h>
+#include <dirent.h>
 
 #include <ccs.h>
 
@@ -51,7 +52,9 @@
 #define CompScrollLockMask (1 << 22)
 
 #define METACITY    "/apps/metacity"
-#define COMPIZ_CCS   "/apps/compiz/ccs"
+#define COMPIZ_CCS  "/apps/compiz"
+#define EXPORTPATH  ".ccs/"
+#define EXTENSION   ".profile.gconf"
 #define DEFAULTPROF "Default"
 #define CORE_NAME   "core"
 
@@ -65,11 +68,11 @@
 
 #define PATHNAME    char pathName[BUFSIZE]; \
 					if (!setting->parent->name || strcmp(setting->parent->name, "core") == 0) \
-						snprintf(pathName, BUFSIZE, "%s/%s/general/%s/options/%s", COMPIZ_CCS, \
-							 currentProfile, keyName, setting->name); \
+						snprintf(pathName, BUFSIZE, "%s/general/%s/options/%s", COMPIZ_CCS, \
+							 keyName, setting->name); \
 					else \
-						snprintf(pathName, BUFSIZE, "%s/%s/plugins/%s/%s/options/%s", COMPIZ_CCS, \
-							 currentProfile, setting->parent->name, keyName, setting->name);
+						snprintf(pathName, BUFSIZE, "%s/plugins/%s/%s/options/%s", COMPIZ_CCS, \
+							 setting->parent->name, keyName, setting->name);
 
 GConfClient *client = NULL;
 
@@ -80,7 +83,6 @@ static char *currentProfile = NULL;
 /* some forward declarations */
 static Bool readInit(CCSContext * context);
 static void readSetting(CCSContext * context, CCSSetting * setting);
-static void readDone(CCSContext * context);
 
 typedef enum {
 	OptionInt,
@@ -264,7 +266,6 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 
 	keyName += strlen(COMPIZ_CCS) + 1;
 
-	token = strsep(&keyName, "/"); /* profile */
 	token = strsep(&keyName, "/"); /* plugin */
 	if (strcmp(token, "general") == 0)
 	{
@@ -297,7 +298,6 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 	
 	readInit(context);
 	readSetting(context, setting);
-	readDone(context);
 }
 
 static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
@@ -339,8 +339,6 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 		s = findDisplaySettingForPlugin (context, "resize", "initiate");
 		if (s)
 			readSetting (context, s);
-
-		readDone(context);
 	}
 	else
 	{
@@ -360,7 +358,6 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 
 		readInit(context);
 		readSetting(context, setting);
-		readDone(context);
 	}
 }
 
@@ -1242,6 +1239,69 @@ static void writeOption(CCSSetting * setting)
 	}
 }
 
+static char*
+fileNameForProfile (char *profile)
+{
+	char *homeDir = NULL;
+	char *fileName = NULL;
+
+	homeDir = getenv ("HOME");
+
+	if (!homeDir)
+		return NULL;
+
+	if (!profile)
+		profile = DEFAULTPROF;
+
+	asprintf (&fileName, "%s/%s%s%s", homeDir, EXPORTPATH, profile, EXTENSION);
+
+	return fileName;
+
+}
+
+static Bool checkProfile(CCSContext *context)
+{
+	char *profile, *lastProfile;
+	Bool ret = TRUE;
+
+	lastProfile = currentProfile;
+
+	profile = ccsGetProfile(context);
+	if (!profile || !strlen (profile))
+		currentProfile = strdup (DEFAULTPROF);
+	else
+		currentProfile = strdup (profile);
+
+	if (!lastProfile || 
+		(strcmp (lastProfile, currentProfile) != 0))
+	{
+		char *fileName;
+
+		/* export last profile */
+		fileName = fileNameForProfile (lastProfile);
+		if (fileName)
+		{
+			ccsExportToFile (context, fileName);
+			free (fileName);
+		}
+
+		/* import new profile */
+		fileName = fileNameForProfile (currentProfile);
+		if (fileName)
+		{
+			ccsImportFromFile (context, fileName, TRUE);
+			free (fileName);
+		}
+		else
+			ret = FALSE;
+	}
+
+	if (lastProfile)
+		free (lastProfile);
+
+	return ret;
+}
+
 static void processEvents(void)
 {
 	while (g_main_context_pending(NULL))
@@ -1296,20 +1356,7 @@ static Bool finiBackend(CCSContext * context)
 
 static Bool readInit(CCSContext * context)
 {
-	char *profile;
-
-	if (currentProfile)
-		free (currentProfile);
-
-	profile = ccsGetProfile(context);
-	if (!profile)
-		currentProfile = strdup (DEFAULTPROF);
-	else if (!strlen(profile))
-		currentProfile = strdup (DEFAULTPROF);
-	else
-		currentProfile = strdup (profile);
-
-	return TRUE;
+	return checkProfile (context);
 }
 
 static void readSetting(CCSContext * context, CCSSetting * setting)
@@ -1326,26 +1373,9 @@ static void readSetting(CCSContext * context, CCSSetting * setting)
 		ccsResetToDefault(setting);
 }
 
-static void readDone(CCSContext * context)
-{
-}
-
 static Bool writeInit(CCSContext * context)
 {
-	char *profile;
-
-	if (currentProfile)
-		free (currentProfile);
-
-	profile = ccsGetProfile(context);
-	if (!profile)
-		currentProfile = strdup (DEFAULTPROF);
-	else if (!strlen(profile))
-		currentProfile = strdup (DEFAULTPROF);
-	else
-		currentProfile = strdup (profile);
-
-	return TRUE;
+	return checkProfile (context);
 }
 
 static void writeSetting(CCSContext * context, CCSSetting * setting)
@@ -1359,10 +1389,6 @@ static void writeSetting(CCSContext * context, CCSSetting * setting)
 	else
 		writeOption(setting);
 
-}
-
-static void writeDone(CCSContext * context)
-{
 }
 
 static Bool getSettingIsIntegrated(CCSSetting * setting)
@@ -1382,44 +1408,73 @@ static Bool getSettingIsReadOnly(CCSSetting * setting)
 	return FALSE;
 }
 
+static int profileNameFilter (const struct dirent *name)
+{
+	int length = strlen (name->d_name);
+	int extLen = strlen (EXTENSION);
+
+	if (strncmp (name->d_name + length - extLen, EXTENSION, extLen))
+		return 0;
+
+	return 1;
+}
+
 static CCSStringList getExistingProfiles(void)
 {
-	gconf_client_suggest_sync(client,NULL);
-	GSList * data = gconf_client_all_dirs(client, COMPIZ_CCS, NULL);
-	CCSStringList ret = NULL;
-	GSList * tmp = data;
-	char *name;
+	CCSStringList  ret = NULL;
+	struct dirent **nameList;
+	char          *homeDir = NULL;
+	char          *filePath = NULL;
+	char          *buffer;
+	int           nFile, i, len;
 
-	for (;tmp;tmp = g_slist_next(tmp))
+	homeDir = getenv ("HOME");
+	if (!homeDir)
+		return NULL;
+
+	asprintf (&filePath, "%s/%s", homeDir, EXPORTPATH);
+	if (!filePath)
+		return NULL;
+
+	nFile = scandir(filePath, &nameList, profileNameFilter, NULL);
+
+	if (nFile <= 0)
+		return NULL;
+
+	for (i = 0; i < nFile; i++)
 	{
-		name = strrchr(tmp->data, '/');
-		if (name && (strcmp(name+1, DEFAULTPROF) != 0))
-			ret = ccsStringListAppend(ret, strdup(name+1));
-
-		g_free(tmp->data);
+		len = strlen (nameList[i]->d_name) - strlen (EXTENSION);
+		if (len > 0)
+		{
+			buffer = calloc (1, (len + 1) * sizeof (char));
+			strncpy (buffer, nameList[i]->d_name, len);
+		printf("buffer: %s\n", buffer);
+			if (strcmp(buffer, DEFAULTPROF) != 0) 
+				ret = ccsStringListAppend (ret, buffer);
+			else
+				free (buffer);
+		}
+		free(nameList[i]);
 	}
-	g_slist_free(data);
+
+	free (filePath);
+	free (nameList);
 
 	return ret;
 }
 
 static Bool deleteProfile(char * profile)
 {
-	char path[BUFSIZE];
+	char *fileName;
 
-	if (profile && strlen(profile))
-		snprintf(path, BUFSIZE, "%s/%s", COMPIZ_CCS, profile);
-	else
-		snprintf(path, BUFSIZE, "%s/Default", COMPIZ_CCS);
+	fileName = fileNameForProfile (profile);
+	if (!fileName)
+		return FALSE;
 
-	gboolean status = FALSE;
-	if (gconf_client_dir_exists(client, path, NULL))
-	{
-		status = gconf_client_recursive_unset(client, path, 0, NULL);
-		gconf_client_suggest_sync(client,NULL);
-	}
+	remove (fileName);
+	free (fileName);
 
-	return status;
+	return TRUE;
 }
 
 
@@ -1434,10 +1489,10 @@ static CCSBackendVTable gconfVTable = {
     finiBackend,
 	readInit,
 	readSetting,
-	readDone,
+	0,
 	writeInit,
 	writeSetting,
-	writeDone,
+	0,
 	getSettingIsIntegrated,
 	getSettingIsReadOnly,
 	getExistingProfiles,
