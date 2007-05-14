@@ -54,7 +54,7 @@ typedef struct _InfoScreen
   int savedy;
 } InfoScreen;
 
-#define RESIZE_POPUP_WIDTH 80
+#define RESIZE_POPUP_WIDTH 75
 #define RESIZE_POPUP_HEIGHT 50
 
 #define GET_INFO_DISPLAY(d) \
@@ -120,6 +120,7 @@ void updateTextLayer(CompScreen *s)
   int height = is->pWindow->serverHeight;
   int xv = (width-base_width)/width_inc;
   int yv = (height-base_height)/height_inc;
+  unsigned short * color = resizeinfoGetTextColor(s->display);
   
   if (height_inc == 1)
     yv = height-1;
@@ -176,7 +177,7 @@ void updateTextLayer(CompScreen *s)
   pango_layout_set_width(layout, RESIZE_POPUP_WIDTH * PANGO_SCALE);
   pango_cairo_update_layout(cr, layout);
   
-  cairo_set_source_rgba(cr, 0.0f,0.0f,0.0f,1.0f);
+  cairo_set_source_rgba(cr, *(color)/(float)0xffff,*(color+1)/(float)0xffff,*(color+2)/(float)0xffff,*(color+3)/(float)0xffff);
   pango_cairo_show_layout(cr, layout);
 
   pango_font_description_free(font);
@@ -201,6 +202,17 @@ static void drawCairoBackground (CompScreen *s)
 	int height = RESIZE_POPUP_HEIGHT;
 	int width = RESIZE_POPUP_WIDTH;
 	
+#define GET_GRADIENT(NUM) \
+	float r##NUM = resizeinfoGetGradient##NUM##Red(s->display) / (float) 0xffff; \
+	float g##NUM = resizeinfoGetGradient##NUM##Green(s->display) / (float) 0xffff; \
+	float b##NUM = resizeinfoGetGradient##NUM##Blue(s->display) / (float) 0xffff; \
+	float a##NUM = resizeinfoGetGradient##NUM##Alpha(s->display) / (float) 0xffff;
+
+	GET_GRADIENT(1);
+	GET_GRADIENT(2);
+	GET_GRADIENT(3);
+	
+	
 	cairo_set_line_width(cr, 1.0f);
 
 	/* Clear */
@@ -213,9 +225,9 @@ static void drawCairoBackground (CompScreen *s)
 	
 	/* Setup Gradient */
  	pattern = cairo_pattern_create_linear(0, 0, width, height);	
-	cairo_pattern_add_color_stop_rgba(pattern, 0.00f, 0.80, 0.80, 0.90, 0.8);
-	cairo_pattern_add_color_stop_rgba(pattern, 0.65f, 0.95, 0.95, 0.95f, 0.8);
-	cairo_pattern_add_color_stop_rgba(pattern, 0.85f, 0.85, 0.85, 0.85, 0.8);
+	cairo_pattern_add_color_stop_rgba(pattern, 0.00f, r1, g1, b1, a1);
+	cairo_pattern_add_color_stop_rgba(pattern, 0.65f, r2, g2, b2, a2);
+	cairo_pattern_add_color_stop_rgba(pattern, 0.85f, r3, g3, b3, a3);
 	cairo_set_source(cr, pattern);
 	
 	/* Rounded Rectangle! */
@@ -233,6 +245,13 @@ static void drawCairoBackground (CompScreen *s)
 		cairo_pattern_destroy(pattern);
 }
 
+static void gradientChanged (CompDisplay *d, CompOption *o, ResizeinfoDisplayOptions num)
+{
+  CompScreen *s;
+  for (s = d->screens; s; s=s->next)
+    drawCairoBackground(s);
+}
+
 // Setup the background and draw to it
 static void buildCairoBackground (CompScreen *s)
 {
@@ -240,6 +259,10 @@ static void buildCairoBackground (CompScreen *s)
 
   setupCairoLayer(s, &is->backgroundLayer);
   drawCairoBackground(s);
+  
+  resizeinfoSetGradient1Notify(s->display, gradientChanged);
+  resizeinfoSetGradient2Notify(s->display, gradientChanged);
+  resizeinfoSetGradient3Notify(s->display, gradientChanged);
 }
 
 // Set up the layer for text.
