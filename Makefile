@@ -21,10 +21,10 @@
 ## configuration
 
 #enter plugin name here
-PLUGIN = resizeinfo
+PLUGIN = xxx
 
 #enter dependencies here
-PKG_DEP = cairo pango pangocairo
+PKG_DEP =
 
 ## end of configuration
 
@@ -33,7 +33,7 @@ TARGET = compiz
 
 ifeq ($(BUILD_GLOBAL),true)
     DESTDIR = $(shell pkg-config --variable=libdir compiz)/compiz
-    XMLDIR = $(shell pkg-config --variable=prefix compiz)/share/compiz/metadata
+    XMLDIR = $(shell pkg-config --variable=prefix compiz)/share/compiz
 else
     DESTDIR = $(HOME)/.$(TARGET)/plugins
     XMLDIR = $(HOME)/.$(TARGET)/metadata
@@ -62,7 +62,7 @@ schema-output := $(shell if [ -n "$(gen-schemas)" ]; then echo compiz-$(PLUGIN).
 
 # find all the object files (including those from .moc.cpp files)
 
-c-objs := $(patsubst %.c,%.lo,$(shell find -name 'resizeinfo.c' 2> /dev/null | grep -v "$(BUILDDIR)/" | sed -e 's/^.\///'))
+c-objs := $(patsubst %.c,%.lo,$(shell find -name '*.c' 2> /dev/null | grep -v "$(BUILDDIR)/" | sed -e 's/^.\///'))
 c-objs := $(filter-out $(bcop-target-src:.c=.lo),$(c-objs))
 c-objs += $(bcop-target-src:.c=.lo)
 
