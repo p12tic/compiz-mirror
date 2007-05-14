@@ -21,10 +21,10 @@
 ## configuration
 
 #enter plugin name here
-PLUGIN = xxx
+PLUGIN = resizeinfo
 
 #enter dependencies here
-PKG_DEP =
+PKG_DEP = pango cairo pangocairo
 
 ## end of configuration
 
