@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<gconfschemafile>
+  <schemalist>
+    <schema>
+      <key>/schemas/apps/compiz/plugins/resizeinfo/allscreens/options/always_show</key>
+      <applyto>/apps/compiz/plugins/resizeinfo/allscreens/options/always_show</applyto>
+      <owner>compiz</owner>
+      <type>bool</type>
+      <default>false</default>
+      <locale name="C">
+        <short> Show resize info for all windows. </short>
+        <long> Show resize info for all windows as opposed to just
+	  windows with a resize increment of greater than 1. </long>
+      </locale>
+    </schema>
+  </schemalist>
+</gconfschemafile>

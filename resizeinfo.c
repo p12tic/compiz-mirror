@@ -15,6 +15,7 @@
 #include <pango/pangocairo.h>
 
 
+#include "resizeinfo_options.h"
 
 static int displayPrivateIndex;
 
@@ -119,6 +120,11 @@ void updateTextLayer(CompScreen *s)
   int height = is->pWindow->serverHeight;
   int xv = (width-base_width)/width_inc;
   int yv = (height-base_height)/height_inc;
+  
+  if (height_inc == 1)
+    yv = height-1;
+  if (width_inc == 1)
+    xv = width-1;
   
   if ((is->savedx == xv) && (is->savedy == yv))
     return;
@@ -276,7 +282,7 @@ static void infoWindowGrabNotify (CompWindow * w,
 {
 	CompScreen * s = w->screen;
 	INFO_SCREEN(s);
-	if (!((w->sizeHints.width_inc == 1) || (w->sizeHints.height_inc == 1)))
+	if ((!((w->sizeHints.width_inc == 1) || (w->sizeHints.height_inc == 1))) || resizeinfoGetAlwaysShow(s->display))
 	{
 		if (mask & CompWindowGrabResizeMask)
 		{
@@ -533,8 +539,7 @@ static CompPluginVTable infoVTable =
 };
 
 // Get the info vtable.
-CompPluginVTable *
-getCompPluginInfo(void)
+CompPluginVTable * getCompPluginInfo(void)
 {
-	return &infoVTable;
+		return &infoVTable;
 }

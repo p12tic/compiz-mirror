@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<compiz>
+  <plugin name="resizeinfo" useBcop="true">
+    <short>Resize Info</short>
+    <long> Display info on resize similar to metacity </long>
+    <category> Extras </category>
+    <display>
+      <group>
+	<option name="always_show" type="bool">
+	  <short> Show resize info for all windows. </short>
+	  <long> Show resize info for all windows as opposed to just
+	  windows with a resize increment of greater than 1. </long>
+	  <default>false</default>
+	</option>
+      </group>
+    </display>
+  </plugin>
+</compiz>
