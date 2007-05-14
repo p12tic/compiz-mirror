@@ -224,6 +224,7 @@ static void drawCairoBackground (CompScreen *s)
 	cairo_set_source_rgba(cr, 0.9f,0.9f,0.9f,1.0f);
 	cairo_stroke(cr);
 	
+		cairo_pattern_destroy(pattern);
 }
 
 // Setup the background and draw to it
