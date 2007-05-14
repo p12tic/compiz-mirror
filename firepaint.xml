@@ -2,6 +2,7 @@
     <plugin name="firepaint" useBcop="true">
 	<short>Paint fire on the screen</short>
 	<long>Paint fire or other particles on the screen</long>
+	<category>Effects</category>
 	<display>
 	    <option type="action" name="initiate">
 		<short>Initiate</short>
