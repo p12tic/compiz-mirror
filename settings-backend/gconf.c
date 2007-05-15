@@ -267,11 +267,16 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 	keyName += strlen(COMPIZ_CCS) + 1;
 
 	token = strsep(&keyName, "/"); /* plugin */
+	if (!token)
+		return;
+
 	if (strcmp(token, "general") == 0)
 	{
 		pluginName = "core";
 	} else {
 		token = strsep(&keyName, "/");
+		if (!token)
+			return;
 		pluginName = token;
 	}
 
@@ -280,6 +285,8 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 		return;
 
 	token = strsep(&keyName, "/");
+	if (!token)
+		return;
 
 	if (strcmp(token, "allscreens") == 0)
 		isScreen = FALSE;
@@ -289,8 +296,13 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 		sscanf(token, "screen%d", &screenNum);
 	}
 
+	token = strsep(&keyName, "/"); /* 'options' */
+	if (!token)
+		return;
+
 	token = strsep(&keyName, "/");
-	token = strsep(&keyName, "/");
+	if (!token)
+		return;
 
 	CCSSetting *setting = ccsFindSetting(plugin, token, isScreen, screenNum);
 	if (!setting)
