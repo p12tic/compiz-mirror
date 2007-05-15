@@ -121,7 +121,7 @@ void updateTextLayer(CompScreen *s)
   int xv = (width-base_width)/width_inc;
   int yv = (height-base_height)/height_inc;
   unsigned short * color = resizeinfoGetTextColor(s->display);
-  
+ 
   if (height_inc == 1)
     yv = height-1;
   if (width_inc == 1)
@@ -141,9 +141,6 @@ void updateTextLayer(CompScreen *s)
   int w;
   int h;
 
-  xv++;
-  yv++;
-  
   // Clear the context.
   cairo_save(cr);
   cairo_set_operator(cr,CAIRO_OPERATOR_CLEAR);
@@ -152,7 +149,7 @@ void updateTextLayer(CompScreen *s)
   cairo_set_operator(cr,CAIRO_OPERATOR_OVER);
 
   asprintf(&info, "%d x %d", xv, yv);
-  
+ 
   font = pango_font_description_new();
   layout = pango_cairo_create_layout(is->textLayer.cr);
   
