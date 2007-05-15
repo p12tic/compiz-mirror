@@ -5,7 +5,14 @@
     <long> Display info on resize similar to metacity </long>
     <category> Extras </category>
     <display>
-      <group>
+		<group>
+	<option name="fade_time" type="int">
+	  <short>Fade Time</short>
+	  <long>Fade time (in ms) for popup window</long>
+	  <default>500</default>
+	  <min>10</min>
+	  <max>5000</max>
+	</option>
 	<option name="always_show" type="bool">
 	  <short> Show resize info for all windows. </short>
 	  <long> Show resize info for all windows as opposed to just

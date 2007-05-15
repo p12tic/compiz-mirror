@@ -40,12 +40,13 @@ typedef struct _InfoScreen
   WindowUngrabNotifyProc windowUngrabNotify;
   PaintScreenProc paintScreen;
   PreparePaintScreenProc preparePaintScreen;
+  DonePaintScreenProc donePaintScreen;
   
   CompWindow * pWindow;
   
 
-  float opacity;
   Bool drawing;
+  int fadeTime;
 
   InfoLayer backgroundLayer;
   InfoLayer textLayer;
@@ -274,24 +275,52 @@ static void infoPreparePaintScreen(CompScreen *s, int ms)
 {
 	INFO_SCREEN(s);
 	
-	if ((is->opacity != 0.0f) || is->drawing)
+	if (is->fadeTime)
 	{
-		/* Look at me I'm DENNIS! */
-		if (is->drawing)
-		  is->opacity = MIN(1,is->opacity + 0.05); /* This is me 
-							      pretending
-							      to be
-							      Dennis */
-		else
-		  is->opacity = MAX(0,is->opacity - 0.05); /* Here too */
+	    is->fadeTime -= ms;
+	    if (is->fadeTime < 0)
+		is->fadeTime = 0;
 	}
-	
 	
 	UNWRAP(is,s,preparePaintScreen);
 	(*s->preparePaintScreen)(s,ms);
 	WRAP(is,s,preparePaintScreen,infoPreparePaintScreen);
 }
 
+static void infoDonePaintScreen (CompScreen *s)
+{
+    INFO_SCREEN(s);
+
+    if (is->pWindow)
+    {
+	if (is->fadeTime || is->drawing)
+	{
+	    REGION reg;
+
+	    int tlx = is->pWindow->attrib.x + is->pWindow->attrib.width / 2.0f -
+	              RESIZE_POPUP_WIDTH / 2.0f;
+	    int tly = is->pWindow->attrib.y + is->pWindow->attrib.height / 2.0f - 
+	              RESIZE_POPUP_HEIGHT/2.0f;
+
+	    reg.rects    = &reg.extents;
+	    reg.numRects = 1;
+
+	    reg.extents.x1 = tlx - 5;
+	    reg.extents.y1 = tly - 5;
+	    reg.extents.x2 = tlx + RESIZE_POPUP_WIDTH + 5;
+	    reg.extents.y2 = tly + RESIZE_POPUP_HEIGHT + 5;
+
+	    damageScreenRegion (s, &reg);
+	}
+	
+	if (!is->fadeTime && !is->drawing)
+	    is->pWindow = 0;
+    }
+
+    UNWRAP (is, s, donePaintScreen);
+    (*s->donePaintScreen) (s);
+    WRAP (is, s, donePaintScreen, infoDonePaintScreen);
+}
 
 // For when we start resizing windows.
 static void infoWindowGrabNotify (CompWindow * w,
@@ -308,8 +337,7 @@ static void infoWindowGrabNotify (CompWindow * w,
 		{
 			is->pWindow = w;
 			is->drawing = TRUE;
-			is->opacity = 0.0f;
-			
+			is->fadeTime = resizeinfoGetFadeTime(s->display);
 		}
 	}
 	
@@ -324,10 +352,12 @@ static void infoWindowUngrabNotify (CompWindow * w)
 	CompScreen *s = w->screen;
 
 	INFO_SCREEN(s);
-	
+
 	if (is->pWindow)
 	{
 		is->drawing = FALSE;
+		is->fadeTime = resizeinfoGetFadeTime(s->display);
+		damageScreen (w->screen);
 	}
 	
 	UNWRAP(is, s, windowUngrabNotify);
@@ -340,6 +370,7 @@ static void infoWindowUngrabNotify (CompWindow * w)
 static void drawLayer (CompScreen *s, int tlx, int tly, CompMatrix matrix, CompTexture *t)
 {
   BOX box;
+  float opacity;
   INFO_SCREEN(s);
 
 
@@ -353,7 +384,15 @@ static void drawLayer (CompScreen *s, int tlx, int tly, CompMatrix matrix, CompT
   box.y2 = tly + RESIZE_POPUP_HEIGHT;
 
   // Using the blend function is for lamers.
-  glColor4f(is->opacity*1.0f,is->opacity*1.0f,is->opacity*1.0f,is->opacity); 
+
+  if (is->drawing)
+      opacity = 1.0f - ((float)is->fadeTime / 
+			resizeinfoGetFadeTime(s->display));
+  else
+      opacity = (float)is->fadeTime / 
+                resizeinfoGetFadeTime(s->display);
+
+  glColor4f(opacity, opacity, opacity, opacity); 
   glBegin(GL_QUADS);
   glTexCoord2f(COMP_TEX_COORD_X(&matrix, box.x1), COMP_TEX_COORD_Y(&matrix, box.y2));
   glVertex2i(box.x1, box.y2);
@@ -387,7 +426,7 @@ infoPaintScreen (CompScreen *s,
   WRAP(is,s,paintScreen,infoPaintScreen);
   
 
-  if (((is->drawing) || (is->opacity != 0.0f)) && is->pWindow)
+  if ((is->drawing || is->fadeTime) && is->pWindow)
     {
 
       int tlx = is->pWindow->attrib.x+is->pWindow->attrib.width/2.0f-RESIZE_POPUP_WIDTH/2.0f;
@@ -408,8 +447,6 @@ infoPaintScreen (CompScreen *s,
       glDisable(GL_BLEND);
       glEnableClientState(GL_TEXTURE_COORD_ARRAY);
       glPopMatrix();
-
-      addWindowDamage(is->pWindow); // For fade effect.
     }
   
   return status;
@@ -452,8 +489,8 @@ infoInitScreen (CompPlugin *p,
 	if (!is)
 		return FALSE;
 
-	is->opacity = 0;
 	is->pWindow = 0;
+	is->fadeTime = 0;
 	is->savedx = 0;
 	is->savedy = 0;
 
@@ -465,7 +502,7 @@ infoInitScreen (CompPlugin *p,
 	WRAP (is, s, windowUngrabNotify, infoWindowUngrabNotify);
 	WRAP (is, s, preparePaintScreen, infoPreparePaintScreen);
 	WRAP (is, s, paintScreen, infoPaintScreen);
-
+	WRAP (is, s, donePaintScreen, infoDonePaintScreen);
 
 	s->privates[id->screenPrivateIndex].ptr = is;
 	buildCairoBackground(s);
@@ -505,6 +542,7 @@ infoFiniScreen (CompPlugin *p,
 	UNWRAP (is, s, windowUngrabNotify);
 	UNWRAP (is, s, preparePaintScreen);
 	UNWRAP (is, s, paintScreen);
+	UNWRAP (is, s, donePaintScreen);
 	
 	free (is);
 }
