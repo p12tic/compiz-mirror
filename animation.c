@@ -5766,7 +5766,7 @@ static const CompMetadataOptionInfo animScreenOptionInfo[] = {
 	{ "horizontal_folds_amp", "float", "<min>-0.5</min><max>0.5</max>", 0, 0 },
 	{ "horizontal_folds_num_folds", "int", "<min>1</min>", 0, 0 },
 	{ "magic_lamp_grid_res", "int", "<min>4</min>", 0, 0 },
-	{ "magic_lamp_max_waves", "int", "<min>0</min>", 0, 0 },
+	{ "magic_lamp_max_waves", "int", "<min>3</min>", 0, 0 },
 	{ "magic_lamp_amp_min", "float", "<min>0</min>", 0, 0 },
 	{ "magic_lamp_amp_max", "float", "<min>0</min>", 0, 0 },
 	{ "magic_lamp_create_start_width", "int", "<min>0</min>", 0, 0 },
