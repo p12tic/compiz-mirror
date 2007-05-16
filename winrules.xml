@@ -3,7 +3,11 @@
     <plugin name="winrules">
 	<short>Window Rules</short>
 	<long>Set windows rules</long>
-	<rule type="before">widget</rule>
+	<deps>
+	    <relation type="before">
+		<plugin>widget</plugin>
+	    </relation>
+	</deps>
 	<screen>
 	    <option name="skiptaskbar_match" type="match">
 		<short>Skip taskbar</short>

@@ -838,10 +838,6 @@ winrulesFini (CompPlugin *p)
     compFiniMetadata (&winrulesMetadata);
 }
 
-CompPluginDep winrulesDeps[] = {
-    {CompPluginRuleBefore, "widget"}
-};
-
 static int
 winrulesGetVersion (CompPlugin *plugin,
 		int	    version)
@@ -871,8 +867,8 @@ static CompPluginVTable winrulesVTable = {
     0, /* winrulesSetDisplayOption,  */
     winrulesGetScreenOptions,
     winrulesSetScreenOption,
-    winrulesDeps,
-    sizeof (winrulesDeps) / sizeof (winrulesDeps[0]),
+    0,
+    0,
     0,
     0
 };
