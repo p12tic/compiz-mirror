@@ -8610,11 +8610,6 @@ static void animFini(CompPlugin * p)
 	compFiniMetadata (&animMetadata);
 }
 
-CompPluginDep animDeps[] = {
-	{CompPluginRuleAfter, "decoration"},
-	{CompPluginRuleBefore, "fade"}
-};
-
 static int
 animGetVersion (CompPlugin *plugin,
 		int	   version)
@@ -8644,8 +8639,8 @@ CompPluginVTable animVTable = {
 	0,
 	animGetScreenOptions,
 	animSetScreenOptions,
-	animDeps,
-	sizeof(animDeps) / sizeof(animDeps[0]),
+	0,
+	0,
 	0,
 	0
 };
