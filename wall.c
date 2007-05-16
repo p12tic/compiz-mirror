@@ -1739,14 +1739,6 @@ static int wallGetVersion(CompPlugin * p, int version)
 	return ABIVERSION;
 }
 
-CompPluginFeature wallFeatures[] = {
-	{"largedesktop"}
-};
-
-CompPluginDep wallDeps[] = {
-	{CompPluginRuleAfter, "decoration"}
-};
-
 CompPluginVTable wallVTable = {
 	"wall",
 	wallGetVersion,
@@ -1763,10 +1755,10 @@ CompPluginVTable wallVTable = {
 	NULL,
 	NULL,
 	NULL,
-	wallDeps,
-	sizeof(wallDeps) / sizeof(wallDeps[0]),
-	wallFeatures,
-	sizeof(wallFeatures) / sizeof(wallFeatures[0])
+	0,
+	0,
+	0,
+	0
 };
 
 CompPluginVTable *getCompPluginInfo(void)
