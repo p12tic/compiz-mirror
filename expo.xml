@@ -3,10 +3,16 @@
   <plugin name="expo" useBcop="true">
     <short>Expo</short>
     <long>Expo Plugin</long>
-	<category>Desktop</category>
-    	<rule type="after">decoration</rule>
-	<rule type="before">wobbly</rule>
-	<rule type="before">fade</rule>
+    <category>Desktop</category>
+    <deps>
+	<relation type="after">
+	    <plugin>decoration</plugin>
+	</relation>
+	<relation type="before">
+	    <plugin>wobbly</plugin>
+	    <plugin>fade</plugin>
+	</relation>
+    </deps>
     <display>
       <group>
         <short>Misc. Settings</short>
