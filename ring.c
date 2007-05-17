@@ -297,7 +297,7 @@ ringDrawWindowTitle(CompScreen *s)
     float y;
 
     /* assign y (for the lower corner!) according to the setting */
-    switch (ringGetTitleTextPlacementIndex (s))
+    switch (ringGetTitleTextPlacement (s))
     {
 	case TitleTextPlacementCenteredOnScreen:
 	    y = oy1 + ((oy2 - oy1) / 2) + (height / 2);
@@ -308,7 +308,7 @@ ringDrawWindowTitle(CompScreen *s)
 		XRectangle workArea;
 		getWorkareaForOutput (s, s->currentOutputDev, &workArea);
 
-	    	if (ringGetTitleTextPlacementIndex (s) == TitleTextPlacementAboveRing)
+	    	if (ringGetTitleTextPlacement (s) == TitleTextPlacementAboveRing)
     		    y = oy1 + workArea.y + (2 * border) + height;
 		else
 		    y = oy1 + workArea.y + workArea.height - (2 * border);
@@ -492,7 +492,7 @@ ringPaintWindow (CompWindow		  *w,
 	}
 
 	if (scaled && (rs->state != RingStateIn) &&
-	    ((ringGetOverlayIconIndex (s) != OverlayIconNone) || !w->texture->pixmap))
+	    ((ringGetOverlayIcon (s) != OverlayIconNone) || !w->texture->pixmap))
 	{
 	    CompIcon *icon;
 
@@ -508,7 +508,7 @@ ringPaintWindow (CompWindow		  *w,
 		float  x, y;
 		int    width, height;
 		int    scaledWinWidth, scaledWinHeight;
-		RingOverlayIconEnum iconOverlay = ringGetOverlayIconIndex (s);
+		RingOverlayIconEnum iconOverlay = ringGetOverlayIcon (s);
 
 		scaledWinWidth  = w->width  * rw->scale;
 		scaledWinHeight = w->height * rw->scale;
