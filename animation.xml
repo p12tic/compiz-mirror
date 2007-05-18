@@ -696,14 +696,6 @@
 			
 			<subgroup>
 				<short>Zoom</short>
-				<option name="zoom_curvature" type="float">
-					<short>Zoom Curvature</short>
-					<long>The amount of curvedness of the zoom motion.</long>
-					<default>0.5</default>
-					<min>0</min>
-					<max>1</max>
-					<precision>0.05</precision>
-				</option>
 				<option name="zoom_from_center" type="string">
 					<short>Zoom from Center</short>
 					<long>Zoom from center when playing the Zoom and Sidekick animations.</long>
@@ -714,6 +706,14 @@
 						<value>Create/Close Only</value>
 						<value>On</value>
 					</allowed>
+				</option>
+				<option name="zoom_springiness" type="float">
+					<short>Zoom Springiness</short>
+					<long>How spring-like the Zoom animation should be.</long>
+					<default>0.5</default>
+					<min>0</min>
+					<max>1</max>
+					<precision>0.02</precision>
 				</option>
 			</subgroup>
 
@@ -730,11 +730,19 @@
 				<short>Sidekick</short>
 				<option name="sidekick_num_rotations" type="float">
 					<short>Sidekick Number of Rotations</short>
-					<long>The number of rotations plus or minus 10% (for randomness) that Sidekick has.</long>
+					<long>Number of rotations for Sidekick (plus or minus 10% for randomness).</long>
 					<default>0.5</default>
 					<min>0</min>
 					<max>5</max>
 					<precision>0.01</precision>
+				</option>
+				<option name="sidekick_springiness" type="float">
+					<short>Sidekick Springiness</short>
+					<long>How spring-like the Sidekick animation should be.</long>
+					<default>0.5</default>
+					<min>0</min>
+					<max>1</max>
+					<precision>0.02</precision>
 				</option>
 			</subgroup>
 

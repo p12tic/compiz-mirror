@@ -540,10 +540,11 @@ typedef enum
 	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_WAVE_AMP_MAX,
 	ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH,
 	ANIM_SCREEN_OPTION_SIDEKICK_NUM_ROTATIONS,
+	ANIM_SCREEN_OPTION_SIDEKICK_SPRINGINESS,
 	ANIM_SCREEN_OPTION_WAVE_WIDTH,
 	ANIM_SCREEN_OPTION_WAVE_AMP,
-	ANIM_SCREEN_OPTION_ZOOM_CURVATURE,
 	ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER,
+	ANIM_SCREEN_OPTION_ZOOM_SPRINGINESS,
 
 	ANIM_SCREEN_OPTION_NUM
 } AnimScreenOptions;
@@ -1285,18 +1286,6 @@ static float decelerateProgressCustom(float progress, float minx, float maxx)
 			 (sigmoid2(maxx, s) - sigmoid2(minx, s))));
 }
 
-// default x limits for deceleration sigmoid
-#define DECEL_SIG_DEF_START 0.9
-#define DECEL_SIG_DEF_END 1.3
-
-/*
-static float decelerateProgress(float progress)
-{
-	return decelerateProgressCustom
-		(progress, DECEL_SIG_DEF_START, DECEL_SIG_DEF_END);
-}
-*/
-
 static float decelerateProgress2(float progress)
 {
 	return decelerateProgressCustom(progress, 0.5, 0.75);
@@ -1905,49 +1894,79 @@ static void fxZoomInit(CompScreen * s, CompWindow * w)
 					as->opt[ANIM_SCREEN_OPTION_TIME_STEP].value.i);
 }
 
-// Provides the animation progress for Zoom
-static float fxZoomAnimProgressDirCustom(AnimWindow * aw,
-										 float maxSigX)
-{
-	// maxSig is the max x for the deceleration sigmoid
+// spring crossing x (second time it spring movement reaches target)
+#define SPRING_CROSSING_X 0.6184f
+#define SPRING_PERCEIVED_T 0.5f
+//0.52884f
 
+static void fxZoomAnimProgressDir(AnimScreen * as,
+								  AnimWindow * aw,
+								  float *moveProgress,
+								  float *scaleProgress)
+{
 	float forwardProgress =
 			1 - (aw->animRemainingTime - aw->timestep) /
 			(aw->animTotalTime - aw->timestep);
 	forwardProgress = MIN(forwardProgress, 1);
 	forwardProgress = MAX(forwardProgress, 0);
 
+	float x = forwardProgress;
+	Bool backwards = FALSE;
 	int animProgressDir = 1;
 
 	if (aw->curWindowEvent == WindowEventUnminimize ||
 		aw->curWindowEvent == WindowEventCreate)
 		animProgressDir = 2;
-
 	if (aw->animOverrideProgressDir != 0)
 		animProgressDir = aw->animOverrideProgressDir;
-
-	float x = forwardProgress;
-
 	if ((animProgressDir == 1 &&
 		 (aw->curWindowEvent == WindowEventUnminimize ||
 		  aw->curWindowEvent == WindowEventCreate)) ||
 		(animProgressDir == 2 &&
 		 (aw->curWindowEvent == WindowEventMinimize ||
 		  aw->curWindowEvent == WindowEventClose)))
-		x = 1 - forwardProgress;
+		backwards = TRUE;
+	if (backwards)
+		x = 1 - x;
+	
+	float cx = SPRING_CROSSING_X;
+	float nonSpringyProgress = 1 - pow(1-(x/cx*0.5),10);
 
-	forwardProgress = decelerateProgressCustom
-		(1 - x, DECEL_SIG_DEF_START, maxSigX);
+	x = pow(x, 0.7);
+	float damping = (pow(1-(x*0.5),10)-pow(1-0.5,10))/(1-pow(1-0.5,10));
 
-	if (animProgressDir == 1)
-		forwardProgress = 1 - forwardProgress;
+	if (moveProgress)
+	{
+		float springiness = 0;
+		if (aw->curAnimEffect == AnimEffectZoom)
+			springiness = 2 *
+				as->opt[ANIM_SCREEN_OPTION_ZOOM_SPRINGINESS].value.f;
+		else
+			springiness = 1.6 *
+				as->opt[ANIM_SCREEN_OPTION_SIDEKICK_SPRINGINESS].value.f;
 
-	return forwardProgress;
-}
+		float springyMoveProgress =
+			1 - sin(3.5*M_PI*(pow(x,1.5)-1)) * damping;
 
-static float fxZoomAnimProgressDir(AnimWindow * aw)
-{
-	return fxZoomAnimProgressDirCustom(aw, DECEL_SIG_DEF_END);
+		*moveProgress =
+			springiness * springyMoveProgress +
+			(1 - springiness) * nonSpringyProgress;
+
+		if (aw->curWindowEvent == WindowEventUnminimize ||
+			aw->curWindowEvent == WindowEventCreate)
+			*moveProgress = 1 - *moveProgress;
+		if (backwards)
+			*moveProgress = 1 - *moveProgress;
+	}
+	if (scaleProgress)
+	{
+		*scaleProgress = nonSpringyProgress;
+		if (aw->curWindowEvent == WindowEventUnminimize ||
+			aw->curWindowEvent == WindowEventCreate)
+			*scaleProgress = 1 - *scaleProgress;
+		if (backwards)
+			*scaleProgress = 1 - *scaleProgress;
+	}
 }
 
 static void
@@ -2009,57 +2028,46 @@ static void fxZoomModelStep(CompScreen * s, CompWindow * w, float time)
 		return;
 	steps = MAX(1, steps);
 
+	Point winCenter =
+		{(WIN_X(w) + WIN_W(w) * model->scale.x / 2),
+		 (WIN_Y(w) + WIN_H(w) * model->scale.y / 2)};
+	Point iconCenter =
+		{aw->icon.x + aw->icon.width / 2,
+		 aw->icon.y + aw->icon.height / 2};
+	Point winSize =
+		{WIN_W(w) * model->scale.x,
+		 WIN_H(w) * model->scale.y};
+
 	for (j = 0; j < steps; j++)
 	{
 		float sinRot = 0;
 		float cosRot = 0;
 
-		Point winCenter =
-			{(WIN_X(w) + WIN_W(w) * model->scale.x / 2),
-			 (WIN_Y(w) + WIN_H(w) * model->scale.y / 2)};
-		Point iconCenter =
-			{aw->icon.x + aw->icon.width / 2,
-			 aw->icon.y + aw->icon.height / 2};
-
-		Point winSize =
-			{WIN_W(w) * model->scale.x,
-			 WIN_H(w) * model->scale.y};
-
-		float xDiff = fabs(winCenter.x - iconCenter.x);
-		float yDiff = fabs(winCenter.y - iconCenter.y);
-		float xMaxSig;
-		float yMaxSig;
-		float sigDiff =
-			0.5 * as->opt[ANIM_SCREEN_OPTION_ZOOM_CURVATURE].value.f;
+		float scaleProgress;
+		float moveProgress;
+		float rotateProgress = 0;
 
 		if (aw->curAnimEffect == AnimEffectSidekick)
-			sigDiff = 0;
-
-		if (yDiff > xDiff / 1.4) // prefer y axis more for the curved motion
 		{
-			xMaxSig = DECEL_SIG_DEF_END;
-			yMaxSig = DECEL_SIG_DEF_END + sigDiff;
+			fxZoomAnimProgressDir(as, aw, &moveProgress, &scaleProgress);
+			rotateProgress = moveProgress;
 		}
 		else
 		{
-			xMaxSig = DECEL_SIG_DEF_END + sigDiff;
-			yMaxSig = DECEL_SIG_DEF_END;
+			fxZoomAnimProgressDir(as, aw, &moveProgress, &scaleProgress);
 		}
-		float xProgress = fxZoomAnimProgressDirCustom(aw, xMaxSig);
-		float yProgress = fxZoomAnimProgressDirCustom(aw, yMaxSig);
-		float progress = (xProgress + yProgress) / 2;
 
 		Point currentCenter =
-			{(1 - xProgress) * winCenter.x + xProgress * iconCenter.x,
-			 (1 - yProgress) * winCenter.y + yProgress * iconCenter.y};
+			{(1 - moveProgress) * winCenter.x + moveProgress * iconCenter.x,
+			 (1 - moveProgress) * winCenter.y + moveProgress * iconCenter.y};
 		Point currentSize =
-			{(1 - progress) * winSize.x + progress * aw->icon.width,
-			 (1 - progress) * winSize.y + progress * aw->icon.height};
+			{(1 - scaleProgress) * winSize.x + scaleProgress * aw->icon.width,
+			 (1 - scaleProgress) * winSize.y + scaleProgress * aw->icon.height};
 
 		if (aw->curAnimEffect == AnimEffectSidekick)
 		{
-			sinRot = sin(2 * M_PI * progress * aw->numZoomRotations);
-			cosRot = cos(2 * M_PI * progress * aw->numZoomRotations);
+			sinRot = sin(2 * M_PI * rotateProgress * aw->numZoomRotations);
+			cosRot = cos(2 * M_PI * rotateProgress * aw->numZoomRotations);
 
 			for (i = 0; i < model->numObjects; i++)
 				fxSidekickModelStepObject(w, model,
@@ -2090,7 +2098,8 @@ fxZoomUpdateWindowAttrib(AnimScreen * as,
 	if (aw->model->scale.x < 1.0 &&	// if Scale plugin in progress
 		aw->curWindowEvent == WindowEventUnminimize)	// and if unminimizing
 		return;					// then allow Fade to take over opacity
-	float forwardProgress = fxZoomAnimProgressDir(aw);
+	float forwardProgress;
+	fxZoomAnimProgressDir(as, aw, NULL, &forwardProgress);
 
 	wAttrib->opacity =
 			(GLushort) (aw->storedOpacity * pow(1 - forwardProgress, 0.75));
@@ -5776,10 +5785,11 @@ static const CompMetadataOptionInfo animScreenOptionInfo[] = {
 	{ "magic_lamp_vacuum_amp_max", "float", "<min>200</min>", 0, 0 },
 	{ "magic_lamp_vacuum_create_start_width", "int", "<min>0</min>", 0, 0 },
 	{ "sidekick_num_rotations", "float", "<min>0</min>", 0, 0 },
+	{ "sidekick_springiness", "float", "<min>0</min><max>1</max>", 0, 0 },
 	{ "wave_width", "float", "<min>0</min>", 0, 0 },
 	{ "wave_amp", "float", "<min>0</min>", 0, 0 },
-	{ "zoom_curvature", "float", "<min>0</min><max>1</max>", 0, 0 },
-	{ "zoom_from_center", "string", 0, 0, 0 }
+	{ "zoom_from_center", "string", 0, 0, 0 },
+	{ "zoom_springiness", "float", "<min>0</min><max>1</max>", 0, 0 }
 };
 
 static CompOption *
@@ -7444,6 +7454,12 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 
 						aw->animTotalTime =
 								as->opt[ANIM_SCREEN_OPTION_MINIMIZE_DURATION].value.f * 1000;
+
+						// allow extra time for spring damping
+						if (effectToBePlayed == AnimEffectZoom ||
+							effectToBePlayed == AnimEffectSidekick)
+							aw->animTotalTime /= SPRING_PERCEIVED_T;
+
 						aw->animRemainingTime = aw->animTotalTime;
 					}
 
@@ -7578,6 +7594,12 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 							as->opt[whichClose == 1 ?
 									ANIM_SCREEN_OPTION_CLOSE1_DURATION :
 									ANIM_SCREEN_OPTION_CLOSE2_DURATION].value.f * 1000;
+
+						// allow extra time for spring damping
+						if (effectToBePlayed == AnimEffectZoom ||
+							effectToBePlayed == AnimEffectSidekick)
+							aw->animTotalTime /= SPRING_PERCEIVED_T;
+
 						aw->animRemainingTime = aw->animTotalTime;
 					}
 
@@ -7899,6 +7921,12 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 
 						aw->animTotalTime =
 							as->opt[ANIM_SCREEN_OPTION_MINIMIZE_DURATION].value.f * 1000;
+
+						// allow extra time for spring damping
+						if (effectToBePlayed == AnimEffectZoom ||
+							effectToBePlayed == AnimEffectSidekick)
+							aw->animTotalTime /= SPRING_PERCEIVED_T;
+
 						aw->animRemainingTime = aw->animTotalTime;
 					}
 				}
@@ -8091,6 +8119,12 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 							as->opt[whichCreate == 1 ?
 									ANIM_SCREEN_OPTION_CREATE1_DURATION	:
 									ANIM_SCREEN_OPTION_CREATE2_DURATION].value.f * 1000;
+
+						// allow extra time for spring damping
+						if (effectToBePlayed == AnimEffectZoom ||
+							effectToBePlayed == AnimEffectSidekick)
+							aw->animTotalTime /= SPRING_PERCEIVED_T;
+
 						aw->animRemainingTime = aw->animTotalTime;
 					}
 				}
