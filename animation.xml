@@ -55,7 +55,7 @@
 					<default>0.2</default>
 					<min>0.1</min>
 					<max>10</max>
-					<precision>0.05</precision>
+					<precision>0.02</precision>
 				</option>
 				<option name="close1_random_effects" type="list">
 					<short>Random Effect Pool</short>
@@ -141,7 +141,7 @@
 					<default>0.15</default>
 					<min>0.1</min>
 					<max>10</max>
-					<precision>0.05</precision>
+					<precision>0.02</precision>
 				</option>
 				<option name="close2_random_effects" type="list">
 					<short>Random Effect Pool</short>
@@ -231,7 +231,7 @@
 					<default>0.2</default>
 					<min>0.1</min>
 					<max>10</max>
-					<precision>0.05</precision>
+					<precision>0.02</precision>
 				</option>
 				<option name="create1_random_effects" type="list">
 					<short>Random Effect Pool</short>
@@ -317,7 +317,7 @@
 					<default>0.15</default>
 					<min>0.1</min>
 					<max>10</max>
-					<precision>0.05</precision>
+					<precision>0.02</precision>
 				</option>
 				<option name="create2_random_effects" type="list">
 					<short>Random Effect Pool</short>
@@ -378,7 +378,7 @@
 				<default>0.3</default>
 				<min>0.1</min>
 				<max>10</max>
-				<precision>0.05</precision>
+				<precision>0.02</precision>
 			</option>
 			<option name="minimize_effect" type="string">
 				<short>Minimize Animation</short>
@@ -471,7 +471,7 @@
 				<default>0.5</default>
 				<min>0.1</min>
 				<max>10</max>
-				<precision>0.05</precision>
+				<precision>0.02</precision>
 			</option>
 			<option name="shade_random_effects" type="list">
 				<short>Random Effect Pool</short>
@@ -513,7 +513,7 @@
 				<default>0.3</default>
 				<min>0.1</min>
 				<max>10</max>
-				<precision>0.05</precision>
+				<precision>0.02</precision>
 			</option>
 		</group>
 		
