@@ -1258,11 +1258,8 @@ void groupHandleEvent(CompDisplay * d, XEvent * event)
 
 			GROUP_WINDOW(w);
 			if (gw->group && !gw->group->tabBar) {
-				if (groupGetRaiseAll(w->screen) &&
-				    !screenGrabExist(w->screen, "scale", 0))
-				{
+				if (groupGetRaiseAll(w->screen))
 					groupRaiseWindows(w, gw->group);
-				}
 			}
 		}
 		break;
@@ -1516,7 +1513,7 @@ groupWindowMoveNotify(CompWindow * w, int dx, int dy, Bool immediate)
 
 	if (gw->group->doTabbing || gd->ignoreMode || 
 	    (gw->group->grabWindow != w->id) ||
-	    !screenGrabExist (w->screen, "move", "expo", 0) ||
+		!(gw->group->grabMask & CompWindowGrabMoveMask) ||
 	    !groupGetMoveAll(w->screen))
 		return;
 
