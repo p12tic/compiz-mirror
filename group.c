@@ -1383,22 +1383,6 @@ void groupWindowResizeNotify(CompWindow * w, int dx, int dy, int dwidth, int dhe
 	GROUP_DISPLAY(w->screen->display);
 	GROUP_WINDOW(w);
 
-	UNWRAP(gs, w->screen, windowResizeNotify);
-	(*w->screen->windowResizeNotify) (w, dx, dy, dwidth, dheight);
-	WRAP(gs, w->screen, windowResizeNotify, groupWindowResizeNotify);
-
-	if (gw->glowQuads)
-		groupComputeGlowQuads (w, &gs->glowTexture.matrix);
-
-	if (!dx && !dy && !dwidth && !dheight)
-		return;
-
-	if (gw->group && gw->group->tabBar && 
-	    (gw->group->tabBar->state != PaintOff) && IS_TOP_TAB(w, gw->group)) {
-		groupRecalcTabBarPos(gw->group, pointerX,
-			WIN_X(w), WIN_X(w) + WIN_WIDTH(w));
-	}
-
 	if (gw->group && !gd->ignoreMode) {
 		if (((gw->lastState & MAXIMIZE_STATE) != (w->state & MAXIMIZE_STATE)) &&
 		    groupGetMaximizeUnmaximizeAll(w->screen))
@@ -1458,6 +1442,20 @@ void groupWindowResizeNotify(CompWindow * w, int dx, int dy, int dwidth, int dhe
 			}
 		}
 	}
+
+	UNWRAP(gs, w->screen, windowResizeNotify);
+	(*w->screen->windowResizeNotify) (w, dx, dy, dwidth, dheight);
+	WRAP(gs, w->screen, windowResizeNotify, groupWindowResizeNotify);
+
+	if (gw->glowQuads)
+		groupComputeGlowQuads (w, &gs->glowTexture.matrix);
+
+	if (gw->group && gw->group->tabBar && 
+	    (gw->group->tabBar->state != PaintOff) && IS_TOP_TAB(w, gw->group)) {
+		groupRecalcTabBarPos(gw->group, pointerX,
+			WIN_X(w), WIN_X(w) + WIN_WIDTH(w));
+	}
+
 }
 
 /*
