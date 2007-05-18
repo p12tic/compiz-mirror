@@ -152,6 +152,7 @@ Bool groupInitDisplay(CompPlugin * p, CompDisplay * d)
 	groupSetRemoveInitiate(d, groupRemoveWindow);
 	groupSetCloseInitiate(d, groupCloseWindows);
 	groupSetIgnoreInitiate(d, groupSetIgnore);
+	groupSetIgnoreTerminate(d, groupUnsetIgnore);
 	groupSetChangeColorInitiate(d, groupChangeColor);
 
 	d->privates[displayPrivateIndex].ptr = gd;
