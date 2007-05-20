@@ -2,7 +2,7 @@
 <compiz>
   <plugin name="resizeinfo" useBcop="true">
     <short>Resize Info</short>
-    <long> Display info on resize similar to metacity </long>
+    <long>Display info on resize similar to metacity</long>
     <category>Extras</category>
     <display>
 		<group>
