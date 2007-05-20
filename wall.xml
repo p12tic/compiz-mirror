@@ -6,9 +6,12 @@
 	<category>Desktop</category>
     <feature>largedesktop</feature>
     <deps>
-	<relation type="after">
-	    <plugin>decoration</plugin>
-	</relation>
+		<relation type="after">
+		    <plugin>decoration</plugin>
+		</relation>
+		<relation type="before">
+			<plugin>wobbly</plugin>
+		</relation>
     </deps>
     <display>
       <group>
