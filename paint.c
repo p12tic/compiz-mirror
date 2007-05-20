@@ -358,7 +358,7 @@ void groupRenderTabBarBackground(GroupSelection *group)
 			cairo_save(cr);
 
 			// clip width rounded rectangle
-			cairo_clip(cr);
+			cairo_clip_preserve(cr);
 
 			// ==== TOP ====
 
@@ -367,12 +367,6 @@ void groupRenderTabBarBackground(GroupSelection *group)
 			x1 = width  - border_width/2.0;
 			y1 = height - border_width/2.0;
 			radius = (y1 - y0) / 2;
-
-			cairo_move_to(cr, x0, y0);
-			cairo_line_to(cr, x1, y0);
-			cairo_arc(cr, x1 - radius, y0, radius, 0.0, M_PI * 0.5);
-			cairo_arc_negative(cr, x0 + radius, y1, radius, M_PI * 1.5, M_PI);
-			cairo_close_path (cr);
 
 			// setup pattern
 			pattern = cairo_pattern_create_linear(0, 0, 0, height);
@@ -435,9 +429,11 @@ void groupRenderTabBarBackground(GroupSelection *group)
 			     groupGetTabBaseColorAlpha(group->screen)) / (2 * 65535.0f);
 			cairo_pattern_add_color_stop_rgba(pattern, 1.0f, r, g, b, a);
 
+			cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
 			cairo_set_source(cr, pattern);
 			cairo_fill(cr);
 			cairo_pattern_destroy(pattern);
+			cairo_set_operator(cr, CAIRO_OPERATOR_OVER);
 
 			cairo_restore(cr);
 
