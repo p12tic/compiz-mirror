@@ -263,7 +263,6 @@ typedef struct _Model
 	int winWidth;				// keeps win. size when model was created
 	int winHeight;				//
 
-	float remainderSteps;
 	Vector scale;
 	Point scaleOrigin;
 	Point topLeft;
@@ -636,6 +635,7 @@ typedef struct _AnimWindow
 	Bool animInitialized;		// whether the animation effect (not the window) is initialized
 	float animTotalTime;
 	float animRemainingTime;
+	float remainderSteps;
 	int animOverrideProgressDir;	// 0: default dir, 1: forward, 2: backward
 
 	Bool nowShaded;
@@ -1311,9 +1311,9 @@ static void polygonsAnimStep(CompScreen * s, CompWindow * w, float time)
 
 	aw->timestep = timestep;
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
 	steps = MAX(1, steps);
@@ -1613,9 +1613,9 @@ static void fxMagicLampModelStep(CompScreen * s, CompWindow * w, float time)
 	float timestep = (s->slowAnimations ? 2 :	// For smooth slow-mo (refer to display.c)
 					  as->opt[ANIM_SCREEN_OPTION_TIME_STEP].value.i);
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
@@ -1700,9 +1700,9 @@ static void fxDreamModelStep(CompScreen * s, CompWindow * w, float time)
 
 	aw->timestep = timestep;
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
@@ -1789,9 +1789,9 @@ static void fxWaveModelStep(CompScreen * s, CompWindow * w, float time)
 	float timestep = (s->slowAnimations ? 2 :	// For smooth slow-mo (refer to display.c)
 					  as->opt[ANIM_SCREEN_OPTION_TIME_STEP].value.i);
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
@@ -1980,9 +1980,9 @@ static void fxZoomModelStep(CompScreen * s, CompWindow * w, float time)
 
 	aw->timestep = timestep;
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
@@ -2154,9 +2154,9 @@ static void fxGlideAnimStep(CompScreen * s, CompWindow * w, float time)
 
 	aw->timestep = timestep;
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
@@ -2306,9 +2306,9 @@ static void fxCurvedFoldModelStep(CompScreen * s, CompWindow * w, float time)
 	float timestep = (s->slowAnimations ? 2 :	// For smooth slow-mo (refer to display.c)
 					  as->opt[ANIM_SCREEN_OPTION_TIME_STEP].value.i);
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
@@ -2438,9 +2438,9 @@ fxHorizontalFoldsModelStep(CompScreen * s, CompWindow * w, float time)
 	float timestep = (s->slowAnimations ? 2 :	// For smooth slow-mo (refer to display.c)
 					  as->opt[ANIM_SCREEN_OPTION_TIME_STEP].value.i);
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
 	steps = MAX(1, steps);
@@ -2566,9 +2566,9 @@ static void fxRollUpModelStep(CompScreen * s, CompWindow * w, float time)
 	float timestep = (s->slowAnimations ? 2 :	// For smooth slow-mo (refer to display.c)
 					  as->opt[ANIM_SCREEN_OPTION_TIME_STEP].value.i);
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
 	steps = MAX(1, steps);
@@ -2627,16 +2627,14 @@ static void fxFadeModelStep(CompScreen * s, CompWindow * w, float time)
 	ANIM_WINDOW(w);
 	ANIM_SCREEN(s);
 
-	Model *model = aw->model;
-
 	float timestep = (s->slowAnimations ? 2 :	// For smooth slow-mo (refer to display.c)
 					  as->opt[ANIM_SCREEN_OPTION_TIME_STEP].value.i);
 
 	aw->timestep = timestep;
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
@@ -2953,9 +2951,9 @@ static void fxBurnModelStep(CompScreen * s, CompWindow * w, float time)
 	float old = 1 - (aw->animRemainingTime) / (aw->animTotalTime);
 	float stepSize;
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
 	steps = MAX(1, steps);
@@ -3275,9 +3273,9 @@ static void fxBeamUpModelStep(CompScreen * s, CompWindow * w, float time)
 	float old = 1 - (aw->animRemainingTime) / (aw->animTotalTime);
 	float stepSize;
 
-	model->remainderSteps += time / timestep;
-	steps = floor(model->remainderSteps);
-	model->remainderSteps -= steps;
+	aw->remainderSteps += time / timestep;
+	steps = floor(aw->remainderSteps);
+	aw->remainderSteps -= steps;
 	if (!steps && aw->animRemainingTime < aw->animTotalTime)
 		return;
 	steps = MAX(1, steps);
@@ -5895,8 +5893,6 @@ static Model *createModel(CompWindow * w,
 	model->topHeight = w->output.top;
 	model->bottomHeight = w->output.bottom;
 
-	model->remainderSteps = 0;
-
 	model->scale.x = 1.0f;
 	model->scale.y = 1.0f;
 
@@ -6030,6 +6026,7 @@ static void postAnimationCleanup(CompWindow * w, Bool resetAnimation)
 		//aw->polygonSet->nClips = 0;
 	}
 	aw->animInitialized = FALSE;
+	aw->remainderSteps = 0;
 
 	//if (aw->unmapCnt || aw->destroyCnt)
 	//    releaseWindow (w);
@@ -6304,16 +6301,11 @@ static void animPreparePaintScreen(CompScreen * s, int msSinceLastPaint)
 						aw->model->winHeight != WIN_H(w))
 					{
 						// model needs update
-
-						// keep this value
-						float remainderSteps = aw->model->remainderSteps;
-
 						// re-create model
 						animEnsureModel
 								(w, aw->curWindowEvent, aw->curAnimEffect);
 						if (aw->model == 0)
 							continue;	// skip this window
-						aw->model->remainderSteps = remainderSteps;
 					}
 					// Call fx step func.
 					if (animEffectProperties[aw->curAnimEffect].animStepFunc)
