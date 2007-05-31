@@ -187,7 +187,7 @@ notifyInit (CompPlugin *p)
 	return FALSE;
     }
 
-    //compAddMetadataFromFile (&notifyMetadata, p->vTable->name);
+    compAddMetadataFromFile (&notifyMetadata, p->vTable->name);
 
     return TRUE;
 }
