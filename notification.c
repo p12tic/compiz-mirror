@@ -224,7 +224,7 @@ notifyGetMetadata (CompPlugin *plugin)
 }
 
 static CompPluginVTable notifyVTable = {
-    "notify",
+    "notification",
     notifyGetVersion,
     notifyGetMetadata,
     notifyInit,
