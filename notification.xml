@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compiz>
+    <plugin name="notification">
+	<short>Uses libnotify to display errors</short>
+	<long>Uses libnotify to display errors</long>
+	<display>
+	    <option type="int" name="timeout">
+		<short>Timeout in seconds before hiding the notification</short>
+		<long>Timeout in seconds before hiding the notification, set to -1 for system default and 0 for indefinite</long>
+		<min>-1</min>
+		<max>30</max>
+		<default>-1</default>
+	    </option>
+	    <option type="int" name="max_log_level">
+		<short>The maximum log level to display</short>
+		<long>The maximum log level to display</long>
+		<default>1</default>
+		<desc>
+		    <value>0</value>
+		    <name>Fatal</name>
+		</desc>
+		<desc>
+		    <value>1</value>
+		    <name>Error</name>
+		</desc>
+		<desc>
+		    <value>2</value>
+		    <name>Warn</name>
+		</desc>
+		<desc>
+		    <value>3</value>
+		    <name>Info</name>
+		</desc>
+		<desc>
+		    <value>4</value>
+		    <name>Debug</name>
+		</desc>
+	    </option>
+	</display>
+    </plugin>
+</compiz>
