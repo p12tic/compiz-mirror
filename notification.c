@@ -25,8 +25,9 @@
 #include <unistd.h>
 #include <compiz.h>
 
-#define NOTIFY_DISPLAY_OPTION_TIMEOUT 0
-#define NOTIFY_DISPLAY_OPTION_NUM     1
+#define NOTIFY_DISPLAY_OPTION_TIMEOUT   0
+#define NOTIFY_DISPLAY_OPTION_MAX_LEVEL 1
+#define NOTIFY_DISPLAY_OPTION_NUM       2
 
 #define IMAGE_DIR ".compiz/images"
 
@@ -61,8 +62,19 @@ notifyLogMessage (CompDisplay  *d,
 {
     NotifyNotification *n;
     char               *logLevel, iconFile[256], *iconUri, *homeDir;
+    int                maxLevel;
 
     NOTIFY_DISPLAY (d);
+
+    maxLevel = nd->opt[NOTIFY_DISPLAY_OPTION_MAX_LEVEL].value.i;
+    if (level >= maxLevel)
+    {
+	UNWRAP (nd, d, logMessage);
+	(*d->logMessage) (d, component, level, message);
+	WRAP (nd, d, logMessage, notifyLogMessage);
+
+	return;
+    }
 
     homeDir = getenv ("HOME");
     if (!homeDir)
@@ -111,7 +123,8 @@ notifyLogMessage (CompDisplay  *d,
 }
 
 static const CompMetadataOptionInfo notifyDisplayOptionInfo[] = {
-    { "timeout", "int", "<min>-1</min><max>30</max><default>-1</default>", 0, 0 }
+    { "timeout", "int", "<min>-1</min><max>30</max><default>-1</default>", 0, 0 },
+    { "max_log_level", "int", "<default>1</default>", 0, 0 }
 };
 
 static Bool
@@ -216,6 +229,8 @@ notifySetDisplayOption (CompPlugin      *p,
 	    return TRUE;
 	}
     default:
+	if (compSetOption (o, value))
+	    return TRUE;
 	break;
     }
 
