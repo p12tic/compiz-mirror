@@ -28,7 +28,7 @@ install: lib$(PLUGIN).la
 	@mkdir -p $(METADATADIR)
 	@mkdir -p $(IMAGEDIR)
 	@cp $(PLUGIN).xml $(METADATADIR)
-	@cp compiz.png $(IMAGEDIR)
+	@cp images/compiz.png $(IMAGEDIR)
 
 install-schema:
 	@xsltproc -o $(PLUGIN).schema $(XSLTDIR)/schemas.xslt $(PLUGIN).xml
