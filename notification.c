@@ -67,7 +67,7 @@ notifyLogMessage (CompDisplay  *d,
     NOTIFY_DISPLAY (d);
 
     maxLevel = nd->opt[NOTIFY_DISPLAY_OPTION_MAX_LEVEL].value.i;
-    if (level >= maxLevel)
+    if (level > maxLevel)
     {
 	UNWRAP (nd, d, logMessage);
 	(*d->logMessage) (d, component, level, message);
