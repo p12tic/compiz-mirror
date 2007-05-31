@@ -54,7 +54,7 @@ typedef struct _NotifyDisplay {
 #define NUM_OPTIONS(s) (sizeof ((s)->opt) / sizeof (CompOption))
 
 
-void
+static void
 notifyLogMessage (CompDisplay  *d,
 		  char         *component,
 		  CompLogLevel level,
