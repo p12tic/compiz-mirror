@@ -47,7 +47,7 @@ INSTALL   = install
 
 BCOP       = `pkg-config --variable=bin bcop`
 
-CFLAGS  = -g -Wall `pkg-config --cflags $(PKG_DEP) $(TARGET) `
+CFLAGS  = -g -O2 -Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fno-strict-aliasing `pkg-config --cflags $(PKG_DEP) $(TARGET) `
 LDFLAGS = `pkg-config --libs $(PKG_DEP) $(TARGET) `
 
 is-bcop-target := $(shell if [ -e $(PLUGIN).xml ]; then cat $(PLUGIN).xml | grep "useBcop=\"true\"";fi )
