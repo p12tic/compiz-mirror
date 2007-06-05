@@ -1,0 +1,18 @@
+<compiz>
+  <plugin name="wallpaper" useBcop="true">
+    <_short>Wallpaper</_short>
+    <_long>Draw the desktop wallpaper</_long>
+    <screen>
+      <option name="images" type="list">
+	<_short> Background Files </_short>
+	<_long> The files to use as background images, repetition will
+	occur if you have fewer than hsize*vsize images. Note using
+	fewer images will conserve video memory </_long>
+	<type>string</type>
+      </option>
+    </screen>
+  </plugin>
+</compiz>
+
+	
+	
