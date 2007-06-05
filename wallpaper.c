@@ -48,6 +48,8 @@ typedef struct _WallpaperScreen
   
   CompTexture * textures;
   int nTextures;
+
+  Bool propSet; /* Avoid having to ask server */
 } WallpaperScreen;
 
 #define GET_WALLPAPER_DISPLAY(d) \
@@ -62,7 +64,7 @@ typedef struct _WallpaperScreen
 #define WALLPAPER_SCREEN(s) \
   WallpaperScreen * ws = GET_WALLPAPER_SCREEN(s, GET_WALLPAPER_DISPLAY(s->display))
 
-
+/* fini and remove all textures on the WallpaperScreen */
 static void
 cleanupTextures (CompScreen *s)
 {
@@ -79,6 +81,7 @@ cleanupTextures (CompScreen *s)
   
 }
 
+/* Installed as a handler for the images setting changing through bcop */
 static void wallpaperImagesChanged(CompScreen *s,
 				   CompOption *o,
 				   WallpaperScreenOptions num)
@@ -86,7 +89,7 @@ static void wallpaperImagesChanged(CompScreen *s,
   cleanupTextures(s);
 }
 
-
+/* Return a texture for viewport x/y if there are no textures, load them */
 static CompTexture *
 getTextureForViewport(CompScreen *s, int x, int y)
 {
@@ -108,7 +111,26 @@ getTextureForViewport(CompScreen *s, int x, int y)
     }
 
   if (!ws->nTextures)
-    return 0;
+    {
+      WALLPAPER_DISPLAY(s->display);
+      
+      if (!ws->propSet)
+	XDeleteProperty(s->display->display, s->root, wd->compizWallpaperAtom);
+      ws->propSet = FALSE;
+      return 0;
+    }
+  else if (!ws->propSet)
+    {
+      WALLPAPER_DISPLAY(s->display);
+      unsigned char sd = 1;
+
+	  XChangeProperty(s->display->display, s->root, 
+		      wd->compizWallpaperAtom, XA_CARDINAL, 	
+		      8, PropModeReplace, &sd, 1);      
+      ws->propSet = TRUE;
+    }
+  
+  
   
 
   
@@ -247,6 +269,8 @@ static Bool wallpaperInitScreen (CompPlugin * p,
 
   XChangeProperty(s->display->display, s->root, wd->compizWallpaperAtom, XA_CARDINAL, 	8, PropModeReplace, &sd, 1);
   
+  ws->propSet = TRUE;
+  
   
   s->privates[wd->screenPrivateIndex].ptr = ws;
  
@@ -263,6 +287,7 @@ static void wallpaperFiniScreen (CompPlugin * p,
     
   XDeleteProperty(s->display->display, s->root, wd->compizWallpaperAtom);
   
+  cleanupTextures(s);
   
   UNWRAP(ws, s, paintBackground);
   
