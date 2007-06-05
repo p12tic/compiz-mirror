@@ -107,6 +107,10 @@ getTextureForViewport(CompScreen *s, int x, int y)
       ws->nTextures = images->nValue;      
     }
 
+  if (!ws->nTextures)
+    return 0;
+  
+
   
   return &ws->textures[(s->x + (s->y * s->hsize)) % ws->nTextures];
   
@@ -119,13 +123,22 @@ wallpaperPaintBackground (CompScreen *s,
 			  unsigned int mask)
 {
 
-
+  WALLPAPER_SCREEN(s)
   BoxPtr pBox = region->rects;
   int n, nBox = region->numRects;
   GLfloat *d, *data;
   CompTexture * bg;
-    
+ 
   bg = getTextureForViewport(s, s->x, s->y);
+
+  if (!bg)
+    {
+      UNWRAP (ws, s, paintBackground);
+      (*s->paintBackground)(s, region, mask);
+      WRAP (ws, s, paintBackground, wallpaperPaintBackground);
+      return;
+    }
+  
     
   if (!nBox)
     return;
