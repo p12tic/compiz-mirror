@@ -123,7 +123,7 @@ wallpaperPaintBackground (CompScreen *s,
 			  unsigned int mask)
 {
 
-  WALLPAPER_SCREEN(s)
+  WALLPAPER_SCREEN(s);
   BoxPtr pBox = region->rects;
   int n, nBox = region->numRects;
   GLfloat *d, *data;
