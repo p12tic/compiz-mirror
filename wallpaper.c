@@ -314,7 +314,10 @@ wallpaperLoadImages(CompScreen *s)
 		
 		initTexture(s, &ws->wallpapers[i].texture);
 		
-		
+		if (!strcmp(type,"fill_only"))
+		{
+			wallpaperFillFillOnly(s,data,i);
+		}
 		if (!strcmp(type,"file"))
 		{
 			p = wallpaperFileToPixmap(s, data, &w, &h);
