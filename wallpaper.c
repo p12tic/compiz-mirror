@@ -36,12 +36,12 @@ static int displayPrivateIndex;
 
 typedef struct _WallpaperWallpaper
 {
-  CompTexture texture;
+	CompTexture texture;
   
-  Bool fillOnly;
-  float fillColor[3];
+	Bool fillOnly;
+	float fillColor[3];
   
-  float opacity;
+	float opacity;
   
 } WallpaperWallpaper;
 
@@ -128,77 +128,99 @@ static Bool updateWallpaperProperty(CompScreen *s)
 	return 1;
 }
 
-static void
-wallpaperFileToTexture(CompScreen *s, char * data, CompTexture * texture, int i)
+static Pixmap
+wallpaperFileToPixmap(CompScreen *s, char * data, int * width, int *height)
 {
-  unsigned int w, h;
-  
-  initTexture(s, texture);
-  readImageToTexture(s, texture, data, &w, &h);
+	int w, h;
+	void * imageData;
+	XImage * image;
+	GC gc;
+	Pixmap pixmap;
+	int stride;
+	XVisualInfo * vi = glXGetVisualFromFBConfig(s->display->display,
+						    s->glxPixmapFBConfigs[32].fbConfig);
+	
+	(*s->display->fileToImage)(s->display, 0, data, &w, &h, &stride, &imageData);
+	
+	pixmap = XCreatePixmap(s->display->display, 
+			       s->root, w, h, 32);
+	
+	
+	gc = XCreateGC(s->display->display, pixmap, 0, 0);
+	
+	
+	
+	image = XCreateImage(s->display->display, vi->visual, 
+			     32, ZPixmap, 0, imageData, w, h, 32,
+			     0);
+	
+	XPutImage(s->display->display, pixmap, gc, image, 0, 0, 0, 0, w, h);
+	
+
+	XFreeGC(s->display->display, gc);
+	XDestroyImage(image);
+	XFree(vi);
+	
+	*width = w;
+	*height = h;
+    
+	return pixmap;
 }
 
-
-static void
-wallpaperLinearGradientToTexture(CompScreen *s, char * data, CompTexture * texture, int i)
+static Pixmap
+wallpaperLinearGradientToPixmap(CompScreen *s, char * data, int * width, int * height)
 {
-  Pixmap p;
-  cairo_t * cr;
-  cairo_pattern_t * gradient;
-  cairo_surface_t * surface;
-  XImage * image;
-  XRenderPictFormat * format;
-  Screen *screen;
-  float r1,g1,b1,r2,g2,b2,x1,y1,x2,y2;
+	Pixmap p;
+	cairo_t * cr;
+	cairo_pattern_t * gradient;
+	cairo_surface_t * surface;
+	XRenderPictFormat * format;
+	Screen *screen;
+	float r1,g1,b1,r2,g2,b2,x1,y1,x2,y2;
   
-  sscanf(data,"%f,%f,%f,%f|%f,%f,%f,%f,%f,%f",&x1,&y1,&x2,&y2,&r1,&g1,&b1,&r2,&g2,&b2);
+	sscanf(data,"%f,%f,%f,%f|%f,%f,%f,%f,%f,%f",&x1,&y1,&x2,&y2,&r1,&g1,&b1,&r2,&g2,&b2);
 			
-  initTexture(s, texture);
+	screen = ScreenOfDisplay(s->display->display, s->screenNum);
+	format = XRenderFindStandardFormat(s->display->display,
+					   PictStandardARGB32);
 			
-  screen = ScreenOfDisplay(s->display->display, s->screenNum);
-  format = XRenderFindStandardFormat(s->display->display,
-				     PictStandardARGB32);
+	p = XCreatePixmap(s->display->display, s->root, s->width, s->height, 32);
 			
-  p = XCreatePixmap(s->display->display, s->root, s->width, s->height, 32);
+	surface = cairo_xlib_surface_create_with_xrender_format(s->display->display,
+								p, screen,
+								format, s->width, s->height);
+	cr = cairo_create(surface);
 			
-  surface = cairo_xlib_surface_create_with_xrender_format(s->display->display,
-							  p, screen,
-							  format, s->width, s->height);
-  cr = cairo_create(surface);
-			
-  gradient = cairo_pattern_create_linear(x1,y1,x2*s->width,y2*s->height);
-  cairo_pattern_add_color_stop_rgb(gradient,0.0f,r1,g1,b1);
-  cairo_pattern_add_color_stop_rgb(gradient,1.0f,r2,g2,b2);
+	gradient = cairo_pattern_create_linear(x1,y1,x2*s->width,y2*s->height);
+	cairo_pattern_add_color_stop_rgb(gradient,0.0f,r1,g1,b1);
+	cairo_pattern_add_color_stop_rgb(gradient,1.0f,r2,g2,b2);
 
 			
 	
-  cairo_set_source(cr,gradient);
-  cairo_paint(cr);
-  cairo_fill(cr);
+	cairo_set_source(cr,gradient);
+	cairo_paint(cr);
+	cairo_fill(cr);
 			
-  image = XGetImage(s->display->display, p, 0, 0, s->width, s->height, AllPlanes, ZPixmap);
-  imageBufferToTexture(s, texture, image->data, s->width, s->height);
-			
-  XFreePixmap(s->display->display, p);
-			
-  cairo_surface_destroy(surface);
-  cairo_pattern_destroy(gradient);
-  cairo_destroy(cr);
-  if (image)
-    XDestroyImage(image);
-			
+	cairo_surface_destroy(surface);
+	cairo_pattern_destroy(gradient);
+	cairo_destroy(cr);
+	
+	*width = s->width;
+	*height = s->height;
+	return p;
 }
 
 static void
 wallpaperFillFillOnly(CompScreen *s, char * data, int i)
 {
-  WALLPAPER_SCREEN(s);
-  float r,g,b;
-  sscanf(data,"%f,%f,%f",&r,&g,&b);
+	WALLPAPER_SCREEN(s);
+	float r,g,b;
+	sscanf(data,"%f,%f,%f",&r,&g,&b);
   
-  ws->wallpapers[i].fillOnly = TRUE;
-  ws->wallpapers[i].fillColor[0]=r;
-  ws->wallpapers[i].fillColor[1]=g;
-  ws->wallpapers[i].fillColor[2]=b;
+	ws->wallpapers[i].fillOnly = TRUE;
+	ws->wallpapers[i].fillColor[0]=r;
+	ws->wallpapers[i].fillColor[1]=g;
+	ws->wallpapers[i].fillColor[2]=b;
 }
 
 
@@ -208,6 +230,7 @@ wallpaperLoadImages(CompScreen *s)
 	CompListValue * images;
 	WALLPAPER_SCREEN(s);
 	int i;
+	XRenderPictFormat * format = XRenderFindStandardFormat(s->display->display, PictStandardARGB32);
 	
 	images = wallpaperGetImages(s);
 	ws->wallpapers = malloc(sizeof(WallpaperWallpaper) * images->nValue);
@@ -216,6 +239,9 @@ wallpaperLoadImages(CompScreen *s)
 	{
 		char * component = images->value[i].s;
 		char * type,* data,* opacity;
+		Pixmap p = 0;
+		XImage * image;
+		int w,h;
 		
 		ws->wallpapers[i].fillOnly = FALSE;
 
@@ -223,22 +249,53 @@ wallpaperLoadImages(CompScreen *s)
 		data = strsep(&component,":");
 		opacity = strsep(&component,";");
 		
-		sscanf(opacity,"%f",&ws->wallpapers[i].opacity);
+		initTexture(s, &ws->wallpapers[i].texture);
+		
 		
 		if (!strcmp(type,"file"))
 		{
-		  wallpaperFileToTexture(s, data, &ws->wallpapers[i].texture, i);
+			p = wallpaperFileToPixmap(s, data, &w, &h);
 		}
 		else if (!strcmp(type,"fill"))
 		{
-		  wallpaperFillFillOnly(s, data, i);
+			wallpaperFillFillOnly(s, data, i);
 		}
 		else if (!strcmp(type,"linear"))
 		{
-		  wallpaperLinearGradientToTexture(s, data, &ws->wallpapers[i].texture,i);
+			p = wallpaperLinearGradientToPixmap(s, data, &w, &h);
+		}
+		if (p)
+		{
+			float xf = s->width/(float)w;
+			float yf = s->height/(float)h;
+			
+			XTransform xform = {{
+					{XDoubleToFixed(1/xf), XDoubleToFixed(0), XDoubleToFixed(0)},
+					{XDoubleToFixed(0), XDoubleToFixed(1/yf), XDoubleToFixed(0)},
+					{XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1)}}};
+					    
+			Pixmap finalPixmap = XCreatePixmap(s->display->display, s->root,
+							   s->width, s->height, 32);
+			Picture destPicture = XRenderCreatePicture(s->display->display, finalPixmap, format, 0, 0);
+			Picture sourcePicture = XRenderCreatePicture(s->display->display, p, format, 0, 0);
+
+			XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
+			XRenderComposite(s->display->display, PictOpSrc,
+					 sourcePicture, 0, destPicture,
+					 0, 0, 0, 0, 0, 0,
+					 w, h);
+						
+			image = XGetImage(s->display->display, finalPixmap, 0, 0, s->width, s->height, AllPlanes, ZPixmap);
+			imageBufferToTexture(s, &ws->wallpapers[i].texture, image->data, s->width, s->height);
+			
+			XDestroyImage(image);
+			XFreePixmap(s->display->display, p);
+			XFreePixmap(s->display->display, finalPixmap);
+			XRenderFreePicture(s->display->display, destPicture);
+			XRenderFreePicture(s->display->display, sourcePicture);
 		}
 		
-
+		    
 	}
 	ws->nWallpapers = images->nValue;
 }
