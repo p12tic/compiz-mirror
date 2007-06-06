@@ -299,8 +299,7 @@ wallpaperLoadImages(CompScreen *s)
 		if (p)
 		{
 			Pixmap finalPixmap;
-			Picture destPicture, sourcePicture;
-			Picture alpha;
+			Picture destPicture, sourcePicture, alpha;
 			XImage *image;
 			
 			
@@ -330,6 +329,7 @@ wallpaperLoadImages(CompScreen *s)
 			XFreePixmap(s->display->display, finalPixmap);
 			XRenderFreePicture(s->display->display, destPicture);
 			XRenderFreePicture(s->display->display, sourcePicture);
+			XRenderFreePicture(s->display->display, alpha);
 		}
 		
 		    
