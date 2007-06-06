@@ -40,9 +40,6 @@ typedef struct _WallpaperWallpaper
   
 	Bool fillOnly;
 	float fillColor[3];
-  
-	float opacity;
-  
 } WallpaperWallpaper;
 
   
@@ -455,10 +452,9 @@ wallpaperPaintBackground (CompScreen *s,
 	if (!ww->fillOnly)
 	{
 		glTexCoordPointer(2, GL_FLOAT, sizeof(GLfloat) * 4, data);
-		glColor4f(1.0f,1.0f,1.0f,ww->opacity);
 	} else {
 		glColor4f(ww->fillColor[0], ww->fillColor[1],
-			  ww->fillColor[2], ww->opacity);
+			  ww->fillColor[2], 1.0f);
 	}
 	
 	
@@ -472,13 +468,9 @@ wallpaperPaintBackground (CompScreen *s,
 			enableTexture(s, bg, COMP_TEXTURE_FILTER_FAST);
 	}
 	
-	if (ww->opacity != 1.0f)
-		glEnable(GL_BLEND);
 	
 	glDrawArrays(GL_QUADS, 0, nBox * 4);
 	
-	glDisable(GL_BLEND);
-  
 	if (!ww->fillOnly)
 		disableTexture(s, bg);
   
