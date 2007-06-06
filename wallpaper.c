@@ -6,8 +6,6 @@
  *
  * Copyright (c) 2007 Robert Carr <racarr@opencompositing.org>
  *
- * Authors:
- * Robert Carr <racarr@beryl-project.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -35,6 +33,19 @@
 
 static int displayPrivateIndex;
 
+typedef struct _WallpaperWallpaper
+{
+  CompTexture texture;
+  
+  Bool fillOnly;
+  float fillColor[3];
+  
+  float opacity;
+  
+} WallpaperWallpaper;
+
+  
+
 typedef struct _WallpaperDisplay
 {
 	int screenPrivateIndex;
@@ -45,8 +56,8 @@ typedef struct _WallpaperScreen
 {
 	PaintBackgroundProc paintBackground;
   
-	CompTexture * textures;
-	int nTextures;
+	WallpaperWallpaper * wallpapers;
+	int nWallpapers;
 
 	Bool propSet; /* Avoid having to ask server */
 } WallpaperScreen;
@@ -70,13 +81,13 @@ cleanupBackgrounds (CompScreen *s)
 	WALLPAPER_SCREEN(s);
 	int i;
   
-	for ( i = 0; i < ws->nTextures; i++)
+	for ( i = 0; i < ws->nWallpapers; i++)
 	{
-		finiTexture(s, &ws->textures[i]);
+		finiTexture(s, &ws->wallpapers[i].texture);
 	}
-	free(ws->textures);
-	ws->textures = 0;
-	ws->nTextures = 0;
+	free(ws->wallpapers);
+	ws->wallpapers = 0;
+	ws->nWallpapers = 0;
 }
 
 /* Installed as a handler for the images setting changing through bcop */
@@ -91,7 +102,7 @@ static Bool updateWallpaperProperty(CompScreen *s)
 {
 	WALLPAPER_SCREEN(s);
   
-	if (!ws->nTextures)
+	if (!ws->nWallpapers)
 	{
 		WALLPAPER_DISPLAY(s->display);
 	  
@@ -124,26 +135,29 @@ wallpaperLoadImages(CompScreen *s)
 	unsigned int w,h;
 	
 	images = wallpaperGetImages(s);
-	ws->textures = malloc(sizeof(CompTexture) * images->nValue);
+	ws->wallpapers = malloc(sizeof(WallpaperWallpaper) * images->nValue);
 	
 	for (i = 0; i < images->nValue; i++)
 	{
-		initTexture(s, &ws->textures[i]);
-		readImageToTexture(s, &ws->textures[i], 
+		ws->wallpapers[i].fillOnly = FALSE;
+		ws->wallpapers[i].opacity = 1.0f;
+		
+		initTexture(s, &ws->wallpapers[i].texture);
+		readImageToTexture(s, &ws->wallpapers[i].texture, 
 				   images->value[i].s, &w, &h);
 	}
-	ws->nTextures = images->nValue;
+	ws->nWallpapers = images->nValue;
 }
 
 
 
 /* Return a texture for viewport x/y if there are no textures, load them */
-static CompTexture *
+static WallpaperWallpaper *
 getTextureForViewport(CompScreen *s, int x, int y)
 {
 	WALLPAPER_SCREEN(s);
   
-	if (!ws->textures)
+	if (!ws->wallpapers)
 	{  
 		wallpaperLoadImages(s);
 	}
@@ -151,7 +165,7 @@ getTextureForViewport(CompScreen *s, int x, int y)
 	if (!updateWallpaperProperty(s))
 		return 0;
     
-	return &ws->textures[(x+y) % ws->nTextures];
+	return &ws->wallpapers[(x+y) % ws->nWallpapers];
   
     
 }
@@ -167,9 +181,12 @@ wallpaperPaintBackground (CompScreen *s,
 	int n, nBox = region->numRects;
 	GLfloat *d, *data;
 	CompTexture * bg;
+	WallpaperWallpaper * ww;
+	
  
-	bg = getTextureForViewport(s, s->x, s->y);
-
+	ww = getTextureForViewport(s, s->x, s->y);
+	bg = &ww->texture;
+	
 	if (!nBox)
 		return;
 
@@ -274,8 +291,8 @@ static Bool wallpaperInitScreen (CompPlugin * p,
 	if (!ws)
 		return FALSE;
   
-	ws->textures = 0;
-	ws->nTextures = 0;
+	ws->wallpapers = 0;
+	ws->nWallpapers = 0;
 
 	wallpaperSetImagesNotify(s, wallpaperImagesChanged);
   
