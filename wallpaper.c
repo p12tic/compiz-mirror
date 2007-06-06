@@ -83,7 +83,8 @@ cleanupBackgrounds (CompScreen *s)
   
 	for ( i = 0; i < ws->nWallpapers; i++)
 	{
-		finiTexture(s, &ws->wallpapers[i].texture);
+		if (!ws->wallpapers[i].fillOnly)
+			finiTexture(s, &ws->wallpapers[i].texture);
 	}
 	free(ws->wallpapers);
 	ws->wallpapers = 0;
@@ -139,12 +140,33 @@ wallpaperLoadImages(CompScreen *s)
 	
 	for (i = 0; i < images->nValue; i++)
 	{
-		ws->wallpapers[i].fillOnly = FALSE;
-		ws->wallpapers[i].opacity = 1.0f;
+		char * component = images->value[i].s;
+		char * type,* data,* opacity;
 		
-		initTexture(s, &ws->wallpapers[i].texture);
-		readImageToTexture(s, &ws->wallpapers[i].texture, 
-				   images->value[i].s, &w, &h);
+		ws->wallpapers[i].fillOnly = FALSE;
+
+		type = strsep(&component,":");
+		data = strsep(&component,":");
+		opacity = strsep(&component,";");
+		
+		sscanf(opacity,"%f",&ws->wallpapers[i].opacity);
+		
+		if (!strcmp(type,"file"))
+		{
+			initTexture(s, &ws->wallpapers[i].texture);
+			readImageToTexture(s, &ws->wallpapers[i].texture,data, &w, &h);
+		}
+		else if (!strcmp(type,"fill"))
+		{
+			float r,g,b;
+			sscanf(data,"%f,%f,%f",&r,&g,&b);
+			
+			ws->wallpapers[i].fillOnly = TRUE;
+			ws->wallpapers[i].fillColor[0]=r;
+			ws->wallpapers[i].fillColor[1]=g;
+			ws->wallpapers[i].fillColor[2]=b;
+		}
+
 	}
 	ws->nWallpapers = images->nValue;
 }
@@ -230,18 +252,35 @@ wallpaperPaintBackground (CompScreen *s,
       
 		pBox++;
 	}
-  
-	glTexCoordPointer(2, GL_FLOAT, sizeof(GLfloat) * 4, data);
+	if (!ww->fillOnly)
+	{
+		glTexCoordPointer(2, GL_FLOAT, sizeof(GLfloat) * 4, data);
+		glColor4f(1.0f,1.0f,1.0f,ww->opacity);
+	} else {
+		glColor4f(ww->fillColor[0], ww->fillColor[1],
+			  ww->fillColor[2], ww->opacity);
+	}
+	
+	
 	glVertexPointer(2, GL_FLOAT, sizeof(GLfloat) * 4, data+2);
-  
-	if (mask & PAINT_BACKGROUND_ON_TRANSFORMED_SCREEN_MASK)
-		enableTexture(s, bg, COMP_TEXTURE_FILTER_GOOD);
-	else
-		enableTexture(s, bg, COMP_TEXTURE_FILTER_FAST);
-  
+	
+	if (!ww->fillOnly)
+	{
+		if (mask & PAINT_BACKGROUND_ON_TRANSFORMED_SCREEN_MASK)
+			enableTexture(s, bg, COMP_TEXTURE_FILTER_GOOD);
+		else
+			enableTexture(s, bg, COMP_TEXTURE_FILTER_FAST);
+	}
+	
+	if (ww->opacity != 1.0f)
+		glEnable(GL_BLEND);
+	
 	glDrawArrays(GL_QUADS, 0, nBox * 4);
+	
+	glDisable(GL_BLEND);
   
-	disableTexture(s, bg);
+	if (!ww->fillOnly)
+		disableTexture(s, bg);
   
 }
 
