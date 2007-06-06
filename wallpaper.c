@@ -45,7 +45,6 @@ typedef struct _WallpaperScreen
 {
   PaintBackgroundProc paintBackground;
   
-  
   CompTexture * textures;
   int nTextures;
 
@@ -78,7 +77,6 @@ cleanupTextures (CompScreen *s)
   free(ws->textures);
   ws->textures = 0;
   ws->nTextures = 0;
-  
 }
 
 /* Installed as a handler for the images setting changing through bcop */
@@ -89,51 +87,69 @@ static void wallpaperImagesChanged(CompScreen *s,
   cleanupTextures(s);
 }
 
+static Bool updateWallpaperProperty(CompScreen *s)
+{
+  WALLPAPER_SCREEN(s);
+  
+  if (!ws->nTextures)
+  {
+	  WALLPAPER_DISPLAY(s->display);
+	  
+	  if (!ws->propSet)
+		  XDeleteProperty(s->display->display, 
+				  s->root, wd->compizWallpaperAtom);
+	  ws->propSet = FALSE;
+	  return 0;
+  }
+  else if (!ws->propSet)
+  {
+	  WALLPAPER_DISPLAY(s->display);
+	  unsigned char sd = 1;
+	  
+	  XChangeProperty(s->display->display, s->root, 
+			  wd->compizWallpaperAtom, XA_CARDINAL, 	
+			  8, PropModeReplace, &sd, 1);      
+	  ws->propSet = TRUE;
+  }    
+  return 1;
+}
+
+static void
+wallpaperLoadImages(CompScreen *s)
+{
+	CompListValue * images;
+	WALLPAPER_SCREEN(s);
+	int i;
+	unsigned int w,h;
+	
+	images = wallpaperGetImages(s);
+	ws->textures = malloc(sizeof(CompTexture) * images->nValue);
+	
+	for (i = 0; i < images->nValue; i++)
+	{
+		initTexture(s, &ws->textures[i]);
+		readImageToTexture(s, &ws->textures[i], 
+				   images->value[i].s, &w, &h);
+	}
+	ws->nTextures = images->nValue;
+}
+
+
+
 /* Return a texture for viewport x/y if there are no textures, load them */
 static CompTexture *
 getTextureForViewport(CompScreen *s, int x, int y)
 {
-  CompListValue * images;
   WALLPAPER_SCREEN(s);
-  unsigned int w, h;
-  int i;
   
   if (!ws->textures)
-    {  
-      images = wallpaperGetImages(s);
-      ws->textures = malloc(sizeof(CompTexture) * images->nValue);
-      for ( i = 0; i < images->nValue; i++)
-	{
-	  initTexture(s, &ws->textures[i]);
-	  readImageToTexture(s, &ws->textures[i], images->value[i].s, &w, &h);
-	}
-      ws->nTextures = images->nValue;      
-    }
+  {  
+	  wallpaperLoadImages(s);
+  }
 
-  if (!ws->nTextures)
-    {
-      WALLPAPER_DISPLAY(s->display);
-      
-      if (!ws->propSet)
-	XDeleteProperty(s->display->display, s->root, wd->compizWallpaperAtom);
-      ws->propSet = FALSE;
-      return 0;
-    }
-  else if (!ws->propSet)
-    {
-      WALLPAPER_DISPLAY(s->display);
-      unsigned char sd = 1;
-
-	  XChangeProperty(s->display->display, s->root, 
-		      wd->compizWallpaperAtom, XA_CARDINAL, 	
-		      8, PropModeReplace, &sd, 1);      
-      ws->propSet = TRUE;
-    }
-  
-  
-  
-
-  
+  if (!updateWallpaperProperty(s))
+	  return 0;
+    
   return &ws->textures[(x+y) % ws->nTextures];
   
     
@@ -153,6 +169,9 @@ wallpaperPaintBackground (CompScreen *s,
  
   bg = getTextureForViewport(s, s->x, s->y);
 
+  if (!nBox)
+    return;
+
   if (!bg)
     {
       UNWRAP (ws, s, paintBackground);
@@ -161,11 +180,8 @@ wallpaperPaintBackground (CompScreen *s,
       return;
     }
   
-    
-  if (!nBox)
-    return;
-  
   data = malloc(sizeof(GLfloat)*nBox*16);
+
   d = data;
   n = nBox;
   while (n--)
@@ -230,7 +246,8 @@ wallpaperInitDisplay (CompPlugin * p,
       return FALSE;
     }
 
-  wd->compizWallpaperAtom = XInternAtom(d->display, "_COMPIZ_WALLPAPER_SUPPORTED", 0);
+  wd->compizWallpaperAtom = XInternAtom(d->display, 
+					"_COMPIZ_WALLPAPER_SUPPORTED", 0);
   
   d->privates[displayPrivateIndex].ptr = wd;
   
