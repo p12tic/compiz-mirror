@@ -166,6 +166,11 @@ wallpaperLoadImages(CompScreen *s)
 			ws->wallpapers[i].fillColor[1]=g;
 			ws->wallpapers[i].fillColor[2]=b;
 		}
+		else if (!strcmp(type,"linear"))
+		{
+			// Stop being lazy. Implement me FOO!
+		}
+		
 
 	}
 	ws->nWallpapers = images->nValue;

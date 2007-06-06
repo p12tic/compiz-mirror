@@ -7,7 +7,13 @@
 	<_short> Background Files </_short>
 	<_long> The files to use as background images, repetition will
 	occur if you have fewer than hsize*vsize images. Note using
-	fewer images will conserve video memory </_long>
+	fewer images will conserve video memory 
+	Format is as follows: for loading a file
+	  file:pathToFile:opacity
+	  where opacity is in the 0 to 1 range.
+	  For a solid fill you can use
+	  fill:r,g,b:opacity where r g b and opacity are in the 0 to 1 range.
+	</_long>
 	<type>string</type>
       </option>
     </screen>
