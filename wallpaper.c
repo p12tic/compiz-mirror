@@ -187,7 +187,7 @@ getTextureForViewport(CompScreen *s, int x, int y)
 	if (!updateWallpaperProperty(s))
 		return 0;
     
-	return &ws->wallpapers[(x+y) % ws->nWallpapers];
+	return &ws->wallpapers[(x+y*s->hsize) % ws->nWallpapers];
   
     
 }
