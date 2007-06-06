@@ -240,7 +240,6 @@ wallpaperLoadImages(CompScreen *s)
 		char * component = images->value[i].s;
 		char * type,* data,* opacity;
 		Pixmap p = 0;
-		XImage * image;
 		int w,h;
 		
 		ws->wallpapers[i].fillOnly = FALSE;
@@ -266,18 +265,22 @@ wallpaperLoadImages(CompScreen *s)
 		}
 		if (p)
 		{
-			float xf = s->width/(float)w;
-			float yf = s->height/(float)h;
+			Pixmap finalPixmap;
+			Picture destPicture, sourcePicture;
+			XImage *image;
+			
 			
 			XTransform xform = {{
-					{XDoubleToFixed(1/xf), XDoubleToFixed(0), XDoubleToFixed(0)},
-					{XDoubleToFixed(0), XDoubleToFixed(1/yf), XDoubleToFixed(0)},
+					{XDoubleToFixed(1/(s->width/(float)w)), XDoubleToFixed(0), XDoubleToFixed(0)},
+					 {XDoubleToFixed(0), XDoubleToFixed(1/(s->height/(float)h)), XDoubleToFixed(0)},
 					{XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1)}}};
+			
 					    
-			Pixmap finalPixmap = XCreatePixmap(s->display->display, s->root,
+			finalPixmap = XCreatePixmap(s->display->display, s->root,
 							   s->width, s->height, 32);
-			Picture destPicture = XRenderCreatePicture(s->display->display, finalPixmap, format, 0, 0);
-			Picture sourcePicture = XRenderCreatePicture(s->display->display, p, format, 0, 0);
+			destPicture = XRenderCreatePicture(s->display->display, finalPixmap, format, 0, 0);
+			sourcePicture = XRenderCreatePicture(s->display->display, p, format, 0, 0);
+			
 
 			XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
 			XRenderComposite(s->display->display, PictOpSrc,
