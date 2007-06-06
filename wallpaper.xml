@@ -9,12 +9,12 @@
 	occur if you have fewer than hsize*vsize images. Note using
 	fewer images will conserve video memory 
 	Format is as follows: for loading a file
-	  file:pathToFile:opacity;
+	  file:pathToFile:opacity:
 	  where opacity is in the 0 to 1 range.
 	  For a solid fill you can use
-	  fill:r,g,b:opacity; where r g b and opacity are in the 0 to 1
+	  fill:r,g,b:opacity: where r g b and opacity are in the 0 to 1
 	range.
-	  linear:x1,y1,x2,y2|r1,g1,b1,r2,g2,b2:opacity;
+	  linear:x1,y1,x2,y2|r1,g1,b1,r2,g2,b2:opacity:
 	  creates a linear gradient from x1,y1 to x2,y2 blending
 	between (r1,g1,b1) and (r2,g2,b2), all values are in the
 	0.0-1.0 range.
