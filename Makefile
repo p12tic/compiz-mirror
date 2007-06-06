@@ -24,7 +24,7 @@
 PLUGIN = wallpaper
 
 #enter dependencies here
-PKG_DEP = 
+PKG_DEP = cairo
 
 ## end of configuration
 

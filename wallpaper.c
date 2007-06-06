@@ -28,6 +28,7 @@
 #include <compiz.h>
 
 #include <X11/Xatom.h>
+#include <cairo-xlib-xrender.h>
 
 #include "wallpaper_options.h"
 
@@ -168,7 +169,52 @@ wallpaperLoadImages(CompScreen *s)
 		}
 		else if (!strcmp(type,"linear"))
 		{
-			// Stop being lazy. Implement me FOO!
+			Pixmap p;
+			cairo_t * cr;
+			cairo_pattern_t * gradient;
+			cairo_surface_t * surface;
+			XImage * image;
+			XRenderPictFormat * format;
+			CompTexture * texture = &ws->wallpapers[i].texture;
+			Screen *screen;
+			float r1,g1,b1,r2,g2,b2,x1,y1,x2,y2;
+			
+			sscanf(data,"%f,%f,%f,%f|%f,%f,%f,%f,%f,%f",&x1,&y1,&x2,&y2,&r1,&g1,&b1,&r2,&g2,&b2);
+			
+			initTexture(s, texture);
+			
+			screen = ScreenOfDisplay(s->display->display, s->screenNum);
+			format = XRenderFindStandardFormat(s->display->display,
+							   PictStandardARGB32);
+			
+			p = XCreatePixmap(s->display->display, s->root, s->width, s->height, 32);
+			
+			surface = cairo_xlib_surface_create_with_xrender_format(s->display->display,
+										p, screen,
+										format, s->width, s->height);
+			cr = cairo_create(surface);
+			
+			gradient = cairo_pattern_create_linear(x1,y1,x2*s->width,y2*s->height);
+			cairo_pattern_add_color_stop_rgb(gradient,0.0f,r1,g1,b1);
+			cairo_pattern_add_color_stop_rgb(gradient,1.0f,r2,g2,b2);
+
+			
+	
+			cairo_set_source(cr,gradient);
+			cairo_paint(cr);
+			cairo_fill(cr);
+			
+			image = XGetImage(s->display->display, p, 0, 0, s->width, s->height, AllPlanes, ZPixmap);
+			imageBufferToTexture(s, texture, image->data, s->width, s->height);
+			
+			XFreePixmap(s->display->display, p);
+			
+			cairo_surface_destroy(surface);
+			cairo_pattern_destroy(gradient);
+			cairo_destroy(cr);
+			if (image)
+			  XDestroyImage(image);
+			
 		}
 		
 
