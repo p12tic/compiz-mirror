@@ -210,6 +210,36 @@ wallpaperLinearGradientToPixmap(CompScreen *s, char * data, int * width, int * h
 	return p;
 }
 
+static Picture
+wallpaperAlphaMask(CompScreen *s, double a)
+{
+	Pixmap pixmap;
+	Picture picture;
+	XRenderPictureAttributes pa;
+	XRenderColor c;
+	
+	pixmap = XCreatePixmap(s->display->display, s->root,
+			       1, 1, 32);
+	
+	pa.repeat = True;
+	picture = XRenderCreatePicture(s->display->display, pixmap,
+				       XRenderFindStandardFormat(s->display->display, PictStandardARGB32),
+				       CPRepeat,
+				       &pa);
+	
+	c.alpha = a* 0xffff;
+	c.red = 0;
+	c.green = 0;
+	c.blue = 0;
+	
+	XRenderFillRectangle(s->display->display, PictOpSrc, picture, &c, 0, 0, 1, 1);
+	XFreePixmap(s->display->display, pixmap);
+	
+	return picture;
+}
+
+	       
+
 static void
 wallpaperFillFillOnly(CompScreen *s, char * data, int i)
 {
@@ -238,7 +268,8 @@ wallpaperLoadImages(CompScreen *s)
 	for (i = 0; i < images->nValue; i++)
 	{
 		char * component = images->value[i].s;
-		char * type,* data,* opacity;
+		char * type,* data,* opacityc;
+		float opacity;
 		Pixmap p = 0;
 		int w,h;
 		
@@ -246,7 +277,9 @@ wallpaperLoadImages(CompScreen *s)
 
 		type = strsep(&component,":");
 		data = strsep(&component,":");
-		opacity = strsep(&component,";");
+		opacityc = strsep(&component,":");
+		opacity = atof(opacityc);
+		
 		
 		initTexture(s, &ws->wallpapers[i].texture);
 		
@@ -267,6 +300,7 @@ wallpaperLoadImages(CompScreen *s)
 		{
 			Pixmap finalPixmap;
 			Picture destPicture, sourcePicture;
+			Picture alpha;
 			XImage *image;
 			
 			
@@ -280,11 +314,11 @@ wallpaperLoadImages(CompScreen *s)
 							   s->width, s->height, 32);
 			destPicture = XRenderCreatePicture(s->display->display, finalPixmap, format, 0, 0);
 			sourcePicture = XRenderCreatePicture(s->display->display, p, format, 0, 0);
-			
+			alpha = wallpaperAlphaMask(s, opacity);
 
 			XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
 			XRenderComposite(s->display->display, PictOpSrc,
-					 sourcePicture, 0, destPicture,
+					 sourcePicture, alpha, destPicture,
 					 0, 0, 0, 0, 0, 0,
 					 w, h);
 						
