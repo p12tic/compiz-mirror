@@ -238,7 +238,41 @@ wallpaperAlphaMask(CompScreen *s, double a)
 	return picture;
 }
 
-	       
+static Pixmap
+wallpaperFillToPixmap(CompScreen *s, char * data, int * width, int * height)
+{
+	Pixmap pixmap;
+	Picture fill;
+	Picture dest;
+	XRenderPictFormat * format;
+	XRenderColor c;
+	float r,g,b;
+
+	sscanf(data,"%f,%f,%f",&r,&g,&b);	
+	c.red = r*65535;
+	c.green = g*65535;
+	c.blue = b*65535;
+	c.alpha = 65535;
+	
+	format = XRenderFindStandardFormat(s->display->display, PictStandardARGB32);
+	pixmap = XCreatePixmap(s->display->display, s->root, s->width, s->height, 32);
+	dest = XRenderCreatePicture(s->display->display, pixmap, format, 0, 0);
+	fill = XRenderCreateSolidFill(s->display->display, &c);
+	
+	XRenderComposite(s->display->display, PictOpSrc,
+			 fill, 0, dest,
+			 0, 0, 0, 0, 0, 0,
+			 s->width, s->height);
+	
+	XRenderFreePicture(s->display->display,dest);
+	XRenderFreePicture(s->display->display,fill);
+	
+	*width = s->width;
+	*height = s->height;
+	
+	return pixmap;
+}
+
 
 static void
 wallpaperFillFillOnly(CompScreen *s, char * data, int i)
@@ -290,7 +324,7 @@ wallpaperLoadImages(CompScreen *s)
 		}
 		else if (!strcmp(type,"fill"))
 		{
-			wallpaperFillFillOnly(s, data, i);
+			p = wallpaperFillToPixmap(s, data, &w, &h);
 		}
 		else if (!strcmp(type,"linear"))
 		{
