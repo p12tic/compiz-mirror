@@ -134,7 +134,7 @@ getTextureForViewport(CompScreen *s, int x, int y)
   
 
   
-  return &ws->textures[(s->x + (s->y * s->hsize)) % ws->nTextures];
+  return &ws->textures[(x+y) % ws->nTextures];
   
     
 }
