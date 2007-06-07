@@ -574,29 +574,23 @@ layoutOrganicThumbs(CompScreen * s)
 
     int i;
     int cx, cy;
-    int head;
+    int moMode;
     XRectangle workArea;
 
     SCALE_SCREEN (s);
     ADDON_SCREEN (s);
 
-    workArea = s->outputDev[s->currentOutputDev].workArea;
-    /* TODO
-    if (ss->mmMode == Current)
-    {
-	head = screenGetCurrentOutputDev(s);
-	screenGetOutputDevWorkArea(s, head, &workArea);
-    }
-    else if (ss->mmMode == Selected)
-    {
-	head = ss->head;
-	screenGetOutputDevWorkArea(s, head, &workArea);
-    }
-    else
-    {
+    moMode = ss->opt[SCALE_SCREEN_OPTION_MULTIOUTPUT_MODE].value.i;
+
+    switch (moMode) {
+    case SCALE_MOMODE_ALL:
 	workArea = s->workArea;
+	break;
+    case SCALE_MOMODE_CURRENT:
+    default:
+	workArea = s->outputDev[s->currentOutputDev].workArea;
+	break;
     }
-    */
 
     as->scale = 1.0f;
 
