@@ -273,7 +273,9 @@ scaleaddonScalePaintDecoration (CompWindow              *w,
     		scaleaddonRenderWindowTitle (w);
     		ad->lastSelectedWindow = sd->selectedWindow;
 	    }
-	    scaleaddonDrawWindowTitle (w);
+
+	    if (as->textPixmap)
+	        scaleaddonDrawWindowTitle (w);
 	}
     }
 }
