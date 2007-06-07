@@ -1,0 +1,17 @@
+The images option is a list of wallpapers, which will be tiled to fill all viewports.
+
+Each wallpaper is specified as follows:
+     type1:data1:opacity1;type2:data2:opacity2;...
+The final result will be the combinations of all the components.
+
+the different types are as follows
+
+file
+	data for file is path to file
+fill
+	data for fill is r,g,b value for fill, all between 0 and 1
+linear
+	data for linear gradient, is x1,y1,x2,y2|r1,g1,b1,r2,g2,b2 all between 0 and 1
+fill_only
+	optimized fill, data is the same, can only be used by itself.
+
