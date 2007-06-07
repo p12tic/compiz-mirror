@@ -44,7 +44,9 @@ static int scaleDisplayPrivateIndex;
 typedef struct _ScaleAddonDisplay {
     int screenPrivateIndex;
 
-    Window lastSelectedWindow;
+    HandleEventProc handleEvent;
+
+    Window lastHoveredWindow;
 } ScaleAddonDisplay;
 
 typedef struct _ScaleAddonScreen {
@@ -246,6 +248,65 @@ scaleaddonDrawWindowTitle (CompWindow *w)
 }
 
 static void
+scaleaddonCheckHoveredWindow (CompScreen *s)
+{
+    CompDisplay *d = s->display;
+
+    ADDON_DISPLAY (d);
+    SCALE_DISPLAY (d);
+
+    if (sd->hoveredWindow != ad->lastHoveredWindow)
+    {
+	CompWindow *w, *lw;
+
+	w = findWindowAtDisplay (d, sd->hoveredWindow);
+	if (w)
+	{
+	    scaleaddonRenderWindowTitle (w);
+	    addWindowDamage (w);
+	}
+	else
+	    scaleaddonFreeWindowTitle (s);
+
+	lw = findWindowAtDisplay (d, ad->lastHoveredWindow);
+	if (lw)
+	    addWindowDamage (lw);
+
+	ad->lastHoveredWindow = sd->hoveredWindow;
+    }
+}
+
+static void
+scaleaddonHandleEvent (CompDisplay *d,
+		       XEvent      *event)
+{
+    ADDON_DISPLAY (d);
+
+    UNWRAP (ad, d, handleEvent);
+    (*d->handleEvent) (d, event);
+    WRAP (ad, d, handleEvent, scaleaddonHandleEvent);
+
+    switch (event->type)
+    {
+    case MotionNotify:
+	{
+	    CompScreen *s;
+	    s = findScreenAtDisplay (d, event->xmotion.root);
+
+	    if (s)
+	    {
+		SCALE_SCREEN (s);
+		if (ss->grabIndex)
+		    scaleaddonCheckHoveredWindow (s);
+	    }
+	}
+	break;
+    default:
+	break;
+    }
+}
+
+static void
 scaleaddonScalePaintDecoration (CompWindow              *w,
 				const WindowPaintAttrib *attrib,
 				const CompTransform     *transform,
@@ -254,29 +315,19 @@ scaleaddonScalePaintDecoration (CompWindow              *w,
 {
     ADDON_SCREEN (w->screen);
     SCALE_SCREEN (w->screen);
+    SCALE_DISPLAY (w->screen->display);
 
     UNWRAP (as, ss, scalePaintDecoration);
     (*ss->scalePaintDecoration) (w, attrib, transform, region, mask);
     WRAP (as, ss, scalePaintDecoration, scaleaddonScalePaintDecoration);
 
-    if (((ss->state == SCALE_STATE_WAIT) ||
-	 (ss->state == SCALE_STATE_OUT)) &&
-	scaleaddonGetWindowTitle (w->screen))
+    scaleaddonCheckHoveredWindow (w->screen);
+
+    if ((w->id == sd->hoveredWindow) &&
+	((ss->state == SCALE_STATE_WAIT) || (ss->state == SCALE_STATE_OUT)))
     {
-	SCALE_DISPLAY (w->screen->display);
-	ADDON_DISPLAY (w->screen->display);
-
-	if (sd->selectedWindow == w->id)
-	{
-	    if (ad->lastSelectedWindow != w->id)
-	    {
-    		scaleaddonRenderWindowTitle (w);
-    		ad->lastSelectedWindow = sd->selectedWindow;
-	    }
-
-	    if (as->textPixmap)
-	        scaleaddonDrawWindowTitle (w);
-	}
+	if (as->textPixmap)
+	    scaleaddonDrawWindowTitle (w);
     }
 }
 
@@ -695,7 +746,7 @@ scaleaddonScreenOptionChanged (CompScreen              *s,
 		ADDON_DISPLAY (s->display);
 
 		scaleaddonFreeWindowTitle (s);
-		ad->lastSelectedWindow = None;
+		ad->lastHoveredWindow = None;
 	    }
 	    break;
 	default:
@@ -739,9 +790,11 @@ scaleaddonInitDisplay (CompPlugin  *p,
 	return FALSE;
     }
 
+    WRAP (ad, d, handleEvent, scaleaddonHandleEvent);
+
     d->privates[displayPrivateIndex].ptr = ad;
 
-    ad->lastSelectedWindow = None;
+    ad->lastHoveredWindow = None;
 
     return TRUE;
 }
@@ -751,6 +804,8 @@ scaleaddonFiniDisplay (CompPlugin  *p,
 	      	       CompDisplay *d)
 {
     ADDON_DISPLAY (d);
+
+    UNWRAP (ad, d, handleEvent);
 
     freeScreenPrivateIndex (d, ad->screenPrivateIndex);
 
