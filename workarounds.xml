@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<compiz>
+    <plugin name="workarounds">
+	<deps>
+	</deps>
+	<short>Workarounds</short>
+	<long>Metacity-like workarounds.</long>
+	<display>
+	</display>
+	<screen>
+	</screen>
+    </plugin>
+</compiz>
