@@ -20,3 +20,44 @@
 
 #include <compiz.h>
 
+static Bool workaroundsInit( CompPlugin *plugin )
+{
+    return TRUE;
+}
+
+static void workaroundsFini( CompPlugin *plugin )
+{
+}
+
+static int workaroundsGetVersion( CompPlugin *plugin, int version )
+{   
+    return ABIVERSION;
+}
+
+CompPluginVTable workaroundsVTable = 
+{
+    "workarounds",
+    workaroundsGetVersion,
+    0, /* GetMetadata */
+    workaroundsInit,
+    workaroundsFini,
+    0, /* InitDisplay */
+    0, /* FiniDisplay */
+    0, /* InitScreen */
+    0, /* FiniScreen */
+    0, /* InitWindow */
+    0, /* FiniWindow */
+    0, /* GetDisplayOptions */
+    0, /* SetDisplayOption */
+    0, /* GetScreenOptions */
+    0, /* SetScreenOption */
+    0, /* Deps */
+    0, /* nDeps */
+    0, /* Features */
+    0  /* nFeatures */
+};
+
+CompPluginVTable *getCompPluginInfo( void )
+{
+    return &workaroundsVTable;
+}
