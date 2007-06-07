@@ -41,12 +41,6 @@ static int scaleDisplayPrivateIndex;
 #define WIN_W(w) ((w)->width + (w)->input.left + (w)->input.right)
 #define WIN_H(w) ((w)->height + (w)->input.top + (w)->input.bottom)
 
-typedef struct _SlotArea
-{
-    int nWindows;
-    XRectangle workArea;
-} SlotArea;
-
 typedef struct _ScaleAddonDisplay {
     int screenPrivateIndex;
 
