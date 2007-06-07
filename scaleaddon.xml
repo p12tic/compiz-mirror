@@ -11,7 +11,8 @@
 			</requirement>
 		</deps>
 		<screen>
-			<group name="Window Title">
+			<group>
+				<short>Window Title</short>
 				<option name="window_title" type="bool">
 					<short>Show Window Title</short>
 					<long>Show window title in scale mode</long>
@@ -57,7 +58,8 @@
 					</default>
 				</option>
 			</group>
-			<group name="Misc. Options">
+			<group>
+				<short>Misc. Options</short>
 				<option name="layout_mode" type="int">
 					<short>Window Layout Mode</short>
 					<long>Selects the mode to layout the windows in scale mode</long>
@@ -74,7 +76,8 @@
 						<name>Organic - EXPERIMENTAL</name>
 					</desc>
 				</option>
-				<subgroup name="Window Highlight">
+				<subgroup>
+					<short>Window Highlight</short>
 					<option name="window_highlight" type="bool">
 						<short>Draw Window Highlight</short>
 						<long>Highlights the hovered window with the given color</long>
