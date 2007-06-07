@@ -314,8 +314,6 @@ wallpaperLoadImages(CompScreen *s)
 		opacityc = strsep(&component,":");
 		opacity = atof(opacityc);
 
-		free(temp);
-		
 		initTexture(s, &ws->wallpapers[i].texture);
 		
 		if (!strcmp(type,"fill_only"))
@@ -369,6 +367,7 @@ wallpaperLoadImages(CompScreen *s)
 			XRenderFreePicture(s->display->display, sourcePicture);
 			XRenderFreePicture(s->display->display, alpha);
 		}
+		free(temp);
 		
 		    
 	}
