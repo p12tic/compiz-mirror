@@ -291,26 +291,30 @@ wallpaperLoadImages(CompScreen *s)
 	CompListValue * images;
 	WALLPAPER_SCREEN(s);
 	int i;
-	XRenderPictFormat * format = XRenderFindStandardFormat(s->display->display, PictStandardARGB32);
+	XRenderPictFormat * format = XRenderFindStandardFormat(s->display->display, 
+							       PictStandardARGB32);
 	
 	images = wallpaperGetImages(s);
 	ws->wallpapers = malloc(sizeof(WallpaperWallpaper) * images->nValue);
 	
 	for (i = 0; i < images->nValue; i++)
 	{
-		char * component = images->value[i].s;
-		char * type,* data,* opacityc;
+		char * component = strdup(images->value[i].s);
+		char * type,* data,* opacityc, temp;
 		float opacity;
 		Pixmap p = 0;
 		int w,h;
-		
+
+		temp = component();
+
 		ws->wallpapers[i].fillOnly = FALSE;
 
 		type = strsep(&component,":");
 		data = strsep(&component,":");
 		opacityc = strsep(&component,":");
 		opacity = atof(opacityc);
-		
+
+		free(temp);
 		
 		initTexture(s, &ws->wallpapers[i].texture);
 		
