@@ -311,21 +311,32 @@ wallpaperLoadImages(CompScreen *s)
 
 		temp = wallpaper;
 
+		if (strstr(wallpaper,"fill_only"))
+		{
+			ws->wallpapers[i].fillOnly = TRUE;
+			
+			strsep(&wallpaper, ":");
+			data = strsep(&wallpaper, ":");
+			wallpaperFillFillOnly(s, data, i);
+			
+			free(temp);
+			continue;
+		}
+		
 		ws->wallpapers[i].fillOnly = FALSE;
 
 		finalPixmap = XCreatePixmap(s->display->display, s->root, s->width, s->height, 32);
 		destPicture = XRenderCreatePicture(s->display->display, finalPixmap, format, 0, 0);
+		
 
 		while ((component = strsep(&wallpaper,";"))
-			&& *component != '\0')
+		       && *component != '\0')
 		{
 			
 			type = strsep(&component,":");
 			data = strsep(&component,":");
 			opacityc = strsep(&component,":");
 			opacity = atof(opacityc);
-			
-			
 			
 			if (!strcmp(type,"file"))
 			{
@@ -374,6 +385,7 @@ wallpaperLoadImages(CompScreen *s)
 		XDestroyImage(image);
 		XFreePixmap(s->display->display, finalPixmap);
 		XRenderFreePicture(s->display->display, destPicture);
+
 		free(temp);
 	}
 	ws->nWallpapers = images->nValue;
