@@ -355,7 +355,7 @@ wallpaperLoadImages(CompScreen *s)
 			XRenderComposite(s->display->display, PictOpSrc,
 					 sourcePicture, alpha, destPicture,
 					 0, 0, 0, 0, 0, 0,
-					 w, h);
+					 s->width ,s->height);
 						
 			image = XGetImage(s->display->display, finalPixmap, 0, 0, s->width, s->height, AllPlanes, ZPixmap);
 			imageBufferToTexture(s, &ws->wallpapers[i].texture, image->data, s->width, s->height);
