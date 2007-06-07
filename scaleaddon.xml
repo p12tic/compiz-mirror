@@ -57,9 +57,9 @@
 					</default>
 				</option>
 			</group>
-			<group name="Window Layout">
+			<group name="Misc. Options">
 				<option name="layout_mode" type="int">
-					<short>Layout Mode</short>
+					<short>Window Layout Mode</short>
 					<long>Selects the mode to layout the windows in scale mode</long>
 					<min>0</min>
 					<!-- note: don't offer the organic mode for now as it's utterly broken -->
@@ -74,6 +74,23 @@
 						<name>Organic - EXPERIMENTAL</name>
 					</desc>
 				</option>
+				<subgroup name="Window Highlight">
+					<option name="window_highlight" type="bool">
+						<short>Draw Window Highlight</short>
+						<long>Highlights the hovered window with the given color</long>
+						<default>false</default>
+					</option>
+					<option name="highlight_color" type="color">
+						<short>Highlight Color</short>
+						<long>Color used for highlighting the hovered window</long>
+						<default>
+							<red>0xffff</red>
+							<green>0xffff</green>
+							<blue>0xffff</blue>
+							<alpha>0x9696</alpha>
+						</default>
+					</option>
+				</subgroup>
 			</group>
 		</screen>
 	</plugin>

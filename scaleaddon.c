@@ -248,6 +248,45 @@ scaleaddonDrawWindowTitle (CompWindow *w)
 }
 
 static void
+scaleaddonDrawWindowHighlight (CompWindow *w)
+{
+    SCALE_WINDOW (w);
+
+    GLboolean wasBlend;
+    GLint     oldBlendSrc, oldBlendDst;
+
+    float x      = sw->tx + w->attrib.x - (w->input.left * sw->scale);
+    float y      = sw->ty + w->attrib.y - (w->input.top * sw->scale);
+    float width  = WIN_W(w) * sw->scale;
+    float height = WIN_H(w) * sw->scale;
+
+    x = floor (x);
+    y = floor (y);
+
+    wasBlend = glIsEnabled (GL_BLEND);
+    glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
+    glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
+
+    if (!wasBlend)
+	glEnable (GL_BLEND);
+
+    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    glColor4us (scaleaddonGetHighlightColorRed (w->screen),
+		scaleaddonGetHighlightColorGreen (w->screen),
+		scaleaddonGetHighlightColorBlue (w->screen),
+		scaleaddonGetHighlightColorAlpha (w->screen));
+
+    glRectf (x, y + height, x + width, y);
+
+    glColor4usv (defaultColor);
+
+    if (!wasBlend)
+	glDisable (GL_BLEND);
+    glBlendFunc (oldBlendSrc, oldBlendDst);
+}
+
+static void
 scaleaddonCheckHoveredWindow (CompScreen *s)
 {
     CompDisplay *d = s->display;
@@ -326,6 +365,9 @@ scaleaddonScalePaintDecoration (CompWindow              *w,
     if ((w->id == sd->hoveredWindow) &&
 	((ss->state == SCALE_STATE_WAIT) || (ss->state == SCALE_STATE_OUT)))
     {
+	if (scaleaddonGetWindowHighlight (w->screen))
+	    scaleaddonDrawWindowHighlight (w);
+
 	if (as->textPixmap)
 	    scaleaddonDrawWindowTitle (w);
     }
