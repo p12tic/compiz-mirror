@@ -20,13 +20,31 @@
 
 #include <compiz.h>
 
+static CompMetadata workaroundsMetadata;
+static int displayPrivateIndex;
+
 static Bool workaroundsInit( CompPlugin *plugin )
 {
+   if ( !compInitPluginMetadataFromInfo( &workaroundsMetadata,
+                                         plugin->vTable->name, 0, 0, 0, 0 ) )
+        return FALSE;
+
+    displayPrivateIndex = allocateDisplayPrivateIndex ();
+    if ( displayPrivateIndex < 0 )
+    {
+        compFiniMetadata( &workaroundsMetadata );
+        return FALSE;
+    }
+
+    compAddMetadataFromFile( &workaroundsMetadata, plugin->vTable->name );
+
     return TRUE;
 }
 
 static void workaroundsFini( CompPlugin *plugin )
 {
+    freeDisplayPrivateIndex( displayPrivateIndex );
+    compFiniMetadata( &workaroundsMetadata );
 }
 
 static int workaroundsGetVersion( CompPlugin *plugin, int version )
@@ -34,11 +52,16 @@ static int workaroundsGetVersion( CompPlugin *plugin, int version )
     return ABIVERSION;
 }
 
+static CompMetadata *workaroundsGetMetadata( CompPlugin *plugin )
+{
+    return &workaroundsMetadata;
+}
+
 CompPluginVTable workaroundsVTable = 
 {
     "workarounds",
     workaroundsGetVersion,
-    0, /* GetMetadata */
+    workaroundsGetMetadata,
     workaroundsInit,
     workaroundsFini,
     0, /* InitDisplay */
