@@ -300,12 +300,12 @@ wallpaperLoadImages(CompScreen *s)
 	for (i = 0; i < images->nValue; i++)
 	{
 		char * component = strdup(images->value[i].s);
-		char * type,* data,* opacityc, temp;
+		char * type,* data,* opacityc, * temp;
 		float opacity;
 		Pixmap p = 0;
 		int w,h;
 
-		temp = component();
+		temp = component;
 
 		ws->wallpapers[i].fillOnly = FALSE;
 
