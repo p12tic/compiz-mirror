@@ -318,7 +318,7 @@ wallpaperLoadImages(CompScreen *s)
 		{
 			wallpaperFillFillOnly(s,data,i);
 		}
-		if (!strcmp(type,"file"))
+		else if (!strcmp(type,"file"))
 		{
 			p = wallpaperFileToPixmap(s, data, &w, &h);
 		}
