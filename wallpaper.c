@@ -299,77 +299,82 @@ wallpaperLoadImages(CompScreen *s)
 	
 	for (i = 0; i < images->nValue; i++)
 	{
-		char * component = strdup(images->value[i].s);
-		char * type,* data,* opacityc, * temp;
+		char * wallpaper = strdup(images->value[i].s);
+		char * type,* data,* opacityc, * temp, * component;
 		float opacity;
-		Pixmap p = 0;
+		Pixmap p = 0, finalPixmap;
+		Picture destPicture;
+		XImage * image;
 		int w,h;
 
-		temp = component;
+		initTexture(s, &ws->wallpapers[i].texture);
+
+		temp = wallpaper;
 
 		ws->wallpapers[i].fillOnly = FALSE;
 
-		type = strsep(&component,":");
-		data = strsep(&component,":");
-		opacityc = strsep(&component,":");
-		opacity = atof(opacityc);
+		finalPixmap = XCreatePixmap(s->display->display, s->root, s->width, s->height, 32);
+		destPicture = XRenderCreatePicture(s->display->display, finalPixmap, format, 0, 0);
 
-		initTexture(s, &ws->wallpapers[i].texture);
-		
-		if (!strcmp(type,"fill_only"))
+		while ((component = strsep(&wallpaper,";"))
+			&& *component != '\0')
 		{
-			wallpaperFillFillOnly(s,data,i);
-		}
-		else if (!strcmp(type,"file"))
-		{
-			p = wallpaperFileToPixmap(s, data, &w, &h);
-		}
-		else if (!strcmp(type,"fill"))
-		{
-			p = wallpaperFillToPixmap(s, data, &w, &h);
-		}
-		else if (!strcmp(type,"linear"))
-		{
-			p = wallpaperLinearGradientToPixmap(s, data, &w, &h);
-		}
-		if (p)
-		{
-			Pixmap finalPixmap;
-			Picture destPicture, sourcePicture, alpha;
-			XImage *image;
+			
+			type = strsep(&component,":");
+			data = strsep(&component,":");
+			opacityc = strsep(&component,":");
+			opacity = atof(opacityc);
 			
 			
-			XTransform xform = {{
+			
+			if (!strcmp(type,"file"))
+			{
+				p = wallpaperFileToPixmap(s, data, &w, &h);
+			}
+			else if (!strcmp(type,"fill"))
+			{
+				p = wallpaperFillToPixmap(s, data, &w, &h);
+			}
+			else if (!strcmp(type,"linear"))
+			{
+				p = wallpaperLinearGradientToPixmap(s, data, &w, &h);
+			}
+			if (p)
+			{
+				Picture sourcePicture, alpha;					
+				XTransform xform = {{
 					{XDoubleToFixed(1/(s->width/(float)w)), XDoubleToFixed(0), XDoubleToFixed(0)},
-					 {XDoubleToFixed(0), XDoubleToFixed(1/(s->height/(float)h)), XDoubleToFixed(0)},
+					{XDoubleToFixed(0), XDoubleToFixed(1/(s->height/(float)h)), XDoubleToFixed(0)},
 					{XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1)}}};
-			
-					    
-			finalPixmap = XCreatePixmap(s->display->display, s->root,
-							   s->width, s->height, 32);
-			destPicture = XRenderCreatePicture(s->display->display, finalPixmap, format, 0, 0);
-			sourcePicture = XRenderCreatePicture(s->display->display, p, format, 0, 0);
-			alpha = wallpaperAlphaMask(s, opacity);
+				
+				
 
-			XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
-			XRenderComposite(s->display->display, PictOpSrc,
-					 sourcePicture, alpha, destPicture,
-					 0, 0, 0, 0, 0, 0,
-					 s->width ,s->height);
-						
-			image = XGetImage(s->display->display, finalPixmap, 0, 0, s->width, s->height, AllPlanes, ZPixmap);
-			imageBufferToTexture(s, &ws->wallpapers[i].texture, image->data, s->width, s->height);
-			
-			XDestroyImage(image);
-			XFreePixmap(s->display->display, p);
-			XFreePixmap(s->display->display, finalPixmap);
-			XRenderFreePicture(s->display->display, destPicture);
-			XRenderFreePicture(s->display->display, sourcePicture);
-			XRenderFreePicture(s->display->display, alpha);
+				sourcePicture = XRenderCreatePicture(s->display->display, p, format, 0, 0);
+				alpha = wallpaperAlphaMask(s, opacity);
+				
+				XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
+				XRenderComposite(s->display->display, PictOpOver,
+						 sourcePicture, alpha, destPicture,
+						 0, 0, 0, 0, 0, 0,
+						 s->width ,s->height);
+				
+				
+				
+				XFreePixmap(s->display->display, p);
+				XRenderFreePicture(s->display->display, sourcePicture);
+				XRenderFreePicture(s->display->display, alpha);
+			}
 		}
-		free(temp);
 		
-		    
+			
+		image = XGetImage(s->display->display, finalPixmap, 
+				  0, 0, s->width, s->height, AllPlanes, ZPixmap);
+		imageBufferToTexture(s, &ws->wallpapers[i].texture, image->data, s->width, s->height);
+		
+		XDestroyImage(image);
+		XFreePixmap(s->display->display, finalPixmap);
+		XRenderFreePicture(s->display->display, destPicture);
+		free(temp);
 	}
 	ws->nWallpapers = images->nValue;
 }
