@@ -50,8 +50,11 @@ typedef struct _ScaleAddonDisplay {
 } ScaleAddonDisplay;
 
 typedef struct _ScaleAddonScreen {
+    int windowPrivateIndex;
+
     ScaleLayoutSlotsAndAssignWindowsProc layoutSlotsAndAssignWindows;
     ScalePaintDecorationProc		 scalePaintDecoration;
+    PreparePaintScreenProc               preparePaintScreen;
     
     Pixmap      textPixmap;
     CompTexture textTexture;
@@ -60,7 +63,19 @@ typedef struct _ScaleAddonScreen {
     int textHeight;
 
     float scale;
+
+    int lastScaleState;
 } ScaleAddonScreen;
+
+typedef struct _ScaleAddonWindow {
+    float origScale;
+    float origX; 
+    float origY;
+
+    Bool rescaled;
+
+    CompWindow *oldAbove;
+} ScaleAddonWindow;
 
 #define GET_ADDON_DISPLAY(d)				          \
     ((ScaleAddonDisplay *) (d)->privates[displayPrivateIndex].ptr)
@@ -73,6 +88,13 @@ typedef struct _ScaleAddonScreen {
 
 #define ADDON_SCREEN(s)						               \
     ScaleAddonScreen *as = GET_ADDON_SCREEN (s, GET_ADDON_DISPLAY (s->display))
+
+#define GET_ADDON_WINDOW(w, as)				              \
+    ((ScaleAddonWindow *) (w)->privates[(as)->windowPrivateIndex].ptr)
+
+#define ADDON_WINDOW(w)						                 \
+    ScaleAddonWindow *aw = GET_ADDON_WINDOW (w,                                  \
+	    GET_ADDON_SCREEN (w->screen, GET_ADDON_DISPLAY (w->screen->display)))
 
 
 static void 
@@ -251,9 +273,13 @@ static void
 scaleaddonDrawWindowHighlight (CompWindow *w)
 {
     SCALE_WINDOW (w);
+    ADDON_WINDOW (w);
 
     GLboolean wasBlend;
     GLint     oldBlendSrc, oldBlendDst;
+
+    if (aw->rescaled)
+	return;
 
     float x      = sw->tx + w->attrib.x - (w->input.left * sw->scale);
     float y      = sw->ty + w->attrib.y - (w->input.top * sw->scale);
@@ -346,6 +372,56 @@ scaleaddonCheckForWindowAt (CompScreen * s, int x, int y)
 }
 
 static void
+scaleaddonZoomWindow (CompWindow *w)
+{
+    SCALE_WINDOW (w);
+    ADDON_WINDOW (w);
+    
+    XRectangle outputRect;
+    BOX outputBox;
+    int head;
+    
+    head = outputDeviceForPoint (w->screen, sw->slot->x1, sw->slot->y1);
+    outputBox = w->screen->outputDev[head].region.extents;
+
+    outputRect.x      = outputBox.x1;
+    outputRect.y      = outputBox.y1;
+    outputRect.width  = outputBox.x2 - outputBox.x1;
+    outputRect.height = outputBox.y2 - outputBox.y1;
+
+    if (!aw->rescaled)
+    {
+	aw->oldAbove = w->next;
+	raiseWindow(w);
+	
+	/* backup old values */
+	aw->origScale = sw->scale;
+	aw->origX = sw->tx;
+	aw->origY = sw->ty;
+
+	sw->scale = 1.0f;
+	aw->rescaled = TRUE;
+
+	sw->tx = (outputRect.width / 2) - (WIN_W(w) / 2) - WIN_X(w);
+	sw->ty = (outputRect.height / 2) - (WIN_H(w) / 2) - WIN_Y(w);
+
+	damageScreen (w->screen);
+    }
+    else
+    {
+	if (aw->oldAbove)
+	    restackWindowBelow (w, aw->oldAbove);
+
+	aw->rescaled = FALSE;
+	sw->scale = aw->origScale;
+	sw->tx = aw->origX;
+	sw->ty = aw->origY;
+
+	damageScreen (w->screen);
+    }
+}
+
+static void
 scaleaddonHandleEvent (CompDisplay *d,
 		       XEvent      *event)
 {
@@ -377,6 +453,17 @@ scaleaddonHandleEvent (CompDisplay *d,
                                                     event->xbutton.y_root);
                     if (w)
                         closeWindow (w, event->xbutton.time);
+                }
+
+		if ((event->xbutton.button == Button3) &&
+                    scaleaddonGetZoomButton3 (s))
+                {
+                    CompWindow *w;
+                    w = scaleaddonCheckForWindowAt (s,
+                                                    event->xbutton.x_root,
+                                                    event->xbutton.y_root);
+                    if (w)
+                        scaleaddonZoomWindow (w);
                 }
             }
         }
@@ -425,6 +512,32 @@ scaleaddonScalePaintDecoration (CompWindow              *w,
 	if (as->textPixmap)
 	    scaleaddonDrawWindowTitle (w);
     }
+}
+
+static void
+scaleaddonPreparePaintScreen (CompScreen *s,
+			      int        msSinceLastPaint)
+{
+    ADDON_SCREEN (s);
+    SCALE_SCREEN (s);
+
+    UNWRAP (as, s, preparePaintScreen);
+    (*s->preparePaintScreen) (s, msSinceLastPaint);
+    WRAP (as, s, preparePaintScreen, scaleaddonPreparePaintScreen);
+
+    if ((ss->state == SCALE_STATE_NONE) &&
+	(as->lastScaleState != SCALE_STATE_NONE))
+    {
+	CompWindow *w;
+
+	for (w = s->windows; w; w = w->next)
+	{
+	    ADDON_WINDOW (w);
+	    aw->rescaled = FALSE;
+	}
+    }
+
+    as->lastScaleState = ss->state;
 }
 
 /**
@@ -921,11 +1034,19 @@ scaleaddonInitScreen (CompPlugin *p,
     if (!as)
 	return FALSE;
 
+    as->windowPrivateIndex = allocateWindowPrivateIndex (s);
+    if (as->windowPrivateIndex < 0)
+    {
+	free (as);
+	return FALSE;
+    }
+
     as->scale = 1.0f;
 
     as->textPixmap = None;
     initTexture (s, &as->textTexture);
 
+    WRAP (as, s, preparePaintScreen, scaleaddonPreparePaintScreen);
     WRAP (as, ss, scalePaintDecoration, scaleaddonScalePaintDecoration);
     WRAP (as, ss, layoutSlotsAndAssignWindows, 
 	  scaleaddonLayoutSlotsAndAssignWindows);
@@ -948,12 +1069,46 @@ scaleaddonFiniScreen (CompPlugin *p,
     ADDON_SCREEN (s);
     SCALE_SCREEN (s);
 
+    UNWRAP (as, s, preparePaintScreen);
     UNWRAP (as, ss, scalePaintDecoration);
     UNWRAP (as, ss, layoutSlotsAndAssignWindows);
 
     scaleaddonFreeWindowTitle (s);
 
+    freeWindowPrivateIndex (s, as->windowPrivateIndex);
     free (as);
+}
+
+static Bool
+scaleaddonInitWindow (CompPlugin *p, 
+		      CompWindow *w)
+{
+    ScaleAddonWindow *aw;
+
+    ADDON_SCREEN (w->screen);
+
+    aw = malloc (sizeof (ScaleAddonWindow));
+    if (!aw)
+	return FALSE;
+    
+    aw->origX     = 0;
+    aw->origY     = 0;
+    aw->origScale = 1.0f;
+
+    aw->rescaled = FALSE;
+
+    w->privates[as->windowPrivateIndex].ptr = aw;
+
+    return TRUE;
+}
+
+static void
+scaleaddonFiniWindow (CompPlugin *p,
+		      CompWindow *w)
+{
+    ADDON_WINDOW (w);
+
+    free (aw);
 }
 
 static Bool
@@ -989,8 +1144,8 @@ CompPluginVTable scaleaddonVTable = {
     scaleaddonFiniDisplay,
     scaleaddonInitScreen,
     scaleaddonFiniScreen,
-    0,
-    0,
+    scaleaddonInitWindow,
+    scaleaddonFiniWindow,
     0,
     0,
     0,

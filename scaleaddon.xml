@@ -104,6 +104,11 @@
 						<long>Close windows by clicking on them with the middle mouse button in scale mode</long>
 						<default>false</default>
 					</option>
+					<option name="zoom_button3" type="bool">
+						<short>Zoom Windows With Button 3</short>
+						<long>Zoom windows to full size by clicking on them with the right mouse button in scale mode</long>
+						<default>false</default>
+					</option>
 				</subgroup>
 			</group>
 		</screen>
