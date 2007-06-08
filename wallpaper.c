@@ -165,6 +165,49 @@ wallpaperFileToPixmap(CompScreen *s, char * data, int * width, int *height)
 }
 
 static Pixmap
+wallpaperRadialGradientToPixmap(CompScreen *s, char * data, int * width, int * height)
+{
+  Pixmap p;
+  cairo_t * cr;
+  cairo_pattern_t * gradient;
+  cairo_surface_t * surface;
+  XRenderPictFormat * format;
+  Screen * screen;
+  
+  float r1,g1,b1,r2,g2,b2,x1,y1,x2,y2,ra1,ra2;
+  
+  sscanf(data,"%f,%f,%f,%f,%f,%f|%f,%f,%f,%f,%f,%f",
+	 &x1,&y1,&r1,&x2,&y2,&r2,
+	 &r1,&g1,&b1,&r2,&g2,&b2);
+  screen = ScreenOfDisplay(s->display->display, s->screenNum);
+  format = XRenderFindStandardFormat(s->display->display,
+				     PictStandardARGB32);
+  
+  p = XCreatePixmap(s->display->display, s->root, s->width, s->height, 32);
+  surface = cairo_xlib_surface_create_with_xrender_format(s->display->display, p, screen,
+							  format,s->width,s->height);
+  cr = cairo_create(surface);
+  
+  gradient = cairo_pattern_create_radial(x1*s->width,y1*s->height,ra1*((s->width+s->height)/2)
+					 ,x2*s->width,y2*s->height,ra2*((s->width+s->height)/2));
+  cairo_pattern_add_color_stop_rgb(gradient, 0.0f,r1,g1,b1);
+  cairo_pattern_add_color_stop_rgb(gradient, 1.0f,r2,g2,b2);
+  
+  cairo_set_source(cr, gradient);
+  cairo_paint(cr);
+  
+  cairo_surface_destroy(surface);
+  cairo_pattern_destroy(gradient);
+  cairo_destroy(cr);
+  
+  *width = s->width;
+  *height = s->height;
+  return p;
+
+  
+}
+
+static Pixmap
 wallpaperLinearGradientToPixmap(CompScreen *s, char * data, int * width, int * height)
 {
 	Pixmap p;
@@ -188,7 +231,7 @@ wallpaperLinearGradientToPixmap(CompScreen *s, char * data, int * width, int * h
 								format, s->width, s->height);
 	cr = cairo_create(surface);
 			
-	gradient = cairo_pattern_create_linear(x1,y1,x2*s->width,y2*s->height);
+	gradient = cairo_pattern_create_linear(x1*s->width,y1*s->height,x2*s->width,y2*s->height);
 	cairo_pattern_add_color_stop_rgb(gradient,0.0f,r1,g1,b1);
 	cairo_pattern_add_color_stop_rgb(gradient,1.0f,r2,g2,b2);
 
@@ -196,7 +239,6 @@ wallpaperLinearGradientToPixmap(CompScreen *s, char * data, int * width, int * h
 	
 	cairo_set_source(cr,gradient);
 	cairo_paint(cr);
-	cairo_fill(cr);
 			
 	cairo_surface_destroy(surface);
 	cairo_pattern_destroy(gradient);
@@ -350,6 +392,11 @@ wallpaperLoadImages(CompScreen *s)
 			{
 				p = wallpaperLinearGradientToPixmap(s, data, &w, &h);
 			}
+			else if (!strcmp(type,"radial"))
+			  {
+			    p = wallpaperRadialGradientToPixmap(s, data, &w, &h);
+			  }
+			
 			if (p)
 			{
 				Picture sourcePicture, alpha;					
