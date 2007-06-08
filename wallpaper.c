@@ -34,6 +34,10 @@
 
 static int displayPrivateIndex;
 
+/* Represents one wallpaper which may be a composition of various wallpaper
+ * elements fillOnly is used to indicate that texture should be ignored and
+ * quad with color fillColor should be drawn in it's place */
+ 
 typedef struct _WallpaperWallpaper
 {
 	CompTexture texture;
@@ -47,6 +51,9 @@ typedef struct _WallpaperWallpaper
 typedef struct _WallpaperDisplay
 {
 	int screenPrivateIndex;
+	/* _COMPIZ_WALLPAPER_SUPPORTED atom is used to indicate that
+	 * the wallpaper plugin or a plugin providing similar functionality is
+	 * active so that desktop managers can respond appropriately */
 	Atom compizWallpaperAtom;
 } WallpaperDisplay;
 
@@ -81,6 +88,7 @@ cleanupBackgrounds (CompScreen *s)
   
 	for ( i = 0; i < ws->nWallpapers; i++)
 	{
+		/* In the case of fillOnly we never called initTexture */
 		if (!ws->wallpapers[i].fillOnly)
 			finiTexture(s, &ws->wallpapers[i].texture);
 	}
@@ -125,6 +133,10 @@ static Bool updateWallpaperProperty(CompScreen *s)
 	return 1;
 }
 
+/* We need to load the file in a pixmap so that it can be composited on to
+ * other pixmaps in the later stages of the pipeline. To do this we create an
+ * XImage from the pixel data returned from fileToImage and put it on to a
+ * pixmap with XPutImage */
 static Pixmap
 wallpaperFileToPixmap(CompScreen *s, char * data, int * width, int *height)
 {
@@ -144,7 +156,10 @@ wallpaperFileToPixmap(CompScreen *s, char * data, int * width, int *height)
 	vi = glXGetVisualFromFBConfig(s->display->display,
 				      s->glxPixmapFBConfigs[32].fbConfig);
 
-	
+
+	/* Here we return a pixmap the full size of the image and use XRender
+	to scale it down to s->width by s->heigh later in the pipeline. This is
+	to allow for tiling, etc, in the future */
 	pixmap = XCreatePixmap(s->display->display, 
 			       s->root, w, h, 32);
 	
@@ -163,7 +178,7 @@ wallpaperFileToPixmap(CompScreen *s, char * data, int * width, int *height)
 	XFreeGC(s->display->display, gc);
 	XDestroyImage(image);
 	XFree(vi);
-	
+
 	*width = w;
 	*height = h;
     
@@ -255,6 +270,8 @@ wallpaperLinearGradientToPixmap(CompScreen *s, char * data, int * width, int * h
 	return p;
 }
 
+/* Returns a picture representing a fill of 'a' opacity, used to blend various
+ * components together in the compositing stage */
 static Picture
 wallpaperAlphaMask(CompScreen *s, double a)
 {
@@ -263,6 +280,8 @@ wallpaperAlphaMask(CompScreen *s, double a)
 	XRenderPictureAttributes pa;
 	XRenderColor c;
 	
+	/* 1x1 is fine here because we just need a pixmap to create the picture
+	   from, not actually one to draw to because we use CPRepeat */
 	pixmap = XCreatePixmap(s->display->display, s->root,
 			       1, 1, 32);
 	
@@ -405,7 +424,10 @@ wallpaperLoadImages(CompScreen *s)
 			
 			if (p)
 			{
-				Picture sourcePicture, alpha;					
+				Picture sourcePicture, alpha;	
+				/* Projective transformation to scale source to
+				s->width by s->height from w/h as set in the
+				function which returned the pixmap */
 				XTransform xform = {{
 				    {XDoubleToFixed(1/(s->width/(float)w)), XDoubleToFixed(0), XDoubleToFixed(0)},
 				    {XDoubleToFixed(0), XDoubleToFixed(1/(s->height/(float)h)), XDoubleToFixed(0)},
