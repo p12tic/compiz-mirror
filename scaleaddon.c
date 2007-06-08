@@ -315,6 +315,36 @@ scaleaddonCheckHoveredWindow (CompScreen *s)
     }
 }
 
+static CompWindow *
+scaleaddonCheckForWindowAt (CompScreen * s, int x, int y)
+{
+    int x1, y1, x2, y2;
+    CompWindow *w;
+
+    for (w = s->reverseWindows; w; w = w->prev)
+    {
+        SCALE_WINDOW(w);
+
+        if (sw->slot)
+	{
+	    x1 = w->attrib.x - w->input.left * sw->scale;
+            y1 = w->attrib.y - w->input.top * sw->scale;
+            x2 = w->attrib.x + (w->width + w->input.right) * sw->scale;
+            y2 = w->attrib.y + (w->height + w->input.bottom) * sw->scale;
+            
+            x1 += sw->tx;
+            y1 += sw->ty;
+            x2 += sw->tx;
+            y2 += sw->ty;
+            
+            if (x1 <= x && y1 <= y && x2 > x && y2 > y)
+                return w;
+        }
+    }
+    
+    return NULL;
+}
+
 static void
 scaleaddonHandleEvent (CompDisplay *d,
 		       XEvent      *event)
@@ -327,6 +357,30 @@ scaleaddonHandleEvent (CompDisplay *d,
 
     switch (event->type)
     {
+    case ButtonPress:
+        {
+            CompScreen *s;
+            s = findScreenAtDisplay (d, event->xbutton.root);
+
+            if (s)
+            {
+                SCALE_SCREEN (s);
+                if (!ss->grabIndex)
+                    break;
+
+                if ((event->xbutton.button == Button2) &&
+                    scaleaddonGetCloseButton2 (s))
+                {
+                    CompWindow *w;
+                    w = scaleaddonCheckForWindowAt (s,
+                                                    event->xbutton.x_root,
+                                                    event->xbutton.y_root);
+                    if (w)
+                        closeWindow (w, event->xbutton.time);
+                }
+            }
+        }
+        break;
     case MotionNotify:
 	{
 	    CompScreen *s;

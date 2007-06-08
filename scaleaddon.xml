@@ -97,6 +97,14 @@
 						<name>Organic - EXPERIMENTAL</name>
 					</desc>
 				</option>
+				<subgroup>
+					<short>Mouse Button Behaviour</short>
+					<option name="close_button2" type="bool">
+						<short>Close Windows With Button 2</short>
+						<long>Close windows by clicking on them with the middle mouse button in scale mode</long>
+						<default>false</default>
+					</option>
+				</subgroup>
 			</group>
 		</screen>
 	</plugin>
