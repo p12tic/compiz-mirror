@@ -442,7 +442,7 @@ scaleaddonHandleEvent (CompDisplay *d,
             if (s)
             {
                 SCALE_SCREEN (s);
-                if (!ss->grabIndex)
+                if (ss->state != SCALE_STATE_WAIT)
                     break;
 
                 if ((event->xbutton.button == Button2) &&
