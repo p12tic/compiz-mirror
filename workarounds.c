@@ -23,6 +23,27 @@
 static CompMetadata workaroundsMetadata;
 static int displayPrivateIndex;
 
+static Bool workaroundsInitWindow( CompPlugin *plugin, CompWindow *w )
+{
+    unsigned int type;
+
+    type = w->wmType;
+
+    /* Some code to make Wine and legacy applications work. */
+    if (w->width == w->screen->width && w->height == w->screen->height &&
+       !(w->type & CompWindowTypeFullscreenMask) &&
+       !(type & CompWindowTypeDesktopMask))
+           type = CompWindowTypeFullscreenMask;
+
+    w->type = type;
+
+    return TRUE;
+}
+
+static void workaroundsFiniWindow( CompPlugin *p, CompWindow *w )
+{
+}
+
 static Bool workaroundsInit( CompPlugin *plugin )
 {
    if ( !compInitPluginMetadataFromInfo( &workaroundsMetadata,
@@ -68,8 +89,8 @@ CompPluginVTable workaroundsVTable =
     0, /* FiniDisplay */
     0, /* InitScreen */
     0, /* FiniScreen */
-    0, /* InitWindow */
-    0, /* FiniWindow */
+    workaroundsInitWindow,
+    workaroundsFiniWindow,
     0, /* GetDisplayOptions */
     0, /* SetDisplayOption */
     0, /* GetScreenOptions */
