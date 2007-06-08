@@ -128,16 +128,22 @@ static Bool updateWallpaperProperty(CompScreen *s)
 static Pixmap
 wallpaperFileToPixmap(CompScreen *s, char * data, int * width, int *height)
 {
+  Bool status;
 	int w, h;
 	void * imageData;
 	XImage * image;
 	GC gc;
 	Pixmap pixmap;
+	XVisualInfo * vi;
 	int stride;
-	XVisualInfo * vi = glXGetVisualFromFBConfig(s->display->display,
-						    s->glxPixmapFBConfigs[32].fbConfig);
 	
-	(*s->display->fileToImage)(s->display, 0, data, &w, &h, &stride, &imageData);
+	status = (*s->display->fileToImage)(s->display, 0, data, &w, &h, &stride, &imageData);
+	if (!status)
+	  return 0;
+
+	vi = glXGetVisualFromFBConfig(s->display->display,
+						    s->glxPixmapFBConfigs[32].fbConfig);
+
 	
 	pixmap = XCreatePixmap(s->display->display, 
 			       s->root, w, h, 32);
