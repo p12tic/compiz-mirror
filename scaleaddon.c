@@ -26,6 +26,7 @@
  */
 
 #include <math.h>
+#include <string.h>
 
 #include <compiz.h>
 #include <scale.h>
@@ -44,7 +45,8 @@ static int scaleDisplayPrivateIndex;
 typedef struct _ScaleAddonDisplay {
     int screenPrivateIndex;
 
-    HandleEventProc handleEvent;
+    HandleEventProc       handleEvent;
+    HandleCompizEventProc handleCompizEvent;
 
     Window lastHoveredWindow;
 } ScaleAddonDisplay;
@@ -54,7 +56,6 @@ typedef struct _ScaleAddonScreen {
 
     ScaleLayoutSlotsAndAssignWindowsProc layoutSlotsAndAssignWindows;
     ScalePaintDecorationProc		 scalePaintDecoration;
-    PreparePaintScreenProc               preparePaintScreen;
     
     Pixmap      textPixmap;
     CompTexture textTexture;
@@ -63,8 +64,6 @@ typedef struct _ScaleAddonScreen {
     int textHeight;
 
     float scale;
-
-    int lastScaleState;
 } ScaleAddonScreen;
 
 typedef struct _ScaleAddonWindow {
@@ -517,29 +516,35 @@ scaleaddonScalePaintDecoration (CompWindow              *w,
 }
 
 static void
-scaleaddonPreparePaintScreen (CompScreen *s,
-			      int        msSinceLastPaint)
+scaleaddonHandleCompizEvent (CompDisplay *d,
+			     char        *pluginName,
+			     char        *eventName,
+			     CompOption  *option,
+			     int         nOption)
 {
-    ADDON_SCREEN (s);
-    SCALE_SCREEN (s);
+    ADDON_DISPLAY(d);
 
-    UNWRAP (as, s, preparePaintScreen);
-    (*s->preparePaintScreen) (s, msSinceLastPaint);
-    WRAP (as, s, preparePaintScreen, scaleaddonPreparePaintScreen);
+    UNWRAP (ad, d, handleCompizEvent);
+    (*d->handleCompizEvent) (d, pluginName, eventName, option, nOption);
+    WRAP (ad, d, handleCompizEvent, scaleaddonHandleCompizEvent);
 
-    if ((ss->state == SCALE_STATE_NONE) &&
-	(as->lastScaleState != SCALE_STATE_NONE))
+    if ((strcmp (pluginName, "scale") == 0) &&
+	(strcmp (eventName, "activate") == 0))
     {
-	CompWindow *w;
+	Window xid = getIntOptionNamed (option, nOption, "root", 0);
+	CompScreen *s = findScreenAtDisplay (d, xid);
 
-	for (w = s->windows; w; w = w->next)
+	if (s)
 	{
-	    ADDON_WINDOW (w);
-	    aw->rescaled = FALSE;
+    	    CompWindow *w;
+
+    	    for (w = s->windows; w; w = w->next)
+    	    {
+    		ADDON_WINDOW (w);
+    		aw->rescaled = FALSE;
+    	    }
 	}
     }
-
-    as->lastScaleState = ss->state;
 }
 
 /**
@@ -1002,6 +1007,7 @@ scaleaddonInitDisplay (CompPlugin  *p,
     }
 
     WRAP (ad, d, handleEvent, scaleaddonHandleEvent);
+    WRAP (ad, d, handleCompizEvent, scaleaddonHandleCompizEvent);
 
     d->privates[displayPrivateIndex].ptr = ad;
 
@@ -1017,6 +1023,7 @@ scaleaddonFiniDisplay (CompPlugin  *p,
     ADDON_DISPLAY (d);
 
     UNWRAP (ad, d, handleEvent);
+    UNWRAP (ad, d, handleCompizEvent);
 
     freeScreenPrivateIndex (d, ad->screenPrivateIndex);
 
@@ -1048,7 +1055,6 @@ scaleaddonInitScreen (CompPlugin *p,
     as->textPixmap = None;
     initTexture (s, &as->textTexture);
 
-    WRAP (as, s, preparePaintScreen, scaleaddonPreparePaintScreen);
     WRAP (as, ss, scalePaintDecoration, scaleaddonScalePaintDecoration);
     WRAP (as, ss, layoutSlotsAndAssignWindows, 
 	  scaleaddonLayoutSlotsAndAssignWindows);
@@ -1071,7 +1077,6 @@ scaleaddonFiniScreen (CompPlugin *p,
     ADDON_SCREEN (s);
     SCALE_SCREEN (s);
 
-    UNWRAP (as, s, preparePaintScreen);
     UNWRAP (as, ss, scalePaintDecoration);
     UNWRAP (as, ss, layoutSlotsAndAssignWindows);
 
