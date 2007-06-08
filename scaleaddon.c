@@ -67,9 +67,7 @@ typedef struct _ScaleAddonScreen {
 } ScaleAddonScreen;
 
 typedef struct _ScaleAddonWindow {
-    float origScale;
-    float origX; 
-    float origY;
+    ScaleSlot origSlot;
 
     Bool rescaled;
 
@@ -375,6 +373,7 @@ scaleaddonZoomWindow (CompWindow *w)
 {
     SCALE_WINDOW (w);
     ADDON_WINDOW (w);
+    SCALE_SCREEN (w->screen);
     
     XRectangle outputRect;
     BOX outputBox;
@@ -394,17 +393,20 @@ scaleaddonZoomWindow (CompWindow *w)
 	raiseWindow(w);
 	
 	/* backup old values */
-	aw->origScale = sw->scale;
-	aw->origX = sw->tx;
-	aw->origY = sw->ty;
+	aw->origSlot = *sw->slot;
 
-	sw->scale = 1.0f;
 	aw->rescaled = TRUE;
 
-	sw->tx = (outputRect.width / 2) - (WIN_W(w) / 2) - 
-	         WIN_X(w) + outputRect.x;
-	sw->ty = (outputRect.height / 2) - (WIN_H(w) / 2) - 
-	         WIN_Y(w) + outputRect.y;
+	sw->slot->x1 = (outputRect.width / 2) - (WIN_W(w) / 2) + 
+	               w->input.left + outputRect.x; 
+	sw->slot->y1 = (outputRect.height / 2) - (WIN_H(w) / 2) + 
+	               w->input.top + outputRect.y; 
+	sw->slot->x2 = sw->slot->x1 + WIN_W(w);
+	sw->slot->y2 = sw->slot->y1 + WIN_H(w);
+	sw->slot->scale = 1.0f;
+
+	sw->adjust = TRUE;
+	ss->state = SCALE_STATE_OUT;
 
 	damageScreen (w->screen);
     }
@@ -414,9 +416,10 @@ scaleaddonZoomWindow (CompWindow *w)
 	    restackWindowBelow (w, aw->oldAbove);
 
 	aw->rescaled = FALSE;
-	sw->scale = aw->origScale;
-	sw->tx = aw->origX;
-	sw->ty = aw->origY;
+	*(sw->slot) = aw->origSlot;
+
+	sw->adjust = TRUE;
+	ss->state = SCALE_STATE_OUT;
 
 	damageScreen (w->screen);
     }
@@ -1098,10 +1101,6 @@ scaleaddonInitWindow (CompPlugin *p,
     if (!aw)
 	return FALSE;
     
-    aw->origX     = 0;
-    aw->origY     = 0;
-    aw->origScale = 1.0f;
-
     aw->rescaled = FALSE;
 
     w->privates[as->windowPrivateIndex].ptr = aw;
