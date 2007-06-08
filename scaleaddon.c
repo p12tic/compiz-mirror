@@ -402,8 +402,10 @@ scaleaddonZoomWindow (CompWindow *w)
 	sw->scale = 1.0f;
 	aw->rescaled = TRUE;
 
-	sw->tx = (outputRect.width / 2) - (WIN_W(w) / 2) - WIN_X(w);
-	sw->ty = (outputRect.height / 2) - (WIN_H(w) / 2) - WIN_Y(w);
+	sw->tx = (outputRect.width / 2) - (WIN_W(w) / 2) - 
+	         WIN_X(w) + outputRect.x;
+	sw->ty = (outputRect.height / 2) - (WIN_H(w) / 2) - 
+	         WIN_Y(w) + outputRect.y;
 
 	damageScreen (w->screen);
     }
