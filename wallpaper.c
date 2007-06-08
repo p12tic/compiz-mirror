@@ -407,9 +407,9 @@ wallpaperLoadImages(CompScreen *s)
 			{
 				Picture sourcePicture, alpha;					
 				XTransform xform = {{
-						{XDoubleToFixed(1/(s->width/(float)w)), XDoubleToFixed(0), XDoubleToFixed(0)},
-						{XDoubleToFixed(0), XDoubleToFixed(1/(s->height/(float)h)), XDoubleToFixed(0)},
-						{XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1)}}};
+				    {XDoubleToFixed(1/(s->width/(float)w)), XDoubleToFixed(0), XDoubleToFixed(0)},
+				    {XDoubleToFixed(0), XDoubleToFixed(1/(s->height/(float)h)), XDoubleToFixed(0)},
+				    {XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1)}}};
 				
 				
 
