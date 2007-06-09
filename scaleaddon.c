@@ -390,7 +390,14 @@ scaleaddonCloseWindow (CompDisplay     *d,
 	if (ss->state != SCALE_STATE_WAIT)
 	    return FALSE;
 
-	w = scaleaddonCheckForWindowAt (s, pointerX, pointerY);
+	if (state & CompActionStateInitKey)
+	{
+	    SCALE_DISPLAY (d);
+	    w = findWindowAtDisplay (d, sd->selectedWindow);
+	}
+	else
+	    w = scaleaddonCheckForWindowAt (s, pointerX, pointerY);
+
         if (w)
 	{
 	    closeWindow (w, getCurrentTimeFromDisplay (d));
@@ -423,7 +430,13 @@ scaleaddonZoomWindow (CompDisplay     *d,
 	if (ss->state != SCALE_STATE_WAIT)
 	    return FALSE;
 
-	w = scaleaddonCheckForWindowAt (s, pointerX, pointerY);
+	if (state & CompActionStateInitKey)
+	{
+	    SCALE_DISPLAY (d);
+	    w = findWindowAtDisplay (d, sd->selectedWindow);
+	}
+	else
+	    w = scaleaddonCheckForWindowAt (s, pointerX, pointerY);
 
         if (w)
 	{
