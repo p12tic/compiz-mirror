@@ -368,61 +368,125 @@ scaleaddonCheckForWindowAt (CompScreen * s, int x, int y)
     return NULL;
 }
 
-static void
-scaleaddonZoomWindow (CompWindow *w)
+static Bool
+scaleaddonCloseWindow (CompDisplay     *d,
+	               CompAction      *action,
+		       CompActionState state,
+		       CompOption      *option,
+		       int             nOption)
 {
-    SCALE_WINDOW (w);
-    ADDON_WINDOW (w);
-    SCALE_SCREEN (w->screen);
-    
-    XRectangle outputRect;
-    BOX outputBox;
-    int head;
-    
-    head = outputDeviceForPoint (w->screen, sw->slot->x1, sw->slot->y1);
-    outputBox = w->screen->outputDev[head].region.extents;
+    CompScreen *s;
+    Window     xid;
 
-    outputRect.x      = outputBox.x1;
-    outputRect.y      = outputBox.y1;
-    outputRect.width  = outputBox.x2 - outputBox.x1;
-    outputRect.height = outputBox.y2 - outputBox.y1;
+    xid = getIntOptionNamed (option, nOption, "root", 0);
 
-    if (!aw->rescaled)
+    s = findScreenAtDisplay (d, xid);
+    if (s)
     {
-	aw->oldAbove = w->next;
-	raiseWindow(w);
+	CompWindow *w;
+
+	SCALE_SCREEN (s);
+
+	if (ss->state != SCALE_STATE_WAIT)
+	    return FALSE;
+
+	w = scaleaddonCheckForWindowAt (s, pointerX, pointerY);
+        if (w)
+	{
+	    closeWindow (w, getCurrentTimeFromDisplay (d));
+	    return TRUE;
+	}
+    }
+
+    return FALSE;
+}
+
+static Bool
+scaleaddonZoomWindow (CompDisplay     *d,
+		      CompAction      *action,
+		      CompActionState state,
+		      CompOption      *option,
+		      int             nOption)
+{
+    CompScreen *s;
+    Window     xid;
+
+    xid = getIntOptionNamed (option, nOption, "root", 0);
+
+    s = findScreenAtDisplay (d, xid);
+    if (s)
+    {
+	CompWindow *w;
+
+	SCALE_SCREEN (s);
+
+	if (ss->state != SCALE_STATE_WAIT)
+	    return FALSE;
+
+	w = scaleaddonCheckForWindowAt (s, pointerX, pointerY);
+
+        if (w)
+	{
+	    SCALE_WINDOW (w);
+	    ADDON_WINDOW (w);
+    
+	    XRectangle outputRect;
+	    BOX outputBox;
+	    int head;
+
+	    if (!sw->slot)
+		return FALSE;
+    
+	    head = outputDeviceForPoint (s, sw->slot->x1, sw->slot->y1);
+	    outputBox = w->screen->outputDev[head].region.extents;
+
+	    outputRect.x      = outputBox.x1;
+	    outputRect.y      = outputBox.y1;
+	    outputRect.width  = outputBox.x2 - outputBox.x1;
+	    outputRect.height = outputBox.y2 - outputBox.y1;
+
+	    if (!aw->rescaled)
+	    {
+		aw->oldAbove = w->next;
+		raiseWindow(w);
 	
-	/* backup old values */
-	aw->origSlot = *sw->slot;
+		/* backup old values */
+		aw->origSlot = *sw->slot;
 
-	aw->rescaled = TRUE;
+		aw->rescaled = TRUE;
 
-	sw->slot->x1 = (outputRect.width / 2) - (WIN_W(w) / 2) + 
-	               w->input.left + outputRect.x; 
-	sw->slot->y1 = (outputRect.height / 2) - (WIN_H(w) / 2) + 
-	               w->input.top + outputRect.y; 
-	sw->slot->x2 = sw->slot->x1 + WIN_W(w);
-	sw->slot->y2 = sw->slot->y1 + WIN_H(w);
-	sw->slot->scale = 1.0f;
+		sw->slot->x1 = (outputRect.width / 2) - (WIN_W(w) / 2) + 
+			       w->input.left + outputRect.x; 
+		sw->slot->y1 = (outputRect.height / 2) - (WIN_H(w) / 2) + 
+			       w->input.top + outputRect.y; 
+		sw->slot->x2 = sw->slot->x1 + WIN_W(w);
+		sw->slot->y2 = sw->slot->y1 + WIN_H(w);
+		sw->slot->scale = 1.0f;
 
-	sw->adjust = TRUE;
-	ss->state = SCALE_STATE_OUT;
+		sw->adjust = TRUE;
+		ss->state = SCALE_STATE_OUT;
 
-	damageScreen (w->screen);
+		damageScreen (w->screen);
+	    }
+	    else
+	    {
+		if (aw->oldAbove)
+		    restackWindowBelow (w, aw->oldAbove);
+
+		aw->rescaled = FALSE;
+		*(sw->slot) = aw->origSlot;
+
+		sw->adjust = TRUE;
+		ss->state = SCALE_STATE_OUT;
+
+		damageScreen (w->screen);
+	    }
+
+	    return TRUE;
+	}
     }
-    else
-    {
-	if (aw->oldAbove)
-	    restackWindowBelow (w, aw->oldAbove);
 
-	aw->rescaled = FALSE;
-	*(sw->slot) = aw->origSlot;
-
-	sw->adjust = TRUE;
-	ss->state = SCALE_STATE_OUT;
-
-	damageScreen (w->screen);
-    }
+    return FALSE;
 }
 
 static void
@@ -437,41 +501,6 @@ scaleaddonHandleEvent (CompDisplay *d,
 
     switch (event->type)
     {
-    case ButtonPress:
-        {
-            CompScreen *s;
-            s = findScreenAtDisplay (d, event->xbutton.root);
-
-            if (s)
-            {
-                SCALE_SCREEN (s);
-                if (ss->state != SCALE_STATE_WAIT)
-                    break;
-
-                if ((event->xbutton.button == Button2) &&
-                    scaleaddonGetCloseButton2 (s))
-                {
-                    CompWindow *w;
-                    w = scaleaddonCheckForWindowAt (s,
-                                                    event->xbutton.x_root,
-                                                    event->xbutton.y_root);
-                    if (w)
-                        closeWindow (w, event->xbutton.time);
-                }
-
-		if ((event->xbutton.button == Button3) &&
-                    scaleaddonGetZoomButton3 (s))
-                {
-                    CompWindow *w;
-                    w = scaleaddonCheckForWindowAt (s,
-                                                    event->xbutton.x_root,
-                                                    event->xbutton.y_root);
-                    if (w)
-                        scaleaddonZoomWindow (w);
-                }
-            }
-        }
-        break;
     case MotionNotify:
 	{
 	    CompScreen *s;
@@ -535,17 +564,29 @@ scaleaddonHandleCompizEvent (CompDisplay *d,
 	(strcmp (eventName, "activate") == 0))
     {
 	Window xid = getIntOptionNamed (option, nOption, "root", 0);
+	Bool activated = getIntOptionNamed (option, nOption, "activated", FALSE);
 	CompScreen *s = findScreenAtDisplay (d, xid);
 
 	if (s)
 	{
-    	    CompWindow *w;
+	    if (activated)
+	    {
+		addScreenAction (s, scaleaddonGetClose (s->display));
+		addScreenAction (s, scaleaddonGetZoom (s->display));
+	    }
+	    else
+	    {
+		CompWindow *w;
 
-    	    for (w = s->windows; w; w = w->next)
-    	    {
-    		ADDON_WINDOW (w);
-    		aw->rescaled = FALSE;
-    	    }
+		for (w = s->windows; w; w = w->next)
+		{
+		    ADDON_WINDOW (w);
+		    aw->rescaled = FALSE;
+		}
+
+		removeScreenAction (s, scaleaddonGetClose (s->display));
+		removeScreenAction (s, scaleaddonGetZoom (s->display));
+	    }
 	}
     }
 }
@@ -1015,6 +1056,9 @@ scaleaddonInitDisplay (CompPlugin  *p,
     d->privates[displayPrivateIndex].ptr = ad;
 
     ad->lastHoveredWindow = None;
+
+    scaleaddonSetCloseInitiate (d, scaleaddonCloseWindow);
+    scaleaddonSetZoomInitiate (d, scaleaddonZoomWindow);
 
     return TRUE;
 }

@@ -10,6 +10,29 @@
 				<plugin>scale</plugin>
 			</requirement>
 		</deps>
+		<display>
+			<group>
+			    <short>Bindings</short>
+			    <option name="close" type="action">
+					<short>Close Windows In Scale</short>
+					<long>Close windows while in scale mode</long>
+					<allowed button="true"/>
+					<passive_grab>true</passive_grab>
+					<default>
+						<button>Button2</button>
+					</default>
+			    </option>
+			    <option name="zoom" type="action">
+					<short>Zoom Windows In Scale</short>
+					<long>Zoom windows while in scale mode</long>
+					<allowed button="true"/>
+					<passive_grab>true</passive_grab>
+					<default>
+						<button>Button3</button>
+					</default>
+			    </option>
+			</group>
+		</display>
 		<screen>
 			<group>
 				<short>Appearance</short>
@@ -97,19 +120,6 @@
 						<name>Organic - EXPERIMENTAL</name>
 					</desc>
 				</option>
-				<subgroup>
-					<short>Mouse Button Behaviour</short>
-					<option name="close_button2" type="bool">
-						<short>Close Windows With Button 2</short>
-						<long>Close windows by clicking on them with the middle mouse button in scale mode</long>
-						<default>false</default>
-					</option>
-					<option name="zoom_button3" type="bool">
-						<short>Zoom Windows With Button 3</short>
-						<long>Zoom windows to full size by clicking on them with the right mouse button in scale mode</long>
-						<default>false</default>
-					</option>
-				</subgroup>
 			</group>
 		</screen>
 	</plugin>
