@@ -822,7 +822,7 @@ groupHandleButtonPressEvent(CompDisplay *d, XEvent *event)
 					}
 				}
 				break;
-			
+
 				case Button4:
 				case Button5:
 				{
