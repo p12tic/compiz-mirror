@@ -158,8 +158,8 @@ wallpaperFileToPixmap(CompScreen *s, char * data, int * width, int *height)
 
 
 	/* Here we return a pixmap the full size of the image and use XRender
-	to scale it down to s->width by s->heigh later in the pipeline. This is
-	to allow for tiling, etc, in the future */
+	   to scale it down to s->width by s->heigh later in the pipeline. This is
+	   to allow for tiling, etc, in the future */
 	pixmap = XCreatePixmap(s->display->display, 
 			       s->root, w, h, 32);
 	
@@ -172,7 +172,8 @@ wallpaperFileToPixmap(CompScreen *s, char * data, int * width, int *height)
 			     32, ZPixmap, 0, imageData, w, h, 32,
 			     0);
 	
-	XPutImage(s->display->display, pixmap, gc, image, 0, 0, 0, 0, w, h);
+	XPutImage(s->display->display, pixmap, gc,
+		  image, 0, 0, 0, 0, w, h);
 	
 
 	XFreeGC(s->display->display, gc);
@@ -351,6 +352,41 @@ wallpaperFillFillOnly(CompScreen *s, char * data, int i)
 	ws->wallpapers[i].fillColor[2]=b;
 }
 
+static void
+wallpaperCompositeElement(CompScreen *s, Picture destPicture, Pixmap p, float opacity, int w, int h)
+{
+	Picture sourcePicture, alpha;
+	XRenderPictFormat * format;
+	XRenderPictureAttributes attrib;
+	
+	attrib.repeat = wallpaperGetTile(s);
+	format = XRenderFindStandardFormat(s->display->display, PictStandardARGB32);
+	
+	/* Projective transformation to scale source to
+	   s->width by s->height from w/h as set in the
+	   function which returned the pixmap */
+	XTransform xform = {{
+			{XDoubleToFixed(1/(s->width/(float)w)), XDoubleToFixed(0), XDoubleToFixed(0)},
+			{XDoubleToFixed(0), XDoubleToFixed(1/(s->height/(float)h)), XDoubleToFixed(0)},
+			{XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1)}}};
+	
+	
+	
+	sourcePicture = XRenderCreatePicture(s->display->display, p, format, CPRepeat, &attrib);
+	alpha = wallpaperAlphaMask(s, opacity);
+	
+	if (((w > s->width) && (h > s->height)) || (attrib.repeat == 0))
+		XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
+	XRenderComposite(s->display->display, PictOpOver,
+			 sourcePicture, alpha, destPicture,
+			 0, 0, 0, 0, 0, 0,
+			 s->width ,s->height);
+	
+	XFreePixmap(s->display->display, p);
+	XRenderFreePicture(s->display->display, sourcePicture);
+	XRenderFreePicture(s->display->display, alpha);	
+}
+
 
 static void
 wallpaperLoadImages(CompScreen *s)
@@ -423,38 +459,8 @@ wallpaperLoadImages(CompScreen *s)
 			}
 			
 			if (p)
-			{
-				Picture sourcePicture, alpha;	
-				XRenderPictureAttributes attrib;
+				wallpaperCompositeElement(s, destPicture, p, opacity, w, h);
 
-				attrib.repeat = wallpaperGetTile(s);
-				
-				/* Projective transformation to scale source to
-				s->width by s->height from w/h as set in the
-				function which returned the pixmap */
-				XTransform xform = {{
-				    {XDoubleToFixed(1/(s->width/(float)w)), XDoubleToFixed(0), XDoubleToFixed(0)},
-				    {XDoubleToFixed(0), XDoubleToFixed(1/(s->height/(float)h)), XDoubleToFixed(0)},
-				    {XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1)}}};
-				
-				
-				
-				sourcePicture = XRenderCreatePicture(s->display->display, p, format, CPRepeat, &attrib);
-				alpha = wallpaperAlphaMask(s, opacity);
-				
-				if (((w > s->width) && (h > s->height)) || (attrib.repeat == 0))
-					XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
-				XRenderComposite(s->display->display, PictOpOver,
-						 sourcePicture, alpha, destPicture,
-						 0, 0, 0, 0, 0, 0,
-						 s->width ,s->height);
-				
-				
-				
-				XFreePixmap(s->display->display, p);
-				XRenderFreePicture(s->display->display, sourcePicture);
-				XRenderFreePicture(s->display->display, alpha);
-			}
 		}
 		
 			
