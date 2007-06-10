@@ -210,8 +210,11 @@ wallpaperRadialGradientToPixmap(CompScreen *s, char * data, int * width, int * h
 								format,s->width,s->height);
 	cr = cairo_create(surface);
   
-	gradient = cairo_pattern_create_radial(x1*s->width,y1*s->height,ra1*((s->width+s->height)/2)
-					       ,x2*s->width,y2*s->height,ra2*((s->width+s->height)/2));
+	gradient = cairo_pattern_create_radial(x1*s->width,y1*s->height,
+					       ra1*((s->width+s->height)/2)
+					       ,x2*s->width,y2*s->height,
+					       ra2*((s->width+s->height)/2));
+
 	cairo_pattern_add_color_stop_rgb(gradient, 0.0f,r1,g1,b1);
 	cairo_pattern_add_color_stop_rgb(gradient, 1.0f,r2,g2,b2);
   
@@ -579,6 +582,7 @@ wallpaperPaintBackground (CompScreen *s,
 	
 	
 	glDrawArrays(GL_QUADS, 0, nBox * 4);
+	glColor4usv(defaultColor);
 	
 	if (!ww->fillOnly)
 		disableTexture(s, bg);
