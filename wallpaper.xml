@@ -10,6 +10,11 @@
 	</_long>
 	<type>string</type>
       </option>
+      <option name="tile" type="bool">
+	<_short> Tile or Stretch </_short>
+	<_long> Tile backgrounds as opposed to stretching </_long>
+	<type>bool</type>
+      </option>
     </screen>
   </plugin>
 </compiz>

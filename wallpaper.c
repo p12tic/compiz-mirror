@@ -425,6 +425,10 @@ wallpaperLoadImages(CompScreen *s)
 			if (p)
 			{
 				Picture sourcePicture, alpha;	
+				XRenderPictureAttributes attrib;
+
+				attrib.repeat = wallpaperGetTile(s);
+				
 				/* Projective transformation to scale source to
 				s->width by s->height from w/h as set in the
 				function which returned the pixmap */
@@ -434,11 +438,12 @@ wallpaperLoadImages(CompScreen *s)
 				    {XDoubleToFixed(0), XDoubleToFixed(0), XDoubleToFixed(1)}}};
 				
 				
-
-				sourcePicture = XRenderCreatePicture(s->display->display, p, format, 0, 0);
+				
+				sourcePicture = XRenderCreatePicture(s->display->display, p, format, CPRepeat, &attrib);
 				alpha = wallpaperAlphaMask(s, opacity);
 				
-				XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
+				if (((w > s->width) && (h > s->height)) || (attrib.repeat == 0))
+					XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
 				XRenderComposite(s->display->display, PictOpOver,
 						 sourcePicture, alpha, destPicture,
 						 0, 0, 0, 0, 0, 0,
@@ -624,6 +629,7 @@ static Bool wallpaperInitScreen (CompPlugin * p,
 	ws->nWallpapers = 0;
 
 	wallpaperSetImagesNotify(s, wallpaperImagesChanged);
+	wallpaperSetTileNotify(s, wallpaperImagesChanged);
   
     
 	WRAP (ws, s, paintBackground, wallpaperPaintBackground);
