@@ -1,0 +1,2 @@
+PLUGIN = imgjpeg
+LDFLAGS_ADD = -ljpeg
