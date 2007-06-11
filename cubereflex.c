@@ -1,5 +1,4 @@
 /*
- *
  * Compiz cube reflection plugin
  *
  * cubereflex.c
