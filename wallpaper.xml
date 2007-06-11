@@ -1,22 +1,20 @@
 <compiz>
-  <plugin name="wallpaper" useBcop="true">
-    <_short>Wallpaper</_short>
-    <_long>Draw the desktop wallpaper</_long>
-    <screen>
-      <option name="images" type="list">
-	<_short> Backgrounds </_short>
-	<_long> The background specifications (as explained in
-	DOCUMENTATION) to use.
-	</_long>
-	<type>string</type>
-      </option>
-      <option name="tile" type="bool">
-	<_short> Tile or Stretch </_short>
-	<_long> Tile backgrounds as opposed to stretching </_long>
-	<type>bool</type>
-      </option>
-    </screen>
-  </plugin>
+	<plugin name="wallpaper" useBcop="true">
+		<short>Wallpaper</short>
+		<long>Draw the desktop wallpaper</long>
+		<screen>
+			<option name="images" type="list">
+				<short>Backgrounds</short>
+				<long>The background specifications (as explained in DOCUMENTATION) to use.</long>
+				<type>string</type>
+			</option>
+			<option name="tile" type="bool">
+				<short>Tile or Stretch</short>
+				<long>Tile backgrounds as opposed to stretching</long>
+				<type>bool</type>
+			</option>
+		</screen>
+	</plugin>
 </compiz>
 
 	
