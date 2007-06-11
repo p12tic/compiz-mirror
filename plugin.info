@@ -1,0 +1,2 @@
+PLUGIN = wallpaper
+PKG_DEP = cairo
