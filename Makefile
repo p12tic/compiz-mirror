@@ -240,11 +240,11 @@ install: $(DESTDIR) all
 	fi
 	@if [ -n "$(hdr-install-target)" ]; then \
 	    if [ '$(color)' != 'no' ]; then \
-		echo -n -e "\033[0;1;5minstall   \033[0;1;37m: \033[0;31m$(PREFIX)/include/$(hdr-install-target)\033[0m"; \
+		echo -n -e "\033[0;1;5minstall   \033[0;1;37m: \033[0;31m$(PREFIX)/include/compiz/$(hdr-install-target)\033[0m"; \
 	    else \
-		echo "install   : $(PREFIX)/include/$(hdr-install-target)"; \
+		echo "install   : $(PREFIX)/include/compiz/$(hdr-install-target)"; \
 	    fi; \
-	    cp $(hdr-install-target) $(PREFIX)/include/$(hdr-install-target); \
+	    cp $(hdr-install-target) $(PREFIX)/include/compiz/$(hdr-install-target); \
 	    if [ '$(color)' != 'no' ]; then \
 		echo -e "\r\033[0minstall   : \033[34m$(PREFIX)/include/$(hdr-install-target)\033[0m"; \
 	    fi; \
