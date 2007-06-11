@@ -1,0 +1,2 @@
+PLUGIN = resizeinfo
+PKG_DEP = pango cairo pangocairo
