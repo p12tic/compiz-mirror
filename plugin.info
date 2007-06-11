@@ -1,1 +1,2 @@
 PLUGIN = thumbnail
+PKG_DEP = compiz-text
