@@ -24,7 +24,7 @@
 PLUGIN = scaleaddon
 
 #enter dependencies here
-PKG_DEP =
+PKG_DEP = compiz-scale
 
 ## end of configuration
 
