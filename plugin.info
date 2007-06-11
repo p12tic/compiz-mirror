@@ -1,0 +1,2 @@
+PLUGIN = wall
+PKG_DEP = cairo
