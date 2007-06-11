@@ -1,2 +1,2 @@
 PLUGIN = group
-PKG_DEP = cairo cairo-xlib-xrender
+PKG_DEP = cairo cairo-xlib-xrender compiz-text
