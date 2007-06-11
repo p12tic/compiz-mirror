@@ -1,2 +1,2 @@
 PLUGIN = wall
-PKG_DEP = cairo
+PKG_DEP = cairo cairo-xlib-xrender
