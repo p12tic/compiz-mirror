@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef _BERYL_TEXT_H
-#define _BERYL_TEXT_H
+#ifndef _COMPIZ_TEXT_H
+#define _COMPIZ_TEXT_H
 
 #define TEXT_ID "TextToPixmap"
 
