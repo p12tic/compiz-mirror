@@ -1,1 +1,2 @@
 PLUGIN = ring
+PKG_DEPS = compiz-text
