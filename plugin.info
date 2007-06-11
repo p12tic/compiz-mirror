@@ -1,2 +1,2 @@
 PLUGIN = resizeinfo
-PKG_DEP = pango cairo pangocairo
+PKG_DEP = pango cairo pangocairo cairo-xlib-xrender
