@@ -1,1 +1,2 @@
 PLUGIN = expo
+LDFLAGS_ADD = -lGLU
