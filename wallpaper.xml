@@ -2,6 +2,7 @@
 	<plugin name="wallpaper" useBcop="true">
 		<short>Wallpaper</short>
 		<long>Draw the desktop wallpaper</long>
+		<category>Utility</category>
 		<screen>
 			<option name="images" type="list">
 				<short>Backgrounds</short>
