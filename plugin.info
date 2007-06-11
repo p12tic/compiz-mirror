@@ -1,0 +1,2 @@
+PLUGIN = cubereflex
+PKG_DEP = compiz-cube
