@@ -73,7 +73,6 @@ typedef struct _CubereflexScreen
 
 } CubereflexScreen;
 
-/* Helpers */
 #define GET_CUBEREFLEX_DISPLAY(d) \
 		((CubereflexDisplay *) (d)->privates[displayPrivateIndex].ptr)
 #define CUBEREFLEX_DISPLAY(d) \
