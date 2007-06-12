@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compiz>
-    <plugin name="workarounds">
+    <plugin name="workarounds" useBcop="true">
 	<deps>
 	</deps>
 	<short>Workarounds</short>

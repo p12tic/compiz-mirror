@@ -100,8 +100,3 @@ CompPluginVTable workaroundsVTable =
     0, /* Features */
     0  /* nFeatures */
 };
-
-CompPluginVTable *getCompPluginInfo( void )
-{
-    return &workaroundsVTable;
-}
