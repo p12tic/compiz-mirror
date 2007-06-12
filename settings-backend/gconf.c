@@ -4,13 +4,13 @@
  *
  * gconf.c
  *
- * Copyright (c) 2007 Danny Baumann <maniac@beryl-project.org>
+ * Copyright (c) 2007 Danny Baumann <maniac@opencompositing.org>
  *
  * Parts of this code are taken from libberylsettings 
  * gconf backend, written by:
  *
- * Copyright (c) 2006 Robert Carr <racarr@beryl-project.org>
- * Copyright (c) 2007 Dennis Kasprzyk <onestone@beryl-project.org>
+ * Copyright (c) 2006 Robert Carr <racarr@opencompositing.org>
+ * Copyright (c) 2007 Dennis Kasprzyk <onestone@opencompositing.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License

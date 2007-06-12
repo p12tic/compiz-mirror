@@ -1,6 +1,6 @@
 AC_PREREQ(2.57)
 
-AC_INIT([ccs-backend-gconf],esyscmd(. ./VERSION;echo -n $VERSION), [maniac@beryl-project.org])
+AC_INIT([ccs-backend-gconf],esyscmd(. ./VERSION;echo -n $VERSION), [maniac@opencompositing.org])
 
 AC_DEFINE_UNQUOTED(VERSION,"$VERSION",[Version])
 
