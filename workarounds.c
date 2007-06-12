@@ -41,6 +41,17 @@ static void workaroundsDisplayOptionChanged( CompDisplay *d, CompOption *opt,
 
 static Bool workaroundsInitDisplay( CompPlugin *plugin, CompDisplay *d )
 {
+    WorkaroundsDisplay *wd = 
+        (WorkaroundsDisplay *) malloc( sizeof( WorkaroundsDisplay ) );
+
+    wd->screenPrivateIndex = allocateScreenPrivateIndex( d );
+    if ( wd->screenPrivateIndex < 0 )
+    {
+        free( wd );
+        return FALSE;
+    }
+    d->privates[displayPrivateIndex].ptr = wd;
+
     workaroundsSetLegacyAppsNotify( d, workaroundsDisplayOptionChanged );
 
     return TRUE;
@@ -48,6 +59,10 @@ static Bool workaroundsInitDisplay( CompPlugin *plugin, CompDisplay *d )
 
 static void workaroundsFiniDisplay( CompPlugin *plugin, CompDisplay *d )
 {
+    WORKAROUNDS_DISPLAY( d );
+
+    freeScreenPrivateIndex( d, wd->screenPrivateIndex );
+    free(wd);
 }
 
 static Bool workaroundsInitWindow( CompPlugin *plugin, CompWindow *w )
