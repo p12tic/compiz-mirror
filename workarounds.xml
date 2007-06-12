@@ -6,7 +6,7 @@
 	<short>Workarounds</short>
 	<long>Metacity-like workarounds.</long>
 	<display>
-            <option type="bool" name="filter_linear">
+            <option type="bool" name="legacy_apps">
                 <short>Legacy application support</short>
                 <long>Make Wine and legacy applications work.</long>
                 <default>true</default>
