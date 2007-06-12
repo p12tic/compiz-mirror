@@ -19,28 +19,60 @@
  */
 
 #include <compiz.h>
+#include <workarounds_options.h>
+#include "workarounds.h"
 
 static CompMetadata workaroundsMetadata;
 static int displayPrivateIndex;
 
-static Bool workaroundsInitWindow( CompPlugin *plugin, CompWindow *w )
+static void workaroundsDisplayOptionChanged( CompDisplay *d, CompOption *opt, 
+                                             WorkaroundsDisplayOptions num )
 {
-    unsigned int type;
+    WORKAROUNDS_DISPLAY( d );
 
-    type = w->wmType;
+    switch( num ) {
+        case WorkaroundsDisplayOptionLegacyApps:
+            wd->legacyApps = opt->value.b;
+            break;
+        default:
+            break;
+    }
+}
 
-    /* Some code to make Wine and legacy applications work. */
-    if (w->width == w->screen->width && w->height == w->screen->height &&
-       !(w->type & CompWindowTypeFullscreenMask) &&
-       !(type & CompWindowTypeDesktopMask))
-           type = CompWindowTypeFullscreenMask;
-
-    w->type = type;
+static Bool workaroundsInitDisplay( CompPlugin *plugin, CompDisplay *d )
+{
+    workaroundsSetLegacyAppsNotify( d, workaroundsDisplayOptionChanged );
 
     return TRUE;
 }
 
-static void workaroundsFiniWindow( CompPlugin *p, CompWindow *w )
+static void workaroundsFiniDisplay( CompPlugin *plugin, CompDisplay *d )
+{
+}
+
+static Bool workaroundsInitWindow( CompPlugin *plugin, CompWindow *w )
+{
+    WORKAROUNDS_DISPLAY( w->screen->display );
+
+    if ( wd->legacyApps )
+    {
+        unsigned int type;
+
+        type = w->wmType;
+
+        /* Some code to make Wine and legacy applications work. */
+        if (w->width == w->screen->width && w->height == w->screen->height &&
+           !(w->type & CompWindowTypeFullscreenMask) &&
+           !(type & CompWindowTypeDesktopMask))
+               type = CompWindowTypeFullscreenMask;
+
+        w->type = type;
+    }
+
+    return TRUE;
+}
+
+static void workaroundsFiniWindow( CompPlugin *plugin, CompWindow *w )
 {
 }
 
@@ -85,8 +117,8 @@ CompPluginVTable workaroundsVTable =
     workaroundsGetMetadata,
     workaroundsInit,
     workaroundsFini,
-    0, /* InitDisplay */
-    0, /* FiniDisplay */
+    workaroundsInitDisplay,
+    workaroundsFiniDisplay,
     0, /* InitScreen */
     0, /* FiniScreen */
     workaroundsInitWindow,
@@ -100,3 +132,9 @@ CompPluginVTable workaroundsVTable =
     0, /* Features */
     0  /* nFeatures */
 };
+
+CompPluginVTable *getCompPluginInfo( void )
+{
+    return &workaroundsVTable;
+}
+
