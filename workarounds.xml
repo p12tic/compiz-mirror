@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compiz>
     <plugin name="workarounds" useBcop="true">
-	<deps>
-	</deps>
-	<short>Workarounds</short>
-	<long>Metacity-like workarounds.</long>
-	<display>
+        <category>Utility</category>
+        <deps>
+        </deps>
+        <short>Workarounds</short>
+        <long>Metacity-like workarounds.</long>
+        <display>
             <option type="bool" name="legacy_apps">
                 <short>Legacy application support</short>
                 <long>Make Wine and legacy applications work.</long>
                 <default>true</default>
             </option>
-	</display>
-	<screen>
-	</screen>
+        </display>
+        <screen>
+        </screen>
     </plugin>
 </compiz>
