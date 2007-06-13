@@ -20,56 +20,13 @@
 
 #include <compiz.h>
 #include <workarounds_options.h>
-#include "workarounds.h"
 
 static CompMetadata workaroundsMetadata;
 static int displayPrivateIndex;
 
-static void workaroundsDisplayOptionChanged( CompDisplay *d, CompOption *opt, 
-                                             WorkaroundsDisplayOptions num )
-{
-    WORKAROUNDS_DISPLAY( d );
-
-    switch( num ) {
-        case WorkaroundsDisplayOptionLegacyApps:
-            wd->legacyApps = opt->value.b;
-            break;
-        default:
-            break;
-    }
-}
-
-static Bool workaroundsInitDisplay( CompPlugin *plugin, CompDisplay *d )
-{
-    WorkaroundsDisplay *wd = 
-        (WorkaroundsDisplay *) malloc( sizeof( WorkaroundsDisplay ) );
-
-    wd->screenPrivateIndex = allocateScreenPrivateIndex( d );
-    if ( wd->screenPrivateIndex < 0 )
-    {
-        free( wd );
-        return FALSE;
-    }
-    d->privates[displayPrivateIndex].ptr = wd;
-
-    workaroundsSetLegacyAppsNotify( d, workaroundsDisplayOptionChanged );
-
-    return TRUE;
-}
-
-static void workaroundsFiniDisplay( CompPlugin *plugin, CompDisplay *d )
-{
-    WORKAROUNDS_DISPLAY( d );
-
-    freeScreenPrivateIndex( d, wd->screenPrivateIndex );
-    free(wd);
-}
-
 static Bool workaroundsInitWindow( CompPlugin *plugin, CompWindow *w )
 {
-    WORKAROUNDS_DISPLAY( w->screen->display );
-
-    if ( wd->legacyApps )
+    if ( workaroundsGetLegacyApps( w->screen->display ) )
     {
         unsigned int type;
 
@@ -132,8 +89,8 @@ CompPluginVTable workaroundsVTable =
     workaroundsGetMetadata,
     workaroundsInit,
     workaroundsFini,
-    workaroundsInitDisplay,
-    workaroundsFiniDisplay,
+    0, /* InitDisplay */
+    0, /* FiniDisplay */
     0, /* InitScreen */
     0, /* FiniScreen */
     workaroundsInitWindow,
