@@ -53,7 +53,7 @@
 
 #define METACITY    "/apps/metacity"
 #define COMPIZ_CCS  "/apps/compiz"
-#define EXPORTPATH  ".ccs/"
+#define EXPORTPATH  ".compizconfig/"
 #define EXTENSION   ".profile.gconf"
 #define DEFAULTPROF "Default"
 #define CORE_NAME   "core"
