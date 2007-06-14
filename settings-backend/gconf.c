@@ -1314,10 +1314,13 @@ static Bool checkProfile(CCSContext *context)
 	return ret;
 }
 
-static void processEvents(void)
+static void processEvents(unsigned int flags)
 {
-	while (g_main_context_pending(NULL))
-		g_main_context_iteration(NULL, FALSE);
+	if (!(flags & ProcessEventsNoGlibMainLoopMask))
+	{
+		while (g_main_context_pending(NULL))
+			g_main_context_iteration(NULL, FALSE);
+	}
 }
 
 static Bool initBackend(CCSContext * context)
