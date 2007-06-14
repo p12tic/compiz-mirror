@@ -306,6 +306,16 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 
 	CCSSetting *setting = ccsFindSetting(plugin, token, isScreen, screenNum);
 	if (!setting)
+	{
+		/* maybe it's an action which has a name_button/... naming scheme */
+		char *delim = strchr (token, '_');
+		if (delim)
+		{
+			*delim = 0;
+			setting = ccsFindSetting(plugin, token, isScreen, screenNum);
+		}
+	}
+	if (!setting)
 		return;
 	
 	readInit(context);
