@@ -876,6 +876,7 @@ static Bool readOption(CCSSetting * setting)
 	   separately */
 	if (setting->type != TypeAction)
 	{
+		Bool valid = TRUE;
 		gconfValue = gconf_client_get_without_default(client, pathName, &err);
 		if (err)
 		{
@@ -885,6 +886,37 @@ static Bool readOption(CCSSetting * setting)
 		if (!gconfValue)
 			/* value is not set */
 			return FALSE;
+
+		/* setting type sanity check */
+		switch (setting->type)
+		{
+			case TypeString:
+			case TypeMatch:
+			case TypeColor:
+				valid = (gconfValue->type == GCONF_VALUE_STRING);
+				break;
+			case TypeInt:
+				valid = (gconfValue->type == GCONF_VALUE_INT);
+				break;
+			case TypeBool:
+				valid = (gconfValue->type == GCONF_VALUE_BOOL);
+				break;
+			case TypeFloat:
+				valid = (gconfValue->type == GCONF_VALUE_FLOAT);
+				break;
+			case TypeList:
+				valid = (gconfValue->type == GCONF_VALUE_LIST);
+				break;
+			default:
+				break;
+		}
+		if (!valid)
+		{
+			printf ("GConf backend: There is an unsupported value at path %s. Settings from this path "
+					"won't be read. Try to remove that value so that operation can continue properly.\n",
+					pathName);
+			return FALSE;
+		}
 	}
 
 	switch (setting->type)
