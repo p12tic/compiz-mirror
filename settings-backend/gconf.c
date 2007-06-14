@@ -308,16 +308,28 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 	if (!setting)
 	{
 		/* maybe it's an action which has a name_button/... naming scheme */
-		char *delim = strchr (token, '_');
-		if (delim)
+		const char *prefix[] = { "_key", "_button", "_edge", "_edgebutton" };
+		int i;
+		int prefixLen, len = strlen (token);
+
+		for (i = 0; i < sizeof(prefix) / sizeof(prefix[0]); i++)
 		{
-			*delim = 0;
-			setting = ccsFindSetting(plugin, token, isScreen, screenNum);
+			prefixLen = strlen(prefix[i]);
+			if (len < prefixLen)
+				continue;
+
+			if (strcmp (token + len - prefixLen, prefix[i]) == 0)
+			{
+				char *buffer = strndup (token, len - prefixLen);
+				setting = ccsFindSetting(plugin, buffer, isScreen, screenNum);
+				free (buffer);
+				break;
+			}
 		}
 	}
 	if (!setting)
 		return;
-	
+
 	readInit(context);
 	readSetting(context, setting);
 }
@@ -412,7 +424,7 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 	gconfValue = gconf_client_get(client, itemPath, &err);
 	if (!err && gconfValue)
 	{
-		if ((gconfValue->type == GCONF_VALUE_LIST ) &&
+		if ((gconfValue->type == GCONF_VALUE_LIST) &&
 		    (gconf_value_get_list_type(gconfValue) == GCONF_VALUE_STRING))
 		{
 			GSList *list;
@@ -420,7 +432,13 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 
 			list = gconf_value_get_list(gconfValue);
 			for ( ; list; list = list->next)
-				edgeList = ccsStringListAppend (edgeList, list->data);
+			{
+				GConfValue *value = (GConfValue *) list->data;
+				char *edge = gconf_value_get_string (value);
+
+				if (edge)
+					edgeList = ccsStringListAppend (edgeList, edge);
+			}
 
 			ccsStringListToEdges (edgeList, &action);
 
