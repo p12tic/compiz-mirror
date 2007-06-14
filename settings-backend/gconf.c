@@ -692,6 +692,7 @@ static Bool readIntegratedOption(CCSContext * context, CCSSetting * setting, int
 				{
 					Bool clickToFocus = (strcmp(focusMode, "click") == 0);
 					ccsSetBool(setting, clickToFocus);
+					ret = TRUE;
 					g_free(focusMode);
 				}
 			}
