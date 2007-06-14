@@ -81,17 +81,9 @@ static void workaroundsWindowResizeNotify( CompWindow *w, int dx, int dy,
 
     if ( workaroundsGetLegacyApps( w->screen->display ) )
     {
-        unsigned int type;
-
-        type = w->wmType;
-
-        /* Fix up the window mask if the size of the window changed. */
-        if ((w->width != w->screen->width || w->height != w->screen->height) &&
-           (w->type & CompWindowTypeFullscreenMask) &&
-           !(type & CompWindowTypeDesktopMask))
-               type &= ~CompWindowTypeFullscreenMask;
-
-        w->type = type;
+        /* Fix up the window type. */
+        recalcWindowType( w );
+        workaroundsDoLegacyApps( w );
     }
 
     UNWRAP( ws, w->screen, windowResizeNotify );
