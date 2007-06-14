@@ -1402,6 +1402,8 @@ fileNameForProfile (char *profile)
 
 static Bool checkProfile(CCSContext *context)
 {
+	return TRUE;
+
 	char *profile, *lastProfile;
 	Bool ret = TRUE;
 
@@ -1629,7 +1631,7 @@ static CCSBackendVTable gconfVTable = {
     "GConf Configuration Backend",
     "GConf Configuration Backend for libccs",
     TRUE,
-    TRUE,
+    FALSE, /* TRUE,*/
     processEvents,
     initBackend,
     finiBackend,
@@ -1641,8 +1643,8 @@ static CCSBackendVTable gconfVTable = {
 	0,
 	getSettingIsIntegrated,
 	getSettingIsReadOnly,
-	getExistingProfiles,
-	deleteProfile
+	0, /* getExistingProfiles, */
+	0, /* deleteProfile */
 };
 
 CCSBackendVTable *
