@@ -75,6 +75,7 @@
 							 setting->parent->name, keyName, setting->name);
 
 GConfClient *client = NULL;
+GConfEngine *conf = NULL;
 
 static guint backendNotifyId = 0;
 static guint gnomeNotifyId = 0;
@@ -395,6 +396,105 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 	}
 }
 
+static void copyGconfValues (GConfEngine *conf, const gchar *from, const gchar *to, Bool associate)
+{
+	GSList *values, *tmp;
+	GError *err = NULL;
+  
+	values = gconf_engine_all_entries (conf, from, &err);
+	tmp = values;
+
+	while (tmp)
+	{
+		GConfEntry *entry = tmp->data;
+		GConfValue *value;
+		const char *key   = gconf_entry_get_key (entry);
+		char *name, *newKey;
+
+		name = strrchr (key, '/');
+		if (!name)
+			continue;
+
+		if (to)
+		{
+			asprintf (&newKey, "%s/%s", to, name + 1);
+			value = gconf_entry_get_value (entry);
+			if (value)
+			{
+				char *schemaKey;
+				asprintf (&schemaKey, "%s%s/%s", "/schemas", from, name + 1);
+				gconf_engine_set (conf, newKey, value, NULL);
+				gconf_engine_associate_schema (conf, newKey, schemaKey, NULL);
+				free (schemaKey);
+			}
+			free (newKey);
+		}
+		else
+		{
+			gconf_engine_associate_schema (conf, key, NULL, NULL);
+			gconf_engine_unset (conf, key, NULL);
+		}
+
+		gconf_entry_unref (entry);
+		tmp = g_slist_next (tmp);
+	}
+
+	if (values)
+  		g_slist_free (values);
+}
+
+static void copyGconfRecursively (GConfEngine *conf, GSList* subdirs, const gchar *to, Bool associate)
+{
+  GSList* tmp;
+
+  tmp = subdirs;
+  
+  while (tmp)
+  {
+   	  gchar* path = tmp->data;
+	  char *newKey, *name;
+
+	  name = strrchr (path, '/');
+	  if (name)
+	  {
+		  if (to)
+			  asprintf (&newKey, "%s/%s", to, name + 1);
+		  else
+			  newKey = NULL;
+
+		  copyGconfValues (conf, path, newKey, associate);
+		  copyGconfRecursively (conf, gconf_engine_all_dirs (conf, path, NULL), newKey, associate);
+
+		  if (to)
+			  free (newKey);
+		  else
+			  gconf_engine_remove_dir (conf, path, NULL);
+	  }
+
+      g_free (path);
+      tmp = g_slist_next(tmp);
+  }
+
+  if (subdirs)
+	  g_slist_free(subdirs);
+}
+
+static void copyGconfTree (const gchar *from, const gchar *to, Bool associate)
+{
+	GSList* subdirs;
+
+	/* we aren't allowed to have an open GConfClient object while 
+	   using GConfEngine, so shut it down and open it again afterwards */
+	g_object_unref (client);
+
+	subdirs = gconf_engine_all_dirs (conf, from, NULL);
+	copyGconfRecursively (conf, subdirs, to, associate);
+
+	gconf_engine_suggest_sync (conf, NULL);
+
+	client = gconf_client_get_for_engine(conf);
+}
+
 static Bool readActionValue(CCSSetting * setting, char * pathName)
 {
 	char itemPath[BUFSIZE];
@@ -434,7 +534,7 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 			for ( ; list; list = list->next)
 			{
 				GConfValue *value = (GConfValue *) list->data;
-				char *edge = gconf_value_get_string (value);
+				const char *edge = gconf_value_get_string (value);
 
 				if (edge)
 					edgeList = ccsStringListAppend (edgeList, edge);
@@ -1356,7 +1456,8 @@ static Bool initBackend(CCSContext * context)
 {
 	g_type_init();
 
-	client = gconf_client_get_default();
+	conf = gconf_engine_get_default();
+	client = gconf_client_get_for_engine(conf);
 
 	backendNotifyId = gconf_client_notify_add(client, COMPIZ_CCS, valueChanged,
 											  context, NULL, NULL);
@@ -1394,6 +1495,8 @@ static Bool finiBackend(CCSContext * context)
 
 	g_object_unref(client);
 	client = NULL;
+	gconf_engine_unref(conf);
+	conf = NULL;
 
 	return TRUE;
 }
