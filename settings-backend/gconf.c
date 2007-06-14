@@ -1565,7 +1565,7 @@ static void writeSetting(CCSContext * context, CCSSetting * setting)
 
 	if (ccsGetIntegrationEnabled(context) && isIntegratedOption(setting, &index))
 		writeIntegratedOption(context, setting, index);
-	else if (setting->isDefault)
+	else if (setting->isDefault && (strcmp (setting->name, "____plugin_enabled") != 0))
 		resetOptionToDefault(setting);
 	else
 		writeOption(setting);
