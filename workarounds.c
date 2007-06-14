@@ -59,6 +59,21 @@ typedef struct _WorkaroundsWindow {
                             GET_WORKAROUNDS_DISPLAY (w->screen->display)))
 
 
+static void workaroundsDoLegacyApps( CompWindow *w )
+{
+    unsigned int type;
+
+    type = w->wmType;
+
+    /* Some code to make Wine and legacy applications work. */
+    if (w->width == w->screen->width && w->height == w->screen->height &&
+       !(w->type & CompWindowTypeFullscreenMask) &&
+       !(type & CompWindowTypeDesktopMask))
+           type = CompWindowTypeFullscreenMask;
+
+    w->type = type;
+}
+
 static void workaroundsWindowResizeNotify( CompWindow *w, int dx, int dy,
                                            int dwidth, int dheight )
 {
@@ -149,19 +164,7 @@ static void workaroundsFiniScreen( CompPlugin *plugin, CompScreen *s )
 static Bool workaroundsInitWindow( CompPlugin *plugin, CompWindow *w )
 {
     if ( workaroundsGetLegacyApps( w->screen->display ) )
-    {
-        unsigned int type;
-
-        type = w->wmType;
-
-        /* Some code to make Wine and legacy applications work. */
-        if (w->width == w->screen->width && w->height == w->screen->height &&
-           !(w->type & CompWindowTypeFullscreenMask) &&
-           !(type & CompWindowTypeDesktopMask))
-               type = CompWindowTypeFullscreenMask;
-
-        w->type = type;
-    }
+        workaroundsDoLegacyApps( w );
 
     return TRUE;
 }
