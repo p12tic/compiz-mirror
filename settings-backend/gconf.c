@@ -396,6 +396,40 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 	}
 }
 
+static void initClient(CCSContext *context)
+{
+	client = gconf_client_get_for_engine(conf);
+
+	backendNotifyId = gconf_client_notify_add(client, COMPIZ, valueChanged,
+											  context, NULL, NULL);
+
+	gnomeNotifyId = gconf_client_notify_add(client, METACITY,
+											gnomeValueChanged, context, NULL,NULL);
+
+	gconf_client_add_dir(client, COMPIZ, GCONF_CLIENT_PRELOAD_NONE, NULL);
+	gconf_client_add_dir(client, METACITY, GCONF_CLIENT_PRELOAD_NONE, NULL);
+}
+
+static void finiClient(void)
+{
+	if (backendNotifyId)
+	{
+		gconf_client_notify_remove(client, backendNotifyId);
+		backendNotifyId = 0;
+	}
+	if (gnomeNotifyId)
+	{
+		gconf_client_notify_remove(client, gnomeNotifyId);
+		gnomeNotifyId = 0;
+	}
+
+	gconf_client_remove_dir(client, COMPIZ, NULL);
+	gconf_client_remove_dir(client, METACITY, NULL);
+
+	g_object_unref(client);
+	client = NULL;
+}
+
 static void copyGconfValues (GConfEngine *conf, const gchar *from, const gchar *to, Bool associate)
 {
 	GSList *values, *tmp;
@@ -479,20 +513,20 @@ static void copyGconfRecursively (GConfEngine *conf, GSList* subdirs, const gcha
 	  g_slist_free(subdirs);
 }
 
-static void copyGconfTree (const gchar *from, const gchar *to, Bool associate)
+static void copyGconfTree (CCSContext *context, const gchar *from, const gchar *to, Bool associate)
 {
 	GSList* subdirs;
 
 	/* we aren't allowed to have an open GConfClient object while 
 	   using GConfEngine, so shut it down and open it again afterwards */
-	g_object_unref (client);
+	finiClient();
 
 	subdirs = gconf_engine_all_dirs (conf, from, NULL);
 	copyGconfRecursively (conf, subdirs, to, associate);
 
 	gconf_engine_suggest_sync (conf, NULL);
 
-	client = gconf_client_get_for_engine(conf);
+	initClient(context);
 }
 
 static Bool readActionValue(CCSSetting * setting, char * pathName)
@@ -1473,7 +1507,7 @@ static Bool checkProfile(CCSContext *context)
 
 		/* copy /apps/compiz tree to profile path */
 		asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
-		copyGconfTree ("/apps/compiz", pathName, TRUE);
+		copyGconfTree (context, "/apps/compiz", pathName, TRUE);
 		free (pathName);
 
 		/* reset /apps/compiz tree */
@@ -1481,11 +1515,11 @@ static Bool checkProfile(CCSContext *context)
 
 		/* copy new profile tree to /apps/compiz */
 		asprintf (&pathName, "%s/%s", PROFILEPATH, currentProfile);
-		copyGconfTree (pathName, COMPIZ, TRUE);
+		copyGconfTree (context, pathName, COMPIZ, TRUE);
 
 		/* delete the new profile tree in /apps/compizconfig
 		   to avoid user modification in the wrong tree */
-		copyGconfTree (pathName, NULL, TRUE);
+		copyGconfTree (context, pathName, NULL, TRUE);
 		free (pathName);
 
 		/* update current profile name */
@@ -1512,16 +1546,8 @@ static Bool initBackend(CCSContext * context)
 	g_type_init();
 
 	conf = gconf_engine_get_default();
-	client = gconf_client_get_for_engine(conf);
 
-	backendNotifyId = gconf_client_notify_add(client, COMPIZ, valueChanged,
-											  context, NULL, NULL);
-
-	gnomeNotifyId = gconf_client_notify_add(client, METACITY,
-											gnomeValueChanged, context, NULL,NULL);
-
-	gconf_client_add_dir(client, COMPIZ, GCONF_CLIENT_PRELOAD_NONE, NULL);
-	gconf_client_add_dir(client, METACITY, GCONF_CLIENT_PRELOAD_NONE, NULL);
+	initClient(context);
 
 	currentProfile = getCurrentProfileName ();
 
@@ -1530,16 +1556,7 @@ static Bool initBackend(CCSContext * context)
 
 static Bool finiBackend(CCSContext * context)
 {
-	if (backendNotifyId)
-	{
-		gconf_client_notify_remove(client, backendNotifyId);
-		backendNotifyId = 0;
-	}
-	if (gnomeNotifyId)
-	{
-		gconf_client_notify_remove(client, gnomeNotifyId);
-		gnomeNotifyId = 0;
-	}
+	finiClient ();
 
 	if (currentProfile)
 	{
@@ -1547,11 +1564,6 @@ static Bool finiBackend(CCSContext * context)
 		currentProfile = NULL;
 	}
 
-	gconf_client_remove_dir(client, COMPIZ, NULL);
-	gconf_client_remove_dir(client, METACITY, NULL);
-
-	g_object_unref(client);
-	client = NULL;
 	gconf_engine_unref(conf);
 	conf = NULL;
 
