@@ -1435,7 +1435,6 @@ static void updateCurrentProfileName(char *profile)
 static char *getCurrentProfileName(void)
 {
 	GConfSchema *schema = NULL;
-	GError *err = NULL;
 
 	schema = gconf_client_get_schema (client, 
 									  "/apps/compizconfig/current_profile", 
@@ -1471,8 +1470,6 @@ static Bool checkProfile(CCSContext *context)
 	if (strcmp (lastProfile, currentProfile) != 0)
 	{
 		char *pathName;
-		CCSPlugin *p;
-		CCSSetting *s;
 
 		/* copy /apps/compiz tree to profile path */
 		asprintf (&pathName, "/apps/compizconfig/profiles/%s", lastProfile);
@@ -1480,9 +1477,7 @@ static Bool checkProfile(CCSContext *context)
 		free (pathName);
 
 		/* reset /apps/compiz tree */
-		for (p = context->plugins; p; p = p->next)
-			for (s = p->settings; s; s = s->next)
-				ccsResetToDefault (s);
+		gconf_client_recursive_unset (client, "/apps/compiz", 0, NULL);
 
 		/* copy new profile tree to /apps/compiz */
 		asprintf (&pathName, "/apps/compizconfig/profiles/%s", currentProfile);
@@ -1618,7 +1613,7 @@ static Bool getSettingIsReadOnly(CCSSetting * setting)
 	return FALSE;
 }
 
-static CCSStringList getExistingProfiles(void)
+static CCSStringList getExistingProfiles(CCSContext *context)
 {
 	GSList *data, *tmp;
 	CCSStringList ret = NULL;
@@ -1647,19 +1642,19 @@ static CCSStringList getExistingProfiles(void)
 	return ret;
 }
 
-static Bool deleteProfile(char * profile)
+static Bool deleteProfile(CCSContext *context, char * profile)
 {
 	char path[BUFSIZE];
 	gboolean status = FALSE;
 
-	if (!profile || !strlen(profile))
-		profile = DEFAULTPROF;
+	checkProfile (context);
 
-	snprintf(path, BUFSIZE, "%s/%s", "/apps/compizconfig/profiles", profile);
+	snprintf (path, BUFSIZE, "%s/%s", "/apps/compizconfig/profiles", profile);
 
 	if (gconf_client_dir_exists(client, path, NULL))
 	{
-		status = gconf_client_recursive_unset (client, path, 0, NULL);
+		status = gconf_client_recursive_unset (client, path, 
+											   GCONF_UNSET_INCLUDING_SCHEMA_NAMES, NULL);
 		gconf_client_suggest_sync (client, NULL);
 	}
 
