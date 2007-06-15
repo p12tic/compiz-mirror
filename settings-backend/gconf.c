@@ -51,10 +51,10 @@
 #define CompNumLockMask    (1 << 21)
 #define CompScrollLockMask (1 << 22)
 
-#define METACITY    "/apps/metacity"
-#define COMPIZ_CCS  "/apps/compiz"
-#define EXPORTPATH  ".compizconfig/"
-#define EXTENSION   ".profile.gconf"
+#define METACITY     "/apps/metacity"
+#define COMPIZ       "/apps/compiz"
+#define COMPIZCONFIG "/apps/compizconfig"
+#define PROFILEPATH  COMPIZCONFIG "/profiles"
 #define DEFAULTPROF "Default"
 #define CORE_NAME   "core"
 
@@ -68,10 +68,10 @@
 
 #define PATHNAME    char pathName[BUFSIZE]; \
 					if (!setting->parent->name || strcmp(setting->parent->name, "core") == 0) \
-						snprintf(pathName, BUFSIZE, "%s/general/%s/options/%s", COMPIZ_CCS, \
+						snprintf(pathName, BUFSIZE, "%s/general/%s/options/%s", COMPIZ, \
 							 keyName, setting->name); \
 					else \
-						snprintf(pathName, BUFSIZE, "%s/plugins/%s/%s/options/%s", COMPIZ_CCS, \
+						snprintf(pathName, BUFSIZE, "%s/plugins/%s/%s/options/%s", COMPIZ, \
 							 setting->parent->name, keyName, setting->name);
 
 GConfClient *client = NULL;
@@ -265,7 +265,7 @@ static void valueChanged(GConfClient *client, guint cnxn_id, GConfEntry *entry,
 	Bool isScreen;
 	unsigned int screenNum;
 
-	keyName += strlen(COMPIZ_CCS) + 1;
+	keyName += strlen(COMPIZ) + 1;
 
 	token = strsep(&keyName, "/"); /* plugin */
 	if (!token)
@@ -1425,7 +1425,7 @@ static void updateCurrentProfileName(char *profile)
 	gconf_value_set_string (value, profile);
 	gconf_schema_set_default_value (schema, value);
 
-	gconf_client_set_schema (client, "/apps/compizconfig/current_profile", 
+	gconf_client_set_schema (client, COMPIZCONFIG "/current_profile", 
 							 schema, NULL);
 
 	gconf_schema_free (schema);
@@ -1437,7 +1437,7 @@ static char *getCurrentProfileName(void)
 	GConfSchema *schema = NULL;
 
 	schema = gconf_client_get_schema (client, 
-									  "/apps/compizconfig/current_profile", 
+									  COMPIZCONFIG "/current_profile", 
 									  NULL);
 
 	if (schema)
@@ -1472,16 +1472,16 @@ static Bool checkProfile(CCSContext *context)
 		char *pathName;
 
 		/* copy /apps/compiz tree to profile path */
-		asprintf (&pathName, "/apps/compizconfig/profiles/%s", lastProfile);
+		asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
 		copyGconfTree ("/apps/compiz", pathName, TRUE);
 		free (pathName);
 
 		/* reset /apps/compiz tree */
-		gconf_client_recursive_unset (client, "/apps/compiz", 0, NULL);
+		gconf_client_recursive_unset (client, COMPIZ, 0, NULL);
 
 		/* copy new profile tree to /apps/compiz */
-		asprintf (&pathName, "/apps/compizconfig/profiles/%s", currentProfile);
-		copyGconfTree (pathName, "/apps/compiz", TRUE);
+		asprintf (&pathName, "%s/%s", PROFILEPATH, currentProfile);
+		copyGconfTree (pathName, COMPIZ, TRUE);
 
 		/* delete the new profile tree in /apps/compizconfig
 		   to avoid user modification in the wrong tree */
@@ -1515,13 +1515,13 @@ static Bool initBackend(CCSContext * context)
 	conf = gconf_engine_get_default();
 	client = gconf_client_get_for_engine(conf);
 
-	backendNotifyId = gconf_client_notify_add(client, COMPIZ_CCS, valueChanged,
+	backendNotifyId = gconf_client_notify_add(client, COMPIZ, valueChanged,
 											  context, NULL, NULL);
 
 	gnomeNotifyId = gconf_client_notify_add(client, METACITY,
 											gnomeValueChanged, context, NULL,NULL);
 
-	gconf_client_add_dir(client, COMPIZ_CCS, GCONF_CLIENT_PRELOAD_NONE, NULL);
+	gconf_client_add_dir(client, COMPIZ, GCONF_CLIENT_PRELOAD_NONE, NULL);
 	gconf_client_add_dir(client, METACITY, GCONF_CLIENT_PRELOAD_NONE, NULL);
 
 	currentProfile = getCurrentProfileName ();
@@ -1548,7 +1548,7 @@ static Bool finiBackend(CCSContext * context)
 		currentProfile = NULL;
 	}
 
-	gconf_client_remove_dir(client, COMPIZ_CCS, NULL);
+	gconf_client_remove_dir(client, COMPIZ, NULL);
 	gconf_client_remove_dir(client, METACITY, NULL);
 
 	g_object_unref(client);
@@ -1620,7 +1620,7 @@ static CCSStringList getExistingProfiles(CCSContext *context)
 	char *name;
 
 	gconf_client_suggest_sync (client, NULL);
-	data = gconf_client_all_dirs (client, "/apps/compizconfig/profiles", NULL);
+	data = gconf_client_all_dirs (client, PROFILEPATH, NULL);
 
 	for (tmp = data; tmp; tmp = g_slist_next(tmp))
 	{
@@ -1649,7 +1649,7 @@ static Bool deleteProfile(CCSContext *context, char * profile)
 
 	checkProfile (context);
 
-	snprintf (path, BUFSIZE, "%s/%s", "/apps/compizconfig/profiles", profile);
+	snprintf (path, BUFSIZE, "%s/%s", PROFILEPATH, profile);
 
 	if (gconf_client_dir_exists(client, path, NULL))
 	{
@@ -1667,7 +1667,7 @@ static CCSBackendVTable gconfVTable = {
     "GConf Configuration Backend",
     "GConf Configuration Backend for libccs",
     TRUE,
-    FALSE, /* TRUE, */
+    TRUE,
     processEvents,
     initBackend,
     finiBackend,
