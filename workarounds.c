@@ -67,7 +67,6 @@ static void workaroundsDoLegacyApps( CompWindow *w )
 
     /* Some code to make Wine and legacy applications work. */
     if (w->width == w->screen->width && w->height == w->screen->height &&
-       !(w->type & CompWindowTypeFullscreenMask) &&
        !(type & CompWindowTypeDesktopMask))
            type = CompWindowTypeFullscreenMask;
 
