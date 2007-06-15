@@ -1437,7 +1437,7 @@ static char *getCurrentProfileName(void)
 	GConfSchema *schema = NULL;
 
 	schema = gconf_client_get_schema (client, 
-									  COMPIZCONFIG "/current_profile", 
+									  COMPIZCONFIG "/current_profile",
 									  NULL);
 
 	if (schema)
@@ -1490,7 +1490,6 @@ static Bool checkProfile(CCSContext *context)
 
 		/* update current profile name */
 		updateCurrentProfileName (currentProfile);
-
 	}
 
 	if (lastProfile)
@@ -1653,7 +1652,7 @@ static Bool deleteProfile(CCSContext *context, char * profile)
 
 	if (gconf_client_dir_exists(client, path, NULL))
 	{
-		status = gconf_client_recursive_unset (client, path, 
+		status = gconf_client_recursive_unset (client, path,
 											   GCONF_UNSET_INCLUDING_SCHEMA_NAMES, NULL);
 		gconf_client_suggest_sync (client, NULL);
 	}
