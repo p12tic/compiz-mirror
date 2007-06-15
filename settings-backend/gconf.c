@@ -378,21 +378,35 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 	else
 	{
 		CCSPlugin * plugin = NULL;
+		CCSSetting * setting;
+		Bool needInit = TRUE;
+
 		plugin = ccsFindPlugin(context, (char*) specialOptions[num].pluginName);
 
 		if (!plugin)
 			return;
 
-		CCSSetting * setting = NULL;
-		/* FIXME: where should we get the screen num from? */
-		setting = ccsFindSetting(plugin, (char*) specialOptions[num].settingName, 
-					 specialOptions[num].screen, 0);
+		for (i = 0; specialOptions[num].screen && (i < context->numScreens); i++)
+		{
+			unsigned int screen;
+			if (specialOptions[num].screen)
+				screen = context->screens[i];
+			else
+				screen = 0;
 
-		if (!setting)
-			return;
+			setting = ccsFindSetting(plugin, (char*) specialOptions[num].settingName, 
+									 specialOptions[num].screen, screen);
 
-		readInit(context);
-		readSetting(context, setting);
+			if (setting)
+			{
+				if (needInit)
+				{
+					readInit(context);
+					needInit = FALSE;
+				}
+				readSetting(context, setting);
+			}
+		}
 	}
 }
 
