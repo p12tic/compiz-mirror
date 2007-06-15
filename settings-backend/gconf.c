@@ -1412,32 +1412,53 @@ static void writeOption(CCSSetting * setting)
 	}
 }
 
-static char*
-fileNameForProfile (char *profile)
+static void updateCurrentProfileName(char *profile)
 {
-	char *homeDir = NULL;
-	char *fileName = NULL;
+	GConfSchema    *schema = gconf_schema_new();
+	GConfValue     *value = gconf_value_new(GCONF_VALUE_STRING);
 
-	homeDir = getenv ("HOME");
+	gconf_schema_set_type (schema, GCONF_VALUE_STRING);
+  	gconf_schema_set_locale (schema, "C");
+	gconf_schema_set_short_desc (schema, "Current profile");
+	gconf_schema_set_long_desc (schema, "Current profile of gconf backend");
+	gconf_schema_set_owner (schema, "compizconfig");
+	gconf_value_set_string (value, profile);
+	gconf_schema_set_default_value (schema, value);
 
-	if (!homeDir)
-		return NULL;
+	gconf_client_set_schema (client, "/apps/compizconfig/current_profile", 
+							 schema, NULL);
 
-	if (!profile)
-		profile = DEFAULTPROF;
+	gconf_schema_free (schema);
+	gconf_value_free (value);
+}
 
-	asprintf (&fileName, "%s/%s%s%s", homeDir, EXPORTPATH, profile, EXTENSION);
+static char *getCurrentProfileName(void)
+{
+	GConfSchema *schema = NULL;
+	GError *err = NULL;
 
-	return fileName;
+	schema = gconf_client_get_schema (client, 
+									  "/apps/compizconfig/current_profile", 
+									  NULL);
 
+	if (schema)
+	{
+		GConfValue *value;
+		char *ret;
+
+		value = gconf_schema_get_default_value(schema);
+		ret = strdup (gconf_value_get_string (value));
+		gconf_schema_free (schema);
+
+		return ret;
+	}
+
+	return strdup (DEFAULTPROF);
 }
 
 static Bool checkProfile(CCSContext *context)
 {
-	return TRUE;
-
 	char *profile, *lastProfile;
-	Bool ret = TRUE;
 
 	lastProfile = currentProfile;
 
@@ -1447,34 +1468,40 @@ static Bool checkProfile(CCSContext *context)
 	else
 		currentProfile = strdup (profile);
 
-	if (!lastProfile || 
-		(strcmp (lastProfile, currentProfile) != 0))
+	if (strcmp (lastProfile, currentProfile) != 0)
 	{
-		char *fileName;
+		char *pathName;
+		CCSPlugin *p;
+		CCSSetting *s;
 
-		/* export last profile */
-		fileName = fileNameForProfile (lastProfile);
-		if (fileName)
-		{
-			ccsExportToFile (context, fileName);
-			free (fileName);
-		}
+		/* copy /apps/compiz tree to profile path */
+		asprintf (&pathName, "/apps/compizconfig/profiles/%s", lastProfile);
+		copyGconfTree ("/apps/compiz", pathName, TRUE);
+		free (pathName);
 
-		/* import new profile */
-		fileName = fileNameForProfile (currentProfile);
-		if (fileName)
-		{
-			ccsImportFromFile (context, fileName, TRUE);
-			free (fileName);
-		}
-		else
-			ret = FALSE;
+		/* reset /apps/compiz tree */
+		for (p = context->plugins; p; p = p->next)
+			for (s = p->settings; s; s = s->next)
+				ccsResetToDefault (s);
+
+		/* copy new profile tree to /apps/compiz */
+		asprintf (&pathName, "/apps/compizconfig/profiles/%s", currentProfile);
+		copyGconfTree (pathName, "/apps/compiz", TRUE);
+
+		/* delete the new profile tree in /apps/compizconfig
+		   to avoid user modification in the wrong tree */
+		copyGconfTree (pathName, NULL, TRUE);
+		free (pathName);
+
+		/* update current profile name */
+		updateCurrentProfileName (currentProfile);
+
 	}
 
 	if (lastProfile)
 		free (lastProfile);
 
-	return ret;
+	return TRUE;
 }
 
 static void processEvents(unsigned int flags)
@@ -1501,6 +1528,8 @@ static Bool initBackend(CCSContext * context)
 
 	gconf_client_add_dir(client, COMPIZ_CCS, GCONF_CLIENT_PRELOAD_NONE, NULL);
 	gconf_client_add_dir(client, METACITY, GCONF_CLIENT_PRELOAD_NONE, NULL);
+
+	currentProfile = getCurrentProfileName ();
 
 	return TRUE;
 }
@@ -1589,72 +1618,52 @@ static Bool getSettingIsReadOnly(CCSSetting * setting)
 	return FALSE;
 }
 
-static int profileNameFilter (const struct dirent *name)
-{
-	int length = strlen (name->d_name);
-	int extLen = strlen (EXTENSION);
-
-	if (strncmp (name->d_name + length - extLen, EXTENSION, extLen))
-		return 0;
-
-	return 1;
-}
-
 static CCSStringList getExistingProfiles(void)
 {
-	CCSStringList  ret = NULL;
-	struct dirent **nameList;
-	char          *homeDir = NULL;
-	char          *filePath = NULL;
-	char          *buffer;
-	int           nFile, i, len;
+	GSList *data, *tmp;
+	CCSStringList ret = NULL;
+	char *name;
 
-	homeDir = getenv ("HOME");
-	if (!homeDir)
-		return NULL;
+	gconf_client_suggest_sync (client, NULL);
+	data = gconf_client_all_dirs (client, "/apps/compizconfig/profiles", NULL);
 
-	asprintf (&filePath, "%s/%s", homeDir, EXPORTPATH);
-	if (!filePath)
-		return NULL;
-
-	nFile = scandir(filePath, &nameList, profileNameFilter, NULL);
-
-	if (nFile <= 0)
-		return NULL;
-
-	for (i = 0; i < nFile; i++)
+	for (tmp = data; tmp; tmp = g_slist_next(tmp))
 	{
-		len = strlen (nameList[i]->d_name) - strlen (EXTENSION);
-		if (len > 0)
-		{
-			buffer = calloc (1, (len + 1) * sizeof (char));
-			strncpy (buffer, nameList[i]->d_name, len);
-			if (strcmp(buffer, DEFAULTPROF) != 0) 
-				ret = ccsStringListAppend (ret, buffer);
-			else
-				free (buffer);
-		}
-		free(nameList[i]);
+		name = strrchr(tmp->data, '/');
+		if (name && (strcmp (name + 1, DEFAULTPROF) != 0))
+			ret = ccsStringListAppend(ret, strdup (name + 1));
+
+		g_free (tmp->data);
 	}
 
-	free (filePath);
-	free (nameList);
+	g_slist_free (data);
+
+	name = getCurrentProfileName ();
+	if (strcmp (name, DEFAULTPROF) != 0)
+		ret = ccsStringListAppend (ret, name);
+	else
+		free (name);
 
 	return ret;
 }
 
 static Bool deleteProfile(char * profile)
 {
-	char *fileName;
+	char path[BUFSIZE];
+	gboolean status = FALSE;
 
-	fileName = fileNameForProfile (profile);
-	if (!fileName)
-		return FALSE;
+	if (!profile || !strlen(profile))
+		profile = DEFAULTPROF;
 
-	remove (fileName);
-	free (fileName);
+	snprintf(path, BUFSIZE, "%s/%s", "/apps/compizconfig/profiles", profile);
 
-	return TRUE;
+	if (gconf_client_dir_exists(client, path, NULL))
+	{
+		status = gconf_client_recursive_unset (client, path, 0, NULL);
+		gconf_client_suggest_sync (client, NULL);
+	}
+
+	return status;
 }
 
 
@@ -1663,7 +1672,7 @@ static CCSBackendVTable gconfVTable = {
     "GConf Configuration Backend",
     "GConf Configuration Backend for libccs",
     TRUE,
-    FALSE, /* TRUE,*/
+    FALSE, /* TRUE, */
     processEvents,
     initBackend,
     finiBackend,
@@ -1675,8 +1684,8 @@ static CCSBackendVTable gconfVTable = {
 	0,
 	getSettingIsIntegrated,
 	getSettingIsReadOnly,
-	0, /* getExistingProfiles, */
-	0, /* deleteProfile */
+	getExistingProfiles,
+	deleteProfile
 };
 
 CCSBackendVTable *
