@@ -537,7 +537,7 @@ static Bool readActionValue(CCSSetting * setting, char * pathName)
 				const char *edge = gconf_value_get_string (value);
 
 				if (edge)
-					edgeList = ccsStringListAppend (edgeList, edge);
+					edgeList = ccsStringListAppend (edgeList, (char*) edge);
 			}
 
 			ccsStringListToEdges (edgeList, &action);
