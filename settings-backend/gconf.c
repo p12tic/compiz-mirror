@@ -1572,6 +1572,7 @@ static Bool finiBackend(CCSContext * context)
 {
 	processEvents (0);
 
+	gconf_client_clear_cache (client);
 	finiClient ();
 
 	if (currentProfile)
