@@ -1570,6 +1570,8 @@ static Bool initBackend(CCSContext * context)
 
 static Bool finiBackend(CCSContext * context)
 {
+	processEvents (0);
+
 	finiClient ();
 
 	if (currentProfile)
@@ -1581,6 +1583,7 @@ static Bool finiBackend(CCSContext * context)
 	gconf_engine_unref(conf);
 	conf = NULL;
 
+	processEvents (0);
 	return TRUE;
 }
 
