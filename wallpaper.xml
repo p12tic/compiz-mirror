@@ -1,5 +1,10 @@
 <compiz>
 	<plugin name="wallpaper" useBcop="true">
+		<deps>
+				<relation type="after">
+						<plugin>cube</plugin>
+				</relation>
+		</deps>
 		<short>Wallpaper</short>
 		<long>Draw the desktop wallpaper</long>
 		<category>Utility</category>
