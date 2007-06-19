@@ -379,7 +379,11 @@ wallpaperCompositeElement(CompScreen *s, Picture destPicture, Pixmap p, float op
 	alpha = wallpaperAlphaMask(s, opacity);
 	
 	if (((w > s->width) && (h > s->height)) || (attrib.repeat == 0))
+	{
 		XRenderSetPictureTransform(s->display->display, sourcePicture, &xform);
+		XRenderSetPictureFilter(s->display->display, sourcePicture, "bilinear", 0, 0);
+	}
+	
 	XRenderComposite(s->display->display, PictOpOver,
 			 sourcePicture, alpha, destPicture,
 			 0, 0, 0, 0, 0, 0,
@@ -399,6 +403,7 @@ wallpaperLoadImages(CompScreen *s)
 	int i;
 	XRenderPictFormat * format = XRenderFindStandardFormat(s->display->display, 
 							       PictStandardARGB32);
+	
 	
 	images = wallpaperGetImages(s);
 	ws->wallpapers = malloc(sizeof(WallpaperWallpaper) * images->nValue);
