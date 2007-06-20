@@ -119,6 +119,9 @@ scalefilterRenderFilterText (CompScreen *s)
     if (!scalefilterGetFilterDisplay (s))
 	return;
 
+    if (strlen (fs->filterInfo->filterString) == 0)
+	return;
+
     getCurrentOutputExtents (s, &x1, &y1, &x2, &y2);
 
     tA.maxwidth = x2 - x1 - (2 * scalefilterGetBorderSize (s));
