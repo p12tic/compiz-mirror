@@ -477,6 +477,7 @@ scalefilterHandleEvent (CompDisplay *d,
 	        SCALE_SCREEN (s);
 		if (ss->grabIndex)
 		{
+		    Bool needRelayout = FALSE;
 		    char buffer[1];
 		    KeySym ks;
 		    int count, timeout;
@@ -503,35 +504,43 @@ scalefilterHandleEvent (CompDisplay *d,
 		    if (ks == XK_BackSpace)
 		    {
 			if (info->filterStringLength > 0)
+			{
 			    info->filterString[--(info->filterStringLength)] = '\0';
+			    needRelayout = TRUE;
+			}
 		    }
-		    else if (count > 0) 
+		    else if (count > 0)
 		    {
 			if (info->filterStringLength < MAX_FILTER_SIZE)
 			{
     			    info->filterString[info->filterStringLength++] = buffer[0];
     			    info->filterString[info->filterStringLength] = '\0';
+			    needRelayout = TRUE;
 			}
 		    }
 
-		    scalefilterRenderFilterText (s);
+		    if (needRelayout)
+		    {
+			char *matchTitle;
 
-		    matchFini (&info->match);
-		    matchInit (&info->match);
+			scalefilterRenderFilterText (s);
 
-		    char *matchTitle;
-		    if (info->origMatch->nOp > 0)
-			asprintf (&matchTitle, "(%s) & (title=%s)",
-				  matchToString (info->origMatch),
-				  info->filterString);
-		    else
-			asprintf (&matchTitle, "title=%s", info->filterString);
+			matchFini (&info->match);
+			matchInit (&info->match);
+
+			if (info->origMatch->nOp > 0)
+			    asprintf (&matchTitle, "(%s) & (title=%s)",
+			    	      matchToString (info->origMatch),
+			    	      info->filterString);
+			else
+			    asprintf (&matchTitle, "title=%s", info->filterString);
 		
-		    matchAddFromString (&info->match, matchTitle);
-		    free (matchTitle);
+			matchAddFromString (&info->match, matchTitle);
+			free (matchTitle);
 
-		    matchUpdate (s->display, &info->match);
-		    scalefilterRelayout (s);
+			matchUpdate (s->display, &info->match);
+			scalefilterRelayout (s);
+		    }
 		}
 	    }
 	}
