@@ -68,6 +68,7 @@ typedef struct _ScaleFilterDisplay {
 
 typedef struct _ScaleFilterScreen {
     PaintOutputProc paintOutput;
+    DrawWindowProc drawWindow;
 
     ScaleFilterInfo *filterInfo;
 } ScaleFilterScreen;
@@ -119,7 +120,7 @@ scalefilterRenderFilterText (CompScreen *s)
     if (!scalefilterGetFilterDisplay (s))
 	return;
 
-    if (strlen (fs->filterInfo->filterString) == 0)
+    if (fs->filterInfo->filterStringLength == 0)
 	return;
 
     getCurrentOutputExtents (s, &x1, &y1, &x2, &y2);
@@ -613,7 +614,42 @@ scalefilterPaintOutput (CompScreen              *s,
     return status;
 }
 
-static void 
+static Bool
+scalefilterDrawWindow (CompWindow	     *w,
+	     	       const CompTransform  *transform,
+       		       const FragmentAttrib *attrib,
+		       Region		     region,
+		       unsigned int	     mask)
+{
+    CompScreen *s = w->screen;
+    Bool       status;
+
+    FILTER_SCREEN (s);
+
+    if (fs->filterInfo && fs->filterInfo->filterStringLength)
+    {
+	FragmentAttrib fA = *attrib;
+
+	SCALE_WINDOW (w);
+
+	if (!sw->slot)
+    	    fA.opacity = 0;
+
+	UNWRAP (fs, s, drawWindow);
+	status = (*s->drawWindow) (w, transform, &fA, region, mask);
+	WRAP (fs, s, drawWindow, scalefilterDrawWindow);
+    }
+    else
+    {
+	UNWRAP (fs, s, drawWindow);
+	status = (*s->drawWindow) (w, transform, attrib, region, mask);
+	WRAP (fs, s, drawWindow, scalefilterDrawWindow);
+    }
+
+    return status;
+}
+
+static void
 scalefilterScreenOptionChanged (CompScreen               *s,
 				CompOption               *opt,
 	 			ScalefilterScreenOptions num)
@@ -709,6 +745,7 @@ scalefilterInitScreen (CompPlugin *p,
     fs->filterInfo = NULL;
 
     WRAP (fs, s, paintOutput, scalefilterPaintOutput);
+    WRAP (fs, s, drawWindow, scalefilterDrawWindow);
 
     scalefilterSetFontBoldNotify (s, scalefilterScreenOptionChanged);
     scalefilterSetFontSizeNotify (s, scalefilterScreenOptionChanged);
@@ -727,6 +764,7 @@ scalefilterFiniScreen (CompPlugin *p,
     FILTER_SCREEN (s);
 
     UNWRAP (fs, s, paintOutput);
+    UNWRAP (fs, s, drawWindow);
 
     if (fs->filterInfo)
 	scalefilterFiniFilterInfo (s);
