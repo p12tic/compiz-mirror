@@ -430,21 +430,18 @@ scalefilterFilterTimeout (void *closure)
 
     FILTER_SCREEN (s);
 
-    printf("timeout\n");
     if (fs->filterInfo)
     {
 	SCALE_SCREEN (s);
 
 	scalefilterFiniFilterInfo (s, FALSE);
 
-	fprintf(stderr, "%s\n", matchToString (ss->currentMatch));
     	if (scalefilterLayoutThumbs (s)) {
     	    ss->state = SCALE_STATE_OUT;
     	    (*ss->layoutSlotsAndAssignWindows) (s);
 	}
 	
 	damageScreen (s);
-	printf("nSlots = %d\n", ss->nSlots);
     }
 
     return FALSE;
@@ -525,14 +522,11 @@ scalefilterHandleEvent (CompDisplay *d,
 		    free (matchTitle);
 
 		    matchUpdate (s->display, &info->match);
-	    	    fprintf (stderr, "%s\n",matchToString (ss->currentMatch));
 
 		    if (scalefilterLayoutThumbs (s)) {
 		    	ss->state = SCALE_STATE_OUT;
 		        (*ss->layoutSlotsAndAssignWindows) (s);
 		    }
-
-		    printf("nSlots = %d\n", ss->nSlots);
 
 		    damageScreen (s);
 		}
