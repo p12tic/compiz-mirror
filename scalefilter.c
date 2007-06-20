@@ -381,6 +381,23 @@ scalefilterLayoutThumbs (CompScreen *s)
 }
 
 static void
+scalefilterRelayout (CompScreen *s)
+{
+    SCALE_SCREEN (s);
+    SCALE_DISPLAY (s->display);
+
+    sd->selectedWindow = None;
+    sd->hoveredWindow = None;
+
+    if (scalefilterLayoutThumbs (s)) {
+	ss->state = SCALE_STATE_OUT;
+	(*ss->layoutSlotsAndAssignWindows) (s);
+    }
+
+    damageScreen (s);
+}
+
+static void
 scalefilterInitFilterInfo (CompScreen *s)
 {
     FILTER_SCREEN (s);
@@ -432,16 +449,8 @@ scalefilterFilterTimeout (void *closure)
 
     if (fs->filterInfo)
     {
-	SCALE_SCREEN (s);
-
 	scalefilterFiniFilterInfo (s, FALSE);
-
-    	if (scalefilterLayoutThumbs (s)) {
-    	    ss->state = SCALE_STATE_OUT;
-    	    (*ss->layoutSlotsAndAssignWindows) (s);
-	}
-	
-	damageScreen (s);
+	scalefilterRelayout (s);
     }
 
     return FALSE;
@@ -522,13 +531,7 @@ scalefilterHandleEvent (CompDisplay *d,
 		    free (matchTitle);
 
 		    matchUpdate (s->display, &info->match);
-
-		    if (scalefilterLayoutThumbs (s)) {
-		    	ss->state = SCALE_STATE_OUT;
-		        (*ss->layoutSlotsAndAssignWindows) (s);
-		    }
-
-		    damageScreen (s);
+		    scalefilterRelayout (s);
 		}
 	    }
 	}
