@@ -386,7 +386,7 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 		if (!plugin)
 			return;
 
-		for (i = 0; specialOptions[num].screen && (i < context->numScreens); i++)
+		for (i = 0; i < context->numScreens; i++)
 		{
 			unsigned int screen;
 			if (specialOptions[num].screen)
@@ -406,6 +406,11 @@ static void gnomeValueChanged(GConfClient *client, guint cnxn_id, GConfEntry *en
 				}
 				readSetting(context, setting);
 			}
+
+			/* do not read display settings multiple 
+			   times for multiscreen environments */
+			if (!specialOptions[num].screen)
+				break;
 		}
 	}
 }
