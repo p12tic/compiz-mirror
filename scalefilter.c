@@ -407,7 +407,8 @@ scalefilterInitFilterInfo (CompScreen *s)
 }
 
 static void
-scalefilterFiniFilterInfo (CompScreen *s)
+scalefilterFiniFilterInfo (CompScreen *s,
+			   Bool freeTimeout)
 {
     SCALE_SCREEN (s);
     FILTER_SCREEN (s);
@@ -415,7 +416,7 @@ scalefilterFiniFilterInfo (CompScreen *s)
     scalefilterFreeFilterText (s);
     ss->currentMatch = fs->filterInfo->origMatch;
 
-    if (fs->filterInfo->timeoutHandle)
+    if (freeTimeout && fs->filterInfo->timeoutHandle)
 	compRemoveTimeout (fs->filterInfo->timeoutHandle);
 
     free (fs->filterInfo);
@@ -434,7 +435,7 @@ scalefilterFilterTimeout (void *closure)
     {
 	SCALE_SCREEN (s);
 
-	scalefilterFiniFilterInfo (s);
+	scalefilterFiniFilterInfo (s, FALSE);
 
 	fprintf(stderr, "%s\n", matchToString (ss->currentMatch));
     	if (scalefilterLayoutThumbs (s)) {
@@ -446,10 +447,7 @@ scalefilterFilterTimeout (void *closure)
 	printf("nSlots = %d\n", ss->nSlots);
     }
 
-    /* we return TRUE to prevent the timer
-       being free'd two times - we already
-       free'd it from scalefilterFiniFilterInfo */
-    return TRUE;
+    return FALSE;
 }
 
 static void
@@ -571,7 +569,7 @@ scalefilterHandleCompizEvent (CompDisplay *d,
 	    FILTER_SCREEN (s);
 
 	    if (!activated && fs->filterInfo)
-		scalefilterFiniFilterInfo (s);
+		scalefilterFiniFilterInfo (s, TRUE);
 	}
     }
 }
@@ -767,7 +765,7 @@ scalefilterFiniScreen (CompPlugin *p,
     UNWRAP (fs, s, drawWindow);
 
     if (fs->filterInfo)
-	scalefilterFiniFilterInfo (s);
+	scalefilterFiniFilterInfo (s, TRUE);
 
     free (fs);
 }
