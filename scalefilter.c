@@ -445,7 +445,10 @@ scalefilterFilterTimeout (void *closure)
 	printf("nSlots = %d\n", ss->nSlots);
     }
 
-    return FALSE;
+    /* we return TRUE to prevent the timer
+       being free'd two times - we already
+       free'd it from scalefilterFiniFilterInfo */
+    return TRUE;
 }
 
 static void
