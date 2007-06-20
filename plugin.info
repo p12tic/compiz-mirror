@@ -1,0 +1,2 @@
+PLUGIN = scalefilter
+PKG_DEP = compiz-scale compiz-text
