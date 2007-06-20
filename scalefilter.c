@@ -499,10 +499,6 @@ scalefilterHandleEvent (CompDisplay *d,
 {
     FILTER_DISPLAY (d);
 
-    UNWRAP (fd, d, handleEvent);
-    (*d->handleEvent) (d, event);
-    WRAP (fd, d, handleEvent, scalefilterHandleEvent);
-
     switch (event->type)
     {
     case KeyPress:
@@ -515,6 +511,7 @@ scalefilterHandleEvent (CompDisplay *d,
 		if (ss->grabIndex)
 		{
 		    Bool needRelayout = FALSE;
+		    Bool dropKeyEvent = FALSE;
 		    char buffer[1];
 		    KeySym ks;
 		    int count, timeout;
@@ -522,23 +519,35 @@ scalefilterHandleEvent (CompDisplay *d,
 
 		    FILTER_SCREEN (s);
 
-		    if (!fs->filterInfo)
+		    /* store old value to be able to check
+		       later if we were just invoked */
+		    info = fs->filterInfo;
+		    if (!info)
 		    {
 			fs->filterInfo = malloc (sizeof (ScaleFilterInfo));
 			scalefilterInitFilterInfo (s);
 		    }
-		    info = fs->filterInfo;
 
-		    if (info->timeoutHandle)
+		    if (info && info->timeoutHandle)
 			compRemoveTimeout (info->timeoutHandle);
 
 		    timeout = scalefilterGetTimeout (s);
 		    if (timeout > 0)
-			info->timeoutHandle = compAddTimeout (timeout,
-							      scalefilterFilterTimeout, s);
+			fs->filterInfo->timeoutHandle =
+			    compAddTimeout (timeout,
+					    scalefilterFilterTimeout, s);
 
 		    count = XLookupString (&(event->xkey), buffer, 1, &ks, NULL);
-		    if (ks == XK_BackSpace)
+		    if (info && ks == XK_Escape)
+		    {
+			scalefilterFiniFilterInfo (s, TRUE);
+			needRelayout = TRUE;
+			dropKeyEvent = TRUE;
+		    }
+		    else if (info && ks == XK_Return)
+		    {
+		    }
+		    else if (info && ks == XK_BackSpace)
 		    {
 			if (info->filterStringLength > 0)
 			{
@@ -548,6 +557,7 @@ scalefilterHandleEvent (CompDisplay *d,
 		    }
 		    else if (count > 0)
 		    {
+			info = fs->filterInfo;
 			if (info->filterStringLength < MAX_FILTER_SIZE)
 			{
     			    info->filterString[info->filterStringLength++] = buffer[0];
@@ -555,27 +565,40 @@ scalefilterHandleEvent (CompDisplay *d,
 			    needRelayout = TRUE;
 			}
 		    }
+		    else if (!info)
+		    {
+			scalefilterFiniFilterInfo (s, TRUE);
+		    }
+
+		    /* set the event type invalid if we
+		       don't want other plugins see it */
+		    if (dropKeyEvent)
+			event->type = LASTEvent+1;
 
 		    if (needRelayout)
 		    {
 			char *matchTitle;
+			info = fs->filterInfo;
 
 			scalefilterRenderFilterText (s);
 
-			matchFini (&info->match);
-			matchInit (&info->match);
+			if (info)
+			{
+			    matchFini (&info->match);
+			    matchInit (&info->match);
 
-			if (info->origMatch->nOp > 0)
-			    asprintf (&matchTitle, "(%s) & (title=%s)",
-			    	      matchToString (info->origMatch),
-			    	      info->filterString);
-			else
-			    asprintf (&matchTitle, "title=%s", info->filterString);
+			    if (info->origMatch->nOp > 0)
+				asprintf (&matchTitle, "(%s) & (title=%s)",
+					  matchToString (info->origMatch),
+					  info->filterString);
+			    else
+				asprintf (&matchTitle, "title=%s", info->filterString);
 		
-			matchAddFromString (&info->match, matchTitle);
-			free (matchTitle);
+			    matchAddFromString (&info->match, matchTitle);
+			    free (matchTitle);
 
-			matchUpdate (s->display, &info->match);
+			    matchUpdate (s->display, &info->match);
+			}
 			scalefilterRelayout (s);
 		    }
 		}
@@ -585,6 +608,10 @@ scalefilterHandleEvent (CompDisplay *d,
     default:
 	break;
     }
+
+    UNWRAP (fd, d, handleEvent);
+    (*d->handleEvent) (d, event);
+    WRAP (fd, d, handleEvent, scalefilterHandleEvent);
 }
 
 static void
