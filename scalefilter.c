@@ -49,6 +49,8 @@ typedef struct _ScaleFilterInfo {
     Pixmap      textPixmap;
     CompTexture textTexture;
 
+    unsigned int outputDevice;
+
     int textWidth;
     int textHeight;
 
@@ -109,11 +111,32 @@ scalefilterRenderFilterText (CompScreen *s)
     int            stride;
     void*          data;
     int            x1, x2, y1, y2;
+    int            width, height;
+    REGION         reg;
 
     FILTER_SCREEN (s);
 
     if (!fs->filterInfo)
 	return;
+
+    x1 = s->outputDev[fs->filterInfo->outputDevice].region.extents.x1;
+    x2 = s->outputDev[fs->filterInfo->outputDevice].region.extents.x2;
+    y1 = s->outputDev[fs->filterInfo->outputDevice].region.extents.y1;
+    y2 = s->outputDev[fs->filterInfo->outputDevice].region.extents.y2;
+
+    reg.rects    = &reg.extents;
+    reg.numRects = 1;
+
+    /* damage the old draw rectangle */
+    width  = fs->filterInfo->textWidth + (2 * scalefilterGetBorderSize (s));
+    height = fs->filterInfo->textHeight + (2 * scalefilterGetBorderSize (s));
+
+    reg.extents.x1 = x1 + ((x2 - x1) / 2) - (width / 2) - 1;
+    reg.extents.x2 = reg.extents.x1 + width + 1;
+    reg.extents.y1 = y1 + ((y2 - y1) / 2) - (height / 2) - 1;
+    reg.extents.y2 = reg.extents.y1 + height + 1;
+
+    damageScreenRegion (s, &reg);
 
     scalefilterFreeFilterText (s);
 
@@ -122,8 +145,6 @@ scalefilterRenderFilterText (CompScreen *s)
 
     if (fs->filterInfo->filterStringLength == 0)
 	return;
-
-    getCurrentOutputExtents (s, &x1, &y1, &x2, &y2);
 
     tA.maxwidth = x2 - x1 - (2 * scalefilterGetBorderSize (s));
     tA.maxheight = y2 - y1 - (2 * scalefilterGetBorderSize (s));
@@ -143,13 +164,13 @@ scalefilterRenderFilterText (CompScreen *s)
 
     if ((*s->display->fileToImage) (s->display, TEXT_ID, (char *)&tA,
 				    &fs->filterInfo->textWidth,
-				    &fs->filterInfo->textHeight, 
+				    &fs->filterInfo->textHeight,
 				    &stride, &data))
     {
 	fs->filterInfo->textPixmap = (Pixmap)data;
-	bindPixmapToTexture (s, &fs->filterInfo->textTexture, 
+	bindPixmapToTexture (s, &fs->filterInfo->textTexture,
 			     fs->filterInfo->textPixmap,
-			     fs->filterInfo->textWidth, 
+			     fs->filterInfo->textWidth,
 			     fs->filterInfo->textHeight, 32);
     }
     else
@@ -158,10 +179,22 @@ scalefilterRenderFilterText (CompScreen *s)
 	fs->filterInfo->textWidth = 0;
 	fs->filterInfo->textHeight = 0;
     }
+
+    /* damage the new draw rectangle */
+    width  = fs->filterInfo->textWidth + (2 * scalefilterGetBorderSize (s));
+    height = fs->filterInfo->textHeight + (2 * scalefilterGetBorderSize (s));
+
+    reg.extents.x1 = x1 + ((x2 - x1) / 2) - (width / 2) - 1;
+    reg.extents.x2 = reg.extents.x1 + width + 1;
+    reg.extents.y1 = y1 + ((y2 - y1) / 2) - (height / 2) - 1;
+    reg.extents.y2 = reg.extents.y1 + height + 1;
+
+    damageScreenRegion (s, &reg);
 }
 
 static void
-scalefilterDrawFilterText (CompScreen *s)
+scalefilterDrawFilterText (CompScreen *s,
+			   CompOutput *output)
 {
     FILTER_SCREEN (s);
 
@@ -173,8 +206,10 @@ scalefilterDrawFilterText (CompScreen *s)
     float height = fs->filterInfo->textHeight;
     float border = scalefilterGetBorderSize (s);
 
-    getCurrentOutputExtents (s, &ox1, &oy1, &ox2, &oy2);
-
+    ox1 = output->region.extents.x1;
+    ox2 = output->region.extents.x2;
+    oy1 = output->region.extents.y1;
+    oy2 = output->region.extents.y2;
     float x = ox1 + ((ox2 - ox1) / 2) - (width / 2);
     float y = oy1 + ((oy2 - oy1) / 2) + (height / 2);
 
@@ -414,6 +449,8 @@ scalefilterInitFilterInfo (CompScreen *s)
 
     info->timeoutHandle = 0;
 
+    info->outputDevice = s->currentOutputDev;
+
     initTexture (s, &info->textTexture);
 
     matchInit (&info->match);
@@ -589,7 +626,6 @@ scalefilterPaintOutput (CompScreen              *s,
 			unsigned int            mask)
 {
     Bool status;
-    Bool targetOutput;
 
     FILTER_SCREEN (s);
 
@@ -597,11 +633,10 @@ scalefilterPaintOutput (CompScreen              *s,
     status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
     WRAP (fs, s, paintOutput, scalefilterPaintOutput);
 
-    targetOutput = (output->id == ~0) || (output->id == s->currentOutputDev);
-
-    if (status && targetOutput)
+    if (status && fs->filterInfo)
     {
-	if (fs->filterInfo && fs->filterInfo->textPixmap)
+	if ((output->id == ~0 || output->id == fs->filterInfo->outputDevice) &&
+	    fs->filterInfo->textPixmap)
 	{
 	    CompTransform sTransform = *transform;
 	    transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &sTransform);
@@ -609,7 +644,7 @@ scalefilterPaintOutput (CompScreen              *s,
 	    glPushMatrix ();
 	    glLoadMatrixf (sTransform.m);
 
-	    scalefilterDrawFilterText (s);
+	    scalefilterDrawFilterText (s, output);
 
 	    glPopMatrix ();
 	}
