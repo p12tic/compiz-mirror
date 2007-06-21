@@ -314,7 +314,9 @@ static void gearsPaintInside (CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glDisable(GL_LIGHT1);
 	glDisable(GL_NORMALIZE);
 	glEnable(GL_COLOR_MATERIAL);
-	glDisable(GL_LIGHTING);
+
+	if (!s->lighting)
+		glDisable(GL_LIGHTING);
 
 	glDisable(GL_DEPTH_TEST);
 
