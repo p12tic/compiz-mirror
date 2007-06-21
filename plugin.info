@@ -1,0 +1,2 @@
+PLUGIN = gears
+PKG_DEP = compiz-cube
