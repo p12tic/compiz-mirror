@@ -72,6 +72,9 @@ typedef struct _ScaleFilterScreen {
     PaintOutputProc paintOutput;
     DrawWindowProc drawWindow;
 
+    CompMatch scaleMatch;
+    Bool matchApplied;
+
     ScaleFilterInfo *filterInfo;
 } ScaleFilterScreen;
 
@@ -464,11 +467,9 @@ static void
 scalefilterFiniFilterInfo (CompScreen *s,
 			   Bool freeTimeout)
 {
-    SCALE_SCREEN (s);
     FILTER_SCREEN (s);
 
     scalefilterFreeFilterText (s);
-    ss->currentMatch = fs->filterInfo->origMatch;
 
     matchFini (&fs->filterInfo->match);
 
@@ -485,9 +486,11 @@ scalefilterFilterTimeout (void *closure)
     CompScreen *s = (CompScreen *) closure;
 
     FILTER_SCREEN (s);
+    SCALE_SCREEN (s);
 
     if (fs->filterInfo)
     {
+	ss->currentMatch = fs->filterInfo->origMatch;
 	scalefilterFiniFilterInfo (s, FALSE);
 	scalefilterRelayout (s);
     }
@@ -521,55 +524,73 @@ scalefilterHandleEvent (CompDisplay *d,
 
 		    FILTER_SCREEN (s);
 
-		    /* store old value to be able to check
-		       later if we were just invoked */
 		    info = fs->filterInfo;
-		    if (!info)
-		    {
-			fs->filterInfo = malloc (sizeof (ScaleFilterInfo));
-			scalefilterInitFilterInfo (s);
-		    }
-
-		    if (info && info->timeoutHandle)
-			compRemoveTimeout (info->timeoutHandle);
-
-		    timeout = scalefilterGetTimeout (s);
-		    if (timeout > 0)
-			fs->filterInfo->timeoutHandle =
-			    compAddTimeout (timeout,
-					    scalefilterFilterTimeout, s);
-
 		    count = XLookupString (&(event->xkey), buffer, 1, &ks, NULL);
+
 		    if (info && ks == XK_Escape)
 		    {
+			/* Escape key - drop current filter */
+			ss->currentMatch = info->origMatch;
 			scalefilterFiniFilterInfo (s, TRUE);
 			needRelayout = TRUE;
 			dropKeyEvent = TRUE;
 		    }
 		    else if (info && ks == XK_Return)
 		    {
+			/* Return key - apply current filter persistently */
+			matchFini (&ss->match);
+			matchInit (&ss->match);
+			matchCopy (&ss->match, &info->match);
+			matchUpdate (s->display, &ss->match);
+			ss->currentMatch = &ss->match;
+			fs->matchApplied = TRUE;
+			dropKeyEvent = TRUE;
+			needRelayout = TRUE;
+			scalefilterFiniFilterInfo (s, TRUE);
 		    }
-		    else if (info && ks == XK_BackSpace)
+		    else if (ks == XK_BackSpace)
 		    {
-			if (info->filterStringLength > 0)
+			if (info && info->filterStringLength > 0)
 			{
+			    /* remove last character in string */
 			    info->filterString[--(info->filterStringLength)] = '\0';
+			    needRelayout = TRUE;
+			}
+			else if (fs->matchApplied)
+			{
+			    /* remove filter applied previously
+			       if currently not in input mode */
+    			    matchFini (&ss->match);
+    			    matchInit (&ss->match);
+    			    matchCopy (&ss->match, &fs->scaleMatch);
+			    matchUpdate (s->display, &ss->match);
+    			    ss->currentMatch = &ss->match;
+			    fs->matchApplied = FALSE;
 			    needRelayout = TRUE;
 			}
 		    }
 		    else if (count > 0)
 		    {
-			info = fs->filterInfo;
+			if (!info)
+			{
+			    fs->filterInfo = info = malloc (sizeof (ScaleFilterInfo));
+			    scalefilterInitFilterInfo (s);
+			}
+			else if (info->timeoutHandle)
+			    compRemoveTimeout (info->timeoutHandle);
+
+			timeout = scalefilterGetTimeout (s);
+			if (timeout > 0)
+			    info->timeoutHandle =
+				compAddTimeout (timeout,
+				    		scalefilterFilterTimeout, s);
+
 			if (info->filterStringLength < MAX_FILTER_SIZE)
 			{
     			    info->filterString[info->filterStringLength++] = buffer[0];
     			    info->filterString[info->filterStringLength] = '\0';
 			    needRelayout = TRUE;
 			}
-		    }
-		    else if (!info)
-		    {
-			scalefilterFiniFilterInfo (s, TRUE);
 		    }
 
 		    /* set the event type invalid if we
@@ -633,15 +654,32 @@ scalefilterHandleCompizEvent (CompDisplay *d,
 	(strcmp (eventName, "activate") == 0))
     {
 	Window xid = getIntOptionNamed (option, nOption, "root", 0);
-	Bool activated = getIntOptionNamed (option, nOption, "activated", FALSE);
+	Bool activated = getBoolOptionNamed (option, nOption, "active", FALSE);
 	CompScreen *s = findScreenAtDisplay (d, xid);
 
 	if (s)
 	{
 	    FILTER_SCREEN (s);
+	    SCALE_SCREEN (s);
 
-	    if (!activated && fs->filterInfo)
-		scalefilterFiniFilterInfo (s, TRUE);
+	    if (activated)
+	    {
+		matchFini (&fs->scaleMatch);
+		matchInit (&fs->scaleMatch);
+		matchCopy (&fs->scaleMatch, ss->currentMatch);
+		matchUpdate (d, &fs->scaleMatch);
+		fs->matchApplied = FALSE;
+	    }
+
+	    if (!activated)
+	    {
+		if (fs->filterInfo)
+		{
+		    ss->currentMatch = fs->filterInfo->origMatch;
+		    scalefilterFiniFilterInfo (s, TRUE);
+		}
+		fs->matchApplied = FALSE;
+	    }
 	}
     }
 }
@@ -694,7 +732,8 @@ scalefilterDrawWindow (CompWindow	     *w,
 
     FILTER_SCREEN (s);
 
-    if (fs->filterInfo && fs->filterInfo->filterStringLength)
+    if (fs->matchApplied ||
+	(fs->filterInfo && fs->filterInfo->filterStringLength))
     {
 	FragmentAttrib fA = *attrib;
 
@@ -811,6 +850,8 @@ scalefilterInitScreen (CompPlugin *p,
 	return FALSE;
 
     fs->filterInfo = NULL;
+    matchInit (&fs->scaleMatch);
+    fs->matchApplied = FALSE;
 
     WRAP (fs, s, paintOutput, scalefilterPaintOutput);
     WRAP (fs, s, drawWindow, scalefilterDrawWindow);
@@ -830,12 +871,16 @@ scalefilterFiniScreen (CompPlugin *p,
 	    	       CompScreen *s)
 {
     FILTER_SCREEN (s);
+    SCALE_SCREEN (s);
 
     UNWRAP (fs, s, paintOutput);
     UNWRAP (fs, s, drawWindow);
 
     if (fs->filterInfo)
+    {
+	ss->currentMatch = fs->filterInfo->origMatch;
 	scalefilterFiniFilterInfo (s, TRUE);
+    }
 
     free (fs);
 }
