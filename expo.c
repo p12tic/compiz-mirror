@@ -64,6 +64,7 @@ typedef struct _ExpoScreen
 	PaintScreenProc paintScreen;
 	PreparePaintScreenProc preparePaintScreen;
 	PaintTransformedOutputProc paintTransformedOutput;
+	PaintWindowProc paintWindow;
 	DrawWindowProc drawWindow;
 	DamageWindowRectProc damageWindowRect;
 
@@ -619,10 +620,12 @@ static void expoPaintTransformedOutput(CompScreen * s,
 
 	if (es->expoCam > 0)
 	    mask |= PAINT_SCREEN_CLEAR_MASK;
-    if (es->expoCam <= 0)
-    (*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
-    else
-    glClear(GL_COLOR_BUFFER_BIT);
+	if (es->expoCam <= 0 || (es->expoCam < 1.0 && es->expoCam > 0.0 &&
+		expoGetExpoAnimation(s->display) != ExpoAnimationZoom))
+		(*s->paintTransformedOutput) (s, sAttrib, transform, region,
+		  							  output, mask);
+	else
+		glClear(GL_COLOR_BUFFER_BIT);
 	mask &= ~PAINT_SCREEN_CLEAR_MASK;
 
 	if (es->expoCam > 0.0)
@@ -685,6 +688,28 @@ expoDrawWindow (CompWindow			 *w,
 	UNWRAP(es, w->screen, drawWindow);
 	status = (*w->screen->drawWindow) (w, transform, &fA, region, mask);
 	WRAP(es, w->screen, drawWindow, expoDrawWindow);
+
+	return status;
+}
+
+static Bool
+expoPaintWindow (CompWindow * w,
+				 const WindowPaintAttrib * attrib,
+				 const CompTransform * transform,
+				 Region region, unsigned int mask)
+{
+	CompScreen *s = w->screen;
+	Bool status;
+
+	EXPO_SCREEN (s);
+
+	if (es->expoCam > 0.0 && es->expoActive &&
+	    (es->expoCam < 1.0 || (w->wmType & CompWindowTypeDockMask)))
+		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
+
+	UNWRAP(es, s, paintWindow);
+	status = (*s->paintWindow) (w, attrib, transform, region, mask);
+	WRAP(es, s, paintWindow, expoPaintWindow);
 
 	return status;
 }
@@ -846,6 +871,7 @@ static Bool expoInitScreen(CompPlugin * p, CompScreen * s)
 	WRAP(es, s, preparePaintScreen, expoPreparePaintScreen);
 	WRAP(es, s, drawWindow, expoDrawWindow);
 	WRAP(es, s, damageWindowRect, expoDamageWindowRect);
+	WRAP(es, s, paintWindow, expoPaintWindow);
 
 	s->privates[ed->screenPrivateIndex].ptr = es;
 
@@ -863,6 +889,7 @@ static void expoFiniScreen(CompPlugin * p, CompScreen * s)
 	UNWRAP(es, s, preparePaintScreen);
 	UNWRAP(es, s, drawWindow);
 	UNWRAP(es, s, damageWindowRect);
+	UNWRAP(es, s, paintWindow);
 
 	free(es);
 }
