@@ -470,6 +470,8 @@ scalefilterFiniFilterInfo (CompScreen *s,
     scalefilterFreeFilterText (s);
     ss->currentMatch = fs->filterInfo->origMatch;
 
+    matchFini (&fs->filterInfo->match);
+
     if (freeTimeout && fs->filterInfo->timeoutHandle)
 	compRemoveTimeout (fs->filterInfo->timeoutHandle);
 
