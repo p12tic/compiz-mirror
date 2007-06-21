@@ -324,6 +324,7 @@ static void gearsPaintInside (CompScreen *s, const ScreenPaintAttrib *sAttrib,
 		glDisable(GL_CULL_FACE);
 
 	glPopMatrix();
+	glPopAttrib();
 
 	gs->damage = TRUE;
 	
