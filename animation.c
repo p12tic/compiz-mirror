@@ -77,22 +77,22 @@
 
 #include "animation-internal.h"
 
-#include "magiclamp.h"
-#include "dream.h"
-#include "wave.h"
-#include "zoomside.h"
-#include "glide.h"
+#include "beamup.h"
+#include "burn.h"
 #include "curvedfold.h"
-#include "horizontalfold.h"
-#include "rollup.h"
 #include "dodge.h"
+#include "domino.h"
+#include "dream.h"
+#include "explode3d.h"
 #include "fade.h"
 #include "focusfade.h"
-#include "burn.h"
-#include "beamup.h"
-#include "explode3d.h"
+#include "glide.h"
+#include "horizontalfold.h"
 #include "leafspread.h"
-#include "domino.h"
+#include "magiclamp.h"
+#include "rollup.h"
+#include "wave.h"
+#include "zoomside.h"
 
 int displayPrivateIndex;
 CompMetadata animMetadata;

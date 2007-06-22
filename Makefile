@@ -50,6 +50,7 @@ INSTALL   = install
 
 BCOP       = `pkg-config --variable=bin bcop`
 
+CFLAGS_ADD = -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fno-strict-aliasing
 CFLAGS  = -g -Wall `pkg-config --cflags $(PKG_DEP) compiz ` $(CFLAGS_ADD)
 LDFLAGS = `pkg-config --libs $(PKG_DEP) compiz ` $(LDFLAGS_ADD)
 

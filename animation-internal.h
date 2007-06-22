@@ -747,7 +747,5 @@ void drawParticles(CompScreen * s, CompWindow * w, ParticleSystem * ps);
 void updateParticles(ParticleSystem * ps, float time);
 void finiParticles(ParticleSystem * ps);
 
-
-
-
+void cleanUpParentChildChainItem(AnimScreen *as, AnimWindow *aw);
 
