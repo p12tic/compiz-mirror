@@ -457,7 +457,7 @@ scalefilterInitFilterInfo (CompScreen *s)
     initTexture (s, &info->textTexture);
 
     matchInit (&info->match);
-    matchCopy (&info->match, ss->currentMatch);
+    matchCopy (&info->match, &fs->scaleMatch);
 
     info->origMatch  = ss->currentMatch;
     ss->currentMatch = &info->match;
@@ -526,27 +526,32 @@ scalefilterHandleEvent (CompDisplay *d,
 
 		    info = fs->filterInfo;
 		    count = XLookupString (&(event->xkey), buffer, 1, &ks, NULL);
-
-		    if (info && ks == XK_Escape)
+		    if (ks == XK_Escape)
 		    {
-			/* Escape key - drop current filter */
-			ss->currentMatch = info->origMatch;
-			scalefilterFiniFilterInfo (s, TRUE);
-			needRelayout = TRUE;
-			dropKeyEvent = TRUE;
+			if (info)
+			{
+    			    /* Escape key - drop current filter */
+    			    ss->currentMatch = info->origMatch;
+    			    scalefilterFiniFilterInfo (s, TRUE);
+    			    needRelayout = TRUE;
+    			    dropKeyEvent = TRUE;
+			}
 		    }
-		    else if (info && ks == XK_Return)
+		    else if (ks == XK_Return)
 		    {
-			/* Return key - apply current filter persistently */
-			matchFini (&ss->match);
-			matchInit (&ss->match);
-			matchCopy (&ss->match, &info->match);
-			matchUpdate (s->display, &ss->match);
-			ss->currentMatch = &ss->match;
-			fs->matchApplied = TRUE;
-			dropKeyEvent = TRUE;
-			needRelayout = TRUE;
-			scalefilterFiniFilterInfo (s, TRUE);
+			if (info)
+			{
+			    /* Return key - apply current filter persistently */
+			    matchFini (&ss->match);
+			    matchInit (&ss->match);
+			    matchCopy (&ss->match, &info->match);
+			    matchUpdate (s->display, &ss->match);
+			    ss->currentMatch = &ss->match;
+			    fs->matchApplied = TRUE;
+			    dropKeyEvent = TRUE;
+			    needRelayout = TRUE;
+			    scalefilterFiniFilterInfo (s, TRUE);
+			}
 		    }
 		    else if (ks == XK_BackSpace)
 		    {
@@ -610,13 +615,13 @@ scalefilterHandleEvent (CompDisplay *d,
 			    matchFini (&info->match);
 			    matchInit (&info->match);
 
-			    if (info->origMatch->nOp > 0)
+			    if (fs->scaleMatch.nOp > 0)
 				asprintf (&matchTitle, "(%s) & (title=%s)",
-					  matchToString (info->origMatch),
+					  matchToString (&fs->scaleMatch),
 					  info->filterString);
 			    else
 				asprintf (&matchTitle, "title=%s", info->filterString);
-		
+
 			    matchAddFromString (&info->match, matchTitle);
 			    free (matchTitle);
 
