@@ -24,7 +24,7 @@
 PLUGIN = 3d
 
 #enter dependencies here
-PKG_DEP =
+PKG_DEP = compiz-cube
 
 ## end of configuration
 

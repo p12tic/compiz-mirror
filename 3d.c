@@ -40,6 +40,7 @@ TODO:
 #include <math.h>
 
 #include <compiz.h>
+#include <cube.h>
 #include "3d_options.h"
 
 #define PI 3.14159265359f
@@ -76,6 +77,7 @@ v[2] /= v[3]; \
 v[3] /= v[3];
 
 static int displayPrivateIndex;
+static int cubeDisplayPrivateIndex;
 
 typedef struct _revertReorder
 {
@@ -89,22 +91,8 @@ typedef struct _revertReorder
 } RevertReorder;
 
 
-typedef enum _MultiMonitorMode
-{
-	Multiple,
-	OneBig,
-} MultiMonitorMode;
-
-typedef enum _RotationMode
-{
-	NoRotation = 0,
-	RotationChange,
-	RotationManual
-} RotationMode;
-
 typedef struct _tdDisplay
 {
-	HandleCompizEventProc handleCompizEvent;
 	int screenPrivateIndex;
 } tdDisplay;
 
@@ -116,12 +104,11 @@ typedef struct _tdScreen
 	//Bool reorder;
 
 	PreparePaintScreenProc preparePaintScreen;
-	PaintTransformedScreenProc paintTransformedScreen;
-	PaintScreenProc paintScreen;
+	PaintTransformedOutputProc paintTransformedOutput;
+	PaintOutputProc paintOutput;
 	DonePaintScreenProc donePaintScreen;
 
 	PaintWindowProc paintWindow;
-	SetScreenOptionForPluginProc setScreenOptionForPlugin;
 
 	RevertReorder *revertReorder;
 
@@ -130,20 +117,12 @@ typedef struct _tdScreen
 	int currentViewportNum;
 	float xMove;
 
-	MultiMonitorMode currentMmMode;
-	MultiMonitorMode mmMode;
-	Bool insideCube;
-	Bool sticky;
-	Bool cubeUnfolded;
-
-	RotationMode rotationMode;
-
 	Bool currentDifferentResolutions;
 
 	int currentScreenNum;
 
 	Bool reorderWindowPainting;
-	int tmpOutput;
+	CompOutput *tmpOutput;
 } tdScreen;
 
 typedef struct _tdWindow
@@ -179,18 +158,12 @@ typedef struct _tdWindow
 
 static Bool windowIs3D(CompWindow * w)
 {
-	TD_SCREEN(w->screen);
-	
 	if (w->attrib.override_redirect)
 		return FALSE;
 
 	if (!(w->shaded || w->attrib.map_state == IsViewable))
 		return FALSE;
 
-	if (tds->sticky &&
-		(w->state & CompWindowStateStickyMask && !(w->state & CompWindowStateBelowMask)))
-			return FALSE;
-	
 	if (w->state & (CompWindowStateSkipPagerMask | CompWindowStateSkipTaskbarMask))
 		return FALSE;
 	
@@ -258,8 +231,8 @@ static Bool differentResolutions(CompScreen * s)
 #define IS_IN_VIEWPORT(w, i) ( ( LEFT_VIEWPORT(w) > RIGHT_VIEWPORT(w) && !(LEFT_VIEWPORT(w) > i && i > RIGHT_VIEWPORT(w)) ) \
                                 || ( LEFT_VIEWPORT(w) <= i && i <= RIGHT_VIEWPORT(w) ) )
 
-#define DO_3D(s) ((tds->rotationMode != NoRotation) && !(tdGetManualOnly(s) && \
-			     (tds->rotationMode != RotationManual)))
+#define DO_3D(s) ((cs->rotationState != RotationNone) && !(tdGetManualOnly(s) && \
+			     (cs->rotationState != RotationManual)))
 
 static void reorder(CompScreen * screen)
 {
@@ -359,53 +332,6 @@ static void revertReorder(CompScreen * screen)
 	}
 }
 
-static void tdHandleCompizEvent(CompDisplay * d, char *pluginName,
-				 char *eventName, CompOption * option, int nOption)
-{
-	TD_DISPLAY(d);
-
-	UNWRAP (tdd, d, handleCompizEvent);
-	(*d->handleCompizEvent) (d, pluginName, eventName, option, nOption);
-	WRAP (tdd, d, handleCompizEvent, tdHandleCompizEvent);
-
-	if (strcmp(pluginName, "cube") == 0)
-	{
-		if (strcmp(eventName, "unfoldEvent") == 0)
-		{
-			Window xid = getIntOptionNamed(option, nOption, "root", 0);
-			CompScreen *s = findScreenAtDisplay(d, xid);
-
-			if (s)
-			{
-				TD_SCREEN(s);
-				tds->cubeUnfolded = getBoolOptionNamed(option, nOption, "unfolded", FALSE);
-			}
-		}
-	} 
-	else if (strcmp(pluginName, "rotate") == 0)
-	{
-		if (strcmp(eventName, "rotateEvent") == 0)
-		{
-			Window xid = getIntOptionNamed(option, nOption, "root", 0);
-			CompScreen *s = findScreenAtDisplay(d, xid);
-
-			if (s)
-			{
-				TD_SCREEN(s);
-				Bool rotate = getBoolOptionNamed(option, nOption, "rotating", FALSE);
-				Bool manual = getBoolOptionNamed(option, nOption, "manual", FALSE);
-
-				if (rotate && manual)
-					tds->rotationMode = RotationManual;
-				else if (rotate)
-					tds->rotationMode = RotationChange;
-				else
-					tds->rotationMode = NoRotation;
-			}
-		}
-	}
-}
-
 static void tdPaintAllViewportsEvent(CompScreen* s, Bool paintAllViewports)
 {
 	CompOption o[2];
@@ -455,19 +381,18 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 	float maxZoom;
 
 	TD_SCREEN(screen);
+	CUBE_SCREEN (screen);
 
-	if (tds->currentMmMode != tds->mmMode
-		|| tds->currentViewportNum != screen->hsize
+	if (tds->currentViewportNum != screen->hsize
 		|| tds->currentScreenNum != screen->nOutputDev
 		|| tds->currentDifferentResolutions != differentResolutions(screen))
 	{
 		tds->currentViewportNum = screen->hsize;
-		tds->currentMmMode = tds->mmMode;
 		tds->currentScreenNum = screen->nOutputDev;
 		tds->currentDifferentResolutions = differentResolutions(screen);
 
 		if (tds->currentViewportNum > 2
-			&& (tds->currentMmMode != Multiple || screen->nOutputDev == 1))
+			&& (screen->nOutputDev == 1))
 			tds->xMove =
 					1.0f / (tan (PI * (tds->currentViewportNum - 2.0f) / (2.0f * tds->currentViewportNum)));
 		else
@@ -522,7 +447,7 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 			tds->maxZ = tdw->z;
 	}
 
-	if (tds->maxZ > 0.0f && tds->insideCube && tdGetDisableCaps(screen))
+	if (tds->maxZ > 0.0f && cs->invert == 1 && tdGetDisableCaps(screen))
 		tdDisableCapsEvent(screen, TRUE);
 
 	reorder(screen);
@@ -547,9 +472,10 @@ tdPaintWindow(CompWindow * w,
 	Bool wasCulled = glIsEnabled(GL_CULL_FACE);
 
 	TD_SCREEN(w->screen);
+	CUBE_SCREEN (w->screen);
 	TD_WINDOW(w);
 
-	int output = tds->tmpOutput;
+	int output = (tds->tmpOutput->id == ~0) ? 0 : tds->tmpOutput->id;
 	int width = w->screen->width;
 
 	if (DO_3D(w->screen) && tds->reorderWindowPainting)
@@ -661,7 +587,7 @@ tdPaintWindow(CompWindow * w,
 		}
 		*/
 
-		if ((LEFT_VIEWPORT(w) != RIGHT_VIEWPORT(w)) && !tds->cubeUnfolded)
+		if ((LEFT_VIEWPORT(w) != RIGHT_VIEWPORT(w)) && !cs->unfolded)
 		{
 			if (LEFT_VIEWPORT(w) == 0)
 				matrixTranslate(&wTransform, width * tdw->currentZ * tds->xMove, 0.0f, 0.0f);
@@ -892,37 +818,15 @@ tdPaintWindow(CompWindow * w,
 	return status;
 }
 
-static Bool
-tdSetScreenOptionForPlugin(CompScreen *s, char *plugin,
-						   char *name, CompOptionValue *value)
-{
-    Bool status;
-    TD_SCREEN (s);
-
-    UNWRAP (tds, s, setScreenOptionForPlugin);
-    status = (*s->setScreenOptionForPlugin) (s, plugin, name, value);
-    WRAP (tds, s, setScreenOptionForPlugin, tdSetScreenOptionForPlugin);
-
-    if (status && strcmp (plugin, "cube") == 0)
-	{
-		if (strcmp (name, "in") == 0)
-			tds->insideCube = value->b;
-		else if (strcmp (name, "multimonitor_mode") == 0)
-			tds->mmMode = value->i;
-		else if (strcmp (name, "stuck_to_screen") == 0)
-			tds->sticky = value->b;
-	}
-
-    return status;
-}
-
 static void
-tdPaintTransformedScreen(CompScreen * s,
+tdPaintTransformedOutput(CompScreen * s,
 						 const ScreenPaintAttrib * sAttrib,
 						 const CompTransform    *transform,
-						 Region region, int output, unsigned int mask)
+						 Region region, CompOutput *output,
+						 unsigned int mask)
 {
 	TD_SCREEN(s);
+	CUBE_SCREEN(s);
 
 	tds->reorderWindowPainting = FALSE;
 
@@ -937,27 +841,28 @@ tdPaintTransformedScreen(CompScreen * s,
 		   If FTB is already in mask, then the viewport is reversed, and all windows should be reversed.
 		   If BTF is in mask, the viewport isn't reversed, but some of the windows there might be, so we set FTB in addition to BTF, and check for each window what mode it should use... */
 
-		if (!(mask & PAINT_SCREEN_ORDER_FRONT_TO_BACK_MASK) && !tds->insideCube)
+		if (!(mask & PAINT_SCREEN_ORDER_FRONT_TO_BACK_MASK) && cs->invert != 1)
 		{
 			tds->reorderWindowPainting = TRUE;
 			mask |= PAINT_SCREEN_ORDER_FRONT_TO_BACK_MASK | PAINT_SCREEN_ORDER_BACK_TO_FRONT_MASK;
 		}
 	}
 
-	UNWRAP(tds, s, paintTransformedScreen);
-	(*s->paintTransformedScreen) (s, sAttrib, transform, region, output, mask);
-	WRAP(tds, s, paintTransformedScreen, tdPaintTransformedScreen);
+	UNWRAP(tds, s, paintTransformedOutput);
+	(*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
+	WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
 }
 
 static Bool
-tdPaintScreen(CompScreen * s,
+tdPaintOutput(CompScreen * s,
 			  const ScreenPaintAttrib * sAttrib,
 			  const CompTransform    *transform,
-			  Region region, int output, unsigned int mask)
+			  Region region, CompOutput *output, unsigned int mask)
 {
 	Bool status;
 
 	TD_SCREEN(s);
+	CUBE_SCREEN(s);
 
 	if (DO_3D(s) || tds->tdWindowExists)
 	{
@@ -965,9 +870,9 @@ tdPaintScreen(CompScreen * s,
 				PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 	}
 
-	UNWRAP(tds, s, paintScreen);
-	status = (*s->paintScreen) (s, sAttrib, transform, region, output, mask);
-	WRAP(tds, s, paintScreen, tdPaintScreen);
+	UNWRAP(tds, s, paintOutput);
+	status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
+	WRAP(tds, s, paintOutput, tdPaintOutput);
 
 	return status;
 }
@@ -978,6 +883,7 @@ static void tdDonePaintScreen(CompScreen * s)
 	tdWindow *tdw;
 
 	TD_SCREEN(s);
+	CUBE_SCREEN (s);
 
 	tdDisableCapsEvent(s, FALSE);
 	tdPaintAllViewportsEvent(s, FALSE);
@@ -997,10 +903,7 @@ static void tdDonePaintScreen(CompScreen * s)
 
 			if (DO_3D(s))
 			{
-				if (tds->sticky && ((w->type & CompWindowTypeDockMask) ||
-					(w->state & CompWindowStateStickyMask && !(w->state & CompWindowStateBelowMask))))
-						aim = 0;
-				else if (tds->insideCube)
+				if (cs->invert == 1)
 					aim = tdw->z - tds->maxZ;
 				else
 					aim = tdw->z;
@@ -1030,6 +933,25 @@ static void tdDonePaintScreen(CompScreen * s)
 static Bool tdInitDisplay(CompPlugin * p, CompDisplay * d)
 {
 	tdDisplay *tdd;
+    CompPlugin *cube = findActivePlugin ("cube");
+    CompOption *option;
+    int nOption;
+
+    if (!cube || !cube->vTable->getDisplayOptions)
+		return FALSE;
+
+    option = (*cube->vTable->getDisplayOptions) (cube, d, &nOption);
+
+    if (getIntOptionNamed (option, nOption, "abi", 0) != CUBE_ABIVERSION)
+    {
+		compLogMessage (d, "3d", CompLogLevelError,
+						"cube ABI version mismatch");
+		return FALSE;
+    }
+
+    cubeDisplayPrivateIndex = getIntOptionNamed (option, nOption, "index", -1);
+    if (cubeDisplayPrivateIndex < 0)
+		return FALSE;
 
 	tdd = malloc(sizeof(tdDisplay));
 	if (!tdd)
@@ -1042,8 +964,6 @@ static Bool tdInitDisplay(CompPlugin * p, CompDisplay * d)
 		return FALSE;
 	}
 
-	WRAP (tdd, d, handleCompizEvent, tdHandleCompizEvent);
-
 	d->privates[displayPrivateIndex].ptr = tdd;
 
 	return TRUE;
@@ -1052,8 +972,6 @@ static Bool tdInitDisplay(CompPlugin * p, CompDisplay * d)
 static void tdFiniDisplay(CompPlugin * p, CompDisplay * d)
 {
 	TD_DISPLAY(d);
-
-	UNWRAP (tdd, d, handleCompizEvent);
 
 	freeScreenPrivateIndex(d, tdd->screenPrivateIndex);
 
@@ -1082,31 +1000,17 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	//tds->reorder = TRUE;
 	tds->revertReorder = NULL;
 
-	tds->mmMode = tds->currentMmMode = OneBig;
-	tds->rotationMode = NoRotation;
-	tds->insideCube = FALSE;
-	tds->sticky = FALSE;
-	tds->cubeUnfolded = FALSE;
-
 	tds->currentViewportNum = s->hsize;
 	tds->currentScreenNum = s->nOutputDev;
 	tds->currentDifferentResolutions = differentResolutions(s);
 
-	if (tds->currentViewportNum > 2 && tds->currentMmMode != Multiple)
-		tds->xMove =
-				1.0f /
-				(tan
-				 (PI * (tds->currentViewportNum - 2.0f) /
-				  (2.0f * tds->currentViewportNum)));
-	else
-		tds->xMove = 0.0f;
+	tds->xMove = 0.0f;
 
-	WRAP(tds, s, paintTransformedScreen, tdPaintTransformedScreen);
+	WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
 	WRAP(tds, s, paintWindow, tdPaintWindow);
-	WRAP(tds, s, paintScreen, tdPaintScreen);
+	WRAP(tds, s, paintOutput, tdPaintOutput);
 	WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
 	WRAP(tds, s, preparePaintScreen, tdPreparePaintScreen);
-	WRAP(tds, s, setScreenOptionForPlugin, tdSetScreenOptionForPlugin);
 
 	s->privates[tdd->screenPrivateIndex].ptr = tds;
 
@@ -1119,12 +1023,11 @@ static void tdFiniScreen(CompPlugin * p, CompScreen * s)
 
 	freeWindowPrivateIndex(s, tds->windowPrivateIndex);
 
-	UNWRAP(tds, s, paintTransformedScreen);
+	UNWRAP(tds, s, paintTransformedOutput);
 	UNWRAP(tds, s, paintWindow);
-	UNWRAP(tds, s, paintScreen);
+	UNWRAP(tds, s, paintOutput);
 	UNWRAP(tds, s, donePaintScreen);
 	UNWRAP(tds, s, preparePaintScreen);
-	UNWRAP(tds, s, setScreenOptionForPlugin);
 
 	free(tds);
 }
