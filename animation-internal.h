@@ -302,72 +302,18 @@ typedef enum
 
 #define RANDOM_EFFECT_OFFSET 2 /* skip none and random */
 
-
-static AnimEffect minimizeEffectType[] = {
-	AnimEffectNone,
-	AnimEffectRandom,
-	AnimEffectBeamUp,
-	AnimEffectBurn,
-	AnimEffectCurvedFold,
-	AnimEffectDomino3D,
-	AnimEffectDream,
-	AnimEffectExplode3D,
-	AnimEffectFade,
-	AnimEffectGlide3D1,
-	AnimEffectGlide3D2,
-	AnimEffectHorizontalFolds,
-	AnimEffectLeafSpread3D,
-	AnimEffectMagicLamp,
-	AnimEffectRazr3D,
-	AnimEffectSidekick,
-	AnimEffectZoom
-};
-#define NUM_MINIMIZE_EFFECT (LIST_SIZE(minimizeEffectType))
+#define NUM_MINIMIZE_EFFECT 17
 #define LAST_MINIMIZE_EFFECT 16
 #define LAST_RANDOM_MINIMIZE_EFFECT 14
 
-static AnimEffect closeEffectType[] = {
-	AnimEffectNone,
-	AnimEffectRandom,
-	AnimEffectBeamUp,
-	AnimEffectBurn,
-	AnimEffectCurvedFold,
-	AnimEffectDomino3D,
-	AnimEffectDream,
-	AnimEffectExplode3D,
-	AnimEffectFade,
-	AnimEffectGlide3D1,
-	AnimEffectGlide3D2,
-	AnimEffectHorizontalFolds,
-	AnimEffectLeafSpread3D,
-	AnimEffectMagicLamp,
-	AnimEffectMagicLampVacuum,
-	AnimEffectRazr3D,
-	AnimEffectSidekick,
-	AnimEffectWave,
-	AnimEffectZoom
-};
-#define NUM_CLOSE_EFFECT (LIST_SIZE(closeEffectType))
+#define NUM_CLOSE_EFFECT 19
 #define LAST_CLOSE_EFFECT 18
 #define LAST_RANDOM_CLOSE_EFFECT 16
 
-static AnimEffect focusEffectType[] = {
-	AnimEffectNone,
-	AnimEffectDodge,
-	AnimEffectFocusFade,
-	AnimEffectWave
-};
-#define NUM_FOCUS_EFFECT (LIST_SIZE(focusEffectType))
+#define NUM_FOCUS_EFFECT 4
 #define LAST_FOCUS_EFFECT 3
 
-static AnimEffect shadeEffectType[] = {
-	AnimEffectNone,
-	AnimEffectRandom,
-	AnimEffectCurvedFold,
-	AnimEffectHorizontalFolds,
-	AnimEffectRollUp
-};
-#define NUM_SHADE_EFFECT (LIST_SIZE(shadeEffectType))
+#define NUM_SHADE_EFFECT 5
 #define LAST_SHADE_EFFECT 4
 #define LAST_RANDOM_SHADE_EFFECT 2
 
@@ -748,4 +694,6 @@ void updateParticles(ParticleSystem * ps, float time);
 void finiParticles(ParticleSystem * ps);
 
 void cleanUpParentChildChainItem(AnimScreen *as, AnimWindow *aw);
+
+void animDrawWindowGeometry(CompWindow * w);
 

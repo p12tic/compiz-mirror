@@ -97,10 +97,62 @@
 int displayPrivateIndex;
 CompMetadata animMetadata;
 
-static void
-animDrawWindowGeometry(CompWindow * w);
+static AnimEffect minimizeEffectType[] = {
+	AnimEffectNone,
+	AnimEffectRandom,
+	AnimEffectBeamUp,
+	AnimEffectBurn,
+	AnimEffectCurvedFold,
+	AnimEffectDomino3D,
+	AnimEffectDream,
+	AnimEffectExplode3D,
+	AnimEffectFade,
+	AnimEffectGlide3D1,
+	AnimEffectGlide3D2,
+	AnimEffectHorizontalFolds,
+	AnimEffectLeafSpread3D,
+	AnimEffectMagicLamp,
+	AnimEffectRazr3D,
+	AnimEffectSidekick,
+	AnimEffectZoom
+};
 
+static AnimEffect closeEffectType[] = {
+	AnimEffectNone,
+	AnimEffectRandom,
+	AnimEffectBeamUp,
+	AnimEffectBurn,
+	AnimEffectCurvedFold,
+	AnimEffectDomino3D,
+	AnimEffectDream,
+	AnimEffectExplode3D,
+	AnimEffectFade,
+	AnimEffectGlide3D1,
+	AnimEffectGlide3D2,
+	AnimEffectHorizontalFolds,
+	AnimEffectLeafSpread3D,
+	AnimEffectMagicLamp,
+	AnimEffectMagicLampVacuum,
+	AnimEffectRazr3D,
+	AnimEffectSidekick,
+	AnimEffectWave,
+	AnimEffectZoom
+};
 
+static AnimEffect focusEffectType[] = {
+	AnimEffectNone,
+	AnimEffectDodge,
+	AnimEffectFocusFade,
+	AnimEffectWave
+};
+
+static AnimEffect shadeEffectType[] = {
+	AnimEffectNone,
+	AnimEffectRandom,
+	AnimEffectCurvedFold,
+	AnimEffectHorizontalFolds,
+	AnimEffectRollUp
+};
 
 
 // iterate over given list
@@ -2319,7 +2371,7 @@ animDrawWindowTexture(CompWindow * w, CompTexture * texture,
 	WRAP(as, w->screen, drawWindowTexture, animDrawWindowTexture);
 }
 
-static void
+void
 animDrawWindowGeometry(CompWindow * w)
 {
 	ANIM_WINDOW(w);
