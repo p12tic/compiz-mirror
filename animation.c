@@ -6417,12 +6417,14 @@ initiateFocusAnimation(CompWindow *w)
 static Bool
 relevantForFadeFocus(CompWindow *nw)
 {
-	if (!(nw->type &
-		  (CompWindowTypeDockMask |
-		   CompWindowTypeNormalMask |
-		   CompWindowTypeSplashMask |
-		   CompWindowTypeDialogMask |
-		   CompWindowTypeModalDialogMask)))
+	ANIM_SCREEN(nw->screen);
+
+	if (!((nw->type &
+		   // these two are to be used as "host" windows
+		   // to host the painting of windows being focused
+		   // at a stacking order lower than them
+		   (CompWindowTypeDockMask | CompWindowTypeSplashMask)) ||
+		matchEval(&as->opt[ANIM_SCREEN_OPTION_FOCUS_MATCH].value.match, nw)))
 		return FALSE;
 	return isWinVisible(nw);
 }
