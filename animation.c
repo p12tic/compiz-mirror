@@ -694,6 +694,8 @@ typedef struct _AnimWindow
 	CompWindow *dodgeChainStart;// for the subject window
 	CompWindow *dodgeChainPrev;	// for dodging windows
 	CompWindow *dodgeChainNext;	// for dodging windows
+	Bool skipPostPrepareScreen;
+	Bool drawnOnHostSkip;
 } AnimWindow;
 
 typedef struct _AnimEffectProperties
@@ -742,11 +744,18 @@ AnimEffectProperties *animEffectPropertiesTmp;
 #define NUM_OPTIONS(s) (sizeof ((s)->opt) / sizeof (CompOption))
 
 // up, down, left, right
-#define DODGE_AMOUNT(dir, w, dw) \
+#define DODGE_AMOUNT(w, dw, dir) \
 	((dir) == 0 ? WIN_Y(w) - (WIN_Y(dw) + WIN_H(dw)) : \
 	 (dir) == 1 ? (WIN_Y(w) + WIN_H(w)) - WIN_Y(dw) : \
 	 (dir) == 2 ? WIN_X(w) - (WIN_X(dw) + WIN_W(dw)) : \
 	              (WIN_X(w) + WIN_W(w)) - WIN_X(dw))
+
+// up, down, left, right
+#define DODGE_AMOUNT_BOX(box, dw, dir) \
+	((dir) == 0 ? (box).y - (WIN_Y(dw) + WIN_H(dw)) : \
+	 (dir) == 1 ? ((box).y + (box).height) - WIN_Y(dw) : \
+	 (dir) == 2 ? (box).x - (WIN_X(dw) + WIN_W(dw)) : \
+	              ((box).x + (box).width) - WIN_X(dw))
 
 // iterate over given list
 // check if given effect name matches any implemented effect
@@ -2585,6 +2594,63 @@ static void fxRollUpModelStep(CompScreen * s, CompWindow * w, float time)
 
 // =====================  Effect: Dodge  =========================
 
+void
+fxDodgeProcessSubject (CompWindow *wCur, Region wRegion, Region dodgeRegion)
+{
+	XRectangle rect;
+	rect.x = WIN_X(wCur);
+	rect.y = WIN_Y(wCur);
+	rect.width = WIN_W(wCur);
+	rect.height = WIN_H(wCur);
+	Region wCurRegion = XCreateRegion();
+	Region intersectionRegion = XCreateRegion();
+	XUnionRectWithRegion(&rect, &emptyRegion, wCurRegion);
+	XIntersectRegion(wRegion, wCurRegion,
+					 intersectionRegion);
+	if (!XEmptyRegion(intersectionRegion))
+		XUnionRegion(dodgeRegion, wCurRegion, dodgeRegion);
+}
+
+void
+fxDodgeFindDodgeBox (CompWindow *w, XRectangle *dodgeBox)
+{
+	ANIM_SCREEN(w->screen);
+	ANIM_WINDOW(w);
+
+	// Find the box to be dodged, it can contain multiple windows
+	// when there are dialog/utility windows of subject windows
+	// (stacked in the moreToBePaintedNext chain)
+	// Then this would be a bounding box of the subject windows
+	// intersecting with dodger.
+	Region wRegion = XCreateRegion();
+	Region dodgeRegion = XCreateRegion();
+
+	XRectangle rect;
+	rect.x = WIN_X(w);
+	rect.y = WIN_Y(w);
+	rect.width = WIN_W(w);
+	rect.height = WIN_H(w);
+	XUnionRectWithRegion(&rect, &emptyRegion, wRegion);
+
+	AnimWindow *awCur;
+	CompWindow *wCur = aw->dodgeSubjectWin;
+	for (; wCur; wCur = awCur->moreToBePaintedNext)
+	{
+		fxDodgeProcessSubject(wCur, wRegion, dodgeRegion);
+		awCur = GET_ANIM_WINDOW(wCur, as);
+	}
+
+	AnimWindow *awSubj = GET_ANIM_WINDOW(aw->dodgeSubjectWin, as);
+	wCur = awSubj->moreToBePaintedPrev;
+	for (; wCur; wCur = awCur->moreToBePaintedPrev)
+	{
+		fxDodgeProcessSubject(wCur, wRegion, dodgeRegion);
+		awCur = GET_ANIM_WINDOW(wCur, as);
+	}
+
+	XClipBox(dodgeRegion, dodgeBox);
+}
+
 static void
 fxDodgeAnimStep (CompScreen * s, CompWindow * w, float time)
 {
@@ -2603,9 +2669,12 @@ fxDodgeAnimStep (CompScreen * s, CompWindow * w, float time)
 
 	if (!aw->isDodgeSubject)
 	{
+		XRectangle dodgeBox;
+		fxDodgeFindDodgeBox (w, &dodgeBox);
+
 		// Update dodge amount if subject window is moved during dodge
 		int newDodgeAmount =
-			DODGE_AMOUNT(aw->dodgeDirection, aw->dodgeSubjectWin, w);
+			DODGE_AMOUNT_BOX(dodgeBox, w, aw->dodgeDirection);
 
 		// Only update if amount got larger
 		if (abs(newDodgeAmount) > abs(aw->dodgeMaxAmount))
@@ -2619,6 +2688,8 @@ fxDodgeUpdateWindowTransform
 {
 	ANIM_WINDOW(w);
 
+	if (aw->isDodgeSubject)
+		return;
 	float amount = sin(M_PI * aw->transformProgress) * aw->dodgeMaxAmount;
 
 	if (aw->dodgeDirection > 1) // if x axis
@@ -2640,6 +2711,9 @@ fxDodgePostPreparePaintScreen(CompScreen *s, CompWindow *w)
 	if (!aw->restackInfo)
 		return;
 
+	if (aw->skipPostPrepareScreen)
+		return;
+
 	// Dodgy window
 	CompWindow *dw;
 	AnimWindow *adw = NULL;
@@ -2648,7 +2722,6 @@ fxDodgePostPreparePaintScreen(CompScreen *s, CompWindow *w)
 		adw = GET_ANIM_WINDOW(dw, as);
 		if (!adw)
 			break;
-
 		// find the first dodging window that hasn't yet
 		// reached 50% progress yet. The subject window should be
 		// painted right behind that one (or right in front of it if
@@ -2663,9 +2736,8 @@ fxDodgePostPreparePaintScreen(CompScreen *s, CompWindow *w)
 	{
 		if (aw->winThisIsPaintedBefore)
 		{
-			awOldHost = GET_ANIM_WINDOW(aw->winThisIsPaintedBefore, as);
-
 			// Clear old host
+			awOldHost = GET_ANIM_WINDOW(aw->winThisIsPaintedBefore, as);			
 			awOldHost->winToBePaintedBeforeThis = NULL;
 		}
 		if (dw) // if a dodgy win. is still at <0.5 progress
@@ -2675,7 +2747,13 @@ fxDodgePostPreparePaintScreen(CompScreen *s, CompWindow *w)
 		}
 		// otherwise all dodgy win.s have passed 0.5 progress
 
-		aw->winThisIsPaintedBefore = dw; // dw can be null, which is ok
+		CompWindow *wCur = w;
+		while (wCur)
+		{
+			AnimWindow *awCur = GET_ANIM_WINDOW(wCur, as);
+			awCur->winThisIsPaintedBefore = dw; // dw can be null, which is ok
+			wCur = awCur->moreToBePaintedNext;
+		}
 	}
 	else if (!aw->restackInfo->raised)
 	{
@@ -6057,6 +6135,23 @@ static Bool playingPolygonEffect(AnimScreen *as, AnimWindow *aw)
 	return (thickness > 1e-5); // glide is 3D if thickness > 0
 }
 
+static void
+cleanUpParentChildChainItem(AnimScreen *as, AnimWindow *aw)
+{
+	if (aw->winThisIsPaintedBefore && !aw->winThisIsPaintedBefore->destroyed)
+	{
+		AnimWindow *aw2 =
+			GET_ANIM_WINDOW(aw->winThisIsPaintedBefore, as);
+		if (aw2)
+			aw2->winToBePaintedBeforeThis = NULL;
+	}
+	aw->winThisIsPaintedBefore = NULL;
+	aw->moreToBePaintedPrev = NULL;
+	aw->moreToBePaintedNext = NULL;
+	aw->isDodgeSubject = FALSE;
+	aw->skipPostPrepareScreen = FALSE;
+}
+
 static void postAnimationCleanup(CompWindow * w, Bool resetAnimation)
 {
 	ANIM_WINDOW(w);
@@ -6075,16 +6170,54 @@ static void postAnimationCleanup(CompWindow * w, Bool resetAnimation)
 			aw->model->magicLampWaves = 0;
 		}
 	}
-	if (aw->winThisIsPaintedBefore && !aw->winThisIsPaintedBefore->destroyed)
+
+	Bool thereIsUnfinishedChainElem = FALSE;
+
+	// Look for still playing windows in parent-child chain
+	CompWindow *wCur = aw->moreToBePaintedNext;
+	while (wCur)
 	{
-		AnimWindow *aw2 = GET_ANIM_WINDOW(aw->winThisIsPaintedBefore, as);
-		if (aw2)
+		AnimWindow *awCur = GET_ANIM_WINDOW(wCur, as);
+
+		if (awCur->animRemainingTime > 0)
 		{
-			aw2->winToBePaintedBeforeThis = NULL;
+			thereIsUnfinishedChainElem = TRUE;
+			break;
 		}
-		aw->winThisIsPaintedBefore = NULL;
-		aw->moreToBePaintedPrev = NULL;
-		aw->moreToBePaintedNext = NULL;
+		wCur = awCur->moreToBePaintedNext;
+	}
+	if (!thereIsUnfinishedChainElem)
+	{
+		wCur = aw->moreToBePaintedPrev;
+		while (wCur)
+		{
+			AnimWindow *awCur = GET_ANIM_WINDOW(wCur, as);
+
+			if (awCur->animRemainingTime > 0)
+			{
+				thereIsUnfinishedChainElem = TRUE;
+				break;
+			}
+			wCur = awCur->moreToBePaintedPrev;
+		}
+	}
+	if (!thereIsUnfinishedChainElem)
+	{
+		// Finish off all windows in parent-child chain
+		CompWindow *wCur = aw->moreToBePaintedNext;
+		while (wCur)
+		{
+			AnimWindow *awCur = GET_ANIM_WINDOW(wCur, as);
+			wCur = awCur->moreToBePaintedNext;
+			cleanUpParentChildChainItem(as, awCur);
+		}
+		wCur = w;
+		while (wCur)
+		{
+			AnimWindow *awCur = GET_ANIM_WINDOW(wCur, as);
+			wCur = awCur->moreToBePaintedPrev;
+			cleanUpParentChildChainItem(as, awCur);
+		}
 	}
 
 	aw->state = aw->newState;
@@ -6115,7 +6248,12 @@ static void postAnimationCleanup(CompWindow * w, Bool resetAnimation)
 
 	// Reset dodge parameters
 	aw->dodgeMaxAmount = 0;
-	aw->isDodgeSubject = FALSE;
+	if (!(aw->moreToBePaintedPrev ||
+		  aw->moreToBePaintedNext))
+	{
+		aw->isDodgeSubject = FALSE;
+		aw->skipPostPrepareScreen = FALSE;
+	}
 
 	if (aw->restackInfo)
 	{
@@ -6145,6 +6283,17 @@ isWinVisible(CompWindow *w)
 			  (w->attrib.map_state != IsViewable)));
 }
 
+static inline void
+getHostedOnWin (AnimScreen *as,
+				CompWindow *w,
+				CompWindow *wHost)
+{
+	ANIM_WINDOW(w);
+	AnimWindow *awHost = GET_ANIM_WINDOW(wHost, as);
+	awHost->winToBePaintedBeforeThis = w;
+	aw->winThisIsPaintedBefore = wHost;
+}
+
 static void
 initiateFocusAnimation(CompWindow *w)
 {
@@ -6164,21 +6313,6 @@ initiateFocusAnimation(CompWindow *w)
 		return;
 	}
 
-	CompWindow *wStart = NULL;
-	CompWindow *wEnd = NULL;
-	CompWindow *wOldAbove = NULL;
-
-	RestackInfo *restackInfo = aw->restackInfo;
-	Bool raised = TRUE;
-
-	if (restackInfo)
-	{
-		wStart = restackInfo->wStart;
-		wEnd = restackInfo->wEnd;
-		wOldAbove = restackInfo->wOldAbove;
-		raised = restackInfo->raised;
-	}
-
 	if (matchEval (&as->opt[ANIM_SCREEN_OPTION_FOCUS_MATCH].value.match, w) &&
 		as->focusEffect &&
 		// On unminimization, focus event is fired first.
@@ -6188,6 +6322,21 @@ initiateFocusAnimation(CompWindow *w)
 		aw->curWindowEvent != WindowEventMinimize &&
 		animEnsureModel(w, WindowEventFocus, as->focusEffect))
 	{
+		CompWindow *wStart = NULL;
+		CompWindow *wEnd = NULL;
+		CompWindow *wOldAbove = NULL;
+
+		RestackInfo *restackInfo = aw->restackInfo;
+		Bool raised = TRUE;
+
+		if (restackInfo)
+		{
+			wStart = restackInfo->wStart;
+			wEnd = restackInfo->wEnd;
+			wOldAbove = restackInfo->wOldAbove;
+			raised = restackInfo->raised;
+		}
+
 		if (as->focusEffect == AnimEffectFocusFade ||
 			as->focusEffect == AnimEffectDodge)
 		{
@@ -6233,7 +6382,8 @@ initiateFocusAnimation(CompWindow *w)
 					!XEmptyRegion(thisAndSubjectIntersection))
 				{
 					AnimWindow *adw = GET_ANIM_WINDOW(dw, as);
-					if (adw->curAnimEffect == AnimEffectNone &&
+					if ((adw->curAnimEffect == AnimEffectNone ||
+						 (adw->curAnimEffect == AnimEffectDodge)) &&
 						dw->id != w->id) // don't let the subject dodge itself
 					{
 						// Mark this window for dodge
@@ -6246,6 +6396,15 @@ initiateFocusAnimation(CompWindow *w)
 
 			if (XEmptyRegion(fadeRegion))
 				return; // empty -> won't be drawn
+
+			if ((as->focusEffect == AnimEffectFocusFade ||
+				 as->focusEffect == AnimEffectDodge) && wOldAbove)
+			{
+				// Store this window in the next window
+				// so that this is drawn before that,
+				// i.e. in its old place
+				getHostedOnWin(as, w, wOldAbove);
+			}
 
 			float dodgeMaxStartProgress =
 				numDodgingWins *
@@ -6337,7 +6496,7 @@ initiateFocusAnimation(CompWindow *w)
 
 					int i;
 					for (i = 0; i < 4; i++)
-						dodgeAmount[i] = DODGE_AMOUNT(i, w, dw);
+						dodgeAmount[i] = DODGE_AMOUNT(w, dw, i);
 
 					int amountMin = abs(dodgeAmount[0]);
 					int iMin = 0;
@@ -6358,6 +6517,8 @@ initiateFocusAnimation(CompWindow *w)
 					// Reset back to 0 for the next dodge calculation
 					adw->dodgeOrder = 0;
 				}
+				if (aw->isDodgeSubject)
+					aw->dodgeMaxAmount = 0;
 
 				// if subject is being lowered,
 				// point chain-start to the topmost doding window
@@ -6393,22 +6554,6 @@ initiateFocusAnimation(CompWindow *w)
 		aw->lastKnownCoords.x = w->attrib.x;
 		aw->lastKnownCoords.y = w->attrib.y;
 
-		if ((as->focusEffect == AnimEffectFocusFade) && wOldAbove)
-		{
-			// (for focus fade effect)
-			// Store this window in the next window
-			// so that this is drawn before that,
-			// i.e. in its old place
-
-			// (for dodge effect)
-			// It will again start being drawn in its old place
-			// But will gradually move backward/forward
-			// to be positioned behind / in front of dodging windows
-			AnimWindow *awOldAbove = GET_ANIM_WINDOW(wOldAbove, as);
-			awOldAbove->winToBePaintedBeforeThis = w;
-			aw->winThisIsPaintedBefore = wOldAbove;
-		}
-
 		damageScreen(w->screen);
 	}
 }
@@ -6424,8 +6569,10 @@ relevantForFadeFocus(CompWindow *nw)
 		   // to host the painting of windows being focused
 		   // at a stacking order lower than them
 		   (CompWindowTypeDockMask | CompWindowTypeSplashMask)) ||
-		matchEval(&as->opt[ANIM_SCREEN_OPTION_FOCUS_MATCH].value.match, nw)))
+		  matchEval(&as->opt[ANIM_SCREEN_OPTION_FOCUS_MATCH].value.match, nw)))
+	{
 		return FALSE;
+	}
 	return isWinVisible(nw);
 }
 
@@ -6468,6 +6615,29 @@ static void animPreparePaintScreen(CompScreen * s, int msSinceLastPaint)
 							awNext->winThisIsPaintedBefore;
 					}
 					initiateFocusAnimation(w);
+				}
+			}
+			if (as->focusEffect == AnimEffectDodge)
+			{
+				for (w = s->reverseWindows; w; w = w->prev)
+				{
+					ANIM_WINDOW(w);
+
+					if (!aw->isDodgeSubject)
+						continue;
+					Bool dodgersAreOnlySubjects = TRUE;
+					CompWindow *dw;
+					AnimWindow *adw;
+					for (dw = aw->dodgeChainStart; dw; dw = adw->dodgeChainNext)
+					{
+						adw = GET_ANIM_WINDOW(dw, as);
+						if (!adw)
+							break;
+						if (!adw->isDodgeSubject)
+							dodgersAreOnlySubjects = FALSE;
+					}
+					if (dodgersAreOnlySubjects)
+						aw->skipPostPrepareScreen = TRUE;
 				}
 			}
 		}
@@ -6563,8 +6733,7 @@ static void animPreparePaintScreen(CompScreen * s, int msSinceLastPaint)
 				// Call fx step func.
 				if (animEffectProperties[aw->curAnimEffect].animStepFunc)
 				{
-					animEffectProperties[aw->
-										 curAnimEffect].
+					animEffectProperties[aw->curAnimEffect].
 							animStepFunc(s, w, msSinceLastPaint);
 				}
 				if (aw->animRemainingTime <= 0)
@@ -7180,8 +7349,6 @@ animDrawWindowTexture(CompWindow * w, CompTexture * texture,
 
 	if (aw->animRemainingTime > 0)	// if animation in progress, store texture
 	{
-		//printf("%X animDrawWindowTexture, texture: %X\n",
-		//     (unsigned)w->id, (unsigned)texture);
 		aw->curTexture = texture;
 		aw->curPaintAttrib = *attrib;
 	}
@@ -7264,7 +7431,6 @@ animPaintWindow(CompWindow * w,
 	if (aw->winToBePaintedBeforeThis)
 	{
 		CompWindow *w2 = aw->winToBePaintedBeforeThis;
-
 		// ========= Paint w2 on host w =========
 
 		// Go to the bottommost window in this "focus chain"
@@ -7288,6 +7454,10 @@ animPaintWindow(CompWindow * w,
 			if (!aw2)
 				continue;
 
+			if (aw2->animTotalTime < 1e-4)
+			{
+				aw2->drawnOnHostSkip = TRUE;
+			}
 			w2->indexCount = 0;
 			WindowPaintAttrib wAttrib2 = w2->paint;
 
@@ -7309,7 +7479,11 @@ animPaintWindow(CompWindow * w,
 			WRAP(as, w2->screen, paintWindow, animPaintWindow);
 		}
 	}
-		
+	if (aw->drawnOnHostSkip)
+	{
+		aw->drawnOnHostSkip = FALSE;
+		return FALSE;
+	}
 	if (aw->animRemainingTime > 0)
 	{
 		if (aw->curAnimEffect == AnimEffectDodge &&
