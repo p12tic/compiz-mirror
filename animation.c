@@ -77,7 +77,7 @@
 
 #include "animation-internal.h"
 
-int displayPrivateIndex;
+int animDisplayPrivateIndex;
 CompMetadata animMetadata;
 
 static AnimEffect minimizeEffectType[] = {
@@ -3760,7 +3760,7 @@ static Bool animInitDisplay(CompPlugin * p, CompDisplay * d)
 	WRAP(ad, d, handleEvent, animHandleEvent);
 	WRAP(ad, d, handleCompizEvent, animHandleCompizEvent);
 
-	d->privates[displayPrivateIndex].ptr = ad;
+	d->privates[animDisplayPrivateIndex].ptr = ad;
 
 	return TRUE;
 }
@@ -3996,8 +3996,8 @@ static Bool animInit(CompPlugin * p)
 											 ANIM_SCREEN_OPTION_NUM))
 		return FALSE;
 		
-	displayPrivateIndex = allocateDisplayPrivateIndex();
-	if (displayPrivateIndex < 0)
+	animDisplayPrivateIndex = allocateDisplayPrivateIndex();
+	if (animDisplayPrivateIndex < 0)
 	{
 		compFiniMetadata (&animMetadata);
 		return FALSE;
@@ -4011,7 +4011,7 @@ static Bool animInit(CompPlugin * p)
 
 static void animFini(CompPlugin * p)
 {
-	freeDisplayPrivateIndex(displayPrivateIndex);
+	freeDisplayPrivateIndex(animDisplayPrivateIndex);
 	compFiniMetadata (&animMetadata);
 }
 

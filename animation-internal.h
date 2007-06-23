@@ -324,7 +324,7 @@ typedef struct RestackInfo
 	Bool raised;
 } RestackInfo;
 
-extern int displayPrivateIndex;
+extern int animDisplayPrivateIndex;
 extern CompMetadata animMetadata;
 
 typedef struct _AnimDisplay
@@ -583,7 +583,7 @@ typedef struct _AnimEffectProperties
 AnimEffectProperties *animEffectPropertiesTmp;
 
 #define GET_ANIM_DISPLAY(d)                                       \
-    ((AnimDisplay *) (d)->privates[displayPrivateIndex].ptr)
+    ((AnimDisplay *) (d)->privates[animDisplayPrivateIndex].ptr)
 
 #define ANIM_DISPLAY(d)                       \
     AnimDisplay *ad = GET_ANIM_DISPLAY (d)
