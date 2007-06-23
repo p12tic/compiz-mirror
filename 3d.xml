@@ -1,6 +1,17 @@
 <?xml version="1.0"?>
 <compiz>
 	<plugin name="3d" useBcop="true">
+		<short>3D Windows</short>
+		<long>Elevates windows while rotating the cube</long>
+		<category>Effects</category>
+		<deps>
+			<requirement>
+				<plugin>cube</plugin>
+			</requirement>
+			<relation type="after">
+				<plugin>cube</plugin>
+			</relation>
+		</deps>
 		<screen>
 			<group>
 				<short>Misc. Options</short>
