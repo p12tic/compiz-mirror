@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "focusfade.h"
 
 // =====================  Effect: Focus Fade  =========================
 

@@ -35,9 +35,8 @@
  */
 
 #include "animation-internal.h"
-#include "dream.h"
 
-void
+static void
 fxDreamModelStepObject(CompWindow * w,
 					   Model * model, Object * object, float forwardProgress)
 {

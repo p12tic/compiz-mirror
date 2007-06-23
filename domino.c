@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "domino.h"
 
 void fxDomino3DInit(CompScreen * s, CompWindow * w)
 {

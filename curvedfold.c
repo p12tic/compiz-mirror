@@ -35,11 +35,10 @@
  */
 
 #include "animation-internal.h"
-#include "curvedfold.h"
 
 // =====================  Effect: Curved Fold  =========================
 
-void
+static void
 fxCurvedFoldModelStepObject(CompWindow * w,
 							Model * model,
 							Object * object,

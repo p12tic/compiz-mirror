@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "glide.h"
 
 // =====================  Effect: Glide  =========================
 
@@ -77,7 +76,7 @@ float fxGlideAnimProgress(AnimWindow * aw)
 	return decelerateProgress2(forwardProgress);
 }
 
-void
+static void
 fxGlideModelStepObject(CompWindow * w,
 					   Model * model,
 					   Object * obj,

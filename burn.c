@@ -36,7 +36,6 @@
 
 #include "animation-internal.h"
 #include "animation_tex.h"
-#include "burn.h"
 
 // =====================  Effect: Burn  =========================
 
@@ -101,7 +100,7 @@ void fxBurnInit(CompScreen * s, CompWindow * w)
 	}
 }
 
-void
+static void
 fxBurnGenNewFire(CompScreen * s, ParticleSystem * ps, int x, int y,
 				 int width, int height, float size, float time)
 {
@@ -192,7 +191,7 @@ fxBurnGenNewFire(CompScreen * s, ParticleSystem * ps, int x, int y,
 
 }
 
-void
+static void
 fxBurnGenNewSmoke(CompScreen * s, ParticleSystem * ps, int x, int y,
 				  int width, int height, float size, float time)
 {
@@ -439,23 +438,5 @@ void fxBurnModelStep(CompScreen * s, CompWindow * w, float time)
 	aw->ps[1].y = WIN_Y(w);
 
 	modelCalcBounds(model);
-}
-
-void drawParticleSystems(CompScreen * s, CompWindow * w)
-{
-	ANIM_WINDOW(w);
-
-	if (aw->numPs)
-	{
-		int i = 0;
-
-		for (i = 0; i < aw->numPs; i++)
-		{
-			if (aw->ps[i].active && !WINDOW_INVISIBLE(w))
-			{
-				drawParticles(s, w, &aw->ps[i]);
-			}
-		}
-	}
 }
 

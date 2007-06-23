@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "fade.h"
 
 // =====================  Effect: Fade  =========================
 

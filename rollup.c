@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "rollup.h"
 
 // =====================  Effect: Roll Up  =========================
 
@@ -51,7 +50,7 @@ fxRollUpInitGrid(AnimScreen * as,
 		*gridHeight = 2;
 }
 
-void
+static void
 fxRollUpModelStepObject(CompWindow * w,
 						Model * model,
 						Object * object,

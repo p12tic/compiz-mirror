@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "explode3d.h"
 
 void fxExplode3DInit(CompScreen * s, CompWindow * w)
 {

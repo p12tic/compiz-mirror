@@ -77,23 +77,6 @@
 
 #include "animation-internal.h"
 
-#include "beamup.h"
-#include "burn.h"
-#include "curvedfold.h"
-#include "dodge.h"
-#include "domino.h"
-#include "dream.h"
-#include "explode3d.h"
-#include "fade.h"
-#include "focusfade.h"
-#include "glide.h"
-#include "horizontalfold.h"
-#include "leafspread.h"
-#include "magiclamp.h"
-#include "rollup.h"
-#include "wave.h"
-#include "zoomside.h"
-
 int displayPrivateIndex;
 CompMetadata animMetadata;
 
@@ -255,40 +238,6 @@ void modelCalcBounds(Model * model)
 		else if (model->objects[i].position.y > model->bottomRight.y)
 			model->bottomRight.y = model->objects[i].position.y;
 	}
-}
-
-Bool ensureLargerClipCapacity(PolygonSet * pset)
-{
-	if (pset->clipCapacity == pset->nClips)	// if list full
-	{
-		Clip4Polygons *newList = realloc
-				(pset->clips, sizeof(Clip4Polygons) *
-				 (pset->clipCapacity + ANIM_CLIP_LIST_INCREMENT));
-		if (!newList)
-			return FALSE;
-		// reset newly allocated part of this memory to 0
-		memset(newList + pset->clipCapacity,
-			   0, sizeof(Clip4Polygons) * ANIM_CLIP_LIST_INCREMENT);
-
-		int *newList2 = realloc
-				(pset->lastClipInGroup, sizeof(int) *
-				 (pset->clipCapacity + ANIM_CLIP_LIST_INCREMENT));
-		if (!newList2)
-		{
-			free(newList);
-			pset->clips = 0;
-			pset->lastClipInGroup = 0;
-			return FALSE;
-		}
-		// reset newly allocated part of this memory to 0
-		memset(newList2 + pset->clipCapacity,
-			   0, sizeof(int) * ANIM_CLIP_LIST_INCREMENT);
-
-		pset->clips = newList;
-		pset->clipCapacity += ANIM_CLIP_LIST_INCREMENT;
-		pset->lastClipInGroup = newList2;
-	}
-	return TRUE;
 }
 
 float defaultAnimProgress(AnimWindow * aw)
@@ -1149,7 +1098,7 @@ static Bool playingPolygonEffect(AnimScreen *as, AnimWindow *aw)
 	return (thickness > 1e-5); // glide is 3D if thickness > 0
 }
 
-void cleanUpParentChildChainItem(AnimScreen *as, AnimWindow *aw)
+static void cleanUpParentChildChainItem(AnimScreen *as, AnimWindow *aw)
 {
 	if (aw->winThisIsPaintedBefore && !aw->winThisIsPaintedBefore->destroyed)
 	{

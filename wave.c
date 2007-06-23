@@ -35,11 +35,10 @@
  */
 
 #include "animation-internal.h"
-#include "wave.h"
 
 // =====================  Effect: Wave  =========================
 
-void
+static void
 fxWaveModelStepObject(CompWindow * w,
 					  Model * model,
 					  Object * object,

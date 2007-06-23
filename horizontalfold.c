@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "horizontalfold.h"
 
 // =====================  Effect: Horizontal Folds  =========================
 
@@ -55,7 +54,7 @@ fxHorizontalFoldsInitGrid(AnimScreen * as,
 			as->opt[ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS].value.i;
 }
 
-void
+static void
 fxHorizontalFoldsModelStepObject(CompWindow * w,
 								 Model * model,
 								 Object * object,

@@ -35,11 +35,10 @@
  */
 
 #include "animation-internal.h"
-#include "dodge.h"
 
 // =====================  Effect: Dodge  =========================
 
-void
+static void
 fxDodgeProcessSubject (CompWindow *wCur,
 					   Region wRegion,
 					   Region dodgeRegion,
@@ -64,7 +63,7 @@ fxDodgeProcessSubject (CompWindow *wCur,
 		XUnionRegion(dodgeRegion, wCurRegion, dodgeRegion);
 }
 
-void
+static void
 fxDodgeFindDodgeBox (CompWindow *w, XRectangle *dodgeBox)
 {
 	ANIM_SCREEN(w->screen);

@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "leafspread.h"
 
 void fxLeafSpread3DInit(CompScreen * s, CompWindow * w)
 {

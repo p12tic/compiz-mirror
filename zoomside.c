@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "zoomside.h"
 
 // =====================  Effect: Zoom and Sidekick  =========================
 
@@ -57,7 +56,7 @@ void fxSidekickInit(CompScreen * s, CompWindow * w)
 
 
 
-void fxZoomAnimProgressDir(AnimScreen * as,
+static void fxZoomAnimProgressDir(AnimScreen * as,
 								  AnimWindow * aw,
 								  float *moveProgress,
 								  float *scaleProgress)
@@ -127,7 +126,7 @@ void fxZoomAnimProgressDir(AnimScreen * as,
 	}
 }
 
-void
+static void
 fxSidekickModelStepObject(CompWindow * w,
 						  Model * model,
 						  Object * object,
@@ -151,7 +150,7 @@ fxSidekickModelStepObject(CompWindow * w,
 	object->position.y += currentCenter.y;
 }
 
-void
+static void
 fxZoomModelStepObject(CompScreen *s, CompWindow * w,
 					  Model * model, Object * object,
 					  Point currentCenter, Point currentSize)

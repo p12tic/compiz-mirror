@@ -36,7 +36,6 @@
 
 #include "animation-internal.h"
 #include "animation_tex.h"
-#include "beamup.h"
 
 // =====================  Effect: Beam Up  =========================
 
@@ -92,7 +91,7 @@ void fxBeamUpInit(CompScreen * s, CompWindow * w)
 
 }
 
-void
+static void
 fxBeamUpGenNewFire(CompScreen * s, ParticleSystem * ps, int x, int y,
 				   int width, int height, float size, float time)
 {

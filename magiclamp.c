@@ -35,7 +35,6 @@
  */
 
 #include "animation-internal.h"
-#include "magiclamp.h"
 
 void
 fxMagicLampInitGrid(AnimScreen * as,
@@ -138,7 +137,7 @@ void fxMagicLampInit(CompScreen * s, CompWindow * w)
 		model->magicLampWaveCount = 0;
 }
 
-void
+static void
 fxMagicLampModelStepObject(CompWindow * w,
 						   Model * model,
 						   Object * object,

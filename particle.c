@@ -279,6 +279,24 @@ void drawParticles(CompScreen * s, CompWindow * w, ParticleSystem * ps)
 	glDisable(GL_BLEND);
 }
 
+void drawParticleSystems(CompScreen * s, CompWindow * w)
+{
+	ANIM_WINDOW(w);
+
+	if (aw->numPs)
+	{
+		int i = 0;
+
+		for (i = 0; i < aw->numPs; i++)
+		{
+			if (aw->ps[i].active && !WINDOW_INVISIBLE(w))
+			{
+				drawParticles(s, w, &aw->ps[i]);
+			}
+		}
+	}
+}
+
 void updateParticles(ParticleSystem * ps, float time)
 {
 	int i;
