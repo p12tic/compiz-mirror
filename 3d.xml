@@ -1,89 +1,89 @@
 <?xml version="1.0"?>
 <compiz>
-  <plugin name="3d" useBcop="true">
-    <screen>
-      <group>
-        <short>Misc. Options</short>
-        <option name="window_match" type="match">
-          <short>Window Match</short>
-          <long>Windows that should be handled by 3D</long>
-          <default>Toolbar | Utility | Dialog | Normal | Unknown</default>
-        </option>
-        <option name="space" type="float">
-          <short>Window Space</short>
-          <long>Change the amount of space between the windows.</long>
-          <default>0.02</default>
-          <min>0.0</min>
-          <max>1.0</max>
-          <precision>0.001</precision>
-        </option>
-        <option name="speed" type="float">
-          <short>Animation Speed</short>
-          <long>Change the speed of the 3D animation</long>
-          <default>0.02</default>
-          <min>0.0</min>
-          <max>1.0</max>
-          <precision>0.001</precision>
-        </option>
-        <option name="width" type="float">
-          <short>Window Width</short>
-          <long>Window width</long>
-          <default>0.3</default>
-          <min>0.0</min>
-          <max>1.0</max>
-          <precision>0.001</precision>
-        </option>
-        <option name="mipmaps" type="bool">
-          <short>Create Mipmaps</short>
-          <long>This will create mipmaps which improve overall texture appearence, and reduce jagged edges.</long>
-          <default>false</default>
-        </option>
-        <option name="disable_culling" type="bool">
-          <short>Draw Window Backsides</short>
-          <long>Enables the drawing of the backside of windows.</long>
-          <default>true</default>
-        </option>
-        <option name="disable_caps" type="bool">
-          <short>Disable Caps for Inside Cube</short>
-          <long>Disables the drawing of the cube caps when the inside cube mode is set.</long>
-          <default>true</default>
-        </option>
-        <option name="manual_only" type="bool">
-          <short>3D Only On Mouse Rotate</short>
-          <long>Initiates the 3D display only if rotate is mouse driven. (Ex. You rotate the cube via the mouse)</long>
-          <default>true</default>
-        </option>
-      </group>
-      <group>
-        <short>Corner Bevelling</short>
-        <option name="bevel" type="int">
-          <short>Bevel Corners</short>
-          <long>Roundoff corners for consistency with rounded decorations</long>
-          <default>0</default>
-          <min>0</min>
-          <max>20</max>
-        </option>
-        <option name="bevel_topleft" type="bool">
-          <short>Bevel Top Left</short>
-          <long>Bevel top left corner</long>
-          <default>true</default>
-        </option>
-        <option name="bevel_topright" type="bool">
-          <short>Bevel Top Right</short>
-          <long>Bevel top right corner</long>
-          <default>true</default>
-        </option>
-        <option name="bevel_bottomleft" type="bool">
-          <short>Bevel Bottom Left</short>
-          <long>Bevel bottom left corner</long>
-          <default>false</default>
-        </option>
-        <option name="bevel_bottomright" type="bool">
-          <short>Bevel Bottom Right</short>
-          <long>Bevel top bottom right corner</long>
-          <default>false</default>
-        </option>
-      </group>
-    </screen>
-  </plugin>
+	<plugin name="3d" useBcop="true">
+		<screen>
+			<group>
+				<short>Misc. Options</short>
+				<option name="window_match" type="match">
+					<short>Window Match</short>
+					<long>Windows that should be handled by 3D</long>
+					<default>Toolbar | Utility | Dialog | Normal | Unknown</default>
+				</option>
+				<option name="space" type="float">
+					<short>Window Space</short>
+					<long>Change the amount of space between the windows.</long>
+					<default>0.02</default>
+					<min>0.0</min>
+					<max>1.0</max>
+					<precision>0.001</precision>
+				</option>
+				<option name="speed" type="float">
+					<short>Animation Speed</short>
+					<long>Change the speed of the 3D animation</long>
+					<default>0.02</default>
+					<min>0.0</min>
+					<max>1.0</max>
+					<precision>0.001</precision>
+				</option>
+				<option name="width" type="float">
+					<short>Window Width</short>
+					<long>Window width</long>
+					<default>0.3</default>
+					<min>0.0</min>
+					<max>1.0</max>
+					<precision>0.001</precision>
+				</option>
+				<option name="mipmaps" type="bool">
+					<short>Create Mipmaps</short>
+					<long>This will create mipmaps which improve overall texture appearence, and reduce jagged edges.</long>
+					<default>false</default>
+				</option>
+				<option name="disable_culling" type="bool">
+					<short>Draw Window Backsides</short>
+					<long>Enables the drawing of the backside of windows.</long>
+					<default>true</default>
+				</option>
+				<option name="disable_caps" type="bool">
+					<short>Disable Caps for Inside Cube</short>
+					<long>Disables the drawing of the cube caps when the inside cube mode is set.</long>
+					<default>true</default>
+				</option>
+				<option name="manual_only" type="bool">
+					<short>3D Only On Mouse Rotate</short>
+					<long>Initiates the 3D display only if rotate is mouse driven. (Ex. You rotate the cube via the mouse)</long>
+					<default>true</default>
+				</option>
+			</group>
+			<group>
+				<short>Corner Bevelling</short>
+				<option name="bevel" type="int">
+					<short>Bevel Corners</short>
+					<long>Roundoff corners for consistency with rounded decorations</long>
+					<default>0</default>
+					<min>0</min>
+					<max>20</max>
+				</option>
+				<option name="bevel_topleft" type="bool">
+					<short>Bevel Top Left</short>
+					<long>Bevel top left corner</long>
+					<default>true</default>
+				</option>
+				<option name="bevel_topright" type="bool">
+					<short>Bevel Top Right</short>
+					<long>Bevel top right corner</long>
+					<default>true</default>
+				</option>
+				<option name="bevel_bottomleft" type="bool">
+					<short>Bevel Bottom Left</short>
+					<long>Bevel bottom left corner</long>
+					<default>false</default>
+				</option>
+				<option name="bevel_bottomright" type="bool">
+					<short>Bevel Bottom Right</short>
+					<long>Bevel top bottom right corner</long>
+					<default>false</default>
+				</option>
+			</group>
+		</screen>
+	</plugin>
 </compiz>
