@@ -302,6 +302,13 @@ typedef enum
 
 #define RANDOM_EFFECT_OFFSET 2 /* skip none and random */
 
+/* These macros definitions _always_ must match the number
+   of array items in the corresponding EffectType structure
+   in animation.c.
+   LAST_*_EFFECT always must be NUM_*_EFFECT - 1
+   LAST_RANDOM_*_EFFECT always must be LAST_*_EFFECT - RANDOM_EFFECT_OFFSET
+   */
+
 #define NUM_MINIMIZE_EFFECT 17
 #define LAST_MINIMIZE_EFFECT 16
 #define LAST_RANDOM_MINIMIZE_EFFECT 14

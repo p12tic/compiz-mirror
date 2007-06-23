@@ -80,6 +80,13 @@
 int animDisplayPrivateIndex;
 CompMetadata animMetadata;
 
+/*
+ * NOTE:
+ * Be sure to always update the NUM_EFFECT_TYPE
+ * macro definitions in animation-internal.h whenever
+ * elements of these arrays are added or removed.
+ */
+
 static AnimEffect minimizeEffectType[] = {
 	AnimEffectNone,
 	AnimEffectRandom,
