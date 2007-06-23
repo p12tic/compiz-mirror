@@ -40,7 +40,10 @@
 // =====================  Effect: Dodge  =========================
 
 void
-fxDodgeProcessSubject (CompWindow *wCur, Region wRegion, Region dodgeRegion)
+fxDodgeProcessSubject (CompWindow *wCur,
+					   Region wRegion,
+					   Region dodgeRegion,
+					   Bool alwaysInclude)
 {
 	XRectangle rect;
 	rect.x = WIN_X(wCur);
@@ -48,11 +51,16 @@ fxDodgeProcessSubject (CompWindow *wCur, Region wRegion, Region dodgeRegion)
 	rect.width = WIN_W(wCur);
 	rect.height = WIN_H(wCur);
 	Region wCurRegion = XCreateRegion();
-	Region intersectionRegion = XCreateRegion();
 	XUnionRectWithRegion(&rect, &emptyRegion, wCurRegion);
-	XIntersectRegion(wRegion, wCurRegion,
-					 intersectionRegion);
-	if (!XEmptyRegion(intersectionRegion))
+	if (!alwaysInclude)
+	{
+		Region intersectionRegion = XCreateRegion();
+		XIntersectRegion(wRegion, wCurRegion,
+						 intersectionRegion);
+		if (!XEmptyRegion(intersectionRegion))
+			XUnionRegion(dodgeRegion, wCurRegion, dodgeRegion);
+	}
+	else
 		XUnionRegion(dodgeRegion, wCurRegion, dodgeRegion);
 }
 
@@ -75,13 +83,38 @@ fxDodgeFindDodgeBox (CompWindow *w, XRectangle *dodgeBox)
 	rect.y = WIN_Y(w);
 	rect.width = WIN_W(w);
 	rect.height = WIN_H(w);
+
+	int dodgeMaxAmount = (int)aw->dodgeMaxAmount;
+
+	// to compute if subject(s) intersect with dodger w,
+	// enlarge dodger window's box so that it encloses all of the covered
+	// region during dodge movement. This corrects the animation when
+	// there are >1 subjects (a window with its dialog/utility windows).
+	switch (aw->dodgeDirection)
+	{
+		case 0:
+			rect.y += dodgeMaxAmount;
+			rect.height -= dodgeMaxAmount;
+			break;
+		case 1:
+			rect.height += dodgeMaxAmount;
+			break;
+		case 2:
+			rect.x += dodgeMaxAmount;
+			rect.width -= dodgeMaxAmount;
+			break;
+		case 3:
+			rect.width += dodgeMaxAmount;
+			break;
+	}
 	XUnionRectWithRegion(&rect, &emptyRegion, wRegion);
 
 	AnimWindow *awCur;
 	CompWindow *wCur = aw->dodgeSubjectWin;
 	for (; wCur; wCur = awCur->moreToBePaintedNext)
 	{
-		fxDodgeProcessSubject(wCur, wRegion, dodgeRegion);
+		fxDodgeProcessSubject(wCur, wRegion, dodgeRegion,
+							  wCur == aw->dodgeSubjectWin);
 		awCur = GET_ANIM_WINDOW(wCur, as);
 	}
 
@@ -89,7 +122,7 @@ fxDodgeFindDodgeBox (CompWindow *w, XRectangle *dodgeBox)
 	wCur = awSubj->moreToBePaintedPrev;
 	for (; wCur; wCur = awCur->moreToBePaintedPrev)
 	{
-		fxDodgeProcessSubject(wCur, wRegion, dodgeRegion);
+		fxDodgeProcessSubject(wCur, wRegion, dodgeRegion, FALSE);
 		awCur = GET_ANIM_WINDOW(wCur, as);
 	}
 
@@ -112,18 +145,22 @@ fxDodgeAnimStep (CompScreen * s, CompWindow * w, float time)
 			(1 - aw->transformStartProgress);
 	}
 
-	if (!aw->isDodgeSubject)
+	if (!aw->isDodgeSubject && aw->transformProgress <= 0.5f)
 	{
 		XRectangle dodgeBox;
 		fxDodgeFindDodgeBox (w, &dodgeBox);
 
 		// Update dodge amount if subject window is moved during dodge
-		int newDodgeAmount =
+		float newDodgeAmount =
 			DODGE_AMOUNT_BOX(dodgeBox, w, aw->dodgeDirection);
 
 		// Only update if amount got larger
-		if (abs(newDodgeAmount) > abs(aw->dodgeMaxAmount))
+		if (((newDodgeAmount > 0 && aw->dodgeMaxAmount > 0) ||
+			 (newDodgeAmount < 0 && aw->dodgeMaxAmount < 0)) &&
+			abs(newDodgeAmount) > abs(aw->dodgeMaxAmount))
+		{
 			aw->dodgeMaxAmount = newDodgeAmount;
+		}
 	}
 }
 
