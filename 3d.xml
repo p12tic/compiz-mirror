@@ -8,7 +8,7 @@
 			<requirement>
 				<plugin>cube</plugin>
 			</requirement>
-			<relation type="after">
+			<relation type="before">
 				<plugin>cube</plugin>
 			</relation>
 		</deps>
