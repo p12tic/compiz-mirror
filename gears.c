@@ -259,12 +259,12 @@ static void gearsPaintInside (CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	CompTransform mT = *transform;
 	
 	(*s->applyScreenTransform) (s, &sA, output, &mT);
+	glPushMatrix();
 	glLoadMatrixf (mT.m);
     glTranslatef (cs->outputXOffset, -cs->outputYOffset, 0.0f);
     glScalef (cs->outputXScale, cs->outputYScale, 1.0f);
 
 	Bool enabledCull = FALSE;
-	glPushMatrix();
 	glPushAttrib(GL_COLOR_BUFFER_BIT | GL_TEXTURE_BIT);
 	glDisable(GL_BLEND);
 
