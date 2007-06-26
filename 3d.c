@@ -1054,6 +1054,9 @@ static void tdFiniDisplay(CompPlugin * p, CompDisplay * d)
 
 	freeScreenPrivateIndex(d, tdd->screenPrivateIndex);
 
+	UNWRAP(tdd, d, initPluginForDisplay);
+	UNWRAP(tdd, d, finiPluginForDisplay);
+
 	free(tdd);
 }
 
