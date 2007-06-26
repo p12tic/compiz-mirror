@@ -45,37 +45,6 @@ TODO:
 
 #define PI 3.14159265359f
 
-#define MULTM(x,y,z) \
-z[0] = x[0] * y[0] + x[4] * y[1] + x[8] * y[2] + x[12] * y[3]; \
-z[1] = x[1] * y[0] + x[5] * y[1] + x[9] * y[2] + x[13] * y[3]; \
-z[2] = x[2] * y[0] + x[6] * y[1] + x[10] * y[2] + x[14] * y[3]; \
-z[3] = x[3] * y[0] + x[7] * y[1] + x[11] * y[2] + x[15] * y[3]; \
-z[4] = x[0] * y[4] + x[4] * y[5] + x[8] * y[6] + x[12] * y[7]; \
-z[5] = x[1] * y[4] + x[5] * y[5] + x[9] * y[6] + x[13] * y[7]; \
-z[6] = x[2] * y[4] + x[6] * y[5] + x[10] * y[6] + x[14] * y[7]; \
-z[7] = x[3] * y[4] + x[7] * y[5] + x[11] * y[6] + x[15] * y[7]; \
-z[8] = x[0] * y[8] + x[4] * y[9] + x[8] * y[10] + x[12] * y[11]; \
-z[9] = x[1] * y[8] + x[5] * y[9] + x[9] * y[10] + x[13] * y[11]; \
-z[10] = x[2] * y[8] + x[6] * y[9] + x[10] * y[10] + x[14] * y[11]; \
-z[11] = x[3] * y[8] + x[7] * y[9] + x[11] * y[10] + x[15] * y[11]; \
-z[12] = x[0] * y[12] + x[4] * y[13] + x[8] * y[14] + x[12] * y[15]; \
-z[13] = x[1] * y[12] + x[5] * y[13] + x[9] * y[14] + x[13] * y[15]; \
-z[14] = x[2] * y[12] + x[6] * y[13] + x[10] * y[14] + x[14] * y[15]; \
-z[15] = x[3] * y[12] + x[7] * y[13] + x[11] * y[14] + x[15] * y[15];
-
-#define MULTMV(m, v) { \
-float v0 = m[0]*v[0] + m[4]*v[1] + m[8]*v[2] + m[12]*v[3]; \
-float v1 = m[1]*v[0] + m[5]*v[1] + m[9]*v[2] + m[13]*v[3]; \
-float v2 = m[2]*v[0] + m[6]*v[1] + m[10]*v[2] + m[14]*v[3]; \
-float v3 = m[3]*v[0] + m[7]*v[1] + m[11]*v[2] + m[15]*v[3]; \
-v[0] = v0; v[1] = v1; v[2] = v2; v[3] = v3; }
-
-#define DIVV(v) \
-v[0] /= v[3]; \
-v[1] /= v[3]; \
-v[2] /= v[3]; \
-v[3] /= v[3];
-
 static int displayPrivateIndex;
 static int cubeDisplayPrivateIndex;
 
@@ -103,10 +72,14 @@ typedef struct _tdScreen
 	Bool tdWindowExists;
 	//Bool reorder;
 
-	PreparePaintScreenProc preparePaintScreen;
-	PaintTransformedOutputProc paintTransformedOutput;
-	PaintOutputProc paintOutput;
-	DonePaintScreenProc donePaintScreen;
+	PreparePaintScreenProc		preparePaintScreen;
+	PaintTransformedOutputProc	paintTransformedOutput;
+	PaintOutputProc			paintOutput;
+	DonePaintScreenProc		donePaintScreen;
+	InitWindowWalkerProc		initWindowWalker;
+
+	CompWindow* firstFTB;
+	CompWindow* lastBTF;
 
 	PaintWindowProc paintWindow;
 
@@ -129,6 +102,7 @@ typedef struct _tdWindow
 {
 	float z;
 	float currentZ;
+	Bool ftb;
 } tdWindow;
 
 
@@ -475,72 +449,8 @@ tdPaintWindow(CompWindow * w,
 	CUBE_SCREEN (w->screen);
 	TD_WINDOW(w);
 
-	int output = (tds->tmpOutput->id == ~0) ? 0 : tds->tmpOutput->id;
+	// int output = (tds->tmpOutput->id == ~0) ? 0 : tds->tmpOutput->id;
 	int width = w->screen->width;
-
-	if (DO_3D(w->screen) && tds->reorderWindowPainting)
-	{
-		// Window painting is done twice, once in reverse mode and one in normal.
-		// We should paint it only in the needed mode.
-
-		if (((w->attrib.y + w->attrib.height) > w->screen->workArea.height)
-			&& (w->attrib.x > w->screen->workArea.x) &&
-			((w->attrib.x + w->attrib.width) < w->screen->workArea.width))
-
-			mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-
-		float mvp[16];
-
-		MULTM(w->screen->projection, transform->m, mvp);
-
-		float pntA[4] = { w->screen->outputDev[output].region.extents.x1,
-			w->screen->outputDev[output].region.extents.y1,
-			tdw->currentZ, 1
-		};
-
-		float pntB[4] = { w->screen->outputDev[output].region.extents.x2,
-			w->screen->outputDev[output].region.extents.y1,
-			tdw->currentZ, 1
-		};
-
-		float pntC[4] =
-				{ w->screen->outputDev[output].region.extents.x1 +
-			w->screen->outputDev[output].width / 2.0f,
-			w->screen->outputDev[output].region.extents.y1 +
-					w->screen->outputDev[output].height / 2.0f,
-			tdw->currentZ, 1
-		};
-
-		MULTMV(mvp, pntA);
-		DIVV(pntA);
-
-		MULTMV(mvp, pntB);
-		DIVV(pntB);
-
-		MULTMV(mvp, pntC);
-		DIVV(pntC);
-
-		float vecA[3] = { pntC[0] - pntA[0], pntC[1] - pntA[1],
-			pntC[2] - pntA[2]
-		};
-		float vecB[3] = { pntC[0] - pntB[0], pntC[1] - pntB[1],
-			pntC[2] - pntB[2]
-		};
-
-		float ortho[3] = { vecA[1] * vecB[2] - vecA[2] * vecB[1],
-			vecA[2] * vecB[0] - vecA[0] * vecB[2],
-			vecA[0] * vecB[1] - vecA[1] * vecB[0]
-		};
-
-		if (ortho[2] > 0.0f)	//The window is reversed, should be painted front to back.
-		{
-			if (mask & PAINT_WINDOW_BACK_TO_FRONT_MASK)
-				return (occlusionDetection)? FALSE: TRUE;
-		}
-		
-		else if (mask & PAINT_WINDOW_FRONT_TO_BACK_MASK)
-			return (occlusionDetection)? FALSE: TRUE;
-	}
 
 	CompTransform wTransform = *transform;
 
@@ -552,7 +462,7 @@ tdPaintWindow(CompWindow * w,
 
 		mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
-		if (mask & PAINT_WINDOW_FRONT_TO_BACK_MASK)
+		if (tdw->ftb)
 			glNormal3f(0.0, 0.0, 1.0);
 		else
 			glNormal3f(0.0, 0.0, -1.0);
@@ -613,7 +523,7 @@ tdPaintWindow(CompWindow * w,
 
 		if ((wwidth != 0) && ww && wh && !w->shaded && !occlusionDetection)
 		{
-			if (mask & PAINT_WINDOW_BACK_TO_FRONT_MASK)
+			if (tdw->ftb)
 			{
 				glEnable(GL_CULL_FACE);	// Make sure culling is on.
 				glCullFace(GL_FRONT);
@@ -769,7 +679,7 @@ tdPaintWindow(CompWindow * w,
 			glEnd();
 			glPopMatrix();
 
-			if (mask & PAINT_WINDOW_FRONT_TO_BACK_MASK)
+			if (tdw->ftb)
 			{
 				glEnable(GL_CULL_FACE);	// Re-enable culling.
 				glCullFace(GL_FRONT);
@@ -820,33 +730,44 @@ tdPaintWindow(CompWindow * w,
 
 static void
 tdPaintTransformedOutput(CompScreen * s,
-						 const ScreenPaintAttrib * sAttrib,
-						 const CompTransform    *transform,
-						 Region region, CompOutput *output,
-						 unsigned int mask)
+			 const ScreenPaintAttrib * sAttrib,
+			 const CompTransform    *transform,
+			 Region region, CompOutput *output,
+			 unsigned int mask)
 {
 	TD_SCREEN(s);
 	CUBE_SCREEN(s);
+
+	CompWindow* now;
+	CompWindow* firstFTB = NULL;
+	CompWindow* lastBTF = NULL;
 
 	tds->reorderWindowPainting = FALSE;
 
 	tds->tmpOutput = output;
 
-	if (DO_3D(s))
+	if (DO_3D(s) || tds->tdWindowExists)
 	{
 		if (tdGetMipmaps(s))
 			s->display->textureFilter = GL_LINEAR_MIPMAP_LINEAR;
 
-		/* Front to back should always be done.
-		   If FTB is already in mask, then the viewport is reversed, and all windows should be reversed.
-		   If BTF is in mask, the viewport isn't reversed, but some of the windows there might be, so we set FTB in addition to BTF, and check for each window what mode it should use... */
-
-		if (!(mask & PAINT_SCREEN_ORDER_FRONT_TO_BACK_MASK) && cs->invert != 1)
+		for (now = s->windows; now; now = now->next)
 		{
-			tds->reorderWindowPainting = TRUE;
-			mask |= PAINT_SCREEN_ORDER_FRONT_TO_BACK_MASK | PAINT_SCREEN_ORDER_BACK_TO_FRONT_MASK;
+			TD_WINDOW(now);
+
+			float vPoints[3][3] = { { -0.5, 0.0, cs->distance + tdw->currentZ},
+						{ 0.0, 0.5, cs->distance + tdw->currentZ},
+						{ 0.0, 0.0, cs->distance + tdw->currentZ}};
+			
+			tdw->ftb = cs->checkOrientation (s, sAttrib, transform, output, vPoints);
+			if (tdw->ftb && !firstFTB)
+				firstFTB = now;
+			else if (!tdw->ftb)
+				lastBTF = now;
 		}
 	}
+
+	tds->firstFTB = firstFTB;
 
 	UNWRAP(tds, s, paintTransformedOutput);
 	(*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
@@ -930,27 +851,102 @@ static void tdDonePaintScreen(CompScreen * s)
 	WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
 }
 
+static CompWindow *
+tdWalkFirst (CompScreen *s)
+{
+	TD_SCREEN(s);
+
+	if (tds->lastBTF == NULL)
+		return s->reverseWindows;
+	return s->windows;
+}
+
+static CompWindow *
+tdWalkLast (CompScreen *s)
+{
+	TD_SCREEN(s);
+
+	if (tds->firstFTB == NULL)
+		return s->reverseWindows;
+	return tds->firstFTB;
+}
+
+static CompWindow *
+tdWalkNext (CompWindow *w)
+{
+	TD_SCREEN(w->screen);
+	TD_WINDOW(w);
+
+	if (tdw->ftb)
+	{
+		if (w == tds->firstFTB)
+			return NULL;
+		return w->prev;
+	}
+
+	if (w == tds->lastBTF)
+		return w->screen->reverseWindows;
+	return w->next;
+}
+
+static CompWindow *
+tdWalkPrev (CompWindow *w)
+{
+	TD_SCREEN(w->screen);
+	TD_WINDOW(w);
+
+	if (tdw->ftb)
+	{
+		if (w == w->screen->reverseWindows)
+			return tds->lastBTF;
+		return w->next;
+	}
+
+	return w->prev;
+}
+
+static void
+tdInitWindowWalker (CompScreen *s, CompWalker* walker)
+{
+	TD_SCREEN (s);
+	CUBE_SCREEN (s);
+
+	if (DO_3D(s) || tds->tdWindowExists)
+	{
+		walker->first = tdWalkFirst;
+		walker->last =  tdWalkLast;
+		walker->next =  tdWalkNext;
+		walker->prev =  tdWalkPrev;
+
+		return;
+	}
+
+	UNWRAP (tds, s, initWindowWalker);
+	(*s->initWindowWalker) (s, walker);
+	WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
+}
+
 static Bool tdInitDisplay(CompPlugin * p, CompDisplay * d)
 {
 	tdDisplay *tdd;
-    CompPlugin *cube = findActivePlugin ("cube");
-    CompOption *option;
-    int nOption;
+	CompPlugin *cube = findActivePlugin ("cube");
+	CompOption *option;
+	int nOption;
 
-    if (!cube || !cube->vTable->getDisplayOptions)
+	if (!cube || !cube->vTable->getDisplayOptions)
 		return FALSE;
 
-    option = (*cube->vTable->getDisplayOptions) (cube, d, &nOption);
+	option = (*cube->vTable->getDisplayOptions) (cube, d, &nOption);
 
-    if (getIntOptionNamed (option, nOption, "abi", 0) != CUBE_ABIVERSION)
-    {
+	if (getIntOptionNamed (option, nOption, "abi", 0) != CUBE_ABIVERSION)
+	{
 		compLogMessage (d, "3d", CompLogLevelError,
 						"cube ABI version mismatch");
 		return FALSE;
-    }
+	}
 
-    cubeDisplayPrivateIndex = getIntOptionNamed (option, nOption, "index", -1);
-    if (cubeDisplayPrivateIndex < 0)
+	cubeDisplayPrivateIndex = getIntOptionNamed (option, nOption, "index", -1);
+	if (cubeDisplayPrivateIndex < 0)
 		return FALSE;
 
 	tdd = malloc(sizeof(tdDisplay));
@@ -1011,6 +1007,7 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	WRAP(tds, s, paintOutput, tdPaintOutput);
 	WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
 	WRAP(tds, s, preparePaintScreen, tdPreparePaintScreen);
+	WRAP(tds, s, initWindowWalker, tdInitWindowWalker);
 
 	s->privates[tdd->screenPrivateIndex].ptr = tds;
 
@@ -1028,6 +1025,7 @@ static void tdFiniScreen(CompPlugin * p, CompScreen * s)
 	UNWRAP(tds, s, paintOutput);
 	UNWRAP(tds, s, donePaintScreen);
 	UNWRAP(tds, s, preparePaintScreen);
+	UNWRAP(tds, s, initWindowWalker);
 
 	free(tds);
 }
@@ -1073,7 +1071,7 @@ static void tdFini(CompPlugin * p)
 }
 
 CompPluginDep tdDeps[] = {
-	{CompPluginRuleAfter, "decoration"}
+	{CompPluginRuleBefore, "cube"}
 	,
 };
 
