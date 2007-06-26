@@ -94,6 +94,8 @@ typedef struct _tdScreen
 
 	int currentScreenNum;
 
+	Bool active;
+
 	Bool reorderWindowPainting;
 	CompOutput *tmpOutput;
 } tdScreen;
@@ -204,9 +206,6 @@ static Bool differentResolutions(CompScreen * s)
 
 #define IS_IN_VIEWPORT(w, i) ( ( LEFT_VIEWPORT(w) > RIGHT_VIEWPORT(w) && !(LEFT_VIEWPORT(w) > i && i > RIGHT_VIEWPORT(w)) ) \
                                 || ( LEFT_VIEWPORT(w) <= i && i <= RIGHT_VIEWPORT(w) ) )
-
-#define DO_3D(s) ((cs->rotationState != RotationNone) && !(tdGetManualOnly(s) && \
-			     (cs->rotationState != RotationManual)))
 
 static void reorder(CompScreen * screen)
 {
@@ -357,6 +356,10 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 	TD_SCREEN(screen);
 	CUBE_SCREEN (screen);
 
+	tds->active = (cs->rotationState != RotationNone) && 
+	              !(tdGetManualOnly(screen) && 
+			(cs->rotationState != RotationManual));
+
 	if (tds->currentViewportNum != screen->hsize
 		|| tds->currentScreenNum != screen->nOutputDev
 		|| tds->currentDifferentResolutions != differentResolutions(screen))
@@ -373,7 +376,7 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 			tds->xMove = 0.0f;
 	}
 
-	if (!DO_3D(screen))
+	if (tds->active)
 	{
 		//tds->reorder = TRUE;
 
@@ -746,7 +749,7 @@ tdPaintTransformedOutput(CompScreen * s,
 
 	tds->tmpOutput = output;
 
-	if (DO_3D(s) || tds->tdWindowExists)
+	if (tds->active ||  tds->tdWindowExists)
 	{
 		if (tdGetMipmaps(s))
 			s->display->textureFilter = GL_LINEAR_MIPMAP_LINEAR;
@@ -783,9 +786,8 @@ tdPaintOutput(CompScreen * s,
 	Bool status;
 
 	TD_SCREEN(s);
-	CUBE_SCREEN(s);
 
-	if (DO_3D(s) || tds->tdWindowExists)
+	if (tds->active || tds->tdWindowExists)
 	{
 		mask |= PAINT_SCREEN_TRANSFORMED_MASK |
 				PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
@@ -809,7 +811,7 @@ static void tdDonePaintScreen(CompScreen * s)
 	tdDisableCapsEvent(s, FALSE);
 	tdPaintAllViewportsEvent(s, FALSE);
 
-	if (DO_3D(s) || tds->tdWindowExists)
+	if (tds->active || tds->tdWindowExists)
 	{
 		float aim = 0.0f;
 
@@ -822,7 +824,7 @@ static void tdDonePaintScreen(CompScreen * s)
 			tdw = GET_TD_WINDOW(w, GET_TD_SCREEN(w->screen,
 									GET_TD_DISPLAY(w->screen->display)));
 
-			if (DO_3D(s))
+			if (tds->active)
 			{
 				if (cs->invert == 1)
 					aim = tdw->z - tds->maxZ;
@@ -909,9 +911,8 @@ static void
 tdInitWindowWalker (CompScreen *s, CompWalker* walker)
 {
 	TD_SCREEN (s);
-	CUBE_SCREEN (s);
 
-	if (DO_3D(s) || tds->tdWindowExists)
+	if (tds->active || tds->tdWindowExists)
 	{
 		walker->first = tdWalkFirst;
 		walker->last =  tdWalkLast;
