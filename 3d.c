@@ -530,7 +530,7 @@ tdPaintWindow(CompWindow * w,
 
 		if ((wwidth != 0) && ww && wh && !w->shaded && !occlusionDetection)
 		{
-			if (tdw->ftb)
+			if (!tdw->ftb)
 			{
 				glEnable(GL_CULL_FACE);	// Make sure culling is on.
 				glCullFace(GL_FRONT);
