@@ -916,21 +916,32 @@ tdWalkPrev (CompWindow *w)
 static void
 tdInitWindowWalker (CompScreen *s, CompWalker* walker)
 {
-	TD_SCREEN (s);
-
-	if (tds->active || tds->tdWindowExists)
-	{
-		walker->first = tdWalkFirst;
-		walker->last =  tdWalkLast;
-		walker->next =  tdWalkNext;
-		walker->prev =  tdWalkPrev;
-
-		return;
-	}
+	TD_SCREEN(s);
+	CUBE_SCREEN(s);
 
 	UNWRAP (tds, s, initWindowWalker);
 	(*s->initWindowWalker) (s, walker);
 	WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
+
+	if (tds->active || tds->tdWindowExists)
+	{
+		if (!cs->paintOrder == BTF)
+		{
+			walker->first = tdWalkFirst;
+			walker->last =  tdWalkLast;
+			walker->next =  tdWalkNext;
+			walker->prev =  tdWalkPrev;
+		}
+
+		else
+		{
+			// Cube will flip it back for us
+			walker->last  = tdWalkFirst;
+			walker->first = tdWalkLast;
+			walker->prev  = tdWalkNext;
+			walker->next  = tdWalkPrev;
+		}
+	}
 }
 
 static Bool tdInitDisplay(CompPlugin * p, CompDisplay * d)
