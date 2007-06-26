@@ -747,7 +747,7 @@ tdPaintTransformedOutput(CompScreen * s,
 
 	CompWindow* now;
 	CompWindow* firstFTB = NULL;
-	CompWindow* lastBTF = s->reverseWindows;
+	CompWindow* lastBTF = NULL;
 
 	tds->reorderWindowPainting = FALSE;
 
@@ -764,9 +764,9 @@ tdPaintTransformedOutput(CompScreen * s,
 			
 			if (!firstFTB)
 			{
-				float vPoints[3][3] = { { -0.5, 0.0, cs->distance + tdw->currentZ},
-							{ 0.0, 0.5, cs->distance + tdw->currentZ},
-							{ 0.0, 0.0, cs->distance + tdw->currentZ}};
+				float vPoints[3][3] = { { -0.5, 0.0, (cs->invert * cs->distance) + tdw->currentZ},
+							{ 0.0, 0.5, (cs->invert * cs->distance) + tdw->currentZ},
+							{ 0.0, 0.0, (cs->invert * cs->distance) + tdw->currentZ}};
 				
 				tdw->ftb = cs->checkOrientation (s, sAttrib, transform, output, vPoints);
 				
@@ -1086,7 +1086,7 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	tds->xMove = 0.0f;
 
 	tds->firstFTB = NULL;
-	tds->lastBTF = s->reverseWindows;
+	tds->lastBTF = NULL;
 	
 	s->privates[tdd->screenPrivateIndex].ptr = tds;
 
