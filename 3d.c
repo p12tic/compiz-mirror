@@ -757,16 +757,22 @@ tdPaintTransformedOutput(CompScreen * s,
 		for (now = s->windows; now; now = now->next)
 		{
 			TD_WINDOW(now);
-
-			float vPoints[3][3] = { { -0.5, 0.0, cs->distance + tdw->currentZ},
-						{ 0.0, 0.5, cs->distance + tdw->currentZ},
-						{ 0.0, 0.0, cs->distance + tdw->currentZ}};
 			
-			tdw->ftb = cs->checkOrientation (s, sAttrib, transform, output, vPoints);
-			if (tdw->ftb && !firstFTB)
-				firstFTB = now;
-			else if (!tdw->ftb)
-				lastBTF = now;
+			if (!firstFTB)
+			{
+				float vPoints[3][3] = { { -0.5, 0.0, cs->distance + tdw->currentZ},
+							{ 0.0, 0.5, cs->distance + tdw->currentZ},
+							{ 0.0, 0.0, cs->distance + tdw->currentZ}};
+				
+				tdw->ftb = cs->checkOrientation (s, sAttrib, transform, output, vPoints);
+				
+				if (tdw->ftb)
+					firstFTB = now;
+				else
+					lastBTF = now;
+			}
+			else
+				tdw->ftb = TRUE;
 		}
 	}
 
