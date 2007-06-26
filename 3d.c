@@ -63,6 +63,10 @@ typedef struct _revertReorder
 typedef struct _tdDisplay
 {
 	int screenPrivateIndex;
+	Bool active;
+
+	InitPluginForDisplayProc initPluginForDisplay;
+	FiniPluginForDisplayProc finiPluginForDisplay;
 } tdDisplay;
 
 typedef struct _tdScreen
@@ -424,7 +428,7 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 			tds->maxZ = tdw->z;
 	}
 
-	if (tds->maxZ > 0.0f && cs->invert == 1 && tdGetDisableCaps(screen))
+	if (tds->maxZ > 0.0f && cs->invert == -1 && tdGetDisableCaps(screen))
 		tdDisableCapsEvent(screen, TRUE);
 
 	reorder(screen);
@@ -832,7 +836,7 @@ static void tdDonePaintScreen(CompScreen * s)
 
 			if (tds->active)
 			{
-				if (cs->invert == 1)
+				if (cs->invert == -1)
 					aim = tdw->z - tds->maxZ;
 				else
 					aim = tdw->z;
@@ -923,49 +927,106 @@ tdInitWindowWalker (CompScreen *s, CompWalker* walker)
 	(*s->initWindowWalker) (s, walker);
 	WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
 
-	if (tds->active || tds->tdWindowExists)
+	if ((tds->active || tds->tdWindowExists) &&
+	     cs->paintOrder == BTF)
 	{
-		if (!cs->paintOrder == BTF)
-		{
-			walker->first = tdWalkFirst;
-			walker->last =  tdWalkLast;
-			walker->next =  tdWalkNext;
-			walker->prev =  tdWalkPrev;
-		}
+		walker->first = tdWalkFirst;
+		walker->last =  tdWalkLast;
+		walker->next =  tdWalkNext;
+		walker->prev =  tdWalkPrev;
+	}
 
-		else
+}
+
+static Bool tdInitPluginForDisplay (CompPlugin *p, CompDisplay *d)
+{
+        Bool status;
+        TD_DISPLAY(d);
+
+        if (strcmp(p->vTable->name, "cube") == 0)
+        {
+                CompOption *option;
+                int nOption;
+                Bool valid = TRUE;
+                if (!p->vTable->getDisplayOptions)
+                {
+                        compLogMessage (d, "3d", CompLogLevelError,
+                                        "can't get cube plugin ref");
+                        valid = FALSE;
+                }
+
+                else {
+
+                        option = (*p->vTable->getDisplayOptions) (p, d, &nOption);
+
+                        if (getIntOptionNamed (option, nOption, "abi", 0) != CUBE_ABIVERSION)
+                        {
+                                compLogMessage (d, "3d", CompLogLevelError,
+                                                "cube ABI version mismatch");
+                                valid = FALSE;
+
+                        }
+
+                        else
+                        {
+                                cubeDisplayPrivateIndex = getIntOptionNamed (option, nOption, "index", -1);
+                                if (cubeDisplayPrivateIndex < 0)
+                                        valid = FALSE;
+                        }
+                }
+		if (valid)
 		{
-			// Cube will flip it back for us
-			walker->last  = tdWalkFirst;
-			walker->first = tdWalkLast;
-			walker->prev  = tdWalkNext;
-			walker->next  = tdWalkPrev;
+			CompScreen *s;
+
+			printf("Got cube, wrapping.\n");
+
+			for (s = d->screens; s; s = s->next)
+			{
+				TD_SCREEN(s);
+				WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
+				WRAP(tds, s, paintWindow, tdPaintWindow);
+				WRAP(tds, s, paintOutput, tdPaintOutput);
+				WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
+				WRAP(tds, s, preparePaintScreen, tdPreparePaintScreen);
+				WRAP(tds, s, initWindowWalker, tdInitWindowWalker);
+
+			}
 		}
 	}
+
+        UNWRAP (tdd, d, initPluginForDisplay);
+        status = (*d->initPluginForDisplay) (p, d);
+        WRAP (tdd, d, initPluginForDisplay, tdInitPluginForDisplay);
+
+        return status;
+}
+
+static void tdFiniPluginForDisplay (CompPlugin *p, CompDisplay *d)
+{
+        TD_DISPLAY(d);
+        if (strcmp(p->vTable->name, "cube") == 0)
+	{
+		CompScreen *s;
+		for (s = d->screens; s; s = s->next)
+		{
+			TD_SCREEN(s);
+			UNWRAP(tds, s, paintTransformedOutput);
+			UNWRAP(tds, s, paintWindow);
+			UNWRAP(tds, s, paintOutput);
+			UNWRAP(tds, s, donePaintScreen);
+			UNWRAP(tds, s, preparePaintScreen);
+			UNWRAP(tds, s, initWindowWalker);
+		}
+	}
+
+	UNWRAP (tdd, d, finiPluginForDisplay);
+	(*d->finiPluginForDisplay) (p, d);
+	WRAP (tdd, d, finiPluginForDisplay, tdFiniPluginForDisplay);
 }
 
 static Bool tdInitDisplay(CompPlugin * p, CompDisplay * d)
 {
 	tdDisplay *tdd;
-	CompPlugin *cube = findActivePlugin ("cube");
-	CompOption *option;
-	int nOption;
-
-	if (!cube || !cube->vTable->getDisplayOptions)
-		return FALSE;
-
-	option = (*cube->vTable->getDisplayOptions) (cube, d, &nOption);
-
-	if (getIntOptionNamed (option, nOption, "abi", 0) != CUBE_ABIVERSION)
-	{
-		compLogMessage (d, "3d", CompLogLevelError,
-						"cube ABI version mismatch");
-		return FALSE;
-	}
-
-	cubeDisplayPrivateIndex = getIntOptionNamed (option, nOption, "index", -1);
-	if (cubeDisplayPrivateIndex < 0)
-		return FALSE;
 
 	tdd = malloc(sizeof(tdDisplay));
 	if (!tdd)
@@ -979,6 +1040,9 @@ static Bool tdInitDisplay(CompPlugin * p, CompDisplay * d)
 	}
 
 	d->privates[displayPrivateIndex].ptr = tdd;
+
+	WRAP(tdd, d, initPluginForDisplay, tdInitPluginForDisplay);
+	WRAP(tdd, d, finiPluginForDisplay, tdFiniPluginForDisplay);
 
 	return TRUE;
 }
@@ -1020,13 +1084,6 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 
 	tds->xMove = 0.0f;
 
-	WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
-	WRAP(tds, s, paintWindow, tdPaintWindow);
-	WRAP(tds, s, paintOutput, tdPaintOutput);
-	WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
-	WRAP(tds, s, preparePaintScreen, tdPreparePaintScreen);
-	WRAP(tds, s, initWindowWalker, tdInitWindowWalker);
-
 	s->privates[tdd->screenPrivateIndex].ptr = tds;
 
 	return TRUE;
@@ -1037,14 +1094,7 @@ static void tdFiniScreen(CompPlugin * p, CompScreen * s)
 	TD_SCREEN(s);
 
 	freeWindowPrivateIndex(s, tds->windowPrivateIndex);
-
-	UNWRAP(tds, s, paintTransformedOutput);
-	UNWRAP(tds, s, paintWindow);
-	UNWRAP(tds, s, paintOutput);
-	UNWRAP(tds, s, donePaintScreen);
-	UNWRAP(tds, s, preparePaintScreen);
-	UNWRAP(tds, s, initWindowWalker);
-
+	
 	free(tds);
 }
 
