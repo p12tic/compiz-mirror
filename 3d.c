@@ -83,7 +83,6 @@ typedef struct _tdScreen
 	InitWindowWalkerProc		initWindowWalker;
 
 	CompWindow* firstFTB;
-	CompWindow* lastBTF;
 
 	PaintWindowProc paintWindow;
 
@@ -747,7 +746,6 @@ tdPaintTransformedOutput(CompScreen * s,
 
 	CompWindow* now;
 	CompWindow* firstFTB = NULL;
-	CompWindow* lastBTF = NULL;
 
 	tds->reorderWindowPainting = FALSE;
 
@@ -772,8 +770,6 @@ tdPaintTransformedOutput(CompScreen * s,
 				
 				if (tdw->ftb)
 					firstFTB = now;
-				else
-					lastBTF = now;
 			}
 			else
 				tdw->ftb = TRUE;
@@ -781,7 +777,6 @@ tdPaintTransformedOutput(CompScreen * s,
 	}
 
 	tds->firstFTB = firstFTB;
-	tds->lastBTF = lastBTF;
 
 	UNWRAP(tds, s, paintTransformedOutput);
 	(*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
@@ -869,7 +864,7 @@ tdWalkFirst (CompScreen *s)
 {
 	TD_SCREEN(s);
 
-	if (tds->lastBTF == NULL)
+	if (tds->firstFTB == s->windows)
 		return s->reverseWindows;
 	return s->windows;
 }
@@ -897,7 +892,7 @@ tdWalkNext (CompWindow *w)
 		return w->prev;
 	}
 
-	if (w == tds->lastBTF && w != w->screen->reverseWindows)
+	if (w->next == tds->firstFTB && tds->firstFTB)
 		return w->screen->reverseWindows;
 	return w->next;
 }
@@ -911,7 +906,7 @@ tdWalkPrev (CompWindow *w)
 	if (tdw->ftb)
 	{
 		if (w == w->screen->reverseWindows)
-			return tds->lastBTF;
+			return tds->firstFTB->prev;
 		return w->next;
 	}
 
@@ -1084,9 +1079,6 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	tds->currentDifferentResolutions = differentResolutions(s);
 
 	tds->xMove = 0.0f;
-
-	tds->firstFTB = NULL;
-	tds->lastBTF = NULL;
 	
 	s->privates[tdd->screenPrivateIndex].ptr = tds;
 
