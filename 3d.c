@@ -747,7 +747,7 @@ tdPaintTransformedOutput(CompScreen * s,
 
 	CompWindow* now;
 	CompWindow* firstFTB = NULL;
-	CompWindow* lastBTF = NULL;
+	CompWindow* lastBTF = s->reverseWindows;
 
 	tds->reorderWindowPainting = FALSE;
 
@@ -781,6 +781,7 @@ tdPaintTransformedOutput(CompScreen * s,
 	}
 
 	tds->firstFTB = firstFTB;
+	tds->lastBTF = lastBTF;
 
 	UNWRAP(tds, s, paintTransformedOutput);
 	(*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
@@ -896,7 +897,7 @@ tdWalkNext (CompWindow *w)
 		return w->prev;
 	}
 
-	if (w == tds->lastBTF)
+	if (w == tds->lastBTF && w != w->screen->reverseWindows)
 		return w->screen->reverseWindows;
 	return w->next;
 }
@@ -1084,6 +1085,9 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 
 	tds->xMove = 0.0f;
 
+	tds->firstFTB = NULL;
+	tds->lastBTF = s->reverseWindows;
+	
 	s->privates[tdd->screenPrivateIndex].ptr = tds;
 
 	return TRUE;
