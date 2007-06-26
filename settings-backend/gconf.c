@@ -1213,6 +1213,7 @@ setGnomeMouseButtonModifier(unsigned int modMask)
 	currentValue = gconf_client_get_string(client, METACITY "/general/mouse_button_modifier", &err);
 	if (err)
 	{
+		free (modifiers);
 		g_error_free(err);
 		return;
 	}
