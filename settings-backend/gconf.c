@@ -1546,8 +1546,7 @@ static Bool checkProfile(CCSContext *context)
 		updateCurrentProfileName (currentProfile);
 	}
 
-	if (lastProfile)
-		free (lastProfile);
+	free (lastProfile);
 
 	return TRUE;
 }
