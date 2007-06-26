@@ -1,1 +1,2 @@
 PLUGIN = 3d
+PKG_DEP = compiz-cube
