@@ -1004,8 +1004,13 @@ static Bool tdInitPluginForDisplay (CompPlugin *p, CompDisplay *d)
 
 static void tdFiniPluginForDisplay (CompPlugin *p, CompDisplay *d)
 {
-        TD_DISPLAY(d);
-        if (strcmp(p->vTable->name, "cube") == 0)
+	TD_DISPLAY(d);
+
+	UNWRAP (tdd, d, finiPluginForDisplay);
+	(*d->finiPluginForDisplay) (p, d);
+	WRAP (tdd, d, finiPluginForDisplay, tdFiniPluginForDisplay);
+	
+	if (strcmp(p->vTable->name, "cube") == 0)
 	{
 		CompScreen *s;
 		for (s = d->screens; s; s = s->next)
@@ -1019,10 +1024,6 @@ static void tdFiniPluginForDisplay (CompPlugin *p, CompDisplay *d)
 			UNWRAP(tds, s, initWindowWalker);
 		}
 	}
-
-	UNWRAP (tdd, d, finiPluginForDisplay);
-	(*d->finiPluginForDisplay) (p, d);
-	WRAP (tdd, d, finiPluginForDisplay, tdFiniPluginForDisplay);
 }
 
 static Bool tdInitDisplay(CompPlugin * p, CompDisplay * d)
