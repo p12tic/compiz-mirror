@@ -1,13 +1,15 @@
-/**
+/*
  *
- * Beryl 3d plugin
+ * Compiz 3d plugin
  *
  * 3d.c
  *
  * Copyright : (C) 2006 by Roi Cohen
  * E-mail    : roico12@gmail.com
  *
- * Modified and maintained by : Robert Carr <racarr@beryl-project.org>
+ * Modified by : Dennis Kasprzyk <onestone@opencompositing.org>
+ *               Danny Baumann <mainiac@opencompositing.org>
+ *               Robert Carr <racarr@beryl-project.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -19,7 +21,7 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- **/
+ */
 
 /**
 TODO:
