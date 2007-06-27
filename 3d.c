@@ -973,7 +973,7 @@ static Bool tdInitPluginForDisplay (CompPlugin *p, CompDisplay *d)
 			compLogMessage (d, "3d", CompLogLevelError,
 							"Can't get cube plugin vTable");
 		}
-		else 
+		else
 		{
 			option = (*p->vTable->getDisplayOptions) (p, d, &nOption);
 
@@ -985,6 +985,25 @@ static Bool tdInitPluginForDisplay (CompPlugin *p, CompDisplay *d)
 			else
 			{
 				cubeDisplayPrivateIndex = getIntOptionNamed (option, nOption, "index", -1);
+			}
+		}
+
+		if (cubeDisplayPrivateIndex >= 0)
+		{
+			CompScreen *s;
+
+			/* we have to wrap those functions here in other to have
+			   them wrapped before the cube functions */
+			for (s = d->screens; s; s = s->next)
+			{
+				TD_SCREEN(s);
+
+				WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
+				WRAP(tds, s, paintWindow, tdPaintWindow);
+				WRAP(tds, s, paintOutput, tdPaintOutput);
+				WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
+				WRAP(tds, s, preparePaintScreen, tdPreparePaintScreen);
+				WRAP(tds, s, initWindowWalker, tdInitWindowWalker);
 			}
 		}
 	}
@@ -1006,6 +1025,18 @@ static void tdFiniPluginForDisplay (CompPlugin *p, CompDisplay *d)
 	
 	if (strcmp(p->vTable->name, "cube") == 0)
 	{
+		CompScreen *s;
+		for (s = d->screens; s; s = s->next)
+		{
+			TD_SCREEN (s);
+			UNWRAP(tds, s, paintTransformedOutput);
+			UNWRAP(tds, s, paintWindow);
+			UNWRAP(tds, s, paintOutput);
+			UNWRAP(tds, s, donePaintScreen);
+			UNWRAP(tds, s, preparePaintScreen);
+			UNWRAP(tds, s, initWindowWalker);
+		}
+
 		cubeDisplayPrivateIndex = -1;
 	}
 }
@@ -1024,13 +1055,6 @@ static Bool tdInitPluginForScreen (CompPlugin *p, CompScreen *s)
 		if (cubeDisplayPrivateIndex >= 0)
 		{
 			CUBE_SCREEN (s);
-
-			WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
-			WRAP(tds, s, paintWindow, tdPaintWindow);
-			WRAP(tds, s, paintOutput, tdPaintOutput);
-			WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
-			WRAP(tds, s, preparePaintScreen, tdPreparePaintScreen);
-			WRAP(tds, s, initWindowWalker, tdInitWindowWalker);
 
 			WRAP(tds, cs, paintTop, tdCubePaintTop);
 			WRAP(tds, cs, paintBottom, tdCubePaintBottom);
@@ -1051,13 +1075,6 @@ static void tdFiniPluginForScreen (CompPlugin *p, CompScreen *s)
 	if (strcmp(p->vTable->name, "cube") == 0)
 	{
 		CUBE_SCREEN (s);
-
-		UNWRAP(tds, s, paintTransformedOutput);
-		UNWRAP(tds, s, paintWindow);
-		UNWRAP(tds, s, paintOutput);
-		UNWRAP(tds, s, donePaintScreen);
-		UNWRAP(tds, s, preparePaintScreen);
-		UNWRAP(tds, s, initWindowWalker);
 
 		UNWRAP(tds, cs, paintTop);
 		UNWRAP(tds, cs, paintBottom);
