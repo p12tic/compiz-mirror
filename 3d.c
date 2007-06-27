@@ -74,7 +74,6 @@ typedef struct _tdScreen
 	int windowPrivateIndex;
 
 	Bool tdWindowExists;
-	//Bool reorder;
 
 	PreparePaintScreenProc		preparePaintScreen;
 	PaintTransformedOutputProc	paintTransformedOutput;
@@ -106,7 +105,6 @@ typedef struct _tdScreen
 	Bool active;
 
 	Bool reorderWindowPainting;
-	CompOutput *tmpOutput;
 } tdScreen;
 
 typedef struct _tdWindow
@@ -369,8 +367,6 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 
 	if (tds->active)
 	{
-		//tds->reorder = TRUE;
-
 		if (tds->tdWindowExists)
 			reorder(screen);
 
@@ -416,8 +412,6 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 	}
 
 	reorder(screen);
-
-	//tds->reorder = FALSE;
 
 	free(lastInViewport);
 
@@ -729,8 +723,6 @@ tdPaintTransformedOutput(CompScreen * s,
 	CompWindow* firstFTB = NULL;
 
 	tds->reorderWindowPainting = FALSE;
-
-	tds->tmpOutput = output;
 
 	if (tds->active ||  tds->tdWindowExists)
 	{
@@ -1131,7 +1123,6 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	}
 
 	tds->tdWindowExists = FALSE;
-	//tds->reorder = TRUE;
 	tds->revertReorder = NULL;
 
 	tds->currentViewportNum = s->hsize;
