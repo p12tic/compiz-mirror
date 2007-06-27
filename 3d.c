@@ -105,6 +105,9 @@ typedef struct _tdScreen
 	Bool active;
 
 	Bool reorderWindowPainting;
+
+	CompWindow *first;
+	CompWindow *last;
 } tdScreen;
 
 typedef struct _tdWindow
@@ -112,6 +115,9 @@ typedef struct _tdWindow
 	float z;
 	float currentZ;
 	Bool ftb;
+
+	CompWindow *next;
+	CompWindow *prev;
 } tdWindow;
 
 
@@ -214,104 +220,6 @@ static Bool differentResolutions(CompScreen * s)
 #define IS_IN_VIEWPORT(w, i) ( ( LEFT_VIEWPORT(w) > RIGHT_VIEWPORT(w) && !(LEFT_VIEWPORT(w) > i && i > RIGHT_VIEWPORT(w)) ) \
                                 || ( LEFT_VIEWPORT(w) <= i && i <= RIGHT_VIEWPORT(w) ) )
 
-static void reorder(CompScreen * screen)
-{
-	CompWindow *firstReordered = NULL;
-	CompWindow *next;
-	CompWindow *w;
-
-	TD_SCREEN(screen);
-
-	for (w = screen->windows; w && w != firstReordered; w = next)
-	{
-		next = w->next;
-
-		if (!windowIs3D(w))
-			continue;
-
-		if (!firstReordered)
-			firstReordered = w;
-
-		if (tds->revertReorder)
-		{
-			tds->revertReorder->next =
-					(RevertReorder *) malloc(sizeof(RevertReorder));
-			tds->revertReorder->next->prev = tds->revertReorder;
-
-			tds->revertReorder = tds->revertReorder->next;
-		}
-
-		else
-		{
-			tds->revertReorder =
-					(RevertReorder *) malloc(sizeof(RevertReorder));
-			tds->revertReorder->prev = NULL;
-		}
-
-		tds->revertReorder->next = NULL;
-
-		tds->revertReorder->window = w;
-		tds->revertReorder->nextWindow = w->next;
-		tds->revertReorder->prevWindow = w->prev;
-
-		unhookWindowFromScreen(screen, w);
-
-		/*This is a faster replacement to insertWindowIntoScreen (screen, w, screen->reverseWindows->id)
-		   The original function will go through all the windows until it finds screen->reverseWindows->id
-		   But we already know where that window is, so it's unnecessary to go through all the windows. */
-		if (screen->windows)
-		{
-			screen->reverseWindows->next = w;
-			w->next = NULL;
-			w->prev = screen->reverseWindows;
-			screen->reverseWindows = w;
-		}
-
-		else
-		{
-			screen->reverseWindows = screen->windows = w;
-			w->prev = w->next = NULL;
-		}
-	}
-}
-
-static void revertReorder(CompScreen * screen)
-{
-	TD_SCREEN(screen);
-
-	while (tds->revertReorder)
-	{
-		unhookWindowFromScreen(screen, tds->revertReorder->window);
-
-		tds->revertReorder->window->next = tds->revertReorder->nextWindow;
-		tds->revertReorder->window->prev = tds->revertReorder->prevWindow;
-
-		if (tds->revertReorder->nextWindow)
-			tds->revertReorder->nextWindow->prev = tds->revertReorder->window;
-		else
-			screen->reverseWindows = tds->revertReorder->window;
-
-		if (tds->revertReorder->prevWindow)
-			tds->revertReorder->prevWindow->next = tds->revertReorder->window;
-		else
-			screen->windows = tds->revertReorder->window;
-
-		if (tds->revertReorder->prev)
-		{
-			tds->revertReorder = tds->revertReorder->prev;
-
-			free(tds->revertReorder->next);
-			tds->revertReorder->next = NULL;
-		}
-
-		else
-		{
-			free(tds->revertReorder);
-			tds->revertReorder = NULL;
-		}
-	}
-}
-
 static void tdPaintAllViewportsEvent(CompScreen* s, Bool paintAllViewports)
 {
 	CompOption o[2];
@@ -365,11 +273,8 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 			tds->xMove = 0.0f;
 	}
 
-	if (tds->active)
+	if (!tds->active)
 	{
-		if (tds->tdWindowExists)
-			reorder(screen);
-
 		UNWRAP(tds, screen, preparePaintScreen);
 		(*screen->preparePaintScreen) (screen, msSinceLastPaint);
 		WRAP(tds, screen, preparePaintScreen, tdPreparePaintScreen);
@@ -410,8 +315,6 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 		if (tdw->z > tds->maxZ)
 			tds->maxZ = tdw->z;
 	}
-
-	reorder(screen);
 
 	free(lastInViewport);
 
@@ -709,6 +612,22 @@ tdPaintWindow(CompWindow * w,
 	return status;
 }
 
+static void tdAddWindow(CompScreen *s, CompWindow *w)
+{
+	TD_SCREEN(s);
+	TD_WINDOW(w);
+	
+	if (!tds->first)
+	{
+		tds->first = tds->last = w;
+	}
+
+	GET_TD_WINDOW(tds->last, tds)->next = w;
+	if (tds->first != tds->last)
+		tdw->prev = tds->last;
+	tds->last = w;
+}
+
 static void
 tdPaintTransformedOutput(CompScreen * s,
 			 const ScreenPaintAttrib * sAttrib,
@@ -719,37 +638,64 @@ tdPaintTransformedOutput(CompScreen * s,
 	TD_SCREEN(s);
 	CUBE_SCREEN(s);
 
-	CompWindow* now;
+	CompWindow* w;
 	CompWindow* firstFTB = NULL;
-
-	tds->reorderWindowPainting = FALSE;
 
 	if (tds->active ||  tds->tdWindowExists)
 	{
-		if (tdGetMipmaps(s))
-			s->display->textureFilter = GL_LINEAR_MIPMAP_LINEAR;
-
-		for (now = s->windows; now; now = now->next)
+		/* all non 3d windows first */
+		tds->first = NULL;
+		tds->last = NULL;
+		
+		for (w = s->windows; w; w = w->next)
 		{
-			TD_WINDOW(now);
+			TD_WINDOW(w);
 			
-			if (!firstFTB)
-			{
-				float vPoints[3][3] = { { -0.5, 0.0, (cs->invert * cs->distance) + tdw->currentZ},
-							{ 0.0, 0.5, (cs->invert * cs->distance) + tdw->currentZ},
-							{ 0.0, 0.0, (cs->invert * cs->distance) + tdw->currentZ}};
-				
-				tdw->ftb = cs->checkOrientation (s, sAttrib, transform, output, vPoints);
-				
-				if (tdw->ftb)
-					firstFTB = now;
-			}
+			tdw->next = NULL;
+			tdw->prev = NULL;
+
+			if (!windowIs3D(w))
+				tdAddWindow (s, w);
+		}
+
+		/* all BTF windows in normal order */
+
+		for (w = s->windows; w && !firstFTB; w = w->next)
+		{
+			TD_WINDOW(w);
+
+			if (!windowIs3D(w))
+				continue;
+			
+			float vPoints[3][3] = { { -0.5, 0.0, (cs->invert * cs->distance) + tdw->currentZ},
+								{ 0.0, 0.5, (cs->invert * cs->distance) + tdw->currentZ},
+								{ 0.0, 0.0, (cs->invert * cs->distance) + tdw->currentZ}};
+					
+			tdw->ftb = cs->checkOrientation (s, sAttrib, transform, output, vPoints);
+					
+			if (tdw->ftb)
+				firstFTB = w;
 			else
+				tdAddWindow (s, w);
+		}
+
+		/* all FTB windows in reversed order */
+
+		if (firstFTB)
+		{
+			for (w = s->reverseWindows; w && w != firstFTB->prev; w = w->prev)
+			{
+				TD_WINDOW(w);
+				
+				if (!windowIs3D(w))
+					continue;
+				
 				tdw->ftb = TRUE;
+
+				tdAddWindow (s, w);
+			}
 		}
 	}
-
-	tds->firstFTB = firstFTB;
 
 	UNWRAP(tds, s, paintTransformedOutput);
 	(*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
@@ -824,8 +770,6 @@ static void tdDonePaintScreen(CompScreen * s)
 		}
 	}
 
-	revertReorder(s);
-
 	UNWRAP(tds, s, donePaintScreen);
 	(*s->donePaintScreen) (s);
 	WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
@@ -875,54 +819,28 @@ static CompWindow *
 tdWalkFirst (CompScreen *s)
 {
 	TD_SCREEN(s);
-
-	if (tds->firstFTB == s->windows)
-		return s->reverseWindows;
-	return s->windows;
+	return tds->first;
 }
 
 static CompWindow *
 tdWalkLast (CompScreen *s)
 {
 	TD_SCREEN(s);
-
-	if (tds->firstFTB == NULL)
-		return s->reverseWindows;
-	return tds->firstFTB;
+	return tds->last;
 }
 
 static CompWindow *
 tdWalkNext (CompWindow *w)
 {
-	TD_SCREEN(w->screen);
 	TD_WINDOW(w);
-
-	if (tdw->ftb)
-	{
-		if (w == tds->firstFTB)
-			return NULL;
-		return w->prev;
-	}
-
-	if (w->next == tds->firstFTB && tds->firstFTB)
-		return w->screen->reverseWindows;
-	return w->next;
+	return tdw->next;
 }
 
 static CompWindow *
 tdWalkPrev (CompWindow *w)
 {
-	TD_SCREEN(w->screen);
 	TD_WINDOW(w);
-
-	if (tdw->ftb)
-	{
-		if (w == w->screen->reverseWindows)
-			return tds->firstFTB->prev;
-		return w->next;
-	}
-
-	return w->prev;
+	return tdw->prev;
 }
 
 static void
@@ -1133,6 +1051,9 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	
 	s->privates[tdd->screenPrivateIndex].ptr = tds;
 
+	tds->first = NULL;
+	tds->last  = NULL;
+
 	WRAP (tds, s, initPluginForScreen, tdInitPluginForScreen);
 	WRAP (tds, s, finiPluginForScreen, tdFiniPluginForScreen);
 
@@ -1163,6 +1084,9 @@ static Bool tdInitWindow(CompPlugin * p, CompWindow * w)
 
 	tdw->z = 0.0f;
 	tdw->currentZ = 0.0f;
+
+	tdw->prev = NULL;
+	tdw->next = NULL;
 
 	w->privates[tds->windowPrivateIndex].ptr = tdw;
 
