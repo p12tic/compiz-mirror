@@ -304,11 +304,6 @@ tdPaintWindow(CompWindow * w,
 
 		wasCulled = glIsEnabled(GL_CULL_FACE);
 
-		if (tdw->ftb)
-			glNormal3f(0.0, 0.0, 1.0);
-		else
-			glNormal3f(0.0, 0.0, -1.0);
-
 		matrixTranslate(&wTransform, 0.0f, 0.0f, tdw->currentZ);
 
 		if (wasCulled && tdGetDisableCulling(w->screen))
@@ -546,8 +541,6 @@ tdPaintWindow(CompWindow * w,
 
 			if (!wasCulled)
 				glDisable(GL_CULL_FACE);
-
-			glNormal3f(0.0, 0.0, -1.0);
 
 			return status;
 		}
