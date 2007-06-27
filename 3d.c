@@ -57,6 +57,16 @@ typedef struct _tdDisplay
 	FiniPluginForDisplayProc finiPluginForDisplay;
 } tdDisplay;
 
+typedef struct _tdWindow
+{
+	float z;
+	float currentZ;
+	Bool ftb;
+
+	CompWindow *next;
+	CompWindow *prev;
+} tdWindow;
+
 typedef struct _tdScreen
 {
 	int windowPrivateIndex;
@@ -86,22 +96,14 @@ typedef struct _tdScreen
 
 	int currentScreenNum;
 
+	tdWindow **lastInViewportList;
+	int lastInViewportListSize;
+
 	Bool active;
 
 	CompWindow *first;
 	CompWindow *last;
 } tdScreen;
-
-typedef struct _tdWindow
-{
-	float z;
-	float currentZ;
-	Bool ftb;
-
-	CompWindow *next;
-	CompWindow *prev;
-} tdWindow;
-
 
 #define GET_TD_DISPLAY(d)       \
         ((tdDisplay *) (d)->privates[displayPrivateIndex].ptr)
@@ -122,10 +124,6 @@ typedef struct _tdWindow
         tdWindow *tdw = GET_TD_WINDOW  (w,                     \
                 GET_TD_SCREEN  (w->screen,             \
                         GET_TD_DISPLAY (w->screen->display)))
-
-
-
-#define NUM_OPTIONS(s) (sizeof ((s)->opt) / sizeof (CompOption))
 
 static Bool windowIs3D(CompWindow * w)
 {
@@ -205,14 +203,10 @@ static Bool differentResolutions(CompScreen * s)
 
 static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 {
-	tdWindow **lastInViewport;
-
 	CompWindow *w;
-
 	tdWindow *tdw;
 
 	int i;
-
 	float maxZoom;
 
 	TD_SCREEN(screen);
@@ -238,48 +232,45 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 			tds->xMove = 0.0f;
 	}
 
-	if (!tds->active)
+	if (tds->active)
 	{
-		UNWRAP(tds, screen, preparePaintScreen);
-		(*screen->preparePaintScreen) (screen, msSinceLastPaint);
-		WRAP(tds, screen, preparePaintScreen, tdPreparePaintScreen);
-
-		return;
-	}
-
-	lastInViewport = (tdWindow **) malloc(sizeof(tdWindow *) * screen->hsize);
-
-	for (i = 0; i < screen->hsize; i++)
-		lastInViewport[i] = NULL;
-
-	tds->maxZ = 0.0f;
-
-	for (w = screen->windows; w; w = w->next)
-	{
-		if (!windowIs3D(w))
-			continue;
-
-		tdw = GET_TD_WINDOW(w, tds);
-		maxZoom = 0.0f;
-
-		for (i = 0; i < screen->hsize; i++)
+		if (tds->lastInViewportListSize < screen->hsize)
 		{
-			if (IS_IN_VIEWPORT(w, i))
-			{
-				if (lastInViewport[i] && lastInViewport[i]->z > maxZoom)
-					maxZoom = lastInViewport[i]->z;
-
-				lastInViewport[i] = tdw;
-			}
+			tds->lastInViewportList  =
+				(tdWindow **) realloc(tds->lastInViewportList, sizeof(tdWindow *) * screen->hsize);
+			tds->lastInViewportListSize = screen->hsize;
 		}
 
-		tdw->z = maxZoom + tdGetSpace(screen);
+		for (i = 0; i < screen->hsize; i++)
+			tds->lastInViewportList[i] = NULL;
 
-		if (tdw->z > tds->maxZ)
-			tds->maxZ = tdw->z;
+		tds->maxZ = 0.0f;
+
+		for (w = screen->windows; w; w = w->next)
+		{
+			if (!windowIs3D(w))
+				continue;
+
+			tdw = GET_TD_WINDOW(w, tds);
+			maxZoom = 0.0f;
+
+			for (i = 0; i < screen->hsize; i++)
+			{
+				if (IS_IN_VIEWPORT(w, i))
+				{
+					if (tds->lastInViewportList[i] && tds->lastInViewportList[i]->z > maxZoom)
+						maxZoom = tds->lastInViewportList[i]->z;
+
+					tds->lastInViewportList[i] = tdw;
+				}
+			}
+
+			tdw->z = maxZoom + tdGetSpace(screen);
+
+			if (tdw->z > tds->maxZ)
+				tds->maxZ = tdw->z;
+		}
 	}
-
-	free(lastInViewport);
 
 	UNWRAP(tds, screen, preparePaintScreen);
 	(*screen->preparePaintScreen) (screen, msSinceLastPaint);
@@ -1008,6 +999,9 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	tds->currentDifferentResolutions = differentResolutions(s);
 
 	tds->xMove = 0.0f;
+
+	tds->lastInViewportList = NULL;
+	tds->lastInViewportListSize = 0;
 	
 	s->privates[tdd->screenPrivateIndex].ptr = tds;
 
@@ -1025,6 +1019,9 @@ static void tdFiniScreen(CompPlugin * p, CompScreen * s)
 	TD_SCREEN(s);
 
 	freeWindowPrivateIndex(s, tds->windowPrivateIndex);
+
+	if (tds->lastInViewportList)
+		free (tds->lastInViewportList);
 
 	UNWRAP (tds, s, initPluginForScreen);
 	UNWRAP (tds, s, finiPluginForScreen);
