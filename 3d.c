@@ -10,6 +10,7 @@
  * Modified by : Dennis Kasprzyk <onestone@opencompositing.org>
  *               Danny Baumann <mainiac@opencompositing.org>
  *               Robert Carr <racarr@beryl-project.org>
+ *               Diogo Ferreira <diogo@underdev.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
