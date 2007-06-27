@@ -48,18 +48,6 @@ TODO:
 static int displayPrivateIndex;
 static int cubeDisplayPrivateIndex = -1;
 
-typedef struct _revertReorder
-{
-	struct _revertReorder *next;
-	struct _revertReorder *prev;
-
-	CompWindow *window;
-
-	CompWindow *nextWindow;
-	CompWindow *prevWindow;
-} RevertReorder;
-
-
 typedef struct _tdDisplay
 {
 	int screenPrivateIndex;
@@ -77,8 +65,8 @@ typedef struct _tdScreen
 
 	PreparePaintScreenProc		preparePaintScreen;
 	PaintTransformedOutputProc	paintTransformedOutput;
-	PaintOutputProc			paintOutput;
-	DonePaintScreenProc		donePaintScreen;
+	PaintOutputProc				paintOutput;
+	DonePaintScreenProc			donePaintScreen;
 	InitWindowWalkerProc		initWindowWalker;
 
 	CubePaintTopProc    paintTop;
@@ -87,11 +75,7 @@ typedef struct _tdScreen
 	InitPluginForScreenProc initPluginForScreen;
 	FiniPluginForScreenProc finiPluginForScreen;
 
-	CompWindow* firstFTB;
-
 	PaintWindowProc paintWindow;
-
-	RevertReorder *revertReorder;
 
 	float maxZ;
 
@@ -103,8 +87,6 @@ typedef struct _tdScreen
 	int currentScreenNum;
 
 	Bool active;
-
-	Bool reorderWindowPainting;
 
 	CompWindow *first;
 	CompWindow *last;
@@ -220,23 +202,6 @@ static Bool differentResolutions(CompScreen * s)
 #define IS_IN_VIEWPORT(w, i) ( ( LEFT_VIEWPORT(w) > RIGHT_VIEWPORT(w) && !(LEFT_VIEWPORT(w) > i && i > RIGHT_VIEWPORT(w)) ) \
                                 || ( LEFT_VIEWPORT(w) <= i && i <= RIGHT_VIEWPORT(w) ) )
 
-static void tdPaintAllViewportsEvent(CompScreen* s, Bool paintAllViewports)
-{
-	CompOption o[2];
-
-	o[0].type = CompOptionTypeInt;
-	o[0].name = "root";
-	o[0].value.i = s->root;
-
-	o[1].type = CompOptionTypeBool;
-	o[1].name = "paintAllViewports";
-	o[1].value.b = paintAllViewports;
-
-	(*s->display->handleCompizEvent) (s->display, 
-					  "3d", 
-					  "paintAllViewportsEvent", 
-					   o, 2);
-}
 
 static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 {
@@ -281,8 +246,6 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 
 		return;
 	}
-	
-	tdPaintAllViewportsEvent(screen, TRUE);
 
 	lastInViewport = (tdWindow **) malloc(sizeof(tdWindow *) * screen->hsize);
 
@@ -733,8 +696,6 @@ static void tdDonePaintScreen(CompScreen * s)
 	TD_SCREEN(s);
 	CUBE_SCREEN (s);
 
-	tdPaintAllViewportsEvent(s, FALSE);
-
 	if (tds->active || tds->tdWindowExists)
 	{
 		float aim = 0.0f;
@@ -1041,7 +1002,6 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	}
 
 	tds->tdWindowExists = FALSE;
-	tds->revertReorder = NULL;
 
 	tds->currentViewportNum = s->hsize;
 	tds->currentScreenNum = s->nOutputDev;
