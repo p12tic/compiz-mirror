@@ -432,26 +432,26 @@ tdPaintWindow(CompWindow * w,
 			  const CompTransform    *transform,
 			  Region region, unsigned int mask)
 {
-	Bool occlusionDetection = mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK;
 	Bool status;
-	Bool wasCulled = glIsEnabled(GL_CULL_FACE);
 
 	TD_SCREEN(w->screen);
-	CUBE_SCREEN (w->screen);
 	TD_WINDOW(w);
-
-	// int output = (tds->tmpOutput->id == ~0) ? 0 : tds->tmpOutput->id;
-	int width = w->screen->width;
-
-	CompTransform wTransform = *transform;
-
 
 	if (tdw->currentZ != 0.0f)
 	{
+		Bool wasCulled;
+		int width = w->screen->width;
+		int wx, wy, wx2, wy2, ww, wh;
+		CompTransform wTransform = *transform;
+
+		CUBE_SCREEN (w->screen);
+
 		if (!IS_IN_VIEWPORT(w, 0))
 			return TRUE;
-
+	
 		mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+
+		wasCulled = glIsEnabled(GL_CULL_FACE);
 
 		if (tdw->ftb)
 			glNormal3f(0.0, 0.0, 1.0);
@@ -497,8 +497,6 @@ tdPaintWindow(CompWindow * w,
 				matrixTranslate(&wTransform, -width * tdw->currentZ * tds->xMove, 0.0f, 0.0f);
 		}
 
-		int wx, wy, wx2, wy2, ww, wh;
-
 		wx = MAX(0, MIN(w->screen->width, w->attrib.x - w->input.left));
 		wx2 = MAX(0, MIN(w->screen->width, w->attrib.x + w->attrib.width + w->input.right));
 
@@ -511,8 +509,8 @@ tdPaintWindow(CompWindow * w,
 		float wwidth = -(tdGetWidth(w->screen)) / 30;
 		int bevel = tdGetBevel(w->screen);
 
-
-		if ((wwidth != 0) && ww && wh && !w->shaded && !occlusionDetection)
+		if ((wwidth != 0) && ww && wh && !w->shaded &&
+			!(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
 		{
 			if (!tdw->ftb)
 			{
@@ -683,7 +681,6 @@ tdPaintWindow(CompWindow * w,
 
 				matrixTranslate(&wTransform, 0.0f, 0.0f, -wwidth);
 			}
-
 			else
 			{
 				glEnable(GL_CULL_FACE);	// Re-enable culling.
@@ -703,18 +700,17 @@ tdPaintWindow(CompWindow * w,
 
 			return status;
 		}
+
+		UNWRAP(tds, w->screen, paintWindow);
+		status = (*w->screen->paintWindow) (w, attrib, &wTransform, region, mask);
+		WRAP(tds, w->screen, paintWindow, tdPaintWindow);
 	}
-
-	UNWRAP(tds, w->screen, paintWindow);
-	status = (*w->screen->paintWindow) (w, attrib, &wTransform, region, mask);
-	WRAP(tds, w->screen, paintWindow, tdPaintWindow);
-
-
-	if (wasCulled)
-		glEnable(GL_CULL_FACE);
 	else
-		glDisable(GL_CULL_FACE);
-
+	{
+		UNWRAP(tds, w->screen, paintWindow);
+		status = (*w->screen->paintWindow) (w, attrib, transform, region, mask);
+		WRAP(tds, w->screen, paintWindow, tdPaintWindow);
+	}
 
 	return status;
 }
