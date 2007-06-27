@@ -82,6 +82,9 @@ typedef struct _tdScreen
 	DonePaintScreenProc		donePaintScreen;
 	InitWindowWalkerProc		initWindowWalker;
 
+	CubePaintTopProc    paintTop;
+	CubePaintBottomProc paintBottom;
+
 	InitPluginForScreenProc initPluginForScreen;
 	FiniPluginForScreenProc finiPluginForScreen;
 
@@ -329,24 +332,6 @@ static void tdPaintAllViewportsEvent(CompScreen* s, Bool paintAllViewports)
 					   o, 2);
 }
 
-static void tdDisableCapsEvent(CompScreen* s, Bool disableCaps)
-{
-	CompOption o[2];
-
-	o[0].type = CompOptionTypeInt;
-	o[0].name = "root";
-	o[0].value.i = s->root;
-
-	o[1].type = CompOptionTypeBool;
-	o[1].name = "disableCaps";
-	o[1].value.b = disableCaps;
-
-	(*s->display->handleCompizEvent) (s->display, 
-					  "3d", 
-					  "disableCaps", 
-					   o, 2);
-}
-
 static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 {
 	tdWindow **lastInViewport;
@@ -429,9 +414,6 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 		if (tdw->z > tds->maxZ)
 			tds->maxZ = tdw->z;
 	}
-
-	if (tds->maxZ > 0.0f && cs->invert == -1 && tdGetDisableCaps(screen))
-		tdDisableCapsEvent(screen, TRUE);
 
 	reorder(screen);
 
@@ -817,7 +799,6 @@ static void tdDonePaintScreen(CompScreen * s)
 	TD_SCREEN(s);
 	CUBE_SCREEN (s);
 
-	tdDisableCapsEvent(s, FALSE);
 	tdPaintAllViewportsEvent(s, FALSE);
 
 	if (tds->active || tds->tdWindowExists)
@@ -860,6 +841,46 @@ static void tdDonePaintScreen(CompScreen * s)
 	UNWRAP(tds, s, donePaintScreen);
 	(*s->donePaintScreen) (s);
 	WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
+}
+
+static void
+tdCubePaintTop (CompScreen			    *s,
+	  			const ScreenPaintAttrib *sAttrib,
+				const CompTransform	    *transform,
+				CompOutput			    *output,
+				int				        size)
+{
+	TD_SCREEN (s);
+	CUBE_SCREEN (s);
+
+	if (tds->maxZ > 0.0f && cs->invert == -1 && tdGetDisableCaps(s))
+		return;
+	else
+	{
+		UNWRAP (tds, cs, paintTop);
+		(*cs->paintTop) (s, sAttrib, transform, output, size);
+		WRAP (tds, cs, paintTop, tdCubePaintTop);
+	}
+}
+
+static void
+tdCubePaintBottom (CompScreen			   *s,
+				   const ScreenPaintAttrib *sAttrib,
+				   const CompTransform	   *transform,
+				   CompOutput			   *output,
+				   int				       size)
+{
+	TD_SCREEN (s);
+	CUBE_SCREEN (s);
+
+	if (tds->maxZ > 0.0f && cs->invert == -1 && tdGetDisableCaps(s))
+		return;
+	else
+	{
+		UNWRAP (tds, cs, paintBottom);
+		(*cs->paintBottom) (s, sAttrib, transform, output, size);
+		WRAP (tds, cs, paintBottom, tdCubePaintBottom);
+	}
 }
 
 static CompWindow *
@@ -1002,12 +1023,17 @@ static Bool tdInitPluginForScreen (CompPlugin *p, CompScreen *s)
 	{
 		if (cubeDisplayPrivateIndex >= 0)
 		{
+			CUBE_SCREEN (s);
+
 			WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
 			WRAP(tds, s, paintWindow, tdPaintWindow);
 			WRAP(tds, s, paintOutput, tdPaintOutput);
 			WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
 			WRAP(tds, s, preparePaintScreen, tdPreparePaintScreen);
 			WRAP(tds, s, initWindowWalker, tdInitWindowWalker);
+
+			WRAP(tds, cs, paintTop, tdCubePaintTop);
+			WRAP(tds, cs, paintBottom, tdCubePaintBottom);
 		}
 	}
 
@@ -1024,12 +1050,17 @@ static void tdFiniPluginForScreen (CompPlugin *p, CompScreen *s)
 	
 	if (strcmp(p->vTable->name, "cube") == 0)
 	{
+		CUBE_SCREEN (s);
+
 		UNWRAP(tds, s, paintTransformedOutput);
 		UNWRAP(tds, s, paintWindow);
 		UNWRAP(tds, s, paintOutput);
 		UNWRAP(tds, s, donePaintScreen);
 		UNWRAP(tds, s, preparePaintScreen);
 		UNWRAP(tds, s, initWindowWalker);
+
+		UNWRAP(tds, cs, paintTop);
+		UNWRAP(tds, cs, paintBottom);
 	}
 }
 
