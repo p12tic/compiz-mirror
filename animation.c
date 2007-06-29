@@ -250,22 +250,6 @@ void modelCalcBounds(Model * model)
 	}
 }
 
-float defaultAnimProgress(AnimWindow * aw)
-{
-	float forwardProgress =
-		1 - aw->animRemainingTime /	(aw->animTotalTime - aw->timestep);
-	forwardProgress = MIN(forwardProgress, 1);
-	forwardProgress = MAX(forwardProgress, 0);
-
-	if (aw->curWindowEvent == WindowEventCreate ||
-		aw->curWindowEvent == WindowEventUnminimize ||
-		aw->curWindowEvent == WindowEventUnshade ||
-		aw->curWindowEvent == WindowEventFocus)
-		forwardProgress = 1 - forwardProgress;
-
-	return forwardProgress;
-}
-
 // Converts animation direction string to an integer direction
 // (up, down, left, or right)
 AnimDirection getAnimationDirection(CompWindow * w,
@@ -316,6 +300,43 @@ AnimDirection getAnimationDirection(CompWindow * w,
 		}
 	}
 	return dir;
+}
+
+float defaultAnimProgress(AnimWindow * aw)
+{
+	float forwardProgress =
+		1 - aw->animRemainingTime /	(aw->animTotalTime - aw->timestep);
+	forwardProgress = MIN(forwardProgress, 1);
+	forwardProgress = MAX(forwardProgress, 0);
+
+	if (aw->curWindowEvent == WindowEventCreate ||
+		aw->curWindowEvent == WindowEventUnminimize ||
+		aw->curWindowEvent == WindowEventUnshade ||
+		aw->curWindowEvent == WindowEventFocus)
+		forwardProgress = 1 - forwardProgress;
+
+	return forwardProgress;
+}
+
+float sigmoidAnimProgress(AnimWindow * aw)
+{
+	float forwardProgress =
+		1 - aw->animRemainingTime /	(aw->animTotalTime - aw->timestep);
+	forwardProgress = MIN(forwardProgress, 1);
+	forwardProgress = MAX(forwardProgress, 0);
+
+	// Apply sigmoid and normalize
+	forwardProgress =
+		(sigmoid(forwardProgress) - sigmoid(0)) /
+		(sigmoid(1) - sigmoid(0));
+
+	if (aw->curWindowEvent == WindowEventCreate ||
+		aw->curWindowEvent == WindowEventUnminimize ||
+		aw->curWindowEvent == WindowEventUnshade ||
+		aw->curWindowEvent == WindowEventFocus)
+		forwardProgress = 1 - forwardProgress;
+
+	return forwardProgress;
 }
 
 // Gives some acceleration (when closing a window)

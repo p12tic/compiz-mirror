@@ -652,7 +652,10 @@ modelCalcBounds (Model * model);
  
 float
 defaultAnimProgress (AnimWindow * aw);
- 
+
+float
+sigmoidAnimProgress(AnimWindow * aw);
+
 float
 decelerateProgressCustom (float progress,
 						  float minx, float maxx);
