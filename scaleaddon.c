@@ -519,6 +519,26 @@ scaleaddonHandleEvent (CompDisplay *d,
 
     switch (event->type)
     {
+    case PropertyNotify:
+	{
+	    SCALE_DISPLAY (d);
+	    if (event->xproperty.window == sd->hoveredWindow)
+	    {
+		CompWindow *w;
+
+		w = findWindowAtDisplay (d, event->xproperty.window);
+		if (w)
+		{
+		    SCALE_SCREEN (w->screen);
+		    if (ss->grabIndex)
+		    {
+			scaleaddonRenderWindowTitle (w);
+			addWindowDamage (w);
+		    }
+		}
+	    }
+	}
+	break;
     case MotionNotify:
 	{
 	    CompScreen *s;
