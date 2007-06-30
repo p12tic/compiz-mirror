@@ -3299,7 +3299,7 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 				}
 			}
 		}
-		else if (aw->state != NormalState && !w->invisible)
+		else if (!w->invisible)
 		{
 			aw->created = TRUE;
 			AnimEffect windowsCreateEffect = AnimEffectNone;
