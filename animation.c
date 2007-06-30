@@ -1432,6 +1432,7 @@ static void animPreparePaintScreen(CompScreen * s, int msSinceLastPaint)
 					}
 					if (!nw)
 						continue;
+
 					AnimWindow *awNext = GET_ANIM_WINDOW(nw, as);
 					if (awNext && awNext->winThisIsPaintedBefore)
 					{
@@ -2439,6 +2440,7 @@ static void animHandleCompizEvent(CompDisplay * d, char *pluginName,
 			{
 				ANIM_SCREEN(s);
 				as->switcherActive = getBoolOptionNamed(option, nOption, "active", FALSE);
+				as->switcherWinOpeningSuppressed = FALSE;
 			}
 		}
 	}
@@ -3302,6 +3304,7 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 		else if (!w->invisible)
 		{
 			aw->created = TRUE;
+
 			AnimEffect windowsCreateEffect = AnimEffectNone;
 
 			int whichCreate = 1;	// either 1 or 2
@@ -3317,6 +3320,9 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 			}
 
 			if (windowsCreateEffect &&
+				// suppress switcher window
+				// (1st window that opens after switcher becomes active)
+				(!as->switcherActive || as->switcherWinOpeningSuppressed) &&
 				getMousePointerXY(w->screen, &aw->icon.x, &aw->icon.y))
 			{
 				// CREATE event!
@@ -3424,6 +3430,11 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 					else
 						postAnimationCleanup(w, TRUE);
 				}
+			}
+			else if (as->switcherActive && !as->switcherWinOpeningSuppressed)
+			{
+				// done suppressing open animation
+				as->switcherWinOpeningSuppressed = TRUE;
 			}
 		}
 
