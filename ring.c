@@ -1501,14 +1501,14 @@ ringHandleEvent (CompDisplay *d,
 	{
 	    CompWindow *w;
 	    w = findWindowAtDisplay (d, event->xproperty.window);
-	    if (!w)
-		break;
-
-	    RING_SCREEN (w->screen);
-	    if (rs->grabIndex && (w->id == rs->selectedWindow))
+	    if (w)
 	    {
-		ringRenderWindowTitle (w->screen);
-		damageScreen (w->screen);
+    		RING_SCREEN (w->screen);
+    		if (rs->grabIndex && (w->id == rs->selectedWindow))
+    		{
+    		    ringRenderWindowTitle (w->screen);
+    		    damageScreen (w->screen);
+		}
 	    }
 	}
 	break;
@@ -1517,13 +1517,15 @@ ringHandleEvent (CompDisplay *d,
 	{
 	    CompScreen *s;
 	    s = findScreenAtDisplay (d, event->xbutton.root);
-	    if (!s)
-		break;
+	    if (s)
+	    {
+    		RING_SCREEN (s);
 
-	    RING_SCREEN (s);
-
-	    if (rs->grabIndex)
-		ringWindowSelectAt (s, event->xbutton.x_root, event->xbutton.y_root);
+    		if (rs->grabIndex)
+    		    ringWindowSelectAt (s, 
+					event->xbutton.x_root, 
+					event->xbutton.y_root);
+	    }
 	}
 	break;
     case UnmapNotify:
