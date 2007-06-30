@@ -570,11 +570,11 @@ static void tdAddWindow(CompScreen *s, CompWindow *w)
 	if (!tds->first)
 	{
 		tds->first = tds->last = w;
+		return;
 	}
 
 	GET_TD_WINDOW(tds->last, tds)->next = w;
-	if (tds->first != tds->last)
-		tdw->prev = tds->last;
+	tdw->prev = tds->last;
 	tds->last = w;
 }
 
@@ -591,19 +591,22 @@ tdPaintTransformedOutput(CompScreen * s,
 	CompWindow* w;
 	CompWindow* firstFTB = NULL;
 
-	if (tds->active ||  tds->tdWindowExists)
+	if (tds->active || tds->tdWindowExists)
 	{
 		/* all non 3d windows first */
 		tds->first = NULL;
 		tds->last = NULL;
-		
+
 		for (w = s->windows; w; w = w->next)
 		{
 			TD_WINDOW(w);
-			
+
 			tdw->next = NULL;
 			tdw->prev = NULL;
+		}
 
+		for (w = s->windows; w; w = w->next)
+		{
 			if (!windowIs3D(w))
 				tdAddWindow (s, w);
 		}
@@ -618,8 +621,8 @@ tdPaintTransformedOutput(CompScreen * s,
 				continue;
 			
 			float vPoints[3][3] = { { -0.5, 0.0, (cs->invert * cs->distance) + tdw->currentZ},
-								{ 0.0, 0.5, (cs->invert * cs->distance) + tdw->currentZ},
-								{ 0.0, 0.0, (cs->invert * cs->distance) + tdw->currentZ}};
+						{ 0.0, 0.5, (cs->invert * cs->distance) + tdw->currentZ},
+						{ 0.0, 0.0, (cs->invert * cs->distance) + tdw->currentZ}};
 					
 			tdw->ftb = cs->checkOrientation (s, sAttrib, transform, output, vPoints);
 					
