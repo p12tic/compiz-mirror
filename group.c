@@ -1292,15 +1292,19 @@ void groupHandleEvent(CompDisplay * d, XEvent * event)
 					gw->group->activateTab = NULL;
 				}
 			} else if (event->xproperty.atom == d->wmNameAtom) {
-				CompWindow *w = findWindowAtDisplay(d, d->activeWindow);
+				CompWindow *w = findWindowAtDisplay(d, event->xproperty.window);
 				if (!w)
 					break;
 
 				GROUP_WINDOW(w);
 
-				if (gw->group && gw->group->tabBar) {
+				if (gw->group && gw->group->tabBar &&
+				    gw->group->tabBar->textSlot    &&
+				    gw->group->tabBar->textSlot->window == w) 
+				{
 					// make sure we are using the updated name
 					groupRenderWindowTitle(gw->group);
+					groupDamageTabBarRegion(gw->group);
 				}
 			}
 			break;
