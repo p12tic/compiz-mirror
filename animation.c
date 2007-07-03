@@ -2708,18 +2708,6 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 							aw->icon.height = 20;
 						}
 						*/
-						if ((aw->curAnimEffect == AnimEffectZoom || 
-							 aw->curAnimEffect == AnimEffectSidekick) &&
-							(as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value.i == ZoomFromCenterOn ||
-							 as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value.i == ZoomFromCenterMin))
-						{
-							aw->icon.x =
-									WIN_X(w) +
-									WIN_W(w) / 2 - aw->icon.width / 2;
-							aw->icon.y =
-									WIN_Y(w) +
-									WIN_H(w) / 2 - aw->icon.height / 2;
-						}
 
 						aw->unmapCnt++;
 						w->unmapRefCnt++;
@@ -2846,19 +2834,6 @@ static void animHandleEvent(CompDisplay * d, XEvent * event)
 							aw->icon.width =
 								MAX(aw->icon.width,
 									as->opt[ANIM_SCREEN_OPTION_MAGIC_LAMP_VACUUM_CREATE_START_WIDTH].value.i);
-
-						if ((aw->curAnimEffect == AnimEffectZoom || 
-							 aw->curAnimEffect == AnimEffectSidekick) &&
-							(as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value.i == ZoomFromCenterOn ||
-							 as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value.i == ZoomFromCenterCreate))
-						{
-							aw->icon.x =
-									WIN_X(w) +
-									WIN_W(w) / 2 - aw->icon.width / 2;
-							aw->icon.y =
-									WIN_Y(w) +
-									WIN_H(w) / 2 - aw->icon.height / 2;
-						}
 
 						aw->unmapCnt++;
 						w->unmapRefCnt++;
@@ -3192,16 +3167,6 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 							aw->icon.width = 100;
 							aw->icon.height = 20;
 						}
-						if ((aw->curAnimEffect == AnimEffectZoom || 
-							 aw->curAnimEffect == AnimEffectSidekick) &&
-							(as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value.i == ZoomFromCenterOn ||
-							 as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value.i == ZoomFromCenterMin))
-						{
-							aw->icon.x =
-									WIN_X(w) + WIN_W(w) / 2 - aw->icon.width / 2;
-							aw->icon.y =
-									WIN_Y(w) + WIN_H(w) / 2 - aw->icon.height / 2;
-						}
 						addWindowDamage(w);
 					}
 					else
@@ -3388,14 +3353,6 @@ static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
 					aw->icon.x -= aw->icon.width / 2;
 					aw->icon.y -= aw->icon.height / 2;
 
-					if ((aw->curAnimEffect == AnimEffectZoom ||
-						 aw->curAnimEffect == AnimEffectSidekick) &&
-						(as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value.i == ZoomFromCenterOn ||
-						 as->opt[ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER].value.i == ZoomFromCenterCreate))
-					{
-						aw->icon.x = WIN_X(w) + WIN_W(w) / 2 - aw->icon.width / 2;
-						aw->icon.y = WIN_Y(w) + WIN_H(w) / 2 - aw->icon.height / 2;
-					}
 					aw->state = IconicState;	// we're doing this as a hack, it may not be necessary
 
 					// Store coords in this viewport to omit 3d effect
@@ -3778,8 +3735,6 @@ static Bool animInitWindow(CompPlugin * p, CompWindow * w)
 	if (!aw)
 		return FALSE;
 
-	//aw->animatedAtom = IPCS_GetAtom(IPCS_OBJECT(w), IPCS_BOOL,
-	//								"IS_ANIMATED", TRUE);
 	aw->model = 0;
 	aw->state = w->state;
 	aw->animRemainingTime = 0;
