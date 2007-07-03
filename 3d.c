@@ -997,7 +997,12 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	tds->currentScreenNum = s->nOutputDev;
 	tds->currentDifferentResolutions = differentResolutions(s);
 
-	tds->xMove = 0.0f;
+	if (tds->currentViewportNum > 2
+	    && (s->nOutputDev == 1))
+		tds->xMove =
+			1.0f / (tan (PI * (tds->currentViewportNum - 2.0f) / (2.0f * tds->currentViewportNum)));
+	else
+		tds->xMove = 0.0f;
 
 	tds->lastInViewportList = NULL;
 	tds->lastInViewportListSize = 0;
