@@ -42,6 +42,7 @@ static int scaleDisplayPrivateIndex;
 
 #define MAX_FILTER_SIZE 32
 #define MAX_FILTER_STRING_LEN (MAX_FILTER_SIZE+1)
+#define MAX_FILTER_TEXT_LEN (MAX_FILTER_SIZE+8)
 
 typedef struct _ScaleFilterInfo {
     CompTimeoutHandle timeoutHandle;
@@ -308,6 +309,23 @@ scalefilterDrawFilterText (CompScreen *s,
     glBlendFunc (oldBlendSrc, oldBlendDst);
 }
 
+void
+scalefilterUpdateFilter (CompScreen *s,
+	   		 CompMatch  *match)
+{
+    char filterMatch[MAX_FILTER_TEXT_LEN];
+
+    FILTER_SCREEN (s);
+
+    matchFini (match);
+    matchInit (match);
+
+    strncpy (filterMatch, "title=", MAX_FILTER_TEXT_LEN);
+    strncat (filterMatch, fs->filterInfo->filterString, MAX_FILTER_TEXT_LEN);
+    matchAddFromString (match, filterMatch);
+    matchAddGroup (match, MATCH_OP_AND_MASK, &fs->scaleMatch);
+    matchUpdate (s->display, match);
+}
 
 /*
  * FIXME:
@@ -605,28 +623,11 @@ scalefilterHandleEvent (CompDisplay *d,
 
 		    if (needRelayout)
 		    {
-			char *matchTitle;
-			info = fs->filterInfo;
-
 			scalefilterRenderFilterText (s);
 
-			if (info)
-			{
-			    matchFini (&info->match);
-			    matchInit (&info->match);
+			if (fs->filterInfo)
+			    scalefilterUpdateFilter (s, &fs->filterInfo->match);
 
-			    if (fs->scaleMatch.nOp > 0)
-				asprintf (&matchTitle, "(%s) & (title=%s)",
-					  matchToString (&fs->scaleMatch),
-					  info->filterString);
-			    else
-				asprintf (&matchTitle, "title=%s", info->filterString);
-
-			    matchAddFromString (&info->match, matchTitle);
-			    free (matchTitle);
-
-			    matchUpdate (s->display, &info->match);
-			}
 			scalefilterRelayout (s);
 		    }
 		}
