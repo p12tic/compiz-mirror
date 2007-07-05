@@ -62,8 +62,8 @@ typedef struct _ColorFilterScreen
 
 typedef struct _ColorFilterWindow
 {
-    Bool isFiltered;
-    Bool createEvent;
+    Bool    isFiltered;
+    Bool    createEvent;
 } ColorFilterWindow;
 
 #define GET_FILTER_DISPLAY(d) \
@@ -164,6 +164,7 @@ colorFilterSwitchFilter (CompScreen * s)
 {
     int id;
     CompFunction *function;
+    CompWindow *w;
     FILTER_SCREEN (s);
 
     // % (count + 1) because of the cumulative filters mode
@@ -186,6 +187,13 @@ colorFilterSwitchFilter (CompScreen * s)
             compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
                             "Single filter mode (filter loading failure)");
         }
+    }
+    // Damage currently filtered window
+    for (w = s->windows; w; w = w->next)
+    {
+        FILTER_WINDOW (w);
+        if (cfw->isFiltered)
+            addWindowDamage (w);
     }
 }
 
