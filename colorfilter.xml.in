@@ -3,6 +3,7 @@
   <plugin name="colorfilter" useBcop="true">
     <_short>Color filter</_short>
     <_long>Filter colors for accessibility purposes</_long>
+    <category>Accessibility</category>
     <display>
       <option name="window_toggle" type="action">
         <_short>Toggle window filtering</_short>
