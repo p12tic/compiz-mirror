@@ -322,7 +322,7 @@ loadFilters (CompScreen *s, CompTexture *texture)
     {
         name = base_name (filters->value[i].s);
         compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
-                        "Loading filter %s at %s.", name,
+                        "Loading filter %s (item %s).", name,
                         filters->value[i].s);
         function = loadFragmentProgram (filters->value[i].s, name, s, target);
         free (name);
