@@ -327,130 +327,28 @@ scalefilterUpdateFilter (CompScreen *s,
     matchUpdate (s->display, match);
 }
 
-/*
- * FIXME:
- * we should not need to duplicate these three
- * functions from scale.c
- *
- */
-static Bool
-scalefilterIsNeverScaleWin (CompWindow *w)
-{
-    if (w->attrib.override_redirect)
-	return TRUE;
-
-    if (w->wmType & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
-	return TRUE;
-
-    return FALSE;
-}
-
-static Bool
-scalefilterIsScaleWin (CompWindow *w)
-{
-    SCALE_SCREEN (w->screen);
-
-    if (scalefilterIsNeverScaleWin (w))
-	return FALSE;
-
-    if (!ss->type || ss->type == ScaleTypeOutput)
-    {
-	if (!(*w->screen->focusWindow) (w))
-	    return FALSE;
-    }
-
-    if (w->state & CompWindowStateSkipPagerMask)
-	return FALSE;
-
-    if (w->state & CompWindowStateShadedMask)
-	return FALSE;
-
-    if (!w->mapNum || w->attrib.map_state != IsViewable)
-	return FALSE;
-
-    switch (ss->type) {
-    case ScaleTypeGroup:
-	if (ss->clientLeader != w->clientLeader &&
-	    ss->clientLeader != w->id)
-	    return FALSE;
-	break;
-    case ScaleTypeOutput:
-	if (outputDeviceForWindow(w) != w->screen->currentOutputDev)
-	    return FALSE;
-    default:
-	break;
-    }
-
-    if (!matchEval (ss->currentMatch, w))
-	return FALSE;
-
-    return TRUE;
-}
-
-static Bool
-scalefilterLayoutThumbs (CompScreen *s)
-{
-    CompWindow *w;
-
-    SCALE_SCREEN (s);
-
-    ss->nWindows = 0;
-
-    /* add windows scale list, top most window first */
-    for (w = s->reverseWindows; w; w = w->prev)
-    {
-        SCALE_WINDOW (w);
-
-        if (sw->slot)
-            sw->adjust = TRUE;
-
-        sw->slot = 0;
-
-        if (!scalefilterIsScaleWin (w))
-            continue;
-
-        if (ss->windowsSize <= ss->nWindows)
-        {
-            ss->windows = realloc (ss->windows,
-                                   sizeof (CompWindow *) * (ss->nWindows + 32));
-            if (!ss->windows)
-                return FALSE;
-
-            ss->windowsSize = ss->nWindows + 32;
-        }
-
-        ss->windows[ss->nWindows++] = w;
-    }
-
-    if (ss->nWindows == 0)
-        return FALSE;
-
-    if (ss->slotsSize < ss->nWindows)
-    {
-        ss->slots = realloc (ss->slots, sizeof (ScaleSlot) * ss->nWindows);
-        if (!ss->slots)
-            return FALSE;
-
-        ss->slotsSize = ss->nWindows;
-    }
-    return TRUE;
-}
-
 static void
 scalefilterRelayout (CompScreen *s)
 {
-    SCALE_SCREEN (s);
+    CompOption o[1];
+    CompAction *action;
+
     SCALE_DISPLAY (s->display);
 
     sd->selectedWindow = None;
     sd->hoveredWindow = None;
 
-    if (scalefilterLayoutThumbs (s)) {
-	ss->state = SCALE_STATE_OUT;
-	(*ss->layoutSlotsAndAssignWindows) (s);
-    }
+    action = &sd->opt[SCALE_DISPLAY_OPTION_RELAYOUT].value.action;
 
-    damageScreen (s);
+    o[0].type    = CompOptionTypeInt;
+    o[0].name    = "root";
+    o[0].value.i = s->root;
+
+    if (action->initiate)
+    {
+	if ((*action->initiate) (s->display, NULL, 0, o, 1))
+	    damageScreen (s);
+    }
 }
 
 static void
