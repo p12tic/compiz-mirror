@@ -38,11 +38,11 @@ char *basename (char *str)
     char *current = str;
     while (1)
     {
-        if (*current == '\0') break;
+        if (!*current) break;
         if (*current == '/')
         {
             current++;
-            if (*current == '\0') break;
+            if (!*current) break;
             str = current;
         }
         else
@@ -80,7 +80,7 @@ static char *programReadSource (char *fname)
     // Read file
     fread (data, length, 1, fp);
 
-    data[length] = '\0';
+    data[length] = 0;
 
     // Close file
     fclose (fp);
@@ -101,7 +101,7 @@ static void programParseSource (CompFunctionData *data,
     char *arg1, *arg2;
 
     // Find the header, skip it, and start parsing from there
-    while (*source != '\0')
+    while (*source)
     {
         if (strncmp (source, "!!ARBfp1.0", 10) == 0)
         {
@@ -122,7 +122,7 @@ static void programParseSource (CompFunctionData *data,
     {
         current = line;
         // Left trim it
-        while (*current != '\0' && (*current == ' ' || *current == '\t'))
+        while (*current && (*current == ' ' || *current == '\t'))
             current++;
         // Find instruction type
         type = NoOp;
@@ -187,7 +187,7 @@ static void programParseSource (CompFunctionData *data,
                 arg1 = malloc (sizeof (char) * (length + 2));
                 strncpy (arg1, current, length);
                 arg1[length] = ';';
-                arg1[length + 1] = '\0';
+                arg1[length + 1] = 0;
                 addDataOpToFunctionData (data, arg1);
                 free (arg1);
                 break;
@@ -204,7 +204,7 @@ static void programParseSource (CompFunctionData *data,
                 if (!arg1) break;
                 current += oplength + 1;
                 strncpy (arg1, current, length - oplength - 1);
-                arg1[length - oplength - 1] = '\0';
+                arg1[length - oplength - 1] = 0;
                 if (strncmp (arg1, "output", 6) == 0)
                 {
                     free (arg1);
@@ -226,7 +226,7 @@ static void programParseSource (CompFunctionData *data,
                 arg1 = malloc (sizeof (char) * (length + 1));
                 if (!arg1) break;
                 strncpy (arg1, current, length);
-                arg1[length] = '\0';
+                arg1[length] = 0;
                 addFetchOpToFunctionData (data, arg1, NULL, target);
                 break;
             case ColorOp:
@@ -239,7 +239,7 @@ static void programParseSource (CompFunctionData *data,
                     arg1 = malloc (sizeof (char) * (length + 1));
                     if (!arg1) break;
                     strncpy (arg1, current, length);
-                    arg1[length] = '\0';
+                    arg1[length] = 0;
                     if (strlen (current) < 3)
                     {
                         free (arg1);
@@ -261,7 +261,7 @@ static void programParseSource (CompFunctionData *data,
                         break;
                     }
                     strncpy (arg2, current, length);
-                    arg2[length] = '\0';
+                    arg2[length] = 0;
                     addColorOpToFunctionData (data, arg1, arg2);
                     free (arg1);
                     free (arg2);
@@ -274,7 +274,7 @@ static void programParseSource (CompFunctionData *data,
                     arg1 = malloc (sizeof (char) * (length + 1));
                     if (!arg1) break;
                     strncpy (arg1, current, length);
-                    arg1[length] = '\0';
+                    arg1[length] = 0;
                     addColorOpToFunctionData (data, arg1, arg1);
                     free (arg1);
                 }
