@@ -231,7 +231,7 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 		tds->currentDifferentResolutions = differentResolutions(screen);
 
 		if (tds->currentViewportNum > 2
-			&& (cs->moMode != Multiple || screen->nOutputDev == 1))
+			&& (cs->moMode != CUBE_MOMODE_MULTI || screen->nOutputDev == 1))
 			tds->xMove =
 					1.0f / (tan (PI * (tds->currentViewportNum - 2.0f) / (2.0f * tds->currentViewportNum)));
 		else
@@ -996,7 +996,7 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 
 	tds->tdWindowExists = FALSE;
 
-	tds->currentMoMode = Automatic;
+	tds->currentMoMode = CUBE_MOMODE_AUTO;
 	tds->currentViewportNum = s->hsize;
 	tds->currentScreenNum = s->nOutputDev;
 	tds->currentDifferentResolutions = differentResolutions(s);
