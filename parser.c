@@ -85,8 +85,7 @@ static char *programReadSource (char *fname)
     // If failed again, try as system wide data file (in share/compiz/filters)
     if (!fp)
     {
-        // !!!FIXME!!! - "/usr/local" should obviously not be static
-        asprintf (&path, "%s/share/compiz/filters/%s", "/usr/local", fname);
+        asprintf (&path, "%s/share/compiz/filters/%s", PREFIX, fname);
         fp = fopen (path, "r");
         free (path);
     }
