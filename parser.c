@@ -28,9 +28,11 @@
 #include <compiz.h>
 #include "parser.h"
 
-// Helper function to get the basename of file from its path
-// e.g. basename ("/home/user/blah.c") == "blah.c"
-// special case : basename ("/home/user/") == "user/"
+/*
+ * Helper function to get the basename of file from its path
+ * e.g. basename ("/home/user/blah.c") == "blah.c"
+ * special case : basename ("/home/user/") == "user/"
+ */
 char *basename (char *str)
 {
     char *current = str;
@@ -49,7 +51,9 @@ char *basename (char *str)
     return str;
 }
 
-// File reader function
+/*
+ * File reader function
+ */
 static char *programReadSource (char *fname)
 {
     FILE   *fp;
@@ -80,9 +84,11 @@ static char *programReadSource (char *fname)
     return data;
 }
 
-// Parse the source buffer op by op and add each op to function data
+/*
+ * Parse the source buffer op by op and add each op to function data
+ */
 static void programParseSource (CompFunctionData *data,
-                int target, char *source)
+                                int target, char *source)
 {
     char *line, *next, *current;
     int   length, oplength, type;
