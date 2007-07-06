@@ -21,6 +21,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+#define _GNU_SOURCE
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -67,13 +68,30 @@ char *base_name (char *str)
 static char *programReadSource (char *fname)
 {
     FILE   *fp;
-    char   *data;
+    char   *data, *path = NULL, *home = getenv ("HOME");
     int     length;
 
-    // Try to open file
+    // Try to open file fname as is
     fp = fopen (fname, "r");
 
-    // If failed, abort
+    // If failed, try as user filter file (in ~/.compiz/filters)
+    if (!fp && home && strlen (home))
+    {
+        asprintf (&path, "%s/.compiz/filters/%s", home, fname);
+        fp = fopen (path, "r");
+        free (path);
+    }
+
+    // If failed again, try as system wide data file (in share/compiz/filters)
+    if (!fp)
+    {
+        // !!!FIXME!!! - "/usr/local" should obviously not be static
+        asprintf (&path, "%s/share/compiz/filters/%s", "/usr/local", fname);
+        fp = fopen (path, "r");
+        free (path);
+    }
+
+    // If failed again & again, abort
     if (!fp)
         return NULL;
 
