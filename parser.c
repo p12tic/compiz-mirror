@@ -52,10 +52,9 @@ char *basename (char *str)
 	}
     length = strlen (str);
     // Duplicate result string for trimming
-    current = malloc (sizeof (char) * (length + 1));
+    current = strdup (str);
     if (!current)
         return NULL;
-    strcpy (current, str);
     // Trim terminating '/' if needed
     if (current[(length - 1)] == '/')
         current[(length - 1)] = 0;
