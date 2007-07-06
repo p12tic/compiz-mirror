@@ -325,6 +325,7 @@ loadFilters (CompScreen *s, CompTexture *texture)
                         "Loading filter %s at %s.", name,
                         filters->value[i].s);
         function = loadFragmentProgram (filters->value[i].s, name, s, target);
+        free (name);
         cfs->filtersFunctions[i] = function;
         if (function)
             loaded++;
