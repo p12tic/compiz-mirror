@@ -41,6 +41,8 @@ char *basename (char *str)
 	{
 		if (*current == '/')
 		{
+            /* '/' found, check if it is the latest char of the string,
+             * if not update result string pointer */
 			current++;
 			if (!*current) break;
 			str = current;
@@ -49,10 +51,12 @@ char *basename (char *str)
 			current++;
 	}
     length = strlen (str);
+    // Duplicate result string for trimming
     current = malloc (sizeof (char) * (length + 1));
     if (!current)
         return NULL;
     strcpy (current, str);
+    // Trim terminating '/' if needed
     if (current[(length - 1)] == '/')
         current[(length - 1)] = 0;
 	return current;
