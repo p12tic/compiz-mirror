@@ -31,24 +31,32 @@
 /*
  * Helper function to get the basename of file from its path
  * e.g. basename ("/home/user/blah.c") == "blah.c"
- * special case : basename ("/home/user/") == "user/"
+ * special case : basename ("/home/user/") == "user"
  */
 char *basename (char *str)
 {
-    char *current = str;
-    while (1)
-    {
-        if (!*current) break;
-        if (*current == '/')
-        {
-            current++;
-            if (!*current) break;
-            str = current;
-        }
-        else
-            current++;
-    }
-    return str;
+	char *current = str;
+    int length;
+	while (1)
+	{
+		if (!*current) break;
+		if (*current == '/')
+		{
+			current++;
+			if (!*current) break;
+			str = current;
+		}
+		else
+			current++;
+	}
+    length = strlen (str);
+    current = malloc (sizeof (char) * (length + 1));
+    if (!current)
+        return NULL;
+    strcpy (current, str);
+    if (current[(length - 1)] == '/')
+        current[(length - 1)] = 0;
+	return current;
 }
 
 /*
