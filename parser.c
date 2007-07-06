@@ -296,19 +296,25 @@ static void programParseSource (CompFunctionData *data,
     }
 }
 
-// Pack everything together into this final 
+/*
+ * Load a source file and build a Compiz Fragment Function from it
+ */
 int loadFragmentProgram (char *file, char *name,
                          CompScreen *s, int target)
 {
     char *source;
     int handle = 0;
     CompFunctionData *data;
+    // Read the source file
     source = programReadSource (file);
     if (!source)
         return 0;
     data = createFunctionData ();
+    // Parse the source
     programParseSource (data, target, source);
+    // Create the function
     handle = createFragmentFunction (s, name, data);
+    // Clean things
     destroyFunctionData (data);
     free (source);
     return handle;
