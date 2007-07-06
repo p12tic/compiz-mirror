@@ -36,7 +36,7 @@ enum
     AttribOp,
 } OpType;
 
-char *basename (char *str);
+char *base_name (char *str);
 
 int loadFragmentProgram (char *file, char *name,
                          CompScreen *s, int target);

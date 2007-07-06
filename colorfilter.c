@@ -320,7 +320,7 @@ loadFilters (CompScreen *s, CompTexture *texture)
     loaded = 0;
     for (i = 0; i < count; i++)
     {
-        name = basename (filters->value[i].s);
+        name = base_name (filters->value[i].s);
         compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
                         "Loading filter %s at %s.", name,
                         filters->value[i].s);

@@ -33,7 +33,7 @@
  * e.g. basename ("/home/user/blah.c") == "blah.c"
  * special case : basename ("/home/user/") == "user"
  */
-char *basename (char *str)
+char *base_name (char *str)
 {
 	char *current = str;
     int length;
