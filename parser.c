@@ -60,8 +60,12 @@ static char *programReadSource (char *fname)
     char   *data;
     int     length;
 
-    // Open file
+    // Try to open file
     fp = fopen (fname, "r");
+
+    // If failed, abort
+    if (!fp)
+        return NULL;
 
     // Get file length
     fseek (fp, 0L, SEEK_END);
