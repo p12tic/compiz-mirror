@@ -187,8 +187,6 @@ static void programParseSource (CompFunctionData *data,
             else
                 type = DataOp;
         }
-        //else if (strncmp (current, "", 1) == 0)
-        //    type = DataOp;
         switch (type)
         {
             // Data op : just paste the whole instruction
