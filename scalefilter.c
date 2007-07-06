@@ -70,8 +70,8 @@ typedef struct _ScaleFilterDisplay {
 } ScaleFilterDisplay;
 
 typedef struct _ScaleFilterScreen {
-    PaintOutputProc paintOutput;
-    DrawWindowProc drawWindow;
+    PaintOutputProc                   paintOutput;
+    ScaleSetScaledPaintAttributesProc setScaledPaintAttributes;
 
     CompMatch scaleMatch;
     Bool matchApplied;
@@ -727,39 +727,32 @@ scalefilterPaintOutput (CompScreen              *s,
 }
 
 static Bool
-scalefilterDrawWindow (CompWindow	     *w,
-	     	       const CompTransform  *transform,
-       		       const FragmentAttrib *attrib,
-		       Region		     region,
-		       unsigned int	     mask)
+scalefilterSetScaledPaintAttributes (CompWindow        *w,
+				     WindowPaintAttrib *attrib)
 {
-    CompScreen *s = w->screen;
-    Bool       status;
+    Bool ret;
 
-    FILTER_SCREEN (s);
+    FILTER_SCREEN (w->screen);
+    SCALE_SCREEN (w->screen);
+
+    UNWRAP (fs, ss, setScaledPaintAttributes);
+    ret = (*ss->setScaledPaintAttributes) (w, attrib);
+    WRAP (fs, ss, setScaledPaintAttributes, 
+	  scalefilterSetScaledPaintAttributes);
 
     if (fs->matchApplied ||
 	(fs->filterInfo && fs->filterInfo->filterStringLength))
     {
-	FragmentAttrib fA = *attrib;
-
 	SCALE_WINDOW (w);
 
-	if (!sw->slot)
-    	    fA.opacity = 0;
-
-	UNWRAP (fs, s, drawWindow);
-	status = (*s->drawWindow) (w, transform, &fA, region, mask);
-	WRAP (fs, s, drawWindow, scalefilterDrawWindow);
-    }
-    else
-    {
-	UNWRAP (fs, s, drawWindow);
-	status = (*s->drawWindow) (w, transform, attrib, region, mask);
-	WRAP (fs, s, drawWindow, scalefilterDrawWindow);
+	if (ret && !sw->slot)
+	{
+	    ret = FALSE;
+    	    attrib->opacity = 0;
+	}
     }
 
-    return status;
+    return ret;
 }
 
 static void
@@ -850,6 +843,7 @@ scalefilterInitScreen (CompPlugin *p,
     ScaleFilterScreen *fs;
 
     FILTER_DISPLAY (s->display);
+    SCALE_SCREEN (s);
 
     fs = malloc (sizeof (ScaleFilterScreen));
     if (!fs)
@@ -860,7 +854,8 @@ scalefilterInitScreen (CompPlugin *p,
     fs->matchApplied = FALSE;
 
     WRAP (fs, s, paintOutput, scalefilterPaintOutput);
-    WRAP (fs, s, drawWindow, scalefilterDrawWindow);
+    WRAP (fs, ss, setScaledPaintAttributes,
+	  scalefilterSetScaledPaintAttributes);
 
     scalefilterSetFontBoldNotify (s, scalefilterScreenOptionChanged);
     scalefilterSetFontSizeNotify (s, scalefilterScreenOptionChanged);
@@ -880,7 +875,7 @@ scalefilterFiniScreen (CompPlugin *p,
     SCALE_SCREEN (s);
 
     UNWRAP (fs, s, paintOutput);
-    UNWRAP (fs, s, drawWindow);
+    UNWRAP (fs, ss, setScaledPaintAttributes);
 
     if (fs->filterInfo)
     {
