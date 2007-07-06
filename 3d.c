@@ -92,12 +92,13 @@ typedef struct _tdScreen
 
 	float maxZ;
 
-	int currentViewportNum;
 	float xMove;
 
 	Bool currentDifferentResolutions;
 
 	int currentScreenNum;
+	int currentViewportNum;
+	int currentMoMode;
 
 	tdWindow **lastInViewportList;
 	int lastInViewportListSize;
@@ -219,16 +220,18 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 	              !(tdGetManualOnly(screen) && 
 			(cs->rotationState != RotationManual));
 
-	if (tds->currentViewportNum != screen->hsize
+	if (tds->currentMoMode != cs->moMode
+		|| tds->currentViewportNum != screen->hsize
 		|| tds->currentScreenNum != screen->nOutputDev
 		|| tds->currentDifferentResolutions != differentResolutions(screen))
 	{
+		tds->currentMoMode = cs->moMode;
 		tds->currentViewportNum = screen->hsize;
 		tds->currentScreenNum = screen->nOutputDev;
 		tds->currentDifferentResolutions = differentResolutions(screen);
 
 		if (tds->currentViewportNum > 2
-			&& (screen->nOutputDev == 1))
+			&& (cs->moMode != Multiple || screen->nOutputDev == 1))
 			tds->xMove =
 					1.0f / (tan (PI * (tds->currentViewportNum - 2.0f) / (2.0f * tds->currentViewportNum)));
 		else
@@ -993,6 +996,7 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 
 	tds->tdWindowExists = FALSE;
 
+	tds->currentMoMode = Automatic;
 	tds->currentViewportNum = s->hsize;
 	tds->currentScreenNum = s->nOutputDev;
 	tds->currentDifferentResolutions = differentResolutions(s);
