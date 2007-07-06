@@ -37,9 +37,8 @@ char *basename (char *str)
 {
 	char *current = str;
     int length;
-	while (1)
+	while (*current)
 	{
-		if (!*current) break;
 		if (*current == '/')
 		{
 			current++;
