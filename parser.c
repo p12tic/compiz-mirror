@@ -151,36 +151,45 @@ static void programParseSource (CompFunctionData *data,
         // Left trim it
         while (*current && (*current == ' ' || *current == '\t'))
             current++;
+
         // Find instruction type
         type = NoOp;
-        if (strncmp (current, "ABS", 3) == 0
-         || strncmp (current, "ADD", 3) == 0
-         || strncmp (current, "CMP", 3) == 0
-         || strncmp (current, "COS", 3) == 0
-         || strncmp (current, "DP3", 3) == 0
-         || strncmp (current, "DP4", 3) == 0
-         || strncmp (current, "EX2", 3) == 0
-         || strncmp (current, "FLR", 3) == 0
-         || strncmp (current, "FRC", 3) == 0
-         || strncmp (current, "KIL", 3) == 0
-         || strncmp (current, "LG2", 3) == 0
-         || strncmp (current, "LIT", 3) == 0
-         || strncmp (current, "LRP", 3) == 0
-         || strncmp (current, "MAD", 3) == 0
-         || strncmp (current, "MAX", 3) == 0
-         || strncmp (current, "MIN", 3) == 0
-         || strncmp (current, "POW", 3) == 0
-         || strncmp (current, "RCP", 3) == 0
-         || strncmp (current, "RSQ", 3) == 0
-         || strncmp (current, "SCS", 3) == 0
-         || strncmp (current, "SIN", 3) == 0
-         || strncmp (current, "SGE", 3) == 0
-         || strncmp (current, "SLT", 3) == 0
-         || strncmp (current, "SUB", 3) == 0
-         || strncmp (current, "SWZ", 3) == 0
-         || strncmp (current, "TXB", 3) == 0
-         || strncmp (current, "TXP", 3) == 0
-         || strncmp (current, "XPD", 3) == 0)
+        // Comments
+        if (strncmp (current, "#", 1) == 0)
+        {
+            source = next + 1;
+            line = strtok (NULL, ";");
+            continue;
+        }
+        // Data ops
+        else if (strncmp (current, "ABS", 3) == 0
+              || strncmp (current, "ADD", 3) == 0
+              || strncmp (current, "CMP", 3) == 0
+              || strncmp (current, "COS", 3) == 0
+              || strncmp (current, "DP3", 3) == 0
+              || strncmp (current, "DP4", 3) == 0
+              || strncmp (current, "EX2", 3) == 0
+              || strncmp (current, "FLR", 3) == 0
+              || strncmp (current, "FRC", 3) == 0
+              || strncmp (current, "KIL", 3) == 0
+              || strncmp (current, "LG2", 3) == 0
+              || strncmp (current, "LIT", 3) == 0
+              || strncmp (current, "LRP", 3) == 0
+              || strncmp (current, "MAD", 3) == 0
+              || strncmp (current, "MAX", 3) == 0
+              || strncmp (current, "MIN", 3) == 0
+              || strncmp (current, "POW", 3) == 0
+              || strncmp (current, "RCP", 3) == 0
+              || strncmp (current, "RSQ", 3) == 0
+              || strncmp (current, "SCS", 3) == 0
+              || strncmp (current, "SIN", 3) == 0
+              || strncmp (current, "SGE", 3) == 0
+              || strncmp (current, "SLT", 3) == 0
+              || strncmp (current, "SUB", 3) == 0
+              || strncmp (current, "SWZ", 3) == 0
+              || strncmp (current, "TXB", 3) == 0
+              || strncmp (current, "TXP", 3) == 0
+              || strncmp (current, "XPD", 3) == 0)
             type = DataOp;
         else if (strncmp (current, "TEMP", 4) == 0)
             type = TempOp;
@@ -230,6 +239,7 @@ static void programParseSource (CompFunctionData *data,
                 current += oplength + 1;
                 strncpy (arg1, current, length - oplength - 1);
                 arg1[length - oplength - 1] = 0;
+                // "output" is a reserved word, skip it
                 if (strncmp (arg1, "output", 6) == 0)
                 {
                     free (arg1);
@@ -258,6 +268,8 @@ static void programParseSource (CompFunctionData *data,
                 if (colorDone) break;
                 if (strncmp (current, "MUL", 3) == 0) // MUL op, 2 ops
                 {
+                    // Example : MUL output, fragment.color, output;
+                    // MOV arg1, fragment.color, arg2
                     current = strstr (current, " ") + 1;
                     length = strstr (current, ",") - current;
                     if (length < 1) break;
@@ -293,6 +305,8 @@ static void programParseSource (CompFunctionData *data,
                 }
                 else // MOV op, 1 op
                 {
+                    // Example : MOV result.color, output;
+                    // MOV result.color, arg1;
                     current = strstr (current, ",") + 2;
                     length = strlen (current);
                     if (length < 1) break;
