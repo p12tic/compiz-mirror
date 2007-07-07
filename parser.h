@@ -38,5 +38,8 @@ enum
 
 char *base_name (char *str);
 
+int buildFragmentProgram (char *source, char *name,
+                          CompScreen *s, int target);
+
 int loadFragmentProgram (char *file, char *name,
                          CompScreen *s, int target);
