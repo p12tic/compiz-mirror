@@ -850,7 +850,8 @@ readListValue (CCSSetting *setting,
 	{
 	    Bool *array = malloc (nItems * sizeof (Bool));
 	    for (; valueList; valueList = valueList->next, i++)
-		array[i] = (GPOINTER_TO_INT (valueList->data)) ? TRUE : FALSE;
+		array[i] = 
+		    gconf_value_get_bool (valueList->data) ? TRUE : FALSE;
 	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
 	    free (array);
 	}
@@ -859,7 +860,7 @@ readListValue (CCSSetting *setting,
 	{
 	    int *array = malloc (nItems * sizeof (int));
 	    for (; valueList; valueList = valueList->next, i++)
-		array[i] = GPOINTER_TO_INT (valueList->data);
+		array[i] = gconf_value_get_int (valueList->data);
 	    list = ccsGetValueListFromIntArray (array, nItems, setting);
 	    free (array);
 	}
@@ -868,7 +869,7 @@ readListValue (CCSSetting *setting,
 	{
 	    float *array = malloc (nItems * sizeof (float));
 	    for (; valueList; valueList = valueList->next, i++)
-		array[i] = *((gdouble*) valueList->data);
+		array[i] = gconf_value_get_float (valueList->data);
 	    list = ccsGetValueListFromFloatArray (array, nItems, setting);
 	    free (array);
 	}
@@ -878,7 +879,7 @@ readListValue (CCSSetting *setting,
 	{
 	    char **array = malloc (nItems * sizeof (char*));
 	    for (; valueList; valueList = valueList->next, i++)
-		array[i] = strdup (valueList->data);
+		array[i] = strdup (gconf_value_get_string (valueList->data));
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
 	    for (i = 0; i < nItems; i++)
 		free (array[i]);
@@ -892,7 +893,8 @@ readListValue (CCSSetting *setting,
 	    for (; valueList; valueList = valueList->next, i++)
     	    {
 		memset (&array[i], 0, sizeof (CCSSettingColorValue));
-		ccsStringToColor (valueList->data, &array[i]);
+		ccsStringToColor (gconf_value_get_string (valueList->data),
+				  &array[i]);
 	    }
 	    list = ccsGetValueListFromColorArray (array, nItems, setting);
 	    free (array);
