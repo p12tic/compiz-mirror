@@ -29,7 +29,6 @@
 #load config file
 include plugin.info
 
-
 ifeq ($(BUILD_GLOBAL),true)
 	PREFIX = $(shell pkg-config --variable=prefix compiz)
 	CLIBDIR = $(shell pkg-config --variable=libdir compiz)
