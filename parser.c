@@ -157,7 +157,6 @@ static void programParseSource (CompFunctionData *data,
         // Comments
         if (strncmp (current, "#", 1) == 0)
         {
-            source = next + 1;
             line = strtok (NULL, ";");
             continue;
         }
@@ -322,7 +321,6 @@ static void programParseSource (CompFunctionData *data,
             default:
                 break;
         }
-        source = next + 1;
         line = strtok (NULL, ";");
     }
 }
