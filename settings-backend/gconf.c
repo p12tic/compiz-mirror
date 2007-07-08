@@ -1581,7 +1581,7 @@ resetOptionToDefault (CCSSetting * setting)
     PATHNAME;
 
     gconf_client_recursive_unset (client, pathName, 0, NULL);
-    gconf_client_suggest_sync (client,NULL);
+    gconf_client_suggest_sync (client, NULL);
 }
 
 static void
