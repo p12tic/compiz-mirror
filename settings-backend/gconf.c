@@ -307,7 +307,7 @@ struct _SpecialOption {
 
     {"audible_bell", "core", FALSE,
      METACITY "/general/audible_bell", OptionBool},
-    {"size", "core", TRUE,
+    {"hsize", "core", TRUE,
      METACITY "/general/num_workspaces", OptionInt},
 };
 
