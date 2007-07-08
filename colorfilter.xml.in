@@ -5,7 +5,7 @@
     <_long>Filter colors for accessibility purposes</_long>
     <category>Accessibility</category>
     <display>
-      <option name="window_toggle" type="action">
+      <option name="toggle_window" type="action">
         <_short>Toggle window filtering</_short>
         <_long>Toggle filtering for currently focused window.</_long>
         <allowed key="true"/>
@@ -13,7 +13,7 @@
           <key>&lt;Super&gt;f</key>
         </default>
       </option>
-      <option name="screen_toggle" type="action">
+      <option name="toggle_screen" type="action">
         <_short>Toggle screen filtering</_short>
         <_long>Toggle filtering for every window on the screen.</_long>
         <allowed key="true"/>
@@ -21,7 +21,7 @@
           <key>&lt;Super&gt;d</key>
         </default>
       </option>
-      <option name="filter_switch" type="action">
+      <option name="switch_filter" type="action">
         <_short>Switch filter</_short>
         <_long>Select filter to use from filters list : either apply all filters or only one specific filter (triggering this action switches filters one by one and eventually comes back to the "all filters" mode).</_long>
         <allowed key="true"/>
