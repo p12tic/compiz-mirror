@@ -422,7 +422,7 @@ valueChanged (GConfClient *client,
     if (!setting)
     {
 	/* maybe it's an action which has a name_button/... naming scheme */
-	const char *prefix[] = { "_key", "_button", "_edge", "_edgebutton" };
+	const char *prefix[] = { "_key", "_button", "_edge", "_edgebutton", "_bell" };
 	int        i;
 	int        prefixLen, len = strlen (token);
 
