@@ -188,7 +188,8 @@ colorFilterSwitchFilter (CompScreen * s)
                             "Single filter mode (filter loading failure)");
         }
     }
-    // Damage currently filtered window
+
+    // Damage currently filtered windows
     for (w = s->windows; w; w = w->next)
     {
         FILTER_WINDOW (w);
@@ -294,6 +295,7 @@ loadFilters (CompScreen *s, CompTexture *texture)
     int i, target, loaded, function, count;
     char *name;
     CompListValue *filters;
+    CompWindow *w;
 
     FILTER_SCREEN (s);
 
@@ -336,6 +338,14 @@ loadFilters (CompScreen *s, CompTexture *texture)
         compLogMessage (s->display, "colorfilter", CompLogLevelWarn,
                         "Tried to load %d filter(s), %d succeeded.",
                         count, loaded);
+
+    // Damage currently filtered windows
+    for (w = s->windows; w; w = w->next)
+    {
+        FILTER_WINDOW (w);
+        if (cfw->isFiltered)
+            addWindowDamage (w);
+    }
 
     return loaded;
 }
