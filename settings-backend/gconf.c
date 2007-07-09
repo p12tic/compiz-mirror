@@ -562,6 +562,7 @@ finiClient (void)
 
     gconf_client_remove_dir (client, COMPIZ, NULL);
     gconf_client_remove_dir (client, METACITY, NULL);
+    gconf_client_suggest_sync (client, NULL);
 
     g_object_unref (client);
     client = NULL;
@@ -598,13 +599,15 @@ copyGconfValues (GConfEngine *conf,
 	    if (associate && schemaPath)
 		asprintf (&newSchema, "%s/%s", schemaPath, name + 1);
 
-	    value = gconf_entry_get_value (entry);
+	    value = gconf_engine_get_without_default (conf, key, NULL);
 	    if (value)
 	    {
-		gconf_engine_set (conf, newKey, value, NULL);
 		if (newSchema)
 		    gconf_engine_associate_schema (conf, newKey,
 						   newSchema, NULL);
+		gconf_engine_set (conf, newKey, value, NULL);
+
+		gconf_value_free (value);
 	    }
 	    if (newSchema)
 		free (newSchema);
@@ -688,6 +691,8 @@ copyGconfTree (CCSContext  *context,
     finiClient ();
 
     subdirs = gconf_engine_all_dirs (conf, from, NULL);
+    gconf_engine_suggest_sync (conf, NULL);
+
     copyGconfRecursively (conf, subdirs, to, associate, schemaPath);
 
     gconf_engine_suggest_sync (conf, NULL);
