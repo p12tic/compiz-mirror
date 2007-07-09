@@ -83,8 +83,12 @@ static guint gnomeNotifyId = 0;
 static char *currentProfile = NULL;
 
 /* some forward declarations */
-static Bool readInit(CCSContext * context);
-static void readSetting(CCSContext * context, CCSSetting * setting);
+static Bool readInit (CCSContext * context);
+static void readSetting (CCSContext * context, CCSSetting * setting);
+static Bool readOption (CCSSetting * setting);
+static Bool writeInit (CCSContext * context);
+static void writeIntegratedOption (CCSContext *context, CCSSetting *setting,
+				   int        index);
 
 typedef enum {
     OptionInt,
@@ -366,6 +370,7 @@ valueChanged (GConfClient *client,
     char         *keyName = (char*) gconf_entry_get_key (entry);
     char         *pluginName;
     char         *token;
+    int          index;
     Bool         isScreen;
     unsigned int screenNum;
     CCSPlugin    *plugin;
@@ -440,7 +445,14 @@ valueChanged (GConfClient *client,
 	return;
 
     readInit (context);
-    readSetting (context, setting);
+    readOption (setting);
+
+    if (ccsGetIntegrationEnabled (context) &&
+	isIntegratedOption (setting, &index))
+    {
+	writeInit (context);
+	writeIntegratedOption (context, setting, index);
+    }
 }
 
 static void
