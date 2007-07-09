@@ -445,7 +445,8 @@ valueChanged (GConfClient *client,
 	return;
 
     readInit (context);
-    readOption (setting);
+    if (!readOption (setting))
+	ccsResetToDefault (setting);
 
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
