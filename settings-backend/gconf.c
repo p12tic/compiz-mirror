@@ -1613,7 +1613,28 @@ resetOptionToDefault (CCSSetting * setting)
     KEYNAME;
     PATHNAME;
 
-    gconf_client_recursive_unset (client, pathName, 0, NULL);
+    if (setting->type != TypeAction)
+	gconf_client_recursive_unset (client, pathName, 0, NULL);
+    else
+    {
+	char itemPath[BUFSIZE];
+
+	snprintf (itemPath, BUFSIZE, "%s_edge", pathName);
+	gconf_client_recursive_unset (client, pathName, 0, NULL);
+
+	snprintf (itemPath, BUFSIZE, "%s_edgebutton", pathName);
+	gconf_client_recursive_unset (client, itemPath, 0, NULL);
+
+	snprintf (itemPath, BUFSIZE, "%s_button", pathName);
+	gconf_client_recursive_unset (client, itemPath, 0, NULL);
+
+	snprintf (itemPath, BUFSIZE, "%s_key", pathName);
+	gconf_client_recursive_unset (client, itemPath, 0, NULL);
+
+	snprintf (itemPath, BUFSIZE, "%s_bell", pathName);
+	gconf_client_recursive_unset (client, itemPath, 0, NULL);
+    }
+
     gconf_client_suggest_sync (client, NULL);
 }
 
