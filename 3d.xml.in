@@ -66,7 +66,7 @@
 				</option>
 			</group>
 			<group>
-				<short>Corner Bevelling</short>
+				<_short>Corner Bevelling</_short>
 				<option name="bevel" type="int">
 					<_short>Bevel Corners</_short>
 					<_long>Roundoff corners for consistency with rounded decorations</_long>
