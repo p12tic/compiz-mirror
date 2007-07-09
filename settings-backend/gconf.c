@@ -571,7 +571,8 @@ static void
 copyGconfValues (GConfEngine *conf,
 		 const gchar *from,
 		 const gchar *to,
-		 Bool        associate)
+		 Bool        associate,
+		 const gchar *schemaPath)
 {
     GSList *values, *tmp;
     GError *err = NULL;
@@ -584,7 +585,7 @@ copyGconfValues (GConfEngine *conf,
 	GConfEntry *entry = tmp->data;
 	GConfValue *value;
 	const char *key = gconf_entry_get_key (entry);
-	char       *name, *newKey;
+	char       *name, *newKey, *newSchema = NULL;
 
 	name = strrchr (key, '/');
 	if (!name)
@@ -593,20 +594,26 @@ copyGconfValues (GConfEngine *conf,
 	if (to)
 	{
 	    asprintf (&newKey, "%s/%s", to, name + 1);
+
+	    if (associate && schemaPath)
+		asprintf (&newSchema, "%s/%s", schemaPath, name + 1);
+
 	    value = gconf_entry_get_value (entry);
 	    if (value)
 	    {
-		char *schemaKey;
-		asprintf (&schemaKey, "%s%s/%s", "/schemas", from, name + 1);
 		gconf_engine_set (conf, newKey, value, NULL);
-		gconf_engine_associate_schema (conf, newKey, schemaKey, NULL);
-		free (schemaKey);
+		if (newSchema)
+		    gconf_engine_associate_schema (conf, newKey,
+						   newSchema, NULL);
 	    }
+	    if (newSchema)
+		free (newSchema);
 	    free (newKey);
 	}
 	else
 	{
-	    gconf_engine_associate_schema (conf, key, NULL, NULL);
+	    if (associate)
+		gconf_engine_associate_schema (conf, key, NULL, NULL);
 	    gconf_engine_unset (conf, key, NULL);
 	}
 
@@ -622,7 +629,8 @@ static void
 copyGconfRecursively (GConfEngine *conf,
 		      GSList      *subdirs,
 		      const gchar *to,
-		      Bool        associate)
+		      Bool        associate,
+		      const gchar *schemaPath)
 {
     GSList* tmp;
 
@@ -631,7 +639,7 @@ copyGconfRecursively (GConfEngine *conf,
     while (tmp)
     {
  	gchar *path = tmp->data;
-	char  *newKey, *name;
+	char  *newKey, *newSchema = NULL, *name;
 
 	name = strrchr (path, '/');
 	if (name)
@@ -641,10 +649,16 @@ copyGconfRecursively (GConfEngine *conf,
 	    else
 		newKey = NULL;
 
-	    copyGconfValues (conf, path, newKey, associate);
+	    if (associate && schemaPath)
+		asprintf (&newSchema, "%s/%s", schemaPath, name + 1);
+
+	    copyGconfValues (conf, path, newKey, associate, newSchema);
 	    copyGconfRecursively (conf,
 				  gconf_engine_all_dirs (conf, path, NULL),
-				  newKey, associate);
+				  newKey, associate, newSchema);
+
+	    if (newSchema)
+		free (newSchema);
 
 	    if (to)
       		free (newKey);
@@ -664,7 +678,8 @@ static void
 copyGconfTree (CCSContext  *context,
 	       const gchar *from,
 	       const gchar *to,
-	       Bool        associate)
+	       Bool        associate,
+	       const gchar *schemaPath)
 {
     GSList* subdirs;
 
@@ -673,7 +688,7 @@ copyGconfTree (CCSContext  *context,
     finiClient ();
 
     subdirs = gconf_engine_all_dirs (conf, from, NULL);
-    copyGconfRecursively (conf, subdirs, to, associate);
+    copyGconfRecursively (conf, subdirs, to, associate, schemaPath);
 
     gconf_engine_suggest_sync (conf, NULL);
 
@@ -1724,7 +1739,8 @@ checkProfile (CCSContext *context)
 
 	/* copy /apps/compiz tree to profile path */
 	asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
-	copyGconfTree (context, "/apps/compiz", pathName, TRUE);
+	copyGconfTree (context, "/apps/compiz", pathName,
+		       TRUE, "/schemas/apps/compiz");
 	free (pathName);
 
 	/* reset /apps/compiz tree */
@@ -1732,11 +1748,11 @@ checkProfile (CCSContext *context)
 
 	/* copy new profile tree to /apps/compiz */
 	asprintf (&pathName, "%s/%s", PROFILEPATH, currentProfile);
-	copyGconfTree (context, pathName, COMPIZ, TRUE);
+	copyGconfTree (context, pathName, COMPIZ, FALSE, NULL);
 
 	/* delete the new profile tree in /apps/compizconfig
 	   to avoid user modification in the wrong tree */
-	copyGconfTree (context, pathName, NULL, TRUE);
+	copyGconfTree (context, pathName, NULL, TRUE, NULL);
 	free (pathName);
 
 	/* update current profile name */
