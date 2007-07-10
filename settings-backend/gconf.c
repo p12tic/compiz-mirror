@@ -424,7 +424,7 @@ valueChanged (GConfClient *client,
     if (!setting)
     {
 	/* maybe it's an action which has a name_button/... naming scheme */
-	const char *prefix[] = { "_key", "_button", "_edge", "_edgebutton" };
+	const char *prefix[] = { "_key", "_button", "_edge", "_edgebutton", "_bell" };
 	int        i;
 	int        prefixLen, len = strlen (token);
 
@@ -1622,7 +1622,7 @@ resetOptionToDefault (CCSSetting * setting)
 	char itemPath[BUFSIZE];
 
 	snprintf (itemPath, BUFSIZE, "%s_edge", pathName);
-	gconf_client_recursive_unset (client, pathName, 0, NULL);
+	gconf_client_recursive_unset (client, itemPath, 0, NULL);
 
 	snprintf (itemPath, BUFSIZE, "%s_edgebutton", pathName);
 	gconf_client_recursive_unset (client, itemPath, 0, NULL);
