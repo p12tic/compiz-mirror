@@ -111,6 +111,8 @@ struct _SpecialOption {
      METACITY "/global_keybindings/panel_main_menu", OptionKey},
     {"run_command_screenshot", "core", FALSE,
      METACITY "/global_keybindings/run_command_screenshot", OptionKey},
+    {"run_command_terminal", "core", FALSE,
+     METACITY "/global_keybindings/run_command_terminal", OptionKey},
 
     {"toggle_window_maximized", "core", FALSE,
      METACITY "/window_keybindings/toggle_maximized", OptionKey},
