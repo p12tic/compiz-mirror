@@ -1620,7 +1620,7 @@ resetOptionToDefault (CCSSetting * setting)
 	char itemPath[BUFSIZE];
 
 	snprintf (itemPath, BUFSIZE, "%s_edge", pathName);
-	gconf_client_recursive_unset (client, pathName, 0, NULL);
+	gconf_client_recursive_unset (client, itemPath, 0, NULL);
 
 	snprintf (itemPath, BUFSIZE, "%s_edgebutton", pathName);
 	gconf_client_recursive_unset (client, itemPath, 0, NULL);
