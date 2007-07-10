@@ -49,6 +49,7 @@
 #define CompNumLockMask    (1 << 21)
 #define CompScrollLockMask (1 << 22)
 
+#define GNOME        "/desktop/gnome"
 #define METACITY     "/apps/metacity"
 #define COMPIZ       "/apps/compiz"
 #define COMPIZCONFIG "/apps/compizconfig"
@@ -79,6 +80,7 @@
 static GConfClient *client = NULL;
 static GConfEngine *conf = NULL;
 static guint backendNotifyId = 0;
+static guint metacityNotifyId = 0;
 static guint gnomeNotifyId = 0;
 static char *currentProfile = NULL;
 
@@ -153,54 +155,54 @@ struct _SpecialOption {
     {"prev", "switcher", FALSE,
      METACITY "/global_keybindings/switch_windows_backward", OptionKey},
 
-    {"command1", "core", FALSE,
+    {"command0", "core", FALSE,
      METACITY "/keybinding_commands/command_1", OptionString},
-    {"command2", "core", FALSE,
+    {"command1", "core", FALSE,
      METACITY "/keybinding_commands/command_2", OptionString},
-    {"command3", "core", FALSE,
+    {"command2", "core", FALSE,
      METACITY "/keybinding_commands/command_3", OptionString},
-    {"command4", "core", FALSE,
+    {"command3", "core", FALSE,
      METACITY "/keybinding_commands/command_4", OptionString},
-    {"command5", "core", FALSE,
+    {"command4", "core", FALSE,
      METACITY "/keybinding_commands/command_5", OptionString},
-    {"command6", "core", FALSE,
+    {"command5", "core", FALSE,
      METACITY "/keybinding_commands/command_6", OptionString},
-    {"command7", "core", FALSE,
+    {"command6", "core", FALSE,
      METACITY "/keybinding_commands/command_7", OptionString},
-    {"command8", "core", FALSE,
+    {"command7", "core", FALSE,
      METACITY "/keybinding_commands/command_8", OptionString},
-    {"command9", "core", FALSE,
+    {"command8", "core", FALSE,
      METACITY "/keybinding_commands/command_9", OptionString},
-    {"command10", "core", FALSE,
+    {"command9", "core", FALSE,
      METACITY "/keybinding_commands/command_10", OptionString},
-    {"command11", "core", FALSE,
+    {"command10", "core", FALSE,
      METACITY "/keybinding_commands/command_11", OptionString},
-    {"command12", "core", FALSE,
+    {"command11", "core", FALSE,
      METACITY "/keybinding_commands/command_12", OptionString},
 
-    {"run_command1", "core", FALSE,
+    {"run_command0", "core", FALSE,
      METACITY "/global_keybindings/run_command_1", OptionKey},
-    {"run_command2", "core", FALSE,
+    {"run_command1", "core", FALSE,
      METACITY "/global_keybindings/run_command_2", OptionKey},
-    {"run_command3", "core", FALSE,
+    {"run_command2", "core", FALSE,
      METACITY "/global_keybindings/run_command_3", OptionKey},
-    {"run_command4", "core", FALSE,
+    {"run_command3", "core", FALSE,
      METACITY "/global_keybindings/run_command_4", OptionKey},
-    {"run_command5", "core", FALSE,
+    {"run_command4", "core", FALSE,
      METACITY "/global_keybindings/run_command_5", OptionKey},
-    {"run_command6", "core", FALSE,
+    {"run_command5", "core", FALSE,
      METACITY "/global_keybindings/run_command_6", OptionKey},
-    {"run_command7", "core", FALSE,
+    {"run_command6", "core", FALSE,
      METACITY "/global_keybindings/run_command_7", OptionKey},
-    {"run_command8", "core", FALSE,
+    {"run_command7", "core", FALSE,
      METACITY "/global_keybindings/run_command_8", OptionKey},
-    {"run_command9", "core", FALSE,
+    {"run_command8", "core", FALSE,
      METACITY "/global_keybindings/run_command_9", OptionKey},
-    {"run_command10", "core", FALSE,
+    {"run_command9", "core", FALSE,
      METACITY "/global_keybindings/run_command_10", OptionKey},
-    {"run_command11", "core", FALSE,
+    {"run_command10", "core", FALSE,
      METACITY "/global_keybindings/run_command_11", OptionKey},
-    {"run_command12", "core", FALSE,
+    {"run_command11", "core", FALSE,
      METACITY "/global_keybindings/run_command_12", OptionKey},
 
     {"rotate_to_1", "rotate", FALSE,
@@ -301,6 +303,8 @@ struct _SpecialOption {
      METACITY "/keybinding_commands/command_screenshot", OptionString},
     {"command_window_screenshot", "core", FALSE,
      METACITY "/keybinding_commands/command_window_screenshot", OptionString},
+    {"command_terminal", "core", FALSE,
+     GNOME "/applications/terminal/exec", OptionString},
 
     {"autoraise", "core", FALSE,
      METACITY "/general/auto_raise", OptionBool},
@@ -553,12 +557,19 @@ initClient (CCSContext *context)
 					       valueChanged, context,
 					       NULL, NULL);
 
-    gnomeNotifyId = gconf_client_notify_add (client, METACITY,
-					     gnomeValueChanged, context,
+    metacityNotifyId = gconf_client_notify_add (client, METACITY,
+	   					gnomeValueChanged, context,
+	   					NULL,NULL);
+
+    gnomeNotifyId = gconf_client_notify_add (client,
+					     GNOME "/applications/terminal",
+      					     gnomeValueChanged, context,
 					     NULL,NULL);
 
     gconf_client_add_dir (client, COMPIZ, GCONF_CLIENT_PRELOAD_NONE, NULL);
     gconf_client_add_dir (client, METACITY, GCONF_CLIENT_PRELOAD_NONE, NULL);
+    gconf_client_add_dir (client, GNOME "/applications/terminal",
+			  GCONF_CLIENT_PRELOAD_NONE, NULL);
 }
 
 static void
@@ -569,6 +580,11 @@ finiClient (void)
 	gconf_client_notify_remove (client, backendNotifyId);
 	backendNotifyId = 0;
     }
+    if (metacityNotifyId)
+    {
+	gconf_client_notify_remove (client, metacityNotifyId);
+	metacityNotifyId = 0;
+    }
     if (gnomeNotifyId)
     {
 	gconf_client_notify_remove (client, gnomeNotifyId);
@@ -577,6 +593,7 @@ finiClient (void)
 
     gconf_client_remove_dir (client, COMPIZ, NULL);
     gconf_client_remove_dir (client, METACITY, NULL);
+    gconf_client_remove_dir (client, GNOME "/applications/terminal", NULL);
     gconf_client_suggest_sync (client, NULL);
 
     g_object_unref (client);
