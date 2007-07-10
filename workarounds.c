@@ -78,16 +78,16 @@ static void workaroundsWindowResizeNotify( CompWindow *w, int dx, int dy,
 {
     WORKAROUNDS_SCREEN( w->screen );
 
-    UNWRAP( ws, w->screen, windowResizeNotify );
-    (*w->screen->windowResizeNotify) ( w, dx, dy, dwidth, dheight );
-    WRAP( ws, w->screen, windowResizeNotify, workaroundsWindowResizeNotify );
-
     if ( workaroundsGetLegacyApps( w->screen->display ) )
     {
         /* Fix up the window type. */
         recalcWindowType( w );
         workaroundsDoLegacyApps( w );
     }
+
+    UNWRAP( ws, w->screen, windowResizeNotify );
+    (*w->screen->windowResizeNotify) ( w, dx, dy, dwidth, dheight );
+    WRAP( ws, w->screen, windowResizeNotify, workaroundsWindowResizeNotify );
 }
 
 static Bool workaroundsInitDisplay( CompPlugin *plugin, CompDisplay *d )
