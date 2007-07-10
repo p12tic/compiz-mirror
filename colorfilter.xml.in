@@ -36,6 +36,7 @@
         <_long>List of plain text filter files that should be applied when filtering windows or screen.</_long>
         <type>string</type>
         <default></default>
+        <hints>file;</hints>
       </option>
       <option name="filter_decorations" type="bool">
         <_short>Filter window decorations</_short>
