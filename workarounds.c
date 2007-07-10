@@ -63,12 +63,12 @@ static void workaroundsDoLegacyApps( CompWindow *w )
 {
     unsigned int type;
 
-    type = w->wmType;
+    type = w->type;
 
     /* Some code to make Wine and legacy applications work. */
-    if (w->width == w->screen->width && w->height == w->screen->height &&
-       !(type & CompWindowTypeDesktopMask))
-           type = CompWindowTypeFullscreenMask;
+    if ( w->width == w->screen->width && w->height == w->screen->height &&
+         !( type & CompWindowTypeDesktopMask ) )
+            type = CompWindowTypeFullscreenMask;
 
     w->type = type;
 }
