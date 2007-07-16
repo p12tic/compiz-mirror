@@ -1080,11 +1080,6 @@ static void tdFini(CompPlugin * p)
 		freeDisplayPrivateIndex(displayPrivateIndex);
 }
 
-CompPluginDep tdDeps[] = {
-	{CompPluginRuleBefore, "cube"}
-	,
-};
-
 static int tdGetVersion(CompPlugin *p, int version)
 {
 	return ABIVERSION;
@@ -1106,10 +1101,6 @@ static CompPluginVTable tdVTable = {
 	/*tdSetDisplayOption */ 0,
 	0,
 	0,
-	tdDeps,
-	sizeof(tdDeps) / sizeof(tdDeps[0]),
-	0,
-	0
 };
 
 CompPluginVTable *getCompPluginInfo(void)
