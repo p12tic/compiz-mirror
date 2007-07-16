@@ -5,18 +5,18 @@
 						<plugin>cube</plugin>
 				</relation>
 		</deps>
-		<_short>Wallpaper</short>
-		<_long>Draw the desktop wallpaper</long>
+		<_short>Wallpaper</_short>
+		<_long>Draw the desktop wallpaper</_long>
 		<category>Utility</category>
 		<screen>
 			<option name="images" type="list">
-				<_short>Backgrounds</short>
-				<_long>The background specifications (as explained in DOCUMENTATION) to use.</long>
+				<_short>Backgrounds</_short>
+				<_long>The background specifications (as explained in DOCUMENTATION) to use.</_long>
 				<type>string</type>
 			</option>
 			<option name="tile" type="bool">
-				<_short>Tile or Stretch</short>
-				<_long>Tile backgrounds as opposed to stretching</long>
+				<_short>Tile or Stretch</_short>
+				<_long>Tile backgrounds as opposed to stretching</_long>
 				<type>bool</type>
 			</option>
 		</screen>
