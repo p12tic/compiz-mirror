@@ -717,10 +717,6 @@ static CompPluginVTable  wallpaperVTable=
 	0,
 	0,
 	0,
-	0,
-	0,
-	0,
-	0,
 	0
 };
 
