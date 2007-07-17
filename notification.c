@@ -273,11 +273,7 @@ static CompPluginVTable notifyVTable = {
     notifyGetDisplayOptions,
     notifySetDisplayOption,
     0, /* GetScreenOptions */
-    0, /* SetScreenOption */
-    NULL,
-    0,
-    NULL,
-    0
+    0 /* SetScreenOption */
 };
 
 CompPluginVTable *
