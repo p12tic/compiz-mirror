@@ -34,23 +34,24 @@
  * e.g. basename ("/home/user/blah.c") == "blah.c"
  * special case : basename ("/home/user/") == "user"
  */
-char *base_name (char *str)
+char *
+base_name (char *str)
 {
-	char *current = str;
+    char *current = str;
     int length;
-	while (*current)
+    while (*current)
+    {
+	if (*current == '/')
 	{
-		if (*current == '/')
-		{
 	    /* '/' found, check if it is the latest char of the string,
 	     * if not update result string pointer */
-			current++;
-			if (!*current) break;
-			str = current;
-		}
-		else
-			current++;
+	    current++;
+	    if (!*current) break;
+	    str = current;
 	}
+	else
+	    current++;
+    }
     length = strlen (str);
     /* Duplicate result string for trimming */
     current = strdup (str);
@@ -59,13 +60,14 @@ char *base_name (char *str)
     /* Trim terminating '/' if needed */
     if (current[(length - 1)] == '/')
 	current[(length - 1)] = 0;
-	return current;
+    return current;
 }
 
 /*
  * Left trimming function
  */
-static char *ltrim (char *string)
+static char *
+ltrim (char *string)
 {
     while (*string && (*string == ' ' || *string == '\t'))
 	string++;
@@ -75,7 +77,8 @@ static char *ltrim (char *string)
 /*
  * File reader function
  */
-static char *programReadSource (char *fname)
+static char *
+programReadSource (char *fname)
 {
     FILE   *fp;
     char   *data, *path = NULL, *home = getenv ("HOME");
@@ -92,7 +95,8 @@ static char *programReadSource (char *fname)
 	free (path);
     }
 
-    /* If failed again, try as system wide data file (in share/compiz/filters) */
+    /* If failed again, try as system wide data file 
+     * (in PREFIX/share/compiz/filters) */
     if (!fp)
     {
 	asprintf (&path, "%s/share/compiz/filters/%s", PREFIX, fname);
@@ -133,7 +137,8 @@ static char *programReadSource (char *fname)
  * This function returns NULL if no argument found
  * or a malloc'ed string that will have to be freed later.
  */
-static char *getFirstArgument (char **source)
+static char *
+getFirstArgument (char **source)
 {
     char *next, *arg;
     char *string, *orig;
@@ -180,8 +185,9 @@ static char *getFirstArgument (char **source)
 /*
  * Parse the source buffer op by op and add each op to function data
  */
-static void programParseSource (CompFunctionData *data,
-				int target, char *source)
+static void
+programParseSource (CompFunctionData *data,
+		    int target, char *source)
 {
     char *line, *next, *current;
     char *strtok_ptr;
@@ -257,7 +263,7 @@ static void programParseSource (CompFunctionData *data,
 	      || strncmp (current, "TXB", 3) == 0
 	      || strncmp (current, "TXP", 3) == 0
 	      || strncmp (current, "XPD", 3) == 0)
-	    type = DataOp;
+		type = DataOp;
 	else if (strncmp (current, "TEMP", 4) == 0)
 	    type = TempOp;
 	else if (strncmp (current, "PARAM", 5) == 0)
@@ -292,7 +298,7 @@ static void programParseSource (CompFunctionData *data,
 		addDataOpToFunctionData (data, arg1);
 		free (arg1);
 		break;
-	    /* Parse arguments one by one */
+		/* Parse arguments one by one */
 	    case TempOp:
 	    case AttribOp:
 	    case ParamOp:
@@ -394,8 +400,9 @@ static void programParseSource (CompFunctionData *data,
 /*
  * Build a Compiz Fragment Function from a source string
  */
-int buildFragmentProgram (char *source, char *name,
-			  CompScreen *s, int target)
+int
+buildFragmentProgram (char *source, char *name,
+		      CompScreen *s, int target)
 {
     CompFunctionData *data;
     int handle;
@@ -413,8 +420,9 @@ int buildFragmentProgram (char *source, char *name,
 /*
  * Load a source file and build a Compiz Fragment Function from it
  */
-int loadFragmentProgram (char *file, char *name,
-			 CompScreen *s, int target)
+int
+loadFragmentProgram (char *file, char *name,
+		     CompScreen *s, int target)
 {
     char *source;
     int handle;
