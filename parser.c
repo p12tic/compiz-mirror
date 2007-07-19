@@ -122,6 +122,7 @@ static void programParseSource (CompFunctionData *data,
                                 int target, char *source)
 {
     char *line, *next, *current;
+    char *strtok_ptr;
     int   length, oplength, type;
     Bool colorDone = FALSE;
 
@@ -143,7 +144,7 @@ static void programParseSource (CompFunctionData *data,
     while ((next = strstr (next, "\n")))
         *next = ' ';
 
-    line = strtok (source, ";");
+    line = strtok_r (source, ";", &strtok_ptr);
     // Parse each instruction
     while (line)
     {
@@ -321,7 +322,7 @@ static void programParseSource (CompFunctionData *data,
             default:
                 break;
         }
-        line = strtok (NULL, ";");
+	line = strtok_r (NULL, ";", &strtok_ptr);
     }
 }
 
