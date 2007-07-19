@@ -374,15 +374,12 @@ static void programParseSource (CompFunctionData *data,
                 {
                     // Example : MOV result.color, output;
                     // MOV result.color, arg1;
-                    current = strstr (current, ",") + 2;
-                    length = strlen (current);
-                    if (length < 1) break;
-                    arg1 = malloc (sizeof (char) * (length + 1));
-                    if (!arg1) break;
-                    strncpy (arg1, current, length);
-                    arg1[length] = 0;
-                    addColorOpToFunctionData (data, arg1, arg1);
-                    free (arg1);
+                    current = strstr (current, ",") + 1;
+		    if ((arg1 = getFirstArgument (&current)))
+		    {
+			addColorOpToFunctionData (data, "output", arg1);
+			free (arg1);
+		    }
                 }
                 colorDone = TRUE;
                 break;
