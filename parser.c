@@ -42,8 +42,8 @@ char *base_name (char *str)
 	{
 		if (*current == '/')
 		{
-            /* '/' found, check if it is the latest char of the string,
-             * if not update result string pointer */
+	    /* '/' found, check if it is the latest char of the string,
+	     * if not update result string pointer */
 			current++;
 			if (!*current) break;
 			str = current;
@@ -55,10 +55,10 @@ char *base_name (char *str)
     // Duplicate result string for trimming
     current = strdup (str);
     if (!current)
-        return NULL;
+	return NULL;
     // Trim terminating '/' if needed
     if (current[(length - 1)] == '/')
-        current[(length - 1)] = 0;
+	current[(length - 1)] = 0;
 	return current;
 }
 
@@ -87,22 +87,22 @@ static char *programReadSource (char *fname)
     // If failed, try as user filter file (in ~/.compiz/filters)
     if (!fp && home && strlen (home))
     {
-        asprintf (&path, "%s/.compiz/filters/%s", home, fname);
-        fp = fopen (path, "r");
-        free (path);
+	asprintf (&path, "%s/.compiz/filters/%s", home, fname);
+	fp = fopen (path, "r");
+	free (path);
     }
 
     // If failed again, try as system wide data file (in share/compiz/filters)
     if (!fp)
     {
-        asprintf (&path, "%s/share/compiz/filters/%s", PREFIX, fname);
-        fp = fopen (path, "r");
-        free (path);
+	asprintf (&path, "%s/share/compiz/filters/%s", PREFIX, fname);
+	fp = fopen (path, "r");
+	free (path);
     }
 
     // If failed again & again, abort
     if (!fp)
-        return NULL;
+	return NULL;
 
     // Get file length
     fseek (fp, 0L, SEEK_END);
@@ -112,7 +112,7 @@ static char *programReadSource (char *fname)
     // Alloc memory
     data = malloc (sizeof (char) * (length + 1));
     if (!data)
-        return NULL;
+	return NULL;
 
     // Read file
     fread (data, length, 1, fp);
@@ -150,7 +150,7 @@ static char *getFirstArgument (char **source)
     if ((next = strstr (string, ",")) || (next = strstr (string, ";")))
     {
 	length = next - string;
-        if (!length)
+	if (!length)
 	{
 	    (*source)++;
 	    return getFirstArgument (source);
@@ -181,7 +181,7 @@ static char *getFirstArgument (char **source)
  * Parse the source buffer op by op and add each op to function data
  */
 static void programParseSource (CompFunctionData *data,
-                                int target, char *source)
+				int target, char *source)
 {
     char *line, *next, *current;
     char *strtok_ptr;
@@ -193,18 +193,18 @@ static void programParseSource (CompFunctionData *data,
     // Find the header, skip it, and start parsing from there
     while (*source)
     {
-        if (strncmp (source, "!!ARBfp1.0", 10) == 0)
-        {
-            source += 10;
-            break;
-        }
-        source++;
+	if (strncmp (source, "!!ARBfp1.0", 10) == 0)
+	{
+	    source += 10;
+	    break;
+	}
+	source++;
     }
 
     // Strip linefeeds
     next = source;
     while ((next = strstr (next, "\n")))
-        *next = ' ';
+	*next = ' ';
 
     line = strtok_r (source, ";", &strtok_ptr);
     // Parse each instruction
@@ -213,16 +213,16 @@ static void programParseSource (CompFunctionData *data,
 	line = strdup (line);
 	current = ltrim (line);
 
-        // Find instruction type
-        type = NoOp;
+	// Find instruction type
+	type = NoOp;
 
 	// Comments
-        if (strncmp (current, "#", 1) == 0)
-        {
+	if (strncmp (current, "#", 1) == 0)
+	{
 	    free (line);
-            line = strtok_r (NULL, ";", &strtok_ptr);
-            continue;
-        }
+	    line = strtok_r (NULL, ";", &strtok_ptr);
+	    continue;
+	}
 	if ((next = strstr (current, "#")))
 	    *next = 0;
 
@@ -230,77 +230,77 @@ static void programParseSource (CompFunctionData *data,
 	if (strncmp (current, "END", 3) == 0)
 	    type = NoOp;
 	else if (strncmp (current, "ABS", 3) == 0
-              || strncmp (current, "ADD", 3) == 0
-              || strncmp (current, "CMP", 3) == 0
-              || strncmp (current, "COS", 3) == 0
-              || strncmp (current, "DP3", 3) == 0
-              || strncmp (current, "DP4", 3) == 0
-              || strncmp (current, "EX2", 3) == 0
-              || strncmp (current, "FLR", 3) == 0
-              || strncmp (current, "FRC", 3) == 0
-              || strncmp (current, "KIL", 3) == 0
-              || strncmp (current, "LG2", 3) == 0
-              || strncmp (current, "LIT", 3) == 0
-              || strncmp (current, "LRP", 3) == 0
-              || strncmp (current, "MAD", 3) == 0
-              || strncmp (current, "MAX", 3) == 0
-              || strncmp (current, "MIN", 3) == 0
-              || strncmp (current, "POW", 3) == 0
-              || strncmp (current, "RCP", 3) == 0
-              || strncmp (current, "RSQ", 3) == 0
-              || strncmp (current, "SCS", 3) == 0
-              || strncmp (current, "SIN", 3) == 0
-              || strncmp (current, "SGE", 3) == 0
-              || strncmp (current, "SLT", 3) == 0
-              || strncmp (current, "SUB", 3) == 0
-              || strncmp (current, "SWZ", 3) == 0
-              || strncmp (current, "TXB", 3) == 0
-              || strncmp (current, "TXP", 3) == 0
-              || strncmp (current, "XPD", 3) == 0)
-            type = DataOp;
-        else if (strncmp (current, "TEMP", 4) == 0)
-            type = TempOp;
-        else if (strncmp (current, "PARAM", 5) == 0)
-            type = ParamOp;
-        else if (strncmp (current, "ATTRIB", 6) == 0)
-            type = AttribOp;
-        else if (strncmp (current, "TEX", 3) == 0)
-            type = FetchOp;
-        else if (strncmp (current, "MUL", 3) == 0)
-        {
-            if (strstr (current, "fragment.color"))
-                type = ColorOp;
-            else
-                type = DataOp;
-        }
-        else if (strncmp (current, "MOV", 3) == 0)
-        {
-            if (strstr (current, "result.color"))
-                type = ColorOp;
-            else
-                type = DataOp;
-        }
-        switch (type)
-        {
-            // Data op : just paste the whole instruction
-            case DataOp:
-                length = strlen (current);
-                arg1 = malloc (sizeof (char) * (length + 2));
-                strncpy (arg1, current, length);
-                arg1[length] = ';';
-                arg1[length + 1] = 0;
-                addDataOpToFunctionData (data, arg1);
-                free (arg1);
-                break;
-            // Parse arguments one by one
-            case TempOp:
-            case AttribOp:
-            case ParamOp:
-                if (type == TempOp) oplength = 4;
-                else if (type == ParamOp) oplength = 5;
-                else if (type == AttribOp) oplength = 6;
-                length = strlen (current);
-                if (length < oplength + 2) break;
+	      || strncmp (current, "ADD", 3) == 0
+	      || strncmp (current, "CMP", 3) == 0
+	      || strncmp (current, "COS", 3) == 0
+	      || strncmp (current, "DP3", 3) == 0
+	      || strncmp (current, "DP4", 3) == 0
+	      || strncmp (current, "EX2", 3) == 0
+	      || strncmp (current, "FLR", 3) == 0
+	      || strncmp (current, "FRC", 3) == 0
+	      || strncmp (current, "KIL", 3) == 0
+	      || strncmp (current, "LG2", 3) == 0
+	      || strncmp (current, "LIT", 3) == 0
+	      || strncmp (current, "LRP", 3) == 0
+	      || strncmp (current, "MAD", 3) == 0
+	      || strncmp (current, "MAX", 3) == 0
+	      || strncmp (current, "MIN", 3) == 0
+	      || strncmp (current, "POW", 3) == 0
+	      || strncmp (current, "RCP", 3) == 0
+	      || strncmp (current, "RSQ", 3) == 0
+	      || strncmp (current, "SCS", 3) == 0
+	      || strncmp (current, "SIN", 3) == 0
+	      || strncmp (current, "SGE", 3) == 0
+	      || strncmp (current, "SLT", 3) == 0
+	      || strncmp (current, "SUB", 3) == 0
+	      || strncmp (current, "SWZ", 3) == 0
+	      || strncmp (current, "TXB", 3) == 0
+	      || strncmp (current, "TXP", 3) == 0
+	      || strncmp (current, "XPD", 3) == 0)
+	    type = DataOp;
+	else if (strncmp (current, "TEMP", 4) == 0)
+	    type = TempOp;
+	else if (strncmp (current, "PARAM", 5) == 0)
+	    type = ParamOp;
+	else if (strncmp (current, "ATTRIB", 6) == 0)
+	    type = AttribOp;
+	else if (strncmp (current, "TEX", 3) == 0)
+	    type = FetchOp;
+	else if (strncmp (current, "MUL", 3) == 0)
+	{
+	    if (strstr (current, "fragment.color"))
+		type = ColorOp;
+	    else
+		type = DataOp;
+	}
+	else if (strncmp (current, "MOV", 3) == 0)
+	{
+	    if (strstr (current, "result.color"))
+		type = ColorOp;
+	    else
+		type = DataOp;
+	}
+	switch (type)
+	{
+	    // Data op : just paste the whole instruction
+	    case DataOp:
+		length = strlen (current);
+		arg1 = malloc (sizeof (char) * (length + 2));
+		strncpy (arg1, current, length);
+		arg1[length] = ';';
+		arg1[length + 1] = 0;
+		addDataOpToFunctionData (data, arg1);
+		free (arg1);
+		break;
+	    // Parse arguments one by one
+	    case TempOp:
+	    case AttribOp:
+	    case ParamOp:
+		if (type == TempOp) oplength = 4;
+		else if (type == ParamOp) oplength = 5;
+		else if (type == AttribOp) oplength = 6;
+		length = strlen (current);
+		if (length < oplength + 2) break;
 		current += oplength + 1;
 		while (current && *current &&
 		       (arg1 = getFirstArgument (&current)))
@@ -320,72 +320,72 @@ static void programParseSource (CompFunctionData *data,
 			addAttribHeaderOpToFunctionData (data, arg1);
 		    free (arg1);
 		}
-                break;
-            case FetchOp:
-                current = strstr (current, " ") + 1;
-                length = strstr (current, ",") - current;
-                if (length < 1) break;
-                arg1 = malloc (sizeof (char) * (length + 1));
-                if (!arg1) break;
-                strncpy (arg1, current, length);
-                arg1[length] = 0;
-                addFetchOpToFunctionData (data, arg1, NULL, target);
-                break;
-            case ColorOp:
-                if (colorDone) break;
-                if (strncmp (current, "MUL", 3) == 0) // MUL op, 2 ops
-                {
-                    // Example : MUL output, fragment.color, output;
-                    // MOV arg1, fragment.color, arg2
-                    current = strstr (current, " ") + 1;
-                    length = strstr (current, ",") - current;
-                    if (length < 1) break;
-                    arg1 = malloc (sizeof (char) * (length + 1));
-                    if (!arg1) break;
-                    strncpy (arg1, current, length);
-                    arg1[length] = 0;
-                    if (strlen (current) < 3)
-                    {
-                        free (arg1);
-                        break;
-                    }
-                    current = strstr (current, ",") + 2;
-                    if (strlen (current) < 3)
-                    {
-                        free (arg1);
-                        break;
-                    }
-                    current = strstr (current, ",") + 2;
-                    length = strlen (current);
-                    if (length < 1) break;
-                    arg2 = malloc (sizeof (char) * (length + 1));
-                    if (!arg2)
-                    {
-                        free (arg1);
-                        break;
-                    }
-                    strncpy (arg2, current, length);
-                    arg2[length] = 0;
-                    addColorOpToFunctionData (data, arg1, arg2);
-                    free (arg1);
-                    free (arg2);
-                }
-                else // MOV op, 1 op
-                {
-                    // Example : MOV result.color, output;
-                    // MOV result.color, arg1;
-                    current = strstr (current, ",") + 1;
+		break;
+	    case FetchOp:
+		current = strstr (current, " ") + 1;
+		length = strstr (current, ",") - current;
+		if (length < 1) break;
+		arg1 = malloc (sizeof (char) * (length + 1));
+		if (!arg1) break;
+		strncpy (arg1, current, length);
+		arg1[length] = 0;
+		addFetchOpToFunctionData (data, arg1, NULL, target);
+		break;
+	    case ColorOp:
+		if (colorDone) break;
+		if (strncmp (current, "MUL", 3) == 0) // MUL op, 2 ops
+		{
+		    // Example : MUL output, fragment.color, output;
+		    // MOV arg1, fragment.color, arg2
+		    current = strstr (current, " ") + 1;
+		    length = strstr (current, ",") - current;
+		    if (length < 1) break;
+		    arg1 = malloc (sizeof (char) * (length + 1));
+		    if (!arg1) break;
+		    strncpy (arg1, current, length);
+		    arg1[length] = 0;
+		    if (strlen (current) < 3)
+		    {
+			free (arg1);
+			break;
+		    }
+		    current = strstr (current, ",") + 2;
+		    if (strlen (current) < 3)
+		    {
+			free (arg1);
+			break;
+		    }
+		    current = strstr (current, ",") + 2;
+		    length = strlen (current);
+		    if (length < 1) break;
+		    arg2 = malloc (sizeof (char) * (length + 1));
+		    if (!arg2)
+		    {
+			free (arg1);
+			break;
+		    }
+		    strncpy (arg2, current, length);
+		    arg2[length] = 0;
+		    addColorOpToFunctionData (data, arg1, arg2);
+		    free (arg1);
+		    free (arg2);
+		}
+		else // MOV op, 1 op
+		{
+		    // Example : MOV result.color, output;
+		    // MOV result.color, arg1;
+		    current = strstr (current, ",") + 1;
 		    if ((arg1 = getFirstArgument (&current)))
 		    {
 			addColorOpToFunctionData (data, "output", arg1);
 			free (arg1);
 		    }
-                }
-                colorDone = TRUE;
-                break;
-            default:
-                break;
-        }
+		}
+		colorDone = TRUE;
+		break;
+	    default:
+		break;
+	}
 	free (line);
 	line = strtok_r (NULL, ";", &strtok_ptr);
     }
@@ -414,14 +414,14 @@ int buildFragmentProgram (char *source, char *name,
  * Load a source file and build a Compiz Fragment Function from it
  */
 int loadFragmentProgram (char *file, char *name,
-                         CompScreen *s, int target)
+			 CompScreen *s, int target)
 {
     char *source;
     int handle;
     // Read the source file
     source = programReadSource (file);
     if (!source)
-        return 0;
+	return 0;
     // Build the Compiz Fragment Program
     handle = buildFragmentProgram (source, name, s, target);
     free (source);
