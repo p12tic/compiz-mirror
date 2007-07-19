@@ -52,11 +52,11 @@ char *base_name (char *str)
 			current++;
 	}
     length = strlen (str);
-    // Duplicate result string for trimming
+    /* Duplicate result string for trimming */
     current = strdup (str);
     if (!current)
 	return NULL;
-    // Trim terminating '/' if needed
+    /* Trim terminating '/' if needed */
     if (current[(length - 1)] == '/')
 	current[(length - 1)] = 0;
 	return current;
@@ -81,10 +81,10 @@ static char *programReadSource (char *fname)
     char   *data, *path = NULL, *home = getenv ("HOME");
     int     length;
 
-    // Try to open file fname as is
+    /* Try to open file fname as is */
     fp = fopen (fname, "r");
 
-    // If failed, try as user filter file (in ~/.compiz/filters)
+    /* If failed, try as user filter file (in ~/.compiz/filters) */
     if (!fp && home && strlen (home))
     {
 	asprintf (&path, "%s/.compiz/filters/%s", home, fname);
@@ -92,7 +92,7 @@ static char *programReadSource (char *fname)
 	free (path);
     }
 
-    // If failed again, try as system wide data file (in share/compiz/filters)
+    /* If failed again, try as system wide data file (in share/compiz/filters) */
     if (!fp)
     {
 	asprintf (&path, "%s/share/compiz/filters/%s", PREFIX, fname);
@@ -100,26 +100,26 @@ static char *programReadSource (char *fname)
 	free (path);
     }
 
-    // If failed again & again, abort
+    /* If failed again & again, abort */
     if (!fp)
 	return NULL;
 
-    // Get file length
+    /* Get file length */
     fseek (fp, 0L, SEEK_END);
     length = ftell (fp);
     rewind (fp);
 
-    // Alloc memory
+    /* Alloc memory */
     data = malloc (sizeof (char) * (length + 1));
     if (!data)
 	return NULL;
 
-    // Read file
+    /* Read file */
     fread (data, length, 1, fp);
 
     data[length] = 0;
 
-    // Close file
+    /* Close file */
     fclose (fp);
 
     return data;
@@ -142,11 +142,11 @@ static char *getFirstArgument (char **source)
     if (!**source)
 	return NULL;
 
-    // Left trim
+    /* Left trim */
     orig = string = ltrim (*source);
 
-    // Find next comma or semicolon (which isn't that useful since we
-    // are working on tokens delimited by semicolons)
+    /* Find next comma or semicolon (which isn't that useful since we */
+    /* are working on tokens delimited by semicolons) */
     if ((next = strstr (string, ",")) || (next = strstr (string, ";")))
     {
 	length = next - string;
@@ -161,14 +161,14 @@ static char *getFirstArgument (char **source)
 	length = strlen (string);
     }
 
-    // Allocate, copy and end string
+    /* Allocate, copy and end string */
     arg = malloc (sizeof (char) * (length + 1));
     if (!arg) return NULL;
 
     strncpy (arg, string, length);
     arg[length] = 0;
 
-    // Increment source pointer
+    /* Increment source pointer */
     if (string - orig + strlen (arg) + 1 <= strlen (*source))
 	*source += string - orig + strlen (arg) + 1;
     else
@@ -190,7 +190,7 @@ static void programParseSource (CompFunctionData *data,
 
     char *arg1, *arg2;
 
-    // Find the header, skip it, and start parsing from there
+    /* Find the header, skip it, and start parsing from there */
     while (*source)
     {
 	if (strncmp (source, "!!ARBfp1.0", 10) == 0)
@@ -201,22 +201,22 @@ static void programParseSource (CompFunctionData *data,
 	source++;
     }
 
-    // Strip linefeeds
+    /* Strip linefeeds */
     next = source;
     while ((next = strstr (next, "\n")))
 	*next = ' ';
 
     line = strtok_r (source, ";", &strtok_ptr);
-    // Parse each instruction
+    /* Parse each instruction */
     while (line)
     {
 	line = strdup (line);
 	current = ltrim (line);
 
-	// Find instruction type
+	/* Find instruction type */
 	type = NoOp;
 
-	// Comments
+	/* Comments */
 	if (strncmp (current, "#", 1) == 0)
 	{
 	    free (line);
@@ -226,7 +226,7 @@ static void programParseSource (CompFunctionData *data,
 	if ((next = strstr (current, "#")))
 	    *next = 0;
 
-	// Data ops
+	/* Data ops */
 	if (strncmp (current, "END", 3) == 0)
 	    type = NoOp;
 	else if (strncmp (current, "ABS", 3) == 0
@@ -282,7 +282,7 @@ static void programParseSource (CompFunctionData *data,
 	}
 	switch (type)
 	{
-	    // Data op : just paste the whole instruction
+	    /* Data op : just paste the whole instruction */
 	    case DataOp:
 		length = strlen (current);
 		arg1 = malloc (sizeof (char) * (length + 2));
@@ -292,7 +292,7 @@ static void programParseSource (CompFunctionData *data,
 		addDataOpToFunctionData (data, arg1);
 		free (arg1);
 		break;
-	    // Parse arguments one by one
+	    /* Parse arguments one by one */
 	    case TempOp:
 	    case AttribOp:
 	    case ParamOp:
@@ -305,13 +305,13 @@ static void programParseSource (CompFunctionData *data,
 		while (current && *current &&
 		       (arg1 = getFirstArgument (&current)))
 		{
-		    // "output" is a reserved word, skip it
+		    /* "output" is a reserved word, skip it */
 		    if (strncmp (arg1, "output", 6) == 0)
 		    {
 			free (arg1);
 			continue;
 		    }
-		    // Add ops
+		    /* Add ops */
 		    if (type == TempOp)
 			addTempHeaderOpToFunctionData (data, arg1);
 		    else if (type == ParamOp)
@@ -333,10 +333,10 @@ static void programParseSource (CompFunctionData *data,
 		break;
 	    case ColorOp:
 		if (colorDone) break;
-		if (strncmp (current, "MUL", 3) == 0) // MUL op, 2 ops
+		if (strncmp (current, "MUL", 3) == 0) /* MUL op, 2 ops */
 		{
-		    // Example : MUL output, fragment.color, output;
-		    // MOV arg1, fragment.color, arg2
+		    /* Example : MUL output, fragment.color, output; */
+		    /* MOV arg1, fragment.color, arg2 */
 		    current = strstr (current, " ") + 1;
 		    length = strstr (current, ",") - current;
 		    if (length < 1) break;
@@ -370,10 +370,10 @@ static void programParseSource (CompFunctionData *data,
 		    free (arg1);
 		    free (arg2);
 		}
-		else // MOV op, 1 op
+		else /* MOV op, 1 op */
 		{
-		    // Example : MOV result.color, output;
-		    // MOV result.color, arg1;
+		    /* Example : MOV result.color, output; */
+		    /* MOV result.color, arg1; */
 		    current = strstr (current, ",") + 1;
 		    if ((arg1 = getFirstArgument (&current)))
 		    {
@@ -399,13 +399,13 @@ int buildFragmentProgram (char *source, char *name,
 {
     CompFunctionData *data;
     int handle;
-    // Create the function data
+    /* Create the function data */
     data = createFunctionData ();
-    // Parse the source and fill the function data
+    /* Parse the source and fill the function data */
     programParseSource (data, target, source);
-    // Create the function
+    /* Create the function */
     handle = createFragmentFunction (s, name, data);
-    // Clean things
+    /* Clean things */
     destroyFunctionData (data);
     return handle;
 }
@@ -418,11 +418,11 @@ int loadFragmentProgram (char *file, char *name,
 {
     char *source;
     int handle;
-    // Read the source file
+    /* Read the source file */
     source = programReadSource (file);
     if (!source)
 	return 0;
-    // Build the Compiz Fragment Program
+    /* Build the Compiz Fragment Program */
     handle = buildFragmentProgram (source, name, s, target);
     free (source);
     return handle;
