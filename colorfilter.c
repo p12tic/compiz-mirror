@@ -37,27 +37,27 @@ static int displayPrivateIndex;
 typedef struct _ColorFilterDisplay
 {
     HandleEventProc handleEvent;
-    int             screenPrivateIndex;
+    int	     screenPrivateIndex;
 } ColorFilterDisplay;
 
 typedef struct _ColorFilterScreen
 {
-    int                     windowPrivateIndex;
+    int		     windowPrivateIndex;
 
     DrawWindowTextureProc   drawWindowTexture;
     DamageWindowRectProc    damageWindowRect;
 
-    Bool                    isFiltered;
-    int                     currentFilter; /* 0 : cumulative mode
-                                           0 < c <= count : single mode */
+    Bool		    isFiltered;
+    int		     currentFilter; /* 0 : cumulative mode
+					   0 < c <= count : single mode */
 
     /* The plugin can not immediately load the filters because it needs to
      * know what texture target it will use : when required, this boolean
      * is set to TRUE and filters will be loaded on next filtered window
      * texture painting */
-    Bool                    filtersLoaded;
-    int                    *filtersFunctions;
-    int                     filtersCount;
+    Bool		    filtersLoaded;
+    int		    *filtersFunctions;
+    int		     filtersCount;
 } ColorFilterScreen;
 
 typedef struct _ColorFilterWindow
@@ -74,15 +74,15 @@ typedef struct _ColorFilterWindow
     ((ColorFilterScreen *) (s)->privates[(cfd)->screenPrivateIndex].ptr)
 #define FILTER_SCREEN(s) \
     ColorFilterScreen *cfs = \
-        GET_FILTER_SCREEN (s, \
-            GET_FILTER_DISPLAY (s->display))
+	GET_FILTER_SCREEN (s, \
+	    GET_FILTER_DISPLAY (s->display))
 #define GET_FILTER_WINDOW(w, cfs) \
     ((ColorFilterWindow *) (w)->privates[(cfs)->windowPrivateIndex].ptr)
 #define FILTER_WINDOW(w) \
     ColorFilterWindow *cfw = \
-        GET_FILTER_WINDOW  (w, \
-            GET_FILTER_SCREEN  (w->screen, \
-                GET_FILTER_DISPLAY (w->screen->display)))
+	GET_FILTER_WINDOW  (w, \
+	    GET_FILTER_SCREEN  (w->screen, \
+		GET_FILTER_DISPLAY (w->screen->display)))
 
 // Compiz-core imports ---------------------------------------------------------
 
@@ -94,8 +94,8 @@ typedef struct _ColorFilterWindow
 struct _CompFunction {
     struct _CompFunction *next;
 
-    int             id;
-    char         *name;
+    int	     id;
+    char	 *name;
 };
 
 /*
@@ -103,14 +103,14 @@ struct _CompFunction {
  */
 static CompFunction *
 findFragmentFunction (CompScreen *s,
-                      int     id)
+		      int     id)
 {
     CompFunction *function;
 
     for (function = s->fragmentFunctions; function; function = function->next)
     {
-        if (function->id == id)
-            return function;
+	if (function->id == id)
+	    return function;
     }
 
     return NULL;
@@ -131,7 +131,7 @@ colorFilterToggleWindow (CompWindow * w)
 
     // Check exclude list
     if (matchEval (colorfilterGetExcludeMatch (w->screen), w))
-        cfw->isFiltered = FALSE;
+	cfw->isFiltered = FALSE;
 
     // Ensure window is going to be repainted
     addWindowDamage (w);
@@ -152,8 +152,8 @@ colorFilterToggleScreen (CompScreen * s)
 
     // Toggle filtering for every window
     for (w = s->windows; w; w = w->next)
-        if (w)
-            colorFilterToggleWindow (w);
+	if (w)
+	    colorFilterToggleWindow (w);
 }
 
 /*
@@ -170,31 +170,31 @@ colorFilterSwitchFilter (CompScreen * s)
     // % (count + 1) because of the cumulative filters mode
     cfs->currentFilter = ++cfs->currentFilter % (cfs->filtersCount + 1);
     if (cfs->currentFilter == 0)
-        compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
-                        "Cumulative filters mode");
+	compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
+			"Cumulative filters mode");
     else
     {
-        id = cfs->filtersFunctions[cfs->currentFilter - 1];
-        if (id)
-        {
-            function = findFragmentFunction (s, id);
-            compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
-                            "Single filter mode (using %s filter)",
-                            function->name);
-        }
-        else
-        {
-            compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
-                            "Single filter mode (filter loading failure)");
-        }
+	id = cfs->filtersFunctions[cfs->currentFilter - 1];
+	if (id)
+	{
+	    function = findFragmentFunction (s, id);
+	    compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
+			    "Single filter mode (using %s filter)",
+			    function->name);
+	}
+	else
+	{
+	    compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
+			    "Single filter mode (filter loading failure)");
+	}
     }
 
     // Damage currently filtered windows
     for (w = s->windows; w; w = w->next)
     {
-        FILTER_WINDOW (w);
-        if (cfw->isFiltered)
-            addWindowDamage (w);
+	FILTER_WINDOW (w);
+	if (cfw->isFiltered)
+	    addWindowDamage (w);
     }
 }
 
@@ -203,7 +203,7 @@ colorFilterSwitchFilter (CompScreen * s)
  */
 static Bool
 colorFilterToggle (CompDisplay * d, CompAction * action,
-                   CompActionState state, CompOption * option, int nOption)
+		   CompActionState state, CompOption * option, int nOption)
 {
     CompWindow *w;
     Window xid;
@@ -213,7 +213,7 @@ colorFilterToggle (CompDisplay * d, CompAction * action,
     w = findWindowAtDisplay (d, xid);
 
     if (w)
-        colorFilterToggleWindow (w);
+	colorFilterToggleWindow (w);
 
     return TRUE;
 }
@@ -223,7 +223,7 @@ colorFilterToggle (CompDisplay * d, CompAction * action,
  */
 static Bool
 colorFilterToggleAll (CompDisplay * d, CompAction * action,
-                      CompActionState state, CompOption * option, int nOption)
+		      CompActionState state, CompOption * option, int nOption)
 {
     CompScreen *s;
     Window xid;
@@ -233,7 +233,7 @@ colorFilterToggleAll (CompDisplay * d, CompAction * action,
     s = findScreenAtDisplay(d, xid);
 
     if (s)
-        colorFilterToggleScreen (s);
+	colorFilterToggleScreen (s);
 
     return TRUE;
 }
@@ -243,7 +243,7 @@ colorFilterToggleAll (CompDisplay * d, CompAction * action,
  */
 static Bool
 colorFilterSwitch (CompDisplay * d, CompAction * action,
-                   CompActionState state, CompOption * option, int nOption)
+		   CompActionState state, CompOption * option, int nOption)
 {
     CompScreen *s;
     Window xid;
@@ -253,7 +253,7 @@ colorFilterSwitch (CompDisplay * d, CompAction * action,
     s = findScreenAtDisplay(d, xid);
 
     if (s)
-        colorFilterSwitchFilter (s);
+	colorFilterSwitchFilter (s);
 
     return TRUE;
 }
@@ -272,17 +272,17 @@ unloadFilters (CompScreen *s)
 
     if (cfs->filtersFunctions)
     {
-        // Destroy loaded filters one by one
-        for (i = 0; i < cfs->filtersCount; i++)
-        {
-            if (cfs->filtersFunctions[i])
-                destroyFragmentFunction (s, cfs->filtersFunctions[i]);
-        }
-        free (cfs->filtersFunctions);
-        cfs->filtersFunctions = NULL;
-        cfs->filtersCount = 0;
-        // Reset current filter
-        cfs->currentFilter = 0;
+	// Destroy loaded filters one by one
+	for (i = 0; i < cfs->filtersCount; i++)
+	{
+	    if (cfs->filtersFunctions[i])
+		destroyFragmentFunction (s, cfs->filtersFunctions[i]);
+	}
+	free (cfs->filtersFunctions);
+	cfs->filtersFunctions = NULL;
+	cfs->filtersCount = 0;
+	// Reset current filter
+	cfs->currentFilter = 0;
     }
 }
 
@@ -307,44 +307,44 @@ loadFilters (CompScreen *s, CompTexture *texture)
 
     // The texture target that will be used for some ops
     if (texture->target == GL_TEXTURE_2D)
-        target = COMP_FETCH_TARGET_2D;
+	target = COMP_FETCH_TARGET_2D;
     else
-        target = COMP_FETCH_TARGET_RECT;
+	target = COMP_FETCH_TARGET_RECT;
 
     // Free previously loaded filters and malloc
     unloadFilters (s);
     cfs->filtersFunctions = malloc (sizeof (int) * count);
     if (!cfs->filtersFunctions)
-        return 0;
+	return 0;
     cfs->filtersCount = count;
 
     // Load each filter one by one
     loaded = 0;
     for (i = 0; i < count; i++)
     {
-        name = base_name (filters->value[i].s);
-        compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
-                        "Loading filter %s (item %s).", name,
-                        filters->value[i].s);
-        function = loadFragmentProgram (filters->value[i].s, name, s, target);
-        free (name);
-        cfs->filtersFunctions[i] = function;
-        if (function)
-            loaded++;
+	name = base_name (filters->value[i].s);
+	compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
+			"Loading filter %s (item %s).", name,
+			filters->value[i].s);
+	function = loadFragmentProgram (filters->value[i].s, name, s, target);
+	free (name);
+	cfs->filtersFunctions[i] = function;
+	if (function)
+	    loaded++;
     }
 
     // Warn if there was at least one loading failure
     if (loaded < count)
-        compLogMessage (s->display, "colorfilter", CompLogLevelWarn,
-                        "Tried to load %d filter(s), %d succeeded.",
-                        count, loaded);
+	compLogMessage (s->display, "colorfilter", CompLogLevelWarn,
+			"Tried to load %d filter(s), %d succeeded.",
+			count, loaded);
 
     // Damage currently filtered windows
     for (w = s->windows; w; w = w->next)
     {
-        FILTER_WINDOW (w);
-        if (cfw->isFiltered)
-            addWindowDamage (w);
+	FILTER_WINDOW (w);
+	if (cfw->isFiltered)
+	    addWindowDamage (w);
     }
 
     return loaded;
@@ -355,7 +355,7 @@ loadFilters (CompScreen *s, CompTexture *texture)
  */
 static void
 colorFilterDrawWindowTexture (CompWindow *w, CompTexture *texture,
-                              const FragmentAttrib *attrib, unsigned int mask)
+			      const FragmentAttrib *attrib, unsigned int mask)
 {
     int i, function;
 
@@ -366,7 +366,7 @@ colorFilterDrawWindowTexture (CompWindow *w, CompTexture *texture,
      * Maybe should this check be done only if a filter is going to be applied
      * for this texture? */
     if (!cfs->filtersLoaded)
-        loadFilters (w->screen, texture);    
+	loadFilters (w->screen, texture);    
 
     /* Filter texture if :
      *   o GL_ARB_fragment_program available
@@ -375,37 +375,37 @@ colorFilterDrawWindowTexture (CompWindow *w, CompTexture *texture,
     /* Note : if required, filter window contents only and not decorations
      * (use that w->texture->name != texture->name for decorations) */
     if (w->screen->fragmentProgram && cfs->filtersCount && cfw->isFiltered
-        && (colorfilterGetFilterDecorations (w->screen)
-           || (texture->name == w->texture->name)))
+	&& (colorfilterGetFilterDecorations (w->screen)
+	   || (texture->name == w->texture->name)))
     {
-        FragmentAttrib fa = *attrib;
-        if (cfs->currentFilter == 0) // Cumulative filters mode
-        {
-            // Enable each filter one by one
-            for (i = 0; i < cfs->filtersCount; i++)
-            {
-                function = cfs->filtersFunctions[i];
-                if (function)
-                    addFragmentFunction (&fa, function);
-            }
-        }
-        else if (cfs->currentFilter <= cfs->filtersCount) // Single filter mode
-        {
-            // Enable the currently selected filter if possible (i.e. if it
-            // was successfully loaded)
-            function = cfs->filtersFunctions[cfs->currentFilter - 1];
-            if (function)
-                addFragmentFunction (&fa, function);
-        }
-        UNWRAP (cfs, w->screen, drawWindowTexture);
-        (*w->screen->drawWindowTexture) (w, texture, &fa, mask);
-        WRAP(cfs, w->screen, drawWindowTexture, colorFilterDrawWindowTexture);
+	FragmentAttrib fa = *attrib;
+	if (cfs->currentFilter == 0) // Cumulative filters mode
+	{
+	    // Enable each filter one by one
+	    for (i = 0; i < cfs->filtersCount; i++)
+	    {
+		function = cfs->filtersFunctions[i];
+		if (function)
+		    addFragmentFunction (&fa, function);
+	    }
+	}
+	else if (cfs->currentFilter <= cfs->filtersCount) // Single filter mode
+	{
+	    // Enable the currently selected filter if possible (i.e. if it
+	    // was successfully loaded)
+	    function = cfs->filtersFunctions[cfs->currentFilter - 1];
+	    if (function)
+		addFragmentFunction (&fa, function);
+	}
+	UNWRAP (cfs, w->screen, drawWindowTexture);
+	(*w->screen->drawWindowTexture) (w, texture, &fa, mask);
+	WRAP(cfs, w->screen, drawWindowTexture, colorFilterDrawWindowTexture);
     }
     else // Not filtering
     {
-        UNWRAP (cfs, w->screen, drawWindowTexture);
-        (*w->screen->drawWindowTexture) (w, texture, attrib, mask);
-        WRAP(cfs, w->screen, drawWindowTexture, colorFilterDrawWindowTexture);
+	UNWRAP (cfs, w->screen, drawWindowTexture);
+	(*w->screen->drawWindowTexture) (w, texture, attrib, mask);
+	WRAP(cfs, w->screen, drawWindowTexture, colorFilterDrawWindowTexture);
     }
 }
 
@@ -423,9 +423,9 @@ colorFilterDamageWindowRect (CompWindow * w, Bool initial, BoxPtr rect)
     // The window is initial when it is being mapped
     if (initial)
     {
-        // If the screen is filtered, filter the new window if required
-        if (cfs->isFiltered && !cfw->isFiltered)
-            colorFilterToggleWindow (w);
+	// If the screen is filtered, filter the new window if required
+	if (cfs->isFiltered && !cfw->isFiltered)
+	    colorFilterToggleWindow (w);
     }
 
     UNWRAP (cfs, w->screen, damageWindowRect);
@@ -448,17 +448,17 @@ colorFilterHandleEvent (CompDisplay *d, XEvent *event)
      * Using CreateNotify doesn't work. */
     if (event->type == MapNotify)
     {
-        w = findWindowAtDisplay (d, event->xmap.window);
-        if (w)
-        {
-            FILTER_WINDOW (w);
-            if (cfw->createEvent)
-            {
-                if (w && matchEval (colorfilterGetFilterMatch (w->screen), w))
-                    colorFilterToggleWindow (w);
-                cfw->createEvent = FALSE;
-            }    
-        }
+	w = findWindowAtDisplay (d, event->xmap.window);
+	if (w)
+	{
+	    FILTER_WINDOW (w);
+	    if (cfw->createEvent)
+	    {
+		if (w && matchEval (colorfilterGetFilterMatch (w->screen), w))
+		    colorFilterToggleWindow (w);
+		cfw->createEvent = FALSE;
+	    }    
+	}
     }
     
     UNWRAP (cfd, d, handleEvent);
@@ -474,16 +474,16 @@ colorFilterHandleEvent (CompDisplay *d, XEvent *event)
  */
 static void
 colorfilterFilterMatchsChanged (CompScreen *s, CompOption *opt,
-                                ColorfilterScreenOptions num)
+				ColorfilterScreenOptions num)
 {
     CompWindow *w;
     // Re-check every window against new match settings
     for (w = s->windows; w; w = w->next)
     {
-        FILTER_WINDOW (w);
-        if (matchEval (colorfilterGetFilterMatch (s), w)
-            && !cfw->isFiltered)
-            colorFilterToggleWindow (w);
+	FILTER_WINDOW (w);
+	if (matchEval (colorfilterGetFilterMatch (s), w)
+	    && !cfw->isFiltered)
+	    colorFilterToggleWindow (w);
     }
 }
 
@@ -492,16 +492,16 @@ colorfilterFilterMatchsChanged (CompScreen *s, CompOption *opt,
  */
 static void
 colorfilterExcludeMatchsChanged (CompScreen *s, CompOption *opt,
-                           ColorfilterScreenOptions num)
+			   ColorfilterScreenOptions num)
 {
     CompWindow *w;
     // Re-check every window against new match settings
     for (w = s->windows; w; w = w->next)
     {
-        FILTER_WINDOW (w);
-        if (matchEval (colorfilterGetFilterMatch (s), w)
-            && cfw->isFiltered)
-            colorFilterToggleWindow (w);
+	FILTER_WINDOW (w);
+	if (matchEval (colorfilterGetFilterMatch (s), w)
+	    && cfw->isFiltered)
+	    colorFilterToggleWindow (w);
     }
 }
 
@@ -510,7 +510,7 @@ colorfilterExcludeMatchsChanged (CompScreen *s, CompOption *opt,
  */
 static void
 colorFiltersChanged (CompScreen *s, CompOption *opt,
-                     ColorfilterScreenOptions num)
+		     ColorfilterScreenOptions num)
 {
     FILTER_SCREEN (s);
     /* Just set the filtersLoaded boolean to FALSE, unloadFilters will be
@@ -525,13 +525,13 @@ colorFilterInitDisplay (CompPlugin * p, CompDisplay * d)
 
     cfd = malloc (sizeof (ColorFilterDisplay));
     if (!cfd)
-        return FALSE;
+	return FALSE;
 
     cfd->screenPrivateIndex = allocateScreenPrivateIndex (d);
     if (cfd->screenPrivateIndex < 0)
     {
-        free (cfd);
-        return FALSE;
+	free (cfd);
+	return FALSE;
     }
 
     colorfilterSetToggleWindowInitiate (d, colorFilterToggle);
@@ -562,13 +562,13 @@ colorFilterInitScreen (CompPlugin * p, CompScreen * s)
 
     cfs = malloc (sizeof (ColorFilterScreen));
     if (!cfs)
-        return FALSE;
+	return FALSE;
 
     cfs->windowPrivateIndex = allocateWindowPrivateIndex (s);
     if (cfs->windowPrivateIndex < 0)
     {
-        free (cfs);
-        return FALSE;
+	free (cfs);
+	return FALSE;
     }
 
     cfs->isFiltered = FALSE;
@@ -613,7 +613,7 @@ colorFilterInitWindow (CompPlugin * p, CompWindow * w)
 
     cfw = malloc (sizeof (ColorFilterWindow));
     if (!cfw)
-        return FALSE;
+	return FALSE;
 
     cfw->isFiltered = FALSE;
     cfw->createEvent = TRUE;
@@ -635,7 +635,7 @@ colorFilterInit (CompPlugin * p)
 {
     displayPrivateIndex = allocateDisplayPrivateIndex ();
     if (displayPrivateIndex < 0)
-        return FALSE;
+	return FALSE;
 
     return TRUE;
 }
@@ -644,7 +644,7 @@ static void
 colorFilterFini (CompPlugin * p)
 {
     if (displayPrivateIndex >= 0)
-        freeDisplayPrivateIndex (displayPrivateIndex);
+	freeDisplayPrivateIndex (displayPrivateIndex);
 }
 
 static int
