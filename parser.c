@@ -298,7 +298,7 @@ programParseSource (CompFunctionData *data,
 		addDataOpToFunctionData (data, arg1);
 		free (arg1);
 		break;
-		/* Parse arguments one by one */
+	    /* Parse arguments one by one */
 	    case TempOp:
 	    case AttribOp:
 	    case ParamOp:
