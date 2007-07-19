@@ -268,14 +268,14 @@ static void programParseSource (CompFunctionData *data,
             type = FetchOp;
         else if (strncmp (current, "MUL", 3) == 0)
         {
-            if (strstr (current, "fragment.color") != current)
+            if (strstr (current, "fragment.color"))
                 type = ColorOp;
             else
                 type = DataOp;
         }
         else if (strncmp (current, "MOV", 3) == 0)
         {
-            if (strstr (current, "result.color") != current)
+            if (strstr (current, "result.color"))
                 type = ColorOp;
             else
                 type = DataOp;
