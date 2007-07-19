@@ -63,6 +63,16 @@ char *base_name (char *str)
 }
 
 /*
+ * Left trimming function
+ */
+static char *ltrim (char *string)
+{
+    while (*string && (*string == ' ' || *string == '\t'))
+	string++;
+    return string;
+}
+
+/*
  * File reader function
  */
 static char *programReadSource (char *fname)
@@ -116,6 +126,58 @@ static char *programReadSource (char *fname)
 }
 
 /*
+ * Get the first "argument" in the given string, trimmed
+ * and move source string pointer after the end of the argument.
+ * For instance in string " foo, bar" this function will return "foo".
+ *
+ * This function returns NULL if no argument found
+ * or a malloc'ed string that will have to be freed later.
+ */
+static char *getFirstArgument (char **source)
+{
+    char *next, *arg;
+    char *string, *orig;
+    int length;
+
+    if (!**source)
+	return NULL;
+
+    // Left trim
+    orig = string = ltrim (*source);
+
+    // Find next comma or semicolon (which isn't that useful since we
+    // are working on tokens delimited by semicolons)
+    if ((next = strstr (string, ",")) || (next = strstr (string, ";")))
+    {
+	length = next - string;
+        if (!length)
+	{
+	    (*source)++;
+	    return getFirstArgument (source);
+	}
+    }
+    else
+    {
+	length = strlen (string);
+    }
+
+    // Allocate, copy and end string
+    arg = malloc (sizeof (char) * (length + 1));
+    if (!arg) return NULL;
+
+    strncpy (arg, string, length);
+    arg[length] = 0;
+
+    // Increment source pointer
+    if (string - orig + strlen (arg) + 1 <= strlen (*source))
+	*source += string - orig + strlen (arg) + 1;
+    else
+	**source = 0;
+
+    return arg;
+}
+
+/*
  * Parse the source buffer op by op and add each op to function data
  */
 static void programParseSource (CompFunctionData *data,
@@ -148,21 +210,26 @@ static void programParseSource (CompFunctionData *data,
     // Parse each instruction
     while (line)
     {
-        current = line;
-        // Left trim it
-        while (*current && (*current == ' ' || *current == '\t'))
-            current++;
+	line = strdup (line);
+	current = ltrim (line);
 
         // Find instruction type
         type = NoOp;
-        // Comments
+
+	// Comments
         if (strncmp (current, "#", 1) == 0)
         {
-            line = strtok (NULL, ";");
+	    free (line);
+            line = strtok_r (NULL, ";", &strtok_ptr);
             continue;
         }
-        // Data ops
-        else if (strncmp (current, "ABS", 3) == 0
+	if ((next = strstr (current, "#")))
+	    *next = 0;
+
+	// Data ops
+	if (strncmp (current, "END", 3) == 0)
+	    type = NoOp;
+	else if (strncmp (current, "ABS", 3) == 0
               || strncmp (current, "ADD", 3) == 0
               || strncmp (current, "CMP", 3) == 0
               || strncmp (current, "COS", 3) == 0
@@ -225,7 +292,7 @@ static void programParseSource (CompFunctionData *data,
                 addDataOpToFunctionData (data, arg1);
                 free (arg1);
                 break;
-            // This is a 1-arg op, just parse the arg
+            // Parse arguments one by one
             case TempOp:
             case AttribOp:
             case ParamOp:
@@ -234,25 +301,25 @@ static void programParseSource (CompFunctionData *data,
                 else if (type == AttribOp) oplength = 6;
                 length = strlen (current);
                 if (length < oplength + 2) break;
-                arg1 = malloc (sizeof (char) * (length - oplength - 1));
-                if (!arg1) break;
-                current += oplength + 1;
-                strncpy (arg1, current, length - oplength - 1);
-                arg1[length - oplength - 1] = 0;
-                // "output" is a reserved word, skip it
-                if (strncmp (arg1, "output", 6) == 0)
-                {
-                    free (arg1);
-                    break;
-                }
-                // Add ops
-                if (type == TempOp)
-                    addTempHeaderOpToFunctionData (data, arg1);
-                else if (type == ParamOp)
-                    addParamHeaderOpToFunctionData (data, arg1);
-                else if (type == AttribOp)
-                    addAttribHeaderOpToFunctionData (data, arg1);
-                free (arg1);
+		current += oplength + 1;
+		while (current && *current &&
+		       (arg1 = getFirstArgument (&current)))
+		{
+		    // "output" is a reserved word, skip it
+		    if (strncmp (arg1, "output", 6) == 0)
+		    {
+			free (arg1);
+			continue;
+		    }
+		    // Add ops
+		    if (type == TempOp)
+			addTempHeaderOpToFunctionData (data, arg1);
+		    else if (type == ParamOp)
+			addParamHeaderOpToFunctionData (data, arg1);
+		    else if (type == AttribOp)
+			addAttribHeaderOpToFunctionData (data, arg1);
+		    free (arg1);
+		}
                 break;
             case FetchOp:
                 current = strstr (current, " ") + 1;
@@ -322,6 +389,7 @@ static void programParseSource (CompFunctionData *data,
             default:
                 break;
         }
+	free (line);
 	line = strtok_r (NULL, ";", &strtok_ptr);
     }
 }
