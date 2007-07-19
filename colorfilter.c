@@ -84,7 +84,7 @@ typedef struct _ColorFilterWindow
 	    GET_FILTER_SCREEN  (w->screen, \
 		GET_FILTER_DISPLAY (w->screen->display)))
 
-/* Compiz-core imports --------------------------------------------------------- */
+/* Compiz-core imports ------------------------------------------------------ */
 
 /* _CompFunction struct definition (from compiz-core/src/fragment.c)
  * I just keep the beginning of the struct, since I just want the name
@@ -116,7 +116,7 @@ findFragmentFunction (CompScreen *s,
     return NULL;
 }
 
-/* Actions handling functions -------------------------------------------------- */
+/* Actions handling functions ----------------------------------------------- */
 
 /*
  * Toggle filtering for a specific window
@@ -258,7 +258,7 @@ colorFilterSwitch (CompDisplay * d, CompAction * action,
     return TRUE;
 }
 
-/* Filters handling functions -------------------------------------------------- */
+/* Filters handling functions ----------------------------------------------- */
 
 /*
  * Free filters resources if any
@@ -389,10 +389,11 @@ colorFilterDrawWindowTexture (CompWindow *w, CompTexture *texture,
 		    addFragmentFunction (&fa, function);
 	    }
 	}
-	else if (cfs->currentFilter <= cfs->filtersCount) /* Single filter mode */
+	/* Single filter mode */
+	else if (cfs->currentFilter <= cfs->filtersCount)
 	{
-	    /* Enable the currently selected filter if possible (i.e. if it */
-	    /* was successfully loaded) */
+	    /* Enable the currently selected filter if possible (i.e. if it
+	     * was successfully loaded) */
 	    function = cfs->filtersFunctions[cfs->currentFilter - 1];
 	    if (function)
 		addFragmentFunction (&fa, function);
@@ -467,7 +468,7 @@ colorFilterHandleEvent (CompDisplay *d, XEvent *event)
 }
 
 
-/* Internal stuff -------------------------------------------------------------- */
+/* Internal stuff ----------------------------------------------------------- */
 
 /*
  * Filtering match settings update callback

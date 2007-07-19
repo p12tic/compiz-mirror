@@ -145,8 +145,8 @@ static char *getFirstArgument (char **source)
     /* Left trim */
     orig = string = ltrim (*source);
 
-    /* Find next comma or semicolon (which isn't that useful since we */
-    /* are working on tokens delimited by semicolons) */
+    /* Find next comma or semicolon (which isn't that useful since we
+     * are working on tokens delimited by semicolons) */
     if ((next = strstr (string, ",")) || (next = strstr (string, ";")))
     {
 	length = next - string;
@@ -335,8 +335,8 @@ static void programParseSource (CompFunctionData *data,
 		if (colorDone) break;
 		if (strncmp (current, "MUL", 3) == 0) /* MUL op, 2 ops */
 		{
-		    /* Example : MUL output, fragment.color, output; */
-		    /* MOV arg1, fragment.color, arg2 */
+		    /* Example : MUL output, fragment.color, output;
+		     * MOV arg1, fragment.color, arg2 */
 		    current = strstr (current, " ") + 1;
 		    length = strstr (current, ",") - current;
 		    if (length < 1) break;
@@ -372,8 +372,8 @@ static void programParseSource (CompFunctionData *data,
 		}
 		else /* MOV op, 1 op */
 		{
-		    /* Example : MOV result.color, output; */
-		    /* MOV result.color, arg1; */
+		    /* Example : MOV result.color, output;
+		     * MOV result.color, arg1; */
 		    current = strstr (current, ",") + 1;
 		    if ((arg1 = getFirstArgument (&current)))
 		    {
