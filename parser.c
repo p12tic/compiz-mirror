@@ -288,7 +288,7 @@ programParseSource (CompFunctionData *data,
 	}
 	switch (type)
 	{
-	    /* Data op : just paste the whole instruction */
+	    /* Data op : just copy paste the whole instruction plus a ";" */
 	    case DataOp:
 		length = strlen (current);
 		arg1 = malloc (sizeof (char) * (length + 2));
