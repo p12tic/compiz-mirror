@@ -328,15 +328,12 @@ programParseSource (CompFunctionData *data,
 		}
 		break;
 	    case FetchOp:
-		current = strstr (current, " ") + 1;
-		length = strstr (current, ",") - current;
-		if (length < 1) break;
-		arg1 = malloc (sizeof (char) * (length + 1));
-		if (!arg1) break;
-		strncpy (arg1, current, length);
-		arg1[length] = 0;
-		addFetchOpToFunctionData (data, arg1, NULL, target);
-		free (arg1);
+		current += 3;
+		if ((arg1 = getFirstArgument (&current)))
+		{
+		    addFetchOpToFunctionData (data, arg1, NULL, target);
+		    free (arg1);
+		}
 		break;
 	    case ColorOp:
 		if (colorDone) break;
