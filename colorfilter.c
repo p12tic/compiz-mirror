@@ -66,21 +66,21 @@ typedef struct _ColorFilterWindow
     Bool    createEvent;
 } ColorFilterWindow;
 
-#define GET_FILTER_DISPLAY(d) \
+#define GET_FILTER_DISPLAY(d)					    \
     ((ColorFilterDisplay *) (d)->privates[displayPrivateIndex].ptr)
-#define FILTER_DISPLAY(d) \
+#define FILTER_DISPLAY(d)			    \
     ColorFilterDisplay *cfd = GET_FILTER_DISPLAY (d)
-#define GET_FILTER_SCREEN(s, cfd) \
+#define GET_FILTER_SCREEN(s, cfd)					\
     ((ColorFilterScreen *) (s)->privates[(cfd)->screenPrivateIndex].ptr)
-#define FILTER_SCREEN(s) \
-    ColorFilterScreen *cfs = GET_FILTER_SCREEN (s, \
-				GET_FILTER_DISPLAY (s->display))
-#define GET_FILTER_WINDOW(w, cfs) \
+#define FILTER_SCREEN(s)					\
+    ColorFilterScreen *cfs = GET_FILTER_SCREEN (s,		\
+			     GET_FILTER_DISPLAY (s->display))
+#define GET_FILTER_WINDOW(w, cfs)					\
     ((ColorFilterWindow *) (w)->privates[(cfs)->windowPrivateIndex].ptr)
-#define FILTER_WINDOW(w) \
-    ColorFilterWindow *cfw = GET_FILTER_WINDOW  (w, \
-				GET_FILTER_SCREEN  (w->screen, \
-				    GET_FILTER_DISPLAY (w->screen->display)))
+#define FILTER_WINDOW(w)						\
+    ColorFilterWindow *cfw = GET_FILTER_WINDOW  (w,			\
+			     GET_FILTER_SCREEN  (w->screen,		\
+			     GET_FILTER_DISPLAY (w->screen->display)))
 
 /* Compiz-core imports ------------------------------------------------------ */
 
