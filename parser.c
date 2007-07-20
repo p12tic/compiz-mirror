@@ -336,6 +336,7 @@ programParseSource (CompFunctionData *data,
 		strncpy (arg1, current, length);
 		arg1[length] = 0;
 		addFetchOpToFunctionData (data, arg1, NULL, target);
+		free (arg1);
 		break;
 	    case ColorOp:
 		if (colorDone) break;
