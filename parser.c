@@ -328,6 +328,8 @@ programParseSource (CompFunctionData *data,
 		}
 		break;
 	    case FetchOp:
+		/* Example : TEX tmp, fragment.texcoord[0], texture[0], RECT;
+		 * "tmp" is what we need */
 		current += 3;
 		if ((arg1 = getFirstArgument (&current)))
 		{
