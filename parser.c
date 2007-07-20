@@ -352,7 +352,6 @@ programParseSource (CompFunctionData *data,
 			free (arg1);
 			break;
 		    }
-		    printf ("1st '%s' 2nd '%s'\n", arg1, arg2);
 		    addColorOpToFunctionData (data, arg1, arg2);
 		    free (arg1);
 		    free (arg2);
