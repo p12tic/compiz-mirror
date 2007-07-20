@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #include <compiz.h>
 #include "parser.h"
@@ -72,6 +73,26 @@ ltrim (char *string)
     while (*string && (*string == ' ' || *string == '\t'))
 	string++;
     return string;
+}
+
+/*
+ * Clean program name string
+ */
+static char *
+programCleanName (char *name)
+{
+    char *dest, *current;
+
+    current = dest = strdup (name);
+    
+    while (*current)
+    {
+	if (!isalnum (*current))
+	    *current = '_';
+	current++;
+    }
+
+    return dest;
 }
 
 /*
@@ -406,12 +427,15 @@ loadFragmentProgram (char *file, char *name,
 {
     char *source;
     int handle;
+    /* Clean fragment program name */
+    name = programCleanName (name);
     /* Read the source file */
     source = programReadSource (file);
     if (!source)
 	return 0;
     /* Build the Compiz Fragment Program */
     handle = buildFragmentProgram (source, name, s, target);
+    free (name);
     free (source);
     return handle;
 }
