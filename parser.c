@@ -343,35 +343,16 @@ programParseSource (CompFunctionData *data,
 		{
 		    /* Example : MUL output, fragment.color, output;
 		     * MOV arg1, fragment.color, arg2 */
-		    current = strstr (current, " ") + 1;
-		    length = strstr (current, ",") - current;
-		    if (length < 1) break;
-		    arg1 = malloc (sizeof (char) * (length + 1));
-		    if (!arg1) break;
-		    strncpy (arg1, current, length);
-		    arg1[length] = 0;
-		    if (strlen (current) < 3)
+		    current += 3;
+		    if  (!(arg1 = getFirstArgument (&current)))
+			break;
+		    if (!getFirstArgument (&current) ||
+			!(arg2 = getFirstArgument (&current)))
 		    {
 			free (arg1);
 			break;
 		    }
-		    current = strstr (current, ",") + 2;
-		    if (strlen (current) < 3)
-		    {
-			free (arg1);
-			break;
-		    }
-		    current = strstr (current, ",") + 2;
-		    length = strlen (current);
-		    if (length < 1) break;
-		    arg2 = malloc (sizeof (char) * (length + 1));
-		    if (!arg2)
-		    {
-			free (arg1);
-			break;
-		    }
-		    strncpy (arg2, current, length);
-		    arg2[length] = 0;
+		    printf ("1st '%s' 2nd '%s'\n", arg1, arg2);
 		    addColorOpToFunctionData (data, arg1, arg2);
 		    free (arg1);
 		    free (arg2);
