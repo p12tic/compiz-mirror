@@ -311,11 +311,7 @@ programParseSource (CompFunctionData *data,
 	{
 	    /* Data op : just copy paste the whole instruction plus a ";" */
 	    case DataOp:
-		length = strlen (current);
-		arg1 = malloc (sizeof (char) * (length + 2));
-		strncpy (arg1, current, length);
-		arg1[length] = ';';
-		arg1[length + 1] = 0;
+		asprintf (&arg1, "%s;", current);
 		addDataOpToFunctionData (data, arg1);
 		free (arg1);
 		break;
