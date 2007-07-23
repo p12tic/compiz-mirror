@@ -1410,6 +1410,8 @@ shiftPaintOutput (CompScreen		  *s,
 	int oy2 = s->outputDev[ss->usedOutput].region.extents.y2;
 	int maxThumbHeight = (oy2 - oy1) * shiftGetSize(s) / 100;
 
+	int oldFilter = s->display->textureFilter;
+
 	transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &sTransform);
 
 	GLdouble clip[4] = { 0.0, -1.0, 0.0, 0.0};
@@ -1435,6 +1437,10 @@ shiftPaintOutput (CompScreen		  *s,
 	    glLoadMatrixf (rTransform.m);
 
 	    glDisable (GL_CULL_FACE);
+
+	    if (shiftGetMipmaps (s))
+		s->display->textureFilter = GL_LINEAR_MIPMAP_LINEAR;
+
 
 	    if (ss->reflect == 1.0)
 	    {
@@ -1525,6 +1531,8 @@ shiftPaintOutput (CompScreen		  *s,
 	glDisable (GL_CLIP_PLANE0);
 	
 	ss->activeSlot = NULL;
+
+	s->display->textureFilter = oldFilter;
 
 	if (ss->textPixmap && (ss->state != ShiftStateIn))
 	    shiftDrawWindowTitle (s);

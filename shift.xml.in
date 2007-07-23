@@ -193,6 +193,11 @@
 						<_name>Big</_name>
 					</desc>
 				</option>
+				<option name="mipmaps" type="bool">
+					<_short>Mipmaps</_short>
+					<_long>Generate mipmaps</_long>
+					<default>false</default>
+				</option>
 			</group>
 			<group>
 				<_short>Window title display</_short>
