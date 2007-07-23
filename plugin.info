@@ -1,0 +1,2 @@
+PLUGIN = shift
+PKG_DEP = compiz-text
