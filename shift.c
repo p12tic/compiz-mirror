@@ -7,7 +7,7 @@
  * Copyright : (C) 2007 by Dennis Kasprzyk
  * E-mail    : onestone@opencompositing.org
  *
- *
+//  *
  * Based on ring.c:
  * Copyright : (C) 2007 by Danny Baumann
  * E-mail    : maniac@opencompositing.org
@@ -68,24 +68,15 @@ typedef struct _ShiftSlot {
     float opacity;
     float rotation;
     
-    GLfloat xVelocity;
-    GLfloat yVelocity;
-    GLfloat zVelocity;
-    GLfloat scaleVelocity;
-    GLfloat rotVelocity;
     GLfloat opacityVelocity;
 
     GLfloat tx;
     GLfloat ty;
-    GLfloat tz;
-    GLfloat tscale;
-    GLfloat trot;
     GLfloat topacity;
 
 
     Bool    adjust;
     Bool    active;
-    Bool    primary;
 
 } ShiftSlot;
 
@@ -501,22 +492,22 @@ shiftPaintWindow (CompWindow		 *w,
 	    if (w->alpha || fragment.opacity != OPAQUE)
 		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
-	    matrixTranslate (&wTransform, slot->tx, slot->ty, slot->tz);
+	    matrixTranslate (&wTransform, slot->tx, slot->ty, slot->z);
 
 	    matrixTranslate (&wTransform,
-			     w->attrib.x + (w->width  * slot->tscale / 2),
-			     w->attrib.y + (w->height  * slot->tscale / 2.0),
+			     w->attrib.x + (w->width  * slot->scale / 2),
+			     w->attrib.y + (w->height  * slot->scale / 2.0),
 			     0.0f);
 
 	    matrixScale (&wTransform, ss->output->width, -ss->output->height,
                 	 1.0f);
 	
-	    matrixRotate (&wTransform, slot->trot, 0.0, 1.0, 0.0);
+	    matrixRotate (&wTransform, slot->rotation, 0.0, 1.0, 0.0);
 
 	    matrixScale (&wTransform, 1.0f  / ss->output->width,
                 	 -1.0f / ss->output->height, 1.0f);
 
-	    matrixScale (&wTransform, slot->tscale, slot->tscale, 1.0f);
+	    matrixScale (&wTransform, slot->scale, slot->scale, 1.0f);
 	    matrixTranslate (&wTransform, -w->attrib.x - (w->width / 2),
 			     -w->attrib.y - (w->height / 2), 0.0f);
 
@@ -626,24 +617,24 @@ shiftPaintWindow (CompWindow		 *w,
 		    fragment.brightness = (float)fragment.brightness *
 					  ss->reflectBrightness;
 
-		    matrixTranslate (&wTransform, slot->tx, slot->ty, slot->tz);
+		    matrixTranslate (&wTransform, slot->tx, slot->ty, slot->z);
 
 		    matrixTranslate (&wTransform, w->attrib.x +
-				     (w->width  * slot->tscale / 2),
+				     (w->width  * slot->scale / 2),
 				     w->attrib.y +
-				     (w->height  * slot->tscale / 2.0), 0.0f);
+				     (w->height  * slot->scale / 2.0), 0.0f);
 	
 		    matrixScale (&wTransform, ss->output->width,
                 		 -ss->output->height, 1.0f);
 
-		    matrixRotate (&wTransform, slot->trot, 0.0, 1.0, 0.0);
+		    matrixRotate (&wTransform, slot->rotation, 0.0, 1.0, 0.0);
 
 		    matrixScale (&wTransform, 1.0f  / ss->output->width,
                 		 -1.0f / ss->output->height, 1.0f);
 
 		    matrixTranslate (&wTransform, x -
-				     (w->width  * slot->tscale / 2), y -
-				     (w->height  * slot->tscale / 2.0), 0.0f);
+				     (w->width  * slot->scale / 2), y -
+				     (w->height  * slot->scale / 2.0), 0.0f);
 		    matrixScale (&wTransform, scale, scale, 1.0f);
 
 		    glPushMatrix ();
@@ -818,18 +809,6 @@ layoutThumbsCover (CompScreen *s)
 		ss->drawSlots[index * 2 + i].distance = distance;
 		
 	}
-
-	if (ss->drawSlots[index * 2].distance <
-	    ss->drawSlots[index * 2 + 1].distance)
-	{
-	    sw->slots[0].primary = TRUE;
-	    sw->slots[1].primary = FALSE;
-	}
-	else
-	{
-	    sw->slots[1].primary = TRUE;
-	    sw->slots[0].primary = FALSE;
-	}
     }
 
     ss->nSlots = ss->nWindows * 2;
@@ -903,13 +882,9 @@ layoutThumbsFlip (CompScreen *s)
 		}
 
 		if (distance > 0.0)
-		{
-		    sw->slots[i].primary = FALSE;
 		    sw->slots[i].opacity = MAX (0.0, 1.0 - (distance * 1.1));
-		}
 		else
 		{
-		    sw->slots[i].primary = TRUE;
 		    if (distance < -(ss->nWindows - 1))
 		    	sw->slots[i].opacity = MAX (0.0, ss->nWindows +
 						    distance);
@@ -1046,12 +1021,7 @@ shiftCreateWindowList (CompScreen *s)
 	    sw->active = TRUE;
 
 	    for (i = 0; i < 2; i++)
-	    {
 	    	sw->slots[i].adjust = TRUE;
-	    	sw->slots[i].tx = 0;
-		sw->slots[i].ty = 0;
-		sw->slots[i].tscale = 1.0f;
-	    }
 	}
     }
 
@@ -1176,73 +1146,15 @@ static int adjustShiftMovement (CompScreen *s, float chunk)
 static Bool
 adjustShiftVelocity (CompWindow *w, ShiftSlot *slot)
 {
-    float dx, dy, dz, ds, dp, dr, adjust, amount;
-    float x1, y1, z1, scale, opacity, rot;
+    float dp, adjust, amount;
+    float opacity;
 
     SHIFT_WINDOW (w);
 
     if (sw->active)
-    {
-	scale = slot->scale;
-	x1 = slot->x - (w->attrib.width * scale) / 2;
-	y1 = slot->y - (w->attrib.height * scale) / 2;
-	z1 = slot->z;
 	opacity = slot->opacity;
-	rot = slot->rotation;
-    }
     else
-    {
-	x1 = w->attrib.x;
-	y1 = w->attrib.y;
-	z1 = 0.0;
-	scale = 1.0f;
 	opacity = 0.0;
-	rot = 0.0;
-    }
-
-    dx = x1 - (w->attrib.x + slot->tx);
-
-    adjust = dx * 0.15f;
-    amount = fabs (dx) * 1.5f;
-    if (amount < 0.5f)
-	amount = 0.5f;
-    else if (amount > 5.0f)
-	amount = 5.0f;
-
-    slot->xVelocity = (amount * slot->xVelocity + adjust) / (amount + 1.0f);
-
-    dy = y1 - (w->attrib.y + slot->ty);
-
-    adjust = dy * 0.15f;
-    amount = fabs (dy) * 1.5f;
-    if (amount < 0.5f)
-	amount = 0.5f;
-    else if (amount > 5.0f)
-	amount = 5.0f;
-
-    slot->yVelocity = (amount * slot->yVelocity + adjust) / (amount + 1.0f);
-
-    dz = z1 - slot->tz;
-
-    adjust = dz * 0.15f;
-    amount = fabs (dz) * 1.5f;
-    if (amount < 0.01f)
-	amount = 0.01f;
-    else if (amount > 0.15f)
-	amount = 0.15f;
-
-    slot->zVelocity = (amount * slot->zVelocity + adjust) / (amount + 1.0f);
-
-    ds = scale - slot->tscale;
-    adjust = ds * 0.1f;
-    amount = fabs (ds) * 7.0f;
-    if (amount < 0.01f)
-	amount = 0.01f;
-    else if (amount > 0.15f)
-	amount = 0.15f;
-
-    slot->scaleVelocity = (amount * slot->scaleVelocity + adjust) /
-	(amount + 1.0f);
 
     dp = opacity - slot->topacity;
     adjust = dp * 0.1f;
@@ -1255,36 +1167,10 @@ adjustShiftVelocity (CompWindow *w, ShiftSlot *slot)
     slot->opacityVelocity = (amount * slot->opacityVelocity + adjust) /
 	(amount + 1.0f);
 
-    dr = rot - slot->trot;
-    adjust = dr * 0.1f;
-    amount = fabs (dr) * 7.0f;
-    if (amount < 0.01f)
-	amount = 0.01f;
-    else if (amount > 0.15f)
-	amount = 0.15f;
 
-    slot->rotVelocity = (amount * slot->rotVelocity + adjust) /
-	(amount + 1.0f);
-
-    if (fabs (dx) < 0.1f && fabs (slot->xVelocity) < 0.2f &&
-	fabs (dy) < 0.1f && fabs (slot->yVelocity) < 0.2f &&
-	fabs (dz) < 0.001f && fabs (slot->zVelocity) < 0.002f &&
-	fabs (ds) < 0.001f && fabs (slot->scaleVelocity) < 0.002f &&
-       	fabs (dp) < 0.01f && fabs (slot->opacityVelocity) < 0.02f &&
-	fabs (dr) < 0.1f && fabs (slot->rotVelocity) < 0.2f)
+    if (fabs (dp) < 0.01f && fabs (slot->opacityVelocity) < 0.02f)
     {
-	slot->xVelocity = 0.0f;
-	slot->yVelocity = 0.0f;
-	slot->zVelocity = 0.0f;
-	slot->scaleVelocity = 0.0f;
-	slot->opacityVelocity = 0.0f;
-	slot->rotVelocity = 0.0f;
-	slot->tx = x1 - w->attrib.x;
-	slot->ty = y1 - w->attrib.y;
-	slot->tz = z1;
-	slot->tscale = scale;
 	slot->topacity = opacity;
-	slot->trot = rot;
 
 	return FALSE;
     }
@@ -1596,30 +1482,22 @@ shiftPreparePaintScreen (CompScreen *s,
 		for (i = 0; i < 2; i++)
 		{
 		    ShiftSlot *slot = &sw->slots[i];
-		    if (slot->adjust && ss->state != ShiftStateSwitching)
+		    if (slot->adjust)
 		    {
 			slot->adjust = adjustShiftVelocity (w, slot);
-
+			
 			ss->moreAdjust |= slot->adjust;
-
-			slot->tx += slot->xVelocity * chunk;
-			slot->ty += slot->yVelocity * chunk;
-			slot->tz += slot->zVelocity * chunk;
-			slot->tscale += slot->scaleVelocity * chunk;
+			
 			slot->topacity += slot->opacityVelocity * chunk;
-			slot->trot += slot->rotVelocity * chunk;
 		    }
-		    else if (sw->active && ss->state != ShiftStateNone)
-		    {
-			slot->tscale = slot->scale;
-			slot->tx = slot->x - w->attrib.x -
-				(w->attrib.width * slot->tscale) / 2;
-			slot->ty = slot->y - w->attrib.y -
-				(w->attrib.height * slot->tscale) / 2;
-			slot->tz = slot->z;
+		    else
 			slot->topacity = slot->opacity;
-			slot->trot = slot->rotation;
-		    }
+
+		    slot->tx = slot->x - w->attrib.x -
+			(w->attrib.width * slot->scale) / 2;
+		    slot->ty = slot->y - w->attrib.y -
+			(w->attrib.height * slot->scale) / 2;
+		    slot->topacity = MIN (1.0, slot->topacity);
 		}
 	    }
 
@@ -1799,6 +1677,7 @@ shiftDoSwitch (CompDisplay     *d,
     CompScreen *s;
     Window     xid;
     Bool       ret = TRUE;
+    Bool       initial = FALSE;
 
     xid = getIntOptionNamed (option, nOption, "root", 0);
 
@@ -1836,10 +1715,19 @@ shiftDoSwitch (CompDisplay     *d,
 
 	    if (state & CompActionStateInitEdge)
 		action->state |= CompActionStateTermEdge;
+
+	    initial = TRUE;
 	}
 
 	if (ret)
+	{
     	    switchToWindow (s, nextWindow);
+	    if (initial)
+	    {
+		ss->mvTarget += ss->mvAdjust;
+		ss->mvAdjust  = 0.0;
+	    }
+	}
     }
 
     return ret;
