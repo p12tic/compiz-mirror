@@ -1763,6 +1763,43 @@ shiftInitiate (CompDisplay     *d,
     {
 	SHIFT_SCREEN (s);
 
+	ss->type = ShiftTypeNormal;
+	
+	if ((ss->state == ShiftStateNone) || (ss->state == ShiftStateIn))
+	    ret = shiftInitiateScreen (s, action, state, option, nOption);
+	else
+	    ret = shiftTerminate (d, action, state, option, nOption);
+
+	if (state & CompActionStateTermButton)
+	    action->state &= ~CompActionStateTermButton;
+
+	if (state & CompActionStateTermKey)
+	    action->state &= ~CompActionStateTermKey;
+    }
+
+    return ret;
+}
+
+static Bool
+shiftInitiateAll (CompDisplay     *d,
+		  CompAction      *action,
+		  CompActionState state,
+		  CompOption      *option,
+		  int             nOption)
+{
+    CompScreen *s;
+    Window     xid;
+    Bool       ret = TRUE;
+
+    xid = getIntOptionNamed (option, nOption, "root", 0);
+
+    s = findScreenAtDisplay (d, xid);
+    if (s)
+    {
+	SHIFT_SCREEN (s);
+
+	ss->type = ShiftTypeAll;
+	
 	if ((ss->state == ShiftStateNone) || (ss->state == ShiftStateIn))
 	    ret = shiftInitiateScreen (s, action, state, option, nOption);
 	else
@@ -2058,6 +2095,8 @@ shiftInitDisplay (CompPlugin  *p,
 
     shiftSetInitiateInitiate (d, shiftInitiate);
     shiftSetInitiateTerminate (d, shiftTerminate);
+    shiftSetInitiateAllInitiate (d, shiftInitiateAll);
+    shiftSetInitiateAllTerminate (d, shiftTerminate);
     shiftSetNextInitiate (d, shiftNext);
     shiftSetNextTerminate (d, shiftTerminate);
     shiftSetPrevInitiate (d, shiftPrev);

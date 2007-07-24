@@ -15,6 +15,12 @@
 						<key>&lt;Super&gt;&lt;Shift&gt;s</key>
 					</default>
 				</option>
+				<option name="initiate_all" type="action">
+					<_short>Initiate (All Workspaces)</_short>
+					<_long>Initiate switcher (All Workspaces).</_long>
+					<allowed key="true" button="true" edge="true"/>
+					<default/>
+				</option>
 				<option name="next" type="action">
 					<_short>Next Window</_short>
 					<_long>Show switcher if not visible and select next window.</_long>
