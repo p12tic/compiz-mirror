@@ -89,6 +89,11 @@ typedef struct _ShiftDrawSlot {
 typedef struct _ShiftDisplay {
     int		    screenPrivateIndex;
     HandleEventProc handleEvent;
+
+    KeyCode leftKey;
+    KeyCode rightKey;
+    KeyCode upKey;
+    KeyCode downKey;
 } ShiftDisplay;
 
 typedef struct _ShiftScreen {
@@ -1594,17 +1599,23 @@ shiftTerminate (CompDisplay     *d,
 		    sendWindowActivationRequest (s, w->id);
 	    }
 	}
+
+	if (state & CompActionStateTermButton)
+	    action->state &= ~CompActionStateTermButton;
+
+	if (state & CompActionStateTermKey)
+	    action->state &= ~CompActionStateTermKey;
     }
 
     return FALSE;
 }
 
 static Bool
-shiftInitiate (CompScreen      *s,
- 	      CompAction      *action,
-	      CompActionState state,
-	      CompOption      *option,
-	      int	      nOption)
+shiftInitiateScreen (CompScreen      *s,
+		     CompAction      *action,
+		     CompActionState state,
+		     CompOption      *option,
+		     int	      nOption)
 {
     CompMatch *match;
     int       count; 
@@ -1654,12 +1665,6 @@ shiftInitiate (CompScreen      *s,
 	damageScreen (s);
     }
 
-    if (state & CompActionStateInitButton)
-	action->state |= CompActionStateTermButton;
-
-    if (state & CompActionStateInitKey)
-	action->state |= CompActionStateTermKey;
-
     ss->usedOutput = s->currentOutputDev;
     
     return TRUE;
@@ -1698,13 +1703,14 @@ shiftDoSwitch (CompDisplay     *d,
     		    ss->type = ShiftTypeGroup;
     		    ss->clientLeader =
 			(w->clientLeader) ? w->clientLeader : w->id;
-		    ret = shiftInitiate (s, action, state, option, nOption);
+		    ret = shiftInitiateScreen (s, action, state, option,
+					       nOption);
 		}
 	    }
 	    else
 	    {
 		ss->type = type;
-		ret = shiftInitiate (s, action, state, option, nOption);
+		ret = shiftInitiateScreen (s, action, state, option, nOption);
 	    }
 
 	    if (state & CompActionStateInitKey)
@@ -1728,6 +1734,33 @@ shiftDoSwitch (CompDisplay     *d,
 		ss->mvAdjust  = 0.0;
 	    }
 	}
+    }
+
+    return ret;
+}
+
+static Bool
+shiftInitiate (CompDisplay     *d,
+	       CompAction      *action,
+	       CompActionState state,
+	       CompOption      *option,
+	       int             nOption)
+{
+    CompScreen *s;
+    Window     xid;
+    Bool       ret = TRUE;
+
+    xid = getIntOptionNamed (option, nOption, "root", 0);
+
+    s = findScreenAtDisplay (d, xid);
+    if (s)
+    {
+	SHIFT_SCREEN (s);
+
+	if ((ss->state == ShiftStateNone) || (ss->state == ShiftStateIn))
+	    ret = shiftInitiateScreen (s, action, state, option, nOption);
+	else
+	    ret = shiftTerminate (d, action, state, option, nOption);
     }
 
     return ret;
@@ -1878,6 +1911,7 @@ shiftHandleEvent (CompDisplay *d,
 		 XEvent      *event)
 {
     SHIFT_DISPLAY (d);
+    CompScreen *s;
 
     UNWRAP (sd, d, handleEvent);
     (*d->handleEvent) (d, event);
@@ -1906,6 +1940,42 @@ shiftHandleEvent (CompDisplay *d,
     case DestroyNotify:
 	shiftWindowRemove (d, event->xdestroywindow.window);
 	break;
+    case KeyPress:
+	s = findScreenAtDisplay (d, event->xkey.root);
+
+	if (s)
+	{
+	    SHIFT_SCREEN (s);
+
+	    if (ss->state == ShiftStateSwitching)
+	    {
+		if (event->xkey.keycode == sd->leftKey)
+		    switchToWindow (s, FALSE);
+		else if (event->xkey.keycode == sd->rightKey)
+		    switchToWindow (s, TRUE);
+		else if (event->xkey.keycode == sd->upKey)
+		    switchToWindow (s, FALSE);
+		else if (event->xkey.keycode == sd->downKey)
+		    switchToWindow (s, TRUE);
+	    }
+	}
+
+	break;
+    case ButtonPress:
+	s = findScreenAtDisplay (d, event->xbutton.root);
+
+	if (s)
+	{
+	    SHIFT_SCREEN (s);
+
+	    if (ss->state == ShiftStateSwitching)
+	    {
+		if (event->xbutton.button == Button5)
+		    switchToWindow (s, FALSE);
+		else if (event->xbutton.button == Button4)
+		    switchToWindow (s, TRUE);
+	    }
+	}
     }
 }
 
@@ -1965,6 +2035,13 @@ shiftInitDisplay (CompPlugin  *p,
 	return FALSE;
     }
 
+    sd->leftKey  = XKeysymToKeycode (d->display, XStringToKeysym ("Left"));
+    sd->rightKey = XKeysymToKeycode (d->display, XStringToKeysym ("Right"));
+    sd->upKey    = XKeysymToKeycode (d->display, XStringToKeysym ("Up"));
+    sd->downKey  = XKeysymToKeycode (d->display, XStringToKeysym ("Down"));
+
+    shiftSetInitiateInitiate (d, shiftInitiate);
+    shiftSetInitiateTerminate (d, shiftTerminate);
     shiftSetNextInitiate (d, shiftNext);
     shiftSetNextTerminate (d, shiftTerminate);
     shiftSetPrevInitiate (d, shiftPrev);
