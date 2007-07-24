@@ -1497,7 +1497,7 @@ shiftPreparePaintScreen (CompScreen *s,
 			(w->attrib.width * slot->scale) / 2;
 		    slot->ty = slot->y - w->attrib.y -
 			(w->attrib.height * slot->scale) / 2;
-		    slot->topacity = MIN (1.0, slot->topacity);
+		    slot->topacity = MIN (1.0, MAX (0.0, slot->topacity));
 		}
 	    }
 
