@@ -19,7 +19,7 @@
  * Rounded corner drawing taken from wall.c:
  * Copyright : (C) 2007 Robert Carr
  * E-mail    : racarr@beryl-project.org
- *
+ *<
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -154,6 +154,7 @@ typedef struct _ShiftScreen {
     int   startX;
     int   startY;
     float startTarget;
+    float lastTitle;
 } ShiftScreen;
 
 typedef struct _ShiftWindow {
@@ -2053,6 +2054,7 @@ shiftHandleEvent (CompDisplay *d,
 	    {
 		if (event->xbutton.button == Button1 && ss->buttonPressed)
 		{
+		    int new;
 		    if (event->xbutton.time - ss->buttonPressTime <
 		        shiftGetClickDuration (s))
 		    	shiftTerm (s, FALSE);
@@ -2063,11 +2065,21 @@ shiftHandleEvent (CompDisplay *d,
 		    if (ss->mvTarget - floor (ss->mvTarget) >= 0.5)
 		    {
 			ss->mvAdjust = ceil(ss->mvTarget) - ss->mvTarget;
+			new = ceil(ss->mvTarget);
 		    }
 		    else
 		    {
 			ss->mvAdjust = floor(ss->mvTarget) - ss->mvTarget;
+			new = floor(ss->mvTarget);
 		    }
+
+		    while (new < 0)
+			new += ss->nWindows;
+		    new = new % ss->nWindows;
+		    
+		    ss->selectedWindow = ss->windows[new]->id;
+
+		    shiftRenderWindowTitle (s);
 		    ss->moveAdjust = TRUE;
 		    damageScreen(s);
 		}
@@ -2094,6 +2106,7 @@ shiftHandleEvent (CompDisplay *d,
 		    float div = 0;
 		    int   wx  = 0;
 		    int   wy  = 0;
+		    int   new;
 		    
 		    switch (shiftGetMode (s))
 		    {
@@ -2119,6 +2132,21 @@ shiftHandleEvent (CompDisplay *d,
 		    {
 			ss->mvTarget += ss->nWindows;
 			ss->invert = !ss->invert;
+		    }
+
+		    if (ss->mvTarget - floor (ss->mvTarget) >= 0.5)
+			new = ceil(ss->mvTarget);
+		    else
+			new = floor(ss->mvTarget);
+
+		    while (new < 0)
+			new += ss->nWindows;
+		    new = new % ss->nWindows;
+
+		    if (ss->selectedWindow != ss->windows[new]->id)
+		    {
+		    	ss->selectedWindow = ss->windows[new]->id;
+			shiftRenderWindowTitle (s);
 		    }
 
 		    if (event->xmotion.x_root < 50)
