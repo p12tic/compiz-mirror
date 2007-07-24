@@ -148,6 +148,12 @@ typedef struct _ShiftScreen {
     float reflect;
     float reflectVelocity;
     float reflectBrightness;
+
+    int	  buttonPressTime;
+    Bool  buttonPressed;
+    int   startX;
+    int   startY;
+    float startTarget;
 } ShiftScreen;
 
 typedef struct _ShiftWindow {
@@ -2017,16 +2023,122 @@ shiftHandleEvent (CompDisplay *d,
 	{
 	    SHIFT_SCREEN (s);
 
-	    if (ss->state == ShiftStateSwitching)
+	    if (ss->state == ShiftStateSwitching || ss->state == ShiftStateOut)
 	    {
 		if (event->xbutton.button == Button5)
 		    switchToWindow (s, FALSE);
 		else if (event->xbutton.button == Button4)
 		    switchToWindow (s, TRUE);
 		if (event->xbutton.button == Button1)
-		    shiftTerm (s, FALSE);
+		{
+		    ss->buttonPressTime = event->xbutton.time;
+		    ss->buttonPressed   = TRUE;
+		    ss->startX          = event->xbutton.x_root;
+		    ss->startY          = event->xbutton.y_root;
+		    ss->startTarget     = ss->mvTarget + ss->mvAdjust;
+		}
 		else if (event->xbutton.button == Button3)
 		    shiftTerm (s, TRUE);
+	    }
+	}
+	break;
+    case ButtonRelease:
+	s = findScreenAtDisplay (d, event->xbutton.root);
+
+	if (s)
+	{
+	    SHIFT_SCREEN (s);
+
+	    if (ss->state == ShiftStateSwitching || ss->state == ShiftStateOut)
+	    {
+		if (event->xbutton.button == Button1 && ss->buttonPressed)
+		{
+		    if (event->xbutton.time - ss->buttonPressTime <
+		        shiftGetClickDuration (s))
+		    	shiftTerm (s, FALSE);
+
+		    ss->buttonPressTime = 0;
+		    ss->buttonPressed   = FALSE;
+
+		    if (ss->mvTarget - floor (ss->mvTarget) >= 0.5)
+		    {
+			ss->mvAdjust = ceil(ss->mvTarget) - ss->mvTarget;
+		    }
+		    else
+		    {
+			ss->mvAdjust = floor(ss->mvTarget) - ss->mvTarget;
+		    }
+		    ss->moveAdjust = TRUE;
+		    damageScreen(s);
+		}
+
+	    }
+	}
+	break;
+    case MotionNotify:
+	s = findScreenAtDisplay (d, event->xbutton.root);
+
+	if (s)
+	{
+	    SHIFT_SCREEN (s);
+
+	    if (ss->state == ShiftStateSwitching || ss->state == ShiftStateOut)
+	    {
+		if (ss->buttonPressed)
+		{
+		    int ox1 = s->outputDev[ss->usedOutput].region.extents.x1;
+		    int ox2 = s->outputDev[ss->usedOutput].region.extents.x2;
+		    int oy1 = s->outputDev[ss->usedOutput].region.extents.y1;
+		    int oy2 = s->outputDev[ss->usedOutput].region.extents.y2;
+
+		    float div = 0;
+		    int   wx  = 0;
+		    int   wy  = 0;
+		    
+		    switch (shiftGetMode (s))
+		    {
+		    case ModeCover:
+			div = event->xmotion.x_root - ss->startX;
+			div /= (ox2 - ox1) / shiftGetMouseSpeed (s);
+			break;
+		    case ModeFlip:
+			div = event->xmotion.y_root - ss->startY;
+			div /= (oy2 - oy1) / shiftGetMouseSpeed (s);
+			break;
+		    }
+
+		    ss->mvTarget = ss->startTarget + div - ss->mvAdjust;
+		    ss->moveAdjust = TRUE;
+		    while (ss->mvTarget >= ss->nWindows)
+		    {
+			ss->mvTarget -= ss->nWindows;
+			ss->invert = !ss->invert;
+		    }
+
+		    while (ss->mvTarget < 0)
+		    {
+			ss->mvTarget += ss->nWindows;
+			ss->invert = !ss->invert;
+		    }
+
+		    if (event->xmotion.x_root < 50)
+			wx = 50;
+		    if (s->width - event->xmotion.x_root < 50)
+			wx = -50;
+		    if (event->xmotion.y_root < 50)
+			wy = 50;
+		    if (s->height - event->xmotion.y_root < 50)
+			wy = -50;
+		    if (wx != 0 || wy != 0)
+		    {
+		    	warpPointer (s, wx, wy);
+			ss->startX += wx;
+			ss->startY += wy;
+		    }
+		    
+		    damageScreen(s);
+		}
+
 	    }
 	}
     }
