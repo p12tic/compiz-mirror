@@ -1546,6 +1546,47 @@ shiftDonePaintScreen (CompScreen *s)
     WRAP (ss, s, donePaintScreen, shiftDonePaintScreen);
 }
 
+static void
+shiftTerm (CompScreen *s, Bool cancel)
+{
+    SHIFT_SCREEN (s);
+
+    if (ss->grabIndex)
+    {
+        removeScreenGrab (s, ss->grabIndex, 0);
+        ss->grabIndex = 0;
+    }
+
+    if (ss->state != ShiftStateNone)
+    {
+	CompWindow *w;
+
+	for (w = s->windows; w; w = w->next)
+	{
+	    SHIFT_WINDOW (w);
+
+	    sw->slots[0].active = FALSE;
+	    sw->slots[1].active = FALSE;
+	    if (sw->active)
+	    {
+		sw->slots[0].adjust = TRUE;
+		sw->slots[1].adjust = TRUE;
+	    }
+	    sw->active = FALSE;
+	}
+	ss->moreAdjust = TRUE;
+	ss->state = ShiftStateIn;
+	damageScreen (s);
+
+	if (!cancel && ss->selectedWindow)
+	{
+	    w = findWindowAtScreen (s, ss->selectedWindow);
+	    if (w)
+		sendWindowActivationRequest (s, w->id);
+	}
+    }
+}
+
 static Bool
 shiftTerminate (CompDisplay     *d,
 	       CompAction      *action,
@@ -1560,45 +1601,10 @@ shiftTerminate (CompDisplay     *d,
 
     for (s = d->screens; s; s = s->next)
     {
-	SHIFT_SCREEN (s);
-
 	if (xid && s->root != xid)
 	    continue;
 
-	if (ss->grabIndex)
-    	{
-    	    removeScreenGrab (s, ss->grabIndex, 0);
-    	    ss->grabIndex = 0;
-	}
-
-	if (ss->state != ShiftStateNone)
-    	{
-    	    CompWindow *w;
-
-    	    for (w = s->windows; w; w = w->next)
-    	    {
-    		SHIFT_WINDOW (w);
-
-		sw->slots[0].active = FALSE;
-		sw->slots[1].active = FALSE;
-		if (sw->active)
-		{
-		    sw->slots[0].adjust = TRUE;
-		    sw->slots[1].adjust = TRUE;
-		}
-		sw->active = FALSE;
-	    }
-	    ss->moreAdjust = TRUE;
-    	    ss->state = ShiftStateIn;
-    	    damageScreen (s);
-
-	    if (!(state & CompActionStateCancel) && ss->selectedWindow)
-	    {
-		w = findWindowAtScreen (s, ss->selectedWindow);
-		if (w)
-		    sendWindowActivationRequest (s, w->id);
-	    }
-	}
+	shiftTerm (s, (state & CompActionStateCancel));
 
 	if (state & CompActionStateTermButton)
 	    action->state &= ~CompActionStateTermButton;
@@ -1761,6 +1767,12 @@ shiftInitiate (CompDisplay     *d,
 	    ret = shiftInitiateScreen (s, action, state, option, nOption);
 	else
 	    ret = shiftTerminate (d, action, state, option, nOption);
+
+	if (state & CompActionStateTermButton)
+	    action->state &= ~CompActionStateTermButton;
+
+	if (state & CompActionStateTermKey)
+	    action->state &= ~CompActionStateTermKey;
     }
 
     return ret;
@@ -1974,6 +1986,10 @@ shiftHandleEvent (CompDisplay *d,
 		    switchToWindow (s, FALSE);
 		else if (event->xbutton.button == Button4)
 		    switchToWindow (s, TRUE);
+		if (event->xbutton.button == Button1)
+		    shiftTerm (s, FALSE);
+		else if (event->xbutton.button == Button3)
+		    shiftTerm (s, TRUE);
 	    }
 	}
     }
