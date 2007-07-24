@@ -905,7 +905,7 @@ layoutThumbsFlip (CompScreen *s)
 		if (distance > 0.0)
 		{
 		    sw->slots[i].primary = FALSE;
-		    sw->slots[i].opacity = MAX (0.0, 1.0 - distance);
+		    sw->slots[i].opacity = MAX (0.0, 1.0 - (distance * 1.1));
 		}
 		else
 		{
@@ -923,9 +923,14 @@ layoutThumbsFlip (CompScreen *s)
 				 (((w->height / 2.0) + w->input.bottom) *
 				 sw->slots[i].scale);
 
-		sw->slots[i].x  = centerX;
-		sw->slots[i].x += sin(angle) * distance * (maxThumbWidth / 2);
+		sw->slots[i].x  = sin(angle) * distance * (maxThumbWidth / 2);
+		if (distance > 0)
+		    sw->slots[i].x *= 2.0;
+		sw->slots[i].x += centerX;
+		
 		sw->slots[i].z  = cos(angle) * distance;
+		if (distance > 0)
+		    sw->slots[i].z *= 2.0;
 		sw->slots[i].z *= (maxThumbWidth / (2.0 * (ox2 - ox1)));
 
 		sw->slots[i].rotation = shiftGetFlipRotation (s);
