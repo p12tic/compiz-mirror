@@ -2321,6 +2321,8 @@ shiftInitScreen (CompPlugin *p,
     ss->reflect         = 0.0;
     ss->reflectVelocity = 0.0;
 
+    ss->buttonPressed = FALSE;
+
     matchInit (&ss->match);
 
     WRAP (ss, s, preparePaintScreen, shiftPreparePaintScreen);
