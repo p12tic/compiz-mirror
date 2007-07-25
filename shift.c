@@ -701,8 +701,8 @@ static int
 compareShiftWindowDistance (const void *elem1,
 			    const void *elem2)
 {
-    float a1   = fabs(((ShiftDrawSlot *) elem1)->distance);
-    float a2   = fabs(((ShiftDrawSlot *) elem2)->distance);
+    float a1   = ((ShiftDrawSlot *) elem1)->distance;
+    float a2   = ((ShiftDrawSlot *) elem2)->distance;
 
     if (a1 > a2)
 	return -1;
@@ -818,7 +818,7 @@ layoutThumbsCover (CompScreen *s)
 
 		ss->drawSlots[index * 2 + i].w     = w;
 		ss->drawSlots[index * 2 + i].slot  = &sw->slots[i];
-		ss->drawSlots[index * 2 + i].distance = distance;
+		ss->drawSlots[index * 2 + i].distance = fabs(distance);
 		
 	}
     }
@@ -894,7 +894,7 @@ layoutThumbsFlip (CompScreen *s)
 		}
 
 		if (distance > 0.0)
-		    sw->slots[i].opacity = MAX (0.0, 1.0 - (distance * 1.1));
+		    sw->slots[i].opacity = MAX (0.0, 1.0 - (distance * 1.0));
 		else
 		{
 		    if (distance < -(ss->nWindows - 1))
@@ -911,13 +911,13 @@ layoutThumbsFlip (CompScreen *s)
 				 sw->slots[i].scale);
 
 		sw->slots[i].x  = sin(angle) * distance * (maxThumbWidth / 2);
-		if (distance > 0)
-		    sw->slots[i].x *= 2.0;
+		if (distance > 0 && FALSE)
+		    sw->slots[i].x *= 1.5;
 		sw->slots[i].x += centerX;
 		
 		sw->slots[i].z  = cos(angle) * distance;
 		if (distance > 0)
-		    sw->slots[i].z *= 2.0;
+		    sw->slots[i].z *= 1.5;
 		sw->slots[i].z *= (maxThumbWidth / (2.0 * (ox2 - ox1)));
 
 		sw->slots[i].rotation = shiftGetFlipRotation (s);
@@ -926,7 +926,7 @@ layoutThumbsFlip (CompScreen *s)
 		{
 		    ss->drawSlots[slotNum].w     = w;
 		    ss->drawSlots[slotNum].slot  = &sw->slots[i];
-		    ss->drawSlots[slotNum].distance = distance;
+		    ss->drawSlots[slotNum].distance = -distance;
 		    slotNum++;
 		}
 	}
