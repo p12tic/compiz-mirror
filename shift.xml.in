@@ -203,6 +203,14 @@
 					<min>-80</min>
 					<max>80</max>
 				</option>
+				<option name="cover_offset" type="float">
+					<_short>Cover offset</_short>
+					<_long>Cover movement offset.</_long>
+					<default>0.0</default>
+					<min>-0.4</min>
+					<max>0.4</max>
+					<precision>0.01</precision>
+				</option>
 				<option name="overlay_icon" type="int">
 					<_short>Overlay Icon</_short>
 					<_long>Overlay an icon on windows in the shift switcher</_long>

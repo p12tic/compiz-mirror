@@ -770,10 +770,14 @@ layoutThumbsCover (CompScreen *s)
 
 		
 		if (ss->invert ^ (i == 0))
+		{
 		    distance = ss->mvTarget - index;
+		    distance += shiftGetCoverOffset (s);
+		}
 		else
 		{
 		    distance = ss->mvTarget - index + ss->nWindows;
+		    distance += shiftGetCoverOffset (s);
 		    if (distance > ss->nWindows)
 			distance -= ss->nWindows * 2;
 		}
