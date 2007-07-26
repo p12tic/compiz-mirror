@@ -38,8 +38,6 @@ typedef struct _WorkaroundsScreen {
 } WorkaroundsScreen;
 
 typedef struct _WorkaroundsWindow {
-    Bool bOrigWmType;
-    unsigned int origWmType;
 } WorkaroundsWindow;
 
 #define GET_WORKAROUNDS_DISPLAY(d) \
@@ -100,7 +98,8 @@ workaroundsWindowResizeNotify (CompWindow *w, int dx, int dy,
 static void
 workaroundsWindowAddNotify (CompWindow *w)
 {
-    WORKAROUNDS_WINDOW (w);
+    Bool appliedFix = FALSE;
+
     WORKAROUNDS_SCREEN (w->screen);
 
     /* FIXME: Is this the best way to detect a notification type window? */
@@ -111,19 +110,17 @@ workaroundsWindowAddNotify (CompWindow *w)
             strcmp (w->resName, "notification-daemon") == 0)
         {
              w->wmType = CompWindowTypeNotificationMask;
-             ww->bOrigWmType = TRUE;
-             ww->origWmType = CompWindowTypeNormalMask;
+             appliedFix = TRUE;
         }
     }
     
-    if (workaroundsGetFirefoxMenuFix (w->screen->display) && !ww->bOrigWmType)
+    if (workaroundsGetFirefoxMenuFix (w->screen->display) && !appliedFix)
     {
         if (w->wmType == CompWindowTypeNormalMask &&
             w->attrib.override_redirect)
         {
             w->wmType = CompWindowTypeDropdownMenuMask;
-            ww->bOrigWmType = TRUE;
-            ww->origWmType = CompWindowTypeNormalMask;
+            appliedFix = TRUE;
         }
     }
 
@@ -216,9 +213,6 @@ workaroundsInitWindow (CompPlugin *plugin, CompWindow *w)
     if (!ww)
         return FALSE;
 
-    ww->bOrigWmType = FALSE;
-    ww->origWmType = 0;
-
     w->privates[ws->windowPrivateIndex].ptr = ww;
 
     return TRUE;
@@ -229,11 +223,8 @@ workaroundsFiniWindow (CompPlugin *plugin, CompWindow *w)
 {
     WORKAROUNDS_WINDOW (w);
 
-    if (ww->bOrigWmType)
-    {
-        w->wmType = ww->origWmType;
-        recalcWindowType (w);
-    }
+    w->wmType = getWindowType (w->screen->display, w->id);
+    recalcWindowType (w);
 
     free (ww);
 }
