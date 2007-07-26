@@ -18,6 +18,8 @@
  * This plug-in for Metacity-like workarounds.
  */
 
+#include <string.h>
+
 #include <compiz.h>
 #include <workarounds_options.h>
 
@@ -63,7 +65,7 @@ typedef struct _WorkaroundsWindow {
 
 
 static void
-workaroundsDoLegacyApps (CompWindow *w)
+workaroundsDoLegacyFullscreen (CompWindow *w)
 {
     unsigned int type;
 
@@ -83,11 +85,11 @@ workaroundsWindowResizeNotify (CompWindow *w, int dx, int dy,
 {
     WORKAROUNDS_SCREEN (w->screen);
 
-    if (workaroundsGetLegacyApps (w->screen->display))
+    if (workaroundsGetLegacyFullscreen (w->screen->display))
     {
         /* Fix up the window type. */
         recalcWindowType (w);
-        workaroundsDoLegacyApps (w);
+        workaroundsDoLegacyFullscreen (w);
     }
 
     UNWRAP (ws, w->screen, windowResizeNotify);
@@ -101,8 +103,8 @@ workaroundsWindowAddNotify (CompWindow *w)
     WORKAROUNDS_WINDOW (w);
     WORKAROUNDS_SCREEN (w->screen);
 
-    if (workaroundsGetLegacyApps (w->screen->display))
-        workaroundsDoLegacyApps (w);
+    if (workaroundsGetLegacyFullscreen (w->screen->display))
+        workaroundsDoLegacyFullscreen (w);
 
     /* FIXME: Is this the best way to detect a notification type window? */
     if (workaroundsGetNotificationDaemonFix (w->screen->display) && w->resName)

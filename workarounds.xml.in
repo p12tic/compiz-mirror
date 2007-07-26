@@ -8,19 +8,19 @@
         <_short>Workarounds</_short>
         <_long>Metacity-like workarounds.</_long>
         <display>
-            <option type="bool" name="legacy_apps">
-                <_short>Legacy application support</_short>
-                <_long>Make Wine and legacy applications work.</_long>
+            <option type="bool" name="legacy_fullscreen">
+                <_short>Legacy Fullscreen Support</_short>
+                <_long>Make Wine and legacy applications fullscreen properly.</_long>
                 <default>true</default>
             </option>
             <option type="bool" name="firefox_menu_fix">
-                <_short>Firefox menu fix</_short>
+                <_short>Firefox Menu Fix</_short>
                 <_long>Fix window type of Firefox and Thunderbird menus.</_long>
                 <default>true</default>
             </option>
             <option type="bool" name="notification_daemon_fix">
-                <_short>Notification-Daemon Fix</_short>
-               <_long>Fix window type of notification daemon windows.</_long>
+                <_short>Notification Daemon Fix</_short>
+                <_long>Fix window type of notification daemon windows.</_long>
                 <default>true</default>
            </option>
         </display>
