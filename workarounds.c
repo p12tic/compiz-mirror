@@ -103,9 +103,6 @@ workaroundsWindowAddNotify (CompWindow *w)
     WORKAROUNDS_WINDOW (w);
     WORKAROUNDS_SCREEN (w->screen);
 
-    if (workaroundsGetLegacyFullscreen (w->screen->display))
-        workaroundsDoLegacyFullscreen (w);
-
     /* FIXME: Is this the best way to detect a notification type window? */
     if (workaroundsGetNotificationDaemonFix (w->screen->display) && w->resName)
     {
@@ -129,6 +126,11 @@ workaroundsWindowAddNotify (CompWindow *w)
             ww->origWmType = CompWindowTypeNormalMask;
         }
     }
+
+    recalcWindowType (w);
+
+    if (workaroundsGetLegacyFullscreen (w->screen->display))
+        workaroundsDoLegacyFullscreen (w);
 
     UNWRAP (ws, w->screen, windowAddNotify);
     (*w->screen->windowAddNotify) (w);
