@@ -104,7 +104,20 @@ workaroundsWindowAddNotify (CompWindow *w)
     if (workaroundsGetLegacyApps (w->screen->display))
         workaroundsDoLegacyApps (w);
 
-    if (workaroundsGetFirefoxMenuFix (w->screen->display))
+    /* FIXME: Is this the best way to detect a notification type window? */
+    if (workaroundsGetNotificationDaemonFix (w->screen->display) && w->resName)
+    {
+        if (w->wmType == CompWindowTypeNormalMask &&
+            w->attrib.override_redirect &&
+            strcmp (w->resName, "notification-daemon") == 0)
+        {
+             w->wmType = CompWindowTypeNotificationMask;
+             ww->bOrigWmType = TRUE;
+             ww->origWmType = CompWindowTypeNormalMask;
+        }
+    }
+    
+    if (workaroundsGetFirefoxMenuFix (w->screen->display) && !ww->bOrigWmType)
     {
         if (w->wmType == CompWindowTypeNormalMask &&
             w->attrib.override_redirect)
