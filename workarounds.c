@@ -60,51 +60,54 @@ typedef struct _WorkaroundsWindow {
                             GET_WORKAROUNDS_DISPLAY (w->screen->display)))
 
 
-static void workaroundsDoLegacyApps( CompWindow *w )
+static void
+workaroundsDoLegacyApps (CompWindow *w)
 {
     unsigned int type;
 
     type = w->type;
 
     /* Some code to make Wine and legacy applications work. */
-    if ( w->width == w->screen->width && w->height == w->screen->height &&
-         !( type & CompWindowTypeDesktopMask ) )
+    if (w->width == w->screen->width && w->height == w->screen->height &&
+        !(type & CompWindowTypeDesktopMask))
             type = CompWindowTypeFullscreenMask;
 
     w->type = type;
 }
 
-static void workaroundsWindowResizeNotify( CompWindow *w, int dx, int dy,
-                                           int dwidth, int dheight )
-{
-    WORKAROUNDS_SCREEN( w->screen );
-
-    if ( workaroundsGetLegacyApps( w->screen->display ) )
-    {
-        /* Fix up the window type. */
-        recalcWindowType( w );
-        workaroundsDoLegacyApps( w );
-    }
-
-    UNWRAP( ws, w->screen, windowResizeNotify );
-    (*w->screen->windowResizeNotify) ( w, dx, dy, dwidth, dheight );
-    WRAP( ws, w->screen, windowResizeNotify, workaroundsWindowResizeNotify );
-}
-
-static void workaroundsWindowAddNotify (CompWindow *w)
+static void
+workaroundsWindowResizeNotify (CompWindow *w, int dx, int dy,
+                               int dwidth, int dheight)
 {
     WORKAROUNDS_SCREEN (w->screen);
 
-    if ( workaroundsGetLegacyApps( w->screen->display ) )
-        workaroundsDoLegacyApps( w );
+    if (workaroundsGetLegacyApps (w->screen->display))
+    {
+        /* Fix up the window type. */
+        recalcWindowType (w);
+        workaroundsDoLegacyApps (w);
+    }
+
+    UNWRAP (ws, w->screen, windowResizeNotify);
+    (*w->screen->windowResizeNotify) (w, dx, dy, dwidth, dheight);
+    WRAP (ws, w->screen, windowResizeNotify, workaroundsWindowResizeNotify);
+}
+
+static void
+workaroundsWindowAddNotify (CompWindow *w)
+{
+    WORKAROUNDS_SCREEN (w->screen);
+
+    if (workaroundsGetLegacyApps (w->screen->display))
+        workaroundsDoLegacyApps (w);
 
     if (workaroundsGetFirefoxMenuFix (w->screen->display))
     {
-       if (w->wmType == CompWindowTypeNormalMask &&
-           w->attrib.override_redirect)
-       {
-           w->wmType = CompWindowTypeDropdownMenuMask;
-       }
+        if (w->wmType == CompWindowTypeNormalMask &&
+            w->attrib.override_redirect)
+        {
+            w->wmType = CompWindowTypeDropdownMenuMask;
+        }
     }
 
     UNWRAP (ws, w->screen, windowAddNotify);
@@ -112,16 +115,17 @@ static void workaroundsWindowAddNotify (CompWindow *w)
     WRAP (ws, w->screen, windowAddNotify, workaroundsWindowAddNotify);
 }
 
-static Bool workaroundsInitDisplay( CompPlugin *plugin, CompDisplay *d )
+static Bool
+workaroundsInitDisplay (CompPlugin *plugin, CompDisplay *d)
 {
     WorkaroundsDisplay *wd;
 
-    wd = malloc( sizeof( WorkaroundsDisplay) );
+    wd = malloc (sizeof (WorkaroundsDisplay));
     if (!wd)
         return FALSE;
 
     wd->screenPrivateIndex = allocateScreenPrivateIndex( d );
-    if ( wd->screenPrivateIndex < 0 )
+    if (wd->screenPrivateIndex < 0)
     {
         free (wd);
         return FALSE;
@@ -132,89 +136,99 @@ static Bool workaroundsInitDisplay( CompPlugin *plugin, CompDisplay *d )
     return TRUE;
 }
 
-static void workaroundsFiniDisplay( CompPlugin *plugin, CompDisplay *d )
+static void
+workaroundsFiniDisplay (CompPlugin *plugin, CompDisplay *d)
 {
-    WORKAROUNDS_DISPLAY( d );
+    WORKAROUNDS_DISPLAY (d);
 
-    freeScreenPrivateIndex( d, wd->screenPrivateIndex );
+    freeScreenPrivateIndex (d, wd->screenPrivateIndex);
 
-    free( wd );
+    free (wd);
 }
 
-static Bool workaroundsInitScreen( CompPlugin *plugin, CompScreen *s )
+static Bool
+workaroundsInitScreen (CompPlugin *plugin, CompScreen *s)
 {
     WorkaroundsScreen *ws;
 
-    WORKAROUNDS_DISPLAY( s->display );
+    WORKAROUNDS_DISPLAY (s->display);
 
-    ws = malloc( sizeof( WorkaroundsScreen ) );
+    ws = malloc (sizeof (WorkaroundsScreen));
     if (!ws)
         return FALSE;
 
-    ws->windowPrivateIndex = allocateWindowPrivateIndex( s );
-    if ( ws->windowPrivateIndex < 0 )
+    ws->windowPrivateIndex = allocateWindowPrivateIndex (s);
+    if (ws->windowPrivateIndex < 0)
     {
         free (ws);
         return FALSE;
     }
 
-    WRAP( ws, s, windowAddNotify, workaroundsWindowAddNotify );
-    WRAP( ws, s, windowResizeNotify, workaroundsWindowResizeNotify );
+    WRAP (ws, s, windowAddNotify, workaroundsWindowAddNotify);
+    WRAP (ws, s, windowResizeNotify, workaroundsWindowResizeNotify);
 
     s->privates[wd->screenPrivateIndex].ptr = ws;
 
     return TRUE;
 }
 
-static void workaroundsFiniScreen( CompPlugin *plugin, CompScreen *s )
+static void
+workaroundsFiniScreen (CompPlugin *plugin, CompScreen *s)
 {
-    WORKAROUNDS_SCREEN( s );
+    WORKAROUNDS_SCREEN (s);
 
-    UNWRAP( ws, s, windowAddNotify );
-    UNWRAP( ws, s, windowResizeNotify );
+    UNWRAP (ws, s, windowAddNotify);
+    UNWRAP (ws, s, windowResizeNotify);
 
-    free( ws );
+    free (ws);
 }
 
-static Bool workaroundsInitWindow( CompPlugin *plugin, CompWindow *w )
+static Bool
+workaroundsInitWindow (CompPlugin *plugin, CompWindow *w)
 {
     return TRUE;
 }
 
-static void workaroundsFiniWindow( CompPlugin *plugin, CompWindow *w )
+static void
+workaroundsFiniWindow (CompPlugin *plugin, CompWindow *w)
 {
 }
 
-static Bool workaroundsInit( CompPlugin *plugin )
+static Bool
+workaroundsInit (CompPlugin *plugin)
 {
-   if ( !compInitPluginMetadataFromInfo( &workaroundsMetadata,
-                                         plugin->vTable->name, 0, 0, 0, 0 ) )
+    if (!compInitPluginMetadataFromInfo (&workaroundsMetadata,
+                                         plugin->vTable->name,
+                                         0, 0, 0, 0))
         return FALSE;
 
     displayPrivateIndex = allocateDisplayPrivateIndex ();
-    if ( displayPrivateIndex < 0 )
+    if (displayPrivateIndex < 0)
     {
-        compFiniMetadata( &workaroundsMetadata );
+        compFiniMetadata (&workaroundsMetadata);
         return FALSE;
     }
 
-    compAddMetadataFromFile( &workaroundsMetadata, plugin->vTable->name );
+    compAddMetadataFromFile (&workaroundsMetadata, plugin->vTable->name);
 
     return TRUE;
 }
 
-static void workaroundsFini( CompPlugin *plugin )
+static void
+workaroundsFini (CompPlugin *plugin)
 {
-    freeDisplayPrivateIndex( displayPrivateIndex );
-    compFiniMetadata( &workaroundsMetadata );
+    freeDisplayPrivateIndex (displayPrivateIndex);
+    compFiniMetadata (&workaroundsMetadata);
 }
 
-static int workaroundsGetVersion( CompPlugin *plugin, int version )
+static int
+workaroundsGetVersion (CompPlugin *plugin, int version)
 {   
     return ABIVERSION;
 }
 
-static CompMetadata *workaroundsGetMetadata( CompPlugin *plugin )
+static CompMetadata *
+workaroundsGetMetadata (CompPlugin *plugin)
 {
     return &workaroundsMetadata;
 }
@@ -238,7 +252,8 @@ CompPluginVTable workaroundsVTable =
     0  /* SetScreenOption */
 };
 
-CompPluginVTable *getCompPluginInfo( void )
+CompPluginVTable *
+getCompPluginInfo (void)
 {
     return &workaroundsVTable;
 }
