@@ -36,6 +36,8 @@ typedef struct _WorkaroundsScreen {
 } WorkaroundsScreen;
 
 typedef struct _WorkaroundsWindow {
+    Bool bOrigWmType;
+    unsigned int origWmType;
 } WorkaroundsWindow;
 
 #define GET_WORKAROUNDS_DISPLAY(d) \
@@ -96,6 +98,7 @@ workaroundsWindowResizeNotify (CompWindow *w, int dx, int dy,
 static void
 workaroundsWindowAddNotify (CompWindow *w)
 {
+    WORKAROUNDS_WINDOW (w);
     WORKAROUNDS_SCREEN (w->screen);
 
     if (workaroundsGetLegacyApps (w->screen->display))
@@ -107,6 +110,8 @@ workaroundsWindowAddNotify (CompWindow *w)
             w->attrib.override_redirect)
         {
             w->wmType = CompWindowTypeDropdownMenuMask;
+            ww->bOrigWmType = TRUE;
+            ww->origWmType = CompWindowTypeNormalMask;
         }
     }
 
@@ -186,12 +191,34 @@ workaroundsFiniScreen (CompPlugin *plugin, CompScreen *s)
 static Bool
 workaroundsInitWindow (CompPlugin *plugin, CompWindow *w)
 {
+    WorkaroundsWindow *ww;
+
+    WORKAROUNDS_SCREEN (w->screen);
+
+    ww = malloc (sizeof (WorkaroundsWindow));
+    if (!ww)
+        return FALSE;
+
+    ww->bOrigWmType = FALSE;
+    ww->origWmType = 0;
+
+    w->privates[ws->windowPrivateIndex].ptr = ww;
+
     return TRUE;
 }
 
 static void
 workaroundsFiniWindow (CompPlugin *plugin, CompWindow *w)
 {
+    WORKAROUNDS_WINDOW (w);
+
+    if (ww->bOrigWmType)
+    {
+        w->wmType = ww->origWmType;
+        recalcWindowType (w);
+    }
+
+    free (ww);
 }
 
 static Bool
