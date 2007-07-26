@@ -36,6 +36,16 @@ enum
     AttribOp,
 } OpType;
 
+typedef struct _FragmentOffset FragmentOffset;
+
+struct _FragmentOffset
+{
+    char	    *name;
+    char	    *offset;
+
+    FragmentOffset  *next;
+};
+
 char *base_name (char *str);
 
 int buildFragmentProgram (char *source, char *name,

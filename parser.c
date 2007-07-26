@@ -30,6 +30,13 @@
 #include <compiz.h>
 #include "parser.h"
 
+/* Internal prototypes ------------------------------------------------------ */
+
+static char *
+programFindOffset (FragmentOffset *offset, char *name);
+
+/* General helper functions ------------------------------------------------- */
+
 /*
  * Helper function to get the basename of file from its path
  * e.g. basename ("/home/user/blah.c") == "blah.c"
@@ -75,6 +82,8 @@ ltrim (char *string)
     return string;
 }
 
+/* General fragment program related functions ------------------------------- */
+
 /*
  * Clean program name string
  */
@@ -85,6 +94,7 @@ programCleanName (char *name)
 
     current = dest = strdup (name);
     
+    /* Replace every non alphanumeric char by '_' */
     while (*current)
     {
 	if (!isalnum (*current))
@@ -203,6 +213,106 @@ getFirstArgument (char **source)
     return arg;
 }
 
+/* Texture offset related functions ----------------------------------------- */
+
+/*
+ * Add a new fragment offset to the offsets stack from an ADD op string
+ */
+static FragmentOffset *
+programAddOffsetFromAddOp (FragmentOffset *offsets, char *source)
+{
+    FragmentOffset  *offset;
+    char	    *op, *orig_op;
+    char	    *name;
+    char	    *offset_string;
+    char	    *temp;
+
+    if (strlen (source) < 5)
+	return offsets;
+
+    orig_op = op = strdup (source);
+
+    op += 3;
+    if (!(name = getFirstArgument (&op)))
+    {
+	free (orig_op);
+	return offsets;
+    }
+
+    /* If an offset with the same name is already registered, skeep this one */
+    if (programFindOffset (offsets, name) || !(temp = getFirstArgument (&op)))
+    {
+	free (name);
+	free (orig_op);
+	return offsets;
+    }
+
+    /* We don't need this, let's free it immediately */
+    free (temp);
+
+    /* Just use the end of the op as the offset */
+    op += 1;
+    offset_string = strdup (ltrim (op));
+    if (!offset_string)
+    {
+	free (name);
+	free (orig_op);
+	return offsets;
+    }
+
+    offset = malloc (sizeof (FragmentOffset));
+    if (!offset)
+    {
+	free (offset_string);
+	free (name);
+	free (orig_op);
+	return offsets;
+    }
+
+    offset->name =  strdup (name);
+    offset->offset = strdup (offset_string);
+    offset->next = offsets;
+
+    free (offset_string);
+    free (name);
+    free (orig_op);
+
+    return offset;
+}
+
+/*
+ * Find an offset according to its name
+ */
+static char *
+programFindOffset (FragmentOffset *offset, char *name)
+{
+    if (!offset)
+	return NULL;
+
+    if (strcmp (offset->name, name) == 0)
+	return strdup (offset->offset);
+
+    return programFindOffset (offset->next, name);
+}
+
+/*
+ * Recursively free offsets stack
+ */
+static void
+programFreeOffset (FragmentOffset *offset)
+{
+    if (!offset)
+	return;
+
+    programFreeOffset (offset->next);
+
+    free (offset->name);
+    free (offset->offset);
+    free (offset);
+}
+
+/* Actual parsing/loading functions ----------------------------------------- */
+
 /*
  * Parse the source buffer op by op and add each op to function data
  */
@@ -213,9 +323,10 @@ programParseSource (CompFunctionData *data,
     char *line, *next, *current;
     char *strtok_ptr;
     int   length, oplength, type;
+    FragmentOffset *offsets = NULL;
     Bool colorDone = FALSE;
 
-    char *arg1, *arg2;
+    char *arg1, *arg2, *temp;
 
     /* Find the header, skip it, and start parsing from there */
     while (*source)
@@ -257,7 +368,6 @@ programParseSource (CompFunctionData *data,
 	if (strncmp (current, "END", 3) == 0)
 	    type = NoOp;
 	else if (strncmp (current, "ABS", 3) == 0
-	      || strncmp (current, "ADD", 3) == 0
 	      || strncmp (current, "CMP", 3) == 0
 	      || strncmp (current, "COS", 3) == 0
 	      || strncmp (current, "DP3", 3) == 0
@@ -293,6 +403,13 @@ programParseSource (CompFunctionData *data,
 	    type = AttribOp;
 	else if (strncmp (current, "TEX", 3) == 0)
 	    type = FetchOp;
+	else if (strncmp (current, "ADD", 3) == 0)
+	{
+	    if (strstr (current, "fragment.texcoord"))
+		offsets = programAddOffsetFromAddOp (offsets, current);
+	    else
+		type = DataOp;
+	}
 	else if (strncmp (current, "MUL", 3) == 0)
 	{
 	    if (strstr (current, "fragment.color"))
@@ -345,13 +462,31 @@ programParseSource (CompFunctionData *data,
 		}
 		break;
 	    case FetchOp:
-		/* Example : TEX tmp, fragment.texcoord[0], texture[0], RECT;
-		 * "tmp" is what we need */
+		/* Example : TEX tmp, coord, texture[0], RECT;
+		 * "tmp" is dest name, while "coord" is either 
+		 * fragment.texcoord[0] or an offset */
 		current += 3;
 		if ((arg1 = getFirstArgument (&current)))
 		{
-		    addFetchOpToFunctionData (data, arg1, NULL, target);
+		    if (!(temp = getFirstArgument (&current)))
+		    {
+			free (arg1);
+			break;
+		    }
+		    if (strcmp (temp, "fragment.texcoord[0]") == 0)
+			addFetchOpToFunctionData (data, arg1, NULL, target);
+		    else
+		    {
+			printf ("Looking for offset %s\n", temp);
+			arg2 = programFindOffset (offsets, temp); 
+			if (arg2)
+			{
+			    addFetchOpToFunctionData (data, arg1, arg2, target);
+			    free (arg2);
+			}
+		    }
 		    free (arg1);
+		    free (temp);
 		}
 		break;
 	    case ColorOp:
@@ -363,12 +498,21 @@ programParseSource (CompFunctionData *data,
 		    current += 3;
 		    if  (!(arg1 = getFirstArgument (&current)))
 			break;
-		    if (!getFirstArgument (&current) ||
-			!(arg2 = getFirstArgument (&current)))
+
+		    if (!(temp = getFirstArgument (&current)))
 		    {
 			free (arg1);
 			break;
 		    }
+
+		    free (temp);
+
+		    if (!(arg2 = getFirstArgument (&current)))
+		    {
+			free (arg1);
+			break;
+		    }
+
 		    addColorOpToFunctionData (data, arg1, arg2);
 		    free (arg1);
 		    free (arg2);
@@ -392,6 +536,8 @@ programParseSource (CompFunctionData *data,
 	free (line);
 	line = strtok_r (NULL, ";", &strtok_ptr);
     }
+    programFreeOffset (offsets);
+    offsets = NULL;
 }
 
 /*
