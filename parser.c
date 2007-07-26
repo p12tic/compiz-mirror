@@ -368,33 +368,20 @@ programParseSource (CompFunctionData *data,
 	/* Data ops */
 	if (strncmp (current, "END", 3) == 0)
 	    type = NoOp;
-	else if (strncmp (current, "ABS", 3) == 0
-	      || strncmp (current, "CMP", 3) == 0
-	      || strncmp (current, "COS", 3) == 0
-	      || strncmp (current, "DP3", 3) == 0
-	      || strncmp (current, "DP4", 3) == 0
-	      || strncmp (current, "EX2", 3) == 0
-	      || strncmp (current, "FLR", 3) == 0
-	      || strncmp (current, "FRC", 3) == 0
-	      || strncmp (current, "KIL", 3) == 0
-	      || strncmp (current, "LG2", 3) == 0
-	      || strncmp (current, "LIT", 3) == 0
-	      || strncmp (current, "LRP", 3) == 0
-	      || strncmp (current, "MAD", 3) == 0
-	      || strncmp (current, "MAX", 3) == 0
-	      || strncmp (current, "MIN", 3) == 0
-	      || strncmp (current, "POW", 3) == 0
-	      || strncmp (current, "RCP", 3) == 0
-	      || strncmp (current, "RSQ", 3) == 0
-	      || strncmp (current, "SCS", 3) == 0
-	      || strncmp (current, "SIN", 3) == 0
-	      || strncmp (current, "SGE", 3) == 0
-	      || strncmp (current, "SLT", 3) == 0
-	      || strncmp (current, "SUB", 3) == 0
-	      || strncmp (current, "SWZ", 3) == 0
-	      || strncmp (current, "TXB", 3) == 0
-	      || strncmp (current, "TXP", 3) == 0
-	      || strncmp (current, "XPD", 3) == 0)
+	else if (!strncmp (current, "ABS", 3) || !strncmp (current, "CMP", 3) ||
+	         !strncmp (current, "COS", 3) || !strncmp (current, "DP3", 3) ||
+	         !strncmp (current, "DP4", 3) || !strncmp (current, "EX2", 3) ||
+	         !strncmp (current, "FLR", 3) || !strncmp (current, "FRC", 3) ||
+	         !strncmp (current, "KIL", 3) || !strncmp (current, "LG2", 3) ||
+	         !strncmp (current, "LIT", 3) || !strncmp (current, "LRP", 3) ||
+	         !strncmp (current, "MAD", 3) || !strncmp (current, "MAX", 3) ||
+	         !strncmp (current, "MIN", 3) || !strncmp (current, "POW", 3) ||
+	         !strncmp (current, "RCP", 3) || !strncmp (current, "RSQ", 3) ||
+	         !strncmp (current, "SCS", 3) || !strncmp (current, "SIN", 3) ||
+	         !strncmp (current, "SGE", 3) || !strncmp (current, "SLT", 3) ||
+	         !strncmp (current, "SUB", 3) || !strncmp (current, "SWZ", 3) ||
+	         !strncmp (current, "TXB", 3) || !strncmp (current, "TXP", 3) ||
+	         !strncmp (current, "XPD", 3))
 		type = DataOp;
 	else if (strncmp (current, "TEMP", 4) == 0)
 	    type = TempOp;
