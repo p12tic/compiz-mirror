@@ -31,7 +31,8 @@ typedef struct _WorkaroundsDisplay {
 typedef struct _WorkaroundsScreen {
     int windowPrivateIndex;
 
-    WindowResizeNotifyProc windowResizeNotify;
+    WindowAddNotifyProc     windowAddNotify;
+    WindowResizeNotifyProc  windowResizeNotify;
 } WorkaroundsScreen;
 
 typedef struct _WorkaroundsWindow {
@@ -90,6 +91,18 @@ static void workaroundsWindowResizeNotify( CompWindow *w, int dx, int dy,
     WRAP( ws, w->screen, windowResizeNotify, workaroundsWindowResizeNotify );
 }
 
+static void workaroundsWindowAddNotify (CompWindow *w)
+{
+    WORKAROUNDS_SCREEN (w->screen);
+
+    if ( workaroundsGetLegacyApps( w->screen->display ) )
+        workaroundsDoLegacyApps( w );
+
+    UNWRAP (ws, w->screen, windowAddNotify);
+    (*w->screen->windowAddNotify) (w);
+    WRAP (ws, w->screen, windowAddNotify, workaroundsWindowAddNotify);
+}
+
 static Bool workaroundsInitDisplay( CompPlugin *plugin, CompDisplay *d )
 {
     WorkaroundsDisplay *wd;
@@ -136,6 +149,7 @@ static Bool workaroundsInitScreen( CompPlugin *plugin, CompScreen *s )
         return FALSE;
     }
 
+    WRAP( ws, s, windowAddNotify, workaroundsWindowAddNotify );
     WRAP( ws, s, windowResizeNotify, workaroundsWindowResizeNotify );
 
     s->privates[wd->screenPrivateIndex].ptr = ws;
@@ -147,6 +161,7 @@ static void workaroundsFiniScreen( CompPlugin *plugin, CompScreen *s )
 {
     WORKAROUNDS_SCREEN( s );
 
+    UNWRAP( ws, s, windowAddNotify );
     UNWRAP( ws, s, windowResizeNotify );
 
     free( ws );
@@ -154,9 +169,6 @@ static void workaroundsFiniScreen( CompPlugin *plugin, CompScreen *s )
 
 static Bool workaroundsInitWindow( CompPlugin *plugin, CompWindow *w )
 {
-    if ( workaroundsGetLegacyApps( w->screen->display ) )
-        workaroundsDoLegacyApps( w );
-
     return TRUE;
 }
 
