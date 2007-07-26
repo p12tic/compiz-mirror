@@ -124,6 +124,27 @@ workaroundsWindowAddNotify (CompWindow *w)
         }
     }
 
+    /* FIXME: Basic hack to get Java windows working correctly. */
+    if (workaroundsGetJavaFix (w->screen->display) && !appliedFix && w->resName)
+    {
+        if ((strcmp (w->resName, "sun-awt-X11-XMenuWindow") == 0) ||
+            (strcmp (w->resName, "sun-awt-X11-XWindowPeer") == 0))
+        {
+            w->wmType = CompWindowTypeDropdownMenuMask;
+            appliedFix = TRUE;
+        }
+        else if (strcmp (w->resName, "sun-awt-X11-XDialogPeer") == 0)
+        {
+            w->wmType = CompWindowTypeDialogMask;
+            appliedFix = TRUE;
+        }
+        else if (strcmp (w->resName, "sun-awt-X11-XFramePeer") == 0)
+        {
+            w->wmType = CompWindowTypeNormalMask;
+            appliedFix = TRUE;
+        }
+    }
+
     recalcWindowType (w);
 
     if (workaroundsGetLegacyFullscreen (w->screen->display))
