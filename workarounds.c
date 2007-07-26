@@ -98,6 +98,15 @@ static void workaroundsWindowAddNotify (CompWindow *w)
     if ( workaroundsGetLegacyApps( w->screen->display ) )
         workaroundsDoLegacyApps( w );
 
+    if (workaroundsGetFirefoxMenuFix (w->screen->display))
+    {
+       if (w->wmType == CompWindowTypeNormalMask &&
+           w->attrib.override_redirect)
+       {
+           w->wmType = CompWindowTypeDropdownMenuMask;
+       }
+    }
+
     UNWRAP (ws, w->screen, windowAddNotify);
     (*w->screen->windowAddNotify) (w);
     WRAP (ws, w->screen, windowAddNotify, workaroundsWindowAddNotify);

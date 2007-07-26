@@ -13,6 +13,11 @@
                 <_long>Make Wine and legacy applications work.</_long>
                 <default>true</default>
             </option>
+            <option type="bool" name="firefox_menu_fix">
+                <_short>Firefox menu fix</_short>
+                <_long>Fix window type of Firefox and Thunderbird menus.</_long>
+                <default>true</default>
+            </option>
         </display>
         <screen>
         </screen>
