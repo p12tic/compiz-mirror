@@ -316,6 +316,7 @@ programFreeOffset (FragmentOffset *offset)
 /*
  * Parse the source buffer op by op and add each op to function data
  */
+/* FIXME : I am more than 200 lines long, I feel so heavy! */
 static void
 programParseSource (CompFunctionData *data,
 		    int target, char *source)
