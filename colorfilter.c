@@ -100,8 +100,7 @@ struct _CompFunction {
  * Find fragment function by id (imported from compiz-core/src/fragment.c)
  */
 static CompFunction *
-findFragmentFunction (CompScreen *s,
-	int     id)
+findFragmentFunction (CompScreen *s, int id)
 {
     CompFunction *function;
 
@@ -201,7 +200,7 @@ colorFilterSwitchFilter (CompScreen * s)
  */
 static Bool
 colorFilterToggle (CompDisplay * d, CompAction * action,
-	CompActionState state, CompOption * option, int nOption)
+		   CompActionState state, CompOption * option, int nOption)
 {
     CompWindow *w;
     Window xid;
@@ -221,7 +220,7 @@ colorFilterToggle (CompDisplay * d, CompAction * action,
  */
 static Bool
 colorFilterToggleAll (CompDisplay * d, CompAction * action,
-	CompActionState state, CompOption * option, int nOption)
+		      CompActionState state, CompOption * option, int nOption)
 {
     CompScreen *s;
     Window xid;
@@ -241,7 +240,7 @@ colorFilterToggleAll (CompDisplay * d, CompAction * action,
  */
 static Bool
 colorFilterSwitch (CompDisplay * d, CompAction * action,
-	CompActionState state, CompOption * option, int nOption)
+		   CompActionState state, CompOption * option, int nOption)
 {
     CompScreen *s;
     Window xid;
@@ -353,7 +352,7 @@ loadFilters (CompScreen *s, CompTexture *texture)
  */
 static void
 colorFilterDrawWindowTexture (CompWindow *w, CompTexture *texture,
-	const FragmentAttrib *attrib, unsigned int mask)
+			      const FragmentAttrib *attrib, unsigned int mask)
 {
     int i, function;
 
@@ -473,7 +472,7 @@ colorFilterHandleEvent (CompDisplay *d, XEvent *event)
  */
 static void
 colorfilterFilterMatchsChanged (CompScreen *s, CompOption *opt,
-	ColorfilterScreenOptions num)
+				ColorfilterScreenOptions num)
 {
     CompWindow *w;
     /* Re-check every window against new match settings */
@@ -491,7 +490,7 @@ colorfilterFilterMatchsChanged (CompScreen *s, CompOption *opt,
  */
 static void
 colorfilterExcludeMatchsChanged (CompScreen *s, CompOption *opt,
-	ColorfilterScreenOptions num)
+				 ColorfilterScreenOptions num)
 {
     CompWindow *w;
     /* Re-check every window against new match settings */
@@ -509,7 +508,7 @@ colorfilterExcludeMatchsChanged (CompScreen *s, CompOption *opt,
  */
 static void
 colorFiltersChanged (CompScreen *s, CompOption *opt,
-	ColorfilterScreenOptions num)
+		     ColorfilterScreenOptions num)
 {
     FILTER_SCREEN (s);
     /* Just set the filtersLoaded boolean to FALSE, unloadFilters will be
