@@ -25,9 +25,6 @@
 #include <string.h>
 #include <stdio.h>
 
-#include <X11/Xatom.h>
-#include <X11/extensions/Xrender.h>
-
 #include <compiz.h>
 #include "parser.h"
 #include "colorfilter_options.h"
