@@ -562,7 +562,10 @@ loadFragmentProgram (char *file, char *name,
     /* Read the source file */
     source = programReadSource (file);
     if (!source)
+    {
+	free (name);
 	return 0;
+    }
     /* Build the Compiz Fragment Program */
     handle = buildFragmentProgram (source, name, s, target);
     free (name);
