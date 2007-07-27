@@ -465,7 +465,6 @@ programParseSource (CompFunctionData *data,
 			addFetchOpToFunctionData (data, arg1, NULL, target);
 		    else
 		    {
-			printf ("Looking for offset %s\n", temp);
 			arg2 = programFindOffset (offsets, temp); 
 			if (arg2)
 			{
