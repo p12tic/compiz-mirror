@@ -97,7 +97,7 @@
 				<option name="window_match" type="match">
 					<_short>Shift Windows</_short>
 					<_long>Windows that should be shown in the shift switcher</_long>
-					<default>(type=Normal | Dialog | ModalDialog | Utility | Unknown | name=sun-awt-X11-XFramePeer | name=sun-awt-X11-XDialogPeer) &amp; !(type=Normal &amp; override_redirect=1)</default>
+					<default>Normal | Dialog | ModalDialog | Utility | Unknown</default>
 				</option>
 				<option name="minimized" type="bool">
 					<_short>Show Minimized</_short>
