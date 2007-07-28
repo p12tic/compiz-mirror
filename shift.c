@@ -190,6 +190,23 @@ typedef struct _ShiftWindow {
 	             GET_SHIFT_SCREEN  (w->screen,	       \
 		     GET_SHIFT_DISPLAY (w->screen->display)))
 
+static void
+shiftActivateEvent (CompScreen *s,
+		    Bool       activating)
+{
+    CompOption o[2];
+
+    o[0].type = CompOptionTypeInt;
+    o[0].name = "root";
+    o[0].value.i = s->root;
+
+    o[1].type = CompOptionTypeBool;
+    o[1].name = "active";
+    o[1].value.b = activating;
+
+    (*s->display->handleCompizEvent) (s->display, "shift", "activate", o, 2);
+}
+
 static Bool
 isShiftWin (CompWindow *w)
 {
@@ -1546,7 +1563,10 @@ shiftDonePaintScreen (CompScreen *s)
 	    }
 
 	    if (ss->state == ShiftStateIn)
+	    {
 		ss->state = ShiftStateNone;
+		shiftActivateEvent(s, FALSE);
+	    }
 	    else if (ss->state == ShiftStateOut)
 		ss->state = ShiftStateSwitching;
 	}
@@ -1668,6 +1688,7 @@ shiftInitiateScreen (CompScreen      *s,
     if (ss->grabIndex)
     {
 	ss->state = ShiftStateOut;
+	shiftActivateEvent(s, TRUE);
 
 	if (!shiftCreateWindowList (s))
 	    return FALSE;
