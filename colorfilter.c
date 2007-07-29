@@ -165,7 +165,7 @@ colorFilterSwitchFilter (CompScreen * s)
     cfs->currentFilter = ++cfs->currentFilter % (cfs->filtersCount + 1);
     if (cfs->currentFilter == 0)
 	compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
-		"Cumulative filters mode");
+			"Cumulative filters mode");
     else
     {
 	id = cfs->filtersFunctions[cfs->currentFilter - 1];
@@ -173,13 +173,13 @@ colorFilterSwitchFilter (CompScreen * s)
 	{
 	    function = findFragmentFunction (s, id);
 	    compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
-		    "Single filter mode (using %s filter)",
-		    function->name);
+			    "Single filter mode (using %s filter)",
+			    function->name);
 	}
 	else
 	{
 	    compLogMessage (s->display, "colorfilter", CompLogLevelInfo,
-		    "Single filter mode (filter loading failure)");
+			    "Single filter mode (filter loading failure)");
 	}
     }
 
