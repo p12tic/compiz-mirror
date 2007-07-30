@@ -222,7 +222,7 @@ isShiftWin (CompWindow *w)
     {
 	if (shiftGetMinimized (w->screen))
 	{
-	    if (!w->minimized && !w->shaded)
+	    if (!w->minimized && !w->inShowDesktopMode && !w->shaded)
 		return FALSE;
 	}
 	else
