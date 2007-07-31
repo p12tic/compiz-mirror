@@ -555,6 +555,13 @@ colorFilterInitScreen (CompPlugin * p, CompScreen * s)
 
     FILTER_DISPLAY (s->display);
 
+    if (!s->fragmentProgram)
+    {
+	compLogMessage (s->display, "colorfilter", CompLogLevelFatal,
+			"Fragment program support missing.");
+	return FALSE;
+    }
+
     cfs = malloc (sizeof (ColorFilterScreen));
     if (!cfs)
 	return FALSE;
