@@ -91,7 +91,7 @@
 				</option>
 				<option name="bevel_bottomright" type="bool">
 					<_short>Bevel Bottom Right</_short>
-					<_long>Bevel top bottom right corner</_long>
+					<_long>Bevel bottom right corner</_long>
 					<default>false</default>
 				</option>
 			</group>
