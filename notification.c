@@ -114,7 +114,6 @@ notifyLogMessage (CompDisplay  *d,
 	fprintf (stderr, "failed to send notification\n");
 
     g_object_unref (G_OBJECT (n));
-    free (logLevel);
     free (iconUri);
 
     UNWRAP (nd, d, logMessage);
