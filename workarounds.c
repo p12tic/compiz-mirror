@@ -86,39 +86,6 @@ workaroundsGetWindowRoleAtom (CompWindow *w)
 }
 
 static void
-workaroundsDoLegacyFullscreen (CompWindow *w)
-{
-    unsigned int type;
-
-    type = w->type;
-
-    /* Some code to make Wine and legacy applications work. */
-    if (w->width == w->screen->width && w->height == w->screen->height &&
-        !(type & CompWindowTypeDesktopMask))
-            type = CompWindowTypeFullscreenMask;
-
-    w->type = type;
-}
-
-static void
-workaroundsWindowResizeNotify (CompWindow *w, int dx, int dy,
-                               int dwidth, int dheight)
-{
-    WORKAROUNDS_SCREEN (w->screen);
-
-    if (workaroundsGetLegacyFullscreen (w->screen->display))
-    {
-        /* Fix up the window type. */
-        recalcWindowType (w);
-        workaroundsDoLegacyFullscreen (w);
-    }
-
-    UNWRAP (ws, w->screen, windowResizeNotify);
-    (*w->screen->windowResizeNotify) (w, dx, dy, dwidth, dheight);
-    WRAP (ws, w->screen, windowResizeNotify, workaroundsWindowResizeNotify);
-}
-
-static void
 workaroundsDoFixes (CompWindow *w)
 {
     Bool appliedFix = FALSE;
@@ -203,7 +170,28 @@ workaroundsDoFixes (CompWindow *w)
     recalcWindowType (w);
 
     if (workaroundsGetLegacyFullscreen (w->screen->display))
-        workaroundsDoLegacyFullscreen (w);
+    {
+        /* Some code to make Wine and legacy applications work. */
+        if (w->width == w->screen->width && w->height == w->screen->height &&
+            !(w->type & CompWindowTypeDesktopMask))
+                w->type = CompWindowTypeFullscreenMask;
+    }
+}
+
+static void
+workaroundsWindowResizeNotify (CompWindow *w, int dx, int dy,
+                               int dwidth, int dheight)
+{
+    WORKAROUNDS_SCREEN (w->screen);
+
+    if (workaroundsGetLegacyFullscreen (w->screen->display))
+    {
+        workaroundsDoFixes (w);
+    }
+
+    UNWRAP (ws, w->screen, windowResizeNotify);
+    (*w->screen->windowResizeNotify) (w, dx, dy, dwidth, dheight);
+    WRAP (ws, w->screen, windowResizeNotify, workaroundsWindowResizeNotify);
 }
 
 static Bool
