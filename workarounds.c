@@ -118,10 +118,12 @@ workaroundsWindowResizeNotify (CompWindow *w, int dx, int dy,
     WRAP (ws, w->screen, windowResizeNotify, workaroundsWindowResizeNotify);
 }
 
-static Bool
-workaroundsInitWindow (CompPlugin *plugin, CompWindow *w)
+static void
+workaroundsDoFixes (CompWindow *w)
 {
     Bool appliedFix = FALSE;
+
+    w->wmType = getWindowType (w->screen->display, w->id);
 
     /* FIXME: Is this the best way to detect a notification type window? */
     if (workaroundsGetNotificationDaemonFix (w->screen->display) && w->resName)
@@ -202,8 +204,6 @@ workaroundsInitWindow (CompPlugin *plugin, CompWindow *w)
 
     if (workaroundsGetLegacyFullscreen (w->screen->display))
         workaroundsDoLegacyFullscreen (w);
-
-    return TRUE;
 }
 
 static Bool
@@ -265,6 +265,14 @@ workaroundsFiniScreen (CompPlugin *plugin, CompScreen *s)
     UNWRAP (ws, s, windowResizeNotify);
 
     free (ws);
+}
+
+static Bool
+workaroundsInitWindow (CompPlugin *plugin, CompWindow *w)
+{
+    workaroundsDoFixes (w);
+
+    return TRUE;
 }
 
 static void
