@@ -901,8 +901,11 @@ readListValue (CCSSetting *setting,
     case TypeBool:
 	{
 	    Bool *array = malloc (nItems * sizeof (Bool));
+	    if (!array)
+		break;
+
 	    for (; valueList; valueList = valueList->next, i++)
-		array[i] = 
+		array[i] =
 		    gconf_value_get_bool (valueList->data) ? TRUE : FALSE;
 	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
 	    free (array);
@@ -911,6 +914,9 @@ readListValue (CCSSetting *setting,
     case TypeInt:
 	{
 	    int *array = malloc (nItems * sizeof (int));
+	    if (!array)
+		break;
+
 	    for (; valueList; valueList = valueList->next, i++)
 		array[i] = gconf_value_get_int (valueList->data);
 	    list = ccsGetValueListFromIntArray (array, nItems, setting);
@@ -920,6 +926,9 @@ readListValue (CCSSetting *setting,
     case TypeFloat:
 	{
 	    float *array = malloc (nItems * sizeof (float));
+	    if (!array)
+		break;
+
 	    for (; valueList; valueList = valueList->next, i++)
 		array[i] = gconf_value_get_float (valueList->data);
 	    list = ccsGetValueListFromFloatArray (array, nItems, setting);
@@ -930,6 +939,9 @@ readListValue (CCSSetting *setting,
     case TypeMatch:
 	{
 	    char **array = malloc (nItems * sizeof (char*));
+	    if (!array)
+		break;
+
 	    for (; valueList; valueList = valueList->next, i++)
 		array[i] = strdup (gconf_value_get_string (valueList->data));
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
@@ -942,6 +954,9 @@ readListValue (CCSSetting *setting,
 	{
 	    CCSSettingColorValue *array;
 	    array = malloc (nItems * sizeof (CCSSettingColorValue));
+	    if (!array)
+		break;
+
 	    for (; valueList; valueList = valueList->next, i++)
     	    {
 		memset (&array[i], 0, sizeof (CCSSettingColorValue));
@@ -1358,8 +1373,11 @@ writeListValue (CCSSetting *setting,
 	    while (list)
 	    {
 		item = malloc (sizeof (float));
-		*item = list->data->value.asFloat;
-		valueList = g_slist_append (valueList, item);
+		if (item)
+		{
+		    *item = list->data->value.asFloat;
+		    valueList = g_slist_append (valueList, item);
+		}
 		list = list->next;
 	    }
 	    freeItems = TRUE;
