@@ -99,8 +99,8 @@ workaroundsDoFixes (CompWindow *w)
             w->attrib.override_redirect &&
             strcmp (w->resName, "notification-daemon") == 0)
         {
-             w->wmType = CompWindowTypeNotificationMask;
-             appliedFix = TRUE;
+            w->wmType = CompWindowTypeNotificationMask;
+            appliedFix = TRUE;
         }
     }
 
