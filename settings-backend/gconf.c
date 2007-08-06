@@ -33,6 +33,7 @@
 #include <dirent.h>
 
 #include <ccs.h>
+#include <ccs-backend.h>
 
 #include <X11/X.h>
 #include <X11/Xlib.h>
