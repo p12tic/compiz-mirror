@@ -442,8 +442,12 @@ valueChanged (GConfClient *client,
 	    if (strcmp (token + len - prefixLen, prefix[i]) == 0)
 	    {
 		char *buffer = strndup (token, len - prefixLen);
-		setting = ccsFindSetting (plugin, buffer, isScreen, screenNum);
-		free (buffer);
+		if (buffer)
+		{
+		    setting = ccsFindSetting (plugin, buffer,
+					      isScreen, screenNum);
+		    free (buffer);
+		}
 		break;
 	    }
 	}
@@ -633,7 +637,7 @@ copyGconfValues (GConfEngine *conf,
 		asprintf (&newSchema, "%s/%s", schemaPath, name + 1);
 
 	    value = gconf_engine_get_without_default (conf, key, NULL);
-	    if (value)
+	    if (value && newKey)
 	    {
 		if (newSchema)
 		    gconf_engine_associate_schema (conf, newKey,
@@ -644,7 +648,8 @@ copyGconfValues (GConfEngine *conf,
 	    }
 	    if (newSchema)
 		free (newSchema);
-	    free (newKey);
+	    if (newKey)
+		free (newKey);
 	}
 	else
 	{
@@ -697,7 +702,10 @@ copyGconfRecursively (GConfEngine *conf,
 		free (newSchema);
 
 	    if (to)
-      		free (newKey);
+	    {
+		if (newKey)
+		    free (newKey);
+	    }
 	    else
 		gconf_engine_remove_dir (conf, path, NULL);
 	}
@@ -947,7 +955,8 @@ readListValue (CCSSetting *setting,
 		array[i] = strdup (gconf_value_get_string (valueList->data));
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
 	    for (i = 0; i < nItems; i++)
-		free (array[i]);
+		if (array[i])
+		    free (array[i]);
 	    free (array);
 	}
 	break;
@@ -1453,6 +1462,8 @@ setGnomeMouseButtonModifier (unsigned int modMask)
 
     if (!modifiers)
 	modifiers = strdup ("");
+    if (!modifiers)
+	return;
 
     currentValue =
 	gconf_client_get_string(client,
@@ -1756,8 +1767,19 @@ writeOption (CCSSetting * setting)
 static void
 updateCurrentProfileName (char *profile)
 {
-    GConfSchema *schema = gconf_schema_new();
-    GConfValue  *value = gconf_value_new(GCONF_VALUE_STRING);
+    GConfSchema *schema;
+    GConfValue  *value;
+    
+    schema = gconf_schema_new ();
+    if (!schema)
+	return;
+
+    value = gconf_value_new (GCONF_VALUE_STRING);
+    if (!value)
+    {
+	gconf_schema_free (schema);
+	return;
+    }
 
     gconf_schema_set_type (schema, GCONF_VALUE_STRING);
     gconf_schema_set_locale (schema, "C");
@@ -1785,10 +1807,11 @@ getCurrentProfileName (void)
     if (schema)
     {
 	GConfValue *value;
-	char       *ret;
+	char       *ret = NULL;
 
 	value = gconf_schema_get_default_value (schema);
-	ret = strdup (gconf_value_get_string (value));
+	if (value)
+	    ret = strdup (gconf_value_get_string (value));
 	gconf_schema_free (schema);
 
 	return ret;
@@ -1816,21 +1839,27 @@ checkProfile (CCSContext *context)
 
 	/* copy /apps/compiz tree to profile path */
 	asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
-	copyGconfTree (context, "/apps/compiz", pathName,
-		       TRUE, "/schemas/apps/compiz");
-	free (pathName);
+	if (pathName)
+	{
+	    copyGconfTree (context, "/apps/compiz", pathName,
+	    		   TRUE, "/schemas/apps/compiz");
+	    free (pathName);
+	}
 
 	/* reset /apps/compiz tree */
 	gconf_client_recursive_unset (client, COMPIZ, 0, NULL);
 
 	/* copy new profile tree to /apps/compiz */
 	asprintf (&pathName, "%s/%s", PROFILEPATH, currentProfile);
-	copyGconfTree (context, pathName, COMPIZ, FALSE, NULL);
+	if (pathName)
+	{
+    	    copyGconfTree (context, pathName, COMPIZ, FALSE, NULL);
 
-	/* delete the new profile tree in /apps/compizconfig
-	   to avoid user modification in the wrong tree */
-	copyGconfTree (context, pathName, NULL, TRUE, NULL);
-	free (pathName);
+    	    /* delete the new profile tree in /apps/compizconfig
+    	       to avoid user modification in the wrong tree */
+    	    copyGconfTree (context, pathName, NULL, TRUE, NULL);
+    	    free (pathName);
+	}
 
 	/* update current profile name */
 	updateCurrentProfileName (currentProfile);
