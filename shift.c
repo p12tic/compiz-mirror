@@ -7,7 +7,7 @@
  * Copyright : (C) 2007 by Dennis Kasprzyk
  * E-mail    : onestone@opencompositing.org
  *
-//  *
+ *
  * Based on ring.c:
  * Copyright : (C) 2007 by Danny Baumann
  * E-mail    : maniac@opencompositing.org
@@ -19,7 +19,7 @@
  * Rounded corner drawing taken from wall.c:
  * Copyright : (C) 2007 Robert Carr
  * E-mail    : racarr@beryl-project.org
- *<
+ *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
