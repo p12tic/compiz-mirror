@@ -669,6 +669,9 @@ widgetInitWindow (CompPlugin *p,
     if (!ww)
         return FALSE;
 
+    ww->isWidget = FALSE;
+    ww->wasUnmapped = FALSE;
+
     w->privates[ws->windowPrivateIndex].ptr = ww;
 
     widgetUpdateWidgetPropertyState (w);
