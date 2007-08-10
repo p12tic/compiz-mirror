@@ -450,14 +450,7 @@ widgetPaintWindow (CompWindow              *w,
 	    fadeProgress = 1.0f - fadeProgress;
 	}
 
-	if (ww->isWidget)
-	{
-	    if (ws->state == StateFadeOut)
-		fadeProgress = 1.0f - fadeProgress;
-
-	    wAttrib.opacity = (float) wAttrib.opacity * fadeProgress;
-	}
-	else
+	if (!ww->isWidget)
 	{
 	    float progress;
 
