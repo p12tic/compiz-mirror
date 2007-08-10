@@ -2,6 +2,7 @@
 	<plugin name="widget" useBcop="true">
 		<_short>Widget Layer</_short>
 		<_long>Show widget windows on a separate layer</_long>
+		<category>Desktop</category>
 		<deps>
 			<relation type="before">
 				<plugin>fade</plugin>
