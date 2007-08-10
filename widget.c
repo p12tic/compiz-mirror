@@ -169,7 +169,7 @@ widgetUpdateWidgetMapState (CompWindow *w,
 
     if (map && ww->wasUnmapped)
     {
-	XMapWindow (w->screen->display->display, w->id);
+	XMapRaised (w->screen->display->display, w->id);
 	ww->wasUnmapped = FALSE;
     }
     else if (!map && !ww->wasUnmapped)
