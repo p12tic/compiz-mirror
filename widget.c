@@ -304,6 +304,7 @@ widgetToggle (CompDisplay     *d,
 	    ws->state = StateFadeIn;
 	    break;
 	case StateOn:
+	    widgetSetWidgetLayerMapState (s, FALSE);
 	    ws->fadeTime = 1000.0f * widgetGetFadeTime (s);
 	    ws->state = StateFadeOut;
 	    break;
@@ -515,19 +516,13 @@ widgetDonePaintScreen (CompScreen *s)
 	    damageScreen (s);
 	else
 	{
+	    removeScreenGrab (s, ws->grabIndex, NULL);
+	    ws->grabIndex = 0;
+
 	    if (ws->state == StateFadeIn)
-	    {
-		removeScreenGrab (s, ws->grabIndex, NULL);
-		ws->grabIndex = 0;
 		ws->state = StateOn;
-	    }
 	    else
-	    {
-		widgetSetWidgetLayerMapState (s, FALSE);
-		removeScreenGrab (s, ws->grabIndex, NULL);
-		ws->grabIndex = 0;
 		ws->state = StateOff;
-	    }
 	}
     }
 
