@@ -268,6 +268,8 @@ widgetMatchExpHandlerChanged (CompDisplay *d)
 
 		map = !ww->isWidget || (ws->state != StateOff);
 		widgetUpdateWidgetMapState (w, map);
+
+		(*d->matchPropertyChanged) (d, w);
 	    }
     }
 }
@@ -340,7 +342,10 @@ widgetHandleEvent (CompDisplay *d,
 
 	    w = findWindowAtDisplay (d, event->xproperty.window);
 	    if (w)
+	    {
 		widgetUpdateWidgetPropertyState (w);
+		(*d->matchPropertyChanged) (d, w);
+	    }
 	}
 	break;
     case ButtonPress:
@@ -394,13 +399,28 @@ widgetHandleEvent (CompDisplay *d,
     }
 }
 
+static Bool
+widgetUpdateMatch (void *closure)
+{
+    CompWindow *w = (CompWindow *) closure;
+
+    if (widgetUpdateWidgetStatus (w))
+	(*w->screen->display->matchPropertyChanged) (w->screen->display, w);
+
+    return FALSE;
+}
+
+
 static void
 widgetMatchPropertyChanged (CompDisplay *d,
 			    CompWindow  *w)
 {
     WIDGET_DISPLAY (d);
 
-    widgetUpdateWidgetStatus (w);
+    /* one shot timeout which will update the widget status (timer
+       is needed because we don't want to call wrapped functions
+       recursively) */
+    compAddTimeout (0, widgetUpdateMatch, (void *) w);
 
     UNWRAP (wd, d, matchPropertyChanged);
     (*d->matchPropertyChanged) (d, w);
@@ -543,6 +563,8 @@ widgetScreenOptionChanged (CompScreen           *s,
 
 		    map = !ww->isWidget || (ws->state != StateOff);
 		    widgetUpdateWidgetMapState (w, map);
+
+		    (*s->display->matchPropertyChanged) (s->display, w);
 		}
 	}
 	break;
