@@ -82,6 +82,7 @@ typedef struct _WidgetWindow
 {
     Bool                isWidget;
     Bool                wasUnmapped;
+    CompTimeoutHandle   matchUpdateHandle;
     WidgetPropertyState propertyState;
 } WidgetWindow;
 
@@ -404,9 +405,12 @@ widgetUpdateMatch (void *closure)
 {
     CompWindow *w = (CompWindow *) closure;
 
+    WIDGET_WINDOW (w);
+
     if (widgetUpdateWidgetStatus (w))
 	(*w->screen->display->matchPropertyChanged) (w->screen->display, w);
 
+    ww->matchUpdateHandle = 0;
     return FALSE;
 }
 
@@ -416,11 +420,12 @@ widgetMatchPropertyChanged (CompDisplay *d,
 			    CompWindow  *w)
 {
     WIDGET_DISPLAY (d);
+    WIDGET_WINDOW (w);
 
     /* one shot timeout which will update the widget status (timer
        is needed because we don't want to call wrapped functions
        recursively) */
-    compAddTimeout (0, widgetUpdateMatch, (void *) w);
+    ww->matchUpdateHandle = compAddTimeout (0, widgetUpdateMatch, (void *) w);
 
     UNWRAP (wd, d, matchPropertyChanged);
     (*d->matchPropertyChanged) (d, w);
@@ -693,6 +698,7 @@ widgetInitWindow (CompPlugin *p,
 
     ww->isWidget = FALSE;
     ww->wasUnmapped = FALSE;
+    ww->matchUpdateHandle = 0;
 
     w->privates[ws->windowPrivateIndex].ptr = ww;
 
@@ -709,6 +715,9 @@ widgetFiniWindow (CompPlugin *p,
 
     if (ww->wasUnmapped)
 	widgetUpdateWidgetMapState (w, TRUE);
+
+    if (ww->matchUpdateHandle)
+	compRemoveTimeout (ww->matchUpdateHandle);
 
     free (ww);
 }
