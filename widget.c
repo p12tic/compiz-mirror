@@ -219,7 +219,7 @@ widgetMatchExpEval (CompDisplay *d,
 {
     WIDGET_WINDOW (w);
 
-    return ww->isWidget;
+    return ((private.val && ww->isWidget) || (!private.val && !ww->isWidget));
 }
 
 static void
@@ -233,7 +233,7 @@ widgetMatchInitExp (CompDisplay  *d,
     {
 	exp->fini     = NULL;
 	exp->eval     = widgetMatchExpEval;
-	exp->priv.ptr = NULL;
+	exp->priv.val = strtol (value + 7, NULL, 0);
     }
     else
     {
