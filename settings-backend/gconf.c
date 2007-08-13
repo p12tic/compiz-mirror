@@ -101,13 +101,15 @@ typedef enum {
     OptionSpecial,
 } SpecialOptionType;
 
-struct _SpecialOption {
+typedef struct _SpecialOption {
     const char*       settingName;
     const char*       pluginName;
     Bool	      screen;
     const char*       gnomeName;
     SpecialOptionType type;
-} const specialOptions[] = {
+} SpecialOption;
+
+const SpecialOption specialOptions[] = {
     {"run", "core", FALSE,
      METACITY "/global_keybindings/panel_run_dialog", OptionKey},
     {"main_menu", "core", FALSE,
@@ -532,80 +534,90 @@ gnomeValueChanged (GConfClient *client,
 {
     CCSContext *context = (CCSContext *)user_data;
     char       *keyName = (char*) gconf_entry_get_key (entry);
-    int        i, num = -1;
+    int        i, last = 0, num = 0;
+    Bool       needInit = TRUE;
 
     if (!ccsGetIntegrationEnabled (context))
 	return;
 
-    for (i = 0; i < N_SOPTIONS; i++)
+    /* we have to loop multiple times here, because one Gnome
+       option may be integrated with multiple Compiz options */
+
+    while (1)
     {
-	if (strcmp (specialOptions[i].gnomeName, keyName) == 0)
+	for (i = last, num = -1; i < N_SOPTIONS; i++)
 	{
-	    num = i;
-	    break;
-	}
-    }
-
-    if (num < 0)
-	return;
-
-    if (strcmp (specialOptions[num].settingName, "mouse_button_modifier") == 0)
-    {
-	CCSSetting *s;
-
-	readInit (context);
-
-	s = findDisplaySettingForPlugin (context, "core", "window_menu");
-	if (s)
-	    readSetting (context, s);
-
-	s = findDisplaySettingForPlugin (context, "move", "initiate");
-	if (s)
-	    readSetting (context, s);
-
-	s = findDisplaySettingForPlugin (context, "resize", "initiate");
-	if (s)
-	    readSetting (context, s);
-    }
-    else
-    {
-	CCSPlugin  *plugin = NULL;
-	CCSSetting *setting;
-	Bool       needInit = TRUE;
-
-	plugin = ccsFindPlugin (context,
-				(char*) specialOptions[num].pluginName);
-
-	if (!plugin)
-    	    return;
-
-	for (i = 0; i < context->numScreens; i++)
-	{
-	    unsigned int screen;
-
-	    if (specialOptions[num].screen)
-		screen = context->screens[i];
-	    else
-		screen = 0;
-
-	    setting = ccsFindSetting (plugin,
-				      (char*) specialOptions[num].settingName,
-				      specialOptions[num].screen, screen);
-
-	    if (setting)
+	    if (strcmp (specialOptions[i].gnomeName, keyName) == 0)
 	    {
-		if (needInit)
-		{
-		    readInit (context);
-    		    needInit = FALSE;
-		}
-		readSetting (context, setting);
+		num = i;
+		last = i + 1;
+		break;
+	    }
+	}
+
+	if (num < 0)
+	    break;
+
+	if (strcmp (specialOptions[num].settingName,
+		    "mouse_button_modifier") == 0)
+	{
+	    CCSSetting *s;
+
+	    if (needInit)
+	    {
+		readInit (context);
+		needInit = FALSE;
 	    }
 
-	    /* do not read display settings multiple
-	       times for multiscreen environments */
-	    if (!specialOptions[num].screen)
-		break;
+	    s = findDisplaySettingForPlugin (context, "core", "window_menu");
+	    if (s)
+		readSetting (context, s);
+
+	    s = findDisplaySettingForPlugin (context, "move", "initiate");
+	    if (s)
+		readSetting (context, s);
+
+	    s = findDisplaySettingForPlugin (context, "resize", "initiate");
+	    if (s)
+		readSetting (context, s);
+	}
+	else
+	{
+	    CCSPlugin     *plugin = NULL;
+	    CCSSetting    *setting;
+	    SpecialOption *opt = (SpecialOption *) &specialOptions[num];
+
+	    plugin = ccsFindPlugin (context, (char*) opt->pluginName);
+	    if (plugin)
+	    {
+		for (i = 0; i < context->numScreens; i++)
+		{
+		    unsigned int screen;
+
+		    if (opt->screen)
+			screen = context->screens[i];
+		    else
+			screen = 0;
+
+		    setting = ccsFindSetting (plugin, (char*) opt->settingName,
+					      opt->screen, screen);
+
+		    if (setting)
+		    {
+			if (needInit)
+			{
+			    readInit (context);
+			    needInit = FALSE;
+			}
+			readSetting (context, setting);
+		    }
+
+		    /* do not read display settings multiple
+		       times for multiscreen environments */
+		    if (!opt->screen)
+			i = context->numScreens;
+		}
+	    }
 	}
     }
 }
