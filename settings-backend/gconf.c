@@ -101,19 +101,23 @@ typedef enum {
     OptionSpecial,
 } SpecialOptionType;
 
-struct _SpecialOption {
+typedef struct _SpecialOption {
     const char*       settingName;
     const char*       pluginName;
     Bool	      screen;
     const char*       gnomeName;
     SpecialOptionType type;
-} const specialOptions[] = {
+} SpecialOption;
+
+const SpecialOption specialOptions[] = {
     {"run", "core", FALSE,
      METACITY "/global_keybindings/panel_run_dialog", OptionKey},
     {"main_menu", "core", FALSE,
      METACITY "/global_keybindings/panel_main_menu", OptionKey},
     {"run_command_screenshot", "core", FALSE,
      METACITY "/global_keybindings/run_command_screenshot", OptionKey},
+    {"run_command_window_screenshot", "core", FALSE,
+     METACITY "/global_keybindings/run_command_window_screenshot", OptionKey},
     {"run_command_terminal", "core", FALSE,
      METACITY "/global_keybindings/run_command_terminal", OptionKey},
 
@@ -155,6 +159,11 @@ struct _SpecialOption {
      METACITY "/global_keybindings/switch_windows", OptionKey},
     {"prev", "switcher", FALSE,
      METACITY "/global_keybindings/switch_windows_backward", OptionKey},
+
+    {"toggle_sticky", "extrawm", FALSE,
+     METACITY "/window_keybindings/toggle_on_all_workspaces", OptionKey},
+    {"toggle_fullscreen", "extrawm", FALSE,
+     METACITY "/window_keybindings/toggle_fullscreen", OptionKey},
 
     {"command0", "core", FALSE,
      METACITY "/keybinding_commands/command_1", OptionString},
@@ -261,6 +270,31 @@ struct _SpecialOption {
     {"plane_to_12", "plane", FALSE,
      METACITY "/global_keybindings/switch_to_workspace_12", OptionKey},
 
+    {"switch_to_1", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_1", OptionKey},
+    {"switch_to_2", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_2", OptionKey},
+    {"switch_to_3", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_3", OptionKey},
+    {"switch_to_4", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_4", OptionKey},
+    {"switch_to_5", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_5", OptionKey},
+    {"switch_to_6", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_6", OptionKey},
+    {"switch_to_7", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_7", OptionKey},
+    {"switch_to_8", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_8", OptionKey},
+    {"switch_to_9", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_9", OptionKey},
+    {"switch_to_10", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_10", OptionKey},
+    {"switch_to_11", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_11", OptionKey},
+    {"switch_to_12", "vpswitch", FALSE,
+     METACITY "/global_keybindings/switch_to_workspace_12", OptionKey},
+
     {"up", "wall", FALSE,
      METACITY "/global_keybindings/switch_to_workspace_up", OptionKey},
     {"down", "wall", FALSE,
@@ -269,6 +303,31 @@ struct _SpecialOption {
      METACITY "/global_keybindings/switch_to_workspace_left", OptionKey},
     {"right", "wall", FALSE,
      METACITY "/global_keybindings/switch_to_workspace_right", OptionKey},
+    {"left_window", "wall", FALSE,
+     METACITY "/window_keybindings/move_to_workspace_left", OptionKey},
+    {"right_window", "wall", FALSE,
+     METACITY "/window_keybindings/move_to_workspace_right", OptionKey},
+    {"up_window", "wall", FALSE,
+     METACITY "/window_keybindings/move_to_workspace_up", OptionKey},
+    {"down_window", "wall", FALSE,
+     METACITY "/window_keybindings/move_to_workspace_down", OptionKey},
+
+    {"put_topleft", "put", FALSE,
+     METACITY "/window_keybindings/move_to_corner_nw", OptionKey},
+    {"put_topright", "put", FALSE,
+     METACITY "/window_keybindings/move_to_corner_ne", OptionKey},
+    {"put_bottomleft", "put", FALSE,
+     METACITY "/window_keybindings/move_to_corner_sw", OptionKey},
+    {"put_bottomright", "put", FALSE,
+     METACITY "/window_keybindings/move_to_corner_se", OptionKey},
+    {"put_left", "put", FALSE,
+     METACITY "/window_keybindings/move_to_side_w", OptionKey},
+    {"put_right", "put", FALSE,
+     METACITY "/window_keybindings/move_to_side_e", OptionKey},
+    {"put_top", "put", FALSE,
+     METACITY "/window_keybindings/move_to_side_n", OptionKey},
+    {"put_bottom", "put", FALSE,
+     METACITY "/window_keybindings/move_to_side_s", OptionKey},
 
     {"rotate_to_1_window", "rotate", FALSE,
      METACITY "/window_keybindings/move_to_workspace_1", OptionKey},
@@ -475,80 +534,90 @@ gnomeValueChanged (GConfClient *client,
 {
     CCSContext *context = (CCSContext *)user_data;
     char       *keyName = (char*) gconf_entry_get_key (entry);
-    int        i, num = -1;
+    int        i, last = 0, num = 0;
+    Bool       needInit = TRUE;
 
     if (!ccsGetIntegrationEnabled (context))
 	return;
 
-    for (i = 0; i < N_SOPTIONS; i++)
+    /* we have to loop multiple times here, because one Gnome
+       option may be integrated with multiple Compiz options */
+
+    while (1)
     {
-	if (strcmp (specialOptions[i].gnomeName, keyName) == 0)
+	for (i = last, num = -1; i < N_SOPTIONS; i++)
 	{
-	    num = i;
-	    break;
-	}
-    }
-
-    if (num < 0)
-	return;
-
-    if (strcmp (specialOptions[num].settingName, "mouse_button_modifier") == 0)
-    {
-	CCSSetting *s;
-
-	readInit (context);
-
-	s = findDisplaySettingForPlugin (context, "core", "window_menu");
-	if (s)
-	    readSetting (context, s);
-
-	s = findDisplaySettingForPlugin (context, "move", "initiate");
-	if (s)
-	    readSetting (context, s);
-
-	s = findDisplaySettingForPlugin (context, "resize", "initiate");
-	if (s)
-	    readSetting (context, s);
-    }
-    else
-    {
-	CCSPlugin  *plugin = NULL;
-	CCSSetting *setting;
-	Bool       needInit = TRUE;
-
-	plugin = ccsFindPlugin (context,
-				(char*) specialOptions[num].pluginName);
-
-	if (!plugin)
-    	    return;
-
-	for (i = 0; i < context->numScreens; i++)
-	{
-	    unsigned int screen;
-
-	    if (specialOptions[num].screen)
-		screen = context->screens[i];
-	    else
-		screen = 0;
-
-	    setting = ccsFindSetting (plugin,
-				      (char*) specialOptions[num].settingName,
-				      specialOptions[num].screen, screen);
-
-	    if (setting)
+	    if (strcmp (specialOptions[i].gnomeName, keyName) == 0)
 	    {
-		if (needInit)
-		{
-		    readInit (context);
-    		    needInit = FALSE;
-		}
-		readSetting (context, setting);
+		num = i;
+		last = i + 1;
+		break;
+	    }
+	}
+
+	if (num < 0)
+	    break;
+
+	if (strcmp (specialOptions[num].settingName,
+		    "mouse_button_modifier") == 0)
+	{
+	    CCSSetting *s;
+
+	    if (needInit)
+	    {
+		readInit (context);
+		needInit = FALSE;
 	    }
 
-	    /* do not read display settings multiple
-	       times for multiscreen environments */
-	    if (!specialOptions[num].screen)
-		break;
+	    s = findDisplaySettingForPlugin (context, "core", "window_menu");
+	    if (s)
+		readSetting (context, s);
+
+	    s = findDisplaySettingForPlugin (context, "move", "initiate");
+	    if (s)
+		readSetting (context, s);
+
+	    s = findDisplaySettingForPlugin (context, "resize", "initiate");
+	    if (s)
+		readSetting (context, s);
+	}
+	else
+	{
+	    CCSPlugin     *plugin = NULL;
+	    CCSSetting    *setting;
+	    SpecialOption *opt = (SpecialOption *) &specialOptions[num];
+
+	    plugin = ccsFindPlugin (context, (char*) opt->pluginName);
+	    if (plugin)
+	    {
+		for (i = 0; i < context->numScreens; i++)
+		{
+		    unsigned int screen;
+
+		    if (opt->screen)
+			screen = context->screens[i];
+		    else
+			screen = 0;
+
+		    setting = ccsFindSetting (plugin, (char*) opt->settingName,
+					      opt->screen, screen);
+
+		    if (setting)
+		    {
+			if (needInit)
+			{
+			    readInit (context);
+			    needInit = FALSE;
+			}
+			readSetting (context, setting);
+		    }
+
+		    /* do not read display settings multiple
+		       times for multiscreen environments */
+		    if (!opt->screen)
+			i = context->numScreens;
+		}
+	    }
 	}
     }
 }
