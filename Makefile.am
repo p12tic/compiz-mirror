@@ -3,3 +3,5 @@
 ALL_SUBDIRS = settings-backend
 
 SUBDIRS = $(ALL_SUBDIRS)
+
+EXTRA_DIST = VERSION
