@@ -50,7 +50,6 @@
 #define CompNumLockMask    (1 << 21)
 #define CompScrollLockMask (1 << 22)
 
-#define GNOME        "/desktop/gnome"
 #define METACITY     "/apps/metacity"
 #define COMPIZ       "/apps/compiz"
 #define COMPIZCONFIG "/apps/compizconfig"
@@ -78,11 +77,17 @@
 				 "%s/plugins/%s/%s/options/%s", COMPIZ, \
 				 setting->parent->name, keyName, setting->name);
 
+static const char* watchedGnomeDirectories[] = {
+    METACITY,
+    "/desktop/gnome/applications/terminal",
+    "/apps/panel/applets/window_list/prefs"
+};
+#define NUM_WATCHED_DIRS 3
+
 static GConfClient *client = NULL;
 static GConfEngine *conf = NULL;
-static guint backendNotifyId = 0;
-static guint metacityNotifyId = 0;
-static guint gnomeNotifyId = 0;
+static guint compizNotifyId;
+static guint gnomeNotifyIds[NUM_WATCHED_DIRS];
 static char *currentProfile = NULL;
 
 /* some forward declarations */
@@ -364,7 +369,11 @@ const SpecialOption specialOptions[] = {
     {"command_window_screenshot", "core", FALSE,
      METACITY "/keybinding_commands/command_window_screenshot", OptionString},
     {"command_terminal", "core", FALSE,
-     GNOME "/applications/terminal/exec", OptionString},
+     "/desktop/gnome/applications/terminal/exec", OptionString},
+
+    {"current_viewport", "thumbnail", TRUE,
+     "/apps/panel/applets/window_list/prefs/display_all_workspaces",
+     OptionSpecial},
 
     {"autoraise", "core", FALSE,
      METACITY "/general/auto_raise", OptionBool},
@@ -625,49 +634,47 @@ gnomeValueChanged (GConfClient *client,
 static void
 initClient (CCSContext *context)
 {
+    int i;
+
     client = gconf_client_get_for_engine (conf);
 
-    backendNotifyId = gconf_client_notify_add (client, COMPIZ,
-					       valueChanged, context,
-					       NULL, NULL);
-
-    metacityNotifyId = gconf_client_notify_add (client, METACITY,
-	   					gnomeValueChanged, context,
-	   					NULL,NULL);
-
-    gnomeNotifyId = gconf_client_notify_add (client,
-					     GNOME "/applications/terminal",
-      					     gnomeValueChanged, context,
-					     NULL,NULL);
-
+    compizNotifyId = gconf_client_notify_add (client, COMPIZ, valueChanged,
+					      context, NULL, NULL);
     gconf_client_add_dir (client, COMPIZ, GCONF_CLIENT_PRELOAD_NONE, NULL);
-    gconf_client_add_dir (client, METACITY, GCONF_CLIENT_PRELOAD_NONE, NULL);
-    gconf_client_add_dir (client, GNOME "/applications/terminal",
-			  GCONF_CLIENT_PRELOAD_NONE, NULL);
+
+    for (i = 0; i < NUM_WATCHED_DIRS; i++)
+    {
+	gnomeNotifyIds[i] = gconf_client_notify_add (client,
+						     watchedGnomeDirectories[i],
+						     gnomeValueChanged, context,
+						     NULL, NULL);
+	gconf_client_add_dir (client, watchedGnomeDirectories[i],
+			      GCONF_CLIENT_PRELOAD_NONE, NULL);
+    }
 }
 
 static void
 finiClient (void)
 {
-    if (backendNotifyId)
+    int i;
+
+    if (compizNotifyId)
     {
-	gconf_client_notify_remove (client, backendNotifyId);
-	backendNotifyId = 0;
+	gconf_client_notify_remove (client, compizNotifyId);
+	compizNotifyId = 0;
     }
-    if (metacityNotifyId)
+    gconf_client_remove_dir (client, COMPIZ, NULL);
+
+    for (i = 0; i < NUM_WATCHED_DIRS; i++)
     {
-	gconf_client_notify_remove (client, metacityNotifyId);
-	metacityNotifyId = 0;
-    }
-    if (gnomeNotifyId)
-    {
-	gconf_client_notify_remove (client, gnomeNotifyId);
-	gnomeNotifyId = 0;
+	if (gnomeNotifyIds[i])
+	{
+	    gconf_client_notify_remove (client, gnomeNotifyIds[0]);
+	    gnomeNotifyIds[i] = 0;
+	}
+	gconf_client_remove_dir (client, watchedGnomeDirectories[i], NULL);
     }
 
-    gconf_client_remove_dir (client, COMPIZ, NULL);
-    gconf_client_remove_dir (client, METACITY, NULL);
-    gconf_client_remove_dir (client, GNOME "/applications/terminal", NULL);
     gconf_client_suggest_sync (client, NULL);
 
     g_object_unref (client);
@@ -1165,7 +1172,20 @@ readIntegratedOption (CCSContext *context,
 	    const char *settingName = specialOptions[index].settingName;
 	    const char *pluginName  = specialOptions[index].pluginName;
 
-	    if (strcmp (settingName, "click_to_focus") == 0)
+	    if (strcmp (settingName, "current_viewport") == 0)
+	    {
+		const char *name;
+		gboolean   showAll;
+
+		name = specialOptions[index].gnomeName;
+		showAll = gconf_client_get_bool (client, name, &err);
+		if (!err)
+		{
+		    ccsSetBool (setting, !showAll);
+		    ret = TRUE;
+		}
+	    }
+	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
 		char       *focusMode;
 		const char *name;
@@ -1663,7 +1683,17 @@ writeIntegratedOption (CCSContext *context,
 	    const char *settingName = specialOptions[index].settingName;
 	    const char *pluginName  = specialOptions[index].pluginName;
 
-	    if (strcmp (settingName, "click_to_focus") == 0)
+	    if (strcmp (settingName, "current_viewport") == 0)
+	    {
+		Bool currentViewport;
+
+		if (!ccsGetBool (setting, &currentViewport))
+		    break;
+
+		gconf_client_set_bool (client, optionName,
+				       !currentViewport, NULL);
+	    }
+	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
 		Bool  clickToFocus;
 		gchar *newValue, *currentValue;
@@ -1671,14 +1701,14 @@ writeIntegratedOption (CCSContext *context,
 		    break;
 
 		newValue = clickToFocus ? "click" : "mouse";
-		currentValue = gconf_client_get_string(client,
-						       optionName, &err);
+		currentValue = gconf_client_get_string (client,
+							optionName, &err);
 
 		if (!err && currentValue)
 		{
 		    if (strcmp(currentValue, newValue) != 0)
 			gconf_client_set_string (client, optionName,
-						 newValue,NULL);
+						 newValue, NULL);
 		    g_free (currentValue);
 		}
 	    }
