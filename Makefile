@@ -60,7 +60,7 @@ BCOP      = `pkg-config --variable=bin bcop`
 CFLAGS    = -g -Wall -Wpointer-arith -Wstrict-prototypes -Wmissing-prototypes -Wmissing-declarations -Wnested-externs -fno-strict-aliasing `pkg-config --cflags $(PKG_DEP) compiz ` $(CFLAGS_ADD)
 LDFLAGS   = `pkg-config --libs $(PKG_DEP) compiz ` $(LDFLAGS_ADD)
 
-DEFINES   = -DIMAGEDIR=$(IMAGEDIR) -DDATADIR=$(DATADIR)
+DEFINES   = -DIMAGEDIR=\"$(IMAGEDIR)\" -DDATADIR=\"$(DATADIR)\"
 
 POFILEDIR = $(shell if [ -n "$(PODIR)" ]; then $(ECHO) $(PODIR); else $(ECHO) ./po;fi )
 
