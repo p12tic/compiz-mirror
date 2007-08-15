@@ -1,2 +1,1 @@
 PLUGIN = colorfilter
-CFLAGS_ADD = -DPREFIX=\"$(shell pkg-config --variable=prefix compiz)\"
