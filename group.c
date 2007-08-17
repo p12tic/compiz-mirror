@@ -1678,7 +1678,7 @@ groupHandleEvent (CompDisplay *d,
 						if (groupGetRaiseAll (w->screen))
 							groupRaiseWindows (w, gw->group);
 					}
-					if (w->managed)
+					if (w->managed && !w->attrib.override_redirect)
 						gd->lastRestackedGroup = gw->group;
 				}
 			}
