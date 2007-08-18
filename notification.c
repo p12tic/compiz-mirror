@@ -56,9 +56,9 @@ typedef struct _NotifyDisplay {
 
 static void
 notifyLogMessage (CompDisplay  *d,
-		  char         *component,
+		  const char   *component,
 		  CompLogLevel level,
-		  char         *message)
+		  const char   *message)
 {
     NotifyNotification *n;
     char               *logLevel, iconFile[256], *iconUri, *homeDir;
@@ -88,7 +88,7 @@ notifyLogMessage (CompDisplay  *d,
 
     sprintf (iconUri, "file://%s", iconFile);
 
-    logLevel = logLevelToString (level);
+    logLevel = (char *) logLevelToString (level);
 
     n = notify_notification_new (logLevel,
                                  message,
@@ -205,7 +205,7 @@ notifyGetDisplayOptions (CompPlugin   *p,
 static Bool
 notifySetDisplayOption (CompPlugin      *p,
 			CompDisplay     *display,
-			char	        *name,
+			const char      *name,
 			CompOptionValue *value)
 {
     CompOption *o;
