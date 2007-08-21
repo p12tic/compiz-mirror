@@ -495,32 +495,6 @@ valueChanged (GConfClient *client,
 
     setting = ccsFindSetting (plugin, token, isScreen, screenNum);
     if (!setting)
-    {
-	/* maybe it's an action which has a name_button/... naming scheme */
-	const char *prefix[] = { "_key", "_button", "_edge", "_edgebutton", "_bell" };
-	int        i;
-	int        prefixLen, len = strlen (token);
-
-	for (i = 0; i < sizeof (prefix) / sizeof (prefix[0]); i++)
-	{
-	    prefixLen = strlen (prefix[i]);
-	    if (len < prefixLen)
-		continue;
-
-	    if (strcmp (token + len - prefixLen, prefix[i]) == 0)
-	    {
-		char *buffer = strndup (token, len - prefixLen);
-		if (buffer)
-		{
-		    setting = ccsFindSetting (plugin, buffer,
-					      isScreen, screenNum);
-		    free (buffer);
-		}
-		break;
-	    }
-	}
-    }
-    if (!setting)
 	return;
 
     readInit (context);
@@ -818,128 +792,6 @@ copyGconfTree (CCSContext  *context,
 }
 
 static Bool
-readActionValue (CCSSetting *setting,
-		 char       *pathName)
-{
-    char                  itemPath[BUFSIZE];
-    GError                *err = NULL;
-    Bool                  ret = FALSE;
-    GConfValue            *gconfValue;
-    CCSSettingActionValue action;
-
-    memset (&action, 0, sizeof (CCSSettingActionValue));
-
-    snprintf (itemPath, 512, "%s_bell", pathName);
-    gconfValue = gconf_client_get (client, itemPath, &err);
-    if (!err && gconfValue)
-    {
-	action.onBell = gconf_value_get_bool (gconfValue);
-	ret = TRUE;
-    }
-    if (err)
-    {
-	g_error_free (err);
-	err = NULL;
-    }
-    if (gconfValue)
-	gconf_value_free (gconfValue);
-
-    snprintf (itemPath, 512, "%s_edge", pathName);
-    gconfValue = gconf_client_get (client, itemPath, &err);
-    if (!err && gconfValue)
-    {
-	if ((gconfValue->type == GCONF_VALUE_LIST) &&
-	    (gconf_value_get_list_type (gconfValue) == GCONF_VALUE_STRING))
-	{
-	    GSList        *list;
-	    CCSStringList edgeList = NULL;
-
-	    list = gconf_value_get_list (gconfValue);
-	    for ( ; list; list = list->next)
-	    {
-		GConfValue *value = (GConfValue *) list->data;
-		const char *edge = gconf_value_get_string (value);
-
-		if (edge)
-		    edgeList = ccsStringListAppend (edgeList, (char*) edge);
-	    }
-
-	    ccsStringListToEdges (edgeList, &action);
-
-	    if (edgeList)
-		ccsStringListFree (edgeList, FALSE);
-	}
-    }
-    if (err)
-    {
-	g_error_free (err);
-	err = NULL;
-    }
-    if (gconfValue)
-	gconf_value_free (gconfValue);
-
-    snprintf (itemPath, 512, "%s_edgebutton", pathName);
-    gconfValue = gconf_client_get (client, itemPath, &err);
-    if (!err && gconfValue)
-    {
-	action.edgeButton = gconf_value_get_int (gconfValue);
-	ret = TRUE;
-    }
-    if (err)
-    {
-	g_error_free (err);
-	err = NULL;
-    }
-    if (gconfValue)
-	gconf_value_free (gconfValue);
-
-    snprintf (itemPath, 512, "%s_key", pathName);
-    gconfValue = gconf_client_get (client, itemPath, &err);
-    if (!err && gconfValue)
-    {
-	const char* buffer;
-	buffer = gconf_value_get_string (gconfValue);
-	if (buffer)
-	{
-	    ccsStringToKeyBinding (buffer, &action);
-	    ret = TRUE;
-	}
-    }
-    if (err)
-    {
-	g_error_free (err);
-	err = NULL;
-    }
-    if (gconfValue)
-	gconf_value_free (gconfValue);
-
-    snprintf (itemPath, 512, "%s_button", pathName);
-    gconfValue = gconf_client_get (client, itemPath, &err);
-    if (!err && gconfValue)
-    {
-	const char* buffer;
-	buffer = gconf_value_get_string (gconfValue);
-	if (buffer)
-	{
-	    ccsStringToButtonBinding (buffer, &action);
-	    ret = TRUE;
-	}
-    }
-    if (err)
-    {
-	g_error_free (err);
-	err = NULL;
-    }
-    if (gconfValue)
-	gconf_value_free (gconfValue);
-
-    if (ret)
-	ccsSetAction (setting, action);
-
-    return ret;
-}
-
-static Bool
 readListValue (CCSSetting *setting,
 	       GConfValue *gconfValue)
 {
@@ -1155,12 +1007,13 @@ readIntegratedOption (CCSContext *context,
 
 	    if (!err && value)
     	    {
-		CCSSettingActionValue action;
-		memset (&action, 0, sizeof(CCSSettingActionValue));
-		ccsGetAction (setting, &action);
-		if (ccsStringToKeyBinding (value, &action))
+		CCSSettingKeyValue key;
+
+		memset (&key, 0, sizeof (CCSSettingKeyValue));
+		ccsGetKey (setting, &key);
+		if (ccsStringToKeyBinding (value, &key))
 		{
-		    ccsSetAction (setting, action);
+		    ccsSetKey (setting, key);
 		    ret = TRUE;
 		}
 		g_free (value);
@@ -1214,20 +1067,20 @@ readIntegratedOption (CCSContext *context,
 
 		if (!err && value)
 		{
-		    CCSSettingActionValue action;
-		    memset (&action, 0, sizeof(CCSSettingActionValue));
-    		    ccsGetAction (setting, &action);
-	    	    if (ccsStringToKeyBinding (value, &action))
+		    CCSSettingButtonValue button;
+		    memset (&button, 0, sizeof (CCSSettingButtonValue));
+    		    ccsGetButton (setting, &button);
+	    	    if (ccsStringToButtonBinding (value, &button))
 		    {
-			action.buttonModMask = getGnomeMouseButtonModifier ();
+			button.buttonModMask = getGnomeMouseButtonModifier ();
 			if (strcmp (settingName, "window_menu") == 0)
-    			    action.button = 3;
+    			    button.button = 3;
 			else if (strcmp (pluginName, "resize") == 0)
-	    		    action.button = 2;
+	    		    button.button = 2;
 			else
-			    action.button = 1;
+			    button.button = 1;
 
-			ccsSetAction (setting, action);
+			ccsSetButton (setting, button);
 			ret = TRUE;
 		    }
 		    g_free (value);
@@ -1251,57 +1104,56 @@ readOption (CCSSetting * setting)
     GConfValue *gconfValue = NULL;
     GError     *err = NULL;
     Bool       ret = FALSE;
+    Bool       valid = TRUE;
 
     KEYNAME;
     PATHNAME;
 
-    /* first check if the key is set, but only if the setting
-       type is not action - actions are in a subtree and handled
-       separately */
-    if (setting->type != TypeAction)
+    /* first check if the key is set */
+    gconfValue = gconf_client_get_without_default (client, pathName, &err);
+    if (err)
     {
-	Bool valid = TRUE;
-	gconfValue = gconf_client_get_without_default (client, pathName, &err);
-	if (err)
-	{
-	    g_error_free (err);
-	    return FALSE;
-	}
-	if (!gconfValue)
-	    /* value is not set */
-	    return FALSE;
+	g_error_free (err);
+	return FALSE;
+    }
+    if (!gconfValue)
+	/* value is not set */
+	return FALSE;
 
-	/* setting type sanity check */
-	switch (setting->type)
-	{
-	case TypeString:
-    	case TypeMatch:
-	case TypeColor:
-	    valid = (gconfValue->type == GCONF_VALUE_STRING);
-	    break;
-	case TypeInt:
-	    valid = (gconfValue->type == GCONF_VALUE_INT);
-	    break;
-	case TypeBool:
-	    valid = (gconfValue->type == GCONF_VALUE_BOOL);
-	    break;
-	case TypeFloat:
-	    valid = (gconfValue->type == GCONF_VALUE_FLOAT);
-	    break;
-	case TypeList:
-	    valid = (gconfValue->type == GCONF_VALUE_LIST);
-	    break;
-	default:
-	    break;
-	}
-	if (!valid)
-	{
-	    printf ("GConf backend: There is an unsupported value at path %s. "
-		    "Settings from this path won't be read. Try to remove "
-		    "that value so that operation can continue properly.\n",
-		    pathName);
-	    return FALSE;
-	}
+    /* setting type sanity check */
+    switch (setting->type)
+    {
+    case TypeString:
+    case TypeMatch:
+    case TypeColor:
+    case TypeKey:
+    case TypeButton:
+    case TypeEdge:
+	valid = (gconfValue->type == GCONF_VALUE_STRING);
+	break;
+    case TypeInt:
+	valid = (gconfValue->type == GCONF_VALUE_INT);
+	break;
+    case TypeBool:
+    case TypeBell:
+	valid = (gconfValue->type == GCONF_VALUE_BOOL);
+	break;
+    case TypeFloat:
+	valid = (gconfValue->type == GCONF_VALUE_FLOAT);
+	break;
+    case TypeList:
+	valid = (gconfValue->type == GCONF_VALUE_LIST);
+	break;
+    default:
+	break;
+    }
+    if (!valid)
+    {
+	printf ("GConf backend: There is an unsupported value at path %s. "
+		"Settings from this path won't be read. Try to remove "
+		"that value so that operation can continue properly.\n",
+		pathName);
+	return FALSE;
     }
 
     switch (setting->type)
@@ -1368,11 +1220,57 @@ readOption (CCSSetting * setting)
 	    }
 	}
 	break;
+    case TypeKey:
+	{
+	    const char         *value;
+	    CCSSettingKeyValue key;
+	    value = gconf_value_get_string (gconfValue);
+
+	    if (value && ccsStringToKeyBinding (value, &key))
+	    {
+		ccsSetKey (setting, key);
+		ret = TRUE;
+	    }
+	}
+	break;
+    case TypeButton:
+	{
+	    const char            *value;
+	    CCSSettingButtonValue button;
+	    value = gconf_value_get_string (gconfValue);
+
+	    if (value && ccsStringToButtonBinding (value, &button))
+	    {
+		ccsSetButton (setting, button);
+		ret = TRUE;
+	    }
+	}
+	break;
+    case TypeEdge:
+	{
+	    const char   *value;
+	    value = gconf_value_get_string (gconfValue);
+
+	    if (value)
+	    {
+		unsigned int edges;
+		edges = ccsStringToEdges (value);
+		ccsSetEdge (setting, edges);
+		ret = TRUE;
+	    }
+	}
+	break;
+    case TypeBell:
+	{
+	    gboolean value;
+	    value = gconf_value_get_bool (gconfValue);
+
+	    ccsSetBell (setting, value ? TRUE : FALSE);
+	    ret = TRUE;
+	}
+	break;
     case TypeList:
 	ret = readListValue (setting, gconfValue);
-	break;
-    case TypeAction:
-	ret = readActionValue (setting, pathName);
 	break;
     default:
 	printf("GConf backend: attempt to read unsupported setting type %d!\n",
@@ -1384,49 +1282,6 @@ readOption (CCSSetting * setting)
 	gconf_value_free (gconfValue);
 
     return ret;
-}
-
-static void
-writeActionValue(CCSSettingActionValue *action,
-		 char                  *pathName)
-{
-    char          *buffer;
-    char          itemPath[BUFSIZE];
-    CCSStringList edgeList, l;
-    GSList        *list = NULL;
-
-    snprintf (itemPath, BUFSIZE, "%s_edge", pathName);
-    edgeList = ccsEdgesToStringList (action);
-    for (l = edgeList; l; l = l->next)
-	list = g_slist_append (list, l->data);
-
-    gconf_client_set_list (client, itemPath, GCONF_VALUE_STRING, list, NULL);
-    if (edgeList)
-	ccsStringListFree (edgeList, TRUE);
-    if (list)
-	g_slist_free (list);
-
-    snprintf (itemPath, BUFSIZE, "%s_bell", pathName);
-    gconf_client_set_bool (client, itemPath, action->onBell, NULL);
-
-    snprintf (itemPath, BUFSIZE, "%s_edgebutton", pathName);
-    gconf_client_set_int (client, itemPath, action->edgeButton, NULL);
-
-    snprintf (itemPath, BUFSIZE, "%s_button", pathName);
-    buffer = ccsButtonBindingToString (action);
-    if (buffer)
-    {
-	gconf_client_set_string (client, itemPath, buffer, NULL);
-	free (buffer);
-    }
-
-    snprintf (itemPath, BUFSIZE, "%s_key", pathName);
-    buffer = ccsKeyBindingToString (action);
-    if (buffer)
-    {
-	gconf_client_set_string (client, itemPath, buffer, NULL);
-	free (buffer);
-    }
 }
 
 static void
@@ -1583,23 +1438,23 @@ setButtonBindingForSetting (CCSContext   *context,
 			    unsigned int buttonModMask)
 {
     CCSSetting            *s;
-    CCSSettingActionValue action;
+    CCSSettingButtonValue value;
 
     s = findDisplaySettingForPlugin (context, (char*) plugin, (char*) setting);
     if (!s)
 	return;
 
-    if (s->type != TypeAction)
+    if (s->type != TypeButton)
 	return;
 
-    action = s->value->value.asAction;
+    value = s->value->value.asButton;
 
-    if ((action.button != button) || (action.buttonModMask != buttonModMask))
+    if ((value.button != button) || (value.buttonModMask != buttonModMask))
     {
-	action.button = button;
-	action.buttonModMask = buttonModMask;
+	value.button = button;
+	value.buttonModMask = buttonModMask;
 
-	ccsSetAction (s, action);
+	ccsSetButton (s, value);
     }
 }
 
@@ -1661,11 +1516,11 @@ writeIntegratedOption (CCSContext *context,
 	    char  *newValue;
 	    gchar *currentValue;
 
-	    newValue = ccsKeyBindingToString (&setting->value->value.asAction);
+	    newValue = ccsKeyBindingToString (&setting->value->value.asKey);
 	    if (newValue)
     	    {
-		currentValue = gconf_client_get_string(client,
-						       optionName, &err);
+		currentValue = gconf_client_get_string (client,
+							optionName, &err);
 
 		if (!err && currentValue)
 		{
@@ -1721,9 +1576,9 @@ writeIntegratedOption (CCSContext *context,
 		gchar        *currentValue;
 		unsigned int modMask;
 
-		modMask = setting->value->value.asAction.buttonModMask;
+		modMask = setting->value->value.asButton.buttonModMask;
 		newValue =
-		    ccsKeyBindingToString (&setting->value->value.asAction);
+		    ccsButtonBindingToString (&setting->value->value.asButton);
 		if (newValue)
 		{
 		    currentValue = gconf_client_get_string(client,
@@ -1761,28 +1616,7 @@ resetOptionToDefault (CCSSetting * setting)
     KEYNAME;
     PATHNAME;
 
-    if (setting->type != TypeAction)
-	gconf_client_recursive_unset (client, pathName, 0, NULL);
-    else
-    {
-	char itemPath[BUFSIZE];
-
-	snprintf (itemPath, BUFSIZE, "%s_edge", pathName);
-	gconf_client_recursive_unset (client, itemPath, 0, NULL);
-
-	snprintf (itemPath, BUFSIZE, "%s_edgebutton", pathName);
-	gconf_client_recursive_unset (client, itemPath, 0, NULL);
-
-	snprintf (itemPath, BUFSIZE, "%s_button", pathName);
-	gconf_client_recursive_unset (client, itemPath, 0, NULL);
-
-	snprintf (itemPath, BUFSIZE, "%s_key", pathName);
-	gconf_client_recursive_unset (client, itemPath, 0, NULL);
-
-	snprintf (itemPath, BUFSIZE, "%s_bell", pathName);
-	gconf_client_recursive_unset (client, itemPath, 0, NULL);
-    }
-
+    gconf_client_recursive_unset (client, pathName, 0, NULL);
     gconf_client_suggest_sync (client, NULL);
 }
 
@@ -1844,13 +1678,59 @@ writeOption (CCSSetting * setting)
 	    free (colString);
 	}
 	break;
-    case TypeAction:
+    case TypeKey:
 	{
-	    CCSSettingActionValue value;
-	    if (!ccsGetAction (setting, &value))
+	    CCSSettingKeyValue key;
+	    char               *keyString;
+
+	    if (!ccsGetKey (setting, &key))
 		break;
 
-	    writeActionValue (&value, pathName);
+	    keyString = ccsKeyBindingToString (&key);
+	    if (!keyString)
+		break;
+
+	    gconf_client_set_string (client, pathName, keyString, NULL);
+	    free (keyString);
+	}
+	break;
+    case TypeButton:
+	{
+	    CCSSettingButtonValue button;
+	    char                  *buttonString;
+
+	    if (!ccsGetButton (setting, &button))
+		break;
+
+	    buttonString = ccsButtonBindingToString (&button);
+	    if (!buttonString)
+		break;
+
+	    gconf_client_set_string (client, pathName, buttonString, NULL);
+	    free (buttonString);
+	}
+	break;
+    case TypeEdge:
+	{
+	    unsigned int edges;
+	    char         *edgeString;
+
+	    if (!ccsGetEdge (setting, &edges))
+		break;
+
+	    edgeString = ccsEdgesToString (edges);
+	    if (!edgeString)
+		break;
+
+	    gconf_client_set_string (client, pathName, edgeString, NULL);
+	    free (edgeString);
+	}
+	break;
+    case TypeBell:
+	{
+	    Bool value;
+	    if (ccsGetBell (setting, &value))
+		gconf_client_set_bool (client, pathName, value, NULL);
 	}
 	break;
     case TypeList:
