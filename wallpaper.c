@@ -445,8 +445,23 @@ wallpaperLoadImages(CompScreen *s)
 	{
 
 	    type = strsep(&component,":");
+	    if (component == '\0')
+	    {
+		compLogMessage (s->display, "wallpaper", CompLogLevelError, "Invalid format detected: %s\n", temp);
+		continue;
+	    }
 	    data = strsep(&component,":");
+	    if (component == '\0')
+	    {
+		compLogMessage (s->display, "wallpaper", CompLogLevelError, "Invalid format detected: %s\n", temp);
+		continue;
+	    }
 	    opacityc = strsep(&component,":");
+	    if (opacityc == NULL || opacityc == '\0')
+	    {
+		compLogMessage (s->display, "wallpaper", CompLogLevelError, "Invalid format detected: %s\n", temp);
+		continue;
+	    }
 	    opacity = atof(opacityc);
 
 	    if (!strcmp(type,"file"))
@@ -464,6 +479,11 @@ wallpaperLoadImages(CompScreen *s)
 	    else if (!strcmp(type,"radial"))
 	    {
 		p = wallpaperRadialGradientToPixmap(s, data, &w, &h);
+	    }
+	    else
+	    {
+		compLogMessage (s->display, "wallpaper", CompLogLevelError, "Invalid format detected: %s\n", temp);
+		continue;
 	    }
 
 	    if (p)
