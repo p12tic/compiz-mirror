@@ -199,7 +199,7 @@ wallpaperRadialGradientToPixmap(CompScreen *s, char * data, int * width, int * h
     float r1,g1,b1,r2,g2,b2,x1,y1,x2,y2,ra1,ra2;
 
     sscanf(data,"%f,%f,%f,%f,%f,%f|%f,%f,%f,%f,%f,%f",
-	   &x1,&y1,&r1,&x2,&y2,&r2,
+	   &x1,&y1,&ra1,&x2,&y2,&ra2,
 	   &r1,&g1,&b1,&r2,&g2,&b2);
     screen = ScreenOfDisplay(s->display->display, s->screenNum);
     format = XRenderFindStandardFormat(s->display->display,
