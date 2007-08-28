@@ -53,146 +53,152 @@ static int cubeDisplayPrivateIndex = -1;
 
 typedef struct _tdDisplay
 {
-	int screenPrivateIndex;
+    int screenPrivateIndex;
 
-	InitPluginForDisplayProc initPluginForDisplay;
-	FiniPluginForDisplayProc finiPluginForDisplay;
+    InitPluginForDisplayProc initPluginForDisplay;
+    FiniPluginForDisplayProc finiPluginForDisplay;
 } tdDisplay;
 
 typedef struct _tdWindow
 {
-	Bool ftb;
+    Bool ftb;
 
-	float depth;
+    float depth;
 
-	CompWindow *next;
-	CompWindow *prev;
+    CompWindow *next;
+    CompWindow *prev;
 } tdWindow;
 
 typedef struct _tdScreen
 {
-	int windowPrivateIndex;
+    int windowPrivateIndex;
 
-	Bool tdWindowExists;
+    Bool tdWindowExists;
 
-	PreparePaintScreenProc		preparePaintScreen;
-	PaintTransformedOutputProc	paintTransformedOutput;
-	PaintOutputProc				paintOutput;
-	DonePaintScreenProc			donePaintScreen;
-	InitWindowWalkerProc		initWindowWalker;
-	ApplyScreenTransformProc   applyScreenTransform;
+    PreparePaintScreenProc     preparePaintScreen;
+    PaintTransformedOutputProc paintTransformedOutput;
+    PaintOutputProc	       paintOutput;
+    DonePaintScreenProc	       donePaintScreen;
+    InitWindowWalkerProc       initWindowWalker;
+    ApplyScreenTransformProc   applyScreenTransform;
+    PaintWindowProc            paintWindow;
 
-	PaintWindowProc paintWindow;
+    Bool active;
 
-	Bool active;
+    CompWindow *first;
+    CompWindow *last;
 
-	CompWindow *first;
-	CompWindow *last;
+    Bool  test;
+    float currentScale;
 
-	Bool test;
-	float currentScale;
-
-	float basicScale;
-	float maxDepth;
-	
+    float basicScale;
+    float maxDepth;
 } tdScreen;
 
 #define GET_TD_DISPLAY(d)       \
-        ((tdDisplay *) (d)->privates[displayPrivateIndex].ptr)
+    ((tdDisplay *) (d)->privates[displayPrivateIndex].ptr)
 
 #define TD_DISPLAY(d)   \
-        tdDisplay *tdd = GET_TD_DISPLAY (d)
+    tdDisplay *tdd = GET_TD_DISPLAY (d)
 
 #define GET_TD_SCREEN(s, tdd)   \
-        ((tdScreen *) (s)->privates[(tdd)->screenPrivateIndex].ptr)
+    ((tdScreen *) (s)->privates[(tdd)->screenPrivateIndex].ptr)
 
 #define TD_SCREEN(s)    \
-        tdScreen *tds = GET_TD_SCREEN (s, GET_TD_DISPLAY (s->display))
+    tdScreen *tds = GET_TD_SCREEN (s, GET_TD_DISPLAY (s->display))
 
 #define GET_TD_WINDOW(w, tds)                                     \
-        ((tdWindow *) (w)->privates[(tds)->windowPrivateIndex].ptr)
+    ((tdWindow *) (w)->privates[(tds)->windowPrivateIndex].ptr)
 
 #define TD_WINDOW(w)    \
-        tdWindow *tdw = GET_TD_WINDOW  (w,                     \
-                GET_TD_SCREEN  (w->screen,             \
-                        GET_TD_DISPLAY (w->screen->display)))
+    tdWindow *tdw = GET_TD_WINDOW  (w,                     \
+		    GET_TD_SCREEN  (w->screen,             \
+		    GET_TD_DISPLAY (w->screen->display)))
 
-static Bool windowIs3D(CompWindow * w)
+static Bool
+windowIs3D (CompWindow *w)
 {
-	if (w->attrib.override_redirect)
-		return FALSE;
+    if (w->attrib.override_redirect)
+	return FALSE;
 
-	if (!(w->shaded || w->attrib.map_state == IsViewable))
-		return FALSE;
+    if (!(w->shaded || w->attrib.map_state == IsViewable))
+	return FALSE;
 
-	if (w->state & (CompWindowStateSkipPagerMask | CompWindowStateSkipTaskbarMask))
-		return FALSE;
+    if (w->state & (CompWindowStateSkipPagerMask |
+		    CompWindowStateSkipTaskbarMask))
+	return FALSE;
 	
-	if (!matchEval(tdGetWindowMatch(w->screen), w))
-		return FALSE;
+    if (!matchEval (tdGetWindowMatch (w->screen), w))
+	return FALSE;
 
-	return TRUE;
+    return TRUE;
 }
 
-static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
+static void
+tdPreparePaintScreen (CompScreen *s,
+		      int        msSinceLastPaint)
 {
-	CompWindow *w;
+    CompWindow *w;
 
-	TD_SCREEN(screen);
-	CUBE_SCREEN (screen);
+    TD_SCREEN (s);
+    CUBE_SCREEN (s);
 
-	tds->active = (cs->rotationState != RotationNone) && 
-	              !(tdGetManualOnly(screen) && 
-			(cs->rotationState != RotationManual));
+    tds->active = (cs->rotationState != RotationNone) &&
+	          !(tdGetManualOnly(s) &&
+		    (cs->rotationState != RotationManual));
 
-	if (tds->active)
+    if (tds->active)
+    {
+	float maxDiv = 0.1; // should be a option;
+	float minScale = 0.5; // should be a option;
+
+	tds->maxDepth = 0;
+	for (w = s->windows; w; w = w->next)
 	{
-		float maxDiv = 0.1; // should be a option;
-		float minScale = 0.5; // should be a option;
+	    TD_WINDOW (w);
+	    tdw->depth = 0;
 
+	    if (!windowIs3D (w))
+		continue;
 
-		tds->maxDepth = 0;
-		for (w = screen->windows; w; w = w->next)
-		{
-			TD_WINDOW (w);
-			tdw->depth = 0;
-			
-			if (!windowIs3D(w))
-				continue;
-
-			
-			tds->maxDepth++;
-			tdw->depth = tds->maxDepth;
-			tds->tdWindowExists = TRUE;
-		}
-
-		minScale = MAX(minScale, 1.0 - (tds->maxDepth * maxDiv));
-		
-		tds->basicScale = MAX(minScale,tds->basicScale - ((float)msSinceLastPaint * tdGetSpeed(screen)/ 1000.0));
-
-	}
-	else
-	{
-		tds->basicScale = MIN(1.0,tds->basicScale + ((float)msSinceLastPaint * tdGetSpeed(screen)/ 1000.0));
+	    tds->maxDepth++;
+	    tdw->depth = tds->maxDepth;
+	    tds->tdWindowExists = TRUE;
 	}
 
-	UNWRAP(tds, screen, preparePaintScreen);
-	(*screen->preparePaintScreen) (screen, msSinceLastPaint);
-	WRAP(tds, screen, preparePaintScreen, tdPreparePaintScreen);
+	minScale =  MAX(minScale, 1.0 - (tds->maxDepth * maxDiv));
+	tds->basicScale = MAX (minScale,
+			       tds->basicScale - ((float)msSinceLastPaint *
+						  tdGetSpeed (s) / 1000.0));
+    }
+    else
+    {
+	tds->basicScale = MIN (1.0, tds->basicScale +
+			       ((float)msSinceLastPaint *
+				tdGetSpeed(s) / 1000.0));
+    }
+
+    UNWRAP (tds, s, preparePaintScreen);
+    (*s->preparePaintScreen) (s, msSinceLastPaint);
+    WRAP (tds, s, preparePaintScreen, tdPreparePaintScreen);
 }
 
 static Bool
-tdPaintWindow(CompWindow * w,
-			  const WindowPaintAttrib * attrib,
-			  const CompTransform    *transform,
-			  Region region, unsigned int mask)
+tdPaintWindow (CompWindow              *w,
+	       const WindowPaintAttrib *attrib,
+	       const CompTransform     *transform,
+	       Region                  region,
+	       unsigned int            mask)
 {
-	Bool status;
-	Bool wasCulled;
-	wasCulled = glIsEnabled(GL_CULL_FACE);
+    Bool       status;
+    Bool       wasCulled;
+    CompScreen *s = w->screen;
 
-	TD_SCREEN(w->screen);
-	TD_WINDOW(w);
+    wasCulled = glIsEnabled (GL_CULL_FACE);
+
+    TD_SCREEN (s);
+    TD_WINDOW (w);
+
 #if 0
 	if (tdw->currentZ != 0.0f)
 	{
@@ -458,44 +464,35 @@ tdPaintWindow(CompWindow * w,
 	else
 #endif
 
-	if (tdw->depth != 0.0f && !tds->test && tds->active)
-		mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+    if (tdw->depth != 0.0f && !tds->test && tds->active)
+	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
+    if (tds->test)
+    {
+	glDisable (GL_CULL_FACE);
 
-	if (tds->test)
-	{
+	UNWRAP (tds, s, paintWindow);
+	status = (*s->paintWindow) (w, attrib, transform, region, mask);
+	WRAP (tds, s, paintWindow, tdPaintWindow);
 
-		glDisable(GL_CULL_FACE);
+	if (wasCulled)
+	    glEnable (GL_CULL_FACE);
+    }
+    else
+    {
+	UNWRAP (tds, s, paintWindow);
+	status = (*s->paintWindow) (w, attrib, transform, region, mask);
+	WRAP(tds, s, paintWindow, tdPaintWindow);
+    }
 
-
-
-				UNWRAP(tds, w->screen, paintWindow);
-				status = (*w->screen->paintWindow) (w, attrib, transform, region, mask);
-				WRAP(tds, w->screen, paintWindow, tdPaintWindow);
-
-
-
-			if (wasCulled)
-				glEnable(GL_CULL_FACE);
-
-	}
-	else
-	{
-		UNWRAP(tds, w->screen, paintWindow);
-		status = (*w->screen->paintWindow) (w, attrib, transform, region, mask);
-		WRAP(tds, w->screen, paintWindow, tdPaintWindow);
-	}
-
-
-	return status;
+    return status;
 }
 
-
 static void
-tdApplyScreenTransform (CompScreen		  *s,
-			  const ScreenPaintAttrib *sAttrib,
-			  CompOutput		  *output,
-			  CompTransform	          *transform)
+tdApplyScreenTransform (CompScreen		*s,
+			const ScreenPaintAttrib *sAttrib,
+			CompOutput		*output,
+			CompTransform	        *transform)
 {
     TD_SCREEN (s);
 
@@ -503,146 +500,145 @@ tdApplyScreenTransform (CompScreen		  *s,
     (*s->applyScreenTransform) (s, sAttrib, output, transform);
     WRAP (tds, s, applyScreenTransform, tdApplyScreenTransform);
 
-	matrixScale(transform, tds->currentScale, tds->currentScale, tds->currentScale);
-    
-    
-}
-
-static void tdAddWindow(CompScreen *s, CompWindow *w)
-{
-	TD_SCREEN(s);
-	TD_WINDOW(w);
-	
-	if (!tds->first)
-	{
-		tds->first = tds->last = w;
-		return;
-	}
-
-	GET_TD_WINDOW(tds->last, tds)->next = w;
-	tdw->prev = tds->last;
-	tds->last = w;
+    matrixScale (transform,
+		 tds->currentScale, tds->currentScale, tds->currentScale);
 }
 
 static void
-tdPaintTransformedOutput(CompScreen * s,
-			 const ScreenPaintAttrib * sAttrib,
-			 const CompTransform    *transform,
-			 Region region, CompOutput *output,
-			 unsigned int mask)
+tdAddWindow (CompWindow *w)
 {
-	TD_SCREEN(s);
-	CUBE_SCREEN(s);
+    TD_SCREEN (w->screen);
+    TD_WINDOW (w);
 
-	CompWindow* w;
-	CompWindow* firstFTB = NULL;
-
-	if (tds->active || tds->tdWindowExists)
-	{
-		/* all non 3d windows first */
-		tds->first = NULL;
-		tds->last = NULL;
-
-		for (w = s->windows; w; w = w->next)
-		{
-			TD_WINDOW(w);
-
-			tdw->next = NULL;
-			tdw->prev = NULL;
-		}
-
-		for (w = s->windows; w; w = w->next)
-		{
-			if (!windowIs3D(w))
-				tdAddWindow (s, w);
-		}
-
-		/* all BTF windows in normal order */
-
-		for (w = s->windows; w && !firstFTB; w = w->next)
-		{
-			TD_WINDOW(w);
-
-			if (!windowIs3D(w))
-				continue;
-
-			tds->currentScale = tds->basicScale + (tdw->depth * ((1.0 - tds->basicScale) / tds->maxDepth));
-			float vPoints[3][3] = { { -0.5, 0.0, (cs->invert * cs->distance)},
-						{ 0.0, 0.5, (cs->invert * cs->distance)},
-						{ 0.0, 0.0, (cs->invert * cs->distance)}};
-					
-			tdw->ftb = cs->checkOrientation (s, sAttrib, transform, output, vPoints);
-					
-			if (tdw->ftb)
-				firstFTB = w;
-			else
-				tdAddWindow (s, w);
-		}
-
-		/* all FTB windows in reversed order */
-
-		if (firstFTB)
-		{
-			for (w = s->reverseWindows; w && w != firstFTB->prev; w = w->prev)
-			{
-				TD_WINDOW(w);
-				
-				if (!windowIs3D(w))
-					continue;
-				
-				tdw->ftb = TRUE;
-
-				tdAddWindow (s, w);
-			}
-		}
-	}
-
-	tds->currentScale = tds->basicScale;
-	UNWRAP(tds, s, paintTransformedOutput);
-	(*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
-	WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
-	tds->test = TRUE;
-
-	{
-		CompTransform sTransform = *transform;
-		    screenLighting (s, TRUE);
-
-	    	
-
-
-		
-
-
-    CompWindow    *w;
-    CompWalker    walk;
-
-
-
-
-    (*s->initWindowWalker) (s, &walk);
-
-
-    /* paint all windows from bottom to top */
-    for (w = (*walk.first) (s); w; w = (*walk.next) (w))
+    if (!tds->first)
     {
-	CompTransform mTransform = sTransform;
-	   
-	TD_WINDOW (w);
-	if (w->destroyed)
-	    continue;
+	tds->first = tds->last = w;
+	return;
+    }
 
-	if (!w->shaded)
+    GET_TD_WINDOW (tds->last, tds)->next = w;
+    tdw->prev = tds->last;
+    tds->last = w;
+}
+
+static void
+tdPaintTransformedOutput (CompScreen              *s,
+			  const ScreenPaintAttrib *sAttrib,
+			  const CompTransform     *transform,
+			  Region                  region,
+			  CompOutput              *output,
+			  unsigned int            mask)
+{
+    CompWindow* w;
+    CompWindow* firstFTB = NULL;
+
+    TD_SCREEN (s);
+    CUBE_SCREEN (s);
+
+    if (tds->active || tds->tdWindowExists)
+    {
+	float vPoints[3][3] = {{ -0.5, 0.0, (cs->invert * cs->distance)},
+	                       { 0.0, 0.5, (cs->invert * cs->distance)},
+		               { 0.0, 0.0, (cs->invert * cs->distance)}};
+
+	/* all non 3d windows first */
+	tds->first = NULL;
+	tds->last = NULL;
+
+	for (w = s->windows; w; w = w->next)
 	{
-	    if (w->attrib.map_state != IsViewable || !w->damaged)
-		continue;
+	    TD_WINDOW (w);
+
+    	    tdw->next = NULL;
+	    tdw->prev = NULL;
 	}
-	if (tdw->depth != 0.0f)
+
+	for (w = s->windows; w; w = w->next)
 	{
-		tds->currentScale = tds->basicScale + (tdw->depth * ((1.0 - tds->basicScale) / tds->maxDepth));
+	    if (!windowIs3D (w))
+		tdAddWindow (w);
+	}
+
+	/* all BTF windows in normal order */
+	for (w = s->windows; w && !firstFTB; w = w->next)
+	{
+	    TD_WINDOW (w);
+
+    	    if (!windowIs3D (w))
+		continue;
+
+	    tds->currentScale = tds->basicScale +
+		                (tdw->depth * ((1.0 - tds->basicScale) /
+					       tds->maxDepth));
+
+	    tdw->ftb = cs->checkOrientation (s, sAttrib, transform,
+					     output, vPoints);
+
+	    if (tdw->ftb)
+		firstFTB = w;
+	    else
+		tdAddWindow (w);
+	}
+
+	/* all FTB windows in reversed order */
+	if (firstFTB)
+	{
+	    for (w = s->reverseWindows; w && w != firstFTB->prev; w = w->prev)
+	    {
+		TD_WINDOW (w);
+
+		if (!windowIs3D (w))
+		    continue;
+
+		tdw->ftb = TRUE;
+
+		tdAddWindow (w);
+	    }
+	}
+    }
+
+    tds->currentScale = tds->basicScale;
+    UNWRAP (tds, s, paintTransformedOutput);
+    (*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
+    WRAP (tds, s, paintTransformedOutput, tdPaintTransformedOutput);
+
+    tds->test = TRUE;
+
+    {
+	CompTransform sTransform = *transform;
+	CompWindow    *w;
+	CompWalker    walk;
+
+	screenLighting (s, TRUE);
+
+	(*s->initWindowWalker) (s, &walk);
+
+    	/* paint all windows from bottom to top */
+	for (w = (*walk.first) (s); w; w = (*walk.next) (w))
+	{
+	    CompTransform mTransform = sTransform;
+
+    	    TD_WINDOW (w);
+    	    if (w->destroyed)
+    		continue;
+
+    	    if (!w->shaded)
+    	    {
+    		if (w->attrib.map_state != IsViewable || !w->damaged)
+    		    continue;
+    	    }
+
+	    if (tdw->depth != 0.0f)
+	    {
+		tds->currentScale = tds->basicScale +
+		                    (tdw->depth * ((1.0 - tds->basicScale) /
+						   tds->maxDepth));
+
 		(*s->applyScreenTransform) (s, sAttrib, output, &mTransform);
 
-		//s->enableOutputClipping (s, &mTransform, region, output);
-
+#if 0
+		//(*s->enableOutputClipping) (s, &mTransform, region, output);
+#else
 		GLdouble h = s->height;
 
 		GLdouble p1[2] = { region->extents.x1, h - region->extents.y2 };
@@ -671,348 +667,366 @@ tdPaintTransformedOutput(CompScreen * s,
 		glEnable (GL_CLIP_PLANE1);
 		glEnable (GL_CLIP_PLANE2);
 		glEnable (GL_CLIP_PLANE3);
+#endif
 
 		transformToScreenSpace (s, output, -sAttrib->zTranslate,
 					&mTransform);
 
 		glLoadMatrixf (mTransform.m);
 
-		
-		
-		(*s->paintWindow) (w, &w->paint, &mTransform, &infiniteRegion, PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK);
+		(*s->paintWindow) (w, &w->paint, &mTransform, &infiniteRegion,
+				   PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK);
 		glPopMatrix ();
+
+#if 0
+		//(*s->disableOutputClipping) (s);
+#else
 		glDisable (GL_CLIP_PLANE0);
 		glDisable (GL_CLIP_PLANE1);
 		glDisable (GL_CLIP_PLANE2);
 		glDisable (GL_CLIP_PLANE3);
-		//s->disableOutputClipping (s);
+#endif
+	    }
 	}
     }
 
-
-    
-
-		
-
-		
-	}
-tds->test = FALSE;
-tds->currentScale = tds->basicScale;
-
+    tds->test = FALSE;
+    tds->currentScale = tds->basicScale;
 }
 
 static Bool
-tdPaintOutput(CompScreen * s,
-			  const ScreenPaintAttrib * sAttrib,
-			  const CompTransform    *transform,
-			  Region region, CompOutput *output, unsigned int mask)
+tdPaintOutput (CompScreen              *s,
+	       const ScreenPaintAttrib *sAttrib,
+	       const CompTransform     *transform,
+	       Region                  region,
+	       CompOutput              *output,
+	       unsigned int            mask)
 {
-	Bool status;
+    Bool status;
 
-	TD_SCREEN(s);
+    TD_SCREEN (s);
 
-	if (tds->basicScale != 1.0)
-	{
-		mask |= PAINT_SCREEN_TRANSFORMED_MASK |
-				PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
-	}
+    if (tds->basicScale != 1.0)
+    {
+	mask |= PAINT_SCREEN_TRANSFORMED_MASK |
+	        PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+    }
 
-	UNWRAP(tds, s, paintOutput);
-	status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
-	WRAP(tds, s, paintOutput, tdPaintOutput);
+    UNWRAP (tds, s, paintOutput);
+    status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
+    WRAP (tds, s, paintOutput, tdPaintOutput);
 
-	return status;
-}
-
-static void tdDonePaintScreen(CompScreen * s)
-{
-	TD_SCREEN(s);
-
-	if (tds->basicScale != 1.0)
-		damageScreen(s);
-
-	UNWRAP(tds, s, donePaintScreen);
-	(*s->donePaintScreen) (s);
-	WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
-}
-
-
-static CompWindow *
-tdWalkFirst (CompScreen *s)
-{
-	TD_SCREEN(s);
-	return tds->first;
-}
-
-static CompWindow *
-tdWalkLast (CompScreen *s)
-{
-	TD_SCREEN(s);
-	return tds->last;
-}
-
-static CompWindow *
-tdWalkNext (CompWindow *w)
-{
-	TD_WINDOW(w);
-	return tdw->next;
-}
-
-static CompWindow *
-tdWalkPrev (CompWindow *w)
-{
-	TD_WINDOW(w);
-	return tdw->prev;
+    return status;
 }
 
 static void
-tdInitWindowWalker (CompScreen *s, CompWalker* walker)
+tdDonePaintScreen (CompScreen *s)
 {
-	TD_SCREEN(s);
-	CUBE_SCREEN(s);
+    TD_SCREEN (s);
 
-	UNWRAP (tds, s, initWindowWalker);
-	(*s->initWindowWalker) (s, walker);
-	WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
+    /* FIXME: we damage way more often than needed here */
+    if (tds->basicScale != 1.0)
+	damageScreen (s);
 
-	if ((tds->active || tds->tdWindowExists) &&
-	     cs->paintOrder == BTF && tds->test)
-	{
-		walker->first = tdWalkFirst;
-		walker->last =  tdWalkLast;
-		walker->next =  tdWalkNext;
-		walker->prev =  tdWalkPrev;
-	}
-
-
+    UNWRAP (tds, s, donePaintScreen);
+    (*s->donePaintScreen) (s);
+    WRAP (tds, s, donePaintScreen, tdDonePaintScreen);
 }
 
-static Bool tdInitPluginForDisplay (CompPlugin *p, CompDisplay *d)
+static CompWindow*
+tdWalkFirst (CompScreen *s)
 {
-	Bool status;
-	TD_DISPLAY(d);
-
-	if (strcmp(p->vTable->name, "cube") == 0)
-	{
-		CompOption *option;
-		int nOption;
-
-		if (!p->vTable->getDisplayOptions)
-		{
-			compLogMessage (d, "3d", CompLogLevelError,
-							"Can't get cube plugin vTable");
-		}
-		else
-		{
-			option = (*p->vTable->getDisplayOptions) (p, d, &nOption);
-
-			if (getIntOptionNamed (option, nOption, "abi", 0) != CUBE_ABIVERSION)
-			{
-				compLogMessage (d, "3d", CompLogLevelError,
-								"cube ABI version mismatch");
-			}
-			else
-			{
-				cubeDisplayPrivateIndex = getIntOptionNamed (option, nOption, "index", -1);
-			}
-		}
-
-		if (cubeDisplayPrivateIndex >= 0)
-		{
-			CompScreen *s;
-
-			/* we have to wrap those functions here in other to have
-			   them wrapped before the cube functions */
-			for (s = d->screens; s; s = s->next)
-			{
-				TD_SCREEN(s);
-
-				WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
-				WRAP(tds, s, paintWindow, tdPaintWindow);
-				WRAP(tds, s, paintOutput, tdPaintOutput);
-				WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
-				WRAP(tds, s, preparePaintScreen, tdPreparePaintScreen);
-				WRAP(tds, s, initWindowWalker, tdInitWindowWalker);
-				
-    WRAP (tds, s, applyScreenTransform, tdApplyScreenTransform);
-			}
-		}
-	}
-
-	UNWRAP (tdd, d, initPluginForDisplay);
-	status = (*d->initPluginForDisplay) (p, d);
-	WRAP (tdd, d, initPluginForDisplay, tdInitPluginForDisplay);
-
-	return status;
+    TD_SCREEN (s);
+    return tds->first;
 }
 
-static void tdFiniPluginForDisplay (CompPlugin *p, CompDisplay *d)
+static CompWindow*
+tdWalkLast (CompScreen *s)
 {
-	TD_DISPLAY(d);
+    TD_SCREEN (s);
+    return tds->last;
+}
 
-	UNWRAP (tdd, d, finiPluginForDisplay);
-	(*d->finiPluginForDisplay) (p, d);
-	WRAP (tdd, d, finiPluginForDisplay, tdFiniPluginForDisplay);
+static CompWindow*
+tdWalkNext (CompWindow *w)
+{
+    TD_WINDOW (w);
+    return tdw->next;
+}
+
+static CompWindow*
+tdWalkPrev (CompWindow *w)
+{
+    TD_WINDOW (w);
+    return tdw->prev;
+}
+
+static void
+tdInitWindowWalker (CompScreen *s,
+		    CompWalker *walker)
+{
+    TD_SCREEN (s);
+    CUBE_SCREEN (s);
+
+    UNWRAP (tds, s, initWindowWalker);
+    (*s->initWindowWalker) (s, walker);
+    WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
+
+    if ((tds->active || tds->tdWindowExists) &&
+	cs->paintOrder == BTF && tds->test)
+    {
+	walker->first = tdWalkFirst;
+	walker->last =  tdWalkLast;
+	walker->next =  tdWalkNext;
+	walker->prev =  tdWalkPrev;
+    }
+}
+
+static Bool
+tdInitPluginForDisplay (CompPlugin  *p,
+			CompDisplay *d)
+{
+    Bool status;
+
+    TD_DISPLAY (d);
+
+    if (strcmp (p->vTable->name, "cube") == 0)
+    {
+	CompOption *option;
+	int        nOption;
+
+	if (!p->vTable->getDisplayOptions)
+	{
+	    compLogMessage (d, "3d", CompLogLevelError,
+			    "Can't get cube plugin vTable");
+	}
+	else
+	{
+	    int abi;
+
+	    option = (*p->vTable->getDisplayOptions) (p, d, &nOption);
+	    abi = getIntOptionNamed (option, nOption, "abi", 0);
+
+	    if (abi != CUBE_ABIVERSION)
+	    {
+		compLogMessage (d, "3d", CompLogLevelError,
+				"cube ABI version mismatch");
+	    }
+	    else
+	    {
+		cubeDisplayPrivateIndex = getIntOptionNamed (option, nOption,
+							     "index", -1);
+	    }
+	}
+
+	if (cubeDisplayPrivateIndex >= 0)
+	{
+	    CompScreen *s;
+
+	    /* we have to wrap those functions here in order to have
+	       them wrapped before the cube functions */
+	    for (s = d->screens; s; s = s->next)
+	    {
+		TD_SCREEN (s);
+
+		WRAP (tds, s, paintTransformedOutput, tdPaintTransformedOutput);
+		WRAP (tds, s, paintWindow, tdPaintWindow);
+		WRAP (tds, s, paintOutput, tdPaintOutput);
+		WRAP (tds, s, donePaintScreen, tdDonePaintScreen);
+		WRAP (tds, s, preparePaintScreen, tdPreparePaintScreen);
+		WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
+		WRAP (tds, s, applyScreenTransform, tdApplyScreenTransform);
+	    }
+	}
+    }
+
+    UNWRAP (tdd, d, initPluginForDisplay);
+    status = (*d->initPluginForDisplay) (p, d);
+    WRAP (tdd, d, initPluginForDisplay, tdInitPluginForDisplay);
+
+    return status;
+}
+
+static void
+tdFiniPluginForDisplay (CompPlugin  *p,
+			CompDisplay *d)
+{
+    TD_DISPLAY (d);
+
+    UNWRAP (tdd, d, finiPluginForDisplay);
+    (*d->finiPluginForDisplay) (p, d);
+    WRAP (tdd, d, finiPluginForDisplay, tdFiniPluginForDisplay);
+
+    if (strcmp (p->vTable->name, "cube") == 0)
+    {
+	CompScreen *s;
+	for (s = d->screens; s; s = s->next)
+	{
+	    TD_SCREEN (s);
+	    UNWRAP (tds, s, paintTransformedOutput);
+	    UNWRAP (tds, s, paintWindow);
+	    UNWRAP (tds, s, paintOutput);
+	    UNWRAP (tds, s, donePaintScreen);
+	    UNWRAP (tds, s, preparePaintScreen);
+	    UNWRAP (tds, s, initWindowWalker);
+	    UNWRAP (tds, s, applyScreenTransform);
+	}
+	cubeDisplayPrivateIndex = -1;
+    }
+}
+
+static Bool
+tdInitDisplay (CompPlugin  *p,
+	       CompDisplay *d)
+{
+    tdDisplay *tdd;
+
+    tdd = malloc (sizeof (tdDisplay));
+    if (!tdd)
+	return FALSE;
+
+    tdd->screenPrivateIndex = allocateScreenPrivateIndex (d);
+    if (tdd->screenPrivateIndex < 0)
+    {
+	free (tdd);
+	return FALSE;
+    }
+
+    d->privates[displayPrivateIndex].ptr = tdd;
+
+    WRAP (tdd, d, initPluginForDisplay, tdInitPluginForDisplay);
+    WRAP (tdd, d, finiPluginForDisplay, tdFiniPluginForDisplay);
+
+    return TRUE;
+}
+
+static void
+tdFiniDisplay (CompPlugin  *p,
+	       CompDisplay *d)
+{
+    TD_DISPLAY (d);
+
+    freeScreenPrivateIndex (d, tdd->screenPrivateIndex);
+
+    UNWRAP (tdd, d, initPluginForDisplay);
+    UNWRAP (tdd, d, finiPluginForDisplay);
+
+    free (tdd);
+}
+
+static Bool
+tdInitScreen (CompPlugin *p,
+	      CompScreen *s)
+{
+    tdScreen *tds;
+
+    TD_DISPLAY (s->display);
+
+    tds = malloc (sizeof (tdScreen));
+    if (!tds)
+	return FALSE;
+
+    tds->windowPrivateIndex = allocateWindowPrivateIndex (s);
+    if (tds->windowPrivateIndex < 0)
+    {
+	free (tds);
+	return FALSE;
+    }
+
+    tds->basicScale = 1.0;
+    tds->tdWindowExists = FALSE;
+
+    tds->first = NULL;
+    tds->last  = NULL;
+
+    s->privates[tdd->screenPrivateIndex].ptr = tds;
+
+    return TRUE;
+}
+
+static void
+tdFiniScreen (CompPlugin *p,
+	      CompScreen *s)
+{
+    TD_SCREEN (s);
+
+    freeWindowPrivateIndex (s, tds->windowPrivateIndex);
 	
-	if (strcmp(p->vTable->name, "cube") == 0)
-	{
-		CompScreen *s;
-		for (s = d->screens; s; s = s->next)
-		{
-			TD_SCREEN (s);
-			UNWRAP(tds, s, paintTransformedOutput);
-			UNWRAP(tds, s, paintWindow);
-			UNWRAP(tds, s, paintOutput);
-			UNWRAP(tds, s, donePaintScreen);
-			UNWRAP(tds, s, preparePaintScreen);
-			UNWRAP(tds, s, initWindowWalker);
-			
-    UNWRAP (tds, s, applyScreenTransform);
-    
-		}
-
-		cubeDisplayPrivateIndex = -1;
-	}
+    free (tds);
 }
 
-static Bool tdInitDisplay(CompPlugin * p, CompDisplay * d)
+static Bool
+tdInitWindow (CompPlugin *p,
+	      CompWindow *w)
 {
-	tdDisplay *tdd;
+    tdWindow *tdw;
 
-	tdd = malloc(sizeof(tdDisplay));
-	if (!tdd)
-		return FALSE;
+    TD_SCREEN (w->screen);
 
-	tdd->screenPrivateIndex = allocateScreenPrivateIndex(d);
-	if (tdd->screenPrivateIndex < 0)
-	{
-		free(tdd);
-		return FALSE;
-	}
+    tdw = malloc (sizeof (tdWindow));
+    if (!tdw)
+	return FALSE;
 
-	d->privates[displayPrivateIndex].ptr = tdd;
+    tdw->prev = NULL;
+    tdw->next = NULL;
 
-	WRAP(tdd, d, initPluginForDisplay, tdInitPluginForDisplay);
-	WRAP(tdd, d, finiPluginForDisplay, tdFiniPluginForDisplay);
+    w->privates[tds->windowPrivateIndex].ptr = tdw;
 
-	return TRUE;
+    return TRUE;
 }
 
-static void tdFiniDisplay(CompPlugin * p, CompDisplay * d)
+static void
+tdFiniWindow (CompPlugin *p,
+	      CompWindow *w)
 {
-	TD_DISPLAY(d);
+    TD_WINDOW (w);
 
-	freeScreenPrivateIndex(d, tdd->screenPrivateIndex);
-
-	UNWRAP(tdd, d, initPluginForDisplay);
-	UNWRAP(tdd, d, finiPluginForDisplay);
-
-	free(tdd);
+    free (tdw);
 }
 
-static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
+static Bool
+tdInit (CompPlugin *p)
 {
-	TD_DISPLAY(s->display);
+    displayPrivateIndex = allocateDisplayPrivateIndex ();
+    if (displayPrivateIndex < 0)
+	return FALSE;
 
-	tdScreen *tds;
-
-	tds = malloc(sizeof(tdScreen));
-	if (!tds)
-		return FALSE;
-
-	tds->windowPrivateIndex = allocateWindowPrivateIndex(s);
-	if (tds->windowPrivateIndex < 0)
-	{
-		free(tds);
-		free(tdd);
-		return FALSE;
-	}
-
-	tds->basicScale = 1.0;
-	
-	tds->tdWindowExists = FALSE;
-	
-	s->privates[tdd->screenPrivateIndex].ptr = tds;
-
-	tds->first = NULL;
-	tds->last  = NULL;
-
-	return TRUE;
+    return TRUE;
 }
 
-static void tdFiniScreen(CompPlugin * p, CompScreen * s)
+static void
+tdFini (CompPlugin *p)
 {
-	TD_SCREEN(s);
-
-	freeWindowPrivateIndex(s, tds->windowPrivateIndex);
-	
-	free(tds);
+    freeDisplayPrivateIndex (displayPrivateIndex);
 }
 
-static Bool tdInitWindow(CompPlugin * p, CompWindow * w)
+static int
+tdGetVersion (CompPlugin *p,
+	      int        version)
 {
-	tdWindow *tdw;
-
-	TD_SCREEN(w->screen);
-
-	tdw = malloc(sizeof(tdWindow));
-	if (!tdw)
-		return FALSE;
-
-	tdw->prev = NULL;
-	tdw->next = NULL;
-
-	w->privates[tds->windowPrivateIndex].ptr = tdw;
-
-	return TRUE;
-}
-
-static void tdFiniWindow(CompPlugin * p, CompWindow * w)
-{
-	TD_WINDOW(w);
-
-	free(tdw);
-}
-
-static Bool tdInit(CompPlugin * p)
-{
-	displayPrivateIndex = allocateDisplayPrivateIndex();
-	if (displayPrivateIndex < 0)
-		return FALSE;
-
-	return TRUE;
-}
-
-static void tdFini(CompPlugin * p)
-{
-	if (displayPrivateIndex >= 0)
-		freeDisplayPrivateIndex(displayPrivateIndex);
-}
-
-static int tdGetVersion(CompPlugin *p, int version)
-{
-	return ABIVERSION;
+    return ABIVERSION;
 }
 
 static CompPluginVTable tdVTable = {
-	"3d",
-	tdGetVersion,
-	0,
-	tdInit,
-	tdFini,
-	tdInitDisplay,
-	tdFiniDisplay,
-	tdInitScreen,
-	tdFiniScreen,
-	tdInitWindow,
-	tdFiniWindow,
-	/*tdGetDisplayOptions */ 0,
-	/*tdSetDisplayOption */ 0,
-	0,
-	0,
+    "3d",
+    tdGetVersion,
+    0,
+    tdInit,
+    tdFini,
+    tdInitDisplay,
+    tdFiniDisplay,
+    tdInitScreen,
+    tdFiniScreen,
+    tdInitWindow,
+    tdFiniWindow,
+    0, /*tdGetDisplayOptions */
+    0, /*tdSetDisplayOption */
+    0,
+    0
 };
 
-CompPluginVTable *getCompPluginInfo(void)
+CompPluginVTable*
+getCompPluginInfo (void)
 {
-	return &tdVTable;
+    return &tdVTable;
 }
