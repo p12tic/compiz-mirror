@@ -66,6 +66,8 @@ typedef struct _tdWindow
 	float currentZ;
 	Bool ftb;
 
+	float depth;
+
 	CompWindow *next;
 	CompWindow *prev;
 } tdWindow;
@@ -81,12 +83,7 @@ typedef struct _tdScreen
 	PaintOutputProc				paintOutput;
 	DonePaintScreenProc			donePaintScreen;
 	InitWindowWalkerProc		initWindowWalker;
-
-	CubePaintTopProc    paintTop;
-	CubePaintBottomProc paintBottom;
-
-	InitPluginForScreenProc initPluginForScreen;
-	FiniPluginForScreenProc finiPluginForScreen;
+	ApplyScreenTransformProc   applyScreenTransform;
 
 	PaintWindowProc paintWindow;
 
@@ -107,6 +104,13 @@ typedef struct _tdScreen
 
 	CompWindow *first;
 	CompWindow *last;
+
+	Bool test;
+	float currentScale;
+
+	float basicScale;
+	float maxDepth;
+	
 } tdScreen;
 
 #define GET_TD_DISPLAY(d)       \
@@ -208,10 +212,6 @@ static Bool differentResolutions(CompScreen * s)
 static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 {
 	CompWindow *w;
-	tdWindow *tdw;
-
-	int i;
-	float maxZoom;
 
 	TD_SCREEN(screen);
 	CUBE_SCREEN (screen);
@@ -220,62 +220,34 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 	              !(tdGetManualOnly(screen) && 
 			(cs->rotationState != RotationManual));
 
-	if (tds->currentMoMode != cs->moMode
-		|| tds->currentViewportNum != screen->hsize
-		|| tds->currentScreenNum != screen->nOutputDev
-		|| tds->currentDifferentResolutions != differentResolutions(screen))
-	{
-		tds->currentMoMode = cs->moMode;
-		tds->currentViewportNum = screen->hsize;
-		tds->currentScreenNum = screen->nOutputDev;
-		tds->currentDifferentResolutions = differentResolutions(screen);
-
-		if (tds->currentViewportNum > 2
-			&& (cs->moMode != CUBE_MOMODE_MULTI || screen->nOutputDev == 1))
-			tds->xMove =
-					1.0f / (tan (PI * (tds->currentViewportNum - 2.0f) / (2.0f * tds->currentViewportNum)));
-		else
-			tds->xMove = 0.0f;
-	}
-
 	if (tds->active)
 	{
-		if (tds->lastInViewportListSize < screen->hsize)
-		{
-			tds->lastInViewportList  =
-				(tdWindow **) realloc(tds->lastInViewportList, sizeof(tdWindow *) * screen->hsize);
-			tds->lastInViewportListSize = screen->hsize;
-		}
+		float maxDiv = 0.1; // should be a option;
+		float minScale = 0.5; // should be a option;
 
-		for (i = 0; i < screen->hsize; i++)
-			tds->lastInViewportList[i] = NULL;
 
-		tds->maxZ = 0.0f;
-
+		tds->maxDepth = 0;
 		for (w = screen->windows; w; w = w->next)
 		{
+			TD_WINDOW (w);
+			tdw->depth = 0;
+			
 			if (!windowIs3D(w))
 				continue;
 
-			tdw = GET_TD_WINDOW(w, tds);
-			maxZoom = 0.0f;
-
-			for (i = 0; i < screen->hsize; i++)
-			{
-				if (IS_IN_VIEWPORT(w, i))
-				{
-					if (tds->lastInViewportList[i] && tds->lastInViewportList[i]->z > maxZoom)
-						maxZoom = tds->lastInViewportList[i]->z;
-
-					tds->lastInViewportList[i] = tdw;
-				}
-			}
-
-			tdw->z = maxZoom + tdGetSpace(screen);
-
-			if (tdw->z > tds->maxZ)
-				tds->maxZ = tdw->z;
+			
+			tds->maxDepth++;
+			tdw->depth = tds->maxDepth;
 		}
+
+		minScale = MAX(minScale, 1.0 - (tds->maxDepth * maxDiv));
+		
+		tds->basicScale = MAX(minScale,tds->basicScale - ((float)msSinceLastPaint * tdGetSpeed(screen)/ 1000.0));
+
+	}
+	else
+	{
+		tds->basicScale = MIN(1.0,tds->basicScale + ((float)msSinceLastPaint * tdGetSpeed(screen)/ 1000.0));
 	}
 
 	UNWRAP(tds, screen, preparePaintScreen);
@@ -290,10 +262,12 @@ tdPaintWindow(CompWindow * w,
 			  Region region, unsigned int mask)
 {
 	Bool status;
+	Bool wasCulled;
+	wasCulled = glIsEnabled(GL_CULL_FACE);
 
 	TD_SCREEN(w->screen);
 	TD_WINDOW(w);
-
+#if 0
 	if (tdw->currentZ != 0.0f)
 	{
 		Bool wasCulled;
@@ -308,7 +282,7 @@ tdPaintWindow(CompWindow * w,
 	
 		mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
-		wasCulled = glIsEnabled(GL_CULL_FACE);
+		
 
 		matrixTranslate(&wTransform, 0.0f, 0.0f, tdw->currentZ);
 
@@ -556,13 +530,56 @@ tdPaintWindow(CompWindow * w,
 		WRAP(tds, w->screen, paintWindow, tdPaintWindow);
 	}
 	else
+#endif
+
+	if (tdw->depth != 0.0f && !tds->test && tds->active)
+		mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+
+
+	if (tds->test)
+	{
+
+		glDisable(GL_CULL_FACE);
+
+
+
+				UNWRAP(tds, w->screen, paintWindow);
+				status = (*w->screen->paintWindow) (w, attrib, transform, region, mask);
+				WRAP(tds, w->screen, paintWindow, tdPaintWindow);
+
+
+
+			if (wasCulled)
+				glEnable(GL_CULL_FACE);
+
+	}
+	else
 	{
 		UNWRAP(tds, w->screen, paintWindow);
 		status = (*w->screen->paintWindow) (w, attrib, transform, region, mask);
 		WRAP(tds, w->screen, paintWindow, tdPaintWindow);
 	}
 
+
 	return status;
+}
+
+
+static void
+tdApplyScreenTransform (CompScreen		  *s,
+			  const ScreenPaintAttrib *sAttrib,
+			  CompOutput		  *output,
+			  CompTransform	          *transform)
+{
+    TD_SCREEN (s);
+
+    UNWRAP (tds, s, applyScreenTransform);
+    (*s->applyScreenTransform) (s, sAttrib, output, transform);
+    WRAP (tds, s, applyScreenTransform, tdApplyScreenTransform);
+
+	matrixScale(transform, tds->currentScale, tds->currentScale, tds->currentScale);
+    
+    
 }
 
 static void tdAddWindow(CompScreen *s, CompWindow *w)
@@ -622,10 +639,11 @@ tdPaintTransformedOutput(CompScreen * s,
 
 			if (!windowIs3D(w))
 				continue;
-			
-			float vPoints[3][3] = { { -0.5, 0.0, (cs->invert * cs->distance) + tdw->currentZ},
-						{ 0.0, 0.5, (cs->invert * cs->distance) + tdw->currentZ},
-						{ 0.0, 0.0, (cs->invert * cs->distance) + tdw->currentZ}};
+
+			tds->currentScale = tds->basicScale + (tdw->depth * ((1.0 - tds->basicScale) / tds->maxDepth));
+			float vPoints[3][3] = { { -0.5, 0.0, (cs->invert * cs->distance)},
+						{ 0.0, 0.5, (cs->invert * cs->distance)},
+						{ 0.0, 0.0, (cs->invert * cs->distance)}};
 					
 			tdw->ftb = cs->checkOrientation (s, sAttrib, transform, output, vPoints);
 					
@@ -653,9 +671,74 @@ tdPaintTransformedOutput(CompScreen * s,
 		}
 	}
 
+	tds->currentScale = tds->basicScale;
 	UNWRAP(tds, s, paintTransformedOutput);
 	(*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
 	WRAP(tds, s, paintTransformedOutput, tdPaintTransformedOutput);
+	tds->test = TRUE;
+
+	{
+		CompTransform sTransform = *transform;
+		    screenLighting (s, TRUE);
+
+	    	
+
+
+		
+
+
+    CompWindow    *w;
+    CompWalker    walk;
+
+
+
+
+    (*s->initWindowWalker) (s, &walk);
+
+
+    /* paint all windows from bottom to top */
+    for (w = (*walk.first) (s); w; w = (*walk.next) (w))
+    {
+	CompTransform mTransform = sTransform;
+	   
+	TD_WINDOW (w);
+	if (w->destroyed)
+	    continue;
+
+	if (!w->shaded)
+	{
+	    if (w->attrib.map_state != IsViewable || !w->damaged)
+		continue;
+	}
+	if (tdw->depth != 0.0f)
+	{
+		tds->currentScale = tds->basicScale + (tdw->depth * ((1.0 - tds->basicScale) / tds->maxDepth));
+		(*s->applyScreenTransform) (s, sAttrib, output, &mTransform);
+		s->enableOutputClipping (s, &mTransform, region, output);
+
+		transformToScreenSpace (s, output, -sAttrib->zTranslate,
+					&mTransform);
+
+		glPushMatrix ();
+		glLoadMatrixf (mTransform.m);
+
+		
+		(*s->paintWindow) (w, &w->paint, &mTransform, &infiniteRegion, PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK);
+		glPopMatrix ();
+		s->disableOutputClipping (s);
+	}
+    }
+
+
+    
+
+		
+
+		
+	}
+tds->test = FALSE;
+tds->currentScale = tds->basicScale;
+
 }
 
 static Bool
@@ -668,7 +751,7 @@ tdPaintOutput(CompScreen * s,
 
 	TD_SCREEN(s);
 
-	if (tds->active || tds->tdWindowExists)
+	if (tds->basicScale != 1.0)
 	{
 		mask |= PAINT_SCREEN_TRANSFORMED_MASK |
 				PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
@@ -683,91 +766,16 @@ tdPaintOutput(CompScreen * s,
 
 static void tdDonePaintScreen(CompScreen * s)
 {
-	CompWindow *w;
-	tdWindow *tdw;
-
 	TD_SCREEN(s);
-	CUBE_SCREEN (s);
 
-	if (tds->active || tds->tdWindowExists)
-	{
-		float aim = 0.0f;
-
+	if (tds->basicScale != 1.0)
 		damageScreen(s);
-
-		tds->tdWindowExists = FALSE;
-
-		for (w = s->windows; w; w = w->next)
-		{
-			tdw = GET_TD_WINDOW(w, GET_TD_SCREEN(w->screen,
-									GET_TD_DISPLAY(w->screen->display)));
-
-			if (tds->active)
-			{
-				if (cs->invert == -1)
-					aim = tdw->z - tds->maxZ;
-				else
-					aim = tdw->z;
-			}
-
-			if (fabs(tdw->currentZ - aim) < tdGetSpeed(s))
-				tdw->currentZ = aim;
-
-			else if (tdw->currentZ < aim)
-				tdw->currentZ += tdGetSpeed(s);
-
-			else if (tdw->currentZ > aim)
-				tdw->currentZ -= tdGetSpeed(s);
-
-			if (tdw->currentZ)
-				tds->tdWindowExists = TRUE;
-		}
-	}
 
 	UNWRAP(tds, s, donePaintScreen);
 	(*s->donePaintScreen) (s);
 	WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
 }
 
-static void
-tdCubePaintTop (CompScreen			    *s,
-	  			const ScreenPaintAttrib *sAttrib,
-				const CompTransform	    *transform,
-				CompOutput			    *output,
-				int				        size)
-{
-	TD_SCREEN (s);
-	CUBE_SCREEN (s);
-
-	if (tds->maxZ > 0.0f && cs->invert == -1 && tdGetDisableCaps(s))
-		return;
-	else
-	{
-		UNWRAP (tds, cs, paintTop);
-		(*cs->paintTop) (s, sAttrib, transform, output, size);
-		WRAP (tds, cs, paintTop, tdCubePaintTop);
-	}
-}
-
-static void
-tdCubePaintBottom (CompScreen			   *s,
-				   const ScreenPaintAttrib *sAttrib,
-				   const CompTransform	   *transform,
-				   CompOutput			   *output,
-				   int				       size)
-{
-	TD_SCREEN (s);
-	CUBE_SCREEN (s);
-
-	if (tds->maxZ > 0.0f && cs->invert == -1 && tdGetDisableCaps(s))
-		return;
-	else
-	{
-		UNWRAP (tds, cs, paintBottom);
-		(*cs->paintBottom) (s, sAttrib, transform, output, size);
-		WRAP (tds, cs, paintBottom, tdCubePaintBottom);
-	}
-}
 
 static CompWindow *
 tdWalkFirst (CompScreen *s)
@@ -808,13 +816,14 @@ tdInitWindowWalker (CompScreen *s, CompWalker* walker)
 	WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
 
 	if ((tds->active || tds->tdWindowExists) &&
-	     cs->paintOrder == BTF)
+	     cs->paintOrder == BTF && tds->test)
 	{
 		walker->first = tdWalkFirst;
 		walker->last =  tdWalkLast;
 		walker->next =  tdWalkNext;
 		walker->prev =  tdWalkPrev;
 	}
+
 
 }
 
@@ -864,6 +873,8 @@ static Bool tdInitPluginForDisplay (CompPlugin *p, CompDisplay *d)
 				WRAP(tds, s, donePaintScreen, tdDonePaintScreen);
 				WRAP(tds, s, preparePaintScreen, tdPreparePaintScreen);
 				WRAP(tds, s, initWindowWalker, tdInitWindowWalker);
+				
+    WRAP (tds, s, applyScreenTransform, tdApplyScreenTransform);
 			}
 		}
 	}
@@ -895,49 +906,12 @@ static void tdFiniPluginForDisplay (CompPlugin *p, CompDisplay *d)
 			UNWRAP(tds, s, donePaintScreen);
 			UNWRAP(tds, s, preparePaintScreen);
 			UNWRAP(tds, s, initWindowWalker);
+			
+    UNWRAP (tds, s, applyScreenTransform);
+    
 		}
 
 		cubeDisplayPrivateIndex = -1;
-	}
-}
-
-static Bool tdInitPluginForScreen (CompPlugin *p, CompScreen *s)
-{
-	Bool status;
-	TD_SCREEN(s);
-
-	UNWRAP (tds, s, initPluginForScreen);
-	status = (*s->initPluginForScreen) (p, s);
-	WRAP (tds, s, initPluginForScreen, tdInitPluginForScreen);
-
-	if (status && strcmp(p->vTable->name, "cube") == 0)
-	{
-		if (cubeDisplayPrivateIndex >= 0)
-		{
-			CUBE_SCREEN (s);
-
-			WRAP(tds, cs, paintTop, tdCubePaintTop);
-			WRAP(tds, cs, paintBottom, tdCubePaintBottom);
-		}
-	}
-
-	return status;
-}
-
-static void tdFiniPluginForScreen (CompPlugin *p, CompScreen *s)
-{
-	TD_SCREEN(s);
-
-	UNWRAP (tds, s, finiPluginForScreen);
-	(*s->finiPluginForScreen) (p, s);
-	WRAP (tds, s, finiPluginForScreen, tdFiniPluginForScreen);
-	
-	if (strcmp(p->vTable->name, "cube") == 0)
-	{
-		CUBE_SCREEN (s);
-
-		UNWRAP(tds, cs, paintTop);
-		UNWRAP(tds, cs, paintBottom);
 	}
 }
 
@@ -994,6 +968,8 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 		return FALSE;
 	}
 
+	tds->basicScale = 1.0;
+	
 	tds->tdWindowExists = FALSE;
 
 	tds->currentMoMode = CUBE_MOMODE_AUTO;
@@ -1016,9 +992,6 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	tds->first = NULL;
 	tds->last  = NULL;
 
-	WRAP (tds, s, initPluginForScreen, tdInitPluginForScreen);
-	WRAP (tds, s, finiPluginForScreen, tdFiniPluginForScreen);
-
 	return TRUE;
 }
 
@@ -1030,9 +1003,6 @@ static void tdFiniScreen(CompPlugin * p, CompScreen * s)
 
 	if (tds->lastInViewportList)
 		free (tds->lastInViewportList);
-
-	UNWRAP (tds, s, initPluginForScreen);
-	UNWRAP (tds, s, finiPluginForScreen);
 	
 	free(tds);
 }
