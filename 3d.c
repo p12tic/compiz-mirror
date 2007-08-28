@@ -54,7 +54,6 @@ static int cubeDisplayPrivateIndex = -1;
 typedef struct _tdDisplay
 {
 	int screenPrivateIndex;
-	Bool active;
 
 	InitPluginForDisplayProc initPluginForDisplay;
 	FiniPluginForDisplayProc finiPluginForDisplay;
@@ -164,6 +163,7 @@ static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 			
 			tds->maxDepth++;
 			tdw->depth = tds->maxDepth;
+			tds->tdWindowExists = TRUE;
 		}
 
 		minScale = MAX(minScale, 1.0 - (tds->maxDepth * maxDiv));
