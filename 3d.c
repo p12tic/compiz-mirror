@@ -62,8 +62,6 @@ typedef struct _tdDisplay
 
 typedef struct _tdWindow
 {
-	float z;
-	float currentZ;
 	Bool ftb;
 
 	float depth;
@@ -86,19 +84,6 @@ typedef struct _tdScreen
 	ApplyScreenTransformProc   applyScreenTransform;
 
 	PaintWindowProc paintWindow;
-
-	float maxZ;
-
-	float xMove;
-
-	Bool currentDifferentResolutions;
-
-	int currentScreenNum;
-	int currentViewportNum;
-	int currentMoMode;
-
-	tdWindow **lastInViewportList;
-	int lastInViewportListSize;
 
 	Bool active;
 
@@ -149,65 +134,6 @@ static Bool windowIs3D(CompWindow * w)
 
 	return TRUE;
 }
-
-static Bool differentResolutions(CompScreen * s)
-{
-	//This code is taken from cube plugin... thanks for whoever wrote it (davidr i guess).
-
-	BoxPtr pBox0, pBox1;
-	int i, j, k;
-
-	k = 0;
-
-	for (i = 0; i < s->nOutputDev; i++)
-	{
-		/* dimensions must match first output */
-		if (s->outputDev[i].width != s->outputDev[0].width ||
-			s->outputDev[i].height != s->outputDev[0].height)
-			continue;
-
-		pBox0 = &s->outputDev[0].region.extents;
-		pBox1 = &s->outputDev[i].region.extents;
-
-		/* top and bottom line must match first output */
-		if (pBox0->y1 != pBox1->y1 || pBox0->y2 != pBox1->y2)
-			continue;
-
-		k++;
-
-		for (j = 0; j < s->nOutputDev; j++)
-		{
-			pBox0 = &s->outputDev[j].region.extents;
-
-			/* must not intersect other output region */
-			if (i != j && pBox0->x2 > pBox1->x1 && pBox0->x1 < pBox1->x2)
-			{
-				k--;
-				break;
-			}
-		}
-	}
-
-	if (k != s->nOutputDev)
-		return TRUE;
-
-	return FALSE;
-}
-
-#define REAL_POSITION(x, s) ( (x >= 0)? x: x + (s)->hsize * (s)->width )
-
-#define VIEWPORT(x, s) ( ( REAL_POSITION(x, s) / (s)->width ) % (s)->hsize )
-#define SCREEN(x, s)   ( ( REAL_POSITION(x, s) % (s)->width ) / (s)->outputDev[0].width )
-
-#define RIGHT_VIEWPORT(w) VIEWPORT( (w)->attrib.x + (w)->attrib.width + (w)->input.right -1, (w)->screen)
-#define LEFT_VIEWPORT(w) VIEWPORT( (w)->attrib.x + 1 - (w)->input.left, (w)->screen)
-
-#define RIGHT_SCREEN(w) SCREEN( (w)->attrib.x + (w)->attrib.width -1+w->input.right, (w)->screen)
-#define LEFT_SCREEN(w) SCREEN( (w)->attrib.x + 1-w->input.left , (w)->screen)
-
-#define IS_IN_VIEWPORT(w, i) ( ( LEFT_VIEWPORT(w) > RIGHT_VIEWPORT(w) && !(LEFT_VIEWPORT(w) > i && i > RIGHT_VIEWPORT(w)) ) \
-                                || ( LEFT_VIEWPORT(w) <= i && i <= RIGHT_VIEWPORT(w) ) )
-
 
 static void tdPreparePaintScreen(CompScreen * screen, int msSinceLastPaint)
 {
@@ -971,21 +897,6 @@ static Bool tdInitScreen(CompPlugin * p, CompScreen * s)
 	tds->basicScale = 1.0;
 	
 	tds->tdWindowExists = FALSE;
-
-	tds->currentMoMode = CUBE_MOMODE_AUTO;
-	tds->currentViewportNum = s->hsize;
-	tds->currentScreenNum = s->nOutputDev;
-	tds->currentDifferentResolutions = differentResolutions(s);
-
-	if (tds->currentViewportNum > 2
-	    && (s->nOutputDev == 1))
-		tds->xMove =
-			1.0f / (tan (PI * (tds->currentViewportNum - 2.0f) / (2.0f * tds->currentViewportNum)));
-	else
-		tds->xMove = 0.0f;
-
-	tds->lastInViewportList = NULL;
-	tds->lastInViewportListSize = 0;
 	
 	s->privates[tdd->screenPrivateIndex].ptr = tds;
 
@@ -1000,9 +911,6 @@ static void tdFiniScreen(CompPlugin * p, CompScreen * s)
 	TD_SCREEN(s);
 
 	freeWindowPrivateIndex(s, tds->windowPrivateIndex);
-
-	if (tds->lastInViewportList)
-		free (tds->lastInViewportList);
 	
 	free(tds);
 }
@@ -1016,9 +924,6 @@ static Bool tdInitWindow(CompPlugin * p, CompWindow * w)
 	tdw = malloc(sizeof(tdWindow));
 	if (!tdw)
 		return FALSE;
-
-	tdw->z = 0.0f;
-	tdw->currentZ = 0.0f;
 
 	tdw->prev = NULL;
 	tdw->next = NULL;
