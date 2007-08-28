@@ -62,6 +62,7 @@ typedef struct _tdDisplay
 typedef struct _tdWindow
 {
     Bool ftb;
+    Bool is3D;
 
     float depth;
 
@@ -74,6 +75,8 @@ typedef struct _tdScreen
     int windowPrivateIndex;
 
     Bool tdWindowExists;
+    Bool active;
+    Bool wasActive;
 
     PreparePaintScreenProc     preparePaintScreen;
     PaintTransformedOutputProc paintTransformedOutput;
@@ -82,8 +85,6 @@ typedef struct _tdScreen
     InitWindowWalkerProc       initWindowWalker;
     ApplyScreenTransformProc   applyScreenTransform;
     PaintWindowProc            paintWindow;
-
-    Bool active;
 
     CompWindow *first;
     CompWindow *last;
@@ -139,6 +140,7 @@ tdPreparePaintScreen (CompScreen *s,
 		      int        msSinceLastPaint)
 {
     CompWindow *w;
+    float      amount;
 
     TD_SCREEN (s);
     CUBE_SCREEN (s);
@@ -147,6 +149,7 @@ tdPreparePaintScreen (CompScreen *s,
 	          !(tdGetManualOnly(s) &&
 		    (cs->rotationState != RotationManual));
 
+    amount = ((float)msSinceLastPaint * tdGetSpeed (s) / 1000.0);
     if (tds->active)
     {
 	float maxDiv = 0.1; // should be a option;
@@ -156,26 +159,24 @@ tdPreparePaintScreen (CompScreen *s,
 	for (w = s->windows; w; w = w->next)
 	{
 	    TD_WINDOW (w);
+	    tdw->is3D = FALSE;
 	    tdw->depth = 0;
 
 	    if (!windowIs3D (w))
 		continue;
 
+	    tdw->is3D = TRUE;
 	    tds->maxDepth++;
 	    tdw->depth = tds->maxDepth;
 	    tds->tdWindowExists = TRUE;
 	}
 
-	minScale =  MAX(minScale, 1.0 - (tds->maxDepth * maxDiv));
-	tds->basicScale = MAX (minScale,
-			       tds->basicScale - ((float)msSinceLastPaint *
-						  tdGetSpeed (s) / 1000.0));
+	minScale =  MAX (minScale, 1.0 - (tds->maxDepth * maxDiv));
+	tds->basicScale = MAX (minScale, tds->basicScale - amount);
     }
     else
     {
-	tds->basicScale = MIN (1.0, tds->basicScale +
-			       ((float)msSinceLastPaint *
-				tdGetSpeed(s) / 1000.0));
+	tds->basicScale = MIN (1.0, tds->basicScale + amount);
     }
 
     UNWRAP (tds, s, preparePaintScreen);
@@ -555,7 +556,9 @@ tdPaintTransformedOutput (CompScreen              *s,
 
 	for (w = s->windows; w; w = w->next)
 	{
-	    if (!windowIs3D (w))
+	    TD_WINDOW (w);
+
+	    if (!tdw->is3D)
 		tdAddWindow (w);
 	}
 
@@ -564,15 +567,15 @@ tdPaintTransformedOutput (CompScreen              *s,
 	{
 	    TD_WINDOW (w);
 
-    	    if (!windowIs3D (w))
+    	    if (!tdw->is3D)
 		continue;
 
 	    tds->currentScale = tds->basicScale +
 		                (tdw->depth * ((1.0 - tds->basicScale) /
 					       tds->maxDepth));
 
-	    tdw->ftb = cs->checkOrientation (s, sAttrib, transform,
-					     output, vPoints);
+	    tdw->ftb = (*cs->checkOrientation) (s, sAttrib, transform,
+						output, vPoints);
 
 	    if (tdw->ftb)
 		firstFTB = w;
@@ -587,7 +590,7 @@ tdPaintTransformedOutput (CompScreen              *s,
 	    {
 		TD_WINDOW (w);
 
-		if (!windowIs3D (w))
+		if (!tdw->is3D)
 		    continue;
 
 		tdw->ftb = TRUE;
@@ -619,6 +622,7 @@ tdPaintTransformedOutput (CompScreen              *s,
 	    CompTransform mTransform = sTransform;
 
     	    TD_WINDOW (w);
+
     	    if (w->destroyed)
     		continue;
 
@@ -724,8 +728,7 @@ tdDonePaintScreen (CompScreen *s)
 {
     TD_SCREEN (s);
 
-    /* FIXME: we damage way more often than needed here */
-    if (tds->basicScale != 1.0)
+    if (tds->basicScale != 1.0f)
 	damageScreen (s);
 
     UNWRAP (tds, s, donePaintScreen);
@@ -933,6 +936,7 @@ tdInitScreen (CompPlugin *p,
 	return FALSE;
     }
 
+    tds->active = tds->wasActive = FALSE;
     tds->basicScale = 1.0;
     tds->tdWindowExists = FALSE;
 
@@ -967,6 +971,7 @@ tdInitWindow (CompPlugin *p,
     if (!tdw)
 	return FALSE;
 
+    tdw->is3D = FALSE;
     tdw->prev = NULL;
     tdw->next = NULL;
 
