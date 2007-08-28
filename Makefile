@@ -369,6 +369,8 @@ install: $(DESTDIR) all
 		else \
 		    $(ECHO) "install   : $(DATADIR)/$$FILE"; \
 		fi; \
+	    	FILEDIR="$(DATADIR)/`dirname "$$FILE"`"; \
+		mkdir -p "$$FILEDIR"; \
 		cp data/$$FILE $(DATADIR)/$$FILE; \
 		if [ '$(color)' != 'no' ]; then \
 		    $(ECHO) -e "\r\033[0minstall   : \033[34m$(DATADIR)/$$FILE\033[0m"; \
@@ -383,6 +385,8 @@ install: $(DESTDIR) all
 		else \
 		    $(ECHO) "install   : $(IMAGEDIR)/$$FILE"; \
 		fi; \
+	    	FILEDIR="$(IMAGEDIR)/`dirname "$$FILE"`"; \
+		mkdir -p "$$FILEDIR"; \
 		cp images/$$FILE $(IMAGEDIR)/$$FILE; \
 		if [ '$(color)' != 'no' ]; then \
 		    $(ECHO) -e "\r\033[0minstall   : \033[34m$(IMAGEDIR)/$$FILE\033[0m"; \
