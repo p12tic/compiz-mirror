@@ -172,11 +172,17 @@ tdPreparePaintScreen (CompScreen *s,
 	}
 
 	minScale =  MAX (minScale, 1.0 - (tds->maxDepth * maxDiv));
-	tds->basicScale = MAX (minScale, tds->basicScale - amount);
+	if (cs->invert == 1)
+	    tds->basicScale = MAX (minScale, tds->basicScale - amount);
+	else
+ 	    tds->basicScale = MIN (2 - minScale, tds->basicScale + amount);
     }
     else
     {
-	tds->basicScale = MIN (1.0, tds->basicScale + amount);
+	if (cs->invert == 1)
+	    tds->basicScale = MIN (1.0, tds->basicScale + amount);
+	else
+ 	    tds->basicScale = MAX (1.0, tds->basicScale - amount);
     }
 
     UNWRAP (tds, s, preparePaintScreen);
@@ -465,7 +471,7 @@ tdPaintWindow (CompWindow              *w,
 	else
 #endif
 
-    if (tdw->depth != 0.0f && !tds->test && tds->active)
+    if (tdw->depth != 0.0f && !tds->test && tds->basicScale != 1.0)
 	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
     if (tds->test)
