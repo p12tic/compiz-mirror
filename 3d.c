@@ -943,7 +943,9 @@ tdInitScreen (CompPlugin *p,
     }
 
     tds->active = tds->wasActive = FALSE;
-    tds->basicScale = 1.0;
+
+    tds->basicScale     = 1.0;
+    tds->currentScale   = 1.0;
     tds->tdWindowExists = FALSE;
 
     tds->first = NULL;
