@@ -42,8 +42,8 @@ TODO:
 #include <string.h>
 #include <math.h>
 
-#include <compiz.h>
-#include <cube.h>
+#include <compiz-core.h>
+#include <compiz-cube.h>
 #include "3d_options.h"
 
 #define PI 3.14159265359f
@@ -97,19 +97,19 @@ typedef struct _tdScreen
 } tdScreen;
 
 #define GET_TD_DISPLAY(d)       \
-    ((tdDisplay *) (d)->privates[displayPrivateIndex].ptr)
+    ((tdDisplay *) (d)->object.privates[displayPrivateIndex].ptr)
 
 #define TD_DISPLAY(d)   \
     tdDisplay *tdd = GET_TD_DISPLAY (d)
 
 #define GET_TD_SCREEN(s, tdd)   \
-    ((tdScreen *) (s)->privates[(tdd)->screenPrivateIndex].ptr)
+    ((tdScreen *) (s)->object.privates[(tdd)->screenPrivateIndex].ptr)
 
 #define TD_SCREEN(s)    \
     tdScreen *tds = GET_TD_SCREEN (s, GET_TD_DISPLAY (s->display))
 
 #define GET_TD_WINDOW(w, tds)                                     \
-    ((tdWindow *) (w)->privates[(tds)->windowPrivateIndex].ptr)
+    ((tdWindow *) (w)->object.privates[(tds)->windowPrivateIndex].ptr)
 
 #define TD_WINDOW(w)    \
     tdWindow *tdw = GET_TD_WINDOW  (w,                     \
@@ -804,7 +804,7 @@ tdInitPluginForDisplay (CompPlugin  *p,
 	CompOption *option;
 	int        nOption;
 
-	if (!p->vTable->getDisplayOptions)
+	if (!p->vTable->getObjectOptions)
 	{
 	    compLogMessage (d, "3d", CompLogLevelError,
 			    "Can't get cube plugin vTable");
@@ -813,7 +813,7 @@ tdInitPluginForDisplay (CompPlugin  *p,
 	{
 	    int abi;
 
-	    option = (*p->vTable->getDisplayOptions) (p, d, &nOption);
+	    option = (*p->vTable->getObjectOptions) (p, &d->object, &nOption);
 	    abi = getIntOptionNamed (option, nOption, "abi", 0);
 
 	    if (abi != CUBE_ABIVERSION)
@@ -890,6 +890,9 @@ tdInitDisplay (CompPlugin  *p,
 {
     tdDisplay *tdd;
 
+    if (!checkPluginABI ("core", CORE_ABIVERSION))
+	return FALSE;
+
     tdd = malloc (sizeof (tdDisplay));
     if (!tdd)
 	return FALSE;
@@ -901,7 +904,7 @@ tdInitDisplay (CompPlugin  *p,
 	return FALSE;
     }
 
-    d->privates[displayPrivateIndex].ptr = tdd;
+    d->object.privates[displayPrivateIndex].ptr = tdd;
 
     WRAP (tdd, d, initPluginForDisplay, tdInitPluginForDisplay);
     WRAP (tdd, d, finiPluginForDisplay, tdFiniPluginForDisplay);
@@ -951,7 +954,7 @@ tdInitScreen (CompPlugin *p,
     tds->first = NULL;
     tds->last  = NULL;
 
-    s->privates[tdd->screenPrivateIndex].ptr = tds;
+    s->object.privates[tdd->screenPrivateIndex].ptr = tds;
 
     return TRUE;
 }
@@ -983,7 +986,7 @@ tdInitWindow (CompPlugin *p,
     tdw->prev = NULL;
     tdw->next = NULL;
 
-    w->privates[tds->windowPrivateIndex].ptr = tdw;
+    w->object.privates[tds->windowPrivateIndex].ptr = tdw;
 
     return TRUE;
 }
@@ -1013,27 +1016,39 @@ tdFini (CompPlugin *p)
     freeDisplayPrivateIndex (displayPrivateIndex);
 }
 
-static int
-tdGetVersion (CompPlugin *p,
-	      int        version)
+static CompBool
+tdInitObject (CompPlugin *p,
+		 CompObject *o)
 {
-    return ABIVERSION;
+    static InitPluginObjectProc dispTab[] = {
+	(InitPluginObjectProc) tdInitDisplay,
+	(InitPluginObjectProc) tdInitScreen,
+	(InitPluginObjectProc) tdInitWindow
+    };
+
+    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
+}
+
+static void
+tdFiniObject (CompPlugin *p,
+		 CompObject *o)
+{
+    static FiniPluginObjectProc dispTab[] = {
+	(FiniPluginObjectProc) tdFiniDisplay,
+	(FiniPluginObjectProc) tdFiniScreen,
+	(FiniPluginObjectProc) tdFiniWindow
+    };
+
+    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
 }
 
 static CompPluginVTable tdVTable = {
     "3d",
-    tdGetVersion,
     0,
     tdInit,
     tdFini,
-    tdInitDisplay,
-    tdFiniDisplay,
-    tdInitScreen,
-    tdFiniScreen,
-    tdInitWindow,
-    tdFiniWindow,
-    0, /*tdGetDisplayOptions */
-    0, /*tdSetDisplayOption */
+    tdInitObject,
+    tdFiniObject,
     0,
     0
 };
