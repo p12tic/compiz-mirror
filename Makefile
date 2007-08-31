@@ -79,7 +79,7 @@ schema-output   := $(shell if [ -n "$(gen-schemas)" ]; then $(ECHO) $(BUILDDIR)/
 
 ifeq ($(BUILD_GLOBAL),true)
     pkg-target         := $(shell if [ -e compiz-$(PLUGIN).pc.in -a -n "$(PREFIX)" -a -d "$(PREFIX)" ]; then $(ECHO) "$(BUILDDIR)/compiz-$(PLUGIN).pc"; fi )
-    hdr-install-target := $(shell if [ -e compiz-$(PLUGIN).pc.in -a -n "$(PREFIX)" -a -d "$(PREFIX)" -a -e $(PLUGIN).h ]; then $(ECHO) "$(PLUGIN).h"; fi )
+    hdr-install-target := $(shell if [ -e compiz-$(PLUGIN).pc.in -a -n "$(PREFIX)" -a -d "$(PREFIX)" -a -e compiz-$(PLUGIN).h ]; then $(ECHO) "compiz-$(PLUGIN).h"; fi )
 endif
 
 # find all the object files
