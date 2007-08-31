@@ -25,7 +25,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <compiz.h>
+#include <compiz-core.h>
 
 #include <X11/Xatom.h>
 #include <cairo-xlib-xrender.h>
@@ -68,13 +68,13 @@ typedef struct _WallpaperScreen
 } WallpaperScreen;
 
 #define GET_WALLPAPER_DISPLAY(d)					\
-    ((WallpaperDisplay *) (d)->privates[displayPrivateIndex].ptr)
+    ((WallpaperDisplay *) (d)->object.privates[displayPrivateIndex].ptr)
 
 #define WALLPAPER_DISPLAY(d)					\
     WallpaperDisplay * wd = GET_WALLPAPER_DISPLAY(d)
 
 #define GET_WALLPAPER_SCREEN(s, wd)					\
-    ((WallpaperScreen *) (s)->privates[(wd)->screenPrivateIndex].ptr)
+    ((WallpaperScreen *) (s)->object.privates[(wd)->screenPrivateIndex].ptr)
 
 #define WALLPAPER_SCREEN(s)						\
     WallpaperScreen * ws = GET_WALLPAPER_SCREEN(s, GET_WALLPAPER_DISPLAY(s->display))
@@ -620,6 +620,10 @@ wallpaperInitDisplay (CompPlugin * p,
 		      CompDisplay *d)
 {
     WallpaperDisplay * wd;
+
+    if (!checkPluginABI ("core", CORE_ABIVERSION))
+	return FALSE;
+
     wd = malloc(sizeof(WallpaperDisplay));
     if (!wd)
 	return FALSE;
@@ -634,7 +638,7 @@ wallpaperInitDisplay (CompPlugin * p,
     wd->compizWallpaperAtom = XInternAtom(d->display, 
 					  "_COMPIZ_WALLPAPER_SUPPORTED", 0);
 
-    d->privates[displayPrivateIndex].ptr = wd;
+    d->object.privates[displayPrivateIndex].ptr = wd;
 
     return TRUE;
 
@@ -677,7 +681,7 @@ static Bool wallpaperInitScreen (CompPlugin * p,
     ws->propSet = TRUE;
 
 
-    s->privates[wd->screenPrivateIndex].ptr = ws;
+    s->object.privates[wd->screenPrivateIndex].ptr = ws;
 
 
     return TRUE;
@@ -699,6 +703,30 @@ static void wallpaperFiniScreen (CompPlugin * p,
     free(ws);
 }
 
+static CompBool
+wallpaperInitObject (CompPlugin *p,
+		     CompObject *o)
+{
+	static InitPluginObjectProc dispTab[] = {
+		(InitPluginObjectProc) wallpaperInitDisplay,
+		(InitPluginObjectProc) wallpaperInitScreen
+    };
+
+    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
+}
+
+static void
+wallpaperFiniObject (CompPlugin *p,
+		     CompObject *o)
+{
+    static FiniPluginObjectProc dispTab[] = {
+		(FiniPluginObjectProc) wallpaperFiniDisplay,
+		(FiniPluginObjectProc) wallpaperFiniScreen
+    };
+
+    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
+}
+
 static Bool
 wallpaperInit(CompPlugin *p)
 {
@@ -714,28 +742,14 @@ wallpaperFini (CompPlugin *p)
     freeDisplayPrivateIndex(displayPrivateIndex);
 }
 
-static int
-wallpaperGetVersion(CompPlugin * p,
-		    int version)
-{
-    return ABIVERSION;
-}
-
 static CompPluginVTable  wallpaperVTable=
 {
     "wallpaper",
-    wallpaperGetVersion,
     0,
     wallpaperInit,
     wallpaperFini,
-    wallpaperInitDisplay,
-    wallpaperFiniDisplay,
-    wallpaperInitScreen,
-    wallpaperFiniScreen,
-    0,
-    0,
-    0,
-    0,
+    wallpaperInitObject,
+    wallpaperFiniObject,
     0,
     0
 };
