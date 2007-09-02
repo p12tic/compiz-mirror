@@ -1935,8 +1935,7 @@ writeSetting (CCSContext *context,
     {
 	writeIntegratedOption (context, setting, index);
     }
-    else if (setting->isDefault &&
-	     (strcmp (setting->name, "____plugin_enabled") != 0))
+    else if (setting->isDefault)
     {
 	resetOptionToDefault (setting);
     }
