@@ -829,7 +829,10 @@ readListValue (CCSSetting *setting,
 
     valueList = gconf_value_get_list (gconfValue);
     if (!valueList)
-	return FALSE;
+    {
+	ccsSetList (setting, NULL);
+	return TRUE;
+    }
 
     nItems = g_slist_length (valueList);
 
