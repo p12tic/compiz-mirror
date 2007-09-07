@@ -1021,6 +1021,7 @@ tdInitObject (CompPlugin *p,
 		 CompObject *o)
 {
     static InitPluginObjectProc dispTab[] = {
+	(InitPluginObjectProc) 0, /* InitCore */
 	(InitPluginObjectProc) tdInitDisplay,
 	(InitPluginObjectProc) tdInitScreen,
 	(InitPluginObjectProc) tdInitWindow
@@ -1034,6 +1035,7 @@ tdFiniObject (CompPlugin *p,
 		 CompObject *o)
 {
     static FiniPluginObjectProc dispTab[] = {
+	(FiniPluginObjectProc) 0, /* FiniCore */
 	(FiniPluginObjectProc) tdFiniDisplay,
 	(FiniPluginObjectProc) tdFiniScreen,
 	(FiniPluginObjectProc) tdFiniWindow
