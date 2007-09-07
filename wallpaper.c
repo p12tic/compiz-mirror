@@ -68,13 +68,13 @@ typedef struct _WallpaperScreen
 } WallpaperScreen;
 
 #define GET_WALLPAPER_DISPLAY(d)					\
-    ((WallpaperDisplay *) (d)->object.privates[displayPrivateIndex].ptr)
+    ((WallpaperDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
 
 #define WALLPAPER_DISPLAY(d)					\
     WallpaperDisplay * wd = GET_WALLPAPER_DISPLAY(d)
 
 #define GET_WALLPAPER_SCREEN(s, wd)					\
-    ((WallpaperScreen *) (s)->object.privates[(wd)->screenPrivateIndex].ptr)
+    ((WallpaperScreen *) (s)->base.privates[(wd)->screenPrivateIndex].ptr)
 
 #define WALLPAPER_SCREEN(s)						\
     WallpaperScreen * ws = GET_WALLPAPER_SCREEN(s, GET_WALLPAPER_DISPLAY(s->display))
@@ -638,7 +638,7 @@ wallpaperInitDisplay (CompPlugin * p,
     wd->compizWallpaperAtom = XInternAtom(d->display, 
 					  "_COMPIZ_WALLPAPER_SUPPORTED", 0);
 
-    d->object.privates[displayPrivateIndex].ptr = wd;
+    d->base.privates[displayPrivateIndex].ptr = wd;
 
     return TRUE;
 
@@ -681,7 +681,7 @@ static Bool wallpaperInitScreen (CompPlugin * p,
     ws->propSet = TRUE;
 
 
-    s->object.privates[wd->screenPrivateIndex].ptr = ws;
+    s->base.privates[wd->screenPrivateIndex].ptr = ws;
 
 
     return TRUE;
@@ -707,9 +707,10 @@ static CompBool
 wallpaperInitObject (CompPlugin *p,
 		     CompObject *o)
 {
-	static InitPluginObjectProc dispTab[] = {
-		(InitPluginObjectProc) wallpaperInitDisplay,
-		(InitPluginObjectProc) wallpaperInitScreen
+    static InitPluginObjectProc dispTab[] = {
+	(InitPluginObjectProc) 0, /* InitCore */
+	(InitPluginObjectProc) wallpaperInitDisplay,
+	(InitPluginObjectProc) wallpaperInitScreen
     };
 
     RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
@@ -720,8 +721,9 @@ wallpaperFiniObject (CompPlugin *p,
 		     CompObject *o)
 {
     static FiniPluginObjectProc dispTab[] = {
-		(FiniPluginObjectProc) wallpaperFiniDisplay,
-		(FiniPluginObjectProc) wallpaperFiniScreen
+	(FiniPluginObjectProc) 0, /* FiniCore */
+	(FiniPluginObjectProc) wallpaperFiniDisplay,
+	(FiniPluginObjectProc) wallpaperFiniScreen
     };
 
     DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
