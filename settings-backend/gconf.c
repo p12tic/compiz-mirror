@@ -160,6 +160,11 @@ const SpecialOption specialOptions[] = {
     {"mouse_button_modifier", NULL, FALSE,
      METACITY "/general/mouse_button_modifier", OptionSpecial},
 
+    {"visual_bell", "fade", TRUE,
+     METACITY "/general/visual_bell", OptionBool},
+    {"fullscreen_visual_bell", "fade", TRUE,
+     METACITY "/general/visual_bell_type", OptionSpecial},
+
     {"next_key", "switcher", FALSE,
      METACITY "/global_keybindings/switch_windows", OptionKey},
     {"prev_key", "switcher", FALSE,
@@ -1041,6 +1046,23 @@ readIntegratedOption (CCSContext *context,
 		    ret = TRUE;
 		}
 	    }
+	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
+	    {
+		const char *name;
+		char       *value;
+
+		name = specialOptions[index].gnomeName;
+		value = gconf_client_get_string (client, name, &err);
+		if (!err && value)
+		{
+		    Bool fullscreen;
+
+		    fullscreen = strcmp (value, "fullscreen") == 0;
+		    ccsSetBool (setting, fullscreen);
+		    ret = TRUE;
+		    g_free (value);
+		}
+	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
 		char       *focusMode;
@@ -1551,6 +1573,24 @@ writeIntegratedOption (CCSContext *context,
 		gconf_client_set_bool (client, optionName,
 				       !currentViewport, NULL);
 	    }
+	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
+	    {
+		Bool  fullscreen;
+		gchar *currentValue, *newValue;
+		if (!ccsGetBool (setting, &fullscreen))
+		    break;
+
+		newValue = fullscreen ? "fullscreen" : "frame_flash";
+		currentValue = gconf_client_get_string (client,
+							optionName, &err);
+		if (!err && currentValue)
+		{
+		    if (strcmp (currentValue, newValue) != 0)
+			gconf_client_set_string (client, optionName,
+						 newValue, NULL);
+		    g_free (currentValue);
+		}
+	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
 		Bool  clickToFocus;
@@ -1564,7 +1604,7 @@ writeIntegratedOption (CCSContext *context,
 
 		if (!err && currentValue)
 		{
-		    if (strcmp(currentValue, newValue) != 0)
+		    if (strcmp (currentValue, newValue) != 0)
 			gconf_client_set_string (client, optionName,
 						 newValue, NULL);
 		    g_free (currentValue);
