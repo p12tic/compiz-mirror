@@ -1544,6 +1544,12 @@ writeIntegratedOption (CCSContext *context,
 	    newValue = ccsKeyBindingToString (&setting->value->value.asKey);
 	    if (newValue)
     	    {
+		if (strcmp (newValue, "Disabled") == 0)
+		{
+		    /* Metacity doesn't like "Disabled", it wants "disabled" */
+		    newValue[0] = 'd';
+		}
+
 		currentValue = gconf_client_get_string (client,
 							optionName, &err);
 
