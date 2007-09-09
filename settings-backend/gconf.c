@@ -31,7 +31,6 @@
 #include <malloc.h>
 #include <string.h>
 #include <dirent.h>
-#include <math.h>
 
 #include <ccs.h>
 #include <ccs-backend.h>
@@ -81,10 +80,9 @@
 static const char* watchedGnomeDirectories[] = {
     METACITY,
     "/desktop/gnome/applications/terminal",
-    "/apps/panel/applets/window_list/prefs",
-    "/apps/panel/applets/workspace_switcher/prefs"
+    "/apps/panel/applets/window_list/prefs"
 };
-#define NUM_WATCHED_DIRS 4
+#define NUM_WATCHED_DIRS 3
 
 static GConfClient *client = NULL;
 static GConfEngine *conf = NULL;
@@ -393,11 +391,8 @@ const SpecialOption specialOptions[] = {
 
     {"audible_bell", "core", FALSE,
      METACITY "/general/audible_bell", OptionBool},
-
     {"hsize", "core", TRUE,
-     METACITY "/general/num_workspaces", OptionSpecial},
-    {"vsize", "core", TRUE,
-     "/apps/panel/applets/workspace_switcher/prefs/num_rows", OptionSpecial}
+     METACITY "/general/num_workspaces", OptionInt},
 };
 
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOption))
@@ -1084,35 +1079,6 @@ readIntegratedOption (CCSContext *context,
 		    g_free (focusMode);
 		}
 	    }
-	    else if ((strcmp (settingName, "hsize") == 0) ||
-		     (strcmp (settingName, "vsize") == 0))
-	    {
-		int numDesks, numRows;
-		int hsize, vsize, value;
-
-		numDesks = gconf_client_get_int (client, METACITY
-						 "/general/num_workspaces",
-						 &err);
-		if (err)
-		    break;
-
-		numRows = gconf_client_get_int (client, "/apps/panel/applets/"
-						"workspace_switcher/prefs/"
-						"num_rows", &err);
-		if (err)
-		    break;
-
-		hsize = ceil ((float)numDesks / (float) numRows);
-		vsize = numRows;
-
-		if (strcmp (settingName, "hsize") == 0)
-		    value = hsize;
-		else
-		    value = vsize;
-
-		ccsSetInt (setting, value);
-		ret = TRUE;
-	    }
 	    else if (((strcmp (settingName, "initiate") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
 		       (strcmp (pluginName, "resize") == 0))) ||
@@ -1643,36 +1609,6 @@ writeIntegratedOption (CCSContext *context,
 						 newValue, NULL);
 		    g_free (currentValue);
 		}
-	    }
-	    else if ((strcmp (settingName, "hsize") == 0) ||
-		     (strcmp (settingName, "vsize") == 0))
-	    {
-		CCSPlugin *p;
-		CCSSetting *s;
-		int hsize, vsize;
-
-		p = ccsFindPlugin (context, "core");
-		if (!p)
-		    break;
-
-		s = ccsFindSetting (p, "hsize", TRUE, 0);
-		if (!s)
-		    break;
-		if (!ccsGetInt (s, &hsize))
-		    break;
-
-		s = ccsFindSetting (p, "vsize", TRUE, 0);
-		if (!s)
-		    break;
-		if (!ccsGetInt (s, &vsize))
-		    break;
-
-		gconf_client_set_int (client, METACITY
-				      "/general/num_workspaces",
-				      hsize * vsize, NULL);
-		gconf_client_set_int (client, "/apps/panel/applets/"
-				      "workspace_switcher/prefs/num_rows",
-				      vsize, NULL);
 	    }
 	    else if (((strcmp (settingName, "initiate") == 0) &&
 	    	      ((strcmp (pluginName, "move") == 0) ||
