@@ -816,23 +816,17 @@ tdInitPluginForObject (CompPlugin *p,
 	CompOption  *option;
 	int         nOption;
 
-	if (!p->vTable->getObjectOptions)
+    	if (!p->vTable->getObjectOptions)
 	{
 	    compLogMessage (d, "3d", CompLogLevelError,
 			    "Can't get cube plugin vTable");
 	}
 	else
 	{
-	    int        abi = -1;
-	    CompObject *object;
+	    int abi = -1;
 
-	    object = compObjectFind (&core.base,
-				     COMP_OBJECT_TYPE_DISPLAY, NULL);
-	    if (object)
-	    {
-		option = (*p->vTable->getObjectOptions) (p, object, &nOption);
-		abi = getIntOptionNamed (option, nOption, "abi", 0);
-	    }
+    	    option = (*p->vTable->getObjectOptions) (p, o, &nOption);
+	    abi = getIntOptionNamed (option, nOption, "abi", 0);
 
 	    if (abi != CUBE_ABIVERSION)
 	    {
@@ -846,17 +840,17 @@ tdInitPluginForObject (CompPlugin *p,
 	    }
 	}
 
-	if (cubeDisplayPrivateIndex >= 0)
+    	if (cubeDisplayPrivateIndex >= 0)
 	{
 	    CompScreen *s;
 
-	    /* we have to wrap those functions here in order to have
+    	    /* we have to wrap those functions here in order to have
 	       them wrapped before the cube functions */
 	    for (s = d->screens; s; s = s->next)
 	    {
 		TD_SCREEN (s);
 
-		WRAP (tds, s, paintTransformedOutput, tdPaintTransformedOutput);
+	    	WRAP (tds, s, paintTransformedOutput, tdPaintTransformedOutput);
 		WRAP (tds, s, paintWindow, tdPaintWindow);
 		WRAP (tds, s, paintOutput, tdPaintOutput);
 		WRAP (tds, s, donePaintScreen, tdDonePaintScreen);
@@ -884,24 +878,26 @@ tdFiniPluginForObject (CompPlugin *p,
     (*core.finiPluginForObject) (p, o);
     WRAP (tdc, &core, finiPluginForObject, tdFiniPluginForObject);
 
-    if ((strcmp (p->vTable->name, "cube") == 0) &&
-	(o->type == COMP_OBJECT_TYPE_DISPLAY))
+    if (strcmp (p->vTable->name, "cube") == 0)
     {
-	CompDisplay *d = (CompDisplay *) o;
-	CompScreen  *s;
-
-	for (s = d->screens; s; s = s->next)
+	if (o->type == COMP_OBJECT_TYPE_DISPLAY)
 	{
-	    TD_SCREEN (s);
-	    UNWRAP (tds, s, paintTransformedOutput);
-	    UNWRAP (tds, s, paintWindow);
-	    UNWRAP (tds, s, paintOutput);
-	    UNWRAP (tds, s, donePaintScreen);
-	    UNWRAP (tds, s, preparePaintScreen);
-	    UNWRAP (tds, s, initWindowWalker);
-	    UNWRAP (tds, s, applyScreenTransform);
+	    CompDisplay *d = (CompDisplay *) o;
+	    CompScreen  *s;
+
+	    for (s = d->screens; s; s = s->next)
+	    {
+		TD_SCREEN (s);
+		UNWRAP (tds, s, paintTransformedOutput);
+		UNWRAP (tds, s, paintWindow);
+		UNWRAP (tds, s, paintOutput);
+		UNWRAP (tds, s, donePaintScreen);
+		UNWRAP (tds, s, preparePaintScreen);
+		UNWRAP (tds, s, initWindowWalker);
+		UNWRAP (tds, s, applyScreenTransform);
+	    }
+	    cubeDisplayPrivateIndex = -1;
 	}
-	cubeDisplayPrivateIndex = -1;
     }
 }
 
