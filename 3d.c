@@ -49,14 +49,7 @@ TODO:
 #define PI 3.14159265359f
 
 static int displayPrivateIndex;
-static int corePrivateIndex;
 static int cubeDisplayPrivateIndex = -1;
-
-typedef struct _tdCore
-{
-    InitPluginForObjectProc initPluginForObject;
-    FiniPluginForObjectProc finiPluginForObject;
-} tdCore;
 
 typedef struct _tdDisplay
 {
@@ -99,12 +92,6 @@ typedef struct _tdScreen
     float basicScale;
     float maxDepth;
 } tdScreen;
-
-#define GET_TD_CORE(c) \
-    ((tdCore *) (c)->base.privates[corePrivateIndex].ptr)
-
-#define TD_CORE(c) \
-    tdCore *tdc = GET_TD_CORE (c)
 
 #define GET_TD_DISPLAY(d)       \
     ((tdDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
@@ -802,152 +789,19 @@ tdInitWindowWalker (CompScreen *s,
 }
 
 static Bool
-tdInitPluginForObject (CompPlugin *p,
-	       	       CompObject *o)
-{
-    CompBool status;
-
-    TD_CORE (&core);
-
-    if ((strcmp (p->vTable->name, "cube") == 0) &&
-	(o->type == COMP_OBJECT_TYPE_DISPLAY))
-    {
-	CompDisplay *d = (CompDisplay *) o;
-	CompOption  *option;
-	int         nOption;
-
-    	if (!p->vTable->getObjectOptions)
-	{
-	    compLogMessage (d, "3d", CompLogLevelError,
-			    "Can't get cube plugin vTable");
-	}
-	else
-	{
-	    int abi = -1;
-
-    	    option = (*p->vTable->getObjectOptions) (p, o, &nOption);
-	    abi = getIntOptionNamed (option, nOption, "abi", 0);
-
-	    if (abi != CUBE_ABIVERSION)
-	    {
-		compLogMessage (d, "3d", CompLogLevelError,
-				"cube ABI version mismatch");
-	    }
-	    else
-	    {
-		cubeDisplayPrivateIndex = getIntOptionNamed (option, nOption,
-							     "index", -1);
-	    }
-	}
-
-    	if (cubeDisplayPrivateIndex >= 0)
-	{
-	    CompScreen *s;
-
-    	    /* we have to wrap those functions here in order to have
-	       them wrapped before the cube functions */
-	    for (s = d->screens; s; s = s->next)
-	    {
-		TD_SCREEN (s);
-
-	    	WRAP (tds, s, paintTransformedOutput, tdPaintTransformedOutput);
-		WRAP (tds, s, paintWindow, tdPaintWindow);
-		WRAP (tds, s, paintOutput, tdPaintOutput);
-		WRAP (tds, s, donePaintScreen, tdDonePaintScreen);
-		WRAP (tds, s, preparePaintScreen, tdPreparePaintScreen);
-		WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
-		WRAP (tds, s, applyScreenTransform, tdApplyScreenTransform);
-	    }
-	}
-    }
-
-    UNWRAP (tdc, &core, initPluginForObject);
-    status = (*core.initPluginForObject) (p, o);
-    WRAP (tdc, &core, initPluginForObject, tdInitPluginForObject);
-
-    return status;
-}
-
-static void
-tdFiniPluginForObject (CompPlugin *p,
-	       	       CompObject *o)
-{
-    TD_CORE (&core);
-
-    UNWRAP (tdc, &core, finiPluginForObject);
-    (*core.finiPluginForObject) (p, o);
-    WRAP (tdc, &core, finiPluginForObject, tdFiniPluginForObject);
-
-    if (strcmp (p->vTable->name, "cube") == 0)
-    {
-	if (o->type == COMP_OBJECT_TYPE_DISPLAY)
-	{
-	    CompDisplay *d = (CompDisplay *) o;
-	    CompScreen  *s;
-
-	    for (s = d->screens; s; s = s->next)
-	    {
-		TD_SCREEN (s);
-		UNWRAP (tds, s, paintTransformedOutput);
-		UNWRAP (tds, s, paintWindow);
-		UNWRAP (tds, s, paintOutput);
-		UNWRAP (tds, s, donePaintScreen);
-		UNWRAP (tds, s, preparePaintScreen);
-		UNWRAP (tds, s, initWindowWalker);
-		UNWRAP (tds, s, applyScreenTransform);
-	    }
-	    cubeDisplayPrivateIndex = -1;
-	}
-    }
-}
-
-static Bool
-tdInitCore (CompPlugin *p,
-	    CompCore   *c)
-{
-    tdCore *tdc;
-
-    if (!checkPluginABI ("core", CORE_ABIVERSION))
-	return FALSE;
-
-    tdc = malloc (sizeof (tdCore));
-    if (!tdc)
-	return FALSE;
-
-    displayPrivateIndex = allocateDisplayPrivateIndex ();
-    if (displayPrivateIndex < 0)
-    {
-	free (tdc);
-	return FALSE;
-    }
-
-    WRAP (tdc, c, initPluginForObject, tdInitPluginForObject);
-    WRAP (tdc, c, finiPluginForObject, tdFiniPluginForObject);
-
-    c->base.privates[corePrivateIndex].ptr = tdc;
-
-    return TRUE;
-}
-
-static void
-tdFiniCore (CompPlugin *p,
-	    CompCore   *c)
-{
-    TD_CORE (c);
-
-    UNWRAP (tdc, c, initPluginForObject);
-    UNWRAP (tdc, c, finiPluginForObject);
-
-    freeDisplayPrivateIndex (displayPrivateIndex);
-
-    free (tdc);
-}
-
-static Bool
 tdInitDisplay (CompPlugin  *p,
 	       CompDisplay *d)
 {
     tdDisplay *tdd;
+
+    if (!checkPluginABI ("core", CORE_ABIVERSION))
+	return FALSE;
+
+    if (!checkPluginABI ("cube", CUBE_ABIVERSION))
+	return FALSE;
+
+    if (!getPluginDisplayIndex (d, "cube", &cubeDisplayPrivateIndex))
+	return FALSE;
 
     tdd = malloc (sizeof (tdDisplay));
     if (!tdd)
@@ -1006,6 +860,14 @@ tdInitScreen (CompPlugin *p,
 
     s->base.privates[tdd->screenPrivateIndex].ptr = tds;
 
+    WRAP (tds, s, paintTransformedOutput, tdPaintTransformedOutput);
+    WRAP (tds, s, paintWindow, tdPaintWindow);
+    WRAP (tds, s, paintOutput, tdPaintOutput);
+    WRAP (tds, s, donePaintScreen, tdDonePaintScreen);
+    WRAP (tds, s, preparePaintScreen, tdPreparePaintScreen);
+    WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
+    WRAP (tds, s, applyScreenTransform, tdApplyScreenTransform);
+
     return TRUE;
 }
 
@@ -1014,6 +876,14 @@ tdFiniScreen (CompPlugin *p,
 	      CompScreen *s)
 {
     TD_SCREEN (s);
+
+    UNWRAP (tds, s, paintTransformedOutput);
+    UNWRAP (tds, s, paintWindow);
+    UNWRAP (tds, s, paintOutput);
+    UNWRAP (tds, s, donePaintScreen);
+    UNWRAP (tds, s, preparePaintScreen);
+    UNWRAP (tds, s, initWindowWalker);
+    UNWRAP (tds, s, applyScreenTransform);
 
     freeWindowPrivateIndex (s, tds->windowPrivateIndex);
 	
@@ -1053,8 +923,8 @@ tdFiniWindow (CompPlugin *p,
 static Bool
 tdInit (CompPlugin *p)
 {
-    corePrivateIndex = allocateCorePrivateIndex ();
-    if (corePrivateIndex < 0)
+    displayPrivateIndex = allocateDisplayPrivateIndex ();
+    if (displayPrivateIndex < 0)
 	return FALSE;
 
     return TRUE;
@@ -1063,7 +933,7 @@ tdInit (CompPlugin *p)
 static void
 tdFini (CompPlugin *p)
 {
-    freeCorePrivateIndex (corePrivateIndex);
+    freeDisplayPrivateIndex (displayPrivateIndex);
 }
 
 static CompBool
@@ -1071,7 +941,7 @@ tdInitObject (CompPlugin *p,
 	      CompObject *o)
 {
     static InitPluginObjectProc dispTab[] = {
-	(InitPluginObjectProc) tdInitCore,
+	(InitPluginObjectProc) 0, /* InitCore */
 	(InitPluginObjectProc) tdInitDisplay,
 	(InitPluginObjectProc) tdInitScreen,
 	(InitPluginObjectProc) tdInitWindow
@@ -1085,7 +955,7 @@ tdFiniObject (CompPlugin *p,
 	      CompObject *o)
 {
     static FiniPluginObjectProc dispTab[] = {
-	(FiniPluginObjectProc) tdFiniCore,
+	(FiniPluginObjectProc) 0, /* FiniCore */
 	(FiniPluginObjectProc) tdFiniDisplay,
 	(FiniPluginObjectProc) tdFiniScreen,
 	(FiniPluginObjectProc) tdFiniWindow
