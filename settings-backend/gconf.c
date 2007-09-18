@@ -391,8 +391,8 @@ const SpecialOption specialOptions[] = {
 
     {"audible_bell", "core", FALSE,
      METACITY "/general/audible_bell", OptionBool},
-    {"hsize", "core", TRUE,
-     METACITY "/general/num_workspaces", OptionInt},
+    /*{"hsize", "core", TRUE,
+     METACITY "/general/num_workspaces", OptionInt},*/
 };
 
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOption))
