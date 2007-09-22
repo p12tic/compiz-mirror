@@ -27,9 +27,11 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <poll.h>
+#include <errno.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <string.h>
+#include <pwd.h>
 #include <X11/SM/SMlib.h>
 #include <X11/ICE/ICElib.h>
 
@@ -130,15 +132,37 @@ sessionGetWindowName (CompDisplay *d,
 }
 
 static void
-writeFile (CompDisplay *d)
+saveState (CompDisplay *d)
 {
     SESSION_DISPLAY (d);
-    CompScreen  *s;
-    CompWindow  *w;
-    char        *name;
-    FILE        *outfile;
+    CompScreen    *s;
+    CompWindow    *w;
+    char           filename[1024];
+    char          *name;
+    FILE          *outfile;
+    struct passwd *p = getpwuid(geteuid());
 
-    outfile = fopen ("/home/travis/.config/compiz/session", "w");
+    //setup filename and create directories as needed
+    strncat (filename, p->pw_dir, 1024);
+    strncat (filename, "/.compiz/", 1024);
+    if (mkdir (filename, 0700) == 0 || errno == EEXIST)
+    {
+	strncat (filename, "session/", 1024);
+	if (mkdir (filename, 0700) == 0 || errno == EEXIST)
+	{
+	    strncat (filename, smClientId, 1024);
+	}
+	else
+	{
+	    return;
+	}
+    }
+    else
+    {
+	return;
+    }
+
+    outfile = fopen (filename, "w");
     if (outfile == NULL)
     {
 	return;
@@ -247,6 +271,11 @@ writeFile (CompDisplay *d)
 }
 
 static void
+loadState (CompDisplay *d)
+{
+}
+
+static void
 setCloneRestartCommands (SmcConn connection)
 {
     char *restartv[10];
@@ -345,7 +374,7 @@ saveYourselfCallback (SmcConn	connection,
 		      int	interact_Style,
 		      Bool	fast)
 {
-    writeFile ((CompDisplay*) client_data);
+    saveState ((CompDisplay*) client_data);
 
     if (!SmcGetProperties (connection, saveYourselfGotProps, NULL))
 	SmcSaveYourselfDone (connection, 1);
