@@ -197,11 +197,11 @@ static Bool tdPaintWindow (CompWindow              *w,
 			   unsigned int            mask);
 
 static Bool
-tdPaintWindowDepth (CompWindow              *w,
-		    const WindowPaintAttrib *attrib,
-		    const CompTransform     *transform,
-		    Region                  region,
-		    unsigned int            mask)
+tdPaintWindowWithDepth (CompWindow              *w,
+		     	const WindowPaintAttrib *attrib,
+			const CompTransform     *transform,
+			Region                  region,
+			unsigned int            mask)
 {
     Bool wasCulled;
     Bool status;
@@ -454,7 +454,8 @@ tdPaintWindow (CompWindow              *w,
     {
 	if (tdGetWidth (s))
 	{
-	    status = tdPaintWindowDepth (w, attrib, transform, region, mask);
+	    status = tdPaintWindowWithDepth (w, attrib, transform,
+					     region, mask);
 	}
 	else
 	{
