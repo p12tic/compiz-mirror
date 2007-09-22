@@ -75,13 +75,13 @@ typedef struct _tdScreen
     Bool active;
     Bool wasActive;
 
-    PreparePaintScreenProc     preparePaintScreen;
-    PaintTransformedOutputProc paintTransformedOutput;
-    PaintOutputProc	       paintOutput;
-    DonePaintScreenProc	       donePaintScreen;
-    InitWindowWalkerProc       initWindowWalker;
-    ApplyScreenTransformProc   applyScreenTransform;
-    PaintWindowProc            paintWindow;
+    PreparePaintScreenProc    preparePaintScreen;
+    PaintOutputProc	      paintOutput;
+    CubePostPaintViewportProc postPaintViewport;
+    DonePaintScreenProc	      donePaintScreen;
+    InitWindowWalkerProc      initWindowWalker;
+    ApplyScreenTransformProc  applyScreenTransform;
+    PaintWindowProc           paintWindow;
 
     CompWindow *first;
     CompWindow *last;
@@ -528,18 +528,21 @@ tdAddWindow (CompWindow *w)
 }
 
 static void
-tdPaintTransformedOutput (CompScreen              *s,
-			  const ScreenPaintAttrib *sAttrib,
-			  const CompTransform     *transform,
-			  Region                  region,
-			  CompOutput              *output,
-			  unsigned int            mask)
+tdPostPaintViewport (CompScreen              *s,
+	   	     const ScreenPaintAttrib *sAttrib,
+   		     const CompTransform     *transform,
+		     CompOutput              *output,
+		     Region                  region)
 {
     CompWindow* w;
     CompWindow* firstFTB = NULL;
 
     TD_SCREEN (s);
     CUBE_SCREEN (s);
+
+    UNWRAP (tds, cs, postPaintViewport);
+    (*cs->postPaintViewport) (s, sAttrib, transform, output, region);
+    WRAP (tds, cs, postPaintViewport, tdPostPaintViewport);
 
     if (tds->active || tds->tdWindowExists)
     {
@@ -606,10 +609,6 @@ tdPaintTransformedOutput (CompScreen              *s,
     }
 
     tds->currentScale = tds->basicScale;
-    UNWRAP (tds, s, paintTransformedOutput);
-    (*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask);
-    WRAP (tds, s, paintTransformedOutput, tdPaintTransformedOutput);
-
     tds->test = TRUE;
 
     {
@@ -801,6 +800,7 @@ tdInitScreen (CompPlugin *p,
     tdScreen *tds;
 
     TD_DISPLAY (s->display);
+    CUBE_SCREEN (s);
 
     tds = malloc (sizeof (tdScreen));
     if (!tds)
@@ -824,13 +824,13 @@ tdInitScreen (CompPlugin *p,
 
     s->base.privates[tdd->screenPrivateIndex].ptr = tds;
 
-    WRAP (tds, s, paintTransformedOutput, tdPaintTransformedOutput);
     WRAP (tds, s, paintWindow, tdPaintWindow);
     WRAP (tds, s, paintOutput, tdPaintOutput);
     WRAP (tds, s, donePaintScreen, tdDonePaintScreen);
     WRAP (tds, s, preparePaintScreen, tdPreparePaintScreen);
     WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
     WRAP (tds, s, applyScreenTransform, tdApplyScreenTransform);
+    WRAP (tds, cs, postPaintViewport, tdPostPaintViewport);
 
     return TRUE;
 }
@@ -840,14 +840,15 @@ tdFiniScreen (CompPlugin *p,
 	      CompScreen *s)
 {
     TD_SCREEN (s);
+    CUBE_SCREEN (s);
 
-    UNWRAP (tds, s, paintTransformedOutput);
     UNWRAP (tds, s, paintWindow);
     UNWRAP (tds, s, paintOutput);
     UNWRAP (tds, s, donePaintScreen);
     UNWRAP (tds, s, preparePaintScreen);
     UNWRAP (tds, s, initWindowWalker);
     UNWRAP (tds, s, applyScreenTransform);
+    UNWRAP (tds, cs, postPaintViewport);
 
     freeWindowPrivateIndex (s, tds->windowPrivateIndex);
 	
