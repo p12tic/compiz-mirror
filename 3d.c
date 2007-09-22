@@ -189,6 +189,251 @@ tdPreparePaintScreen (CompScreen *s,
     cs->paintAllViewports |= tds->active | tds->tdWindowExists;
 }
 
+/* forward declaration */
+static Bool tdPaintWindow (CompWindow              *w,
+			   const WindowPaintAttrib *attrib,
+			   const CompTransform     *transform,
+			   Region                  region,
+			   unsigned int            mask);
+
+static Bool
+tdPaintWindowDepth (CompWindow              *w,
+		    const WindowPaintAttrib *attrib,
+		    const CompTransform     *transform,
+		    Region                  region,
+		    unsigned int            mask)
+{
+    Bool wasCulled;
+    Bool status;
+    int wx, wy, wx2, wy2, ww, wh;
+    int bevel;
+    float wwidth;
+    CompTransform wTransform = *transform;
+    CompScreen *s = w->screen;
+
+    TD_SCREEN (s);
+
+    wasCulled = glIsEnabled (GL_CULL_FACE);
+
+    wx = MAX (0, MIN (s->width, w->attrib.x - w->input.left));
+    wx2 = MAX (0, MIN (s->width, w->attrib.x + w->width + w->input.right));
+
+    wy = MAX (0, MIN (s->height, w->attrib.y - w->input.top));
+    wy2 = MAX (0, MIN (s->height, w->attrib.y + w->height + w->input.bottom));
+
+    ww = wx2 - wx;
+    wh = wy2 - wy;
+
+    wwidth = -(tdGetWidth (s)) / 30;
+    bevel = tdGetBevel (s);
+
+    if (ww && wh && !(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
+    {
+	TD_WINDOW (w);
+
+	if (!tdw->ftb)
+	{
+	    glEnable (GL_CULL_FACE);
+	    glCullFace (GL_FRONT);
+
+	    matrixTranslate (&wTransform, 0.0f, 0.0f, wwidth);
+
+    	    UNWRAP (tds, s, paintWindow);
+	    status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
+	    WRAP (tds, s, paintWindow, tdPaintWindow);
+
+	    matrixTranslate (&wTransform, 0.0f, 0.0f, -wwidth);
+	}
+	else
+	{
+	    glEnable (GL_CULL_FACE);
+	    glCullFace (GL_BACK);
+
+	    UNWRAP (tds, s, paintWindow);
+    	    status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
+    	    WRAP (tds, s, paintWindow, tdPaintWindow);
+	}
+
+	/* Paint window depth. */
+
+	glPushMatrix ();
+	glLoadMatrixf (wTransform.m);
+
+	glDisable (GL_CULL_FACE);
+	glEnable (GL_BLEND);
+
+	glBegin (GL_QUADS);
+	glColor4f (0.90f, 0.90f, 0.90f, w->paint.opacity / OPAQUE);
+
+#define DOBEVEL(corner) (tdGetBevel##corner (s) ? bevel : 0)
+
+	/* Top */
+	glVertex3f (wx + DOBEVEL (Topleft), wy, 0);
+	glVertex3f (wx + ww - DOBEVEL (Topright), wy, 0);
+	glVertex3f (wx + ww - DOBEVEL (Topright), wy, wwidth);
+	glVertex3f (wx + DOBEVEL (Topleft), wy, wwidth);
+
+	/* Bottom */
+	glVertex3f (wx + DOBEVEL (Bottomleft), wy + wh, 0);
+	glVertex3f (wx + ww - DOBEVEL (Bottomright), wy + wh, 0);
+	glVertex3f (wx + ww - DOBEVEL (Bottomright), wy + wh, wwidth);
+	glVertex3f (wx + DOBEVEL (Bottomleft), wy + wh, wwidth);
+
+	glColor4f (0.70f, 0.70f, 0.70f,  w->paint.opacity / OPAQUE);
+
+	/* Left */
+	if (w->attrib.x >= s->workArea.x)
+	{
+	    glVertex3f (wx, wy + DOBEVEL (Topleft), 0);
+	    glVertex3f (wx, wy + wh - DOBEVEL (Bottomleft), 0);
+	    glVertex3f (wx, wy + wh - DOBEVEL (Bottomleft), wwidth);
+	    glVertex3f (wx, wy + DOBEVEL (Topleft), wwidth);
+	}
+
+	/* Right */
+	if ((w->attrib.x + w->width + w->input.left + w->input.right) <=
+	    s->workArea.width)
+	{
+	    glVertex3f (wx + ww, wy + DOBEVEL (Topright), 0);
+	    glVertex3f (wx + ww, wy + wh - DOBEVEL (Bottomright), 0);
+	    glVertex3f (wx + ww, wy + wh - DOBEVEL (Bottomright), wwidth);
+	    glVertex3f (wx + ww, wy + DOBEVEL (Topright), wwidth);
+	}
+
+	glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
+
+	if (w->attrib.x >= s->workArea.x)
+	{
+	    /* Top left bevel */
+	    if (tdGetBevelTopleft (s))
+	    {
+		glVertex3f (wx, wy + bevel, wwidth);
+		glVertex3f (wx, wy + bevel, 0);
+		glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
+		glVertex3f (wx + bevel / 2.0f,
+			    wy + bevel - bevel / 1.2f, wwidth);
+
+		glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
+
+		glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
+		glVertex3f (wx + bevel / 2.0f,
+			    wy + bevel - bevel / 1.2f, wwidth);
+		glVertex3f (wx + bevel, wy, wwidth);
+		glVertex3f (wx + bevel, wy, 0);
+
+		glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
+	    }
+
+	    /* Bottom left bevel */
+	    if (tdGetBevelBottomleft (s))
+	    {
+		glVertex3f (wx, wy + wh - bevel, 0);
+		glVertex3f (wx, wy + wh - bevel, wwidth);
+		glVertex3f (wx + bevel / 2.0f,
+			    wy + wh - bevel + bevel / 1.2f, wwidth);
+		glVertex3f (wx + bevel / 2.0f,
+			    wy + wh - bevel + bevel / 1.2f, 0);
+
+		glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
+
+		glVertex3f (wx + bevel / 2.0f,
+			    wy + wh - bevel + bevel / 1.2f, wwidth);
+		glVertex3f (wx + bevel / 2.0f,
+			    wy + wh - bevel + bevel / 1.2f, 0);
+		glVertex3f (wx + bevel, wy + wh, 0);
+		glVertex3f (wx + bevel, wy + wh, wwidth);
+	    }
+	}
+
+	glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
+
+	if ((w->attrib.x + w->width + w->input.left + w->input.right) <=
+	    s->workArea.width)
+	{
+	    /* Bottom right bevel */
+	    if (tdGetBevelBottomright (s))
+	    {
+		glVertex3f (wx + ww - bevel, wy + wh, 0);
+		glVertex3f (wx + ww - bevel, wy + wh, wwidth);
+		glVertex3f (wx + ww - bevel / 2.0f,
+			    wy + wh - bevel + bevel / 1.2f, wwidth);
+		glVertex3f (wx + ww - bevel / 2.0f,
+			    wy + wh - bevel + bevel / 1.2f, 0);
+
+		glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
+
+		glVertex3f (wx + ww - bevel / 2.0f,
+			    wy + wh - bevel + bevel / 1.2f, wwidth);
+		glVertex3f (wx + ww - bevel / 2.0f,
+			    wy + wh - bevel + bevel / 1.2f, 0);
+		glVertex3f (wx + ww, wy + wh - bevel, 0);
+		glVertex3f (wx + ww, wy + wh - bevel, wwidth);
+
+		glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
+	    }
+    
+	    /* Top right bevel */
+	    if (tdGetBevelTopright (s))
+	    {
+		glVertex3f (wx + ww - bevel, wy, 0);
+		glVertex3f (wx + ww - bevel, wy, wwidth);
+		glVertex3f (wx + ww - bevel / 2.0f,
+			    wy + bevel - bevel / 1.2f, wwidth);
+		glVertex3f (wx + ww - bevel / 2.0f,
+			    wy + bevel - bevel / 1.2f, 0);
+
+		glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
+
+		glVertex3f (wx + ww - bevel / 2.0f,
+			    wy + bevel - bevel / 1.2f, wwidth);
+		glVertex3f (wx + ww - bevel / 2.0f,
+			    wy + bevel - bevel / 1.2f, 0);
+		glVertex3f (wx + ww, wy + bevel, 0);
+		glVertex3f (wx + ww, wy + bevel, wwidth);
+    	    }
+	}
+
+	glEnd ();
+	glPopMatrix ();
+
+	if (tdw->ftb)
+	{
+	    glEnable (GL_CULL_FACE);
+	    glCullFace (GL_FRONT);
+
+	    matrixTranslate (&wTransform, 0.0f, 0.0f, wwidth);
+
+    	    UNWRAP (tds, s, paintWindow);
+	    status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
+	    WRAP(tds, s, paintWindow, tdPaintWindow);
+
+	    matrixTranslate(&wTransform, 0.0f, 0.0f, -wwidth);
+	}
+	else
+	{
+	    glEnable (GL_CULL_FACE);
+	    glCullFace (GL_BACK);
+
+	    UNWRAP(tds, s, paintWindow);
+	    status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
+	    WRAP (tds, s, paintWindow, tdPaintWindow);
+	}
+    }
+    else
+    {
+	UNWRAP(tds, s, paintWindow);
+	status = (*s->paintWindow) (w, attrib, transform, region, mask);
+	WRAP (tds, s, paintWindow, tdPaintWindow);
+    }
+
+    glCullFace (GL_BACK);
+
+    if (!wasCulled)
+	glDisable (GL_CULL_FACE);
+
+    return status;
+}
+
 static Bool
 tdPaintWindow (CompWindow              *w,
 	       const WindowPaintAttrib *attrib,
@@ -197,292 +442,34 @@ tdPaintWindow (CompWindow              *w,
 	       unsigned int            mask)
 {
     Bool       status;
-    Bool       wasCulled;
     CompScreen *s = w->screen;
-
-    wasCulled = glIsEnabled (GL_CULL_FACE);
 
     TD_SCREEN (s);
     TD_WINDOW (w);
-
-#if 0
-	if (tdw->currentZ != 0.0f)
-	{
-		Bool wasCulled;
-		int width = w->screen->width;
-		int wx, wy, wx2, wy2, ww, wh;
-		CompTransform wTransform = *transform;
-
-		CUBE_SCREEN (w->screen);
-
-		if (!IS_IN_VIEWPORT(w, 0))
-			return TRUE;
-	
-		mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-
-		
-
-		matrixTranslate(&wTransform, 0.0f, 0.0f, tdw->currentZ);
-
-		if (wasCulled && tdGetDisableCulling(w->screen))
-			glDisable(GL_CULL_FACE);
-
-		/*
-		if (!IS_IN_VIEWPORT(w, 0))
-		{
-			float angle = 360 / tds->currentViewportNum;
-
-			matrixScale(&wTransform, 1.0f, 1.0f, 1.0f / width);
-
-			if (RIGHT_VIEWPORT(w) == w->screen->hsize - 1)
-			{
-				matrixTranslate(&wTransform, -width * tdw->currentZ * tds->xMove, 0.0f, 0.0f);
-				matrixRotate(&wTransform, -angle, 0.0f, 1.0f, 0.0f);
-				matrixTranslate(&wTransform, -width * tdw->currentZ * tds->xMove, 0.0f, 0.0f);
-			}
-
-			else if (LEFT_VIEWPORT(w) == 1)
-			{
-				matrixTranslate(&wTransform, width +
-							 width * tdw->currentZ * tds->xMove, 0.0f, 0.0f);
-				matrixRotate(&wTransform, angle, 0.0f, 1.0f, 0.0f);
-				matrixTranslate(&wTransform, width * tdw->currentZ *
-							 tds->xMove - width, 0.0f, 0.0f);
-			}
-		}
-		*/
-
-		if ((LEFT_VIEWPORT(w) != RIGHT_VIEWPORT(w)) && !cs->unfolded)
-		{
-			if (LEFT_VIEWPORT(w) == 0)
-				matrixTranslate(&wTransform, width * tdw->currentZ * tds->xMove, 0.0f, 0.0f);
-
-			if (RIGHT_VIEWPORT(w) == 0)
-				matrixTranslate(&wTransform, -width * tdw->currentZ * tds->xMove, 0.0f, 0.0f);
-		}
-
-		wx = MAX(0, MIN(w->screen->width, w->attrib.x - w->input.left));
-		wx2 = MAX(0, MIN(w->screen->width, w->attrib.x + w->attrib.width + w->input.right));
-
-		wy = MAX(0, MIN(w->screen->height, w->attrib.y - w->input.top));
-		wy2 = MAX(0, MIN(w->screen->height, w->attrib.y + w->attrib.height + w->input.bottom));
-
-		ww = wx2 - wx;
-		wh = wy2 - wy;
-
-		float wwidth = -(tdGetWidth(w->screen)) / 30;
-		int bevel = tdGetBevel(w->screen);
-
-		if ((wwidth != 0) && ww && wh && !w->shaded &&
-			!(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
-		{
-			if (!tdw->ftb)
-			{
-				glEnable(GL_CULL_FACE);	// Make sure culling is on.
-				glCullFace(GL_FRONT);
-
-				matrixTranslate(&wTransform, 0.0f, 0.0f, wwidth);
-
-				UNWRAP(tds, w->screen, paintWindow);
-				status = (*w->screen->paintWindow) (w, attrib, &wTransform, region, mask);
-				WRAP(tds, w->screen, paintWindow, tdPaintWindow);
-
-				matrixTranslate(&wTransform, 0.0f, 0.0f, -wwidth);
-			}
-
-			else
-			{
-				glEnable(GL_CULL_FACE);	// Make sure culling is on.
-				glCullFace(GL_BACK);
-
-				UNWRAP(tds, w->screen, paintWindow);
-				status = (*w->screen->paintWindow) (w, attrib, &wTransform, region, mask);
-				WRAP(tds, w->screen, paintWindow, tdPaintWindow);
-			}
-
-			/* Paint window depth. */
-
-			glPushMatrix();
-    			glLoadMatrixf(wTransform.m);
-
-			glDisable(GL_CULL_FACE);
-			glEnable(GL_BLEND);
-
-			glBegin(GL_QUADS);
-			glColor4f(0.90f, 0.90f, 0.90f, w->paint.opacity/OPAQUE);
-
-	#define DOBEVEL(corner) (tdGetBevel##corner(w->screen) ? bevel : 0)
-
-			/* Top */
-			glVertex3f(wx + DOBEVEL(Topleft), wy, 0);
-			glVertex3f(wx + ww - DOBEVEL(Topright), wy, 0);
-			glVertex3f(wx + ww - DOBEVEL(Topright), wy, (wwidth));
-			glVertex3f(wx + DOBEVEL(Topleft), wy, (wwidth));
-
-			/* Bottom */
-			glVertex3f(wx + DOBEVEL(Bottomleft), wy + wh, 0);
-			glVertex3f(wx + ww - DOBEVEL(Bottomright), wy + wh, 0);
-			glVertex3f(wx + ww - DOBEVEL(Bottomright), wy + wh, wwidth);
-			glVertex3f(wx + DOBEVEL(Bottomleft), wy + wh, wwidth);
-
-
-			glColor4f(0.70f, 0.70f, 0.70f,  w->paint.opacity/OPAQUE);
-
-			/* Left */
-			if (!(w->attrib.x < w->screen->workArea.x))
-			{
-				glVertex3f(wx, wy + DOBEVEL(Topleft), 0);
-				glVertex3f(wx, wy + wh - DOBEVEL(Bottomleft), 0);
-				glVertex3f(wx, wy + wh - DOBEVEL(Bottomleft), wwidth);
-				glVertex3f(wx, wy + DOBEVEL(Topleft), wwidth);
-			}
-
-
-			/* Right */
-			if (!((w->attrib.x + w->attrib.width + w->input.left +
-				  w->input.right) > w->screen->workArea.width))
-			{
-				glVertex3f(wx + ww, wy + DOBEVEL(Topright), 0);
-				glVertex3f(wx + ww, wy + wh - DOBEVEL(Bottomright), 0);
-				glVertex3f(wx + ww, wy + wh - DOBEVEL(Bottomright), wwidth);
-				glVertex3f(wx + ww, wy + DOBEVEL(Topright), wwidth);
-			}
-
-			glColor4f(0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
-
-			if (!(w->attrib.x < w->screen->workArea.x))
-			{
-				/* Top left bevel */
-				if (tdGetBevelTopleft(w->screen))
-				{
-					glVertex3f(wx, wy + bevel, wwidth);
-					glVertex3f(wx, wy + bevel, 0);
-					glVertex3f(wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
-					glVertex3f(wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, wwidth);
-
-					glColor4f(1.0f, 1.0f, 1.0f,  w->paint.opacity/OPAQUE);
-
-					glVertex3f(wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
-					glVertex3f(wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, wwidth);
-					glVertex3f(wx + bevel, wy, wwidth);
-					glVertex3f(wx + bevel, wy, 0);
-
-					glColor4f(0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
-				}
-				/* Bottom left bevel */
-				if (tdGetBevelBottomleft(w->screen))
-				{
-					glVertex3f(wx, wy + wh - bevel, 0);
-					glVertex3f(wx, wy + wh - bevel, wwidth);
-					glVertex3f(wx + bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, wwidth);
-					glVertex3f(wx + bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, 0);
-
-					glColor4f(1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
-
-					glVertex3f(wx + bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, wwidth);
-					glVertex3f(wx + bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, 0);
-					glVertex3f(wx + bevel, wy + wh, 0);
-					glVertex3f(wx + bevel, wy + wh, wwidth);
-				}
-			}
-
-			glColor4f(0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
-
-
-			if (!((w->attrib.x + w->attrib.width + w->input.left +
-				  w->input.right) > w->screen->workArea.width))
-			{
-
-				/* Bottom right bevel */
-				if (tdGetBevelBottomright(w->screen))
-				{
-					glVertex3f(wx + ww - bevel, wy + wh, 0);
-					glVertex3f(wx + ww - bevel, wy + wh, wwidth);
-					glVertex3f(wx + ww - bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, wwidth);
-					glVertex3f(wx + ww - bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, 0);
-
-					glColor4f(1.0f, 1.0f, 1.0f,  w->paint.opacity/OPAQUE);
-
-					glVertex3f(wx + ww - bevel / 2.0f,
-							   wy + wh - bevel + bevel / 1.2f, wwidth);
-					glVertex3f(wx + ww - bevel / 2.0f,
-							   wy + wh - bevel + bevel / 1.2f, 0);
-					glVertex3f(wx + ww, wy + wh - bevel, 0);
-					glVertex3f(wx + ww, wy + wh - bevel, wwidth);
-
-					glColor4f(0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
-				}
-				/* Top right bevel */
-				if (tdGetBevelTopright(w->screen))
-				{
-					glVertex3f(wx + ww - bevel, wy, 0);
-					glVertex3f(wx + ww - bevel, wy, wwidth);
-					glVertex3f(wx + ww - bevel / 2.0f, wy + bevel - bevel / 1.2f, wwidth);
-					glVertex3f(wx + ww - bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
-
-					glColor4f(1.0f, 1.0f, 1.0f,  w->paint.opacity/OPAQUE);
-
-					glVertex3f(wx + ww - bevel / 2.0f, wy + bevel - bevel / 1.2f, wwidth);
-					glVertex3f(wx + ww - bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
-					glVertex3f(wx + ww, wy + bevel, 0);
-					glVertex3f(wx + ww, wy + bevel, wwidth);
-				}
-			}
-
-			glEnd();
-			glPopMatrix();
-
-			if (tdw->ftb)
-			{
-				glEnable(GL_CULL_FACE);	// Re-enable culling.
-				glCullFace(GL_FRONT);
-
-				matrixTranslate(&wTransform, 0.0f, 0.0f, wwidth);
-
-				UNWRAP(tds, w->screen, paintWindow);
-				status = (*w->screen->paintWindow) (w, attrib, &wTransform, region, mask);
-				WRAP(tds, w->screen, paintWindow, tdPaintWindow);
-
-				matrixTranslate(&wTransform, 0.0f, 0.0f, -wwidth);
-			}
-			else
-			{
-				glEnable(GL_CULL_FACE);	// Re-enable culling.
-				glCullFace(GL_BACK);
-
-				UNWRAP(tds, w->screen, paintWindow);
-				status = (*w->screen->paintWindow) (w, attrib, &wTransform, region, mask);
-				WRAP(tds, w->screen, paintWindow, tdPaintWindow);
-			}
-
-			glCullFace(GL_BACK);
-
-			if (!wasCulled)
-				glDisable(GL_CULL_FACE);
-
-			return status;
-		}
-
-		UNWRAP(tds, w->screen, paintWindow);
-		status = (*w->screen->paintWindow) (w, attrib, &wTransform, region, mask);
-		WRAP(tds, w->screen, paintWindow, tdPaintWindow);
-	}
-	else
-#endif
 
     if (tdw->depth != 0.0f && !tds->test && tds->basicScale != 1.0)
 	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
     if (tds->test)
     {
-	glDisable (GL_CULL_FACE);
+	if (tdGetWidth (s))
+	{
+	    status = tdPaintWindowDepth (w, attrib, transform, region, mask);
+	}
+	else
+	{
+	    Bool wasCulled;
 
-	UNWRAP (tds, s, paintWindow);
-	status = (*s->paintWindow) (w, attrib, transform, region, mask);
-	WRAP (tds, s, paintWindow, tdPaintWindow);
+    	    wasCulled = glIsEnabled (GL_CULL_FACE);
+    	    glDisable (GL_CULL_FACE);
 
-	if (wasCulled)
-	    glEnable (GL_CULL_FACE);
+    	    UNWRAP (tds, s, paintWindow);
+    	    status = (*s->paintWindow) (w, attrib, transform, region, mask);
+    	    WRAP (tds, s, paintWindow, tdPaintWindow);
+
+    	    if (wasCulled)
+    		glEnable (GL_CULL_FACE);
+	}
     }
     else
     {
