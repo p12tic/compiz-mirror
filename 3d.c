@@ -185,6 +185,8 @@ tdPreparePaintScreen (CompScreen *s,
     UNWRAP (tds, s, preparePaintScreen);
     (*s->preparePaintScreen) (s, msSinceLastPaint);
     WRAP (tds, s, preparePaintScreen, tdPreparePaintScreen);
+
+    cs->paintAllViewports |= tds->active | tds->tdWindowExists;
 }
 
 static Bool
