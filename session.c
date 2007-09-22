@@ -164,14 +164,13 @@ sessionGetClientId (CompWindow *w)
     XTextProperty text;
     text.nitems = 0;
 
-    clientLeader = w->clientLeader;
     clientId = NULL;
 
-    if (clientLeader == w->id)
+    if (w->clientLeader == w->id)
 	return NULL;
 
     //try to find clientLeader on transient parents
-    if (clientLeader == None)
+    if (w->clientLeader == None)
     {
 	CompWindow *window;
 	window = w;
@@ -381,8 +380,7 @@ printf ("loading file %s\n", filename);
 
 	    name = sessionGetWindowName (d, w->id);
 
-	    cur = root->xmlChildrenNode;
-	    while (cur != NULL)
+	    for (cur = root->xmlChildrenNode; cur; cur = cur->next)
 	    {
 		printf ("current tag: %s\n", cur->name);
 		if (xmlStrcmp (cur->name, BAD_CAST "window") == 0)
@@ -393,6 +391,7 @@ printf ("loading file %s\n", filename);
 			if (clientId == (char*) newClientId)
 			{
 			    foundWindow = TRUE;
+			    break;
 			}
 			xmlFree (newClientId);
 		    }
@@ -403,20 +402,20 @@ printf ("loading file %s\n", filename);
 			if (name == (char*) newName)
 			{
 			    foundWindow = TRUE;
+			    break;
 			}
 			xmlFree (newName);
 		    }
 		}
-		cur = cur->next;
 	    }
+
 	    if (foundWindow)
 	    {
-		cur = cur->xmlChildrenNode;
-		while (cur != NULL)
+		for (cur = cur->xmlChildrenNode; cur; cur = cur->next)
 		{
 		    if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
 		    {
-			double   x, y, width, height;
+			double x, y, width, height;
 
 			x = sessionGetIntForProp (cur, "x");
 			y = sessionGetIntForProp (cur, "y");
