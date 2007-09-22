@@ -556,7 +556,7 @@ static int
 sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 {
     SessionDisplay *sd;
-    Bool found = FALSE;
+    char *previousId = NULL;
     int i;
 
     sd = malloc (sizeof (SessionDisplay));
@@ -572,15 +572,12 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
     {
 	if (strcmp(programArgv[i], "--sm-client-id") == 0)
 	{
-	    found = TRUE;
+	    previousId = programArgv[++i];
 	    break;
 	}
     }
 
-    if (found)
-	initSession2 (d, programArgv[++i]);
-    else
-	initSession2 (d, NULL);
+    initSession2 (d, previousId);
 
     d->privates[displayPrivateIndex].ptr = sd;
 
