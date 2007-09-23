@@ -86,7 +86,7 @@ typedef struct _tdScreen
     CompWindow *first;
     CompWindow *last;
 
-    Bool  test;
+    Bool  painting3D;
     float currentScale;
 
     float basicScale;
@@ -429,10 +429,10 @@ tdPaintWindow (CompWindow              *w,
     TD_SCREEN (s);
     TD_WINDOW (w);
 
-    if (tdw->depth != 0.0f && !tds->test && tds->basicScale != 1.0)
+    if (tdw->depth != 0.0f && !tds->painting3D && tds->basicScale != 1.0)
 	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
-    if (tds->test)
+    if (tds->painting3D)
     {
 	if (tdGetWidth (s) && (tdw->depth != 0.0f))
 	{
@@ -504,9 +504,6 @@ tdPostPaintViewport (CompScreen              *s,
 		     CompOutput              *output,
 		     Region                  region)
 {
-    CompWindow* w;
-    CompWindow* firstFTB = NULL;
-
     TD_SCREEN (s);
     CUBE_SCREEN (s);
 
@@ -516,6 +513,11 @@ tdPostPaintViewport (CompScreen              *s,
 
     if (tds->active || tds->tdWindowExists)
     {
+	CompTransform sTransform = *transform;
+	CompWindow    *firstFTB = NULL;
+	CompWindow    *w;
+	CompWalker    walk;
+
 	float vPoints[3][3] = {{ -0.5, 0.0, (cs->invert * cs->distance)},
 	                       { 0.0, 0.5, (cs->invert * cs->distance)},
 		               { 0.0, 0.0, (cs->invert * cs->distance)}};
@@ -576,15 +578,9 @@ tdPostPaintViewport (CompScreen              *s,
 		tdAddWindow (w);
 	    }
 	}
-    }
 
-    tds->currentScale = tds->basicScale;
-    tds->test = TRUE;
-
-    {
-	CompTransform sTransform = *transform;
-	CompWindow    *w;
-	CompWalker    walk;
+    	tds->currentScale = tds->basicScale;
+	tds->painting3D   = TRUE;
 
 	screenLighting (s, TRUE);
 
@@ -628,10 +624,10 @@ tdPostPaintViewport (CompScreen              *s,
 		(*s->disableOutputClipping) (s);
 	    }
 	}
-    }
 
-    tds->test = FALSE;
-    tds->currentScale = tds->basicScale;
+    	tds->painting3D   = FALSE;
+	tds->currentScale = tds->basicScale;
+    }
 }
 
 static Bool
@@ -712,7 +708,7 @@ tdInitWindowWalker (CompScreen *s,
     WRAP (tds, s, initWindowWalker, tdInitWindowWalker);
 
     if ((tds->active || tds->tdWindowExists) &&
-	cs->paintOrder == BTF && tds->test)
+	cs->paintOrder == BTF && tds->painting3D)
     {
 	walker->first = tdWalkFirst;
 	walker->last =  tdWalkLast;
@@ -788,7 +784,7 @@ tdInitScreen (CompPlugin *p,
     tds->basicScale     = 1.0;
     tds->currentScale   = 1.0;
     tds->tdWindowExists = FALSE;
-    tds->test           = FALSE;
+    tds->painting3D     = FALSE;
 
     tds->first = NULL;
     tds->last  = NULL;
