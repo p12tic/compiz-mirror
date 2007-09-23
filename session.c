@@ -168,12 +168,13 @@ sessionGetClientId (CompWindow *w)
     text.nitems = 0;
 
     clientId = NULL;
+    clientLeader = w->clientLeader;
 
-    if (w->clientLeader == w->id)
+    if (clientLeader == w->id)
 	return NULL;
 
     //try to find clientLeader on transient parents
-    if (w->clientLeader == None)
+    if (clientLeader == None)
     {
 	CompWindow *window;
 	window = w;
@@ -251,6 +252,9 @@ sessionForeachWindow (CompDisplay *d, SessionWindowFunc func, void *user_data)
 
 	    clientId = sessionGetClientId (w);
 
+	    if (clientId == NULL)
+		continue;
+
 	    name = sessionGetWindowName (d, w->id);
 
 	    (* func) (w, clientId, name, user_data);
@@ -262,9 +266,6 @@ static void
 sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 {
     FILE *outfile = (FILE*) user_data;
-
-    if (clientId == NULL)
-	return;
 
     fprintf (outfile, "  <window id=\"%s\" title=\"%s\" class=\"%s\" name=\"%s\">\n",
 	     clientId,
@@ -348,8 +349,8 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
     xmlNodePtr  cur;
     xmlChar    *newName;
     xmlChar    *newClientId;
-    Bool       foundWindow = FALSE;
-    xmlNodePtr root = (xmlNodePtr) user_data;
+    Bool        foundWindow = FALSE;
+    xmlNodePtr  root = (xmlNodePtr) user_data;
 
     if (clientId == NULL)
 	return;
@@ -358,7 +359,6 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
     {
 	if (xmlStrcmp (cur->name, BAD_CAST "window") == 0)
 	{
-	    printf ("checking window\n");
 	    newClientId = xmlGetProp (cur, BAD_CAST "id");
 	    if (newClientId != NULL)
 	    {
@@ -390,7 +390,6 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	{
 	    if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
 	    {
-		printf ("setting geometry\n");
 		double x, y, width, height;
 
 		x = sessionGetIntForProp (cur, "x");
@@ -753,7 +752,7 @@ static int
 sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 {
     SessionDisplay *sd;
-    char *previousId = NULL;
+    char *previousId;
     int i;
 
     sd = malloc (sizeof (SessionDisplay));
@@ -771,7 +770,10 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
     {
 	if (strcmp(programArgv[i], "--sm-client-id") == 0)
 	{
-	    previousId = programArgv[++i];
+	    i++;
+	    printf ("%s\n", programArgv[i]);
+	    previousId = malloc (strlen (programArgv[i]) + 1);
+	    previousId = strdup (programArgv[i]);
 	    break;
 	}
     }
