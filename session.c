@@ -346,12 +346,15 @@ saveState (CompDisplay *d)
 static void
 sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 {
-printf ("Looking for %s\n", name);
-    xmlNodePtr  cur;
-    xmlChar    *newName;
-    xmlChar    *newClientId;
-    Bool        foundWindow = FALSE;
-    xmlNodePtr  root = (xmlNodePtr) user_data;
+    xmlNodePtr     cur;
+    xmlChar       *newName;
+    xmlChar       *newClientId;
+    XWindowChanges xwc;
+    Bool           foundWindow = FALSE;
+    unsigned int   xwcm = 0;
+    xmlNodePtr     root = (xmlNodePtr) user_data;
+
+    memset (&xwc, 0, sizeof (xwc));
 
     if (clientId == NULL)
 	return;
@@ -386,19 +389,19 @@ printf ("Looking for %s\n", name);
 
     if (foundWindow)
     {
-	printf ("found window\n");
+	printf ("Found window %s\n", name);
 	for (cur = cur->xmlChildrenNode; cur; cur = cur->next)
 	{
 	    if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
 	    {
-		double x, y, width, height;
+		xwcm = CWX | CWY | CWWidth | CWHeight;
 
-		x = sessionGetIntForProp (cur, "x");
-		y = sessionGetIntForProp (cur, "y");
-		width = sessionGetIntForProp (cur, "width");
-		height = sessionGetIntForProp (cur, "height");
+		xwc.x = sessionGetIntForProp (cur, "x");
+		xwc.y = sessionGetIntForProp (cur, "y");
+		xwc.width = sessionGetIntForProp (cur, "width");
+		xwc.height = sessionGetIntForProp (cur, "height");
 
-		resizeWindow (w, x, y, width, height, 0);
+		moveResizeWindow (w, &xwc, xwcm, 0);
 	    }
 	}
     }
