@@ -170,6 +170,7 @@ sessionGetClientId (CompWindow *w)
     clientId = NULL;
     clientLeader = w->clientLeader;
 
+    //window is its own client leader so it's a leader for something else
     if (clientLeader == w->id)
 	return NULL;
 
@@ -399,7 +400,6 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 
     if (foundWindow)
     {
-	printf ("Found window %s\n", name);
 	for (cur = cur->xmlChildrenNode; cur; cur = cur->next)
 	{
 	    if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
