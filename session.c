@@ -49,6 +49,7 @@ static char		 *smClientId;
 static void iceInit (void);
 
 static int displayPrivateIndex;
+static CompMetadata sessionMetadata;
 
 typedef void (* SessionWindowFunc) (CompWindow *w, char *clientId, char *name,
 				    void *user_data);
@@ -802,9 +803,18 @@ sessionGetVersion(CompPlugin * p,
 static int
 sessionInit (CompPlugin *p)
 {
+    if (!compInitPluginMetadataFromInfo (&sessionMetadata, p->vTable->name,
+					 0, 0, 0, 0))
+	return FALSE;
+
     displayPrivateIndex = allocateDisplayPrivateIndex ();
     if (displayPrivateIndex < 0)
+    {
+	compFiniMetadata (&sessionMetadata);
 	return FALSE;
+    }
+
+    compAddMetadataFromFile (&sessionMetadata, p->vTable->name);
 
     return TRUE;
 }
@@ -813,6 +823,7 @@ static void
 sessionFini (CompPlugin *p)
 {
     freeDisplayPrivateIndex(displayPrivateIndex);
+    compFiniMetadata (&sessionMetadata);
 }
 
 static int
@@ -864,11 +875,17 @@ sessionFiniDisplay (CompPlugin *p, CompDisplay *d)
     free (sd);
 }
 
+static CompMetadata *
+sessionGetMetadata (CompPlugin *plugin)
+{
+    return &sessionMetadata;
+}
+
 static CompPluginVTable sessionVTable =
 {
     "session",
     sessionGetVersion,
-    0,
+    sessionGetMetadata,
     sessionInit,
     sessionFini,
     sessionInitDisplay,
