@@ -827,9 +827,10 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
     initSession2 (d, previousId);
 
     if (previousId != NULL)
+    {
 	loadState (d, previousId);
-
-    free (previousId);
+	free (previousId);
+    }
 
     return TRUE;
 }
