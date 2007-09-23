@@ -235,11 +235,12 @@ tdPaintWindowWithDepth (CompWindow              *w,
 	{
 	    glEnable (GL_CULL_FACE);
 	    glCullFace (GL_FRONT);
-
+	    
 	    matrixTranslate (&wTransform, 0.0f, 0.0f, wwidth);
 
     	    UNWRAP (tds, s, paintWindow);
-	    status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
+	    status = (*s->paintWindow) (w, attrib, &wTransform, region,
+					mask | PAINT_WINDOW_TRANSFORMED_MASK);
 	    WRAP (tds, s, paintWindow, tdPaintWindow);
 
 	    matrixTranslate (&wTransform, 0.0f, 0.0f, -wwidth);
@@ -248,14 +249,13 @@ tdPaintWindowWithDepth (CompWindow              *w,
 	{
 	    glEnable (GL_CULL_FACE);
 	    glCullFace (GL_BACK);
-
+	    
 	    UNWRAP (tds, s, paintWindow);
     	    status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
     	    WRAP (tds, s, paintWindow, tdPaintWindow);
 	}
 
 	/* Paint window depth. */
-
 	glPushMatrix ();
 	glLoadMatrixf (wTransform.m);
 
@@ -385,7 +385,8 @@ tdPaintWindowWithDepth (CompWindow              *w,
 	    matrixTranslate (&wTransform, 0.0f, 0.0f, wwidth);
 
     	    UNWRAP (tds, s, paintWindow);
-	    status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
+	    status = (*s->paintWindow) (w, attrib, &wTransform, region,
+					mask | PAINT_WINDOW_TRANSFORMED_MASK);
 	    WRAP(tds, s, paintWindow, tdPaintWindow);
 
 	    matrixTranslate(&wTransform, 0.0f, 0.0f, -wwidth);
