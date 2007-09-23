@@ -8,7 +8,7 @@
  * E-mail    : roico12@gmail.com
  *
  * Modified by : Dennis Kasprzyk <onestone@opencompositing.org>
- *               Danny Baumann <mainiac@opencompositing.org>
+ *               Danny Baumann <maniac@opencompositing.org>
  *               Robert Carr <racarr@beryl-project.org>
  *               Diogo Ferreira <diogo@underdev.org>
  *
