@@ -806,6 +806,7 @@ tdInitScreen (CompPlugin *p,
     tds->basicScale     = 1.0;
     tds->currentScale   = 1.0;
     tds->tdWindowExists = FALSE;
+    tds->test           = FALSE;
 
     tds->first = NULL;
     tds->last  = NULL;
@@ -855,9 +856,10 @@ tdInitWindow (CompPlugin *p,
     if (!tdw)
 	return FALSE;
 
-    tdw->is3D = FALSE;
-    tdw->prev = NULL;
-    tdw->next = NULL;
+    tdw->is3D  = FALSE;
+    tdw->prev  = NULL;
+    tdw->next  = NULL;
+    tdw->depth = 0.0f;
 
     w->base.privates[tds->windowPrivateIndex].ptr = tdw;
 
