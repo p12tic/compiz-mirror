@@ -36,14 +36,6 @@
 					<max>1.0</max>
 					<precision>0.001</precision>
 				</option>
-				<option name="width" type="float">
-					<_short>Window Width</_short>
-					<_long>Window width</_long>
-					<default>0.3</default>
-					<min>0.0</min>
-					<max>1.0</max>
-					<precision>0.001</precision>
-				</option>
 				<option name="mipmaps" type="bool">
 					<_short>Create Mipmaps</_short>
 					<_long>This will create mipmaps which improve overall texture appearence, and reduce jagged edges.</_long>
@@ -56,7 +48,15 @@
 				</option>
 			</group>
 			<group>
-				<_short>Corner Bevelling</_short>
+				<_short>Window Depth</_short>
+				<option name="width" type="float">
+					<_short>Window Depth</_short>
+					<_long>Window depth</_long>
+					<default>0.3</default>
+					<min>0.0</min>
+					<max>1.0</max>
+					<precision>0.001</precision>
+				</option>
 				<option name="bevel" type="int">
 					<_short>Bevel Corners</_short>
 					<_long>Roundoff corners for consistency with rounded decorations</_long>
@@ -64,26 +64,29 @@
 					<min>0</min>
 					<max>20</max>
 				</option>
-				<option name="bevel_topleft" type="bool">
-					<_short>Bevel Top Left</_short>
-					<_long>Bevel top left corner</_long>
-					<default>true</default>
-				</option>
-				<option name="bevel_topright" type="bool">
-					<_short>Bevel Top Right</_short>
-					<_long>Bevel top right corner</_long>
-					<default>true</default>
-				</option>
-				<option name="bevel_bottomleft" type="bool">
-					<_short>Bevel Bottom Left</_short>
-					<_long>Bevel bottom left corner</_long>
-					<default>false</default>
-				</option>
-				<option name="bevel_bottomright" type="bool">
-					<_short>Bevel Bottom Right</_short>
-					<_long>Bevel bottom right corner</_long>
-					<default>false</default>
-				</option>
+				<subgroup>
+					<_short>Bevel Corners</_short>
+					<option name="bevel_topleft" type="bool">
+						<_short>Bevel Top Left</_short>
+						<_long>Bevel top left corner</_long>
+						<default>true</default>
+					</option>
+					<option name="bevel_topright" type="bool">
+						<_short>Bevel Top Right</_short>
+						<_long>Bevel top right corner</_long>
+						<default>true</default>
+					</option>
+					<option name="bevel_bottomleft" type="bool">
+						<_short>Bevel Bottom Left</_short>
+						<_long>Bevel bottom left corner</_long>
+						<default>false</default>
+					</option>
+					<option name="bevel_bottomright" type="bool">
+						<_short>Bevel Bottom Right</_short>
+						<_long>Bevel bottom right corner</_long>
+						<default>false</default>
+					</option>
+				</subgroup>
 			</group>
 		</screen>
 	</plugin>
