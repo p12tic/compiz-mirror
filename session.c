@@ -285,7 +285,14 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 
     //save maximized
     if (w->state & MAXIMIZE_STATE)
-	fprintf (outfile, "    <maximized/>\n");
+    {
+	fprintf (outfile, "    <maximized ");
+	if (w->state & CompWindowStateMaximizedVertMask)
+	    fprintf (outfile, "vert=\"yes\" ");
+	if (w->state & CompWindowStateMaximizedHorzMask)
+	    fprintf (outfile, "horiz=\"yes\"");
+	fprintf (outfile, "/>\n");
+    }
 
     //save workspace
     if (!(w->type & CompWindowTypeDesktopMask ||
@@ -295,7 +302,9 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 
     //save geometry
     fprintf (outfile, "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
-	     w->serverX, w->serverY, w->width, w->height);
+	     w->attrib.x - w->input.left, w->attrib.y - w->input.top,
+	     w->width + 2 * w->attrib.border_width + w->input.left + w->input.right,
+	     w->height + 2 * w->attrib.border_width + w->input.top + w->input.bottom);
 
     fprintf (outfile, "  </window>\n");
 }
@@ -366,7 +375,7 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	    newClientId = xmlGetProp (cur, BAD_CAST "id");
 	    if (newClientId != NULL)
 	    {
-		if (strcmp (clientId, newClientId) == 0)
+		if (strcmp (clientId, (char*) newClientId) == 0)
 		{
 		    foundWindow = TRUE;
 		    break;
@@ -377,7 +386,7 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	    newName = xmlGetProp (cur, BAD_CAST "title");
 	    if (newName != NULL)
 	    {
-		if (strcmp (name, newName) == 0)
+		if (strcmp (name, (char*) newName) == 0)
 		{
 		    foundWindow = TRUE;
 		    break;
@@ -401,7 +410,33 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 		xwc.width = sessionGetIntForProp (cur, "width");
 		xwc.height = sessionGetIntForProp (cur, "height");
 
-		moveResizeWindow (w, &xwc, xwcm, 0);
+		configureXWindow (w, xwcm, &xwc);
+	    }
+	    if (xmlStrcmp (cur->name, BAD_CAST "sticky") == 0)
+	    {
+		changeWindowState (w, w->state |= CompWindowStateStickyMask);
+	    }
+	    if (xmlStrcmp (cur->name, BAD_CAST "minimized") == 0)
+	    {
+		minimizeWindow (w);
+	    }
+	    if (xmlStrcmp (cur->name, BAD_CAST "maximized") == 0)
+	    {
+		int state = 0;
+		xmlChar *vert, *horiz;
+		vert = xmlGetProp (cur, BAD_CAST "vert");
+		if (vert != NULL)
+		{
+		    state |= CompWindowStateMaximizedVertMask;
+		    xmlFree (vert);
+		}
+		horiz = xmlGetProp (cur, BAD_CAST "horiz");
+		if (horiz != NULL)
+		{
+		    state |= CompWindowStateMaximizedHorzMask;
+		    xmlFree (horiz);
+		}
+		maximizeWindow (w, state);
 	    }
 	}
     }
@@ -786,6 +821,8 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 
     if (previousId != NULL)
 	loadState (d, previousId);
+
+    free (previousId);
 
     return TRUE;
 }
