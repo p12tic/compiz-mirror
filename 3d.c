@@ -282,115 +282,96 @@ tdPaintWindowWithDepth (CompWindow              *w,
 	glColor4f (0.70f, 0.70f, 0.70f,  w->paint.opacity / OPAQUE);
 
 	/* Left */
-	if (w->attrib.x >= s->workArea.x)
-	{
-	    glVertex3f (wx, wy + DOBEVEL (Topleft), 0);
-	    glVertex3f (wx, wy + wh - DOBEVEL (Bottomleft), 0);
-	    glVertex3f (wx, wy + wh - DOBEVEL (Bottomleft), wwidth);
-	    glVertex3f (wx, wy + DOBEVEL (Topleft), wwidth);
-	}
+	glVertex3f (wx, wy + DOBEVEL (Topleft), 0);
+	glVertex3f (wx, wy + wh - DOBEVEL (Bottomleft), 0);
+	glVertex3f (wx, wy + wh - DOBEVEL (Bottomleft), wwidth);
+	glVertex3f (wx, wy + DOBEVEL (Topleft), wwidth);
 
 	/* Right */
-	if ((w->attrib.x + w->width + w->input.left + w->input.right) <=
-	    s->workArea.width)
-	{
-	    glVertex3f (wx + ww, wy + DOBEVEL (Topright), 0);
-	    glVertex3f (wx + ww, wy + wh - DOBEVEL (Bottomright), 0);
-	    glVertex3f (wx + ww, wy + wh - DOBEVEL (Bottomright), wwidth);
-	    glVertex3f (wx + ww, wy + DOBEVEL (Topright), wwidth);
-	}
+	glVertex3f (wx + ww, wy + DOBEVEL (Topright), 0);
+	glVertex3f (wx + ww, wy + wh - DOBEVEL (Bottomright), 0);
+	glVertex3f (wx + ww, wy + wh - DOBEVEL (Bottomright), wwidth);
+	glVertex3f (wx + ww, wy + DOBEVEL (Topright), wwidth);
 
 	glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
 
-	if (w->attrib.x >= s->workArea.x)
+	/* Top left bevel */
+	if (tdGetBevelTopleft (s))
 	{
-	    /* Top left bevel */
-	    if (tdGetBevelTopleft (s))
-	    {
-		glVertex3f (wx, wy + bevel, wwidth);
-		glVertex3f (wx, wy + bevel, 0);
-		glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
-		glVertex3f (wx + bevel / 2.0f,
-			    wy + bevel - bevel / 1.2f, wwidth);
+	    glVertex3f (wx, wy + bevel, wwidth);
+	    glVertex3f (wx, wy + bevel, 0);
+	    glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
+	    glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, wwidth);
 
-		glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
+	    glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
 
-		glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
-		glVertex3f (wx + bevel / 2.0f,
-			    wy + bevel - bevel / 1.2f, wwidth);
-		glVertex3f (wx + bevel, wy, wwidth);
-		glVertex3f (wx + bevel, wy, 0);
+	    glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
+	    glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, wwidth);
+	    glVertex3f (wx + bevel, wy, wwidth);
+	    glVertex3f (wx + bevel, wy, 0);
 
-		glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
-	    }
-
-	    /* Bottom left bevel */
-	    if (tdGetBevelBottomleft (s))
-	    {
-		glVertex3f (wx, wy + wh - bevel, 0);
-		glVertex3f (wx, wy + wh - bevel, wwidth);
-		glVertex3f (wx + bevel / 2.0f,
-			    wy + wh - bevel + bevel / 1.2f, wwidth);
-		glVertex3f (wx + bevel / 2.0f,
-			    wy + wh - bevel + bevel / 1.2f, 0);
-
-		glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
-
-		glVertex3f (wx + bevel / 2.0f,
-			    wy + wh - bevel + bevel / 1.2f, wwidth);
-		glVertex3f (wx + bevel / 2.0f,
-			    wy + wh - bevel + bevel / 1.2f, 0);
-		glVertex3f (wx + bevel, wy + wh, 0);
-		glVertex3f (wx + bevel, wy + wh, wwidth);
-	    }
+	    glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
 	}
 
-	glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
-
-	if ((w->attrib.x + w->width + w->input.left + w->input.right) <=
-	    s->workArea.width)
+     	/* Bottom left bevel */
+	if (tdGetBevelBottomleft (s))
 	{
-	    /* Bottom right bevel */
-	    if (tdGetBevelBottomright (s))
-	    {
-		glVertex3f (wx + ww - bevel, wy + wh, 0);
-		glVertex3f (wx + ww - bevel, wy + wh, wwidth);
-		glVertex3f (wx + ww - bevel / 2.0f,
-			    wy + wh - bevel + bevel / 1.2f, wwidth);
-		glVertex3f (wx + ww - bevel / 2.0f,
-			    wy + wh - bevel + bevel / 1.2f, 0);
+	    glVertex3f (wx, wy + wh - bevel, 0);
+	    glVertex3f (wx, wy + wh - bevel, wwidth);
+	    glVertex3f (wx + bevel / 2.0f,
+			wy + wh - bevel + bevel / 1.2f, wwidth);
+	    glVertex3f (wx + bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, 0);
 
-		glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
+	    glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
 
-		glVertex3f (wx + ww - bevel / 2.0f,
-			    wy + wh - bevel + bevel / 1.2f, wwidth);
-		glVertex3f (wx + ww - bevel / 2.0f,
-			    wy + wh - bevel + bevel / 1.2f, 0);
-		glVertex3f (wx + ww, wy + wh - bevel, 0);
-		glVertex3f (wx + ww, wy + wh - bevel, wwidth);
+	    glVertex3f (wx + bevel / 2.0f,
+			wy + wh - bevel + bevel / 1.2f, wwidth);
+	    glVertex3f (wx + bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, 0);
+	    glVertex3f (wx + bevel, wy + wh, 0);
+	    glVertex3f (wx + bevel, wy + wh, wwidth);
+	}
 
-		glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
-	    }
+    	glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
+
+	/* Bottom right bevel */
+	if (tdGetBevelBottomright (s))
+	{
+	    glVertex3f (wx + ww - bevel, wy + wh, 0);
+	    glVertex3f (wx + ww - bevel, wy + wh, wwidth);
+	    glVertex3f (wx + ww - bevel / 2.0f,
+			wy + wh - bevel + bevel / 1.2f, wwidth);
+	    glVertex3f (wx + ww - bevel / 2.0f,
+			wy + wh - bevel + bevel / 1.2f, 0);
+
+	    glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
+
+	    glVertex3f (wx + ww - bevel / 2.0f,
+			wy + wh - bevel + bevel / 1.2f, wwidth);
+	    glVertex3f (wx + ww - bevel / 2.0f,
+			wy + wh - bevel + bevel / 1.2f, 0);
+	    glVertex3f (wx + ww, wy + wh - bevel, 0);
+	    glVertex3f (wx + ww, wy + wh - bevel, wwidth);
+
+	    glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
+	}
     
-	    /* Top right bevel */
-	    if (tdGetBevelTopright (s))
-	    {
-		glVertex3f (wx + ww - bevel, wy, 0);
-		glVertex3f (wx + ww - bevel, wy, wwidth);
-		glVertex3f (wx + ww - bevel / 2.0f,
-			    wy + bevel - bevel / 1.2f, wwidth);
-		glVertex3f (wx + ww - bevel / 2.0f,
-			    wy + bevel - bevel / 1.2f, 0);
+	/* Top right bevel */
+	if (tdGetBevelTopright (s))
+	{
+	    glVertex3f (wx + ww - bevel, wy, 0);
+    	    glVertex3f (wx + ww - bevel, wy, wwidth);
+	    glVertex3f (wx + ww - bevel / 2.0f,
+			wy + bevel - bevel / 1.2f, wwidth);
+	    glVertex3f (wx + ww - bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
 
-		glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
+	    glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
 
-		glVertex3f (wx + ww - bevel / 2.0f,
-			    wy + bevel - bevel / 1.2f, wwidth);
-		glVertex3f (wx + ww - bevel / 2.0f,
-			    wy + bevel - bevel / 1.2f, 0);
-		glVertex3f (wx + ww, wy + bevel, 0);
-		glVertex3f (wx + ww, wy + bevel, wwidth);
-    	    }
+	    glVertex3f (wx + ww - bevel / 2.0f,
+			wy + bevel - bevel / 1.2f, wwidth);
+	    glVertex3f (wx + ww - bevel / 2.0f,
+			wy + bevel - bevel / 1.2f, 0);
+	    glVertex3f (wx + ww, wy + bevel, 0);
+	    glVertex3f (wx + ww, wy + bevel, wwidth);
 	}
 
 	glEnd ();
