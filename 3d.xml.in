@@ -37,10 +37,10 @@
 				<option name="speed" type="float">
 					<_short>Animation Speed</_short>
 					<_long>Change the speed of the 3D animation</_long>
-					<default>0.02</default>
+					<default>0.2</default>
 					<min>0.0</min>
 					<max>1.0</max>
-					<precision>0.001</precision>
+					<precision>0.01</precision>
 				</option>
 				<option name="manual_only" type="bool">
 					<_short>3D Only On Mouse Rotate</_short>
