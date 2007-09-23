@@ -149,8 +149,8 @@ tdPreparePaintScreen (CompScreen *s,
     amount = ((float)msSinceLastPaint * tdGetSpeed (s) / 1000.0);
     if (tds->active)
     {
-	float maxDiv = 0.1; // should be a option;
-	float minScale = 0.5; // should be a option;
+	float maxDiv = (float) tdGetMaxWindowSpace (s) / 100;
+	float minScale = (float) tdGetMinCubeSize (s) / 100;
 
 	tds->maxDepth = 0;
 	for (w = s->windows; w; w = w->next)

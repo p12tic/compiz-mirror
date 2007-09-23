@@ -20,13 +20,19 @@
 					<_long>Windows that should be handled by 3D</_long>
 					<default>Toolbar | Utility | Dialog | Normal | Unknown</default>
 				</option>
-				<option name="space" type="float">
+				<option name="min_cube_size" type="int">
+					<_short>Minimum Cube Size</_short>
+					<_long>Minimum cube size (in percent).</_long>
+					<default>60</default>
+					<min>10</min>
+					<max>100</max>
+				</option>
+				<option name="max_window_space" type="int">
 					<_short>Window Space</_short>
-					<_long>Change the amount of space between the windows.</_long>
-					<default>0.02</default>
-					<min>0.0</min>
-					<max>1.0</max>
-					<precision>0.001</precision>
+					<_long>Change the amount of space between the windows (in percent of the cube size).</_long>
+					<default>10</default>
+					<min>0</min>
+					<max>50</max>
 				</option>
 				<option name="speed" type="float">
 					<_short>Animation Speed</_short>
