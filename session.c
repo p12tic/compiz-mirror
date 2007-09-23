@@ -267,12 +267,32 @@ static void
 sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 {
     FILE *outfile = (FILE*) user_data;
+    int x, y, width, height;
 
     fprintf (outfile, "  <window id=\"%s\" title=\"%s\" class=\"%s\" name=\"%s\">\n",
 	     clientId,
 	     name ? name : "",
 	     w->resClass ? w->resClass : "",
 	     w->resName ? w->resName : "");
+
+    //save geometry
+    x = w->attrib.x - w->input.left;
+    y = w->attrib.y - w->input.top;
+    width = w->attrib.width;
+    height = w->attrib.height;
+    if (w->state & CompWindowStateMaximizedVertMask)
+    {
+	y = w->saveWc.y;
+	height = w->saveWc.height;
+    }
+    if (w->state & CompWindowStateMaximizedHorzMask)
+    {
+	x = w->saveWc.x;
+	width = w->saveWc.width;
+    }
+
+    fprintf (outfile, "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
+	     x, y, width, height);
 
     //save sticky
     if (w->state & CompWindowStateStickyMask ||
@@ -300,13 +320,6 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	  w->type & CompWindowTypeDockMask))
 	    fprintf (outfile, "    <workspace index=\"%d\"/>\n",
 		     w->desktop);
-
-    //save geometry
-    if (!(w->state & MAXIMIZE_STATE))
-	fprintf (outfile, "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
-		 w->attrib.x - w->input.left, w->attrib.y - w->input.top,
-		 w->width + 2 * w->attrib.border_width + w->input.left + w->input.right,
-		 w->height + 2 * w->attrib.border_width + w->input.top + w->input.bottom);
 
     fprintf (outfile, "  </window>\n");
 }
