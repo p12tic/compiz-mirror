@@ -294,6 +294,10 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
     fprintf (outfile, "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
 	     x, y, width, height);
 
+    //save shaded
+    if (w->state & CompWindowStateShadedMask)
+	fprintf (outfile, "    <shaded/>\n");
+
     //save sticky
     if (w->state & CompWindowStateStickyMask ||
 	w->type & CompWindowTypeDesktopMask ||
@@ -425,6 +429,10 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 		xwc.height = sessionGetIntForProp (cur, "height");
 
 		configureXWindow (w, xwcm, &xwc);
+	    }
+	    if (xmlStrcmp (cur->name, BAD_CAST "shaded") == 0)
+	    {
+		changeWindowState (w, w->state | CompWindowStateShadedMask);
 	    }
 	    if (xmlStrcmp (cur->name, BAD_CAST "sticky") == 0)
 	    {
