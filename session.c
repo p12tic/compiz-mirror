@@ -415,7 +415,7 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	    }
 	    if (xmlStrcmp (cur->name, BAD_CAST "sticky") == 0)
 	    {
-		changeWindowState (w, w->state |= CompWindowStateStickyMask);
+		changeWindowState (w, w->state | CompWindowStateStickyMask);
 	    }
 	    if (xmlStrcmp (cur->name, BAD_CAST "minimized") == 0)
 	    {
