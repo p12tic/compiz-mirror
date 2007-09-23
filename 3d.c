@@ -452,7 +452,7 @@ tdPaintWindow (CompWindow              *w,
 
     if (tds->test)
     {
-	if (tdGetWidth (s))
+	if (tdGetWidth (s) && (tdw->depth != 0.0f))
 	{
 	    status = tdPaintWindowWithDepth (w, attrib, transform,
 					     region, mask);
