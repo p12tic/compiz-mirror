@@ -439,6 +439,12 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 		}
 		maximizeWindow (w, state);
 	    }
+	    if (xmlStrcmp (cur->name, BAD_CAST "workspace") == 0)
+	    {
+		int desktop = sessionGetIntForProp (cur, "index");
+		if (desktop != -1)
+		    setDesktopForWindow (w, desktop);
+	    }
 	}
     }
 }
