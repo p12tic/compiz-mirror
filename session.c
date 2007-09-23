@@ -239,8 +239,8 @@ sessionForeachWindow (CompDisplay *d, SessionWindowFunc func, void *user_data)
 {
     CompScreen *s;
     CompWindow *w;
-    char       *clientId;
-    char       *name;
+    char       *clientId = NULL;
+    char       *name = NULL;
 
     for (s = d->screens; s; s = s->next)
     {
@@ -308,7 +308,7 @@ saveState (CompDisplay *d)
     struct passwd *p = getpwuid(geteuid());
 
     //setup filename and create directories as needed
-    filename[0] = '\0';
+    memset (filename, '\0', 1024);
     strncat (filename, p->pw_dir, 1024);
     strncat (filename, "/.compiz", 1024);
     if (mkdir (filename, 0700) == 0 || errno == EEXIST)
@@ -346,6 +346,7 @@ saveState (CompDisplay *d)
 static void
 sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 {
+printf ("Looking for %s\n", name);
     xmlNodePtr  cur;
     xmlChar    *newName;
     xmlChar    *newClientId;
@@ -362,7 +363,7 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	    newClientId = xmlGetProp (cur, BAD_CAST "id");
 	    if (newClientId != NULL)
 	    {
-		if (clientId == (char*) newClientId)
+		if (strcmp (clientId, newClientId) == 0)
 		{
 		    foundWindow = TRUE;
 		    break;
@@ -370,10 +371,10 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 		xmlFree (newClientId);
 	    }
 
-	    newName = xmlGetProp (cur, BAD_CAST "name");
+	    newName = xmlGetProp (cur, BAD_CAST "title");
 	    if (newName != NULL)
 	    {
-		if (name == (char*) newName)
+		if (strcmp (name, newName) == 0)
 		{
 		    foundWindow = TRUE;
 		    break;
@@ -412,7 +413,7 @@ loadState (CompDisplay *d, char *previousId)
     struct passwd *p = getpwuid(geteuid());
 
     //setup filename and create directories as needed
-    filename[0] = '\0';
+    memset (filename, '\0', 1024);
     strncat (filename, p->pw_dir, 1024);
     strncat (filename, "/.compiz/", 1024);
     strncat (filename, "session/", 1024);
@@ -752,12 +753,14 @@ static int
 sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 {
     SessionDisplay *sd;
-    char *previousId;
+    char *previousId = NULL;
     int i;
 
     sd = malloc (sizeof (SessionDisplay));
     if (!sd)
 	return FALSE;
+
+    d->privates[displayPrivateIndex].ptr = sd;
 
     sd->visibleNameAtom = XInternAtom (d->display,
 				       "_NET_WM_VISIBLE_NAME", 0);
@@ -770,9 +773,7 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
     {
 	if (strcmp(programArgv[i], "--sm-client-id") == 0)
 	{
-	    i++;
-	    printf ("%s\n", programArgv[i]);
-	    previousId = malloc (strlen (programArgv[i]) + 1);
+	    previousId = malloc (strlen (programArgv[++i]) + 1);
 	    previousId = strdup (programArgv[i]);
 	    break;
 	}
@@ -782,8 +783,6 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 
     if (previousId != NULL)
 	loadState (d, previousId);
-
-    d->privates[displayPrivateIndex].ptr = sd;
 
     return TRUE;
 }
