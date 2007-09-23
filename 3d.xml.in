@@ -36,11 +36,6 @@
 					<max>1.0</max>
 					<precision>0.001</precision>
 				</option>
-				<option name="mipmaps" type="bool">
-					<_short>Create Mipmaps</_short>
-					<_long>This will create mipmaps which improve overall texture appearence, and reduce jagged edges.</_long>
-					<default>false</default>
-				</option>
 				<option name="manual_only" type="bool">
 					<_short>3D Only On Mouse Rotate</_short>
 					<_long>Initiates the 3D display only if rotate is mouse driven. (Ex. You rotate the cube via the mouse)</_long>
