@@ -304,15 +304,18 @@ saveState (CompDisplay *d)
 {
     char           filename[1024];
     FILE          *outfile;
+    struct passwd *p = getpwuid(geteuid());
 
     //setup filename and create directories as needed
-    strncat (filename, getenv("HOME"), 1024);
-    strncat (filename, "/.compiz/", 1024);
+    filename[0] = '\0';
+    strncat (filename, p->pw_dir, 1024);
+    strncat (filename, "/.compiz", 1024);
     if (mkdir (filename, 0700) == 0 || errno == EEXIST)
     {
-	strncat (filename, "session/", 1024);
+	strncat (filename, "/session", 1024);
 	if (mkdir (filename, 0700) == 0 || errno == EEXIST)
 	{
+	    strncat (filename, "/", 1024);
 	    strncat (filename, smClientId, 1024);
 	}
 	else
@@ -353,9 +356,9 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 
     for (cur = root->xmlChildrenNode; cur; cur = cur->next)
     {
-	printf ("current tag: %s\n", cur->name);
 	if (xmlStrcmp (cur->name, BAD_CAST "window") == 0)
 	{
+	    printf ("checking window\n");
 	    newClientId = xmlGetProp (cur, BAD_CAST "id");
 	    if (newClientId != NULL)
 	    {
@@ -382,10 +385,12 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 
     if (foundWindow)
     {
+	printf ("found window\n");
 	for (cur = cur->xmlChildrenNode; cur; cur = cur->next)
 	{
 	    if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
 	    {
+		printf ("setting geometry\n");
 		double x, y, width, height;
 
 		x = sessionGetIntForProp (cur, "x");
@@ -405,13 +410,14 @@ loadState (CompDisplay *d, char *previousId)
     xmlDocPtr      doc;
     xmlNodePtr     root;
     char           filename[1024];
+    struct passwd *p = getpwuid(geteuid());
 
     //setup filename and create directories as needed
-    strncat (filename, getenv("HOME"), 1024);
+    filename[0] = '\0';
+    strncat (filename, p->pw_dir, 1024);
     strncat (filename, "/.compiz/", 1024);
     strncat (filename, "session/", 1024);
     strncat (filename, previousId, 1024);
-printf ("loading file %s\n", filename);
 
     doc = xmlParseFile (filename);
     if (doc == NULL)
@@ -419,19 +425,20 @@ printf ("loading file %s\n", filename);
 
     root = xmlDocGetRootElement (doc);
     if (root == NULL)
-    {
-	xmlFreeDoc (doc);
-	return;
-    }
+	goto out;
 
     if (xmlStrcmp (root->name, BAD_CAST "compiz_session") != 0)
-    {
-	xmlFreeDoc (doc);
-	return;
-    }
+	goto out;
 
     sessionForeachWindow (d, sessionReadWindow, root);
+
+   out:
+    xmlFreeDoc(doc);
+    xmlCleanupParser();
 }
+
+
+
 
 static void
 setCloneRestartCommands (SmcConn connection)
@@ -715,6 +722,9 @@ iceInit (void)
 	iceInitialized = 1;
     }
 }
+
+
+
 
 static int
 sessionGetVersion(CompPlugin * p,
