@@ -50,6 +50,9 @@ static void iceInit (void);
 
 static int displayPrivateIndex;
 
+typedef void (* SessionWindowFunc) (CompWindow *w, char *clientId, char *name,
+				    void *user_data);
+
 typedef struct _SessionDisplay
 {
     Atom visibleNameAtom;
@@ -230,19 +233,80 @@ sessionGetIntForProp (xmlNodePtr node, char *prop)
     return 0;
 }
 
+static void
+sessionForeachWindow (CompDisplay *d, SessionWindowFunc func, void *user_data)
+{
+    CompScreen *s;
+    CompWindow *w;
+    char       *clientId;
+    char       *name;
+
+    for (s = d->screens; s; s = s->next)
+    {
+	for (w = s->windows; w; w = w->next)
+	{
+	    //filter out embedded windows (notification icons)
+	    if (sessionGetIsEmbedded (d, w->id))
+		continue;
+
+	    clientId = sessionGetClientId (w);
+
+	    name = sessionGetWindowName (d, w->id);
+
+	    (* func) (w, clientId, name, user_data);
+	}
+    }
+}
+
+static void
+sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
+{
+    FILE *outfile = (FILE*) user_data;
+
+    if (clientId == NULL)
+	return;
+
+    fprintf (outfile, "  <window id=\"%s\" title=\"%s\" class=\"%s\" name=\"%s\">\n",
+	     clientId,
+	     name ? name : "",
+	     w->resClass ? w->resClass : "",
+	     w->resName ? w->resName : "");
+
+    //save sticky
+    if (w->state & CompWindowStateStickyMask ||
+	w->type & CompWindowTypeDesktopMask ||
+	w->type & CompWindowTypeDockMask)
+	    fprintf (outfile, "    <sticky/>\n");
+
+    //save minimized
+    if (w->minimized)
+	fprintf (outfile, "    <minimized/>\n");
+
+    //save maximized
+    if (w->state & MAXIMIZE_STATE)
+	fprintf (outfile, "    <maximized/>\n");
+
+    //save workspace
+    if (!(w->type & CompWindowTypeDesktopMask ||
+	  w->type & CompWindowTypeDockMask))
+	    fprintf (outfile, "    <workspace index=\"%d\"/>\n",
+		     w->desktop);
+
+    //save geometry
+    fprintf (outfile, "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
+	     w->serverX, w->serverY, w->width, w->height);
+
+    fprintf (outfile, "  </window>\n");
+}
 
 static void
 saveState (CompDisplay *d)
 {
-    CompScreen    *s;
-    CompWindow    *w;
     char           filename[1024];
-    char          *name;
     FILE          *outfile;
-    struct passwd *p = getpwuid(geteuid());
 
     //setup filename and create directories as needed
-    strncat (filename, p->pw_dir, 1024);
+    strncat (filename, getenv("HOME"), 1024);
     strncat (filename, "/.compiz/", 1024);
     if (mkdir (filename, 0700) == 0 || errno == EEXIST)
     {
@@ -269,61 +333,70 @@ saveState (CompDisplay *d)
 
     fprintf (outfile, "<compiz_session id=\"%s\">\n", smClientId);
 
-    for (s = d->screens; s; s = s->next)
-    {
-	for (w = s->windows; w; w = w->next)
-	{
-	    char  *clientId = NULL;
-	    Window clientLeader;
-	    clientLeader = w->clientLeader;
-
-	    //filter out embedded windows (notification icons)
-	    if (sessionGetIsEmbedded (d, w->id))
-		continue;
-
-	    clientId = sessionGetClientId (w);
-
-	    if (clientId == NULL)
-		continue;
-
-	    name = sessionGetWindowName (d, w->id);
-
-	    fprintf (outfile, "  <window id=\"%s\" title=\"%s\" class=\"%s\" name=\"%s\">\n",
-		     clientId,
-		     name ? name : "",
-		     w->resClass ? w->resClass : "",
-		     w->resName ? w->resName : "");
-
-	    //save sticky
-	    if (w->state & CompWindowStateStickyMask ||
-		w->type & CompWindowTypeDesktopMask ||
-		w->type & CompWindowTypeDockMask)
-		    fprintf (outfile, "    <sticky/>\n");
-
-	    //save minimized
-	    if (w->minimized)
-		fprintf (outfile, "    <minimized/>\n");
-
-	    //save maximized
-	    if (w->state & MAXIMIZE_STATE)
-		fprintf (outfile, "    <maximized/>\n");
-
-	    //save workspace
-	    if (!(w->type & CompWindowTypeDesktopMask ||
-		  w->type & CompWindowTypeDockMask))
-		    fprintf (outfile, "    <workspace index=\"%d\"/>\n",
-			     w->desktop);
-
-	    //save geometry
-	    fprintf (outfile, "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
-		     w->serverX, w->serverY, w->width, w->height);
-
-	    fprintf (outfile, "  </window>\n");
-	}
-    }
+    sessionForeachWindow (d, sessionWriteWindow, outfile);
 
     fprintf (outfile, "</compiz_session>\n");
     fclose (outfile);
+}
+
+static void
+sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
+{
+    xmlNodePtr  cur;
+    xmlChar    *newName;
+    xmlChar    *newClientId;
+    Bool       foundWindow = FALSE;
+    xmlNodePtr root = (xmlNodePtr) user_data;
+
+    if (clientId == NULL)
+	return;
+
+    for (cur = root->xmlChildrenNode; cur; cur = cur->next)
+    {
+	printf ("current tag: %s\n", cur->name);
+	if (xmlStrcmp (cur->name, BAD_CAST "window") == 0)
+	{
+	    newClientId = xmlGetProp (cur, BAD_CAST "id");
+	    if (newClientId != NULL)
+	    {
+		if (clientId == (char*) newClientId)
+		{
+		    foundWindow = TRUE;
+		    break;
+		}
+		xmlFree (newClientId);
+	    }
+
+	    newName = xmlGetProp (cur, BAD_CAST "name");
+	    if (newName != NULL)
+	    {
+		if (name == (char*) newName)
+		{
+		    foundWindow = TRUE;
+		    break;
+		}
+		xmlFree (newName);
+	    }
+	}
+    }
+
+    if (foundWindow)
+    {
+	for (cur = cur->xmlChildrenNode; cur; cur = cur->next)
+	{
+	    if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
+	    {
+		double x, y, width, height;
+
+		x = sessionGetIntForProp (cur, "x");
+		y = sessionGetIntForProp (cur, "y");
+		width = sessionGetIntForProp (cur, "width");
+		height = sessionGetIntForProp (cur, "height");
+
+		resizeWindow (w, x, y, width, height, 0);
+	    }
+	}
+    }
 }
 
 static void
@@ -331,28 +404,16 @@ loadState (CompDisplay *d, char *previousId)
 {
     xmlDocPtr      doc;
     xmlNodePtr     root;
-    xmlNodePtr     cur;
-    CompScreen    *s;
-    CompWindow    *w;
-    char          *filename;
-    char          *name;
-    xmlChar       *newName = NULL;
-    xmlChar       *newClientId = NULL;
-    char          *clientId = NULL;
-    Bool           foundWindow = FALSE;
-    struct passwd *p = getpwuid(geteuid());
+    char           filename[1024];
 
     //setup filename and create directories as needed
-    filename = malloc (1024);
-    memset (filename, '\0', 1024);
-    strncat (filename, p->pw_dir, 1024);
+    strncat (filename, getenv("HOME"), 1024);
     strncat (filename, "/.compiz/", 1024);
     strncat (filename, "session/", 1024);
     strncat (filename, previousId, 1024);
 printf ("loading file %s\n", filename);
 
     doc = xmlParseFile (filename);
-    free (filename);
     if (doc == NULL)
 	return;
 
@@ -369,65 +430,7 @@ printf ("loading file %s\n", filename);
 	return;
     }
 
-    for (s = d->screens; s; s = s->next)
-    {
-	for (w = s->windows; w; w = w->next)
-	{
-	    clientId = sessionGetClientId (w);
-
-	    if (clientId == NULL)
-		continue;
-
-	    name = sessionGetWindowName (d, w->id);
-
-	    for (cur = root->xmlChildrenNode; cur; cur = cur->next)
-	    {
-		printf ("current tag: %s\n", cur->name);
-		if (xmlStrcmp (cur->name, BAD_CAST "window") == 0)
-		{
-		    newClientId = xmlGetProp (cur, BAD_CAST "id");
-		    if (newClientId != NULL)
-		    {
-			if (clientId == (char*) newClientId)
-			{
-			    foundWindow = TRUE;
-			    break;
-			}
-			xmlFree (newClientId);
-		    }
-
-		    newName = xmlGetProp (cur, BAD_CAST "name");
-		    if (newName != NULL)
-		    {
-			if (name == (char*) newName)
-			{
-			    foundWindow = TRUE;
-			    break;
-			}
-			xmlFree (newName);
-		    }
-		}
-	    }
-
-	    if (foundWindow)
-	    {
-		for (cur = cur->xmlChildrenNode; cur; cur = cur->next)
-		{
-		    if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
-		    {
-			double x, y, width, height;
-
-			x = sessionGetIntForProp (cur, "x");
-			y = sessionGetIntForProp (cur, "y");
-			width = sessionGetIntForProp (cur, "width");
-			height = sessionGetIntForProp (cur, "height");
-
-			resizeWindow (w, x, y, width, height, 0);
-		    }
-		}
-	    }
-	}
-    }
+    sessionForeachWindow (d, sessionReadWindow, root);
 }
 
 static void
