@@ -5,6 +5,8 @@
  * session.c
  *
  * Copyright (c) 2007 Travis Watkins <amaranth@ubuntu.com>
+ * Copyright (c) 2005 Novell, Inc.
+ * Copyright (c) 2006 Patrick Niklaus
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -17,6 +19,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
+ * Authors: Travis Watkins <amaranth@ubuntu.com>
+ *          Radek Doulik <rodo@novell.com>
+ *          Patrick Niklaus
  **/
 
 #define _GNU_SOURCE
