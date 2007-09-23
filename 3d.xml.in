@@ -49,16 +49,6 @@
 					<_long>This will create mipmaps which improve overall texture appearence, and reduce jagged edges.</_long>
 					<default>false</default>
 				</option>
-				<option name="disable_culling" type="bool">
-					<_short>Draw Window Backsides</_short>
-					<_long>Enables the drawing of the backside of windows.</_long>
-					<default>true</default>
-				</option>
-				<option name="disable_caps" type="bool">
-					<_short>Disable Caps for Inside Cube</_short>
-					<_long>Disables the drawing of the cube caps when the inside cube mode is set.</_long>
-					<default>true</default>
-				</option>
 				<option name="manual_only" type="bool">
 					<_short>3D Only On Mouse Rotate</_short>
 					<_long>Initiates the 3D display only if rotate is mouse driven. (Ex. You rotate the cube via the mouse)</_long>
