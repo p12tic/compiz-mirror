@@ -24,16 +24,10 @@
  *
  */
 
-/**
-TODO:
-        1. Add 3d shadows / projections.
-        3. Add an option to select z-order of windows not only by viewports but also by screens.
-        4. Fix 3d for inside cube and planed / unfolded cube.
-        5. Find a better solution for blur cache + 3d.
-        6. Fix bugs with 3d + animations / wobbly.
-        	- Wobbly will draw the window twice if its in 2 different viewports.
-        	- Many Bugs with animations, some are solvable by changing the load order, but it will result with clipping when animations are done.
-		7. *High priority* Fix windows in 3D appearing a second time to the left of their real position.
+/** TODO:
+  1. Add 3d shadows / projections.
+  2. Add an option to select z-order of windows not only by viewports,
+     but also by screens.
 */
 
 #define _GNU_SOURCE
