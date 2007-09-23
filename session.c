@@ -853,7 +853,11 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 
     for (i = 0; i < programArgc; i++)
     {
-	if (strcmp(programArgv[i], "--sm-client-id") == 0)
+	if (strcmp (programArgv[i], "--sm-disable") == 0)
+	{
+	    return FALSE;
+	}
+	if (strcmp (programArgv[i], "--sm-client-id") == 0)
 	{
 	    previousId = malloc (strlen (programArgv[++i]) + 1);
 	    previousId = strdup (programArgv[i]);
