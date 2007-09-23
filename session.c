@@ -301,10 +301,11 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 		     w->desktop);
 
     //save geometry
-    fprintf (outfile, "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
-	     w->attrib.x - w->input.left, w->attrib.y - w->input.top,
-	     w->width + 2 * w->attrib.border_width + w->input.left + w->input.right,
-	     w->height + 2 * w->attrib.border_width + w->input.top + w->input.bottom);
+    if (!(w->state & MAXIMIZE_STATE))
+	fprintf (outfile, "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
+		 w->attrib.x - w->input.left, w->attrib.y - w->input.top,
+		 w->width + 2 * w->attrib.border_width + w->input.left + w->input.right,
+		 w->height + 2 * w->attrib.border_width + w->input.top + w->input.bottom);
 
     fprintf (outfile, "  </window>\n");
 }
