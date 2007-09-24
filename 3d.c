@@ -42,6 +42,12 @@
 
 #define PI 3.14159265359f
 
+#define MULTMV(m, v, w) { \
+w[0] = m[0]*v[0] + m[4]*v[1] + m[8]*v[2] + m[12]*v[3]; \
+w[1] = m[1]*v[0] + m[5]*v[1] + m[9]*v[2] + m[13]*v[3]; \
+w[2] = m[2]*v[0] + m[6]*v[1] + m[10]*v[2] + m[14]*v[3]; \
+w[3] = m[3]*v[0] + m[7]*v[1] + m[11]*v[2] + m[15]*v[3]; }
+
 static int displayPrivateIndex;
 static int cubeDisplayPrivateIndex = -1;
 
@@ -85,6 +91,8 @@ typedef struct _tdScreen
 
     float basicScale;
     float maxDepth;
+
+    CompTransform bTransform;
 } tdScreen;
 
 #define GET_TD_DISPLAY(d)       \
@@ -197,13 +205,13 @@ tdPaintWindowWithDepth (CompWindow              *w,
 			Region                  region,
 			unsigned int            mask)
 {
-    Bool wasCulled;
-    Bool status;
-    int wx, wy, wx2, wy2, ww, wh;
-    int bevel;
-    float wwidth;
-    CompTransform wTransform = *transform;
+    Bool       wasCulled;
+    Bool       status;
+    int        wx, wy, wx2, wy2, ww, wh;
+    int        bevel;
     CompScreen *s = w->screen;
+    GLdouble   point[4];
+    GLdouble   tPoint[4];
 
     TD_SCREEN (s);
 
@@ -218,7 +226,6 @@ tdPaintWindowWithDepth (CompWindow              *w,
     ww = wx2 - wx;
     wh = wy2 - wy;
 
-    wwidth = -(tdGetWidth (s)) / 30;
     bevel = tdGetBevel (s);
 
     if (ww && wh && !(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
@@ -229,30 +236,26 @@ tdPaintWindowWithDepth (CompWindow              *w,
 	{
 	    glEnable (GL_CULL_FACE);
 	    glCullFace (GL_FRONT);
-	    
-	    matrixTranslate (&wTransform, 0.0f, 0.0f, wwidth);
 
-    	    UNWRAP (tds, s, paintWindow);
-	    status = (*s->paintWindow) (w, attrib, &wTransform, region,
+	    UNWRAP (tds, s, paintWindow);
+	    status = (*s->paintWindow) (w, attrib, &tds->bTransform, region,
 					mask | PAINT_WINDOW_TRANSFORMED_MASK);
 	    WRAP (tds, s, paintWindow, tdPaintWindow);
-
-	    matrixTranslate (&wTransform, 0.0f, 0.0f, -wwidth);
 	}
 	else
 	{
 	    glEnable (GL_CULL_FACE);
 	    glCullFace (GL_BACK);
-	    
+
 	    UNWRAP (tds, s, paintWindow);
-    	    status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
-    	    WRAP (tds, s, paintWindow, tdPaintWindow);
+	    status = (*s->paintWindow) (w, attrib, transform, region, mask);
+	    WRAP (tds, s, paintWindow, tdPaintWindow);
 	}
 
 	/* Paint window depth. */
 	glPushMatrix ();
-	glLoadMatrixf (wTransform.m);
-
+	glLoadIdentity ();
+	
 	glDisable (GL_CULL_FACE);
 	glEnable (GL_BLEND);
 
@@ -262,112 +265,243 @@ tdPaintWindowWithDepth (CompWindow              *w,
 #define DOBEVEL(corner) (tdGetBevel##corner (s) ? bevel : 0)
 
 	/* Top */
-	glVertex3f (wx + DOBEVEL (Topleft), wy, 0);
-	glVertex3f (wx + ww - DOBEVEL (Topright), wy, 0);
-	glVertex3f (wx + ww - DOBEVEL (Topright), wy, wwidth);
-	glVertex3f (wx + DOBEVEL (Topleft), wy, wwidth);
+	point[0] = wx + DOBEVEL (Topleft);
+	point[1] = wy + 0.01;
+	point[2] = 0.0;
+	point[3] = 1.0;
+	MULTMV (transform->m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[0] = wx + ww - DOBEVEL (Topright);
+	MULTMV (transform->m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[0] = wx + ww - DOBEVEL (Topright);
+	MULTMV (tds->bTransform.m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[0] = wx + DOBEVEL (Topleft);
+	MULTMV (tds->bTransform.m, point, tPoint);
+	glVertex4dv (tPoint);
 
 	/* Bottom */
-	glVertex3f (wx + DOBEVEL (Bottomleft), wy + wh, 0);
-	glVertex3f (wx + ww - DOBEVEL (Bottomright), wy + wh, 0);
-	glVertex3f (wx + ww - DOBEVEL (Bottomright), wy + wh, wwidth);
-	glVertex3f (wx + DOBEVEL (Bottomleft), wy + wh, wwidth);
+	point[0] = wx + DOBEVEL (Topleft);
+	point[1] = wy + wh - 0.01;
+	MULTMV (transform->m, point, tPoint);
+	glVertex4dv (tPoint);
 
-	glColor4f (0.70f, 0.70f, 0.70f,  w->paint.opacity / OPAQUE);
+	point[0] = wx + ww - DOBEVEL (Topright);
+	MULTMV (transform->m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[0] = wx + ww - DOBEVEL (Topright);
+	MULTMV (tds->bTransform.m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[0] = wx + DOBEVEL (Topleft);
+	MULTMV (tds->bTransform.m, point, tPoint);
+	glVertex4dv (tPoint);
 
 	/* Left */
-	glVertex3f (wx, wy + DOBEVEL (Topleft), 0);
-	glVertex3f (wx, wy + wh - DOBEVEL (Bottomleft), 0);
-	glVertex3f (wx, wy + wh - DOBEVEL (Bottomleft), wwidth);
-	glVertex3f (wx, wy + DOBEVEL (Topleft), wwidth);
+	point[0] = wx + 0.01;
+	point[1] = wy + DOBEVEL (Topleft);
+	MULTMV (transform->m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[1] = wy + wh - DOBEVEL (Bottomleft);
+	MULTMV (transform->m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[1] = wy + wh - DOBEVEL (Bottomleft);
+	MULTMV (tds->bTransform.m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[1] = wy + DOBEVEL (Topleft);
+	MULTMV (tds->bTransform.m, point, tPoint);
+	glVertex4dv (tPoint);
 
 	/* Right */
-	glVertex3f (wx + ww, wy + DOBEVEL (Topright), 0);
-	glVertex3f (wx + ww, wy + wh - DOBEVEL (Bottomright), 0);
-	glVertex3f (wx + ww, wy + wh - DOBEVEL (Bottomright), wwidth);
-	glVertex3f (wx + ww, wy + DOBEVEL (Topright), wwidth);
+	point[0] = wx + ww - 0.01;
+	point[1] = wy + DOBEVEL (Topleft);
+	MULTMV (transform->m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[1] = wy + wh - DOBEVEL (Bottomleft);
+	MULTMV (transform->m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[1] = wy + wh - DOBEVEL (Bottomleft);
+	MULTMV (tds->bTransform.m, point, tPoint);
+	glVertex4dv (tPoint);
+
+	point[1] = wy + DOBEVEL (Topleft);
+	MULTMV (tds->bTransform.m, point, tPoint);
+	glVertex4dv (tPoint);
 
 	glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
 
 	/* Top left bevel */
 	if (tdGetBevelTopleft (s))
 	{
-	    glVertex3f (wx, wy + bevel, wwidth);
-	    glVertex3f (wx, wy + bevel, 0);
-	    glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
-	    glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, wwidth);
+	    point[0] = wx;
+	    point[1] = wy + bevel;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx + bevel / 2.0f;
+	    point[1] = wy + bevel - bevel / 1.2f;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx;
+	    point[1] = wy + bevel;
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
 
 	    glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
 
-	    glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
-	    glVertex3f (wx + bevel / 2.0f, wy + bevel - bevel / 1.2f, wwidth);
-	    glVertex3f (wx + bevel, wy, wwidth);
-	    glVertex3f (wx + bevel, wy, 0);
+	    point[0] = wx + bevel;
+	    point[1] = wy;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx + bevel / 2.0f;
+	    point[1] = wy + bevel - bevel / 1.2f;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx + bevel;
+	    point[1] = wy;
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
 
 	    glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
 	}
 
-     	/* Bottom left bevel */
+	/* Bottom left bevel */
 	if (tdGetBevelBottomleft (s))
 	{
-	    glVertex3f (wx, wy + wh - bevel, 0);
-	    glVertex3f (wx, wy + wh - bevel, wwidth);
-	    glVertex3f (wx + bevel / 2.0f,
-			wy + wh - bevel + bevel / 1.2f, wwidth);
-	    glVertex3f (wx + bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, 0);
+	    point[0] = wx;
+	    point[1] = wy + wh - bevel;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx + bevel / 2.0f;
+	    point[1] = wy + wh - bevel + bevel / 1.2f;
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
 
 	    glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
 
-	    glVertex3f (wx + bevel / 2.0f,
-			wy + wh - bevel + bevel / 1.2f, wwidth);
-	    glVertex3f (wx + bevel / 2.0f, wy + wh - bevel + bevel / 1.2f, 0);
-	    glVertex3f (wx + bevel, wy + wh, 0);
-	    glVertex3f (wx + bevel, wy + wh, wwidth);
+	    point[0] = wx + bevel;
+	    point[1] = wy + wh;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx + bevel / 2.0f;
+	    point[1] = wy + wh - bevel + bevel / 1.2f;
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
 	}
 
-    	glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
+	glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
 
 	/* Bottom right bevel */
 	if (tdGetBevelBottomright (s))
 	{
-	    glVertex3f (wx + ww - bevel, wy + wh, 0);
-	    glVertex3f (wx + ww - bevel, wy + wh, wwidth);
-	    glVertex3f (wx + ww - bevel / 2.0f,
-			wy + wh - bevel + bevel / 1.2f, wwidth);
-	    glVertex3f (wx + ww - bevel / 2.0f,
-			wy + wh - bevel + bevel / 1.2f, 0);
+	    point[0] = wx + ww - bevel;
+	    point[1] = wy + wh;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx + ww - bevel / 2.0f;
+	    point[1] = wy + wh - bevel + bevel / 1.2f;
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
 
 	    glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
 
-	    glVertex3f (wx + ww - bevel / 2.0f,
-			wy + wh - bevel + bevel / 1.2f, wwidth);
-	    glVertex3f (wx + ww - bevel / 2.0f,
-			wy + wh - bevel + bevel / 1.2f, 0);
-	    glVertex3f (wx + ww, wy + wh - bevel, 0);
-	    glVertex3f (wx + ww, wy + wh - bevel, wwidth);
+	    point[0] = wx + ww;
+	    point[1] = wy + wh - bevel;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx + ww - bevel / 2.0f;
+	    point[1] = wy + wh - bevel + bevel / 1.2f;
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
 
 	    glColor4f (0.95f, 0.95f, 0.95f,  w->paint.opacity / OPAQUE);
 	}
-    
+
 	/* Top right bevel */
 	if (tdGetBevelTopright (s))
 	{
-	    glVertex3f (wx + ww - bevel, wy, 0);
-    	    glVertex3f (wx + ww - bevel, wy, wwidth);
-	    glVertex3f (wx + ww - bevel / 2.0f,
-			wy + bevel - bevel / 1.2f, wwidth);
-	    glVertex3f (wx + ww - bevel / 2.0f, wy + bevel - bevel / 1.2f, 0);
+	    point[0] = wx + ww - bevel;
+	    point[1] = wy;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx + ww - bevel / 2.0f;
+	    point[1] = wy + bevel - bevel / 1.2f;
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
 
 	    glColor4f (1.0f, 1.0f, 1.0f,  w->paint.opacity / OPAQUE);
 
-	    glVertex3f (wx + ww - bevel / 2.0f,
-			wy + bevel - bevel / 1.2f, wwidth);
-	    glVertex3f (wx + ww - bevel / 2.0f,
-			wy + bevel - bevel / 1.2f, 0);
-	    glVertex3f (wx + ww, wy + bevel, 0);
-	    glVertex3f (wx + ww, wy + bevel, wwidth);
-	}
+	    point[0] = wx + ww;
+	    point[1] = wy + bevel;
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
 
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    point[0] = wx + ww - bevel / 2.0f;
+	    point[1] = wy + bevel - bevel / 1.2f;
+	    MULTMV (tds->bTransform.m, point, tPoint);
+	    glVertex4dv (tPoint);
+
+	    MULTMV (transform->m, point, tPoint);
+	    glVertex4dv (tPoint);
+	}
+	
 	glEnd ();
 	glPopMatrix ();
 
@@ -376,14 +510,15 @@ tdPaintWindowWithDepth (CompWindow              *w,
 	    glEnable (GL_CULL_FACE);
 	    glCullFace (GL_FRONT);
 
-	    matrixTranslate (&wTransform, 0.0f, 0.0f, wwidth);
+	    glPushMatrix ();
+	    glLoadMatrixf (tds->bTransform.m);
 
-    	    UNWRAP (tds, s, paintWindow);
-	    status = (*s->paintWindow) (w, attrib, &wTransform, region,
+	    UNWRAP (tds, s, paintWindow);
+	    status = (*s->paintWindow) (w, attrib, &tds->bTransform, region,
 					mask | PAINT_WINDOW_TRANSFORMED_MASK);
 	    WRAP(tds, s, paintWindow, tdPaintWindow);
 
-	    matrixTranslate(&wTransform, 0.0f, 0.0f, -wwidth);
+	    glPopMatrix ();
 	}
 	else
 	{
@@ -391,7 +526,7 @@ tdPaintWindowWithDepth (CompWindow              *w,
 	    glCullFace (GL_BACK);
 
 	    UNWRAP(tds, s, paintWindow);
-	    status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
+	    status = (*s->paintWindow) (w, attrib, transform, region, mask);
 	    WRAP (tds, s, paintWindow, tdPaintWindow);
 	}
     }
@@ -511,10 +646,14 @@ tdPostPaintViewport (CompScreen              *s,
 	CompWindow    *firstFTB = NULL;
 	CompWindow    *w;
 	CompWalker    walk;
+	float         wDepth;
 
 	float vPoints[3][3] = {{ -0.5, 0.0, (cs->invert * cs->distance)},
 	                       { 0.0, 0.5, (cs->invert * cs->distance)},
 		               { 0.0, 0.0, (cs->invert * cs->distance)}};
+
+	wDepth = -MIN((tdGetWidth (s)) / 30, (1.0 - tds->basicScale) /
+					       tds->maxDepth);
 
 	/* all non 3d windows first */
 	tds->first = NULL;
@@ -601,6 +740,15 @@ tdPostPaintViewport (CompScreen              *s,
 		tds->currentScale = tds->basicScale +
 		                    (tdw->depth * ((1.0 - tds->basicScale) /
 						   tds->maxDepth));
+    
+		tds->currentScale += wDepth;
+		tds->bTransform   = sTransform;
+		(*s->applyScreenTransform) (s, sAttrib, output,
+					    &tds->bTransform);
+		tds->currentScale -= wDepth;
+
+		transformToScreenSpace (s, output, -sAttrib->zTranslate,
+					&tds->bTransform);
 
 		(*s->applyScreenTransform) (s, sAttrib, output, &mTransform);
 		(*s->enableOutputClipping) (s, &mTransform, region, output);
