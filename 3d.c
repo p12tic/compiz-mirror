@@ -927,3 +927,4 @@ getCompPluginInfo (void)
 {
     return &tdVTable;
 }
+
