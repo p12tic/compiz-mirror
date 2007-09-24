@@ -181,7 +181,7 @@ tdPreparePaintScreen (CompScreen *s,
 	if (cs->invert == 1)
 	    tds->basicScale = MIN (1.0, tds->basicScale + amount);
 	else
- 	    tds->basicScale = MAX (1.0, tds->basicScale - amount);
+	    tds->basicScale = MAX (1.0, tds->basicScale - amount);
     }
 
     UNWRAP (tds, s, preparePaintScreen);
@@ -444,15 +444,15 @@ tdPaintWindow (CompWindow              *w,
 	{
 	    Bool wasCulled;
 
-    	    wasCulled = glIsEnabled (GL_CULL_FACE);
-    	    glDisable (GL_CULL_FACE);
+	    wasCulled = glIsEnabled (GL_CULL_FACE);
+	    glDisable (GL_CULL_FACE);
 
-    	    UNWRAP (tds, s, paintWindow);
-    	    status = (*s->paintWindow) (w, attrib, transform, region, mask);
-    	    WRAP (tds, s, paintWindow, tdPaintWindow);
+	    UNWRAP (tds, s, paintWindow);
+	    status = (*s->paintWindow) (w, attrib, transform, region, mask);
+	    WRAP (tds, s, paintWindow, tdPaintWindow);
 
-    	    if (wasCulled)
-    		glEnable (GL_CULL_FACE);
+	    if (wasCulled)
+		glEnable (GL_CULL_FACE);
 	}
     }
     else
@@ -500,8 +500,8 @@ tdAddWindow (CompWindow *w)
 
 static void
 tdPostPaintViewport (CompScreen              *s,
-	   	     const ScreenPaintAttrib *sAttrib,
-   		     const CompTransform     *transform,
+		     const ScreenPaintAttrib *sAttrib,
+		     const CompTransform     *transform,
 		     CompOutput              *output,
 		     Region                  region)
 {
@@ -535,7 +535,7 @@ tdPostPaintViewport (CompScreen              *s,
 	{
 	    TD_WINDOW (w);
 
-    	    tdw->next = NULL;
+	    tdw->next = NULL;
 	    tdw->prev = NULL;
 	}
 
@@ -552,7 +552,7 @@ tdPostPaintViewport (CompScreen              *s,
 	{
 	    TD_WINDOW (w);
 
-    	    if (!tdw->is3D)
+	    if (!tdw->is3D)
 		continue;
 
 	    tds->currentScale = tds->basicScale +
@@ -584,35 +584,35 @@ tdPostPaintViewport (CompScreen              *s,
 	    }
 	}
 
-    	tds->currentScale = tds->basicScale;
+	tds->currentScale = tds->basicScale;
 	tds->painting3D   = TRUE;
 
 	screenLighting (s, TRUE);
 
 	(*s->initWindowWalker) (s, &walk);
 
-    	/* paint all windows from bottom to top */
+	/* paint all windows from bottom to top */
 	for (w = (*walk.first) (s); w; w = (*walk.next) (w))
 	{
 	    CompTransform mTransform = sTransform;
 
-    	    TD_WINDOW (w);
+	    TD_WINDOW (w);
 
-    	    if (w->destroyed)
-    		continue;
+	    if (w->destroyed)
+		continue;
 
-    	    if (!w->shaded)
-    	    {
-    		if (w->attrib.map_state != IsViewable || !w->damaged)
-    		    continue;
-    	    }
+	    if (!w->shaded)
+	    {
+		if (w->attrib.map_state != IsViewable || !w->damaged)
+		    continue;
+	    }
 
 	    if (tdw->depth != 0.0f)
 	    {
 		tds->currentScale = tds->basicScale +
 		                    (tdw->depth * ((1.0 - tds->basicScale) /
 						   tds->maxDepth));
-    
+
 		tds->currentScale += wDepth;
 		tds->bTransform   = sTransform;
 		(*s->applyScreenTransform) (s, sAttrib, output,
@@ -639,7 +639,7 @@ tdPostPaintViewport (CompScreen              *s,
 	    }
 	}
 
-    	tds->painting3D   = FALSE;
+	tds->painting3D   = FALSE;
 	tds->currentScale = tds->basicScale;
     }
 }
