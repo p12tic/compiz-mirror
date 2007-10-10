@@ -958,63 +958,65 @@ readIntegratedOption (CCSContext *context,
 		      CCSSetting *setting,
 		      int        index)
 {
-    GError *err = NULL;
-    Bool   ret = FALSE;
+    GConfValue *gconfValue;
+    GError     *err = NULL;
+    Bool       ret = FALSE;
 
-    switch (specialOptions[index].type)
+    gconfValue = gconf_client_get (client,
+				   specialOptions[index].gnomeName,
+				   &err);
+
+    if (err)
     {
+	g_error_free (err);
+	return FALSE;
+    }
+
+    if (!gconfValue)
+	return FALSE;
+
+    switch (specialOptions[index].type) {
     case OptionInt:
+	if (gconfValue->type == GCONF_VALUE_INT)
 	{
 	    guint value;
-	    value = gconf_client_get_int (client,
-					  specialOptions[index].gnomeName,
-					  &err);
 
-	    if (!err)
-	    {
-		ccsSetInt (setting, value);
-		ret = TRUE;
-	    }
+	    value = gconf_value_get_int (gconfValue);
+	    ccsSetInt (setting, value);
+	    ret = TRUE;
 	}
 	break;
     case OptionBool:
+	if (gconfValue->type == GCONF_VALUE_BOOL)
 	{
 	    gboolean value;
-	    value = gconf_client_get_bool (client,
-					   specialOptions[index].gnomeName,
-					   &err);
 
-	    if (!err)
-	    {
-		ccsSetBool (setting, value ? TRUE : FALSE);
-		ret = TRUE;
-	    }
+	    value = gconf_value_get_bool (gconfValue);
+	    ccsSetBool (setting, value ? TRUE : FALSE);
+	    ret = TRUE;
 	}
 	break;
     case OptionString:
+	if (gconfValue->type == GCONF_VALUE_STRING)
 	{
-	    char *value;
-	    value = gconf_client_get_string (client,
-					     specialOptions[index].gnomeName,
-					     &err);
+	    const char *value;
 
-	    if (!err && value)
-    	    {
+	    value = gconf_value_get_string (gconfValue);
+	    if (value)
+	    {
 		ccsSetString (setting, value);
 		ret = TRUE;
-		g_free (value);
 	    }
 	}
 	break;
     case OptionKey:
+	if (gconfValue->type == GCONF_VALUE_STRING)
 	{
-	    char *value;
-	    value = gconf_client_get_string (client,
-					     specialOptions[index].gnomeName,
-					     &err);
+	    const char *value;
 
-	    if (!err && value)
-    	    {
+	    value = gconf_value_get_string (gconfValue);
+	    if (value)
+	    {
 		CCSSettingKeyValue key;
 
 		memset (&key, 0, sizeof (CCSSettingKeyValue));
@@ -1024,7 +1026,6 @@ readIntegratedOption (CCSContext *context,
 		    ccsSetKey (setting, key);
 		    ret = TRUE;
 		}
-		g_free (value);
 	    }
 	}
 	break;
@@ -1035,48 +1036,46 @@ readIntegratedOption (CCSContext *context,
 
 	    if (strcmp (settingName, "current_viewport") == 0)
 	    {
-		const char *name;
-		gboolean   showAll;
-
-		name = specialOptions[index].gnomeName;
-		showAll = gconf_client_get_bool (client, name, &err);
-		if (!err)
+		if (gconfValue->type == GCONF_VALUE_BOOL)
 		{
+		    gboolean showAll;
+
+		    showAll = gconf_value_get_bool (gconfValue);
 		    ccsSetBool (setting, !showAll);
 		    ret = TRUE;
 		}
 	    }
 	    else if (strcmp (settingName, "fullscreen_visual_bell") == 0)
 	    {
-		const char *name;
-		char       *value;
-
-		name = specialOptions[index].gnomeName;
-		value = gconf_client_get_string (client, name, &err);
-		if (!err && value)
+		if (gconfValue->type == GCONF_VALUE_STRING)
 		{
-		    Bool fullscreen;
+		    const char *value;
 
-		    fullscreen = strcmp (value, "fullscreen") == 0;
-		    ccsSetBool (setting, fullscreen);
-		    ret = TRUE;
-		    g_free (value);
+		    value = gconf_value_get_string (gconfValue);
+		    if (value)
+		    {
+			Bool fullscreen;
+
+			fullscreen = strcmp (value, "fullscreen") == 0;
+			ccsSetBool (setting, fullscreen);
+			ret = TRUE;
+		    }
 		}
 	    }
 	    else if (strcmp (settingName, "click_to_focus") == 0)
 	    {
-		char       *focusMode;
-		const char *name;
-
-		name = specialOptions[index].gnomeName;
-		focusMode = gconf_client_get_string (client, name, &err);
-
-		if (!err && focusMode)
+		if (gconfValue->type == GCONF_VALUE_STRING)
 		{
-		    Bool clickToFocus = (strcmp (focusMode, "click") == 0);
-		    ccsSetBool (setting, clickToFocus);
-		    ret = TRUE;
-		    g_free (focusMode);
+		    const char *focusMode;
+
+		    focusMode = gconf_value_get_string (gconfValue);
+
+		    if (focusMode)
+		    {
+			Bool clickToFocus = (strcmp (focusMode, "click") == 0);
+			ccsSetBool (setting, clickToFocus);
+			ret = TRUE;
+		    }
 		}
 	    }
 	    else if (((strcmp (settingName, "initiate") == 0) &&
@@ -1084,31 +1083,32 @@ readIntegratedOption (CCSContext *context,
 		       (strcmp (pluginName, "resize") == 0))) ||
 		     (strcmp (settingName, "window_menu") == 0))
 	    {
-		char       *value;
-		const char *name;
-
-		name = specialOptions[index].gnomeName;
-		value = gconf_client_get_string (client, name, &err);
-
-		if (!err && value)
+		if (gconfValue->type == GCONF_VALUE_STRING)
 		{
-		    CCSSettingButtonValue button;
-		    memset (&button, 0, sizeof (CCSSettingButtonValue));
-    		    ccsGetButton (setting, &button);
-	    	    if (ccsStringToButtonBinding (value, &button))
-		    {
-			button.buttonModMask = getGnomeMouseButtonModifier ();
-			if (strcmp (settingName, "window_menu") == 0)
-    			    button.button = 3;
-			else if (strcmp (pluginName, "resize") == 0)
-	    		    button.button = 2;
-			else
-			    button.button = 1;
+		    const char *value;
 
-			ccsSetButton (setting, button);
-			ret = TRUE;
+		    value = gconf_value_get_string (gconfValue);
+
+		    if (value)
+		    {
+			CCSSettingButtonValue button;
+			memset (&button, 0, sizeof (CCSSettingButtonValue));
+			ccsGetButton (setting, &button);
+			if (ccsStringToButtonBinding (value, &button))
+			{
+			    button.buttonModMask =
+				getGnomeMouseButtonModifier ();
+			    if (strcmp (settingName, "window_menu") == 0)
+				button.button = 3;
+			    else if (strcmp (pluginName, "resize") == 0)
+				button.button = 2;
+			    else
+				button.button = 1;
+
+			    ccsSetButton (setting, button);
+			    ret = TRUE;
+			}
 		    }
-		    g_free (value);
 		}
 	    }
 	}
@@ -1117,8 +1117,7 @@ readIntegratedOption (CCSContext *context,
 	break;
     }
 
-    if (err)
-	g_error_free (err);
+    gconf_value_free (gconfValue);
 
     return ret;
 }
