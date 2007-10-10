@@ -538,9 +538,18 @@ wallpaperPaintBackground (CompScreen *s,
     GLfloat *d, *data;
     CompTexture * bg;
     WallpaperWallpaper * ww;
+    int vx,vy;
+    
+    vx = s->x - (s->windowOffsetX / s->width);
+    while (vx < 0) vx += s->hsize;
+    vx %= s->hsize;
 
+    vy = s->y - (s->windowOffsetY / s->height);
+    while (vy < 0) vy += s->vsize;
+    vy %= s->vsize;
+    
 
-    ww = getTextureForViewport(s, s->x, s->y);
+    ww = getTextureForViewport(s, vx, vy);
     bg = &ww->texture;
 
     if (!nBox)
