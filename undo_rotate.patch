@@ -1,0 +1,54 @@
+*** freewins.c	2007-10-21 18:53:16.000000000 -0400
+--- freewins-0.1/freewins.c	2007-10-16 12:49:22.000000000 -0400
+***************
+*** 131,137 ****
+  	    
+  	case ButtonPress:
+  	    
+! 	    if(ev->xbutton.state & (ControlMask)){
+  
+  		for(s = d->screens; s; s = s->next){
+  		    FREEWINS_SCREEN(s);
+--- 131,137 ----
+  	    
+  	case ButtonPress:
+  	    
+! 	    if(ev->xbutton.state & (ControlMask | ShiftMask)){
+  
+  		for(s = d->screens; s; s = s->next){
+  		    FREEWINS_SCREEN(s);
+***************
+*** 168,199 ****
+  			fww->zaxis = FALSE;
+  		}
+  	    }
+- 
+- 	    if(ev->xbutton.state & (ShiftMask)){
+- 
+- 		for(s = d->screens; s; s = s->next){
+- 		    FREEWINS_SCREEN(s);
+- 
+- 		    if(!otherScreenGrabExist(s, "freewins", 0))
+- 			if(!fws->grabIndex)
+- 			    fws->grabIndex = pushScreenGrab(s, None, "freewins");
+- 		}
+- 
+- 		w = findWindowAtDisplay(d, ev->xbutton.window);
+- 
+- 		if(w){
+- 		    FREEWINS_WINDOW(w);
+- 		    fww->grabbed = FALSE;
+- 
+- 		    fww->oldX = ev->xbutton.x_root;
+- 		    fww->oldY = ev->xbutton.y_root;
+- 			
+- 			fww->angX = 0;
+- 			fww->angY = 0;
+- 			fww->angZ = 0;
+- 		}
+- 		}
+- 
+  	    break;
+  
+  	case ButtonRelease:
+--- 168,173 ----
