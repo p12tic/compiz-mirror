@@ -80,6 +80,7 @@ typedef struct _FWScreen{
 	CompOption opt[FREEWINS_OPTION_NUM];
 
     int grabIndex;
+    Bool isDamaged;
 
 } FWScreen;
 
@@ -117,6 +118,9 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	    if(fwd->grabWindow){
 		//fprintf(stderr, "Moved\n");
 		FREEWINS_WINDOW(fwd->grabWindow);
+		FREEWINS_SCREEN(fwd->grabWindow->screen);
+
+		fws->isDamaged = TRUE;
 
 		dx = (float)(ev->xmotion.x_root - fww->oldX) / fwd->grabWindow->screen->width;
 		dy = (float)(ev->xmotion.y_root - fww->oldY) / fwd->grabWindow->screen->height;
@@ -159,6 +163,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		if(fws->grabIndex){
 		    removeScreenGrab(s, fws->grabIndex, 0);
 		    fws->grabIndex = 0;
+		    fws->isDamaged = FALSE;
 		}
 	    }
 
@@ -186,7 +191,10 @@ static void FWDonePaintScreen(CompScreen *s){
 
     FREEWINS_SCREEN(s);
 
-    damageScreen(s);
+    if(fws->isDamaged){
+	damageScreen(s);
+//	fws->isDamaged = FALSE;
+    }
 
     UNWRAP(fws, s, donePaintScreen);
     (*s->donePaintScreen)(s);
@@ -236,6 +244,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
     return status;
 }
 
+/*
 static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib, 
 	const CompTransform *transform, Region region, CompOutput *output, unsigned int mask){
 
@@ -252,6 +261,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
     return status;
 }
+*/
 
 /*
 static void FWPaintTransformedOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib, 
@@ -428,6 +438,8 @@ resetFWRotation (CompDisplay     *d,
 	
 	if(w){
 	    FREEWINS_WINDOW(w);
+	    FREEWINS_SCREEN(w->screen);
+	    fws->isDamaged = TRUE;
 	    fww->grabbed = FALSE;
 /*
 		fww->oldX = fww->oldX;
@@ -461,12 +473,13 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     }
 
     fws->grabIndex = 0;
+    fws->isDamaged = TRUE;
 
     s->base.privates[fwd->screenPrivateIndex].ptr = fws;
     
     WRAP(fws, s, donePaintScreen, FWDonePaintScreen);
 
-    WRAP(fws, s, paintOutput, FWPaintOutput);
+    //WRAP(fws, s, paintOutput, FWPaintOutput);
     WRAP(fws, s, paintWindow, FWPaintWindow);
 
 //    WRAP(fws, s, paintTransformedOutput, FWPaintTransformedOutput);
@@ -483,7 +496,7 @@ static void freewinsFiniScreen(CompPlugin *p, CompScreen *s){
  //   UNWRAP(fws, s, paintTransformedOutput);
     UNWRAP(fws, s, donePaintScreen);
     UNWRAP(fws, s, paintWindow);
-    UNWRAP(fws, s, paintOutput);
+    //UNWRAP(fws, s, paintOutput);
 
     free(fws);
 }
