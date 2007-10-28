@@ -1078,10 +1078,11 @@ readIntegratedOption (CCSContext *context,
 		    }
 		}
 	    }
-	    else if (((strcmp (settingName, "initiate") == 0) &&
+	    else if (((strcmp (settingName, "initiate_button") == 0) &&
 		      ((strcmp (pluginName, "move") == 0) ||
 		       (strcmp (pluginName, "resize") == 0))) ||
-		     (strcmp (settingName, "window_menu") == 0))
+		      ((strcmp (settingName, "window_menu_button") == 0) &&
+           (strcmp (pluginName, "core") == 0)))
 	    {
 		if (gconfValue->type == GCONF_VALUE_STRING)
 		{
@@ -1098,7 +1099,7 @@ readIntegratedOption (CCSContext *context,
 			{
 			    button.buttonModMask =
 				getGnomeMouseButtonModifier ();
-			    if (strcmp (settingName, "window_menu") == 0)
+			    if (strcmp (settingName, "window_menu_button") == 0)
 				button.button = 3;
 			    else if (strcmp (pluginName, "resize") == 0)
 				button.button = 2;
@@ -1615,10 +1616,11 @@ writeIntegratedOption (CCSContext *context,
 		    g_free (currentValue);
 		}
 	    }
-	    else if (((strcmp (settingName, "initiate") == 0) &&
-	    	      ((strcmp (pluginName, "move") == 0) ||
+	    else if (((strcmp (settingName, "initiate_button") == 0) &&
+		      ((strcmp (pluginName, "move") == 0) ||
 		       (strcmp (pluginName, "resize") == 0))) ||
-		     (strcmp (settingName, "window_menu") == 0))
+		      ((strcmp (settingName, "window_menu_button") == 0) &&
+           (strcmp (pluginName, "core") == 0)))
 	    {
 		char         *newValue;
 		gchar        *currentValue;
@@ -1644,11 +1646,11 @@ writeIntegratedOption (CCSContext *context,
 
 		setGnomeMouseButtonModifier (modMask);
 		setButtonBindingForSetting (context, "move",
-					    "initiate", 1, modMask);
+					    "initiate_button", 1, modMask);
 		setButtonBindingForSetting (context, "resize",
-					    "initiate", 2, modMask);
+					    "initiate_button", 2, modMask);
 		setButtonBindingForSetting (context, "core",
-					    "window_menu", 3, modMask);
+					    "window_menu_button", 3, modMask);
 	    }
 	}
      	break;
