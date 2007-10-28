@@ -557,15 +557,18 @@ gnomeValueChanged (GConfClient *client,
 		needInit = FALSE;
 	    }
 
-	    s = findDisplaySettingForPlugin (context, "core", "window_menu");
+	    s = findDisplaySettingForPlugin (context, "core",
+					     "window_menu_button");
 	    if (s)
 		readSetting (context, s);
 
-	    s = findDisplaySettingForPlugin (context, "move", "initiate");
+	    s = findDisplaySettingForPlugin (context, "move",
+					     "initiate_button");
 	    if (s)
 		readSetting (context, s);
 
-	    s = findDisplaySettingForPlugin (context, "resize", "initiate");
+	    s = findDisplaySettingForPlugin (context, "resize",
+					     "initiate_button");
 	    if (s)
 		readSetting (context, s);
 	}
@@ -1082,7 +1085,7 @@ readIntegratedOption (CCSContext *context,
 		      ((strcmp (pluginName, "move") == 0) ||
 		       (strcmp (pluginName, "resize") == 0))) ||
 		      ((strcmp (settingName, "window_menu_button") == 0) &&
-           (strcmp (pluginName, "core") == 0)))
+		       (strcmp (pluginName, "core") == 0)))
 	    {
 		if (gconfValue->type == GCONF_VALUE_STRING)
 		{
@@ -1620,7 +1623,7 @@ writeIntegratedOption (CCSContext *context,
 		      ((strcmp (pluginName, "move") == 0) ||
 		       (strcmp (pluginName, "resize") == 0))) ||
 		      ((strcmp (settingName, "window_menu_button") == 0) &&
-           (strcmp (pluginName, "core") == 0)))
+		       (strcmp (pluginName, "core") == 0)))
 	    {
 		char         *newValue;
 		gchar        *currentValue;
