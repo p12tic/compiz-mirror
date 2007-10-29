@@ -4,20 +4,20 @@
 	<short>Freewins</short>
 	<long>Freely rotate windows</long>
 	<display>
-	    <option type="button" name="initiatez_button">
-			<short>Initiate Z rotation</short>
+	    <option type="button" name="initiate_button">
+			<short>Initiate rotation</short>
 			<long>Start Rotation</long>
 			<default>&lt;Control&gt;&lt;Shift&gt;Button1</default>
-	    </option>
-	    <option type="button" name="initiatex_button">
-			<short>Initiate X rotation</short>
-			<long>Start Rotation</long>
-			<default>&lt;Control&gt;&lt;Shift&gt;Button3</default>
 	    </option>
 	    <option type="button" name="reset_button">
 			<short>Reset</short>
 			<long>Reset Rotation</long>
 			<default>&lt;Control&gt;&lt;Shift&gt;Button2</default>
+	    </option>
+	    <option type="key" name="toggle_axis">
+			<short>Axis help toggle</short>
+			<long>Axis selection helper </long>
+			<default>&lt;Control&gt;&lt;Shift&gt;a</default>
 	    </option>
 	</display>
     </plugin>
