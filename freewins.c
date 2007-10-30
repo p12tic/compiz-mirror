@@ -1,8 +1,8 @@
 #include <compiz-core.h>
+#include <math.h>
 
 #define ABS(x) ((x)>0?(x):-(x))
-
-int displayPrivateIndex;
+#define D2R(x) ((x) * M_PI / 180.0)
 
 // Macros/*{{{*/
 #define GET_FREEWINS_DISPLAY(d)                                       \
@@ -39,48 +39,48 @@ int displayPrivateIndex;
 #define WIN_REAL_W(w) (w->width + w->input.left + w->input.right)
 #define WIN_REAL_H(w) (w->height + w->input.top + w->input.bottom)
 
-#define FREEWINS_OPTION_INITIATEZ_BUTTON 0
-#define FREEWINS_OPTION_INITIATEX_BUTTON 1
-#define FREEWINS_OPTION_RESET_BUTTON 2
+#define FREEWINS_OPTION_INITIATE_BUTTON 0
+#define FREEWINS_OPTION_RESET_BUTTON 1
+#define FREEWINS_OPTION_AXIS_TOGGLE_KEY 2
 #define FREEWINS_OPTION_NUM 3
 
 /*}}}*/
 
-static CompMetadata freewinsMetadata;
-
 // Structures /*{{{*/
 typedef struct _FWDisplay{
     int screenPrivateIndex;
-	int boundAction;
-	int ClickX;
-	int ClickY;
+
+    int click_root_x;
+    int click_root_y;
+
+    int click_win_x;
+    int click_win_y;
 
     HandleEventProc handleEvent;
 
     CompWindow *grabWindow;
-	Window clickWindow;
+    CompWindow *focusWindow;
+    
+    CompOption opt[FREEWINS_OPTION_NUM];
 
-	CompOption opt[FREEWINS_OPTION_NUM];
+    Bool axisHelp;
 
 } FWDisplay;
 
 typedef struct _FWScreen{
     int windowPrivateIndex;
 
-    PreparePaintScreenProc preparePaintScreen;
-    DonePaintScreenProc donePaintScreen;
     PaintOutputProc paintOutput;
     PaintWindowProc paintWindow;
 
-    PaintTransformedOutputProc paintTransformedOutput;
+    DamageWindowRectProc damageWindowRect;
 
-    WindowGrabNotifyProc windowGrabNotify;
-    WindowUngrabNotifyProc windowUngrabNotify;
+    WindowResizeNotifyProc windowResizeNotify;
 
-	CompOption opt[FREEWINS_OPTION_NUM];
+    CompOption opt[FREEWINS_OPTION_NUM];
 
     int grabIndex;
-    Bool isDamaged;
+    int rotatedWindows;
 
 } FWScreen;
 
@@ -89,46 +89,58 @@ typedef struct _FWWindow{
     float angY;
     float angZ;
 
-    // Agregar resize notify
     float midX;
     float midY;
 
     int oldX;
     int oldY;
 
+    //Box rect;
+
     Bool grabbed;
     Bool zaxis;
 
+    Bool grabLeft;
+    Bool grabTop;
+
+    Bool rotated;
 
 } FWWindow;
 /*}}}*/
 
+int displayPrivateIndex;
+static CompMetadata freewinsMetadata;
+
+// Event handler/*{{{*/
 static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
-    FREEWINS_DISPLAY(d);
-    CompWindow *w;
     CompScreen *s;
     float dx, dy;
+    FREEWINS_DISPLAY(d);
 
     switch(ev->type){
 	
+	// Motion Notify/*{{{*/
 	case MotionNotify:
 	    
-		//fprintf(stderr, "MotionNotify\n");
 	    if(fwd->grabWindow){
-		//fprintf(stderr, "Moved\n");
 		FREEWINS_WINDOW(fwd->grabWindow);
 		FREEWINS_SCREEN(fwd->grabWindow->screen);
 
-		fws->isDamaged = TRUE;
-
 		dx = (float)(ev->xmotion.x_root - fww->oldX) / fwd->grabWindow->screen->width;
 		dy = (float)(ev->xmotion.y_root - fww->oldY) / fwd->grabWindow->screen->height;
-		
+
 		if(fww->zaxis){
 		    if(ABS(dy)>ABS(dx)){
+			if(fww->grabLeft)
 			    fww->angZ -= 360 * dy;
+			else
+			    fww->angZ += 360 * dy;
+		    }else{
+			if(fww->grabTop)
 			    fww->angZ += 360 * dx;
+			else
+			    fww->angZ -= 360 * dx;
 		    }
 		}else{
 		    fww->angX -= 360.0 * dy;
@@ -137,45 +149,69 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
 		fww->oldX = ev->xmotion.x_root;
 		fww->oldY = ev->xmotion.y_root;
+
+		fww->grabLeft = (ev->xmotion.x - fww->midX > 0 ? FALSE : TRUE);
+		fww->grabTop = (ev->xmotion.y - fww->midY > 0 ? FALSE : TRUE);
+
+		//fww->rect.x1 = 0; 
+		//fww->rect.y1 = 0; 
+
+		//fww->rect.x2 = fwd->grabWindow->screen->width; 
+		//fww->rect.y2 = fwd->grabWindow->screen->height; 
+
+		if(dx != 0.0 || dy != 0.0)
+		    damageScreen(fwd->grabWindow->screen);
+		    //damageScreenRegion(fwd->grabWindow->screen, fww->rect);
+
+		// Check if there are rotated windows
+		if(fww->angX != 0.0 || fww->angY != 0.0 || fww->angZ != 0.0){
+		    if( !fww->rotated ){
+			fws->rotatedWindows++;
+			fww->rotated = TRUE;
+		    }
+		}else{
+		    if( fww->rotated ){
+			fws->rotatedWindows--;
+			fww->rotated = FALSE;
+		    }
+		}
+		
 	    }
 	    break;
-	    
+	    /*}}}*/
+
+	// Button press / release/*{{{*/
 	case ButtonPress:
-	    
-		//fprintf(stderr, "ButtonPress\n");
-		//fprintf(stderr, "%d %d\n", ev->xbutton.x_root, ev->xbutton.y_root);
-
-		w = findWindowAtDisplay(d, ev->xbutton.window);
-
-		if(w){
-		    fwd->ClickX = ev->xbutton.x_root;
-		    fwd->ClickY = ev->xbutton.y_root;
-			//fprintf(stderr, "%d %d\n", fwd->ClickX, fwd->ClickY);
-		}
-
+	    fwd->click_root_x = ev->xbutton.x_root;
+	    fwd->click_root_y = ev->xbutton.y_root;
+	    fwd->click_win_x = ev->xbutton.x;
+	    fwd->click_win_y = ev->xbutton.y;
 	    break;
+
 	case ButtonRelease:
-
-		//fprintf(stderr, "ButtonRelese\n");
-	    for(s = d->screens; s; s = s->next){
-		FREEWINS_SCREEN(s);
-
-		if(fws->grabIndex){
-		    removeScreenGrab(s, fws->grabIndex, 0);
-		    fws->grabIndex = 0;
-		    fws->isDamaged = FALSE;
-		}
-	    }
-
 	    if(fwd->grabWindow){
-		//fprintf(stderr, "Released\n");
+		for(s = d->screens; s; s = s->next){
+		    FREEWINS_SCREEN(s);
+
+		    if(fws->grabIndex){
+			removeScreenGrab(s, fws->grabIndex, 0);
+			fws->grabIndex = 0;
+		    }
+		}
+
 		FREEWINS_WINDOW(fwd->grabWindow);
 		fww->grabbed = FALSE;
 		fwd->grabWindow = 0;
 	    }
+	    break;
+	/*}}}*/
 
-		fwd->boundAction = -1;
+	case FocusOut:
+	    break;
 
+	case FocusIn:
+	    if(ev->xfocus.mode != NotifyGrab)
+		fwd->focusWindow = findWindowAtDisplay(d, ev->xfocus.window);
 	    break;
 
 	default:
@@ -186,21 +222,9 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
     (*d->handleEvent)(d, ev);
     WRAP(fwd, d, handleEvent, FWHandleEvent);
 }
+/*}}}*/
 
-static void FWDonePaintScreen(CompScreen *s){
-
-    FREEWINS_SCREEN(s);
-
-    if(fws->isDamaged){
-	damageScreen(s);
-//	fws->isDamaged = FALSE;
-    }
-
-    UNWRAP(fws, s, donePaintScreen);
-    (*s->donePaintScreen)(s);
-    WRAP(fws, s, donePaintScreen, FWDonePaintScreen);
-}
-
+// Paint Window/*{{{*/
 static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib, 
 	const CompTransform *transform, Region region, unsigned int mask){
 
@@ -215,6 +239,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
+	// Ajustar espesor de la ventana
 	matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
 
 	matrixTranslate(&wTransform, 
@@ -243,41 +268,260 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
     return status;
 }
+/*}}}*/
 
-/*
+//Paint Output/*{{{*/
 static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib, 
 	const CompTransform *transform, Region region, CompOutput *output, unsigned int mask){
 
-    Bool status;
+    Bool wasCulled, status;
+    CompTransform zTransform;
+    float x, y;
+    int j;
 
     FREEWINS_SCREEN(s);
+    FREEWINS_DISPLAY(s->display);
 
-    //if(fws->rotatedWindows)
-    	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+    if(fws->rotatedWindows > 0)
+	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     UNWRAP(fws, s, paintOutput);
     status = (*s->paintOutput)(s, sAttrib, transform, region, output, mask);
     WRAP(fws, s, paintOutput, FWPaintOutput);
 
+    // z-axis circle/*{{{*/
+    if(fwd->axisHelp && fwd->focusWindow){
+
+	x = WIN_REAL_X(fwd->focusWindow) + WIN_REAL_W(fwd->focusWindow)/2.0;
+	y = WIN_REAL_Y(fwd->focusWindow) + WIN_REAL_H(fwd->focusWindow)/2.0;
+
+	wasCulled = glIsEnabled(GL_CULL_FACE);
+	zTransform = *transform;
+
+	transformToScreenSpace(s, output, -DEFAULT_Z_CAMERA, &zTransform);
+
+	glPushMatrix();
+	glLoadMatrixf(zTransform.m);
+
+	if(wasCulled)
+	    glDisable(GL_CULL_FACE);
+
+	glColor4f (0.6, 0.6, 1.0, 0.8f);
+	glEnable(GL_BLEND);
+
+	glBegin(GL_POLYGON);
+	for(j=0; j<360; j += 10)
+	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
+	glEnd ();
+
+	glDisable(GL_BLEND);
+	glColor4f (0.6, 0.6, 1.0, 1.0f);
+	glLineWidth(3.0);
+
+	glBegin(GL_LINE_LOOP);
+	for(j=360; j>=0; j -= 10)
+	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
+	glEnd ();
+
+	if(wasCulled)
+	    glEnable(GL_CULL_FACE);
+
+	glColor4usv(defaultColor);
+	glPopMatrix ();
+    }
+
+/*}}}*/
+
     return status;
 }
-*/
+/*}}}*/
 
-/*
-static void FWPaintTransformedOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib, 
-	const CompTransform *transform, Region region, CompOutput *output, unsigned int mask){
+// Damage Window Rect/*{{{*/
+static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
-    FREEWINS_SCREEN(s);
+    Bool status = TRUE;
+    FREEWINS_SCREEN(w->screen);
+//    FREEWINS_WINDOW(w);
 
+    damageScreen(w->screen);
 
-    UNWRAP(fws, s, paintTransformedOutput);
-    (*s->paintTransformedOutput)(s, sAttrib, transform, region, output, mask);
-    WRAP(fws, s, paintTransformedOutput, FWPaintTransformedOutput);
+    UNWRAP(fws, w->screen, damageWindowRect);
+    status |= (*w->screen->damageWindowRect)(w, initial, rect);
+    //(*w->screen->damageWindowRect)(w, initial, &fww->rect);
+    WRAP(fws, w->screen, damageWindowRect, FWDamageWindowRect);
 
-    if(wasCulled)
-	glEnabled(GL_CULL_FACE);
+    // true if damaged something
+    return status;
 }
-*/
+/*}}}*/
+
+
+// Resize Notify/*{{{*/
+static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh){
+
+    FREEWINS_WINDOW(w);
+    FREEWINS_SCREEN(w->screen);
+
+    fww->midX += dw;
+    fww->midY += dh;
+
+    UNWRAP(fws, w->screen, windowResizeNotify);
+    (*w->screen->windowResizeNotify)(w, dx, dy, dw, dh);
+    WRAP(fws, w->screen, windowResizeNotify, FWWindowResizeNotify);
+}
+/*}}}*/
+
+// Initiate Rotate/*{{{*/
+static Bool initiateFWRotate (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption) {
+    
+    CompWindow* w;
+    CompScreen* s;
+    Window xid;
+    float dx, dy;
+    
+    FREEWINS_DISPLAY(d);
+
+    xid = getIntOptionNamed (option, nOption, "window", 0);
+    w = findWindowAtDisplay (d, xid);
+    
+    for(s = d->screens; s; s = s->next){
+	FREEWINS_SCREEN(s);
+	
+	if(!otherScreenGrabExist(s, "freewins", 0))
+	    if(!fws->grabIndex)
+		fws->grabIndex = pushScreenGrab(s, None, "freewins");
+    }
+    
+    if(w){
+	FREEWINS_WINDOW(w);
+	
+	fwd->grabWindow = w;
+	
+	fww->grabbed = TRUE;
+
+	fww->oldX = fwd->click_root_x;
+	fww->oldY = fwd->click_root_y;
+
+	dx = fwd->click_win_x - fww->midX;
+	dy = fwd->click_win_y - fww->midY;
+
+	fww->grabLeft = (dx > 0 ? FALSE : TRUE);
+	fww->grabTop = (dy > 0 ? FALSE : TRUE);
+
+	dx = ABS(dx);
+	dy = ABS(dy);
+
+	if( (dx>dy?dx:dy) > 100 )
+	    fww->zaxis = TRUE;
+	else
+	    fww->zaxis = FALSE;
+    }
+    
+    return TRUE;
+}
+/*}}}*/
+
+// Reset Rotation/*{{{*/
+static Bool resetFWRotation (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+    
+    CompWindow* w;
+    
+    w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
+
+    if(w){
+	FREEWINS_WINDOW(w);
+
+	damageScreen(w->screen);
+
+	if( fww->rotated ){
+	    FREEWINS_SCREEN(w->screen);
+	    fws->rotatedWindows--;
+	    fww->rotated = FALSE;
+	}
+
+	fww->angX = 0.0;
+	fww->angY = 0.0;
+	fww->angZ = 0.0;
+    }
+    
+    return TRUE;
+}
+/*}}}*/
+
+// Toggle Axis /*{{{*/
+static Bool toggleFWAxis (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+
+    FREEWINS_DISPLAY(d);
+
+    fwd->axisHelp = !fwd->axisHelp;
+
+    return TRUE;
+}
+/*}}}*/
+
+// Display Option/*{{{*/
+static CompOption* freewinsGetDisplayOptions (CompPlugin *plugin, 
+	CompDisplay *display, int *count) {
+
+    FREEWINS_DISPLAY (display);
+
+    *count = FREEWINS_OPTION_NUM;
+    return fwd->opt;
+}
+
+static Bool freewinsSetDisplayOption (CompPlugin *plugin, CompDisplay *display, 
+	const char *name, CompOptionValue *value) {
+
+    CompOption *o;
+    int index;
+
+    FREEWINS_DISPLAY (display);
+
+    if( !(o = compFindOption (fwd->opt, FREEWINS_OPTION_NUM, name, &index)) )
+	return FALSE;
+
+    return compSetDisplayOption (display, o, value);
+}
+/*}}}*/
+
+// Object Options/*{{{*/
+static CompOption* freewinsGetObjectOptions (CompPlugin *plugin, 
+	CompObject *object, int *count) {
+    
+    static GetPluginObjectOptionsProc dispTab[] = {
+	(GetPluginObjectOptionsProc) 0, // GetCoreOptions
+	(GetPluginObjectOptionsProc) freewinsGetDisplayOptions
+    };
+
+    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab),
+             (void *) (*count = 0), (plugin, object, count));
+}
+
+static CompBool freewinsSetObjectOption (CompPlugin *plugin, CompObject *object, 
+	const char *name, CompOptionValue *value) {
+    
+    static SetPluginObjectOptionProc dispTab[] = {
+	(SetPluginObjectOptionProc) 0, /* SetCoreOption */
+	(SetPluginObjectOptionProc) freewinsSetDisplayOption
+    };
+    
+    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab), 
+	FALSE, (plugin, object, name, value));
+}
+/*}}}*/
+
+static const CompMetadataOptionInfo freewinsOptionInfo[] = {
+	{ "initiate_button", "button", 0, initiateFWRotate, 0 /* terminateFWRotate */ },
+	{ "reset_button", "button", 0, resetFWRotation, 0},
+	{ "toggle_axis", "key", 0, toggleFWAxis, 0}
+};
+
+static CompMetadata* freewinsGetMetadata(CompPlugin* plugin){
+    return &freewinsMetadata;
+}
 
 // Window init / clean/*{{{*/
 static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
@@ -297,6 +541,14 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->grabbed = 0;
     fww->zaxis = FALSE;
 
+    // Window Bounding box
+    //fww->rect.x1 = fww->rect.x2 = WIN_REAL_X(w);
+    //fww->rect.y1 = fww->rect.y2 = WIN_REAL_Y(w);
+    //fww->rect.x2 += WIN_REAL_W(w);
+    //fww->rect.y2 += WIN_REAL_H(w);
+
+    fww->rotated = FALSE;
+
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
 
     return TRUE;
@@ -315,149 +567,6 @@ static void freewinsFiniWindow(CompPlugin *p, CompWindow *w){
 }
 /*}}}*/
 
-static Bool
-initiateFWRotateZ (CompDisplay     *d,
-         CompAction      *action,
-         CompActionState state,
-         CompOption      *option,
-         int         nOption)
-{
-	//fprintf(stderr, "Initiate Freewins Rotation Keybinding\n");
-	
-	CompWindow* w;
-	CompScreen* s;
-	Window xid;
-
-	FREEWINS_DISPLAY(d);
-
-	xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-
-	for(s = d->screens; s; s = s->next){
-	    FREEWINS_SCREEN(s);
-
-	    if(!otherScreenGrabExist(s, "freewins", 0))
-		if(!fws->grabIndex)
-		    fws->grabIndex = pushScreenGrab(s, None, "freewins");
-	}
-	
-	if(w){
-		//fprintf(stderr, "Grabbed\n");
-		FREEWINS_WINDOW(w);
-
-		fwd->grabWindow = w;
-
-		fww->grabbed = TRUE;
-
-		fww->oldX = fwd->ClickX;
-		fww->oldY = fwd->ClickY;
-
-		fww->zaxis = TRUE;
-	}
-
-	return TRUE;
-}
-
-static Bool
-initiateFWRotateX (CompDisplay     *d,
-         CompAction      *action,
-         CompActionState state,
-         CompOption      *option,
-         int         nOption)
-{
-	//fprintf(stderr, "Initiate Freewins Rotation Keybinding\n");
-	
-	CompWindow* w;
-	CompScreen* s;
-	Window xid;
-
-	FREEWINS_DISPLAY(d);
-
-	xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-
-	for(s = d->screens; s; s = s->next){
-	    FREEWINS_SCREEN(s);
-
-	    if(!otherScreenGrabExist(s, "freewins", 0))
-		if(!fws->grabIndex)
-		    fws->grabIndex = pushScreenGrab(s, None, "freewins");
-	}
-	
-	if(w){
-		//fprintf(stderr, "Grabbed\n");
-		FREEWINS_WINDOW(w);
-
-		fwd->grabWindow = w;
-
-		fww->grabbed = TRUE;
-
-		fww->oldX = fwd->ClickX;
-		fww->oldY = fwd->ClickY;
-
-		fww->zaxis = FALSE;
-	}
-
-	return TRUE;
-}
-
-static Bool
-terminateFWRotate (CompDisplay     *d,
-         CompAction      *action,
-         CompActionState state,
-         CompOption      *option,
-         int         nOption)
-{
-	//fprintf(stderr, "Terminate Freewins Rotation Keybinding\n");
-
-	return TRUE;
-}
-
-static Bool
-resetFWRotation (CompDisplay     *d,
-         CompAction      *action,
-         CompActionState state,
-         CompOption      *option,
-         int         nOption)
-{
-	//fprintf(stderr, "Reset Freewins Rotation Keybinding\n");
-	CompWindow* w;
-	CompScreen* s;
-	Window xid;
-
-	xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-
-	for(s = d->screens; s; s = s->next){
-	    FREEWINS_SCREEN(s);
-
-	    if(!otherScreenGrabExist(s, "freewins", 0))
-		if(!fws->grabIndex)
-		    fws->grabIndex = pushScreenGrab(s, None, "freewins");
-	}
-	
-	if(w){
-	    FREEWINS_WINDOW(w);
-	    FREEWINS_SCREEN(w->screen);
-	    fws->isDamaged = TRUE;
-	    fww->grabbed = FALSE;
-/*
-		fww->oldX = fww->oldX;
-		fww->oldY = fww->oldY;
-*/		
-		fww->angX = 0;
-		fww->angY = 0;
-		fww->angZ = 0;
-	}
-	return TRUE;
-}
-
-static const CompMetadataOptionInfo freewinsOptionInfo[] = {
-	{ "initiatez_button", "button", 0, initiateFWRotateZ, terminateFWRotate },
-	{ "initiatex_button", "button", 0, initiateFWRotateX, terminateFWRotate },
-	{ "reset_button", "button", 0, resetFWRotation, 0}
-};
-
 // Screen init / clean/*{{{*/
 static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     FWScreen *fws;
@@ -473,16 +582,16 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     }
 
     fws->grabIndex = 0;
-    fws->isDamaged = TRUE;
+    fws->rotatedWindows = 0;
 
     s->base.privates[fwd->screenPrivateIndex].ptr = fws;
     
-    WRAP(fws, s, donePaintScreen, FWDonePaintScreen);
-
-    //WRAP(fws, s, paintOutput, FWPaintOutput);
     WRAP(fws, s, paintWindow, FWPaintWindow);
+    WRAP(fws, s, paintOutput, FWPaintOutput);
 
-//    WRAP(fws, s, paintTransformedOutput, FWPaintTransformedOutput);
+    WRAP(fws, s, damageWindowRect, FWDamageWindowRect);
+
+    WRAP(fws, s, windowResizeNotify, FWWindowResizeNotify);
 
     return TRUE;
 }
@@ -493,17 +602,19 @@ static void freewinsFiniScreen(CompPlugin *p, CompScreen *s){
 
     freeWindowPrivateIndex(s, fws->windowPrivateIndex);
 
- //   UNWRAP(fws, s, paintTransformedOutput);
-    UNWRAP(fws, s, donePaintScreen);
     UNWRAP(fws, s, paintWindow);
-    //UNWRAP(fws, s, paintOutput);
+    UNWRAP(fws, s, paintOutput);
 
+    UNWRAP(fws, s, damageWindowRect);
+
+    UNWRAP(fws, s, windowResizeNotify);
     free(fws);
 }
 /*}}}*/
 
 // Display init / clean/*{{{*/
 static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
+
     FWDisplay *fwd; 
 
     if( !(fwd = (FWDisplay*)malloc( sizeof(FWDisplay) )) )
@@ -511,21 +622,19 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
     
     // inicializar cosas particulares del plugin.
     fwd->grabWindow = 0;
-    fwd->boundAction = -1;
+    fwd->axisHelp = FALSE;
+    fwd->focusWindow = 0;
      
     if( (fwd->screenPrivateIndex = allocateScreenPrivateIndex(d)) < 0 ){
 	free(fwd);
 	return FALSE;
     }
 
-    if (!compInitDisplayOptionsFromMetadata (d,
-                         &freewinsMetadata,
-                         freewinsOptionInfo,
-                         fwd->opt,
-                         FREEWINS_OPTION_NUM))
-    {
-    free (fwd);
-    return FALSE;
+    if( !compInitDisplayOptionsFromMetadata (d, &freewinsMetadata, 
+	    freewinsOptionInfo, fwd->opt, FREEWINS_OPTION_NUM) ){
+	
+	free (fwd);
+	return FALSE;
     }
 
     d->base.privates[displayPrivateIndex].ptr = fwd;
@@ -574,13 +683,10 @@ static void freewinsFiniObject(CompPlugin *p, CompObject *o){
 
 // Plugin init / clean/*{{{*/
 static Bool freewinsInit(CompPlugin *p){
-	if (!compInitPluginMetadataFromInfo (&freewinsMetadata,
-                     p->vTable->name,
-                     freewinsOptionInfo,
-                     FREEWINS_OPTION_NUM,
-					 0,
-					 0))
-    return FALSE;
+    
+    if( !compInitPluginMetadataFromInfo (&freewinsMetadata, p->vTable->name, 
+		freewinsOptionInfo, FREEWINS_OPTION_NUM, 0, 0) )
+	return FALSE;
     
     if( (displayPrivateIndex = allocateDisplayPrivateIndex()) < 0 )
 	return FALSE;
@@ -598,74 +704,7 @@ static void freewinsFini(CompPlugin *p){
 }
 /*}}}*/
 
-static CompOption *
-freewinsGetDisplayOptions (CompPlugin  *plugin,
-               CompDisplay *display,
-               int     *count)
-{
-    FREEWINS_DISPLAY (display);
-
-    *count = FREEWINS_OPTION_NUM;
-    return fwd->opt;
-}
-
-static Bool
-freewinsSetDisplayOption (CompPlugin      *plugin,
-              CompDisplay     *display,
-              const char      *name,
-              CompOptionValue *value)
-{
-    CompOption *o;
-    int        index;
-
-    FREEWINS_DISPLAY (display);
-
-    o = compFindOption (fwd->opt, FREEWINS_OPTION_NUM, name, &index);
-    if (!o)
-    return FALSE;
-
-    return compSetDisplayOption (display, o, value);
-
-    return FALSE;
-}
-
-static CompOption *
-freewinsGetObjectOptions (CompPlugin *plugin,
-              CompObject *object,
-              int    *count)
-{
-    static GetPluginObjectOptionsProc dispTab[] = {
-    (GetPluginObjectOptionsProc) 0, /* GetCoreOptions */
-    (GetPluginObjectOptionsProc) freewinsGetDisplayOptions
-    };
-
-    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab),
-             (void *) (*count = 0), (plugin, object, count));
-}
-
-static CompBool
-freewinsSetObjectOption (CompPlugin      *plugin,
-             CompObject      *object,
-             const char      *name,
-             CompOptionValue *value)
-{
-    static SetPluginObjectOptionProc dispTab[] = {
-    (SetPluginObjectOptionProc) 0, /* SetCoreOption */
-    (SetPluginObjectOptionProc) freewinsSetDisplayOption
-    };
-
-    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab), FALSE,
-             (plugin, object, name, value));
-}
-
-static CompMetadata*
-freewinsGetMetadata(CompPlugin* plugin)
-{
-	return &freewinsMetadata;
-}
-
 // Plugin implementation export/*{{{*/
-
 CompPluginVTable freewinsVTable = {
     "freewins",
     freewinsGetMetadata,
