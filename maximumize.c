@@ -27,7 +27,6 @@ maximumizeEmptyRegion (CompWindow *window, Region region)
     newregion = XCreateRegion ();
     if (!newregion)
 	return 0;
-    int i;
     XSubtractRegion (region, &emptyRegion, newregion);
 
     for (w = s->windows; w; w = w->next)
@@ -63,70 +62,77 @@ maximumizeBoxInBox (BOX a, BOX b)
 	return TRUE;
     return FALSE;
 }
+
+static BOX
+maximumizeExtendBox (BOX tmp, CompWindow *w, Region r, Bool Xfirst)
+{
+    short int counter = 0;
+
+#define CHECKREC \
+	XRectInRegion (r, tmp.x1 - w->input.left, tmp.y1 - w->input.top, \
+		       tmp.x2 - tmp.x1 + w->input.left + w->input.right, \
+		       tmp.y2 - tmp.y1 + w->input.top + w->input.bottom) \
+	    == RectangleIn
+    Bool touch = FALSE;
+    while (counter < 1)
+    {
+	if ((Xfirst && counter == 0) || (!Xfirst && counter == 1))
+	{
+	    while (CHECKREC)
+	    {
+		tmp.x1--;
+	        touch = TRUE;
+	    }
+	    if (touch)
+		tmp.x1++;
+	    touch = FALSE;
+	    while (CHECKREC)
+	    {
+		    tmp.x2++;
+		    touch = TRUE;
+	    }
+	    if (touch)
+		tmp.x2--;
+	    touch = FALSE;
+	    counter++;
+	}
+	if ((Xfirst && counter == 1) || (!Xfirst && counter == 0))
+	{
+	    while (CHECKREC)
+	    {
+		tmp.y2++;
+		touch = TRUE;
+	    }
+	    if (touch)
+		tmp.y2--;
+	    touch = FALSE;
+	    while (CHECKREC)
+	    {
+		tmp.y1--;
+		touch = TRUE;
+	    }
+	    if (touch)
+		tmp.y1++;
+	    touch = FALSE;
+	    counter++;
+	}
+    }
+#undef CHECKREC
+    return tmp;
+}
 static BOX
 maximumizeFindRect (CompWindow *w, Region r)
 {
-    int i;
-    int current = -1;
-    BOX windowBox;
+    BOX windowBox, ansa, ansb;
     windowBox.x1 = w->serverX;
-    windowBox.x2 = w->serverX + w->serverWidth;
+    windowBox.x2 = w->serverX + w->serverWidth ;
     windowBox.y1 = w->serverY;
     windowBox.y2 = w->serverY + w->serverHeight;
-    BOX ansa;
-    BOX ansb;
-    BOX tmp;
-    tmp = windowBox;
-    Bool touch = FALSE;
-    while (XRectInRegion (r, tmp.x1, tmp.y1, tmp.x2 - tmp.x1, tmp.y2 -
-			  tmp.y1) == RectangleIn)
-	if (tmp.x1 > r->extents.x1) 
-	{
-	    touch = TRUE;
-	    tmp.x1--;
-	}
-	else
-	    break;
-    if (touch)
-	tmp.x1++;
-    touch = FALSE;
-    while (XRectInRegion (r, tmp.x1, tmp.y1, tmp.x2 - tmp.x1, tmp.y2 -
-			  tmp.y1) == RectangleIn)
-	if (tmp.x2 < r->extents.x2)
-	{ 
-	    tmp.x2++;
-	    touch = TRUE;
-	}
-	else
-	    break;
-    if (touch)
-	tmp.x2--;
-    touch = FALSE;
-    while (XRectInRegion (r, tmp.x1, tmp.y1, tmp.x2 - tmp.x1, tmp.y2 -
-			  tmp.y1) == RectangleIn)
-	if (tmp.y2 < r->extents.y2)
-	{ 
-	    tmp.y2++;
-	    touch = TRUE;
-	}
-	else
-	    break;
-    if (touch)
-	tmp.y2--;
-    touch = FALSE;
-    while (XRectInRegion (r, tmp.x1, tmp.y1, tmp.x2 - tmp.x1, tmp.y2 -
-			  tmp.y1) == RectangleIn)
-	if (tmp.y1 > r->extents.y1)
-	{ 
-	    tmp.y1--;
-	    touch = TRUE;
-	}
-	else
-	    break;
-    if (touch)
-	tmp.y1++;
-    touch = FALSE;
-    return tmp;
+    ansa = maximumizeExtendBox (windowBox, w, r, TRUE);
+    ansb = maximumizeExtendBox (windowBox, w, r, FALSE);
+    if (maximumizeBoxCompare(ansa,ansb))
+	return ansa;
+    return ansb;
 
 }
 static void
@@ -162,7 +168,6 @@ maximumizeTrigger(CompDisplay     *d,
     CompWindow *w;
     int width, height, x, y;
     XWindowChanges xwc;
-
     w = findWindowAtDisplay (d, d->activeWindow);
     maximumizeComputeResize (w, &width, &height, &x, &y);
     constrainNewWindowSize (w, width, height, &width, &height);
@@ -171,10 +176,7 @@ maximumizeTrigger(CompDisplay     *d,
     xwc.width = width;
     xwc.height = height;
     sendSyncRequest (w);
-    printf ("width: %d heigth: %d x: %d y: %d\n", width, height, x, y); 
-    configureXWindow (w, (unsigned int) CWWidth | CWHeight, &xwc);
-    moveWindow (w, x - w->attrib.x, y - w->attrib.y, TRUE, TRUE);
-    syncWindowPosition (w);
+    configureXWindow (w, (unsigned int) CWWidth | CWHeight | CWX | CWY, &xwc);
     return TRUE;
 }
 
