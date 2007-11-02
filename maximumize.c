@@ -18,17 +18,21 @@
 #include <compiz-core.h>
 #include "maximumize_options.h"
 
+/* Fixme: TITANIC!
+ */
 static Region
 maximumizeEmptyRegion (CompWindow *window, Region region)
 {
     CompScreen *s = window->screen;
     CompWindow *w;
-    Region newregion;
+    Region newregion, tmpregion, eMpty;
     newregion = XCreateRegion ();
+    tmpregion = XCreateRegion ();
+    eMpty = XCreateRegion ();
+    XRectangle tmprect;
     if (!newregion)
 	return 0;
     XSubtractRegion (region, &emptyRegion, newregion);
-
     for (w = s->windows; w; w = w->next)
     {
         if (w->id == w->screen->display->activeWindow)
@@ -37,7 +41,13 @@ maximumizeEmptyRegion (CompWindow *window, Region region)
             continue;
 	if (w->wmType & CompWindowTypeDesktopMask )
 	    continue;
-	XSubtractRegion (newregion, w->region, newregion);
+	tmprect.x = w->serverX - w->input.left;
+	tmprect.y = w->serverY - w->input.top;
+	tmprect.width = w->serverWidth + w->input.right + w->input.left;
+	tmprect.height = w->serverHeight + w->input.top + w->input.bottom;
+	XUnionRectWithRegion (&tmprect, tmpregion, tmpregion);
+	XSubtractRegion (newregion, tmpregion, newregion);
+	XSubtractRegion (eMpty, eMpty, tmpregion);
     }
 
     return newregion;
@@ -52,6 +62,7 @@ maximumizeBoxCompare (BOX a, BOX b)
     return FALSE;
 }
 
+/*
 static Bool
 maximumizeBoxInBox (BOX a, BOX b)
 {
@@ -62,6 +73,7 @@ maximumizeBoxInBox (BOX a, BOX b)
 	return TRUE;
     return FALSE;
 }
+*/
 
 static BOX
 maximumizeExtendBox (BOX tmp, CompWindow *w, Region r, Bool Xfirst)
@@ -120,6 +132,9 @@ maximumizeExtendBox (BOX tmp, CompWindow *w, Region r, Bool Xfirst)
 #undef CHECKREC
     return tmp;
 }
+
+/* Create a box for resizing in the given region
+ */
 static BOX
 maximumizeFindRect (CompWindow *w, Region r)
 {
@@ -135,6 +150,8 @@ maximumizeFindRect (CompWindow *w, Region r)
     return ansb;
 
 }
+
+/* Calls out to compute the resize */
 static void
 maximumizeComputeResize(CompWindow *w,
 			int *width,
@@ -143,7 +160,6 @@ maximumizeComputeResize(CompWindow *w,
 			int *y)
 {
     CompOutput *o = &w->screen->outputDev[outputDeviceForWindow (w)];
-
     Region r = maximumizeEmptyRegion (w, &o->region);
     BOX b = maximumizeFindRect (w, r);
 
