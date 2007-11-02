@@ -15,10 +15,21 @@
  *
  */
 
+/* 
+ * Maximumize resizes a window so it fills as much of the free space as
+ * possible without overlapping with other windows.
+ *
+ * Todo:
+ *  - The algorithm moves one pixel at a time, it should be smarter.
+ */
+
 #include <compiz-core.h>
 #include "maximumize_options.h"
 
-/* Fixme: TITANIC!
+/* Generates a region containing free space (here the
+ * active window counts as free space). The region argument
+ * is the start-region (ie: the output dev).
+ * Logic borrowed from opacify (courtesy of myself).
  */
 static Region
 maximumizeEmptyRegion (CompWindow *window, Region region)
@@ -26,12 +37,24 @@ maximumizeEmptyRegion (CompWindow *window, Region region)
     CompScreen *s = window->screen;
     CompWindow *w;
     Region newregion, tmpregion, eMpty;
-    newregion = XCreateRegion ();
-    tmpregion = XCreateRegion ();
-    eMpty = XCreateRegion ();
     XRectangle tmprect;
+
+    newregion = XCreateRegion ();
     if (!newregion)
-	return 0;
+	return NULL;
+    tmpregion = XCreateRegion ();
+    if (!tmpregion)
+    {
+	XDestroyRegion (newregion);
+	return NULL;
+    }
+    eMpty = XCreateRegion ();
+    if (!eMpty)
+    {
+	XDestroyRegion (newregion);
+	XDestroyRegion (tmpregion);
+	return NULL;
+    }
     XSubtractRegion (region, &emptyRegion, newregion);
     for (w = s->windows; w; w = w->next)
     {
@@ -49,10 +72,14 @@ maximumizeEmptyRegion (CompWindow *window, Region region)
 	XSubtractRegion (newregion, tmpregion, newregion);
 	XSubtractRegion (eMpty, eMpty, tmpregion);
     }
-
+    XDestroyRegion (tmpregion);
+    XDestroyRegion (eMpty);
+    
     return newregion;
 }
 
+/* Returns true if box a has a larger area than box b.
+ */
 static Bool
 maximumizeBoxCompare (BOX a, BOX b)
 {
@@ -62,19 +89,11 @@ maximumizeBoxCompare (BOX a, BOX b)
     return FALSE;
 }
 
-/*
-static Bool
-maximumizeBoxInBox (BOX a, BOX b)
-{
-    if (a.x1 >= b.x1 && a.x1 < b.x2 &&
-	a.x2 > b.x1 && a.x2 <= b.x2 &&
-	a.y1 >= b.y1 && a.y1 < b.y2 &&
-	a.y2 > b.y1 && a.y2 <= b.y2)
-	return TRUE;
-    return FALSE;
-}
-*/
-
+/* Extends the given box for Window w to fit as much space in region r.
+ * If XFirst is true, it will first expand in the X direction,
+ * then Y. This is because it gives different results. 
+ * PS: Decorations are icky.
+ */
 static BOX
 maximumizeExtendBox (BOX tmp, CompWindow *w, Region r, Bool Xfirst)
 {
@@ -152,7 +171,7 @@ maximumizeFindRect (CompWindow *w, Region r)
 }
 
 /* Calls out to compute the resize */
-static void
+static Bool
 maximumizeComputeResize(CompWindow *w,
 			int *width,
 			int *height,
@@ -161,12 +180,16 @@ maximumizeComputeResize(CompWindow *w,
 {
     CompOutput *o = &w->screen->outputDev[outputDeviceForWindow (w)];
     Region r = maximumizeEmptyRegion (w, &o->region);
+    if (!r)
+	return FALSE;
     BOX b = maximumizeFindRect (w, r);
+    XDestroyRegion (r);
 
     *width = b.x2 - b.x1; 
     *height = b.y2 - b.y1;
     *x = b.x1;
     *y = b.y1;
+    return TRUE;
 }
 
 /* 
@@ -185,14 +208,16 @@ maximumizeTrigger(CompDisplay     *d,
     int width, height, x, y;
     XWindowChanges xwc;
     w = findWindowAtDisplay (d, d->activeWindow);
-    maximumizeComputeResize (w, &width, &height, &x, &y);
+    if (! maximumizeComputeResize (w, &width, &height, &x, &y))
+	return TRUE;
     constrainNewWindowSize (w, width, height, &width, &height);
     xwc.x = x;
     xwc.y = y;
     xwc.width = width;
     xwc.height = height;
     sendSyncRequest (w);
-    configureXWindow (w, (unsigned int) CWWidth | CWHeight | CWX | CWY, &xwc);
+    configureXWindow (w, (unsigned int) CWWidth | CWHeight | CWX | CWY,
+		      &xwc);
     return TRUE;
 }
 
