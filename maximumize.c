@@ -63,7 +63,7 @@ maximumizeEmptyRegion (CompWindow *window,
 
     for (w = s->windows; w; w = w->next)
     {
-        if (w->id == s->display->activeWindow)
+        if (w->id == window->id)
             continue;
 
         if (w->invisible || w->hidden || w->minimized)
