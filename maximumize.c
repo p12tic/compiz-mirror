@@ -32,61 +32,74 @@
  * Logic borrowed from opacify (courtesy of myself).
  */
 static Region
-maximumizeEmptyRegion (CompWindow *window, Region region)
+maximumizeEmptyRegion (CompWindow *window,
+		       Region     region)
 {
     CompScreen *s = window->screen;
     CompWindow *w;
-    Region newregion, tmpregion, eMpty;
-    XRectangle tmprect;
+    Region     newRegion, tmpRegion, empty;
+    XRectangle tmpRect;
 
-    newregion = XCreateRegion ();
-    if (!newregion)
+    newRegion = XCreateRegion ();
+    if (!newRegion)
 	return NULL;
-    tmpregion = XCreateRegion ();
-    if (!tmpregion)
+
+    tmpRegion = XCreateRegion ();
+    if (!tmpRegion)
     {
-	XDestroyRegion (newregion);
+	XDestroyRegion (newRegion);
 	return NULL;
     }
-    eMpty = XCreateRegion ();
-    if (!eMpty)
+
+    empty = XCreateRegion ();
+    if (!empty)
     {
-	XDestroyRegion (newregion);
-	XDestroyRegion (tmpregion);
+	XDestroyRegion (newRegion);
+	XDestroyRegion (tmpRegion);
 	return NULL;
     }
-    XSubtractRegion (region, &emptyRegion, newregion);
+
+    XSubtractRegion (region, &emptyRegion, newRegion);
+
     for (w = s->windows; w; w = w->next)
     {
-        if (w->id == w->screen->display->activeWindow)
+        if (w->id == s->display->activeWindow)
             continue;
+
         if (w->invisible || w->hidden || w->minimized)
             continue;
-	if (w->wmType & CompWindowTypeDesktopMask )
+
+	if (w->wmType & CompWindowTypeDesktopMask)
 	    continue;
-	tmprect.x = w->serverX - w->input.left;
-	tmprect.y = w->serverY - w->input.top;
-	tmprect.width = w->serverWidth + w->input.right + w->input.left;
-	tmprect.height = w->serverHeight + w->input.top + w->input.bottom;
-	XUnionRectWithRegion (&tmprect, tmpregion, tmpregion);
-	XSubtractRegion (newregion, tmpregion, newregion);
-	XSubtractRegion (eMpty, eMpty, tmpregion);
+
+	tmpRect.x = w->serverX - w->input.left;
+	tmpRect.y = w->serverY - w->input.top;
+	tmpRect.width  = w->serverWidth + w->input.right + w->input.left;
+	tmpRect.height = w->serverHeight + w->input.top +
+	                 w->input.bottom;
+
+	XUnionRectWithRegion (&tmpRect, tmpRegion, tmpRegion);
+	XSubtractRegion (newRegion, tmpRegion, newRegion);
+	XSubtractRegion (empty, empty, tmpRegion);
     }
-    XDestroyRegion (tmpregion);
-    XDestroyRegion (eMpty);
+    XDestroyRegion (tmpRegion);
+    XDestroyRegion (empty);
     
-    return newregion;
+    return newRegion;
 }
 
 /* Returns true if box a has a larger area than box b.
  */
 static Bool
-maximumizeBoxCompare (BOX a, BOX b)
+maximumizeBoxCompare (BOX a,
+		      BOX b)
 {
-    if (((a.x2 - a.x1) * (a.y2 - a.y1)) > 
-	((b.x2 - b.x1) * (b.y2 - b.y1)))
-	return TRUE;
-    return FALSE;
+    int areaA, areaB;
+
+    areaA = (a.x2 - a.x1) * (a.y2 - a.y1);
+    areaB = (b.x2 - b.x1) * (b.y2 - b.y1);
+
+    return (areaA > areaB);
 }
 
 /* Extends the given box for Window w to fit as much space in region r.
@@ -95,19 +108,23 @@ maximumizeBoxCompare (BOX a, BOX b)
  * PS: Decorations are icky.
  */
 static BOX
-maximumizeExtendBox (BOX tmp, CompWindow *w, Region r, Bool Xfirst)
+maximumizeExtendBox (CompWindow *w,
+		     BOX        tmp,
+		     Region     r,
+		     Bool       xFirst)
 {
     short int counter = 0;
+    Bool      touch = FALSE;
 
 #define CHECKREC \
-	XRectInRegion (r, tmp.x1 - w->input.left, tmp.y1 - w->input.top, \
-		       tmp.x2 - tmp.x1 + w->input.left + w->input.right, \
-		       tmp.y2 - tmp.y1 + w->input.top + w->input.bottom) \
+	XRectInRegion (r, tmp.x1 - w->input.left, tmp.y1 - w->input.top,\
+		       tmp.x2 - tmp.x1 + w->input.left + w->input.right,\
+		       tmp.y2 - tmp.y1 + w->input.top + w->input.bottom)\
 	    == RectangleIn
-    Bool touch = FALSE;
+
     while (counter < 1)
     {
-	if ((Xfirst && counter == 0) || (!Xfirst && counter == 1))
+	if ((xFirst && counter == 0) || (!xFirst && counter == 1))
 	{
 	    while (CHECKREC)
 	    {
@@ -117,6 +134,7 @@ maximumizeExtendBox (BOX tmp, CompWindow *w, Region r, Bool Xfirst)
 	    if (touch)
 		tmp.x1++;
 	    touch = FALSE;
+
 	    while (CHECKREC)
 	    {
 		    tmp.x2++;
@@ -127,7 +145,8 @@ maximumizeExtendBox (BOX tmp, CompWindow *w, Region r, Bool Xfirst)
 	    touch = FALSE;
 	    counter++;
 	}
-	if ((Xfirst && counter == 1) || (!Xfirst && counter == 0))
+
+	if ((xFirst && counter == 1) || (!xFirst && counter == 0))
 	{
 	    while (CHECKREC)
 	    {
@@ -155,41 +174,62 @@ maximumizeExtendBox (BOX tmp, CompWindow *w, Region r, Bool Xfirst)
 /* Create a box for resizing in the given region
  */
 static BOX
-maximumizeFindRect (CompWindow *w, Region r)
+maximumizeFindRect (CompWindow *w,
+		    Region     r)
 {
-    BOX windowBox, ansa, ansb;
+    BOX windowBox, ansA, ansB;
+
     windowBox.x1 = w->serverX;
-    windowBox.x2 = w->serverX + w->serverWidth ;
+    windowBox.x2 = w->serverX + w->serverWidth;
     windowBox.y1 = w->serverY;
     windowBox.y2 = w->serverY + w->serverHeight;
-    ansa = maximumizeExtendBox (windowBox, w, r, TRUE);
-    ansb = maximumizeExtendBox (windowBox, w, r, FALSE);
-    if (maximumizeBoxCompare(ansa,ansb))
-	return ansa;
-    return ansb;
+
+    ansA = maximumizeExtendBox (w, windowBox, r, TRUE);
+    ansB = maximumizeExtendBox (w, windowBox, r, FALSE);
+
+    if (maximumizeBoxCompare (ansA, ansB))
+	return ansA;
+    else
+	return ansB;
 
 }
 
 /* Calls out to compute the resize */
-static Bool
-maximumizeComputeResize(CompWindow *w,
-			int *width,
-			int *height,
-			int *x,
-			int *y)
+static unsigned int
+maximumizeComputeResize(CompWindow     *w,
+			XWindowChanges *xwc)
 {
-    CompOutput *o = &w->screen->outputDev[outputDeviceForWindow (w)];
-    Region r = maximumizeEmptyRegion (w, &o->region);
-    if (!r)
-	return FALSE;
-    BOX b = maximumizeFindRect (w, r);
-    XDestroyRegion (r);
+    CompOutput   *output;
+    Region       region;
+    unsigned int mask = 0;
+    BOX          box;
 
-    *width = b.x2 - b.x1; 
-    *height = b.y2 - b.y1;
-    *x = b.x1;
-    *y = b.y1;
-    return TRUE;
+    output = &w->screen->outputDev[outputDeviceForWindow (w)];
+    region = maximumizeEmptyRegion (w, &output->region);
+    if (!region)
+	return mask;
+
+    box = maximumizeFindRect (w, region);
+    XDestroyRegion (region);
+
+    if (box.x1 != w->serverX)
+	mask |= CWX;
+
+    if (box.y1 != w->serverY)
+	mask |= CWY;
+
+    if ((box.x2 - box.x1) != w->serverWidth)
+	mask |= CWWidth;
+
+    if ((box.y2 - box.y1) != w->serverHeight)
+	mask |= CWHeight;
+
+    xwc->x = box.x1;
+    xwc->y = box.y1;
+    xwc->width = box.x2 - box.x1; 
+    xwc->height = box.y2 - box.y1;
+
+    return mask;
 }
 
 /* 
@@ -205,23 +245,36 @@ maximumizeTrigger(CompDisplay     *d,
 		 int             nOption)
 {
     CompWindow *w;
-    int width, height, x, y;
-    XWindowChanges xwc;
+
     w = findWindowAtDisplay (d, d->activeWindow);
-    if (! maximumizeComputeResize (w, &width, &height, &x, &y))
-	return TRUE;
-    constrainNewWindowSize (w, width, height, &width, &height);
-    xwc.x = x;
-    xwc.y = y;
-    xwc.width = width;
-    xwc.height = height;
-    sendSyncRequest (w);
-    configureXWindow (w, (unsigned int) CWWidth | CWHeight | CWX | CWY,
-		      &xwc);
+    if (w)
+    {
+	int            width, height;
+	unsigned int   mask;
+	XWindowChanges xwc;
+
+	mask = maximumizeComputeResize (w, &xwc);
+	if (mask)
+	{
+	    if (constrainNewWindowSize (w, xwc.width, xwc.height,
+					&width, &height))
+	    {
+		mask |= CWWidth | CWHeight;
+		xwc.width  = width;
+		xwc.height = height;
+	    }
+
+	    if (w->mapNum && (mask & (CWWidth | CWHeight)))
+		sendSyncRequest (w);
+
+	    configureXWindow (w, mask, &xwc);
+	}
+    }
+
     return TRUE;
 }
 
-/* Configuration, initialization, boring stuff. ----------------------- */
+/* Configuration, initialization, boring stuff. --------------------- */
 static Bool
 maximumizeInitDisplay (CompPlugin  *p,
 		      CompDisplay *d)
@@ -230,6 +283,7 @@ maximumizeInitDisplay (CompPlugin  *p,
 	return FALSE;
 
     maximumizeSetTriggerKeyInitiate (d, maximumizeTrigger);
+
     return TRUE;
 }
 
