@@ -37,7 +37,7 @@ maximumizeEmptyRegion (CompWindow *window,
 {
     CompScreen *s = window->screen;
     CompWindow *w;
-    Region     newRegion, tmpRegion, empty;
+    Region     newRegion, tmpRegion;
     XRectangle tmpRect;
 
     newRegion = XCreateRegion ();
@@ -51,15 +51,7 @@ maximumizeEmptyRegion (CompWindow *window,
 	return NULL;
     }
 
-    empty = XCreateRegion ();
-    if (!empty)
-    {
-	XDestroyRegion (newRegion);
-	XDestroyRegion (tmpRegion);
-	return NULL;
-    }
-
-    XSubtractRegion (region, &emptyRegion, newRegion);
+    XUnionRegion (region, newRegion, newRegion);
 
     for (w = s->windows; w; w = w->next)
     {
@@ -78,12 +70,12 @@ maximumizeEmptyRegion (CompWindow *window,
 	tmpRect.height = w->serverHeight + w->input.top +
 	                 w->input.bottom;
 
+	EMPTY_REGION (tmpRegion);
 	XUnionRectWithRegion (&tmpRect, tmpRegion, tmpRegion);
 	XSubtractRegion (newRegion, tmpRegion, newRegion);
-	XSubtractRegion (empty, empty, tmpRegion);
     }
+
     XDestroyRegion (tmpRegion);
-    XDestroyRegion (empty);
     
     return newRegion;
 }
