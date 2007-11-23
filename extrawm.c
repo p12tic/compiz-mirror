@@ -68,13 +68,7 @@ fullscreenWindow (CompWindow *w,
     changeWindowState (w, newState);
     recalcWindowType (w);
     recalcWindowActions (w);
-
-    /* update stack position when going to fullscreen to
-       make the window cover panels etc. */
-    if (state & CompWindowStateFullscreenMask)
-	updateWindowAttributes (w, CompStackingUpdateModeNormal);
-    else
-	updateWindowAttributes (w, CompStackingUpdateModeNone);
+    updateWindowAttributes (w, CompStackingUpdateModeNormal);
 }
 
 static Bool
