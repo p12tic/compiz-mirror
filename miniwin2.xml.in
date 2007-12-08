@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<compiz>
+  <plugin name="miniwin2" useBcop="true">
+    <_short>Create miniwindows</_short>
+	<_long>Visually scales a window down to allow easy monitoring
+	without true/traditional resizing.
+	</_long>
+	<category></category>
+    <display>
+      <group>
+        <_short>Bindings</_short>
+        <option name="trigger_key" type="key">
+          <_short>Trigger scale down</_short>
+          <_long>
+	  Scale a window down to half size.
+	  </_long>
+          <default>&lt;Super&gt;l</default>
+        </option>
+      </group>
+    </display>
+  </plugin>
+</compiz>

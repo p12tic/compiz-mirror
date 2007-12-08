@@ -1,0 +1,295 @@
+/*
+ * Compiz Fusion Miniwin 2 plugin
+ *
+ * Copyright (C) 2007  Canonical Ltd.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * Author: Kristian Lyngstøl <kristian@bohemians.org>
+ *
+ */
+
+#include <compiz-core.h>
+#include "miniwin2_options.h"
+
+/* Generates a region containing free space (here the
+ * active window counts as free space). The region argument
+ * is the start-region (ie: the output dev).
+ * Logic borrowed from opacify (courtesy of myself).
+ */
+static Region
+maximumizeEmptyRegion (CompWindow *window,
+		       Region     region)
+{
+    CompScreen *s = window->screen;
+    CompWindow *w;
+    Region     newRegion, tmpRegion;
+    XRectangle tmpRect;
+
+    newRegion = XCreateRegion ();
+    if (!newRegion)
+	return NULL;
+
+    tmpRegion = XCreateRegion ();
+    if (!tmpRegion)
+    {
+	XDestroyRegion (newRegion);
+	return NULL;
+    }
+
+    XUnionRegion (region, newRegion, newRegion);
+
+    for (w = s->windows; w; w = w->next)
+    {
+        if (w->id == window->id)
+            continue;
+
+        if (w->invisible || w->hidden || w->minimized)
+            continue;
+
+	if (w->wmType & CompWindowTypeDesktopMask)
+	    continue;
+
+	tmpRect.x = w->serverX - w->input.left;
+	tmpRect.y = w->serverY - w->input.top;
+	tmpRect.width  = w->serverWidth + w->input.right + w->input.left;
+	tmpRect.height = w->serverHeight + w->input.top +
+	                 w->input.bottom;
+
+	EMPTY_REGION (tmpRegion);
+	XUnionRectWithRegion (&tmpRect, tmpRegion, tmpRegion);
+	XSubtractRegion (newRegion, tmpRegion, newRegion);
+    }
+
+    XDestroyRegion (tmpRegion);
+    
+    return newRegion;
+}
+
+/* Returns true if box a has a larger area than box b.
+ */
+static Bool
+maximumizeBoxCompare (BOX a,
+		      BOX b)
+{
+    int areaA, areaB;
+
+    areaA = (a.x2 - a.x1) * (a.y2 - a.y1);
+    areaB = (b.x2 - b.x1) * (b.y2 - b.y1);
+
+    return (areaA > areaB);
+}
+
+/* Extends the given box for Window w to fit as much space in region r.
+ * If XFirst is true, it will first expand in the X direction,
+ * then Y. This is because it gives different results. 
+ * PS: Decorations are icky.
+ */
+static BOX
+maximumizeExtendBox (CompWindow *w,
+		     BOX        tmp,
+		     Region     r,
+		     Bool       xFirst)
+{
+    short int counter = 0;
+    Bool      touch = FALSE;
+
+#define CHECKREC \
+	XRectInRegion (r, tmp.x1 - w->input.left, tmp.y1 - w->input.top,\
+		       tmp.x2 - tmp.x1 + w->input.left + w->input.right,\
+		       tmp.y2 - tmp.y1 + w->input.top + w->input.bottom)\
+	    == RectangleIn
+
+    while (counter < 1)
+    {
+	if ((xFirst && counter == 0) || (!xFirst && counter == 1))
+	{
+	    while (CHECKREC)
+	    {
+		tmp.x1--;
+	        touch = TRUE;
+	    }
+	    if (touch)
+		tmp.x1++;
+	    touch = FALSE;
+
+	    while (CHECKREC)
+	    {
+		    tmp.x2++;
+		    touch = TRUE;
+	    }
+	    if (touch)
+		tmp.x2--;
+	    touch = FALSE;
+	    counter++;
+	}
+
+	if ((xFirst && counter == 1) || (!xFirst && counter == 0))
+	{
+	    while (CHECKREC)
+	    {
+		tmp.y2++;
+		touch = TRUE;
+	    }
+	    if (touch)
+		tmp.y2--;
+	    touch = FALSE;
+	    while (CHECKREC)
+	    {
+		tmp.y1--;
+		touch = TRUE;
+	    }
+	    if (touch)
+		tmp.y1++;
+	    touch = FALSE;
+	    counter++;
+	}
+    }
+#undef CHECKREC
+    return tmp;
+}
+
+/* Create a box for resizing in the given region
+ */
+static BOX
+maximumizeFindRect (CompWindow *w,
+		    Region     r)
+{
+    BOX windowBox, ansA, ansB;
+
+    windowBox.x1 = w->serverX;
+    windowBox.x2 = w->serverX + w->serverWidth;
+    windowBox.y1 = w->serverY;
+    windowBox.y2 = w->serverY + w->serverHeight;
+
+    ansA = maximumizeExtendBox (w, windowBox, r, TRUE);
+    ansB = maximumizeExtendBox (w, windowBox, r, FALSE);
+
+    if (maximumizeBoxCompare (ansA, ansB))
+	return ansA;
+    else
+	return ansB;
+
+}
+
+/* Calls out to compute the resize */
+static unsigned int
+maximumizeComputeResize(CompWindow     *w,
+			XWindowChanges *xwc)
+{
+    CompOutput   *output;
+    Region       region;
+    unsigned int mask = 0;
+    BOX          box;
+
+    output = &w->screen->outputDev[outputDeviceForWindow (w)];
+    region = maximumizeEmptyRegion (w, &output->region);
+    if (!region)
+	return mask;
+
+    box = maximumizeFindRect (w, region);
+    XDestroyRegion (region);
+
+    if (box.x1 != w->serverX)
+	mask |= CWX;
+
+    if (box.y1 != w->serverY)
+	mask |= CWY;
+
+    if ((box.x2 - box.x1) != w->serverWidth)
+	mask |= CWWidth;
+
+    if ((box.y2 - box.y1) != w->serverHeight)
+	mask |= CWHeight;
+
+    xwc->x = box.x1;
+    xwc->y = box.y1;
+    xwc->width = box.x2 - box.x1; 
+    xwc->height = box.y2 - box.y1;
+
+    return mask;
+}
+
+/* 
+ * Initially triggered keybinding.
+ * Fetch the window, fetch the resize, constrain it.
+ *
+ */
+static Bool
+miniwin2Trigger(CompDisplay     *d,
+		 CompAction      *action,
+		 CompActionState state,
+		 CompOption      *option,
+		 int             nOption)
+{
+    Window     xid;
+    CompWindow *w;
+
+    return TRUE;
+}
+
+/* Configuration, initialization, boring stuff. --------------------- */
+static Bool
+miniwin2InitDisplay (CompPlugin  *p,
+		      CompDisplay *d)
+{
+    if (!checkPluginABI ("core", CORE_ABIVERSION))
+	return FALSE;
+
+    miniwin2SetTriggerKeyInitiate (d, miniwin2Trigger);
+
+    return TRUE;
+}
+
+static CompBool
+miniwin2InitObject (CompPlugin *p,
+		     CompObject *o)
+{
+    static InitPluginObjectProc dispTab[] = {
+	(InitPluginObjectProc) 0, /* InitCore */
+	(InitPluginObjectProc) miniwin2InitDisplay,
+	0, 
+	0 
+    };
+
+    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
+}
+
+static void
+miniwin2FiniObject (CompPlugin *p,
+		     CompObject *o)
+{
+    static FiniPluginObjectProc dispTab[] = {
+	(FiniPluginObjectProc) 0, /* FiniCore */
+	0, 
+	0, 
+	0 
+    };
+
+    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
+}
+
+CompPluginVTable miniwin2VTable = {
+    "miniwin2",
+    0,
+    0,
+    0,
+    miniwin2InitObject,
+    miniwin2FiniObject,
+    0,
+    0
+};
+
+CompPluginVTable*
+getCompPluginInfo (void)
+{
+    return &miniwin2VTable;
+}
