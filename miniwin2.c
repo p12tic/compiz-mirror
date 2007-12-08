@@ -20,203 +20,38 @@
 #include <compiz-core.h>
 #include "miniwin2_options.h"
 
-/* Generates a region containing free space (here the
- * active window counts as free space). The region argument
- * is the start-region (ie: the output dev).
- * Logic borrowed from opacify (courtesy of myself).
- */
-static Region
-maximumizeEmptyRegion (CompWindow *window,
-		       Region     region)
+typedef struct { 
+    Window id;
+    float scale;
+    int x;
+    int y;
+} miniWindow;
+
+typedef struct {
+    PaintWindowProc paintWindow;
+    Window scaledWin;
+    int windowPrivateIndex;
+} miniScreen;
+
+static int displayPrivateIndex;
+static int screenPrivateIndex;
+
+#define MINI_SCREEN(s) miniScreen *ms = s->base.privates[screenPrivateIndex].ptr;
+#define MINI_WINDOW(w) miniWindow *mw = w->base.privates[ms->windowPrivateIndex].ptr;
+
+/* functions */
+static void
+miniwinScale (CompWindow *w)
 {
-    CompScreen *s = window->screen;
-    CompWindow *w;
-    Region     newRegion, tmpRegion;
-    XRectangle tmpRect;
-
-    newRegion = XCreateRegion ();
-    if (!newRegion)
-	return NULL;
-
-    tmpRegion = XCreateRegion ();
-    if (!tmpRegion)
-    {
-	XDestroyRegion (newRegion);
-	return NULL;
-    }
-
-    XUnionRegion (region, newRegion, newRegion);
-
-    for (w = s->windows; w; w = w->next)
-    {
-        if (w->id == window->id)
-            continue;
-
-        if (w->invisible || w->hidden || w->minimized)
-            continue;
-
-	if (w->wmType & CompWindowTypeDesktopMask)
-	    continue;
-
-	tmpRect.x = w->serverX - w->input.left;
-	tmpRect.y = w->serverY - w->input.top;
-	tmpRect.width  = w->serverWidth + w->input.right + w->input.left;
-	tmpRect.height = w->serverHeight + w->input.top +
-	                 w->input.bottom;
-
-	EMPTY_REGION (tmpRegion);
-	XUnionRectWithRegion (&tmpRect, tmpRegion, tmpRegion);
-	XSubtractRegion (newRegion, tmpRegion, newRegion);
-    }
-
-    XDestroyRegion (tmpRegion);
-    
-    return newRegion;
+    printf ("Miniwin2 triggered\n");
 }
 
-/* Returns true if box a has a larger area than box b.
- */
-static Bool
-maximumizeBoxCompare (BOX a,
-		      BOX b)
+static void
+miniwinUnscale (CompWindow *w)
 {
-    int areaA, areaB;
-
-    areaA = (a.x2 - a.x1) * (a.y2 - a.y1);
-    areaB = (b.x2 - b.x1) * (b.y2 - b.y1);
-
-    return (areaA > areaB);
+    printf ("Miniwin2 triggered 2\n");
 }
 
-/* Extends the given box for Window w to fit as much space in region r.
- * If XFirst is true, it will first expand in the X direction,
- * then Y. This is because it gives different results. 
- * PS: Decorations are icky.
- */
-static BOX
-maximumizeExtendBox (CompWindow *w,
-		     BOX        tmp,
-		     Region     r,
-		     Bool       xFirst)
-{
-    short int counter = 0;
-    Bool      touch = FALSE;
-
-#define CHECKREC \
-	XRectInRegion (r, tmp.x1 - w->input.left, tmp.y1 - w->input.top,\
-		       tmp.x2 - tmp.x1 + w->input.left + w->input.right,\
-		       tmp.y2 - tmp.y1 + w->input.top + w->input.bottom)\
-	    == RectangleIn
-
-    while (counter < 1)
-    {
-	if ((xFirst && counter == 0) || (!xFirst && counter == 1))
-	{
-	    while (CHECKREC)
-	    {
-		tmp.x1--;
-	        touch = TRUE;
-	    }
-	    if (touch)
-		tmp.x1++;
-	    touch = FALSE;
-
-	    while (CHECKREC)
-	    {
-		    tmp.x2++;
-		    touch = TRUE;
-	    }
-	    if (touch)
-		tmp.x2--;
-	    touch = FALSE;
-	    counter++;
-	}
-
-	if ((xFirst && counter == 1) || (!xFirst && counter == 0))
-	{
-	    while (CHECKREC)
-	    {
-		tmp.y2++;
-		touch = TRUE;
-	    }
-	    if (touch)
-		tmp.y2--;
-	    touch = FALSE;
-	    while (CHECKREC)
-	    {
-		tmp.y1--;
-		touch = TRUE;
-	    }
-	    if (touch)
-		tmp.y1++;
-	    touch = FALSE;
-	    counter++;
-	}
-    }
-#undef CHECKREC
-    return tmp;
-}
-
-/* Create a box for resizing in the given region
- */
-static BOX
-maximumizeFindRect (CompWindow *w,
-		    Region     r)
-{
-    BOX windowBox, ansA, ansB;
-
-    windowBox.x1 = w->serverX;
-    windowBox.x2 = w->serverX + w->serverWidth;
-    windowBox.y1 = w->serverY;
-    windowBox.y2 = w->serverY + w->serverHeight;
-
-    ansA = maximumizeExtendBox (w, windowBox, r, TRUE);
-    ansB = maximumizeExtendBox (w, windowBox, r, FALSE);
-
-    if (maximumizeBoxCompare (ansA, ansB))
-	return ansA;
-    else
-	return ansB;
-
-}
-
-/* Calls out to compute the resize */
-static unsigned int
-maximumizeComputeResize(CompWindow     *w,
-			XWindowChanges *xwc)
-{
-    CompOutput   *output;
-    Region       region;
-    unsigned int mask = 0;
-    BOX          box;
-
-    output = &w->screen->outputDev[outputDeviceForWindow (w)];
-    region = maximumizeEmptyRegion (w, &output->region);
-    if (!region)
-	return mask;
-
-    box = maximumizeFindRect (w, region);
-    XDestroyRegion (region);
-
-    if (box.x1 != w->serverX)
-	mask |= CWX;
-
-    if (box.y1 != w->serverY)
-	mask |= CWY;
-
-    if ((box.x2 - box.x1) != w->serverWidth)
-	mask |= CWWidth;
-
-    if ((box.y2 - box.y1) != w->serverHeight)
-	mask |= CWHeight;
-
-    xwc->x = box.x1;
-    xwc->y = box.y1;
-    xwc->width = box.x2 - box.x1; 
-    xwc->height = box.y2 - box.y1;
-
-    return mask;
-}
 
 /* 
  * Initially triggered keybinding.
@@ -230,22 +65,122 @@ miniwin2Trigger(CompDisplay     *d,
 		 CompOption      *option,
 		 int             nOption)
 {
-    Window     xid;
-    CompWindow *w;
-
+    CompWindow *w = findWindowAtDisplay(d, d->activeWindow);
+    if (!w)
+	return TRUE;
+    MINI_SCREEN (w->screen);
+    MINI_WINDOW (w);
+    if (mw->scale == 1.0f)
+    {
+	miniwinScale (w);
+	mw->scale = 0.5f;
+	mw->x = 0;
+	mw->y = 0;
+    }
+    else
+    {
+	miniwinUnscale (w);
+	mw->scale = 1.0f;
+    }
+    damageScreen (w->screen);
     return TRUE;
 }
 
+static Bool
+mwPaintWindow (CompWindow *w,
+	       const WindowPaintAttrib *attrib,
+	       const CompTransform *transform,
+	       Region region,
+	       unsigned int mask)
+{
+    Bool status;
+    CompScreen *s = w->screen;
+    MINI_SCREEN (s);
+    MINI_WINDOW (w);
+
+    if (mw->scale != 1.0f)
+    {
+	CompTransform mTransform = *transform;
+	int xOrigin, yOrigin;
+	xOrigin = w->attrib.x + w->input.left;
+	yOrigin = w->attrib.y + w->input.top;
+
+	matrixTranslate (&mTransform, xOrigin, yOrigin, 0);
+	matrixScale (&mTransform, mw->scale, mw->scale, 0);
+	matrixTranslate (&mTransform,
+			 (mw->x - w->attrib.x) / 
+			 mw->scale - xOrigin,
+			 (mw->y - w->attrib.y) /
+			 mw->scale - yOrigin,
+			 0);
+
+	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+	UNWRAP (ms, s, paintWindow);
+	status = (*s->paintWindow) (w, attrib, &mTransform, region, mask);
+	WRAP (ms, s, paintWindow, mwPaintWindow);
+    } else
+    {
+	UNWRAP (ms, s, paintWindow);
+	status = (*s->paintWindow) (w, attrib, transform, region, mask);
+	WRAP (ms, s, paintWindow, mwPaintWindow);
+    }
+
+    return status;
+}
+
 /* Configuration, initialization, boring stuff. --------------------- */
+static Bool
+miniwin2InitScreen (CompPlugin *p,
+		    CompScreen *s)
+{
+    miniScreen *ms;
+    ms = malloc (sizeof (miniScreen));
+    if (!ms)
+	return FALSE; // fixme: error message.
+    ms->windowPrivateIndex = allocateWindowPrivateIndex (s);
+    s->base.privates[screenPrivateIndex].ptr = ms;
+    WRAP (ms, s, paintWindow, mwPaintWindow); 
+    return TRUE; 
+}
+
 static Bool
 miniwin2InitDisplay (CompPlugin  *p,
 		      CompDisplay *d)
 {
     if (!checkPluginABI ("core", CORE_ABIVERSION))
 	return FALSE;
-
+    screenPrivateIndex = allocateScreenPrivateIndex (d); 
+    if (screenPrivateIndex < 0)
+	return FALSE;
     miniwin2SetTriggerKeyInitiate (d, miniwin2Trigger);
+    return TRUE;
+}
 
+static Bool
+miniwin2Init (CompPlugin *p)
+{
+    displayPrivateIndex = allocateDisplayPrivateIndex ();
+    if (displayPrivateIndex < 0)
+	return FALSE;
+    return TRUE;
+}
+
+static Bool
+miniwin2InitWindow (CompPlugin *p,
+		    CompWindow *w)
+{
+    MINI_SCREEN(w->screen);
+
+    miniWindow *mw;
+    mw = malloc (sizeof (miniWindow));
+    if (!mw)
+	return FALSE;
+
+    mw->id = w->id;
+    mw->scale = 1.0f;
+    mw->x = 0;
+    mw->y = 0;
+    w->base.privates[ms->windowPrivateIndex].ptr = mw;
     return TRUE;
 }
 
@@ -254,10 +189,10 @@ miniwin2InitObject (CompPlugin *p,
 		     CompObject *o)
 {
     static InitPluginObjectProc dispTab[] = {
-	(InitPluginObjectProc) 0, /* InitCore */
+	(InitPluginObjectProc) miniwin2Init, /* InitCore */
 	(InitPluginObjectProc) miniwin2InitDisplay,
-	0, 
-	0 
+	(InitPluginObjectProc) miniwin2InitScreen, 
+	(InitPluginObjectProc) miniwin2InitWindow
     };
 
     RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
