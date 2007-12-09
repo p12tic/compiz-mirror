@@ -135,6 +135,19 @@ mwPaintWindow (CompWindow *w,
 }
 
 /* Configuration, initialization, boring stuff. --------------------- */
+static void
+miniwin2FiniScreen (CompPlugin *p,
+		    CompScreen *s)
+{
+    MINI_SCREEN (s);
+    if (!ms)
+	return ;
+    UNWRAP (ms, s, paintWindow);
+    UNWRAP (ms, s, damageWindowRect);
+    if (ms->windowPrivateIndex)
+	freeWindowPrivateIndex (s, ms->windowPrivateIndex);
+    free (ms);
+}
 static Bool
 miniwin2InitScreen (CompPlugin *p,
 		    CompScreen *s)
@@ -150,6 +163,14 @@ miniwin2InitScreen (CompPlugin *p,
     return TRUE; 
 }
 
+static void
+miniwin2FiniDisplay (CompPlugin  *p,
+		      CompDisplay *d)
+{
+    if (screenPrivateIndex >= 0)
+        freeScreenPrivateIndex (d, screenPrivateIndex);
+}
+
 static Bool
 miniwin2InitDisplay (CompPlugin  *p,
 		      CompDisplay *d)
@@ -163,6 +184,14 @@ miniwin2InitDisplay (CompPlugin  *p,
     return TRUE;
 }
 
+static void
+miniwin2Fini (CompPlugin *p)
+{
+    if (displayPrivateIndex >= 0)
+       freeDisplayPrivateIndex (displayPrivateIndex);
+    return ;
+}
+
 static Bool
 miniwin2Init (CompPlugin *p)
 {
@@ -170,6 +199,17 @@ miniwin2Init (CompPlugin *p)
     if (displayPrivateIndex < 0)
 	return FALSE;
     return TRUE;
+}
+
+static void
+miniwin2FiniWindow (CompPlugin *p,
+		    CompWindow *w)
+{
+    MINI_SCREEN (w->screen);
+    MINI_WINDOW (w);
+    if (mw)
+	free (mw);
+    return;
 }
 
 static Bool
@@ -208,10 +248,10 @@ miniwin2FiniObject (CompPlugin *p,
 		     CompObject *o)
 {
     static FiniPluginObjectProc dispTab[] = {
-	(FiniPluginObjectProc) 0, /* FiniCore */
-	0, 
-	0, 
-	0 
+	(FiniPluginObjectProc) miniwin2Fini, /* InitCore */
+	(FiniPluginObjectProc) miniwin2FiniDisplay,
+	(FiniPluginObjectProc) miniwin2FiniScreen, 
+	(FiniPluginObjectProc) miniwin2FiniWindow
     };
 
     DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
