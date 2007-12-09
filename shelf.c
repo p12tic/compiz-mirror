@@ -1,5 +1,5 @@
 /*
- * Compiz Fusion Miniwin 2 plugin
+ * Compiz Fusion Shelf plugin
  *
  * Copyright (C) 2007  Canonical Ltd.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <compiz-core.h>
-#include "miniwin2_options.h"
+#include "shelf_options.h"
 
 typedef struct { 
     Window id;
@@ -159,7 +159,7 @@ miniwin2InitDisplay (CompPlugin  *p,
     screenPrivateIndex = allocateScreenPrivateIndex (d); 
     if (screenPrivateIndex < 0)
 	return FALSE;
-    miniwin2SetTriggerKeyInitiate (d, miniwin2Trigger);
+    shelfSetTriggerKeyInitiate (d, miniwin2Trigger);
     return TRUE;
 }
 
@@ -218,7 +218,7 @@ miniwin2FiniObject (CompPlugin *p,
 }
 
 CompPluginVTable miniwin2VTable = {
-    "miniwin2",
+    "shelf",
     0,
     0,
     0,
