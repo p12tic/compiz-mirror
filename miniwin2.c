@@ -15,6 +15,13 @@
  *
  * Author: Kristian Lyngstøl <kristian@bohemians.org>
  *
+ * TODO: 
+ *  - Mem leaks (no malloc ()'s are ever freed)
+ *  - Unwrap on unload
+ *  - Input mask
+ *  - Animation
+ *  - Floating resize (on scroll wheel for instance)
+ *  - Misc
  */
 
 #include <compiz-core.h>
@@ -23,40 +30,23 @@
 typedef struct { 
     Window id;
     float scale;
-    int x;
-    int y;
 } miniWindow;
 
 typedef struct {
     PaintWindowProc paintWindow;
-    Window scaledWin;
+    DamageWindowRectProc damageWindowRect;
     int windowPrivateIndex;
 } miniScreen;
 
 static int displayPrivateIndex;
 static int screenPrivateIndex;
 
-#define MINI_SCREEN(s) miniScreen *ms = s->base.privates[screenPrivateIndex].ptr;
-#define MINI_WINDOW(w) miniWindow *mw = w->base.privates[ms->windowPrivateIndex].ptr;
+#define MINI_SCREEN(s) \
+    miniScreen *ms = s->base.privates[screenPrivateIndex].ptr;
+#define MINI_WINDOW(w) \
+    miniWindow *mw = w->base.privates[ms->windowPrivateIndex].ptr;
 
-/* functions */
-static void
-miniwinScale (CompWindow *w)
-{
-    printf ("Miniwin2 triggered\n");
-}
-
-static void
-miniwinUnscale (CompWindow *w)
-{
-    printf ("Miniwin2 triggered 2\n");
-}
-
-
-/* 
- * Initially triggered keybinding.
- * Fetch the window, fetch the resize, constrain it.
- *
+/* Initially triggered keybinding.
  */
 static Bool
 miniwin2Trigger(CompDisplay     *d,
@@ -71,21 +61,44 @@ miniwin2Trigger(CompDisplay     *d,
     MINI_SCREEN (w->screen);
     MINI_WINDOW (w);
     if (mw->scale == 1.0f)
-    {
-	miniwinScale (w);
 	mw->scale = 0.5f;
-	mw->x = 0;
-	mw->y = 0;
-    }
-    else
-    {
-	miniwinUnscale (w);
-	mw->scale = 1.0f;
-    }
+    else if (mw->scale == 0.5f)
+	mw->scale = 0.25f;
+    else 
+	mw->scale = 1.00f;
     damageScreen (w->screen);
     return TRUE;
 }
 
+/* Fixme:
+ * This should not cause total screen damage, but only adjust the rect
+ * correctly.
+ */
+static Bool
+miniDamageWindowRect (CompWindow *w,
+                       Bool       initial,
+                       BoxPtr     rect)
+{
+    Bool status = FALSE;
+
+    MINI_SCREEN (w->screen);
+    MINI_WINDOW (w);
+
+    if (mw->scale != 1.0f)
+    {
+	damageScreen (w->screen);
+	status = TRUE;
+    }
+
+    UNWRAP (ms, w->screen, damageWindowRect);
+    status |= (*w->screen->damageWindowRect) (w, initial, rect);
+    WRAP (ms, w->screen, damageWindowRect, miniDamageWindowRect);
+
+    return status;
+}
+
+/* Scale the window if it is supposed to be scaled. 
+ */
 static Bool
 mwPaintWindow (CompWindow *w,
 	       const WindowPaintAttrib *attrib,
@@ -102,29 +115,22 @@ mwPaintWindow (CompWindow *w,
     {
 	CompTransform mTransform = *transform;
 	int xOrigin, yOrigin;
-	xOrigin = w->attrib.x + w->input.left;
-	yOrigin = w->attrib.y + w->input.top;
-
-	matrixTranslate (&mTransform, xOrigin, yOrigin, 0);
+	xOrigin = w->attrib.x - w->input.left;
+	yOrigin = w->attrib.y - w->input.top;
+	matrixTranslate (&mTransform, xOrigin, yOrigin,  0);
 	matrixScale (&mTransform, mw->scale, mw->scale, 0);
-	matrixTranslate (&mTransform,
-			 (mw->x - w->attrib.x) / 
-			 mw->scale - xOrigin,
-			 (mw->y - w->attrib.y) /
-			 mw->scale - yOrigin,
-			 0);
-
+	matrixTranslate (&mTransform, -xOrigin, -yOrigin,  0);
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 	UNWRAP (ms, s, paintWindow);
 	status = (*s->paintWindow) (w, attrib, &mTransform, region, mask);
 	WRAP (ms, s, paintWindow, mwPaintWindow);
-    } else
+    }
+    else
     {
 	UNWRAP (ms, s, paintWindow);
 	status = (*s->paintWindow) (w, attrib, transform, region, mask);
 	WRAP (ms, s, paintWindow, mwPaintWindow);
     }
-
     return status;
 }
 
@@ -140,6 +146,7 @@ miniwin2InitScreen (CompPlugin *p,
     ms->windowPrivateIndex = allocateWindowPrivateIndex (s);
     s->base.privates[screenPrivateIndex].ptr = ms;
     WRAP (ms, s, paintWindow, mwPaintWindow); 
+    WRAP (ms, s, damageWindowRect, miniDamageWindowRect);
     return TRUE; 
 }
 
@@ -178,8 +185,6 @@ miniwin2InitWindow (CompPlugin *p,
 
     mw->id = w->id;
     mw->scale = 1.0f;
-    mw->x = 0;
-    mw->y = 0;
     w->base.privates[ms->windowPrivateIndex].ptr = mw;
     return TRUE;
 }
