@@ -55,10 +55,10 @@ static int screenPrivateIndex;
  */
 static Bool
 shelfTrigger(CompDisplay     *d,
-		 CompAction      *action,
-		 CompActionState state,
-		 CompOption      *option,
-		 int             nOption)
+	     CompAction      *action,
+	     CompActionState state,
+	     CompOption      *option,
+	     int             nOption)
 {
     CompWindow *w = findWindowAtDisplay(d, d->activeWindow);
     if (!w)
@@ -85,7 +85,6 @@ shelfDamageWindowRect (CompWindow *w,
                        BoxPtr     rect)
 {
     Bool status = FALSE;
-
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
 
@@ -105,11 +104,11 @@ shelfDamageWindowRect (CompWindow *w,
 /* Scale the window if it is supposed to be scaled. 
  */
 static Bool
-shelfPaintWindow (CompWindow *w,
-	       const WindowPaintAttrib *attrib,
-	       const CompTransform *transform,
-	       Region region,
-	       unsigned int mask)
+shelfPaintWindow (CompWindow		    *w,
+		  const WindowPaintAttrib   *attrib,
+		  const CompTransform	    *transform,
+		  Region		    region,
+		  unsigned int		    mask)
 {
     Bool status;
     CompScreen *s = w->screen;
@@ -142,7 +141,7 @@ shelfPaintWindow (CompWindow *w,
 /* Configuration, initialization, boring stuff. --------------------- */
 static void
 shelfFiniScreen (CompPlugin *p,
-		    CompScreen *s)
+		 CompScreen *s)
 {
     SHELF_SCREEN (s);
     if (!ss)
@@ -153,9 +152,10 @@ shelfFiniScreen (CompPlugin *p,
 	freeWindowPrivateIndex (s, ss->windowPrivateIndex);
     free (ss);
 }
+
 static Bool
 shelfInitScreen (CompPlugin *p,
-		    CompScreen *s)
+		 CompScreen *s)
 {
     shelfScreen *ss;
     ss = malloc (sizeof (shelfScreen));
@@ -170,7 +170,7 @@ shelfInitScreen (CompPlugin *p,
 
 static void
 shelfFiniDisplay (CompPlugin  *p,
-		      CompDisplay *d)
+		  CompDisplay *d)
 {
     if (screenPrivateIndex >= 0)
         freeScreenPrivateIndex (d, screenPrivateIndex);
@@ -178,7 +178,7 @@ shelfFiniDisplay (CompPlugin  *p,
 
 static Bool
 shelfInitDisplay (CompPlugin  *p,
-		      CompDisplay *d)
+		  CompDisplay *d)
 {
     if (!checkPluginABI ("core", CORE_ABIVERSION))
 	return FALSE;
@@ -194,7 +194,6 @@ shelfFini (CompPlugin *p)
 {
     if (displayPrivateIndex >= 0)
        freeDisplayPrivateIndex (displayPrivateIndex);
-    return ;
 }
 
 static Bool
@@ -208,18 +207,17 @@ shelfInit (CompPlugin *p)
 
 static void
 shelfFiniWindow (CompPlugin *p,
-		    CompWindow *w)
+		 CompWindow *w)
 {
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
     if (sw)
 	free (sw);
-    return;
 }
 
 static Bool
 shelfInitWindow (CompPlugin *p,
-		    CompWindow *w)
+		 CompWindow *w)
 {
     SHELF_SCREEN(w->screen);
 
@@ -235,7 +233,7 @@ shelfInitWindow (CompPlugin *p,
 
 static CompBool
 shelfInitObject (CompPlugin *p,
-		     CompObject *o)
+		 CompObject *o)
 {
     static InitPluginObjectProc dispTab[] = {
 	    (InitPluginObjectProc) shelfInit, /* InitCore */
@@ -249,7 +247,7 @@ shelfInitObject (CompPlugin *p,
 
 static void
 shelfFiniObject (CompPlugin *p,
-		     CompObject *o)
+		 CompObject *o)
 {
     static FiniPluginObjectProc dispTab[] = {
 	(FiniPluginObjectProc) shelfFini, /* InitCore */
