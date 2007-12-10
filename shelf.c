@@ -27,13 +27,13 @@
  *  - Animation
  *  - Floating resize (on scroll wheel for instance)
  *  - Correct damage handeling
+ *  - Mouse-over?
  */
 
 #include <compiz-core.h>
 #include "shelf_options.h"
 
 typedef struct { 
-    Window id;
     float scale;
 } shelfWindow;
 
@@ -51,7 +51,9 @@ static int screenPrivateIndex;
 #define SHELF_WINDOW(w) \
     shelfWindow *sw = w->base.privates[ss->windowPrivateIndex].ptr;
 
-/* Initially triggered keybinding.
+/* Binding for toggle mode. 
+ * Toggles through three preset scale levels, 
+ * currently hard coded to 1.0f (no scale), 0.5f and 0.25f.
  */
 static Bool
 shelfTrigger (CompDisplay     *d,
@@ -75,7 +77,10 @@ shelfTrigger (CompDisplay     *d,
     return TRUE;
 }
 
-/* Fixme:
+/* The window was damaged, adjust the damage to fit the actual area we
+ * care about.
+ *
+ * FIXME:
  * This should not cause total screen damage, but only adjust the rect
  * correctly.
  */
@@ -101,7 +106,10 @@ shelfDamageWindowRect (CompWindow *w,
     return status;
 }
 
-/* Scale the window if it is supposed to be scaled. 
+/* Scale the window if it is supposed to be scaled.
+ * Translate into place.
+ *
+ * FIXME: Merge the two translations.
  */
 static Bool
 shelfPaintWindow (CompWindow		    *w,
