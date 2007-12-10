@@ -13,14 +13,17 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- */
-
-/* 
+ * Author(s):
+ * Kristian Lyngstøl <kristian@bohemians.org>
+ *
+ * Description:
+ *
  * Maximumize resizes a window so it fills as much of the free space as
  * possible without overlapping with other windows.
  *
  * Todo:
  *  - The algorithm moves one pixel at a time, it should be smarter.
+ *  - Handle slight overlaps. 
  */
 
 #include <compiz-core.h>
