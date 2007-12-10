@@ -13,15 +13,20 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
- * Author: Kristian Lyngstøl <kristian@bohemians.org>
+ * Author(s): 
+ * Kristian Lyngstøl <kristian@bohemians.org>
  *
- * TODO: 
- *  - Mem leaks (no malloc ()'s are ever freed)
- *  - Unwrap on unload
+ * Description:
+ *
+ * This plugin visually resizes a window to allow otherwise obtrusive
+ * windows to be visible in a monitor-fashion. Use case: Anything with
+ * progress bars, notification programs, etc.
+ *
+ * Todo: 
  *  - Input mask
  *  - Animation
  *  - Floating resize (on scroll wheel for instance)
- *  - Misc
+ *  - Correct damage handeling
  */
 
 #include <compiz-core.h>
@@ -30,26 +35,26 @@
 typedef struct { 
     Window id;
     float scale;
-} miniWindow;
+} shelfWindow;
 
 typedef struct {
     PaintWindowProc paintWindow;
     DamageWindowRectProc damageWindowRect;
     int windowPrivateIndex;
-} miniScreen;
+} shelfScreen;
 
 static int displayPrivateIndex;
 static int screenPrivateIndex;
 
-#define MINI_SCREEN(s) \
-    miniScreen *ms = s->base.privates[screenPrivateIndex].ptr;
-#define MINI_WINDOW(w) \
-    miniWindow *mw = w->base.privates[ms->windowPrivateIndex].ptr;
+#define SHELF_SCREEN(s) \
+    shelfScreen *ss = s->base.privates[screenPrivateIndex].ptr;
+#define SHELF_WINDOW(w) \
+    shelfWindow *sw = w->base.privates[ss->windowPrivateIndex].ptr;
 
 /* Initially triggered keybinding.
  */
 static Bool
-miniwin2Trigger(CompDisplay     *d,
+shelfTrigger(CompDisplay     *d,
 		 CompAction      *action,
 		 CompActionState state,
 		 CompOption      *option,
@@ -58,14 +63,14 @@ miniwin2Trigger(CompDisplay     *d,
     CompWindow *w = findWindowAtDisplay(d, d->activeWindow);
     if (!w)
 	return TRUE;
-    MINI_SCREEN (w->screen);
-    MINI_WINDOW (w);
-    if (mw->scale == 1.0f)
-	mw->scale = 0.5f;
-    else if (mw->scale == 0.5f)
-	mw->scale = 0.25f;
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+    if (sw->scale == 1.0f)
+	sw->scale = 0.5f;
+    else if (sw->scale == 0.5f)
+	sw->scale = 0.25f;
     else 
-	mw->scale = 1.00f;
+	sw->scale = 1.00f;
     damageScreen (w->screen);
     return TRUE;
 }
@@ -75,24 +80,24 @@ miniwin2Trigger(CompDisplay     *d,
  * correctly.
  */
 static Bool
-miniDamageWindowRect (CompWindow *w,
+shelfDamageWindowRect (CompWindow *w,
                        Bool       initial,
                        BoxPtr     rect)
 {
     Bool status = FALSE;
 
-    MINI_SCREEN (w->screen);
-    MINI_WINDOW (w);
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
 
-    if (mw->scale != 1.0f)
+    if (sw->scale != 1.0f)
     {
 	damageScreen (w->screen);
 	status = TRUE;
     }
 
-    UNWRAP (ms, w->screen, damageWindowRect);
+    UNWRAP (ss, w->screen, damageWindowRect);
     status |= (*w->screen->damageWindowRect) (w, initial, rect);
-    WRAP (ms, w->screen, damageWindowRect, miniDamageWindowRect);
+    WRAP (ss, w->screen, damageWindowRect, shelfDamageWindowRect);
 
     return status;
 }
@@ -100,7 +105,7 @@ miniDamageWindowRect (CompWindow *w,
 /* Scale the window if it is supposed to be scaled. 
  */
 static Bool
-mwPaintWindow (CompWindow *w,
+shelfPaintWindow (CompWindow *w,
 	       const WindowPaintAttrib *attrib,
 	       const CompTransform *transform,
 	       Region region,
@@ -108,63 +113,63 @@ mwPaintWindow (CompWindow *w,
 {
     Bool status;
     CompScreen *s = w->screen;
-    MINI_SCREEN (s);
-    MINI_WINDOW (w);
+    SHELF_SCREEN (s);
+    SHELF_WINDOW (w);
 
-    if (mw->scale != 1.0f)
+    if (sw->scale != 1.0f)
     {
 	CompTransform mTransform = *transform;
 	int xOrigin, yOrigin;
 	xOrigin = w->attrib.x - w->input.left;
 	yOrigin = w->attrib.y - w->input.top;
 	matrixTranslate (&mTransform, xOrigin, yOrigin,  0);
-	matrixScale (&mTransform, mw->scale, mw->scale, 0);
+	matrixScale (&mTransform, sw->scale, sw->scale, 0);
 	matrixTranslate (&mTransform, -xOrigin, -yOrigin,  0);
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-	UNWRAP (ms, s, paintWindow);
+	UNWRAP (ss, s, paintWindow);
 	status = (*s->paintWindow) (w, attrib, &mTransform, region, mask);
-	WRAP (ms, s, paintWindow, mwPaintWindow);
+	WRAP (ss, s, paintWindow, shelfPaintWindow);
     }
     else
     {
-	UNWRAP (ms, s, paintWindow);
+	UNWRAP (ss, s, paintWindow);
 	status = (*s->paintWindow) (w, attrib, transform, region, mask);
-	WRAP (ms, s, paintWindow, mwPaintWindow);
+	WRAP (ss, s, paintWindow, shelfPaintWindow);
     }
     return status;
 }
 
 /* Configuration, initialization, boring stuff. --------------------- */
 static void
-miniwin2FiniScreen (CompPlugin *p,
+shelfFiniScreen (CompPlugin *p,
 		    CompScreen *s)
 {
-    MINI_SCREEN (s);
-    if (!ms)
+    SHELF_SCREEN (s);
+    if (!ss)
 	return ;
-    UNWRAP (ms, s, paintWindow);
-    UNWRAP (ms, s, damageWindowRect);
-    if (ms->windowPrivateIndex)
-	freeWindowPrivateIndex (s, ms->windowPrivateIndex);
-    free (ms);
+    UNWRAP (ss, s, paintWindow);
+    UNWRAP (ss, s, damageWindowRect);
+    if (ss->windowPrivateIndex)
+	freeWindowPrivateIndex (s, ss->windowPrivateIndex);
+    free (ss);
 }
 static Bool
-miniwin2InitScreen (CompPlugin *p,
+shelfInitScreen (CompPlugin *p,
 		    CompScreen *s)
 {
-    miniScreen *ms;
-    ms = malloc (sizeof (miniScreen));
-    if (!ms)
+    shelfScreen *ss;
+    ss = malloc (sizeof (shelfScreen));
+    if (!ss)
 	return FALSE; // fixme: error message.
-    ms->windowPrivateIndex = allocateWindowPrivateIndex (s);
-    s->base.privates[screenPrivateIndex].ptr = ms;
-    WRAP (ms, s, paintWindow, mwPaintWindow); 
-    WRAP (ms, s, damageWindowRect, miniDamageWindowRect);
+    ss->windowPrivateIndex = allocateWindowPrivateIndex (s);
+    s->base.privates[screenPrivateIndex].ptr = ss;
+    WRAP (ss, s, paintWindow, shelfPaintWindow); 
+    WRAP (ss, s, damageWindowRect, shelfDamageWindowRect);
     return TRUE; 
 }
 
 static void
-miniwin2FiniDisplay (CompPlugin  *p,
+shelfFiniDisplay (CompPlugin  *p,
 		      CompDisplay *d)
 {
     if (screenPrivateIndex >= 0)
@@ -172,7 +177,7 @@ miniwin2FiniDisplay (CompPlugin  *p,
 }
 
 static Bool
-miniwin2InitDisplay (CompPlugin  *p,
+shelfInitDisplay (CompPlugin  *p,
 		      CompDisplay *d)
 {
     if (!checkPluginABI ("core", CORE_ABIVERSION))
@@ -180,12 +185,12 @@ miniwin2InitDisplay (CompPlugin  *p,
     screenPrivateIndex = allocateScreenPrivateIndex (d); 
     if (screenPrivateIndex < 0)
 	return FALSE;
-    shelfSetTriggerKeyInitiate (d, miniwin2Trigger);
+    shelfSetTriggerKeyInitiate (d, shelfTrigger);
     return TRUE;
 }
 
 static void
-miniwin2Fini (CompPlugin *p)
+shelfFini (CompPlugin *p)
 {
     if (displayPrivateIndex >= 0)
        freeDisplayPrivateIndex (displayPrivateIndex);
@@ -193,7 +198,7 @@ miniwin2Fini (CompPlugin *p)
 }
 
 static Bool
-miniwin2Init (CompPlugin *p)
+shelfInit (CompPlugin *p)
 {
     displayPrivateIndex = allocateDisplayPrivateIndex ();
     if (displayPrivateIndex < 0)
@@ -202,68 +207,67 @@ miniwin2Init (CompPlugin *p)
 }
 
 static void
-miniwin2FiniWindow (CompPlugin *p,
+shelfFiniWindow (CompPlugin *p,
 		    CompWindow *w)
 {
-    MINI_SCREEN (w->screen);
-    MINI_WINDOW (w);
-    if (mw)
-	free (mw);
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+    if (sw)
+	free (sw);
     return;
 }
 
 static Bool
-miniwin2InitWindow (CompPlugin *p,
+shelfInitWindow (CompPlugin *p,
 		    CompWindow *w)
 {
-    MINI_SCREEN(w->screen);
+    SHELF_SCREEN(w->screen);
 
-    miniWindow *mw;
-    mw = malloc (sizeof (miniWindow));
-    if (!mw)
+    shelfWindow *sw;
+    sw = malloc (sizeof (shelfWindow));
+    if (!sw)
 	return FALSE;
 
-    mw->id = w->id;
-    mw->scale = 1.0f;
-    w->base.privates[ms->windowPrivateIndex].ptr = mw;
+    sw->scale = 1.0f;
+    w->base.privates[ss->windowPrivateIndex].ptr = sw;
     return TRUE;
 }
 
 static CompBool
-miniwin2InitObject (CompPlugin *p,
+shelfInitObject (CompPlugin *p,
 		     CompObject *o)
 {
     static InitPluginObjectProc dispTab[] = {
-	(InitPluginObjectProc) miniwin2Init, /* InitCore */
-	(InitPluginObjectProc) miniwin2InitDisplay,
-	(InitPluginObjectProc) miniwin2InitScreen, 
-	(InitPluginObjectProc) miniwin2InitWindow
+	    (InitPluginObjectProc) shelfInit, /* InitCore */
+	    (InitPluginObjectProc) shelfInitDisplay,
+	    (InitPluginObjectProc) shelfInitScreen, 
+	    (InitPluginObjectProc) shelfInitWindow
     };
 
     RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
 }
 
 static void
-miniwin2FiniObject (CompPlugin *p,
+shelfFiniObject (CompPlugin *p,
 		     CompObject *o)
 {
     static FiniPluginObjectProc dispTab[] = {
-	(FiniPluginObjectProc) miniwin2Fini, /* InitCore */
-	(FiniPluginObjectProc) miniwin2FiniDisplay,
-	(FiniPluginObjectProc) miniwin2FiniScreen, 
-	(FiniPluginObjectProc) miniwin2FiniWindow
+	(FiniPluginObjectProc) shelfFini, /* InitCore */
+	(FiniPluginObjectProc) shelfFiniDisplay,
+	(FiniPluginObjectProc) shelfFiniScreen, 
+	(FiniPluginObjectProc) shelfFiniWindow
     };
 
     DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
 }
 
-CompPluginVTable miniwin2VTable = {
+CompPluginVTable shelfVTable = {
     "shelf",
     0,
     0,
     0,
-    miniwin2InitObject,
-    miniwin2FiniObject,
+    shelfInitObject,
+    shelfFiniObject,
     0,
     0
 };
@@ -271,5 +275,5 @@ CompPluginVTable miniwin2VTable = {
 CompPluginVTable*
 getCompPluginInfo (void)
 {
-    return &miniwin2VTable;
+    return &shelfVTable;
 }
