@@ -54,13 +54,13 @@ static int screenPrivateIndex;
 /* Initially triggered keybinding.
  */
 static Bool
-shelfTrigger(CompDisplay     *d,
-	     CompAction      *action,
-	     CompActionState state,
-	     CompOption      *option,
-	     int             nOption)
+shelfTrigger (CompDisplay     *d,
+	      CompAction      *action,
+	      CompActionState state,
+	      CompOption      *option,
+	      int             nOption)
 {
-    CompWindow *w = findWindowAtDisplay(d, d->activeWindow);
+    CompWindow *w = findWindowAtDisplay (d, d->activeWindow);
     if (!w)
 	return TRUE;
     SHELF_SCREEN (w->screen);
@@ -119,12 +119,16 @@ shelfPaintWindow (CompWindow		    *w,
     {
 	CompTransform mTransform = *transform;
 	int xOrigin, yOrigin;
+
 	xOrigin = w->attrib.x - w->input.left;
 	yOrigin = w->attrib.y - w->input.top;
+	
 	matrixTranslate (&mTransform, xOrigin, yOrigin,  0);
 	matrixScale (&mTransform, sw->scale, sw->scale, 0);
 	matrixTranslate (&mTransform, -xOrigin, -yOrigin,  0);
+	
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+	
 	UNWRAP (ss, s, paintWindow);
 	status = (*s->paintWindow) (w, attrib, &mTransform, region, mask);
 	WRAP (ss, s, paintWindow, shelfPaintWindow);
