@@ -23,7 +23,7 @@
  * progress bars, notification programs, etc.
  *
  * Todo: 
- *  - Input mask
+ *  - Check for XShape
  *  - Animation
  *  - Floating resize (on scroll wheel for instance)
  *  - Correct damage handeling
@@ -31,6 +31,7 @@
  */
 
 #include <compiz-core.h>
+#include <X11/extensions/shape.h>
 #include "shelf_options.h"
 
 typedef struct { 
@@ -51,6 +52,24 @@ static int screenPrivateIndex;
 #define SHELF_WINDOW(w) \
     shelfWindow *sw = w->base.privates[ss->windowPrivateIndex].ptr;
 
+/* Shape the input of the window when scaled */
+static void
+shelfShapeInput (CompWindow *w)
+{
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+
+    XRectangle rect;
+    rect.x = 0;
+    rect.y = 0;
+    rect.width = w->serverWidth * sw->scale;
+    rect.height = w->serverHeight * sw->scale;
+
+    XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
+    XShapeCombineRectangles  (w->screen->display->display, w->id, 
+			      ShapeInput, 0, 0, &rect, 1,  ShapeSet, 0);
+    XShapeSelectInput (w->screen->display->display, w->id, ShapeNotify);
+}
 /* Binding for toggle mode. 
  * Toggles through three preset scale levels, 
  * currently hard coded to 1.0f (no scale), 0.5f and 0.25f.
@@ -73,6 +92,7 @@ shelfTrigger (CompDisplay     *d,
 	sw->scale = 0.25f;
     else 
 	sw->scale = 1.00f;
+    shelfShapeInput (w);
     damageScreen (w->screen);
     return TRUE;
 }
