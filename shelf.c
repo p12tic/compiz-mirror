@@ -69,6 +69,9 @@ shelfShapeInput (CompWindow *w)
     XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
     XShapeCombineRectangles  (w->screen->display->display, w->id, 
 			      ShapeInput, 0, 0, &rect, 1,  ShapeSet, 0);
+    if (w->frame)
+	XShapeCombineRectangles  (w->screen->display->display, w->frame, 
+				  ShapeInput, 0, 0, &rect, 1,  ShapeSet, 0);
     XShapeSelectInput (w->screen->display->display, w->id, ShapeNotify);
 }
 /* Binding for toggle mode. 
