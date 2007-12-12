@@ -23,7 +23,8 @@
  * progress bars, notification programs, etc.
  *
  * Todo: 
- *  - Check for XShape
+ *  - Check for XShape events
+ *  - Handle input in a sane way
  *  - Animation
  *  - Floating resize (on scroll wheel for instance)
  *  - Correct damage handeling
@@ -217,6 +218,12 @@ shelfInitDisplay (CompPlugin  *p,
     screenPrivateIndex = allocateScreenPrivateIndex (d); 
     if (screenPrivateIndex < 0)
 	return FALSE;
+    if (!d->shapeExtension)
+    {
+	printf ("shelf: No Shape extension found. Shelfing not possible.\n");
+	freeScreenPrivateIndex (d, screenPrivateIndex);
+	return FALSE;
+    }
     shelfSetTriggerKeyInitiate (d, shelfTrigger);
     return TRUE;
 }
