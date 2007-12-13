@@ -167,21 +167,39 @@ maximumizeExtendBox (CompWindow *w,
 }
 
 /* Create a box for resizing in the given region
+ * Also shrinks the window box in case of minor overlaps.
+ * FIXME: should be somewhat cleaner.
  */
 static BOX
 maximumizeFindRect (CompWindow *w,
 		    Region     r)
 {
-    BOX windowBox, ansA, ansB;
+    BOX windowBox, ansA, ansB, orig;
 
     windowBox.x1 = w->serverX;
     windowBox.x2 = w->serverX + w->serverWidth;
     windowBox.y1 = w->serverY;
     windowBox.y2 = w->serverY + w->serverHeight;
 
+    orig = windowBox;
+
+    if (windowBox.x2 - windowBox.x1 > 80)
+    {
+	windowBox.x1 += 40;
+	windowBox.x2 -= 40;
+    }
+    if (windowBox.y2 - windowBox.y1 > 80)
+    {
+	windowBox.y1 += 40;
+	windowBox.y2 -= 40;
+    }
+
     ansA = maximumizeExtendBox (w, windowBox, r, TRUE);
     ansB = maximumizeExtendBox (w, windowBox, r, FALSE);
 
+    if (maximumizeBoxCompare (orig, ansA) &&
+	maximumizeBoxCompare (orig, ansB))
+	return orig;
     if (maximumizeBoxCompare (ansA, ansB))
 	return ansA;
     else
