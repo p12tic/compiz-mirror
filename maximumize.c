@@ -67,6 +67,10 @@ maximumizeEmptyRegion (CompWindow *window,
 	if (w->wmType & CompWindowTypeDesktopMask)
 	    continue;
 
+	if (maximumizeGetIgnoreSticky(s->display) && 
+	    (w->state & CompWindowStateStickyMask) &&
+	    !(w->wmType & CompWindowTypeDockMask))
+	    continue;
 	tmpRect.x = w->serverX - w->input.left;
 	tmpRect.y = w->serverY - w->input.top;
 	tmpRect.width  = w->serverWidth + w->input.right + w->input.left;
