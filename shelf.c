@@ -116,7 +116,7 @@ shelfInc (CompDisplay     *d,
 	return TRUE;
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
-    sw->scale += shelfGetInterval(d);
+    sw->scale /= shelfGetInterval(d);
     if (sw->scale >= 1.00f) 
 	sw->scale = 1.00f;
     shelfShapeInput (w);
@@ -136,7 +136,7 @@ shelfDec (CompDisplay     *d,
 	return TRUE;
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
-    sw->scale -= shelfGetInterval(d);
+    sw->scale *= shelfGetInterval(d);
     if (sw->scale < 0.001f) 
 	sw->scale = 0.001f;
     shelfShapeInput (w);

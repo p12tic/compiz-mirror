@@ -2,39 +2,33 @@
 <compiz>
   <plugin name="shelf" useBcop="true">
     <_short>Create miniwindows</_short>
-	<_long>Visually scales a window down to allow easy monitoring
-	without true/traditional resizing.
-	</_long>
+	<_long>Visually scales a window down to allow easy monitoring without true/traditional resizing.  </_long>
 	<category></category>
     <display>
       <group>
         <_short>Bindings</_short>
         <option name="trigger_key" type="key">
           <_short>Trigger scale down</_short>
-          <_long>
-	  Scale a window down to half size.
-	  </_long>
+          <_long> Scale a window down to half size.  </_long>
           <default>&lt;Super&gt;l</default>
         </option>
         <option name="dec_button" type="button">
           <_short>Make the window smaller</_short>
-          <_long>
-	  Reduces the scale factor making the window smaller.
-	  </_long>
+          <_long> Reduces the scale factor making the window smaller.  </_long>
           <default>&lt;Alt&gt;&lt;Super&gt;Button4</default>
         </option>
         <option name="inc_button" type="button">
           <_short>Make the window bigger</_short>
-          <_long>
-	  Increase the scale factor making the window bigger.
-	  </_long>
+          <_long> Increase the scale factor making the window bigger.  </_long>
           <default>&lt;Alt&gt;&lt;Super&gt;Button5</default>
         </option>
       </group>
       <option name="interval" type="float">
-       <default>0.1</default>
-       <min>0.001</min>
-       <max>1.000</max>
+       <_short>Scale interval</_short>
+       <_long> The number to divide the scale factor by or multiply it with when (respectively) increasing and decreasing the scale level manually.  Higher number means finer changes.  </_long>
+       <default>0.9</default>
+       <min>0.100</min>
+       <max>9.999</max>
        <precision>0.001</precision>
       </option>
     </display>
