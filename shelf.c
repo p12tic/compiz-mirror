@@ -101,6 +101,49 @@ shelfTrigger (CompDisplay     *d,
     return TRUE;
 }
 
+/* shelfInc and shelfDec are matcing functions and bindings;
+ * They increase and decrease the scale factor by 'interval'.
+ */
+static Bool
+shelfInc (CompDisplay     *d,
+	  CompAction      *action,
+	  CompActionState state,
+	  CompOption      *option,
+	  int             nOption)
+{
+    CompWindow *w = findWindowAtDisplay (d, d->activeWindow);
+    if (!w)
+	return TRUE;
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+    sw->scale += shelfGetInterval(d);
+    if (sw->scale >= 1.00f) 
+	sw->scale = 1.00f;
+    shelfShapeInput (w);
+    damageScreen (w->screen);
+    return TRUE;
+}
+
+static Bool
+shelfDec (CompDisplay     *d,
+	  CompAction      *action,
+	  CompActionState state,
+	  CompOption      *option,
+	  int             nOption)
+{
+    CompWindow *w = findWindowAtDisplay (d, d->activeWindow);
+    if (!w)
+	return TRUE;
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+    sw->scale -= shelfGetInterval(d);
+    if (sw->scale < 0.001f) 
+	sw->scale = 0.001f;
+    shelfShapeInput (w);
+    damageScreen (w->screen);
+    return TRUE;
+}
+
 /* The window was damaged, adjust the damage to fit the actual area we
  * care about.
  *
@@ -228,6 +271,8 @@ shelfInitDisplay (CompPlugin  *p,
 	return FALSE;
     }
     shelfSetTriggerKeyInitiate (d, shelfTrigger);
+    shelfSetIncButtonInitiate (d, shelfInc);
+    shelfSetDecButtonInitiate (d, shelfDec);
     return TRUE;
 }
 

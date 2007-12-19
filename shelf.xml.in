@@ -16,7 +16,27 @@
 	  </_long>
           <default>&lt;Super&gt;l</default>
         </option>
+        <option name="dec_button" type="button">
+          <_short>Make the window smaller</_short>
+          <_long>
+	  Reduces the scale factor making the window smaller.
+	  </_long>
+          <default>&lt;Alt&gt;&lt;Super&gt;Button4</default>
+        </option>
+        <option name="inc_button" type="button">
+          <_short>Make the window bigger</_short>
+          <_long>
+	  Increase the scale factor making the window bigger.
+	  </_long>
+          <default>&lt;Alt&gt;&lt;Super&gt;Button5</default>
+        </option>
       </group>
+      <option name="interval" type="float">
+       <default>0.1</default>
+       <min>0.001</min>
+       <max>1.000</max>
+       <precision>0.001</precision>
+      </option>
     </display>
   </plugin>
 </compiz>
