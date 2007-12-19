@@ -3,7 +3,7 @@
   <plugin name="shelf" useBcop="true">
     <_short>Create miniwindows</_short>
 	<_long>Visually scales a window down to allow easy monitoring without true/traditional resizing.  </_long>
-	<category></category>
+	<category>Window Management</category>
     <display>
       <group>
         <_short>Bindings</_short>
