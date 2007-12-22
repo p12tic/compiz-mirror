@@ -219,7 +219,7 @@ shelfPaintWindow (CompWindow		    *w,
     if (sw->targetScale != sw->scale && sw->steps)
     {
 	sw->scale += (float) sw->steps * (sw->targetScale - sw->scale);
-	if (fabsf(sw->targetScale - sw->scale) < 0.001)
+	if (fabsf(sw->targetScale - sw->scale) < 0.005)
 	    sw->scale = sw->targetScale;
     }
     if (sw->scale != 1.0f)
