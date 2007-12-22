@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <compiz>
   <plugin name="shelf" useBcop="true">
-    <_short>Create miniwindows</_short>
+    <_short>Shelf</_short>
 	<_long>Visually scales a window down to allow easy monitoring without true/traditional resizing.  </_long>
 	<category>Window Management</category>
     <display>
