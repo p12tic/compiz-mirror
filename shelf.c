@@ -33,15 +33,19 @@
 
 #include <compiz-core.h>
 #include <X11/extensions/shape.h>
+#include <math.h>
 #include "shelf_options.h"
 
 typedef struct { 
     float scale;
+    float targetScale;
+    float steps;
 } shelfWindow;
 
 typedef struct {
     PaintWindowProc paintWindow;
     DamageWindowRectProc damageWindowRect;
+    PreparePaintScreenProc preparePaintScreen;
     int windowPrivateIndex;
 } shelfScreen;
 
@@ -63,8 +67,8 @@ shelfShapeInput (CompWindow *w)
     XRectangle rect;
     rect.x = 0;
     rect.y = 0;
-    rect.width = w->serverWidth * sw->scale;
-    rect.height = w->serverHeight * sw->scale;
+    rect.width = w->serverWidth * sw->targetScale;
+    rect.height = w->serverHeight * sw->targetScale;
 
     XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
     XShapeCombineRectangles  (w->screen->display->display, w->id, 
@@ -74,6 +78,28 @@ shelfShapeInput (CompWindow *w)
 				  ShapeInput, 0, 0, &rect, 1,  ShapeSet, 0);
     XShapeSelectInput (w->screen->display->display, w->id, ShapeNotify);
 }
+
+static void
+shelfPreparePaintScreen (CompScreen *s,
+			 int	    msSinceLastPaint)
+{
+    CompWindow *w;
+    float steps;
+    SHELF_SCREEN (s);
+
+    steps =  (float)msSinceLastPaint / (float)shelfGetAnimtime(s->display);
+
+    if (steps < 0.001)
+	steps = 0.001;
+
+    for (w = s->windows; w; w = w->next)
+	((shelfWindow *)w->base.privates[ss->windowPrivateIndex].ptr)->steps = steps;
+    
+    UNWRAP (ss, s, preparePaintScreen);
+    (*s->preparePaintScreen) (s, msSinceLastPaint);
+    WRAP (ss, s, preparePaintScreen, shelfPreparePaintScreen);
+}
+
 /* Binding for toggle mode. 
  * Toggles through three preset scale levels, 
  * currently hard coded to 1.0f (no scale), 0.5f and 0.25f.
@@ -90,12 +116,12 @@ shelfTrigger (CompDisplay     *d,
 	return TRUE;
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
-    if (sw->scale == 1.0f)
-	sw->scale = 0.5f;
-    else if (sw->scale == 0.5f)
-	sw->scale = 0.25f;
+    if (sw->targetScale == 1.0f)
+	sw->targetScale = 0.5f;
+    else if (sw->targetScale == 0.5f)
+	sw->targetScale = 0.25f;
     else 
-	sw->scale = 1.00f;
+	sw->targetScale = 1.00f;
     shelfShapeInput (w);
     damageScreen (w->screen);
     return TRUE;
@@ -116,9 +142,9 @@ shelfInc (CompDisplay     *d,
 	return TRUE;
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
-    sw->scale /= shelfGetInterval(d);
-    if (sw->scale >= 1.00f) 
-	sw->scale = 1.00f;
+    sw->targetScale /= shelfGetInterval(d);
+    if (sw->targetScale >= 1.00f) 
+	sw->targetScale = 1.00f;
     shelfShapeInput (w);
     damageScreen (w->screen);
     return TRUE;
@@ -136,9 +162,9 @@ shelfDec (CompDisplay     *d,
 	return TRUE;
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
-    sw->scale *= shelfGetInterval(d);
-    if (sw->scale < 0.001f) 
-	sw->scale = 0.001f;
+    sw->targetScale *= shelfGetInterval(d);
+    if (sw->targetScale < 0.001f) 
+	sw->targetScale = 0.001f;
     shelfShapeInput (w);
     damageScreen (w->screen);
     return TRUE;
@@ -190,6 +216,12 @@ shelfPaintWindow (CompWindow		    *w,
     SHELF_SCREEN (s);
     SHELF_WINDOW (w);
 
+    if (sw->targetScale != sw->scale && sw->steps)
+    {
+	sw->scale += (float) sw->steps * (sw->targetScale - sw->scale);
+	if (fabsf(sw->targetScale - sw->scale) < 0.001)
+	    sw->scale = sw->targetScale;
+    }
     if (sw->scale != 1.0f)
     {
 	CompTransform mTransform = *transform;
@@ -203,7 +235,8 @@ shelfPaintWindow (CompWindow		    *w,
 	matrixTranslate (&mTransform, -xOrigin, -yOrigin,  0);
 	
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-	
+	if (sw->scale != sw->targetScale)
+	    addWindowDamage (w);	    
 	UNWRAP (ss, s, paintWindow);
 	status = (*s->paintWindow) (w, attrib, &mTransform, region, mask);
 	WRAP (ss, s, paintWindow, shelfPaintWindow);
@@ -225,6 +258,7 @@ shelfFiniScreen (CompPlugin *p,
     SHELF_SCREEN (s);
     if (!ss)
 	return ;
+    UNWRAP (ss, s, preparePaintScreen);
     UNWRAP (ss, s, paintWindow);
     UNWRAP (ss, s, damageWindowRect);
     if (ss->windowPrivateIndex)
@@ -242,6 +276,7 @@ shelfInitScreen (CompPlugin *p,
 	return FALSE; // fixme: error message.
     ss->windowPrivateIndex = allocateWindowPrivateIndex (s);
     s->base.privates[screenPrivateIndex].ptr = ss;
+    WRAP (ss, s, preparePaintScreen, shelfPreparePaintScreen);
     WRAP (ss, s, paintWindow, shelfPaintWindow); 
     WRAP (ss, s, damageWindowRect, shelfDamageWindowRect);
     return TRUE; 
@@ -314,6 +349,7 @@ shelfInitWindow (CompPlugin *p,
 	return FALSE;
 
     sw->scale = 1.0f;
+    sw->targetScale = 1.0f;
     w->base.privates[ss->windowPrivateIndex].ptr = sw;
     return TRUE;
 }

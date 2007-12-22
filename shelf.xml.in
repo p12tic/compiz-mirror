@@ -23,6 +23,13 @@
           <default>&lt;Alt&gt;&lt;Super&gt;Button5</default>
         </option>
       </group>
+      <option name="animtime" type="int">
+       <_short>Animation duration</_short>
+       <_long> Duration of the animation in milliseconds. </_long>
+       <default>50</default>
+       <min>1</min>
+       <max>10000</max>
+      </option>
       <option name="interval" type="float">
        <_short>Scale interval</_short>
        <_long> The number to divide the scale factor by or multiply it with when (respectively) increasing and decreasing the scale level manually.  Higher number means finer changes.  </_long>
