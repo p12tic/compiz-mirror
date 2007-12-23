@@ -100,6 +100,21 @@ shelfPreparePaintScreen (CompScreen *s,
     WRAP (ss, s, preparePaintScreen, shelfPreparePaintScreen);
 }
 
+/* Sets the scale level and adjust the shape */
+static void
+shelfScaleWindow (CompWindow *w, float scale)
+{
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+
+    sw->targetScale = scale;
+    if (sw->targetScale > 1.0f)
+	sw->targetScale = 1.0f;
+    else if (sw->targetScale < 0.01f)
+	sw->targetScale = 0.01f;
+    shelfShapeInput (w);
+    damageScreen (w->screen);
+}
 /* Binding for toggle mode. 
  * Toggles through three preset scale levels, 
  * currently hard coded to 1.0f (no scale), 0.5f and 0.25f.
@@ -116,14 +131,12 @@ shelfTrigger (CompDisplay     *d,
 	return TRUE;
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
-    if (sw->targetScale == 1.0f)
-	sw->targetScale = 0.5f;
-    else if (sw->targetScale == 0.5f)
-	sw->targetScale = 0.25f;
+    if (sw->targetScale > 0.5f)
+	shelfScaleWindow (w, 0.5f);
+    else if (sw->targetScale <= 0.5f && sw->targetScale > 0.25)
+	shelfScaleWindow (w, 0.25f);
     else 
-	sw->targetScale = 1.00f;
-    shelfShapeInput (w);
-    damageScreen (w->screen);
+	shelfScaleWindow (w, 1.0f);
     return TRUE;
 }
 
@@ -142,11 +155,7 @@ shelfInc (CompDisplay     *d,
 	return TRUE;
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
-    sw->targetScale /= shelfGetInterval(d);
-    if (sw->targetScale >= 1.00f) 
-	sw->targetScale = 1.00f;
-    shelfShapeInput (w);
-    damageScreen (w->screen);
+    shelfScaleWindow (w, sw->targetScale / shelfGetInterval (d));
     return TRUE;
 }
 
@@ -162,11 +171,7 @@ shelfDec (CompDisplay     *d,
 	return TRUE;
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
-    sw->targetScale *= shelfGetInterval(d);
-    if (sw->targetScale < 0.001f) 
-	sw->targetScale = 0.001f;
-    shelfShapeInput (w);
-    damageScreen (w->screen);
+    shelfScaleWindow (w, sw->targetScale * shelfGetInterval (d));
     return TRUE;
 }
 
