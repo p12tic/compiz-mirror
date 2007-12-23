@@ -26,7 +26,7 @@
       <option name="animtime" type="int">
        <_short>Animation duration</_short>
        <_long> Duration of the animation in milliseconds. </_long>
-       <default>50</default>
+       <default>150</default>
        <min>1</min>
        <max>10000</max>
       </option>
@@ -35,7 +35,7 @@
        <_long> The number to divide the scale factor by or multiply it with when (respectively) increasing and decreasing the scale level manually.  Higher number means finer changes.  </_long>
        <default>0.9</default>
        <min>0.100</min>
-       <max>9.999</max>
+       <max>0.999</max>
        <precision>0.001</precision>
       </option>
     </display>
