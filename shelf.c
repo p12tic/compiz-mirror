@@ -107,6 +107,8 @@ shelfScaleWindow (CompWindow *w, float scale)
     SHELF_SCREEN (w->screen);
     SHELF_WINDOW (w);
 
+    if (w->wmType & (CompWindowTypeDesktopMask | CompWindowTypeDockMask))
+	return;
     sw->targetScale = scale;
     if (sw->targetScale > 1.0f)
 	sw->targetScale = 1.0f;
