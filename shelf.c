@@ -89,8 +89,8 @@ shelfPreparePaintScreen (CompScreen *s,
 
     steps =  (float)msSinceLastPaint / (float)shelfGetAnimtime(s->display);
 
-    if (steps < 0.001)
-	steps = 0.001;
+    if (steps < 0.005)
+	steps = 0.005;
 
     for (w = s->windows; w; w = w->next)
 	((shelfWindow *)w->base.privates[ss->windowPrivateIndex].ptr)->steps = steps;
@@ -117,6 +117,7 @@ shelfScaleWindow (CompWindow *w, float scale)
     shelfShapeInput (w);
     damageScreen (w->screen);
 }
+
 /* Binding for toggle mode. 
  * Toggles through three preset scale levels, 
  * currently hard coded to 1.0f (no scale), 0.5f and 0.25f.
