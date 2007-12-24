@@ -25,8 +25,6 @@
  * Todo: 
  *  - Check for XShape events
  *  - Handle input in a sane way
- *  - Animation
- *  - Floating resize (on scroll wheel for instance)
  *  - Correct damage handeling
  *  - Mouse-over?
  */
