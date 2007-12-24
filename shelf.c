@@ -55,6 +55,8 @@ static int screenPrivateIndex;
 #define SHELF_WINDOW(w) \
     shelfWindow *sw = w->base.privates[ss->windowPrivateIndex].ptr;
 
+#define SHELF_MIN_SIZE 50.0f // Minimum pixelsize a window can be scaled to
+
 /* Shape the input of the window when scaled */
 static void
 shelfShapeInput (CompWindow *w)
@@ -91,7 +93,8 @@ shelfPreparePaintScreen (CompScreen *s,
 	steps = 0.005;
 
     for (w = s->windows; w; w = w->next)
-	((shelfWindow *)w->base.privates[ss->windowPrivateIndex].ptr)->steps = steps;
+	((shelfWindow *)w->base.privates[ss->windowPrivateIndex].ptr)->steps
+	    = steps;
     
     UNWRAP (ss, s, preparePaintScreen);
     (*s->preparePaintScreen) (s, msSinceLastPaint);
@@ -110,8 +113,8 @@ shelfScaleWindow (CompWindow *w, float scale)
     sw->targetScale = scale;
     if (sw->targetScale > 1.0f)
 	sw->targetScale = 1.0f;
-    else if (sw->targetScale < 0.01f)
-	sw->targetScale = 0.01f;
+    else if ((float)w->width * sw->targetScale < SHELF_MIN_SIZE )
+	sw->targetScale = SHELF_MIN_SIZE / (float)w->width;
     shelfShapeInput (w);
     damageScreen (w->screen);
 }
