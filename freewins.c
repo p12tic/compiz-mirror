@@ -31,10 +31,11 @@
  *
  * Todo: 
  *  - Shape input on rotation
+ *  - Show scaling-corner axes
  *  - Modifier key to rotate on the Z Axis
  *  - Correct damage and choppyness handling
- *  - Simplify code
  *  - Make help colors configurable
+ *  - Simplify code
  */
 
 #include <compiz-core.h>
@@ -52,19 +53,19 @@
 
 // Macros/*{{{*/
 #define GET_FREEWINS_DISPLAY(d)                                       \
-    ((FWDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
+    ((FWDisplay *) (d)->privates[displayPrivateIndex].ptr)
 
 #define FREEWINS_DISPLAY(d)                      \
     FWDisplay *fwd = GET_FREEWINS_DISPLAY (d)
 
 #define GET_FREEWINS_SCREEN(s, fwd)                                        \
-    ((FWScreen *) (s)->base.privates[(fwd)->screenPrivateIndex].ptr)
+    ((FWScreen *) (s)->privates[(fwd)->screenPrivateIndex].ptr)
 
 #define FREEWINS_SCREEN(s)                                                      \
     FWScreen *fws = GET_FREEWINS_SCREEN (s, GET_FREEWINS_DISPLAY (s->display))
 
 #define GET_FREEWINS_WINDOW(w, fws)                                        \
-    ((FWWindow *) (w)->base.privates[(fws)->windowPrivateIndex].ptr)
+    ((FWWindow *) (w)->privates[(fws)->windowPrivateIndex].ptr)
 
 #define FREEWINS_WINDOW(w)                                         \
     FWWindow *fww = GET_FREEWINS_WINDOW  (w,                    \
@@ -220,7 +221,6 @@ static void FWShapeInput (CompWindow *w)
         ScaleX = fww->scaleX;
         ScaleY = fww->scaleY;
     }
-    
     Rectangle.x = (int)(0 + ((1 - ScaleX) / 2) * w->width);
     Rectangle.y = (int)(0 + ((1 - ScaleY) / 2) * w->height);
     Rectangle.width = (int)(w->serverWidth * ((ScaleX)));
@@ -706,7 +706,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
 	glEnd ();
 	
-	glColor4f (0.6, 0.6, 1.0, 1.0f);
+	glColor4f (0.5, 0.5, 0.5, 0.5f);
 	glBegin(GL_LINES);
 	glVertex3f(x, y - (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
 	glVertex3f(x, y + (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
@@ -728,7 +728,6 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
     return status;
 }
-/*}}}*/
 
 // Damage Window Rect/*{{{*/
 static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
@@ -1298,7 +1297,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->aTimeRemaining = freewinsGetResetTime (w->screen);
     fww->cTimeRemaining = freewinsGetResetTime (w->screen);
 
-    w->base.privates[fws->windowPrivateIndex].ptr = fww;
+    w->privates[fws->windowPrivateIndex].ptr = fww;
     
     // Shape window back to normal
     if (w->screen->display->shapeExtension)
@@ -1344,7 +1343,7 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     fws->grabIndex = 0;
     fws->rotatedWindows = 0;
 
-    s->base.privates[fwd->screenPrivateIndex].ptr = fws;
+    s->privates[fwd->screenPrivateIndex].ptr = fws;
     
     WRAP(fws, s, paintWindow, FWPaintWindow);
     WRAP(fws, s, paintOutput, FWPaintOutput);
@@ -1396,26 +1395,23 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
 
 
     /* BCOP Action initiation */
-    freewinsSetInitiateRotationButtonInitiate(d, initiateFWRotate);
-    freewinsSetInitiateScaleButtonInitiate(d, initiateFWScale);
-    freewinsSetResetButtonInitiate(d, resetFWRotation);
-    freewinsSetResetKeyInitiate(d, resetFWRotation);
+    freewinsSetInitiateRotationInitiate(d, initiateFWRotate);
+    freewinsSetInitiateScaleInitiate(d, initiateFWScale);
+    freewinsSetResetInitiate(d, resetFWRotation);
     freewinsSetToggleAxisInitiate(d, toggleFWAxis);
     
     // Rotate / Scale Up Down Left Right
-    freewinsSetScaleUpKeyInitiate(d, FWScaleUp);
-    freewinsSetScaleDownKeyInitiate(d, FWScaleDown);
-    freewinsSetScaleUpButtonInitiate(d, FWScaleUp);
-    freewinsSetScaleDownButtonInitiate(d, FWScaleDown);
+    freewinsSetScaleUpInitiate(d, FWScaleUp);
+    freewinsSetScaleDownInitiate(d, FWScaleDown);
+
+    freewinsSetRotateUpInitiate(d, FWRotateUp);
+    freewinsSetRotateDownInitiate(d, FWRotateDown);
+    freewinsSetRotateLeftInitiate(d, FWRotateLeft);
+    freewinsSetRotateRightInitiate(d, FWRotateRight);
+    freewinsSetRotateCInitiate(d, FWRotateClockwise);
+    freewinsSetRotateCcInitiate(d, FWRotateCounterclockwise);
     
-    freewinsSetRotateUpKeyInitiate(d, FWRotateUp);
-    freewinsSetRotateDownKeyInitiate(d, FWRotateDown);
-    freewinsSetRotateLeftKeyInitiate(d, FWRotateLeft);
-    freewinsSetRotateRightKeyInitiate(d, FWRotateRight);
-    freewinsSetRotateCKeyInitiate(d, FWRotateClockwise);
-    freewinsSetRotateCcKeyInitiate(d, FWRotateCounterclockwise);
-    
-    d->base.privates[displayPrivateIndex].ptr = fwd;
+    d->privates[displayPrivateIndex].ptr = fwd;
     WRAP(fwd, d, handleEvent, FWHandleEvent);
     
     return TRUE;
@@ -1432,32 +1428,6 @@ static void freewinsFiniDisplay(CompPlugin *p, CompDisplay *d){
     free(fwd);
 }
 /*}}}*/
-
-// Object init / clean
-static CompBool freewinsInitObject(CompPlugin *p, CompObject *o){
-
-    static InitPluginObjectProc dispTab[] = {
-	(InitPluginObjectProc) 0, // InitCore
-	(InitPluginObjectProc) freewinsInitDisplay,
-	(InitPluginObjectProc) freewinsInitScreen,
-	(InitPluginObjectProc) freewinsInitWindow
-    };
-
-    RETURN_DISPATCH(o, dispTab, ARRAY_SIZE(dispTab), TRUE, (p, o));
-}
-
-static void freewinsFiniObject(CompPlugin *p, CompObject *o){
-
-    static FiniPluginObjectProc dispTab[] = {
-	(FiniPluginObjectProc) 0, // FiniCore
-	(FiniPluginObjectProc) freewinsFiniDisplay,
-	(FiniPluginObjectProc) freewinsFiniScreen,
-	(FiniPluginObjectProc) freewinsFiniWindow
-    };
-
-    DISPATCH(o, dispTab, ARRAY_SIZE(dispTab), (p, o));
-}
-
 // Plugin init / clean
 static Bool freewinsInit(CompPlugin *p){
     
@@ -1477,14 +1447,28 @@ static void freewinsFini(CompPlugin *p){
 	freeDisplayPrivateIndex( displayPrivateIndex );
 }
 
+static int
+freewinsGetVersion (CompPlugin *plugin,
+		int	   version)
+{
+    return ABIVERSION;
+}
+
 // Plugin implementation export
 CompPluginVTable freewinsVTable = {
     "freewins",
+    freewinsGetVersion,
     0,
     freewinsInit,
     freewinsFini,
-    freewinsInitObject,
-    freewinsFiniObject,
+    freewinsInitDisplay,
+    freewinsFiniDisplay,
+    freewinsInitScreen,
+    freewinsFiniScreen,
+    freewinsInitWindow,
+    freewinsFiniWindow,
+    0,
+    0,
     0,
     0
 };
