@@ -38,6 +38,7 @@ typedef struct {
     float scale;
     float targetScale;
     float steps;
+    Window ipw;
 } shelfWindow;
 
 typedef struct {
@@ -101,6 +102,60 @@ shelfPreparePaintScreen (CompScreen *s,
     WRAP (ss, s, preparePaintScreen, shelfPreparePaintScreen);
 }
 
+/* Adjust size and location of the input prevention window
+ */
+static void 
+shelfAdjustIPW (CompWindow *w)
+{
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+    XWindowChanges xwc;
+
+    if (!sw->ipw)
+	return;
+    if (sw->targetScale == 1.0f)
+    {
+	XDestroyWindow (w->screen->display->display, sw->ipw);
+	sw->ipw = None;
+	return;
+    }
+    xwc.x = w->serverX - w->input.left;
+    xwc.y = w->serverY - w->input.top;
+    xwc.width = (int) ((float) (w->serverWidth + w->input.left +
+				w->input.right) * sw->targetScale);
+    xwc.height = (int) ((float) (w->serverHeight + w->input.top +
+				 w->input.bottom) * sw->targetScale);
+
+    xwc.stack_mode = Above;
+    xwc.sibling = w->id;
+    XConfigureWindow (w->screen->display->display, sw->ipw,
+		      CWSibling | CWStackMode | CWX | CWY |
+		      CWWidth | CWHeight, &xwc);
+    XMapWindow (w->screen->display->display, sw->ipw);
+    return;
+
+}
+
+/* Create an input prevention window */
+static void
+shelfMkIPW (CompWindow *w)
+{
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+
+    if (sw->ipw)
+	return;
+    XSetWindowAttributes attrib;
+    attrib.override_redirect = TRUE;
+    sw->ipw = XCreateWindow (w->screen->display->display, w->screen->root,
+			     w->serverX - w->input.left, w->serverY -
+			     w->input.top, w->serverWidth + w->input.left +
+			     w->input.right, w->serverHeight + w->input.top
+			     + w->input.bottom, 0, CopyFromParent,
+			     InputOnly, CopyFromParent, CWOverrideRedirect,
+			     &attrib);
+}
+
 /* Sets the scale level and adjust the shape */
 static void
 shelfScaleWindow (CompWindow *w, float scale)
@@ -116,6 +171,8 @@ shelfScaleWindow (CompWindow *w, float scale)
     else if ((float)w->width * sw->targetScale < SHELF_MIN_SIZE )
 	sw->targetScale = SHELF_MIN_SIZE / (float)w->width;
     shelfShapeInput (w);
+    shelfMkIPW (w);
+    shelfAdjustIPW (w);
     damageScreen (w->screen);
 }
 
@@ -359,6 +416,7 @@ shelfInitWindow (CompPlugin *p,
 
     sw->scale = 1.0f;
     sw->targetScale = 1.0f;
+    sw->ipw = None;
     w->base.privates[ss->windowPrivateIndex].ptr = sw;
     return TRUE;
 }
