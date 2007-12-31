@@ -48,6 +48,12 @@ typedef struct {
     int windowPrivateIndex;
 } shelfScreen;
 
+typedef struct {
+    HandleEventProc handleEvent;
+} shelfDisplay;
+
+static shelfDisplay sdtmp;
+static shelfDisplay *sd = &sdtmp;
 static int displayPrivateIndex;
 static int screenPrivateIndex;
 
@@ -235,6 +241,28 @@ shelfDec (CompDisplay     *d,
     shelfScaleWindow (w, sw->targetScale * shelfGetInterval (d));
     return TRUE;
 }
+static void
+shelfHandleEvent (CompDisplay *d, XEvent *event)
+{
+    SHELF_SCREEN (d->screens);
+    CompWindow *w;
+    switch (event->type)
+    {
+	case ButtonPress:
+	    for (w = d->screens->windows; w; w = w->next)
+	    {
+		SHELF_WINDOW (w);
+		if (event->xbutton.window == sw->ipw)
+		{
+		    moveInputFocusToWindow (w);
+		}
+	    }
+	    break;
+    }
+    UNWRAP (sd, d, handleEvent);
+    (*d->handleEvent) (d, event);
+    WRAP (sd, d, handleEvent, shelfHandleEvent);
+}
 
 /* The window was damaged, adjust the damage to fit the actual area we
  * care about.
@@ -354,6 +382,7 @@ shelfFiniDisplay (CompPlugin  *p,
 {
     if (screenPrivateIndex >= 0)
         freeScreenPrivateIndex (d, screenPrivateIndex);
+    UNWRAP (sd, d, handleEvent);
 }
 
 static Bool
@@ -374,6 +403,7 @@ shelfInitDisplay (CompPlugin  *p,
     shelfSetTriggerKeyInitiate (d, shelfTrigger);
     shelfSetIncButtonInitiate (d, shelfInc);
     shelfSetDecButtonInitiate (d, shelfDec);
+    WRAP (sd, d, handleEvent, shelfHandleEvent);
     return TRUE;
 }
 
