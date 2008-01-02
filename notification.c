@@ -23,7 +23,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <unistd.h>
-#include <compiz.h>
+#include <compiz-core.h>
 
 #define NOTIFY_DISPLAY_OPTION_TIMEOUT   0
 #define NOTIFY_DISPLAY_OPTION_MAX_LEVEL 1
@@ -46,7 +46,7 @@ typedef struct _NotifyDisplay {
 } NotifyDisplay;
 
 #define GET_NOTIFY_DISPLAY(d)				       \
-    ((NotifyDisplay *) (d)->privates[displayPrivateIndex].ptr)
+    ((NotifyDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
 
 #define NOTIFY_DISPLAY(d)		       \
     NotifyDisplay *nd = GET_NOTIFY_DISPLAY (d)
@@ -149,7 +149,7 @@ notifyInitDisplay (CompPlugin  *p,
     notify_init ("compiz");
     nd->timeout = 2000;
 
-    d->privates[displayPrivateIndex].ptr = nd;
+    d->base.privates[displayPrivateIndex].ptr = nd;
 
     WRAP (nd, d, logMessage, notifyLogMessage);
 
@@ -169,6 +169,7 @@ notifyFiniDisplay (CompPlugin  *p,
 
     free (nd);
 }
+
 static Bool
 notifyInit (CompPlugin *p)
 {
@@ -189,6 +190,30 @@ notifyInit (CompPlugin *p)
     compAddMetadataFromFile (&notifyMetadata, p->vTable->name);
 
     return TRUE;
+}
+
+static CompBool
+notifyInitObject (CompPlugin *p,
+		  CompObject *o)
+{
+    static InitPluginObjectProc dispTab[] = {
+    	(InitPluginObjectProc) 0, /* InitCore */
+	(InitPluginObjectProc) notifyInitDisplay
+    };
+
+    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
+}
+
+static void
+notifyFiniObject (CompPlugin *p,
+		  CompObject *o)
+{
+    static FiniPluginObjectProc dispTab[] = {
+	(FiniPluginObjectProc) 0, /* FiniCore */
+	(FiniPluginObjectProc) notifyFiniDisplay
+    };
+
+    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
 }
 
 static CompOption *
@@ -236,19 +261,40 @@ notifySetDisplayOption (CompPlugin      *p,
     return FALSE;
 }
 
+static CompOption *
+notifyGetObjectOptions (CompPlugin *plugin,
+			CompObject *object,
+			int	   *count)
+{
+    static GetPluginObjectOptionsProc dispTab[] = {
+	(GetPluginObjectOptionsProc) 0, /* GetCoreOptions */
+	(GetPluginObjectOptionsProc) notifyGetDisplayOptions
+    };
+
+    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab),
+		     (void *) (*count = 0), (plugin, object, count));
+}
+
+static CompBool
+notifySetObjectOption (CompPlugin      *plugin,
+		       CompObject      *object,
+		       const char      *name,
+		       CompOptionValue *value)
+{
+    static SetPluginObjectOptionProc dispTab[] = {
+	(SetPluginObjectOptionProc) 0, /* SetCoreOption */
+	(SetPluginObjectOptionProc) notifySetDisplayOption
+    };
+
+    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab), FALSE,
+		     (plugin, object, name, value));
+}
+
 static void
 notifyFini (CompPlugin *p)
 {
-    if (displayPrivateIndex >= 0)
-	freeDisplayPrivateIndex (displayPrivateIndex);
-
+    freeDisplayPrivateIndex (displayPrivateIndex);
     compFiniMetadata (&notifyMetadata);
-}
-static int
-notifyGetVersion (CompPlugin *plugin,
-		  int	     version)
-{
-    return ABIVERSION;
 }
 
 static CompMetadata *
@@ -259,24 +305,17 @@ notifyGetMetadata (CompPlugin *plugin)
 
 static CompPluginVTable notifyVTable = {
     "notification",
-    notifyGetVersion,
     notifyGetMetadata,
     notifyInit,
     notifyFini,
-    notifyInitDisplay,
-    notifyFiniDisplay,
-    0,
-    0,
-    0, /* InitWindow */
-    0, /* FiniWindow */
-    notifyGetDisplayOptions,
-    notifySetDisplayOption,
-    0, /* GetScreenOptions */
-    0 /* SetScreenOption */
+    notifyInitObject,
+    notifyFiniObject,
+    notifyGetObjectOptions,
+    notifySetObjectOption
 };
 
 CompPluginVTable *
-getCompPluginInfo (void)
+getCompPluginInfo20070830 (void)
 {
     return &notifyVTable;
 }
