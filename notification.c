@@ -134,6 +134,9 @@ notifyInitDisplay (CompPlugin  *p,
 {
     NotifyDisplay *nd;
 
+    if (!checkPluginABI ("core", CORE_ABIVERSION))
+	return FALSE;
+
     nd = malloc (sizeof (NotifyDisplay));
     if (!nd)
 	return FALSE;
