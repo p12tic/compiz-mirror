@@ -26,12 +26,12 @@
  *  - Check for XShape events
  *  - Handle input in a sane way
  *  - Correct damage handeling
- *  - Handle WindowMove
  *  - Mouse-over?
  */
 
 #include <compiz-core.h>
 #include <X11/extensions/shape.h>
+#include <X11/cursorfont.h>
 #include <math.h>
 #include "shelf_options.h"
 
@@ -43,7 +43,12 @@ typedef struct {
 } shelfWindow;
 
 typedef struct {
-    PaintWindowProc paintWindow;
+    int grabIndex;
+    Cursor moveCursor;
+    Window grabbedWindow;
+    int lastPointerX;
+    int lastPointerY;
+    PaintWindowProc paintWindow;    
     DamageWindowRectProc damageWindowRect;
     PreparePaintScreenProc preparePaintScreen;
     WindowMoveNotifyProc windowMoveNotify;
@@ -66,6 +71,21 @@ static int screenPrivateIndex;
 
 #define SHELF_MIN_SIZE 50.0f // Minimum pixelsize a window can be scaled to
 
+/* Checks if w is a ipw and returns the real window */
+static CompWindow *
+shelfGetRealWindow (CompWindow *w)
+{
+    SHELF_SCREEN (w->screen);
+    CompWindow *rw;
+    for (rw = w->screen->windows; rw; rw = rw->next)
+    {
+	SHELF_WINDOW (rw);
+	if (sw->ipw == w->id)
+	    return rw;
+    }
+    return NULL;
+}
+
 /* Shape the input of the window when scaled.
  * Since the IPW will be dealing with the input, removing input
  * from the window entirely is a perfectly good solution. */
@@ -73,11 +93,20 @@ static void
 shelfShapeInput (CompWindow *w)
 {
     XRectangle rect;
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+
     rect.x = 0;
     rect.y = 0;
     rect.width = 0;
     rect.height = 0;
-
+    if (sw->targetScale == 1.0f)
+    {
+	rect.x = -w->serverBorderWidth;
+	rect.y = -w->serverBorderWidth;
+	rect.width = (w->serverWidth + w->serverBorderWidth);
+	rect.height = (w->serverHeight + w->serverBorderWidth);
+    }
     XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
     XShapeCombineRectangles  (w->screen->display->display, w->id, 
 			      ShapeInput, 0, 0, &rect, 1,  ShapeSet, 0);
@@ -243,23 +272,104 @@ shelfDec (CompDisplay     *d,
     shelfScaleWindow (w, sw->targetScale * shelfGetInterval (d));
     return TRUE;
 }
+
+static void
+handleButtonPress (CompWindow *w)
+{
+    CompScreen *s = w->screen;
+    SHELF_SCREEN (s);
+    if (!otherScreenGrabExist (s, "shelf", 0))
+    {
+	moveInputFocusToWindow (w);
+	ss->grabbedWindow = w->id;
+	ss->grabIndex = pushScreenGrab (s, ss->moveCursor, "shelf");
+    }
+}
+
+static void
+handleMotionEvent (CompDisplay *d, XEvent *event)
+{
+    CompScreen *s;
+    CompWindow *w;
+    int x,y;
+    s = findScreenAtDisplay (d, event->xmotion.root);
+    if (!s)
+	return;
+    SHELF_SCREEN (s);
+    if (!ss->grabIndex)
+	return;
+    w = findWindowAtScreen (s, ss->grabbedWindow);
+    if (!w)
+	return;
+    x = event->xmotion.x_root;
+    y = event->xmotion.y_root;
+
+    if (ss->lastPointerX < 0)
+    {
+	ss->lastPointerX = x;
+	ss->lastPointerY = y;
+	return;
+    }
+    moveWindow (w,
+		-ss->lastPointerX + x,
+		-ss->lastPointerY + y,
+		TRUE,
+		FALSE);
+    syncWindowPosition (w);
+    ss->lastPointerX = event->xmotion.x_root;
+    ss->lastPointerY = event->xmotion.y_root;
+}
+
+static void
+handleButtonRelease (CompWindow *w)
+{
+    CompScreen *s = w->screen;
+    SHELF_SCREEN (s);
+    ss->grabbedWindow = None;
+    if (ss->grabIndex)
+    {
+	ss->lastPointerX = -1;
+	ss->lastPointerY = -1;
+	moveInputFocusToWindow (w);
+	removeScreenGrab (s, ss->grabIndex, NULL);
+	ss->grabIndex = 0;
+	ss->grabbedWindow = 0;
+    }
+}
+
+static CompWindow *
+shelfFindRealWindowID (CompDisplay *d, Window wid)
+{
+    CompWindow *orig;
+    orig = findWindowAtDisplay (d, wid);
+    if (!orig)
+	return NULL;
+    return shelfGetRealWindow (orig);
+}
+
 static void
 shelfHandleEvent (CompDisplay *d, XEvent *event)
 {
-    SHELF_SCREEN (d->screens);
     CompWindow *w;
+    CompScreen *s;
     switch (event->type)
     {
 	case ButtonPress:
-	    for (w = d->screens->windows; w; w = w->next)
-	    {
-		SHELF_WINDOW (w);
-		if (event->xbutton.window == sw->ipw)
-		{
-		    moveInputFocusToWindow (w);
-		}
-	    }
+	    w = shelfFindRealWindowID (d, event->xbutton.window);
+	    if (w)
+		handleButtonPress (w);
 	    break;
+	case ButtonRelease:
+	    s = findScreenAtDisplay (d, event->xbutton.root);
+	    SHELF_SCREEN (s);
+	    w = findWindowAtDisplay (d, ss->grabbedWindow);
+	    if (w)
+		handleButtonRelease (w);
+	    break;
+	case MotionNotify:
+	    handleMotionEvent (d, event);
+	    break;
+	    
     }
     UNWRAP (sd, d, handleEvent);
     (*d->handleEvent) (d, event);
@@ -346,21 +456,6 @@ shelfPaintWindow (CompWindow		    *w,
     return status;
 }
 
-/* Checks if w is a ipw and returns the real window */
-static CompWindow *
-shelfGetRealWindow (CompWindow *w)
-{
-    SHELF_SCREEN (w->screen);
-    CompWindow *rw;
-    for (rw = w->screen->windows; rw; rw = rw->next)
-    {
-	SHELF_WINDOW (rw);
-	if (sw->ipw == w->id)
-	    return rw;
-    }
-    return NULL;
-}
-
 static void
 shelfWindowMoveNotify (CompWindow *w,
 		       int dx,
@@ -403,6 +498,9 @@ shelfInitScreen (CompPlugin *p,
 	return FALSE; // fixme: error message.
     ss->windowPrivateIndex = allocateWindowPrivateIndex (s);
     s->base.privates[screenPrivateIndex].ptr = ss;
+    ss->moveCursor = XCreateFontCursor (s->display->display, XC_fleur);
+    ss->lastPointerX = -1;
+    ss->lastPointerY = -1;
     WRAP (ss, s, preparePaintScreen, shelfPreparePaintScreen);
     WRAP (ss, s, paintWindow, shelfPaintWindow); 
     WRAP (ss, s, damageWindowRect, shelfDamageWindowRect);
