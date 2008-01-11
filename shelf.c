@@ -26,6 +26,7 @@
  *  - Check for XShape events
  *  - Handle input in a sane way
  *  - Correct damage handeling
+ *  - Handle WindowMove
  *  - Mouse-over?
  */
 
@@ -45,6 +46,7 @@ typedef struct {
     PaintWindowProc paintWindow;
     DamageWindowRectProc damageWindowRect;
     PreparePaintScreenProc preparePaintScreen;
+    WindowMoveNotifyProc windowMoveNotify;
     int windowPrivateIndex;
 } shelfScreen;
 
@@ -64,22 +66,22 @@ static int screenPrivateIndex;
 
 #define SHELF_MIN_SIZE 50.0f // Minimum pixelsize a window can be scaled to
 
-/* Shape the input of the window when scaled */
+/* Shape the input of the window when scaled.
+ * Since the IPW will be dealing with the input, removing input
+ * from the window entirely is a perfectly good solution. */
 static void
 shelfShapeInput (CompWindow *w)
 {
-    SHELF_SCREEN (w->screen);
-    SHELF_WINDOW (w);
-
     XRectangle rect;
     rect.x = 0;
     rect.y = 0;
-    rect.width = w->serverWidth * sw->targetScale;
-    rect.height = w->serverHeight * sw->targetScale;
+    rect.width = 0;
+    rect.height = 0;
 
     XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
     XShapeCombineRectangles  (w->screen->display->display, w->id, 
 			      ShapeInput, 0, 0, &rect, 1,  ShapeSet, 0);
+    
     if (w->frame)
 	XShapeCombineRectangles  (w->screen->display->display, w->frame, 
 				  ShapeInput, 0, 0, &rect, 1,  ShapeSet, 0);
@@ -125,11 +127,11 @@ shelfAdjustIPW (CompWindow *w)
 	sw->ipw = None;
 	return;
     }
-    xwc.x = w->serverX - w->input.left;
-    xwc.y = w->serverY - w->input.top;
-    xwc.width = (int) ((float) (w->serverWidth + w->input.left +
-				w->input.right) * sw->targetScale);
-    xwc.height = (int) ((float) (w->serverHeight + w->input.top +
+    xwc.x = w->attrib.x - w->input.left;
+    xwc.y = w->attrib.y - w->input.top;
+    xwc.width = (int) ((float) (w->width + 2 + w->attrib.border_width +
+				w->input.left + w->input.right) * sw->targetScale);
+    xwc.height = (int) ((float) (w->height + 2 + w->attrib.border_width + w->input.top +
 				 w->input.bottom) * sw->targetScale);
 
     xwc.stack_mode = Above;
@@ -344,6 +346,36 @@ shelfPaintWindow (CompWindow		    *w,
     return status;
 }
 
+/* Checks if w is a ipw and returns the real window */
+static CompWindow *
+shelfGetRealWindow (CompWindow *w)
+{
+    SHELF_SCREEN (w->screen);
+    CompWindow *rw;
+    for (rw = w->screen->windows; rw; rw = rw->next)
+    {
+	SHELF_WINDOW (rw);
+	if (sw->ipw == w->id)
+	    return rw;
+    }
+    return NULL;
+}
+
+static void
+shelfWindowMoveNotify (CompWindow *w,
+		       int dx,
+		       int dy,
+		       Bool immediate)
+{
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+    if (sw->targetScale != 1.00f)
+	shelfAdjustIPW (w);
+
+    UNWRAP (ss, w->screen, windowMoveNotify);
+    (*w->screen->windowMoveNotify) (w, dx, dy, immediate);
+    WRAP (ss, w->screen, windowMoveNotify, shelfWindowMoveNotify);
+}
 /* Configuration, initialization, boring stuff. --------------------- */
 static void
 shelfFiniScreen (CompPlugin *p,
@@ -355,6 +387,7 @@ shelfFiniScreen (CompPlugin *p,
     UNWRAP (ss, s, preparePaintScreen);
     UNWRAP (ss, s, paintWindow);
     UNWRAP (ss, s, damageWindowRect);
+    UNWRAP (ss, s, windowMoveNotify);
     if (ss->windowPrivateIndex)
 	freeWindowPrivateIndex (s, ss->windowPrivateIndex);
     free (ss);
@@ -373,6 +406,7 @@ shelfInitScreen (CompPlugin *p,
     WRAP (ss, s, preparePaintScreen, shelfPreparePaintScreen);
     WRAP (ss, s, paintWindow, shelfPaintWindow); 
     WRAP (ss, s, damageWindowRect, shelfDamageWindowRect);
+    WRAP (ss, s, windowMoveNotify, shelfWindowMoveNotify);
     return TRUE; 
 }
 
