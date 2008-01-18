@@ -1,0 +1,2 @@
+PLUGIN = showmouse
+PKG_DEP = compiz-mousepoll
