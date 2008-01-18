@@ -1,0 +1,2 @@
+PLUGIN = mag
+PKG_DEP = compiz-mousepoll
