@@ -46,6 +46,7 @@ typedef struct {
     int grabIndex;
     Cursor moveCursor;
     Window grabbedWindow;
+    Bool noLastPointer;
     int lastPointerX;
     int lastPointerY;
     PaintWindowProc paintWindow;    
@@ -348,8 +349,9 @@ handleMotionEvent (CompDisplay *d, XEvent *event)
     x = event->xmotion.x_root;
     y = event->xmotion.y_root;
 
-    if (ss->lastPointerX < 0)
+    if (ss->noLastPointer)
     {
+	ss->noLastPointer = FALSE;
 	ss->lastPointerX = x;
 	ss->lastPointerY = y;
 	return;
@@ -372,8 +374,9 @@ handleButtonRelease (CompWindow *w)
     ss->grabbedWindow = None;
     if (ss->grabIndex)
     {
-	ss->lastPointerX = -1;
-	ss->lastPointerY = -1;
+	ss->noLastPointer = TRUE;
+	ss->lastPointerX = 0;
+	ss->lastPointerY = 0;
 	moveInputFocusToWindow (w);
 	removeScreenGrab (s, ss->grabIndex, NULL);
 	ss->grabIndex = 0;
@@ -543,8 +546,9 @@ shelfInitScreen (CompPlugin *p,
     ss->windowPrivateIndex = allocateWindowPrivateIndex (s);
     s->base.privates[screenPrivateIndex].ptr = ss;
     ss->moveCursor = XCreateFontCursor (s->display->display, XC_fleur);
-    ss->lastPointerX = -1;
-    ss->lastPointerY = -1;
+    ss->lastPointerX = 0;
+    ss->lastPointerY = 0;
+    ss->noLastPointer = TRUE;
     WRAP (ss, s, preparePaintScreen, shelfPreparePaintScreen);
     WRAP (ss, s, paintWindow, shelfPaintWindow); 
     WRAP (ss, s, damageWindowRect, shelfDamageWindowRect);
