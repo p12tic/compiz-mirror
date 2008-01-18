@@ -9,8 +9,13 @@
         <_short>Bindings</_short>
         <option name="trigger_key" type="key">
           <_short>Trigger scale down</_short>
-          <_long> Scale a window down to half size.  </_long>
+          <_long> Scale a window down to a portion of it's size.  </_long>
           <default>&lt;Super&gt;l</default>
+        </option>
+        <option name="triggerscreen_key" type="key">
+          <_short>Trigger scale down to screen</_short>
+          <_long> Scale a window down to a ration of the screen size. Respectively half, a third or a sixth of the screen.</_long>
+          <default>&lt;Super&gt;p</default>
         </option>
         <option name="dec_button" type="button">
           <_short>Make the window smaller</_short>

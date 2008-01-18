@@ -238,6 +238,50 @@ shelfTrigger (CompDisplay     *d,
     return TRUE;
 }
 
+/* Returns the ratio to multiply by to get a window that's 1/ration the
+ * size of the screen.
+ */
+static inline float
+shelfRat (CompWindow *w,
+	  float ratio)
+{
+    float winHeight = (float) w->height;
+    float winWidth = (float) w->width;
+    float scrHeight = (float) w->screen->height;
+    float scrWidth = (float) w->screen->width;
+    float ret;
+    if (winHeight/scrHeight < winWidth/scrWidth)
+	ret = scrWidth/winWidth;
+    else
+	ret = scrHeight/winHeight;
+    return ret/ratio;
+}
+
+static Bool
+shelfTriggerScreen (CompDisplay *d,
+		    CompAction *action,
+		    CompActionState state,
+		    CompOption      *option,
+		    int             nOption)
+{
+    CompWindow *w = findWindowAtDisplay (d, d->activeWindow);
+    if (!w)
+	return TRUE;
+    SHELF_SCREEN (w->screen);
+    SHELF_WINDOW (w);
+    if (sw->targetScale > shelfRat(w,2.0f))
+	shelfScaleWindow (w, shelfRat(w,2.0f));
+    else if (sw->targetScale <= shelfRat(w,2.0f) && 
+	     sw->targetScale > shelfRat(w,3.0f))
+	shelfScaleWindow (w, shelfRat(w,3.0f));
+    else if (sw->targetScale <= shelfRat(w,3.0f) && 
+	     sw->targetScale > shelfRat(w,6.0f))
+	shelfScaleWindow (w, shelfRat(w,6.0f));
+    else 
+	shelfScaleWindow (w, 1.0f);
+    return TRUE;
+}
+
 /* shelfInc and shelfDec are matcing functions and bindings;
  * They increase and decrease the scale factor by 'interval'.
  */
@@ -532,7 +576,9 @@ shelfInitDisplay (CompPlugin  *p,
 	freeScreenPrivateIndex (d, screenPrivateIndex);
 	return FALSE;
     }
+
     shelfSetTriggerKeyInitiate (d, shelfTrigger);
+    shelfSetTriggerscreenKeyInitiate (d, shelfTriggerScreen);
     shelfSetIncButtonInitiate (d, shelfInc);
     shelfSetDecButtonInitiate (d, shelfDec);
     WRAP (sd, d, handleEvent, shelfHandleEvent);
