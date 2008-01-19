@@ -251,14 +251,18 @@ magPaintOutput (CompScreen              *s,
     y2 = y1 + h;
     
     matrixTranslate (&sTransform,
-		     (float)(ms->posX - (output->width / 2)) / output->width,
-		     (float)(ms->posY - (output->height / 2)) / -output->height,
+		     (float)(ms->posX - (output->width / 2) -
+		     output->region.extents.x1) / output->width,
+		     (float)(ms->posY - (output->height / 2) -
+		     output->region.extents.y1) / -output->height,
 		     0.0);
     matrixScale (&sTransform, ms->zoom, ms->zoom, 1.0);
     
     matrixTranslate (&sTransform,
-		     (float)((output->width / 2) - ms->posX) / output->width,
-		     (float)((output->height / 2) - ms->posY) / -output->height,
+		     (float)((output->width / 2) + output->region.extents.x1 -
+		     ms->posX) / output->width,
+		     (float)((output->height / 2) + output->region.extents.y1 -
+		     ms->posY) / -output->height,
 		     0.0);
 
     mask |= PAINT_SCREEN_TRANSFORMED_MASK;
@@ -266,13 +270,15 @@ magPaintOutput (CompScreen              *s,
     glScissor (x1, s->height - y2, w, h);
 
     glEnable (GL_SCISSOR_TEST);
-    
+
     UNWRAP (ms, s, paintOutput);
     status = (*s->paintOutput) (s, sa, &sTransform, region, output, mask);
     WRAP (ms, s, paintOutput, magPaintOutput);
 
     glDisable (GL_SCISSOR_TEST);
-    
+
+    glScissor (0, 0, s->width, s->height);
+
     matrixGetIdentity (&sTransform);
 
     transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &sTransform);
