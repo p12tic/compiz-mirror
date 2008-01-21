@@ -2,7 +2,7 @@
 <compiz>
 	<plugin name="showmouse" useBcop="true">
 		<_short>Show mouse</_short>
-		<_long>increases the visibility of the mouse pointer</_long>
+		<_long>Increases the visibility of the mouse pointer</_long>
 		<category>Accessibility</category>
 		<deps>
 			<relation type="after">
@@ -14,17 +14,17 @@
 		</deps>
 		<display>
 			<group>
-				<_short>Misc. Options</_short>
+				<_short>General</_short>
 				<option name="initiate" type="key">
 					<_short>Initiate</_short>
-					<_long>Show/hide</_long>
+				    <_long>Toggle the mouse pointer trail.</_long>
 					<default>&lt;Super&gt;k</default>
 				</option>
 			</group>
 		</display>
 		<screen>
 			<group>
-				<_short>Misc. Options</_short>
+				<_short>Particle Options</_short>
 				<option name="num_particles" type="int">
 					<_short>Number Of Particles</_short>
 					<_long>Number of particles.</_long>
@@ -71,7 +71,7 @@
 				</option>
 				<option name="color" type="color">
 					<_short>Particle Color</_short>
-					<_long>particle color.</_long>
+					<_long>Particle color.</_long>
 					<default>
 					<red>0xffff</red>
 					<green>0xdfff</green>
@@ -84,6 +84,9 @@
 					<_long>Have random colors for the particles</_long>
 					<default>false</default>
 				</option>
+			    </group>
+			    <group>
+				<_short>General</_short>
 				<option name="rotation_speed" type="float">
 					<_short>Rotation speed</_short>
 					<_long>Rotation speed.</_long>
@@ -99,9 +102,9 @@
 					<min>10</min>
 					<max>1000</max>
 				</option>
-				<option name="emmiters" type="int">
-					<_short>Emmiters</_short>
-					<_long>number of particle emmiters.</_long>
+				<option name="emiters" type="int">
+					<_short>Emiters</_short>
+					<_long>Number of particle emiters.</_long>
 					<default>3</default>
 					<min>1</min>
 					<max>10</max>

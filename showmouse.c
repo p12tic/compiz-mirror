@@ -381,7 +381,7 @@ genNewParticles(CompScreen     *s,
     int i, j;
 
     float pos[10][2];
-    int nE       = MIN (10, showmouseGetEmmiters (s));
+    int nE       = MIN (10, showmouseGetEmiters (s));
     float rA     = (2 * M_PI) / nE;
     int radius   = showmouseGetRadius (s);
     for (i = 0; i < nE; i++)
