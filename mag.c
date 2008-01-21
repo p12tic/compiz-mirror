@@ -297,6 +297,12 @@ magPaintScreen (CompScreen   *s,
     cx = (w - cw) / 2;
     cy = (h - ch) / 2;
 
+    cx -= (x1 - (ms->posX - (w / 2))) / ms->zoom;
+    cy += (y1 - (ms->posY - (h / 2))) / ms->zoom;
+
+    cx = MAX (0, MIN (ms->width - cw, cx));
+    cy = MAX (0, MIN (ms->height - ch, cy));
+
     if (ms->width != w || ms->height != h)
     {
 	glCopyTexImage2D(ms->target, 0, GL_RGB, x1, s->height - y2,
@@ -340,13 +346,13 @@ magPaintScreen (CompScreen   *s,
 
     glPushMatrix ();
 
-    glTranslatef ((float)(x1 + (w / 2) - (s->width / 2)) * 2 / s->width,
-		  (float)(y1 + (h / 2) - (s->height / 2)) * 2 / -s->height, 0.0);
+    glTranslatef ((float)(ms->posX - (s->width / 2)) * 2 / s->width,
+		  (float)(ms->posY - (s->height / 2)) * 2 / -s->height, 0.0);
 
     glScalef (ms->zoom, ms->zoom, 1.0);
 
-    glTranslatef ((float)((s->width / 2) - (x1 + (w / 2))) * 2 / s->width,
-		  (float)((s->height / 2) - (y1 + (h / 2))) * 2 / -s->height, 0.0);
+    glTranslatef ((float)((s->width / 2) - ms->posX) * 2 / s->width,
+		  (float)((s->height / 2) - ms->posY) * 2 / -s->height, 0.0);
 
     glScissor (x1, s->height - y2, w, h);
 
