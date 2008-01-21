@@ -244,7 +244,7 @@ magPaintScreen (CompScreen   *s,
     int            x1, x2, y1, y2;
     float          vc[4];
     float          tc[4];
-    int            w, h;
+    int            w, h, cw, ch, cx, cy;
     Bool           kScreen;
     unsigned short *color;
     float          tmp;
@@ -290,6 +290,11 @@ magPaintScreen (CompScreen   *s,
 
     glBindTexture (ms->target, ms->texture);
 
+    cw = ceil ((float)w / (ms->zoom * 2.0)) * 2.0;
+    ch = ceil ((float)h / (ms->zoom * 2.0)) * 2.0;
+    cx = (w - cw) / 2;
+    cy = (h - ch) / 2;
+
     if (ms->width != w || ms->height != h)
     {
 	glCopyTexImage2D(ms->target, 0, GL_RGB, x1, s->height - y2,
@@ -298,8 +303,8 @@ magPaintScreen (CompScreen   *s,
 	ms->height = h;
     }
     else
-	glCopyTexSubImage2D (ms->target, 0, 0, 0,
-			     x1, s->height - y2, x2 - x1, y2 - y1);
+	glCopyTexSubImage2D (ms->target, 0, cx, cy,
+			     x1 + cx, s->height - y2 + cy, cw, ch);
 
     if (ms->target == GL_TEXTURE_2D)
     {
