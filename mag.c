@@ -280,25 +280,47 @@ static void
 damageRegion (CompScreen *s)
 {
     REGION r;
-    float  w, h, b;
 
     MAG_SCREEN (s);
-
-    w = magGetBoxWidth (s);
-    h = magGetBoxHeight (s);
-    b = magGetBorder (s);
-    w += 2 * b;
-    h += 2 * b;
 
     r.rects = &r.extents;
     r.numRects = r.size = 1;
 
-    r.extents.x1 = MAX (0, MIN (ms->posX - (w / 2), s->width - w));
-    r.extents.x2 = r.extents.x1 + w;
-    r.extents.y1 = MAX (0, MIN (ms->posY - (h / 2), s->height - h));
-    r.extents.y2 = r.extents.y1 + h;
+    switch (ms->mode)
+    {
+    case ModeSimple:
+        {
+	    int  w, h, b;
 
-    damageScreen (s);
+	    w = magGetBoxWidth (s);
+	    h = magGetBoxHeight (s);
+	    b = magGetBorder (s);
+	    w += 2 * b;
+	    h += 2 * b;
+
+	    r.extents.x1 = MAX (0, MIN (ms->posX - (w / 2), s->width - w));
+	    r.extents.x2 = r.extents.x1 + w;
+	    r.extents.y1 = MAX (0, MIN (ms->posY - (h / 2), s->height - h));
+	    r.extents.y2 = r.extents.y1 + h;
+	}
+	break;
+    case ModeImageOverlay:
+	r.extents.x1 = ms->posX - magGetXOffset (s);
+	r.extents.x2 = r.extents.x1 + ms->overlay.width;
+	r.extents.y1 = ms->posY - magGetYOffset (s);
+	r.extents.y2 = r.extents.y1 + ms->overlay.height;
+	break;
+    case ModeFisheye:
+        {
+	    int radius = magGetRadius (s);
+
+	    r.extents.x1 = MAX (0.0, ms->posX - radius);
+	    r.extents.x2 = MIN (s->width, ms->posX + radius);
+	    r.extents.y1 = MAX (0.0, ms->posY - radius);
+	    r.extents.y2 = MIN (s->height, ms->posY + radius);
+	}
+	break;
+    }
 
     damageScreenRegion (s, &r);
 }
