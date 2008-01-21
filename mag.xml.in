@@ -14,7 +14,7 @@
 		</deps>
 		<display>
 			<group>
-				<short>Main</short>
+				<_short>Main</_short>
 				<option name="initiate" type="key">
 					<_short>Initiate</_short>
 					<_long>Zoom In</_long>
@@ -34,7 +34,7 @@
 		</display>
 		<screen>
 			<group>
-				<short>Main</short>
+				<_short>Main</_short>
 				<option name="zoom_factor" type="float">
 					<_short>Zoom</_short>
 					<_long>Zoom factor for keyboard initiated magnifier.</_long>
@@ -76,7 +76,7 @@
 				</option>
 			</group>
 			<group>
-				<short>Box</short>
+				<_short>Box</_short>
 				<option name="keep_screen" type="bool">
 					<_short>Keep fully on screen</_short>
 					<_long>Keep fully on screen.</_long>
@@ -115,7 +115,7 @@
 				</option>
 			</group>
 			<group>
-				<short>Image</short>
+				<_short>Image</_short>
 				<option name="overlay" type="string">
 					<_short>Magnifier image</_short>
 					<_long>Magnifier image.</_long>
