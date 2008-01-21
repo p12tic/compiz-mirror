@@ -64,7 +64,7 @@
 					<_long>Mode.</_long>
 					<default>0</default>
 					<min>0</min>
-					<max>1</max>
+					<max>2</max>
 					<desc>
 						<value>0</value>
 						<_name>Simple</_name>
@@ -72,6 +72,10 @@
 					<desc>
 						<value>1</value>
 						<_name>Image overlay</_name>
+					</desc>
+					<desc>
+						<value>2</value>
+						<_name>Fisheye</_name>
 					</desc>
 				</option>
 			</group>
@@ -140,6 +144,16 @@
 					<_long>Y offset of the cursor.</_long>
 					<default>120</default>
 					<min>0</min>
+					<max>1000</max>
+				</option>
+			</group>
+			<group>
+				<_short>Fisheye</_short>
+				<option name="radius" type="int">
+					<_short>Radius</_short>
+					<_long>Radius of the magnification area.</_long>
+					<default>200</default>
+					<min>10</min>
 					<max>1000</max>
 				</option>
 			</group>

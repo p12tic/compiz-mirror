@@ -21,6 +21,7 @@
  */
 
 #include <math.h>
+#include <string.h>
 
 #include <compiz-core.h>
 #include <compiz-mousepoll.h>
@@ -72,6 +73,8 @@ typedef struct _MagScreen
     GLfloat zTarget;
     GLfloat zoom;
 
+    MagModeEnum mode;
+
     GLuint texture;
     GLenum target;
 
@@ -80,7 +83,8 @@ typedef struct _MagScreen
 
     MagImage overlay;
     MagImage mask;
-    Bool     imgMode;
+
+    GLuint program;
 
     GLMultiTexCoord2fProc multiTexCoord2f;
 
@@ -92,14 +96,39 @@ typedef struct _MagScreen
 }
 MagScreen;
 
+static const char *fisheyeFpString =
+    "!!ARBfp1.0"
+
+    "PARAM p0 = program.env[0];"
+    "PARAM p1 = program.env[1];"
+    "PARAM p2 = program.env[2];"
+
+    "TEMP t1, t2, t3;"
+
+    "SUB t1, p0.xyww, fragment.position;"
+    "DP3 t2, t1, t1;"
+    "RSQ t2, t2.x;"
+    "SUB t3, t2, p0;"
+    "KIL t3.z;"
+
+    "RCP t3, t2.x;"
+    "MUL t3, t3, p1.z;"
+    "SIN t3, t3.x;"
+
+    "MUL t3, t3, p1.w;"
+
+    "MUL t1, t2, t1;"
+    "MAD t1, t1, t3, fragment.position;"
+	
+    "MAD t1, t1, p1, p2;"
+    "TEX result.color, t1, texture[0], %s;"
+
+    "END";
+
 static void
-magImagesChanged (CompScreen	   *s,
-		  CompOption	   *opt,
-		  MagScreenOptions num)
+magCleanup (CompScreen *s)
 {
     MAG_SCREEN (s);
-
-    ms->imgMode = FALSE;
 
     if (ms->overlay.loaded)
     {
@@ -114,11 +143,63 @@ magImagesChanged (CompScreen	   *s,
 	initTexture (s, &ms->mask.tex);
     }
 
-    if (magGetMode (s) == ModeSimple)
-	return;
+    if (ms->program)
+    {
+	(*s->deletePrograms) (1, &ms->program);
+	ms->program = 0;
+    }
+}
+
+static Bool
+loadFragmentProgram (CompScreen *s)
+{
+    char  buffer[1024];
+    GLint errorPos;
+
+    MAG_SCREEN (s);
+
+    if (!s->fragmentProgram)
+	return FALSE;
+
+    if (ms->target == GL_TEXTURE_2D)
+	sprintf (buffer, fisheyeFpString, "2D");
+    else
+	sprintf (buffer, fisheyeFpString, "RECT");
+
+    /* clear errors */
+    glGetError ();
+
+    if (!ms->program)
+	(*s->genPrograms) (1, &ms->program);
+
+    (*s->bindProgram) (GL_FRAGMENT_PROGRAM_ARB, ms->program);
+    (*s->programString) (GL_FRAGMENT_PROGRAM_ARB,
+			 GL_PROGRAM_FORMAT_ASCII_ARB,
+			 strlen (buffer), buffer);
+
+    glGetIntegerv (GL_PROGRAM_ERROR_POSITION_ARB, &errorPos);
+    if (glGetError () != GL_NO_ERROR || errorPos != -1)
+    {
+	compLogMessage (s->display, "mag", CompLogLevelError,
+			"failed to fisheye program");
+
+	(*s->deletePrograms) (1, &ms->program);
+	ms->program = 0;
+
+	return FALSE;
+    }
+    (*s->bindProgram) (GL_FRAGMENT_PROGRAM_ARB, 0);
+
+    return TRUE;
+}
+
+static Bool
+loadImages (CompScreen *s)
+{
+    MAG_SCREEN (s);
 
     if (!ms->multiTexCoord2f)
-	return;
+	return FALSE;
 
     ms->overlay.loaded = readImageToTexture (s, &ms->overlay.tex,
 					     magGetOverlay (s),
@@ -130,7 +211,7 @@ magImagesChanged (CompScreen	   *s,
 	compLogMessage (s->display, "mag", CompLogLevelWarn,
 			"Could not load magnifier overlay image \"%s\"!",
 			magGetOverlay (s));
-	return;
+	return FALSE;
     }
 
     ms->mask.loaded = readImageToTexture (s, &ms->mask.tex,
@@ -146,7 +227,7 @@ magImagesChanged (CompScreen	   *s,
 	ms->overlay.loaded = FALSE;
 	finiTexture (s, &ms->overlay.tex);
 	initTexture (s, &ms->overlay.tex);
-	return;
+	return FALSE;
     }
 
     if (ms->overlay.width != ms->mask.width ||
@@ -160,9 +241,39 @@ magImagesChanged (CompScreen	   *s,
 	ms->mask.loaded = FALSE;
 	finiTexture (s, &ms->mask.tex);
 	initTexture (s, &ms->mask.tex);
+	return FALSE;
     }
 
-    ms->imgMode = TRUE;
+    return TRUE;
+}
+
+static void
+magOptionsChanged (CompScreen	   *s,
+		   CompOption	   *opt,
+		   MagScreenOptions num)
+{
+    MAG_SCREEN (s);
+
+    magCleanup (s);
+
+    switch (magGetMode (s))
+    {
+    case ModeImageOverlay:
+	if (loadImages (s))
+	    ms->mode = ModeImageOverlay;
+	else
+	    ms->mode = ModeSimple;
+	break;
+    case ModeFisheye:
+	if (loadFragmentProgram (s))
+	    ms->mode = ModeFisheye;
+	else
+	    ms->mode = ModeSimple;
+	break;
+    default:
+	ms->mode = ModeSimple;
+    }
+
 }
 
 static void
@@ -653,6 +764,98 @@ magPaintImage (CompScreen *s)
 
 }
 
+static void
+magPaintFisheye (CompScreen   *s)
+{
+    float      pw, ph;
+    float      radius, zoom, base;
+    int        x1, x2, y1, y2;
+    float      vc[4];
+
+    MAG_SCREEN (s);
+
+    radius = magGetRadius (s);
+    base   = 0.5 + (0.0015 * radius);
+    zoom   = (ms->zoom * base) + 1.0 - base;
+ 
+
+    x1 = MAX (0.0, ms->posX - radius);
+    x2 = MIN (s->width, ms->posX + radius);
+    y1 = MAX (0.0, ms->posY - radius);
+    y2 = MIN (s->height, ms->posY + radius);
+ 
+    glEnable (ms->target);
+
+    glBindTexture (ms->target, ms->texture);
+
+    if (ms->width != 2 * radius || ms->height != 2 * radius)
+    {
+	glCopyTexImage2D(ms->target, 0, GL_RGB, x1, s->height - y2,
+			 radius * 2, radius * 2, 0);
+	ms->width = ms->height = 2 * radius;
+    }
+    else
+	glCopyTexSubImage2D (ms->target, 0, 0, 0,
+			     x1, s->height - y2, x2 - x1, y2 - y1);
+
+    if (ms->target == GL_TEXTURE_2D)
+    {
+	pw = 1.0 / ms->width;
+	ph = 1.0 / ms->height;
+    }
+    else
+    {
+	pw = 1.0;
+	ph = 1.0;
+    }
+    
+    glMatrixMode (GL_PROJECTION);
+    glPushMatrix ();
+    glLoadIdentity ();
+    glMatrixMode (GL_MODELVIEW);
+    glPushMatrix ();
+    glLoadIdentity ();
+
+    glColor4usv (defaultColor);
+
+    glEnable (GL_FRAGMENT_PROGRAM_ARB);
+    (*s->bindProgram) (GL_FRAGMENT_PROGRAM_ARB, ms->program);
+
+    (*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB, 0,
+				 ms->posX, s->height - ms->posY,
+				 1.0 / radius, 0.0f);
+    (*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB, 1,
+				 pw, ph, M_PI / radius,
+				 (zoom - 1.0) * zoom);
+    (*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB, 2,
+				 -x1 * pw, -(s->height - y2) * ph,
+				 0.0, 0.0);
+
+    vc[0] = ((x1 * 2.0) / s->width) - 1.0;
+    vc[1] = ((x2 * 2.0) / s->width) - 1.0;
+    vc[2] = ((y1 * -2.0) / s->height) + 1.0;
+    vc[3] = ((y2 * -2.0) / s->height) + 1.0;
+
+    glBegin (GL_QUADS);
+    glVertex2f (vc[0], vc[2]);
+    glVertex2f (vc[0], vc[3]);
+    glVertex2f (vc[1], vc[3]);
+    glVertex2f (vc[1], vc[2]);
+    glEnd ();
+
+    glDisable (GL_FRAGMENT_PROGRAM_ARB);
+
+    glColor4usv (defaultColor);
+    
+    glPopMatrix();
+    glMatrixMode (GL_PROJECTION);
+    glPopMatrix ();
+    glMatrixMode (GL_MODELVIEW);
+
+    glBindTexture (ms->target, 0);
+
+    glDisable (ms->target);
+}
 
 static void
 magPaintScreen (CompScreen   *s,
@@ -685,10 +888,17 @@ magPaintScreen (CompScreen   *s,
 	s->lastViewport = r;
     }
 
-    if (ms->imgMode)
+    switch (ms->mode)
+    {
+    case ModeImageOverlay:
 	magPaintImage (s);
-    else
+	break;
+    case ModeFisheye:
+	magPaintFisheye (s);
+	break;
+    default:
 	magPaintSimple (s);
+    }
 
 }
 
@@ -739,11 +949,21 @@ magInitiate (CompDisplay     *d,
 
 	if (factor == 0.0 && ms->zTarget != 1.0)
 	    return magTerminate (d, action, state, option, nOption);
-	
-	if (factor != 1.0)
-	    factor = magGetZoomFactor (s);
-	
-	ms->zTarget = MAX (1.0, MIN (64.0, factor));
+
+	if (ms->mode == ModeFisheye)
+	{
+	    if (factor != 1.0)
+		factor = magGetZoomFactor (s) * 3;
+
+	    ms->zTarget = MAX (1.0, MIN (10.0, factor));
+	}
+	else
+	{
+	    if (factor != 1.0)
+		factor = magGetZoomFactor (s);
+
+	    ms->zTarget = MAX (1.0, MIN (64.0, factor));
+	}
 	ms->adjust  = TRUE;
 	damageScreen (s);
 
@@ -769,7 +989,10 @@ magZoomIn (CompDisplay     *d,
     {
 	MAG_SCREEN (s);
 
-	ms->zTarget = MIN (64.0, ms->zTarget * 1.2);
+	if (ms->mode == ModeFisheye)
+	    ms->zTarget = MIN (10.0, ms->zTarget + 1.0);
+	else
+	    ms->zTarget = MIN (64.0, ms->zTarget * 1.2);
 	ms->adjust  = TRUE;
 	damageScreen (s);
 
@@ -795,7 +1018,10 @@ magZoomOut (CompDisplay     *d,
     {
 	MAG_SCREEN (s);
 
-	ms->zTarget = MAX (1.0, ms->zTarget / 1.2);
+	if (ms->mode == ModeFisheye)
+	    ms->zTarget = MAX (1.0, ms->zTarget - 1.0);
+	else
+	    ms->zTarget = MAX (1.0, ms->zTarget / 1.2);
 	ms->adjust  = TRUE;
 	damageScreen (s);
 
@@ -861,16 +1087,38 @@ magInitScreen (CompPlugin *p,
     initTexture (s, &ms->mask.tex);
     ms->overlay.loaded = FALSE;
     ms->mask.loaded    = FALSE;
-    ms->imgMode        = FALSE;
 
-    magImagesChanged (s, NULL, MagScreenOptionNum);
+    ms->program = 0;
 
-    magSetOverlayNotify (s, magImagesChanged);
-    magSetMaskNotify (s, magImagesChanged);
-    magSetModeNotify (s, magImagesChanged);
+    magSetOverlayNotify (s, magOptionsChanged);
+    magSetMaskNotify (s, magOptionsChanged);
+    magSetModeNotify (s, magOptionsChanged);
 
     ms->multiTexCoord2f = (GLMultiTexCoord2fProc)
 			  (*s->getProcAddress) ((GLubyte *)"glMultiTexCoord2f");
+
+    switch (magGetMode (s))
+    {
+    case ModeImageOverlay:
+	if (loadImages (s))
+	    ms->mode = ModeImageOverlay;
+	else
+	    ms->mode = ModeSimple;
+	break;
+    case ModeFisheye:
+	if (loadFragmentProgram (s))
+	    ms->mode = ModeFisheye;
+	else
+	    ms->mode = ModeSimple;
+	break;
+    default:
+	ms->mode = ModeSimple;
+    }
+
+    if (!s->fragmentProgram)
+	compLogMessage (s->display, "mag", CompLogLevelWarn,
+			"GL_ARB_fragment_program not supported. "
+			"Fisheye mode will not work.");
 
     return TRUE;
 }
@@ -895,6 +1143,8 @@ magFiniScreen (CompPlugin *p,
 	damageScreen (s);
 
     glDeleteTextures (1, &ms->target);
+
+    magCleanup (s);
 
     /* Free the pointer */
     free (ms);
