@@ -14,7 +14,7 @@
 		</deps>
 		<display>
 			<group>
-				<_short>Misc</_short>
+				<_short>Misc. Options</_short>
 				<option name="initiate" type="key">
 					<_short>Initiate</_short>
 					<_long>Show/hide</_long>
@@ -24,7 +24,7 @@
 		</display>
 		<screen>
 			<group>
-				<_short>Misc</_short>
+				<_short>Misc. Options</_short>
 				<option name="num_particles" type="int">
 					<_short>Number Of Particles</_short>
 					<_long>Number of particles.</_long>
