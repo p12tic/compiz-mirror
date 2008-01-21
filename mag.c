@@ -161,6 +161,7 @@ magImagesChanged (CompScreen	   *s,
 	finiTexture (s, &ms->mask.tex);
 	initTexture (s, &ms->mask.tex);
     }
+
     ms->imgMode = TRUE;
 }
 
@@ -426,14 +427,14 @@ magPaintSimple (CompScreen *s)
     glEnable (GL_SCISSOR_TEST);
 
     glBegin (GL_QUADS);
-	glTexCoord2f (tc[0], tc[2]);
-	glVertex2f (vc[0], vc[2]);
-	glTexCoord2f (tc[0], tc[3]);
-	glVertex2f (vc[0], vc[3]);
-	glTexCoord2f (tc[1], tc[3]);
-	glVertex2f (vc[1], vc[3]);
-	glTexCoord2f (tc[1], tc[2]);
-	glVertex2f (vc[1], vc[2]);
+    glTexCoord2f (tc[0], tc[2]);
+    glVertex2f (vc[0], vc[2]);
+    glTexCoord2f (tc[0], tc[3]);
+    glVertex2f (vc[0], vc[3]);
+    glTexCoord2f (tc[1], tc[3]);
+    glVertex2f (vc[1], vc[3]);
+    glTexCoord2f (tc[1], tc[2]);
+    glVertex2f (vc[1], vc[2]);
     glEnd ();
 
     glDisable (GL_SCISSOR_TEST);
@@ -464,22 +465,22 @@ magPaintSimple (CompScreen *s)
     glColor4us (color[0], color[1], color[2], color[3] * tmp);
 
     glBegin (GL_QUADS);
-	glVertex2f (vc[0] - bw, vc[2] + bh);
-	glVertex2f (vc[0] - bw, vc[2]);
-	glVertex2f (vc[1] + bw, vc[2]);
-	glVertex2f (vc[1] + bw, vc[2] + bh);
-	glVertex2f (vc[0] - bw, vc[3]);
-	glVertex2f (vc[0] - bw, vc[3] - bh);
-	glVertex2f (vc[1] + bw, vc[3] - bh);
-	glVertex2f (vc[1] + bw, vc[3]);
-	glVertex2f (vc[0] - bw, vc[2]);
-	glVertex2f (vc[0] - bw, vc[3]);
-	glVertex2f (vc[0], vc[3]);
-	glVertex2f (vc[0], vc[2]);
-	glVertex2f (vc[1], vc[2]);
-	glVertex2f (vc[1], vc[3]);
-	glVertex2f (vc[1] + bw, vc[3]);
-	glVertex2f (vc[1] + bw, vc[2]);
+    glVertex2f (vc[0] - bw, vc[2] + bh);
+    glVertex2f (vc[0] - bw, vc[2]);
+    glVertex2f (vc[1] + bw, vc[2]);
+    glVertex2f (vc[1] + bw, vc[2] + bh);
+    glVertex2f (vc[0] - bw, vc[3]);
+    glVertex2f (vc[0] - bw, vc[3] - bh);
+    glVertex2f (vc[1] + bw, vc[3] - bh);
+    glVertex2f (vc[1] + bw, vc[3]);
+    glVertex2f (vc[0] - bw, vc[2]);
+    glVertex2f (vc[0] - bw, vc[3]);
+    glVertex2f (vc[0], vc[3]);
+    glVertex2f (vc[0], vc[2]);
+    glVertex2f (vc[1], vc[2]);
+    glVertex2f (vc[1], vc[3]);
+    glVertex2f (vc[1] + bw, vc[3]);
+    glVertex2f (vc[1] + bw, vc[2]);
     glEnd();
 
     glColor4usv (defaultColor);
@@ -577,39 +578,39 @@ magPaintImage (CompScreen *s)
     tc[3] *= ph;
 
     glEnable (GL_BLEND);
-    
+
     glColor4usv (defaultColor);
     glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-    s->activeTexture (GL_TEXTURE1_ARB);
+    (*s->activeTexture) (GL_TEXTURE1_ARB);
     enableTexture (s, &ms->mask.tex, COMP_TEXTURE_FILTER_FAST);
     glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     glBegin (GL_QUADS);
-	ms->multiTexCoord2f (GL_TEXTURE0_ARB, tc[0], tc[2]);
-	ms->multiTexCoord2f (GL_TEXTURE1_ARB,
-			     COMP_TEX_COORD_X (&ms->mask.tex.matrix, 0),
-			     COMP_TEX_COORD_Y (&ms->mask.tex.matrix, 0));
-	glVertex2f (vc[0], vc[2]);
-	ms->multiTexCoord2f (GL_TEXTURE0_ARB, tc[0], tc[3]);
-	ms->multiTexCoord2f (GL_TEXTURE1_ARB,
-			     COMP_TEX_COORD_X (&ms->mask.tex.matrix, 0),
-			     COMP_TEX_COORD_Y (&ms->mask.tex.matrix, h));
-	glVertex2f (vc[0], vc[3]);
-	ms->multiTexCoord2f (GL_TEXTURE0_ARB, tc[1], tc[3]);
-	ms->multiTexCoord2f (GL_TEXTURE1_ARB,
-			     COMP_TEX_COORD_X (&ms->mask.tex.matrix, w),
-			     COMP_TEX_COORD_Y (&ms->mask.tex.matrix, h));
-	glVertex2f (vc[1], vc[3]);
-	ms->multiTexCoord2f (GL_TEXTURE0_ARB, tc[1], tc[2]);
-	ms->multiTexCoord2f (GL_TEXTURE1_ARB,
-			     COMP_TEX_COORD_X (&ms->mask.tex.matrix, w),
-			     COMP_TEX_COORD_Y (&ms->mask.tex.matrix, 0));
-	glVertex2f (vc[1], vc[2]);
+    (*ms->multiTexCoord2f) (GL_TEXTURE0_ARB, tc[0], tc[2]);
+    (*ms->multiTexCoord2f) (GL_TEXTURE1_ARB,
+			    COMP_TEX_COORD_X (&ms->mask.tex.matrix, 0),
+			    COMP_TEX_COORD_Y (&ms->mask.tex.matrix, 0));
+    glVertex2f (vc[0], vc[2]);
+    (*ms->multiTexCoord2f) (GL_TEXTURE0_ARB, tc[0], tc[3]);
+    (*ms->multiTexCoord2f) (GL_TEXTURE1_ARB,
+			    COMP_TEX_COORD_X (&ms->mask.tex.matrix, 0),
+			    COMP_TEX_COORD_Y (&ms->mask.tex.matrix, h));
+    glVertex2f (vc[0], vc[3]);
+    (*ms->multiTexCoord2f) (GL_TEXTURE0_ARB, tc[1], tc[3]);
+    (*ms->multiTexCoord2f) (GL_TEXTURE1_ARB,
+			    COMP_TEX_COORD_X (&ms->mask.tex.matrix, w),
+			    COMP_TEX_COORD_Y (&ms->mask.tex.matrix, h));
+    glVertex2f (vc[1], vc[3]);
+    (*ms->multiTexCoord2f) (GL_TEXTURE0_ARB, tc[1], tc[2]);
+    (*ms->multiTexCoord2f) (GL_TEXTURE1_ARB,
+			    COMP_TEX_COORD_X (&ms->mask.tex.matrix, w),
+			    COMP_TEX_COORD_Y (&ms->mask.tex.matrix, 0));
+    glVertex2f (vc[1], vc[2]);
     glEnd ();
 
     disableTexture (s, &ms->mask.tex);
-    s->activeTexture (GL_TEXTURE0_ARB);
+    (*s->activeTexture) (GL_TEXTURE0_ARB);
 
     glBindTexture (ms->target, 0);
 
@@ -623,18 +624,18 @@ magPaintImage (CompScreen *s)
     glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     glBegin (GL_QUADS);
-	glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, 0),
-		      COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, 0));
-	glVertex2f (vc[0], vc[2]);
-	glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, 0),
-		      COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, h));
-	glVertex2f (vc[0], vc[3]);
-	glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, w),
-		      COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, h));
-	glVertex2f (vc[1], vc[3]);
-	glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, w),
-		      COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, 0));
-	glVertex2f (vc[1], vc[2]);
+    glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, 0),
+		  COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, 0));
+    glVertex2f (vc[0], vc[2]);
+    glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, 0),
+		  COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, h));
+    glVertex2f (vc[0], vc[3]);
+    glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, w),
+		  COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, h));
+    glVertex2f (vc[1], vc[3]);
+    glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, w),
+		  COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, 0));
+    glVertex2f (vc[1], vc[2]);
     glEnd ();
 
     disableTexture (s, &ms->overlay.tex);
@@ -808,10 +809,11 @@ static Bool
 magInitScreen (CompPlugin *p,
 	       CompScreen *s)
 {
+    MagScreen *ms;
+
     MAG_DISPLAY (s->display);
 
-    MagScreen *ms = (MagScreen *) calloc (1, sizeof (MagScreen) );
-
+    ms = calloc (1, sizeof (MagScreen));
     if (!ms)
 	return FALSE;
 
@@ -836,10 +838,10 @@ magInitScreen (CompPlugin *p,
 
     glEnable (ms->target);
 
-    //Bind the texture
+    /* Bind the texture */
     glBindTexture (ms->target, ms->texture);
 
-    //Load the parameters
+    /* Load the parameters */
     glTexParameteri (ms->target, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri (ms->target, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri (ms->target, GL_TEXTURE_WRAP_S, GL_CLAMP);
@@ -868,7 +870,7 @@ magInitScreen (CompPlugin *p,
     magSetModeNotify (s, magImagesChanged);
 
     ms->multiTexCoord2f = (GLMultiTexCoord2fProc)
-			  s->getProcAddress ((GLubyte *)"glMultiTexCoord2f");
+			  (*s->getProcAddress) ((GLubyte *)"glMultiTexCoord2f");
 
     return TRUE;
 }
@@ -881,7 +883,7 @@ magFiniScreen (CompPlugin *p,
     MAG_SCREEN (s);
     MAG_DISPLAY (s->display);
 
-    //Restore the original function
+    /* Restore the original function */
     UNWRAP (ms, s, paintScreen);
     UNWRAP (ms, s, preparePaintScreen);
     UNWRAP (ms, s, donePaintScreen);
@@ -894,7 +896,7 @@ magFiniScreen (CompPlugin *p,
 
     glDeleteTextures (1, &ms->target);
 
-    //Free the pointer
+    /* Free the pointer */
     free (ms);
 }
 
@@ -902,7 +904,7 @@ static Bool
 magInitDisplay (CompPlugin  *p,
 	        CompDisplay *d)
 {
-    //Generate a mag display
+    /* Generate a mag display */
     MagDisplay *md;
     int        index;
 
@@ -913,18 +915,17 @@ magInitDisplay (CompPlugin  *p,
     if (!getPluginDisplayIndex (d, "mousepoll", &index))
 	return FALSE;
 
-    md = (MagDisplay *) malloc (sizeof (MagDisplay));
-
+    md = malloc (sizeof (MagDisplay));
     if (!md)
 	return FALSE;
  
-    //Allocate a private index
+    /* Allocate a private index */
     md->screenPrivateIndex = allocateScreenPrivateIndex (d);
 
-    //Check if its valid
+    /* Check if its valid */
     if (md->screenPrivateIndex < 0)
     {
-	//Its invalid so free memory and return
+	/* It's invalid so free memory and return */
 	free (md);
 	return FALSE;
     }
@@ -937,7 +938,7 @@ magInitDisplay (CompPlugin  *p,
     magSetZoomInButtonInitiate (d, magZoomIn);
     magSetZoomOutButtonInitiate (d, magZoomOut);
 
-    //Record the display
+    /* Record the display */
     d->base.privates[displayPrivateIndex].ptr = md;
     return TRUE;
 }
@@ -947,18 +948,17 @@ magFiniDisplay (CompPlugin  *p,
 	        CompDisplay *d)
 {
     MAG_DISPLAY (d);
-    //Free the private index
+
+    /* Free the private index */
     freeScreenPrivateIndex (d, md->screenPrivateIndex);
-    //Free the pointer
+    /* Free the pointer */
     free (md);
 }
-
-
 
 static Bool
 magInit (CompPlugin * p)
 {
-    displayPrivateIndex = allocateDisplayPrivateIndex();
+    displayPrivateIndex = allocateDisplayPrivateIndex ();
 
     if (displayPrivateIndex < 0)
 	return FALSE;
@@ -969,8 +969,7 @@ magInit (CompPlugin * p)
 static void
 magFini (CompPlugin * p)
 {
-    if (displayPrivateIndex >= 0)
-	freeDisplayPrivateIndex (displayPrivateIndex);
+    freeDisplayPrivateIndex (displayPrivateIndex);
 }
 
 static CompBool
