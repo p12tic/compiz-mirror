@@ -14,7 +14,7 @@
 		</deps>
 		<display>
 			<group>
-				<short>Misc</short>
+				<_short>Misc</_short>
 				<option name="initiate" type="key">
 					<_short>Initiate</_short>
 					<_long>Show/hide</_long>
