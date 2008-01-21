@@ -39,6 +39,8 @@
 #define MAG_SCREEN(s)                                                      \
     MagScreen *ms = GET_MAG_SCREEN (s, GET_MAG_DISPLAY (s->display))
 
+typedef void (*GLMultiTexCoord2fProc) (GLenum, GLfloat, GLfloat);
+
 static int displayPrivateIndex = 0;
 
 typedef struct _MagDisplay
@@ -48,6 +50,16 @@ typedef struct _MagDisplay
     MousePollFunc *mpFunc;
 }
 MagDisplay;
+
+typedef struct _MagImage
+{
+    CompTexture  tex;
+    unsigned int width;
+    unsigned int height;
+
+    Bool loaded;
+}
+MagImage;
 
 typedef struct _MagScreen
 {
@@ -66,6 +78,12 @@ typedef struct _MagScreen
     int width;
     int height;
 
+    MagImage overlay;
+    MagImage mask;
+    Bool     imgMode;
+
+    GLMultiTexCoord2fProc multiTexCoord2f;
+
     PositionPollingHandle pollHandle;
 	
     PreparePaintScreenProc preparePaintScreen;
@@ -73,6 +91,78 @@ typedef struct _MagScreen
     PaintScreenProc        paintScreen;
 }
 MagScreen;
+
+static void
+magImagesChanged (CompScreen	   *s,
+		  CompOption	   *opt,
+		  MagScreenOptions num)
+{
+    MAG_SCREEN (s);
+
+    ms->imgMode = FALSE;
+
+    if (ms->overlay.loaded)
+    {
+	ms->overlay.loaded = FALSE;
+	finiTexture (s, &ms->overlay.tex);
+	initTexture (s, &ms->overlay.tex);
+    }
+    if (ms->mask.loaded)
+    {
+	ms->mask.loaded = FALSE;
+	finiTexture (s, &ms->mask.tex);
+	initTexture (s, &ms->mask.tex);
+    }
+
+    if (magGetMode (s) == ModeSimple)
+	return;
+
+    if (!ms->multiTexCoord2f)
+	return;
+
+    ms->overlay.loaded = readImageToTexture (s, &ms->overlay.tex,
+					     magGetOverlay (s),
+					     &ms->overlay.width,
+					     &ms->overlay.height);
+    
+    if (!ms->overlay.loaded)
+    {
+	compLogMessage (s->display, "mag", CompLogLevelWarn,
+			"Could not load magnifier overlay image \"%s\"!",
+			magGetOverlay (s));
+	return;
+    }
+
+    ms->mask.loaded = readImageToTexture (s, &ms->mask.tex,
+					  magGetMask (s),
+					  &ms->mask.width,
+					  &ms->mask.height);
+
+    if (!ms->mask.loaded)
+    {
+	compLogMessage (s->display, "mag", CompLogLevelWarn,
+			"Could not load magnifier mask image \"%s\"!",
+			magGetOverlay (s));
+	ms->overlay.loaded = FALSE;
+	finiTexture (s, &ms->overlay.tex);
+	initTexture (s, &ms->overlay.tex);
+	return;
+    }
+
+    if (ms->overlay.width != ms->mask.width ||
+	ms->overlay.height != ms->mask.height)
+    {
+	compLogMessage (s->display, "mag", CompLogLevelWarn,
+			"Image dimensions do not match!");
+	ms->overlay.loaded = FALSE;
+	finiTexture (s, &ms->overlay.tex);
+	initTexture (s, &ms->overlay.tex);
+	ms->mask.loaded = FALSE;
+	finiTexture (s, &ms->mask.tex);
+	initTexture (s, &ms->mask.tex);
+    }
+    ms->imgMode = TRUE;
+}
 
 static void
 damageRegion (CompScreen *s)
@@ -95,6 +185,8 @@ damageRegion (CompScreen *s)
     r.extents.x2 = r.extents.x1 + w;
     r.extents.y1 = MAX (0, MIN (ms->posY - (h / 2), s->height - h));
     r.extents.y2 = r.extents.y1 + h;
+
+    damageScreen (s);
 
     damageScreenRegion (s, &r);
 }
@@ -234,12 +326,8 @@ magDonePaintScreen (CompScreen *s)
 }
 
 static void
-magPaintScreen (CompScreen   *s,
-		CompOutput   *outputs,
-		int          numOutput,
-		unsigned int mask)
+magPaintSimple (CompScreen *s)
 {
-    XRectangle     r;
     float          pw, ph, bw, bh;
     int            x1, x2, y1, y2;
     float          vc[4];
@@ -250,27 +338,6 @@ magPaintScreen (CompScreen   *s,
     float          tmp;
 
     MAG_SCREEN (s);
-
-    UNWRAP (ms, s, paintScreen);
-    (*s->paintScreen) (s, outputs, numOutput, mask);
-    WRAP (ms, s, paintScreen, magPaintScreen);
-
-    if (ms->zoom == 1.0)
-	return; 
-
-    r.x      = 0;
-    r.y      = 0;
-    r.width  = s->width;
-    r.height = s->height;
-
-    if (s->lastViewport.x      != r.x     ||
-	s->lastViewport.y      != r.y     ||
-	s->lastViewport.width  != r.width ||
-	s->lastViewport.height != r.height)
-    {
-	glViewport (r.x, r.y, r.width, r.height);
-	s->lastViewport = r;
-    }
 
     w = magGetBoxWidth (s);
     h = magGetBoxHeight (s);
@@ -286,10 +353,6 @@ magPaintScreen (CompScreen   *s,
 	y1 = MAX (0, MIN (y1, s->height - h));
     y2 = y1 + h;
  
-    glEnable (ms->target);
-
-    glBindTexture (ms->target, ms->texture);
-
     cw = ceil ((float)w / (ms->zoom * 2.0)) * 2.0;
     ch = ceil ((float)h / (ms->zoom * 2.0)) * 2.0;
     cw = MIN (w, cw + 2);
@@ -300,8 +363,12 @@ magPaintScreen (CompScreen   *s,
     cx -= (x1 - (ms->posX - (w / 2))) / ms->zoom;
     cy += (y1 - (ms->posY - (h / 2))) / ms->zoom;
 
-    cx = MAX (0, MIN (ms->width - cw, cx));
-    cy = MAX (0, MIN (ms->height - ch, cy));
+    cx = MAX (0, MIN (w - cw, cx));
+    cy = MAX (0, MIN (h - ch, cy));
+
+    glEnable (ms->target);
+
+    glBindTexture (ms->target, ms->texture);
 
     if (ms->width != w || ms->height != h)
     {
@@ -423,8 +490,204 @@ magPaintScreen (CompScreen   *s,
     glMatrixMode (GL_PROJECTION);
     glPopMatrix ();
     glMatrixMode (GL_MODELVIEW);
+}
+
+static void
+magPaintImage (CompScreen *s)
+{
+    float          pw, ph;
+    int            x1, x2, y1, y2;
+    float          vc[4];
+    float          tc[4];
+    int            w, h, cw, ch, cx, cy;
+    float          tmp, xOff, yOff;
+
+    MAG_SCREEN (s);
+
+    w = ms->overlay.width;
+    h = ms->overlay.height;
+
+    xOff = MIN (w, magGetXOffset (s));
+    yOff = MIN (h, magGetYOffset (s));
+
+    x1 = ms->posX - xOff;
+    x2 = x1 + w;
+    y1 = ms->posY - yOff;
+    y2 = y1 + h;
+ 
+    cw = ceil ((float)w / (ms->zoom * 2.0)) * 2.0;
+    ch = ceil ((float)h / (ms->zoom * 2.0)) * 2.0;
+    cw = MIN (w, cw + 2);
+    ch = MIN (h, ch + 2);
+    cx = floor (xOff - (xOff / ms->zoom));
+    cy = h - ch - floor (yOff - (yOff / ms->zoom));
+
+    cx = MAX (0, MIN (w - cw, cx));
+    cy = MAX (0, MIN (h - ch, cy));
+
+    glPushAttrib (GL_TEXTURE_BIT);
+    
+    glEnable (ms->target);
+
+    glBindTexture (ms->target, ms->texture);
+
+    if (ms->width != w || ms->height != h)
+    {
+	glCopyTexImage2D(ms->target, 0, GL_RGB, x1, s->height - y2,
+			 w, h, 0);
+	ms->width = w;
+	ms->height = h;
+    }
+    else
+	glCopyTexSubImage2D (ms->target, 0, cx, cy,
+			     x1 + cx, s->height - y2 + cy, cw, ch);
+
+    if (ms->target == GL_TEXTURE_2D)
+    {
+	pw = 1.0 / ms->width;
+	ph = 1.0 / ms->height;
+    }
+    else
+    {
+	pw = 1.0;
+	ph = 1.0;
+    }
+
+    glMatrixMode (GL_PROJECTION);
+    glPushMatrix ();
+    glLoadIdentity ();
+    glMatrixMode (GL_MODELVIEW);
+    glPushMatrix ();
+    glLoadIdentity ();
+
+    vc[0] = ((x1 * 2.0) / s->width) - 1.0;
+    vc[1] = ((x2 * 2.0) / s->width) - 1.0;
+    vc[2] = ((y1 * -2.0) / s->height) + 1.0;
+    vc[3] = ((y2 * -2.0) / s->height) + 1.0;
+
+    tc[0] = xOff - (xOff / ms->zoom);
+    tc[1] = tc[0] + (w / ms->zoom);
+
+    tc[2] = h - (yOff - (yOff / ms->zoom));
+    tc[3] = tc[2] - (h / ms->zoom);
+
+    tc[0] *= pw;
+    tc[1] *= pw;
+    tc[2] *= ph;
+    tc[3] *= ph;
+
+    glEnable (GL_BLEND);
+    
+    glColor4usv (defaultColor);
+    glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    s->activeTexture (GL_TEXTURE1_ARB);
+    enableTexture (s, &ms->mask.tex, COMP_TEXTURE_FILTER_FAST);
+    glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    glBegin (GL_QUADS);
+	ms->multiTexCoord2f (GL_TEXTURE0_ARB, tc[0], tc[2]);
+	ms->multiTexCoord2f (GL_TEXTURE1_ARB,
+			     COMP_TEX_COORD_X (&ms->mask.tex.matrix, 0),
+			     COMP_TEX_COORD_Y (&ms->mask.tex.matrix, 0));
+	glVertex2f (vc[0], vc[2]);
+	ms->multiTexCoord2f (GL_TEXTURE0_ARB, tc[0], tc[3]);
+	ms->multiTexCoord2f (GL_TEXTURE1_ARB,
+			     COMP_TEX_COORD_X (&ms->mask.tex.matrix, 0),
+			     COMP_TEX_COORD_Y (&ms->mask.tex.matrix, h));
+	glVertex2f (vc[0], vc[3]);
+	ms->multiTexCoord2f (GL_TEXTURE0_ARB, tc[1], tc[3]);
+	ms->multiTexCoord2f (GL_TEXTURE1_ARB,
+			     COMP_TEX_COORD_X (&ms->mask.tex.matrix, w),
+			     COMP_TEX_COORD_Y (&ms->mask.tex.matrix, h));
+	glVertex2f (vc[1], vc[3]);
+	ms->multiTexCoord2f (GL_TEXTURE0_ARB, tc[1], tc[2]);
+	ms->multiTexCoord2f (GL_TEXTURE1_ARB,
+			     COMP_TEX_COORD_X (&ms->mask.tex.matrix, w),
+			     COMP_TEX_COORD_Y (&ms->mask.tex.matrix, 0));
+	glVertex2f (vc[1], vc[2]);
+    glEnd ();
+
+    disableTexture (s, &ms->mask.tex);
+    s->activeTexture (GL_TEXTURE0_ARB);
+
+    glBindTexture (ms->target, 0);
+
+    glDisable (ms->target);
+
+    tmp = MIN (1.0, (ms->zoom - 1) * 3.0);
+
+    glColor4f (tmp, tmp, tmp, tmp);
+
+    enableTexture (s, &ms->overlay.tex, COMP_TEXTURE_FILTER_FAST);
+    glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+
+    glBegin (GL_QUADS);
+	glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, 0),
+		      COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, 0));
+	glVertex2f (vc[0], vc[2]);
+	glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, 0),
+		      COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, h));
+	glVertex2f (vc[0], vc[3]);
+	glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, w),
+		      COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, h));
+	glVertex2f (vc[1], vc[3]);
+	glTexCoord2f (COMP_TEX_COORD_X (&ms->overlay.tex.matrix, w),
+		      COMP_TEX_COORD_Y (&ms->overlay.tex.matrix, 0));
+	glVertex2f (vc[1], vc[2]);
+    glEnd ();
+
+    disableTexture (s, &ms->overlay.tex);
+
+    glColor4usv (defaultColor);
+    glDisable (GL_BLEND);
+    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+
+    glPopMatrix();
+    glMatrixMode (GL_PROJECTION);
+    glPopMatrix ();
+    glMatrixMode (GL_MODELVIEW);
+
+    glPopAttrib ();
+
+}
 
 
+static void
+magPaintScreen (CompScreen   *s,
+		CompOutput   *outputs,
+		int          numOutput,
+		unsigned int mask)
+{
+    XRectangle     r;
+
+    MAG_SCREEN (s);
+
+    UNWRAP (ms, s, paintScreen);
+    (*s->paintScreen) (s, outputs, numOutput, mask);
+    WRAP (ms, s, paintScreen, magPaintScreen);
+
+    if (ms->zoom == 1.0)
+	return; 
+
+    r.x      = 0;
+    r.y      = 0;
+    r.width  = s->width;
+    r.height = s->height;
+
+    if (s->lastViewport.x      != r.x     ||
+	s->lastViewport.y      != r.y     ||
+	s->lastViewport.width  != r.width ||
+	s->lastViewport.height != r.height)
+    {
+	glViewport (r.x, r.y, r.width, r.height);
+	s->lastViewport = r;
+    }
+
+    if (ms->imgMode)
+	magPaintImage (s);
+    else
+	magPaintSimple (s);
 
 }
 
@@ -591,6 +854,21 @@ magInitScreen (CompPlugin *p,
     glBindTexture (ms->target, 0);
 
     glDisable (ms->target);
+
+    initTexture (s, &ms->overlay.tex);
+    initTexture (s, &ms->mask.tex);
+    ms->overlay.loaded = FALSE;
+    ms->mask.loaded    = FALSE;
+    ms->imgMode        = FALSE;
+
+    magImagesChanged (s, NULL, MagScreenOptionNum);
+
+    magSetOverlayNotify (s, magImagesChanged);
+    magSetMaskNotify (s, magImagesChanged);
+    magSetModeNotify (s, magImagesChanged);
+
+    ms->multiTexCoord2f = (GLMultiTexCoord2fProc)
+			  s->getProcAddress ((GLubyte *)"glMultiTexCoord2f");
 
     return TRUE;
 }
