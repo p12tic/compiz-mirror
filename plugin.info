@@ -1,2 +1,3 @@
 PLUGIN = scalefilter
 PKG_DEP = compiz-scale compiz-text
+CHK_HEADERS = compiz-scale.h compiz-text.h
