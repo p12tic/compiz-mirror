@@ -1,2 +1,3 @@
 PLUGIN = group
 PKG_DEP = cairo cairo-xlib-xrender compiz-text
+CHK_HEADERS = compiz-text.h
