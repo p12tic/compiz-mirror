@@ -105,7 +105,7 @@ static const char *fisheyeFpString =
 
     "TEMP t0, t1, t2, t3;"
 
-    "SUB t1, p0.xyww, fragment.position;"
+    "SUB t1, p0.xyww, fragment.texcoord[0];"
     "DP3 t2, t1, t1;"
     "RSQ t2, t2.x;"
     "SUB t0, t2, p0;"
@@ -117,9 +117,9 @@ static const char *fisheyeFpString =
     "MUL t3, t3, p1.w;"
 
     "MUL t1, t2, t1;"
-    "MAD t1, t1, t3, fragment.position;"
+    "MAD t1, t1, t3, fragment.texcoord[0];"
 
-    "CMP t1, t0.z, fragment.position, t1;"
+    "CMP t1, t0.z, fragment.texcoord[0], t1;"
 		
     "MAD t1, t1, p1, p2;"
     "TEX result.color, t1, texture[0], %s;"
@@ -859,10 +859,17 @@ magPaintFisheye (CompScreen   *s)
     vc[2] = ((y1 * -2.0) / s->height) + 1.0;
     vc[3] = ((y2 * -2.0) / s->height) + 1.0;
 
+    y1 = s->height - y1;
+    y2 = s->height - y2;
+
     glBegin (GL_QUADS);
+    glTexCoord2f (x1, y1);
     glVertex2f (vc[0], vc[2]);
+    glTexCoord2f (x1, y2);
     glVertex2f (vc[0], vc[3]);
+    glTexCoord2f (x2, y2);
     glVertex2f (vc[1], vc[3]);
+    glTexCoord2f (x2, y1);
     glVertex2f (vc[1], vc[2]);
     glEnd ();
 
