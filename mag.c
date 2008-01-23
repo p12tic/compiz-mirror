@@ -103,13 +103,12 @@ static const char *fisheyeFpString =
     "PARAM p1 = program.env[1];"
     "PARAM p2 = program.env[2];"
 
-    "TEMP t1, t2, t3;"
+    "TEMP t0, t1, t2, t3;"
 
     "SUB t1, p0.xyww, fragment.position;"
     "DP3 t2, t1, t1;"
     "RSQ t2, t2.x;"
-    "SUB t3, t2, p0;"
-    "KIL t3.z;"
+    "SUB t0, t2, p0;"
 
     "RCP t3, t2.x;"
     "MUL t3, t3, p1.z;"
@@ -119,7 +118,9 @@ static const char *fisheyeFpString =
 
     "MUL t1, t2, t1;"
     "MAD t1, t1, t3, fragment.position;"
-	
+
+    "CMP t1, t0.z, fragment.position, t1;"
+		
     "MAD t1, t1, p1, p2;"
     "TEX result.color, t1, texture[0], %s;"
 
