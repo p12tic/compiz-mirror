@@ -794,28 +794,30 @@ magPaintFisheye (CompScreen   *s)
     float      radius, zoom, base;
     int        x1, x2, y1, y2;
     float      vc[4];
+    int        size;
 
     MAG_SCREEN (s);
 
     radius = magGetRadius (s);
     base   = 0.5 + (0.0015 * radius);
     zoom   = (ms->zoom * base) + 1.0 - base;
- 
 
-    x1 = MAX (0.0, ms->posX - radius);
-    x2 = MIN (s->width, ms->posX + radius);
-    y1 = MAX (0.0, ms->posY - radius);
-    y2 = MIN (s->height, ms->posY + radius);
+    size = radius + 1;
+
+    x1 = MAX (0.0, ms->posX - size);
+    x2 = MIN (s->width, ms->posX + size);
+    y1 = MAX (0.0, ms->posY - size);
+    y2 = MIN (s->height, ms->posY + size);
  
     glEnable (ms->target);
 
     glBindTexture (ms->target, ms->texture);
 
-    if (ms->width != 2 * radius || ms->height != 2 * radius)
+    if (ms->width != 2 * size || ms->height != 2 * size)
     {
 	glCopyTexImage2D(ms->target, 0, GL_RGB, x1, s->height - y2,
-			 radius * 2, radius * 2, 0);
-	ms->width = ms->height = 2 * radius;
+			 size * 2, size * 2, 0);
+	ms->width = ms->height = 2 * size;
     }
     else
 	glCopyTexSubImage2D (ms->target, 0, 0, 0,
@@ -853,6 +855,11 @@ magPaintFisheye (CompScreen   *s)
     (*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB, 2,
 				 -x1 * pw, -(s->height - y2) * ph,
 				 0.0, 0.0);
+
+    x1 = MAX (0.0, ms->posX - radius);
+    x2 = MIN (s->width, ms->posX + radius);
+    y1 = MAX (0.0, ms->posY - radius);
+    y2 = MIN (s->height, ms->posY + radius);
 
     vc[0] = ((x1 * 2.0) / s->width) - 1.0;
     vc[1] = ((x2 * 2.0) / s->width) - 1.0;
