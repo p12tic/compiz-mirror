@@ -134,14 +134,14 @@
 					<option name="x_offset" type="int">
 						<_short>X offset of the cursor</_short>
 						<_long>X offset of the cursor.</_long>
-						<default>120</default>
+						<default>155</default>
 						<min>0</min>
 						<max>1000</max>
 					</option>
 					<option name="y_offset" type="int">
 						<_short>Y offset of the cursor</_short>
 						<_long>Y offset of the cursor.</_long>
-						<default>120</default>
+						<default>155</default>
 						<min>0</min>
 						<max>1000</max>
 					</option>
