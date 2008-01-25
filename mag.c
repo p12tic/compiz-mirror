@@ -111,8 +111,8 @@ static const char *fisheyeFpString =
     "SUB t0, t2, p0;"
 
     "RCP t3, t2.x;"
-    "MUL t3, t3, p1.z;"
-    "SIN t3, t3.x;"
+    "MAD t3, t3, p1.z, p2.z;"
+    "COS t3, t3.x;"
 
     "MUL t3, t3, p1.w;"
 
@@ -854,7 +854,7 @@ magPaintFisheye (CompScreen   *s)
 				 (zoom - 1.0) * zoom);
     (*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB, 2,
 				 -x1 * pw, -(s->height - y2) * ph,
-				 0.0, 0.0);
+				 -M_PI / 2.0, 0.0);
 
     x1 = MAX (0.0, ms->posX - radius);
     x2 = MIN (s->width, ms->posX + radius);
