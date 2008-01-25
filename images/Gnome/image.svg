@@ -28,6 +28,13 @@
        inkscape:vp_y="0 : 1000 : 0"
        inkscape:vp_z="700 : 600 : 1"
        inkscape:persp3d-origin="300 : 400 : 1"
+       id="perspective79" />
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="-50 : 600 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="700 : 600 : 1"
+       inkscape:persp3d-origin="300 : 400 : 1"
        id="perspective78" />
     <linearGradient
        id="linearGradient8659">
@@ -317,7 +324,7 @@
      inkscape:pageopacity="0.0"
      inkscape:pageshadow="2"
      inkscape:zoom="1.5306291"
-     inkscape:cx="17.622699"
+     inkscape:cx="197.47474"
      inkscape:cy="209.97159"
      inkscape:current-layer="layer1"
      showgrid="true"
@@ -373,7 +380,7 @@
   </metadata>
   <g
      id="layer1"
-     inkscape:label="Layer 1"
+     inkscape:label="Overlay"
      inkscape:groupmode="layer">
     <g
        id="layer6"
@@ -473,6 +480,12 @@
          style="fill:none;fill-opacity:1;fill-rule:nonzero;stroke:url(#linearGradient4937);stroke-width:0.68814938999999997;stroke-linecap:round;stroke-linejoin:miter;marker:none;marker-start:none;marker-mid:none;marker-end:none;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:0;stroke-opacity:1;visibility:visible;display:inline;overflow:visible"
          sodipodi:type="arc" />
     </g>
+  </g>
+  <g
+     inkscape:groupmode="layer"
+     id="layer2"
+     inkscape:label="Mask"
+     style="display:inline">
     <path
        sodipodi:type="inkscape:offset"
        inkscape:radius="-1.6160799"
