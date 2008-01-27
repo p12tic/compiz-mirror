@@ -1,2 +1,3 @@
 PLUGIN = wallpaper
-PKG_DEP = cairo
+PKG_DEP = cairo compiz-cube
+CHK_HEADERS = compiz-cube.h
