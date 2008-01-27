@@ -674,7 +674,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
     // z-axis circle/*{{{*/
     if(fwd->axisHelp && fwd->focusWindow){
-
+    	
 	x = WIN_REAL_X(fwd->focusWindow) + WIN_REAL_W(fwd->focusWindow)/2.0;
 	y = WIN_REAL_Y(fwd->focusWindow) + WIN_REAL_H(fwd->focusWindow)/2.0;
 
@@ -689,7 +689,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	if(wasCulled)
 	    glDisable(GL_CULL_FACE);
 
-	glColor4f (0.5, 0.5, 1.0, 0.8f);
+	glColor4usv  (freewinsGetCircleColor (s->display));
 	glEnable(GL_BLEND);
 
 	glBegin(GL_POLYGON);
@@ -698,7 +698,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glEnd ();
 
 	glDisable(GL_BLEND);
-	glColor4f (0.5, 0.5, 1.0, 1.0f);
+	glColor4usv  (freewinsGetLineColor (s->display));
 	glLineWidth(3.0);
 
 	glBegin(GL_LINE_LOOP);
@@ -706,7 +706,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
 	glEnd ();
 	
-	glColor4f (0.6, 0.6, 1.0, 1.0f);
+	glColor4usv  (freewinsGetCrossLineColor (s->display));
 	glBegin(GL_LINES);
 	glVertex3f(x, y - (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
 	glVertex3f(x, y + (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
