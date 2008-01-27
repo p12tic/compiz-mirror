@@ -15,9 +15,14 @@
 				<type>string</type>
 			</option>
 			<option name="tile" type="bool">
-				<_short>Tile or Stretch</_short>
+				<_short>Tile</_short>
 				<_long>Tile backgrounds as opposed to stretching</_long>
 				<type>bool</type>
+			</option>
+			<option name="true_blend" type="bool">
+				<_short>Enable true blending</_short>
+				<_long>Enable true alpha blending for transparent wallpapers</_long>
+				<default>true</default>
 			</option>
 		</screen>
 	</plugin>

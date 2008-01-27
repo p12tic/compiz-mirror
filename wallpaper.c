@@ -6,6 +6,9 @@
  *
  * Copyright (c) 2007 Robert Carr <racarr@opencompositing.org>
  *
+ * Proper blending support added by
+ * Kevin Lange <klange@ogunderground.com>
+ *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,6 +29,7 @@
 #include <string.h>
 
 #include <compiz-core.h>
+#include <compiz-cube.h>
 
 #include <X11/Xatom.h>
 #include <cairo-xlib-xrender.h>
@@ -33,6 +37,8 @@
 #include "wallpaper_options.h"
 
 static int displayPrivateIndex;
+static int cubeDisplayPrivateIndex = -1;
+
 
 /* Represents one wallpaper which may be a composition of various wallpaper
  * elements fillOnly is used to indicate that texture should be ignored and
@@ -564,7 +570,18 @@ wallpaperPaintBackground (CompScreen *s,
     }
 
     data = malloc(sizeof(GLfloat)*nBox*16);
-
+    // Allow actual transparency
+    Bool wasBlended;
+    if (wallpaperGetTrueBlend(s)) {
+    	wasBlended = glIsEnabled(GL_BLEND);
+    	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    	glEnable(GL_BLEND);
+    	if (cubeDisplayPrivateIndex >= 0) {
+    		CUBE_SCREEN(s);
+    		screenTexEnvMode (s, GL_MODULATE);
+    		glColor4us (cs->desktopOpacity,cs->desktopOpacity,cs->desktopOpacity,cs->desktopOpacity);
+	}
+    }
     d = data;
     n = nBox;
     while (n--)
@@ -605,7 +622,7 @@ wallpaperPaintBackground (CompScreen *s,
 
 
     glVertexPointer(2, GL_FLOAT, sizeof(GLfloat) * 4, data+2);
-
+    
     if (!ww->fillOnly)
     {
 	if (mask & PAINT_BACKGROUND_ON_TRANSFORMED_SCREEN_MASK)
@@ -614,10 +631,14 @@ wallpaperPaintBackground (CompScreen *s,
 	    enableTexture(s, bg, COMP_TEXTURE_FILTER_FAST);
     }
 
-
+    
     glDrawArrays(GL_QUADS, 0, nBox * 4);
-    glColor4usv(defaultColor);
-
+    if (wallpaperGetTrueBlend(s)) {
+    if (cubeDisplayPrivateIndex >= 0)
+    	glDisable(GL_BLEND);
+    	screenTexEnvMode (s, GL_REPLACE);
+    }
+    glColor4usv(defaultColor);	
     if (!ww->fillOnly)
 	disableTexture(s, bg);
 
@@ -643,6 +664,8 @@ wallpaperInitDisplay (CompPlugin * p,
 	free (wd);
 	return FALSE;
     }
+    
+    getPluginDisplayIndex (d, "cube", &cubeDisplayPrivateIndex);
 
     wd->compizWallpaperAtom = XInternAtom(d->display, 
 					  "_COMPIZ_WALLPAPER_SUPPORTED", 0);
@@ -678,7 +701,6 @@ static Bool wallpaperInitScreen (CompPlugin * p,
 
     wallpaperSetImagesNotify(s, wallpaperImagesChanged);
     wallpaperSetTileNotify(s, wallpaperImagesChanged);
-
 
     WRAP (ws, s, paintBackground, wallpaperPaintBackground);
 
