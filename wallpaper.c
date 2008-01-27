@@ -545,7 +545,7 @@ wallpaperPaintBackground (CompScreen *s,
     CompTexture * bg;
     WallpaperWallpaper * ww;
     int vx,vy;
-    
+
     vx = s->x - (s->windowOffsetX / s->width);
     while (vx < 0) vx += s->hsize;
     vx %= s->hsize;
@@ -553,7 +553,7 @@ wallpaperPaintBackground (CompScreen *s,
     vy = s->y - (s->windowOffsetY / s->height);
     while (vy < 0) vy += s->vsize;
     vy %= s->vsize;
-    
+
 
     ww = getTextureForViewport(s, vx, vy);
     bg = &ww->texture;
@@ -574,7 +574,6 @@ wallpaperPaintBackground (CompScreen *s,
     Bool wasBlended;
     if (wallpaperGetTrueBlend(s)) {
 	wasBlended = glIsEnabled(GL_BLEND);
-	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 	glEnable(GL_BLEND);
 	if (cubeDisplayPrivateIndex >= 0) {
 	    CUBE_SCREEN(s);
@@ -622,7 +621,7 @@ wallpaperPaintBackground (CompScreen *s,
 
 
     glVertexPointer(2, GL_FLOAT, sizeof(GLfloat) * 4, data+2);
-    
+
     if (!ww->fillOnly)
     {
 	if (mask & PAINT_BACKGROUND_ON_TRANSFORMED_SCREEN_MASK)
@@ -631,13 +630,14 @@ wallpaperPaintBackground (CompScreen *s,
 	    enableTexture(s, bg, COMP_TEXTURE_FILTER_FAST);
     }
 
-    
     glDrawArrays(GL_QUADS, 0, nBox * 4);
-    if (wallpaperGetTrueBlend(s)) {
+
+    if (wasBlended)
+	glDisable(GL_BLEND);
+
     if (cubeDisplayPrivateIndex >= 0)
-    	glDisable(GL_BLEND);
-    	screenTexEnvMode (s, GL_REPLACE);
-    }
+	screenTexEnvMode (s, GL_REPLACE);
+
     glColor4usv(defaultColor);	
     if (!ww->fillOnly)
 	disableTexture(s, bg);
