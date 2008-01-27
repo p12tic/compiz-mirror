@@ -573,13 +573,13 @@ wallpaperPaintBackground (CompScreen *s,
     // Allow actual transparency
     Bool wasBlended;
     if (wallpaperGetTrueBlend(s)) {
-    	wasBlended = glIsEnabled(GL_BLEND);
-    	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    	glEnable(GL_BLEND);
-    	if (cubeDisplayPrivateIndex >= 0) {
-    		CUBE_SCREEN(s);
-    		screenTexEnvMode (s, GL_MODULATE);
-    		glColor4us (cs->desktopOpacity,cs->desktopOpacity,cs->desktopOpacity,cs->desktopOpacity);
+	wasBlended = glIsEnabled(GL_BLEND);
+	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glEnable(GL_BLEND);
+	if (cubeDisplayPrivateIndex >= 0) {
+	    CUBE_SCREEN(s);
+	    screenTexEnvMode (s, GL_MODULATE);
+	    glColor4us (cs->desktopOpacity,cs->desktopOpacity,cs->desktopOpacity,cs->desktopOpacity);
 	}
     }
     d = data;
