@@ -573,13 +573,14 @@ wallpaperPaintBackground (CompScreen *s,
     data = malloc(sizeof(GLfloat)*nBox*16);
  
     // Allow actual transparency
-    if (wallpaperGetTrueBlend(s)) {
-	wasBlended = glIsEnabled(GL_BLEND);
-	glEnable(GL_BLEND);
+    if (wallpaperGetTrueBlend (s)) {
+	wasBlended = glIsEnabled (GL_BLEND);
+	glEnable (GL_BLEND);
 	if (cubeDisplayPrivateIndex >= 0) {
-	    CUBE_SCREEN(s);
+	    CUBE_SCREEN (s);
 	    screenTexEnvMode (s, GL_MODULATE);
-	    glColor4us (cs->desktopOpacity,cs->desktopOpacity,cs->desktopOpacity,cs->desktopOpacity);
+	    glColor4us (cs->desktopOpacity, cs->desktopOpacity,
+			cs->desktopOpacity, cs->desktopOpacity);
 	}
     }
     d = data;
@@ -634,7 +635,7 @@ wallpaperPaintBackground (CompScreen *s,
     glDrawArrays(GL_QUADS, 0, nBox * 4);
 
     if (wasBlended)
-	glDisable(GL_BLEND);
+	glDisable (GL_BLEND);
 
     if (cubeDisplayPrivateIndex >= 0)
 	screenTexEnvMode (s, GL_REPLACE);
