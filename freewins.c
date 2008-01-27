@@ -1192,6 +1192,89 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
 }
 /*}}}*/
 
+/* Callable action to rotate a window to the angle provided*/
+static Bool freewinsRotateWindow (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+	CompWindow *w;
+
+    //FREEWINS_DISPLAY(d);
+    
+    w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
+    
+    if (w)
+    {
+        FREEWINS_WINDOW(w);
+        
+        float x, y, z, dx, dy, dz;
+        
+        x = getFloatOptionNamed(option, nOption, "x", 0.0f);
+        y = getFloatOptionNamed(option, nOption, "y", 0.0f);
+        z = getFloatOptionNamed(option, nOption, "z", 0.0f);
+        dx = getFloatOptionNamed(option, nOption, "dx", 0.0f);
+        dy = getFloatOptionNamed(option, nOption, "dy", 0.0f);
+        dz = getFloatOptionNamed(option, nOption, "dz", 0.0f);
+        
+        if((dx || dy || dz) != 0.0f)
+        {
+            /* Respect dx, dy, dz, first */
+            fww->angX += dx;
+            fww->angY += dy;
+            fww->angZ += dz;
+        }
+        else
+        {
+            fww->angX = x;
+            fww->angY = y;
+            fww->angZ = z;
+        }
+    }
+    else
+    {
+        return FALSE;
+    }
+    
+    damageScreen(w->screen);
+
+    //fwd->axisHelp = !fwd->axisHelp;
+
+    return TRUE;
+}
+
+/* Callable action to rotate a window to the angle provided*/
+static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+	CompWindow *w;
+
+    w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
+    
+    if (w)
+    {
+        FREEWINS_WINDOW(w);
+        
+        fww->scaleX = getFloatOptionNamed(option, nOption, "x", 0.0f);
+        fww->scaleY = getFloatOptionNamed(option, nOption, "y", 0.0f);
+    }
+    else
+    {
+        return FALSE;
+    }
+    
+    damageScreen(w->screen);
+
+    return TRUE;
+}
+
+// Toggle Axis /*{{{*/
+static Bool toggleFWAxis (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+
+    FREEWINS_DISPLAY(d);
+
+    fwd->axisHelp = !fwd->axisHelp;
+
+    return TRUE;
+}
+
 // Reset Rotation/*{{{*/
 static Bool resetFWRotation (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption){
@@ -1243,17 +1326,6 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
     return TRUE;
 }
 /*}}}*/
-
-// Toggle Axis /*{{{*/
-static Bool toggleFWAxis (CompDisplay *d, CompAction *action, 
-	CompActionState state, CompOption *option, int nOption){
-
-    FREEWINS_DISPLAY(d);
-
-    fwd->axisHelp = !fwd->axisHelp;
-
-    return TRUE;
-}
 
 // Window initialisation / cleaning
 static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
@@ -1414,6 +1486,9 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
     freewinsSetRotateRightKeyInitiate(d, FWRotateRight);
     freewinsSetRotateCKeyInitiate(d, FWRotateClockwise);
     freewinsSetRotateCcKeyInitiate(d, FWRotateCounterclockwise);
+    
+    freewinsSetRotateInitiate (d, freewinsRotateWindow);
+    freewinsSetRotateInitiate (d, freewinsScaleWindow);
     
     d->base.privates[displayPrivateIndex].ptr = fwd;
     WRAP(fwd, d, handleEvent, FWHandleEvent);
