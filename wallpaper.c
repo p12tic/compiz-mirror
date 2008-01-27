@@ -545,6 +545,7 @@ wallpaperPaintBackground (CompScreen *s,
     CompTexture * bg;
     WallpaperWallpaper * ww;
     int vx,vy;
+    Bool wasBlended;
 
     vx = s->x - (s->windowOffsetX / s->width);
     while (vx < 0) vx += s->hsize;
@@ -570,8 +571,8 @@ wallpaperPaintBackground (CompScreen *s,
     }
 
     data = malloc(sizeof(GLfloat)*nBox*16);
+ 
     // Allow actual transparency
-    Bool wasBlended;
     if (wallpaperGetTrueBlend(s)) {
 	wasBlended = glIsEnabled(GL_BLEND);
 	glEnable(GL_BLEND);
