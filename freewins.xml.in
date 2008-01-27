@@ -5,6 +5,8 @@
 	<_long>Freely transform windows</_long>
 	<category>Effects</category>
 	<display>
+	<option name='rotate' type='action'/>
+	<option name='scale' type='action'/>
 	<group>
 	<_short>Free Transformation</_short>
 	    <option type="button" name="initiate_rotation_button">
