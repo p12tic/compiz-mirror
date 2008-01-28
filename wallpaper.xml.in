@@ -13,6 +13,7 @@
 				<_short>Backgrounds</_short>
 				<_long>The background specifications (as explained in DOCUMENTATION) to use.</_long>
 				<type>string</type>
+				<hints>file;image;</hints>
 			</option>
 			<option name="tile" type="bool">
 				<_short>Tile</_short>
