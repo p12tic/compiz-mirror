@@ -674,7 +674,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
     // z-axis circle/*{{{*/
     if(fwd->axisHelp && fwd->focusWindow){
-
+    	
 	x = WIN_REAL_X(fwd->focusWindow) + WIN_REAL_W(fwd->focusWindow)/2.0;
 	y = WIN_REAL_Y(fwd->focusWindow) + WIN_REAL_H(fwd->focusWindow)/2.0;
 
@@ -689,7 +689,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	if(wasCulled)
 	    glDisable(GL_CULL_FACE);
 
-	glColor4f (0.5, 0.5, 1.0, 0.8f);
+	glColor4usv  (freewinsGetCircleColor (s->display));
 	glEnable(GL_BLEND);
 
 	glBegin(GL_POLYGON);
@@ -698,7 +698,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glEnd ();
 
 	glDisable(GL_BLEND);
-	glColor4f (0.5, 0.5, 1.0, 1.0f);
+	glColor4usv  (freewinsGetLineColor (s->display));
 	glLineWidth(3.0);
 
 	glBegin(GL_LINE_LOOP);
@@ -706,7 +706,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
 	glEnd ();
 	
-	glColor4f (0.5, 0.5, 0.5, 0.5f);
+	glColor4usv  (freewinsGetCrossLineColor (s->display));
 	glBegin(GL_LINES);
 	glVertex3f(x, y - (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
 	glVertex3f(x, y + (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
@@ -1191,6 +1191,114 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
 }
 /*}}}*/
 
+/* Callable action to rotate a window to the angle provided*/
+static Bool freewinsRotateWindow (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+	CompWindow *w;
+
+    //FREEWINS_DISPLAY(d);
+    
+    w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
+    
+    if (w)
+    {
+        FREEWINS_WINDOW(w);
+        
+        float x, y, z;
+        
+        y = getFloatOptionNamed(option, nOption, "x", 0.0f);
+        x = getFloatOptionNamed(option, nOption, "y", 0.0f);
+        z = getFloatOptionNamed(option, nOption, "z", 0.0f);
+        
+        fww->angX = x;
+        fww->angY = y;
+        fww->angZ = z;
+        
+    }
+    else
+    {
+        return FALSE;
+    }
+    
+    damageScreen(w->screen);
+
+    //fwd->axisHelp = !fwd->axisHelp;
+
+    return TRUE;
+}
+
+/* Callable action to rotate a window to the angle provided*/
+static Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+	CompWindow *w;
+
+    //FREEWINS_DISPLAY(d);
+    
+    w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
+    
+    if (w)
+    {
+        FREEWINS_WINDOW(w);
+        
+        float x, y, z;
+        
+        y = getFloatOptionNamed(option, nOption, "x", 0.0f);
+        z = getFloatOptionNamed(option, nOption, "y", 0.0f);
+        z = getFloatOptionNamed(option, nOption, "z", 0.0f);
+        
+        /* Respect dx, dy, dz, first */
+        fww->angX += x;
+        fww->angY += y;
+        fww->angZ += z;
+        
+    }
+    else
+    {
+        return FALSE;
+    }
+    
+    damageScreen(w->screen);
+
+    //fwd->axisHelp = !fwd->axisHelp;
+
+    return TRUE;
+}
+
+/* Callable action to scale a window to the scale provided*/
+static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+	CompWindow *w;
+
+    w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
+    
+    if (w)
+    {
+        FREEWINS_WINDOW(w);
+        
+        fww->scaleX = getFloatOptionNamed(option, nOption, "x", 0.0f);
+        fww->scaleY = getFloatOptionNamed(option, nOption, "y", 0.0f);
+    }
+    else
+    {
+        return FALSE;
+    }
+    
+    damageScreen(w->screen);
+
+    return TRUE;
+}
+
+// Toggle Axis /*{{{*/
+static Bool toggleFWAxis (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+
+    FREEWINS_DISPLAY(d);
+
+    fwd->axisHelp = !fwd->axisHelp;
+
+    return TRUE;
+}
+
 // Reset Rotation/*{{{*/
 static Bool resetFWRotation (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption){
@@ -1242,17 +1350,6 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
     return TRUE;
 }
 /*}}}*/
-
-// Toggle Axis /*{{{*/
-static Bool toggleFWAxis (CompDisplay *d, CompAction *action, 
-	CompActionState state, CompOption *option, int nOption){
-
-    FREEWINS_DISPLAY(d);
-
-    fwd->axisHelp = !fwd->axisHelp;
-
-    return TRUE;
-}
 
 // Window initialisation / cleaning
 static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
@@ -1411,7 +1508,11 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
     freewinsSetRotateCInitiate(d, FWRotateClockwise);
     freewinsSetRotateCcInitiate(d, FWRotateCounterclockwise);
     
-    d->privates[displayPrivateIndex].ptr = fwd;
+    freewinsSetRotateInitiate (d, freewinsRotateWindow);
+    freewinsSetIncrementRotateInitiate (d, freewinsIncrementRotateWindow);
+    freewinsSetScaleInitiate (d, freewinsScaleWindow);
+    
+    d->base.privates[displayPrivateIndex].ptr = fwd;
     WRAP(fwd, d, handleEvent, FWHandleEvent);
     
     return TRUE;
