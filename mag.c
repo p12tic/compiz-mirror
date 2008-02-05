@@ -40,6 +40,7 @@
 #define MAG_SCREEN(s)                                                      \
     MagScreen *ms = GET_MAG_SCREEN (s, GET_MAG_DISPLAY (s->display))
 
+
 typedef void (*GLMultiTexCoord2fProc) (GLenum, GLfloat, GLfloat);
 
 static int displayPrivateIndex = 0;
