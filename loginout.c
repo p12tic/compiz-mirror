@@ -18,10 +18,10 @@
  * GNU General Public License for more details.
  *
  */
+
 #include <compiz-core.h>
 
 #include "loginout_options.h"
-
 
 static int displayPrivateIndex = 0;
 
