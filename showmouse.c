@@ -41,6 +41,7 @@
 #define SHOWMOUSE_SCREEN(s)                                                      \
     ShowmouseScreen *ss = GET_SHOWMOUSE_SCREEN (s, GET_SHOWMOUSE_DISPLAY (s->display))
 
+
 typedef struct _Particle
 {
     float life;			// particle life
