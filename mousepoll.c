@@ -64,7 +64,6 @@ typedef struct _MousepollScreen {
 
 } MousepollScreen;
 
-
 #define GET_MOUSEPOLL_DISPLAY(d)				      \
     ((MousepollDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
 
