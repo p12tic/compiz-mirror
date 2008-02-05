@@ -495,11 +495,19 @@ magPaintSimple (CompScreen *s)
     cx = (w - cw) / 2;
     cy = (h - ch) / 2;
 
-    cx -= (x1 - (ms->posX - (w / 2))) / ms->zoom;
-    cy += (y1 - (ms->posY - (h / 2))) / ms->zoom;
-
     cx = MAX (0, MIN (w - cw, cx));
     cy = MAX (0, MIN (h - ch, cy));
+
+    if (x1 != (ms->posX - (w / 2)))
+    {
+	cx = 0;
+	cw = w;
+    }
+    if (y1 != (ms->posY - (h / 2)))
+    {
+	cy = 0;
+	ch = h;
+    }
 
     glEnable (ms->target);
 
