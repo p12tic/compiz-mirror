@@ -31,6 +31,8 @@ typedef struct _LoginoutDisplay
     MatchPropertyChangedProc   matchPropertyChanged;
 
     int screenPrivateIndex;
+
+    Atom kdeLogoutInfoAtom;
 }
 LoginoutDisplay;
 
@@ -58,7 +60,6 @@ LoginoutScreen;
 typedef struct _LoginoutWindow {
     Bool login;
     Bool logout;
-    Bool hide;
 } LoginoutWindow;
 
 #define GET_LOGINOUT_DISPLAY(d)                                  \
@@ -109,12 +110,6 @@ loginoutUpdateWindowMatch (CompWindow *w)
 	    ls->numLogoutWin--;
 	damageScreen (w->screen);
     }
-    curr = matchEval (loginoutGetHideMatch (w->screen), w);
-    if (curr != lw->hide)
-    {
-	lw->hide = curr;
-	damageScreen (w->screen);
-    }
 }
 
 static void
@@ -128,7 +123,6 @@ loginoutScreenOptionChanged (CompScreen          *s,
     {
     case LoginoutScreenOptionInMatch:
     case LoginoutScreenOptionOutMatch:
-    case LoginoutScreenOptionHideMatch:
 	for (w = s->windows; w; w = w->next)
 	    loginoutUpdateWindowMatch (w);
 
@@ -190,11 +184,6 @@ loginoutPaintWindow (CompWindow              *w,
     if ((ls->in > 0.0 || ls->out > 0.0) && !lw->login && !lw->logout &&
 	!(w->wmType & CompWindowTypeDesktopMask) && ls->opacity < 1.0)
 	mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
-
-    if ((ls->in > 0.0 || ls->out > 0.0) && !lw->login && !lw->logout &&
-	lw->hide)
-	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
-
 
     UNWRAP (ls, s, paintWindow);
     status = (*s->paintWindow) (w, attrib, transform, region, mask);
@@ -321,6 +310,9 @@ loginoutInitDisplay (CompPlugin  *p,
 
     d->base.privates[displayPrivateIndex].ptr = ld;
 
+    ld->kdeLogoutInfoAtom = XInternAtom (d->display,
+					 "_KWIN_LOGOUT_EFFECT", 0);
+
     WRAP (ld, d, matchExpHandlerChanged, loginoutMatchExpHandlerChanged);
     WRAP (ld, d, matchPropertyChanged, loginoutMatchPropertyChanged);
 
@@ -364,7 +356,6 @@ loginoutInitScreen (CompPlugin *p,
 
     loginoutSetInMatchNotify (s, loginoutScreenOptionChanged);
     loginoutSetOutMatchNotify (s, loginoutScreenOptionChanged);
-    loginoutSetHideMatchNotify (s, loginoutScreenOptionChanged);
 
     s->base.privates[ld->screenPrivateIndex].ptr = ls;
 
@@ -383,6 +374,13 @@ loginoutInitScreen (CompPlugin *p,
     WRAP (ls, s, paintWindow, loginoutPaintWindow);
     WRAP (ls, s, drawWindow, loginoutDrawWindow);
 
+    /* This is a temporary solution until an official spec will be released */
+    XChangeProperty (s->display->display, s->wmSnSelectionWindow,
+		     ld->kdeLogoutInfoAtom, ld->kdeLogoutInfoAtom, 8,
+		     PropModeReplace,
+		     (unsigned char*)&ld->kdeLogoutInfoAtom, 1);
+
+
     return TRUE;
 }
 
@@ -392,6 +390,7 @@ loginoutFiniScreen (CompPlugin *p,
 		    CompScreen *s)
 {
     LOGINOUT_SCREEN (s);
+    LOGINOUT_DISPLAY (s->display);
 
     freeWindowPrivateIndex (s, ls->windowPrivateIndex);
 
@@ -399,6 +398,9 @@ loginoutFiniScreen (CompPlugin *p,
     UNWRAP (ls, s, donePaintScreen);
     UNWRAP (ls, s, paintWindow);
     UNWRAP (ls, s, drawWindow);
+
+    XDeleteProperty (s->display->display, s->wmSnSelectionWindow,
+		     ld->kdeLogoutInfoAtom);
 
     free (ls);
 }
@@ -417,7 +419,6 @@ loginoutInitWindow (CompPlugin *p,
 
     lw->login  = FALSE;
     lw->logout = FALSE;
-    lw->hide   = FALSE;
 
     w->base.privates[ls->windowPrivateIndex].ptr = lw;
 

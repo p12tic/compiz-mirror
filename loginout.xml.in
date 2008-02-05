@@ -93,14 +93,6 @@
 					<precision>0.1</precision>
 				</option>
 			</group>
-			<group>
-				<_short>Misc. Options</_short>
-				<option name="hide_match" type="match">
-					<_short>Hide Window match</_short>
-					<_long>Window match for windows that should be hidden during the animations</_long>
-					<default>class=Ksmserver &amp; role=feedbackwidget</default>
-				</option>
-			</group>
 		</screen>
 	</plugin>
 </compiz>
