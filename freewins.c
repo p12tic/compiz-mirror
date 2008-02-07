@@ -1398,7 +1398,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
     
     // Shape window back to normal
-    if (w->screen->display->shapeExtension)
+    if (w->screen->display->shapeExtension && freewinsGetShapeInput (w->screen))
         FWShapeInput (w);
 
     return TRUE;
