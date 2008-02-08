@@ -1,2 +1,3 @@
 PLUGIN = notification
 PKG_DEP = libnotify
+
