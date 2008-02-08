@@ -27,7 +27,7 @@
 #define _GNU_SOURCE
 #include <X11/Xatom.h>
 
-#include <compiz.h>
+#include <compiz-core.h>
 
 #include <stdlib.h>
 #include <stdio.h>
@@ -67,7 +67,7 @@ typedef struct _SessionDisplay
 } SessionDisplay;
 
 #define GET_SESSION_DISPLAY(d)                                 \
-    ((SessionDisplay *) (d)->privates[displayPrivateIndex].ptr)
+    ((SessionDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
 
 #define SESSION_DISPLAY(d)                  \
     SessionDisplay *sd = GET_SESSION_DISPLAY (d)
@@ -795,16 +795,6 @@ iceInit (void)
     }
 }
 
-
-
-
-static int
-sessionGetVersion(CompPlugin * p,
-		    int version)
-{
-    return ABIVERSION;
-}
-
 static int
 sessionInit (CompPlugin *p)
 {
@@ -842,7 +832,7 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
     if (!sd)
 	return FALSE;
 
-    d->privates[displayPrivateIndex].ptr = sd;
+    d->base.privates[displayPrivateIndex].ptr = sd;
 
     sd->visibleNameAtom = XInternAtom (d->display,
 				       "_NET_WM_VISIBLE_NAME", 0);
@@ -884,6 +874,30 @@ sessionFiniDisplay (CompPlugin *p, CompDisplay *d)
     free (sd);
 }
 
+static CompBool
+sessionInitObject (CompPlugin *p,
+		   CompObject *o)
+{
+    static InitPluginObjectProc dispTab[] = {
+    	(InitPluginObjectProc) 0, /* InitCore */
+	(InitPluginObjectProc) sessionInitDisplay
+    };
+
+    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
+}
+
+static void
+sessionFiniObject (CompPlugin *p,
+		   CompObject *o)
+{
+    static FiniPluginObjectProc dispTab[] = {
+	(FiniPluginObjectProc) 0, /* FiniCore */
+	(FiniPluginObjectProc) sessionFiniDisplay
+    };
+
+    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
+}
+
 static CompMetadata *
 sessionGetMetadata (CompPlugin *plugin)
 {
@@ -893,23 +907,16 @@ sessionGetMetadata (CompPlugin *plugin)
 static CompPluginVTable sessionVTable =
 {
     "session",
-    sessionGetVersion,
     sessionGetMetadata,
     sessionInit,
     sessionFini,
-    sessionInitDisplay,
-    sessionFiniDisplay,
-    0,
-    0,
-    0,
-    0,
-    0,
-    0,
+    sessionInitObject,
+    sessionFiniObject,
     0,
     0
 };
 
-CompPluginVTable * getCompPluginInfo(void)
+CompPluginVTable * getCompPluginInfo20070830(void)
 {
     return &sessionVTable;
 }
