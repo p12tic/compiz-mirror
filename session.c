@@ -53,11 +53,17 @@ static char		 *smClientId;
 
 static void iceInit (void);
 
+static int corePrivateIndex;
 static int displayPrivateIndex;
 static CompMetadata sessionMetadata;
 
 typedef void (* SessionWindowFunc) (CompWindow *w, char *clientId, char *name,
 				    void *user_data);
+
+typedef struct _SessionCore
+{
+    SessionSaveYourselfProc sessionSaveYourself;
+} SessionCore;
 
 typedef struct _SessionDisplay
 {
@@ -65,6 +71,12 @@ typedef struct _SessionDisplay
     Atom clientIdAtom;
     Atom embedInfoAtom;
 } SessionDisplay;
+
+#define GET_SESSION_CORE(c)				     \
+    ((SessionCore *) (c)->base.privates[corePrivateIndex].ptr)
+
+#define SESSION_CORE(c)		       \
+    SessionCore *sc = GET_SESSION_CORE (c)
 
 #define GET_SESSION_DISPLAY(d)                                 \
     ((SessionDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
@@ -802,8 +814,8 @@ sessionInit (CompPlugin *p)
 					 0, 0, 0, 0))
 	return FALSE;
 
-    displayPrivateIndex = allocateDisplayPrivateIndex ();
-    if (displayPrivateIndex < 0)
+    displayPrivateIndex = allocateCorePrivateIndex ();
+    if (corePrivateIndex < 0)
     {
 	compFiniMetadata (&sessionMetadata);
 	return FALSE;
@@ -817,8 +829,43 @@ sessionInit (CompPlugin *p)
 static void
 sessionFini (CompPlugin *p)
 {
-    freeDisplayPrivateIndex(displayPrivateIndex);
+    freeDisplayPrivateIndex(corePrivateIndex);
     compFiniMetadata (&sessionMetadata);
+}
+
+static Bool
+sessionInitCore (CompPlugin *p,
+		 CompCore   *c)
+{
+    SessionCore *sc;
+
+    if (!checkPluginABI ("core", CORE_ABIVERSION))
+	return FALSE;
+
+    sc = malloc (sizeof (SessionCore));
+    if (!sc)
+	return FALSE;
+
+    displayPrivateIndex = allocateDisplayPrivateIndex ();
+    if (displayPrivateIndex < 0)
+    {
+	free (sc);
+	return FALSE;
+    }
+
+    c->base.privates[corePrivateIndex].ptr = sc;
+
+    return TRUE;
+}
+
+static void
+sessionFiniCore (CompPlugin *p,
+		 CompCore   *c)
+{
+    SESSION_CORE (c);
+
+    freeDisplayPrivateIndex (displayPrivateIndex);
+    free (sc);
 }
 
 static int
@@ -879,7 +926,7 @@ sessionInitObject (CompPlugin *p,
 		   CompObject *o)
 {
     static InitPluginObjectProc dispTab[] = {
-    	(InitPluginObjectProc) 0, /* InitCore */
+    	(InitPluginObjectProc) sessionInitCore,
 	(InitPluginObjectProc) sessionInitDisplay
     };
 
@@ -891,7 +938,7 @@ sessionFiniObject (CompPlugin *p,
 		   CompObject *o)
 {
     static FiniPluginObjectProc dispTab[] = {
-	(FiniPluginObjectProc) 0, /* FiniCore */
+	(FiniPluginObjectProc) sessionFiniCore,
 	(FiniPluginObjectProc) sessionFiniDisplay
     };
 
