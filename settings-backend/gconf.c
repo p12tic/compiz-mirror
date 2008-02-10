@@ -150,13 +150,20 @@ const SpecialOption specialOptions[] = {
     {"show_desktop_key", "core", FALSE,
      METACITY "/global_keybindings/show_desktop", OptionKey},
 
+    {"initiate_key", "move", FALSE,
+     METACITY "/window_keybindings/begin_move", OptionKey},
+    {"initiate_key", "resize", FALSE,
+     METACITY "/window_keybindings/begin_resize", OptionKey},
+    {"window_menu_key", "core", FALSE,
+     METACITY "/window_keybindings/activate_window_menu", OptionKey},
+
+    /* integration of Metacity's mouse_button_modifier option */
     {"initiate_button", "move", FALSE,
      METACITY "/window_keybindings/begin_move", OptionSpecial},
     {"initiate_button", "resize", FALSE,
      METACITY "/window_keybindings/begin_resize", OptionSpecial},
     {"window_menu_button", "core", FALSE,
      METACITY "/window_keybindings/activate_window_menu", OptionSpecial},
-    /* this option does not exist in Compiz */
     {"mouse_button_modifier", NULL, FALSE,
      METACITY "/general/mouse_button_modifier", OptionSpecial},
 
@@ -1087,33 +1094,20 @@ readIntegratedOption (CCSContext *context,
 		      ((strcmp (settingName, "window_menu_button") == 0) &&
 		       (strcmp (pluginName, "core") == 0)))
 	    {
-		if (gconfValue->type == GCONF_VALUE_STRING)
-		{
-		    const char *value;
+		CCSSettingButtonValue button;
+		memset (&button, 0, sizeof (CCSSettingButtonValue));
+		ccsGetButton (setting, &button);
 
-		    value = gconf_value_get_string (gconfValue);
+		button.buttonModMask = getGnomeMouseButtonModifier ();
+		if (strcmp (settingName, "window_menu_button") == 0)
+		    button.button = 3;
+		else if (strcmp (pluginName, "resize") == 0)
+		    button.button = 2;
+		else
+		    button.button = 1;
 
-		    if (value)
-		    {
-			CCSSettingButtonValue button;
-			memset (&button, 0, sizeof (CCSSettingButtonValue));
-			ccsGetButton (setting, &button);
-			if (ccsStringToButtonBinding (value, &button))
-			{
-			    button.buttonModMask =
-				getGnomeMouseButtonModifier ();
-			    if (strcmp (settingName, "window_menu_button") == 0)
-				button.button = 3;
-			    else if (strcmp (pluginName, "resize") == 0)
-				button.button = 2;
-			    else
-				button.button = 1;
-
-			    ccsSetButton (setting, button);
-			    ret = TRUE;
-			}
-		    }
-		}
+		ccsSetButton (setting, button);
+		ret = TRUE;
 	    }
 	}
      	break;
@@ -1625,28 +1619,9 @@ writeIntegratedOption (CCSContext *context,
 		      ((strcmp (settingName, "window_menu_button") == 0) &&
 		       (strcmp (pluginName, "core") == 0)))
 	    {
-		char         *newValue;
-		gchar        *currentValue;
 		unsigned int modMask;
 
 		modMask = setting->value->value.asButton.buttonModMask;
-		newValue =
-		    ccsButtonBindingToString (&setting->value->value.asButton);
-		if (newValue)
-		{
-		    currentValue = gconf_client_get_string(client,
-							   optionName, &err);
-
-		    if (!err && currentValue)
-		    {
-			if (strcmp (currentValue, newValue) != 0)
-    			    gconf_client_set_string(client, optionName,
-						    newValue, NULL);
-			g_free (currentValue);
-    		    }
-		    free (newValue);
-		}
-
 		setGnomeMouseButtonModifier (modMask);
 		setButtonBindingForSetting (context, "move",
 					    "initiate_button", 1, modMask);
