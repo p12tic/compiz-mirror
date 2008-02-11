@@ -417,8 +417,8 @@ putInitiateCommon (CompDisplay     *d,
 	    pd->lastWindow = w->id;
 
     	    /* the windows location */
-	    x = w->attrib.x;
-	    y = w->attrib.y;
+	    x = w->attrib.x + pw->tx;
+	    y = w->attrib.y + pw->ty;
 
 	    /*
 	     * handle the put types
