@@ -1242,8 +1242,8 @@ static Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
         
         float x, y, z;
         
-        y = getFloatOptionNamed(option, nOption, "x", 0.0f);
-        z = getFloatOptionNamed(option, nOption, "y", 0.0f);
+        x = getFloatOptionNamed(option, nOption, "x", 0.0f);
+        y = getFloatOptionNamed(option, nOption, "y", 0.0f);
         z = getFloatOptionNamed(option, nOption, "z", 0.0f);
         
         /* Respect dx, dy, dz, first */
