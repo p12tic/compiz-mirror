@@ -712,8 +712,10 @@ putInitiate (CompDisplay     *d,
     if (typeString)
     	type = putTypeFromString (typeString);
 
-    return putInitiateCommon (d, action, state,
-			      option, nOption, type);
+    if (type == PutViewport)
+	return putToViewport (d, action, state, option, nOption);
+    else
+	return putInitiateCommon (d, action, state, option, nOption, type);
 }
 
 static Bool
@@ -748,6 +750,9 @@ putToViewport (CompDisplay     *d,
 	    i++;
 	}
     }
+
+    if (face < 0)
+	return FALSE;
 
     /* setup the options for putInitiate */
     o[0].type    = CompOptionTypeInt;
