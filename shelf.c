@@ -285,7 +285,10 @@ shelfRemoveWindowFromList (ShelfedWindowInfo *info)
 	for (run = ss->shelfedWindows; run->next; run = run->next)
 	{
 	    if (run->next == info)
+	    {
 		run->next = info->next;
+		break;
+	    }
 	}
     }
 }
