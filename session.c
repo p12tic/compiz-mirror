@@ -5,7 +5,6 @@
  * session.c
  *
  * Copyright (c) 2007 Travis Watkins <amaranth@ubuntu.com>
- * Copyright (c) 2005 Novell, Inc.
  * Copyright (c) 2006 Patrick Niklaus
  *
  *
@@ -20,14 +19,12 @@
  * GNU General Public License for more details.
  *
  * Authors: Travis Watkins <amaranth@ubuntu.com>
- *          Radek Doulik <rodo@novell.com>
  *          Patrick Niklaus
  **/
 
 #define _GNU_SOURCE
 #include <X11/Xatom.h>
 
-#include <compiz.h>
 #include <compiz-core.h>
 
 #include <string.h>
@@ -43,7 +40,6 @@
 static int corePrivateIndex;
 static int displayPrivateIndex;
 static CompMetadata sessionMetadata;
-extern char *smClientId;
 
 typedef void (* SessionWindowFunc) (CompWindow *w, char *clientId, char *name,
 				    void *user_data);
@@ -335,7 +331,7 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 }
 
 static void
-saveState (CompDisplay *d)
+saveState (const char *clientId, CompDisplay *d)
 {
     char           filename[1024];
     FILE          *outfile;
@@ -351,7 +347,7 @@ saveState (CompDisplay *d)
 	if (mkdir (filename, 0700) == 0 || errno == EEXIST)
 	{
 	    strncat (filename, "/", 1024);
-	    strncat (filename, smClientId, 1024);
+	    strncat (filename, clientId, 1024);
 	}
 	else
 	{
@@ -369,7 +365,7 @@ saveState (CompDisplay *d)
 	return;
     }
 
-    fprintf (outfile, "<compiz_session id=\"%s\">\n", smClientId);
+    fprintf (outfile, "<compiz_session id=\"%s\">\n", clientId);
 
     sessionForeachWindow (d, sessionWriteWindow, outfile);
 
@@ -510,13 +506,14 @@ loadState (CompDisplay *d, char *previousId)
 }
 
 static void
-sessionSessionSaveYourself (CompCore *c,
-			    int       saveType,
-			    int       interactStyle,
-			    Bool      shutdown,
-			    Bool      fast)
+sessionSessionSaveYourself (CompCore   *c,
+			    const char *clientId,
+			    int         saveType,
+			    int         interactStyle,
+			    Bool        shutdown,
+			    Bool        fast)
 {
-    saveState (c->displays);
+    saveState (clientId, c->displays);
 }
 
 
@@ -606,10 +603,6 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 
     for (i = 0; i < programArgc; i++)
     {
-	if (strcmp (programArgv[i], "--sm-disable") == 0)
-	{
-	    return FALSE;
-	}
 	if (strcmp (programArgv[i], "--sm-client-id") == 0)
 	{
 	    previousId = malloc (strlen (programArgv[++i]) + 1);
@@ -677,7 +670,7 @@ static CompPluginVTable sessionVTable =
 };
 
 CompPluginVTable *
-getCompPluginInfo(void)
+getCompPluginInfo20070830 (void)
 {
     return &sessionVTable;
 }
