@@ -47,6 +47,7 @@ typedef void (* SessionWindowFunc) (CompWindow *w, char *clientId, char *name,
 typedef struct _SessionCore
 {
     SessionSaveYourselfProc sessionSaveYourself;
+    ObjectAddProc           objectAdd;
 } SessionCore;
 
 typedef struct _SessionDisplay
@@ -482,12 +483,19 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	}
 
 	//remove item from list
-	SessionWindowList *prev;
-	for (prev = windowList; prev; prev = prev->next)
+	if (cur == windowList)
 	{
-	    if (prev->next == cur)
+	    windowList = cur->next;
+	}
+	else
+	{
+	    SessionWindowList *prev;
+	    for (prev = windowList; prev; prev = prev->next)
 	    {
-		prev->next = cur->next;
+		if (prev->next == cur)
+		{
+		    prev->next = cur->next;
+		}
 	    }
 	}
 	if (cur->clientId != NULL)
@@ -635,6 +643,15 @@ loadState (CompDisplay *d, char *previousId)
     xmlCleanupParser();
 }
 
+
+static void
+sessionWindowAdd (CompScreen *s,
+		  CompWindow *w)
+{
+    //just go through every window again instead of duplicating the filter
+    sessionForeachWindow (s->display, sessionReadWindow, NULL);
+}
+
 static void
 sessionSessionSaveYourself (CompCore   *c,
 			    const char *clientId,
@@ -653,6 +670,25 @@ sessionSessionSaveYourself (CompCore   *c,
     }
 }
 
+static void
+sessionObjectAdd (CompObject *parent,
+		  CompObject *object)
+{
+    static ObjectAddProc dispTab[] = {
+	(ObjectAddProc) 0, /* CoreAdd */
+	(ObjectAddProc) 0, /* DisplayAdd */
+	(ObjectAddProc) 0, /* ScreenAdd */
+	(ObjectAddProc) sessionWindowAdd
+	};
+
+    SESSION_CORE (&core);
+
+    UNWRAP (sc, &core, objectAdd);
+    (*core.objectAdd) (parent, object);
+    WRAP (sc, &core, objectAdd, sessionObjectAdd);
+	
+    DISPATCH (object, dispTab, ARRAY_SIZE (dispTab), (parent, object));
+}
 
 static int
 sessionInit (CompPlugin *p)
@@ -700,6 +736,7 @@ sessionInitCore (CompPlugin *p,
 	return FALSE;
     }
 
+    WRAP (sc, c, objectAdd, sessionObjectAdd);
     WRAP(sc, c, sessionSaveYourself, sessionSessionSaveYourself);
 
     c->base.privates[corePrivateIndex].ptr = sc;
@@ -714,6 +751,7 @@ sessionFiniCore (CompPlugin *p,
     SESSION_CORE (c);
 
     freeDisplayPrivateIndex (displayPrivateIndex);
+    UNWRAP(sc, c, objectAdd);
     UNWRAP(sc, c, sessionSaveYourself);
     free (sc);
 }
