@@ -814,7 +814,7 @@ sessionInit (CompPlugin *p)
 					 0, 0, 0, 0))
 	return FALSE;
 
-    displayPrivateIndex = allocateCorePrivateIndex ();
+    corePrivateIndex = allocateCorePrivateIndex ();
     if (corePrivateIndex < 0)
     {
 	compFiniMetadata (&sessionMetadata);
@@ -829,7 +829,7 @@ sessionInit (CompPlugin *p)
 static void
 sessionFini (CompPlugin *p)
 {
-    freeDisplayPrivateIndex(corePrivateIndex);
+    freeCorePrivateIndex(corePrivateIndex);
     compFiniMetadata (&sessionMetadata);
 }
 
