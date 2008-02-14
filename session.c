@@ -27,35 +27,23 @@
 #define _GNU_SOURCE
 #include <X11/Xatom.h>
 
+#include <compiz.h>
 #include <compiz-core.h>
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <poll.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <string.h>
+#include <errno.h>
 #include <pwd.h>
-#include <X11/SM/SMlib.h>
-#include <X11/ICE/ICElib.h>
+#include <unistd.h>
+#include <sys/stat.h>
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
-#define SM_DEBUG(x)
-
-static SmcConn		 smcConnection;
-static CompWatchFdHandle iceWatchFdHandle;
-static Bool		 connected = 0;
-static Bool		 iceConnected = 0;
-static char		 *smClientId;
-
-static void iceInit (void);
 
 static int corePrivateIndex;
 static int displayPrivateIndex;
 static CompMetadata sessionMetadata;
+extern char *smClientId;
 
 typedef void (* SessionWindowFunc) (CompWindow *w, char *clientId, char *name,
 				    void *user_data);
@@ -521,291 +509,16 @@ loadState (CompDisplay *d, char *previousId)
     xmlCleanupParser();
 }
 
-
-
-
 static void
-setCloneRestartCommands (SmcConn connection)
+sessionSessionSaveYourself (CompCore *c,
+			    int       saveType,
+			    int       interactStyle,
+			    Bool      shutdown,
+			    Bool      fast)
 {
-    char *restartv[10];
-    char *clonev[10];
-    SmProp prop1, prop2, *props[2];
-    int    i;
-
-    prop1.name = SmRestartCommand;
-    prop1.type = SmLISTofARRAY8;
-
-    i = 0;
-    restartv[i] = "compiz";
-    ++i;
-    restartv[i] = "--sm-client-id";
-    ++i;
-    restartv[i] = smClientId;
-    ++i;
-    restartv[i] = NULL;
-
-    prop1.vals = malloc (i * sizeof (SmPropValue));
-    if (!prop1.vals)
-	return;
-
-    i = 0;
-    while (restartv[i])
-    {
-        prop1.vals[i].value = restartv[i];
-	prop1.vals[i].length = strlen (restartv[i]);
-	++i;
-    }
-    prop1.num_vals = i;
-
-
-    prop2.name = SmCloneCommand;
-    prop2.type = SmLISTofARRAY8;
-
-    i = 0;
-    clonev[i] = "compiz";
-    ++i;
-    clonev[i] = NULL;
-
-    prop2.vals = malloc (i * sizeof (SmPropValue));
-    if (!prop2.vals)
-	return;
-
-    i = 0;
-    while (clonev[i])
-    {
-        prop2.vals[i].value = clonev[i];
-	prop2.vals[i].length = strlen (clonev[i]);
-	++i;
-    }
-    prop2.num_vals = i;
-
-
-    props[0] = &prop1;
-    props[1] = &prop2;
-    
-    SmcSetProperties (connection, 2, props);
+    saveState (c->displays);
 }
 
-static void
-setRestartStyle (SmcConn connection, char hint)
-{
-    SmProp	prop, *pProp;
-    SmPropValue propVal;
-
-    prop.name = SmRestartStyleHint;
-    prop.type = SmCARD8;
-    prop.num_vals = 1;
-    prop.vals = &propVal;
-    propVal.value = &hint;
-    propVal.length = 1;
-
-    pProp = &prop;
-
-    SmcSetProperties (connection, 1, &pProp);
-}
-
-static void
-saveYourselfGotProps (SmcConn   connection,
-		      SmPointer client_data,
-		      int       num_props,
-		      SmProp    **props)
-{
-    setRestartStyle (connection, SmRestartIfRunning);
-    setCloneRestartCommands (connection);
-    SmcSaveYourselfDone (connection, 1);
-}
-
-static void
-saveYourselfCallback (SmcConn	connection,
-		      SmPointer client_data,
-		      int	saveType,
-		      Bool	shutdown,
-		      int	interact_Style,
-		      Bool	fast)
-{
-    saveState ((CompDisplay*) client_data);
-
-    if (!SmcGetProperties (connection, saveYourselfGotProps, NULL))
-	SmcSaveYourselfDone (connection, 1);
-}
-
-static void
-dieCallback (SmcConn   connection,
-	     SmPointer clientData)
-{
-    closeSession ();
-    exit (0);
-}
-
-static void
-saveCompleteCallback (SmcConn	connection,
-		      SmPointer clientData)
-{
-}
-
-static void
-shutdownCancelledCallback (SmcConn   connection,
-			   SmPointer clientData)
-{
-}
-
-static void
-initSession2 (CompDisplay *d, char *smPrevClientId)
-{
-    static SmcCallbacks callbacks;
-
-    if (getenv ("SESSION_MANAGER"))
-    {
-	char errorBuffer[1024];
-
-	iceInit ();
-
-	callbacks.save_yourself.callback    = saveYourselfCallback;
-	callbacks.save_yourself.client_data = d;
-
-	callbacks.die.callback	  = dieCallback;
-	callbacks.die.client_data = NULL;
-
-	callbacks.save_complete.callback    = saveCompleteCallback;
-	callbacks.save_complete.client_data = NULL;
-
-	callbacks.shutdown_cancelled.callback	 = shutdownCancelledCallback;
-	callbacks.shutdown_cancelled.client_data = NULL;
-
-	smcConnection = SmcOpenConnection (NULL,
-					   NULL,
-					   SmProtoMajor,
-					   SmProtoMinor,
-					   SmcSaveYourselfProcMask |
-					   SmcDieProcMask	   |
-					   SmcSaveCompleteProcMask |
-					   SmcShutdownCancelledProcMask,
-					   &callbacks,
-					   smPrevClientId,
-					   &smClientId,
-					   sizeof (errorBuffer),
-					   errorBuffer);
-	if (!smcConnection)
-	    compLogMessage (NULL, "session", CompLogLevelWarn,
-			    "SmcOpenConnection failed: %s",
-			    errorBuffer);
-	else
-	    connected = TRUE;
-    }
-}
-
-void
-closeSession (void)
-{
-    if (connected)
-    {
-	setRestartStyle (smcConnection, SmRestartIfRunning);
-
-	if (SmcCloseConnection (smcConnection, 0, NULL) != SmcConnectionInUse)
-	    connected = FALSE;
-	if (smClientId) {
-	    free (smClientId);
-	    smClientId = NULL;
-	}
-    }
-}
-
-/* ice connection handling taken and updated from gnome-ice.c
- * original gnome-ice.c code written by Tom Tromey <tromey@cygnus.com>
- */
-
-/* This is called when data is available on an ICE connection. */
-static Bool
-iceProcessMessages (void *data)
-{
-    IceConn		     connection = (IceConn) data;
-    IceProcessMessagesStatus status;
-
-    SM_DEBUG (printf ("ICE connection process messages\n"));
-
-    status = IceProcessMessages (connection, NULL, NULL);
-
-    if (status == IceProcessMessagesIOError)
-    {
-	SM_DEBUG (printf ("ICE connection process messages"
-			  " - error => shutting down the connection\n"));
-
-	IceSetShutdownNegotiation (connection, False);
-	IceCloseConnection (connection);
-    }
-
-    return 1;
-}
-
-/* This is called when a new ICE connection is made.  It arranges for
-   the ICE connection to be handled via the event loop.  */
-static void
-iceNewConnection (IceConn    connection,
-		  IcePointer clientData,
-		  Bool	     opening,
-		  IcePointer *watchData)
-{
-    if (opening)
-    {
-	SM_DEBUG (printf ("ICE connection opening\n"));
-
-	/* Make sure we don't pass on these file descriptors to any
-	   exec'ed children */
-	fcntl (IceConnectionNumber (connection), F_SETFD,
-	       fcntl (IceConnectionNumber (connection),
-		      F_GETFD,0) | FD_CLOEXEC);
-
-	iceWatchFdHandle = compAddWatchFd (IceConnectionNumber (connection),
-					   POLLIN | POLLPRI | POLLHUP | POLLERR,
-					   iceProcessMessages, connection);
-
-	iceConnected = 1;
-    }
-    else
-    {
-	SM_DEBUG (printf ("ICE connection closing\n"));
-
-	if (iceConnected)
-	{
-	    compRemoveWatchFd (iceWatchFdHandle);
-
-	    iceWatchFdHandle = 0;
-	    iceConnected = 0;
-	}
-    }
-}
-
-static IceIOErrorHandler oldIceHandler;
-
-static void
-iceErrorHandler (IceConn connection)
-{
-    if (oldIceHandler)
-	(*oldIceHandler) (connection);
-}
-
-/* We call any handler installed before (or after) iceInit but
-   avoid calling the default libICE handler which does an exit() */
-static void
-iceInit (void)
-{
-    static Bool iceInitialized = 0;
-
-    if (!iceInitialized)
-    {
-	IceIOErrorHandler defaultIceHandler;
-
-	oldIceHandler	  = IceSetIOErrorHandler (NULL);
-	defaultIceHandler = IceSetIOErrorHandler (iceErrorHandler);
-
-	if (oldIceHandler == defaultIceHandler)
-	    oldIceHandler = NULL;
-
-	IceAddConnectionWatch (iceNewConnection, NULL);
-
-	iceInitialized = 1;
-    }
-}
 
 static int
 sessionInit (CompPlugin *p)
@@ -853,6 +566,8 @@ sessionInitCore (CompPlugin *p,
 	return FALSE;
     }
 
+    WRAP(sc, c, sessionSaveYourself, sessionSessionSaveYourself);
+
     c->base.privates[corePrivateIndex].ptr = sc;
 
     return TRUE;
@@ -865,6 +580,7 @@ sessionFiniCore (CompPlugin *p,
     SESSION_CORE (c);
 
     freeDisplayPrivateIndex (displayPrivateIndex);
+    UNWRAP(sc, c, sessionSaveYourself);
     free (sc);
 }
 
@@ -902,8 +618,6 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 	}
     }
 
-    initSession2 (d, previousId);
-
     if (previousId != NULL)
     {
 	loadState (d, previousId);
@@ -917,7 +631,6 @@ static void
 sessionFiniDisplay (CompPlugin *p, CompDisplay *d)
 {
     SESSION_DISPLAY (d);
-    closeSession ();
     free (sd);
 }
 
@@ -963,7 +676,8 @@ static CompPluginVTable sessionVTable =
     0
 };
 
-CompPluginVTable * getCompPluginInfo20070830(void)
+CompPluginVTable *
+getCompPluginInfo(void)
 {
     return &sessionVTable;
 }
