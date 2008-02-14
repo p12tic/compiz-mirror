@@ -43,7 +43,6 @@
 static int corePrivateIndex;
 static int displayPrivateIndex;
 static CompMetadata sessionMetadata;
-extern char *smClientId;
 
 typedef void (* SessionWindowFunc) (CompWindow *w, char *clientId, char *name,
 				    void *user_data);
@@ -335,7 +334,8 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 }
 
 static void
-saveState (CompDisplay *d)
+saveState (CompDisplay *d,
+	   const char  *smClientId)
 {
     char           filename[1024];
     FILE          *outfile;
@@ -510,11 +510,12 @@ loadState (CompDisplay *d, char *previousId)
 }
 
 static void
-sessionSessionSaveYourself (CompCore *c,
-			    int       saveType,
-			    int       interactStyle,
-			    Bool      shutdown,
-			    Bool      fast)
+sessionSessionSaveYourself (CompCore   *c,
+			    const char *smClientId,
+			    int        saveType,
+			    int        interactStyle,
+			    Bool       shutdown,
+			    Bool       fast)
 {
     CompObject *object;
 
@@ -522,7 +523,7 @@ sessionSessionSaveYourself (CompCore *c,
     if (object)
     {
 	CompDisplay *d = (CompDisplay *) object;
-	saveState (d);
+	saveState (d, smClientId);
     }
 }
 
