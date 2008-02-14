@@ -96,7 +96,7 @@ DEFINES   = -DIMAGEDIR=\"$(IMAGEDIR)\" -DDATADIR=\"$(DATADIR)\"
 
 POFILEDIR = $(shell if [ -n "$(PODIR)" ]; then $(ECHO) $(PODIR); else $(ECHO) ./po;fi )
 
-COMPIZ_HEADERS = compiz.h compiz-core.h
+COMPIZ_HEADERS = compiz.h
 COMPIZ_INC = $(shell pkg-config --variable=includedir compiz)/compiz/
 
 is-bcop-target  := $(shell if [ -e $(PLUGIN).xml.in ]; then cat $(PLUGIN).xml.in | grep "useBcop=\"true\""; \
