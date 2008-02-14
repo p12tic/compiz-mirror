@@ -680,7 +680,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     FREEWINS_SCREEN(s);
     FREEWINS_DISPLAY(s->display);
 
-    if(fws->rotatedWindows > 0)
+    //if(fws->rotatedWindows > 0)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     UNWRAP(fws, s, paintOutput);
