@@ -331,7 +331,8 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 }
 
 static void
-saveState (const char *clientId, CompDisplay *d)
+saveState (const char *clientId,
+	   CompDisplay *d)
 {
     char           filename[1024];
     FILE          *outfile;
@@ -513,7 +514,14 @@ sessionSessionSaveYourself (CompCore   *c,
 			    Bool        shutdown,
 			    Bool        fast)
 {
-    saveState (clientId, c->displays);
+    CompObject *object;
+
+    object = compObjectFind (&c->base, COMP_OBJECT_TYPE_DISPLAY, NULL);
+    if (object)
+    {
+	CompDisplay *d = (CompDisplay *) object;
+	saveState (clientId, d);
+    }
 }
 
 
@@ -603,15 +611,22 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 
     for (i = 0; i < programArgc; i++)
     {
-	if (strcmp (programArgv[i], "--sm-client-id") == 0)
+	if (strcmp (programArgv[i], "--sm-disable") == 0)
 	{
-	    previousId = malloc (strlen (programArgv[++i]) + 1);
-	    previousId = strdup (programArgv[i]);
-	    break;
+	    if (previousId)
+	    {
+		free (previousId);
+		previousId = NULL;
+		break;
+	    }
+	}
+	else if (strcmp (programArgv[i], "--sm-client-id") == 0)
+	{
+	    previousId = strdup (programArgv[i + 1]);
 	}
     }
 
-    if (previousId != NULL)
+    if (previousId)
     {
 	loadState (d, previousId);
 	free (previousId);
