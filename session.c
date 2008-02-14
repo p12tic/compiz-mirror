@@ -68,6 +68,41 @@ typedef struct _SessionDisplay
 #define SESSION_DISPLAY(d)                  \
     SessionDisplay *sd = GET_SESSION_DISPLAY (d)
 
+//list stuff
+typedef struct _SessionWindowList SessionWindowList;
+struct _SessionWindowList
+{
+    SessionWindowList *next;
+
+    char *clientId;
+    char *name;
+    int   x;
+    int   y;
+    int   width;
+    int   height;
+    int   shaded;
+    int   sticky;
+    int   minimized;
+    int   maxvert;
+    int   maxhoriz;
+    int   workspace;
+};
+static SessionWindowList *windowList;
+
+static void
+freeWindowList (SessionWindowList *item)
+{
+    if (item->next != NULL)
+    {
+	freeWindowList (item->next);
+    }
+    free (item->clientId);
+    free (item->name);
+    free (item);
+}
+
+
+
 static char*
 sessionGetUtf8Property (CompDisplay *d,
 			Window      id,
@@ -234,7 +269,7 @@ sessionGetIntForProp (xmlNodePtr node, char *prop)
 	xmlFree (temp);
 	return num;
     }
-    return 0;
+    return -1;
 }
 
 static void
@@ -377,98 +412,187 @@ saveState (const char *clientId,
 static void
 sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 {
-    xmlNodePtr     cur;
-    xmlChar       *newName;
-    xmlChar       *newClientId;
-    XWindowChanges xwc;
-    Bool           foundWindow = FALSE;
-    unsigned int   xwcm = 0;
-    xmlNodePtr     root = (xmlNodePtr) user_data;
+    XWindowChanges     xwc;
+    Bool               foundWindow = FALSE;
+    unsigned int       xwcm = 0;
+    SessionWindowList *cur;
 
     memset (&xwc, 0, sizeof (xwc));
 
     if (clientId == NULL)
 	return;
 
+    for (cur = windowList; cur; cur = cur->next)
+    {
+	if (strcmp (clientId, cur->clientId) == 0)
+	{
+	    foundWindow = TRUE;
+	    break;
+	}
+	if (strcmp (name, cur->name) == 0)
+	{
+	    foundWindow = TRUE;
+	    break;
+	}
+    }
+
+    if (foundWindow)
+    {
+	if (cur->x != 0 && cur->y != 0 && cur->width != 0 && cur->height != 0)
+	{
+	    xwcm = CWX | CWY | CWWidth | CWHeight;
+
+	    xwc.x = cur->x;
+	    xwc.y = cur->y;
+	    xwc.width = cur->width;
+	    xwc.height = cur->height;
+
+	    configureXWindow (w, xwcm, &xwc);
+	}
+	if (cur->shaded)
+	{
+	    changeWindowState (w, w->state | CompWindowStateShadedMask);
+	}
+	if (cur->sticky)
+	{
+	    changeWindowState (w, w->state | CompWindowStateStickyMask);
+	}
+	if (cur->minimized)
+	{
+	    minimizeWindow (w);
+	}
+	if (cur->maxvert != 0 && cur->maxhoriz != 0)
+	{
+	    int state = 0;
+	    if (cur->maxvert != 0)
+	    {
+		state |= CompWindowStateMaximizedVertMask;
+	    }
+	    if (cur->maxhoriz != 0)
+	    {
+		state |= CompWindowStateMaximizedHorzMask;
+	    }
+	    maximizeWindow (w, state);
+	}
+	if (cur->workspace != -1)
+	{
+	    setDesktopForWindow (w, cur->workspace);
+	}
+
+	//remove item from list
+	SessionWindowList *prev;
+	int i = 0;
+	for (prev = windowList; prev; prev = prev->next)
+	{
+	    if (prev->next == cur)
+	    {
+		prev->next = cur->next;
+	    }
+	    i++;
+	}
+	printf ("DEBUG - %d windows in list\n", i);
+	free (cur->clientId);
+	free (cur->name);
+	free (cur);
+    }
+}
+
+static void
+readState (xmlNodePtr root)
+{
+    xmlNodePtr         cur;
+    xmlChar           *newClientId;
+    xmlChar           *newName;
+    SessionWindowList *current_window;
+    int                first = 1;
+
     for (cur = root->xmlChildrenNode; cur; cur = cur->next)
     {
+	SessionWindowList *item = malloc (sizeof (SessionWindowList));
+	item->next = NULL;
+	item->clientId = item->name = NULL;
+	item->x = item->y = item->width = item->height = 0;
+	item->shaded = item->sticky = item->minimized = 0;
+	item->maxvert = item->maxhoriz = item->workspace = 0;
+
+
 	if (xmlStrcmp (cur->name, BAD_CAST "window") == 0)
 	{
 	    newClientId = xmlGetProp (cur, BAD_CAST "id");
 	    if (newClientId != NULL)
 	    {
-		if (strcmp (clientId, (char*) newClientId) == 0)
-		{
-		    foundWindow = TRUE;
-		    break;
-		}
+		item->clientId = strdup ((char*) newClientId);
 		xmlFree (newClientId);
 	    }
 
 	    newName = xmlGetProp (cur, BAD_CAST "title");
 	    if (newName != NULL)
 	    {
-		if (strcmp (name, (char*) newName) == 0)
-		{
-		    foundWindow = TRUE;
-		    break;
-		}
+		item->name = strdup ((char*) newName);
 		xmlFree (newName);
 	    }
 	}
-    }
 
-    if (foundWindow)
-    {
-	for (cur = cur->xmlChildrenNode; cur; cur = cur->next)
+	if (item->clientId == NULL || item->name == NULL)
 	{
-	    if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
-	    {
-		xwcm = CWX | CWY | CWWidth | CWHeight;
+	    free (item);
+	    continue;
+	}
 
-		xwc.x = sessionGetIntForProp (cur, "x");
-		xwc.y = sessionGetIntForProp (cur, "y");
-		xwc.width = sessionGetIntForProp (cur, "width");
-		xwc.height = sessionGetIntForProp (cur, "height");
+	if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
+	{
+	    item->x = sessionGetIntForProp (cur, "x");
+	    item->y = sessionGetIntForProp (cur, "y");
+	    item->width = sessionGetIntForProp (cur, "width");
+	    item->height = sessionGetIntForProp (cur, "height");
+	}
 
-		configureXWindow (w, xwcm, &xwc);
-	    }
-	    if (xmlStrcmp (cur->name, BAD_CAST "shaded") == 0)
+	if (xmlStrcmp (cur->name, BAD_CAST "shaded") == 0)
+	{
+	    item->shaded = 1;
+	}
+	if (xmlStrcmp (cur->name, BAD_CAST "sticky") == 0)
+	{
+	    item->sticky = 1;
+	}
+	if (xmlStrcmp (cur->name, BAD_CAST "minimized") == 0)
+	{
+	    item->minimized = 1;
+	}
+
+	if (xmlStrcmp (cur->name, BAD_CAST "maximized") == 0)
+	{
+	    xmlChar *vert, *horiz;
+	    vert = xmlGetProp (cur, BAD_CAST "vert");
+	    if (vert != NULL)
 	    {
-		changeWindowState (w, w->state | CompWindowStateShadedMask);
+		item->maxvert = 1;
+		xmlFree (vert);
 	    }
-	    if (xmlStrcmp (cur->name, BAD_CAST "sticky") == 0)
+	    horiz = xmlGetProp (cur, BAD_CAST "horiz");
+	    if (horiz != NULL)
 	    {
-		changeWindowState (w, w->state | CompWindowStateStickyMask);
+		item->maxhoriz = 1;
+		xmlFree (horiz);
 	    }
-	    if (xmlStrcmp (cur->name, BAD_CAST "minimized") == 0)
-	    {
-		minimizeWindow (w);
-	    }
-	    if (xmlStrcmp (cur->name, BAD_CAST "maximized") == 0)
-	    {
-		int state = 0;
-		xmlChar *vert, *horiz;
-		vert = xmlGetProp (cur, BAD_CAST "vert");
-		if (vert != NULL)
-		{
-		    state |= CompWindowStateMaximizedVertMask;
-		    xmlFree (vert);
-		}
-		horiz = xmlGetProp (cur, BAD_CAST "horiz");
-		if (horiz != NULL)
-		{
-		    state |= CompWindowStateMaximizedHorzMask;
-		    xmlFree (horiz);
-		}
-		maximizeWindow (w, state);
-	    }
-	    if (xmlStrcmp (cur->name, BAD_CAST "workspace") == 0)
-	    {
-		int desktop = sessionGetIntForProp (cur, "index");
-		if (desktop != -1)
-		    setDesktopForWindow (w, desktop);
-	    }
+	}
+
+	if (xmlStrcmp (cur->name, BAD_CAST "workspace") == 0)
+	{
+	    int desktop = sessionGetIntForProp (cur, "index");
+	    item->workspace = desktop;
+	}
+
+	if (first)
+	{
+	    windowList = item;
+	    current_window = item;
+	    first = 0;
+	}
+	else
+	{
+	    current_window->next = item;
+	    current_window = item;
 	}
     }
 }
@@ -476,9 +600,9 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 static void
 loadState (CompDisplay *d, char *previousId)
 {
-    xmlDocPtr      doc;
-    xmlNodePtr     root;
-    char           filename[1024];
+    xmlDocPtr          doc;
+    xmlNodePtr         root;
+    char               filename[1024];
     struct passwd *p = getpwuid(geteuid());
 
     //setup filename and create directories as needed
@@ -499,7 +623,11 @@ loadState (CompDisplay *d, char *previousId)
     if (xmlStrcmp (root->name, BAD_CAST "compiz_session") != 0)
 	goto out;
 
-    sessionForeachWindow (d, sessionReadWindow, root);
+    readState (root);
+
+    //load state for windows that appeared before compiz
+    sessionForeachWindow (d, sessionReadWindow, NULL);
+
 
    out:
     xmlFreeDoc(doc);
@@ -639,6 +767,7 @@ static void
 sessionFiniDisplay (CompPlugin *p, CompDisplay *d)
 {
     SESSION_DISPLAY (d);
+    freeWindowList (windowList);
     free (sd);
 }
 
