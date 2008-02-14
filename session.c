@@ -616,17 +616,20 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
     {
 	if (strcmp (programArgv[i], "--sm-disable") == 0)
 	{
-	    return FALSE;
+	    if (previousId)
+	    {
+		free (previousId);
+		previousId = NULL;
+		break;
+	    }
 	}
-	if (strcmp (programArgv[i], "--sm-client-id") == 0)
+	else if (strcmp (programArgv[i], "--sm-client-id") == 0)
 	{
-	    previousId = malloc (strlen (programArgv[++i]) + 1);
-	    previousId = strdup (programArgv[i]);
-	    break;
+	    previousId = strdup (programArgv[i + 1]);
 	}
     }
 
-    if (previousId != NULL)
+    if (previousId)
     {
 	loadState (d, previousId);
 	free (previousId);
