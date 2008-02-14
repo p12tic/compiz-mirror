@@ -426,12 +426,12 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 
     for (cur = windowList; cur; cur = cur->next)
     {
-	if (strcmp (clientId, cur->clientId) == 0)
+	if (cur->clientId != NULL && strcmp (clientId, cur->clientId) == 0)
 	{
 	    foundWindow = TRUE;
 	    break;
 	}
-	if (strcmp (name, cur->name) == 0)
+	if (cur->name != NULL && strcmp (name, cur->name) == 0)
 	{
 	    foundWindow = TRUE;
 	    break;
