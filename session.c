@@ -516,7 +516,14 @@ sessionSessionSaveYourself (CompCore *c,
 			    Bool      shutdown,
 			    Bool      fast)
 {
-    saveState (c->displays);
+    CompObject *object;
+
+    object = compObjectFind (&c->base, COMP_OBJECT_TYPE_DISPLAY, NULL);
+    if (object)
+    {
+	CompDisplay *d = (CompDisplay *) object;
+	saveState (d);
+    }
 }
 
 
@@ -677,7 +684,7 @@ static CompPluginVTable sessionVTable =
 };
 
 CompPluginVTable *
-getCompPluginInfo(void)
+getCompPluginInfo20070830(void)
 {
     return &sessionVTable;
 }
