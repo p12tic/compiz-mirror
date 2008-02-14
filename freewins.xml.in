@@ -132,7 +132,12 @@
 	<screen>
 	<group>
 	<_short>Free Transformation</_short>
-		    <option type="int" name="reset_time">
+	    <option name="shape_window_types" type="match">
+          <_short>Shaped Window Types</_short>
+          <_long>Window types that should be Shaped. Disable problematic windows here</_long>
+          <default>(Toolbar | Utility | Dialog | ModalDialog | Normal)</default>
+        </option>
+		<option type="int" name="reset_time">
 			<_short>Reset animation time</_short>
 			<_long>How long the reset animation should last</_long>
 			<default>75</default>

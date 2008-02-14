@@ -201,6 +201,21 @@ typedef struct _FWWindow{
 int displayPrivateIndex;
 static CompMetadata freewinsMetadata;
 
+static Bool FWCanShape (CompWindow *w)
+{
+
+    if (!freewinsGetShapeInput (w->screen))
+    return FALSE;
+    
+    if (!w->screen->display->shapeExtension)
+    return FALSE;
+    
+    if (!matchEval (freewinsGetShapeWindowTypes (w->screen), w))
+    return FALSE;
+    
+    return TRUE;
+}
+
 /* Input Shaper */
 static void FWShapeInput (CompWindow *w)
 {
@@ -478,7 +493,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
 	case ButtonRelease:
 	    if(fwd->grabWindow){
-	    if (freewinsGetShapeInput (fwd->grabWindow->screen) && d->shapeExtension)
+	    if (FWCanShape (fwd->grabWindow))
 	        FWShapeInput (fwd->grabWindow);
 		for(s = d->screens; s; s = s->next){
 		    FREEWINS_SCREEN(s);
@@ -515,7 +530,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		        {
 		            FREEWINS_WINDOW (w);
 
-		            if (freewinsGetShapeInput (w->screen) && d->shapeExtension && (fww->scaleX != 1.0f || fww->scaleY != 1.0f))
+		            if (FWCanShape (w) && (fww->scaleX != 1.0f || fww->scaleY != 1.0f))
 		            {
 		                // Reset the window back to normal, scale-wise anyways
 		                fww->scaleX = 1.0f;
@@ -576,7 +591,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         ScaleX = fww->scaleX;
         ScaleY = fww->scaleY;
     }
-    if (!freewinsGetAllowNegative (w->screen) || (freewinsGetShapeInput (w->screen) && w->screen->display->shapeExtension))
+    if (!freewinsGetAllowNegative (w->screen) || (FWCanShape (w)))
 	{
 	    float minScale = freewinsGetMinScale (w->screen);
 		if (ScaleX < minScale)
@@ -633,7 +648,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             fww->doAnimate = FALSE;
             fww->aTimeRemaining = freewinsGetResetTime (w->screen);
             fww->cTimeRemaining = freewinsGetResetTime (w->screen);
-            if (freewinsGetShapeInput (w->screen) && w->screen->display->shapeExtension)
+            if (FWCanShape (w))
                 FWShapeInput (w);
         }
     }
@@ -759,7 +774,7 @@ static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh){
     fww->midX += dw;
     fww->midY += dh;
     
-    if (w->screen->display->shapeExtension && freewinsGetShapeInput (w->screen))
+    if (FWCanShape (w))
         FWShapeInput (w);
 
     UNWRAP(fws, w->screen, windowResizeNotify);
@@ -1145,7 +1160,7 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
     
     damageScreen (w->screen); // Smoothen Painting
     
-    if (freewinsGetShapeInput (w->screen) && d->shapeExtension)
+    if (FWCanShape (w))
         FWShapeInput (w);
     
     return TRUE;
@@ -1182,7 +1197,7 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
     
     fww->doAnimate = TRUE; // Start animating
     
-    if (freewinsGetShapeInput (w->screen) && d->shapeExtension)
+    if (FWCanShape (w))
         FWShapeInput (w);
     
     damageScreen (w->screen); // Smoothen Painting
@@ -1283,6 +1298,9 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
     {
         return FALSE;
     }
+    
+    if (FWCanShape (w))
+        FWShapeInput (w);
     
     damageScreen(w->screen);
 
@@ -1398,7 +1416,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
     
     // Shape window back to normal
-    if (w->screen->display->shapeExtension && freewinsGetShapeInput (w->screen))
+    if (FWCanShape (w))
         FWShapeInput (w);
 
     return TRUE;
@@ -1413,7 +1431,7 @@ static void freewinsFiniWindow(CompPlugin *p, CompWindow *w){
     fww->scaleX = 1.0f;
     fww->scaleY = 1.0f;
     
-    if (w->screen->display->shapeExtension)
+    if (FWCanShape (w))
         FWShapeInput (w);
 
     if(fwd->grabWindow == w){
