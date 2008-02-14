@@ -87,7 +87,7 @@ struct _SessionWindowList
     int   maxhoriz;
     int   workspace;
 };
-static SessionWindowList *windowList;
+static SessionWindowList *windowList = NULL;
 
 static void
 freeWindowList (SessionWindowList *item)
@@ -96,8 +96,10 @@ freeWindowList (SessionWindowList *item)
     {
 	freeWindowList (item->next);
     }
-    free (item->clientId);
-    free (item->name);
+    if (item->clientId != NULL)
+	free (item->clientId);
+    if (item->name != NULL)
+	free (item->name);
     free (item);
 }
 
@@ -481,18 +483,17 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 
 	//remove item from list
 	SessionWindowList *prev;
-	int i = 0;
 	for (prev = windowList; prev; prev = prev->next)
 	{
 	    if (prev->next == cur)
 	    {
 		prev->next = cur->next;
 	    }
-	    i++;
 	}
-	printf ("DEBUG - %d windows in list\n", i);
-	free (cur->clientId);
-	free (cur->name);
+	if (cur->clientId != NULL)
+	    free (cur->clientId);
+	if (cur->name != NULL)
+	    free (cur->name);
 	free (cur);
     }
 }
@@ -533,7 +534,7 @@ readState (xmlNodePtr root)
 	    }
 	}
 
-	if (item->clientId == NULL || item->name == NULL)
+	if (item->clientId == NULL && item->name == NULL)
 	{
 	    free (item);
 	    continue;
@@ -767,7 +768,9 @@ static void
 sessionFiniDisplay (CompPlugin *p, CompDisplay *d)
 {
     SESSION_DISPLAY (d);
-    freeWindowList (windowList);
+
+    if (windowList != NULL)
+	freeWindowList (windowList);
     free (sd);
 }
 
