@@ -380,10 +380,8 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	fprintf (outfile, "    <shaded/>\n");
 
     //save sticky
-    if (w->state & CompWindowStateStickyMask ||
-	w->type & CompWindowTypeDesktopMask ||
-	w->type & CompWindowTypeDockMask)
-	    fprintf (outfile, "    <sticky/>\n");
+    if (w->state & CompWindowStateStickyMask)
+	fprintf (outfile, "    <sticky/>\n");
 
     //save minimized
     if (w->minimized)
