@@ -450,7 +450,10 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	    xwc.width = cur->geometry.width;
 	    xwc.height = cur->geometry.height;
 
-	    configureXWindow (w, xwcm, &xwc);
+	    /* normally it's better to use configureXWindow, but we have to
+	       use moveResizeWindow here so that the place plugin doesn't
+	       re-place it */
+	    moveResizeWindow (w, &xwc, xwcm, 0);
 	}
 
 	if (cur->minimized)
