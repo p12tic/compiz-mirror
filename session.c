@@ -744,6 +744,7 @@ sessionFiniCore (CompPlugin *p,
     {
 	next = run->next;
 	sessionFreeWindowListItem (run);
+	run = next;
     }
 
     free (sc);
