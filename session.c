@@ -41,9 +41,6 @@ static int corePrivateIndex;
 static int displayPrivateIndex;
 static CompMetadata sessionMetadata;
 
-typedef void (* SessionWindowFunc) (CompWindow *w, char *clientId, char *name,
-				    void *user_data);
-
 typedef struct _SessionCore
 {
     SessionSaveYourselfProc sessionSaveYourself;
@@ -317,37 +314,8 @@ sessionGetWindowClientId (CompWindow *w)
 }
 
 static void
-sessionForeachWindow (CompDisplay *d, SessionWindowFunc func, void *user_data)
+sessionWriteWindow (CompWindow *w, char *clientId, char *name, FILE *outfile)
 {
-    CompScreen *s;
-    CompWindow *w;
-    char       *clientId = NULL;
-    char       *name = NULL;
-
-    for (s = d->screens; s; s = s->next)
-    {
-	for (w = s->windows; w; w = w->next)
-	{
-	    clientId = sessionGetWindowClientId (w);
-
-	    if (!clientId)
-		continue;
-
-	    name = sessionGetWindowName (d, w->id);
-
-	    (* func) (w, clientId, name, user_data);
-
-	    if (name)
-		free (name);
-	    free (clientId);
-	}
-    }
-}
-
-static void
-sessionWriteWindow (CompWindow *w, char *clientId, char *name, void *user_data)
-{
-    FILE *outfile = (FILE*) user_data;
     int x, y, width, height;
 
     fprintf (outfile, "  <window id=\"%s\" title=\"%s\" class=\"%s\" name=\"%s\">\n",
@@ -414,6 +382,7 @@ saveState (const char *clientId,
     char           filename[1024];
     FILE          *outfile;
     struct passwd *p = getpwuid(geteuid());
+    CompScreen    *s;
 
     //setup filename and create directories as needed
     memset (filename, '\0', 1024);
@@ -445,14 +414,34 @@ saveState (const char *clientId,
 
     fprintf (outfile, "<compiz_session id=\"%s\">\n", clientId);
 
-    sessionForeachWindow (d, sessionWriteWindow, outfile);
+    /* write out all windows on this display */
+    for (s = d->screens; s; s = s->next)
+    {
+	CompWindow *w;
+
+	for (w = s->windows; w; w = w->next)
+	{
+	    char *windowClientId, *name;
+
+	    windowClientId = sessionGetWindowClientId (w);
+	    if (!windowClientId)
+		continue;
+
+	    name = sessionGetWindowName (d, w->id);
+	    sessionWriteWindow (w, windowClientId, name, outfile);
+
+	    if (name)
+		free (name);
+	    free (windowClientId);
+	}
+    }
 
     fprintf (outfile, "</compiz_session>\n");
     fclose (outfile);
 }
 
 static void
-sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
+sessionReadWindow (CompWindow *w, char *clientId, char *name)
 {
     XWindowChanges     xwc;
     Bool               foundWindow = FALSE;
@@ -621,10 +610,6 @@ loadState (CompDisplay *d, char *previousId)
 
     readState (root);
 
-    //load state for windows that appeared before compiz
-    sessionForeachWindow (d, sessionReadWindow, NULL);
-
-
    out:
     xmlFreeDoc(doc);
     xmlCleanupParser();
@@ -643,7 +628,7 @@ sessionWindowAdd (CompScreen *s,
 	char *name;
 
        	name = sessionGetWindowName (s->display, w->id);
-	sessionReadWindow (w, clientId, name, NULL);
+	sessionReadWindow (w, clientId, name);
 
 	if (name)
 	    free (name);
