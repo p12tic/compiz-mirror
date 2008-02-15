@@ -299,6 +299,10 @@ sessionForeachWindow (CompDisplay *d, SessionWindowFunc func, void *user_data)
 	    name = sessionGetWindowName (d, w->id);
 
 	    (* func) (w, clientId, name, user_data);
+
+	    if (name)
+		free (name);
+	    free (clientId);
 	}
     }
 }
