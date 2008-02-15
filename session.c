@@ -356,6 +356,8 @@ sessionWriteWindow (CompWindow *w,
 	fprintf (outfile, "    <shaded/>\n");
     if (w->state & CompWindowStateStickyMask)
 	fprintf (outfile, "    <sticky/>\n");
+    if (w->state & CompWindowStateFullscreenMask)
+	fprintf (outfile, "    <fullscreen/>\n");
     if (w->minimized)
 	fprintf (outfile, "    <minimized/>\n");
     if (w->state & MAXIMIZE_STATE)
@@ -485,6 +487,8 @@ sessionReadWindow (CompWindow *w,
 	if (cur->state)
 	{
 	    changeWindowState (w, w->state | cur->state);
+	    recalcWindowType (w);
+	    recalcWindowActions (w);
 	    updateWindowAttributes (w, CompStackingUpdateModeNone);
 	}
 
@@ -547,6 +551,8 @@ readState (xmlNodePtr root)
 		item->state |= CompWindowStateShadedMask;
 	    if (xmlStrcmp (attrib->name, BAD_CAST "sticky") == 0)
 		item->state |= CompWindowStateStickyMask;
+	    if (xmlStrcmp (attrib->name, BAD_CAST "fullscreen") == 0)
+		item->state |= CompWindowStateFullscreenMask;
 	    if (xmlStrcmp (attrib->name, BAD_CAST "minimized") == 0)
 		item->minimized = TRUE;
 
