@@ -486,6 +486,8 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	    setDesktopForWindow (w, cur->workspace);
 	}
 
+	updateWindowAttributes (w, CompStackingUpdateModeNone);
+
 	//remove item from list
 	if (cur == windowList)
 	{
