@@ -70,24 +70,20 @@ typedef struct _SessionDisplay
     SessionDisplay *sd = GET_SESSION_DISPLAY (d)
 
 //list stuff
-typedef struct _SessionWindowList SessionWindowList;
-struct _SessionWindowList
+typedef struct _SessionWindowList
 {
-    SessionWindowList *next;
+    struct _SessionWindowList *next;
 
     char *clientId;
     char *name;
-    int   x;
-    int   y;
-    int   width;
-    int   height;
-    int   shaded;
-    int   sticky;
-    int   minimized;
-    int   maxvert;
-    int   maxhoriz;
-    int   workspace;
-};
+
+    XRectangle   geometry;
+    Bool         geometryValid;
+    unsigned int state;
+    Bool         minimized;
+    int          workspace;
+} SessionWindowList;
+
 static SessionWindowList *windowList = NULL;
 
 static void
@@ -445,48 +441,29 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 
     if (foundWindow)
     {
-	if (cur->x != 0 && cur->y != 0 && cur->width != 0 && cur->height != 0)
+	if (cur->geometryValid)
 	{
 	    xwcm = CWX | CWY | CWWidth | CWHeight;
 
-	    xwc.x = cur->x;
-	    xwc.y = cur->y;
-	    xwc.width = cur->width;
-	    xwc.height = cur->height;
+	    xwc.x = cur->geometry.x;
+	    xwc.y = cur->geometry.y;
+	    xwc.width = cur->geometry.width;
+	    xwc.height = cur->geometry.height;
 
 	    configureXWindow (w, xwcm, &xwc);
 	}
-	if (cur->shaded)
-	{
-	    changeWindowState (w, w->state | CompWindowStateShadedMask);
-	}
-	if (cur->sticky)
-	{
-	    changeWindowState (w, w->state | CompWindowStateStickyMask);
-	}
-	if (cur->minimized)
-	{
-	    minimizeWindow (w);
-	}
-	if (cur->maxvert != 0 && cur->maxhoriz != 0)
-	{
-	    int state = 0;
-	    if (cur->maxvert != 0)
-	    {
-		state |= CompWindowStateMaximizedVertMask;
-	    }
-	    if (cur->maxhoriz != 0)
-	    {
-		state |= CompWindowStateMaximizedHorzMask;
-	    }
-	    maximizeWindow (w, state);
-	}
-	if (cur->workspace != -1)
-	{
-	    setDesktopForWindow (w, cur->workspace);
-	}
 
-	updateWindowAttributes (w, CompStackingUpdateModeNone);
+	if (cur->minimized)
+	    minimizeWindow (w);
+
+	if (cur->workspace != -1)
+	    setDesktopForWindow (w, cur->workspace);
+
+	if (cur->state)
+	{
+	    changeWindowState (w, w->state | cur->state);
+	    updateWindowAttributes (w, CompStackingUpdateModeNone);
+	}
 
 	//remove item from list
 	if (cur == windowList)
@@ -523,12 +500,8 @@ readState (xmlNodePtr root)
 
     for (cur = root->xmlChildrenNode; cur; cur = cur->next)
     {
-	SessionWindowList *item = malloc (sizeof (SessionWindowList));
-	item->next = NULL;
-	item->clientId = item->name = NULL;
-	item->x = item->y = item->width = item->height = 0;
-	item->shaded = item->sticky = item->minimized = 0;
-	item->maxvert = item->maxhoriz = item->workspace = 0;
+	SessionWindowList *item = calloc (1, sizeof (SessionWindowList));
+	item->geometryValid = FALSE;
 
 	if (xmlStrcmp (cur->name, BAD_CAST "window") == 0)
 	{
@@ -557,18 +530,19 @@ readState (xmlNodePtr root)
 	{
 	    if (xmlStrcmp (attrib->name, BAD_CAST "geometry") == 0)
 	    {
-		item->x = sessionGetIntForProp (attrib, "x");
-		item->y = sessionGetIntForProp (attrib, "y");
-		item->width = sessionGetIntForProp (attrib, "width");
-		item->height = sessionGetIntForProp (attrib, "height");
+		item->geometryValid = TRUE;
+		item->geometry.x = sessionGetIntForProp (attrib, "x");
+		item->geometry.y = sessionGetIntForProp (attrib, "y");
+		item->geometry.width = sessionGetIntForProp (attrib, "width");
+		item->geometry.height = sessionGetIntForProp (attrib, "height");
 	    }
 
 	    if (xmlStrcmp (attrib->name, BAD_CAST "shaded") == 0)
-		item->shaded = 1;
+		item->state |= CompWindowStateShadedMask;
 	    if (xmlStrcmp (attrib->name, BAD_CAST "sticky") == 0)
-		item->sticky = 1;
+		item->state |= CompWindowStateStickyMask;
 	    if (xmlStrcmp (attrib->name, BAD_CAST "minimized") == 0)
-		item->minimized = 1;
+		item->minimized = TRUE;
 
 	    if (xmlStrcmp (attrib->name, BAD_CAST "maximized") == 0)
 	    {
@@ -576,13 +550,13 @@ readState (xmlNodePtr root)
 		vert = xmlGetProp (attrib, BAD_CAST "vert");
 		if (vert != NULL)
 		{
-		    item->maxvert = 1;
+		    item->state |= CompWindowStateMaximizedVertMask;
 		    xmlFree (vert);
 		}
 		horiz = xmlGetProp (attrib, BAD_CAST "horiz");
 		if (horiz != NULL)
 		{
-		    item->maxhoriz = 1;
+		    item->state |= CompWindowStateMaximizedHorzMask;
 		    xmlFree (horiz);
 		}
 	    }
