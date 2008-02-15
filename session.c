@@ -87,20 +87,6 @@ typedef struct _SessionWindowList
 static SessionWindowList *windowList = NULL;
 
 static void
-freeWindowList (SessionWindowList *item)
-{
-    if (item->next != NULL)
-    {
-	freeWindowList (item->next);
-    }
-    if (item->clientId != NULL)
-	free (item->clientId);
-    if (item->name != NULL)
-	free (item->name);
-    free (item);
-}
-
-static void
 sessionFreeWindowListItem (SessionWindowList *item)
 {
     if (item->clientId)
