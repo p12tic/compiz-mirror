@@ -52,6 +52,8 @@ typedef struct _SessionWindowList
 
 typedef struct _SessionCore
 {
+    SessionWindowList *windowList;
+
     SessionSaveYourselfProc sessionSaveYourself;
     ObjectAddProc           objectAdd;
 } SessionCore;
@@ -79,7 +81,6 @@ static int corePrivateIndex;
 static int displayPrivateIndex;
 
 static CompMetadata      sessionMetadata;
-static SessionWindowList *windowList = NULL;
 
 static void
 sessionFreeWindowListItem (SessionWindowList *item)
@@ -98,9 +99,11 @@ sessionAddWindowListItem (SessionWindowList *item)
 {
     SessionWindowList *run;
 
-    run = windowList;
+    SESSION_CORE (&core);
+
+    run = sc->windowList;
     if (!run)
-	windowList = item;
+	sc->windowList = item;
     else
     {
 	for (; run->next; run = run->next);
@@ -113,14 +116,16 @@ sessionRemoveWindowListItem (SessionWindowList *item)
 {
     SessionWindowList *run;
 
-    if (!windowList)
+    SESSION_CORE (&core);
+
+    if (!sc->windowList)
 	return;
 
-    if (windowList == item)
-	windowList = item->next;
+    if (sc->windowList == item)
+	sc->windowList = item->next;
     else
     {
-	for (run = windowList; run->next; run = run->next)
+	for (run = sc->windowList; run->next; run = run->next)
 	{
 	    if (run->next == item)
 	    {
@@ -440,26 +445,22 @@ sessionReadWindow (CompWindow *w,
 		   char       *name)
 {
     XWindowChanges     xwc;
-    Bool               foundWindow = FALSE;
     unsigned int       xwcm = 0;
     SessionWindowList *cur;
 
-    for (cur = windowList; cur; cur = cur->next)
+    SESSION_CORE (&core);
+
+    for (cur = sc->windowList; cur; cur = cur->next)
     {
 	if (cur->clientId && strcmp (clientId, cur->clientId) == 0)
-	{
-	    foundWindow = TRUE;
 	    break;
-	}
 	else if (cur->name && strcmp (name, cur->name) == 0)
-	{
-	    foundWindow = TRUE;
 	    break;
-	}
     }
 
-    if (foundWindow)
+    if (cur)
     {
+	/* found a window */
 	if (cur->geometryValid)
 	{
 	    xwcm = CWX | CWY | CWWidth | CWHeight;
@@ -600,15 +601,9 @@ loadState (CompDisplay *d,
 	return;
 
     root = xmlDocGetRootElement (doc);
-    if (!root)
-	goto out;
+    if (root && xmlStrcmp (root->name, BAD_CAST "compiz_session") == 0)
+	readState (root);
 
-    if (xmlStrcmp (root->name, BAD_CAST "compiz_session") != 0)
-	goto out;
-
-    readState (root);
-
-out:
     xmlFreeDoc (doc);
     xmlCleanupParser ();
 }
@@ -718,6 +713,8 @@ sessionInitCore (CompPlugin *p,
 	return FALSE;
     }
 
+    sc->windowList = NULL;
+
     WRAP (sc, c, objectAdd, sessionObjectAdd);
     WRAP (sc, c, sessionSaveYourself, sessionSessionSaveYourself);
 
@@ -739,7 +736,7 @@ sessionFiniCore (CompPlugin *p,
     UNWRAP (sc, c, objectAdd);
     UNWRAP (sc, c, sessionSaveYourself);
 
-    run = windowList;
+    run = sc->windowList;
     while (run)
     {
 	next = run->next;
