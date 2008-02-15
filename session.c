@@ -513,7 +513,7 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 static void
 readState (xmlNodePtr root)
 {
-    xmlNodePtr         cur;
+    xmlNodePtr         cur, attrib;
     xmlChar           *newClientId;
     xmlChar           *newName;
     SessionWindowList *current_window;
@@ -527,7 +527,6 @@ readState (xmlNodePtr root)
 	item->x = item->y = item->width = item->height = 0;
 	item->shaded = item->sticky = item->minimized = 0;
 	item->maxvert = item->maxhoriz = item->workspace = 0;
-
 
 	if (xmlStrcmp (cur->name, BAD_CAST "window") == 0)
 	{
@@ -552,48 +551,45 @@ readState (xmlNodePtr root)
 	    continue;
 	}
 
-	if (xmlStrcmp (cur->name, BAD_CAST "geometry") == 0)
+	for (attrib = cur->xmlChildrenNode; attrib; attrib = attrib->next)
 	{
-	    item->x = sessionGetIntForProp (cur, "x");
-	    item->y = sessionGetIntForProp (cur, "y");
-	    item->width = sessionGetIntForProp (cur, "width");
-	    item->height = sessionGetIntForProp (cur, "height");
-	}
-
-	if (xmlStrcmp (cur->name, BAD_CAST "shaded") == 0)
-	{
-	    item->shaded = 1;
-	}
-	if (xmlStrcmp (cur->name, BAD_CAST "sticky") == 0)
-	{
-	    item->sticky = 1;
-	}
-	if (xmlStrcmp (cur->name, BAD_CAST "minimized") == 0)
-	{
-	    item->minimized = 1;
-	}
-
-	if (xmlStrcmp (cur->name, BAD_CAST "maximized") == 0)
-	{
-	    xmlChar *vert, *horiz;
-	    vert = xmlGetProp (cur, BAD_CAST "vert");
-	    if (vert != NULL)
+	    if (xmlStrcmp (attrib->name, BAD_CAST "geometry") == 0)
 	    {
-		item->maxvert = 1;
-		xmlFree (vert);
+		item->x = sessionGetIntForProp (attrib, "x");
+		item->y = sessionGetIntForProp (attrib, "y");
+		item->width = sessionGetIntForProp (attrib, "width");
+		item->height = sessionGetIntForProp (attrib, "height");
 	    }
-	    horiz = xmlGetProp (cur, BAD_CAST "horiz");
-	    if (horiz != NULL)
-	    {
-		item->maxhoriz = 1;
-		xmlFree (horiz);
-	    }
-	}
 
-	if (xmlStrcmp (cur->name, BAD_CAST "workspace") == 0)
-	{
-	    int desktop = sessionGetIntForProp (cur, "index");
-	    item->workspace = desktop;
+	    if (xmlStrcmp (attrib->name, BAD_CAST "shaded") == 0)
+		item->shaded = 1;
+	    if (xmlStrcmp (attrib->name, BAD_CAST "sticky") == 0)
+		item->sticky = 1;
+	    if (xmlStrcmp (attrib->name, BAD_CAST "minimized") == 0)
+		item->minimized = 1;
+
+	    if (xmlStrcmp (attrib->name, BAD_CAST "maximized") == 0)
+	    {
+		xmlChar *vert, *horiz;
+		vert = xmlGetProp (attrib, BAD_CAST "vert");
+		if (vert != NULL)
+		{
+		    item->maxvert = 1;
+		    xmlFree (vert);
+		}
+		horiz = xmlGetProp (attrib, BAD_CAST "horiz");
+		if (horiz != NULL)
+		{
+		    item->maxhoriz = 1;
+		    xmlFree (horiz);
+		}
+	    }
+
+	    if (xmlStrcmp (attrib->name, BAD_CAST "workspace") == 0)
+	    {
+		int desktop = sessionGetIntForProp (attrib, "index");
+		item->workspace = desktop;
+	    }
 	}
 
 	if (first)
