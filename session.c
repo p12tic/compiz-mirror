@@ -4,7 +4,7 @@
  *
  * session.c
  *
- * Copyright (c) 2007 Travis Watkins <amaranth@ubuntu.com>
+ * Copyright (c) 2008 Travis Watkins <amaranth@ubuntu.com>
  * Copyright (c) 2006 Patrick Niklaus
  *
  *
