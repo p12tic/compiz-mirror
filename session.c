@@ -100,7 +100,56 @@ freeWindowList (SessionWindowList *item)
     free (item);
 }
 
+static void
+sessionFreeWindowListItem (SessionWindowList *item)
+{
+    if (item->clientId)
+	free (item->clientId);
 
+    if (item->name)
+	free (item->name);
+
+    free (item);
+}
+
+static void
+sessionAddWindowListItem (SessionWindowList *item)
+{
+    SessionWindowList *run;
+
+    run = windowList;
+    if (!run)
+	windowList = item;
+    else
+    {
+	for (; run->next; run = run->next);
+	run->next = item;
+    }
+}
+
+static void
+sessionRemoveWindowListItem (SessionWindowList *item)
+{
+    SessionWindowList *run;
+
+    if (!windowList)
+	return;
+
+    if (windowList == item)
+	windowList = item->next;
+    else
+    {
+	for (run = windowList; run->next; run = run->next)
+	{
+	    if (run->next == item)
+	    {
+		run->next = item->next;
+		sessionFreeWindowListItem (item);
+		break;
+	    }
+	}
+    }
+}
 
 static char*
 sessionGetUtf8Property (CompDisplay *d,
@@ -271,6 +320,16 @@ sessionGetIntForProp (xmlNodePtr node, char *prop)
     return -1;
 }
 
+static char *
+sessionGetWindowClientId (CompWindow *w)
+{
+    //filter out embedded windows (notification icons)
+    if (sessionGetIsEmbedded (w->screen->display, w->id))
+	return NULL;
+
+    return sessionGetClientId (w);
+}
+
 static void
 sessionForeachWindow (CompDisplay *d, SessionWindowFunc func, void *user_data)
 {
@@ -283,13 +342,9 @@ sessionForeachWindow (CompDisplay *d, SessionWindowFunc func, void *user_data)
     {
 	for (w = s->windows; w; w = w->next)
 	{
-	    //filter out embedded windows (notification icons)
-	    if (sessionGetIsEmbedded (d, w->id))
-		continue;
+	    clientId = sessionGetWindowClientId (w);
 
-	    clientId = sessionGetClientId (w);
-
-	    if (clientId == NULL)
+	    if (!clientId)
 		continue;
 
 	    name = sessionGetWindowName (d, w->id);
@@ -468,27 +523,8 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name, void *user_data)
 	    updateWindowAttributes (w, CompStackingUpdateModeNone);
 	}
 
-	//remove item from list
-	if (cur == windowList)
-	{
-	    windowList = cur->next;
-	}
-	else
-	{
-	    SessionWindowList *prev;
-	    for (prev = windowList; prev; prev = prev->next)
-	    {
-		if (prev->next == cur)
-		{
-		    prev->next = cur->next;
-		}
-	    }
-	}
-	if (cur->clientId != NULL)
-	    free (cur->clientId);
-	if (cur->name != NULL)
-	    free (cur->name);
-	free (cur);
+	/* remove item from list */
+	sessionRemoveWindowListItem (cur);
     }
 }
 
@@ -498,8 +534,6 @@ readState (xmlNodePtr root)
     xmlNodePtr         cur, attrib;
     xmlChar           *newClientId;
     xmlChar           *newName;
-    SessionWindowList *current_window;
-    int                first = 1;
 
     for (cur = root->xmlChildrenNode; cur; cur = cur->next)
     {
@@ -571,17 +605,7 @@ readState (xmlNodePtr root)
 	    }
 	}
 
-	if (first)
-	{
-	    windowList = item;
-	    current_window = item;
-	    first = 0;
-	}
-	else
-	{
-	    current_window->next = item;
-	    current_window = item;
-	}
+	sessionAddWindowListItem (item);
     }
 }
 
@@ -627,8 +651,20 @@ static void
 sessionWindowAdd (CompScreen *s,
 		  CompWindow *w)
 {
-    //just go through every window again instead of duplicating the filter
-    sessionForeachWindow (s->display, sessionReadWindow, NULL);
+    char *clientId;
+
+    clientId = sessionGetWindowClientId (w);
+    if (clientId)
+    {
+	char *name;
+
+       	name = sessionGetWindowName (s->display, w->id);
+	sessionReadWindow (w, clientId, name, NULL);
+
+	if (name)
+	    free (name);
+	free (clientId);
+    }
 }
 
 static void
@@ -727,11 +763,22 @@ static void
 sessionFiniCore (CompPlugin *p,
 		 CompCore   *c)
 {
+    SessionWindowList *run, *next;
+
     SESSION_CORE (c);
 
     freeDisplayPrivateIndex (displayPrivateIndex);
+
     UNWRAP(sc, c, objectAdd);
     UNWRAP(sc, c, sessionSaveYourself);
+
+    run = windowList;
+    while (run)
+    {
+	next = run->next;
+	sessionFreeWindowListItem (run);
+    }
+
     free (sc);
 }
 
@@ -786,8 +833,6 @@ sessionFiniDisplay (CompPlugin *p, CompDisplay *d)
 {
     SESSION_DISPLAY (d);
 
-    if (windowList != NULL)
-	freeWindowList (windowList);
     free (sd);
 }
 
