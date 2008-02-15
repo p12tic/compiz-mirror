@@ -36,10 +36,19 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
+typedef struct _SessionWindowList
+{
+    struct _SessionWindowList *next;
 
-static int corePrivateIndex;
-static int displayPrivateIndex;
-static CompMetadata sessionMetadata;
+    char *clientId;
+    char *name;
+
+    XRectangle   geometry;
+    Bool         geometryValid;
+    unsigned int state;
+    Bool         minimized;
+    int          workspace;
+} SessionWindowList;
 
 typedef struct _SessionCore
 {
@@ -66,21 +75,10 @@ typedef struct _SessionDisplay
 #define SESSION_DISPLAY(d)                  \
     SessionDisplay *sd = GET_SESSION_DISPLAY (d)
 
-//list stuff
-typedef struct _SessionWindowList
-{
-    struct _SessionWindowList *next;
+static int corePrivateIndex;
+static int displayPrivateIndex;
 
-    char *clientId;
-    char *name;
-
-    XRectangle   geometry;
-    Bool         geometryValid;
-    unsigned int state;
-    Bool         minimized;
-    int          workspace;
-} SessionWindowList;
-
+static CompMetadata      sessionMetadata;
 static SessionWindowList *windowList = NULL;
 
 static void
@@ -207,53 +205,59 @@ sessionGetWindowName (CompDisplay *d,
 }
 
 static Bool
-sessionGetIsEmbedded (CompDisplay *d, Window id)
+sessionGetIsEmbedded (CompDisplay *d,
+		      Window      id)
 {
+    Atom          type;
+    int           format;
+    unsigned long nitems;
+    unsigned long bytesAfter;
+    unsigned char *val;
+    int           result;
+
     SESSION_DISPLAY (d);
-    Atom actual_type_return;
-    int actual_format_return;
-    unsigned long nitems_return;
-    unsigned long bytes_after_return;
-    unsigned char *prop_return = 0;
-    if (XGetWindowProperty(d->display, id, sd->embedInfoAtom, 0, 2,
-			   FALSE, XA_CARDINAL, &actual_type_return,
-			   &actual_format_return, &nitems_return,
-			   &bytes_after_return, &prop_return) == Success)
-    {
-	if (nitems_return > 1)
-	    return TRUE;
-    }
-    return FALSE;
+
+    result = XGetWindowProperty (d->display, id, sd->embedInfoAtom, 0L, 65536,
+				 FALSE, XA_CARDINAL, &type, &format, &nitems,
+                                 &bytesAfter, &val);
+
+    if (result != Success)
+	return FALSE;
+
+    if (val)
+	XFree (val);
+
+    return (nitems > 1);
 }
 
 static char*
 sessionGetClientId (CompWindow *w)
 {
-    SESSION_DISPLAY (w->screen->display);
-    Window clientLeader;
-    char  *clientId;
+    Window        clientLeader;
+    char          *clientId;
     XTextProperty text;
-    text.nitems = 0;
 
-    clientId = NULL;
+    SESSION_DISPLAY (w->screen->display);
+
+    clientId     = NULL;
     clientLeader = w->clientLeader;
 
-    //window is its own client leader so it's a leader for something else
+    /* window is its own client leader so it's a leader for something else */
     if (clientLeader == w->id)
 	return NULL;
 
-    //try to find clientLeader on transient parents
-    if (clientLeader == None)
+    /* try to find clientLeader on transient parents */
+    if (!clientLeader)
     {
-	CompWindow *window;
-	window = w;
-	while (window->transientFor != None)
+	CompWindow *window = w;
+
+	while (window->transientFor)
 	{
 	    if (window->transientFor == window->id)
 		break;
 
 	    window = findWindowAtScreen (w->screen, window->transientFor);
-	    if (window->clientLeader != None)
+	    if (window->clientLeader)
 	    {
 		clientLeader = window->clientLeader;
 		break;
@@ -261,52 +265,45 @@ sessionGetClientId (CompWindow *w)
 	}
     }
 
-    if (clientLeader != None)
+    text.nitems = 0;
+    if (!clientLeader)
+	clientLeader = w->id;
+
+    if (XGetTextProperty (w->screen->display->display, clientLeader,
+			  &text, sd->clientIdAtom))
     {
-	if (XGetTextProperty (w->screen->display->display, clientLeader, &text,
-			      sd->clientIdAtom))
+	if (text.value)
 	{
-	    if (text.value) {
-		clientId = strndup ((char *)text.value, text.nitems);
-		XFree (text.value);
-	    }
+	    clientId = strndup ((char *)text.value, text.nitems);
+	    XFree (text.value);
 	}
     }
-    else
-    {
-	//some apps set SM_CLIENT_ID on the app
-	if (XGetTextProperty (w->screen->display->display, w->id, &text,
-			      sd->clientIdAtom))
-	{
-	    if (text.value) {
-		clientId = strndup ((char *)text.value, text.nitems);
-		XFree (text.value);
-	    }
-	}
-    }
+
     return clientId;
 }
 
 static int
-sessionGetIntForProp (xmlNodePtr node, char *prop)
+sessionGetIntForProp (xmlNodePtr node,
+		      char       *prop)
 {
     xmlChar *temp;
     int      num;
 
     temp = xmlGetProp (node, BAD_CAST prop);
-    if (temp != NULL)
+    if (temp)
     {
 	num = xmlXPathCastStringToNumber (temp);
 	xmlFree (temp);
 	return num;
     }
+
     return -1;
 }
 
 static char *
 sessionGetWindowClientId (CompWindow *w)
 {
-    //filter out embedded windows (notification icons)
+    /* filter out embedded windows (notification icons) */
     if (sessionGetIsEmbedded (w->screen->display, w->id))
 	return NULL;
 
@@ -314,21 +311,26 @@ sessionGetWindowClientId (CompWindow *w)
 }
 
 static void
-sessionWriteWindow (CompWindow *w, char *clientId, char *name, FILE *outfile)
+sessionWriteWindow (CompWindow *w,
+		    char       *clientId,
+		    char       *name,
+		    FILE       *outfile)
 {
     int x, y, width, height;
 
-    fprintf (outfile, "  <window id=\"%s\" title=\"%s\" class=\"%s\" name=\"%s\">\n",
+    fprintf (outfile, 
+	     "  <window id=\"%s\" title=\"%s\" class=\"%s\" name=\"%s\">\n",
 	     clientId,
 	     name ? name : "",
 	     w->resClass ? w->resClass : "",
 	     w->resName ? w->resName : "");
 
-    //save geometry
+    /* save geometry */
     x = w->attrib.x - w->input.left;
     y = w->attrib.y - w->input.top;
     width = w->attrib.width;
     height = w->attrib.height;
+
     if (w->state & CompWindowStateMaximizedVertMask)
     {
 	y = w->saveWc.y;
@@ -340,22 +342,17 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, FILE *outfile)
 	width = w->saveWc.width;
     }
 
-    fprintf (outfile, "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
+    fprintf (outfile,
+	     "    <geometry x=\"%d\" y=\"%d\" width=\"%d\" height=\"%d\"/>\n",
 	     x, y, width, height);
 
-    //save shaded
+    /* save various window states */
     if (w->state & CompWindowStateShadedMask)
 	fprintf (outfile, "    <shaded/>\n");
-
-    //save sticky
     if (w->state & CompWindowStateStickyMask)
 	fprintf (outfile, "    <sticky/>\n");
-
-    //save minimized
     if (w->minimized)
 	fprintf (outfile, "    <minimized/>\n");
-
-    //save maximized
     if (w->state & MAXIMIZE_STATE)
     {
 	fprintf (outfile, "    <maximized ");
@@ -366,7 +363,7 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, FILE *outfile)
 	fprintf (outfile, "/>\n");
     }
 
-    //save workspace
+    /* save workspace */
     if (!(w->type & CompWindowTypeDesktopMask ||
 	  w->type & CompWindowTypeDockMask))
 	    fprintf (outfile, "    <workspace index=\"%d\"/>\n",
@@ -376,17 +373,16 @@ sessionWriteWindow (CompWindow *w, char *clientId, char *name, FILE *outfile)
 }
 
 static void
-saveState (const char *clientId,
+saveState (const char  *clientId,
 	   CompDisplay *d)
 {
     char           filename[1024];
     FILE          *outfile;
-    struct passwd *p = getpwuid(geteuid());
+    struct passwd *p = getpwuid (geteuid ());
     CompScreen    *s;
 
     //setup filename and create directories as needed
-    memset (filename, '\0', 1024);
-    strncat (filename, p->pw_dir, 1024);
+    strncpy (filename, p->pw_dir, 1024);
     strncat (filename, "/.compiz", 1024);
     if (mkdir (filename, 0700) == 0 || errno == EEXIST)
     {
@@ -407,10 +403,8 @@ saveState (const char *clientId,
     }
 
     outfile = fopen (filename, "w");
-    if (outfile == NULL)
-    {
+    if (!outfile)
 	return;
-    }
 
     fprintf (outfile, "<compiz_session id=\"%s\">\n", clientId);
 
@@ -441,26 +435,23 @@ saveState (const char *clientId,
 }
 
 static void
-sessionReadWindow (CompWindow *w, char *clientId, char *name)
+sessionReadWindow (CompWindow *w,
+		   char       *clientId,
+		   char       *name)
 {
     XWindowChanges     xwc;
     Bool               foundWindow = FALSE;
     unsigned int       xwcm = 0;
     SessionWindowList *cur;
 
-    memset (&xwc, 0, sizeof (xwc));
-
-    if (clientId == NULL)
-	return;
-
     for (cur = windowList; cur; cur = cur->next)
     {
-	if (cur->clientId != NULL && strcmp (clientId, cur->clientId) == 0)
+	if (cur->clientId && strcmp (clientId, cur->clientId) == 0)
 	{
 	    foundWindow = TRUE;
 	    break;
 	}
-	if (cur->name != NULL && strcmp (name, cur->name) == 0)
+	else if (cur->name && strcmp (name, cur->name) == 0)
 	{
 	    foundWindow = TRUE;
 	    break;
@@ -504,33 +495,37 @@ sessionReadWindow (CompWindow *w, char *clientId, char *name)
 static void
 readState (xmlNodePtr root)
 {
-    xmlNodePtr         cur, attrib;
-    xmlChar           *newClientId;
-    xmlChar           *newName;
+    xmlNodePtr cur, attrib;
+    xmlChar    *newClientId;
+    xmlChar    *newName;
 
     for (cur = root->xmlChildrenNode; cur; cur = cur->next)
     {
-	SessionWindowList *item = calloc (1, sizeof (SessionWindowList));
+	SessionWindowList *item;
+	
+	item = calloc (1, sizeof (SessionWindowList));
+	if (!item)
+	    return;
 	item->geometryValid = FALSE;
 
 	if (xmlStrcmp (cur->name, BAD_CAST "window") == 0)
 	{
 	    newClientId = xmlGetProp (cur, BAD_CAST "id");
-	    if (newClientId != NULL)
+	    if (newClientId)
 	    {
 		item->clientId = strdup ((char*) newClientId);
 		xmlFree (newClientId);
 	    }
 
 	    newName = xmlGetProp (cur, BAD_CAST "title");
-	    if (newName != NULL)
+	    if (newName)
 	    {
 		item->name = strdup ((char*) newName);
 		xmlFree (newName);
 	    }
 	}
 
-	if (item->clientId == NULL && item->name == NULL)
+	if (!item->clientId && !item->name)
 	{
 	    free (item);
 	    continue;
@@ -543,7 +538,7 @@ readState (xmlNodePtr root)
 		item->geometryValid = TRUE;
 		item->geometry.x = sessionGetIntForProp (attrib, "x");
 		item->geometry.y = sessionGetIntForProp (attrib, "y");
-		item->geometry.width = sessionGetIntForProp (attrib, "width");
+		item->geometry.width  = sessionGetIntForProp (attrib, "width");
 		item->geometry.height = sessionGetIntForProp (attrib, "height");
 	    }
 
@@ -558,13 +553,14 @@ readState (xmlNodePtr root)
 	    {
 		xmlChar *vert, *horiz;
 		vert = xmlGetProp (attrib, BAD_CAST "vert");
-		if (vert != NULL)
+		if (vert)
 		{
 		    item->state |= CompWindowStateMaximizedVertMask;
 		    xmlFree (vert);
 		}
+
 		horiz = xmlGetProp (attrib, BAD_CAST "horiz");
-		if (horiz != NULL)
+		if (horiz)
 		{
 		    item->state |= CompWindowStateMaximizedHorzMask;
 		    xmlFree (horiz);
@@ -573,7 +569,9 @@ readState (xmlNodePtr root)
 
 	    if (xmlStrcmp (attrib->name, BAD_CAST "workspace") == 0)
 	    {
-		int desktop = sessionGetIntForProp (attrib, "index");
+		int desktop;
+		
+		desktop = sessionGetIntForProp (attrib, "index");
 		item->workspace = desktop;
 	    }
 	}
@@ -583,26 +581,26 @@ readState (xmlNodePtr root)
 }
 
 static void
-loadState (CompDisplay *d, char *previousId)
+loadState (CompDisplay *d,
+	   char        *previousId)
 {
     xmlDocPtr          doc;
     xmlNodePtr         root;
     char               filename[1024];
-    struct passwd *p = getpwuid(geteuid());
+    struct passwd *p = getpwuid (geteuid ());
 
     //setup filename and create directories as needed
-    memset (filename, '\0', 1024);
-    strncat (filename, p->pw_dir, 1024);
+    strncpy (filename, p->pw_dir, 1024);
     strncat (filename, "/.compiz/", 1024);
     strncat (filename, "session/", 1024);
     strncat (filename, previousId, 1024);
 
     doc = xmlParseFile (filename);
-    if (doc == NULL)
+    if (!doc)
 	return;
 
     root = xmlDocGetRootElement (doc);
-    if (root == NULL)
+    if (!root)
 	goto out;
 
     if (xmlStrcmp (root->name, BAD_CAST "compiz_session") != 0)
@@ -610,9 +608,9 @@ loadState (CompDisplay *d, char *previousId)
 
     readState (root);
 
-   out:
-    xmlFreeDoc(doc);
-    xmlCleanupParser();
+out:
+    xmlFreeDoc (doc);
+    xmlCleanupParser ();
 }
 
 
@@ -663,7 +661,7 @@ sessionObjectAdd (CompObject *parent,
 	(ObjectAddProc) 0, /* DisplayAdd */
 	(ObjectAddProc) 0, /* ScreenAdd */
 	(ObjectAddProc) sessionWindowAdd
-	};
+    };
 
     SESSION_CORE (&core);
 
@@ -696,7 +694,7 @@ sessionInit (CompPlugin *p)
 static void
 sessionFini (CompPlugin *p)
 {
-    freeCorePrivateIndex(corePrivateIndex);
+    freeCorePrivateIndex (corePrivateIndex);
     compFiniMetadata (&sessionMetadata);
 }
 
@@ -721,7 +719,7 @@ sessionInitCore (CompPlugin *p,
     }
 
     WRAP (sc, c, objectAdd, sessionObjectAdd);
-    WRAP(sc, c, sessionSaveYourself, sessionSessionSaveYourself);
+    WRAP (sc, c, sessionSaveYourself, sessionSessionSaveYourself);
 
     c->base.privates[corePrivateIndex].ptr = sc;
 
@@ -738,8 +736,8 @@ sessionFiniCore (CompPlugin *p,
 
     freeDisplayPrivateIndex (displayPrivateIndex);
 
-    UNWRAP(sc, c, objectAdd);
-    UNWRAP(sc, c, sessionSaveYourself);
+    UNWRAP (sc, c, objectAdd);
+    UNWRAP (sc, c, sessionSaveYourself);
 
     run = windowList;
     while (run)
@@ -752,11 +750,12 @@ sessionFiniCore (CompPlugin *p,
 }
 
 static int
-sessionInitDisplay (CompPlugin *p, CompDisplay *d)
+sessionInitDisplay (CompPlugin  *p,
+		    CompDisplay *d)
 {
     SessionDisplay *sd;
-    char *previousId = NULL;
-    int i;
+    char           *previousId = NULL;
+    int            i;
 
     sd = malloc (sizeof (SessionDisplay));
     if (!sd)
@@ -764,12 +763,9 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 
     d->base.privates[displayPrivateIndex].ptr = sd;
 
-    sd->visibleNameAtom = XInternAtom (d->display,
-				       "_NET_WM_VISIBLE_NAME", 0);
-    sd->clientIdAtom = XInternAtom (d->display,
-				    "SM_CLIENT_ID", 0);
-    sd->embedInfoAtom = XInternAtom (d->display,
-				     "_XEMBED_INFO", 0);
+    sd->visibleNameAtom = XInternAtom (d->display, "_NET_WM_VISIBLE_NAME", 0);
+    sd->clientIdAtom = XInternAtom (d->display, "SM_CLIENT_ID", 0);
+    sd->embedInfoAtom = XInternAtom (d->display, "_XEMBED_INFO", 0);
 
     for (i = 0; i < programArgc; i++)
     {
@@ -798,7 +794,8 @@ sessionInitDisplay (CompPlugin *p, CompDisplay *d)
 }
 
 static void
-sessionFiniDisplay (CompPlugin *p, CompDisplay *d)
+sessionFiniDisplay (CompPlugin  *p,
+		    CompDisplay *d)
 {
     SESSION_DISPLAY (d);
 
