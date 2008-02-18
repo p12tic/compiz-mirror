@@ -45,6 +45,7 @@ typedef struct _SessionWindowList
     char *resName;
     char *resClass;
     char *role;
+    char *command;
 
     XRectangle   geometry;
     Bool         geometryValid;
@@ -69,6 +70,7 @@ typedef struct _SessionDisplay
     Atom clientIdAtom;
     Atom embedInfoAtom;
     Atom roleAtom;
+    Atom commandAtom;
 
     HandleEventProc handleEvent;
 } SessionDisplay;
@@ -118,6 +120,9 @@ sessionFreeWindowListItem (SessionWindowList *item)
 
     if (item->role)
 	free (item->role);
+
+    if (item->command)
+	free (item->command);
 
     free (item);
 }
@@ -264,7 +269,8 @@ sessionGetIsEmbedded (CompDisplay *d,
 }
 
 static char *
-sessionGetWindowRole (CompWindow *w)
+sessionGetWindowAtomText (CompWindow *w,
+			  Atom       atom)
 {
     Atom          type;
     unsigned long nItems;
@@ -272,10 +278,8 @@ sessionGetWindowRole (CompWindow *w)
     int           format, result;
     char          *str = NULL, *retval = NULL;
 
-    SESSION_DISPLAY (w->screen->display);
-
     result = XGetWindowProperty (w->screen->display->display,
-				 w->id, sd->roleAtom, 0, 65536,
+				 w->id, atom, 0, 65536,
 				 FALSE, XA_STRING, &type, &format, &nItems,
 				 &bytesAfter, (unsigned char **) &str);
 
@@ -383,6 +387,8 @@ sessionWriteWindow (CompWindow *w,
     char *string;
     int  x, y;
 
+    SESSION_DISPLAY (w->screen->display);
+
     fprintf (outfile, "  <window id=\"%s\"", clientId);
     string = sessionGetWindowTitle (w);
     if (string)
@@ -394,10 +400,16 @@ sessionWriteWindow (CompWindow *w,
 	fprintf (outfile, " class=\"%s\"", w->resClass);
     if (w->resName)
 	fprintf (outfile, " name=\"%s\"", w->resName);
-    string = sessionGetWindowRole (w);
+    string = sessionGetWindowAtomText (w, sd->roleAtom);
     if (string)
     {
 	fprintf (outfile, " role=\"%s\"", string);
+	free (string);
+    }
+    string = sessionGetWindowAtomText (w, sd->commandAtom);
+    if (string)
+    {
+	fprintf (outfile, " command=\"%s\"", string);
 	free (string);
     }
     fprintf (outfile, ">\n");
@@ -512,6 +524,7 @@ sessionReadWindow (CompWindow *w)
     SessionWindowList  *cur;
 
     SESSION_CORE (&core);
+    SESSION_DISPLAY (w->screen->display);
 
     /* optimization: don't mess around with getting X properties
        if there is nothing to match */
@@ -522,8 +535,8 @@ sessionReadWindow (CompWindow *w)
     if (!clientId)
 	return;
 
-    title = sessionGetWindowTitle (w);
-    role  = sessionGetWindowRole (w);
+    title   = sessionGetWindowTitle (w);
+    role    = sessionGetWindowAtomText (w, sd->roleAtom);
 
     for (cur = sc->windowList; cur; cur = cur->next)
     {
@@ -616,6 +629,7 @@ readState (xmlNodePtr root)
 	    item->resName = sessionGetStringForProp (cur, "name");
 	    item->resClass = sessionGetStringForProp (cur, "class");
 	    item->role = sessionGetStringForProp (cur, "role");
+	    item->command = sessionGetStringForProp (cur, "command");
 	}
 
 	if (!item->clientId && !item->title &&
@@ -897,6 +911,7 @@ sessionInitDisplay (CompPlugin  *p,
     sd->clientIdAtom = XInternAtom (d->display, "SM_CLIENT_ID", 0);
     sd->embedInfoAtom = XInternAtom (d->display, "_XEMBED_INFO", 0);
     sd->roleAtom = XInternAtom (d->display, "WM_WINDOW_ROLE", 0);
+    sd->commandAtom = XInternAtom (d->display, "WM_COMMAND", 0);
 
     for (i = 0; i < programArgc; i++)
     {
