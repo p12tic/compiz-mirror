@@ -222,29 +222,19 @@ BicubicDrawWindowTexture (CompWindow           *w,
 	    glBindTexture (GL_TEXTURE_1D, bs->lTexture);
 	    (*s->activeTexture) (GL_TEXTURE0_ARB);
 
-	    if (texture->target == GL_TEXTURE_2D)
-	    {
-		(*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB, param,
-					     1.0f / w->width, 0.0f, 
-					     0.0f, 0.0f);
-		(*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB,
-					     param + 1,
-					     0.0f, 1.0f / w->height,
-					     0.0f, 0.0f);
-		(*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB,
-					     param + 2,
-					     w->width, w->height,
-					     0.0f, 0.0f);
-	    }
-	    else
-	    {
-		(*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB, param,
-					     1.0f, 0.0f, 0.0f, 0.0f);
-		(*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB,
-					     param + 1, 0.0f, 1.0f, 0.0f, 0.0f);
-		(*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB,
-					     param + 2, 1.0f, 1.0f, 0.0f, 0.0f);
-	    }
+
+	    (*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB, param,
+					 texture->matrix.xx, 0.0f,
+					 0.0f, 0.0f);
+	    (*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB,
+					 param + 1,
+					 0.0f, -texture->matrix.yy,
+					 0.0f, 0.0f);
+	    (*s->programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB,
+					 param + 2,
+					 1.0 / texture->matrix.xx, 
+					 1.0 / -texture->matrix.yy,
+					 0.0f, 0.0f);
 	}
 
 	UNWRAP (bs, s, drawWindowTexture);
