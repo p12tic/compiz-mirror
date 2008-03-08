@@ -923,35 +923,37 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
     return TRUE;
 }
 
+#define MANUAL_ROTATE(x, y, z, u, d) \
+    CompWindow* w; \
+    Window xid; \
+    xid = getIntOptionNamed (option, nOption, "window", 0); \
+    w = findWindowAtDisplay (d, xid); \
+    FREEWINS_WINDOW(w); \
+    fww->oldAngX = fww->angX; \
+    fww->oldAngY = fww->angY; \
+    fww->oldAngZ = fww->angZ; \
+    fww->oldScaleX = fww->scaleX; \
+    fww->oldScaleY = fww->scaleY; \
+    fww->destAngX = fww->angX + x; \
+    fww->destAngY = fww->angY + y; \
+    fww->destAngZ = fww->angZ + z; \
+    fww->destScaleX = fww->scaleX + u; \
+    fww->destScaleY = fww->scaleY + d; \
+    fww->destOpacity = fww->opacity; \
+    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen); \
+    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen); \
+    fww->doAnimate = TRUE; \ // Start animating
+
+#define ROTATE_INC freewinsGetRotateIncrementAmount (w->screen)
+#define NEG_ROTATE_INC freewinsGetRotateIncrementAmount (w->screen) *-1
+
+#define SCALE_INC freewinsGetScaleIncrementAmount (w->screen)
+#define NEG_SCALE_INC freewinsGetScaleIncrementAmount (w->screen) *-1
+
 static Bool FWRotateUp (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
-    
-    CompWindow* w;
-    Window xid;
-   
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-    
-    FREEWINS_WINDOW(w);
-    
-    fww->oldAngX = fww->angX;
-    fww->oldAngY = fww->angY;
-    fww->oldAngZ = fww->angZ;
-    
-    fww->oldScaleX = fww->scaleX;
-    fww->oldScaleY = fww->scaleY;
-    
-    fww->destAngX = fww->angX + freewinsGetRotateIncrementAmount (w->screen);
-    fww->destAngY = fww->angY;
-    fww->destAngZ = fww->angZ;
-    
-    fww->destScaleX = fww->scaleX;
-    fww->destScaleY = fww->scaleY;
-    
-    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    
-    fww->doAnimate = TRUE; // Start animating
+
+    MANUAL_ROTATE (0, ROTATE_INC, 0, 0, 0);
     
     return TRUE;
     
@@ -959,33 +961,8 @@ static Bool FWRotateUp (CompDisplay *d, CompAction *action,
 
 static Bool FWRotateDown (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
-    
-    CompWindow* w;
-    Window xid;
 
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-    
-    FREEWINS_WINDOW(w);
-    
-    fww->oldAngX = fww->angX;
-    fww->oldAngY = fww->angY;
-    fww->oldAngZ = fww->angZ;
-    
-    fww->oldScaleX = fww->scaleX;
-    fww->oldScaleY = fww->scaleY;
-    
-    fww->destAngX = fww->angX - freewinsGetRotateIncrementAmount (w->screen);
-    fww->destAngY = fww->angY;
-    fww->destAngZ = fww->angZ;
-    
-    fww->destScaleX = fww->scaleX;
-    fww->destScaleY = fww->scaleY;
-    
-    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    
-    fww->doAnimate = TRUE; // Start animating
+    MANUAL_ROTATE (0, NEG_ROTATE_INC, 0, 0, 0);
     
     return TRUE;
     
@@ -993,33 +970,8 @@ static Bool FWRotateDown (CompDisplay *d, CompAction *action,
 
 static Bool FWRotateLeft (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
-    
-    CompWindow* w;
-    Window xid;
 
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-    
-    FREEWINS_WINDOW(w);
-    
-    fww->oldAngX = fww->angX;
-    fww->oldAngY = fww->angY;
-    fww->oldAngZ = fww->angZ;
-    
-    fww->oldScaleX = fww->scaleX;
-    fww->oldScaleY = fww->scaleY;
-    
-    fww->destAngX = fww->angX;
-    fww->destAngY = fww->angY - freewinsGetRotateIncrementAmount (w->screen);
-    fww->destAngZ = fww->angZ;
-    
-    fww->destScaleX = fww->scaleX;
-    fww->destScaleY = fww->scaleY;
-    
-    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    
-    fww->doAnimate = TRUE; // Start animating
+    MANUAL_ROTATE (ROTATE_INC, 0, 0, 0, 0);
     
     return TRUE;
     
@@ -1028,32 +980,7 @@ static Bool FWRotateLeft (CompDisplay *d, CompAction *action,
 static Bool FWRotateRight (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    CompWindow* w;
-    Window xid;
-
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-    
-    FREEWINS_WINDOW(w);
-    
-    fww->oldAngX = fww->angX;
-    fww->oldAngY = fww->angY;
-    fww->oldAngZ = fww->angZ;
-    
-    fww->oldScaleX = fww->scaleX;
-    fww->oldScaleY = fww->scaleY;
-    
-    fww->destAngX = fww->angX;
-    fww->destAngY = fww->angY + freewinsGetRotateIncrementAmount (w->screen);
-    fww->destAngZ = fww->angZ;
-    
-    fww->destScaleX = fww->scaleX;
-    fww->destScaleY = fww->scaleY;
-    
-    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    
-    fww->doAnimate = TRUE; // Start animating
+    MANUAL_ROTATE (NEG_ROTATE_INC, 0, 0, 0, 0);
     
     return TRUE;
     
@@ -1062,32 +989,7 @@ static Bool FWRotateRight (CompDisplay *d, CompAction *action,
 static Bool FWRotateClockwise (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    CompWindow* w;
-    Window xid;
-
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-    
-    FREEWINS_WINDOW(w);
-    
-    fww->oldAngX = fww->angX;
-    fww->oldAngY = fww->angY;
-    fww->oldAngZ = fww->angZ;
-    
-    fww->oldScaleX = fww->scaleX;
-    fww->oldScaleY = fww->scaleY;
-    
-    fww->destAngX = fww->angX;
-    fww->destAngY = fww->angY;
-    fww->destAngZ = fww->angZ + freewinsGetRotateIncrementAmount (w->screen);
-    
-    fww->destScaleX = fww->scaleX;
-    fww->destScaleY = fww->scaleY;
-    
-    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    
-    fww->doAnimate = TRUE; // Start animating
+    MANUAL_ROTATE (0, 0, ROTATE_INC, 0, 0);
     
     return TRUE;
     
@@ -1096,32 +998,7 @@ static Bool FWRotateClockwise (CompDisplay *d, CompAction *action,
 static Bool FWRotateCounterclockwise (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    CompWindow* w;
-    Window xid;
-
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-    
-    FREEWINS_WINDOW(w);
-    
-    fww->oldAngX = fww->angX;
-    fww->oldAngY = fww->angY;
-    fww->oldAngZ = fww->angZ;
-    
-    fww->oldScaleX = fww->scaleX;
-    fww->oldScaleY = fww->scaleY;
-    
-    fww->destAngX = fww->angX;
-    fww->destAngY = fww->angY;
-    fww->destAngZ = fww->angZ - freewinsGetRotateIncrementAmount (w->screen);
-
-    fww->destScaleX = fww->scaleX;
-    fww->destScaleY = fww->scaleY;
-    
-    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen);
-    
-    fww->doAnimate = TRUE; // Start animating
+    MANUAL_ROTATE (0, 0, NEG_ROTATE_INC, 0, 0);
     
     return TRUE;
     
@@ -1130,32 +1007,7 @@ static Bool FWRotateCounterclockwise (CompDisplay *d, CompAction *action,
 static Bool FWScaleUp (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    CompWindow* w;
-    Window xid;
-
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-    
-    FREEWINS_WINDOW(w);
-    
-    fww->oldAngX = fww->angX;
-    fww->oldAngY = fww->angY;
-    fww->oldAngZ = fww->angZ;
-    
-    fww->oldScaleX = fww->scaleX;
-    fww->oldScaleY = fww->scaleY;
-    
-    fww->destAngX = fww->angX;
-    fww->destAngY = fww->angY;
-    fww->destAngZ = fww->angZ;
-    
-    fww->destScaleX = fww->scaleX + freewinsGetScaleIncrementAmount (w->screen);
-    fww->destScaleY = fww->scaleY + freewinsGetScaleIncrementAmount (w->screen);
-    
-    fww->aTimeRemaining = freewinsGetScaleIncrementTime (w->screen);
-    fww->cTimeRemaining = freewinsGetScaleIncrementTime (w->screen);
-    
-    fww->doAnimate = TRUE; // Start animating
+    MANUAL_ROTATE (0, 0, 0, SCALE_INC, SCALE_INC);
     
     damageScreen (w->screen); // Smoothen Painting
     
@@ -1169,32 +1021,7 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
 static Bool FWScaleDown (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    CompWindow* w;
-    Window xid;
-
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-    
-    FREEWINS_WINDOW(w);
-    
-    fww->oldAngX = fww->angX;
-    fww->oldAngY = fww->angY;
-    fww->oldAngZ = fww->angZ;
-    
-    fww->oldScaleX = fww->scaleX;
-    fww->oldScaleY = fww->scaleY;
-    
-    fww->destAngX = fww->angX;
-    fww->destAngY = fww->angY;
-    fww->destAngZ = fww->angZ;
-    
-    fww->destScaleX = fww->scaleX - freewinsGetScaleIncrementAmount (w->screen);
-    fww->destScaleY = fww->scaleY - freewinsGetScaleIncrementAmount (w->screen);
-    
-    fww->aTimeRemaining = freewinsGetScaleIncrementTime (w->screen);
-    fww->cTimeRemaining = freewinsGetScaleIncrementTime (w->screen);
-    
-    fww->doAnimate = TRUE; // Start animating
+    MANUAL_ROTATE (0, 0, 0, NEG_SCALE_INC, NEG_SCALE_INC);
     
     if (FWCanShape (w))
         FWShapeInput (w);
