@@ -940,7 +940,6 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
     fww->destAngZ = fww->angZ + z; \
     fww->destScaleX = fww->scaleX + u; \
     fww->destScaleY = fww->scaleY + d; \
-    fww->destOpacity = fww->opacity; \
     fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen); \
     fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen); \
     fww->doAnimate = TRUE; \ // Start animating
