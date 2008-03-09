@@ -62,8 +62,12 @@ typedef struct _SessionCore
 {
     SessionWindowList *windowList;
 
-    SessionSaveYourselfProc sessionSaveYourself;
-    ObjectAddProc           objectAdd;
+    char *clientId;
+    char *prevClientId;
+
+    SessionInitProc  sessionInit;
+    SessionEventProc sessionEvent;
+    ObjectAddProc    objectAdd;
 } SessionCore;
 
 typedef struct _SessionDisplay
@@ -766,31 +770,54 @@ sessionHandleEvent (CompDisplay *d,
 }
 
 static void
-sessionSessionSaveYourself (CompCore   *c,
-			    const char *clientId,
-			    int         saveType,
-			    int         interactStyle,
-			    Bool        shutdown,
-			    Bool        fast)
+sessionSessionInit (CompCore *c,
+		    const char *previousClientId,
+		    const char *clientId)
 {
-    CompObject *object;
-
     SESSION_CORE (c);
 
-    if (shutdown)
+    if (previousClientId)
+	sc->prevClientId = strdup (previousClientId);
+
+    if (clientId)
+	sc->clientId = strdup (clientId);
+
+    UNWRAP (sc, c, sessionInit);
+    (*c->sessionInit) (c, previousClientId, clientId);
+    WRAP (sc, c, sessionInit, sessionSessionInit);
+}
+
+static void
+sessionSessionEvent (CompCore         *c,
+		     CompSessionEvent event,
+		     CompOption       *arguments,
+		     unsigned int     nArguments)
+{
+    SESSION_CORE (c);
+
+    if (event == CompSessionEventSaveYourself)
     {
-	object = compObjectFind (&c->base, COMP_OBJECT_TYPE_DISPLAY, NULL);
-	if (object)
+	Bool shutdown;
+
+	shutdown = getBoolOptionNamed (arguments, nArguments,
+				       "shutdown", FALSE);
+
+	if (shutdown && sc->clientId)
 	{
-	    CompDisplay *d = (CompDisplay *) object;
-	    saveState (d, clientId);
+	    CompObject *object;
+
+	    object = compObjectFind (&c->base, COMP_OBJECT_TYPE_DISPLAY, NULL);
+	    if (object)
+	    {
+		CompDisplay *d = (CompDisplay *) object;
+		saveState (d, sc->clientId);
+	    }
 	}
     }
 
-    UNWRAP (sc, c, sessionSaveYourself);
-    (*c->sessionSaveYourself) (c, clientId, saveType,
-			       interactStyle, shutdown, fast);
-    WRAP (sc, c, sessionSaveYourself, sessionSessionSaveYourself);
+    UNWRAP (sc, c, sessionEvent);
+    (*c->sessionEvent) (c, event, arguments, nArguments);
+    WRAP (sc, c, sessionEvent, sessionSessionEvent);
 }
 
 static void
@@ -893,7 +920,7 @@ static const CompMetadataOptionInfo sessionDisplayOptionInfo[] = {
 };
 
 static int
-sessionInit (CompPlugin *p)
+sessionInitPlugin (CompPlugin *p)
 {
     if (!compInitPluginMetadataFromInfo (&sessionMetadata, p->vTable->name,
 					 sessionDisplayOptionInfo,
@@ -914,7 +941,7 @@ sessionInit (CompPlugin *p)
 }
 
 static void
-sessionFini (CompPlugin *p)
+sessionFiniPlugin (CompPlugin *p)
 {
     freeCorePrivateIndex (corePrivateIndex);
     compFiniMetadata (&sessionMetadata);
@@ -940,13 +967,16 @@ sessionInitCore (CompPlugin *p,
 	return FALSE;
     }
 
-    sc->windowList = NULL;
+    sc->windowList   = NULL;
+    sc->clientId     = NULL;
+    sc->prevClientId = NULL;
 
     /* FIXME: don't use WindowAdd for now as it's not called for windows
        that are present before Compiz start - TODO: find out why and remove
        the timeout hack */
     /* WRAP (sc, c, objectAdd, sessionObjectAdd); */
-    WRAP (sc, c, sessionSaveYourself, sessionSessionSaveYourself);
+    WRAP (sc, c, sessionInit, sessionSessionInit);
+    WRAP (sc, c, sessionEvent, sessionSessionEvent);
 
     c->base.privates[corePrivateIndex].ptr = sc;
 
@@ -965,7 +995,14 @@ sessionFiniCore (CompPlugin *p,
 
     /* FIXME: see above */
     /* UNWRAP (sc, c, objectAdd); */
-    UNWRAP (sc, c, sessionSaveYourself);
+    UNWRAP (sc, c, sessionInit);
+    UNWRAP (sc, c, sessionEvent);
+
+    if (sc->clientId)
+	free (sc->clientId);
+
+    if (sc->prevClientId)
+	free (sc->prevClientId);
 
     run = sc->windowList;
     while (run)
@@ -983,8 +1020,8 @@ sessionInitDisplay (CompPlugin  *p,
 		    CompDisplay *d)
 {
     SessionDisplay *sd;
-    char           *previousId = NULL;
-    int            i;
+
+    SESSION_CORE (&core);
 
     sd = malloc (sizeof (SessionDisplay));
     if (!sd)
@@ -1009,28 +1046,8 @@ sessionInitDisplay (CompPlugin  *p,
     sd->roleAtom = XInternAtom (d->display, "WM_WINDOW_ROLE", 0);
     sd->commandAtom = XInternAtom (d->display, "WM_COMMAND", 0);
 
-    for (i = 0; i < programArgc; i++)
-    {
-	if (strcmp (programArgv[i], "--sm-disable") == 0)
-	{
-	    if (previousId)
-	    {
-		free (previousId);
-		previousId = NULL;
-		break;
-	    }
-	}
-	else if (strcmp (programArgv[i], "--sm-client-id") == 0)
-	{
-	    previousId = strdup (programArgv[i + 1]);
-	}
-    }
-
-    if (previousId)
-    {
-	loadState (d, previousId);
-	free (previousId);
-    }
+    if (sc->prevClientId)
+	loadState (d, sc->prevClientId);
 
     sd->windowAddTimeout = compAddTimeout (0, sessionWindowAddTimeout, d);
 
@@ -1091,8 +1108,8 @@ static CompPluginVTable sessionVTable =
 {
     "session",
     sessionGetMetadata,
-    sessionInit,
-    sessionFini,
+    sessionInitPlugin,
+    sessionFiniPlugin,
     sessionInitObject,
     sessionFiniObject,
     sessionGetObjectOptions,
