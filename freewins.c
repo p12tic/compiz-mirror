@@ -923,25 +923,35 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
     return TRUE;
 }
 
-#define MANUAL_ROTATE(x, y, z, u, d) \
-    CompWindow* w; \
+#define GET_WINDOW \
+    CompWindow *w; \
     Window xid; \
     xid = getIntOptionNamed (option, nOption, "window", 0); \
     w = findWindowAtDisplay (d, xid); \
-    FREEWINS_WINDOW(w); \
-    fww->oldAngX = fww->angX; \
-    fww->oldAngY = fww->angY; \
-    fww->oldAngZ = fww->angZ; \
-    fww->oldScaleX = fww->scaleX; \
-    fww->oldScaleY = fww->scaleY; \
-    fww->destAngX = fww->angX + x; \
-    fww->destAngY = fww->angY + y; \
-    fww->destAngZ = fww->angZ + z; \
-    fww->destScaleX = fww->scaleX + u; \
-    fww->destScaleY = fww->scaleY + d; \
-    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen); \
-    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen); \
-    fww->doAnimate = TRUE; \ // Start animating
+
+static void
+FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, float dsd)
+{
+    FREEWINS_WINDOW (w);
+
+    fww->oldAngX = fww->angX; 
+    fww->oldAngY = fww->angY; 
+    fww->oldAngZ = fww->angZ;
+
+    fww->oldScaleX = fww->scaleX; 
+    fww->oldScaleY = fww->scaleY;
+
+    fww->destAngX = fww->angX + dx; 
+    fww->destAngY = fww->angY + dy; 
+    fww->destAngZ = fww->angZ + dz;
+
+    fww->destScaleX = fww->scaleX + dsu; 
+    fww->destScaleY = fww->scaleY + dsd;
+
+    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen); 
+    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen); 
+    fww->doAnimate = TRUE; // Start animating
+}
 
 #define ROTATE_INC freewinsGetRotateIncrementAmount (w->screen)
 #define NEG_ROTATE_INC freewinsGetRotateIncrementAmount (w->screen) *-1
@@ -952,7 +962,9 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 static Bool FWRotateUp (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
 
-    MANUAL_ROTATE (0, ROTATE_INC, 0, 0, 0);
+    GET_WINDOW
+    if (w)
+        FWSetPrepareRotation (w, 0, ROTATE_INC, 0, 0, 0);
     
     return TRUE;
     
@@ -961,7 +973,9 @@ static Bool FWRotateUp (CompDisplay *d, CompAction *action,
 static Bool FWRotateDown (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
 
-    MANUAL_ROTATE (0, NEG_ROTATE_INC, 0, 0, 0);
+    GET_WINDOW
+    if (w)
+        FWSetPrepareRotation (w, 0, NEG_ROTATE_INC, 0, 0, 0);
     
     return TRUE;
     
@@ -970,7 +984,9 @@ static Bool FWRotateDown (CompDisplay *d, CompAction *action,
 static Bool FWRotateLeft (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
 
-    MANUAL_ROTATE (ROTATE_INC, 0, 0, 0, 0);
+    GET_WINDOW
+    if (w)
+        FWSetPrepareRotation (w, ROTATE_INC, 0, 0, 0, 0);
     
     return TRUE;
     
@@ -979,7 +995,9 @@ static Bool FWRotateLeft (CompDisplay *d, CompAction *action,
 static Bool FWRotateRight (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    MANUAL_ROTATE (NEG_ROTATE_INC, 0, 0, 0, 0);
+    GET_WINDOW
+    if (w)
+        FWSetPrepareRotation (w, NEG_ROTATE_INC, 0, 0, 0, 0);
     
     return TRUE;
     
@@ -988,7 +1006,9 @@ static Bool FWRotateRight (CompDisplay *d, CompAction *action,
 static Bool FWRotateClockwise (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    MANUAL_ROTATE (0, 0, ROTATE_INC, 0, 0);
+    GET_WINDOW
+    if (w)
+        FWSetPrepareRotation (w, 0, 0, ROTATE_INC, 0, 0);
     
     return TRUE;
     
@@ -997,7 +1017,9 @@ static Bool FWRotateClockwise (CompDisplay *d, CompAction *action,
 static Bool FWRotateCounterclockwise (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    MANUAL_ROTATE (0, 0, NEG_ROTATE_INC, 0, 0);
+    GET_WINDOW
+    if (w)
+        FWSetPrepareRotation (w, 0, 0, NEG_ROTATE_INC, 0, 0);
     
     return TRUE;
     
@@ -1006,7 +1028,9 @@ static Bool FWRotateCounterclockwise (CompDisplay *d, CompAction *action,
 static Bool FWScaleUp (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    MANUAL_ROTATE (0, 0, 0, SCALE_INC, SCALE_INC);
+    GET_WINDOW
+    if (w)
+        FWSetPrepareRotation (w, 0, 0, 0, SCALE_INC, SCALE_INC);
     
     damageScreen (w->screen); // Smoothen Painting
     
@@ -1020,7 +1044,9 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
 static Bool FWScaleDown (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
-    MANUAL_ROTATE (0, 0, 0, NEG_SCALE_INC, NEG_SCALE_INC);
+    GET_WINDOW
+    if (w)
+        FWSetPrepareRotation (w, 0, 0, 0, NEG_SCALE_INC, NEG_SCALE_INC);
     
     if (FWCanShape (w))
         FWShapeInput (w);
@@ -1030,7 +1056,6 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
     return TRUE;
     
 }
-/*}}}*/
 
 /* Callable action to rotate a window to the angle provided*/
 static Bool freewinsRotateWindow (CompDisplay *d, CompAction *action, 
