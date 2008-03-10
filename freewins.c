@@ -179,6 +179,7 @@ typedef struct _FWWindow{
     StartCorner corner;
 
     //Box rect;
+    REGION damageRegion;
 
     Bool grabbed;
     
@@ -267,7 +268,6 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	    
 	    if(fwd->grabWindow){
 		FREEWINS_WINDOW(fwd->grabWindow);
-		FREEWINS_SCREEN(fwd->grabWindow->screen);
 
 		dx = (float)(ev->xmotion.x_root - fww->oldX) / fwd->grabWindow->screen->width;
 		dy = (float)(ev->xmotion.y_root - fww->oldY) / fwd->grabWindow->screen->height;
@@ -455,15 +455,17 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		fww->grabLeft = (ev->xmotion.x - fww->midX > 0 ? FALSE : TRUE);
 		fww->grabTop = (ev->xmotion.y - fww->midY > 0 ? FALSE : TRUE);
 
-		//fww->rect.x1 = 0; 
-		//fww->rect.y1 = 0; 
+        CompWindow *w = fwd->grabWindow;
 
-		//fww->rect.x2 = fwd->grabWindow->screen->width; 
-		//fww->rect.y2 = fwd->grabWindow->screen->height; 
+		fww->damageRegion.extents.x1 = WIN_REAL_X (w) - (WIN_REAL_X (w) / 2); 
+		fww->damageRegion.extents.y1 = WIN_REAL_Y (w) - (WIN_REAL_Y (w) / 2); 
+
+		fww->damageRegion.extents.x2 = WIN_REAL_X (w) + WIN_REAL_W (w) + (WIN_REAL_X (w) / 2); 
+		fww->damageRegion.extents.y2 = WIN_REAL_X (w) + WIN_REAL_W (w) + (WIN_REAL_Y (w) / 2); 
 
 		if(dx != 0.0 || dy != 0.0)
-		    damageScreen(fwd->grabWindow->screen);
-		    //damageScreenRegion(fwd->grabWindow->screen, fww->rect);
+		    //damageScreen(fwd->grabWindow->screen);
+		    damageScreenRegion(fwd->grabWindow->screen, &fww->damageRegion);
 
         }
 	    break;
@@ -586,6 +588,11 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 		  matrixScale(&wTransform, minScale, 1.0, 0.0);
 		  fww->scaleX = minScale; // Don't allow negative values either, which could be referenced
 		}
+        else if (ScaleX >= 1.25)
+        {
+          matrixScale(&wTransform, 1.25, 1.0, 0.0);
+          fww->scaleX = 1.25f;
+        }
 		else
 		  matrixScale(&wTransform, ScaleX, 1.0, 0.0);
 		
@@ -594,6 +601,11 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 		  matrixScale(&wTransform, 1.0, minScale, 0.0);
 		  fww->scaleY = minScale;
 		}
+        else if (ScaleY >= 1.25)
+        {
+          matrixScale(&wTransform, 1.0, 1.25, 0.0);
+          fww->scaleY = 1.25f;
+        }
 		else
 		  matrixScale(&wTransform, 1.0, ScaleY, 0.0);
 	}
@@ -624,7 +636,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         fww->scaleY += saY;
                 
         fww->aTimeRemaining--;
-        damageScreen (w->screen); // FIXME: Find a better way to fix jitteryness
+        damageScreenRegion (w->screen, &fww->damageRegion); // FIXME: Find a better way to fix jitteryness
         
         if (fww->aTimeRemaining <= 0 || (fww->angX == fww->destAngX && fww->angY == fww->destAngY
                                         && fww->angZ == fww->destAngZ && fww->scaleX == fww->destScaleX
@@ -758,7 +770,7 @@ static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
     Bool status = TRUE;
     FREEWINS_SCREEN(w->screen);
-//    FREEWINS_WINDOW(w);
+    //FREEWINS_WINDOW(w);
 
     damageScreen(w->screen);
 
@@ -1039,12 +1051,13 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
     
     GET_WINDOW
     if (w)
+    {
         FWSetPrepareRotation (w, 0, 0, 0, SCALE_INC, SCALE_INC);
-    
-    damageScreen (w->screen); // Smoothen Painting
-    
-    if (FWCanShape (w))
+        FREEWINS_WINDOW (w);
+        damageScreenRegion (w->screen, &fww->damageRegion); // Smoothen Painting
+        if (FWCanShape (w))
         FWShapeInput (w);
+    }
     
     return TRUE;
     
@@ -1055,12 +1068,13 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
     
     GET_WINDOW
     if (w)
+    {
         FWSetPrepareRotation (w, 0, 0, 0, NEG_SCALE_INC, NEG_SCALE_INC);
-    
-    if (FWCanShape (w))
-        FWShapeInput (w);
-    
-    damageScreen (w->screen); // Smoothen Painting
+        FREEWINS_WINDOW (w);
+        damageScreenRegion (w->screen, &fww->damageRegion); // Smoothen Painting
+        if (FWCanShape (w))
+            FWShapeInput (w);
+    }
     
     return TRUE;
     
@@ -1088,6 +1102,8 @@ static Bool freewinsRotateWindow (CompDisplay *d, CompAction *action,
         fww->angX = x;
         fww->angY = y;
         fww->angZ = z;
+
+        damageScreenRegion(w->screen, &fww->damageRegion);
         
     }
     else
@@ -1095,8 +1111,6 @@ static Bool freewinsRotateWindow (CompDisplay *d, CompAction *action,
         return FALSE;
     }
     
-    damageScreen(w->screen);
-
     //fwd->axisHelp = !fwd->axisHelp;
 
     return TRUE;
@@ -1125,14 +1139,14 @@ static Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
         fww->angX += x;
         fww->angY += y;
         fww->angZ += z;
+
+        damageScreenRegion(w->screen, &fww->damageRegion);
         
     }
     else
     {
         return FALSE;
     }
-    
-    damageScreen(w->screen);
 
     //fwd->axisHelp = !fwd->axisHelp;
 
@@ -1152,6 +1166,8 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
         
         fww->scaleX = getFloatOptionNamed(option, nOption, "x", 0.0f);
         fww->scaleY = getFloatOptionNamed(option, nOption, "y", 0.0f);
+
+        damageScreenRegion(w->screen, &fww->damageRegion);
     }
     else
     {
@@ -1161,8 +1177,6 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
     if (FWCanShape (w))
         FWShapeInput (w);
     
-    damageScreen(w->screen);
-
     return TRUE;
 }
 
@@ -1188,7 +1202,7 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
     if(w){
 	FREEWINS_WINDOW(w);
 
-	damageScreen(w->screen);
+    damageScreenRegion(w->screen, &fww->damageRegion);
 
 	if( fww->rotated ){
 	    FREEWINS_SCREEN(w->screen);
