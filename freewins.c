@@ -465,20 +465,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		    damageScreen(fwd->grabWindow->screen);
 		    //damageScreenRegion(fwd->grabWindow->screen, fww->rect);
 
-		// Check if there are rotated windows
-		if(fww->angX != 0.0 || fww->angY != 0.0 || fww->angZ != 0.0 || fww->scaleX != 1.0 || fww->scaleY != 1.0){
-		    if( !fww->rotated ){
-			fws->rotatedWindows++;
-			fww->rotated = TRUE;
-		    }
-		}else{
-		    if( fww->rotated ){
-			fws->rotatedWindows--;
-			fww->rotated = FALSE;
-		    }
-		}
-		
-	    }
+        }
 	    break;
 
 
@@ -644,6 +631,12 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
                                         && fww->scaleY == fww->destScaleY))
         {
             fww->resetting = FALSE;
+
+            fww->angX = 0.0f;
+            fww->angY = 0.0f;
+            fww->angZ = 0.0f;
+            fww->scaleX = 1.0f;
+            fww->scaleY = 1.0f;
             
             fww->doAnimate = FALSE;
             fww->aTimeRemaining = freewinsGetResetTime (w->screen);
@@ -652,6 +645,19 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
                 FWShapeInput (w);
         }
     }
+
+	// Check if there are rotated windows
+	if(fww->angX != 0.0 || fww->angY != 0.0 || fww->angZ != 0.0 || fww->scaleX != 1.0 || fww->scaleY != 1.0){
+	    if( !fww->rotated ){
+		fws->rotatedWindows++;
+		fww->rotated = TRUE;
+	    }
+	}else{
+	    if( fww->rotated ){
+		fws->rotatedWindows--;
+		fww->rotated = FALSE;
+	    }
+	}
 
     if(wasCulled)
 	glDisable(GL_CULL_FACE);
@@ -680,7 +686,10 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     FREEWINS_SCREEN(s);
     FREEWINS_DISPLAY(s->display);
 
-    //if(fws->rotatedWindows > 0)
+
+    fprintf(stderr, "rotatedWindows is %i\n", fws->rotatedWindows);
+
+    if(fws->rotatedWindows > 0)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     UNWRAP(fws, s, paintOutput);
