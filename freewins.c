@@ -50,6 +50,9 @@
 #define ABS(x) ((x)>0?(x):-(x))
 #define D2R(x) ((x) * M_PI / 180.0)
 
+#define VISIBILITY_CONSTANT 2.3
+#define SCALE_RATE_OF_CHANGE 2.0
+
 // Macros/*{{{*/
 #define GET_FREEWINS_DISPLAY(d)                                       \
     ((FWDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
@@ -118,6 +121,7 @@ typedef struct _FWScreen{
 
     PaintOutputProc paintOutput;
     PaintWindowProc paintWindow;
+    DonePaintScreenProc donePaintScreen;
 
     DamageWindowRectProc damageWindowRect;
 
@@ -177,8 +181,8 @@ typedef struct _FWWindow{
     // Used to determine starting point
     StartCorner corner;
 
-    //Box rect;
-    REGION damageRegion;
+    Box rect;
+    //REGION damageRegion;
 
     Bool grabbed;
     
@@ -455,20 +459,13 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		fww->grabLeft = (ev->xmotion.x - fww->midX > 0 ? FALSE : TRUE);
 		fww->grabTop = (ev->xmotion.y - fww->midY > 0 ? FALSE : TRUE);
 
-        CompWindow *w = fwd->grabWindow;
+	    if(dx != 0.0 || dy != 0.0)
+	        //damageScreen(fwd->grabWindow->screen);
+	        //damageScreenRegion(fwd->grabWindow->screen, &fww->damageRegion);
+            addWindowDamage (fwd->grabWindow);
 
-		fww->damageRegion.extents.x1 = WIN_REAL_X (w) - (WIN_REAL_X (w) / 2); 
-		fww->damageRegion.extents.y1 = WIN_REAL_Y (w) - (WIN_REAL_Y (w) / 2); 
-
-		fww->damageRegion.extents.x2 = WIN_REAL_X (w) + WIN_REAL_W (w) + (WIN_REAL_X (w) / 2); 
-		fww->damageRegion.extents.y2 = WIN_REAL_X (w) + WIN_REAL_W (w) + (WIN_REAL_Y (w) / 2); 
-
-		if(dx != 0.0 || dy != 0.0)
-		    //damageScreen(fwd->grabWindow->screen);
-		    damageScreenRegion(fwd->grabWindow->screen, &fww->damageRegion);
-
-        }
-	    break;
+    }
+    break;
 
 
 	// Button press / release/*{{{*/
@@ -636,7 +633,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         fww->scaleY += saY;
                 
         fww->aTimeRemaining--;
-        damageScreenRegion (w->screen, &fww->damageRegion); // FIXME: Find a better way to fix jitteryness
+        addWindowDamage (w);
         
         if (fww->aTimeRemaining <= 0 || (fww->angX == fww->destAngX && fww->angY == fww->destAngY
                                         && fww->angZ == fww->destAngZ && fww->scaleX == fww->destScaleX
@@ -698,9 +695,6 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     FREEWINS_SCREEN(s);
     FREEWINS_DISPLAY(s->display);
 
-
-    fprintf(stderr, "rotatedWindows is %i\n", fws->rotatedWindows);
-
     if(fws->rotatedWindows > 0)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
@@ -752,7 +746,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glVertex3f(x - (WIN_REAL_W (fwd->focusWindow) / 2), y, 0.0f);
 	glVertex3f(x + (WIN_REAL_W (fwd->focusWindow) / 2), y, 0.0f);
 	glEnd ();
-	
+
 	if(wasCulled)
 	    glEnable(GL_CULL_FACE);
 
@@ -764,16 +758,44 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
     return status;
 }
-/*}}}*/
 
 // Damage Window Rect/*{{{*/
 static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
     Bool status = TRUE;
     FREEWINS_SCREEN(w->screen);
-    //FREEWINS_WINDOW(w);
+    FREEWINS_WINDOW(w);
 
-    damageScreen(w->screen);
+    float x1, x2, y1, y2;
+    int sx, sy;
+    REGION region;
+
+    sx = WIN_REAL_X (w);
+    sy = WIN_REAL_Y (w);
+
+    x1 = sx - ((WIN_REAL_W (w)) / VISIBILITY_CONSTANT)
+         * pow(fww->scaleX, SCALE_RATE_OF_CHANGE);
+
+    y1 = sy - ((WIN_REAL_H (w)) / VISIBILITY_CONSTANT)
+              * pow(fww->scaleY, SCALE_RATE_OF_CHANGE);
+
+    x2 = (sx + ((WIN_REAL_W (w))) + 
+         ((WIN_REAL_W (w)) / VISIBILITY_CONSTANT)
+         * pow(fww->scaleX, SCALE_RATE_OF_CHANGE));
+
+    y2 = (sy + ((WIN_REAL_H (w))) +
+         ((WIN_REAL_H (w)) / VISIBILITY_CONSTANT)
+         * pow(fww->scaleY, SCALE_RATE_OF_CHANGE));
+
+    region.rects = &region.extents;
+    region.numRects = region.size = 1;
+
+    region.extents.x1 = x1;
+    region.extents.x2 = x2;
+    region.extents.y1 = y1;
+    region.extents.y2 = y2;
+
+    damageScreenRegion (w->screen, &region);
 
     UNWRAP(fws, w->screen, damageWindowRect);
     status |= (*w->screen->damageWindowRect)(w, initial, rect);
@@ -794,7 +816,7 @@ static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh){
 
     fww->midX += dw;
     fww->midY += dh;
-    
+
     if (FWCanShape (w))
         FWShapeInput (w);
 
@@ -1054,8 +1076,7 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
     if (w)
     {
         FWSetPrepareRotation (w, 0, 0, 0, SCALE_INC, SCALE_INC);
-        FREEWINS_WINDOW (w);
-        damageScreenRegion (w->screen, &fww->damageRegion); // Smoothen Painting
+        addWindowDamage (w); // Smoothen Painting
         if (FWCanShape (w))
         FWShapeInput (w);
     }
@@ -1071,8 +1092,7 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
     if (w)
     {
         FWSetPrepareRotation (w, 0, 0, 0, NEG_SCALE_INC, NEG_SCALE_INC);
-        FREEWINS_WINDOW (w);
-        damageScreenRegion (w->screen, &fww->damageRegion); // Smoothen Painting
+        addWindowDamage (w); // Smoothen Painting
         if (FWCanShape (w))
             FWShapeInput (w);
     }
@@ -1104,7 +1124,7 @@ static Bool freewinsRotateWindow (CompDisplay *d, CompAction *action,
         fww->angY = y;
         fww->angZ = z;
 
-        damageScreenRegion(w->screen, &fww->damageRegion);
+        addWindowDamage (w);
         
     }
     else
@@ -1141,7 +1161,7 @@ static Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
         fww->angY += y;
         fww->angZ += z;
 
-        damageScreenRegion(w->screen, &fww->damageRegion);
+        addWindowDamage (w);
         
     }
     else
@@ -1168,7 +1188,7 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
         fww->scaleX = getFloatOptionNamed(option, nOption, "x", 0.0f);
         fww->scaleY = getFloatOptionNamed(option, nOption, "y", 0.0f);
 
-        damageScreenRegion(w->screen, &fww->damageRegion);
+        addWindowDamage (w);
     }
     else
     {
@@ -1203,7 +1223,7 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
     if(w){
 	FREEWINS_WINDOW(w);
 
-    damageScreenRegion(w->screen, &fww->damageRegion);
+    addWindowDamage (w);
 
 	if( fww->rotated ){
 	    FREEWINS_SCREEN(w->screen);
@@ -1261,12 +1281,6 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
 
     fww->grabbed = 0;
     fww->zaxis = FALSE;
-
-    // Window Bounding box
-    //fww->rect.x1 = fww->rect.x2 = WIN_REAL_X(w);
-    //fww->rect.y1 = fww->rect.y2 = WIN_REAL_Y(w);
-    //fww->rect.x2 += WIN_REAL_W(w);
-    //fww->rect.y2 += WIN_REAL_H(w);
 
     fww->rotated = FALSE;
     
@@ -1339,6 +1353,7 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     WRAP(fws, s, paintOutput, FWPaintOutput);
 
     WRAP(fws, s, damageWindowRect, FWDamageWindowRect);
+    //WRAP(fws, s, donePaintScreen, FWDonePaintScreen);
 
     WRAP(fws, s, windowResizeNotify, FWWindowResizeNotify);
 
@@ -1355,6 +1370,7 @@ static void freewinsFiniScreen(CompPlugin *p, CompScreen *s){
     UNWRAP(fws, s, paintOutput);
 
     UNWRAP(fws, s, damageWindowRect);
+    //UNWRAP(fws, s, donePaintScreen);
 
     UNWRAP(fws, s, windowResizeNotify);
     free(fws);
