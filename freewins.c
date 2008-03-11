@@ -585,11 +585,6 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 		  matrixScale(&wTransform, minScale, 1.0, 0.0);
 		  fww->scaleX = minScale; // Don't allow negative values either, which could be referenced
 		}
-        else if (ScaleX >= 1.25)
-        {
-          matrixScale(&wTransform, 1.25, 1.0, 0.0);
-          fww->scaleX = 1.25f;
-        }
 		else
 		  matrixScale(&wTransform, ScaleX, 1.0, 0.0);
 		
@@ -598,11 +593,6 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 		  matrixScale(&wTransform, 1.0, minScale, 0.0);
 		  fww->scaleY = minScale;
 		}
-        else if (ScaleY >= 1.25)
-        {
-          matrixScale(&wTransform, 1.0, 1.25, 0.0);
-          fww->scaleY = 1.25f;
-        }
 		else
 		  matrixScale(&wTransform, 1.0, ScaleY, 0.0);
 	}
@@ -641,11 +631,11 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         {
             fww->resetting = FALSE;
 
-            fww->angX = 0.0f;
-            fww->angY = 0.0f;
-            fww->angZ = 0.0f;
-            fww->scaleX = 1.0f;
-            fww->scaleY = 1.0f;
+            fww->angX = fww->destAngX;
+            fww->angY = fww->destAngY;
+            fww->angZ = fww->destAngZ;
+            fww->scaleX = fww->destScaleX;
+            fww->scaleY = fww->destScaleX;
             
             fww->doAnimate = FALSE;
             fww->aTimeRemaining = freewinsGetResetTime (w->screen);
