@@ -614,8 +614,6 @@ sessionReadWindow (CompWindow *w)
 	if (cur->state)
 	{
 	    changeWindowState (w, w->state | cur->state);
-	    recalcWindowType (w);
-	    recalcWindowActions (w);
 	    updateWindowAttributes (w, CompStackingUpdateModeNone);
 	}
 
