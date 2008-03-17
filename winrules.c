@@ -214,9 +214,6 @@ winrulesUpdateState (CompWindow *w,
     {
 	changeWindowState (w, newState);
 
-	recalcWindowType (w);
-	recalcWindowActions (w);
-
 	if (mask & (CompWindowStateFullscreenMask |
 		    CompWindowStateAboveMask      |
 		    CompWindowStateBelowMask       ))
