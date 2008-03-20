@@ -1531,10 +1531,10 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->midX = WIN_REAL_W(w)/2.0;
     fww->midY = WIN_REAL_H(w)/2.0;
 
-    fww->rect.x1 = WIN_REAL_X (w);
-    fww->rect.x2 = WIN_REAL_X (w) + WIN_REAL_W (w);
-    fww->rect.y1 = WIN_REAL_Y (w);
-    fww->rect.y2 = WIN_REAL_Y (w) + WIN_REAL_H (w);
+    fww->rect.x1 = WIN_OUTPUT_X (w);
+    fww->rect.x2 = WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w);
+    fww->rect.y1 = WIN_OUTPUT_Y (w);
+    fww->rect.y2 = WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w);
 
     fww->grabbed = 0;
     fww->zaxis = FALSE;
@@ -1561,8 +1561,8 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
     
     // Shape window back to normal
-    /*if (FWCanShape (w))
-        FWShapeInput (w);*/
+    if (FWCanShape (w))
+        FWShapeInput (w);
 
     return TRUE;
 }
@@ -1654,21 +1654,23 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
 
 
     /* BCOP Action initiation */
-    freewinsSetInitiateRotationInitiate(d, initiateFWRotate);
-    freewinsSetInitiateScaleInitiate(d, initiateFWScale);
-    freewinsSetResetInitiate(d, resetFWRotation);
-    freewinsSetToggleAxisInitiate(d, toggleFWAxis);
+    freewinsSetInitiateRotationButtonInitiate(d, initiateFWRotate);
+    freewinsSetInitiateScaleButtonInitiate(d, initiateFWScale);
+    freewinsSetResetButtonInitiate(d, resetFWRotation);
+    freewinsSetToggleAxisKeyInitiate(d, toggleFWAxis);
     
     // Rotate / Scale Up Down Left Right
-    freewinsSetScaleUpInitiate(d, FWScaleUp);
-    freewinsSetScaleDownInitiate(d, FWScaleDown);
+    freewinsSetScaleUpKeyInitiate(d, FWScaleUp);
+    freewinsSetScaleDownKeyInitiate(d, FWScaleDown);
+    freewinsSetScaleUpButtonInitiate(d, FWScaleUp);
+    freewinsSetScaleDownButtonInitiate(d, FWScaleDown);
 
-    freewinsSetRotateUpInitiate(d, FWRotateUp);
-    freewinsSetRotateDownInitiate(d, FWRotateDown);
-    freewinsSetRotateLeftInitiate(d, FWRotateLeft);
-    freewinsSetRotateRightInitiate(d, FWRotateRight);
-    freewinsSetRotateCInitiate(d, FWRotateClockwise);
-    freewinsSetRotateCcInitiate(d, FWRotateCounterclockwise);
+    freewinsSetRotateUpKeyInitiate(d, FWRotateUp);
+    freewinsSetRotateDownKeyInitiate(d, FWRotateDown);
+    freewinsSetRotateLeftKeyInitiate(d, FWRotateLeft);
+    freewinsSetRotateRightKeyInitiate(d, FWRotateRight);
+    freewinsSetRotateCKeyInitiate(d, FWRotateClockwise);
+    freewinsSetRotateCcKeyInitiate(d, FWRotateCounterclockwise);
     
     freewinsSetRotateInitiate (d, freewinsRotateWindow);
     freewinsSetIncrementRotateInitiate (d, freewinsIncrementRotateWindow);
