@@ -30,9 +30,7 @@
  * or just as a toy.
  *
  * Todo: 
- *  - Shape input on rotation
  *  - Modifier key to rotate on the Z Axis
- *  - Correct damage and choppyness handling
  *  - Simplify code
  *  - Auto-zoom to fit in rect
  *  - Input prevention windows and proper shape handling
