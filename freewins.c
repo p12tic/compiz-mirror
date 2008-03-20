@@ -36,7 +36,7 @@
  *  - Input prevention windows and proper shape handling
  */
 
-#include <compiz.h>
+#include <compiz-core.h>
 #include <math.h>
 
 #include <stdio.h>
@@ -55,19 +55,19 @@
 
 /* ------ Macros ---------------------------------------------------------*/
 #define GET_FREEWINS_DISPLAY(d)                                       \
-    ((FWDisplay *) (d)->privates[displayPrivateIndex].ptr)
+    ((FWDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
 
 #define FREEWINS_DISPLAY(d)                      \
     FWDisplay *fwd = GET_FREEWINS_DISPLAY (d)
 
 #define GET_FREEWINS_SCREEN(s, fwd)                                        \
-    ((FWScreen *) (s)->privates[(fwd)->screenPrivateIndex].ptr)
+    ((FWScreen *) (s)->base.privates[(fwd)->screenPrivateIndex].ptr)
 
 #define FREEWINS_SCREEN(s)                                                      \
     FWScreen *fws = GET_FREEWINS_SCREEN (s, GET_FREEWINS_DISPLAY (s->display))
 
 #define GET_FREEWINS_WINDOW(w, fws)                                        \
-    ((FWWindow *) (w)->privates[(fws)->windowPrivateIndex].ptr)
+    ((FWWindow *) (w)->base.privates[(fws)->windowPrivateIndex].ptr)
 
 #define FREEWINS_WINDOW(w)                                         \
     FWWindow *fww = GET_FREEWINS_WINDOW  (w,                    \
@@ -1558,7 +1558,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->aTimeRemaining = freewinsGetResetTime (w->screen);
     fww->cTimeRemaining = freewinsGetResetTime (w->screen);
 
-    w->privates[fws->windowPrivateIndex].ptr = fww;
+    w->base.privates[fws->windowPrivateIndex].ptr = fww;
     
     // Shape window back to normal
     /*if (FWCanShape (w))
@@ -1603,13 +1603,12 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     fws->grabIndex = 0;
     fws->rotatedWindows = 0;
 
-    s->privates[fwd->screenPrivateIndex].ptr = fws;
+    s->base.privates[fwd->screenPrivateIndex].ptr = fws;
     
     WRAP(fws, s, paintWindow, FWPaintWindow);
     WRAP(fws, s, paintOutput, FWPaintOutput);
 
     WRAP(fws, s, damageWindowRect, FWDamageWindowRect);
-    //WRAP(fws, s, donePaintScreen, FWDonePaintScreen);
 
     WRAP(fws, s, windowResizeNotify, FWWindowResizeNotify);
 
@@ -1692,6 +1691,34 @@ static void freewinsFiniDisplay(CompPlugin *p, CompDisplay *d){
     free(fwd);
 }
 
+static CompBool
+freewinsInitObject (CompPlugin *p,
+		 CompObject *o)
+{
+    static InitPluginObjectProc dispTab[] = {
+	    (InitPluginObjectProc) 0, /* InitCore */
+	    (InitPluginObjectProc) freewinsInitDisplay,
+	    (InitPluginObjectProc) freewinsInitScreen, 
+	    (InitPluginObjectProc) freewinsInitWindow
+    };
+
+    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
+}
+
+static void
+freewinsFiniObject (CompPlugin *p,
+		 CompObject *o)
+{
+    static FiniPluginObjectProc dispTab[] = {
+	(FiniPluginObjectProc) 0, /* InitCore */
+	(FiniPluginObjectProc) freewinsFiniDisplay,
+	(FiniPluginObjectProc) freewinsFiniScreen, 
+	(FiniPluginObjectProc) freewinsFiniWindow
+    };
+
+    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
+}
+
 /* Plugin initialization / cleaning */
 static Bool freewinsInit(CompPlugin *p){
     
@@ -1711,28 +1738,14 @@ static void freewinsFini(CompPlugin *p){
 	freeDisplayPrivateIndex( displayPrivateIndex );
 }
 
-static int
-freewinsGetVersion (CompPlugin *plugin,
-		int	   version)
-{
-    return ABIVERSION;
-}
-
 /* Plugin implementation export */
 CompPluginVTable freewinsVTable = {
     "freewins",
-    freewinsGetVersion,
     0,
     freewinsInit,
     freewinsFini,
-    freewinsInitDisplay,
-    freewinsFiniDisplay,
-    freewinsInitScreen,
-    freewinsFiniScreen,
-    freewinsInitWindow,
-    freewinsFiniWindow,
-    0,
-    0,
+    freewinsInitObject,
+    freewinsFiniObject,
     0,
     0
 };
