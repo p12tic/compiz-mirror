@@ -5,7 +5,7 @@
  *
  * Copyright (c) 2008 Dennis Kasprzyk <onestone@opencompositing.org>
  *
- * Rewrite of wallpaper.c 
+ * Rewrite of wallpaper.c
  * Copyright (c) 2007 Robert Carr <racarr@opencompositing.org>
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,6 @@
  * GNU General Public License for more details.
  *
  */
-
 
 #include <stdarg.h>
 #include <string.h>
@@ -80,7 +79,8 @@ typedef struct _WallpaperScreen
 #define WALLPAPER_DISPLAY(d) PLUGIN_DISPLAY(d, Wallpaper, w)
 #define WALLPAPER_SCREEN(s) PLUGIN_SCREEN(s, Wallpaper, w)
 
-typedef void (*MultiListStructProc) (void *object, void *closure);
+typedef void (*MultiListStructProc) (void *object,
+				     void *closure);
 
 static void *
 processMultiList (unsigned int        structSize,
@@ -95,7 +95,7 @@ processMultiList (unsigned int        structSize,
     CompOption     *option;
     CompListValue  **options;
     unsigned int   *offsets;
-    unsigned int   i, j, nE = 0;
+    unsigned int   i, j, nElements = 0;
     unsigned int   oldSize;
     char           *rv, *value, *newVal, *setVal;
     va_list        ap;
@@ -103,8 +103,8 @@ processMultiList (unsigned int        structSize,
 
     CompOptionValue zeroVal, *optVal;
 
-    char           **sV, **sV2;
-    CompMatch      *mV;
+    char           **stringValue, **stringValue2;
+    CompMatch      *matchValue;
 
     if (!numReturn)
 	return NULL;
@@ -145,11 +145,11 @@ processMultiList (unsigned int        structSize,
 	}
 	
 	options[i] = &option->value.list;
-	nE = MAX (nE, options[i]->nValue);
+	nElements = MAX (nElements, options[i]->nValue);
     }
     va_end (ap);
 
-    for (j = nE; j < oldSize; j++)
+    for (j = nElements; j < oldSize; j++)
     {
 	(*fini) (((char *)currData) + (j * structSize), closure);
 	for (i = 0; i < numOptions; i++)
@@ -158,13 +158,13 @@ processMultiList (unsigned int        structSize,
 	    switch (options[i]->type)
 	    {
 	    case CompOptionTypeString:
-		sV = (char **) value;
-		if (*sV)
-		    free (*sV);
+		stringValue = (char **) value;
+		if (*stringValue)
+		    free (*stringValue);
 		break;
             case CompOptionTypeMatch:
-		mV = (CompMatch *) value;
-		matchFini (mV);
+		matchValue = (CompMatch *) value;
+		matchFini (matchValue);
 		break;
 	    default:
 		break;
@@ -172,7 +172,7 @@ processMultiList (unsigned int        structSize,
 	}
     }
 
-    if (!nE)
+    if (!nElements)
     {
 	free (options);
 	free (offsets);
@@ -183,9 +183,9 @@ processMultiList (unsigned int        structSize,
     }
 
     if (oldSize)
-	rv = realloc (currData, nE * structSize);
+	rv = realloc (currData, nElements * structSize);
     else
-        rv = malloc (nE * structSize);
+        rv = malloc (nElements * structSize);
 
     if (!rv)
     {
@@ -195,12 +195,13 @@ processMultiList (unsigned int        structSize,
 	return currData;
     }
 
-    if (nE > oldSize)
-	memset (rv + (oldSize * structSize), 0, (nE - oldSize) * structSize);
+    if (nElements > oldSize)
+	memset (rv + (oldSize * structSize), 0,
+		(nElements - oldSize) * structSize);
 
     memset (&zeroVal, 0, sizeof (CompOptionValue));
 
-    for (j = 0; j < nE; j++)
+    for (j = 0; j < nElements; j++)
     {
 	changed = (j >= oldSize);
 	memset (newVal, 0, structSize);
@@ -208,7 +209,7 @@ processMultiList (unsigned int        structSize,
 	{
 	    value = rv + (j * structSize) + offsets[i];
 	    setVal = newVal + offsets[i];
- 
+
 	    if (j < options[i]->nValue)
 		optVal = &options[i]->value[j];
 	    else
@@ -231,13 +232,13 @@ processMultiList (unsigned int        structSize,
 		    changed |= memcmp (value, setVal, sizeof (float));
 		    break;
 		case CompOptionTypeString:
-		    sV = (char **) setVal;
+		    stringValue = (char **) setVal;
 		    if (optVal->s)
-			*sV = strdup (optVal->s);
+			*stringValue = strdup (optVal->s);
 		    else
-			*sV = strdup ("");
-		    sV2 = (char **) value;
-		    if (!*sV2 || strcmp (*sV, *sV2))
+			*stringValue = strdup ("");
+		    stringValue2 = (char **) value;
+		    if (!*stringValue2 || strcmp (*stringValue, *stringValue2))
 			changed = TRUE;
 		    break;
 		case CompOptionTypeColor:
@@ -246,10 +247,10 @@ processMultiList (unsigned int        structSize,
 				       sizeof (unsigned short) * 4);
 		    break;
                 case CompOptionTypeMatch:
-		    mV = (CompMatch *) setVal;
-		    matchInit (mV);
-		    matchCopy (mV, &optVal->match);
-		    changed |= matchEqual ((CompMatch *) value, 
+		    matchValue = (CompMatch *) setVal;
+		    matchInit (matchValue);
+		    matchCopy (matchValue, &optVal->match);
+		    changed |= matchEqual ((CompMatch *) value,
 					   (CompMatch *) setVal);
 		    break;
 		default:
@@ -272,13 +273,13 @@ processMultiList (unsigned int        structSize,
 	    switch (options[i]->type)
 	    {
 	    case CompOptionTypeString:
-		sV = (char **) value;
-		if (*sV)
-		    free (*sV);
+		stringValue = (char **) value;
+		if (*stringValue)
+		    free (*stringValue);
 		break;
             case CompOptionTypeMatch:
-		mV = (CompMatch *) value;
-		matchFini (mV);
+		matchValue = (CompMatch *) value;
+		matchFini (matchValue);
 		break;
 	    default:
 		break;
@@ -296,12 +297,13 @@ processMultiList (unsigned int        structSize,
     free (options);
     free (offsets);
     free (newVal);
-    *numReturn = nE;
+    *numReturn = nElements;
     return rv;
 }
 
 static Visual *
-findArgbVisual (Display *dpy, int scr)
+findArgbVisual (Display *dpy,
+		int     screen)
 {
     XVisualInfo		*xvi;
     XVisualInfo		template;
@@ -310,7 +312,7 @@ findArgbVisual (Display *dpy, int scr)
     XRenderPictFormat	*format;
     Visual		*visual;
 
-    template.screen = scr;
+    template.screen = screen;
     template.depth  = 32;
     template.class  = TrueColor;
 
@@ -345,8 +347,6 @@ createFakeDesktopWindow (CompScreen *s)
     Display              *dpy = s->display->display;
     XSizeHints           xsh;
     XWMHints             xwmh;
-    Atom                 state[1];
-    int                  nState = 0;
     XSetWindowAttributes attr;
     Visual               *visual;
     XserverRegion        region;
@@ -370,13 +370,12 @@ createFakeDesktopWindow (CompScreen *s)
     attr.colormap	  = XCreateColormap (dpy, s->root, visual, AllocNone);
 
     ws->fakeDesktop = XCreateWindow (dpy, s->root, -1, -1, 1, 1, 0, 32,
-				     InputOutput, visual, CWBackPixel | 
-				     CWBorderPixel | CWColormap, &attr);
+				     InputOutput, visual,
+				     CWBackPixel | CWBorderPixel | CWColormap,
+				     &attr);
 
     XSetWMProperties (dpy, ws->fakeDesktop, NULL, NULL,
 		      programArgv, programArgc, &xsh, &xwmh, NULL);
-
-    state[nState++] = s->display->winStateSkipPagerAtom;
 
     XChangeProperty (dpy, ws->fakeDesktop, s->display->winStateAtom,
 		     XA_ATOM, 32, PropModeReplace,
@@ -417,7 +416,7 @@ updateProperty(CompScreen *s)
 	WALLPAPER_DISPLAY (s->display);
 
 	if (!ws->propSet)
-	    XDeleteProperty (s->display->display, 
+	    XDeleteProperty (s->display->display,
 			     s->root, wd->compizWallpaperAtom);
 	ws->propSet = FALSE;
     }
@@ -426,19 +425,21 @@ updateProperty(CompScreen *s)
 	WALLPAPER_DISPLAY (s->display);
 	unsigned char sd = 1;
 
-	XChangeProperty (s->display->display, s->root, 
+	XChangeProperty (s->display->display, s->root,
 			 wd->compizWallpaperAtom, XA_CARDINAL,
 			 8, PropModeReplace, &sd, 1);
 	ws->propSet = TRUE;
     }
 }
 
-static void initBackground (void *object, void *closure)
+static void
+initBackground (void *object,
+		void *closure)
 {
     CompScreen          *s = (CompScreen *) closure;
     WallpaperBackground *back = (WallpaperBackground *) object;
     unsigned int        c[2];
-    unsigned short      *col;
+    unsigned short      *color;
 
     initTexture (s, &back->imgTex);
     initTexture (s, &back->fillTex);
@@ -460,17 +461,17 @@ static void initBackground (void *object, void *closure)
 
     }
 	
-    col = back->color1;
-    c[0] = ((col[3] << 16) & 0xff000000) |
-	    ((col[0] * col[3] >> 8) & 0xff0000) |
-	    ((col[1] * col[3] >> 16) & 0xff00) |
-	    ((col[2] * col[3] >> 24) & 0xff);
+    color = back->color1;
+    c[0] = ((color[3] << 16) & 0xff000000) |
+	    ((color[0] * color[3] >> 8) & 0xff0000) |
+	    ((color[1] * color[3] >> 16) & 0xff00) |
+	    ((color[2] * color[3] >> 24) & 0xff);
 	
-    col = back->color2;
-    c[1] = ((col[3] << 16) & 0xff000000) |
-	    ((col[0] * col[3] >> 8) & 0xff0000) |
-	    ((col[1] * col[3] >> 16) & 0xff00) |
-	    ((col[2] * col[3] >> 24) & 0xff);
+    color = back->color2;
+    c[1] = ((color[3] << 16) & 0xff000000) |
+	    ((color[0] * color[3] >> 8) & 0xff0000) |
+	    ((color[1] * color[3] >> 16) & 0xff00) |
+	    ((color[2] * color[3] >> 24) & 0xff);
 
     if (back->fillType == BgFillTypeVerticalGradient)
     {
@@ -490,7 +491,9 @@ static void initBackground (void *object, void *closure)
     }
 }
 
-static void finiBackground (void *object, void *closure)
+static void
+finiBackground (void *object,
+		void *closure)
 {
     CompScreen          *s = (CompScreen *) closure;
     WallpaperBackground *back = (WallpaperBackground *) object;
@@ -505,8 +508,8 @@ updateBackgrounds (CompScreen *s)
 {
     WALLPAPER_SCREEN (s);
 
-    ws->backgrounds = 
-	processMultiList (sizeof (WallpaperBackground), 
+    ws->backgrounds =
+	processMultiList (sizeof (WallpaperBackground),
 			  ws->backgrounds, &ws->nBackgrounds,
 			  initBackground, finiBackground, s, 5,
 			  wallpaperGetBgImageOption (s),
@@ -520,7 +523,6 @@ updateBackgrounds (CompScreen *s)
 			  wallpaperGetBgColor2Option (s),
 			  offsetof (WallpaperBackground, color2));
 }
-
 
 static void
 freeBackgrounds (CompScreen *s)
@@ -543,10 +545,10 @@ freeBackgrounds (CompScreen *s)
 
 
 /* Installed as a handler for the images setting changing through bcop */
-static void 
-wallpaperBackgroundsChanged(CompScreen *s,
-			    CompOption *o,
-			    WallpaperScreenOptions num)
+static void
+wallpaperBackgroundsChanged (CompScreen             *s,
+			     CompOption             *o,
+			     WallpaperScreenOptions num)
 {
     updateBackgrounds (s);
     updateProperty (s);
@@ -563,11 +565,13 @@ getBackgroundForViewport (CompScreen *s)
 	return NULL;
 
     x = s->x - (s->windowOffsetX / s->width);
-    while (x < 0) x += s->hsize;
+    while (x < 0)
+	x += s->hsize;
     x %= s->hsize;
 
     y = s->y - (s->windowOffsetY / s->height);
-    while (y < 0) y += s->vsize;
+    while (y < 0)
+	y += s->vsize;
     y %= s->vsize;
 
     return &ws->backgrounds[(x + (y * s->hsize)) % ws->nBackgrounds];
@@ -592,7 +596,7 @@ wallpaperHandleEvent (CompDisplay *d,
 	    && ws->nBackgrounds)
 	    createFakeDesktopWindow (s);
 
-	if ((s->desktopWindowCount > 1 || !ws->nBackgrounds) 
+	if ((s->desktopWindowCount > 1 || !ws->nBackgrounds)
 	    && ws->fakeDesktop != None)
 	    destroyFakeDesktopWindow (s);
     }
@@ -762,7 +766,7 @@ wallpaperDrawWindow (CompWindow           *w,
 			tmpRegion.extents.x1 = MAX (0, xi);
 			tmpRegion.extents.y1 = MAX (0, y);
 			tmpRegion.extents.x2 = MIN (s->width, xi + back->width);
-			tmpRegion.extents.y2 = MIN (s->height, 
+			tmpRegion.extents.y2 = MIN (s->height,
 						    y + back->height);
 
 			(*w->screen->addWindowGeometry) (w, &tmpMatrix, 1,
@@ -787,7 +791,7 @@ wallpaperDrawWindow (CompWindow           *w,
 	}
 	
 	ws->desktop = w;
-	fA.opacity = OPAQUE;
+	fA.opacity  = OPAQUE;
     }
 
     UNWRAP (ws, w->screen, drawWindow);
@@ -836,7 +840,7 @@ wallpaperInitDisplay (CompPlugin * p,
 	return FALSE;
     }
 
-    wd->compizWallpaperAtom = XInternAtom (d->display, 
+    wd->compizWallpaperAtom = XInternAtom (d->display,
 					   "_COMPIZ_WALLPAPER_SUPPORTED", 0);
 
     d->base.privates[WallpaperDisplayPrivateIndex].ptr = wd;
