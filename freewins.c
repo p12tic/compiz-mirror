@@ -55,9 +55,6 @@
 #define D2R(x) ((x) * (M_PI / 180.0))
 #define R2D(x) ((x) * (180 / M_PI))
 
-#define VISIBILITY_CONSTANT 2.3
-#define SCALE_RATE_OF_CHANGE 2.0
-
 // Macros/*{{{*/
 #define GET_FREEWINS_DISPLAY(d)                                       \
     ((FWDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
