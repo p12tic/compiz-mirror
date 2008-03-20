@@ -141,6 +141,7 @@ processMultiList (unsigned int        structSize,
 	    free (options);
 	    free (offsets);
 	    free (newVal);
+	    va_end (ap);
 	    return currData;
 	}
 	
