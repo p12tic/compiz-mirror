@@ -30,11 +30,7 @@
  * or just as a toy.
  *
  * Todo: 
- *  - Shape input on rotation
- *  - Show scaling-corner axes
  *  - Modifier key to rotate on the Z Axis
- *  - Correct damage and choppyness handling
- *  - Make help colors configurable
  *  - Simplify code
  *  - Auto-zoom to fit in rect
  *  - Input prevention windows and proper shape handling
@@ -56,9 +52,6 @@
 #define ABS(x) ((x)>0?(x):-(x))
 #define D2R(x) ((x) * (M_PI / 180.0))
 #define R2D(x) ((x) * (180 / M_PI))
-
-#define VISIBILITY_CONSTANT 2.3
-#define SCALE_RATE_OF_CHANGE 2.0
 
 // Macros/*{{{*/
 #define GET_FREEWINS_DISPLAY(d)                                       \
@@ -260,10 +253,20 @@ static void FWShapeInput (CompWindow *w)
         ScaleX = fww->scaleX;
         ScaleY = fww->scaleY;
     }
+<<<<<<< HEAD:freewins.c
+=======
+
+    float widthScale = (float) (fww->rect.x2 - fww->rect.x1) / (float) WIN_OUTPUT_W (w); 
+    float heightScale = (float) (fww->rect.y2 - fww->rect.y1) / (float) WIN_OUTPUT_H (w); 
+
+    ScaleX = widthScale - (1 - ScaleX);
+    ScaleY = heightScale - (1 - ScaleY);
+
+>>>>>>> master:freewins.c
     Rectangle.x = (int)(0 + ((1 - ScaleX) / 2) * w->width);
     Rectangle.y = (int)(0 + ((1 - ScaleY) / 2) * w->height);
-    Rectangle.width = (int)(w->serverWidth * ((ScaleX)));
-    Rectangle.height = (int)(w->serverHeight * ((ScaleY)));
+    Rectangle.width = (int) (w->serverWidth * ((ScaleX)));
+    Rectangle.height = (int) (w->serverHeight * ((ScaleY)));
     
     XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
     XShapeCombineRectangles  (w->screen->display->display, w->id, 
@@ -538,9 +541,9 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		            if (FWCanShape (w) && (fww->scaleX != 1.0f || fww->scaleY != 1.0f))
 		            {
 		                // Reset the window back to normal, scale-wise anyways
-		                fww->scaleX = 1.0f;
+		                /*fww->scaleX = 1.0f;
 		                fww->scaleY = 1.0f;
-			            FWShapeInput (w);
+			            FWShapeInput (w);*/
 			        }
 		        }
 	        }
@@ -1477,6 +1480,11 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->midX = WIN_REAL_W(w)/2.0;
     fww->midY = WIN_REAL_H(w)/2.0;
 
+    fww->rect.x1 = WIN_REAL_X (w);
+    fww->rect.x2 = WIN_REAL_X (w) + WIN_REAL_W (w);
+    fww->rect.y1 = WIN_REAL_Y (w);
+    fww->rect.y2 = WIN_REAL_Y (w) + WIN_REAL_H (w);
+
     fww->grabbed = 0;
     fww->zaxis = FALSE;
 
@@ -1502,8 +1510,8 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     w->privates[fws->windowPrivateIndex].ptr = fww;
     
     // Shape window back to normal
-    if (FWCanShape (w))
-        FWShapeInput (w);
+    /*if (FWCanShape (w))
+        FWShapeInput (w);*/
 
     return TRUE;
 }
