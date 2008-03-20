@@ -415,7 +415,7 @@ updateProperty(CompScreen *s)
     {
 	WALLPAPER_DISPLAY (s->display);
 
-	if (!ws->propSet)
+	if (ws->propSet)
 	    XDeleteProperty (s->display->display,
 			     s->root, wd->compizWallpaperAtom);
 	ws->propSet = FALSE;
