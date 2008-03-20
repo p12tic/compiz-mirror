@@ -565,14 +565,14 @@ getBackgroundForViewport (CompScreen *s)
 	return NULL;
 
     x = s->x - (s->windowOffsetX / s->width);
-    while (x < 0)
-	x += s->hsize;
     x %= s->hsize;
+    if (x < 0)
+	x += s->hsize;
 
     y = s->y - (s->windowOffsetY / s->height);
-    while (y < 0)
-	y += s->vsize;
     y %= s->vsize;
+    if (y < 0)
+	y += s->vsize;
 
     return &ws->backgrounds[(x + (y * s->hsize)) % ws->nBackgrounds];
 }
