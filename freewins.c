@@ -556,7 +556,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
                         fww->angX = 0.0f;
                         fww->angY = 0.0f;
                         fww->angZ = 0.0f;
-			            FWShapeInput (w);
+			            /*FWShapeInput (w); - Disabled due to problems it causes*/ 
 			        }
 		        }
 	        }
@@ -646,18 +646,6 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         CompVector corner2 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
         CompVector corner3 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
         CompVector corner4 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
-
-        /*c1x = WIN_REAL_X (w);
-        c1y = WIN_REAL_Y (w);
-
-        c2x = WIN_REAL_X (w) + WIN_REAL_W (w);
-        c2y = WIN_REAL_Y (w);
-
-        c3x = WIN_REAL_X (w);
-        c3y = WIN_REAL_Y (w) + WIN_REAL_H (w);
-
-        c4x = WIN_REAL_X (w) + WIN_REAL_W (w);
-        c4y = WIN_REAL_Y (w) + WIN_REAL_H (w);*/
 
         /* Here we duplicate some of the work the openGL does
          * but for different reasons. We have access to the 
@@ -911,18 +899,6 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     CompWindow *w = fwd->focusWindow;
     FREEWINS_WINDOW (w);
 
-    /*sx = WIN_REAL_X (w);
-    sy = WIN_REAL_Y (w);
-
-    x1 = sx;
-
-    y1 = sy;
-
-    x2 = (sx + ((WIN_REAL_W (w))));
-
-    y2 = (sy + ((WIN_REAL_H (w))));*/
-
-
 	glBegin(GL_POLYGON);
 	for(j=0; j<360; j += 10)
 	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
@@ -945,29 +921,6 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	for(j=360; j>=0; j -= 10)
 	    glVertex3f( x + rad0 * cos(D2R(j)), y + rad0 * sin(D2R(j)), 0.0 );
 	glEnd ();
-
-    /*float c1x, c2x, c3x, c4x;
-    float c1y, c2y, c3y, c4y;*/
-
-    /*glBegin(GL_LINE_LOOP);
-    for(j=360; j>=0; j -= 10)
-        glVertex3f(xScreen1 + 20 * cos(D2R(j)), (s->height - yScreen1) + 20 * sin(D2R(j)), 0.0f);
-    glEnd();
-
-    glBegin(GL_LINE_LOOP);
-    for(j=360; j>=0; j -= 10)
-        glVertex3f(xScreen2 + 20 * cos(D2R(j)), (s->height - yScreen2) + 20 * sin(D2R(j)), 0.0f);
-    glEnd();
-
-    glBegin(GL_LINE_LOOP);
-    for(j=360; j>=0; j -= 10)
-        glVertex3f(xScreen3 + 20 * cos(D2R(j)), (s->height - yScreen3) + 20 * sin(D2R(j)), 0.0f);
-    glEnd();
-
-    glBegin(GL_LINE_LOOP);
-    for(j=360; j>=0; j -= 10)
-        glVertex3f(xScreen4 + 20 * cos(D2R(j)), (s->height - yScreen4) + 20 * sin(D2R(j)), 0.0f);
-    glEnd();*/
 
     /* Draw the bounding box */
 
@@ -1561,8 +1514,8 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
     
     // Shape window back to normal
-    if (FWCanShape (w))
-        FWShapeInput (w);
+    /*if (FWCanShape (w))
+        FWShapeInput (w); - disabled as it causes problems*/
 
     return TRUE;
 }
