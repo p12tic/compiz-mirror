@@ -40,7 +40,7 @@
  *  - Input prevention windows and proper shape handling
  */
 
-#include <compiz-core.h>
+#include <compiz.h>
 #include <math.h>
 
 #include <stdio.h>
