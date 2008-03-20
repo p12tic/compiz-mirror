@@ -1,1 +1,2 @@
 PLUGIN = freewins
+LDFLAGS_ADD = -lGLU

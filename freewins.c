@@ -36,6 +36,8 @@
  *  - Correct damage and choppyness handling
  *  - Make help colors configurable
  *  - Simplify code
+ *  - Auto-zoom to fit in rect
+ *  - Input prevention windows and proper shape handling
  */
 
 #include <compiz-core.h>
@@ -46,10 +48,14 @@
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
 
+#include <GL/glu.h>
+#include <GL/gl.h>
+
 #include "freewins_options.h"
 
 #define ABS(x) ((x)>0?(x):-(x))
-#define D2R(x) ((x) * M_PI / 180.0)
+#define D2R(x) ((x) * (M_PI / 180.0))
+#define R2D(x) ((x) * (180 / M_PI))
 
 #define VISIBILITY_CONSTANT 2.3
 #define SCALE_RATE_OF_CHANGE 2.0
@@ -76,20 +82,19 @@
                        GET_FREEWINS_DISPLAY (w->screen->display)))
 
 
-/*
-#define WIN_REAL_X(w) (w->attrib.x - w->output.left)
-#define WIN_REAL_Y(w) (w->attrib.y - w->output.top)
 
-#define WIN_REAL_W(w) (w->width + w->output.left + w->output.right)
-#define WIN_REAL_H(w) (w->height + w->output.top + w->output.bottom)
-*/
+#define WIN_OUTPUT_X(w) (w->attrib.x - w->output.left)
+#define WIN_OUTPUT_Y(w) (w->attrib.y - w->output.top)
+
+#define WIN_OUTPUT_W(w) (w->width + w->output.left + w->output.right)
+#define WIN_OUTPUT_H(w) (w->height + w->output.top + w->output.bottom)
+
 #define WIN_REAL_X(w) (w->attrib.x - w->input.left)
 #define WIN_REAL_Y(w) (w->attrib.y - w->input.top)
 
 #define WIN_REAL_W(w) (w->width + w->input.left + w->input.right)
 #define WIN_REAL_H(w) (w->height + w->input.top + w->input.bottom)
 
-/*}}}*/
 /* Enums */
 typedef enum _StartCorner {
     CornerTopLeft = 0,
@@ -182,8 +187,9 @@ typedef struct _FWWindow{
     // Used to determine starting point
     StartCorner corner;
 
+    CompTransform rTransform;
+
     Box rect;
-    //REGION damageRegion;
 
     Bool grabbed;
     
@@ -221,6 +227,19 @@ static Bool FWCanShape (CompWindow *w)
     
     return TRUE;
 }
+
+/*static int FWMakeIntoOutOfThreeSixty (int value)
+{
+    while (value > 0)
+    {
+        value -= 360;
+    }
+
+    if (value < 0)
+        value += 360;
+
+    return value;
+}*/
 
 /* Input Shaper */
 static void FWShapeInput (CompWindow *w)
@@ -552,110 +571,243 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
                          fww->scaleX != 1.0 || fww->scaleY != 1.0) && !(w->type == CompWindowTypeDesktopMask))
     {
 
+	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
-	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+	    // Ajustar espesor de la ventana
+	    matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
 
-	// Ajustar espesor de la ventana
-	matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+	    matrixTranslate(&wTransform, 
+		    WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
+		    WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
 
-	matrixTranslate(&wTransform, 
-		WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
-		WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
-
-
-    matrixRotate(&wTransform, fww->angX, 1.0, 0.0, 0.0);
-    matrixRotate(&wTransform, fww->angY, 0.0, 1.0, 0.0);
-    matrixRotate(&wTransform, fww->angZ, 0.0, 0.0, 1.0);
-    
-    if (freewinsGetScaleUniform (w->screen))
-    {
-        ScaleX = ((fww->scaleX + fww->scaleY) / 2);
-        ScaleY = ((fww->scaleX + fww->scaleY) / 2);
-    }
-    else
-    {
-        ScaleX = fww->scaleX;
-        ScaleY = fww->scaleY;
-    }
-    if (!freewinsGetAllowNegative (w->screen) || (FWCanShape (w)))
-	{
-	    float minScale = freewinsGetMinScale (w->screen);
-		if (ScaleX < minScale)
-		{
-		  matrixScale(&wTransform, minScale, 1.0, 0.0);
-		  fww->scaleX = minScale; // Don't allow negative values either, which could be referenced
-		}
-		else
-		  matrixScale(&wTransform, ScaleX, 1.0, 0.0);
-		
-		if (ScaleY < minScale)
-	    {
-		  matrixScale(&wTransform, 1.0, minScale, 0.0);
-		  fww->scaleY = minScale;
-		}
-		else
-		  matrixScale(&wTransform, 1.0, ScaleY, 0.0);
-	}
-	else
-	{
-	    matrixScale(&wTransform, ScaleX, ScaleY, 0.0);
-	}
-
-	matrixTranslate(&wTransform, 
-		-(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
-		-(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
-    }
-
-    if (fww->doAnimate)
-    {
-        float raX = (fww->destAngX - fww->oldAngX) / timeRemaining;
-        float raY = (fww->destAngY - fww->oldAngY) / timeRemaining;
-        float raZ = (fww->destAngZ - fww->oldAngZ) / timeRemaining;
+        matrixRotate(&wTransform, fww->angX, 1.0, 0.0, 0.0);
+        matrixRotate(&wTransform, fww->angY, 0.0, 1.0, 0.0);
+        matrixRotate(&wTransform, fww->angZ, 0.0, 0.0, 1.0);
         
-        float saX = ((fww->destScaleX - fww->oldScaleX) / timeRemaining);
-        float saY = ((fww->destScaleX - fww->oldScaleY) / timeRemaining);
-        
-        fww->angX += raX;
-        fww->angY += raY;
-        fww->angZ += raZ;
-        
-        fww->scaleX += saX;
-        fww->scaleY += saY;
-                
-        fww->aTimeRemaining--;
-        addWindowDamage (w);
-        
-        if (fww->aTimeRemaining <= 0 || (fww->angX == fww->destAngX && fww->angY == fww->destAngY
-                                        && fww->angZ == fww->destAngZ && fww->scaleX == fww->destScaleX
-                                        && fww->scaleY == fww->destScaleY))
+        if (freewinsGetScaleUniform (w->screen))
         {
-            fww->resetting = FALSE;
-
-            fww->angX = fww->destAngX;
-            fww->angY = fww->destAngY;
-            fww->angZ = fww->destAngZ;
-            fww->scaleX = fww->destScaleX;
-            fww->scaleY = fww->destScaleX;
-            
-            fww->doAnimate = FALSE;
-            fww->aTimeRemaining = freewinsGetResetTime (w->screen);
-            fww->cTimeRemaining = freewinsGetResetTime (w->screen);
-            if (FWCanShape (w))
-                FWShapeInput (w);
+            ScaleX = ((fww->scaleX + fww->scaleY) / 2);
+            ScaleY = ((fww->scaleX + fww->scaleY) / 2);
         }
-    }
+        else
+        {
+            ScaleX = fww->scaleX;
+            ScaleY = fww->scaleY;
+        }
 
-	// Check if there are rotated windows
-	if(fww->angX != 0.0 || fww->angY != 0.0 || fww->angZ != 0.0 || fww->scaleX != 1.0 || fww->scaleY != 1.0){
-	    if( !fww->rotated ){
-		fws->rotatedWindows++;
-		fww->rotated = TRUE;
+        if (!freewinsGetAllowNegative (w->screen) || (FWCanShape (w)))
+	    {
+	        float minScale = freewinsGetMinScale (w->screen);
+		    if (ScaleX < minScale)
+		    {
+		      matrixScale(&wTransform, minScale, 1.0, 0.0);
+		      fww->scaleX = minScale; // Don't allow negative values either, which could be referenced
+		    }
+		    else
+		      matrixScale(&wTransform, ScaleX, 1.0, 0.0);
+		
+		    if (ScaleY < minScale)
+	        {
+		      matrixScale(&wTransform, 1.0, minScale, 0.0);
+		      fww->scaleY = minScale;
+		    }
+		    else
+		      matrixScale(&wTransform, 1.0, ScaleY, 0.0);
 	    }
-	}else{
-	    if( fww->rotated ){
-		fws->rotatedWindows--;
-		fww->rotated = FALSE;
+	    else
+	    {
+	        matrixScale(&wTransform, ScaleX, ScaleY, 0.0);
 	    }
+
+	    matrixTranslate(&wTransform, 
+		    -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
+		    -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
+        }
+
+        fww->rTransform = wTransform;
+
+        CompVector corner1 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
+        CompVector corner2 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
+        CompVector corner3 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
+        CompVector corner4 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
+
+        /*c1x = WIN_REAL_X (w);
+        c1y = WIN_REAL_Y (w);
+
+        c2x = WIN_REAL_X (w) + WIN_REAL_W (w);
+        c2y = WIN_REAL_Y (w);
+
+        c3x = WIN_REAL_X (w);
+        c3y = WIN_REAL_Y (w) + WIN_REAL_H (w);
+
+        c4x = WIN_REAL_X (w) + WIN_REAL_W (w);
+        c4y = WIN_REAL_Y (w) + WIN_REAL_H (w);*/
+
+        matrixGetIdentity (&fww->rTransform);
+        matrixScale (&fww->rTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+        matrixTranslate(&fww->rTransform, 
+            WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0, 
+            WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0, 0.0);
+        matrixRotate (&fww->rTransform, fww->angX, 1.0f, 0.0f, 0.0f);
+        matrixRotate (&fww->rTransform, fww->angY, 0.0f, 1.0f, 0.0f);
+        matrixRotate (&fww->rTransform, fww->angZ, 0.0f, 0.0f, 1.0f);
+        matrixScale(&fww->rTransform, fww->scaleX, 1.0, 0.0);
+        matrixScale(&fww->rTransform, 1.0, fww->scaleY, 0.0);
+        matrixTranslate(&fww->rTransform, 
+            -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
+            -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
+
+        matrixMultiplyVector(&corner1, &corner1, &fww->rTransform);
+        matrixMultiplyVector(&corner2, &corner2, &fww->rTransform);
+        matrixMultiplyVector(&corner3, &corner3, &fww->rTransform);
+        matrixMultiplyVector(&corner4, &corner4, &fww->rTransform);
+
+        GLdouble xScreen1, yScreen1, zScreen1;
+        GLdouble xScreen2, yScreen2, zScreen2;
+        GLdouble xScreen3, yScreen3, zScreen3;
+        GLdouble xScreen4, yScreen4, zScreen4;
+
+        GLint viewport[4]; // Viewport
+        GLdouble modelview[16]; // Modelview Matrix
+        GLdouble projection[16]; // Projection Matrix
+
+        glGetIntegerv (GL_VIEWPORT, viewport);
+        glGetDoublev (GL_MODELVIEW_MATRIX, modelview);
+        glGetDoublev (GL_PROJECTION_MATRIX, projection);
+
+        gluProject (corner1.x, corner1.y, corner1.z,
+                    modelview, projection, viewport,
+                    &xScreen1, &yScreen1, &zScreen1);
+
+        gluProject (corner2.x, corner2.y, corner2.z,
+                    modelview, projection, viewport,
+                    &xScreen2, &yScreen2, &zScreen2);
+
+        gluProject (corner3.x, corner3.y, corner3.z,
+                    modelview, projection, viewport,
+                    &xScreen3, &yScreen3, &zScreen3);
+
+        gluProject (corner4.x, corner4.y, corner4.z,
+                    modelview, projection, viewport,
+                    &xScreen4, &yScreen4, &zScreen4);
+
+        float leftmost, rightmost, topmost, bottommost;
+
+        /* Y co-ords must be negated */
+
+        yScreen1 = w->screen->height - yScreen1;
+        yScreen2 = w->screen->height - yScreen2;
+        yScreen3 = w->screen->height - yScreen3;
+        yScreen4 = w->screen->height - yScreen4;
+
+        /* Left most point */
+
+        leftmost = xScreen1;
+
+        if (xScreen2 <= leftmost)
+            leftmost = xScreen2;
+
+        if (xScreen3 <= leftmost)
+            leftmost = xScreen3;
+
+        if (xScreen4 <= leftmost)
+            leftmost = xScreen4;
+
+        /* Right most point */
+
+        rightmost = xScreen1;
+
+        if (xScreen2 >= rightmost)
+            rightmost = xScreen2;
+
+        if (xScreen3 >= rightmost)
+            rightmost = xScreen3;
+
+        if (xScreen4 >= rightmost)
+            rightmost = xScreen4;
+
+        /* Top most point */
+
+        topmost = yScreen1;
+
+        if (yScreen2 <= topmost)
+            topmost = yScreen2;
+
+        if (yScreen3 <= topmost)
+            topmost = yScreen3;
+
+        if (yScreen4 <= topmost)
+            topmost = yScreen4;
+
+        /* Bottom most point */
+
+        bottommost = yScreen1;
+
+        if (yScreen2 >= bottommost)
+            bottommost = yScreen2;
+
+        if (yScreen3 >= bottommost)
+            bottommost = yScreen3;
+
+        if (yScreen4 >= bottommost)
+            bottommost = yScreen4;
+
+        fww->rect.x1 = leftmost;
+        fww->rect.y1 = topmost;
+
+        fww->rect.x2 = rightmost;
+        fww->rect.y2 = bottommost;
+
+        if (fww->doAnimate)
+        {
+            float raX = (fww->destAngX - fww->oldAngX) / timeRemaining;
+            float raY = (fww->destAngY - fww->oldAngY) / timeRemaining;
+            float raZ = (fww->destAngZ - fww->oldAngZ) / timeRemaining;
+            
+            float saX = ((fww->destScaleX - fww->oldScaleX) / timeRemaining);
+            float saY = ((fww->destScaleX - fww->oldScaleY) / timeRemaining);
+            
+            fww->angX += raX;
+            fww->angY += raY;
+            fww->angZ += raZ;
+            
+            fww->scaleX += saX;
+            fww->scaleY += saY;
+                    
+            fww->aTimeRemaining--;
+            addWindowDamage (w);
+            
+            if (fww->aTimeRemaining <= 0 || (fww->angX == fww->destAngX && fww->angY == fww->destAngY
+                                            && fww->angZ == fww->destAngZ && fww->scaleX == fww->destScaleX
+                                            && fww->scaleY == fww->destScaleY))
+            {
+                fww->resetting = FALSE;
+
+                fww->angX = fww->destAngX;
+                fww->angY = fww->destAngY;
+                fww->angZ = fww->destAngZ;
+                fww->scaleX = fww->destScaleX;
+                fww->scaleY = fww->destScaleX;
+                
+                fww->doAnimate = FALSE;
+                fww->aTimeRemaining = freewinsGetResetTime (w->screen);
+                fww->cTimeRemaining = freewinsGetResetTime (w->screen);
+                if (FWCanShape (w))
+                    FWShapeInput (w);
+            }
+        }
+
+	    // Check if there are rotated windows
+	    if(fww->angX != 0.0 || fww->angY != 0.0 || fww->angZ != 0.0 || fww->scaleX != 1.0 || fww->scaleY != 1.0){
+	        if( !fww->rotated ){
+		    fws->rotatedWindows++;
+		    fww->rotated = TRUE;
+	        }
+	    }else{
+	        if( fww->rotated ){
+		    fws->rotatedWindows--;
+		    fww->rotated = FALSE;
+	        }
 	}
 
     if(wasCulled)
@@ -712,6 +864,23 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glColor4usv  (freewinsGetCircleColor (s->display));
 	glEnable(GL_BLEND);
 
+    //float x1, x2, x3, x4, y1, y2, y3, y4;
+
+    CompWindow *w = fwd->focusWindow;
+    FREEWINS_WINDOW (w);
+
+    /*sx = WIN_REAL_X (w);
+    sy = WIN_REAL_Y (w);
+
+    x1 = sx;
+
+    y1 = sy;
+
+    x2 = (sx + ((WIN_REAL_W (w))));
+
+    y2 = (sy + ((WIN_REAL_H (w))));*/
+
+
 	glBegin(GL_POLYGON);
 	for(j=0; j<360; j += 10)
 	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
@@ -725,6 +894,55 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	for(j=360; j>=0; j -= 10)
 	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
 	glEnd ();
+
+    float rad0;
+
+    rad0 = sqrt(pow((x - WIN_REAL_X (w)), 2) + pow((y - WIN_REAL_Y (w)), 2));
+
+	glBegin(GL_LINE_LOOP);
+	for(j=360; j>=0; j -= 10)
+	    glVertex3f( x + rad0 * cos(D2R(j)), y + rad0 * sin(D2R(j)), 0.0 );
+	glEnd ();
+
+    /*float c1x, c2x, c3x, c4x;
+    float c1y, c2y, c3y, c4y;*/
+
+    /*glBegin(GL_LINE_LOOP);
+    for(j=360; j>=0; j -= 10)
+        glVertex3f(xScreen1 + 20 * cos(D2R(j)), (s->height - yScreen1) + 20 * sin(D2R(j)), 0.0f);
+    glEnd();
+
+    glBegin(GL_LINE_LOOP);
+    for(j=360; j>=0; j -= 10)
+        glVertex3f(xScreen2 + 20 * cos(D2R(j)), (s->height - yScreen2) + 20 * sin(D2R(j)), 0.0f);
+    glEnd();
+
+    glBegin(GL_LINE_LOOP);
+    for(j=360; j>=0; j -= 10)
+        glVertex3f(xScreen3 + 20 * cos(D2R(j)), (s->height - yScreen3) + 20 * sin(D2R(j)), 0.0f);
+    glEnd();
+
+    glBegin(GL_LINE_LOOP);
+    for(j=360; j>=0; j -= 10)
+        glVertex3f(xScreen4 + 20 * cos(D2R(j)), (s->height - yScreen4) + 20 * sin(D2R(j)), 0.0f);
+    glEnd();*/
+
+    /* Draw the bounding box */
+
+    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+    glEnable (GL_BLEND);
+    glColor4us (0x2fff, 0x2fff, 0x4fff, 0x4fff);
+    glRecti (fww->rect.x1, fww->rect.y1, fww->rect.x2, fww->rect.y2);
+    glColor4us (0x2fff, 0x2fff, 0x4fff, 0x9fff);
+    glBegin (GL_LINE_LOOP);
+    glVertex2i (fww->rect.x1, fww->rect.y1);
+    glVertex2i (fww->rect.x2, fww->rect.y1);
+    glVertex2i (fww->rect.x1, fww->rect.y2);
+    glVertex2i (fww->rect.x2, fww->rect.y2);
+    glEnd ();
+    glColor4usv (defaultColor);
+    glDisable (GL_BLEND);
+    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 	
 	glColor4usv  (freewinsGetCrossLineColor (s->display));
 	glBegin(GL_LINES);
@@ -743,49 +961,39 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glColor4usv(defaultColor);
 	glPopMatrix ();
     }
-    
-/*}}}*/
 
     return status;
 }
 
-// Damage Window Rect/*{{{*/
+/* Damage the Window Rect */
 static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
     Bool status = TRUE;
+    FREEWINS_DISPLAY(w->screen->display);
     FREEWINS_SCREEN(w->screen);
     FREEWINS_WINDOW(w);
 
-    float x1, x2, y1, y2;
-    int sx, sy;
-    REGION region;
+    if (fww->rotated)
+    {
+        REGION region;
 
-    sx = WIN_REAL_X (w);
-    sy = WIN_REAL_Y (w);
+        region.rects = &region.extents;
+        region.numRects = region.size = 1;
 
-    x1 = sx - ((WIN_REAL_W (w)) / VISIBILITY_CONSTANT)
-         * pow(fww->scaleX, SCALE_RATE_OF_CHANGE);
+        region.extents.x1 = fww->rect.x1;
+        region.extents.x2 = fww->rect.x2;
+        region.extents.y1 = fww->rect.y1;
+        region.extents.y2 = fww->rect.y2;
 
-    y1 = sy - ((WIN_REAL_H (w)) / VISIBILITY_CONSTANT)
-              * pow(fww->scaleY, SCALE_RATE_OF_CHANGE);
+        damageScreenRegion (w->screen, &region);
+    }
+    else
+    {
+        status = FALSE;
+    }
 
-    x2 = (sx + ((WIN_REAL_W (w))) + 
-         ((WIN_REAL_W (w)) / VISIBILITY_CONSTANT)
-         * pow(fww->scaleX, SCALE_RATE_OF_CHANGE));
-
-    y2 = (sy + ((WIN_REAL_H (w))) +
-         ((WIN_REAL_H (w)) / VISIBILITY_CONSTANT)
-         * pow(fww->scaleY, SCALE_RATE_OF_CHANGE));
-
-    region.rects = &region.extents;
-    region.numRects = region.size = 1;
-
-    region.extents.x1 = x1;
-    region.extents.x2 = x2;
-    region.extents.y1 = y1;
-    region.extents.y2 = y2;
-
-    damageScreenRegion (w->screen, &region);
+    if (fwd->axisHelp)
+        damageScreen (w->screen);
 
     UNWRAP(fws, w->screen, damageWindowRect);
     status |= (*w->screen->damageWindowRect)(w, initial, rect);
