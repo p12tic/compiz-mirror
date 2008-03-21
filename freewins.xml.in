@@ -25,9 +25,12 @@
 	    <option type="button" name="reset_button">
 			<_short>Reset</_short>
 			<_long>Reset Transformation</_long>
-			<allowed button="true"/>
-			<default>&lt;Control&gt;&lt;Shift&gt;Button2
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;Button2</default>
+	    </option>
+	    <option type="key" name="reset_key">
+			<_short>Reset</_short>
+			<_long>Reset Transformation</_long>
+			<default>&lt;Control&gt;&lt;Shift&gt;r</default>
 	    </option>
 	    <option type="key" name="toggle_axis_key">
 			<_short>Axis help toggle</_short>
@@ -75,26 +78,22 @@
         <option type="key" name="scale_up_key">
 		    <_short>Scale Up</_short>
 		    <_long>Scale up by one increment</_long>
-			<default>&lt;Control&gt;&lt;Shift&gt;Page_Up
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;Page_Up</default>
         </option>
         <option type="key" name="scale_down_key">
 		    <_short>Scale Down</_short>
 		    <_long>Scale down by one increment</_long>
-			<default>&lt;Control&gt;&lt;Shift&gt;Page_Down
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;Page_Down</default>
         </option>
         <option type="button" name="scale_up_button">
 		    <_short>Scale Up</_short>
 		    <_long>Scale up by one increment</_long>
-			<default>&lt;Control&gt;&lt;Shift&gt;Button4
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;Button4</default>
         </option>
         <option type="button" name="scale_down_button">
 		    <_short>Scale Down</_short>
 		    <_long>Scale down by one increment</_long>
-			<default>&lt;Control&gt;&lt;Shift&gt;Button5
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;Button5</default>
         </option>
     </subgroup>
     <subgroup>
@@ -102,44 +101,34 @@
 	    <option type="key" name="rotate_up_key">
 			<_short>Rotate Up</_short>
 			<_long>Rotate up by one increment</_long>
-			<allowed key="true"/>
-			<default>&lt;Control&gt;&lt;Shift&gt;w
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;w</default>
 	    </option>
 	    <option type="key" name="rotate_down_key">
 			<_short>Rotate Down</_short>
 			<_long>Rotate down by one increment</_long>
 			<allowed key="true"/>
-			<default>&lt;Control&gt;&lt;Shift&gt;s
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;s</default>
 	    </option>	
 	    <option type="key" name="rotate_left_key">
 			<_short>Rotate Left</_short>
 			<_long>Rotate left by one increment</_long>
-			<allowed key="true"/>
-			<default>&lt;Control&gt;&lt;Shift&gt;d
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;d</default>
 	    </option>
 	    <option type="key" name="rotate_right_key">
 			<_short>Rotate Right</_short>
 			<_long>Rotate right by one increment</_long>
 			<allowed key="true"/>
-			<default>&lt;Control&gt;&lt;Shift&gt;a
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;a</default>
 	    </option>
 	    <option type="key" name="rotate_c_key">
 			<_short>Rotate Clockwise</_short>
 			<_long>Rotate clockwise by one increment</_long>
-			<allowed key="true"/>
-			<default>&lt;Control&gt;&lt;Shift&gt;e
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;e</default>
 	    </option>
 	    <option type="key" name="rotate_cc_key">
 			<_short>Rotate Counter-Clockwise</_short>
 			<_long>Rotate counter-clockwise by one increment</_long>
-			<allowed key="true"/>
-			<default>&lt;Control&gt;&lt;Shift&gt;q
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;q</default>
 	    </option>
 	</subgroup>
 	</group>
