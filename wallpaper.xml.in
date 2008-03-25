@@ -3,6 +3,13 @@
 		<_short>Wallpaper</_short>
 		<_long>Draw the desktop wallpaper</_long>
 		<category>Utility</category>
+		<deps>
+			<relation type="after">
+				<plugin>svg</plugin>
+				<plugin>png</plugin>
+				<plugin>imgjpeg</plugin>
+			</relation>
+		</deps>
 		<screen>
 			<subgroup>
 				<_short>Backgrounds</_short>
