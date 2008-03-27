@@ -185,7 +185,8 @@ typedef struct _FWWindow{
 
     CompTransform rTransform;
 
-    Box rect;
+    Box outputRect;
+    Box inputRect;
 
     Bool grabbed;
     
@@ -210,6 +211,28 @@ static CompMetadata freewinsMetadata;
 
 /* ------ Utility Functions ---------------------------------------------*/
 
+/* Rotate and project individual vectors */
+static void FWRotateProjectVector (CompWindow *w, CompVector vector, GLdouble *resultX, GLdouble *resultY, GLdouble *resultZ)
+{
+    FREEWINS_WINDOW (w);
+
+    matrixMultiplyVector(&vector, &vector, &fww->rTransform);
+
+    GLint viewport[4]; // Viewport
+    GLdouble modelview[16]; // Modelview Matrix
+    GLdouble projection[16]; // Projection Matrix
+
+    glGetIntegerv (GL_VIEWPORT, viewport);
+    glGetDoublev (GL_MODELVIEW_MATRIX, modelview);
+    glGetDoublev (GL_PROJECTION_MATRIX, projection);
+
+    gluProject (vector.x, vector.y, vector.z,
+                modelview, projection, viewport,
+                resultX, resultY, resultZ);
+
+    /* Y must be negated */
+    *resultY = w->screen->height - *resultY;
+}
 
 /* Check to see if we can shape a window */
 static Bool FWCanShape (CompWindow *w)
@@ -267,8 +290,8 @@ static void FWShapeInput (CompWindow *w)
         ScaleY = fww->scaleY;
     }
 
-    float widthScale = (float) (fww->rect.x2 - fww->rect.x1) / (float) WIN_OUTPUT_W (w); 
-    float heightScale = (float) (fww->rect.y2 - fww->rect.y1) / (float) WIN_OUTPUT_H (w); 
+    float widthScale = (float) (fww->outputRect.x2 - fww->outputRect.x1) / (float) WIN_OUTPUT_W (w); 
+    float heightScale = (float) (fww->outputRect.y2 - fww->outputRect.y1) / (float) WIN_OUTPUT_H (w); 
 
     ScaleX = widthScale - (1 - ScaleX);
     ScaleY = heightScale - (1 - ScaleY);
@@ -677,15 +700,22 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
             -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
 
-        matrixMultiplyVector(&corner1, &corner1, &fww->rTransform);
-        matrixMultiplyVector(&corner2, &corner2, &fww->rTransform);
-        matrixMultiplyVector(&corner3, &corner3, &fww->rTransform);
-        matrixMultiplyVector(&corner4, &corner4, &fww->rTransform);
-
         GLdouble xScreen1, yScreen1, zScreen1;
         GLdouble xScreen2, yScreen2, zScreen2;
         GLdouble xScreen3, yScreen3, zScreen3;
         GLdouble xScreen4, yScreen4, zScreen4;
+
+        FWRotateProjectVector(w, corner1, &xScreen1, &yScreen1, &zScreen1);
+        FWRotateProjectVector(w, corner2, &xScreen2, &yScreen2, &zScreen2);
+        FWRotateProjectVector(w, corner3, &xScreen3, &yScreen3, &zScreen3);
+        FWRotateProjectVector(w, corner4, &xScreen4, &yScreen4, &zScreen4);
+
+        /*
+
+        matrixMultiplyVector(&corner1, &corner1, &fww->rTransform);
+        matrixMultiplyVector(&corner2, &corner2, &fww->rTransform);
+        matrixMultiplyVector(&corner3, &corner3, &fww->rTransform);
+        matrixMultiplyVector(&corner4, &corner4, &fww->rTransform);
 
         GLint viewport[4]; // Viewport
         GLdouble modelview[16]; // Modelview Matrix
@@ -709,16 +739,9 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
         gluProject (corner4.x, corner4.y, corner4.z,
                     modelview, projection, viewport,
-                    &xScreen4, &yScreen4, &zScreen4);
+                    &xScreen4, &yScreen4, &zScreen4);*/
 
         float leftmost, rightmost, topmost, bottommost;
-
-        /* Y co-ords must be negated */
-
-        yScreen1 = w->screen->height - yScreen1;
-        yScreen2 = w->screen->height - yScreen2;
-        yScreen3 = w->screen->height - yScreen3;
-        yScreen4 = w->screen->height - yScreen4;
 
         /* Left most point */
 
@@ -772,11 +795,11 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         if (yScreen4 >= bottommost)
             bottommost = yScreen4;
 
-        fww->rect.x1 = leftmost;
-        fww->rect.y1 = topmost;
+        fww->outputRect.x1 = leftmost;
+        fww->outputRect.y1 = topmost;
 
-        fww->rect.x2 = rightmost;
-        fww->rect.y2 = bottommost;
+        fww->outputRect.x2 = rightmost;
+        fww->outputRect.y2 = bottommost;
 
         /* Animation. We calculate how much increment
          * a window must rotate / scale per paint by
@@ -927,13 +950,13 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnable (GL_BLEND);
     glColor4us (0x2fff, 0x2fff, 0x4fff, 0x4fff);
-    glRecti (fww->rect.x1, fww->rect.y1, fww->rect.x2, fww->rect.y2);
+    glRecti (fww->outputRect.x1, fww->outputRect.y1, fww->outputRect.x2, fww->outputRect.y2);
     glColor4us (0x2fff, 0x2fff, 0x4fff, 0x9fff);
     glBegin (GL_LINE_LOOP);
-    glVertex2i (fww->rect.x1, fww->rect.y1);
-    glVertex2i (fww->rect.x2, fww->rect.y1);
-    glVertex2i (fww->rect.x1, fww->rect.y2);
-    glVertex2i (fww->rect.x2, fww->rect.y2);
+    glVertex2i (fww->outputRect.x1, fww->outputRect.y1);
+    glVertex2i (fww->outputRect.x2, fww->outputRect.y1);
+    glVertex2i (fww->outputRect.x1, fww->outputRect.y2);
+    glVertex2i (fww->outputRect.x2, fww->outputRect.y2);
     glEnd ();
     glColor4usv (defaultColor);
     glDisable (GL_BLEND);
@@ -975,10 +998,10 @@ static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
         region.rects = &region.extents;
         region.numRects = region.size = 1;
 
-        region.extents.x1 = fww->rect.x1;
-        region.extents.x2 = fww->rect.x2;
-        region.extents.y1 = fww->rect.y1;
-        region.extents.y2 = fww->rect.y2;
+        region.extents.x1 = fww->outputRect.x1;
+        region.extents.x2 = fww->outputRect.x2;
+        region.extents.y1 = fww->outputRect.y1;
+        region.extents.y2 = fww->outputRect.y2;
 
         damageScreenRegion (w->screen, &region);
     }
@@ -993,7 +1016,7 @@ static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
     UNWRAP(fws, w->screen, damageWindowRect);
     status |= (*w->screen->damageWindowRect)(w, initial, rect);
-    //(*w->screen->damageWindowRect)(w, initial, &fww->rect);
+    //(*w->screen->damageWindowRect)(w, initial, &fww->outputRect);
     WRAP(fws, w->screen, damageWindowRect, FWDamageWindowRect);
 
     // true if damaged something
@@ -1484,10 +1507,10 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->midX = WIN_REAL_W(w)/2.0;
     fww->midY = WIN_REAL_H(w)/2.0;
 
-    fww->rect.x1 = WIN_OUTPUT_X (w);
-    fww->rect.x2 = WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w);
-    fww->rect.y1 = WIN_OUTPUT_Y (w);
-    fww->rect.y2 = WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w);
+    fww->outputRect.x1 = WIN_OUTPUT_X (w);
+    fww->outputRect.x2 = WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w);
+    fww->outputRect.y1 = WIN_OUTPUT_Y (w);
+    fww->outputRect.y2 = WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w);
 
     fww->grabbed = 0;
     fww->zaxis = FALSE;
