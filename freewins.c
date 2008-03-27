@@ -212,7 +212,8 @@ static CompMetadata freewinsMetadata;
 /* ------ Utility Functions ---------------------------------------------*/
 
 /* Rotate and project individual vectors */
-static void FWRotateProjectVector (CompWindow *w, CompVector vector, GLdouble *resultX, GLdouble *resultY, GLdouble *resultZ)
+static void FWRotateProjectVector (CompWindow *w, CompVector vector,
+                                   GLdouble *resultX, GLdouble *resultY, GLdouble *resultZ)
 {
     FREEWINS_WINDOW (w);
 
@@ -234,6 +235,71 @@ static void FWRotateProjectVector (CompWindow *w, CompVector vector, GLdouble *r
     *resultY = w->screen->height - *resultY;
 }
 
+static Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, float xScreen4,
+                              float yScreen1, float yScreen2, float yScreen3, float yScreen4)
+{
+        float leftmost, rightmost, topmost, bottommost;
+        Box rect;
+
+        /* Left most point */
+
+        leftmost = xScreen1;
+
+        if (xScreen2 <= leftmost)
+            leftmost = xScreen2;
+
+        if (xScreen3 <= leftmost)
+            leftmost = xScreen3;
+
+        if (xScreen4 <= leftmost)
+            leftmost = xScreen4;
+
+        /* Right most point */
+
+        rightmost = xScreen1;
+
+        if (xScreen2 >= rightmost)
+            rightmost = xScreen2;
+
+        if (xScreen3 >= rightmost)
+            rightmost = xScreen3;
+
+        if (xScreen4 >= rightmost)
+            rightmost = xScreen4;
+
+        /* Top most point */
+
+        topmost = yScreen1;
+
+        if (yScreen2 <= topmost)
+            topmost = yScreen2;
+
+        if (yScreen3 <= topmost)
+            topmost = yScreen3;
+
+        if (yScreen4 <= topmost)
+            topmost = yScreen4;
+
+        /* Bottom most point */
+
+        bottommost = yScreen1;
+
+        if (yScreen2 >= bottommost)
+            bottommost = yScreen2;
+
+        if (yScreen3 >= bottommost)
+            bottommost = yScreen3;
+
+        if (yScreen4 >= bottommost)
+            bottommost = yScreen4;
+
+        rect.x1 = leftmost;
+        rect.x2 = rightmost;
+        rect.y1 = topmost;
+        rect.y2 = bottommost;
+
+        return rect;
+}
 /* Check to see if we can shape a window */
 static Bool FWCanShape (CompWindow *w)
 {
@@ -710,96 +776,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         FWRotateProjectVector(w, corner3, &xScreen3, &yScreen3, &zScreen3);
         FWRotateProjectVector(w, corner4, &xScreen4, &yScreen4, &zScreen4);
 
-        /*
-
-        matrixMultiplyVector(&corner1, &corner1, &fww->rTransform);
-        matrixMultiplyVector(&corner2, &corner2, &fww->rTransform);
-        matrixMultiplyVector(&corner3, &corner3, &fww->rTransform);
-        matrixMultiplyVector(&corner4, &corner4, &fww->rTransform);
-
-        GLint viewport[4]; // Viewport
-        GLdouble modelview[16]; // Modelview Matrix
-        GLdouble projection[16]; // Projection Matrix
-
-        glGetIntegerv (GL_VIEWPORT, viewport);
-        glGetDoublev (GL_MODELVIEW_MATRIX, modelview);
-        glGetDoublev (GL_PROJECTION_MATRIX, projection);
-
-        gluProject (corner1.x, corner1.y, corner1.z,
-                    modelview, projection, viewport,
-                    &xScreen1, &yScreen1, &zScreen1);
-
-        gluProject (corner2.x, corner2.y, corner2.z,
-                    modelview, projection, viewport,
-                    &xScreen2, &yScreen2, &zScreen2);
-
-        gluProject (corner3.x, corner3.y, corner3.z,
-                    modelview, projection, viewport,
-                    &xScreen3, &yScreen3, &zScreen3);
-
-        gluProject (corner4.x, corner4.y, corner4.z,
-                    modelview, projection, viewport,
-                    &xScreen4, &yScreen4, &zScreen4);*/
-
-        float leftmost, rightmost, topmost, bottommost;
-
-        /* Left most point */
-
-        leftmost = xScreen1;
-
-        if (xScreen2 <= leftmost)
-            leftmost = xScreen2;
-
-        if (xScreen3 <= leftmost)
-            leftmost = xScreen3;
-
-        if (xScreen4 <= leftmost)
-            leftmost = xScreen4;
-
-        /* Right most point */
-
-        rightmost = xScreen1;
-
-        if (xScreen2 >= rightmost)
-            rightmost = xScreen2;
-
-        if (xScreen3 >= rightmost)
-            rightmost = xScreen3;
-
-        if (xScreen4 >= rightmost)
-            rightmost = xScreen4;
-
-        /* Top most point */
-
-        topmost = yScreen1;
-
-        if (yScreen2 <= topmost)
-            topmost = yScreen2;
-
-        if (yScreen3 <= topmost)
-            topmost = yScreen3;
-
-        if (yScreen4 <= topmost)
-            topmost = yScreen4;
-
-        /* Bottom most point */
-
-        bottommost = yScreen1;
-
-        if (yScreen2 >= bottommost)
-            bottommost = yScreen2;
-
-        if (yScreen3 >= bottommost)
-            bottommost = yScreen3;
-
-        if (yScreen4 >= bottommost)
-            bottommost = yScreen4;
-
-        fww->outputRect.x1 = leftmost;
-        fww->outputRect.y1 = topmost;
-
-        fww->outputRect.x2 = rightmost;
-        fww->outputRect.y2 = bottommost;
+        fww->outputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
+                                            yScreen1, yScreen2, yScreen3, yScreen4);
 
         /* Animation. We calculate how much increment
          * a window must rotate / scale per paint by
