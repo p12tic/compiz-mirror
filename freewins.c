@@ -30,10 +30,10 @@
  * or just as a toy.
  *
  * Todo: 
+ *  - Input prevention windows and proper shape handling
  *  - Modifier key to rotate on the Z Axis
  *  - Simplify code
  *  - Auto-zoom to fit in rect
- *  - Input prevention windows and proper shape handling
  */
 
 #include <compiz-core.h>
