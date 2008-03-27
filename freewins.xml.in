@@ -34,7 +34,7 @@
 			    <button>&lt;Control&gt;&lt;Shift&gt;Button2</button>
 			</default>
 	    </option>
-	    <option type="key" name="toggle_axis_key">
+	    <option type="key" name="toggle_axis">
 			<_short>Axis help toggle</_short>
 			<_long>Axis selection helper </_long>
 			<allowed key="true"/>
@@ -97,7 +97,6 @@
 			<default>
 			    <key>&lt;Control&gt;&lt;Shift&gt;Page_Down</key>
 			    <button>&lt;Control&gt;&lt;Shift&gt;Button5</button>
-			<default>&lt;Control&gt;&lt;Shift&gt;Page_Down
 			</default>
         </option>
     </subgroup>

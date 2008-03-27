@@ -30,10 +30,10 @@
  * or just as a toy.
  *
  * Todo: 
+ *  - Input prevention windows and proper shape handling
  *  - Modifier key to rotate on the Z Axis
  *  - Simplify code
  *  - Auto-zoom to fit in rect
- *  - Input prevention windows and proper shape handling
  */
 
 #include <compiz.h>
@@ -183,9 +183,8 @@ typedef struct _FWWindow{
     // Used to determine starting point
     StartCorner corner;
 
-    CompTransform rTransform;
-
-    Box rect;
+    Box outputRect;
+    Box inputRect;
 
     Bool grabbed;
     
@@ -210,7 +209,93 @@ static CompMetadata freewinsMetadata;
 
 /* ------ Utility Functions ---------------------------------------------*/
 
+/* Rotate and project individual vectors */
+static void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransform transform,
+                                   GLdouble *resultX, GLdouble *resultY, GLdouble *resultZ)
+{
+    matrixMultiplyVector(&vector, &vector, &transform);
 
+    GLint viewport[4]; // Viewport
+    GLdouble modelview[16]; // Modelview Matrix
+    GLdouble projection[16]; // Projection Matrix
+
+    glGetIntegerv (GL_VIEWPORT, viewport);
+    glGetDoublev (GL_MODELVIEW_MATRIX, modelview);
+    glGetDoublev (GL_PROJECTION_MATRIX, projection);
+
+    gluProject (vector.x, vector.y, vector.z,
+                modelview, projection, viewport,
+                resultX, resultY, resultZ);
+
+    /* Y must be negated */
+    *resultY = w->screen->height - *resultY;
+}
+
+static Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, float xScreen4,
+                              float yScreen1, float yScreen2, float yScreen3, float yScreen4)
+{
+        float leftmost, rightmost, topmost, bottommost;
+        Box rect;
+
+        /* Left most point */
+
+        leftmost = xScreen1;
+
+        if (xScreen2 <= leftmost)
+            leftmost = xScreen2;
+
+        if (xScreen3 <= leftmost)
+            leftmost = xScreen3;
+
+        if (xScreen4 <= leftmost)
+            leftmost = xScreen4;
+
+        /* Right most point */
+
+        rightmost = xScreen1;
+
+        if (xScreen2 >= rightmost)
+            rightmost = xScreen2;
+
+        if (xScreen3 >= rightmost)
+            rightmost = xScreen3;
+
+        if (xScreen4 >= rightmost)
+            rightmost = xScreen4;
+
+        /* Top most point */
+
+        topmost = yScreen1;
+
+        if (yScreen2 <= topmost)
+            topmost = yScreen2;
+
+        if (yScreen3 <= topmost)
+            topmost = yScreen3;
+
+        if (yScreen4 <= topmost)
+            topmost = yScreen4;
+
+        /* Bottom most point */
+
+        bottommost = yScreen1;
+
+        if (yScreen2 >= bottommost)
+            bottommost = yScreen2;
+
+        if (yScreen3 >= bottommost)
+            bottommost = yScreen3;
+
+        if (yScreen4 >= bottommost)
+            bottommost = yScreen4;
+
+        rect.x1 = leftmost;
+        rect.x2 = rightmost;
+        rect.y1 = topmost;
+        rect.y2 = bottommost;
+
+        return rect;
+}
 /* Check to see if we can shape a window */
 static Bool FWCanShape (CompWindow *w)
 {
@@ -267,8 +352,8 @@ static void FWShapeInput (CompWindow *w)
         ScaleY = fww->scaleY;
     }
 
-    float widthScale = (float) (fww->rect.x2 - fww->rect.x1) / (float) WIN_OUTPUT_W (w); 
-    float heightScale = (float) (fww->rect.y2 - fww->rect.y1) / (float) WIN_OUTPUT_H (w); 
+    float widthScale = (float) (fww->inputRect.x2 - fww->inputRect.x1) / (float) WIN_OUTPUT_W (w); 
+    float heightScale = (float) (fww->inputRect.y2 - fww->inputRect.y1) / (float) WIN_OUTPUT_H (w); 
 
     ScaleX = widthScale - (1 - ScaleX);
     ScaleY = heightScale - (1 - ScaleY);
@@ -641,7 +726,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 		    -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
         }
 
-        fww->rTransform = wTransform;
+        CompTransform outTransform = wTransform;
+        CompTransform inputTransform = wTransform;
 
         CompVector corner1 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
         CompVector corner2 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
@@ -664,6 +750,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
          * damage a lot more accurate than they used to be.
          */
 
+<<<<<<< HEAD:freewins.c
         /* Here we duplicate some of the work the openGL does
          * but for different reasons. We have access to the 
          * window's transformation matrix, so we will create
@@ -680,120 +767,83 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
          * damage a lot more accurate than they used to be.
          */
 
-        matrixGetIdentity (&fww->rTransform);
-        matrixScale (&fww->rTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-        matrixTranslate(&fww->rTransform, 
+        matrixGetIdentity (&outTransform);
+        matrixScale (&outTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+        matrixTranslate(&outTransform, 
             WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0, 
             WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0, 0.0);
-        matrixRotate (&fww->rTransform, fww->angX, 1.0f, 0.0f, 0.0f);
-        matrixRotate (&fww->rTransform, fww->angY, 0.0f, 1.0f, 0.0f);
-        matrixRotate (&fww->rTransform, fww->angZ, 0.0f, 0.0f, 1.0f);
-        matrixScale(&fww->rTransform, fww->scaleX, 1.0, 0.0);
-        matrixScale(&fww->rTransform, 1.0, fww->scaleY, 0.0);
-        matrixTranslate(&fww->rTransform, 
+        matrixRotate (&outTransform, fww->angX, 1.0f, 0.0f, 0.0f);
+        matrixRotate (&outTransform, fww->angY, 0.0f, 1.0f, 0.0f);
+        matrixRotate (&outTransform, fww->angZ, 0.0f, 0.0f, 1.0f);
+        matrixScale(&outTransform, fww->scaleX, 1.0, 0.0);
+        matrixScale(&outTransform, 1.0, fww->scaleY, 0.0);
+        matrixTranslate(&outTransform, 
             -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
             -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
-
-        matrixMultiplyVector(&corner1, &corner1, &fww->rTransform);
-        matrixMultiplyVector(&corner2, &corner2, &fww->rTransform);
-        matrixMultiplyVector(&corner3, &corner3, &fww->rTransform);
-        matrixMultiplyVector(&corner4, &corner4, &fww->rTransform);
 
         GLdouble xScreen1, yScreen1, zScreen1;
         GLdouble xScreen2, yScreen2, zScreen2;
         GLdouble xScreen3, yScreen3, zScreen3;
         GLdouble xScreen4, yScreen4, zScreen4;
 
-        GLint viewport[4]; // Viewport
-        GLdouble modelview[16]; // Modelview Matrix
-        GLdouble projection[16]; // Projection Matrix
+        FWRotateProjectVector(w, corner1, outTransform, &xScreen1, &yScreen1, &zScreen1);
+        FWRotateProjectVector(w, corner2, outTransform, &xScreen2, &yScreen2, &zScreen2);
+        FWRotateProjectVector(w, corner3, outTransform, &xScreen3, &yScreen3, &zScreen3);
+        FWRotateProjectVector(w, corner4, outTransform, &xScreen4, &yScreen4, &zScreen4);
 
-        glGetIntegerv (GL_VIEWPORT, viewport);
-        glGetDoublev (GL_MODELVIEW_MATRIX, modelview);
-        glGetDoublev (GL_PROJECTION_MATRIX, projection);
+        fww->outputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
+                                            yScreen1, yScreen2, yScreen3, yScreen4);
 
-        gluProject (corner1.x, corner1.y, corner1.z,
-                    modelview, projection, viewport,
-                    &xScreen1, &yScreen1, &zScreen1);
+        /* Now calculate the input rects */
 
-        gluProject (corner2.x, corner2.y, corner2.z,
-                    modelview, projection, viewport,
-                    &xScreen2, &yScreen2, &zScreen2);
+        /* It is safe to over-write variables
+         * as they will not be used to calculate
+         * output regions again
+         */
 
-        gluProject (corner3.x, corner3.y, corner3.z,
-                    modelview, projection, viewport,
-                    &xScreen3, &yScreen3, &zScreen3);
+        CompVector corneri1 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+        CompVector corneri2 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+        CompVector corneri3 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
+        CompVector corneri4 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
 
-        gluProject (corner4.x, corner4.y, corner4.z,
-                    modelview, projection, viewport,
-                    &xScreen4, &yScreen4, &zScreen4);
+        /* Here we duplicate some of the work the openGL does
+         * but for different reasons. We have access to the 
+         * window's transformation matrix, so we will create
+         * our own matrix and apply the same transformations
+         * to it. From there, we create vectors for each point
+         * that we wish to track and multiply them by this 
+         * matrix to give us the rotated / scaled co-ordinates.
+         * From there, we project these co-ordinates onto the flat
+         * screen that we have using the OGL viewport, projection
+         * matrix and model matrix. Projection gives us three
+         * co-ordinates, but we ignore Z and just use X and Y
+         * to store in a surrounding rectangle. We can use this
+         * surrounding rectangle to make things like shaping and
+         * damage a lot more accurate than they used to be.
+         */
 
-        float leftmost, rightmost, topmost, bottommost;
+        matrixGetIdentity (&inputTransform);
+        matrixScale (&inputTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+        matrixTranslate(&inputTransform, 
+            WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
+            WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
+        matrixRotate (&inputTransform, fww->angX, 1.0f, 0.0f, 0.0f);
+        matrixRotate (&inputTransform, fww->angY, 0.0f, 1.0f, 0.0f);
+        matrixRotate (&inputTransform, fww->angZ, 0.0f, 0.0f, 1.0f);
+        matrixScale(&inputTransform, fww->scaleX, 1.0, 0.0);
+        matrixScale(&inputTransform, 1.0, fww->scaleY, 0.0);
+        matrixTranslate(&inputTransform, 
+            -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
+            -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
 
-        /* Y co-ords must be negated */
+        FWRotateProjectVector(w, corneri1, inputTransform, &xScreen1, &yScreen1, &zScreen1);
+        FWRotateProjectVector(w, corneri2, inputTransform, &xScreen2, &yScreen2, &zScreen2);
+        FWRotateProjectVector(w, corneri3, inputTransform, &xScreen3, &yScreen3, &zScreen3);
+        FWRotateProjectVector(w, corneri4, inputTransform, &xScreen4, &yScreen4, &zScreen4);
 
-        yScreen1 = w->screen->height - yScreen1;
-        yScreen2 = w->screen->height - yScreen2;
-        yScreen3 = w->screen->height - yScreen3;
-        yScreen4 = w->screen->height - yScreen4;
-
-        /* Left most point */
-
-        leftmost = xScreen1;
-
-        if (xScreen2 <= leftmost)
-            leftmost = xScreen2;
-
-        if (xScreen3 <= leftmost)
-            leftmost = xScreen3;
-
-        if (xScreen4 <= leftmost)
-            leftmost = xScreen4;
-
-        /* Right most point */
-
-        rightmost = xScreen1;
-
-        if (xScreen2 >= rightmost)
-            rightmost = xScreen2;
-
-        if (xScreen3 >= rightmost)
-            rightmost = xScreen3;
-
-        if (xScreen4 >= rightmost)
-            rightmost = xScreen4;
-
-        /* Top most point */
-
-        topmost = yScreen1;
-
-        if (yScreen2 <= topmost)
-            topmost = yScreen2;
-
-        if (yScreen3 <= topmost)
-            topmost = yScreen3;
-
-        if (yScreen4 <= topmost)
-            topmost = yScreen4;
-
-        /* Bottom most point */
-
-        bottommost = yScreen1;
-
-        if (yScreen2 >= bottommost)
-            bottommost = yScreen2;
-
-        if (yScreen3 >= bottommost)
-            bottommost = yScreen3;
-
-        if (yScreen4 >= bottommost)
-            bottommost = yScreen4;
-
-        fww->rect.x1 = leftmost;
-        fww->rect.y1 = topmost;
-
-        fww->rect.x2 = rightmost;
-        fww->rect.y2 = bottommost;
+        fww->inputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
+                                            yScreen1, yScreen2, yScreen3, yScreen4);
+        
 
         /* Animation. We calculate how much increment
          * a window must rotate / scale per paint by
@@ -944,13 +994,13 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnable (GL_BLEND);
     glColor4us (0x2fff, 0x2fff, 0x4fff, 0x4fff);
-    glRecti (fww->rect.x1, fww->rect.y1, fww->rect.x2, fww->rect.y2);
+    glRecti (fww->outputRect.x1, fww->outputRect.y1, fww->outputRect.x2, fww->outputRect.y2);
     glColor4us (0x2fff, 0x2fff, 0x4fff, 0x9fff);
     glBegin (GL_LINE_LOOP);
-    glVertex2i (fww->rect.x1, fww->rect.y1);
-    glVertex2i (fww->rect.x2, fww->rect.y1);
-    glVertex2i (fww->rect.x1, fww->rect.y2);
-    glVertex2i (fww->rect.x2, fww->rect.y2);
+    glVertex2i (fww->outputRect.x1, fww->outputRect.y1);
+    glVertex2i (fww->outputRect.x2, fww->outputRect.y1);
+    glVertex2i (fww->outputRect.x1, fww->outputRect.y2);
+    glVertex2i (fww->outputRect.x2, fww->outputRect.y2);
     glEnd ();
     glColor4usv (defaultColor);
     glDisable (GL_BLEND);
@@ -992,10 +1042,10 @@ static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
         region.rects = &region.extents;
         region.numRects = region.size = 1;
 
-        region.extents.x1 = fww->rect.x1;
-        region.extents.x2 = fww->rect.x2;
-        region.extents.y1 = fww->rect.y1;
-        region.extents.y2 = fww->rect.y2;
+        region.extents.x1 = fww->outputRect.x1;
+        region.extents.x2 = fww->outputRect.x2;
+        region.extents.y1 = fww->outputRect.y1;
+        region.extents.y2 = fww->outputRect.y2;
 
         damageScreenRegion (w->screen, &region);
     }
@@ -1010,7 +1060,7 @@ static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
     UNWRAP(fws, w->screen, damageWindowRect);
     status |= (*w->screen->damageWindowRect)(w, initial, rect);
-    //(*w->screen->damageWindowRect)(w, initial, &fww->rect);
+    //(*w->screen->damageWindowRect)(w, initial, &fww->outputRect);
     WRAP(fws, w->screen, damageWindowRect, FWDamageWindowRect);
 
     // true if damaged something
@@ -1501,10 +1551,10 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->midX = WIN_REAL_W(w)/2.0;
     fww->midY = WIN_REAL_H(w)/2.0;
 
-    fww->rect.x1 = WIN_OUTPUT_X (w);
-    fww->rect.x2 = WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w);
-    fww->rect.y1 = WIN_OUTPUT_Y (w);
-    fww->rect.y2 = WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w);
+    fww->outputRect.x1 = WIN_OUTPUT_X (w);
+    fww->outputRect.x2 = WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w);
+    fww->outputRect.y1 = WIN_OUTPUT_Y (w);
+    fww->outputRect.y2 = WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w);
 
     fww->grabbed = 0;
     fww->zaxis = FALSE;
