@@ -183,8 +183,6 @@ typedef struct _FWWindow{
     // Used to determine starting point
     StartCorner corner;
 
-    CompTransform rTransform;
-
     Box outputRect;
     Box inputRect;
 
@@ -728,6 +726,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         }
 
         CompTransform outTransform = wTransform;
+        CompTransform inputTransform = wTransform;
 
         CompVector corner1 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
         CompVector corner2 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
@@ -776,6 +775,57 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
         fww->outputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
                                             yScreen1, yScreen2, yScreen3, yScreen4);
+
+        /* Now calculate the input rects */
+
+        /* It is safe to over-write variables
+         * as they will not be used to calculate
+         * output regions again
+         */
+
+        CompVector corneri1 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+        CompVector corneri2 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+        CompVector corneri3 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
+        CompVector corneri4 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
+
+        /* Here we duplicate some of the work the openGL does
+         * but for different reasons. We have access to the 
+         * window's transformation matrix, so we will create
+         * our own matrix and apply the same transformations
+         * to it. From there, we create vectors for each point
+         * that we wish to track and multiply them by this 
+         * matrix to give us the rotated / scaled co-ordinates.
+         * From there, we project these co-ordinates onto the flat
+         * screen that we have using the OGL viewport, projection
+         * matrix and model matrix. Projection gives us three
+         * co-ordinates, but we ignore Z and just use X and Y
+         * to store in a surrounding rectangle. We can use this
+         * surrounding rectangle to make things like shaping and
+         * damage a lot more accurate than they used to be.
+         */
+
+        matrixGetIdentity (&inputTransform);
+        matrixScale (&inputTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+        matrixTranslate(&inputTransform, 
+            WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
+            WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
+        matrixRotate (&inputTransform, fww->angX, 1.0f, 0.0f, 0.0f);
+        matrixRotate (&inputTransform, fww->angY, 0.0f, 1.0f, 0.0f);
+        matrixRotate (&inputTransform, fww->angZ, 0.0f, 0.0f, 1.0f);
+        matrixScale(&inputTransform, fww->scaleX, 1.0, 0.0);
+        matrixScale(&inputTransform, 1.0, fww->scaleY, 0.0);
+        matrixTranslate(&inputTransform, 
+            -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
+            -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
+
+        FWRotateProjectVector(w, corneri1, inputTransform, &xScreen1, &yScreen1, &zScreen1);
+        FWRotateProjectVector(w, corneri2, inputTransform, &xScreen2, &yScreen2, &zScreen2);
+        FWRotateProjectVector(w, corneri3, inputTransform, &xScreen3, &yScreen3, &zScreen3);
+        FWRotateProjectVector(w, corneri4, inputTransform, &xScreen4, &yScreen4, &zScreen4);
+
+        fww->inputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
+                                            yScreen1, yScreen2, yScreen3, yScreen4);
+        
 
         /* Animation. We calculate how much increment
          * a window must rotate / scale per paint by
