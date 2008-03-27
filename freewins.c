@@ -352,8 +352,8 @@ static void FWShapeInput (CompWindow *w)
         ScaleY = fww->scaleY;
     }
 
-    float widthScale = (float) (fww->outputRect.x2 - fww->outputRect.x1) / (float) WIN_OUTPUT_W (w); 
-    float heightScale = (float) (fww->outputRect.y2 - fww->outputRect.y1) / (float) WIN_OUTPUT_H (w); 
+    float widthScale = (float) (fww->inputRect.x2 - fww->inputRect.x1) / (float) WIN_OUTPUT_W (w); 
+    float heightScale = (float) (fww->inputRect.y2 - fww->inputRect.y1) / (float) WIN_OUTPUT_H (w); 
 
     ScaleX = widthScale - (1 - ScaleX);
     ScaleY = heightScale - (1 - ScaleY);
