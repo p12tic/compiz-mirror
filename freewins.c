@@ -750,7 +750,6 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
          * damage a lot more accurate than they used to be.
          */
 
-<<<<<<< HEAD:freewins.c
         /* Here we duplicate some of the work the openGL does
          * but for different reasons. We have access to the 
          * window's transformation matrix, so we will create
