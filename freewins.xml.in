@@ -246,6 +246,21 @@
 						<alpha>0xFFFF</alpha>
 					</default>
 		</option>
+        <option type="bool" name="show_circle">
+		    <_short>Show 3D rotation circle</_short>
+		    <_long>Show click area for 3D rotation</_long>
+		    <default>True</default>
+	    </option>
+        <option type="bool" name="show_cross">
+		    <_short>Show crosshair</_short>
+		    <_long>Show crosshair (for scaling click regions)</_long>
+		    <default>True</default>
+	    </option>
+        <option type="bool" name="show_region">
+		    <_short>Show input regions</_short>
+		    <_long>Show input region rectangle</_long>
+		    <default>True</default>
+	    </option>
 	</subgroup>
     </group>
 	   </screen>

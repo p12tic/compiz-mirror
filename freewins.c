@@ -948,13 +948,16 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	if(wasCulled)
 	    glDisable(GL_CULL_FACE);
 
+    CompWindow *w = fwd->focusWindow;
+    FREEWINS_WINDOW (w);
+
+    if (freewinsGetShowCircle (s))
+    {
+
 	glColor4usv  (freewinsGetCircleColor (s));
 	glEnable(GL_BLEND);
 
     //float x1, x2, y1, y2;
-
-    CompWindow *w = fwd->focusWindow;
-    FREEWINS_WINDOW (w);
 
 	glBegin(GL_POLYGON);
 	for(j=0; j<360; j += 10)
@@ -979,7 +982,12 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	    glVertex3f( x + rad0 * cos(D2R(j)), y + rad0 * sin(D2R(j)), 0.0 );
 	glEnd ();
 
+    }
+
     /* Draw the bounding box */
+
+    if (freewinsGetShowRegion (s))
+    {
 
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnable (GL_BLEND);
@@ -995,6 +1003,11 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     glColor4usv (defaultColor);
     glDisable (GL_BLEND);
     glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+
+    }
+
+    if (freewinsGetShowCross (s))
+    {
 	
 	glColor4usv  (freewinsGetCrossLineColor (s));
 	glBegin(GL_LINES);
@@ -1006,6 +1019,8 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glVertex3f(x - (WIN_REAL_W (fwd->focusWindow) / 2), y, 0.0f);
 	glVertex3f(x + (WIN_REAL_W (fwd->focusWindow) / 2), y, 0.0f);
 	glEnd ();
+
+    }
 
 	if(wasCulled)
 	    glEnable(GL_CULL_FACE);
