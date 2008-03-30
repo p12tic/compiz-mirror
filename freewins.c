@@ -934,7 +934,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	if(wasCulled)
 	    glDisable(GL_CULL_FACE);
 
-	glColor4usv  (freewinsGetCircleColor (s->display));
+	glColor4usv  (freewinsGetCircleColor (s));
 	glEnable(GL_BLEND);
 
     //float x1, x2, y1, y2;
@@ -948,7 +948,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glEnd ();
 
 	glDisable(GL_BLEND);
-	glColor4usv  (freewinsGetLineColor (s->display));
+	glColor4usv  (freewinsGetLineColor (s));
 	glLineWidth(3.0);
 
 	glBegin(GL_LINE_LOOP);
@@ -982,7 +982,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     glDisable (GL_BLEND);
     glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 	
-	glColor4usv  (freewinsGetCrossLineColor (s->display));
+	glColor4usv  (freewinsGetCrossLineColor (s));
 	glBegin(GL_LINES);
 	glVertex3f(x, y - (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
 	glVertex3f(x, y + (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
