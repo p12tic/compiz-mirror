@@ -23,6 +23,11 @@
  * and Key-Based Transformation added by:
  * Sam Spilsbury <smspillaz@gmail.com>
  *
+ * Most of the input handling here is based on
+ * the shelf plugin by
+ *        : Kristian Lyngstøl <kristian@bohemians.org>
+ *        : Danny Baumann <maniac@opencompositing.org>
+ *
  * Description:
  *
  * This plugin allows you to freely transform the texture of a window,
@@ -97,6 +102,22 @@ typedef enum _StartCorner {
     CornerBottomLeft = 2,
     CornerBottomRight = 3
 } StartCorner;
+
+/* Shape info / restoration */
+typedef struct _FWWindowInputInfo {
+    CompWindow                *w;
+    struct _FWWindowInputInfo *next;
+
+    Window     ipw;
+
+    XRectangle *inputRects;
+    int        nInputRects;
+    int        inputRectOrdering;
+
+    XRectangle *frameInputRects;
+    int        frameNInputRects;
+    int        frameInputRectOrdering;
+} FWWindowInputInfo;
 
 /* Transformation info */
 typedef struct _FWTransformedWindowInfo
@@ -173,6 +194,8 @@ typedef struct _FWScreen{
     DamageWindowRectProc damageWindowRect;
 
     WindowResizeNotifyProc windowResizeNotify;
+
+    FWWindowInputInfo *transformedWindows;
     
     Cursor rotateCursor;
 
@@ -204,6 +227,9 @@ typedef struct _FWWindow{
 
     // Animation Info
     FWAnimationInfo animate;
+
+    // Input Info
+    FWWindowInputInfo *input;
 
     Box outputRect;
     Box inputRect;
@@ -320,6 +346,20 @@ static Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, fl
         return rect;
 }
 
+/* Change angles more than 360 into angles out of 360 */
+/*static int FWMakeIntoOutOfThreeSixty (int value)
+{
+    while (value > 0)
+    {
+        value -= 360;
+    }
+
+    if (value < 0)
+        value += 360;
+
+    return value;
+}*/
+
 /* Check to see if we can shape a window */
 static Bool FWCanShape (CompWindow *w)
 {
@@ -336,19 +376,89 @@ static Bool FWCanShape (CompWindow *w)
     return TRUE;
 }
 
-/* Change angles more than 360 into angles out of 360 */
-/*static int FWMakeIntoOutOfThreeSixty (int value)
+/* Checks if w is a ipw and returns the real window */
+static CompWindow *
+FWGetRealWindow (CompWindow *w)
 {
-    while (value > 0)
+    FWWindowInputInfo *info;
+
+    FREEWINS_SCREEN (w->screen);
+
+    for (info = fws->transformedWindows; info; info = info->next)
     {
-        value -= 360;
+	if (w->id == info->ipw)
+	    return info->w;
     }
 
-    if (value < 0)
-        value += 360;
+    return NULL;
+}
 
-    return value;
-}*/
+static void
+FWSaveInputShape (CompWindow *w,
+		     XRectangle **retRects,
+		     int        *retCount,
+		     int        *retOrdering)
+{
+    XRectangle *rects;
+    int        count = 0, ordering;
+    Display    *dpy = w->screen->display->display;
+
+    rects = XShapeGetRectangles (dpy, w->id, ShapeInput, &count, &ordering);
+
+    if (rects)
+        fprintf(stderr, "rects exists in memory\n");
+
+    /* check if the returned shape exactly matches the window shape -
+       if that is true, the window currently has no set input shape */
+    if ((count == 1) &&
+	(rects[0].x == -w->serverBorderWidth) &&
+	(rects[0].y == -w->serverBorderWidth) &&
+	(rects[0].width == (w->serverWidth + w->serverBorderWidth)) &&
+	(rects[0].height == (w->serverHeight + w->serverBorderWidth)))
+    {
+	count = 0;
+    }
+    
+    *retRects    = rects;
+    *retCount    = count;
+    *retOrdering = ordering;
+}
+
+static void
+FWUnshapeInput (CompWindow *w)
+{
+    Display *dpy = w->screen->display->display;
+
+    FREEWINS_WINDOW (w);
+
+    if (fww->input->nInputRects)
+    {
+	XShapeCombineRectangles (dpy, w->id, ShapeInput, 0, 0,
+				 fww->input->inputRects, fww->input->nInputRects,
+				 ShapeSet, fww->input->inputRectOrdering);
+    }
+    else
+    {
+	XShapeCombineMask (dpy, w->id, ShapeInput, 0, 0, None, ShapeSet);
+    }
+
+    if (fww->input->frameNInputRects >= 0)
+    {
+	if (fww->input->frameInputRects)
+	{
+	    XShapeCombineRectangles (dpy, w->frame, ShapeInput, 0, 0,
+				     fww->input->frameInputRects,
+				     fww->input->frameNInputRects,
+				     ShapeSet,
+				     fww->input->frameInputRectOrdering);
+	}
+	else
+	{
+	    XShapeCombineMask (dpy, w->frame, ShapeInput, 0, 0, None, ShapeSet);
+	}
+    }
+}
+
 
 /* Input Shaper. Take into account the provided transformed
    corner-rects of the windows, and find the scale difference
@@ -359,7 +469,7 @@ static Bool FWCanShape (CompWindow *w)
 /* XXX: This will changed to input prevention in the near future */
 static void FWShapeInput (CompWindow *w)
 {
-    FREEWINS_WINDOW(w);
+    /*FREEWINS_WINDOW(w);
     XRectangle Rectangle;
     float ScaleX;
     float ScaleY;
@@ -381,13 +491,124 @@ static void FWShapeInput (CompWindow *w)
     XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
     XShapeCombineRectangles  (w->screen->display->display, w->id, 
 			      ShapeInput, 0, 0, &Rectangle, 1,  ShapeSet, 0);
-	/* Shape the frame window too */
-	if (w->frame)
+	/*if (w->frame)
 	{
 	    XShapeCombineRectangles  (w->screen->display->display, w->frame, 
 			      ShapeInput, 0, 0, &Rectangle, 1,  ShapeSet, 0);
 	    XShapeSelectInput (w->screen->display->display, w->id, ShapeNotify);
+	}*/
+
+    CompWindow *fw;
+    Display    *dpy = w->screen->display->display;
+
+    FREEWINS_WINDOW (w);
+
+    /* save old shape */
+    FWSaveInputShape (w, &fww->input->inputRects,
+			 &fww->input->nInputRects, &fww->input->inputRectOrdering);
+
+    fw = findWindowAtDisplay (w->screen->display, w->frame);
+    if (fw)
+    {
+	FWSaveInputShape(fw, &fww->input->frameInputRects,
+			    &fww->input->frameNInputRects,
+			    &fww->input->frameInputRectOrdering);
+    }
+    else
+    {
+	fww->input->frameInputRects        = NULL;
+	fww->input->frameNInputRects       = -1;
+	fww->input->frameInputRectOrdering = 0;
+    }
+
+    /* clear shape */
+    XShapeSelectInput (dpy, w->id, NoEventMask);
+    XShapeCombineRectangles  (dpy, w->id, ShapeInput, 0, 0,
+			      NULL, 0, ShapeSet, 0);
+    
+    if (w->frame)
+	XShapeCombineRectangles  (dpy, w->frame, ShapeInput, 0, 0,
+				  NULL, 0, ShapeSet, 0);
+
+    XShapeSelectInput (dpy, w->id, ShapeNotify);
+}
+
+
+static void
+FWAddWindowToList (FWWindowInputInfo *info)
+{
+    CompScreen        *s = info->w->screen;
+    FWWindowInputInfo *run;
+
+    FREEWINS_SCREEN (s);
+
+    run = fws->transformedWindows;
+    if (!run)
+	fws->transformedWindows = info;
+    else
+    {
+	for (; run->next; run = run->next)
+	run->next = info;
+    }
+}
+
+static void
+FWRemoveWindowFromList (FWWindowInputInfo *info)
+{
+    CompScreen        *s = info->w->screen;
+    FWWindowInputInfo *run;
+
+    FREEWINS_SCREEN (s);
+
+    if (!fws->transformedWindows)
+	return;
+
+    if (fws->transformedWindows == info)
+	fws->transformedWindows = info->next;
+    else
+    {
+	for (run = fws->transformedWindows; run->next; run = run->next)
+	{
+	    if (run->next == info)
+	    {
+		run->next = info->next;
+		break;
+	    }
 	}
+    }
+}
+
+static Bool
+FWHandleFWInputInfo (CompWindow *w)
+{
+    FREEWINS_WINDOW (w);
+
+    if (!fww->rotated && fww->input)
+    {
+	if (fww->input->ipw)
+	    XDestroyWindow (w->screen->display->display, fww->input->ipw);
+
+	FWUnshapeInput (w);
+	FWRemoveWindowFromList (fww->input);
+
+	free (fww->input);
+	fww->input = NULL;
+
+	return FALSE;
+    }
+    else if (fww->rotated && !fww->input)
+    {
+	fww->input = calloc (1, sizeof (FWWindowInputInfo));
+	if (!fww->input)
+	    return FALSE;
+
+	fww->input->w = w;
+	FWShapeInput (w);
+	//shelfCreateIPW (w);
+	FWAddWindowToList (fww->input);
+    }
+
+    return TRUE;
 }
 
 /* ------ Wrappable Functions -------------------------------------------*/
@@ -634,7 +855,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	case ButtonRelease:
 	    if(fwd->grabWindow){
 	    if (FWCanShape (fwd->grabWindow))
-	        FWShapeInput (fwd->grabWindow);
+	        FWHandleFWInputInfo (fwd->grabWindow);
 		for(s = d->screens; s; s = s->next){
 		    FREEWINS_SCREEN(s);
 
@@ -647,6 +868,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		FREEWINS_WINDOW(fwd->grabWindow);
 		fww->grabbed = FALSE;
 		fwd->grabWindow = 0;
+        fww->rotated = TRUE;
 	    }
 	    break;
 
@@ -943,8 +1165,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             fww->doAnimate = FALSE;
             fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
             fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
-            if (FWCanShape (w))
-                FWShapeInput (w);
+            /*if (FWCanShape (w))
+                FWShapeInput (w);*/
         }
     }
 
@@ -1144,8 +1366,8 @@ static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh){
     fww->midX += dw;
     fww->midY += dh;
 
-    if (FWCanShape (w))
-        FWShapeInput (w);
+    /*if (FWCanShape (w))
+        FWShapeInput (w);*/
 
     UNWRAP(fws, w->screen, windowResizeNotify);
     (*w->screen->windowResizeNotify)(w, dx, dy, dw, dh);
@@ -1407,8 +1629,8 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, 0, 0, 0, SCALE_INC, SCALE_INC);
         addWindowDamage (w); // Smoothen Painting
-        if (FWCanShape (w))
-        FWShapeInput (w);
+        /*if (FWCanShape (w))
+        FWShapeInput (w);*/
     }
     
     return TRUE;
@@ -1423,8 +1645,8 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, 0, 0, 0, NEG_SCALE_INC, NEG_SCALE_INC);
         addWindowDamage (w); // Smoothen Painting
-        if (FWCanShape (w))
-            FWShapeInput (w);
+        /*if (FWCanShape (w))
+            FWShapeInput (w);*/
     }
     
     return TRUE;
@@ -1533,8 +1755,8 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
         return FALSE;
     }
     
-    if (FWCanShape (w))
-        FWShapeInput (w);
+    /*if (FWCanShape (w))
+        FWShapeInput (w);*/
     
     return TRUE;
 }
@@ -1575,6 +1797,9 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
 	    fws->rotatedWindows--;
 	    fww->rotated = FALSE;
 	}
+
+    if (FWCanShape (w))
+        FWHandleFWInputInfo (w);
 
     // Set values to animate from
 	fww->animate.oldAngX = fww->transform.angX;
@@ -1652,6 +1877,8 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
     fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
 
+    fww->input = NULL;
+
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
     
     // Shape window back to normal
@@ -1670,8 +1897,8 @@ static void freewinsFiniWindow(CompPlugin *p, CompWindow *w){
     fww->transform.scaleX = 1.0f;
     fww->transform.scaleY = 1.0f;
     
-    if (FWCanShape (w))
-        FWShapeInput (w);
+    /*if (FWCanShape (w))
+        FWShapeInput (w);*/
 
     if(fwd->grabWindow == w){
 	fwd->grabWindow = NULL;
@@ -1696,6 +1923,7 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
 
     fws->grabIndex = 0;
     fws->rotatedWindows = 0;
+    fws->transformedWindows = NULL;
 
     s->base.privates[fwd->screenPrivateIndex].ptr = fws;
     
