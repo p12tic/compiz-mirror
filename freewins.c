@@ -342,17 +342,8 @@ static void FWShapeInput (CompWindow *w)
     float ScaleX;
     float ScaleY;
     
-    /* Check to see if we are scaling uniformly */
-    if (freewinsGetScaleUniform (w->screen))
-    {
-        ScaleX = ((fww->scaleX + fww->scaleY) / 2);
-        ScaleY = ((fww->scaleX + fww->scaleX) / 2);
-    }
-    else
-    {
-        ScaleX = fww->scaleX;
-        ScaleY = fww->scaleY;
-    }
+    ScaleX = fww->scaleX;
+    ScaleY = fww->scaleY;
 
     float widthScale = (float) (fww->inputRect.x2 - fww->inputRect.x1) / (float) WIN_OUTPUT_W (w); 
     float heightScale = (float) (fww->inputRect.y2 - fww->inputRect.y1) / (float) WIN_OUTPUT_H (w); 
