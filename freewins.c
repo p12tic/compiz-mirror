@@ -700,25 +700,6 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
                          fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0) && !(w->type == CompWindowTypeDesktopMask))
     {
 
-	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-
-	    /* Adjust the window in the matrix to prepare for transformation */
-	    matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-	    matrixTranslate(&wTransform, 
-		    WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
-		    WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
-        matrixRotate(&wTransform, fww->transform.angX, 1.0, 0.0, 0.0);
-        matrixRotate(&wTransform, fww->transform.angY, 0.0, 1.0, 0.0);
-        matrixRotate(&wTransform, fww->transform.angZ, 0.0, 0.0, 1.0);        
-       
-	    matrixScale(&wTransform, fww->transform.scaleX, 1.0, 0.0);
-        matrixScale(&wTransform, 1.0, fww->transform.scaleY, 0.0);
-
-	    matrixTranslate(&wTransform, 
-		    -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
-		    -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
-        }
-
         CompTransform outTransform = wTransform;
         CompTransform inputTransform = wTransform;
 
@@ -770,7 +751,56 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         fww->outputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
                                             yScreen1, yScreen2, yScreen3, yScreen4);
 
-        /* Now calculate the input rects */
+        /* Prepare for transformation by doing
+         * any neccesary adjustments
+         */
+
+        float autoScaleX = 1.0f;
+        float autoScaleY = 1.0f;
+
+        if (freewinsGetAutoZoom (w->screen))
+        {
+
+            float apparantWidth = fww->outputRect.x2 - fww->outputRect.x1;
+            float apparantHeight = fww->outputRect.y2 - fww->outputRect.y1;
+
+            autoScaleX = (float) WIN_OUTPUT_W (w) / (float) apparantWidth;
+            autoScaleY = (float) WIN_OUTPUT_H (w) / (float) apparantHeight;
+
+            if (autoScaleX >= 1.0f)
+                autoScaleX = 1.0f;
+            if (autoScaleY >= 1.0f)
+                autoScaleY = 1.0f;
+
+            autoScaleX = autoScaleY = (autoScaleX + autoScaleY) / 2;
+        }
+
+        float scaleX = autoScaleX - (1 - fww->transform.scaleX);
+        float scaleY = autoScaleY - (1 - fww->transform.scaleY);
+
+        /* Actually Transform the window */
+
+	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+
+	    /* Adjust the window in the matrix to prepare for transformation */
+	    matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+	    matrixTranslate(&wTransform, 
+		    WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
+		    WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
+        matrixRotate(&wTransform, fww->transform.angX, 1.0, 0.0, 0.0);
+        matrixRotate(&wTransform, fww->transform.angY, 0.0, 1.0, 0.0);
+        matrixRotate(&wTransform, fww->transform.angZ, 0.0, 0.0, 1.0);        
+       
+	    matrixScale(&wTransform, scaleX, 1.0, 0.0);
+        matrixScale(&wTransform, 1.0, scaleY, 0.0);
+
+	    matrixTranslate(&wTransform, 
+		    -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
+		    -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
+
+        /* Create rects for input after we've dealt
+         * with output
+         */
 
         /* It is safe to over-write variables
          * as they will not be used to calculate
@@ -781,22 +811,6 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         CompVector corneri2 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
         CompVector corneri3 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
         CompVector corneri4 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
-
-        /* Here we duplicate some of the work the openGL does
-         * but for different reasons. We have access to the 
-         * window's transformation matrix, so we will create
-         * our own matrix and apply the same transformations
-         * to it. From there, we create vectors for each point
-         * that we wish to track and multiply them by this 
-         * matrix to give us the rotated / scaled co-ordinates.
-         * From there, we project these co-ordinates onto the flat
-         * screen that we have using the OGL viewport, projection
-         * matrix and model matrix. Projection gives us three
-         * co-ordinates, but we ignore Z and just use X and Y
-         * to store in a surrounding rectangle. We can use this
-         * surrounding rectangle to make things like shaping and
-         * damage a lot more accurate than they used to be.
-         */
 
         matrixGetIdentity (&inputTransform);
         matrixScale (&inputTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
@@ -819,7 +833,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
         fww->inputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
                                             yScreen1, yScreen2, yScreen3, yScreen4);
-        
+        }
 
         /* Animation. We calculate how much increment
          * a window must rotate / scale per paint by

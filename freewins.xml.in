@@ -148,6 +148,11 @@
 			    <_long>Always allow 3D rotation, even when not clicking in the middle of a window</_long>
 			    <default>False</default>
 	        </option>
+	        <option type="bool" name="auto_zoom">
+			    <_short>Auto-Zoom</_short>
+			    <_long>Auto-Zoom when rotating so that windows do not get too large</_long>
+			    <default>False</default>
+	        </option>
         </subgroup>
     </group>
     <group>
