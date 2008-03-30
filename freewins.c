@@ -1070,7 +1070,7 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 
 	if(!otherScreenGrabExist(s, "freewins", 0))
 	    if(!fws->grabIndex)
-		fws->grabIndex = pushScreenGrab(s, None, "freewins");
+		fws->grabIndex = pushScreenGrab(s, fws->rotateCursor, "freewins");
     }
     
     
@@ -1137,7 +1137,7 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 
 	if(!otherScreenGrabExist(s, "freewins", 0))
 	    if(!fws->grabIndex)
-		fws->grabIndex = pushScreenGrab(s, None, "freewins");
+		fws->grabIndex = pushScreenGrab(s, fws->rotateCursor, "freewins");
     }
     
     
