@@ -620,8 +620,10 @@ FWAdjustIPW (CompWindow *w)
     width  = fww->inputRect.x2 - fww->inputRect.x1;
     height = fww->inputRect.y2 - fww->inputRect.y1;
 
-    xwc.x          = w->attrib.x - w->input.left;
-    xwc.y          = w->attrib.y - w->input.top;
+    fprintf(stderr, "width: %f, height %f\n", width, height);
+
+    xwc.x          = (fww->inputRect.x1);
+    xwc.y          = (fww->inputRect.y1);
     xwc.width      = ceil(width);
     xwc.height     = ceil(height);
     xwc.stack_mode = Below;
