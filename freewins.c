@@ -695,61 +695,61 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
     FREEWINS_WINDOW(w);
     
     float timeRemaining = fww->animate.cTimeRemaining;
+
+    CompTransform outTransform = wTransform;
+    CompTransform inputTransform = wTransform;
+
+    CompVector corner1 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
+    CompVector corner2 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
+    CompVector corner3 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
+    CompVector corner4 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
+
+    /* Here we duplicate some of the work the openGL does
+     * but for different reasons. We have access to the 
+     * window's transformation matrix, so we will create
+     * our own matrix and apply the same transformations
+     * to it. From there, we create vectors for each point
+     * that we wish to track and multiply them by this 
+     * matrix to give us the rotated / scaled co-ordinates.
+     * From there, we project these co-ordinates onto the flat
+     * screen that we have using the OGL viewport, projection
+     * matrix and model matrix. Projection gives us three
+     * co-ordinates, but we ignore Z and just use X and Y
+     * to store in a surrounding rectangle. We can use this
+     * surrounding rectangle to make things like shaping and
+     * damage a lot more accurate than they used to be.
+     */
+
+    matrixGetIdentity (&outTransform);
+    matrixScale (&outTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+    matrixTranslate(&outTransform, 
+        WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0, 
+        WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0, 0.0);
+    matrixRotate (&outTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
+    matrixRotate (&outTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
+    matrixRotate (&outTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
+    matrixScale(&outTransform, fww->transform.scaleX, 1.0, 0.0);
+    matrixScale(&outTransform, 1.0, fww->transform.scaleY, 0.0);
+    matrixTranslate(&outTransform, 
+        -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
+        -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
+
+    GLdouble xScreen1, yScreen1, zScreen1;
+    GLdouble xScreen2, yScreen2, zScreen2;
+    GLdouble xScreen3, yScreen3, zScreen3;
+    GLdouble xScreen4, yScreen4, zScreen4;
+
+    FWRotateProjectVector(w, corner1, outTransform, &xScreen1, &yScreen1, &zScreen1);
+    FWRotateProjectVector(w, corner2, outTransform, &xScreen2, &yScreen2, &zScreen2);
+    FWRotateProjectVector(w, corner3, outTransform, &xScreen3, &yScreen3, &zScreen3);
+    FWRotateProjectVector(w, corner4, outTransform, &xScreen4, &yScreen4, &zScreen4);
+
+    fww->outputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
+                                        yScreen1, yScreen2, yScreen3, yScreen4);
     
     if((fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 ||
                          fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0) && !(w->type == CompWindowTypeDesktopMask))
     {
-
-        CompTransform outTransform = wTransform;
-        CompTransform inputTransform = wTransform;
-
-        CompVector corner1 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
-        CompVector corner2 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
-        CompVector corner3 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
-        CompVector corner4 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
-
-        /* Here we duplicate some of the work the openGL does
-         * but for different reasons. We have access to the 
-         * window's transformation matrix, so we will create
-         * our own matrix and apply the same transformations
-         * to it. From there, we create vectors for each point
-         * that we wish to track and multiply them by this 
-         * matrix to give us the rotated / scaled co-ordinates.
-         * From there, we project these co-ordinates onto the flat
-         * screen that we have using the OGL viewport, projection
-         * matrix and model matrix. Projection gives us three
-         * co-ordinates, but we ignore Z and just use X and Y
-         * to store in a surrounding rectangle. We can use this
-         * surrounding rectangle to make things like shaping and
-         * damage a lot more accurate than they used to be.
-         */
-
-        matrixGetIdentity (&outTransform);
-        matrixScale (&outTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-        matrixTranslate(&outTransform, 
-            WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0, 
-            WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0, 0.0);
-        matrixRotate (&outTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
-        matrixRotate (&outTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
-        matrixRotate (&outTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
-        matrixScale(&outTransform, fww->transform.scaleX, 1.0, 0.0);
-        matrixScale(&outTransform, 1.0, fww->transform.scaleY, 0.0);
-        matrixTranslate(&outTransform, 
-            -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
-            -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
-
-        GLdouble xScreen1, yScreen1, zScreen1;
-        GLdouble xScreen2, yScreen2, zScreen2;
-        GLdouble xScreen3, yScreen3, zScreen3;
-        GLdouble xScreen4, yScreen4, zScreen4;
-
-        FWRotateProjectVector(w, corner1, outTransform, &xScreen1, &yScreen1, &zScreen1);
-        FWRotateProjectVector(w, corner2, outTransform, &xScreen2, &yScreen2, &zScreen2);
-        FWRotateProjectVector(w, corner3, outTransform, &xScreen3, &yScreen3, &zScreen3);
-        FWRotateProjectVector(w, corner4, outTransform, &xScreen4, &yScreen4, &zScreen4);
-
-        fww->outputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
-                                            yScreen1, yScreen2, yScreen3, yScreen4);
 
         /* Prepare for transformation by doing
          * any neccesary adjustments
@@ -798,105 +798,106 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 		    -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
 		    -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
 
-        /* Create rects for input after we've dealt
-         * with output
-         */
+    }
 
-        /* It is safe to over-write variables
-         * as they will not be used to calculate
-         * output regions again
-         */
+    /* Create rects for input after we've dealt
+     * with output
+     */
 
-        CompVector corneri1 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
-        CompVector corneri2 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
-        CompVector corneri3 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
-        CompVector corneri4 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
+    /* It is safe to over-write variables
+     * as they will not be used to calculate
+     * output regions again
+     */
 
-        matrixGetIdentity (&inputTransform);
-        matrixScale (&inputTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-        matrixTranslate(&inputTransform, 
-            WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
-            WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
-        matrixRotate (&inputTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
-        matrixRotate (&inputTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
-        matrixRotate (&inputTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
-        matrixScale(&inputTransform, fww->transform.scaleX, 1.0, 0.0);
-        matrixScale(&inputTransform, 1.0, fww->transform.scaleY, 0.0);
-        matrixTranslate(&inputTransform, 
-            -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
-            -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
+    CompVector corneri1 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+    CompVector corneri2 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+    CompVector corneri3 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
+    CompVector corneri4 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
 
-        FWRotateProjectVector(w, corneri1, inputTransform, &xScreen1, &yScreen1, &zScreen1);
-        FWRotateProjectVector(w, corneri2, inputTransform, &xScreen2, &yScreen2, &zScreen2);
-        FWRotateProjectVector(w, corneri3, inputTransform, &xScreen3, &yScreen3, &zScreen3);
-        FWRotateProjectVector(w, corneri4, inputTransform, &xScreen4, &yScreen4, &zScreen4);
+    matrixGetIdentity (&inputTransform);
+    matrixScale (&inputTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+    matrixTranslate(&inputTransform, 
+        WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
+        WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
+    matrixRotate (&inputTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
+    matrixRotate (&inputTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
+    matrixRotate (&inputTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
+    matrixScale(&inputTransform, fww->transform.scaleX, 1.0, 0.0);
+    matrixScale(&inputTransform, 1.0, fww->transform.scaleY, 0.0);
+    matrixTranslate(&inputTransform, 
+        -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
+        -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
 
-        fww->inputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
-                                            yScreen1, yScreen2, yScreen3, yScreen4);
-        }
+    FWRotateProjectVector(w, corneri1, inputTransform, &xScreen1, &yScreen1, &zScreen1);
+    FWRotateProjectVector(w, corneri2, inputTransform, &xScreen2, &yScreen2, &zScreen2);
+    FWRotateProjectVector(w, corneri3, inputTransform, &xScreen3, &yScreen3, &zScreen3);
+    FWRotateProjectVector(w, corneri4, inputTransform, &xScreen4, &yScreen4, &zScreen4);
 
-        /* Animation. We calculate how much increment
-         * a window must rotate / scale per paint by
-         * using the set destination attributes minus
-         * the old attributes divided by the time
-         * remaining.
-         */
+    fww->inputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
+                                        yScreen1, yScreen2, yScreen3, yScreen4);
 
-        /* TODO: Use preparePaintScreen and msSinceLastPaint to make
-         * this more accurate and springy
-         */
+    /* Animation. We calculate how much increment
+     * a window must rotate / scale per paint by
+     * using the set destination attributes minus
+     * the old attributes divided by the time
+     * remaining.
+     */
 
-        if (fww->doAnimate)
-        {
-            float raX = (fww->animate.destAngX - fww->animate.oldAngX) / timeRemaining;
-            float raY = (fww->animate.destAngY - fww->animate.oldAngY) / timeRemaining;
-            float raZ = (fww->animate.destAngZ - fww->animate.oldAngZ) / timeRemaining;
-            
-            float saX = ((fww->animate.destScaleX - fww->animate.oldScaleX) / timeRemaining);
-            float saY = ((fww->animate.destScaleX - fww->animate.oldScaleY) / timeRemaining);
-            
-            fww->transform.angX += raX;
-            fww->transform.angY += raY;
-            fww->transform.angZ += raZ;
-            
-            fww->transform.scaleX += saX;
-            fww->transform.scaleY += saY;
-                    
-            fww->animate.aTimeRemaining--;
-            addWindowDamage (w);
-            
-            if (fww->animate.aTimeRemaining <= 0 || (fww->transform.angX == fww->animate.destAngX && fww->transform.angY == fww->animate.destAngY
-                                            && fww->transform.angZ == fww->animate.destAngZ && fww->transform.scaleX == fww->animate.destScaleX
-                                            && fww->transform.scaleY == fww->animate.destScaleY))
-            {
-                fww->resetting = FALSE;
+    /* TODO: Use preparePaintScreen and msSinceLastPaint to make
+     * this more accurate and springy
+     */
 
-                fww->transform.angX = fww->animate.destAngX;
-                fww->transform.angY = fww->animate.destAngY;
-                fww->transform.angZ = fww->animate.destAngZ;
-                fww->transform.scaleX = fww->animate.destScaleX;
-                fww->transform.scaleY = fww->animate.destScaleX;
+    if (fww->doAnimate)
+    {
+        float raX = (fww->animate.destAngX - fww->animate.oldAngX) / timeRemaining;
+        float raY = (fww->animate.destAngY - fww->animate.oldAngY) / timeRemaining;
+        float raZ = (fww->animate.destAngZ - fww->animate.oldAngZ) / timeRemaining;
+        
+        float saX = ((fww->animate.destScaleX - fww->animate.oldScaleX) / timeRemaining);
+        float saY = ((fww->animate.destScaleX - fww->animate.oldScaleY) / timeRemaining);
+        
+        fww->transform.angX += raX;
+        fww->transform.angY += raY;
+        fww->transform.angZ += raZ;
+        
+        fww->transform.scaleX += saX;
+        fww->transform.scaleY += saY;
                 
-                fww->doAnimate = FALSE;
-                fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
-                fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
-                if (FWCanShape (w))
-                    FWShapeInput (w);
-            }
-        }
+        fww->animate.aTimeRemaining--;
+        addWindowDamage (w);
+        
+        if (fww->animate.aTimeRemaining <= 0 || (fww->transform.angX == fww->animate.destAngX && fww->transform.angY == fww->animate.destAngY
+                                        && fww->transform.angZ == fww->animate.destAngZ && fww->transform.scaleX == fww->animate.destScaleX
+                                        && fww->transform.scaleY == fww->animate.destScaleY))
+        {
+            fww->resetting = FALSE;
 
-	    // Check if there are rotated windows
-	    if(fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 || fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0){
-	        if( !fww->rotated ){
-		    fws->rotatedWindows++;
-		    fww->rotated = TRUE;
-	        }
-	    }else{
-	        if( fww->rotated ){
-		    fws->rotatedWindows--;
-		    fww->rotated = FALSE;
-	        }
-	}
+            fww->transform.angX = fww->animate.destAngX;
+            fww->transform.angY = fww->animate.destAngY;
+            fww->transform.angZ = fww->animate.destAngZ;
+            fww->transform.scaleX = fww->animate.destScaleX;
+            fww->transform.scaleY = fww->animate.destScaleX;
+            
+            fww->doAnimate = FALSE;
+            fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
+            fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
+            if (FWCanShape (w))
+                FWShapeInput (w);
+        }
+    }
+
+    // Check if there are rotated windows
+    if(fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 || fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0){
+        if( !fww->rotated ){
+	    fws->rotatedWindows++;
+	    fww->rotated = TRUE;
+        }
+    }else{
+        if( fww->rotated ){
+	    fws->rotatedWindows--;
+	    fww->rotated = FALSE;
+        }
+    }
 
     if(wasCulled)
 	glDisable(GL_CULL_FACE);
