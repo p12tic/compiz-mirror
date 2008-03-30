@@ -784,6 +784,33 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
                 autoScaleY = 1.0f;
 
             autoScaleX = autoScaleY = (autoScaleX + autoScaleY) / 2;
+
+            /* Because we modified the scale after calculating
+             * the output rect, we need to recalculate again
+             */
+
+            matrixGetIdentity (&outTransform);
+            matrixScale (&outTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+            matrixTranslate(&outTransform, 
+                WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0, 
+                WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0, 0.0);
+            matrixRotate (&outTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
+            matrixRotate (&outTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
+            matrixRotate (&outTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
+            matrixScale(&outTransform, autoScaleX, 1.0, 0.0);
+            matrixScale(&outTransform, 1.0, autoScaleY, 0.0);
+            matrixTranslate(&outTransform, 
+                -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
+                -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
+
+            FWRotateProjectVector(w, corner1, outTransform, &xScreen1, &yScreen1, &zScreen1);
+            FWRotateProjectVector(w, corner2, outTransform, &xScreen2, &yScreen2, &zScreen2);
+            FWRotateProjectVector(w, corner3, outTransform, &xScreen3, &yScreen3, &zScreen3);
+            FWRotateProjectVector(w, corner4, outTransform, &xScreen4, &yScreen4, &zScreen4);
+
+            fww->outputRect = FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
+                                                yScreen1, yScreen2, yScreen3, yScreen4);
+
         }
 
         float scaleX = autoScaleX - (1 - fww->transform.scaleX);
