@@ -1495,6 +1495,7 @@ static Bool toggleFWAxis (CompDisplay *d, CompAction *action,
     FREEWINS_DISPLAY(d);
 
     fwd->axisHelp = !fwd->axisHelp;
+    damageScreen (s);
 
     return TRUE;
 }
