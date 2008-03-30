@@ -393,6 +393,8 @@ FWGetRealWindow (CompWindow *w)
     return NULL;
 }
 
+/* ------ Input Prevention -------------------------------------------*/
+
 static void
 FWSaveInputShape (CompWindow *w,
 		     XRectangle **retRects,
@@ -404,9 +406,6 @@ FWSaveInputShape (CompWindow *w,
     Display    *dpy = w->screen->display->display;
 
     rects = XShapeGetRectangles (dpy, w->id, ShapeInput, &count, &ordering);
-
-    if (rects)
-        fprintf(stderr, "rects exists in memory\n");
 
     /* check if the returned shape exactly matches the window shape -
        if that is true, the window currently has no set input shape */
@@ -460,13 +459,10 @@ FWUnshapeInput (CompWindow *w)
 }
 
 
-/* Input Shaper. Take into account the provided transformed
-   corner-rects of the windows, and find the scale difference
-   between the window's actual width and the scaled and rotated
-   width. Then we create a new input rectangle and apply it
-   to the window. Most of the hard work regarding rotation is
-   done for us in paintWindow */
-/* XXX: This will changed to input prevention in the near future */
+/* Input Shaper. This no longer adjusts the shape of the window
+   but instead shapes it to 0 as the IPW deals with the input.
+   Old code is available commented, but will be removed as soon
+   as input prevention becomes stable enough  */
 static void FWShapeInput (CompWindow *w)
 {
     /*FREEWINS_WINDOW(w);
@@ -533,7 +529,7 @@ static void FWShapeInput (CompWindow *w)
     XShapeSelectInput (dpy, w->id, ShapeNotify);
 }
 
-
+/* Add the input info to the list of input info */
 static void
 FWAddWindowToList (FWWindowInputInfo *info)
 {
@@ -552,6 +548,7 @@ FWAddWindowToList (FWWindowInputInfo *info)
     }
 }
 
+/* Remove the input info from the list of input info */
 static void
 FWRemoveWindowFromList (FWWindowInputInfo *info)
 {
@@ -578,6 +575,89 @@ FWRemoveWindowFromList (FWWindowInputInfo *info)
     }
 }
 
+/* Create an input prevention window */
+static void
+FWCreateIPW (CompWindow *w)
+{
+    Window               ipw;
+    XSetWindowAttributes attrib;
+
+    FREEWINS_WINDOW (w);
+
+    if (!fww->input || fww->input->ipw)
+	return;
+
+    attrib.override_redirect = TRUE;
+    attrib.event_mask        = 0;
+
+    ipw = XCreateWindow (w->screen->display->display,
+			 w->screen->root,
+			 w->serverX - w->input.left,
+			 w->serverY - w->input.top,
+			 w->serverWidth + w->input.left + w->input.right,
+			 w->serverHeight + w->input.top + w->input.bottom,
+			 0, CopyFromParent, InputOnly, CopyFromParent,
+			 CWEventMask | CWOverrideRedirect,
+			 &attrib);
+ 
+    fww->input->ipw = ipw;
+}
+
+/* Adjust size and location of the input prevention window
+ */
+static void 
+FWAdjustIPW (CompWindow *w)
+{
+    XWindowChanges xwc;
+    Display        *dpy = w->screen->display->display;
+    float          width, height;
+
+    FREEWINS_WINDOW (w);
+
+    if (!fww->input || !fww->input->ipw)
+	return;
+
+    width  = fww->inputRect.x2 - fww->inputRect.x1;
+    height = fww->inputRect.y2 - fww->inputRect.y1;
+
+    xwc.x          = w->attrib.x - w->input.left;
+    xwc.y          = w->attrib.y - w->input.top;
+    xwc.width      = ceil(width);
+    xwc.height     = ceil(height);
+    xwc.stack_mode = Below;
+    xwc.sibling    = w->id;
+
+    XConfigureWindow (dpy, fww->input->ipw,
+		      CWSibling | CWStackMode | CWX | CWY | CWWidth | CWHeight,
+		      &xwc);
+
+    XMapWindow (dpy, fww->input->ipw);
+}
+
+/* Ensure that the input prevention window
+ * is always on top of the transformed 
+ * window
+ */
+
+static void
+FWAdjustIPWStacking (CompScreen *s)
+{
+    FWWindowInputInfo *input;
+
+    FREEWINS_SCREEN (s);
+
+    for (input = fws->transformedWindows; input; input = input->next)
+    {
+	if (!input->w->prev || input->w->prev->id != input->ipw)
+	    FWAdjustIPW (input->w);
+    }
+}
+
+
+
+/* This should be called instead of FWShapeInput or FWCreateIPW
+ * as it does all the setup beforehand.
+ */
 static Bool
 FWHandleFWInputInfo (CompWindow *w)
 {
@@ -604,7 +684,7 @@ FWHandleFWInputInfo (CompWindow *w)
 
 	fww->input->w = w;
 	FWShapeInput (w);
-	//shelfCreateIPW (w);
+	FWCreateIPW (w);
 	FWAddWindowToList (fww->input);
     }
 
@@ -618,6 +698,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
     CompScreen *s;
     float dx, dy;
+    CompWindow *oldPrev, *oldNext, *w;
     FREEWINS_DISPLAY(d);
 
     switch(ev->type){
@@ -855,7 +936,8 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	case ButtonRelease:
 	    if(fwd->grabWindow){
 	    if (FWCanShape (fwd->grabWindow))
-	        FWHandleFWInputInfo (fwd->grabWindow);
+	        if (FWHandleFWInputInfo (fwd->grabWindow))
+	            FWAdjustIPW (fwd->grabWindow);
 		for(s = d->screens; s; s = s->next){
 		    FREEWINS_SCREEN(s);
 
@@ -878,6 +960,15 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	case FocusIn:
 	    if(ev->xfocus.mode != NotifyGrab)
 		fwd->focusWindow = findWindowAtDisplay(d, ev->xfocus.window);
+	    break;
+
+	case ConfigureNotify:
+	    w = findWindowAtDisplay (d, ev->xconfigure.window);
+	    if (w)
+	    {
+		oldPrev = w->prev;
+		oldNext = w->next;
+	    }
 	    break;
 
     default:
@@ -910,6 +1001,22 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
     UNWRAP(fwd, d, handleEvent);
     (*d->handleEvent)(d, ev);
     WRAP(fwd, d, handleEvent, FWHandleEvent);
+
+    /* Now we can find out if a restacking occurred while we were handing events */
+
+    switch (ev->type)
+    {
+	case ConfigureNotify:
+	    if (w) /* already assigned above */
+	    {
+		if (w->prev != oldPrev || w->next != oldNext)
+		{
+		    /* restacking occured, ensure ipw stacking */
+		    FWAdjustIPWStacking (w->screen);
+		}
+	    }
+	    break;
+    }
 }
 
 /* Animation Prep */
