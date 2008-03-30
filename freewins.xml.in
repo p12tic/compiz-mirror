@@ -42,39 +42,6 @@
 			    <key>&lt;Control&gt;&lt;Shift&gt;h</key>
 			</default>
 	    </option>
-	   <subgroup>
-	   <_short>Helper Options</_short>	    
-	    <option type="color" name="circle_color" >
-					<_short>Helper Circle Color</_short>
-					<_long>Color of the circle.</_long>
-					<default>
-						<red>0x5400</red>
-						<green>0xHE00</green>
-						<blue>0xFB00</blue>
-						<alpha>0x8000</alpha>
-					</default>
-		</option>
-		<option type="color" name="line_color" >
-					<_short>Helper Line Color</_short>
-					<_long>Helper line color around the circle</_long>
-					<default>
-						<red>0x1800</red>
-						<green>0x0000</green>
-						<blue>0xFF00</blue>
-						<alpha>0xFFFF</alpha>
-					</default>
-		</option>
-		<option type="color" name="cross_line_color" >
-					<_short>Helper Cross Line Color</_short>
-					<_long>Color of the cross line</_long>
-					<default>
-						<red>0x1800</red>
-						<green>0x0000</green>
-						<blue>0xFF00</blue>
-						<alpha>0xFFFF</alpha>
-					</default>
-		</option>
-	</subgroup>
     </group>
     <group>
     <_short>Manual Transformation</_short>
@@ -156,18 +123,6 @@
 	<screen>
 	<group>
 	<_short>Free Transformation</_short>
-	    <option name="shape_window_types" type="match">
-          <_short>Shaped Window Types</_short>
-          <_long>Window types that should be Shaped. Disable problematic windows here</_long>
-          <default>(Toolbar | Utility | Dialog | ModalDialog | Normal)</default>
-        </option>
-		<option type="int" name="reset_time">
-			<_short>Reset animation time</_short>
-			<_long>How long the reset animation should last</_long>
-			<default>75</default>
-			<min>10</min>
-			<max>500</max>
-	    </option>
 	    <option type="float" name="mouse_sensitivity">
 			<_short>Mouse sensitivity</_short>
 			<_long>How sensitive the mouse movement should be</_long>
@@ -213,11 +168,11 @@
 			    <_long>Always allow 3D rotation, even when not clicking in the middle of a window</_long>
 			    <default>False</default>
 	        </option>
-	        <option type="bool" name="shape_input">
-			    <_short>Shape input</_short>
-			    <_long>Only allow clicks in the window. This is NOT input redirection and is experimental!</_long>
-			    <default>True</default>
-		    </option>
+	        <option type="bool" name="auto_zoom">
+			    <_short>Auto-Zoom</_short>
+			    <_long>Auto-Zoom when rotating so that windows do not get too large</_long>
+			    <default>False</default>
+	        </option>
         </subgroup>
     </group>
     <group>
@@ -257,6 +212,77 @@
 	    </option>   
 	</subgroup>
 	</group>
+    <group>
+    <_short>Misc</_short>
+        <subgroup>
+        <_short>Input Prevention</_short>
+        <option name="shape_window_types" type="match">
+          <_short>Shaped Window Types</_short>
+          <_long>Window types that should be Shaped. Disable problematic windows here</_long>
+          <default>(Toolbar | Utility | Dialog | ModalDialog | Normal)</default>
+        </option>
+        <option type="bool" name="shape_input">
+		    <_short>Shape input</_short>
+		    <_long>Only allow clicks in the window. This is NOT input redirection and is experimental!</_long>
+		    <default>True</default>
+	    </option>
+        </subgroup>
+		<option type="int" name="reset_time">
+			<_short>Reset animation time</_short>
+			<_long>How long the reset animation should last</_long>
+			<default>75</default>
+			<min>10</min>
+			<max>500</max>
+	    </option>
+       <subgroup>
+	   <_short>Helper Options</_short>	    
+	    <option type="color" name="circle_color" >
+					<_short>Helper Circle Color</_short>
+					<_long>Color of the circle.</_long>
+					<default>
+						<red>0x5400</red>
+						<green>0xHE00</green>
+						<blue>0xFB00</blue>
+						<alpha>0x8000</alpha>
+					</default>
+		</option>
+		<option type="color" name="line_color" >
+					<_short>Helper Line Color</_short>
+					<_long>Helper line color around the circle</_long>
+					<default>
+						<red>0x1800</red>
+						<green>0x0000</green>
+						<blue>0xFF00</blue>
+						<alpha>0xFFFF</alpha>
+					</default>
+		</option>
+		<option type="color" name="cross_line_color" >
+					<_short>Helper Cross Line Color</_short>
+					<_long>Color of the cross line</_long>
+					<default>
+						<red>0x1800</red>
+						<green>0x0000</green>
+						<blue>0xFF00</blue>
+						<alpha>0xFFFF</alpha>
+					</default>
+		</option>
+        <option type="bool" name="show_circle">
+		    <_short>Show 3D rotation circle</_short>
+		    <_long>Show click area for 3D rotation</_long>
+		    <default>True</default>
+	    </option>
+        <option type="bool" name="show_cross">
+		    <_short>Show crosshair</_short>
+		    <_long>Show crosshair (for scaling click regions)</_long>
+		    <default>True</default>
+	    </option>
+        <option type="bool" name="show_region">
+		    <_short>Show input regions</_short>
+		    <_long>Show input region rectangle</_long>
+		    <default>True</default>
+	    </option>
+	</subgroup>
+    </group>
 	   </screen>
     </plugin>
 </compiz>
