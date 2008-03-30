@@ -487,7 +487,7 @@ static void FWShapeInput (CompWindow *w)
     XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
     XShapeCombineRectangles  (w->screen->display->display, w->id, 
 			      ShapeInput, 0, 0, &Rectangle, 1,  ShapeSet, 0);
-	/*if (w->frame)
+	if (w->frame)
 	{
 	    XShapeCombineRectangles  (w->screen->display->display, w->frame, 
 			      ShapeInput, 0, 0, &Rectangle, 1,  ShapeSet, 0);
@@ -1488,33 +1488,51 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	CompActionState state, CompOption *option, int nOption) {
     
     CompWindow* w;
+    CompWindow *useW;
     CompScreen* s;
-    Window xid;
+    FWWindowInputInfo *info;
+    Window xid, root;
     float dx, dy;
     
     FREEWINS_DISPLAY(d);
 
     xid = getIntOptionNamed (option, nOption, "window", 0);
     w = findWindowAtDisplay (d, xid);
-    
-    for(s = d->screens; s; s = s->next){
-	FREEWINS_SCREEN(s);
-	
+    useW = findWindowAtDisplay (d, xid);
+
+    root = getIntOptionNamed (option, nOption, "root", 0);
+    s = findScreenAtDisplay (d, root);
+
+    if (s)
+    {
+
+    FREEWINS_SCREEN (s);
+
+    for (info = fws->transformedWindows; info; info = info->next)
+    {
+        if (w->id == info->ipw)
+        /* The window we just grabbed was actually
+         * an IPW, get the real window instead
+         */
+        useW = FWGetRealWindow (w);
+    }
+
 	fws->rotateCursor = XCreateFontCursor (s->display->display, XC_fleur);	
 
 	if(!otherScreenGrabExist(s, "freewins", 0))
 	    if(!fws->grabIndex)
 		fws->grabIndex = pushScreenGrab(s, fws->rotateCursor, "freewins");
+
     }
     
     
-    if(w){
-	FREEWINS_WINDOW(w);
+    if(useW){
+	FREEWINS_WINDOW(useW);
 	
 	fww->allowRotation = TRUE;
 	fww->allowScaling = FALSE;
 	
-	fwd->grabWindow = w;
+	fwd->grabWindow = useW;
 	
 	fww->grabbed = TRUE;
 	
@@ -1555,33 +1573,51 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	CompActionState state, CompOption *option, int nOption) {
     
     CompWindow* w;
+    CompWindow *useW;
     CompScreen* s;
-    Window xid;
+    FWWindowInputInfo *info;
+    Window xid, root;
     float dx, dy;
     
     FREEWINS_DISPLAY(d);
 
     xid = getIntOptionNamed (option, nOption, "window", 0);
     w = findWindowAtDisplay (d, xid);
-    
-    for(s = d->screens; s; s = s->next){
+    useW = findWindowAtDisplay (d, xid);
+
+    root = getIntOptionNamed (option, nOption, "root", 0);
+    s = findScreenAtDisplay (d, root);
+
+    if (s)
+    {
+
 	FREEWINS_SCREEN(s);
-	
+
+    for (info = fws->transformedWindows; info; info = info->next)
+    {
+        if (w->id == info->ipw)
+        /* The window we just grabbed was actually
+         * an IPW, get the real window instead
+         */
+        useW = FWGetRealWindow (w);
+    }
+
 	fws->rotateCursor = XCreateFontCursor (s->display->display, XC_plus);	
 
 	if(!otherScreenGrabExist(s, "freewins", 0))
 	    if(!fws->grabIndex)
 		fws->grabIndex = pushScreenGrab(s, fws->rotateCursor, "freewins");
+
     }
     
     
-    if(w){
-	FREEWINS_WINDOW(w);
+    if(useW){
+	FREEWINS_WINDOW(useW);
 	
 	fww->allowScaling = TRUE;
 	fww->allowRotation = FALSE;
 	
-	fwd->grabWindow = w;
+	fwd->grabWindow = useW;
 	
 	/* Find out the corner we clicked in */
 	
@@ -1625,10 +1661,25 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 }
 
 #define GET_WINDOW \
-    CompWindow *w; \
+    CompWindow *tW, *w; \
+    CompScreen *s; \
     Window xid; \
+    FWWindowInputInfo *info; \
     xid = getIntOptionNamed (option, nOption, "window", 0); \
-    w = findWindowAtDisplay (d, xid); \
+    tW = findWindowAtDisplay (d, xid); \
+    w = tW; \
+    s = findScreenAtDisplay (d, getIntOptionNamed (option, nOption, "root", 0)); \
+    if (s) \
+    { \
+	FREEWINS_SCREEN(s); \
+    for (info = fws->transformedWindows; info; info = info->next) \
+    { \
+        if (tW->id == info->ipw) \
+        w = FWGetRealWindow (tW); \
+        break; \
+    } \
+    } \
+
 
 /* Repetitive Stuff */
 
@@ -1891,22 +1942,49 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
 	CompActionState state, CompOption *option, int nOption){
     
     CompWindow* w;
+    CompWindow *useW;
+    CompScreen* s;
+    FWWindowInputInfo *info;
+    Window xid, root;
     
     w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
+    useW = findWindowAtDisplay (d, xid);
+    
+    xid = getIntOptionNamed (option, nOption, "window", 0);
+    w = findWindowAtDisplay (d, xid);
 
-    if(w){
-	FREEWINS_WINDOW(w);
+    root = getIntOptionNamed (option, nOption, "root", 0);
+    s = findScreenAtDisplay (d, root);
 
-    addWindowDamage (w);
+    if (s)
+    {
+
+    FREEWINS_SCREEN (s);
+
+    for (info = fws->transformedWindows; info; info = info->next)
+    {
+        if (w->id == info->ipw)
+        /* The window we just grabbed was actually
+         * an IPW, get the real window instead
+         */
+        useW = FWGetRealWindow (w);
+    }
+
+    }
+
+    if(useW){
+	FREEWINS_WINDOW(useW);
+
+    addWindowDamage (useW);
 
 	if( fww->rotated ){
-	    FREEWINS_SCREEN(w->screen);
+	    FREEWINS_SCREEN(useW->screen);
 	    fws->rotatedWindows--;
 	    fww->rotated = FALSE;
 	}
 
-    if (FWCanShape (w))
-        FWHandleFWInputInfo (w);
+    if (FWCanShape (useW))
+        FWHandleFWInputInfo (useW);
 
     // Set values to animate from
 	fww->animate.oldAngX = fww->transform.angX;
