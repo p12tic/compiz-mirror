@@ -98,6 +98,50 @@ typedef enum _StartCorner {
     CornerBottomRight = 3
 } StartCorner;
 
+/* Transformation info */
+typedef struct _FWTransformedWindowInfo
+{
+    float angX;
+    float angY;
+    float angZ;
+    
+    float scaleY;
+    float scaleX;
+
+    /* Used for snapping */
+
+    float unsnapAngX;
+    float unsnapAngY;
+    float unsnapAngZ;
+
+    float unsnapScaleX;
+    float unsnapScaleY;
+
+} FWTransformedWindowInfo;
+
+typedef struct _FWAnimationInfo
+{
+    // Old values to animate from
+    float oldAngX;
+    float oldAngY;
+    float oldAngZ;
+    
+    float oldScaleX;
+    float oldScaleY;
+    
+    // New values to animate to
+    float destAngX;
+    float destAngY;
+    float destAngZ;
+    
+    float destScaleX;
+    float destScaleY;
+
+    // For animation
+    float aTimeRemaining; // Actual time remaining (is decremented)
+    float cTimeRemaining; // Constant time remaining (is referenced and not decremented)
+} FWAnimationInfo;
+
 /* Freewins Display Structure */
 typedef struct _FWDisplay{
     int screenPrivateIndex;
@@ -137,51 +181,22 @@ typedef struct _FWScreen{
 
 /* Freewins Window Structure */
 typedef struct _FWWindow{
-    float angX;
-    float angY;
-    float angZ;
-    
-    float scaleY;
-    float scaleX;
 
     float midX;
     float midY;
     
-    // For animation
-    float aTimeRemaining; // Actual time remaining (is decremented)
-    float cTimeRemaining; // Constant time remaining (is referenced and not decremented)
-    
-    // Old values to animate from
-    float oldAngX;
-    float oldAngY;
-    float oldAngZ;
-    
-    float oldScaleX;
-    float oldScaleY;
-    
-    // New values to animate to
-    float destAngX;
-    float destAngY;
-    float destAngZ;
-    
-    float destScaleX;
-    float destScaleY;
-    
-    // Unsnapped values. These are not painted but always remain true
-    
-    float unsnapAngX;
-    float unsnapAngY;
-    float unsnapAngZ;
-
-    float unsnapScaleX;
-    float unsnapScaleY;
-
     // Used for determining direction
     int oldX;
     int oldY;
     
     // Used to determine starting point
     StartCorner corner;
+
+    // Transformation info
+    FWTransformedWindowInfo transform;
+
+    // Animation Info
+    FWAnimationInfo animate;
 
     Box outputRect;
     Box inputRect;
@@ -342,8 +357,8 @@ static void FWShapeInput (CompWindow *w)
     float ScaleX;
     float ScaleY;
     
-    ScaleX = fww->scaleX;
-    ScaleY = fww->scaleY;
+    ScaleX = fww->transform.scaleX;
+    ScaleY = fww->transform.scaleY;
 
     float widthScale = (float) (fww->inputRect.x2 - fww->inputRect.x1) / (float) WIN_OUTPUT_W (w); 
     float heightScale = (float) (fww->inputRect.y2 - fww->inputRect.y1) / (float) WIN_OUTPUT_H (w); 
@@ -397,35 +412,35 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		            {
 			            if(fww->grabLeft)
 			            {
-			                fww->angZ -= 360 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-			                fww->unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.angZ -= 360 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 			            }
 			            else
 			            {
-			                fww->angZ += 360 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-			                fww->unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.angZ += 360 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 			            }
 		                }
 		                else
 		                {
 			            if(fww->grabTop)
 			            {
-			                fww->angZ += 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-			                fww->unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.angZ += 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 			            }
 			            else
 		                {
-			                fww->angZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-			                fww->unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.angZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 			            }
 		            }
 		        }
 		        else
 		        {
-		            fww->angX -= 360.0 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-		            fww->unsnapAngX -= 360.0 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-		            fww->angY += 360.0 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-		            fww->unsnapAngY += 360.0 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		            fww->transform.angX -= 360.0 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		            fww->transform.unsnapAngX -= 360.0 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		            fww->transform.angY += 360.0 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		            fww->transform.unsnapAngY += 360.0 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		        }
 		    }
 		    if (fww->allowScaling)
@@ -438,25 +453,25 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                // Check X Direction
 		                if ((ev->xmotion.x - 100.0) < fww->oldX)
 		                {
-		                    fww->scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
 		                {
-		                    fww->scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                // Check Y Direction
 		                if ((ev->xmotion.y - 100.0) < fww->oldY)
 		                {
-		                    fww->scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
 		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
 		                {
-		                    fww->scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
 		                break;            
 		        		            
@@ -465,26 +480,26 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                // Check X Direction
 		                if ((ev->xmotion.x - 100.0) < fww->oldX)
 		                {
-		                    fww->scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
 		                {
-		                    fww->scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                
 		                // Check Y Direction
 		                if ((ev->xmotion.y - 100.0) < fww->oldY)
 		                {
-		                    fww->scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
 		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
 		                {
-		                    fww->scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
 		                    
 		                break;
@@ -494,25 +509,25 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                // Check X Direction
 		                if ((ev->xmotion.x - 100.0) < fww->oldX)
 		                {
-		                    fww->scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
 		                {
-		                    fww->scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                // Check Y Direction
 		                if ((ev->xmotion.y - 100.0) < fww->oldY)
 		                {
-		                    fww->scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
 		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
 		                {
-		                    fww->scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
 		                    
 		                break;
@@ -522,25 +537,25 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                // Check X Direction
 		                if ((ev->xmotion.x - 100.0) < fww->oldX)
 		                {
-		                    fww->scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
 		                {
-		                    fww->scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                // Check Y Direction
 		                if ((ev->xmotion.y - 100.0) < fww->oldY)
 		                {
-		                    fww->scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
 		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
 		                {
-		                    fww->scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }		                    
 		                break;
 		         }
@@ -557,43 +572,41 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
             if (!freewinsGetAllowNegative (fwd->grabWindow->screen) || (FWCanShape (fwd->grabWindow)))
             {
                 float minScale = freewinsGetMinScale (fwd->grabWindow->screen);
-	            if (fww->scaleX < minScale)
-	              fww->scaleX = minScale; // Don't allow negative values either, which could be referenced
+	            if (fww->transform.scaleX < minScale)
+	              fww->transform.scaleX = minScale; // Don't allow negative values either, which could be referenced
 	
-	            if (fww->scaleY < minScale)
-	              fww->scaleY = minScale;
+	            if (fww->transform.scaleY < minScale)
+	              fww->transform.scaleY = minScale;
             }
 
             /* Change scales for maintaining aspect ratio */
             if (freewinsGetScaleUniform (fwd->grabWindow->screen))
             {
-                float tempscaleX = fww->scaleX;
-                float tempscaleY = fww->scaleY;
-                fww->scaleX = (tempscaleX + tempscaleY) / 2;
-                fww->scaleY = (tempscaleX + tempscaleY) / 2;
-                fww->unsnapScaleX = (tempscaleX + tempscaleY) / 2;
-                fww->unsnapScaleY = (tempscaleX + tempscaleY) / 2;
+                float tempscaleX = fww->transform.scaleX;
+                float tempscaleY = fww->transform.scaleY;
+                fww->transform.scaleX = (tempscaleX + tempscaleY) / 2;
+                fww->transform.scaleY = (tempscaleX + tempscaleY) / 2;
+                fww->transform.unsnapScaleX = (tempscaleX + tempscaleY) / 2;
+                fww->transform.unsnapScaleY = (tempscaleX + tempscaleY) / 2;
             }
 
 	        /* Handle Snapping */
 	        if (freewinsGetSnap (fwd->grabWindow->screen))
 	        {
 	            int snapFactor = freewinsGetSnapThreshold (fwd->grabWindow->screen);
-                fww->angX = ((int) (fww->unsnapAngX) / snapFactor) * snapFactor;
-                fww->angY = ((int) (fww->unsnapAngY) / snapFactor) * snapFactor;
-                fww->angZ = ((int) (fww->unsnapAngZ) / snapFactor) * snapFactor;
-                fww->scaleX = ((float) ( (int) (fww->unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
-                fww->scaleY = ((float) ( (int) (fww->unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
+                fww->transform.angX = ((int) (fww->transform.unsnapAngX) / snapFactor) * snapFactor;
+                fww->transform.angY = ((int) (fww->transform.unsnapAngY) / snapFactor) * snapFactor;
+                fww->transform.angZ = ((int) (fww->transform.unsnapAngZ) / snapFactor) * snapFactor;
+                fww->transform.scaleX = ((float) ( (int) (fww->transform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
+                fww->transform.scaleY = ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
             }
 	
-	        fww->oldAngX = fww->angX;
-	        fww->oldAngY = fww->angY;
-	        fww->oldAngZ = fww->angZ;
+	        fww->animate.oldAngX = fww->transform.angX;
+	        fww->animate.oldAngY = fww->transform.angY;
+	        fww->animate.oldAngZ = fww->transform.angZ;
 	
-	        fww->oldScaleX = fww->scaleX;
-	        fww->oldScaleY = fww->scaleY;
-
-            fprintf(stderr, "dx: %f, dy %f\n", dx, dy);
+	        fww->animate.oldScaleX = fww->transform.scaleX;
+	        fww->animate.oldScaleY = fww->transform.scaleY;
 
 	        if(dx != 0.0 || dy != 0.0)
                 addWindowDamage (fwd->grabWindow);
@@ -650,14 +663,14 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		        {
 		            FREEWINS_WINDOW (w);
 
-		            if (FWCanShape (w) && (fww->scaleX != 1.0f || fww->scaleY != 1.0f))
+		            if (FWCanShape (w) && (fww->transform.scaleX != 1.0f || fww->transform.scaleY != 1.0f))
 		            {
 		                // Reset the window back to normal
-		                fww->scaleX = 1.0f;
-		                fww->scaleY = 1.0f;
-                        fww->angX = 0.0f;
-                        fww->angY = 0.0f;
-                        fww->angZ = 0.0f;
+		                fww->transform.scaleX = 1.0f;
+		                fww->transform.scaleY = 1.0f;
+                        fww->transform.angX = 0.0f;
+                        fww->transform.angY = 0.0f;
+                        fww->transform.angZ = 0.0f;
 			            /*FWShapeInput (w); - Disabled due to problems it causes*/ 
 			        }
 		        }
@@ -681,10 +694,10 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
     FREEWINS_SCREEN(w->screen);
     FREEWINS_WINDOW(w);
     
-    float timeRemaining = fww->cTimeRemaining;
+    float timeRemaining = fww->animate.cTimeRemaining;
     
-    if((fww->angX != 0.0 || fww->angY != 0.0 || fww->angZ != 0.0 ||
-                         fww->scaleX != 1.0 || fww->scaleY != 1.0) && !(w->type == CompWindowTypeDesktopMask))
+    if((fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 ||
+                         fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0) && !(w->type == CompWindowTypeDesktopMask))
     {
 
 	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
@@ -694,12 +707,12 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 	    matrixTranslate(&wTransform, 
 		    WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
 		    WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
-        matrixRotate(&wTransform, fww->angX, 1.0, 0.0, 0.0);
-        matrixRotate(&wTransform, fww->angY, 0.0, 1.0, 0.0);
-        matrixRotate(&wTransform, fww->angZ, 0.0, 0.0, 1.0);        
+        matrixRotate(&wTransform, fww->transform.angX, 1.0, 0.0, 0.0);
+        matrixRotate(&wTransform, fww->transform.angY, 0.0, 1.0, 0.0);
+        matrixRotate(&wTransform, fww->transform.angZ, 0.0, 0.0, 1.0);        
        
-	    matrixScale(&wTransform, fww->scaleX, 1.0, 0.0);
-        matrixScale(&wTransform, 1.0, fww->scaleY, 0.0);
+	    matrixScale(&wTransform, fww->transform.scaleX, 1.0, 0.0);
+        matrixScale(&wTransform, 1.0, fww->transform.scaleY, 0.0);
 
 	    matrixTranslate(&wTransform, 
 		    -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
@@ -735,11 +748,11 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         matrixTranslate(&outTransform, 
             WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0, 
             WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0, 0.0);
-        matrixRotate (&outTransform, fww->angX, 1.0f, 0.0f, 0.0f);
-        matrixRotate (&outTransform, fww->angY, 0.0f, 1.0f, 0.0f);
-        matrixRotate (&outTransform, fww->angZ, 0.0f, 0.0f, 1.0f);
-        matrixScale(&outTransform, fww->scaleX, 1.0, 0.0);
-        matrixScale(&outTransform, 1.0, fww->scaleY, 0.0);
+        matrixRotate (&outTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
+        matrixRotate (&outTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
+        matrixRotate (&outTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
+        matrixScale(&outTransform, fww->transform.scaleX, 1.0, 0.0);
+        matrixScale(&outTransform, 1.0, fww->transform.scaleY, 0.0);
         matrixTranslate(&outTransform, 
             -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
             -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
@@ -790,11 +803,11 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         matrixTranslate(&inputTransform, 
             WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
             WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
-        matrixRotate (&inputTransform, fww->angX, 1.0f, 0.0f, 0.0f);
-        matrixRotate (&inputTransform, fww->angY, 0.0f, 1.0f, 0.0f);
-        matrixRotate (&inputTransform, fww->angZ, 0.0f, 0.0f, 1.0f);
-        matrixScale(&inputTransform, fww->scaleX, 1.0, 0.0);
-        matrixScale(&inputTransform, 1.0, fww->scaleY, 0.0);
+        matrixRotate (&inputTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
+        matrixRotate (&inputTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
+        matrixRotate (&inputTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
+        matrixScale(&inputTransform, fww->transform.scaleX, 1.0, 0.0);
+        matrixScale(&inputTransform, 1.0, fww->transform.scaleY, 0.0);
         matrixTranslate(&inputTransform, 
             -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
             -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
@@ -821,45 +834,45 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
         if (fww->doAnimate)
         {
-            float raX = (fww->destAngX - fww->oldAngX) / timeRemaining;
-            float raY = (fww->destAngY - fww->oldAngY) / timeRemaining;
-            float raZ = (fww->destAngZ - fww->oldAngZ) / timeRemaining;
+            float raX = (fww->animate.destAngX - fww->animate.oldAngX) / timeRemaining;
+            float raY = (fww->animate.destAngY - fww->animate.oldAngY) / timeRemaining;
+            float raZ = (fww->animate.destAngZ - fww->animate.oldAngZ) / timeRemaining;
             
-            float saX = ((fww->destScaleX - fww->oldScaleX) / timeRemaining);
-            float saY = ((fww->destScaleX - fww->oldScaleY) / timeRemaining);
+            float saX = ((fww->animate.destScaleX - fww->animate.oldScaleX) / timeRemaining);
+            float saY = ((fww->animate.destScaleX - fww->animate.oldScaleY) / timeRemaining);
             
-            fww->angX += raX;
-            fww->angY += raY;
-            fww->angZ += raZ;
+            fww->transform.angX += raX;
+            fww->transform.angY += raY;
+            fww->transform.angZ += raZ;
             
-            fww->scaleX += saX;
-            fww->scaleY += saY;
+            fww->transform.scaleX += saX;
+            fww->transform.scaleY += saY;
                     
-            fww->aTimeRemaining--;
+            fww->animate.aTimeRemaining--;
             addWindowDamage (w);
             
-            if (fww->aTimeRemaining <= 0 || (fww->angX == fww->destAngX && fww->angY == fww->destAngY
-                                            && fww->angZ == fww->destAngZ && fww->scaleX == fww->destScaleX
-                                            && fww->scaleY == fww->destScaleY))
+            if (fww->animate.aTimeRemaining <= 0 || (fww->transform.angX == fww->animate.destAngX && fww->transform.angY == fww->animate.destAngY
+                                            && fww->transform.angZ == fww->animate.destAngZ && fww->transform.scaleX == fww->animate.destScaleX
+                                            && fww->transform.scaleY == fww->animate.destScaleY))
             {
                 fww->resetting = FALSE;
 
-                fww->angX = fww->destAngX;
-                fww->angY = fww->destAngY;
-                fww->angZ = fww->destAngZ;
-                fww->scaleX = fww->destScaleX;
-                fww->scaleY = fww->destScaleX;
+                fww->transform.angX = fww->animate.destAngX;
+                fww->transform.angY = fww->animate.destAngY;
+                fww->transform.angZ = fww->animate.destAngZ;
+                fww->transform.scaleX = fww->animate.destScaleX;
+                fww->transform.scaleY = fww->animate.destScaleX;
                 
                 fww->doAnimate = FALSE;
-                fww->aTimeRemaining = freewinsGetResetTime (w->screen);
-                fww->cTimeRemaining = freewinsGetResetTime (w->screen);
+                fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
+                fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
                 if (FWCanShape (w))
                     FWShapeInput (w);
             }
         }
 
 	    // Check if there are rotated windows
-	    if(fww->angX != 0.0 || fww->angY != 0.0 || fww->angZ != 0.0 || fww->scaleX != 1.0 || fww->scaleY != 1.0){
+	    if(fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 || fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0){
 	        if( !fww->rotated ){
 		    fws->rotatedWindows++;
 		    fww->rotated = TRUE;
@@ -1203,22 +1216,22 @@ FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, fl
 {
     FREEWINS_WINDOW (w);
 
-    fww->oldAngX = fww->angX; 
-    fww->oldAngY = fww->angY; 
-    fww->oldAngZ = fww->angZ;
+    fww->animate.oldAngX = fww->transform.angX; 
+    fww->animate.oldAngY = fww->transform.angY; 
+    fww->animate.oldAngZ = fww->transform.angZ;
 
-    fww->oldScaleX = fww->scaleX; 
-    fww->oldScaleY = fww->scaleY;
+    fww->animate.oldScaleX = fww->transform.scaleX; 
+    fww->animate.oldScaleY = fww->transform.scaleY;
 
-    fww->destAngX = fww->angX + dx; 
-    fww->destAngY = fww->angY + dy; 
-    fww->destAngZ = fww->angZ + dz;
+    fww->animate.destAngX = fww->transform.angX + dx; 
+    fww->animate.destAngY = fww->transform.angY + dy; 
+    fww->animate.destAngZ = fww->transform.angZ + dz;
 
-    fww->destScaleX = fww->scaleX + dsu; 
-    fww->destScaleY = fww->scaleY + dsd;
+    fww->animate.destScaleX = fww->transform.scaleX + dsu; 
+    fww->animate.destScaleY = fww->transform.scaleY + dsd;
 
-    fww->aTimeRemaining = freewinsGetRotateIncrementTime (w->screen); 
-    fww->cTimeRemaining = freewinsGetRotateIncrementTime (w->screen); 
+    fww->animate.aTimeRemaining = freewinsGetRotateIncrementTime (w->screen); 
+    fww->animate.cTimeRemaining = freewinsGetRotateIncrementTime (w->screen); 
     fww->doAnimate = TRUE; // Start animating
 }
 
@@ -1348,9 +1361,9 @@ static Bool freewinsRotateWindow (CompDisplay *d, CompAction *action,
         x = getFloatOptionNamed(option, nOption, "y", 0.0f);
         z = getFloatOptionNamed(option, nOption, "z", 0.0f);
         
-        fww->angX = x;
-        fww->angY = y;
-        fww->angZ = z;
+        fww->transform.angX = x;
+        fww->transform.angY = y;
+        fww->transform.angZ = z;
 
         addWindowDamage (w);
         
@@ -1388,9 +1401,9 @@ static Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
         z = getFloatOptionNamed(option, nOption, "z", 0.0f);
         
         /* Respect dx, dy, dz, first */
-        fww->angX += x;
-        fww->angY += y;
-        fww->angZ += z;
+        fww->transform.angX += x;
+        fww->transform.angY += y;
+        fww->transform.angZ += z;
 
         addWindowDamage (w);
         
@@ -1418,8 +1431,8 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
     {
         FREEWINS_WINDOW(w);
         
-        fww->scaleX = getFloatOptionNamed(option, nOption, "x", 0.0f);
-        fww->scaleY = getFloatOptionNamed(option, nOption, "y", 0.0f);
+        fww->transform.scaleX = getFloatOptionNamed(option, nOption, "x", 0.0f);
+        fww->transform.scaleY = getFloatOptionNamed(option, nOption, "y", 0.0f);
 
         addWindowDamage (w);
     }
@@ -1466,28 +1479,28 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
 	}
 
     // Set values to animate from
-	fww->oldAngX = fww->angX;
-    fww->oldAngY = fww->angY;
-    fww->oldAngZ = fww->angZ;
-	fww->oldScaleX = fww->scaleX;
-	fww->oldScaleY = fww->scaleY;
+	fww->animate.oldAngX = fww->transform.angX;
+    fww->animate.oldAngY = fww->transform.angY;
+    fww->animate.oldAngZ = fww->transform.angZ;
+	fww->animate.oldScaleX = fww->transform.scaleX;
+	fww->animate.oldScaleY = fww->transform.scaleY;
 	
 	// Set values to animate to
-	fww->destAngX = 0.0f;
-	fww->destAngY = 0.0f;
-	fww->destAngZ = 0.0f;
+	fww->animate.destAngX = 0.0f;
+	fww->animate.destAngY = 0.0f;
+	fww->animate.destAngZ = 0.0f;
 	
-	fww->destScaleX = 1.0f;
-	fww->destScaleY = 1.0f;
+	fww->animate.destScaleX = 1.0f;
+	fww->animate.destScaleY = 1.0f;
 	
 	// Reset unsnapped values too
 	
-    fww->unsnapAngX = 0.0f;
-    fww->unsnapAngY = 0.0f;
-    fww->unsnapAngZ = 0.0f;
+    fww->transform.unsnapAngX = 0.0f;
+    fww->transform.unsnapAngY = 0.0f;
+    fww->transform.unsnapAngZ = 0.0f;
     
-    fww->unsnapScaleX = 1.0f;
-    fww->unsnapScaleY = 1.0f;
+    fww->transform.unsnapScaleX = 1.0f;
+    fww->transform.unsnapScaleY = 1.0f;
 
 	
 	fww->doAnimate = TRUE;
@@ -1507,9 +1520,9 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     if( !(fww = (FWWindow*)malloc( sizeof(FWWindow) )) )
 	return FALSE;
 
-    fww->angX = 0.0;
-    fww->angY = 0.0;
-    fww->angZ = 0.0;
+    fww->transform.angX = 0.0;
+    fww->transform.angY = 0.0;
+    fww->transform.angZ = 0.0;
 
     fww->midX = WIN_REAL_W(w)/2.0;
     fww->midY = WIN_REAL_H(w)/2.0;
@@ -1532,14 +1545,14 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     
     // Don't allow incorrect window drawing as soon as the plugin is started
     
-    fww->scaleX = 1.0;
-    fww->scaleY = 1.0;
+    fww->transform.scaleX = 1.0;
+    fww->transform.scaleY = 1.0;
     
-    fww->unsnapScaleX = 1.0;
-    fww->unsnapScaleY = 1.0;
+    fww->transform.unsnapScaleX = 1.0;
+    fww->transform.unsnapScaleY = 1.0;
     
-    fww->aTimeRemaining = freewinsGetResetTime (w->screen);
-    fww->cTimeRemaining = freewinsGetResetTime (w->screen);
+    fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
+    fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
 
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
     
@@ -1556,8 +1569,8 @@ static void freewinsFiniWindow(CompPlugin *p, CompWindow *w){
     FREEWINS_DISPLAY(w->screen->display);
     
     /* Shape window back to normal */
-    fww->scaleX = 1.0f;
-    fww->scaleY = 1.0f;
+    fww->transform.scaleX = 1.0f;
+    fww->transform.scaleY = 1.0f;
     
     if (FWCanShape (w))
         FWShapeInput (w);
