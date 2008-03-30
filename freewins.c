@@ -1492,10 +1492,15 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
 static Bool toggleFWAxis (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption){
 
+    CompScreen *s;
+
     FREEWINS_DISPLAY(d);
 
+    s = findScreenAtDisplay(d, getIntOptionNamed(option, nOption, "root", 0));
+
     fwd->axisHelp = !fwd->axisHelp;
-    damageScreen (s);
+    if (s)
+        damageScreen (s);
 
     return TRUE;
 }
