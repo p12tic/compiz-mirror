@@ -33,6 +33,7 @@
  *  - Input prevention windows and proper shape handling
  *  - Modifier key to rotate on the Z Axis
  *  - Code could be cleaner
+ *  - Add timestep and speed options to animation
  */
 
 #include <compiz-core.h>
