@@ -32,8 +32,7 @@
  * Todo: 
  *  - Input prevention windows and proper shape handling
  *  - Modifier key to rotate on the Z Axis
- *  - Simplify code
- *  - Auto-zoom to fit in rect
+ *  - Code could be cleaner
  */
 
 #include <compiz-core.h>
