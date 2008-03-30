@@ -824,8 +824,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             matrixRotate (&outTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
             matrixRotate (&outTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
             matrixRotate (&outTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
-            matrixScale(&outTransform, autoScaleX, 1.0, 0.0);
-            matrixScale(&outTransform, 1.0, autoScaleY, 0.0);
+            matrixScale(&outTransform, autoScaleX - (1 - fww->transform.scaleX), 1.0, 0.0);
+            matrixScale(&outTransform, 1.0, autoScaleY - (1 - fww->transform.scaleY), 0.0);
             matrixTranslate(&outTransform, 
                 -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
                 -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
@@ -920,9 +920,17 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         fww->animate.aTimeRemaining--;
         addWindowDamage (w);
         
-        if (fww->animate.aTimeRemaining <= 0 || (fww->transform.angX == fww->animate.destAngX && fww->transform.angY == fww->animate.destAngY
-                                        && fww->transform.angZ == fww->animate.destAngZ && fww->transform.scaleX == fww->animate.destScaleX
-                                        && fww->transform.scaleY == fww->animate.destScaleY))
+        if (fww->animate.aTimeRemaining <= 0 || 
+             ((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
+              fww->transform.angX <= fww->animate.destAngX + 0.0 ) &&
+             (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
+              fww->transform.angY <= fww->animate.destAngY + 0.05 ) &&
+             (fww->transform.angZ >= fww->animate.destAngZ - 0.05 &&
+              fww->transform.angZ <= fww->animate.destAngZ + 0.05 ) &&
+             (fww->transform.scaleX >= fww->animate.destScaleX - 0.05 &&
+              fww->transform.scaleX <= fww->animate.destScaleX + 0.05 ) &&
+             (fww->transform.scaleY >= fww->animate.destScaleY - 0.05 &&
+              fww->transform.scaleY <= fww->animate.destScaleY + 0.05 )))
         {
             fww->resetting = FALSE;
 
