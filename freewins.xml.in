@@ -189,9 +189,9 @@
 	        <option type="int" name="rotate_increment_time">
 			    <_short>Rotate increment time</_short>
 			    <_long>How long to rotate a window when rotating an 'increment'</_long>
-			    <default>25</default>
+			    <default>200</default>
 			    <min>10</min>
-			    <max>100</max>
+			    <max>500</max>
 	        </option>
     </subgroup>
     <subgroup>
@@ -206,9 +206,9 @@
 	    <option type="int" name="scale_increment_time">
 			<_short>Scale increment time</_short>
 			<_long>How long to scale a window when scaling by an 'increment'</_long>
-			<default>25</default>
+			<default>200</default>
 			<min>10</min>
-			<max>100</max>
+			<max>500</max>
 	    </option>   
 	</subgroup>
 	</group>
@@ -230,9 +230,9 @@
 		<option type="int" name="reset_time">
 			<_short>Reset animation time</_short>
 			<_long>How long the reset animation should last</_long>
-			<default>75</default>
+			<default>350</default>
 			<min>10</min>
-			<max>500</max>
+			<max>1000</max>
 	    </option>
        <subgroup>
 	   <_short>Helper Options</_short>	    

@@ -33,6 +33,7 @@
  *  - Input prevention windows and proper shape handling
  *  - Modifier key to rotate on the Z Axis
  *  - Code could be cleaner
+ *  - Add timestep and speed options to animation
  */
 
 #include <compiz.h>
@@ -139,6 +140,7 @@ typedef struct _FWAnimationInfo
     // For animation
     float aTimeRemaining; // Actual time remaining (is decremented)
     float cTimeRemaining; // Constant time remaining (is referenced and not decremented)
+    float steps;
 } FWAnimationInfo;
 
 /* Freewins Display Structure */
@@ -164,6 +166,7 @@ typedef struct _FWDisplay{
 typedef struct _FWScreen{
     int windowPrivateIndex;
 
+    PreparePaintScreenProc preparePaintScreen;
     PaintOutputProc paintOutput;
     PaintWindowProc paintWindow;
 
@@ -687,6 +690,33 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
     WRAP(fwd, d, handleEvent, FWHandleEvent);
 }
 
+/* Animation Prep */
+static void
+FWPreparePaintScreen (CompScreen *s,
+			 int	        ms)
+{
+    CompWindow *w;
+    FREEWINS_SCREEN (s);
+
+    /* FIXME: should only loop over all windows if at least one animation
+       is running */
+    for (w = s->windows; w; w = w->next)
+    {
+        FREEWINS_WINDOW (w);
+        if (fww->doAnimate)
+        {
+	        fww->animate.steps = (float)ms / (float)fww->animate.cTimeRemaining;
+
+            if (fww->animate.steps < 0.005)
+	            fww->animate.steps = 0.005;
+        }
+    }
+    
+    UNWRAP (fws, s, preparePaintScreen);
+    (*s->preparePaintScreen) (s, ms);
+    WRAP (fws, s, preparePaintScreen, FWPreparePaintScreen);
+}
+
 /* Paint the window rotated or scaled */
 static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib, 
 	const CompTransform *transform, Region region, unsigned int mask){
@@ -710,8 +740,6 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
     FREEWINS_SCREEN(w->screen);
     FREEWINS_WINDOW(w);
-
-    float timeRemaining = fww->animate.cTimeRemaining;
         
     /* Has something happened? */
 
@@ -812,8 +840,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             matrixRotate (&outTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
             matrixRotate (&outTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
             matrixRotate (&outTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
-            matrixScale(&outTransform, autoScaleX, 1.0, 0.0);
-            matrixScale(&outTransform, 1.0, autoScaleY, 0.0);
+            matrixScale(&outTransform, autoScaleX - (1 - fww->transform.scaleX), 1.0, 0.0);
+            matrixScale(&outTransform, 1.0, autoScaleY - (1 - fww->transform.scaleY), 0.0);
             matrixTranslate(&outTransform, 
                 -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
                 -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
@@ -896,32 +924,29 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
      * remaining.
      */
 
-    /* TODO: Use preparePaintScreen and msSinceLastPaint to make
-     * this more accurate and springy
-     */
-
     if (fww->doAnimate)
     {
-        float raX = (fww->animate.destAngX - fww->animate.oldAngX) / timeRemaining;
-        float raY = (fww->animate.destAngY - fww->animate.oldAngY) / timeRemaining;
-        float raZ = (fww->animate.destAngZ - fww->animate.oldAngZ) / timeRemaining;
+        fww->transform.angX += (float) fww->animate.steps * (fww->animate.destAngX - fww->transform.angX);
+        fww->transform.angY += (float) fww->animate.steps * (fww->animate.destAngY - fww->transform.angY);
+        fww->transform.angZ += (float) fww->animate.steps * (fww->animate.destAngZ - fww->transform.angZ);
         
-        float saX = ((fww->animate.destScaleX - fww->animate.oldScaleX) / timeRemaining);
-        float saY = ((fww->animate.destScaleX - fww->animate.oldScaleY) / timeRemaining);
-        
-        fww->transform.angX += raX;
-        fww->transform.angY += raY;
-        fww->transform.angZ += raZ;
-        
-        fww->transform.scaleX += saX;
-        fww->transform.scaleY += saY;
+        fww->transform.scaleX += (float) fww->animate.steps * (fww->animate.destScaleX - fww->transform.scaleX);        
+        fww->transform.scaleY += (float) fww->animate.steps * (fww->animate.destScaleY - fww->transform.scaleY);
                 
         fww->animate.aTimeRemaining--;
         addWindowDamage (w);
         
-        if (fww->animate.aTimeRemaining <= 0 || (fww->transform.angX == fww->animate.destAngX && fww->transform.angY == fww->animate.destAngY
-                                        && fww->transform.angZ == fww->animate.destAngZ && fww->transform.scaleX == fww->animate.destScaleX
-                                        && fww->transform.scaleY == fww->animate.destScaleY))
+        if (fww->animate.aTimeRemaining <= 0 || 
+             ((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
+              fww->transform.angX <= fww->animate.destAngX + 0.0 ) &&
+             (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
+              fww->transform.angY <= fww->animate.destAngY + 0.05 ) &&
+             (fww->transform.angZ >= fww->animate.destAngZ - 0.05 &&
+              fww->transform.angZ <= fww->animate.destAngZ + 0.05 ) &&
+             (fww->transform.scaleX >= fww->animate.destScaleX - 0.05 &&
+              fww->transform.scaleX <= fww->animate.destScaleX + 0.05 ) &&
+             (fww->transform.scaleY >= fww->animate.destScaleY - 0.05 &&
+              fww->transform.scaleY <= fww->animate.destScaleY + 0.05 )))
         {
             fww->resetting = FALSE;
 
@@ -1690,6 +1715,7 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
 
     s->privates[fwd->screenPrivateIndex].ptr = fws;
     
+    WRAP(fws, s, preparePaintScreen, FWPreparePaintScreen);
     WRAP(fws, s, paintWindow, FWPaintWindow);
     WRAP(fws, s, paintOutput, FWPaintOutput);
 
@@ -1706,6 +1732,7 @@ static void freewinsFiniScreen(CompPlugin *p, CompScreen *s){
 
     freeWindowPrivateIndex(s, fws->windowPrivateIndex);
 
+    UNWRAP(fws, s, preparePaintScreen);
     UNWRAP(fws, s, paintWindow);
     UNWRAP(fws, s, paintOutput);
 
