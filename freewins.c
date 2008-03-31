@@ -103,6 +103,15 @@ typedef enum _StartCorner {
     CornerBottomRight = 3
 } StartCorner;
 
+typedef enum _FWGrabType {
+    grabNone = 0,
+    grabRotate,
+    grabScale,
+    grabMove,
+    grabResize
+} FWGrabType;
+    
+
 /* Shape info / restoration */
 typedef struct _FWWindowInputInfo {
     CompWindow                *w;
@@ -174,10 +183,16 @@ typedef struct _FWDisplay{
     int click_win_x;
     int click_win_y;
 
+    // Used for determining cursor direction
+    int oldX;
+    int oldY;
+
     HandleEventProc handleEvent;
 
     CompWindow *grabWindow;
     CompWindow *focusWindow;
+
+    FWGrabType grab;
     
     Bool axisHelp;
 
@@ -210,10 +225,6 @@ typedef struct _FWWindow{
     float midX;
     float midY;
     
-    // Used for determining cursor direction
-    int oldX;
-    int oldY;
-
     // Used for determining window movement
 
     int oldWinX;
@@ -234,8 +245,6 @@ typedef struct _FWWindow{
     Box outputRect;
     Box inputRect;
 
-    Bool grabbed;
-    
     // Used to determine whether to animate the window
     Bool doAnimate;
     Bool resetting;
@@ -391,6 +400,19 @@ FWGetRealWindow (CompWindow *w)
     }
 
     return NULL;
+}
+
+static CompWindow *
+FWGetRealWindowFromID (CompDisplay *d,
+		       Window      wid)
+{
+    CompWindow *orig;
+
+    orig = findWindowAtDisplay (d, wid);
+    if (!orig)
+	return NULL;
+
+    return FWGetRealWindow (orig);
 }
 
 /* ------ Input Prevention -------------------------------------------*/
@@ -620,8 +642,6 @@ FWAdjustIPW (CompWindow *w)
     width  = fww->inputRect.x2 - fww->inputRect.x1;
     height = fww->inputRect.y2 - fww->inputRect.y1;
 
-    fprintf(stderr, "width: %f, height %f\n", width, height);
-
     xwc.x          = (fww->inputRect.x1);
     xwc.y          = (fww->inputRect.y1);
     xwc.width      = ceil(width);
@@ -655,8 +675,54 @@ FWAdjustIPWStacking (CompScreen *s)
     }
 }
 
+static void FWHandleIPWButtonPress (CompWindow *w)
+{
+    FREEWINS_SCREEN (w->screen);
+    FREEWINS_DISPLAY (w->screen->display);
+
+    (*w->screen->activateWindow) (w);
+    fwd->grab = grabMove;
+    fws->rotateCursor = XC_fleur;
+	if(!otherScreenGrabExist(w->screen, "freewins", 0))
+	    if(!fws->grabIndex)
+        {
+		fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "freewins");
+        }
+    fwd->grabWindow = w;
+}
+
+static void FWHandleMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
+{
+    FREEWINS_SCREEN (w->screen);
+    FREEWINS_DISPLAY (w->screen->display);
+
+    //static int oldPointerX, oldPointerY;
+
+    int dx = x - fwd->oldX;
+    int dy = y - fwd->oldY;
+
+    if (!fws->grabIndex)
+        return;
 
 
+    moveWindow(w, dx, dy, TRUE, FALSE);
+    syncWindowPosition (w);
+}
+
+static void FWHandleButtonReleaseEvent (CompWindow *w)
+{
+    FREEWINS_SCREEN (w->screen);
+    FREEWINS_DISPLAY (w->screen->display);
+
+    if (fwd->grab == grabMove)
+    {
+        removeScreenGrab (w->screen, fws->grabIndex, NULL);
+        moveInputFocusToWindow (w);
+        fws->grabIndex = 0;
+        fwd->grabWindow = NULL;
+        fwd->grab = grabNone;
+    }
+}
 /* This should be called instead of FWShapeInput or FWCreateIPW
  * as it does all the setup beforehand.
  */
@@ -698,7 +764,6 @@ FWHandleFWInputInfo (CompWindow *w)
 /* X Event Handler */
 static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
-    CompScreen *s;
     float dx, dy;
     CompWindow *oldPrev, *oldNext, *w;
     FREEWINS_DISPLAY(d);
@@ -708,14 +773,33 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	/* Motion Notify Event */
 	case MotionNotify:
 	    
-	    if(fwd->grabWindow)
+	    if(fwd->grab != grabNone)
         {
 		    FREEWINS_WINDOW(fwd->grabWindow);
 
-		    dx = (float)(ev->xmotion.x_root - fww->oldX) / fwd->grabWindow->screen->width;
-		    dy = (float)(ev->xmotion.y_root - fww->oldY) / fwd->grabWindow->screen->height;
+		    dx = (float)(ev->xmotion.x_root - fwd->oldX) / fwd->grabWindow->screen->width;
+		    dy = (float)(ev->xmotion.y_root - fwd->oldY) / fwd->grabWindow->screen->height;
 
-            if (fww->allowRotation)
+
+            if (fwd->grab == grabMove)
+            {
+                FREEWINS_SCREEN (fwd->grabWindow->screen);
+                FWWindowInputInfo *info;
+                CompWindow *w = fwd->grabWindow;
+                for (info = fws->transformedWindows; info; info = info->next)
+                {
+                    if (fwd->grabWindow->id == info->ipw)
+                    /* The window we just grabbed was actually
+                     * an IPW, get the real window instead
+                     */
+                    w = FWGetRealWindow (fwd->grabWindow);
+                }
+                FWHandleMotionEvent (w, ev->xmotion.x_root, ev->xmotion.y_root);
+                fww->allowRotation = FALSE;
+                fww->allowScaling = FALSE;
+            }
+
+            if (fwd->grab == grabRotate)
             {        
                 if(fww->zaxis)
                 {
@@ -754,7 +838,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		            fww->transform.unsnapAngY += 360.0 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		        }
 		    }
-		    if (fww->allowScaling)
+		    if (fwd->grab == grabScale)
 		    {
 		        switch (fww->corner)
 		        {
@@ -762,24 +846,24 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		        case CornerTopLeft:
 		        		        
 		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fww->oldX)
+		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
 		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
-		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
+		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
 		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fww->oldY)
+		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
 		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
-		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
+		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
 		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
@@ -789,12 +873,12 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 case CornerTopRight:
                  
 		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fww->oldX)
+		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
 		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
-		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
+		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
 		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
@@ -802,12 +886,12 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                
 		                
 		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fww->oldY)
+		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
 		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
-		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
+		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
 		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
@@ -818,24 +902,24 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		         case CornerBottomLeft:
 		            
 		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fww->oldX)
+		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
 		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
-		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
+		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
 		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fww->oldY)
+		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
 		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
-		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
+		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
 		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
@@ -846,24 +930,24 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		         case CornerBottomRight:
 		            
 		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fww->oldX)
+		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
 		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
-		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
+		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
 		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fww->oldY)
+		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
 		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
-		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
+		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
 		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
@@ -873,8 +957,8 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		      
 		    }
 		
-            fww->oldX = ev->xmotion.x_root;
-		    fww->oldY = ev->xmotion.y_root;
+            fwd->oldX += (ev->xmotion.x_root - fwd->oldX);
+		    fwd->oldY += (ev->xmotion.y_root - fwd->oldY);
 
 		    fww->grabLeft = (ev->xmotion.x - fww->midX > 0 ? FALSE : TRUE);
 		    fww->grabTop = (ev->xmotion.y - fww->midY > 0 ? FALSE : TRUE);
@@ -928,15 +1012,29 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
 	/* Button Press and Release */
 	case ButtonPress:
+    {
+        CompWindow *btnW;
+        btnW = FWGetRealWindowFromID (d, ev->xbutton.window);
+        if (btnW)
+            if (fwd->grab == grabNone)
+                FWHandleIPWButtonPress (btnW);
 	    fwd->click_root_x = ev->xbutton.x_root;
 	    fwd->click_root_y = ev->xbutton.y_root;
 	    fwd->click_win_x = ev->xbutton.x;
-	    fwd->click_win_y = ev->xbutton.y;
+	    fwd->click_win_y = ev->xbutton.y;       
 
 	    break;
-
+    }
 	case ButtonRelease:
-	    if(fwd->grabWindow){
+    {
+        if (fwd->grabWindow)
+        {
+        FREEWINS_WINDOW (fwd->grabWindow);
+        if (fwd->grab == grabMove)
+            FWHandleButtonReleaseEvent (fwd->grabWindow);
+
+	    if((fwd->grab == grabScale) || (fwd->grab == grabRotate)){
+        CompScreen *s;
 	    if (FWCanShape (fwd->grabWindow))
 	        if (FWHandleFWInputInfo (fwd->grabWindow))
 	            FWAdjustIPW (fwd->grabWindow);
@@ -949,12 +1047,13 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		    }
 		}
 
-		FREEWINS_WINDOW(fwd->grabWindow);
-		fww->grabbed = FALSE;
+        fwd->grab = grabNone;
 		fwd->grabWindow = 0;
         fww->rotated = TRUE;
 	    }
+        }
 	    break;
+    }
 
 	case FocusOut:
 	    break;
@@ -1536,10 +1635,10 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	
 	fwd->grabWindow = useW;
 	
-	fww->grabbed = TRUE;
+	fwd->grab = grabRotate;
 	
-	fww->oldX = fwd->click_root_x;
-	fww->oldY = fwd->click_root_y;
+	fwd->oldX = fwd->click_root_x;
+	fwd->oldY = fwd->click_root_y;
 
 	dx = fwd->click_win_x - fww->midX;
 	dy = fwd->click_win_y - fww->midY;
@@ -1641,10 +1740,10 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	        fww->corner = CornerTopLeft;
 	}
 	
-	fww->grabbed = TRUE;
+	fwd->grab = grabScale;
 
-	fww->oldX = fwd->click_root_x;
-	fww->oldY = fwd->click_root_y;
+	fwd->oldX = fwd->click_root_x;
+	fwd->oldY = fwd->click_root_y;
 
 	dx = fwd->click_win_x - fww->midX;
 	dy = fwd->click_win_y - fww->midY;
@@ -2026,6 +2125,7 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
 static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     FWWindow *fww;
     FREEWINS_SCREEN(w->screen);
+    FREEWINS_DISPLAY(w->screen->display);
 
     if( !(fww = (FWWindow*)malloc( sizeof(FWWindow) )) )
 	return FALSE;
@@ -2042,7 +2142,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->outputRect.y1 = WIN_OUTPUT_Y (w);
     fww->outputRect.y2 = WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w);
 
-    fww->grabbed = 0;
+    fwd->grab = grabNone;
     fww->zaxis = FALSE;
 
     fww->rotated = FALSE;
