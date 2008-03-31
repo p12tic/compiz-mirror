@@ -23,6 +23,11 @@
  * and Key-Based Transformation added by:
  * Sam Spilsbury <smspillaz@gmail.com>
  *
+ * Most of the input handling here is based on
+ * the shelf plugin by
+ *        : Kristian Lyngstøl <kristian@bohemians.org>
+ *        : Danny Baumann <maniac@opencompositing.org>
+ *
  * Description:
  *
  * This plugin allows you to freely transform the texture of a window,
@@ -98,6 +103,31 @@ typedef enum _StartCorner {
     CornerBottomRight = 3
 } StartCorner;
 
+typedef enum _FWGrabType {
+    grabNone = 0,
+    grabRotate,
+    grabScale,
+    grabMove,
+    grabResize
+} FWGrabType;
+    
+
+/* Shape info / restoration */
+typedef struct _FWWindowInputInfo {
+    CompWindow                *w;
+    struct _FWWindowInputInfo *next;
+
+    Window     ipw;
+
+    XRectangle *inputRects;
+    int        nInputRects;
+    int        inputRectOrdering;
+
+    XRectangle *frameInputRects;
+    int        frameNInputRects;
+    int        frameInputRectOrdering;
+} FWWindowInputInfo;
+
 /* Transformation info */
 typedef struct _FWTransformedWindowInfo
 {
@@ -153,10 +183,16 @@ typedef struct _FWDisplay{
     int click_win_x;
     int click_win_y;
 
+    // Used for determining cursor direction
+    int oldX;
+    int oldY;
+
     HandleEventProc handleEvent;
 
     CompWindow *grabWindow;
     CompWindow *focusWindow;
+
+    FWGrabType grab;
     
     Bool axisHelp;
 
@@ -173,6 +209,8 @@ typedef struct _FWScreen{
     DamageWindowRectProc damageWindowRect;
 
     WindowResizeNotifyProc windowResizeNotify;
+
+    FWWindowInputInfo *transformedWindows;
     
     Cursor rotateCursor;
 
@@ -187,10 +225,6 @@ typedef struct _FWWindow{
     float midX;
     float midY;
     
-    // Used for determining cursor direction
-    int oldX;
-    int oldY;
-
     // Used for determining window movement
 
     int oldWinX;
@@ -205,11 +239,12 @@ typedef struct _FWWindow{
     // Animation Info
     FWAnimationInfo animate;
 
+    // Input Info
+    FWWindowInputInfo *input;
+
     Box outputRect;
     Box inputRect;
 
-    Bool grabbed;
-    
     // Used to determine whether to animate the window
     Bool doAnimate;
     Bool resetting;
@@ -320,6 +355,20 @@ static Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, fl
         return rect;
 }
 
+/* Change angles more than 360 into angles out of 360 */
+/*static int FWMakeIntoOutOfThreeSixty (int value)
+{
+    while (value > 0)
+    {
+        value -= 360;
+    }
+
+    if (value < 0)
+        value += 360;
+
+    return value;
+}*/
+
 /* Check to see if we can shape a window */
 static Bool FWCanShape (CompWindow *w)
 {
@@ -336,30 +385,109 @@ static Bool FWCanShape (CompWindow *w)
     return TRUE;
 }
 
-/* Change angles more than 360 into angles out of 360 */
-/*static int FWMakeIntoOutOfThreeSixty (int value)
+/* Checks if w is a ipw and returns the real window */
+static CompWindow *
+FWGetRealWindow (CompWindow *w)
 {
-    while (value > 0)
+    FWWindowInputInfo *info;
+
+    FREEWINS_SCREEN (w->screen);
+
+    for (info = fws->transformedWindows; info; info = info->next)
     {
-        value -= 360;
+	if (w->id == info->ipw)
+	    return info->w;
     }
 
-    if (value < 0)
-        value += 360;
+    return NULL;
+}
 
-    return value;
-}*/
+static CompWindow *
+FWGetRealWindowFromID (CompDisplay *d,
+		       Window      wid)
+{
+    CompWindow *orig;
 
-/* Input Shaper. Take into account the provided transformed
-   corner-rects of the windows, and find the scale difference
-   between the window's actual width and the scaled and rotated
-   width. Then we create a new input rectangle and apply it
-   to the window. Most of the hard work regarding rotation is
-   done for us in paintWindow */
-/* XXX: This will changed to input prevention in the near future */
+    orig = findWindowAtDisplay (d, wid);
+    if (!orig)
+	return NULL;
+
+    return FWGetRealWindow (orig);
+}
+
+/* ------ Input Prevention -------------------------------------------*/
+
+static void
+FWSaveInputShape (CompWindow *w,
+		     XRectangle **retRects,
+		     int        *retCount,
+		     int        *retOrdering)
+{
+    XRectangle *rects;
+    int        count = 0, ordering;
+    Display    *dpy = w->screen->display->display;
+
+    rects = XShapeGetRectangles (dpy, w->id, ShapeInput, &count, &ordering);
+
+    /* check if the returned shape exactly matches the window shape -
+       if that is true, the window currently has no set input shape */
+    if ((count == 1) &&
+	(rects[0].x == -w->serverBorderWidth) &&
+	(rects[0].y == -w->serverBorderWidth) &&
+	(rects[0].width == (w->serverWidth + w->serverBorderWidth)) &&
+	(rects[0].height == (w->serverHeight + w->serverBorderWidth)))
+    {
+	count = 0;
+    }
+    
+    *retRects    = rects;
+    *retCount    = count;
+    *retOrdering = ordering;
+}
+
+static void
+FWUnshapeInput (CompWindow *w)
+{
+    Display *dpy = w->screen->display->display;
+
+    FREEWINS_WINDOW (w);
+
+    if (fww->input->nInputRects)
+    {
+	XShapeCombineRectangles (dpy, w->id, ShapeInput, 0, 0,
+				 fww->input->inputRects, fww->input->nInputRects,
+				 ShapeSet, fww->input->inputRectOrdering);
+    }
+    else
+    {
+	XShapeCombineMask (dpy, w->id, ShapeInput, 0, 0, None, ShapeSet);
+    }
+
+    if (fww->input->frameNInputRects >= 0)
+    {
+	if (fww->input->frameInputRects)
+	{
+	    XShapeCombineRectangles (dpy, w->frame, ShapeInput, 0, 0,
+				     fww->input->frameInputRects,
+				     fww->input->frameNInputRects,
+				     ShapeSet,
+				     fww->input->frameInputRectOrdering);
+	}
+	else
+	{
+	    XShapeCombineMask (dpy, w->frame, ShapeInput, 0, 0, None, ShapeSet);
+	}
+    }
+}
+
+
+/* Input Shaper. This no longer adjusts the shape of the window
+   but instead shapes it to 0 as the IPW deals with the input.
+   Old code is available commented, but will be removed as soon
+   as input prevention becomes stable enough  */
 static void FWShapeInput (CompWindow *w)
 {
-    FREEWINS_WINDOW(w);
+    /*FREEWINS_WINDOW(w);
     XRectangle Rectangle;
     float ScaleX;
     float ScaleY;
@@ -381,13 +509,254 @@ static void FWShapeInput (CompWindow *w)
     XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
     XShapeCombineRectangles  (w->screen->display->display, w->id, 
 			      ShapeInput, 0, 0, &Rectangle, 1,  ShapeSet, 0);
-	/* Shape the frame window too */
 	if (w->frame)
 	{
 	    XShapeCombineRectangles  (w->screen->display->display, w->frame, 
 			      ShapeInput, 0, 0, &Rectangle, 1,  ShapeSet, 0);
 	    XShapeSelectInput (w->screen->display->display, w->id, ShapeNotify);
+	}*/
+
+    CompWindow *fw;
+    Display    *dpy = w->screen->display->display;
+
+    FREEWINS_WINDOW (w);
+
+    /* save old shape */
+    FWSaveInputShape (w, &fww->input->inputRects,
+			 &fww->input->nInputRects, &fww->input->inputRectOrdering);
+
+    fw = findWindowAtDisplay (w->screen->display, w->frame);
+    if (fw)
+    {
+	FWSaveInputShape(fw, &fww->input->frameInputRects,
+			    &fww->input->frameNInputRects,
+			    &fww->input->frameInputRectOrdering);
+    }
+    else
+    {
+	fww->input->frameInputRects        = NULL;
+	fww->input->frameNInputRects       = -1;
+	fww->input->frameInputRectOrdering = 0;
+    }
+
+    /* clear shape */
+    XShapeSelectInput (dpy, w->id, NoEventMask);
+    XShapeCombineRectangles  (dpy, w->id, ShapeInput, 0, 0,
+			      NULL, 0, ShapeSet, 0);
+    
+    if (w->frame)
+	XShapeCombineRectangles  (dpy, w->frame, ShapeInput, 0, 0,
+				  NULL, 0, ShapeSet, 0);
+
+    XShapeSelectInput (dpy, w->id, ShapeNotify);
+}
+
+/* Add the input info to the list of input info */
+static void
+FWAddWindowToList (FWWindowInputInfo *info)
+{
+    CompScreen        *s = info->w->screen;
+    FWWindowInputInfo *run;
+
+    FREEWINS_SCREEN (s);
+
+    run = fws->transformedWindows;
+    if (!run)
+	fws->transformedWindows = info;
+    else
+    {
+	for (; run->next; run = run->next)
+	run->next = info;
+    }
+}
+
+/* Remove the input info from the list of input info */
+static void
+FWRemoveWindowFromList (FWWindowInputInfo *info)
+{
+    CompScreen        *s = info->w->screen;
+    FWWindowInputInfo *run;
+
+    FREEWINS_SCREEN (s);
+
+    if (!fws->transformedWindows)
+	return;
+
+    if (fws->transformedWindows == info)
+	fws->transformedWindows = info->next;
+    else
+    {
+	for (run = fws->transformedWindows; run->next; run = run->next)
+	{
+	    if (run->next == info)
+	    {
+		run->next = info->next;
+		break;
+	    }
 	}
+    }
+}
+
+/* Create an input prevention window */
+static void
+FWCreateIPW (CompWindow *w)
+{
+    Window               ipw;
+    XSetWindowAttributes attrib;
+
+    FREEWINS_WINDOW (w);
+
+    if (!fww->input || fww->input->ipw)
+	return;
+
+    attrib.override_redirect = TRUE;
+    attrib.event_mask        = 0;
+
+    ipw = XCreateWindow (w->screen->display->display,
+			 w->screen->root,
+			 w->serverX - w->input.left,
+			 w->serverY - w->input.top,
+			 w->serverWidth + w->input.left + w->input.right,
+			 w->serverHeight + w->input.top + w->input.bottom,
+			 0, CopyFromParent, InputOnly, CopyFromParent,
+			 CWEventMask | CWOverrideRedirect,
+			 &attrib);
+ 
+    fww->input->ipw = ipw;
+}
+
+/* Adjust size and location of the input prevention window
+ */
+static void 
+FWAdjustIPW (CompWindow *w)
+{
+    XWindowChanges xwc;
+    Display        *dpy = w->screen->display->display;
+    float          width, height;
+
+    FREEWINS_WINDOW (w);
+
+    if (!fww->input || !fww->input->ipw)
+	return;
+
+    width  = fww->inputRect.x2 - fww->inputRect.x1;
+    height = fww->inputRect.y2 - fww->inputRect.y1;
+
+    xwc.x          = (fww->inputRect.x1);
+    xwc.y          = (fww->inputRect.y1);
+    xwc.width      = ceil(width);
+    xwc.height     = ceil(height);
+    xwc.stack_mode = Below;
+    xwc.sibling    = w->id;
+
+    XConfigureWindow (dpy, fww->input->ipw,
+		      CWSibling | CWStackMode | CWX | CWY | CWWidth | CWHeight,
+		      &xwc);
+
+    XMapWindow (dpy, fww->input->ipw);
+}
+
+/* Ensure that the input prevention window
+ * is always on top of the transformed 
+ * window
+ */
+
+static void
+FWAdjustIPWStacking (CompScreen *s)
+{
+    FWWindowInputInfo *input;
+
+    FREEWINS_SCREEN (s);
+
+    for (input = fws->transformedWindows; input; input = input->next)
+    {
+	if (!input->w->prev || input->w->prev->id != input->ipw)
+	    FWAdjustIPW (input->w);
+    }
+}
+
+static void FWHandleIPWButtonPress (CompWindow *w)
+{
+    FREEWINS_SCREEN (w->screen);
+    FREEWINS_DISPLAY (w->screen->display);
+
+    (*w->screen->activateWindow) (w);
+    fwd->grab = grabMove;
+    fws->rotateCursor = XC_fleur;
+	if(!otherScreenGrabExist(w->screen, "freewins", 0))
+	    if(!fws->grabIndex)
+        {
+		fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "freewins");
+        }
+    fwd->grabWindow = w;
+}
+
+static void FWHandleMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
+{
+    FREEWINS_SCREEN (w->screen);
+    FREEWINS_DISPLAY (w->screen->display);
+
+    //static int oldPointerX, oldPointerY;
+
+    int dx = x - fwd->oldX;
+    int dy = y - fwd->oldY;
+
+    if (!fws->grabIndex)
+        return;
+
+
+    moveWindow(w, dx, dy, TRUE, FALSE);
+    syncWindowPosition (w);
+}
+
+static void FWHandleButtonReleaseEvent (CompWindow *w)
+{
+    FREEWINS_SCREEN (w->screen);
+    FREEWINS_DISPLAY (w->screen->display);
+
+    if (fwd->grab == grabMove)
+    {
+        removeScreenGrab (w->screen, fws->grabIndex, NULL);
+        moveInputFocusToWindow (w);
+        fws->grabIndex = 0;
+        fwd->grabWindow = NULL;
+        fwd->grab = grabNone;
+    }
+}
+/* This should be called instead of FWShapeInput or FWCreateIPW
+ * as it does all the setup beforehand.
+ */
+static Bool
+FWHandleFWInputInfo (CompWindow *w)
+{
+    FREEWINS_WINDOW (w);
+
+    if (!fww->rotated && fww->input)
+    {
+	if (fww->input->ipw)
+	    XDestroyWindow (w->screen->display->display, fww->input->ipw);
+
+	FWUnshapeInput (w);
+	FWRemoveWindowFromList (fww->input);
+
+	free (fww->input);
+	fww->input = NULL;
+
+	return FALSE;
+    }
+    else if (fww->rotated && !fww->input)
+    {
+	fww->input = calloc (1, sizeof (FWWindowInputInfo));
+	if (!fww->input)
+	    return FALSE;
+
+	fww->input->w = w;
+	FWShapeInput (w);
+	FWCreateIPW (w);
+	FWAddWindowToList (fww->input);
+    }
+
+    return TRUE;
 }
 
 /* ------ Wrappable Functions -------------------------------------------*/
@@ -395,8 +764,8 @@ static void FWShapeInput (CompWindow *w)
 /* X Event Handler */
 static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
-    CompScreen *s;
     float dx, dy;
+    CompWindow *oldPrev, *oldNext, *w;
     FREEWINS_DISPLAY(d);
 
     switch(ev->type){
@@ -404,14 +773,33 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	/* Motion Notify Event */
 	case MotionNotify:
 	    
-	    if(fwd->grabWindow)
+	    if(fwd->grab != grabNone)
         {
 		    FREEWINS_WINDOW(fwd->grabWindow);
 
-		    dx = (float)(ev->xmotion.x_root - fww->oldX) / fwd->grabWindow->screen->width;
-		    dy = (float)(ev->xmotion.y_root - fww->oldY) / fwd->grabWindow->screen->height;
+		    dx = (float)(ev->xmotion.x_root - fwd->oldX) / fwd->grabWindow->screen->width;
+		    dy = (float)(ev->xmotion.y_root - fwd->oldY) / fwd->grabWindow->screen->height;
 
-            if (fww->allowRotation)
+
+            if (fwd->grab == grabMove)
+            {
+                FREEWINS_SCREEN (fwd->grabWindow->screen);
+                FWWindowInputInfo *info;
+                CompWindow *w = fwd->grabWindow;
+                for (info = fws->transformedWindows; info; info = info->next)
+                {
+                    if (fwd->grabWindow->id == info->ipw)
+                    /* The window we just grabbed was actually
+                     * an IPW, get the real window instead
+                     */
+                    w = FWGetRealWindow (fwd->grabWindow);
+                }
+                FWHandleMotionEvent (w, ev->xmotion.x_root, ev->xmotion.y_root);
+                fww->allowRotation = FALSE;
+                fww->allowScaling = FALSE;
+            }
+
+            if (fwd->grab == grabRotate)
             {        
                 if(fww->zaxis)
                 {
@@ -450,7 +838,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		            fww->transform.unsnapAngY += 360.0 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		        }
 		    }
-		    if (fww->allowScaling)
+		    if (fwd->grab == grabScale)
 		    {
 		        switch (fww->corner)
 		        {
@@ -458,24 +846,24 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		        case CornerTopLeft:
 		        		        
 		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fww->oldX)
+		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
 		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
-		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
+		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
 		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fww->oldY)
+		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
 		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
-		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
+		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
 		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
@@ -485,12 +873,12 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 case CornerTopRight:
                  
 		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fww->oldX)
+		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
 		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
-		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
+		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
 		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
@@ -498,12 +886,12 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                
 		                
 		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fww->oldY)
+		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
 		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
-		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
+		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
 		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
@@ -514,24 +902,24 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		         case CornerBottomLeft:
 		            
 		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fww->oldX)
+		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
 		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
-		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
+		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
 		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fww->oldY)
+		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
 		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
-		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
+		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
 		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
@@ -542,24 +930,24 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		         case CornerBottomRight:
 		            
 		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fww->oldX)
+		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
 		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
-		                else if ((ev->xmotion.x - 100.0) > fww->oldX)
+		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
 		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
 		                }
 		                
 		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fww->oldY)
+		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
 		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                }
-		                else if ((ev->xmotion.y - 100.0) > fww->oldY)
+		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
 		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
@@ -569,8 +957,8 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		      
 		    }
 		
-            fww->oldX = ev->xmotion.x_root;
-		    fww->oldY = ev->xmotion.y_root;
+            fwd->oldX += (ev->xmotion.x_root - fwd->oldX);
+		    fwd->oldY += (ev->xmotion.y_root - fwd->oldY);
 
 		    fww->grabLeft = (ev->xmotion.x - fww->midX > 0 ? FALSE : TRUE);
 		    fww->grabTop = (ev->xmotion.y - fww->midY > 0 ? FALSE : TRUE);
@@ -624,17 +1012,32 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
 	/* Button Press and Release */
 	case ButtonPress:
+    {
+        CompWindow *btnW;
+        btnW = FWGetRealWindowFromID (d, ev->xbutton.window);
+        if (btnW)
+            if (fwd->grab == grabNone)
+                FWHandleIPWButtonPress (btnW);
 	    fwd->click_root_x = ev->xbutton.x_root;
 	    fwd->click_root_y = ev->xbutton.y_root;
 	    fwd->click_win_x = ev->xbutton.x;
-	    fwd->click_win_y = ev->xbutton.y;
+	    fwd->click_win_y = ev->xbutton.y;       
 
 	    break;
-
+    }
 	case ButtonRelease:
-	    if(fwd->grabWindow){
+    {
+        if (fwd->grabWindow)
+        {
+        FREEWINS_WINDOW (fwd->grabWindow);
+        if (fwd->grab == grabMove)
+            FWHandleButtonReleaseEvent (fwd->grabWindow);
+
+	    if((fwd->grab == grabScale) || (fwd->grab == grabRotate)){
+        CompScreen *s;
 	    if (FWCanShape (fwd->grabWindow))
-	        FWShapeInput (fwd->grabWindow);
+	        if (FWHandleFWInputInfo (fwd->grabWindow))
+	            FWAdjustIPW (fwd->grabWindow);
 		for(s = d->screens; s; s = s->next){
 		    FREEWINS_SCREEN(s);
 
@@ -644,11 +1047,13 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		    }
 		}
 
-		FREEWINS_WINDOW(fwd->grabWindow);
-		fww->grabbed = FALSE;
+        fwd->grab = grabNone;
 		fwd->grabWindow = 0;
+        fww->rotated = TRUE;
 	    }
+        }
 	    break;
+    }
 
 	case FocusOut:
 	    break;
@@ -656,6 +1061,15 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	case FocusIn:
 	    if(ev->xfocus.mode != NotifyGrab)
 		fwd->focusWindow = findWindowAtDisplay(d, ev->xfocus.window);
+	    break;
+
+	case ConfigureNotify:
+	    w = findWindowAtDisplay (d, ev->xconfigure.window);
+	    if (w)
+	    {
+		oldPrev = w->prev;
+		oldNext = w->next;
+	    }
 	    break;
 
     default:
@@ -688,6 +1102,22 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
     UNWRAP(fwd, d, handleEvent);
     (*d->handleEvent)(d, ev);
     WRAP(fwd, d, handleEvent, FWHandleEvent);
+
+    /* Now we can find out if a restacking occurred while we were handing events */
+
+    switch (ev->type)
+    {
+	case ConfigureNotify:
+	    if (w) /* already assigned above */
+	    {
+		if (w->prev != oldPrev || w->next != oldNext)
+		{
+		    /* restacking occured, ensure ipw stacking */
+		    FWAdjustIPWStacking (w->screen);
+		}
+	    }
+	    break;
+    }
 }
 
 /* Animation Prep */
@@ -959,8 +1389,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             fww->doAnimate = FALSE;
             fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
             fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
-            if (FWCanShape (w))
-                FWShapeInput (w);
+            /*if (FWCanShape (w))
+                FWShapeInput (w);*/
         }
     }
 
@@ -1160,8 +1590,8 @@ static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh){
     fww->midX += dw;
     fww->midY += dh;
 
-    if (FWCanShape (w))
-        FWShapeInput (w);
+    /*if (FWCanShape (w))
+        FWShapeInput (w);*/
 
     UNWRAP(fws, w->screen, windowResizeNotify);
     (*w->screen->windowResizeNotify)(w, dx, dy, dw, dh);
@@ -1175,38 +1605,56 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	CompActionState state, CompOption *option, int nOption) {
     
     CompWindow* w;
+    CompWindow *useW;
     CompScreen* s;
-    Window xid;
+    FWWindowInputInfo *info;
+    Window xid, root;
     float dx, dy;
     
     FREEWINS_DISPLAY(d);
 
     xid = getIntOptionNamed (option, nOption, "window", 0);
     w = findWindowAtDisplay (d, xid);
-    
-    for(s = d->screens; s; s = s->next){
-	FREEWINS_SCREEN(s);
-	
+    useW = findWindowAtDisplay (d, xid);
+
+    root = getIntOptionNamed (option, nOption, "root", 0);
+    s = findScreenAtDisplay (d, root);
+
+    if (s)
+    {
+
+    FREEWINS_SCREEN (s);
+
+    for (info = fws->transformedWindows; info; info = info->next)
+    {
+        if (w->id == info->ipw)
+        /* The window we just grabbed was actually
+         * an IPW, get the real window instead
+         */
+        useW = FWGetRealWindow (w);
+    }
+
 	fws->rotateCursor = XCreateFontCursor (s->display->display, XC_fleur);	
 
 	if(!otherScreenGrabExist(s, "freewins", 0))
 	    if(!fws->grabIndex)
 		fws->grabIndex = pushScreenGrab(s, fws->rotateCursor, "freewins");
+
     }
     
     
-    if(w){
-	FREEWINS_WINDOW(w);
+    if(useW){
+	FREEWINS_WINDOW(useW);
 	
 	fww->allowRotation = TRUE;
 	fww->allowScaling = FALSE;
 	
-	fwd->grabWindow = w;
+	fwd->grabWindow = useW;
 	
-	fww->grabbed = TRUE;
+	fwd->grab = grabRotate;
 	
-	fww->oldX = fwd->click_root_x;
-	fww->oldY = fwd->click_root_y;
+	fwd->oldX = fwd->click_root_x;
+	fwd->oldY = fwd->click_root_y;
 
 	dx = fwd->click_win_x - fww->midX;
 	dy = fwd->click_win_y - fww->midY;
@@ -1242,33 +1690,51 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	CompActionState state, CompOption *option, int nOption) {
     
     CompWindow* w;
+    CompWindow *useW;
     CompScreen* s;
-    Window xid;
+    FWWindowInputInfo *info;
+    Window xid, root;
     float dx, dy;
     
     FREEWINS_DISPLAY(d);
 
     xid = getIntOptionNamed (option, nOption, "window", 0);
     w = findWindowAtDisplay (d, xid);
-    
-    for(s = d->screens; s; s = s->next){
+    useW = findWindowAtDisplay (d, xid);
+
+    root = getIntOptionNamed (option, nOption, "root", 0);
+    s = findScreenAtDisplay (d, root);
+
+    if (s)
+    {
+
 	FREEWINS_SCREEN(s);
-	
+
+    for (info = fws->transformedWindows; info; info = info->next)
+    {
+        if (w->id == info->ipw)
+        /* The window we just grabbed was actually
+         * an IPW, get the real window instead
+         */
+        useW = FWGetRealWindow (w);
+    }
+
 	fws->rotateCursor = XCreateFontCursor (s->display->display, XC_plus);	
 
 	if(!otherScreenGrabExist(s, "freewins", 0))
 	    if(!fws->grabIndex)
 		fws->grabIndex = pushScreenGrab(s, fws->rotateCursor, "freewins");
+
     }
     
     
-    if(w){
-	FREEWINS_WINDOW(w);
+    if(useW){
+	FREEWINS_WINDOW(useW);
 	
 	fww->allowScaling = TRUE;
 	fww->allowRotation = FALSE;
 	
-	fwd->grabWindow = w;
+	fwd->grabWindow = useW;
 	
 	/* Find out the corner we clicked in */
 	
@@ -1290,10 +1756,10 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	        fww->corner = CornerTopLeft;
 	}
 	
-	fww->grabbed = TRUE;
+	fwd->grab = grabScale;
 
-	fww->oldX = fwd->click_root_x;
-	fww->oldY = fwd->click_root_y;
+	fwd->oldX = fwd->click_root_x;
+	fwd->oldY = fwd->click_root_y;
 
 	dx = fwd->click_win_x - fww->midX;
 	dy = fwd->click_win_y - fww->midY;
@@ -1312,10 +1778,25 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 }
 
 #define GET_WINDOW \
-    CompWindow *w; \
+    CompWindow *tW, *w; \
+    CompScreen *s; \
     Window xid; \
+    FWWindowInputInfo *info; \
     xid = getIntOptionNamed (option, nOption, "window", 0); \
-    w = findWindowAtDisplay (d, xid); \
+    tW = findWindowAtDisplay (d, xid); \
+    w = tW; \
+    s = findScreenAtDisplay (d, getIntOptionNamed (option, nOption, "root", 0)); \
+    if (s) \
+    { \
+	FREEWINS_SCREEN(s); \
+    for (info = fws->transformedWindows; info; info = info->next) \
+    { \
+        if (tW->id == info->ipw) \
+        w = FWGetRealWindow (tW); \
+        break; \
+    } \
+    } \
+
 
 /* Repetitive Stuff */
 
@@ -1423,8 +1904,8 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, 0, 0, 0, SCALE_INC, SCALE_INC);
         addWindowDamage (w); // Smoothen Painting
-        if (FWCanShape (w))
-        FWShapeInput (w);
+        /*if (FWCanShape (w))
+        FWShapeInput (w);*/
     }
     
     return TRUE;
@@ -1439,8 +1920,8 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, 0, 0, 0, NEG_SCALE_INC, NEG_SCALE_INC);
         addWindowDamage (w); // Smoothen Painting
-        if (FWCanShape (w))
-            FWShapeInput (w);
+        /*if (FWCanShape (w))
+            FWShapeInput (w);*/
     }
     
     return TRUE;
@@ -1549,8 +2030,8 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
         return FALSE;
     }
     
-    if (FWCanShape (w))
-        FWShapeInput (w);
+    /*if (FWCanShape (w))
+        FWShapeInput (w);*/
     
     return TRUE;
 }
@@ -1578,19 +2059,49 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
 	CompActionState state, CompOption *option, int nOption){
     
     CompWindow* w;
+    CompWindow *useW;
+    CompScreen* s;
+    FWWindowInputInfo *info;
+    Window xid, root;
     
     w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
+    useW = findWindowAtDisplay (d, xid);
+    
+    xid = getIntOptionNamed (option, nOption, "window", 0);
+    w = findWindowAtDisplay (d, xid);
 
-    if(w){
-	FREEWINS_WINDOW(w);
+    root = getIntOptionNamed (option, nOption, "root", 0);
+    s = findScreenAtDisplay (d, root);
 
-    addWindowDamage (w);
+    if (s)
+    {
+
+    FREEWINS_SCREEN (s);
+
+    for (info = fws->transformedWindows; info; info = info->next)
+    {
+        if (w->id == info->ipw)
+        /* The window we just grabbed was actually
+         * an IPW, get the real window instead
+         */
+        useW = FWGetRealWindow (w);
+    }
+
+    }
+
+    if(useW){
+	FREEWINS_WINDOW(useW);
+
+    addWindowDamage (useW);
 
 	if( fww->rotated ){
-	    FREEWINS_SCREEN(w->screen);
+	    FREEWINS_SCREEN(useW->screen);
 	    fws->rotatedWindows--;
 	    fww->rotated = FALSE;
 	}
+
+    if (FWCanShape (useW))
+        FWHandleFWInputInfo (useW);
 
     // Set values to animate from
 	fww->animate.oldAngX = fww->transform.angX;
@@ -1630,6 +2141,7 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
 static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     FWWindow *fww;
     FREEWINS_SCREEN(w->screen);
+    FREEWINS_DISPLAY(w->screen->display);
 
     if( !(fww = (FWWindow*)malloc( sizeof(FWWindow) )) )
 	return FALSE;
@@ -1646,7 +2158,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->outputRect.y1 = WIN_OUTPUT_Y (w);
     fww->outputRect.y2 = WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w);
 
-    fww->grabbed = 0;
+    fwd->grab = grabNone;
     fww->zaxis = FALSE;
 
     fww->rotated = FALSE;
@@ -1669,6 +2181,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
 
     w->privates[fws->windowPrivateIndex].ptr = fww;
+    fww->input = NULL;
     
     // Shape window back to normal
     /*if (FWCanShape (w))
@@ -1686,8 +2199,8 @@ static void freewinsFiniWindow(CompPlugin *p, CompWindow *w){
     fww->transform.scaleX = 1.0f;
     fww->transform.scaleY = 1.0f;
     
-    if (FWCanShape (w))
-        FWShapeInput (w);
+    /*if (FWCanShape (w))
+        FWShapeInput (w);*/
 
     if(fwd->grabWindow == w){
 	fwd->grabWindow = NULL;
@@ -1712,6 +2225,7 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
 
     fws->grabIndex = 0;
     fws->rotatedWindows = 0;
+    fws->transformedWindows = NULL;
 
     s->privates[fwd->screenPrivateIndex].ptr = fws;
     
