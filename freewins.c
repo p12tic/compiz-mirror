@@ -35,10 +35,15 @@
  * or just as a toy.
  *
  * Todo: 
- *  - Input prevention windows and proper shape handling
  *  - Modifier key to rotate on the Z Axis
  *  - Code could be cleaner
  *  - Add timestep and speed options to animation
+ *  - Activate the move action in move to move the window
+ *  - Add window hover-over info via paintOutput : i.e
+ *    - Resize borders
+ *    - 'Reset' Button
+ *    - 'Scale' Button
+ *    - 'Rotate' Button
  */
 
 #include <compiz-core.h>
