@@ -685,9 +685,10 @@ static void FWHandleIPWButtonPress (CompWindow *w)
     fws->rotateCursor = XC_fleur;
 	if(!otherScreenGrabExist(w->screen, "freewins", 0))
 	    if(!fws->grabIndex)
-        {
-		fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "freewins");
-        }
+        /* HACK: Register a screengrab under move so that cube will rotate
+         * when we drag a windwo to the edge of the screen
+         */
+		    fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "move");
     fwd->grabWindow = w;
 }
 
