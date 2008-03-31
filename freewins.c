@@ -682,11 +682,11 @@ static void FWHandleIPWButtonPress (CompWindow *w)
 
     (*w->screen->activateWindow) (w);
     fwd->grab = grabMove;
-    fws->rotateCursor = XC_fleur;
-	if(!otherScreenGrabExist(w->screen, "freewins", 0))
+    fws->rotateCursor = XCreateFontCursor (w->screen->display->display, XC_fleur);	
+	if(!otherScreenGrabExist(w->screen, "freewins", "move", 0))
 	    if(!fws->grabIndex)
         {
-		fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "freewins");
+		fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "move");
         }
     fwd->grabWindow = w;
 }
