@@ -691,7 +691,13 @@ static void FWHandleIPWButtonPress (CompWindow *w)
 	if(!otherScreenGrabExist(w->screen, "freewins", "move", 0))
 	    if(!fws->grabIndex)
         {
+        unsigned int mods;
+        mods &= CompNoMask;
 		fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "move");
+	    (w->screen->windowGrabNotify) (w,  w->attrib.x + (w->width / 2),
+                                           w->attrib.y + (w->height / 2), mods,
+					                       CompWindowGrabMoveMask |
+					                       CompWindowGrabButtonMask);
         }
     fwd->grabWindow = w;
 }
@@ -722,6 +728,7 @@ static void FWHandleButtonReleaseEvent (CompWindow *w)
     if (fwd->grab == grabMove)
     {
         removeScreenGrab (w->screen, fws->grabIndex, NULL);
+        (w->screen->windowUngrabNotify) (w);
         moveInputFocusToWindow (w);
         fws->grabIndex = 0;
         fwd->grabWindow = NULL;
@@ -1023,6 +1030,9 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
         if (btnW)
             if (fwd->grab == grabNone)
                 FWHandleIPWButtonPress (btnW);
+
+        fwd->oldX =  ev->xbutton.x_root;
+	    fwd->oldY =  ev->xbutton.y_root;
 	    fwd->click_root_x = ev->xbutton.x_root;
 	    fwd->click_root_y = ev->xbutton.y_root;
 	    fwd->click_win_x = ev->xbutton.x;
