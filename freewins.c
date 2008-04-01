@@ -977,7 +977,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		    fww->grabTop = (ev->xmotion.y - fww->midY > 0 ? FALSE : TRUE);
 
             /* Stop scale at threshold specified */
-            if (!freewinsGetAllowNegative (fwd->grabWindow->screen) || (FWCanShape (fwd->grabWindow)))
+            if (!freewinsGetAllowNegative (fwd->grabWindow->screen))
             {
                 float minScale = freewinsGetMinScale (fwd->grabWindow->screen);
 	            if (fww->transform.scaleX < minScale)
