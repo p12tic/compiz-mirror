@@ -1925,8 +1925,8 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, 0, 0, 0, SCALE_INC, SCALE_INC);
         addWindowDamage (w); // Smoothen Painting
-        /*if (FWCanShape (w))
-        FWShapeInput (w);*/
+        if (FWCanShape (w))
+        FWHandleWindowInputInfo (w);
     }
     
     return TRUE;
@@ -1941,8 +1941,8 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, 0, 0, 0, NEG_SCALE_INC, NEG_SCALE_INC);
         addWindowDamage (w); // Smoothen Painting
-        /*if (FWCanShape (w))
-            FWShapeInput (w);*/
+        if (FWCanShape (w))
+            FWHandleWindowInputInfo (w);
     }
     
     return TRUE;
@@ -2051,8 +2051,8 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
         return FALSE;
     }
     
-    /*if (FWCanShape (w))
-        FWShapeInput (w);*/
+    if (FWCanShape (w))
+        FWHandleWindowInputInfo (w);
     
     return TRUE;
 }
@@ -2220,9 +2220,11 @@ static void freewinsFiniWindow(CompPlugin *p, CompWindow *w){
     /* Shape window back to normal */
     fww->transform.scaleX = 1.0f;
     fww->transform.scaleY = 1.0f;
+
+    fww->rotated = FALSE
     
-    /*if (FWCanShape (w))
-        FWShapeInput (w);*/
+    if (FWCanShape (w))
+        FWHandleWindowInputInfo (w);
 
     if(fwd->grabWindow == w){
 	fwd->grabWindow = NULL;
