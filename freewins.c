@@ -214,6 +214,7 @@ typedef struct _FWScreen{
     DamageWindowRectProc damageWindowRect;
 
     WindowResizeNotifyProc windowResizeNotify;
+    WindowMoveNotifyProc   windowMoveNotify;
 
     FWWindowInputInfo *transformedWindows;
     
@@ -705,18 +706,18 @@ static void FWHandleIPWButtonPress (CompWindow *w)
 static void FWHandleMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
 {
     FREEWINS_SCREEN (w->screen);
-    FREEWINS_DISPLAY (w->screen->display);
 
     //static int oldPointerX, oldPointerY;
 
-    int dx = x - fwd->oldX;
-    int dy = y - fwd->oldY;
+    int dx = x - lastPointerX;
+    int dy = y - lastPointerY;
 
     if (!fws->grabIndex)
         return;
 
 
-    moveWindow(w, dx, dy, TRUE, FALSE);
+    moveWindow(w, dx,
+                  dy, TRUE, FALSE);
     syncWindowPosition (w);
 }
 
@@ -806,7 +807,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
                      */
                     w = FWGetRealWindow (fwd->grabWindow);
                 }
-                FWHandleMotionEvent (w, ev->xmotion.x_root, ev->xmotion.y_root);
+                FWHandleMotionEvent (w, pointerX, pointerY);
                 fww->allowRotation = FALSE;
                 fww->allowScaling = FALSE;
             }
@@ -1597,6 +1598,27 @@ static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh){
     WRAP(fws, w->screen, windowResizeNotify, FWWindowResizeNotify);
 }
 
+static void
+FWWindowMoveNotify (CompWindow *w,
+		       int        dx,
+		       int        dy,
+		       Bool       immediate)
+{
+    FREEWINS_SCREEN (w->screen);
+
+    CompWindow *useWindow;
+
+    useWindow = FWGetRealWindow (w); /* Did we move an IPW and not the actual window? */
+    if (useWindow)
+        moveWindow (useWindow, dx, dy, TRUE, FALSE);
+    else
+        FWAdjustIPW (w); /* We moved a window but not the IPW, so adjust it */
+
+    UNWRAP (fws, w->screen, windowMoveNotify);
+    (*w->screen->windowMoveNotify) (w, dx, dy, immediate);
+    WRAP (fws, w->screen, windowMoveNotify, FWWindowMoveNotify);
+}
+
 /* ------ Actions -------------------------------------------------------*/
 
 /* Initiate Mouse Rotation */
@@ -2236,6 +2258,7 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     WRAP(fws, s, damageWindowRect, FWDamageWindowRect);
 
     WRAP(fws, s, windowResizeNotify, FWWindowResizeNotify);
+    WRAP(fws, s, windowMoveNotify, FWWindowMoveNotify);
 
     return TRUE;
 }
@@ -2253,6 +2276,7 @@ static void freewinsFiniScreen(CompPlugin *p, CompScreen *s){
     UNWRAP(fws, s, damageWindowRect);
 
     UNWRAP(fws, s, windowResizeNotify);
+    UNWRAP(fws, s, windowMoveNotify);
     free(fws);
 }
 
