@@ -27,6 +27,7 @@
 # CHK_HEADERS = compiz-cube.h
 #
 
+
 #load config file
 
 ECHO	  = `which echo`
