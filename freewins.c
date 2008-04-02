@@ -693,26 +693,49 @@ static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned 
 }
 
 /* Handle Rotation */
-static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy)
+static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 {
     FREEWINS_WINDOW (w);
+    FREEWINS_DISPLAY (w->screen->display);
+
+    x -= 100;
+    y -= 100;
 
     if(fww->zaxis)
     {
-       if(ABS(dy)>ABS(dx))
+
+        dx *= 360;
+        dy *= 360;
+
+       switch (fww->corner)
        {
-            if(fww->grabLeft)
-            fww->transform.unsnapAngZ -= 360 * dx;
-            else
-            fww->transform.unsnapAngZ -= 360 * dx;
-       }
-       else
-       {
-            if(fww->grabTop)
-            fww->transform.unsnapAngZ -= 360 * dy;
-            else
-            fww->transform.unsnapAngZ -= 360 * dy;
-       }
+            case CornerTopRight:
+
+            fww->transform.unsnapAngZ += dx;
+            fww->transform.unsnapAngZ += dy;
+
+            break;
+
+            case CornerTopLeft:
+
+            fww->transform.unsnapAngZ -= dx;
+            fww->transform.unsnapAngZ -= dy;
+
+            break;
+
+            case CornerBottomLeft:
+
+            fww->transform.unsnapAngZ -= dx;
+            fww->transform.unsnapAngZ += dy;
+
+            break;
+
+            case CornerBottomRight:
+
+            fww->transform.unsnapAngZ += dx;
+            fww->transform.unsnapAngZ -= dy;
+            break;
+        }
     }
     else
     {
@@ -892,7 +915,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
             if (fwd->grab == grabRotate)
             {        
-                FWHandleRotateMotionEvent(fwd->grabWindow, dx, dy);
+                FWHandleRotateMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);
 		    }
 		    if (fwd->grab == grabScale)
 		    {
@@ -1630,6 +1653,24 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 
 	dx = fwd->click_win_x - fww->midX;
 	dy = fwd->click_win_y - fww->midY;
+
+	/* Check for Y axis clicking (Top / Bottom) */
+	if (fwd->click_win_y > fww->midY)
+	{
+	    /* Check for X axis clicking (Left / Right) */
+	    if (fwd->click_win_x > fww->midX)
+	        fww->corner = CornerBottomRight;
+	    else if (fwd->click_win_x < fww->midX)
+	        fww->corner = CornerBottomLeft;
+	}
+	else if (fwd->click_win_y < fww->midY)
+	{
+	    /* Check for X axis clicking (Left / Right) */
+	    if (fwd->click_win_x > fww->midX)
+	        fww->corner = CornerTopRight;
+	    else if (fwd->click_win_x < fww->midX)
+	        fww->corner = CornerTopLeft;
+	}
 
 	fww->grabLeft = (dx > 0 ? FALSE : TRUE);
 	fww->grabTop = (dy > 0 ? FALSE : TRUE);
