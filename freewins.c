@@ -493,7 +493,6 @@ FWUnshapeInput (CompWindow *w)
    as input prevention becomes stable enough  */
 static void FWShapeInput (CompWindow *w)
 {
-
     CompWindow *fw;
     Display    *dpy = w->screen->display->display;
 
@@ -675,7 +674,7 @@ static void FWHandleIPWButtonPress (CompWindow *w)
     fwd->grabWindow = w;
 }
 
-static void FWHandleMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
+static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
 {
     FREEWINS_SCREEN (w->screen);
 
@@ -744,6 +743,8 @@ FWHandleWindowInputInfo (CompWindow *w)
     return TRUE;
 }
 
+
+
 /* ------ Wrappable Functions -------------------------------------------*/
 
 /* X Event Handler */
@@ -762,8 +763,10 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
         {
 		    FREEWINS_WINDOW(fwd->grabWindow);
 
-		    dx = (float)(ev->xmotion.x_root - fwd->oldX) / fwd->grabWindow->screen->width;
-		    dy = (float)(ev->xmotion.y_root - fwd->oldY) / fwd->grabWindow->screen->height;
+		    dx = ((float)(ev->xmotion.x_root - fwd->oldX) / fwd->grabWindow->screen->width) * \
+            freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		    dy = ((float)(ev->xmotion.y_root - fwd->oldY) / fwd->grabWindow->screen->height) * \
+            freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 
 
             if (fwd->grab == grabMove)
@@ -779,7 +782,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
                      */
                     w = FWGetRealWindow (fwd->grabWindow);
                 }
-                FWHandleMotionEvent (w, pointerX, pointerY);
+                FWHandleIPWMoveMotionEvent (w, pointerX, pointerY);
                 fww->allowRotation = FALSE;
                 fww->allowScaling = FALSE;
             }
@@ -792,35 +795,35 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		            {
 			            if(fww->grabLeft)
 			            {
-			                fww->transform.angZ -= 360 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-			                fww->transform.unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.angZ -= 360 * dx;
+			                fww->transform.unsnapAngZ -= 360 * dx;
 			            }
 			            else
 			            {
-			                fww->transform.angZ += 360 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-			                fww->transform.unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.angZ += 360 * dx;
+			                fww->transform.unsnapAngZ -= 360 * dx;
 			            }
 		                }
 		                else
 		                {
 			            if(fww->grabTop)
 			            {
-			                fww->transform.angZ += 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-			                fww->transform.unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.angZ += 360 * dx;
+			                fww->transform.unsnapAngZ -= 360 * dx;
 			            }
 			            else
 		                {
-			                fww->transform.angZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-			                fww->transform.unsnapAngZ -= 360 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+			                fww->transform.angZ -= 360 * dx;
+			                fww->transform.unsnapAngZ -= 360 * dx;
 			            }
 		            }
 		        }
 		        else
 		        {
-		            fww->transform.angX -= 360.0 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-		            fww->transform.unsnapAngX -= 360.0 * (dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-		            fww->transform.angY += 360.0 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
-		            fww->transform.unsnapAngY += 360.0 * (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		            fww->transform.angX -= 360.0 * dy;
+		            fww->transform.unsnapAngX -= 360.0 * dy;
+		            fww->transform.angY += 360.0 * dx;
+		            fww->transform.unsnapAngY += 360.0 * dx;
 		        }
 		    }
 		    if (fwd->grab == grabScale)
@@ -833,25 +836,25 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                // Check X Direction
 		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
-		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX -= dx;
+		                    fww->transform.unsnapScaleX -= dx;
 		                }
 		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
-		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX -= dx;
+		                    fww->transform.unsnapScaleX -= dx;
 		                }
 		                
 		                // Check Y Direction
 		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
-		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY -= dy;
+		                    fww->transform.unsnapScaleY -= dy;
 		                }
 		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
-		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY -= dy;
+		                    fww->transform.unsnapScaleY -= dy;
 		                }
 		                break;            
 		        		            
@@ -860,26 +863,26 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                // Check X Direction
 		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
-		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX += dx;
+		                    fww->transform.unsnapScaleX += dx;
 		                }
 		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
-		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX += dx;
+		                    fww->transform.unsnapScaleX += dx;
 		                }
 		                
 		                
 		                // Check Y Direction
 		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
-		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY -= dy;
+		                    fww->transform.unsnapScaleY -= dy;
 		                }
 		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
-		                    fww->transform.scaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleY -= dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY -= dy;
+		                    fww->transform.unsnapScaleY -= dy;
 		                }
 		                    
 		                break;
@@ -889,25 +892,25 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                // Check X Direction
 		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
-		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX -= dx;
+		                    fww->transform.unsnapScaleX -= dx;
 		                }
 		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
-		                    fww->transform.scaleX -= dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleX -= (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX -= dx;
+		                    fww->transform.unsnapScaleX -= dx;
 		                }
 		                
 		                // Check Y Direction
 		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
-		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY += dy;
+		                    fww->transform.unsnapScaleY += dy;
 		                }
 		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
-		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY += dy;
+		                    fww->transform.unsnapScaleY += dy;
 		                }
 		                    
 		                break;
@@ -917,25 +920,25 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		                // Check X Direction
 		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
 		                {
-		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX += dx;
+		                    fww->transform.unsnapScaleX += dx;
 		                }
 		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
 		                {
-		                    fww->transform.scaleX += dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleX += (dx * freewinsGetMouseSensitivity (fwd->grabWindow->screen));
+		                    fww->transform.scaleX += dx;
+		                    fww->transform.unsnapScaleX += dx;
 		                }
 		                
 		                // Check Y Direction
 		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
 		                {
-		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY += dy;
+		                    fww->transform.unsnapScaleY += dy;
 		                }
 		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
 		                {
-		                    fww->transform.scaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		                    fww->transform.unsnapScaleY += dy * freewinsGetMouseSensitivity (fwd->grabWindow->screen);
+		                    fww->transform.scaleY += dy;
+		                    fww->transform.unsnapScaleY += dy;
 		                }		                    
 		                break;
 		         }
