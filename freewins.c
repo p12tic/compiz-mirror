@@ -721,6 +721,80 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy)
     }
 }
 
+/* Handle Rotation */
+static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
+{
+    FREEWINS_WINDOW (w);
+    FREEWINS_DISPLAY (w->screen->display);
+
+    x -= 100.0;
+    y -= 100.0;
+
+    switch (fww->corner)
+    {
+
+        case CornerTopLeft:
+        
+        if ((x) < fwd->oldX)
+        fww->transform.unsnapScaleX -= dx;
+        else if ((x) > fwd->oldX)
+        fww->transform.unsnapScaleX -= dx;
+
+        if ((y) < fwd->oldY)
+        fww->transform.unsnapScaleY -= dy;
+        else if ((y) > fwd->oldY)
+        fww->transform.unsnapScaleY -= dy;
+        break;            
+            
+        case CornerTopRight:
+
+        if ((x) < fwd->oldX)
+        fww->transform.unsnapScaleX += dx;
+        else if ((y) > fwd->oldX)
+        fww->transform.unsnapScaleX += dx;
+
+
+        // Check Y Direction
+        if ((y) < fwd->oldY)
+        fww->transform.unsnapScaleY -= dy;
+        else if ((y) > fwd->oldY)
+        fww->transform.unsnapScaleY -= dy;
+
+        break;
+
+        case CornerBottomLeft:
+
+        // Check X Direction
+        if ((x) < fwd->oldX)
+        fww->transform.unsnapScaleX -= dx;
+        else if ((y) > fwd->oldX)
+        fww->transform.unsnapScaleX -= dx;
+
+        // Check Y Direction
+        if ((y) < fwd->oldY)
+        fww->transform.unsnapScaleY += dy;
+        else if ((y) > fwd->oldY)
+        fww->transform.unsnapScaleY += dy;
+
+        break;
+
+        case CornerBottomRight:
+
+        // Check X Direction
+        if ((x) < fwd->oldX)
+        fww->transform.unsnapScaleX += dx;
+        else if ((x) > fwd->oldX)
+        fww->transform.unsnapScaleX += dx;
+
+        // Check Y Direction
+        if ((y) < fwd->oldY)
+        fww->transform.unsnapScaleY += dy;
+        else if ((y) > fwd->oldY)
+        fww->transform.unsnapScaleY += dy;
+        break;
+    }
+}
+
 static void FWHandleButtonReleaseEvent (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
@@ -822,121 +896,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		    }
 		    if (fwd->grab == grabScale)
 		    {
-		        switch (fww->corner)
-		        {
-		        
-		        case CornerTopLeft:
-		        		        
-		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
-		                {
-		                    fww->transform.scaleX -= dx;
-		                    fww->transform.unsnapScaleX -= dx;
-		                }
-		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
-		                {
-		                    fww->transform.scaleX -= dx;
-		                    fww->transform.unsnapScaleX -= dx;
-		                }
-		                
-		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
-		                {
-		                    fww->transform.scaleY -= dy;
-		                    fww->transform.unsnapScaleY -= dy;
-		                }
-		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
-		                {
-		                    fww->transform.scaleY -= dy;
-		                    fww->transform.unsnapScaleY -= dy;
-		                }
-		                break;            
-		        		            
-                case CornerTopRight:
-                 
-		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
-		                {
-		                    fww->transform.scaleX += dx;
-		                    fww->transform.unsnapScaleX += dx;
-		                }
-		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
-		                {
-		                    fww->transform.scaleX += dx;
-		                    fww->transform.unsnapScaleX += dx;
-		                }
-		                
-		                
-		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
-		                {
-		                    fww->transform.scaleY -= dy;
-		                    fww->transform.unsnapScaleY -= dy;
-		                }
-		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
-		                {
-		                    fww->transform.scaleY -= dy;
-		                    fww->transform.unsnapScaleY -= dy;
-		                }
-		                    
-		                break;
-		                
-		         case CornerBottomLeft:
-		            
-		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
-		                {
-		                    fww->transform.scaleX -= dx;
-		                    fww->transform.unsnapScaleX -= dx;
-		                }
-		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
-		                {
-		                    fww->transform.scaleX -= dx;
-		                    fww->transform.unsnapScaleX -= dx;
-		                }
-		                
-		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
-		                {
-		                    fww->transform.scaleY += dy;
-		                    fww->transform.unsnapScaleY += dy;
-		                }
-		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
-		                {
-		                    fww->transform.scaleY += dy;
-		                    fww->transform.unsnapScaleY += dy;
-		                }
-		                    
-		                break;
-		                
-		         case CornerBottomRight:
-		            
-		                // Check X Direction
-		                if ((ev->xmotion.x - 100.0) < fwd->oldX)
-		                {
-		                    fww->transform.scaleX += dx;
-		                    fww->transform.unsnapScaleX += dx;
-		                }
-		                else if ((ev->xmotion.x - 100.0) > fwd->oldX)
-		                {
-		                    fww->transform.scaleX += dx;
-		                    fww->transform.unsnapScaleX += dx;
-		                }
-		                
-		                // Check Y Direction
-		                if ((ev->xmotion.y - 100.0) < fwd->oldY)
-		                {
-		                    fww->transform.scaleY += dy;
-		                    fww->transform.unsnapScaleY += dy;
-		                }
-		                else if ((ev->xmotion.y - 100.0) > fwd->oldY)
-		                {
-		                    fww->transform.scaleY += dy;
-		                    fww->transform.unsnapScaleY += dy;
-		                }		                    
-		                break;
-		         }
-		      
+		        FWHandleScaleMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);		      
 		    }
 
             fww->transform.angX = fww->transform.unsnapAngX;
