@@ -10,36 +10,34 @@
 	<option name='scale' type='action'/>
 	<group>
 	<_short>Free Transformation</_short>
-	    <option type="action" name="initiate_rotation">
+	    <option type="button" name="initiate_rotation_button">
 			<_short>Initiate Rotation</_short>
 			<_long>Start Free Rotation</_long>
-			<allowed button="true"/>
-			<default>
-			    <button>&lt;Control&gt;&lt;Shift&gt;Button1</button>
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;Button1</default>
 	    </option>
-	    <option type="action" name="initiate_scale">
+	    <option type="button" name="initiate_scale_button">
 			<_short>Initiate Scaling</_short>
 			<_long>Start Free Rotation</_long>
-			<allowed button="true"/>
-			<default>
-			    <button>&lt;Control&gt;&lt;Shift&gt;Button3</button>
+			<default>&lt;Control&gt;&lt;Shift&gt;Button3
 			</default>
 	    </option>
-	    <option type="action" name="reset">
+	    <option type="button" name="reset_button">
 			<_short>Reset</_short>
 			<_long>Reset Transformation</_long>
-			<allowed button="true"/>
-			<default>
-			    <button>&lt;Control&gt;&lt;Shift&gt;Button2</button>
+			<default>&lt;Control&gt;&lt;Shift&gt;Button2
 			</default>
 	    </option>
-	    <option type="key" name="toggle_axis">
+	    <option type="key" name="reset_key">
+			<_short>Reset</_short>
+			<_long>Reset Transformation</_long>
+			<default>&lt;Control&gt;&lt;Shift&gt;r
+			</default>
+	    </option>
+	    <option type="key" name="toggle_axis_key">
 			<_short>Axis help toggle</_short>
 			<_long>Axis selection helper </_long>
 			<allowed key="true"/>
-			<default>
-			    <key>&lt;Control&gt;&lt;Shift&gt;h</key>
+			<default>&lt;Control&gt;&lt;Shift&gt;h
 			</default>
 	    </option>
     </group>
@@ -47,74 +45,68 @@
     <_short>Manual Transformation</_short>
 	<subgroup>
 	    <_short>Scaling</_short>
-        <option type="action" name="scale_up">
+        <option type="button" name="scale_up_button">
 		    <_short>Scale Up</_short>
 		    <_long>Scale up by one increment</_long>
-			<allowed key="true" button="true"/>
-			<default>
-			    <key>&lt;Control&gt;&lt;Shift&gt;Page_Up</key>
-			    <button>&lt;Control&gt;&lt;Shift&gt;Button4</button>
+			<default>&lt;Control&gt;&lt;Shift&gt;Button4
+			</default>
+        </option>
+        <option type="button" name="scale_down_button">
+		    <_short>Scale Down</_short>
+		    <_long>Scale down by one increment</_long>
+			<default>&lt;Control&gt;&lt;Shift&gt;Button5
+			</default>
+        </option>
+	    <_short>Scaling</_short>
+        <option type="key" name="scale_up_key">
+		    <_short>Scale Up</_short>
+		    <_long>Scale up by one increment</_long>
 			<default>&lt;Control&gt;&lt;Shift&gt;Page_Up
 			</default>
         </option>
-        <option type="action" name="scale_down">
+        <option type="key" name="scale_down_key">
 		    <_short>Scale Down</_short>
 		    <_long>Scale down by one increment</_long>
-			<allowed key="true" button="true"/>
-			<default>
-			    <key>&lt;Control&gt;&lt;Shift&gt;Page_Down</key>
-			    <button>&lt;Control&gt;&lt;Shift&gt;Button5</button>
+			<default>&lt;Control&gt;&lt;Shift&gt;Page_Down
 			</default>
         </option>
     </subgroup>
     <subgroup>
     <_short>Rotation</_short>
-	    <option type="action" name="rotate_up">
+	    <option type="key" name="rotate_up_key">
 			<_short>Rotate Up</_short>
 			<_long>Rotate up by one increment</_long>
-			<allowed key="true"/>
-            <default>
-			    <key>&lt;Control&gt;&lt;Shift&gt;w</key>
+            <default>&lt;Control&gt;&lt;Shift&gt;w
 			</default>
 	    </option>
-	    <option type="action" name="rotate_down">
+	    <option type="key" name="rotate_down_key">
 			<_short>Rotate Down</_short>
 			<_long>Rotate down by one increment</_long>
-			<allowed key="true"/>
-			<default>
-			    <key>&lt;Control&gt;&lt;Shift&gt;s</key>
+			<default>&lt;Control&gt;&lt;Shift&gt;s
 			</default>
 	    </option>	
-	    <option type="action" name="rotate_left">
+	    <option type="key" name="rotate_left_key">
 			<_short>Rotate Left</_short>
 			<_long>Rotate left by one increment</_long>
-			<allowed key="true"/>
-			<default>
-			    <key>&lt;Control&gt;&lt;Shift&gt;d</key>
+			<default>&lt;Control&gt;&lt;Shift&gt;d
 			</default>
 	    </option>
-	    <option type="action" name="rotate_right">
+	    <option type="key" name="rotate_right_key">
 			<_short>Rotate Right</_short>
 			<_long>Rotate right by one increment</_long>
-			<allowed key="true"/>
-			<default>
-			    <key>&lt;Control&gt;&lt;Shift&gt;a</key>
+			<default>&lt;Control&gt;&lt;Shift&gt;a
 			</default>
 	    </option>
-	    <option type="action" name="rotate_c">
+	    <option type="key" name="rotate_c_key">
 			<_short>Rotate Clockwise</_short>
 			<_long>Rotate clockwise by one increment</_long>
-			<allowed key="true"/>
-			<default>
-			    <key>&lt;Control&gt;&lt;Shift&gt;e</key>
+			<default>&lt;Control&gt;&lt;Shift&gt;e
 			</default>
 	    </option>
-	    <option type="action" name="rotate_cc">
+	    <option type="key" name="rotate_cc_key">
 			<_short>Rotate Counter-Clockwise</_short>
 			<_long>Rotate counter-clockwise by one increment</_long>
-			<allowed key="true"/>
-			<default>
-			    <key>&lt;Control&gt;&lt;Shift&gt;q</key>
+			<default>&lt;Control&gt;&lt;Shift&gt;q
 			</default>
 	    </option>
 	</subgroup>

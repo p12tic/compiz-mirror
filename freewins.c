@@ -46,7 +46,7 @@
  *    - 'Rotate' Button
  */
 
-#include <compiz.h>
+#include <compiz-core.h>
 #include <math.h>
 
 #include <stdio.h>
@@ -65,19 +65,19 @@
 
 /* ------ Macros ---------------------------------------------------------*/
 #define GET_FREEWINS_DISPLAY(d)                                       \
-    ((FWDisplay *) (d)->privates[displayPrivateIndex].ptr)
+    ((FWDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
 
 #define FREEWINS_DISPLAY(d)                      \
     FWDisplay *fwd = GET_FREEWINS_DISPLAY (d)
 
 #define GET_FREEWINS_SCREEN(s, fwd)                                        \
-    ((FWScreen *) (s)->privates[(fwd)->screenPrivateIndex].ptr)
+    ((FWScreen *) (s)->base.privates[(fwd)->screenPrivateIndex].ptr)
 
 #define FREEWINS_SCREEN(s)                                                      \
     FWScreen *fws = GET_FREEWINS_SCREEN (s, GET_FREEWINS_DISPLAY (s->display))
 
 #define GET_FREEWINS_WINDOW(w, fws)                                        \
-    ((FWWindow *) (w)->privates[(fws)->windowPrivateIndex].ptr)
+    ((FWWindow *) (w)->base.privates[(fws)->windowPrivateIndex].ptr)
 
 #define FREEWINS_WINDOW(w)                                         \
     FWWindow *fww = GET_FREEWINS_WINDOW  (w,                    \
@@ -740,7 +740,7 @@ static void FWHandleButtonReleaseEvent (CompWindow *w)
  * as it does all the setup beforehand.
  */
 static Bool
-FWHandleFWInputInfo (CompWindow *w)
+FWHandleWindowInputInfo (CompWindow *w)
 {
     FREEWINS_WINDOW (w);
 
@@ -1052,7 +1052,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	    if((fwd->grab == grabScale) || (fwd->grab == grabRotate)){
         CompScreen *s;
 	    if (FWCanShape (fwd->grabWindow))
-	        if (FWHandleFWInputInfo (fwd->grabWindow))
+	        if (FWHandleWindowInputInfo (fwd->grabWindow))
 	            FWAdjustIPW (fwd->grabWindow);
 		for(s = d->screens; s; s = s->next){
 		    FREEWINS_SCREEN(s);
@@ -2138,7 +2138,7 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
 	}
 
     if (FWCanShape (useW))
-        FWHandleFWInputInfo (useW);
+        FWHandleWindowInputInfo (useW);
 
     // Set values to animate from
 	fww->animate.oldAngX = fww->transform.angX;
@@ -2217,7 +2217,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
     fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
 
-    w->privates[fws->windowPrivateIndex].ptr = fww;
+    w->base.privates[fws->windowPrivateIndex].ptr = fww;
     fww->input = NULL;
     
     // Shape window back to normal
@@ -2236,7 +2236,7 @@ static void freewinsFiniWindow(CompPlugin *p, CompWindow *w){
     fww->transform.scaleX = 1.0f;
     fww->transform.scaleY = 1.0f;
 
-    fww->rotated = FALSE
+    fww->rotated = FALSE;
     
     if (FWCanShape (w))
         FWHandleWindowInputInfo (w);
@@ -2266,7 +2266,7 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     fws->rotatedWindows = 0;
     fws->transformedWindows = NULL;
 
-    s->privates[fwd->screenPrivateIndex].ptr = fws;
+    s->base.privates[fwd->screenPrivateIndex].ptr = fws;
     
     WRAP(fws, s, preparePaintScreen, FWPreparePaintScreen);
     WRAP(fws, s, paintWindow, FWPaintWindow);
@@ -2321,22 +2321,24 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
 
 
     /* BCOP Action initiation */
-    freewinsSetInitiateRotationInitiate(d, initiateFWRotate);
-    freewinsSetInitiateScaleInitiate(d, initiateFWScale);
-    freewinsSetResetInitiate(d, resetFWRotation);
-    freewinsSetToggleAxisInitiate(d, toggleFWAxis);
+    freewinsSetInitiateRotationButtonInitiate(d, initiateFWRotate);
+    freewinsSetInitiateScaleButtonInitiate(d, initiateFWScale);
+    freewinsSetResetButtonInitiate(d, resetFWRotation);
+    freewinsSetToggleAxisKeyInitiate(d, toggleFWAxis);
     
     // Rotate / Scale Up Down Left Right
 
-    freewinsSetScaleUpInitiate(d, FWScaleUp);
-    freewinsSetScaleDownInitiate(d, FWScaleDown);
+    freewinsSetScaleUpButtonInitiate(d, FWScaleUp);
+    freewinsSetScaleDownButtonInitiate(d, FWScaleDown);
+    freewinsSetScaleUpKeyInitiate(d, FWScaleUp);
+    freewinsSetScaleDownKeyInitiate(d, FWScaleDown);
 
-    freewinsSetRotateUpInitiate(d, FWRotateUp);
-    freewinsSetRotateDownInitiate(d, FWRotateDown);
-    freewinsSetRotateLeftInitiate(d, FWRotateLeft);
-    freewinsSetRotateRightInitiate(d, FWRotateRight);
-    freewinsSetRotateCInitiate(d, FWRotateClockwise);
-    freewinsSetRotateCcInitiate(d, FWRotateCounterclockwise);
+    freewinsSetRotateUpKeyInitiate(d, FWRotateUp);
+    freewinsSetRotateDownKeyInitiate(d, FWRotateDown);
+    freewinsSetRotateLeftKeyInitiate(d, FWRotateLeft);
+    freewinsSetRotateRightKeyInitiate(d, FWRotateRight);
+    freewinsSetRotateCKeyInitiate(d, FWRotateClockwise);
+    freewinsSetRotateCcKeyInitiate(d, FWRotateCounterclockwise);
 
     freewinsSetRotateInitiate (d, freewinsRotateWindow);
     freewinsSetIncrementRotateInitiate (d, freewinsIncrementRotateWindow);
@@ -2359,6 +2361,37 @@ static void freewinsFiniDisplay(CompPlugin *p, CompDisplay *d){
     free(fwd);
 }
 
+/* Object Initiation and Finitialization */
+
+static CompBool
+freewinsInitObject (CompPlugin *p,
+		     CompObject *o)
+{
+    static InitPluginObjectProc dispTab[] = {
+	(InitPluginObjectProc) 0,
+	(InitPluginObjectProc) freewinsInitDisplay,
+	(InitPluginObjectProc) freewinsInitScreen,
+	(InitPluginObjectProc) freewinsInitWindow
+    };
+
+    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
+}
+
+static void
+freewinsFiniObject (CompPlugin *p,
+		     CompObject *o)
+{
+    static FiniPluginObjectProc dispTab[] = {
+	(FiniPluginObjectProc) 0,
+	(FiniPluginObjectProc) freewinsFiniDisplay,
+	(FiniPluginObjectProc) freewinsFiniScreen,
+	(FiniPluginObjectProc) freewinsFiniWindow
+    };
+
+    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
+}
+
+
 /* Plugin initialization / cleaning */
 static Bool freewinsInit(CompPlugin *p){
     
@@ -2378,30 +2411,16 @@ static void freewinsFini(CompPlugin *p){
 	freeDisplayPrivateIndex( displayPrivateIndex );
 }
 
-static int
-freewinsGetVersion (CompPlugin *plugin,
-		int	   version)
-{
-    return ABIVERSION;
-}
-
 /* Plugin implementation export */
 CompPluginVTable freewinsVTable = {
     "freewins",
-    freewinsGetVersion,
     0,
     freewinsInit,
     freewinsFini,
-    freewinsInitDisplay,
-    freewinsFiniDisplay,
-    freewinsInitScreen,
-    freewinsFiniScreen,
-    freewinsInitWindow,
-    freewinsFiniWindow,
+    freewinsInitObject,
+    freewinsFiniObject,
     0,
     0,
-    0,
-    0
 };
 
 CompPluginVTable *getCompPluginInfo (void){ return &freewinsVTable; }
