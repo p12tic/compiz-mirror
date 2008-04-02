@@ -692,6 +692,35 @@ static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned 
     syncWindowPosition (w);
 }
 
+/* Handle Rotation */
+static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy)
+{
+    FREEWINS_WINDOW (w);
+
+    if(fww->zaxis)
+    {
+       if(ABS(dy)>ABS(dx))
+       {
+            if(fww->grabLeft)
+            fww->transform.unsnapAngZ -= 360 * dx;
+            else
+            fww->transform.unsnapAngZ -= 360 * dx;
+       }
+       else
+       {
+            if(fww->grabTop)
+            fww->transform.unsnapAngZ -= 360 * dy;
+            else
+            fww->transform.unsnapAngZ -= 360 * dy;
+       }
+    }
+    else
+    {
+    fww->transform.unsnapAngX -= 360.0 * dy;
+    fww->transform.unsnapAngY += 360.0 * dx;
+    }
+}
+
 static void FWHandleButtonReleaseEvent (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
@@ -789,42 +818,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
             if (fwd->grab == grabRotate)
             {        
-                if(fww->zaxis)
-                {
-		            if(ABS(dy)>ABS(dx))
-		            {
-			            if(fww->grabLeft)
-			            {
-			                fww->transform.angZ -= 360 * dx;
-			                fww->transform.unsnapAngZ -= 360 * dx;
-			            }
-			            else
-			            {
-			                fww->transform.angZ += 360 * dx;
-			                fww->transform.unsnapAngZ -= 360 * dx;
-			            }
-		                }
-		                else
-		                {
-			            if(fww->grabTop)
-			            {
-			                fww->transform.angZ += 360 * dx;
-			                fww->transform.unsnapAngZ -= 360 * dx;
-			            }
-			            else
-		                {
-			                fww->transform.angZ -= 360 * dx;
-			                fww->transform.unsnapAngZ -= 360 * dx;
-			            }
-		            }
-		        }
-		        else
-		        {
-		            fww->transform.angX -= 360.0 * dy;
-		            fww->transform.unsnapAngX -= 360.0 * dy;
-		            fww->transform.angY += 360.0 * dx;
-		            fww->transform.unsnapAngY += 360.0 * dx;
-		        }
+                FWHandleRotateMotionEvent(fwd->grabWindow, dx, dy);
 		    }
 		    if (fwd->grab == grabScale)
 		    {
@@ -944,7 +938,13 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		         }
 		      
 		    }
-		
+
+            fww->transform.angX = fww->transform.unsnapAngX;
+            fww->transform.angY = fww->transform.unsnapAngY;
+            fww->transform.angZ = fww->transform.unsnapAngZ;
+            fww->transform.scaleX = fww->transform.unsnapScaleX;
+            fww->transform.scaleY = fww->transform.unsnapScaleY;
+
             fwd->oldX += (ev->xmotion.x_root - fwd->oldX);
 		    fwd->oldY += (ev->xmotion.y_root - fwd->oldY);
 
