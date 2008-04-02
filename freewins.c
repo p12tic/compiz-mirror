@@ -493,34 +493,6 @@ FWUnshapeInput (CompWindow *w)
    as input prevention becomes stable enough  */
 static void FWShapeInput (CompWindow *w)
 {
-    /*FREEWINS_WINDOW(w);
-    XRectangle Rectangle;
-    float ScaleX;
-    float ScaleY;
-    
-    ScaleX = fww->transform.scaleX;
-    ScaleY = fww->transform.scaleY;
-
-    float widthScale = (float) (fww->inputRect.x2 - fww->inputRect.x1) / (float) WIN_OUTPUT_W (w); 
-    float heightScale = (float) (fww->inputRect.y2 - fww->inputRect.y1) / (float) WIN_OUTPUT_H (w); 
-
-    ScaleX = widthScale - (1 - ScaleX);
-    ScaleY = heightScale - (1 - ScaleY);
-
-    Rectangle.x = (int)(0 + ((1 - ScaleX) / 2) * w->width);
-    Rectangle.y = (int)(0 + ((1 - ScaleY) / 2) * w->height);
-    Rectangle.width = (int) (w->serverWidth * ((ScaleX)));
-    Rectangle.height = (int) (w->serverHeight * ((ScaleY)));
-    
-    XShapeSelectInput (w->screen->display->display, w->id, NoEventMask);
-    XShapeCombineRectangles  (w->screen->display->display, w->id, 
-			      ShapeInput, 0, 0, &Rectangle, 1,  ShapeSet, 0);
-	if (w->frame)
-	{
-	    XShapeCombineRectangles  (w->screen->display->display, w->frame, 
-			      ShapeInput, 0, 0, &Rectangle, 1,  ShapeSet, 0);
-	    XShapeSelectInput (w->screen->display->display, w->id, ShapeNotify);
-	}*/
 
     CompWindow *fw;
     Display    *dpy = w->screen->display->display;
