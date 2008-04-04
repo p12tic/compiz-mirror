@@ -1713,7 +1713,6 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	dy = fwd->click_win_y - fww->midY;
 
 
-    /*
 	if (fwd->click_win_y > fww->midY)
 	{
 	    if (fwd->click_win_x > fww->midX)
@@ -1728,7 +1727,6 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	    else if (fwd->click_win_x < fww->midX)
 	        fww->corner = CornerTopLeft;
 	}
-    */
 
 	fww->grabLeft = (dx > 0 ? FALSE : TRUE);
 	fww->grabTop = (dy > 0 ? FALSE : TRUE);
