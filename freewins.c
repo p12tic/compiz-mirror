@@ -701,39 +701,95 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     x -= 100;
     y -= 100;
 
+    int oldX = lastPointerX - 100;
+    int oldY = lastPointerY - 100;
+
+	float midX = WIN_REAL_X(fwd->focusWindow) + WIN_REAL_W(fwd->focusWindow)/2.0;
+	float midY = WIN_REAL_Y(fwd->focusWindow) + WIN_REAL_H(fwd->focusWindow)/2.0;
+
+	/* Check for Y axis clicking (Top / Bottom) */
+	if (pointerY > midY)
+	{
+	    /* Check for X axis clicking (Left / Right) */
+	    if (pointerX > midX)
+	        fww->corner = CornerBottomRight;
+	    else if (pointerX < midX)
+	        fww->corner = CornerBottomLeft;
+	}
+	else if (pointerY < midY)
+	{
+	    /* Check for X axis clicking (Left / Right) */
+	    if (pointerX > midX)
+	        fww->corner = CornerTopRight;
+	    else if (pointerX < midX)
+	        fww->corner = CornerTopLeft;
+	}
+
     if(fww->zaxis)
     {
 
-        dx *= 360;
-        dy *= 360;
+       dx *= 360;
+       dy *= 360;
 
        switch (fww->corner)
        {
             case CornerTopRight:
 
+            if ((x) < oldX)
+            fww->transform.unsnapAngZ -= dx;
+            else if ((x) > oldX)
             fww->transform.unsnapAngZ += dx;
+
+
+            if ((y) < oldY)
+            fww->transform.unsnapAngZ -= dy;
+            else if ((y) > oldY)
             fww->transform.unsnapAngZ += dy;
 
             break;
 
             case CornerTopLeft:
 
+            if ((x) < oldX)
             fww->transform.unsnapAngZ -= dx;
+            else if ((x) > oldX)
+            fww->transform.unsnapAngZ += dx;
+
+
+            if ((y) < oldY)
+            fww->transform.unsnapAngZ += dy;
+            else if ((y) > oldY)
             fww->transform.unsnapAngZ -= dy;
 
             break;
 
             case CornerBottomLeft:
 
+            if ((x) < oldX)
+            fww->transform.unsnapAngZ += dx;
+            else if ((x) > oldX)
             fww->transform.unsnapAngZ -= dx;
+
+
+            if ((y) < oldY)
             fww->transform.unsnapAngZ += dy;
+            else if ((y) > oldY)
+            fww->transform.unsnapAngZ -= dy;
 
             break;
 
             case CornerBottomRight:
 
+            if ((x) < oldX)
             fww->transform.unsnapAngZ += dx;
+            else if ((x) > oldX)
+            fww->transform.unsnapAngZ -= dx;
+
+
+            if ((y) < oldY)
             fww->transform.unsnapAngZ -= dy;
+            else if ((y) > oldY)
+            fww->transform.unsnapAngZ += dy;
             break;
         }
     }
@@ -742,6 +798,7 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     fww->transform.unsnapAngX -= 360.0 * dy;
     fww->transform.unsnapAngY += 360.0 * dx;
     }
+
 }
 
 /* Handle Rotation */
@@ -978,6 +1035,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 addWindowDamage (fwd->grabWindow);
 
         }
+
     break;
 
 
@@ -1654,10 +1712,10 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	dx = fwd->click_win_x - fww->midX;
 	dy = fwd->click_win_y - fww->midY;
 
-	/* Check for Y axis clicking (Top / Bottom) */
+
+    /*
 	if (fwd->click_win_y > fww->midY)
 	{
-	    /* Check for X axis clicking (Left / Right) */
 	    if (fwd->click_win_x > fww->midX)
 	        fww->corner = CornerBottomRight;
 	    else if (fwd->click_win_x < fww->midX)
@@ -1665,12 +1723,12 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	}
 	else if (fwd->click_win_y < fww->midY)
 	{
-	    /* Check for X axis clicking (Left / Right) */
 	    if (fwd->click_win_x > fww->midX)
 	        fww->corner = CornerTopRight;
 	    else if (fwd->click_win_x < fww->midX)
 	        fww->corner = CornerTopLeft;
 	}
+    */
 
 	fww->grabLeft = (dx > 0 ? FALSE : TRUE);
 	fww->grabTop = (dy > 0 ? FALSE : TRUE);
