@@ -147,7 +147,7 @@
 	        </option>
 	        <option type="float" name="min_scale">
 			    <_short>Minimum scale</_short>
-			    <_long>How small the scale is allowed to be when 'Allow Negative' is not toggled or input shaping is enabled</_long>
+			    <_long>How small the scale is allowed to be when 'Allow Negative' is not toggled</_long>
 			    <default>0.1</default>
 			    <min>0.01</min>
 			    <max>1.0</max>
@@ -155,11 +155,30 @@
 	    </subgroup>
 	    <subgroup>
 	    <_short>Rotation</_short>
-	        <option type="bool" name="always_z">
-			    <_short>Always allow 3D rotation</_short>
-			    <_long>Always allow 3D rotation, even when not clicking in the middle of a window</_long>
-			    <default>False</default>
+	        <option type="int" name="z_axis_rotation">
+			    <_short>Rotation Type</_short>
+			    <_long>2D/3D Rotation Type</_long>
+			    <desc>
+                    <value>0</value><name>Always 2D</name>
+                </desc>
+			    <desc>
+                    <value>1</value><name>Always 3D</name>
+                </desc>
+			    <desc>
+                    <value>2</value><name>Determine on Click</name>
+                </desc>
+			    <desc>
+                    <value>3</value><name>Interchangable</name>
+                </desc>
+                <default>2</default>
 	        </option>
+            <option type="float" name="3D_percent">
+                <_short>3D Rotation Percentage</_short>
+                <_long>Percentage of the window area used for 3D rotation</_long>
+                <default>35.0</default>
+                <min>10.0</min>
+                <max>90.0</max>
+            </option>
 	        <option type="bool" name="auto_zoom">
 			    <_short>Auto-Zoom</_short>
 			    <_long>Auto-Zoom when rotating so that windows do not get too large</_long>

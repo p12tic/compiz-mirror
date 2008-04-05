@@ -230,6 +230,8 @@ typedef struct _FWWindow{
 
     float midX;
     float midY;
+
+    float radius;
     
     // Used for determining window movement
 
@@ -374,6 +376,25 @@ static Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, fl
 
     return value;
 }*/
+
+/* Determine if we clicked in the z-axis region */
+static void FWDetermineZAxisClick (CompWindow *w, int px, int py)
+{
+    FREEWINS_WINDOW (w);
+
+    fww->zaxis = FALSE;
+
+    float clickRadiusFromCenter;
+
+    int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
+	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
+
+    clickRadiusFromCenter = sqrt(pow((x - px), 2) + pow((y - py), 2));
+
+    if (clickRadiusFromCenter > fww->radius * (freewinsGet3dPercent (w->screen) / 100))
+        fww->zaxis = TRUE;
+}
+    
 
 /* Check to see if we can shape a window */
 static Bool FWCanShape (CompWindow *w)
@@ -706,6 +727,9 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 
 	float midX = WIN_REAL_X(fwd->focusWindow) + WIN_REAL_W(fwd->focusWindow)/2.0;
 	float midY = WIN_REAL_Y(fwd->focusWindow) + WIN_REAL_H(fwd->focusWindow)/2.0;
+
+    if (freewinsGetZAxisRotation (w->screen) == ZAxisRotationInterchangable)
+        FWDetermineZAxisClick (w, pointerX, pointerY);
 
 	/* Check for Y axis clicking (Top / Bottom) */
 	if (pointerY > midY)
@@ -1478,6 +1502,10 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	x = WIN_REAL_X(fwd->focusWindow) + WIN_REAL_W(fwd->focusWindow)/2.0;
 	y = WIN_REAL_Y(fwd->focusWindow) + WIN_REAL_H(fwd->focusWindow)/2.0;
 
+    FREEWINS_WINDOW (fwd->focusWindow);
+
+    float zRad = fww->radius * (freewinsGet3dPercent (s) / 100);
+
 	wasCulled = glIsEnabled(GL_CULL_FACE);
 	zTransform = *transform;
 
@@ -1489,8 +1517,8 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	if(wasCulled)
 	    glDisable(GL_CULL_FACE);
 
-    CompWindow *w = fwd->focusWindow;
-    FREEWINS_WINDOW (w);
+    //CompWindow *w = fwd->focusWindow;
+    //FREEWINS_WINDOW (w);
 
     if (freewinsGetShowCircle (s))
     {
@@ -1502,7 +1530,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
 	glBegin(GL_POLYGON);
 	for(j=0; j<360; j += 10)
-	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
+	    glVertex3f( x + zRad * cos(D2R(j)), y + zRad * sin(D2R(j)), 0.0 );
 	glEnd ();
 
 	glDisable(GL_BLEND);
@@ -1511,16 +1539,12 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
 	glBegin(GL_LINE_LOOP);
 	for(j=360; j>=0; j -= 10)
-	    glVertex3f( x + 100 * cos(D2R(j)), y + 100 * sin(D2R(j)), 0.0 );
+	    glVertex3f( x + zRad * cos(D2R(j)), y + zRad * sin(D2R(j)), 0.0 );
 	glEnd ();
-
-    float rad0;
-
-    rad0 = sqrt(pow((x - WIN_REAL_X (w)), 2) + pow((y - WIN_REAL_Y (w)), 2));
 
 	glBegin(GL_LINE_LOOP);
 	for(j=360; j>=0; j -= 10)
-	    glVertex3f( x + rad0 * cos(D2R(j)), y + rad0 * sin(D2R(j)), 0.0 );
+	    glVertex3f( x + fww->radius * cos(D2R(j)), y + fww->radius * sin(D2R(j)), 0.0 );
 	glEnd ();
 
     }
@@ -1614,13 +1638,18 @@ static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 }
 
 /* Information on window resize */
-static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh){
-
+static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh)
+{
     FREEWINS_WINDOW(w);
     FREEWINS_SCREEN(w->screen);
 
     fww->midX += dw;
     fww->midY += dh;
+
+	int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
+	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
+
+    fww->radius = sqrt(pow((x - WIN_REAL_X (w)), 2) + pow((y - WIN_REAL_Y (w)), 2));
 
     /*if (FWCanShape (w))
         FWShapeInput (w);*/
@@ -1637,6 +1666,7 @@ FWWindowMoveNotify (CompWindow *w,
 		       Bool       immediate)
 {
     FREEWINS_SCREEN (w->screen);
+    FREEWINS_WINDOW (w);
 
     CompWindow *useWindow;
 
@@ -1645,6 +1675,11 @@ FWWindowMoveNotify (CompWindow *w,
         moveWindow (useWindow, dx, dy, TRUE, FALSE);
     else
         FWAdjustIPW (w); /* We moved a window but not the IPW, so adjust it */
+
+	int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
+	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
+
+    fww->radius = sqrt(pow((x - WIN_REAL_X (w)), 2) + pow((y - WIN_REAL_Y (w)), 2));
 
     UNWRAP (fws, w->screen, windowMoveNotify);
     (*w->screen->windowMoveNotify) (w, dx, dy, immediate);
@@ -1733,22 +1768,20 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 
 	dx = ABS(dx);
 	dy = ABS(dy);
-	
-	if (!freewinsGetAlwaysZ (w->screen)) // Check the option
-	{
-	    if( (dx>dy?dx:dy) > 100 ) // Check the position
-	        {
-	            fww->zaxis = TRUE;
-	        }
-	    else
-	        {
-	            fww->zaxis = FALSE;
-	        }
-	}
-	else // It's always 3D rotation
-	{
-	    fww->zaxis = FALSE;
-	}
+
+    switch (freewinsGetZAxisRotation (s))
+    {
+        case ZAxisRotationAlways3d:
+            fww->zaxis = FALSE; break;
+        case ZAxisRotationAlways2d:
+            fww->zaxis = TRUE; break;
+        case ZAxisRotationDetermineOnClick:
+            FWDetermineZAxisClick (useW, pointerX, pointerY); break;
+        case ZAxisRotationInterchangable:
+        default:
+            break;
+    }
+
 	}
 	
     return TRUE;
@@ -2221,6 +2254,11 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
 
     fww->midX = WIN_REAL_W(w)/2.0;
     fww->midY = WIN_REAL_H(w)/2.0;
+
+	int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
+	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
+
+    fww->radius = sqrt(pow((x - WIN_REAL_X (w)), 2) + pow((y - WIN_REAL_Y (w)), 2));
 
     fww->outputRect.x1 = WIN_OUTPUT_X (w);
     fww->outputRect.x2 = WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w);
