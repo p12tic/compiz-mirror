@@ -237,6 +237,11 @@ typedef struct _FWWindow{
 
     int oldWinX;
     int oldWinY;
+
+    // Used for resize
+
+    int winH;
+    int winW;    
     
     // Used to determine starting point
     StartCorner corner;
@@ -673,7 +678,29 @@ FWAdjustIPWStacking (CompScreen *s)
     }
 }
 
-static void FWHandleIPWButtonPress (CompWindow *w)
+static void FWHandleIPWResizeInitiate (CompWindow *w)
+{
+    FREEWINS_SCREEN (w->screen);
+    FREEWINS_DISPLAY (w->screen->display);
+
+    (*w->screen->activateWindow) (w);
+    fwd->grab = grabResize;
+    fws->rotateCursor = XCreateFontCursor (w->screen->display->display, XC_fleur);	
+	if(!otherScreenGrabExist(w->screen, "freewins", "resize", 0))
+	    if(!fws->grabIndex)
+        {
+        unsigned int mods;
+        mods &= CompNoMask;
+		fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "resize");
+	    (w->screen->windowGrabNotify) (w,  w->attrib.x + (w->width / 2),
+                                           w->attrib.y + (w->height / 2), mods,
+					                       CompWindowGrabMoveMask |
+					                       CompWindowGrabButtonMask);
+        fwd->grabWindow = w;
+        }
+}
+
+static void FWHandleIPWMoveInitiate (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
@@ -707,11 +734,49 @@ static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned 
     if (!fws->grabIndex)
         return;
 
-
     moveWindow(w, dx,
                   dy, TRUE, FALSE);
     syncWindowPosition (w);
 }
+
+static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
+{
+    FREEWINS_WINDOW (w);
+
+    int dx = (x - lastPointerX) * 10;
+    int dy = (y - lastPointerY) * 10;
+
+    fww->winH += dx;
+    fww->winW += dy;
+
+    /* In order to prevent a window redraw on resize
+     * on every motion event we have a threshold
+     */
+
+    if (fww->winH - 10 > w->height || fww->winW - 10 > w->width)
+    { 
+
+        XWindowChanges xwc;
+        unsigned int   mask = CWX | CWY | CWWidth | CWHeight;
+
+        xwc.x = w->serverX;
+        xwc.y = w->serverX;
+        xwc.width = fww->winW;
+        xwc.height = fww->winH;
+
+        if (xwc.width == w->serverWidth)
+	    mask &= ~CWWidth;
+
+        if (xwc.height == w->serverHeight)
+	    mask &= ~CWHeight;
+
+        if (w->mapNum && (mask & (CWWidth | CWHeight)))
+	    sendSyncRequest (w);
+
+        configureXWindow (w, mask, &xwc);
+    }
+}
+
 
 /* Handle Rotation */
 static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
@@ -904,7 +969,7 @@ static void FWHandleButtonReleaseEvent (CompWindow *w)
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
 
-    if (fwd->grab == grabMove)
+    if (fwd->grab == grabMove || fwd->grab == grabResize)
     {
         removeScreenGrab (w->screen, fws->grabIndex, NULL);
         (w->screen->windowUngrabNotify) (w);
@@ -976,7 +1041,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
             freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 
 
-            if (fwd->grab == grabMove)
+            if (fwd->grab == grabMove || fwd->grab == grabResize)
             {
                 FREEWINS_SCREEN (fwd->grabWindow->screen);
                 FWWindowInputInfo *info;
@@ -989,7 +1054,15 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
                      */
                     w = FWGetRealWindow (fwd->grabWindow);
                 }
-                FWHandleIPWMoveMotionEvent (w, pointerX, pointerY);
+                switch (fwd->grab)
+                {
+                    case grabMove:
+                        FWHandleIPWMoveMotionEvent (w, pointerX, pointerY); break;
+                    case grabResize:
+                        FWHandleIPWResizeMotionEvent (w, pointerX, pointerY); break;
+                    default:
+                        break;
+                }
                 fww->allowRotation = FALSE;
                 fww->allowScaling = FALSE;
             }
@@ -1068,11 +1141,15 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
     {
         CompWindow *btnW;
         btnW = FWGetRealWindowFromID (d, ev->xbutton.window);
-
-        if (ev->xbutton.button == Button1)
-            if (btnW)
-                if (fwd->grab == grabNone)
-                    FWHandleIPWButtonPress (btnW);
+        if (btnW)
+            if (fwd->grab == grabNone)
+                switch (ev->xbutton.button)
+                {
+                    case Button1:
+                        FWHandleIPWMoveInitiate (btnW); break;
+                    case Button3:
+                        FWHandleIPWResizeInitiate (btnW); break;
+                }
 
         fwd->oldX =  ev->xbutton.x_root;
 	    fwd->oldY =  ev->xbutton.y_root;
@@ -1081,7 +1158,6 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	    fwd->click_win_x = ev->xbutton.x;
 	    fwd->click_win_y = ev->xbutton.y;
 
-        if (ev->xbutton.button == Button1)
 	    break;
     }
 	case ButtonRelease:
@@ -1089,7 +1165,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
         if (fwd->grabWindow)
         {
         FREEWINS_WINDOW (fwd->grabWindow);
-        if (fwd->grab == grabMove)
+        if (fwd->grab == grabMove || fwd->grab == grabResize)
             FWHandleButtonReleaseEvent (fwd->grabWindow);
 
 	    if((fwd->grab == grabScale) || (fwd->grab == grabRotate)){
@@ -1128,6 +1204,11 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	    {
 		oldPrev = w->prev;
 		oldNext = w->next;
+
+        FREEWINS_WINDOW (w);
+
+        fww->winH = WIN_REAL_H (w);
+        fww->winW = WIN_REAL_W (w);
 	    }
 	    break;
 
@@ -1648,6 +1729,9 @@ static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh)
 
     fww->midX += dw;
     fww->midY += dh;
+
+    fww->winH += dh;
+    fww->winW += dw;
 
 	int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
 	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;

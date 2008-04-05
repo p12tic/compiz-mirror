@@ -228,13 +228,13 @@
         <subgroup>
         <_short>Input Prevention</_short>
         <option name="shape_window_types" type="match">
-          <_short>Shaped Window Types</_short>
+          <_short>Prevented Input Window Types</_short>
           <_long>Window types that should be Shaped. Disable problematic windows here</_long>
           <default>(Toolbar | Utility | Dialog | ModalDialog | Normal)</default>
         </option>
         <option type="bool" name="shape_input">
-		    <_short>Shape input</_short>
-		    <_long>Only allow clicks in the window. This is NOT input redirection and is experimental!</_long>
+		    <_short>Prevent input</_short>
+		    <_long>Prevent input in transformed windows</_long>
 		    <default>True</default>
 	    </option>
         </subgroup>
