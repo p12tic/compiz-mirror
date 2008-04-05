@@ -1068,17 +1068,20 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
     {
         CompWindow *btnW;
         btnW = FWGetRealWindowFromID (d, ev->xbutton.window);
-        if (btnW)
-            if (fwd->grab == grabNone)
-                FWHandleIPWButtonPress (btnW);
+
+        if (ev->xbutton.button == Button1)
+            if (btnW)
+                if (fwd->grab == grabNone)
+                    FWHandleIPWButtonPress (btnW);
 
         fwd->oldX =  ev->xbutton.x_root;
 	    fwd->oldY =  ev->xbutton.y_root;
 	    fwd->click_root_x = ev->xbutton.x_root;
 	    fwd->click_root_y = ev->xbutton.y_root;
 	    fwd->click_win_x = ev->xbutton.x;
-	    fwd->click_win_y = ev->xbutton.y;       
+	    fwd->click_win_y = ev->xbutton.y;
 
+        if (ev->xbutton.button == Button1)
 	    break;
     }
 	case ButtonRelease:
