@@ -115,7 +115,11 @@ typedef enum _FWGrabType {
     grabMove,
     grabResize
 } FWGrabType;
-    
+
+typedef enum _Direction {
+    UpDown = 0,
+    LeftRight = 1
+} Direction;
 
 /* Shape info / restoration */
 typedef struct _FWWindowInputInfo {
@@ -195,6 +199,7 @@ typedef struct _FWDisplay{
     HandleEventProc handleEvent;
 
     CompWindow *grabWindow;
+    CompWindow *lastGrabWindow;
     CompWindow *focusWindow;
 
     FWGrabType grab;
@@ -241,7 +246,14 @@ typedef struct _FWWindow{
     // Used for resize
 
     int winH;
-    int winW;    
+    int winW;
+
+    // Used to determine axis
+
+    float adjustX;
+    float adjustY;
+
+    Direction direction;
     
     // Used to determine starting point
     StartCorner corner;
@@ -387,19 +399,67 @@ static void FWDetermineZAxisClick (CompWindow *w, int px, int py)
 {
     FREEWINS_WINDOW (w);
 
-    fww->zaxis = FALSE;
+    Bool directionChange = FALSE;
 
-    float clickRadiusFromCenter;
+    if (!fww->zaxis)
+    {
 
-    int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
-	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
+        static int steps;
 
-    clickRadiusFromCenter = sqrt(pow((x - px), 2) + pow((y - py), 2));
+        /* Check if we are going in a particular 3D direction
+         * because if we are going left/right and we suddenly 
+         * change to 2D mode this would not be expected behaviour.
+         * It is only if we have a change in direction that we want
+         * to change to 2D rotation.
+         */
 
-    if (clickRadiusFromCenter > fww->radius * (freewinsGet3dPercent (w->screen) / 100))
-        fww->zaxis = TRUE;
+        /* FIXME: Improve Detection */
+
+        Direction direction;
+
+        static int ddx, ddy;
+
+        unsigned int dx = pointerX - lastPointerX;
+        unsigned int dy = pointerY - lastPointerY;
+
+        ddx += dx;
+        ddy += dy;
+
+        if (steps >= 10)
+        {
+            if (ddx > ddy)
+                direction = LeftRight;
+            else
+                direction = UpDown;
+
+            if (fww->direction != direction)
+                directionChange = TRUE;
+
+            fww->direction = direction;
+        }
+
+        steps++;
+
+    }
+    else
+        directionChange = TRUE;
+
+    if (directionChange)
+    {
+
+        float clickRadiusFromCenter;
+
+        int x = (WIN_REAL_X(w) + WIN_REAL_W(w)/2.0) + fww->adjustX;
+	    int y = (WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0) + fww->adjustY;
+
+        clickRadiusFromCenter = sqrt(pow((x - px), 2) + pow((y - py), 2));
+
+        if (clickRadiusFromCenter > fww->radius * (freewinsGet3dPercent (w->screen) / 100))
+            fww->zaxis = TRUE;
+        else
+            fww->zaxis = FALSE;
+    }
 }
-    
 
 /* Check to see if we can shape a window */
 static Bool FWCanShape (CompWindow *w)
@@ -1121,12 +1181,12 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 fww->transform.scaleY = ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
             }
 	
-	        fww->animate.oldAngX = fww->transform.angX;
+	        /*fww->animate.oldAngX = fww->transform.angX;
 	        fww->animate.oldAngY = fww->transform.angY;
 	        fww->animate.oldAngZ = fww->transform.angZ;
 	
 	        fww->animate.oldScaleX = fww->transform.scaleX;
-	        fww->animate.oldScaleY = fww->transform.scaleY;
+	        fww->animate.oldScaleY = fww->transform.scaleY;*/
 
 	        if(dx != 0.0 || dy != 0.0)
                 addWindowDamage (fwd->grabWindow);
@@ -1183,6 +1243,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		}
 
         fwd->grab = grabNone;
+        fwd->lastGrabWindow = fwd->grabWindow;
 		fwd->grabWindow = 0;
         fww->rotated = TRUE;
 	    }
@@ -1281,7 +1342,7 @@ FWPreparePaintScreen (CompScreen *s,
 	            fww->animate.steps = 0.005;
         }
     }
-    
+
     UNWRAP (fws, s, preparePaintScreen);
     (*s->preparePaintScreen) (s, ms);
     WRAP (fws, s, preparePaintScreen, FWPreparePaintScreen);
@@ -1308,6 +1369,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
     Bool wasCulled = glIsEnabled(GL_CULL_FACE);
     Bool status;
 
+    FREEWINS_DISPLAY (w->screen->display);
     FREEWINS_SCREEN(w->screen);
     FREEWINS_WINDOW(w);
         
@@ -1320,6 +1382,24 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
         fww->oldWinX = WIN_REAL_X (w);
         fww->oldWinY = WIN_REAL_Y (w);
+
+        if (fwd->grab == grabRotate)
+            switch (freewinsGetRotationAxis (w->screen))
+            {
+                case RotationAxisAlwaysCentre:
+                default:
+                    fww->adjustX = (1.0f);
+                    fww->adjustY = (1.0f);
+                    break;
+                case RotationAxisClickPoint:            
+                    fww->adjustX = (fwd->click_win_x - fww->midX);
+                    fww->adjustY = (fwd->click_win_y - fww->midY);
+                    break;
+                case RotationAxisOppositeToClick:            
+                    fww->adjustX = -(fwd->click_win_x - fww->midX);
+                    fww->adjustY = -(fwd->click_win_y - fww->midY);
+                    break;
+            }
 
         /* Here we duplicate some of the work the openGL does
          * but for different reasons. We have access to the 
@@ -1355,17 +1435,17 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
         matrixGetIdentity (&outTransform);
         matrixScale (&outTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-        matrixTranslate(&outTransform, 
-            WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0, 
-            WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0, 0.0);
+	    matrixTranslate(&outTransform, 
+		    (WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0) + (fww->adjustX), 
+		    (WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0) + (fww->adjustY), 0.0);
         matrixRotate (&outTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
         matrixRotate (&outTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
         matrixRotate (&outTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
         matrixScale(&outTransform, fww->transform.scaleX, 1.0, 0.0);
         matrixScale(&outTransform, 1.0, fww->transform.scaleY, 0.0);
-        matrixTranslate(&outTransform, 
-            -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
-            -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
+            matrixTranslate(&outTransform, 
+                -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0 + (fww->adjustX)), 
+                -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0 + (fww->adjustY)), 0.0);
 
         FWRotateProjectVector(w, corner1, outTransform, &xScreen1, &yScreen1, &zScreen1);
         FWRotateProjectVector(w, corner2, outTransform, &xScreen2, &yScreen2, &zScreen2);
@@ -1404,17 +1484,17 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
             matrixGetIdentity (&outTransform);
             matrixScale (&outTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-            matrixTranslate(&outTransform, 
-                WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0, 
-                WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0, 0.0);
+	        matrixTranslate(&outTransform, 
+		        (WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0) + (fww->adjustX), 
+		        (WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0) + (fww->adjustY), 0.0);
             matrixRotate (&outTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
             matrixRotate (&outTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
             matrixRotate (&outTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
             matrixScale(&outTransform, autoScaleX - (1 - fww->transform.scaleX), 1.0, 0.0);
             matrixScale(&outTransform, 1.0, autoScaleY - (1 - fww->transform.scaleY), 0.0);
             matrixTranslate(&outTransform, 
-                -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0), 
-                -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0), 0.0);
+                -(WIN_OUTPUT_X(w) + WIN_OUTPUT_W(w)/2.0 + (fww->adjustX)), 
+                -(WIN_OUTPUT_Y(w) + WIN_OUTPUT_H(w)/2.0 + (fww->adjustY)), 0.0);
 
             FWRotateProjectVector(w, corner1, outTransform, &xScreen1, &yScreen1, &zScreen1);
             FWRotateProjectVector(w, corner2, outTransform, &xScreen2, &yScreen2, &zScreen2);
@@ -1436,8 +1516,9 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 	    /* Adjust the window in the matrix to prepare for transformation */
 	    matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
 	    matrixTranslate(&wTransform, 
-		    WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
-		    WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
+		    (WIN_REAL_X(w) + WIN_REAL_W(w)/2.0) + (fww->adjustX), 
+		    (WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0) + (fww->adjustY), 0.0);
+        
         matrixRotate(&wTransform, fww->transform.angX, 1.0, 0.0, 0.0);
         matrixRotate(&wTransform, fww->transform.angY, 0.0, 1.0, 0.0);
         matrixRotate(&wTransform, fww->transform.angZ, 0.0, 0.0, 1.0);        
@@ -1446,8 +1527,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         matrixScale(&wTransform, 1.0, scaleY, 0.0);
 
 	    matrixTranslate(&wTransform, 
-		    -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
-		    -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
+		    -((WIN_REAL_X(w) + WIN_REAL_W(w)/2.0) + (fww->adjustX)), 
+		    -((WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0) + (fww->adjustY)), 0.0);
 
         /* Create rects for input after we've dealt
          * with output
@@ -1465,17 +1546,17 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
         matrixGetIdentity (&inputTransform);
         matrixScale (&inputTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-        matrixTranslate(&inputTransform, 
-            WIN_REAL_X(w) + WIN_REAL_W(w)/2.0, 
-            WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0, 0.0);
+	    matrixTranslate(&inputTransform, 
+		    (WIN_REAL_X(w) + WIN_REAL_W(w)/2.0) + (fww->adjustX), 
+		    (WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0) + (fww->adjustY), 0.0);
         matrixRotate (&inputTransform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
         matrixRotate (&inputTransform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
         matrixRotate (&inputTransform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
         matrixScale(&inputTransform, fww->transform.scaleX, 1.0, 0.0);
         matrixScale(&inputTransform, 1.0, fww->transform.scaleY, 0.0);
-        matrixTranslate(&inputTransform, 
-            -(WIN_REAL_X(w) + WIN_REAL_W(w)/2.0), 
-            -(WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0), 0.0);
+	    matrixTranslate(&inputTransform, 
+		    -((WIN_REAL_X(w) + WIN_REAL_W(w)/2.0) + (fww->adjustX)), 
+		    -((WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0) + (fww->adjustY)), 0.0);
 
         FWRotateProjectVector(w, corneri1, inputTransform, &xScreen1, &yScreen1, &zScreen1);
         FWRotateProjectVector(w, corneri2, inputTransform, &xScreen2, &yScreen2, &zScreen2);
@@ -1601,16 +1682,11 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	if(wasCulled)
 	    glDisable(GL_CULL_FACE);
 
-    //CompWindow *w = fwd->focusWindow;
-    //FREEWINS_WINDOW (w);
-
-    if (freewinsGetShowCircle (s))
+    if (freewinsGetShowCircle (s) && freewinsGetRotationAxis (fwd->focusWindow->screen) == RotationAxisAlwaysCentre)
     {
 
 	glColor4usv  (freewinsGetCircleColor (s));
 	glEnable(GL_BLEND);
-
-    //float x1, x2, y1, y2;
 
 	glBegin(GL_POLYGON);
 	for(j=0; j<360; j += 10)
@@ -1834,6 +1910,13 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	dx = fwd->click_win_x - fww->midX;
 	dy = fwd->click_win_y - fww->midY;
 
+    /* Save current scales and angles */
+
+    fww->animate.oldAngX = fww->transform.angX;
+    fww->animate.oldAngY = fww->transform.angY;
+    fww->animate.oldAngZ = fww->transform.angZ;
+    fww->animate.oldScaleX = fww->transform.scaleX;
+    fww->animate.oldScaleY = fww->transform.scaleY;
 
 	if (fwd->click_win_y > fww->midY)
 	{
@@ -2464,6 +2547,7 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
     
     // Set variables correctly
     fwd->grabWindow = 0;
+    fwd->lastGrabWindow = 0;
     fwd->axisHelp = FALSE;
     fwd->focusWindow = 0;
      

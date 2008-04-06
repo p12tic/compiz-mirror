@@ -172,6 +172,25 @@
                 </desc>
                 <default>2</default>
 	        </option>
+	        <option type="int" name="rotation_axis">
+			    <_short>Rotation Axis</_short>
+			    <_long>How Freely Transformable Windows should determine the rotation axis</_long>
+			    <desc>
+                    <value>0</value><name>Always Centre</name>
+                </desc>
+			    <desc>
+                    <value>1</value><name>Click Point</name>
+                </desc>
+			    <desc>
+                    <value>2</value><name>Opposite to Click</name>
+                </desc>
+			    <desc>
+                    <value>3</value><name>Nearest Corner</name>
+                </desc>
+                <min>0</min>
+                <max>2</max>
+                <default>0</default>
+	        </option>
             <option type="float" name="3D_percent">
                 <_short>3D Rotation Percentage</_short>
                 <_long>Percentage of the window area used for 3D rotation</_long>
