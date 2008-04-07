@@ -2565,6 +2565,7 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
     freewinsSetInitiateRotationButtonInitiate(d, initiateFWRotate);
     freewinsSetInitiateScaleButtonInitiate(d, initiateFWScale);
     freewinsSetResetButtonInitiate(d, resetFWRotation);
+    freewinsSetResetKeyInitiate(d, resetFWRotation);
     freewinsSetToggleAxisKeyInitiate(d, toggleFWAxis);
     
     // Rotate / Scale Up Down Left Right
