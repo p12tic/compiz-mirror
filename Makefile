@@ -96,7 +96,7 @@ DEFINES   = -DIMAGEDIR=\"$(IMAGEDIR)\" -DDATADIR=\"$(DATADIR)\"
 
 POFILEDIR = $(shell if [ -n "$(PODIR)" ]; then $(ECHO) $(PODIR); else $(ECHO) ./po;fi )
 
-COMPIZ_HEADERS = compiz.h
+COMPIZ_HEADERS = compiz.h compiz-core.h
 COMPIZ_INC = $(shell pkg-config --variable=includedir compiz)/compiz/
 
 is-bcop-target  := $(shell if [ -e $(PLUGIN).xml.in ]; then cat $(PLUGIN).xml.in | grep "useBcop=\"true\""; \
@@ -372,7 +372,7 @@ install: $(DESTDIR) all
 		$(ECHO) "install   : $(XMLDIR)/$(PLUGIN).xml"; \
 	    fi; \
 	    mkdir -p $(XMLDIR); \
-	    cp $(BUILDDIR)/$(PLUGIN).xml $(XMLDIR)/$(PLUGIN).xml; \
+	    $(INSTALL)  $(BUILDDIR)/$(PLUGIN).xml $(XMLDIR)/$(PLUGIN).xml; \
 	    if [ '$(color)' != 'no' ]; then \
 		$(ECHO) -e "\r\033[0minstall   : \033[34m$(XMLDIR)/$(PLUGIN).xml\033[0m"; \
 	    fi; \
@@ -383,7 +383,7 @@ install: $(DESTDIR) all
 	    else \
 		$(ECHO) "install   : $(CINCDIR)/compiz/$(hdr-install-target)"; \
 	    fi; \
-	    cp $(hdr-install-target) $(CINCDIR)/compiz/$(hdr-install-target); \
+	    $(INSTALL) --mode=u=rw,go=r,a-s $(hdr-install-target) $(CINCDIR)/compiz/$(hdr-install-target); \
 	    if [ '$(color)' != 'no' ]; then \
 		$(ECHO) -e "\r\033[0minstall   : \033[34m$(CINCDIR)/compiz/$(hdr-install-target)\033[0m"; \
 	    fi; \
@@ -394,7 +394,7 @@ install: $(DESTDIR) all
 	    else \
 		$(ECHO) "install   : $(PKGDIR)/compiz-$(PLUGIN).pc"; \
 	    fi; \
-	    cp $(pkg-target) $(PKGDIR)/compiz-$(PLUGIN).pc; \
+	    $(INSTALL) --mode=u=rw,go=r,a-s $(pkg-target) $(PKGDIR)/compiz-$(PLUGIN).pc; \
 	    if [ '$(color)' != 'no' ]; then \
 		$(ECHO) -e "\r\033[0minstall   : \033[34m$(PKGDIR)/compiz-$(PLUGIN).pc\033[0m"; \
 	    fi; \
@@ -405,7 +405,12 @@ install: $(DESTDIR) all
 	    else \
 		$(ECHO) "install   : $(schema-output)"; \
 	    fi; \
-	    gconftool-2 --install-schema-file=$(schema-output) > /dev/null; \
+	    if [ "x$(USER)" = "xroot" ]; then \
+		GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source` \
+		gconftool-2 --makefile-install-rule $(schema-output) > /dev/null; \
+	    else \
+		gconftool-2 --install-schema-file=$(schema-output) > /dev/null; \
+	    fi; \
 	    if [ '$(color)' != 'no' ]; then \
 		$(ECHO) -e "\r\033[0minstall   : \033[34m$(schema-output)\033[0m"; \
 	    fi; \
@@ -420,7 +425,7 @@ install: $(DESTDIR) all
 		fi; \
 	    	FILEDIR="$(DATADIR)/`dirname "$$FILE"`"; \
 		mkdir -p "$$FILEDIR"; \
-		cp data/$$FILE $(DATADIR)/$$FILE; \
+		$(INSTALL) --mode=u=rw,go=r,a-s data/$$FILE $(DATADIR)/$$FILE; \
 		if [ '$(color)' != 'no' ]; then \
 		    $(ECHO) -e "\r\033[0minstall   : \033[34m$(DATADIR)/$$FILE\033[0m"; \
 		fi; \
@@ -436,7 +441,7 @@ install: $(DESTDIR) all
 		fi; \
 	    	FILEDIR="$(IMAGEDIR)/`dirname "$$FILE"`"; \
 		mkdir -p "$$FILEDIR"; \
-		cp images/$$FILE $(IMAGEDIR)/$$FILE; \
+		$(INSTALL) --mode=u=rw,go=r,a-s images/$$FILE $(IMAGEDIR)/$$FILE; \
 		if [ '$(color)' != 'no' ]; then \
 		    $(ECHO) -e "\r\033[0minstall   : \033[34m$(IMAGEDIR)/$$FILE\033[0m"; \
 		fi; \
@@ -486,6 +491,18 @@ uninstall:
 	    rm -f $(PKGDIR)/compiz-$(PLUGIN).pc; \
 	    if [ '$(color)' != 'no' ]; then \
 		$(ECHO) -e "\r\033[0muninstall : \033[34m$(PKGDIR)/compiz-$(PLUGIN).pc\033[0m"; \
+	    fi; \
+	fi
+	@if [ -n "$(schema-output)" -a -e "$(schema-output)" -a 'x$(USER)' = 'xroot' ]; then \
+	    if [ '$(color)' != 'no' ]; then \
+		$(ECHO) -n -e "\033[0;1;5muninstall \033[0m: \033[0;31m$(schema-output)\033[0m"; \
+	    else \
+		$(ECHO) "uninstall : $(schema-output)"; \
+	    fi; \
+	    GCONF_CONFIG_SOURCE=`gconftool-2 --get-default-source` \
+	    gconftool-2 --makefile-uninstall-rule $(schema-output) > /dev/null; \
+	    if [ '$(color)' != 'no' ]; then \
+		$(ECHO) -e "\r\033[0muninstall : \033[34m$(schema-output)\033[0m"; \
 	    fi; \
 	fi
 	@if [ -n "$(data-files)" ]; then \
