@@ -2114,7 +2114,12 @@ static Bool FWRotateUp (CompDisplay *d, CompAction *action,
 
     GET_WINDOW
     if (w)
+    {
         FWSetPrepareRotation (w, 0, ROTATE_INC, 0, 0, 0);
+
+        if (FWCanShape (w))
+            FWHandleWindowInputInfo (w);
+    }
     
     return TRUE;
     
@@ -2125,8 +2130,12 @@ static Bool FWRotateDown (CompDisplay *d, CompAction *action,
 
     GET_WINDOW
     if (w)
+    {
         FWSetPrepareRotation (w, 0, NEG_ROTATE_INC, 0, 0, 0);
     
+        if (FWCanShape (w))
+            FWHandleWindowInputInfo (w);
+    }
     return TRUE;
     
 }
@@ -2136,7 +2145,11 @@ static Bool FWRotateLeft (CompDisplay *d, CompAction *action,
 
     GET_WINDOW
     if (w)
+    {
         FWSetPrepareRotation (w, ROTATE_INC, 0, 0, 0, 0);
+        if (FWCanShape (w))
+            FWHandleWindowInputInfo (w);
+    }
     
     return TRUE;
     
@@ -2147,7 +2160,11 @@ static Bool FWRotateRight (CompDisplay *d, CompAction *action,
     
     GET_WINDOW
     if (w)
+    {
         FWSetPrepareRotation (w, NEG_ROTATE_INC, 0, 0, 0, 0);
+        if (FWCanShape (w))
+            FWHandleWindowInputInfo (w);
+    }
     
     return TRUE;
     
@@ -2158,7 +2175,11 @@ static Bool FWRotateClockwise (CompDisplay *d, CompAction *action,
     
     GET_WINDOW
     if (w)
+    {
         FWSetPrepareRotation (w, 0, 0, ROTATE_INC, 0, 0);
+        if (FWCanShape (w))
+            FWHandleWindowInputInfo (w);
+    }
     
     return TRUE;
     
@@ -2169,7 +2190,11 @@ static Bool FWRotateCounterclockwise (CompDisplay *d, CompAction *action,
     
     GET_WINDOW
     if (w)
+    {
         FWSetPrepareRotation (w, 0, 0, NEG_ROTATE_INC, 0, 0);
+        if (FWCanShape (w))
+            FWHandleWindowInputInfo (w);
+    }
     
     return TRUE;
     
