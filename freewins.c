@@ -2077,6 +2077,13 @@ FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, fl
 {
     FREEWINS_WINDOW (w);
 
+    fww->transform.unsnapAngX += dy;
+    fww->transform.unsnapAngY -= dx;
+    fww->transform.unsnapAngZ += dz;
+    
+    fww->transform.unsnapScaleX += dsu;
+    fww->transform.unsnapScaleY += dsd;
+
     fww->animate.oldAngX = fww->transform.angX; 
     fww->animate.oldAngY = fww->transform.angY; 
     fww->animate.oldAngZ = fww->transform.angZ;
@@ -2084,8 +2091,8 @@ FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, fl
     fww->animate.oldScaleX = fww->transform.scaleX; 
     fww->animate.oldScaleY = fww->transform.scaleY;
 
-    fww->animate.destAngX = fww->transform.angX + dx; 
-    fww->animate.destAngY = fww->transform.angY + dy; 
+    fww->animate.destAngX = fww->transform.angX + dy; 
+    fww->animate.destAngY = fww->transform.angY - dx; 
     fww->animate.destAngZ = fww->transform.angZ + dz;
 
     fww->animate.destScaleX = fww->transform.scaleX + dsu; 
@@ -2198,6 +2205,37 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
     
     return TRUE;
     
+}
+
+/* Reset the Rotation and Scale to 0 and 1 */
+/* TODO: Rename to resetFWTransform */
+static Bool resetFWRotation (CompDisplay *d, CompAction *action, 
+	CompActionState state, CompOption *option, int nOption){
+    
+    GET_WINDOW;
+    if (w)
+    {
+        FREEWINS_WINDOW (w);
+        FWSetPrepareRotation (w, fww->transform.angY,
+                                 -fww->transform.angX,
+                                 -fww->transform.angZ,
+                                 (1 - fww->transform.scaleX),
+                                 (1 - fww->transform.scaleY));
+        addWindowDamage (w);
+
+	    if( fww->rotated ){
+	        FREEWINS_SCREEN(w->screen);
+	        fws->rotatedWindows--;
+	        fww->rotated = FALSE;
+	    }
+
+        if (FWCanShape (w))
+            FWHandleWindowInputInfo (w);
+
+        fww->resetting = TRUE;
+    }
+
+    return TRUE;
 }
 
 /* Callable action to rotate a window to the angle provided
@@ -2325,87 +2363,6 @@ static Bool toggleFWAxis (CompDisplay *d, CompAction *action,
     return TRUE;
 }
 
-/* Reset the Rotation and Scale to 0 and 1 */
-/* TODO: Rename to resetFWTransform */
-static Bool resetFWRotation (CompDisplay *d, CompAction *action, 
-	CompActionState state, CompOption *option, int nOption){
-    
-    CompWindow* w;
-    CompWindow *useW;
-    CompScreen* s;
-    FWWindowInputInfo *info;
-    Window xid, root;
-    
-    w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
-    useW = findWindowAtDisplay (d, xid);
-    
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w = findWindowAtDisplay (d, xid);
-
-    root = getIntOptionNamed (option, nOption, "root", 0);
-    s = findScreenAtDisplay (d, root);
-
-    if (s)
-    {
-
-    FREEWINS_SCREEN (s);
-
-    for (info = fws->transformedWindows; info; info = info->next)
-    {
-        if (w->id == info->ipw)
-        /* The window we just grabbed was actually
-         * an IPW, get the real window instead
-         */
-        useW = FWGetRealWindow (w);
-    }
-
-    }
-
-    if(useW){
-	FREEWINS_WINDOW(useW);
-
-    addWindowDamage (useW);
-
-	if( fww->rotated ){
-	    FREEWINS_SCREEN(useW->screen);
-	    fws->rotatedWindows--;
-	    fww->rotated = FALSE;
-	}
-
-    if (FWCanShape (useW))
-        FWHandleWindowInputInfo (useW);
-
-    // Set values to animate from
-	fww->animate.oldAngX = fww->transform.angX;
-    fww->animate.oldAngY = fww->transform.angY;
-    fww->animate.oldAngZ = fww->transform.angZ;
-	fww->animate.oldScaleX = fww->transform.scaleX;
-	fww->animate.oldScaleY = fww->transform.scaleY;
-	
-	// Set values to animate to
-	fww->animate.destAngX = 0.0f;
-	fww->animate.destAngY = 0.0f;
-	fww->animate.destAngZ = 0.0f;
-	
-	fww->animate.destScaleX = 1.0f;
-	fww->animate.destScaleY = 1.0f;
-	
-	// Reset unsnapped values too
-	
-    fww->transform.unsnapAngX = 0.0f;
-    fww->transform.unsnapAngY = 0.0f;
-    fww->transform.unsnapAngZ = 0.0f;
-    
-    fww->transform.unsnapScaleX = 1.0f;
-    fww->transform.unsnapScaleY = 1.0f;
-
-	
-	fww->doAnimate = TRUE;
-	fww->resetting = TRUE;
-    }
-    
-    return TRUE;
-}
 
 /* ------ Plugin Initialisation ---------------------------------------*/
 
