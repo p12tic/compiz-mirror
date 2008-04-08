@@ -32,6 +32,11 @@
 				<_long>Windows to exclude from negating</_long>
 				<default>type=Desktop</default>
 			</option>
+			<option name="neg_decorations" type="bool">
+				<_short>Negate Decorations</_short>
+				<_long>Also negate window decorations, not only the window contents.</_long>
+				<default>false</default>
+			</option>
 		</screen>
 	</plugin>
 </compiz>

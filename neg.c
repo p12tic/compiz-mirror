@@ -225,21 +225,32 @@ NEGDrawWindowTexture (CompWindow           *w,
 		      const FragmentAttrib *attrib,
 		      unsigned int         mask)
 {
-    int filter;
+    int  filter;
+    Bool doNeg = FALSE;
 
     NEG_SCREEN (w->screen);
     NEG_WINDOW (w);
 
-    /* only negate window contents; that's the only case
-       where w->texture->name == texture->name */
-    if (nw->isNeg && (texture->name == w->texture->name))
+    if (nw->isNeg)
+    {
+	if (negGetNegDecorations (w->screen))
+	    doNeg = TRUE;
+	else
+	    doNeg = (texture->name == w->texture->name);
+    }
+
+    if (doNeg)
     {
 	if (w->screen->fragmentProgram)
 	{
 	    FragmentAttrib fa = *attrib;
 	    int            function;
+	    Bool           alpha = TRUE;
 
-	    function = getNegFragmentFunction (w->screen, texture, w->alpha);
+	    if (texture->name == w->texture->name)
+		alpha = w->alpha;
+
+	    function = getNegFragmentFunction (w->screen, texture, alpha);
 	    if (function)
 		addFragmentFunction (&fa, function);
 
