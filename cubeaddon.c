@@ -399,6 +399,7 @@ cubeaddonAddWindowGeometry (CompWindow *w,
 
 	const float angle = atan (0.5 / cs->distance);
 	const float rad = 0.5 / sin (angle);
+	float       ang;
 			
 	reg.numRects = 1;
 	reg.rects = &reg.extents;
@@ -462,8 +463,13 @@ cubeaddonAddWindowGeometry (CompWindow *w,
 	    if (v[0] + offX >= sx1 - CUBEADDON_GRID_SIZE &&
 		v[0] + offX < sx2 + CUBEADDON_GRID_SIZE)
 	    {
-		v[2] = (cos (angle - ((v[0] + offX - sx1) /
-		       (float)sw * angle * 2)) * rad) - cs->distance;
+		ang = (((v[0] + offX - sx1) / (float)sw) - 0.5) / rad;
+		while (ang > 1.0)
+		    ang -= 2.0;
+		while (ang < -1.0)
+		    ang += 2.0;
+		ang = asin (ang);
+		v[2] = (cos (ang) * rad) - cs->distance;
 		v[2] *= cas->deform;
 	    }
 
@@ -493,7 +499,7 @@ cubeaddonPaintTransformedOutput (CompScreen              *s,
     CUBEADDON_SCREEN (s);
     CUBE_SCREEN (s);
 
-    if (cubeaddonGetCylinder (s) &&
+    if (cubeaddonGetCylinder (s) && s->hsize * cs->nOutput > 2 &&
 	(cs->rotationState == RotationManual ||
 	(cs->rotationState == RotationChange &&
 	!cubeaddonGetCylinderManualOnly (s)) || cas->deform > 0.0))
@@ -512,10 +518,7 @@ cubeaddonPaintTransformedOutput (CompScreen              *s,
 	for (i = 0; i <= CUBEADDON_CAP_ELEMENTS; i++)
 	{
 	    x = -0.5 + ((float)i / (float)CUBEADDON_CAP_ELEMENTS);
-
-	    z = ((cos (angle - ((x + 0.5) * angle * 2)) * rad) -
-		 cs->distance) * cas->deform;
-
+	    z = ((cos (asin (x / rad)) * rad) - cs->distance) * cas->deform;
 
 	    quad = &cas->capFill[(i + 1) * 3];
 	    quad[0] = x;
