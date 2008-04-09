@@ -1,13 +1,14 @@
 <?xml version="1.0"?>
 <compiz>
-	<plugin name="cubereflex" useBcop="true">
-		<_short>Cube Reflection</_short>
-		<_long>Compiz cube reflection</_long>
+	<plugin name="cubeaddon" useBcop="true">
+		<_short>Cube Reflection and Cylinder</_short>
+		<_long>Compiz cube reflection and cylinder deformation</_long>
 		<category>Effects</category>
 		<deps>
 		<relation type="after">
 			<plugin>cube</plugin>
 			<plugin>rotate</plugin>
+			<plugin>cubecaps</plugin>
 		</relation>
 		<requirement>
 			<plugin>cube</plugin>

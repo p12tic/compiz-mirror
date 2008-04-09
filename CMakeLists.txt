@@ -1,3 +1,3 @@
 include (CompizFusion)
 
-compiz_fusion_plugin (cubereflex PLUGINDEPS cube)
+compiz_fusion_plugin (cubeaddon PLUGINDEPS cube)

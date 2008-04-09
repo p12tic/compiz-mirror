@@ -1,9 +1,9 @@
 /*
- * Compiz cube reflection plugin
+ * Compiz cube reflection and cylinder deformation plugin
  *
- * cubereflex.c
+ * cubeaddon.c
  *
- * Copyright : (C) 2007 by Dennis Kasprzyk
+ * Copyright : (C) 2008 by Dennis Kasprzyk
  * E-mail    : onestone@opencompositing.org
  *
  *
@@ -29,20 +29,20 @@
 #include <compiz-core.h>
 #include <compiz-cube.h>
 
-#include "cubereflex_options.h"
+#include "cubeaddon_options.h"
 
-static int displayPrivateIndex;
+static int CubeaddonDisplayPrivateIndex;
 static int cubeDisplayPrivateIndex;
 
-#define CUBEREFLEX_GRID_SIZE    100
-#define CUBEREFLEX_CAP_ELEMENTS 30
+#define CUBEADDON_GRID_SIZE    100
+#define CUBEADDON_CAP_ELEMENTS 30
 
-typedef struct _CubereflexDisplay
+typedef struct _CubeaddonDisplay
 {
     int screenPrivateIndex;
-} CubereflexDisplay;
+} CubeaddonDisplay;
 
-typedef struct _CubereflexScreen
+typedef struct _CubeaddonScreen
 {
     DonePaintScreenProc        donePaintScreen;
     PaintOutputProc            paintOutput;
@@ -73,19 +73,11 @@ typedef struct _CubereflexScreen
 
     Region tmpRegion;
 
-    GLfloat capFill[CUBEREFLEX_CAP_ELEMENTS * 12];
-} CubereflexScreen;
+    GLfloat capFill[CUBEADDON_CAP_ELEMENTS * 12];
+} CubeaddonScreen;
 
-#define GET_CUBEREFLEX_DISPLAY(d) \
-    ((CubereflexDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
-#define CUBEREFLEX_DISPLAY(d) \
-    CubereflexDisplay *rd = GET_CUBEREFLEX_DISPLAY (d);
-
-#define GET_CUBEREFLEX_SCREEN(s, rd) \
-    ((CubereflexScreen *) (s)->base.privates[(rd)->screenPrivateIndex].ptr)
-#define CUBEREFLEX_SCREEN(s) \
-    CubereflexScreen *rs = GET_CUBEREFLEX_SCREEN (s,           \
-			   GET_CUBEREFLEX_DISPLAY (s->display))
+#define CUBEADDON_DISPLAY(d) PLUGIN_DISPLAY(d, Cubeaddon, ca)
+#define CUBEADDON_SCREEN(s) PLUGIN_SCREEN(s, Cubeaddon, ca)
 
 static void
 drawBasicGround (CompScreen *s)
@@ -100,7 +92,7 @@ drawBasicGround (CompScreen *s)
     glLoadIdentity ();
     glTranslatef (0.0, 0.0, -DEFAULT_Z_CAMERA);
 
-    i = cubereflexGetIntensity (s) * 2;
+    i = cubeaddonGetIntensity (s) * 2;
 
     glBegin (GL_QUADS);
     glColor4f (0.0, 0.0, 0.0, MAX (0.0, 1.0 - i) );
@@ -111,15 +103,15 @@ drawBasicGround (CompScreen *s)
     glVertex2f (0.5, -0.5);
     glEnd ();
 
-    if (cubereflexGetGroundSize (s) > 0.0)
+    if (cubeaddonGetGroundSize (s) > 0.0)
     {
 	glBegin (GL_QUADS);
-	glColor4usv (cubereflexGetGroundColor1 (s) );
+	glColor4usv (cubeaddonGetGroundColor1 (s) );
 	glVertex2f (-0.5, -0.5);
 	glVertex2f (0.5, -0.5);
-	glColor4usv (cubereflexGetGroundColor2 (s) );
-	glVertex2f (0.5, -0.5 + cubereflexGetGroundSize (s) );
-	glVertex2f (-0.5, -0.5 + cubereflexGetGroundSize (s) );
+	glColor4usv (cubeaddonGetGroundColor2 (s) );
+	glVertex2f (0.5, -0.5 + cubeaddonGetGroundSize (s) );
+	glVertex2f (-0.5, -0.5 + cubeaddonGetGroundSize (s) );
 	glEnd ();
     }
 
@@ -131,7 +123,7 @@ drawBasicGround (CompScreen *s)
 }
 
 static Bool
-cubereflexCheckOrientation (CompScreen              *s,
+cubeaddonCheckOrientation (CompScreen              *s,
 			    const ScreenPaintAttrib *sAttrib,
 			    const CompTransform     *transform,
 			    CompOutput              *outputPtr,
@@ -139,63 +131,63 @@ cubereflexCheckOrientation (CompScreen              *s,
 {
     Bool status;
 
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
     CUBE_SCREEN (s);
 
-    UNWRAP (rs, cs, checkOrientation);
+    UNWRAP (cas, cs, checkOrientation);
     status = (*cs->checkOrientation) (s, sAttrib, transform,
 				      outputPtr, points);
-    WRAP (rs, cs, checkOrientation, cubereflexCheckOrientation);
+    WRAP (cas, cs, checkOrientation, cubeaddonCheckOrientation);
 
-    if (rs->reflection)
+    if (cas->reflection)
 	return !status;
 
     return status;
 }
 
 static void
-cubereflexGetRotation (CompScreen *s,
+cubeaddonGetRotation (CompScreen *s,
 		       float      *x,
 		       float      *v,
 		       float      *progress)
 {
     CUBE_SCREEN (s);
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
 
-    UNWRAP (rs, cs, getRotation);
+    UNWRAP (cas, cs, getRotation);
     (*cs->getRotation) (s, x, v, progress);
-    WRAP (rs, cs, getRotation, cubereflexGetRotation);
+    WRAP (cas, cs, getRotation, cubeaddonGetRotation);
 
-    if (cubereflexGetMode (s) == ModeAbove && *v > 0.0 && rs->reflection)
+    if (cubeaddonGetMode (s) == ModeAbove && *v > 0.0 && cas->reflection)
     {
-	rs->vRot = *v;
+	cas->vRot = *v;
 	*v = 0.0;
     }
     else
-	rs->vRot = 0.0;
+	cas->vRot = 0.0;
 }
 
 static void
-cubereflexClearTargetOutput (CompScreen *s,
+cubeaddonClearTargetOutput (CompScreen *s,
 			     float      xRotate,
 			     float      vRotate)
 {
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
     CUBE_SCREEN (s);
 
-    if (rs->reflection)
+    if (cas->reflection)
 	glCullFace (GL_BACK);
 
-    UNWRAP (rs, cs, clearTargetOutput);
-    (*cs->clearTargetOutput) (s, xRotate, rs->backVRotate);
-    WRAP (rs, cs, clearTargetOutput, cubereflexClearTargetOutput);
+    UNWRAP (cas, cs, clearTargetOutput);
+    (*cs->clearTargetOutput) (s, xRotate, cas->backVRotate);
+    WRAP (cas, cs, clearTargetOutput, cubeaddonClearTargetOutput);
 
-    if (rs->reflection)
+    if (cas->reflection)
 	glCullFace (GL_FRONT);
 }
 
 static Bool
-cubereflexShouldPaintViewport (CompScreen              *s,
+cubeaddonShouldPaintViewport (CompScreen              *s,
 			       const ScreenPaintAttrib *sAttrib,
 			       const CompTransform     *transform,
 			       CompOutput              *outputPtr,
@@ -203,10 +195,10 @@ cubereflexShouldPaintViewport (CompScreen              *s,
 {
     Bool rv = FALSE;
 
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
     CUBE_SCREEN (s);
 
-    if (rs->deform > 0.0)
+    if (cas->deform > 0.0)
     {
 	float z[3];
 	Bool  ftb1, ftb2, ftb3;
@@ -237,17 +229,17 @@ cubereflexShouldPaintViewport (CompScreen              *s,
     }
     else
     {
-	UNWRAP (rs, cs, shouldPaintViewport);
+	UNWRAP (cas, cs, shouldPaintViewport);
 	rv = (*cs->shouldPaintViewport) (s, sAttrib, transform,
 					 outputPtr, order);
-	WRAP (rs, cs, shouldPaintViewport, cubereflexShouldPaintViewport);
+	WRAP (cas, cs, shouldPaintViewport, cubeaddonShouldPaintViewport);
     }
 
     return rv;
 }
 
 static void
-cubereflexPaintTop (CompScreen		  *s,
+cubeaddonPaintTop (CompScreen		  *s,
 		  const ScreenPaintAttrib *sAttrib,
 		  const CompTransform     *transform,
 		  CompOutput		  *output,
@@ -259,22 +251,22 @@ cubereflexPaintTop (CompScreen		  *s,
     Bool              wasCulled = glIsEnabled (GL_CULL_FACE);
 
     CUBE_SCREEN (s);
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
 
-    UNWRAP (rs, cs, paintTop);
+    UNWRAP (cas, cs, paintTop);
     (*cs->paintTop) (s, sAttrib, transform, output, size);
-    WRAP (rs, cs, paintTop, cubereflexPaintTop);
+    WRAP (cas, cs, paintTop, cubeaddonPaintTop);
 
-    if (rs->deform == 0.0 || !cubereflexGetFillCaps (s))
+    if (cas->deform == 0.0 || !cubeaddonGetFillCaps (s))
 	return;
 
-    for (i = 0; i < CUBEREFLEX_CAP_ELEMENTS * 4; i++)
-	rs->capFill[(i * 3) + 1] = 0.5;
+    for (i = 0; i < CUBEADDON_CAP_ELEMENTS * 4; i++)
+	cas->capFill[(i * 3) + 1] = 0.5;
 
-    opacity = (cs->desktopOpacity * cubereflexGetTopColor(s)[3]) / 0xffff;
-    glColor4us (cubereflexGetTopColor(s)[0],
-		cubereflexGetTopColor(s)[1],
-		cubereflexGetTopColor(s)[2],
+    opacity = (cs->desktopOpacity * cubeaddonGetTopColor(s)[3]) / 0xffff;
+    glColor4us (cubeaddonGetTopColor(s)[0],
+		cubeaddonGetTopColor(s)[1],
+		cubeaddonGetTopColor(s)[2],
 		opacity);
 
     glPushMatrix ();
@@ -286,7 +278,7 @@ cubereflexPaintTop (CompScreen		  *s,
     }
 
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer (3, GL_FLOAT, 0, rs->capFill);
+    glVertexPointer (3, GL_FLOAT, 0, cas->capFill);
 
     glDisable (GL_CULL_FACE);
 
@@ -300,7 +292,7 @@ cubereflexPaintTop (CompScreen		  *s,
 
         glLoadMatrixf (sTransform.m);
 
-	glDrawArrays (GL_TRIANGLE_FAN, 0, CUBEREFLEX_CAP_ELEMENTS + 2);
+	glDrawArrays (GL_TRIANGLE_FAN, 0, CUBEADDON_CAP_ELEMENTS + 2);
     }
     glEnableClientState (GL_TEXTURE_COORD_ARRAY);
     glDisable (GL_BLEND);
@@ -318,7 +310,7 @@ cubereflexPaintTop (CompScreen		  *s,
  * Paint bottom cube face
  */
 static void
-cubereflexPaintBottom (CompScreen		     *s,
+cubeaddonPaintBottom (CompScreen		     *s,
 		      const ScreenPaintAttrib *sAttrib,
 		      const CompTransform     *transform,
 		      CompOutput		     *output,
@@ -330,22 +322,22 @@ cubereflexPaintBottom (CompScreen		     *s,
     Bool              wasCulled = glIsEnabled (GL_CULL_FACE);
 
     CUBE_SCREEN (s);
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
 
-    UNWRAP (rs, cs, paintBottom);
+    UNWRAP (cas, cs, paintBottom);
     (*cs->paintBottom) (s, sAttrib, transform, output, size);
-    WRAP (rs, cs, paintBottom, cubereflexPaintBottom);
+    WRAP (cas, cs, paintBottom, cubeaddonPaintBottom);
 
-    if (rs->deform == 0.0 || !cubereflexGetFillCaps (s))
+    if (cas->deform == 0.0 || !cubeaddonGetFillCaps (s))
 	return;
 
-    for (i = 0; i < CUBEREFLEX_CAP_ELEMENTS * 4; i++)
-	rs->capFill[(i * 3) + 1] = -0.5;
+    for (i = 0; i < CUBEADDON_CAP_ELEMENTS * 4; i++)
+	cas->capFill[(i * 3) + 1] = -0.5;
 
-    opacity = (cs->desktopOpacity * cubereflexGetBottomColor(s)[3]) / 0xffff;
-    glColor4us (cubereflexGetBottomColor(s)[0],
-		cubereflexGetBottomColor(s)[1],
-		cubereflexGetBottomColor(s)[2],
+    opacity = (cs->desktopOpacity * cubeaddonGetBottomColor(s)[3]) / 0xffff;
+    glColor4us (cubeaddonGetBottomColor(s)[0],
+		cubeaddonGetBottomColor(s)[1],
+		cubeaddonGetBottomColor(s)[2],
 		opacity);
 
     glPushMatrix ();
@@ -357,7 +349,7 @@ cubereflexPaintBottom (CompScreen		     *s,
     }
 
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-    glVertexPointer (3, GL_FLOAT, 0, rs->capFill);
+    glVertexPointer (3, GL_FLOAT, 0, cas->capFill);
 
     glDisable (GL_CULL_FACE);
 
@@ -371,7 +363,7 @@ cubereflexPaintBottom (CompScreen		     *s,
 
         glLoadMatrixf (sTransform.m);
 
-	glDrawArrays (GL_TRIANGLE_FAN, 0, CUBEREFLEX_CAP_ELEMENTS + 2);
+	glDrawArrays (GL_TRIANGLE_FAN, 0, CUBEADDON_CAP_ELEMENTS + 2);
     }
     glEnableClientState (GL_TEXTURE_COORD_ARRAY);
     glDisable (GL_BLEND);
@@ -386,7 +378,7 @@ cubereflexPaintBottom (CompScreen		     *s,
 }
 
 static void
-cubereflexAddWindowGeometry (CompWindow *w,
+cubeaddonAddWindowGeometry (CompWindow *w,
 			     CompMatrix *matrix,
 			     int	nMatrix,
 			     Region     region,
@@ -394,10 +386,10 @@ cubereflexAddWindowGeometry (CompWindow *w,
 {
     CompScreen *s = w->screen;
 
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
     CUBE_SCREEN (s);
 
-    if (rs->deform > 0.0 && s->desktopWindowCount)
+    if (cas->deform > 0.0 && s->desktopWindowCount)
     {
 	int         x1, x2, i, oldVCount = w->vCount;
 	REGION      reg;
@@ -414,28 +406,28 @@ cubereflexAddWindowGeometry (CompWindow *w,
 	reg.extents.y1 = region->extents.y1;
 	reg.extents.y2 = region->extents.y2;
 	
-	x1 = (region->extents.x1 / CUBEREFLEX_GRID_SIZE) * CUBEREFLEX_GRID_SIZE;
+	x1 = (region->extents.x1 / CUBEADDON_GRID_SIZE) * CUBEADDON_GRID_SIZE;
 	x1 = region->extents.x1;
-	x2 = MIN (x1 + CUBEREFLEX_GRID_SIZE, region->extents.x2);
+	x2 = MIN (x1 + CUBEADDON_GRID_SIZE, region->extents.x2);
 	
-	UNWRAP (rs, s, addWindowGeometry);
+	UNWRAP (cas, s, addWindowGeometry);
 	while (x1 < region->extents.x2)
 	{
 	    reg.extents.x1 = x1;
 	    reg.extents.x2 = x2;
 
-	    XIntersectRegion (region, &reg, rs->tmpRegion);
+	    XIntersectRegion (region, &reg, cas->tmpRegion);
 
-	    if (!XEmptyRegion (rs->tmpRegion))
+	    if (!XEmptyRegion (cas->tmpRegion))
 	    {
 		(*w->screen->addWindowGeometry) (w, matrix, nMatrix,
-						 rs->tmpRegion, clip);
+						 cas->tmpRegion, clip);
 	    }
 
 	    x1 = x2;
-	    x2 = MIN (x2 + CUBEREFLEX_GRID_SIZE, region->extents.x2);
+	    x2 = MIN (x2 + CUBEADDON_GRID_SIZE, region->extents.x2);
 	}
-	WRAP (rs, s, addWindowGeometry, cubereflexAddWindowGeometry);
+	WRAP (cas, s, addWindowGeometry, cubeaddonAddWindowGeometry);
 	
 	v  = w->vertices + (w->vertexStride - 3);
 	v += w->vertexStride * oldVCount;
@@ -454,8 +446,8 @@ cubereflexAddWindowGeometry (CompWindow *w,
 	}
 	else if (cs->moMode == CUBE_MOMODE_MULTI)
 	{
-	    sx1 = rs->last->region.extents.x1;
-	    sx2 = rs->last->region.extents.x2;
+	    sx1 = cas->last->region.extents.x1;
+	    sx2 = cas->last->region.extents.x2;
 	    sw  = sx2 - sx1;
 	}
 	else
@@ -467,12 +459,12 @@ cubereflexAddWindowGeometry (CompWindow *w,
 	
 	for (i = oldVCount; i < w->vCount; i++)
 	{
-	    if (v[0] + offX >= sx1 - CUBEREFLEX_GRID_SIZE &&
-		v[0] + offX < sx2 + CUBEREFLEX_GRID_SIZE)
+	    if (v[0] + offX >= sx1 - CUBEADDON_GRID_SIZE &&
+		v[0] + offX < sx2 + CUBEADDON_GRID_SIZE)
 	    {
 		v[2] = (cos (angle - ((v[0] + offX - sx1) /
 		       (float)sw * angle * 2)) * rad) - cs->distance;
-		v[2] *= rs->deform;
+		v[2] *= cas->deform;
 	    }
 
 	    v += w->vertexStride;
@@ -480,14 +472,14 @@ cubereflexAddWindowGeometry (CompWindow *w,
     }
     else
     {
-	UNWRAP (rs, s, addWindowGeometry);
+	UNWRAP (cas, s, addWindowGeometry);
 	(*w->screen->addWindowGeometry) (w, matrix, nMatrix, region, clip);
-	WRAP (rs, s, addWindowGeometry, cubereflexAddWindowGeometry);
+	WRAP (cas, s, addWindowGeometry, cubeaddonAddWindowGeometry);
     }
 }
 
 static void
-cubereflexPaintTransformedOutput (CompScreen              *s,
+cubeaddonPaintTransformedOutput (CompScreen              *s,
 				  const ScreenPaintAttrib *sAttrib,
 				  const CompTransform     *transform,
 				  Region                  region,
@@ -498,13 +490,13 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
     CompTransform  sTransform = *transform;
     float          x, progress;
 
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
     CUBE_SCREEN (s);
 
-    if (cubereflexGetCylinder (s) &&
+    if (cubeaddonGetCylinder (s) &&
 	(cs->rotationState == RotationManual ||
 	(cs->rotationState == RotationChange &&
-	!cubereflexGetCylinderManualOnly (s)) || rs->deform > 0.0))
+	!cubeaddonGetCylinderManualOnly (s)) || cas->deform > 0.0))
     {
 	const float angle = atan (0.5 / cs->distance);
 	const float rad = 0.5 / sin (angle);
@@ -512,33 +504,33 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 	int         i;
 	
 	(*cs->getRotation) (s, &x, &x, &progress);
-	rs->deform = progress;
+	cas->deform = progress;
 
-	rs->capFill[0] = 0.0;
-	rs->capFill[2] = cs->distance;
+	cas->capFill[0] = 0.0;
+	cas->capFill[2] = cs->distance;
 
-	for (i = 0; i <= CUBEREFLEX_CAP_ELEMENTS; i++)
+	for (i = 0; i <= CUBEADDON_CAP_ELEMENTS; i++)
 	{
-	    x = -0.5 + ((float)i / (float)CUBEREFLEX_CAP_ELEMENTS);
+	    x = -0.5 + ((float)i / (float)CUBEADDON_CAP_ELEMENTS);
 
 	    z = ((cos (angle - ((x + 0.5) * angle * 2)) * rad) -
-		 cs->distance) * rs->deform;
+		 cs->distance) * cas->deform;
 
 
-	    quad = &rs->capFill[(i + 1) * 3];
+	    quad = &cas->capFill[(i + 1) * 3];
 	    quad[0] = x;
 	    quad[2] = cs->distance + z;
 	}
     }
     else
     {
-	rs->deform = 0.0;
+	cas->deform = 0.0;
     }
 
-    if (cs->invert == 1 && rs->first && cubereflexGetReflection (s))
+    if (cs->invert == 1 && cas->first && cubeaddonGetReflection (s))
     {
-	rs->first = FALSE;
-	rs->reflection = TRUE;
+	cas->first = FALSE;
+	cas->reflection = TRUE;
 
 	if (cs->grabIndex)
 	{
@@ -548,11 +540,11 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 	    matrixScale (&rTransform, 1.0, -1.0, 1.0);
 	    glCullFace (GL_FRONT);
 
-	    UNWRAP (rs, s, paintTransformedOutput);
+	    UNWRAP (cas, s, paintTransformedOutput);
 	    (*s->paintTransformedOutput) (s, sAttrib, &rTransform,
 					  region, output, mask);
-	    WRAP (rs, s, paintTransformedOutput,
-		  cubereflexPaintTransformedOutput);
+	    WRAP (cas, s, paintTransformedOutput,
+		  cubeaddonPaintTransformedOutput);
 
 	    glCullFace (GL_BACK);
 	    drawBasicGround (s);
@@ -570,7 +562,7 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 
 	    (*cs->getRotation) (s, &xRot, &vRot, &p);
 
-	    rs->backVRotate = 0.0;
+	    cas->backVRotate = 0.0;
 
 	    xRotate  = xRot;
 	    xRotate2 = xRot;
@@ -592,8 +584,10 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 	    if (xRotate2 >= angle / 2.0)
 		xRotate2 = angle - xRotate2;
 
-	    xRotate = (rs->deform * angle * 0.5) + ((1.0 - rs->deform) * xRotate);
-	    xRotate2 = (rs->deform * angle * 0.5) + ((1.0 - rs->deform) * xRotate2);
+	    xRotate = (cas->deform * angle * 0.5) +
+		      ((1.0 - cas->deform) * xRotate);
+	    xRotate2 = (cas->deform * angle * 0.5) +
+		       ((1.0 - cas->deform) * xRotate2);
 
 
 	    matrixGetIdentity (&pTransform);
@@ -612,43 +606,44 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 
 	    matrixMultiplyVector (&point2, &point2, &pTransform);
 
-	    switch (cubereflexGetMode (s)) {
+	    switch (cubeaddonGetMode (s)) {
 	    case ModeJumpyReflection:
-		rs->yTrans     = 0.0;
+		cas->yTrans     = 0.0;
 		rYTrans        = point.y * 2.0;
 		break;
 	    case ModeDistance:
-		rs->yTrans     = 0.0;
+		cas->yTrans     = 0.0;
 		rYTrans        = sqrt (0.5 + (cs->distance * cs->distance)) *
 				 -2.0;
 		break;
 	    default:
-		rs->yTrans     = -point.y - 0.5;
+		cas->yTrans     = -point.y - 0.5;
 		rYTrans        = point.y - 0.5;
 		break;
 	    }
 
-	    if (!cubereflexGetAutoZoom (s) ||
+	    if (!cubeaddonGetAutoZoom (s) ||
 		((cs->rotationState != RotationManual) &&
-		 cubereflexGetZoomManualOnly (s)))
+		 cubeaddonGetZoomManualOnly (s)))
 	    {
-		rs->zTrans = 0.0;
+		cas->zTrans = 0.0;
 	    }
 	    else
-		rs->zTrans = -point2.z + cs->distance;
+		cas->zTrans = -point2.z + cs->distance;
 
-	    if (cubereflexGetMode (s) == ModeAbove)
-		rs->zTrans = 0.0;
+	    if (cubeaddonGetMode (s) == ModeAbove)
+		cas->zTrans = 0.0;
 
 	    deform = (sqrt (0.25 + (cs->distance * cs->distance)) -
-		     cs->distance) * -rs->deform;
+		     cs->distance) * -cas->deform;
 
-	    rs->zTrans = MIN (rs->zTrans, deform);
+	    if (cas->deform > 0.0)
+	        cas->zTrans = deform;
 
-	    if (cubereflexGetMode (s) == ModeAbove && rs->vRot > 0.0)
+	    if (cubeaddonGetMode (s) == ModeAbove && cas->vRot > 0.0)
 	    {
-		rs->backVRotate = rs->vRot;
-		rs->yTrans      = 0.0;
+		cas->backVRotate = cas->vRot;
+		cas->yTrans      = 0.0;
 		rYTrans         = 0.0;
 
 		matrixGetIdentity (&pTransform);
@@ -660,14 +655,14 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 		matrixMultiplyVector (&point, &point, &pTransform);
 		
 		matrixTranslate (&rTransform, 0.0, 0.0, point.z);
-		matrixRotate (&rTransform, rs->vRot, 1.0, 0.0, 0.0);
+		matrixRotate (&rTransform, cas->vRot, 1.0, 0.0, 0.0);
 		matrixScale (&rTransform, 1.0, -1.0, 1.0);
 		matrixTranslate (&rTransform, 0.0, 1.0, 0.0);
-		matrixTranslate (&rTransform, 0.0, 0.0, -point.z + rs->zTrans);
+		matrixTranslate (&rTransform, 0.0, 0.0, -point.z + cas->zTrans);
 	    }
 	    else
 	    {
-		matrixTranslate (&rTransform, 0.0, rYTrans, rs->zTrans);
+		matrixTranslate (&rTransform, 0.0, rYTrans, cas->zTrans);
 		matrixScale (&rTransform, 1.0, -1.0, 1.0);
 	    }
 
@@ -678,11 +673,11 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 	    glPopMatrix ();
 	    glCullFace (GL_FRONT);
 
-	    UNWRAP (rs, s, paintTransformedOutput);
+	    UNWRAP (cas, s, paintTransformedOutput);
 	    (*s->paintTransformedOutput) (s, sAttrib, &rTransform,
 					  region, output, mask);
-	    WRAP (rs, s, paintTransformedOutput,
-		  cubereflexPaintTransformedOutput);
+	    WRAP (cas, s, paintTransformedOutput,
+		  cubeaddonPaintTransformedOutput);
 
 	    glCullFace (GL_BACK);
 	    glPushMatrix ();
@@ -690,11 +685,11 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 	    glLightfv (GL_LIGHT0, GL_POSITION, light0Position);
 	    glPopMatrix ();
 
-	    if (cubereflexGetMode (s) == ModeAbove && rs->vRot > 0.0)
+	    if (cubeaddonGetMode (s) == ModeAbove && cas->vRot > 0.0)
 	    {
 		int   j;
 		float i, c;
-		float v = MIN (1.0, rs->vRot / 30.0);
+		float v = MIN (1.0, cas->vRot / 30.0);
 		float col1[4], col2[4];
 
 		glPushMatrix ();
@@ -705,8 +700,8 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 		glLoadIdentity ();
 		glTranslatef (0.0, 0.0, -DEFAULT_Z_CAMERA);
 
-		i = cubereflexGetIntensity (s) * 2;
-		c = cubereflexGetIntensity (s);
+		i = cubeaddonGetIntensity (s) * 2;
+		c = cubeaddonGetIntensity (s);
 
 		glBegin (GL_QUADS);
 		glColor4f (0.0, 0.0, 0.0,
@@ -721,17 +716,17 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 
 		for (j = 0; j < 4; j++)
 		{
-		    col1[j] = (1.0 - v) * cubereflexGetGroundColor1 (s) [j] +
-			      (v * (cubereflexGetGroundColor1 (s) [j] +
-				    cubereflexGetGroundColor2 (s) [j]) * 0.5);
+		    col1[j] = (1.0 - v) * cubeaddonGetGroundColor1 (s) [j] +
+			      (v * (cubeaddonGetGroundColor1 (s) [j] +
+				    cubeaddonGetGroundColor2 (s) [j]) * 0.5);
 		    col1[j] /= 0xffff;
-		    col2[j] = (1.0 - v) * cubereflexGetGroundColor2 (s) [j] +
-			      (v * (cubereflexGetGroundColor1 (s) [j] +
-				    cubereflexGetGroundColor2 (s) [j]) * 0.5);
+		    col2[j] = (1.0 - v) * cubeaddonGetGroundColor2 (s) [j] +
+			      (v * (cubeaddonGetGroundColor1 (s) [j] +
+				    cubeaddonGetGroundColor2 (s) [j]) * 0.5);
 		    col2[j] /= 0xffff;
 		}
 
-		if (cubereflexGetGroundSize (s) > 0.0)
+		if (cubeaddonGetGroundSize (s) > 0.0)
 		{
 		    glBegin (GL_QUADS);
 		    glColor4fv (col1);
@@ -739,9 +734,9 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 		    glVertex2f (0.5, -0.5);
 		    glColor4fv (col2);
 		    glVertex2f (0.5, -0.5 +
-				((1 - v) * cubereflexGetGroundSize (s)) + v);
+				((1 - v) * cubeaddonGetGroundSize (s)) + v);
 		    glVertex2f (-0.5, -0.5 +
-				((1 - v) * cubereflexGetGroundSize (s)) + v);
+				((1 - v) * cubeaddonGetGroundSize (s)) + v);
 		    glEnd ();
 		}
 
@@ -756,26 +751,26 @@ cubereflexPaintTransformedOutput (CompScreen              *s,
 	}
 	
 	memset (cs->capsPainted, 0, sizeof (Bool) * s->nOutputDev);
-	rs->reflection = FALSE;
+	cas->reflection = FALSE;
     }
 
-    if (!cubereflexGetReflection (s))
+    if (!cubeaddonGetReflection (s))
     {
-	rs->yTrans = 0.0;
-	rs->zTrans = (sqrt (0.25 + (cs->distance * cs->distance)) -
-		     cs->distance) * -rs->deform;
+	cas->yTrans = 0.0;
+	cas->zTrans = (sqrt (0.25 + (cs->distance * cs->distance)) -
+		     cs->distance) * -cas->deform;
     }
 
-    matrixTranslate (&sTransform, 0.0, rs->yTrans, rs->zTrans);
+    matrixTranslate (&sTransform, 0.0, cas->yTrans, cas->zTrans);
 
-    UNWRAP (rs, s, paintTransformedOutput);
+    UNWRAP (cas, s, paintTransformedOutput);
     (*s->paintTransformedOutput) (s, sAttrib, &sTransform,
 				  region, output, mask);
-    WRAP (rs, s, paintTransformedOutput, cubereflexPaintTransformedOutput);
+    WRAP (cas, s, paintTransformedOutput, cubeaddonPaintTransformedOutput);
 }
 
 static Bool
-cubereflexPaintOutput (CompScreen              *s,
+cubeaddonPaintOutput (CompScreen              *s,
 		       const ScreenPaintAttrib *sAttrib,
 		       const CompTransform     *transform,
 		       Region                  region,
@@ -784,40 +779,40 @@ cubereflexPaintOutput (CompScreen              *s,
 {
     Bool status;
 
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
 
-    if (rs->last != output)
-	rs->first = TRUE;
+    if (cas->last != output)
+	cas->first = TRUE;
 
-    rs->last = output;
+    cas->last = output;
 
-    UNWRAP (rs, s, paintOutput);
+    UNWRAP (cas, s, paintOutput);
     status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
-    WRAP (rs, s, paintOutput, cubereflexPaintOutput);
+    WRAP (cas, s, paintOutput, cubeaddonPaintOutput);
 
     return status;
 }
 
 static void
-cubereflexDonePaintScreen (CompScreen * s)
+cubeaddonDonePaintScreen (CompScreen * s)
 {
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
 
-    rs->first      = TRUE;
-    rs->yTrans     = 0.0;
-    rs->zTrans     = 0.0;
+    cas->first      = TRUE;
+    cas->yTrans     = 0.0;
+    cas->zTrans     = 0.0;
 
-    UNWRAP (rs, s, donePaintScreen);
+    UNWRAP (cas, s, donePaintScreen);
     (*s->donePaintScreen) (s);
-    WRAP (rs, s, donePaintScreen, cubereflexDonePaintScreen);
+    WRAP (cas, s, donePaintScreen, cubeaddonDonePaintScreen);
 }
 
 
 static Bool
-cubereflexInitDisplay (CompPlugin  *p,
+cubeaddonInitDisplay (CompPlugin  *p,
 		       CompDisplay *d)
 {
-    CubereflexDisplay *rd;
+    CubeaddonDisplay *cad;
 
     if (!checkPluginABI ("core", CORE_ABIVERSION) ||
 	!checkPluginABI ("cube", CUBE_ABIVERSION))
@@ -826,147 +821,147 @@ cubereflexInitDisplay (CompPlugin  *p,
     if (!getPluginDisplayIndex (d, "cube", &cubeDisplayPrivateIndex))
 	return FALSE;
 
-    rd = malloc (sizeof (CubereflexDisplay));
+    cad = malloc (sizeof (CubeaddonDisplay));
 
-    if (!rd)
+    if (!cad)
 	return FALSE;
 
-    rd->screenPrivateIndex = allocateScreenPrivateIndex (d);
+    cad->screenPrivateIndex = allocateScreenPrivateIndex (d);
 
-    if (rd->screenPrivateIndex < 0)
+    if (cad->screenPrivateIndex < 0)
     {
-	free (rd);
+	free (cad);
 	return FALSE;
     }
 
-    d->base.privates[displayPrivateIndex].ptr = rd;
+    d->base.privates[CubeaddonDisplayPrivateIndex].ptr = cad;
 
     return TRUE;
 }
 
 static void
-cubereflexFiniDisplay (CompPlugin  *p,
+cubeaddonFiniDisplay (CompPlugin  *p,
 		       CompDisplay *d)
 {
-    CUBEREFLEX_DISPLAY (d);
+    CUBEADDON_DISPLAY (d);
 
-    freeScreenPrivateIndex (d, rd->screenPrivateIndex);
-    free (rd);
+    freeScreenPrivateIndex (d, cad->screenPrivateIndex);
+    free (cad);
 }
 
 static Bool
-cubereflexInitScreen (CompPlugin *p,
+cubeaddonInitScreen (CompPlugin *p,
 		      CompScreen *s)
 {
-    CubereflexScreen *rs;
+    CubeaddonScreen *cas;
 
-    CUBEREFLEX_DISPLAY (s->display);
+    CUBEADDON_DISPLAY (s->display);
     CUBE_SCREEN (s);
 
-    rs = malloc (sizeof (CubereflexScreen));
+    cas = malloc (sizeof (CubeaddonScreen));
 
-    if (!rs)
+    if (!cas)
 	return FALSE;
 
-    s->base.privates[rd->screenPrivateIndex].ptr = rs;
+    s->base.privates[cad->screenPrivateIndex].ptr = cas;
 
-    rs->reflection = FALSE;
-    rs->first      = TRUE;
-    rs->last       = NULL;
-    rs->yTrans     = 0.0;
-    rs->zTrans     = 0.0;
-    rs->tmpRegion  = XCreateRegion ();
-    rs->deform     = 0.0;
+    cas->reflection = FALSE;
+    cas->first      = TRUE;
+    cas->last       = NULL;
+    cas->yTrans     = 0.0;
+    cas->zTrans     = 0.0;
+    cas->tmpRegion  = XCreateRegion ();
+    cas->deform     = 0.0;
 
-    WRAP (rs, s, paintTransformedOutput, cubereflexPaintTransformedOutput);
-    WRAP (rs, s, paintOutput, cubereflexPaintOutput);
-    WRAP (rs, s, donePaintScreen, cubereflexDonePaintScreen);
-    WRAP (rs, s, addWindowGeometry, cubereflexAddWindowGeometry);
+    WRAP (cas, s, paintTransformedOutput, cubeaddonPaintTransformedOutput);
+    WRAP (cas, s, paintOutput, cubeaddonPaintOutput);
+    WRAP (cas, s, donePaintScreen, cubeaddonDonePaintScreen);
+    WRAP (cas, s, addWindowGeometry, cubeaddonAddWindowGeometry);
 
-    WRAP (rs, cs, clearTargetOutput, cubereflexClearTargetOutput);
-    WRAP (rs, cs, getRotation, cubereflexGetRotation);
-    WRAP (rs, cs, checkOrientation, cubereflexCheckOrientation);
-    WRAP (rs, cs, shouldPaintViewport, cubereflexShouldPaintViewport);
-    WRAP (rs, cs, paintTop, cubereflexPaintTop);
-    WRAP (rs, cs, paintBottom, cubereflexPaintBottom);
+    WRAP (cas, cs, clearTargetOutput, cubeaddonClearTargetOutput);
+    WRAP (cas, cs, getRotation, cubeaddonGetRotation);
+    WRAP (cas, cs, checkOrientation, cubeaddonCheckOrientation);
+    WRAP (cas, cs, shouldPaintViewport, cubeaddonShouldPaintViewport);
+    WRAP (cas, cs, paintTop, cubeaddonPaintTop);
+    WRAP (cas, cs, paintBottom, cubeaddonPaintBottom);
 
     return TRUE;
 }
 
 static void
-cubereflexFiniScreen (CompPlugin *p,
+cubeaddonFiniScreen (CompPlugin *p,
 		      CompScreen *s)
 {
-    CUBEREFLEX_SCREEN (s);
+    CUBEADDON_SCREEN (s);
     CUBE_SCREEN (s);
 
-    XDestroyRegion (rs->tmpRegion);
+    XDestroyRegion (cas->tmpRegion);
 
-    UNWRAP (rs, s, paintTransformedOutput);
-    UNWRAP (rs, s, paintOutput);
-    UNWRAP (rs, s, donePaintScreen);
-    UNWRAP (rs, s, addWindowGeometry);
+    UNWRAP (cas, s, paintTransformedOutput);
+    UNWRAP (cas, s, paintOutput);
+    UNWRAP (cas, s, donePaintScreen);
+    UNWRAP (cas, s, addWindowGeometry);
 
-    UNWRAP (rs, cs, clearTargetOutput);
-    UNWRAP (rs, cs, getRotation);
-    UNWRAP (rs, cs, checkOrientation);
-    UNWRAP (rs, cs, shouldPaintViewport);
-    UNWRAP (rs, cs, paintTop);
-    UNWRAP (rs, cs, paintBottom);
+    UNWRAP (cas, cs, clearTargetOutput);
+    UNWRAP (cas, cs, getRotation);
+    UNWRAP (cas, cs, checkOrientation);
+    UNWRAP (cas, cs, shouldPaintViewport);
+    UNWRAP (cas, cs, paintTop);
+    UNWRAP (cas, cs, paintBottom);
 
-    free (rs);
+    free (cas);
 }
 
 static Bool
-cubereflexInit (CompPlugin *p)
+cubeaddonInit (CompPlugin *p)
 {
-    displayPrivateIndex = allocateDisplayPrivateIndex ();
+    CubeaddonDisplayPrivateIndex = allocateDisplayPrivateIndex ();
 
-    if (displayPrivateIndex < 0)
+    if (CubeaddonDisplayPrivateIndex < 0)
 	return FALSE;
 
     return TRUE;
 }
 
 static void
-cubereflexFini (CompPlugin *p)
+cubeaddonFini (CompPlugin *p)
 {
-    freeDisplayPrivateIndex (displayPrivateIndex);
+    freeDisplayPrivateIndex (CubeaddonDisplayPrivateIndex);
 }
 
 static CompBool
-cubereflexInitObject (CompPlugin *p,
+cubeaddonInitObject (CompPlugin *p,
 		      CompObject *o)
 {
     static InitPluginObjectProc dispTab[] = {
 	(InitPluginObjectProc) 0, /* InitCore */
-	(InitPluginObjectProc) cubereflexInitDisplay,
-	(InitPluginObjectProc) cubereflexInitScreen
+	(InitPluginObjectProc) cubeaddonInitDisplay,
+	(InitPluginObjectProc) cubeaddonInitScreen
     };
 
     RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
 }
 
 static void
-cubereflexFiniObject (CompPlugin *p,
+cubeaddonFiniObject (CompPlugin *p,
 		      CompObject *o)
 {
     static FiniPluginObjectProc dispTab[] = {
 	(FiniPluginObjectProc) 0, /* FiniCore */
-	(FiniPluginObjectProc) cubereflexFiniDisplay,
-	(FiniPluginObjectProc) cubereflexFiniScreen
+	(FiniPluginObjectProc) cubeaddonFiniDisplay,
+	(FiniPluginObjectProc) cubeaddonFiniScreen
     };
 
     DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
 }
 
-CompPluginVTable cubereflexVTable = {
-    "cubereflex",
+CompPluginVTable cubeaddonVTable = {
+    "cubeaddon",
     0,
-    cubereflexInit,
-    cubereflexFini,
-    cubereflexInitObject,
-    cubereflexFiniObject,
+    cubeaddonInit,
+    cubeaddonFini,
+    cubeaddonInitObject,
+    cubeaddonFiniObject,
     0,
     0
 };
@@ -974,5 +969,5 @@ CompPluginVTable cubereflexVTable = {
 CompPluginVTable *
 getCompPluginInfo (void)
 {
-    return &cubereflexVTable;
+    return &cubeaddonVTable;
 }
