@@ -233,8 +233,11 @@ typedef struct _FWScreen{
 /* Freewins Window Structure */
 typedef struct _FWWindow{
 
-    float midX;
-    float midY;
+    float iMidX;
+    float iMidY;
+
+    float oMidX;
+    float oMidY;
 
     float radius;
     
@@ -395,16 +398,16 @@ static Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
         matrixGetIdentity (&transform);
         matrixScale (&transform, 1.0f, 1.0f, 1.0f / w->screen->width);
 	    matrixTranslate(&transform, 
-		    fww->midX + w->attrib.x, 
-		    fww->midY + w->attrib.y, 0.0);
+		    fww->iMidX + w->attrib.x, 
+		    fww->iMidY + w->attrib.y, 0.0);
         matrixRotate (&transform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
         matrixRotate (&transform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
         matrixRotate (&transform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
         matrixScale(&transform, fww->transform.scaleX, 1.0, 0.0);
         matrixScale(&transform, 1.0, fww->transform.scaleY, 0.0);
             matrixTranslate(&transform, 
-                -(fww->midX + w->attrib.x), 
-                -(fww->midY + w->attrib.y), 0.0);
+                -(fww->iMidX + w->attrib.x), 
+                -(fww->iMidY + w->attrib.y), 0.0);
 
         FWRotateProjectVector(w, c1, transform, &xScreen1, &yScreen1, &zScreen1);
         FWRotateProjectVector(w, c2, transform, &xScreen2, &yScreen2, &zScreen2);
@@ -460,10 +463,23 @@ static void FWCalculateInputOrigin (CompWindow *w, float x, float y)
     dx = x - w->attrib.x;
     dy = y - w->attrib.y;
 
-    fww->midX = w->attrib.x + dx * fww->transform.scaleX;
-    fww->midY = w->attrib.y + dy * fww->transform.scaleY;
+    fww->iMidX = w->attrib.x + dx * fww->transform.scaleX;
+    fww->iMidY = w->attrib.y + dy * fww->transform.scaleY;
 }
 
+static void FWCalculateOutputOrigin (CompWindow *w, float x, float y)
+{
+
+    FREEWINS_WINDOW (w);
+
+    float dx, dy;
+
+    dx = x - WIN_OUTPUT_X (w);
+    dy = y - WIN_OUTPUT_Y (w);
+
+    fww->oMidX = WIN_OUTPUT_X (w) + dx * fww->transform.scaleX;
+    fww->oMidY = WIN_OUTPUT_Y (w) + dy * fww->transform.scaleY;
+}
 
 /* Change angles more than 360 into angles out of 360 */
 /*static int FWMakeIntoOutOfThreeSixty (int value)
@@ -1235,8 +1251,8 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
             fwd->oldX += (ev->xmotion.x_root - fwd->oldX);
 		    fwd->oldY += (ev->xmotion.y_root - fwd->oldY);
 
-		    fww->grabLeft = (ev->xmotion.x - fww->midX > 0 ? FALSE : TRUE);
-		    fww->grabTop = (ev->xmotion.y - fww->midY > 0 ? FALSE : TRUE);
+		    fww->grabLeft = (ev->xmotion.x - fww->iMidX > 0 ? FALSE : TRUE);
+		    fww->grabTop = (ev->xmotion.y - fww->iMidY > 0 ? FALSE : TRUE);
 
             /* Stop scale at threshold specified */
             if (!freewinsGetAllowNegative (fwd->grabWindow->screen))
@@ -1467,12 +1483,15 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
                 case RotationAxisAlwaysCentre:
                 default:
                     FWCalculateInputOrigin (w, WIN_REAL_W (w) / 2.0f, WIN_REAL_H (w) / 2.0f);
+                    FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
                     break;
                 case RotationAxisClickPoint:            
                     FWCalculateInputOrigin(w, fwd->click_win_x, fwd->click_win_y);
+                    FWCalculateOutputOrigin(w, fwd->click_win_x, fwd->click_win_y);
                     break;
                 case RotationAxisOppositeToClick:            
                     FWCalculateInputOrigin(w, w->width - fwd->click_win_x, w->height - fwd->click_win_y);
+                    FWCalculateOutputOrigin(w, w->width - fwd->click_win_x, w->height - fwd->click_win_y);
                     break;
             }
 
@@ -1552,8 +1571,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 	    /* Adjust the window in the matrix to prepare for transformation */
 	    matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
 	    matrixTranslate(&wTransform, 
-		    (fww->midX + w->attrib.x), 
-		    (fww->midY + w->attrib.y), 0.0);
+		    (fww->iMidX + w->attrib.x), 
+		    (fww->iMidY + w->attrib.y), 0.0);
         
         matrixRotate(&wTransform, fww->transform.angX, 1.0, 0.0, 0.0);
         matrixRotate(&wTransform, fww->transform.angY, 0.0, 1.0, 0.0);
@@ -1563,8 +1582,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         matrixScale(&wTransform, 1.0, scaleY, 0.0);
 
 	    matrixTranslate(&wTransform, 
-		    -((fww->midX + w->attrib.x)), 
-		    -((fww->midY + w->attrib.y)), 0.0);
+		    -((fww->iMidX + w->attrib.x)), 
+		    -((fww->iMidY + w->attrib.y)), 0.0);
 
         /* Create rects for input after we've dealt
          * with output
@@ -1814,8 +1833,8 @@ static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh)
     FREEWINS_WINDOW(w);
     FREEWINS_SCREEN(w->screen);
 
-    fww->midX += dw;
-    fww->midY += dh;
+    fww->iMidX += dw;
+    fww->iMidY += dh;
 
     fww->winH += dh;
     fww->winW += dw;
@@ -1918,8 +1937,8 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	fwd->oldX = fwd->click_root_x;
 	fwd->oldY = fwd->click_root_y;
 
-	dx = fwd->click_win_x - fww->midX;
-	dy = fwd->click_win_y - fww->midY;
+	dx = fwd->click_win_x - fww->iMidX;
+	dy = fwd->click_win_y - fww->iMidY;
 
     /* Save current scales and angles */
 
@@ -1929,18 +1948,18 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     fww->animate.oldScaleX = fww->transform.scaleX;
     fww->animate.oldScaleY = fww->transform.scaleY;
 
-	if (fwd->click_win_y > fww->midY)
+	if (fwd->click_win_y > fww->iMidY)
 	{
-	    if (fwd->click_win_x > fww->midX)
+	    if (fwd->click_win_x > fww->iMidX)
 	        fww->corner = CornerBottomRight;
-	    else if (fwd->click_win_x < fww->midX)
+	    else if (fwd->click_win_x < fww->iMidX)
 	        fww->corner = CornerBottomLeft;
 	}
-	else if (fwd->click_win_y < fww->midY)
+	else if (fwd->click_win_y < fww->iMidY)
 	{
-	    if (fwd->click_win_x > fww->midX)
+	    if (fwd->click_win_x > fww->iMidX)
 	        fww->corner = CornerTopRight;
-	    else if (fwd->click_win_x < fww->midX)
+	    else if (fwd->click_win_x < fww->iMidX)
 	        fww->corner = CornerTopLeft;
 	}
 
@@ -2022,20 +2041,20 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	/* Find out the corner we clicked in */
 	
 	/* Check for Y axis clicking (Top / Bottom) */
-	if (fwd->click_win_y > fww->midY)
+	if (fwd->click_win_y > fww->iMidY)
 	{
 	    /* Check for X axis clicking (Left / Right) */
-	    if (fwd->click_win_x > fww->midX)
+	    if (fwd->click_win_x > fww->iMidX)
 	        fww->corner = CornerBottomRight;
-	    else if (fwd->click_win_x < fww->midX)
+	    else if (fwd->click_win_x < fww->iMidX)
 	        fww->corner = CornerBottomLeft;
 	}
-	else if (fwd->click_win_y < fww->midY)
+	else if (fwd->click_win_y < fww->iMidY)
 	{
 	    /* Check for X axis clicking (Left / Right) */
-	    if (fwd->click_win_x > fww->midX)
+	    if (fwd->click_win_x > fww->iMidX)
 	        fww->corner = CornerTopRight;
-	    else if (fwd->click_win_x < fww->midX)
+	    else if (fwd->click_win_x < fww->iMidX)
 	        fww->corner = CornerTopLeft;
 	}
 	
@@ -2044,8 +2063,8 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	fwd->oldX = fwd->click_root_x;
 	fwd->oldY = fwd->click_root_y;
 
-	dx = fwd->click_win_x - fww->midX;
-	dy = fwd->click_win_y - fww->midY;
+	dx = fwd->click_win_x - fww->iMidX;
+	dy = fwd->click_win_y - fww->iMidY;
 
 	fww->grabLeft = (dx > 0 ? FALSE : TRUE);
 	fww->grabTop = (dy > 0 ? FALSE : TRUE);
@@ -2415,8 +2434,8 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->transform.angY = 0.0;
     fww->transform.angZ = 0.0;
 
-    fww->midX = WIN_REAL_W(w)/2.0;
-    fww->midY = WIN_REAL_H(w)/2.0;
+    fww->iMidX = WIN_REAL_W(w)/2.0;
+    fww->iMidY = WIN_REAL_H(w)/2.0;
 
 	int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
 	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
