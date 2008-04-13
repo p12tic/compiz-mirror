@@ -1060,6 +1060,23 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     fww->transform.unsnapAngY += 360.0 * dx;
     }
 
+    switch (freewinsGetRotationAxis (w->screen))
+    {
+        case RotationAxisAlwaysCentre:
+        default:
+            FWCalculateInputOrigin (w, WIN_REAL_W (w) / 2.0f, WIN_REAL_H (w) / 2.0f);
+            FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
+            break;
+        case RotationAxisClickPoint:            
+            FWCalculateInputOrigin(w, fwd->click_win_x, fwd->click_win_y);
+            FWCalculateOutputOrigin(w, fwd->click_win_x, fwd->click_win_y);
+            break;
+        case RotationAxisOppositeToClick:            
+            FWCalculateInputOrigin(w, w->width - fwd->click_win_x, w->height - fwd->click_win_y);
+            FWCalculateOutputOrigin(w, w->width - fwd->click_win_x, w->height - fwd->click_win_y);
+            break;
+    }
+
 }
 
 /* Handle Rotation */
@@ -1133,6 +1150,26 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
         else if ((y) > fwd->oldY)
         fww->transform.unsnapScaleY += dy;
         break;
+    }
+
+    switch (fww->corner)
+    {
+        case CornerBottomRight:
+        /* Translate origin to the top left of the window */
+        FWCalculateInputOrigin (w, w->attrib.x, w->attrib.y);
+        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
+        case CornerBottomLeft:
+        /* Translate origin to the top right of the window */
+        FWCalculateInputOrigin (w, w->attrib.x + w->width, w->attrib.y);
+        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w));
+        case CornerTopRight:
+        /* Translate origin to the bottom left of the window */
+        FWCalculateInputOrigin (w, w->attrib.x, w->attrib.y + w->attrib.height);
+        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
+        case CornerTopLeft:
+        /* Translate origin to the bottom right of the window */
+        FWCalculateInputOrigin (w, w->attrib.x + w->width, w->attrib.y + w->attrib.height);
+        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w));
     }
 }
 
@@ -1469,7 +1506,6 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
     Bool wasCulled = glIsEnabled(GL_CULL_FACE);
     Bool status;
 
-    FREEWINS_DISPLAY (w->screen->display);
     FREEWINS_SCREEN(w->screen);
     FREEWINS_WINDOW(w);
         
@@ -1482,24 +1518,6 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
         fww->oldWinX = WIN_REAL_X (w);
         fww->oldWinY = WIN_REAL_Y (w);
-
-        if (fwd->grab == grabRotate)
-            switch (freewinsGetRotationAxis (w->screen))
-            {
-                case RotationAxisAlwaysCentre:
-                default:
-                    FWCalculateInputOrigin (w, WIN_REAL_W (w) / 2.0f, WIN_REAL_H (w) / 2.0f);
-                    FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
-                    break;
-                case RotationAxisClickPoint:            
-                    FWCalculateInputOrigin(w, fwd->click_win_x, fwd->click_win_y);
-                    FWCalculateOutputOrigin(w, fwd->click_win_x, fwd->click_win_y);
-                    break;
-                case RotationAxisOppositeToClick:            
-                    FWCalculateInputOrigin(w, w->width - fwd->click_win_x, w->height - fwd->click_win_y);
-                    FWCalculateOutputOrigin(w, w->width - fwd->click_win_x, w->height - fwd->click_win_y);
-                    break;
-            }
 
         /* Here we duplicate some of the work the openGL does
          * but for different reasons. We have access to the 
