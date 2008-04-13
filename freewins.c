@@ -459,12 +459,18 @@ static void FWCalculateInputOrigin (CompWindow *w, float x, float y)
     FREEWINS_WINDOW (w);
 
     float dx, dy;
+    float ix, iy;
 
-    dx = x - w->attrib.x;
-    dy = y - w->attrib.y;
+    ix = fww->inputRect.x1;
+    iy = fww->inputRect.y1;
 
-    fww->iMidX = w->attrib.x + dx * fww->transform.scaleX;
-    fww->iMidY = w->attrib.y + dy * fww->transform.scaleY;
+    fprintf(stderr, "ix %f iy %f\n", ix, iy);
+
+    dx = x - ix;
+    dy = y - iy;
+
+    fww->iMidX = ix + dx * fww->transform.scaleX;
+    fww->iMidY = iy + dy * fww->transform.scaleY;
 }
 
 static void FWCalculateOutputOrigin (CompWindow *w, float x, float y)
