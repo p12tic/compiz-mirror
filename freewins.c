@@ -962,8 +962,8 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     int oldX = lastPointerX - 100;
     int oldY = lastPointerY - 100;
 
-	float midX = WIN_REAL_X(fwd->focusWindow) + WIN_REAL_W(fwd->focusWindow)/2.0;
-	float midY = WIN_REAL_Y(fwd->focusWindow) + WIN_REAL_H(fwd->focusWindow)/2.0;
+	float midX = WIN_REAL_X(fwd->grabWindow) + WIN_REAL_W(fwd->grabWindow)/2.0;
+	float midY = WIN_REAL_Y(fwd->grabWindow) + WIN_REAL_H(fwd->grabWindow)/2.0;
 
     if (freewinsGetZAxisRotation (w->screen) == ZAxisRotationInterchangable)
         FWDetermineZAxisClick (w, pointerX, pointerY);
