@@ -278,7 +278,8 @@ typedef struct _FWWindow{
     Bool resetting;
     
     // Used to determine whether rotating on X and Y axis, or just on Z
-    Bool zaxis;
+    Bool can2D;
+    Bool can3D;
 
     Bool grabLeft;
     Bool grabTop;
@@ -458,15 +459,6 @@ static void FWCalculateInputOrigin (CompWindow *w, float x, float y)
 
     FREEWINS_WINDOW (w);
 
-    /*float dx, dy;
-    float ix, iy;
-
-    ix = fww->inputRect.x1;
-    iy = fww->inputRect.y1;
-
-    dx = x - ix;
-    dy = y - iy;*/
-
     fww->iMidX = x;
     fww->iMidY = y;
 }
@@ -506,7 +498,7 @@ static void FWDetermineZAxisClick (CompWindow *w, int px, int py)
 
     Bool directionChange = FALSE;
 
-    if (!fww->zaxis)
+    if (!fww->can2D)
     {
 
         static int steps;
@@ -560,16 +552,17 @@ static void FWDetermineZAxisClick (CompWindow *w, int px, int py)
         clickRadiusFromCenter = sqrt(pow((x - px), 2) + pow((y - py), 2));
 
         if (clickRadiusFromCenter > fww->radius * (freewinsGet3dPercent (w->screen) / 100))
-            fww->zaxis = TRUE;
+        {
+            fww->can2D = TRUE;
+            fww->can3D = FALSE;
+        }
         else
-            fww->zaxis = FALSE;
+        {
+            fww->can2D = FALSE;
+            fww->can3D = TRUE;
+        }
     }
 }
-
-/* Change the Rotation and Scaling Axis' */
-/*static void FWAdjustAxis (FreewinsWindow *fww, float posX, float posY)
-{
-}*/
 
 /* Check to see if we can shape a window */
 static Bool FWCanShape (CompWindow *w)
@@ -963,8 +956,6 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 	float midX = WIN_REAL_X(fwd->grabWindow) + WIN_REAL_W(fwd->grabWindow)/2.0;
 	float midY = WIN_REAL_Y(fwd->grabWindow) + WIN_REAL_H(fwd->grabWindow)/2.0;
 
-    fww->zaxis = TRUE;
-
   /* Check for Y axis clicking (Top / Bottom) */
 	if (pointerY > midY)
 	{
@@ -985,8 +976,8 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 
     float percentFromXAxis, percentFromYAxis;
 
-    percentFromXAxis = 1.0f;
-    percentFromYAxis = 1.0f;
+    percentFromXAxis = 0.0f;
+    percentFromYAxis = 0.0f;
 
     if (freewinsGetZAxisRotation (w->screen) == ZAxisRotationInterchangable)
     {
@@ -1016,13 +1007,13 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
         percentFromXAxis = distFromXAxis / halfWidth;
         percentFromYAxis = distFromYAxis / halfHeight;
 
-        }
+    }
 
-    if(fww->zaxis)
+    dx *= 360;
+    dy *= 360;
+
+    if(fww->can2D)
     {
-
-       dx *= 360;
-       dy *= 360;
 
        float zX = percentFromXAxis;
        float zY = percentFromYAxis;
@@ -1030,97 +1021,75 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
        zX = zX > 1.0f ? 1.0f : zX;
        zY = zY > 1.0f ? 1.0f : zY;
 
-       fprintf(stderr, "zx zy %f %f dx dy %f %f\n", zX, zY, dx, dy);
-
        switch (fww->corner)
        {
             case CornerTopRight:
 
-            if ((x) < oldX)
-            fww->transform.unsnapAngZ -= dx * zX;
-            else if ((x) > oldX)
-            fww->transform.unsnapAngZ += dx * zX;
+                if ((x) < oldX)
+                fww->transform.unsnapAngZ -= dx * zX;
+                else if ((x) > oldX)
+                fww->transform.unsnapAngZ += dx * zX;
 
 
-            if ((y) < oldY)
-            fww->transform.unsnapAngZ -= dy * zY;
-            else if ((y) > oldY)
-            fww->transform.unsnapAngZ += dy * zY;
+                if ((y) < oldY)
+                fww->transform.unsnapAngZ -= dy * zY;
+                else if ((y) > oldY)
+                fww->transform.unsnapAngZ += dy * zY;
 
-            break;
+                break;
 
             case CornerTopLeft:
 
-            if ((x) < oldX)
-            fww->transform.unsnapAngZ -= dx * zX;
-            else if ((x) > oldX)
-            fww->transform.unsnapAngZ += dx * zX;
+                if ((x) < oldX)
+                fww->transform.unsnapAngZ -= dx * zX;
+                else if ((x) > oldX)
+                fww->transform.unsnapAngZ += dx * zX;
 
 
-            if ((y) < oldY)
-            fww->transform.unsnapAngZ += dy * zY;
-            else if ((y) > oldY)
-            fww->transform.unsnapAngZ -= dy * zY;
+                if ((y) < oldY)
+                fww->transform.unsnapAngZ += dy * zY;
+                else if ((y) > oldY)
+                fww->transform.unsnapAngZ -= dy * zY;
 
-            break;
+                break;
 
             case CornerBottomLeft:
 
-            if ((x) < oldX)
-            fww->transform.unsnapAngZ += dx * zX;
-            else if ((x) > oldX)
-            fww->transform.unsnapAngZ -= dx * zX;
+                if ((x) < oldX)
+                fww->transform.unsnapAngZ += dx * zX;
+                else if ((x) > oldX)
+                fww->transform.unsnapAngZ -= dx * zX;
 
 
-            if ((y) < oldY)
-            fww->transform.unsnapAngZ += dy * zY;
-            else if ((y) > oldY)
-            fww->transform.unsnapAngZ -= dy * zY;
+                if ((y) < oldY)
+                fww->transform.unsnapAngZ += dy * zY;
+                else if ((y) > oldY)
+                fww->transform.unsnapAngZ -= dy * zY;
 
-            break;
+                break;
 
             case CornerBottomRight:
 
-            if ((x) < oldX)
-            fww->transform.unsnapAngZ += dx * zX;
-            else if ((x) > oldX)
-            fww->transform.unsnapAngZ -= dx * zX;
+                if ((x) < oldX)
+                fww->transform.unsnapAngZ += dx * zX;
+                else if ((x) > oldX)
+                fww->transform.unsnapAngZ -= dx * zX;
 
 
-            if ((y) < oldY)
-            fww->transform.unsnapAngZ -= dy * zY;
-            else if ((y) > oldY)
-            fww->transform.unsnapAngZ += dy * zY;
-            break;
+                if ((y) < oldY)
+                fww->transform.unsnapAngZ -= dy * zY;
+                else if ((y) > oldY)
+                fww->transform.unsnapAngZ += dy * zY;
+                break;
         }
     }
-    fww->zaxis = FALSE;
-    if (!fww->zaxis)
+
+    if (fww->can3D || freewinsGetZAxisRotation (w->screen) == ZAxisRotationAlways3d)
     {
     fww->transform.unsnapAngX -= dy * (1 - percentFromXAxis);
     fww->transform.unsnapAngY += dx * (1 - percentFromYAxis);
     }
 
-    switch (freewinsGetRotationAxis (w->screen))
-    {
-        case RotationAxisAlwaysCentre:
-        default:
-            FWCalculateInputOrigin(w, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
-                                      WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
-            FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
-            break;
-        case RotationAxisClickPoint:            
-            FWCalculateInputOrigin(w, fwd->click_root_x, fwd->click_root_y);
-            FWCalculateOutputOrigin(w, fwd->click_root_x, fwd->click_root_y);
-            break;
-        case RotationAxisOppositeToClick:            
-            FWCalculateInputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
-                                      w->attrib.y + w->height - fwd->click_root_y);
-            FWCalculateOutputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
-                                      w->attrib.y + w->height - fwd->click_root_y);
-            break;
-    }
-    
 }
 
 /* Handle Scaling */
@@ -1979,6 +1948,26 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     
     if(useW){
 	FREEWINS_WINDOW(useW);
+
+    switch (freewinsGetRotationAxis (w->screen))
+    {
+        case RotationAxisAlwaysCentre:
+        default:
+            FWCalculateInputOrigin(w, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
+                                      WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
+            FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
+            break;
+        case RotationAxisClickPoint:            
+            FWCalculateInputOrigin(w, fwd->click_root_x, fwd->click_root_y);
+            FWCalculateOutputOrigin(w, fwd->click_root_x, fwd->click_root_y);
+            break;
+        case RotationAxisOppositeToClick:            
+            FWCalculateInputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
+                                      w->attrib.y + w->height - fwd->click_root_y);
+            FWCalculateOutputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
+                                      w->attrib.y + w->height - fwd->click_root_y);
+            break;
+    }
 	
 	fww->allowRotation = TRUE;
 	fww->allowScaling = FALSE;
@@ -2001,23 +1990,20 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     fww->animate.oldScaleX = fww->transform.scaleX;
     fww->animate.oldScaleY = fww->transform.scaleY;
 
-	if (fwd->click_win_y > fww->iMidY)
+	if (fwd->click_root_y > fww->iMidY)
 	{
-	    if (fwd->click_win_x > fww->iMidX)
+	    if (fwd->click_root_x > fww->iMidX)
 	        fww->corner = CornerBottomRight;
-	    else if (fwd->click_win_x < fww->iMidX)
+	    else if (fwd->click_root_x < fww->iMidX)
 	        fww->corner = CornerBottomLeft;
 	}
-	else if (fwd->click_win_y < fww->iMidY)
+	else if (fwd->click_root_y < fww->iMidY)
 	{
-	    if (fwd->click_win_x > fww->iMidX)
+	    if (fwd->click_root_x > fww->iMidX)
 	        fww->corner = CornerTopRight;
-	    else if (fwd->click_win_x < fww->iMidX)
+	    else if (fwd->click_root_x < fww->iMidX)
 	        fww->corner = CornerTopLeft;
 	}
-
-	fww->grabLeft = (dx > 0 ? FALSE : TRUE);
-	fww->grabTop = (dy > 0 ? FALSE : TRUE);
 
 	dx = ABS(dx);
 	dy = ABS(dy);
@@ -2025,13 +2011,16 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     switch (freewinsGetZAxisRotation (s))
     {
         case ZAxisRotationAlways3d:
-            fww->zaxis = FALSE; break;
+            fww->can3D = TRUE;
+            fww->can2D = FALSE; break;
         case ZAxisRotationAlways2d:
-            fww->zaxis = TRUE; break;
+            fww->can3D = FALSE;
+            fww->can2D = TRUE; break;
         case ZAxisRotationDetermineOnClick:
             FWDetermineZAxisClick (useW, pointerX, pointerY); break;
         case ZAxisRotationInterchangable:
-            startTrackball (pointerX, pointerY, WIN_REAL_X (w), WIN_REAL_Y (w), WIN_REAL_W (w), WIN_REAL_H (w));
+            fww->can3D = TRUE;
+            fww->can2D = TRUE;  break;
         default:
             break;
     }
@@ -2163,8 +2152,6 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 
 	dx = ABS(dx);
 	dy = ABS(dy);
-	
-	fww->zaxis = TRUE;	
 	
 	}
     
@@ -2545,7 +2532,8 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->outputRect.y2 = WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w);
 
     fwd->grab = grabNone;
-    fww->zaxis = FALSE;
+    fww->can2D = FALSE;
+    fww->can3D = FALSE;
 
     fww->rotated = FALSE;
     

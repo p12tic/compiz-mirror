@@ -193,6 +193,7 @@
                     <value>3</value><name>Interchangable</name>
                 </desc>
                 <default>2</default>
+                <min>0</min><max>3</max>
 	        </option>
 	        <option type="int" name="rotation_axis">
 			    <_short>Rotation Axis</_short>
