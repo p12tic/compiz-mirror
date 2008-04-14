@@ -855,11 +855,11 @@ static void FWHandleIPWResizeInitiate (CompWindow *w)
 
     (*w->screen->activateWindow) (w);
     fwd->grab = grabResize;
-    fws->rotateCursor = XCreateFontCursor (w->screen->display->display, XC_fleur);	
+    fws->rotateCursor = XCreateFontCursor (w->screen->display->display, XC_plus);	
 	if(!otherScreenGrabExist(w->screen, "freewins", "resize", 0))
 	    if(!fws->grabIndex)
         {
-        unsigned int mods;
+        unsigned int mods = 0;
         mods &= CompNoMask;
 		fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "resize");
 	    (w->screen->windowGrabNotify) (w,  w->attrib.x + (w->width / 2),
@@ -881,7 +881,7 @@ static void FWHandleIPWMoveInitiate (CompWindow *w)
 	if(!otherScreenGrabExist(w->screen, "freewins", "move", 0))
 	    if(!fws->grabIndex)
         {
-        unsigned int mods;
+        unsigned int mods = 0;
         mods &= CompNoMask;
 		fws->grabIndex = pushScreenGrab(w->screen, fws->rotateCursor, "move");
 	    (w->screen->windowGrabNotify) (w,  w->attrib.x + (w->width / 2),
