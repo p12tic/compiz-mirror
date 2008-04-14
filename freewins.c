@@ -963,10 +963,9 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 	float midX = WIN_REAL_X(fwd->grabWindow) + WIN_REAL_W(fwd->grabWindow)/2.0;
 	float midY = WIN_REAL_Y(fwd->grabWindow) + WIN_REAL_H(fwd->grabWindow)/2.0;
 
-    if (freewinsGetZAxisRotation (w->screen) == ZAxisRotationInterchangable)
-        FWDetermineZAxisClick (w, pointerX, pointerY);
+    fww->zaxis = TRUE;
 
-	/* Check for Y axis clicking (Top / Bottom) */
+  /* Check for Y axis clicking (Top / Bottom) */
 	if (pointerY > midY)
 	{
 	    /* Check for X axis clicking (Left / Right) */
@@ -984,78 +983,122 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 	        fww->corner = CornerTopLeft;
 	}
 
+    float percentFromXAxis, percentFromYAxis;
+
+    percentFromXAxis = 1.0f;
+    percentFromYAxis = 1.0f;
+
+    if (freewinsGetZAxisRotation (w->screen) == ZAxisRotationInterchangable)
+    {
+
+        /* Trackball rotation was too hard to implement. If anyone can implement it,
+         * please come forward so I can replace this hacky solution to the problem.
+         * Anyways, what happens here, is that we determine how far away we are from
+         * each axis (y and x). The further we are away from the y axis, the more
+         * up / down movements become Z axis movements and the further we are away from
+         * the x-axis, the more left / right movements become z rotations. */
+
+        /* We determine this by taking a percentage of how far away the cursor is from
+         * each axis. We divide the 3D rotation by this percentage ( and divide by the
+         * percentage squared in order to ensure that rotation is not too violent when we
+         * are quite close to the origin. We multiply the 2D rotation by this percentage also
+         * so we are essentially rotating in 3D and 2D all the time, but this is only really
+         * noticeable when you move the cursor over to the extremes of a window. In every case
+         * percentage can be defined as decimal-percentage (i.e 0.036 == 3.6%). Like I mentioned
+         * earlier, if you can replace this with trackball rotation, please come forward! */
+
+        float halfWidth = WIN_REAL_W (w) / 2.0f;
+        float halfHeight = WIN_REAL_H (w) / 2.0f;
+
+        float distFromXAxis = fabs (fww->iMidX - pointerX);
+        float distFromYAxis = fabs (fww->iMidY - pointerY);
+
+        percentFromXAxis = distFromXAxis / halfWidth;
+        percentFromYAxis = distFromYAxis / halfHeight;
+
+        }
+
     if(fww->zaxis)
     {
 
        dx *= 360;
        dy *= 360;
 
+       float zX = percentFromXAxis;
+       float zY = percentFromYAxis;
+
+       zX = zX > 1.0f ? 1.0f : zX;
+       zY = zY > 1.0f ? 1.0f : zY;
+
+       fprintf(stderr, "zx zy %f %f dx dy %f %f\n", zX, zY, dx, dy);
+
        switch (fww->corner)
        {
             case CornerTopRight:
 
             if ((x) < oldX)
-            fww->transform.unsnapAngZ -= dx;
+            fww->transform.unsnapAngZ -= dx * zX;
             else if ((x) > oldX)
-            fww->transform.unsnapAngZ += dx;
+            fww->transform.unsnapAngZ += dx * zX;
 
 
             if ((y) < oldY)
-            fww->transform.unsnapAngZ -= dy;
+            fww->transform.unsnapAngZ -= dy * zY;
             else if ((y) > oldY)
-            fww->transform.unsnapAngZ += dy;
+            fww->transform.unsnapAngZ += dy * zY;
 
             break;
 
             case CornerTopLeft:
 
             if ((x) < oldX)
-            fww->transform.unsnapAngZ -= dx;
+            fww->transform.unsnapAngZ -= dx * zX;
             else if ((x) > oldX)
-            fww->transform.unsnapAngZ += dx;
+            fww->transform.unsnapAngZ += dx * zX;
 
 
             if ((y) < oldY)
-            fww->transform.unsnapAngZ += dy;
+            fww->transform.unsnapAngZ += dy * zY;
             else if ((y) > oldY)
-            fww->transform.unsnapAngZ -= dy;
+            fww->transform.unsnapAngZ -= dy * zY;
 
             break;
 
             case CornerBottomLeft:
 
             if ((x) < oldX)
-            fww->transform.unsnapAngZ += dx;
+            fww->transform.unsnapAngZ += dx * zX;
             else if ((x) > oldX)
-            fww->transform.unsnapAngZ -= dx;
+            fww->transform.unsnapAngZ -= dx * zX;
 
 
             if ((y) < oldY)
-            fww->transform.unsnapAngZ += dy;
+            fww->transform.unsnapAngZ += dy * zY;
             else if ((y) > oldY)
-            fww->transform.unsnapAngZ -= dy;
+            fww->transform.unsnapAngZ -= dy * zY;
 
             break;
 
             case CornerBottomRight:
 
             if ((x) < oldX)
-            fww->transform.unsnapAngZ += dx;
+            fww->transform.unsnapAngZ += dx * zX;
             else if ((x) > oldX)
-            fww->transform.unsnapAngZ -= dx;
+            fww->transform.unsnapAngZ -= dx * zX;
 
 
             if ((y) < oldY)
-            fww->transform.unsnapAngZ -= dy;
+            fww->transform.unsnapAngZ -= dy * zY;
             else if ((y) > oldY)
-            fww->transform.unsnapAngZ += dy;
+            fww->transform.unsnapAngZ += dy * zY;
             break;
         }
     }
-    else
+    fww->zaxis = FALSE;
+    if (!fww->zaxis)
     {
-    fww->transform.unsnapAngX -= 360.0 * dy;
-    fww->transform.unsnapAngY += 360.0 * dx;
+    fww->transform.unsnapAngX -= dy * (1 - percentFromXAxis);
+    fww->transform.unsnapAngY += dx * (1 - percentFromYAxis);
     }
 
     switch (freewinsGetRotationAxis (w->screen))
@@ -1988,6 +2031,7 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
         case ZAxisRotationDetermineOnClick:
             FWDetermineZAxisClick (useW, pointerX, pointerY); break;
         case ZAxisRotationInterchangable:
+            startTrackball (pointerX, pointerY, WIN_REAL_X (w), WIN_REAL_Y (w), WIN_REAL_W (w), WIN_REAL_H (w));
         default:
             break;
     }
