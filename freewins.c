@@ -458,14 +458,14 @@ static void FWCalculateInputOrigin (CompWindow *w, float x, float y)
 
     FREEWINS_WINDOW (w);
 
-    float dx, dy;
+    /*float dx, dy;
     float ix, iy;
 
     ix = fww->inputRect.x1;
     iy = fww->inputRect.y1;
 
     dx = x - ix;
-    dy = y - iy;
+    dy = y - iy;*/
 
     fww->iMidX = x;
     fww->iMidY = y;
@@ -1060,23 +1060,22 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 
     switch (freewinsGetRotationAxis (w->screen))
     {
-        float iapw = fww->inputRect.x2 - fww->inputRect.x1;
-        float iaph = fww->inputRect.y2 - fww->inputRect.y1;
         case RotationAxisAlwaysCentre:
         default:
-            FWCalculateInputOrigin (w, iapw / 2.0f, iaph / 2.0f);
+            FWCalculateInputOrigin(w, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
+                                      WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
             FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
             break;
         case RotationAxisClickPoint:            
-            FWCalculateInputOrigin(w, fwd->click_win_x, fwd->click_win_y);
-            FWCalculateOutputOrigin(w, fwd->click_win_x, fwd->click_win_y);
+            FWCalculateInputOrigin(w, fwd->click_root_x, fwd->click_root_y);
+            FWCalculateOutputOrigin(w, fwd->click_root_x, fwd->click_root_y);
             break;
         case RotationAxisOppositeToClick:            
-            FWCalculateInputOrigin(w, w->width - fwd->click_win_x, w->height - fwd->click_win_y);
-            FWCalculateOutputOrigin(w, w->width - fwd->click_win_x, w->height - fwd->click_win_y);
+            FWCalculateInputOrigin(w, w->width - fwd->click_root_x, w->height - fwd->click_root_y);
+            FWCalculateOutputOrigin(w, w->width - fwd->click_root_x, w->height - fwd->click_root_y);
             break;
     }
-
+    
 }
 
 /* Handle Scaling */
@@ -2069,8 +2068,6 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 
     switch (fww->corner)
     {
-        float iapw = fww->inputRect.x2 - fww->inputRect.x1;
-        float iaph = fww->inputRect.y2 - fww->inputRect.y1;
         case CornerBottomRight:
         /* Translate origin to the top left of the window */
         FWCalculateInputOrigin (w, WIN_REAL_X (w), WIN_REAL_Y (w));
