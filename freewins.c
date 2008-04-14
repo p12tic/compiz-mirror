@@ -1071,8 +1071,10 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
             FWCalculateOutputOrigin(w, fwd->click_root_x, fwd->click_root_y);
             break;
         case RotationAxisOppositeToClick:            
-            FWCalculateInputOrigin(w, w->width - fwd->click_root_x, w->height - fwd->click_root_y);
-            FWCalculateOutputOrigin(w, w->width - fwd->click_root_x, w->height - fwd->click_root_y);
+            FWCalculateInputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
+                                      w->attrib.y + w->height - fwd->click_root_y);
+            FWCalculateOutputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
+                                      w->attrib.y + w->height - fwd->click_root_y);
             break;
     }
     
