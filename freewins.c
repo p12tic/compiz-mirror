@@ -398,16 +398,16 @@ static Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
         matrixGetIdentity (&transform);
         matrixScale (&transform, 1.0f, 1.0f, 1.0f / w->screen->width);
 	    matrixTranslate(&transform, 
-		    fww->iMidX + w->attrib.x, 
-		    fww->iMidY + w->attrib.y, 0.0);
+		    fww->iMidX, 
+		    fww->iMidY, 0.0);
         matrixRotate (&transform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
         matrixRotate (&transform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
         matrixRotate (&transform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
         matrixScale(&transform, fww->transform.scaleX, 1.0, 0.0);
         matrixScale(&transform, 1.0, fww->transform.scaleY, 0.0);
             matrixTranslate(&transform, 
-                -(fww->iMidX + w->attrib.x), 
-                -(fww->iMidY + w->attrib.y), 0.0);
+                -(fww->iMidX), 
+                -(fww->iMidY), 0.0);
 
         FWRotateProjectVector(w, c1, transform, &xScreen1, &yScreen1, &zScreen1);
         FWRotateProjectVector(w, c2, transform, &xScreen2, &yScreen2, &zScreen2);
@@ -464,13 +464,11 @@ static void FWCalculateInputOrigin (CompWindow *w, float x, float y)
     ix = fww->inputRect.x1;
     iy = fww->inputRect.y1;
 
-    fprintf(stderr, "ix %f iy %f\n", ix, iy);
-
     dx = x - ix;
     dy = y - iy;
 
-    fww->iMidX = ix + dx * fww->transform.scaleX;
-    fww->iMidY = iy + dy * fww->transform.scaleY;
+    fww->iMidX = x;
+    fww->iMidY = y;
 }
 
 static void FWCalculateOutputOrigin (CompWindow *w, float x, float y)
@@ -1062,9 +1060,11 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 
     switch (freewinsGetRotationAxis (w->screen))
     {
+        float iapw = fww->inputRect.x2 - fww->inputRect.x1;
+        float iaph = fww->inputRect.y2 - fww->inputRect.y1;
         case RotationAxisAlwaysCentre:
         default:
-            FWCalculateInputOrigin (w, WIN_REAL_W (w) / 2.0f, WIN_REAL_H (w) / 2.0f);
+            FWCalculateInputOrigin (w, iapw / 2.0f, iaph / 2.0f);
             FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
             break;
         case RotationAxisClickPoint:            
@@ -1079,7 +1079,7 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 
 }
 
-/* Handle Rotation */
+/* Handle Scaling */
 static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 {
     FREEWINS_WINDOW (w);
@@ -1087,6 +1087,8 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
 
     x -= 100.0;
     y -= 100.0;
+
+    FWCalculateInputRect (w);
 
     switch (fww->corner)
     {
@@ -1150,26 +1152,6 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
         else if ((y) > fwd->oldY)
         fww->transform.unsnapScaleY += dy;
         break;
-    }
-
-    switch (fww->corner)
-    {
-        case CornerBottomRight:
-        /* Translate origin to the top left of the window */
-        FWCalculateInputOrigin (w, w->attrib.x, w->attrib.y);
-        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
-        case CornerBottomLeft:
-        /* Translate origin to the top right of the window */
-        FWCalculateInputOrigin (w, w->attrib.x + w->width, w->attrib.y);
-        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w));
-        case CornerTopRight:
-        /* Translate origin to the bottom left of the window */
-        FWCalculateInputOrigin (w, w->attrib.x, w->attrib.y + w->attrib.height);
-        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
-        case CornerTopLeft:
-        /* Translate origin to the bottom right of the window */
-        FWCalculateInputOrigin (w, w->attrib.x + w->width, w->attrib.y + w->attrib.height);
-        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w));
     }
 }
 
@@ -1595,8 +1577,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 	    /* Adjust the window in the matrix to prepare for transformation */
 	    matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
 	    matrixTranslate(&wTransform, 
-		    (fww->iMidX + w->attrib.x), 
-		    (fww->iMidY + w->attrib.y), 0.0);
+		    (fww->iMidX), 
+		    (fww->iMidY), 0.0);
         
         matrixRotate(&wTransform, fww->transform.angX, 1.0, 0.0, 0.0);
         matrixRotate(&wTransform, fww->transform.angY, 0.0, 1.0, 0.0);
@@ -1606,8 +1588,8 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         matrixScale(&wTransform, 1.0, scaleY, 0.0);
 
 	    matrixTranslate(&wTransform, 
-		    -((fww->iMidX + w->attrib.x)), 
-		    -((fww->iMidY + w->attrib.y)), 0.0);
+		    -((fww->iMidX)), 
+		    -((fww->iMidY)), 0.0);
 
         /* Create rects for input after we've dealt
          * with output
@@ -2063,26 +2045,55 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	fwd->grabWindow = useW;
 	
 	/* Find out the corner we clicked in */
+
+    float MidX = fww->inputRect.x1 + ((fww->inputRect.x2 - fww->inputRect.x1) / 2.0f);
+    float MidY = fww->inputRect.y1 + ((fww->inputRect.y2 - fww->inputRect.y1) / 2.0f);
 	
 	/* Check for Y axis clicking (Top / Bottom) */
-	if (fwd->click_win_y > fww->iMidY)
+	if (fwd->click_root_y > MidY)
 	{
 	    /* Check for X axis clicking (Left / Right) */
-	    if (fwd->click_win_x > fww->iMidX)
+	    if (fwd->click_root_x > MidX)
 	        fww->corner = CornerBottomRight;
-	    else if (fwd->click_win_x < fww->iMidX)
+	    else if (fwd->click_root_x < MidX)
 	        fww->corner = CornerBottomLeft;
 	}
-	else if (fwd->click_win_y < fww->iMidY)
+	else if (fwd->click_win_y < MidY)
 	{
 	    /* Check for X axis clicking (Left / Right) */
-	    if (fwd->click_win_x > fww->iMidX)
+	    if (fwd->click_root_x > MidX)
 	        fww->corner = CornerTopRight;
-	    else if (fwd->click_win_x < fww->iMidX)
+	    else if (fwd->click_root_x < MidX)
 	        fww->corner = CornerTopLeft;
 	}
-	
-	fwd->grab = grabScale;
+
+    switch (fww->corner)
+    {
+        float iapw = fww->inputRect.x2 - fww->inputRect.x1;
+        float iaph = fww->inputRect.y2 - fww->inputRect.y1;
+        case CornerBottomRight:
+        /* Translate origin to the top left of the window */
+        FWCalculateInputOrigin (w, WIN_REAL_X (w), WIN_REAL_Y (w));
+        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
+        break;
+        case CornerBottomLeft:
+        /* Translate origin to the top right of the window */
+        FWCalculateInputOrigin (w, WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w));
+        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w));
+        break;
+        case CornerTopRight:
+        /* Translate origin to the bottom left of the window */
+        FWCalculateInputOrigin (w, WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w));
+        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
+        break;
+        case CornerTopLeft:
+        /* Translate origin to the bottom right of the window */
+        FWCalculateInputOrigin (w, WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w));
+        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w));
+        break;
+    }
+
+    fwd->grab = grabScale;
 
 	fwd->oldX = fwd->click_root_x;
 	fwd->oldY = fwd->click_root_y;
