@@ -2066,28 +2066,39 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	        fww->corner = CornerTopLeft;
 	}
 
-    switch (fww->corner)
+    switch (freewinsGetScaleMode (w->screen))
     {
-        case CornerBottomRight:
-        /* Translate origin to the top left of the window */
-        FWCalculateInputOrigin (w, WIN_REAL_X (w), WIN_REAL_Y (w));
-        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
-        break;
-        case CornerBottomLeft:
-        /* Translate origin to the top right of the window */
-        FWCalculateInputOrigin (w, WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w));
-        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w));
-        break;
-        case CornerTopRight:
-        /* Translate origin to the bottom left of the window */
-        FWCalculateInputOrigin (w, WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w));
-        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
-        break;
-        case CornerTopLeft:
-        /* Translate origin to the bottom right of the window */
-        FWCalculateInputOrigin (w, WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w));
-        FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w));
-        break;
+        case ScaleModeToCentre:
+            FWCalculateInputOrigin(w, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
+                                      WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
+            FWCalculateOutputOrigin(w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w) / 2.0f,
+                                       WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
+            break;
+        case ScaleModeToOppositeCorner:
+            switch (fww->corner)
+            {
+                case CornerBottomRight:
+                /* Translate origin to the top left of the window */
+                FWCalculateInputOrigin (w, WIN_REAL_X (w), WIN_REAL_Y (w));
+                FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
+                break;
+                case CornerBottomLeft:
+                /* Translate origin to the top right of the window */
+                FWCalculateInputOrigin (w, WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w));
+                FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w));
+                break;
+                case CornerTopRight:
+                /* Translate origin to the bottom left of the window */
+                FWCalculateInputOrigin (w, WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w));
+                FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
+                break;
+                case CornerTopLeft:
+                /* Translate origin to the bottom right of the window */
+                FWCalculateInputOrigin (w, WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w));
+                FWCalculateOutputOrigin (w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w));
+                break;
+            }
+            break;
     }
 
     fwd->grab = grabScale;
