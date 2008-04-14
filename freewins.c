@@ -1202,6 +1202,9 @@ FWHandleWindowInputInfo (CompWindow *w)
 	FWAddWindowToList (fww->input);
     }
 
+    if (fww->input)
+        FWAdjustIPW (w);
+
     return TRUE;
 }
 
@@ -2149,6 +2152,11 @@ static void
 FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, float dsd)
 {
     FREEWINS_WINDOW (w);
+
+    FWCalculateInputOrigin(w, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
+                              WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
+    FWCalculateOutputOrigin(w, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w) / 2.0f,
+                               WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
 
     fww->transform.unsnapAngX += dy;
     fww->transform.unsnapAngY -= dx;
