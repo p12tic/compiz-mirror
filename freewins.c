@@ -1,4 +1,4 @@
-/*
+/**
  * Compiz Fusion Freewins plugin
  *
  * Copyright (C) 2007  Rodolfo Granata <warlock.cc@gmail.com>
@@ -597,18 +597,25 @@ FWGetRealWindow (CompWindow *w)
     return NULL;
 }
 
-static CompWindow *
+/*static CompWindow *
 FWGetRealWindowFromID (CompDisplay *d,
 		       Window      wid)
 {
-    CompWindow *orig;
+    CompWindow *orig, *w;
+    CompScreen *s;
 
     orig = findWindowAtDisplay (d, wid);
+
+    for (s = d->screens; s; s = s->next)
+        for (w = s->windows; w; w = w->next)
+            if (wid == w->id)
+                orig = w;
     if (!orig)
 	return NULL;
 
+
     return FWGetRealWindow (orig);
-}
+}*/
 
 /* ------ Input Prevention -------------------------------------------*/
 
@@ -731,7 +738,7 @@ FWAddWindowToList (FWWindowInputInfo *info)
 	fws->transformedWindows = info;
     else
     {
-	for (; run->next; run = run->next)
+	for (; run->next; run = run->next);
 	run->next = info;
     }
 }
@@ -763,33 +770,6 @@ FWRemoveWindowFromList (FWWindowInputInfo *info)
     }
 }
 
-/* Create an input prevention window */
-static void
-FWCreateIPW (CompWindow *w)
-{
-    Window               ipw;
-    XSetWindowAttributes attrib;
-
-    FREEWINS_WINDOW (w);
-
-    if (!fww->input || fww->input->ipw)
-	return;
-
-    attrib.override_redirect = TRUE;
-    attrib.event_mask        = 0;
-
-    ipw = XCreateWindow (w->screen->display->display,
-			 w->screen->root,
-			 w->serverX - w->input.left,
-			 w->serverY - w->input.top,
-			 w->serverWidth + w->input.left + w->input.right,
-			 w->serverHeight + w->input.top + w->input.bottom,
-			 0, CopyFromParent, InputOnly, CopyFromParent,
-			 CWEventMask | CWOverrideRedirect,
-			 &attrib);
- 
-    fww->input->ipw = ipw;
-}
 
 /* Adjust size and location of the input prevention window
  */
@@ -820,6 +800,36 @@ FWAdjustIPW (CompWindow *w)
 		      &xwc);
 
     XMapWindow (dpy, fww->input->ipw);
+}
+
+/* Create an input prevention window */
+static void
+FWCreateIPW (CompWindow *w)
+{
+    Window               ipw;
+    XSetWindowAttributes attrib;
+
+    FREEWINS_WINDOW (w);
+
+    if (!fww->input || fww->input->ipw)
+	return;
+
+    attrib.override_redirect = TRUE;
+    attrib.event_mask        = 0;
+
+    ipw = XCreateWindow (w->screen->display->display,
+			 w->screen->root,
+			 w->serverX - w->input.left,
+			 w->serverY - w->input.top,
+			 w->serverWidth + w->input.left + w->input.right,
+			 w->serverHeight + w->input.top + w->input.bottom,
+			 0, CopyFromParent, InputOnly, CopyFromParent,
+			 CWEventMask | CWOverrideRedirect,
+			 &attrib);
+ 
+    fww->input->ipw = ipw;
+
+    FWAdjustIPW (w);
 }
 
 /* Ensure that the input prevention window
@@ -1216,9 +1226,6 @@ FWHandleWindowInputInfo (CompWindow *w)
 	FWAddWindowToList (fww->input);
     }
 
-    if (fww->input)
-        FWAdjustIPW (w);
-
     return TRUE;
 }
 
@@ -1347,8 +1354,19 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	case ButtonPress:
     {
         CompWindow *btnW;
-        btnW = FWGetRealWindowFromID (d, ev->xbutton.window);
+        btnW = findWindowAtDisplay (d, ev->xbutton.subwindow);
+
+        /* It wasn't the subwindow, try the window */
+        if (!btnW)
+            btnW = findWindowAtDisplay (d, ev->xbutton.window);
+
+        /* We have established the CompWindow we clicked
+         * on. Get the real window */
         if (btnW)
+        btnW = FWGetRealWindow (btnW);
+
+        if (btnW)
+        {
             if (fwd->grab == grabNone)
                 switch (ev->xbutton.button)
                 {
@@ -1357,6 +1375,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
                     case Button3:
                         FWHandleIPWResizeInitiate (btnW); break;
                 }
+        }
 
         fwd->oldX =  ev->xbutton.x_root;
 	    fwd->oldY =  ev->xbutton.y_root;
@@ -1462,6 +1481,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		{
 		    /* restacking occured, ensure ipw stacking */
 		    FWAdjustIPWStacking (w->screen);
+            FWAdjustIPW (w);
 		}
 	    }
 	    break;
@@ -1506,7 +1526,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
     FREEWINS_SCREEN(w->screen);
     FREEWINS_WINDOW(w);
-        
+
     /* Has something happened? */
 
     if((fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 ||
@@ -2232,7 +2252,8 @@ static Bool FWRotateUp (CompDisplay *d, CompAction *action,
         FWSetPrepareRotation (w, 0, ROTATE_INC, 0, 0, 0);
 
         if (FWCanShape (w))
-            FWHandleWindowInputInfo (w);
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);
     }
     
     return TRUE;
@@ -2248,7 +2269,8 @@ static Bool FWRotateDown (CompDisplay *d, CompAction *action,
         FWSetPrepareRotation (w, 0, NEG_ROTATE_INC, 0, 0, 0);
     
         if (FWCanShape (w))
-            FWHandleWindowInputInfo (w);
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);
     }
     return TRUE;
     
@@ -2262,7 +2284,8 @@ static Bool FWRotateLeft (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, ROTATE_INC, 0, 0, 0, 0);
         if (FWCanShape (w))
-            FWHandleWindowInputInfo (w);
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);
     }
     
     return TRUE;
@@ -2277,7 +2300,8 @@ static Bool FWRotateRight (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, NEG_ROTATE_INC, 0, 0, 0, 0);
         if (FWCanShape (w))
-            FWHandleWindowInputInfo (w);
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);
     }
     
     return TRUE;
@@ -2292,7 +2316,8 @@ static Bool FWRotateClockwise (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, 0, 0, ROTATE_INC, 0, 0);
         if (FWCanShape (w))
-            FWHandleWindowInputInfo (w);
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);
     }
     
     return TRUE;
@@ -2307,7 +2332,8 @@ static Bool FWRotateCounterclockwise (CompDisplay *d, CompAction *action,
     {
         FWSetPrepareRotation (w, 0, 0, NEG_ROTATE_INC, 0, 0);
         if (FWCanShape (w))
-            FWHandleWindowInputInfo (w);
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);
     }
     
     return TRUE;
@@ -2323,7 +2349,8 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
         FWSetPrepareRotation (w, 0, 0, 0, SCALE_INC, SCALE_INC);
         addWindowDamage (w); // Smoothen Painting
         if (FWCanShape (w))
-        FWHandleWindowInputInfo (w);
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);
     }
     
     return TRUE;
@@ -2339,7 +2366,8 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
         FWSetPrepareRotation (w, 0, 0, 0, NEG_SCALE_INC, NEG_SCALE_INC);
         addWindowDamage (w); // Smoothen Painting
         if (FWCanShape (w))
-            FWHandleWindowInputInfo (w);
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);
     }
     
     return TRUE;
@@ -2369,7 +2397,8 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
 	    }
 
         if (FWCanShape (w))
-            FWHandleWindowInputInfo (w);
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);
 
         fww->resetting = TRUE;
     }
