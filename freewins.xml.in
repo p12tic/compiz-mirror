@@ -11,6 +11,8 @@
             <plugin>shift</plugin>
             <plugin>shelf</plugin>
             <plugin>group</plugin>
+            <plugin>wobbly</plugin>
+            <plugin>animation</plugin>
 		</relation>
 	</deps>
 	<display>
@@ -279,6 +281,11 @@
 		    <_long>Prevent input in transformed windows</_long>
 		    <default>True</default>
 	    </option>
+        <option type="bool" name="immediate_moves">
+            <_short>Immediate Moves</_short>
+            <_long>Don't allow plugins like wobbly to transform the transformed window while it's being moved</_long>
+            <default>True</default>
+        </option>
         </subgroup>
 		<option type="int" name="reset_time">
 			<_short>Reset animation time</_short>

@@ -908,7 +908,7 @@ static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned 
         return;
 
     moveWindow(w, dx,
-                  dy, TRUE, FALSE);
+                  dy, TRUE, freewinsGetImmediateMoves (w->screen));
     syncWindowPosition (w);
 }
 
@@ -1856,13 +1856,13 @@ static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
         status = FALSE;
     }
 
-    if (fwd->axisHelp)
+    if ((fwd->axisHelp) || (fwd->grab == grabMove && !freewinsGetImmediateMoves (w->screen)))
         damageScreen (w->screen);
         /* TODO: Calculate a region for the axisHelp */
 
     UNWRAP(fws, w->screen, damageWindowRect);
-    status |= (*w->screen->damageWindowRect)(w, initial, rect);
-    //(*w->screen->damageWindowRect)(w, initial, &fww->outputRect);
+    status |= (*w->screen->damageWindowRect)(w, initial, &fww->outputRect);
+    //(*w->screen->damageWindowRect)(w, initial, rect);
     WRAP(fws, w->screen, damageWindowRect, FWDamageWindowRect);
 
     // true if damaged something
@@ -1907,7 +1907,7 @@ FWWindowMoveNotify (CompWindow *w,
 
     useWindow = FWGetRealWindow (w); /* Did we move an IPW and not the actual window? */
     if (useWindow)
-        moveWindow (useWindow, dx, dy, TRUE, FALSE);
+        moveWindow (useWindow, dx, dy, TRUE, freewinsGetImmediateMoves (w->screen));
     else
         FWAdjustIPW (w); /* We moved a window but not the IPW, so adjust it */
 
