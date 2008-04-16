@@ -344,7 +344,6 @@ FWCreateMatrix  (CompWindow *w, CompTransform *mTransform,
 {
     /* Create our transformation Matrix */
 
-    matrixGetIdentity (mTransform);
     matrixScale (mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
     matrixTranslate(mTransform, 
 	    tX, 
@@ -352,11 +351,11 @@ FWCreateMatrix  (CompWindow *w, CompTransform *mTransform,
     matrixRotate (mTransform, angX, 1.0f, 0.0f, 0.0f);
     matrixRotate (mTransform, angY, 0.0f, 1.0f, 0.0f);
     matrixRotate (mTransform, angZ, 0.0f, 0.0f, 1.0f);
-    matrixScale(mTransform, scX, 1.0, 0.0);
-    matrixScale(mTransform, 1.0, scY, 0.0);
+    matrixScale(mTransform, scX, 1.0f, 0.0f);
+    matrixScale(mTransform, 1.0f, scY, 0.0f);
     matrixTranslate(mTransform, 
             -(tX), 
-            -(tY), 0.0);
+            -(tY), 0.0f);
 }
 
 /* Create a rect from 4 screen points */
@@ -438,19 +437,14 @@ static Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
         GLdouble xScreen3, yScreen3, zScreen3;
         GLdouble xScreen4, yScreen4, zScreen4;
 
-        matrixGetIdentity (&transform);
-        matrixScale (&transform, 1.0f, 1.0f, 1.0f / w->screen->width);
-	    matrixTranslate(&transform, 
-		    fww->iMidX, 
-		    fww->iMidY, 0.0);
-        matrixRotate (&transform, fww->transform.angX, 1.0f, 0.0f, 0.0f);
-        matrixRotate (&transform, fww->transform.angY, 0.0f, 1.0f, 0.0f);
-        matrixRotate (&transform, fww->transform.angZ, 0.0f, 0.0f, 1.0f);
-        matrixScale(&transform, fww->transform.scaleX, 1.0, 0.0);
-        matrixScale(&transform, 1.0, fww->transform.scaleY, 0.0);
-            matrixTranslate(&transform, 
-                -(fww->iMidX), 
-                -(fww->iMidY), 0.0);
+        matrixGetIdentity(&transform);
+        FWCreateMatrix (w, &transform,
+                        fww->transform.angX,
+                        fww->transform.angY,
+                        fww->transform.angZ,
+                        fww->iMidX, fww->iMidY, 0.0f,
+                        fww->transform.scaleX,
+                        fww->transform.scaleY, 0.0f);        
 
         //CompVector pointer = { .v = { pointerX, pointerY, 1.0f, 1.0f } };
 
@@ -463,19 +457,7 @@ static Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
                  on original window
         */
 
-        /*matrixGetIdentity (&transform);
-        matrixScale (&transform, 1.0f, 1.0f, 1.0f / w->screen->width);
-	    matrixTranslate(&transform, 
-		    fww->iMidX, 
-		    fww->iMidY, 0.0);
-        matrixRotate (&transform, -fww->transform.angX, 1.0f, 0.0f, 0.0f);
-        matrixRotate (&transform, -fww->transform.angY, 0.0f, 1.0f, 0.0f);
-        matrixRotate (&transform, -fww->transform.angZ, 0.0f, 0.0f, 1.0f);
-        matrixScale(&transform, 1.0f + (1 - fww->transform.scaleX), 1.0, 0.0);
-        matrixScale(&transform, 1.0, 1.0f + (1 - fww->transform.scaleY), 0.0);
-        matrixTranslate(&transform, 
-            -(fww->iMidX), 
-            -(fww->iMidY), 0.0);
+        /*
 
         FWRotateProjectVector(w, pointer, transform, &xScreen5, &yScreen5, &zScreen5, report);
 
@@ -515,10 +497,10 @@ static void FWCalculateInputRect (CompWindow *w)
 
     FREEWINS_WINDOW (w);
 
-    CompVector corner1 = { .v = { w->attrib.x, w->attrib.y, 1.0f, 1.0f } };
-    CompVector corner2 = { .v = { w->attrib.x + w->attrib.width, w->attrib.y, 1.0f, 1.0f } };
-    CompVector corner3 = { .v = { w->attrib.x, w->attrib.y + w->attrib.height, 1.0f, 1.0f } };
-    CompVector corner4 = { .v = { w->attrib.x + w->attrib.width, w->attrib.y + w->attrib.height, 1.0f, 1.0f } };
+    CompVector corner1 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+    CompVector corner2 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+    CompVector corner3 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
+    CompVector corner4 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
 
     fww->inputRect = FWCalculateWindowRect (w, corner1, corner2, corner3, corner4);
     }
@@ -1805,7 +1787,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
 	    /* Adjust the window in the matrix to prepare for transformation */
-	    matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+	    /*matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
 	    matrixTranslate(&wTransform, 
 		    (fww->iMidX), 
 		    (fww->iMidY), 0.0);
@@ -1819,7 +1801,14 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
 	    matrixTranslate(&wTransform, 
 		    -((fww->iMidX)), 
-		    -((fww->iMidY)), 0.0);
+		    -((fww->iMidY)), 0.0);*/
+
+        FWCreateMatrix (w, &wTransform,
+                        fww->transform.angX,
+                        fww->transform.angY,
+                        fww->transform.angZ,
+                        fww->iMidX, fww->iMidY, 0.0f,
+                        scaleX, scaleY, 1.0f);
 
         /* Create rects for input after we've dealt
          * with output
