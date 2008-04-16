@@ -50,6 +50,7 @@
 #include <math.h>
 
 #include <stdio.h>
+#include <string.h>
 
 #include <X11/cursorfont.h>
 #include <X11/extensions/shape.h>
@@ -1193,6 +1194,36 @@ static void FWHandleButtonReleaseEvent (CompWindow *w)
         fwd->grab = grabNone;
     }
 }
+
+static void
+FWHandleEnterNotify (CompWindow *w,
+                     XEvent *xev)
+{
+    XEvent EnterNotifyEvent;
+
+    memcpy (&EnterNotifyEvent.xcrossing, &xev->xcrossing,
+	    sizeof (XCrossingEvent));
+    EnterNotifyEvent.xcrossing.window = w->id;
+
+    if (w)
+    XSendEvent (w->screen->display->display, w->id,
+		FALSE, EnterWindowMask, &EnterNotifyEvent);
+}
+
+static void
+FWHandleLeaveNotify (CompWindow *w,
+                     XEvent *xev)
+{
+    XEvent LeaveNotifyEvent;
+
+    memcpy (&LeaveNotifyEvent.xcrossing, &xev->xcrossing,
+            sizeof (XCrossingEvent));
+    LeaveNotifyEvent.xcrossing.window = w->id;
+
+    XSendEvent (w->screen->display->display, w->id, FALSE,
+                LeaveWindowMask, &LeaveNotifyEvent);
+}
+
 /* This should be called instead of FWShapeInput or FWCreateIPW
  * as it does all the setup beforehand.
  */
@@ -1243,6 +1274,44 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
     switch(ev->type){
 	
 	/* Motion Notify Event */
+    case EnterNotify:
+    {
+
+        CompWindow *btnW;
+        btnW = findWindowAtDisplay (d, ev->xbutton.subwindow);
+
+        /* It wasn't the subwindow, try the window */
+        if (!btnW)
+            btnW = findWindowAtDisplay (d, ev->xbutton.window);
+
+        /* We have established the CompWindow we clicked
+         * on. Get the real window */
+        if (btnW)
+        btnW = FWGetRealWindow (btnW);
+
+        if (btnW)
+            FWHandleEnterNotify (btnW, ev);
+    }
+    break;
+    case LeaveNotify:
+    {
+
+        CompWindow *btnW;
+        btnW = findWindowAtDisplay (d, ev->xbutton.subwindow);
+
+        /* It wasn't the subwindow, try the window */
+        if (!btnW)
+            btnW = findWindowAtDisplay (d, ev->xbutton.window);
+
+        /* We have established the CompWindow we clicked
+         * on. Get the real window */
+        if (btnW)
+        btnW = FWGetRealWindow (btnW);
+
+        if (btnW)
+            FWHandleLeaveNotify (btnW, ev);
+    }
+    break;
 	case MotionNotify:
 	    
 	    if(fwd->grab != grabNone)
