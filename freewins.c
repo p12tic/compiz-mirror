@@ -445,10 +445,10 @@ static void FWCalculateInputRect (CompWindow *w)
 
     FREEWINS_WINDOW (w);
 
-    CompVector corner1 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
-    CompVector corner2 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
-    CompVector corner3 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
-    CompVector corner4 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
+    CompVector corner1 = { .v = { w->attrib.x, w->attrib.y, 1.0f, 1.0f } };
+    CompVector corner2 = { .v = { w->attrib.x + w->attrib.width, w->attrib.y, 1.0f, 1.0f } };
+    CompVector corner3 = { .v = { w->attrib.x, w->attrib.y + w->attrib.height, 1.0f, 1.0f } };
+    CompVector corner4 = { .v = { w->attrib.x + w->attrib.width, w->attrib.y + w->attrib.height, 1.0f, 1.0f } };
 
     fww->inputRect = FWCalculateWindowRect (w, corner1, corner2, corner3, corner4);
     }
@@ -785,6 +785,8 @@ FWAdjustIPW (CompWindow *w)
 
     if (!fww->input || !fww->input->ipw)
 	return;
+
+    FWCalculateInputRect (w);
 
     width  = fww->inputRect.x2 - fww->inputRect.x1;
     height = fww->inputRect.y2 - fww->inputRect.y1;
@@ -1507,6 +1509,20 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
         fww->winW = WIN_REAL_W (w);
 	    }
 	    break;
+
+    case ClientMessage:
+    if (ev->xclient.message_type == d->desktopViewportAtom)
+    {
+        /* Viewport change occurred, or something like that - adjust the IPW's */
+        CompScreen *s;
+        CompWindow *adjW;
+
+        for (s = d->screens; s; s = s->next)
+            for (adjW = s->windows; adjW; adjW = adjW->next)
+                if (FWHandleWindowInputInfo (w))
+                    FWAdjustIPW (w);
+    }
+    break;
 
     default:
 	    if (ev->type == d->shapeEvent + ShapeNotify)
