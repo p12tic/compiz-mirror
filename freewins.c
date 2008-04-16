@@ -193,6 +193,11 @@ typedef struct _FWDisplay{
     int click_win_x;
     int click_win_y;
 
+    // ZOMG Input Redirection
+
+    float transformed_px;
+    float transformed_py;
+
     // Used for determining cursor direction
     int oldX;
     int oldY;
@@ -298,9 +303,18 @@ static CompMetadata freewinsMetadata;
 
 /* Rotate and project individual vectors */
 static void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransform transform,
-                                   GLdouble *resultX, GLdouble *resultY, GLdouble *resultZ)
+                                   GLdouble *resultX, GLdouble *resultY, GLdouble *resultZ, Bool report)
 {
+
+    //report = TRUE;
+
+    /*if (report)
+    fprintf(stderr, "Vector info %f %f %f %f\n", vector.v[0], vector.v[1], vector.v[2], vector.v[3]);*/
+
     matrixMultiplyVector(&vector, &vector, &transform);
+
+    /*if (report)
+    fprintf(stderr, "Multiplied info %f %f %f\n", vector.x, vector.y, vector.z);*/
 
     GLint viewport[4]; // Viewport
     GLdouble modelview[16]; // Modelview Matrix
@@ -314,8 +328,42 @@ static void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransfo
                 modelview, projection, viewport,
                 resultX, resultY, resultZ);
 
+    /*if (report)
+    fprintf(stderr, "Projected info %f %f %f\n", *resultX, *resultY, *resultZ);*/
+
     /* Y must be negated */
     *resultY = w->screen->height - *resultY;
+}
+
+/* Transform a co-ordinate by a particular transformation matrix */
+static CompTransform
+FWCreateMatrix  (CompWindow *w,
+                 float angX, float angY, float angZ,
+                 float tX, float tY, float tZ,
+                 float scX, float scY, float scZ)
+{
+    CompTransform mTransform;
+
+    /* Create our transformation Matrix */
+
+    matrixGetIdentity (&mTransform);
+    matrixScale (&mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+    matrixTranslate(&mTransform, 
+	    tX, 
+	    tY, 0.0);
+    matrixRotate (&mTransform, angX, 1.0f, 0.0f, 0.0f);
+    matrixRotate (&mTransform, angY, 0.0f, 1.0f, 0.0f);
+    matrixRotate (&mTransform, angZ, 0.0f, 0.0f, 1.0f);
+    matrixScale(&mTransform, scX, 1.0, 0.0);
+    matrixScale(&mTransform, 1.0, scY, 0.0);
+    matrixTranslate(&mTransform, 
+            -(tX), 
+            -(tY), 0.0);
+
+    //matrixMultiplyVector (vector, vector, &mTransform);
+
+    return mTransform;
+
 }
 
 /* Create a rect from 4 screen points */
@@ -411,10 +459,39 @@ static Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
                 -(fww->iMidX), 
                 -(fww->iMidY), 0.0);
 
-        FWRotateProjectVector(w, c1, transform, &xScreen1, &yScreen1, &zScreen1);
-        FWRotateProjectVector(w, c2, transform, &xScreen2, &yScreen2, &zScreen2);
-        FWRotateProjectVector(w, c3, transform, &xScreen3, &yScreen3, &zScreen3);
-        FWRotateProjectVector(w, c4, transform, &xScreen4, &yScreen4, &zScreen4);
+        //CompVector pointer = { .v = { pointerX, pointerY, 1.0f, 1.0f } };
+
+        FWRotateProjectVector(w, c1, transform, &xScreen1, &yScreen1, &zScreen1, FALSE);
+        FWRotateProjectVector(w, c2, transform, &xScreen2, &yScreen2, &zScreen2, FALSE);
+        FWRotateProjectVector(w, c3, transform, &xScreen3, &yScreen3, &zScreen3, FALSE);
+        FWRotateProjectVector(w, c4, transform, &xScreen4, &yScreen4, &zScreen4, FALSE);
+
+        /* TODO: Use inverse matrix to calculate pointer position
+                 on original window
+        */
+
+        /*matrixGetIdentity (&transform);
+        matrixScale (&transform, 1.0f, 1.0f, 1.0f / w->screen->width);
+	    matrixTranslate(&transform, 
+		    fww->iMidX, 
+		    fww->iMidY, 0.0);
+        matrixRotate (&transform, -fww->transform.angX, 1.0f, 0.0f, 0.0f);
+        matrixRotate (&transform, -fww->transform.angY, 0.0f, 1.0f, 0.0f);
+        matrixRotate (&transform, -fww->transform.angZ, 0.0f, 0.0f, 1.0f);
+        matrixScale(&transform, 1.0f + (1 - fww->transform.scaleX), 1.0, 0.0);
+        matrixScale(&transform, 1.0, 1.0f + (1 - fww->transform.scaleY), 0.0);
+        matrixTranslate(&transform, 
+            -(fww->iMidX), 
+            -(fww->iMidY), 0.0);
+
+        FWRotateProjectVector(w, pointer, transform, &xScreen5, &yScreen5, &zScreen5, report);
+
+        //fprintf(stderr, "Resultants for pointer are %f %f %f\n", xScreen5, yScreen5, zScreen5);
+
+        FREEWINS_DISPLAY (w->screen->display);
+
+        fwd->transformed_px = (fww->inputRect.x1 - xScreen5) + w->screen->width;
+        fwd->transformed_py = (fww->inputRect.y1 - yScreen5) + w->screen->height;*/
 
         return FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
                                  yScreen1, yScreen2, yScreen3, yScreen4);
@@ -1432,7 +1509,9 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
             btnW = findWindowAtDisplay (d, ev->xbutton.window);
 
         /* We have established the CompWindow we clicked
-         * on. Get the real window */
+         * on. Get the real window
+         * FIXME: Free btnW and use another CompWindow * such as realW
+         */
         if (btnW)
         btnW = FWGetRealWindow (btnW);
 
@@ -1455,8 +1534,45 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	    fwd->click_win_x = ev->xbutton.x;
 	    fwd->click_win_y = ev->xbutton.y;
 
-	    break;
+        /*if (btnW)
+        {
+
+        float x = ev->xbutton.x_root;
+        float y = ev->xbutton.y_root;
+
+        fprintf(stderr, "X %f Y %f\n", x, y);
+
+        CompVector vec = { .v = { x, y, 1.0f, 1.0f } };
+
+        CompWindow *realW;
+
+        realW = FWGetRealWindow (btnW);
+
+        if (!realW)
+            realW = btnW;
+
+        FREEWINS_WINDOW (realW);
+
+        CompTransform matrix =  FWCreateMatrix (realW,
+                                                0.0f - fww->transform.angX,
+                                                0.0f - fww->transform.angY,
+                                                0.0f - fww->transform.angZ,
+                                                fww->iMidX, fww->iMidY, 0.0f,
+                                                1.0f - fww->transform.scaleX,
+                                                1.0f - fww->transform.scaleY,
+                                                1.0f);
+
+        GLdouble xs, ys, zs;
+
+        FWRotateProjectVector (btnW, vec, matrix, &xs, &ys, &zs, TRUE);*/
+
+        /*fprintf(stderr, "CLick :%i %i\n", ev->xbutton.x_root, ev->xbutton.y_root);
+
+        fprintf(stderr, "Transform: %f %f %f\n", fww->transform.angX, fww->transform.angY, fww->transform.angZ);
+
+        fprintf(stderr, "XSYSZS: %f %f %f\n", xs, ys, zs);*/
     }
+    break;
 	case ButtonRelease:
     {
         if (fwd->grabWindow)
@@ -1900,6 +2016,17 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glBegin(GL_LINES);
 	glVertex3f(x - (WIN_REAL_W (fwd->focusWindow) / 2), y, 0.0f);
 	glVertex3f(x + (WIN_REAL_W (fwd->focusWindow) / 2), y, 0.0f);
+	glEnd ();
+
+	glColor4usv  (freewinsGetCrossLineColor (s));
+	glBegin(GL_LINES);
+	glVertex3f(fwd->transformed_px, 0.0f, 0.0f);
+	glVertex3f(fwd->transformed_px, s->height, 0.0f);
+	glEnd ();
+	
+	glBegin(GL_LINES);
+	glVertex3f(0.0f , fwd->transformed_py, 0.0f);
+	glVertex3f(s->width, fwd->transformed_py, 0.0f);
 	glEnd ();
 
     }
