@@ -336,34 +336,27 @@ static void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransfo
 }
 
 /* Transform a co-ordinate by a particular transformation matrix */
-static CompTransform
-FWCreateMatrix  (CompWindow *w,
+static void
+FWCreateMatrix  (CompWindow *w, CompTransform *mTransform,
                  float angX, float angY, float angZ,
                  float tX, float tY, float tZ,
                  float scX, float scY, float scZ)
 {
-    CompTransform mTransform;
-
     /* Create our transformation Matrix */
 
-    matrixGetIdentity (&mTransform);
-    matrixScale (&mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-    matrixTranslate(&mTransform, 
+    matrixGetIdentity (mTransform);
+    matrixScale (mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+    matrixTranslate(mTransform, 
 	    tX, 
 	    tY, 0.0);
-    matrixRotate (&mTransform, angX, 1.0f, 0.0f, 0.0f);
-    matrixRotate (&mTransform, angY, 0.0f, 1.0f, 0.0f);
-    matrixRotate (&mTransform, angZ, 0.0f, 0.0f, 1.0f);
-    matrixScale(&mTransform, scX, 1.0, 0.0);
-    matrixScale(&mTransform, 1.0, scY, 0.0);
-    matrixTranslate(&mTransform, 
+    matrixRotate (mTransform, angX, 1.0f, 0.0f, 0.0f);
+    matrixRotate (mTransform, angY, 0.0f, 1.0f, 0.0f);
+    matrixRotate (mTransform, angZ, 0.0f, 0.0f, 1.0f);
+    matrixScale(mTransform, scX, 1.0, 0.0);
+    matrixScale(mTransform, 1.0, scY, 0.0);
+    matrixTranslate(mTransform, 
             -(tX), 
             -(tY), 0.0);
-
-    //matrixMultiplyVector (vector, vector, &mTransform);
-
-    return mTransform;
-
 }
 
 /* Create a rect from 4 screen points */
