@@ -737,9 +737,7 @@ FWUnshapeInput (CompWindow *w)
 
 
 /* Input Shaper. This no longer adjusts the shape of the window
-   but instead shapes it to 0 as the IPW deals with the input.
-   Old code is available commented, but will be removed as soon
-   as input prevention becomes stable enough  */
+   but instead shapes it to 0 as the IPW deals with the input.  */
 static void FWShapeInput (CompWindow *w)
 {
     CompWindow *fw;
@@ -838,10 +836,10 @@ FWAdjustIPW (CompWindow *w)
     if (!fww->input || !fww->input->ipw)
 	return;
 
-    FWCalculateInputRect (w);
-
     width  = fww->inputRect.x2 - fww->inputRect.x1;
     height = fww->inputRect.y2 - fww->inputRect.y1;
+
+    fprintf(stderr, "x %i y %i, w %f, h %f\n", fww->inputRect.x1, fww->inputRect.y1, width, height);
 
     xwc.x          = (fww->inputRect.x1);
     xwc.y          = (fww->inputRect.y1);
@@ -906,6 +904,42 @@ FWAdjustIPWStacking (CompScreen *s)
     }
 }
 
+/* This should be called instead of FWShapeInput or FWCreateIPW
+ * as it does all the setup beforehand.
+ */
+static Bool
+FWHandleWindowInputInfo (CompWindow *w)
+{
+    FREEWINS_WINDOW (w);
+
+    if (!fww->rotated && fww->input)
+    {
+	if (fww->input->ipw)
+	    XDestroyWindow (w->screen->display->display, fww->input->ipw);
+
+	FWUnshapeInput (w);
+	FWRemoveWindowFromList (fww->input);
+
+	free (fww->input);
+	fww->input = NULL;
+
+	return FALSE;
+    }
+    else if (fww->rotated && !fww->input)
+    {
+	fww->input = calloc (1, sizeof (FWWindowInputInfo));
+	if (!fww->input)
+	    return FALSE;
+
+	fww->input->w = w;
+	FWShapeInput (w);
+	FWCreateIPW (w);
+	FWAddWindowToList (fww->input);
+    }
+
+    return TRUE;
+}
+
 static void FWHandleIPWResizeInitiate (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
@@ -965,6 +999,8 @@ static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned 
     moveWindow(w, dx,
                   dy, TRUE, freewinsGetImmediateMoves (w->screen));
     syncWindowPosition (w);
+
+    FWAdjustIPW (w);
 }
 
 static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
@@ -1003,6 +1039,8 @@ static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigne
 
         configureXWindow (w, mask, &xwc);
     }
+
+    FWAdjustIPW (w);
 }
 
 
@@ -1155,6 +1193,8 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     fww->transform.unsnapAngY += dx * (1 - percentFromYAxis);
     }
 
+    FWAdjustIPW (w);
+
 }
 
 /* Handle Scaling */
@@ -1231,6 +1271,9 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
         fww->transform.unsnapScaleY += dy;
         break;
     }
+
+    FWAdjustIPW (w);
+
 }
 
 static void FWHandleButtonReleaseEvent (CompWindow *w)
@@ -1277,43 +1320,6 @@ FWHandleLeaveNotify (CompWindow *w,
     XSendEvent (w->screen->display->display, w->id, FALSE,
                 LeaveWindowMask, &LeaveNotifyEvent);
 }
-
-/* This should be called instead of FWShapeInput or FWCreateIPW
- * as it does all the setup beforehand.
- */
-static Bool
-FWHandleWindowInputInfo (CompWindow *w)
-{
-    FREEWINS_WINDOW (w);
-
-    if (!fww->rotated && fww->input)
-    {
-	if (fww->input->ipw)
-	    XDestroyWindow (w->screen->display->display, fww->input->ipw);
-
-	FWUnshapeInput (w);
-	FWRemoveWindowFromList (fww->input);
-
-	free (fww->input);
-	fww->input = NULL;
-
-	return FALSE;
-    }
-    else if (fww->rotated && !fww->input)
-    {
-	fww->input = calloc (1, sizeof (FWWindowInputInfo));
-	if (!fww->input)
-	    return FALSE;
-
-	fww->input->w = w;
-	FWShapeInput (w);
-	FWCreateIPW (w);
-	FWAddWindowToList (fww->input);
-    }
-
-    return TRUE;
-}
-
 
 
 /* ------ Wrappable Functions -------------------------------------------*/
@@ -1996,13 +2002,13 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnable (GL_BLEND);
     glColor4us (0x2fff, 0x2fff, 0x4fff, 0x4fff);
-    glRecti (fww->outputRect.x1, fww->outputRect.y1, fww->outputRect.x2, fww->outputRect.y2);
+    glRecti (fww->inputRect.x1, fww->inputRect.y1, fww->inputRect.x2, fww->inputRect.y2);
     glColor4us (0x2fff, 0x2fff, 0x4fff, 0x9fff);
     glBegin (GL_LINE_LOOP);
-    glVertex2i (fww->outputRect.x1, fww->outputRect.y1);
-    glVertex2i (fww->outputRect.x2, fww->outputRect.y1);
-    glVertex2i (fww->outputRect.x1, fww->outputRect.y2);
-    glVertex2i (fww->outputRect.x2, fww->outputRect.y2);
+    glVertex2i (fww->inputRect.x1, fww->inputRect.y1);
+    glVertex2i (fww->inputRect.x2, fww->inputRect.y1);
+    glVertex2i (fww->inputRect.x1, fww->inputRect.y2);
+    glVertex2i (fww->inputRect.x2, fww->inputRect.y2);
     glEnd ();
     glColor4usv (defaultColor);
     glDisable (GL_BLEND);
