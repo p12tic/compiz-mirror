@@ -1606,12 +1606,36 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
     {
         /* Viewport change occurred, or something like that - adjust the IPW's */
         CompScreen *s;
-        CompWindow *adjW;
+        CompWindow *adjW, *actualW;
 
         for (s = d->screens; s; s = s->next)
             for (adjW = s->windows; adjW; adjW = adjW->next)
-                if (FWHandleWindowInputInfo (w))
-                    FWAdjustIPW (w);
+            {
+                int vX, vY, dX, dY;
+
+                actualW = FWGetRealWindow (adjW);
+
+                if (!actualW)
+                    actualW = adjW;
+
+                if (actualW)
+                {
+                    CompWindow *ipw;
+
+                    FREEWINS_WINDOW (actualW);
+
+                    ipw = findWindowAtDisplay (d, fww->input->ipw);
+
+                    dX = s->x - vX;
+                    dY = s->y - vY;
+
+                    defaultViewportForWindow (actualW, &vX, &vY);
+            		moveWindowToViewportPosition (ipw,
+			              ipw->attrib.x - dX * s->width,
+			              ipw->attrib.y - dY * s->height,
+			              FALSE);
+                }
+            }
     }
     break;
 
