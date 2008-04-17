@@ -1630,6 +1630,9 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
                     FREEWINS_WINDOW (actualW);
 
+                    if (!fww->input || fww->input->ipw)
+                        break;
+
                     ipw = findWindowAtDisplay (d, fww->input->ipw);
 
                     dX = s->x - vX;
