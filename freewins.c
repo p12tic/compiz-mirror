@@ -358,6 +358,115 @@ FWCreateMatrix  (CompWindow *w, CompTransform *mTransform,
             -(tY), 0.0f);
 }
 
+static float det3(float m00, float m01, float m02,
+		 float m10, float m11, float m12,
+		 float m20, float m21, float m22){
+
+    float ret = 0.0;
+
+    ret += m00 * m11 * m22 - m21 * m12 * m00;
+    ret += m01 * m12 * m20 - m22 * m10 * m01;
+    ret += m02 * m10 * m21 - m20 * m11 * m02;
+
+    return ret;
+}
+
+static void FWFindInverseMatrix(CompTransform *m, CompTransform *r){
+    float *mm = m->m;
+    float d, c[16];
+
+    d = mm[0] * det3(mm[5], mm[6], mm[7],
+			mm[9], mm[10], mm[11],
+			 mm[13], mm[14], mm[15]) -
+
+	  mm[1] * det3(mm[4], mm[6], mm[7],
+			mm[8], mm[10], mm[11],
+			 mm[12], mm[14], mm[15]) +
+
+	  mm[2] * det3(mm[4], mm[5], mm[7],
+			mm[8], mm[9], mm[11],
+			 mm[12], mm[13], mm[15]) -
+
+	  mm[3] * det3(mm[4], mm[5], mm[6],
+			mm[8], mm[9], mm[10],
+			 mm[12], mm[13], mm[14]);
+
+    c[0] = det3(mm[5], mm[6], mm[7],
+		  mm[9], mm[10], mm[11],
+		  mm[13], mm[14], mm[15]);
+    c[1] = -det3(mm[4], mm[6], mm[7],
+		  mm[8], mm[10], mm[11],
+		  mm[12], mm[14], mm[15]);
+    c[2] = det3(mm[4], mm[5], mm[7],
+		  mm[8], mm[9], mm[11],
+		  mm[12], mm[13], mm[15]);
+    c[3] = -det3(mm[4], mm[5], mm[6],
+		  mm[8], mm[9], mm[10],
+		  mm[12], mm[13], mm[14]);
+
+    c[4] = -det3(mm[1], mm[2], mm[3],
+		  mm[9], mm[10], mm[11],
+		  mm[13], mm[14], mm[15]);
+    c[5] = det3(mm[0], mm[2], mm[3],
+		  mm[8], mm[10], mm[11],
+		  mm[12], mm[14], mm[15]);
+    c[6] = -det3(mm[0], mm[1], mm[3],
+		  mm[8], mm[9], mm[11],
+		  mm[12], mm[13], mm[15]);
+    c[7] = det3(mm[0], mm[1], mm[2],
+		  mm[8], mm[9], mm[10],
+		  mm[12], mm[13], mm[14]);
+
+    c[8] = det3(mm[1], mm[2], mm[3],
+		  mm[5], mm[6], mm[7],
+		  mm[13], mm[14], mm[15]);
+    c[9] = -det3(mm[0], mm[2], mm[3],
+		  mm[4], mm[6], mm[7],
+		  mm[12], mm[14], mm[15]);
+    c[10] = det3(mm[0], mm[1], mm[3],
+		  mm[4], mm[5], mm[7],
+		  mm[12], mm[13], mm[15]);
+    c[11] = -det3(mm[0], mm[1], mm[2],
+		  mm[4], mm[5], mm[6],
+		  mm[12], mm[13], mm[14]);
+
+    c[12] = -det3(mm[1], mm[2], mm[3],
+		  mm[5], mm[6], mm[7],
+		  mm[9], mm[10], mm[11]);
+    c[13] = det3(mm[0], mm[2], mm[3],
+		  mm[4], mm[6], mm[7],
+		  mm[8], mm[10], mm[11]);
+    c[14] = -det3(mm[0], mm[1], mm[3],
+		  mm[4], mm[5], mm[7],
+		  mm[8], mm[9], mm[11]);
+    c[15] = det3(mm[0], mm[1], mm[2],
+		  mm[4], mm[5], mm[6],
+		  mm[8], mm[9], mm[10]);
+
+
+    r->m[0] = c[0] / d;
+    r->m[1] = c[4] / d;
+    r->m[2] = c[8] / d;
+    r->m[3] = c[12] / d;
+
+    r->m[4] = c[1] / d;
+    r->m[5] = c[5] / d;
+    r->m[6] = c[9] / d;
+    r->m[7] = c[13] / d;
+
+    r->m[8] = c[2] / d;
+    r->m[9] = c[6] / d;
+    r->m[10] = c[10] / d;
+    r->m[11] = c[14] / d;
+
+    r->m[12] = c[3] / d;
+    r->m[13] = c[7] / d;
+    r->m[14] = c[11] / d;
+    r->m[15] = c[15] / d;
+
+    return;
+}
+
 /* Create a rect from 4 screen points */
 static Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, float xScreen4,
                               float yScreen1, float yScreen2, float yScreen3, float yScreen4)
