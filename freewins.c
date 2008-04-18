@@ -36,9 +36,12 @@
  *
  * Todo: 
  *  - Modifier key to rotate on the Z Axis
+ *  - Fully implement an input redirection system by
+      finding an inverse matrix, multiplying by it,
+      translating to the actual window co-ords and 
+      XSendEvent() the co-ords to the actual window.
  *  - Code could be cleaner
  *  - Add timestep and speed options to animation
- *  - Activate the move action in move to move the window
  *  - Add window hover-over info via paintOutput : i.e
  *    - Resize borders
  *    - 'Reset' Button
