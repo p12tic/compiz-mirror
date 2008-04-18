@@ -553,7 +553,38 @@ static Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
                         fww->transform.angZ,
                         fww->iMidX, fww->iMidY, 0.0f,
                         fww->transform.scaleX,
-                        fww->transform.scaleY, 0.0f);        
+                        fww->transform.scaleY, 0.0f);  
+
+        CompTransform inverse;
+        FWFindInverseMatrix (&transform, &inverse);
+
+        CompTransform identify, identity;
+
+        matrixGetIdentity(&identity);
+
+        matrixMultiply(&identify, &transform, &inverse);
+
+        /*
+
+        fprintf(stderr, "Inverse Matrix\n\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n %f %f %f %f %f\n\n",
+                inverse.m[0],   inverse.m[1],   inverse.m[2],   inverse.m[3],   inverse.m[4],   
+                inverse.m[5],   inverse.m[6],   inverse.m[7],   inverse.m[8],   inverse.m[9],   
+                inverse.m[10],   inverse.m[11],   inverse.m[12],   inverse.m[13],   inverse.m[14],   
+                inverse.m[15],   inverse.m[16]); 
+
+        fprintf(stderr, "Real Identity\n\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n %f %f %f %f %f\n\n",
+                identity.m[0],   identity.m[1],   identity.m[2],   identity.m[3],   identity.m[4],   
+                identity.m[5],   identity.m[6],   identity.m[7],   identity.m[8],   identity.m[9],   
+                identity.m[10],   identity.m[11],   identity.m[12],   identity.m[13],   identity.m[14],   
+                identity.m[15],   identity.m[16]); 
+
+        fprintf(stderr, "Supposed Identity\n\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n %f %f %f %f %f\n\n",
+                identify.m[0],   identify.m[1],   identify.m[2],   identify.m[3],   identify.m[4],   
+                identify.m[5],   identify.m[6],   identify.m[7],   identify.m[8],   identify.m[9],   
+                identify.m[10],   identify.m[11],   identify.m[12],   identify.m[13],   identify.m[14],   
+                identify.m[15],   identify.m[16]); 
+
+        */
 
         //CompVector pointer = { .v = { pointerX, pointerY, 1.0f, 1.0f } };
 
