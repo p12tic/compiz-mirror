@@ -360,7 +360,7 @@ FWCreateMatrix  (CompWindow *w, CompTransform *mTransform,
             -(tX), 
             -(tY), 0.0f);
 }
-
+/*
 static float det3(float m00, float m01, float m02,
 		 float m10, float m11, float m12,
 		 float m20, float m21, float m22){
@@ -470,6 +470,7 @@ static void FWFindInverseMatrix(CompTransform *m, CompTransform *r){
     return;
 }
 
+*/
 /* Create a rect from 4 screen points */
 static Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, float xScreen4,
                               float yScreen1, float yScreen2, float yScreen3, float yScreen4)
