@@ -555,14 +555,14 @@ static Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
                         fww->transform.scaleX,
                         fww->transform.scaleY, 0.0f);  
 
-        CompTransform inverse;
+        /*CompTransform inverse;
         FWFindInverseMatrix (&transform, &inverse);
 
         CompTransform identify, identity;
 
         matrixGetIdentity(&identity);
 
-        matrixMultiply(&identify, &transform, &inverse);
+        matrixMultiply(&identify, &transform, &inverse);*/
 
         /*
 
