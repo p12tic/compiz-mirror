@@ -21,12 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
 #include <math.h>
-#include <sys/time.h>
-
-#include <X11/Xatom.h>
-#include <X11/cursorfont.h>
 
 #include <compiz-core.h>
 #include <compiz-text.h>
@@ -36,12 +31,12 @@
 
 static int WSNamesDisplayPrivateIndex;
 
-typedef struct _RingDisplay {
+typedef struct _WSNamesDisplay {
     int		    screenPrivateIndex;
     HandleEventProc handleEvent;
 } WSNamesDisplay;
 
-typedef struct _RingScreen {
+typedef struct _WSNamesScreen {
     PreparePaintScreenProc preparePaintScreen;
     DonePaintScreenProc    donePaintScreen;
     PaintOutputProc        paintOutput;
