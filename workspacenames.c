@@ -118,8 +118,15 @@ wsnamesRenderNameText (CompScreen *s)
     tA.color[3] = workspacenamesGetFontColorAlpha (s);
     tA.style = (workspacenamesGetBoldText (s)) ?
 	       TEXT_STYLE_BOLD : TEXT_STYLE_NORMAL;
+    tA.style |= TEXT_STYLE_BACKGROUND;
     tA.family = "Sans";
     tA.ellipsize = TRUE;
+    tA.backgroundHMargin = 15;
+    tA.backgroundVMargin = 15;
+    tA.backgroundColor[0] = workspacenamesGetBackColorRed (s);
+    tA.backgroundColor[1] = workspacenamesGetBackColorGreen (s);
+    tA.backgroundColor[2] = workspacenamesGetBackColorBlue (s);
+    tA.backgroundColor[3] = workspacenamesGetBackColorAlpha (s);
 
     tA.renderMode = TextRenderNormal;
     tA.data = (void *) name;
@@ -151,7 +158,6 @@ wsnamesDrawText (CompScreen *s)
     GLfloat   alpha;
     float     width, height, border;
     int       ox1, ox2, oy1, oy2;
-    int       k;
     float     x, y;
 
     WSNAMES_SCREEN(s);
@@ -203,57 +209,6 @@ wsnamesDrawText (CompScreen *s)
 	alpha = ws->timer / (workspacenamesGetFadeTime (s) * 1000.0f);
     else
 	alpha = 1.0f;
-
-    glColor4us (workspacenamesGetBackColorRed (s),
-		workspacenamesGetBackColorGreen (s),
-		workspacenamesGetBackColorBlue (s),
-		workspacenamesGetBackColorAlpha (s) * alpha);
-
-    glPushMatrix ();
-
-    glTranslatef (x, y - height, 0.0f);
-    glRectf (0.0f, height, width, 0.0f);
-    glRectf (0.0f, 0.0f, width, -border);
-    glRectf (0.0f, height + border, width, height);
-    glRectf (-border, height, 0.0f, 0.0f);
-    glRectf (width, height, width + border, 0.0f);
-    glTranslatef (-border, -border, 0.0f);
-
-#define CORNER(a,b) \
-    for (k = a; k < b; k++) \
-    {\
-	float rad = k * (PI / 180.0f);\
-	glVertex2f (0.0f, 0.0f);\
-	glVertex2f (cos (rad) * border, sin (rad) * border);\
-	glVertex2f (cos ((k - 1) * (PI / 180.0f)) * border, \
-		    sin ((k - 1) * (PI / 180.0f)) * border);\
-    }
-
-    /* Rounded corners */
-
-    glTranslatef (border, border, 0.0f);
-    glBegin (GL_TRIANGLES);
-    CORNER (180, 270) glEnd ();
-    glTranslatef (-border, -border, 0.0f);
-
-    glTranslatef (width + border, border, 0.0f);
-    glBegin (GL_TRIANGLES);
-    CORNER (270, 360) glEnd ();
-    glTranslatef (-(width + border), -border, 0.0f);
-
-    glTranslatef (border, height + border, 0.0f);
-    glBegin (GL_TRIANGLES);
-    CORNER (90, 180) glEnd ();
-    glTranslatef (-border, -(height + border), 0.0f);
-
-    glTranslatef (width + border, height + border, 0.0f);
-    glBegin (GL_TRIANGLES);
-    CORNER (0, 90) glEnd ();
-    glTranslatef (-(width + border), -(height + border), 0.0f);
-
-    glPopMatrix ();
-
-#undef CORNER
 
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glColor4f (alpha, alpha, alpha, alpha);
