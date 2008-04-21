@@ -1,2 +1,3 @@
 PLUGIN = text
 PKG_DEP = pangocairo cairo cairo-xlib-xrender
+BUILD_GLOBAL = true
