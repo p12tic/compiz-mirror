@@ -2060,6 +2060,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         }
     }
 
+    if (fww->rotated)
     if(wasCulled)
 	glDisable(GL_CULL_FACE);
 	
