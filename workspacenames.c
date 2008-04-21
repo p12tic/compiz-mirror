@@ -389,9 +389,11 @@ wsnamesHandleEvent (CompDisplay *d,
 
 		WSNAMES_SCREEN (s);
 
-		wsnamesRenderNameText (s);
+		ws->timer = 0;
 		if (ws->timeoutHandle)
 		    compRemoveTimeout (ws->timeoutHandle);
+
+		wsnamesRenderNameText (s);
 		timeout = workspacenamesGetDisplayTime (s) * 1000;
 		ws->timeoutHandle = compAddTimeout (timeout,
 						    wsnamesHideTimeout, s);
