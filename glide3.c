@@ -34,20 +34,51 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "animationaddon.h"
 
-// =====================  Effect: Fade  =========================
+// =====================  Effect: Slab  =========================
 
-void
-fxFadeUpdateWindowAttrib(AnimScreen * as,
-			 CompWindow * w,
-			 WindowPaintAttrib * wAttrib)
+Bool
+fxGlide3Init (CompWindow * w)
 {
-    ANIM_WINDOW(w);
+    if (!polygonsAnimInit (w))
+	return FALSE;
 
-    float forwardProgress = defaultAnimProgress(aw);
+    CompScreen *s = w->screen;
+    ANIMADDON_WINDOW(w);
 
-    wAttrib->opacity = (GLushort) (aw->storedOpacity * (1 - forwardProgress));
+    float finalDistFac = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_AWAY_POS);
+    float finalRotAng = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_AWAY_ANGLE);
+    float thickness = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_THICKNESS);
+
+    PolygonSet *pset = aw->ext.polygonSet;
+
+    pset->includeShadows = (thickness < 1e-5);
+
+    if (!tessellateIntoRectangles(w, 1, 1, thickness))
+	return FALSE;
+
+    PolygonObject *p = pset->polygons;
+
+    int i;
+
+    for (i = 0; i < pset->nPolygons; i++, p++)
+    {
+	p->rotAxis.x = 1;
+	p->rotAxis.y = 0;
+	p->rotAxis.z = 0;
+
+	p->finalRelPos.x = 0;
+	p->finalRelPos.y = 0;
+	p->finalRelPos.z = finalDistFac * 0.8 * DEFAULT_Z_CAMERA * s->width;
+
+	p->finalRotAng = finalRotAng;
+    }
+    pset->allFadeDuration = 1.0f;
+    pset->backAndSidesFadeDur = 0.2f;
+    pset->doLighting = TRUE;
+    pset->correctPerspective = CorrectPerspectivePolygon;
+
+    return TRUE;
 }
-
 
