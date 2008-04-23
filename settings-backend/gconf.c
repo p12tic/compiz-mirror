@@ -701,16 +701,19 @@ copyGconfValues (GConfEngine *conf,
 	    if (associate && schemaPath)
 		asprintf (&newSchema, "%s/%s", schemaPath, name + 1);
 
-	    value = gconf_engine_get_without_default (conf, key, NULL);
-	    if (value && newKey)
-	    {
-		if (newSchema)
-		    gconf_engine_associate_schema (conf, newKey,
-						   newSchema, NULL);
-		gconf_engine_set (conf, newKey, value, NULL);
+	    if (newKey && newSchema)
+		gconf_engine_associate_schema (conf, newKey, newSchema, NULL);
 
-		gconf_value_free (value);
+	    if (newKey)
+	    {
+		value = gconf_engine_get_without_default (conf, key, NULL);
+		if (value)
+		{
+		    gconf_engine_set (conf, newKey, value, NULL);
+		    gconf_value_free (value);
+		}
 	    }
+
 	    if (newSchema)
 		free (newSchema);
 	    if (newKey)
@@ -766,12 +769,10 @@ copyGconfRecursively (GConfEngine *conf,
 	    if (newSchema)
 		free (newSchema);
 
-	    if (to)
-	    {
-		if (newKey)
-		    free (newKey);
-	    }
-	    else
+	    if (newKey)
+		free (newKey);
+
+	    if (!to)
 		gconf_engine_remove_dir (conf, path, NULL);
 	}
 
@@ -1848,8 +1849,8 @@ checkProfile (CCSContext *context)
 	asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
 	if (pathName)
 	{
-	    copyGconfTree (context, "/apps/compiz", pathName,
-	    		   TRUE, "/schemas/apps/compiz");
+	    copyGconfTree (context, COMPIZ, pathName,
+	    		   TRUE, "/schemas" COMPIZ);
 	    free (pathName);
 	}
 
