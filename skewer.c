@@ -31,7 +31,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. 
  **/
 
-#include "animation-internal.h"
+#include "animationaddon.h"
 
 static void
 getDirection (int *dir, int *c, int direction)
@@ -84,38 +84,42 @@ getDirection (int *dir, int *c, int direction)
     }
 }
 
-void
-fxSkewerInit (CompScreen * s, CompWindow * w)
+Bool
+fxSkewerInit (CompWindow * w)
 {
-    ANIM_SCREEN (s);
-    ANIM_WINDOW (w);
+    if (!polygonsAnimInit (w))
+	return FALSE;
 
-    aw->animTotalTime /= SKEWER_PERCEIVED_T;
-    aw->animRemainingTime = aw->animTotalTime;
+    CompScreen *s = w->screen;
 
-    float thickness = animGetF (as, aw, ANIM_SCREEN_OPTION_SKEWER_THICKNESS);
-    int rotation = animGetI (as, aw, ANIM_SCREEN_OPTION_SKEWER_ROTATION);
-    int gridSizeX = animGetI (as, aw, ANIM_SCREEN_OPTION_SKEWER_GRIDSIZE_X);
-    int gridSizeY = animGetI (as, aw, ANIM_SCREEN_OPTION_SKEWER_GRIDSIZE_Y);
+    ANIMADDON_WINDOW (w);
+
+    aw->com->animTotalTime /= SKEWER_PERCEIVED_T;
+    aw->com->animRemainingTime = aw->com->animTotalTime;
+
+    float thickness = animGetF (w, ANIMADDON_SCREEN_OPTION_SKEWER_THICKNESS);
+    int rotation = animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_ROTATION);
+    int gridSizeX = animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_GRIDSIZE_X);
+    int gridSizeY = animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_GRIDSIZE_Y);
 
     int dir[2];			// directions array
     int c = 0;			// number of directions
 
     getDirection (dir, &c,
-		  animGetI (as, aw, ANIM_SCREEN_OPTION_SKEWER_DIRECTION));
+		  animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_DIRECTION));
 
-    if (animGetI (as, aw, ANIM_SCREEN_OPTION_SKEWER_TESS) == PolygonTessHex)
+    if (animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_TESS) == PolygonTessHex)
     {
 	if (!tessellateIntoHexagons (w, gridSizeX, gridSizeY, thickness))
-	    return;
+	    return FALSE;
     }
     else
     {
 	if (!tessellateIntoRectangles (w, gridSizeX, gridSizeY, thickness))
-	    return;
+	    return FALSE;
     }
 
-    PolygonSet *pset = aw->polygonSet;
+    PolygonSet *pset = aw->eng.polygonSet;
     PolygonObject *p = pset->polygons;
 
     int times[pset->nPolygons];
@@ -190,11 +194,13 @@ fxSkewerInit (CompScreen * s, CompWindow * w)
     pset->doDepthTest = TRUE;
     pset->doLighting = TRUE;
     pset->correctPerspective = CorrectPerspectiveWindow;
+
+    return TRUE;
 }
 
 void
-fxSkewerAnimStepPolygon (CompWindow * w,
-			 PolygonObject * p,
+fxSkewerAnimStepPolygon (CompWindow *w,
+			 PolygonObject *p,
 			 float forwardProgress)
 {
     float moveProgress = forwardProgress - p->moveStartTime;

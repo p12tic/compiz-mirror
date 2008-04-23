@@ -1,2 +1,2 @@
-PLUGIN = animation
+PLUGIN = animationaddon
 LDFLAGS_ADD = -lGLU

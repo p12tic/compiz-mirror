@@ -28,28 +28,30 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  **/
 
-#include "animation-internal.h"
+#include "animationaddon.h"
 
-void
-fxFold3DInit (CompScreen * s, CompWindow * w)
+Bool
+fxFoldInit (CompWindow * w)
 {
-    ANIM_WINDOW (w);
-    ANIM_SCREEN (s);
+    if (!polygonsAnimInit (w))
+	return FALSE;
 
-    aw->animTotalTime /= FOLD_PERCEIVED_T;
-    aw->animRemainingTime = aw->animTotalTime;
+    ANIMADDON_WINDOW (w);
 
-    int gridSizeX = animGetI (as, aw, ANIM_SCREEN_OPTION_FOLD3D_GRIDSIZE_X);
-    int gridSizeY = animGetI (as, aw, ANIM_SCREEN_OPTION_FOLD3D_GRIDSIZE_Y);
+    aw->com->animTotalTime /= FOLD_PERCEIVED_T;
+    aw->com->animRemainingTime = aw->com->animTotalTime;
+
+    int gridSizeX = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_X);
+    int gridSizeY = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_Y);
 
     if (!tessellateIntoRectangles (w, gridSizeX, gridSizeY, 1.0f))
-	return;
+	return FALSE;
 
-    PolygonSet *pset = aw->polygonSet;
+    PolygonSet *pset = aw->eng.polygonSet;
     PolygonObject *p = pset->polygons;
 
     // handle other non-zero values
-    int fold_in = animGetI (as, aw, ANIM_SCREEN_OPTION_FOLD3D_DIR) == 0 ? 1 : 0;
+    int fold_in = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_DIR) == 0 ? 1 : 0;
 
     float rows_duration;
     float fduration;
@@ -134,19 +136,19 @@ fxFold3DInit (CompScreen * s, CompWindow * w)
     pset->doDepthTest = TRUE;
     pset->doLighting = TRUE;
     pset->correctPerspective = CorrectPerspectiveWindow;
+
+    return TRUE;
 }
 
 void
-fxFold3dAnimStepPolygon (CompWindow * w, PolygonObject * p,
+fxFoldAnimStepPolygon (CompWindow *w,
+			 PolygonObject *p,
 			 float forwardProgress)
 {
-    ANIM_SCREEN (w->screen);
-    ANIM_WINDOW (w);
+    int dir = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_DIR) == 0 ? 1 : -1;
 
-    int dir = animGetI (as, aw, ANIM_SCREEN_OPTION_FOLD3D_DIR) == 0 ? 1 : -1;
-
-    int gridSizeX = animGetI (as, aw, ANIM_SCREEN_OPTION_FOLD3D_GRIDSIZE_X);
-    int gridSizeY = animGetI (as, aw, ANIM_SCREEN_OPTION_FOLD3D_GRIDSIZE_Y);
+    int gridSizeX = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_X);
+    int gridSizeY = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_Y);
 
     float moveProgress = forwardProgress - p->moveStartTime;
 

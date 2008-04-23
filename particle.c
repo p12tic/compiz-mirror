@@ -34,7 +34,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "animationaddon.h"
 
 void initParticles(int numParticles, ParticleSystem * ps)
 {
@@ -62,8 +62,10 @@ void initParticles(int numParticles, ParticleSystem * ps)
 	part->life = 0.0f;
 }
 
-void drawParticles (CompScreen * s, CompWindow * w, ParticleSystem * ps)
+void drawParticles (CompWindow * w, ParticleSystem * ps)
 {
+    CompScreen *s = w->screen;
+
     glPushMatrix();
     if (w)
 	glTranslated(WIN_X(w) - ps->x, WIN_Y(w) - ps->y, 0);
@@ -217,18 +219,18 @@ void drawParticles (CompScreen * s, CompWindow * w, ParticleSystem * ps)
     glDisable(GL_BLEND);
 }
 
-void drawParticleSystems(CompScreen * s, CompWindow * w)
+void drawParticleSystems (CompWindow * w)
 {
-    ANIM_WINDOW(w);
+    ANIMADDON_WINDOW (w);
 
-    if (aw->numPs && !WINDOW_INVISIBLE(w))
+    if (aw->eng.numPs && !WINDOW_INVISIBLE(w))
     {
 	int i = 0;
 
-	for (i = 0; i < aw->numPs; i++)
+	for (i = 0; i < aw->eng.numPs; i++)
 	{
-	    if (aw->ps[i].active)
-		drawParticles(s, w, &aw->ps[i]);
+	    if (aw->eng.ps[i].active)
+		drawParticles (w, &aw->eng.ps[i]);
 	}
     }
 }
@@ -283,14 +285,16 @@ void finiParticles(ParticleSystem * ps)
 
 void
 particlesUpdateBB (CompOutput *output,
-		   CompWindow * w)
+		   CompWindow * w,
+		   Box *BB)
 {
-    ANIM_WINDOW(w);
+    ANIMADDON_DISPLAY (w->screen->display);
+    ANIMADDON_WINDOW (w);
 
     int i;
-    for (i = 0; i < aw->numPs; i++)
+    for (i = 0; i < aw->eng.numPs; i++)
     {
-	ParticleSystem * ps = &aw->ps[i];
+	ParticleSystem * ps = &aw->eng.ps[i];
 	if (ps->active)
 	{
 	    Particle *part = ps->particles;
@@ -307,18 +311,59 @@ particlesUpdateBB (CompOutput *output,
 		    {part->x - w, part->x + w,
 		     part->y - h, part->y + h};
 
-		expandBoxWithBox (&aw->BB, &particleBox);
+		ad->animBaseFunctions->expandBoxWithBox (BB, &particleBox);
 	    }
 	}
     }
-    if (aw->useDrawRegion)
+    if (aw->com->useDrawRegion)
     {
-	int nClip = aw->drawRegion->numRects;
-	Box *pClip = aw->drawRegion->rects;
+	int nClip = aw->com->drawRegion->numRects;
+	Box *pClip = aw->com->drawRegion->rects;
 
 	for (; nClip--; pClip++)
-	    expandBoxWithBox (&aw->BB, pClip);
+	    ad->animBaseFunctions->expandBoxWithBox (BB, pClip);
     }
     else // drawing full window
-	updateBBWindow (output, w);
+	ad->animBaseFunctions->updateBBWindow (output, w, BB);
 }
+
+void
+particlesCleanup (CompWindow * w)
+{
+    ANIMADDON_WINDOW (w);
+
+    if (aw->eng.numPs)
+    {
+	int i = 0;
+
+	for (i = 0; i < aw->eng.numPs; i++)
+	    finiParticles (aw->eng.ps + i);
+	free (aw->eng.ps);
+	aw->eng.ps = NULL;
+	aw->eng.numPs = 0;
+    }
+}
+
+Bool
+particlesPrePrepPaintScreen (CompWindow * w, int msSinceLastPaint)
+{
+    ANIMADDON_WINDOW (w);
+
+    Bool particleAnimInProgress = FALSE;
+
+    if (aw->eng.numPs)
+    {
+	int i;
+	for (i = 0; i < aw->eng.numPs; i++)
+	{
+	    if (aw->eng.ps[i].active)
+	    {
+		updateParticles (&aw->eng.ps[i], msSinceLastPaint);
+		particleAnimInProgress = TRUE;
+	    }
+	}
+    }
+
+    return particleAnimInProgress;
+}
+

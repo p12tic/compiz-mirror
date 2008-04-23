@@ -34,24 +34,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "animationaddon.h"
 
-void fxDomino3DInit(CompScreen * s, CompWindow * w)
+Bool
+fxDominoInit (CompWindow * w)
 {
-    ANIM_WINDOW(w);
-    ANIM_SCREEN(s);
+    if (!polygonsAnimInit (w))
+	return FALSE;
 
-    Bool isRazr = (aw->curAnimEffect == AnimEffectRazr3D);
+    ANIMADDON_DISPLAY (w->screen->display);
+    ANIMADDON_WINDOW (w);
+
+    Bool isRazr = (aw->com->curAnimEffect == AnimEffectRazr);
 
     int fallDir;
 
     if (isRazr)
-	fallDir = getAnimationDirection
-	    (w, animGetOptVal(as, aw, ANIM_SCREEN_OPTION_RAZR_DIRECTION), TRUE);
+	fallDir = ad->animBaseFunctions->getActualAnimDirection
+	    (w, animGetI (w, ANIMADDON_SCREEN_OPTION_RAZR_DIRECTION), TRUE);
     else
-	fallDir = getAnimationDirection
-	    (w, animGetOptVal(as, aw, ANIM_SCREEN_OPTION_DOMINO_DIRECTION),
-	     TRUE);
+	fallDir = ad->animBaseFunctions->getActualAnimDirection
+	    (w, animGetI (w, ANIMADDON_SCREEN_OPTION_DOMINO_DIRECTION), TRUE);
 
     int defaultGridSize = 20;
     float minCellSize = 30;
@@ -102,7 +105,7 @@ void fxDomino3DInit(CompScreen * s, CompWindow * w)
     float thickness = MIN(gridCellW, gridCellH) / 3.5;
 
     if (!tessellateIntoRectangles(w, gridSizeX, gridSizeY, thickness))
-	return;
+	return FALSE;
 
     float rotAxisX = 0;
     float rotAxisY = 0;
@@ -178,13 +181,13 @@ void fxDomino3DInit(CompScreen * s, CompWindow * w)
 
     if (!riseTimeRandSeed)
 	// TODO: log error here
-	return;
+	return FALSE;
     int i;
 
     for (i = 0; i < nFallingColumns; i++)
 	riseTimeRandSeed[i] = RAND_FLOAT();
 
-    PolygonSet *pset = aw->polygonSet;
+    PolygonSet *pset = aw->eng.polygonSet;
     PolygonObject *p = pset->polygons;
 
     for (i = 0; i < pset->nPolygons; i++, p++)
@@ -266,6 +269,8 @@ void fxDomino3DInit(CompScreen * s, CompWindow * w)
     pset->doLighting = TRUE;
     pset->correctPerspective = CorrectPerspectivePolygon;
 
-    aw->animTotalTime /= DOMINO_PERCEIVED_T;
-    aw->animRemainingTime = aw->animTotalTime;
+    aw->com->animTotalTime /= DOMINO_PERCEIVED_T;
+    aw->com->animRemainingTime = aw->com->animTotalTime;
+
+    return TRUE;
 }

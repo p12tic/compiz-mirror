@@ -29,16 +29,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "animationaddon.h"
 
 // Divide the window in 8 polygons (6 quadrilaters and 2 triangles (all of them draw as quadrilaters))
 // Based on tessellateIntoRectangles and tessellateIntoHexagons. Improperly called tessellation.
 static Bool
 tessellateIntoAirplane (CompWindow * w)
 {
-    ANIM_WINDOW (w);
+    ANIMADDON_WINDOW (w);
 
-    PolygonSet *pset = aw->polygonSet;
+    PolygonSet *pset = aw->eng.polygonSet;
 
     if (!pset)
 	return FALSE;
@@ -64,7 +64,7 @@ tessellateIntoAirplane (CompWindow * w)
 	pset->polygons = calloc (pset->nPolygons, sizeof (PolygonObject));
 	if (!pset->polygons)
 	{
-	    compLogMessage (w->screen->display, "animation",
+	    compLogMessage (w->screen->display, "animationaddon",
 			    CompLogLevelError, "Not enough memory");
 	    pset->nPolygons = 0;
 	    return FALSE;
@@ -422,19 +422,21 @@ tessellateIntoAirplane (CompWindow * w)
     return TRUE;
 }
 
-void
-fxAirplane3DInit (CompScreen * s, CompWindow * w)
+Bool
+fxAirplaneInit (CompWindow * w)
 {
-    ANIM_SCREEN (s);
-    ANIM_WINDOW (w);
-
-    float airplanePathLength =
-	animGetF (as, aw, ANIM_SCREEN_OPTION_AIRPLANE_PATHLENGTH);
+    if (!polygonsAnimInit (w))
+	return FALSE;
 
     if (!tessellateIntoAirplane (w))
-	return;
+	return FALSE;
 
-    PolygonSet *pset = aw->polygonSet;
+    ANIMADDON_WINDOW (w);
+
+    float airplanePathLength =
+	animGetF (w, ANIMADDON_SCREEN_OPTION_AIRPLANE_PATHLENGTH);
+
+    PolygonSet *pset = aw->eng.polygonSet;
     PolygonObject *p = pset->polygons;
 
     float winLimitsW;		// boundaries of polygon tessellation
@@ -457,7 +459,7 @@ fxAirplane3DInit (CompScreen * s, CompWindow * w)
 	{
 	    compLogMessage (w->screen->display, "animation",
 			    CompLogLevelError, "Not enough memory");
-	    return;
+	    return FALSE;
 	}
 
 	AirplaneEffectParameters *aep = p->effectParameters;
@@ -749,22 +751,23 @@ fxAirplane3DInit (CompScreen * s, CompWindow * w)
 	&AirplaneExtraPolygonTransformFunc;
 
     // Duration extension
-    aw->animTotalTime *= 2 + airplanePathLength;
-    aw->animRemainingTime = aw->animTotalTime;
+    aw->com->animTotalTime *= 2 + airplanePathLength;
+    aw->com->animRemainingTime = aw->com->animTotalTime;
+
+    return TRUE;
 }
 
 void
-fxAirplane3DLinearAnimStepPolygon (CompWindow * w,
-				   PolygonObject * p,
+fxAirplaneLinearAnimStepPolygon (CompWindow *w,
+				   PolygonObject *p,
 				   float forwardProgress)
 {
-    ANIM_SCREEN (w->screen);
-    ANIM_WINDOW (w);
+    ANIMADDON_WINDOW (w);
 
     float airplanePathLength =
-	animGetF (as, aw, ANIM_SCREEN_OPTION_AIRPLANE_PATHLENGTH);
+	animGetF (w, ANIMADDON_SCREEN_OPTION_AIRPLANE_PATHLENGTH);
     Bool airplaneFly2TaskBar =
-	animGetB (as, aw, ANIM_SCREEN_OPTION_AIRPLANE_FLY2TOM);
+	animGetB (w, ANIMADDON_SCREEN_OPTION_AIRPLANE_FLY2TOM);
 
     AirplaneEffectParameters *aep = p->effectParameters;
     if (!aep)
@@ -854,27 +857,27 @@ fxAirplane3DLinearAnimStepPolygon (CompWindow * w,
 	aep->flyTheta = moveProgress5 * -M_PI_2 * airplanePathLength;
 	aep->centerPosFly.x = w->screen->width * .4 * sin (2 * aep->flyTheta);
 
-	if (((aw->curWindowEvent == WindowEventMinimize ||
-	      aw->curWindowEvent == WindowEventUnminimize) &&
+	if (((aw->com->curWindowEvent == WindowEventMinimize ||
+	      aw->com->curWindowEvent == WindowEventUnminimize) &&
 	     airplaneFly2TaskBar) ||
-	    aw->curWindowEvent == WindowEventOpen ||
-	    aw->curWindowEvent == WindowEventClose)
+	    aw->com->curWindowEvent == WindowEventOpen ||
+	    aw->com->curWindowEvent == WindowEventClose)
 	{
 	    // flying path ends at icon/pointer
 
 	    int sign = 1;
-	    if (aw->curWindowEvent == WindowEventUnminimize ||
-		aw->curWindowEvent == WindowEventOpen)
+	    if (aw->com->curWindowEvent == WindowEventUnminimize ||
+		aw->com->curWindowEvent == WindowEventOpen)
 		sign = -1;
 
 	    icondiffx =
-		(((aw->icon.x + aw->icon.width / 2)
+		(((aw->com->icon.x + aw->com->icon.width / 2)
 		  - (p->centerPosStart.x +
 		     sign * w->screen->width * .4 *
 		     sin (2 * -M_PI_2 * airplanePathLength))) *
 		 moveProgress5);
 	    aep->centerPosFly.y =
-		((aw->icon.y + aw->icon.height / 2) -
+		((aw->com->icon.y + aw->com->icon.height / 2) -
 		 p->centerPosStart.y) *
 		-sin (aep->flyTheta / airplanePathLength);
 	}
@@ -896,13 +899,13 @@ fxAirplane3DLinearAnimStepPolygon (CompWindow * w,
 	aep->flyFinalRotation.z += 90;
 
 
-	if (aw->curWindowEvent == WindowEventMinimize ||
-	    aw->curWindowEvent == WindowEventClose)
+	if (aw->com->curWindowEvent == WindowEventMinimize ||
+	    aw->com->curWindowEvent == WindowEventClose)
 	{
 	    aep->flyFinalRotation.z *= -1;
 	}
-	else if (aw->curWindowEvent == WindowEventUnminimize ||
-		 aw->curWindowEvent == WindowEventOpen)
+	else if (aw->com->curWindowEvent == WindowEventUnminimize ||
+		 aw->com->curWindowEvent == WindowEventOpen)
 	{
 	    aep->centerPosFly.x *= -1;
 	}
@@ -958,15 +961,15 @@ AirplaneExtraPolygonTransformFunc (PolygonObject * p)
 }
 
 void
-fxAirplane3DAnimStep (CompScreen * s,
-		      CompWindow * w,
+fxAirplaneAnimStep (CompWindow * w,
 		      float time)
 {
-    ANIM_WINDOW (w);
+    ANIMADDON_WINDOW (w);
+    ANIMADDON_DISPLAY (w->screen->display);
 
-    polygonsAnimStep (s, w, time);
+    polygonsAnimStep (w, time);
 
     // Make sure the airplane always flies towards mouse pointer
-    if (aw->curWindowEvent == WindowEventClose)
-	getMousePointerXY(s, &aw->icon.x, &aw->icon.y);
+    if (aw->com->curWindowEvent == WindowEventClose)
+	ad->animBaseFunctions->getMousePointerXY(w->screen, &aw->com->icon.x, &aw->com->icon.y);
 }

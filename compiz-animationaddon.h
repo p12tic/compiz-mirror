@@ -156,7 +156,7 @@ typedef struct _ParticleSystem
 } ParticleSystem;
 
 // Window properties for particle or polygon based animation effects
-typedef struct _AnimWindowExtraStuff
+typedef struct _AnimWindowEngineData
 {
     // for polygon engine
     PolygonSet *polygonSet;
@@ -164,7 +164,7 @@ typedef struct _AnimWindowExtraStuff
     // for particle engine
     int numPs;
     ParticleSystem *ps;
-} AnimWindowExtraStuff;
+} AnimWindowEngineData;
 
 
 typedef Bool
@@ -176,7 +176,7 @@ typedef Bool
 // Animaddon plugin functions for extension plugins to call
 // (only for plugins with effects that use polygon or particle engines).
 typedef struct _AnimAddonFunctions {
-    AnimWindowExtraStuff * (*getAnimWindowExtraStuff) (CompWindow *w);
+    AnimWindowEngineData * (*getAnimWindowEngineData) (CompWindow *w);
     int (*getIntenseTimeStep) (CompScreen *s);
 
     // Particle engine functions

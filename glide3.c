@@ -51,7 +51,7 @@ fxGlide3Init (CompWindow * w)
     float finalRotAng = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_AWAY_ANGLE);
     float thickness = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_THICKNESS);
 
-    PolygonSet *pset = aw->ext.polygonSet;
+    PolygonSet *pset = aw->eng.polygonSet;
 
     pset->includeShadows = (thickness < 1e-5);
 

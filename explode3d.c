@@ -34,34 +34,38 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "animationaddon.h"
 
-void fxExplode3DInit(CompScreen * s, CompWindow * w)
+Bool
+fxExplodeInit (CompWindow * w)
 {
-    ANIM_WINDOW(w);
-    ANIM_SCREEN(s);
+    if (!polygonsAnimInit (w))
+	return FALSE;
 
-    switch (animGetI(as, aw, ANIM_SCREEN_OPTION_EXPLODE3D_TESS))
+    CompScreen *s = w->screen;
+    ANIMADDON_WINDOW (w);
+
+    switch (animGetI (w, ANIMADDON_SCREEN_OPTION_EXPLODE_TESS))
     {
     case PolygonTessRect:
 	if (!tessellateIntoRectangles(w, 
-				      animGetI(as, aw, ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X),
-				      animGetI(as, aw, ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y),
-				      animGetF(as, aw, ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS)))
-	    return;
+				      animGetI (w, ANIMADDON_SCREEN_OPTION_EXPLODE_GRIDSIZE_X),
+				      animGetI (w, ANIMADDON_SCREEN_OPTION_EXPLODE_GRIDSIZE_Y),
+				      animGetF (w, ANIMADDON_SCREEN_OPTION_EXPLODE_THICKNESS)))
+	    return FALSE;
 	break;
     case PolygonTessHex:
 	if (!tessellateIntoHexagons(w, 
-				    animGetI(as, aw, ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_X),
-				    animGetI(as, aw, ANIM_SCREEN_OPTION_EXPLODE3D_GRIDSIZE_Y),
-				    animGetF(as, aw, ANIM_SCREEN_OPTION_EXPLODE3D_THICKNESS)))
-	    return;
+				    animGetI (w, ANIMADDON_SCREEN_OPTION_EXPLODE_GRIDSIZE_X),
+				    animGetI (w, ANIMADDON_SCREEN_OPTION_EXPLODE_GRIDSIZE_Y),
+				    animGetF (w, ANIMADDON_SCREEN_OPTION_EXPLODE_THICKNESS)))
+	    return FALSE;
 	break;
     default:
-	return;
+	return FALSE;
     }
 
-    PolygonSet *pset = aw->polygonSet;
+    PolygonSet *pset = aw->eng.polygonSet;
     PolygonObject *p = pset->polygons;
     double sqrt2 = sqrt(2);
 
@@ -101,7 +105,9 @@ void fxExplode3DInit(CompScreen * s, CompWindow * w)
     pset->correctPerspective = CorrectPerspectivePolygon;
     pset->backAndSidesFadeDur = 0.2f;
 
-    aw->animTotalTime /= EXPLODE_PERCEIVED_T;
-    aw->animRemainingTime = aw->animTotalTime;
+    aw->com->animTotalTime /= EXPLODE_PERCEIVED_T;
+    aw->com->animRemainingTime = aw->com->animTotalTime;
+
+    return TRUE;
 }
 

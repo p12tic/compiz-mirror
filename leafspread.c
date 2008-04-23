@@ -34,16 +34,21 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "animationaddon.h"
 
-void fxLeafSpread3DInit(CompScreen * s, CompWindow * w)
+Bool
+fxLeafSpreadInit (CompWindow * w)
 {
-    ANIM_WINDOW(w);
+    if (!polygonsAnimInit (w))
+	return FALSE;
+
+    CompScreen *s = w->screen;
+    ANIMADDON_WINDOW (w);
 
     if (!tessellateIntoRectangles(w, 20, 14, 15.0f))
-	return;
+	return FALSE;
 
-    PolygonSet *pset = aw->polygonSet;
+    PolygonSet *pset = aw->eng.polygonSet;
     PolygonObject *p = pset->polygons;
     float fadeDuration = 0.26;
     float life = 0.4;
@@ -95,6 +100,8 @@ void fxLeafSpread3DInit(CompScreen * s, CompWindow * w)
     pset->doLighting = TRUE;
     pset->correctPerspective = CorrectPerspectivePolygon;
 
-    aw->animTotalTime /= LEAFSPREAD_PERCEIVED_T;
-    aw->animRemainingTime = aw->animTotalTime;
+    aw->com->animTotalTime /= LEAFSPREAD_PERCEIVED_T;
+    aw->com->animRemainingTime = aw->com->animTotalTime;
+
+    return TRUE;
 }
