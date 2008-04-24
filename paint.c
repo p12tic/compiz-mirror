@@ -123,23 +123,6 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
          FWCalculateOutputRect (w);
 
-
-        /* Here we duplicate some of the work the openGL does
-         * but for different reasons. We have access to the 
-         * window's transformation matrix, so we will create
-         * our own matrix and apply the same transformations
-         * to it. From there, we create vectors for each point
-         * that we wish to track and multiply them by this 
-         * matrix to give us the rotated / scaled co-ordinates.
-         * From there, we project these co-ordinates onto the flat
-         * screen that we have using the OGL viewport, projection
-         * matrix and model matrix. Projection gives us three
-         * co-ordinates, but we ignore Z and just use X and Y
-         * to store in a surrounding rectangle. We can use this
-         * surrounding rectangle to make things like shaping and
-         * damage a lot more accurate than they used to be.
-         */
-
         /* Prepare for transformation by doing
          * any neccesary adjustments
          */
@@ -179,21 +162,6 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
 	    /* Adjust the window in the matrix to prepare for transformation */
-	    /*matrixScale (&wTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-	    matrixTranslate(&wTransform, 
-		    (fww->iMidX), 
-		    (fww->iMidY), 0.0);
-        
-        matrixRotate(&wTransform, fww->transform.angX, 1.0, 0.0, 0.0);
-        matrixRotate(&wTransform, fww->transform.angY, 0.0, 1.0, 0.0);
-        matrixRotate(&wTransform, fww->transform.angZ, 0.0, 0.0, 1.0);        
-       
-	    matrixScale(&wTransform, scaleX, 1.0, 0.0);
-        matrixScale(&wTransform, 1.0, scaleY, 0.0);
-
-	    matrixTranslate(&wTransform, 
-		    -((fww->iMidX)), 
-		    -((fww->iMidY)), 0.0);*/
 
         FWCreateMatrix (w, &wTransform,
                         fww->transform.angX,
