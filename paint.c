@@ -202,17 +202,17 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         fww->animate.aTimeRemaining--;
         addWindowDamage (w);
         
-        if (fww->animate.aTimeRemaining <= 0 || 
-             ((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
-              fww->transform.angX <= fww->animate.destAngX + 0.0 ) &&
-             (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
-              fww->transform.angY <= fww->animate.destAngY + 0.05 ) &&
-             (fww->transform.angZ >= fww->animate.destAngZ - 0.05 &&
-              fww->transform.angZ <= fww->animate.destAngZ + 0.05 ) &&
-             (fww->transform.scaleX >= fww->animate.destScaleX - 0.05 &&
-              fww->transform.scaleX <= fww->animate.destScaleX + 0.05 ) &&
-             (fww->transform.scaleY >= fww->animate.destScaleY - 0.05 &&
-              fww->transform.scaleY <= fww->animate.destScaleY + 0.05 )))
+        if (fww->animate.aTimeRemaining <= 0 &&
+             ((fww->transform.angX >= fww->animate.destAngX - 0.5 &&
+              fww->transform.angX <= fww->animate.destAngX + 0.5 ) &&
+             (fww->transform.angY >= fww->animate.destAngY - 0.5 &&
+              fww->transform.angY <= fww->animate.destAngY + 0.5 ) &&
+             (fww->transform.angZ >= fww->animate.destAngZ - 0.5 &&
+              fww->transform.angZ <= fww->animate.destAngZ + 0.5 ) &&
+             (fww->transform.scaleX >= fww->animate.destScaleX - 0.5 &&
+              fww->transform.scaleX <= fww->animate.destScaleX + 0.5 ) &&
+             (fww->transform.scaleY >= fww->animate.destScaleY - 0.5 &&
+              fww->transform.scaleY <= fww->animate.destScaleY + 0.5 )))
         {
             fww->resetting = FALSE;
 
@@ -221,6 +221,12 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             fww->transform.angZ = fww->animate.destAngZ;
             fww->transform.scaleX = fww->animate.destScaleX;
             fww->transform.scaleY = fww->animate.destScaleX;
+
+            fww->transform.unsnapAngX = fww->animate.destAngX;
+            fww->transform.unsnapAngY = fww->animate.destAngY;
+            fww->transform.unsnapAngZ = fww->animate.destAngZ;
+            fww->transform.unsnapScaleX = fww->animate.destScaleX;
+            fww->transform.unsnapScaleY = fww->animate.destScaleX;
             
             fww->doAnimate = FALSE;
             fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
