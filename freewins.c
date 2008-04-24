@@ -1,3 +1,56 @@
+/**
+ * Compiz Fusion Freewins plugin
+ *
+ * freewins.c
+ *
+ * Copyright (C) 2007  Rodolfo Granata <warlock.cc@gmail.com>
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * Author(s): 
+ * Rodolfo Granata <warlock.cc@gmail.com>
+ *
+ * Button binding support and Reset added by:
+ * enigma_0Z <enigma.0ZA@gmail.com>
+ *
+ * Scaling, Animation, Input-Shaping, Snapping
+ * and Key-Based Transformation added by:
+ * Sam Spilsbury <smspillaz@gmail.com>
+ *
+ * Most of the input handling here is based on
+ * the shelf plugin by
+ *        : Kristian Lyngstøl <kristian@bohemians.org>
+ *        : Danny Baumann <maniac@opencompositing.org>
+ *
+ * Description:
+ *
+ * This plugin allows you to freely transform the texture of a window,
+ * whether that be rotation or scaling to make better use of screen space
+ * or just as a toy.
+ *
+ * Todo: 
+ *  - Modifier key to rotate on the Z Axis
+ *  - Fully implement an input redirection system by
+ *    finding an inverse matrix, multiplying by it,
+ *    translating to the actual window co-ords and 
+ *    XSendEvent() the co-ords to the actual window.
+ *  - Code could be cleaner
+ *  - Add timestep and speed options to animation
+ *  - Add window hover-over info via paintOutput : i.e
+ *    - Resize borders
+ *    - 'Reset' Button
+ *    - 'Scale' Button
+ *    - 'Rotate' Button
+ */
+
 #include "freewins.h"
 
 static CompMetadata freewinsMetadata;
