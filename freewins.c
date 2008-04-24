@@ -1,311 +1,9 @@
-/**
- * Compiz Fusion Freewins plugin
- *
- * Copyright (C) 2007  Rodolfo Granata <warlock.cc@gmail.com>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; either version 2
- * of the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * Author(s): 
- * Rodolfo Granata <warlock.cc@gmail.com>
- *
- * Button binding support and Reset added by:
- * enigma_0Z <enigma.0ZA@gmail.com>
- *
- * Scaling, Animation, Input-Shaping, Snapping
- * and Key-Based Transformation added by:
- * Sam Spilsbury <smspillaz@gmail.com>
- *
- * Most of the input handling here is based on
- * the shelf plugin by
- *        : Kristian Lyngstøl <kristian@bohemians.org>
- *        : Danny Baumann <maniac@opencompositing.org>
- *
- * Description:
- *
- * This plugin allows you to freely transform the texture of a window,
- * whether that be rotation or scaling to make better use of screen space
- * or just as a toy.
- *
- * Todo: 
- *  - Modifier key to rotate on the Z Axis
- *  - Fully implement an input redirection system by
-      finding an inverse matrix, multiplying by it,
-      translating to the actual window co-ords and 
-      XSendEvent() the co-ords to the actual window.
- *  - Code could be cleaner
- *  - Add timestep and speed options to animation
- *  - Add window hover-over info via paintOutput : i.e
- *    - Resize borders
- *    - 'Reset' Button
- *    - 'Scale' Button
- *    - 'Rotate' Button
- */
-
-#include <compiz-core.h>
-#include <math.h>
-
-#include <stdio.h>
-#include <string.h>
-
-#include <X11/cursorfont.h>
-#include <X11/extensions/shape.h>
-
-#include <GL/glu.h>
-#include <GL/gl.h>
-
-#include "freewins_options.h"
-
-#define ABS(x) ((x)>0?(x):-(x))
-#define D2R(x) ((x) * (M_PI / 180.0))
-#define R2D(x) ((x) * (180 / M_PI))
-
-/* ------ Macros ---------------------------------------------------------*/
-#define GET_FREEWINS_DISPLAY(d)                                       \
-    ((FWDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
-
-#define FREEWINS_DISPLAY(d)                      \
-    FWDisplay *fwd = GET_FREEWINS_DISPLAY (d)
-
-#define GET_FREEWINS_SCREEN(s, fwd)                                        \
-    ((FWScreen *) (s)->base.privates[(fwd)->screenPrivateIndex].ptr)
-
-#define FREEWINS_SCREEN(s)                                                      \
-    FWScreen *fws = GET_FREEWINS_SCREEN (s, GET_FREEWINS_DISPLAY (s->display))
-
-#define GET_FREEWINS_WINDOW(w, fws)                                        \
-    ((FWWindow *) (w)->base.privates[(fws)->windowPrivateIndex].ptr)
-
-#define FREEWINS_WINDOW(w)                                         \
-    FWWindow *fww = GET_FREEWINS_WINDOW  (w,                    \
-                       GET_FREEWINS_SCREEN  (w->screen,            \
-                       GET_FREEWINS_DISPLAY (w->screen->display)))
-
-
-
-#define WIN_OUTPUT_X(w) (w->attrib.x - w->output.left)
-#define WIN_OUTPUT_Y(w) (w->attrib.y - w->output.top)
-
-#define WIN_OUTPUT_W(w) (w->width + w->output.left + w->output.right)
-#define WIN_OUTPUT_H(w) (w->height + w->output.top + w->output.bottom)
-
-#define WIN_REAL_X(w) (w->attrib.x - w->input.left)
-#define WIN_REAL_Y(w) (w->attrib.y - w->input.top)
-
-#define WIN_REAL_W(w) (w->width + w->input.left + w->input.right)
-#define WIN_REAL_H(w) (w->height + w->input.top + w->input.bottom)
-
-/* ------ Structures and Enums ------------------------------------------*/
-
-/* Enums */
-typedef enum _StartCorner {
-    CornerTopLeft = 0,
-    CornerTopRight = 1,
-    CornerBottomLeft = 2,
-    CornerBottomRight = 3
-} StartCorner;
-
-typedef enum _FWGrabType {
-    grabNone = 0,
-    grabRotate,
-    grabScale,
-    grabMove,
-    grabResize
-} FWGrabType;
-
-typedef enum _Direction {
-    UpDown = 0,
-    LeftRight = 1
-} Direction;
-
-/* Shape info / restoration */
-typedef struct _FWWindowInputInfo {
-    CompWindow                *w;
-    struct _FWWindowInputInfo *next;
-
-    Window     ipw;
-
-    XRectangle *inputRects;
-    int        nInputRects;
-    int        inputRectOrdering;
-
-    XRectangle *frameInputRects;
-    int        frameNInputRects;
-    int        frameInputRectOrdering;
-} FWWindowInputInfo;
-
-/* Transformation info */
-typedef struct _FWTransformedWindowInfo
-{
-    float angX;
-    float angY;
-    float angZ;
-    
-    float scaleY;
-    float scaleX;
-
-    /* Used for snapping */
-
-    float unsnapAngX;
-    float unsnapAngY;
-    float unsnapAngZ;
-
-    float unsnapScaleX;
-    float unsnapScaleY;
-
-} FWTransformedWindowInfo;
-
-typedef struct _FWAnimationInfo
-{
-    // Old values to animate from
-    float oldAngX;
-    float oldAngY;
-    float oldAngZ;
-    
-    float oldScaleX;
-    float oldScaleY;
-    
-    // New values to animate to
-    float destAngX;
-    float destAngY;
-    float destAngZ;
-    
-    float destScaleX;
-    float destScaleY;
-
-    // For animation
-    float aTimeRemaining; // Actual time remaining (is decremented)
-    float cTimeRemaining; // Constant time remaining (is referenced and not decremented)
-    float steps;
-} FWAnimationInfo;
-
-/* Freewins Display Structure */
-typedef struct _FWDisplay{
-    int screenPrivateIndex;
-
-    int click_root_x;
-    int click_root_y;
-
-    int click_win_x;
-    int click_win_y;
-
-    // ZOMG Input Redirection
-
-    float transformed_px;
-    float transformed_py;
-
-    // Used for determining cursor direction
-    int oldX;
-    int oldY;
-
-    HandleEventProc handleEvent;
-
-    CompWindow *grabWindow;
-    CompWindow *lastGrabWindow;
-    CompWindow *focusWindow;
-
-    FWGrabType grab;
-    
-    Bool axisHelp;
-
-} FWDisplay;
-
-/* Freewins Screen Structure */
-typedef struct _FWScreen{
-    int windowPrivateIndex;
-
-    PreparePaintScreenProc preparePaintScreen;
-    PaintOutputProc paintOutput;
-    PaintWindowProc paintWindow;
-
-    DamageWindowRectProc damageWindowRect;
-
-    WindowResizeNotifyProc windowResizeNotify;
-    WindowMoveNotifyProc   windowMoveNotify;
-
-    FWWindowInputInfo *transformedWindows;
-    
-    Cursor rotateCursor;
-
-    int grabIndex;
-    int rotatedWindows;
-
-} FWScreen;
-
-/* Freewins Window Structure */
-typedef struct _FWWindow{
-
-    float iMidX;
-    float iMidY;
-
-    float oMidX;
-    float oMidY;
-
-    float radius;
-    
-    // Used for determining window movement
-
-    int oldWinX;
-    int oldWinY;
-
-    // Used for resize
-
-    int winH;
-    int winW;
-
-    // Used to determine axis
-
-    float adjustX;
-    float adjustY;
-
-    Direction direction;
-    
-    // Used to determine starting point
-    StartCorner corner;
-
-    // Transformation info
-    FWTransformedWindowInfo transform;
-
-    // Animation Info
-    FWAnimationInfo animate;
-
-    // Input Info
-    FWWindowInputInfo *input;
-
-    Box outputRect;
-    Box inputRect;
-
-    // Used to determine whether to animate the window
-    Bool doAnimate;
-    Bool resetting;
-    
-    // Used to determine whether rotating on X and Y axis, or just on Z
-    Bool can2D;
-    Bool can3D;
-
-    Bool grabLeft;
-    Bool grabTop;
-
-    Bool rotated;
-    Bool allowScaling;
-    Bool allowRotation;
-
-} FWWindow;
-
-int displayPrivateIndex;
-static CompMetadata freewinsMetadata;
+#include "freewins.h"
 
 /* ------ Utility Functions ---------------------------------------------*/
 
 /* Rotate and project individual vectors */
-static void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransform transform,
+void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransform transform,
                                    GLdouble *resultX, GLdouble *resultY, GLdouble *resultZ, Bool report)
 {
 
@@ -339,7 +37,7 @@ static void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransfo
 }
 
 /* Transform a co-ordinate by a particular transformation matrix */
-static void
+void
 FWCreateMatrix  (CompWindow *w, CompTransform *mTransform,
                  float angX, float angY, float angZ,
                  float tX, float tY, float tZ,
@@ -472,7 +170,7 @@ static void FWFindInverseMatrix(CompTransform *m, CompTransform *r){
 
 */
 /* Create a rect from 4 screen points */
-static Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, float xScreen4,
+Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, float xScreen4,
                               float yScreen1, float yScreen2, float yScreen3, float yScreen4)
 {
         float leftmost, rightmost, topmost, bottommost;
@@ -538,7 +236,7 @@ static Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, fl
         return rect;
 }
 
-static Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
+Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
                                    CompVector c3, CompVector c4)
 {
 
@@ -617,7 +315,7 @@ static Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
            
 }
 
-static void FWCalculateOutputRect (CompWindow *w)
+void FWCalculateOutputRect (CompWindow *w)
 {
     if (w)
     {
@@ -633,7 +331,7 @@ static void FWCalculateOutputRect (CompWindow *w)
     }
 }
 
-static void FWCalculateInputRect (CompWindow *w)
+void FWCalculateInputRect (CompWindow *w)
 {
 
     if (w)
@@ -651,7 +349,7 @@ static void FWCalculateInputRect (CompWindow *w)
 
 }
 
-static void FWCalculateInputOrigin (CompWindow *w, float x, float y)
+void FWCalculateInputOrigin (CompWindow *w, float x, float y)
 {
 
     FREEWINS_WINDOW (w);
@@ -660,7 +358,7 @@ static void FWCalculateInputOrigin (CompWindow *w, float x, float y)
     fww->iMidY = y;
 }
 
-static void FWCalculateOutputOrigin (CompWindow *w, float x, float y)
+void FWCalculateOutputOrigin (CompWindow *w, float x, float y)
 {
 
     FREEWINS_WINDOW (w);
@@ -689,7 +387,7 @@ static void FWCalculateOutputOrigin (CompWindow *w, float x, float y)
 }*/
 
 /* Determine if we clicked in the z-axis region */
-static void FWDetermineZAxisClick (CompWindow *w, int px, int py)
+void FWDetermineZAxisClick (CompWindow *w, int px, int py)
 {
     FREEWINS_WINDOW (w);
 
@@ -762,7 +460,7 @@ static void FWDetermineZAxisClick (CompWindow *w, int px, int py)
 }
 
 /* Check to see if we can shape a window */
-static Bool FWCanShape (CompWindow *w)
+Bool FWCanShape (CompWindow *w)
 {
 
     if (!freewinsGetShapeInput (w->screen))
@@ -778,7 +476,7 @@ static Bool FWCanShape (CompWindow *w)
 }
 
 /* Checks if w is a ipw and returns the real window */
-static CompWindow *
+CompWindow *
 FWGetRealWindow (CompWindow *w)
 {
     FWWindowInputInfo *info;
@@ -816,7 +514,7 @@ FWGetRealWindowFromID (CompDisplay *d,
 
 /* ------ Input Prevention -------------------------------------------*/
 
-static void
+void
 FWSaveInputShape (CompWindow *w,
 		     XRectangle **retRects,
 		     int        *retCount,
@@ -844,7 +542,7 @@ FWSaveInputShape (CompWindow *w,
     *retOrdering = ordering;
 }
 
-static void
+void
 FWUnshapeInput (CompWindow *w)
 {
     Display *dpy = w->screen->display->display;
@@ -882,7 +580,7 @@ FWUnshapeInput (CompWindow *w)
 
 /* Input Shaper. This no longer adjusts the shape of the window
    but instead shapes it to 0 as the IPW deals with the input.  */
-static void FWShapeInput (CompWindow *w)
+void FWShapeInput (CompWindow *w)
 {
     CompWindow *fw;
     Display    *dpy = w->screen->display->display;
@@ -920,7 +618,7 @@ static void FWShapeInput (CompWindow *w)
 }
 
 /* Add the input info to the list of input info */
-static void
+void
 FWAddWindowToList (FWWindowInputInfo *info)
 {
     CompScreen        *s = info->w->screen;
@@ -939,7 +637,7 @@ FWAddWindowToList (FWWindowInputInfo *info)
 }
 
 /* Remove the input info from the list of input info */
-static void
+void
 FWRemoveWindowFromList (FWWindowInputInfo *info)
 {
     CompScreen        *s = info->w->screen;
@@ -968,7 +666,7 @@ FWRemoveWindowFromList (FWWindowInputInfo *info)
 
 /* Adjust size and location of the input prevention window
  */
-static void 
+void 
 FWAdjustIPW (CompWindow *w)
 {
     XWindowChanges xwc;
@@ -1000,7 +698,7 @@ FWAdjustIPW (CompWindow *w)
 }
 
 /* Create an input prevention window */
-static void
+void
 FWCreateIPW (CompWindow *w)
 {
     Window               ipw;
@@ -1034,7 +732,7 @@ FWCreateIPW (CompWindow *w)
  * window
  */
 
-static void
+void
 FWAdjustIPWStacking (CompScreen *s)
 {
     FWWindowInputInfo *input;
@@ -1051,7 +749,7 @@ FWAdjustIPWStacking (CompScreen *s)
 /* This should be called instead of FWShapeInput or FWCreateIPW
  * as it does all the setup beforehand.
  */
-static Bool
+Bool
 FWHandleWindowInputInfo (CompWindow *w)
 {
     FREEWINS_WINDOW (w);
@@ -1084,7 +782,7 @@ FWHandleWindowInputInfo (CompWindow *w)
     return TRUE;
 }
 
-static void FWHandleIPWResizeInitiate (CompWindow *w)
+void FWHandleIPWResizeInitiate (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
@@ -1106,7 +804,7 @@ static void FWHandleIPWResizeInitiate (CompWindow *w)
         }
 }
 
-static void FWHandleIPWMoveInitiate (CompWindow *w)
+void FWHandleIPWMoveInitiate (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
@@ -1128,7 +826,7 @@ static void FWHandleIPWMoveInitiate (CompWindow *w)
     fwd->grabWindow = w;
 }
 
-static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
+void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
 {
     FREEWINS_SCREEN (w->screen);
 
@@ -1147,7 +845,7 @@ static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned 
     FWAdjustIPW (w);
 }
 
-static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
+void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
 {
     FREEWINS_WINDOW (w);
 
@@ -1189,7 +887,7 @@ static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigne
 
 
 /* Handle Rotation */
-static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
+void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 {
     FREEWINS_WINDOW (w);
     FREEWINS_DISPLAY (w->screen->display);
@@ -1342,7 +1040,7 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 }
 
 /* Handle Scaling */
-static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
+void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 {
     FREEWINS_WINDOW (w);
     FREEWINS_DISPLAY (w->screen->display);
@@ -1420,7 +1118,7 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
 
 }
 
-static void FWHandleButtonReleaseEvent (CompWindow *w)
+void FWHandleButtonReleaseEvent (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
@@ -1436,7 +1134,7 @@ static void FWHandleButtonReleaseEvent (CompWindow *w)
     }
 }
 
-static void
+void
 FWHandleEnterNotify (CompWindow *w,
                      XEvent *xev)
 {
@@ -1451,7 +1149,7 @@ FWHandleEnterNotify (CompWindow *w,
 		FALSE, EnterWindowMask, &EnterNotifyEvent);
 }
 
-static void
+void
 FWHandleLeaveNotify (CompWindow *w,
                      XEvent *xev)
 {
@@ -1469,7 +1167,7 @@ FWHandleLeaveNotify (CompWindow *w,
 /* ------ Wrappable Functions -------------------------------------------*/
 
 /* X Event Handler */
-static void FWHandleEvent(CompDisplay *d, XEvent *ev){
+void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
     float dx, dy;
     CompWindow *oldPrev, *oldNext, *w;
@@ -1842,7 +1540,7 @@ static void FWHandleEvent(CompDisplay *d, XEvent *ev){
 }
 
 /* Animation Prep */
-static void
+void
 FWPreparePaintScreen (CompScreen *s,
 			 int	        ms)
 {
@@ -1869,7 +1567,7 @@ FWPreparePaintScreen (CompScreen *s,
 }
 
 /* Paint the window rotated or scaled */
-static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib, 
+Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib, 
 	const CompTransform *transform, Region region, unsigned int mask){
 
     CompTransform wTransform = *transform;
@@ -2076,7 +1774,7 @@ static Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 }
 
 /* Paint the window axis help onto the screen */
-static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib, 
+Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib, 
 	const CompTransform *transform, Region region, CompOutput *output, unsigned int mask){
 
     Bool wasCulled, status;
@@ -2202,7 +1900,7 @@ static Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 }
 
 /* Damage the Window Rect */
-static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
+Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
     Bool status = TRUE;
     FREEWINS_DISPLAY(w->screen->display);
@@ -2242,7 +1940,7 @@ static Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 }
 
 /* Information on window resize */
-static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh)
+void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh)
 {
     FREEWINS_WINDOW(w);
     FREEWINS_SCREEN(w->screen);
@@ -2266,7 +1964,7 @@ static void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh)
     WRAP(fws, w->screen, windowResizeNotify, FWWindowResizeNotify);
 }
 
-static void
+void
 FWWindowMoveNotify (CompWindow *w,
 		       int        dx,
 		       int        dy,
@@ -2296,7 +1994,7 @@ FWWindowMoveNotify (CompWindow *w,
 /* ------ Actions -------------------------------------------------------*/
 
 /* Initiate Mouse Rotation */
-static Bool initiateFWRotate (CompDisplay *d, CompAction *action, 
+Bool initiateFWRotate (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
     CompWindow* w;
@@ -2423,7 +2121,7 @@ static Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 }
 
 /* Initiate Scaling */
-static Bool initiateFWScale (CompDisplay *d, CompAction *action, 
+Bool initiateFWScale (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
     CompWindow* w;
@@ -2573,7 +2271,7 @@ static Bool initiateFWScale (CompDisplay *d, CompAction *action,
 
 /* Repetitive Stuff */
 
-static void
+void
 FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, float dsd)
 {
     FREEWINS_WINDOW (w);
@@ -2615,7 +2313,7 @@ FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, fl
 #define SCALE_INC freewinsGetScaleIncrementAmount (w->screen)
 #define NEG_SCALE_INC freewinsGetScaleIncrementAmount (w->screen) *-1
 
-static Bool FWRotateUp (CompDisplay *d, CompAction *action, 
+Bool FWRotateUp (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
 
     GET_WINDOW
@@ -2632,7 +2330,7 @@ static Bool FWRotateUp (CompDisplay *d, CompAction *action,
     
 }
 
-static Bool FWRotateDown (CompDisplay *d, CompAction *action, 
+Bool FWRotateDown (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
 
     GET_WINDOW
@@ -2648,7 +2346,7 @@ static Bool FWRotateDown (CompDisplay *d, CompAction *action,
     
 }
 
-static Bool FWRotateLeft (CompDisplay *d, CompAction *action, 
+Bool FWRotateLeft (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
 
     GET_WINDOW
@@ -2664,7 +2362,7 @@ static Bool FWRotateLeft (CompDisplay *d, CompAction *action,
     
 }
 
-static Bool FWRotateRight (CompDisplay *d, CompAction *action, 
+Bool FWRotateRight (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
     GET_WINDOW
@@ -2680,7 +2378,7 @@ static Bool FWRotateRight (CompDisplay *d, CompAction *action,
     
 }
 
-static Bool FWRotateClockwise (CompDisplay *d, CompAction *action, 
+Bool FWRotateClockwise (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
     GET_WINDOW
@@ -2696,7 +2394,7 @@ static Bool FWRotateClockwise (CompDisplay *d, CompAction *action,
     
 }
 
-static Bool FWRotateCounterclockwise (CompDisplay *d, CompAction *action, 
+Bool FWRotateCounterclockwise (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
     GET_WINDOW
@@ -2712,7 +2410,7 @@ static Bool FWRotateCounterclockwise (CompDisplay *d, CompAction *action,
     
 }
 
-static Bool FWScaleUp (CompDisplay *d, CompAction *action, 
+Bool FWScaleUp (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
     GET_WINDOW
@@ -2729,7 +2427,7 @@ static Bool FWScaleUp (CompDisplay *d, CompAction *action,
     
 }
 
-static Bool FWScaleDown (CompDisplay *d, CompAction *action, 
+Bool FWScaleDown (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
     
     GET_WINDOW
@@ -2748,7 +2446,7 @@ static Bool FWScaleDown (CompDisplay *d, CompAction *action,
 
 /* Reset the Rotation and Scale to 0 and 1 */
 /* TODO: Rename to resetFWTransform */
-static Bool resetFWRotation (CompDisplay *d, CompAction *action, 
+Bool resetFWRotation (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption){
     
     GET_WINDOW;
@@ -2784,7 +2482,7 @@ static Bool resetFWRotation (CompDisplay *d, CompAction *action,
  * z: Set angle to z degrees
  * window: The window to apply the transformation to
  */
-static Bool freewinsRotateWindow (CompDisplay *d, CompAction *action, 
+Bool freewinsRotateWindow (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption){
 	CompWindow *w;
     
@@ -2821,7 +2519,7 @@ static Bool freewinsRotateWindow (CompDisplay *d, CompAction *action,
  * z: Increment angle by z degrees
  * window: The window to apply the transformation to
  */
-static Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action, 
+Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption){
 	CompWindow *w;
 
@@ -2860,7 +2558,7 @@ static Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
  * y: Set scale to y factor
  * window: The window to apply the transformation to
  */
-static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action, 
+Bool freewinsScaleWindow (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption){
 	CompWindow *w;
 
@@ -2887,7 +2585,7 @@ static Bool freewinsScaleWindow (CompDisplay *d, CompAction *action,
 }
 
 /* Toggle Axis-Help Display */
-static Bool toggleFWAxis (CompDisplay *d, CompAction *action, 
+Bool toggleFWAxis (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption){
 
     CompScreen *s;
