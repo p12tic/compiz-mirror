@@ -70,7 +70,7 @@ typedef struct _CubeaddonScreen
     float vRot;
 
     float deform;
-    Bool  damage;
+    Bool  wasDeformed;
 
     Region tmpRegion;
 
@@ -804,7 +804,7 @@ cubeaddonPaintTransformedOutput (CompScreen              *s,
 	&& s->hsize * cs->nOutput > 2 && s->desktopWindowCount &&
 	(cs->rotationState == RotationManual ||
 	(cs->rotationState == RotationChange &&
-	!cubeaddonGetCylinderManualOnly (s)) || cas->deform > 0.0))
+	!cubeaddonGetCylinderManualOnly (s)) || cas->wasDeformed))
     {
 	const float angle = atan (0.5 / cs->distance);
 	const float rad = 0.5 / sin (angle);
@@ -826,13 +826,13 @@ cubeaddonPaintTransformedOutput (CompScreen              *s,
 	    quad[0] = x;
 	    quad[2] = cs->distance + z;
 	}
-	if (cas->deform != 0.0 && cas->deform != 1.0)
-	    cas->damage = TRUE;
     }
     else
     {
 	cas->deform = 0.0;
     }
+
+    cas->wasDeformed = (cas->deform > 0.0);
 
     if (cs->invert == 1 && cas->first && cubeaddonGetReflection (s))
     {
@@ -1113,10 +1113,10 @@ cubeaddonDonePaintScreen (CompScreen * s)
     cas->yTrans     = 0.0;
     cas->zTrans     = 0.0;
 
-    if (cas->damage)
+    if (cas->deform)
     {
 	damageScreen (s);
-	cas->damage = FALSE;
+	cas->deform = 0.0;
     }
 
     UNWRAP (cas, s, donePaintScreen);
