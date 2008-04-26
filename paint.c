@@ -331,6 +331,62 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
     }
 
+    /* Draw the 'gizmo' */
+
+    if (freewinsGetShowGizmo (s))
+    {
+    
+	glPushMatrix ();
+
+	    glTranslatef (x, y, 0.0);
+       
+	    glScalef (zRad, zRad, zRad / (float)s->width);
+
+	    //glColor4f(0.3, 0.3, 0.3, 0.3);
+
+	    /*glLineWidth(1.0);
+	    glBegin(GL_LINE);
+	    glVertex3f(0.0, 0.0, 0.0);
+	    glVertex3f(fww->mouse0.x, -fww->mouse0.y, fww->mouse0.z);
+	    glEnd ();
+
+	    glBegin(GL_LINE);
+	    glVertex3f(0.0, 0.0, 0.0);
+	    glVertex3f(fww->mouseX.x, -fww->mouseX.y, fww->mouseX.z);
+	    glEnd ();
+
+	    glLineWidth(2.0);
+	    glBegin(GL_LINE);
+	    glVertex3f(0.0, 0.0, 0.0);
+	    glVertex3f(q.x, -q.y, q.z);
+	    glEnd ();
+
+	    glMultMatrixf(fww->rot_state.m);
+	    glRotatef(fww->tr_ang * 180.0/M_PI, q.x, q.y, q.z);*/
+
+        glRotatef(fww->transform.angX, 1.0f, 0.0f, 0.0f);
+        glRotatef(fww->transform.angY, 0.0f, 1.0f, 0.0f);
+        glRotatef(fww->transform.angZ, 0.0f, 0.0f, 1.0f);
+
+	    glLineWidth(4.0f);
+        int i;
+	    for(i=0; i<3; i++) {
+		glPushMatrix();
+		    glColor4f(1.0 * (i==0), 1.0 * (i==1), 1.0 * (i==2), 1.0);
+		    glRotatef(90.0, 1.0 * (i==0), 1.0 * (i==1), 1.0 * (i==2));
+
+		    glBegin(GL_LINE_LOOP);
+		    for(j=360; j>=0; j -= 10)
+			glVertex3f( cos(D2R(j)), sin(D2R(j)), 0.0 );
+		    glEnd ();
+		glPopMatrix();
+	    }
+
+	glPopMatrix();
+	glColor4usv(defaultColor);
+
+    }
+
     /* Draw the bounding box */
 
     if (freewinsGetShowRegion (s))

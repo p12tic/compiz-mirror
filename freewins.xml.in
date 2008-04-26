@@ -331,6 +331,11 @@
 		    <_long>Show click area for 3D rotation</_long>
 		    <default>True</default>
 	    </option>
+        <option type="bool" name="show_gizmo">
+		    <_short>Show rotation gizmo</_short>
+		    <_long>Show rotation axis info</_long>
+		    <default>True</default>
+	    </option>
         <option type="bool" name="show_cross">
 		    <_short>Show crosshair</_short>
 		    <_long>Show crosshair (for scaling click regions)</_long>
