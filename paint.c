@@ -17,13 +17,10 @@
  *
  * Author(s): 
  * Rodolfo Granata <warlock.cc@gmail.com>
+ * Sam Spilsbury <smspillaz@gmail.com>
  *
  * Button binding support and Reset added by:
  * enigma_0Z <enigma.0ZA@gmail.com>
- *
- * Scaling, Animation, Input-Shaping, Snapping
- * and Key-Based Transformation added by:
- * Sam Spilsbury <smspillaz@gmail.com>
  *
  * Most of the input handling here is based on
  * the shelf plugin by
