@@ -104,6 +104,16 @@
 #define WIN_REAL_W(w) (w->width + w->input.left + w->input.right)
 #define WIN_REAL_H(w) (w->height + w->input.top + w->input.bottom)
 
+#define WIN_CORNER1(w) CompVector ic1 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 0.0f, 1.0f } };
+#define WIN_CORNER2(w) CompVector ic2 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 0.0f, 1.0f } };
+#define WIN_CORNER3(w) CompVector ic3 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 0.0f, 1.0f } };
+#define WIN_CORNER4(w) CompVector ic4 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 0.0f, 1.0f } };
+
+#define WIN_OCORNER1(w) CompVector oc1 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w), 0.0f, 1.0f } };
+#define WIN_OCORNER2(w) CompVector oc2 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 0.0f, 1.0f } };
+#define WIN_OCORNER3(w) CompVector oc3 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 0.0f, 1.0f } };
+#define WIN_OCORNER4(w) CompVector oc4 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 0.0f, 1.0f } };
+
 /* ------ Structures and Enums ------------------------------------------*/
 
 /* Enums */
@@ -127,6 +137,14 @@ typedef enum _Direction {
     LeftRight = 1
 } Direction;
 
+typedef enum _FWAxisType {
+    axisX = 0,
+    axisY,
+    axisZ,
+    axisXY,
+    axisXZ,
+} FWAxisType;
+
 /* Shape info / restoration */
 typedef struct _FWWindowInputInfo {
     CompWindow                *w;
@@ -143,15 +161,35 @@ typedef struct _FWWindowInputInfo {
     int        frameInputRectOrdering;
 } FWWindowInputInfo;
 
+/* Trackball */
+
+typedef struct _FWTrackball
+{
+    CompVector mouseX;
+    CompVector mouse0;
+    CompVector tr_axis;
+    float tr_ang;
+    float tr_radius;
+
+} FWTrackball;
+
 /* Transformation info */
 typedef struct _FWTransformedWindowInfo
 {
+    FWTrackball trackball;
+
+    /* XXX: These will be removed in favor of the matricies */
+
     float angX;
     float angY;
     float angZ;
     
     float scaleY;
     float scaleX;
+
+    // Window transformation
+    CompTransform rotationState;
+    CompTransform scaleState;
 
     /* Used for snapping */
 
