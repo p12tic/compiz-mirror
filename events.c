@@ -221,6 +221,8 @@ void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
         percentFromYAxis = distFromYAxis / halfHeight;
 
     }
+    else if (freewinsGetZAxisRotation (w->screen) == ZAxisRotationSwitch)
+        FWDetermineZAxisClick (w, pointerX, pointerY, TRUE);
 
     dx *= 360;
     dy *= 360;
@@ -635,10 +637,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 }
         }
 
-        fwd->oldX =  ev->xbutton.x_root;
-	    fwd->oldY =  ev->xbutton.y_root;
-	    fwd->click_root_x = ev->xbutton.x_root;
-	    fwd->click_root_y = ev->xbutton.y_root;
 	    fwd->click_win_x = ev->xbutton.x;
 	    fwd->click_win_y = ev->xbutton.y;
 

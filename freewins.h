@@ -512,7 +512,8 @@ Bool FWCanShape (CompWindow *w);
 
 void FWDetermineZAxisClick (CompWindow *w,
                            int px,
-                           int py);
+                           int py,
+                           Bool motion);
 
 void FWCalculateOutputOrigin (CompWindow *w,
                              float x,

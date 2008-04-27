@@ -194,8 +194,14 @@
 			    <desc>
                     <value>3</value><name>Interchangable</name>
                 </desc>
+			    <desc>
+                    <value>4</value><name>Switch</name>
+                </desc>
+			    <desc>
+                    <value>5</value><name>Trackball</name>
+                </desc>
                 <default>2</default>
-                <min>0</min><max>3</max>
+                <min>0</min><max>4</max>
 	        </option>
 	        <option type="int" name="rotation_axis">
 			    <_short>Rotation Axis</_short>

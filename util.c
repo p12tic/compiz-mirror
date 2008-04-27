@@ -438,13 +438,13 @@ void FWCalculateOutputOrigin (CompWindow *w, float x, float y)
 }*/
 
 /* Determine if we clicked in the z-axis region */
-void FWDetermineZAxisClick (CompWindow *w, int px, int py)
+void FWDetermineZAxisClick (CompWindow *w, int px, int py, Bool motion)
 {
     FREEWINS_WINDOW (w);
 
-    //Bool directionChange = FALSE;
+    Bool directionChange = FALSE;
 
-    /*if (!fww->can2D)
+    if (!fww->can2D && motion)
     {
 
         static int steps;
@@ -456,7 +456,7 @@ void FWDetermineZAxisClick (CompWindow *w, int px, int py)
          * to change to 2D rotation.
          */
 
-        /*
+        
         Direction direction;
 
         static int ddx, ddy;
@@ -484,10 +484,10 @@ void FWDetermineZAxisClick (CompWindow *w, int px, int py)
 
     }
     else
-        directionChange = TRUE;*/
+        directionChange = TRUE;
 
-    /*if (directionChange)
-    {*/
+    if (directionChange)
+    {
 
         float clickRadiusFromCenter;
 
@@ -506,7 +506,7 @@ void FWDetermineZAxisClick (CompWindow *w, int px, int py)
             fww->can2D = FALSE;
             fww->can3D = TRUE;
         }
-    /*}*/
+    }
 }
 
 /* Check to see if we can shape a window */

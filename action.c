@@ -62,7 +62,6 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     CompScreen* s;
     FWWindowInputInfo *info;
     Window xid, root;
-    float dx, dy;
     
     FREEWINS_DISPLAY(d);
 
@@ -126,11 +125,10 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	
 	fwd->grab = grabRotate;
 	
-	fwd->oldX = fwd->click_root_x;
-	fwd->oldY = fwd->click_root_y;
-
-	dx = fwd->click_win_x - fww->iMidX;
-	dy = fwd->click_win_y - fww->iMidY;
+    fwd->oldX =  pointerX;
+    fwd->oldY =  pointerY;
+    fwd->click_root_x = pointerX;
+    fwd->click_root_y = pointerY;
 
     /* Save current scales and angles */
 
@@ -155,9 +153,6 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	        fww->corner = CornerTopLeft;
 	}
 
-	dx = ABS(dx);
-	dy = ABS(dy);
-
     switch (freewinsGetZAxisRotation (s))
     {
         case ZAxisRotationAlways3d:
@@ -167,7 +162,8 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
             fww->can3D = FALSE;
             fww->can2D = TRUE; break;
         case ZAxisRotationDetermineOnClick:
-            FWDetermineZAxisClick (useW, pointerX, pointerY); break;
+        case ZAxisRotationSwitch:
+            FWDetermineZAxisClick (useW, pointerX, pointerY, FALSE); break;
         case ZAxisRotationInterchangable:
             fww->can3D = TRUE;
             fww->can2D = TRUE;  break;
@@ -199,6 +195,11 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
 
     root = getIntOptionNamed (option, nOption, "root", 0);
     s = findScreenAtDisplay (d, root);
+
+    fwd->oldX =  pointerX;
+    fwd->oldY =  pointerY;
+    fwd->click_root_x = pointerX;
+    fwd->click_root_y = pointerY;
 
     if (s)
     {
