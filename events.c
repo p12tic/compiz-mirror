@@ -192,9 +192,6 @@ void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 
     float percentFromXAxis, percentFromYAxis;
 
-    percentFromXAxis = 0.0f;
-    percentFromYAxis = 0.0f;
-
     if (freewinsGetZAxisRotation (w->screen) == ZAxisRotationInterchangable)
     {
 
@@ -231,8 +228,14 @@ void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
     if(fww->can2D)
     {
 
-       float zX = percentFromXAxis;
-       float zY = percentFromYAxis;
+       float zX = 1.0f;
+       float zY = 1.0f;
+
+       if (freewinsGetZAxisRotation (w->screen) == ZAxisRotationInterchangable)
+       {
+            zX = percentFromXAxis;
+            zY = percentFromYAxis;
+       }
 
        zX = zX > 1.0f ? 1.0f : zX;
        zY = zY > 1.0f ? 1.0f : zY;
@@ -302,6 +305,12 @@ void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 
     if (fww->can3D || freewinsGetZAxisRotation (w->screen) == ZAxisRotationAlways3d)
     {
+        if (freewinsGetZAxisRotation (w->screen) != ZAxisRotationInterchangable)
+        {
+            percentFromXAxis = 0.0f;
+            percentFromYAxis = 0.0f;
+        }
+    
     fww->transform.unsnapAngX -= dy * (1 - percentFromXAxis);
     fww->transform.unsnapAngY += dx * (1 - percentFromYAxis);
     }
