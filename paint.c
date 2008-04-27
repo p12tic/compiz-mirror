@@ -475,7 +475,7 @@ Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
         /* TODO: Calculate a region for the axisHelp */
 
     UNWRAP(fws, w->screen, damageWindowRect);
-    status |= (*w->screen->damageWindowRect)(w, initial, &fww->outputRect);
+    status |= (*w->screen->damageWindowRect)(w, initial, rect);
     //(*w->screen->damageWindowRect)(w, initial, rect);
     WRAP(fws, w->screen, damageWindowRect, FWDamageWindowRect);
 
