@@ -247,7 +247,7 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
     fwd->grabWindow = 0;
     fwd->lastGrabWindow = 0;
     fwd->axisHelp = FALSE;
-    fwd->focusWindow = 0;
+    fwd->hoverWindow = 0;
      
     if( (fwd->screenPrivateIndex = allocateScreenPrivateIndex(d)) < 0 ){
 	free(fwd);

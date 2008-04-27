@@ -281,12 +281,12 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     WRAP(fws, s, paintOutput, FWPaintOutput);
 
     // z-axis circle/*{{{*/
-    if(fwd->axisHelp && fwd->focusWindow){
+    if(fwd->axisHelp && fwd->hoverWindow){
     	
-	x = WIN_REAL_X(fwd->focusWindow) + WIN_REAL_W(fwd->focusWindow)/2.0;
-	y = WIN_REAL_Y(fwd->focusWindow) + WIN_REAL_H(fwd->focusWindow)/2.0;
+	x = WIN_REAL_X(fwd->hoverWindow) + WIN_REAL_W(fwd->hoverWindow)/2.0;
+	y = WIN_REAL_Y(fwd->hoverWindow) + WIN_REAL_H(fwd->hoverWindow)/2.0;
 
-    FREEWINS_WINDOW (fwd->focusWindow);
+    FREEWINS_WINDOW (fwd->hoverWindow);
 
     float zRad = fww->radius * (freewinsGet3dPercent (s) / 100);
 
@@ -301,7 +301,7 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	if(wasCulled)
 	    glDisable(GL_CULL_FACE);
 
-    if (freewinsGetShowCircle (s) && freewinsGetRotationAxis (fwd->focusWindow->screen) == RotationAxisAlwaysCentre)
+    if (freewinsGetShowCircle (s) && freewinsGetRotationAxis (fwd->hoverWindow->screen) == RotationAxisAlwaysCentre)
     {
 
 	glColor4usv  (freewinsGetCircleColor (s));
@@ -411,15 +411,15 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	
 	glColor4usv  (freewinsGetCrossLineColor (s));
 	glBegin(GL_LINES);
-	glVertex3f(x, y - (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
-	glVertex3f(x, y + (WIN_REAL_H (fwd->focusWindow) / 2), 0.0f);
+	glVertex3f(x, y - (WIN_REAL_H (fwd->hoverWindow) / 2), 0.0f);
+	glVertex3f(x, y + (WIN_REAL_H (fwd->hoverWindow) / 2), 0.0f);
 	glEnd ();
 	
 	glBegin(GL_LINES);
-	glVertex3f(x - (WIN_REAL_W (fwd->focusWindow) / 2), y, 0.0f);
-	glVertex3f(x + (WIN_REAL_W (fwd->focusWindow) / 2), y, 0.0f);
+	glVertex3f(x - (WIN_REAL_W (fwd->hoverWindow) / 2), y, 0.0f);
+	glVertex3f(x + (WIN_REAL_W (fwd->hoverWindow) / 2), y, 0.0f);
 	glEnd ();
-
+    /*
 	glColor4usv  (freewinsGetCrossLineColor (s));
 	glBegin(GL_LINES);
 	glVertex3f(fwd->transformed_px, 0.0f, 0.0f);
@@ -429,7 +429,7 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glBegin(GL_LINES);
 	glVertex3f(0.0f , fwd->transformed_py, 0.0f);
 	glVertex3f(s->width, fwd->transformed_py, 0.0f);
-	glEnd ();
+	glEnd ();*/
 
     }
 

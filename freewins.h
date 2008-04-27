@@ -199,9 +199,10 @@ typedef struct _FWDisplay{
     int click_win_y;
 
     // ZOMG Input Redirection
-
+    /*
     float transformed_px;
     float transformed_py;
+    */
 
     // Used for determining cursor direction
     int oldX;
@@ -211,7 +212,7 @@ typedef struct _FWDisplay{
 
     CompWindow *grabWindow;
     CompWindow *lastGrabWindow;
-    CompWindow *focusWindow;
+    CompWindow *hoverWindow;
 
     FWGrabType grab;
     

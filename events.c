@@ -447,7 +447,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	/* Motion Notify Event */
     case EnterNotify:
     {
-
         CompWindow *btnW;
         btnW = findWindowAtDisplay (d, ev->xbutton.subwindow);
 
@@ -458,10 +457,18 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
         /* We have established the CompWindow we clicked
          * on. Get the real window */
         if (btnW)
-        btnW = FWGetRealWindow (btnW);
+        {
+            if (FWCanShape (btnW) && !fwd->grabWindow && !otherScreenGrabExist(btnW->screen, 0))
+                fwd->hoverWindow = btnW;
+            btnW = FWGetRealWindow (btnW);
+        }
 
         if (btnW)
+        {
+            if (FWCanShape (btnW) && !fwd->grabWindow && !otherScreenGrabExist(btnW->screen, 0))
+                fwd->hoverWindow = btnW;
             FWHandleEnterNotify (btnW, ev);
+        }
     }
     break;
     case LeaveNotify:
@@ -477,7 +484,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
         /* We have established the CompWindow we clicked
          * on. Get the real window */
         if (btnW)
-        btnW = FWGetRealWindow (btnW);
+            btnW = FWGetRealWindow (btnW);
 
         if (btnW)
             FWHandleLeaveNotify (btnW, ev);
@@ -695,14 +702,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
         }
 	    break;
     }
-
-	case FocusOut:
-	    break;
-
-	case FocusIn:
-	    if(ev->xfocus.mode != NotifyGrab)
-		fwd->focusWindow = findWindowAtDisplay(d, ev->xfocus.window);
-	    break;
 
 	case ConfigureNotify:
 	    w = findWindowAtDisplay (d, ev->xconfigure.window);
