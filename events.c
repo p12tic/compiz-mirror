@@ -704,7 +704,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
         fwd->grab = grabNone;
         fwd->lastGrabWindow = fwd->grabWindow;
 		fwd->grabWindow = 0;
-        fww->rotated = TRUE;
+        fww->transformed = TRUE;
 	    }
         }
 	    break;

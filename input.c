@@ -290,7 +290,7 @@ FWHandleWindowInputInfo (CompWindow *w)
 {
     FREEWINS_WINDOW (w);
 
-    if (!fww->rotated && fww->input)
+    if (!fww->transformed && fww->input)
     {
 	if (fww->input->ipw)
 	    XDestroyWindow (w->screen->display->display, fww->input->ipw);
@@ -303,7 +303,7 @@ FWHandleWindowInputInfo (CompWindow *w)
 
 	return FALSE;
     }
-    else if (fww->rotated && !fww->input)
+    else if (fww->transformed && !fww->input)
     {
 	fww->input = calloc (1, sizeof (FWWindowInputInfo));
 	if (!fww->input)

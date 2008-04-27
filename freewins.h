@@ -276,7 +276,6 @@ typedef struct _FWScreen{
     Cursor rotateCursor;
 
     int grabIndex;
-    int rotatedWindows;
 
 } FWScreen;
 
@@ -334,7 +333,7 @@ typedef struct _FWWindow{
     Bool grabLeft;
     Bool grabTop;
 
-    Bool rotated;
+    Bool transformed;
     Bool allowScaling;
     Bool allowRotation;
 

@@ -136,7 +136,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->can2D = FALSE;
     fww->can3D = FALSE;
 
-    fww->rotated = FALSE;
+    fww->transformed = FALSE;
     
     // Don't allow anything yet
     fww->allowScaling = FALSE;
@@ -174,7 +174,7 @@ static void freewinsFiniWindow(CompPlugin *p, CompWindow *w){
     fww->transform.scaleX = 1.0f;
     fww->transform.scaleY = 1.0f;
 
-    fww->rotated = FALSE;
+    fww->transformed = FALSE;
     
     if (FWCanShape (w))
         FWHandleWindowInputInfo (w);
@@ -201,7 +201,6 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     }
 
     fws->grabIndex = 0;
-    fws->rotatedWindows = 0;
     fws->transformedWindows = NULL;
 
     s->base.privates[fwd->screenPrivateIndex].ptr = fws;

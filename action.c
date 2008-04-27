@@ -521,11 +521,7 @@ Bool resetFWRotation (CompDisplay *d, CompAction *action,
                                  (1 - fww->transform.scaleY));
         addWindowDamage (w);
 
-	    if( fww->rotated ){
-	        FREEWINS_SCREEN(w->screen);
-	        fws->rotatedWindows--;
-	        fww->rotated = FALSE;
-	    }
+	    fww->transformed = FALSE;
 
         if (FWCanShape (w))
             if (FWHandleWindowInputInfo (w))

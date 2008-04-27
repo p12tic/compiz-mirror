@@ -235,18 +235,16 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
     // Check if there are rotated windows
     if(fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 || fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0){
-        if( !fww->rotated ){
-	    fws->rotatedWindows++;
-	    fww->rotated = TRUE;
+        if( !fww->transformed ){
+	    fww->transformed = TRUE;
         }
     }else{
-        if( fww->rotated ){
-	    fws->rotatedWindows--;
-	    fww->rotated = FALSE;
+        if( fww->transformed ){
+	    fww->transformed = FALSE;
         }
     }
 
-    if (fww->rotated)
+    if (fww->transformed)
     if(wasCulled)
 	glDisable(GL_CULL_FACE);
 	
@@ -273,7 +271,7 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     FREEWINS_SCREEN(s);
     FREEWINS_DISPLAY(s->display);
 
-    if(fws->rotatedWindows > 0)
+    if(fws->transformedWindows)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     UNWRAP(fws, s, paintOutput);
@@ -451,7 +449,7 @@ Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
     FREEWINS_SCREEN(w->screen);
     FREEWINS_WINDOW(w);
 
-    if (fww->rotated)
+    if (fww->transformed)
     {
         REGION region;
 
