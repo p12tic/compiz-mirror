@@ -160,7 +160,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
 	    /* Adjust the window in the matrix to prepare for transformation */
 
-        FWCreateMatrix (w, &wTransform,
+        FWModifyMatrix (w, &wTransform,
                         fww->transform.angX,
                         fww->transform.angY,
                         fww->transform.angZ,

@@ -589,7 +589,7 @@ Box FWCreateSizedRect (float xScreen1,
                        float yScreen3,
                        float yScreen4);
 
-void FWCreateMatrix  (CompWindow *w, CompTransform *mTransform,
+void FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
                      float angX, float angY, float angZ,
                      float tX, float tY, float tZ,
                      float scX, float scY, float scZ);

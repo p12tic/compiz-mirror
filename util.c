@@ -87,9 +87,8 @@ void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransform tran
     *resultY = w->screen->height - *resultY;
 }
 
-/* Transform a co-ordinate by a particular transformation matrix */
 void
-FWCreateMatrix  (CompWindow *w, CompTransform *mTransform,
+FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
                  float angX, float angY, float angZ,
                  float tX, float tY, float tZ,
                  float scX, float scY, float scZ)
@@ -300,7 +299,7 @@ Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
         GLdouble xScreen4, yScreen4, zScreen4;
 
         matrixGetIdentity(&transform);
-        FWCreateMatrix (w, &transform,
+        FWModifyMatrix (w, &transform,
                         fww->transform.angX,
                         fww->transform.angY,
                         fww->transform.angZ,
