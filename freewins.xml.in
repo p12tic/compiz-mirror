@@ -136,7 +136,7 @@
 	    <option type="bool" name="snap">
 			    <_short>Snap</_short>
 			    <_long>Snap to common points</_long>
-			    <default>True</default>
+			    <default>False</default>
 	    </option>
 	    <option type="int" name="snap_threshold">
 			    <_short>Snap Threshold</_short>

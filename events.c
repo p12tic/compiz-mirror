@@ -593,13 +593,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 fww->transform.scaleY = ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
             }
 	
-	        /*fww->animate.oldAngX = fww->transform.angX;
-	        fww->animate.oldAngY = fww->transform.angY;
-	        fww->animate.oldAngZ = fww->transform.angZ;
-	
-	        fww->animate.oldScaleX = fww->transform.scaleX;
-	        fww->animate.oldScaleY = fww->transform.scaleY;*/
-
 	        if(dx != 0.0 || dy != 0.0)
                 addWindowDamage (fwd->grabWindow);
 
@@ -639,44 +632,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
 	    fwd->click_win_x = ev->xbutton.x;
 	    fwd->click_win_y = ev->xbutton.y;
-
-        /*if (btnW)
-        {
-
-        float x = ev->xbutton.x_root;
-        float y = ev->xbutton.y_root;
-
-        fprintf(stderr, "X %f Y %f\n", x, y);
-
-        CompVector vec = { .v = { x, y, 1.0f, 1.0f } };
-
-        CompWindow *realW;
-
-        realW = FWGetRealWindow (btnW);
-
-        if (!realW)
-            realW = btnW;
-
-        FREEWINS_WINDOW (realW);
-
-        CompTransform matrix =  FWCreateMatrix (realW,
-                                                0.0f - fww->transform.angX,
-                                                0.0f - fww->transform.angY,
-                                                0.0f - fww->transform.angZ,
-                                                fww->iMidX, fww->iMidY, 0.0f,
-                                                1.0f - fww->transform.scaleX,
-                                                1.0f - fww->transform.scaleY,
-                                                1.0f);
-
-        GLdouble xs, ys, zs;
-
-        FWRotateProjectVector (btnW, vec, matrix, &xs, &ys, &zs, TRUE);*/
-
-        /*fprintf(stderr, "CLick :%i %i\n", ev->xbutton.x_root, ev->xbutton.y_root);
-
-        fprintf(stderr, "Transform: %f %f %f\n", fww->transform.angX, fww->transform.angY, fww->transform.angZ);
-
-        fprintf(stderr, "XSYSZS: %f %f %f\n", xs, ys, zs);*/
     }
     break;
 	case ButtonRelease:
