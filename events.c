@@ -190,7 +190,7 @@ void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 	        fww->corner = CornerTopLeft;
 	}
 
-    float percentFromXAxis, percentFromYAxis;
+    float percentFromXAxis = 0.0, percentFromYAxis = 0.0;
 
     if (freewinsGetZAxisRotation (w->screen) == ZAxisRotationInterchangable)
     {
@@ -424,11 +424,13 @@ FWHandleEnterNotify (CompWindow *w,
 
     memcpy (&EnterNotifyEvent.xcrossing, &xev->xcrossing,
 	    sizeof (XCrossingEvent));
-    EnterNotifyEvent.xcrossing.window = w->id;
 
-    if (w)
-    XSendEvent (w->screen->display->display, w->id,
-		FALSE, EnterWindowMask, &EnterNotifyEvent);
+    if (w) 
+    {
+	EnterNotifyEvent.xcrossing.window = w->id;
+	XSendEvent (w->screen->display->display, w->id,
+		    FALSE, EnterWindowMask, &EnterNotifyEvent);
+    }
 }
 
 void
@@ -689,7 +691,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
         for (s = d->screens; s; s = s->next)
             for (adjW = s->windows; adjW; adjW = adjW->next)
             {
-                int vX, vY, dX, dY;
+                int vX = 0, vY = 0, dX, dY;
 
                 actualW = FWGetRealWindow (adjW);
 
@@ -706,15 +708,17 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                         break;
 
                     ipw = findWindowAtDisplay (d, fww->input->ipw);
+		    if (ipw) 
+		    {
+			dX = s->x - vX;
+			dY = s->y - vY;
 
-                    dX = s->x - vX;
-                    dY = s->y - vY;
-
-                    defaultViewportForWindow (actualW, &vX, &vY);
+			defaultViewportForWindow (actualW, &vX, &vY);
             		moveWindowToViewportPosition (ipw,
 			              ipw->attrib.x - dX * s->width,
 			              ipw->attrib.y - dY * s->height,
 			              FALSE);
+		    }
                 }
             }
     }
