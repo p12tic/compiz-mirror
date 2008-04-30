@@ -57,9 +57,6 @@
 		  <type>int</type>
 		  <min>0</min>
 		  <max>3</max>
-          <default>
-            <value>0</value>
-		  </default>
 		  <desc>
 			  <value>0</value>
 			  <_name>Shift</_name>
@@ -85,9 +82,6 @@
 		  <type>int</type>
 		  <min>0</min>
 		  <max>3</max>
-          <default>
-            <value>0</value>
-		  </default>
 		  <desc>
 			  <value>0</value>
 			  <_name>Shift</_name>
