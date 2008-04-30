@@ -34,7 +34,6 @@
  * or just as a toy.
  *
  * Todo: 
- *  - Modifier key to rotate on the Z Axis
  *  - Fully implement an input redirection system by
  *    finding an inverse matrix, multiplying by it,
  *    translating to the actual window co-ords and 
