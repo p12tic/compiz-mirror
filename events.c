@@ -227,7 +227,17 @@ void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
     dx *= 360;
     dy *= 360;
 
-    if(fww->can2D)
+    /* Handle inversion */
+
+    Bool can2D = fww->can2D, can3D = fww->can3D;
+
+    if (fwd->invert && freewinsGetZAxisRotation (w->screen) != ZAxisRotationInterchangable)
+    {
+        can2D = !fww->can2D;
+        can3D = !fww->can3D;
+    }
+
+    if(can2D)
     {
 
        float zX = 1.0f;
@@ -305,13 +315,14 @@ void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
         }
     }
 
-    if (fww->can3D || freewinsGetZAxisRotation (w->screen) == ZAxisRotationAlways3d)
+    if (can3D)
     {
         if (freewinsGetZAxisRotation (w->screen) != ZAxisRotationInterchangable)
         {
             percentFromXAxis = 0.0f;
             percentFromYAxis = 0.0f;
         }
+    
     
     fww->transform.unsnapAngX -= dy * (1 - percentFromXAxis);
     fww->transform.unsnapAngY += dx * (1 - percentFromYAxis);
