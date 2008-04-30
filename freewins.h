@@ -255,6 +255,8 @@ typedef struct _FWDisplay{
     FWGrabType grab;
     
     Bool axisHelp;
+    Bool snap;
+    Bool invert;
     int snapMask;
     int invertMask;
 

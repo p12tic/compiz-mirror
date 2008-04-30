@@ -104,41 +104,47 @@ FWWindowMoveNotify (CompWindow *w,
     WRAP (fws, w->screen, windowMoveNotify, FWWindowMoveNotify);
 }
 
-
-static void FWDisplayOptionChanged(CompDisplay *d, CompOption *opt, FreewinsDisplayOptions num)
+static void FWReloadSnapKeys (CompDisplay *d)
 {
-	FREEWINS_DISPLAY(d);
+    FREEWINS_DISPLAY (d);
 
+    if (fwd)
+    {
+
+	unsigned int imask = freewinsGetInvertModsMask(d);
+	fwd->invertMask = 0;
+
+	if (imask & InvertModsShiftMask)
+		fwd->invertMask |= ShiftMask;
+	if (imask & InvertModsAltMask)
+		fwd->invertMask |= CompAltMask;
+	if (imask & InvertModsControlMask)
+		fwd->invertMask |= ControlMask;
+	if (imask & InvertModsMetaMask)
+		fwd->invertMask |= CompMetaMask;
+
+	unsigned int smask = freewinsGetSnapModsMask(d);
+	fwd->snapMask = 0;
+	if (smask & SnapModsShiftMask)
+		fwd->snapMask |= ShiftMask;
+	if (smask & SnapModsAltMask)
+		fwd->snapMask |= CompAltMask;
+	if (smask & SnapModsControlMask)
+		fwd->snapMask |= ControlMask;
+	if (smask & SnapModsMetaMask)
+		fwd->snapMask |= CompMetaMask;
+
+    }
+}
+
+static void FWDisplayOptionChanged (CompDisplay *d, CompOption *opt, FreewinsDisplayOptions num)
+{
 	switch (num)
 	{
 		case FreewinsDisplayOptionSnapMods:
-		{
-			unsigned int mask = freewinsGetSnapModsMask(d);
-			fwd->snapMask = 0;
-			if (mask & SnapModsShiftMask)
-				fwd->snapMask |= ShiftMask;
-			if (mask & SnapModsAltMask)
-				fwd->snapMask |= CompAltMask;
-			if (mask & SnapModsControlMask)
-				fwd->snapMask |= ControlMask;
-			if (mask & SnapModsMetaMask)
-				fwd->snapMask |= CompMetaMask;
-		}
-
-		case FreewinsDisplayOptionInvertMods:
-		{
-			unsigned int mask = freewinsGetInvertModsMask(d);
-			fwd->invertMask = 0;
-			if (mask & InvertModsShiftMask)
-				fwd->invertMask |= ShiftMask;
-			if (mask & InvertModsAltMask)
-				fwd->invertMask |= CompAltMask;
-			if (mask & InvertModsControlMask)
-				fwd->invertMask |= ControlMask;
-			if (mask & InvertModsMetaMask)
-				fwd->invertMask |= CompMetaMask;
-		}
-
+        case FreewinsDisplayOptionInvertMods:
+            FWReloadSnapKeys (d);
+            break;
 		default:
 			break;
 	}
@@ -325,9 +331,11 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
 
     freewinsSetSnapModsNotify (d, FWDisplayOptionChanged);
     freewinsSetInvertModsNotify (d, FWDisplayOptionChanged);
-    
+
     d->base.privates[displayPrivateIndex].ptr = fwd;
     WRAP(fwd, d, handleEvent, FWHandleEvent);
+
+    FWReloadSnapKeys (d);
     
     return TRUE;
 }

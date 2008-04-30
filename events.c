@@ -455,6 +455,39 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
     CompWindow *oldPrev, *oldNext, *w;
     FREEWINS_DISPLAY(d);
 
+    /* Check our modifiers first */
+
+    if (ev->type == d->xkbEvent)
+    {
+	    XkbAnyEvent *xkbEvent = (XkbAnyEvent *) ev;
+
+	    if (xkbEvent->xkb_type == XkbStateNotify)
+	    {
+		    XkbStateNotifyEvent *stateEvent = (XkbStateNotifyEvent *) ev;
+		    unsigned int snapMods = 0xffffffff;
+		    unsigned int invertMods = 0xffffffff;
+
+		    if (fwd->snapMask)
+			    snapMods = fwd->snapMask;
+
+		    if ((stateEvent->mods & snapMods) == snapMods)
+			    fwd->snap = TRUE;
+		    else
+			    fwd->snap = FALSE;
+
+		    if (fwd->invertMask)
+			    invertMods = fwd->invertMask;
+
+		    if ((stateEvent->mods & invertMods) == invertMods)
+			    fwd->invert = TRUE;
+		    else
+			    fwd->invert = FALSE;
+
+        //fprintf(stderr, "Snap %i, Invert %i\n", fwd->snap, fwd->invert);
+
+	    }
+    }
+
     switch(ev->type){
 	
 	/* Motion Notify Event */
@@ -585,7 +618,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
             }
 
 	        /* Handle Snapping */
-	        if (freewinsGetSnap (fwd->grabWindow->screen))
+	        if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
 	        {
 	            int snapFactor = freewinsGetSnapThreshold (fwd->grabWindow->screen);
                 fww->transform.angX = ((int) (fww->transform.unsnapAngX) / snapFactor) * snapFactor;
