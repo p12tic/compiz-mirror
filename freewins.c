@@ -104,6 +104,46 @@ FWWindowMoveNotify (CompWindow *w,
     WRAP (fws, w->screen, windowMoveNotify, FWWindowMoveNotify);
 }
 
+
+static void FWDisplayOptionChanged(CompDisplay *d, CompOption *opt, FreewinsDisplayOptions num)
+{
+	FREEWINS_DISPLAY(d);
+
+	switch (num)
+	{
+		case FreewinsDisplayOptionSnapMods:
+		{
+			unsigned int mask = freewinsGetSnapModsMask(d);
+			fwd->snapMask = 0;
+			if (mask & SnapModsShiftMask)
+				fwd->snapMask |= ShiftMask;
+			if (mask & SnapModsAltMask)
+				fwd->snapMask |= CompAltMask;
+			if (mask & SnapModsControlMask)
+				fwd->snapMask |= ControlMask;
+			if (mask & SnapModsMetaMask)
+				fwd->snapMask |= CompMetaMask;
+		}
+
+		case FreewinsDisplayOptionInvertMods:
+		{
+			unsigned int mask = freewinsGetInvertModsMask(d);
+			fwd->invertMask = 0;
+			if (mask & InvertModsShiftMask)
+				fwd->invertMask |= ShiftMask;
+			if (mask & InvertModsAltMask)
+				fwd->invertMask |= CompAltMask;
+			if (mask & InvertModsControlMask)
+				fwd->invertMask |= ControlMask;
+			if (mask & InvertModsMetaMask)
+				fwd->invertMask |= CompMetaMask;
+		}
+
+		default:
+			break;
+	}
+}
+
 /* ------ Plugin Initialisation ---------------------------------------*/
 
 /* Window initialisation / cleaning */
@@ -282,6 +322,9 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
     freewinsSetRotateInitiate (d, freewinsRotateWindow);
     freewinsSetIncrementRotateInitiate (d, freewinsIncrementRotateWindow);
     freewinsSetScaleInitiate (d, freewinsScaleWindow);
+
+    freewinsSetSnapModsNotify (d, FWDisplayOptionChanged);
+    freewinsSetInvertModsNotify (d, FWDisplayOptionChanged);
     
     d->base.privates[displayPrivateIndex].ptr = fwd;
     WRAP(fwd, d, handleEvent, FWHandleEvent);

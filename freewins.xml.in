@@ -51,6 +51,61 @@
 			<default>&lt;Control&gt;&lt;Shift&gt;h
 			</default>
 	    </option>
+        <option name="snap_mods" type="list">
+          <_short>Snap Modifier</_short>
+          <_long>Use this bindings to enable/disable snapping.</_long>
+		  <type>int</type>
+		  <min>0</min>
+		  <max>3</max>
+          <default>
+            <value>0</value>
+		  </default>
+		  <desc>
+			  <value>0</value>
+			  <_name>Shift</_name>
+		  </desc>
+		  <desc>
+			  <value>1</value>
+			  <_name>Alt</_name>
+		  </desc>
+		  <desc>
+			  <value>2</value>
+			  <_name>Control</_name>
+		  </desc>
+		  <desc>
+			  <value>3</value>
+			  <_name>Meta</_name>
+		  </desc>
+        </option>
+        <subgroup>
+        <_short>Rotation</_short>
+          <option name="invert_mods" type="list">
+          <_short>Invert Modifier</_short>
+          <_long>Use this bindings to invert the rotation mode.</_long>
+		  <type>int</type>
+		  <min>0</min>
+		  <max>3</max>
+          <default>
+            <value>0</value>
+		  </default>
+		  <desc>
+			  <value>0</value>
+			  <_name>Shift</_name>
+		  </desc>
+		  <desc>
+			  <value>1</value>
+			  <_name>Alt</_name>
+		  </desc>
+		  <desc>
+			  <value>2</value>
+			  <_name>Control</_name>
+		  </desc>
+		  <desc>
+			  <value>3</value>
+			  <_name>Meta</_name>
+		  </desc>
+        </option>
+        </subgroup>
     </group>
     <group>
     <_short>Manual Transformation</_short>
@@ -134,11 +189,11 @@
 			<max>10.0</max>
 	    </option>
 	    <option type="bool" name="snap">
-			    <_short>Snap</_short>
-			    <_long>Snap to common points</_long>
+			    <_short>Snap by default</_short>
+			    <_long>Snap to common points by default</_long>
 			    <default>False</default>
 	    </option>
-	    <option type="int" name="snap_threshold">
+        <option type="int" name="snap_threshold">
 			    <_short>Snap Threshold</_short>
 			    <_long>Snap to every one of these</_long>
 			    <min>1</min>

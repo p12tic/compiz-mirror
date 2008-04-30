@@ -583,6 +583,8 @@ Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
     //FREEWINS_DISPLAY(d);
     
     w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
+
+    fprintf(stderr, "called: ");
     
     if (w)
     {
@@ -593,6 +595,8 @@ Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
         x = getFloatOptionNamed(option, nOption, "x", 0.0f);
         y = getFloatOptionNamed(option, nOption, "y", 0.0f);
         z = getFloatOptionNamed(option, nOption, "z", 0.0f);
+
+        fprintf(stderr, "called: ... window present variables are %f %f %f\n", x, y, z);
         
         /* Respect dx, dy, dz, first */
         fww->transform.angX += x;
@@ -604,6 +608,9 @@ Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
     }
     else
     {
+
+        fprintf(stderr, "called: ... no window present\n");
+
         return FALSE;
     }
 
