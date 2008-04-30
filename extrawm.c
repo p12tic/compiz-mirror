@@ -21,6 +21,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <X11/Xatom.h>
 
 #include <compiz-core.h>
 #include "extrawm_options.h"
@@ -34,6 +35,8 @@ typedef struct _DemandsAttentionWindow {
 
 typedef struct _ExtraWMDisplay {
     int screenPrivateIndex;
+
+    HandleEventProc handleEvent;
 } ExtraWMDisplay;
 
 typedef struct _ExtraWMScreen {
@@ -51,6 +54,11 @@ addAttentionWindow (CompWindow *w)
     DemandsAttentionWindow *dw;
 
     EXTRAWM_SCREEN (w->screen);
+
+    /* check if the window is already there */
+    for (dw = es->attentionWindows; dw; dw = dw->next)
+	if (dw->w == w)
+	    return;
 
     dw = malloc (sizeof (DemandsAttentionWindow));
     if (!dw)
@@ -83,6 +91,27 @@ removeAttentionWindow (CompWindow *w)
 
 	ldw = dw;
     }
+}
+
+static void
+updateAttentionWindow (CompWindow *w)
+{
+    XWMHints *hints;
+    Bool     urgent = FALSE;
+
+    hints = XGetWMHints (w->screen->display->display, w->id);
+    if (hints)
+    {
+	if (hints->flags & XUrgencyHint)
+	    urgent = TRUE;
+
+	XFree (hints);
+    }
+
+    if (urgent || (w->state & CompWindowStateDemandsAttentionMask))
+	addAttentionWindow (w);
+    else
+	removeAttentionWindow (w);
 }
 
 static Bool
@@ -132,7 +161,7 @@ activateWin (CompDisplay     *d,
     return TRUE;
 }
 
-static void 
+static void
 fullscreenWindow (CompWindow *w,
 		  int        state)
 {
@@ -246,6 +275,32 @@ toggleSticky (CompDisplay     *d,
 }
 
 static void
+extraWMHandleEvent (CompDisplay *d,
+		    XEvent      *event)
+{
+    EXTRAWM_DISPLAY (d);
+
+    UNWRAP (ed, d, handleEvent);
+    (*d->handleEvent) (d, event);
+    WRAP (ed, d, handleEvent, extraWMHandleEvent);
+
+    switch (event->type) {
+    case PropertyNotify:
+	if (event->xproperty.atom == XA_WM_HINTS)
+	{
+	    CompWindow *w;
+
+	    w = findWindowAtDisplay (d, event->xproperty.window);
+	    if (w)
+		updateAttentionWindow (w);
+	}
+	break;
+    default:
+	break;
+    }
+}
+
+static void
 extraWMWindowStateChangeNotify (CompWindow *w,
 				unsigned int lastState)
 {
@@ -258,12 +313,7 @@ extraWMWindowStateChangeNotify (CompWindow *w,
     WRAP (es, s, windowStateChangeNotify, extraWMWindowStateChangeNotify);
 
     if ((w->state ^ lastState) & CompWindowStateDemandsAttentionMask)
-    {
-	if (w->state & CompWindowStateDemandsAttentionMask)
-	    addAttentionWindow (w);
-	else
-	    removeAttentionWindow (w);
-    }
+	updateAttentionWindow (w);
 }
 
 static Bool
@@ -309,6 +359,8 @@ extraWMInitDisplay (CompPlugin  *p,
     extrawmSetActivateInitiate (d, activateWin);
     extrawmSetActivateDemandsAttentionInitiate (d, activateDemandsAttention);
 
+    WRAP (ed, d, handleEvent, extraWMHandleEvent);
+
     d->base.privates[ExtraWMDisplayPrivateIndex].ptr = ed;
 
     return TRUE;
@@ -321,6 +373,8 @@ extraWMFiniDisplay (CompPlugin  *p,
     EXTRAWM_DISPLAY (d);
 
     freeScreenPrivateIndex (d, ed->screenPrivateIndex);
+
+    UNWRAP (ed, d, handleEvent);
 
     free (ed);
 }
