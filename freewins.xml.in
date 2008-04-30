@@ -41,16 +41,15 @@
 	    <option type="key" name="reset_key">
 			<_short>Reset</_short>
 			<_long>Reset Transformation</_long>
-			<default>&lt;Control&gt;&lt;Shift&gt;r
-			</default>
+			<default>&lt;Control&gt;&lt;Shift&gt;r</default>
 	    </option>
 	    <option type="key" name="toggle_axis_key">
 			<_short>Axis help toggle</_short>
-			<_long>Axis selection helper </_long>
-			<allowed key="true"/>
-			<default>&lt;Control&gt;&lt;Shift&gt;h
-			</default>
+			<_long>Axis selection helper</_long>
+			<default>&lt;Control&gt;&lt;Shift&gt;h</default>
 	    </option>
+        <subgroup>
+        <_short>Transformation Behaviour</_short>
         <option name="snap_mods" type="list">
           <_short>Snap Modifier</_short>
           <_long>Use this bindings to enable/disable snapping.</_long>
@@ -74,6 +73,7 @@
 			  <_name>Meta</_name>
 		  </desc>
         </option>
+        </subgroup>
         <subgroup>
         <_short>Rotation</_short>
           <option name="invert_mods" type="list">
@@ -175,13 +175,8 @@
 	<screen>
 	<group>
 	<_short>Free Transformation</_short>
-	    <option type="float" name="mouse_sensitivity">
-			<_short>Mouse sensitivity</_short>
-			<_long>How sensitive the mouse movement should be</_long>
-			<default>1.0</default>
-			<min>0.1</min>
-			<max>10.0</max>
-	    </option>
+    <subgroup>
+    <_short>Transformation Behaviour</_short>
 	    <option type="bool" name="snap">
 			    <_short>Snap by default</_short>
 			    <_long>Snap to common points by default</_long>
@@ -189,10 +184,18 @@
 	    </option>
         <option type="int" name="snap_threshold">
 			    <_short>Snap Threshold</_short>
-			    <_long>Snap to every one of these</_long>
+			    <_long>Snap to every one of these angles</_long>
 			    <min>1</min>
-			    <max>20</max>
+			    <max>100</max>
 	    </option>
+	    <option type="float" name="mouse_sensitivity">
+			<_short>Mouse sensitivity</_short>
+			<_long>How sensitive the mouse movement should be</_long>
+			<default>1.0</default>
+			<min>0.1</min>
+			<max>10.0</max>
+	    </option>
+    </subgroup>
 	    <subgroup>
 	    <_short>Scaling</_short>
 	        <option type="int" name="scale_mode">
