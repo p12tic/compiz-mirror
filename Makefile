@@ -18,6 +18,7 @@
 #
 ##
 
+
 # plugin.info file contents
 # 
 # PLUGIN = foo
