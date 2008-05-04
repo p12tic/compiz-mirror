@@ -832,8 +832,6 @@ cubeaddonPaintTransformedOutput (CompScreen              *s,
 	cas->deform = 0.0;
     }
 
-    cas->wasDeformed = (cas->deform > 0.0);
-
     if (cs->invert == 1 && cas->first && cubeaddonGetReflection (s))
     {
 	cas->first = FALSE;
@@ -1112,6 +1110,8 @@ cubeaddonDonePaintScreen (CompScreen * s)
     cas->first      = TRUE;
     cas->yTrans     = 0.0;
     cas->zTrans     = 0.0;
+
+    cas->wasDeformed = (cas->deform > 0.0);
 
     if (cas->deform)
     {
