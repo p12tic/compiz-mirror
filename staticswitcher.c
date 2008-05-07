@@ -473,6 +473,8 @@ switchShowPopup (void *closure)
 	XMapWindow (s->display->display, ss->popupWindow);
     }
 
+    damageScreen (s);
+
     ss->popupDelayHandle = 0;
 
     return FALSE;
@@ -1452,7 +1454,8 @@ switchPaintWindow (CompWindow		   *w,
 
 	glPopAttrib ();
     }
-    else if (ss->switching && (w->id != ss->selectedWindow))
+    else if (ss->switching && !ss->popupDelayHandle &&
+	     (w->id != ss->selectedWindow))
     {
 	WindowPaintAttrib sAttrib = *attrib;
 	GLuint            value;
