@@ -62,21 +62,16 @@ typedef struct _SwitchScreen {
     CompTimeoutHandle popupDelayHandle;
 
     Window selectedWindow;
-    Window zoomedWindow;
 
     unsigned int previewWidth;
     unsigned int previewHeight;
     unsigned int previewBorder;
     unsigned int xCount;
 
-    float zoom;
-
-    int grabIndex;
-
+    int  grabIndex;
     Bool switching;
 
-    int moreAdjust;
-
+    int     moreAdjust;
     GLfloat mVelocity;
 
     CompWindow **windows;
@@ -1625,15 +1620,14 @@ switchInitScreen (CompPlugin *p,
     ss->nWindows    = 0;
     ss->windowsSize = 0;
 
-    ss->pos = ss->move = 0;
+    ss->pos  = 0;
+    ss->move = 0;
 
     ss->switching = FALSE;
-
     ss->grabIndex = 0;
 
     ss->moreAdjust = 0;
-
-    ss->mVelocity = 0.0f;
+    ss->mVelocity  = 0.0f;
 
     ss->selection = CurrentViewport;
 
