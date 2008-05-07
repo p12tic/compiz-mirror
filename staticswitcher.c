@@ -255,7 +255,7 @@ switchUpdatePopupWindow (CompScreen *s,
 
     winWidth = winWidth * w + (winWidth + 1) * b;
     winHeight = winHeight * h + (winHeight + 1) * b;
-    ss->xCount = xCount;
+    ss->xCount = MIN (xCount, count);
 
     ss->previewWidth = w;
     ss->previewHeight = h;
@@ -984,6 +984,8 @@ adjustSwitchVelocity (CompScreen *s)
     dx = ss->move - ss->pos;
     if (abs (dx) > abs (dx + ss->nWindows))
 	dx += ss->nWindows;
+    if (abs (dx) > abs (dx - ss->nWindows))
+	dx -= ss->nWindows;
 
     adjust = dx * 0.15f;
     amount = fabs (dx) * 1.5f;
@@ -1029,6 +1031,9 @@ switchPreparePaintScreen (CompScreen *s,
 	    }
 
 	    ss->pos += ss->mVelocity * chunk;
+	    ss->pos = fmod (ss->pos, ss->nWindows);
+	    if (ss->pos < 0.0)
+		ss->pos += ss->nWindows;
 	}
     }
 
@@ -1482,14 +1487,15 @@ switchPaintWindow (CompWindow		   *w,
 	{
 	    switchPaintSelectionRect (ss, w->attrib.x, w->attrib.y, px, py,
 				      w->lastPaint.opacity);
-	    y = py + 1;
+	    py = fmod (py + 1, ceil (ss->nWindows / ss->xCount));
+	    y = py;
 	    if (ss->nWindows - (y * ss->xCount) < ss->xCount)
 		offX = (ss->xCount - ss->nWindows + (y * ss->xCount)) *
 		       (ss->previewWidth + ss->previewBorder) / 2;
 	    else
 		offX = 0;
 	    switchPaintSelectionRect (ss, w->attrib.x + offX, w->attrib.y,
-				      px - ss->xCount, py + 1,
+				      px - ss->xCount, py,
 				      w->lastPaint.opacity);
 	}
 	else
