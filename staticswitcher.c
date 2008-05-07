@@ -35,9 +35,6 @@
 #include <decoration.h>
 #include "staticswitcher_options.h"
 
-#define ZOOMED_WINDOW_MASK (1 << 0)
-#define NORMAL_WINDOW_MASK (1 << 1)
-
 static int SwitchDisplayPrivateIndex;
 
 typedef struct _SwitchDisplay {
@@ -77,14 +74,10 @@ typedef struct _SwitchScreen {
     int grabIndex;
 
     Bool switching;
-    Bool zooming;
-    int  zoomMask;
 
     int moreAdjust;
 
     GLfloat mVelocity;
-    GLfloat tVelocity;
-    GLfloat sVelocity;
 
     CompWindow **windows;
     int        windowsSize;
@@ -92,9 +85,6 @@ typedef struct _SwitchScreen {
 
     float pos;
     float move;
-
-    float translate;
-    float sTranslate;
 
     SwitchWindowSelection selection;
 
@@ -108,28 +98,6 @@ typedef struct _SwitchScreen {
 
 #define SWITCH_DISPLAY(d) PLUGIN_DISPLAY(d, Switch, s)
 #define SWITCH_SCREEN(s) PLUGIN_SCREEN(s, Switch, s)
-
-static void
-switchScreenOptionChanged (CompScreen                  *s,
-			   CompOption                  *opt,
-			   StaticswitcherScreenOptions num)
-{
-    if (num == StaticswitcherScreenOptionZoom)
-    {
-	SWITCH_SCREEN (s);
-
-	if (opt->value.f < 0.05f)
-	{
-	    ss->zooming = FALSE;
-	    ss->zoom    = 0.0f;
-	}
-	else
-	{
-	    ss->zooming = TRUE;
-	    ss->zoom    = opt->value.f / 30.0f;
-	}
-    }
-}
 
 static void
 setSelectedWindowHint (CompScreen *s)
@@ -410,9 +378,6 @@ switchToWindow (CompScreen *s,
 
 	ss->selectedWindow = w->id;
 
-	if (!ss->zoomedWindow)
-	    ss->zoomedWindow = ss->selectedWindow;
-
 	if (old != w->id)
 	{
 	    ss->move = nextIdx * (ss->previewWidth + ss->previewBorder);
@@ -598,8 +563,6 @@ switchInitiate (CompScreen            *s,
 	{
 	    switchCreateWindowList (s, count);
 
-	    ss->sTranslate = ss->zoom;
-
 	    if (ss->popupWindow && showPopup)
 	    {
 		unsigned int delay;
@@ -675,10 +638,7 @@ switchTerminate (CompDisplay     *d,
 	    ss->switching = FALSE;
 
 	    if (state & CompActionStateCancel)
-	    {
 		ss->selectedWindow = None;
-		ss->zoomedWindow   = None;
-	    }
 
 	    if (state && ss->selectedWindow)
 	    {
@@ -690,19 +650,9 @@ switchTerminate (CompDisplay     *d,
 	    removeScreenGrab (s, ss->grabIndex, 0);
 	    ss->grabIndex = 0;
 
-	    if (!ss->zooming)
-	    {
-		ss->selectedWindow = None;
-		ss->zoomedWindow   = None;
-
-		switchActivateEvent (s, FALSE);
-	    }
-	    else
-	    {
-		ss->moreAdjust = 1;
-	    }
-
 	    ss->selectedWindow = None;
+
+	    switchActivateEvent (s, FALSE);
 	    setSelectedWindowHint (s);
 
 	    damageScreen (s);
@@ -1045,57 +995,10 @@ adjustSwitchVelocity (CompScreen *s)
 
     ss->mVelocity = (amount * ss->mVelocity + adjust) / (amount + 1.0f);
 
-    if (ss->zooming)
+    if (fabs (dx) < 0.1f && fabs (ss->mVelocity) < 0.2f)
     {
-	float dt, ds;
-
-	if (ss->switching)
-	    dt = ss->zoom - ss->translate;
-	else
-	    dt = 0.0f - ss->translate;
-
-	adjust = dt * 0.15f;
-	amount = fabs (dt) * 1.5f;
-	if (amount < 0.2f)
-	    amount = 0.2f;
-	else if (amount > 2.0f)
-	    amount = 2.0f;
-
-	ss->tVelocity = (amount * ss->tVelocity + adjust) / (amount + 1.0f);
-
-	if (ss->selectedWindow == ss->zoomedWindow)
-	    ds = ss->zoom - ss->sTranslate;
-	else
-	    ds = 0.0f - ss->sTranslate;
-
-	adjust = ds * 0.5f;
-	amount = fabs (ds) * 5.0f;
-	if (amount < 1.0f)
-	    amount = 1.0f;
-	else if (amount > 6.0f)
-	    amount = 6.0f;
-
-	ss->sVelocity = (amount * ss->sVelocity + adjust) / (amount + 1.0f);
-
-	if (ss->selectedWindow == ss->zoomedWindow)
-	{
-	    if (fabs (dx) < 0.1f   && fabs (ss->mVelocity) < 0.2f   &&
-		fabs (dt) < 0.001f && fabs (ss->tVelocity) < 0.001f &&
-		fabs (ds) < 0.001f && fabs (ss->sVelocity) < 0.001f)
-	    {
-		ss->mVelocity = 0.0f;
-		ss->tVelocity = ss->sVelocity  = 0.0f;
-		return 0;
-	    }
-	}
-    }
-    else
-    {
-	if (fabs (dx) < 0.1f && fabs (ss->mVelocity) < 0.2f)
-	{
-	    ss->mVelocity = 0.0f;
-	    return 0;
-	}
+	ss->mVelocity = 0.0f;
+	return 0;
     }
 
     return 1;
@@ -1122,44 +1025,11 @@ switchPreparePaintScreen (CompScreen *s,
 	    ss->moreAdjust = adjustSwitchVelocity (s);
 	    if (!ss->moreAdjust)
 	    {
-		if (ss->zooming)
-		{
-		    if (ss->switching)
-		    {
-			ss->translate  = ss->zoom;
-			ss->sTranslate = ss->zoom;
-		    }
-		    else
-		    {
-			ss->translate  = 0.0f;
-			ss->sTranslate = ss->zoom;
-
-			ss->selectedWindow = None;
-			ss->zoomedWindow   = None;
-
-			if (ss->grabIndex)
-			{
-			    removeScreenGrab (s, ss->grabIndex, 0);
-			    ss->grabIndex = 0;
-			}
-
-			switchActivateEvent (s, FALSE);
-		    }
-		}
 		ss->pos = ss->move;
 		break;
 	    }
 
 	    ss->pos += ss->mVelocity * chunk;
-
-	    ss->translate  += ss->tVelocity * chunk;
-	    ss->sTranslate += ss->sVelocity * chunk;
-
-	    if (ss->selectedWindow != ss->zoomedWindow)
-	    {
-		if (ss->sTranslate < 0.01f)
-		    ss->zoomedWindow = ss->selectedWindow;
-	    }
 	}
     }
 
@@ -1180,25 +1050,12 @@ switchPaintOutput (CompScreen		   *s,
 
     SWITCH_SCREEN (s);
 
-    ss->zoomMask = ZOOMED_WINDOW_MASK | NORMAL_WINDOW_MASK;
-
-    if (ss->grabIndex || (ss->zooming && ss->translate > 0.001f))
+    if (ss->grabIndex)
     {
-	CompTransform sTransform = *transform;
 	CompWindow    *zoomed;
 	CompWindow    *switcher;
 	Window	      zoomedAbove = None;
 	Bool	      saveDestroyed = FALSE;
-
-	if (ss->zooming)
-	{
-	    mask &= ~PAINT_SCREEN_REGION_MASK;
-	    mask |= PAINT_SCREEN_TRANSFORMED_MASK | PAINT_SCREEN_CLEAR_MASK;
-
-	    matrixTranslate (&sTransform, 0.0f, 0.0f, -ss->translate);
-
-	    ss->zoomMask = NORMAL_WINDOW_MASK;
-	}
 
 	switcher = findWindowAtScreen (s, ss->popupWindow);
 	if (switcher)
@@ -1209,7 +1066,7 @@ switchPaintOutput (CompScreen		   *s,
 
 	if (staticswitcherGetBringToFront (s))
 	{
-	    zoomed = findWindowAtScreen (s, ss->zoomedWindow);
+	    zoomed = findWindowAtScreen (s, ss->selectedWindow);
 	    if (zoomed)
 	    {
 		CompWindow *w;
@@ -1227,27 +1084,9 @@ switchPaintOutput (CompScreen		   *s,
 	}
 
 	UNWRAP (ss, s, paintOutput);
-	status = (*s->paintOutput) (s, sAttrib, &sTransform,
+	status = (*s->paintOutput) (s, sAttrib, transform,
 				    region, output, mask);
 	WRAP (ss, s, paintOutput, switchPaintOutput);
-
-	if (ss->zooming)
-	{
-	    float zTranslate;
-
-	    mask &= ~PAINT_SCREEN_CLEAR_MASK;
-	    mask |= PAINT_SCREEN_NO_BACKGROUND_MASK;
-
-	    ss->zoomMask = ZOOMED_WINDOW_MASK;
-
-	    zTranslate = MIN (ss->sTranslate, ss->translate);
-	    matrixTranslate (&sTransform, 0.0f, 0.0f, zTranslate);
-
-	    UNWRAP (ss, s, paintOutput);
-	    status = (*s->paintOutput) (s, sAttrib, &sTransform, region,
-					output, mask);
-	    WRAP (ss, s, paintOutput, switchPaintOutput);
-	}
 
 	if (zoomed)
 	{
@@ -1257,7 +1096,7 @@ switchPaintOutput (CompScreen		   *s,
 
 	if (switcher)
 	{
-	    sTransform = *transform;
+	    CompTransform sTransform = *transform;
 
 	    switcher->destroyed = saveDestroyed;
 
@@ -1293,20 +1132,13 @@ switchDonePaintScreen (CompScreen *s)
 {
     SWITCH_SCREEN (s);
 
-    if ((ss->grabIndex || ss->zooming) && ss->moreAdjust)
+    if (ss->grabIndex && ss->moreAdjust)
     {
-	if (ss->zooming)
-	{
-	    damageScreen (s);
-	}
-	else
-	{
-	    CompWindow *w;
+	CompWindow *w;
 
-	    w = findWindowAtScreen (s, ss->popupWindow);
-	    if (w)
-		addWindowDamage (w);
-	}
+	w = findWindowAtScreen (s, ss->popupWindow);
+	if (w)
+	    addWindowDamage (w);
     }
 
     UNWRAP (ss, s, donePaintScreen);
@@ -1554,7 +1386,6 @@ switchPaintWindow (CompWindow		   *w,
 		   unsigned int		   mask)
 {
     CompScreen *s = w->screen;
-    int	       zoomType = NORMAL_WINDOW_MASK;
     Bool       status;
 
     SWITCH_SCREEN (s);
@@ -1626,21 +1457,7 @@ switchPaintWindow (CompWindow		   *w,
 
 	glPopAttrib ();
     }
-    else if (w->id == ss->selectedWindow)
-    {
-	if (staticswitcherGetBringToFront (s) &&
-	    ss->selectedWindow == ss->zoomedWindow)
-	    zoomType = ZOOMED_WINDOW_MASK;
-
-	if (!(ss->zoomMask & zoomType))
-	    return (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK) ?
-		FALSE : TRUE;
-
-	UNWRAP (ss, s, paintWindow);
-	status = (*s->paintWindow) (w, attrib, transform, region, mask);
-	WRAP (ss, s, paintWindow, switchPaintWindow);
-    }
-    else if (ss->switching)
+    else if (ss->switching && (w->id != ss->selectedWindow))
     {
 	WindowPaintAttrib sAttrib = *attrib;
 	GLuint            value;
@@ -1660,23 +1477,12 @@ switchPaintWindow (CompWindow		   *w,
 		sAttrib.opacity = sAttrib.opacity * value / 100;
 	}
 
-	if (staticswitcherGetBringToFront (s) && w->id == ss->zoomedWindow)
-	    zoomType = ZOOMED_WINDOW_MASK;
-
-	if (!(ss->zoomMask & zoomType))
-	    return (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK) ?
-		FALSE : TRUE;
-
 	UNWRAP (ss, s, paintWindow);
 	status = (*s->paintWindow) (w, &sAttrib, transform, region, mask);
 	WRAP (ss, s, paintWindow, switchPaintWindow);
     }
     else
     {
-	if (!(ss->zoomMask & zoomType))
-	    return (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK) ?
-		FALSE : TRUE;
-
 	UNWRAP (ss, s, paintWindow);
 	status = (*s->paintWindow) (w, attrib, transform, region, mask);
 	WRAP (ss, s, paintWindow, switchPaintWindow);
@@ -1814,7 +1620,6 @@ switchInitScreen (CompPlugin *p,
     ss->popupDelayHandle = 0;
 
     ss->selectedWindow = None;
-    ss->zoomedWindow   = None;
 
     ss->windows     = 0;
     ss->nWindows    = 0;
@@ -1826,19 +1631,9 @@ switchInitScreen (CompPlugin *p,
 
     ss->grabIndex = 0;
 
-    ss->zoom    = staticswitcherGetZoom (s) / 30.0f;
-    ss->zooming = staticswitcherGetZoom (s) > 0.05f;
-
-    ss->zoomMask = ~0;
-
     ss->moreAdjust = 0;
 
     ss->mVelocity = 0.0f;
-    ss->tVelocity = 0.0f;
-    ss->sVelocity = 0.0f;
-
-    ss->translate  = 0.0f;
-    ss->sTranslate = 0.0f;
 
     ss->selection = CurrentViewport;
 
@@ -1846,8 +1641,6 @@ switchInitScreen (CompPlugin *p,
     ss->fgColor[1] = 0;
     ss->fgColor[2] = 0;
     ss->fgColor[3] = 0xffff;
-
-    staticswitcherSetZoomNotify (s, switchScreenOptionChanged);
 
     WRAP (ss, s, preparePaintScreen, switchPreparePaintScreen);
     WRAP (ss, s, donePaintScreen, switchDonePaintScreen);

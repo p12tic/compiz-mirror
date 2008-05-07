@@ -146,14 +146,6 @@
 		    <min>0</min>
 		    <max>100</max>
 		</option>
-		<option name="zoom" type="float">
-		    <_short>Zoom</_short>
-		    <_long>Distance desktop should be zoom out while switching windows</_long>
-		    <default>1</default>
-		    <min>0</min>
-		    <max>5</max>
-		    <precision>0.1</precision>
-		</option>
 		<option name="icon" type="bool">
 		    <_short>Icon</_short>
 		    <_long>Show icon next to thumbnail</_long>
