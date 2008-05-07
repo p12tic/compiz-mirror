@@ -284,8 +284,8 @@ switchUpdateWindowList (CompScreen *s,
 {
     SWITCH_SCREEN (s);
 
-    ss->pos  = 0;
-    ss->move = 0;
+    ss->pos  = 0.0;
+    ss->move = 0.0;
 
     ss->selectedWindow = ss->windows[0]->id;
 
@@ -375,7 +375,7 @@ switchToWindow (CompScreen *s,
 
 	if (old != w->id)
 	{
-	    ss->move = nextIdx * (ss->previewWidth + ss->previewBorder);
+	    ss->move = nextIdx;
 
 	    ss->moreAdjust = 1;
 	}
@@ -861,7 +861,7 @@ switchWindowRemove (CompDisplay *d,
 	for (i = 0; i < ss->nWindows; i++)
 	{
 	    ss->selectedWindow = ss->windows[i]->id;
-	    ss->move = ss->pos = i * (ss->previewWidth + ss->previewBorder);
+	    ss->move = ss->pos = i;
 
 	    if (ss->selectedWindow == selected)
 		break;
@@ -982,6 +982,8 @@ adjustSwitchVelocity (CompScreen *s)
     SWITCH_SCREEN (s);
 
     dx = ss->move - ss->pos;
+    if (abs (dx) > abs (dx + ss->nWindows))
+	dx += ss->nWindows;
 
     adjust = dx * 0.15f;
     amount = fabs (dx) * 1.5f;
@@ -992,7 +994,7 @@ adjustSwitchVelocity (CompScreen *s)
 
     ss->mVelocity = (amount * ss->mVelocity + adjust) / (amount + 1.0f);
 
-    if (fabs (dx) < 0.1f && fabs (ss->mVelocity) < 0.2f)
+    if (fabs (dx) < 0.001f && fabs (ss->mVelocity) < 0.001f)
     {
 	ss->mVelocity = 0.0f;
 	return 0;
@@ -1344,30 +1346,53 @@ static void
 switchPaintSelectionRect (SwitchScreen *ss,
 			  int          x,
 			  int          y,
+			  float        dx,
+			  float        dy,
 			  unsigned int opacity)
 {
     int            i;
-    unsigned short color[4];
+    float          color[4], op;
     unsigned int   w, h;
 
     w = ss->previewWidth + ss->previewBorder;
     h = ss->previewHeight + ss->previewBorder;
 
     glEnable (GL_BLEND);
+
+    if (dx > ss->xCount - 1)
+	op = 1.0 - MIN (1.0, dx - (ss->xCount - 1));
+    else if (dx + (dy * ss->xCount) > ss->nWindows - 1)
+	op = 1.0 - MIN (1.0, dx - (ss->nWindows - 1 - (dy * ss->xCount)));
+    else if (dx < 0.0)
+	op = 1.0 + MAX (-1.0, dx);
+    else
+	op = 1.0;
+
     for (i = 0; i < 4; i++)
-	color[i] = (unsigned int)ss->fgColor[i] * opacity / 0xffff;
+	color[i] = (float)ss->fgColor[i] * opacity * op / 0xffffffff;
 
-    glColor4usv (color);
+    glColor4fv (color);
     glPushMatrix ();
-    glTranslatef (x + ss->previewBorder / 2,
-		  y + ss->previewBorder / 2, 0.0f);
-    glLineWidth (3.0);
+    glTranslatef (x + ss->previewBorder / 2 + (dx * w),
+		  y + ss->previewBorder / 2 + (dy * h), 0.0f);
 
-    glBegin (GL_LINE_LOOP);
-    glVertex2i (0, 0);
-    glVertex2i (w, 0);
+    glBegin (GL_QUADS);
+    glVertex2i (-1, -1);
+    glVertex2i (-1, 1);
+    glVertex2i (w + 2, 1);
+    glVertex2i (w + 2, -1);
+    glVertex2i (-1, h);
+    glVertex2i (-1, h + 2);
+    glVertex2i (w + 1, h + 2);
+    glVertex2i (w + 1, h);
+    glVertex2i (-1, 1);
+    glVertex2i (-1, h);
+    glVertex2i (1, h);
+    glVertex2i (1, 1);
+    glVertex2i (w, 1);
     glVertex2i (w, h);
-    glVertex2i (0, h);
+    glVertex2i (w + 2, h);
+    glVertex2i (w + 2, 1);
     glEnd ();
 
     glPopMatrix ();
@@ -1390,7 +1415,8 @@ switchPaintWindow (CompWindow		   *w,
     if (w->id == ss->popupWindow)
     {
 	GLenum         filter;
-	int            x, y, i, width;
+	int            x, y, offX, i;
+	float          px, py, pos;
 
 	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
 	    return FALSE;
@@ -1417,41 +1443,61 @@ switchPaintWindow (CompWindow		   *w,
 	    x = i % ss->xCount;
 	    x = x * ss->previewWidth + (x + 1) * ss->previewBorder;
 	    y = (i / ss->xCount);
+	    if (ss->nWindows - (y * ss->xCount) < ss->xCount)
+		offX = (ss->xCount - ss->nWindows + (y * ss->xCount)) *
+		       (ss->previewWidth + ss->previewBorder) / 2;
+	    else
+		offX = 0;
 	    y = y * ss->previewHeight + (y + 1) * ss->previewBorder;
 
 	    switchPaintThumb (ss->windows[i], &w->lastPaint, transform,
-			      mask, x + w->attrib.x, y + w->attrib.y);
+			      mask, offX + x + w->attrib.x, y + w->attrib.y);
 	}
 
 	s->display->textureFilter = filter;
 
-	width = w->attrib.width - ss->previewBorder;
+	pos = fmod (ss->pos, ss->nWindows);
+	px  = fmod (pos, ss->xCount);
+	py  = floor (pos / ss->xCount);
 
-	x = ss->pos;
-	y = ((int) ss->pos / width);
-
-	x -= y * ss->xCount * (ss->previewWidth + ss->previewBorder);
-	y = y * (ss->previewHeight + ss->previewBorder);
-
-	if ((x + ss->previewWidth) > width)
+	y = py;
+	if (ss->nWindows - (y * ss->xCount) < ss->xCount)
+	    offX = (ss->xCount - ss->nWindows + (y * ss->xCount)) *
+		   (ss->previewWidth + ss->previewBorder) / 2;
+	else
+	    offX = 0;
+	
+	if (pos > ss->nWindows - 1)
 	{
-	    x += ss->previewBorder;
-
-	    switchPaintSelectionRect (ss, x + w->attrib.x, y + w->attrib.y,
+	    px = fmod (pos - ss->nWindows, ss->xCount);
+	    switchPaintSelectionRect (ss, w->attrib.x, w->attrib.y, px, 0.0,
 				      w->lastPaint.opacity);
 
-	    x = x - w->attrib.width;
-	    y = y + ss->previewHeight + ss->previewBorder;
+	    px = fmod (pos, ss->xCount);
 
-	    switchPaintSelectionRect (ss, x + w->attrib.x, y + w->attrib.y,
+	    switchPaintSelectionRect (ss, w->attrib.x + offX, w->attrib.y,
+				      px, py, w->lastPaint.opacity);
+	}
+	if (px > ss->xCount - 1)
+	{
+	    switchPaintSelectionRect (ss, w->attrib.x, w->attrib.y, px, py,
+				      w->lastPaint.opacity);
+	    y = py + 1;
+	    if (ss->nWindows - (y * ss->xCount) < ss->xCount)
+		offX = (ss->xCount - ss->nWindows + (y * ss->xCount)) *
+		       (ss->previewWidth + ss->previewBorder) / 2;
+	    else
+		offX = 0;
+	    switchPaintSelectionRect (ss, w->attrib.x + offX, w->attrib.y,
+				      px - ss->xCount, py + 1,
 				      w->lastPaint.opacity);
 	}
 	else
 	{
-	    switchPaintSelectionRect (ss, x + w->attrib.x, y + w->attrib.y,
-				      w->lastPaint.opacity);
+	    switchPaintSelectionRect (ss, w->attrib.x + offX, w->attrib.y,
+				      px, py, w->lastPaint.opacity);
 	}
-
+	glDisable (GL_SCISSOR_TEST);
 	glPopAttrib ();
     }
     else if (ss->switching && !ss->popupDelayHandle &&
