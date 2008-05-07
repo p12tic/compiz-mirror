@@ -81,7 +81,7 @@
 		<option name="speed" type="float">
 		    <_short>Speed</_short>
 		    <_long>Switcher speed</_long>
-		    <default>1.5</default>
+		    <default>4</default>
 		    <min>0.1</min>
 		    <max>50</max>
 		    <precision>0.1</precision>
@@ -128,21 +128,21 @@
 		<option name="saturation" type="int">
 		    <_short>Saturation</_short>
 		    <_long>Amount of saturation in percent</_long>
-		    <default>100</default>
+		    <default>50</default>
 		    <min>0</min>
 		    <max>100</max>
 		</option>
 		<option name="brightness" type="int">
 		    <_short>Brightness</_short>
 		    <_long>Amount of brightness in percent</_long>
-		    <default>65</default>
+		    <default>50</default>
 		    <min>0</min>
 		    <max>100</max>
 		</option>
 		<option name="opacity" type="int">
 		    <_short>Opacity</_short>
 		    <_long>Amount of opacity in percent</_long>
-		    <default>40</default>
+		    <default>100</default>
 		    <min>0</min>
 		    <max>100</max>
 		</option>
