@@ -239,7 +239,8 @@ switchUpdatePopupWindow (CompScreen *s,
     winHeight = s->outputDev[s->currentOutputDev].height * 2 / 3;
 
     aspect = (float) winWidth / winHeight;
-    yCount = round (sqrt (dCount / aspect));
+    /* round is available in C99 only, so use a replacement for that */
+    yCount = floor (sqrt (dCount / aspect) + 0.5f);
     xCount = ceil (dCount / yCount);
 
     while ((w + b) * xCount > winWidth ||
