@@ -1079,7 +1079,7 @@ switchPaintOutput (CompScreen		   *s,
 	    switcher->destroyed = TRUE;
 	}
 
-	if (staticswitcherGetBringToFront (s))
+	if (staticswitcherGetBringToFront (s) && !ss->popupDelayHandle)
 	{
 	    zoomed = findWindowAtScreen (s, ss->selectedWindow);
 	    if (zoomed)
