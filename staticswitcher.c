@@ -226,6 +226,8 @@ switchUpdatePopupWindow (CompScreen *s,
 {
     unsigned int winWidth, winHeight;
     unsigned int xCount, yCount;
+    float        aspect;
+    double       dCount = count;
     unsigned int w = PREVIEWSIZE, h = PREVIEWSIZE, b = BORDER;
     XSizeHints xsh;
     int x, y;
@@ -236,18 +238,17 @@ switchUpdatePopupWindow (CompScreen *s,
     winWidth  = s->outputDev[s->currentOutputDev].width * 2 / 3;
     winHeight = s->outputDev[s->currentOutputDev].height * 2 / 3;
 
-    xCount = winWidth / (w + b);
-    yCount = winHeight / (h + b);
+    aspect = (float) winWidth / winHeight;
+    yCount = round (sqrt (dCount / aspect));
+    xCount = ceil (dCount / yCount);
 
-    while (xCount * yCount < count)
+    while ((w + b) * xCount > winWidth ||
+	   (h + b) * yCount > winHeight)
     {
 	/* shrink by 10% until all windows fit */
 	w = w * 9 / 10;
 	h = h * 9 / 10;
 	b = b * 9 / 10;
-
-	xCount = winWidth / (w + b);
-	yCount = winHeight / (h + b);
     }
 
     winWidth = MIN (count, xCount);
