@@ -2,6 +2,11 @@
     <plugin name="staticswitcher" useBcop="true">
 	<_short>Static Application Switcher</_short>
 	<_long>Static Application Switcher</_long>
+	<deps>
+	    <relation type="after">
+		<plugin>fade</plugin>
+	    </relation>
+	</deps>
 	<display>
 	    <group>
 		<_short>Bindings</_short>
