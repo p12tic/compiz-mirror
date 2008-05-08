@@ -1471,7 +1471,7 @@ switchPaintWindow (CompWindow		   *w,
 		   (ss->previewWidth + ss->previewBorder) / 2;
 	else
 	    offX = 0;
-	
+
 	if (pos > ss->nWindows - 1)
 	{
 	    px = fmod (pos - ss->nWindows, ss->xCount);
@@ -1487,7 +1487,7 @@ switchPaintWindow (CompWindow		   *w,
 	{
 	    switchPaintSelectionRect (ss, w->attrib.x, w->attrib.y, px, py,
 				      w->lastPaint.opacity);
-	    py = fmod (py + 1, ceil (ss->nWindows / ss->xCount));
+	    py = fmod (py + 1, ceil ((double) ss->nWindows / ss->xCount));
 	    y = py;
 	    if (ss->nWindows - (y * ss->xCount) < ss->xCount)
 		offX = (ss->xCount - ss->nWindows + (y * ss->xCount)) *
