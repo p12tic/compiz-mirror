@@ -1405,6 +1405,21 @@ switchPaintSelectionRect (SwitchScreen *ss,
     glDisable (GL_BLEND);
 }
 
+static inline int
+switchGetRowXOffset (CompScreen   *s,
+		     SwitchScreen *ss,
+		     int          y)
+{
+    if (staticswitcherGetRowAlign (s) == RowAlignLeft)
+	return 0;
+
+    if (ss->nWindows - (y * ss->xCount) >= ss->xCount)
+	return 0;
+
+    return (ss->xCount - ss->nWindows + (y * ss->xCount)) *
+	   (ss->previewWidth + ss->previewBorder) / 2;
+}
+
 static Bool
 switchPaintWindow (CompWindow		   *w,
 		   const WindowPaintAttrib *attrib,
@@ -1446,13 +1461,12 @@ switchPaintWindow (CompWindow		   *w,
 	for (i = 0; i < ss->nWindows; i++)
 	{
 	    x = i % ss->xCount;
+	    y = i / ss->xCount;
+
+	    if (x == 0)
+		offX = switchGetRowXOffset (s, ss, y);
+
 	    x = x * ss->previewWidth + (x + 1) * ss->previewBorder;
-	    y = (i / ss->xCount);
-	    if (ss->nWindows - (y * ss->xCount) < ss->xCount)
-		offX = (ss->xCount - ss->nWindows + (y * ss->xCount)) *
-		       (ss->previewWidth + ss->previewBorder) / 2;
-	    else
-		offX = 0;
 	    y = y * ss->previewHeight + (y + 1) * ss->previewBorder;
 
 	    switchPaintThumb (ss->windows[i], &w->lastPaint, transform,
@@ -1465,12 +1479,7 @@ switchPaintWindow (CompWindow		   *w,
 	px  = fmod (pos, ss->xCount);
 	py  = floor (pos / ss->xCount);
 
-	y = py;
-	if (ss->nWindows - (y * ss->xCount) < ss->xCount)
-	    offX = (ss->xCount - ss->nWindows + (y * ss->xCount)) *
-		   (ss->previewWidth + ss->previewBorder) / 2;
-	else
-	    offX = 0;
+	offX = switchGetRowXOffset (s, ss, py);
 
 	if (pos > ss->nWindows - 1)
 	{
@@ -1479,7 +1488,6 @@ switchPaintWindow (CompWindow		   *w,
 				      w->lastPaint.opacity);
 
 	    px = fmod (pos, ss->xCount);
-
 	    switchPaintSelectionRect (ss, w->attrib.x + offX, w->attrib.y,
 				      px, py, w->lastPaint.opacity);
 	}
@@ -1487,13 +1495,10 @@ switchPaintWindow (CompWindow		   *w,
 	{
 	    switchPaintSelectionRect (ss, w->attrib.x, w->attrib.y, px, py,
 				      w->lastPaint.opacity);
+
 	    py = fmod (py + 1, ceil ((double) ss->nWindows / ss->xCount));
-	    y = py;
-	    if (ss->nWindows - (y * ss->xCount) < ss->xCount)
-		offX = (ss->xCount - ss->nWindows + (y * ss->xCount)) *
-		       (ss->previewWidth + ss->previewBorder) / 2;
-	    else
-		offX = 0;
+	    offX = switchGetRowXOffset (s, ss, py);
+
 	    switchPaintSelectionRect (ss, w->attrib.x + offX, w->attrib.y,
 				      px - ss->xCount, py,
 				      w->lastPaint.opacity);
