@@ -700,12 +700,10 @@ switchInitiateCommon (CompDisplay           *d,
 	    if (state & CompActionStateInitKey)
 		action->state |= CompActionStateTermKey;
 
-	    if (state & CompActionStateInitButton)
-		action->state |= CompActionStateTermButton;
-
 	    if (state & CompActionStateInitEdge)
 		action->state |= CompActionStateTermEdge;
-
+	    else if (state & CompActionStateInitButton)
+		action->state |= CompActionStateTermButton;
 	}
 
 	switchToWindow (s, nextWindow);
