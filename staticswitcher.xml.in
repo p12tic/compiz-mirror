@@ -6,6 +6,9 @@
 	    <relation type="after">
 		<plugin>fade</plugin>
 	    </relation>
+	    <relation type="before">
+		<plugin>bs</plugin>
+	    </relation>
 	</deps>
 	<category>Window Management</category>
 	<display>
