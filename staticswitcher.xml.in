@@ -50,6 +50,22 @@
 		    <_long>Popup switcher if not visible and select previous window out of all windows</_long>
 		    <default>&lt;Shift&gt;&lt;Control&gt;&lt;Alt&gt;Tab</default>
 		</option>
+		<option name="next_group_button" type="button">
+		    <_short>Next window (Group)</_short>
+		    <_long>Popup switcher if not visible and select next window of the current application.</_long>
+		</option>
+		<option name="next_group_key" type="key">
+		    <_short>Next window (Group)</_short>
+		    <_long>Popup switcher if not visible and select next window of the current application.</_long>
+		</option>
+		<option name="prev_group_button" type="button">
+		    <_short>Prev window (Group)</_short>
+		    <_long>Popup switcher if not visible and select previous window of the current application.</_long>
+		</option>
+		<option name="prev_group_key" type="key">
+		    <_short>Prev window (Group)</_short>
+		    <_long>Popup switcher if not visible and select previous window of the current application.</_long>
+		</option>
 		<option name="next_no_popup_button" type="button">
 		    <_short>Next window (No popup)</_short>
 		    <_long>Select next window without showing the popup window.</_long>

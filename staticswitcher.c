@@ -48,6 +48,7 @@ typedef struct _SwitchDisplay {
 typedef enum {
     CurrentViewport = 0,
     AllViewports,
+    Group,
     Panels
 } SwitchWindowSelection;
 
@@ -62,6 +63,7 @@ typedef struct _SwitchScreen {
     CompTimeoutHandle popupDelayHandle;
 
     Window selectedWindow;
+    Window clientLeader;
 
     unsigned int previewWidth;
     unsigned int previewHeight;
@@ -160,6 +162,12 @@ isSwitchWin (CompWindow *w)
 	    if (!(*w->screen->focusWindow) (w))
 		return FALSE;
 	}
+    }
+    else if (ss->selection == Group)
+    {
+	if (ss->clientLeader != w->clientLeader &&
+	    ss->clientLeader != w->id)
+	    return FALSE;
     }
 
     if (!matchEval (staticswitcherGetWindowMatch (s), w))
@@ -695,6 +703,20 @@ switchInitiateCommon (CompDisplay           *d,
 
 	if (!ss->switching)
 	{
+	    if (selection == Group)
+	    {
+    		CompWindow *w;
+		Window     xid;
+
+		xid = getIntOptionNamed (option, nOption, "window", 0);
+    		w   = findWindowAtDisplay (d, xid);
+    		if (w)
+    		    ss->clientLeader = (w->clientLeader) ?
+			               w->clientLeader : w->id;
+		else
+		    ss->clientLeader = None;
+	    }
+
 	    switchInitiate (s, selection, showPopup);
 
 	    if (state & CompActionStateInitKey)
@@ -754,6 +776,28 @@ switchPrevAll (CompDisplay     *d,
 {
     return switchInitiateCommon (d, action, state, option, nOption,
 				 AllViewports, TRUE, FALSE);
+}
+
+static Bool
+switchNextGroup (CompDisplay     *d,
+		 CompAction      *action,
+		 CompActionState state,
+		 CompOption      *option,
+		 int	         nOption)
+{
+    return switchInitiateCommon (d, action, state, option, nOption,
+				 Group, TRUE, TRUE);
+}
+
+static Bool
+switchPrevGroup (CompDisplay     *d,
+		 CompAction      *action,
+		 CompActionState state,
+		 CompOption      *option,
+		 int	         nOption)
+{
+    return switchInitiateCommon (d, action, state, option, nOption,
+				 Group, TRUE, FALSE);
 }
 
 static Bool
@@ -1626,6 +1670,14 @@ switchInitDisplay (CompPlugin  *p,
     staticswitcherSetPrevAllButtonTerminate (d, switchTerminate);
     staticswitcherSetPrevAllKeyInitiate (d, switchPrevAll);
     staticswitcherSetPrevAllKeyTerminate (d, switchTerminate);
+    staticswitcherSetNextGroupButtonInitiate (d, switchNextGroup);
+    staticswitcherSetNextGroupButtonTerminate (d, switchTerminate);
+    staticswitcherSetNextGroupKeyInitiate (d, switchNextGroup);
+    staticswitcherSetNextGroupKeyTerminate (d, switchTerminate);
+    staticswitcherSetPrevGroupButtonInitiate (d, switchPrevGroup);
+    staticswitcherSetPrevGroupButtonTerminate (d, switchTerminate);
+    staticswitcherSetPrevGroupKeyInitiate (d, switchPrevGroup);
+    staticswitcherSetPrevGroupKeyTerminate (d, switchTerminate);
     staticswitcherSetNextNoPopupButtonInitiate (d, switchNextNoPopup);
     staticswitcherSetNextNoPopupButtonTerminate (d, switchTerminate);
     staticswitcherSetNextNoPopupKeyInitiate (d, switchNextNoPopup);
@@ -1684,6 +1736,7 @@ switchInitScreen (CompPlugin *p,
     ss->popupDelayHandle = 0;
 
     ss->selectedWindow = None;
+    ss->clientLeader   = None;
 
     ss->windows     = 0;
     ss->nWindows    = 0;
