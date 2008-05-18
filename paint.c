@@ -69,8 +69,53 @@ FWPreparePaintScreen (CompScreen *s,
 
         if (fww->animate.steps < 0.005)
             fww->animate.steps = 0.005;
-    }
+        
+    /* Animation. We calculate how much increment
+     * a window must rotate / scale per paint by
+     * using the set destination attributes minus
+     * the old attributes divided by the time
+     * remaining.
+     */
 
+        fww->transform.angX += (float) fww->animate.steps * (fww->animate.destAngX - fww->transform.angX);
+        fww->transform.angY += (float) fww->animate.steps * (fww->animate.destAngY - fww->transform.angY);
+        fww->transform.angZ += (float) fww->animate.steps * (fww->animate.destAngZ - fww->transform.angZ);
+        
+        fww->transform.scaleX += (float) fww->animate.steps * (fww->animate.destScaleX - fww->transform.scaleX);        
+        fww->transform.scaleY += (float) fww->animate.steps * (fww->animate.destScaleY - fww->transform.scaleY);
+                
+ 
+        if (((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
+              fww->transform.angX <= fww->animate.destAngX + 0.05 ) &&
+             (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
+              fww->transform.angY <= fww->animate.destAngY + 0.05 ) &&
+             (fww->transform.angZ >= fww->animate.destAngZ - 0.05 &&
+              fww->transform.angZ <= fww->animate.destAngZ + 0.05 ) &&
+             (fww->transform.scaleX >= fww->animate.destScaleX - 0.00005 &&
+              fww->transform.scaleX <= fww->animate.destScaleX + 0.00005 ) &&
+             (fww->transform.scaleY >= fww->animate.destScaleY - 0.00005 &&
+              fww->transform.scaleY <= fww->animate.destScaleY + 0.00005 )))
+        {
+            fww->resetting = FALSE;
+
+            fww->transform.angX = fww->animate.destAngX;
+            fww->transform.angY = fww->animate.destAngY;
+            fww->transform.angZ = fww->animate.destAngZ;
+            fww->transform.scaleX = fww->animate.destScaleX;
+            fww->transform.scaleY = fww->animate.destScaleY;
+
+            fww->transform.unsnapAngX = fww->animate.destAngX;
+            fww->transform.unsnapAngY = fww->animate.destAngY;
+            fww->transform.unsnapAngZ = fww->animate.destAngZ;
+            fww->transform.unsnapScaleX = fww->animate.destScaleX;
+            fww->transform.unsnapScaleY = fww->animate.destScaleX;
+            
+            fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
+        }
+        else
+            damageScreen (s); /*FIXME: Find the window rect and damage that */
+    }
+    
     UNWRAP (fws, s, preparePaintScreen);
     (*s->preparePaintScreen) (s, ms);
     WRAP (fws, s, preparePaintScreen, FWPreparePaintScreen);
@@ -94,6 +139,8 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0 || fww->oldWinX != WIN_REAL_X (w) ||
         fww->oldWinY != WIN_REAL_Y (w)) && !(w->type == CompWindowTypeDesktopMask))
     {
+    
+            addWindowDamage (w);
 
         fww->oldWinX = WIN_REAL_X (w);
         fww->oldWinY = WIN_REAL_Y (w);
@@ -175,53 +222,6 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         FWCalculateInputRect (w);
 
     }
-
-    /* Animation. We calculate how much increment
-     * a window must rotate / scale per paint by
-     * using the set destination attributes minus
-     * the old attributes divided by the time
-     * remaining.
-     */
-     
-     /* FIXME: This belongs in preparePaintScreen not paintWindow */
-
-        fww->transform.angX += (float) fww->animate.steps * (fww->animate.destAngX - fww->transform.angX);
-        fww->transform.angY += (float) fww->animate.steps * (fww->animate.destAngY - fww->transform.angY);
-        fww->transform.angZ += (float) fww->animate.steps * (fww->animate.destAngZ - fww->transform.angZ);
-        
-        fww->transform.scaleX += (float) fww->animate.steps * (fww->animate.destScaleX - fww->transform.scaleX);        
-        fww->transform.scaleY += (float) fww->animate.steps * (fww->animate.destScaleY - fww->transform.scaleY);
-                
-        addWindowDamage (w);
-        
-        if (((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
-              fww->transform.angX <= fww->animate.destAngX + 0.05 ) &&
-             (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
-              fww->transform.angY <= fww->animate.destAngY + 0.05 ) &&
-             (fww->transform.angZ >= fww->animate.destAngZ - 0.05 &&
-              fww->transform.angZ <= fww->animate.destAngZ + 0.05 ) &&
-             (fww->transform.scaleX >= fww->animate.destScaleX - 0.00005 &&
-              fww->transform.scaleX <= fww->animate.destScaleX + 0.00005 ) &&
-             (fww->transform.scaleY >= fww->animate.destScaleY - 0.00005 &&
-              fww->transform.scaleY <= fww->animate.destScaleY + 0.00005 )))
-        {
-            fww->resetting = FALSE;
-
-            fww->transform.angX = fww->animate.destAngX;
-            fww->transform.angY = fww->animate.destAngY;
-            fww->transform.angZ = fww->animate.destAngZ;
-            fww->transform.scaleX = fww->animate.destScaleX;
-            fww->transform.scaleY = fww->animate.destScaleY;
-
-            fww->transform.unsnapAngX = fww->animate.destAngX;
-            fww->transform.unsnapAngY = fww->animate.destAngY;
-            fww->transform.unsnapAngZ = fww->animate.destAngZ;
-            fww->transform.unsnapScaleX = fww->animate.destScaleX;
-            fww->transform.unsnapScaleY = fww->animate.destScaleX;
-            
-            fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
-        }
-    
 
     // Check if there are rotated windows
     if(fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 || fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0){
