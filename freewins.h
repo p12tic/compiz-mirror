@@ -220,7 +220,6 @@ typedef struct _FWAnimationInfo
     float destScaleY;
 
     // For animation
-    float aTimeRemaining; // Actual time remaining (is decremented)
     float cTimeRemaining; // Constant time remaining (is referenced and not decremented)
     float steps;
 } FWAnimationInfo;

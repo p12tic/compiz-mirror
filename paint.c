@@ -195,11 +195,9 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         fww->transform.scaleX += (float) fww->animate.steps * (fww->animate.destScaleX - fww->transform.scaleX);        
         fww->transform.scaleY += (float) fww->animate.steps * (fww->animate.destScaleY - fww->transform.scaleY);
                 
-        fww->animate.aTimeRemaining--;
         addWindowDamage (w);
         
-        if (fww->animate.aTimeRemaining <= 0 &&
-             ((fww->transform.angX >= fww->animate.destAngX - 0.5 &&
+        if (((fww->transform.angX >= fww->animate.destAngX - 0.5 &&
               fww->transform.angX <= fww->animate.destAngX + 0.5 ) &&
              (fww->transform.angY >= fww->animate.destAngY - 0.5 &&
               fww->transform.angY <= fww->animate.destAngY + 0.5 ) &&
@@ -225,7 +223,6 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             fww->transform.unsnapScaleY = fww->animate.destScaleX;
             
             fww->doAnimate = FALSE;
-            fww->animate.aTimeRemaining = freewinsGetResetTime (w->screen);
             fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
             /*if (FWCanShape (w))
                 FWShapeInput (w);*/
