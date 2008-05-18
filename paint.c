@@ -221,7 +221,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             
             fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
         }
-    }
+    
 
     // Check if there are rotated windows
     if(fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 || fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0){

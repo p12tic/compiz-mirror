@@ -198,6 +198,18 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->transform.unsnapScaleX = 1.0;
     fww->transform.unsnapScaleY = 1.0;
     
+    fww->animate.destAngX = 0.0f;
+    fww->animate.destAngY = 0.0f;
+    fww->animate.destAngZ = 0.0f;
+    fww->animate.destScaleX = 1.0f;
+    fww->animate.destScaleY = 1.0f;
+    
+    fww->animate.oldAngX = 0.0f;
+    fww->animate.oldAngY = 0.0f;
+    fww->animate.oldAngZ = 0.0f;
+    fww->animate.oldScaleX = 1.0f;
+    fww->animate.oldScaleY = 01.0f;
+    
     fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
 
     w->base.privates[fws->windowPrivateIndex].ptr = fww;

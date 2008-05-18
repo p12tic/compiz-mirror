@@ -170,6 +170,12 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 
 	float midX = WIN_REAL_X(fwd->grabWindow) + WIN_REAL_W(fwd->grabWindow)/2.0;
 	float midY = WIN_REAL_Y(fwd->grabWindow) + WIN_REAL_H(fwd->grabWindow)/2.0;
+	
+	/* Save the current angles so we can work with them */
+    
+    float angX = fww->animate.destAngX;
+    float angY = fww->animate.destAngY;
+    float angZ = fww->animate.destAngZ;
 
   /* Check for Y axis clicking (Top / Bottom) */
 	if (pointerY > midY)
@@ -256,60 +262,60 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
             case CornerTopRight:
 
                 if ((x) < oldX)
-                fww->transform.unsnapAngZ -= dx * zX;
+                angZ -= dx * zX;
                 else if ((x) > oldX)
-                fww->transform.unsnapAngZ += dx * zX;
+                angZ += dx * zX;
 
 
                 if ((y) < oldY)
-                fww->transform.unsnapAngZ -= dy * zY;
+                angZ -= dy * zY;
                 else if ((y) > oldY)
-                fww->transform.unsnapAngZ += dy * zY;
+                angZ += dy * zY;
 
                 break;
 
             case CornerTopLeft:
 
                 if ((x) < oldX)
-                fww->transform.unsnapAngZ -= dx * zX;
+                angZ -= dx * zX;
                 else if ((x) > oldX)
-                fww->transform.unsnapAngZ += dx * zX;
+                angZ += dx * zX;
 
 
                 if ((y) < oldY)
-                fww->transform.unsnapAngZ += dy * zY;
+                angZ += dy * zY;
                 else if ((y) > oldY)
-                fww->transform.unsnapAngZ -= dy * zY;
+                angZ -= dy * zY;
 
                 break;
 
             case CornerBottomLeft:
 
                 if ((x) < oldX)
-                fww->transform.unsnapAngZ += dx * zX;
+                angZ += dx * zX;
                 else if ((x) > oldX)
-                fww->transform.unsnapAngZ -= dx * zX;
+                angZ -= dx * zX;
 
 
                 if ((y) < oldY)
-                fww->transform.unsnapAngZ += dy * zY;
+                angZ += dy * zY;
                 else if ((y) > oldY)
-                fww->transform.unsnapAngZ -= dy * zY;
+                angZ -= dy * zY;
 
                 break;
 
             case CornerBottomRight:
 
                 if ((x) < oldX)
-                fww->transform.unsnapAngZ += dx * zX;
+                angZ += dx * zX;
                 else if ((x) > oldX)
-                fww->transform.unsnapAngZ -= dx * zX;
+                angZ -= dx * zX;
 
 
                 if ((y) < oldY)
-                fww->transform.unsnapAngZ -= dy * zY;
+                angZ -= dy * zY;
                 else if ((y) > oldY)
-                fww->transform.unsnapAngZ += dy * zY;
+                angZ += dy * zY;
                 break;
         }
     }
@@ -323,9 +329,15 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
         }
     
     
-    fww->transform.unsnapAngX -= dy * (1 - percentFromXAxis);
-    fww->transform.unsnapAngY += dx * (1 - percentFromYAxis);
+    angX -= dy * (1 - percentFromXAxis);
+    angY += dx * (1 - percentFromYAxis);
     }
+    
+    /* Restore angles */
+    
+    fww->animate.destAngX = angX;
+    fww->animate.destAngY = angY;
+    fww->animate.destAngZ = angZ;
 
     FWAdjustIPW (w);
 
@@ -339,6 +351,10 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
 
     x -= 100.0;
     y -= 100.0;
+    
+   
+    //float scaleX = fww->animate.destScaleX;
+    //float scaleY = fww->transform.destsScaleY    
 
     FWCalculateInputRect (w);
 
@@ -593,11 +609,13 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		        FWHandleScaleMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);		      
 		    }
 
+/* if snapping then
             fww->transform.angX = fww->transform.unsnapAngX;
             fww->transform.angY = fww->transform.unsnapAngY;
             fww->transform.angZ = fww->transform.unsnapAngZ;
             fww->transform.scaleX = fww->transform.unsnapScaleX;
             fww->transform.scaleY = fww->transform.unsnapScaleY;
+end if */
 
             fwd->oldX += (ev->xmotion.x_root - fwd->oldX);
 		    fwd->oldY += (ev->xmotion.y_root - fwd->oldY);
