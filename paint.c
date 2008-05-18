@@ -200,10 +200,10 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
               fww->transform.angY <= fww->animate.destAngY + 0.05 ) &&
              (fww->transform.angZ >= fww->animate.destAngZ - 0.05 &&
               fww->transform.angZ <= fww->animate.destAngZ + 0.05 ) &&
-             (fww->transform.scaleX >= fww->animate.destScaleX - 0.05 &&
-              fww->transform.scaleX <= fww->animate.destScaleX + 0.05 ) &&
-             (fww->transform.scaleY >= fww->animate.destScaleY - 0.05 &&
-              fww->transform.scaleY <= fww->animate.destScaleY + 0.05 )))
+             (fww->transform.scaleX >= fww->animate.destScaleX - 0.00005 &&
+              fww->transform.scaleX <= fww->animate.destScaleX + 0.00005 ) &&
+             (fww->transform.scaleY >= fww->animate.destScaleY - 0.00005 &&
+              fww->transform.scaleY <= fww->animate.destScaleY + 0.00005 )))
         {
             fww->resetting = FALSE;
 
@@ -211,7 +211,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             fww->transform.angY = fww->animate.destAngY;
             fww->transform.angZ = fww->animate.destAngZ;
             fww->transform.scaleX = fww->animate.destScaleX;
-            fww->transform.scaleY = fww->animate.destScaleX;
+            fww->transform.scaleY = fww->animate.destScaleY;
 
             fww->transform.unsnapAngX = fww->animate.destAngX;
             fww->transform.unsnapAngY = fww->animate.destAngY;

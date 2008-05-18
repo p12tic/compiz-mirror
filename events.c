@@ -374,9 +374,18 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
     x -= 100.0;
     y -= 100.0;
     
-   
-    //float scaleX = fww->animate.destScaleX;
-    //float scaleY = fww->transform.destsScaleY    
+    float scaleX, scaleY;
+    
+    if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
+    {
+        scaleX = fww->transform.unsnapScaleX;
+        scaleY = fww->transform.unsnapScaleY;
+    }
+    else
+    {
+        scaleX = fww->animate.destScaleX;
+        scaleY = fww->animate.destScaleY;
+    }
 
     FWCalculateInputRect (w);
 
@@ -386,29 +395,29 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
         case CornerTopLeft:
         
         if ((x) < fwd->oldX)
-        fww->transform.unsnapScaleX -= dx;
+        scaleX -= dx;
         else if ((x) > fwd->oldX)
-        fww->transform.unsnapScaleX -= dx;
+        scaleX -= dx;
 
         if ((y) < fwd->oldY)
-        fww->transform.unsnapScaleY -= dy;
+        scaleY -= dy;
         else if ((y) > fwd->oldY)
-        fww->transform.unsnapScaleY -= dy;
+        scaleY -= dy;
         break;            
             
         case CornerTopRight:
 
         if ((x) < fwd->oldX)
-        fww->transform.unsnapScaleX += dx;
+        scaleX += dx;
         else if ((y) > fwd->oldX)
-        fww->transform.unsnapScaleX += dx;
+        scaleX += dx;
 
 
         // Check Y Direction
         if ((y) < fwd->oldY)
-        fww->transform.unsnapScaleY -= dy;
+        scaleY -= dy;
         else if ((y) > fwd->oldY)
-        fww->transform.unsnapScaleY -= dy;
+        scaleY -= dy;
 
         break;
 
@@ -416,15 +425,15 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
 
         // Check X Direction
         if ((x) < fwd->oldX)
-        fww->transform.unsnapScaleX -= dx;
+        scaleX -= dx;
         else if ((y) > fwd->oldX)
-        fww->transform.unsnapScaleX -= dx;
+        scaleX -= dx;
 
         // Check Y Direction
         if ((y) < fwd->oldY)
-        fww->transform.unsnapScaleY += dy;
+        scaleY += dy;
         else if ((y) > fwd->oldY)
-        fww->transform.unsnapScaleY += dy;
+        scaleY += dy;
 
         break;
 
@@ -432,16 +441,27 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
 
         // Check X Direction
         if ((x) < fwd->oldX)
-        fww->transform.unsnapScaleX += dx;
+        scaleX += dx;
         else if ((x) > fwd->oldX)
-        fww->transform.unsnapScaleX += dx;
+        scaleX += dx;
 
         // Check Y Direction
         if ((y) < fwd->oldY)
-        fww->transform.unsnapScaleY += dy;
+        scaleY += dy;
         else if ((y) > fwd->oldY)
-        fww->transform.unsnapScaleY += dy;
+        scaleY += dy;
         break;
+    }
+    
+    if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
+    {
+       fww->transform.unsnapScaleX = scaleX;
+        fww->transform.unsnapScaleY = scaleY;
+    }
+    else
+    {
+        fww->animate.destScaleX = scaleX;
+        fww->animate.destScaleY = scaleY;
     }
 
     FWAdjustIPW (w);
