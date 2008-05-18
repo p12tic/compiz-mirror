@@ -65,13 +65,10 @@ FWPreparePaintScreen (CompScreen *s,
     for (w = s->windows; w; w = w->next)
     {
         FREEWINS_WINDOW (w);
-        if (fww->doAnimate)
-        {
-	        fww->animate.steps = (float)ms / (float)fww->animate.cTimeRemaining;
+        fww->animate.steps = (float)ms / (float)fww->animate.cTimeRemaining;
 
-            if (fww->animate.steps < 0.005)
-	            fww->animate.steps = 0.005;
-        }
+        if (fww->animate.steps < 0.005)
+            fww->animate.steps = 0.005;
     }
 
     UNWRAP (fws, s, preparePaintScreen);
@@ -185,9 +182,9 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
      * the old attributes divided by the time
      * remaining.
      */
+     
+     /* FIXME: This belongs in preparePaintScreen not paintWindow */
 
-    if (fww->doAnimate)
-    {
         fww->transform.angX += (float) fww->animate.steps * (fww->animate.destAngX - fww->transform.angX);
         fww->transform.angY += (float) fww->animate.steps * (fww->animate.destAngY - fww->transform.angY);
         fww->transform.angZ += (float) fww->animate.steps * (fww->animate.destAngZ - fww->transform.angZ);
@@ -197,16 +194,16 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
                 
         addWindowDamage (w);
         
-        if (((fww->transform.angX >= fww->animate.destAngX - 0.5 &&
-              fww->transform.angX <= fww->animate.destAngX + 0.5 ) &&
-             (fww->transform.angY >= fww->animate.destAngY - 0.5 &&
-              fww->transform.angY <= fww->animate.destAngY + 0.5 ) &&
-             (fww->transform.angZ >= fww->animate.destAngZ - 0.5 &&
-              fww->transform.angZ <= fww->animate.destAngZ + 0.5 ) &&
-             (fww->transform.scaleX >= fww->animate.destScaleX - 0.5 &&
-              fww->transform.scaleX <= fww->animate.destScaleX + 0.5 ) &&
-             (fww->transform.scaleY >= fww->animate.destScaleY - 0.5 &&
-              fww->transform.scaleY <= fww->animate.destScaleY + 0.5 )))
+        if (((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
+              fww->transform.angX <= fww->animate.destAngX + 0.05 ) &&
+             (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
+              fww->transform.angY <= fww->animate.destAngY + 0.05 ) &&
+             (fww->transform.angZ >= fww->animate.destAngZ - 0.05 &&
+              fww->transform.angZ <= fww->animate.destAngZ + 0.05 ) &&
+             (fww->transform.scaleX >= fww->animate.destScaleX - 0.05 &&
+              fww->transform.scaleX <= fww->animate.destScaleX + 0.05 ) &&
+             (fww->transform.scaleY >= fww->animate.destScaleY - 0.05 &&
+              fww->transform.scaleY <= fww->animate.destScaleY + 0.05 )))
         {
             fww->resetting = FALSE;
 
@@ -222,10 +219,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
             fww->transform.unsnapScaleX = fww->animate.destScaleX;
             fww->transform.unsnapScaleY = fww->animate.destScaleX;
             
-            fww->doAnimate = FALSE;
             fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
-            /*if (FWCanShape (w))
-                FWShapeInput (w);*/
         }
     }
 
