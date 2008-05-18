@@ -71,13 +71,14 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     root = getIntOptionNamed (option, nOption, "root", 0);
     s = findScreenAtDisplay (d, root);
 
-    if (s)
+    if (s && w)
     {
 
     FREEWINS_SCREEN (s);
 
     for (info = fws->transformedWindows; info; info = info->next)
     {
+        if (info->ipw)
         if (w->id == info->ipw)
         /* The window we just grabbed was actually
          * an IPW, get the real window instead

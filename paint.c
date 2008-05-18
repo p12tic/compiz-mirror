@@ -136,17 +136,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
     if((fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 ||
         fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0 || fww->oldWinX != WIN_REAL_X (w) ||
-        fww->oldWinY != WIN_REAL_Y (w)) && !(w->type == CompWindowTypeDesktopMask) &&
-        !(((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
-              fww->transform.angX <= fww->animate.destAngX + 0.05 ) &&
-             (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
-              fww->transform.angY <= fww->animate.destAngY + 0.05 ) &&
-             (fww->transform.angZ >= fww->animate.destAngZ - 0.05 &&
-              fww->transform.angZ <= fww->animate.destAngZ + 0.05 ) &&
-             (fww->transform.scaleX >= fww->animate.destScaleX - 0.00005 &&
-              fww->transform.scaleX <= fww->animate.destScaleX + 0.00005 ) &&
-             (fww->transform.scaleY >= fww->animate.destScaleY - 0.00005 &&
-              fww->transform.scaleY <= fww->animate.destScaleY + 0.00005 ))))
+        fww->oldWinY != WIN_REAL_Y (w)) && !(w->type == CompWindowTypeDesktopMask))
     {
     
         addWindowDamage (w);
