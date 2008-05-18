@@ -110,8 +110,6 @@ FWPreparePaintScreen (CompScreen *s,
             fww->transform.unsnapAngZ = fww->animate.destAngZ;
             fww->transform.unsnapScaleX = fww->animate.destScaleX;
             fww->transform.unsnapScaleY = fww->animate.destScaleX;
-            
-            fww->animate.cTimeRemaining = freewinsGetResetTime (w->screen);
         }
         else
             damageScreen (s); /*FIXME: Find the window rect and damage that */
