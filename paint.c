@@ -65,7 +65,8 @@ FWPreparePaintScreen (CompScreen *s,
     for (w = s->windows; w; w = w->next)
     {
         FREEWINS_WINDOW (w);
-        fww->animate.steps = (float)ms / (float)fww->animate.cTimeRemaining;
+        float speed = freewinsGetSpeed (s);
+        fww->animate.steps = ((float)ms / ((20.1 - speed) * 100));
 
         if (fww->animate.steps < 0.005)
             fww->animate.steps = 0.005;
@@ -76,13 +77,13 @@ FWPreparePaintScreen (CompScreen *s,
      * the old attributes divided by the time
      * remaining.
      */
-
-        fww->transform.angX += (float) fww->animate.steps * (fww->animate.destAngX - fww->transform.angX);
-        fww->transform.angY += (float) fww->animate.steps * (fww->animate.destAngY - fww->transform.angY);
-        fww->transform.angZ += (float) fww->animate.steps * (fww->animate.destAngZ - fww->transform.angZ);
+     
+        fww->transform.angX += (float) fww->animate.steps * (fww->animate.destAngX - fww->transform.angX) * speed;
+        fww->transform.angY += (float) fww->animate.steps * (fww->animate.destAngY - fww->transform.angY) * speed;
+        fww->transform.angZ += (float) fww->animate.steps * (fww->animate.destAngZ - fww->transform.angZ) * speed;
         
-        fww->transform.scaleX += (float) fww->animate.steps * (fww->animate.destScaleX - fww->transform.scaleX);        
-        fww->transform.scaleY += (float) fww->animate.steps * (fww->animate.destScaleY - fww->transform.scaleY);
+        fww->transform.scaleX += (float) fww->animate.steps * (fww->animate.destScaleX - fww->transform.scaleX) * speed;        
+        fww->transform.scaleY += (float) fww->animate.steps * (fww->animate.destScaleY - fww->transform.scaleY) * speed;
                 
  
         if (((fww->transform.angX >= fww->animate.destAngX - 0.05 &&

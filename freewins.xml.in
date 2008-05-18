@@ -287,6 +287,16 @@
 			    <default>False</default>
 	        </option>
         </subgroup>
+        <subgroup>
+            <_short>Transformation Behaviour</_short>
+            <option type="float" name="speed">
+                <_short>Speed of window rotation</_short>
+                <_long>How fast the window should rotate</_long>
+                <default>1.0</default>
+                <min>0.1</min>
+                <max>15.0</max>
+            </option>
+        </subgroup>
     </group>
     <group>
     <_short>Manual Transformation</_short>
