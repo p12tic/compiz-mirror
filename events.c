@@ -171,11 +171,23 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
 	float midX = WIN_REAL_X(fwd->grabWindow) + WIN_REAL_W(fwd->grabWindow)/2.0;
 	float midY = WIN_REAL_Y(fwd->grabWindow) + WIN_REAL_H(fwd->grabWindow)/2.0;
 	
+	float angX;
+	float angY;
+	float angZ;
+	
 	/* Save the current angles so we can work with them */
-    
-    float angX = fww->animate.destAngX;
-    float angY = fww->animate.destAngY;
-    float angZ = fww->animate.destAngZ;
+    if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
+    {
+         angX = fww->transform.unsnapAngX;
+         angY = fww->transform.unsnapAngY;
+         angZ = fww->transform.unsnapAngZ;
+    }
+    else
+    {
+         angX = fww->animate.destAngX;
+         angY = fww->animate.destAngY;
+         angZ = fww->animate.destAngZ;
+    }
 
   /* Check for Y axis clicking (Top / Bottom) */
 	if (pointerY > midY)
@@ -335,9 +347,19 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     
     /* Restore angles */
     
-    fww->animate.destAngX = angX;
-    fww->animate.destAngY = angY;
-    fww->animate.destAngZ = angZ;
+    if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
+    {
+         fww->transform.unsnapAngX = angX;
+         fww->transform.unsnapAngY = angY;
+         fww->transform.unsnapAngZ = angZ;
+    }
+    else
+    {
+         fww->animate.destAngX = angX;
+         fww->animate.destAngY = angY;
+         fww->animate.destAngZ = angZ;
+    }
+
 
     FWAdjustIPW (w);
 
@@ -609,14 +631,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		        FWHandleScaleMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);		      
 		    }
 
-/* if snapping then
-            fww->transform.angX = fww->transform.unsnapAngX;
-            fww->transform.angY = fww->transform.unsnapAngY;
-            fww->transform.angZ = fww->transform.unsnapAngZ;
-            fww->transform.scaleX = fww->transform.unsnapScaleX;
-            fww->transform.scaleY = fww->transform.unsnapScaleY;
-end if */
-
             fwd->oldX += (ev->xmotion.x_root - fwd->oldX);
 		    fwd->oldY += (ev->xmotion.y_root - fwd->oldY);
 
@@ -637,10 +651,10 @@ end if */
             /* Change scales for maintaining aspect ratio */
             if (freewinsGetScaleUniform (fwd->grabWindow->screen))
             {
-                float tempscaleX = fww->transform.scaleX;
-                float tempscaleY = fww->transform.scaleY;
-                fww->transform.scaleX = (tempscaleX + tempscaleY) / 2;
-                fww->transform.scaleY = (tempscaleX + tempscaleY) / 2;
+                float tempscaleX = fww->animate.destScaleX;
+                float tempscaleY = fww->animate.destScaleY;
+                fww->animate.destScaleX = (tempscaleX + tempscaleY) / 2;
+                fww->animate.destScaleY = (tempscaleX + tempscaleY) / 2;
                 fww->transform.unsnapScaleX = (tempscaleX + tempscaleY) / 2;
                 fww->transform.unsnapScaleY = (tempscaleX + tempscaleY) / 2;
             }
@@ -649,11 +663,11 @@ end if */
 	        if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
 	        {
 	            int snapFactor = freewinsGetSnapThreshold (fwd->grabWindow->screen);
-                fww->transform.angX = ((int) (fww->transform.unsnapAngX) / snapFactor) * snapFactor;
-                fww->transform.angY = ((int) (fww->transform.unsnapAngY) / snapFactor) * snapFactor;
-                fww->transform.angZ = ((int) (fww->transform.unsnapAngZ) / snapFactor) * snapFactor;
-                fww->transform.scaleX = ((float) ( (int) (fww->transform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
-                fww->transform.scaleY = ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
+                fww->animate.destAngX = ((int) (fww->transform.unsnapAngX) / snapFactor) * snapFactor;
+                fww->animate.destAngY = ((int) (fww->transform.unsnapAngY) / snapFactor) * snapFactor;
+                fww->animate.destAngZ = ((int) (fww->transform.unsnapAngZ) / snapFactor) * snapFactor;
+                //fww->animate.destScaleX = ((float) ( (int) (fww->transform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
+                //fww->animate.destScaleY = ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
             }
 	
 	        if(dx != 0.0 || dy != 0.0)
