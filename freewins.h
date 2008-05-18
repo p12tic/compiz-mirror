@@ -481,40 +481,8 @@ Bool toggleFWAxis (CompDisplay *d,
 
 /* event.c */
 
-void FWHandleEvent (CompDisplay *d,
+ void FWHandleEvent (CompDisplay *d,
                    XEvent *ev);
-
-void FWHandleEnterNotify (CompWindow *w,
-                         XEvent *xev);
-
-void FWHandleLeaveNotify (CompWindow *w,
-                         XEvent *xev);
-
-void FWHandleScaleMotionEvent (CompWindow *w,
-                              float dx,
-                              float dy,
-                              int x,
-                              int y);
-
-void FWHandleRotateMotionEvent (CompWindow *w,
-                               float dx,
-                               float dy,
-                               int x,
-                               int y);
-
-void FWHandleIPWResizeMotionEvent (CompWindow *w,
-                                  unsigned int x,
-                                  unsigned int y);
-
-void FWHandleIPWMoveMotionEvent (CompWindow *w,
-                                unsigned int x,
-                                unsigned int y);
-
-void FWHandleIPWMoveInitiate (CompWindow *w);
-
-void FWHandleIPWResizeInitiate (CompWindow *w);
-
-void FWHandleButtonReleaseEvent (CompWindow *w);
 
 /* input.c */
 
@@ -525,24 +493,10 @@ void FWHandleButtonReleaseEvent (CompWindow *w);
 
 Bool FWHandleWindowInputInfo (CompWindow *w);
 
-void FWAdjustIPWStacking (CompScreen *s);
-
-void FWCreateIPW (CompWindow *w);
-
 void FWAdjustIPW (CompWindow *w);
 
-void FWRemoveWindowFromList (FWWindowInputInfo *info);
+void FWAdjustIPWStacking (CompScreen *s);
 
-void FWAddWindowToList (FWWindowInputInfo *info);
-
-void FWShapeInput (CompWindow *w);
-
-void FWUnshapeInput (CompWindow *w);
-
-void FWSaveInputShape (CompWindow *w,
-                      XRectangle **retRects,
-                      int        *retCount,
-                      int        *retOrdering);
 /* util.c */
 
 CompWindow * FWGetRealWindow (CompWindow *w);

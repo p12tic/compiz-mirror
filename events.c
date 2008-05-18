@@ -52,7 +52,7 @@
 
 /* ------ Event Handlers ------------------------------------------------*/
 
-void FWHandleIPWResizeInitiate (CompWindow *w)
+static void FWHandleIPWResizeInitiate (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
@@ -74,7 +74,7 @@ void FWHandleIPWResizeInitiate (CompWindow *w)
         }
 }
 
-void FWHandleIPWMoveInitiate (CompWindow *w)
+static void FWHandleIPWMoveInitiate (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
@@ -96,7 +96,7 @@ void FWHandleIPWMoveInitiate (CompWindow *w)
     fwd->grabWindow = w;
 }
 
-void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
+static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
 {
     FREEWINS_SCREEN (w->screen);
 
@@ -115,7 +115,7 @@ void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
     FWAdjustIPW (w);
 }
 
-void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
+static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
 {
     FREEWINS_WINDOW (w);
 
@@ -157,7 +157,7 @@ void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigned int y
 
 
 /* Handle Rotation */
-void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
+static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 {
     FREEWINS_WINDOW (w);
     FREEWINS_DISPLAY (w->screen->display);
@@ -332,7 +332,7 @@ void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 }
 
 /* Handle Scaling */
-void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
+static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 {
     FREEWINS_WINDOW (w);
     FREEWINS_DISPLAY (w->screen->display);
@@ -410,7 +410,7 @@ void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, int y)
 
 }
 
-void FWHandleButtonReleaseEvent (CompWindow *w)
+static void FWHandleButtonReleaseEvent (CompWindow *w)
 {
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
@@ -426,7 +426,7 @@ void FWHandleButtonReleaseEvent (CompWindow *w)
     }
 }
 
-void
+static void
 FWHandleEnterNotify (CompWindow *w,
                      XEvent *xev)
 {
@@ -443,7 +443,7 @@ FWHandleEnterNotify (CompWindow *w,
     }
 }
 
-void
+static void
 FWHandleLeaveNotify (CompWindow *w,
                      XEvent *xev)
 {

@@ -51,7 +51,7 @@
 
 /* ------ Input Prevention -------------------------------------------*/
 
-void
+static void
 FWSaveInputShape (CompWindow *w,
 		     XRectangle **retRects,
 		     int        *retCount,
@@ -79,7 +79,7 @@ FWSaveInputShape (CompWindow *w,
     *retOrdering = ordering;
 }
 
-void
+static void
 FWUnshapeInput (CompWindow *w)
 {
     Display *dpy = w->screen->display->display;
@@ -117,7 +117,7 @@ FWUnshapeInput (CompWindow *w)
 
 /* Input Shaper. This no longer adjusts the shape of the window
    but instead shapes it to 0 as the IPW deals with the input.  */
-void FWShapeInput (CompWindow *w)
+static void FWShapeInput (CompWindow *w)
 {
     CompWindow *fw;
     Display    *dpy = w->screen->display->display;
@@ -155,7 +155,7 @@ void FWShapeInput (CompWindow *w)
 }
 
 /* Add the input info to the list of input info */
-void
+static void
 FWAddWindowToList (FWWindowInputInfo *info)
 {
     CompScreen        *s = info->w->screen;
@@ -174,7 +174,7 @@ FWAddWindowToList (FWWindowInputInfo *info)
 }
 
 /* Remove the input info from the list of input info */
-void
+static void
 FWRemoveWindowFromList (FWWindowInputInfo *info)
 {
     CompScreen        *s = info->w->screen;
@@ -233,7 +233,7 @@ FWAdjustIPW (CompWindow *w)
 }
 
 /* Create an input prevention window */
-void
+static void
 FWCreateIPW (CompWindow *w)
 {
     Window               ipw;
