@@ -98,26 +98,6 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     if(useW){
 	FREEWINS_WINDOW(useW);
 
-    switch (freewinsGetRotationAxis (w->screen))
-    {
-        case RotationAxisAlwaysCentre:
-        default:
-            FWCalculateInputOrigin(w, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
-                                      WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
-            FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
-            break;
-        case RotationAxisClickPoint:            
-            FWCalculateInputOrigin(w, fwd->click_root_x, fwd->click_root_y);
-            FWCalculateOutputOrigin(w, fwd->click_root_x, fwd->click_root_y);
-            break;
-        case RotationAxisOppositeToClick:            
-            FWCalculateInputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
-                                      w->attrib.y + w->height - fwd->click_root_y);
-            FWCalculateOutputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
-                                      w->attrib.y + w->height - fwd->click_root_y);
-            break;
-    }
-	
 	fww->allowRotation = TRUE;
 	fww->allowScaling = FALSE;
 	
