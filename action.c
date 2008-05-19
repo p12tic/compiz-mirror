@@ -181,7 +181,7 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
     fwd->click_root_x = pointerX;
     fwd->click_root_y = pointerY;
 
-    if (s)
+    if (s && w && useW)
     {
 
 	FREEWINS_SCREEN(s);
@@ -298,7 +298,7 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
     tW = findWindowAtDisplay (d, xid); \
     w = tW; \
     s = findScreenAtDisplay (d, getIntOptionNamed (option, nOption, "root", 0)); \
-    if (s) \
+    if (s && w && tW) \
     { \
 	FREEWINS_SCREEN(s); \
     for (info = fws->transformedWindows; info; info = info->next) \
