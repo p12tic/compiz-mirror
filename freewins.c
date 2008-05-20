@@ -315,7 +315,9 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
 
     /* BCOP Action initiation */
     freewinsSetInitiateRotationButtonInitiate(d, initiateFWRotate);
+    freewinsSetInitiateRotationButtonTerminate(d, terminateFWRotate);
     freewinsSetInitiateScaleButtonInitiate(d, initiateFWScale);
+    freewinsSetInitiateScaleButtonTerminate(d, terminateFWScale);
     freewinsSetResetButtonInitiate(d, resetFWRotation);
     freewinsSetResetKeyInitiate(d, resetFWRotation);
     freewinsSetToggleAxisKeyInitiate(d, toggleFWAxis);

@@ -735,30 +735,14 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
     {
         if (fwd->grabWindow)
         {
-        FREEWINS_WINDOW (fwd->grabWindow);
         if (fwd->grab == grabMove || fwd->grab == grabResize)
+        {
             FWHandleButtonReleaseEvent (fwd->grabWindow);
-
-	    if((fwd->grab == grabScale) || (fwd->grab == grabRotate)){
-        CompScreen *s;
-	    if (FWCanShape (fwd->grabWindow))
-	        if (FWHandleWindowInputInfo (fwd->grabWindow))
-	            FWAdjustIPW (fwd->grabWindow);
-		for(s = d->screens; s; s = s->next){
-		    FREEWINS_SCREEN(s);
-
-		    if(fws->grabIndex){
-			removeScreenGrab(s, fws->grabIndex, 0);
-			fws->grabIndex = 0;
-		    }
-		}
-
-        fwd->grab = grabNone;
-        fwd->lastGrabWindow = fwd->grabWindow;
-		fwd->grabWindow = 0;
-        fww->transformed = TRUE;
-	    }
+            fwd->grab = grabNone;
+            fwd->lastGrabWindow = fwd->grabWindow;
+		    fwd->grabWindow = 0;
         }
+	    }
 	    break;
     }
 

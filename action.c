@@ -47,6 +47,8 @@
  *    - 'Rotate' Button
  */
 
+/* TODO: Finish porting stuff to actions */
+
 #include "freewins.h"
 
 
@@ -153,7 +155,52 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 
 	}
 	
+	if (state & CompActionStateInitButton)
+    action->state |= CompActionStateTermButton;
+
+	if (state & CompActionStateInitKey)
+	    action->state |= CompActionStateTermKey;
+	
     return TRUE;
+}
+
+
+Bool
+terminateFWRotate (CompDisplay     *d,
+	       CompAction      *action,
+	       CompActionState state,
+	       CompOption      *option,
+	       int             nOption)
+{
+
+    FREEWINS_DISPLAY (d);
+
+    CompScreen *s;
+
+    for (s = d->screens; s; s = s->next)
+    {
+	FREEWINS_SCREEN (s);
+
+     
+        if (fwd->grabWindow && fws->grabIndex)
+        if((fwd->grab == grabRotate))
+        {
+	    if (FWCanShape (fwd->grabWindow))
+	        if (FWHandleWindowInputInfo (fwd->grabWindow))
+	            FWAdjustIPW (fwd->grabWindow);
+
+    	removeScreenGrab(s, fws->grabIndex, 0);
+		fws->grabIndex = 0;
+		fwd->grabWindow = NULL;
+		fwd->grab = grabNone;
+		
+	    }
+	}
+    
+
+    action->state &= ~ (CompActionStateTermKey | CompActionStateTermButton);
+
+    return FALSE;
 }
 
 /* Initiate Scaling */
@@ -284,9 +331,52 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	dx = ABS(dx);
 	dy = ABS(dy);
 	
+	if (state & CompActionStateInitButton)
+        action->state |= CompActionStateTermButton;
+
+	if (state & CompActionStateInitKey)
+	    action->state |= CompActionStateTermKey;
+	
 	}
     
     return TRUE;
+}
+
+Bool
+terminateFWScale (CompDisplay     *d,
+	       CompAction      *action,
+	       CompActionState state,
+	       CompOption      *option,
+	       int             nOption)
+{
+
+    FREEWINS_DISPLAY (d);
+
+    CompScreen *s;
+
+    for (s = d->screens; s; s = s->next)
+    {
+	FREEWINS_SCREEN (s);
+
+      
+        if (fwd->grabWindow && fws->grabIndex)
+        if((fwd->grab == grabScale))
+        {
+	    if (FWCanShape (fwd->grabWindow))
+	        if (FWHandleWindowInputInfo (fwd->grabWindow))
+	            FWAdjustIPW (fwd->grabWindow);
+
+    	removeScreenGrab(s, fws->grabIndex, 0);
+		fws->grabIndex = 0;
+		fwd->grabWindow = NULL;
+		fwd->grab = grabNone;
+	    }
+	}
+    
+
+    action->state &= ~ (CompActionStateTermKey | CompActionStateTermButton);
+
+    return FALSE;
 }
 
 #define GET_WINDOW \

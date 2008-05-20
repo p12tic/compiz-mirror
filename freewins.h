@@ -392,6 +392,18 @@ Bool initiateFWScale (CompDisplay *d,
                       CompActionState state,
                       CompOption *option,
                       int nOption);
+                      
+Bool terminateFWRotate (CompDisplay *d,
+                      CompAction *action,
+                      CompActionState state,
+                      CompOption *option,
+                      int nOption);
+
+Bool terminateFWScale (CompDisplay *d,
+                      CompAction *action,
+                      CompActionState state,
+                      CompOption *option,
+                      int nOption);
 
 void FWSetPrepareRotation (CompWindow *w,
                               float dx,
