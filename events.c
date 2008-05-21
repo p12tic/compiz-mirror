@@ -701,7 +701,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	/* Button Press and Release */
 	case ButtonPress:
     {
-         fprintf(stderr, "ButtonPress\n");
         CompWindow *btnW;
         btnW = findWindowAtDisplay (d, ev->xbutton.subwindow);
 
@@ -718,9 +717,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
         if (btnW)
         {
-        
-        fprintf(stderr, "Decided that there was a 'real window'\n");
-        
             if (fwd->grab == grabNone)
                 switch (ev->xbutton.button)
                 {
