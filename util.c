@@ -540,6 +540,24 @@ FWGetRealWindow (CompWindow *w)
     return NULL;
 }
 
+void
+FWHandleSnap (CompWindow *w)
+{
+    FREEWINS_WINDOW (w);
+    FREEWINS_DISPLAY (w->screen->display);
+    
+    /* Handle Snapping */
+    if (freewinsGetSnap (w->screen) || fwd->snap)
+    {
+        int snapFactor = freewinsGetSnapThreshold (w->screen);
+        fww->animate.destAngX = ((int) (fww->transform.unsnapAngX) / snapFactor) * snapFactor;
+        fww->animate.destAngY = ((int) (fww->transform.unsnapAngY) / snapFactor) * snapFactor;
+        fww->animate.destAngZ = ((int) (fww->transform.unsnapAngZ) / snapFactor) * snapFactor;
+        fww->transform.scaleX = ((float) ( (int) (fww->transform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
+        fww->transform.scaleY = ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
+    }
+}
+
 /*static CompWindow *
 FWGetRealWindowFromID (CompDisplay *d,
 		       Window      wid)

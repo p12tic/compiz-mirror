@@ -510,6 +510,9 @@ void FWAdjustIPWStacking (CompScreen *s);
 
 /* util.c */
 
+void
+FWHandleSnap (CompWindow *w);
+
 CompWindow * FWGetRealWindow (CompWindow *w);
 
 Bool FWCanShape (CompWindow *w);
