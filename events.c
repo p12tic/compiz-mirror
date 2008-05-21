@@ -701,6 +701,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	/* Button Press and Release */
 	case ButtonPress:
     {
+         fprintf(stderr, "ButtonPress\n");
         CompWindow *btnW;
         btnW = findWindowAtDisplay (d, ev->xbutton.subwindow);
 
@@ -717,6 +718,9 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
         if (btnW)
         {
+        
+        fprintf(stderr, "Decided that there was a 'real window'\n");
+        
             if (fwd->grab == grabNone)
                 switch (ev->xbutton.button)
                 {
@@ -724,6 +728,8 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                         FWHandleIPWMoveInitiate (btnW); break;
                     case Button3:
                         FWHandleIPWResizeInitiate (btnW); break;
+                    default:
+                        break;
                 }
         }
 
@@ -733,15 +739,28 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
     break;
 	case ButtonRelease:
     {
+        CompScreen *s = findScreenAtDisplay(d, ev->xbutton.root);
         if (fwd->grabWindow)
         {
-        if (fwd->grab == grabMove || fwd->grab == grabResize)
-        {
-            FWHandleButtonReleaseEvent (fwd->grabWindow);
-            fwd->grab = grabNone;
-            fwd->lastGrabWindow = fwd->grabWindow;
-		    fwd->grabWindow = 0;
-        }
+            if (fwd->grab == grabMove || fwd->grab == grabResize)
+            {
+                FWHandleButtonReleaseEvent (fwd->grabWindow);
+		        fwd->grabWindow = 0;
+            }
+            if (s)
+            {
+                /* For some reason, the grabs seem to fail and 'get stuck' when something
+                     happens, i.e: you first rotate a window or a tooltip appears. Then when you
+                     let go of the button, the terminate action isn't called. This basically insures
+                     that _whenever_ you let go of the button, the grab goes away*/
+                FREEWINS_SCREEN (s);
+                if (fws->grabIndex)
+                {
+                    removeScreenGrab (s, fws->grabIndex, NULL);
+                    fwd->grab = grabNone;
+                    fwd->grabWindow = 0;
+                }
+            }
 	    }
 	    break;
     }
@@ -787,17 +806,17 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                         break;
 
                     ipw = findWindowAtDisplay (d, fww->input->ipw);
-		    if (ipw) 
-		    {
-			dX = s->x - vX;
-			dY = s->y - vY;
+		            if (ipw) 
+		            {
+			            dX = s->x - vX;
+			            dY = s->y - vY;
 
-			defaultViewportForWindow (actualW, &vX, &vY);
-            		moveWindowToViewportPosition (ipw,
-			              ipw->attrib.x - dX * s->width,
-			              ipw->attrib.y - dY * s->height,
-			              FALSE);
-		    }
+			            defaultViewportForWindow (actualW, &vX, &vY);
+                        		moveWindowToViewportPosition (ipw,
+			                          ipw->attrib.x - dX * s->width,
+			                          ipw->attrib.y - dY * s->height,
+			                          FALSE);
+		            }
                 }
             }
     }

@@ -152,6 +152,11 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
         default:
             break;
     }
+    
+    /*Shape the window beforehand and avoid a stale grab*/
+    if (FWCanShape (useW))
+        if (FWHandleWindowInputInfo (useW))
+            FWAdjustIPW (useW);
 
 	}
 	
@@ -331,13 +336,18 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	dx = ABS(dx);
 	dy = ABS(dy);
 	
+	/*Shape the window beforehand and avoid a stale grab*/
+    if (FWCanShape (useW))
+        if (FWHandleWindowInputInfo (useW))
+            FWAdjustIPW (useW);
+	
+	}
+	
 	if (state & CompActionStateInitButton)
         action->state |= CompActionStateTermButton;
 
 	if (state & CompActionStateInitKey)
 	    action->state |= CompActionStateTermKey;
-	
-	}
     
     return TRUE;
 }
