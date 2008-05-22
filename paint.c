@@ -52,6 +52,26 @@
 
 /* ------ Window and Output Painting ------------------------------------*/
 
+/* Damage util function */
+
+void FWDamageArea(CompWindow *w)
+{
+    FREEWINS_WINDOW (w);
+
+    REGION region;
+
+    region.rects = &region.extents;
+    region.numRects = region.size = 1;
+
+    region.extents.x1 = fww->outputRect.x1;
+    region.extents.x2 = fww->outputRect.x2;
+    region.extents.y1 = fww->outputRect.y1;
+    region.extents.y2 = fww->outputRect.y2;
+
+    damageScreenRegion (w->screen, &region);
+}
+
+
 /* Animation Prep */
 void
 FWPreparePaintScreen (CompScreen *s,
@@ -112,7 +132,7 @@ FWPreparePaintScreen (CompScreen *s,
             fww->transform.unsnapScaleY = fww->animate.destScaleX;
         }
         else
-            damageScreen (s); /*FIXME: Find the window rect and damage that */
+            FWDamageArea (w);
     }
     
     UNWRAP (fws, s, preparePaintScreen);
@@ -140,8 +160,6 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         fww->oldWinY != WIN_REAL_Y (w)) && !(w->type == CompWindowTypeDesktopMask))
     {
     
-        addWindowDamage (w);
-
         fww->oldWinX = WIN_REAL_X (w);
         fww->oldWinY = WIN_REAL_Y (w);
         
@@ -285,6 +303,19 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
     UNWRAP(fws, w->screen, paintWindow);
     status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
     WRAP(fws, w->screen, paintWindow, FWPaintWindow);
+    
+    if (!(((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
+      fww->transform.angX <= fww->animate.destAngX + 0.05 ) &&
+     (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
+      fww->transform.angY <= fww->animate.destAngY + 0.05 ) &&
+     (fww->transform.angZ >= fww->animate.destAngZ - 0.05 &&
+      fww->transform.angZ <= fww->animate.destAngZ + 0.05 ) &&
+     (fww->transform.scaleX >= fww->animate.destScaleX - 0.00005 &&
+      fww->transform.scaleX <= fww->animate.destScaleX + 0.00005 ) &&
+     (fww->transform.scaleY >= fww->animate.destScaleY - 0.00005 &&
+      fww->transform.scaleY <= fww->animate.destScaleY + 0.00005 ))))
+      FWDamageArea (w);
+    
 
     if(wasCulled)
 	glEnable(GL_CULL_FACE);
@@ -484,17 +515,7 @@ Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
     if (fww->transformed)
     {
-        REGION region;
-
-        region.rects = &region.extents;
-        region.numRects = region.size = 1;
-
-        region.extents.x1 = fww->outputRect.x1;
-        region.extents.x2 = fww->outputRect.x2;
-        region.extents.y1 = fww->outputRect.y1;
-        region.extents.y2 = fww->outputRect.y2;
-
-        damageScreenRegion (w->screen, &region);
+        FWDamageArea (w);
     }
     else
     {

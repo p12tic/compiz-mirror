@@ -682,7 +682,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		    fww->grabTop = (ev->xmotion.y - fww->iMidY > 0 ? FALSE : TRUE);
 
 	        if(dx != 0.0 || dy != 0.0)
-                addWindowDamage (fwd->grabWindow);
+                FWDamageArea (fwd->grabWindow);
 
         }
 

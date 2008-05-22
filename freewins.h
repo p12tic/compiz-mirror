@@ -359,6 +359,8 @@ void FWWindowMoveNotify (CompWindow *w,
 
 /* paint.c */
 
+void FWDamageArea(CompWindow *w);
+
 void FWPreparePaintScreen (CompScreen *s,
 	                      int        ms);
 
