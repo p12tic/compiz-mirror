@@ -292,7 +292,7 @@
             <option type="float" name="speed">
                 <_short>Speed of window rotation</_short>
                 <_long>How fast the window should rotate</_long>
-                <default>1.0</default>
+                <default>5.0</default>
                 <min>0.1</min>
                 <max>15.0</max>
             </option>

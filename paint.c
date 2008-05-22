@@ -304,6 +304,8 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
     status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
     WRAP(fws, w->screen, paintWindow, FWPaintWindow);
     
+    /* There is still animation to be done */
+    
     if (!(((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
       fww->transform.angX <= fww->animate.destAngX + 0.05 ) &&
      (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
