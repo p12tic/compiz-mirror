@@ -575,8 +575,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		    else
 			    fwd->invert = FALSE;
 
-        //fprintf(stderr, "Snap %i, Invert %i\n", fwd->snap, fwd->invert);
-
 	    }
     }
 
@@ -630,11 +628,11 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
     break;
 	case MotionNotify:
 	    
-	    if(fwd->grab != grabNone)
+	    if(fwd->grab != grabNone || fwd->grabWindow)
         {
 		    FREEWINS_WINDOW(fwd->grabWindow);
-
-		    dx = ((float)(ev->xmotion.x_root - fwd->oldX) / fwd->grabWindow->screen->width) * \
+		    
+     	    dx = ((float)(ev->xmotion.x_root - fwd->oldX) / fwd->grabWindow->screen->width) * \
             freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 		    dy = ((float)(ev->xmotion.y_root - fwd->oldY) / fwd->grabWindow->screen->height) * \
             freewinsGetMouseSensitivity (fwd->grabWindow->screen);
@@ -666,11 +664,11 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 fww->allowScaling = FALSE;
             }
 
-            if (fwd->grab == grabRotate)
+            if (fwd->grab == grabRotate || fww->allowRotation)
             {        
                 FWHandleRotateMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);
 		    }
-		    if (fwd->grab == grabScale)
+		    if (fwd->grab == grabScale || fww->allowScaling)
 		    {
 		        FWHandleScaleMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);		      
 		    }

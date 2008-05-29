@@ -408,8 +408,8 @@ terminateFWScale (CompDisplay     *d,
 	            FWAdjustIPW (fwd->grabWindow);
 	            
         (fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
-
-    	removeScreenGrab(s, fws->grabIndex, 0);
+        
+        removeScreenGrab(s, fws->grabIndex, 0);
 		fws->grabIndex = 0;
 		fwd->grabWindow = NULL;
 		fwd->grab = grabNone;
@@ -695,8 +695,7 @@ Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
     
     w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
 
-    fprintf(stderr, "called: ");
-    
+ 
     if (w)
     {
         FREEWINS_WINDOW(w);
@@ -707,8 +706,7 @@ Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
         y = getFloatOptionNamed(option, nOption, "y", 0.0f);
         z = getFloatOptionNamed(option, nOption, "z", 0.0f);
 
-        fprintf(stderr, "called: ... window present variables are %f %f %f\n", x, y, z);
-        
+  
         /* Respect dx, dy, dz, first */
         fww->transform.angX += x;
         fww->transform.angY += y;
@@ -719,9 +717,6 @@ Bool freewinsIncrementRotateWindow (CompDisplay *d, CompAction *action,
     }
     else
     {
-
-        fprintf(stderr, "called: ... no window present\n");
-
         return FALSE;
     }
 
