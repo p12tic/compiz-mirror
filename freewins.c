@@ -184,7 +184,6 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->transformed = FALSE;
     
     // Don't allow anything yet
-    fww->doAnimate = FALSE;
     fww->resetting = FALSE;
     
     // Don't allow incorrect window drawing as soon as the plugin is started

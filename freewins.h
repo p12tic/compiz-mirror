@@ -322,7 +322,6 @@ typedef struct _FWWindow{
     Box inputRect;
 
     // Used to determine whether to animate the window
-    Bool doAnimate;
     Bool resetting;
     
     // Used to determine whether rotating on X and Y axis, or just on Z

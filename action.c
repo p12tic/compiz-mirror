@@ -473,7 +473,6 @@ FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, fl
     fww->animate.destScaleX = fww->transform.scaleX + dsu; 
     fww->animate.destScaleY = fww->transform.scaleY + dsd;
 
-   fww->doAnimate = TRUE; // Start animating
 }
 
 #define ROTATE_INC freewinsGetRotateIncrementAmount (w->screen)
