@@ -178,7 +178,7 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->outputRect.y1 = WIN_OUTPUT_Y (w);
     fww->outputRect.y2 = WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w);
 
-    fwd->grab = grabNone;
+    fww->grab = grabNone;
     fww->can2D = FALSE;
     fww->can3D = FALSE;
 

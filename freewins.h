@@ -249,8 +249,6 @@ typedef struct _FWDisplay{
     CompWindow *lastGrabWindow;
     CompWindow *hoverWindow;
 
-    FWGrabType grab;
-    
     Bool axisHelp;
     Bool snap;
     Bool invert;
@@ -337,6 +335,8 @@ typedef struct _FWWindow{
     Bool transformed;
     Bool allowScaling;
     Bool allowRotation;
+    
+    FWGrabType grab;
 
 } FWWindow;
 

@@ -54,11 +54,12 @@
 
 static void FWHandleIPWResizeInitiate (CompWindow *w)
 {
+	FREEWINS_WINDOW (w);
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
 
     (*w->screen->activateWindow) (w);
-    fwd->grab = grabResize;
+    fww->grab = grabResize;
     fws->rotateCursor = XCreateFontCursor (w->screen->display->display, XC_plus);	
 	if(!otherScreenGrabExist(w->screen, "freewins", "resize", 0))
 	    if(!fws->grabIndex)
@@ -76,11 +77,12 @@ static void FWHandleIPWResizeInitiate (CompWindow *w)
 
 static void FWHandleIPWMoveInitiate (CompWindow *w)
 {
+	FREEWINS_WINDOW (w);
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
 
     (*w->screen->activateWindow) (w);
-    fwd->grab = grabMove;
+    fww->grab = grabMove;
     fws->rotateCursor = XCreateFontCursor (w->screen->display->display, XC_fleur);	
 	if(!otherScreenGrabExist(w->screen, "freewins", "move", 0))
 	    if(!fws->grabIndex)
@@ -494,17 +496,18 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
 
 static void FWHandleButtonReleaseEvent (CompWindow *w)
 {
+	FREEWINS_WINDOW (w);
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
 
-    if (fwd->grab == grabMove || fwd->grab == grabResize)
+    if (fww->grab == grabMove || fww->grab == grabResize)
     {
         removeScreenGrab (w->screen, fws->grabIndex, NULL);
         (w->screen->windowUngrabNotify) (w);
         moveInputFocusToWindow (w);
         fws->grabIndex = 0;
         fwd->grabWindow = NULL;
-        fwd->grab = grabNone;
+        fww->grab = grabNone;
     }
 }
 
@@ -628,7 +631,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
     break;
 	case MotionNotify:
 	    
-	    if(fwd->grab != grabNone || fwd->grabWindow)
+	    if(fwd->grabWindow)
         {
 		    FREEWINS_WINDOW(fwd->grabWindow);
 		    
@@ -638,7 +641,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
             freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 
 
-            if (fwd->grab == grabMove || fwd->grab == grabResize)
+            if (fww->grab == grabMove || fww->grab == grabResize)
             {
                 FREEWINS_SCREEN (fwd->grabWindow->screen);
                 FWWindowInputInfo *info;
@@ -651,7 +654,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                      */
                     w = FWGetRealWindow (fwd->grabWindow);
                 }
-                switch (fwd->grab)
+                switch (fww->grab)
                 {
                     case grabMove:
                         FWHandleIPWMoveMotionEvent (w, pointerX, pointerY); break;
@@ -664,11 +667,11 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 fww->allowScaling = FALSE;
             }
 
-            if (fwd->grab == grabRotate || fww->allowRotation)
+            if (fww->grab == grabRotate)
             {        
                 FWHandleRotateMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);
 		    }
-		    if (fwd->grab == grabScale || fww->allowScaling)
+		    if (fww->grab == grabScale)
 		    {
 		        FWHandleScaleMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);		      
 		    }
@@ -706,7 +709,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
         if (btnW)
         {
-            if (fwd->grab == grabNone)
                 switch (ev->xbutton.button)
                 {
                     case Button1:
@@ -727,7 +729,10 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
         CompScreen *s = findScreenAtDisplay(d, ev->xbutton.root);
         if (fwd->grabWindow)
         {
-            if (fwd->grab == grabMove || fwd->grab == grabResize)
+        
+        	FREEWINS_WINDOW (fwd->grabWindow);
+        
+            if (fww->grab == grabMove || fww->grab == grabResize)
             {
                 FWHandleButtonReleaseEvent (fwd->grabWindow);
 		        fwd->grabWindow = 0;
@@ -742,7 +747,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 if (fws->grabIndex)
                 {
                     removeScreenGrab (s, fws->grabIndex, NULL);
-                    fwd->grab = grabNone;
+                    fww->grab = grabNone;
                     fwd->grabWindow = 0;
                 }*/
             }
