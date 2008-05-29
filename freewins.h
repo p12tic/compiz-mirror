@@ -329,9 +329,6 @@ typedef struct _FWWindow{
     Bool can2D;
     Bool can3D;
 
-    Bool grabLeft;
-    Bool grabTop;
-
     Bool transformed;
     
     FWGrabType grab;

@@ -352,9 +352,6 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	dx = fwd->click_win_x - fww->iMidX;
 	dy = fwd->click_win_y - fww->iMidY;
 
-	fww->grabLeft = (dx > 0 ? FALSE : TRUE);
-	fww->grabTop = (dy > 0 ? FALSE : TRUE);
-
 	dx = ABS(dx);
 	dy = ABS(dy);
 	
