@@ -293,7 +293,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         }
     }
     
-    FWHandleWindowInputInfo (w);
+    //FWHandleWindowInputInfo (w);
 
     if (fww->transformed)
     if(wasCulled)
