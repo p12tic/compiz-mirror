@@ -333,8 +333,6 @@ typedef struct _FWWindow{
     Bool grabTop;
 
     Bool transformed;
-    Bool allowScaling;
-    Bool allowRotation;
     
     FWGrabType grab;
 

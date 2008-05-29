@@ -663,8 +663,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                     default:
                         break;
                 }
-                fww->allowRotation = FALSE;
-                fww->allowScaling = FALSE;
             }
 
             if (fww->grab == grabRotate)

@@ -156,7 +156,6 @@ static void FWDisplayOptionChanged (CompDisplay *d, CompOption *opt, FreewinsDis
 static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     FWWindow *fww;
     FREEWINS_SCREEN(w->screen);
-    FREEWINS_DISPLAY(w->screen->display);
 
     if( !(fww = (FWWindow*)malloc( sizeof(FWWindow) )) )
 	return FALSE;
@@ -185,8 +184,6 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
     fww->transformed = FALSE;
     
     // Don't allow anything yet
-    fww->allowScaling = FALSE;
-    fww->allowRotation = FALSE;
     fww->doAnimate = FALSE;
     fww->resetting = FALSE;
     

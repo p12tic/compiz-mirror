@@ -108,9 +108,6 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 			       
    	mods = getIntOptionNamed (option, nOption, "modifiers", 0);
 
-	fww->allowRotation = TRUE;
-	fww->allowScaling = FALSE;
-	
 	fwd->grabWindow = useW;
 	
 	fww->grab = grabRotate;
@@ -287,10 +284,7 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
 			       
    	mods = getIntOptionNamed (option, nOption, "modifiers", 0);
 	
-	fww->allowScaling = TRUE;
-	fww->allowRotation = FALSE;
-	
-	fwd->grabWindow = useW;
+    fwd->grabWindow = useW;
 	
 	/* Find out the corner we clicked in */
 
