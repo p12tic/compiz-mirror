@@ -63,6 +63,7 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     CompScreen* s;
     FWWindowInputInfo *info;
     Window xid, root;
+    int x, y, mods;
     
     FREEWINS_DISPLAY(d);
 
@@ -98,7 +99,14 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     
     
     if(useW){
-	FREEWINS_WINDOW(useW);
+	FREEWINS_WINDOW(useW);	
+	
+	x = getIntOptionNamed (option, nOption, "x",
+			       useW->attrib.x + (useW->width / 2));
+	y = getIntOptionNamed (option, nOption, "y",
+			       useW->attrib.y + (useW->height / 2));
+			       
+   	mods = getIntOptionNamed (option, nOption, "modifiers", 0);
 
 	fww->allowRotation = TRUE;
 	fww->allowScaling = FALSE;
@@ -153,6 +161,12 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
             break;
     }
     
+	/* Announce that we grabbed the window */
+	
+    (w->screen->windowGrabNotify) (w, x, y, mods,
+			   CompWindowGrabMoveMask |
+			   CompWindowGrabButtonMask);
+    
     /*Shape the window beforehand and avoid a stale grab*/
     if (FWCanShape (useW))
         if (FWHandleWindowInputInfo (useW))
@@ -193,6 +207,8 @@ terminateFWRotate (CompDisplay     *d,
 	    if (FWCanShape (fwd->grabWindow))
 	        if (FWHandleWindowInputInfo (fwd->grabWindow))
 	            FWAdjustIPW (fwd->grabWindow);
+	            
+       (fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
 
     	removeScreenGrab(s, fws->grabIndex, 0);
 		fws->grabIndex = 0;
@@ -218,7 +234,9 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
     FWWindowInputInfo *info;
     Window xid, root;
     float dx, dy;
+    int x, y, mods;
     
+   
     FREEWINS_DISPLAY(d);
 
     xid = getIntOptionNamed (option, nOption, "window", 0);
@@ -258,6 +276,13 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
     
     if(useW){
 	FREEWINS_WINDOW(useW);
+	
+	x = getIntOptionNamed (option, nOption, "x",
+			       useW->attrib.x + (useW->width / 2));
+	y = getIntOptionNamed (option, nOption, "y",
+			       useW->attrib.y + (useW->height / 2));
+			       
+   	mods = getIntOptionNamed (option, nOption, "modifiers", 0);
 	
 	fww->allowScaling = TRUE;
 	fww->allowRotation = FALSE;
@@ -336,6 +361,12 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	dx = ABS(dx);
 	dy = ABS(dy);
 	
+	/* Announce that we grabbed the window */
+	
+    (w->screen->windowGrabNotify) (w, x, y, mods,
+			   CompWindowGrabMoveMask |
+			   CompWindowGrabButtonMask);
+	
 	/*Shape the window beforehand and avoid a stale grab*/
     if (FWCanShape (useW))
         if (FWHandleWindowInputInfo (useW))
@@ -375,6 +406,8 @@ terminateFWScale (CompDisplay     *d,
 	    if (FWCanShape (fwd->grabWindow))
 	        if (FWHandleWindowInputInfo (fwd->grabWindow))
 	            FWAdjustIPW (fwd->grabWindow);
+	            
+        (fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
 
     	removeScreenGrab(s, fws->grabIndex, 0);
 		fws->grabIndex = 0;
