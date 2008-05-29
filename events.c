@@ -130,6 +130,8 @@ static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigne
     /* In order to prevent a window redraw on resize
      * on every motion event we have a threshold
      */
+     
+     /* FIXME: cf-love: Instead of actually resizing the window, scale it up, then resize it */
 
     if (fww->winH - 10 > w->height || fww->winW - 10 > w->width)
     { 
@@ -377,6 +379,9 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
     x -= 100.0;
     y -= 100.0;
     
+    int oldX = lastPointerX - 100;
+    int oldY = lastPointerY - 100;
+    
     float scaleX, scaleY;
     
     if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
@@ -397,29 +402,29 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
 
         case CornerTopLeft:
         
-        if ((x) < fwd->oldX)
+        if ((x) < oldX)
         scaleX -= dx;
-        else if ((x) > fwd->oldX)
+        else if ((x) > oldX)
         scaleX -= dx;
 
-        if ((y) < fwd->oldY)
+        if ((y) < oldY)
         scaleY -= dy;
-        else if ((y) > fwd->oldY)
+        else if ((y) > oldY)
         scaleY -= dy;
         break;            
             
         case CornerTopRight:
 
-        if ((x) < fwd->oldX)
+        if ((x) < oldX)
         scaleX += dx;
-        else if ((y) > fwd->oldX)
+        else if ((y) > oldX)
         scaleX += dx;
 
 
         // Check Y Direction
-        if ((y) < fwd->oldY)
+        if ((y) < oldY)
         scaleY -= dy;
-        else if ((y) > fwd->oldY)
+        else if ((y) > oldY)
         scaleY -= dy;
 
         break;
@@ -427,15 +432,15 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
         case CornerBottomLeft:
 
         // Check X Direction
-        if ((x) < fwd->oldX)
+        if ((x) < oldX)
         scaleX -= dx;
-        else if ((y) > fwd->oldX)
+        else if ((y) > oldX)
         scaleX -= dx;
 
         // Check Y Direction
-        if ((y) < fwd->oldY)
+        if ((y) < oldY)
         scaleY += dy;
-        else if ((y) > fwd->oldY)
+        else if ((y) > oldY)
         scaleY += dy;
 
         break;
@@ -443,15 +448,15 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
         case CornerBottomRight:
 
         // Check X Direction
-        if ((x) < fwd->oldX)
+        if ((x) < oldX)
         scaleX += dx;
-        else if ((x) > fwd->oldX)
+        else if ((x) > oldX)
         scaleX += dx;
 
         // Check Y Direction
-        if ((y) < fwd->oldY)
+        if ((y) < oldY)
         scaleY += dy;
-        else if ((y) > fwd->oldY)
+        else if ((y) > oldY)
         scaleY += dy;
         break;
     }
@@ -635,9 +640,9 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
         {
 		    FREEWINS_WINDOW(fwd->grabWindow);
 		    
-     	    dx = ((float)(ev->xmotion.x_root - fwd->oldX) / fwd->grabWindow->screen->width) * \
+     	    dx = ((float)(pointerX - lastPointerX) / fwd->grabWindow->screen->width) * \
             freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		    dy = ((float)(ev->xmotion.y_root - fwd->oldY) / fwd->grabWindow->screen->height) * \
+		    dy = ((float)(pointerY - lastPointerY) / fwd->grabWindow->screen->height) * \
             freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 
 
@@ -673,9 +678,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		    {
 		        FWHandleScaleMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);		      
 		    }
-
-            fwd->oldX += (ev->xmotion.x_root - fwd->oldX);
-		    fwd->oldY += (ev->xmotion.y_root - fwd->oldY);
 
 	        if(dx != 0.0 || dy != 0.0)
                 FWDamageArea (fwd->grabWindow);
@@ -714,9 +716,10 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                         break;
                 }
         }
+        
+        fwd->click_root_x = ev->xbutton.x_root;
+        fwd->click_root_y = ev->xbutton.y_root;
 
-	    fwd->click_win_x = ev->xbutton.x;
-	    fwd->click_win_y = ev->xbutton.y;
     }
     break;
 	case ButtonRelease:

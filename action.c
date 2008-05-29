@@ -112,11 +112,6 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 	
 	fww->grab = grabRotate;
 	
-    fwd->oldX =  pointerX;
-    fwd->oldY =  pointerY;
-    fwd->click_root_x = pointerX;
-    fwd->click_root_y = pointerY;
-
     /* Save current scales and angles */
 
     fww->animate.oldAngX = fww->transform.angX;
@@ -125,18 +120,18 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
     fww->animate.oldScaleX = fww->transform.scaleX;
     fww->animate.oldScaleY = fww->transform.scaleY;
 
-	if (fwd->click_root_y > fww->iMidY)
+	if (pointerY > fww->iMidY)
 	{
-	    if (fwd->click_root_x > fww->iMidX)
+	    if (pointerX > fww->iMidX)
 	        fww->corner = CornerBottomRight;
-	    else if (fwd->click_root_x < fww->iMidX)
+	    else if (pointerX < fww->iMidX)
 	        fww->corner = CornerBottomLeft;
 	}
-	else if (fwd->click_root_y < fww->iMidY)
+	else if (pointerY < fww->iMidY)
 	{
-	    if (fwd->click_root_x > fww->iMidX)
+	    if (pointerX > fww->iMidX)
 	        fww->corner = CornerTopRight;
-	    else if (fwd->click_root_x < fww->iMidX)
+	    else if (pointerX < fww->iMidX)
 	        fww->corner = CornerTopLeft;
 	}
 
@@ -233,7 +228,6 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
     CompScreen* s;
     FWWindowInputInfo *info;
     Window xid, root;
-    float dx, dy;
     int x, y, mods;
     
    
@@ -245,11 +239,6 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
 
     root = getIntOptionNamed (option, nOption, "root", 0);
     s = findScreenAtDisplay (d, root);
-
-    fwd->oldX =  pointerX;
-    fwd->oldY =  pointerY;
-    fwd->click_root_x = pointerX;
-    fwd->click_root_y = pointerY;
 
     if (s && w && useW)
     {
@@ -292,20 +281,20 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
     float MidY = fww->inputRect.y1 + ((fww->inputRect.y2 - fww->inputRect.y1) / 2.0f);
 	
 	/* Check for Y axis clicking (Top / Bottom) */
-	if (fwd->click_root_y > MidY)
+	if (pointerY > MidY)
 	{
 	    /* Check for X axis clicking (Left / Right) */
-	    if (fwd->click_root_x > MidX)
+	    if (pointerX > MidX)
 	        fww->corner = CornerBottomRight;
-	    else if (fwd->click_root_x < MidX)
+	    else if (pointerX < MidX)
 	        fww->corner = CornerBottomLeft;
 	}
-	else if (fwd->click_win_y < MidY)
+	else if (pointerY < MidY)
 	{
 	    /* Check for X axis clicking (Left / Right) */
-	    if (fwd->click_root_x > MidX)
+	    if (pointerX > MidX)
 	        fww->corner = CornerTopRight;
-	    else if (fwd->click_root_x < MidX)
+	    else if (pointerX < MidX)
 	        fww->corner = CornerTopLeft;
 	}
 
@@ -346,15 +335,6 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
 
     fww->grab = grabScale;
 
-	fwd->oldX = fwd->click_root_x;
-	fwd->oldY = fwd->click_root_y;
-
-	dx = fwd->click_win_x - fww->iMidX;
-	dy = fwd->click_win_y - fww->iMidY;
-
-	dx = ABS(dx);
-	dy = ABS(dy);
-	
 	/* Announce that we grabbed the window */
 	
     (w->screen->windowGrabNotify) (w, x, y, mods,

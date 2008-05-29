@@ -226,22 +226,15 @@ typedef struct _FWAnimationInfo
 /* Freewins Display Structure */
 typedef struct _FWDisplay{
     int screenPrivateIndex;
-
+    
     int click_root_x;
     int click_root_y;
-
-    int click_win_x;
-    int click_win_y;
 
     // ZOMG Input Redirection
     /*
     float transformed_px;
     float transformed_py;
     */
-
-    // Used for determining cursor direction
-    int oldX;
-    int oldY;
 
     HandleEventProc handleEvent;
 
@@ -298,11 +291,6 @@ typedef struct _FWWindow{
 
     int winH;
     int winW;
-
-    // Used to determine axis
-
-    float adjustX;
-    float adjustY;
 
     Direction direction;
     

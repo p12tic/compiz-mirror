@@ -489,8 +489,8 @@ void FWDetermineZAxisClick (CompWindow *w, int px, int py, Bool motion)
 
         float clickRadiusFromCenter;
 
-        int x = (WIN_REAL_X(w) + WIN_REAL_W(w)/2.0) + fww->adjustX;
-	    int y = (WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0) + fww->adjustY;
+        int x = (WIN_REAL_X(w) + WIN_REAL_W(w)/2.0);
+	    int y = (WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0);
 
         clickRadiusFromCenter = sqrt(pow((x - px), 2) + pow((y - py), 2));
 
