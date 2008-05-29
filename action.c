@@ -181,7 +181,6 @@ terminateFWRotate (CompDisplay     *d,
     FREEWINS_DISPLAY (d);
 
     CompScreen *s;
-    //CompWindow *w;
 
     for (s = d->screens; s; s = s->next)
     {
@@ -202,6 +201,7 @@ terminateFWRotate (CompDisplay     *d,
 		
 	    }
 	}
+    
 
     action->state &= ~ (CompActionStateTermKey | CompActionStateTermButton);
 

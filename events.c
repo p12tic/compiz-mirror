@@ -740,13 +740,13 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                      happens, i.e: you first rotate a window or a tooltip appears. Then when you
                      let go of the button, the terminate action isn't called. This basically insures
                      that _whenever_ you let go of the button, the grab goes away*/
-                FREEWINS_SCREEN (s);
+                /*FREEWINS_SCREEN (s);
                 if (fws->grabIndex)
                 {
                     removeScreenGrab (s, fws->grabIndex, NULL);
                     fwd->grab = grabNone;
                     fwd->grabWindow = 0;
-                }
+                }*/
             }
 	    }
 	    break;
