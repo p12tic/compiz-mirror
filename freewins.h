@@ -256,6 +256,7 @@ typedef struct _FWScreen{
 
     PreparePaintScreenProc preparePaintScreen;
     PaintOutputProc paintOutput;
+    PaintTransformedOutputProc paintTransformedOutput;
     PaintWindowProc paintWindow;
 
     DamageWindowRectProc damageWindowRect;
@@ -268,6 +269,8 @@ typedef struct _FWScreen{
     Cursor rotateCursor;
 
     int grabIndex;
+    
+    Bool transformedScreen;
 
 } FWScreen;
 
@@ -358,6 +361,14 @@ Bool FWPaintOutput(CompScreen *s,
                   Region region,
                   CompOutput *output,
                   unsigned int mask);
+                  
+void
+FWPaintTransformedOutput (CompScreen              *s,
+                              const ScreenPaintAttrib *sAttrib,
+                              const CompTransform     *transform,
+                              Region                  region,
+                              CompOutput              *output,
+                              unsigned int            mask);
 
 Bool FWDamageWindowRect(CompWindow *w,
                        Bool initial,

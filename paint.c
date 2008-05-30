@@ -140,16 +140,37 @@ FWPreparePaintScreen (CompScreen *s,
     WRAP (fws, s, preparePaintScreen, FWPreparePaintScreen);
 }
 
+/* Check to see if we are painting a transformed output,
+  * and if so, disable all rotation temporarily
+  */
+  
+void
+FWPaintTransformedOutput (CompScreen              *s,
+                              const ScreenPaintAttrib *sAttrib,
+                              const CompTransform     *transform,
+                              Region                  region,
+                              CompOutput              *output,
+                              unsigned int            mask)
+{
+    FREEWINS_SCREEN(s);
+
+    fws->transformedScreen = TRUE;
+
+    UNWRAP (fws, s, paintTransformedOutput);
+    (*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask); 
+    WRAP (fws, s, paintTransformedOutput, FWPaintTransformedOutput);
+}
+
 /* Paint the window rotated or scaled */
 Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib, 
 	const CompTransform *transform, Region region, unsigned int mask){
 
     CompTransform wTransform = *transform;
+    float angX = 0.0f, angY = 0.0f, angZ = 0.0f;
 
     Bool wasCulled = glIsEnabled(GL_CULL_FACE);
     Bool status;
 
-    FREEWINS_DISPLAY (w->screen->display);
     FREEWINS_SCREEN(w->screen);
     FREEWINS_WINDOW(w);
 
@@ -167,7 +188,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
           * be where we clicked if the window is not grabbed, etc
           */
         
-        if (w == fwd->grabWindow)
+        /*if (w == fwd->grabWindow)
         {
 		    if (fww->grab == grabRotate || fww->grab == grabScale)
 		    switch (freewinsGetRotationAxis (w->screen))
@@ -191,11 +212,11 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 		    }
 	    }
 	    else
-	    {
+	    {*/
 	            FWCalculateInputOrigin(w, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
 	                                      WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
 	            FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
-	    }
+	    /*}*/
         /* Here we duplicate some of the work the openGL does
          * but for different reasons. We have access to the 
          * window's transformation matrix, so we will create
@@ -211,7 +232,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
          * surrounding rectangle to make things like shaping and
          * damage a lot more accurate than they used to be.
          */
-
+         
          FWCalculateOutputRect (w);
 
         /* Prepare for transformation by doing
@@ -253,11 +274,18 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
 	    /* Adjust the window in the matrix to prepare for transformation */
+	    
+	      if (!fws->transformedScreen)
+         {
+         	angX = fww->transform.angX;
+         	angY = fww->transform.angY;
+         	angZ = fww->transform.angZ;
+     	 }
 
         FWModifyMatrix (w, &wTransform,
-                        fww->transform.angX,
-                        fww->transform.angY,
-                        fww->transform.angZ,
+                        angX,
+                        angY,
+                        angZ,
                         fww->iMidX, fww->iMidY , 0.0f,
                         scaleX, scaleY, 1.0f);
                         
@@ -324,7 +352,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
     if(wasCulled)
 	glEnable(GL_CULL_FACE);
-
+	
     return status;
 }
 
@@ -342,6 +370,8 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
     if(fws->transformedWindows)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+	
+	fws->transformedScreen = FALSE;
 
     UNWRAP(fws, s, paintOutput);
     status = (*s->paintOutput)(s, sAttrib, transform, region, output, mask);
