@@ -286,6 +286,11 @@
 			    <_long>Auto-Zoom when rotating so that windows do not get too large</_long>
 			    <default>False</default>
 	        </option>
+	        <option type="bool" name="disable_on_transformed_screen">
+			    <_short>Disable on Transformed Screen</_short>
+			    <_long>Disable rotation on transformed screen. This prevents ugly looking clipped windows when the screen is transformed</_long>
+			    <default>False</default>
+	        </option>
         </subgroup>
         <subgroup>
             <_short>Transformation Behaviour</_short>

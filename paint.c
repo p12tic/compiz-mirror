@@ -275,7 +275,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 
 	    /* Adjust the window in the matrix to prepare for transformation */
 	    
-	      if (!fws->transformedScreen)
+	      if (!fws->transformedScreen && !freewinsGetDisableOnTransformedScreen (w->screen))
          {
          	angX = fww->transform.angX;
          	angY = fww->transform.angY;
