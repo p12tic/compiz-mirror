@@ -543,7 +543,6 @@ void FWDonePaintScreen (CompScreen *s)
 Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
     Bool status = TRUE;
-    FREEWINS_DISPLAY(w->screen->display);
     FREEWINS_SCREEN(w->screen);
     FREEWINS_WINDOW(w);
 

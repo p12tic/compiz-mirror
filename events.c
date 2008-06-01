@@ -724,7 +724,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
     break;
 	case ButtonRelease:
     {
-        CompScreen *s = findScreenAtDisplay(d, ev->xbutton.root);
         if (fwd->grabWindow)
         {
         
