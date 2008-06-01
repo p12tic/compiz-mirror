@@ -610,6 +610,19 @@ Bool FWScaleUp (CompDisplay *d, CompAction *action,
         if (FWCanShape (w))
             if (FWHandleWindowInputInfo (w))
                 FWAdjustIPW (w);
+                
+        FREEWINS_WINDOW (w);
+        
+        /* Stop scale at threshold specified */
+		if (!freewinsGetAllowNegative (w->screen))
+		{
+		    float minScale = freewinsGetMinScale (w->screen);
+		    if (fww->animate.destScaleX < minScale)
+		      fww->animate.destScaleX = minScale;
+
+		    if (fww->animate.destScaleY < minScale)
+		      fww->animate.destScaleY = minScale;
+		}
     }
     
     return TRUE;
@@ -627,6 +640,20 @@ Bool FWScaleDown (CompDisplay *d, CompAction *action,
         if (FWCanShape (w))
             if (FWHandleWindowInputInfo (w))
                 FWAdjustIPW (w);
+                
+                
+		FREEWINS_WINDOW (w);                
+
+        /* Stop scale at threshold specified */
+		if (!freewinsGetAllowNegative (w->screen))
+		{
+		    float minScale = freewinsGetMinScale (w->screen);
+		    if (fww->animate.destScaleX < minScale)
+		      fww->animate.destScaleX = minScale;
+
+		    if (fww->animate.destScaleY < minScale)
+		      fww->animate.destScaleY = minScale;
+		}
     }
     
     return TRUE;

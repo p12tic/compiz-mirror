@@ -735,20 +735,6 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                 FWHandleButtonReleaseEvent (fwd->grabWindow);
 		        fwd->grabWindow = 0;
             }
-            if (s)
-            {
-                /* For some reason, the grabs seem to fail and 'get stuck' when something
-                     happens, i.e: you first rotate a window or a tooltip appears. Then when you
-                     let go of the button, the terminate action isn't called. This basically insures
-                     that _whenever_ you let go of the button, the grab goes away*/
-                /*FREEWINS_SCREEN (s);
-                if (fws->grabIndex)
-                {
-                    removeScreenGrab (s, fws->grabIndex, NULL);
-                    fww->grab = grabNone;
-                    fwd->grabWindow = 0;
-                }*/
-            }
 	    }
 	    break;
     }
@@ -836,7 +822,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 	        }
 	    }
     }
-
+    
     UNWRAP(fwd, d, handleEvent);
     (*d->handleEvent)(d, ev);
     WRAP(fwd, d, handleEvent, FWHandleEvent);

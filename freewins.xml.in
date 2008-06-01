@@ -320,7 +320,7 @@
         <option type="float" name="scale_increment_amount">
 			<_short>Scale increment amount</_short>
 			<_long>How much to scale a window by when scaling by an 'increment'</_long>
-			<default>0.1</default>
+			<default>0.3</default>
 			<min>0.01</min>
 			<max>0.5</max>
 	    </option>
