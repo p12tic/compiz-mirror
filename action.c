@@ -232,11 +232,25 @@ terminateFWRotate (CompDisplay     *d,
 		    
 		    int distX, distY;
 		    
+		    
+		    switch (freewinsGetRotationAxis (fwd->grabWindow->screen))
+		    {
+		    
+		    case RotationAxisClickPoint:
+		    case RotationAxisOppositeToClick:
+		    
 		    distX =  (fww->outputRect.x1 + (fww->outputRect.x2 - fww->outputRect.x1) / 2.0f) - (WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f);
 		    distY = (fww->outputRect.y1 + (fww->outputRect.y2 - fww->outputRect.y1) / 2.0f) - (WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
 		    
 		    moveWindow(fwd->grabWindow, distX, distY, TRUE, TRUE);
 		    syncWindowPosition (fwd->grabWindow);
+		    
+		    break;
+		    
+		    default:
+		    	break;
+		    	
+	    	}
 		    
 			removeScreenGrab(s, fws->grabIndex, 0);
 			fws->grabIndex = 0;
