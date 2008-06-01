@@ -243,15 +243,17 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         /* Actually Transform the window */
 
 	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-
-	    /* Adjust the window in the matrix to prepare for transformation */
 	    
-	      if (!fws->transformedScreen && !freewinsGetDisableOnTransformedScreen (w->screen))
+	    /* Check to see if we are painting on a transformed screen */
+
+       if (!fws->transformedScreen && !freewinsGetDisableOnTransformedScreen (w->screen))
          {
          	angX = fww->transform.angX;
          	angY = fww->transform.angY;
          	angZ = fww->transform.angZ;
      	 }
+     	 
+     	/* Adjust the window in the matrix to prepare for transformation */
 
         FWModifyMatrix (w, &wTransform,
                         angX,

@@ -13,6 +13,7 @@
             <plugin>group</plugin>
             <plugin>wobbly</plugin>
             <plugin>animation</plugin>
+            <plugin>water</plugin>
 		</relation>
 	</deps>
 	<display>
