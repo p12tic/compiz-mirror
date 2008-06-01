@@ -238,13 +238,6 @@ terminateFWRotate (CompDisplay     *d,
 		    moveWindow(fwd->grabWindow, distX, distY, TRUE, TRUE);
 		    syncWindowPosition (fwd->grabWindow);
 		    
-			FWCalculateInputOrigin(fwd->grabWindow,
-												WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f,
-				                      			WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
-			FWCalculateOutputOrigin(fwd->grabWindow,
-												WIN_OUTPUT_X (fwd->grabWindow) + WIN_OUTPUT_W (fwd->grabWindow) / 2.0f,
-				                      			WIN_OUTPUT_Y (fwd->grabWindow) + WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
-
 			removeScreenGrab(s, fws->grabIndex, 0);
 			fws->grabIndex = 0;
 			fwd->grabWindow = NULL;

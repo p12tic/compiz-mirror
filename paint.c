@@ -254,6 +254,18 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
      	 }
      	 
      	/* Adjust the window in the matrix to prepare for transformation */
+     	
+     	if (fww->grab != grabRotate && fww->grab != grabScale)
+     	{
+     	
+		FWCalculateInputOrigin(w,
+											WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
+			                      			WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
+		FWCalculateOutputOrigin(w,
+											WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w) / 2.0f,
+			                      			WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
+			                      			
+		}
 
         FWModifyMatrix (w, &wTransform,
                         angX,
