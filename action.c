@@ -152,6 +152,32 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
         default:
             break;
     }
+
+	/* Set the rotation axis */
+
+    switch (freewinsGetRotationAxis (w->screen))
+    {
+        case RotationAxisAlwaysCentre:
+        default:
+			FWCalculateInputOrigin(w,
+												WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f,
+				                      			WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
+			FWCalculateOutputOrigin(w,
+												WIN_OUTPUT_X (fwd->grabWindow) + WIN_OUTPUT_W (fwd->grabWindow) / 2.0f,
+				                      			WIN_OUTPUT_Y (fwd->grabWindow) + WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
+            break;
+        case RotationAxisClickPoint:            
+            FWCalculateInputOrigin(w, fwd->click_root_x, fwd->click_root_y);
+            FWCalculateOutputOrigin(w, fwd->click_root_x, fwd->click_root_y);
+            break;
+        case RotationAxisOppositeToClick:            
+            FWCalculateInputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
+                                      w->attrib.y + w->height - fwd->click_root_y);
+            FWCalculateOutputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
+                                      w->attrib.y + w->height - fwd->click_root_y);
+            break;
+    }
+
     
 	/* Announce that we grabbed the window */
 	
@@ -203,6 +229,21 @@ terminateFWRotate (CompDisplay     *d,
 			        FWAdjustIPW (fwd->grabWindow);
 			        
 		    (fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
+		    
+		    int distX, distY;
+		    
+		    distX =  (fww->outputRect.x1 + (fww->outputRect.x2 - fww->outputRect.x1) / 2.0f) - (WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f);
+		    distY = (fww->outputRect.y1 + (fww->outputRect.y2 - fww->outputRect.y1) / 2.0f) - (WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
+		    
+		    moveWindow(fwd->grabWindow, distX, distY, TRUE, TRUE);
+		    syncWindowPosition (fwd->grabWindow);
+		    
+			FWCalculateInputOrigin(fwd->grabWindow,
+												WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f,
+				                      			WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
+			FWCalculateOutputOrigin(fwd->grabWindow,
+												WIN_OUTPUT_X (fwd->grabWindow) + WIN_OUTPUT_W (fwd->grabWindow) / 2.0f,
+				                      			WIN_OUTPUT_Y (fwd->grabWindow) + WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
 
 			removeScreenGrab(s, fws->grabIndex, 0);
 			fws->grabIndex = 0;

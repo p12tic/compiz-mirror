@@ -188,35 +188,6 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
           * be where we clicked if the window is not grabbed, etc
           */
         
-        /*if (w == fwd->grabWindow)
-        {
-		    if (fww->grab == grabRotate || fww->grab == grabScale)
-		    switch (freewinsGetRotationAxis (w->screen))
-		    {
-		        case RotationAxisAlwaysCentre:
-		        default:
-		            FWCalculateInputOrigin(w, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
-		                                      WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
-		            FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
-		            break;
-		        case RotationAxisClickPoint:            
-		            FWCalculateInputOrigin(w, fwd->click_root_x, fwd->click_root_y);
-		            FWCalculateOutputOrigin(w, fwd->click_root_x, fwd->click_root_y);
-		            break;
-		        case RotationAxisOppositeToClick:            
-		            FWCalculateInputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
-		                                      w->attrib.y + w->height - fwd->click_root_y);
-		            FWCalculateOutputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
-		                                      w->attrib.y + w->height - fwd->click_root_y);
-		            break;
-		    }
-	    }
-	    else
-	    {*/
-	            FWCalculateInputOrigin(w, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
-	                                      WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
-	            FWCalculateOutputOrigin (w, WIN_OUTPUT_W (w) / 2.0f, WIN_OUTPUT_H (w) / 2.0f);
-	    /*}*/
         /* Here we duplicate some of the work the openGL does
          * but for different reasons. We have access to the 
          * window's transformation matrix, so we will create
