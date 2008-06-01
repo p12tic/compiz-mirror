@@ -260,6 +260,7 @@ static Bool freewinsInitScreen(CompPlugin *p, CompScreen *s){
     WRAP(fws, s, paintWindow, FWPaintWindow);
     WRAP(fws, s, paintOutput, FWPaintOutput);
     WRAP(fws, s, paintTransformedOutput, FWPaintTransformedOutput);
+    WRAP(fws, s, donePaintScreen, FWDonePaintScreen);
 
     WRAP(fws, s, damageWindowRect, FWDamageWindowRect);
 
@@ -279,6 +280,7 @@ static void freewinsFiniScreen(CompPlugin *p, CompScreen *s){
     UNWRAP (fws, s, paintWindow);
     UNWRAP (fws, s, paintOutput);
     UNWRAP (fws, s, paintTransformedOutput);
+    UNWRAP (fws, s, donePaintScreen);
 
     UNWRAP(fws, s, damageWindowRect);
 

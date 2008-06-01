@@ -257,6 +257,7 @@ typedef struct _FWScreen{
     PreparePaintScreenProc preparePaintScreen;
     PaintOutputProc paintOutput;
     PaintTransformedOutputProc paintTransformedOutput;
+    DonePaintScreenProc donePaintScreen;
     PaintWindowProc paintWindow;
 
     DamageWindowRectProc damageWindowRect;
@@ -369,6 +370,8 @@ FWPaintTransformedOutput (CompScreen              *s,
                               Region                  region,
                               CompOutput              *output,
                               unsigned int            mask);
+                              
+void FWDonePaintScreen (CompScreen *s);
 
 Bool FWDamageWindowRect(CompWindow *w,
                        Bool initial,

@@ -511,6 +511,34 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
     return status;
 }
 
+void FWDonePaintScreen (CompScreen *s)
+{
+	FREEWINS_DISPLAY (s->display);
+	FREEWINS_SCREEN (s);
+	
+	if (fwd->axisHelp && fwd->hoverWindow)
+	{
+	
+		FREEWINS_WINDOW (fwd->hoverWindow);
+
+		REGION region;
+
+		region.rects = &region.extents;
+		region.numRects = region.size = 1;
+
+		region.extents.x1 = MIN(WIN_REAL_X (fwd->hoverWindow), fww->outputRect.x1);
+		region.extents.x2 = MAX(WIN_REAL_X (fwd->hoverWindow) + WIN_REAL_W (fwd->hoverWindow) / 2.0f, fww->outputRect.x2);
+		region.extents.y1 = MIN(WIN_REAL_Y (fwd->hoverWindow), fww->outputRect.y1);
+		region.extents.y2 = MAX(WIN_REAL_Y (fwd->hoverWindow) + WIN_REAL_H (fwd->hoverWindow) / 2.0f, fww->outputRect.y2);
+
+		damageScreenRegion (s, &region);
+	}
+	
+	UNWRAP (fws, s, donePaintScreen);
+	(*s->donePaintScreen) (s);
+	WRAP (fws, s, donePaintScreen, FWDonePaintScreen);
+}
+
 /* Damage the Window Rect */
 Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
 
@@ -520,21 +548,15 @@ Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
     FREEWINS_WINDOW(w);
 
     if (fww->transformed)
-    {
         FWDamageArea (w);
-    }
     else
-    {
         status = FALSE;
-    }
 
-    if ((fwd->axisHelp) || (fww->grab == grabMove && !freewinsGetImmediateMoves (w->screen)))
+    if ((fww->grab == grabMove && !freewinsGetImmediateMoves (w->screen)))
         damageScreen (w->screen);
-        /* TODO: Calculate a region for the axisHelp */
 
     UNWRAP(fws, w->screen, damageWindowRect);
     status |= (*w->screen->damageWindowRect)(w, initial, rect);
-    //(*w->screen->damageWindowRect)(w, initial, rect);
     WRAP(fws, w->screen, damageWindowRect, FWDamageWindowRect);
 
     // true if damaged something
