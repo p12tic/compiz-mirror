@@ -71,12 +71,13 @@ FWShapeIPW (CompWindow *w)
 	
 	if (ipw)
 	{	
-    Pixmap b = XCreatePixmap (ipw->screen->display->display, xipw, ipw->width, ipw->height, 1);
     cairo_t 				*cr;
     int               width, height;
 
-    width = ipw->width;
-    height = ipw->height;
+    width = fww->outputRect.x2 - fww->outputRect.x1;
+    height = fww->outputRect.y2 - fww->outputRect.y1;
+    
+    Pixmap b = XCreatePixmap (ipw->screen->display->display, xipw, width, height, 1);
 
     cairo_surface_t *bitmap = cairo_xlib_surface_create_for_bitmap (ipw->screen->display->display,
     																									 b,
