@@ -102,8 +102,6 @@ static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned 
 {
     FREEWINS_SCREEN (w->screen);
 
-    //static int oldPointerX, oldPointerY;
-
     int dx = x - lastPointerX;
     int dy = y - lastPointerY;
 
@@ -114,7 +112,6 @@ static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned 
                   dy, TRUE, freewinsGetImmediateMoves (w->screen));
     syncWindowPosition (w);
 
-    FWAdjustIPW (w);
 }
 
 static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
@@ -156,7 +153,6 @@ static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigne
         configureXWindow (w, mask, &xwc);
     }
 
-    FWAdjustIPW (w);
 }
 
 
@@ -365,9 +361,6 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     }
 
     FWHandleSnap(w);
-
-    FWAdjustIPW (w);
-
 }
 
 /* Handle Scaling */
@@ -495,8 +488,6 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
     }
 
     FWHandleSnap(w);
-    FWAdjustIPW (w);
-
 }
 
 static void FWHandleButtonReleaseEvent (CompWindow *w)
@@ -509,7 +500,8 @@ static void FWHandleButtonReleaseEvent (CompWindow *w)
     {
         removeScreenGrab (w->screen, fws->grabIndex, NULL);
         (w->screen->windowUngrabNotify) (w);
-        moveInputFocusToWindow (w);
+        moveInputFocusToWindow (w);        
+		FWAdjustIPW (w);
         fws->grabIndex = 0;
         fwd->grabWindow = NULL;
         fww->grab = grabNone;

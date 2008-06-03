@@ -224,10 +224,6 @@ terminateFWRotate (CompDisplay     *d,
         	FREEWINS_WINDOW (fwd->grabWindow);
 		    if((fww->grab == grabRotate))
 		    {
-			if (FWCanShape (fwd->grabWindow))
-			    if (FWHandleWindowInputInfo (fwd->grabWindow))
-			        FWAdjustIPW (fwd->grabWindow);
-			        
 		    (fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
 		    
 		    int distX, distY;
@@ -239,18 +235,23 @@ terminateFWRotate (CompDisplay     *d,
 		    case RotationAxisClickPoint:
 		    case RotationAxisOppositeToClick:
 		    
-		    distX =  (fww->outputRect.x1 + (fww->outputRect.x2 - fww->outputRect.x1) / 2.0f) - (WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f);
-		    distY = (fww->outputRect.y1 + (fww->outputRect.y2 - fww->outputRect.y1) / 2.0f) - (WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
-		    
-		    moveWindow(fwd->grabWindow, distX, distY, TRUE, TRUE);
-		    syncWindowPosition (fwd->grabWindow);
-		    
-		    break;
+				distX =  (fww->outputRect.x1 + (fww->outputRect.x2 - fww->outputRect.x1) / 2.0f) - (WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f);
+				distY = (fww->outputRect.y1 + (fww->outputRect.y2 - fww->outputRect.y1) / 2.0f) - (WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
+				
+				moveWindow(fwd->grabWindow, distX, distY, TRUE, TRUE);
+				syncWindowPosition (fwd->grabWindow);
+				
+				break;
 		    
 		    default:
 		    	break;
 		    	
 	    	}
+	    	
+	    	
+			if (FWCanShape (fwd->grabWindow))
+			    if (FWHandleWindowInputInfo (fwd->grabWindow))
+			        FWAdjustIPW (fwd->grabWindow);
 		    
 			removeScreenGrab(s, fws->grabIndex, 0);
 			fws->grabIndex = 0;
@@ -427,11 +428,12 @@ terminateFWScale (CompDisplay     *d,
         	FREEWINS_WINDOW (fwd->grabWindow);
 		    if((fww->grab == grabScale))
 		    {
+			        
+		    (fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
+		    
 			if (FWCanShape (fwd->grabWindow))
 			    if (FWHandleWindowInputInfo (fwd->grabWindow))
 			        FWAdjustIPW (fwd->grabWindow);
-			        
-		    (fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
 		    
 		    removeScreenGrab(s, fws->grabIndex, 0);
 			fws->grabIndex = 0;
