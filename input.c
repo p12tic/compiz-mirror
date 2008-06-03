@@ -52,8 +52,11 @@
 
 /* ------ Input Prevention -------------------------------------------*/
 
-/* Shape the IPW */
-#if 0
+/* Shape the IPW
+  * Thanks to Joel Bosveld (b0le)
+  * for helping me with this section
+  */
+
 static void
 FWShapeIPW (CompWindow *w)
 {
@@ -72,12 +75,8 @@ FWShapeIPW (CompWindow *w)
     cairo_t 				*cr;
     int               width, height;
 
-   // screen = ScreenOfDisplay (ipw->screen->display->display, screen->screenNum);
-
     width = ipw->width;
     height = ipw->height;
-
-	// That wont work
 
     cairo_surface_t *bitmap = cairo_xlib_surface_create_for_bitmap (ipw->screen->display->display,
     																									 b,
@@ -86,40 +85,64 @@ FWShapeIPW (CompWindow *w)
 
     cr = cairo_create (bitmap);
     
-    /* Draw out what our window looks like so we can shape the ipw */
+    cairo_save (cr);
+	cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
+	cairo_paint (cr);
+	cairo_restore (cr);
+ 
+    /* Move to our first corner (TopLeft)  */
     
-    /* First get the points of the window */
+    cairo_move_to (cr, fww->input->shapex1 - WIN_REAL_X (w) + 100, fww->input->shapey1 - WIN_REAL_Y (w) + 100);
     
-    cairo_move_to (cr, fww->input->shapex1, fww->input->shapey1);
-    cairo_line_to (cr, fww->input->shapex2, fww->input->shapey2);
+    /* Line to TopRight */
     
-    cairo_move_to (cr, fww->input->shapex2, fww->input->shapey2);
-    cairo_line_to (cr, fww->input->shapex3, fww->input->shapey3);
+    cairo_line_to (cr, fww->input->shapex2 - WIN_REAL_X (w) + 100, fww->input->shapey2 - WIN_REAL_Y (w) + 100);
     
-    cairo_move_to (cr, fww->input->shapex3, fww->input->shapey3);
-    cairo_line_to (cr, fww->input->shapex4, fww->input->shapey4);
+    /* Line to BottomRight */
     
-    cairo_move_to (cr, fww->input->shapex4, fww->input->shapey4);
-    cairo_line_to (cr, fww->input->shapex1, fww->input->shapey1);
+    cairo_line_to (cr, fww->input->shapex4 - WIN_REAL_X (w) + 100, fww->input->shapey4 - WIN_REAL_Y (w) + 100);
     
-    cairo_stroke (cr);
+    /* Line to BottomLeft */
     
-    cairo_set_source_rgb (cr, 1.0f, 1.0f, 1.0f);
+    cairo_line_to (cr, fww->input->shapex3 - WIN_REAL_X (w) + 100, fww->input->shapey3 - WIN_REAL_Y (w) + 100);
     
+    /* Line to TopLeft*/
+    
+    cairo_line_to (cr, fww->input->shapex1 - WIN_REAL_X (w) + 100, fww->input->shapey1 - WIN_REAL_Y (w) + 100);
+    
+    /* Ensure it's all closed up */
+    
+    cairo_close_path (cr);
+    
+    /* Fill in the box */
+    
+    cairo_set_source_rgb (cr, 1.0f, 1.0f, 1.0f);    
     cairo_fill (cr);
     
-    cairo_paint (cr);
+    /* This takes the bitmap we just drew with cairo
+      * and scans out the white bits (You can see these)
+      * if you uncomment the following line after this
+      * comment. Then, all the bits we drew on are clickable,
+      * leaving us with a nice and neat window shape. Yummy.
+      */
     
-    XShapeSelectInput (ipw->screen->display->display, xipw, NoEventMask);
+    /* XWriteBitmap (ipw->screen->display->display,
+    							 "/path/to/filename/you/want/to/write/to.bmp",
+    							 b,
+    							 ipw->width,
+    							 ipw->height,
+    							 -1, -1); */
     
-    XShapeCombineMask (ipw->screen->display->display, b, ShapeBounding,
+    XShapeCombineMask (ipw->screen->display->display, xipw, ShapeBounding,
        	       0, 0, b, ShapeSet);
     
     XFreePixmap (ipw->screen->display->display, b);
+    cairo_surface_destroy (bitmap);
+    cairo_destroy (cr);
     }
     }
 }
-#endif
+
 
 static void
 FWSaveInputShape (CompWindow *w,
@@ -300,6 +323,9 @@ FWAdjustIPW (CompWindow *w)
 		      &xwc);
 
     XMapWindow (dpy, fww->input->ipw);
+    
+    FWShapeIPW (w);
+    
 }
 
 /* Create an input prevention window */
