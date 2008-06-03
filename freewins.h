@@ -150,6 +150,15 @@ typedef struct _FWWindowInputInfo {
     struct _FWWindowInputInfo *next;
 
     Window     ipw;
+    
+    float shapex1;
+    float shapex2;
+    float shapex3;
+    float shapex4;
+    float shapey1;
+    float shapey2;
+    float shapey3;
+    float shapey4;
 
     XRectangle *inputRects;
     int        nInputRects;

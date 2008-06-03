@@ -224,7 +224,7 @@ Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, float xSc
 {
         float leftmost, rightmost, topmost, bottommost;
         Box rect;
-
+        
         /* Left most point */
 
         leftmost = xScreen1;
@@ -343,6 +343,21 @@ Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
         FWRotateProjectVector(w, c2, transform, &xScreen2, &yScreen2, &zScreen2, FALSE);
         FWRotateProjectVector(w, c3, transform, &xScreen3, &yScreen3, &zScreen3, FALSE);
         FWRotateProjectVector(w, c4, transform, &xScreen4, &yScreen4, &zScreen4, FALSE);
+        
+		/* First, save the non-rectangular points so that we can shape the rectangular IPW */
+        
+        if (fww->input)
+        {
+        	fww->input->shapex1 = xScreen1;
+        	fww->input->shapex2 = xScreen2;
+        	fww->input->shapex3 = xScreen3;
+        	fww->input->shapex4 = xScreen4;
+        	fww->input->shapey1 = yScreen1;
+        	fww->input->shapey2 = yScreen2;
+        	fww->input->shapey3 = yScreen3;
+        	fww->input->shapey4 = yScreen4;
+    	}
+        	
 
         /* TODO: Use inverse matrix to calculate pointer position
                  on original window

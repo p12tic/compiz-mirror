@@ -1,2 +1,3 @@
 PLUGIN = freewins
-LDFLAGS_ADD = -lGLU
+LDFLAGS_ADD = -lGLU -lcairo
+PKG_DEP = cairo-xlib

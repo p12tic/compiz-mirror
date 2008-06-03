@@ -280,15 +280,10 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
          * with output
          */
 
-        /* It is safe to over-write variables
-         * as they will not be used to calculate
-         * output regions again
-         */
-
         FWCalculateInputRect (w);
-
+        
     }
-
+    
     // Check if there are rotated windows
     if(!((fww->transform.angX >= 0.0f - 0.05 &&
               fww->transform.angX <= 0.0f + 0.05 ) &&

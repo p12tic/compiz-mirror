@@ -48,8 +48,78 @@
  */
 
 #include "freewins.h"
+#include <cairo/cairo-xlib.h>
 
 /* ------ Input Prevention -------------------------------------------*/
+
+/* Shape the IPW */
+#if 0
+static void
+FWShapeIPW (CompWindow *w)
+{
+
+	FREEWINS_WINDOW (w);
+	
+	if (fww->input)
+	{
+
+	Window xipw = fww->input->ipw;
+	CompWindow *ipw = findWindowAtDisplay (w->screen->display, xipw);
+	
+	if (ipw)
+	{	
+    Pixmap b = XCreatePixmap (ipw->screen->display->display, xipw, ipw->width, ipw->height, 1);
+    cairo_t 				*cr;
+    int               width, height;
+
+   // screen = ScreenOfDisplay (ipw->screen->display->display, screen->screenNum);
+
+    width = ipw->width;
+    height = ipw->height;
+
+	// That wont work
+
+    cairo_surface_t *bitmap = cairo_xlib_surface_create_for_bitmap (ipw->screen->display->display,
+    																									 b,
+    																									 DefaultScreenOfDisplay (ipw->screen->display->display),
+    																									 width, height);
+
+    cr = cairo_create (bitmap);
+    
+    /* Draw out what our window looks like so we can shape the ipw */
+    
+    /* First get the points of the window */
+    
+    cairo_move_to (cr, fww->input->shapex1, fww->input->shapey1);
+    cairo_line_to (cr, fww->input->shapex2, fww->input->shapey2);
+    
+    cairo_move_to (cr, fww->input->shapex2, fww->input->shapey2);
+    cairo_line_to (cr, fww->input->shapex3, fww->input->shapey3);
+    
+    cairo_move_to (cr, fww->input->shapex3, fww->input->shapey3);
+    cairo_line_to (cr, fww->input->shapex4, fww->input->shapey4);
+    
+    cairo_move_to (cr, fww->input->shapex4, fww->input->shapey4);
+    cairo_line_to (cr, fww->input->shapex1, fww->input->shapey1);
+    
+    cairo_stroke (cr);
+    
+    cairo_set_source_rgb (cr, 1.0f, 1.0f, 1.0f);
+    
+    cairo_fill (cr);
+    
+    cairo_paint (cr);
+    
+    XShapeSelectInput (ipw->screen->display->display, xipw, NoEventMask);
+    
+    XShapeCombineMask (ipw->screen->display->display, b, ShapeBounding,
+       	       0, 0, b, ShapeSet);
+    
+    XFreePixmap (ipw->screen->display->display, b);
+    }
+    }
+}
+#endif
 
 static void
 FWSaveInputShape (CompWindow *w,
