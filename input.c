@@ -325,7 +325,7 @@ FWAdjustIPW (CompWindow *w)
 
     XMapWindow (dpy, fww->input->ipw);
     
-    FWShapeIPW (w);
+    //FWShapeIPW (w);
     
 }
 
