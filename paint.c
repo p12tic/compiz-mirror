@@ -496,6 +496,36 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glVertex3f(x - (WIN_REAL_W (fwd->hoverWindow) / 2), y, 0.0f);
 	glVertex3f(x + (WIN_REAL_W (fwd->hoverWindow) / 2), y, 0.0f);
 	glEnd ();
+	
+	/* Move to our first corner (TopLeft)  */
+	
+	CompWindow *w = fwd->hoverWindow;
+	
+	if (fww->input)
+	{
+	
+	glBegin(GL_LINES);
+	glVertex3f(fww->input->shapex1, fww->input->shapey1, 0.0f);
+	glVertex3f(fww->input->shapex2, fww->input->shapey2, 0.0f);
+	glEnd ();
+	
+	glBegin(GL_LINES);
+	glVertex3f(fww->input->shapex2, fww->input->shapey2, 0.0f);
+	glVertex3f(fww->input->shapex4, fww->input->shapey4, 0.0f);
+	glEnd ();
+	
+	glBegin(GL_LINES);
+	glVertex3f(fww->input->shapex4, fww->input->shapey4, 0.0f);
+	glVertex3f(fww->input->shapex3, fww->input->shapey3, 0.0f);
+	glEnd ();
+	
+	glBegin(GL_LINES);
+	glVertex3f(fww->input->shapex3, fww->input->shapey3, 0.0f);
+	glVertex3f(fww->input->shapex1, fww->input->shapey1, 0.0f);
+	glEnd ();
+	
+	}
+    
     /*
 	glColor4usv  (freewinsGetCrossLineColor (s));
 	glBegin(GL_LINES);
