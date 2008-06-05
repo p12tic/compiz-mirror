@@ -567,10 +567,23 @@ void FWDonePaintScreen (CompScreen *s)
 		region.rects = &region.extents;
 		region.numRects = region.size = 1;
 
-		region.extents.x1 = MIN(WIN_REAL_X (fwd->hoverWindow), fww->outputRect.x1);
-		region.extents.x2 = MAX(WIN_REAL_X (fwd->hoverWindow) + WIN_REAL_W (fwd->hoverWindow) / 2.0f, fww->outputRect.x2);
-		region.extents.y1 = MIN(WIN_REAL_Y (fwd->hoverWindow), fww->outputRect.y1);
-		region.extents.y2 = MAX(WIN_REAL_Y (fwd->hoverWindow) + WIN_REAL_H (fwd->hoverWindow) / 2.0f, fww->outputRect.y2);
+		region.extents.x1 = MIN(WIN_REAL_X (fwd->hoverWindow), 
+												WIN_REAL_X (fwd->hoverWindow)
+												+ WIN_REAL_W (fwd->hoverWindow)
+												 / 2.0f - fww->radius);
+ 		region.extents.x2 = MAX(WIN_REAL_X (fwd->hoverWindow), 
+										WIN_REAL_X (fwd->hoverWindow)
+										+ WIN_REAL_W (fwd->hoverWindow)
+										 / 2.0f + fww->radius);
+										 
+		region.extents.y1 = MIN(WIN_REAL_Y (fwd->hoverWindow), 
+												WIN_REAL_Y (fwd->hoverWindow)
+												+ WIN_REAL_H (fwd->hoverWindow)
+												 / 2.0f - fww->radius);
+ 		region.extents.y2 = MAX(WIN_REAL_Y (fwd->hoverWindow), 
+										WIN_REAL_Y (fwd->hoverWindow)
+										+ WIN_REAL_H (fwd->hoverWindow)
+										 / 2.0f + fww->radius);
 
 		damageScreenRegion (s, &region);
 	}
