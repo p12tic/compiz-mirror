@@ -127,12 +127,12 @@ FWShapeIPW (CompWindow *w)
       * leaving us with a nice and neat window shape. Yummy.
       */
     
-     XWriteBitmapFile (ipw->screen->display->display,
+     /* XWriteBitmapFile (ipw->screen->display->display,
     							 "/home/Sam/test2.bmp",
     							 b,
     							 ipw->width,
     							 ipw->height,
-    							 -1, -1); 
+    							 -1, -1);  */
     							 
     XShapeCombineMask (ipw->screen->display->display, xipw, ShapeBounding,
        	       0, 0, b, ShapeSet);
