@@ -668,7 +668,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		    }
 		    if (fww->grab == grabScale)
 		    {
-		        FWHandleScaleMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);		      
+		        FWHandleScaleMotionEvent(fwd->grabWindow, dx * 3, dy * 3, ev->xmotion.x, ev->xmotion.y);		      
 		    }
 
 	        if(dx != 0.0 || dy != 0.0)

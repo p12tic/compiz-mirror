@@ -434,7 +434,27 @@ terminateFWScale (CompDisplay     *d,
 			if (FWCanShape (fwd->grabWindow))
 			    if (FWHandleWindowInputInfo (fwd->grabWindow))
 			        FWAdjustIPW (fwd->grabWindow);
-		    
+			        
+    		    switch (freewinsGetScaleMode (fwd->grabWindow->screen))
+				{
+
+				int distX, distY;
+
+				case ScaleModeToOppositeCorner:
+	
+					distX =  (fww->outputRect.x1 + (fww->outputRect.x2 - fww->outputRect.x1) / 2.0f) - (WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f);
+					distY = (fww->outputRect.y1 + (fww->outputRect.y2 - fww->outputRect.y1) / 2.0f) - (WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
+	
+					moveWindow(fwd->grabWindow, distX, distY, TRUE, TRUE);
+					syncWindowPosition (fwd->grabWindow);
+	
+					break;
+	
+				default:
+					break;
+		
+				}
+    
 		    removeScreenGrab(s, fws->grabIndex, 0);
 			fws->grabIndex = 0;
 			fwd->grabWindow = NULL;
