@@ -503,8 +503,6 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	
 	/* Move to our first corner (TopLeft)  */
 	
-	CompWindow *w = fwd->hoverWindow;
-	
 	if (fww->input)
 	{
 	

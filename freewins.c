@@ -92,7 +92,7 @@ FWWindowMoveNotify (CompWindow *w,
     useWindow = FWGetRealWindow (w); /* Did we move an IPW and not the actual window? */
     if (useWindow)
         moveWindow (useWindow, dx, dy, TRUE, freewinsGetImmediateMoves (w->screen));
-    //else if (w != fwd->grabWindow)
+    else if (w != fwd->grabWindow)
         FWAdjustIPW (w); /* We moved a window but not the IPW, so adjust it */
 
 	int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
