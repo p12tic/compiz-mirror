@@ -304,8 +304,6 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
         }
     }
     
-    //FWHandleWindowInputInfo (w);
-
     if (fww->transformed)
     if(wasCulled)
 	glDisable(GL_CULL_FACE);
@@ -328,6 +326,12 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
      (fww->transform.scaleY >= fww->animate.destScaleY - 0.00005 &&
       fww->transform.scaleY <= fww->animate.destScaleY + 0.00005 ))))
       FWDamageArea (w);
+  else /* We're done animating now*/
+  {
+  	if (FWHandleWindowInputInfo (w))
+		FWAdjustIPW (w);
+  }
+	
     
 
     if(wasCulled)
