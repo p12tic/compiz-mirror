@@ -93,23 +93,23 @@ FWShapeIPW (CompWindow *w)
  
     /* Move to our first corner (TopLeft)  */
     
-    cairo_move_to (cr, fww->input->shapex1 - WIN_REAL_X (ipw), fww->input->shapey1 - WIN_REAL_Y (ipw));
+    cairo_move_to (cr, fww->input->shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
     
     /* Line to TopRight */
     
-    cairo_line_to (cr, fww->input->shapex2 - WIN_REAL_X (ipw), fww->input->shapey2 - WIN_REAL_Y (ipw));
+    cairo_line_to (cr, fww->input->shapex2 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey2 - MIN(fww->inputRect.y1, fww->inputRect.y2));
     
     /* Line to BottomRight */
     
-    cairo_line_to (cr, fww->input->shapex4 - WIN_REAL_X (ipw), fww->input->shapey4 - WIN_REAL_Y (ipw));
+    cairo_line_to (cr, fww->input->shapex4 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey4 - MIN(fww->inputRect.y1, fww->inputRect.y2));
     
     /* Line to BottomLeft */
     
-    cairo_line_to (cr, fww->input->shapex3 - WIN_REAL_X (ipw), fww->input->shapey3 - WIN_REAL_Y (ipw));
+    cairo_line_to (cr, fww->input->shapex3 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey3 - MIN(fww->inputRect.y1, fww->inputRect.y2));
     
     /* Line to TopLeft*/
     
-    cairo_line_to (cr, fww->input->shapex1 - WIN_REAL_X (ipw), fww->input->shapey1 - WIN_REAL_Y (ipw) );
+    cairo_line_to (cr, fww->input->shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
     
     /* Ensure it's all closed up */
     
@@ -127,12 +127,12 @@ FWShapeIPW (CompWindow *w)
       * leaving us with a nice and neat window shape. Yummy.
       */
     
-     /* XWriteBitmapFile (ipw->screen->display->display,
+     XWriteBitmapFile (ipw->screen->display->display,
     							 "/home/Sam/test2.bmp",
     							 b,
     							 ipw->width,
     							 ipw->height,
-    							 -1, -1);  */
+    							 -1, -1); 
     							 
     XShapeCombineMask (ipw->screen->display->display, xipw, ShapeBounding,
        	       0, 0, b, ShapeSet);
@@ -309,6 +309,8 @@ FWAdjustIPW (CompWindow *w)
     if (!fww->input || !fww->input->ipw)
 	return;
 
+	/* Repaint the window and recalculate rects */	
+
     width  = fww->inputRect.x2 - fww->inputRect.x1;
     height = fww->inputRect.y2 - fww->inputRect.y1;
 
@@ -325,7 +327,10 @@ FWAdjustIPW (CompWindow *w)
 
     XMapWindow (dpy, fww->input->ipw);
     
-    //FWShapeIPW (w);
+    /* Don't shape if we're grabbed */
+    
+    if (fww->grab == grabNone)    
+    FWShapeIPW (w);
     
 }
 

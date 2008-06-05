@@ -281,6 +281,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
          */
 
         FWCalculateInputRect (w);
+        FWAdjustIPW (w);
         
     }
     
