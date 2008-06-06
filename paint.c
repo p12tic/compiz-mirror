@@ -258,6 +258,8 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
      	if (fww->grab != grabRotate && fww->grab != grabScale)
      	{
      	
+     	fprintf(stderr, "Grab is not as expected. Adjusting To center\n");
+     	
 		FWCalculateInputOrigin(w,
 											WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
 			                      			WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
@@ -266,6 +268,8 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 			                      			WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
 			                      			
 		}
+		else
+		fprintf(stderr, "Grab isas expected. not Adjusting To center\n");
 
         FWModifyMatrix (w, &wTransform,
                         angX,
@@ -325,11 +329,16 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
       fww->transform.scaleX <= fww->animate.destScaleX + 0.00005 ) &&
      (fww->transform.scaleY >= fww->animate.destScaleY - 0.00005 &&
       fww->transform.scaleY <= fww->animate.destScaleY + 0.00005 ))))
+  {
       FWDamageArea (w);
-  else /* We're done animating now*/
+      fww->isAnimating = TRUE;
+  }
+  else if (fww->isAnimating) /* We're done animating now, and we were animating*/
   {
   	if (FWHandleWindowInputInfo (w))
 		FWAdjustIPW (w);
+		
+	fww->isAnimating = FALSE;
   }
 	
     

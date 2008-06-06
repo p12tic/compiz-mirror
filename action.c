@@ -346,6 +346,8 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
 	    else if (pointerX < MidX)
 	        fww->corner = CornerTopLeft;
 	}
+	
+	//fprintf(stderr, "corner is % mode is %ii\n", fww->corner);
 
     switch (freewinsGetScaleMode (w->screen))
     {

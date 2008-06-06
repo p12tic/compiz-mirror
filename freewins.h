@@ -324,12 +324,13 @@ typedef struct _FWWindow{
 
     // Used to determine whether to animate the window
     Bool resetting;
+    Bool isAnimating;
     
     // Used to determine whether rotating on X and Y axis, or just on Z
-    Bool can2D;
+    Bool can2D; // These need to be removed
     Bool can3D;
 
-    Bool transformed;
+    Bool transformed; // So does this in favor of FWWindowInputInfo
     
     FWGrabType grab;
 
