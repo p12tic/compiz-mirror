@@ -755,7 +755,8 @@ widgetFiniDisplay (CompPlugin  *p,
     UNWRAP (wd, d, matchExpHandlerChanged);
     UNWRAP (wd, d, matchInitExp);
 
-    (*d->matchExpHandlerChanged) (d);
+    if (d->base.parent)
+	(*d->matchExpHandlerChanged) (d);
 
     free (wd);
 }
