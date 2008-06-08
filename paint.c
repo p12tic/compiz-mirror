@@ -255,10 +255,12 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
      	 
      	/* Adjust the window in the matrix to prepare for transformation */
      	
+     	//fprintf(stderr, "Centers before check %f %f\n", fww->iMidX, fww->iMidY);
+     	
      	if (fww->grab != grabRotate && fww->grab != grabScale)
      	{
      	
-     	fprintf(stderr, "Grab is not as expected. Adjusting To center\n");
+     	//fprintf(stderr, "Grab is not as expected. Adjusting To center\n");
      	
 		FWCalculateInputOrigin(w,
 											WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
@@ -268,8 +270,8 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 			                      			WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
 			                      			
 		}
-		else
-		fprintf(stderr, "Grab isas expected. not Adjusting To center\n");
+		else		
+     	fprintf(stderr, "Centers after check %f %f\n", fww->iMidX, fww->iMidY);
 
         FWModifyMatrix (w, &wTransform,
                         angX,

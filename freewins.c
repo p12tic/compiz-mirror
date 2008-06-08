@@ -57,12 +57,16 @@ void FWWindowResizeNotify(CompWindow *w, int dx, int dy, int dw, int dh)
 {
     FREEWINS_WINDOW(w);
     FREEWINS_SCREEN(w->screen);
+    
+    FWCalculateInputRect (w);
+    FWCalculateInputOrigin (w, fww->inputRect.x1 + (fww->inputRect.x2 - fww->inputRect.x1) / 2.0f,
+    											 fww->inputRect.y1 + (fww->inputRect.y2 - fww->inputRect.y1) / 2.0f);
 
-    fww->iMidX += dw;
+    /*fww->iMidX += dw;
     fww->iMidY += dh;
 
     fww->winH += dh;
-    fww->winW += dw;
+    fww->winW += dw;*/
 
 	int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
 	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
@@ -88,6 +92,10 @@ FWWindowMoveNotify (CompWindow *w,
     FREEWINS_WINDOW (w);
 
     CompWindow *useWindow;
+    
+    FWCalculateInputRect (w);
+    FWCalculateInputOrigin (w, fww->inputRect.x1 + (fww->inputRect.x2 - fww->inputRect.x1) / 2.0f,
+    											 fww->inputRect.y1 + (fww->inputRect.y2 - fww->inputRect.y1) / 2.0f);
 
     useWindow = FWGetRealWindow (w); /* Did we move an IPW and not the actual window? */
     if (useWindow)
