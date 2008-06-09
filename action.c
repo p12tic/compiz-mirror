@@ -167,13 +167,13 @@ Bool initiateFWRotate (CompDisplay *d, CompAction *action,
 				                      			WIN_OUTPUT_Y (fwd->grabWindow) + WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
             break;
         case RotationAxisClickPoint:            
-            FWCalculateInputOrigin(w, fwd->click_root_x, fwd->click_root_y);
-            FWCalculateOutputOrigin(w, fwd->click_root_x, fwd->click_root_y);
+            FWCalculateInputOrigin(fwd->grabWindow, fwd->click_root_x, fwd->click_root_y);
+            FWCalculateOutputOrigin(fwd->grabWindow, fwd->click_root_x, fwd->click_root_y);
             break;
         case RotationAxisOppositeToClick:            
-            FWCalculateInputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
+            FWCalculateInputOrigin(fwd->grabWindow, w->attrib.x + w->width - fwd->click_root_x,
                                       w->attrib.y + w->height - fwd->click_root_y);
-            FWCalculateOutputOrigin(w, w->attrib.x + w->width - fwd->click_root_x,
+            FWCalculateOutputOrigin(fwd->grabWindow, w->attrib.x + w->width - fwd->click_root_x,
                                       w->attrib.y + w->height - fwd->click_root_y);
             break;
     }
