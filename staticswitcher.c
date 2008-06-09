@@ -145,6 +145,9 @@ isSwitchWin (CompWindow *w)
 
 	if (w->state & CompWindowStateSkipTaskbarMask)
 	    return FALSE;
+
+	if (!matchEval (staticswitcherGetWindowMatch (s), w))
+	    return FALSE;
     }
 
     if (ss->selection == CurrentViewport)
@@ -169,9 +172,6 @@ isSwitchWin (CompWindow *w)
 	    ss->clientLeader != w->id)
 	    return FALSE;
     }
-
-    if (!matchEval (staticswitcherGetWindowMatch (s), w))
-	return FALSE;
 
     return TRUE;
 }

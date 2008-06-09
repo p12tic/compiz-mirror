@@ -122,7 +122,7 @@
 		<option name="window_match" type="match">
 		    <_short>Switcher windows</_short>
 		    <_long>Windows that should be shown in switcher</_long>
-		    <default>any</default>
+		    <default>Normal | Dialog | Toolbar | Utility | Unknown</default>
 		</option>
 		<option name="bring_to_front" type="bool">
 		    <_short>Bring To Front</_short>
