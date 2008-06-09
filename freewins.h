@@ -290,8 +290,11 @@ typedef struct _FWWindow{
     float iMidX;
     float iMidY;
 
-    float oMidX;
+    float oMidX; /* These will be removed */
     float oMidY;
+    
+    float adjustX;
+    float adjustY;
 
     float radius;
     
@@ -570,7 +573,8 @@ Box FWCreateSizedRect (float xScreen1,
 void FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
                      float angX, float angY, float angZ,
                      float tX, float tY, float tZ,
-                     float scX, float scY, float scZ);
+                     float scX, float scY, float scZ,
+                     float adjustX, float adjustY);
 
 void FWRotateProjectVector (CompWindow *w,
                            CompVector vector,

@@ -90,9 +90,12 @@ void
 FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
                  float angX, float angY, float angZ,
                  float tX, float tY, float tZ,
-                 float scX, float scY, float scZ)
+                 float scX, float scY, float scZ,
+                 float adjustX, float adjustY)
 {
     /* Create our transformation Matrix */
+    
+    //fprintf(stderr, "adjustX %f adjustY %f\n", adjustX, adjustY);
 
     matrixScale (mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
     matrixTranslate(mTransform, 
@@ -304,7 +307,7 @@ Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
                         fww->transform.angZ,
                         fww->iMidX, fww->iMidY, 0.0f,
                         fww->transform.scaleX,
-                        fww->transform.scaleY, 0.0f);  
+                        fww->transform.scaleY, 0.0f, 0.0f, 0.0f);  
 
         /*CompTransform inverse;
         FWFindInverseMatrix (&transform, &inverse);

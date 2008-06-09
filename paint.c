@@ -270,15 +270,15 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 			                      			WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
 			                      			
 		}
-		else		
-     	fprintf(stderr, "Centers after check %f %f\n", fww->iMidX, fww->iMidY);
+		/*else		
+     	fprintf(stderr, "Centers after check %f %f\n", fww->iMidX, fww->iMidY);*/
 
         FWModifyMatrix (w, &wTransform,
                         angX,
                         angY,
                         angZ,
                         fww->iMidX, fww->iMidY , 0.0f,
-                        scaleX, scaleY, 1.0f);
+                        scaleX, scaleY, 1.0f, fww->adjustX, fww->adjustY);
                         
         //fprintf(stderr, "iMidX is %f iMidY is %f\n", fww->iMidX, fww->iMidY);
 

@@ -175,6 +175,9 @@ static Bool freewinsInitWindow(CompPlugin *p, CompWindow *w){
 
     fww->iMidX = WIN_REAL_W(w)/2.0;
     fww->iMidY = WIN_REAL_H(w)/2.0;
+    
+    fww->adjustX = 0.0f;
+    fww->adjustY = 0.0f;
 
 	int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
 	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
