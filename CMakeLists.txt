@@ -1,3 +1,3 @@
 include (CompizFusion)
 
-compiz_fusion_plugin (freewins)
+compiz_fusion_plugin (freewins PKGDEPS cairo-xlib)
