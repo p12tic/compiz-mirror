@@ -1577,7 +1577,7 @@ writeIntegratedOption (CCSContext *context,
 		if (!ccsGetBool (setting, &clickToFocus))
 		    break;
 
-		newValue = clickToFocus ? "click" : "mouse";
+		newValue = clickToFocus ? "click" : "sloppy";
 		currentValue = gconf_client_get_string (client,
 							optionName, &err);
 
