@@ -109,6 +109,9 @@ FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
     matrixTranslate(mTransform, 
             -(tX), 
             -(tY), 0.0f);
+    matrixTranslate(mTransform,
+    		adjustX,
+    		adjustY, 0.0f);
 }
 /*
 static float det3(float m00, float m01, float m02,

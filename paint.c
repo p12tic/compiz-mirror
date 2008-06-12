@@ -272,13 +272,40 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
 		}
 		/*else		
      	fprintf(stderr, "Centers after check %f %f\n", fww->iMidX, fww->iMidY);*/
+     	
+     	float adjustX, adjustY;
 
+		/*if (fww->grab == grabScale)
+		switch (fww->corner)
+		{
+			case CornerBottomLeft:
+			adjustX =	(w->input.right * (fww->transform.scaleX - 1.0f)) / fww->transform.scaleX;
+			adjustY = (w->input.top * (fww->transform.scaleY - 1.0f)) / fww->transform.scaleY;
+			break;
+			case CornerBottomRight:
+			adjustX =	(w->input.left * (fww->transform.scaleX - 1.0f)) / fww->transform.scaleX;
+			adjustY = (w->input.top * (fww->transform.scaleY - 1.0f)) / fww->transform.scaleY;
+			break;
+			case CornerTopLeft:
+			adjustX =	(w->input.right * (fww->transform.scaleX - 1.0f)) / fww->transform.scaleX;
+			adjustY = (w->input.bottom * (fww->transform.scaleY - 1.0f)) / fww->transform.scaleY;
+			break;
+			case CornerTopRight:
+			adjustX =	(w->input.left * (fww->transform.scaleX - 1.0f)) / fww->transform.scaleX;
+			adjustY = (w->input.bottom * (fww->transform.scaleY - 1.0f)) / fww->transform.scaleY;
+			break;
+		}
+		else
+		{*/
+		adjustX = 0.0f;
+		adjustY = 0.0f;
+		//}
         FWModifyMatrix (w, &wTransform,
                         angX,
                         angY,
                         angZ,
                         fww->iMidX, fww->iMidY , 0.0f,
-                        scaleX, scaleY, 1.0f, fww->adjustX, fww->adjustY);
+                        scaleX, scaleY, 1.0f, adjustX, adjustY);
                         
         //fprintf(stderr, "iMidX is %f iMidY is %f\n", fww->iMidX, fww->iMidY);
 
@@ -510,6 +537,16 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glBegin(GL_LINES);
 	glVertex3f(x - (WIN_REAL_W (fwd->hoverWindow) / 2), y, 0.0f);
 	glVertex3f(x + (WIN_REAL_W (fwd->hoverWindow) / 2), y, 0.0f);
+	glEnd ();
+	
+	glBegin(GL_LINES);
+	glVertex3f(0, fww->iMidY, 0.0f);
+	glVertex3f(s->width, fww->iMidY, 0.0f);
+	glEnd ();
+	
+	glBegin(GL_LINES);
+	glVertex3f(fww->iMidX, 0, 0.0f);
+	glVertex3f(fww->iMidX, s->height, 0.0f);
 	glEnd ();
 	
 	/* Move to our first corner (TopLeft)  */
