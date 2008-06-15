@@ -312,7 +312,6 @@ static Bool freewinsInitDisplay(CompPlugin *p, CompDisplay *d){
     
     // Set variables correctly
     fwd->grabWindow = 0;
-    fwd->lastGrabWindow = 0;
     fwd->axisHelp = FALSE;
     fwd->hoverWindow = 0;
      
