@@ -441,7 +441,7 @@ FWPaintOutput(CompScreen *s,
 		    glColor4f (1.0 * (i==0), 1.0 * (i==1), 1.0 * (i==2), 1.0);
 		    glRotatef (90.0, 1.0 * (i==0), 1.0 * (i==1), 1.0 * (i==2));
 
-		    glBegin GL_LINE_LOOP);
+		    glBegin (GL_LINE_LOOP);
 		    for (j=360; j>=0; j -= 10)
 			glVertex3f ( cos (D2R (j)), sin (D2R (j)), 0.0 );
 		    glEnd ();

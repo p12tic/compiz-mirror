@@ -293,7 +293,7 @@ FWCalculateWindowRect (CompWindow *w,
                            CompVector c1,
                            CompVector c2,
                            CompVector c3,
-                           CompVector c4);
+                           CompVector c4)
 {
 
         FREEWINS_WINDOW (w);
