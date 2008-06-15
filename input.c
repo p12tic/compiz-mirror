@@ -56,19 +56,18 @@
   * Thanks to Joel Bosveld (b0le)
   * for helping me with this section
   */
-
 static void
 FWShapeIPW (CompWindow *w)
 {
 
 	FREEWINS_WINDOW (w);
-	
+
 	if (fww->input)
 	{
 
 	Window xipw = fww->input->ipw;
 	CompWindow *ipw = findWindowAtDisplay (w->screen->display, xipw);
-	
+
 	if (ipw)
 	{	
     cairo_t 				*cr;
@@ -76,7 +75,7 @@ FWShapeIPW (CompWindow *w)
 
     width = fww->inputRect.x2 - fww->inputRect.x1;
     height = fww->inputRect.y2 - fww->inputRect.y1;
-    
+
     Pixmap b = XCreatePixmap (ipw->screen->display->display, xipw, width, height, 1);
 
     cairo_surface_t *bitmap = cairo_xlib_surface_create_for_bitmap (ipw->screen->display->display,
@@ -85,65 +84,68 @@ FWShapeIPW (CompWindow *w)
     																									 width, height);
 
     cr = cairo_create (bitmap);
-    
+
     cairo_save (cr);
 	cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
 	cairo_paint (cr);
 	cairo_restore (cr);
- 
+
     /* Move to our first corner (TopLeft)  */
-    
+
     cairo_move_to (cr, fww->input->shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
-    
+
     /* Line to TopRight */
-    
+
     cairo_line_to (cr, fww->input->shapex2 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey2 - MIN(fww->inputRect.y1, fww->inputRect.y2));
-    
+
     /* Line to BottomRight */
-    
+
     cairo_line_to (cr, fww->input->shapex4 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey4 - MIN(fww->inputRect.y1, fww->inputRect.y2));
-    
+
     /* Line to BottomLeft */
-    
+
     cairo_line_to (cr, fww->input->shapex3 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey3 - MIN(fww->inputRect.y1, fww->inputRect.y2));
-    
+
     /* Line to TopLeft*/
-    
+
     cairo_line_to (cr, fww->input->shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->input->shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
-    
+
     /* Ensure it's all closed up */
-    
+
     cairo_close_path (cr);
-    
+
     /* Fill in the box */
-    
+
     cairo_set_source_rgb (cr, 1.0f, 1.0f, 1.0f);    
     cairo_fill (cr);
-    
+ 
     /* This takes the bitmap we just drew with cairo
       * and scans out the white bits (You can see these)
       * if you uncomment the following line after this
       * comment. Then, all the bits we drew on are clickable,
       * leaving us with a nice and neat window shape. Yummy.
       */
-    
+
      /* XWriteBitmapFile (ipw->screen->display->display,
-    							 "/home/Sam/test2.bmp",
+    							 "/path/to/your/image.bmp",
     							 b,
     							 ipw->width,
     							 ipw->height,
     							 -1, -1);  */
-    							 
-    XShapeCombineMask (ipw->screen->display->display, xipw, ShapeBounding,
-       	       0, 0, b, ShapeSet);
-    
+
+    XShapeCombineMask (ipw->screen->display->display, xipw,
+    									 ShapeBounding,
+       	       							0,
+       	       							0,
+       	       							b,
+       	       							ShapeSet);
+
     XFreePixmap (ipw->screen->display->display, b);
     cairo_surface_destroy (bitmap);
     cairo_destroy (cr);
     }
     }
 }
-
 
 static void
 FWSaveInputShape (CompWindow *w,
@@ -210,7 +212,8 @@ FWUnshapeInput (CompWindow *w)
 
 
 /* Input Shaper. This no longer adjusts the shape of the window
-   but instead shapes it to 0 as the IPW deals with the input.  */
+    but instead shapes it to 0 as the IPW deals with the input.
+  */
 static void FWShapeInput (CompWindow *w)
 {
     CompWindow *fw;
@@ -294,9 +297,8 @@ FWRemoveWindowFromList (FWWindowInputInfo *info)
     }
 }
 
-
 /* Adjust size and location of the input prevention window
- */
+  */
 void 
 FWAdjustIPW (CompWindow *w)
 {
@@ -328,7 +330,7 @@ FWAdjustIPW (CompWindow *w)
     XMapWindow (dpy, fww->input->ipw);
     
     /* Don't shape if we're grabbed */
-    
+
     if (fww->grab == grabNone)    
     FWShapeIPW (w);
     
@@ -358,7 +360,7 @@ FWCreateIPW (CompWindow *w)
 			 0, CopyFromParent, InputOnly, CopyFromParent,
 			 CWEventMask | CWOverrideRedirect,
 			 &attrib);
- 
+
     fww->input->ipw = ipw;
 
     FWAdjustIPW (w);
