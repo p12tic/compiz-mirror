@@ -89,8 +89,6 @@
                        GET_FREEWINS_SCREEN  (w->screen,            \
                        GET_FREEWINS_DISPLAY (w->screen->display)))
 
-
-
 #define WIN_OUTPUT_X(w) (w->attrib.x - w->output.left)
 #define WIN_OUTPUT_Y(w) (w->attrib.y - w->output.top)
 
@@ -186,8 +184,6 @@ typedef struct _FWTransformedWindowInfo
 {
     FWTrackball trackball;
 
-    /* XXX: These will be removed in favor of the matricies */
-
     float angX;
     float angY;
     float angZ;
@@ -233,22 +229,16 @@ typedef struct _FWAnimationInfo
 } FWAnimationInfo;
 
 /* Freewins Display Structure */
-typedef struct _FWDisplay{
+typedef struct _FWDisplay
+{
     int screenPrivateIndex;
     
     int click_root_x;
     int click_root_y;
 
-    // ZOMG Input Redirection
-    /*
-    float transformed_px;
-    float transformed_py;
-    */
-
     HandleEventProc handleEvent;
 
     CompWindow *grabWindow;
-    CompWindow *lastGrabWindow;
     CompWindow *hoverWindow;
 
     Bool axisHelp;
@@ -260,7 +250,8 @@ typedef struct _FWDisplay{
 } FWDisplay;
 
 /* Freewins Screen Structure */
-typedef struct _FWScreen{
+typedef struct _FWScreen
+{
     int windowPrivateIndex;
 
     PreparePaintScreenProc preparePaintScreen;
@@ -285,7 +276,8 @@ typedef struct _FWScreen{
 } FWScreen;
 
 /* Freewins Window Structure */
-typedef struct _FWWindow{
+typedef struct _FWWindow
+{
 
     float iMidX;
     float iMidY;
