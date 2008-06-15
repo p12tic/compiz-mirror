@@ -273,6 +273,19 @@ terminateFWRotate (CompDisplay     *d,
     return FALSE;
 }
 
+/*static void FWMoveWindowToCorrectPosition (CompWindow *w, float distX, float distY)
+{
+
+	FREEWINS_WINDOW (w);
+
+	fprintf(stderr, "distX is %f distY is %f midX and midY are %f %f\n", distX, distY, fww->iMidX, fww->iMidY);
+	
+	moveWindow (w, distX * (1 + (1 - fww->transform.scaleX)), distY * (1 + (1 - fww->transform.scaleY)), TRUE, FALSE);
+	
+	syncWindowPosition (w);
+}*/
+	
+
 /* Initiate Scaling */
 Bool initiateFWScale (CompDisplay *d, CompAction *action, 
 	CompActionState state, CompOption *option, int nOption) {
@@ -357,53 +370,40 @@ Bool initiateFWScale (CompDisplay *d, CompAction *action,
     switch (freewinsGetScaleMode (w->screen))
     {
         case ScaleModeToCentre:
-        //fprintf(stderr, "Default to center\n");
             FWCalculateInputOrigin(useW, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
                                       WIN_REAL_Y (useW) + WIN_REAL_H (useW) / 2.0f);
             FWCalculateOutputOrigin(useW, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w) / 2.0f,
                                        WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
             break;
+        /** 
+          *Experimental scale to corners mode
+          */
         case ScaleModeToOppositeCorner:
-        //fprintf(stderr, "Checking the corner, attribs are x %d y %d h %d w %d\n", WIN_REAL_X (w), WIN_REAL_Y (w), WIN_REAL_H (w), WIN_REAL_W (w));
             switch (fww->corner)
             {
                 case CornerBottomRight:
                 /* Translate origin to the top left of the window */
+                //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 - WIN_REAL_X (useW) , fww->inputRect.y1 - WIN_REAL_Y (useW));
                 FWCalculateInputOrigin (useW, WIN_REAL_X (useW), WIN_REAL_Y (useW));
-                FWCalculateOutputOrigin (useW, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w));
-                fww->adjustX = fww->iMidX - WIN_REAL_X (useW);
-                fww->adjustY = fww->iMidY - WIN_REAL_Y (useW);
-                //fprintf(stderr, "Cbr before check check%f %f\n", fww->iMidX, fww->iMidY);
                 break;
                 case CornerBottomLeft:
                 /* Translate origin to the top right of the window */
+                //FWMoveWindowToCorrectPosition (w, fww->inputRect.x2 - (WIN_REAL_X (useW) + WIN_REAL_W (useW)), fww->inputRect.y1 - WIN_REAL_Y (useW));
                 FWCalculateInputOrigin (useW, WIN_REAL_X (useW) + (WIN_REAL_W (useW)), WIN_REAL_Y (useW));
-                FWCalculateOutputOrigin (useW, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w));
-                fww->adjustX = fww->iMidX - WIN_REAL_X (useW) + (WIN_REAL_W (useW));
-                fww->adjustY = fww->iMidY - WIN_REAL_Y (useW);
-                //fprintf(stderr, "Cbl before check check%f %f\n", fww->iMidX, fww->iMidY);
                 break;
                 case CornerTopRight:
                 /* Translate origin to the bottom left of the window */
+                //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 - WIN_REAL_X (useW) , fww->inputRect.y1 - (WIN_REAL_Y (useW) + WIN_REAL_H (useW)));
                 FWCalculateInputOrigin (useW, WIN_REAL_X (useW), WIN_REAL_Y (useW) + (WIN_REAL_H (useW)));
-                FWCalculateOutputOrigin (useW, WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w));
-                fww->adjustX = fww->iMidX - WIN_REAL_X (useW);
-                fww->adjustY = fww->iMidY - WIN_REAL_Y (useW) + (WIN_REAL_H (useW));
-                //fprintf(stderr, "Ctr before check check%f %f\n", fww->iMidX, fww->iMidY);
                 break;
                 case CornerTopLeft:
                 /* Translate origin to the bottom right of the window */
+                //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 -(WIN_REAL_X (useW) + WIN_REAL_W (useW)) , fww->inputRect.y1 - (WIN_REAL_Y (useW) + WIN_REAL_H (useW)));
                 FWCalculateInputOrigin (useW, WIN_REAL_X (useW) + (WIN_REAL_W (useW)), WIN_REAL_Y (useW) + (WIN_REAL_H (useW)));
-                FWCalculateOutputOrigin (useW, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w));
-                fww->adjustX = fww->iMidX - WIN_REAL_X (useW) + (WIN_REAL_W (useW));
-                fww->adjustY = fww->iMidY - WIN_REAL_Y (useW) + (WIN_REAL_H (useW));
-                //fprintf(stderr, "Ctl before check check%f %f\n", fww->iMidX, fww->iMidY);
                 break;
             }
             break;
     }
-
- 	fprintf(stderr, "Centers before check check%f %f\n", fww->iMidX, fww->iMidY);
 
     fww->grab = grabScale;
 

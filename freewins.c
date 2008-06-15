@@ -94,8 +94,8 @@ FWWindowMoveNotify (CompWindow *w,
     CompWindow *useWindow;
     
     FWCalculateInputRect (w);
-    FWCalculateInputOrigin (w, fww->inputRect.x1 + (fww->inputRect.x2 - fww->inputRect.x1) / 2.0f,
-    											 fww->inputRect.y1 + (fww->inputRect.y2 - fww->inputRect.y1) / 2.0f);
+    /*FWCalculateInputOrigin (w, fww->inputRect.x1 + (fww->inputRect.x2 - fww->inputRect.x1) / 2.0f,
+    											 fww->inputRect.y1 + (fww->inputRect.y2 - fww->inputRect.y1) / 2.0f);*/
 
     useWindow = FWGetRealWindow (w); /* Did we move an IPW and not the actual window? */
     if (useWindow)

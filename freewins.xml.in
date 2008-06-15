@@ -201,6 +201,7 @@
 	    <_short>Scaling</_short>
 	        <option type="int" name="scale_mode">
 			    <_short>Scale Mode</_short>
+			    <!-- Comment out 'To Opposite Corner' for now as it is EXTREMELY BROKEN !-->			    
 			    <_long>How to scale windows</_long>
 			    <desc>
                     <value>0</value><name>To Centre</name>
@@ -209,7 +210,7 @@
                     <value>1</value><name>To Opposite Corner</name>
                 </desc>
                 <min>0</min>
-                <max>1</max>
+                <max>0</max>
                 <default>0</default>
 	        </option>
 	        <option type="bool" name="allow_negative">

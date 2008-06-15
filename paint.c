@@ -549,6 +549,11 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glVertex3f(fww->iMidX, s->height, 0.0f);
 	glEnd ();
 	
+	glBegin(GL_LINES);
+	glVertex3f(WIN_REAL_X (fwd->hoverWindow), WIN_REAL_Y (fwd->hoverWindow), 0.0f);
+	glVertex3f(fww->inputRect.x1, fww->inputRect.y1, 0.0f);
+	glEnd();
+	
 	/* Move to our first corner (TopLeft)  */
 	
 	if (fww->input)
