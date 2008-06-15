@@ -49,7 +49,6 @@
 
 #include "freewins.h"
 
-
 /* ------ Window and Output Painting ------------------------------------*/
 
 /* Damage util function */
@@ -71,7 +70,6 @@ void FWDamageArea(CompWindow *w)
     damageScreenRegion (w->screen, &region);
 }
 
-
 /* Animation Prep */
 void
 FWPreparePaintScreen (CompScreen *s,
@@ -86,7 +84,7 @@ FWPreparePaintScreen (CompScreen *s,
     {
         FREEWINS_WINDOW (w);
         float speed = freewinsGetSpeed (s);
-        fww->animate.steps = ((float)ms / ((20.1 - speed) * 100));
+        fww->animate.steps = ((float) ms / ((20.1 - speed) * 100));
 
         if (fww->animate.steps < 0.005)
             fww->animate.steps = 0.005;
@@ -97,15 +95,14 @@ FWPreparePaintScreen (CompScreen *s,
      * the old attributes divided by the time
      * remaining.
      */
-     
+
         fww->transform.angX += (float) fww->animate.steps * (fww->animate.destAngX - fww->transform.angX) * speed;
         fww->transform.angY += (float) fww->animate.steps * (fww->animate.destAngY - fww->transform.angY) * speed;
         fww->transform.angZ += (float) fww->animate.steps * (fww->animate.destAngZ - fww->transform.angZ) * speed;
-        
+
         fww->transform.scaleX += (float) fww->animate.steps * (fww->animate.destScaleX - fww->transform.scaleX) * speed;        
         fww->transform.scaleY += (float) fww->animate.steps * (fww->animate.destScaleY - fww->transform.scaleY) * speed;
-                
- 
+
         if (((fww->transform.angX >= fww->animate.destAngX - 0.05 &&
               fww->transform.angX <= fww->animate.destAngX + 0.05 ) &&
              (fww->transform.angY >= fww->animate.destAngY - 0.05 &&
@@ -134,7 +131,7 @@ FWPreparePaintScreen (CompScreen *s,
         else
             FWDamageArea (w);
     }
-    
+
     UNWRAP (fws, s, preparePaintScreen);
     (*s->preparePaintScreen) (s, ms);
     WRAP (fws, s, preparePaintScreen, FWPreparePaintScreen);
@@ -143,7 +140,7 @@ FWPreparePaintScreen (CompScreen *s,
 /* Check to see if we are painting a transformed output,
   * and if so, disable all rotation temporarily
   */
-  
+
 void
 FWPaintTransformedOutput (CompScreen              *s,
                               const ScreenPaintAttrib *sAttrib,
@@ -152,7 +149,7 @@ FWPaintTransformedOutput (CompScreen              *s,
                               CompOutput              *output,
                               unsigned int            mask)
 {
-    FREEWINS_SCREEN(s);
+    FREEWINS_SCREEN (s);
 
     fws->transformedScreen = TRUE;
 
@@ -162,21 +159,25 @@ FWPaintTransformedOutput (CompScreen              *s,
 }
 
 /* Paint the window rotated or scaled */
-Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib, 
-	const CompTransform *transform, Region region, unsigned int mask){
+Bool FWPaintWindow(CompWindow *w,
+									 const WindowPaintAttrib *attrib,
+									 const CompTransform *transform,
+									 Region region,
+									 unsigned int mask)
+{
 
     CompTransform wTransform = *transform;
     float angX = 0.0f, angY = 0.0f, angZ = 0.0f;
 
-    Bool wasCulled = glIsEnabled(GL_CULL_FACE);
+    Bool wasCulled = glIsEnabled (GL_CULL_FACE);
     Bool status;
 
-    FREEWINS_SCREEN(w->screen);
-    FREEWINS_WINDOW(w);
+    FREEWINS_SCREEN (w->screen);
+    FREEWINS_WINDOW (w);
 
     /* Has something happened? */
 
-    if((fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 ||
+    if ((fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 ||
         fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0 || fww->oldWinX != WIN_REAL_X (w) ||
         fww->oldWinY != WIN_REAL_Y (w)) && !(w->type == CompWindowTypeDesktopMask))
     {
@@ -254,52 +255,24 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
      	 }
      	 
      	/* Adjust the window in the matrix to prepare for transformation */
-     	
-     	//fprintf(stderr, "Centers before check %f %f\n", fww->iMidX, fww->iMidY);
-     	
+    	
      	if (fww->grab != grabRotate && fww->grab != grabScale)
      	{
-     	
-     	//fprintf(stderr, "Grab is not as expected. Adjusting To center\n");
-     	
-		FWCalculateInputOrigin(w,
+
+		FWCalculateInputOrigin (w,
 											WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
 			                      			WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
-		FWCalculateOutputOrigin(w,
+		FWCalculateOutputOrigin (w,
 											WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w) / 2.0f,
 			                      			WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
 			                      			
 		}
-		/*else		
-     	fprintf(stderr, "Centers after check %f %f\n", fww->iMidX, fww->iMidY);*/
+
      	
      	float adjustX, adjustY;
 
-		/*if (fww->grab == grabScale)
-		switch (fww->corner)
-		{
-			case CornerBottomLeft:
-			adjustX =	(w->input.right * (fww->transform.scaleX - 1.0f)) / fww->transform.scaleX;
-			adjustY = (w->input.top * (fww->transform.scaleY - 1.0f)) / fww->transform.scaleY;
-			break;
-			case CornerBottomRight:
-			adjustX =	(w->input.left * (fww->transform.scaleX - 1.0f)) / fww->transform.scaleX;
-			adjustY = (w->input.top * (fww->transform.scaleY - 1.0f)) / fww->transform.scaleY;
-			break;
-			case CornerTopLeft:
-			adjustX =	(w->input.right * (fww->transform.scaleX - 1.0f)) / fww->transform.scaleX;
-			adjustY = (w->input.bottom * (fww->transform.scaleY - 1.0f)) / fww->transform.scaleY;
-			break;
-			case CornerTopRight:
-			adjustX =	(w->input.left * (fww->transform.scaleX - 1.0f)) / fww->transform.scaleX;
-			adjustY = (w->input.bottom * (fww->transform.scaleY - 1.0f)) / fww->transform.scaleY;
-			break;
-		}
-		else
-		{*/
 		adjustX = 0.0f;
 		adjustY = 0.0f;
-		//}
         FWModifyMatrix (w, &wTransform,
                         angX,
                         angY,
@@ -307,8 +280,6 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
                         fww->iMidX, fww->iMidY , 0.0f,
                         scaleX, scaleY, 1.0f, adjustX, adjustY);
                         
-        //fprintf(stderr, "iMidX is %f iMidY is %f\n", fww->iMidX, fww->iMidY);
-
         /* Create rects for input after we've dealt
          * with output
          */
@@ -318,7 +289,7 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
     }
     
     // Check if there are rotated windows
-    if(!((fww->transform.angX >= 0.0f - 0.05 &&
+    if (!((fww->transform.angX >= 0.0f - 0.05 &&
               fww->transform.angX <= 0.0f + 0.05 ) &&
              (fww->transform.angY >= 0.0f - 0.05 &&
               fww->transform.angY <= 0.0f + 0.05 ) &&
@@ -327,20 +298,16 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
              (fww->transform.scaleX >= 1.0f - 0.00005 &&
               fww->transform.scaleX <= 1.0f + 0.00005 ) &&
              (fww->transform.scaleY >= 1.0f - 0.00005 &&
-              fww->transform.scaleY <= 1.0f + 0.00005 ))){
-        if( !fww->transformed ){
-	    fww->transformed = TRUE;
-        }
-    }else{
-        if( fww->transformed ){
+              fww->transform.scaleY <= 1.0f + 0.00005 )) && !fww->transformed)
+		fww->transformed = TRUE;        
+	else if (fww->transformed)
 	    fww->transformed = FALSE;
-        }
-    }
+    
+    /* TODO: Cull specific planes instead of disabling culling all together */
     
     if (fww->transformed)
-    if(wasCulled)
-	glDisable(GL_CULL_FACE);
-	
+		if (wasCulled)
+			glDisable(GL_CULL_FACE);
 
     UNWRAP(fws, w->screen, paintWindow);
     status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
@@ -358,50 +325,51 @@ Bool FWPaintWindow(CompWindow *w, const WindowPaintAttrib *attrib,
       fww->transform.scaleX <= fww->animate.destScaleX + 0.00005 ) &&
      (fww->transform.scaleY >= fww->animate.destScaleY - 0.00005 &&
       fww->transform.scaleY <= fww->animate.destScaleY + 0.00005 ))))
-  {
-      FWDamageArea (w);
-      fww->isAnimating = TRUE;
-  }
-  else if (fww->isAnimating) /* We're done animating now, and we were animating*/
-  {
-  	if (FWHandleWindowInputInfo (w))
-		FWAdjustIPW (w);
-		
-	fww->isAnimating = FALSE;
-  }
-	
-    
+	{
+		FWDamageArea (w);
+		fww->isAnimating = TRUE;
+	}
+	else if (fww->isAnimating) /* We're done animating now, and we were animating*/
+	{
+		if (FWHandleWindowInputInfo (w))
+			FWAdjustIPW (w);		
+		fww->isAnimating = FALSE;
+	}
 
-    if(wasCulled)
-	glEnable(GL_CULL_FACE);
+	if (wasCulled)
+		glEnable(GL_CULL_FACE);
 	
     return status;
 }
 
 /* Paint the window axis help onto the screen */
-Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib, 
-	const CompTransform *transform, Region region, CompOutput *output, unsigned int mask){
+Bool FWPaintOutput(CompScreen *s,
+								 const ScreenPaintAttrib *sAttrib,
+								 const CompTransform *transform,
+								 Region region,
+								 CompOutput *output,
+								 unsigned int mask)
+{
 
     Bool wasCulled, status;
     CompTransform zTransform;
     float x, y;
     int j;
 
-    FREEWINS_SCREEN(s);
-    FREEWINS_DISPLAY(s->display);
+    FREEWINS_SCREEN (s);
+    FREEWINS_DISPLAY (s->display);
 
-    if(fws->transformedWindows)
+    if (fws->transformedWindows)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 	
 	fws->transformedScreen = FALSE;
 
-    UNWRAP(fws, s, paintOutput);
-    status = (*s->paintOutput)(s, sAttrib, transform, region, output, mask);
-    WRAP(fws, s, paintOutput, FWPaintOutput);
+    UNWRAP (fws, s, paintOutput);
+    status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
+    WRAP (fws, s, paintOutput, FWPaintOutput);
 
-    // z-axis circle/*{{{*/
-    if(fwd->axisHelp && fwd->hoverWindow){
-    	
+    if (fwd->axisHelp && fwd->hoverWindow)
+    {    	
 	x = WIN_REAL_X(fwd->hoverWindow) + WIN_REAL_W(fwd->hoverWindow)/2.0;
 	y = WIN_REAL_Y(fwd->hoverWindow) + WIN_REAL_H(fwd->hoverWindow)/2.0;
 
@@ -409,39 +377,39 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 
     float zRad = fww->radius * (freewinsGet3dPercent (s) / 100);
 
-	wasCulled = glIsEnabled(GL_CULL_FACE);
+	wasCulled = glIsEnabled (GL_CULL_FACE);
 	zTransform = *transform;
 
-	transformToScreenSpace(s, output, -DEFAULT_Z_CAMERA, &zTransform);
+	transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &zTransform);
 
-	glPushMatrix();
-	glLoadMatrixf(zTransform.m);
+	glPushMatrix ();
+	glLoadMatrixf (zTransform.m);
 
-	if(wasCulled)
-	    glDisable(GL_CULL_FACE);
+	if (wasCulled)
+	    glDisable (GL_CULL_FACE);
 
     if (freewinsGetShowCircle (s) && freewinsGetRotationAxis (fwd->hoverWindow->screen) == RotationAxisAlwaysCentre)
     {
 
 	glColor4usv  (freewinsGetCircleColor (s));
-	glEnable(GL_BLEND);
+	glEnable (GL_BLEND);
 
-	glBegin(GL_POLYGON);
-	for(j=0; j<360; j += 10)
-	    glVertex3f( x + zRad * cos(D2R(j)), y + zRad * sin(D2R(j)), 0.0 );
+	glBegin (GL_POLYGON);
+	for (j=0; j<360; j += 10)
+	    glVertex3f ( x + zRad * cos(D2R(j)), y + zRad * sin(D2R(j)), 0.0 );
 	glEnd ();
 
-	glDisable(GL_BLEND);
+	glDisable (GL_BLEND);
 	glColor4usv  (freewinsGetLineColor (s));
-	glLineWidth(3.0);
+	glLineWidth (3.0);
 
-	glBegin(GL_LINE_LOOP);
-	for(j=360; j>=0; j -= 10)
-	    glVertex3f( x + zRad * cos(D2R(j)), y + zRad * sin(D2R(j)), 0.0 );
+	glBegin (GL_LINE_LOOP);
+	for (j=360; j>=0; j -= 10)
+	    glVertex3f ( x + zRad * cos(D2R(j)), y + zRad * sin(D2R(j)), 0.0 );
 	glEnd ();
 
-	glBegin(GL_LINE_LOOP);
-	for(j=360; j>=0; j -= 10)
+	glBegin (GL_LINE_LOOP);
+	for (j=360; j>=0; j -= 10)
 	    glVertex3f( x + fww->radius * cos(D2R(j)), y + fww->radius * sin(D2R(j)), 0.0 );
 	glEnd ();
 
@@ -458,48 +426,27 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
        
 	    glScalef (zRad, zRad, zRad / (float)s->width);
 
-	    //glColor4f(0.3, 0.3, 0.3, 0.3);
+        glRotatef (fww->transform.angX, 1.0f, 0.0f, 0.0f);
+        glRotatef (fww->transform.angY, 0.0f, 1.0f, 0.0f);
+        glRotatef (fww->transform.angZ, 0.0f, 0.0f, 1.0f);
 
-	    /*glLineWidth(1.0);
-	    glBegin(GL_LINE);
-	    glVertex3f(0.0, 0.0, 0.0);
-	    glVertex3f(fww->mouse0.x, -fww->mouse0.y, fww->mouse0.z);
-	    glEnd ();
-
-	    glBegin(GL_LINE);
-	    glVertex3f(0.0, 0.0, 0.0);
-	    glVertex3f(fww->mouseX.x, -fww->mouseX.y, fww->mouseX.z);
-	    glEnd ();
-
-	    glLineWidth(2.0);
-	    glBegin(GL_LINE);
-	    glVertex3f(0.0, 0.0, 0.0);
-	    glVertex3f(q.x, -q.y, q.z);
-	    glEnd ();
-
-	    glMultMatrixf(fww->rot_state.m);
-	    glRotatef(fww->tr_ang * 180.0/M_PI, q.x, q.y, q.z);*/
-
-        glRotatef(fww->transform.angX, 1.0f, 0.0f, 0.0f);
-        glRotatef(fww->transform.angY, 0.0f, 1.0f, 0.0f);
-        glRotatef(fww->transform.angZ, 0.0f, 0.0f, 1.0f);
-
-	    glLineWidth(4.0f);
+	    glLineWidth (4.0f);
         int i;
-	    for(i=0; i<3; i++) {
-		glPushMatrix();
-		    glColor4f(1.0 * (i==0), 1.0 * (i==1), 1.0 * (i==2), 1.0);
-		    glRotatef(90.0, 1.0 * (i==0), 1.0 * (i==1), 1.0 * (i==2));
+	    for (i=0; i<3; i++)
+	    {
+		glPushMatrix ();
+		    glColor4f (1.0 * (i==0), 1.0 * (i==1), 1.0 * (i==2), 1.0);
+		    glRotatef (90.0, 1.0 * (i==0), 1.0 * (i==1), 1.0 * (i==2));
 
-		    glBegin(GL_LINE_LOOP);
-		    for(j=360; j>=0; j -= 10)
-			glVertex3f( cos(D2R(j)), sin(D2R(j)), 0.0 );
+		    glBegin GL_LINE_LOOP);
+		    for (j=360; j>=0; j -= 10)
+			glVertex3f ( cos (D2R (j)), sin (D2R (j)), 0.0 );
 		    glEnd ();
-		glPopMatrix();
+		glPopMatrix ();
 	    }
 
-	glPopMatrix();
-	glColor4usv(defaultColor);
+	glPopMatrix ();
+	glColor4usv (defaultColor);
 
     }
 
@@ -539,21 +486,6 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glVertex3f(x + (WIN_REAL_W (fwd->hoverWindow) / 2), y, 0.0f);
 	glEnd ();
 	
-	glBegin(GL_LINES);
-	glVertex3f(0, fww->iMidY, 0.0f);
-	glVertex3f(s->width, fww->iMidY, 0.0f);
-	glEnd ();
-	
-	glBegin(GL_LINES);
-	glVertex3f(fww->iMidX, 0, 0.0f);
-	glVertex3f(fww->iMidX, s->height, 0.0f);
-	glEnd ();
-	
-	glBegin(GL_LINES);
-	glVertex3f(WIN_REAL_X (fwd->hoverWindow), WIN_REAL_Y (fwd->hoverWindow), 0.0f);
-	glVertex3f(fww->inputRect.x1, fww->inputRect.y1, 0.0f);
-	glEnd();
-	
 	/* Move to our first corner (TopLeft)  */
 	
 	if (fww->input)
@@ -580,22 +512,10 @@ Bool FWPaintOutput(CompScreen *s, const ScreenPaintAttrib *sAttrib,
 	glEnd ();
 	
 	}
-    
-    /*
-	glColor4usv  (freewinsGetCrossLineColor (s));
-	glBegin(GL_LINES);
-	glVertex3f(fwd->transformed_px, 0.0f, 0.0f);
-	glVertex3f(fwd->transformed_px, s->height, 0.0f);
-	glEnd ();
-	
-	glBegin(GL_LINES);
-	glVertex3f(0.0f , fwd->transformed_py, 0.0f);
-	glVertex3f(s->width, fwd->transformed_py, 0.0f);
-	glEnd ();*/
 
     }
 
-	if(wasCulled)
+	if (wasCulled)
 	    glEnable(GL_CULL_FACE);
 
 	glColor4usv(defaultColor);
@@ -612,7 +532,6 @@ void FWDonePaintScreen (CompScreen *s)
 	
 	if (fwd->axisHelp && fwd->hoverWindow)
 	{
-	
 		FREEWINS_WINDOW (fwd->hoverWindow);
 
 		REGION region;
@@ -620,34 +539,37 @@ void FWDonePaintScreen (CompScreen *s)
 		region.rects = &region.extents;
 		region.numRects = region.size = 1;
 
-		region.extents.x1 = MIN(WIN_REAL_X (fwd->hoverWindow), 
+		region.extents.x1 = MIN (WIN_REAL_X (fwd->hoverWindow), 
 												WIN_REAL_X (fwd->hoverWindow)
 												+ WIN_REAL_W (fwd->hoverWindow)
 												 / 2.0f - fww->radius);
- 		region.extents.x2 = MAX(WIN_REAL_X (fwd->hoverWindow), 
+ 		region.extents.x2 = MAX (WIN_REAL_X (fwd->hoverWindow), 
 										WIN_REAL_X (fwd->hoverWindow)
 										+ WIN_REAL_W (fwd->hoverWindow)
 										 / 2.0f + fww->radius);
 										 
-		region.extents.y1 = MIN(WIN_REAL_Y (fwd->hoverWindow), 
+		region.extents.y1 = MIN (WIN_REAL_Y (fwd->hoverWindow), 
 												WIN_REAL_Y (fwd->hoverWindow)
 												+ WIN_REAL_H (fwd->hoverWindow)
 												 / 2.0f - fww->radius);
- 		region.extents.y2 = MAX(WIN_REAL_Y (fwd->hoverWindow), 
+ 		region.extents.y2 = MAX (WIN_REAL_Y (fwd->hoverWindow), 
 										WIN_REAL_Y (fwd->hoverWindow)
 										+ WIN_REAL_H (fwd->hoverWindow)
 										 / 2.0f + fww->radius);
 
 		damageScreenRegion (s, &region);
 	}
-	
+
 	UNWRAP (fws, s, donePaintScreen);
 	(*s->donePaintScreen) (s);
 	WRAP (fws, s, donePaintScreen, FWDonePaintScreen);
 }
 
 /* Damage the Window Rect */
-Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
+Bool FWDamageWindowRect(CompWindow *w,
+												Bool initial,
+												BoxPtr rect)
+{
 
     Bool status = TRUE;
     FREEWINS_SCREEN(w->screen);
@@ -658,13 +580,19 @@ Bool FWDamageWindowRect(CompWindow *w, Bool initial, BoxPtr rect){
     else
         status = FALSE;
 
-    if ((fww->grab == grabMove && !freewinsGetImmediateMoves (w->screen)))
+	/**
+	  * Special situations where we must damage the screen
+	  * i.e when we are playing with windows and wobbly is
+	  * enabled
+	  */
+
+    if ((fww->grab == grabMove && !freewinsGetImmediateMoves (w->screen))
+        || (fww->isAnimating || w->grabbed))
         damageScreen (w->screen);
 
     UNWRAP(fws, w->screen, damageWindowRect);
     status |= (*w->screen->damageWindowRect)(w, initial, rect);
     WRAP(fws, w->screen, damageWindowRect, FWDamageWindowRect);
 
-    // true if damaged something
     return status;
 }
