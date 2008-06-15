@@ -52,7 +52,8 @@
 
 /* ------ Event Handlers ------------------------------------------------*/
 
-static void FWHandleIPWResizeInitiate (CompWindow *w)
+static void
+FWHandleIPWResizeInitiate (CompWindow *w)
 {
 	FREEWINS_WINDOW (w);
     FREEWINS_SCREEN (w->screen);
@@ -75,7 +76,8 @@ static void FWHandleIPWResizeInitiate (CompWindow *w)
         }
 }
 
-static void FWHandleIPWMoveInitiate (CompWindow *w)
+static void
+FWHandleIPWMoveInitiate (CompWindow *w)
 {
 	FREEWINS_WINDOW (w);
     FREEWINS_SCREEN (w->screen);
@@ -98,7 +100,8 @@ static void FWHandleIPWMoveInitiate (CompWindow *w)
     fwd->grabWindow = w;
 }
 
-static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
+static void
+FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned int y)
 {
     FREEWINS_SCREEN (w->screen);
 
@@ -114,7 +117,8 @@ static void FWHandleIPWMoveMotionEvent (CompWindow *w, unsigned int x, unsigned 
 
 }
 
-static void FWHandleIPWResizeMotionEvent (CompWindow *w,
+static void
+FWHandleIPWResizeMotionEvent (CompWindow *w,
 																		  unsigned int x,
 																		  unsigned int y)
 {
@@ -158,7 +162,8 @@ static void FWHandleIPWResizeMotionEvent (CompWindow *w,
 }
 
 /* Handle Rotation */
-static void FWHandleRotateMotionEvent (CompWindow *w,
+static void
+FWHandleRotateMotionEvent (CompWindow *w,
 																   float dx,
 																   float dy,
 																   int x,
@@ -364,7 +369,8 @@ static void FWHandleRotateMotionEvent (CompWindow *w,
 }
 
 /* Handle Scaling */
-static void FWHandleScaleMotionEvent (CompWindow *w,
+static void
+FWHandleScaleMotionEvent (CompWindow *w,
 																  float dx,
 																  float dy,
 																  int x,
@@ -490,7 +496,8 @@ static void FWHandleScaleMotionEvent (CompWindow *w,
     FWHandleSnap (w);
 }
 
-static void FWHandleButtonReleaseEvent (CompWindow *w)
+static void
+FWHandleButtonReleaseEvent (CompWindow *w)
 {
 	FREEWINS_WINDOW (w);
     FREEWINS_SCREEN (w->screen);
@@ -540,7 +547,8 @@ FWHandleLeaveNotify (CompWindow *w,
 }
 
 /* X Event Handler */
-void FWHandleEvent(CompDisplay *d,
+void
+FWHandleEvent(CompDisplay *d,
 								 XEvent *ev)
 {
     float dx, dy;

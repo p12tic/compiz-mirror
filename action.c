@@ -55,7 +55,8 @@
 /* ------ Actions -------------------------------------------------------*/
 
 /* Initiate Mouse Rotation */
-Bool initiateFWRotate (CompDisplay *d,
+Bool
+initiateFWRotate (CompDisplay *d,
 							 CompAction *action,
 							 CompActionState state,
 							 CompOption *option,
@@ -297,7 +298,8 @@ terminateFWRotate (CompDisplay     *d,
 	
 
 /* Initiate Scaling */
-Bool initiateFWScale (CompDisplay *d,
+Bool
+initiateFWScale (CompDisplay *d,
 								    CompAction *action,
 								    CompActionState state,
 								    CompOption *option,
@@ -575,7 +577,8 @@ FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, fl
 #define SCALE_INC freewinsGetScaleIncrementAmount (w->screen)
 #define NEG_SCALE_INC freewinsGetScaleIncrementAmount (w->screen) *-1
 
-Bool FWRotateUp (CompDisplay *d,
+Bool
+FWRotateUp (CompDisplay *d,
 								   CompAction *action,
 								   CompActionState state,
 								   CompOption *option,
@@ -596,7 +599,8 @@ Bool FWRotateUp (CompDisplay *d,
     
 }
 
-Bool FWRotateDown (CompDisplay *d,
+Bool
+FWRotateDown (CompDisplay *d,
 								   CompAction *action,
 								   CompActionState state,
 								   CompOption *option,
@@ -616,7 +620,8 @@ Bool FWRotateDown (CompDisplay *d,
     
 }
 
-Bool FWRotateLeft (CompDisplay *d,
+Bool
+FWRotateLeft (CompDisplay *d,
 								   CompAction *action,
 								   CompActionState state,
 								   CompOption *option,
@@ -636,7 +641,8 @@ Bool FWRotateLeft (CompDisplay *d,
     
 }
 
-Bool FWRotateRight (CompDisplay *d,
+Bool
+FWRotateRight (CompDisplay *d,
 								   CompAction *action,
 								   CompActionState state,
 								   CompOption *option,
@@ -656,7 +662,8 @@ Bool FWRotateRight (CompDisplay *d,
     
 }
 
-Bool FWRotateClockwise (CompDisplay *d,
+Bool
+FWRotateClockwise (CompDisplay *d,
 								   CompAction *action,
 								   CompActionState state,
 								   CompOption *option,
@@ -676,7 +683,8 @@ Bool FWRotateClockwise (CompDisplay *d,
     
 }
 
-Bool FWRotateCounterclockwise (CompDisplay *d,
+Bool
+FWRotateCounterclockwise (CompDisplay *d,
 								   CompAction *action,
 								   CompActionState state,
 								   CompOption *option,
@@ -696,11 +704,12 @@ Bool FWRotateCounterclockwise (CompDisplay *d,
     
 }
 
-Bool FWScaleUp (CompDisplay *d,
-								   CompAction *action,
-								   CompActionState state,
-								   CompOption *option,
-								   int nOption)
+Bool
+FWScaleUp (CompDisplay *d,
+						   CompAction *action,
+						   CompActionState state,
+						   CompOption *option,
+						   int nOption)
 {
     
     GET_WINDOW
@@ -730,7 +739,8 @@ Bool FWScaleUp (CompDisplay *d,
     
 }
 
-Bool FWScaleDown (CompDisplay *d,
+Bool
+FWScaleDown (CompDisplay *d,
 								   CompAction *action,
 								   CompActionState state,
 								   CompOption *option,
@@ -766,7 +776,8 @@ Bool FWScaleDown (CompDisplay *d,
 }
 
 /* Reset the Rotation and Scale to 0 and 1 */
-Bool resetFWTransform (CompDisplay *d,
+Bool
+resetFWTransform (CompDisplay *d,
 								   CompAction *action,
 								   CompActionState state,
 								   CompOption *option,
@@ -802,7 +813,8 @@ Bool resetFWTransform (CompDisplay *d,
  * z: Set angle to z degrees
  * window: The window to apply the transformation to
  */
-Bool freewinsRotateWindow (CompDisplay *d,
+Bool
+freewinsRotateWindow (CompDisplay *d,
                           CompAction *action, 
                           CompActionState state,
                           CompOption *option,
@@ -843,7 +855,8 @@ Bool freewinsRotateWindow (CompDisplay *d,
  * z: Increment angle by z degrees
  * window: The window to apply the transformation to
  */
-Bool freewinsIncrementRotateWindow (CompDisplay *d,
+Bool
+freewinsIncrementRotateWindow (CompDisplay *d,
                                   CompAction *action, 
                                   CompActionState state,
                                   CompOption *option,
@@ -884,7 +897,8 @@ Bool freewinsIncrementRotateWindow (CompDisplay *d,
  * y: Set scale to y factor
  * window: The window to apply the transformation to
  */
-Bool freewinsScaleWindow (CompDisplay *d,
+Bool
+freewinsScaleWindow (CompDisplay *d,
                           CompAction *action, 
                           CompActionState state,
                           CompOption *option,
@@ -915,7 +929,8 @@ Bool freewinsScaleWindow (CompDisplay *d,
 }
 
 /* Toggle Axis-Help Display */
-Bool toggleFWAxis (CompDisplay *d,
+Bool
+toggleFWAxis (CompDisplay *d,
                   CompAction *action,
                   CompActionState state,
                   CompOption *option,

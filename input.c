@@ -214,7 +214,8 @@ FWUnshapeInput (CompWindow *w)
 /* Input Shaper. This no longer adjusts the shape of the window
     but instead shapes it to 0 as the IPW deals with the input.
   */
-static void FWShapeInput (CompWindow *w)
+static void
+FWShapeInput (CompWindow *w)
 {
     CompWindow *fw;
     Display    *dpy = w->screen->display->display;

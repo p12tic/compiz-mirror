@@ -53,7 +53,8 @@
 static CompMetadata freewinsMetadata;
 
 /* Information on window resize */
-void FWWindowResizeNotify(CompWindow *w,
+void
+FWWindowResizeNotify(CompWindow *w,
 												int dx,
 											    int dy,
 											    int dw,
@@ -104,7 +105,8 @@ FWWindowMoveNotify (CompWindow *w,
     WRAP (fws, w->screen, windowMoveNotify, FWWindowMoveNotify);
 }
 
-static void FWReloadSnapKeys (CompDisplay *d)
+static void
+FWReloadSnapKeys (CompDisplay *d)
 {
     FREEWINS_DISPLAY (d);
 
@@ -137,7 +139,8 @@ static void FWReloadSnapKeys (CompDisplay *d)
     }
 }
 
-static void FWDisplayOptionChanged (CompDisplay *d, CompOption *opt, FreewinsDisplayOptions num)
+static void
+FWDisplayOptionChanged (CompDisplay *d, CompOption *opt, FreewinsDisplayOptions num)
 {
 	switch (num)
 	{
@@ -153,7 +156,8 @@ static void FWDisplayOptionChanged (CompDisplay *d, CompOption *opt, FreewinsDis
 /* ------ Plugin Initialisation ---------------------------------------*/
 
 /* Window initialisation / cleaning */
-static Bool freewinsInitWindow (CompPlugin *p,
+static Bool
+freewinsInitWindow (CompPlugin *p,
 												 CompWindow *w)
 {
     FWWindow *fww;
@@ -218,7 +222,8 @@ static Bool freewinsInitWindow (CompPlugin *p,
     return TRUE;
 }
 
-static void freewinsFiniWindow (CompPlugin *p,
+static void
+freewinsFiniWindow (CompPlugin *p,
 											 CompWindow *w)
  {
 
@@ -241,7 +246,8 @@ static void freewinsFiniWindow (CompPlugin *p,
 }
 
 /* Screen initialization / cleaning */
-static Bool freewinsInitScreen (CompPlugin *p,
+static Bool
+freewinsInitScreen (CompPlugin *p,
 												 CompScreen *s)
 {
     FWScreen *fws;
@@ -276,7 +282,8 @@ static Bool freewinsInitScreen (CompPlugin *p,
     return TRUE;
 }
 
-static void freewinsFiniScreen (CompPlugin *p,
+static void
+freewinsFiniScreen (CompPlugin *p,
 												 CompScreen *s)
 {
 
@@ -299,7 +306,8 @@ static void freewinsFiniScreen (CompPlugin *p,
 }
 
 /* Display initialization / cleaning */
-static Bool freewinsInitDisplay (CompPlugin *p, 
+static Bool
+freewinsInitDisplay (CompPlugin *p, 
 													CompDisplay *d)
 {
 
@@ -362,7 +370,9 @@ static Bool freewinsInitDisplay (CompPlugin *p,
     return TRUE;
 }
 
-static void freewinsFiniDisplay(CompPlugin *p, CompDisplay *d){
+static void
+freewinsFiniDisplay(CompPlugin *p, CompDisplay *d)
+{
 
     FREEWINS_DISPLAY(d);
     
@@ -405,7 +415,8 @@ freewinsFiniObject (CompPlugin *p,
 
 
 /* Plugin initialization / cleaning */
-static Bool freewinsInit(CompPlugin *p)
+static Bool
+freewinsInit(CompPlugin *p)
 {
 
     if ((displayPrivateIndex = allocateDisplayPrivateIndex ()) < 0 )
@@ -417,7 +428,8 @@ static Bool freewinsInit(CompPlugin *p)
 }
 
 
-static void freewinsFini(CompPlugin *p)
+static void
+freewinsFini(CompPlugin *p)
 {
     if (displayPrivateIndex >= 0)
 		freeDisplayPrivateIndex( displayPrivateIndex );

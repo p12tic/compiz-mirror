@@ -53,7 +53,8 @@
 
 /* Damage util function */
 
-void FWDamageArea(CompWindow *w)
+void
+FWDamageArea(CompWindow *w)
 {
     FREEWINS_WINDOW (w);
 
@@ -159,7 +160,8 @@ FWPaintTransformedOutput (CompScreen              *s,
 }
 
 /* Paint the window rotated or scaled */
-Bool FWPaintWindow(CompWindow *w,
+Bool
+FWPaintWindow(CompWindow *w,
 									 const WindowPaintAttrib *attrib,
 									 const CompTransform *transform,
 									 Region region,
@@ -343,7 +345,8 @@ Bool FWPaintWindow(CompWindow *w,
 }
 
 /* Paint the window axis help onto the screen */
-Bool FWPaintOutput(CompScreen *s,
+Bool
+FWPaintOutput(CompScreen *s,
 								 const ScreenPaintAttrib *sAttrib,
 								 const CompTransform *transform,
 								 Region region,
@@ -525,7 +528,8 @@ Bool FWPaintOutput(CompScreen *s,
     return status;
 }
 
-void FWDonePaintScreen (CompScreen *s)
+void
+FWDonePaintScreen (CompScreen *s)
 {
 	FREEWINS_DISPLAY (s->display);
 	FREEWINS_SCREEN (s);
@@ -566,7 +570,8 @@ void FWDonePaintScreen (CompScreen *s)
 }
 
 /* Damage the Window Rect */
-Bool FWDamageWindowRect(CompWindow *w,
+Bool
+FWDamageWindowRect(CompWindow *w,
 												Bool initial,
 												BoxPtr rect)
 {
