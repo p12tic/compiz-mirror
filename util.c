@@ -53,19 +53,16 @@
 /* ------ Utility Functions ---------------------------------------------*/
 
 /* Rotate and project individual vectors */
-void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransform transform,
-                                   GLdouble *resultX, GLdouble *resultY, GLdouble *resultZ, Bool report)
+void
+FWRotateProjectVector (CompWindow *w,
+											  CompVector vector, CompTransform transform,
+                                   			  GLdouble *resultX,
+                                   			  GLdouble *resultY,
+                                   			  GLdouble *resultZ,
+                                   			  Bool report)
 {
 
-    //report = TRUE;
-
-    /*if (report)
-    fprintf(stderr, "Vector info %f %f %f %f\n", vector.v[0], vector.v[1], vector.v[2], vector.v[3]);*/
-
     matrixMultiplyVector(&vector, &vector, &transform);
-
-    /*if (report)
-    fprintf(stderr, "Multiplied info %f %f %f\n", vector.x, vector.y, vector.z);*/
 
     GLint viewport[4]; // Viewport
     GLdouble modelview[16]; // Modelview Matrix
@@ -78,9 +75,6 @@ void FWRotateProjectVector (CompWindow *w, CompVector vector, CompTransform tran
     gluProject (vector.x, vector.y, vector.z,
                 modelview, projection, viewport,
                 resultX, resultY, resultZ);
-
-    /*if (report)
-    fprintf(stderr, "Projected info %f %f %f\n", *resultX, *resultY, *resultZ);*/
 
     /* Y must be negated */
     *resultY = w->screen->height - *resultY;
@@ -95,8 +89,6 @@ FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
 {
     /* Create our transformation Matrix */
     
-    //fprintf(stderr, "adjustX %f adjustY %f\n", adjustX, adjustY);
-
     matrixScale (mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
     matrixTranslate(mTransform, 
 	    tX, 
@@ -110,6 +102,7 @@ FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
             -(tX), 
             -(tY), 0.0f);
 }
+
 /*
 static float det3(float m00, float m01, float m02,
 		 float m10, float m11, float m12,
@@ -219,11 +212,18 @@ static void FWFindInverseMatrix(CompTransform *m, CompTransform *r){
 
     return;
 }
-
 */
+
 /* Create a rect from 4 screen points */
-Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, float xScreen4,
-                              float yScreen1, float yScreen2, float yScreen3, float yScreen4)
+Box
+FWCreateSizedRect (float xScreen1,
+                       float xScreen2,
+                       float xScreen3,
+                       float xScreen4,
+                       float yScreen1,
+                       float yScreen2,
+                       float yScreen3,
+                       float yScreen4)
 {
         float leftmost, rightmost, topmost, bottommost;
         Box rect;
@@ -288,8 +288,12 @@ Box FWCreateSizedRect (float xScreen1, float xScreen2, float xScreen3, float xSc
         return rect;
 }
 
-Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
-                                   CompVector c3, CompVector c4)
+Box
+FWCalculateWindowRect (CompWindow *w,
+                           CompVector c1,
+                           CompVector c2,
+                           CompVector c3,
+                           CompVector c4);
 {
 
         FREEWINS_WINDOW (w);
@@ -309,39 +313,6 @@ Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
                         fww->transform.scaleX,
                         fww->transform.scaleY, 0.0f, 0.0f, 0.0f);  
 
-        /*CompTransform inverse;
-        FWFindInverseMatrix (&transform, &inverse);
-
-        CompTransform identify, identity;
-
-        matrixGetIdentity(&identity);
-
-        matrixMultiply(&identify, &transform, &inverse);*/
-
-        /*
-
-        fprintf(stderr, "Inverse Matrix\n\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n %f %f %f %f %f\n\n",
-                inverse.m[0],   inverse.m[1],   inverse.m[2],   inverse.m[3],   inverse.m[4],   
-                inverse.m[5],   inverse.m[6],   inverse.m[7],   inverse.m[8],   inverse.m[9],   
-                inverse.m[10],   inverse.m[11],   inverse.m[12],   inverse.m[13],   inverse.m[14],   
-                inverse.m[15],   inverse.m[16]); 
-
-        fprintf(stderr, "Real Identity\n\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n %f %f %f %f %f\n\n",
-                identity.m[0],   identity.m[1],   identity.m[2],   identity.m[3],   identity.m[4],   
-                identity.m[5],   identity.m[6],   identity.m[7],   identity.m[8],   identity.m[9],   
-                identity.m[10],   identity.m[11],   identity.m[12],   identity.m[13],   identity.m[14],   
-                identity.m[15],   identity.m[16]); 
-
-        fprintf(stderr, "Supposed Identity\n\n%f %f %f %f\n%f %f %f %f\n%f %f %f %f\n %f %f %f %f %f\n\n",
-                identify.m[0],   identify.m[1],   identify.m[2],   identify.m[3],   identify.m[4],   
-                identify.m[5],   identify.m[6],   identify.m[7],   identify.m[8],   identify.m[9],   
-                identify.m[10],   identify.m[11],   identify.m[12],   identify.m[13],   identify.m[14],   
-                identify.m[15],   identify.m[16]); 
-
-        */
-
-        //CompVector pointer = { .v = { pointerX, pointerY, 1.0f, 1.0f } };
-
         FWRotateProjectVector(w, c1, transform, &xScreen1, &yScreen1, &zScreen1, FALSE);
         FWRotateProjectVector(w, c2, transform, &xScreen2, &yScreen2, &zScreen2, FALSE);
         FWRotateProjectVector(w, c3, transform, &xScreen3, &yScreen3, &zScreen3, FALSE);
@@ -360,29 +331,14 @@ Box FWCalculateWindowRect (CompWindow *w, CompVector c1, CompVector c2,
         	fww->input->shapey3 = yScreen3;
         	fww->input->shapey4 = yScreen4;
     	}
-        	
-
-        /* TODO: Use inverse matrix to calculate pointer position
-                 on original window
-        */
-
-        /*
-
-        FWRotateProjectVector(w, pointer, transform, &xScreen5, &yScreen5, &zScreen5, report);
-
-        //fprintf(stderr, "Resultants for pointer are %f %f %f\n", xScreen5, yScreen5, zScreen5);
-
-        FREEWINS_DISPLAY (w->screen->display);
-
-        fwd->transformed_px = (fww->inputRect.x1 - xScreen5) + w->screen->width;
-        fwd->transformed_py = (fww->inputRect.y1 - yScreen5) + w->screen->height;*/
 
         return FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
                                  yScreen1, yScreen2, yScreen3, yScreen4);
            
 }
 
-void FWCalculateOutputRect (CompWindow *w)
+void
+FWCalculateOutputRect (CompWindow *w)
 {
     if (w)
     {
@@ -398,7 +354,8 @@ void FWCalculateOutputRect (CompWindow *w)
     }
 }
 
-void FWCalculateInputRect (CompWindow *w)
+void
+FWCalculateInputRect (CompWindow *w)
 {
 
     if (w)
@@ -416,7 +373,8 @@ void FWCalculateInputRect (CompWindow *w)
 
 }
 
-void FWCalculateInputOrigin (CompWindow *w, float x, float y)
+void
+FWCalculateInputOrigin (CompWindow *w, float x, float y)
 {
 
     FREEWINS_WINDOW (w);
@@ -425,7 +383,8 @@ void FWCalculateInputOrigin (CompWindow *w, float x, float y)
     fww->iMidY = y;
 }
 
-void FWCalculateOutputOrigin (CompWindow *w, float x, float y)
+void
+FWCalculateOutputOrigin (CompWindow *w, float x, float y)
 {
 
     FREEWINS_WINDOW (w);
@@ -454,7 +413,11 @@ void FWCalculateOutputOrigin (CompWindow *w, float x, float y)
 }*/
 
 /* Determine if we clicked in the z-axis region */
-void FWDetermineZAxisClick (CompWindow *w, int px, int py, Bool motion)
+void
+FWDetermineZAxisClick (CompWindow *w,
+										  int px,
+										  int py,
+										  Bool motion)
 {
     FREEWINS_WINDOW (w);
 
@@ -472,7 +435,6 @@ void FWDetermineZAxisClick (CompWindow *w, int px, int py, Bool motion)
          * to change to 2D rotation.
          */
 
-        
         Direction direction;
 
         static int ddx, ddy;
@@ -526,17 +488,18 @@ void FWDetermineZAxisClick (CompWindow *w, int px, int py, Bool motion)
 }
 
 /* Check to see if we can shape a window */
-Bool FWCanShape (CompWindow *w)
+Bool
+FWCanShape (CompWindow *w)
 {
 
     if (!freewinsGetShapeInput (w->screen))
-    return FALSE;
+    	return FALSE;
     
     if (!w->screen->display->shapeExtension)
-    return FALSE;
+    	return FALSE;
     
     if (!matchEval (freewinsGetShapeWindowTypes (w->screen), w))
-    return FALSE;
+    	return FALSE;
     
     return TRUE;
 }
@@ -575,23 +538,3 @@ FWHandleSnap (CompWindow *w)
         fww->transform.scaleY = ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
     }
 }
-
-/*static CompWindow *
-FWGetRealWindowFromID (CompDisplay *d,
-		       Window      wid)
-{
-    CompWindow *orig, *w;
-    CompScreen *s;
-
-    orig = findWindowAtDisplay (d, wid);
-
-    for (s = d->screens; s; s = s->next)
-        for (w = s->windows; w; w = w->next)
-            if (wid == w->id)
-                orig = w;
-    if (!orig)
-	return NULL;
-
-
-    return FWGetRealWindow (orig);
-}*/
