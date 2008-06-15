@@ -471,7 +471,7 @@ Bool FWScaleDown (CompDisplay *d,
                   CompOption *option,
                   int nOption);
 
-Bool resetFWRotation (CompDisplay *d,
+Bool resetFWTransform (CompDisplay *d,
                      CompAction *action,
                      CompActionState state, 
                      CompOption *option, 
