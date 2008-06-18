@@ -38,6 +38,7 @@
  *    finding an inverse matrix, multiplying by it,
  *    translating to the actual window co-ords and 
  *    XSendEvent() the co-ords to the actual window.
+ * -  X Input Redirection
  *  - Code could be cleaner
  *  - Add timestep and speed options to animation
  *  - Add window hover-over info via paintOutput : i.e
