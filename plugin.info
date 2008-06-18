@@ -1,4 +1,3 @@
 PLUGIN = thumbnail
-PKG_DEP = compiz-text
-CHK_HEADERS = compiz-text.h
-
+PKG_DEP = compiz-text compiz-mousepoll
+CHK_HEADERS = compiz-text.h compiz-mousepoll.h
