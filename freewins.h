@@ -114,14 +114,16 @@
 /* ------ Structures and Enums ------------------------------------------*/
 
 /* Enums */
-typedef enum _StartCorner {
+typedef enum _StartCorner
+{
     CornerTopLeft = 0,
     CornerTopRight = 1,
     CornerBottomLeft = 2,
     CornerBottomRight = 3
 } StartCorner;
 
-typedef enum _FWGrabType {
+typedef enum _FWGrabType
+{
     grabNone = 0,
     grabRotate,
     grabScale,
@@ -129,12 +131,14 @@ typedef enum _FWGrabType {
     grabResize
 } FWGrabType;
 
-typedef enum _Direction {
+typedef enum _Direction
+{
     UpDown = 0,
     LeftRight = 1
 } Direction;
 
-typedef enum _FWAxisType {
+typedef enum _FWAxisType
+{
     axisX = 0,
     axisY,
     axisZ,
@@ -143,21 +147,13 @@ typedef enum _FWAxisType {
 } FWAxisType;
 
 /* Shape info / restoration */
-typedef struct _FWWindowInputInfo {
+typedef struct _FWWindowInputInfo
+{
     CompWindow                *w;
     struct _FWWindowInputInfo *next;
 
     Window     ipw;
     
-    float shapex1;
-    float shapex2;
-    float shapex3;
-    float shapex4;
-    float shapey1;
-    float shapey2;
-    float shapey3;
-    float shapey4;
-
     XRectangle *inputRects;
     int        nInputRects;
     int        inputRectOrdering;
@@ -166,6 +162,18 @@ typedef struct _FWWindowInputInfo {
     int        frameNInputRects;
     int        frameInputRectOrdering;
 } FWWindowInputInfo;
+
+typedef struct _FWWindowOutputInfo
+{
+    float shapex1;
+    float shapex2;
+    float shapex3;
+    float shapex4;
+    float shapey1;
+    float shapey2;
+    float shapey3;
+    float shapey4;
+} FWWindowOutputInfo; 
 
 /* Trackball */
 
@@ -314,6 +322,9 @@ typedef struct _FWWindow
 
     // Input Info
     FWWindowInputInfo *input;
+    
+    //Output Info
+    FWWindowOutputInfo *output;
 
     Box outputRect;
     Box inputRect;

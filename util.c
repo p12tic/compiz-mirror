@@ -322,14 +322,14 @@ FWCalculateWindowRect (CompWindow *w,
         
         if (fww->input)
         {
-        	fww->input->shapex1 = xScreen1;
-        	fww->input->shapex2 = xScreen2;
-        	fww->input->shapex3 = xScreen3;
-        	fww->input->shapex4 = xScreen4;
-        	fww->input->shapey1 = yScreen1;
-        	fww->input->shapey2 = yScreen2;
-        	fww->input->shapey3 = yScreen3;
-        	fww->input->shapey4 = yScreen4;
+        	fww->output->shapex1 = xScreen1;
+        	fww->output->shapex2 = xScreen2;
+        	fww->output->shapex3 = xScreen3;
+        	fww->output->shapex4 = xScreen4;
+        	fww->output->shapey1 = yScreen1;
+        	fww->output->shapey2 = yScreen2;
+        	fww->output->shapey3 = yScreen3;
+        	fww->output->shapey4 = yScreen4;
     	}
 
         return FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,

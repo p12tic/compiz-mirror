@@ -495,23 +495,23 @@ FWPaintOutput(CompScreen *s,
 	{
 	
 	glBegin(GL_LINES);
-	glVertex3f(fww->input->shapex1, fww->input->shapey1, 0.0f);
-	glVertex3f(fww->input->shapex2, fww->input->shapey2, 0.0f);
+	glVertex3f(fww->output->shapex1, fww->output->shapey1, 0.0f);
+	glVertex3f(fww->output->shapex2, fww->output->shapey2, 0.0f);
 	glEnd ();
 	
 	glBegin(GL_LINES);
-	glVertex3f(fww->input->shapex2, fww->input->shapey2, 0.0f);
-	glVertex3f(fww->input->shapex4, fww->input->shapey4, 0.0f);
+	glVertex3f(fww->output->shapex2, fww->output->shapey2, 0.0f);
+	glVertex3f(fww->output->shapex4, fww->output->shapey4, 0.0f);
 	glEnd ();
 	
 	glBegin(GL_LINES);
-	glVertex3f(fww->input->shapex4, fww->input->shapey4, 0.0f);
-	glVertex3f(fww->input->shapex3, fww->input->shapey3, 0.0f);
+	glVertex3f(fww->output->shapex4, fww->output->shapey4, 0.0f);
+	glVertex3f(fww->output->shapex3, fww->output->shapey3, 0.0f);
 	glEnd ();
 	
 	glBegin(GL_LINES);
-	glVertex3f(fww->input->shapex3, fww->input->shapey3, 0.0f);
-	glVertex3f(fww->input->shapex1, fww->input->shapey1, 0.0f);
+	glVertex3f(fww->output->shapex3, fww->output->shapey3, 0.0f);
+	glVertex3f(fww->output->shapex1, fww->output->shapey1, 0.0f);
 	glEnd ();
 	
 	}
