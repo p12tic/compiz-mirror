@@ -240,6 +240,7 @@ typedef struct _FWDisplay
 
     CompWindow *grabWindow;
     CompWindow *hoverWindow;
+    CompWindow *lastGrabWindow;
 
     Bool axisHelp;
     Bool snap;
