@@ -924,7 +924,7 @@ adjustStackswitchRotation (CompScreen *s,
     STACKSWITCH_SCREEN(s);
 
     if (ss->state != StackswitchStateNone && ss->state != StackswitchStateIn)
-	rot = stackswitchGetRotation (s);
+	rot = stackswitchGetTilt (s);
     else
 	rot = 0.0;
 

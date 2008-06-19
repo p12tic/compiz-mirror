@@ -112,9 +112,9 @@
 					<_long>Show windows that are minimized, shaded or in show desktop mode.</_long>
 					<default>true</default>
 				</option>
-				<option name="rotation" type="int">
-					<_short>Rotation</_short>
-					<_long>Rotation angle.</_long>
+				<option name="tilt" type="int">
+					<_short>Tilt</_short>
+					<_long>Tilt angle of the background.</_long>
 					<default>30</default>
 					<min>0</min>
 					<max>90</max>
