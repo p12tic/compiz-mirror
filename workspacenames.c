@@ -350,7 +350,7 @@ wsnamesHandleEvent (CompDisplay *d,
 
 		wsnamesRenderNameText (s);
 		timeout = workspacenamesGetDisplayTime (s) * 1000;
-		ws->timeoutHandle = compAddTimeout (timeout,
+		ws->timeoutHandle = compAddTimeout (timeout, timeout + 200,
 						    wsnamesHideTimeout, s);
 
 		damageScreen (s);
