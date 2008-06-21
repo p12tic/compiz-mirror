@@ -184,7 +184,7 @@ FWPaintWindow(CompWindow *w,
           fww->transform.scaleX != 1.0 ||
           fww->transform.scaleY != 1.0 ||
           fww->oldWinX != WIN_REAL_X (w) ||
-        fww->oldWinY != WIN_REAL_Y (w)))
+        fww->oldWinY != WIN_REAL_Y (w)) && matchEval (freewinsGetShapeWindowTypes (w->screen), w))
     {
     
         fww->oldWinX = WIN_REAL_X (w);

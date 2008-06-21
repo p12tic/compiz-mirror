@@ -704,7 +704,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
         if (btnW)
         {
-        		if (matchEval (freewinsGetShapeWindowTypes (btn->screen), btnW))
+        		if (matchEval (freewinsGetShapeWindowTypes (btnW->screen), btnW))
                 switch (ev->xbutton.button)
                 {
                     case Button1:
