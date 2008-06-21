@@ -330,14 +330,14 @@ FWPaintWindow(CompWindow *w,
 	else if (fww->output.shapey2 > fww->output.shapey4)
 		needsInvert = TRUE;
 	
-	if (needsInvert)
+	if (needsInvert && (!fws->transformedScreen))
 		glCullFace (invertCull);
 
     UNWRAP(fws, w->screen, paintWindow);	
     status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
     WRAP(fws, w->screen, paintWindow, FWPaintWindow);
     
-    if (needsInvert)
+    if (needsInvert && (!fws->transformedScreen))
     	glCullFace (currentCull);
     
     /* There is still animation to be done */
