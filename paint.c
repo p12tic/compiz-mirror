@@ -170,6 +170,9 @@ FWPaintWindow(CompWindow *w,
 
     CompTransform wTransform = *transform;
     float angX = 0.0f, angY = 0.0f, angZ = 0.0f;
+	int currentCull, invertCull;
+	glGetIntegerv (GL_CULL_FACE_MODE, &currentCull);
+	invertCull = (currentCull == GL_BACK) ? GL_FRONT : GL_BACK;
 
     Bool status;
 
@@ -308,13 +311,6 @@ FWPaintWindow(CompWindow *w,
 	else if (fww->transformed)
 	    fww->transformed = FALSE;
     
-    /* TODO: Cull specific planes instead of disabling culling all together */
-    
-
-	int currentCull, invertCull;
-	glGetIntegerv (GL_CULL_FACE_MODE, &currentCull);
-	invertCull = (currentCull == GL_BACK) ? GL_FRONT : GL_BACK;
-	
 	/* Determine if the window is inverted */
 	
 	Bool needsInvert = FALSE;
