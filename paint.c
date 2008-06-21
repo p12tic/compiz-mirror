@@ -401,7 +401,7 @@ FWPaintOutput(CompScreen *s,
 
     float zRad = fww->radius * (freewinsGet3dPercent (s) / 100);
 
-	//wasCulled = glIsEnabled (GL_CULL_FACE);
+	wasCulled = glIsEnabled (GL_CULL_FACE);
 	zTransform = *transform;
 
 	transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &zTransform);
@@ -409,8 +409,8 @@ FWPaintOutput(CompScreen *s,
 	glPushMatrix ();
 	glLoadMatrixf (zTransform.m);
 
-	//if (wasCulled)
-	    //glDisable (GL_CULL_FACE);
+	if (wasCulled)
+	    glDisable (GL_CULL_FACE);
 
     if (freewinsGetShowCircle (s) && freewinsGetRotationAxis (fwd->hoverWindow->screen) == RotationAxisAlwaysCentre)
     {
@@ -539,8 +539,8 @@ FWPaintOutput(CompScreen *s,
 
     }
 
-	//if (wasCulled)
-	    //glEnable(GL_CULL_FACE);
+	if (wasCulled)
+	    glEnable(GL_CULL_FACE);
 
 	glColor4usv(defaultColor);
 	glPopMatrix ();
