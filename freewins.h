@@ -324,7 +324,7 @@ typedef struct _FWWindow
     FWWindowInputInfo *input;
     
     //Output Info
-    FWWindowOutputInfo *output;
+    FWWindowOutputInfo output;
 
     Box outputRect;
     Box inputRect;

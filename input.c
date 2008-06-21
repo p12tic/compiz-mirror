@@ -92,23 +92,23 @@ FWShapeIPW (CompWindow *w)
 
     /* Move to our first corner (TopLeft)  */
 
-    cairo_move_to (cr, fww->output->shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output->shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_move_to (cr, fww->output.shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Line to TopRight */
 
-    cairo_line_to (cr, fww->output->shapex2 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output->shapey2 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_line_to (cr, fww->output.shapex2 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey2 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Line to BottomRight */
 
-    cairo_line_to (cr, fww->output->shapex4 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output->shapey4 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_line_to (cr, fww->output.shapex4 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey4 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Line to BottomLeft */
 
-    cairo_line_to (cr, fww->output->shapex3 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output->shapey3 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_line_to (cr, fww->output.shapex3 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey3 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Line to TopLeft*/
 
-    cairo_line_to (cr, fww->output->shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output->shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_line_to (cr, fww->output.shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Ensure it's all closed up */
 

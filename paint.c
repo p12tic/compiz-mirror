@@ -171,7 +171,7 @@ FWPaintWindow(CompWindow *w,
     CompTransform wTransform = *transform;
     float angX = 0.0f, angY = 0.0f, angZ = 0.0f;
 
-    Bool wasCulled = glIsEnabled (GL_CULL_FACE);
+    //Bool wasCulled = glIsEnabled (GL_CULL_FACE);
     Bool status;
 
     FREEWINS_SCREEN (w->screen);
@@ -286,8 +286,8 @@ FWPaintWindow(CompWindow *w,
          * with output
          */
 
-        FWCalculateInputRect (w);
-        
+    	FWCalculateInputRect (w);
+
     }
     
     // Check if there are rotated windows
@@ -307,13 +307,45 @@ FWPaintWindow(CompWindow *w,
     
     /* TODO: Cull specific planes instead of disabling culling all together */
     
-    if (fww->transformed)
-		if (wasCulled)
-			glDisable(GL_CULL_FACE);
 
-    UNWRAP(fws, w->screen, paintWindow);
+	int currentCull, invertCull;
+	glGetIntegerv (GL_CULL_FACE_MODE, &currentCull);
+	invertCull = (currentCull == GL_BACK) ? GL_FRONT : GL_BACK;
+	
+	/* Determine if the window is inverted */
+	
+	Bool needsInvert = FALSE;
+	
+	if (fww->output.shapex1 > fww->output.shapex2)
+		needsInvert = TRUE;
+	else if (fww->output.shapex3 > fww->output.shapex4)
+		needsInvert = TRUE;
+	
+	if (fww->output.shapey1 > fww->output.shapey3)
+		needsInvert = TRUE;
+	else if (fww->output.shapey2 > fww->output.shapey4)
+		needsInvert = TRUE;
+	
+	if (needsInvert)
+		glCullFace (invertCull);
+
+	glDisable (GL_CULL_FACE);
+
+    UNWRAP(fws, w->screen, paintWindow);	
     status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
     WRAP(fws, w->screen, paintWindow, FWPaintWindow);
+    
+    glEnable (GL_CULL_FACE);
+    
+    if (needsInvert)
+    	glCullFace (currentCull);
+
+    
+    //if (fww->transformed)
+    //fprintf(stderr, "Face culling is enabled? %i\n", glIsEnabled(GL_CULL_FACE));
+    
+	//if (wasCulled)
+		//glEnable(GL_CULL_FACE);
     
     /* There is still animation to be done */
     
@@ -331,16 +363,13 @@ FWPaintWindow(CompWindow *w,
 		FWDamageArea (w);
 		fww->isAnimating = TRUE;
 	}
-	else if (fww->isAnimating) /* We're done animating now, and we were animating*/
+	else if (fww->isAnimating) /* We're done animating now, and we were animating */
 	{
 		if (FWHandleWindowInputInfo (w))
 			FWAdjustIPW (w);		
 		fww->isAnimating = FALSE;
 	}
 
-	if (wasCulled)
-		glEnable(GL_CULL_FACE);
-	
     return status;
 }
 
@@ -380,7 +409,7 @@ FWPaintOutput(CompScreen *s,
 
     float zRad = fww->radius * (freewinsGet3dPercent (s) / 100);
 
-	wasCulled = glIsEnabled (GL_CULL_FACE);
+	//wasCulled = glIsEnabled (GL_CULL_FACE);
 	zTransform = *transform;
 
 	transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &zTransform);
@@ -388,8 +417,8 @@ FWPaintOutput(CompScreen *s,
 	glPushMatrix ();
 	glLoadMatrixf (zTransform.m);
 
-	if (wasCulled)
-	    glDisable (GL_CULL_FACE);
+	//if (wasCulled)
+	    //glDisable (GL_CULL_FACE);
 
     if (freewinsGetShowCircle (s) && freewinsGetRotationAxis (fwd->hoverWindow->screen) == RotationAxisAlwaysCentre)
     {
@@ -495,31 +524,31 @@ FWPaintOutput(CompScreen *s,
 	{
 	
 	glBegin(GL_LINES);
-	glVertex3f(fww->output->shapex1, fww->output->shapey1, 0.0f);
-	glVertex3f(fww->output->shapex2, fww->output->shapey2, 0.0f);
+	glVertex3f(fww->output.shapex1, fww->output.shapey1, 0.0f);
+	glVertex3f(fww->output.shapex2, fww->output.shapey2, 0.0f);
 	glEnd ();
 	
 	glBegin(GL_LINES);
-	glVertex3f(fww->output->shapex2, fww->output->shapey2, 0.0f);
-	glVertex3f(fww->output->shapex4, fww->output->shapey4, 0.0f);
+	glVertex3f(fww->output.shapex2, fww->output.shapey2, 0.0f);
+	glVertex3f(fww->output.shapex4, fww->output.shapey4, 0.0f);
 	glEnd ();
 	
 	glBegin(GL_LINES);
-	glVertex3f(fww->output->shapex4, fww->output->shapey4, 0.0f);
-	glVertex3f(fww->output->shapex3, fww->output->shapey3, 0.0f);
+	glVertex3f(fww->output.shapex4, fww->output.shapey4, 0.0f);
+	glVertex3f(fww->output.shapex3, fww->output.shapey3, 0.0f);
 	glEnd ();
 	
 	glBegin(GL_LINES);
-	glVertex3f(fww->output->shapex3, fww->output->shapey3, 0.0f);
-	glVertex3f(fww->output->shapex1, fww->output->shapey1, 0.0f);
+	glVertex3f(fww->output.shapex3, fww->output.shapey3, 0.0f);
+	glVertex3f(fww->output.shapex1, fww->output.shapey1, 0.0f);
 	glEnd ();
 	
 	}
 
     }
 
-	if (wasCulled)
-	    glEnable(GL_CULL_FACE);
+	//if (wasCulled)
+	    //glEnable(GL_CULL_FACE);
 
 	glColor4usv(defaultColor);
 	glPopMatrix ();
