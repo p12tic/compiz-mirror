@@ -294,7 +294,37 @@ FWPaintWindow(CompWindow *w,
 
     	FWCalculateInputRect (w);
 
+		/* Determine if the window is inverted */
+	
+		Bool needsInvert = FALSE;
+	
+		if (fww->output.shapex1 > fww->output.shapex2)
+			needsInvert = TRUE;
+		else if (fww->output.shapex3 > fww->output.shapex4)
+			needsInvert = TRUE;
+	
+		if (fww->output.shapey1 > fww->output.shapey3)
+			needsInvert = TRUE;
+		else if (fww->output.shapey2 > fww->output.shapey4)
+			needsInvert = TRUE;
+	
+		if (needsInvert && (!fws->transformedScreen))
+			glCullFace (invertCull);
+
+		UNWRAP(fws, w->screen, paintWindow);	
+		status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
+		WRAP(fws, w->screen, paintWindow, FWPaintWindow);
+		
+		if (needsInvert && (!fws->transformedScreen))
+			glCullFace (currentCull);
+
     }
+    else
+    {
+		UNWRAP(fws, w->screen, paintWindow);	
+		status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
+		WRAP(fws, w->screen, paintWindow, FWPaintWindow);
+	}
     
     // Check if there are rotated windows
     if (!((fww->transform.angX >= 0.0f - 0.05 &&
@@ -310,30 +340,6 @@ FWPaintWindow(CompWindow *w,
 		fww->transformed = TRUE;        
 	else if (fww->transformed)
 	    fww->transformed = FALSE;
-    
-	/* Determine if the window is inverted */
-	
-	Bool needsInvert = FALSE;
-	
-	if (fww->output.shapex1 > fww->output.shapex2)
-		needsInvert = TRUE;
-	else if (fww->output.shapex3 > fww->output.shapex4)
-		needsInvert = TRUE;
-	
-	if (fww->output.shapey1 > fww->output.shapey3)
-		needsInvert = TRUE;
-	else if (fww->output.shapey2 > fww->output.shapey4)
-		needsInvert = TRUE;
-	
-	if (needsInvert && (!fws->transformedScreen))
-		glCullFace (invertCull);
-
-    UNWRAP(fws, w->screen, paintWindow);	
-    status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
-    WRAP(fws, w->screen, paintWindow, FWPaintWindow);
-    
-    if (needsInvert && (!fws->transformedScreen))
-    	glCullFace (currentCull);
     
     /* There is still animation to be done */
     
