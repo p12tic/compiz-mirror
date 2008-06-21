@@ -333,13 +333,9 @@ FWPaintWindow(CompWindow *w,
 	if (needsInvert)
 		glCullFace (invertCull);
 
-	glDisable (GL_CULL_FACE);
-
     UNWRAP(fws, w->screen, paintWindow);	
     status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
     WRAP(fws, w->screen, paintWindow, FWPaintWindow);
-    
-    glEnable (GL_CULL_FACE);
     
     if (needsInvert)
     	glCullFace (currentCull);
