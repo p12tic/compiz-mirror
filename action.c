@@ -538,37 +538,41 @@ void
 FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, float dsd)
 {
     FREEWINS_WINDOW (w);
+    
+    if (matchEval (freewinsGetShapeWindowTypes (w->screen), w))
+    {
 
-    FWCalculateInputOrigin(w, WIN_REAL_X (w) + 
-    											WIN_REAL_W (w) / 2.0f,
-                             					WIN_REAL_Y (w) +
-                             				    WIN_REAL_H (w) / 2.0f);
-    FWCalculateOutputOrigin(w, WIN_OUTPUT_X (w) +
-    											  WIN_OUTPUT_W (w) / 2.0f,
-                               					  WIN_OUTPUT_Y (w) +
-                               					  WIN_OUTPUT_H (w) / 2.0f);
+		FWCalculateInputOrigin(w, WIN_REAL_X (w) + 
+													WIN_REAL_W (w) / 2.0f,
+		                         					WIN_REAL_Y (w) +
+		                         				    WIN_REAL_H (w) / 2.0f);
+		FWCalculateOutputOrigin(w, WIN_OUTPUT_X (w) +
+													  WIN_OUTPUT_W (w) / 2.0f,
+		                           					  WIN_OUTPUT_Y (w) +
+		                           					  WIN_OUTPUT_H (w) / 2.0f);
 
-    fww->transform.unsnapAngX += dy;
-    fww->transform.unsnapAngY -= dx;
-    fww->transform.unsnapAngZ += dz;
+		fww->transform.unsnapAngX += dy;
+		fww->transform.unsnapAngY -= dx;
+		fww->transform.unsnapAngZ += dz;
 
-    fww->transform.unsnapScaleX += dsu;
-    fww->transform.unsnapScaleY += dsd;
+		fww->transform.unsnapScaleX += dsu;
+		fww->transform.unsnapScaleY += dsd;
 
-    fww->animate.oldAngX = fww->transform.angX; 
-    fww->animate.oldAngY = fww->transform.angY; 
-    fww->animate.oldAngZ = fww->transform.angZ;
+		fww->animate.oldAngX = fww->transform.angX; 
+		fww->animate.oldAngY = fww->transform.angY; 
+		fww->animate.oldAngZ = fww->transform.angZ;
 
-    fww->animate.oldScaleX = fww->transform.scaleX; 
-    fww->animate.oldScaleY = fww->transform.scaleY;
+		fww->animate.oldScaleX = fww->transform.scaleX; 
+		fww->animate.oldScaleY = fww->transform.scaleY;
 
-    fww->animate.destAngX = fww->transform.angX + dy; 
-    fww->animate.destAngY = fww->transform.angY - dx; 
-    fww->animate.destAngZ = fww->transform.angZ + dz;
+		fww->animate.destAngX = fww->transform.angX + dy; 
+		fww->animate.destAngY = fww->transform.angY - dx; 
+		fww->animate.destAngZ = fww->transform.angZ + dz;
 
-    fww->animate.destScaleX = fww->transform.scaleX + dsu; 
-    fww->animate.destScaleY = fww->transform.scaleY + dsd;
+		fww->animate.destScaleX = fww->transform.scaleX + dsu; 
+		fww->animate.destScaleY = fww->transform.scaleY + dsd;
 
+	}
 }
 
 #define ROTATE_INC freewinsGetRotateIncrementAmount (w->screen)
