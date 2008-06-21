@@ -179,8 +179,12 @@ FWPaintWindow(CompWindow *w,
 
     /* Has something happened? */
 
-    if ((fww->transform.angX != 0.0 || fww->transform.angY != 0.0 || fww->transform.angZ != 0.0 ||
-        fww->transform.scaleX != 1.0 || fww->transform.scaleY != 1.0 || fww->oldWinX != WIN_REAL_X (w) ||
+    if ((fww->transform.angX != 0.0 ||
+    	  fww->transform.angY != 0.0 ||
+    	  fww->transform.angZ != 0.0 ||
+          fww->transform.scaleX != 1.0 ||
+          fww->transform.scaleY != 1.0 ||
+          fww->oldWinX != WIN_REAL_X (w) ||
         fww->oldWinY != WIN_REAL_Y (w)) && !(w->type == CompWindowTypeDesktopMask))
     {
     
@@ -339,13 +343,6 @@ FWPaintWindow(CompWindow *w,
     
     if (needsInvert)
     	glCullFace (currentCull);
-
-    
-    //if (fww->transformed)
-    //fprintf(stderr, "Face culling is enabled? %i\n", glIsEnabled(GL_CULL_FACE));
-    
-	//if (wasCulled)
-		//glEnable(GL_CULL_FACE);
     
     /* There is still animation to be done */
     
