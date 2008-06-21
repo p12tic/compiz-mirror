@@ -171,7 +171,6 @@ FWPaintWindow(CompWindow *w,
     CompTransform wTransform = *transform;
     float angX = 0.0f, angY = 0.0f, angZ = 0.0f;
 
-    //Bool wasCulled = glIsEnabled (GL_CULL_FACE);
     Bool status;
 
     FREEWINS_SCREEN (w->screen);
@@ -185,7 +184,7 @@ FWPaintWindow(CompWindow *w,
           fww->transform.scaleX != 1.0 ||
           fww->transform.scaleY != 1.0 ||
           fww->oldWinX != WIN_REAL_X (w) ||
-        fww->oldWinY != WIN_REAL_Y (w)) && !(w->type == CompWindowTypeDesktopMask))
+        fww->oldWinY != WIN_REAL_Y (w)))
     {
     
         fww->oldWinX = WIN_REAL_X (w);
