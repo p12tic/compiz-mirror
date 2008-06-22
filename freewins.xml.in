@@ -14,6 +14,8 @@
             <plugin>wobbly</plugin>
             <plugin>animation</plugin>
             <plugin>water</plugin>
+            <plugin>cubeaddon</plugin>
+            <plugin>3d</plugin>
 		</relation>
 	</deps>
 	<display>
