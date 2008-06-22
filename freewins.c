@@ -204,6 +204,14 @@ freewinsInitWindow (CompPlugin *p,
     fww->transform.unsnapScaleX = 1.0;
     fww->transform.unsnapScaleY = 1.0;
     
+    fww->transform.isSaved = FALSE;
+    
+    fww->transform.savAngX = 0.0f;
+    fww->transform.savAngY = 0.0f;
+    fww->transform.savAngZ = 0.0f;
+    fww->transform.savScaleX = 1.0f;
+    fww->transform.savScaleY = 1.0f;
+    
     fww->animate.destAngX = 0.0f;
     fww->animate.destAngY = 0.0f;
     fww->animate.destAngZ = 0.0f;

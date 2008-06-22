@@ -200,8 +200,8 @@ typedef struct _FWTransformedWindowInfo
     float scaleX;
 
     // Window transformation
-    CompTransform rotationState;
-    CompTransform scaleState;
+    //CompTransform rotationState;
+    //CompTransform scaleState;
 
     /* Used for snapping */
 
@@ -211,6 +211,17 @@ typedef struct _FWTransformedWindowInfo
 
     float unsnapScaleX;
     float unsnapScaleY;
+    
+    /* Used for disabling on transformed screen */
+    
+    float savAngX;
+    float savAngY;
+    float savAngZ;
+
+    float savScaleX;
+    float savScaleY;
+    
+    Bool isSaved;
 
 } FWTransformedWindowInfo;
 
