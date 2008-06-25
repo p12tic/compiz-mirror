@@ -99,7 +99,6 @@ typedef struct _WallScreen
 
     Bool moving; /* Used to track miniview movement */
     Bool showPreview;
-    Bool focusDefault;
 
     float curPosX;
     float curPosY;
@@ -553,8 +552,6 @@ wallMoveViewport (CompScreen *s,
     ws->moving = TRUE;
     ws->boxOutputDevice = outputDeviceForPoint (s, pointerX, pointerY);
 
-    ws->focusDefault = TRUE;
-
     if (wallGetShowSwitcher (s->display))
 	ws->boxTimeout = wallGetPreviewTimeout (s->display) * 1000;
     else
@@ -621,8 +618,6 @@ wallActivateWindow (CompWindow *w)
 	
 	if (dx || dy)
 	    wallMoveViewport (s, -dx, -dy, None);
-
-	ws->focusDefault = FALSE;
     }
 
     UNWRAP (ws, s, activateWindow);
@@ -1400,7 +1395,7 @@ wallPreparePaintScreen (CompScreen *s,
 
 	if (ws->moveWindow)
 	    wallReleaseMoveWindow (s);
-	else if (ws->focusDefault)
+	else
 	    focusDefaultWindow (s);
 
 	if (ws->grabIndex)
@@ -1882,7 +1877,6 @@ wallInitScreen (CompPlugin *p,
     ws->timer = 0;
     ws->moving = FALSE;
     ws->showPreview = FALSE;
-    ws->focusDefault = TRUE;
     ws->moveWindow = None;
 
     memset (&ws->switcherContext, 0, sizeof (WallCairoContext));
