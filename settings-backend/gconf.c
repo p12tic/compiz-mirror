@@ -1321,10 +1321,10 @@ writeListValue (CCSSetting *setting,
 	break;
     case TypeFloat:
 	{
-	    float *item;
+	    gdouble *item;
 	    while (list)
 	    {
-		item = malloc (sizeof (float));
+		item = malloc (sizeof (gdouble));
 		if (item)
 		{
 		    *item = list->data->value.asFloat;
