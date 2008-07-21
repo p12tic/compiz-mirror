@@ -97,10 +97,8 @@ FWPreparePaintScreen (CompScreen *s,
      * remaining.
      */
 
-		/* Don't animate if the window is saved */
-		
-		if (!fww->transform.isSaved)
-		{
+	/* Don't animate if the window is saved */
+	
 
         fww->transform.angX += (float) fww->animate.steps * (fww->animate.destAngX - fww->transform.angX) * speed;
         fww->transform.angY += (float) fww->animate.steps * (fww->animate.destAngY - fww->transform.angY) * speed;
@@ -122,6 +120,9 @@ FWPreparePaintScreen (CompScreen *s,
         {
             fww->resetting = FALSE;
 
+            if (fww->transform.isSaved && fws->transformedScreen)
+                fww->noPaint = TRUE;
+
             fww->transform.angX = fww->animate.destAngX;
             fww->transform.angY = fww->animate.destAngY;
             fww->transform.angZ = fww->animate.destAngZ;
@@ -137,7 +138,7 @@ FWPreparePaintScreen (CompScreen *s,
         else
             FWDamageArea (w);
     }
-    }
+
 
     UNWRAP (fws, s, preparePaintScreen);
     (*s->preparePaintScreen) (s, ms);
@@ -168,13 +169,13 @@ FWPaintTransformedOutput (CompScreen              *s,
 /* Paint the window rotated or scaled */
 Bool
 FWPaintWindow(CompWindow *w,
-									 const WindowPaintAttrib *attrib,
-									 const CompTransform *transform,
-									 Region region,
-									 unsigned int mask)
+	 const WindowPaintAttrib *attrib,
+	 const CompTransform *transform,
+	 Region region,
+	 unsigned int mask)
 {
 
-    CompTransform wTransform = *transform;
+	CompTransform wTransform = *transform;
 	int currentCull, invertCull;
 	glGetIntegerv (GL_CULL_FACE_MODE, &currentCull);
 	invertCull = (currentCull == GL_BACK) ? GL_FRONT : GL_BACK;
@@ -186,173 +187,197 @@ FWPaintWindow(CompWindow *w,
 
     /* Has something happened? */
     
-		/* Check to see if we are painting on a transformed screen TODO: Animate =)*/
+    /* Check to see if we are painting on a transformed screen*/
+    /* Enable this code when we can animate between the two states */
 
-	   if (fws->transformedScreen && !fww->transform.isSaved)
-	   {
-		 	fww->transform.savAngX = fww->animate.destAngX;
-		 	fww->transform.savAngY = fww->animate.destAngY;
-		 	fww->transform.savAngZ = fww->animate.destAngZ;
-		 	
-		 	fww->transform.savScaleX = fww->animate.destScaleX;
-		 	fww->transform.savScaleY = fww->animate.destScaleY;
-		 	fww->transform.isSaved = TRUE;
-		 	
-		 	fww->transform.angX = 0.0f;
-		 	fww->transform.angY = 0.0f;
-		 	fww->transform.angZ = 0.0f;
-		 	
-		 	fww->transform.scaleX = 1.0f;
-		 	fww->transform.scaleY = 1.0f;
-	 }
-	 else if (fww->transform.isSaved && !fws->transformedScreen)
-	 {
-		 	fww->transform.angX = fww->transform.savAngX;
-		 	fww->transform.angY = fww->transform.savAngX;
-		 	fww->transform.angZ = fww->transform.savAngX;
-		 	
-		 	fww->transform.scaleX = fww->transform.savScaleX;
-		 	fww->transform.scaleY = fww->transform.savScaleX;
-		 	
-		 	fww->transform.isSaved = FALSE;
-	}
-
-    if (((fww->transform.angX != 0.0 ||
-    	  fww->transform.angY != 0.0 ||
-    	  fww->transform.angZ != 0.0 ||
-          fww->transform.scaleX != 1.0 ||
-          fww->transform.scaleY != 1.0 ||
-          fww->oldWinX != WIN_REAL_X (w) ||
-        fww->oldWinY != WIN_REAL_Y (w)) && matchEval (freewinsGetShapeWindowTypes (w->screen), w)) || fww->transform.isSaved)
+    if (fws->transformedScreen && !fww->transform.isSaved)
     {
-    
-        fww->oldWinX = WIN_REAL_X (w);
-        fww->oldWinY = WIN_REAL_Y (w);
-        
-        /* Figure out where our 'origin' is, don't allow the origin to
-          * be where we clicked if the window is not grabbed, etc
-          */
-        
-        /* Here we duplicate some of the work the openGL does
-         * but for different reasons. We have access to the 
-         * window's transformation matrix, so we will create
-         * our own matrix and apply the same transformations
-         * to it. From there, we create vectors for each point
-         * that we wish to track and multiply them by this 
-         * matrix to give us the rotated / scaled co-ordinates.
-         * From there, we project these co-ordinates onto the flat
-         * screen that we have using the OGL viewport, projection
-         * matrix and model matrix. Projection gives us three
-         * co-ordinates, but we ignore Z and just use X and Y
-         * to store in a surrounding rectangle. We can use this
-         * surrounding rectangle to make things like shaping and
-         * damage a lot more accurate than they used to be.
-         */
-         
-         FWCalculateOutputRect (w);
+        fww->transform.savAngX = fww->animate.destAngX;
+        fww->transform.savAngY = fww->animate.destAngY;
+        fww->transform.savAngZ = fww->animate.destAngZ;
 
-        /* Prepare for transformation by doing
-         * any neccesary adjustments
-         */
+        fww->transform.savScaleX = fww->animate.destScaleX;
+        fww->transform.savScaleY = fww->animate.destScaleY;
+        fww->transform.isSaved = TRUE;
+        fww->noPaint = FALSE;
 
-        float autoScaleX = 1.0f;
-        float autoScaleY = 1.0f;
+        fww->animate.destAngX = 0.0f;
+        fww->animate.destAngY = 0.0f;
+        fww->animate.destAngZ = 0.0f;
 
-        if (freewinsGetAutoZoom (w->screen))
+        fww->animate.destScaleX = 1.0f;
+        fww->animate.destScaleY = 1.0f;
+    }
+    else if (fww->transform.isSaved && !fws->transformedScreen)
+    {
+        fww->animate.destAngX = fww->transform.savAngX;
+        fww->animate.destAngY = fww->transform.savAngY;
+        fww->animate.destAngZ = fww->transform.savAngZ;
+
+        fww->animate.destScaleX = fww->transform.savScaleX;
+        fww->animate.destScaleY = fww->transform.savScaleY;
+
+        fww->transform.isSaved = FALSE;
+        fww->noPaint = FALSE;
+    }
+
+        if (!fww->noPaint &&
+           (((fww->transform.angX != 0.0 ||
+        	  fww->transform.angY != 0.0 ||
+        	  fww->transform.angZ != 0.0 ||
+              fww->transform.scaleX != 1.0 ||
+              fww->transform.scaleY != 1.0 ||
+              fww->oldWinX != WIN_REAL_X (w) ||
+            fww->oldWinY != WIN_REAL_Y (w)) && matchEval (freewinsGetShapeWindowTypes (w->screen), w)) || fww->transform.isSaved))
         {
 
-            float apparantWidth = fww->outputRect.x2 - fww->outputRect.x1;
-            float apparantHeight = fww->outputRect.y2 - fww->outputRect.y1;
+   
+            fww->oldWinX = WIN_REAL_X (w);
+            fww->oldWinY = WIN_REAL_Y (w);
+            
+            /* Figure out where our 'origin' is, don't allow the origin to
+              * be where we clicked if the window is not grabbed, etc
+              */
+            
+            /* Here we duplicate some of the work the openGL does
+             * but for different reasons. We have access to the 
+             * window's transformation matrix, so we will create
+             * our own matrix and apply the same transformations
+             * to it. From there, we create vectors for each point
+             * that we wish to track and multiply them by this 
+             * matrix to give us the rotated / scaled co-ordinates.
+             * From there, we project these co-ordinates onto the flat
+             * screen that we have using the OGL viewport, projection
+             * matrix and model matrix. Projection gives us three
+             * co-ordinates, but we ignore Z and just use X and Y
+             * to store in a surrounding rectangle. We can use this
+             * surrounding rectangle to make things like shaping and
+             * damage a lot more accurate than they used to be.
+             */
+             
+             FWCalculateOutputRect (w);
 
-            autoScaleX = (float) WIN_OUTPUT_W (w) / (float) apparantWidth;
-            autoScaleY = (float) WIN_OUTPUT_H (w) / (float) apparantHeight;
-
-            if (autoScaleX >= 1.0f)
-                autoScaleX = 1.0f;
-            if (autoScaleY >= 1.0f)
-                autoScaleY = 1.0f;
-
-            autoScaleX = autoScaleY = (autoScaleX + autoScaleY) / 2;
-
-            /* Because we modified the scale after calculating
-             * the output rect, we need to recalculate again
+            /* Prepare for transformation by doing
+             * any neccesary adjustments
              */
 
-            FWCalculateOutputRect (w);
+            float autoScaleX = 1.0f;
+            float autoScaleY = 1.0f;
+
+            if (freewinsGetAutoZoom (w->screen))
+            {
+
+                float apparantWidth = fww->outputRect.x2 - fww->outputRect.x1;
+                float apparantHeight = fww->outputRect.y2 - fww->outputRect.y1;
+
+                autoScaleX = (float) WIN_OUTPUT_W (w) / (float) apparantWidth;
+                autoScaleY = (float) WIN_OUTPUT_H (w) / (float) apparantHeight;
+
+                if (autoScaleX >= 1.0f)
+                    autoScaleX = 1.0f;
+                if (autoScaleY >= 1.0f)
+                    autoScaleY = 1.0f;
+
+                autoScaleX = autoScaleY = (autoScaleX + autoScaleY) / 2;
+
+                /* Because we modified the scale after calculating
+                 * the output rect, we need to recalculate again
+                 */
+
+                FWCalculateOutputRect (w);
+
+            }
+
+            float scaleX = autoScaleX - (1 - fww->transform.scaleX);
+            float scaleY = autoScaleY - (1 - fww->transform.scaleY);
+
+            /* Actually Transform the window */
+
+		    if (!fww->transform.isSaved)
+	        mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+
+	     	/* Adjust the window in the matrix to prepare for transformation */
+	
+	     	if (fww->grab != grabRotate && fww->grab != grabScale)
+	     	{
+
+		    FWCalculateInputOrigin (w,
+					    WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
+      					WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
+		    FWCalculateOutputOrigin (w,
+					    WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w) / 2.0f,
+      					WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
+				                      			
+		    }
+
+	     	
+	     	float adjustX, adjustY;
+
+		    adjustX = 0.0f;
+		    adjustY = 0.0f;
+		    FWModifyMatrix (w, &wTransform,
+		                    fww->transform.angX,
+		                    fww->transform.angY,
+		                    fww->transform.angZ,
+		                    fww->iMidX, fww->iMidY , 0.0f,
+		                    scaleX, scaleY, 1.0f, adjustX, adjustY);
+		                    
+		    /* Create rects for input after we've dealt
+		     * with output
+		     */
+
+		    FWCalculateInputRect (w);
+
+		    /* Determine if the window is inverted */
+
+		    Bool xInvert = FALSE;
+		    Bool yInvert = FALSE;
+		    Bool zInvert = FALSE; /* Check to see if zRotation is > 180 & < 360 */
+		    Bool needsInvert = FALSE;
+
+		    int renZ = (int) fww->transform.angZ % (int)360;
+
+		    if (renZ < 0) renZ = renZ * -1;
+
+		    if (renZ > 90 && renZ < 270)
+		    zInvert = TRUE;
+
+		    if (zInvert)
+		    {
+			    if (fww->output.shapex1 < fww->output.shapex2 && fww->output.shapex3 < fww->output.shapex4)
+				    xInvert = TRUE;
+			    if (fww->output.shapey1 < fww->output.shapey3 && fww->output.shapey2 < fww->output.shapey4)
+				    yInvert = TRUE;
+		    }
+		    else
+		    {
+			    if (fww->output.shapex1 > fww->output.shapex2 && fww->output.shapex3 > fww->output.shapex4)
+				    xInvert = TRUE;
+			    if (fww->output.shapey1 > fww->output.shapey3 && fww->output.shapey2 > fww->output.shapey4)
+				    yInvert = TRUE;
+		    }
+
+		    if ((xInvert || yInvert) && !(xInvert && yInvert))
+		    needsInvert = TRUE;
+
+		    if (needsInvert && (!fws->transformedScreen))
+			    glCullFace (invertCull);
+
+		    UNWRAP(fws, w->screen, paintWindow);	
+		    status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
+		    WRAP(fws, w->screen, paintWindow, FWPaintWindow);
+	
+		    if (needsInvert && (!fws->transformedScreen))
+			    glCullFace (currentCull);
 
         }
+        else
+        {
+	    UNWRAP(fws, w->screen, paintWindow);	
+	    status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
+	    WRAP(fws, w->screen, paintWindow, FWPaintWindow);
+        }
 
-        float scaleX = autoScaleX - (1 - fww->transform.scaleX);
-        float scaleY = autoScaleY - (1 - fww->transform.scaleY);
-
-        /* Actually Transform the window */
-
-		if (!fww->transform.isSaved)
-	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-
-	 	/* Adjust the window in the matrix to prepare for transformation */
-	
-	 	if (fww->grab != grabRotate && fww->grab != grabScale)
-	 	{
-
-		FWCalculateInputOrigin (w,
-											WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
-				                  			WIN_REAL_Y (w) + WIN_REAL_H (w) / 2.0f);
-		FWCalculateOutputOrigin (w,
-											WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w) / 2.0f,
-				                  			WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
-				                  			
-		}
-
-	 	
-	 	float adjustX, adjustY;
-
-		adjustX = 0.0f;
-		adjustY = 0.0f;
-		FWModifyMatrix (w, &wTransform,
-		                fww->transform.angX,
-		                fww->transform.angY,
-		                fww->transform.angZ,
-		                fww->iMidX, fww->iMidY , 0.0f,
-		                scaleX, scaleY, 1.0f, adjustX, adjustY);
-		                
-		/* Create rects for input after we've dealt
-		 * with output
-		 */
-
-		FWCalculateInputRect (w);
-
-		/* Determine if the window is inverted */
-
-		Bool needsInvert = FALSE;
-
-		if (fww->output.shapex1 > fww->output.shapex2)
-			needsInvert = TRUE;
-		else if (fww->output.shapex3 > fww->output.shapex4)
-			needsInvert = TRUE;
-
-		if (fww->output.shapey1 > fww->output.shapey3)
-			needsInvert = TRUE;
-		else if (fww->output.shapey2 > fww->output.shapey4)
-			needsInvert = TRUE;
-
-		if (needsInvert && (!fws->transformedScreen))
-			glCullFace (invertCull);
-
-		UNWRAP(fws, w->screen, paintWindow);	
-		status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
-		WRAP(fws, w->screen, paintWindow, FWPaintWindow);
-	
-		if (needsInvert && (!fws->transformedScreen))
-			glCullFace (currentCull);
-
-    }
-    else
-    {
-		UNWRAP(fws, w->screen, paintWindow);	
-		status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
-		WRAP(fws, w->screen, paintWindow, FWPaintWindow);
-	}
     
     // Check if there are rotated windows
     if (!((fww->transform.angX >= 0.0f - 0.05 &&

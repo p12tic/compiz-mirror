@@ -317,9 +317,8 @@ FWCalculateWindowRect (CompWindow *w,
         FWRotateProjectVector(w, c2, transform, &xScreen2, &yScreen2, &zScreen2, FALSE);
         FWRotateProjectVector(w, c3, transform, &xScreen3, &yScreen3, &zScreen3, FALSE);
         FWRotateProjectVector(w, c4, transform, &xScreen4, &yScreen4, &zScreen4, FALSE);
-        
-		/* First, save the non-rectangular points so that we can shape the rectangular IPW */
-        
+       
+	/* Save the non-rectangular points so that we can shape the rectangular IPW */        
 
     	fww->output.shapex1 = xScreen1;
     	fww->output.shapex2 = xScreen2;

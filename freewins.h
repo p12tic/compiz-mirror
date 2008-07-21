@@ -348,6 +348,9 @@ typedef struct _FWWindow
     Bool can2D; // These need to be removed
     Bool can3D;
 
+    Bool noPaint;
+    Bool noSave;
+
     Bool transformed; // So does this in favor of FWWindowInputInfo
     
     FWGrabType grab;

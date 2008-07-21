@@ -55,10 +55,10 @@ static CompMetadata freewinsMetadata;
 /* Information on window resize */
 void
 FWWindowResizeNotify(CompWindow *w,
-												int dx,
-											    int dy,
-											    int dw,
-											    int dh)
+                    int dx,
+                    int dy,
+                    int dw,
+                    int dh)
 {
     FREEWINS_WINDOW (w);
     FREEWINS_SCREEN (w->screen);
