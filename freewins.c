@@ -226,6 +226,7 @@ freewinsInitWindow (CompPlugin *p,
 
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
     fww->input = NULL;
+    fww->noPaint = NULL;
     
     return TRUE;
 }
@@ -273,6 +274,7 @@ freewinsInitScreen (CompPlugin *p,
 
     fws->grabIndex = 0;
     fws->transformedWindows = NULL;
+    fws->transformedScreen = FALSE;
 
     s->base.privates[fwd->screenPrivateIndex].ptr = fws;
     
