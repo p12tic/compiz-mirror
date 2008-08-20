@@ -54,7 +54,7 @@
 /* Damage util function */
 
 void
-FWDamageArea(CompWindow *w)
+FWDamageArea (CompWindow *w)
 {
     FREEWINS_WINDOW (w);
 
@@ -74,7 +74,7 @@ FWDamageArea(CompWindow *w)
 /* Animation Prep */
 void
 FWPreparePaintScreen (CompScreen *s,
-			 int	        ms)
+			            int	      ms)
 {
     CompWindow *w;
     FREEWINS_SCREEN (s);
@@ -151,11 +151,11 @@ FWPreparePaintScreen (CompScreen *s,
 
 void
 FWPaintTransformedOutput (CompScreen              *s,
-                              const ScreenPaintAttrib *sAttrib,
-                              const CompTransform     *transform,
-                              Region                  region,
-                              CompOutput              *output,
-                              unsigned int            mask)
+                          const ScreenPaintAttrib *sAttrib,
+                          const CompTransform     *transform,
+                          Region                  region,
+                          CompOutput              *output,
+                          unsigned int            mask)
 {
     FREEWINS_SCREEN (s);
 
@@ -168,11 +168,11 @@ FWPaintTransformedOutput (CompScreen              *s,
 
 /* Paint the window rotated or scaled */
 Bool
-FWPaintWindow(CompWindow *w,
-	 const WindowPaintAttrib *attrib,
-	 const CompTransform *transform,
-	 Region region,
-	 unsigned int mask)
+FWPaintWindow (CompWindow *w,
+               const WindowPaintAttrib *attrib,
+               const CompTransform *transform,
+               Region region,
+               unsigned int mask)
 {
 
 	CompTransform wTransform = *transform;
@@ -423,11 +423,11 @@ FWPaintWindow(CompWindow *w,
 /* Paint the window axis help onto the screen */
 Bool
 FWPaintOutput(CompScreen *s,
-								 const ScreenPaintAttrib *sAttrib,
-								 const CompTransform *transform,
-								 Region region,
-								 CompOutput *output,
-								 unsigned int mask)
+			  const ScreenPaintAttrib *sAttrib,
+			  const CompTransform *transform,
+			  Region region,
+			  CompOutput *output,
+			  unsigned int mask)
 {
 
     Bool wasCulled, status;
@@ -648,8 +648,8 @@ FWDonePaintScreen (CompScreen *s)
 /* Damage the Window Rect */
 Bool
 FWDamageWindowRect(CompWindow *w,
-												Bool initial,
-												BoxPtr rect)
+					Bool initial,
+					BoxPtr rect)
 {
 
     Bool status = TRUE;

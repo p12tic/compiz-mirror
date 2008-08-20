@@ -55,11 +55,12 @@
 /* Rotate and project individual vectors */
 void
 FWRotateProjectVector (CompWindow *w,
-											  CompVector vector, CompTransform transform,
-                                   			  GLdouble *resultX,
-                                   			  GLdouble *resultY,
-                                   			  GLdouble *resultZ,
-                                   			  Bool report)
+					  CompVector vector,
+                      CompTransform transform,
+           			  GLdouble *resultX,
+           			  GLdouble *resultY,
+           			  GLdouble *resultZ,
+           			  Bool report)
 {
 
     matrixMultiplyVector(&vector, &vector, &transform);
@@ -217,13 +218,13 @@ static void FWFindInverseMatrix(CompTransform *m, CompTransform *r){
 /* Create a rect from 4 screen points */
 Box
 FWCreateSizedRect (float xScreen1,
-                       float xScreen2,
-                       float xScreen3,
-                       float xScreen4,
-                       float yScreen1,
-                       float yScreen2,
-                       float yScreen3,
-                       float yScreen4)
+                   float xScreen2,
+                   float xScreen3,
+                   float xScreen4,
+                   float yScreen1,
+                   float yScreen2,
+                   float yScreen3,
+                   float yScreen4)
 {
         float leftmost, rightmost, topmost, bottommost;
         Box rect;
@@ -290,10 +291,10 @@ FWCreateSizedRect (float xScreen1,
 
 Box
 FWCalculateWindowRect (CompWindow *w,
-                           CompVector c1,
-                           CompVector c2,
-                           CompVector c3,
-                           CompVector c4)
+                       CompVector c1,
+                       CompVector c2,
+                       CompVector c3,
+                       CompVector c4)
 {
 
         FREEWINS_WINDOW (w);
@@ -318,7 +319,7 @@ FWCalculateWindowRect (CompWindow *w,
         FWRotateProjectVector(w, c3, transform, &xScreen3, &yScreen3, &zScreen3, FALSE);
         FWRotateProjectVector(w, c4, transform, &xScreen4, &yScreen4, &zScreen4, FALSE);
        
-	/* Save the non-rectangular points so that we can shape the rectangular IPW */        
+	    /* Save the non-rectangular points so that we can shape the rectangular IPW */        
 
     	fww->output.shapex1 = xScreen1;
     	fww->output.shapex2 = xScreen2;
@@ -343,10 +344,14 @@ FWCalculateOutputRect (CompWindow *w)
 
     FREEWINS_WINDOW (w);
 
-    CompVector corner1 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
-    CompVector corner2 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
-    CompVector corner3 = { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
-    CompVector corner4 = { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
+    CompVector corner1 =
+    { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
+    CompVector corner2 =
+    { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
+    CompVector corner3 =
+    { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
+    CompVector corner4 =
+    { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
 
     fww->outputRect = FWCalculateWindowRect (w, corner1, corner2, corner3, corner4);
     }
@@ -361,10 +366,14 @@ FWCalculateInputRect (CompWindow *w)
 
     FREEWINS_WINDOW (w);
 
-    CompVector corner1 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
-    CompVector corner2 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
-    CompVector corner3 = { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
-    CompVector corner4 = { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
+    CompVector corner1 =
+    { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+    CompVector corner2 =
+    { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
+    CompVector corner3 =
+    { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
+    CompVector corner4 =
+    { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
 
     fww->inputRect = FWCalculateWindowRect (w, corner1, corner2, corner3, corner4);
     }
@@ -413,9 +422,9 @@ FWCalculateOutputOrigin (CompWindow *w, float x, float y)
 /* Determine if we clicked in the z-axis region */
 void
 FWDetermineZAxisClick (CompWindow *w,
-										  int px,
-										  int py,
-										  Bool motion)
+					  int px,
+					  int py,
+					  Bool motion)
 {
     FREEWINS_WINDOW (w);
 
@@ -532,7 +541,9 @@ FWHandleSnap (CompWindow *w)
         fww->animate.destAngX = ((int) (fww->transform.unsnapAngX) / snapFactor) * snapFactor;
         fww->animate.destAngY = ((int) (fww->transform.unsnapAngY) / snapFactor) * snapFactor;
         fww->animate.destAngZ = ((int) (fww->transform.unsnapAngZ) / snapFactor) * snapFactor;
-        fww->transform.scaleX = ((float) ( (int) (fww->transform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
-        fww->transform.scaleY = ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
+        fww->transform.scaleX =
+        ((float) ( (int) (fww->transform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
+        fww->transform.scaleY =
+        ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
     }
 }

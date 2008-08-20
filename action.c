@@ -57,10 +57,10 @@
 /* Initiate Mouse Rotation */
 Bool
 initiateFWRotate (CompDisplay *d,
-							 CompAction *action,
-							 CompActionState state,
-							 CompOption *option,
-							 int nOption)
+				 CompAction *action,
+				 CompActionState state,
+				 CompOption *option,
+				 int nOption)
 {
     CompWindow* w;
     CompWindow *useW;
@@ -215,10 +215,10 @@ initiateFWRotate (CompDisplay *d,
 
 Bool
 terminateFWRotate (CompDisplay     *d,
-	       CompAction      *action,
-	       CompActionState state,
-	       CompOption      *option,
-	       int             nOption)
+	               CompAction      *action,
+	               CompActionState state,
+	               CompOption      *option,
+	               int             nOption)
 {
 
     CompScreen *s;
@@ -305,10 +305,10 @@ terminateFWRotate (CompDisplay     *d,
 /* Initiate Scaling */
 Bool
 initiateFWScale (CompDisplay *d,
-								    CompAction *action,
-								    CompActionState state,
-								    CompOption *option,
-								    int nOption)
+			    CompAction *action,
+			    CompActionState state,
+			    CompOption *option,
+			    int nOption)
 {
 
     CompWindow* w;
@@ -455,10 +455,10 @@ initiateFWScale (CompDisplay *d,
 
 Bool
 terminateFWScale (CompDisplay     *d,
-	       CompAction      *action,
-	       CompActionState state,
-	       CompOption      *option,
-	       int             nOption)
+	               CompAction      *action,
+	               CompActionState state,
+	               CompOption      *option,
+	               int             nOption)
 {
 
     FREEWINS_DISPLAY (d);
@@ -545,7 +545,12 @@ terminateFWScale (CompDisplay     *d,
 /* Repetitive Stuff */
 
 void
-FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, float dsd)
+FWSetPrepareRotation (CompWindow *w,
+                      float dx,
+                      float dy,
+                      float dz,
+                      float dsu,
+                      float dsd)
 {
     FREEWINS_WINDOW (w);
     
@@ -593,10 +598,10 @@ FWSetPrepareRotation (CompWindow *w, float dx, float dy, float dz, float dsu, fl
 
 Bool
 FWRotateUp (CompDisplay *d,
-								   CompAction *action,
-								   CompActionState state,
-								   CompOption *option,
-								   int nOption)
+		   CompAction *action,
+		   CompActionState state,
+		   CompOption *option,
+		   int nOption)
 {
 
     GET_WINDOW
@@ -615,10 +620,10 @@ FWRotateUp (CompDisplay *d,
 
 Bool
 FWRotateDown (CompDisplay *d,
-								   CompAction *action,
-								   CompActionState state,
-								   CompOption *option,
-								   int nOption)
+			   CompAction *action,
+			   CompActionState state,
+			   CompOption *option,
+			   int nOption)
 {
 
     GET_WINDOW
@@ -636,10 +641,10 @@ FWRotateDown (CompDisplay *d,
 
 Bool
 FWRotateLeft (CompDisplay *d,
-								   CompAction *action,
-								   CompActionState state,
-								   CompOption *option,
-								   int nOption)
+			   CompAction *action,
+			   CompActionState state,
+			   CompOption *option,
+			   int nOption)
 {
 
     GET_WINDOW
@@ -657,10 +662,10 @@ FWRotateLeft (CompDisplay *d,
 
 Bool
 FWRotateRight (CompDisplay *d,
-								   CompAction *action,
-								   CompActionState state,
-								   CompOption *option,
-								   int nOption)
+			   CompAction *action,
+			   CompActionState state,
+			   CompOption *option,
+			   int nOption)
 {
     
     GET_WINDOW
@@ -678,10 +683,10 @@ FWRotateRight (CompDisplay *d,
 
 Bool
 FWRotateClockwise (CompDisplay *d,
-								   CompAction *action,
-								   CompActionState state,
-								   CompOption *option,
-								   int nOption)
+				   CompAction *action,
+				   CompActionState state,
+				   CompOption *option,
+				   int nOption)
 {
     
     GET_WINDOW
@@ -699,10 +704,10 @@ FWRotateClockwise (CompDisplay *d,
 
 Bool
 FWRotateCounterclockwise (CompDisplay *d,
-								   CompAction *action,
-								   CompActionState state,
-								   CompOption *option,
-								   int nOption)
+						   CompAction *action,
+						   CompActionState state,
+						   CompOption *option,
+						   int nOption)
 {
     
     GET_WINDOW
@@ -720,10 +725,10 @@ FWRotateCounterclockwise (CompDisplay *d,
 
 Bool
 FWScaleUp (CompDisplay *d,
-						   CompAction *action,
-						   CompActionState state,
-						   CompOption *option,
-						   int nOption)
+		   CompAction *action,
+		   CompActionState state,
+		   CompOption *option,
+		   int nOption)
 {
     
     GET_WINDOW
@@ -755,10 +760,10 @@ FWScaleUp (CompDisplay *d,
 
 Bool
 FWScaleDown (CompDisplay *d,
-								   CompAction *action,
-								   CompActionState state,
-								   CompOption *option,
-								   int nOption)
+		       CompAction *action,
+		       CompActionState state,
+		       CompOption *option,
+		       int nOption)
 {
     
     GET_WINDOW
@@ -792,10 +797,10 @@ FWScaleDown (CompDisplay *d,
 /* Reset the Rotation and Scale to 0 and 1 */
 Bool
 resetFWTransform (CompDisplay *d,
-								   CompAction *action,
-								   CompActionState state,
-								   CompOption *option,
-								   int nOption)
+				   CompAction *action,
+				   CompActionState state,
+				   CompOption *option,
+				   int nOption)
 {
     
     GET_WINDOW;
@@ -829,10 +834,10 @@ resetFWTransform (CompDisplay *d,
  */
 Bool
 freewinsRotateWindow (CompDisplay *d,
-                          CompAction *action, 
-                          CompActionState state,
-                          CompOption *option,
-                          int nOption)
+                      CompAction *action, 
+                      CompActionState state,
+                      CompOption *option,
+                      int nOption)
 {
 	CompWindow *w;
 
@@ -871,10 +876,10 @@ freewinsRotateWindow (CompDisplay *d,
  */
 Bool
 freewinsIncrementRotateWindow (CompDisplay *d,
-                                  CompAction *action, 
-                                  CompActionState state,
-                                  CompOption *option,
-                                  int nOption)
+                              CompAction *action, 
+                              CompActionState state,
+                              CompOption *option,
+                              int nOption)
 {
 	CompWindow *w;
 
@@ -913,10 +918,10 @@ freewinsIncrementRotateWindow (CompDisplay *d,
  */
 Bool
 freewinsScaleWindow (CompDisplay *d,
-                          CompAction *action, 
-                          CompActionState state,
-                          CompOption *option,
-                          int nOption)
+                      CompAction *action, 
+                      CompActionState state,
+                      CompOption *option,
+                      int nOption)
 {
 	CompWindow *w;
 
@@ -945,10 +950,10 @@ freewinsScaleWindow (CompDisplay *d,
 /* Toggle Axis-Help Display */
 Bool
 toggleFWAxis (CompDisplay *d,
-                  CompAction *action,
-                  CompActionState state,
-                  CompOption *option,
-                  int nOption)
+              CompAction *action,
+              CompActionState state,
+              CompOption *option,
+              int nOption)
 {
 
     CompScreen *s;

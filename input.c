@@ -78,10 +78,11 @@ FWShapeIPW (CompWindow *w)
 
     Pixmap b = XCreatePixmap (ipw->screen->display->display, xipw, width, height, 1);
 
-    cairo_surface_t *bitmap = cairo_xlib_surface_create_for_bitmap (ipw->screen->display->display,
-    																									 b,
-    																									 DefaultScreenOfDisplay (ipw->screen->display->display),
-    																									 width, height);
+    cairo_surface_t *bitmap =
+    cairo_xlib_surface_create_for_bitmap (ipw->screen->display->display,
+										 b,
+										 DefaultScreenOfDisplay (ipw->screen->display->display),
+										 width, height);
 
     cr = cairo_create (bitmap);
 
@@ -92,23 +93,33 @@ FWShapeIPW (CompWindow *w)
 
     /* Move to our first corner (TopLeft)  */
 
-    cairo_move_to (cr, fww->output.shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_move_to (cr,
+                   fww->output.shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2),
+                   fww->output.shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Line to TopRight */
 
-    cairo_line_to (cr, fww->output.shapex2 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey2 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_line_to (cr,
+                   fww->output.shapex2 - MIN(fww->inputRect.x1, fww->inputRect.x2),
+                   fww->output.shapey2 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Line to BottomRight */
 
-    cairo_line_to (cr, fww->output.shapex4 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey4 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_line_to (cr,
+                   fww->output.shapex4 - MIN(fww->inputRect.x1, fww->inputRect.x2),
+                   fww->output.shapey4 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Line to BottomLeft */
 
-    cairo_line_to (cr, fww->output.shapex3 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey3 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_line_to (cr,
+                   fww->output.shapex3 - MIN(fww->inputRect.x1, fww->inputRect.x2),
+                   fww->output.shapey3 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Line to TopLeft*/
 
-    cairo_line_to (cr, fww->output.shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2), fww->output.shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
+    cairo_line_to (cr,
+                   fww->output.shapex1 - MIN(fww->inputRect.x1, fww->inputRect.x2),
+                   fww->output.shapey1 - MIN(fww->inputRect.y1, fww->inputRect.y2));
 
     /* Ensure it's all closed up */
 
@@ -134,11 +145,11 @@ FWShapeIPW (CompWindow *w)
     							 -1, -1);  */
 
     XShapeCombineMask (ipw->screen->display->display, xipw,
-    									 ShapeBounding,
-       	       							0,
-       	       							0,
-       	       							b,
-       	       							ShapeSet);
+					   ShapeBounding,
+					   0,
+					   0,
+					   b,
+					   ShapeSet);
 
     XFreePixmap (ipw->screen->display->display, b);
     cairo_surface_destroy (bitmap);
@@ -149,9 +160,9 @@ FWShapeIPW (CompWindow *w)
 
 static void
 FWSaveInputShape (CompWindow *w,
-		     XRectangle **retRects,
-		     int        *retCount,
-		     int        *retOrdering)
+	             XRectangle **retRects,
+	             int        *retCount,
+	             int        *retOrdering)
 {
     XRectangle *rects;
     int        count = 0, ordering;

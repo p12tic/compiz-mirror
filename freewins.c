@@ -140,7 +140,9 @@ FWReloadSnapKeys (CompDisplay *d)
 }
 
 static void
-FWDisplayOptionChanged (CompDisplay *d, CompOption *opt, FreewinsDisplayOptions num)
+FWDisplayOptionChanged (CompDisplay *d,
+                        CompOption *opt,
+                        FreewinsDisplayOptions num)
 {
 	switch (num)
 	{
@@ -158,7 +160,7 @@ FWDisplayOptionChanged (CompDisplay *d, CompOption *opt, FreewinsDisplayOptions 
 /* Window initialisation / cleaning */
 static Bool
 freewinsInitWindow (CompPlugin *p,
-												 CompWindow *w)
+					 CompWindow *w)
 {
     FWWindow *fww;
     FREEWINS_SCREEN(w->screen);
@@ -224,16 +226,17 @@ freewinsInitWindow (CompPlugin *p,
     fww->animate.oldScaleX = 1.0f;
     fww->animate.oldScaleY = 01.0f;
 
-    w->base.privates[fws->windowPrivateIndex].ptr = fww;
     fww->input = NULL;
     fww->noPaint = FALSE;
+
+    w->base.privates[fws->windowPrivateIndex].ptr = fww;
     
     return TRUE;
 }
 
 static void
 freewinsFiniWindow (CompPlugin *p,
-											 CompWindow *w)
+					 CompWindow *w)
  {
 
     FREEWINS_WINDOW (w);
@@ -257,7 +260,7 @@ freewinsFiniWindow (CompPlugin *p,
 /* Screen initialization / cleaning */
 static Bool
 freewinsInitScreen (CompPlugin *p,
-												 CompScreen *s)
+					 CompScreen *s)
 {
     FWScreen *fws;
 
@@ -294,7 +297,7 @@ freewinsInitScreen (CompPlugin *p,
 
 static void
 freewinsFiniScreen (CompPlugin *p,
-												 CompScreen *s)
+					 CompScreen *s)
 {
 
     FREEWINS_SCREEN(s);
@@ -318,7 +321,7 @@ freewinsFiniScreen (CompPlugin *p,
 /* Display initialization / cleaning */
 static Bool
 freewinsInitDisplay (CompPlugin *p, 
-													CompDisplay *d)
+				    CompDisplay *d)
 {
 
     FWDisplay *fwd; 
@@ -382,7 +385,8 @@ freewinsInitDisplay (CompPlugin *p,
 }
 
 static void
-freewinsFiniDisplay(CompPlugin *p, CompDisplay *d)
+freewinsFiniDisplay (CompPlugin *p,
+                    CompDisplay *d)
 {
 
     FREEWINS_DISPLAY(d);
@@ -398,7 +402,7 @@ freewinsFiniDisplay(CompPlugin *p, CompDisplay *d)
 
 static CompBool
 freewinsInitObject (CompPlugin *p,
-		     CompObject *o)
+		            CompObject *o)
 {
     static InitPluginObjectProc dispTab[] = {
 	(InitPluginObjectProc) 0,
@@ -412,7 +416,7 @@ freewinsInitObject (CompPlugin *p,
 
 static void
 freewinsFiniObject (CompPlugin *p,
-		     CompObject *o)
+		            CompObject *o)
 {
     static FiniPluginObjectProc dispTab[] = {
 	(FiniPluginObjectProc) 0,
@@ -427,7 +431,7 @@ freewinsFiniObject (CompPlugin *p,
 
 /* Plugin initialization / cleaning */
 static Bool
-freewinsInit(CompPlugin *p)
+freewinsInit (CompPlugin *p)
 {
 
     if ((displayPrivateIndex = allocateDisplayPrivateIndex ()) < 0 )
@@ -440,7 +444,7 @@ freewinsInit(CompPlugin *p)
 
 
 static void
-freewinsFini(CompPlugin *p)
+freewinsFini (CompPlugin *p)
 {
     if (displayPrivateIndex >= 0)
 		freeDisplayPrivateIndex( displayPrivateIndex );
