@@ -226,7 +226,7 @@ freewinsInitWindow (CompPlugin *p,
 
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
     fww->input = NULL;
-    fww->noPaint = NULL;
+    fww->noPaint = FALSE;
     
     return TRUE;
 }
