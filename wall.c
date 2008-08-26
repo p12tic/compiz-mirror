@@ -1396,7 +1396,17 @@ wallPreparePaintScreen (CompScreen *s,
 	if (ws->moveWindow)
 	    wallReleaseMoveWindow (s);
 	else
-	    focusDefaultWindow (s);
+	{
+	    int i;
+	    for (i = 0; i < s->maxGrab; i++)
+		if (s->grabs[i].active)
+		    if (strcmp(s->grabs[i].name, "switcher") == 0)
+			break;
+
+	    /* only focus default window if switcher is not active */
+	    if (i == s->maxGrab)
+		focusDefaultWindow (s);
+	}
 
 	if (ws->grabIndex)
 	{
