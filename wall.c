@@ -1311,7 +1311,7 @@ wallPaintOutput (CompScreen              *s,
 		    ws->miniScreen = TRUE;
 		    mx = ws->firstViewportX +
 			 (i * (ws->viewportWidth + ws->viewportBorder));
-    		    my = ws->firstViewportY +
+    		    my = ws->firstViewportY + 
 			 (j * (ws->viewportHeight + ws->viewportBorder));
     		    mw = ws->viewportWidth;
 		    mh = ws->viewportHeight;
@@ -1428,9 +1428,12 @@ wallPaintTransformedOutput (CompScreen              *s,
 	mask &= ~PAINT_SCREEN_CLEAR_MASK;
 
 	/* move each screen to the correct output position */
+
 	matrixTranslate (&sTransform,
-			 -output->region.extents.x1 / output->width,
-			 output->region.extents.y1 / output->height, 0.0f);
+			 -(float) output->region.extents.x1 /
+			  (float) output->width,
+			 (float) output->region.extents.y1 /
+			 (float) output->height, 0.0f);
 	matrixTranslate (&sTransform, 0.0f, 0.0f, -DEFAULT_Z_CAMERA);
 
 	matrixTranslate (&sTransform,
@@ -1447,8 +1450,10 @@ wallPaintTransformedOutput (CompScreen              *s,
 	   Now all screens display the same */
 	matrixTranslate (&sTransform, 0.5f, 0.5f, DEFAULT_Z_CAMERA);
 	matrixTranslate (&sTransform,
-			 output->region.extents.x1 / output->width,
-			 -output->region.extents.y2 / output->height, 0.0f);
+			 (float) output->region.extents.x1 /
+			 (float) output->width,
+			 -(float) output->region.extents.y2 /
+			 (float) output->height, 0.0f);
 
 	UNWRAP (ws, s, paintTransformedOutput);
 	(*s->paintTransformedOutput) (s, sAttrib, &sTransform,
