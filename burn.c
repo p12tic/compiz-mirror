@@ -49,7 +49,10 @@ fxBurnInit (CompWindow * w)
     {
 	aw->eng.ps = calloc(2, sizeof(ParticleSystem));
 	if (!aw->eng.ps)
+	{
+	    ad->animBaseFunctions->postAnimationCleanup (w);
 	    return FALSE;
+	}
 
 	aw->eng.numPs = 2;
     }
@@ -342,11 +345,13 @@ fxBurnAnimStep (CompWindow *w, float time)
 	    rect.height = WIN_H(w) - (new * WIN_H(w));
 	    break;
 	}
-	XUnionRectWithRegion(&rect, &emptyRegion, aw->com->drawRegion);
+	rect.x += WIN_X(w);
+	rect.y += WIN_Y(w);
+	XUnionRectWithRegion (&rect, &emptyRegion, aw->com->drawRegion);
     }
     else
     {
-	XUnionRegion(&emptyRegion, &emptyRegion, aw->com->drawRegion);
+	XUnionRegion (&emptyRegion, &emptyRegion, aw->com->drawRegion);
     }
     aw->com->useDrawRegion = (fabs (new) > 1e-5);
 

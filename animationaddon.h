@@ -61,25 +61,18 @@ typedef struct _AirplaneEffectParameters
     float moveDuration5;		// Movement lasts this long     ([0-1] range)
 } AirplaneEffectParameters;
 
-#define ANIM_ID_START 50
+extern AnimEffect AnimEffectAirplane;
+extern AnimEffect AnimEffectBeamUp;
+extern AnimEffect AnimEffectBurn;
+extern AnimEffect AnimEffectDomino;
+extern AnimEffect AnimEffectExplode;
+extern AnimEffect AnimEffectFold;
+extern AnimEffect AnimEffectGlide3;
+extern AnimEffect AnimEffectLeafSpread;
+extern AnimEffect AnimEffectRazr;
+extern AnimEffect AnimEffectSkewer;
 
-typedef enum
-{
-    AnimEffectAirplane = ANIM_ID_START,
-    AnimEffectBeamUp,
-    AnimEffectBurn,
-    AnimEffectDomino,
-    AnimEffectExplode,
-    AnimEffectFold,
-    AnimEffectGlide3,
-    AnimEffectLeafSpread,
-    AnimEffectRazr,
-    AnimEffectSkewer,
-
-    AnimEffectEnd
-} AnimAddonEffect;
-
-#define NUM_EFFECTS (AnimEffectEnd - ANIM_ID_START)
+#define NUM_EFFECTS 10
 
 typedef enum
 {

@@ -51,7 +51,10 @@ fxBeamUpInit (CompWindow * w)
     {
 	aw->eng.ps = calloc(2, sizeof(ParticleSystem));
 	if (!aw->eng.ps)
+	{
+	    ad->animBaseFunctions->postAnimationCleanup (w);
 	    return FALSE;
+	}
 
 	aw->eng.numPs = 2;
     }
@@ -211,9 +214,9 @@ fxBeamUpAnimStep (CompWindow *w, float time)
     {
 	XRectangle rect;
 
-	rect.x = ((new / 2) * WIN_W(w));
+	rect.x = WIN_X(w) + ((new / 2) * WIN_W(w));
 	rect.width = (1 - new) * WIN_W(w);
-	rect.y = ((new / 2) * WIN_H(w));
+	rect.y = WIN_Y(w) + ((new / 2) * WIN_H(w));
 	rect.height = (1 - new) * WIN_H(w);
 	XUnionRectWithRegion(&rect, &emptyRegion, aw->com->drawRegion);
     }
