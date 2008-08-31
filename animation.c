@@ -4482,6 +4482,8 @@ static void animFiniDisplay(CompPlugin * p, CompDisplay * d)
 
     matchFini (&ad->neverAnimateMatch);
 
+    compFiniDisplayOptions (d, ad->opt, ANIM_DISPLAY_OPTION_NUM);
+
     UNWRAP(ad, d, handleCompizEvent);
     UNWRAP(ad, d, handleEvent);
 
