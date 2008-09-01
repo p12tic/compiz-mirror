@@ -1619,7 +1619,7 @@ stackswitchInitDisplay (CompPlugin  *p,
 
     sd->textAvailable = checkPluginABI ("text", TEXT_ABIVERSION);
     if (!sd->textAvailable)
-	compLogMessage (d, "stackswitch", CompLogLevelWarn,
+	compLogMessage ("stackswitch", CompLogLevelWarn,
 			"No compatible text plugin found.");
 
     stackswitchSetNextKeyInitiate (d, stackswitchNext);
