@@ -343,7 +343,7 @@ freewinsInitDisplay (CompPlugin *p,
     
     // Spit out a warning if there is no shape extension
     if (!d->shapeExtension)
-        compLogMessage (d, "freewins", CompLogLevelInfo, "No input shaping extension. Input shaping disabled");
+        compLogMessage ("freewins", CompLogLevelInfo, "No input shaping extension. Input shaping disabled");
 
 
     /* BCOP Action initiation */
