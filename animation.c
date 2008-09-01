@@ -733,9 +733,10 @@ defaultUpdateWindowTransform (CompWindow *w,
 	    Point center;
 	    getProgressAndCenter (w, &center);
 	
+	    ANIM_SCREEN (w->screen);
 	    CompTransform skewTransform;
 	    matrixGetIdentity (&skewTransform);
-	    applyPerspectiveSkew (w->screen, &skewTransform, &center);
+	    applyPerspectiveSkew (as->output, &skewTransform, &center);
 	    applyTransform (wTransform, &aw->com.transform);
 	    applyTransform (wTransform, &skewTransform);
 	}
@@ -896,7 +897,7 @@ modelUpdateBB (CompOutput *output,
 
 	    CompTransform fullTransform;
 	    memcpy (fullTransform.m, aw->com.transform.m, sizeof (float) * 16);
-	    applyPerspectiveSkew (w->screen, &fullTransform, &center);
+	    applyPerspectiveSkew (output, &fullTransform, &center);
 
 	    prepareTransform (w->screen, output, &wTransform, &fullTransform);
 
@@ -2429,16 +2430,14 @@ perspectiveDistortAndResetZ (CompScreen *s,
 }
 
 void
-applyPerspectiveSkew (CompScreen *s,
+applyPerspectiveSkew (CompOutput *output,
 		      CompTransform *transform,
 		      Point *center)
 {
-    ANIM_SCREEN (s);
-
-    GLfloat skewx = -(((center->x - as->output->region.extents.x1) -
-		       as->output->width / 2) * 1.15);
-    GLfloat skewy = -(((center->y - as->output->region.extents.y1) -
-		       as->output->height / 2) * 1.15);
+    GLfloat skewx = -(((center->x - output->region.extents.x1) -
+		       output->width / 2) * 1.15);
+    GLfloat skewy = -(((center->y - output->region.extents.y1) -
+		       output->height / 2) * 1.15);
 
     /* transform = M * transform, where M is the skew matrix
 	{1,0,0,0,
