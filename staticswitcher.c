@@ -280,17 +280,19 @@ switchUpdatePopupWindow (CompScreen *s,
     ss->previewHeight = h;
     ss->previewBorder = b;
 
+    x = s->outputDev[s->currentOutputDev].region.extents.x1 +
+	s->outputDev[s->currentOutputDev].width / 2;
+    y = s->outputDev[s->currentOutputDev].region.extents.y1 +
+	s->outputDev[s->currentOutputDev].height / 2;
+
     xsh.flags       = PSize | PPosition | PWinGravity;
+    xsh.x           = x;
+    xsh.y           = y;
     xsh.width       = winWidth;
     xsh.height      = winHeight;
     xsh.win_gravity = StaticGravity;
 
     XSetWMNormalHints (s->display->display, ss->popupWindow, &xsh);
-
-    x = s->outputDev[s->currentOutputDev].region.extents.x1 +
-	s->outputDev[s->currentOutputDev].width / 2;
-    y = s->outputDev[s->currentOutputDev].region.extents.y1 +
-	s->outputDev[s->currentOutputDev].height / 2;
 
     XMoveResizeWindow (s->display->display, ss->popupWindow,
 		       x - winWidth / 2, y - winHeight / 2,
