@@ -266,21 +266,18 @@ widgetSetWidgetLayerMapState (CompScreen *s,
 	widgetUpdateWidgetMapState (w, map);
     }
 
-    if (widgetGetFocusWidgetLayer (s))
+    if (map && highest)
     {
-	if (map && highest)
-	{
-	    if (!wd->lastActiveWindow)
-		wd->lastActiveWindow = s->display->activeWindow;
-	    moveInputFocusToWindow (highest);
-	}
-	else if (!map)
-	{
-	    w = findWindowAtDisplay (s->display, wd->lastActiveWindow);
-	    wd->lastActiveWindow = None;
-	    if (w)
-		moveInputFocusToWindow (w);
-	}
+	if (!wd->lastActiveWindow)
+	    wd->lastActiveWindow = s->display->activeWindow;
+	moveInputFocusToWindow (highest);
+    }
+    else if (!map)
+    {
+	w = findWindowAtDisplay (s->display, wd->lastActiveWindow);
+	wd->lastActiveWindow = None;
+	if (w)
+	    moveInputFocusToWindow (w);
     }
 }
 
