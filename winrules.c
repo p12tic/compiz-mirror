@@ -124,9 +124,7 @@ isWinrulesWindow (CompWindow *w)
     return TRUE;
 }
 
-/* FIXME? Directly set inputHint, not a problem for now
-   --> better should wrap into focusWindow(), only problem is focus
-       on MapRequest */
+/* FIXME? Directly set inputHint, not a problem for now */
 static void
 winrulesSetNoFocus (CompWindow *w,
 		    int        optNum)
@@ -735,7 +733,6 @@ winrulesInitWindow (CompPlugin *p,
 
     w->base.privates[ws->windowPrivateIndex].ptr = ww;
 
-    /* FIXME: Wrap into objectAdd and remove this timer */
     compAddTimeout (0, 0, winrulesApplyRules, w);
 
     return TRUE;
