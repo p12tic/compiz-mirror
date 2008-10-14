@@ -55,12 +55,12 @@
 /* Rotate and project individual vectors */
 void
 FWRotateProjectVector (CompWindow *w,
-					  CompVector vector,
-                      CompTransform transform,
-           			  GLdouble *resultX,
-           			  GLdouble *resultY,
-           			  GLdouble *resultZ,
-           			  Bool report)
+		       CompVector vector,
+                       CompTransform transform,
+           	       GLdouble *resultX,
+           	       GLdouble *resultY,
+           	       GLdouble *resultZ,
+           	       Bool report)
 {
 
     matrixMultiplyVector(&vector, &vector, &transform);

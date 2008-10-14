@@ -57,10 +57,10 @@
 /* Initiate Mouse Rotation */
 Bool
 initiateFWRotate (CompDisplay *d,
-				 CompAction *action,
-				 CompActionState state,
-				 CompOption *option,
-				 int nOption)
+                  CompAction *action,
+                  CompActionState state,
+                  CompOption *option,
+                  int nOption)
 {
     CompWindow* w;
     CompWindow *useW;
@@ -93,122 +93,122 @@ initiateFWRotate (CompDisplay *d,
         useW = FWGetRealWindow (w);
     }
 
-	fws->rotateCursor = XCreateFontCursor (s->display->display, XC_fleur);	
+    fws->rotateCursor = XCreateFontCursor (s->display->display, XC_fleur);	
 
-	if (!otherScreenGrabExist (s, "freewins", 0))
-	    if (!fws->grabIndex)
-		fws->grabIndex = pushScreenGrab (s, fws->rotateCursor, "freewins");
+    if (!otherScreenGrabExist (s, "freewins", 0))
+	if (!fws->grabIndex)
+	    fws->grabIndex = pushScreenGrab (s, fws->rotateCursor, "freewins");
 
     }
 
     if (useW)
     {
     
-		if (matchEval (freewinsGetShapeWindowTypes (useW->screen), useW))
-		{
-			FREEWINS_WINDOW (useW);	
+	if (matchEval (freewinsGetShapeWindowTypes (useW->screen), useW))
+	{
+	    FREEWINS_WINDOW (useW);	
 	
-			x = getIntOptionNamed (option, nOption, "x",
-						   useW->attrib.x + (useW->width / 2));
-			y = getIntOptionNamed (option, nOption, "y",
-						   useW->attrib.y + (useW->height / 2));
+	    x = getIntOptionNamed (option, nOption, "x",
+					useW->attrib.x + (useW->width / 2));
+	    y = getIntOptionNamed (option, nOption, "y",
+					useW->attrib.y + (useW->height / 2));
 						   
-		   	mods = getIntOptionNamed (option, nOption, "modifiers", 0);
+	    mods = getIntOptionNamed (option, nOption, "modifiers", 0);
 
-			fwd->grabWindow = useW;
+	    fwd->grabWindow = useW;
 	
-			fww->grab = grabRotate;
+	    fww->grab = grabRotate;
 	
-			/* Save current scales and angles */
+	    /* Save current scales and angles */
 
-			fww->animate.oldAngX = fww->transform.angX;
-			fww->animate.oldAngY = fww->transform.angY;
-			fww->animate.oldAngZ = fww->transform.angZ;
-			fww->animate.oldScaleX = fww->transform.scaleX;
-			fww->animate.oldScaleY = fww->transform.scaleY;
+	    fww->animate.oldAngX = fww->transform.angX;
+	    fww->animate.oldAngY = fww->transform.angY;
+	    fww->animate.oldAngZ = fww->transform.angZ;
+	    fww->animate.oldScaleX = fww->transform.scaleX;
+	    fww->animate.oldScaleY = fww->transform.scaleY;
 
-			if (pointerY > fww->iMidY)
-			{
-				if (pointerX > fww->iMidX)
-					fww->corner = CornerBottomRight;
-				else if (pointerX < fww->iMidX)
-					fww->corner = CornerBottomLeft;
-			}
-			else if (pointerY < fww->iMidY)
-			{
-				if (pointerX > fww->iMidX)
-					fww->corner = CornerTopRight;
-				else if (pointerX < fww->iMidX)
-					fww->corner = CornerTopLeft;
-			}
+	    if (pointerY > fww->iMidY)
+	    {
+		if (pointerX > fww->iMidX)
+			fww->corner = CornerBottomRight;
+		else if (pointerX < fww->iMidX)
+			fww->corner = CornerBottomLeft;
+	    }
+	    else if (pointerY < fww->iMidY)
+	    {
+		if (pointerX > fww->iMidX)
+			fww->corner = CornerTopRight;
+		else if (pointerX < fww->iMidX)
+			fww->corner = CornerTopLeft;
+	    }
 
-			switch (freewinsGetZAxisRotation (s))
-			{
-				case ZAxisRotationAlways3d:
-				    fww->can3D = TRUE;
-				    fww->can2D = FALSE; break;
-				case ZAxisRotationAlways2d:
-				    fww->can3D = FALSE;
-				    fww->can2D = TRUE; break;
-				case ZAxisRotationDetermineOnClick:
-				case ZAxisRotationSwitch:
-				    FWDetermineZAxisClick (useW, pointerX, pointerY, FALSE); break;
-				case ZAxisRotationInterchangable:
-				    fww->can3D = TRUE;
-				    fww->can2D = TRUE;  break;
-				default:
-				    break;
-			}
+	   switch (freewinsGetZAxisRotation (s))
+	   {
+		case ZAxisRotationAlways3d:
+		    fww->can3D = TRUE;
+		    fww->can2D = FALSE; break;
+		case ZAxisRotationAlways2d:
+		    fww->can3D = FALSE;
+		    fww->can2D = TRUE; break;
+		case ZAxisRotationDetermineOnClick:
+		case ZAxisRotationSwitch:
+		    FWDetermineZAxisClick (useW, pointerX, pointerY, FALSE); break;
+		case ZAxisRotationInterchangable:
+		    fww->can3D = TRUE;
+		    fww->can2D = TRUE;  break;
+		default:
+		    break;
+	    }
 
-			/* Set the rotation axis */
+	    /* Set the rotation axis */
 
-			switch (freewinsGetRotationAxis (w->screen))
-			{
-				case RotationAxisAlwaysCentre:
-				default:
-					FWCalculateInputOrigin (w,
-														WIN_REAL_X (fwd->grabWindow) + 
-														WIN_REAL_W (fwd->grabWindow) / 2.0f,
-								              			WIN_REAL_Y (fwd->grabWindow) + 
-								              			WIN_REAL_H (fwd->grabWindow) / 2.0f);
-					FWCalculateOutputOrigin (w,
-														WIN_OUTPUT_X (fwd->grabWindow) + 
-														WIN_OUTPUT_W (fwd->grabWindow) / 2.0f,
-								              			WIN_OUTPUT_Y (fwd->grabWindow) +
-								              			WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
-				    break;
-				case RotationAxisClickPoint:            
-				    FWCalculateInputOrigin (fwd->grabWindow, fwd->click_root_x, fwd->click_root_y);
-				    FWCalculateOutputOrigin (fwd->grabWindow, fwd->click_root_x, fwd->click_root_y);
-				    break;
-				case RotationAxisOppositeToClick:            
-				    FWCalculateInputOrigin (fwd->grabWindow, w->attrib.x + w->width - fwd->click_root_x,
-				                              w->attrib.y + w->height - fwd->click_root_y);
-				    FWCalculateOutputOrigin (fwd->grabWindow, w->attrib.x + w->width - fwd->click_root_x,
-				                              w->attrib.y + w->height - fwd->click_root_y);
-				    break;
-			}
+	    switch (freewinsGetRotationAxis (w->screen))
+	    {
+		case RotationAxisAlwaysCentre:
+		default:
+		    FWCalculateInputOrigin (w,
+					    WIN_REAL_X (fwd->grabWindow) + 
+					    WIN_REAL_W (fwd->grabWindow) / 2.0f,
+					    WIN_REAL_Y (fwd->grabWindow) + 
+					    WIN_REAL_H (fwd->grabWindow) / 2.0f);
+		    FWCalculateOutputOrigin (w,
+					    WIN_OUTPUT_X (fwd->grabWindow) + 
+					    WIN_OUTPUT_W (fwd->grabWindow) / 2.0f,
+					    WIN_OUTPUT_Y (fwd->grabWindow) +
+					    WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
+		    break;
+		case RotationAxisClickPoint:            
+		    FWCalculateInputOrigin (fwd->grabWindow, fwd->click_root_x, fwd->click_root_y);
+		    FWCalculateOutputOrigin (fwd->grabWindow, fwd->click_root_x, fwd->click_root_y);
+		    break;
+		case RotationAxisOppositeToClick:            
+		    FWCalculateInputOrigin (fwd->grabWindow, w->attrib.x + w->width - fwd->click_root_x,
+		                              w->attrib.y + w->height - fwd->click_root_y);
+		    FWCalculateOutputOrigin (fwd->grabWindow, w->attrib.x + w->width - fwd->click_root_x,
+		                              w->attrib.y + w->height - fwd->click_root_y);
+		    break;
+	    }
 		
-			/* Announce that we grabbed the window */
+	    /* Announce that we grabbed the window */
 
-			(useW->screen->windowGrabNotify) (useW, x, y, mods,
+	    (useW->screen->windowGrabNotify) (useW, x, y, mods,
 					   CompWindowGrabMoveMask |
 					   CompWindowGrabButtonMask);
 
-			/*Shape the window beforehand and avoid a stale grab*/
-			if (FWCanShape (useW))
-				if (FWHandleWindowInputInfo (useW))
-				    FWAdjustIPW (useW);
+	    /* Shape the window beforehand and avoid a stale grab*/
+	    if (FWCanShape (useW))
+		if (FWHandleWindowInputInfo (useW))
+		    FWAdjustIPW (useW);
 				    
 			 	
-			if (state & CompActionStateInitButton)
-			action->state |= CompActionStateTermButton;
+	    if (state & CompActionStateInitButton)
+		action->state |= CompActionStateTermButton;
 
-			if (state & CompActionStateInitKey)
-			action->state |= CompActionStateTermKey;
+	    if (state & CompActionStateInitKey)
+		action->state |= CompActionStateTermKey;
 		
-		}
 	}
+    }
     return TRUE;
 }
 
@@ -231,58 +231,57 @@ terminateFWRotate (CompDisplay     *d,
 
         if (fwd->grabWindow && fws->grabIndex)
         {
-        	FREEWINS_WINDOW (fwd->grabWindow);
-		    if (fww->grab == grabRotate)
-		    {
-		    
-		    int distX, distY;
+            FREEWINS_WINDOW (fwd->grabWindow);
+	    if (fww->grab == grabRotate)
+	    {    
+		int distX, distY;
 
-		    (fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
+		(fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
 
-		    switch (freewinsGetRotationAxis (fwd->grabWindow->screen))
-		    {
+		switch (freewinsGetRotationAxis (fwd->grabWindow->screen))
+		{
 		    case RotationAxisClickPoint:
 		    case RotationAxisOppositeToClick:
 
-				distX =  (fww->outputRect.x1 + 
-							  (fww->outputRect.x2 - fww->outputRect.x1) / 2.0f) - 
-							  (WIN_REAL_X (fwd->grabWindow) + 
-							   WIN_REAL_W (fwd->grabWindow) / 2.0f);
-				distY = (fww->outputRect.y1 + 
-							 (fww->outputRect.y2 - fww->outputRect.y1) / 2.0f) - 
-							 (WIN_REAL_Y (fwd->grabWindow) + 
-							  WIN_REAL_H (fwd->grabWindow) / 2.0f);
+		    distX =  (fww->outputRect.x1 + 
+			      (fww->outputRect.x2 - fww->outputRect.x1) / 2.0f) - 
+			      (WIN_REAL_X (fwd->grabWindow) + 
+			       WIN_REAL_W (fwd->grabWindow) / 2.0f);
+		    distY = (fww->outputRect.y1 + 
+			     (fww->outputRect.y2 - fww->outputRect.y1) / 2.0f) - 
+			     (WIN_REAL_Y (fwd->grabWindow) + 
+			      WIN_REAL_H (fwd->grabWindow) / 2.0f);
 
-				moveWindow (fwd->grabWindow, distX, distY, TRUE, TRUE);
-				syncWindowPosition (fwd->grabWindow);
+		    moveWindow (fwd->grabWindow, distX, distY, TRUE, TRUE);
+		    syncWindowPosition (fwd->grabWindow);
 
 	            FWCalculateInputOrigin (fwd->grabWindow, WIN_REAL_X (fwd->grabWindow) +
-	            																		WIN_REAL_W (fwd->grabWindow) / 2.0f,
-                          																WIN_REAL_Y (fwd->grabWindow) +
-                          																WIN_REAL_H (fwd->grabWindow) / 2.0f);
-           		FWCalculateOutputOrigin(fwd->grabWindow,
-           												 WIN_OUTPUT_X (fwd->grabWindow) +
-           												 WIN_OUTPUT_W (fwd->grabWindow) / 2.0f,
-                           								 WIN_OUTPUT_Y (fwd->grabWindow) + 
-                           								 WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
+							     WIN_REAL_W (fwd->grabWindow) / 2.0f,
+							     WIN_REAL_Y (fwd->grabWindow) +
+                          				     WIN_REAL_H (fwd->grabWindow) / 2.0f);
+		    FWCalculateOutputOrigin(fwd->grabWindow,
+					    WIN_OUTPUT_X (fwd->grabWindow) +
+					    WIN_OUTPUT_W (fwd->grabWindow) / 2.0f,
+					    WIN_OUTPUT_Y (fwd->grabWindow) + 
+					    WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
 				
-				break;		    
+		    break;		    
 		    default:
 		    	break;		    	
 	    	}
 
-			if (FWCanShape (fwd->grabWindow))
-			    if (FWHandleWindowInputInfo (fwd->grabWindow))
-			        FWAdjustIPW (fwd->grabWindow);
+		if (FWCanShape (fwd->grabWindow))
+		    if (FWHandleWindowInputInfo (fwd->grabWindow))
+			FWAdjustIPW (fwd->grabWindow);
 		    
-			removeScreenGrab(s, fws->grabIndex, 0);
-			fws->grabIndex = 0;
-			fwd->grabWindow = NULL;
-			fww->grab = grabNone;
+		removeScreenGrab(s, fws->grabIndex, 0);
+		fws->grabIndex = 0;
+		fwd->grabWindow = NULL;
+		fww->grab = grabNone;
 		
-			}
-		}
+	    }
 	}
+    }
 
     action->state &= ~ (CompActionStateTermKey | CompActionStateTermButton);
 
@@ -350,105 +349,104 @@ initiateFWScale (CompDisplay *d,
     }
 
     if (useW)
-    {
-    
-		if (matchEval (freewinsGetShapeWindowTypes (useW->screen), useW))
-		{
-		
-		FREEWINS_WINDOW (useW);
-
-		x = getIntOptionNamed (option, nOption, "x",
-					   useW->attrib.x + (useW->width / 2));
-		y = getIntOptionNamed (option, nOption, "y",
-					   useW->attrib.y + (useW->height / 2));
-
-	   	mods = getIntOptionNamed (option, nOption, "modifiers", 0);
-
-		fwd->grabWindow = useW;
-
-		/* Find out the corner we clicked in */
-
-		float MidX = fww->inputRect.x1 + ((fww->inputRect.x2 - fww->inputRect.x1) / 2.0f);
-		float MidY = fww->inputRect.y1 + ((fww->inputRect.y2 - fww->inputRect.y1) / 2.0f);
-
-		/* Check for Y axis clicking (Top / Bottom) */
-		if (pointerY > MidY)
-		{
-			/* Check for X axis clicking (Left / Right) */
-			if (pointerX > MidX)
-			    fww->corner = CornerBottomRight;
-			else if (pointerX < MidX)
-			    fww->corner = CornerBottomLeft;
-		}
-		else if (pointerY < MidY)
-		{
-			/* Check for X axis clicking (Left / Right) */
-			if (pointerX > MidX)
-			    fww->corner = CornerTopRight;
-			else if (pointerX < MidX)
-			    fww->corner = CornerTopLeft;
-		}
-
-
-		switch (freewinsGetScaleMode (w->screen))
-		{
-		    case ScaleModeToCentre:
-		        FWCalculateInputOrigin(useW, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
-		                                  WIN_REAL_Y (useW) + WIN_REAL_H (useW) / 2.0f);
-		        FWCalculateOutputOrigin(useW, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w) / 2.0f,
-		                                   WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
-		        break;
-		    /** 
-		      *Experimental scale to corners mode
-		      */
-		    case ScaleModeToOppositeCorner:
-		        switch (fww->corner)
-		        {
-		            case CornerBottomRight:
-		            /* Translate origin to the top left of the window */
-		            //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 - WIN_REAL_X (useW), fww->inputRect.y1 - WIN_REAL_Y (useW));
-		            FWCalculateInputOrigin (useW, WIN_REAL_X (useW), WIN_REAL_Y (useW));
-		            break;
-		            case CornerBottomLeft:
-		            /* Translate origin to the top right of the window */
-		            //FWMoveWindowToCorrectPosition (w, fww->inputRect.x2 - (WIN_REAL_X (useW) + WIN_REAL_W (useW)), fww->inputRect.y1 - WIN_REAL_Y (useW));
-		            FWCalculateInputOrigin (useW, WIN_REAL_X (useW) + (WIN_REAL_W (useW)), WIN_REAL_Y (useW));
-		            break;
-		            case CornerTopRight:
-		            /* Translate origin to the bottom left of the window */
-		            //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 - WIN_REAL_X (useW) , fww->inputRect.y1 - (WIN_REAL_Y (useW) + WIN_REAL_H (useW)));
-		            FWCalculateInputOrigin (useW, WIN_REAL_X (useW), WIN_REAL_Y (useW) + (WIN_REAL_H (useW)));
-		            break;
-		            case CornerTopLeft:
-		            /* Translate origin to the bottom right of the window */
-		            //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 -(WIN_REAL_X (useW) + WIN_REAL_W (useW)) , fww->inputRect.y1 - (WIN_REAL_Y (useW) + WIN_REAL_H (useW)));
-		            FWCalculateInputOrigin (useW, WIN_REAL_X (useW) + (WIN_REAL_W (useW)), WIN_REAL_Y (useW) + (WIN_REAL_H (useW)));
-		            break;
-		        }
-		        break;
-		}
-
-		fww->grab = grabScale;
-
-		/* Announce that we grabbed the window */
-
-		(w->screen->windowGrabNotify) (w, x, y, mods,
-				   CompWindowGrabMoveMask |
-				   CompWindowGrabButtonMask);
-
-		/*Shape the window beforehand and avoid a stale grab*/
-		if (FWCanShape (useW))
-		    if (FWHandleWindowInputInfo (useW))
-		        FWAdjustIPW (useW);
-		        
-		if (state & CompActionStateInitButton)
-		    action->state |= CompActionStateTermButton;
-
-		if (state & CompActionStateInitKey)
-			action->state |= CompActionStateTermKey;
+    {    
+	if (matchEval (freewinsGetShapeWindowTypes (useW->screen), useW))
+	{
 	
-		}
+	FREEWINS_WINDOW (useW);
+
+	x = getIntOptionNamed (option, nOption, "x",
+				   useW->attrib.x + (useW->width / 2));
+	y = getIntOptionNamed (option, nOption, "y",
+				   useW->attrib.y + (useW->height / 2));
+
+   	mods = getIntOptionNamed (option, nOption, "modifiers", 0);
+
+	fwd->grabWindow = useW;
+
+	/* Find out the corner we clicked in */
+
+	float MidX = fww->inputRect.x1 + ((fww->inputRect.x2 - fww->inputRect.x1) / 2.0f);
+	float MidY = fww->inputRect.y1 + ((fww->inputRect.y2 - fww->inputRect.y1) / 2.0f);
+
+	/* Check for Y axis clicking (Top / Bottom) */
+	if (pointerY > MidY)
+	{
+	    /* Check for X axis clicking (Left / Right) */
+	    if (pointerX > MidX)
+		fww->corner = CornerBottomRight;
+	    else if (pointerX < MidX)
+		fww->corner = CornerBottomLeft;
 	}
+	else if (pointerY < MidY)
+	{
+	    /* Check for X axis clicking (Left / Right) */
+	    if (pointerX > MidX)
+		fww->corner = CornerTopRight;
+	    else if (pointerX < MidX)
+		fww->corner = CornerTopLeft;
+	}
+
+
+	switch (freewinsGetScaleMode (w->screen))
+	{
+	    case ScaleModeToCentre:
+	        FWCalculateInputOrigin(useW, WIN_REAL_X (w) + WIN_REAL_W (w) / 2.0f,
+	                                  WIN_REAL_Y (useW) + WIN_REAL_H (useW) / 2.0f);
+	        FWCalculateOutputOrigin(useW, WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w) / 2.0f,
+	                                   WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);
+	        break;
+	    /** 
+	      *Experimental scale to corners mode
+	      */
+	    case ScaleModeToOppositeCorner:
+	        switch (fww->corner)
+	        {
+	            case CornerBottomRight:
+	            /* Translate origin to the top left of the window */
+	            //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 - WIN_REAL_X (useW), fww->inputRect.y1 - WIN_REAL_Y (useW));
+	            FWCalculateInputOrigin (useW, WIN_REAL_X (useW), WIN_REAL_Y (useW));
+	            break;
+	            case CornerBottomLeft:
+	            /* Translate origin to the top right of the window */
+	            //FWMoveWindowToCorrectPosition (w, fww->inputRect.x2 - (WIN_REAL_X (useW) + WIN_REAL_W (useW)), fww->inputRect.y1 - WIN_REAL_Y (useW));
+	            FWCalculateInputOrigin (useW, WIN_REAL_X (useW) + (WIN_REAL_W (useW)), WIN_REAL_Y (useW));
+	            break;
+	            case CornerTopRight:
+	            /* Translate origin to the bottom left of the window */
+	            //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 - WIN_REAL_X (useW) , fww->inputRect.y1 - (WIN_REAL_Y (useW) + WIN_REAL_H (useW)));
+	            FWCalculateInputOrigin (useW, WIN_REAL_X (useW), WIN_REAL_Y (useW) + (WIN_REAL_H (useW)));
+	            break;
+	            case CornerTopLeft:
+	            /* Translate origin to the bottom right of the window */
+	            //FWMoveWindowToCorrectPosition (w, fww->inputRect.x1 -(WIN_REAL_X (useW) + WIN_REAL_W (useW)) , fww->inputRect.y1 - (WIN_REAL_Y (useW) + WIN_REAL_H (useW)));
+	            FWCalculateInputOrigin (useW, WIN_REAL_X (useW) + (WIN_REAL_W (useW)), WIN_REAL_Y (useW) + (WIN_REAL_H (useW)));
+	            break;
+	        }
+	        break;
+	}
+
+	fww->grab = grabScale;
+
+	/* Announce that we grabbed the window */
+
+	(w->screen->windowGrabNotify) (w, x, y, mods,
+			   CompWindowGrabMoveMask |
+			   CompWindowGrabButtonMask);
+
+	/*Shape the window beforehand and avoid a stale grab*/
+	if (FWCanShape (useW))
+	    if (FWHandleWindowInputInfo (useW))
+	        FWAdjustIPW (useW);
+	        
+	if (state & CompActionStateInitButton)
+	    action->state |= CompActionStateTermButton;
+
+	if (state & CompActionStateInitKey)
+		action->state |= CompActionStateTermKey;
+
+	}
+    }
 
     return TRUE;
 }
@@ -471,50 +469,48 @@ terminateFWScale (CompDisplay     *d,
 
         if (fwd->grabWindow && fws->grabIndex)
         {
-        	FREEWINS_WINDOW (fwd->grabWindow);
-		    if (fww->grab == grabScale)
-		    {
+            FREEWINS_WINDOW (fwd->grabWindow);
+	    if (fww->grab == grabScale)
+	    {
+		(fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
 
-		    (fwd->grabWindow->screen->windowUngrabNotify) (fwd->grabWindow);
-
-			if (FWCanShape (fwd->grabWindow))
-			    if (FWHandleWindowInputInfo (fwd->grabWindow))
-			        FWAdjustIPW (fwd->grabWindow);
+		if (FWCanShape (fwd->grabWindow))
+		    if (FWHandleWindowInputInfo (fwd->grabWindow))
+			FWAdjustIPW (fwd->grabWindow);
 			        
-    		    switch (freewinsGetScaleMode (fwd->grabWindow->screen))
-				{
-				int distX, distY;
+		switch (freewinsGetScaleMode (fwd->grabWindow->screen))
+		{
+		    int distX, distY;
 
-				case ScaleModeToOppositeCorner:
+		    case ScaleModeToOppositeCorner:
+			distX =  (fww->outputRect.x1 + (fww->outputRect.x2 - fww->outputRect.x1) / 2.0f) - (WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f);
+			distY = (fww->outputRect.y1 + (fww->outputRect.y2 - fww->outputRect.y1) / 2.0f) - (WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
 	
-					distX =  (fww->outputRect.x1 + (fww->outputRect.x2 - fww->outputRect.x1) / 2.0f) - (WIN_REAL_X (fwd->grabWindow) + WIN_REAL_W (fwd->grabWindow) / 2.0f);
-					distY = (fww->outputRect.y1 + (fww->outputRect.y2 - fww->outputRect.y1) / 2.0f) - (WIN_REAL_Y (fwd->grabWindow) + WIN_REAL_H (fwd->grabWindow) / 2.0f);
-	
-					moveWindow(fwd->grabWindow, distX, distY, TRUE, TRUE);
-					syncWindowPosition (fwd->grabWindow);
+			moveWindow(fwd->grabWindow, distX, distY, TRUE, TRUE);
+			syncWindowPosition (fwd->grabWindow);
 					
-			        FWCalculateInputOrigin(fwd->grabWindow, WIN_REAL_X (fwd->grabWindow) +
-			        																	   WIN_REAL_W (fwd->grabWindow) / 2.0f,
-		                      															   WIN_REAL_Y (fwd->grabWindow) +
-		                      															   WIN_REAL_H (fwd->grabWindow) / 2.0f);
-		       		FWCalculateOutputOrigin(fwd->grabWindow, WIN_OUTPUT_X (fwd->grabWindow) +
-		       																				  WIN_OUTPUT_W (fwd->grabWindow) / 2.0f,
-		                      																  WIN_OUTPUT_Y (fwd->grabWindow) +
-		                      																  WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
+			FWCalculateInputOrigin (fwd->grabWindow, WIN_REAL_X (fwd->grabWindow) +
+						WIN_REAL_W (fwd->grabWindow) / 2.0f,
+		                      		WIN_REAL_Y (fwd->grabWindow) +
+		                      		WIN_REAL_H (fwd->grabWindow) / 2.0f);
+		       	FWCalculateOutputOrigin (fwd->grabWindow, WIN_OUTPUT_X (fwd->grabWindow) +
+		       				 WIN_OUTPUT_W (fwd->grabWindow) / 2.0f,
+		                      		 WIN_OUTPUT_Y (fwd->grabWindow) +
+		                      		 WIN_OUTPUT_H (fwd->grabWindow) / 2.0f);
 	
-					break;
-				default:
-					break;
+			break;
+		     default:
+			break;
 		
-				}
-
-		    removeScreenGrab(s, fws->grabIndex, 0);
-			fws->grabIndex = 0;
-			fwd->grabWindow = NULL;
-			fww->grab = grabNone;
-			}
 		}
+
+		removeScreenGrab(s, fws->grabIndex, 0);
+		fws->grabIndex = 0;
+		fwd->grabWindow = NULL;
+		fww->grab = grabNone;
+	    }
 	}
+    }
 
     action->state &= ~ (CompActionStateTermKey | CompActionStateTermButton);
 
@@ -557,37 +553,37 @@ FWSetPrepareRotation (CompWindow *w,
     if (matchEval (freewinsGetShapeWindowTypes (w->screen), w))
     {
 
-		FWCalculateInputOrigin(w, WIN_REAL_X (w) + 
-													WIN_REAL_W (w) / 2.0f,
-		                         					WIN_REAL_Y (w) +
-		                         				    WIN_REAL_H (w) / 2.0f);
-		FWCalculateOutputOrigin(w, WIN_OUTPUT_X (w) +
-													  WIN_OUTPUT_W (w) / 2.0f,
-		                           					  WIN_OUTPUT_Y (w) +
-		                           					  WIN_OUTPUT_H (w) / 2.0f);
+	FWCalculateInputOrigin(w, WIN_REAL_X (w) + 
+				  WIN_REAL_W (w) / 2.0f,
+	                          WIN_REAL_Y (w) +
+	                          WIN_REAL_H (w) / 2.0f);
+	FWCalculateOutputOrigin(w, WIN_OUTPUT_X (w) +
+				   WIN_OUTPUT_W (w) / 2.0f,
+	                           WIN_OUTPUT_Y (w) +
+	                           WIN_OUTPUT_H (w) / 2.0f);
 
-		fww->transform.unsnapAngX += dy;
-		fww->transform.unsnapAngY -= dx;
-		fww->transform.unsnapAngZ += dz;
+	fww->transform.unsnapAngX += dy;
+	fww->transform.unsnapAngY -= dx;
+	fww->transform.unsnapAngZ += dz;
 
-		fww->transform.unsnapScaleX += dsu;
-		fww->transform.unsnapScaleY += dsd;
+	fww->transform.unsnapScaleX += dsu;
+	fww->transform.unsnapScaleY += dsd;
 
-		fww->animate.oldAngX = fww->transform.angX; 
-		fww->animate.oldAngY = fww->transform.angY; 
-		fww->animate.oldAngZ = fww->transform.angZ;
+	fww->animate.oldAngX = fww->transform.angX; 
+	fww->animate.oldAngY = fww->transform.angY; 
+	fww->animate.oldAngZ = fww->transform.angZ;
 
-		fww->animate.oldScaleX = fww->transform.scaleX; 
-		fww->animate.oldScaleY = fww->transform.scaleY;
+	fww->animate.oldScaleX = fww->transform.scaleX; 
+	fww->animate.oldScaleY = fww->transform.scaleY;
 
-		fww->animate.destAngX = fww->transform.angX + dy; 
-		fww->animate.destAngY = fww->transform.angY - dx; 
-		fww->animate.destAngZ = fww->transform.angZ + dz;
+	fww->animate.destAngX = fww->transform.angX + dy; 
+	fww->animate.destAngY = fww->transform.angY - dx; 
+	fww->animate.destAngZ = fww->transform.angZ + dz;
 
-		fww->animate.destScaleX = fww->transform.scaleX + dsu; 
-		fww->animate.destScaleY = fww->transform.scaleY + dsd;
+	fww->animate.destScaleX = fww->transform.scaleX + dsu; 
+	fww->animate.destScaleY = fww->transform.scaleY + dsd;
 
-	}
+    }
 }
 
 #define ROTATE_INC freewinsGetRotateIncrementAmount (w->screen)
@@ -598,10 +594,10 @@ FWSetPrepareRotation (CompWindow *w,
 
 Bool
 FWRotateUp (CompDisplay *d,
-		   CompAction *action,
-		   CompActionState state,
-		   CompOption *option,
-		   int nOption)
+            CompAction *action,
+            CompActionState state,
+	    CompOption *option,
+	    int nOption)
 {
 
     GET_WINDOW
@@ -620,10 +616,10 @@ FWRotateUp (CompDisplay *d,
 
 Bool
 FWRotateDown (CompDisplay *d,
-			   CompAction *action,
-			   CompActionState state,
-			   CompOption *option,
-			   int nOption)
+	      CompAction *action,
+	      CompActionState state,
+	      CompOption *option,
+	      int nOption)
 {
 
     GET_WINDOW
@@ -641,10 +637,10 @@ FWRotateDown (CompDisplay *d,
 
 Bool
 FWRotateLeft (CompDisplay *d,
-			   CompAction *action,
-			   CompActionState state,
-			   CompOption *option,
-			   int nOption)
+	      CompAction *action,
+	      CompActionState state,
+	      CompOption *option,
+	      int nOption)
 {
 
     GET_WINDOW
@@ -662,10 +658,10 @@ FWRotateLeft (CompDisplay *d,
 
 Bool
 FWRotateRight (CompDisplay *d,
-			   CompAction *action,
-			   CompActionState state,
-			   CompOption *option,
-			   int nOption)
+	       CompAction *action,
+	       CompActionState state,
+	       CompOption *option,
+	       int nOption)
 {
     
     GET_WINDOW
@@ -683,10 +679,10 @@ FWRotateRight (CompDisplay *d,
 
 Bool
 FWRotateClockwise (CompDisplay *d,
-				   CompAction *action,
-				   CompActionState state,
-				   CompOption *option,
-				   int nOption)
+		   CompAction *action,
+		   CompActionState state,
+		   CompOption *option,
+		   int nOption)
 {
     
     GET_WINDOW
@@ -704,10 +700,10 @@ FWRotateClockwise (CompDisplay *d,
 
 Bool
 FWRotateCounterclockwise (CompDisplay *d,
-						   CompAction *action,
-						   CompActionState state,
-						   CompOption *option,
-						   int nOption)
+			   CompAction *action,
+			   CompActionState state,
+			   CompOption *option,
+			   int nOption)
 {
     
     GET_WINDOW
@@ -725,10 +721,10 @@ FWRotateCounterclockwise (CompDisplay *d,
 
 Bool
 FWScaleUp (CompDisplay *d,
-		   CompAction *action,
-		   CompActionState state,
-		   CompOption *option,
-		   int nOption)
+	   CompAction *action,
+	   CompActionState state,
+	   CompOption *option,
+	   int nOption)
 {
     
     GET_WINDOW
@@ -742,16 +738,15 @@ FWScaleUp (CompDisplay *d,
                 
         FREEWINS_WINDOW (w);
 
-        /* Stop scale at threshold specified */
-		if (!freewinsGetAllowNegative (w->screen))
-		{
-		    float minScale = freewinsGetMinScale (w->screen);
-		    if (fww->animate.destScaleX < minScale)
-		      fww->animate.destScaleX = minScale;
+	if (!freewinsGetAllowNegative (w->screen))
+	{
+	    float minScale = freewinsGetMinScale (w->screen);
+	    if (fww->animate.destScaleX < minScale)
+		fww->animate.destScaleX = minScale;
 
-		    if (fww->animate.destScaleY < minScale)
-		      fww->animate.destScaleY = minScale;
-		}
+	    if (fww->animate.destScaleY < minScale)
+		fww->animate.destScaleY = minScale;
+	}
     }
     
     return TRUE;
@@ -760,10 +755,10 @@ FWScaleUp (CompDisplay *d,
 
 Bool
 FWScaleDown (CompDisplay *d,
-		       CompAction *action,
-		       CompActionState state,
-		       CompOption *option,
-		       int nOption)
+	       CompAction *action,
+	       CompActionState state,
+	       CompOption *option,
+	       int nOption)
 {
     
     GET_WINDOW
@@ -776,18 +771,18 @@ FWScaleDown (CompDisplay *d,
                 FWAdjustIPW (w);
                 
                 
-		FREEWINS_WINDOW (w);                
+	FREEWINS_WINDOW (w);                
 
         /* Stop scale at threshold specified */
-		if (!freewinsGetAllowNegative (w->screen))
-		{
-		    float minScale = freewinsGetMinScale (w->screen);
-		    if (fww->animate.destScaleX < minScale)
-		      fww->animate.destScaleX = minScale;
+	if (!freewinsGetAllowNegative (w->screen))
+	{
+	    float minScale = freewinsGetMinScale (w->screen);
+	    if (fww->animate.destScaleX < minScale)
+		fww->animate.destScaleX = minScale;
 
-		    if (fww->animate.destScaleY < minScale)
-		      fww->animate.destScaleY = minScale;
-		}
+	    if (fww->animate.destScaleY < minScale)
+		fww->animate.destScaleY = minScale;
+	}
     }
     
     return TRUE;
@@ -797,10 +792,10 @@ FWScaleDown (CompDisplay *d,
 /* Reset the Rotation and Scale to 0 and 1 */
 Bool
 resetFWTransform (CompDisplay *d,
-				   CompAction *action,
-				   CompActionState state,
-				   CompOption *option,
-				   int nOption)
+		   CompAction *action,
+		   CompActionState state,
+		   CompOption *option,
+		   int nOption)
 {
     
     GET_WINDOW;
@@ -814,7 +809,7 @@ resetFWTransform (CompDisplay *d,
                                  (1 - fww->transform.scaleY));
         addWindowDamage (w);
 
-	    fww->transformed = FALSE;
+	fww->transformed = FALSE;
 
         if (FWCanShape (w))
             if (FWHandleWindowInputInfo (w))
@@ -839,7 +834,7 @@ freewinsRotateWindow (CompDisplay *d,
                       CompOption *option,
                       int nOption)
 {
-	CompWindow *w;
+    CompWindow *w;
 
     w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
 
@@ -881,7 +876,7 @@ freewinsIncrementRotateWindow (CompDisplay *d,
                               CompOption *option,
                               int nOption)
 {
-	CompWindow *w;
+    CompWindow *w;
 
     w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
 
@@ -923,7 +918,7 @@ freewinsScaleWindow (CompDisplay *d,
                       CompOption *option,
                       int nOption)
 {
-	CompWindow *w;
+    CompWindow *w;
 
     w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
 

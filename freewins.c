@@ -65,8 +65,8 @@ FWWindowResizeNotify(CompWindow *w,
     
     FWCalculateInputRect (w);
 
-	int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
-	int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
+    int x = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
+    int y = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
 
     fww->radius = sqrt(pow((x - WIN_REAL_X (w)), 2) + pow((y - WIN_REAL_Y (w)), 2));
 
@@ -81,7 +81,7 @@ FWWindowMoveNotify (CompWindow *w,
 		       int        dy,
 		       Bool       immediate)
 {
-	FREEWINS_DISPLAY (w->screen->display);
+    FREEWINS_DISPLAY (w->screen->display);
     FREEWINS_SCREEN (w->screen);
     FREEWINS_WINDOW (w);
 
@@ -112,7 +112,6 @@ FWReloadSnapKeys (CompDisplay *d)
 
     if (fwd)
     {
-
 	unsigned int imask = freewinsGetInvertModsMask(d);
 	fwd->invertMask = 0;
 
@@ -144,15 +143,15 @@ FWDisplayOptionChanged (CompDisplay *d,
                         CompOption *opt,
                         FreewinsDisplayOptions num)
 {
-	switch (num)
-	{
-		case FreewinsDisplayOptionSnapMods:
+    switch (num)
+    {
+	case FreewinsDisplayOptionSnapMods:
         case FreewinsDisplayOptionInvertMods:
-            FWReloadSnapKeys (d);
+	    FWReloadSnapKeys (d);
             break;
-		default:
-			break;
-	}
+	default:
+	    break;
+    }
 }
 
 /* ------ Plugin Initialisation ---------------------------------------*/
@@ -160,7 +159,7 @@ FWDisplayOptionChanged (CompDisplay *d,
 /* Window initialisation / cleaning */
 static Bool
 freewinsInitWindow (CompPlugin *p,
-					 CompWindow *w)
+		    CompWindow *w)
 {
     FWWindow *fww;
     FREEWINS_SCREEN(w->screen);
@@ -178,8 +177,8 @@ freewinsInitWindow (CompPlugin *p,
     fww->adjustX = 0.0f;
     fww->adjustY = 0.0f;
 
-	int x = WIN_REAL_X (w) + WIN_REAL_W (w) /2.0;
-	int y = WIN_REAL_Y (w) + WIN_REAL_H (w) /2.0;
+    int x = WIN_REAL_X (w) + WIN_REAL_W (w) /2.0;
+    int y = WIN_REAL_Y (w) + WIN_REAL_H (w) /2.0;
 
     fww->radius = sqrt (pow ((x - WIN_REAL_X (w)), 2) + pow ((y - WIN_REAL_Y (w)), 2));
 
@@ -236,7 +235,7 @@ freewinsInitWindow (CompPlugin *p,
 
 static void
 freewinsFiniWindow (CompPlugin *p,
-					 CompWindow *w)
+		    CompWindow *w)
  {
 
     FREEWINS_WINDOW (w);
@@ -246,13 +245,17 @@ freewinsFiniWindow (CompPlugin *p,
     fww->transform.scaleX = 1.0f;
     fww->transform.scaleY = 1.0f;
 
+    fww->transform.angX   = 0.0f;
+    fww->transform.angY   = 0.0f;
+    fww->transform.angZ   = 0.0f;
+
     fww->transformed = FALSE;
     
     if (FWCanShape (w))
         FWHandleWindowInputInfo (w);
 
     if (fwd->grabWindow == w)
-		fwd->grabWindow = NULL;
+	fwd->grabWindow = NULL;
 
    free(fww); 
 }
@@ -260,7 +263,7 @@ freewinsFiniWindow (CompPlugin *p,
 /* Screen initialization / cleaning */
 static Bool
 freewinsInitScreen (CompPlugin *p,
-					 CompScreen *s)
+		    CompScreen *s)
 {
     FWScreen *fws;
 
@@ -297,7 +300,7 @@ freewinsInitScreen (CompPlugin *p,
 
 static void
 freewinsFiniScreen (CompPlugin *p,
-					 CompScreen *s)
+                    CompScreen *s)
 {
 
     FREEWINS_SCREEN(s);
@@ -320,8 +323,8 @@ freewinsFiniScreen (CompPlugin *p,
 
 /* Display initialization / cleaning */
 static Bool
-freewinsInitDisplay (CompPlugin *p, 
-				    CompDisplay *d)
+freewinsInitDisplay (CompPlugin *p,
+                     CompDisplay *d)
 {
 
     FWDisplay *fwd; 
@@ -437,7 +440,7 @@ freewinsInit (CompPlugin *p)
     if ((displayPrivateIndex = allocateDisplayPrivateIndex ()) < 0 )
 	return FALSE;
 
-	compAddMetadataFromFile (&freewinsMetadata, p->vTable->name);
+    compAddMetadataFromFile (&freewinsMetadata, p->vTable->name);
 
     return TRUE;
 }

@@ -56,7 +56,7 @@
 static void
 FWHandleIPWResizeInitiate (CompWindow *w)
 {
-	FREEWINS_WINDOW (w);
+    FREEWINS_WINDOW (w);
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
 
@@ -80,7 +80,7 @@ FWHandleIPWResizeInitiate (CompWindow *w)
 static void
 FWHandleIPWMoveInitiate (CompWindow *w)
 {
-	FREEWINS_WINDOW (w);
+    FREEWINS_WINDOW (w);
     FREEWINS_SCREEN (w->screen);
     FREEWINS_DISPLAY (w->screen->display);
 
@@ -136,7 +136,6 @@ static void FWHandleIPWResizeMotionEvent (CompWindow *w, unsigned int x, unsigne
 
     if (fww->winH - 10 > w->height || fww->winW - 10 > w->width)
     { 
-
         XWindowChanges xwc;
         unsigned int   mask = CWX | CWY | CWWidth | CWHeight;
 
@@ -172,14 +171,14 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     int oldX = lastPointerX - 100;
     int oldY = lastPointerY - 100;
 
-	float midX = WIN_REAL_X(fwd->grabWindow) + WIN_REAL_W(fwd->grabWindow)/2.0;
-	float midY = WIN_REAL_Y(fwd->grabWindow) + WIN_REAL_H(fwd->grabWindow)/2.0;
+    float midX = WIN_REAL_X(fwd->grabWindow) + WIN_REAL_W(fwd->grabWindow)/2.0;
+    float midY = WIN_REAL_Y(fwd->grabWindow) + WIN_REAL_H(fwd->grabWindow)/2.0;
 	
-	float angX;
-	float angY;
-	float angZ;
+    float angX;
+    float angY;
+    float angZ;
 	
-	/* Save the current angles so we can work with them */
+    /* Save the current angles so we can work with them */
     if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
     {
          angX = fww->transform.unsnapAngX;
@@ -194,22 +193,22 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     }
 
   /* Check for Y axis clicking (Top / Bottom) */
-	if (pointerY > midY)
-	{
-	    /* Check for X axis clicking (Left / Right) */
-	    if (pointerX > midX)
-	        fww->corner = CornerBottomRight;
-	    else if (pointerX < midX)
-	        fww->corner = CornerBottomLeft;
-	}
-	else if (pointerY < midY)
-	{
-	    /* Check for X axis clicking (Left / Right) */
-	    if (pointerX > midX)
-	        fww->corner = CornerTopRight;
-	    else if (pointerX < midX)
-	        fww->corner = CornerTopLeft;
-	}
+    if (pointerY > midY)
+    {
+	/* Check for X axis clicking (Left / Right) */
+	if (pointerX > midX)
+	    fww->corner = CornerBottomRight;
+	else if (pointerX < midX)
+	    fww->corner = CornerBottomLeft;
+    }
+    else if (pointerY < midY)
+    {
+	/* Check for X axis clicking (Left / Right) */
+	if (pointerX > midX)
+	    fww->corner = CornerTopRight;
+	else if (pointerX < midX)
+	    fww->corner = CornerTopLeft;
+    }
 
     float percentFromXAxis = 0.0, percentFromYAxis = 0.0;
 
@@ -556,36 +555,35 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
     if (ev->type == d->xkbEvent)
     {
-	    XkbAnyEvent *xkbEvent = (XkbAnyEvent *) ev;
+	XkbAnyEvent *xkbEvent = (XkbAnyEvent *) ev;
 
-	    if (xkbEvent->xkb_type == XkbStateNotify)
-	    {
-		    XkbStateNotifyEvent *stateEvent = (XkbStateNotifyEvent *) ev;
-		    unsigned int snapMods = 0xffffffff;
-		    unsigned int invertMods = 0xffffffff;
+	if (xkbEvent->xkb_type == XkbStateNotify)
+	{
+	    XkbStateNotifyEvent *stateEvent = (XkbStateNotifyEvent *) ev;
+	    unsigned int snapMods = 0xffffffff;
+	    unsigned int invertMods = 0xffffffff;
 
-		    if (fwd->snapMask)
-			    snapMods = fwd->snapMask;
+	    if (fwd->snapMask)
+		snapMods = fwd->snapMask;
 
-		    if ((stateEvent->mods & snapMods) == snapMods)
-			    fwd->snap = TRUE;
-		    else
-			    fwd->snap = FALSE;
+	    if ((stateEvent->mods & snapMods) == snapMods)
+		fwd->snap = TRUE;
+	    else
+		fwd->snap = FALSE;
 
-		    if (fwd->invertMask)
-			    invertMods = fwd->invertMask;
+	    if (fwd->invertMask)
+		invertMods = fwd->invertMask;
 
-		    if ((stateEvent->mods & invertMods) == invertMods)
-			    fwd->invert = TRUE;
-		    else
-			    fwd->invert = FALSE;
+	    if ((stateEvent->mods & invertMods) == invertMods)
+		fwd->invert = TRUE;
+	    else
+		fwd->invert = FALSE;
 
-	    }
+	}
     }
 
     switch(ev->type){
 	
-	/* Motion Notify Event */
     case EnterNotify:
     {
         CompWindow *btnW;
@@ -631,62 +629,61 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
             FWHandleLeaveNotify (btnW, ev);
     }
     break;
-	case MotionNotify:
+    case MotionNotify:
 	    
-	    if(fwd->grabWindow)
-        {
-		    FREEWINS_WINDOW(fwd->grabWindow);
+    if(fwd->grabWindow)
+    {
+	FREEWINS_WINDOW(fwd->grabWindow);
 		    
-     	    dx = ((float)(pointerX - lastPointerX) / fwd->grabWindow->screen->width) * \
+	dx = ((float)(pointerX - lastPointerX) / fwd->grabWindow->screen->width) * \
             freewinsGetMouseSensitivity (fwd->grabWindow->screen);
-		    dy = ((float)(pointerY - lastPointerY) / fwd->grabWindow->screen->height) * \
+	dy = ((float)(pointerY - lastPointerY) / fwd->grabWindow->screen->height) * \
             freewinsGetMouseSensitivity (fwd->grabWindow->screen);
 
-			if (matchEval (freewinsGetShapeWindowTypes (fwd->grabWindow->screen), fwd->grabWindow))
-			{
-		        if (fww->grab == grabMove || fww->grab == grabResize)
-		        {
-		            FREEWINS_SCREEN (fwd->grabWindow->screen);
-		            FWWindowInputInfo *info;
-		            CompWindow *w = fwd->grabWindow;
-		            for (info = fws->transformedWindows; info; info = info->next)
-		            {
-		                if (fwd->grabWindow->id == info->ipw)
-		                /* The window we just grabbed was actually
-		                 * an IPW, get the real window instead
-		                 */
-		                w = FWGetRealWindow (fwd->grabWindow);
-		            }
-		            switch (fww->grab)
-		            {
-		                case grabMove:
-		                    FWHandleIPWMoveMotionEvent (w, pointerX, pointerY); break;
-		                case grabResize:
-		                    FWHandleIPWResizeMotionEvent (w, pointerX, pointerY); break;
-		                default:
-		                    break;
-		            }
-		        }
+	if (matchEval (freewinsGetShapeWindowTypes (fwd->grabWindow->screen), fwd->grabWindow))
+	{
+	    if (fww->grab == grabMove || fww->grab == grabResize)
+	    {
+		FREEWINS_SCREEN (fwd->grabWindow->screen);
+		FWWindowInputInfo *info;
+		CompWindow *w = fwd->grabWindow;
+		for (info = fws->transformedWindows; info; info = info->next)
+		{
+		    if (fwd->grabWindow->id == info->ipw)
+		    /* The window we just grabbed was actually
+		     * an IPW, get the real window instead
+		      */
+			w = FWGetRealWindow (fwd->grabWindow);
+		}
+		switch (fww->grab)
+		{
+		    case grabMove:
+			FWHandleIPWMoveMotionEvent (w, pointerX, pointerY); break;
+		    case grabResize:
+		        FWHandleIPWResizeMotionEvent (w, pointerX, pointerY); break;
+		    default:
+		        break;
+		}
+	    }
+	}
 
-		        if (fww->grab == grabRotate)
-		        {        
-		            FWHandleRotateMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);
-				}
-				if (fww->grab == grabScale)
-				{
-				    FWHandleScaleMotionEvent(fwd->grabWindow, dx * 3, dy * 3, ev->xmotion.x, ev->xmotion.y);		      
-				}
+	if (fww->grab == grabRotate)
+	{        
+	    FWHandleRotateMotionEvent(fwd->grabWindow, dx, dy, ev->xmotion.x, ev->xmotion.y);
+	}
+	if (fww->grab == grabScale)
+	{
+	    FWHandleScaleMotionEvent(fwd->grabWindow, dx * 3, dy * 3, ev->xmotion.x, ev->xmotion.y);		      
+	}
 
-			    if(dx != 0.0 || dy != 0.0)
-		            FWDamageArea (fwd->grabWindow);
-            }
-        }
-
+	if(dx != 0.0 || dy != 0.0)
+	    FWDamageArea (fwd->grabWindow);
+    }
     break;
 
 
-	/* Button Press and Release */
-	case ButtonPress:
+    /* Button Press and Release */
+    case ButtonPress:
     {
         CompWindow *btnW;
         btnW = findWindowAtDisplay (d, ev->xbutton.subwindow);
@@ -704,7 +701,7 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
         if (btnW)
         {
-        		if (matchEval (freewinsGetShapeWindowTypes (btnW->screen), btnW))
+	    if (matchEval (freewinsGetShapeWindowTypes (btnW->screen), btnW))
                 switch (ev->xbutton.button)
                 {
                     case Button1:
@@ -721,35 +718,36 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 
     }
     break;
-	case ButtonRelease:
+
+    case ButtonRelease:
     {
         if (fwd->grabWindow)
         {        
-        	FREEWINS_WINDOW (fwd->grabWindow);
+	    FREEWINS_WINDOW (fwd->grabWindow);
         
-        	if (matchEval (freewinsGetShapeWindowTypes (fwd->grabWindow->screen), fwd->grabWindow))
+	    if (matchEval (freewinsGetShapeWindowTypes (fwd->grabWindow->screen), fwd->grabWindow))
             if (fww->grab == grabMove || fww->grab == grabResize)
             {
                 FWHandleButtonReleaseEvent (fwd->grabWindow);
 		        fwd->grabWindow = 0;
             }
-	    }
-	    break;
+	}
     }
+    break;
 
-	case ConfigureNotify:
-	    w = findWindowAtDisplay (d, ev->xconfigure.window);
-	    if (w)
-	    {
-		oldPrev = w->prev;
-		oldNext = w->next;
+    case ConfigureNotify:
+	w = findWindowAtDisplay (d, ev->xconfigure.window);
+	if (w)
+	{
+	    oldPrev = w->prev;
+	    oldNext = w->next;
 
-        FREEWINS_WINDOW (w);
+            FREEWINS_WINDOW (w);
 
-        fww->winH = WIN_REAL_H (w);
-        fww->winW = WIN_REAL_W (w);
-	    }
-	    break;
+            fww->winH = WIN_REAL_H (w);
+            fww->winW = WIN_REAL_W (w);
+	}
+    break;
 
     case ClientMessage:
     if (ev->xclient.message_type == d->desktopViewportAtom)
@@ -777,48 +775,48 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
                     if (!fww->input || fww->input->ipw)
                         break;
 
-                    ipw = findWindowAtDisplay (d, fww->input->ipw);
-		            if (ipw) 
-		            {
-			            dX = s->x - vX;
-			            dY = s->y - vY;
+            	    ipw = findWindowAtDisplay (d, fww->input->ipw);
+	            if (ipw) 
+	            {
+			dX = s->x - vX;
+			dY = s->y - vY;
 
-			            defaultViewportForWindow (actualW, &vX, &vY);
-                        		moveWindowToViewportPosition (ipw,
-			                          ipw->attrib.x - dX * s->width,
-			                          ipw->attrib.y - dY * s->height,
-			                          FALSE);
-		            }
+			defaultViewportForWindow (actualW, &vX, &vY);
+			moveWindowToViewportPosition (ipw,
+		                          ipw->attrib.x - dX * s->width,
+		                          ipw->attrib.y - dY * s->height,
+		                          FALSE);
+	            }
                 }
             }
     }
     break;
 
     default:
-	    if (ev->type == d->shapeEvent + ShapeNotify)
-	    {
-	        XShapeEvent *se = (XShapeEvent *) ev;
-	        if (se->kind == ShapeInput)
+    if (ev->type == d->shapeEvent + ShapeNotify)
+    {
+        XShapeEvent *se = (XShapeEvent *) ev;
+        if (se->kind == ShapeInput)
+        {
+	        CompWindow *w;
+	        w = findWindowAtDisplay (d, se->window);
+	        if (w)
 	        {
-		        CompWindow *w;
-		        w = findWindowAtDisplay (d, se->window);
-		        if (w)
-		        {
-		            FREEWINS_WINDOW (w);
+	            FREEWINS_WINDOW (w);
 
-		            if (FWCanShape (w) && (fww->transform.scaleX != 1.0f || fww->transform.scaleY != 1.0f))
-		            {
-		                // Reset the window back to normal
-		                fww->transform.scaleX = 1.0f;
-		                fww->transform.scaleY = 1.0f;
-                        fww->transform.angX = 0.0f;
-                        fww->transform.angY = 0.0f;
-                        fww->transform.angZ = 0.0f;
-			            /*FWShapeInput (w); - Disabled due to problems it causes*/ 
-			        }
+	            if (FWCanShape (w) && (fww->transform.scaleX != 1.0f || fww->transform.scaleY != 1.0f))
+	            {
+	                // Reset the window back to normal
+	                fww->transform.scaleX = 1.0f;
+	                fww->transform.scaleY = 1.0f;
+                fww->transform.angX = 0.0f;
+                fww->transform.angY = 0.0f;
+                fww->transform.angZ = 0.0f;
+		            /*FWShapeInput (w); - Disabled due to problems it causes*/ 
 		        }
 	        }
-	    }
+        }
+    }
     }
     
     UNWRAP(fwd, d, handleEvent);
@@ -836,9 +834,9 @@ void FWHandleEvent(CompDisplay *d, XEvent *ev){
 		{
 		    /* restacking occured, ensure ipw stacking */
 		    FWAdjustIPWStacking (w->screen);
-            FWAdjustIPW (w);
+            	    FWAdjustIPW (w);
 		}
 	    }
-	    break;
+	break;
     }
 }

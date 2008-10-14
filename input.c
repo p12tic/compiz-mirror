@@ -80,9 +80,9 @@ FWShapeIPW (CompWindow *w)
 
     cairo_surface_t *bitmap =
     cairo_xlib_surface_create_for_bitmap (ipw->screen->display->display,
-										 b,
-										 DefaultScreenOfDisplay (ipw->screen->display->display),
-										 width, height);
+					 b,
+					 DefaultScreenOfDisplay (ipw->screen->display->display),
+					 width, height);
 
     cr = cairo_create (bitmap);
 
