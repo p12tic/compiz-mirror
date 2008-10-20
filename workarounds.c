@@ -274,19 +274,11 @@ workaroundsUpdateSticky (CompWindow *w)
 static void
 updateUrgencyState (CompWindow *w)
 {
-    XWMHints *hints;
-    Bool     urgent = FALSE;
+    Bool urgent;
 
     WORKAROUNDS_WINDOW (w);
 
-    hints = XGetWMHints (w->screen->display->display, w->id);
-    if (hints)
-    {
-	if (hints->flags & XUrgencyHint)
-	    urgent = TRUE;
-
-	XFree (hints);
-    }
+    urgent = (w->hints && (w->hints->flags & XUrgencyHint));
 
     if (urgent)
     {
