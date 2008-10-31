@@ -192,6 +192,7 @@ freewinsInitWindow (CompPlugin *p,
     fww->can3D = FALSE;
 
     fww->transformed = FALSE;
+    fww->noPaint     = FALSE;
     
     // Don't allow anything yet
     fww->resetting = FALSE;

@@ -300,10 +300,10 @@ FWCalculateWindowRect (CompWindow *w,
         FREEWINS_WINDOW (w);
 
         CompTransform transform;
-        GLdouble xScreen1, yScreen1, zScreen1;
-        GLdouble xScreen2, yScreen2, zScreen2;
-        GLdouble xScreen3, yScreen3, zScreen3;
-        GLdouble xScreen4, yScreen4, zScreen4;
+        GLdouble xScreen1 = 0.0f, yScreen1 = 0.0f, zScreen1 = 0.0f;
+        GLdouble xScreen2 = 0.0f, yScreen2 = 0.0f, zScreen2 = 0.0f;
+        GLdouble xScreen3 = 0.0f, yScreen3 = 0.0f, zScreen3 = 0.0f;
+        GLdouble xScreen4 = 0.0f, yScreen4 = 0.0f, zScreen4 = 0.0f;
 
         matrixGetIdentity(&transform);
         FWModifyMatrix (w, &transform,
