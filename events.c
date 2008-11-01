@@ -171,15 +171,15 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     int oldX = lastPointerX - 100;
     int oldY = lastPointerY - 100;
 
-    float midX = WIN_REAL_X(fwd->grabWindow) + WIN_REAL_W(fwd->grabWindow)/2.0;
-    float midY = WIN_REAL_Y(fwd->grabWindow) + WIN_REAL_H(fwd->grabWindow)/2.0;
+    float midX = WIN_REAL_X(w) + WIN_REAL_W(w)/2.0;
+    float midY = WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0;
 	
     float angX;
     float angY;
     float angZ;
 	
     /* Save the current angles so we can work with them */
-    if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
+    if (freewinsGetSnap (w->screen) || fwd->snap)
     {
          angX = fww->transform.unsnapAngX;
          angY = fww->transform.unsnapAngY;
@@ -350,7 +350,7 @@ static void FWHandleRotateMotionEvent (CompWindow *w, float dx, float dy, int x,
     
     /* Restore angles */
     
-    if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
+    if (freewinsGetSnap (w->screen) || fwd->snap)
     {
          fww->transform.unsnapAngX = angX;
          fww->transform.unsnapAngY = angY;
@@ -380,7 +380,7 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
     
     float scaleX, scaleY;
     
-    if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
+    if (freewinsGetSnap (w->screen) || fwd->snap)
     {
         scaleX = fww->transform.unsnapScaleX;
         scaleY = fww->transform.unsnapScaleY;
@@ -457,7 +457,7 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
         break;
     }
     
-    if (freewinsGetSnap (fwd->grabWindow->screen) || fwd->snap)
+    if (freewinsGetSnap (w->screen) || fwd->snap)
     {
        fww->transform.unsnapScaleX = scaleX;
         fww->transform.unsnapScaleY = scaleY;
@@ -469,9 +469,9 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
     }
 
     /* Stop scale at threshold specified */
-    if (!freewinsGetAllowNegative (fwd->grabWindow->screen))
+    if (!freewinsGetAllowNegative (w->screen))
     {
-        float minScale = freewinsGetMinScale (fwd->grabWindow->screen);
+        float minScale = freewinsGetMinScale (w->screen);
         if (fww->animate.destScaleX < minScale)
           fww->animate.destScaleX = minScale;
 
@@ -480,7 +480,7 @@ static void FWHandleScaleMotionEvent (CompWindow *w, float dx, float dy, int x, 
     }
 
     /* Change scales for maintaining aspect ratio */
-    if (freewinsGetScaleUniform (fwd->grabWindow->screen))
+    if (freewinsGetScaleUniform (w->screen))
     {
         float tempscaleX = fww->animate.destScaleX;
         float tempscaleY = fww->animate.destScaleY;
