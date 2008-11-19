@@ -301,6 +301,19 @@ setBoxHeight (BOX	   *box,
 	box->y2 -= increment;
 }
 
+/* Make sure the window isn't maximized */
+static void
+maximumizeUnmaximizeWindow (CompWindow *w)
+{
+    int state = w->state;
+    if (state & MAXIMIZE_STATE)
+    {
+	/* Unmaximize */
+	state &= (w->state & ~MAXIMIZE_STATE);
+	changeWindowState (w, state);
+    }
+}
+
 /* Reduce box size by setting width and height to 1/4th or the minimum size
  * allowed, whichever is bigger.
  */
@@ -313,16 +326,7 @@ maximumizeMinimumize (CompWindow *w,
     const int min_height = w->sizeHints.min_height;
     int width, height;
 
-    /* Checking if the window is maximized. */
-
-    int state = w->state;
-    if (state & MAXIMIZE_STATE)
-    {
-	/* Unmaximize */
-	state &= (w->state & ~MAXIMIZE_STATE);
-	changeWindowState (w, state);
-    }
-
+    maximumizeUnmaximizeWindow (w);
 
     width = box.x2 - box.x1;
     height = box.y2 - box.y1;
