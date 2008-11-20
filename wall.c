@@ -585,7 +585,7 @@ wallHandleEvent (CompDisplay *d,
 	    if (!s)
 		break;
 
-	    if (otherScreenGrabExist (s, "switcher", 0))
+	    if (otherScreenGrabExist (s, "switcher", "wall", 0))
 		break;
 
     	    dx = event->xclient.data.l[0] / s->width - s->x;
