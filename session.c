@@ -38,8 +38,9 @@
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
 
-#define SESSION_DISPLAY_OPTION_SAVE_LEGACY 0
-#define SESSION_DISPLAY_OPTION_NUM         1
+#define SESSION_DISPLAY_OPTION_SAVE_LEGACY  0
+#define SESSION_DISPLAY_OPTION_IGNORE_MATCH 1
+#define SESSION_DISPLAY_OPTION_NUM          2
 
 typedef struct _SessionWindowList
 {
@@ -342,6 +343,11 @@ isSessionWindow (CompWindow *w)
 
     /* filter out embedded windows (notification icons) */
     if (sessionGetIsEmbedded (w->screen->display, w->id))
+	return FALSE;
+
+    SESSION_DISPLAY (w->screen->display);
+
+    if (matchEval (&sd->opt[SESSION_DISPLAY_OPTION_IGNORE_MATCH].value.match, w))
 	return FALSE;
 
     return TRUE;
@@ -942,7 +948,8 @@ sessionSetObjectOption (CompPlugin      *plugin,
 }
 
 static const CompMetadataOptionInfo sessionDisplayOptionInfo[] = {
-    { "save_legacy", "bool", 0, 0, 0 }
+    { "save_legacy", "bool", 0, 0, 0 },
+    { "ignore_match", "match", 0, 0, 0 }
 };
 
 static int
