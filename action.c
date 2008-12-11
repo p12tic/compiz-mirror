@@ -848,10 +848,9 @@ freewinsRotateWindow (CompDisplay *d,
         x = getFloatOptionNamed(option, nOption, "y", 0.0f);
         z = getFloatOptionNamed(option, nOption, "z", 0.0f);
         
-        fww->transform.angX = x;
-        fww->transform.angY = y;
-        fww->transform.angZ = z;
-
+        FWSetPrepareRotation (w, x - fww->animate.destAngX,
+				 y - fww->animate.destAngY,
+				 z - fww->animate.destAngZ, 0, 0);
         addWindowDamage (w);
         
     }
@@ -879,12 +878,9 @@ freewinsIncrementRotateWindow (CompDisplay *d,
     CompWindow *w;
 
     w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
-
  
     if (w)
-    {
-        FREEWINS_WINDOW(w);
-        
+    {        
         float x, y, z;
         
         x = getFloatOptionNamed(option, nOption, "x", 0.0f);
@@ -892,16 +888,16 @@ freewinsIncrementRotateWindow (CompDisplay *d,
         z = getFloatOptionNamed(option, nOption, "z", 0.0f);
 
         /* Respect dx, dy, dz, first */
-        fww->transform.angX += x;
-        fww->transform.angY += y;
-        fww->transform.angZ += z;
-
+        FWSetPrepareRotation (w, x, y, z, 0, 0);
         addWindowDamage (w);
     }
     else
     {
         return FALSE;
     }
+
+    if (FWCanShape (w))
+        FWHandleWindowInputInfo (w);
 
     return TRUE;
 }
@@ -919,15 +915,34 @@ freewinsScaleWindow (CompDisplay *d,
                       int nOption)
 {
     CompWindow *w;
+    float x, y;
 
     w = findWindowAtDisplay (d, getIntOptionNamed(option, nOption, "window", 0));
 
     if (w)
     {
-        FREEWINS_WINDOW(w);
+	FREEWINS_WINDOW (w);
 
-        fww->transform.scaleX = getFloatOptionNamed(option, nOption, "x", 0.0f);
-        fww->transform.scaleY = getFloatOptionNamed(option, nOption, "y", 0.0f);
+        x = getFloatOptionNamed(option, nOption, "x", 0.0f);
+        y = getFloatOptionNamed(option, nOption, "y", 0.0f);
+
+        FWSetPrepareRotation (w, 0, 0, 0,
+			      x - fww->animate.destScaleX,
+			      y - fww->animate.destScaleY);
+        if (FWCanShape (w))
+            if (FWHandleWindowInputInfo (w))
+                FWAdjustIPW (w);                
+                
+        /* Stop scale at threshold specified */
+	if (!freewinsGetAllowNegative (w->screen))
+	{
+	    float minScale = freewinsGetMinScale (w->screen);
+	    if (fww->animate.destScaleX < minScale)
+		fww->animate.destScaleX = minScale;
+
+	    if (fww->animate.destScaleY < minScale)
+		fww->animate.destScaleY = minScale;
+	}
 
         addWindowDamage (w);
     }
