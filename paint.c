@@ -259,7 +259,7 @@ FWPaintWindow (CompWindow *w,
 	                    fww->transform.angY,
 		            fww->transform.angZ,
 		            fww->iMidX, fww->iMidY , 0.0f,
-		            scaleX, scaleY, 1.0f, adjustX, adjustY);
+		            scaleX, scaleY, 1.0f, adjustX, adjustY, TRUE);
 		                    
 	/* Create rects for input after we've dealt
 	 * with output

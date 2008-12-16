@@ -573,7 +573,7 @@ void FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
                      float angX, float angY, float angZ,
                      float tX, float tY, float tZ,
                      float scX, float scY, float scZ,
-                     float adjustX, float adjustY);
+                     float adjustX, float adjustY, Bool paint);
 
 void FWRotateProjectVector (CompWindow *w,
                            CompVector vector,

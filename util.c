@@ -112,15 +112,17 @@ FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
                  float angX, float angY, float angZ,
                  float tX, float tY, float tZ,
                  float scX, float scY, float scZ,
-                 float adjustX, float adjustY)
+                 float adjustX, float adjustY, Bool paint)
 {
     /* Create our transformation Matrix */
     
-    //matrixScale (mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
     matrixTranslate(mTransform, 
 	    tX, 
 	    tY, 0.0);
-    perspectiveDistortAndResetZ (w->screen, mTransform);
+    if (paint)
+	perspectiveDistortAndResetZ (w->screen, mTransform);
+    else
+	matrixScale (mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
     matrixRotate (mTransform, angX, 1.0f, 0.0f, 0.0f);
     matrixRotate (mTransform, angY, 0.0f, 1.0f, 0.0f);
     matrixRotate (mTransform, angZ, 0.0f, 0.0f, 1.0f);
@@ -339,7 +341,7 @@ FWCalculateWindowRect (CompWindow *w,
                         fww->transform.angZ,
                         fww->iMidX, fww->iMidY, 0.0f,
                         fww->transform.scaleX,
-                        fww->transform.scaleY, 0.0f, 0.0f, 0.0f);  
+                        fww->transform.scaleY, 0.0f, 0.0f, 0.0f, FALSE);  
 
         FWRotateProjectVector(w, c1, transform, &xScreen1, &yScreen1, &zScreen1, FALSE);
         FWRotateProjectVector(w, c2, transform, &xScreen2, &yScreen2, &zScreen2, FALSE);
