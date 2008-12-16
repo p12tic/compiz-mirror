@@ -120,9 +120,6 @@ FWPreparePaintScreen (CompScreen *s,
         {
             fww->resetting = FALSE;
 
-            if (fww->transform.isSaved && fws->transformedScreen)
-                fww->noPaint = TRUE;
-
             fww->transform.angX = fww->animate.destAngX;
             fww->transform.angY = fww->animate.destAngY;
             fww->transform.angZ = fww->animate.destAngZ;
@@ -148,23 +145,6 @@ FWPreparePaintScreen (CompScreen *s,
 /* Check to see if we are painting a transformed output,
   * and if so, disable all rotation temporarily
   */
-
-void
-FWPaintTransformedOutput (CompScreen              *s,
-                          const ScreenPaintAttrib *sAttrib,
-                          const CompTransform     *transform,
-                          Region                  region,
-                          CompOutput              *output,
-                          unsigned int            mask)
-{
-    FREEWINS_SCREEN (s);
-
-    fws->transformedScreen = TRUE;
-
-    UNWRAP (fws, s, paintTransformedOutput);
-    (*s->paintTransformedOutput) (s, sAttrib, transform, region, output, mask); 
-    WRAP (fws, s, paintTransformedOutput, FWPaintTransformedOutput);
-}
 
 // Scales z by 0 and does perspective distortion so that it
 // looks the same wherever on the screen
@@ -216,45 +196,13 @@ FWPaintWindow (CompWindow *w,
     /* Check to see if we are painting on a transformed screen*/
     /* Enable this code when we can animate between the two states */
 
-    /*if (fws->transformedScreen && !fww->transform.isSaved)
-    {
-        fww->transform.savAngX = fww->animate.destAngX;
-        fww->transform.savAngY = fww->animate.destAngY;
-        fww->transform.savAngZ = fww->animate.destAngZ;
-
-        fww->transform.savScaleX = fww->animate.destScaleX;
-        fww->transform.savScaleY = fww->animate.destScaleY;
-        fww->transform.isSaved = TRUE;
-        fww->noPaint = FALSE;
-
-        fww->animate.destAngX = 0.0f;
-        fww->animate.destAngY = 0.0f;
-        fww->animate.destAngZ = 0.0f;
-
-        fww->animate.destScaleX = 1.0f;
-        fww->animate.destScaleY = 1.0f;
-    }
-    else if (fww->transform.isSaved && !fws->transformedScreen)
-    {
-        fww->animate.destAngX = fww->transform.savAngX;
-        fww->animate.destAngY = fww->transform.savAngY;
-        fww->animate.destAngZ = fww->transform.savAngZ;
-
-        fww->animate.destScaleX = fww->transform.savScaleX;
-        fww->animate.destScaleY = fww->transform.savScaleY;
-
-        fww->transform.isSaved = FALSE;
-        fww->noPaint = FALSE;
-    }*/
-
-    if (
-        (((fww->transform.angX != 0.0 ||
+    if ((fww->transform.angX != 0.0 ||
            fww->transform.angY != 0.0 ||
            fww->transform.angZ != 0.0 ||
            fww->transform.scaleX != 1.0 ||
            fww->transform.scaleY != 1.0 ||
            fww->oldWinX != WIN_REAL_X (w) ||
-           fww->oldWinY != WIN_REAL_Y (w)) && matchEval (freewinsGetShapeWindowTypes (w->screen), w)) || fww->transform.isSaved))
+           fww->oldWinY != WIN_REAL_Y (w)) && matchEval (freewinsGetShapeWindowTypes (w->screen), w))
     {
 
 	fww->oldWinX = WIN_REAL_X (w);
@@ -317,8 +265,7 @@ FWPaintWindow (CompWindow *w,
 
          /* Actually Transform the window */
 
-	if (!fww->transform.isSaved)
-	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
 	/* Adjust the window in the matrix to prepare for transformation */
 	
@@ -454,8 +401,6 @@ FWPaintOutput(CompScreen *s,
 
     if (fws->transformedWindows)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
-	
-	fws->transformedScreen = FALSE;
 
     UNWRAP (fws, s, paintOutput);
     status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
@@ -466,7 +411,7 @@ FWPaintOutput(CompScreen *s,
 	x = WIN_REAL_X(fwd->hoverWindow) + WIN_REAL_W(fwd->hoverWindow)/2.0;
 	y = WIN_REAL_Y(fwd->hoverWindow) + WIN_REAL_H(fwd->hoverWindow)/2.0;
 
-       FREEWINS_WINDOW (fwd->hoverWindow);
+        FREEWINS_WINDOW (fwd->hoverWindow);
 
         float zRad = fww->radius * (freewinsGet3dPercent (s) / 100);
 

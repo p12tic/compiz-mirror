@@ -200,8 +200,6 @@ typedef struct _FWTransformedWindowInfo
     float scaleX;
 
     // Window transformation
-    //CompTransform rotationState;
-    //CompTransform scaleState;
 
     /* Used for snapping */
 
@@ -212,17 +210,6 @@ typedef struct _FWTransformedWindowInfo
     float unsnapScaleX;
     float unsnapScaleY;
     
-    /* Used for disabling on transformed screen */
-    
-    float savAngX;
-    float savAngY;
-    float savAngZ;
-
-    float savScaleX;
-    float savScaleY;
-    
-    Bool isSaved;
-
 } FWTransformedWindowInfo;
 
 typedef struct _FWAnimationInfo
@@ -276,7 +263,6 @@ typedef struct _FWScreen
 
     PreparePaintScreenProc preparePaintScreen;
     PaintOutputProc paintOutput;
-    PaintTransformedOutputProc paintTransformedOutput;
     DonePaintScreenProc donePaintScreen;
     PaintWindowProc paintWindow;
 
@@ -290,8 +276,6 @@ typedef struct _FWScreen
     Cursor rotateCursor;
 
     int grabIndex;
-    
-    Bool transformedScreen;
 
 } FWScreen;
 
@@ -347,9 +331,6 @@ typedef struct _FWWindow
     // Used to determine whether rotating on X and Y axis, or just on Z
     Bool can2D; // These need to be removed
     Bool can3D;
-
-    Bool noPaint;
-    Bool noSave;
 
     Bool transformed; // So does this in favor of FWWindowInputInfo
     

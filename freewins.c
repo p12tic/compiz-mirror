@@ -192,7 +192,6 @@ freewinsInitWindow (CompPlugin *p,
     fww->can3D = FALSE;
 
     fww->transformed = FALSE;
-    fww->noPaint     = FALSE;
     
     // Don't allow anything yet
     fww->resetting = FALSE;
@@ -205,14 +204,6 @@ freewinsInitWindow (CompPlugin *p,
     
     fww->transform.unsnapScaleX = 1.0;
     fww->transform.unsnapScaleY = 1.0;
-    
-    fww->transform.isSaved = FALSE;
-    
-    fww->transform.savAngX = 0.0f;
-    fww->transform.savAngY = 0.0f;
-    fww->transform.savAngZ = 0.0f;
-    fww->transform.savScaleX = 1.0f;
-    fww->transform.savScaleY = 1.0f;
     
     fww->animate.destAngX = 0.0f;
     fww->animate.destAngY = 0.0f;
@@ -227,7 +218,6 @@ freewinsInitWindow (CompPlugin *p,
     fww->animate.oldScaleY = 01.0f;
 
     fww->input = NULL;
-    fww->noPaint = FALSE;
 
     w->base.privates[fws->windowPrivateIndex].ptr = fww;
     
@@ -281,14 +271,12 @@ freewinsInitScreen (CompPlugin *p,
 
     fws->grabIndex = 0;
     fws->transformedWindows = NULL;
-    fws->transformedScreen = FALSE;
 
     s->base.privates[fwd->screenPrivateIndex].ptr = fws;
     
     WRAP (fws, s, preparePaintScreen, FWPreparePaintScreen);
     WRAP (fws, s, paintWindow, FWPaintWindow);
     WRAP (fws, s, paintOutput, FWPaintOutput);
-    WRAP (fws, s, paintTransformedOutput, FWPaintTransformedOutput);
     WRAP (fws, s, donePaintScreen, FWDonePaintScreen);
 
     WRAP (fws, s, damageWindowRect, FWDamageWindowRect);
@@ -311,7 +299,6 @@ freewinsFiniScreen (CompPlugin *p,
     UNWRAP (fws, s, preparePaintScreen);
     UNWRAP (fws, s, paintWindow);
     UNWRAP (fws, s, paintOutput);
-    UNWRAP (fws, s, paintTransformedOutput);
     UNWRAP (fws, s, donePaintScreen);
 
     UNWRAP (fws, s, damageWindowRect);
