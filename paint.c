@@ -360,45 +360,28 @@ FWPaintWindow (CompWindow *w,
 
 	Bool xInvert = FALSE;
 	Bool yInvert = FALSE;
-	Bool zInvert = FALSE; /* Check to see if zRotation is > 180 & < 360 */
+
 	Bool needsInvert = FALSE;
+	float renX = fabs (fmodf (fww->transform.angX, 360.0f));
+	float renY = fabs (fmodf (fww->transform.angY, 360.0f));
 
-	int renZ = (int) fww->transform.angZ % (int)360;
+	if (90 < renX && renX < 270)
+	    xInvert = TRUE;
 
-	if (renZ < 0) renZ = renZ * -1;
-	    if (renZ > 90 && renZ < 270)
-		zInvert = TRUE;
-
-	if (zInvert)
-	{
-	    if (fww->output.shapex1 < fww->output.shapex2 && fww->output.shapex3 < fww->output.shapex4)
-		xInvert = TRUE;
-	    if (fww->output.shapey1 < fww->output.shapey3 && fww->output.shapey2 < fww->output.shapey4)
-		yInvert = TRUE;
-	}
-	else
-	{
-	    if (fww->output.shapex1 > fww->output.shapex2 && fww->output.shapex3 > fww->output.shapex4)
-		xInvert = TRUE;
-	    if (fww->output.shapey1 > fww->output.shapey3 && fww->output.shapey2 > fww->output.shapey4)
-		yInvert = TRUE;
-	}
+	if (90 < renY && renY < 270)
+	    yInvert = TRUE;
 
 	if ((xInvert || yInvert) && !(xInvert && yInvert))
 	    needsInvert = TRUE;
 
-	if (needsInvert && (!fws->transformedScreen))
+	if (needsInvert)
 	    glCullFace (invertCull);
-
-	glDisable (GL_CULL_FACE);
 
 	UNWRAP(fws, w->screen, paintWindow);	
 	status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
 	WRAP(fws, w->screen, paintWindow, FWPaintWindow);
 
-	glEnable (GL_CULL_FACE);
-
-	if (needsInvert && (!fws->transformedScreen))
+	if (needsInvert)
 	    glCullFace (currentCull);
 
         }
