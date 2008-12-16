@@ -142,36 +142,6 @@ FWPreparePaintScreen (CompScreen *s,
     WRAP (fws, s, preparePaintScreen, FWPreparePaintScreen);
 }
 
-/* Check to see if we are painting a transformed output,
-  * and if so, disable all rotation temporarily
-  */
-
-// Scales z by 0 and does perspective distortion so that it
-// looks the same wherever on the screen
-
-/* This code taken from animation.c,
- * Copyright (c) 2006 Erkin Bahceci
- */
-static void
-perspectiveDistortAndResetZ (CompScreen *s,
-			     CompTransform *transform)
-{
-    float v = -1.0 / s->width;
-    /*
-      This does
-      transform = M * transform, where M is
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 0, v,
-      0, 0, 0, 1
-    */
-    float *m = transform->m;
-    m[8] = v * m[12];
-    m[9] = v * m[13];
-    m[10] = v * m[14];
-    m[11] = v * m[15];
-}
-
 /* Paint the window rotated or scaled */
 Bool
 FWPaintWindow (CompWindow *w,
@@ -280,10 +250,6 @@ FWPaintWindow (CompWindow *w,
       				     WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);                 			
 	}
 
-	matrixTranslate (&wTransform, fww->iMidX, fww->iMidY, 0.0f);
-
-	perspectiveDistortAndResetZ (w->screen, &wTransform);
-
      	float adjustX, adjustY;
 
 	adjustX = 0.0f;
@@ -292,14 +258,12 @@ FWPaintWindow (CompWindow *w,
 	                    fww->transform.angX,
 	                    fww->transform.angY,
 		            fww->transform.angZ,
-		            0.0f, 0.0f , 0.0f,
+		            fww->iMidX, fww->iMidY , 0.0f,
 		            scaleX, scaleY, 1.0f, adjustX, adjustY);
 		                    
 	/* Create rects for input after we've dealt
 	 * with output
 	 */
-	glDisable (GL_CULL_FACE);
-	matrixTranslate (&wTransform, -fww->iMidX, -fww->iMidY, 0.0f);
 
 	FWCalculateInputRect (w);
 

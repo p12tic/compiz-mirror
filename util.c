@@ -81,6 +81,32 @@ FWRotateProjectVector (CompWindow *w,
     *resultY = w->screen->height - *resultY;
 }
 
+// Scales z by 0 and does perspective distortion so that it
+// looks the same wherever on the screen
+
+/* This code taken from animation.c,
+ * Copyright (c) 2006 Erkin Bahceci
+ */
+static void
+perspectiveDistortAndResetZ (CompScreen *s,
+			     CompTransform *transform)
+{
+    float v = -1.0 / s->width;
+    /*
+      This does
+      transform = M * transform, where M is
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 0, v,
+      0, 0, 0, 1
+    */
+    float *m = transform->m;
+    m[8] = v * m[12];
+    m[9] = v * m[13];
+    m[10] = v * m[14];
+    m[11] = v * m[15];
+}
+
 void
 FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
                  float angX, float angY, float angZ,
@@ -94,6 +120,7 @@ FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
     matrixTranslate(mTransform, 
 	    tX, 
 	    tY, 0.0);
+    perspectiveDistortAndResetZ (w->screen, mTransform);
     matrixRotate (mTransform, angX, 1.0f, 0.0f, 0.0f);
     matrixRotate (mTransform, angY, 0.0f, 1.0f, 0.0f);
     matrixRotate (mTransform, angZ, 0.0f, 0.0f, 1.0f);
@@ -319,7 +346,7 @@ FWCalculateWindowRect (CompWindow *w,
         FWRotateProjectVector(w, c3, transform, &xScreen3, &yScreen3, &zScreen3, FALSE);
         FWRotateProjectVector(w, c4, transform, &xScreen4, &yScreen4, &zScreen4, FALSE);
        
-	    /* Save the non-rectangular points so that we can shape the rectangular IPW */        
+	/* Save the non-rectangular points so that we can shape the rectangular IPW */        
 
     	fww->output.shapex1 = xScreen1;
     	fww->output.shapex2 = xScreen2;
