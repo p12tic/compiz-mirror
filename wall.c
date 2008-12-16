@@ -51,8 +51,8 @@
     b = wallGet##name##Blue(_display) / 65535.0f; \
     a = wallGet##name##Alpha(_display) / 65535.0f
 
-static int displayPrivateIndex;
-static int corePrivateIndex;
+static int WallDisplayPrivateIndex;
+static int WallCorePrivateIndex;
 
 /* Enums */
 typedef enum
@@ -62,6 +62,13 @@ typedef enum
     Down,
     Right
 } Direction;
+
+typedef enum
+{
+    NoTransformation,
+    MiniScreen,
+    Sliding
+} ScreenTransformation;
 
 typedef struct _WallCairoContext
 {
@@ -77,6 +84,7 @@ typedef struct _WallCairoContext
 
 typedef struct _WallCore
 {
+    ObjectAddProc          objectAdd;
     SetOptionForPluginProc setOptionForPlugin;
 } WallCore;
 
@@ -84,11 +92,15 @@ typedef struct _WallDisplay
 {
     int screenPrivateIndex;
 
-    HandleEventProc handleEvent;
+    HandleEventProc            handleEvent;
+    MatchExpHandlerChangedProc matchExpHandlerChanged;
+    MatchPropertyChangedProc   matchPropertyChanged;
 } WallDisplay;
 
 typedef struct _WallScreen
 {
+    int windowPrivateIndex;
+
     DonePaintScreenProc          donePaintScreen;
     PaintOutputProc              paintOutput;
     PaintScreenProc              paintScreen;
@@ -99,6 +111,9 @@ typedef struct _WallScreen
 
     Bool moving; /* Used to track miniview movement */
     Bool showPreview;
+
+    int xTranslate;
+    int yTranslate;
 
     float curPosX;
     float curPosY;
@@ -116,7 +131,8 @@ typedef struct _WallScreen
 
     Bool focusDefault;
 
-    Bool              miniScreen;
+    ScreenTransformation transform;
+
     WindowPaintAttrib mSAttribs;
     float             mSzCamera;
 
@@ -135,20 +151,16 @@ typedef struct _WallScreen
     WallCairoContext arrowContext;
 } WallScreen;
 
-/* Helpers */
-#define GET_WALL_CORE(c) \
-    ((WallCore *) (c)->base.privates[corePrivateIndex].ptr)
-#define WALL_CORE(c) \
-    WallCore *wc = GET_WALL_CORE (c)
-#define GET_WALL_DISPLAY(d)						\
-    ((WallDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
-#define WALL_DISPLAY(d)				\
-    WallDisplay *wd = GET_WALL_DISPLAY(d);
+typedef struct _WallWindow
+{
+    Bool isSliding;
+} WallWindow;
 
-#define GET_WALL_SCREEN(s, wd)						\
-    ((WallScreen *) (s)->base.privates[(wd)->screenPrivateIndex].ptr)
-#define WALL_SCREEN(s)							\
-    WallScreen *ws = GET_WALL_SCREEN(s, GET_WALL_DISPLAY(s->display))
+/* Helpers */
+#define WALL_CORE(c)	PLUGIN_CORE(c, Wall, w)
+#define WALL_DISPLAY(d)	PLUGIN_DISPLAY(d, Wall, w)
+#define WALL_SCREEN(s)	PLUGIN_SCREEN(s, Wall, w)
+#define WALL_WINDOW(w)	PLUGIN_WINDOW(w, Wall, w)
 
 #define GET_SCREEN					\
     CompScreen *s;					\
@@ -1326,9 +1338,10 @@ wallPaintOutput (CompScreen              *s,
 
     WALL_SCREEN (s);
 
-    ws->miniScreen = FALSE;
+    ws->transform = NoTransformation;
     if (ws->moving)
-	mask |= PAINT_SCREEN_TRANSFORMED_MASK;
+	mask |= PAINT_SCREEN_TRANSFORMED_MASK |
+	        PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     UNWRAP (ws, s, paintOutput);
     status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
@@ -1357,7 +1370,7 @@ wallPaintOutput (CompScreen              *s,
 	    mw = ws->viewportWidth;
 	    mh = ws->viewportHeight;
 
-	    ws->miniScreen = TRUE;
+	    ws->transform = MiniScreen;
 	    ws->mSAttribs.xScale = mw / s->width;
 	    ws->mSAttribs.yScale = mh / s->height;
 	    ws->mSAttribs.opacity = OPAQUE * (1.0 + ws->mSzCamera);
@@ -1399,7 +1412,7 @@ wallPaintOutput (CompScreen              *s,
 
 		}
 	    }
-	    ws->miniScreen = FALSE;
+	    ws->transform = NoTransformation;
 	    setWindowPaintOffset (s, 0, 0);
 	}
     }
@@ -1480,7 +1493,7 @@ wallPaintTransformedOutput (CompScreen              *s,
     WALL_SCREEN (s);
     Bool clear = (mask & PAINT_SCREEN_CLEAR_MASK);
 
-    if (ws->miniScreen)
+    if (ws->transform == MiniScreen)
     {
 	CompTransform sTransform = *transform;
 
@@ -1531,13 +1544,16 @@ wallPaintTransformedOutput (CompScreen              *s,
 
     if (ws->moving)
     {
-	CompTransform sTransform = *transform;
-	float         xTranslate, yTranslate;
-	float         px, py;
-	int           tx, ty;
+	ScreenTransformation oldTransform = ws->transform;
+	CompTransform        sTransform = *transform;
+	float                xTranslate, yTranslate;
+	float                px, py;
+	int                  tx, ty;
 
 	if (clear)
 	    clearTargetOutput (s->display, GL_COLOR_BUFFER_BIT);
+
+	ws->transform = Sliding;
 
 	px = ws->curPosX;
 	py = ws->curPosY;
@@ -1546,6 +1562,7 @@ wallPaintTransformedOutput (CompScreen              *s,
 	{
 	    ty = ceil (py) - s->y;
 	    yTranslate = fmod (py, 1) - 1;
+	    ws->yTranslate = yTranslate * -output->height;
 
 	    matrixTranslate (&sTransform, 0.0f, yTranslate, 0.0f);
 
@@ -1553,6 +1570,7 @@ wallPaintTransformedOutput (CompScreen              *s,
 	    {
 		tx = ceil (px) - s->x;
 		xTranslate = 1 - fmod (px, 1);
+		ws->xTranslate = xTranslate * output->width;
 
 		setWindowPaintOffset (s, (s->x - ceil(px)) * s->width,
 				      (s->y - ceil(py)) * s->height);
@@ -1567,6 +1585,7 @@ wallPaintTransformedOutput (CompScreen              *s,
 
 	    tx = floor (px) - s->x;
 	    xTranslate = -fmod (px, 1);
+	    ws->xTranslate = xTranslate * output->width;
 
 	    setWindowPaintOffset (s, (s->x - floor(px)) * s->width,
 				  (s->y - ceil(py)) * s->height);
@@ -1580,6 +1599,7 @@ wallPaintTransformedOutput (CompScreen              *s,
 
 	ty = floor (py) - s->y;
 	yTranslate = fmod (py, 1);
+	ws->yTranslate = yTranslate * -output->height;
 
 	matrixTranslate (&sTransform, 0.0f, yTranslate, 0.0f);
 
@@ -1587,6 +1607,7 @@ wallPaintTransformedOutput (CompScreen              *s,
 	{
 	    tx = ceil (px) - s->x;
 	    xTranslate = 1 - fmod (px, 1);
+	    ws->xTranslate = xTranslate * output->width;
 
 	    setWindowPaintOffset (s, (s->x - ceil(px)) * s->width,
 				  (s->y - floor(py)) * s->height);
@@ -1601,6 +1622,7 @@ wallPaintTransformedOutput (CompScreen              *s,
 
 	tx = floor (px) - s->x;
 	xTranslate = -fmod (px, 1);
+	ws->xTranslate = xTranslate * output->width;
 
 	setWindowPaintOffset (s, (s->x - floor(px)) * s->width,
 			      (s->y - floor(py)) * s->height);
@@ -1610,6 +1632,7 @@ wallPaintTransformedOutput (CompScreen              *s,
 				      &output->region, output, mask);
 
 	setWindowPaintOffset (s, 0, 0);
+	ws->transform = oldTransform;
     }
 
     WRAP (ws, s, paintTransformedOutput, wallPaintTransformedOutput);
@@ -1627,7 +1650,7 @@ wallPaintWindow (CompWindow              *w,
 
     WALL_SCREEN (s);
 
-    if (ws->miniScreen)
+    if (ws->transform == MiniScreen)
     {
 	WindowPaintAttrib pA = *attrib;
 
@@ -1643,6 +1666,23 @@ wallPaintWindow (CompWindow              *w,
 	UNWRAP (ws, s, paintWindow);
 	status = (*s->paintWindow) (w, &pA, transform, region, mask);
     	WRAP (ws, s, paintWindow, wallPaintWindow);
+    }
+    else if (ws->transform == Sliding)
+    {
+	CompTransform wTransform = *transform;
+
+	WALL_WINDOW (w);
+
+	if (!ww->isSliding)
+	{
+	    matrixTranslate (&wTransform,
+			     -ws->xTranslate, -ws->yTranslate, 0.0f);
+	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+	}
+
+	UNWRAP (ws, s, paintWindow);
+	status = (*s->paintWindow) (w, attrib, &wTransform, region, mask);
+	WRAP (ws, s, paintWindow, wallPaintWindow);
     }
     else
     {
@@ -1767,6 +1807,20 @@ wallDisplayOptionChanged (CompDisplay        *display,
 	for (s = display->screens; s; s = s->next)
 	    wallDrawArrow (s);
 	break;
+
+    case WallDisplayOptionNoSlideMatch:
+	for (s = display->screens; s; s = s->next)
+	{
+	    CompWindow *w;
+
+	    for (w = s->windows; w; w = w->next)
+	    {
+		WALL_WINDOW (w);
+		ww->isSliding = !matchEval (wallGetNoSlideMatch (display), w);
+	    }
+	}
+	break;
+
     default:
 	break;
     }
@@ -1800,6 +1854,73 @@ wallSetOptionForPlugin (CompObject      *o,
     return status;
 }
 
+static void
+wallMatchExpHandlerChanged (CompDisplay *d)
+{
+    CompScreen *s;
+
+    WALL_DISPLAY (d);
+
+    UNWRAP (wd, d, matchExpHandlerChanged);
+    (*d->matchExpHandlerChanged) (d);
+    WRAP (wd, d, matchExpHandlerChanged, wallMatchExpHandlerChanged);
+
+    for (s = d->screens; s; s = s->next)
+    {
+	CompWindow *w;
+
+	for (w = s->windows; w; w = w->next)
+	{
+	    WALL_WINDOW (w);
+
+	    ww->isSliding = !matchEval (wallGetNoSlideMatch (d), w);
+	}
+    }
+}
+
+static void
+wallMatchPropertyChanged (CompDisplay *d,
+			  CompWindow  *w)
+{
+    WALL_DISPLAY (d);
+    WALL_WINDOW (w);
+
+    UNWRAP (wd, d, matchPropertyChanged);
+    (*d->matchPropertyChanged) (d, w);
+    WRAP (wd, d, matchPropertyChanged, wallMatchPropertyChanged);
+
+    ww->isSliding = !matchEval (wallGetNoSlideMatch (d), w);
+}
+
+static void
+wallWindowAdd (CompScreen *s,
+	       CompWindow *w)
+{
+    WALL_WINDOW (w);
+
+    ww->isSliding = !matchEval (wallGetNoSlideMatch (s->display), w);
+}
+
+static void
+wallObjectAdd (CompObject *parent,
+	       CompObject *object)
+{
+    static ObjectAddProc dispTab[] = {
+	(ObjectAddProc) 0, /* CoreAdd */
+	(ObjectAddProc) 0, /* DisplayAdd */
+	(ObjectAddProc) 0, /* ScreenAdd */
+	(ObjectAddProc) wallWindowAdd
+    };
+
+    WALL_CORE (&core);
+
+    UNWRAP (wc, &core, objectAdd);
+    (*core.objectAdd) (parent, object);
+    WRAP (wc, &core, objectAdd, wallObjectAdd);
+
+    DISPATCH (object, dispTab, ARRAY_SIZE (dispTab), (parent, object));
+}
+
 static Bool
 wallInitCore (CompPlugin *p,
               CompCore   *c)
@@ -1813,16 +1934,17 @@ wallInitCore (CompPlugin *p,
     if (!wc)
         return FALSE;
 
-    displayPrivateIndex = allocateDisplayPrivateIndex ();
-    if (displayPrivateIndex < 0)
+    WallDisplayPrivateIndex = allocateDisplayPrivateIndex ();
+    if (WallDisplayPrivateIndex < 0)
     {
         free (wc);
         return FALSE;
     }
 
-    WRAP (wc, &core, setOptionForPlugin, wallSetOptionForPlugin);
+    WRAP (wc, c, setOptionForPlugin, wallSetOptionForPlugin);
+    WRAP (wc, c, objectAdd, wallObjectAdd);
 
-    c->base.privates[corePrivateIndex].ptr = wc;
+    c->base.privates[WallCorePrivateIndex].ptr = wc;
 
     return TRUE;
 }
@@ -1833,9 +1955,10 @@ wallFiniCore (CompPlugin *p,
 {
     WALL_CORE (c);
 
-    UNWRAP (wc, &core, setOptionForPlugin);
+    UNWRAP (wc, c, setOptionForPlugin);
+    UNWRAP (wc, c, objectAdd);
 
-    freeDisplayPrivateIndex (displayPrivateIndex);
+    freeDisplayPrivateIndex (WallDisplayPrivateIndex);
 
     free (wc);
 }
@@ -1908,9 +2031,13 @@ wallInitDisplay (CompPlugin  *p,
 						    wallDisplayOptionChanged);
     wallSetArrowBaseColorNotify (d, wallDisplayOptionChanged);
     wallSetArrowShadowColorNotify (d, wallDisplayOptionChanged);
+    wallSetNoSlideMatchNotify (d, wallDisplayOptionChanged);
 
     WRAP (wd, d, handleEvent, wallHandleEvent);
-    d->base.privates[displayPrivateIndex].ptr = wd;
+    WRAP (wd, d, matchExpHandlerChanged, wallMatchExpHandlerChanged);
+    WRAP (wd, d, matchPropertyChanged, wallMatchPropertyChanged);
+
+    d->base.privates[WallDisplayPrivateIndex].ptr = wd;
 
     return TRUE;
 }
@@ -1922,6 +2049,8 @@ wallFiniDisplay (CompPlugin  *p,
     WALL_DISPLAY (d);
 
     UNWRAP (wd, d, handleEvent);
+    UNWRAP (wd, d, matchExpHandlerChanged);
+    UNWRAP (wd, d, matchPropertyChanged);
 
     freeScreenPrivateIndex (d, wd->screenPrivateIndex);
     free (wd);
@@ -1939,6 +2068,13 @@ wallInitScreen (CompPlugin *p,
     if (!ws)
 	return FALSE;
 
+    ws->windowPrivateIndex = allocateWindowPrivateIndex (s);
+    if (ws->windowPrivateIndex < 0)
+    {
+	free (ws);
+ 	return FALSE;
+    }
+
     ws->boxTimeout = 0;
     ws->grabIndex = 0;
     ws->timer = 0;
@@ -1947,6 +2083,9 @@ wallInitScreen (CompPlugin *p,
     ws->focusDefault = TRUE;
     ws->moveWindow = None;
     ws->lastAngle = 0;
+    ws->transform = NoTransformation;
+    ws->xTranslate = 0;
+    ws->yTranslate = 0;
 
     memset (&ws->switcherContext, 0, sizeof (WallCairoContext));
     memset (&ws->thumbContext, 0, sizeof (WallCairoContext));
@@ -1989,8 +2128,38 @@ wallFiniScreen (CompPlugin *p,
     UNWRAP (ws, s, preparePaintScreen);
     UNWRAP (ws, s, paintWindow);
     UNWRAP (ws, s, activateWindow);
+    
+    freeWindowPrivateIndex (s, ws->windowPrivateIndex);
 
     free(ws);
+}
+
+static CompBool
+wallInitWindow (CompPlugin *p,
+		CompWindow *w)
+{
+    WallWindow *ww;
+
+    WALL_SCREEN (w->screen);
+
+    ww = malloc (sizeof (WallWindow));
+    if (!ww)
+	return FALSE;
+
+    ww->isSliding = TRUE;
+
+    w->base.privates[ws->windowPrivateIndex].ptr = ww;
+
+    return TRUE;
+}
+
+static void
+wallFiniWindow (CompPlugin *p,
+		CompWindow *w)
+{
+    WALL_WINDOW (w);
+
+    free (ww);
 }
 
 static CompBool
@@ -2000,7 +2169,8 @@ wallInitObject (CompPlugin *p,
     static InitPluginObjectProc dispTab[] = {
 	(InitPluginObjectProc) wallInitCore,
 	(InitPluginObjectProc) wallInitDisplay,
-	(InitPluginObjectProc) wallInitScreen
+	(InitPluginObjectProc) wallInitScreen,
+	(InitPluginObjectProc) wallInitWindow
     };
 
     RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
@@ -2013,7 +2183,8 @@ wallFiniObject (CompPlugin *p,
     static FiniPluginObjectProc dispTab[] = {
 	(FiniPluginObjectProc) wallFiniCore,
 	(FiniPluginObjectProc) wallFiniDisplay,
-	(FiniPluginObjectProc) wallFiniScreen
+	(FiniPluginObjectProc) wallFiniScreen,
+	(FiniPluginObjectProc) wallFiniWindow
     };
 
     DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
@@ -2022,8 +2193,8 @@ wallFiniObject (CompPlugin *p,
 static Bool
 wallInit (CompPlugin *p)
 {
-    corePrivateIndex = allocateCorePrivateIndex ();
-    if (corePrivateIndex < 0)
+    WallCorePrivateIndex = allocateCorePrivateIndex ();
+    if (WallCorePrivateIndex < 0)
 	return FALSE;
 
     return TRUE;
@@ -2032,7 +2203,7 @@ wallInit (CompPlugin *p)
 static void
 wallFini (CompPlugin *p)
 {
-    freeCorePrivateIndex (corePrivateIndex);
+    freeCorePrivateIndex (WallCorePrivateIndex);
 }
 
 CompPluginVTable wallVTable = {
