@@ -90,7 +90,7 @@ FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
 {
     /* Create our transformation Matrix */
     
-    matrixScale (mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
+    //matrixScale (mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
     matrixTranslate(mTransform, 
 	    tX, 
 	    tY, 0.0);

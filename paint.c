@@ -166,6 +166,32 @@ FWPaintTransformedOutput (CompScreen              *s,
     WRAP (fws, s, paintTransformedOutput, FWPaintTransformedOutput);
 }
 
+// Scales z by 0 and does perspective distortion so that it
+// looks the same wherever on the screen
+
+/* This code taken from animation.c,
+ * Copyright (c) 2006 Erkin Bahceci
+ */
+static void
+perspectiveDistortAndResetZ (CompScreen *s,
+			     CompTransform *transform)
+{
+    float v = -1.0 / s->width;
+    /*
+      This does
+      transform = M * transform, where M is
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 0, v,
+      0, 0, 0, 1
+    */
+    float *m = transform->m;
+    m[8] = v * m[12];
+    m[9] = v * m[13];
+    m[10] = v * m[14];
+    m[11] = v * m[15];
+}
+
 /* Paint the window rotated or scaled */
 Bool
 FWPaintWindow (CompWindow *w,
@@ -190,7 +216,7 @@ FWPaintWindow (CompWindow *w,
     /* Check to see if we are painting on a transformed screen*/
     /* Enable this code when we can animate between the two states */
 
-    if (fws->transformedScreen && !fww->transform.isSaved)
+    /*if (fws->transformedScreen && !fww->transform.isSaved)
     {
         fww->transform.savAngX = fww->animate.destAngX;
         fww->transform.savAngY = fww->animate.destAngY;
@@ -219,9 +245,9 @@ FWPaintWindow (CompWindow *w,
 
         fww->transform.isSaved = FALSE;
         fww->noPaint = FALSE;
-    }
+    }*/
 
-    if (!fww->noPaint &&
+    if (
         (((fww->transform.angX != 0.0 ||
            fww->transform.angY != 0.0 ||
            fww->transform.angZ != 0.0 ||
@@ -307,7 +333,10 @@ FWPaintWindow (CompWindow *w,
       				     WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w) / 2.0f);                 			
 	}
 
-	     	
+	matrixTranslate (&wTransform, fww->iMidX, fww->iMidY, 0.0f);
+
+	perspectiveDistortAndResetZ (w->screen, &wTransform);
+
      	float adjustX, adjustY;
 
 	adjustX = 0.0f;
@@ -316,12 +345,14 @@ FWPaintWindow (CompWindow *w,
 	                    fww->transform.angX,
 	                    fww->transform.angY,
 		            fww->transform.angZ,
-		            fww->iMidX, fww->iMidY , 0.0f,
+		            0.0f, 0.0f , 0.0f,
 		            scaleX, scaleY, 1.0f, adjustX, adjustY);
 		                    
 	/* Create rects for input after we've dealt
 	 * with output
 	 */
+	glDisable (GL_CULL_FACE);
+	matrixTranslate (&wTransform, -fww->iMidX, -fww->iMidY, 0.0f);
 
 	FWCalculateInputRect (w);
 
@@ -359,10 +390,14 @@ FWPaintWindow (CompWindow *w,
 	if (needsInvert && (!fws->transformedScreen))
 	    glCullFace (invertCull);
 
+	glDisable (GL_CULL_FACE);
+
 	UNWRAP(fws, w->screen, paintWindow);	
 	status = (*w->screen->paintWindow)(w, attrib, &wTransform, region, mask);
 	WRAP(fws, w->screen, paintWindow, FWPaintWindow);
-	
+
+	glEnable (GL_CULL_FACE);
+
 	if (needsInvert && (!fws->transformedScreen))
 	    glCullFace (currentCull);
 
