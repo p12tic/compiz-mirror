@@ -64,7 +64,7 @@ typedef struct _StackswitchDrawSlot {
 typedef struct _StackswitchDisplay {
     int		    screenPrivateIndex;
     HandleEventProc handleEvent;
-    Bool            textAvailable;
+    TextFunc        *textFunc;
 } StackswitchDisplay;
 
 typedef struct _StackswitchScreen {
@@ -98,10 +98,7 @@ typedef struct _StackswitchScreen {
     Window selectedWindow;
 
     /* text display support */
-    CompTexture textTexture;
-    Pixmap      textPixmap;
-    int         textWidth;
-    int         textHeight;
+    CompTextData *textData;
 
     CompMatch match;
     CompMatch *currentMatch;
@@ -181,34 +178,32 @@ isStackswitchWin (CompWindow *w)
     return TRUE;
 }
 
-static void 
+static void
 stackswitchFreeWindowTitle (CompScreen *s)
 {
-    STACKSWITCH_SCREEN(s);
+    STACKSWITCH_SCREEN (s);
+    STACKSWITCH_DISPLAY (s->display);
 
-    if (!ss->textPixmap)
+    if (!ss->textData)
 	return;
 
-    releasePixmapFromTexture (s, &ss->textTexture);
-    initTexture (s, &ss->textTexture);
-    XFreePixmap (s->display->display, ss->textPixmap);
-    ss->textPixmap = None;
+    (sd->textFunc->finiTextData) (s, ss->textData);
+    ss->textData = NULL;
 }
 
 static void 
 stackswitchRenderWindowTitle (CompScreen *s)
 {
     CompTextAttrib tA;
-    int            stride;
-    void           *data;
     int            ox1, ox2, oy1, oy2;
+    Bool           showViewport;
 
     STACKSWITCH_SCREEN (s);
     STACKSWITCH_DISPLAY (s->display);
 
     stackswitchFreeWindowTitle (s);
 
-    if (!sd->textAvailable)
+    if (!sd->textFunc)
 	return;
 
     if (!stackswitchGetWindowTitle (s))
@@ -219,47 +214,28 @@ stackswitchRenderWindowTitle (CompScreen *s)
     /* 75% of the output device as maximum width */
     tA.maxWidth = (ox2 - ox1) * 3 / 4;
     tA.maxHeight = 100;
-    tA.screen = s;
+
+    tA.family = "Sans";
     tA.size = stackswitchGetTitleFontSize (s);
     tA.color[0] = stackswitchGetTitleFontColorRed (s);
     tA.color[1] = stackswitchGetTitleFontColorGreen (s);
     tA.color[2] = stackswitchGetTitleFontColorBlue (s);
     tA.color[3] = stackswitchGetTitleFontColorAlpha (s);
-    tA.style = (stackswitchGetTitleFontBold (s)) ?
-	       TEXT_STYLE_BOLD : TEXT_STYLE_NORMAL;
-    tA.style |= TEXT_STYLE_BACKGROUND;
-    tA.family = "Sans";
-    tA.ellipsize = TRUE;
-    tA.backgroundHMargin = 15;
-    tA.backgroundVMargin = 15;
-    tA.backgroundColor[0] = stackswitchGetTitleBackColorRed (s);
-    tA.backgroundColor[1] = stackswitchGetTitleBackColorGreen (s);
-    tA.backgroundColor[2] = stackswitchGetTitleBackColorBlue (s);
-    tA.backgroundColor[3] = stackswitchGetTitleBackColorAlpha (s);
 
-    if (ss->type == StackswitchTypeAll)
-	tA.renderMode = TextRenderWindowTitleWithViewport;
-    else
-	tA.renderMode = TextRenderWindowTitle;
+    tA.flags = CompTextFlagWithBackground | CompTextFlagEllipsized;
+    if (stackswitchGetTitleFontBold (s))
+	tA.flags |= CompTextFlagStyleBold;
 
-    tA.data = (void*)ss->selectedWindow;
+    tA.bgHMargin = 15;
+    tA.bgVMargin = 15;
+    tA.bgColor[0] = stackswitchGetTitleBackColorRed (s);
+    tA.bgColor[1] = stackswitchGetTitleBackColorGreen (s);
+    tA.bgColor[2] = stackswitchGetTitleBackColorBlue (s);
+    tA.bgColor[3] = stackswitchGetTitleBackColorAlpha (s);
 
-    initTexture (s, &ss->textTexture);
-
-    if ((*s->display->fileToImage) (s->display, TEXT_ID, (char *)&tA,
-			 	    &ss->textWidth, &ss->textHeight,
-				    &stride, &data))
-    {
-	ss->textPixmap = (Pixmap)data;
-	bindPixmapToTexture (s, &ss->textTexture, ss->textPixmap,
-			     ss->textWidth, ss->textHeight, 32);
-    }
-    else 
-    {
-	ss->textPixmap = None;
-	ss->textWidth  = 0;
-	ss->textHeight = 0;
-    }
+    showViewport = ss->type == StackswitchTypeAll;
+    ss->textData = (sd->textFunc->renderWindowTitle) (s, ss->selectedWindow,
+						      showViewport, &tA);
 }
 
 static void
@@ -281,11 +257,11 @@ stackswitchDrawWindowTitle (CompScreen    *s,
 
     getCurrentOutputExtents (s, &ox1, &oy1, &ox2, &oy2);
 
-    width = ss->textWidth;
-    height = ss->textHeight;
+    width = ss->textData->width;
+    height = ss->textData->height;
 
     x = ox1 + ((ox2 - ox1) / 2);
-    tx = x - (ss->textWidth / 2);
+    tx = x - (ss->textData->width / 2);
 
     switch (stackswitchGetTitleTextPlacement (s))
     {
@@ -405,9 +381,9 @@ stackswitchDrawWindowTitle (CompScreen    *s,
 	disableTexture (s, &icon->texture);
     }
 
-    enableTexture (s, &ss->textTexture,COMP_TEXTURE_FILTER_GOOD);
+    enableTexture (s, ss->textData->texture, COMP_TEXTURE_FILTER_GOOD);
 
-    m = &ss->textTexture.matrix;
+    m = &ss->textData->texture->matrix;
 
     glBegin (GL_QUADS);
 
@@ -422,7 +398,7 @@ stackswitchDrawWindowTitle (CompScreen    *s,
 
     glEnd ();
 
-    disableTexture (s, &ss->textTexture);
+    disableTexture (s, ss->textData->texture);
     glColor4usv (defaultColor);
 
     if (!wasBlend)
@@ -1090,7 +1066,7 @@ stackswitchPaintOutput (CompScreen		*s,
 	transformToScreenSpace (s, output, -DEFAULT_Z_CAMERA, &tTransform);
 	glLoadMatrixf (tTransform.m);
 	
-	if (ss->textPixmap && (ss->state != StackswitchStateIn) && aw)
+	if (ss->textData && (ss->state != StackswitchStateIn) && aw)
 	    stackswitchDrawWindowTitle (s, &sTransform, aw);
 	
 	ss->paintingSwitcher = FALSE;
@@ -1602,6 +1578,7 @@ stackswitchInitDisplay (CompPlugin  *p,
 			CompDisplay *d)
 {
     StackswitchDisplay *sd;
+    int                index;
 
     if (!checkPluginABI ("core", CORE_ABIVERSION))
 	return FALSE;
@@ -1617,10 +1594,17 @@ stackswitchInitDisplay (CompPlugin  *p,
 	return FALSE;
     }
 
-    sd->textAvailable = checkPluginABI ("text", TEXT_ABIVERSION);
-    if (!sd->textAvailable)
+    if (checkPluginABI ("text", TEXT_ABIVERSION) &&
+	getPluginDisplayIndex (d, "text", &index))
+    {
+	sd->textFunc = d->base.privates[index].ptr;
+    }
+    else
+    {
 	compLogMessage ("stackswitch", CompLogLevelWarn,
 			"No compatible text plugin found.");
+	sd->textFunc = NULL;
+    }
 
     stackswitchSetNextKeyInitiate (d, stackswitchNext);
     stackswitchSetNextKeyTerminate (d, stackswitchTerminate);
@@ -1705,7 +1689,7 @@ stackswitchInitScreen (CompPlugin *p,
     ss->rVelocity = 0;
     ss->rotation  = 0.0;
 
-    ss->textPixmap = None;
+    ss->textData = NULL;
 
     matchInit (&ss->match);
 
