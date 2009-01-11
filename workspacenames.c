@@ -32,8 +32,11 @@
 static int WSNamesDisplayPrivateIndex;
 
 typedef struct _WSNamesDisplay {
-    int		    screenPrivateIndex;
+    int screenPrivateIndex;
+
     HandleEventProc handleEvent;
+
+    TextFunc *textFunc;
 } WSNamesDisplay;
 
 typedef struct _WSNamesScreen {
@@ -41,10 +44,7 @@ typedef struct _WSNamesScreen {
     DonePaintScreenProc    donePaintScreen;
     PaintOutputProc        paintOutput;
 
-    CompTexture textTexture;
-    Pixmap      textPixmap;
-    int         textWidth;
-    int         textHeight;
+    CompTextData *textData;
 
     CompTimeoutHandle timeoutHandle;
     int               timer;
@@ -53,18 +53,17 @@ typedef struct _WSNamesScreen {
 #define WSNAMES_DISPLAY(d) PLUGIN_DISPLAY(d, WSNames, w)
 #define WSNAMES_SCREEN(s) PLUGIN_SCREEN(s, WSNames, w)
 
-static void 
+static void
 wsnamesFreeText (CompScreen *s)
 {
-    WSNAMES_SCREEN(s);
+    WSNAMES_SCREEN (s);
+    WSNAMES_DISPLAY (s->display);
 
-    if (!ws->textPixmap)
+    if (!ws->textData)
 	return;
 
-    releasePixmapFromTexture (s, &ws->textTexture);
-    initTexture (s, &ws->textTexture);
-    XFreePixmap (s->display->display, ws->textPixmap);
-    ws->textPixmap = None;
+    (wd->textFunc->finiTextData) (s, ws->textData);
+    ws->textData = NULL;
 }
 
 static char *
@@ -91,13 +90,12 @@ wsnamesGetCurrentWSName (CompScreen *s)
 static void
 wsnamesRenderNameText (CompScreen *s)
 {
-    CompTextAttrib tA;
-    int            stride;
-    void           *data;
+    CompTextAttrib attrib;
     char           *name;
     int            ox1, ox2, oy1, oy2;
 
     WSNAMES_SCREEN (s);
+    WSNAMES_DISPLAY (s->display);
 
     wsnamesFreeText (s);
 
@@ -108,73 +106,50 @@ wsnamesRenderNameText (CompScreen *s)
     getCurrentOutputExtents (s, &ox1, &oy1, &ox2, &oy2);
 
     /* 75% of the output device as maximum width */
-    tA.maxWidth = (ox2 - ox1) * 3 / 4;
-    tA.maxHeight = 100;
-    tA.screen = s;
-    tA.size = workspacenamesGetTextFontSize (s);
-    tA.color[0] = workspacenamesGetFontColorRed (s);
-    tA.color[1] = workspacenamesGetFontColorGreen (s);
-    tA.color[2] = workspacenamesGetFontColorBlue (s);
-    tA.color[3] = workspacenamesGetFontColorAlpha (s);
-    tA.style = (workspacenamesGetBoldText (s)) ?
-	       TEXT_STYLE_BOLD : TEXT_STYLE_NORMAL;
-    tA.style |= TEXT_STYLE_BACKGROUND;
-    tA.family = "Sans";
-    tA.ellipsize = TRUE;
-    tA.backgroundHMargin = 15;
-    tA.backgroundVMargin = 15;
-    tA.backgroundColor[0] = workspacenamesGetBackColorRed (s);
-    tA.backgroundColor[1] = workspacenamesGetBackColorGreen (s);
-    tA.backgroundColor[2] = workspacenamesGetBackColorBlue (s);
-    tA.backgroundColor[3] = workspacenamesGetBackColorAlpha (s);
+    attrib.maxWidth  = (ox2 - ox1) * 3 / 4;
+    attrib.maxHeight = 100;
 
-    tA.renderMode = TextRenderNormal;
-    tA.data = (void *) name;
+    attrib.family = "Sans";
+    attrib.size = workspacenamesGetTextFontSize (s);
 
-    initTexture (s, &ws->textTexture);
+    attrib.color[0] = workspacenamesGetFontColorRed (s);
+    attrib.color[1] = workspacenamesGetFontColorGreen (s);
+    attrib.color[2] = workspacenamesGetFontColorBlue (s);
+    attrib.color[3] = workspacenamesGetFontColorAlpha (s);
 
-    if ((*s->display->fileToImage) (s->display, TEXT_ID, (char *)&tA,
-			 	    &ws->textWidth, &ws->textHeight,
-				    &stride, &data))
-    {
-	ws->textPixmap = (Pixmap) data;
+    attrib.flags = CompTextFlagWithBackground | CompTextFlagEllipsized;
+    if (workspacenamesGetBoldText (s))
+	attrib.flags |= CompTextFlagStyleBold;
 
-	bindPixmapToTexture (s, &ws->textTexture, ws->textPixmap,
-			     ws->textWidth, ws->textHeight, 32);
-    }
-    else 
-    {
-	ws->textPixmap = None;
-	ws->textWidth  = 0;
-	ws->textHeight = 0;
-    }
+    attrib.bgHMargin = 15;
+    attrib.bgVMargin = 15;
+    attrib.bgColor[0] = workspacenamesGetBackColorRed (s);
+    attrib.bgColor[1] = workspacenamesGetBackColorGreen (s);
+    attrib.bgColor[2] = workspacenamesGetBackColorBlue (s);
+    attrib.bgColor[3] = workspacenamesGetBackColorAlpha (s);
+
+    ws->textData = (wd->textFunc->renderText) (s, name, &attrib);
 }
 
 static void
 wsnamesDrawText (CompScreen *s)
 {
-    GLboolean wasBlend;
-    GLint     oldBlendSrc, oldBlendDst;
     GLfloat   alpha;
-    float     width, height, border;
     int       ox1, ox2, oy1, oy2;
-    float     x, y;
+    float     x, y, border = 10.0f;
 
-    WSNAMES_SCREEN(s);
-
-    width  = ws->textWidth;
-    height = ws->textHeight;
-    border = 10.0f;
+    WSNAMES_SCREEN (s);
+    WSNAMES_DISPLAY (s->display);
 
     getCurrentOutputExtents (s, &ox1, &oy1, &ox2, &oy2);
 
-    x = ox1 + ((ox2 - ox1) / 2) - (ws->textWidth / 2);
+    x = ox1 + ((ox2 - ox1) / 2) - (ws->textData->width / 2);
 
     /* assign y (for the lower corner!) according to the setting */
     switch (workspacenamesGetTextPlacement (s))
     {
 	case TextPlacementCenteredOnScreen:
-	    y = oy1 + ((oy2 - oy1) / 2) + (height / 2);
+	    y = oy1 + ((oy2 - oy1) / 2) + (ws->textData->height / 2);
 	    break;
 	case TextPlacementTopOfScreen:
 	case TextPlacementBottomOfScreen:
@@ -182,9 +157,9 @@ wsnamesDrawText (CompScreen *s)
 		XRectangle workArea;
 		getWorkareaForOutput (s, s->currentOutputDev, &workArea);
 
-	    	if (workspacenamesGetTextPlacement (s) == 
+	    	if (workspacenamesGetTextPlacement (s) ==
 		    TextPlacementTopOfScreen)
-    		    y = oy1 + workArea.y + (2 * border) + height;
+    		    y = oy1 + workArea.y + (2 * border) + ws->textData->height;
 		else
 		    y = oy1 + workArea.y + workArea.height - (2 * border);
 	    }
@@ -194,48 +169,12 @@ wsnamesDrawText (CompScreen *s)
 	    break;
     }
 
-    x = floor (x);
-    y = floor (y);
-
-    glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
-    glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
-    wasBlend = glIsEnabled (GL_BLEND);
-
-    if (!wasBlend)
-	glEnable (GL_BLEND);
-    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-
     if (ws->timer)
 	alpha = ws->timer / (workspacenamesGetFadeTime (s) * 1000.0f);
     else
 	alpha = 1.0f;
 
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glColor4f (alpha, alpha, alpha, alpha);
-
-    enableTexture (s, &ws->textTexture,COMP_TEXTURE_FILTER_GOOD);
-
-    CompMatrix *m = &ws->textTexture.matrix;
-
-    glBegin (GL_QUADS);
-
-    glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m ,0));
-    glVertex2f (x, y - height);
-    glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m, height));
-    glVertex2f (x, y);
-    glTexCoord2f (COMP_TEX_COORD_X (m, width), COMP_TEX_COORD_Y (m, height));
-    glVertex2f (x + width, y);
-    glTexCoord2f (COMP_TEX_COORD_X (m, width), COMP_TEX_COORD_Y (m, 0));
-    glVertex2f (x + width, y - height);
-
-    glEnd ();
-
-    disableTexture (s, &ws->textTexture);
-    glColor4usv (defaultColor);
-
-    if (!wasBlend)
-	glDisable (GL_BLEND);
-    glBlendFunc (oldBlendSrc, oldBlendDst);
+    (wd->textFunc->drawText) (s, ws->textData, floor (x), floor (y), alpha);
 }
 
 static Bool
@@ -254,7 +193,7 @@ wsnamesPaintOutput (CompScreen		    *s,
     status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
     WRAP (ws, s, paintOutput, wsnamesPaintOutput);
 
-    if (ws->textPixmap)
+    if (ws->textData)
     {
 	CompTransform sTransform = *transform;
 
@@ -365,12 +304,16 @@ wsnamesInitDisplay (CompPlugin  *p,
 		    CompDisplay *d)
 {
     WSNamesDisplay *wd;
+    int            index;
 
     if (!checkPluginABI ("core", CORE_ABIVERSION))
 	return FALSE;
 
-    if (!checkPluginABI ("text", TEXT_ABIVERSION))
+    if (!checkPluginABI ("text", TEXT_ABIVERSION) ||
+	!getPluginDisplayIndex (d, "text", &index))
+    {
 	return FALSE;
+    }
 
     wd = malloc (sizeof (WSNamesDisplay));
     if (!wd)
@@ -382,6 +325,8 @@ wsnamesInitDisplay (CompPlugin  *p,
 	free (wd);
 	return FALSE;
     }
+
+    wd->textFunc = d->base.privates[index].ptr;
 
     WRAP (wd, d, handleEvent, wsnamesHandleEvent);
 
@@ -415,9 +360,7 @@ wsnamesInitScreen (CompPlugin *p,
     if (!ws)
 	return FALSE;
 
-    ws->textPixmap = None;
-    ws->textHeight = 0;
-    ws->textWidth  = 0;
+    ws->textData = NULL;
 
     ws->timeoutHandle = 0;
     ws->timer         = 0;
