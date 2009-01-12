@@ -310,7 +310,7 @@ $(BUILDDIR)/lib$(PLUGIN).la: $(all-c-objs)
 	else \
 		$(ECHO) "linking   : $@"; \
 	fi
-	@$(LIBTOOL) --quiet --mode=link $(CC) $(LDFLAGS) -rpath $(DESTDIR) -o $@ $(all-c-objs)
+	@$(LIBTOOL) --quiet --mode=link $(CC) $(LDFLAGS) -rpath $(DESTDIR) -R `pkg-config --variable=libdir compiz`/compiz -o $@ $(all-c-objs)
 	@if [ '$(color)' != 'no' ]; then \
 		$(ECHO) -e "\r\033[0mlinking   : \033[34m$@\033[0m"; \
 	fi
