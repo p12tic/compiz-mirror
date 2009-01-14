@@ -1394,28 +1394,25 @@ writeListValue (CCSSetting *setting,
 	g_slist_free (valueList);
 }
 
-static void
+static Bool
 setGnomeMouseButtonModifier (unsigned int modMask)
 {
     char   *modifiers, *currentValue;
     GError *err = NULL;
 
     modifiers = ccsModifiersToString (modMask);
-
     if (!modifiers)
-	modifiers = strdup ("");
-    if (!modifiers)
-	return;
+	return FALSE;
 
-    currentValue =
-	gconf_client_get_string(client,
-				METACITY "/general/mouse_button_modifier",
-				&err);
+    currentValue = gconf_client_get_string (client,
+					    METACITY
+					    "/general/mouse_button_modifier",
+					    &err);
     if (err)
     {
 	free (modifiers);
 	g_error_free (err);
-	return;
+	return FALSE;
     }
 
     if (!currentValue || (strcmp (currentValue, modifiers) != 0))
@@ -1426,6 +1423,8 @@ setGnomeMouseButtonModifier (unsigned int modMask)
 	g_free (currentValue);
 
     free (modifiers);
+
+    return TRUE;
 }
 
 static void
@@ -1598,13 +1597,16 @@ writeIntegratedOption (CCSContext *context,
 		unsigned int modMask;
 
 		modMask = setting->value->value.asButton.buttonModMask;
-		setGnomeMouseButtonModifier (modMask);
-		setButtonBindingForSetting (context, "move",
-					    "initiate_button", 1, modMask);
-		setButtonBindingForSetting (context, "resize",
-					    "initiate_button", 2, modMask);
-		setButtonBindingForSetting (context, "core",
-					    "window_menu_button", 3, modMask);
+		if (setGnomeMouseButtonModifier (modMask))
+		{
+		    setButtonBindingForSetting (context, "move",
+						"initiate_button", 1, modMask);
+		    setButtonBindingForSetting (context, "resize",
+						"initiate_button", 2, modMask);
+		    setButtonBindingForSetting (context, "core",
+						"window_menu_button",
+						3, modMask);
+		}
 	    }
 	}
      	break;
