@@ -406,19 +406,35 @@ isIntegratedOption (CCSSetting *setting,
 
     for (i = 0; i < N_SOPTIONS; i++)
     {
-	if ((strcmp (setting->name, specialOptions[i].settingName) == 0) &&
-	    ((!setting->parent->name && !specialOptions[i].pluginName) ||
-	     (setting->parent->name && specialOptions[i].pluginName &&
-	      (strcmp (setting->parent->name,
-		       specialOptions[i].pluginName) == 0))) &&
-	    ((setting->isScreen && specialOptions[i].screen) ||
-	     (!setting->isScreen && !specialOptions[i].screen)))
+	SpecialOption *opt = &specialOptions[i];
+
+	if (strcmp (setting->name, opt->settingName) != 0)
+	    continue;
+
+	if (setting->parent->name)
 	{
-	    if (index)
-		*index = i;
-	    return TRUE;
+	    if (!opt->pluginName)
+		continue;
+	    if (strcmp (setting->parent->name, opt->pluginName) != 0)
+		continue;
 	}
+	else
+	{
+	    if (opt->pluginName)
+		continue;
+	}
+
+	if (setting->isScreen && !opt->screen)
+	    continue;
+	if (!setting->isScreen && opt->screen)
+	    continue;
+
+	if (index)
+	    *index = i;
+
+	return TRUE;
     }
+
     return FALSE;
 }
 
