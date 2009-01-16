@@ -1,3 +1,3 @@
 include (CompizFusion)
 
-compiz_fusion_plugin (wall PKGDEPS cairo cairo-xlib-xrender)
+compiz_fusion_plugin (wall PLUGINDEPS composite opengl)
