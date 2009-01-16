@@ -117,6 +117,8 @@ class WallScreen :
 
         bool moveViewport (int, int, Window);
 
+	void optionChanged (CompOption *opt, WallOptions::Options num);
+
 
         CompositeScreen *cScreen;
         GLScreen *glScreen;

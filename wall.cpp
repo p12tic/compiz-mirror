@@ -782,8 +782,8 @@ WallScreen::drawCairoTextureOnScreen ()
     GLTexture::Matrix matrix;
     BOX               box;
 
-	CompOutput::vector &outputDevs = screen->outputDevs ();
-	CompOutput output = outputDevs[boxOutputDevice];
+    CompOutput::vector &outputDevs = screen->outputDevs ();
+    CompOutput output = outputDevs[boxOutputDevice];
 
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnable (GL_BLEND);
@@ -1004,8 +1004,8 @@ WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     if (optionGetShowSwitcher () &&
         (moving || showPreview || boxTimeout) &&
-        (output->id () == boxOutputDevice /*||
-		output == screen->fullscreenOutput ()*/))
+        (output->id () == boxOutputDevice ||
+	 output == &screen->fullscreenOutput ()))
     {
         GLMatrix sMatrix = matrix;
 
@@ -1122,15 +1122,9 @@ WallScreen::preparePaint (int ms)
             releaseMoveWindow ();
         else if (focusDefault)
         {
-//            int i;
-//            for (i = 0; i < screen->maxGrab; i++)
-//                if (s->grabs[i].active)
-//                    if (strcmp(s->grabs[i].name, "switcher") == 0)
-//                        break;
-//
-//            /* only focus default window if switcher is not active */
-//            if (i == s->maxGrab)
-//                focusDefaultWindow (s);
+            /* only focus default window if switcher is not active */
+            if (!screen->grabExist ("switcher"))
+                screen->focusDefaultWindow ();
         }
     }
 
@@ -1372,14 +1366,14 @@ WallScreen::createCairoContexts (bool initial)
 
     viewportWidth = VIEWPORT_SWITCHER_SIZE *
                     (float) optionGetPreviewScale () / 100.0f;
-    viewportHeight = viewportWidth * (float) screen->vpSize ().height () /
-									        (float) screen->vpSize ().width ();
+    viewportHeight = viewportWidth * (float) screen->height () /
+		     (float) screen->width ();
     viewportBorder = optionGetBorderWidth ();
 
     width  = screen->vpSize ().width () * (viewportWidth + viewportBorder) +
-                                                                viewportBorder;
+             viewportBorder;
     height = screen->vpSize ().height () * (viewportHeight + viewportBorder) +
-                                                                viewportBorder;
+             viewportBorder;
 
     destroyCairoContext (&switcherContext);
     switcherContext.width = width;
@@ -1409,64 +1403,58 @@ WallScreen::createCairoContexts (bool initial)
 }
 
 
-
-/*static void
-wallDisplayOptionChanged (CompDisplay        *display,
-			  CompOption         *opt,
-			  WallDisplayOptions num)
+void
+WallScreen::optionChanged (CompOption *opt, WallOptions::Options num)
 {
-    CompScreen *s;
 
     switch(num)
     {
-    case WallOptions::OutlineColor:
-        drawSwitcherBackground ();
-        drawHighlight ();
-        drawThumb ();
-        break;
+	case WallOptions::OutlineColor:
+	    drawSwitcherBackground ();
+	    drawHighlight ();
+	    drawThumb ();
+	    break;
 
-    case WallOptions::EdgeRadius:
-    case WallOptions::BackgroundGradientBaseColor:
-    case WallOptions::BackgroundGradientHighlightColor:
-    case WallOptions::BackgroundGradientShadowColor:
-        drawSwitcherBackground ();
-        break;
+	case WallOptions::EdgeRadius:
+	case WallOptions::BackgroundGradientBaseColor:
+	case WallOptions::BackgroundGradientHighlightColor:
+	case WallOptions::BackgroundGradientShadowColor:
+	    drawSwitcherBackground ();
+	    break;
 
-    case WallOptions::BorderWidth:
-    case WallOptions::PreviewScale:
-        wallCreateCairoContexts (s, FALSE);
-        break;
+	case WallOptions::BorderWidth:
+	case WallOptions::PreviewScale:
+	    createCairoContexts (false);
+	    break;
 
-    case WallOptions::ThumbGradientBaseColor:
-    case WallOptions::ThumbGradientHighlightColor:
-        drawThumb ();
-        break;
+	case WallOptions::ThumbGradientBaseColor:
+	case WallOptions::ThumbGradientHighlightColor:
+	    drawThumb ();
+	    break;
 
-    case WallOptions::ThumbHighlightGradientBaseColor:
-    case WallOptions::ThumbHighlightGradientShadowColor:
-        drawHighlight ();
-        break;
+	case WallOptions::ThumbHighlightGradientBaseColor:
+	case WallOptions::ThumbHighlightGradientShadowColor:
+	    drawHighlight ();
+	    break;
 
-    case WallOptions::ArrowBaseColor:
-    case WallOptions::ArrowShadowColor:
-        drawArrow ();
-        break;
+	case WallOptions::ArrowBaseColor:
+	case WallOptions::ArrowShadowColor:
+	    drawArrow ();
+	    break;
 
-    case WallOptions::NoSlideMatch:
-        CompWindow *window;
+	case WallOptions::NoSlideMatch:
 
-        for (window = screen->windows (); window; window = window->next)
-        {
-            WALL_WINDOW (w);
-            CompMatch *match = new CompMatch (optionGetNoSlideMatch ());
-            ww->isSliding = !match->evaluate (w);
-        }
-        break;
+	    foreach (CompWindow *w, screen->windows ())
+	    {
+		WALL_WINDOW (w);
+		ww->isSliding = !optionGetNoSlideMatch ().evaluate (w);
+	    }
+	    break;
 
-    default:
-        break;
+	default:
+	    break;
     }
-}*/
+}
 
 bool
 WallScreen::setOptionForPlugin (const char        *plugin,
@@ -1491,16 +1479,10 @@ WallScreen::matchExpHandlerChanged ()
 {
     screen->matchExpHandlerChanged ();
 
-	CompWindow *window;
-
-    for (CompWindowList::iterator it = screen->windows ().begin ();
-         it != screen->windows ().end ();)
+    foreach (CompWindow *w, screen->windows ())
     {
-		window = *it;
-        WALL_WINDOW (window);
-
-        CompMatch *match = new CompMatch (optionGetNoSlideMatch ());
-        ww->isSliding = !match->evaluate (window);
+	WALL_WINDOW (w);
+	ww->isSliding = !optionGetNoSlideMatch ().evaluate (w);
     }
 }
 
@@ -1511,19 +1493,8 @@ WallScreen::matchPropertyChanged (CompWindow *window)
 
     screen->matchPropertyChanged (window);
 
-    CompMatch *match = new CompMatch (optionGetNoSlideMatch ());
-    ww->isSliding = !match->evaluate (window);
+    ww->isSliding = !optionGetNoSlideMatch ().evaluate (window);
 }
-
-/*static void
-wallWindowAdd (CompScreen *s,
-	       CompWindow *w)
-{
-    WALL_WINDOW (w);
-
-    ww->isSliding = !matchEval (wallGetNoSlideMatch (s->display), w);
-}*/
-
 
 WallScreen::WallScreen (CompScreen *screen) :
     PrivateHandler <WallScreen, CompScreen> (screen),
@@ -1580,23 +1551,23 @@ WallScreen::WallScreen (CompScreen *screen) :
     setFlipAction (FlipUpEdge, Up);
     setFlipAction (FlipDownEdge, Down);
 
-/*
-    wallSetEdgeRadiusNotify (d, wallDisplayOptionChanged);
-    wallSetBorderWidthNotify (d, wallDisplayOptionChanged);
-    wallSetPreviewScaleNotify (d, wallDisplayOptionChanged);
-    wallSetOutlineColorNotify (d, wallDisplayOptionChanged);
-    wallSetBackgroundGradientBaseColorNotify (d, wallDisplayOptionChanged);
-    wallSetBackgroundGradientHighlightColorNotify (d, wallDisplayOptionChanged);
-    wallSetBackgroundGradientShadowColorNotify (d, wallDisplayOptionChanged);
-    wallSetThumbGradientBaseColorNotify (d, wallDisplayOptionChanged);
-    wallSetThumbGradientHighlightColorNotify (d, wallDisplayOptionChanged);
-    wallSetThumbHighlightGradientBaseColorNotify (d, wallDisplayOptionChanged);
-    wallSetThumbHighlightGradientShadowColorNotify (d,
-						    wallDisplayOptionChanged);
-    wallSetArrowBaseColorNotify (d, wallDisplayOptionChanged);
-    wallSetArrowShadowColorNotify (d, wallDisplayOptionChanged);
-    wallSetNoSlideMatchNotify (d, wallDisplayOptionChanged);
-*/
+#define setNotify(func) \
+    optionSet##func##Notify (boost::bind (&WallScreen::optionChanged, this, _1, _2))
+
+    setNotify (EdgeRadius);
+    setNotify (BorderWidth);
+    setNotify (PreviewScale);
+    setNotify (OutlineColor);
+    setNotify (BackgroundGradientBaseColor);
+    setNotify (BackgroundGradientHighlightColor);
+    setNotify (BackgroundGradientShadowColor);
+    setNotify (ThumbGradientBaseColor);
+    setNotify (ThumbGradientHighlightColor);
+    setNotify (ThumbHighlightGradientBaseColor);
+    setNotify (ThumbHighlightGradientShadowColor);
+    setNotify (ArrowBaseColor);
+    setNotify (ArrowShadowColor);
+    setNotify (NoSlideMatch);
 }
 
 WallScreen::~WallScreen ()
@@ -1609,9 +1580,9 @@ WallScreen::~WallScreen ()
 
 WallWindow::WallWindow (CompWindow *window) :
     PrivateHandler <WallWindow, CompWindow> (window),
-	window (window),
-	glWindow (GLWindow::get (window)),
-    isSliding (true)
+    window (window),
+    glWindow (GLWindow::get (window)),
+    isSliding (!WallScreen::get (screen)->optionGetNoSlideMatch ().evaluate (window))
 {
 }
 
