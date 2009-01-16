@@ -13,8 +13,11 @@
 				<plugin>wobbly</plugin>
 				<plugin>fade</plugin>
 			</relation>
+			<requirement>
+				<plugin>opengl</plugin>
+			</requirement>
 		</deps>
-		<display>
+		<options>
 			<group>
 				<_short>Viewport Switch Preview</_short>
 				<option name="show_switcher" type="bool">
@@ -314,8 +317,6 @@
 					</option>
 				</subgroup>
 			</group>
-		</display>
-		<screen>
 			<group>
 				<_short>Viewport Switching</_short>
 				<option name="mmmode" type="int">
@@ -352,6 +353,6 @@
 					<default>false</default>
 				</option>
 			</group>
-		</screen>
+		</options>
 	</plugin>
 </compiz>
