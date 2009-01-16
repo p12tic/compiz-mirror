@@ -52,10 +52,6 @@
 #define sigmoidProgress(x) ((sigmoid (x) - sigmoid (0)) / \
 			    (sigmoid (1) - sigmoid (0)))
 
-#define setAction(action, func) \
-    optionSet##action (boost::bind (&WallScreen::func, this, _1, _2, _3))
-
-
 COMPIZ_PLUGIN_20081216 (wall, WallPluginVTable);
 
 void
@@ -558,15 +554,78 @@ WallScreen::checkAmount (unsigned int  dx,
 }
 
 bool
-WallScreen::initiate (int               dx,
-                      int               dy,
-                      Window            win,
-                      CompAction       *action,
-                      CompAction::State state)
+WallScreen::initiate (CompAction         *action,
+                      CompAction::State  state,
+		      CompOption::Vector &options,
+		      Direction          dir,
+		      bool               withWin)
 {
-    int amountX, amountY;
+    int dx = 0, dy = 0, amountX, amountY;
 
-    checkAmount (dx, dy, &amountX, &amountY);
+    CompPoint point;
+    CompSize size;
+    Window win = None;
+	
+    point = screen->vp ();
+    size = screen->vpSize ();
+
+    switch (dir) {
+	case Up:
+	    dy = -1;
+	    checkAmount (dx, dy, &amountX, &amountY);
+	    break;
+	case Down:
+	    dy = 1;
+	    checkAmount (dx, dy, &amountX, &amountY);
+	    break;
+	case Left:
+	    dx = -1;
+	    checkAmount (dx, dy, &amountX, &amountY);
+	    break;
+	case Right:
+	    dx = 1;
+	    checkAmount (dx, dy, &amountX, &amountY);
+	    break;
+	case Next:
+	    if ((point.x () == size.width () - 1) && (point.y () == size.height () - 1))
+	    {
+		amountX = -(size.width () - 1);
+		amountY = -(size.height () - 1);
+	    }
+	    else if (point.x () == size.width () - 1)
+	    {
+		amountX = -(size.width () - 1);
+		amountY = 1;
+	    }
+	    else
+	    {
+		amountX = 1;
+		amountY = 0;
+	    }
+
+	    break;
+	case Prev:
+	    if ((point.x () == 0) && (point.y () == 0))
+	    {
+		amountX = size.width () - 1;
+		amountY = size.height () - 1;
+	    }
+	    else if (point.x () == 0)
+	    {
+		amountX = size.width () - 1;
+		amountY = -1;
+	    }
+	    else
+	    {
+		amountX = -1;
+		amountY = 0;
+	    }
+	    break;
+    }
+
+    if (withWin)
+	win = CompOption::getIntOptionNamed (options, "window", 0);
+
     if (!moveViewport (amountX, amountY, win))
         return true;
 
@@ -599,8 +658,8 @@ WallScreen::terminate (CompAction         *action,
 }
 
 bool
-WallScreen::initiateFlip (Direction  direction,
-                          Bool       dnd)
+WallScreen::initiateFlip (Direction         direction,
+                          CompAction::State state)
 {
     int dx, dy;
     int amountX, amountY;
@@ -608,7 +667,7 @@ WallScreen::initiateFlip (Direction  direction,
     if (screen->otherGrabExist ("wall", "move", "group-drag", 0))
         return false;
 
-    if (dnd)
+    if (state & CompAction::StateInitEdgeDnd)
     {
         if (!optionGetEdgeflipDnd ())
             return false;
@@ -693,172 +752,6 @@ WallScreen::initiateFlip (Direction  direction,
     }
 
     return true;
-}
-
-bool
-WallScreen::left (CompAction         *action,
-                  CompAction::State   state,
-                  CompOption::Vector &option)
-{
-    return initiate (-1, 0, None, action, state);
-}
-
-bool
-WallScreen::right (CompAction         *action,
-                   CompAction::State   state,
-                   CompOption::Vector &option)
-{
-    return initiate (1, 0, None, action, state);
-}
-
-bool
-WallScreen::up (CompAction         *action,
-                CompAction::State   state,
-                CompOption::Vector &option)
-{
-    return initiate (0, -1, None, action, state);
-}
-
-bool
-WallScreen::down (CompAction         *action,
-                  CompAction::State   state,
-                  CompOption::Vector &option)
-{
-    return initiate (0, 1, None, action, state);
-}
-
-bool
-WallScreen::next (CompAction         *action,
-                  CompAction::State   state,
-                  CompOption::Vector &option)
-{
-    int amountX, amountY;
-    CompPoint point;
-    CompSize size;
-	
-    point = screen->vp ();
-    size = screen->vpSize ();
-
-    if ((point.x () == size.width () - 1) && (point.y () == size.height () - 1))
-    {
-        amountX = -(size.width () - 1);
-        amountY = -(size.height () - 1);
-    }
-    else if (point.x () == size.width () - 1)
-    {
-        amountX = -(size.width () - 1);
-        amountY = 1;
-    }
-    else
-    {
-        amountX = 1;
-        amountY = 0;
-    }
-
-    return initiate (amountX, amountY, None, action, state);
-}
-
-bool
-WallScreen::prev (CompAction         *action,
-                  CompAction::State   state,
-                  CompOption::Vector &option)
-{
-    int amountX, amountY;
-    CompPoint point;
-    CompSize size;
-
-    point = screen->vp ();
-    size = screen->vpSize ();
-
-    if ((point.x () == 0) && (point.y () == 0))
-    {
-        amountX = size.width () - 1;
-        amountY = size.height () - 1;
-    }
-    else if (point.x () == 0)
-    {
-        amountX = size.width () - 1;
-        amountY = -1;
-    }
-    else
-    {
-        amountX = -1;
-        amountY = 0;
-    }
-
-    return initiate (amountX, amountY, None, action, state);
-}
-
-bool
-WallScreen::flipLeft (CompAction         *action,
-                      CompAction::State   state,
-                      CompOption::Vector &option)
-{
-    return initiateFlip (Left, (state & CompAction::StateInitEdgeDnd));
-}
-
-bool
-WallScreen::flipRight (CompAction         *action,
-                       CompAction::State   state,
-                       CompOption::Vector &option)
-{
-    return initiateFlip (Right, (state & CompAction::StateInitEdgeDnd));
-}
-
-bool
-WallScreen::flipUp (CompAction         *action,
-                    CompAction::State   state,
-                    CompOption::Vector &option)
-{
-    return initiateFlip (Up, (state & CompAction::StateInitEdgeDnd));
-}
-
-bool
-WallScreen::flipDown (CompAction         *action,
-                      CompAction::State   state,
-                      CompOption::Vector &option)
-{
-    return initiateFlip (Down, (state & CompAction::StateInitEdgeDnd));
-}
-
-bool
-WallScreen::leftWithWindow (CompAction         *action,
-                            CompAction::State   state,
-                            CompOption::Vector &option)
-{
-    Window win = CompOption::getIntOptionNamed (option, "window", 0);
-
-    return initiate (-1, 0, win, action, state);
-}
-
-bool
-WallScreen::rightWithWindow (CompAction         *action,
-                             CompAction::State   state,
-                             CompOption::Vector &option)
-{
-    Window win = CompOption::getIntOptionNamed (option, "window", 0);
-
-    return initiate (1, 0, win, action, state);
-}
-
-bool
-WallScreen::upWithWindow (CompAction         *action,
-                          CompAction::State   state,
-                          CompOption::Vector &option)
-{
-    Window win = CompOption::getIntOptionNamed (option, "window", 0);
-
-    return initiate (0, -1, win, action, state);
-}
-
-bool
-WallScreen::downWithWindow (CompAction         *action,
-                            CompAction::State   state,
-                            CompOption::Vector &option)
-{
-    Window win = CompOption::getIntOptionNamed (option, "window", 0);
-
-    return initiate (0, 1, win, action, state);
 }
 
 inline void
@@ -1657,42 +1550,35 @@ WallScreen::WallScreen (CompScreen *screen) :
     memset (&arrowContext, 0, sizeof (WallCairoContext));
     createCairoContexts (true);
 
-    setAction (LeftKeyInitiate, left);
-    setAction (LeftKeyTerminate, terminate);
-    setAction (RightKeyInitiate, right);
-    setAction (RightKeyTerminate, terminate);
-    setAction (UpKeyInitiate, up);
-    setAction (UpKeyTerminate, terminate);
-    setAction (DownKeyInitiate, down);
-    setAction (DownKeyTerminate, terminate);
-    setAction (NextKeyInitiate, next);
-    setAction (NextKeyTerminate, terminate);
-    setAction (PrevKeyInitiate, prev);
-    setAction (PrevKeyTerminate, terminate);
-    setAction (LeftButtonInitiate, left);
-    setAction (LeftButtonTerminate, terminate);
-    setAction (RightButtonInitiate, right);
-    setAction (RightButtonTerminate, terminate);
-    setAction (UpButtonInitiate, up);
-    setAction (UpButtonTerminate, terminate);
-    setAction (DownButtonInitiate, down);
-    setAction (DownButtonTerminate, terminate);
-    setAction (NextButtonInitiate, next);
-    setAction (NextButtonTerminate, terminate);
-    setAction (PrevButtonInitiate, prev);
-    setAction (PrevButtonTerminate, terminate);
-    setAction (LeftWindowKeyInitiate, leftWithWindow);
-    setAction (LeftWindowKeyTerminate, terminate);
-    setAction (RightWindowKeyInitiate, rightWithWindow);
-    setAction (RightWindowKeyTerminate, terminate);
-    setAction (UpWindowKeyInitiate, upWithWindow);
-    setAction (UpWindowKeyTerminate, terminate);
-    setAction (DownWindowKeyInitiate, downWithWindow);
-    setAction (DownWindowKeyTerminate, terminate);
-    setAction (FlipLeftEdgeInitiate, flipLeft);
-    setAction (FlipRightEdgeInitiate, flipRight);
-    setAction (FlipUpEdgeInitiate, flipUp);
-	setAction (FlipDownEdgeInitiate, flipDown);
+#define setAction(action, dir, win) \
+    optionSet##action##Initiate (boost::bind (&WallScreen::initiate, this, _1, _2, _3, dir, win)); \
+    optionSet##action##Terminate (boost::bind (&WallScreen::terminate, this, _1, _2, _3))
+
+#define setFlipAction(action, dir) \
+    optionSet##action##Initiate (boost::bind (&WallScreen::initiateFlip, this, dir, _2))
+    
+    setAction (LeftKey, Left, false);
+    setAction (RightKey, Right, false);
+    setAction (UpKey, Up, false);
+    setAction (DownKey, Down, false);
+    setAction (NextKey, Next, false);
+    setAction (PrevKey, Prev, false);
+    setAction (LeftButton, Left, false);
+    setAction (RightButton, Right, false);
+    setAction (UpButton, Up, false);
+    setAction (DownButton, Down, false);
+    setAction (NextButton, Next, false);
+    setAction (PrevButton, Prev, false);
+    setAction (LeftWindowKey, Left, true);
+    setAction (RightWindowKey, Right, true);
+    setAction (UpWindowKey, Up, true);
+    setAction (DownWindowKey, Down, true);
+
+
+    setFlipAction (FlipLeftEdge, Left);
+    setFlipAction (FlipRightEdge, Right);
+    setFlipAction (FlipUpEdge, Up);
+    setFlipAction (FlipDownEdge, Down);
 
 /*
     wallSetEdgeRadiusNotify (d, wallDisplayOptionChanged);

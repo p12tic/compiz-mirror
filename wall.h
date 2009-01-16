@@ -34,13 +34,7 @@
 
 
 /* enums */
-typedef enum
-{
-    Up = 0,
-    Left,
-    Down,
-    Right
-} Direction;
+
 
 typedef enum
 {
@@ -66,11 +60,21 @@ typedef struct _WallCairoContext
 class WallScreen :
     public ScreenInterface,
     public CompositeScreenInterface,
-	public GLScreenInterface,
+    public GLScreenInterface,
     public PrivateHandler <WallScreen, CompScreen>,
     public WallOptions
 {
     public:
+	enum Direction
+	{
+	    Up = 0,
+	    Left,
+	    Down,
+	    Right,
+            Next,
+	    Prev
+	};
+	
         WallScreen (CompScreen *s);
         ~WallScreen ();
 
@@ -106,41 +110,10 @@ class WallScreen :
     	bool checkDestination (unsigned int, unsigned int);
     	void checkAmount (unsigned int, unsigned int, int *, int *);
 
-        bool initiate (int, int, Window, CompAction *, unsigned int);
-        bool terminate (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool initiateFlip (Direction, Bool);
-
-        bool left (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool right (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool up (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool down (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool next (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool prev (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-
-        bool flipLeft (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool flipRight (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool flipUp (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool flipDown (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-
-        bool leftWithWindow (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool rightWithWindow (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool upWithWindow (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
-        bool downWithWindow (CompAction *, unsigned int, std::vector<CompOption,
-                                                std::allocator<CompOption> >&);
+        bool initiate (CompAction *, CompAction::State, CompOption::Vector &,
+		       Direction, bool);
+        bool terminate (CompAction *, CompAction::State, CompOption::Vector &);
+        bool initiateFlip (Direction, CompAction::State);
 
         bool moveViewport (int, int, Window);
 
