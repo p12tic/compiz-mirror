@@ -57,32 +57,36 @@ class PrivateTextScreen :
 
 	CompOption::Vector opt;	
 
-        CompScreen *screen;
-
+	GLScreen *gScreen;
 };
 
-class TextHelper
+class TextSurface
 {
     public:
-	int                  width;
-	int                  height;
+	TextSurface  ();
+	~TextSurface ();
+
+	bool valid () const;
+
+	bool render (const CompText::Attrib &attrib,
+		     const CompString       &text);
+
+	unsigned int width;
+	unsigned int height;
+	Pixmap       pixmap;
+
+    private:
+	bool initCairo (unsigned int width,
+			unsigned int height);
+	bool update (unsigned int width,
+		     unsigned int height);
 
 	cairo_t              *cr;
 	cairo_surface_t      *surface;
 	PangoLayout          *layout;
-	Pixmap               pixmap;
 	XRenderPictFormat    *format;
 	PangoFontDescription *font;
-	Screen               *screen;
-	CompScreen		 *s;
-
-	bool 		 failed;
-
-	bool render          (const CompText::Attrib &attrib,
-			      CompString     &text);
-
-	~TextHelper		();
-	TextHelper		(CompScreen *s);
+	Screen               *scrn;
 };
 
 #define TEXT_SCREEN(screen)						      \
@@ -93,6 +97,5 @@ class TextPluginVTable :
 {
     public:
 
-	bool
-	init ();
+	bool init ();
 };

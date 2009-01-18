@@ -33,33 +33,33 @@ static CompMetadata textMetadata;
 
 COMPIZ_PLUGIN_20081216 (text, TextPluginVTable);
 
-static char *
-textGetUtf8Property (CompScreen *s,
-		     Window      id,
-		     Atom        atom)
+static CompString
+textGetUtf8Property (Window id,
+		     Atom   atom)
 {
     Atom          type;
     int           result, format;
     unsigned long nItems, bytesAfter;
-    char          *val, *retval = NULL;
+    char          *val;
+    CompString    retval;
 
-    TEXT_SCREEN (s);
+    TEXT_SCREEN (screen);
 
-    result = XGetWindowProperty (s->dpy (), id, atom, 0L, 65536, False,
-				 ts->utf8StringAtom, &type, &format, &nItems, // AT
+    result = XGetWindowProperty (screen->dpy (), id, atom, 0L, 65536, False,
+				 ts->utf8StringAtom, &type, &format, &nItems,
 				 &bytesAfter, (unsigned char **) &val);
 
     if (result != Success)
-	return NULL;
+	return retval;
 
     if (type == ts->utf8StringAtom && format == 8 && val && nItems > 0)
     {
-	retval = (char *) malloc (sizeof (char) * (nItems + 1));
-	if (retval)
-	{
-	    strncpy (retval, val, nItems);
-	    retval[nItems] = 0;
-	}
+	char valueString[nItems + 1];
+
+	strncpy (valueString, val, nItems);
+	valueString[nItems] = 0;
+
+	retval = valueString;
     }
 
     if (val)
@@ -68,25 +68,24 @@ textGetUtf8Property (CompScreen *s,
     return retval;
 }
 
-static char *
-textGetTextProperty (CompScreen  *s,
-		     Window      id,
-		     Atom        atom)
+static CompString
+textGetTextProperty (Window id,
+		     Atom   atom)
 {
     XTextProperty text;
-    char          *retval = NULL;
+    CompString    retval;
 
     text.nitems = 0;
-    if (XGetTextProperty (s->dpy (), id, &text, atom))
+    if (XGetTextProperty (screen->dpy (), id, &text, atom))
     {
         if (text.value)
 	{
-	    retval = (char *) malloc (sizeof (char) * (text.nitems + 1));
-	    if (retval)
-	    {
-		strncpy (retval, (char *) text.value, text.nitems);
-		retval[text.nitems] = 0;
-	    }
+	    char valueString[text.nitems + 1];
+
+	    strncpy (valueString, (char *) text.value, text.nitems);
+	    valueString[text.nitems] = 0;
+
+	    retval = valueString;
 
 	    XFree (text.value);
 	}
@@ -95,21 +94,20 @@ textGetTextProperty (CompScreen  *s,
     return retval;
 }
 
-static char *
-textGetWindowName (CompScreen *s,
-		   Window      id)
+static CompString
+textGetWindowName (Window id)
 {
-    char *name;
+    CompString name;
 
-    TEXT_SCREEN (s);
+    TEXT_SCREEN (screen);
 
-    name = textGetUtf8Property (s, id, ts->visibleNameAtom); // AT
+    name = textGetUtf8Property (id, ts->visibleNameAtom);
 
-    if (!name)
-	name = textGetUtf8Property (s, id, ts->wmNameAtom); // AT
+    if (name.empty ())
+	name = textGetUtf8Property (id, ts->wmNameAtom);
 
-    if (!name)
-	name = textGetTextProperty (s, id, XA_WM_NAME);
+    if (name.empty ())
+	name = textGetTextProperty (id, XA_WM_NAME);
 
     return name;
 }
@@ -145,86 +143,86 @@ textDrawTextBackground (cairo_t *cr,
     cairo_close_path (cr);
 }
 
-static Bool
-textInitCairo (CompScreen      *s,
-	       TextHelper      *data,
-	       int             width,
-	       int             height)
+bool
+TextSurface::initCairo (unsigned int width,
+			unsigned int height)
 {
-    Display *dpy = s->dpy ();
+    Display *dpy = screen->dpy ();
 
-    data->pixmap = None;
+    pixmap = None;
     if (width > 0 && height > 0)
-	data->pixmap = XCreatePixmap (dpy, s->root (), width, height, 32);
+	pixmap = XCreatePixmap (dpy, screen->root (), width, height, 32);
 
-    data->width  = width;
-    data->height = height;
+    width  = width;
+    height = height;
 
-    if (!data->pixmap)
+    if (!pixmap)
     {
 	compLogMessage ("text", CompLogLevelError,
 			"Couldn't create %d x %d pixmap.", width, height);
-	return FALSE;
+	return false;
     }
 
-    data->surface = cairo_xlib_surface_create_with_xrender_format (dpy,
-								   data->pixmap,
-								   data->screen,
-								   data->format,
-								   width,
-								   height);
-    if (cairo_surface_status (data->surface) != CAIRO_STATUS_SUCCESS)
+    surface = cairo_xlib_surface_create_with_xrender_format (dpy,
+							     pixmap,
+							     scrn,
+							     format,
+							     width,
+							     height);
+
+    if (cairo_surface_status (surface) != CAIRO_STATUS_SUCCESS)
     {
 	compLogMessage ("text", CompLogLevelError, "Couldn't create surface.");
-	return FALSE;
+	return false;
     }
 
-    data->cr = cairo_create (data->surface);
-    if (cairo_status (data->cr) != CAIRO_STATUS_SUCCESS)
+    cr = cairo_create (surface);
+    if (cairo_status (cr) != CAIRO_STATUS_SUCCESS)
     {
 	compLogMessage ("text", CompLogLevelError,
 			"Couldn't create cairo context.");
-	return FALSE;
+	return false;
     }
 
-    return TRUE;
-}
-
-static Bool
-textUpdateSurface (CompScreen      *s,
-		   TextHelper      *data,
-		   int             width,
-		   int             height)
-{
-    Display *dpy = s->dpy ();
-
-    cairo_surface_destroy (data->surface);
-    cairo_destroy (data->cr);
-    XFreePixmap (dpy, data->pixmap);
-
-    return textInitCairo (s, data, width, height);
+    return true;
 }
 
 bool
-TextHelper::render (const CompText::Attrib &attrib,
-		    CompString     &text)
+TextSurface::update (unsigned int width,
+		     unsigned int height)
+{
+    Display *dpy = screen->dpy ();
+
+    cairo_surface_destroy (surface);
+    cairo_destroy (cr);
+    XFreePixmap (dpy, pixmap);
+
+    return initCairo (width, height);
+}
+
+bool
+TextSurface::render (const CompText::Attrib &attrib,
+		     const CompString       &text)
 {
     int width, height, layoutWidth;
+
+    if (!valid ())
+	return false;
 
     pango_font_description_set_family (font, attrib.family);
     pango_font_description_set_absolute_size (font,
 					      attrib.size * PANGO_SCALE);
     pango_font_description_set_style (font, PANGO_STYLE_NORMAL);
 
-    if (attrib.flags & CompTextFlagStyleBold)
+    if (attrib.flags & CompText::StyleBold)
 	pango_font_description_set_weight (font, PANGO_WEIGHT_BOLD);
 
-    if (attrib.flags & CompTextFlagStyleItalic)
+    if (attrib.flags & CompText::StyleItalic)
 	pango_font_description_set_style (font, PANGO_STYLE_ITALIC);
 
     pango_layout_set_font_description (layout, font);
 
-    if (attrib.flags & CompTextFlagEllipsized)
+    if (attrib.flags & CompText::Ellipsized)
 	pango_layout_set_ellipsize (layout, PANGO_ELLIPSIZE_END);
 
     pango_layout_set_auto_dir (layout, FALSE);
@@ -232,7 +230,7 @@ TextHelper::render (const CompText::Attrib &attrib,
 
     pango_layout_get_pixel_size (layout, &width, &height);
 
-    if (attrib.flags & CompTextFlagWithBackground)
+    if (attrib.flags & CompText::WithBackground)
     {
 	width  += 2 * attrib.bgHMargin;
 	height += 2 * attrib.bgVMargin;
@@ -243,13 +241,13 @@ TextHelper::render (const CompText::Attrib &attrib,
 
     /* update the size of the pango layout */
     layoutWidth = attrib.maxWidth;
-    if (attrib.flags & CompTextFlagWithBackground)
+    if (attrib.flags & CompText::WithBackground)
 	layoutWidth -= 2 * attrib.bgHMargin;
 
     pango_layout_set_width (layout, layoutWidth * PANGO_SCALE);
 
-    if (!textUpdateSurface (s, this, width, height))
-	return FALSE;
+    if (!update (width, height))
+	return false;
 
     pango_cairo_update_layout (cr, layout);
 
@@ -260,7 +258,7 @@ TextHelper::render (const CompText::Attrib &attrib,
 
     cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
 
-    if (attrib.flags & CompTextFlagWithBackground)
+    if (attrib.flags & CompText::WithBackground)
     {
 	textDrawTextBackground (cr, 0, 0, width, height,
 				MIN (attrib.bgHMargin, attrib.bgVMargin));
@@ -281,52 +279,56 @@ TextHelper::render (const CompText::Attrib &attrib,
 
     pango_cairo_show_layout (cr, layout);
 
-    return TRUE;
+    return true;
 }
 
-TextHelper::TextHelper (CompScreen *s) :
+bool
+TextSurface::valid () const
+{
+    return scrn && format && layout && font &&
+	   cr && cairo_status (cr) == CAIRO_STATUS_SUCCESS &&
+	   surface && cairo_surface_status (surface) == CAIRO_STATUS_SUCCESS;
+}
+
+TextSurface::TextSurface () :
     width  (0),
     height (0),
+    pixmap (None),
     cr (NULL),
     surface (NULL),
     layout (NULL),
-    pixmap (None),
     format (NULL),
     font (NULL),
-    screen (NULL),
-    s (s),
-    failed (false)
+    scrn (NULL)
 {
-    Display *dpy = s->dpy ();
+    Display *dpy = screen->dpy ();
 
-    screen = ScreenOfDisplay (dpy, s->screenNum ());
+    scrn = ScreenOfDisplay (dpy, screen->screenNum ());
 
-    if (!screen)
+    if (!scrn)
     {
 	compLogMessage ("text", CompLogLevelError,
-			"Couldn't get screen for %d.", s->screenNum ());
-	failed = true;
+			"Couldn't get screen for %d.", screen->screenNum ());
+	return;
     }
 
     format = XRenderFindStandardFormat (dpy, PictStandardARGB32);
     if (!format)
     {
 	compLogMessage ("text", CompLogLevelError, "Couldn't get format.");
-	failed = true;
+	return;
     }
 
-    if (textInitCairo (s, this, 1, 1))
+    if (!initCairo (1, 1))
+	return;
+
+    /* init pango */
+    layout = pango_cairo_create_layout (cr);
+    if (!layout)
     {
-
-	/* init pango */
-	layout = pango_cairo_create_layout (cr);
-	if (!layout)
-	{
-	    compLogMessage ("text", CompLogLevelError,
-			    "Couldn't create pango layout.");
-	    failed = true;
-	}
-
+	compLogMessage ("text", CompLogLevelError,
+			"Couldn't create pango layout.");
+	return;
     }
 
     font = pango_font_description_new ();
@@ -334,11 +336,11 @@ TextHelper::TextHelper (CompScreen *s) :
     {
 	compLogMessage ("text", CompLogLevelError,
 			"Couldn't create font description.");
-	failed = true;
+	return;
     }
 }
 
-TextHelper::~TextHelper ()
+TextSurface::~TextSurface ()
 {
     if (layout)
 	g_object_unref (layout);
@@ -350,58 +352,51 @@ TextHelper::~TextHelper ()
 	pango_font_description_free (font);
 }
 
-CompText
-CompText::renderText (CompScreen           *screen,
-		      CompString           text,
-		      const CompText::Attrib &attrib)
+CompText *
+CompText::renderText (CompString   text,
+		      const Attrib &attrib)
 {
-    TextHelper      helper (screen);
-    CompText        retval (screen);
-    Bool	    success = false;
+    TextSurface surface;
+    CompText    *retval = NULL;
 
-    if (helper.failed)
-	return FALSE;
+    TEXT_SCREEN (screen);
 
-    if (!helper.failed &&
-	helper.render (attrib, text))
+    if (!surface.valid ())
+	return NULL;
+
+    if (!(attrib.flags & NoAutoBinding) && !ts->gScreen)
+	return NULL;
+
+    if (surface.render (attrib, text))
     {
-	if (!(attrib.flags & CompTextFlagNoAutoBinding))
-	{
-	    retval.texture = GLTexture::bindPixmapToTexture (helper.pixmap,
-						      	      helper.width,
-						      	      helper.height,
-						      	      32);
-	}
-
-	retval.pixmap = helper.pixmap;
-	retval.width  = helper.width;
-	retval.height = helper.height;
-
-	success = true;
+	retval = new CompText (surface.pixmap,
+			       surface.width,
+			       surface.height,
+			       !(attrib.flags & NoAutoBinding));
     }
-
-    if (!success && helper.pixmap)
-	XFreePixmap (screen->dpy (), helper.pixmap);
+    else if (surface.pixmap)
+    {
+	XFreePixmap (screen->dpy (), surface.pixmap);
+    }
 
     return retval;
 }
 
-CompText
-CompText::renderWindowTitle (CompScreen		  *screen,
-			     Window               window,
+CompText *
+CompText::renderWindowTitle (Window               window,
 		             bool                 withViewportNumber,
 		             const CompText::Attrib &attrib)
 {
-    CompString   text;
-    CompPoint    winViewport;
-    CompSize	 viewportSize;
+    CompString text;
 
     if (withViewportNumber)
     {
 	CompString title;
+    	CompPoint  winViewport;
+	CompSize   viewportSize;
 	
-	title = textGetWindowName (screen, window);
-	if (title.c_str ())
+	title = textGetWindowName (window);
+	if (!title.empty ())
 	{
 	    CompWindow *w;
 
@@ -410,9 +405,10 @@ CompText::renderWindowTitle (CompScreen		  *screen,
 	    {
 		int viewport;
 
-		winViewport = w->defaultViewport ();
+		winViewport  = w->defaultViewport ();
 		viewportSize = screen->vpSize ();
-		viewport = winViewport.y () * viewportSize.width () + winViewport.y () + 1;
+		viewport = winViewport.y () * viewportSize.width () +
+		           winViewport.y () + 1;
 		text = compPrintf ("%s -[%d]-", title.c_str (), viewport);
 	    }
 	    else
@@ -423,24 +419,39 @@ CompText::renderWindowTitle (CompScreen		  *screen,
     }
     else
     {
-	text = textGetWindowName (screen, window);
+	text = textGetWindowName (window);
     }
 
-    if (!text.c_str ())
+    if (text.empty ())
 	return NULL;
 
-    return CompText::renderText (screen, text, attrib);;
+    return CompText::renderText (text, attrib);
+}
+
+Pixmap
+CompText::getPixmap ()
+{
+    Pixmap retval = None;
+    
+    if (!texture.size ())
+    {
+	retval = pixmap;
+	pixmap = None;
+    }
+
+    return retval;
 }
 
 void
-CompText::draw (float              x,
-	        float              y,
-	        float              alpha)
+CompText::draw (float x,
+	        float y,
+	        float alpha) const
 {
     GLboolean  wasBlend;
     GLint      oldBlendSrc, oldBlendDst;
-    GLTexture::Matrix m;
-    float      width, height;
+
+    if (!texture.size ())
+	return;
 
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
@@ -456,8 +467,8 @@ CompText::draw (float              x,
 
     for (unsigned int i = 0; i < texture.size (); i++)
     {
-	GLTexture *tex = texture[i];
-	m      = tex->matrix ();
+	GLTexture         *tex = texture[i];
+	GLTexture::Matrix m = tex->matrix ();
 
 	tex->enable (GLTexture::Good);
 
@@ -484,23 +495,27 @@ CompText::draw (float              x,
     glBlendFunc (oldBlendSrc, oldBlendDst);
 }
 
-CompText::CompText (CompScreen *screen) :
-    width (0),
-    height (0),
-    pixmap (None),
-    texture (NULL),
-    screen (screen)
+CompText::CompText (Pixmap       pm,
+		    unsigned int w,
+		    unsigned int h,
+		    bool         bind) :
+    width (w),
+    height (h),
+    pixmap (pm)
 {
+    if (bind)
+	texture = GLTexture::bindPixmapToTexture (pixmap, width, height, 32);
 };
 
 CompText::~CompText ()
 {
-    XFreePixmap (screen->dpy (), pixmap);
+    if (pixmap)
+	XFreePixmap (screen->dpy (), pixmap);
 };
 
 PrivateTextScreen::PrivateTextScreen (CompScreen *screen) :
     PrivateHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI> (screen),
-    screen (screen)
+    gScreen (GLScreen::get (screen))
 {
     visibleNameAtom = XInternAtom (screen->dpy (), "_NET_WM_VISIBLE_NAME", 0);
     utf8StringAtom = XInternAtom (screen->dpy (), "UTF8_STRING", 0);
@@ -515,9 +530,6 @@ bool
 TextPluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	 return false;
-
-    if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	 return false;
 
     return true;

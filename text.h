@@ -14,87 +14,75 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor,
+ * Boston, MA  02110-1301, USA.
  *
  */
 
 #ifndef _COMPIZ_TEXT_H
 #define _COMPIZ_TEXT_H
 
-#define COMPIZ_TEXT_ABI 1
+#define COMPIZ_TEXT_ABI 20090118
 
-/**
- * Flags to be passed into the flags field of CompTextAttrib
- */
-#define CompTextFlagStyleBold      (1 << 0) /**< render the text in bold */
-#define CompTextFlagStyleItalic    (1 << 1) /**< render the text italic */
-#define CompTextFlagEllipsized     (1 << 2) /**< ellipsize the text if the
-					         specified maximum size is too
-						 small */
-#define CompTextFlagWithBackground (1 << 3) /**< render a rounded rectangle as
-					          background behind the text */
-#define CompTextFlagNoAutoBinding  (1 << 4) /**< do not automatically bind the
-					         rendered text pixmap to a
-						 texture */
 class CompText
 {
     public:
+	/**
+	 * Flags to be passed into the flags field of CompTextAttrib
+	 */
+	typedef enum {
+	    StyleBold      = (1 << 0), /**< render the text in bold */
+	    StyleItalic    = (1 << 1), /**< render the text italic */
+	    Ellipsized     = (1 << 2), /**< ellipsize the text if the
+					    specified maximum size is
+					    too small */
+	    WithBackground = (1 << 3), /**< render a rounded rectangle as
+					    background behind the text */
+	    NoAutoBinding  = (1 << 4) /**< do not automatically bind the
+					   rendered text pixmap to a texture */
+	} Flags;
+
 	typedef struct {
 	    char           *family;    /**< font family */
 	    int            size;       /**< font size in points */
 	    unsigned short color[4];   /**< font color (RGBA) */
 
-	    unsigned int   flags;      /**< rendering flags, see above */
+	    Flags          flags;      /**< rendering flags, see above */
 
-	    int            maxWidth;   /**< maximum width of the generated pixmap */
-	    int            maxHeight;  /**< maximum height of the generated pixmap */
+	    int            maxWidth;   /**< maximum width of the
+					    generated pixmap */
+	    int            maxHeight;  /**< maximum height of the
+					    generated pixmap */
 
 	    int            bgHMargin;  /**< horizontal margin in pixels
-		     			 (offset of text into background) */
+		     			    (offset of text into background) */
 	    int            bgVMargin;  /**< vertical margin */
 	    unsigned short bgColor[4]; /**< background color (RGBA) */
 	} Attrib;
 
 	~CompText();
 
-	static CompText renderText (CompScreen *s,
-				     CompString text,
-				     const Attrib &attrib);
+	static CompText * renderText (CompString   text,
+				      const Attrib &attrib);
 
-	static CompText renderWindowTitle (CompScreen *s,
-					    Window     window,
-					    bool       renderViewportNumber,
-					    const Attrib &attrib);
+	static CompText * renderWindowTitle (Window       window,
+					     bool         renderViewportNumber,
+					     const Attrib &attrib);
 
-	void  draw (float x,
-		    float y,
-		    float alpha);
+	Pixmap getPixmap ();
+
+	void draw (float x,
+		   float y,
+		   float alpha) const;
+
+    private:
+	CompText (Pixmap pm, unsigned int w, unsigned int h, bool bind);
 
 	unsigned int width;
 	unsigned int height;
 
-    private:
-	CompText(CompScreen *);
-
-	Pixmap pixmap;
+	Pixmap          pixmap;
 	GLTexture::List texture;
-
-        CompScreen *screen;
 };
 
-typedef struct _CompTextAttrib {
-    char           *family;    /**< font family */
-    int            size;       /**< font size in points */
-    unsigned short color[4];   /**< font color (RGBA) */
-
-    unsigned int   flags;      /**< rendering flags, see above */
-
-    int            maxWidth;   /**< maximum width of the generated pixmap */
-    int            maxHeight;  /**< maximum height of the generated pixmap */
-
-    int            bgHMargin;  /**< horizontal margin in pixels
-				    (offset of text into background) */
-    int            bgVMargin;  /**< vertical margin */
-    unsigned short bgColor[4]; /**< background color (RGBA) */
-} CompTextAttrib;
 #endif
