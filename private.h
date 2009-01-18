@@ -48,16 +48,22 @@ class PrivateTextScreen :
 	PrivateTextScreen (CompScreen *);
 	~PrivateTextScreen ();
 
+	CompOption::Vector & getOptions ();
+	bool setOption (const char *name, CompOption::Value &value);	
+
+	CompOption::Vector opt;
+
+	CompString getWindowName (Window id);
+
+	GLScreen *gScreen;
+
+    private:
 	Atom visibleNameAtom;
 	Atom utf8StringAtom;
 	Atom wmNameAtom;
 
-	CompOption::Vector & getOptions ();
-	bool setOption (const char *name, CompOption::Value &value);	
-
-	CompOption::Vector opt;	
-
-	GLScreen *gScreen;
+	CompString getUtf8Property (Window id, Atom atom);
+	CompString getTextProperty (Window id, Atom atom);
 };
 
 class TextSurface
@@ -80,6 +86,9 @@ class TextSurface
 			unsigned int height);
 	bool update (unsigned int width,
 		     unsigned int height);
+	void drawBackground (int x, int y,
+			     int width, int height,
+			     int radius);
 
 	cairo_t              *cr;
 	cairo_surface_t      *surface;

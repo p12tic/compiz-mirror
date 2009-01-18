@@ -33,9 +33,9 @@ static CompMetadata textMetadata;
 
 COMPIZ_PLUGIN_20081216 (text, TextPluginVTable);
 
-static CompString
-textGetUtf8Property (Window id,
-		     Atom   atom)
+CompString
+PrivateTextScreen::getUtf8Property (Window id,
+				    Atom   atom)
 {
     Atom          type;
     int           result, format;
@@ -43,16 +43,14 @@ textGetUtf8Property (Window id,
     char          *val;
     CompString    retval;
 
-    TEXT_SCREEN (screen);
-
     result = XGetWindowProperty (screen->dpy (), id, atom, 0L, 65536, False,
-				 ts->utf8StringAtom, &type, &format, &nItems,
+				 utf8StringAtom, &type, &format, &nItems,
 				 &bytesAfter, (unsigned char **) &val);
 
     if (result != Success)
 	return retval;
 
-    if (type == ts->utf8StringAtom && format == 8 && val && nItems > 0)
+    if (type == utf8StringAtom && format == 8 && val && nItems > 0)
     {
 	char valueString[nItems + 1];
 
@@ -68,9 +66,9 @@ textGetUtf8Property (Window id,
     return retval;
 }
 
-static CompString
-textGetTextProperty (Window id,
-		     Atom   atom)
+CompString
+PrivateTextScreen::getTextProperty (Window id,
+				    Atom   atom)
 {
     XTextProperty text;
     CompString    retval;
@@ -94,20 +92,18 @@ textGetTextProperty (Window id,
     return retval;
 }
 
-static CompString
-textGetWindowName (Window id)
+CompString
+PrivateTextScreen::getWindowName (Window id)
 {
     CompString name;
 
-    TEXT_SCREEN (screen);
-
-    name = textGetUtf8Property (id, ts->visibleNameAtom);
+    name = getUtf8Property (id, visibleNameAtom);
 
     if (name.empty ())
-	name = textGetUtf8Property (id, ts->wmNameAtom);
+	name = getUtf8Property (id, wmNameAtom);
 
     if (name.empty ())
-	name = textGetTextProperty (id, XA_WM_NAME);
+	name = getTextProperty (id, XA_WM_NAME);
 
     return name;
 }
@@ -117,13 +113,12 @@ textGetWindowName (Window id)
 /*
  * Draw a rounded rectangle path
  */
-static void
-textDrawTextBackground (cairo_t *cr,
-			int     x,
-			int     y,
-			int     width,
-			int     height,
-			int     radius)
+void
+TextSurface::drawBackground (int     x,
+			     int     y,
+			     int     width,
+			     int     height,
+			     int     radius)
 {
     int x0, y0, x1, y1;
 
@@ -260,8 +255,8 @@ TextSurface::render (const CompText::Attrib &attrib,
 
     if (attrib.flags & CompText::WithBackground)
     {
-	textDrawTextBackground (cr, 0, 0, width, height,
-				MIN (attrib.bgHMargin, attrib.bgVMargin));
+	drawBackground (0, 0, width, height,
+			MIN (attrib.bgHMargin, attrib.bgVMargin));
 	cairo_set_source_rgba (cr,
 			       attrib.bgColor[0] / 65535.0,
 			       attrib.bgColor[1] / 65535.0,
@@ -389,13 +384,15 @@ CompText::renderWindowTitle (Window               window,
 {
     CompString text;
 
+    TEXT_SCREEN (screen);
+
     if (withViewportNumber)
     {
 	CompString title;
     	CompPoint  winViewport;
 	CompSize   viewportSize;
 	
-	title = textGetWindowName (window);
+	title = ts->getWindowName (window);
 	if (!title.empty ())
 	{
 	    CompWindow *w;
@@ -419,7 +416,7 @@ CompText::renderWindowTitle (Window               window,
     }
     else
     {
-	text = textGetWindowName (window);
+	text = ts->getWindowName (window);
     }
 
     if (text.empty ())
