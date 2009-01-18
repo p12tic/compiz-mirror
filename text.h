@@ -70,6 +70,8 @@ class CompText
 					     const Attrib &attrib);
 
 	Pixmap getPixmap ();
+	unsigned int getWidth () const;
+	unsigned int getHeight () const;
 
 	void draw (float x,
 		   float y,

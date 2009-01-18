@@ -439,6 +439,18 @@ CompText::getPixmap ()
     return retval;
 }
 
+unsigned int
+CompText::getWidth () const
+{
+    return width;
+}
+
+unsigned int
+CompText::getHeight () const
+{
+    return height;
+}
+
 void
 CompText::draw (float x,
 	        float y,
