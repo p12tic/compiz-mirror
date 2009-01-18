@@ -429,7 +429,7 @@ Pixmap
 CompText::getPixmap ()
 {
     Pixmap retval = None;
-    
+ 
     if (!texture.size ())
     {
 	retval = pixmap;
