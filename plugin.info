@@ -1,2 +1,2 @@
 PLUGIN = text
-PKG_DEP = pangocairo cairo cairo-xlib-xrender
+PKG_DEP = pangocairo cairo cairo-xlib-xrender compiz-composite compiz-opengl
