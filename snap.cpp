@@ -65,7 +65,7 @@ SnapWindow::resize (int dx, int dy, int dwidth, int dheight)
     skipNotify = false;
 }
 
-Edge *
+void
 SnapWindow::addEdge (Window   id,
 		     int       position,
 		     int      start,
@@ -73,22 +73,18 @@ SnapWindow::addEdge (Window   id,
 		     EdgeType type,
 		     bool     screenEdge)
 {
-    Edge *edge = (Edge *)malloc (sizeof (Edge));
-    if (!edge)
-	return NULL;
+    Edge edge;
 
-    edge->position = position;
-    edge->start = start;
-    edge->end = end;
-    edge->type = type;
-    edge->screenEdge = screenEdge;
-    edge->snapped = false;
-    edge->passed = false;
-    edge->id = id;
+    edge.position = position;
+    edge.start = start;
+    edge.end = end;
+    edge.type = type;
+    edge.screenEdge = screenEdge;
+    edge.snapped = false;
+    edge.passed = false;
+    edge.id = id;
 
     edges.push_back (edge);
-
-    return edge;
 }
 
 /*
@@ -97,7 +93,6 @@ SnapWindow::addEdge (Window   id,
 void
 SnapWindow::addRegionEdges (Edge *parent, CompRegion region)
 {
-    Edge *edge;
     int i, position, start, end;
 
     for (i = 0; i < region.numRects (); i++)
@@ -117,10 +112,10 @@ SnapWindow::addRegionEdges (Edge *parent, CompRegion region)
 	    start = region.rects ()[i].x1 ();
 	    end = region.rects ()[i].x2 ();
 	}
-	edge = addEdge (parent->id, position, start, end, parent->type,
-			parent->screenEdge);
-	if (edge)
-	    edge->passed = parent->passed;
+	
+	addEdge (parent->id, position, start, end,
+		 parent->type, parent->screenEdge);
+	edges.back ().passed = parent->passed;
     }
 }
 
@@ -138,7 +133,7 @@ isSnapWindow (CompWindow *w)
 
     if (UNLIKELY(!w))
 	return false;
-    if (w->invisible () || w->isViewable () || w->minimized ())
+    if (!w->isViewable ())
 	return false;
     if ((w->type () & SNAP_WINDOW_TYPE) && 
 	(ss->optionGetEdgesCategoriesMask () & EdgesCategoriesWindowEdgesMask))
@@ -157,8 +152,6 @@ void
 SnapWindow::updateWindowsEdges ()
 {
     CompRegion edgeRegion, resultRegion;
-    XRectangle rect;
-    CompRect *cRect;
     bool remove = false;
 
     // First add all the windows
@@ -191,41 +184,39 @@ SnapWindow::updateWindowsEdges ()
 	    continue;
 
 	// can't use foreach here because we need the iterator for erase()
-	for (std::list<Edge *>::iterator it = edges.begin ();
-	     it != edges.end ();)
+	for (std::list<Edge>::iterator it = edges.begin (); it != edges.end (); )
 	{
-	    Edge *e = *it;
+	    Edge     *e = &*it;
+	    CompRect rect;
+
 	    if (!e->passed)
 	    {
 		if (e->id == w->id ())
-		    e->passed = TRUE;
+		    e->passed = true;
+		it++;
 		continue;
 	    }
+
 	    switch (e->type)
 	    {
 	    case LeftEdge:
 	    case RightEdge:
-		rect.x = e->position;
-		rect.y = e->start;
-		rect.width = 1;
-		rect.height = e->end - e->start;
+		rect.setGeometry (e->position, e->start, 1, e->end - e->start);
 		break;
 	    case TopEdge:
 	    case BottomEdge:
 	    default:
-		rect.x = e->start;
-		rect.y = e->position;
-		rect.width = e->end - e->start;
-		rect.height = 1;
+		rect.setGeometry (e->start, e->position, e->end - e->start, 1);
 	    }
 
 	    // If the edge is in the window region, remove it,
 	    // if it's partly in the region, split it
-	    cRect = new CompRect (rect);
-	    edgeRegion = edgeRegion.united (*cRect);
+	    edgeRegion = edgeRegion.united (rect);
 	    resultRegion = edgeRegion.subtracted (w->region ());
 	    if (resultRegion.isEmpty ())
+	    {
 		remove = true;
+	    }
 	    else if (edgeRegion != resultRegion)
 	    {
 		addRegionEdges (e, resultRegion);
@@ -234,8 +225,12 @@ SnapWindow::updateWindowsEdges ()
 
 	    if (remove)
 	    {
-		edges.erase (it);
+		it = edges.erase (it);
 		remove = false;
+	    }
+	    else
+	    {
+		it++;
 	    }
 	}
     }
@@ -251,8 +246,6 @@ void
 SnapWindow::updateScreenEdges ()
 {
     CompRegion edgeRegion, resultRegion;
-    XRectangle rect;
-    CompRect *cRect;
     bool remove = false;
 
     foreach (CompOutput output, screen->outputDevs ())
@@ -273,36 +266,35 @@ SnapWindow::updateScreenEdges ()
 	if (w == window || !w->struts ())
 	    continue;
 
-	for (std::list<Edge *>::iterator it = edges.begin ();
-	     it != edges.end ();)
+	for (std::list<Edge>::iterator it = edges.begin (); it != edges.end ();)
 	{
-	    Edge *e = *it;
+	    Edge     *e = &*it;
+	    CompRect rect;
+
 	    if (!e->screenEdge)
+	    {
+		it++;
 		continue;
+	    }
 
 	    switch (e->type)
 	    {
 	    case LeftEdge:
 	    case RightEdge:
-		rect.x = e->position;
-		rect.y = e->start;
-		rect.width = 1;
-		rect.height = e->end - e->start;
+		rect.setGeometry (e->position, e->start, 1, e->end - e->start);
 		break;
 	    case TopEdge:
 	    case BottomEdge:
 	    default:
-		rect.x = e->start;
-		rect.y = e->position;
-		rect.width = e->end - e->start;
-		rect.height = 1;
+		rect.setGeometry (e->start, e->position, e->end - e->start, 1);
 	    }
 
-	    cRect = new CompRect (rect);
-	    edgeRegion = edgeRegion.united (*cRect);
+	    edgeRegion = edgeRegion.united (rect);
 	    resultRegion = edgeRegion.subtracted (w->region ());
 	    if (resultRegion.isEmpty ())
+	    {
 		remove = true;
+	    }
 	    else if (edgeRegion != resultRegion)
 	    {
 		addRegionEdges (e, resultRegion);
@@ -311,8 +303,12 @@ SnapWindow::updateScreenEdges ()
 
 	    if (remove)
 	    {
-		edges.erase (it);
+		it = edges.erase (it);
 		remove = false;
+	    }
+	    else
+	    {
+		it++;
 	    }
 	}
     }
@@ -351,21 +347,17 @@ SnapWindow::moveCheckNearestEdge (int position,
 {
     SNAP_SCREEN (screen);
 
-    Edge *edge = edges.front ();
+    Edge &edge = edges.front ();
     int dist, min = 65535;
 
-    foreach (Edge *current, edges)
+    foreach (Edge &current, edges)
     {
 	// Skip wrong type or outbound edges
-	if (current->type != type || current->end < start ||
-	    current->start > end)
-	{
+	if (current.type != type || current.end < start || current.start > end)
 	    continue;
-	}
 
 	// Compute distance
-	dist = before ? position - current->position
-	       : current->position - position;
+	dist = before ? position - current.position : current.position - position;
 	// Update minimum distance if needed
 	if (dist < min && dist >= 0)
 	{
@@ -376,8 +368,8 @@ SnapWindow::moveCheckNearestEdge (int position,
 	if (dist == 0)
 	    break;
 	// Unsnap edges that aren't snapped anymore
-	if (current->snapped && dist > ss->optionGetResistanceDistance ())
-	    current->snapped = false;
+	if (current.snapped && dist > ss->optionGetResistanceDistance ())
+	    current.snapped = false;
     }
     // We found a 0-dist edge, or we have a snapping candidate
     if (min == 0 || (min <= ss->optionGetAttractionDistance ()
@@ -390,9 +382,9 @@ SnapWindow::moveCheckNearestEdge (int position,
 	    snapDirection |= snapDirection;
 	}
 	// Attract the window if needed, moving it of the correct dist
-	if (min != 0 && !edge->snapped)
+	if (min != 0 && !edge.snapped)
 	{
-	    edge->snapped = true;
+	    edge.snapped = true;
 	    switch (type)
 	    {
 	    case LeftEdge:
@@ -449,21 +441,17 @@ SnapWindow::resizeCheckNearestEdge (int position,
 {
     SNAP_SCREEN (screen);
 
-    Edge *edge = edges.front ();
+    Edge &edge = edges.front ();
     int dist, min = 65535;
 
-    foreach (Edge *current, edges)
+    foreach (Edge &current, edges)
     {
 	// Skip wrong type or outbound edges
-	if (current->type != type || current->end < start ||
-	    current->start > end)
-	{
+	if (current.type != type || current.end < start || current.start > end)
 	    continue;
-	}
 
 	// Compute distance
-	dist = before ? position - current->position
-	       : current->position - position;
+	dist = before ? position - current.position : current.position - position;
 	// Update minimum distance if needed
 	if (dist < min && dist >= 0)
 	{
@@ -474,8 +462,8 @@ SnapWindow::resizeCheckNearestEdge (int position,
 	if (dist == 0)
 	    break;
 	// Unsnap edges that aren't snapped anymore
-	if (current->snapped && dist > ss->optionGetResistanceDistance ())
-	    current->snapped = false;
+	if (current.snapped && dist > ss->optionGetResistanceDistance ())
+	    current.snapped = false;
     }
     // We found a 0-dist edge, or we have a snapping candidate
     if (min == 0 || (min <= ss->optionGetAttractionDistance ()
@@ -489,9 +477,9 @@ SnapWindow::resizeCheckNearestEdge (int position,
 	}
 	// FIXME : this needs resize-specific code.
 	// Attract the window if needed, moving it of the correct dist
-	if (min != 0 && !edge->snapped)
+	if (min != 0 && !edge.snapped)
 	{
-	    edge->snapped = true;
+	    edge.snapped = true;
 	    switch (type)
 	    {
 	    case LeftEdge:
@@ -573,10 +561,10 @@ SnapWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	return;
 
     // we have to avoid snapping but there's still some buffered moving
-    if (!ss->snapping && (this->dx || this->dy || this->dwidth || this->dheight))
+    if (!ss->snapping && (m_dx || m_dy || m_dwidth || m_dheight))
     {
-	resize (this->dx, this->dy, this->dwidth, this->dheight);
-	this->dx = this->dy = this->dwidth = this->dheight = 0;
+	resize (m_dx, m_dy, m_dwidth, m_dheight);
+	m_dx = m_dy = m_dwidth = m_dheight = 0;
 	return;
     }
 
@@ -592,30 +580,30 @@ SnapWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	// by buffered dx - dx, same for dh
 	if (snapped && snapDirection & HorizontalSnap)
 	{
-	    this->dx += dx;
-	    if (this->dx < ss->optionGetResistanceDistance ()
-		&& this->dx > -ss->optionGetResistanceDistance ())
+	    m_dx += dx;
+	    if (m_dx < ss->optionGetResistanceDistance ()
+		&& m_dx > -ss->optionGetResistanceDistance ())
 	    {
 		resize (-dx, 0, 0, 0);
 	    }
 	    else
 	    {
-		resize (this->dx - dx, 0, 0, 0);
-		this->dx = 0;
-		if (!this->dwidth)
+		resize (m_dx - dx, 0, 0, 0);
+		m_dx = 0;
+		if (!m_dwidth)
 		    snapDirection &= VerticalSnap;
 	    }
-	    this->dwidth += dwidth;
-	    if (this->dwidth < ss->optionGetResistanceDistance ()
-		&& this->dwidth > -ss->optionGetResistanceDistance ())
+	    m_dwidth += dwidth;
+	    if (m_dwidth < ss->optionGetResistanceDistance ()
+		&& m_dwidth > -ss->optionGetResistanceDistance ())
 	    {
 		resize (0, 0, -dwidth, 0);
 	    }
 	    else
 	    {
-		resize (0, 0, this->dwidth - dwidth, 0);
-		this->dwidth = 0;
-		if (!this->dx)
+		resize (0, 0, m_dwidth - dwidth, 0);
+		m_dwidth = 0;
+		if (!m_dx)
 		    snapDirection &= VerticalSnap;
 	    }
 	}
@@ -623,30 +611,30 @@ SnapWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	// Same for vertical snapping and dy/dh
 	if (snapped && snapDirection & VerticalSnap)
 	{
-	    this->dy += dy;
-	    if (this->dy < ss->optionGetResistanceDistance ()
-		&& this->dy > -ss->optionGetResistanceDistance ())
+	    m_dy += dy;
+	    if (m_dy < ss->optionGetResistanceDistance ()
+		&& m_dy > -ss->optionGetResistanceDistance ())
 	    {
 		resize (0, -dy, 0, 0);
 	    }
 	    else
 	    {
-		resize (0, this->dy - dy, 0, 0);
-		this->dy = 0;
-		if (!this->dheight)
+		resize (0, m_dy - dy, 0, 0);
+		m_dy = 0;
+		if (!m_dheight)
 		    snapDirection &= HorizontalSnap;
 	    }
-	    this->dheight += dheight;
-	    if (this->dheight < ss->optionGetResistanceDistance ()
-		&& this->dheight > -ss->optionGetResistanceDistance ())
+	    m_dheight += dheight;
+	    if (m_dheight < ss->optionGetResistanceDistance ()
+		&& m_dheight > -ss->optionGetResistanceDistance ())
 	    {
 		resize (0, 0, 0, -dheight);
 	    }
 	    else
 	    {
-		resize (0, 0, 0, this->dheight - dheight);
-		this->dheight = 0;
-		if (!this->dy)
+		resize (0, 0, 0, m_dheight - dheight);
+		m_dheight = 0;
+		if (!m_dy)
 		    snapDirection &= HorizontalSnap;
 	    }
 	}
@@ -673,10 +661,10 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	return;
 
     // we have to avoid snapping but there's still some buffered moving
-    if (!ss->snapping && (this->dx || this->dy))
+    if (!ss->snapping && (m_dx || m_dy))
     {
-	move (this->dx, this->dy);
-	this->dx = this->dy = 0;
+	move (m_dx, m_dy);
+	m_dx = m_dy = 0;
 	return;
     }
 
@@ -692,32 +680,32 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	// by buffered dx - dx
 	if (snapped && snapDirection & HorizontalSnap)
 	{
-	    this->dx += dx;
-	    if (this->dx < ss->optionGetResistanceDistance ()
-		&& this->dx > -ss->optionGetResistanceDistance ())
+	    m_dx += dx;
+	    if (m_dx < ss->optionGetResistanceDistance ()
+		&& m_dx > -ss->optionGetResistanceDistance ())
 	    {
 		move (-dx, 0);
 	    }
 	    else
 	    {
-		move (this->dx - dx, 0);
-		this->dx = 0;
+		move (m_dx - dx, 0);
+		m_dx = 0;
 		snapDirection &= VerticalSnap;
 	    }
 	}
 	// Same for vertical snapping and dy
 	if (snapped && snapDirection & VerticalSnap)
 	{
-	    this->dy += dy;
-	    if (this->dy < ss->optionGetResistanceDistance ()
-		&& this->dy > -ss->optionGetResistanceDistance ())
+	    m_dy += dy;
+	    if (m_dy < ss->optionGetResistanceDistance ()
+		&& m_dy > -ss->optionGetResistanceDistance ())
 	    {
 		move (0, -dy);
 	    }
 	    else
 	    {
-		move (0, this->dy - dy);
-		this->dy = 0;
+		move (0, m_dy - dy);
+		m_dy = 0;
 		snapDirection &= HorizontalSnap;
 	    }
 	}
@@ -755,7 +743,7 @@ SnapWindow::ungrabNotify ()
     snapped = false;
     snapDirection = 0;
     grabbed = 0;
-    dx = dy = dwidth = dheight = 0;
+    m_dx = m_dy = m_dwidth = m_dheight = 0;
 
     window->ungrabNotify ();
 }
@@ -804,10 +792,10 @@ SnapWindow::SnapWindow (CompWindow *window) :
     PrivateHandler <SnapWindow, CompWindow> (window),
     window (window),
     snapDirection (0),
-    dx (0),
-    dy (0),
-    dwidth (0),
-    dheight (0),
+    m_dx (0),
+    m_dy (0),
+    m_dwidth (0),
+    m_dheight (0),
     snapped (false),
     grabbed (0),
     skipNotify (false)
@@ -817,7 +805,6 @@ SnapWindow::SnapWindow (CompWindow *window) :
 
 SnapWindow::~SnapWindow ()
 {
-    edges.clear ();
 }
 
 bool

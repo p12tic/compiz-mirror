@@ -123,16 +123,16 @@ class SnapWindow :
 	CompWindow *window;
 
 	// linked lists
-	std::list<Edge *> edges;
+	std::list<Edge> edges;
 
 	// bitfield
 	int snapDirection;
 
 	// dx/dy/dw/dh when a window is resisting to user
-	int dx;
-	int dy;
-	int dwidth;
-	int dheight;
+	int m_dx;
+	int m_dy;
+	int m_dwidth;
+	int m_dheight;
 
 	// internals
 	bool snapped;
@@ -145,8 +145,8 @@ class SnapWindow :
 	void move (int dx, int dy);
 	void resize (int dx, int dy, int dwidth, int dheight);
 
-	Edge *addEdge (Window id, int position, int start, int end,
-		       EdgeType type, bool screenEdge);
+	void addEdge (Window id, int position, int start, int end,
+		      EdgeType type, bool screenEdge);
 	void addRegionEdges (Edge *parent, CompRegion region);
 	void updateWindowsEdges ();
 	void updateScreenEdges ();
