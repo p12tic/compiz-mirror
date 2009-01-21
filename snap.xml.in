@@ -10,7 +10,7 @@
 			<plugin>decoration</plugin>
 		</relation>
 	</deps>
-    <display>
+    <options>
       <group>
         <_short>Bindings</_short>
         <option name="avoid_snap" type="list">
@@ -40,8 +40,6 @@
 		  </desc>
         </option>
       </group>
-    </display>
-    <screen>
       <group>
         <_short>Behaviour</_short>
         <option name="snap_type" type="list">
@@ -95,6 +93,6 @@
           <max>100</max>
         </option>
       </group>
-    </screen>
+    </options>
   </plugin>
 </compiz>
