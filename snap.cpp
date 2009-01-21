@@ -192,7 +192,7 @@ SnapWindow::updateWindowsEdges ()
 
 	// can't use foreach here because we need the iterator for erase()
 	for (std::list<Edge *>::iterator it = edges.begin ();
-	     it != edges.end ();)
+	     it != edges.end (); it++)
 	{
 	    Edge *e = *it;
 	    if (!e->passed)
@@ -274,7 +274,7 @@ SnapWindow::updateScreenEdges ()
 	    continue;
 
 	for (std::list<Edge *>::iterator it = edges.begin ();
-	     it != edges.end ();)
+	     it != edges.end (); it++)
 	{
 	    Edge *e = *it;
 	    if (!e->screenEdge)
