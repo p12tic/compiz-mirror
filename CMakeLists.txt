@@ -1,3 +1,3 @@
 include (CompizFusion)
 
-compiz_fusion_plugin (snap)
+compiz_fusion_plugin (snap PLUGINDEPS)
