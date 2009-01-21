@@ -408,7 +408,7 @@ WallScreen::determineMovementAngle ()
 bool
 WallScreen::moveViewport (int    x,
                           int    y,
-                          Window moveWindow)
+                          Window moveWin)
 {
     if (!x && !y)
         return false;
@@ -419,12 +419,12 @@ WallScreen::moveViewport (int    x,
     if (!checkDestination (x, y))
         return false;
 
-    if (moveWindow != moveWindow)
+    if (moveWindow != moveWin)
     {
         CompWindow *w;
 
         releaseMoveWindow ();
-        w = screen->findWindow (moveWindow);
+        w = screen->findWindow (moveWin);
         if (w)
         {
             if (!(w->type () & (CompWindowTypeDesktopMask |
