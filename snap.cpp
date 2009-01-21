@@ -138,7 +138,7 @@ isSnapWindow (CompWindow *w)
 
     if (UNLIKELY(!w))
 	return false;
-    if (w->invisible () || /*w->hidden () ||*/ w->minimized ())
+    if (w->invisible () || w->isViewable () || w->minimized ())
 	return false;
     if ((w->type () & SNAP_WINDOW_TYPE) && 
 	(ss->optionGetEdgesCategoriesMask () & EdgesCategoriesWindowEdgesMask))
@@ -533,31 +533,11 @@ SnapWindow::resizeCheckEdges (int dx, int dy, int dwidth, int dheight)
 			    VerticalSnap);
 }
 
-// avoidSnap functions ---------------------------------------------------------
-
-bool
-SnapScreen::enableSnapping (CompAction         *action,
-			    CompAction::State   state,
-			    CompOption::Vector &options)
-{
-	snapping = true;
-	return false;
-}
-
-bool
-SnapScreen::disableSnapping (CompAction         *action,
-			     CompAction::State   state,
-			     CompOption::Vector &options)
-{
-	snapping = false;
-	return false;
-}
-
 // Check if avoidSnap is matched, and enable/disable snap consequently
 void
 SnapScreen::handleEvent (XEvent *event)
 {
-/*    if (event->type == d->xkbEvent)
+    if (event->type == screen->xkbEvent ())
     {
 	XkbAnyEvent *xkbEvent = (XkbAnyEvent *) event;
 
@@ -570,12 +550,12 @@ SnapScreen::handleEvent (XEvent *event)
 		mods = avoidSnapMask;
 
 	    if ((stateEvent->mods & mods) == mods)
-		disableSnapping (NULL, 0, NULL);
+		snapping = false;
 	    else
-		enableSnapping (NULL, 0, NULL);
+		snapping = true;
 	}
     }
-*/
+
     screen->handleEvent (event);
 }
 
@@ -832,6 +812,7 @@ SnapWindow::SnapWindow (CompWindow *window) :
     grabbed (0),
     skipNotify (false)
 {
+    WindowInterface::setHandler (window);
 }
 
 SnapWindow::~SnapWindow ()
