@@ -351,7 +351,7 @@ SnapWindow::moveCheckNearestEdge (int position,
 {
     SNAP_SCREEN (screen);
 
-    Edge &edge = edges.front ();
+    Edge *edge = &edges.front ();
     int dist, min = 65535;
 
     foreach (Edge &current, edges)
@@ -366,7 +366,7 @@ SnapWindow::moveCheckNearestEdge (int position,
 	if (dist < min && dist >= 0)
 	{
 	    min = dist;
-	    edge = current;
+	    edge = &current;
 	}
 	// 0-dist edge, just break
 	if (dist == 0)
@@ -383,12 +383,12 @@ SnapWindow::moveCheckNearestEdge (int position,
 	if (ss->optionGetSnapTypeMask () & SnapTypeEdgeResistanceMask)
 	{
 	    snapped = true;
-	    snapDirection |= snapDirection;
+	    this->snapDirection |= snapDirection;
 	}
 	// Attract the window if needed, moving it of the correct dist
-	if (min != 0 && !edge.snapped)
+	if (min != 0 && !edge->snapped)
 	{
-	    edge.snapped = true;
+	    edge->snapped = true;
 	    switch (type)
 	    {
 	    case LeftEdge:
@@ -445,7 +445,7 @@ SnapWindow::resizeCheckNearestEdge (int position,
 {
     SNAP_SCREEN (screen);
 
-    Edge &edge = edges.front ();
+    Edge *edge = &edges.front ();
     int dist, min = 65535;
 
     foreach (Edge &current, edges)
@@ -460,7 +460,7 @@ SnapWindow::resizeCheckNearestEdge (int position,
 	if (dist < min && dist >= 0)
 	{
 	    min = dist;
-	    edge = current;
+	    edge = &current;
 	}
 	// 0-dist edge, just break
 	if (dist == 0)
@@ -477,13 +477,13 @@ SnapWindow::resizeCheckNearestEdge (int position,
 	if (ss->optionGetSnapTypeMask () & SnapTypeEdgeResistanceMask)
 	{
 	    snapped = true;
-	    snapDirection |= snapDirection;
+	    this->snapDirection |= snapDirection;
 	}
 	// FIXME : this needs resize-specific code.
 	// Attract the window if needed, moving it of the correct dist
-	if (min != 0 && !edge.snapped)
+	if (min != 0 && !edge->snapped)
 	{
-	    edge.snapped = true;
+	    edge->snapped = true;
 	    switch (type)
 	    {
 	    case LeftEdge:
