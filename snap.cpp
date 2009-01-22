@@ -93,24 +93,24 @@ SnapWindow::addEdge (Window   id,
 void
 SnapWindow::addRegionEdges (Edge *parent, CompRegion region)
 {
-    int i, position, start, end;
+    int position, start, end;
 
-    for (i = 0; i < region.numRects (); i++)
+    foreach (const CompRect &r, region.rects ())
     {
 	switch (parent->type)
 	{
 	case LeftEdge:
 	case RightEdge:
-	    position = region.rects ()[i].x1 ();
-	    start = region.rects ()[i].y1 ();
-	    end = region.rects ()[i].y2 ();
+	    position = r.x1 ();
+	    start = r.y1 ();
+	    end = r.y2 ();
 	    break;
 	case TopEdge:
 	case BottomEdge:
 	default:
-	    position = region.rects ()[i].y1 ();
-	    start = region.rects ()[i].x1 ();
-	    end = region.rects ()[i].x2 ();
+	    position = r.y1 ();
+	    start = r.x1 ();
+	    end = r.x2 ();
 	}
 	
 	addEdge (parent->id, position, start, end,
@@ -199,20 +199,22 @@ SnapWindow::updateWindowsEdges ()
 
 	    switch (e->type)
 	    {
-	    case LeftEdge:
-	    case RightEdge:
-		rect.setGeometry (e->position, e->start, 1, e->end - e->start);
-		break;
-	    case TopEdge:
-	    case BottomEdge:
-	    default:
-		rect.setGeometry (e->start, e->position, e->end - e->start, 1);
+		case LeftEdge:
+		case RightEdge:
+		    rect.setGeometry (e->position, e->position + 1,
+				    e->start, e->end);
+		    break;
+		case TopEdge:
+		case BottomEdge:
+		default:
+		    rect.setGeometry (e->start, e->end,
+				    e->position, e->position + 1);
 	    }
 
 	    // If the edge is in the window region, remove it,
 	    // if it's partly in the region, split it
-	    edgeRegion = edgeRegion.united (rect);
-	    resultRegion = edgeRegion.subtracted (w->region ());
+	    edgeRegion = CompRegion (rect);
+	    resultRegion = edgeRegion - w->region ();
 	    if (resultRegion.isEmpty ())
 	    {
 		remove = true;
@@ -279,18 +281,20 @@ SnapWindow::updateScreenEdges ()
 
 	    switch (e->type)
 	    {
-	    case LeftEdge:
-	    case RightEdge:
-		rect.setGeometry (e->position, e->start, 1, e->end - e->start);
-		break;
-	    case TopEdge:
-	    case BottomEdge:
-	    default:
-		rect.setGeometry (e->start, e->position, e->end - e->start, 1);
+		case LeftEdge:
+		case RightEdge:
+		    rect.setGeometry (e->position, e->position + 1,
+				    e->start, e->end);
+		    break;
+		case TopEdge:
+		case BottomEdge:
+		default:
+		    rect.setGeometry (e->start, e->end,
+				    e->position, e->position + 1);
 	    }
 
-	    edgeRegion = edgeRegion.united (rect);
-	    resultRegion = edgeRegion.subtracted (w->region ());
+            edgeRegion = CompRegion (rect);
+	    resultRegion = edgeRegion - w->region ();
 	    if (resultRegion.isEmpty ())
 	    {
 		remove = true;
