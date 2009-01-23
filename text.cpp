@@ -347,37 +347,57 @@ TextSurface::~TextSurface ()
 	pango_font_description_free (font);
 }
 
-CompText *
+bool
 CompText::renderText (CompString   text,
 		      const Attrib &attrib)
 {
     TextSurface surface;
-    CompText    *retval = NULL;
+    bool        retval = false;
 
     TEXT_SCREEN (screen);
 
+    if (!ts)
+	return false;
+
     if (!surface.valid ())
-	return NULL;
+	return false;
 
     if (!(attrib.flags & NoAutoBinding) && !ts->gScreen)
-	return NULL;
+	return false;
 
     if (surface.render (attrib, text))
     {
-	retval = new CompText (surface.pixmap,
-			       surface.width,
-			       surface.height,
-			       !(attrib.flags & NoAutoBinding));
+	if (!(attrib.flags & NoAutoBinding))
+	{
+	    texture = GLTexture::bindPixmapToTexture (surface.pixmap,
+						      surface.width,
+						      surface.height,
+						      32);
+	    retval  = !texture.empty ();
+	}
+	else
+	{
+	    retval = true;
+	}
     }
-    else if (surface.pixmap)
+
+    if (!retval && surface.pixmap)
     {
 	XFreePixmap (screen->dpy (), surface.pixmap);
+	return retval;
     }
+
+    if (pixmap)
+	XFreePixmap (screen->dpy (), pixmap);
+
+    pixmap = surface.pixmap;
+    width  = surface.width;
+    height = surface.height;
 
     return retval;
 }
 
-CompText *
+bool
 CompText::renderWindowTitle (Window               window,
 		             bool                 withViewportNumber,
 		             const CompText::Attrib &attrib)
@@ -385,6 +405,9 @@ CompText::renderWindowTitle (Window               window,
     CompString text;
 
     TEXT_SCREEN (screen);
+
+    if (!ts)
+	return false;
 
     if (withViewportNumber)
     {
@@ -420,9 +443,9 @@ CompText::renderWindowTitle (Window               window,
     }
 
     if (text.empty ())
-	return NULL;
+	return false;
 
-    return CompText::renderText (text, attrib);
+    return renderText (text, attrib);
 }
 
 Pixmap
@@ -430,7 +453,7 @@ CompText::getPixmap ()
 {
     Pixmap retval = None;
  
-    if (!texture.size ())
+    if (texture.empty ())
     {
 	retval = pixmap;
 	pixmap = None;
@@ -459,7 +482,7 @@ CompText::draw (float x,
     GLboolean  wasBlend;
     GLint      oldBlendSrc, oldBlendDst;
 
-    if (!texture.size ())
+    if (texture.empty ())
 	return;
 
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
@@ -504,16 +527,11 @@ CompText::draw (float x,
     glBlendFunc (oldBlendSrc, oldBlendDst);
 }
 
-CompText::CompText (Pixmap       pm,
-		    unsigned int w,
-		    unsigned int h,
-		    bool         bind) :
-    width (w),
-    height (h),
-    pixmap (pm)
+CompText::CompText () :
+    width (0),
+    height (0),
+    pixmap (None)
 {
-    if (bind)
-	texture = GLTexture::bindPixmapToTexture (pixmap, width, height, 32);
 };
 
 CompText::~CompText ()

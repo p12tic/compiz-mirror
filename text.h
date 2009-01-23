@@ -60,14 +60,16 @@ class CompText
 	    unsigned short bgColor[4]; /**< background color (RGBA) */
 	} Attrib;
 
+	CompText ();
 	~CompText();
 
-	static CompText * renderText (CompString   text,
-				      const Attrib &attrib);
+	bool renderText (CompString   text,
+			 const Attrib &attrib);
 
-	static CompText * renderWindowTitle (Window       window,
-					     bool         renderViewportNumber,
-					     const Attrib &attrib);
+
+	bool renderWindowTitle (Window       window,
+				bool         renderViewportNumber,
+				const Attrib &attrib);
 
 	Pixmap getPixmap ();
 	unsigned int getWidth () const;
@@ -78,8 +80,6 @@ class CompText
 		   float alpha) const;
 
     private:
-	CompText (Pixmap pm, unsigned int w, unsigned int h, bool bind);
-
 	unsigned int width;
 	unsigned int height;
 
