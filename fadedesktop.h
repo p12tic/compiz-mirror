@@ -36,16 +36,17 @@ class FadedesktopScreen :
 {
     public:
 
-	typedef enum
-	{
-	    FD_STATE_OFF = 0,
-	    FD_STATE_OUT,
-	    FD_STATE_ON,
-	    FD_STATE_IN
-	} FadeDesktopState;
+	typedef enum {
+	    Off,
+	    Out,
+	    On,
+	    In
+	} State;
     public:
 
 	FadedesktopScreen (CompScreen *);
+
+	void activateEvent (bool);
 
 	void preparePaint (int);
 	void donePaint ();
@@ -56,8 +57,8 @@ class FadedesktopScreen :
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
 
-	FadeDesktopState state;
-	int		  fadeTime;
+	State state;
+	int   fadeTime;
 };
 
 class FadedesktopWindow :
@@ -68,6 +69,8 @@ class FadedesktopWindow :
     public:
 
 	FadedesktopWindow (CompWindow *);
+
+	bool isFadedesktopWindow ();
 
 	bool glPaint (const GLWindowPaintAttrib &,
 		      const GLMatrix &,

@@ -23,8 +23,8 @@
 
 COMPIZ_PLUGIN_20081216 (fadedesktop, FadedesktopPluginVTable);
 
-static void
-fadeDesktopActivateEvent (bool activating)
+void
+FadedesktopScreen::activateEvent (bool activating)
 {
     CompOption::Vector o;
 
@@ -32,61 +32,66 @@ fadeDesktopActivateEvent (bool activating)
     o.push_back (CompOption ("active", CompOption::TypeBool));
 
     o[0].value (). set ((int) screen->root ());
-    o[1].value (). set ((bool) activating);
+    o[1].value (). set (activating);
+
+    screen->handleCompizEvent ("fadedesktop", "activate", o);
 }
 
-static bool
-isFDWin (CompWindow *w)
+bool
+FadedesktopWindow::isFadedesktopWindow ()
 {
-    CompMatch match (FadedesktopScreen::get (screen)->optionGetWindowMatch ());
-    if (w->overrideRedirect ())
+    FD_SCREEN (screen);
+
+    if (!window->managed ())
 	return false;
 
-    if (w->grabbed ())
+    if (window->grabbed ())
 	return false;
 
-    if (!w->managed ())
+    if (window->wmType () & (CompWindowTypeDesktopMask |
+			     CompWindowTypeDockMask))
 	return false;
 
-    if (w->wmType () & (CompWindowTypeDesktopMask |
-		        CompWindowTypeDockMask))
+    if (window->state () & CompWindowStateSkipPagerMask)
 	return false;
 
-    if (w->state () & CompWindowStateSkipPagerMask)
-	return false;
-
-    if (!match.evaluate (w))
+    if (!fs->optionGetWindowMatch ().evaluate (window))
 	return false;
 
     return true;
 }
 
-void 
+void
 FadedesktopScreen::preparePaint (int msSinceLastPaint)
 {
-    bool doFade;
-
     fadeTime -= msSinceLastPaint;
     if (fadeTime < 0)
 	fadeTime = 0;
 
-    if ((state == FD_STATE_OUT) || (state == FD_STATE_IN))
+    if (state == Out || state == In)
     {
 	foreach (CompWindow *w, screen->windows ())
 	{
+	    bool doFade;
+
 	    FD_WINDOW (w);
 
-	    if (state == FD_STATE_OUT)
+	    if (state == Out)
 		doFade = fw->fading && w->inShowDesktopMode ();
 	    else
 		doFade = fw->fading && !w->inShowDesktopMode ();
 
 	    if (doFade)
 	    {
+		float windowFadeTime;
+
+		if (state == Out)
+		    windowFadeTime = fadeTime;
+		else
+		    windowFadeTime = optionGetFadetime () - fadeTime;
+
 		fw->opacity = fw->cWindow->opacity () *
-		    (float)((state == FD_STATE_OUT) ? fadeTime : 
-		    optionGetFadetime () - fadeTime) / 
-		    (float)optionGetFadetime();
+		              (windowFadeTime / optionGetFadetime ());
 	    }
 	}
     }
@@ -97,7 +102,7 @@ FadedesktopScreen::preparePaint (int msSinceLastPaint)
 void
 FadedesktopScreen::donePaint ()
 {
-    if ((state == FD_STATE_OUT) || (state == FD_STATE_IN))
+    if (state == Out || state == In)
     {
 	if (fadeTime <= 0)
 	{
@@ -109,7 +114,7 @@ FadedesktopScreen::donePaint ()
 
 		if (fw->fading)
 		{
-		    if (state == FD_STATE_OUT)
+		    if (state == Out)
 		    {
 			w->hide ();
 			fw->isHidden = true;
@@ -120,14 +125,17 @@ FadedesktopScreen::donePaint ()
 		    isStillSD = true;
 	    }
 
-	    if ((state == FD_STATE_OUT) || isStillSD)
-		state = FD_STATE_ON;
+	    if (state == Out || isStillSD)
+		state = On;
 	    else
-		state = FD_STATE_OFF;
-	    fadeDesktopActivateEvent (false);
+		state = Off;
+
+	    activateEvent (false);
 	}
 	else
+	{
 	    cScreen->damageScreen ();
+	}
     }
 
     cScreen->donePaint ();
@@ -135,41 +143,37 @@ FadedesktopScreen::donePaint ()
 
 bool
 FadedesktopWindow::glPaint (const GLWindowPaintAttrib &attrib,
-		      	    const GLMatrix &transform,
-		      	    const CompRegion &region,
-		      	    unsigned int mask)
+			    const GLMatrix            &transform,
+			    const CompRegion          &region,
+			    unsigned int              mask)
 {
-    bool status;
-
     if (fading || isHidden)
     {
 	GLWindowPaintAttrib wAttrib = attrib;
 	wAttrib.opacity = opacity;
 
-	status = gWindow->glPaint (wAttrib, transform, region, mask);
+	return gWindow->glPaint (wAttrib, transform, region, mask);
     }
-    else
-	status = gWindow->glPaint (attrib, transform, region, mask);
 
-    return status;
+    return gWindow->glPaint (attrib, transform, region, mask);
 }
 
 void
 FadedesktopScreen::enterShowDesktopMode ()
 {
-    if ((state == FD_STATE_OFF) || (state == FD_STATE_IN))
+    if (state == Off || state == In)
     {
-	if (state == FD_STATE_OFF)
-	    fadeDesktopActivateEvent (true);
+	if (state == Off)
+	    activateEvent (true);
 
-	state = FD_STATE_OUT;
+	state = Out;
 	fadeTime = optionGetFadetime() - fadeTime;
 
 	foreach (CompWindow *w, screen->windows ())
 	{
-	    if (isFDWin(w))
+	    FD_WINDOW (w);
+	    if (fw->isFadedesktopWindow ())
 	    {
-		FD_WINDOW(w);
 
 		fw->fading = true;
 		w->setShowDesktopMode (true);
@@ -186,14 +190,14 @@ FadedesktopScreen::enterShowDesktopMode ()
 void
 FadedesktopScreen::leaveShowDesktopMode (CompWindow *w)
 {
-    if (state != FD_STATE_OFF)
+    if (state != Off)
     {
-	if (state != FD_STATE_IN)
+	if (state != In)
 	{
-	    if (state == FD_STATE_ON)
-		fadeDesktopActivateEvent (true);
+	    if (state == On)
+		activateEvent (true);
 
-	    state = FD_STATE_IN;
+	    state = In;
 	    fadeTime = optionGetFadetime() - fadeTime;
 	}
 
@@ -202,7 +206,7 @@ FadedesktopScreen::leaveShowDesktopMode (CompWindow *w)
 	    if (w && (w->id () != cw->id ()))
 		continue;
 
-	    FD_WINDOW(cw);
+	    FD_WINDOW (cw);
 
 	    if (fw->isHidden)
 	    {
@@ -228,7 +232,7 @@ FadedesktopScreen::FadedesktopScreen (CompScreen *screen) :
     FadedesktopOptions (fadedesktopVTable->getMetadata ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
-    state (FD_STATE_OFF),
+    state (Off),
     fadeTime (0)
 {
     ScreenInterface::setHandler (screen);
