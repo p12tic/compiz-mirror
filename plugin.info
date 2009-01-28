@@ -1,1 +1,2 @@
 PLUGIN = fadedesktop
+PKG_DEP = compiz-composite compiz-opengl

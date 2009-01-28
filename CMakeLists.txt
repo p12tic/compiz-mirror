@@ -1,3 +1,3 @@
 include (CompizFusion)
 
-compiz_fusion_plugin (fadedesktop)
+compiz_fusion_plugin (fadedesktop PLUGINDEPS opengl composite)
