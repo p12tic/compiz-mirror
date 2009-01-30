@@ -30,48 +30,52 @@ InfoLayer::~InfoLayer ()
 {
     if (cr)
 	cairo_destroy (cr);
-    cr = NULL;
 
     if (surface)
 	cairo_surface_destroy (surface);
-    surface = NULL;
 
     if (pixmap)
 	XFreePixmap (screen->dpy (), pixmap);
-    pixmap = None;
 }
 
 /* Here 's' is Screen * 'screen' is 'CompScreen *' */
 
 InfoLayer::InfoLayer () :
+    valid (false),
     s (ScreenOfDisplay (screen->dpy (), screen->screenNum ())),
-    format (XRenderFindStandardFormat (screen->dpy (),
-	    				PictStandardARGB32)),
-    pixmap (XCreatePixmap (screen->dpy (), screen->root (),
-	 RESIZE_POPUP_WIDTH, RESIZE_POPUP_HEIGHT, 32)),
-    surface (cairo_xlib_surface_create_with_xrender_format (screen->dpy (),
+    pixmap (None),
+    surface (NULL),
+    cr (NULL)
+{
+    format = XRenderFindStandardFormat (screen->dpy (), PictStandardARGB32);
+    if (!format)
+	return;
+
+    pixmap = XCreatePixmap (screen->dpy (), screen->root (),
+			    RESIZE_POPUP_WIDTH, RESIZE_POPUP_HEIGHT, 32);
+    if (!pixmap)
+	return;
+
+    surface =
+	cairo_xlib_surface_create_with_xrender_format (screen->dpy (),
 						       pixmap, s,
 						       format,
 						       RESIZE_POPUP_WIDTH,
-						       RESIZE_POPUP_HEIGHT)),
-    texture (GLTexture::bindPixmapToTexture (pixmap,
-					     RESIZE_POPUP_WIDTH,
-					     RESIZE_POPUP_HEIGHT, 32))
-{
-
-    if (!texture.size ())
-    {
-	compLogMessage ("resizeinfo", CompLogLevelWarn,
-			"Bind Pixmap to Texture failure");
-	delete this;
-	return;
-    }
-
+						       RESIZE_POPUP_HEIGHT);
     if (cairo_surface_status (surface) != CAIRO_STATUS_SUCCESS)
     {
 	compLogMessage ("resizeinfo", CompLogLevelWarn,
 			"Could not create cairo layer surface,");
-	delete this;
+	return;
+    }
+
+    texture = GLTexture::bindPixmapToTexture (pixmap,
+					      RESIZE_POPUP_WIDTH,
+					      RESIZE_POPUP_HEIGHT, 32);
+    if (!texture.size ())
+    {
+	compLogMessage ("resizeinfo", CompLogLevelWarn,
+			"Bind Pixmap to Texture failure");
 	return;
     }
 
@@ -80,9 +84,10 @@ InfoLayer::InfoLayer () :
     {
 	compLogMessage ("resizeinfo", CompLogLevelWarn,
 			"Could not create cairo context");
-	delete this;
 	return;
     }
+
+    valid = true;
 }
 
 /* Draw the window "size" derived from the window hints.
@@ -92,9 +97,9 @@ InfoLayer::InfoLayer () :
 void
 InfoLayer::renderText ()
 {
-    int                  baseWidth, baseHeight;
-    int                  widthInc, heightInc;
-    int                  width, height, xv, yv;
+    unsigned int         baseWidth, baseHeight;
+    unsigned int         widthInc, heightInc;
+    unsigned int         width, height, xv, yv;
     unsigned short       *color;
     char                 info[50];
     PangoLayout          *layout;
@@ -102,6 +107,9 @@ InfoLayer::renderText ()
     int                  w, h;
 
     INFO_SCREEN (screen);
+
+    if (!valid)
+	return;
 
     baseWidth = is->pWindow->sizeHints ().base_width;
     baseHeight = is->pWindow->sizeHints ().base_height;
@@ -170,7 +178,10 @@ InfoLayer::renderBackground ()
     float           r, g, b, a;
 
     INFO_SCREEN (screen);
-	
+
+    if (!valid)
+	return;
+
     cairo_set_line_width (cr, 1.0f);
 
     /* Clear */
@@ -271,7 +282,7 @@ InfoScreen::donePaint ()
 	
 	if (!fadeTime && !drawing)
 	{
-	    pWindow = 0;
+	    pWindow = NULL;
 
 	    cScreen->preparePaintSetEnabled (this, false);
 	    gScreen->glPaintOutputSetEnabled (this, false);
@@ -295,8 +306,8 @@ InfoWindow::grabNotify (int          x,
     {
 	bool showInfo;
 	showInfo = (((window->sizeHints ().width_inc != 1) && 
-		    (window->sizeHints ().height_inc != 1)) ||
-	           is->optionGetAlwaysShow ());
+		     (window->sizeHints ().height_inc != 1)) ||
+		    is->optionGetAlwaysShow ());
 
 	if (showInfo && (mask & CompWindowGrabResizeMask))
 	{
@@ -310,7 +321,6 @@ InfoWindow::grabNotify (int          x,
 	    is->resizeGeometry.height = window->height ();
 
 	    screen->handleEventSetEnabled (is, true);
-
 	}
     }
 	
@@ -329,9 +339,7 @@ InfoWindow::ungrabNotify ()
 	is->cScreen->damageScreen ();
 
 	screen->handleEventSetEnabled (is, false);
-
 	window->ungrabNotifySetEnabled (this, false);
-
     }
 	
     window->ungrabNotify ();
@@ -340,20 +348,25 @@ InfoWindow::ungrabNotify ()
 /* Draw a texture at x/y on a quad of RESIZE_POPUP_WIDTH /
    RESIZE_POPUP_HEIGHT with the opacity in InfoScreen. */
 void
-InfoLayer::draw (int         x,
-	   	 int         y)
+InfoLayer::draw (int x,
+	   	 int y)
 {
     BOX   box;
     float opacity;
 
     INFO_SCREEN (screen);
 
+    if (!valid)
+	return;
+
     for (unsigned int i = 0; i < texture.size (); i++)
     {
 
-	GLTexture *tex = texture[i];
+	GLTexture         *tex = texture[i];
 	GLTexture::Matrix matrix = tex->matrix ();
+
 	tex->enable (GLTexture::Good);
+
 	matrix.x0 -= x * matrix.xx;
 	matrix.y0 -= y * matrix.yy;
 
@@ -362,23 +375,23 @@ InfoLayer::draw (int         x,
 	box.y1 = y;
 	box.y2 = y + RESIZE_POPUP_HEIGHT;
 
-	opacity = (float)is->fadeTime / is->optionGetFadeTime ();
+	opacity = (float) is->fadeTime / is->optionGetFadeTime ();
 	if (is->drawing)
 	    opacity = 1.0f - opacity;
 
 	glColor4f (opacity, opacity, opacity, opacity); 
 	glBegin (GL_QUADS);
 	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x1), 
-		  COMP_TEX_COORD_Y (matrix, box.y2));
+		      COMP_TEX_COORD_Y (matrix, box.y2));
 	glVertex2i (box.x1, box.y2);
 	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x2), 
-		  COMP_TEX_COORD_Y (matrix, box.y2));
+		      COMP_TEX_COORD_Y (matrix, box.y2));
 	glVertex2i (box.x2, box.y2);
 	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x2), 
-		  COMP_TEX_COORD_Y (matrix, box.y1));
+		      COMP_TEX_COORD_Y (matrix, box.y1));
 	glVertex2i (box.x2, box.y1);
 	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x1), 
-		  COMP_TEX_COORD_Y (matrix, box.y1));
+		      COMP_TEX_COORD_Y (matrix, box.y1));
 	glVertex2i (box.x1, box.y1);	
 	glEnd ();
 	glColor4usv (defaultColor);
@@ -389,19 +402,19 @@ InfoLayer::draw (int         x,
 
 bool
 InfoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
-			   const GLMatrix &transform,
-			   const CompRegion &region,
-			   CompOutput *output,
-			   unsigned int mask)
+			   const GLMatrix            &transform,
+			   const CompRegion          &region,
+			   CompOutput                *output,
+			   unsigned int              mask)
 {
     bool status;
   
-    gScreen->glPaintOutput (attrib, transform, region, output, mask);
+    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
     if ((drawing || fadeTime) && pWindow)
     {
 	GLMatrix sTransform = transform;
-	int           x, y;
+	int      x, y;
 
 	x = resizeGeometry.x + resizeGeometry.width / 2.0f - 
 	    RESIZE_POPUP_WIDTH / 2.0f;
@@ -415,7 +428,7 @@ InfoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 	glEnable (GL_BLEND);
-	//screenTexEnvMode (s, GL_MODULATE);
+	gScreen->setTexEnvMode (GL_MODULATE);
   
 	backgroundLayer.draw (x, y);
 	textLayer.draw (x, y);
@@ -439,25 +452,22 @@ InfoScreen::handleEvent (XEvent *event)
 	    CompWindow *w;
 
 	    w = screen->findWindow (event->xclient.window);
-	    if (w)
+	    if (w && w == pWindow)
 	    {
-		if (w == pWindow)
-		{
-		    resizeGeometry.x = event->xclient.data.l[0];
-		    resizeGeometry.y = event->xclient.data.l[1];
-		    resizeGeometry.width = event->xclient.data.l[2];
-		    resizeGeometry.height = event->xclient.data.l[3];
+		resizeGeometry.x      = event->xclient.data.l[0];
+		resizeGeometry.y      = event->xclient.data.l[1];
+		resizeGeometry.width  = event->xclient.data.l[2];
+		resizeGeometry.height = event->xclient.data.l[3];
 
-		    textLayer.renderText ();
+		textLayer.renderText ();
 
-		    cScreen->preparePaintSetEnabled (this, true);
-		    gScreen->glPaintOutputSetEnabled (this, true);
-		    cScreen->donePaintSetEnabled (this, true);
+		cScreen->preparePaintSetEnabled (this, true);
+		gScreen->glPaintOutputSetEnabled (this, true);
+		cScreen->donePaintSetEnabled (this, true);
 
-		    w->ungrabNotifySetEnabled (InfoWindow::get (w), true);
+		w->ungrabNotifySetEnabled (InfoWindow::get (w), true);
 
-		    damagePaintRegion ();
-		}
+		damagePaintRegion ();
 	    }
 	}
 	break;
@@ -482,16 +492,13 @@ InfoScreen::InfoScreen (CompScreen *screen) :
     CompositeScreenInterface::setHandler (cScreen);
     GLScreenInterface::setHandler (gScreen);
 
+    memset (&resizeGeometry, 0, sizeof (resizeGeometry));
+
     cScreen->preparePaintSetEnabled (this, false);
     gScreen->glPaintOutputSetEnabled (this, false);
     cScreen->donePaintSetEnabled (this, false);
 
     screen->handleEventSetEnabled (this, false);
-
-    resizeGeometry.x      = 0;
-    resizeGeometry.y      = 0;
-    resizeGeometry.width  = 0;
-    resizeGeometry.height = 0;
 
     backgroundLayer.renderBackground ();
 

@@ -48,19 +48,19 @@ class InfoLayer
 	InfoLayer ();
 	~InfoLayer ();
 
-	Screen		*s;
+	bool valid;
 
+	Screen		  *s;
 	XRenderPictFormat *format;
-	Pixmap          pixmap;
-	cairo_surface_t *surface;
-	GLTexture::List texture;
-	cairo_t         *cr;
+	Pixmap            pixmap;
+	cairo_surface_t   *surface;
+	GLTexture::List   texture;
+	cairo_t           *cr;
 
-	void draw (int         x,
-	 	   int         y);
+	void draw (int x,
+	 	   int y);
 
 	void renderBackground ();
-
 	void renderText ();
 };
 
