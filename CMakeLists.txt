@@ -1,3 +1,3 @@
 include (CompizFusion)
 
-compiz_fusion_plugin (resizeinfo PKGDEPS pango pangocairo cairo-xlib-xrender)
+compiz_fusion_plugin (fadedesktop PLUGINDEPS opengl composite)
