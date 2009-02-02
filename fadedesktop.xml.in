@@ -10,7 +10,7 @@
 	    </relation>
 	</deps>
 	<feature>showdesktop</feature>
-	<screen>
+	<options>
 	    <option name="fadetime" type="int">
 		<_short>Fade Time</_short>
 		<_long>Fade time (in ms)</_long>
@@ -23,6 +23,6 @@
 		<_long>Windows that should be faded to desktop</_long>
 		<default>Toolbar | Utility | Dialog | Normal | Unknown</default>
 	    </option>
-	</screen>
+	</options>
     </plugin>
 </compiz>
