@@ -4,7 +4,7 @@
 	<_short>Extra WM Actions</_short>
 	<_long>Provides less commonly used WM actions</_long>
 	<category>Window Management</category>
-	<display>
+	<options>
 	    <option name="activate" type="action">
 		<_short>Activate Window</_short>
 		<_long>Activate a given window</_long>
@@ -29,6 +29,6 @@
 		<_short>Activate Demanding Attention Window</_short>
 		<_long>Activate next window which has the "demands attention" flag set.</_long>
 	    </option>
-	</display>
+	</options>
     </plugin>
 </compiz>

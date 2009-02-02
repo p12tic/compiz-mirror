@@ -1,3 +1,3 @@
 include (CompizFusion)
 
-compiz_fusion_plugin (extrawm)
+compiz_fusion_plugin (extrawm PLUGINDEPS composite)
