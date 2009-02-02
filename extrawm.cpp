@@ -158,10 +158,15 @@ ExtraWMScreen::toggleRedirect (CompAction         *action,
     w = screen->findTopLevelWindow (xid);
     if (w)
     {
-	if (CompositeWindow::get (w)->redirected ())
-	    CompositeWindow::get (w)->unredirect ();
-	else
-	    CompositeWindow::get (w)->redirect ();
+	CompositeWindow *cWindow = CompositeWindow::get (w);
+
+	if (cWindow)
+	{
+	    if (cWindow->redirected ())
+		cWindow->unredirect ();
+	    else
+		cWindow->redirect ();
+	}
     }
 
     return TRUE;
@@ -269,8 +274,7 @@ ExtraWMWindow::ExtraWMWindow (CompWindow *window) :
 bool
 ExtraWMPluginVTable::init ()
 {
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
-	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
+    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
 	return false;
 
     return true;
