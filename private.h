@@ -47,8 +47,7 @@ class MousepollScreen :
 	std::list<MousePoller *> pollers;
 	CompTimer		 timer;
 
-	int posX;
-	int posY;
+	CompPoint pos;
 
 	bool
 	updatePosition ();
@@ -64,10 +63,9 @@ class MousepollScreen :
 
 	CompOption::Vector & getOptions ();
 	bool setOption (const char *name, CompOption::Value &value);
-
 };
 
-#define MOUSEPOLL_SCREEN(s)						        \
+#define MOUSEPOLL_SCREEN(s)						\
     MousepollScreen *ms = MousepollScreen::get (s)
 
 #define NUM_OPTIONS(s) (sizeof ((s)->opt) / sizeof (CompOption))

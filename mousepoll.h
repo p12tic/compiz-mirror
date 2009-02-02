@@ -27,7 +27,7 @@ class MousePoller
 {
     public:
 
-	typedef boost::function<void (int, int)> CallBack;
+	typedef boost::function<void (const CompPoint &)> CallBack;
 
 	MousePoller ();
 	~MousePoller ();

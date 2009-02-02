@@ -31,7 +31,7 @@ MousepollScreen::getMousePosition ()
     Window       child_return;
     int          rootX, rootY;
     int          winX, winY;
-    int		 w = screen->width (), h = screen->height ();
+    int          w = screen->width (), h = screen->height ();
     unsigned int maskReturn;
     bool         status;
 
@@ -39,16 +39,16 @@ MousepollScreen::getMousePosition ()
 			    &root_return, &child_return,
 			    &rootX, &rootY, &winX, &winY, &maskReturn);
 
-    if (!status || rootX > w || rootY > h ||
-	screen->root () != root_return)
+    if (!status || rootX > w || rootY > h || screen->root () != root_return)
 	return false;
 
-    if ((rootX != posX || rootY != posY))
+    if (rootX != pos.x () || rootY != pos.y ())
     {
-	posX = rootX;
-	posY = rootY;
+	pos.setX (rootX);
+	pos.setY (rootY);
 	return true;
     }
+
     return false;
 }
 
@@ -64,9 +64,9 @@ MousepollScreen::updatePosition ()
 	for (it = pollers.begin (); it != pollers.end (); it++)
 	{
 	    MousePoller *poller = *it;
-	    poller->mPoint.setX(posX);
-	    poller->mPoint.setY(posY);
-	    poller->mCallback (posX, posY);
+
+	    poller->mPoint = pos;
+	    poller->mCallback (pos);
 	}
     }
 
@@ -76,11 +76,10 @@ MousepollScreen::updatePosition ()
 bool
 MousepollScreen::addTimer (MousePoller *poller)
 {
-    bool start   = pollers.empty ();
+    bool                               start = pollers.empty ();
     std::list<MousePoller *>::iterator it;
 
     it = std::find (pollers.begin (), pollers.end (), poller);
-
     if (it != pollers.end ())
 	return false;
 
@@ -101,22 +100,19 @@ MousepollScreen::removeTimer (MousePoller *poller)
     std::list<MousePoller *>::iterator it;
 
     it = std::find (pollers.begin(), pollers.end (), poller);
-
     if (it == pollers.end ())
 	return;
 
     pollers.erase (it);
 
     if (pollers.empty ())
-    {
 	timer.stop ();
-    }
 }
 
 void
 MousePoller::start ()
 {
-    MOUSEPOLL_SCREEN  (screen);
+    MOUSEPOLL_SCREEN (screen);
 
     if (!ms)
     {
@@ -154,26 +150,21 @@ MousePoller::stop ()
 CompPoint
 MousePoller::getCurrentPosition ()
 {
-    MOUSEPOLL_SCREEN (screen);
-
     CompPoint p;
+
+    MOUSEPOLL_SCREEN (screen);
 
     if (!ms)
     {
 	compLogMessage ("mousepoll",
 			CompLogLevelWarn,
 			"Plugin version mismatch, can't start mouse poller");
-
-	p.setX (0);
-	p.setY (0);
-
-	return p;
     }
-
-    ms->getMousePosition ();
-
-    p.setX (ms->posX);
-    p.setY (ms->posY);
+    else
+    {
+	ms->getMousePosition ();
+	p = ms->pos;
+    }
 
     return p;
 }
@@ -196,8 +187,7 @@ MousePoller::~MousePoller ()
 	stop ();
 }
 static const CompMetadata::OptionInfo mousepollOptionInfo[] = {
-    { "mouse_poll_interval", "int",
-      "<min>1</min><max>500</max>", 0, 0 }
+    { "mouse_poll_interval", "int", "<min>1</min><max>500</max>", 0, 0 }
 };
 
 CompOption::Vector &
@@ -205,40 +195,36 @@ MousepollScreen::getOptions ()
 {
     return opt;
 }
- 
+
 bool
 MousepollScreen::setOption (const char        *name,
-		       	    CompOption::Value &value)
+			    CompOption::Value &value)
 {
-    CompOption *o;
-    bool status;
+    CompOption   *o;
+    bool         status;
     unsigned int index;
- 
+
     o = CompOption::findOption (opt, name, &index);
     if (!o)
 	return false;
- 
-    switch (index) {
-	case MP_OPTION_MOUSE_POLL_INTERVAL:
-	    status = o->set (value);
 
-	    if (timer.active ())
-		timer.start
-		    (o->value ().i () / 2,
-		     o->value ().i ());
-	    return status;
+    switch (index) {
+    case MP_OPTION_MOUSE_POLL_INTERVAL:
+	status = o->set (value);
+
+	if (timer.active ())
+	    timer.start (o->value ().i () / 2, o->value ().i ());
+	return status;
     default:
 	return CompOption::setOption (*o, value);
     }
- 
+
     return false;
 }
 
 MousepollScreen::MousepollScreen (CompScreen *screen) :
     PrivateHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI> (screen),
-    opt (MP_OPTION_NUM),
-    posX (0),
-    posY (0)    
+    opt (MP_OPTION_NUM)
 {
     if (!mousepollVTable->getMetadata ()->initOptions (mousepollOptionInfo,
 						       MP_OPTION_NUM, opt))
