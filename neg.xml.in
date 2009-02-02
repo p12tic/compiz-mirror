@@ -9,7 +9,7 @@
 		<plugin>blur</plugin>
 	    </relation>
 	</deps>
-	<display>
+	<options>
 	    <option name="window_toggle_key" type="key">
 		<_short>Toggle Window Negative</_short>
 		<_long>Toggle active window negative</_long>
@@ -20,8 +20,6 @@
 		<_long>Toggle screen negative</_long>
 		<default>&lt;Super&gt;m</default>
 	    </option>
-	</display>
-	<screen>
 	    <option name="neg_match" type="match">
 		<_short>Neg Windows</_short>
 		<_long>Windows to be negative by default</_long>
@@ -37,6 +35,6 @@
 		<_long>Also negate window decorations, not only the window contents.</_long>
 		<default>false</default>
 	    </option>
-	</screen>
+	</options>
     </plugin>
 </compiz>
