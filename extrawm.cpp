@@ -32,8 +32,7 @@ ExtraWMScreen::addAttentionWindow (CompWindow *w)
     /* check if the window is already there */
     for (it = attentionWindows.begin (); it != attentionWindows.end (); it++)
     {
-	CompWindow *window = *it;
-	if (window == w)
+	if (*it == w)
 	    return;
     }
 
@@ -50,13 +49,13 @@ void
 ExtraWMScreen::updateAttentionWindow (CompWindow *w)
 {
     XWMHints *hints;
-    Bool     urgent = FALSE;
+    bool     urgent = false;
 
     hints = XGetWMHints (screen->dpy (), w->id ());
     if (hints)
     {
 	if (hints->flags & XUrgencyHint)
-	    urgent = TRUE;
+	    urgent = true;
 
 	XFree (hints);
     }
@@ -76,9 +75,9 @@ ExtraWMScreen::activateDemandsAttention (CompAction         *action,
 
     if (!es->attentionWindows.empty ())
     {
-	CompWindow *w = es->attentionWindows.front (); // first member
+	CompWindow *w = es->attentionWindows.front ();
 
-	es->removeAttentionWindow (w);
+	es->attentionWindows.pop_front ();
 	w->activate ();
     }
 
@@ -94,11 +93,12 @@ ExtraWMScreen::activateWin (CompAction         *action,
     Window     xid;
 
     xid = CompOption::getIntOptionNamed (options, "window");
-    w = screen->findWindow (xid);
-    if (w)
-  	screen->sendWindowActivationRequest (w->id ());
+    w   = screen->findWindow (xid);
 
-    return TRUE;
+    if (w)
+	screen->sendWindowActivationRequest (w->id ());
+
+    return true;
 }
 
 void
@@ -135,15 +135,17 @@ ExtraWMScreen::toggleFullscreen (CompAction         *action,
     CompWindow *w;
     Window     xid;
 
-    EXTRAWM_SCREEN (screen);
-
     xid = CompOption::getIntOptionNamed (options, "window");
+    w   = screen->findWindow (xid);
 
-    w = screen->findWindow (xid);
     if (w && (w->actions () & CompWindowActionFullscreenMask))
-	es->fullscreenWindow (w, w->state () ^ CompWindowStateFullscreenMask);
+    {
+	EXTRAWM_SCREEN (screen);
 
-    return TRUE;
+	es->fullscreenWindow (w, w->state () ^ CompWindowStateFullscreenMask);
+    }
+
+    return true;
 }
 
 bool
@@ -155,7 +157,8 @@ ExtraWMScreen::toggleRedirect (CompAction         *action,
     Window     xid;
 
     xid = CompOption::getIntOptionNamed (options, "window");
-    w = screen->findTopLevelWindow (xid);
+    w   = screen->findTopLevelWindow (xid);
+
     if (w)
     {
 	CompositeWindow *cWindow = CompositeWindow::get (w);
@@ -169,7 +172,7 @@ ExtraWMScreen::toggleRedirect (CompAction         *action,
 	}
     }
 
-    return TRUE;
+    return true;
 }
 
 bool
@@ -181,10 +184,12 @@ ExtraWMScreen::toggleAlwaysOnTop (CompAction         *action,
     Window     xid;
 
     xid = CompOption::getIntOptionNamed (options, "window");
-    w = screen->findTopLevelWindow (xid);
+    w   = screen->findTopLevelWindow (xid);
+
     if (w)
     {
 	unsigned int newState;
+
 	newState = w->state () ^ CompWindowStateAboveMask;
 	w->changeState (newState);
 	w->updateAttributes (CompStackingUpdateModeNormal);
@@ -192,8 +197,6 @@ ExtraWMScreen::toggleAlwaysOnTop (CompAction         *action,
 
     return TRUE;
 }
-
-/* From here */
 
 bool
 ExtraWMScreen::toggleSticky (CompAction         *action,
@@ -204,7 +207,8 @@ ExtraWMScreen::toggleSticky (CompAction         *action,
     Window     xid;
 
     xid = CompOption::getIntOptionNamed (options, "window");
-    w = screen->findTopLevelWindow (xid);
+    w   = screen->findTopLevelWindow (xid);
+
     if (w && (w->actions () & CompWindowActionStickMask))
     {
 	unsigned int newState;
@@ -216,9 +220,8 @@ ExtraWMScreen::toggleSticky (CompAction         *action,
 }
 
 void
-ExtraWMScreen::handleEvent (XEvent      *event)
+ExtraWMScreen::handleEvent (XEvent *event)
 {
-
     screen->handleEvent (event);
 
     switch (event->type) {
@@ -252,7 +255,6 @@ ExtraWMScreen::ExtraWMScreen (CompScreen *screen) :
     PrivateHandler <ExtraWMScreen, CompScreen> (screen),
     ExtrawmOptions (extrawmVTable->getMetadata ())
 {
-
     ScreenInterface::setHandler (screen);
 
     optionSetToggleRedirectKeyInitiate (toggleRedirect);
@@ -261,7 +263,6 @@ ExtraWMScreen::ExtraWMScreen (CompScreen *screen) :
     optionSetToggleFullscreenKeyInitiate (toggleFullscreen);
     optionSetActivateInitiate (activateWin);
     optionSetActivateDemandsAttentionKeyInitiate (activateDemandsAttention);
-
 }
 
 ExtraWMWindow::ExtraWMWindow (CompWindow *window) :
