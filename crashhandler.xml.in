@@ -4,7 +4,7 @@
 		<_short>Crash handler</_short>
 		<_long>Compiz crash handler plugin</_long>
 		<category>Utility</category>
-		<display>
+		<options>
 			<group>
 				<_short>Main</_short>
 				<option name="enabled" type="bool">
@@ -30,6 +30,6 @@
 					<default/>
 				</option>
 			</group>
-		</display>
+		</options>
 	</plugin>
 </compiz>
