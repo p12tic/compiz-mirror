@@ -21,31 +21,39 @@
 #ifndef _COMPIZ_MOUSEPOLL_H
 #define _COMPIZ_MOUSEPOLL_H
 
-#define MOUSEPOLL_ABIVERSION 20080116
+#define COMPIZ_MOUSEPOLL_ABI 1
 
-typedef int PositionPollingHandle;
+class MousePoller
+{
+    public:
 
-typedef void (*PositionUpdateProc) (CompScreen *s,
-				    int        x,
-				    int        y);
+	typedef boost::function<void (int, int)> CallBack;
 
-typedef PositionPollingHandle
-(*AddPositionPollingProc) (CompScreen         *s,
-			   PositionUpdateProc update);
+	MousePoller ();
+	~MousePoller ();
 
-typedef void
-(*RemovePositionPollingProc) (CompScreen            *s,
-			      PositionPollingHandle id);
+	void
+	setCallback (CallBack callback);
 
-typedef void
-(*GetCurrentPositionProc) (CompScreen *s,
-			   int        *x,
-			   int        *y);
+	void
+	start ();
 
-typedef struct _MousePollFunc {
-   AddPositionPollingProc    addPositionPolling;
-   RemovePositionPollingProc removePositionPolling;
-   GetCurrentPositionProc    getCurrentPosition;
-} MousePollFunc;
+	void
+	stop ();
+
+	CompPoint
+	getPosition ();
+
+	static CompPoint
+	getCurrentPosition ();
+
+    private:
+
+	bool 	 mActive;
+	CompPoint mPoint;
+	CallBack mCallback;
+
+    friend class MousepollScreen;
+};
 
 #endif

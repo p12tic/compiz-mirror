@@ -4,9 +4,7 @@
 		<_short>Mouse position polling</_short>
 		<_long>Updates the mouse pointer position from the xserver</_long>
 		<category>Utility</category>
-		<display>
-			<option name="abi" type="int" read_only="true"/>
-			<option name="index" type="int" read_only="true"/>
+		<screen>
 			<group>
 				<_short>Misc</_short>
 				<option type="int" name="mouse_poll_interval">
@@ -17,6 +15,6 @@
 					<max>500</max>
 				</option>
 			</group>
-		</display>
+		</screen>
 	</plugin>
 </compiz>
