@@ -55,15 +55,18 @@ NegScreen::ToggleScreen ()
 
     /* toggle every window */
     foreach (CompWindow *w, screen->windows ())
-	if (w)
-	    NegWindow::get (w)->toggle ();
+    {
+	NEG_WINDOW (w);
+
+	nw->toggle ();
+    }
 }
 
 bool
 NegScreen::toggle (CompAction         *action,
 		   CompAction::State  state,
 		   CompOption::Vector options,
-		   bool 	      all)
+		   bool		      all)
 {
     if (all)
     {
@@ -73,8 +76,10 @@ NegScreen::toggle (CompAction         *action,
     else
     {
 	Window     xid;
+	CompWindow *w;
+
 	xid = CompOption::getIntOptionNamed (options, "window");
-	CompWindow *w = screen->findWindow (xid);
+	w   = screen->findWindow (xid);
 	if (w)
 	    NegWindow::get (w)->toggle ();
     }
@@ -83,67 +88,56 @@ NegScreen::toggle (CompAction         *action,
 }
 
 int
-NegScreen::getFragmentFunction (GLTexture   *texture,
-				bool        alpha)
+NegScreen::getFragmentFunction (GLTexture *texture,
+				bool      alpha)
 {
-    FunctionData *data = new FunctionData;
-    int          target;
+    int handle = 0;
 
-    if (texture->target () == GL_TEXTURE_2D)
-	target = COMP_FETCH_TARGET_2D;
-    else
-	target = COMP_FETCH_TARGET_RECT;
+    if (alpha && negAlphaFunction)
+	handle = negAlphaFunction;
+    else if (!alpha && negFunction)
+	handle = negFunction;
 
-    if (alpha)
+    if (!handle)
     {
-	if (negAlphaFunction)
-	    return negAlphaFunction;
-    }
-    else
-    {
-	if (negFunction)
-	    return negFunction;
-    }
-
-    if (data)
-    {
-	int  handle = 0;
+	FunctionData data;
+	int          target;
 
 	if (alpha)
-	    data->addTempHeaderOp ("neg");
+	    data.addTempHeaderOp ("neg");
 
-	data->addFetchOp ("output", NULL, target);
+	if (texture->target () == GL_TEXTURE_2D)
+	    target = COMP_FETCH_TARGET_2D;
+	else
+	    target = COMP_FETCH_TARGET_RECT;
+
+	data.addFetchOp ("output", NULL, target);
+
 	if (alpha)
 	{
-	    data->addDataOp ("RCP neg.a, output.a;");
-	    data->addDataOp ("MAD output.rgb, -neg.a, output, 1.0;");
+	    data.addDataOp ("RCP neg.a, output.a;");
+	    data.addDataOp ("MAD output.rgb, -neg.a, output, 1.0;");
 	}
 	else
-	    data->addDataOp ("SUB output.rgb, 1.0, output;");
+	    data.addDataOp ("SUB output.rgb, 1.0, output;");
 
 	if (alpha)
-	    data->addDataOp ("MUL output.rgb, output.a, output;");
-		
-	data->addColorOp ("output", "output");
-	if (!data->status ())
-	{
-	    delete data;
-	    return 0;
-	}
+	    data.addDataOp ("MUL output.rgb, output.a, output;");
 
-	handle = data->createFragmentFunction ("neg");
+	data.addColorOp ("output", "output");
+
+	if (!data.status ())
+	    return 0;
+
+	handle = data.createFragmentFunction ("neg");
 
 	if (alpha)
 	    negAlphaFunction = handle;
 	else
 	    negFunction = handle;
-
-	delete data;
-
-	return handle;
     }
 
-    return 0;
+    return handle;
 }
 
 void
@@ -151,9 +145,9 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 			  GLFragment::Attrib &attrib,
 			  unsigned int       mask)
 {
-    GLTexture::Filter  filter;
-    bool doNeg = false;
-    GLTexture *tex = NULL;
+    GLTexture::Filter filter;
+    bool              doNeg = false;
+    GLTexture         *tex = NULL;
 
     NEG_SCREEN (screen);
 
@@ -183,10 +177,10 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 	if (GL::fragmentProgram)
 	{
 	    GLFragment::Attrib fa = attrib;
-	    int            function;
-	    bool           alpha = true;
+	    int                function;
+	    bool               alpha = true;
 
-	    if (texture->name () == tex->name ()) // Not a decoration
+	    if (texture->name () == tex->name ()) /* Not a decoration */
 		alpha = window->alpha ();
 
 	    function = ns->getFragmentFunction (texture, alpha);
@@ -195,19 +189,16 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 
 	    gWindow->glDrawTexture (texture, fa, mask);
 	}
-	/* Texture manipulation negation */
-	else
+	else /* Texture manipulation negation */
 	{
-	    GLScreen *gScreen = ns->gScreen;
-
 	    /* this is for the most part taken from paint.c */
 
 	    if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
-		filter = gScreen->filter (WINDOW_TRANS_FILTER);
+		filter = ns->gScreen->filter (WINDOW_TRANS_FILTER);
 	    else if (mask & PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK)
-		filter = gScreen->filter (SCREEN_TRANS_FILTER);
+		filter = ns->gScreen->filter (SCREEN_TRANS_FILTER);
 	    else
-		filter = gScreen->filter (NOTHING_TRANS_FILTER);
+		filter = ns->gScreen->filter (NOTHING_TRANS_FILTER);
 
 	    /* if we can adjust saturation, even if it's just on and off */
 	    if (GL::canDoSaturated && attrib.getSaturation () != COLOR)
@@ -309,8 +300,7 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 			/* color constant */
 			constant[3] = attrib.getOpacity () / 65535.0f;
 			constant[0] = constant[1] = constant[2] =
-			              constant[3] * attrib.getBrightness () /
-				      65535.0f;
+			    constant[3] * attrib.getBrightness () / 65535.0f;
 
 			glTexEnvfv(GL_TEXTURE_ENV,
 				   GL_TEXTURE_ENV_COLOR, constant);
@@ -380,7 +370,7 @@ NegWindow::glDrawTexture (GLTexture          *texture,
     		    /* color constant */
 		    constant[3] = attrib.getOpacity () / 65535.0f;
 		    constant[0] = constant[1] = constant[2] =
-				  constant[3] * attrib.getBrightness () / 65535.0f;
+			constant[3] * attrib.getBrightness () / 65535.0f;
 
 		    constant[0] =
 			0.5f + 0.5f * RED_SATURATION_WEIGHT * constant[0];
@@ -411,7 +401,7 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		glColor4usv (defaultColor);
 
 		/* set screens texture mode back to replace */
-		gScreen->setTexEnvMode (GL_REPLACE);
+		ns->gScreen->setTexEnvMode (GL_REPLACE);
 
 		/* if it's a translucent window, disable blending */
 		if (mask & PAINT_WINDOW_TRANSLUCENT_MASK)
@@ -441,11 +431,10 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		    /* enable blending */
 		    glEnable (GL_BLEND);
 
-    		    /* color constant */
+		    /* color constant */
 		    constant[3] = attrib.getOpacity () / 65535.0f;
-		    constant[0] = constant[3] * attrib.getBrightness () / 65535.0f;
-		    constant[1] = constant[3] * attrib.getBrightness () / 65535.0f;
-		    constant[2] = constant[3] * attrib.getBrightness () / 65535.0f;
+		    constant[0] = constant[1] = constant[2] =
+			constant[3] * attrib.getBrightness () / 65535.0f;
 
 		    glTexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constant);
 		    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
@@ -483,7 +472,7 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		texture->disable ();
 
 		/* set the screens texture mode back to replace */
-		//screenTexEnvMode (w->screen, GL_REPLACE);
+		ns->gScreen->setTexEnvMode (GL_REPLACE);
 	    }
 	}
     }
@@ -503,19 +492,17 @@ NegScreen::optionChanged (CompOption          *opt,
     case NegOptions::NegMatch:
     case NegOptions::ExcludeMatch:
 	{
-	    NEG_SCREEN (screen);
-
 	    foreach (CompWindow *w, screen->windows ())
 	    {
-		bool isNeg;
+		bool isNowNeg;
 		NEG_WINDOW (w);
 
-		isNeg = optionGetNegMatch ().evaluate (w);
-		isNeg = isNeg && !optionGetExcludeMatch ().evaluate (w);
+		isNowNeg = optionGetNegMatch ().evaluate (w);
+		isNowNeg = isNowNeg && !optionGetExcludeMatch ().evaluate (w);
 
-		if (isNeg && ns->isNeg && !nw->isNeg)
+		if (isNowNeg && isNeg && !nw->isNeg)
 		    nw->toggle ();
-		else if (!isNeg && nw->isNeg)
+		else if (!isNowNeg && nw->isNeg)
 		    nw->toggle ();
 	    }
 	}
@@ -533,13 +520,17 @@ NegScreen::NegScreen (CompScreen *screen) :
     isNeg (false),
     gScreen (GLScreen::get (screen))
 {
-    optionSetWindowToggleKeyInitiate (boost::bind (&NegScreen::toggle, this, _1, _2, _3,
+    optionSetWindowToggleKeyInitiate (boost::bind (&NegScreen::toggle, this,
+						   _1, _2, _3,
 						   false));
-    optionSetScreenToggleKeyInitiate (boost::bind (&NegScreen::toggle, this, _1, _2, _3,
+    optionSetScreenToggleKeyInitiate (boost::bind (&NegScreen::toggle, this,
+						   _1, _2, _3,
 						   true));
 
-    optionSetNegMatchNotify (boost::bind (&NegScreen::optionChanged, this, _1, _2));
-    optionSetExcludeMatchNotify (boost::bind (&NegScreen::optionChanged, this, _1, _2));
+    optionSetNegMatchNotify (boost::bind (&NegScreen::optionChanged, this,
+					  _1, _2));
+    optionSetExcludeMatchNotify (boost::bind (&NegScreen::optionChanged, this,
+					      _1, _2));
 
 }
 
@@ -559,8 +550,8 @@ NegWindow::NegWindow (CompWindow *window) :
 
     if (ns->isNeg && ns->optionGetNegMatch ().evaluate (window))
 	toggle ();
-}    
-    
+}
+
 bool
 NegPluginVTable::init ()
 {
