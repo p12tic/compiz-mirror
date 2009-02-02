@@ -9,7 +9,7 @@
 		<plugin>resize</plugin>
 	    </relation>
 	</deps>
-	<screen>
+	<options>
 	    <option name="fade_time" type="int">
 		<_short>Fade Time</_short>
 		<_long>Fade time (in ms) for popup window</_long>
@@ -62,6 +62,6 @@
 		    <alpha>0xcccc</alpha>
 		</default>
 	    </option>
-	</screen>
+	</options>
     </plugin>
 </compiz>
