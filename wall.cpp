@@ -96,14 +96,14 @@ WallScreen::drawSwitcherBackground ()
     radius = optionGetEdgeRadius ();
     if (radius)
     {
-        cairo_arc (cr, radius, radius, radius, PI, 1.5f * PI);
-        cairo_arc (cr, radius + width - 2 * radius,
-                   radius, radius, 1.5f * PI, 2.0 * PI);
-        cairo_arc (cr, width - radius, height - radius, radius, 0,  PI / 2.0f);
-        cairo_arc (cr, radius, height - radius, radius,  PI / 2.0f, PI);
+	cairo_arc (cr, radius, radius, radius, PI, 1.5f * PI);
+	cairo_arc (cr, radius + width - 2 * radius,
+		   radius, radius, 1.5f * PI, 2.0 * PI);
+	cairo_arc (cr, width - radius, height - radius, radius, 0,  PI / 2.0f);
+	cairo_arc (cr, radius, height - radius, radius,  PI / 2.0f, PI);
     }
     else
-        cairo_rectangle (cr, 0, 0, width, height);
+	cairo_rectangle (cr, 0, 0, width, height);
 
     cairo_close_path (cr);
 
@@ -122,26 +122,26 @@ WallScreen::drawSwitcherBackground ()
     cairo_save (cr);
     for (i = 0; i < screen->vpSize ().height (); i++)
     {
-        cairo_translate (cr, 0.0, viewportBorder);
-        cairo_save (cr);
-        for (j = 0; j < screen->vpSize ().width (); j++)
-        {
-            cairo_translate (cr, viewportBorder, 0.0);
+	cairo_translate (cr, 0.0, viewportBorder);
+	cairo_save (cr);
+	for (j = 0; j < screen->vpSize ().width (); j++)
+	{
+	    cairo_translate (cr, viewportBorder, 0.0);
 
-            /* this cuts a hole into our background */
-            cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
-            cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 1.0);
-            cairo_rectangle (cr, 0, 0, viewportWidth, viewportHeight);
+	    /* this cuts a hole into our background */
+	    cairo_set_operator (cr, CAIRO_OPERATOR_OVER);
+	    cairo_set_source_rgba (cr, 0.0, 0.0, 0.0, 1.0);
+	    cairo_rectangle (cr, 0, 0, viewportWidth, viewportHeight);
 
-            cairo_fill_preserve (cr);
-            cairo_set_operator (cr, CAIRO_OPERATOR_XOR);
-            cairo_fill (cr);
+	    cairo_fill_preserve (cr);
+	    cairo_set_operator (cr, CAIRO_OPERATOR_XOR);
+	    cairo_fill (cr);
 
-            cairo_translate (cr, viewportWidth, 0.0);
-        }
-        cairo_restore(cr);
+	    cairo_translate (cr, viewportWidth, 0.0);
+	}
+	cairo_restore(cr);
 
-        cairo_translate (cr, 0.0, viewportHeight);
+	cairo_translate (cr, 0.0, viewportHeight);
     }
     cairo_restore (cr);
 }
@@ -269,7 +269,7 @@ WallScreen::drawArrow ()
 }
 
 void
-WallScreen::setupCairoContext (WallCairoContext *context)
+WallScreen::setupCairoContext (WallCairoContext &context)
 {
     XRenderPictFormat *format;
     Screen            *xScreen;
@@ -277,50 +277,50 @@ WallScreen::setupCairoContext (WallCairoContext *context)
 
     xScreen = ScreenOfDisplay (screen->dpy (), screen->screenNum ());
 
-    width = context->width;
-    height = context->height;
+    width = context.width;
+    height = context.height;
 
     format = XRenderFindStandardFormat (screen->dpy (), PictStandardARGB32);
 
-    context->pixmap = XCreatePixmap (screen->dpy (), screen->root (),
-                                     width, height, 32);
+    context.pixmap = XCreatePixmap (screen->dpy (), screen->root (),
+				    width, height, 32);
 
-    context->texture = GLTexture::bindPixmapToTexture (context->pixmap,
-                                                       width, height, 32);
-    if (context->texture.empty ())
+    context.texture = GLTexture::bindPixmapToTexture (context.pixmap,
+						      width, height, 32);
+    if (context.texture.empty ())
     {
-        screen->logMessage ("wall", CompLogLevelError,
-                            "Couldn't create cairo context for switcher");
+	screen->logMessage ("wall", CompLogLevelError,
+			    "Couldn't create cairo context for switcher");
     }
 
-    context->surface =
-        cairo_xlib_surface_create_with_xrender_format (screen->dpy (),
-                                                       context->pixmap,
-                                                       xScreen, format,
-                                                       width, height);
+    context.surface =
+	cairo_xlib_surface_create_with_xrender_format (screen->dpy (),
+						       context.pixmap,
+						       xScreen, format,
+						       width, height);
 
-    context->cr = cairo_create (context->surface);
-    clearCairoLayer (context->cr);
+    context.cr = cairo_create (context.surface);
+    clearCairoLayer (context.cr);
 }
 
 void
-WallScreen::destroyCairoContext (WallCairoContext *context)
+WallScreen::destroyCairoContext (WallCairoContext &context)
 {
-    if (context->cr)
-        cairo_destroy (context->cr);
+    if (context.cr)
+	cairo_destroy (context.cr);
 
-    if (context->surface)
-        cairo_surface_destroy (context->surface);
+    if (context.surface)
+	cairo_surface_destroy (context.surface);
 
-	context->texture.clear ();
+    context.texture.clear ();
 
-    if (context->pixmap)
-        XFreePixmap (screen->dpy (), context->pixmap);
+    if (context.pixmap)
+	XFreePixmap (screen->dpy (), context.pixmap);
 }
 
 bool
 WallScreen::checkDestination (unsigned int destX,
-                              unsigned int destY)
+			      unsigned int destY)
 {
     CompPoint point;
     CompSize  size;
@@ -329,16 +329,16 @@ WallScreen::checkDestination (unsigned int destX,
     size = screen->vpSize ();
 
     if (point.x () - destX < 0)
-        return false;
+	return false;
 
     if (point.x () - destX >= size.width ())
-        return false;
+	return false;
 
     if (point.y () - destY >= size.height ())
-        return false;
+	return false;
 
     if (point.y () - destY < 0)
-        return false;
+	return false;
 
     return true;
 }
@@ -350,34 +350,31 @@ WallScreen::releaseMoveWindow ()
 
     window = screen->findWindow (moveWindow);
     if (window)
-        window->syncPosition ();
+	window->syncPosition ();
 
     moveWindow = 0;
 }
 
 void
-WallScreen::computeTranslation (float *x,
-                                float *y)
+WallScreen::computeTranslation (float &x,
+				float &y)
 {
-    float dx, dy, elapsed, duration;
+    float elapsed, duration;
 
     duration = optionGetSlideDuration () * 1000.0;
     if (duration != 0.0)
-        elapsed = 1.0 - (timer / duration);
+	elapsed = 1.0 - (timer / duration);
     else
-        elapsed = 1.0;
+	elapsed = 1.0;
 
     if (elapsed < 0.0)
-        elapsed = 0.0;
+	elapsed = 0.0;
     if (elapsed > 1.0)
-        elapsed = 1.0;
+	elapsed = 1.0;
 
     /* Use temporary variables to you can pass in &ps->cur_x */
-    dx = (gotoX - curPosX) * elapsed + curPosX;
-    dy = (gotoY - curPosY) * elapsed + curPosY;
-
-    *x = dx;
-    *y = dy;
+    x = (gotoX - curPosX) * elapsed + curPosX;
+    y = (gotoY - curPosY) * elapsed + curPosY;
 }
 
 /* movement remainder that gets ignored for direction calculation */
@@ -386,65 +383,65 @@ WallScreen::computeTranslation (float *x,
 void
 WallScreen::determineMovementAngle ()
 {
-    int angle;
+    int   angle;
     float dx, dy;
 
     dx = gotoX - curPosX;
     dy = gotoY - curPosY;
 
     if (dy > IGNORE_REMAINDER)
-        angle = (dx > IGNORE_REMAINDER) ? 135 :
-                (dx < -IGNORE_REMAINDER) ? 225 : 180;
+	angle = (dx > IGNORE_REMAINDER) ? 135 :
+		(dx < -IGNORE_REMAINDER) ? 225 : 180;
     else if (dy < -IGNORE_REMAINDER)
-        angle = (dx > IGNORE_REMAINDER) ? 45 :
-                (dx < -IGNORE_REMAINDER) ? 315 : 0;
+	angle = (dx > IGNORE_REMAINDER) ? 45 :
+		(dx < -IGNORE_REMAINDER) ? 315 : 0;
     else
-        angle = (dx > IGNORE_REMAINDER) ? 90 :
-                (dx < -IGNORE_REMAINDER) ? 270 : -1;
+	angle = (dx > IGNORE_REMAINDER) ? 90 :
+		(dx < -IGNORE_REMAINDER) ? 270 : -1;
 
     direction = angle;
 }
 
 bool
 WallScreen::moveViewport (int    x,
-                          int    y,
-                          Window moveWin)
+			  int    y,
+			  Window moveWin)
 {
     if (!x && !y)
-        return false;
+	return false;
 
     if (screen->otherGrabExist ("move", "switcher", "group-drag", "wall", 0))
-        return false;
+	return false;
 
     if (!checkDestination (x, y))
-        return false;
+	return false;
 
     if (moveWindow != moveWin)
     {
-        CompWindow *w;
+	CompWindow *w;
 
-        releaseMoveWindow ();
-        w = screen->findWindow (moveWin);
-        if (w)
-        {
-            if (!(w->type () & (CompWindowTypeDesktopMask |
-                             CompWindowTypeDockMask)))
-            {
-                if (!(w->state () & CompWindowStateStickyMask))
-                {
-                    moveWindow = w->id ();
-                    moveWindowX = w->x ();
-                    moveWindowY = w->y ();
-                    w->raise ();
-                }
-            }
-        }
+	releaseMoveWindow ();
+	w = screen->findWindow (moveWin);
+	if (w)
+	{
+	    if (!(w->type () & (CompWindowTypeDesktopMask |
+				CompWindowTypeDockMask)))
+	    {
+		if (!(w->state () & CompWindowStateStickyMask))
+		{
+		    moveWindow = w->id ();
+		    moveWindowX = w->x ();
+		    moveWindowY = w->y ();
+		    w->raise ();
+		}
+	    }
+	}
     }
 
     if (!moving)
     {
-        curPosX = screen->vp ().x ();
-        curPosY = screen->vp ().y ();
+	curPosX = screen->vp ().x ();
+	curPosY = screen->vp ().y ();
     }
     gotoX = screen->vp ().x () - x;
     gotoY = screen->vp ().y () - y;
@@ -452,7 +449,7 @@ WallScreen::moveViewport (int    x,
     determineMovementAngle ();
 
     if (!grabIndex)
-        grabIndex = screen->pushGrab (screen->invisibleCursor (), "wall");
+	grabIndex = screen->pushGrab (screen->invisibleCursor (), "wall");
 
     screen->moveViewport (x, y, true);
 
@@ -461,9 +458,9 @@ WallScreen::moveViewport (int    x,
     boxOutputDevice = screen->outputDeviceForPoint (pointerX, pointerY);
 
     if (optionGetShowSwitcher ())
-        boxTimeout = optionGetPreviewTimeout () * 1000;
+	boxTimeout = optionGetPreviewTimeout () * 1000;
     else
-        boxTimeout = 0;
+	boxTimeout = 0;
 
     timer = optionGetSlideDuration () * 1000;
 
@@ -476,24 +473,27 @@ void
 WallScreen::handleEvent (XEvent *event)
 {
     switch (event->type) {
-        case ClientMessage:
-        if (event->xclient.message_type == Atoms::desktopViewport)
-        {
-            int        dx, dy;
+    case ClientMessage:
+	if (event->xclient.message_type == Atoms::desktopViewport)
+	{
+	    int dx, dy;
 
-            if (screen->otherGrabExist ("switcher", "wall", 0))
-                break;
+	    if (screen->otherGrabExist ("switcher", "wall", 0))
+		break;
 
-            dx = event->xclient.data.l[0] / screen->width() - screen->vp().x();
-            dy = event->xclient.data.l[1] / screen->height() - screen->vp().y();
+	    dx  = event->xclient.data.l[0] / screen->width();
+	    dx -= screen->vp ().x ();
+	    dy  = event->xclient.data.l[1] / screen->height();
+	    dy -= screen->vp ().y ();
 
-            if (!dx && !dy)
-                break;
+	    if (!dx && !dy)
+		break;
 
-            moveViewport (-dx, -dy, None);
-        }
-        break;
+	    moveViewport (-dx, -dy, None);
+	}
+	break;
     }
+
     screen->handleEvent (event);
 }
 
@@ -504,31 +504,31 @@ WallWindow::activate ()
 
     if (window->placed () && !screen->otherGrabExist ("wall", "switcher", 0))
     {
-        int dx, dy;
-		CompPoint viewport;
+	int       dx, dy;
+	CompPoint viewport;
 
-		viewport = window->defaultViewport ();
-		dx = viewport.x ();
-		dy = viewport.y ();
+	viewport = window->defaultViewport ();
+	dx       = viewport.x ();
+	dy       = viewport.y ();
 
-        dx -= screen->vp ().x ();
-        dy -= screen->vp ().y ();
-	
-        if (dx || dy)
-        {
-            ws->moveViewport (-dx, -dy, None);
-            ws->focusDefault = false;
-        }
+	dx -= screen->vp ().x ();
+	dy -= screen->vp ().y ();
+
+	if (dx || dy)
+	{
+	    ws->moveViewport (-dx, -dy, None);
+	    ws->focusDefault = false;
+	}
     }
 
     window->activate ();
 }
 
 void
-WallScreen::checkAmount (unsigned int  dx,
-                         unsigned int  dy,
-                         int *amountX,
-                         int *amountY)
+WallScreen::checkAmount (unsigned int dx,
+			 unsigned int dy,
+			 int          &amountX,
+			 int          &amountY)
 {
     CompPoint point;
     CompSize  size;
@@ -536,63 +536,63 @@ WallScreen::checkAmount (unsigned int  dx,
     point = screen->vp ();
     size = screen->vpSize ();
 
-    *amountX = -dx;
-    *amountY = -dy;
+    amountX = -dx;
+    amountY = -dy;
 
     if (optionGetAllowWraparound ())
     {
-        if ((point.x () + dx) < 0)
-            *amountX = -(size.width () + dx);
-        else if ((point.x () + dx) >= size.width ())
-            *amountX = size.width () - dx;
+	if ((point.x () + dx) < 0)
+	    amountX = -(size.width () + dx);
+	else if ((point.x () + dx) >= size.width ())
+	    amountX = size.width () - dx;
 
-        if ((point.y () + dy) < 0)
-            *amountY = -(size.height () + dy);
-        else if ((point.y () + dy) >= size.height ())
-            *amountY = size.height () - dy;
+	if ((point.y () + dy) < 0)
+	    amountY = -(size.height () + dy);
+	else if ((point.y () + dy) >= size.height ())
+	    amountY = size.height () - dy;
     }
 }
 
 bool
 WallScreen::initiate (CompAction         *action,
-                      CompAction::State  state,
+		      CompAction::State  state,
 		      CompOption::Vector &options,
 		      Direction          dir,
 		      bool               withWin)
 {
-    int dx = 0, dy = 0, amountX, amountY;
+    int          dx = 0, dy = 0, amountX, amountY;
+    unsigned int vpX, vpY;
+    CompSize     size;
+    Window       win = None;
 
-    CompPoint point;
-    CompSize size;
-    Window win = None;
-	
-    point = screen->vp ();
+    vpX  = screen->vp ().x ();
+    vpY  = screen->vp ().y ();
     size = screen->vpSize ();
 
     switch (dir) {
 	case Up:
 	    dy = -1;
-	    checkAmount (dx, dy, &amountX, &amountY);
+	    checkAmount (dx, dy, amountX, amountY);
 	    break;
 	case Down:
 	    dy = 1;
-	    checkAmount (dx, dy, &amountX, &amountY);
+	    checkAmount (dx, dy, amountX, amountY);
 	    break;
 	case Left:
 	    dx = -1;
-	    checkAmount (dx, dy, &amountX, &amountY);
+	    checkAmount (dx, dy, amountX, amountY);
 	    break;
 	case Right:
 	    dx = 1;
-	    checkAmount (dx, dy, &amountX, &amountY);
+	    checkAmount (dx, dy, amountX, amountY);
 	    break;
 	case Next:
-	    if ((point.x () == size.width () - 1) && (point.y () == size.height () - 1))
+	    if ((vpX == size.width () - 1) && (vpY == size.height () - 1))
 	    {
 		amountX = -(size.width () - 1);
 		amountY = -(size.height () - 1);
 	    }
-	    else if (point.x () == size.width () - 1)
+	    else if (vpX == size.width () - 1)
 	    {
 		amountX = -(size.width () - 1);
 		amountY = 1;
@@ -605,12 +605,12 @@ WallScreen::initiate (CompAction         *action,
 
 	    break;
 	case Prev:
-	    if ((point.x () == 0) && (point.y () == 0))
+	    if (vpX == 0 && vpY == 0)
 	    {
 		amountX = size.width () - 1;
 		amountY = size.height () - 1;
 	    }
-	    else if (point.x () == 0)
+	    else if (vpX == 0)
 	    {
 		amountX = size.width () - 1;
 		amountY = -1;
@@ -627,13 +627,13 @@ WallScreen::initiate (CompAction         *action,
 	win = CompOption::getIntOptionNamed (options, "window", 0);
 
     if (!moveViewport (amountX, amountY, win))
-        return true;
+	return true;
 
     if (state & CompAction::StateInitKey)
-        action->setState (action->state () | CompAction::StateTermKey);
+	action->setState (action->state () | CompAction::StateTermKey);
 
     if (state & CompAction::StateInitButton)
-        action->setState (action->state () | CompAction::StateTermButton);
+	action->setState (action->state () | CompAction::StateTermButton);
 
     showPreview = optionGetShowSwitcher ();
 
@@ -642,120 +642,120 @@ WallScreen::initiate (CompAction         *action,
 
 bool
 WallScreen::terminate (CompAction         *action,
-                       CompAction::State   state,
-                       CompOption::Vector &options)
+		       CompAction::State   state,
+		       CompOption::Vector &options)
 {
     if (showPreview)
     {
-        showPreview = FALSE;
-	    cScreen->damageScreen ();
+	showPreview = false;
+	cScreen->damageScreen ();
     }
 
     if (action)
-        action->setState (action->state () & ~(CompAction::StateTermKey | CompAction::StateTermButton));
+	action->setState (action->state () & ~(CompAction::StateTermKey |
+					       CompAction::StateTermButton));
 
     return false;
 }
 
 bool
 WallScreen::initiateFlip (Direction         direction,
-                          CompAction::State state)
+			  CompAction::State state)
 {
     int dx, dy;
     int amountX, amountY;
 
     if (screen->otherGrabExist ("wall", "move", "group-drag", 0))
-        return false;
+	return false;
 
     if (state & CompAction::StateInitEdgeDnd)
     {
-        if (!optionGetEdgeflipDnd ())
-            return false;
+	if (!optionGetEdgeflipDnd ())
+	    return false;
 
-        if (screen->otherGrabExist ("wall", 0))
-            return false;
+	if (screen->otherGrabExist ("wall", 0))
+	    return false;
     }
-    else if (screen->otherGrabExist ("wall", "group-drag", 0))
+    else if (screen->grabExist ("move"))
     {
-        /* not wall or group means move */
-        if (!optionGetEdgeflipMove ())
-            return false;
+	if (!optionGetEdgeflipMove ())
+	    return false;
     }
-    else if (screen->otherGrabExist ("wall", 0))
+    else if (screen->grabExist ("group-drag"))
     {
-        /* move was ruled out before, so we have group */
-        if (!optionGetEdgeflipDnd ())
-            return false;
+	if (!optionGetEdgeflipDnd ())
+	    return false;
     }
     else if (!optionGetEdgeflipPointer ())
-        return false;
+	return false;
 
     switch (direction) {
     case Left:
-        dx = -1; dy = 0;
-        break;
+	dx = -1; dy = 0;
+	break;
     case Right:
-        dx = 1; dy = 0;
-        break;
+	dx = 1; dy = 0;
+	break;
     case Up:
-        dx = 0; dy = -1;
-        break;
+	dx = 0; dy = -1;
+	break;
     case Down:
-        dx = 0; dy = 1;
-        break;
+	dx = 0; dy = 1;
+	break;
     default:
-        dx = 0; dy = 0;
-        break;
+	dx = 0; dy = 0;
+	break;
     }
 
-    checkAmount (dx, dy, &amountX, &amountY);
+    checkAmount (dx, dy, amountX, amountY);
     if (moveViewport (amountX, amountY, None))
     {
-        int offsetX, offsetY;
-        int warpX, warpY;
+	int offsetX, offsetY;
+	int warpX, warpY;
 
-        if (dx < 0)
-        {
-            offsetX = screen->width () - 10;
-            warpX = pointerX + screen->width ();
-        }
-        else if (dx > 0)
-        {
-            offsetX = 1- screen->width ();
-            warpX = pointerX - screen->width ();
-        }
-        else
-        {
-            offsetX = 0;
-            warpX = lastPointerX;
-        }
+	if (dx < 0)
+	{
+	    offsetX = screen->width () - 10;
+	    warpX = pointerX + screen->width ();
+	}
+	else if (dx > 0)
+	{
+	    offsetX = 1- screen->width ();
+	    warpX = pointerX - screen->width ();
+	}
+	else
+	{
+	    offsetX = 0;
+	    warpX = lastPointerX;
+	}
 
-        if (dy < 0)
-        {
-            offsetY = screen->height () - 10;
-            warpY = pointerY + screen->height ();
-        }
-        else if (dy > 0)
-        {
-            offsetY = 1- screen->height ();
-            warpY = pointerY - screen->height ();
-        }
-        else
-        {
-            offsetY = 0;
-            warpY = lastPointerY;
-        }
+	if (dy < 0)
+	{
+	    offsetY = screen->height () - 10;
+	    warpY = pointerY + screen->height ();
+	}
+	else if (dy > 0)
+	{
+	    offsetY = 1- screen->height ();
+	    warpY = pointerY - screen->height ();
+	}
+	else
+	{
+	    offsetY = 0;
+	    warpY = lastPointerY;
+	}
 
-        screen->warpPointer (offsetX, offsetY);
-        lastPointerX = warpX;
-        lastPointerY = warpY;
+	screen->warpPointer (offsetX, offsetY);
+	lastPointerX = warpX;
+	lastPointerY = warpY;
     }
 
     return true;
 }
 
 inline void
-wallDrawQuad (GLTexture::Matrix *matrix, BOX *box)
+wallDrawQuad (GLTexture::Matrix *matrix,
+	      BOX               *box)
 {
     glTexCoord2f (COMP_TEX_COORD_X (*matrix, box->x1),
 		  COMP_TEX_COORD_Y (*matrix, box->y2));
@@ -783,7 +783,7 @@ WallScreen::drawCairoTextureOnScreen ()
     BOX               box;
 
     CompOutput::vector &outputDevs = screen->outputDevs ();
-    CompOutput output = outputDevs[boxOutputDevice];
+    CompOutput         output = outputDevs[boxOutputDevice];
 
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnable (GL_BLEND);
@@ -803,27 +803,29 @@ WallScreen::drawCairoTextureOnScreen ()
 
     if (!moving)
     {
-        double left, timeout;
+	double left, timeout;
 
-        timeout = optionGetPreviewTimeout () * 1000.0f;
-        left    = (timeout > 0) ? (float) boxTimeout / timeout : 1.0f;
+	timeout = optionGetPreviewTimeout () * 1000.0f;
+	left    = (timeout > 0) ? (float) boxTimeout / timeout : 1.0f;
 
-        if (left < 0)
-            left = 0.0f;
-        else if (left > 0.5)
-            left = 1.0f;
-        else
-            left = 2 * left;
+	if (left < 0)
+	    left = 0.0f;
+	else if (left > 0.5)
+	    left = 1.0f;
+	else
+	    left = 2 * left;
 
-        glScreen->setTexEnvMode (GL_MODULATE);
+	glScreen->setTexEnvMode (GL_MODULATE);
 
-        glColor4f (left, left, left, left);
-        glTranslatef (0.0f,0.0f, -(1 - left));
+	glColor4f (left, left, left, left);
+	glTranslatef (0.0f, 0.0f, -(1 - left));
 
-        mSzCamera = -(1 - left);
+	mSzCamera = -(1 - left);
     }
     else
-        mSzCamera = 0.0f;
+    {
+	mSzCamera = 0.0f;
+    }
 
     /* draw background */
 
@@ -850,134 +852,136 @@ WallScreen::drawCairoTextureOnScreen ()
     glBegin (GL_QUADS);
     for (i = 0; i < screen->vpSize ().width (); i++)
     {
-        for (j = 0; j < screen->vpSize ().height (); j++)
-        {
-            if (i == gotoX && j == gotoY && moving)
-                continue;
+	for (j = 0; j < screen->vpSize ().height (); j++)
+	{
+	    if (i == gotoX && j == gotoY && moving)
+		continue;
 
-            box.x1 = i * (width + border);
-            box.x1 += topLeftX + border;
-            box.x2 = box.x1 + width;
-            box.y1 = j * (height + border);
-            box.y1 += topLeftY + border;
-            box.y2 = box.y1 + height;
+	    box.x1 = i * (width + border);
+	    box.x1 += topLeftX + border;
+	    box.x2 = box.x1 + width;
+	    box.y1 = j * (height + border);
+	    box.y1 += topLeftY + border;
+	    box.y2 = box.y1 + height;
 
-            matrix = thumbContext.texture[0]->matrix ();
-            matrix.x0 -= box.x1 * matrix.xx;
-            matrix.y0 -= box.y1 * matrix.yy;
+	    matrix = thumbContext.texture[0]->matrix ();
+	    matrix.x0 -= box.x1 * matrix.xx;
+	    matrix.y0 -= box.y1 * matrix.yy;
 
-            wallDrawQuad (&matrix, &box);
-        }
+	    wallDrawQuad (&matrix, &box);
+	}
     }
     glEnd ();
     thumbContext.texture[0]->disable ();
 
     if (moving || showPreview)
     {
-        /* draw highlight */
-        int   aW, aH;
+	/* draw highlight */
+	int aW, aH;
 
-        box.x1 = screen->vp ().x () * (width + border) + topLeftX + border;
-        box.x2 = box.x1 + width;
-        box.y1 = screen->vp ().y () * (height + border) + topLeftY + border;
-        box.y2 = box.y1 + height;
+	box.x1 = screen->vp ().x () * (width + border) + topLeftX + border;
+	box.x2 = box.x1 + width;
+	box.y1 = screen->vp ().y () * (height + border) + topLeftY + border;
+	box.y2 = box.y1 + height;
 
-        matrix = highlightContext.texture[0]->matrix ();
-        matrix.x0 -= box.x1 * matrix.xx;
-        matrix.y0 -= box.y1 * matrix.yy;
+	matrix = highlightContext.texture[0]->matrix ();
+	matrix.x0 -= box.x1 * matrix.xx;
+	matrix.y0 -= box.y1 * matrix.yy;
 
-        highlightContext.texture[0]->enable (GLTexture::Fast);
-        glBegin (GL_QUADS);
-        wallDrawQuad (&matrix, &box);
-        glEnd ();
-        highlightContext.texture[0]->disable ();
+	highlightContext.texture[0]->enable (GLTexture::Fast);
+	glBegin (GL_QUADS);
+	wallDrawQuad (&matrix, &box);
+	glEnd ();
+	highlightContext.texture[0]->disable ();
 
-        /* draw arrow */
-        if (direction >= 0)
-        {
-            arrowContext.texture[0]->enable (GLTexture::Fast);
-            aW = arrowContext.width;
-            aH = arrowContext.height;
+	/* draw arrow */
+	if (direction >= 0)
+	{
+	    arrowContext.texture[0]->enable (GLTexture::Fast);
+	    aW = arrowContext.width;
+	    aH = arrowContext.height;
 
-            /* if we have a viewport preview we just paint the
-               arrow outside the switcher */
-            if (optionGetMiniscreen ())
-            {
-                width  = (float) switcherContext.width;
-                height = (float) switcherContext.height;
+	    /* if we have a viewport preview we just paint the
+	       arrow outside the switcher */
+	    if (optionGetMiniscreen ())
+	    {
+		width  = (float) switcherContext.width;
+		height = (float) switcherContext.height;
 
-                switch (direction)
-                {
-                    /* top left */
-                    case 315:
-                        box.x1 = topLeftX - aW - border;
-                        box.y1 = topLeftY - aH - border;
-                        break;
-                    /* up */
-                    case 0:
-                        box.x1 = topLeftX + width / 2.0f - aW / 2.0f;
-                        box.y1 = topLeftY - aH - border;
-                        break;
-                    /* top right */
-                    case 45:
-                        box.x1 = topLeftX + width + border;
-                        box.y1 = topLeftY - aH - border;
-                        break;
-                    /* right */
-                    case 90:
-                        box.x1 = topLeftX + width + border;
-                        box.y1 = topLeftY + height / 2.0f - aH / 2.0f;
-                        break;
-                    /* bottom right */
-                    case 135:
-                        box.x1 = topLeftX + width + border;
-                        box.y1 = topLeftY + height + border;
-                        break;
-                    /* down */
-                    case 180:
-                        box.x1 = topLeftX + width / 2.0f - aW / 2.0f;
-                        box.y1 = topLeftY + height + border;
-                        break;
-                    /* bottom left */
-                    case 225:
-                        box.x1 = topLeftX - aW - border;
-                        box.y1 = topLeftY + height + border;
-                        break;
-                    /* left */
-                    case 270:
-                        box.x1 = topLeftX - aW - border;
-                        box.y1 = topLeftY + height / 2.0f - aH / 2.0f;
-                        break;
-                    default:
-                        break;
-                }
-            }
-            else
-            {
-                /* arrow is visible (no preview is painted over it) */
-                box.x1 = screen->vp().x() * (width + border) + topLeftX + border;
-                box.x1 += width / 2 - aW / 2;
-                box.y1 = screen->vp().y() * (height + border) + topLeftY + border;
-                box.y1 += height / 2 - aH / 2;
-            }
+		switch (direction)
+		{
+		    /* top left */
+		    case 315:
+			box.x1 = topLeftX - aW - border;
+			box.y1 = topLeftY - aH - border;
+			break;
+		    /* up */
+		    case 0:
+			box.x1 = topLeftX + width / 2.0f - aW / 2.0f;
+			box.y1 = topLeftY - aH - border;
+			break;
+		    /* top right */
+		    case 45:
+			box.x1 = topLeftX + width + border;
+			box.y1 = topLeftY - aH - border;
+			break;
+		    /* right */
+		    case 90:
+			box.x1 = topLeftX + width + border;
+			box.y1 = topLeftY + height / 2.0f - aH / 2.0f;
+			break;
+		    /* bottom right */
+		    case 135:
+			box.x1 = topLeftX + width + border;
+			box.y1 = topLeftY + height + border;
+			break;
+		    /* down */
+		    case 180:
+			box.x1 = topLeftX + width / 2.0f - aW / 2.0f;
+			box.y1 = topLeftY + height + border;
+			break;
+		    /* bottom left */
+		    case 225:
+			box.x1 = topLeftX - aW - border;
+			box.y1 = topLeftY + height + border;
+			break;
+		    /* left */
+		    case 270:
+			box.x1 = topLeftX - aW - border;
+			box.y1 = topLeftY + height / 2.0f - aH / 2.0f;
+			break;
+		    default:
+			break;
+		}
+	    }
+	    else
+	    {
+		/* arrow is visible (no preview is painted over it) */
+		box.x1  = screen->vp().x() * (width + border) +
+			  topLeftX + border;
+		box.x1 += width / 2 - aW / 2;
+		box.y1  = screen->vp().y() * (height + border) +
+		          topLeftY + border;
+		box.y1 += height / 2 - aH / 2;
+	    }
 
-            box.x2 = box.x1 + aW;
-            box.y2 = box.y1 + aH;
+	    box.x2 = box.x1 + aW;
+	    box.y2 = box.y1 + aH;
 
-            glTranslatef (box.x1 + aW / 2, box.y1 + aH / 2, 0.0f);
-            glRotatef (direction, 0.0f, 0.0f, 1.0f);
-            glTranslatef (-box.x1 - aW / 2, -box.y1 - aH / 2, 0.0f);
+	    glTranslatef (box.x1 + aW / 2, box.y1 + aH / 2, 0.0f);
+	    glRotatef (direction, 0.0f, 0.0f, 1.0f);
+	    glTranslatef (-box.x1 - aW / 2, -box.y1 - aH / 2, 0.0f);
 
-            matrix = arrowContext.texture[0]->matrix ();
-            matrix.x0 -= box.x1 * matrix.xx;
-            matrix.y0 -= box.y1 * matrix.yy;
+	    matrix = arrowContext.texture[0]->matrix ();
+	    matrix.x0 -= box.x1 * matrix.xx;
+	    matrix.y0 -= box.y1 * matrix.yy;
 
-            glBegin (GL_QUADS);
-            wallDrawQuad (&matrix, &box);
-            glEnd ();
+	    glBegin (GL_QUADS);
+	    wallDrawQuad (&matrix, &box);
+	    glEnd ();
 
-            arrowContext.texture[0]->disable ();
-        }
+	    arrowContext.texture[0]->disable ();
+	}
     }
 
     glDisable (GL_BLEND);
@@ -988,157 +992,153 @@ WallScreen::drawCairoTextureOnScreen ()
 
 bool
 WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
-                           const GLMatrix            &matrix,
-                           const CompRegion          &region,
-                           CompOutput                *output,
-                           unsigned int               mask)
+			   const GLMatrix            &matrix,
+			   const CompRegion          &region,
+			   CompOutput                *output,
+			   unsigned int              mask)
 {
     bool status;
 
     transform = NoTransformation;
+
     if (moving)
-        mask |= PAINT_SCREEN_TRANSFORMED_MASK |
-                PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+	mask |= PAINT_SCREEN_TRANSFORMED_MASK |
+		PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     status = glScreen->glPaintOutput (attrib, matrix, region, output, mask);
 
     if (optionGetShowSwitcher () &&
-        (moving || showPreview || boxTimeout) &&
-        (output->id () == boxOutputDevice ||
+	(moving || showPreview || boxTimeout) &&
+	(output->id () == boxOutputDevice ||
 	 output == &screen->fullscreenOutput ()))
     {
-        GLMatrix sMatrix = matrix;
+	GLMatrix sMatrix = matrix;
 
-        sMatrix.toScreenSpace (output, -DEFAULT_Z_CAMERA);
+	sMatrix.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-        glPushMatrix ();
-        glLoadMatrixf (sMatrix.getMatrix ());
+	glPushMatrix ();
+	glLoadMatrixf (sMatrix.getMatrix ());
 
-        drawCairoTextureOnScreen ();
+	drawCairoTextureOnScreen ();
 
-        glPopMatrix ();
+	glPopMatrix ();
 
-        if (optionGetMiniscreen ())
+	if (optionGetMiniscreen ())
         {
-            int  i, j;
-            float mw, mh;
+	    unsigned int i, j;
+	    float        mw, mh;
 
-            mw = viewportWidth;
-            mh = viewportHeight;
+	    mw = viewportWidth;
+	    mh = viewportHeight;
 
-            transform = MiniScreen;
-            mSAttribs.xScale = mw / screen->width ();
-            mSAttribs.yScale = mh / screen->height ();
-            mSAttribs.opacity = OPAQUE * (1.0 + mSzCamera);
-            mSAttribs.saturation = COLOR;
+	    transform = MiniScreen;
+	    mSAttribs.xScale = mw / screen->width ();
+	    mSAttribs.yScale = mh / screen->height ();
+	    mSAttribs.opacity = OPAQUE * (1.0 + mSzCamera);
+	    mSAttribs.saturation = COLOR;
 
-            for (j = 0; j < screen->vpSize ().height (); j++)
-            {
-                for (i = 0; i < screen->vpSize ().width (); i++)
-                {
-                    float        mx, my;
-                    unsigned int msMask;
+	    for (j = 0; j < screen->vpSize ().height (); j++)
+	    {
+		for (i = 0; i < screen->vpSize ().width (); i++)
+		{
+		    float        mx, my;
+		    unsigned int msMask;
+		    CompPoint    vp (i, j);
 
-                    mx = firstViewportX +
-                         (i * (viewportWidth + viewportBorder));
-                    my = firstViewportY + 
-                         (j * (viewportHeight + viewportBorder));
+		    mx = firstViewportX +
+			 (i * (viewportWidth + viewportBorder));
+		    my = firstViewportY +
+			 (j * (viewportHeight + viewportBorder));
 
-                    mSAttribs.xTranslate = mx / output->width ();
-                    mSAttribs.yTranslate = -my / output->height ();
+		    mSAttribs.xTranslate = mx / output->width ();
+		    mSAttribs.yTranslate = -my / output->height ();
 
-                    mSAttribs.brightness = 0.4f * BRIGHT;
+		    mSAttribs.brightness = 0.4f * BRIGHT;
 
-                    if (i == screen->vp ().x () && j == screen->vp ().y ()
-                        && moving)
-                    {
-                        mSAttribs.brightness = BRIGHT;
-                    }
+		    if (vp == screen->vp () &&
+			(moving || boxTimeout || showPreview))
+		    {
+			mSAttribs.brightness = BRIGHT;
+		    }
 
-                    if ((boxTimeout || showPreview) &&
-                        !moving && i == screen->vp ().x () &&
-                        j == screen->vp ().y ())
-                    {
-                        mSAttribs.brightness = BRIGHT;
-                    }
+		    cScreen->setWindowPaintOffset ((screen->vp ().x () - i) *
+						   screen->width (),
+						   (screen->vp ().y () - j) *
+						   screen->height ());
 
-                    cScreen->setWindowPaintOffset ((screen->vp ().x () - i) *
-                                                   screen->width (),
-                                                   (screen->vp ().y () - j) *
-                                                   screen->height ());
+		    msMask = mask | PAINT_SCREEN_TRANSFORMED_MASK;
 
-                    msMask = mask | PAINT_SCREEN_TRANSFORMED_MASK;
-                    glScreen->glPaintTransformedOutput (attrib, matrix,
-                                                       region, output, msMask);
+		    glScreen->glPaintTransformedOutput (attrib, matrix,
+							region, output, msMask);
 
-                }
-            }
-            transform = NoTransformation;
-            cScreen->setWindowPaintOffset (0, 0);
-        }
+		}
+	    }
+	    transform = NoTransformation;
+	    cScreen->setWindowPaintOffset (0, 0);
+	}
     }
 
     return status;
 }
 
 void
-WallScreen::preparePaint (int ms)
+WallScreen::preparePaint (int msSinceLastPaint)
 {
     if (!moving && !showPreview && boxTimeout)
-        boxTimeout -= ms;
+	boxTimeout -= msSinceLastPaint;
 
     if (timer)
-        timer -= ms;
+	timer -= msSinceLastPaint;
 
     if (moving)
     {
-        computeTranslation (&curPosX, &curPosY);
+	computeTranslation (curPosX, curPosY);
 
-        if (moveWindow)
-        {
-            CompWindow *window;
+	if (moveWindow)
+	{
+	    CompWindow *window;
 
-            window = screen->findWindow (moveWindow);
-            if (window)
-            {
-                float dx, dy;
+	    window = screen->findWindow (moveWindow);
+	    if (window)
+	    {
+		float dx, dy;
 
-                dx = gotoX - curPosX;
-                dy = gotoY - curPosY;
+		dx = (gotoX - curPosX) * screen->width ();
+		dy = (gotoY - curPosY) * screen->height ();
 
-                window->moveToViewportPosition (moveWindowX - screen->width () * dx,
-                                                moveWindowY - screen->height () * dy,
-                                                true);
-            }
-        }
+		window->moveToViewportPosition (moveWindowX - dx,
+						moveWindowY - dy,
+						true);
+	    }
+	}
     }
 
     if (moving && curPosX == gotoX && curPosY == gotoY)
     {
-        moving = false;
-        timer  = 0;
+	moving = false;
+	timer  = 0;
 
-        if (moveWindow)
-            releaseMoveWindow ();
-        else if (focusDefault)
-        {
-            /* only focus default window if switcher is not active */
-            if (!screen->grabExist ("switcher"))
-                screen->focusDefaultWindow ();
-        }
+	if (moveWindow)
+	    releaseMoveWindow ();
+	else if (focusDefault)
+	{
+	    /* only focus default window if switcher is not active */
+	    if (!screen->grabExist ("switcher"))
+		screen->focusDefaultWindow ();
+	}
     }
 
-    cScreen->preparePaint (ms);
+    cScreen->preparePaint (msSinceLastPaint);
 }
 
 void
 WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
-                                      const GLMatrix            &matrix,
-                                      const CompRegion          &region,
-                                      CompOutput                *output,
-                                      unsigned int               mask)
+				      const GLMatrix            &matrix,
+				      const CompRegion          &region,
+				      CompOutput                *output,
+				      unsigned int              mask)
 {
-    bool clear = (mask & PAINT_SCREEN_CLEAR_MASK);
+    bool      clear = (mask & PAINT_SCREEN_CLEAR_MASK);
     CompPoint point;
     CompSize  size;
 
@@ -1147,195 +1147,196 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 
     if (transform == MiniScreen)
     {
-        GLMatrix sMatrix = matrix;
+	GLMatrix sMatrix = matrix;
 
-        mask &= ~PAINT_SCREEN_CLEAR_MASK;
+	mask &= ~PAINT_SCREEN_CLEAR_MASK;
 
         /* move each screen to the correct output position */
+	sMatrix.translate (-(float) output->x1 () / (float) output->width (),
+			   (float) output->y1 () / (float) output->height (),
+			   0.0f);
+	sMatrix.translate (0.0f, 0.0f, -DEFAULT_Z_CAMERA);
 
-	    sMatrix.translate (-(float) output->x1 () /
-                           (float) output->width (),
-                           (float) output->y1 () /
-                           (float) output->height (), 0.0f);
-        sMatrix.translate (0.0f, 0.0f, -DEFAULT_Z_CAMERA);
+	sMatrix.translate (mSAttribs.xTranslate,
+			   mSAttribs.yTranslate,
+			   mSzCamera);
 
-        sMatrix.translate (mSAttribs.xTranslate,
-                           mSAttribs.yTranslate,
-                           mSzCamera);
+	/* move origin to top left */
+	sMatrix.translate (-0.5f, 0.5f, 0.0f);
+	sMatrix.scale (mSAttribs.xScale, mSAttribs.yScale, 1.0);
 
-        /* move origin to top left */
-        sMatrix.translate (-0.5f, 0.5f, 0.0f);
-        sMatrix.scale (mSAttribs.xScale, mSAttribs.yScale, 1.0);
+	/* revert prepareXCoords region shift.
+	   Now all screens display the same */
+	sMatrix.translate (0.5f, 0.5f, DEFAULT_Z_CAMERA);
+	sMatrix.translate ((float) output->x1 () / (float) output->width (),
+			   -(float) output->y2 () / (float) output->height (),
+			   0.0f);
 
-        /* revert prepareXCoords region shift.
-           Now all screens display the same */
-        sMatrix.translate (0.5f, 0.5f, DEFAULT_Z_CAMERA);
-        sMatrix.translate ((float) output->x1 () / (float) output->width (),
-                           -(float) output->y2 () /
-                           (float) output->height (), 0.0f);
-
-        glScreen->glPaintTransformedOutput (attrib, sMatrix,
-                                            screen->region (), output, mask);
-        return;
+	glScreen->glPaintTransformedOutput (attrib, sMatrix,
+					    screen->region (), output, mask);
+	return;
     }
 
     if (!moving)
-        glScreen->glPaintTransformedOutput (attrib, matrix,
-                                            region, output, mask);
+	glScreen->glPaintTransformedOutput (attrib, matrix,
+					    region, output, mask);
 
     mask &= ~PAINT_SCREEN_CLEAR_MASK;
 
     if (moving)
     {
-        ScreenTransformation oldTransform = transform;
-        GLMatrix             sMatrix = matrix;
-        float                xTranslate, yTranslate;
-        float                px, py;
-        int                  tx, ty;
-        Bool                 movingX, movingY;
+	ScreenTransformation oldTransform = transform;
+	GLMatrix             sMatrix = matrix;
+	float                xTranslate, yTranslate;
+	float                px, py;
+	int                  tx, ty;
+	bool                 movingX, movingY;
 
-        if (clear)
-            glScreen->clearTargetOutput (GL_COLOR_BUFFER_BIT);
+	if (clear)
+	    glScreen->clearTargetOutput (GL_COLOR_BUFFER_BIT);
 
-        transform  = Sliding;
-        currOutput = output;
+	transform  = Sliding;
+	currOutput = output;
 
-        px = curPosX;
-        py = curPosY;
+	px = curPosX;
+	py = curPosY;
 
-        movingX = ((int) floor (px)) != ((int) ceil (px));
-        movingY = ((int) floor (py)) != ((int) ceil (py));
+	movingX = ((int) floor (px)) != ((int) ceil (px));
+	movingY = ((int) floor (py)) != ((int) ceil (py));
 
-        if (movingY)
-        {
-            ty = ceil (py) - point.y ();
-            yTranslate = fmod (py, 1) - 1;
+	if (movingY)
+	{
+	    ty = ceil (py) - point.y ();
+	    yTranslate = fmod (py, 1) - 1;
 
-            sMatrix.translate (0.0f, yTranslate, 0.0f);
+	    sMatrix.translate (0.0f, yTranslate, 0.0f);
 
-            if (movingX)
-            {
-                tx = ceil (px) - point.x ();
-                xTranslate = 1 - fmod (px, 1);
+	    if (movingX)
+	    {
+		tx = ceil (px) - point.x ();
+		xTranslate = 1 - fmod (px, 1);
 
-                cScreen->setWindowPaintOffset ((point.x () - ceil(px)) *
-                                               size.width (),
-                                               (point.y () - ceil(py)) *
-                                               size.height ());
-		
-                sMatrix.translate (xTranslate, 0.0f, 0.0f);
+		cScreen->setWindowPaintOffset ((point.x () - ceil(px)) *
+					       size.width (),
+					       (point.y () - ceil(py)) *
+					       size.height ());
 
-                glScreen->glPaintTransformedOutput (attrib, sMatrix,
-                                             screen->region (), output, mask);
+		sMatrix.translate (xTranslate, 0.0f, 0.0f);
 
-                sMatrix.translate (-xTranslate, 0.0f, 0.0f);
-            }
+		glScreen->glPaintTransformedOutput (attrib, sMatrix,
+						    screen->region (),
+						    output, mask);
 
-            tx = floor (px) - point.x ();
-            xTranslate = -fmod (px, 1);
+		sMatrix.translate (-xTranslate, 0.0f, 0.0f);
+	    }
 
-            cScreen->setWindowPaintOffset ((point.x () - floor(px)) *
-                                           screen->width (),
-                                           (point.y () - ceil(py)) *
-                                           screen->height ());
+	    tx = floor (px) - point.x ();
+	    xTranslate = -fmod (px, 1);
 
-            sMatrix.translate (xTranslate, 0.0f, 0.0f);
+	    cScreen->setWindowPaintOffset ((point.x () - floor(px)) *
+					   screen->width (),
+					   (point.y () - ceil(py)) *
+					   screen->height ());
 
-            glScreen->glPaintTransformedOutput (attrib, sMatrix,
-                                             screen->region (), output, mask);
-            sMatrix.translate (-xTranslate, -yTranslate, 0.0f);
-        }
+	    sMatrix.translate (xTranslate, 0.0f, 0.0f);
 
-        ty = floor (py) - point.y ();
-        yTranslate = fmod (py, 1);
+	    glScreen->glPaintTransformedOutput (attrib, sMatrix,
+						screen->region (),
+						output, mask);
+	    sMatrix.translate (-xTranslate, -yTranslate, 0.0f);
+	}
 
-        sMatrix.translate (0.0f, yTranslate, 0.0f);
+	ty = floor (py) - point.y ();
+	yTranslate = fmod (py, 1);
 
-        if (movingX)
-        {
-            tx = ceil (px) - point.x ();
-            xTranslate = 1 - fmod (px, 1);
+	sMatrix.translate (0.0f, yTranslate, 0.0f);
 
-            cScreen->setWindowPaintOffset ((point.x () - ceil(px)) *
-                                           screen->width (),
-                                           (point.y () - floor(py)) *
-                                           screen->height ());
+	if (movingX)
+	{
+	    tx = ceil (px) - point.x ();
+	    xTranslate = 1 - fmod (px, 1);
 
-            sMatrix.translate (xTranslate, 0.0f, 0.0f);
+	    cScreen->setWindowPaintOffset ((point.x () - ceil(px)) *
+					   screen->width (),
+					   (point.y () - floor(py)) *
+					   screen->height ());
 
-            glScreen->glPaintTransformedOutput (attrib, sMatrix,
-                                             screen->region (), output, mask);
+	    sMatrix.translate (xTranslate, 0.0f, 0.0f);
 
-            sMatrix.translate (-xTranslate, 0.0f, 0.0f);
-        }
+	    glScreen->glPaintTransformedOutput (attrib, sMatrix,
+						screen->region (),
+						output, mask);
 
-        tx = floor (px) - point.x ();
-        xTranslate = -fmod (px, 1);
+	    sMatrix.translate (-xTranslate, 0.0f, 0.0f);
+	}
 
-        cScreen->setWindowPaintOffset ((point.x () - floor(px)) *
-                                       screen->width (),
-                                       (point.y () - floor(py)) *
-                                       screen->height ());
+	tx = floor (px) - point.x ();
+	xTranslate = -fmod (px, 1);
 
-        sMatrix.translate (xTranslate, 0.0f, 0.0f);
-        glScreen->glPaintTransformedOutput (attrib, sMatrix,
-                                             screen->region (), output, mask);
+	cScreen->setWindowPaintOffset ((point.x () - floor(px)) *
+				       screen->width (),
+				       (point.y () - floor(py)) *
+				       screen->height ());
 
-        cScreen->setWindowPaintOffset (0, 0);
-        transform = oldTransform;
+	sMatrix.translate (xTranslate, 0.0f, 0.0f);
+	glScreen->glPaintTransformedOutput (attrib, sMatrix,
+					    screen->region (), output, mask);
+
+	cScreen->setWindowPaintOffset (0, 0);
+	transform = oldTransform;
     }
 }
 
 bool
 WallWindow::glPaint (const GLWindowPaintAttrib &attrib,
-                     const GLMatrix            &matrix,
-                     const CompRegion          &region,
-                     unsigned int               mask)
+		     const GLMatrix            &matrix,
+		     const CompRegion          &region,
+		     unsigned int               mask)
 {
-    bool       status;
+    bool status;
 
     WALL_SCREEN (screen);
 
     if (ws->transform == MiniScreen)
     {
-        GLWindowPaintAttrib pA = attrib;
+	GLWindowPaintAttrib pA = attrib;
 
-        pA.opacity    = attrib.opacity *
-                        ((float) ws->mSAttribs.opacity / OPAQUE);
-        pA.brightness = attrib.brightness *
-                        ((float) ws->mSAttribs.brightness / BRIGHT);
-        pA.saturation = attrib.saturation *
-                        ((float) ws->mSAttribs.saturation / COLOR);
+	pA.opacity    = attrib.opacity *
+			((float) ws->mSAttribs.opacity / OPAQUE);
+	pA.brightness = attrib.brightness *
+			((float) ws->mSAttribs.brightness / BRIGHT);
+	pA.saturation = attrib.saturation *
+			((float) ws->mSAttribs.saturation / COLOR);
 
-        if (!pA.opacity || !pA.brightness)
-            mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+	if (!pA.opacity || !pA.brightness)
+	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
-        status = glWindow->glPaint (pA, matrix, region, mask);
+	status = glWindow->glPaint (pA, matrix, region, mask);
     }
     else if (ws->transform == Sliding)
     {
-        GLMatrix wMatrix;
+	GLMatrix wMatrix;
 
-        if (!isSliding)
-        {
-            wMatrix.translate (-0.5f, -0.5f, -DEFAULT_Z_CAMERA);
-            wMatrix.scale (1.0f / ws->currOutput->width (),
-                           -1.0f / ws->currOutput->height (),
-                           1.0f);
-            wMatrix.translate (-ws->currOutput->x1 (), -ws->currOutput->y1 (),
-                               0.0f);
-            mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-        }
-        else
-        {
-            wMatrix = matrix;
-        }
+	if (!isSliding)
+	{
+	    wMatrix.translate (-0.5f, -0.5f, -DEFAULT_Z_CAMERA);
+	    wMatrix.scale (1.0f / ws->currOutput->width (),
+			   -1.0f / ws->currOutput->height (),
+			   1.0f);
+	    wMatrix.translate (-ws->currOutput->x1 (), -ws->currOutput->y1 (),
+			       0.0f);
+	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+	}
+	else
+	{
+	    wMatrix = matrix;
+	}
 
-        status = glWindow->glPaint (attrib, wMatrix, region, mask);
+	status = glWindow->glPaint (attrib, wMatrix, region, mask);
     }
     else
     {
-        status = glWindow->glPaint (attrib, matrix, region, mask);
+	status = glWindow->glPaint (attrib, matrix, region, mask);
     }
 
     return status;
@@ -1346,17 +1347,17 @@ WallScreen::donePaint ()
 {
     if (moving || showPreview || boxTimeout)
     {
-		boxTimeout = MAX (0, boxTimeout);
-		cScreen->damageScreen ();
+	boxTimeout = MAX (0, boxTimeout);
+	cScreen->damageScreen ();
     }
 
     if (!moving && !showPreview && grabIndex)
     {
-		screen->removeGrab (grabIndex, NULL);
-		grabIndex = 0;
+	screen->removeGrab (grabIndex, NULL);
+	grabIndex = 0;
     }
 
-	cScreen->donePaint ();
+    cScreen->donePaint ();
 }
 
 void
@@ -1365,101 +1366,99 @@ WallScreen::createCairoContexts (bool initial)
     int width, height;
 
     viewportWidth = VIEWPORT_SWITCHER_SIZE *
-                    (float) optionGetPreviewScale () / 100.0f;
+		    (float) optionGetPreviewScale () / 100.0f;
     viewportHeight = viewportWidth * (float) screen->height () /
 		     (float) screen->width ();
     viewportBorder = optionGetBorderWidth ();
 
     width  = screen->vpSize ().width () * (viewportWidth + viewportBorder) +
-             viewportBorder;
+	     viewportBorder;
     height = screen->vpSize ().height () * (viewportHeight + viewportBorder) +
-             viewportBorder;
+	     viewportBorder;
 
-    destroyCairoContext (&switcherContext);
+    destroyCairoContext (switcherContext);
     switcherContext.width = width;
     switcherContext.height = height;
-    setupCairoContext (&switcherContext);
+    setupCairoContext (switcherContext);
     drawSwitcherBackground ();
 
-    destroyCairoContext (&thumbContext);
+    destroyCairoContext (thumbContext);
     thumbContext.width = viewportWidth;
     thumbContext.height = viewportHeight;
-    setupCairoContext (&thumbContext);
+    setupCairoContext (thumbContext);
     drawThumb ();
 
-    destroyCairoContext (&highlightContext);
+    destroyCairoContext (highlightContext);
     highlightContext.width = viewportWidth;
     highlightContext.height = viewportHeight;
-    setupCairoContext (&highlightContext);
+    setupCairoContext (highlightContext);
     drawHighlight ();
 
     if (initial)
     {
         arrowContext.width = ARROW_SIZE;
         arrowContext.height = ARROW_SIZE;
-        setupCairoContext (&arrowContext);
+        setupCairoContext (arrowContext);
         drawArrow ();
     }
 }
 
 
 void
-WallScreen::optionChanged (CompOption *opt, WallOptions::Options num)
+WallScreen::optionChanged (CompOption           *opt,
+			   WallOptions::Options num)
 {
+    switch(num) {
+    case WallOptions::OutlineColor:
+	drawSwitcherBackground ();
+	drawHighlight ();
+	drawThumb ();
+	break;
 
-    switch(num)
-    {
-	case WallOptions::OutlineColor:
-	    drawSwitcherBackground ();
-	    drawHighlight ();
-	    drawThumb ();
-	    break;
+    case WallOptions::EdgeRadius:
+    case WallOptions::BackgroundGradientBaseColor:
+    case WallOptions::BackgroundGradientHighlightColor:
+    case WallOptions::BackgroundGradientShadowColor:
+	drawSwitcherBackground ();
+	break;
 
-	case WallOptions::EdgeRadius:
-	case WallOptions::BackgroundGradientBaseColor:
-	case WallOptions::BackgroundGradientHighlightColor:
-	case WallOptions::BackgroundGradientShadowColor:
-	    drawSwitcherBackground ();
-	    break;
+    case WallOptions::BorderWidth:
+    case WallOptions::PreviewScale:
+	createCairoContexts (false);
+	break;
 
-	case WallOptions::BorderWidth:
-	case WallOptions::PreviewScale:
-	    createCairoContexts (false);
-	    break;
+    case WallOptions::ThumbGradientBaseColor:
+    case WallOptions::ThumbGradientHighlightColor:
+	drawThumb ();
+	break;
 
-	case WallOptions::ThumbGradientBaseColor:
-	case WallOptions::ThumbGradientHighlightColor:
-	    drawThumb ();
-	    break;
+    case WallOptions::ThumbHighlightGradientBaseColor:
+    case WallOptions::ThumbHighlightGradientShadowColor:
+	drawHighlight ();
+	break;
 
-	case WallOptions::ThumbHighlightGradientBaseColor:
-	case WallOptions::ThumbHighlightGradientShadowColor:
-	    drawHighlight ();
-	    break;
+    case WallOptions::ArrowBaseColor:
+    case WallOptions::ArrowShadowColor:
+	drawArrow ();
+	break;
 
-	case WallOptions::ArrowBaseColor:
-	case WallOptions::ArrowShadowColor:
-	    drawArrow ();
-	    break;
+    case WallOptions::NoSlideMatch:
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    WALL_WINDOW (w);
+	    ww->isSliding = !optionGetNoSlideMatch ().evaluate (w);
+	}
+	break;
 
-	case WallOptions::NoSlideMatch:
-
-	    foreach (CompWindow *w, screen->windows ())
-	    {
-		WALL_WINDOW (w);
-		ww->isSliding = !optionGetNoSlideMatch ().evaluate (w);
-	    }
-	    break;
-
-	default:
-	    break;
+    default:
+	break;
     }
 }
 
 bool
 WallScreen::setOptionForPlugin (const char        *plugin,
-                                const char        *name,
-                                CompOption::Value &value)
+				const char        *name,
+				CompOption::Value &value)
 {
     bool status = screen->setOptionForPlugin (plugin, name, value);
 
@@ -1522,12 +1521,15 @@ WallScreen::WallScreen (CompScreen *screen) :
     createCairoContexts (true);
 
 #define setAction(action, dir, win) \
-    optionSet##action##Initiate (boost::bind (&WallScreen::initiate, this, _1, _2, _3, dir, win)); \
-    optionSet##action##Terminate (boost::bind (&WallScreen::terminate, this, _1, _2, _3))
+    optionSet##action##Initiate (boost::bind (&WallScreen::initiate, this,   \
+					      _1, _2, _3, dir, win));        \
+    optionSet##action##Terminate (boost::bind (&WallScreen::terminate, this, \
+					       _1, _2, _3))
 
 #define setFlipAction(action, dir) \
-    optionSet##action##Initiate (boost::bind (&WallScreen::initiateFlip, this, dir, _2))
-    
+    optionSet##action##Initiate (boost::bind (&WallScreen::initiateFlip, \
+					      this, dir, _2))
+
     setAction (LeftKey, Left, false);
     setAction (RightKey, Right, false);
     setAction (UpKey, Up, false);
@@ -1545,14 +1547,14 @@ WallScreen::WallScreen (CompScreen *screen) :
     setAction (UpWindowKey, Up, true);
     setAction (DownWindowKey, Down, true);
 
-
     setFlipAction (FlipLeftEdge, Left);
     setFlipAction (FlipRightEdge, Right);
     setFlipAction (FlipUpEdge, Up);
     setFlipAction (FlipDownEdge, Down);
 
 #define setNotify(func) \
-    optionSet##func##Notify (boost::bind (&WallScreen::optionChanged, this, _1, _2))
+    optionSet##func##Notify (boost::bind (&WallScreen::optionChanged, \
+					  this, _1, _2))
 
     setNotify (EdgeRadius);
     setNotify (BorderWidth);
@@ -1572,18 +1574,20 @@ WallScreen::WallScreen (CompScreen *screen) :
 
 WallScreen::~WallScreen ()
 {
-    destroyCairoContext (&switcherContext);
-    destroyCairoContext (&thumbContext);
-    destroyCairoContext (&highlightContext);
-    destroyCairoContext (&arrowContext);
+    destroyCairoContext (switcherContext);
+    destroyCairoContext (thumbContext);
+    destroyCairoContext (highlightContext);
+    destroyCairoContext (arrowContext);
 }
 
 WallWindow::WallWindow (CompWindow *window) :
     PrivateHandler <WallWindow, CompWindow> (window),
     window (window),
-    glWindow (GLWindow::get (window)),
-    isSliding (!WallScreen::get (screen)->optionGetNoSlideMatch ().evaluate (window))
+    glWindow (GLWindow::get (window))
 {
+    WALL_SCREEN (screen);
+
+    isSliding = !ws->optionGetNoSlideMatch ().evaluate (window);
 }
 
 bool

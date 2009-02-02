@@ -34,8 +34,6 @@
 
 
 /* enums */
-
-
 typedef enum
 {
     NoTransformation,
@@ -43,6 +41,7 @@ typedef enum
     Sliding
 } ScreenTransformation;
 
+/* FIXME: put into own class? */
 typedef struct _WallCairoContext
 {
     Pixmap          pixmap;
@@ -54,7 +53,6 @@ typedef struct _WallCairoContext
     int width;
     int height;
 } WallCairoContext;
-
 
 /* classes */
 class WallScreen :
@@ -71,96 +69,96 @@ class WallScreen :
 	    Left,
 	    Down,
 	    Right,
-            Next,
+	    Next,
 	    Prev
 	};
-	
-        WallScreen (CompScreen *s);
-        ~WallScreen ();
 
-        void preparePaint (int);
-        void donePaint ();
-        void handleEvent (XEvent *event);
+	WallScreen (CompScreen *s);
+	~WallScreen ();
 
-        bool glPaintOutput (const GLScreenPaintAttrib &,
-                            const GLMatrix &, const CompRegion &,
-                            CompOutput *, unsigned int);
-        void glPaintTransformedOutput (const GLScreenPaintAttrib &,
-                                       const GLMatrix &,
-                                       const CompRegion &,
-                                       CompOutput *, unsigned int);
+	void preparePaint (int);
+	void donePaint ();
+	void handleEvent (XEvent *event);
 
-        bool setOptionForPlugin (const char *, const char *, CompOption::Value&);
-        void matchExpHandlerChanged ();
-        void matchPropertyChanged (CompWindow *);
+	bool glPaintOutput (const GLScreenPaintAttrib &,
+			    const GLMatrix &, const CompRegion &,
+			    CompOutput *, unsigned int);
+	void glPaintTransformedOutput (const GLScreenPaintAttrib &,
+				       const GLMatrix &,
+				       const CompRegion &,
+				       CompOutput *, unsigned int);
 
-    	void createCairoContexts (bool);
-        void setupCairoContext (WallCairoContext *);
-    	void destroyCairoContext (WallCairoContext *);
-    	void clearCairoLayer (cairo_t *);
-    	void drawSwitcherBackground ();
-    	void drawThumb ();
-    	void drawHighlight ();
-    	void drawArrow ();
-    	void drawCairoTextureOnScreen();
+	bool setOptionForPlugin (const char *, const char *,
+				 CompOption::Value&);
+	void matchExpHandlerChanged ();
+	void matchPropertyChanged (CompWindow *);
 
-    	void releaseMoveWindow ();
-    	void computeTranslation (float *, float *);
-    	void determineMovementAngle ();
-    	bool checkDestination (unsigned int, unsigned int);
-    	void checkAmount (unsigned int, unsigned int, int *, int *);
+	void createCairoContexts (bool);
+	void setupCairoContext (WallCairoContext &);
+	void destroyCairoContext (WallCairoContext &);
+	void clearCairoLayer (cairo_t *);
+	void drawSwitcherBackground ();
+	void drawThumb ();
+	void drawHighlight ();
+	void drawArrow ();
+	void drawCairoTextureOnScreen();
 
-        bool initiate (CompAction *, CompAction::State, CompOption::Vector &,
+	void releaseMoveWindow ();
+	void computeTranslation (float &, float &);
+	void determineMovementAngle ();
+	bool checkDestination (unsigned int, unsigned int);
+	void checkAmount (unsigned int, unsigned int, int &, int &);
+
+	bool initiate (CompAction *, CompAction::State, CompOption::Vector &,
 		       Direction, bool);
-        bool terminate (CompAction *, CompAction::State, CompOption::Vector &);
-        bool initiateFlip (Direction, CompAction::State);
+	bool terminate (CompAction *, CompAction::State, CompOption::Vector &);
+	bool initiateFlip (Direction, CompAction::State);
 
-        bool moveViewport (int, int, Window);
+	bool moveViewport (int, int, Window);
 
 	void optionChanged (CompOption *opt, WallOptions::Options num);
 
+	CompositeScreen *cScreen;
+	GLScreen        *glScreen;
 
-        CompositeScreen *cScreen;
-        GLScreen *glScreen;
+	bool moving; /* Used to track miniview movement */
+	bool showPreview;
 
-        bool moving; /* Used to track miniview movement */
-        bool showPreview;
+	float        curPosX;
+	float        curPosY;
+	unsigned int gotoX;
+	unsigned int gotoY;
 
-        float curPosX;
-        float curPosY;
-        unsigned int   gotoX;
-        unsigned int   gotoY;
-        int   direction; /* >= 0 : direction arrow angle, < 0 : no direction */
+	int direction; /* >= 0 : direction arrow angle, < 0 : no direction */
 
-        int boxTimeout;
-        unsigned int boxOutputDevice;
+	int          boxTimeout;
+	unsigned int boxOutputDevice;
+	void         *grabIndex;
+	int          timer;
 
-        void *grabIndex;
-        int timer;
+	Window moveWindow;
 
-        Window moveWindow;
+	bool focusDefault;
 
-        bool focusDefault;
+	ScreenTransformation transform;
+	CompOutput          *currOutput;
 
-        ScreenTransformation transform;
-        CompOutput          *currOutput;
+	GLWindowPaintAttrib mSAttribs;
+	float               mSzCamera;
 
-        GLWindowPaintAttrib mSAttribs;
-        float               mSzCamera;
+	int firstViewportX;
+	int firstViewportY;
+	int viewportWidth;
+	int viewportHeight;
+	int viewportBorder;
 
-        int firstViewportX;
-        int firstViewportY;
-        int viewportWidth;
-        int viewportHeight;
-        int viewportBorder;
+	int moveWindowX;
+	int moveWindowY;
 
-        int moveWindowX;
-        int moveWindowY;
-
-        WallCairoContext switcherContext;
-        WallCairoContext thumbContext;
-        WallCairoContext highlightContext;
-        WallCairoContext arrowContext;
+	WallCairoContext switcherContext;
+	WallCairoContext thumbContext;
+	WallCairoContext highlightContext;
+	WallCairoContext arrowContext;
 };
 
 class WallWindow :
@@ -169,15 +167,16 @@ class WallWindow :
 	public PrivateHandler <WallWindow, CompWindow>
 {
     public:
-        WallWindow (CompWindow *);
+	WallWindow (CompWindow *);
 
-        virtual void activate ();
-        bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
-                      const CompRegion &, unsigned int);
+	virtual void activate ();
+	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
+		      const CompRegion &, unsigned int);
 
-        CompWindow *window;
-        GLWindow *glWindow;
-        bool isSliding;
+	CompWindow *window;
+	GLWindow   *glWindow;
+
+	bool isSliding;
 };
 
 #define WALL_SCREEN(s) \
