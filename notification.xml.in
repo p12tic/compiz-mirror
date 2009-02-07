@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compiz>
-    <plugin name="notification">
+    <plugin name="notification" useBcop="true">
 	<_short>Error Notifications</_short>
 	<_long>Display errors and other messages using libnotify.</_long>
 	<category>Utility</category>
-	<display>
+	<options>
 	    <option type="int" name="timeout">
 		<_short>Hide Timeout</_short>
 		<_long>Timeout (in seconds) before hiding the notification, set to -1 for system default and 0 for indefinite</_long>
@@ -37,7 +37,7 @@
 		    <_name>Debug</_name>
 		</desc>
 	    </option>
-	</display>
+	</options>
     </plugin>
 </compiz>
 
