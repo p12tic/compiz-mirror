@@ -41,6 +41,7 @@ class LoginoutScreen :
 	CompositeScreen *cScreen;
 
 	Atom kdeLogoutInfoAtom;
+	Atom wmSnSelectionWindow;
 
 	int  numLoginWin;
 	int  numLogoutWin;
