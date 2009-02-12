@@ -267,10 +267,6 @@ LoginoutScreen::~LoginoutScreen ()
     char buf[128];
     int  scr = DefaultScreen (screen->dpy ());
 
-    /* wmSnSelectionWindow is not available, so we have to retrieve it
-     * ourselves.
-     */
-
     sprintf (buf, "WM_S%d", scr);
 
     XDeleteProperty (screen->dpy (), wmSnSelectionWindow,
