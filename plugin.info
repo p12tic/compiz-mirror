@@ -1,1 +1,2 @@
 PLUGIN = loginout
+PKG_DEP = compiz-composite compiz-opengl
