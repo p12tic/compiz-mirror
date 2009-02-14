@@ -4,7 +4,7 @@
     <_short>Splash</_short>
     <_long>A simple splash plugin</_long>
 	<category>Extras</category>
-    <display>
+    <options>
       <group>
         <_short>Main</_short>
         <option name="initiate_key" type="key">
@@ -68,6 +68,6 @@
           <precision>0.1</precision>
         </option>
       </group>
-    </display>
+    </options>
   </plugin>
 </compiz>

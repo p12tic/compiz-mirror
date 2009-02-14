@@ -1,1 +1,2 @@
 PLUGIN = splash
+PKG_DEP = compiz-composite compiz-opengl
