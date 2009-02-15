@@ -4,7 +4,7 @@
     <_short>Maximumize</_short>
 	<_long>Maximumizes windows (resize them to fit the available screenspace).</_long>
 	<category>Window Management</category>
-    <display>
+    <options>
       <option name="ignore_sticky" type="bool">
          <_short>Ignore sticky windows in the calculations</_short>
 	 <_long>Treat sticky windows as non-existant when calculating space to use for the maximumize window.</_long>
@@ -53,7 +53,7 @@
 	    <option name="trigger_max_left" type="key">
 	      <_short>Left-only maximumize</_short>
 	      <_long>Grow the window leftwards as much as possible.</_long>
-	      <default></default>
+	      <default>&lt;Super&gt;L</default>
 	    </option>
 	    <option name="trigger_max_right" type="key">
 	      <_short>Right-only maximumize</_short>
@@ -160,6 +160,6 @@
 	    </option>
 	</subgroup>
       </group>
-    </display>
+      </options>
   </plugin>
 </compiz>
