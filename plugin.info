@@ -1,1 +1,9 @@
+# Plugin.info is a file the Makefile imports for further information about your plugin.
+# Plugin name
 PLUGIN = put
+# Any pkg-config packages this plugin depends on?
+PKG_DEP = compiz-composite compiz-opengl
+# Any flags that should be passed to the linker?
+#LD_FLAGS = 
+# Any flags that should be passed to the compiler?
+#CFLAGS = 

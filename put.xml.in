@@ -4,7 +4,20 @@
 		<_short>Put</_short>
 		<_long>Put window</_long>
 		<category>Window Management</category>
-		<display>
+		<deps>
+		<relation type="after">
+		<plugin>decoration</plugin>
+		</relation>
+		<relation type="before">
+		<plugin>wobbly</plugin>
+		<plugin>fade</plugin>
+		</relation>
+		<requirement>
+		<plugin>opengl</plugin>
+		</requirement>
+		</deps>
+
+		<options>
 			<option name="put_viewport" type="action">
 				<_short>Put On Viewport</_short>
 				<_long>Move window to a certain viewport</_long>
@@ -168,6 +181,91 @@
 						<_long>Move window to the bottom right corner</_long>
 					</option>
 				</subgroup>
+				<subgroup>
+				    <_short>Put on empty regions</_short>
+					<option name="put_empty_center_key" type="key">
+						<_short>Put Center</_short>
+						<_long>Move window to the center</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_Begin</default>
+					</option>
+					<option name="put_empty_center_button" type="button">
+						<_short>Put Center</_short>
+						<_long>Move window to the center</_long>
+					</option>
+					<option name="put_empty_left_key" type="key">
+						<_short>Put Left</_short>
+						<_long>Move window to the left edge</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_Left</default>
+					</option>
+					<option name="put_empty_left_button" type="button">
+						<_short>Put Left</_short>
+						<_long>Move window to the left edge</_long>
+					</option>
+					<option name="put_empty_right_key" type="key">
+						<_short>Put Right</_short>
+						<_long>Move window to the right edge</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_Right</default>
+					</option>
+					<option name="put_empty_right_button" type="button">
+						<_short>Put Right</_short>
+						<_long>Move window to the right edge</_long>
+					</option>
+					<option name="put_empty_top_key" type="key">
+						<_short>Put Top</_short>
+						<_long>Move window to the top edge</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_Up</default>
+					</option>
+					<option name="put_empty_top_button" type="button">
+						<_short>Put Top</_short>
+						<_long>Move window to the top edge</_long>
+					</option>
+					<option name="put_empty_bottom_key" type="key">
+						<_short>Put Bottom</_short>
+						<_long>Move window to the bottom edge</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_Down</default>
+					</option>
+					<option name="put_empty_bottom_button" type="button">
+						<_short>Put Bottom</_short>
+						<_long>Move window to the bottom edge</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_Down</default>
+					</option>
+					<option name="put_empty_topleft_key" type="key">
+						<_short>Put Top Left</_short>
+						<_long>Move window to the top left corner</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_Home</default>
+					</option>
+					<option name="put_empty_topleft_button" type="button">
+						<_short>Put Top Left</_short>
+						<_long>Move window to the top left corner</_long>
+					</option>
+					<option name="put_empty_topright_key" type="key">
+						<_short>Put Top Right</_short>
+						<_long>Move window to the top right corner</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_Prior</default>
+					</option>
+					<option name="put_empty_topright_button" type="button">
+						<_short>Put Top Right</_short>
+						<_long>Move window to the top right corner</_long>
+					</option>
+					<option name="put_empty_bottomleft_key" type="key">
+						<_short>Put Bottom Left</_short>
+						<_long>Move window to the bottom left corner</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_End</default>
+					</option>
+					<option name="put_empty_bottomleft_button" type="button">
+						<_short>Put Bottom Left</_short>
+						<_long>Move window to the bottom left corner</_long>
+					</option>
+					<option name="put_empty_bottomright_key" type="key">
+						<_short>Put Bottom Right</_short>
+						<_long>Move window to the bottom right corner</_long>
+						<default>&lt;Super&gt;&lt;Alt&gt;KP_Next</default>
+					</option>
+					<option name="put_empty_bottomright_button" type="button">
+						<_short>Put Bottom Right</_short>
+						<_long>Move window to the bottom right corner</_long>
+					</option>
+				</subgroup>
 				<option name="put_restore_key" type="key">
 					<_short>Restore Position</_short>
 					<_long>Move window to the last position</_long>
@@ -201,8 +299,6 @@
 					<default/>
 				</option>
 			</group>
-		</display>
-		<screen>
 			<group>
 				<_short>Misc. Options</_short>
 				<subgroup>
@@ -271,6 +367,6 @@
 					<precision>0.1</precision>
 				</option>
 			</group>
-		</screen>
+		</options>
 	</plugin>
 </compiz>
