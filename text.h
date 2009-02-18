@@ -43,7 +43,7 @@ class CompText
 	} Flags;
 
 	typedef struct {
-	    char           *family;    /**< font family */
+	    const char     *family;    /**< font family */
 	    int            size;       /**< font size in points */
 	    unsigned short color[4];   /**< font color (RGBA) */
 
