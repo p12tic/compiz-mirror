@@ -9,9 +9,5 @@
 		<plugin>opengl</plugin>
 	    </relation>
 	</deps>
-	<options>
-	    <option name="abi" type="int" read_only="true"/>
-	    <option name="index" type="int" read_only="true"/>
-	</options>
     </plugin>
 </compiz>

@@ -29,8 +29,6 @@
 
 #define PI 3.14159265359f
 
-static CompMetadata textMetadata;
-
 COMPIZ_PLUGIN_20081216 (text, TextPluginVTable);
 
 CompString
