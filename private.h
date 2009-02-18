@@ -107,4 +107,5 @@ class TextPluginVTable :
     public:
 
 	bool init ();
+	void fini ();
 };

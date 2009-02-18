@@ -559,5 +559,15 @@ TextPluginVTable::init ()
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
 	 return false;
 
+    CompPrivate p;
+    p.uval = COMPIZ_TEXT_ABI;
+    screen->storeValue ("text_ABI", p);
+
     return true;
+}
+
+void
+TextPluginVTable::fini ()
+{
+    screen->eraseValue ("text_ABI");
 }
