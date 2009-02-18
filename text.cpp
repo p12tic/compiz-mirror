@@ -142,14 +142,14 @@ TextSurface::initCairo (unsigned int width,
 {
     Display *dpy = screen->dpy ();
 
-    pixmap = None;
+    mPixmap = None;
     if (width > 0 && height > 0)
-	pixmap = XCreatePixmap (dpy, screen->root (), width, height, 32);
+	mPixmap = XCreatePixmap (dpy, screen->root (), width, height, 32);
 
-    width  = width;
-    height = height;
+    mWidth  = width;
+    mHeight = height;
 
-    if (!pixmap)
+    if (!mPixmap)
     {
 	compLogMessage ("text", CompLogLevelError,
 			"Couldn't create %d x %d pixmap.", width, height);
@@ -157,7 +157,7 @@ TextSurface::initCairo (unsigned int width,
     }
 
     surface = cairo_xlib_surface_create_with_xrender_format (dpy,
-							     pixmap,
+							     mPixmap,
 							     scrn,
 							     format,
 							     width,
@@ -187,8 +187,13 @@ TextSurface::update (unsigned int width,
     Display *dpy = screen->dpy ();
 
     cairo_surface_destroy (surface);
+    surface = NULL;
+
     cairo_destroy (cr);
-    XFreePixmap (dpy, pixmap);
+    cr = NULL;
+
+    XFreePixmap (dpy, mPixmap);
+    mPixmap = None;
 
     return initCairo (width, height);
 }
@@ -284,9 +289,9 @@ TextSurface::valid () const
 }
 
 TextSurface::TextSurface () :
-    width  (0),
-    height (0),
-    pixmap (None),
+    mWidth  (0),
+    mHeight (0),
+    mPixmap (None),
     cr (NULL),
     surface (NULL),
     layout (NULL),
@@ -367,9 +372,9 @@ CompText::renderText (CompString   text,
     {
 	if (!(attrib.flags & NoAutoBinding))
 	{
-	    texture = GLTexture::bindPixmapToTexture (surface.pixmap,
-						      surface.width,
-						      surface.height,
+	    texture = GLTexture::bindPixmapToTexture (surface.mPixmap,
+						      surface.mWidth,
+						      surface.mHeight,
 						      32);
 	    retval  = !texture.empty ();
 	}
@@ -379,18 +384,18 @@ CompText::renderText (CompString   text,
 	}
     }
 
-    if (!retval && surface.pixmap)
+    if (!retval && surface.mPixmap)
     {
-	XFreePixmap (screen->dpy (), surface.pixmap);
+	XFreePixmap (screen->dpy (), surface.mPixmap);
 	return retval;
     }
 
     if (pixmap)
 	XFreePixmap (screen->dpy (), pixmap);
 
-    pixmap = surface.pixmap;
-    width  = surface.width;
-    height = surface.height;
+    pixmap = surface.mPixmap;
+    width  = surface.mWidth;
+    height = surface.mHeight;
 
     return retval;
 }
