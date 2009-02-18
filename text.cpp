@@ -532,13 +532,13 @@ CompText::CompText () :
     height (0),
     pixmap (None)
 {
-};
+}
 
 CompText::~CompText ()
 {
     if (pixmap)
 	XFreePixmap (screen->dpy (), pixmap);
-};
+}
 
 PrivateTextScreen::PrivateTextScreen (CompScreen *screen) :
     PrivateHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI> (screen),
@@ -548,10 +548,10 @@ PrivateTextScreen::PrivateTextScreen (CompScreen *screen) :
     utf8StringAtom = XInternAtom (screen->dpy (), "UTF8_STRING", 0);
     wmNameAtom = XInternAtom (screen->dpy (), "_NET_WM_NAME", 0);
 }
-;
+
 PrivateTextScreen::~PrivateTextScreen ()
 {
-};
+}
 
 bool
 TextPluginVTable::init ()
