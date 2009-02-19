@@ -186,7 +186,6 @@
 					<option name="put_empty_center_key" type="key">
 						<_short>Put Center</_short>
 						<_long>Move window to the center</_long>
-						<default>&lt;Super&gt;&lt;Alt&gt;KP_Begin</default>
 					</option>
 					<option name="put_empty_center_button" type="button">
 						<_short>Put Center</_short>
@@ -204,7 +203,6 @@
 					<option name="put_empty_right_key" type="key">
 						<_short>Put Right</_short>
 						<_long>Move window to the right edge</_long>
-						<default>&lt;Super&gt;&lt;Alt&gt;KP_Right</default>
 					</option>
 					<option name="put_empty_right_button" type="button">
 						<_short>Put Right</_short>
@@ -213,7 +211,6 @@
 					<option name="put_empty_top_key" type="key">
 						<_short>Put Top</_short>
 						<_long>Move window to the top edge</_long>
-						<default>&lt;Super&gt;&lt;Alt&gt;KP_Up</default>
 					</option>
 					<option name="put_empty_top_button" type="button">
 						<_short>Put Top</_short>
@@ -222,17 +219,14 @@
 					<option name="put_empty_bottom_key" type="key">
 						<_short>Put Bottom</_short>
 						<_long>Move window to the bottom edge</_long>
-						<default>&lt;Super&gt;&lt;Alt&gt;KP_Down</default>
 					</option>
 					<option name="put_empty_bottom_button" type="button">
 						<_short>Put Bottom</_short>
 						<_long>Move window to the bottom edge</_long>
-						<default>&lt;Super&gt;&lt;Alt&gt;KP_Down</default>
 					</option>
 					<option name="put_empty_topleft_key" type="key">
 						<_short>Put Top Left</_short>
 						<_long>Move window to the top left corner</_long>
-						<default>&lt;Super&gt;&lt;Alt&gt;KP_Home</default>
 					</option>
 					<option name="put_empty_topleft_button" type="button">
 						<_short>Put Top Left</_short>
@@ -241,7 +235,6 @@
 					<option name="put_empty_topright_key" type="key">
 						<_short>Put Top Right</_short>
 						<_long>Move window to the top right corner</_long>
-						<default>&lt;Super&gt;&lt;Alt&gt;KP_Prior</default>
 					</option>
 					<option name="put_empty_topright_button" type="button">
 						<_short>Put Top Right</_short>
