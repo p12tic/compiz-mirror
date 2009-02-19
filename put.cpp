@@ -20,8 +20,6 @@
 #include "put.h"
 
 #include <cmath>
-#include <cstring>
-#include <iostream>
 
 #define PUT_ONLY_EMPTY(type) (type >= PutEmptyBottomLeft && type <= PutEmptyTopRight)
 
@@ -1259,7 +1257,6 @@ PutWindow::~PutWindow () { }
 bool
 PutPluginVTable::init ()
 {
-    std::cout << "Plugin loaded" << std::endl;
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
 	 return false;
     if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
