@@ -8,5 +8,5 @@ Description: Text plugin for compiz
 Version: @VERSION@
 
 Requires: compiz pangocairo cairo cairo-xlib-xrender
-Libs:
-Cflags: @COMPIZ_CFLAGS@
+Libs: -L${libdir}/compiz -ltext
+Cflags: @COMPIZ_CFLAGS@ -I${includedir}/compiz

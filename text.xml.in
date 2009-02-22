@@ -4,9 +4,10 @@
 	<_short>Text</_short>
 	<_long>Render text to texture</_long>
 	<category>Image Loading</category>
-	<options>
-	    <option name="abi" type="int" read_only="true"/>
-	    <option name="index" type="int" read_only="true"/>
-	</options>
+	<deps>
+	    <relation type="after">
+		<plugin>opengl</plugin>
+	    </relation>
+	</deps>
     </plugin>
 </compiz>

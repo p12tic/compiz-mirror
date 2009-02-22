@@ -43,11 +43,11 @@ class CompText
 	} Flags;
 
 	typedef struct {
-	    char           *family;    /**< font family */
+	    const char     *family;    /**< font family */
 	    int            size;       /**< font size in points */
 	    unsigned short color[4];   /**< font color (RGBA) */
 
-	    Flags          flags;      /**< rendering flags, see above */
+	    unsigned int   flags;      /**< rendering flags, see above */
 
 	    int            maxWidth;   /**< maximum width of the
 					    generated pixmap */

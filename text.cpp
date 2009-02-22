@@ -29,8 +29,6 @@
 
 #define PI 3.14159265359f
 
-static CompMetadata textMetadata;
-
 COMPIZ_PLUGIN_20081216 (text, TextPluginVTable);
 
 CompString
@@ -144,14 +142,14 @@ TextSurface::initCairo (unsigned int width,
 {
     Display *dpy = screen->dpy ();
 
-    pixmap = None;
+    mPixmap = None;
     if (width > 0 && height > 0)
-	pixmap = XCreatePixmap (dpy, screen->root (), width, height, 32);
+	mPixmap = XCreatePixmap (dpy, screen->root (), width, height, 32);
 
-    width  = width;
-    height = height;
+    mWidth  = width;
+    mHeight = height;
 
-    if (!pixmap)
+    if (!mPixmap)
     {
 	compLogMessage ("text", CompLogLevelError,
 			"Couldn't create %d x %d pixmap.", width, height);
@@ -159,7 +157,7 @@ TextSurface::initCairo (unsigned int width,
     }
 
     surface = cairo_xlib_surface_create_with_xrender_format (dpy,
-							     pixmap,
+							     mPixmap,
 							     scrn,
 							     format,
 							     width,
@@ -189,8 +187,13 @@ TextSurface::update (unsigned int width,
     Display *dpy = screen->dpy ();
 
     cairo_surface_destroy (surface);
+    surface = NULL;
+
     cairo_destroy (cr);
-    XFreePixmap (dpy, pixmap);
+    cr = NULL;
+
+    XFreePixmap (dpy, mPixmap);
+    mPixmap = None;
 
     return initCairo (width, height);
 }
@@ -286,9 +289,9 @@ TextSurface::valid () const
 }
 
 TextSurface::TextSurface () :
-    width  (0),
-    height (0),
-    pixmap (None),
+    mWidth  (0),
+    mHeight (0),
+    mPixmap (None),
     cr (NULL),
     surface (NULL),
     layout (NULL),
@@ -379,9 +382,9 @@ CompText::renderText (CompString   text,
     {
 	if (!(attrib.flags & NoAutoBinding))
 	{
-	    texture = GLTexture::bindPixmapToTexture (surface.pixmap,
-						      surface.width,
-						      surface.height,
+	    texture = GLTexture::bindPixmapToTexture (surface.mPixmap,
+						      surface.mWidth,
+						      surface.mHeight,
 						      32);
 	    retval  = !texture.empty ();
 	}
@@ -391,15 +394,17 @@ CompText::renderText (CompString   text,
 	}
     }
 
-    if (!retval && surface.pixmap)
+    if (!retval && surface.mPixmap)
     {
-	XFreePixmap (screen->dpy (), surface.pixmap);
+	XFreePixmap (screen->dpy (), surface.mPixmap);
 	return retval;
     }
 
-    pixmap = surface.pixmap;
-    width  = surface.width;
-    height = surface.height;
+    clear ();
+
+    pixmap = surface.mPixmap;
+    width  = surface.mWidth;
+    height = surface.mHeight;
 
     return retval;
 }
@@ -539,13 +544,13 @@ CompText::CompText () :
     height (0),
     pixmap (None)
 {
-};
+}
 
 CompText::~CompText ()
 {
     if (pixmap)
 	XFreePixmap (screen->dpy (), pixmap);
-};
+}
 
 PrivateTextScreen::PrivateTextScreen (CompScreen *screen) :
     PrivateHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI> (screen),
@@ -555,10 +560,10 @@ PrivateTextScreen::PrivateTextScreen (CompScreen *screen) :
     utf8StringAtom = XInternAtom (screen->dpy (), "UTF8_STRING", 0);
     wmNameAtom = XInternAtom (screen->dpy (), "_NET_WM_NAME", 0);
 }
-;
+
 PrivateTextScreen::~PrivateTextScreen ()
 {
-};
+}
 
 bool
 TextPluginVTable::init ()
@@ -566,5 +571,15 @@ TextPluginVTable::init ()
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
 	 return false;
 
+    CompPrivate p;
+    p.uval = COMPIZ_TEXT_ABI;
+    screen->storeValue ("text_ABI", p);
+
     return true;
+}
+
+void
+TextPluginVTable::fini ()
+{
+    screen->eraseValue ("text_ABI");
 }

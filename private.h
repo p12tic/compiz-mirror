@@ -77,15 +77,15 @@ class TextSurface
 	bool render (const CompText::Attrib &attrib,
 		     const CompString       &text);
 
-	unsigned int width;
-	unsigned int height;
-	Pixmap       pixmap;
+	unsigned int mWidth;
+	unsigned int mHeight;
+	Pixmap       mPixmap;
 
     private:
-	bool initCairo (unsigned int width,
-			unsigned int height);
-	bool update (unsigned int width,
-		     unsigned int height);
+	bool initCairo (unsigned int w,
+			unsigned int h);
+	bool update (unsigned int w,
+		     unsigned int h);
 	void drawBackground (int x, int y,
 			     int width, int height,
 			     int radius);
@@ -107,4 +107,5 @@ class TextPluginVTable :
     public:
 
 	bool init ();
+	void fini ();
 };
