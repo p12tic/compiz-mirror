@@ -347,6 +347,16 @@ TextSurface::~TextSurface ()
 	pango_font_description_free (font);
 }
 
+void
+CompText::clear ()
+{
+    if (pixmap)
+	XFreePixmap (screen->dpy (), pixmap);
+
+    width  = 0;
+    height = 0;
+}
+
 bool
 CompText::renderText (CompString   text,
 		      const Attrib &attrib)
@@ -386,9 +396,6 @@ CompText::renderText (CompString   text,
 	XFreePixmap (screen->dpy (), surface.pixmap);
 	return retval;
     }
-
-    if (pixmap)
-	XFreePixmap (screen->dpy (), pixmap);
 
     pixmap = surface.pixmap;
     width  = surface.width;

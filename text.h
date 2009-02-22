@@ -71,6 +71,8 @@ class CompText
 				bool         renderViewportNumber,
 				const Attrib &attrib);
 
+	void clear ();
+
 	Pixmap getPixmap ();
 	unsigned int getWidth () const;
 	unsigned int getHeight () const;
