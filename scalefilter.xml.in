@@ -5,6 +5,8 @@
 	<category>Utility</category>
 	<deps>
 	    <relation type="after">
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
 		<plugin>scale</plugin>
 		<plugin>text</plugin>
 	    </relation>
@@ -13,7 +15,7 @@
 		<plugin>regex</plugin>
 	    </requirement>
 	</deps>
-	<screen>
+	<options>
 	    <group>
 		<_short>Behaviour</_short>
 		<option name="timeout" type="int">
@@ -76,7 +78,7 @@
 		    </default>
 		</option>
 	    </group>
-	</screen>
+	</options>
     </plugin>
 </compiz>
 
