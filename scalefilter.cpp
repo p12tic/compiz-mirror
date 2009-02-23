@@ -141,7 +141,7 @@ FilterInfo::getMatch () const
     if (stringLength)
 	return filterMatch;
 
-    return CompMatch::empty;
+    return CompMatch::emptyMatch;
 }
 
 void
@@ -152,7 +152,7 @@ ScalefilterScreen::relayout ()
     else if (matchApplied)
 	sScreen->relayoutSlots (persistentMatch);
     else
-	sScreen->relayoutSlots (CompMatch::empty);
+	sScreen->relayoutSlots (CompMatch::emptyMatch);
 }
 
 bool
