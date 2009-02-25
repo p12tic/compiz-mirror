@@ -71,6 +71,7 @@ class FilterInfo
 
 class ScalefilterScreen :
     public PrivateHandler <ScalefilterScreen, CompScreen>,
+    public ScreenInterface,
     public ScaleScreenInterface,
     public GLScreenInterface,
     public ScalefilterOptions
@@ -146,12 +147,6 @@ class ScalefilterWindow :
 	bool
 	setScaledPaintAttributes (GLWindowPaintAttrib &);
 };
-
-#define FILTER_SCREEN(s)				\
-    ScalefilterScreen *fs = ScalefilterScreen::get (s);
-
-#define FILTER_WINDOW(w)				\
-    ScalefilterWindow *fw = ScalefilterWindow::get (w);
 
 class ScalefilterPluginVTable :
     public CompPlugin::VTableForScreenAndWindow

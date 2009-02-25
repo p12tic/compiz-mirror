@@ -67,6 +67,12 @@ FilterInfo::damageTextRect () const
     fScreen->cScreen->damageRegion (region);
 }
 
+bool
+FilterInfo::hasText () const
+{
+    return stringLength > 0;
+}
+
 void
 FilterInfo::renderText ()
 {
@@ -415,6 +421,7 @@ ScalefilterScreen::handleCompizEvent (const char          *pluginName,
 
     if (gScreen)
 	gScreen->glPaintOutputSetEnabled (this, activated);
+    screen->handleEventSetEnabled (this, activated);
 
     matchApplied = false;
 }
@@ -428,7 +435,7 @@ FilterInfo::drawText (const CompOutput *output,
 
     if (output->id () == (unsigned int) ~0 || output == &outputDevice)
     {
-	GLMatrix sTransform = transform;
+	GLMatrix sTransform (transform);
 	float    x, y, width, height;
 
 	width  = text.getWidth ();
@@ -480,13 +487,9 @@ ScalefilterScreen::hasFilter () const
 bool
 ScalefilterWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
 {
-    bool ret;
+    bool ret = sWindow->setScaledPaintAttributes (attrib);
 
-    FILTER_SCREEN (screen);
-
-    ret = sWindow->setScaledPaintAttributes (attrib);
-
-    if (fs->hasFilter ())
+    if (ScalefilterScreen::get (screen)->hasFilter ())
     {
 	SCALE_SCREEN (screen);
 
@@ -545,6 +548,11 @@ ScalefilterScreen::ScalefilterScreen (CompScreen *s) :
     optionSetBackColorNotify (boost::bind (&ScalefilterScreen::optionChanged,
 					   this, _1, _2));
 
+    ScreenInterface::setHandler (screen);
+    GLScreenInterface::setHandler (gScreen);
+    ScaleScreenInterface::setHandler (sScreen);
+
+    screen->handleEventSetEnabled (this, false);
     if (gScreen)
 	gScreen->glPaintOutputSetEnabled (this, false);
 }
@@ -564,6 +572,7 @@ ScalefilterWindow::ScalefilterWindow (CompWindow *w) :
     window (w),
     sWindow (ScaleWindow::get (w))
 {
+    ScaleWindowInterface::setHandler (sWindow);
 }
 
 bool
