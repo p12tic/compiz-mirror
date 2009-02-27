@@ -7,6 +7,6 @@ Name: compiz-mousepoll
 Description: Mousepoll plugin for compiz
 Version: @VERSION@
 
-Requires:
-Libs:
-Cflags: @COMPIZ_CFLAGS@
+Requires: compiz
+Libs: -L${libdir}/compiz -lmousepoll
+Cflags: @COMPIZ_CFLAGS@ -I${includedir}/compiz
