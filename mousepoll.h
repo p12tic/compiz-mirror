@@ -41,6 +41,9 @@ class MousePoller
 	void
 	stop ();
 
+	bool
+	active ();
+
 	CompPoint
 	getPosition ();
 

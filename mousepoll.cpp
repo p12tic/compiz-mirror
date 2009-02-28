@@ -147,6 +147,12 @@ MousePoller::stop ()
     ms->removeTimer (this);
 }
 
+bool
+MousePoller::active ()
+{
+    return mActive;
+}
+
 CompPoint
 MousePoller::getCurrentPosition ()
 {
