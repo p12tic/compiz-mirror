@@ -113,7 +113,8 @@ schema-output   := $(shell if [ -n "$(gen-schemas)" ]; then $(ECHO) $(BUILDDIR)/
 
 ifeq ($(BUILD_GLOBAL),true)
     pkg-target         := $(shell if [ -e compiz-$(PLUGIN).pc.in -a -n "$(PREFIX)" -a -d "$(PREFIX)" ]; then $(ECHO) "$(BUILDDIR)/compiz-$(PLUGIN).pc"; fi )
-    hdr-install-target := $(shell if [ -e compiz-$(PLUGIN).pc.in -a -n "$(PREFIX)" -a -d "$(PREFIX)" -a -e compiz-$(PLUGIN).h ]; then $(ECHO) "compiz-$(PLUGIN).h"; fi )
+    hdr-install-target := $(shell if [ -e compiz-$(PLUGIN).pc.in -a -n "$(PREFIX)" -a -d "$(PREFIX)" -a -e $(PLUGIN).h ]; then $(ECHO) "$(PLUGIN).h"; fi )
+    hdr-install-dir := $(shell if [ -e compiz-$(PLUGIN).pc.in -a -n "$(PREFIX)" -a -d "$(PREFIX)" -a -e $(PLUGIN).h ]; then $(ECHO) "$(PLUGIN)"; fi )
 endif
 
 # find all the object files
@@ -353,13 +354,14 @@ install: $(DESTDIR) all
 	fi
 	@if [ -n "$(hdr-install-target)" ]; then \
 	    if [ '$(color)' != 'no' ]; then \
-		$(ECHO) -n -e "\033[0;1;5minstall   \033[0m: \033[0;31m$(CINCDIR)/compiz/$(hdr-install-target)\033[0m"; \
+		$(ECHO) -n -e "\033[0;1;5minstall   \033[0m: \033[0;31m$(CINCDIR)/compiz/$(hdr-install-dir)/$(hdr-install-target)\033[0m"; \
 	    else \
-		$(ECHO) "install   : $(CINCDIR)/compiz/$(hdr-install-target)"; \
+		$(ECHO) "install   : $(CINCDIR)/compiz/$(hdr-install-dir)/$(hdr-install-target)"; \
 	    fi; \
-	    $(INSTALL) --mode=u=rw,go=r,a-s $(hdr-install-target) $(CINCDIR)/compiz/$(hdr-install-target); \
+	    mkdir -p -m 655 $(CINCDIR)/compiz/$(hdr-install-dir);\
+	    $(INSTALL) --mode=u=rw,go=r,a-s $(hdr-install-target) $(CINCDIR)/compiz/$(hdr-install-dir)/$(hdr-install-target); \
 	    if [ '$(color)' != 'no' ]; then \
-		$(ECHO) -e "\r\033[0minstall   : \033[34m$(CINCDIR)/compiz/$(hdr-install-target)\033[0m"; \
+		$(ECHO) -e "\r\033[0minstall   : \033[34m$(CINCDIR)/compiz/$(hdr-install-dir)/$(hdr-install-target)\033[0m"; \
 	    fi; \
 	fi
 	@if [ -n "$(pkg-target)" ]; then \
@@ -445,15 +447,15 @@ uninstall:
 		$(ECHO) -e "\r\033[0muninstall : \033[34m$(XMLDIR)/$(PLUGIN).xml\033[0m"; \
 	    fi; \
 	fi
-	@if [ -n "$(hdr-install-target)" -a -e $(CINCDIR)/compiz/$(hdr-install-target) ]; then \
+	@if [ -n "$(hdr-install-target)" -a -e $(CINCDIR)/compiz/$(hdr-install-dir)/$(hdr-install-target) ]; then \
 	    if [ '$(color)' != 'no' ]; then \
-		$(ECHO) -n -e "\033[0;1;5muninstall \033[0m: \033[0;31m$(CINCDIR)/compiz/$(hdr-install-target)\033[0m"; \
+		$(ECHO) -n -e "\033[0;1;5muninstall \033[0m: \033[0;31m$(CINCDIR)/compiz/$(hdr-install-dir)/$(hdr-install-target)\033[0m"; \
 	    else \
-		$(ECHO) "uninstall : $(CINCDIR)/compiz/$(hdr-install-target)"; \
+		$(ECHO) "uninstall : $(CINCDIR)/compiz/$(hdr-install-dir)/$(hdr-install-target)"; \
 	    fi; \
-	    rm -f $(CINCDIR)/compiz/$(hdr-install-target); \
+	    rm -rf $(CINCDIR)/compiz/$(hdr-install-dir)/$(hdr-install-target); \
 	    if [ '$(color)' != 'no' ]; then \
-		$(ECHO) -e "\r\033[0muninstall : \033[34m$(CINCDIR)/compiz/$(hdr-install-target)\033[0m"; \
+		$(ECHO) -e "\r\033[0muninstall : \033[34m$(CINCDIR)/compiz/$(hdr-install-dir)/$(hdr-install-target))\033[0m"; \
 	    fi; \
 	fi
 	@if [ -n "$(pkg-target)" -a -e $(PKGDIR)/compiz-$(PLUGIN).pc ]; then \
