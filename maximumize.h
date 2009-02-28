@@ -25,7 +25,10 @@
  * Maximumize resizes a window so it fills as much of the free space in any
  * direction as possible without overlapping with other windows.
  *
- * Todo:
+ * TODO:
+ * - CHECKREC should use CompRegion::contains instead of XRectInRegion
+ * - Update Description
+ * - Undo
  */
 
 #include <core/core.h>
@@ -72,15 +75,14 @@ class MaximumizeScreen :
 			  bool		     grow);
     private:
 	bool
-	substantialOverlap (XRectangle a,
-			    XRectangle b);
-	void
-	setWindowBox (CompWindow *w,
-		      XRectangle *rect);
+	substantialOverlap (CompRect a,
+			    CompRect b);
+	CompRect
+	setWindowBox (CompWindow *w);
 
-	Region
-	emptyRegion (CompWindow *window,
-		     Region region);
+	CompRegion
+	findEmptyRegion (CompWindow *window,
+			 CompRegion region);
 
 	bool
 	boxCompare (BOX a,
@@ -88,24 +90,24 @@ class MaximumizeScreen :
 	void
 	growGeneric (CompWindow      *w,
 		     BOX	     *tmp,
-		     Region      r,
+		     CompRegion      r,
 		     short int       *i,
 		     const short int inc);
 	inline void 
 	growWidth (CompWindow   *w,
 		   BOX          *tmp,
-		   Region   r,
+		   CompRegion   r,
 		   const MaxSet mset);
 	inline void 
 	growHeight (CompWindow   *w,
 		    BOX          *tmp,
-		    Region   r,
+		    CompRegion   r,
 		    const MaxSet mset);
 
 	BOX
 	extendBox (CompWindow   *w,
 		   BOX	        tmp,
-		   Region       r,
+		   CompRegion       r,
 		   bool	        xFirst,
 		   const MaxSet mset);
 
@@ -128,7 +130,7 @@ class MaximumizeScreen :
 
 	BOX
 	findRect (CompWindow  *w,
-		  Region  r,
+		  CompRegion  r,
 		  MaxSet      mset);
 
 	unsigned int
@@ -144,7 +146,7 @@ class MaximumizeScreen :
 void 
 MaximumizeScreen::growWidth (CompWindow   *w,
 			     BOX          *tmp,
-			     Region   r,
+			     CompRegion   r,
 			     const MaxSet mset)
 {
     if (mset.left) 
@@ -159,7 +161,7 @@ MaximumizeScreen::growWidth (CompWindow   *w,
 void 
 MaximumizeScreen::growHeight (CompWindow   *w,
 			      BOX          *tmp,
-			      Region   r,
+			      CompRegion   r,
 			      const MaxSet mset)
 {
     if (mset.down) 

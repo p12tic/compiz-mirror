@@ -25,13 +25,9 @@
  * Maximumize resizes a window so it fills as much of the free space in any
  * direction as possible without overlapping with other windows.
  *
- * Todo:
- * Region -> CompRegion
- * XRectangle -> CompRect
  */
 
 #include "maximumize.h"
-#include <iostream>
 
 COMPIZ_PLUGIN_20081216 (maximumize, MaximumizePluginVTable);
 
@@ -39,26 +35,28 @@ COMPIZ_PLUGIN_20081216 (maximumize, MaximumizePluginVTable);
  * directions
  */
 bool 
-MaximumizeScreen::substantialOverlap (XRectangle a,
-				      XRectangle b)
+MaximumizeScreen::substantialOverlap (CompRect a,
+				      CompRect b)
 {
-    if (a.x + a.width <= b.x + 40) return false;
-    if (b.x + b.width <= a.x + 40) return false;
-    if (a.y + a.height <= b.y + 40) return false;
-    if (b.y + b.height <= a.y + 40) return false;
+    if (a.x () + a.width () <= b.x () + 40) return false;
+    if (b.x () + b.width () <= a.x () + 40) return false;
+    if (a.y () + a.height () <= b.y () + 40) return false;
+    if (b.y () + b.height () <= a.y () + 40) return false;
     return true;
 }
 
 
 /* Set the rectangle to cover the window, including decoration. */
-void
-MaximumizeScreen::setWindowBox (CompWindow *w,
-				XRectangle *rect)
+CompRect
+MaximumizeScreen::setWindowBox (CompWindow *w)
 {
-    rect->x = w->serverX () - w->input ().left;
-    rect->y = w->serverY () - w->input ().top;
-    rect->width  = w->serverWidth () + w->input ().right + w->input ().left;
-    rect->height = w->serverHeight () + w->input ().top + w->input ().bottom;
+    CompRect rect;
+    rect.setGeometry (w->serverX () - w->input ().left,
+		      w->serverY () - w->input ().top,
+		      w->serverWidth () + w->input ().right + w->input ().left,
+		      w->serverHeight () + w->input ().top + w->input ().bottom);
+
+    return rect;
 }
 
 
@@ -68,32 +66,21 @@ MaximumizeScreen::setWindowBox (CompWindow *w,
  * Logic borrowed from opacify (courtesy of myself).
  */
 
-Region
-MaximumizeScreen::emptyRegion (CompWindow *window,
-			       Region     region)
+CompRegion
+MaximumizeScreen::findEmptyRegion (CompWindow *window,
+				   CompRegion region)
 {
-    CompScreen *s = screen;
-    Region     newRegion, tmpRegion;
-    XRectangle tmpRect, windowRect;
-
-    newRegion = XCreateRegion ();
-    if (!newRegion)
-	return NULL;
-
-    tmpRegion = XCreateRegion ();
-    if (!tmpRegion)
-    {
-	XDestroyRegion (newRegion);
-	return NULL;
-    }
-
-    XUnionRegion (region, newRegion, newRegion);
+    CompRegion     newRegion (region);
+    CompRect       windowRect;
 
     if (optionGetIgnoreOverlapping ()) 
-	setWindowBox (window, &windowRect);
-    foreach(CompWindow *w, s->windows ())
+	windowRect = setWindowBox (window);
+
+    foreach(CompWindow *w, screen->windows ())
     {
-	EMPTY_REGION (tmpRegion);
+	CompRegion tmpRegion = emptyRegion;
+	CompRect   tmpRect;
+
         if (w->id () == window->id ())
             continue;
 
@@ -107,11 +94,12 @@ MaximumizeScreen::emptyRegion (CompWindow *window,
 	{
 	    if (w->struts ()) 
 	    {
-		XUnionRectWithRegion (&w->struts ()->left, tmpRegion, tmpRegion);
-		XUnionRectWithRegion (&w->struts ()->right, tmpRegion, tmpRegion);
-		XUnionRectWithRegion (&w->struts ()->top, tmpRegion, tmpRegion);
-		XUnionRectWithRegion (&w->struts ()->bottom, tmpRegion, tmpRegion);
-		XSubtractRegion (newRegion, tmpRegion, newRegion);
+		tmpRegion = tmpRegion.united (CompRect (w->struts ()->left));
+		tmpRegion = tmpRegion.united (CompRect (w->struts ()->right));
+		tmpRegion = tmpRegion.united (CompRect (w->struts ()->top));
+		tmpRegion = tmpRegion.united (CompRect (w->struts ()->bottom));
+		newRegion = newRegion.subtracted (tmpRegion);
+
 	    }
 	    continue;
 	}
@@ -121,17 +109,15 @@ MaximumizeScreen::emptyRegion (CompWindow *window,
 	    !(w->wmType () & CompWindowTypeDockMask))
 	    continue;
 
-	setWindowBox (w, &tmpRect);
+	tmpRect = setWindowBox (w);
 
 	if (optionGetIgnoreOverlapping () &&
-		substantialOverlap (tmpRect, windowRect))
+	    substantialOverlap (tmpRect, windowRect))
 	    continue;
-	XUnionRectWithRegion (&tmpRect, tmpRegion, tmpRegion);
-	XSubtractRegion (newRegion, tmpRegion, newRegion);
+	tmpRegion = tmpRegion.united (tmpRect);
+	newRegion = newRegion.subtracted (tmpRegion);
     }
 
-    XDestroyRegion (tmpRegion);
-    
     return newRegion;
 }
 
@@ -161,14 +147,18 @@ MaximumizeScreen::boxCompare (BOX a,
  * space, evaluate to true. 
  */
 #define CHECKREC \
-	XRectInRegion (r, tmp->x1 - w->input ().left, tmp->y1 - w->input ().top,\
+	XRectInRegion (r.handle (), tmp->x1 - w->input ().left, tmp->y1 - w->input ().top,\
 		       tmp->x2 - tmp->x1 + w->input ().left + w->input ().right,\
 		       tmp->y2 - tmp->y1 + w->input ().top + w->input ().bottom)\
 	    == RectangleIn
+/*#define CHECKREC \
+	r.contains (CompRect (tmp->x1 - w->input ().left, tmp->y1 - w->input ().top,\
+			      tmp->x2 - tmp->x1 + w->input ().left + w->input ().right,\
+			      tmp->y2 - tmp->y1 + w->input ().top + w->input ().bottom))*/
 void
 MaximumizeScreen::growGeneric (CompWindow      *w,
 			       BOX	       *tmp,
-			       Region          r,
+			       CompRegion      r,
 			       short int       *i,
 			       const short int inc)
 {
@@ -181,7 +171,7 @@ MaximumizeScreen::growGeneric (CompWindow      *w,
     if (touch)
 	*i -= inc;
 }
-
+#undef CHECKREC
 
 /* Extends the given box for Window w to fit as much space in region r.
  * If XFirst is true, it will first expand in the X direction,
@@ -190,7 +180,7 @@ MaximumizeScreen::growGeneric (CompWindow      *w,
 BOX
 MaximumizeScreen::extendBox (CompWindow   *w,
 			     BOX	  tmp,
-			     Region	  r,
+			     CompRegion	  r,
 			     bool	  xFirst,
 			     const MaxSet mset)
 {
@@ -307,7 +297,7 @@ MaximumizeScreen::minimumize (CompWindow *w,
  */
 BOX
 MaximumizeScreen::findRect (CompWindow  *w,
-			    Region  r,
+			    CompRegion  r,
 			    MaxSet      mset)
 {
     BOX windowBox, ansA, ansB, orig;
@@ -342,7 +332,6 @@ MaximumizeScreen::findRect (CompWindow  *w,
 	    return orig;
     }
 
-
     if (boxCompare (ansA, ansB))
 	return ansA;
     else
@@ -356,8 +345,8 @@ MaximumizeScreen::computeResize (CompWindow     *w,
 				 XWindowChanges *xwc,
 				 MaxSet	   mset)
 {
-    CompOutput   *output;
-    Region       region;
+    CompOutput   output;
+    CompRegion   region;
     unsigned int mask = 0;
     BOX          box;
     int          outputDevice = -1;
@@ -365,14 +354,12 @@ MaximumizeScreen::computeResize (CompWindow     *w,
 
     outputDevice = w->outputDevice ();
 
-    output = &screen->outputDevs ()[outputDevice];
-    region = emptyRegion (w, output->region ());
+    output = screen->outputDevs ()[outputDevice];
+    region = findEmptyRegion (w, CompRegion (output));
 
-    if(!region)
+    if(region == emptyRegion)
 	return mask;
-    
     box = findRect (w, region, mset);
-    XDestroyRegion (region);
 
     if (box.x1 != w->serverX ())
 	mask |= CWX;
