@@ -249,5 +249,15 @@ MousepollPluginVTable::init ()
     getMetadata ()->addFromOptionInfo (mousepollOptionInfo, MP_OPTION_NUM);
     getMetadata ()->addFromFile (name ());
 
+    CompPrivate p;
+    p.uval = COMPIZ_MOUSEPOLL_ABI;
+    screen->storeValue ("mousepoll_ABI", p);
+
     return true;
+}
+
+void
+MousepollPluginVTable::fini ()
+{
+    screen->eraseValue ("mousepoll_ABI");
 }

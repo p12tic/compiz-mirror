@@ -76,6 +76,7 @@ class MousepollPluginVTable :
     public:
 
 	bool init ();
+	void fini ();
 
 	PLUGIN_OPTION_HELPER (MousepollScreen);
 
