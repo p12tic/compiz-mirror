@@ -155,32 +155,6 @@ MaximumizeScreen::boxCompare (const CompRect& a,
  * space, evaluate to true. 
  */
 
-inline void
-MaximumizeScreen::addToCorner (CompRect&   rect,
-			       Corner      corner,
-			       const short inc)
-{
-    int x1 = rect.x1 (), y1 = rect.y1 ();
-    int x2 = rect.x2 (), y2 = rect.y2 ();
-
-    switch (corner) {
-	case X1:
-	    x1 += inc;
-	    break;
-	case X2:
-	    x2 += inc;
-	    break;
-	case Y1:
-	    y1 += inc;
-	    break;
-	case Y2:
-	    y2 += inc;
-	    break;
-    }
-
-    rect.setGeometry (x1, x2, y1, y2);
-}
-
 #define CHECKREC \
     r.contains (CompRect (tmp.x1 () - w->input ().left,   \
 			  tmp.x2 () + w->input ().right,  \
@@ -204,36 +178,6 @@ MaximumizeScreen::growGeneric (CompWindow        *w,
 
     if (touch)
 	addToCorner (tmp, corner, -inc);
-}
-
-/* Grow a box in the left/right directions as much as possible without
- * overlapping other relevant windows.  */
-void
-MaximumizeScreen::growWidth (CompWindow        *w,
-			     CompRect&         tmp,
-			     const CompRegion& r,
-			     const MaxSet&     mset)
-{
-    if (mset.left)
-	growGeneric (w, tmp, r, X1, REDUCE);
-
-    if (mset.right)
-	growGeneric (w, tmp, r, X2, INCREASE);
-}
-
-/* Grow box in the up/down direction as much as possible without
- * overlapping other relevant windows. */
-void 
-MaximumizeScreen::growHeight (CompWindow        *w,
-			      CompRect&         tmp,
-			      const CompRegion& r,
-			      const MaxSet&     mset)
-{
-    if (mset.down)
-	growGeneric (w, tmp, r, Y2, INCREASE);
-    
-    if (mset.up)
-	growGeneric (w, tmp, r, Y1, REDUCE);
 }
 
 /* Extends the given box for Window w to fit as much space in region r.

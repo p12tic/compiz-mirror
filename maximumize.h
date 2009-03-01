@@ -98,18 +98,18 @@ class MaximumizeScreen :
 		     Corner            corner,
 		     const short       inc);
 
-	inline void
+	void
 	addToCorner (CompRect&   rect,
 		     Corner      corner,
 		     const short inc);
 
-	inline void
+	void
 	growWidth (CompWindow        *w,
 		   CompRect&         tmp,
 		   const CompRegion& r,
 		   const MaxSet&     mset);
 
-	inline void
+	void
 	growHeight (CompWindow         *w,
 		    CompRect&          tmp,
 		    const CompRegion&  r,
@@ -160,6 +160,63 @@ class MaximumizePluginVTable :
 
 	PLUGIN_OPTION_HELPER (MaximumizeScreen);
 };
+/* Inline */
+
+inline void
+MaximumizeScreen::addToCorner (CompRect&   rect,
+			       Corner      corner,
+			       const short inc)
+{
+    int x1 = rect.x1 (), y1 = rect.y1 ();
+    int x2 = rect.x2 (), y2 = rect.y2 ();
+
+    switch (corner) {
+	case X1:
+	    x1 += inc;
+	    break;
+	case X2:
+	    x2 += inc;
+	    break;
+	case Y1:
+	    y1 += inc;
+	    break;
+	case Y2:
+	    y2 += inc;
+	    break;
+    }
+
+    rect.setGeometry (x1, x2, y1, y2);
+}
+
+/* Grow a box in the left/right directions as much as possible without
+ * overlapping other relevant windows.  */
+inline void
+MaximumizeScreen::growWidth (CompWindow        *w,
+			     CompRect&         tmp,
+			     const CompRegion& r,
+			     const MaxSet&     mset)
+{
+    if (mset.left)
+	growGeneric (w, tmp, r, X1, REDUCE);
+
+    if (mset.right)
+	growGeneric (w, tmp, r, X2, INCREASE);
+}
+
+/* Grow box in the up/down direction as much as possible without
+ * overlapping other relevant windows. */
+inline void 
+MaximumizeScreen::growHeight (CompWindow        *w,
+			      CompRect&         tmp,
+			      const CompRegion& r,
+			      const MaxSet&     mset)
+{
+    if (mset.down)
+	growGeneric (w, tmp, r, Y2, INCREASE);
+    
+    if (mset.up)
+	growGeneric (w, tmp, r, Y1, REDUCE);
+}
 
 
 
