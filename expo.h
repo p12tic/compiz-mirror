@@ -145,7 +145,7 @@ class ExpoWindow :
 			    const CompRegion&, const CompRegion&);
 	void glDrawTexture (GLTexture *, GLFragment::Attrib& attrib,
 			    unsigned int);
-	
+
 	CompWindow      *window;
 	CompositeWindow *cWindow;
 	GLWindow        *gWindow;
