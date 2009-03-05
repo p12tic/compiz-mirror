@@ -1,2 +1,3 @@
 PLUGIN = expo
+PKG_DEP = compiz-composite compiz-opengl
 LDFLAGS_ADD = -lGLU
