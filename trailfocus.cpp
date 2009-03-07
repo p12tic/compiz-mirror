@@ -75,9 +75,6 @@ TrailfocusScreen::setWindows ()
 	wasTfWindow    = tw->isTfWindow;
 	tw->isTfWindow = isTrailfocusWindow (w);
 
-	if (wasTfWindow && !tw->isTfWindow)
-	    tw->cWindow->addDamage ();
-
 	if (tw->isTfWindow)
 	{
 	    unsigned int i;
@@ -93,6 +90,10 @@ TrailfocusScreen::setWindows ()
 	    }
 
 	    tw->attribs = attribs[i];
+	}
+	else if (wasTfWindow)
+	{
+	    tw->cWindow->addDamage ();
 	}
     }
 }
@@ -127,13 +128,13 @@ TrailfocusScreen::pushWindow (Window id)
 
     windows.insert (windows.begin (), TrailfocusWindow::get (w));
 
-    if ((int) windows.size () >= optionGetWindowsCount ())
+    if ((int) windows.size () > optionGetWindowsCount ())
 	windows.pop_back ();
 
     return true;
 }
 
-/* Ppop a window-id from the trailfocus window-stack (not to be
+/* Pop a window-id from the trailfocus window-stack (not to be
  * confused with the real window stack).  Only keep one copy of a
  * window on the stack. Also fill the empty space with the next
  * window on the real window stack.
@@ -279,8 +280,6 @@ TrailfocusScreen::recalculateAttributes ()
 	attribs[i + start].brightness = max.brightness - (tmp.brightness * i);
 	attribs[i + start].saturation = max.saturation - (tmp.saturation * i);
     }
-
-    windows.clear ();
 }
 
 bool
