@@ -49,7 +49,7 @@ TrailfocusScreen::isTrailfocusWindow (CompWindow *w)
     if (w->overrideRedirect ())
 	return false;
 
-    if (!w->mapNum () || w->minimized () || w->shaded ())
+    if (w->destroyed () || !w->mapNum () || w->minimized () || w->shaded ())
 	return false;
 
     if (!optionGetWindowMatch ().evaluate (w))
@@ -145,24 +145,20 @@ TrailfocusScreen::pushWindow (Window id)
  * window on the stack. Also fill the empty space with the next
  * window on the real window stack.
  */
-bool
-TrailfocusScreen::popWindow (Window id)
+void
+TrailfocusScreen::popWindow (TrailfocusWindow *tw)
 {
-    CompWindow             *w, *best = NULL;
+    CompWindow             *best = NULL;
     TfWindowList::iterator iter;
     int                    distance, bestDist = 1000000;
     unsigned int           i;
 
-    w = screen->findWindow (id);
-    if (!w)
-	return false;
-
     for (iter = windows.begin (); iter != windows.end (); iter++)
-	if ((*iter)->window->id () == id)
+	if (*iter == tw)
 	    break;
 
     if (iter == windows.end ())
-	return false;
+	return;
 
     windows.erase (iter);
 
@@ -175,11 +171,11 @@ TrailfocusScreen::popWindow (Window id)
 	if (!isTrailfocusWindow (cur))
 	    continue;
 
-	if (cur == w)
+	if (cur == tw->window)
 	    continue;
 
 	/* we only want windows that were activated before the popped one */
-	if (cur->activeNum () > w->activeNum ())
+	if (cur->activeNum () > tw->window->activeNum ())
 	    continue;
 
 	/* we do not want any windows already present in the list */
@@ -213,7 +209,7 @@ TrailfocusScreen::popWindow (Window id)
     if (best)
 	windows.push_back (TrailfocusWindow::get (best));
 
-    return true;
+    setWindows ();
 }
 
 static bool
@@ -255,10 +251,6 @@ TrailfocusScreen::handleEvent (XEvent *event)
     switch (event->type) {
     case FocusIn:
 	if (pushWindow (event->xfocus.window))
-	    setWindows ();
-	break;
-    case DestroyNotify:
-	if (popWindow (event->xdestroywindow.window))
 	    setWindows ();
 	break;
     case PropertyNotify:
@@ -393,7 +385,6 @@ TrailfocusScreen::TrailfocusScreen (CompScreen *s) :
     ScreenInterface::setHandler (screen);
 
     recalculateAttributes ();
-    pushWindow (screen->activeWindow ());
 
     setupTimer.start (setupTimerCb, 0, 0);
 }
@@ -406,6 +397,11 @@ TrailfocusWindow::TrailfocusWindow (CompWindow *w) :
     gWindow (GLWindow::get (w))
 {
     GLWindowInterface::setHandler (gWindow, false);
+}
+
+TrailfocusWindow::~TrailfocusWindow ()
+{
+    TrailfocusScreen::get (screen)->popWindow (this);
 }
 
 bool

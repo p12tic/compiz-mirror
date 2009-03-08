@@ -46,6 +46,7 @@ class TrailfocusWindow :
 {
     public:
 	TrailfocusWindow (CompWindow *);
+	~TrailfocusWindow ();
 
 	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
 		      const CompRegion&, unsigned int);
@@ -69,7 +70,7 @@ class TrailfocusScreen :
 	void handleEvent (XEvent *);
 
 	bool pushWindow (Window);
-	bool popWindow (Window);
+	void popWindow (TrailfocusWindow *);
 
     private:
 	bool isTrailfocusWindow (CompWindow *);
