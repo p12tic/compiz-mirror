@@ -71,9 +71,12 @@ TrailfocusScreen::setWindows ()
     foreach (CompWindow *w, screen->windows ())
     {
 	TrailfocusWindow *tw = TrailfocusWindow::get (w);
+	bool             needDamage;
 
 	wasTfWindow    = tw->isTfWindow;
 	tw->isTfWindow = isTrailfocusWindow (w);
+
+	needDamage = wasTfWindow != tw->isTfWindow;
 
 	if (tw->isTfWindow)
 	{
@@ -83,18 +86,21 @@ TrailfocusScreen::setWindows ()
 		if (windows[i] == tw)
 		    break;
 
-	    if (!wasTfWindow ||
-		(memcmp (&tw->attribs, &attribs[i], sizeof (TfAttribs)) != 0))
-	    {
-		tw->cWindow->addDamage ();
-	    }
+	    if (memcmp (&tw->attribs, &attribs[i], sizeof (TfAttribs)) != 0)
+		needDamage = true;
+
+	    if (!wasTfWindow)
+		tw->gWindow->glPaintSetEnabled (tw, true);
 
 	    tw->attribs = attribs[i];
 	}
 	else if (wasTfWindow)
 	{
-	    tw->cWindow->addDamage ();
+	    tw->gWindow->glPaintSetEnabled (tw, false);
 	}
+
+	if (needDamage)
+	    tw->cWindow->addDamage ();
     }
 }
 
@@ -142,9 +148,10 @@ TrailfocusScreen::pushWindow (Window id)
 bool
 TrailfocusScreen::popWindow (Window id)
 {
-    CompWindow                       *w;
-    TfWindowList::iterator           iter;
-    CompWindowList::reverse_iterator winIter;
+    CompWindow             *w, *best = NULL;
+    TfWindowList::iterator iter;
+    int                    distance, bestDist = 1000000;
+    unsigned int           i;
 
     w = screen->findWindow (id);
     if (!w)
@@ -159,54 +166,84 @@ TrailfocusScreen::popWindow (Window id)
 
     windows.erase (iter);
 
-    /* find window from the stacking order next to the last window
-       in the stack to fill the empty space */
-    for (winIter = screen->windows ().rend ();
-	 winIter != screen->windows ().rbegin (); iter++)
+    /* find window that was activated right before the destroyed one
+       to fill the empty space */
+    foreach (CompWindow *cur, screen->windows ())
     {
-	if (isTrailfocusWindow (*winIter))
+	bool present = false;
+
+	if (!isTrailfocusWindow (cur))
+	    continue;
+
+	if (cur == w)
+	    continue;
+
+	/* we only want windows that were activated before the popped one */
+	if (cur->activeNum () > w->activeNum ())
+	    continue;
+
+	/* we do not want any windows already present in the list */
+	for (i = 0; i < windows.size (); i++)
 	{
-	    windows.push_back (TrailfocusWindow::get (*winIter));
-	    break;
+	    if (windows[i]->window == cur)
+	    {
+		present = true;
+		break;
+	    }
+	}
+
+	if (present)
+	    continue;
+
+	if (!best)
+	{
+	    best = cur;
+	}
+	else
+	{
+	    distance = abs (cur->activeNum () - best->activeNum ());
+	    if (distance < bestDist)
+	    {
+		best     = cur;
+		bestDist = distance;
+	    }
 	}
     }
 
+    if (best)
+	windows.push_back (TrailfocusWindow::get (best));
+
     return true;
+}
+
+static bool
+compareActiveness (CompWindow *w1,
+		   CompWindow *w2)
+{
+    return w1->activeNum () >= w2->activeNum ();
 }
 
 /* Walks through the existing stack and removes windows that should
  * (no longer) be there. Used for option-change.
  */
 void
-TrailfocusScreen::cleanList ()
+TrailfocusScreen::refillList ()
 {
+    CompWindowList         activeList = screen->windows ();
     TfWindowList::iterator iter;
+    unsigned int           winMax = optionGetWindowsCount ();
 
-    for (iter = windows.begin (); iter != windows.end (); )
-    {
-	if (!isTrailfocusWindow ((*iter)->window))
-	    iter = windows.erase (iter);
-	else
-	    iter++;
-    }
+    activeList.sort (compareActiveness);
+    windows.clear ();
 
-    pushWindow (screen->activeWindow ());
-
-    /* make sure that enough windows are in the list */
-    if ((int) windows.size () == optionGetWindowsCount ())
-	return;
-
-    foreach (CompWindow *w, screen->windows ())
+    foreach (CompWindow *w, activeList)
     {
 	if (!isTrailfocusWindow (w))
 	    continue;
 
-	for (iter = windows.begin (); iter != windows.end (); iter++)
-	    if ((*iter)->window == w)
-		continue;
-
 	windows.push_back (TrailfocusWindow::get (w));
-	if ((int) windows.size () == optionGetWindowsCount ())
+
+	if (windows.size () == winMax)
 	    break;
     }
 }
@@ -227,7 +264,7 @@ TrailfocusScreen::handleEvent (XEvent *event)
     case PropertyNotify:
 	if (event->xproperty.atom == Atoms::desktopViewport)
 	{
-	    cleanList ();
+	    refillList ();
 	    setWindows ();
 	}
 	break;
@@ -321,7 +358,7 @@ TrailfocusScreen::optionChanged (CompOption *opt,
 	break;
     }
 
-    cleanList ();
+    refillList ();
     setWindows ();
 }
 
@@ -330,7 +367,7 @@ TrailfocusScreen::setupTimerCb ()
 {
     TrailfocusScreen *ts = TrailfocusScreen::get (screen);
 
-    ts->cleanList ();
+    ts->refillList ();
     ts->setWindows ();
 
     return false;
@@ -368,8 +405,7 @@ TrailfocusWindow::TrailfocusWindow (CompWindow *w) :
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w))
 {
-    /* FIXME: only wrap in when needed */
-    GLWindowInterface::setHandler (gWindow);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 bool
