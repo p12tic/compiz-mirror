@@ -37,11 +37,6 @@
 #define VIEWPORT_SWITCHER_SIZE 100
 #define ARROW_SIZE 33
 
-#define WIN_X(w) ((w)->attrib.x - (w)->input.left)
-#define WIN_Y(w) ((w)->attrib.y - (w)->input.top)
-#define WIN_W(w) ((w)->width + (w)->input.left + (w)->input.right)
-#define WIN_H(w) ((w)->height + (w)->input.top + (w)->input.bottom)
-
 #define getColorRGBA(name) \
     r = optionGet##name##Red() / 65535.0f;\
     g = optionGet##name##Green() / 65535.0f; \
@@ -103,7 +98,9 @@ WallScreen::drawSwitcherBackground ()
 	cairo_arc (cr, radius, height - radius, radius,  PI / 2.0f, PI);
     }
     else
+    {
 	cairo_rectangle (cr, 0, 0, width, height);
+    }
 
     cairo_close_path (cr);
 
@@ -1186,7 +1183,7 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
     if (moving)
     {
 	ScreenTransformation oldTransform = transform;
-	GLMatrix             sMatrix = matrix;
+	GLMatrix             sMatrix (matrix);
 	float                xTranslate, yTranslate;
 	float                px, py;
 	int                  tx, ty;
@@ -1299,7 +1296,7 @@ WallWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     if (ws->transform == MiniScreen)
     {
-	GLWindowPaintAttrib pA = attrib;
+	GLWindowPaintAttrib pA (attrib);
 
 	pA.opacity    = attrib.opacity *
 			((float) ws->mSAttribs.opacity / OPAQUE);
@@ -1313,24 +1310,12 @@ WallWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	status = glWindow->glPaint (pA, matrix, region, mask);
     }
-    else if (ws->transform == Sliding)
+    else if (ws->transform == Sliding && !isSliding)
     {
 	GLMatrix wMatrix;
 
-	if (!isSliding)
-	{
-	    wMatrix.translate (-0.5f, -0.5f, -DEFAULT_Z_CAMERA);
-	    wMatrix.scale (1.0f / ws->currOutput->width (),
-			   -1.0f / ws->currOutput->height (),
-			   1.0f);
-	    wMatrix.translate (-ws->currOutput->x1 (), -ws->currOutput->y1 (),
-			       0.0f);
-	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-	}
-	else
-	{
-	    wMatrix = matrix;
-	}
+	wMatrix.toScreenSpace (ws->currOutput, -DEFAULT_Z_CAMERA);
+	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
 	status = glWindow->glPaint (attrib, wMatrix, region, mask);
     }
