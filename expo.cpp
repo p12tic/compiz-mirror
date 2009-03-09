@@ -38,7 +38,7 @@ COMPIZ_PLUGIN_20081216 (expo, ExpoPluginVTable);
 #define sigmoidProgress(x) ((sigmoid (x) - sigmoid (0)) / \
 			    (sigmoid (1) - sigmoid (0)))
 
-#define interpolate(a, b, val) (((val) * a) + ((1 - (val)) * (b)))
+#define interpolate(a, b, val) (((val) * (a)) + ((1 - (val)) * (b)))
 
 bool
 ExpoScreen::dndInit (CompAction          *action,
@@ -880,7 +880,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 		sTransform3.translate (-vpCamPos[GLVector::x], 0.0f,
 				       curveDistance - DEFAULT_Z_CAMERA);
 
-		rotateX = -i + interpolate ((float) vpSize.x () / 2.0 - 0.5,
+		rotateX = -i + interpolate (((float) vpSize.x () / 2.0) - 0.5,
 					    screen->vp ().x (), progress);
 
 		sTransform3.rotate (curveAngle * rotateX, 0.0, 1.0, 0.0);
