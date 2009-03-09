@@ -14,7 +14,7 @@
 				<plugin>wallpaper</plugin>
 			</relation>
 		</deps>
-		<display>
+		<options>
 			<group>
 				<_short>Bindings</_short>
 				<option name="expo_key" type="key">
@@ -247,6 +247,6 @@
 					</option>
 				</subgroup>
 			</group>
-		</display>
+		</options>
 	</plugin>
 </compiz>
