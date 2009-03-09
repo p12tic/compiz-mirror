@@ -1148,7 +1148,7 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 				      CompOutput                *output,
 				      unsigned int              mask)
 {
-    bool      clear = (mask & PAINT_SCREEN_CLEAR_MASK);
+    bool clear = (mask & PAINT_SCREEN_CLEAR_MASK);
 
     if (transform == MiniScreen)
     {
@@ -1197,7 +1197,7 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	int                  tx, ty;
 	bool                 movingX, movingY;
 	CompPoint            point (screen->vp ());
-	CompSize             size (screen->vpSize ());
+	CompRegion           outputRegion (*output);
 
 	if (clear)
 	    glScreen->clearTargetOutput (GL_COLOR_BUFFER_BIT);
@@ -1223,16 +1223,15 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 		tx = ceil (px) - point.x ();
 		xTranslate = 1 - fmod (px, 1);
 
-		cScreen->setWindowPaintOffset ((point.x () - ceil(px)) *
-					       size.width (),
-					       (point.y () - ceil(py)) *
-					       size.height ());
+		cScreen->setWindowPaintOffset ((point.x () - ceil (px)) *
+					       screen->width (),
+					       (point.y () - ceil (py)) *
+					       screen->height ());
 
 		sMatrix.translate (xTranslate, 0.0f, 0.0f);
 
 		glScreen->glPaintTransformedOutput (attrib, sMatrix,
-						    screen->region (),
-						    output, mask);
+						    outputRegion, output, mask);
 
 		sMatrix.translate (-xTranslate, 0.0f, 0.0f);
 	    }
@@ -1240,16 +1239,15 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    tx = floor (px) - point.x ();
 	    xTranslate = -fmod (px, 1);
 
-	    cScreen->setWindowPaintOffset ((point.x () - floor(px)) *
+	    cScreen->setWindowPaintOffset ((point.x () - floor (px)) *
 					   screen->width (),
-					   (point.y () - ceil(py)) *
+					   (point.y () - ceil (py)) *
 					   screen->height ());
 
 	    sMatrix.translate (xTranslate, 0.0f, 0.0f);
 
 	    glScreen->glPaintTransformedOutput (attrib, sMatrix,
-						screen->region (),
-						output, mask);
+						outputRegion, output, mask);
 	    sMatrix.translate (-xTranslate, -yTranslate, 0.0f);
 	}
 
@@ -1263,16 +1261,15 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    tx = ceil (px) - point.x ();
 	    xTranslate = 1 - fmod (px, 1);
 
-	    cScreen->setWindowPaintOffset ((point.x () - ceil(px)) *
+	    cScreen->setWindowPaintOffset ((point.x () - ceil (px)) *
 					   screen->width (),
-					   (point.y () - floor(py)) *
+					   (point.y () - floor (py)) *
 					   screen->height ());
 
 	    sMatrix.translate (xTranslate, 0.0f, 0.0f);
 
 	    glScreen->glPaintTransformedOutput (attrib, sMatrix,
-						screen->region (),
-						output, mask);
+						outputRegion, output, mask);
 
 	    sMatrix.translate (-xTranslate, 0.0f, 0.0f);
 	}
@@ -1280,14 +1277,14 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	tx = floor (px) - point.x ();
 	xTranslate = -fmod (px, 1);
 
-	cScreen->setWindowPaintOffset ((point.x () - floor(px)) *
+	cScreen->setWindowPaintOffset ((point.x () - floor (px)) *
 				       screen->width (),
-				       (point.y () - floor(py)) *
+				       (point.y () - floor (py)) *
 				       screen->height ());
 
 	sMatrix.translate (xTranslate, 0.0f, 0.0f);
-	glScreen->glPaintTransformedOutput (attrib, sMatrix,
-					    screen->region (), output, mask);
+	glScreen->glPaintTransformedOutput (attrib, sMatrix, outputRegion,
+					    output, mask);
 
 	cScreen->setWindowPaintOffset (0, 0);
 	transform = oldTransform;
