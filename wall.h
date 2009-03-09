@@ -77,6 +77,7 @@ class WallScreen :
 	~WallScreen ();
 
 	void preparePaint (int);
+	void paint (CompOutput::ptrList &, unsigned int);
 	void donePaint ();
 	void handleEvent (XEvent *event);
 

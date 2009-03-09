@@ -987,6 +987,19 @@ WallScreen::drawCairoTextureOnScreen ()
     glColor4usv (defaultColor);
 }
 
+void
+WallScreen::paint (CompOutput::ptrList& outputs,
+		   unsigned int         mask)
+{
+    if (moving && outputs.size () > 1 && optionGetMmmode() == MmmodeSwitchAll)
+    {
+	outputs.clear ();
+	outputs.push_back (&screen->fullscreenOutput ());
+    }
+
+    cScreen->paint (outputs, mask);
+}
+
 bool
 WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 			   const GLMatrix            &matrix,
@@ -1009,7 +1022,7 @@ WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	(output->id () == boxOutputDevice ||
 	 output == &screen->fullscreenOutput ()))
     {
-	GLMatrix sMatrix = matrix;
+	GLMatrix sMatrix (matrix);
 
 	sMatrix.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
@@ -1136,15 +1149,10 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 				      unsigned int              mask)
 {
     bool      clear = (mask & PAINT_SCREEN_CLEAR_MASK);
-    CompPoint point;
-    CompSize  size;
-
-    point = screen->vp ();
-    size = screen->vpSize ();
 
     if (transform == MiniScreen)
     {
-	GLMatrix sMatrix = matrix;
+	GLMatrix sMatrix (matrix);
 
 	mask &= ~PAINT_SCREEN_CLEAR_MASK;
 
@@ -1188,6 +1196,8 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	float                px, py;
 	int                  tx, ty;
 	bool                 movingX, movingY;
+	CompPoint            point (screen->vp ());
+	CompSize             size (screen->vpSize ());
 
 	if (clear)
 	    glScreen->clearTargetOutput (GL_COLOR_BUFFER_BIT);
@@ -1288,7 +1298,7 @@ bool
 WallWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		     const GLMatrix            &matrix,
 		     const CompRegion          &region,
-		     unsigned int               mask)
+		     unsigned int              mask)
 {
     bool status;
 
@@ -1573,6 +1583,8 @@ WallWindow::WallWindow (CompWindow *window) :
     WALL_SCREEN (screen);
 
     isSliding = !ws->optionGetNoSlideMatch ().evaluate (window);
+
+    GLWindowInterface::setHandler (glWindow);
 }
 
 bool
