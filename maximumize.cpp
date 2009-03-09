@@ -57,9 +57,9 @@ MaximumizeScreen::getWindowBox (CompWindow *w)
     CompRect rect;
 
     rect.setGeometry (w->serverX () - w->input ().left,
-		      w->serverX () + w->serverWidth () + w->input ().right,
 		      w->serverY () - w->input ().top,
-		      w->serverY () + w->serverHeight () + w->input ().bottom);
+		      w->serverWidth () + w->input ().right + w->input ().left,
+		      w->serverHeight () + w->input ().bottom + w->input ().top);
 
     return rect;
 }
@@ -178,14 +178,14 @@ MaximumizeScreen::addToCorner (CompRect&   rect,
 	    break;
     }
 
-    rect.setGeometry (x1, x2, y1, y2);
+    rect.setGeometry (x1, y1, x2 - x1, y2 - y1);
 }
 
 #define CHECKREC \
     r.contains (CompRect (tmp.x1 () - w->input ().left,   \
-			  tmp.x2 () + w->input ().right,  \
 			  tmp.y1 () - w->input ().top,    \
-			  tmp.y2 () + w->input ().bottom))
+			  tmp.width () + w->input ().right + w->input ().left,  \
+			  tmp.height () + w->input ().bottom + w->input ().top))
 
 void
 MaximumizeScreen::growGeneric (CompWindow        *w,
@@ -273,6 +273,8 @@ MaximumizeScreen::setBoxWidth (CompRect&     box,
 			       const int     width,
 			       const MaxSet& mset)
 {
+    int x1, y1, x2 ,y2;
+
     int original = box.width ();
     int increment;
 
@@ -284,9 +286,12 @@ MaximumizeScreen::setBoxWidth (CompRect&     box,
     else
 	increment = (original - width) / 2;
 
-    box.setGeometry (box.x1 () + (mset.left ? increment : 0),
-		     box.x2 () - (mset.right ? increment : 0),
-		     box.y1 (), box.y2 ());
+    x1 = box.x1 () + (mset.left ? increment : 0);
+    y1 = box.y1 ();
+    x2 = box.x2 () - (mset.right ? increment : 0);
+    y2 = box.y2 ();
+
+    box.setGeometry (x1, y1, x2 - x1, y2 - y1);
 }
 
 void
@@ -294,6 +299,8 @@ MaximumizeScreen::setBoxHeight (CompRect&     box,
 				const int     height,
 				const MaxSet& mset)
 {
+    int x1, y1, x2, y2;
+
     int original = box.height ();
     int increment;
 
@@ -305,9 +312,13 @@ MaximumizeScreen::setBoxHeight (CompRect&     box,
     else
 	increment = (original - height) / 2;
 
-    box.setGeometry (box.x1 (), box.x2 (),
-		     box.y1 () + (mset.up ? increment : 0),
-		     box.y2 () - (mset.down ? increment : 0));
+    x1 = box.x1 ();
+    y1 = box.y1 () + (mset.up ? increment : 0);
+    x2 = box.x2 ();
+    y2 = box.y2 () - (mset.down ? increment : 0);
+
+
+    box.setGeometry (x1, y1, x2 - x1, y2 - y1);
 }
 
 /* Reduce box size by setting width and height to 1/4th or the minimum size
@@ -354,9 +365,9 @@ MaximumizeScreen::findRect (CompWindow        *w,
     CompRect windowBox, ansA, ansB, orig;
 
     windowBox.setGeometry (w->serverX (),
-			   w->serverX () + w->serverWidth (),
 			   w->serverY (),
-			   w->serverY () + w->serverHeight ());
+			   w->serverWidth (),
+			   w->serverHeight ());
     orig = windowBox;
 
     if (mset.shrink)
