@@ -1124,7 +1124,7 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
 
 	while (x1 < region.boundingRect ().x2 ())
 	{
-	    rect.setGeometry (x1, x2, rect.y1 (), rect.y2 ());
+	    rect.setGeometry (x1, rect.y1 (), x2 - x1, rect.y2 () - rect.y1 ());
 
 	    if (region.numRects () > 1)
 	    {
