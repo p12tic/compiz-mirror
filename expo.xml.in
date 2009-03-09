@@ -5,6 +5,9 @@
 	<_long>Expo Plugin</_long>
 	<category>Desktop</category>
 	<deps>
+	    <requirement>
+		<plugin>opengl</plugin>
+	    </requirement>
 	    <relation type="after">
 		<plugin>decoration</plugin>
 		<plugin>cube</plugin>
