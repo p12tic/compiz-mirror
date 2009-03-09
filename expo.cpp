@@ -1325,7 +1325,9 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
     origVp (s->vp ()),
     selectedVp (s->vp ()),
     clickTime (0),
-    doubleClick (false)
+    doubleClick (false),
+    vpNormals (360 * 3),
+    grabIndex (0)
 {
     leftKey  = XKeysymToKeycode (s->dpy (), XStringToKeysym ("Left"));
     rightKey = XKeysymToKeycode (s->dpy (), XStringToKeysym ("Right"));
