@@ -58,8 +58,10 @@ MaximumizeScreen::getWindowBox (CompWindow *w)
 
     rect.setGeometry (w->serverX () - w->input ().left,
 		      w->serverY () - w->input ().top,
-		      w->serverWidth () + w->input ().right + w->input ().left,
-		      w->serverHeight () + w->input ().bottom + w->input ().top);
+		      w->serverWidth () + w->input ().right +
+		      w->input ().left,
+		      w->serverHeight () + w->input ().bottom +
+		      w->input ().top);
 
     return rect;
 }
@@ -160,25 +162,20 @@ MaximumizeScreen::addToCorner (CompRect&   rect,
 			       Corner      corner,
 			       const short inc)
 {
-    int x1 = rect.x1 (), y1 = rect.y1 ();
-    int x2 = rect.x2 (), y2 = rect.y2 ();
-
     switch (corner) {
 	case X1:
-	    x1 += inc;
+	    rect.setX (rect.x () + inc);
 	    break;
 	case X2:
-	    x2 += inc;
+	    rect.setWidth (rect.width () + inc);
 	    break;
 	case Y1:
-	    y1 += inc;
+	    rect.setY (rect.y () + inc);
 	    break;
 	case Y2:
-	    y2 += inc;
+	    rect.setHeight (rect.height () + inc);
 	    break;
     }
-
-    rect.setGeometry (x1, y1, x2 - x1, y2 - y1);
 }
 
 #define CHECKREC \
@@ -273,8 +270,6 @@ MaximumizeScreen::setBoxWidth (CompRect&     box,
 			       const int     width,
 			       const MaxSet& mset)
 {
-    int x1, y1, x2 ,y2;
-
     int original = box.width ();
     int increment;
 
@@ -286,12 +281,8 @@ MaximumizeScreen::setBoxWidth (CompRect&     box,
     else
 	increment = (original - width) / 2;
 
-    x1 = box.x1 () + (mset.left ? increment : 0);
-    y1 = box.y1 ();
-    x2 = box.x2 () - (mset.right ? increment : 0);
-    y2 = box.y2 ();
-
-    box.setGeometry (x1, y1, x2 - x1, y2 - y1);
+    box.setX (box.x () + (mset.left ? increment : 0));
+    box.setWidth (box.width () - (mset.right ? increment : 0));
 }
 
 void
@@ -299,8 +290,6 @@ MaximumizeScreen::setBoxHeight (CompRect&     box,
 				const int     height,
 				const MaxSet& mset)
 {
-    int x1, y1, x2, y2;
-
     int original = box.height ();
     int increment;
 
@@ -312,13 +301,8 @@ MaximumizeScreen::setBoxHeight (CompRect&     box,
     else
 	increment = (original - height) / 2;
 
-    x1 = box.x1 ();
-    y1 = box.y1 () + (mset.up ? increment : 0);
-    x2 = box.x2 ();
-    y2 = box.y2 () - (mset.down ? increment : 0);
-
-
-    box.setGeometry (x1, y1, x2 - x1, y2 - y1);
+    box.setY (box.y () + (mset.up ? increment : 0));
+    box.setHeight (box.height () - (mset.down ? increment : 0));
 }
 
 /* Reduce box size by setting width and height to 1/4th or the minimum size
