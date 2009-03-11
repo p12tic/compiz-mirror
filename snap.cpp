@@ -252,12 +252,14 @@ SnapWindow::updateScreenEdges ()
 
     foreach (CompOutput output, screen->outputDevs ())
     {
-	XRectangle area = output.workArea ();
-	addEdge (0, area.y, area.x, area.x + area.width - 1, BottomEdge, true);
-	addEdge (0, area.y + area.height, area.x, area.x + area.width - 1,
+	const CompRect& area = output.workArea ();
+	addEdge (0, area.top (), area.left (), area.right () - 1,
+		 BottomEdge, true);
+	addEdge (0, area.bottom (), area.left (), area.right () - 1,
 		 TopEdge, true);
-	addEdge (0, area.x, area.y, area.y + area.height - 1, RightEdge, true);
-	addEdge (0, area.x + area.width, area.y, area.y + area.height - 1,
+	addEdge (0, area.left (), area.top (), area.bottom () - 1,
+		 RightEdge, true);
+	addEdge (0, area.right (), area.top (), area.bottom () - 1,
 		 LeftEdge, true);
     }
 
