@@ -201,14 +201,18 @@ SnapWindow::updateWindowsEdges ()
 	    {
 		case LeftEdge:
 		case RightEdge:
-		    rect.setGeometry (e->position, e->position + 1,
-				    e->start, e->end);
+		    rect.setGeometry (e->position,
+				      e->start,
+				      1,
+				      e->end - e->start);
 		    break;
 		case TopEdge:
 		case BottomEdge:
 		default:
-		    rect.setGeometry (e->start, e->end,
-				    e->position, e->position + 1);
+		    rect.setGeometry (e->start,
+				      e->position,
+				      e->end - e->start,
+				      1);
 	    }
 
 	    // If the edge is in the window region, remove it,
@@ -285,14 +289,18 @@ SnapWindow::updateScreenEdges ()
 	    {
 		case LeftEdge:
 		case RightEdge:
-		    rect.setGeometry (e->position, e->position + 1,
-				    e->start, e->end);
+		    rect.setGeometry (e->position,
+				      e->start,
+				      1,
+				      e->end - e->start);
 		    break;
 		case TopEdge:
 		case BottomEdge:
 		default:
-		    rect.setGeometry (e->start, e->end,
-				    e->position, e->position + 1);
+		    rect.setGeometry (e->start,
+				      e->position,
+				      e->end - e->start,
+				      1);
 	    }
 
             edgeRegion = CompRegion (rect);
