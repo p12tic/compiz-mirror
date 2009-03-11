@@ -21,12 +21,15 @@
 
 #include <cmath>
 
-#define PUT_ONLY_EMPTY(type) (type >= PutEmptyBottomLeft && type <= PutEmptyTopRight)
+COMPIZ_PLUGIN_20081216 (put, PutPluginVTable);
 
+#define PUT_ONLY_EMPTY(type) (type >= PutEmptyBottomLeft && \
+			      type <= PutEmptyTopRight)
 
 /*
  * Maximumize functions
- * Functions are from Maximumize plugin (Author:Kristian Lyngstøl  <kristian@bohemians.org>)
+ * Functions are from Maximumize plugin
+ * (Author:Kristian Lyngstøl  <kristian@bohemians.org>)
  */
 
 /* Generates a region containing free space (here the
@@ -34,29 +37,18 @@
  * is the start-region (ie: the output dev).
  * Logic borrowed from opacify (courtesy of myself).
  */
-Region
-PutScreen::emptyRegion (CompWindow *window,
-			Region     region)
+CompRegion
+PutScreen::emptyRegion (CompWindow      *window,
+			const CompRect& outputRect)
 {
-    Region     newRegion, tmpRegion;
-    XRectangle tmpRect;
+    CompRegion newRegion;
 
-    newRegion = XCreateRegion ();
-    if (!newRegion)
-	return NULL;
-
-    tmpRegion = XCreateRegion ();
-    if (!tmpRegion)
-    {
-	XDestroyRegion (newRegion);
-	return NULL;
-    }
-
-    XUnionRegion (region, newRegion, newRegion);
+    newRegion += outputRect;
 
     foreach(CompWindow *w, screen->windows ())
     {
-	EMPTY_REGION (tmpRegion);
+	CompRect tmpRect;
+
         if (w->id () == window->id ())
             continue;
 
@@ -68,43 +60,43 @@ PutScreen::emptyRegion (CompWindow *window,
 
 	if (w->wmType () & CompWindowTypeDockMask)
 	{
-	    if (w->struts ()) 
+	    if (w->struts ())
 	    {
-		XUnionRectWithRegion (&w->struts ()->left, tmpRegion, tmpRegion);
-		XUnionRectWithRegion (&w->struts ()->right, tmpRegion, tmpRegion);
-		XUnionRectWithRegion (&w->struts ()->top, tmpRegion, tmpRegion);
-		XUnionRectWithRegion (&w->struts ()->bottom, tmpRegion, tmpRegion);
-		XSubtractRegion (newRegion, tmpRegion, newRegion);
+		CompRegion tmpRegion;
+
+		tmpRegion += w->struts ()->left;
+		tmpRegion += w->struts ()->right;
+		tmpRegion += w->struts ()->top;
+		tmpRegion += w->struts ()->bottom;
+
+		newRegion -= tmpRegion;
 	    }
 	    continue;
 	}
 
+	tmpRect.setGeometry (w->serverX () - w->input ().left,
+			     w->serverY () - w->input ().top,
+			     w->serverWidth () +
+			     w->input ().right + w->input ().left,
+			     w->serverHeight () +
+			     w->input ().top + w->input ().bottom);
 
-	tmpRect.x = w->serverX () - w->input().left;
-	tmpRect.y = w->serverY () - w->input().top;
-	tmpRect.width  = w->serverWidth () + w->input ().right + w->input ().left;
-	tmpRect.height = w->serverHeight () + w->input ().top +
-	                 w->input ().bottom;
-
-	XUnionRectWithRegion (&tmpRect, tmpRegion, tmpRegion);
-	XSubtractRegion (newRegion, tmpRegion, newRegion);
+	newRegion -= tmpRect;
     }
 
-    XDestroyRegion (tmpRegion);
-    
     return newRegion;
 }
 
 /* Returns true if box a has a larger area than box b.
  */
 bool
-PutScreen::boxCompare (BOX a,
-		       BOX b)
+PutScreen::boxCompare (const CompRect& a,
+		       const CompRect& b)
 {
     int areaA, areaB;
 
-    areaA = (a.x2 - a.x1) * (a.y2 - a.y1);
-    areaB = (b.x2 - b.x1) * (b.y2 - b.y1);
+    areaA = a.width () * a.height ();
+    areaB = b.width () * b.height ();
 
     return (areaA > areaB);
 }
@@ -114,102 +106,125 @@ PutScreen::boxCompare (BOX a,
  * then Y. This is because it gives different results. 
  * PS: Decorations are icky.
  */
-BOX
-PutScreen::extendBox (CompWindow *w,		     
-	   BOX        tmp,
-	   Region     r,
-	   bool       xFirst,
-	   bool       left,
-	   bool       right,
-	   bool       up,
-	   bool       down)
+
+#define LEFT   0
+#define RIGHT  1
+#define TOP    2
+#define BOTTOM 3
+
+inline void
+addToCorner (CompRect&    rect,
+	     unsigned int corner,
+	     const short  inc)
+{
+    switch (corner) {
+	case LEFT:
+	    rect.setX (rect.x () + inc);
+	    break;
+	case RIGHT:
+	    rect.setWidth (rect.width () + inc);
+	    break;
+	case TOP:
+	    rect.setY (rect.y () + inc);
+	    break;
+	case BOTTOM:
+	    rect.setHeight (rect.height () + inc);
+	    break;
+    }
+}
+
+inline void
+expandCorner (CompWindow        *w,
+	      CompRect&         tmp,
+	      const CompRegion& r,
+	      unsigned int      corner,
+	      int               direction)
+{
+    bool touch = false;
+
+#define CHECKREC                                                               \
+    r.contains (CompRect (tmp.x () - w->input ().left,                         \
+			  tmp.y () - w->input ().top,                          \
+			  tmp.width () + w->input ().left + w->input ().right, \
+			  tmp.height () + w->input ().top + w->input ().bottom))
+
+    while (CHECKREC) {
+	addToCorner (tmp, corner, direction);
+	touch = true;
+    }
+
+    if (touch)
+	addToCorner (tmp, corner, -direction);
+
+#undef CHECKREC
+}
+
+CompRect
+PutScreen::extendBox (CompWindow        *w,
+		      const CompRect&   tmp,
+		      const CompRegion& r,
+		      bool              xFirst,
+		      bool              left,
+		      bool              right,
+		      bool              up,
+		      bool              down)
 {
     short int counter = 0;
-    Bool      touch = false;
-
-#define CHECKREC \
-	XRectInRegion (r, tmp.x1 - w->input ().left, tmp.y1 - w->input ().top,\
-		       tmp.x2 - tmp.x1 + w->input ().left + w->input ().right,\
-		       tmp.y2 - tmp.y1 + w->input ().top + w->input ().bottom)\
-			 == RectangleIn
+    CompRect  result = tmp;
 
     while (counter < 1)
     {
 	if ((xFirst && counter == 0) || (!xFirst && counter == 1))
 	{
-	    if(left) {
-		while (CHECKREC) {
-		    tmp.x1--;
-		    touch = true;
-		}
-		if (touch) tmp.x1++;
-	    }
-	    touch = false;
-	    
-	    if(right) {
-		while (CHECKREC) {
-		    tmp.x2++;
-		    touch = true;
-		}
-		if (touch) tmp.x2--;
-	    }
-	    touch = false;
+	    if (left)
+		expandCorner (w, result, r, LEFT, -1);
+
+	    if (right)
+		expandCorner (w, result, r, RIGHT, 1);
+
 	    counter++;
 	}
 
 	if ((xFirst && counter == 1) || (!xFirst && counter == 0))
 	{
-	    if(down) {
-		while (CHECKREC) {
-		    tmp.y2++;
-		    touch = true;
-		}
-		if (touch) tmp.y2--;
-	    }
-	    touch = false;
-	    
-	    if(up) {
-		while (CHECKREC) {
-		    tmp.y1--;
-		    touch = true;
-		}
-		if (touch) tmp.y1++;
-	    }
-	    touch = false;
+	    if (down)
+		expandCorner (w, result, r, BOTTOM, 1);
+
+	    if (up)
+		expandCorner (w, result, r, TOP, -1);
+
 	    counter++;
 	}
     }
-#undef CHECKREC
-    return tmp;
+
+    return result;
 }
 
 /* Create a box for resizing in the given region
  * Also shrinks the window box in case of minor overlaps.
  * FIXME: should be somewhat cleaner.
  */
-BOX
-PutScreen::findRect (CompWindow *w,
-		     Region     r,
-		     bool       left,
-		     bool       right,
-		     bool       up,
-		     bool       down)
+CompRect
+PutScreen::findRect (CompWindow        *w,
+		     const CompRegion& r,
+		     bool              left,
+		     bool              right,
+		     bool              up,
+		     bool              down)
 {
-    BOX windowBox, ansA, ansB, orig;
+    CompRect windowBox, ansA, ansB, orig;
 
-    windowBox.x1 = w->serverX ();
-    windowBox.x2 = w->serverX ()  + w->serverWidth ();
-    windowBox.y1 = w->serverY ();
-    windowBox.y2 = w->serverY () + w->serverHeight ();
+    windowBox.setGeometry (w->serverX (), w->serverY (),
+			   w->serverWidth (), w->serverHeight ());
 
     orig = windowBox;
 
     ansA = extendBox (w, windowBox, r, true, left, right, up, down);
     ansB = extendBox (w, windowBox, r, false, left, right, up, down);
 
-    if (boxCompare (orig, ansA) &&
-	boxCompare (orig, ansB))
+    if (boxCompare (orig, ansA) && boxCompare (orig, ansB))
 	return orig;
+
     if (boxCompare (ansA, ansB))
 	return ansA;
     else
@@ -219,48 +234,40 @@ PutScreen::findRect (CompWindow *w,
 
 /* Calls out to compute the resize */
 unsigned int
-PutScreen::computeResize(CompWindow     *w,
-			 XWindowChanges *xwc,
-			 bool           left,
-			 bool           right,
-			 bool           up,
-			 bool           down)
+PutScreen::computeResize (CompWindow     *w,
+			  XWindowChanges *xwc,
+			  bool           left,
+			  bool           right,
+			  bool           up,
+			  bool           down)
 {
-    CompOutput   *output;
-    Region       region;
     unsigned int mask = 0;
-    BOX          box;
-    int outputDevice = w->outputDevice ();
-    
+    CompRect     box;
+    CompRegion   region;
+    int          outputDevice = w->outputDevice ();
 
-    output = &screen->outputDevs ()[outputDevice];
-    region = emptyRegion (w, output->region ());
-    if (!region)
-	return mask;
+    region = emptyRegion (w, screen->outputDevs ()[outputDevice]);
+    box    = findRect (w, region, left, right, up, down);
 
-    box = findRect (w, region, left, right, up, down);
-    XDestroyRegion (region);
-
-    if (box.x1 != w->serverX ())
+    if (box.x () != w->serverX ())
 	mask |= CWX;
 
-    if (box.y1 != w->serverY ())
+    if (box.y () != w->serverY ())
 	mask |= CWY;
 
-    if ((box.x2 - box.x1) != w->serverWidth ())
+    if (box.width () != w->serverWidth ())
 	mask |= CWWidth;
 
-    if ((box.y2 - box.y1) != w->height ())
+    if (box.height () != w->height ())
 	mask |= CWHeight;
 
-    xwc->x = box.x1;
-    xwc->y = box.y1;
-    xwc->width = box.x2 - box.x1; 
-    xwc->height = box.y2 - box.y1;
+    xwc->x = box.x ();
+    xwc->y = box.y ();
+    xwc->width = box.width ();
+    xwc->height = box.height ();
 
     return mask;
 }
-
 
 /*
  * End of Maximumize functions
@@ -339,27 +346,24 @@ PutScreen::getOutputForWindow (CompWindow *w)
     /* outputDeviceForWindow uses the server geometry,
        so specialcase a running animation, which didn't
        apply the server geometry yet */
-    return screen->outputDeviceForGeometry (CompWindow::Geometry(
-								 w->x () + pw->tx,
-								 w->y () + pw->ty,
-								 w->width (),
-								 w->height (),
-								 w->geometry ().border() ));
+    CompWindow::Geometry geom;
+
+    geom.set (w->x () + pw->tx, w->y () + pw->ty,
+	      w->width (), w->height (), w->geometry ().border ());
+
+    return screen->outputDeviceForGeometry (geom);
 }
 
-
-bool
+CompPoint
 PutScreen::getDistance (CompWindow         *w,
 			PutType            type,
-			CompOption::Vector &option,
-			int                *distX,
-			int                *distY)
+			CompOption::Vector &option)
 {
-
     CompScreen *s = screen;
     int        x, y, dx, dy, posX, posY;
     int        viewport, output;
-    XRectangle workArea;
+    CompRect   workArea;
+    CompPoint  result;
 
     PUT_SCREEN (s);
     PUT_WINDOW (w);
@@ -381,7 +385,7 @@ PutScreen::getDistance (CompWindow         *w,
     else
     {
 	/* make sure the output number is not out of bounds */
-	output = MIN (output,  s->outputDevs ().size () - 1);
+	output = MIN (output,  (int) s->outputDevs ().size () - 1);
     }
 
     if (output == -1)
@@ -396,17 +400,19 @@ PutScreen::getDistance (CompWindow         *w,
     {
 	/* single tap or output provided via options list,
 	   use the output work area */
-	s->getWorkareaForOutput (output, &workArea);
+	workArea = s->getWorkareaForOutput (output);
 	ps->lastType = type;
     }
 
-    if(PUT_ONLY_EMPTY(type))
+    if (PUT_ONLY_EMPTY (type))
     {
 	unsigned int   mask;
 	XWindowChanges xwc;
-	bool left, right, up, down;
+	bool           left, right, up, down;
+
 	left = right = up = down = false;
-	switch(type) {
+
+	switch (type) {
 	    case PutEmptyBottomLeft:
 		left = down = true;
 		break;
@@ -435,24 +441,18 @@ PutScreen::getDistance (CompWindow         *w,
 		right = up = true;
 		break;
 	    default:
-		left = right = up = down = false;
+		break;
 	}
+
 	mask = computeResize (w, &xwc, left,right,up,down);
 	if (mask)
 	{
-	    int width_, height_;
-	    if (w->constrainNewWindowSize ( xwc.width, xwc.height,
-					    &width_, &height_))
-	    {
+	    if (w->constrainNewWindowSize (xwc.width, xwc.height,
+					   &xwc.width, &xwc.height))
 		mask |= CWWidth | CWHeight;
-		xwc.width  = width_;
-		xwc.height = height_;
-	    }
 	}
-	workArea.width  = xwc.width;
-	workArea.height = xwc.height;
-	workArea.x      = xwc.x;
-	workArea.y      = xwc.y;
+
+	workArea.setGeometry (xwc.x, xwc.y, xwc.width, xwc.height);
     }
     /* the windows location */
     x = w->x () + pw->tx;
@@ -462,112 +462,122 @@ PutScreen::getDistance (CompWindow         *w,
     case PutEmptyCenter:
     case PutCenter:
 	/* center of the screen */
-	dx = (workArea.width / 2) - (w->serverWidth () / 2) - (x - workArea.x);
-	dy = (workArea.height / 2) - (w->serverHeight () / 2) - (y - workArea.y);
+	dx = (workArea.width () / 2) - (w->serverWidth () / 2) -
+	     (x - workArea.x ());
+	dy = (workArea.height () / 2) - (w->serverHeight () / 2) -
+	     (y - workArea.y ());
 	break;
     case PutLeft:
 	/* center of the left edge */
-	dx = -(x - workArea.x) + w->input().left + ps->optionGetPadLeft ();
-	dy = (workArea.height / 2) - (w->serverHeight () / 2) - (y - workArea.y);
+	dx = -(x - workArea.x ()) + w->input().left + ps->optionGetPadLeft ();
+	dy = (workArea.height () / 2) - (w->serverHeight () / 2) -
+	     (y - workArea.y ());
 	break;
     case PutEmptyLeft:
 	/* center of the left edge */
-	workArea.x -= w->input().left;
-	dx = -(x - workArea.x) + w->input().left + ps->optionGetPadLeft ();
-	dy = (workArea.height / 2) - (w->serverHeight () / 2) - (y - workArea.y);
+	workArea.setX (workArea.x () - w->input ().left);
+	dx = -(x - workArea.x ()) + w->input ().left + ps->optionGetPadLeft ();
+	dy = (workArea.height () / 2) - (w->serverHeight () / 2) -
+	     (y - workArea.y ());
 	break;
     case PutTopLeft:
 	/* top left corner */
-	dx = -(x - workArea.x) + w->input().left + ps->optionGetPadLeft ();
-	dy = -(y - workArea.y) + w->input().top + ps->optionGetPadTop ();
+	dx = -(x - workArea.x ()) + w->input().left + ps->optionGetPadLeft ();
+	dy = -(y - workArea.y ()) + w->input().top + ps->optionGetPadTop ();
 	break;
     case PutEmptyTopLeft:
 	/* top left corner */
-	workArea.y -= w->input().top;
-	workArea.x -= w->input().left;
-	dx = -(x - workArea.x) + w->input().left + ps->optionGetPadLeft ();
-	dy = -(y - workArea.y) + w->input().top + ps->optionGetPadTop ();
+	workArea.setX (workArea.x () - w->input ().left);
+	workArea.setY (workArea.y () - w->input ().top);
+	dx = -(x - workArea.x ()) + w->input ().left + ps->optionGetPadLeft ();
+	dy = -(y - workArea.y ()) + w->input ().top + ps->optionGetPadTop ();
 	break;
     case PutTop:
 	/* center of top edge */
-	dx = (workArea.width / 2) - (w->serverWidth () / 2) - (x - workArea.x);
-	dy = -(y - workArea.y) + w->input().top + ps->optionGetPadTop ();
+	dx = (workArea.width () / 2) - (w->serverWidth () / 2) -
+	     (x - workArea.x ());
+	dy = -(y - workArea.y ()) + w->input ().top + ps->optionGetPadTop ();
 	break;
     case PutEmptyTop:
 	/* center of top edge */
-	workArea.y -= w->input().top;
-	dx = (workArea.width / 2) - (w->serverWidth () / 2) - (x - workArea.x);
-	dy = -(y - workArea.y) + w->input().top + ps->optionGetPadTop ();
+	workArea.setY (workArea.x () - w->input ().top);
+	dx = (workArea.width () / 2) - (w->serverWidth () / 2) -
+	     (x - workArea.x ());
+	dy = -(y - workArea.y ()) + w->input ().top + ps->optionGetPadTop ();
 	break;
     case PutTopRight:
 	/* top right corner */
-	dx = workArea.width - w->serverWidth () - (x - workArea.x) -
-	    w->input().right - ps->optionGetPadRight ();
-	dy = -(y - workArea.y) + w->input().top + ps->optionGetPadTop ();
+	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
+	     w->input ().right - ps->optionGetPadRight ();
+	dy = -(y - workArea.y ()) + w->input ().top + ps->optionGetPadTop ();
 	break;
     case PutEmptyTopRight:
 	/* top right corner */
-	workArea.y -= w->input().top;
-	workArea.x += w->input().right;
-	dx = workArea.width - w->serverWidth () - (x - workArea.x) -
-	     w->input().right - ps->optionGetPadRight ();
-	dy = -(y - workArea.y) + w->input().top + ps->optionGetPadTop ();
+	workArea.setX (workArea.x () + w->input ().right);
+	workArea.setY (workArea.y () - w->input ().top);
+	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
+	     w->input ().right - ps->optionGetPadRight ();
+	dy = -(y - workArea.y ()) + w->input ().top + ps->optionGetPadTop ();
 	break;
     case PutRight:
 	/* center of right edge */
-	dx = workArea.width - w->serverWidth () - (x - workArea.x) -
-	    w->input().right - ps->optionGetPadRight ();
-	dy = (workArea.height / 2) - (w->serverHeight () / 2) - (y - workArea.y);
+	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
+	     w->input ().right - ps->optionGetPadRight ();
+	dy = (workArea.height () / 2) - (w->serverHeight () / 2) -
+	     (y - workArea.y ());
 	break;
     case PutEmptyRight:
 	/* center of right edge */
-	workArea.x += w->input().right;
-	dx = workArea.width - w->serverWidth () - (x - workArea.x) -
-	     w->input().right - ps->optionGetPadRight ();
-	dy = (workArea.height / 2) - (w->serverHeight () / 2) - (y - workArea.y);
+	workArea.setX (workArea.x () + w->input ().right);
+	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
+	     w->input ().right - ps->optionGetPadRight ();
+	dy = (workArea.height () / 2) - (w->serverHeight () / 2) -
+	     (y - workArea.y ());
 	break;
     case PutBottomRight:
 	/* bottom right corner */
-	dx = workArea.width - w->serverWidth () - (x - workArea.x) -
-	    w->input().right - ps->optionGetPadRight ();
-	dy = workArea.height - w->serverHeight () - (y - workArea.y) -
-	    w->input().bottom - ps->optionGetPadBottom ();
+	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
+	    w->input ().right - ps->optionGetPadRight ();
+	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
+	    w->input ().bottom - ps->optionGetPadBottom ();
 	break;
     case PutEmptyBottomRight:
 	/* bottom right corner */
-	workArea.y += w->input().bottom;
-	workArea.x += w->input().right;
-	dx = workArea.width - w->serverWidth () - (x - workArea.x) -
-	     w->input().right - ps->optionGetPadRight ();
-	dy = workArea.height - w->serverHeight () - (y - workArea.y) -
-	     w->input().bottom - ps->optionGetPadBottom ();
+	workArea.setX (workArea.x () + w->input ().right);
+	workArea.setY (workArea.y () + w->input ().bottom);
+	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
+	     w->input ().right - ps->optionGetPadRight ();
+	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
+	     w->input ().bottom - ps->optionGetPadBottom ();
 	break;
     case PutBottom:
 	/* center of bottom edge */
-	dx = (workArea.width / 2) - (w->serverWidth () / 2) - (x - workArea.x);
-	dy = workArea.height - w->serverHeight () - (y - workArea.y) -
-	     w->input().bottom - ps->optionGetPadBottom ();
+	dx = (workArea.width () / 2) - (w->serverWidth () / 2) -
+	     (x - workArea.x ());
+	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
+	     w->input ().bottom - ps->optionGetPadBottom ();
 	break;
     case PutEmptyBottom:
 	/* center of bottom edge */
-	workArea.y += w->input().bottom;
-	dx = (workArea.width / 2) - (w->serverWidth () / 2) - (x - workArea.x);
-	dy = workArea.height - w->serverHeight () - (y - workArea.y) -
-	     w->input().bottom - ps->optionGetPadBottom ();
+	workArea.setY (workArea.y () + w->input ().bottom);
+	dx = (workArea.width () / 2) - (w->serverWidth () / 2) -
+	     (x - workArea.x ());
+	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
+	     w->input ().bottom - ps->optionGetPadBottom ();
 	break;
     case PutBottomLeft:
 	/* bottom left corner */
-	dx = -(x - workArea.x) + w->input().left + ps->optionGetPadLeft ();
-	dy = workArea.height - w->serverHeight () - (y - workArea.y) -
-	     w->input().bottom - ps->optionGetPadBottom ();
+	dx = -(x - workArea.x ()) + w->input ().left + ps->optionGetPadLeft ();
+	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
+	     w->input ().bottom - ps->optionGetPadBottom ();
 	break;
     case PutEmptyBottomLeft:
 	/* bottom left corner */
-	workArea.y += w->input().bottom;
-	workArea.x -= w->input().left;
-	dx = -(x - workArea.x) + w->input().left + ps->optionGetPadLeft ();
-	dy = workArea.height - w->serverHeight () - (y - workArea.y) -
-	     w->input().bottom - ps->optionGetPadBottom ();
+	workArea.setX (workArea.x () - w->input ().left);
+	workArea.setY (workArea.y () + w->input ().bottom);
+	dx = -(x - workArea.x ()) + w->input ().left + ps->optionGetPadLeft ();
+	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
+	     w->input ().bottom - ps->optionGetPadBottom ();
 	break;
     case PutRestore:
 	/* back to last position */
@@ -583,26 +593,26 @@ PutScreen::getDistance (CompWindow         *w,
 
 	    /* if viewport wasn't supplied, bail out */
 	    if (viewport < 0)
-		return false;
+		return result;
 
 	    /* split 1D viewport value into 2D x and y viewport */
 	    vpX = viewport % s->vpSize ().width ();
 	    vpY = viewport / s->vpSize ().height () ;
-	    if (vpY > s->vpSize ().width ())
+	    if (vpY > (int) s->vpSize ().width ())
 		vpY = s->vpSize ().width () - 1;
 
 	    /* take the shortest horizontal path to the destination viewport */
 	    hDirection = (vpX - s->vp ().x ());
-	    if (hDirection > s->vpSize ().height () / 2)
+	    if (hDirection > (int) s->vpSize ().height () / 2)
 		hDirection = (hDirection - s->vpSize ().height ());
-	    else if (hDirection < -s->vpSize ().height () / 2)
+	    else if (hDirection < - ((int) s->vpSize ().height ()) / 2)
 		hDirection = (hDirection + s->vpSize ().height ());
 
 	    /* we need to do this for the vertical destination viewport too */
 	    vDirection = (vpY - s->vp ().y ());
-	    if (vDirection > s->vpSize ().width () / 2)
+	    if (vDirection > (int) s->vpSize ().width () / 2)
 		vDirection = (vDirection - s->vpSize ().width ());
-	    else if (vDirection < -s->vpSize ().width () / 2)
+	    else if (vDirection < -((int) s->vpSize ().width ()) / 2)
 		vDirection = (vDirection + s->vpSize ().width ());
 
 	    dx = s->width () * hDirection;
@@ -632,18 +642,19 @@ PutScreen::getDistance (CompWindow         *w,
     case PutNextOutput:
 	{
 	    int        outputNum, currentNum;
-	    int nOutputDev = s->outputDevs ().size ();
+	    int        nOutputDev = s->outputDevs ().size ();
 	    CompOutput *currentOutput, *newOutput;
 
 	    if (nOutputDev < 2)
-		return false;
+		return result;
 
 	    currentNum = getOutputForWindow (w);
 	    outputNum  = (currentNum + 1) % nOutputDev;
-	    outputNum  = CompOption::getIntOptionNamed (option,"output", outputNum);
+	    outputNum  = CompOption::getIntOptionNamed (option,"output",
+							outputNum);
 
 	    if (outputNum >= nOutputDev)
-		return false;
+		return result;
 
 	    currentOutput = &s->outputDevs ().at(currentNum);
 	    newOutput     = &s->outputDevs ().at(outputNum);
@@ -663,16 +674,16 @@ PutScreen::getDistance (CompWindow         *w,
 	if (posX < 0)
 	    /* account for a specified negative position,
 	       like geometry without (-0) */
-	    dx = posX + s->width () - w->serverWidth () - x - w->input().right;
+	    dx = posX + s->width () - w->serverWidth () - x - w->input ().right;
 	else
-	    dx = posX - x + w->input().left;
+	    dx = posX - x + w->input ().left;
 
 	if (posY < 0)
 	    /* account for a specified negative position,
 	       like geometry without (-0) */
-	    dy = posY + s->height () - w->height () - y - w->input().bottom;
+	    dy = posY + s->height () - w->height () - y - w->input ().bottom;
 	else
-	    dy = posY - y + w->input().top;
+	    dy = posY - y + w->input ().top;
 	break;
     case PutRelative:
 	/* move window by offset */
@@ -692,7 +703,7 @@ PutScreen::getDistance (CompWindow         *w,
 
 	    /* get the pointers position from the X server */
 	    if (XQueryPointer (s->dpy (), w->id (), &root, &child,
-			       &rx, &ry, &winX, &winY, &pMask)) 
+			       &rx, &ry, &winX, &winY, &pMask))
 	    {
 		if (ps->optionGetWindowCenter ())
 		{
@@ -700,32 +711,32 @@ PutScreen::getDistance (CompWindow         *w,
 		    dx = rx - (w->serverWidth () / 2) - x;
 		    dy = ry - (w->serverHeight () / 2) - y;
 		}
-		else if (rx < s->workArea ().width / 2 &&
-			 ry < s->workArea ().height / 2)
+		else if (rx < (int) s->workArea ().width () / 2 &&
+			 ry < (int) s->workArea ().height () / 2)
 		{
 		    /* top left quad */
-		    dx = rx - x + w->input().left;
-		    dy = ry - y + w->input().top;
+		    dx = rx - x + w->input ().left;
+		    dy = ry - y + w->input ().top;
 		}
-		else if (rx < s->workArea ().width / 2 &&
-			 ry >= s->workArea ().height / 2)
+		else if (rx < (int) s->workArea ().width () / 2 &&
+			 ry >= (int) s->workArea ().height () / 2)
 		{
 		    /* bottom left quad */
-		    dx = rx - x + w->input().left;
-		    dy = ry - w->height () - y - w->input().bottom;
+		    dx = rx - x + w->input ().left;
+		    dy = ry - w->height () - y - w->input ().bottom;
 		}
-		else if (rx >= s->workArea ().width / 2 &&
-			 ry < s->workArea ().height / 2)
+		else if (rx >= (int) s->workArea ().width () / 2 &&
+			 ry < (int) s->workArea ().height () / 2)
 		{
 		    /* top right quad */
-		    dx = rx - w->width () - x - w->input().right;
-		    dy = ry - y + w->input().top;
+		    dx = rx - w->width () - x - w->input ().right;
+		    dy = ry - y + w->input ().top;
 		}
 		else
 		{
 		    /* bottom right quad */
-		    dx = rx - w->width () - x - w->input().right;
-		    dy = ry - w->height () - y - w->input().bottom;
+		    dx = rx - w->width () - x - w->input ().right;
+		    dy = ry - w->height () - y - w->input ().bottom;
 		}
 	    }
 	    else
@@ -752,36 +763,44 @@ PutScreen::getDistance (CompWindow         *w,
 	inDx = dxBefore = dx % s->width ();
 	inDy = dyBefore = dy % s->height ();
 
-	extents.left   = x + inDx - w->input().left;
-	extents.top    = y + inDy - w->input().top;
-	extents.right  = x + inDx + w->serverWidth () + w->input().right;
-	extents.bottom = y + inDy + w->serverHeight () + w->input().bottom;
+	extents.left   = x + inDx - w->input ().left;
+	extents.top    = y + inDy - w->input ().top;
+	extents.right  = x + inDx + w->serverWidth () + w->input ().right;
+	extents.bottom = y + inDy + w->serverHeight () + w->input ().bottom;
 
-	area.left   = workArea.x + ps->optionGetPadLeft ();
-	area.top    = workArea.y + ps->optionGetPadTop ();
-	area.right  = workArea.x + workArea.width - ps->optionGetPadRight ();
-	area.bottom = workArea.y + workArea.height - ps->optionGetPadBottom ();
+	area.left   = workArea.left () + ps->optionGetPadLeft ();
+	area.top    = workArea.top () + ps->optionGetPadTop ();
+	area.right  = workArea.right () - ps->optionGetPadRight ();
+	area.bottom = workArea.bottom () - ps->optionGetPadBottom ();
 
 	if (extents.left < area.left)
+	{
 	    inDx += area.left - extents.left;
-	else if (w->serverWidth () <= workArea.width && extents.right > area.right)
+	}
+	else if (w->serverWidth () <= workArea.width () &&
+		 extents.right > area.right)
+	{
 	    inDx += area.right - extents.right;
+	}
 
 	if (extents.top < area.top)
+	{
 	    inDy += area.top - extents.top;
-	else if (w->serverHeight () <= workArea.height &&
+	}
+	else if (w->serverHeight () <= workArea.height () &&
 		 extents.bottom > area.bottom)
+	{
 	    inDy += area.bottom - extents.bottom;
+	}
 
 	/* apply the change */
 	dx += inDx - dxBefore;
 	dy += inDy - dyBefore;
     }
 
-    *distX = dx;
-    *distY = dy;
+    result.set (dx, dy);
 
-    return true;
+    return result;
 }
 
 void
@@ -845,16 +864,18 @@ PutScreen::preparePaint (int ms)
     cScreen->preparePaint (ms);
 }
 
-/* This is the guts of the paint function. You can transform the way the entire output is painted
- * or you can just draw things on screen with openGL. The unsigned int here is a mask for painting
- * the screen, see opengl/opengl.h on how you can change it */
+/* This is the guts of the paint function. You can transform the way the
+ * entire output is painted or you can just draw things on screen with openGL.
+ * The unsigned int here is a mask for painting the screen, see opengl/opengl.h
+ * on how you can change it
+ */
 
 bool
 PutScreen::glPaintOutput (const GLScreenPaintAttrib     &attrib,
-			  const GLMatrix		&transform, 
-			  const CompRegion		&region, 
+			  const GLMatrix		&transform,
+			  const CompRegion		&region,
 			  CompOutput 		        *output,
-			  unsigned int		        mask) 
+			  unsigned int		        mask)
 {
     bool status;
 
@@ -874,7 +895,9 @@ PutScreen::donePaint ()
     PUT_SCREEN (screen);
 
     if (ps->moreAdjust && ps->grabIndex)
+    {
 	cScreen->damageScreen (); // FIXME
+    }
     else
     {
 	if (ps->grabIndex)
@@ -895,16 +918,15 @@ PutScreen::donePaint ()
 void
 PutScreen::handleEvent (XEvent *event)
 {
-    switch (event->type)
-    {
-	/* handle client events */
+    switch (event->type) {
+    /* handle client events */
     case ClientMessage:
 	/* accept the custom atom for putting windows */
 	if (event->xclient.message_type == compizPutWindowAtom)
 	{
 	    CompWindow *w;
 
-	    w = screen->findWindow(event->xclient.window);
+	    w = screen->findWindow (event->xclient.window);
 	    if (w)
 	    {
 		/*
@@ -919,15 +941,13 @@ PutScreen::handleEvent (XEvent *event)
 		 * l[3] = put type, int value from enum
 		 * l[4] = output number
 		 */
-		CompOption::Vector opt;
-		opt.reserve (5);
+		CompOption::Vector opt (5);
 
 		CompOption::Value value0 = (int) event->xclient.window;
 		opt.push_back (CompOption ( "window",CompOption::TypeInt));
 		opt[0].set (value0);
 
 		CompOption::Value value1 = (int) event->xclient.data.l[0];
-
 		opt.push_back (CompOption ( "x",CompOption::TypeInt));
 		opt[1].set (value1);
 
@@ -943,7 +963,7 @@ PutScreen::handleEvent (XEvent *event)
 		opt.push_back (CompOption ( "output",CompOption::TypeInt));
 		opt[4].set (value4);
 
-		initiateCommon (NULL, 0, opt, 
+		initiateCommon (NULL, 0, opt,
 				(PutType) event->xclient.data.l[3]);
 	    }
 	}
@@ -954,35 +974,27 @@ PutScreen::handleEvent (XEvent *event)
     screen->handleEvent (event);
 }
 
-/* This gets called whenever the window needs to be repainted. WindowPaintAttrib gives you some
- * attributes like brightness/saturation etc to play around with. GLMatrix is the window's
- * transformation matrix. the unsigned int is the mask, have a look at opengl.h on what you can do
+/* This gets called whenever the window needs to be repainted.
+ * WindowPaintAttrib gives you some attributes like brightness/saturation etc
+ * to play around with. GLMatrix is the window's transformation matrix. The
+ * unsigned int is the mask, have a look at opengl.h on what you can do
  * with it */
 bool
-PutWindow::glPaint (const GLWindowPaintAttrib &attrib, 
-		    const GLMatrix &transform, 
-		    const CompRegion &region, 
-		    unsigned int mask) 
+PutWindow::glPaint (const GLWindowPaintAttrib &attrib,
+		    const GLMatrix            &transform,
+		    const CompRegion          &region,
+		    unsigned int              mask)
 {
-    bool status;
-    GLMatrix wTransform = transform;
+    GLMatrix wTransform (transform);
 
-    PUT_WINDOW (window);
-
-    if (pw->adjust)
+    if (adjust)
     {
-
-	wTransform.translate ( pw->tx, pw->ty, 0.0f);
-
+	wTransform.translate (tx, ty, 0.0f);
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-
     }
 
-    status = gWindow->glPaint (attrib, wTransform, region, mask);
-
-    return status;
+    return gWindow->glPaint (attrib, wTransform, region, mask);
 }
-
 
 /*
  * initiate action callback
@@ -1004,9 +1016,7 @@ PutScreen::initiateCommon (CompAction         *action,
     if (w)
     {
 	CompScreen *s = screen;
-	int        dx, dy;
-
-	PUT_SCREEN (s);
+	CompPoint  delta;
 
 	/* we don't want to do anything with override redirect windows */
 	if (w->overrideRedirect ())
@@ -1031,14 +1041,13 @@ PutScreen::initiateCommon (CompAction         *action,
 	/*
 	 * handle the put types
 	 */
-	if (!getDistance (w, type, option, &dx, &dy))
-	    return false;
+	delta = getDistance (w, type, option);
 
 	/* don't do anything if there is nothing to do */
-	if (!dx && !dy)
+	if (!delta.x () && !delta.y ())
 	    return true;
 
-	if (!ps->grabIndex)
+	if (!grabIndex)
 	{
 	    /* this will keep put from working while something
 	       else has a screen grab */
@@ -1046,35 +1055,35 @@ PutScreen::initiateCommon (CompAction         *action,
 		return false;
 
 	    /* we are ok, so grab the screen */
-	    ps->grabIndex = s->pushGrab (s->invisibleCursor (), "put");
+	    grabIndex = s->pushGrab (s->invisibleCursor (), "put");
 	}
 
-	if (ps->grabIndex)
+	if (grabIndex)
 	{
 	    PUT_WINDOW (w);
 
-	    ps->lastWindow = w->id ();
+	    lastWindow = w->id ();
 
 	    /* save the windows position in the saveMask
 	     * this is used when unmaximizing the window
 	     */
 	    if (w->saveMask () & CWX)
-		w->saveWc ().x += dx;
+		w->saveWc ().x += delta.x ();
 
 	    if (w->saveMask () & CWY)
-		w->saveWc ().y += dy;
+		w->saveWc ().y += delta.y ();
 
 	    /* Make sure everyting starts out at the windows
 	       current position */
 	    pw->lastX = w->x () + pw->tx;
 	    pw->lastY = w->y () + pw->ty;
 
-	    pw->targetX = pw->lastX + dx;
-	    pw->targetY = pw->lastY + dy;
+	    pw->targetX = pw->lastX + delta.x ();
+	    pw->targetY = pw->lastY + delta.y ();
 
 	    /* mark for animation */
 	    pw->adjust = true;
-	    ps->moreAdjust = true;
+	    moreAdjust = true;
 
 	    /* cause repainting */
 	    pw->cWindow->addDamage ();
@@ -1088,61 +1097,61 @@ PutScreen::initiateCommon (CompAction         *action,
 PutType
 PutScreen::typeFromString (const CompString &type)
 {
-    if (type.compare("absolute") == 0)
+    if (type == "absolute")
 	return PutAbsolute;
-    else if (type.compare( "relative") == 0)
+    else if (type == "relative")
 	return PutRelative;
-    else if (type.compare( "pointer") == 0)
+    else if (type == "pointer")
 	return PutPointer;
-    else if (type.compare( "viewport") == 0)
+    else if (type == "viewport")
 	return (PutType) PutViewport;
-    else if (type.compare( "viewportleft") == 0)
+    else if (type == "viewportleft")
 	return PutViewportLeft;
-    else if (type.compare( "viewportright") == 0)
+    else if (type == "viewportright")
 	return PutViewportRight;
-    else if (type.compare( "viewportup") == 0)
+    else if (type == "viewportup")
 	return PutViewportUp;
-    else if (type.compare( "viewportdown") == 0)
+    else if (type == "viewportdown")
 	return PutViewportDown;
-    else if (type.compare( "nextoutput") == 0)
+    else if (type == "nextoutput")
 	return PutNextOutput;
-    else if (type.compare( "restore") == 0)
+    else if (type == "restore")
 	return PutRestore;
-    else if (type.compare( "bottomleft") == 0)
+    else if (type == "bottomleft")
 	return PutBottomLeft;
-    else if (type.compare( "emptybottomleft") == 0)
+    else if (type == "emptybottomleft")
 	return PutEmptyBottomLeft;
-    else if (type.compare( "left") == 0)
+    else if (type == "left")
 	return PutLeft;
-    else if (type.compare( "emptyleft") == 0)
+    else if (type == "emptyleft")
 	return PutEmptyLeft;
-    else if (type.compare( "topleft") == 0)
+    else if (type == "topleft")
 	return PutTopLeft;
-    else if (type.compare( "emptytopleft") == 0)
+    else if (type == "emptytopleft")
 	return PutEmptyTopLeft;
-    else if (type.compare( "top") == 0)
+    else if (type == "top")
 	return PutTop;
-    else if (type.compare( "emptytop") == 0)
+    else if (type == "emptytop")
 	return PutEmptyTop;
-    else if (type.compare( "topright") == 0)
+    else if (type == "topright")
 	return PutTopRight;
-    else if (type.compare( "emptytopright") == 0)
+    else if (type == "emptytopright")
 	return PutEmptyTopRight;
-    else if (type.compare( "right") == 0)
+    else if (type == "right")
 	return PutRight;
-    else if (type.compare( "emptyright") == 0)
+    else if (type == "emptyright")
 	return PutEmptyRight;
-    else if (type.compare( "bottomright") == 0)
+    else if (type == "bottomright")
 	return PutBottomRight;
-    else if (type.compare( "emptybottomright") == 0)
+    else if (type == "emptybottomright")
 	return PutEmptyBottomRight;
-    else if (type.compare( "bottom") == 0)
+    else if (type == "bottom")
 	return PutBottom;
-    else if (type.compare( "emptybottom") == 0)
+    else if (type == "emptybottom")
 	return PutEmptyBottom;
-    else if (type.compare( "center") == 0)
+    else if (type == "center")
 	return PutCenter;
-    else if (type.compare( "emptycenter") == 0)
+    else if (type == "emptycenter")
 	return PutEmptyCenter;
     else
 	return PutUnknown;
@@ -1154,11 +1163,11 @@ PutScreen::initiate (CompAction         *action,
 		     CompAction::State  state,
 		     CompOption::Vector &option)
 {
-    PutType type = PutUnknown;
-    CompString    typeString;
+    PutType    type = PutUnknown;
+    CompString typeString;
 
-    typeString = CompOption::getStringOptionNamed (option, "type", 0);
-    if (!typeString.empty())
+    typeString = CompOption::getStringOptionNamed (option, "type");
+    if (!typeString.empty ())
     	type = typeFromString (typeString);
 
 /*    if (type == (PutType) PutViewport)
@@ -1169,7 +1178,7 @@ PutScreen::initiate (CompAction         *action,
 
 
 PutScreen::PutScreen (CompScreen *screen) :
-    PrivateHandler <PutScreen, CompScreen> (screen), 
+    PrivateHandler <PutScreen, CompScreen> (screen),
     PutOptions (putVTable->getMetadata ()),
     screen (screen),
     cScreen (CompositeScreen::get (screen)),
@@ -1179,64 +1188,42 @@ PutScreen::PutScreen (CompScreen *screen) :
     moreAdjust (false),
     grabIndex (0)
 {
-    ScreenInterface::setHandler (screen); 
-    CompositeScreenInterface::setHandler (cScreen); 
-    GLScreenInterface::setHandler (gScreen); 
+    ScreenInterface::setHandler (screen);
+    CompositeScreenInterface::setHandler (cScreen);
+    GLScreenInterface::setHandler (gScreen);
 
     compizPutWindowAtom = XInternAtom(screen->dpy (),
 				      "_COMPIZ_PUT_WINDOW", 0);
 
 #define setAction(action, type) \
-    optionSet##action##Initiate (boost::bind (&PutScreen::initiateCommon, \
+    optionSet##action##KeyInitiate (boost::bind (&PutScreen::initiateCommon,   \
+					      this, _1,_2,_3,type));           \
+    optionSet##action##ButtonInitiate (boost::bind (&PutScreen::initiateCommon,\
 					      this, _1,_2,_3,type))
 
-    /* Keys */
-    setAction(PutCenterKey,PutCenter);
-    setAction(PutEmptyCenterKey,PutEmptyCenter);
-    setAction(PutLeftKey,PutLeft);
-    setAction(PutEmptyLeftKey,PutEmptyLeft);
-    setAction(PutRightKey,PutRight);
-    setAction(PutEmptyRightKey,PutEmptyRight);
-    setAction(PutTopKey,PutTop);
-    setAction(PutEmptyTopKey,PutEmptyTop);
-    setAction(PutBottomKey,PutBottom);
-    setAction(PutEmptyBottomKey,PutEmptyBottom);
-    setAction(PutTopleftKey,PutTopLeft);
-    setAction(PutEmptyTopleftKey,PutEmptyTopLeft);
-    setAction(PutToprightKey,PutTopRight);
-    setAction(PutEmptyToprightKey,PutEmptyTopRight);
-    setAction(PutBottomleftKey,PutBottomLeft);
-    setAction(PutEmptyBottomleftKey,PutEmptyBottomLeft);
-    setAction(PutBottomrightKey,PutBottomRight);
-    setAction(PutEmptyBottomrightKey,PutEmptyBottomRight);
-
-    /* Buttons */
-
-    setAction(PutCenterButton,PutCenter);
-    setAction(PutEmptyCenterButton,PutEmptyCenter);
-    setAction(PutLeftButton,PutLeft);
-    setAction(PutEmptyLeftButton,PutEmptyLeft);
-    setAction(PutRightButton,PutRight);
-    setAction(PutEmptyRightButton,PutEmptyRight);
-    setAction(PutTopButton,PutTop);
-    setAction(PutEmptyTopButton,PutEmptyTop);
-    setAction(PutBottomButton,PutBottom);
-    setAction(PutEmptyBottomButton,PutEmptyBottom);
-    setAction(PutTopleftButton,PutTopLeft);
-    setAction(PutEmptyTopleftButton,PutEmptyTopLeft);
-    setAction(PutToprightButton,PutTopRight);
-    setAction(PutEmptyToprightButton,PutEmptyTopRight);
-    setAction(PutBottomleftButton,PutBottomLeft);
-    setAction(PutEmptyBottomleftButton,PutEmptyBottomLeft);
-    setAction(PutBottomrightButton,PutBottomRight);
-    setAction(PutEmptyBottomrightButton,PutEmptyBottomRight);
+    setAction (PutCenter, PutCenter);
+    setAction (PutEmptyCenter, PutEmptyCenter);
+    setAction (PutLeft, PutLeft);
+    setAction (PutEmptyLeft, PutEmptyLeft);
+    setAction (PutRight, PutRight);
+    setAction (PutEmptyRight, PutEmptyRight);
+    setAction (PutTop, PutTop);
+    setAction (PutEmptyTop, PutEmptyTop);
+    setAction (PutBottom, PutBottom);
+    setAction (PutEmptyBottom, PutEmptyBottom);
+    setAction (PutTopleft, PutTopLeft);
+    setAction (PutEmptyTopleft, PutEmptyTopLeft);
+    setAction (PutTopright, PutTopRight);
+    setAction (PutEmptyTopright, PutEmptyTopRight);
+    setAction (PutBottomleft, PutBottomLeft);
+    setAction (PutEmptyBottomleft, PutEmptyBottomLeft);
+    setAction (PutBottomright, PutBottomRight);
+    setAction (PutEmptyBottomright, PutEmptyBottomRight);
 }
 
-PutScreen::~PutScreen () { }
-
 PutWindow::PutWindow (CompWindow *window) :
-    PrivateHandler <PutWindow, CompWindow> (window), 
-    window (window), 
+    PrivateHandler <PutWindow, CompWindow> (window),
+    window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
     xVelocity (0),
@@ -1247,12 +1234,10 @@ PutWindow::PutWindow (CompWindow *window) :
     lastY (window->serverY ()),
     adjust (false)
 {
-    WindowInterface::setHandler (window); // Sets the window function hook handler
-    CompositeWindowInterface::setHandler (cWindow); // Ditto for cWindow
-    GLWindowInterface::setHandler (gWindow); // Ditto for gWindow
+    WindowInterface::setHandler (window);
+    CompositeWindowInterface::setHandler (cWindow);
+    GLWindowInterface::setHandler (gWindow);
 }
-
-PutWindow::~PutWindow () { }
 
 bool
 PutPluginVTable::init ()
@@ -1263,5 +1248,6 @@ PutPluginVTable::init ()
 	 return false;
     if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	 return false;
+
     return true;
 }

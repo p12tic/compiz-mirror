@@ -15,9 +15,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  *
- * TODO:
- * Region -> CompRegion
- * XRectangle -> CompRect
  */
 
 
@@ -67,12 +64,8 @@ class PutScreen :
     public CompositeScreenInterface,
     public GLScreenInterface
 {
-
     public:
-
 	PutScreen (CompScreen *s);
-	~PutScreen ();
-
 
 	void
 	preparePaint (int);
@@ -100,37 +93,39 @@ class PutScreen :
 		  CompOption::Vector &option);
     private:
 
-	Region
-	emptyRegion (CompWindow *window,
-		     Region     region);
-	bool	    
-	boxCompare (BOX a,
-		    BOX b);
+	CompRegion
+	emptyRegion (CompWindow     *window,
+		     const CompRect &outputRect);
 
-	BOX
-	extendBox (CompWindow *w,		     
-		   BOX        tmp,
-		   Region     r,	   
-		   bool       xFirst,
-		   bool       left,
-		   bool       right,
-		   bool       up,
-		   bool       down);
-	BOX
-	findRect (CompWindow *w,
-		  Region     r,
-		  bool       left,
-		  bool       right,
-		  bool       up,
-		  bool       down);
+	bool
+	boxCompare (const CompRect &a,
+		    const CompRect &b);
+
+	CompRect
+	extendBox (CompWindow       *w,
+		   const CompRect   &tmp,
+		   const CompRegion &r,
+		   bool             xFirst,
+		   bool             left,
+		   bool             right,
+		   bool             up,
+		   bool             down);
+
+	CompRect
+	findRect (CompWindow       *w,
+		  const CompRegion &r,
+		  bool             left,
+		  bool             right,
+		  bool             up,
+		  bool             down);
 
 	unsigned int
-	computeResize(CompWindow     *w,
-		      XWindowChanges *xwc,
-		      bool           left,
-		      bool           right,
-		      bool           up,
-		      bool           down);
+	computeResize (CompWindow     *w,
+		       XWindowChanges *xwc,
+		       bool           left,
+		       bool           right,
+		       bool           up,
+		       bool           down);
 
 	int
 	adjustVelocity (CompWindow *w);
@@ -138,12 +133,10 @@ class PutScreen :
 	void
 	finishWindowMovement (CompWindow *w);
 
-	bool
+	CompPoint
 	getDistance (CompWindow         *w,
 		     PutType            type,
-		     CompOption::Vector &option,
-		     int                *distX,
-		     int                *distY);
+		     CompOption::Vector &option);
 
 	unsigned int
 	getOutputForWindow (CompWindow *w);
@@ -157,44 +150,43 @@ class PutScreen :
 	CompositeScreen *cScreen;
         GLScreen        *gScreen;
 
-	Atom compizPutWindowAtom;
-        Window       lastWindow;
-	PutType      lastType;
-	int          moreAdjust;
+	Atom    compizPutWindowAtom;
+        Window  lastWindow;
+	PutType lastType;
+	int     moreAdjust;
+
 	CompScreen::GrabHandle   grabIndex;
 
 	friend class PutWindow;
 };
+
 class PutWindow :
     public PrivateHandler <PutWindow, CompWindow>,
     public WindowInterface,
     public CompositeWindowInterface,
     public GLWindowInterface
 {
-
     public:
-
 	PutWindow (CompWindow *window);
-	~PutWindow ();
-
-	CompWindow      *window;
-	CompositeWindow *cWindow;
-        GLWindow        *gWindow;
 
 	bool
 	glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
 		 const CompRegion &, unsigned int);
 
     private:
+	CompWindow      *window;
+	CompositeWindow *cWindow;
+        GLWindow        *gWindow;
+
 	GLfloat xVelocity, yVelocity;	/* animation velocity       */
 	GLfloat tx, ty;			/* animation translation    */
 
-	int lastX, lastY;			/* starting position        */
-	int targetX, targetY;               /* target of the animation  */
+	int lastX, lastY;		/* starting position        */
+	int targetX, targetY;           /* target of the animation  */
 
 	Bool adjust;			/* animation flag           */
-	friend class PutScreen;
 
+	friend class PutScreen;
 };
 
 #define PUT_SCREEN(s) \
@@ -210,11 +202,9 @@ class PutPluginVTable :
 
 	bool init ();
 
-	/* This implements ::getOption and ::setOption in your screen class for you. Yay */
-			
+	/* This implements ::getOption and ::setOption in your
+	 * screen class for you. Yay
+	 */
 	PLUGIN_OPTION_HELPER (PutScreen);
 };
-
-
-COMPIZ_PLUGIN_20081216 (put, PutPluginVTable);
 
