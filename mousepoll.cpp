@@ -112,7 +112,13 @@ MousepollScreen::removeTimer (MousePoller *poller)
 void
 MousePoller::setCallback (MousePoller::CallBack callback)
 {
+    bool wasActive = mActive;
+    if (mActive)
+	stop ();
     mCallback = callback;
+
+    if (wasActive)
+	start ();
 }
 
 void
