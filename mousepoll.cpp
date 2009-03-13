@@ -197,7 +197,8 @@ MousePoller::getPosition ()
 
 MousePoller::MousePoller () :
     mActive (false),
-    mPoint (0, 0)
+    mPoint (0, 0),
+    mCallback (NULL)
 {
 }
 
