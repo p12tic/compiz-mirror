@@ -27,13 +27,13 @@ class MousePoller
 {
     public:
 
-	typedef boost::function<void (const CompPoint &)> CallBack;
+	typedef boost::function<void (const CompPoint &)> MPCallBack;
 
 	MousePoller ();
 	~MousePoller ();
 
 	void
-	setCallback (CallBack callback);
+	setCallback (MPCallBack callback);
 
 	void
 	start ();
@@ -54,7 +54,7 @@ class MousePoller
 
 	bool 	 mActive;
 	CompPoint mPoint;
-	CallBack mCallback;
+	MPCallBack mCallback;
 
     friend class MousepollScreen;
 };

@@ -66,7 +66,8 @@ MousepollScreen::updatePosition ()
 	    MousePoller *poller = *it;
 
 	    poller->mPoint = pos;
-	    poller->mCallback (pos);
+	    if (poller->mCallback)
+		poller->mCallback (pos);
 	}
     }
 
@@ -110,11 +111,12 @@ MousepollScreen::removeTimer (MousePoller *poller)
 }
 
 void
-MousePoller::setCallback (MousePoller::CallBack callback)
+MousePoller::setCallback (MousePoller::MPCallBack callback)
 {
     bool wasActive = mActive;
     if (mActive)
 	stop ();
+
     mCallback = callback;
 
     if (wasActive)
