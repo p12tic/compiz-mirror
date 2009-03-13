@@ -111,7 +111,7 @@ MousepollScreen::removeTimer (MousePoller *poller)
 }
 
 void
-MousePoller::setCallback (MousePoller::MPCallBack callback)
+MousePoller::setCallback (MousePoller::CallBack callback)
 {
     bool wasActive = mActive;
     if (mActive)
