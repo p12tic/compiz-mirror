@@ -20,7 +20,7 @@
  **/
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -28,7 +28,7 @@
 #include "fadedesktop_options.h"
 
 class FadedesktopScreen :
-    public PrivateHandler <FadedesktopScreen, CompScreen>,
+    public PluginClassHandler <FadedesktopScreen, CompScreen>,
     public ScreenInterface,
     public CompositeScreenInterface,
     public GLScreenInterface,
@@ -62,7 +62,7 @@ class FadedesktopScreen :
 };
 
 class FadedesktopWindow :
-    public PrivateHandler <FadedesktopWindow, CompWindow>,
+    public PluginClassHandler <FadedesktopWindow, CompWindow>,
     public WindowInterface,
     public GLWindowInterface
 {

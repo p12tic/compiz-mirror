@@ -228,7 +228,7 @@ FadedesktopScreen::leaveShowDesktopMode (CompWindow *w)
 }
 
 FadedesktopScreen::FadedesktopScreen (CompScreen *screen) :
-    PrivateHandler <FadedesktopScreen, CompScreen> (screen),
+    PluginClassHandler <FadedesktopScreen, CompScreen> (screen),
     FadedesktopOptions (fadedesktopVTable->getMetadata ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
@@ -241,7 +241,7 @@ FadedesktopScreen::FadedesktopScreen (CompScreen *screen) :
 }
 
 FadedesktopWindow::FadedesktopWindow (CompWindow *window) :
-    PrivateHandler <FadedesktopWindow, CompWindow> (window),
+    PluginClassHandler <FadedesktopWindow, CompWindow> (window),
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
