@@ -249,7 +249,7 @@ MousepollScreen::setOption (const char        *name,
 }
 
 MousepollScreen::MousepollScreen (CompScreen *screen) :
-    PrivateHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI> (screen),
+    PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI> (screen),
     opt (MP_OPTION_NUM)
 {
     int timeout;

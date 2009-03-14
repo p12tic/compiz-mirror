@@ -21,7 +21,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 #include <core/timer.h>
 
 #include "mousepoll.h"
@@ -36,7 +36,7 @@ typedef enum _MousepollOptions
 #define MP_OPTION_NUM 1
 
 class MousepollScreen :
-    public PrivateHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI>
+    public PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI>
 {
     public:
 
