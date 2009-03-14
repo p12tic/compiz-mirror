@@ -1314,7 +1314,7 @@ ExpoWindow::damageRect (bool            initial,
 					    this, _1, _2, _3));
 
 ExpoScreen::ExpoScreen (CompScreen *s) :
-    PrivateHandler<ExpoScreen, CompScreen> (s),
+    PluginClassHandler<ExpoScreen, CompScreen> (s),
     ExpoOptions (expoVTable->getMetadata ()),
     cScreen (CompositeScreen::get (s)),
     gScreen (GLScreen::get (s)),
@@ -1354,7 +1354,7 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
 }
 
 ExpoWindow::ExpoWindow (CompWindow *w) :
-    PrivateHandler<ExpoWindow, CompWindow> (w),
+    PluginClassHandler<ExpoWindow, CompWindow> (w),
     window (w),
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w)),

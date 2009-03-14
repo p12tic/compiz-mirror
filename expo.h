@@ -24,7 +24,7 @@
  **/
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -35,7 +35,7 @@ class ExpoScreen :
     public ScreenInterface,
     public CompositeScreenInterface,
     public GLScreenInterface,
-    public PrivateHandler<ExpoScreen, CompScreen>,
+    public PluginClassHandler<ExpoScreen, CompScreen>,
     public ExpoOptions
 {
     public:
@@ -130,7 +130,7 @@ class ExpoScreen :
 class ExpoWindow :
     public CompositeWindowInterface,
     public GLWindowInterface,
-    public PrivateHandler<ExpoWindow, CompWindow>
+    public PluginClassHandler<ExpoWindow, CompWindow>
 {
     public:
 	ExpoWindow (CompWindow *);
