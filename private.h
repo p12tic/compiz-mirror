@@ -26,7 +26,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
@@ -39,7 +39,7 @@
 #include "text.h"
 
 class PrivateTextScreen :
-    public PrivateHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI>,
+    public PluginClassHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI>,
     public ScreenInterface,
     public GLScreenInterface
 {

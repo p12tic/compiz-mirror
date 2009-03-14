@@ -553,7 +553,7 @@ CompText::~CompText ()
 }
 
 PrivateTextScreen::PrivateTextScreen (CompScreen *screen) :
-    PrivateHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI> (screen),
+    PluginClassHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI> (screen),
     gScreen (GLScreen::get (screen))
 {
     visibleNameAtom = XInternAtom (screen->dpy (), "_NET_WM_VISIBLE_NAME", 0);
