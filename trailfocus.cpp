@@ -366,7 +366,7 @@ TrailfocusScreen::setupTimerCb ()
 }
 
 TrailfocusScreen::TrailfocusScreen (CompScreen *s) :
-    PrivateHandler<TrailfocusScreen, CompScreen> (s),
+    PluginClassHandler<TrailfocusScreen, CompScreen> (s),
     TrailfocusOptions (trailfocusVTable->getMetadata ())
 {
     ChangeNotify optionCb = boost::bind (&TrailfocusScreen::optionChanged,
@@ -390,7 +390,7 @@ TrailfocusScreen::TrailfocusScreen (CompScreen *s) :
 }
 
 TrailfocusWindow::TrailfocusWindow (CompWindow *w) :
-    PrivateHandler<TrailfocusWindow, CompWindow> (w),
+    PluginClassHandler<TrailfocusWindow, CompWindow> (w),
     isTfWindow (false),
     window (w),
     cWindow (CompositeWindow::get (w)),

@@ -26,7 +26,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -42,7 +42,7 @@ typedef struct
 
 class TrailfocusWindow :
     public GLWindowInterface,
-    public PrivateHandler<TrailfocusWindow, CompWindow>
+    public PluginClassHandler<TrailfocusWindow, CompWindow>
 {
     public:
 	TrailfocusWindow (CompWindow *);
@@ -61,7 +61,7 @@ class TrailfocusWindow :
 
 class TrailfocusScreen :
     public ScreenInterface,
-    public PrivateHandler<TrailfocusScreen, CompScreen>,
+    public PluginClassHandler<TrailfocusScreen, CompScreen>,
     public TrailfocusOptions
 {
     public:
