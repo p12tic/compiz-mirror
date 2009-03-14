@@ -789,7 +789,7 @@ SnapScreen::optionChanged (CompOption *opt, SnapOptions::Options num)
 }
 
 SnapScreen::SnapScreen (CompScreen *screen) :
-    PrivateHandler <SnapScreen, CompScreen> (screen),
+    PluginClassHandler <SnapScreen, CompScreen> (screen),
     SnapOptions (snapVTable->getMetadata ()),
     snapping (true),
     avoidSnapMask (0)
@@ -803,7 +803,7 @@ SnapScreen::SnapScreen (CompScreen *screen) :
 }
 
 SnapWindow::SnapWindow (CompWindow *window) :
-    PrivateHandler <SnapWindow, CompWindow> (window),
+    PluginClassHandler <SnapWindow, CompWindow> (window),
     window (window),
     snapDirection (0),
     m_dx (0),

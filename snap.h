@@ -29,7 +29,7 @@
 #include <vector>
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include "snap_options.h"
 
@@ -86,7 +86,7 @@ typedef struct
 
 class SnapScreen :
     public ScreenInterface,
-    public PrivateHandler <SnapScreen, CompScreen>,
+    public PluginClassHandler <SnapScreen, CompScreen>,
     public SnapOptions
 {
     public:
@@ -108,7 +108,7 @@ class SnapScreen :
 
 class SnapWindow :
     public WindowInterface,
-    public PrivateHandler <SnapWindow, CompWindow>
+    public PluginClassHandler <SnapWindow, CompWindow>
 {
     public:
 	SnapWindow (CompWindow *window);
