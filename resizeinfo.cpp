@@ -479,7 +479,7 @@ InfoScreen::handleEvent (XEvent *event)
 }
 
 InfoScreen::InfoScreen (CompScreen *screen) :
-    PrivateHandler <InfoScreen, CompScreen> (screen),
+    PluginClassHandler <InfoScreen, CompScreen> (screen),
     ResizeinfoOptions (resizeinfoVTable->getMetadata ()),
     gScreen (GLScreen::get (screen)),
     cScreen (CompositeScreen::get (screen)),
@@ -508,7 +508,7 @@ InfoScreen::InfoScreen (CompScreen *screen) :
 }
 
 InfoWindow::InfoWindow (CompWindow *window) :
-    PrivateHandler <InfoWindow, CompWindow> (window),
+    PluginClassHandler <InfoWindow, CompWindow> (window),
     window (window)
 {
     WindowInterface::setHandler (window);

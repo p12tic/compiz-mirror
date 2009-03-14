@@ -22,7 +22,7 @@
  **/
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -65,7 +65,7 @@ class InfoLayer
 };
 
 class InfoScreen :
-    public PrivateHandler <InfoScreen, CompScreen>,
+    public PluginClassHandler <InfoScreen, CompScreen>,
     public ScreenInterface,
     public CompositeScreenInterface,
     public GLScreenInterface,
@@ -111,7 +111,7 @@ class InfoScreen :
 };
 
 class InfoWindow :
-    public PrivateHandler <InfoWindow, CompWindow>,
+    public PluginClassHandler <InfoWindow, CompWindow>,
     public WindowInterface
 {
     public:
