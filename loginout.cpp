@@ -218,7 +218,7 @@ LoginoutScreen::donePaint ()
 }
 
 LoginoutScreen::LoginoutScreen (CompScreen *screen) :
-    PrivateHandler <LoginoutScreen, CompScreen> (screen),
+    PluginClassHandler <LoginoutScreen, CompScreen> (screen),
     LoginoutOptions (loginoutVTable->getMetadata ()),
     cScreen (CompositeScreen::get (screen)),
     kdeLogoutInfoAtom (XInternAtom (screen->dpy (), "_KWIN_LOGOUT_EFFECT", 0)),
@@ -275,7 +275,7 @@ LoginoutScreen::~LoginoutScreen ()
 }
 
 LoginoutWindow::LoginoutWindow (CompWindow *window) :
-    PrivateHandler <LoginoutWindow, CompWindow> (window),
+    PluginClassHandler <LoginoutWindow, CompWindow> (window),
     window (window),
     gWindow (GLWindow::get (window)),
     login (false),

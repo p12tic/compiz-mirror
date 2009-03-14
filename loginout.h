@@ -20,7 +20,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -28,7 +28,7 @@
 #include "loginout_options.h"
 
 class LoginoutScreen :
-    public PrivateHandler <LoginoutScreen, CompScreen>,
+    public PluginClassHandler <LoginoutScreen, CompScreen>,
     public LoginoutOptions,
     public ScreenInterface,
     public CompositeScreenInterface
@@ -74,7 +74,7 @@ class LoginoutScreen :
 };
 
 class LoginoutWindow :
-    public PrivateHandler <LoginoutWindow, CompWindow>,
+    public PluginClassHandler <LoginoutWindow, CompWindow>,
     public WindowInterface,
     public GLWindowInterface
 {
