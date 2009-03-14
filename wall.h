@@ -23,7 +23,7 @@
  **/
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
@@ -59,7 +59,7 @@ class WallScreen :
     public ScreenInterface,
     public CompositeScreenInterface,
     public GLScreenInterface,
-    public PrivateHandler <WallScreen, CompScreen>,
+    public PluginClassHandler <WallScreen, CompScreen>,
     public WallOptions
 {
     public:
@@ -165,7 +165,7 @@ class WallScreen :
 class WallWindow :
 	public WindowInterface,
 	public GLWindowInterface,
-	public PrivateHandler <WallWindow, CompWindow>
+	public PluginClassHandler <WallWindow, CompWindow>
 {
     public:
 	WallWindow (CompWindow *);

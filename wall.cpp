@@ -1488,7 +1488,7 @@ WallScreen::matchPropertyChanged (CompWindow *window)
 }
 
 WallScreen::WallScreen (CompScreen *screen) :
-    PrivateHandler <WallScreen, CompScreen> (screen),
+    PluginClassHandler <WallScreen, CompScreen> (screen),
     WallOptions (wallVTable->getMetadata ()),
     cScreen (CompositeScreen::get (screen)),
     glScreen (GLScreen::get (screen)),
@@ -1573,7 +1573,7 @@ WallScreen::~WallScreen ()
 }
 
 WallWindow::WallWindow (CompWindow *window) :
-    PrivateHandler <WallWindow, CompWindow> (window),
+    PluginClassHandler <WallWindow, CompWindow> (window),
     window (window),
     glWindow (GLWindow::get (window))
 {
