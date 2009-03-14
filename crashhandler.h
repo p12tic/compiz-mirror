@@ -21,11 +21,11 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 #include "crashhandler_options.h"
 
 class CrashScreen :
-    public PrivateHandler<CrashScreen,CompScreen>,
+    public PluginClassHandler<CrashScreen,CompScreen>,
     public CrashhandlerOptions
 {
     public:

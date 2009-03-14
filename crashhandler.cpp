@@ -106,7 +106,7 @@ CrashScreen::optionChanged (CompOption                   *opt,
 
 
 CrashScreen::CrashScreen (CompScreen *screen) :
-    PrivateHandler<CrashScreen,CompScreen> (screen),
+    PluginClassHandler<CrashScreen,CompScreen> (screen),
     CrashhandlerOptions (crashhandlerVTable->getMetadata ())
 {
     if (optionGetEnabled ())
