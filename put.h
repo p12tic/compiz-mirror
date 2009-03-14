@@ -19,7 +19,7 @@
 
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include "put_options.h"
@@ -58,7 +58,7 @@ enum PutType
 };
 
 class PutScreen :
-    public PrivateHandler <PutScreen, CompScreen>,
+    public PluginClassHandler <PutScreen, CompScreen>,
     public PutOptions,
     public ScreenInterface,
     public CompositeScreenInterface,
@@ -161,7 +161,7 @@ class PutScreen :
 };
 
 class PutWindow :
-    public PrivateHandler <PutWindow, CompWindow>,
+    public PluginClassHandler <PutWindow, CompWindow>,
     public WindowInterface,
     public CompositeWindowInterface,
     public GLWindowInterface

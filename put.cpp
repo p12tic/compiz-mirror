@@ -1178,7 +1178,7 @@ PutScreen::initiate (CompAction         *action,
 
 
 PutScreen::PutScreen (CompScreen *screen) :
-    PrivateHandler <PutScreen, CompScreen> (screen),
+    PluginClassHandler <PutScreen, CompScreen> (screen),
     PutOptions (putVTable->getMetadata ()),
     screen (screen),
     cScreen (CompositeScreen::get (screen)),
@@ -1222,7 +1222,7 @@ PutScreen::PutScreen (CompScreen *screen) :
 }
 
 PutWindow::PutWindow (CompWindow *window) :
-    PrivateHandler <PutWindow, CompWindow> (window),
+    PluginClassHandler <PutWindow, CompWindow> (window),
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
