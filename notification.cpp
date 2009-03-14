@@ -79,7 +79,7 @@ NotificationScreen::logMessage (const char   *component,
 }
 
 NotificationScreen::NotificationScreen (CompScreen *screen) :
-    PrivateHandler <NotificationScreen, CompScreen> (screen),
+    PluginClassHandler <NotificationScreen, CompScreen> (screen),
     NotificationOptions (notificationVTable->getMetadata ())
 {
     ScreenInterface::setHandler (screen);

@@ -23,7 +23,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <libnotify/notify.h>
 
@@ -32,7 +32,7 @@
 #define IMAGE_DIR ".compiz/images"
 
 class NotificationScreen :
-    public PrivateHandler <NotificationScreen, CompScreen>,
+    public PluginClassHandler <NotificationScreen, CompScreen>,
     public NotificationOptions,
     public ScreenInterface
 {
