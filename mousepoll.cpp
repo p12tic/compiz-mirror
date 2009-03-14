@@ -66,7 +66,7 @@ MousepollScreen::updatePosition ()
 	    MousePoller *poller = *it;
 
 	    poller->mPoint = pos;
-	    if (poller->mCallback)
+	    if (!poller->mCallback.empty ())
 		poller->mCallback (pos);
 	}
     }
@@ -222,7 +222,6 @@ MousepollScreen::setOption (const char        *name,
 			    CompOption::Value &value)
 {
     CompOption   *o;
-    bool         status;
     unsigned int index;
 
     o = CompOption::findOption (opt, name, &index);
@@ -231,11 +230,12 @@ MousepollScreen::setOption (const char        *name,
 
     switch (index) {
     case MP_OPTION_MOUSE_POLL_INTERVAL:
-	status = o->set (value);
-
-	if (timer.active ())
-	    timer.start (o->value ().i () / 2, o->value ().i ());
-	return status;
+	if (o->set (value))
+	{
+	    timer.setTimes (o->value ().i (), (float) o->value ().i () * 1.5);
+	    return true;
+	}
+	break;
     default:
 	return CompOption::setOption (*o, value);
     }
@@ -247,12 +247,18 @@ MousepollScreen::MousepollScreen (CompScreen *screen) :
     PrivateHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI> (screen),
     opt (MP_OPTION_NUM)
 {
+    int timeout;
+
     if (!mousepollVTable->getMetadata ()->initOptions (mousepollOptionInfo,
 						       MP_OPTION_NUM, opt))
     {
 	setFailed ();
 	return;
     }
+
+    timeout = opt[MP_OPTION_MOUSE_POLL_INTERVAL].value ().i ();
+    timer.setCallback (boost::bind (&MousepollScreen::updatePosition, this));
+    timer.setTimes (timeout, (float) timeout * 1.5);
 }
 
 bool
