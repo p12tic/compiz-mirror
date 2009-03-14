@@ -424,7 +424,7 @@ SplashScreen::initiateSplash (CompAction         *action,
 /* replace with ctor, dtor, init etc */
 
 SplashScreen::SplashScreen (CompScreen *screen) :
-    PrivateHandler <SplashScreen, CompScreen> (screen),
+    PluginClassHandler <SplashScreen, CompScreen> (screen),
     SplashOptions (splashVTable->getMetadata ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
@@ -487,7 +487,7 @@ SplashScreen::SplashScreen (CompScreen *screen) :
 }
 
 SplashWindow::SplashWindow (CompWindow *window) :
-    PrivateHandler <SplashWindow, CompWindow> (window),
+    PluginClassHandler <SplashWindow, CompWindow> (window),
     window (window),
     gWindow (GLWindow::get (window))
 {

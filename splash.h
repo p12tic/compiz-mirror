@@ -20,7 +20,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -38,7 +38,7 @@
 #define SPLASH_LOGO_DEFAULT ""
 
 class SplashScreen :
-    public PrivateHandler <SplashScreen, CompScreen>,
+    public PluginClassHandler <SplashScreen, CompScreen>,
     public SplashOptions,
     public CompositeScreenInterface,
     public GLScreenInterface
@@ -95,7 +95,7 @@ class SplashScreen :
     SplashScreen *ss = SplashScreen::get (s)
 
 class SplashWindow :
-    public PrivateHandler <SplashWindow, CompWindow>,
+    public PluginClassHandler <SplashWindow, CompWindow>,
     public GLWindowInterface
 {
     public:
