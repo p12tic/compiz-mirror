@@ -22,14 +22,14 @@
 #include <X11/Xatom.h>
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 
 #include "extrawm_options.h"
 
 class ExtraWMScreen :
-    public PrivateHandler <ExtraWMScreen, CompScreen>,
+    public PluginClassHandler <ExtraWMScreen, CompScreen>,
     public ExtrawmOptions,
     public ScreenInterface
 {
@@ -87,7 +87,7 @@ class ExtraWMScreen :
 };
 
 class ExtraWMWindow :
-    public PrivateHandler <ExtraWMWindow, CompWindow>,
+    public PluginClassHandler <ExtraWMWindow, CompWindow>,
     public WindowInterface
 {
     public:

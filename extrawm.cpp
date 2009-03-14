@@ -252,7 +252,7 @@ ExtraWMWindow::stateChangeNotify (unsigned int lastState)
 }
 
 ExtraWMScreen::ExtraWMScreen (CompScreen *screen) :
-    PrivateHandler <ExtraWMScreen, CompScreen> (screen),
+    PluginClassHandler <ExtraWMScreen, CompScreen> (screen),
     ExtrawmOptions (extrawmVTable->getMetadata ())
 {
     ScreenInterface::setHandler (screen);
@@ -266,7 +266,7 @@ ExtraWMScreen::ExtraWMScreen (CompScreen *screen) :
 }
 
 ExtraWMWindow::ExtraWMWindow (CompWindow *window) :
-    PrivateHandler <ExtraWMWindow, CompWindow> (window),
+    PluginClassHandler <ExtraWMWindow, CompWindow> (window),
     window (window)
 {
     WindowInterface::setHandler (window);
