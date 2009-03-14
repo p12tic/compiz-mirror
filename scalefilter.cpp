@@ -522,7 +522,7 @@ ScalefilterScreen::optionChanged (CompOption *opt,
 }
 
 ScalefilterScreen::ScalefilterScreen (CompScreen *s) :
-    PrivateHandler <ScalefilterScreen, CompScreen> (s),
+    PluginClassHandler <ScalefilterScreen, CompScreen> (s),
     ScalefilterOptions (scalefilterVTable->getMetadata ()),
     xic (NULL),
     filterInfo (NULL),
@@ -568,7 +568,7 @@ ScalefilterScreen::~ScalefilterScreen ()
 }
 
 ScalefilterWindow::ScalefilterWindow (CompWindow *w) :
-    PrivateHandler <ScalefilterWindow, CompWindow> (w),
+    PluginClassHandler <ScalefilterWindow, CompWindow> (w),
     window (w),
     sWindow (ScaleWindow::get (w))
 {

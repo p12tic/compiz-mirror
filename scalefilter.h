@@ -22,7 +22,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -70,7 +70,7 @@ class FilterInfo
 };
 
 class ScalefilterScreen :
-    public PrivateHandler <ScalefilterScreen, CompScreen>,
+    public PluginClassHandler <ScalefilterScreen, CompScreen>,
     public ScreenInterface,
     public ScaleScreenInterface,
     public GLScreenInterface,
@@ -135,7 +135,7 @@ class ScalefilterScreen :
 };
 
 class ScalefilterWindow :
-    public PrivateHandler <ScalefilterWindow, CompWindow>,
+    public PluginClassHandler <ScalefilterWindow, CompWindow>,
     public ScaleWindowInterface
 {
     public:
