@@ -27,8 +27,7 @@ COMPIZ_PLUGIN_20081216 (mousepoll, MousepollPluginVTable);
 bool
 MousepollScreen::getMousePosition ()
 {
-    Window       root_return;
-    Window       child_return;
+    Window       root, child;
     int          rootX, rootY;
     int          winX, winY;
     int          w = screen->width (), h = screen->height ();
@@ -36,16 +35,15 @@ MousepollScreen::getMousePosition ()
     bool         status;
 
     status = XQueryPointer (screen->dpy (), screen->root (),
-			    &root_return, &child_return,
-			    &rootX, &rootY, &winX, &winY, &maskReturn);
+			    &root, &child, &rootX, &rootY,
+			    &winX, &winY, &maskReturn);
 
-    if (!status || rootX > w || rootY > h || screen->root () != root_return)
+    if (!status || rootX > w || rootY > h || screen->root () != root)
 	return false;
 
     if (rootX != pos.x () || rootY != pos.y ())
     {
-	pos.setX (rootX);
-	pos.setY (rootY);
+	pos.set (rootX, rootY);
 	return true;
     }
 
@@ -66,8 +64,7 @@ MousepollScreen::updatePosition ()
 	    MousePoller *poller = *it;
 
 	    poller->mPoint = pos;
-	    if (!poller->mCallback.empty ())
-		poller->mCallback (pos);
+	    poller->mCallback (pos);
 	}
     }
 
@@ -114,6 +111,7 @@ void
 MousePoller::setCallback (MousePoller::CallBack callback)
 {
     bool wasActive = mActive;
+
     if (mActive)
 	stop ();
 
@@ -130,10 +128,16 @@ MousePoller::start ()
 
     if (!ms)
     {
-	compLogMessage ("mousepoll",
-			CompLogLevelWarn,
-			"Plugin version mismatch, can't start mouse poller");
+	compLogMessage ("mousepoll", CompLogLevelWarn,
+			"Plugin version mismatch, can't start mouse poller.");
 
+	return;
+    }
+
+    if (mCallback.empty ())
+    {
+	compLogMessage ("mousepoll", CompLogLevelWarn,
+			"Can't start mouse poller without callback.");
 	return;
     }
 
@@ -151,7 +155,7 @@ MousePoller::stop ()
     {
 	compLogMessage ("mousepoll",
 			CompLogLevelWarn,
-			"Plugin version mismatch, can't start mouse poller");
+			"Plugin version mismatch, can't stop mouse poller.");
 
 	return;
     }
@@ -176,9 +180,8 @@ MousePoller::getCurrentPosition ()
 
     if (!ms)
     {
-	compLogMessage ("mousepoll",
-			CompLogLevelWarn,
-			"Plugin version mismatch, can't start mouse poller");
+	compLogMessage ("mousepoll", CompLogLevelWarn,
+			"Plugin version mismatch, can't get mouse position.");
     }
     else
     {
@@ -232,7 +235,9 @@ MousepollScreen::setOption (const char        *name,
     case MP_OPTION_MOUSE_POLL_INTERVAL:
 	if (o->set (value))
 	{
-	    timer.setTimes (o->value ().i (), (float) o->value ().i () * 1.5);
+	    int timeout = o->value ().i ();
+	    timer.setTimes (timeout, (float) timeout * 1.5);
+
 	    return true;
 	}
 	break;
