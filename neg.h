@@ -22,7 +22,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
@@ -30,7 +30,7 @@
 #include "neg_options.h"
 
 class NegScreen :
-    public PrivateHandler <NegScreen, CompScreen>,
+    public PluginClassHandler <NegScreen, CompScreen>,
     public NegOptions
 {
     public:
@@ -63,7 +63,7 @@ class NegScreen :
 };
 
 class NegWindow :
-    public PrivateHandler <NegWindow, CompWindow>,
+    public PluginClassHandler <NegWindow, CompWindow>,
     public GLWindowInterface
 {
     public:

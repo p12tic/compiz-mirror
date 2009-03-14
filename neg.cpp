@@ -513,7 +513,7 @@ NegScreen::optionChanged (CompOption          *opt,
 }
 
 NegScreen::NegScreen (CompScreen *screen) :
-    PrivateHandler <NegScreen, CompScreen> (screen),
+    PluginClassHandler <NegScreen, CompScreen> (screen),
     NegOptions (negVTable->getMetadata ()),
     negFunction (0),
     negAlphaFunction (0),
@@ -535,7 +535,7 @@ NegScreen::NegScreen (CompScreen *screen) :
 }
 
 NegWindow::NegWindow (CompWindow *window) :
-    PrivateHandler <NegWindow, CompWindow> (window),
+    PluginClassHandler <NegWindow, CompWindow> (window),
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
