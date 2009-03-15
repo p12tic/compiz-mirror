@@ -101,7 +101,7 @@ MousepollScreen::removeTimer (MousePoller *poller)
     if (it == pollers.end ())
 	return;
 
-    pollers.erase (it);
+    pollers.remove (it);
 
     if (pollers.empty ())
 	timer.stop ();
@@ -150,6 +150,11 @@ void
 MousePoller::stop ()
 {
     MOUSEPOLL_SCREEN (screen);
+
+    /* Prevent broken plugins from calling stop () twice */
+
+    if (!mActive)
+	return;
 
     if (!ms)
     {
