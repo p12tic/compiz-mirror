@@ -157,7 +157,5 @@ class ExpoPluginVTable :
 {
     public:
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (ExpoScreen);
 };
 

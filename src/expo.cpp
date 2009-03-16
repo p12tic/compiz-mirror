@@ -27,7 +27,7 @@
 #include <math.h>
 #include <GL/glu.h>
 
-COMPIZ_PLUGIN_20081216 (expo, ExpoPluginVTable);
+COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 
 #define WIN_X(w) ((w)->x () - (w)->input ().left)
 #define WIN_Y(w) ((w)->y () - (w)->input ().top)
@@ -1315,7 +1315,7 @@ ExpoWindow::damageRect (bool            initial,
 
 ExpoScreen::ExpoScreen (CompScreen *s) :
     PluginClassHandler<ExpoScreen, CompScreen> (s),
-    ExpoOptions (expoVTable->getMetadata ()),
+    ExpoOptions (),
     cScreen (CompositeScreen::get (s)),
     gScreen (GLScreen::get (s)),
     expoCam (0.0f),
