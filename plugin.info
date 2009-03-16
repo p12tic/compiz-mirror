@@ -1,2 +1,0 @@
-PLUGIN = neg
-PKG_DEP = compiz-composite compiz-opengl

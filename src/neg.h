@@ -96,6 +96,4 @@ class NegPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (NegScreen);
 };

@@ -24,7 +24,7 @@
 
 using namespace GLFragment;
 
-COMPIZ_PLUGIN_20081216 (neg, NegPluginVTable);
+COMPIZ_PLUGIN_20090315 (neg, NegPluginVTable);
 
 void
 NegWindow::toggle ()
@@ -514,7 +514,7 @@ NegScreen::optionChanged (CompOption          *opt,
 
 NegScreen::NegScreen (CompScreen *screen) :
     PluginClassHandler <NegScreen, CompScreen> (screen),
-    NegOptions (negVTable->getMetadata ()),
+    NegOptions (),
     negFunction (0),
     negAlphaFunction (0),
     isNeg (false),
