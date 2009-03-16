@@ -38,7 +38,7 @@
 #include "snap.h"
 
 
-COMPIZ_PLUGIN_20081216 (snap, SnapPluginVTable);
+COMPIZ_PLUGIN_20090315 (snap, SnapPluginVTable);
 
 // helper functions
 
@@ -790,7 +790,7 @@ SnapScreen::optionChanged (CompOption *opt, SnapOptions::Options num)
 
 SnapScreen::SnapScreen (CompScreen *screen) :
     PluginClassHandler <SnapScreen, CompScreen> (screen),
-    SnapOptions (snapVTable->getMetadata ()),
+    SnapOptions (),
     snapping (true),
     avoidSnapMask (0)
 {

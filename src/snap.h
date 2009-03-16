@@ -172,7 +172,5 @@ class SnapPluginVTable :
 {
     public:
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (SnapScreen);
 };
 
