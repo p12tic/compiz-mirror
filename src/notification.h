@@ -54,6 +54,4 @@ class NotificationPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (NotificationScreen);
 };

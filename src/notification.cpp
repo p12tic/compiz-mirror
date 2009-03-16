@@ -24,7 +24,7 @@
 
 #include "notification.h"
 
-COMPIZ_PLUGIN_20081216 (notification, NotificationPluginVTable);
+COMPIZ_PLUGIN_20090315 (notification, NotificationPluginVTable);
 
 void
 NotificationScreen::logMessage (const char   *component,
@@ -80,7 +80,7 @@ NotificationScreen::logMessage (const char   *component,
 
 NotificationScreen::NotificationScreen (CompScreen *screen) :
     PluginClassHandler <NotificationScreen, CompScreen> (screen),
-    NotificationOptions (notificationVTable->getMetadata ())
+    NotificationOptions ()
 {
     ScreenInterface::setHandler (screen);
 }
