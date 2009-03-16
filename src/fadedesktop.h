@@ -99,6 +99,4 @@ class FadedesktopPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (FadedesktopScreen);
 };

@@ -21,7 +21,7 @@
 
 #include "fadedesktop.h"
 
-COMPIZ_PLUGIN_20081216 (fadedesktop, FadedesktopPluginVTable);
+COMPIZ_PLUGIN_20090315 (fadedesktop, FadedesktopPluginVTable);
 
 void
 FadedesktopScreen::activateEvent (bool activating)
@@ -229,7 +229,7 @@ FadedesktopScreen::leaveShowDesktopMode (CompWindow *w)
 
 FadedesktopScreen::FadedesktopScreen (CompScreen *screen) :
     PluginClassHandler <FadedesktopScreen, CompScreen> (screen),
-    FadedesktopOptions (fadedesktopVTable->getMetadata ()),
+    FadedesktopOptions (),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     state (Off),
