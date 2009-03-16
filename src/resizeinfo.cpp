@@ -23,7 +23,7 @@
 
 #include "resizeinfo.h"
 
-COMPIZ_PLUGIN_20081216 (resizeinfo, InfoPluginVTable);
+COMPIZ_PLUGIN_20090315 (resizeinfo, InfoPluginVTable);
 
 /* Set up an InfoLayer to build a cairo->opengl texture pipeline */
 InfoLayer::~InfoLayer ()
@@ -480,7 +480,7 @@ InfoScreen::handleEvent (XEvent *event)
 
 InfoScreen::InfoScreen (CompScreen *screen) :
     PluginClassHandler <InfoScreen, CompScreen> (screen),
-    ResizeinfoOptions (resizeinfoVTable->getMetadata ()),
+    ResizeinfoOptions (),
     gScreen (GLScreen::get (screen)),
     cScreen (CompositeScreen::get (screen)),
     resizeInfoAtom (XInternAtom (screen->dpy (), "_COMPIZ_RESIZE_NOTIFY", 0)),

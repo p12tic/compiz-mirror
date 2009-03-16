@@ -1,2 +1,0 @@
-PLUGIN = resizeinfo
-PKG_DEP = pangocairo cairo cairo-xlib-xrender compiz-composite compiz-opengl

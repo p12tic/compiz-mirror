@@ -142,6 +142,4 @@ class InfoPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (InfoScreen);
 };
