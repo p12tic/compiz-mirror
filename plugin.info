@@ -1,2 +1,0 @@
-PLUGIN = scalefilter
-PKG_DEP = compiz-opengl compiz-composite compiz-scale compiz-text

@@ -155,6 +155,4 @@ class ScalefilterPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (ScalefilterScreen);
 };

@@ -33,7 +33,7 @@
 
 #include "scalefilter.h"
 
-COMPIZ_PLUGIN_20081216 (scalefilter, ScalefilterPluginVTable);
+COMPIZ_PLUGIN_20090315 (scalefilter, ScalefilterPluginVTable);
 
 FilterInfo::FilterInfo (ScalefilterScreen *fs, const CompOutput& output) :
     outputDevice (output),
@@ -523,7 +523,7 @@ ScalefilterScreen::optionChanged (CompOption *opt,
 
 ScalefilterScreen::ScalefilterScreen (CompScreen *s) :
     PluginClassHandler <ScalefilterScreen, CompScreen> (s),
-    ScalefilterOptions (scalefilterVTable->getMetadata ()),
+    ScalefilterOptions (),
     xic (NULL),
     filterInfo (NULL),
     matchApplied (false),
