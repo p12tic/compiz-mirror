@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compiz>
-    <plugin name="mousepoll">
+    <plugin name="mousepoll" useBcop="true">
 	<_short>Mouse position polling</_short>
 	<_long>Updates the mouse pointer position from the xserver</_long>
 	<category>Utility</category>

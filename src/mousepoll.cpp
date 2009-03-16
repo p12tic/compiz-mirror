@@ -22,7 +22,7 @@
 
 #include "private.h"
 
-COMPIZ_PLUGIN_20081216 (mousepoll, MousepollPluginVTable);
+COMPIZ_PLUGIN_20090315 (mousepoll, MousepollPluginVTable);
 
 bool
 MousepollScreen::getMousePosition ()
@@ -210,60 +210,22 @@ MousePoller::~MousePoller ()
     if (mActive)
 	stop ();
 }
-static const CompMetadata::OptionInfo mousepollOptionInfo[] = {
-    { "mouse_poll_interval", "int", "<min>1</min><max>500</max>", 0, 0 }
-};
 
-CompOption::Vector &
-MousepollScreen::getOptions ()
+void
+MousepollScreen::updateTimer ()
 {
-    return opt;
-}
+    float timeout = optionGetMousePollInterval ();
+    timer.setTimes (timeout, timeout * 1.5);
 
-bool
-MousepollScreen::setOption (const char        *name,
-			    CompOption::Value &value)
-{
-    CompOption   *o;
-    unsigned int index;
-
-    o = CompOption::findOption (opt, name, &index);
-    if (!o)
-	return false;
-
-    switch (index) {
-    case MP_OPTION_MOUSE_POLL_INTERVAL:
-	if (o->set (value))
-	{
-	    int timeout = o->value ().i ();
-	    timer.setTimes (timeout, (float) timeout * 1.5);
-
-	    return true;
-	}
-	break;
-    default:
-	return CompOption::setOption (*o, value);
-    }
-
-    return false;
 }
 
 MousepollScreen::MousepollScreen (CompScreen *screen) :
-    PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI> (screen),
-    opt (MP_OPTION_NUM)
+    PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI> (screen)
 {
-    int timeout;
-
-    if (!mousepollVTable->getMetadata ()->initOptions (mousepollOptionInfo,
-						       MP_OPTION_NUM, opt))
-    {
-	setFailed ();
-	return;
-    }
-
-    timeout = opt[MP_OPTION_MOUSE_POLL_INTERVAL].value ().i ();
+    updateTimer ();
     timer.setCallback (boost::bind (&MousepollScreen::updatePosition, this));
-    timer.setTimes (timeout, (float) timeout * 1.5);
+
+    optionSetMousePollIntervalNotify (boost::bind (&MousepollScreen::updateTimer, this));
 }
 
 bool
@@ -271,9 +233,6 @@ MousepollPluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
 	return false;
-
-    getMetadata ()->addFromOptionInfo (mousepollOptionInfo, MP_OPTION_NUM);
-    getMetadata ()->addFromFile (name ());
 
     CompPrivate p;
     p.uval = COMPIZ_MOUSEPOLL_ABI;

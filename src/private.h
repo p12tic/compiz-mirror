@@ -24,7 +24,9 @@
 #include <core/pluginclasshandler.h>
 #include <core/timer.h>
 
-#include "mousepoll.h"
+#include <mousepoll/mousepoll.h>
+
+#include "mousepoll_options.h"
 
 typedef enum _MousepollOptions
 {
@@ -36,11 +38,10 @@ typedef enum _MousepollOptions
 #define MP_OPTION_NUM 1
 
 class MousepollScreen :
-    public PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI>
+    public PluginClassHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI>,
+    public MousepollOptions
 {
     public:
-
-	CompOption::Vector opt;
 
 	MousepollScreen (CompScreen *screen);
 
@@ -61,8 +62,7 @@ class MousepollScreen :
 	void
 	removeTimer (MousePoller *poller);
 
-	CompOption::Vector & getOptions ();
-	bool setOption (const char *name, CompOption::Value &value);
+	void updateTimer ();
 };
 
 #define MOUSEPOLL_SCREEN(s)						\
@@ -77,8 +77,5 @@ class MousepollPluginVTable :
 
 	bool init ();
 	void fini ();
-
-	PLUGIN_OPTION_HELPER (MousepollScreen);
-
 };
 
