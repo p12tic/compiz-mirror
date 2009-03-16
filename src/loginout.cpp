@@ -21,7 +21,7 @@
 
 #include "loginout.h"
 
-COMPIZ_PLUGIN_20081216 (loginout, LoginoutPluginVTable)
+COMPIZ_PLUGIN_20090315 (loginout, LoginoutPluginVTable)
 
 void
 LoginoutScreen::updateWindowMatch (CompWindow *w)
@@ -219,7 +219,7 @@ LoginoutScreen::donePaint ()
 
 LoginoutScreen::LoginoutScreen (CompScreen *screen) :
     PluginClassHandler <LoginoutScreen, CompScreen> (screen),
-    LoginoutOptions (loginoutVTable->getMetadata ()),
+    LoginoutOptions (),
     cScreen (CompositeScreen::get (screen)),
     kdeLogoutInfoAtom (XInternAtom (screen->dpy (), "_KWIN_LOGOUT_EFFECT", 0)),
     numLoginWin (0),

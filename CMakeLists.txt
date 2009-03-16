@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (loginout PLUGINDEPS composite opengl)
+include (CompizPlugin)
+
+compiz_plugin (loginout PLUGINDEPS composite opengl)

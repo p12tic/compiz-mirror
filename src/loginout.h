@@ -112,6 +112,4 @@ class LoginoutPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (LoginoutScreen);
 };
