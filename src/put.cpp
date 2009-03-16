@@ -21,7 +21,7 @@
 
 #include <cmath>
 
-COMPIZ_PLUGIN_20081216 (put, PutPluginVTable);
+COMPIZ_PLUGIN_20090315 (put, PutPluginVTable);
 
 #define PUT_ONLY_EMPTY(type) (type >= PutEmptyBottomLeft && \
 			      type <= PutEmptyTopRight)
@@ -1179,7 +1179,7 @@ PutScreen::initiate (CompAction         *action,
 
 PutScreen::PutScreen (CompScreen *screen) :
     PluginClassHandler <PutScreen, CompScreen> (screen),
-    PutOptions (putVTable->getMetadata ()),
+    PutOptions (),
     screen (screen),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),

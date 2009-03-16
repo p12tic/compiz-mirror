@@ -201,10 +201,5 @@ class PutPluginVTable :
     public:
 
 	bool init ();
-
-	/* This implements ::getOption and ::setOption in your
-	 * screen class for you. Yay
-	 */
-	PLUGIN_OPTION_HELPER (PutScreen);
 };
 
