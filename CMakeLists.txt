@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (text PLUGINDEPS composite opengl)
+include (CompizPlugin)
+
+compiz_plugin (text PLUGINDEPS composite opengl PKGDEPS pangocairo cairo cairo-xlib-xrender)

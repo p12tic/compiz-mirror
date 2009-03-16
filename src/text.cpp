@@ -29,7 +29,7 @@
 
 #define PI 3.14159265359f
 
-COMPIZ_PLUGIN_20081216 (text, TextPluginVTable);
+COMPIZ_PLUGIN_20090315 (text, TextPluginVTable);
 
 CompString
 PrivateTextScreen::getUtf8Property (Window id,

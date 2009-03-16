@@ -36,7 +36,7 @@
 
 #include <X11/Xatom.h>
 
-#include "text.h"
+#include <text/text.h>
 
 class PrivateTextScreen :
     public PluginClassHandler <PrivateTextScreen, CompScreen, COMPIZ_TEXT_ABI>,
@@ -47,11 +47,6 @@ class PrivateTextScreen :
 
 	PrivateTextScreen (CompScreen *);
 	~PrivateTextScreen ();
-
-	CompOption::Vector & getOptions ();
-	bool setOption (const char *name, CompOption::Value &value);	
-
-	CompOption::Vector opt;
 
 	CompString getWindowName (Window id);
 
