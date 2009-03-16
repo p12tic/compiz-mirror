@@ -53,20 +53,20 @@ MousepollScreen::getMousePosition ()
 bool
 MousepollScreen::updatePosition ()
 {
-    if (pollers.empty ())
-	return false;
 
     if (getMousePosition ())
     {
-	std::list<MousePoller *>::iterator it;
-	for (it = pollers.begin (); it != pollers.end (); it++)
-	{
-	    MousePoller *poller = *it;
-
-	    poller->mPoint = pos;
-	    poller->mCallback (pos);
-	}
+        std::list<MousePoller *>::iterator it;
+        for (it = pollers.begin (); it != pollers.end (); )
+        {
+            MousePoller *poller = *it;
+ 
+            it++;
+            poller->mPoint = pos;
+            poller->mCallback (pos);
+        }
     }
+
 
     return true;
 }
@@ -101,7 +101,7 @@ MousepollScreen::removeTimer (MousePoller *poller)
     if (it == pollers.end ())
 	return;
 
-    pollers.remove (it);
+    pollers.erase (it);
 
     if (pollers.empty ())
 	timer.stop ();
@@ -255,7 +255,8 @@ MousepollScreen::setOption (const char        *name,
 
 MousepollScreen::MousepollScreen (CompScreen *screen) :
     PrivateHandler <MousepollScreen, CompScreen, COMPIZ_MOUSEPOLL_ABI> (screen),
-    opt (MP_OPTION_NUM)
+    opt (MP_OPTION_NUM),
+    empty (true)
 {
     int timeout;
 

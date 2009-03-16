@@ -52,9 +52,9 @@ class MousePoller
 
     private:
 
-	bool 	 mActive;
+	bool 	  mActive;
 	CompPoint mPoint;
-	CallBack mCallback;
+	CallBack  mCallback;
 
     friend class MousepollScreen;
 };
