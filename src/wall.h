@@ -192,8 +192,5 @@ class WallPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (WallScreen);
-
 };
 

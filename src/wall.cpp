@@ -47,7 +47,7 @@
 #define sigmoidProgress(x) ((sigmoid (x) - sigmoid (0)) / \
 			    (sigmoid (1) - sigmoid (0)))
 
-COMPIZ_PLUGIN_20081216 (wall, WallPluginVTable);
+COMPIZ_PLUGIN_20090315 (wall, WallPluginVTable);
 
 void
 WallScreen::clearCairoLayer (cairo_t *cr)
@@ -1489,7 +1489,7 @@ WallScreen::matchPropertyChanged (CompWindow *window)
 
 WallScreen::WallScreen (CompScreen *screen) :
     PluginClassHandler <WallScreen, CompScreen> (screen),
-    WallOptions (wallVTable->getMetadata ()),
+    WallOptions (),
     cScreen (CompositeScreen::get (screen)),
     glScreen (GLScreen::get (screen)),
     moving (false),
