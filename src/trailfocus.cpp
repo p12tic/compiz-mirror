@@ -34,7 +34,7 @@
 #define WIN_TOP(w)    (w->y () - w->input ().top)
 #define WIN_BOTTOM(w) (w->y () + w->height () + w->input ().bottom)
 
-COMPIZ_PLUGIN_20081216 (trailfocus, TrailfocusPluginVTable);
+COMPIZ_PLUGIN_20090315 (trailfocus, TrailfocusPluginVTable);
 
 /* Determines if a window should be handled by trailfocus or not */
 bool
@@ -367,7 +367,7 @@ TrailfocusScreen::setupTimerCb ()
 
 TrailfocusScreen::TrailfocusScreen (CompScreen *s) :
     PluginClassHandler<TrailfocusScreen, CompScreen> (s),
-    TrailfocusOptions (trailfocusVTable->getMetadata ())
+    TrailfocusOptions ()
 {
     ChangeNotify optionCb = boost::bind (&TrailfocusScreen::optionChanged,
 					 this, _1, _2);

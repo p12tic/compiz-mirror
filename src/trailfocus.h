@@ -94,6 +94,4 @@ class TrailfocusPluginVTable :
 {
     public:
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (TrailfocusScreen);
 };

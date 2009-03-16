@@ -1,2 +1,0 @@
-PLUGIN = trailfocus
-PKG_DEP = compiz-composite compiz-opengl
