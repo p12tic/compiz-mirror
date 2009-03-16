@@ -30,7 +30,7 @@
 #include "crashhandler.h"
 
 
-COMPIZ_PLUGIN_20081216 (crashhandler, CrashPluginVTable)
+COMPIZ_PLUGIN_20090315 (crashhandler, CrashPluginVTable)
 
 static void
 crash_handler (int sig)
@@ -107,7 +107,7 @@ CrashScreen::optionChanged (CompOption                   *opt,
 
 CrashScreen::CrashScreen (CompScreen *screen) :
     PluginClassHandler<CrashScreen,CompScreen> (screen),
-    CrashhandlerOptions (crashhandlerVTable->getMetadata ())
+    CrashhandlerOptions ()
 {
     if (optionGetEnabled ())
     {

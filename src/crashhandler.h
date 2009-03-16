@@ -43,7 +43,4 @@ class CrashPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (CrashScreen);
-
 };
