@@ -22,7 +22,7 @@
 
 #include "extrawm.h"
 
-COMPIZ_PLUGIN_20081216 (extrawm, ExtraWMPluginVTable);
+COMPIZ_PLUGIN_20090315 (extrawm, ExtraWMPluginVTable);
 
 void
 ExtraWMScreen::addAttentionWindow (CompWindow *w)
@@ -253,7 +253,7 @@ ExtraWMWindow::stateChangeNotify (unsigned int lastState)
 
 ExtraWMScreen::ExtraWMScreen (CompScreen *screen) :
     PluginClassHandler <ExtraWMScreen, CompScreen> (screen),
-    ExtrawmOptions (extrawmVTable->getMetadata ())
+    ExtrawmOptions ()
 {
     ScreenInterface::setHandler (screen);
 

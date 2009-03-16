@@ -112,6 +112,4 @@ class ExtraWMPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (ExtraWMScreen);
 };

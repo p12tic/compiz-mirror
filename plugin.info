@@ -1,2 +1,0 @@
-PLUGIN = extrawm
-PKG_DEP= compiz-composite
