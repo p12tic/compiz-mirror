@@ -21,7 +21,7 @@
 
 #include "splash.h"
 
-COMPIZ_PLUGIN_20081216 (splash, SplashPluginVTable);
+COMPIZ_PLUGIN_20090315 (splash, SplashPluginVTable);
 
 void
 SplashScreen::preparePaint (int ms)
@@ -425,7 +425,7 @@ SplashScreen::initiateSplash (CompAction         *action,
 
 SplashScreen::SplashScreen (CompScreen *screen) :
     PluginClassHandler <SplashScreen, CompScreen> (screen),
-    SplashOptions (splashVTable->getMetadata ()),
+    SplashOptions (),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     splashAtom (XInternAtom (screen->dpy (), "_COMPIZ_WM_SPLASH", 0)),

@@ -120,6 +120,4 @@ class SplashPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (SplashScreen);
 };
