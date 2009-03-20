@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (session PKGDEPS libxml-2.0)
+include (CompizPlugin)
+
+compiz_plugin (session)

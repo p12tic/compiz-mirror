@@ -1,2 +1,0 @@
-PLUGIN = session
-PKG_DEP = libxml-2.0
