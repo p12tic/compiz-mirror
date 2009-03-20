@@ -152,25 +152,29 @@ void
 SnapWindow::updateWindowsEdges ()
 {
     CompRegion edgeRegion, resultRegion;
-    bool remove = false;
+    CompRect   input;
+    bool       remove = false;
 
     // First add all the windows
     foreach (CompWindow *w, screen->windows ())
     {
+
 	// Just check that we're not trying to snap to current window,
 	// that the window is not invisible and of a valid type
 	if (w == window || !isSnapWindow (w))
 	{
 	    continue;
 	}
-	addEdge (w->id (), WIN_Y (w), WIN_X (w), WIN_X (w) + WIN_W (w),
-		 TopEdge, false);
-	addEdge (w->id (), WIN_Y (w) + WIN_H (w), WIN_X (w),
-		 WIN_X (w) + WIN_W (w), BottomEdge, false);
-	addEdge (w->id (), WIN_X (w), WIN_Y (w), WIN_Y (w) + WIN_H (w),
-		 LeftEdge, false);
-	addEdge (w->id (), WIN_X (w) + WIN_W (w), WIN_Y (w),
-		 WIN_Y (w) + WIN_H (w), RightEdge, false);
+
+	input = w->inputRect ();
+	addEdge (w->id (), input.top (), input.left (),
+		 input.right (), TopEdge, false);
+	addEdge (w->id (), input.bottom (), input.left (),
+		 input.right (), BottomEdge, false);
+	addEdge (w->id (), input.left (), input.top (),
+		 input.bottom (), LeftEdge, false);
+	addEdge (w->id (), input.right (), input.top (),
+		 input.bottom (), RightEdge, false);
     }
 
     // Now strip invisible edges
@@ -426,17 +430,14 @@ SnapWindow::moveCheckNearestEdge (int position,
 void
 SnapWindow::moveCheckEdges ()
 {
-    moveCheckNearestEdge (WIN_X (window), WIN_Y (window),
-			  WIN_Y (window) + WIN_H (window), true, RightEdge,
-			  HorizontalSnap);
-    moveCheckNearestEdge (WIN_X (window) + WIN_W (window), WIN_Y (window),
-			  WIN_Y (window) + WIN_H (window), false, LeftEdge,
-			  HorizontalSnap);
-    moveCheckNearestEdge (WIN_Y (window), WIN_X(window),
-			  WIN_X (window) + WIN_W (window), true, BottomEdge,
-			  VerticalSnap);
-    moveCheckNearestEdge (WIN_Y (window) + WIN_H (window),
-			  WIN_X (window), WIN_X (window) + WIN_W (window),
+    CompRect input (window->inputRect ());
+    moveCheckNearestEdge (input.left (), input.top (), input.bottom (),
+			  true, RightEdge, HorizontalSnap);
+    moveCheckNearestEdge (input.right (), input.top (), input.bottom (),
+			  false, LeftEdge, HorizontalSnap);
+    moveCheckNearestEdge (input.top (), input.left (), input.right (),
+			  true, BottomEdge, VerticalSnap);
+    moveCheckNearestEdge (input.bottom (), input.left (), input.right (),
 			  false, TopEdge, VerticalSnap);
 }
 
@@ -521,18 +522,16 @@ SnapWindow::resizeCheckNearestEdge (int position,
 void
 SnapWindow::resizeCheckEdges (int dx, int dy, int dwidth, int dheight)
 {
-    int x, y, width, height;
-    x =  WIN_W (window);
-    y =  WIN_Y (window);
-    width = WIN_W (window);
-    height = WIN_H (window);
+    CompRect input (window->inputRect ());
 
-    resizeCheckNearestEdge (x, y, y + height, true, RightEdge, HorizontalSnap);
-    resizeCheckNearestEdge (x + width, y, y + height, false, LeftEdge,
-			    HorizontalSnap);
-    resizeCheckNearestEdge (y, x, x + width, true, BottomEdge, VerticalSnap);
-    resizeCheckNearestEdge (y + height, x, x + width, false, TopEdge,
-			    VerticalSnap);
+    resizeCheckNearestEdge (input.left (), input.top (), input.bottom (),
+			    true, RightEdge, HorizontalSnap);
+    resizeCheckNearestEdge (input.right (), input.top (), input.bottom (),
+			    false, LeftEdge, HorizontalSnap);
+    resizeCheckNearestEdge (input.top (), input.left (), input.right (),
+			    true, BottomEdge, VerticalSnap);
+    resizeCheckNearestEdge (input.bottom (), input.left (), input.right (),
+			    false, TopEdge, VerticalSnap);
 }
 
 // Check if avoidSnap is matched, and enable/disable snap consequently
