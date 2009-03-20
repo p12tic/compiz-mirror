@@ -28,20 +28,16 @@
 #include "trailfocus.h"
 #include <core/atoms.h>
 
-/* helper macros for getting the window's extents */
-#define WIN_LEFT(w)   (w->x () - w->input ().left)
-#define WIN_RIGHT(w)  (w->x () + w->width () + w->input ().right)
-#define WIN_TOP(w)    (w->y () - w->input ().top)
-#define WIN_BOTTOM(w) (w->y () + w->height () + w->input ().bottom)
-
 COMPIZ_PLUGIN_20090315 (trailfocus, TrailfocusPluginVTable);
 
 /* Determines if a window should be handled by trailfocus or not */
 bool
 TrailfocusScreen::isTrailfocusWindow (CompWindow *w)
 {
-    if (WIN_LEFT (w) >= (int) screen->width () || WIN_RIGHT (w) <= 0 ||
-	WIN_TOP (w) >= (int) screen->height () || WIN_BOTTOM (w) <= 0)
+    CompRect input (w->inputRect ());
+
+    if (input.left () >= (int) screen->width ()  || input.right () <= 0 ||
+	input.top ()  >= (int) screen->height () || input.bottom () <= 0)
     {
 	return false;
     }
