@@ -47,8 +47,6 @@ PutScreen::emptyRegion (CompWindow      *window,
 
     foreach(CompWindow *w, screen->windows ())
     {
-	CompRect tmpRect;
-
         if (w->id () == window->id ())
             continue;
 
@@ -74,14 +72,7 @@ PutScreen::emptyRegion (CompWindow      *window,
 	    continue;
 	}
 
-	tmpRect.setGeometry (w->serverX () - w->input ().left,
-			     w->serverY () - w->input ().top,
-			     w->serverWidth () +
-			     w->input ().right + w->input ().left,
-			     w->serverHeight () +
-			     w->input ().top + w->input ().bottom);
-
-	newRegion -= tmpRect;
+	newRegion -= w->serverInputRect ();
     }
 
     return newRegion;
