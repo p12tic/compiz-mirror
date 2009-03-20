@@ -27,7 +27,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 
 #include "maximumize_options.h"
 
@@ -46,7 +46,7 @@ typedef struct
 } MaxSet;
 
 class MaximumizeScreen :
-    public PrivateHandler <MaximumizeScreen, CompScreen>,
+    public PluginClassHandler <MaximumizeScreen, CompScreen>,
     public MaximumizeOptions
 {
     public:
@@ -154,8 +154,6 @@ class MaximumizePluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (MaximumizeScreen);
 };
 
 

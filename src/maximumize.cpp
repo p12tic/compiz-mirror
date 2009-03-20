@@ -29,7 +29,7 @@
 
 #include "maximumize.h"
 
-COMPIZ_PLUGIN_20081216 (maximumize, MaximumizePluginVTable);
+COMPIZ_PLUGIN_20090315 (maximumize, MaximumizePluginVTable);
 
 /* Returns true if rectangles a and b intersect by at least 40 in both
  * directions
@@ -518,8 +518,7 @@ MaximumizeScreen::triggerDirection (CompAction         *action,
 
 /* Screen Constructor */
 MaximumizeScreen::MaximumizeScreen (CompScreen *screen) :
-    PrivateHandler <MaximumizeScreen, CompScreen> (screen),
-    MaximumizeOptions (maximumizeVTable->getMetadata ())
+    PluginClassHandler <MaximumizeScreen, CompScreen> (screen)
 {
 /* This macro uses boost::bind to have lots of callbacks trigger the same
  * function with different arguments */
