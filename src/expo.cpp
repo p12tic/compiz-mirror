@@ -29,11 +29,6 @@
 
 COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 
-#define WIN_X(w) ((w)->x () - (w)->input ().left)
-#define WIN_Y(w) ((w)->y () - (w)->input ().top)
-#define WIN_W(w) ((w)->width () + (w)->input ().left + (w)->input ().right)
-#define WIN_H(w) ((w)->height () + (w)->input ().top + (w)->input ().bottom)
-
 #define sigmoid(x) (1.0f / (1.0f + exp (-5.5f * 2 * ((x) - 0.5))))
 #define sigmoidProgress(x) ((sigmoid (x) - sigmoid (0)) / \
 			    (sigmoid (1) - sigmoid (0)))
@@ -541,6 +536,7 @@ ExpoScreen::donePaint ()
 		 iter != screen->windows ().rend (); ++iter)
 	    {
 		CompWindow *w = *iter;
+		CompRect   input (w->inputRect ());
 		bool       inWindow;
 		int        nx, ny;
 
@@ -563,15 +559,13 @@ ExpoScreen::donePaint ()
 			 (screen->vp ().y () * screen->height ());
 		}
 
-		inWindow = ((nx >= WIN_X (w)) &&
-			    (nx <= (int) (WIN_X (w) + WIN_W (w)))) ||
-		           ((nx >= (WIN_X (w) + xOffset)) &&
-			    (nx <= (int) (WIN_X (w) + WIN_W (w) + xOffset)));
+		inWindow = (nx >= input.left () && nx <= input.right ()) ||
+			   (nx >= (input.left () + xOffset) &&
+			    nx <= (input.right () + xOffset));
 
-		inWindow &= ((ny >= WIN_Y (w)) &&
-			     (ny <= (int) (WIN_Y (w) + WIN_H (w)))) ||
-		            ((ny >= (WIN_Y (w) + yOffset)) &&
-			     (ny <= (int) (WIN_Y (w) + WIN_H (w) + yOffset)));
+		inWindow &= (ny >= input.top () && ny <= input.bottom ()) ||
+			    (ny >= (input.top () + yOffset) &&
+			     ny <= (input.bottom () + yOffset));
 
 		if (!inWindow)
 		    continue;
