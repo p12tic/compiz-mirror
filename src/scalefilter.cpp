@@ -138,7 +138,6 @@ FilterInfo::update ()
 
     filterMatch  = fScreen->sScreen->getCustomMatch ();
     filterMatch &= filterText;
-    filterMatch.update ();
 }
 
 const CompMatch&
