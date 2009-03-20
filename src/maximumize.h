@@ -80,9 +80,6 @@ class MaximumizeScreen :
 	substantialOverlap (const CompRect& a,
 			    const CompRect& b);
 
-	CompRect
-	getWindowBox (CompWindow *w);
-
 	CompRegion
 	findEmptyRegion (CompWindow      *window,
 			 const CompRect& output);

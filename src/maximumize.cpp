@@ -50,22 +50,6 @@ MaximumizeScreen::substantialOverlap (const CompRect& a,
     return true;
 }
 
-/* Set the rectangle to cover the window, including decoration. */
-CompRect
-MaximumizeScreen::getWindowBox (CompWindow *w)
-{
-    CompRect rect;
-
-    rect.setGeometry (w->serverX () - w->input ().left,
-		      w->serverY () - w->input ().top,
-		      w->serverWidth () + w->input ().right +
-		      w->input ().left,
-		      w->serverHeight () + w->input ().bottom +
-		      w->input ().top);
-
-    return rect;
-}
-
 /* Generates a region containing free space (here the
  * active window counts as free space). The region argument
  * is the start-region (ie: the output dev).
@@ -80,7 +64,7 @@ MaximumizeScreen::findEmptyRegion (CompWindow      *window,
     CompRect   tmpRect, windowRect;
 
     if (optionGetIgnoreOverlapping ())
-	windowRect = getWindowBox (window);
+	windowRect = window->serverInputRect ();
 
     foreach (CompWindow *w, screen->windows ())
     {
@@ -116,7 +100,7 @@ MaximumizeScreen::findEmptyRegion (CompWindow      *window,
 	    continue;
 	}
 
-	tmpRect = getWindowBox (w);
+	tmpRect = w->serverInputRect ();
 
 	if (optionGetIgnoreOverlapping () &&
 	    substantialOverlap (tmpRect, windowRect))
