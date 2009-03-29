@@ -196,9 +196,7 @@ cdef struct CCSContext:
     void * ccsPrivate
 
     CCSSettingList * changedSettings
-
-    unsigned int * screens
-    unsigned int   numScreens
+    unsigned int   screenNum
 
 cdef struct CCSPlugin
 
@@ -208,9 +206,6 @@ cdef struct CCSSetting:
     char * longDesc
 
     CCSSettingType type
-
-    Bool         isScreen
-    unsigned int screenNum
 
     CCSSettingInfo info
     char *         group
@@ -228,7 +223,6 @@ cdef struct CCSStrExtension:
     char *                  basePlugin
     CCSSettingList *        baseSettings
     CCSStrRestrictionList * restriction
-    Bool                    isScreen
 
 cdef struct CCSPlugin:
     char * name
@@ -256,19 +250,15 @@ cdef struct CCSPluginConflict:
 
 '''Context functions'''
 cdef extern void ccsSetBasicMetadata (Bool value)
-cdef extern CCSContext * ccsContextNew (unsigned int * screens,
-                                        unsigned int numScreens)
-cdef extern CCSContext * ccsEmptyContextNew (unsigned int * screens,
-                                             unsigned int   numScreens)
+cdef extern CCSContext * ccsContextNew (unsigned int screenNum)
+cdef extern CCSContext * ccsEmptyContextNew (unsigned int screenNum)
 cdef extern void ccsContextDestroy (CCSContext * context)
 
 '''Plugin functions'''
 cdef extern Bool ccsLoadPlugin (CCSContext * context, char * name)
 cdef extern CCSPlugin * ccsFindPlugin (CCSContext * context, char * name)
 cdef extern CCSSetting * ccsFindSetting (CCSPlugin * plugin,
-                                         char *      name,
-                                         Bool        isScreen,
-                                         int         screenNum)
+                                         char *      name)
 cdef extern CCSSettingList * ccsGetPluginSettings (CCSPlugin * plugin)
 cdef extern CCSGroupList * ccsGetPluginGroups (CCSPlugin * plugin)
 
@@ -429,10 +419,7 @@ cdef object SettingListToList (Context context, CCSList * settingList):
         ccsSetting = <CCSSetting *> settingList.data
         setting = None
         plugin = context.Plugins[ccsSetting.parent.name]
-        if ccsSetting.isScreen:
-            setting = plugin.Screens[ccsSetting.screenNum][ccsSetting.name]
-        else:
-            setting = plugin.Display[ccsSetting.name]
+        setting = plugin.Screen[ccsSetting.name]
         list.append (setting)
         settingList = settingList.next
     
@@ -583,12 +570,11 @@ cdef class Setting:
     cdef object extendedStrRestrictions
     cdef object baseStrRestrictions
 
-    def __new__ (self, Plugin plugin, name, isScreen, screenNum = 0):
+    def __new__ (self, Plugin plugin, name):
         cdef CCSSettingType t
         cdef CCSSettingInfo * i
 
-        self.ccsSetting = ccsFindSetting (plugin.ccsPlugin,
-                                          name, isScreen, screenNum)
+        self.ccsSetting = ccsFindSetting (plugin.ccsPlugin, name)
         self.plugin = plugin
 
         self.extendedStrRestrictions = None
@@ -686,30 +672,21 @@ cdef class Setting:
             return bool (ccsSettingIsReadOnly (self.ccsSetting))
 
 cdef class SSGroup:
-    cdef object display
-    cdef object screens
+    cdef object screen
 
-    def __new__ (self, disp, screen):
-        self.display = disp
-        self.screens = screen
+    def __new__ (self, screen):
+        self.screen = screen
 
-    property Display:
+    property Screen:
         def __get__ (self):
-            return self.display
+            return self.screen
         def __set__ (self, value):
-            self.display = value
-
-    property Screens:
-        def __get__ (self):
-            return self.screens
-        def __set__ (self, value):
-            self.screens = value
+            self.screen = value
 
 cdef class Plugin:
     cdef CCSPlugin * ccsPlugin
     cdef Context context
-    cdef object screens
-    cdef object display
+    cdef object screen
     cdef object groups
     cdef object loaded
     cdef object ranking
@@ -718,15 +695,11 @@ cdef class Plugin:
     def __new__ (self, Context context, name):
         self.ccsPlugin = ccsFindPlugin (context.ccsContext, name)
         self.context = context
-        self.screens = []
-        self.display = {}
+        self.screen = {}
         self.groups = {}
         self.loaded = False
         self.ranking = {}
         self.hasExtendedString = False
-
-        for n in range (0, context.NScreens):
-            self.screens.append ({})
 
     def Update (self):
         cdef CCSList * setlist
@@ -747,11 +720,8 @@ cdef class Plugin:
             sglist = gr.subGroups
             while sglist != NULL:
                 sgr = <CCSSubGroup *> sglist.data
-                scr = []
-                for n in range (0, self.context.NScreens):
-                    scr.append ({})
                 self.groups[gr.name][1][sgr.name] = (subGroupIndex,
-                                                     SSGroup ({}, scr))
+                                                     SSGroup ({}))
                 subGroupIndex = subGroupIndex + 1
                 sglist = sglist.next
             groupIndex = groupIndex + 1
@@ -765,14 +735,9 @@ cdef class Plugin:
 
             subgroup = self.groups[sett.group][1][sett.subGroup][1]
 
-            if sett.isScreen:
-                setting = Setting (self, sett.name, True, sett.screenNum)
-                self.screens[sett.screenNum][sett.name] = setting
-                subgroup.Screens[sett.screenNum][sett.name] = setting
-            else:
-                setting = Setting (self, sett.name, False)
-                self.display[sett.name] = setting
-                subgroup.Display[sett.name] = setting
+            setting = Setting (self, sett.name)
+            self.screen[sett.name] = setting
+            subgroup.Screen[sett.name] = setting
 
             t = sett.type
             i = &sett.info
@@ -794,10 +759,7 @@ cdef class Plugin:
         self.SortStringSettings ()
 
     def SortStringSettings (self):
-        for i in xrange (self.context.nScreens):
-            for name, setting in self.Screens[i].items ():
-                self.SortSingleStringSetting (setting)
-        for name, setting in self.Display.items ():
+        for name, setting in self.Screen.items ():
             self.SortSingleStringSetting (setting)
 
     def SortSingleStringSetting (self, Setting setting):
@@ -880,12 +842,7 @@ cdef class Plugin:
             while baseSettingList:
                 baseSettingName = <char *> baseSettingList.data
 
-                if ext.isScreen:
-                    settings = []
-                    for x in xrange (self.context.nScreens):
-                        settings.append (basePlugin.Screens[x][baseSettingName])
-                else:
-                    settings = [basePlugin.Display[baseSettingName]]
+                settings = [basePlugin.Screen[baseSettingName]]
 
                 for settingItem in settings:
                     setting = settingItem
@@ -939,17 +896,11 @@ cdef class Plugin:
                 self.Update ()
             return self.groups
 
-    property Display:
+    property Screen:
         def __get__ (self):
             if not self.loaded:
                 self.Update ()
-            return self.display
-
-    property Screens:
-        def __get__ (self):
-            if not self.loaded:
-                self.Update ()
-            return self.screens
+            return self.screen
 
     property Ranking:
         def __get__ (self):
@@ -1119,25 +1070,18 @@ cdef class Context:
     cdef object currentProfile
     cdef object backends
     cdef object currentBackend
-    cdef int nScreens
     cdef Bool integration
 
-    def __new__ (self, screens = [0], plugins = [], basic_metadata = False):
+    def __new__ (self, screenNum = 0, plugins = [], basic_metadata = False):
         cdef CCSPlugin * pl
         cdef CCSList * pll
         if basic_metadata:
             ccsSetBasicMetadata (True)
-        self.nScreens = nScreens = len (screens)
         self.plugins = {}
-        cdef unsigned int * screensBuf
-        screensBuf = <unsigned int *> malloc (sizeof (unsigned int) * nScreens)
-        for i in range (nScreens):
-            screensBuf[i] = screens[i]
         if not len (plugins):
-            self.ccsContext = ccsContextNew (screensBuf, nScreens)
+            self.ccsContext = ccsContextNew (screenNum)
         else:
-            self.ccsContext = ccsEmptyContextNew (screensBuf, nScreens)
-        free (screensBuf)
+            self.ccsContext = ccsEmptyContextNew (screenNum)
 
         for plugin in plugins:
             self.LoadPlugin (plugin)
@@ -1292,10 +1236,6 @@ cdef class Context:
             return bool (ccsGetPluginListAutoSort (self.ccsContext))
         def __set__ (self, value):
             ccsSetPluginListAutoSort (self.ccsContext, bool (value))
-
-    property NScreens:
-        def __get__ (self):
-            return self.nScreens
 
     property Integration:
         def __get__ (self):
