@@ -406,7 +406,7 @@ isIntegratedOption (CCSSetting *setting,
 
     for (i = 0; i < N_SOPTIONS; i++)
     {
-	SpecialOption *opt = &specialOptions[i];
+	const SpecialOption *opt = &specialOptions[i];
 
 	if (strcmp (setting->name, opt->settingName) != 0)
 	    continue;
