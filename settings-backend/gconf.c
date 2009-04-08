@@ -351,11 +351,11 @@ const SpecialOption specialOptions[] = {
     {"rotate_right_window_key", "rotate", FALSE,
      METACITY "/window_keybindings/move_to_workspace_right", OptionKey},
 
-    {"command_screenshot", "core", FALSE,
+    {"command_screenshot", "gnomecompat", FALSE,
      METACITY "/keybinding_commands/command_screenshot", OptionString},
-    {"command_window_screenshot", "core", FALSE,
+    {"command_window_screenshot", "gnomecompat", FALSE,
      METACITY "/keybinding_commands/command_window_screenshot", OptionString},
-    {"command_terminal", "core", FALSE,
+    {"command_terminal", "gnomecompat", FALSE,
      "/desktop/gnome/applications/terminal/exec", OptionString},
 
     {"current_viewport", "thumbnail", TRUE,
