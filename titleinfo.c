@@ -63,7 +63,7 @@ titleinfoUpdateVisibleName (CompWindow *w)
 {
     CompDisplay *d = w->screen->display;
     char        *text = NULL, *machine = NULL;
-    const char  *root = NULL, *title;
+    const char  *root = "", *title;
 
     TITLEINFO_DISPLAY (d);
     TITLEINFO_WINDOW (w);
@@ -83,7 +83,7 @@ titleinfoUpdateVisibleName (CompWindow *w)
 
     if (machine)
 	asprintf (&text, "%s%s (@%s)", root, title, machine);
-    else if (root)
+    else if (root[0])
 	asprintf (&text, "%s%s", root, title);
 
     if (text)
