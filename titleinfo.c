@@ -136,7 +136,7 @@ titleinfoUpdatePid (CompWindow *w)
 	char        path[512];
 	struct stat fileStat;
 
-	snprintf (path, 512, "/proc/%d/exe", pid);
+	snprintf (path, 512, "/proc/%d", pid);
 	if (!lstat (path, &fileStat))
 	    tw->owner = fileStat.st_uid;
     }
