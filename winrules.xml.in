@@ -1,6 +1,6 @@
 <compiz>
 	<!-- winrules metadata -->
-	<plugin name="winrules">
+	<plugin name="winrules" useBcop="true">
 		<_short>Window Rules</_short>
 		<_long>Set windows rules</_long>
 		<category>Window Management</category>
