@@ -457,7 +457,4 @@ WinrulesPluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
 	return false;
-    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
-#warning  * [FIXME] Ability to operate without composite plugin
-	return false;
 }

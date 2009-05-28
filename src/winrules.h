@@ -22,8 +22,8 @@
  */
 
 #include <core/core.h>
+#include <core/pluginclasshandler.h>
 #include <core/atoms.h>
-#include <composite/composite.h>
 #include <X11/Xatom.h>
 #include "winrules_options.h"
 

@@ -2,4 +2,4 @@ find_package (Compiz REQUIRED)
 
 include (CompizPlugin)
 
-compiz_plugin (winrules PLUGINDEPS composite)
+compiz_plugin (winrules)
