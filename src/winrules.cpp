@@ -94,7 +94,6 @@ WinrulesWindow::setNoFocus (int        optNum)
     if (newProtocol != window->protocols ())
     {
 	ws->setProtocols (newProtocol, window->id ());
-#warning * [FIXME] Core patch needed top make protocols () wrappable, or given a setter func
     }
 }
 
@@ -109,12 +108,12 @@ WinrulesWindow::setNoAlpha (int        optNum)
     if (ws->getOptions ().at (optNum). value ().match ().evaluate (window))
     {
 	hasAlpha = window->alpha ();
-#warning * [FIXME] Core patch needed for window->setAlpha
+#warning * [FIXME] Core patch needed to make window->alpha () wrappable
 	//window->setAlpha (false); Core patch needed
     }
     else
     {
-#warning * [FIXME] Core patch needed for window->setAlpha
+#warning * [FIXME] Core patch needed for window->alpha () wrappable
 	//window->setAlpha (hasAlpha); Core patch needed
     }
 }
@@ -296,11 +295,6 @@ WinrulesScreen::optionChanged (CompOption	       *option,
 	    return;
 	break;
 	case WinrulesOptions::SizeMatches:
-#warning * [FIXME]: Core patch needed for matchUpdate
-/*
-	    for (int i = 0; i < o->value ().list ().size (); i++)
-		matchUpdate (screen->display, o->value ().list (). at(i).match ()); // ???
-*/
 	    return;
 	break;
 	default:
