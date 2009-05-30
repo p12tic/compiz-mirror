@@ -339,15 +339,14 @@ WidgetScreen::endWidgetMode (CompWindow *closedWidget)
 
 	WIDGET_WINDOW (closedWidget);
 	if (ww->isWidget)
+	    return;
+	foreach (CompWindow *w, screen->windows ())
 	{
-	    foreach (CompWindow *w, screen->windows ())
-	    {
 		WIDGET_WINDOW (w);
 		if (w == closedWidget)
 		    continue;
 		if (ww->isWidget)
 		    return;
-	    }
 	}
     }
 
