@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (widget)
+include (CompizPlugin)
+
+compiz_plugin (widget)
