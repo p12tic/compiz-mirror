@@ -46,6 +46,8 @@ typedef struct _TitleinfoDisplay {
 
 typedef struct _TitleinfoScreen {
     int windowPrivateIndex;
+
+    AddSupportedAtomsProc addSupportedAtoms;
 } TitleinfoScreen;
 
 typedef struct _TitleinfoWindow {
@@ -241,6 +243,29 @@ titleinfoUpdateMachine (CompWindow *w)
 	titleinfoUpdateVisibleName (w);
 }
 
+static unsigned int
+titleinfoAddSupportedAtoms (CompScreen   *s,
+			    Atom         *atoms,
+			    unsigned int size)
+{
+    unsigned int count;
+
+    TITLEINFO_DISPLAY (s->display);
+    TITLEINFO_SCREEN (s);
+
+    UNWRAP (ts, s, addSupportedAtoms);
+    count = (*s->addSupportedAtoms) (s, atoms, size);
+    WRAP (ts, s, addSupportedAtoms, titleinfoAddSupportedAtoms);
+
+    if ((size - count) >= 2)
+    {
+	atoms[count++] = td->visibleNameAtom;
+	atoms[count++] = td->wmPidAtom;
+    }
+
+    return count;
+}
+
 static void
 titleinfoHandleEvent (CompDisplay *d,
 		      XEvent      *event)
@@ -341,6 +366,8 @@ titleinfoInitScreen (CompPlugin *p,
 
     s->base.privates[td->screenPrivateIndex].ptr = ts;
 
+    WRAP (ts, s, addSupportedAtoms, titleinfoAddSupportedAtoms);
+
     return TRUE;
 }
 
@@ -349,6 +376,8 @@ titleinfoFiniScreen (CompPlugin *p,
 		     CompScreen *s)
 {
     TITLEINFO_SCREEN (s);
+
+    UNWRAP (ts, s, addSupportedAtoms);
 
     freeWindowPrivateIndex (s, ts->windowPrivateIndex);
 
