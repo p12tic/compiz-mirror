@@ -220,7 +220,7 @@ VPSwitchScreen::handleEvent (XEvent *event)
 	    break;
 
 	pressedKeySym = XLookupKeysym (&event->xkey, 0);
-	mods = screen->modHandler ().keycodeToModifiers (event->xkey.keycode);
+	mods = modHandler->keycodeToModifiers (event->xkey.keycode);
 	if (mods & CompNumLockMask)
 	    row = 1; /* use first row of lookup table */
 	else
