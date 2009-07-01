@@ -4,7 +4,7 @@
 		<_short>Viewport Switcher</_short>
 		<_long>Initiate viewport changes through several events</_long>
 		<category>Desktop</category>
-		<display>
+		<options>
 			<group>
 				<_short>Number-Based Viewport Switching</_short>
 				<option name="begin_key" type="key">
@@ -114,6 +114,6 @@
 					<default>initiate_button</default>
 				</option>
 			</group>
-		</display>
+		</options>
 	</plugin>
 </compiz>
