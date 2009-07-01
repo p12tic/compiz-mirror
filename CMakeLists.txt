@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (vpswitch)
+include (CompizPlugin)
+
+compiz_plugin (vpswitch)
