@@ -28,7 +28,7 @@
 
 #include "vpswitch.h"
 
-COMPIZ_PLUGIN_20081216 (vpswitch, VPSwitchPluginVTable);
+COMPIZ_PLUGIN_20090315 (vpswitch, VPSwitchPluginVTable);
 
 bool
 VPSwitchScreen::initPluginAction (CompAction         *action,
@@ -305,8 +305,7 @@ VPSwitchScreen::switchto (CompAction         *action,
 }
 
 VPSwitchScreen::VPSwitchScreen (CompScreen *screen):
-    PrivateHandler <VPSwitchScreen, CompScreen> (screen),
-    VpswitchOptions (vpswitchVTable->getMetadata ()),
+    PluginClassHandler <VPSwitchScreen, CompScreen> (screen),
     destination (0),
     numberedActive (false)
 {

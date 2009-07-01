@@ -27,7 +27,7 @@
  */
 
 #include <core/core.h>
-#include <core/privatehandler.h>
+#include <core/pluginclasshandler.h>
 #include <core/atoms.h>
 
 #include "vpswitch_options.h"
@@ -133,6 +133,4 @@ class VPSwitchPluginVTable :
     public:
 
 	bool init ();
-
-	PLUGIN_OPTION_HELPER (VPSwitchScreen);
 };	
