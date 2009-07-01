@@ -60,7 +60,7 @@ static const KeySym numberKeySyms[3][10] = {
 };
 
 class VPSwitchScreen :
-    public PrivateHandler <VPSwitchScreen, CompScreen>,
+    public PluginClassHandler <VPSwitchScreen, CompScreen>,
     public VpswitchOptions,
     public ScreenInterface
 {
