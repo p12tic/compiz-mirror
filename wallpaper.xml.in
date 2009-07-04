@@ -1,16 +1,21 @@
+<?xml version="1.0"?>
 <compiz>
 	<plugin name="wallpaper" useBcop="true">
 		<_short>Wallpaper</_short>
 		<_long>Draw the desktop wallpaper</_long>
 		<category>Utility</category>
 		<deps>
+			<requirement>
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
+			</requirement>
 			<relation type="after">
 				<plugin>svg</plugin>
 				<plugin>png</plugin>
 				<plugin>imgjpeg</plugin>
 			</relation>
 		</deps>
-		<screen>
+		<options>
 			<subgroup>
 				<_short>Backgrounds</_short>
 				<option name="bg_image" type="list">
@@ -76,7 +81,7 @@
 					<type>color</type>
 				</option>
 			</subgroup>
-		</screen>
+		</options>
 	</plugin>
 </compiz>
 
