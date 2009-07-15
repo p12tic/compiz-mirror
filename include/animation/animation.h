@@ -153,7 +153,7 @@ public:
     /// To be run after the startup countdown ends.
     virtual void postStartupCountdown () {}
 
-    virtual bool paintShouldSkipWindow (CompWindow *w) {}
+    virtual bool paintShouldSkipWindow (CompWindow *w) { return false; }
 
     virtual void cleanUpAnimation (bool closing,
 				   bool destructing) {}
@@ -223,9 +223,6 @@ class Animation
 protected:
     CompWindow *mWindow;
     AnimWindow *mAWindow;
-    AnimEffect mInfo;
-
-    CompRect mIcon;
 
     float mTotalTime;
     float mRemainingTime;
@@ -237,11 +234,14 @@ protected:
     GLFragment::Attrib mCurPaintAttrib;
     GLushort mStoredOpacity;
     WindowEvent mCurWindowEvent;
+    bool mInitialized; ///< whether the animation is initialized (in preparePaint)
+
+    AnimEffect mInfo; ///< information about the animation class
+
+    CompRect mIcon;
 
     int mDecorTopHeight;
     int mDecorBottomHeight;
-
-    bool mInitialized; ///< whether the animation is initialized (in preparePaint)
 
     GLTexture::List *texturesCache;
 

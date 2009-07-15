@@ -212,8 +212,7 @@ RestackAnim::initiateRestackAnim (int duration)
 	if (!CompositeWindow::get (wCand)->pixmap ())
 	    continue;
 
-	if (//skipSubjectWindows () &&
-	    onSameRestackChain (mWindow, wCand))
+	if (onSameRestackChain (mWindow, wCand))
 	    continue;
 
 	// Compute intersection of this (wCand) with subject
@@ -297,8 +296,8 @@ RestackAnim::overNewCopy ()
 		     !mRestackData->restackInfo ()->raised);
 
     // Reverse behavior if lowering (i.e. not raising)
-    return (!lowering && mRestackData->mVisitCount == 2 ||
-	    lowering && mRestackData->mVisitCount == 1);
+    return ((!lowering && mRestackData->mVisitCount == 2) ||
+	    (lowering && mRestackData->mVisitCount == 1));
 }
 
 CompRegion
@@ -364,6 +363,20 @@ RestackPersistentData::~RestackPersistentData ()
 {
     if (mRestackInfo)
 	delete mRestackInfo;
+}
+
+void
+RestackPersistentData::resetRestackInfo (bool alsoResetChain)
+{
+    delete mRestackInfo;
+    mRestackInfo = 0;
+
+    if (alsoResetChain)
+    {
+    	// Reset chain connections as this is not on a chain
+    	mMoreToBePaintedNext = 0;
+    	mMoreToBePaintedPrev = 0;
+    }
 }
 
 void

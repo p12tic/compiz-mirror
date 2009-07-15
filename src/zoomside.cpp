@@ -48,8 +48,8 @@ ZoomAnim::ZoomAnim (CompWindow *w,
 		    const AnimEffect info,
 		    const CompRect &icon) :
     Animation::Animation (w, curWindowEvent, duration, info, icon),
-    FadeAnim::FadeAnim (w, curWindowEvent, duration, info, icon),
-    TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon)
+    TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon),
+    FadeAnim::FadeAnim (w, curWindowEvent, duration, info, icon)
 {
     CompRect outRect (mAWindow->savedRectsValid () ?
 		      mAWindow->savedOutRect () :

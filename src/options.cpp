@@ -182,14 +182,13 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 	const ExtensionPluginInfo *extensionPluginInfo;
 	CompOption *o = 0;
 	int optId = -1;
-	for (int k = 0; k < mExtensionPlugins.size (); k++)
+	foreach (ExtensionPluginInfo *extensionPlugin, mExtensionPlugins)
 	{
-	    extensionPluginInfo = mExtensionPlugins[k];
-	    unsigned int nOptions = extensionPluginInfo->effectOptions->size ();
-	    for (optId = extensionPluginInfo->firstEffectOptionIndex;
+	    int nOptions = extensionPlugin->effectOptions->size ();
+	    for (optId = extensionPlugin->firstEffectOptionIndex;
 		 optId < nOptions; optId++)
 	    {
-		o = &(*extensionPluginInfo->effectOptions)[optId];
+		o = &(*extensionPlugin->effectOptions)[optId];
 
 		if (strcasecmp (nameTrimmed, o->name ().c_str ()) == 0)
 		{
@@ -268,15 +267,15 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 	}
 	case CompOption::TypeColor:
 	{
-	    unsigned int vc[4];
-	    valueRead = sscanf (valueStr, " #%2x%2x%2x%2x ",
+	    unsigned short vc[4];
+	    valueRead = sscanf (valueStr, " #%2hx%2hx%2hx%2hx ",
 				&vc[0], &vc[1], &vc[2], &vc[3]);
 	    if (valueRead == 4)
 	    {
-		CompOption::Value * pv = &pair->value;
+		CompOption::Value *pairVal = &pair->value;
 		for (int j = 0; j < 4; j++)
 		    vc[j] = vc[j] << 8 | vc[j];
-		pv->set (vc);
+		pairVal->set (vc);
 	    }
 	    else
 		errorNo = 6;

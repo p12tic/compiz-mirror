@@ -186,8 +186,8 @@ class PrivateAnimScreen :
     friend class AnimWindow;
 
 public:
-    GLScreen *gScreen;
     CompositeScreen *cScreen;
+    GLScreen *gScreen;
     AnimScreen *aScreen;
 
 private:
@@ -196,6 +196,10 @@ private:
 
     bool mPluginActive[WatchedPluginNum];
     int mSwitcherPostWait;
+    int mStartCountdown;
+    ///< To mark windows as "created" if they were opened before compiz
+    ///< was started and to prevent already opened windows from doing
+    ///< open animation.
 
     Window mLastActiveWindow; ///< Last known active window
 
@@ -220,11 +224,6 @@ private:
 
     Window mActiveWindow;
     CompMatch mNeverAnimateMatch;
-
-    int mStartCountdown;
-    ///< To mark windows as "created" if they were opened before compiz
-    ///< was started and to prevent already opened windows from doing
-    ///< open animation.
 
     void updateEventEffects (AnimEvent e,
 			     bool forRandom,
@@ -585,7 +584,7 @@ public:
 
 protected:
     RestackInfo *restackInfo () { return mRestackInfo; }
-    void resetRestackInfo () { delete mRestackInfo; mRestackInfo = 0; }
+    void resetRestackInfo (bool alsoResetChain = false);
     void setRestackInfo (CompWindow *wRestacked,
 			 CompWindow *wStart,
 			 CompWindow *wEnd,

@@ -143,6 +143,7 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
     if (!mAWinWasRestackedJustNow)
 	return;
 
+    bool focusAnimInitiated = false;
     AnimScreen *as = AnimScreen::get (::screen);
 
     // Go in reverse order so that restack chains are handled properly
@@ -169,7 +170,7 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
 	    // Don't animate with stale restack info
 	    !restackInfoStillGood (restackInfo))
 	{
-	    data->resetRestackInfo ();
+	    data->resetRestackInfo (true);
 	    continue;
 	}
 
@@ -189,7 +190,7 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
 	if (!restackInfo->raised && !nw)
 	{
 	    // Free unnecessary restackInfo
-	    data->resetRestackInfo ();
+	    data->resetRestackInfo (true);
 	    continue;
 	}
 
@@ -206,9 +207,19 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
 	    if (dataNext && dataNext->restackInfo () &&
 		wontCreateCircularChain (w, nw))
 	    {
+	    	// Link the two
 		dataNext->mMoreToBePaintedPrev = w;
 		data->mMoreToBePaintedNext = nw;
+
+		// so far, bottommost on chain
+		data->mMoreToBePaintedPrev = 0;
 	    }
+	}
+	else
+	{
+	    // Reset chain connections as this is not (yet) on a chain
+	    data->mMoreToBePaintedNext = 0;
+	    data->mMoreToBePaintedPrev = 0;
 	}
     }
 
@@ -227,12 +238,18 @@ ExtensionPluginAnimation::prePreparePaintGeneral ()
 	RestackInfo *restackInfo = data->restackInfo ();
 	if (restackInfo)
 	{
-	    if (!as->initiateFocusAnim (aw))
-	    	data->resetRestackInfo ();
+	    if (as->initiateFocusAnim (aw))
+		focusAnimInitiated = true;
+	    else
+		data->resetRestackInfo (true);
 	}
     }
 
-    if (as->otherPluginsActive () ||
+    if (!focusAnimInitiated)
+	resetStackingInfo ();
+
+    if (!focusAnimInitiated ||
+	as->otherPluginsActive () ||
 	!as->isAnimEffectPossible (AnimEffectDodge)) // Only dodge stuff below
 	return;
 
@@ -301,7 +318,7 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 	return;
 
     bool winOpenedClosed = false;
-    int n = clients.size ();
+    unsigned int n = clients.size ();
 
     if (n != mLastClientList.size ())
     {
@@ -332,10 +349,9 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 	int changeStart = -1;
 	int changeEnd = -1;
 
-	for (int i = 0; i < n; i++)
+	for (unsigned int i = 0; i < n; i++)
 	{
 	    CompWindow *wi = clients[i];
-	    AnimWindow *awi = AnimWindow::get (wi);
 
 	    // skip if minimized (prevents flashing problem)
 	    if (!wi || wi->destroyed ())
@@ -418,7 +434,7 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 		     // window above this window, since this window needs
 		     // to be drawn on such a "host" in animPaintWindow
 		     // (at least for now).
-		     changeEnd < n - 1)
+		     (unsigned int)changeEnd < n - 1)
 	    {
 		wRestacked = wChangeStart;
 		wStart = wRestacked;
@@ -427,7 +443,6 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 	    }
 	    for (; wOldAbove; wOldAbove = wOldAbove->next)
 	    {
-		AnimWindow *awOldAbove = AnimWindow::get (wOldAbove);
 		if (!wOldAbove->destroyed ())
 		    break;
 	    }

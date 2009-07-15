@@ -642,8 +642,8 @@ GridTransformAnim::GridTransformAnim (CompWindow *w,
 				      const AnimEffect info,
 				      const CompRect &icon) :
     Animation::Animation (w, curWindowEvent, duration, info, icon),
-    GridAnim::GridAnim (w, curWindowEvent, duration, info, icon),
     TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon),
+    GridAnim::GridAnim (w, curWindowEvent, duration, info, icon),
     mUsingTransform (true)
 {
 }

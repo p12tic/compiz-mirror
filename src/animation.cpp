@@ -189,11 +189,8 @@ PrivateAnimScreen::updateEventEffects (AnimEvent e,
 
     if (callPost)
     {
-	for (int p = 0; p < mExtensionPlugins.size (); p++)
-	{
-	    ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+    	foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
 	    extPlugin->postUpdateEventEffects (e, forRandom);
-	}
     }
 }
 
@@ -213,7 +210,7 @@ bool
 PrivateAnimScreen::isAnimEffectInList (AnimEffect theEffect,
 				       EffectSet &effectList)
 {
-    for (int i = 0; i < effectList.effects.size (); i++)
+    for (unsigned int i = 0; i < effectList.effects.size (); i++)
 	if (effectList.effects[i] == theEffect)
 	    return true;
     return false;
@@ -987,8 +984,6 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 					       bool destructing,
 					       bool clearMatchingRow)
 {
-    WindowEvent ev = mCurAnimation->curWindowEvent ();
-
     mCurAnimation->cleanUp (closing, destructing);
     delete mCurAnimation;
     mCurAnimation = 0;
@@ -1023,11 +1018,8 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
     }
     mFinishingAnim = false;
 
-    for (int p = 0; p < mPAScreen->mExtensionPlugins.size (); p++)
-    {
-	ExtensionPluginInfo *extPlugin = mPAScreen->mExtensionPlugins[p];
+    foreach (ExtensionPluginInfo *extPlugin, mPAScreen->mExtensionPlugins)
 	extPlugin->cleanUpAnimation (closing, destructing);
-    }
 }
 
 void
@@ -1123,11 +1115,8 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	}
     }
 
-    for (int p = 0; p < mExtensionPlugins.size (); p++)
-    {
-	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
 	extPlugin->prePreparePaintGeneral ();
-    }
 
     if (mAnimInProgress)
     {
@@ -1250,11 +1239,8 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	}
     }
 
-    for (int p = 0; p < mExtensionPlugins.size (); p++)
-    {
-	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
 	extPlugin->postPreparePaintGeneral ();
-    }
 
     cScreen->preparePaint (msSinceLastPaint);
 }
@@ -1388,9 +1374,8 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    return status;
 	}*/
 
-	for (int p = 0; p < mPAScreen->mExtensionPlugins.size (); p++)
+	foreach (ExtensionPluginInfo *extPlugin, mPAScreen->mExtensionPlugins)
 	{
-	    ExtensionPluginInfo *extPlugin = mPAScreen->mExtensionPlugins[p];
 	    if (extPlugin->paintShouldSkipWindow (mWindow))
 		return false;
 	}
@@ -1543,11 +1528,8 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 {
     CompWindow *w = aw->mWindow;
 
-    for (int p = 0; p < mExtensionPlugins.size (); p++)
-    {
-	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
 	extPlugin->preInitiateCloseAnim (aw->mAWindow);
-    }
 
     if (shouldIgnoreWindowForAnim (w, true))
 	return;
@@ -1561,7 +1543,6 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 
     if (chosenEffect != AnimEffectNone)
     {
-	int tmpSteps = 0;
 	bool startingNew = true;
 	WindowEvent curWindowEvent = WindowEventNone;
 
@@ -1714,11 +1695,8 @@ PrivateAnimScreen::initiateMinimizeAnim (PrivateAnimWindow *aw)
 
     aw->mNewState = IconicState;
 
-    for (int p = 0; p < mExtensionPlugins.size (); p++)
-    {
-	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
 	extPlugin->preInitiateMinimizeAnim (aw->mAWindow);
-    }
 
     int duration = 200;
     AnimEffect chosenEffect =
@@ -1839,11 +1817,8 @@ PrivateAnimScreen::initiateOpenAnim (PrivateAnimWindow *aw)
 
     aw->mNewState = NormalState;
 
-    for (int p = 0; p < mExtensionPlugins.size (); p++)
-    {
-	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
 	extPlugin->preInitiateOpenAnim (aw->mAWindow);
-    }
 
     WindowEvent curWindowEvent = WindowEventNone;
     if (aw->curAnimation ())
@@ -1922,11 +1897,8 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 	bool startingNew = true;
 	bool playEffect = true;
 
-	for (int p = 0; p < mExtensionPlugins.size (); p++)
-	{
-	    ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
 	    extPlugin->preInitiateUnminimizeAnim (aw->mAWindow);
-	}
 
 	// TODO Refactor the rest? (almost the same in other initiateX methods)
 	WindowEvent curWindowEvent = WindowEventNone;
@@ -2191,11 +2163,8 @@ PrivateAnimScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     {
 	mStartingNewPaintRound = true;
 
-	for (int p = 0; p < mExtensionPlugins.size (); p++)
-	{
-	    ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
 	    extPlugin->prePaintOutput (output);
-	}
 
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
     }
@@ -2204,23 +2173,13 @@ PrivateAnimScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     status = gScreen->glPaintOutput (attrib, matrix, region, output, mask);
 
-    /* TODO check if needed for extension plugins
-    for (int p = 0; p < mExtensionPlugins.size (); p++)
-    {
-	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
-	extPlugin->postPaintOutput (output);
-    }*/
-
     if (mStartCountdown)
     {
 	mStartCountdown--;
 	if (!mStartCountdown)
 	{
-	    for (int p = 0; p < mExtensionPlugins.size (); p++)
-	    {
-		ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
 		extPlugin->postStartupCountdown ();
-	    }
 	}
     }
 
@@ -2444,22 +2403,22 @@ PrivateAnimScreen::initAnimationList ()
 
 PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
 				      AnimWindow *aw) :
-    mWindow (w),
     gWindow (GLWindow::get (w)),
+    mWindow (w),
     mCWindow (CompositeWindow::get (w)),
     mAWindow (aw),
     mPAScreen (AnimScreen::get (::screen)->priv),
-    mGrabbed (false),
+    mCurAnimation (0),
     mUnshadePending (false),
     mEventNotOpenClose (false),
     mNowShaded (false),
+    mGrabbed (false),
     mUnmapCnt (0),
     mDestroyCnt (0),
     mUpdateFrameCnt (0),
     mIgnoreDamage (false),
     mFinishingAnim (false),
-    mCurAnimSelectionRow (-1),
-    mCurAnimation (0)
+    mCurAnimSelectionRow (-1)
 {
     mBB.x1 = mBB.y1 = MAXSHORT;
     mBB.x2 = mBB.y2 = MINSHORT;
@@ -2602,12 +2561,9 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 	    if (mPAScreen->mStartCountdown) // Don't animate at startup
 		break;
 
-	    for (int p = 0; p < mPAScreen->mExtensionPlugins.size (); p++)
-	    {
-		ExtensionPluginInfo *extPlugin =
-		    mPAScreen->mExtensionPlugins[p];
+	    foreach (ExtensionPluginInfo *extPlugin,
+	    	     mPAScreen->mExtensionPlugins)
 		extPlugin->handleRestackNotify (mAWindow);
-	    }
 
 	    break;
 	}
@@ -2629,7 +2585,7 @@ AnimScreen::getMatchingAnimSelection (CompWindow *w,
 				      AnimEvent e,
 				      int *duration)
 {
-    priv->getMatchingAnimSelection (w, e, duration);
+    return priv->getMatchingAnimSelection (w, e, duration);
 }
 
 bool
@@ -2693,15 +2649,12 @@ AnimScreen::~AnimScreen ()
 
 AnimWindow::AnimWindow (CompWindow *w) :
     PluginClassHandler<AnimWindow, CompWindow, ANIMATION_ABI> (w),
-    priv (new PrivateAnimWindow (w, this)),
     mWindow (w),
+    priv (new PrivateAnimWindow (w, this)),
     mSavedRectsValid (false)
 {
-    for (int p = 0; p < priv->mPAScreen->mExtensionPlugins.size (); p++)
-    {
-	ExtensionPluginInfo *extPlugin = priv->mPAScreen->mExtensionPlugins[p];
+    foreach (ExtensionPluginInfo *extPlugin, priv->mPAScreen->mExtensionPlugins)
 	extPlugin->initPersistentData (this);
-    }
 }
 
 AnimWindow::~AnimWindow ()

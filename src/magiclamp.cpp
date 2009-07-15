@@ -58,8 +58,6 @@ MagicLampAnim::MagicLampAnim (CompWindow *w,
     Animation::Animation (w, curWindowEvent, duration, info, icon),
     GridAnim::GridAnim (w, curWindowEvent, duration, info, icon)
 {
-    int screenHeight = screen->vpSize ().height ();
-
     CompRect outRect (mAWindow->savedRectsValid () ?
 		      mAWindow->savedOutRect () :
 		      w->outputRect ());
@@ -110,7 +108,7 @@ MagicLampWavyAnim::MagicLampWavyAnim (CompWindow *w,
     float minHalfWidth = 0.22f;
     float maxHalfWidth = 0.38f;
 
-    for (int i = 0; i < mNumWaves; i++)
+    for (unsigned int i = 0; i < mNumWaves; i++)
     {
 	mWaves[i].amp =
 	    ampDirection * (waveAmpMax - waveAmpMin) *
@@ -165,7 +163,7 @@ MagicLampAnim::hasMovingEnd ()
 void
 MagicLampWavyAnim::filterTargetX (float &targetX, float x)
 {
-    for (int i = 0; i < mNumWaves; i++)
+    for (unsigned int i = 0; i < mNumWaves; i++)
     {
 	float cosx = ((x - mWaves[i].pos) /
 		       mWaves[i].halfWidth);

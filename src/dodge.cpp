@@ -129,14 +129,14 @@ DodgeAnim::updateDodgerDodgeAmount ()
 	getDodgeAmount (subjectRect, mWindow, mDodgeDirection);
 
     // Only update if amount got larger
-    if ((mDodgeDirection == DodgeDirectionDown && newDodgeAmount > 0 ||
-	 mDodgeDirection == DodgeDirectionUp && newDodgeAmount < 0) &&
+    if (((mDodgeDirection == DodgeDirectionDown && newDodgeAmount > 0) ||
+	 (mDodgeDirection == DodgeDirectionUp && newDodgeAmount < 0)) &&
 	abs (newDodgeAmount) > abs (mDodgeMaxAmountY))
     {
 	mDodgeMaxAmountY = newDodgeAmount;
     }
-    else if ((mDodgeDirection == DodgeDirectionRight && newDodgeAmount > 0 ||
-	      mDodgeDirection == DodgeDirectionLeft && newDodgeAmount < 0) &&
+    else if (((mDodgeDirection == DodgeDirectionRight && newDodgeAmount > 0) ||
+	      (mDodgeDirection == DodgeDirectionLeft && newDodgeAmount < 0)) &&
 	     abs (newDodgeAmount) > abs (mDodgeMaxAmountX))
     {
 	mDodgeMaxAmountX = newDodgeAmount;
@@ -351,15 +351,15 @@ DodgeAnim::DodgeAnim (CompWindow *w,
 		      const AnimEffect info,
 		      const CompRect &icon) :
     Animation::Animation (w, curWindowEvent, duration, info, icon),
-    TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon),
     RestackAnim::RestackAnim (w, curWindowEvent, duration, info, icon),
+    TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon),
+    mDodgeData (static_cast<DodgePersistentData *>
+		(AnimWindow::get (w)->persistentData["dodge"])),
     mDodgeSubjectWin (0),
     mDodgeMaxAmountX (0),
     mDodgeMaxAmountY (0),
     mDodgeDirection (DodgeDirectionNone),
-    mDodgeMode (optValI (AnimationOptions::DodgeMode)),
-    mDodgeData (static_cast<DodgePersistentData *>
-		(AnimWindow::get (w)->persistentData["dodge"]))
+    mDodgeMode (optValI (AnimationOptions::DodgeMode))
 {
 }
 
@@ -840,9 +840,9 @@ DodgeAnim::paintedElsewhere ()
 }
 
 DodgePersistentData::DodgePersistentData () :
+    dodgeOrder (0),
     isDodgeSubject (false),
     skipPostPrepareScreen (false),
-    dodgeOrder (0),
     dodgeChainStart (0),
     dodgeChainPrev (0),
     dodgeChainNext (0)

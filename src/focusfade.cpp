@@ -44,8 +44,8 @@ FocusFadeAnim::FocusFadeAnim (CompWindow *w,
 			      const AnimEffect info,
 			      const CompRect &icon) :
     Animation::Animation (w, curWindowEvent, duration, info, icon),
-    FadeAnim::FadeAnim (w, curWindowEvent, duration, info, icon),
-    RestackAnim::RestackAnim (w, curWindowEvent, duration, info, icon)
+    RestackAnim::RestackAnim (w, curWindowEvent, duration, info, icon),
+    FadeAnim::FadeAnim (w, curWindowEvent, duration, info, icon)
 {
 }
 
@@ -54,8 +54,6 @@ FocusFadeAnim::FocusFadeAnim (CompWindow *w,
 GLushort
 FocusFadeAnim::computeOpacity (GLushort opacityInt)
 {
-    RestackPersistentData *data = static_cast<RestackPersistentData *>
-	(mAWindow->persistentData["restack"]);
     float progress = progressLinear ();
     float opacity = opacityInt / (float)OPAQUE;
     float multiplier;
