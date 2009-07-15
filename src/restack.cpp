@@ -287,6 +287,7 @@ RestackAnim::onSameRestackChain (CompWindow *wSubject, CompWindow *wOther)
 	if (!dataCur)
 	    break;
     }
+    return false;
 }
 
 bool
