@@ -5,6 +5,10 @@
 	<_long>Used to set a window or screen negative</_long>
 	<category>Accessibility</category>
 	<deps>
+	    <requirement>
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
+	    </requirement>
 	    <relation type="after">
 		<plugin>blur</plugin>
 	    </relation>
