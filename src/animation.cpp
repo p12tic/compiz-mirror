@@ -569,7 +569,9 @@ PrivateAnimScreen::getMatchingAnimSelection (CompWindow *w,
 	if (duration)
 	    *duration = valDuration.list ()[i].i ();
 
-	return eventEffects->effects[i];
+	AnimEffect effect = eventEffects->effects[i];
+
+	return (effect ? effect : AnimEffectNone);
     }
 
     return AnimEffectNone;
@@ -2573,7 +2575,9 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 							 AnimEventFocus,
 							 &duration);
 
-		if (!chosenEffect->isRestackAnim)
+		if (chosenEffect &&
+		    chosenEffect != AnimEffectNone &&
+		    !chosenEffect->isRestackAnim)
 		    mPAScreen->initiateFocusAnim (this);
 	    }
 
