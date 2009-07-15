@@ -34,168 +34,159 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "private.h"
 
 // =====================  Effect: Glide  =========================
 
-static void
-fxGlideGetParams (CompWindow *w,
-		  float *finalDistFac,
-		  float *finalRotAng,
-		  float *thickness)
+GlideAnim::GlideAnim (CompWindow *w,
+		      WindowEvent curWindowEvent,
+		      float duration,
+		      const AnimEffect info,
+		      const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon),
+    ZoomAnim::ZoomAnim (w, curWindowEvent, duration, info, icon)
 {
-    ANIM_WINDOW(w);
+}
 
-    if (aw->com.curAnimEffect == AnimEffectGlide1)
-    {
-	*finalDistFac = animGetF (w, ANIM_SCREEN_OPTION_GLIDE1_AWAY_POS);
-	*finalRotAng = animGetF (w, ANIM_SCREEN_OPTION_GLIDE1_AWAY_ANGLE);
-    }
-    else
-    {
-	*finalDistFac = animGetF (w, ANIM_SCREEN_OPTION_GLIDE2_AWAY_POS);
-	*finalRotAng = animGetF (w, ANIM_SCREEN_OPTION_GLIDE2_AWAY_ANGLE);
-    }
+Glide2Anim::Glide2Anim (CompWindow *w,
+			WindowEvent curWindowEvent,
+			float duration,
+			const AnimEffect info,
+			const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon),
+    GlideAnim::GlideAnim (w, curWindowEvent, duration, info, icon)
+{
+}
+
+void
+GlideAnim::getParams (float *finalDistFac,
+		      float *finalRotAng,
+		      float *thickness)
+{
+    *finalDistFac = optValF (AnimationOptions::Glide1AwayPosition);
+    *finalRotAng = optValF (AnimationOptions::Glide1AwayAngle);
+}
+
+void
+Glide2Anim::getParams (float *finalDistFac,
+		       float *finalRotAng,
+		       float *thickness)
+{
+    *finalDistFac = optValF (AnimationOptions::Glide2AwayPosition);
+    *finalRotAng = optValF (AnimationOptions::Glide2AwayAngle);
 }
 
 float
-fxGlideAnimProgress (CompWindow *w)
+GlideAnim::getProgress ()
 {
-    float forwardProgress = defaultAnimProgress (w);
+    float forwardProgress = progressLinear ();
 
-    return decelerateProgress(forwardProgress);
+    return progressDecelerate (forwardProgress);
 }
 
-static void
-applyGlideTransform (CompWindow *w)
+float
+GlideAnim::getFadeProgress ()
 {
-    ANIM_WINDOW(w);
+    if (zoomToIcon ())
+	return ZoomAnim::getFadeProgress ();
 
-    CompTransform *transform = &aw->com.transform;
+    return getProgress ();
+}
+
+void
+GlideAnim::applyTransform ()
+{
+    if (zoomToIcon ())
+	ZoomAnim::applyTransform ();
 
     float finalDistFac;
     float finalRotAng;
     float thickness;
 
-    fxGlideGetParams (w, &finalDistFac, &finalRotAng, &thickness);
+    getParams (&finalDistFac, &finalRotAng, &thickness);
 
     float forwardProgress;
-    if (fxGlideZoomToIcon (w))
-    {
-	float dummy;
-	fxZoomAnimProgress (w, &forwardProgress, &dummy, TRUE);
-    }
+    if (zoomToIcon ())
+	getZoomProgress (&forwardProgress, 0, true);
     else
-	forwardProgress = fxGlideAnimProgress (w);
+	forwardProgress = getProgress ();
 
     float finalz = finalDistFac * 0.8 * DEFAULT_Z_CAMERA *
-	w->screen->width;
+	::screen->width ();
 
-    Vector3d rotAxis = {1, 0, 0};
-    Point3d rotAxisOffset =
-	{WIN_X(w) + WIN_W(w) / 2.0f,
-	 WIN_Y(w) + WIN_H(w) / 2.0f,
-	 0};
-    Point3d translation = {0, 0, finalz * forwardProgress};
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
+
+    GLVector rotAxis (1, 0, 0, 0);
+    GLVector rotAxisOffset (outRect.x () + outRect.width () / 2.0f,
+			    outRect.y () + outRect.height () / 2.0f,
+			    0, 0);
+    GLVector translation (0, 0, finalz * forwardProgress, 0);
 
     float rotAngle = finalRotAng * forwardProgress;
-    aw->glideModRotAngle = fmodf(rotAngle + 720, 360.0f);
+    glideModRotAngle = fmodf (rotAngle + 720, 360.0f);
 
     // put back to window position
-    matrixTranslate (transform, rotAxisOffset.x, rotAxisOffset.y, 0);
+    mTransform.translate (rotAxisOffset);
 
-    perspectiveDistortAndResetZ (w->screen, transform);
+    perspectiveDistortAndResetZ (mTransform);
 
     // animation movement
-    matrixTranslate (transform, translation.x, translation.y, translation.z);
+    mTransform.translate (translation);
 
     // animation rotation
-    matrixRotate (transform, rotAngle, rotAxis.x, rotAxis.y, rotAxis.z);
+    mTransform.rotate (rotAngle, rotAxis);
 
     // intentional scaling of z by 0 to prevent weird opacity results and
     // flashing that happen when z coords are between 0 and 1 (bug in compiz?)
-    matrixScale (transform, 1.0f, 1.0f, 0.0f);
+    mTransform.scale (1.0f, 1.0f, 0.0f);
 
     // place window rotation axis at origin
-    matrixTranslate (transform, -rotAxisOffset.x, -rotAxisOffset.y, 0);
+    mTransform.translate (-rotAxisOffset);
 }
 
 void
-fxGlideAnimStep (CompWindow *w, float time)
+GlideAnim::adjustDuration ()
 {
-    defaultAnimStep (w, time);
-
-    applyGlideTransform (w);
-}
-
-void
-fxGlideUpdateWindowAttrib (CompWindow * w,
-			   WindowPaintAttrib * wAttrib)
-{
-    ANIM_WINDOW(w);
-
-    if (fxGlideZoomToIcon (w))
+    if (zoomToIcon ())
     {
-	fxZoomUpdateWindowAttrib (w, wAttrib);
-	return;
+	mTotalTime *= kDurationFactor;
+	mRemainingTime = mTotalTime;
     }
-
-    float forwardProgress = fxGlideAnimProgress (w);
-
-    wAttrib->opacity = aw->com.storedOpacity * (1 - forwardProgress);
 }
 
 void
-fxGlideUpdateWindowTransform (CompWindow *w,
-			      CompTransform *wTransform)
+GlideAnim::prePaintWindow ()
 {
-    ANIM_WINDOW(w);
-
-    applyTransform (wTransform, &aw->com.transform);
+    if (90 < glideModRotAngle &&
+	glideModRotAngle < 270)
+	glCullFace (GL_FRONT);
 }
 
-Bool
-fxGlideInit (CompWindow * w)
+void
+GlideAnim::postPaintWindow ()
 {
-    ANIM_WINDOW(w);
-
-    if (fxGlideZoomToIcon (w))
-    {
-	aw->com.animTotalTime /= ZOOM_PERCEIVED_T;
-	aw->com.animRemainingTime = aw->com.animTotalTime;
-    }
-
-    return defaultAnimInit (w);
+    if (90 < glideModRotAngle &&
+	glideModRotAngle < 270)
+	glCullFace (GL_BACK);
 }
 
-void fxGlidePrePaintWindow (CompWindow *w)
+bool
+GlideAnim::zoomToIcon ()
 {
-    ANIM_WINDOW(w);
-
-    if (90 < aw->glideModRotAngle &&
-	aw->glideModRotAngle < 270)
-	glCullFace(GL_FRONT);
+    return ((mCurWindowEvent == WindowEventMinimize ||
+	     mCurWindowEvent == WindowEventUnminimize) &&
+	    optValB (AnimationOptions::Glide1ZoomToTaskbar));
 }
 
-void fxGlidePostPaintWindow (CompWindow * w)
+bool
+Glide2Anim::zoomToIcon ()
 {
-    ANIM_WINDOW(w);
-
-    if (90 < aw->glideModRotAngle &&
-	aw->glideModRotAngle < 270)
-	glCullFace(GL_BACK);
-}
-
-Bool
-fxGlideZoomToIcon (CompWindow *w)
-{
-    ANIM_WINDOW(w);
-    return
-	((aw->com.curWindowEvent == WindowEventMinimize ||
-	  aw->com.curWindowEvent == WindowEventUnminimize) &&
-	 ((aw->com.curAnimEffect == AnimEffectGlide1 &&
-	   animGetB (w, ANIM_SCREEN_OPTION_GLIDE1_Z2TOM)) ||
-	  (aw->com.curAnimEffect == AnimEffectGlide2 &&
-	   animGetB (w, ANIM_SCREEN_OPTION_GLIDE2_Z2TOM))));
+    return ((mCurWindowEvent == WindowEventMinimize ||
+	     mCurWindowEvent == WindowEventUnminimize) &&
+	    optValB (AnimationOptions::Glide2ZoomToTaskbar));
 }
 

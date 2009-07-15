@@ -25,10 +25,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
-
-extern ExtensionPluginInfo animExtensionPluginInfo;
-extern AnimBaseFunctions animBaseFunctions;
+#include "private.h"
 
 // =================  Option Related Functions  =================
 
@@ -43,118 +40,135 @@ AnimEvent win2AnimEventMap[WindowEventNum] =
     AnimEventFocus
 };
 
-OPTION_GETTERS (&animBaseFunctions,
-		&animExtensionPluginInfo, NUM_NONEFFECT_OPTIONS)
-
-CompOptionValue *
-animGetPluginOptVal (CompWindow *w,
-		     ExtensionPluginInfo *pluginInfo,
-		     int optionId)
+AnimEvent
+PrivateAnimScreen::getCorrespondingAnimEvent (AnimationOptions::Options optionId)
 {
-    ANIM_WINDOW (w);
-    ANIM_SCREEN (w->screen);
+    switch (optionId)
+    {
+    case AnimationOptions::OpenOptions:
+    case AnimationOptions::OpenEffects:
+    case AnimationOptions::OpenRandomEffects:
+	return AnimEventOpen;
 
-    OptionSet *os =
-	&as->eventOptionSets[win2AnimEventMap[aw->com.curWindowEvent]].
-	sets[aw->curAnimSelectionRow];
-    IdValuePair *pair = os->pairs;
+    case AnimationOptions::CloseEffects:
+    case AnimationOptions::CloseRandomEffects:
+    case AnimationOptions::CloseOptions:
+	return AnimEventClose;
 
-    int i;
-    for (i = 0; i < os->nPairs; i++, pair++)
-	if (pair->pluginInfo == pluginInfo &&
-	    pair->optionId == optionId)
-	    return &pair->value;
-    return &pluginInfo->effectOptions[optionId].value;
+    case AnimationOptions::MinimizeOptions:
+    case AnimationOptions::MinimizeEffects:
+    case AnimationOptions::MinimizeRandomEffects:
+	return AnimEventMinimize;
+
+    case AnimationOptions::FocusOptions:
+    case AnimationOptions::FocusEffects:
+	return AnimEventFocus;
+
+    case AnimationOptions::ShadeOptions:
+    case AnimationOptions::ShadeEffects:
+    case AnimationOptions::ShadeRandomEffects:
+	return AnimEventShade;
+
+    default:
+	return AnimEventNum;
+    }
 }
 
-static
-void freeSingleEventOptionSets (OptionSets *oss)
+bool
+IdValuePair::matchesPluginOption (ExtensionPluginInfo *testPluginInfo,
+				  int testOptionId)
 {
-    int j;
-    for (j = 0; j < oss->nSets; j++)
-	if (oss->sets[j].pairs)
-	    free(oss->sets[j].pairs);
-    free (oss->sets);
-    oss->sets = NULL;
+    return (pluginInfo == testPluginInfo &&
+	    optionId == testOptionId);
+}
+
+CompOption::Value &
+AnimWindow::pluginOptVal (ExtensionPluginInfo *pluginInfo,
+			  int optionId,
+			  Animation *anim)
+{
+    PrivateAnimWindow *aw = priv;
+    PrivateAnimScreen *as = aw->paScreen ();
+
+    OptionSet *os = as->getOptionSetForSelectedRow (aw, anim);
+
+    IdValuePairVector::iterator it =
+	find_if (os->pairs.begin (),
+		 os->pairs.end (),
+		 boost::bind (&IdValuePair::matchesPluginOption,
+			      _1, pluginInfo, optionId));
+
+    return (it == os->pairs.end () ?
+	    (*pluginInfo->effectOptions)[optionId].value () :
+	    (*it).value);
+}
+
+OptionSet *
+PrivateAnimScreen::getOptionSetForSelectedRow (PrivateAnimWindow *aw,
+					       Animation *anim)
+{
+    return (&mEventOptionSets[win2AnimEventMap
+	    [anim->curWindowEvent ()]].
+	    sets[aw->curAnimSelectionRow ()]);
 }
 
 void
-freeAllOptionSets (AnimScreen *as)
+PrivateAnimScreen::updateOptionSet (OptionSet *os,
+				    const char *optNamesValuesOrig)
 {
-    AnimEvent e;
-    for (e = 0; e < AnimEventNum; e++)
-	freeSingleEventOptionSets (&as->eventOptionSets[e]);
-}
-
-static void
-updateOptionSet(CompScreen *s, OptionSet *os, char *optNamesValuesOrig)
-{
-    ANIM_SCREEN(s);
-    int len = strlen(optNamesValuesOrig);
-    char *optNamesValues = calloc(len + 1, 1);
+    int len = strlen (optNamesValuesOrig);
+    char *optNamesValues = (char *)calloc (len + 1, 1);
 
     // Find the first substring with no spaces in it
-    sscanf(optNamesValuesOrig, " %s ", optNamesValues);
-    if (strlen(optNamesValues) == 0)
+    sscanf (optNamesValuesOrig, " %s ", optNamesValues);
+    if (strlen (optNamesValues) == 0)
     {
-	free(optNamesValues);
+	free (optNamesValues);
 	return;
     }
     // Backup original, since strtok is destructive
-    strcpy(optNamesValues, optNamesValuesOrig);
+    strcpy (optNamesValues, optNamesValuesOrig);
 
     char *name;
-    char *nameTrimmed = calloc(len + 1, 1);
-    char *valueStr = NULL;
-    char *betweenPairs = ",";
-    char *betweenOptVal = "=";
+    char *nameTrimmed = (char *)calloc (len + 1, 1);
+    char *valueStr = 0;
+    const char *betweenPairs = ",";
+    const char *betweenOptVal = "=";
 
     // Count number of pairs
-    char *pairToken = optNamesValuesOrig;
+    char *pairToken = (char *)optNamesValuesOrig; // TODO do with CompString
     int nPairs = 1;
-	
-    while ((pairToken = strchr(pairToken, betweenPairs[0])))
+
+    while ((pairToken = strchr (pairToken, betweenPairs[0])))
     {
 	pairToken++; // skip delimiter
 	nPairs++;
     }
 
-    if (os->pairs)
-	free(os->pairs);
-    os->pairs = calloc(nPairs, sizeof(IdValuePair));
-    if (!os->pairs)
-    {
-	os->nPairs = 0;
-	free(optNamesValues);
-	free(nameTrimmed);
-	compLogMessage ("animation", CompLogLevelError,
-			"Not enough memory");
-	return;
-    }
-    os->nPairs = nPairs;
+    os->pairs.clear ();
+    os->pairs.reserve (nPairs);
 
     // Tokenize pairs
-    name = strtok(optNamesValues, betweenOptVal);
+    name = strtok (optNamesValues, betweenOptVal);
 
-    IdValuePair *pair = &os->pairs[0];
     int errorNo = -1;
     int i;
-    for (i = 0; name && i < nPairs; i++, pair++)
+    for (i = 0; name && i < nPairs; i++)
     {
 	errorNo = 0;
-	if (strchr(name, betweenPairs[0])) // handle "a, b=4" case
+	if (strchr (name, betweenPairs[0])) // handle "a, b=4" case
 	{
 	    errorNo = 1;
 	    break;
 	}
 
-	sscanf(name, " %s ", nameTrimmed);
-	if (strlen(nameTrimmed) == 0)
+	sscanf (name, " %s ", nameTrimmed);
+	if (strlen (nameTrimmed) == 0)
 	{
 	    errorNo = 2;
 	    break;
 	}
-	valueStr = strtok(NULL, betweenPairs);
+	valueStr = strtok (0, betweenPairs);
 	if (!valueStr)
 	{
 	    errorNo = 3;
@@ -164,21 +178,22 @@ updateOptionSet(CompScreen *s, OptionSet *os, char *optNamesValuesOrig)
 	// TODO: Fix: Convert to "pluginname:option_name" format
 	// Warning: Assumes that option names in different extension plugins
 	// will be different.
-	Bool matched = FALSE;
+	bool matched = false;
 	const ExtensionPluginInfo *extensionPluginInfo;
-	CompOption *o;
-	int optId;
-	int k;
-	for (k = 0; k < as->nExtensionPlugins; k++)
+	CompOption *o = 0;
+	int optId = -1;
+	for (int k = 0; k < mExtensionPlugins.size (); k++)
 	{
-	    extensionPluginInfo = as->extensionPlugins[k];
-	    unsigned int nOptions = extensionPluginInfo->nEffectOptions;
-	    o = extensionPluginInfo->effectOptions;
-	    for (optId = 0; optId < nOptions; optId++, o++)
+	    extensionPluginInfo = mExtensionPlugins[k];
+	    unsigned int nOptions = extensionPluginInfo->effectOptions->size ();
+	    for (optId = extensionPluginInfo->firstEffectOptionIndex;
+		 optId < nOptions; optId++)
 	    {
-		if (strcasecmp(nameTrimmed, o->name) == 0)
+		o = &(*extensionPluginInfo->effectOptions)[optId];
+
+		if (strcasecmp (nameTrimmed, o->name ().c_str ()) == 0)
 		{
-		    matched = TRUE;
+		    matched = true;
 		    break;
 		}
 	    }
@@ -190,66 +205,78 @@ updateOptionSet(CompScreen *s, OptionSet *os, char *optNamesValuesOrig)
 	    errorNo = 4;
 	    break;
 	}
-	CompOptionValue v;
+	CompOption::Value v;
+
+	os->pairs.push_back (IdValuePair ());
+	IdValuePair *pair = &os->pairs[i];
 
 	pair->pluginInfo = extensionPluginInfo;
 	pair->optionId = optId;
 	int valueRead = -1;
-	switch (o->type)
+	switch (o->type ())
 	{
-	case CompOptionTypeBool:
-	    valueRead = sscanf(valueStr, " %d ", &pair->value.b);
+	case CompOption::TypeBool:
+	    int vb;
+	    valueRead = sscanf (valueStr, " %d ", &vb);
+	    if (valueRead)
+		pair->value.set ((bool)vb);
 	    break;
-	case CompOptionTypeInt:
-	    valueRead = sscanf(valueStr, " %d ", &v.i);
+	case CompOption::TypeInt:
+	{
+	    int vi;
+	    valueRead = sscanf (valueStr, " %d ", &vi);
 	    if (valueRead > 0)
 	    {
-		// Store option's original value
-		int backup = o->value.i;
-		if (compSetIntOption (o, &v))
+		if (o->rest ().inRange (vi))
+		{
+		    v.set (vi);
 		    pair->value = v;
+		}
 		else
 		    errorNo = 7;
-		// Restore value
-		o->value.i = backup;
 	    }
 	    break;
-	case CompOptionTypeFloat:
-	    valueRead = sscanf(valueStr, " %f ", &v.f);
+	}
+	case CompOption::TypeFloat:
+	{
+	    float vf;
+	    valueRead = sscanf (valueStr, " %f ", &vf);
 	    if (valueRead > 0)
 	    {
-		// Store option's original value
-		float backup = o->value.f;
-		if (compSetFloatOption (o, &v))
+		if (o->rest ().inRange (vf))
+		{
+		    v.set (vf);
 		    pair->value = v;
+		}
 		else
 		    errorNo = 7;
-		// Restore value
-		o->value.f = backup;
 	    }
 	    break;
-	case CompOptionTypeString:
-	    v.s = calloc (strlen(valueStr) + 1, 1); // TODO: not freed
-	    if (!v.s)
+	}
+	case CompOption::TypeString:
+	{
+	    char *vs = (char *)calloc (strlen (valueStr) + 1, 1); // TODO: not freed
+	    if (!vs)
 	    {
 		compLogMessage ("animation", CompLogLevelError,
 				"Not enough memory");
 		return;
 	    }
-	    strcpy(v.s, valueStr);
+	    v.set (CompString (valueStr));
 	    valueRead = 1;
 	    break;
-	case CompOptionTypeColor:
+	}
+	case CompOption::TypeColor:
 	{
-	    unsigned int c[4];
+	    unsigned int vc[4];
 	    valueRead = sscanf (valueStr, " #%2x%2x%2x%2x ",
-				&c[0], &c[1], &c[2], &c[3]);
+				&vc[0], &vc[1], &vc[2], &vc[3]);
 	    if (valueRead == 4)
 	    {
-		CompOptionValue * pv = &pair->value;
-		int j;
-		for (j = 0; j < 4; j++)
-		    pv->c[j] = c[j] << 8 | c[j];
+		CompOption::Value * pv = &pair->value;
+		for (int j = 0; j < 4; j++)
+		    vc[j] = vc[j] << 8 | vc[j];
+		pv->set (vc);
 	    }
 	    else
 		errorNo = 6;
@@ -267,7 +294,7 @@ updateOptionSet(CompScreen *s, OptionSet *os, char *optNamesValuesOrig)
 	// Such an option doesn't currently exist anyway.
 
 	errorNo = -1;
-	name = strtok(NULL, betweenOptVal);
+	name = strtok (0, betweenOptVal);
     }
 
     if (i < nPairs)
@@ -304,38 +331,27 @@ updateOptionSet(CompScreen *s, OptionSet *os, char *optNamesValuesOrig)
 	default:
 	    break;
 	}
-	free(os->pairs);
-	os->pairs = 0;
-	os->nPairs = 0;
+	os->pairs.clear ();
     }
-    free(optNamesValues);
-    free(nameTrimmed);
+    free (optNamesValues);
+    free (nameTrimmed);
 }
 
 void
-updateOptionSets (CompScreen *s,
-		  AnimEvent e)
+PrivateAnimScreen::updateOptionSets (AnimEvent e)
 {
-    ANIM_SCREEN (s);
+    OptionSets *oss = &mEventOptionSets[e];
+    CompOption::Value::Vector *listVal =
+	&getOptions ()[customOptionOptionIds[e]].value ().list ();
+    int n = listVal->size ();
 
-    OptionSets *oss = &as->eventOptionSets[e];
-    CompListValue *listVal = &as->opt[customOptionOptionIds[e]].value.list;
-    int n = listVal->nValue;
+    oss->sets.clear ();
+    oss->sets.reserve (n);
 
-    if (oss->sets)
-	freeSingleEventOptionSets(oss);
-
-    oss->sets = calloc(n, sizeof(OptionSet));
-    if (!oss->sets)
+    for (int i = 0; i < n; i++)
     {
-	compLogMessage ("animation", CompLogLevelError,
-			"Not enough memory");
-	return;
+	oss->sets.push_back (OptionSet ());
+	updateOptionSet (&oss->sets[i], (*listVal)[i].s ().c_str ());
     }
-    oss->nSets = n;
-
-    int i;
-    for (i = 0; i < n; i++)
-	updateOptionSet(s, &oss->sets[i], listVal->value[i].s);
 }
 

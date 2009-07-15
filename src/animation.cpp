@@ -81,402 +81,476 @@
  */
 
 #include <GL/glu.h>
-#include "animation-internal.h"
+#include <core/atoms.h>
+#include <sys/time.h>
+#include "private.h"
 
+class AnimPluginVTable :
+    public CompPlugin::VTableForScreenAndWindow<AnimScreen, AnimWindow>
+{
+public:
+    bool init ();
+    void fini ();
+};
 
-#define EXTENSION_INCREMENT 4
+COMPIZ_PLUGIN_20090315 (animation, AnimPluginVTable);
 
 #define FAKE_ICON_SIZE 4
 
-int animDisplayPrivateIndex;
-int animFunctionsPrivateIndex;
-CompMetadata animMetadata;
-
-static int switcherPostWait = 0;
-
-
-char *eventNames[AnimEventNum] =
+const char *eventNames[AnimEventNum] =
 {"Open", "Close", "Minimize", "Shade", "Focus"};
 
 int chosenEffectOptionIds[AnimEventNum] =
 {
-    ANIM_SCREEN_OPTION_OPEN_EFFECTS,
-    ANIM_SCREEN_OPTION_CLOSE_EFFECTS,
-    ANIM_SCREEN_OPTION_MINIMIZE_EFFECTS,
-    ANIM_SCREEN_OPTION_SHADE_EFFECTS,
-    ANIM_SCREEN_OPTION_FOCUS_EFFECTS
+    AnimationOptions::OpenEffects,
+    AnimationOptions::CloseEffects,
+    AnimationOptions::MinimizeEffects,
+    AnimationOptions::ShadeEffects,
+    AnimationOptions::FocusEffects
 };
 
 int randomEffectOptionIds[AnimEventNum] =
 {
-    ANIM_SCREEN_OPTION_OPEN_RANDOM_EFFECTS,
-    ANIM_SCREEN_OPTION_CLOSE_RANDOM_EFFECTS,
-    ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS,
-    ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS,
+    AnimationOptions::OpenRandomEffects,
+    AnimationOptions::CloseRandomEffects,
+    AnimationOptions::MinimizeRandomEffects,
+    AnimationOptions::ShadeRandomEffects,
     -1
 };
 
 int customOptionOptionIds[AnimEventNum] =
 {
-    ANIM_SCREEN_OPTION_OPEN_OPTIONS,
-    ANIM_SCREEN_OPTION_CLOSE_OPTIONS,
-    ANIM_SCREEN_OPTION_MINIMIZE_OPTIONS,
-    ANIM_SCREEN_OPTION_SHADE_OPTIONS,
-    ANIM_SCREEN_OPTION_FOCUS_OPTIONS
+    AnimationOptions::OpenOptions,
+    AnimationOptions::CloseOptions,
+    AnimationOptions::MinimizeOptions,
+    AnimationOptions::ShadeOptions,
+    AnimationOptions::FocusOptions
 };
 
 int matchOptionIds[AnimEventNum] =
 {
-    ANIM_SCREEN_OPTION_OPEN_MATCHES,
-    ANIM_SCREEN_OPTION_CLOSE_MATCHES,
-    ANIM_SCREEN_OPTION_MINIMIZE_MATCHES,
-    ANIM_SCREEN_OPTION_SHADE_MATCHES,
-    ANIM_SCREEN_OPTION_FOCUS_MATCHES
+    AnimationOptions::OpenMatches,
+    AnimationOptions::CloseMatches,
+    AnimationOptions::MinimizeMatches,
+    AnimationOptions::ShadeMatches,
+    AnimationOptions::FocusMatches
 };
 
 int durationOptionIds[AnimEventNum] =
 {
-    ANIM_SCREEN_OPTION_OPEN_DURATIONS,
-    ANIM_SCREEN_OPTION_CLOSE_DURATIONS,
-    ANIM_SCREEN_OPTION_MINIMIZE_DURATIONS,
-    ANIM_SCREEN_OPTION_SHADE_DURATIONS,
-    ANIM_SCREEN_OPTION_FOCUS_DURATIONS
+    AnimationOptions::OpenDurations,
+    AnimationOptions::CloseDurations,
+    AnimationOptions::MinimizeDurations,
+    AnimationOptions::ShadeDurations,
+    AnimationOptions::FocusDurations
 };
-
 
 // Bind each effect in the list of chosen effects for every event, to the
 // corresponding animation effect (i.e. effect with that name) if it is
 // provided by a plugin, otherwise set it to None.
-static void
-updateEventEffects (CompScreen *s,
-		    AnimEvent e,
-		    Bool forRandom)
+void
+PrivateAnimScreen::updateEventEffects (AnimEvent e,
+				       bool forRandom,
+				       bool callPost)
 {
-    ANIM_SCREEN (s);
-
-    CompListValue *listVal;
+    CompOption::Value::Vector *listVal;
     EffectSet *effectSet;
     if (forRandom)
     {
-	listVal = &as->opt[randomEffectOptionIds[e]].value.list;
-	effectSet = &as->randomEffects[e];
+	listVal = &getOptions ()[randomEffectOptionIds[e]].value ().list ();
+	effectSet = &mRandomEffects[e];
     }
     else
     {
-	listVal = &as->opt[chosenEffectOptionIds[e]].value.list;
-	effectSet = &as->eventEffects[e];
+	listVal = &getOptions ()[chosenEffectOptionIds[e]].value ().list ();
+	effectSet = &mEventEffects[e];
     }
-    int n = listVal->nValue;
-    
-    if (effectSet->effects)
-	free (effectSet->effects);
-    effectSet->effects = calloc (n, sizeof (AnimEffect));
-    if (!effectSet->effects)
-    {
-	compLogMessage ("animation", CompLogLevelError,
-			"Not enough memory");
-	return;
-    }
-    effectSet->n = n;
+    int n = listVal->size ();
 
-    int nEventEffectsAllowed = as->nEventEffectsAllowed[e];
-    const AnimEffect *eventEffectsAllowed = as->eventEffectsAllowed[e];
+    effectSet->effects.clear ();
+    effectSet->effects.reserve (n);
 
-    int r;
-    for (r = 0; r < n; r++) // for each row
+    AnimEffectVector &eventEffectsAllowed = mEventEffectsAllowed[e];
+
+    for (int r = 0; r < n; r++) // for each row
     {
-	const char *animName = listVal->value[r].s;
-	
+	const CompString &animName = (*listVal)[r].s ();
+
 	// Find the animation effect with matching name
-	effectSet->effects[r] = AnimEffectNone;
-	int i;
-	for (i = 0; i < nEventEffectsAllowed; i++)
+	AnimEffectVector::iterator it =
+	    find_if (eventEffectsAllowed.begin (),
+		     eventEffectsAllowed.end (),
+		     boost::bind (&AnimEffectInfo::matchesEffectName,
+				  _1, animName));
+
+	effectSet->effects.push_back (it == eventEffectsAllowed.end () ?
+				      AnimEffectNone : *it);
+    }
+
+    if (callPost)
+    {
+	for (int p = 0; p < mExtensionPlugins.size (); p++)
 	{
-	    if (0 == strcasecmp (animName, eventEffectsAllowed[i]->name))
-	    {
-		effectSet->effects[r] = eventEffectsAllowed[i];
-		break;
-	    }
+	    ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	    extPlugin->postUpdateEventEffects (e, forRandom);
 	}
     }
 }
 
-static void
-updateAllEventEffects (CompScreen *s)
+void
+PrivateAnimScreen::updateAllEventEffects ()
 {
-    AnimEvent e;
-    for (e = 0; e < AnimEventNum; e++) // for each anim event
-	updateEventEffects (s, e, FALSE);
-    for (e = 0; e < AnimEventNum - 1; e++) // for each anim event except focus
-	updateEventEffects (s, e, TRUE);
+    // for each anim event
+    for (int e = 0; e < AnimEventNum; e++)
+	updateEventEffects ((AnimEvent)e, false);
+
+    // for each anim event except focus
+    for (int e = 0; e < AnimEventNum - 1; e++)
+	updateEventEffects ((AnimEvent)e, true);
 }
 
-// Free everything related to effects
-static void
-freeAllEffects (AnimScreen *as)
+bool
+PrivateAnimScreen::isAnimEffectInList (AnimEffect theEffect,
+				       EffectSet &effectList)
 {
-    AnimEvent e;
-    for (e = 0; e < AnimEventNum; e++)
+    for (int i = 0; i < effectList.effects.size (); i++)
+	if (effectList.effects[i] == theEffect)
+	    return true;
+    return false;
+}
+
+bool
+PrivateAnimScreen::isAnimEffectPossibleForEvent (AnimEffect theEffect,
+						 AnimEvent event)
+{
+    // Check all rows to see if the effect is chosen there
+    int nRows = mEventEffects[event].effects.size ();
+    for (int i = 0; i < nRows; i++)
     {
-	if (as->randomEffects[e].effects)
-	    free (as->randomEffects[e].effects);
-	if (as->eventEffectsAllowed[e])
-	    free (as->eventEffectsAllowed[e]);
-	if (as->eventEffects[e].n > 0 && as->eventEffects[e].effects)
-	    free (as->eventEffects[e].effects);
+	AnimEffect chosenEffect = mEventEffects[event].effects[i];
+	// if chosen directly
+	if (chosenEffect == theEffect)
+	    return true;
+	// if chosen in random pool
+	if (mRandomEffects[event].effects.size () &&
+	    chosenEffect == AnimEffectRandom &&
+	    isAnimEffectInList (theEffect, mRandomEffects[event]))
+	    return true;
     }
+    return false;
+}
+
+bool
+PrivateAnimScreen::isAnimEffectPossible (AnimEffect theEffect)
+{
+    for (int e = 0; e < AnimEventNum; e++)
+	if (isAnimEffectPossibleForEvent (theEffect, (AnimEvent)e))
+	    return true;
+    return false;
+}
+
+bool
+PrivateAnimScreen::isRestackAnimPossible ()
+{
+    // Check all rows to see if the chosen effect is a restack animation
+    int nRows = mEventEffects[AnimEventFocus].effects.size ();
+
+    for (int i = 0; i < nRows; i++)
+    {
+	AnimEffect chosenEffect = mEventEffects[AnimEventFocus].effects[i];
+	if (chosenEffect->isRestackAnim)
+	    return true;
+    }
+    return false;
+}
+
+bool
+AnimScreen::isRestackAnimPossible ()
+{
+    return priv->isRestackAnimPossible ();
 }
 
 // Extension functions
 
-static void
-animAddExtension (CompScreen *s,
-		  ExtensionPluginInfo *extensionPluginInfo)
+void
+AnimScreen::addExtension (ExtensionPluginInfo *extensionPluginInfo)
 {
-    ANIM_SCREEN (s);
+    priv->addExtension (extensionPluginInfo, true);
+}
 
-    // Make sure there is enough space for extension plugins
-    if (as->nExtensionPlugins == as->maxExtensionPlugins)
-    {
-	ExtensionPluginInfo **newExtensionPlugins =
-	    realloc (as->extensionPlugins,
-		     (as->maxExtensionPlugins + EXTENSION_INCREMENT) *
-		     sizeof (ExtensionPluginInfo *));
-	if (!newExtensionPlugins)
-	{
-	    compLogMessage ("animation", CompLogLevelError,
-			    "Not enough memory");
-	    return;
-	}
-	as->extensionPlugins = newExtensionPlugins;
-	as->maxExtensionPlugins += EXTENSION_INCREMENT;
-    }
-
-    as->extensionPlugins[as->nExtensionPlugins] = extensionPluginInfo;
-    as->nExtensionPlugins++;
+void
+PrivateAnimScreen::addExtension (ExtensionPluginInfo *extensionPluginInfo,
+				 bool shouldInitPersistentData)
+{
+    mExtensionPlugins.push_back (extensionPluginInfo);
 
     unsigned int nPluginEffects = extensionPluginInfo->nEffects;
 
-    // Make sure there is enough space for event effects
-    AnimEvent e;
-    for (e = 0; e < AnimEventNum; e++) // for each anim event
-    {
-	if (as->maxEventEffectsAllowed[e] <
-	    as->nEventEffectsAllowed[e] + nPluginEffects)
-	{
-	    int newNum = as->nEventEffectsAllowed[e] + nPluginEffects;
-	    AnimEffect *newEventEfffects =
-		realloc (as->eventEffectsAllowed[e],
-			 newNum * sizeof (AnimEffect));
-	    if (!newEventEfffects)
-	    {
-		compLogMessage ("animation", CompLogLevelError,
-				"Not enough memory");
-		return;
-	    }
-	    as->eventEffectsAllowed[e] = newEventEfffects;
-	    as->maxEventEffectsAllowed[e] = newNum;
-	}
-    }
+    bool eventEffectsNeedUpdate[AnimEventNum] =
+	{false, false, false, false, false};
 
-    Bool eventEffectsNeedUpdate[AnimEventNum] =
-	{FALSE, FALSE, FALSE, FALSE, FALSE};
-
-    // Put this plugin's effects into as->eventEffects and
-    // as->eventEffectsAllowed
-    int j;
-    for (j = 0; j < nPluginEffects; j++)
+    // Put this plugin's effects into mEventEffects and
+    // mEventEffectsAllowed
+    for (unsigned int j = 0; j < nPluginEffects; j++)
     {
 	const AnimEffect effect = extensionPluginInfo->effects[j];
 
 	// Update allowed effects for each event
-	for (e = 0; e < AnimEventNum; e++)
+	for (int e = 0; e < AnimEventNum; e++)
 	{
 	    if (effect->usedForEvents[e])
 	    {
-		as->eventEffectsAllowed[e][as->nEventEffectsAllowed[e]++] =
-		    effect;
-		eventEffectsNeedUpdate[e] = TRUE;
+		mEventEffectsAllowed[e].push_back (effect);
+		eventEffectsNeedUpdate[e] = true;
 	    }
 	}
     }
-    for (e = 0; e < AnimEventNum; e++)
+
+    for (int e = 0; e < AnimEventNum; e++)
 	if (eventEffectsNeedUpdate[e])
 	{
-	    updateEventEffects (s, e, FALSE);
+	    updateEventEffects ((AnimEvent)e, false, false);
 	    if (e != AnimEventFocus)
-		updateEventEffects (s, e, TRUE);
+		updateEventEffects ((AnimEvent)e, true, false);
 	}
+
+    if (shouldInitPersistentData)
+    {
+	// Initialize persistent window data for the extension plugin
+	foreach (CompWindow *w, ::screen->windows ())
+	{
+	    AnimWindow *aw = AnimWindow::get (w);
+	    extensionPluginInfo->initPersistentData (aw);
+	}
+    }
 }
 
-static void
-animRemoveExtension (CompScreen *s,
-		     ExtensionPluginInfo *extensionPluginInfo)
+void
+AnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 {
-    ANIM_SCREEN (s);
-    char *pluginName = NULL;
-    int pluginNameLen = 0;
-    
-    if (extensionPluginInfo->nEffects > 0)
-    {
-	pluginName = extensionPluginInfo->effects[0]->name;
-	pluginNameLen = strchr (pluginName, ':') - pluginName;
-    }
+    priv->removeExtension (extensionPluginInfo);
+}
 
+void
+PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
+{
     // Stop all ongoing animations
-    CompWindow *w;
-    for (w = s->windows; w; w = w->next)
+    foreach (CompWindow *w, ::screen->windows ())
     {
-	ANIM_WINDOW (w);
-	if (aw->com.curAnimEffect != AnimEffectNone)
-	    postAnimationCleanup (w);
+	PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
+	if (aw->curAnimation ())
+	    aw->postAnimationCleanUp ();
     }
 
-    int p;
-    for (p = 0; p < as->nExtensionPlugins; p++)
-    {
-	// Find the matching one
-	if (as->extensionPlugins[p] == extensionPluginInfo)
-	    break;
-    }
-    if (p == as->nExtensionPlugins)
+    // Find the matching plugin and delete it
+
+    ExtensionPluginVector::iterator it = find (mExtensionPlugins.begin (),
+					       mExtensionPlugins.end (),
+					       extensionPluginInfo);
+
+    if (it == mExtensionPlugins.end ())
 	return; // couldn't find that extension plugin
 
-    // Remove extensionPlugins[p] (shift following plugins)
-    as->nExtensionPlugins--;
-    if (as->nExtensionPlugins > 0)
-	memmove (&as->extensionPlugins[p],
-		 &as->extensionPlugins[p + 1],
-		 (as->nExtensionPlugins - p) *
-		 sizeof (ExtensionPluginInfo *));
+    mExtensionPlugins.erase (it);
 
-    AnimEvent e;
-    for (e = 0; e < AnimEventNum; e++)
+    if (extensionPluginInfo->nEffects == 0)
+	return; // no animation effects -> we're done here
+
+
+    // Also delete the "allowed effect" entries for that plugin
+
+    const char *firstEffectName = extensionPluginInfo->effects[0]->name;
+    CompString pluginName (firstEffectName,
+			   strchr (firstEffectName, ':') - firstEffectName);
+
+    for (int e = 0; e < AnimEventNum; e++)
     {
-	AnimEffect *eventEffectsAllowed = as->eventEffectsAllowed[e];
-	int n = as->nEventEffectsAllowed[e];
+	AnimEffectVector &eventEffectsAllowed = mEventEffectsAllowed[e];
 
-	// nUpto: number of event effects upto the removed plugin
-	int nUpto;
-	for (nUpto = 0; nUpto < n; nUpto++)
-	{
-	    // if plugin name matches
-	    if (0 == strncmp (pluginName, eventEffectsAllowed[nUpto]->name,
-			      pluginNameLen))
-		break;
-	}
-	// nUptoNext: number of event effects upto the next plugin
-	int nUptoNext;
-	for (nUptoNext = nUpto; nUptoNext < n; nUptoNext++)
-	{
-	    // if plugin name doesn't match
-	    if (0 != strncmp (pluginName, eventEffectsAllowed[nUpto]->name,
-			      pluginNameLen))
-		break;
-	}
-	if (nUpto < nUptoNext)
-	{
-	    // Remove event effects for plugin p (Shift following effects)
-	    if (nUptoNext < n)
-		memmove (&eventEffectsAllowed[nUpto],
-			 &eventEffectsAllowed[nUptoNext],
-			 (nUptoNext - nUpto) * sizeof (AnimEffect));
-	    as->nEventEffectsAllowed[e] -= nUptoNext - nUpto;
+	// Find the first animation effect with matching name
+	AnimEffectVector::iterator itBeginEffect =
+	    find_if (eventEffectsAllowed.begin (),
+		     eventEffectsAllowed.end (),
+		     boost::bind (&AnimEffectInfo::matchesPluginName,
+				  _1, pluginName));
 
-	    // Update event effects to complete removal
-	    updateEventEffects (s, e, FALSE);
-	    if (e != AnimEventFocus)
-		updateEventEffects (s, e, TRUE);
-	}
+	if (itBeginEffect == eventEffectsAllowed.end ())
+	    continue; // plugin didn't provide any effects for this event
+
+	// Find the first animation effect with non-matching name,
+	// starting with itBeginEffect
+	AnimEffectVector::iterator itEndEffect =
+	    find_if (eventEffectsAllowed.begin (),
+		     eventEffectsAllowed.end (),
+		     boost::bind (&AnimEffectInfo::matchesPluginName,
+				  _1, pluginName) == false);
+
+	eventEffectsAllowed.erase (itBeginEffect, itEndEffect);
+
+	// Update event effects to complete removal
+	updateEventEffects ((AnimEvent)e, false);
+	if (e != AnimEventFocus)
+	    updateEventEffects ((AnimEvent)e, true);
     }
+
+    // Destroy persistent window data for the extension plugin
+    foreach (CompWindow *w, ::screen->windows ())
+    {
+	AnimWindow *aw = AnimWindow::get (w);
+	extensionPluginInfo->destroyPersistentData (aw);
+    }
+}
+
+ExtensionPluginInfo::ExtensionPluginInfo (unsigned int nEffects,
+					  AnimEffect *effects,
+					  CompOption::Vector *effectOptions,
+					  unsigned int firstEffectOptionIndex) :
+    nEffects (nEffects),
+    effects (effects),
+    effectOptions (effectOptions),
+    firstEffectOptionIndex (firstEffectOptionIndex)
+{
 }
 
 // End of extension functions
 
-
-Bool
-defaultAnimInit (CompWindow * w)
+Animation::Animation (CompWindow *w,
+		      WindowEvent curWindowEvent,
+		      float duration,
+		      const AnimEffect info,
+		      const CompRect &icon) :
+    mWindow (w),
+    mAWindow (AnimWindow::get (w)),
+    mTotalTime (duration),
+    mRemainingTime (duration),
+    mTimeElapsedWithinTimeStep (0),
+    mOverrideProgressDir (0),
+    mCurPaintAttrib (GLWindow::defaultPaintAttrib),
+    mStoredOpacity (CompositeWindow::get (w)->opacity ()),
+    mCurWindowEvent (curWindowEvent),
+    mInitialized (false), // store window opacity
+    mInfo (info),
+    mIcon (icon)
 {
-    ANIM_SCREEN(w->screen);
-    ANIM_WINDOW(w);
-
-    // store window opacity
-    aw->com.storedOpacity = w->paint.opacity;
-
-    aw->com.timestep =
-    	(w->screen->slowAnimations ? 2 : // For smooth slow-mo (refer to display.c)
-	 as->opt[ANIM_SCREEN_OPTION_TIME_STEP].value.i);
-
-    return TRUE;
-}
-
-Bool
-animZoomToIcon (CompWindow *w)
-{
-    ANIM_WINDOW(w);
-
-    if (aw->com.curAnimEffect->properties.zoomToIconFunc)
-	return aw->com.curAnimEffect->properties.zoomToIconFunc (w);
-
-    return FALSE;
-}
-
-static Bool
-defaultMinimizeAnimInit (CompWindow * w)
-{
-    ANIM_WINDOW(w);
-
-    if (animZoomToIcon (w))
+    if (curWindowEvent == WindowEventShade ||
+	curWindowEvent == WindowEventUnshade)
     {
-	aw->com.animTotalTime /= ZOOM_PERCEIVED_T;
-	aw->com.animRemainingTime = aw->com.animTotalTime;
-	aw->com.usingTransform = TRUE;
+	mDecorTopHeight = w->output ().top;
+	mDecorBottomHeight = w->output ().bottom;
     }
-    return defaultAnimInit (w);
+
+    texturesCache = new GLTexture::List (GLWindow::get (w)->textures ());
+    PrivateAnimScreen *as = mAWindow->priv->paScreen ();
+
+    mTimestep = as->optionGetTimeStep ();
 }
 
-static Bool
-animWithTransformInit (CompWindow * w)
+Animation::~Animation ()
 {
-    ANIM_WINDOW(w);
-
-    aw->com.usingTransform = TRUE;
-
-    return defaultMinimizeAnimInit (w);
+    delete texturesCache;
 }
 
-static inline Bool
-returnTrue (CompWindow *w)
+CompOption::Value &
+Animation::optVal (int optionId)
 {
-    return TRUE;
+    return mAWindow->pluginOptVal (getExtensionPluginInfo (), optionId, this);
+}
+
+/// Play the animation effect backwards from where it left off.
+void
+Animation::reverse ()
+{
+    mRemainingTime = mTotalTime - mRemainingTime;
+
+    // avoid window remains
+    if (mRemainingTime <= 0)
+	mRemainingTime = 1;
+
+    switch (mCurWindowEvent) // the old event
+    {
+    case WindowEventOpen:
+	mCurWindowEvent = WindowEventClose;
+	break;
+    case WindowEventClose:
+	mCurWindowEvent = WindowEventOpen;
+	break;
+    case WindowEventMinimize:
+	mCurWindowEvent = WindowEventUnminimize;
+	break;
+    case WindowEventUnminimize:
+	mCurWindowEvent = WindowEventMinimize;
+	break;
+    case WindowEventShade:
+	mCurWindowEvent = WindowEventUnshade;
+	break;
+    case WindowEventUnshade:
+	mCurWindowEvent = WindowEventShade;
+	break;
+    default:
+	break;
+    }
+
+    // 1: forward, 2: backward  (3 - progressDir is opposite direction)
+    int progressDir = 1;
+
+    switch (mCurWindowEvent) // the new event
+    {
+    case WindowEventClose:
+    case WindowEventMinimize:
+    case WindowEventShade:
+	progressDir = 2;
+	break;
+    default:
+	break;
+    }
+
+    if (mOverrideProgressDir == 0)
+	mOverrideProgressDir = progressDir;
+    else if (mOverrideProgressDir == 3 - progressDir)
+	mOverrideProgressDir = 0; // disable override
+}
+
+PartialWindowAnim::PartialWindowAnim (CompWindow *w,
+				      WindowEvent curWindowEvent,
+				      float duration,
+				      const AnimEffect info,
+				      const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    mUseDrawRegion (false),
+    mDrawRegion ()
+{
+}
+
+void
+PrivateAnimWindow::updateSelectionRow (int r)
+{
+    mPrevAnimSelectionRow = mCurAnimSelectionRow;
+    mCurAnimSelectionRow = r;
 }
 
 // Assumes events in the metadata are in
 // [Open, Close, Minimize, Focus, Shade] order
 // and effects among those are in alphabetical order
 // but with "(Event) None" first and "(Event) Random" last.
-static AnimEffect
-getMatchingAnimSelection (CompWindow *w,
-			  AnimEvent e,
-			  int *duration)
+AnimEffect
+PrivateAnimScreen::getMatchingAnimSelection (CompWindow *w,
+					     AnimEvent e,
+					     int *duration)
 {
-    ANIM_SCREEN(w->screen);
-    ANIM_WINDOW(w);
+    PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
 
-    EffectSet *eventEffects;
-    CompOptionValue *valMatch;
-    CompOptionValue *valDuration;
-    CompOptionValue *valCustomOptions;
+    EffectSet *eventEffects = &mEventEffects[e];
+    CompOption::Value &valMatch =
+	getOptions ()[matchOptionIds[e]].value ();
+    CompOption::Value &valDuration =
+	getOptions ()[durationOptionIds[e]].value ();
+    CompOption::Value &valCustomOptions =
+	getOptions ()[customOptionOptionIds[e]].value ();
 
-    eventEffects = &as->eventEffects[e];
-    valMatch = &as->opt[matchOptionIds[e]].value;
-    valDuration = &as->opt[durationOptionIds[e]].value;
-    valCustomOptions = &as->opt[customOptionOptionIds[e]].value;
-
-    int nRows = valMatch->list.nValue;
-    if (nRows != eventEffects->n ||
-	nRows != valDuration->list.nValue ||
-	nRows != valCustomOptions->list.nValue)
+    unsigned int nRows = valMatch.list ().size ();
+    if (nRows != eventEffects->effects.size () ||
+	nRows != valDuration.list ().size () ||
+	nRows != valCustomOptions.list ().size ())
     {
 	compLogMessage ("animation", CompLogLevelError,
 			"Animation settings mismatch in \"Animation "
@@ -485,17 +559,15 @@ getMatchingAnimSelection (CompWindow *w,
     }
 
     // Find the first row that matches this window for this event
-    int i;
-    for (i = 0; i < nRows; i++)
+    for (unsigned int i = 0; i < nRows; i++)
     {
-	if (!matchEval (&valMatch->list.value[i].match, w))
+	if (!valMatch.list ()[i].match ().evaluate (w))
 	    continue;
 
-	aw->prevAnimSelectionRow = aw->curAnimSelectionRow;
-	aw->curAnimSelectionRow = i;
+	aw->updateSelectionRow (i);
 
 	if (duration)
-	    *duration = valDuration->list.value[i].i;
+	    *duration = valDuration.list ()[i].i ();
 
 	return eventEffects->effects[i];
     }
@@ -503,71 +575,75 @@ getMatchingAnimSelection (CompWindow *w,
     return AnimEffectNone;
 }
 
-static inline AnimEffect
-animGetAnimEffect (AnimScreen *as,
-		   AnimEffect effect,
-		   AnimEvent animEvent)
+AnimEffect
+PrivateAnimScreen::getActualEffect (AnimEffect effect,
+				    AnimEvent animEvent)
 {
-    Bool allRandom = as->opt[ANIM_SCREEN_OPTION_ALL_RANDOM].value.b;
-    AnimEffect *randomEffects = as->randomEffects[animEvent].effects;
-    unsigned int nRandomEffects = as->randomEffects[animEvent].n;
+    bool allRandom = optionGetAllRandom ();
+    AnimEffectVector *randomEffects = &mRandomEffects[animEvent].effects;
+    unsigned int nRandomEffects = randomEffects->size ();
+    unsigned int nFirstRandomEffect = 0;
 
     if ((effect == AnimEffectRandom) || allRandom)
     {
 	if (nRandomEffects == 0) // no random animation selected, assume "all"
 	{
+	    randomEffects = &mEventEffectsAllowed[animEvent];
+
 	    // exclude None and Random
-	    randomEffects = as->eventEffectsAllowed[animEvent] + 2;
-	    nRandomEffects = as->nEventEffectsAllowed[animEvent] - 2;
+	    nFirstRandomEffect = 2;
+	    nRandomEffects = randomEffects->size () - 2;
 	}
-	unsigned int index;
-	index = (unsigned int)(nRandomEffects * (double)rand() / RAND_MAX);
-	return randomEffects[index];
+	unsigned int index = nFirstRandomEffect +
+	    (unsigned int)(nRandomEffects * (double)rand () / RAND_MAX);
+	return (*randomEffects)[index];
     }
     else
 	return effect;
 }
 
-// Converts animation direction string to an integer direction
-// (up, down, left, or right)
-AnimDirection getActualAnimDirection (CompWindow * w,
-				      AnimDirection dir,
-				      Bool openDir)
+/// Converts animation direction (up, down, left, right, random, auto)
+/// to an actual direction (up, down, left, or right).
+AnimDirection
+Animation::getActualAnimDirection (AnimDirection dir,
+				   bool openDir)
 {
-    ANIM_WINDOW(w);
-
     if (dir == AnimDirectionRandom)
     {
-	dir = rand() % 4;
+	dir = (AnimDirection)(rand () % 4);
     }
     else if (dir == AnimDirectionAuto)
     {
+	CompRect outRect (mAWindow->savedRectsValid () ?
+			  mAWindow->savedOutRect () :
+			  mWindow->outputRect ());
+
 	// away from icon
-	int centerX = BORDER_X(w) + BORDER_W(w) / 2;
-	int centerY = BORDER_Y(w) + BORDER_H(w) / 2;
-	float relDiffX = ((float)centerX - aw->com.icon.x) / BORDER_W(w);
-	float relDiffY = ((float)centerY - aw->com.icon.y) / BORDER_H(w);
+	int centerX = outRect.x () + outRect.width () / 2 ;
+	int centerY = outRect.y () + outRect.height () / 2 ;
+	float relDiffX = ((float)centerX - mIcon.x ()) / outRect.width ();
+	float relDiffY = ((float)centerY - mIcon.y ()) / outRect.height ();
 
 	if (openDir)
 	{
-	    if (aw->com.curWindowEvent == WindowEventMinimize ||
-		aw->com.curWindowEvent == WindowEventUnminimize)
+	    if (mCurWindowEvent == WindowEventMinimize ||
+		mCurWindowEvent == WindowEventUnminimize)
 		// min/unmin. should always result in +/- y direction
-		dir = aw->com.icon.y < w->screen->height - aw->com.icon.y ?
+		dir = (mIcon.y () < (int)::screen->height () - mIcon.y ()) ?
 		    AnimDirectionDown : AnimDirectionUp;
-	    else if (fabs(relDiffY) > fabs(relDiffX))
+	    else if (fabs (relDiffY) > fabs (relDiffX))
 		dir = relDiffY > 0 ? AnimDirectionDown : AnimDirectionUp;
 	    else
 		dir = relDiffX > 0 ? AnimDirectionRight : AnimDirectionLeft;
 	}
 	else
 	{
-	    if (aw->com.curWindowEvent == WindowEventMinimize ||
-		aw->com.curWindowEvent == WindowEventUnminimize)
+	    if (mCurWindowEvent == WindowEventMinimize ||
+		mCurWindowEvent == WindowEventUnminimize)
 		// min/unmin. should always result in +/- y direction
-		dir = aw->com.icon.y < w->screen->height - aw->com.icon.y ?
+		dir = (mIcon.y () < (int)::screen->height () - mIcon.y ()) ?
 		    AnimDirectionUp : AnimDirectionDown;
-	    else if (fabs(relDiffY) > fabs(relDiffX))
+	    else if (fabs (relDiffY) > fabs (relDiffX))
 		dir = relDiffY > 0 ? AnimDirectionUp : AnimDirectionDown;
 	    else
 		dir = relDiffX > 0 ? AnimDirectionLeft : AnimDirectionRight;
@@ -577,262 +653,147 @@ AnimDirection getActualAnimDirection (CompWindow * w,
 }
 
 float
-defaultAnimProgress (CompWindow *w)
+Animation::progressLinear ()
 {
-    ANIM_WINDOW (w);
-
     float forwardProgress =
-	1 - aw->com.animRemainingTime / (aw->com.animTotalTime - aw->com.timestep);
-    forwardProgress = MIN(forwardProgress, 1);
-    forwardProgress = MAX(forwardProgress, 0);
+	1 - mRemainingTime / (mTotalTime - mTimestep);
+    forwardProgress = MIN (forwardProgress, 1);
+    forwardProgress = MAX (forwardProgress, 0);
 
-    if (aw->com.curWindowEvent == WindowEventOpen ||
-	aw->com.curWindowEvent == WindowEventUnminimize ||
-	aw->com.curWindowEvent == WindowEventUnshade ||
-	aw->com.curWindowEvent == WindowEventFocus)
+    if (mCurWindowEvent == WindowEventOpen ||
+	mCurWindowEvent == WindowEventUnminimize ||
+	mCurWindowEvent == WindowEventUnshade ||
+	mCurWindowEvent == WindowEventFocus)
 	forwardProgress = 1 - forwardProgress;
 
     return forwardProgress;
 }
 
 float
-sigmoidAnimProgress (CompWindow *w)
+Animation::progressEaseInEaseOut ()
 {
-    ANIM_WINDOW (w);
-
     float forwardProgress =
-	1 - aw->com.animRemainingTime / (aw->com.animTotalTime - aw->com.timestep);
-    forwardProgress = MIN(forwardProgress, 1);
-    forwardProgress = MAX(forwardProgress, 0);
+	1 - mRemainingTime / (mTotalTime - mTimestep);
+    forwardProgress = MIN (forwardProgress, 1);
+    forwardProgress = MAX (forwardProgress, 0);
 
     // Apply sigmoid and normalize
     forwardProgress =
-	(sigmoid(forwardProgress) - sigmoid(0)) /
-	(sigmoid(1) - sigmoid(0));
+	(sigmoid (forwardProgress) - sigmoid (0)) /
+	(sigmoid (1) - sigmoid (0));
 
-    if (aw->com.curWindowEvent == WindowEventOpen ||
-	aw->com.curWindowEvent == WindowEventUnminimize ||
-	aw->com.curWindowEvent == WindowEventUnshade ||
-	aw->com.curWindowEvent == WindowEventFocus)
+    if (mCurWindowEvent == WindowEventOpen ||
+	mCurWindowEvent == WindowEventUnminimize ||
+	mCurWindowEvent == WindowEventUnshade ||
+	mCurWindowEvent == WindowEventFocus)
 	forwardProgress = 1 - forwardProgress;
 
     return forwardProgress;
 }
 
-// Gives some acceleration (when closing a window)
-// or deceleration (when opening a window)
-// Applies a sigmoid with slope s,
-// where minx and maxx are the
-// starting and ending points on the sigmoid
-float decelerateProgressCustom(float progress, float minx, float maxx)
+/// Gives some acceleration (when closing a window)
+/// or deceleration (when opening a window).
+/// Applies a sigmoid with slope s,
+/// where minx and maxx are the
+/// starting and ending points on the sigmoid.
+float
+Animation::progressDecelerateCustom (float progress, float minx, float maxx)
 {
-    float x = 1 - progress;
+    float x = progress;
     float s = 8;
 
-    return (1 -
-	    ((sigmoid2(minx + (x * (maxx - minx)), s) - sigmoid2(minx, s)) /
-	     (sigmoid2(maxx, s) - sigmoid2(minx, s))));
-}
-
-float decelerateProgress(float progress)
-{
-    return decelerateProgressCustom(progress, 0.5, 0.75);
+    return ((sigmoid2(minx + (x * (maxx - minx)), s) - sigmoid2(minx, s)) /
+	    (sigmoid2(maxx, s) - sigmoid2(minx, s)));
 }
 
 float
-getProgressAndCenter (CompWindow *w,
-		      Point *center)
+Animation::progressDecelerate (float progress)
 {
-    float forwardProgress = 0;
-
-    ANIM_WINDOW (w);
-
-    if (center)
-	center->x = WIN_X (w) + WIN_W (w) / 2.0;
-
-    if (animZoomToIcon (w))
-    {
-	float dummy;
-	fxZoomAnimProgress (w, &forwardProgress, &dummy, TRUE);
-
-	if (center)
-	    getZoomCenterScale (w, center, NULL);
-    }
-    else
-    {
-	forwardProgress = defaultAnimProgress (w);
-
-	if (center)
-	{
-	    if (aw->com.curWindowEvent == WindowEventShade ||
-		aw->com.curWindowEvent == WindowEventUnshade)
-	    {
-		float origCenterY = WIN_Y (w) + WIN_H (w) / 2.0;
-		center->y =
-		    (1 - forwardProgress) * origCenterY +
-		    forwardProgress * (WIN_Y (w) + aw->com.model->topHeight);
-	    }
-	    else // i.e. (un)minimizing without zooming
-	    {
-		    center->y = WIN_Y (w) + WIN_H (w) / 2.0;
-	    }
-	}
-    }
-    return forwardProgress;
+    return progressDecelerateCustom (progress, 0.5, 0.75);
 }
 
 void
-defaultAnimStep (CompWindow *w, float time)
+PrivateAnimWindow::copyResetBB ()
 {
-    int steps;
-
-    ANIM_SCREEN (w->screen);
-    ANIM_WINDOW (w);
-
-    float timestep =
-    	(w->screen->slowAnimations ? 2 : // For smooth slow-mo (refer to display.c)
-	 as->opt[ANIM_SCREEN_OPTION_TIME_STEP].value.i);
-
-    aw->com.timestep = timestep;
-
-    aw->remainderSteps += time / timestep;
-    steps = floor(aw->remainderSteps);
-    aw->remainderSteps -= steps;
-
-    steps = MAX(1, steps);
-
-    aw->com.animRemainingTime -= timestep * steps;
-
-    // avoid sub-zero values
-    aw->com.animRemainingTime = MAX(aw->com.animRemainingTime, 0);
-
-    matrixGetIdentity (&aw->com.transform);
-    if (animZoomToIcon (w))
-    {
-	applyZoomTransform (w);
-    }
+    memcpy (&mLastBB, &mBB, sizeof (Box));
+    mBB.x1 = mBB.y1 = MAXSHORT;
+    mBB.x2 = mBB.y2 = MINSHORT;
 }
 
 void
-defaultUpdateWindowTransform (CompWindow *w,
-			      CompTransform *wTransform)
+AnimWindow::expandBBWithBox (Box &source)
 {
-    ANIM_WINDOW(w);
+    Box &target = priv->BB ();
 
-    if (aw->com.usingTransform)
-    {
-	if (aw->com.curAnimEffect->properties.modelAnimIs3D)
-	{
-	    // center for perspective correction
-	    Point center;
-	    getProgressAndCenter (w, &center);
-	
-	    ANIM_SCREEN (w->screen);
-	    CompTransform skewTransform;
-	    matrixGetIdentity (&skewTransform);
-	    applyPerspectiveSkew (as->output, &skewTransform, &center);
-	    applyTransform (wTransform, &aw->com.transform);
-	    applyTransform (wTransform, &skewTransform);
-	}
-	else
-	{
-	    applyTransform (wTransform, &aw->com.transform);
-	}
-    }
-}
-
-// Apply transform to wTransform
-inline void
-applyTransform (CompTransform *wTransform,
-		CompTransform *transform)
-{
-    matrixMultiply (wTransform, wTransform, transform);
-}
-
-static void
-copyResetBB (AnimWindow *aw)
-{
-    memcpy (&aw->lastBB, &aw->BB, sizeof (Box));
-    aw->BB.x1 = aw->BB.y1 = MAXSHORT;
-    aw->BB.x2 = aw->BB.y2 = MINSHORT;
+    if (source.x1 < target.x1)
+	target.x1 = source.x1;
+    if (source.x2 > target.x2)
+	target.x2 = source.x2;
+    if (source.y1 < target.y1)
+	target.y1 = source.y1;
+    if (source.y2 > target.y2)
+	target.y2 = source.y2;
 }
 
 void
-expandBoxWithBox (Box *target, Box *source)
+AnimWindow::expandBBWithPoint (float fx, float fy)
 {
-    if (source->x1 < target->x1)
-	target->x1 = source->x1;
-    if (source->x2 > target->x2)
-	target->x2 = source->x2;
-    if (source->y1 < target->y1)
-	target->y1 = source->y1;
-    if (source->y2 > target->y2)
-	target->y2 = source->y2;
-}
+    Box &target = priv->BB ();
 
-void
-expandBoxWithPoint (Box *target, float fx, float fy)
-{
     short x = MAX (MIN (fx, MAXSHORT - 1), MINSHORT);
     short y = MAX (MIN (fy, MAXSHORT - 1), MINSHORT);
 
-    if (target->x1 == MAXSHORT)
+    if (target.x1 == MAXSHORT)
     {
-	target->x1 = x;
-	target->y1 = y;
-	target->x2 = x + 1;
-	target->y2 = y + 1;
+	target.x1 = x;
+	target.y1 = y;
+	target.x2 = x + 1;
+	target.y2 = y + 1;
 	return;
     }
-    if (x < target->x1)
-	target->x1 = x;
-    else if (x > target->x2)
-	target->x2 = x;
+    if (x < target.x1)
+	target.x1 = x;
+    else if (x > target.x2)
+	target.x2 = x;
 
-    if (y < target->y1)
-	target->y1 = y;
-    else if (y > target->y2)
-	target->y2 = y;
+    if (y < target.y1)
+	target.y1 = y;
+    else if (y > target.y2)
+	target.y2 = y;
 }
 
-// This will work for zoom-like 2D transforms,
-// but not for glide-like 3D transforms.
-static void
-expandBoxWithPoint2DTransform (CompScreen *s,
-			       Box *target,
-			       CompVector *coords,
-			       CompTransform *transformMat)
+/// This will work for zoom-like 2D transforms,
+/// but not for glide-like 3D transforms.
+void
+AnimWindow::expandBBWithPoint2DTransform (GLVector &coords,
+					  GLMatrix &transformMat)
 {
-    CompVector coordsTransformed;
-    
-    matrixMultiplyVector (&coordsTransformed, coords, transformMat);
-    expandBoxWithPoint (target, coordsTransformed.x, coordsTransformed.y);
+    GLVector coordsTransformed = transformMat * coords;
+    expandBBWithPoint (coordsTransformed[GLVector::x],
+		       coordsTransformed[GLVector::y]);
 }
 
-// Either points or objects should be non-NULL.
-static Bool
-expandBoxWithPoints3DTransform (CompOutput          *output,
-				CompScreen          *s,
-				const CompTransform *transform,
-				Box                 *targetBox,
-				const float         *points,
-				Object              *objects,
-				int                 nPoints)
+/// Either points or objects should be non-0.
+bool
+AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
+					   GLMatrix       &transform,
+					   const float    *points,
+					   GridAnim::GridModel::GridObject *objects,
+					   int            nPoints)
 {
     GLdouble dModel[16];
     GLdouble dProjection[16];
     GLdouble x, y, z;
-    int i;
-    for (i = 0; i < 16; i++)
+    for (int i = 0; i < 16; i++)
     {
-	dModel[i] = transform->m[i];
-	dProjection[i] = s->projection[i];
+	dModel[i] = transform[i];
+	dProjection[i] = GLScreen::get (::screen)->projectionMatrix ()[i];
     }
     GLint viewport[4] =
-	{output->region.extents.x1,
-	 output->region.extents.y1,
-	 output->width,
-	 output->height};
+	{output.region ()->extents.x1,
+	 output.region ()->extents.y1,
+	 output.width (),
+	 output.height ()};
 
     if (points) // use points
     {
@@ -841,2201 +802,618 @@ expandBoxWithPoints3DTransform (CompOutput          *output,
 	    if (!gluProject (points[0], points[1], points[2],
 			     dModel, dProjection, viewport,
 			     &x, &y, &z))
-		return FALSE;
-    
-	    expandBoxWithPoint (targetBox, x + 0.5, (s->height - y) + 0.5);
+		return false;
+
+	    expandBBWithPoint (x + 0.5, (::screen->height () - y) + 0.5);
 	}
     }
-    else // use objects
+    else // use grid model objects
     {
-	Object *object = objects;
+	GridAnim::GridModel::GridObject *object = objects;
 	for (; nPoints; nPoints--, object++)
 	{
-	    if (!gluProject (object->position.x,
-			     object->position.y,
-			     object->position.z,
+	    if (!gluProject (object->position ().x (),
+			     object->position ().y (),
+			     object->position ().z (),
 			     dModel, dProjection, viewport,
 			     &x, &y, &z))
-		return FALSE;
+		return false;
 
-	    expandBoxWithPoint (targetBox, x + 0.5, (s->height - y) + 0.5);
+	    expandBBWithPoint (x + 0.5, (::screen->height () - y) + 0.5);
 	}
     }
-    return TRUE;
-}
-
-static void
-modelUpdateBB (CompOutput *output,
-	       CompWindow * w,
-	       Box *BB)
-{
-    int i;
-
-    ANIM_WINDOW (w);
-
-    Model *model = aw->com.model;
-    if (!model)
-	return;
-
-    Object *object = model->objects;
-
-    if (aw->com.usingTransform)
-    {
-	if (aw->com.curAnimEffect->properties.modelAnimIs3D)
-	{
-	    CompTransform wTransform;
-
-	    // center for perspective correction
-	    Point center;
-	    getProgressAndCenter (w, &center);
-
-	    CompTransform fullTransform;
-	    memcpy (fullTransform.m, aw->com.transform.m, sizeof (float) * 16);
-	    applyPerspectiveSkew (output, &fullTransform, &center);
-
-	    prepareTransform (w->screen, output, &wTransform, &fullTransform);
-
-	    expandBoxWithPoints3DTransform (output,
-					    w->screen,
-					    &wTransform,
-					    BB,
-					    NULL,
-					    model->objects,
-					    model->numObjects);
-	}
-	else
-	{
-	    Object *object = model->objects;
-	    for (i = 0; i < model->numObjects; i++, object++)
-	    {
-		CompVector coords;
-    
-		coords.x = object->position.x;
-		coords.y = object->position.y;
-		coords.z = 0;
-		coords.w = 1;
-
-		expandBoxWithPoint2DTransform (w->screen,
-					       BB,
-					       &coords,
-					       &aw->com.transform);
-	    }
-  	}
-    }
-    else
-    {
-	for (i = 0; i < model->numObjects; i++, object++)
-	{
-	    expandBoxWithPoint (BB,
-				object->position.x + 0.5,
-				object->position.y + 0.5);
-	}
-    }
+    return true;
 }
 
 void
-updateBBWindow (CompOutput *output,
-		CompWindow * w,
-		Box *BB)
+AnimWindow::expandBBWithWindow ()
 {
-    Box windowBox = {WIN_X(w), WIN_X(w) + WIN_W(w),
-		     WIN_Y(w), WIN_Y(w) + WIN_H(w)};
-    expandBoxWithBox (BB, &windowBox);
+    CompRect outRect (savedRectsValid () ?
+		      savedOutRect () :
+		      mWindow->outputRect ());
+    Box windowBox = {
+	outRect.x (), outRect.x () + outRect.width (),
+	outRect.y (), outRect.y () + outRect.height ()
+    };
+    expandBBWithBox (windowBox);
 }
 
 void
-updateBBScreen (CompOutput *output,
-		CompWindow * w,
-		Box *BB)
+AnimWindow::expandBBWithScreen ()
 {
-    Box screenBox = {0, w->screen->width,
-		     0, w->screen->height};
-    expandBoxWithBox (BB, &screenBox);
+    Box screenBox = {0, ::screen->width (),
+		     0, ::screen->height ()};
+    expandBBWithBox (screenBox);
 }
 
 void
-prepareTransform (CompScreen *s,
-		  CompOutput *output,
-		  CompTransform *resultTransform,
-		  CompTransform *transform)
+Animation::prepareTransform (CompOutput &output,
+			     GLMatrix &resultTransform,
+			     GLMatrix &transform)
 {
-    CompTransform sTransform;
-
-    matrixGetIdentity (&sTransform);
-    transformToScreenSpace (s, output,
-			    -DEFAULT_Z_CAMERA, &sTransform);
-
-    matrixMultiply (resultTransform, &sTransform, transform);
+    GLMatrix sTransform;
+    sTransform.toScreenSpace (&output, -DEFAULT_Z_CAMERA);
+    resultTransform = sTransform * transform;
 }
 
+/// Damage the union of window's bounding box
+/// before and after animStepFunc does its job.
 void
-compTransformUpdateBB (CompOutput *output,
-		       CompWindow *w,
-		       Box *BB)
+PrivateAnimWindow::damageBoundingBox ()
 {
-    ANIM_WINDOW(w);
-    CompScreen *s = w->screen;
-    CompTransform wTransform;
-
-    prepareTransform (s, output, &wTransform, &aw->com.transform);
-
-    float corners[4*3] = {WIN_X(w), WIN_Y(w), 0,
-			  WIN_X(w) + WIN_W(w), WIN_Y(w), 0,
-			  WIN_X(w), WIN_Y(w) + WIN_H(w), 0,
-			  WIN_X(w) + WIN_W(w), WIN_Y(w) + WIN_H(w), 0};
-
-    expandBoxWithPoints3DTransform (output,
-				    s,
-				    &wTransform,
-				    BB,
-				    corners,
-				    NULL,
-				    4);
-}
-
-// Damage the union of window's bounding box
-// before and after animStepFunc does its job
-static void
-damageBoundingBox (CompWindow * w)
-{
-    ANIM_WINDOW(w);
-
-    if (aw->BB.x1 == MAXSHORT) // unintialized BB
+    if (mBB.x1 == MAXSHORT) // unintialized BB
 	return;
 
     // Find union of BB and lastBB
-    Region regionToDamage = XCreateRegion();
-    XRectangle rect;
-
-    BoxPtr BB = &aw->BB;
-    BoxPtr lastBB = &aw->lastBB;
 
     // Have a 1 pixel margin to prevent occasional 1 pixel line artifact
-    rect.x = BB->x1 - 1;
-    rect.y = BB->y1 - 1;
-    rect.width  = BB->x2 - BB->x1 + 2;
-    rect.height = BB->y2 - BB->y1 + 2;
-    XUnionRectWithRegion (&rect, &emptyRegion, regionToDamage);
+    CompRegion regionToDamage (mBB.x1 - 1,
+			       mBB.y1 - 1,
+			       mBB.x2 - mBB.x1 + 2,
+			       mBB.y2 - mBB.y1 + 2);
+    CompRect rect (mLastBB.x1 - 1,
+		   mLastBB.y1 - 1,
+		   mLastBB.x2 - mLastBB.x1 + 2,
+		   mLastBB.y2 - mLastBB.y1 + 2);
 
-    rect.x = lastBB->x1 - 1;
-    rect.y = lastBB->y1 - 1;
-    rect.width  = lastBB->x2 - lastBB->x1 + 2;
-    rect.height = lastBB->y2 - lastBB->y1 + 2;
-    XUnionRectWithRegion (&rect, regionToDamage, regionToDamage);
+    regionToDamage += rect;
 
-    damageScreenRegion (w->screen, regionToDamage);
-
-    XDestroyRegion (regionToDamage);
+    mPAScreen->cScreen->damageRegion (regionToDamage);
 }
 
-Bool getMousePointerXY(CompScreen * s, short *x, short *y)
+CompOutput &
+AnimScreen::output ()
+{
+    return priv->output ();
+}
+
+bool
+AnimScreen::getMousePointerXY (short *x, short *y)
 {
     Window w1, w2;
     int xp, yp, xj, yj;
     unsigned int m;
 
     if (XQueryPointer
-	(s->display->display, s->root, &w1, &w2, &xj, &yj, &xp, &yp, &m))
+	(::screen->dpy (), ::screen->root (), &w1, &w2, &xj, &yj, &xp, &yp, &m))
     {
 	*x = xp;
 	*y = yp;
-	return TRUE;
+	return true;
     }
-    return FALSE;
+    return false;
 }
 
-static int animGetWindowState(CompWindow * w)
+unsigned int
+PrivateAnimWindow::getState ()
 {
     Atom actual;
     int result, format;
     unsigned long n, left;
     unsigned char *data;
-    int retval = WithdrawnState;
+    unsigned int retval = WithdrawnState;
 
-    result = XGetWindowProperty(w->screen->display->display, w->id,
-				w->screen->display->wmStateAtom, 0L,
-				1L, FALSE,
-				w->screen->display->wmStateAtom,
-				&actual, &format, &n, &left, &data);
+    result = XGetWindowProperty (::screen->dpy (), mWindow->id (),
+				 Atoms::wmState, 0L,
+				 1L, false,
+				 Atoms::wmState,
+				 &actual, &format, &n, &left, &data);
 
     if (result == Success && data)
     {
 	if (n)
-    	    memcpy(&retval, data, sizeof(int));
+    	    memcpy (&retval, data, sizeof (int));
 
-	XFree((void *)data);
+	XFree ((void *)data);
     }
 
     return retval;
 }
 
-static Bool
-animSetScreenOptions(CompPlugin *plugin,
-		     CompScreen * screen,
-		     const char *name,
-		     CompOptionValue * value)
+CompOption::Vector &
+AnimScreen::getOptions ()
 {
-    CompOption *o;
-    int index;
-
-    ANIM_SCREEN(screen);
-
-    o = compFindOption(as->opt, NUM_OPTIONS(as), name, &index);
-    if (!o)
-	return FALSE;
-
-    switch (index)
-    {
-    case ANIM_SCREEN_OPTION_OPEN_MATCHES:
-    case ANIM_SCREEN_OPTION_CLOSE_MATCHES:
-    case ANIM_SCREEN_OPTION_MINIMIZE_MATCHES:
-    case ANIM_SCREEN_OPTION_SHADE_MATCHES:
-    case ANIM_SCREEN_OPTION_FOCUS_MATCHES:
-	if (compSetOptionList(o, value))
-	{
-	    int i;
-	    for (i = 0; i < o->value.list.nValue; i++)
-		matchUpdate (screen->display, &o->value.list.value[i].match);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_OPEN_OPTIONS:
-	if (compSetOptionList(o, value))
-	{
-	    updateOptionSets (screen, AnimEventOpen);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_CLOSE_OPTIONS:
-	if (compSetOptionList(o, value))
-	{
-	    updateOptionSets (screen, AnimEventClose);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_MINIMIZE_OPTIONS:
-	if (compSetOptionList(o, value))
-	{
-	    updateOptionSets (screen, AnimEventMinimize);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_SHADE_OPTIONS:
-	if (compSetOptionList(o, value))
-	{
-	    updateOptionSets (screen, AnimEventShade);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_FOCUS_OPTIONS:
-	if (compSetOptionList(o, value))
-	{
-	    updateOptionSets (screen, AnimEventFocus);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_OPEN_EFFECTS:
-	if (compSetOptionList(o, value))
-	{
-	    updateEventEffects (screen, AnimEventOpen, FALSE);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_CLOSE_EFFECTS:
-	if (compSetOptionList(o, value))
-	{
-	    updateEventEffects (screen, AnimEventClose, FALSE);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_MINIMIZE_EFFECTS:
-	if (compSetOptionList(o, value))
-	{
-	    updateEventEffects (screen, AnimEventMinimize, FALSE);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_SHADE_EFFECTS:
-	if (compSetOptionList(o, value))
-	{
-	    updateEventEffects (screen, AnimEventShade, FALSE);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_FOCUS_EFFECTS:
-	if (compSetOptionList(o, value))
-	{
-	    updateEventEffects (screen, AnimEventFocus, FALSE);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_OPEN_RANDOM_EFFECTS:
-	if (compSetOptionList(o, value))
-	{
-	    updateEventEffects (screen, AnimEventOpen, TRUE);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_CLOSE_RANDOM_EFFECTS:
-	if (compSetOptionList(o, value))
-	{
-	    updateEventEffects (screen, AnimEventClose, TRUE);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS:
-	if (compSetOptionList(o, value))
-	{
-	    updateEventEffects (screen, AnimEventMinimize, TRUE);
-	    return TRUE;
-	}
-	break;
-    case ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS:
-	if (compSetOptionList(o, value))
-	{
-	    updateEventEffects (screen, AnimEventShade, TRUE);
-	    return TRUE;
-	}
-	break;
-    default:
-	return compSetScreenOption (screen, o, value);
-	break;
-    }
-
-    return FALSE;
+    return priv->getOptions ();
 }
 
-static const CompMetadataOptionInfo animScreenOptionInfo[] = {
-    // Event settings
-    { "open_effects", "list", "<type>string</type>", 0, 0 },
-    { "open_durations", "list", "<type>int</type><min>50</min>", 0, 0 },
-    { "open_matches", "list", "<type>match</type>", 0, 0 },
-    { "open_options", "list", "<type>string</type>", 0, 0 },
-    { "open_random_effects", "list", "<type>string</type>", 0, 0 },
-    { "close_effects", "list", "<type>string</type>", 0, 0 },
-    { "close_durations", "list", "<type>int</type><min>50</min>", 0, 0 },
-    { "close_matches", "list", "<type>match</type>", 0, 0 },
-    { "close_options", "list", "<type>string</type>", 0, 0 },
-    { "close_random_effects", "list", "<type>string</type>", 0, 0 },
-    { "minimize_effects", "list", "<type>string</type>", 0, 0 },
-    { "minimize_durations", "list", "<type>int</type><min>50</min>", 0, 0 },
-    { "minimize_matches", "list", "<type>match</type>", 0, 0 },
-    { "minimize_options", "list", "<type>string</type>", 0, 0 },
-    { "minimize_random_effects", "list", "<type>string</type>", 0, 0 },
-    { "shade_effects", "list", "<type>string</type>", 0, 0 },
-    { "shade_durations", "list", "<type>int</type><min>50</min>", 0, 0 },
-    { "shade_matches", "list", "<type>match</type>", 0, 0 },
-    { "shade_options", "list", "<type>string</type>", 0, 0 },
-    { "shade_random_effects", "list", "<type>string</type>", 0, 0 },
-    { "focus_effects", "list", "<type>string</type>", 0, 0 },
-    { "focus_durations", "list", "<type>int</type><min>50</min>", 0, 0 },
-    { "focus_matches", "list", "<type>match</type>", 0, 0 },
-    { "focus_options", "list", "<type>string</type>", 0, 0 },
-    // Misc. settings
-    { "all_random", "bool", 0, 0, 0 },
-    { "time_step", "int", "<min>1</min>", 0, 0 },
-    // Effect settings
-    { "curved_fold_amp_mult", "float", "<min>-1.5</min><max>2.0</max>", 0, 0 },
-    { "curved_fold_zoom_to_taskbar", "bool", 0, 0, 0 },
-    { "dodge_gap_ratio", "float", "<min>0.0</min><max>1.0</max>", 0, 0 },
-    { "dream_zoom_to_taskbar", "bool", 0, 0, 0 },
-    { "glide1_away_position", "float", 0, 0, 0 },
-    { "glide1_away_angle", "float", 0, 0, 0 },
-    { "glide1_zoom_to_taskbar", "bool", 0, 0, 0 },
-    { "glide2_away_position", "float", 0, 0, 0 },
-    { "glide2_away_angle", "float", 0, 0, 0 },
-    { "glide2_zoom_to_taskbar", "bool", 0, 0, 0 },
-    { "horizontal_folds_amp_mult", "float", "<min>-1.0</min><max>3.0</max>", 0, 0 },
-    { "horizontal_folds_num_folds", "int", "<min>1</min>", 0, 0 },
-    { "horizontal_folds_zoom_to_taskbar", "bool", 0, 0, 0 },
-    { "magic_lamp_moving_end", "bool", 0, 0, 0 },
-    { "magic_lamp_grid_res", "int", "<min>4</min>", 0, 0 },
-    { "magic_lamp_max_waves", "int", "<min>3</min>", 0, 0 },
-    { "magic_lamp_amp_min", "float", "<min>200</min>", 0, 0 },
-    { "magic_lamp_amp_max", "float", "<min>200</min>", 0, 0 },
-    { "magic_lamp_open_start_width", "int", "<min>0</min>", 0, 0 },
-    { "rollup_fixed_interior", "bool", 0, 0, 0 },
-    { "sidekick_num_rotations", "float", "<min>0</min>", 0, 0 },
-    { "sidekick_springiness", "float", "<min>0</min><max>1</max>", 0, 0 },
-    { "sidekick_zoom_from_center", "int", RESTOSTRING (0, LAST_ZOOM_FROM_CENTER), 0, 0 },
-    { "vacuum_moving_end", "bool", 0, 0, 0 },
-    { "vacuum_grid_res", "int", "<min>4</min>", 0, 0 },
-    { "vacuum_open_start_width", "int", "<min>0</min>", 0, 0 },
-    { "wave_width", "float", "<min>0</min>", 0, 0 },
-    { "wave_amp_mult", "float", "<min>-20.0</min><max>20.0</max>", 0, 0 },
-    { "zoom_from_center", "int", RESTOSTRING (0, LAST_ZOOM_FROM_CENTER), 0, 0 },
-    { "zoom_springiness", "float", "<min>0</min><max>1</max>", 0, 0 }
-};
-
-static CompOption *
-animGetScreenOptions(CompPlugin *plugin, CompScreen * screen, int *count)
+bool
+AnimScreen::setOption (const CompString  &name,
+		       CompOption::Value &value)
 {
-    ANIM_SCREEN(screen);
-
-    *count = NUM_OPTIONS(as);
-    return as->opt;
-}
-
-static void
-objectInit(Object * object,
-	   float positionX, float positionY,
-	   float gridPositionX, float gridPositionY)
-{
-    object->gridPosition.x = gridPositionX;
-    object->gridPosition.y = gridPositionY;
-
-    object->position.x = positionX;
-    object->position.y = positionY;
-
-    object->offsetTexCoordForQuadBefore.x = 0;
-    object->offsetTexCoordForQuadBefore.y = 0;
-    object->offsetTexCoordForQuadAfter.x = 0;
-    object->offsetTexCoordForQuadAfter.y = 0;
+    return priv->setOption (name, value);
 }
 
 void
-modelInitObjects(Model * model, int x, int y, int width, int height)
+PrivateAnimScreen::eventMatchesChanged (CompOption                *opt,
+					AnimationOptions::Options num)
 {
-    int gridX, gridY;
-    int nGridCellsX, nGridCellsY;
-    float x0, y0;
-
-    x0 = model->scaleOrigin.x;
-    y0 = model->scaleOrigin.y;
-
-    // number of grid cells in x direction
-    nGridCellsX = model->gridWidth - 1;
-
-    if (model->forWindowEvent == WindowEventShade ||
-	model->forWindowEvent == WindowEventUnshade)
-    {
-	// number of grid cells in y direction
-	nGridCellsY = model->gridHeight - 3;	// One allocated for top, one for bottom
-
-	float winContentsHeight =
-	    height - model->topHeight - model->bottomHeight;
-
-	//Top
-	float objectY = y + (0 - y0) * model->scale.y + y0;
-
-	for (gridX = 0; gridX < model->gridWidth; gridX++)
-	{
-	    objectInit(&model->objects[gridX],
-		       x + ((gridX * width / nGridCellsX) - x0) * 
-		       model->scale.x + x0, objectY,
-		       (float)gridX / nGridCellsX, 0);
-	}
-
-	// Window contents
-	for (gridY = 1; gridY < model->gridHeight - 1; gridY++)
-	{
-	    float inWinY =
-		(gridY - 1) * winContentsHeight / nGridCellsY +
-		model->topHeight;
-	    float gridPosY = inWinY / height;
-
-	    objectY = y + (inWinY - y0) * model->scale.y + y0;
-
-	    for (gridX = 0; gridX < model->gridWidth; gridX++)
-	    {
-		objectInit(&model->objects[gridY * model->gridWidth + gridX],
-			   x + ((gridX * width / nGridCellsX) - x0) * 
-			   model->scale.x + x0,
-			   objectY, (float)gridX / nGridCellsX, gridPosY);
-	    }
-	}
-
-	// Bottom (gridY is model->gridHeight-1 now)
-	objectY = y + (height - y0) * model->scale.y + y0;
-
-	for (gridX = 0; gridX < model->gridWidth; gridX++)
-	{
-	    objectInit(&model->objects[gridY * model->gridWidth + gridX],
-		       x + ((gridX * width / nGridCellsX) - x0) * 
-		       model->scale.x + x0, objectY,
-		       (float)gridX / nGridCellsX, 1);
-	}
-    }
-    else
-    {
-	int objIndex = 0;
-
-	// number of grid cells in y direction
-	nGridCellsY = model->gridHeight - 1;
-
-	for (gridY = 0; gridY < model->gridHeight; gridY++)
-	{
-	    float objectY =
-		y + ((gridY * height / nGridCellsY) -
-		     y0) * model->scale.y + y0;
-	    for (gridX = 0; gridX < model->gridWidth; gridX++)
-	    {
-		objectInit(&model->objects[objIndex],
-			   x + ((gridX * width / nGridCellsX) - x0) * 
-			   model->scale.x + x0,
-			   objectY,
-			   (float)gridX / nGridCellsX,
-			   (float)gridY / nGridCellsY);
-		objIndex++;
-	    }
-	}
-    }
+    if (mExtensionPlugins.size () == 0)
+	initAnimationList ();
+    foreach (CompOption::Value &val, opt->value ().list ())
+	val.match ().update ();
 }
 
-static void
-modelMove (Model *model,
-	   float tx,
-	   float ty)
+void
+PrivateAnimScreen::eventOptionsChanged (CompOption                *opt,
+					AnimationOptions::Options num)
 {
-    Object *object = model->objects;
-    int i;
-    for (i = 0; i < model->numObjects; i++, object++)
-    {
-	object->position.x += tx;
-	object->position.y += ty;
-    }
+    if (mExtensionPlugins.size () == 0)
+	initAnimationList ();
+    updateOptionSets (getCorrespondingAnimEvent (num));
 }
 
-static Model *createModel(CompWindow * w,
-			  WindowEvent forWindowEvent,
-			  AnimEffect forAnimEffect, int gridWidth,
-			  int gridHeight)
+void
+PrivateAnimScreen::eventEffectsChanged (CompOption                *opt,
+					AnimationOptions::Options num)
 {
-    int x = WIN_X(w);
-    int y = WIN_Y(w);
-    int width = WIN_W(w);
-    int height = WIN_H(w);
-
-    Model *model;
-
-    model = calloc(1, sizeof(Model));
-    if (!model)
-    {
-	compLogMessage ("animation", CompLogLevelError,
-			"Not enough memory");
-	return 0;
-    }
-
-    model->gridWidth = gridWidth;
-    model->gridHeight = gridHeight;
-    model->numObjects = gridWidth * gridHeight;
-    model->objects = calloc(model->numObjects, sizeof(Object));
-    if (!model->objects)
-    {
-	compLogMessage ("animation", CompLogLevelError,
-			"Not enough memory");
-	free(model);
-	return 0;
-    }
-
-    // Store win. size to check later
-    model->winWidth = width;
-    model->winHeight = height;
-
-    // For shading
-    model->forWindowEvent = forWindowEvent;
-    model->topHeight = w->output.top;
-    model->bottomHeight = w->output.bottom;
-
-    model->scale.x = 1.0f;
-    model->scale.y = 1.0f;
-
-    model->scaleOrigin.x = 0.0f;
-    model->scaleOrigin.y = 0.0f;
-
-    modelInitObjects(model, x, y, width, height);
-
-    return model;
+    if (mExtensionPlugins.size () == 0)
+	initAnimationList ();
+    updateEventEffects (getCorrespondingAnimEvent (num), false);
 }
 
-static void
-animFreeModel(AnimWindow *aw)
+void
+PrivateAnimScreen::eventRandomEffectsChanged (CompOption                *opt,
+					      AnimationOptions::Options num)
 {
-    if (!aw->com.model)
-	return;
-
-    if (aw->com.model->objects)
-	free(aw->com.model->objects);
-    free(aw->com.model);
-    aw->com.model = NULL;
+    if (mExtensionPlugins.size () == 0)
+	initAnimationList ();
+    updateEventEffects (getCorrespondingAnimEvent (num), true);
 }
 
-static Bool
-animEnsureModel(CompWindow * w)
+void
+PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
+					       bool destructing,
+					       bool clearMatchingRow)
 {
-    ANIM_WINDOW(w);
+    WindowEvent ev = mCurAnimation->curWindowEvent ();
 
-    WindowEvent forWindowEvent = aw->com.curWindowEvent;
-    AnimEffect forAnimEffect = aw->com.curAnimEffect;
+    mCurAnimation->cleanUp (closing, destructing);
+    delete mCurAnimation;
+    mCurAnimation = 0;
 
-    int gridWidth = 2;
-    int gridHeight = 2;
+    if (mBB.x1 != MAXSHORT)
+	damageBoundingBox ();
 
-    if (forAnimEffect->properties.initGridFunc)
-	forAnimEffect->properties.initGridFunc (w, &gridWidth, &gridHeight);
+    mBB.x1 = mBB.y1 = MAXSHORT;
+    mBB.x2 = mBB.y2 = MINSHORT;
 
-    Bool isShadeUnshadeEvent =
-	(forWindowEvent == WindowEventShade ||
-	 forWindowEvent == WindowEventUnshade);
-
-    Bool wasShadeUnshadeEvent = aw->com.model &&
-	(aw->com.model->forWindowEvent == WindowEventShade ||
-	 aw->com.model->forWindowEvent == WindowEventUnshade);
-
-    if (!aw->com.model ||
-	gridWidth != aw->com.model->gridWidth ||
-	gridHeight != aw->com.model->gridHeight ||
-	(isShadeUnshadeEvent != wasShadeUnshadeEvent) ||
-	aw->com.model->winWidth != WIN_W(w) || aw->com.model->winHeight != WIN_H(w))
-    {
-	animFreeModel(aw);
-	aw->com.model = createModel(w, forWindowEvent, forAnimEffect,
-				gridWidth, gridHeight);
-	if (!aw->com.model)
-	    return FALSE;
-    }
-
-    return TRUE;
-}
-
-static void cleanUpParentChildChainItem(AnimScreen *as, AnimWindow *aw)
-{
-    if (aw->winThisIsPaintedBefore && !aw->winThisIsPaintedBefore->destroyed)
-    {
-	AnimWindow *aw2 =
-	    GET_ANIM_WINDOW(aw->winThisIsPaintedBefore, as);
-	if (aw2)
-	    aw2->winToBePaintedBeforeThis = NULL;
-    }
-    aw->winThisIsPaintedBefore = NULL;
-    aw->moreToBePaintedPrev = NULL;
-    aw->moreToBePaintedNext = NULL;
-    aw->isDodgeSubject = FALSE;
-    aw->skipPostPrepareScreen = FALSE;
-}
-
-static void postAnimationCleanupCustom (CompWindow * w,
-					Bool closing,
-					Bool finishing,
-					Bool clearMatchingRow)
-{
-    ANIM_WINDOW(w);
-    ANIM_SCREEN(w->screen);
-
-    if (// make sure window shadows (which are not drawn by polygon engine)
-	// are damaged
-	(aw->com.curAnimEffect->properties.addCustomGeometryFunc &&
-	 (aw->com.curWindowEvent == WindowEventOpen ||
-	  aw->com.curWindowEvent == WindowEventUnminimize ||
-	  aw->com.curWindowEvent == WindowEventUnshade ||
-	  aw->com.curWindowEvent == WindowEventFocus)) ||
-	// make sure the window gets fully damaged with
-	// effects that possibly have models that don't cover
-	// the whole window (like in magic lamp with menus)
-	aw->com.curAnimEffect == AnimEffectMagicLamp ||
-	aw->com.curAnimEffect == AnimEffectVacuum ||
-	// make sure dodging windows get one last damage
-	aw->com.curAnimEffect == AnimEffectDodge ||
-	// make sure non-animated closing windows get a damage
-	(aw->com.curWindowEvent == WindowEventClose &&
-	 aw->com.curAnimEffect == AnimEffectNone))
-    {
-	updateBBWindow (NULL, w, &aw->BB);
-    }
-    // Clear winPassingThrough of each window
-    // that this one was passing through
-    // during focus effect
-    if (aw->com.curAnimEffect == AnimEffectFocusFade)
-    {
-	CompWindow *w2;
-	for (w2 = w->screen->windows; w2; w2 = w2->next)
-	{
-	    AnimWindow *aw2;
-
-	    aw2 = GET_ANIM_WINDOW(w2, as);
-	    if (aw2->winPassingThrough == w)
-		aw2->winPassingThrough = NULL;
-	}
-    }
-
-    if (aw->com.curAnimEffect == AnimEffectFocusFade ||
-	aw->com.curAnimEffect == AnimEffectDodge)
-    {
-	as->walkerAnimCount--;
-    }
-
-    if (aw->com.curAnimEffect->properties.cleanupFunc)
-	aw->com.curAnimEffect->properties.cleanupFunc (w);
-
-    aw->com.curWindowEvent = WindowEventNone;
-    aw->com.curAnimEffect = AnimEffectNone;
-    aw->com.animOverrideProgressDir = 0;
-    aw->com.usingTransform = FALSE;
-
-    aw->magicLampWaveCount = 0;
-
-    if (aw->magicLampWaves)
-    {
-	free (aw->magicLampWaves);
-	aw->magicLampWaves = 0;
-    }
-
-    if (aw->BB.x1 != MAXSHORT)
-    {
-	// damage BB
-	damageBoundingBox (w);
-    }
-    aw->BB.x1 = aw->BB.y1 = MAXSHORT;
-    aw->BB.x2 = aw->BB.y2 = MINSHORT;
-
-    Bool thereIsUnfinishedChainElem = FALSE;
-
-    // Look for still playing windows in parent-child chain
-    CompWindow *wCur = aw->moreToBePaintedNext;
-    while (wCur)
-    {
-	AnimWindow *awCur = GET_ANIM_WINDOW(wCur, as);
-
-	if (awCur->com.animRemainingTime > 0)
-	{
-	    thereIsUnfinishedChainElem = TRUE;
-	    break;
-	}
-	wCur = awCur->moreToBePaintedNext;
-    }
-    if (!thereIsUnfinishedChainElem)
-    {
-	wCur = aw->moreToBePaintedPrev;
-	while (wCur)
-	{
-	    AnimWindow *awCur = GET_ANIM_WINDOW(wCur, as);
-
-	    if (awCur->com.animRemainingTime > 0)
-	    {
-		thereIsUnfinishedChainElem = TRUE;
-		break;
-	    }
-	    wCur = awCur->moreToBePaintedPrev;
-	}
-    }
-    if (closing || finishing || !thereIsUnfinishedChainElem)
-    {
-	// Finish off all windows in parent-child chain
-	CompWindow *wCur = aw->moreToBePaintedNext;
-	while (wCur)
-	{
-	    AnimWindow *awCur = GET_ANIM_WINDOW(wCur, as);
-	    wCur = awCur->moreToBePaintedNext;
-	    cleanUpParentChildChainItem(as, awCur);
-	}
-	wCur = w;
-	while (wCur)
-	{
-	    AnimWindow *awCur = GET_ANIM_WINDOW(wCur, as);
-	    wCur = awCur->moreToBePaintedPrev;
-	    cleanUpParentChildChainItem(as, awCur);
-	}
-    }
-
-    aw->state = aw->newState;
+    mState = mNewState;
 
     if (clearMatchingRow)
-	aw->curAnimSelectionRow = -1;
+	mCurAnimSelectionRow = -1;
 
-    if (aw->com.drawRegion)
-	XDestroyRegion(aw->com.drawRegion);
-    aw->com.drawRegion = NULL;
-    aw->com.useDrawRegion = FALSE;
-
-    aw->animInitialized = FALSE;
-    aw->remainderSteps = 0;
-    aw->com.animRemainingTime = 0;
-
-    // Reset dodge parameters
-    aw->dodgeMaxAmount = 0;
-    if (!(aw->moreToBePaintedPrev ||
-	  aw->moreToBePaintedNext))
+    mFinishingAnim = true;
+    if (!destructing)
     {
-	aw->isDodgeSubject = FALSE;
-	aw->skipPostPrepareScreen = FALSE;
-    }
-
-    if (aw->restackInfo)
-    {
-	free(aw->restackInfo);
-	aw->restackInfo = NULL;
-    }
-
-    if (!finishing)
-    {
-	aw->ignoreDamage = TRUE;
-	while (aw->unmapCnt)
+	mIgnoreDamage = true;
+	while (mUnmapCnt)
 	{
-	    unmapWindow(w);
-	    aw->unmapCnt--;
+	    mWindow->unmap ();
+	    mUnmapCnt--;
 	}
-	aw->ignoreDamage = FALSE;
+	mIgnoreDamage = false;
     }
-    while (aw->destroyCnt)
+
+    while (mDestroyCnt)
     {
-	destroyWindow(w);
-	aw->destroyCnt--;
+	mWindow->destroy ();
+	mDestroyCnt--;
+    }
+    mFinishingAnim = false;
+
+    for (int p = 0; p < mPAScreen->mExtensionPlugins.size (); p++)
+    {
+	ExtensionPluginInfo *extPlugin = mPAScreen->mExtensionPlugins[p];
+	extPlugin->cleanUpAnimation (closing, destructing);
     }
 }
 
-void postAnimationCleanup (CompWindow * w)
+void
+PrivateAnimWindow::postAnimationCleanUp ()
 {
-    postAnimationCleanupCustom (w, FALSE, FALSE, TRUE);
+    if (mCurAnimation->curWindowEvent () == WindowEventClose)
+	postAnimationCleanUpCustom (true, false, true);
+    else
+	postAnimationCleanUpCustom (false, false, true);
 }
 
-static void
-postAnimationCleanupPrev (CompWindow * w,
-			  Bool closing,
-			  Bool clearMatchingRow)
+void
+PrivateAnimWindow::postAnimationCleanUpPrev (bool closing,
+					     bool clearMatchingRow)
 {
-    ANIM_WINDOW(w);
-
-    int curAnimSelectionRow = aw->curAnimSelectionRow;
+    int curAnimSelectionRow = mCurAnimSelectionRow;
     // Use previous event's anim selection row
-    aw->curAnimSelectionRow = aw->prevAnimSelectionRow;
+    mCurAnimSelectionRow = mPrevAnimSelectionRow;
 
-    postAnimationCleanupCustom (w, closing, FALSE, clearMatchingRow);
+    postAnimationCleanUpCustom (closing, false, clearMatchingRow);
 
     // Restore current event's anim selection row
-    aw->curAnimSelectionRow = curAnimSelectionRow;
+    mCurAnimSelectionRow = curAnimSelectionRow;
 }
 
-static void
-animActivateEvent (CompScreen *s,
-		   Bool       activating)
+void
+PrivateAnimScreen::activateEvent (bool activating)
 {
-    ANIM_SCREEN(s);
-	
     if (activating)
     {
-	if (as->animInProgress)
+	if (mAnimInProgress)
 	    return;
     }
-    as->animInProgress = activating;
+    mAnimInProgress = activating;
 
-    CompOption o[2];
+    CompOption::Vector o (0);
 
-    o[0].type = CompOptionTypeInt;
-    o[0].name = "root";
-    o[0].value.i = s->root;
+    o.push_back (CompOption ("root", CompOption::TypeInt));
+    o.push_back (CompOption ("active", CompOption::TypeBool));
 
-    o[1].type = CompOptionTypeBool;
-    o[1].name = "active";
-    o[1].value.b = activating;
+    o[0].value ().set ((int) ::screen->root ());
+    o[1].value ().set (activating);
 
-    (*s->display->handleCompizEvent) (s->display, "animation", "activate", o, 2);
+    ::screen->handleCompizEvent ("animation", "activate", o);
 }
 
-static inline Bool
-isWinVisible(CompWindow *w)
+bool
+PrivateAnimScreen::otherPluginsActive ()
 {
-    return (!w->destroyed &&
-	    !(!w->shaded &&
-	      (w->attrib.map_state != IsViewable)));
+    for (int i = 0; i < WatchedPluginNum; i++)
+	if (mPluginActive[i])
+	    return true;
+    return false;
 }
 
-static inline void
-getHostedOnWin (AnimScreen *as,
-		CompWindow *w,
-		CompWindow *wHost)
+bool
+Animation::shouldSkipFrame (int msSinceLastPaintActual)
 {
-    ANIM_WINDOW(w);
-    AnimWindow *awHost = GET_ANIM_WINDOW(wHost, as);
-    awHost->winToBePaintedBeforeThis = w;
-    aw->winThisIsPaintedBefore = wHost;
+    mTimeElapsedWithinTimeStep += msSinceLastPaintActual;
+    if (mTimeElapsedWithinTimeStep < mTimestep) // if timestep not yet completed
+	return true;
+
+    mTimeElapsedWithinTimeStep = fmod (mTimeElapsedWithinTimeStep, mTimestep);
+    return false;
 }
 
-static Bool
-otherPluginsActive(AnimScreen *as)
+bool
+Animation::advanceTime (int msSinceLastPaint)
 {
-    int i;
-    for (i = 0; i < NUM_WATCHED_PLUGINS; i++)
-	if (as->pluginActive[i])
-	    return TRUE;
-    return FALSE;
+    mRemainingTime -= msSinceLastPaint;
+    mRemainingTime = MAX (mRemainingTime, 0); // avoid sub-zero values
+
+    return (mRemainingTime > 0);
 }
 
-static void
-initiateFocusAnimation(CompWindow *w)
+void
+PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 {
-    CompScreen *s = w->screen;
-    ANIM_SCREEN(s);
-    ANIM_WINDOW(w);
-    int duration = 200;
-
-    if (aw->com.curWindowEvent != WindowEventNone || otherPluginsActive(as))
-	return;
-
-    // Check the "switcher post-wait" counter that effectively prevents
-    // focus animation to be initiated when the zoom option value is low
-    // in Switcher.
-    if (switcherPostWait)
-	return;
-
-    AnimEffect chosenEffect =
-	getMatchingAnimSelection (w, AnimEventFocus, &duration);
-
-    if (chosenEffect != AnimEffectNone &&
-	// On unminimization, focus event is fired first.
-	// When this happens and minimize is in progress,
-	// don't prevent rewinding of minimize when unminimize is fired
-	// right after this focus event.
-	aw->com.curWindowEvent != WindowEventMinimize)
-    {
-	CompWindow *wStart = NULL;
-	CompWindow *wEnd = NULL;
-	CompWindow *wOldAbove = NULL;
-
-	RestackInfo *restackInfo = aw->restackInfo;
-	Bool raised = TRUE;
-
-	if (restackInfo)
-	{
-	    wStart = restackInfo->wStart;
-	    wEnd = restackInfo->wEnd;
-	    wOldAbove = restackInfo->wOldAbove;
-	    raised = restackInfo->raised;
-	}
-
-	// FOCUS event!
-
-	aw->com.curWindowEvent = WindowEventFocus;
-	aw->com.curAnimEffect = chosenEffect;
-
-	if (chosenEffect == AnimEffectFocusFade ||
-	    chosenEffect == AnimEffectDodge)
-	{
-	    as->walkerAnimCount++;
-
-	    // Find union region of all windows that will be
-	    // faded through by w. If the region is empty, don't
-	    // run focus fade effect.
-
-	    Region fadeRegion = XCreateRegion();
-	    Region thisAndSubjectIntersection = XCreateRegion();
-	    Region thisWinRegion = XCreateRegion();
-	    Region subjectWinRegion = XCreateRegion();
-	    XRectangle rect;
-
-	    int numDodgingWins = 0;
-
-	    // Compute subject win. region
-	    rect.x = BORDER_X(w);
-	    rect.y = BORDER_Y(w);
-	    rect.width = BORDER_W(w);
-	    rect.height = BORDER_H(w);
-	    XUnionRectWithRegion(&rect, &emptyRegion, subjectWinRegion);
-
-	    CompWindow *dw; // Dodge or Focus fade candidate window
-	    for (dw = wStart; dw && dw != wEnd->next; dw = dw->next)
-	    {
-		if (!isWinVisible(dw) ||
-		    dw->wmType & CompWindowTypeDockMask)
-		    continue;
-
-		AnimWindow *adw = GET_ANIM_WINDOW(dw, as);
-
-		// Skip windows that have been restacked
-		if (dw != wEnd && adw->restackInfo)
-		    continue;
-
-		// Skip subject window for focus fade
-		if (w == dw && chosenEffect == AnimEffectFocusFade)
-		    continue;
-
-		Bool nonMatching = FALSE;
-		if (chosenEffect == AnimEffectDodge &&
-		    getMatchingAnimSelection (dw, AnimEventFocus, NULL) !=
-		    chosenEffect)
-		    nonMatching = TRUE;
-
-		// Compute intersection of this (dw) with subject
-		rect.x = BORDER_X(dw);
-		rect.y = BORDER_Y(dw);
-		rect.width = BORDER_W(dw);
-		rect.height = BORDER_H(dw);
-		XUnionRectWithRegion(&rect, &emptyRegion, thisWinRegion);
-		XIntersectRegion(subjectWinRegion, thisWinRegion,
-				 thisAndSubjectIntersection);
-		XUnionRegion(fadeRegion, thisAndSubjectIntersection,
-			     fadeRegion);
-
-		if (chosenEffect == AnimEffectFocusFade)
-		{
-		    adw->winPassingThrough = w;
-		}
-		else if (chosenEffect == AnimEffectDodge &&
-			 !XEmptyRegion(thisAndSubjectIntersection) &&
-			 (adw->com.curAnimEffect == AnimEffectNone ||
-			  (adw->com.curAnimEffect == AnimEffectDodge)) &&
-			 dw->id != w->id) // don't let the subject dodge itself
-		{
-		    // Mark this window for dodge
-
-		    numDodgingWins++;
-		    adw->dodgeOrder = numDodgingWins;
-		    if (nonMatching) // Use neg. values for non-matching windows
-			adw->dodgeOrder *= -1;
-		}
-	    }
-
-	    if (XEmptyRegion(fadeRegion))
-	    {
-		// empty intersection -> won't be drawn (will end prematurely)
-		duration = 0;
-	    }
-	    if ((chosenEffect == AnimEffectFocusFade ||
-		 chosenEffect == AnimEffectDodge) && wOldAbove)
-	    {
-		// Store this window in the next window
-		// so that this is drawn before that,
-		// i.e. in its old place
-		getHostedOnWin(as, w, wOldAbove);
-	    }
-
-	    if (chosenEffect == AnimEffectDodge)
-	    {
-		float maxTransformTotalProgress = 0;
-		float dodgeMaxStartProgress =
-		    numDodgingWins *
-		    animGetF (w, ANIM_SCREEN_OPTION_DODGE_GAP_RATIO) *
-		    duration / 1000.0f;
-
-		CompWindow *wDodgeChainLastVisited = NULL;
-
-		animActivateEvent(s, TRUE);
-
-		aw->isDodgeSubject = TRUE;
-		aw->dodgeChainStart = NULL;
-
-		for (dw = wStart; dw && dw != wEnd->next; dw = dw->next)
-		{
-		    AnimWindow *adw = GET_ANIM_WINDOW(dw, as);
-
-		    // Skip non-dodgers
-		    if (adw->dodgeOrder == 0)
-			continue;
-
-		    // Initiate dodge for this window
-
-		    Bool stationaryDodger = FALSE;
-		    if (adw->dodgeOrder < 0)
-		    {
-			adw->dodgeOrder *= -1; // Make it positive again
-			stationaryDodger = TRUE;
-		    }
-		    if (adw->com.curAnimEffect != AnimEffectDodge)
-		    {
-			adw->com.curAnimEffect = AnimEffectDodge;
-			as->walkerAnimCount++;
-		    }
-		    adw->dodgeSubjectWin = w;
-
-		    // Slight change in dodge movement start
-		    // to reflect stacking order of dodgy windows
-		    if (raised)
-			adw->com.transformStartProgress =
-			    dodgeMaxStartProgress *
-			    (adw->dodgeOrder - 1) / numDodgingWins;
-		    else
-			adw->com.transformStartProgress =
-			    dodgeMaxStartProgress *
-			    (1 - (float)adw->dodgeOrder / numDodgingWins);
-
-		    float transformTotalProgress =
-			1 + adw->com.transformStartProgress;
-
-		    if (maxTransformTotalProgress < transformTotalProgress)
-			maxTransformTotalProgress = transformTotalProgress;
-
-		    // normalize
-		    adw->com.transformStartProgress /=
-			transformTotalProgress;
-
-		    if (stationaryDodger)
-		    {
-			adw->com.transformStartProgress = 0;
-			transformTotalProgress = 0;
-		    }
-
-		    adw->com.animTotalTime =
-			transformTotalProgress * duration;
-		    adw->com.animRemainingTime = adw->com.animTotalTime;
-
-		    // Put window on dodge chain
-
-		    // if dodge chain was started before
-		    if (wDodgeChainLastVisited)
-		    {
-			AnimWindow *awDodgeChainLastVisited =
-			    GET_ANIM_WINDOW(wDodgeChainLastVisited, as);
-			if (raised)
-			    awDodgeChainLastVisited->dodgeChainNext = dw;
-			else
-			    awDodgeChainLastVisited->dodgeChainPrev = dw;
-		    }
-		    else if (raised) // mark chain start
-		    {
-			aw->dodgeChainStart = dw;
-		    }
-		    if (raised)
-		    {
-			adw->dodgeChainPrev = wDodgeChainLastVisited;
-			adw->dodgeChainNext = NULL;
-		    }
-		    else
-		    {
-			adw->dodgeChainPrev = NULL;
-			adw->dodgeChainNext = wDodgeChainLastVisited;
-		    }
-
-		    // Find direction (left, right, up, down)
-		    // that minimizes dodge amount
-
-		    // Dodge amount (dodge shadows as well)
-
-		    int dodgeAmount[4];
-
-		    int i;
-		    for (i = 0; i < 4; i++)
-			dodgeAmount[i] = DODGE_AMOUNT(w, dw, i);
-
-		    int amountMin = abs(dodgeAmount[0]);
-		    int iMin = 0;
-		    for (i=1; i<4; i++)
-		    {
-			int absAmount = abs(dodgeAmount[i]);
-			if (absAmount < amountMin)
-			{
-			    amountMin = absAmount;
-			    iMin = i;
-			}
-		    }
-		    adw->dodgeMaxAmount = dodgeAmount[iMin];
-		    adw->dodgeDirection = iMin;
-
-		    wDodgeChainLastVisited = dw;
-
-		    // Reset back to 0 for the next dodge calculation
-		    adw->dodgeOrder = 0;
-		}
-		if (aw->isDodgeSubject)
-		    aw->dodgeMaxAmount = 0;
-
-		// if subject is being lowered,
-		// point chain-start to the topmost doding window
-		if (!raised)
-		{
-		    aw->dodgeChainStart = wDodgeChainLastVisited;
-		}
-
-		aw->com.animTotalTime =
-		    maxTransformTotalProgress * duration;
-	    }
-
-	    XDestroyRegion (fadeRegion);
-	    XDestroyRegion (thisAndSubjectIntersection);
-	    XDestroyRegion (thisWinRegion);
-	    XDestroyRegion (subjectWinRegion);
-	}
-
-	if (!animEnsureModel(w))
-	{
-	    postAnimationCleanup (w);
-	    return;
-	}
-
-	animActivateEvent(s, TRUE);
-
-	if (chosenEffect != AnimEffectDodge)
-	    aw->com.animTotalTime = duration;
-	aw->com.animRemainingTime = aw->com.animTotalTime;
-
-	damagePendingOnScreen (s);
-    }
-}
-
-// returns whether this window is relevant for fade focus
-static Bool
-relevantForFadeFocus(CompWindow *nw)
-{
-    if (!((nw->wmType &
-	   // these two are to be used as "host" windows
-	   // to host the painting of windows being focused
-	   // at a stacking order lower than them
-	   (CompWindowTypeDockMask | CompWindowTypeSplashMask)) ||
-	  nw->wmType == CompWindowTypeNormalMask ||
-	  nw->wmType == CompWindowTypeDialogMask ||
-	  nw->wmType == CompWindowTypeUtilMask ||
-	  nw->wmType == CompWindowTypeUnknownMask))
-    {
-	return FALSE;
-    }
-    return isWinVisible(nw);
-}
-
-static Bool
-restackInfoStillGood(CompScreen *s, RestackInfo *restackInfo)
-{
-    Bool wStartGood = FALSE;
-    Bool wEndGood = FALSE;
-    Bool wOldAboveGood = FALSE;
-    Bool wRestackedGood = FALSE;
-
-    CompWindow *w;
-    for (w = s->windows; w; w = w->next)
-    {
-	if (restackInfo->wStart == w && isWinVisible(w))
-	    wStartGood = TRUE;
-	if (restackInfo->wEnd == w && isWinVisible(w))
-	    wEndGood = TRUE;
-	if (restackInfo->wRestacked == w && isWinVisible(w))
-	    wRestackedGood = TRUE;
-	if (restackInfo->wOldAbove == w && isWinVisible(w))
-	    wOldAboveGood = TRUE;
-    }
-    return (wStartGood && wEndGood && wOldAboveGood && wRestackedGood);
-}
-
-// Reset stacking related info
-static void
-resetStackingInfo (CompScreen *s)
-{
-    CompWindow *w;
-    for (w = s->windows; w; w = w->next)
-    {
-	ANIM_WINDOW (w);
-
-	aw->configureNotified = FALSE;
-	if (aw->restackInfo)
-	{
-	    free (aw->restackInfo);
-	    aw->restackInfo = NULL;
-	}
-    }
-}
-
-// Returns TRUE if linking wCur to wNext would not result
-// in a circular chain being formed.
-static Bool
-wontCreateCircularChain (CompWindow *wCur, CompWindow *wNext)
-{
-    ANIM_SCREEN (wCur->screen);
-    AnimWindow *awNext = NULL;
-
-    while (wNext)
-    {
-	if (wNext == wCur) // would form circular chain
-	    return FALSE;
-
-	awNext = GET_ANIM_WINDOW (wNext, as);
-	if (!awNext)
-	    return FALSE;
-
-	wNext = awNext->moreToBePaintedNext;
-    }
-    return TRUE; 
-}
-
-static void animPreparePaintScreen(CompScreen * s, int msSinceLastPaint)
-{
-    CompWindow *w;
-
-    ANIM_SCREEN(s);
-
     // Check and update "switcher post wait" counter
-    if (switcherPostWait > 0)
+    if (mSwitcherPostWait > 0)
     {
-	switcherPostWait++;
-	if (switcherPostWait > 4) // wait over
+	mSwitcherPostWait++;
+	if (mSwitcherPostWait > 2) // wait over
 	{
-	    switcherPostWait = 0;
+	    mSwitcherPostWait = 0;
 
 	    // Reset stacking related info since it will
 	    // cause problems because of the restacking
 	    // just done by Switcher.
-	    resetStackingInfo (s);
+	    ExtensionPluginAnimation *extPlugin =
+		static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
+	    extPlugin->resetStackingInfo ();
 	}
     }
 
-    if (as->aWinWasRestackedJustNow)
+    for (int p = 0; p < mExtensionPlugins.size (); p++)
     {
-	/*
-	  Handle focusing windows with multiple utility/dialog windows
-	  (like gobby), as in this case where gobby was raised with its
-	  utility windows:
-
-	  was: C0001B 36000A5 1E0000C 1E0005B 1E00050 3205B63 600003 
-	  now: C0001B 36000A5 1E0000C 1E00050 3205B63 1E0005B 600003 
-
-	  was: C0001B 36000A5 1E0000C 1E00050 3205B63 1E0005B 600003 
-	  now: C0001B 36000A5 1E0000C 3205B63 1E00050 1E0005B 600003 
-
-	  was: C0001B 36000A5 1E0000C 3205B63 1E00050 1E0005B 600003 
-	  now: C0001B 36000A5 3205B63 1E0000C 1E00050 1E0005B 600003 
-	*/
-	CompWindow *wOldAbove = NULL;
-	for (w = s->windows; w; w = w->next)
-	{
-	    ANIM_WINDOW(w);
-	    if (aw->restackInfo)
-	    {
-		if (aw->com.curWindowEvent != WindowEventNone ||
-		    otherPluginsActive(as) ||
-		    // Don't animate with stale restack info
-		    !restackInfoStillGood(s, aw->restackInfo))
-		{
-		    continue;
-		}
-		if (!wOldAbove)
-		{
-		    // Pick the old above of the bottommost one
-		    wOldAbove = aw->restackInfo->wOldAbove;
-		}
-		else
-		{
-		    // Use as wOldAbove for every focus fading window
-		    // (i.e. the utility/dialog windows of an app.)
-		    if (wOldAbove != w)
-			aw->restackInfo->wOldAbove = wOldAbove;
-		}
-	    }
-	}
-	// do in reverse order so that focus-fading chains are handled
-	// properly
-	for (w = s->reverseWindows; w; w = w->prev)
-	{
-	    ANIM_WINDOW(w);
-	    if (aw->restackInfo)
-	    {
-		if (aw->com.curWindowEvent != WindowEventNone ||
-		    // Don't initiate focus anim for current dodgers
-		    aw->com.curAnimEffect != AnimEffectNone ||
-		    // Don't initiate focus anim for windows being passed thru
-		    aw->winPassingThrough ||
-		    otherPluginsActive(as) ||
-		    // Don't animate with stale restack info
-		    !restackInfoStillGood(s, aw->restackInfo))
-		{
-		    free(aw->restackInfo);
-		    aw->restackInfo = NULL;
-		    continue;
-		}
-
-		// Find the first window at a higher stacking order than w
-		CompWindow *nw;
-		for (nw = w->next; nw; nw = nw->next)
-		{
-		    if (relevantForFadeFocus(nw))
-			break;
-		}
-
-		// If w is being lowered, there has to be a window
-		// at a higher stacking position than w (like a panel)
-		// which this w's copy can be painted before.
-		// Otherwise the animation will only show w fading in
-		// rather than 2 copies of it cross-fading.
-		if (!aw->restackInfo->raised && !nw)
-		{
-		    // Free unnecessary restackInfo
-		    free(aw->restackInfo);
-		    aw->restackInfo = NULL;
-		    continue;
-		}
-
-		// Check if above window is focus-fading too.
-		// (like a dialog of an app. window)
-		// If so, focus-fade this together with the one above
-		// (link to it)
-		if (nw)
-		{
-		    AnimWindow *awNext = GET_ANIM_WINDOW(nw, as);
-		    if (awNext && awNext->winThisIsPaintedBefore &&
-			wontCreateCircularChain (w, nw))
-		    {
-			awNext->moreToBePaintedPrev = w;
-			aw->moreToBePaintedNext = nw;
-			aw->restackInfo->wOldAbove =
-			    awNext->winThisIsPaintedBefore;
-		    }
-		}
-		initiateFocusAnimation(w);
-	    }
-	}
-
-	for (w = s->reverseWindows; w; w = w->prev)
-	{
-	    ANIM_WINDOW(w);
-
-	    if (!aw->isDodgeSubject)
-		continue;
-	    Bool dodgersAreOnlySubjects = TRUE;
-	    CompWindow *dw;
-	    AnimWindow *adw;
-	    for (dw = aw->dodgeChainStart; dw; dw = adw->dodgeChainNext)
-	    {
-		adw = GET_ANIM_WINDOW(dw, as);
-		if (!adw)
-		    break;
-		if (!adw->isDodgeSubject)
-		    dodgersAreOnlySubjects = FALSE;
-	    }
-	    if (dodgersAreOnlySubjects)
-		aw->skipPostPrepareScreen = TRUE;
-	}
+	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	extPlugin->prePreparePaintGeneral ();
     }
-	
-    if (as->animInProgress)
+
+    if (mAnimInProgress)
     {
-	AnimWindow *aw;
-	Bool animStillInProgress = FALSE;
+	int msSinceLastPaintActual;
 
-	for (w = s->windows; w; w = w->next)
+	struct timeval curTime;
+	gettimeofday (&curTime, 0);
+
+	if (mLastRedrawTimeFresh)
 	{
-	    aw = GET_ANIM_WINDOW(w, as);
+	    msSinceLastPaintActual = TIMEVALDIFF (&curTime, &mLastRedrawTime);
+	    // handle clock rollback
+	    if (msSinceLastPaintActual < 0)
+		msSinceLastPaintActual = 0;
+	}
+	else
+	    msSinceLastPaintActual = 20; // assume 20 ms passed
 
-	    if (aw->com.animRemainingTime > 0)
+	mLastRedrawTime = curTime; // Store current time for next time
+	mLastRedrawTimeFresh = true;
+
+	bool animStillInProgress = false;
+
+	foreach (CompWindow *w, ::screen->windows ())
+	{
+	    PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
+	    Animation *curAnim = aw->curAnimation ();
+
+	    if (curAnim)
 	    {
-		if (aw->com.curAnimEffect->properties.prePrepPaintScreenFunc &&
-		    aw->com.curAnimEffect->properties.prePrepPaintScreenFunc
-			(w, msSinceLastPaint))
-		    animStillInProgress = TRUE;
+		if (curAnim->prePreparePaint (msSinceLastPaint))
+		    animStillInProgress = true;
 
-	    	// If just starting, call fx init func.
-		if (!aw->animInitialized &&
-		    aw->com.curAnimEffect->properties.initFunc)
+		/* TODO optimize grid model by reusing one GridModel
+		if (aw->com.mModel &&
+		    (aw->com.mModel->winWidth != outRect.width () ||
+		     aw->com.mModel->winHeight != outRect.height ()))
 		{
-		    if (!aw->com.curAnimEffect->properties.initFunc (w))
-		    {
-			// Abort this window's animation
-			postAnimationCleanup (w);
-			continue;
-		    }
-		}
-
-		if (aw->com.model &&
-		    (aw->com.model->winWidth != WIN_W(w) ||
-		     aw->com.model->winHeight != WIN_H(w)))
-		{
-		    // model needs update
-		    // re-create model
+		    // mModel needs update
+		    // re-create mModel
 		    if (!animEnsureModel (w))
 		    {
 			// Abort this window's animation
-			postAnimationCleanup (w);
+			postAnimationCleanUp (w);
 			continue;
+		    }
+		}*/
+
+		bool animShouldSkipFrame =
+		    (curAnim->shouldSkipFrame (msSinceLastPaintActual) &&
+		     // Skip only if we're not on the first animation frame
+		     curAnim->initialized ());
+
+		// Skip only if we're not on the last animation frame
+		animShouldSkipFrame &=
+		    curAnim->advanceTime (msSinceLastPaint);
+
+		if (!animShouldSkipFrame)
+		{
+		    curAnim->step ();
+
+		    if (curAnim->updateBBUsed ())
+		    {
+			aw->copyResetBB ();
+
+			if (!curAnim->initialized () &&
+			    curAnim->shouldDamageWindowOnStart ())
+			    aw->aWindow ()->expandBBWithWindow ();
+		    }
+		    if (!curAnim->initialized ())
+			curAnim->setInitialized ();
+		    if (curAnim->updateBBUsed ())
+		    {
+			foreach (CompOutput &output, ::screen->outputDevs ())
+			    curAnim->updateBB (output);
+
+			if (!(cScreen->damageMask () &
+			      COMPOSITE_SCREEN_DAMAGE_ALL_MASK))
+			    aw->damageBoundingBox ();
 		    }
 		}
 
-		if (aw->com.curAnimEffect->properties.updateBBFunc)
+		if (curAnim->remainingTime () <= 0) // Animation is done
 		{
-		    copyResetBB (aw);
-
-		    if (!aw->animInitialized &&
-			(aw->com.curWindowEvent == WindowEventClose ||
-			 aw->com.curWindowEvent == WindowEventMinimize ||
-			 aw->com.curWindowEvent == WindowEventShade ||
-			 ((aw->com.curWindowEvent == WindowEventFocus ||
-			   // for dodging windows
-			   aw->com.curAnimEffect == AnimEffectDodge) &&
-			  !aw->isDodgeSubject)))
-			updateBBWindow (NULL, w, &aw->BB);
+		    aw->postAnimationCleanUp ();
 		}
-		aw->animInitialized = TRUE;
-
-		if (aw->com.curAnimEffect->properties.animStepFunc)
-		    aw->com.curAnimEffect->properties.animStepFunc
-			(w, msSinceLastPaint);
-
-		if (aw->com.curAnimEffect->properties.updateBBFunc)
-		{
-		    int i;
-		    for (i = 0; i < s->nOutputDev; i++)
-			aw->com.curAnimEffect->properties.
-			    updateBBFunc (&s->outputDev[i], w, &aw->BB);
-
-		    if (!(s->damageMask & COMP_SCREEN_DAMAGE_ALL_MASK))
-			damageBoundingBox (w);
-		}
-
-		if (aw->com.animRemainingTime <= 0)
-		{
-		    // Animation done
-		    postAnimationCleanup (w);
-		}
-		animStillInProgress |= (aw->com.animRemainingTime > 0);
+		else
+		    animStillInProgress = true;
 	    }
 
+	    /* TODO Check if still necessary
 	    if (aw->com.animRemainingTime <= 0)
 	    {
-		if (aw->com.curAnimEffect != AnimEffectNone ||
-		    aw->unmapCnt > 0 || aw->destroyCnt > 0)
+		if (aw->curAnimation ||
+		    aw->mUnmapCnt > 0 || aw->mDestroyCnt > 0)
 		{
-		    postAnimationCleanup (w);
+		    postAnimationCleanUp (w);
 		}
 		aw->com.curWindowEvent = WindowEventNone;
-		aw->com.curAnimEffect = AnimEffectNone;
-	    }
+		aw->curAnimation = AnimEffectNone;
+	    }*/
 	}
 
-	for (w = s->windows; w; w = w->next)
+	foreach (CompWindow *w, ::screen->windows ())
 	{
-	    aw = GET_ANIM_WINDOW(w, as);
-	    if (aw && aw->com.curAnimEffect->properties.
-		postPrepPaintScreenFunc)
-	    {
-		aw->com.curAnimEffect->properties.postPrepPaintScreenFunc (w);
-	    }
+	    PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
+	    if (aw->curAnimation ())
+		aw->curAnimation ()->postPreparePaint ();
 	}
 
 	if (!animStillInProgress)
-	    animActivateEvent(s, FALSE);
+	{
+	    activateEvent (false);
+	    mLastRedrawTimeFresh = false;
+
+	    // Reset stacking related info after all animations are done.
+	    ExtensionPluginAnimation *extPlugin =
+		static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
+	    extPlugin->resetStackingInfo ();
+	}
     }
 
-    UNWRAP(as, s, preparePaintScreen);
-    (*s->preparePaintScreen) (s, msSinceLastPaint);
-    WRAP(as, s, preparePaintScreen, animPreparePaintScreen);
-}
-
-static void animDonePaintScreen(CompScreen * s)
-{
-    ANIM_SCREEN(s);
-
-    if (as->animInProgress)
-	damagePendingOnScreen (s);
-
-    UNWRAP(as, s, donePaintScreen);
-    (*s->donePaintScreen) (s);
-    WRAP(as, s, donePaintScreen, animDonePaintScreen);
-}
-
-// Scales z by 0 and does perspective distortion so that it
-// looks the same wherever on the screen
-void
-perspectiveDistortAndResetZ (CompScreen *s,
-			     CompTransform *transform)
-{
-    float v = -1.0 / s->width;
-    /*
-      This does
-      transform = M * transform, where M is
-      1, 0, 0, 0,
-      0, 1, 0, 0,
-      0, 0, 0, v,
-      0, 0, 0, 1
-    */
-    float *m = transform->m;
-    m[8] = v * m[12];
-    m[9] = v * m[13];
-    m[10] = v * m[14];
-    m[11] = v * m[15];
-}
-
-void
-applyPerspectiveSkew (CompOutput *output,
-		      CompTransform *transform,
-		      Point *center)
-{
-    GLfloat skewx = -(((center->x - output->region.extents.x1) -
-		       output->width / 2) * 1.15);
-    GLfloat skewy = -(((center->y - output->region.extents.y1) -
-		       output->height / 2) * 1.15);
-
-    /* transform = M * transform, where M is the skew matrix
-	{1,0,0,0,
-	 0,1,0,0,
-	 skewx,skewy,1,0,
-	 0,0,0,1};
-    */
-
-    float *m = transform->m;
-    m[8] = skewx * m[0] + skewy * m[4] + m[8];
-    m[9] = skewx * m[1] + skewy * m[5] + m[9];
-    m[10] = skewx * m[2] + skewy * m[6] + m[10];
-    m[11] = skewx * m[3] + skewy * m[7] + m[11];
-}
-
-static void
-animAddWindowGeometry(CompWindow * w,
-		      CompMatrix * matrix,
-		      int nMatrix, Region region, Region clip)
-{
-    ANIM_WINDOW(w);
-    ANIM_SCREEN(w->screen);
-
-    // if window is being animated
-    if (aw->com.animRemainingTime > 0 && aw->com.model &&
-	!(aw->com.curAnimEffect->properties.letOthersDrawGeomsFunc &&
-	  aw->com.curAnimEffect->properties.letOthersDrawGeomsFunc (w)))
+    for (int p = 0; p < mExtensionPlugins.size (); p++)
     {
-	BoxPtr pClip;
-	int nClip;
-	int nVertices, nIndices;
-	GLushort *i;
-	GLfloat *v;
-	int x1, y1, x2, y2;
-	float width, height;
-	float winContentsY, winContentsHeight;
-	float deformedX, deformedY;
-	float deformedZ = 0;
-	int nVertX, nVertY, wx, wy;
-	int vSize, it;
-	float gridW, gridH, x, y;
-	Bool rect = TRUE;
-	Bool useTextureQ = FALSE;
-	Model *model = aw->com.model;
-	Region awRegion = NULL;
+	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	extPlugin->postPreparePaintGeneral ();
+    }
 
-	Bool notUsing3dCoords =
-	    !aw->com.curAnimEffect->properties.modelAnimIs3D;
+    cScreen->preparePaint (msSinceLastPaint);
+}
 
-	// Use Q texture coordinate to avoid jagged-looking quads
-	// http://www.r3.nu/~cass/qcoord/
-	if (aw->com.curAnimEffect->properties.useQTexCoord)
-	    useTextureQ = TRUE;
+void
+PrivateAnimScreen::donePaint ()
+{
+    if (mAnimInProgress)
+	cScreen->damagePending ();
 
-	if (aw->com.useDrawRegion)
-	{
-	    awRegion = XCreateRegion();
-	    XIntersectRegion (region, aw->com.drawRegion, awRegion);
-	    nClip = awRegion->numRects;
-	    pClip = awRegion->rects;
-	}
-	else
-	{
-	    nClip = region->numRects;
-	    pClip = region->rects;
-	}
+    cScreen->donePaint ();
+}
 
-	if (nClip == 0)			// nothing to do
-	{
-	    if (awRegion)
-		XDestroyRegion(awRegion);
-	    return;
-	}
-
-	for (it = 0; it < nMatrix; it++)
-	{
-	    if (matrix[it].xy != 0.0f || matrix[it].yx != 0.0f)
-	    {
-		rect = FALSE;
-		break;
-	    }
-	}
-
-	w->drawWindowGeometry = animDrawWindowGeometry;
-
-	if (aw->com.curAnimEffect->properties.addCustomGeometryFunc)
-	{
-	    if (nMatrix == 0)
-		return;
-	    aw->com.curAnimEffect->properties.
-		addCustomGeometryFunc (w, nClip, pClip,
-				       nMatrix, matrix);
-
-	    // If addGeometryFunc exists, it is expected to do everthing
-	    // to add geometries (instead of the rest of this function).
-
-	    if (w->vCount == 0)	// if there is no vertex
-	    {
-		// put a dummy quad in vertices and indices
-
-		w->texUnits = 1;
-		w->texCoordSize = 4;
-		vSize = 3 + w->texUnits * w->texCoordSize;
-
-		if (4 > w->indexSize)
-		{
-		    if (!moreWindowIndices(w, 4))
-			return;
-		}
-		if (4 * vSize > w->vertexSize)
-		{
-		    if (!moreWindowVertices(w, 4 * vSize))
-			return;
-		}
-		w->vCount = 4;
-		w->indexCount = 4;
-		w->vertexStride = vSize;
-
-		// Clear dummy quad coordinates/indices
-		memset(w->vertices, 0, sizeof(GLfloat) * 4 * vSize);
-		memset(w->indices, 0, sizeof(GLushort) * 4);
-	    }
-	    return;				// We're done here.
-	}
-
-	// window coordinates and size
-	wx = WIN_X(w);
-	wy = WIN_Y(w);
-	width = WIN_W(w);
-	height = WIN_H(w);
-
-	// to be used if event is shade/unshade
-	winContentsY = w->attrib.y;
-	winContentsHeight = w->height;
-
-	w->texUnits = nMatrix;
-
-	if (w->vCount == 0)
-	{
-	    // reset
-	    w->indexCount = 0;
-	    w->texCoordSize = 4;
-	}
-	w->vertexStride = 3 + w->texUnits * w->texCoordSize;
-	vSize = w->vertexStride;
-
-	nVertices = w->vCount;
-	nIndices = w->indexCount;
-
-	v = w->vertices + (nVertices * vSize);
-	i = w->indices + nIndices;
-
-	// For each clip passed to this function
-	for (; nClip--; pClip++)
-	{
-	    x1 = pClip->x1;
-	    y1 = pClip->y1;
-	    x2 = pClip->x2;
-	    y2 = pClip->y2;
-
-	    gridW = (float)width / (model->gridWidth - 1);
-
-	    if (aw->com.curWindowEvent == WindowEventShade ||
-		aw->com.curWindowEvent == WindowEventUnshade)
-	    {
-		if (y1 < w->attrib.y)	// if at top part
-		{
-		    gridH = model->topHeight;
-		}
-		else if (y2 > w->attrib.y + w->height)	// if at bottom
-		{
-		    gridH = model->bottomHeight;
-		}
-		else			// in window contents (only in Y coords)
-		{
-		    float winContentsHeight =
-			height - model->topHeight - model->bottomHeight;
-		    gridH = winContentsHeight / (model->gridHeight - 3);
-		}
-	    }
-	    else
-		gridH = (float)height / (model->gridHeight - 1);
-
-	    // nVertX, nVertY: number of vertices for this clip in x and y dimensions
-	    // + 2 to avoid running short of vertices in some cases
-	    nVertX = ceil((x2 - x1) / gridW) + 2;
-	    nVertY = (gridH ? ceil((y2 - y1) / gridH) : 0) + 2;
-
-	    // Allocate 4 indices for each quad
-	    int newIndexSize = nIndices + ((nVertX - 1) * (nVertY - 1) * 4);
-
-	    if (newIndexSize > w->indexSize)
-	    {
-		if (!moreWindowIndices(w, newIndexSize))
-		    return;
-
-		i = w->indices + nIndices;
-	    }
-	    // Assign quad vertices to indices
-	    int jx, jy;
-	    for (jy = 0; jy < nVertY - 1; jy++)
-	    {
-		for (jx = 0; jx < nVertX - 1; jx++)
-		{
-		    *i++ = nVertices + nVertX * (2 * jy + 1) + jx;
-		    *i++ = nVertices + nVertX * (2 * jy + 1) + jx + 1;
-		    *i++ = nVertices + nVertX * 2 * jy + jx + 1;
-		    *i++ = nVertices + nVertX * 2 * jy + jx;
-
-		    nIndices += 4;
-		}
-	    }
-
-	    // Allocate vertices
-	    int newVertexSize =
-		(nVertices + nVertX * (2 * nVertY - 2)) * vSize;
-	    if (newVertexSize > w->vertexSize)
-	    {
-		if (!moreWindowVertices(w, newVertexSize))
-		    return;
-
-		v = w->vertices + (nVertices * vSize);
-	    }
-
-	    float rowTexCoordQ = 1;
-	    float prevRowCellWidth = 0;	// this initial value won't be used
-	    float rowCellWidth = 0;
-
-	    // For each vertex
-	    for (jy = 0, y = y1; jy < nVertY; jy++)
-	    {
-		float topiyFloat;
-		Bool applyOffsets = TRUE;
-
-		if (y > y2)
-		    y = y2;
-
-		// Do calculations for y here to avoid repeating
-		// them unnecessarily in the x loop
-
-		if (aw->com.curWindowEvent == WindowEventShade
-		    || aw->com.curWindowEvent == WindowEventUnshade)
-		{
-		    if (y1 < w->attrib.y)	// if at top part
-		    {
-			topiyFloat = (y - WIN_Y(w)) / model->topHeight;
-			topiyFloat = MIN(topiyFloat, 0.999);	// avoid 1.0
-			applyOffsets = FALSE;
-		    }
-		    else if (y2 > w->attrib.y + w->height)	// if at bottom
-		    {
-			topiyFloat = (model->gridHeight - 2) +
-			    (model->bottomHeight ? (y - winContentsY -
-						    winContentsHeight) /
-			     model->bottomHeight : 0);
-			applyOffsets = FALSE;
-		    }
-		    else		// in window contents (only in Y coords)
-		    {
-			topiyFloat = (model->gridHeight - 3) * 
-			    (y - winContentsY) / winContentsHeight + 1;
-		    }
-		}
-		else
-		{
-		    topiyFloat = (model->gridHeight - 1) * (y - wy) / height;
-		}
-		// topiy should be at most (model->gridHeight - 2)
-		int topiy = (int)(topiyFloat + 1e-4);
-
-		if (topiy == model->gridHeight - 1)
-		    topiy--;
-		int bottomiy = topiy + 1;
-		float iny = topiyFloat - topiy;
-
-		// End of calculations for y
-
-		for (jx = 0, x = x1; jx < nVertX; jx++)
-		{
-		    if (x > x2)
-			x = x2;
-
-		    // find containing grid cell (leftix rightix) x (topiy bottomiy)
-		    float leftixFloat =
-			(model->gridWidth - 1) * (x - wx) / width;
-		    int leftix = (int)(leftixFloat + 1e-4);
-
-		    if (leftix == model->gridWidth - 1)
-			leftix--;
-		    int rightix = leftix + 1;
-
-		    // Objects that are at top, bottom, left, right corners of quad
-		    Object *objToTopLeft =
-			&(model->objects[topiy * model->gridWidth + leftix]);
-		    Object *objToTopRight =
-			&(model->objects[topiy * model->gridWidth + rightix]);
-		    Object *objToBottomLeft =
-			&(model->objects[bottomiy * model->gridWidth + leftix]);
-		    Object *objToBottomRight =
-			&(model->objects[bottomiy * model->gridWidth + rightix]);
-
-		    // find position in cell by taking remainder of flooring
-		    float inx = leftixFloat - leftix;
-
-		    // Interpolate to find deformed coordinates
-
-		    float hor1x = (1 - inx) *
-			objToTopLeft->position.x +
-			inx * objToTopRight->position.x;
-		    float hor1y = (1 - inx) *
-			objToTopLeft->position.y +
-			inx * objToTopRight->position.y;
-		    float hor1z = notUsing3dCoords ? 0 :
-			(1 - inx) *
-			objToTopLeft->position.z +
-			inx * objToTopRight->position.z;
-		    float hor2x = (1 - inx) *
-			objToBottomLeft->position.x +
-			inx * objToBottomRight->position.x;
-		    float hor2y = (1 - inx) *
-			objToBottomLeft->position.y +
-			inx * objToBottomRight->position.y;
-		    float hor2z = notUsing3dCoords ? 0 :
-			(1 - inx) *
-			objToBottomLeft->position.z +
-			inx * objToBottomRight->position.z;
-
-		    deformedX = (1 - iny) * hor1x + iny * hor2x;
-		    deformedY = (1 - iny) * hor1y + iny * hor2y;
-		    deformedZ = (1 - iny) * hor1z + iny * hor2z;
-
-		    // Texture coordinates (s, t, r, q)
-
-		    if (useTextureQ)
-		    {
-			if (jx == 1)
-			    rowCellWidth = deformedX - v[-3];
-
-			// do only once per row for all rows except row 0
-			if (jy > 0 && jx == 1)
-			{
-			    rowTexCoordQ = (rowCellWidth / prevRowCellWidth);
-
-			    for (it = 0; it < nMatrix; it++, v += 4)
-			    {
-				// update first column
-				// (since we didn't know rowTexCoordQ before)
-				v[-vSize]     *= rowTexCoordQ; // multiply s & t by q
-				v[-vSize + 1] *= rowTexCoordQ;
-				v[-vSize + 3] = rowTexCoordQ;  // copy q
-			    }
-			    v -= nMatrix * 4;
-			}
-		    }
-
-		    // Loop for each texture element
-		    // (4 texture coordinates for each one)
-		    for (it = 0; it < nMatrix; it++, v += 4)
-		    {
-			float offsetY = 0;
-
-			if (rect)
-			{
-			    if (applyOffsets && y < y2)
-				offsetY = objToTopLeft->offsetTexCoordForQuadAfter.y;
-			    v[0] = COMP_TEX_COORD_X (&matrix[it], x); // s
-			    v[1] = COMP_TEX_COORD_Y (&matrix[it], y + offsetY); // t
-			}
-			else
-			{
-			    if (applyOffsets && y < y2)
-				// FIXME:
-			    	// The correct y offset below produces wrong
-				// texture coordinates for some reason.
-				offsetY = 0;
-				// offsetY = objToTopLeft->offsetTexCoordForQuadAfter.y;
-			    v[0] = COMP_TEX_COORD_XY (&matrix[it], x, y + offsetY); // s
-			    v[1] = COMP_TEX_COORD_YX (&matrix[it], x, y + offsetY); // t
-			}
-			v[2] = 0; // r
-
-			if (0 < jy && jy < nVertY - 1)
-			{
-			    // copy s, t, r to duplicate row
-			    memcpy(v + nVertX * vSize, v,
-				   3 * sizeof(GLfloat));
-			    v[3 + nVertX * vSize] = 1; // q
-			}
-
-			if (applyOffsets && 
-			    objToTopLeft->offsetTexCoordForQuadBefore.y != 0)
-			{
-			    // After copying to next row, update texture y coord
-			    // by following object's offset
-			    offsetY = objToTopLeft->offsetTexCoordForQuadBefore.y;
-			    if (rect)
-			    {
-				v[1] = COMP_TEX_COORD_Y (&matrix[it], y + offsetY);
-			    }
-			    else
-			    {
-				v[0] = COMP_TEX_COORD_XY (&matrix[it],
-							  x, y + offsetY);
-				v[1] = COMP_TEX_COORD_YX (&matrix[it],
-							  x, y + offsetY);
-			    }
-			}
-			if (useTextureQ)
-			{
-			    v[3] = rowTexCoordQ; // q
-
-			    if (jx > 0)	// since column 0 is updated when jx == 1
-			    {
-				// multiply s & t by q
-				v[0] *= rowTexCoordQ;
-				v[1] *= rowTexCoordQ;
-			    }
-			}
-			else
-			{
-			    v[3] = 1; // q
-			}
-		    }
-
-		    v[0] = deformedX;
-		    v[1] = deformedY;
-		    v[2] = deformedZ;
-
-		    // Copy vertex coordinates to duplicate row
-		    if (0 < jy && jy < nVertY - 1)
-			memcpy(v + nVertX * vSize, v, 3 * sizeof(GLfloat));
-
-		    nVertices++;
-
-		    // increment x properly (so that coordinates fall on grid intersections)
-		    x = rightix * gridW + wx;
-
-		    v += 3; // move on to next vertex
-		}
-		if (useTextureQ)
-		    prevRowCellWidth = rowCellWidth;
-
-		if (0 < jy && jy < nVertY - 1)
-		{
-		    v += nVertX * vSize;	// skip the duplicate row
-		    nVertices += nVertX;
-		}
-		// increment y properly (so that coordinates fall on grid intersections)
-		if (aw->com.curWindowEvent == WindowEventShade
-		    || aw->com.curWindowEvent == WindowEventUnshade)
-		{
-		    y += gridH;
-		}
-		else
-		{
-		    y = bottomiy * gridH + wy;
-		}
-	    }
-	}
-	w->vCount = nVertices;
-	w->indexCount = nIndices;
-	if (awRegion)
-	{
-	    XDestroyRegion(awRegion);
-	    awRegion = NULL;
-	}
+void
+PrivateAnimWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
+				  const CompRegion            &region,
+				  const CompRegion            &clip)
+{
+    // if window is being animated
+    if (mCurAnimation)
+    {
+	mCurAnimation->addGeometry (matrix, region, clip);
     }
     else
     {
-	UNWRAP(as, w->screen, addWindowGeometry);
-	(*w->screen->addWindowGeometry) (w, matrix, nMatrix, region, clip);
-	WRAP(as, w->screen, addWindowGeometry, animAddWindowGeometry);
+	gWindow->glAddGeometry (matrix, region, clip);
     }
 }
 
-static void
-animDrawWindowTexture(CompWindow * w, CompTexture * texture,
-		      const FragmentAttrib *attrib,
-		      unsigned int mask)
+bool
+Animation::shouldDamageWindowOnStart ()
 {
-    ANIM_WINDOW(w);
-    ANIM_SCREEN(w->screen);
-
-    if (aw->com.animRemainingTime > 0)	// if animation in progress, store texture
-    {
-	aw->com.curPaintAttrib = *attrib;
-    }
-
-    UNWRAP(as, w->screen, drawWindowTexture);
-    (*w->screen->drawWindowTexture) (w, texture, attrib, mask);
-    WRAP(as, w->screen, drawWindowTexture, animDrawWindowTexture);
+    return (mCurWindowEvent == WindowEventClose ||
+	    mCurWindowEvent == WindowEventMinimize ||
+	    mCurWindowEvent == WindowEventShade);
 }
 
 void
-animDrawWindowGeometry(CompWindow * w)
+Animation::addGeometry (const GLTexture::MatrixList &matrix,
+			const CompRegion            &region,
+			const CompRegion            &clip)
 {
-    ANIM_WINDOW (w);
+    mAWindow->priv->gWindow->glAddGeometry (matrix, region, clip);
+}
 
-    if (aw->com.curAnimEffect->properties.drawCustomGeometryFunc)
+void
+PartialWindowAnim::addGeometry (const GLTexture::MatrixList &matrix,
+				const CompRegion            &region,
+				const CompRegion            &clip)
+{
+    if (mUseDrawRegion)
     {
-	aw->com.curAnimEffect->properties.drawCustomGeometryFunc (w);
-	return;
+	CompRegion awRegion (region.intersected (mDrawRegion));
+	Animation::addGeometry (matrix, awRegion, clip);
     }
-    int texUnit = w->texUnits;
-    int currentTexUnit = 0;
-    int stride = 3 + texUnit * w->texCoordSize;
-    GLfloat *vertices = w->vertices + (stride - 3);
-
-    stride *= sizeof(GLfloat);
-
-    glVertexPointer(3, GL_FLOAT, stride, vertices);
-
-    while (texUnit--)
+    else
     {
-	if (texUnit != currentTexUnit)
-	{
-	    w->screen->clientActiveTexture(GL_TEXTURE0_ARB + texUnit);
-	    glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	    currentTexUnit = texUnit;
-	}
-	vertices -= w->texCoordSize;
-	glTexCoordPointer(w->texCoordSize, GL_FLOAT, stride, vertices);
-    }
-
-    glDrawElements(GL_QUADS, w->indexCount, GL_UNSIGNED_SHORT,
-		   w->indices);
-
-    // disable all texture coordinate arrays except 0
-    texUnit = w->texUnits;
-    if (texUnit > 1)
-    {
-	while (--texUnit)
-	{
-	    (*w->screen->clientActiveTexture) (GL_TEXTURE0_ARB + texUnit);
-	    glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	}
-
-	(*w->screen->clientActiveTexture) (GL_TEXTURE0_ARB);
+	Animation::addGeometry (matrix, region, clip);
     }
 }
 
-static Bool
-animPaintWindow(CompWindow * w,
-		const WindowPaintAttrib * attrib,
-		const CompTransform    *transform,
-		Region region, unsigned int mask)
+void
+PrivateAnimWindow::glDrawTexture (GLTexture          *texture,
+				  GLFragment::Attrib &attrib,
+				  unsigned int       mask)
 {
-    Bool status;
-
-    ANIM_SCREEN(w->screen);
-    ANIM_WINDOW(w);
-
-    if (aw->com.animRemainingTime > 0)
+    if (mCurAnimation)
     {
+	mCurAnimation->setCurPaintAttrib (attrib);
+    }
+
+    gWindow->glDrawTexture (texture, attrib, mask);
+}
+
+void
+PrivateAnimWindow::glDrawGeometry ()
+{
+    if (mCurAnimation)
+    {
+	mCurAnimation->drawGeometry ();
+    }
+    else
+    {
+	gWindow->glDrawGeometry ();
+    }
+}
+
+void
+Animation::drawTexture (GLTexture          *texture,
+			GLFragment::Attrib &attrib,
+			unsigned int       mask)
+{
+    mCurPaintAttrib = attrib;
+}
+
+void
+Animation::drawGeometry ()
+{
+    mAWindow->priv->gWindow->glDrawGeometry ();
+}
+
+bool
+PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
+			    const GLMatrix &transform,
+			    const CompRegion &region, unsigned int mask)
+{
+    bool status;
+
+    // Is this the first glPaint call this round
+    // without the mask PAINT_WINDOW_OCCLUSION_DETECTION_MASK?
+    if (mPAScreen->mStartingNewPaintRound &&
+	!(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
+    {
+	mPAScreen->mStartingNewPaintRound = false;
+
+	// Back-to-front painting of windows is starting now.
+	if (mPAScreen->mPrePaintWindowsBackToFrontEnabled)
+	    mPAScreen->prePaintWindowsBackToFront ();
+    }
+
+    if (mCurAnimation)
+    {
+	/* TODO check if this is necessary now
 	if (!as->animInProgress)
 	{
 	    // This window shouldn't really be undergoing animation,
 	    // because it won't make progress with false as->animInProgress.
-	    postAnimationCleanup (w);
+	    postAnimationCleanUp (w);
 
-	    UNWRAP(as, w->screen, paintWindow);
-	    status = (*w->screen->paintWindow) (w, attrib, transform, region,
-						mask);
-	    WRAP(as, w->screen, paintWindow, animPaintWindow);
-
+	    status = gWindow->glPaint (attrib, transform, region, mask);
 	    return status;
-	}
-	if (aw->com.curAnimEffect == AnimEffectDodge &&
-	    aw->isDodgeSubject &&
-	    aw->walkerOverNewCopy)
+	}*/
+
+	for (int p = 0; p < mPAScreen->mExtensionPlugins.size (); p++)
 	{
-	    // if aw is to be painted somewhere other than in its
-	    // original stacking order, we don't
-	    // need to paint it now
-	    return FALSE;
+	    ExtensionPluginInfo *extPlugin = mPAScreen->mExtensionPlugins[p];
+	    if (extPlugin->paintShouldSkipWindow (mWindow))
+		return false;
 	}
-	if (aw->com.curWindowEvent == WindowEventFocus && otherPluginsActive(as))
-	    postAnimationCleanup (w);
 
-	WindowPaintAttrib wAttrib = *attrib;
-	CompTransform wTransform = *transform;
+	if (mCurAnimation->curWindowEvent () == WindowEventFocus &&
+	    mPAScreen->otherPluginsActive ())
+	{
+	    postAnimationCleanUp ();
+	    return gWindow->glPaint (attrib, transform, region, mask);
+	}
 
-	if (aw->com.curAnimEffect->properties.addCustomGeometryFunc)
+	GLWindowPaintAttrib wAttrib = attrib;
+	GLMatrix wTransform (transform.getMatrix ());
+
+	/* TODO check if this is still necessary
+	if (mCurAnimation->addCustomGeometryFunc)
 	{
 	    // Use slightly smaller brightness to force core
 	    // to handle <max saturation case with <max brightness.
 	    // Otherwise polygon effects show fully unsaturated colors
 	    // in that case.
 	    wAttrib.brightness = MAX (0, wAttrib.brightness - 1);
-	}
-	w->indexCount = 0;
+	} */
+
+	//w->indexCount = 0; // TODO check if this is still necessary
 
 	// TODO: should only happen for distorting effects
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
@@ -3043,235 +1421,63 @@ animPaintWindow(CompWindow * w,
 	wAttrib.xScale = 1.0f;
 	wAttrib.yScale = 1.0f;
 
-	if (aw->com.curAnimEffect->properties.updateWindowAttribFunc)
-	    aw->com.curAnimEffect->properties.
-		updateWindowAttribFunc (w, &wAttrib);
+	mCurAnimation->updateAttrib (wAttrib);
+	mCurAnimation->updateTransform (wTransform);
+	mCurAnimation->prePaintWindow ();
 
-	if (aw->com.curAnimEffect->properties.updateWinTransformFunc)
-	    aw->com.curAnimEffect->properties.
-		updateWinTransformFunc (w, &wTransform);
+	status = gWindow->glPaint (wAttrib, wTransform, region, mask);
 
-	if (aw->com.curAnimEffect->properties.prePaintWindowFunc)
-	    aw->com.curAnimEffect->properties.prePaintWindowFunc (w);
-
-	UNWRAP(as, w->screen, paintWindow);
-	status = (*w->screen->paintWindow) (w, &wAttrib, &wTransform, region, mask);
-	WRAP(as, w->screen, paintWindow, animPaintWindow);
-
-	if (aw->com.curAnimEffect->properties.postPaintWindowFunc)
+	if (mCurAnimation->postPaintWindowUsed ())
 	{
 	    // Transform to make post-paint coincide with the window
 	    glPushMatrix ();
-	    glLoadMatrixf (wTransform.m);
+	    glLoadMatrixf (wTransform.getMatrix ());
 
-	    aw->com.curAnimEffect->properties.postPaintWindowFunc (w);
+	    mCurAnimation->postPaintWindow ();
 
 	    glPopMatrix ();
 	}
     }
     else
     {
-	UNWRAP(as, w->screen, paintWindow);
-	status = (*w->screen->paintWindow) (w, attrib, transform, region, mask);
-	WRAP(as, w->screen, paintWindow, animPaintWindow);
+	status = gWindow->glPaint (attrib, transform, region, mask);
     }
 
     return status;
 }
 
-// Go to the bottommost window in this "focus chain"
-// This chain is used to handle some cases: e.g when Find dialog
-// of an app is open, both windows should be faded when the Find
-// dialog is raised.
-static CompWindow*
-getBottommostInFocusChain (CompWindow *w)
+/// This is enabled only during restack animations.
+CompWindowList
+PrivateAnimScreen::getWindowPaintList ()
 {
-    if (!w)
-	return w;
-
-    ANIM_WINDOW (w);
-    ANIM_SCREEN (w->screen);
-
-    CompWindow *bottommost = aw->winToBePaintedBeforeThis;
-
-    if (!bottommost || bottommost->destroyed)
-	return w;
-
-    AnimWindow *awBottommost = GET_ANIM_WINDOW (bottommost, as);
-    CompWindow *wPrev = NULL;
-
-    if (awBottommost)
-	wPrev = awBottommost->moreToBePaintedPrev;
-    while (wPrev)
-    {
-	bottommost = wPrev;
-	wPrev = GET_ANIM_WINDOW(wPrev, as)->moreToBePaintedPrev;
-    }
-    return bottommost;
+    ExtensionPluginAnimation *extPlugin =
+	static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
+    return extPlugin->getWindowPaintList ();
 }
 
-static void
-resetWalkerMarks (CompScreen *s)
+/// This is enabled only during restack animations.
+void
+PrivateAnimScreen::prePaintWindowsBackToFront ()
 {
-    CompWindow *w;
-    for (w = s->windows; w; w = w->next)
+    if (mAnimInProgress)
     {
-	ANIM_WINDOW(w);
-	aw->walkerOverNewCopy = FALSE;
-	aw->walkerVisitCount = 0;
+	ExtensionPluginAnimation *extPlugin =
+	    static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
+	extPlugin->prePaintWindowsBackToFront ();
     }
 }
 
-static CompWindow*
-animWalkFirst (CompScreen *s)
+void
+PrivateAnimScreen::enablePrePaintWindowsBackToFront (bool enabled)
 {
-    ANIM_SCREEN (s);
-
-    resetWalkerMarks (s);
-
-    CompWindow *w = getBottommostInFocusChain(s->windows);
-    if (w)
-    {
-	AnimWindow *aw = GET_ANIM_WINDOW (w, as);
-	aw->walkerVisitCount++;
-    }
-    return w;
+    mPrePaintWindowsBackToFrontEnabled = enabled;
 }
 
-static CompWindow*
-animWalkLast (CompScreen *s)
+void
+AnimScreen::enableCustomPaintList (bool enabled)
 {
-    ANIM_SCREEN (s);
-
-    resetWalkerMarks (s);
-
-    CompWindow *w = s->reverseWindows;
-    if (w)
-    {
-	AnimWindow *aw = GET_ANIM_WINDOW (w, as);
-	aw->walkerVisitCount++;
-    }
-    return w;
-}
-
-static Bool
-markNewCopy (CompWindow *w)
-{
-    ANIM_WINDOW (w);
-
-    // if window is in a focus chain
-    if (aw->winThisIsPaintedBefore ||
-	aw->moreToBePaintedPrev)
-    {
-	aw->walkerOverNewCopy = TRUE;
-	return TRUE;
-    }
-    return FALSE;
-}
-
-static CompWindow*
-animWalkNext (CompWindow *w)
-{
-    ANIM_WINDOW (w);
-    CompWindow *wRet = NULL;
-
-    if (!aw->walkerOverNewCopy)
-    {
-	// Within a chain? (not the 1st or 2nd window)
-	if (aw->moreToBePaintedNext)
-	    wRet = aw->moreToBePaintedNext;
-	else if (aw->winThisIsPaintedBefore) // 2nd one in chain?
-	    wRet = aw->winThisIsPaintedBefore;
-    }
-    else
-	aw->walkerOverNewCopy = FALSE;
-
-    if (!wRet && w->next && markNewCopy (w->next))
-	wRet = w->next;
-    else if (!wRet)
-	wRet = getBottommostInFocusChain(w->next);
-
-    if (wRet)
-    {
-	ANIM_SCREEN (w->screen);
-
-	AnimWindow *awRet = GET_ANIM_WINDOW (wRet, as);
-	// Prevent cycles, which cause freezes
-	if (awRet->walkerVisitCount > 1) // each window is visited at most twice
-	    return NULL;
-	awRet->walkerVisitCount++;
-    }
-    return wRet;
-}
-
-static CompWindow*
-animWalkPrev (CompWindow *w)
-{
-    ANIM_WINDOW (w);
-    CompWindow *wRet = NULL;
-
-    // Focus chain start?
-    CompWindow *w2 = aw->winToBePaintedBeforeThis;
-    if (w2)
-	wRet = w2;
-    else if (!aw->walkerOverNewCopy)
-    {
-	// Within a focus chain? (not the last window)
-	CompWindow *wPrev = aw->moreToBePaintedPrev;
-	if (wPrev)
-	    wRet = wPrev;
-	else if (aw->winThisIsPaintedBefore) // Focus chain end?
-	    // go to the chain beginning and get the
-	    // prev. in X stacking order
-	{
-	    if (aw->winThisIsPaintedBefore->prev)
-		markNewCopy (aw->winThisIsPaintedBefore->prev);
-
-	    wRet = aw->winThisIsPaintedBefore->prev;
-	}
-    }
-    else
-	aw->walkerOverNewCopy = FALSE;
-
-    if (!wRet && w->prev)
-	markNewCopy (w->prev);
-
-    wRet = w->prev;
-    if (wRet)
-    {
-	ANIM_SCREEN (w->screen);
-
-	AnimWindow *awRet = GET_ANIM_WINDOW (wRet, as);
-	// Prevent cycles, which cause freezes
-	if (awRet->walkerVisitCount > 1) // each window is visited at most twice
-	    return NULL;
-	awRet->walkerVisitCount++;
-    }
-    return wRet;
-}
-
-static void
-animInitWindowWalker (CompScreen *s,
-		      CompWalker *walker)
-{
-    ANIM_SCREEN (s);
-
-    UNWRAP (as, s, initWindowWalker);
-    (*s->initWindowWalker) (s, walker);
-    WRAP (as, s, initWindowWalker, animInitWindowWalker);
-
-    if (as->walkerAnimCount > 0) // only walk if necessary
-    {
-	if (!as->animInProgress) // just in case
-	{
-	    as->walkerAnimCount = 0;
-	    return;
-	}
-	walker->first = animWalkFirst;
-	walker->last  = animWalkLast;
-	walker->next  = animWalkNext;
-	walker->prev  = animWalkPrev;
-    }
+    priv->cScreen->getWindowPaintListSetEnabled (priv, enabled);
+    priv->enablePrePaintWindowsBackToFront (enabled);
 }
 
 static const PluginEventInfo watchedPlugins[] =
@@ -3283,1715 +1489,1247 @@ static const PluginEventInfo watchedPlugins[] =
     {"shift", "activate"},
 };
 
-static void animHandleCompizEvent(CompDisplay * d, const char *pluginName,
-				  const char *eventName, CompOption * option,
-				  int nOption)
+void
+PrivateAnimScreen::handleCompizEvent (const char         *pluginName,
+				      const char         *eventName,
+				      CompOption::Vector &options)
 {
-    ANIM_DISPLAY(d);
+    ::screen->handleCompizEvent (pluginName, eventName, options);
 
-    UNWRAP (ad, d, handleCompizEvent);
-    (*d->handleCompizEvent) (d, pluginName, eventName, option, nOption);
-    WRAP (ad, d, handleCompizEvent, animHandleCompizEvent);
-
-    int i;
-    for (i = 0; i < NUM_WATCHED_PLUGINS; i++)
-	if (strcmp(pluginName, watchedPlugins[i].pluginName) == 0)
+    for (int i = 0; i < WatchedPluginNum; i++)
+	if (strcmp (pluginName, watchedPlugins[i].pluginName) == 0)
 	{
-	    if (strcmp(eventName, watchedPlugins[i].activateEventName) == 0)
+	    if (strcmp (eventName, watchedPlugins[i].activateEventName) == 0)
 	    {
-		Window xid = getIntOptionNamed(option, nOption, "root", 0);
-		CompScreen *s = findScreenAtDisplay(d, xid);
+		mPluginActive[i] =
+		    CompOption::getBoolOptionNamed (options, "active", false);
 
-		if (s)
+		if (i == WatchedPluginSwitcher &&
+		    !mPluginActive[i])
 		{
-		    ANIM_SCREEN(s);
-		    as->pluginActive[i] =
-			getBoolOptionNamed(option, nOption, "active", FALSE);
-		    if (i == 0)
-		    {
-			if (!as->pluginActive[i])
-			    switcherPostWait = 1;
-		    }
+		    mSwitcherPostWait = 1;
 		}
 	    }
 	    break;
 	}
 }
 
-static void
-updateLastClientListStacking(CompScreen *s)
+/// Returns true for windows that don't have a pixmap or certain properties,
+/// like the dimming layer of gksudo and x-session-manager.
+inline bool
+PrivateAnimScreen::shouldIgnoreWindowForAnim (CompWindow *w, bool checkPixmap)
 {
-    ANIM_SCREEN(s);
-    int n = s->nClientList;
-    Window *clientListStacking = (Window *) (s->clientList + n) + n;
-
-    if (as->nLastClientListStacking != n) // the number of windows has changed
-    {
-	Window *list;
-
-	list = realloc (as->lastClientListStacking, sizeof (Window) * n);
-	as->lastClientListStacking  = list;
-
-	if (!list)
-	{
-	    as->nLastClientListStacking = 0;
-	    return;
-	}
-
-	as->nLastClientListStacking = n;
-    }
-
-    // Store new client stack listing
-    memcpy(as->lastClientListStacking, clientListStacking,
-	   sizeof (Window) * n);
+    return ((checkPixmap && !CompositeWindow::get (w)->pixmap ()) ||
+	    mNeverAnimateMatch.evaluate (w));
 }
 
-// Returns true for windows that don't have a pixmap or certain properties,
-// like the dimming layer of gksudo and x-session-manager
-static inline Bool
-shouldIgnoreForAnim (CompWindow *w, Bool checkPixmap)
+void
+PrivateAnimWindow::reverseAnimation ()
 {
-    ANIM_DISPLAY (w->screen->display);
+    mCurAnimation->reverse ();
 
-    return ((checkPixmap && !w->texture->pixmap) ||
-	    matchEval (&ad->neverAnimateMatch, w));
-}
-
-static void animHandleEvent(CompDisplay * d, XEvent * event)
-{
-    CompWindow *w;
-
-    ANIM_DISPLAY(d);
-
-    switch (event->type)
+    // Inflict the pending unmaps
+    while (mUnmapCnt)
     {
-    case PropertyNotify:
-	if (event->xproperty.atom == d->clientListStackingAtom)
-	{
-	    CompScreen *s = findScreenAtDisplay (d, event->xproperty.window);
-	    if (s)
-		updateLastClientListStacking(s);
-	}
-	break;
-    case MapNotify:
-	w = findWindowAtDisplay(d, event->xmap.window);
-	if (w)
-	{
-	    ANIM_WINDOW(w);
-
-	    if (aw->com.animRemainingTime > 0)
-	    {
-		aw->state = aw->newState;
-	    }
-	    aw->ignoreDamage = TRUE;
-	    while (aw->unmapCnt)
-	    {
-		unmapWindow(w);
-		aw->unmapCnt--;
-	    }
-	    aw->ignoreDamage = FALSE;
-	}
-	break;
-    case DestroyNotify:
-	w = findWindowAtDisplay(d, event->xunmap.window);
-	if (w)
-	{
-	    ANIM_WINDOW(w);
-	    int duration;
-
-	    if (shouldIgnoreForAnim (w, TRUE))
-		break;
-
-	    if (AnimEffectNone ==
-		getMatchingAnimSelection (w, AnimEventClose, &duration))
-		break;
-
-	    aw->destroyCnt++;
-	    w->destroyRefCnt++;
-	    addWindowDamage(w);
-	}
-	break;
-    case UnmapNotify:
-	w = findWindowAtDisplay(d, event->xunmap.window);
-	if (w)
-	{
-	    ANIM_SCREEN(w->screen);
-
-	    if (w->pendingUnmaps && onCurrentDesktop(w)) // Normal -> Iconic
-	    {
-		ANIM_WINDOW(w);
-		int duration = 200;
-		AnimEffect chosenEffect =
-		    getMatchingAnimSelection (w, AnimEventShade, &duration);
-
-		if (w->shaded)
-		{
-		    // SHADE event!
-
-		    aw->nowShaded = TRUE;
-
-		    if (chosenEffect != AnimEffectNone)
-		    {
-			Bool startingNew = TRUE;
-
-			if (aw->com.curWindowEvent != WindowEventNone)
-			{
-			    if (aw->com.curWindowEvent != WindowEventUnshade)
-			    {
-				postAnimationCleanupPrev (w, FALSE, FALSE);
-			    }
-			    else
-			    {
-				// Play the unshade effect backwards from where it left
-				aw->com.animRemainingTime =
-				    aw->com.animTotalTime -
-				    aw->com.animRemainingTime;
-
-				// avoid window remains
-				if (aw->com.animRemainingTime <= 0)
-				    aw->com.animRemainingTime = 1;
-
-				startingNew = FALSE;
-				if (aw->com.animOverrideProgressDir == 0)
-				    aw->com.animOverrideProgressDir = 2;
-				else if (aw->com.animOverrideProgressDir == 1)
-				    aw->com.animOverrideProgressDir = 0;
-			    }
-			}
-
-			if (startingNew)
-			{
-			    AnimEffect effectToBePlayed;
-			    effectToBePlayed =
-				animGetAnimEffect (as,
-						   chosenEffect,
-						   AnimEventShade);
-
-			    // handle empty random effect list
-			    if (effectToBePlayed == AnimEffectNone)
-				break;
-
-			    aw->com.curAnimEffect = effectToBePlayed;
-			    aw->com.animTotalTime = duration;
-			    aw->com.animRemainingTime = aw->com.animTotalTime;
-			}
-
-			animActivateEvent(w->screen, TRUE);
-			aw->com.curWindowEvent = WindowEventShade;
-
-			if (!animEnsureModel(w))
-			{
-			    postAnimationCleanup (w);
-			}
-
-			aw->unmapCnt++;
-			w->unmapRefCnt++;
-
-			damagePendingOnScreen (w->screen);
-		    }
-		}
-		else if (!w->invisible && !w->hidden)
-		{
-		    // MINIMIZE event!
-
-		    // Always reset stacking related info when a window is
-		    // minimized.
-		    resetStackingInfo (w->screen);
-
-		    aw->newState = IconicState;
-
-		    if (w->iconGeometrySet)
-		    {
-			aw->com.icon = w->iconGeometry;
-		    }
-		    else
-		    {
-			// Minimize to mouse pointer if there is no
-			// window list or if the window skips taskbar
-			if (!getMousePointerXY (w->screen,
-						&aw->com.icon.x,
-						&aw->com.icon.y))
-			{
-			    // Use screen center if can't get mouse coords
-			    aw->com.icon.x = w->screen->width / 2;
-			    aw->com.icon.y = w->screen->height / 2;
-			}
-			aw->com.icon.width = FAKE_ICON_SIZE;
-			aw->com.icon.height = FAKE_ICON_SIZE;
-		    }
-
-		    chosenEffect =
-			getMatchingAnimSelection (w, AnimEventMinimize, &duration);
-
-		    if (chosenEffect != AnimEffectNone)
-		    {
-			Bool startingNew = TRUE;
-
-			if (aw->com.curWindowEvent != WindowEventNone)
-			{
-			    if (aw->com.curWindowEvent != WindowEventUnminimize)
-			    {
-				postAnimationCleanupPrev (w, FALSE, FALSE);
-			    }
-			    else
-			    {
-				// Play the unminimize effect backwards from where it left
-				aw->com.animRemainingTime =
-				    aw->com.animTotalTime - aw->com.animRemainingTime;
-
-				// avoid window remains
-				if (aw->com.animRemainingTime == 0)
-				    aw->com.animRemainingTime = 1;
-
-				startingNew = FALSE;
-				if (aw->com.animOverrideProgressDir == 0)
-				    aw->com.animOverrideProgressDir = 2;
-				else if (aw->com.animOverrideProgressDir == 1)
-				    aw->com.animOverrideProgressDir = 0;
-			    }
-			}
-
-			if (startingNew)
-			{
-			    AnimEffect effectToBePlayed;
-			    effectToBePlayed =
-				animGetAnimEffect (as,
-						   chosenEffect,
-						   AnimEventMinimize);
-
-			    // handle empty random effect list
-			    if (effectToBePlayed == AnimEffectNone)
-			    {
-				aw->state = aw->newState;
-				break;
-			    }
-			    aw->com.curAnimEffect = effectToBePlayed;
-			    aw->com.animTotalTime = duration;
-			    aw->com.animRemainingTime = aw->com.animTotalTime;
-			}
-
-			animActivateEvent(w->screen, TRUE);
-			aw->com.curWindowEvent = WindowEventMinimize;
-
-			if (!animEnsureModel(w))
-			{
-			    postAnimationCleanup (w);
-			}
-			else
-			{
-			    aw->unmapCnt++;
-			    w->unmapRefCnt++;
-
-			    damagePendingOnScreen (w->screen);
-			}
-		    }
-		    else
-		        aw->state = aw->newState;
-		}
-	    }
-	    else				// X -> Withdrawn
-	    {
-		ANIM_WINDOW(w);
-		int duration = 200;
-
-		// Always reset stacking related info when a window is closed.
-		resetStackingInfo (w->screen);
-
-		if (shouldIgnoreForAnim (w, TRUE))
-		    break;
-
-		AnimEffect chosenEffect =
-		    getMatchingAnimSelection (w, AnimEventClose, &duration);
-
-		// CLOSE event!
-
-		aw->state = NormalState;
-		aw->newState = WithdrawnState;
-
-		if (chosenEffect != AnimEffectNone)
-		{
-		    int tmpSteps = 0;
-		    Bool startingNew = TRUE;
-
-		    if (aw->com.animRemainingTime > 0 &&
-			aw->com.curWindowEvent != WindowEventOpen)
-		    {
-			tmpSteps = aw->com.animRemainingTime;
-			aw->com.animRemainingTime = 0;
-		    }
-		    if (aw->com.curWindowEvent != WindowEventNone)
-		    {
-			if (aw->com.curWindowEvent == WindowEventOpen)
-			{
-			    // Play the create effect backward from where it left
-			    aw->com.animRemainingTime =
-				aw->com.animTotalTime - aw->com.animRemainingTime;
-
-			    // avoid window remains
-			    if (aw->com.animRemainingTime <= 0)
-				aw->com.animRemainingTime = 1;
-
-			    startingNew = FALSE;
-			    if (aw->com.animOverrideProgressDir == 0)
-				aw->com.animOverrideProgressDir = 2;
-			    else if (aw->com.animOverrideProgressDir == 1)
-				aw->com.animOverrideProgressDir = 0;
-			}
-			else if (aw->com.curWindowEvent == WindowEventClose)
-			{
-			    if (aw->com.animOverrideProgressDir == 2)
-			    {
-				aw->com.animRemainingTime = tmpSteps;
-				startingNew = FALSE;
-			    }
-			}
-			else
-			{
-			    postAnimationCleanupPrev (w, TRUE, FALSE);
-			}
-		    }
-
-		    if (startingNew)
-		    {
-			AnimEffect effectToBePlayed;
-			effectToBePlayed = animGetAnimEffect (as,
-							      chosenEffect,
-							      AnimEventClose);
-
-			// handle empty random effect list
-			if (effectToBePlayed == AnimEffectNone)
-			{
-			    aw->state = aw->newState;
-			    break;
-			}
-			aw->com.curAnimEffect = effectToBePlayed;
-			aw->com.animTotalTime = duration;
-			aw->com.animRemainingTime = aw->com.animTotalTime;
-		    }
-		    animActivateEvent(w->screen, TRUE);
-		    aw->com.curWindowEvent = WindowEventClose;
-
-		    if (!animEnsureModel(w))
-		    {
-			postAnimationCleanup (w);
-		    }
-		    else if (getMousePointerXY
-			     (w->screen, &aw->com.icon.x, &aw->com.icon.y))
-		    {
-			aw->com.icon.width = FAKE_ICON_SIZE;
-			aw->com.icon.height = FAKE_ICON_SIZE;
-
-			if (aw->com.curAnimEffect == AnimEffectMagicLamp)
-			    aw->com.icon.width = 
-				MAX(aw->com.icon.width,
-				    animGetI (w, ANIM_SCREEN_OPTION_MAGIC_LAMP_OPEN_START_WIDTH));
-			else if (aw->com.curAnimEffect == AnimEffectVacuum)
-			    aw->com.icon.width =
-				MAX(aw->com.icon.width,
-				    animGetI (w, ANIM_SCREEN_OPTION_VACUUM_OPEN_START_WIDTH));
-
-			aw->unmapCnt++;
-			w->unmapRefCnt++;
-
-			damagePendingOnScreen (w->screen);
-		    }
-		}
-		else if (AnimEffectNone !=
-			 getMatchingAnimSelection (w, AnimEventOpen, &duration))
-		{
-		    // stop the current animation and prevent it from rewinding
-
-		    if (aw->com.animRemainingTime > 0 &&
-			aw->com.curWindowEvent != WindowEventOpen)
-		    {
-			aw->com.animRemainingTime = 0;
-		    }
-		    if ((aw->com.curWindowEvent != WindowEventNone) &&
-			(aw->com.curWindowEvent != WindowEventClose))
-		    {
-			postAnimationCleanup (w);
-		    }
-		    // set some properties to make sure this window will use the
-		    // correct open effect the next time it's "opened"
-
-		    animActivateEvent(w->screen, TRUE);
-		    aw->com.curWindowEvent = WindowEventClose;
-
-		    aw->unmapCnt++;
-		    w->unmapRefCnt++;
-
-		    damagePendingOnScreen (w->screen);
-		}
-		else
-		    aw->state = aw->newState;
-	    }
-	}
-	break;
-    case ConfigureNotify:
-    {
-	XConfigureEvent *ce = &event->xconfigure;
-	w = findWindowAtDisplay (d, ce->window);
-	if (!w)
-	    break;
-	if (w->prev)
-	{
-	    if (ce->above && ce->above == w->prev->id)
-		break;
-	}
-	else if (ce->above == None)
-	    break;
-	CompScreen *s = findScreenAtDisplay (d, event->xproperty.window);
-	if (!s)
-	    break;
-
-	ANIM_SCREEN(s);
-	int n = s->nClientList;
-	Bool winOpenedClosed = FALSE;
-
-	Window *clientList = (Window *) (s->clientList + n);
-	Window *clientListStacking = clientList + n;
-
-	if (n != as->nLastClientListStacking)
-	    winOpenedClosed = TRUE;
-
-	// if restacking occurred and not window open/close
-	if (!winOpenedClosed)
-	{
-	    ANIM_WINDOW(w);
-	    aw->configureNotified = TRUE;
-
-	    // Find which window is restacked 
-	    // e.g. here 8507730 was raised:
-	    // 54526074 8507730 48234499 14680072 6291497
-	    // 54526074 48234499 14680072 8507730 6291497
-	    // compare first changed win. of row 1 with last
-	    // changed win. of row 2, and vica versa
-	    // the matching one is the restacked one
-	    CompWindow *wRestacked = 0;
-	    CompWindow *wStart = 0;
-	    CompWindow *wEnd = 0;
-	    CompWindow *wOldAbove = 0;
-	    CompWindow *wChangeStart = 0;
-	    CompWindow *wChangeEnd = 0;
-
-	    Bool raised = FALSE;
-	    int changeStart = -1;
-	    int changeEnd = -1;
-
-	    int i;
-	    for (i = 0; i < n; i++)
-	    {
-		CompWindow *wi =
-		    findWindowAtScreen (s, clientListStacking[i]);
-
-		// skip if minimized (prevents flashing problem)
-		if (!wi || !isWinVisible(wi))
-		    continue;
-
-		// skip if (tabbed and) hidden by Group plugin
-		if (wi->state & (CompWindowStateSkipPagerMask |
-				 CompWindowStateSkipTaskbarMask))
-		    continue;
-
-		if (clientListStacking[i] !=
-		    as->lastClientListStacking[i])
-		{
-		    if (changeStart < 0)
-		    {
-			changeStart = i;
-			wChangeStart = wi; // make use of already found w
-		    }
-		    else
-		    {
-			changeEnd = i;
-			wChangeEnd = wi;
-		    }
-		}
-		else if (changeStart >= 0) // found some change earlier
-		    break;
-	    }
-
-	    // if restacking occurred
-	    if (changeStart >= 0 && changeEnd >= 0)
-	    {
-		CompWindow *w2;
-
-		// if we have only 2 windows changed, 
-		// choose the one clicked on
-		Bool preferRaised = FALSE;
-		Bool onlyTwo = FALSE;
-
-		if (wChangeEnd &&
-		    clientListStacking[changeEnd] ==
-		    as->lastClientListStacking[changeStart] &&
-		    clientListStacking[changeStart] ==
-		    as->lastClientListStacking[changeEnd])
-		{
-		    // Check if the window coming on top was
-		    // configureNotified (clicked on)
-		    AnimWindow *aw2 = GET_ANIM_WINDOW(wChangeEnd, as);
-		    if (aw2->configureNotified)
-		    {
-			preferRaised = TRUE;
-		    }
-		    onlyTwo = TRUE;
-		}
-		// Clear all configureNotified's
-		for (w2 = s->windows; w2; w2 = w2->next)
-		{
-		    AnimWindow *aw2 = GET_ANIM_WINDOW(w2, as);
-		    aw2->configureNotified = FALSE;
-		}
-
-		if (preferRaised ||
-		    (!onlyTwo &&
-		     clientListStacking[changeEnd] ==
-		     as->lastClientListStacking[changeStart]))
-		{
-		    // raised
-		    raised = TRUE;
-		    wRestacked = wChangeEnd;
-		    wStart = wChangeStart;
-		    wEnd = wRestacked;
-		    wOldAbove = wStart;
-		}
-		else if (clientListStacking[changeStart] ==
-			 as->lastClientListStacking[changeEnd] && // lowered
-			 // We don't animate lowering if there is no
-			 // window above this window, since this window needs
-			 // to be drawn on such a "host" in animPaintWindow
-			 // (at least for now).
-			 changeEnd < n - 1)
-		{
-		    wRestacked = wChangeStart;
-		    wStart = wRestacked;
-		    wEnd = wChangeEnd;
-		    wOldAbove = findWindowAtScreen
-			(s, as->lastClientListStacking[changeEnd+1]);
-		}
-		for (; wOldAbove && !isWinVisible(wOldAbove);
-		     wOldAbove = wOldAbove->next)
-		    ;
-	    }
-	    if (wRestacked && wStart && wEnd && wOldAbove)
-	    {
-		AnimWindow *awRestacked = GET_ANIM_WINDOW(wRestacked, as);
-		if (awRestacked->created)
-		{
-		    RestackInfo *restackInfo = calloc(1, sizeof(RestackInfo));
-		    if (restackInfo)
-		    {
-			restackInfo->wRestacked = wRestacked;
-			restackInfo->wStart = wStart;
-			restackInfo->wEnd = wEnd;
-			restackInfo->wOldAbove = wOldAbove;
-			restackInfo->raised = raised;
-
-			if (awRestacked->restackInfo)
-			    free(awRestacked->restackInfo);
-
-			awRestacked->restackInfo = restackInfo;
-			as->aWinWasRestackedJustNow = TRUE;
-		    }
-		}
-	    }
-	}
-	updateLastClientListStacking(s);
-    }
-    break;
-    default:
-	break;
-    }
-
-    UNWRAP(ad, d, handleEvent);
-    (*d->handleEvent) (d, event);
-    WRAP(ad, d, handleEvent, animHandleEvent);
-
-    switch (event->type)
-    {
-    case PropertyNotify:
-	if (event->xproperty.atom == d->winActiveAtom &&
-	    d->activeWindow != ad->activeWindow)
-	{
-	    ad->activeWindow = d->activeWindow;
-	    w = findWindowAtDisplay(d, d->activeWindow);
-
-	    if (w)
-	    {
-		int duration = 200;
-		AnimEffect chosenEffect =
-		    getMatchingAnimSelection (w, AnimEventFocus, &duration);
-
-		if (!(chosenEffect == AnimEffectFocusFade ||
-		      chosenEffect == AnimEffectDodge))
-		    initiateFocusAnimation(w);
-	    }
-	}
-	break;
-    default:
-	break;
+	mWindow->unmap ();
+	mUnmapCnt--;
     }
 }
 
-static Bool animDamageWindowRect(CompWindow * w, Bool initial, BoxPtr rect)
+void
+PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 {
-    Bool status;
+    CompWindow *w = aw->mWindow;
 
-    ANIM_SCREEN(w->screen);
-    ANIM_WINDOW(w);
-
-    if (aw->ignoreDamage)
-	return TRUE; // if doing the unmap at animation's end, ignore the damage
-
-    if (initial)				// Unminimize or Open
+    for (int p = 0; p < mExtensionPlugins.size (); p++)
     {
-	int duration = 200;
-	AnimEffect chosenEffect;
-
-	if (aw->state == IconicState)
-	{
-	    chosenEffect =
-		getMatchingAnimSelection (w, AnimEventMinimize, &duration);
-
-	    // UNMINIMIZE event!
-
-	    if (!w->invisible && !w->hidden &&
-		chosenEffect != AnimEffectNone &&
-		!as->pluginActive[3]) // fadedesktop
-	    {
-		Bool startingNew = TRUE;
-		Bool playEffect = TRUE;
-
-		// Always reset stacking related info when a window is
-		// unminimized.
-		resetStackingInfo (w->screen);
-
-		if (aw->com.curWindowEvent != WindowEventNone)
-		{
-		    if (aw->com.curWindowEvent != WindowEventMinimize)
-		    {
-			postAnimationCleanupPrev (w, FALSE, FALSE);
-		    }
-		    else
-		    {
-			// Play the minimize effect backwards from where it left
-			aw->com.animRemainingTime =
-			    aw->com.animTotalTime - aw->com.animRemainingTime;
-
-			// avoid window remains
-			if (aw->com.animRemainingTime <= 0)
-			    aw->com.animRemainingTime = 1;
-
-			startingNew = FALSE;
-			if (aw->com.animOverrideProgressDir == 0)
-			    aw->com.animOverrideProgressDir = 1;
-			else if (aw->com.animOverrideProgressDir == 2)
-			    aw->com.animOverrideProgressDir = 0;
-		    }
-		}
-
-		if (startingNew)
-		{
-		    AnimEffect effectToBePlayed;
-		    effectToBePlayed = animGetAnimEffect (as,
-							  chosenEffect,
-							  AnimEventMinimize);
-
-		    // handle empty random effect list
-		    if (effectToBePlayed == AnimEffectNone)
-			playEffect = FALSE;
-
-		    if (playEffect)
-		    {
-			aw->com.curAnimEffect = effectToBePlayed;
-			aw->com.animTotalTime = duration;
-			aw->com.animRemainingTime = aw->com.animTotalTime;
-		    }
-		}
-
-		if (playEffect)
-		{
-		    animActivateEvent(w->screen, TRUE);
-		    aw->com.curWindowEvent = WindowEventUnminimize;
-
-		    if (animEnsureModel(w))
-		    {
-			if (w->iconGeometrySet)
-			{
-			    aw->com.icon = w->iconGeometry;
-			}
-			else
-			{
-			    // Unminimize from mouse pointer if there is no
-			    // window list or if the window skips taskbar
-			    if (!getMousePointerXY (w->screen,
-						    &aw->com.icon.x,
-						    &aw->com.icon.y))
-			    {
-				// Use screen center if can't get mouse coords
-				aw->com.icon.x = w->screen->width / 2;
-				aw->com.icon.y = w->screen->height / 2;
-			    }
-			    aw->com.icon.width = FAKE_ICON_SIZE;
-			    aw->com.icon.height = FAKE_ICON_SIZE;
-			}
-
-			damagePendingOnScreen (w->screen);
-		    }
-		    else
-		    {
-			postAnimationCleanup (w);
-		    }
-		}
-	    }
-	}
-	else if (aw->nowShaded)
-	{
-	    chosenEffect =
-		getMatchingAnimSelection (w, AnimEventShade, &duration);
-
-	    // UNSHADE event!
-
-	    aw->nowShaded = FALSE;
-
-	    if (chosenEffect != AnimEffectNone)
-	    {
-		Bool startingNew = TRUE;
-		Bool playEffect = TRUE;
-
-		if (aw->com.curWindowEvent != WindowEventNone)
-		{
-		    if (aw->com.curWindowEvent != WindowEventShade)
-		    {
-			postAnimationCleanupPrev (w, FALSE, FALSE);
-		    }
-		    else
-		    {
-			// Play the shade effect backwards from where it left
-			aw->com.animRemainingTime =
-			    aw->com.animTotalTime - aw->com.animRemainingTime;
-
-			// avoid window remains
-			if (aw->com.animRemainingTime <= 0)
-			    aw->com.animRemainingTime = 1;
-
-			startingNew = FALSE;
-			if (aw->com.animOverrideProgressDir == 0)
-			    aw->com.animOverrideProgressDir = 1;
-			else if (aw->com.animOverrideProgressDir == 2)
-			    aw->com.animOverrideProgressDir = 0;
-		    }
-		}
-
-		if (startingNew)
-		{
-		    AnimEffect effectToBePlayed;
-		    effectToBePlayed = animGetAnimEffect (as,
-							  chosenEffect,
-							  AnimEventShade);
-
-		    // handle empty random effect list
-		    if (effectToBePlayed == AnimEffectNone)
-			playEffect = FALSE;
-
-		    if (playEffect)
-		    {
-			aw->com.curAnimEffect = effectToBePlayed;
-			aw->com.animTotalTime = duration;
-			aw->com.animRemainingTime = aw->com.animTotalTime;
-		    }
-		}
-
-		if (playEffect)
-		{
-		    animActivateEvent(w->screen, TRUE);
-		    aw->com.curWindowEvent = WindowEventUnshade;
-
-		    if (animEnsureModel(w))
-			damagePendingOnScreen (w->screen);
-		    else
-			postAnimationCleanup (w);
-		}
-	    }
-	}
-	else if (!w->invisible)
-	{
-	    AnimEffect chosenEffect;
-	    int duration = 200;
-
-	    // Always reset stacking related info when a window is opened.
-	    resetStackingInfo (w->screen);
-
-	    aw->created = TRUE;
-
-	    // OPEN event!
-
-	    if (!shouldIgnoreForAnim (w, FALSE) &&
-		AnimEffectNone !=
-		(chosenEffect =
-		 getMatchingAnimSelection (w, AnimEventOpen, &duration)) &&
-		getMousePointerXY(w->screen, &aw->com.icon.x, &aw->com.icon.y))
-	    {
-		Bool startingNew = TRUE;
-		Bool playEffect = TRUE;
-
-		if (aw->com.curWindowEvent != WindowEventNone)
-		{
-		    if (aw->com.curWindowEvent != WindowEventClose)
-		    {
-			postAnimationCleanupPrev (w, FALSE, FALSE);
-		    }
-		    else
-		    {
-			// Play the close effect backwards from where it left
-			aw->com.animRemainingTime =
-			    aw->com.animTotalTime - aw->com.animRemainingTime;
-
-			// avoid window remains
-			if (aw->com.animRemainingTime == 0)
-			    aw->com.animRemainingTime = 1;
-
-			startingNew = FALSE;
-			if (aw->com.animOverrideProgressDir == 0)
-			    aw->com.animOverrideProgressDir = 1;
-			else if (aw->com.animOverrideProgressDir == 2)
-			    aw->com.animOverrideProgressDir = 0;
-		    }
-		}
-
-		if (startingNew)
-		{
-		    AnimEffect effectToBePlayed;
-		    effectToBePlayed = animGetAnimEffect (as,
-							  chosenEffect,
-							  AnimEventOpen);
-
-		    // handle empty random effect list
-		    if (effectToBePlayed == AnimEffectNone)
-			playEffect = FALSE;
-
-		    if (playEffect)
-		    {
-			aw->com.curAnimEffect = effectToBePlayed;
-			aw->com.animTotalTime = duration;
-			aw->com.animRemainingTime = aw->com.animTotalTime;
-		    }
-		}
-
-		if (playEffect)
-		{
-		    animActivateEvent(w->screen, TRUE);
-		    aw->com.curWindowEvent = WindowEventOpen;
-
-		    aw->com.icon.width = FAKE_ICON_SIZE;
-		    aw->com.icon.height = FAKE_ICON_SIZE;
-
-		    if (aw->com.curAnimEffect == AnimEffectMagicLamp)
-			aw->com.icon.width = 
-			    MAX(aw->com.icon.width,
-				animGetI (w, ANIM_SCREEN_OPTION_MAGIC_LAMP_OPEN_START_WIDTH));
-		    else if (aw->com.curAnimEffect == AnimEffectVacuum)
-			aw->com.icon.width =
-			    MAX(aw->com.icon.width,
-				animGetI (w, ANIM_SCREEN_OPTION_VACUUM_OPEN_START_WIDTH));
-
-		    aw->com.icon.x -= aw->com.icon.width / 2;
-		    aw->com.icon.y -= aw->com.icon.height / 2;
-
-		    if (animEnsureModel(w))
-			damagePendingOnScreen (w->screen);
-		    else
-			postAnimationCleanup (w);
-		}
-	    }
-	}
-
-	aw->newState = NormalState;
+	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	extPlugin->preInitiateCloseAnim (aw->mAWindow);
     }
 
-    UNWRAP(as, w->screen, damageWindowRect);
-    status = (*w->screen->damageWindowRect) (w, initial, rect);
-    WRAP(as, w->screen, damageWindowRect, animDamageWindowRect);
+    if (shouldIgnoreWindowForAnim (w, true))
+	return;
 
-    return status;
+    int duration = 200;
+    AnimEffect chosenEffect =
+	getMatchingAnimSelection (w, AnimEventClose, &duration);
+
+    aw->mState = NormalState;
+    aw->mNewState = WithdrawnState;
+
+    if (chosenEffect != AnimEffectNone)
+    {
+	int tmpSteps = 0;
+	bool startingNew = true;
+	WindowEvent curWindowEvent = WindowEventNone;
+
+	if (aw->curAnimation ())
+	    curWindowEvent = aw->curAnimation ()->curWindowEvent ();
+
+	/* TODO
+	if (aw->com.animRemainingTime > 0 &&
+	    aw->com.curWindowEvent != WindowEventOpen)
+	{
+	    tmpSteps = aw->com.animRemainingTime;
+	    aw->com.animRemainingTime = 0;
+	}*/
+	if (curWindowEvent != WindowEventNone)
+	{
+	    if (curWindowEvent == WindowEventOpen)
+	    {
+		startingNew = false;
+		aw->reverseAnimation ();
+	    }
+	    /* TODO check if necessary
+	    else if (aw->com.curWindowEvent == WindowEventClose)
+	    {
+		if (aw->com.animOverrideProgressDir == 2)
+		{
+		    aw->com.animRemainingTime = tmpSteps;
+		    startingNew = false;
+		}
+	    }*/
+	    else
+	    {
+		aw->postAnimationCleanUpPrev (true, false);
+	    }
+	}
+
+	if (startingNew)
+	{
+	    AnimEffect effectToBePlayed =
+		getActualEffect (chosenEffect, AnimEventClose);
+
+	    // handle empty random effect list
+	    if (effectToBePlayed == AnimEffectNone)
+	    {
+		aw->mState = aw->mNewState;
+		return;
+	    }
+
+	    aw->mCurAnimation =
+		effectToBePlayed->create (w, WindowEventClose, duration,
+					  effectToBePlayed, getIcon (w, true));
+	    aw->mCurAnimation->init ();
+	    aw->mCurAnimation->adjustPointerIconSize ();
+	}
+
+	activateEvent (true);
+
+	// Increment 3 times to make sure close animation works
+	// (e.g. for popup menus).
+	for (int i = 0; i < 3; i++)
+	{
+	    aw->mUnmapCnt++;
+	    w->incrementUnmapReference ();
+	}
+	cScreen->damagePending ();
+    }
+    /* TODO check if necessary
+    else if (AnimEffectNone !=
+	     getMatchingAnimSelection (w, AnimEventOpen, &duration))
+    {
+	// stop the current animation and prevent it from rewinding
+
+	if (aw->com.animRemainingTime > 0 &&
+	    aw->com.curWindowEvent != WindowEventOpen)
+	{
+	    aw->com.animRemainingTime = 0;
+	}
+	if ((aw->com.curWindowEvent != WindowEventNone) &&
+	    (aw->com.curWindowEvent != WindowEventClose))
+	{
+	    postAnimationCleanUp (w);
+	}
+	// set some properties to make sure this window will use the
+	// correct open effect the next time it's "opened"
+
+	activateEvent (w->screen, true);
+	aw->com.curWindowEvent = WindowEventClose;
+
+	aw->mUnmapCnt++;
+	w->incrementUnmapRefCnt ();
+
+	damagePendingOnScreen (w->screen);
+    }*/
+    else
+	aw->mState = aw->mNewState;
+
+    // Make sure non-animated closing windows get a damage.
+    if (!aw->curAnimation ())
+    {
+	aw->mAWindow->expandBBWithWindow ();
+    }
 }
 
-static void animWindowResizeNotify(CompWindow * w, int dx, int dy, int dwidth, int dheight)
+CompRect
+PrivateAnimScreen::getIcon (CompWindow *w, bool alwaysUseMouse)
 {
-    ANIM_SCREEN(w->screen);
-    ANIM_WINDOW(w);
+    CompRect icon;
 
-    // Don't let transient window open anim be interrupted with a resize notify
-    if (!(aw->com.curWindowEvent == WindowEventOpen &&
-	  (w->wmType &
+    if (!alwaysUseMouse)
+    {
+	icon = w->iconGeometry ();
+    }
+    if (alwaysUseMouse ||
+	(icon.x () == 0 &&
+	 icon.y () == 0 &&
+	 icon.width () == 0 &&
+	 icon.height () == 0)) // that is, couldn't get icon from window
+    {
+	// Minimize to mouse pointer if there is no
+	// window list or if the window skips taskbar
+	short x, y;
+	if (!aScreen->getMousePointerXY (&x, &y))
+	{
+	    // Use screen center if can't get mouse coords
+	    x = ::screen->width () / 2;
+	    y = ::screen->height () / 2;
+	}
+	icon.setX (x);
+	icon.setY (y);
+	icon.setWidth (FAKE_ICON_SIZE);
+	icon.setHeight (FAKE_ICON_SIZE);
+    }
+
+    return icon;
+}
+
+void
+PrivateAnimScreen::initiateMinimizeAnim (PrivateAnimWindow *aw)
+{
+    CompWindow *w = aw->mWindow;
+
+    if (aw->mWindow->destroyed ())
+	return;
+
+    // Store window geometry for use during animation.
+    aw->mAWindow->mSavedInRect = w->inputRect ();
+    aw->mAWindow->mSavedOutRect = w->outputRect ();
+    aw->mAWindow->mSavedOutExtents = w->output ();
+    aw->mAWindow->mSavedWinRect = w->geometry ();
+    aw->mAWindow->mSavedRectsValid = true;
+
+    aw->mNewState = IconicState;
+
+    for (int p = 0; p < mExtensionPlugins.size (); p++)
+    {
+	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	extPlugin->preInitiateMinimizeAnim (aw->mAWindow);
+    }
+
+    int duration = 200;
+    AnimEffect chosenEffect =
+	getMatchingAnimSelection (w, AnimEventMinimize, &duration);
+
+    if (chosenEffect != AnimEffectNone)
+    {
+	bool startingNew = true;
+	WindowEvent curWindowEvent = WindowEventNone;
+
+	if (aw->curAnimation ())
+	    curWindowEvent = aw->curAnimation ()->curWindowEvent ();
+
+	if (curWindowEvent != WindowEventNone)
+	{
+	    if (curWindowEvent != WindowEventUnminimize)
+	    {
+		aw->postAnimationCleanUpPrev (false, false);
+	    }
+	    else
+	    {
+		startingNew = false;
+		aw->reverseAnimation ();
+	    }
+	}
+
+	if (startingNew)
+	{
+	    AnimEffect effectToBePlayed =
+		getActualEffect (chosenEffect, AnimEventMinimize);
+
+	    // handle empty random effect list
+	    if (effectToBePlayed == AnimEffectNone)
+	    {
+		aw->mState = aw->mNewState;
+		return;
+	    }
+
+	    aw->mCurAnimation =
+		effectToBePlayed->create (w, WindowEventMinimize, duration,
+					  effectToBePlayed, getIcon (w, false));
+	    aw->mCurAnimation->init ();
+	}
+
+	activateEvent (true);
+
+	aw->mUnmapCnt++;
+	w->incrementUnmapReference ();
+
+	cScreen->damagePending ();
+    }
+    else
+	aw->mState = aw->mNewState;
+}
+
+void
+PrivateAnimScreen::initiateShadeAnim (PrivateAnimWindow *aw)
+{
+    CompWindow *w = aw->mWindow;
+
+    int duration = 200;
+    AnimEffect chosenEffect =
+	getMatchingAnimSelection (w, AnimEventShade, &duration);
+
+    aw->setShaded (true);
+
+    if (chosenEffect != AnimEffectNone)
+    {
+	bool startingNew = true;
+	WindowEvent curWindowEvent = WindowEventNone;
+	if (aw->curAnimation ())
+	    curWindowEvent = aw->curAnimation ()->curWindowEvent ();
+
+	if (curWindowEvent != WindowEventNone)
+	{
+	    if (curWindowEvent != WindowEventUnshade)
+	    {
+		aw->postAnimationCleanUpPrev (false, false);
+	    }
+	    else
+	    {
+		startingNew = false;
+		aw->reverseAnimation ();
+	    }
+	}
+
+	if (startingNew)
+	{
+	    AnimEffect effectToBePlayed =
+		getActualEffect (chosenEffect, AnimEventShade);
+
+	    // handle empty random effect list
+	    if (effectToBePlayed == AnimEffectNone)
+		return;
+
+	    aw->mCurAnimation =
+		effectToBePlayed->create (w, WindowEventShade, duration,
+					  effectToBePlayed, getIcon (w, false));
+	    aw->mCurAnimation->init ();
+	}
+
+	activateEvent (true);
+
+	aw->mUnmapCnt++;
+	w->incrementUnmapReference ();
+
+	cScreen->damagePending ();
+    }
+}
+
+void
+PrivateAnimScreen::initiateOpenAnim (PrivateAnimWindow *aw)
+{
+    CompWindow *w = aw->mWindow;
+
+    int duration = 200;
+    AnimEffect chosenEffect;
+
+    aw->mNewState = NormalState;
+
+    for (int p = 0; p < mExtensionPlugins.size (); p++)
+    {
+	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	extPlugin->preInitiateOpenAnim (aw->mAWindow);
+    }
+
+    WindowEvent curWindowEvent = WindowEventNone;
+    if (aw->curAnimation ())
+	curWindowEvent = aw->curAnimation ()->curWindowEvent ();
+
+    if (!shouldIgnoreWindowForAnim (w, false) &&
+	(AnimEffectNone !=
+	 (chosenEffect =
+	  getMatchingAnimSelection (w, AnimEventOpen, &duration)) ||
+	 // reversing case
+	 curWindowEvent == WindowEventClose))
+    {
+	bool startingNew = true;
+	bool playEffect = true;
+
+	if (curWindowEvent != WindowEventNone)
+	{
+	    if (curWindowEvent != WindowEventClose)
+	    {
+		aw->postAnimationCleanUpPrev (false, false);
+	    }
+	    else
+	    {
+		startingNew = false;
+		aw->reverseAnimation ();
+	    }
+	}
+
+	if (startingNew)
+	{
+	    AnimEffect effectToBePlayed =
+		getActualEffect (chosenEffect, AnimEventOpen);
+
+	    // handle empty random effect list
+	    if (effectToBePlayed == AnimEffectNone)
+		playEffect = false;
+
+	    if (playEffect)
+	    {
+		aw->mCurAnimation =
+		    effectToBePlayed->create (w, WindowEventOpen, duration,
+					      effectToBePlayed,
+					      getIcon (w, true));
+		aw->mCurAnimation->init ();
+		aw->mCurAnimation->adjustPointerIconSize ();
+	    }
+	}
+
+	if (playEffect)
+	{
+	    activateEvent (true);
+	    cScreen->damagePending ();
+	}
+    }
+}
+
+void
+PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
+{
+    CompWindow *w = aw->mWindow;
+
+    if (aw->mWindow->destroyed ())
+	return;
+
+    aw->mAWindow->mSavedRectsValid = false;
+
+    int duration = 200;
+    AnimEffect chosenEffect =
+	getMatchingAnimSelection (w, AnimEventMinimize, &duration);
+
+    aw->mNewState = NormalState;
+
+    if (chosenEffect != AnimEffectNone &&
+	!mPluginActive[3]) // fadedesktop
+    {
+	bool startingNew = true;
+	bool playEffect = true;
+
+	for (int p = 0; p < mExtensionPlugins.size (); p++)
+	{
+	    ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	    extPlugin->preInitiateUnminimizeAnim (aw->mAWindow);
+	}
+
+	// TODO Refactor the rest? (almost the same in other initiateX methods)
+	WindowEvent curWindowEvent = WindowEventNone;
+	if (aw->curAnimation ())
+	    curWindowEvent = aw->curAnimation ()->curWindowEvent ();
+
+	if (curWindowEvent != WindowEventNone)
+	{
+	    if (curWindowEvent != WindowEventMinimize)
+	    {
+		aw->postAnimationCleanUpPrev (false, false);
+	    }
+	    else
+	    {
+		startingNew = false;
+		aw->reverseAnimation ();
+	    }
+	}
+
+	if (startingNew)
+	{
+	    AnimEffect effectToBePlayed =
+		getActualEffect (chosenEffect, AnimEventMinimize);
+
+	    // handle empty random effect list
+	    if (effectToBePlayed == AnimEffectNone)
+		playEffect = false;
+
+	    if (playEffect)
+	    {
+		aw->mCurAnimation =
+		    effectToBePlayed->create (w, WindowEventUnminimize,
+					      duration, effectToBePlayed,
+					      getIcon (w, false));
+		aw->mCurAnimation->init ();
+	    }
+	}
+
+	if (playEffect)
+	{
+	    activateEvent (true);
+	    cScreen->damagePending ();
+	}
+    }
+}
+
+void
+PrivateAnimScreen::initiateUnshadeAnim (PrivateAnimWindow *aw)
+{
+    CompWindow *w = aw->mWindow;
+
+    aw->mAWindow->mSavedRectsValid = false;
+
+    aw->setShaded (false);
+
+    aw->mNewState = NormalState;
+
+    int duration = 200;
+    AnimEffect chosenEffect =
+	getMatchingAnimSelection (w, AnimEventShade, &duration);
+
+    if (chosenEffect != AnimEffectNone)
+    {
+	bool startingNew = true;
+	bool playEffect = true;
+
+	WindowEvent curWindowEvent = WindowEventNone;
+	if (aw->curAnimation ())
+	    curWindowEvent = aw->curAnimation ()->curWindowEvent ();
+
+	if (curWindowEvent != WindowEventNone)
+	{
+	    if (curWindowEvent != WindowEventShade)
+	    {
+		aw->postAnimationCleanUpPrev (false, false);
+	    }
+	    else
+	    {
+		startingNew = false;
+		aw->reverseAnimation ();
+	    }
+	}
+
+	if (startingNew)
+	{
+	    AnimEffect effectToBePlayed =
+		getActualEffect (chosenEffect, AnimEventShade);
+
+	    // handle empty random effect list
+	    if (effectToBePlayed == AnimEffectNone)
+		playEffect = false;
+
+	    if (playEffect)
+	    {
+		aw->mCurAnimation =
+		    effectToBePlayed->create (w, WindowEventUnshade,
+					      duration, effectToBePlayed,
+					      getIcon (w, false));
+		aw->mCurAnimation->init ();
+	    }
+	}
+
+	if (playEffect)
+	{
+	    activateEvent (true);
+	    cScreen->damagePending ();
+	}
+    }
+}
+
+bool
+PrivateAnimScreen::initiateFocusAnim (PrivateAnimWindow *aw)
+{
+    CompWindow *w = aw->mWindow;
+    int duration = 200;
+
+    if (aw->curAnimation () || otherPluginsActive () ||
+	// Check the "switcher post-wait" counter that effectively prevents
+	// focus animation to be initiated when the zoom option value is low
+	// in Switcher.
+	mSwitcherPostWait)
+	return false;
+
+    AnimEffect chosenEffect =
+	getMatchingAnimSelection (w, AnimEventFocus, &duration);
+
+    if (chosenEffect != AnimEffectNone)
+    {
+	aw->createFocusAnimation (chosenEffect, duration);
+
+	if (chosenEffect->isRestackAnim &&
+	    !(dynamic_cast<RestackAnim *> (aw->mCurAnimation)->
+	      initiateRestackAnim (duration)))
+	{
+	    aw->postAnimationCleanUp ();
+	    return false;
+	}
+
+	activateEvent (true);
+	cScreen->damagePending ();
+	return true;
+    }
+    return false;
+}
+
+void
+PrivateAnimWindow::resizeNotify (int dx,
+				 int dy,
+				 int dwidth,
+				 int dheight)
+{
+    if (mUnshadePending)
+    {
+	mUnshadePending = false;
+	mPAScreen->initiateUnshadeAnim (this);
+    }
+    else if (mCurAnimation &&
+	// Don't let transient window open anim be interrupted with a resize notify
+	!(mCurAnimation->curWindowEvent () == WindowEventOpen &&
+	  (mWindow->wmType () &
 	   (CompWindowTypeDropdownMenuMask |
 	    CompWindowTypePopupMenuMask |
        	    CompWindowTypeMenuMask |
 	    CompWindowTypeTooltipMask |
 	    CompWindowTypeNotificationMask |
 	    CompWindowTypeComboMask |
-	    CompWindowTypeDndMask))))
+	    CompWindowTypeDndMask))) &&
+	// Ignore resize with dx=0, dy=0, dwidth=0, dheight=0
+	!(dx == 0 && dy == 0 && dwidth == 0 && dheight == 0))
     {
-	if (aw->com.curAnimEffect->properties.refreshFunc)
-	    aw->com.curAnimEffect->properties.refreshFunc (w, aw->animInitialized);
+	mCurAnimation->refresh ();
 
-	if (aw->com.animRemainingTime > 0)
+	if (mCurAnimation->inProgress ())
 	{
-	    aw->com.animRemainingTime = 0;
-	    postAnimationCleanup (w);
+	    postAnimationCleanUp ();
+	    mPAScreen->updateAnimStillInProgress ();
+	}
+    }
+    /* TODO check if still necessary
+    if (com.mModel)
+    {
+	modelInitObjects (com.mModel,
+			  WIN_X (window), WIN_Y (window),
+			  WIN_W (window), WIN_H (window));
+    }*/
+
+    mWindow->resizeNotify (dx, dy, dwidth, dheight);
+}
+
+void
+PrivateAnimScreen::updateAnimStillInProgress ()
+{
+    bool animStillInProgress = false;
+    foreach (CompWindow *w, ::screen->windows ())
+    {
+	PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
+	if (aw->curAnimation () &&
+	    aw->curAnimation ()->inProgress ())
+	{
+	    animStillInProgress = true;
+	    break;
 	}
     }
 
-    if (aw->com.model)
+    if (!animStillInProgress)
+	activateEvent (false);
+}
+
+void
+PrivateAnimWindow::moveNotify (int  dx,
+			       int  dy,
+			       bool immediate)
+{
+    if (!immediate && mCurAnimation &&
+    	mCurAnimation->moveUpdate () &&
+    	mCurAnimation->inProgress () && mGrabbed)
     {
-	modelInitObjects(aw->com.model, 
-			 WIN_X(w), WIN_Y(w), 
-			 WIN_W(w), WIN_H(w));
+    	postAnimationCleanUp ();
+    	mPAScreen->updateAnimStillInProgress ();
     }
 
-    UNWRAP(as, w->screen, windowResizeNotify);
-    (*w->screen->windowResizeNotify) (w, dx, dy, dwidth, dheight);
-    WRAP(as, w->screen, windowResizeNotify, animWindowResizeNotify);
+    mWindow->moveNotify (dx, dy, immediate);
 }
 
-static void
-animWindowMoveNotify(CompWindow * w, int dx, int dy, Bool immediate)
+bool
+Animation::moveUpdate ()
 {
-    ANIM_SCREEN(w->screen);
-    ANIM_WINDOW(w);
+    refresh ();
 
-    if (!immediate)
+    return true;
+}
+
+void
+PrivateAnimWindow::grabNotify (int          x,
+			       int          y,
+			       unsigned int state,
+			       unsigned int mask)
+{
+    mGrabbed = true;
+
+    mWindow->grabNotify (x, y, state, mask);
+}
+
+void
+PrivateAnimWindow::ungrabNotify ()
+{
+    mGrabbed = false;
+
+    mWindow->ungrabNotify ();
+}
+
+bool
+PrivateAnimScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
+				  const GLMatrix            &matrix,
+				  const CompRegion          &region,
+				  CompOutput                *output,
+				  unsigned int               mask)
+{
+    bool status;
+
+    if (mAnimInProgress)
     {
-	if (!(aw->com.animRemainingTime > 0 &&
-	      (aw->com.curAnimEffect == AnimEffectFocusFade ||
-	       aw->com.curAnimEffect == AnimEffectDodge)))
+	mStartingNewPaintRound = true;
+
+	for (int p = 0; p < mExtensionPlugins.size (); p++)
 	{
-	    CompWindow *w2;
-
-	    if (aw->com.curAnimEffect->properties.refreshFunc)
-		aw->com.curAnimEffect->properties.refreshFunc
-		    (w, aw->animInitialized);
-
-	    if (aw->com.animRemainingTime > 0 && aw->grabbed)
-	    {
-		aw->com.animRemainingTime = 0;
-		if (as->animInProgress)
-		{
-		    Bool animStillInProgress = FALSE;
-		    for (w2 = w->screen->windows; w2; w2 = w2->next)
-		    {
-			AnimWindow *aw2;
-
-			aw2 = GET_ANIM_WINDOW(w2, as);
-			if (aw2->com.animRemainingTime > 0)
-			{
-			    animStillInProgress = TRUE;
-			    break;
-			}
-		    }
-
-		    if (!animStillInProgress)
-			animActivateEvent(w->screen, FALSE);
-		}
-		postAnimationCleanup (w);
-	    }
-
-	    if (aw->com.model)
-	    {
-		modelInitObjects(aw->com.model, WIN_X(w), WIN_Y(w), WIN_W(w),
-				 WIN_H(w));
-	    }
-	}
-    }
-    else if (aw->com.model)
-	modelMove (aw->com.model, dx, dy);
-
-    UNWRAP(as, w->screen, windowMoveNotify);
-    (*w->screen->windowMoveNotify) (w, dx, dy, immediate);
-    WRAP(as, w->screen, windowMoveNotify, animWindowMoveNotify);
-}
-
-static void
-animWindowGrabNotify(CompWindow * w,
-		     int x, int y, unsigned int state, unsigned int mask)
-{
-    ANIM_SCREEN(w->screen);
-    ANIM_WINDOW(w);
-
-    aw->grabbed = TRUE;
-
-    UNWRAP(as, w->screen, windowGrabNotify);
-    (*w->screen->windowGrabNotify) (w, x, y, state, mask);
-    WRAP(as, w->screen, windowGrabNotify, animWindowGrabNotify);
-}
-
-static void animWindowUngrabNotify(CompWindow * w)
-{
-    ANIM_SCREEN(w->screen);
-    ANIM_WINDOW(w);
-
-    aw->grabbed = FALSE;
-
-    UNWRAP(as, w->screen, windowUngrabNotify);
-    (*w->screen->windowUngrabNotify) (w);
-    WRAP(as, w->screen, windowUngrabNotify, animWindowUngrabNotify);
-}
-
-static Bool
-animPaintOutput(CompScreen * s,
-		const ScreenPaintAttrib * sAttrib,
-		const CompTransform    *transform,
-		Region region, CompOutput *output, 
-		unsigned int mask)
-{
-    Bool status;
-
-    ANIM_SCREEN(s);
-
-    if (as->animInProgress)
-    {
-	int p;
-	for (p = 0; p < as->nExtensionPlugins; p++)
-	{
-	    const ExtensionPluginInfo *extPlugin = as->extensionPlugins[p];
-	    if (extPlugin->prePaintOutputFunc)
-		extPlugin->prePaintOutputFunc (s, output);
+	    ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	    extPlugin->prePaintOutput (output);
 	}
 
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
     }
 
-    as->output = output;
+    mOutput = output;
 
-    UNWRAP(as, s, paintOutput);
-    status = (*s->paintOutput) (s, sAttrib, transform, region, output, mask);
-    WRAP(as, s, paintOutput, animPaintOutput);
+    status = gScreen->glPaintOutput (attrib, matrix, region, output, mask);
 
-    CompWindow *w;
-    if (as->aWinWasRestackedJustNow)
+    /* TODO check if needed for extension plugins
+    for (int p = 0; p < mExtensionPlugins.size (); p++)
     {
-	as->aWinWasRestackedJustNow = FALSE;
-    }
-    if (as->markAllWinCreatedCountdown > 0)
+	ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+	extPlugin->postPaintOutput (output);
+    }*/
+
+    if (mStartCountdown)
     {
-	if (as->markAllWinCreatedCountdown == 1)
+	mStartCountdown--;
+	if (!mStartCountdown)
 	{
-	    // Mark all windows as "created"
-	    for (w = s->windows; w; w = w->next)
+	    for (int p = 0; p < mExtensionPlugins.size (); p++)
 	    {
-		ANIM_WINDOW(w);
-		aw->created = TRUE;
+		ExtensionPluginInfo *extPlugin = mExtensionPlugins[p];
+		extPlugin->postStartupCountdown ();
 	    }
 	}
-	as->markAllWinCreatedCountdown--;
     }
 
     return status;
 }
 
-static const CompMetadataOptionInfo animDisplayOptionInfo[] = {
-    { "abi", "int", 0, 0, 0 },
-    { "index", "int", 0, 0, 0 }
-};
-
-static CompOption *
-animGetDisplayOptions (CompPlugin  *plugin,
-		       CompDisplay *display,
-		       int         *count)
+AnimEffectInfo::AnimEffectInfo (const char *name,
+				bool usedO, bool usedC, bool usedM,
+				bool usedS, bool usedF,
+				CreateAnimFunc create,
+				bool isRestackAnim) :
+    name (name),
+    create (create),
+    isRestackAnim (isRestackAnim)
 {
-    ANIM_DISPLAY (display);
-    *count = NUM_OPTIONS (ad);
-    return ad->opt;
+    usedForEvents[AnimEventOpen] = usedO;
+    usedForEvents[AnimEventClose] = usedC;
+    usedForEvents[AnimEventMinimize] = usedM;
+    usedForEvents[AnimEventShade] = usedS;
+    usedForEvents[AnimEventFocus] = usedF;
 }
 
-static Bool
-animSetDisplayOption (CompPlugin      *plugin,
-		      CompDisplay     *display,
-		      const char      *name,
-		      CompOptionValue *value)
+bool
+AnimEffectInfo::matchesEffectName (const CompString &animName)
 {
-    CompOption      *o;
-    int	            index;
-    ANIM_DISPLAY (display);
-    o = compFindOption (ad->opt, NUM_OPTIONS (ad), name, &index);
-    if (!o)
-	return FALSE;
-
-    switch (index) {
-    case ANIM_DISPLAY_OPTION_ABI:
-    case ANIM_DISPLAY_OPTION_INDEX:
-        break;
-    default:
-        return compSetDisplayOption (display, o, value);
-    }
-
-    return FALSE;
+    return (0 == strcasecmp (animName.c_str (), name));
 }
 
-static AnimWindowCommon *
-getAnimWindowCommon (CompWindow *w)
+bool
+AnimEffectInfo::matchesPluginName (const CompString &pluginName)
 {
-    ANIM_WINDOW (w);
-
-    return &aw->com;
+    return (0 == strncmp (pluginName.c_str (), name, pluginName.length ()));
 }
 
-AnimBaseFunctions animBaseFunctions =
+/* TODO
+PrivateAnimScreen::setEnabled (bool active)
 {
-    .addExtension		= animAddExtension,
-    .removeExtension		= animRemoveExtension,
-    .getPluginOptVal		= animGetPluginOptVal,
-    .getMousePointerXY		= getMousePointerXY,
-    .defaultAnimInit		= defaultAnimInit,
-    .defaultAnimStep		= defaultAnimStep,
-    .defaultUpdateWindowTransform = defaultUpdateWindowTransform,
-    .getProgressAndCenter	= getProgressAndCenter,
-    .defaultAnimProgress	= defaultAnimProgress,
-    .sigmoidAnimProgress	= sigmoidAnimProgress,
-    .decelerateProgressCustom	= decelerateProgressCustom,
-    .decelerateProgress		= decelerateProgress,
-    .updateBBScreen		= updateBBScreen,
-    .updateBBWindow		= updateBBWindow,
-    .modelUpdateBB		= modelUpdateBB,
-    .compTransformUpdateBB	= compTransformUpdateBB,
-    .getActualAnimDirection	= getActualAnimDirection,
-    .expandBoxWithBox		= expandBoxWithBox,
-    .expandBoxWithPoint		= expandBoxWithPoint,
-    .prepareTransform		= prepareTransform,
-    .getAnimWindowCommon	= getAnimWindowCommon,
-    .returnTrue			= returnTrue,
-    .postAnimationCleanup	= postAnimationCleanup,
-    .fxZoomUpdateWindowAttrib	= fxZoomUpdateWindowAttrib
-};
-
-static Bool animInitDisplay(CompPlugin * p, CompDisplay * d)
-{
-    AnimDisplay *ad;
-
-    if (!checkPluginABI ("core", CORE_ABIVERSION))
-	return FALSE;
-
-    ad = calloc(1, sizeof(AnimDisplay));
-    if (!ad)
-	return FALSE;
-
-    if (!compInitDisplayOptionsFromMetadata (d,
-					     &animMetadata,
-					     animDisplayOptionInfo,
-					     ad->opt,
-					     ANIM_DISPLAY_OPTION_NUM))
-    {
-	free (ad);
-	return FALSE;
-    }
-
-    ad->screenPrivateIndex = allocateScreenPrivateIndex(d);
-    if (ad->screenPrivateIndex < 0)
-    {
-	free(ad);
-	return FALSE;
-    }
-
-    // Never animate screen-dimming layer of logout window and gksu.
-    matchInit (&ad->neverAnimateMatch);
-    matchAddExp (&ad->neverAnimateMatch, 0, "title=gksu");
-    matchAddExp (&ad->neverAnimateMatch, 0, "title=x-session-manager");
-    matchAddExp (&ad->neverAnimateMatch, 0, "title=gnome-session");
-    matchUpdate (d, &ad->neverAnimateMatch);
-
-    WRAP(ad, d, handleEvent, animHandleEvent);
-    WRAP(ad, d, handleCompizEvent, animHandleCompizEvent);
-
-    ad->opt[ANIM_DISPLAY_OPTION_ABI].value.i   = ANIMATION_ABIVERSION;
-    ad->opt[ANIM_DISPLAY_OPTION_INDEX].value.i = animFunctionsPrivateIndex;
-
-    d->base.privates[animDisplayPrivateIndex].ptr = ad;
-    d->base.privates[animFunctionsPrivateIndex].ptr = &animBaseFunctions;
-
-    return TRUE;
-}
-
-static void animFiniDisplay(CompPlugin * p, CompDisplay * d)
-{
-    ANIM_DISPLAY(d);
-
-    freeScreenPrivateIndex(d, ad->screenPrivateIndex);
-
-    matchFini (&ad->neverAnimateMatch);
-
-    compFiniDisplayOptions (d, ad->opt, ANIM_DISPLAY_OPTION_NUM);
-
-    UNWRAP(ad, d, handleCompizEvent);
-    UNWRAP(ad, d, handleEvent);
-
-    free(ad);
-}
-
-AnimEffect AnimEffectNone = &(AnimEffectInfo)
-    {"animation:None",
-     {TRUE, TRUE, TRUE, TRUE, TRUE}};
-
-AnimEffect AnimEffectRandom = &(AnimEffectInfo)
-    {"animation:Random",
-     {TRUE, TRUE, TRUE, TRUE, FALSE}};
-
-AnimEffect AnimEffectCurvedFold = &(AnimEffectInfo)
-    {"animation:Curved Fold",
-     {TRUE, TRUE, TRUE, TRUE, FALSE},
-     {.updateWindowAttribFunc	= fxFoldUpdateWindowAttrib,
-      .animStepFunc		= fxCurvedFoldModelStep,
-      .initFunc			= animWithTransformInit,
-      .initGridFunc		= fxMagicLampInitGrid,
-      .updateWinTransformFunc	= defaultUpdateWindowTransform,
-      .updateBBFunc		= modelUpdateBB,
-      .zoomToIconFunc		= fxCurvedFoldZoomToIcon,
-      .modelAnimIs3D		= TRUE}};
-
-AnimEffect AnimEffectDodge = &(AnimEffectInfo)
-    {"animation:Dodge",
-     {FALSE, FALSE, FALSE, FALSE, TRUE},
-     {.animStepFunc		= fxDodgeAnimStep,
-      .initFunc			= defaultAnimInit,
-      .letOthersDrawGeomsFunc	= returnTrue,
-      .updateWinTransformFunc	= fxDodgeUpdateWindowTransform,
-      .postPrepPaintScreenFunc	= fxDodgePostPreparePaintScreen,
-      .updateBBFunc 		= fxDodgeUpdateBB}};
-
-AnimEffect AnimEffectDream = &(AnimEffectInfo)
-    {"animation:Dream",
-     {TRUE, TRUE, TRUE, FALSE, FALSE},
-     {.updateWindowAttribFunc 	= fxDreamUpdateWindowAttrib,
-      .animStepFunc		= fxDreamModelStep,
-      .initFunc			= fxDreamAnimInit,
-      .initGridFunc		= fxMagicLampInitGrid,
-      .updateWinTransformFunc	= defaultUpdateWindowTransform,
-      .updateBBFunc		= modelUpdateBB,
-      .zoomToIconFunc		= fxDreamZoomToIcon}};
-
-AnimEffect AnimEffectFade = &(AnimEffectInfo)
-    {"animation:Fade",
-     {TRUE, TRUE, TRUE, FALSE, FALSE},
-     {.updateWindowAttribFunc	= fxFadeUpdateWindowAttrib,
-      .animStepFunc 		= defaultAnimStep,
-      .initFunc			= defaultAnimInit,
-      .letOthersDrawGeomsFunc	= returnTrue,
-      .updateBBFunc		= updateBBWindow}};
-
-AnimEffect AnimEffectFocusFade = &(AnimEffectInfo)
-    {"animation:Focus Fade",
-     {FALSE, FALSE, FALSE, FALSE, TRUE},
-     {.updateWindowAttribFunc	= fxFocusFadeUpdateWindowAttrib,
-      .animStepFunc		= defaultAnimStep,
-      .initFunc			= defaultAnimInit,
-      .letOthersDrawGeomsFunc	= returnTrue,
-      .updateBBFunc		= updateBBWindow}};
-
-AnimEffect AnimEffectGlide1 = &(AnimEffectInfo)
-    {"animation:Glide 1",
-     {TRUE, TRUE, TRUE, FALSE, FALSE},
-     {.updateWindowAttribFunc	= fxGlideUpdateWindowAttrib,
-      .prePaintWindowFunc	= fxGlidePrePaintWindow,
-      .postPaintWindowFunc	= fxGlidePostPaintWindow,
-      .animStepFunc		= fxGlideAnimStep,
-      .initFunc			= fxGlideInit,
-      .letOthersDrawGeomsFunc	= returnTrue,
-      .updateWinTransformFunc	= fxGlideUpdateWindowTransform,
-      .updateBBFunc		= compTransformUpdateBB,
-      .zoomToIconFunc		= fxGlideZoomToIcon}};
-
-AnimEffect AnimEffectGlide2 = &(AnimEffectInfo)
-    {"animation:Glide 2",
-     {TRUE, TRUE, TRUE, FALSE, FALSE},
-     {.updateWindowAttribFunc	= fxGlideUpdateWindowAttrib,
-      .prePaintWindowFunc	= fxGlidePrePaintWindow,
-      .postPaintWindowFunc	= fxGlidePostPaintWindow,
-      .animStepFunc		= fxGlideAnimStep,
-      .initFunc			= fxGlideInit,
-      .letOthersDrawGeomsFunc	= returnTrue,
-      .updateWinTransformFunc	= fxGlideUpdateWindowTransform,
-      .updateBBFunc		= compTransformUpdateBB,
-      .zoomToIconFunc		= fxGlideZoomToIcon}};
-
-AnimEffect AnimEffectHorizontalFolds = &(AnimEffectInfo)
-    {"animation:Horizontal Folds",
-     {TRUE, TRUE, TRUE, TRUE, FALSE},
-     {.updateWindowAttribFunc	= fxFoldUpdateWindowAttrib,
-      .animStepFunc		= fxHorizontalFoldsModelStep,
-      .initFunc			= animWithTransformInit,
-      .initGridFunc		= fxHorizontalFoldsInitGrid,
-      .updateWinTransformFunc	= defaultUpdateWindowTransform,
-      .updateBBFunc		= modelUpdateBB,
-      .zoomToIconFunc		= fxHorizontalFoldsZoomToIcon,
-      .modelAnimIs3D		= TRUE}};
-
-AnimEffect AnimEffectMagicLamp = &(AnimEffectInfo)
-    {"animation:Magic Lamp",
-     {TRUE, TRUE, TRUE, FALSE, FALSE},
-     {.animStepFunc		= fxMagicLampModelStep,
-      .initFunc			= fxMagicLampInit,
-      .initGridFunc		= fxMagicLampInitGrid,
-      .updateBBFunc		= modelUpdateBB,
-      .useQTexCoord		= TRUE}};
-
-AnimEffect AnimEffectRollUp = &(AnimEffectInfo)
-    {"animation:Roll Up",
-     {TRUE, TRUE, TRUE, TRUE, FALSE},
-     {.animStepFunc		= fxRollUpModelStep,
-      .initFunc			= fxRollUpAnimInit,
-      .initGridFunc		= fxRollUpInitGrid,
-      .updateBBFunc		= modelUpdateBB}};
-
-AnimEffect AnimEffectSidekick = &(AnimEffectInfo)
-    {"animation:Sidekick",
-     {TRUE, TRUE, TRUE, FALSE, FALSE},
-     {.updateWindowAttribFunc	= fxZoomUpdateWindowAttrib,
-      .animStepFunc		= defaultAnimStep,
-      .initFunc			= fxSidekickInit,
-      .letOthersDrawGeomsFunc	= returnTrue,
-      .updateWinTransformFunc	= defaultUpdateWindowTransform,
-      .updateBBFunc		= compTransformUpdateBB,
-      .zoomToIconFunc		= returnTrue}};
-
-AnimEffect AnimEffectVacuum = &(AnimEffectInfo)
-    {"animation:Vacuum",
-     {TRUE, TRUE, FALSE, FALSE, FALSE},
-     {.animStepFunc		= fxMagicLampModelStep,
-      .initFunc			= fxMagicLampInit,
-      .initGridFunc		= fxVacuumInitGrid,
-      .updateBBFunc		= modelUpdateBB,
-      .useQTexCoord		= TRUE}};
-
-AnimEffect AnimEffectWave = &(AnimEffectInfo)                                       
-    {"animation:Wave",
-     {TRUE, TRUE, TRUE, FALSE, TRUE},
-     {.animStepFunc		= fxWaveModelStep,
-      .initFunc			= animWithTransformInit,
-      .initGridFunc		= fxMagicLampInitGrid,
-      .updateWinTransformFunc	= defaultUpdateWindowTransform,
-      .updateBBFunc		= modelUpdateBB,
-      .modelAnimIs3D		= TRUE}};
-
-AnimEffect AnimEffectZoom = &(AnimEffectInfo)
-    {"animation:Zoom",
-     {TRUE, TRUE, TRUE, FALSE, FALSE},
-     {.updateWindowAttribFunc	= fxZoomUpdateWindowAttrib,
-      .animStepFunc		= defaultAnimStep,
-      .initFunc			= fxZoomInit,
-      .letOthersDrawGeomsFunc	= returnTrue,
-      .updateWinTransformFunc	= defaultUpdateWindowTransform,
-      .updateBBFunc		= compTransformUpdateBB,
-      .zoomToIconFunc		= returnTrue}};
+    cScreen->preparePaintSetEnabled (this, active);
+    cScreen->donePaintSetEnabled (this, active);
+    gScreen->glPaintOutputSetEnabled (this, active);
+}*/
 
 AnimEffect animEffects[NUM_EFFECTS];
 
-ExtensionPluginInfo animExtensionPluginInfo = {
-    .nEffects		= NUM_EFFECTS,
-    .effects		= animEffects,
-
-    .nEffectOptions	= ANIM_SCREEN_OPTION_NUM - NUM_NONEFFECT_OPTIONS,
-};
-
-static Bool animInitScreen(CompPlugin * p, CompScreen * s)
+ExtensionPluginAnimation animExtensionPluginInfo (NUM_EFFECTS, animEffects, 0,
+						  NUM_NONEFFECT_OPTIONS);
+ExtensionPluginInfo *
+Animation::getExtensionPluginInfo ()
 {
-    AnimScreen *as;
-    CompDisplay *d = s->display;
+    return &animExtensionPluginInfo;
+}
 
-    ANIM_DISPLAY(d);
+AnimEffect AnimEffectNone;
+AnimEffect AnimEffectRandom;
+AnimEffect AnimEffectCurvedFold;
+AnimEffect AnimEffectDodge;
+AnimEffect AnimEffectDream;
+AnimEffect AnimEffectFade;
+AnimEffect AnimEffectFocusFade;
+AnimEffect AnimEffectGlide1;
+AnimEffect AnimEffectGlide2;
+AnimEffect AnimEffectHorizontalFolds;
+AnimEffect AnimEffectMagicLamp;
+AnimEffect AnimEffectMagicLampWavy;
+AnimEffect AnimEffectRollUp;
+AnimEffect AnimEffectSidekick;
+AnimEffect AnimEffectWave;
+AnimEffect AnimEffectZoom;
 
-    as = calloc(1, sizeof(AnimScreen));
-    if (!as)
-	return FALSE;
 
-    if (!compInitScreenOptionsFromMetadata (s,
-					    &animMetadata,
-					    animScreenOptionInfo,
-					    as->opt,
-					    ANIM_SCREEN_OPTION_NUM))
-    {
-	free (as);
-	return FALSE;
-    }
+PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
+    cScreen (CompositeScreen::get (s)),
+    gScreen (GLScreen::get (s)),
+    aScreen (as),
+    mLastRedrawTimeFresh (false),
+    mSwitcherPostWait (0),
+    mStartCountdown (2), // start the countdown
+    mAnimInProgress (false),
+    mPrePaintWindowsBackToFrontEnabled (false),
+    mOutput (0)
+{
+    for (int i = 0; i < WatchedPluginNum; i++)
+	mPluginActive[i] = false;
 
-    as->windowPrivateIndex = allocateWindowPrivateIndex(s);
-    if (as->windowPrivateIndex < 0)
-    {
-	compFiniScreenOptions (s, as->opt, ANIM_SCREEN_OPTION_NUM);
-	free(as);
-	return FALSE;
-    }
+    // Never animate screen-dimming layer of logout window and gksu.
+    mNeverAnimateMatch |= "title=gksu";
+    mNeverAnimateMatch |= "title=x-session-manager";
+    mNeverAnimateMatch |= "title=gnome-session";
+    mNeverAnimateMatch.update ();
 
-    s->base.privates[ad->screenPrivateIndex].ptr = as;
+    // Set-up option notifiers
 
-    as->animInProgress = FALSE;
+#define MATCHES_BIND    \
+    boost::bind (&PrivateAnimScreen::eventMatchesChanged, this, _1, _2)
+#define OPTIONS_BIND    \
+    boost::bind (&PrivateAnimScreen::eventOptionsChanged, this, _1, _2)
+#define EFFECTS_BIND    \
+    boost::bind (&PrivateAnimScreen::eventEffectsChanged, this, _1, _2)
+#define RANDOM_EFFECTS_BIND    \
+    boost::bind (&PrivateAnimScreen::eventRandomEffectsChanged, this, _1, _2)
 
-    AnimEffect animEffectsTmp[NUM_EFFECTS] =
-    {
-	AnimEffectNone,
-	AnimEffectRandom,
-	AnimEffectCurvedFold,
-	AnimEffectDodge,
-	AnimEffectDream,
-	AnimEffectFade,
-	AnimEffectFocusFade,
-	AnimEffectGlide1,
-	AnimEffectGlide2,
-	AnimEffectHorizontalFolds,
-	AnimEffectMagicLamp,
-	AnimEffectRollUp,
-	AnimEffectSidekick,
-	AnimEffectVacuum,
-	AnimEffectWave,
-	AnimEffectZoom
-    };
-    memcpy (animEffects,
-	    animEffectsTmp,
-	    NUM_EFFECTS * sizeof (AnimEffect));
+    optionSetOpenMatchesNotify (MATCHES_BIND);
+    optionSetCloseMatchesNotify (MATCHES_BIND);
+    optionSetMinimizeMatchesNotify (MATCHES_BIND);
+    optionSetFocusMatchesNotify (MATCHES_BIND);
+    optionSetShadeMatchesNotify (MATCHES_BIND);
 
-    animExtensionPluginInfo.effectOptions = &as->opt[NUM_NONEFFECT_OPTIONS];
+    optionSetOpenOptionsNotify (OPTIONS_BIND);
+    optionSetCloseOptionsNotify (OPTIONS_BIND);
+    optionSetMinimizeOptionsNotify (OPTIONS_BIND);
+    optionSetFocusOptionsNotify (OPTIONS_BIND);
+    optionSetShadeOptionsNotify (OPTIONS_BIND);
+
+    optionSetOpenEffectsNotify (EFFECTS_BIND);
+    optionSetCloseEffectsNotify (EFFECTS_BIND);
+    optionSetMinimizeEffectsNotify (EFFECTS_BIND);
+    optionSetFocusEffectsNotify (EFFECTS_BIND);
+    optionSetShadeEffectsNotify (EFFECTS_BIND);
+
+    optionSetOpenRandomEffectsNotify (RANDOM_EFFECTS_BIND);
+    optionSetCloseRandomEffectsNotify (RANDOM_EFFECTS_BIND);
+    optionSetMinimizeRandomEffectsNotify (RANDOM_EFFECTS_BIND);
+    optionSetShadeRandomEffectsNotify (RANDOM_EFFECTS_BIND);
+
+    ScreenInterface::setHandler (::screen);
+    CompositeScreenInterface::setHandler (cScreen, false);
+    GLScreenInterface::setHandler (gScreen);
+}
+
+PrivateAnimScreen::~PrivateAnimScreen ()
+{
+    if (mAnimInProgress)
+	activateEvent (false);
+
+    for (int i = 0; i < NUM_EFFECTS; i++)
+	delete animEffects[i];
+}
+
+void
+PrivateAnimScreen::initAnimationList ()
+{
+    int i = 0;
+    animEffects[i++] = AnimEffectNone =
+	new AnimEffectInfo ("animation:None",
+			    true, true, true, true, true, 0);
+    animEffects[i++] = AnimEffectRandom =
+	new AnimEffectInfo ("animation:Random",
+			    true, true, true, true, false, 0);
+    animEffects[i++] = AnimEffectCurvedFold =
+	new AnimEffectInfo ("animation:Curved Fold",
+			    true, true, true, true, false,
+			    &createAnimation<CurvedFoldAnim>);
+    animEffects[i++] = AnimEffectDodge =
+	new AnimEffectInfo ("animation:Dodge",
+			    false, false, false, false, true,
+			    &createAnimation<DodgeAnim>,
+			    true);
+    animEffects[i++] = AnimEffectDream =
+	new AnimEffectInfo ("animation:Dream",
+			    true, true, true, false, false,
+			    &createAnimation<DreamAnim>);
+    animEffects[i++] = AnimEffectFade =
+	new AnimEffectInfo ("animation:Fade",
+			    true, true, true, false, false,
+			    &createAnimation<FadeAnim>);
+    animEffects[i++] = AnimEffectFocusFade =
+	new AnimEffectInfo ("animation:Focus Fade",
+			    false, false, false, false, true,
+			    &createAnimation<FocusFadeAnim>,
+			    true);
+    animEffects[i++] = AnimEffectGlide1 =
+	new AnimEffectInfo ("animation:Glide 1",
+			    true, true, true, false, false,
+			    &createAnimation<GlideAnim>);
+    animEffects[i++] = AnimEffectGlide2 =
+	new AnimEffectInfo ("animation:Glide 2",
+			    true, true, true, false, false,
+			    &createAnimation<Glide2Anim>);
+    animEffects[i++] = AnimEffectHorizontalFolds =
+	new AnimEffectInfo ("animation:Horizontal Folds",
+			    true, true, true, true, false,
+			    &createAnimation<HorizontalFoldsAnim>);
+    animEffects[i++] = AnimEffectMagicLamp =
+	new AnimEffectInfo ("animation:Magic Lamp",
+			    true, true, true, false, false,
+			    &createAnimation<MagicLampAnim>);
+    animEffects[i++] = AnimEffectMagicLampWavy =
+	new AnimEffectInfo ("animation:Magic Lamp Wavy",
+			    true, true, true, false, false,
+			    &createAnimation<MagicLampWavyAnim>);
+    animEffects[i++] = AnimEffectRollUp =
+	new AnimEffectInfo ("animation:Roll Up",
+			    false, false, false, true, false,
+			    &createAnimation<RollUpAnim>);
+    animEffects[i++] = AnimEffectSidekick =
+	new AnimEffectInfo ("animation:Sidekick",
+			    true, true, true, false, false,
+			    &createAnimation<SidekickAnim>);
+    animEffects[i++] = AnimEffectWave =
+	new AnimEffectInfo ("animation:Wave",
+			    true, true, true, false, true,
+			    &createAnimation<WaveAnim>);
+    animEffects[i++] = AnimEffectZoom =
+	new AnimEffectInfo ("animation:Zoom",
+			    true, true, true, false, false,
+			    &createAnimation<ZoomAnim>);
+
+    animExtensionPluginInfo.effectOptions = &getOptions ();
 
     // Extends itself with the basic set of animation effects.
-    animAddExtension (s, &animExtensionPluginInfo);
+    addExtension (&animExtensionPluginInfo, false);
 
-    AnimEvent e;
-    for (e = 0; e < AnimEventNum; e++) // for each anim event
-	updateOptionSets (s, e);
+    for (int e = 0; e < AnimEventNum; e++) // for each anim event
+	updateOptionSets ((AnimEvent)e);
 
-    updateAllEventEffects (s);
+    updateAllEventEffects ();
 
-    as->lastClientListStacking = NULL;
-    as->nLastClientListStacking = 0;
-
-    WRAP(as, s, preparePaintScreen, animPreparePaintScreen);
-    WRAP(as, s, donePaintScreen, animDonePaintScreen);
-    WRAP(as, s, paintOutput, animPaintOutput);
-    WRAP(as, s, paintWindow, animPaintWindow);
-    WRAP(as, s, damageWindowRect, animDamageWindowRect);
-    WRAP(as, s, addWindowGeometry, animAddWindowGeometry);
-    WRAP(as, s, drawWindowTexture, animDrawWindowTexture);
-    WRAP(as, s, windowResizeNotify, animWindowResizeNotify);
-    WRAP(as, s, windowMoveNotify, animWindowMoveNotify);
-    WRAP(as, s, windowGrabNotify, animWindowGrabNotify);
-    WRAP(as, s, windowUngrabNotify, animWindowUngrabNotify);
-    WRAP(as, s, initWindowWalker, animInitWindowWalker);
-
-    as->markAllWinCreatedCountdown = 5; // start countdown
-
-    return TRUE;
+    cScreen->preparePaintSetEnabled (this, true);
+    cScreen->donePaintSetEnabled (this, true);
 }
 
-static void animFiniScreen(CompPlugin * p, CompScreen * s)
+PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
+				      AnimWindow *aw) :
+    mWindow (w),
+    gWindow (GLWindow::get (w)),
+    mCWindow (CompositeWindow::get (w)),
+    mAWindow (aw),
+    mPAScreen (AnimScreen::get (::screen)->priv),
+    mGrabbed (false),
+    mUnshadePending (false),
+    mEventNotOpenClose (false),
+    mNowShaded (false),
+    mUnmapCnt (0),
+    mDestroyCnt (0),
+    mUpdateFrameCnt (0),
+    mIgnoreDamage (false),
+    mFinishingAnim (false),
+    mCurAnimSelectionRow (-1),
+    mCurAnimation (0)
 {
-    ANIM_SCREEN(s);
+    mBB.x1 = mBB.y1 = MAXSHORT;
+    mBB.x2 = mBB.y2 = MINSHORT;
 
-    if (as->animInProgress)
-	animActivateEvent(s, FALSE);
-
-    freeWindowPrivateIndex(s, as->windowPrivateIndex);
-
-    if (as->lastClientListStacking)
-	free(as->lastClientListStacking);
-
-    free (as->extensionPlugins);
-    freeAllEffects (as);
-    freeAllOptionSets (as);
-
-    UNWRAP(as, s, preparePaintScreen);
-    UNWRAP(as, s, donePaintScreen);
-    UNWRAP(as, s, paintOutput);
-    UNWRAP(as, s, paintWindow);
-    UNWRAP(as, s, damageWindowRect);
-    UNWRAP(as, s, addWindowGeometry);
-    UNWRAP(as, s, drawWindowTexture);
-    UNWRAP(as, s, windowResizeNotify);
-    UNWRAP(as, s, windowMoveNotify);
-    UNWRAP(as, s, windowGrabNotify);
-    UNWRAP(as, s, windowUngrabNotify);
-    UNWRAP(as, s, initWindowWalker);
-
-    compFiniScreenOptions (s, as->opt, ANIM_SCREEN_OPTION_NUM);
-
-    free(as);
-}
-
-static Bool animInitWindow(CompPlugin * p, CompWindow * w)
-{
-    AnimWindow *aw;
-
-    ANIM_SCREEN(w->screen);
-
-    aw = calloc(1, sizeof(AnimWindow));
-    if (!aw)
-	return FALSE;
-
-    aw->com.model = 0;
-    aw->com.animRemainingTime = 0;
-    aw->animInitialized = FALSE;
-    aw->com.curAnimEffect = AnimEffectNone;
-    aw->com.curWindowEvent = WindowEventNone;
-    aw->com.animOverrideProgressDir = 0;
-    aw->curAnimSelectionRow = -1;
-
-    w->indexCount = 0;
-
-    aw->unmapCnt = 0;
-    aw->destroyCnt = 0;
-
-    aw->grabbed = FALSE;
-
-    aw->com.useDrawRegion = FALSE;
-    aw->com.drawRegion = NULL;
-
-    aw->BB.x1 = aw->BB.y1 = MAXSHORT;
-    aw->BB.x2 = aw->BB.y2 = MINSHORT;
-
-    aw->nowShaded = FALSE;
-
-    if (w->minimized)
+    if (w->minimized ())
     {
-	aw->state = aw->newState = IconicState;
+	mState = mNewState = IconicState;
     }
-    else if (w->shaded)
+    else if (w->shaded ())
     {
-	aw->state = aw->newState = NormalState;
-	aw->nowShaded = TRUE;
+	mState = mNewState = NormalState;
+	mNowShaded = true;
     }
     else
     {
-	aw->state = aw->newState = animGetWindowState(w);
+	mState = mNewState = getState ();
     }
 
-    w->base.privates[as->windowPrivateIndex].ptr = aw;
-
-    return TRUE;
+    WindowInterface::setHandler (mWindow, true);
+    GLWindowInterface::setHandler (gWindow, true);
+    CompositeWindowInterface::setHandler (mCWindow, true);
 }
 
-static void animFiniWindow(CompPlugin * p, CompWindow * w)
+PrivateAnimWindow::~PrivateAnimWindow ()
 {
-    ANIM_WINDOW(w);
-
-    postAnimationCleanupCustom (w, FALSE, TRUE, TRUE);
-
-    animFreeModel(aw);
-
-    free(aw);
+    if (mCurAnimation)
+	postAnimationCleanUpCustom (false, true, true);
 }
 
-static CompBool
-animInitObject (CompPlugin *p,
-		CompObject *o)
+void
+PrivateAnimWindow::windowNotify (CompWindowNotify n)
 {
-    static InitPluginObjectProc dispTab[] = {
-	(InitPluginObjectProc) 0, /* InitCore */
-	(InitPluginObjectProc) animInitDisplay,
-	(InitPluginObjectProc) animInitScreen,
-	(InitPluginObjectProc) animInitWindow
-    };
-
-    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
-}
-
-static void
-animFiniObject (CompPlugin *p,
-		CompObject *o)
-{
-    static FiniPluginObjectProc dispTab[] = {
-	(FiniPluginObjectProc) 0, /* FiniCore */
-	(FiniPluginObjectProc) animFiniDisplay,
-	(FiniPluginObjectProc) animFiniScreen,
-	(FiniPluginObjectProc) animFiniWindow
-    };
-
-    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
-}
-
-static CompOption *
-animGetObjectOptions (CompPlugin *plugin,
-		      CompObject *object,
-		      int	   *count)
-{
-    static GetPluginObjectOptionsProc dispTab[] = {
-	(GetPluginObjectOptionsProc) 0, /* GetCoreOptions */
-	(GetPluginObjectOptionsProc) animGetDisplayOptions,
-	(GetPluginObjectOptionsProc) animGetScreenOptions
-    };
-
-    *count = 0;
-    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab),
-		     (void *) count, (plugin, object, count));
-}
-
-static CompBool
-animSetObjectOption (CompPlugin      *plugin,
-		     CompObject      *object,
-		     const char      *name,
-		     CompOptionValue *value)
-{
-    static SetPluginObjectOptionProc dispTab[] = {
-	(SetPluginObjectOptionProc) 0, /* SetCoreOption */
-	(SetPluginObjectOptionProc) animSetDisplayOption,
-	(SetPluginObjectOptionProc) animSetScreenOptions
-    };
-
-    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab), FALSE,
-		     (plugin, object, name, value));
-}
-
-static Bool animInit(CompPlugin * p)
-{
-    if (!compInitPluginMetadataFromInfo (&animMetadata,
-					 p->vTable->name,
-					 0, 0,
-					 animScreenOptionInfo,
-					 ANIM_SCREEN_OPTION_NUM))
-	return FALSE;
-
-    animDisplayPrivateIndex = allocateDisplayPrivateIndex();
-    if (animDisplayPrivateIndex < 0)
+    switch (n)
     {
-	compFiniMetadata (&animMetadata);
-	return FALSE;
+	case CompWindowNotifyEnterShowDesktopMode:
+	case CompWindowNotifyMinimize:
+	    mPAScreen->initiateMinimizeAnim (this);
+	    mEventNotOpenClose = true;
+	    break;
+	case CompWindowNotifyShade:
+	    mPAScreen->initiateShadeAnim (this);
+	    mEventNotOpenClose = true;
+	    break;
+	case CompWindowNotifyLeaveShowDesktopMode:
+	case CompWindowNotifyUnminimize:
+	    mPAScreen->initiateUnminimizeAnim (this);
+	    mEventNotOpenClose = true;
+	    break;
+	case CompWindowNotifyUnshade:
+	    if (mNowShaded &&
+		mCurAnimation &&
+		mCurAnimation->curWindowEvent () == WindowEventShade)
+		mPAScreen->initiateUnshadeAnim (this); // reverse the shade anim
+	    break;
+	case CompWindowNotifyClose:
+	    if (!(mCurAnimation &&
+		  (mCurAnimation->curWindowEvent () == WindowEventClose ||
+		   mCurAnimation->curWindowEvent () == WindowEventUnminimize)))
+		mPAScreen->initiateCloseAnim (this);
+	    break;
+	case CompWindowNotifyShow:
+	    // Prevent dialog disappearing when a dialog is reopened during
+	    // its close animation.
+	    if (mCurAnimation &&
+		mCurAnimation->curWindowEvent () == WindowEventClose)
+	    {
+		mPAScreen->initiateOpenAnim (this);
+		mEventNotOpenClose = false;
+	    }
+	    break;
+	case CompWindowNotifyMap:
+	    if (mNowShaded)
+		mUnshadePending = true;
+	    else if (!mUnshadePending &&
+		     !mEventNotOpenClose &&
+		     !mPAScreen->mStartCountdown &&
+		     !(mCurAnimation &&
+		       (mCurAnimation->curWindowEvent () ==
+			WindowEventUnminimize ||
+			mCurAnimation->curWindowEvent () == WindowEventOpen)))
+		mPAScreen->initiateOpenAnim (this);
+	    mEventNotOpenClose = false;
+	    break;
+	case CompWindowNotifyBeforeDestroy:
+	    if (!mFinishingAnim)
+	    {
+		int duration;
+
+		if (mPAScreen->shouldIgnoreWindowForAnim (mWindow, false))// TODO was true))
+		    break;
+
+		if (AnimEffectNone ==
+		    mPAScreen->getMatchingAnimSelection (mWindow,
+							 AnimEventClose,
+							 &duration))
+		    break;
+
+		mDestroyCnt++;
+		mWindow->incrementDestroyReference ();
+	    }
+	    break;
+	case CompWindowNotifyFocusChange:
+	    if (mPAScreen->mLastActiveWindow != mWindow->id ())
+	    {
+		mPAScreen->mLastActiveWindow = mWindow->id ();
+
+		if (mPAScreen->mStartCountdown) // Don't animate at startup
+		    break;
+
+		int duration = 200;
+		AnimEffect chosenEffect =
+		    mPAScreen->getMatchingAnimSelection (mWindow,
+							 AnimEventFocus,
+							 &duration);
+
+		if (!chosenEffect->isRestackAnim)
+		    mPAScreen->initiateFocusAnim (this);
+	    }
+
+	    break;
+	case CompWindowNotifyRestack:
+	{
+	    // Prevent menu disappearing when a menu is reopened during
+	    // its close animation. In that case a restack notify is thrown
+	    // for menus.
+	    if (mCurAnimation &&
+		mCurAnimation->curWindowEvent () == WindowEventClose)
+	    {
+		mPAScreen->initiateOpenAnim (this);
+		mEventNotOpenClose = false;
+		break;
+	    }
+
+	    // Handle CompWindowNotifyRestack only when necessary.
+	    if (!mPAScreen->isRestackAnimPossible ())
+		break;
+
+	    if (mPAScreen->mStartCountdown) // Don't animate at startup
+		break;
+
+	    for (int p = 0; p < mPAScreen->mExtensionPlugins.size (); p++)
+	    {
+		ExtensionPluginInfo *extPlugin =
+		    mPAScreen->mExtensionPlugins[p];
+		extPlugin->handleRestackNotify (mAWindow);
+	    }
+
+	    break;
+	}
+	default:
+	    break;
     }
 
-    animFunctionsPrivateIndex = allocateDisplayPrivateIndex ();
-    if (animFunctionsPrivateIndex < 0)
+    mWindow->windowNotify (n);
+}
+
+Animation *
+AnimWindow::curAnimation ()
+{
+    return priv->curAnimation ();
+}
+
+AnimEffect
+AnimScreen::getMatchingAnimSelection (CompWindow *w,
+				      AnimEvent e,
+				      int *duration)
+{
+    priv->getMatchingAnimSelection (w, e, duration);
+}
+
+bool
+AnimScreen::otherPluginsActive ()
+{
+    return priv->otherPluginsActive ();
+}
+
+bool
+AnimScreen::isAnimEffectPossible (AnimEffect theEffect)
+{
+    return priv->isAnimEffectPossible (theEffect);
+}
+
+bool
+AnimScreen::initiateFocusAnim (AnimWindow *aw)
+{
+    return priv->initiateFocusAnim (aw->priv);
+}
+
+/// If duration is 0, it should be set to a positive value later.
+void
+AnimWindow::createFocusAnimation (AnimEffect effect, int duration)
+{
+    priv->createFocusAnimation (effect, duration);
+}
+
+void
+AnimWindow::deletePersistentData (const char *name)
+{
+    PersistentDataMap::iterator itData =
+	persistentData.find (name);
+    if (itData != persistentData.end ()) // if found
     {
-	freeDisplayPrivateIndex (animDisplayPrivateIndex);
-	compFiniMetadata (&animMetadata);
-	return FALSE;
+	delete itData->second;
+	persistentData.erase (itData);
     }
-
-    compAddMetadataFromFile (&animMetadata, p->vTable->name);
-
-    return TRUE;
 }
 
-static void animFini(CompPlugin * p)
+void
+PrivateAnimWindow::createFocusAnimation (AnimEffect effect, int duration)
 {
-    freeDisplayPrivateIndex(animDisplayPrivateIndex);
-    freeDisplayPrivateIndex (animFunctionsPrivateIndex);
-    compFiniMetadata (&animMetadata);
+    mCurAnimation =
+	effect->create (mWindow, WindowEventFocus,
+			duration,
+			effect,
+			CompRect ());
+    mCurAnimation->init ();
 }
 
-static CompMetadata *
-animGetMetadata (CompPlugin *plugin)
+AnimScreen::AnimScreen (CompScreen *s) :
+    PluginClassHandler<AnimScreen, CompScreen, ANIMATION_ABI> (s),
+    priv (new PrivateAnimScreen (s, this))
 {
-    return &animMetadata;
 }
 
-CompPluginVTable animVTable = {
-    "animation",
-    animGetMetadata,
-    animInit,
-    animFini,
-    animInitObject,
-    animFiniObject,
-    animGetObjectOptions,
-    animSetObjectOption,
-};
-
-CompPluginVTable*
-getCompPluginInfo20070830 (void)
+AnimScreen::~AnimScreen ()
 {
-    return &animVTable;
+    delete priv;
+}
+
+AnimWindow::AnimWindow (CompWindow *w) :
+    PluginClassHandler<AnimWindow, CompWindow, ANIMATION_ABI> (w),
+    priv (new PrivateAnimWindow (w, this)),
+    mWindow (w),
+    mSavedRectsValid (false)
+{
+    for (int p = 0; p < priv->mPAScreen->mExtensionPlugins.size (); p++)
+    {
+	ExtensionPluginInfo *extPlugin = priv->mPAScreen->mExtensionPlugins[p];
+	extPlugin->initPersistentData (this);
+    }
+}
+
+AnimWindow::~AnimWindow ()
+{
+    // Destroy each persistent data object
+    PersistentDataMap::iterator itData = persistentData.begin ();
+    for (; itData != persistentData.end (); itData++)
+	delete itData->second;
+
+    persistentData.clear ();
+
+    delete priv;
+}
+
+bool
+AnimPluginVTable::init ()
+{
+    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) |
+        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) |
+        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	 return false;
+
+    CompPrivate p;
+    p.uval = ANIMATION_ABI;
+    ::screen->storeValue ("animation_ABI", p);
+
+    return true;
+}
+
+void
+AnimPluginVTable::fini ()
+{
+    ::screen->eraseValue ("animation_ABI");
 }
 

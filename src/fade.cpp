@@ -34,19 +34,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "private.h"
 
 // =====================  Effect: Fade  =========================
 
-void
-fxFadeUpdateWindowAttrib(CompWindow * w,
-			 WindowPaintAttrib * wAttrib)
+FadeAnim::FadeAnim (CompWindow *w,
+		    WindowEvent curWindowEvent,
+		    float duration,
+		    const AnimEffect info,
+		    const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon)
 {
-    ANIM_WINDOW(w);
-
-    float forwardProgress = defaultAnimProgress (w);
-
-    wAttrib->opacity = (GLushort) (aw->com.storedOpacity * (1 - forwardProgress));
 }
 
+void
+FadeAnim::updateAttrib (GLWindowPaintAttrib &attrib)
+{
+    attrib.opacity = (GLushort) (mStoredOpacity * (1 - getFadeProgress ()));
+}
+
+void
+FadeAnim::updateBB (CompOutput &output)
+{
+    mAWindow->expandBBWithWindow ();
+}
 

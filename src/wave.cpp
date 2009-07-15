@@ -34,66 +34,90 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "private.h"
+
+const float WaveAnim::kMinDuration = 400;
 
 // =====================  Effect: Wave  =========================
 
-static void inline
-fxWaveModelStepObject(CompWindow * w,
-		      Model * model,
-		      Object * object,
-		      float forwardProgress,
-		      float wavePosition,
-		      float waveAmp,
-		      float waveHalfWidth)
+WaveAnim::WaveAnim (CompWindow *w,
+		    WindowEvent curWindowEvent,
+		    float duration,
+		    const AnimEffect info,
+		    const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon),
+    GridTransformAnim::GridTransformAnim (w, curWindowEvent, duration, info,
+					  icon)
 {
-    float origx = w->attrib.x + (WIN_W(w) * object->gridPosition.x -
-				 w->output.left) * model->scale.x;
-    float origy = w->attrib.y + (WIN_H(w) * object->gridPosition.y -
-				 w->output.top) * model->scale.y;
+}
 
-    object->position.x = origx;
-    object->position.y = origy;
-    object->position.z = 0;
-
-    if (fabs(object->position.y - wavePosition) < waveHalfWidth)
+void
+WaveAnim::adjustDuration ()
+{
+    if (mTotalTime < kMinDuration)
     {
-	object->position.z += waveAmp *
-	    (cos ((object->position.y - wavePosition) *
-		  M_PI / waveHalfWidth) + 1) / 2;
+	mTotalTime = kMinDuration;
+	mRemainingTime = mTotalTime;
     }
 }
 
 void
-fxWaveModelStep (CompWindow *w, float time)
+WaveAnim::initGrid ()
 {
-    defaultAnimStep (w, time);
+    mGridWidth = 2;
+    mGridHeight = optValI (AnimationOptions::MagicLampWavyGridRes); // TODO new option
+}
 
-    ANIM_WINDOW(w);
+void
+WaveAnim::step ()
+{
+    float forwardProgress = 1 - progressLinear ();
+    if (mCurWindowEvent == WindowEventClose)
+	forwardProgress = 1 - forwardProgress;
 
-    Model *model = aw->com.model;
+    CompRect winRect (mAWindow->savedRectsValid () ?
+		      mAWindow->saveWinRect () :
+		      mWindow->geometry ());
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
+    CompWindowExtents outExtents (mAWindow->savedRectsValid () ?
+				  mAWindow->savedOutExtents () :
+				  mWindow->output ());
 
-    float forwardProgress = 1 - defaultAnimProgress (w);
+    float waveHalfWidth = (outRect.height () * mModel->scale ().y () *
+			   optValF (AnimationOptions::WaveWidth) / 2);
 
-    float waveHalfWidth = (WIN_H(w) * model->scale.y *
-			   animGetF (w, ANIM_SCREEN_OPTION_WAVE_WIDTH) / 2);
-
-    float waveAmp = (0.02 * pow ((float)WIN_H (w) / w->screen->height, 0.4) *
-		     animGetF (w, ANIM_SCREEN_OPTION_WAVE_AMP_MULT));
+    float waveAmp = (pow ((float)outRect.height () / ::screen->height (), 0.4) *
+		     0.04 * optValF (AnimationOptions::WaveAmpMult));
 
     float wavePosition =
-	WIN_Y(w) - waveHalfWidth +
-	forwardProgress * (WIN_H(w) * model->scale.y + 2 * waveHalfWidth);
+	outRect.y () - waveHalfWidth +
+	forwardProgress * (outRect.height () * mModel->scale ().y () +
+			   2 * waveHalfWidth);
 
-    Object *object = model->objects;
-    int i;
-    for (i = 0; i < model->numObjects; i++, object++)
-	fxWaveModelStepObject(w,
-			      model,
-			      object,
-			      forwardProgress,
-			      wavePosition,
-			      waveAmp,
-			      waveHalfWidth);
+    GridModel::GridObject *object = mModel->objects ();
+    for (int i = 0; i < mModel->numObjects (); i++, object++)
+    {
+	float origx = winRect.x () + mModel->scale ().x () *
+	    (outRect.width () * object->gridPosition ().x () -
+	     outExtents.left);
+	float origy = winRect.y () + mModel->scale ().y () *
+	    (outRect.height () * object->gridPosition ().y () -
+	     outExtents.top);
+
+	object->position ().setX (origx);
+	object->position ().setY (origy);
+	float distFromWaveCenter =
+	    fabs (object->position ().y () - wavePosition);
+
+	if (distFromWaveCenter < waveHalfWidth)
+	    object->position ().
+		setZ (waveAmp * (cos (distFromWaveCenter *
+				      M_PI / waveHalfWidth) + 1) / 2);
+	else
+	    object->position ().setZ (0);
+    }
 }
 

@@ -34,150 +34,148 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "private.h"
 
 // =====================  Effect: Horizontal Folds  =========================
 
-static inline float
-getObjectZ (Model *model,
-	    float forwardProgress,
-	    float sinForProg,
-	    float relDistToFoldCenter,
-	    float foldMaxAmp)
+HorizontalFoldsAnim::HorizontalFoldsAnim (CompWindow *w,
+					  WindowEvent curWindowEvent,
+					  float duration,
+					  const AnimEffect info,
+					  const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon),
+    FoldAnim::FoldAnim (w, curWindowEvent, duration, info, icon)
+{
+}
+
+void
+HorizontalFoldsAnim::initGrid ()
+{
+    mGridWidth = 2;
+    if (mCurWindowEvent == WindowEventShade ||
+	mCurWindowEvent == WindowEventUnshade)
+	mGridHeight = 3 + 2 *
+	    optValI (AnimationOptions::HorizontalFoldsNumFolds);
+    else
+	mGridHeight = 1 + 2 *
+	    optValI (AnimationOptions::HorizontalFoldsNumFolds);
+}
+
+float
+HorizontalFoldsAnim::getObjectZ (GridAnim::GridModel *mModel,
+				 float forwardProgress,
+				 float sinForProg,
+				 float relDistToFoldCenter,
+				 float foldMaxAmp)
 {
     return -(sinForProg *
 	     foldMaxAmp *
-	     model->scale.x *
+	     mModel->scale ().x () *
 	     2 * (0.5 - relDistToFoldCenter));
 }
 
 void
-fxHorizontalFoldsInitGrid(CompWindow *w,
-			  int *gridWidth, int *gridHeight)
+HorizontalFoldsAnim::step ()
 {
-    ANIM_WINDOW(w);
+    GridZoomAnim::step ();
 
-    *gridWidth = 2;
-    if (aw->com.curWindowEvent == WindowEventShade ||
-	aw->com.curWindowEvent == WindowEventUnshade)
-	*gridHeight = 3 + 2 *	
-	    animGetI (w, ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS);
-    else
-	*gridHeight = 1 + 2 *
-	    animGetI (w, ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS);
-}
-
-static void inline
-fxHorizontalFoldsModelStepObject(CompWindow * w,
-				 Model * model,
-				 Object * object,
-				 float forwardProgress,
-				 float sinForProg,
-				 float foldMaxAmp, int rowNo)
-{
-    ANIM_WINDOW(w);
-
-    float origx = w->attrib.x + (WIN_W(w) * object->gridPosition.x -
-				 w->output.left) * model->scale.x;
-    float origy = w->attrib.y + (WIN_H(w) * object->gridPosition.y -
-				 w->output.top) * model->scale.y;
-
-    object->position.x = origx;
-
-    if (aw->com.curWindowEvent == WindowEventShade ||
-	aw->com.curWindowEvent == WindowEventUnshade)
-    {
-	// Execute shade mode
-
-	float relDistToFoldCenter = (rowNo % 2 == 1 ? 0.5 : 0);
-
-	if (object->gridPosition.y == 0)
-	{
-	    object->position.y = WIN_Y(w);
-	    object->position.z = 0;
-	}
-	else if (object->gridPosition.y == 1)
-	{
-	    object->position.y =
-		(1 - forwardProgress) * origy +
-		forwardProgress *
-		(WIN_Y(w) + model->topHeight + model->bottomHeight);
-	    object->position.z = 0;
-	}
-	else
-	{
-	    object->position.y =
-		(1 - forwardProgress) * origy +
-		forwardProgress * (WIN_Y(w) + model->topHeight);
-	    object->position.z =
-		getObjectZ (model, forwardProgress, sinForProg,
-			    relDistToFoldCenter, foldMaxAmp);
-	}
-    }
-    else
-    {
-	// Execute normal mode
-
-	float relDistToFoldCenter;
-
-	relDistToFoldCenter = (rowNo % 2 == 0 ? 0.5 : 0);
-
-	object->position.y =
-	    (1 - forwardProgress) * origy +
-	    forwardProgress * (BORDER_Y(w) + BORDER_H(w) / 2.0);
-	object->position.z =
-		getObjectZ (model, forwardProgress, sinForProg,
-			    relDistToFoldCenter, foldMaxAmp);
-    }
-}
-
-void
-fxHorizontalFoldsModelStep (CompWindow *w, float time)
-{
-    defaultAnimStep (w, time);
-
-    ANIM_WINDOW(w);
-
-    Model *model = aw->com.model;
-
+    CompRect winRect (mAWindow->savedRectsValid () ?
+		      mAWindow->saveWinRect () :
+		      mWindow->geometry ());
+    CompRect inRect (mAWindow->savedRectsValid () ?
+		     mAWindow->savedInRect () :
+		     mWindow->inputRect ());
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
+    CompWindowExtents outExtents (mAWindow->savedRectsValid () ?
+				  mAWindow->savedOutExtents () :
+				  mWindow->output ());
     float winHeight = 0;
-    if (aw->com.curWindowEvent == WindowEventShade ||
-	aw->com.curWindowEvent == WindowEventUnshade)
+    if (mCurWindowEvent == WindowEventShade ||
+	mCurWindowEvent == WindowEventUnshade)
     {
-	winHeight = (w)->height;
+	winHeight = winRect.height ();
     }
     else
     {
-	winHeight = BORDER_H (w);
+	winHeight = inRect.height ();
     }
     int nHalfFolds =
-	2.0 * animGetI (w, ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS);
+	2.0 * optValI (AnimationOptions::HorizontalFoldsNumFolds);
     float foldMaxAmp =
-	0.3 * pow ((winHeight / nHalfFolds) / w->screen->height, 0.3) *
-	animGetF (w, ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_AMP_MULT);
+	0.3 * pow ((winHeight / nHalfFolds) / ::screen->height (), 0.3) *
+	optValF (AnimationOptions::HorizontalFoldsAmpMult);
 
-    float forwardProgress = getProgressAndCenter (w, NULL);
+    float forwardProgress = getActualProgress ();
 
     float sinForProg = sin (forwardProgress * M_PI / 2);
 
-    Object *object = model->objects;
-    int i;
-    for (i = 0; i < model->numObjects; i++, object++)
-	fxHorizontalFoldsModelStepObject(w, 
-					 model,
-					 object,
-					 forwardProgress,
-					 sinForProg,
-					 foldMaxAmp,
-					 i / model->gridWidth);
+    GridModel::GridObject *object = mModel->objects ();
+    for (int i = 0; i < mModel->numObjects (); i++, object++)
+    {
+	int rowNo = i / mGridWidth;
+	float origx = (winRect.x () +
+		       (outRect.width () * object->gridPosition ().x () -
+			outExtents.left) * mModel->scale ().x ());
+	float origy = (winRect.y () +
+		       (outRect.height () * object->gridPosition ().y () -
+			outExtents.top) * mModel->scale ().y ());
+
+	object->position ().setX (origx);
+
+	if (mCurWindowEvent == WindowEventShade ||
+	    mCurWindowEvent == WindowEventUnshade)
+	{
+	    // Execute shade mode
+
+	    float relDistToFoldCenter = (rowNo % 2 == 1 ? 0.5 : 0);
+
+	    if (object->gridPosition ().y () == 0)
+	    {
+		object->position ().setY (outRect.y ());
+		object->position ().setZ (0);
+	    }
+	    else if (object->gridPosition ().y () == 1)
+	    {
+		object->position ().setY (
+		    (1 - forwardProgress) * origy +
+		    forwardProgress *
+		    (outRect.y () + mDecorTopHeight + mDecorBottomHeight));
+		object->position ().setZ (0);
+	    }
+	    else
+	    {
+		object->position ().setY (
+		    (1 - forwardProgress) * origy +
+		    forwardProgress * (outRect.y () + mDecorTopHeight));
+		object->position ().setZ (
+		    getObjectZ (mModel, forwardProgress, sinForProg,
+				relDistToFoldCenter, foldMaxAmp));
+	    }
+	}
+	else
+	{
+	    // Execute normal mode
+
+	    float relDistToFoldCenter = (rowNo % 2 == 0 ? 0.5 : 0);
+
+	    object->position ().setY (
+		(1 - forwardProgress) * origy +
+		forwardProgress * (inRect.y () + inRect.height () / 2.0));
+	    object->position ().setZ (
+		    getObjectZ (mModel, forwardProgress, sinForProg,
+				relDistToFoldCenter, foldMaxAmp));
+	}
+    }
 }
 
-Bool
-fxHorizontalFoldsZoomToIcon (CompWindow *w)
+bool
+HorizontalFoldsAnim::zoomToIcon ()
 {
-    ANIM_WINDOW(w);
-    return ((aw->com.curWindowEvent == WindowEventMinimize ||
-	     aw->com.curWindowEvent == WindowEventUnminimize) &&
-	    animGetB (w, ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_Z2TOM));
+    return ((mCurWindowEvent == WindowEventMinimize ||
+	     mCurWindowEvent == WindowEventUnminimize) &&
+	    optValB (AnimationOptions::HorizontalFoldsZoomToTaskbar));
 }
 

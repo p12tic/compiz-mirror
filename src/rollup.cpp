@@ -34,121 +34,96 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "private.h"
 
 // =====================  Effect: Roll Up  =========================
 
-void
-fxRollUpInitGrid(CompWindow *w,
-		 int *gridWidth, int *gridHeight)
-{
-    ANIM_WINDOW(w);
+const float RollUpAnim::kDurationFactor = 1.67;
 
-    *gridWidth = 2;
-    if (aw->com.curWindowEvent == WindowEventShade ||
-	aw->com.curWindowEvent == WindowEventUnshade)
-	*gridHeight = 4;
-    else
-	*gridHeight = 2;
+RollUpAnim::RollUpAnim (CompWindow *w,
+			WindowEvent curWindowEvent,
+			float duration,
+			const AnimEffect info,
+			const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, kDurationFactor * duration, info,
+			  icon),
+    GridAnim::GridAnim (w, curWindowEvent, kDurationFactor * duration, info,
+			icon)
+{
 }
 
-static void inline
-fxRollUpModelStepObject(CompWindow * w,
-			Model * model,
-			Object * object,
-			float forwardProgress, Bool fixedInterior)
+void
+RollUpAnim::initGrid ()
 {
-    ANIM_WINDOW(w);
+    mGridWidth = 2;
+    if (mCurWindowEvent == WindowEventShade ||
+	mCurWindowEvent == WindowEventUnshade)
+	mGridHeight = 4;
+    else
+	mGridHeight = 2;
+}
 
-    float origx = WIN_X(w) + WIN_W(w) * object->gridPosition.x;
+void
+RollUpAnim::step ()
+{
+    float forwardProgress = progressEaseInEaseOut ();
+    bool fixedInterior = optValB (AnimationOptions::RollupFixedInterior);
 
-    if (aw->com.curWindowEvent == WindowEventShade ||
-	aw->com.curWindowEvent == WindowEventUnshade)
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
+
+    GridModel::GridObject *object = mModel->objects ();
+    for (int i = 0; i < mModel->numObjects (); i++, object++)
     {
-	// Execute shade mode
+	float origx = outRect.x () + outRect.width () * object->gridPosition ().x ();
+
+	// Executing shade mode
 
 	// find position in window contents
 	// (window contents correspond to 0.0-1.0 range)
 	float relPosInWinContents =
-	    (object->gridPosition.y * WIN_H(w) -
-	     model->topHeight) / w->height;
+	    (object->gridPosition ().y () * outRect.height () -
+	     mDecorTopHeight) / mWindow->height ();
 
-	if (object->gridPosition.y == 0)
+	object->position ().setX (origx);
+
+	if (object->gridPosition ().y () == 0)
 	{
-	    object->position.x = origx;
-	    object->position.y = WIN_Y(w);
+	    object->position ().setY (outRect.y ());
 	}
-	else if (object->gridPosition.y == 1)
+	else if (object->gridPosition ().y () == 1)
 	{
-	    object->position.x = origx;
-	    object->position.y =
+	    object->position ().setY (
 		(1 - forwardProgress) *
-		(WIN_Y(w) +
-		 WIN_H(w) * object->gridPosition.y) +
-		forwardProgress * (WIN_Y(w) +
-				   model->topHeight +
-				   model->bottomHeight);
+		(outRect.y () +
+		 outRect.height () * object->gridPosition ().y ()) +
+		forwardProgress * (outRect.y () +
+				   mDecorTopHeight + mDecorBottomHeight));
 	}
 	else
 	{
-	    object->position.x = origx;
-
 	    if (relPosInWinContents > forwardProgress)
 	    {
-		object->position.y =
+		object->position ().setY (
 		    (1 - forwardProgress) *
-		    (WIN_Y(w) +
-		     WIN_H(w) * object->gridPosition.y) +
-		    forwardProgress * (WIN_Y(w) + model->topHeight);
+		    (outRect.y () +
+		     outRect.height () * object->gridPosition ().y ()) +
+		    forwardProgress * (outRect.y () + mDecorTopHeight));
 
 		if (fixedInterior)
-		    object->offsetTexCoordForQuadBefore.y =
-			-forwardProgress * w->height;
+		    object->offsetTexCoordForQuadBefore ().
+			setY (-forwardProgress * mWindow->height ());
 	    }
 	    else
 	    {
-		object->position.y = WIN_Y(w) + model->topHeight;
+		object->position ().setY (outRect.y () + mDecorTopHeight);
 		if (!fixedInterior)
-		    object->offsetTexCoordForQuadAfter.
-			y =
-			(forwardProgress -
-			 relPosInWinContents) * w->height;
+		    object->offsetTexCoordForQuadAfter ().
+			setY ((forwardProgress - relPosInWinContents) *
+			      mWindow->height ());
 	    }
 	}
     }
-}
-
-void
-fxRollUpModelStep (CompWindow *w, float time)
-{
-    defaultAnimStep (w, time);
-
-    ANIM_WINDOW(w);
-
-    Model *model = aw->com.model;
-
-    float forwardProgress = sigmoidAnimProgress (w);
-    Bool fixedInterior = animGetB (w, ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR);
-
-    Object *object = model->objects;
-    int i;
-    for (i = 0; i < model->numObjects; i++, object++)
-	fxRollUpModelStepObject
-	    (w, 
-	     model,
-	     object,
-	     forwardProgress,
-	     fixedInterior);
-}
-
-Bool
-fxRollUpAnimInit (CompWindow * w)
-{
-    ANIM_WINDOW(w);
-
-    aw->com.animTotalTime /= ROLLUP_PERCEIVED_T;
-    aw->com.animRemainingTime = aw->com.animTotalTime;
-    
-    return TRUE;
 }
 

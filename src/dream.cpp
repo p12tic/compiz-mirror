@@ -34,95 +34,104 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "private.h"
 
-Bool
-fxDreamAnimInit (CompWindow * w)
+const float DreamAnim::kDurationFactor = 1.67;
+
+// =====================  Effect: Dream  =========================
+
+DreamAnim::DreamAnim (CompWindow *w,
+		      WindowEvent curWindowEvent,
+		      float duration,
+		      const AnimEffect info,
+		      const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon),
+    GridZoomAnim::GridZoomAnim (w, curWindowEvent, duration, info, icon)
 {
-    ANIM_WINDOW(w);
-
-    if (fxDreamZoomToIcon (w))
-    {
-	aw->com.animTotalTime /= ZOOM_PERCEIVED_T;
-	aw->com.usingTransform = TRUE;
-    }
-    else
-	aw->com.animTotalTime /= DREAM_PERCEIVED_T;
-
-    aw->com.animRemainingTime = aw->com.animTotalTime;
-
-    return defaultAnimInit (w);
 }
 
-static void inline
-fxDreamModelStepObject (CompWindow * w,
-			Model * model,
-			Object * object,
-			float forwardProgress,
-			float waveAmpMax)
+void
+DreamAnim::init ()
 {
+    GridZoomAnim::init ();
+
+    if (!zoomToIcon ())
+	mUsingTransform = false;
+}
+
+void
+DreamAnim::adjustDuration ()
+{
+    if (zoomToIcon ())
+	mTotalTime *= ZoomAnim::kDurationFactor;
+    else
+	mTotalTime *= kDurationFactor;
+
+    mRemainingTime = mTotalTime;
+}
+
+void
+DreamAnim::initGrid ()
+{
+    mGridWidth = 2;
+    mGridHeight = optValI (AnimationOptions::MagicLampWavyGridRes); // TODO new option
+}
+
+void
+DreamAnim::step ()
+{
+    GridZoomAnim::step ();
+
+    float forwardProgress = getActualProgress ();
+
+    CompRect winRect (mAWindow->savedRectsValid () ?
+		      mAWindow->saveWinRect () :
+		      mWindow->geometry ());
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
+    CompWindowExtents outExtents (mAWindow->savedRectsValid () ?
+				  mAWindow->savedOutExtents () :
+				  mWindow->output ());
+
+    float waveAmpMax = MIN (outRect.height (), outRect.width ()) * 0.125f;
     float waveWidth = 10.0f;
     float waveSpeed = 7.0f;
 
-    float origx = w->attrib.x + (WIN_W(w) * object->gridPosition.x -
-				 w->output.left) * model->scale.x;
-    float origy = w->attrib.y + (WIN_H(w) * object->gridPosition.y -
-				 w->output.top) * model->scale.y;
-
-    object->position.x =
-	origx +
-	forwardProgress * waveAmpMax * model->scale.x *
-	sin(object->gridPosition.y * M_PI * waveWidth +
-	    waveSpeed * forwardProgress);
-    object->position.y = origy;
-}
-
-void
-fxDreamModelStep (CompWindow *w, float time)
-{
-    defaultAnimStep (w, time);
-
-    ANIM_WINDOW(w);
-
-    Model *model = aw->com.model;
-
-    float forwardProgress = getProgressAndCenter (w, NULL);
-
-    float waveAmpMax = MIN(WIN_H(w), WIN_W(w)) * 0.125f;
-
-    Object *object = model->objects;
-    int i;
-    for (i = 0; i < model->numObjects; i++, object++)
-	fxDreamModelStepObject(w,
-			       model,
-			       object,
-			       forwardProgress,
-			       waveAmpMax);
-}
-
-void
-fxDreamUpdateWindowAttrib (CompWindow * w,
-			   WindowPaintAttrib * wAttrib)
-{
-    ANIM_WINDOW(w);
-
-    if (fxDreamZoomToIcon (w))
+    GridModel::GridObject *object = mModel->objects ();
+    for (int i = 0; i < mModel->numObjects (); i++, object++)
     {
-	fxZoomUpdateWindowAttrib (w, wAttrib);
-	return;
+	float origx = (winRect.x () +
+		       (outRect.width () * object->gridPosition ().x () -
+			outExtents.left) * mModel->scale ().x ());
+	float origy = (winRect.y () +
+		       (outRect.height () * object->gridPosition ().y () -
+			outExtents.top) * mModel->scale ().y ());
+
+	object->position ().setX (
+	    origx +
+	    forwardProgress * waveAmpMax * mModel->scale ().x () *
+	    sin (object->gridPosition ().y () * M_PI * waveWidth +
+		waveSpeed * forwardProgress));
+	object->position ().setY (origy);
     }
-
-    float forwardProgress = defaultAnimProgress (w);
-
-    wAttrib->opacity = (GLushort) (aw->com.storedOpacity * (1 - forwardProgress));
 }
 
-Bool
-fxDreamZoomToIcon (CompWindow *w)
+float
+DreamAnim::getFadeProgress ()
 {
-    ANIM_WINDOW(w);
-    return ((aw->com.curWindowEvent == WindowEventMinimize ||
-	     aw->com.curWindowEvent == WindowEventUnminimize) &&
-	    animGetB (w, ANIM_SCREEN_OPTION_DREAM_Z2TOM));
+    if (zoomToIcon ())
+	return ZoomAnim::getFadeProgress ();
+
+    return progressLinear ();
+}
+
+bool
+DreamAnim::zoomToIcon ()
+{
+    return ((mCurWindowEvent == WindowEventMinimize ||
+	     mCurWindowEvent == WindowEventUnminimize) &&
+	    optValB (AnimationOptions::DreamZoomToTaskbar));
 }
 

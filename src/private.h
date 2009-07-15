@@ -1,64 +1,76 @@
-#define _GNU_SOURCE
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
 
-#include <compiz-core.h>
-#include "compiz-animation.h"
+#include <core/core.h>
+#include <composite/composite.h>
+#include <opengl/opengl.h>
+
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
+#include <animation/animation.h>
+
+#include "animation_options.h"
+
+typedef std::vector<CompWindow *> CompWindowVector;
+typedef std::vector<ExtensionPluginInfo *> ExtensionPluginVector;
+typedef std::vector<AnimEffect> AnimEffectVector;
 
 
-typedef struct _WaveParam
+class RestackInfo
 {
-    float halfWidth;
-    float amp;
-    float pos;
-} WaveParam;
+public:
+    RestackInfo (CompWindow *wRestacked,
+		 CompWindow *wStart,
+		 CompWindow *wEnd,
+		 CompWindow *wOldAbove,
+		 bool raised);
 
-typedef enum
-{
-    ZoomFromCenterOff = 0,
-    ZoomFromCenterMin,
-    ZoomFromCenterCreate,
-    ZoomFromCenterOn
-} ZoomFromCenter;
-#define LAST_ZOOM_FROM_CENTER 3
-
-//TODO remove #define RANDOM_EFFECT_OFFSET 2 /* skip None and Random */
-
-typedef struct _RestackInfo
-{
     CompWindow *wRestacked, *wStart, *wEnd, *wOldAbove;
-    Bool raised;
-} RestackInfo;
+    bool raised;
+};
 
-typedef struct _IdValuePair
+class IdValuePair
 {
+public:
+    IdValuePair () : pluginInfo (0), optionId (-1), value () {}
+
+    bool matchesPluginOption (ExtensionPluginInfo *pluginInfo,
+			      int optionId);
+
     const ExtensionPluginInfo *pluginInfo;
     int optionId;
-    CompOptionValue value;
-} IdValuePair;
-    
-typedef struct _OptionSet
-{
-    int nPairs;
-    IdValuePair *pairs;
-} OptionSet;
+    CompOption::Value value;
+};
 
-typedef struct _OptionSets
-{
-    int nSets;
-    OptionSet *sets;
-} OptionSets;
+typedef std::vector<IdValuePair> IdValuePairVector;
 
-typedef struct _EffectSet
+class OptionSet
 {
-    int n;
-    AnimEffect *effects;
-} EffectSet;
+public:
+    OptionSet () {}
 
-extern int animDisplayPrivateIndex;
-extern int animFunctionsPrivateIndex;
-extern CompMetadata animMetadata;
+    IdValuePairVector pairs;
+};
+
+typedef std::vector<OptionSet> OptionSetVector;
+
+class OptionSets
+{
+public:
+    OptionSets () {}
+
+    OptionSetVector sets;
+};
+
+class EffectSet
+{
+public:
+    EffectSet () {}
+
+    AnimEffectVector effects;
+};
 
 extern AnimEffect AnimEffectNone;
 extern AnimEffect AnimEffectRandom;
@@ -71,9 +83,9 @@ extern AnimEffect AnimEffectGlide1;
 extern AnimEffect AnimEffectGlide2;
 extern AnimEffect AnimEffectHorizontalFolds;
 extern AnimEffect AnimEffectMagicLamp;
+extern AnimEffect AnimEffectMagicLampWavy;
 extern AnimEffect AnimEffectRollUp;
 extern AnimEffect AnimEffectSidekick;
-extern AnimEffect AnimEffectVacuum;
 extern AnimEffect AnimEffectWave;
 extern AnimEffect AnimEffectZoom;
 
@@ -81,539 +93,694 @@ extern AnimEffect AnimEffectZoom;
 
 extern int customOptionOptionIds[AnimEventNum];
 
-typedef enum _AnimDisplayOptions
-{
-    ANIM_DISPLAY_OPTION_ABI,
-    ANIM_DISPLAY_OPTION_INDEX,
-    ANIM_DISPLAY_OPTION_NUM
-} AnimDisplayOptions;
-
-typedef struct _AnimDisplay
-{
-    int screenPrivateIndex;
-    HandleEventProc handleEvent;
-    HandleCompizEventProc handleCompizEvent;
-    int activeWindow;
-    CompMatch neverAnimateMatch;
-
-    CompOption opt[ANIM_DISPLAY_OPTION_NUM];
-} AnimDisplay;
-
 typedef struct _PluginEventInfo
 {
-    char *pluginName;
-    char *activateEventName;
+    const char *pluginName;
+    const char *activateEventName;
 } PluginEventInfo;
-
-#define NUM_WATCHED_PLUGINS 5
 
 typedef enum
 {
-    // Event settings
-    ANIM_SCREEN_OPTION_OPEN_EFFECTS = 0,
-    ANIM_SCREEN_OPTION_OPEN_DURATIONS,
-    ANIM_SCREEN_OPTION_OPEN_MATCHES,
-    ANIM_SCREEN_OPTION_OPEN_OPTIONS,
-    ANIM_SCREEN_OPTION_OPEN_RANDOM_EFFECTS,
-    ANIM_SCREEN_OPTION_CLOSE_EFFECTS,
-    ANIM_SCREEN_OPTION_CLOSE_DURATIONS,
-    ANIM_SCREEN_OPTION_CLOSE_MATCHES,
-    ANIM_SCREEN_OPTION_CLOSE_OPTIONS,
-    ANIM_SCREEN_OPTION_CLOSE_RANDOM_EFFECTS,
-    ANIM_SCREEN_OPTION_MINIMIZE_EFFECTS,
-    ANIM_SCREEN_OPTION_MINIMIZE_DURATIONS,
-    ANIM_SCREEN_OPTION_MINIMIZE_MATCHES,
-    ANIM_SCREEN_OPTION_MINIMIZE_OPTIONS,
-    ANIM_SCREEN_OPTION_MINIMIZE_RANDOM_EFFECTS,
-    ANIM_SCREEN_OPTION_SHADE_EFFECTS,
-    ANIM_SCREEN_OPTION_SHADE_DURATIONS,
-    ANIM_SCREEN_OPTION_SHADE_MATCHES,
-    ANIM_SCREEN_OPTION_SHADE_OPTIONS,
-    ANIM_SCREEN_OPTION_SHADE_RANDOM_EFFECTS,
-    ANIM_SCREEN_OPTION_FOCUS_EFFECTS,
-    ANIM_SCREEN_OPTION_FOCUS_DURATIONS,
-    ANIM_SCREEN_OPTION_FOCUS_MATCHES,
-    ANIM_SCREEN_OPTION_FOCUS_OPTIONS,
-    // Misc. settings
-    ANIM_SCREEN_OPTION_ALL_RANDOM,
-    ANIM_SCREEN_OPTION_TIME_STEP,
-    // Effect settings
-    ANIM_SCREEN_OPTION_CURVED_FOLD_AMP_MULT,
-    ANIM_SCREEN_OPTION_CURVED_FOLD_Z2TOM,
-    ANIM_SCREEN_OPTION_DODGE_GAP_RATIO,
-    ANIM_SCREEN_OPTION_DREAM_Z2TOM,
-    ANIM_SCREEN_OPTION_GLIDE1_AWAY_POS,
-    ANIM_SCREEN_OPTION_GLIDE1_AWAY_ANGLE,
-    ANIM_SCREEN_OPTION_GLIDE1_Z2TOM,
-    ANIM_SCREEN_OPTION_GLIDE2_AWAY_POS,
-    ANIM_SCREEN_OPTION_GLIDE2_AWAY_ANGLE,
-    ANIM_SCREEN_OPTION_GLIDE2_Z2TOM,
-    ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_AMP_MULT,
-    ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_NUM_FOLDS,
-    ANIM_SCREEN_OPTION_HORIZONTAL_FOLDS_Z2TOM,
-    ANIM_SCREEN_OPTION_MAGIC_LAMP_MOVING_END,
-    ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES,
-    ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES,
-    ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN,
-    ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX,
-    ANIM_SCREEN_OPTION_MAGIC_LAMP_OPEN_START_WIDTH,
-    ANIM_SCREEN_OPTION_ROLLUP_FIXED_INTERIOR,
-    ANIM_SCREEN_OPTION_SIDEKICK_NUM_ROTATIONS,
-    ANIM_SCREEN_OPTION_SIDEKICK_SPRINGINESS,
-    ANIM_SCREEN_OPTION_SIDEKICK_ZOOM_FROM_CENTER,
-    ANIM_SCREEN_OPTION_VACUUM_MOVING_END,
-    ANIM_SCREEN_OPTION_VACUUM_GRID_RES,
-    ANIM_SCREEN_OPTION_VACUUM_OPEN_START_WIDTH,
-    ANIM_SCREEN_OPTION_WAVE_WIDTH,
-    ANIM_SCREEN_OPTION_WAVE_AMP_MULT,
-    ANIM_SCREEN_OPTION_ZOOM_FROM_CENTER,
-    ANIM_SCREEN_OPTION_ZOOM_SPRINGINESS,
-
-    ANIM_SCREEN_OPTION_NUM
-} AnimScreenOptions;
+    WatchedPluginSwitcher = 0,
+    WatchedPluginScale,
+    WatchedPluginGroup,
+    WatchedPluginFadedesktop,
+    WatchedPluginShift,
+    WatchedPluginNum
+} WatchedPlugin;
 
 // This must have the value of the first "effect setting" above
-// in AnimScreenOptions
-#define NUM_NONEFFECT_OPTIONS ANIM_SCREEN_OPTION_CURVED_FOLD_AMP_MULT
+// in PrivateAnimScreenOptions
+#define NUM_NONEFFECT_OPTIONS AnimationOptions::CurvedFoldAmpMult
 
 
-typedef struct _AnimScreen
+class ExtensionPluginAnimation : public ExtensionPluginInfo
 {
-    int windowPrivateIndex;
+public:
+    ExtensionPluginAnimation (unsigned int nEffects,
+			      AnimEffect *effects,
+			      CompOption::Vector *effectOptions,
+			      unsigned int firstEffectOptionIndex);
+    ~ExtensionPluginAnimation ();
 
-    PreparePaintScreenProc preparePaintScreen;
-    DonePaintScreenProc donePaintScreen;
-    PaintOutputProc paintOutput;
-    PaintWindowProc paintWindow;
-    DamageWindowRectProc damageWindowRect;
-    AddWindowGeometryProc addWindowGeometry;
-    DrawWindowTextureProc drawWindowTexture;
-    InitWindowWalkerProc initWindowWalker;
+    // Overriden methods from ExtensionPluginInfo
+    void postPreparePaintGeneral ();
+    void prePreparePaintGeneral ();
+    void handleRestackNotify (AnimWindow *aw);
+    // Always reset stacking related info when a window is opened, closed,
+    // minimized, or unminimized.
+    void preInitiateOpenAnim (AnimWindow *aw);
+    void preInitiateCloseAnim (AnimWindow *aw);
+    void preInitiateMinimizeAnim (AnimWindow *aw);
+    void preInitiateUnminimizeAnim (AnimWindow *aw);
+    void initPersistentData (AnimWindow *aw);
+    void destroyPersistentData (AnimWindow *aw);
+    void postUpdateEventEffects (AnimEvent e,
+				 bool forRandom);
+    void cleanUpAnimation (bool closing,
+			   bool destructing);
+    void postStartupCountdown ();
 
-    WindowResizeNotifyProc windowResizeNotify;
-    WindowMoveNotifyProc windowMoveNotify;
-    WindowGrabNotifyProc windowGrabNotify;
-    WindowUngrabNotifyProc windowUngrabNotify;
+    // Other methods
+    void handleSingleRestack (AnimWindow *aw);
+    void prePaintWindowsBackToFront ();
+    bool paintShouldSkipWindow (CompWindow *w);
+    CompWindowList getWindowPaintList ();
+    void resetStackingInfo ();
+    static CompWindow *getBottommostInExtendedFocusChain (CompWindow *wStartPoint);
+    static CompWindow *getBottommostInRestackChain (CompWindow *wStartPoint);
+    void resetMarks ();
+    bool markNewCopy (CompWindow *w);
+    CompWindow * walkFirst ();
+    CompWindow * walkNext (CompWindow *w);
+    void incrementCurRestackAnimCount ();
+    void decrementCurRestackAnimCount ();
+    bool wontCreateCircularChain (CompWindow *wCur, CompWindow *wNext);
 
-    CompOption opt[ANIM_SCREEN_OPTION_NUM];
+    static void cleanUpParentChildChainItem (AnimWindow *aw);
+    static bool relevantForRestackAnim (CompWindow *w);
 
-    Bool aWinWasRestackedJustNow; // a window was restacked this paint round
+    /// Is restackInfo still good?
+    static bool restackInfoStillGood (RestackInfo *restackInfo);
 
-    Bool pluginActive[NUM_WATCHED_PLUGINS];
+    void updateLastClientList ();
 
-    Window *lastClientListStacking; // to store last known stacking order
-    int nLastClientListStacking;
-    int markAllWinCreatedCountdown;
-    // to mark windows as "created" if they were opened before compiz
-    // was started
+    /// A window was restacked this paint round.
+    bool mAWinWasRestackedJustNow;
 
-    Bool animInProgress;
+private:
+    CompWindowVector mLastClientList; ///< Last known stacking order
+    CompWindowVector mPrevClientList; ///< The stacking order before mLastClientList
+    int mRestackAnimCount; ///< Count of how many windows are currently involved in
+			   ///< animations that require walker (dodge & focus fade).
+    std::vector<AnimWindow *> mRestackedWindows;
+};
 
-    int walkerAnimCount; // count of how many windows are currently involved in
-			 // animations that require walker (dodge & focus fade)
+class PrivateAnimScreen :
+    public ScreenInterface,
+    public CompositeScreenInterface,
+    public GLScreenInterface,
+    public AnimationOptions
+{
+    friend class PrivateAnimWindow;
+    friend class AnimWindow;
 
-    EffectSet randomEffects[AnimEventNum];
+public:
+    GLScreen *gScreen;
+    CompositeScreen *cScreen;
+    AnimScreen *aScreen;
 
-    OptionSets eventOptionSets[AnimEventNum];
+private:
+    struct timeval mLastRedrawTime;
+    bool mLastRedrawTimeFresh;
 
-    // Effect extensions
-    ExtensionPluginInfo **extensionPlugins;
-    unsigned int nExtensionPlugins;
-    unsigned int maxExtensionPlugins;
+    bool mPluginActive[WatchedPluginNum];
+    int mSwitcherPostWait;
 
-    // List of all possible effects for each event
-    AnimEffect *eventEffectsAllowed[AnimEventNum];
-    unsigned int nEventEffectsAllowed[AnimEventNum];
-    unsigned int maxEventEffectsAllowed[AnimEventNum];
+    Window mLastActiveWindow; ///< Last known active window
+
+    bool mAnimInProgress;         ///< Is an animation currently being played?
+    bool mStartingNewPaintRound;  ///< Is a new round of glPaints starting?
+    bool mPrePaintWindowsBackToFrontEnabled;
+
+    EffectSet mRandomEffects[AnimEventNum];
+
+    OptionSets mEventOptionSets[AnimEventNum];
+
+    // Effect extension plugins
+    ExtensionPluginVector mExtensionPlugins;
+
+    // Possible effects for each event
+    AnimEffectVector mEventEffectsAllowed[AnimEventNum];
 
     // List of chosen effects for each event
-    EffectSet eventEffects[AnimEventNum];
+    EffectSet mEventEffects[AnimEventNum];
 
-    CompOutput *output;
-} AnimScreen;
+    CompOutput *mOutput;
 
-typedef struct _AnimWindow
+    Window mActiveWindow;
+    CompMatch mNeverAnimateMatch;
+
+    int mStartCountdown;
+    ///< To mark windows as "created" if they were opened before compiz
+    ///< was started and to prevent already opened windows from doing
+    ///< open animation.
+
+    void updateEventEffects (AnimEvent e,
+			     bool forRandom,
+			     bool callPost = true);
+    void updateAllEventEffects ();
+
+    void updateOptionSets (AnimEvent e);
+    void updateOptionSet (OptionSet *os, const char *optNamesValuesOrig);
+
+    void activateEvent (bool activating);
+    bool isWinVisible (CompWindow *w);
+    AnimEvent getCorrespondingAnimEvent (AnimationOptions::Options optionId);
+    void eventMatchesChanged (CompOption *opt, AnimationOptions::Options num);
+    void eventOptionsChanged (CompOption *opt, AnimationOptions::Options num);
+    void eventEffectsChanged (CompOption *opt, AnimationOptions::Options num);
+    void eventRandomEffectsChanged (CompOption *opt, AnimationOptions::Options num);
+
+    CompRect getIcon (CompWindow *w, bool alwaysUseMouse);
+    void updateAnimStillInProgress ();
+
+    bool isAnimEffectInList (AnimEffect theEffect,
+			     EffectSet &effectList);
+    bool isAnimEffectPossibleForEvent (AnimEffect theEffect,
+				       AnimEvent event);
+
+public:
+    PrivateAnimScreen (CompScreen *s, AnimScreen *);
+    ~PrivateAnimScreen ();
+
+    // Utility methods
+    void initiateOpenAnim (PrivateAnimWindow *aw);
+    void initiateCloseAnim (PrivateAnimWindow *aw);
+    void initiateMinimizeAnim (PrivateAnimWindow *aw);
+    void initiateUnminimizeAnim (PrivateAnimWindow *aw);
+    void initiateShadeAnim (PrivateAnimWindow *aw);
+    void initiateUnshadeAnim (PrivateAnimWindow *aw);
+    bool initiateFocusAnim (PrivateAnimWindow *aw);
+
+    /// Is a restacking animation currently possible?
+    bool isRestackAnimPossible ();
+
+    void initAnimationList ();
+    bool isAnimEffectPossible (AnimEffect theEffect);
+    CompOutput &output () { return *mOutput; }
+    AnimEffect getActualEffect (AnimEffect effect,
+				AnimEvent animEvent);
+    bool shouldIgnoreWindowForAnim (CompWindow *w, bool checkPixmap);
+    OptionSet *getOptionSetForSelectedRow (PrivateAnimWindow *aw,
+					   Animation *anim);
+    void addExtension (ExtensionPluginInfo *extensionPluginInfo,
+		       bool shouldInitPersistentData);
+    void removeExtension (ExtensionPluginInfo *extensionPluginInfo);
+    AnimEffect getMatchingAnimSelection (CompWindow *w,
+					 AnimEvent e,
+					 int *duration);
+    bool otherPluginsActive ();
+
+    void enablePrePaintWindowsBackToFront (bool enabled);
+    void prePaintWindowsBackToFront ();
+
+    // CompositeScreenInterface methods
+    void preparePaint (int);
+    void donePaint ();
+    CompWindowList getWindowPaintList ();
+
+    // GLScreenInterface methods
+    bool glPaintOutput (const GLScreenPaintAttrib &,
+			const GLMatrix &,
+			const CompRegion &,
+			CompOutput *,
+			unsigned int);
+
+    // ScreenInterface methods
+    void handleCompizEvent (const char * plugin, const char *event,
+			    CompOption::Vector &options);
+};
+
+class PrivateAnimWindow :
+    public WindowInterface,
+    public CompositeWindowInterface,
+    public GLWindowInterface
 {
-    AnimWindowCommon com;
-
-    unsigned int state;
-    unsigned int newState;
-
-    Bool animInitialized;	// whether the animation effect (not the window) is initialized
-    float remainderSteps;
-
-    Bool nowShaded;
-    Bool grabbed;
-
-    int unmapCnt;
-    int destroyCnt;
-
-    Bool ignoreDamage;
-
-    int curAnimSelectionRow;
-    int prevAnimSelectionRow;	// For the case when one event interrupts another
-
-    Box BB;       // Bounding box for damage region calc. of CompTransform fx
-    Box lastBB;   // Last bounding box
-
-    // for magic lamp
-    Bool minimizeToTop;
-    int magicLampWaveCount;
-    WaveParam *magicLampWaves;
-
-    // for glide effect
-    float glideModRotAngle;	// The angle of rotation modulo 360
-
-    // for zoom
-    float numZoomRotations;
-
-    // for focus fade & dodge
-    RestackInfo *restackInfo;   // restack info if window was restacked this paint round
-    CompWindow *winToBePaintedBeforeThis; // Window which should be painted before this
-    CompWindow *winThisIsPaintedBefore; // the inverse relation of the above
-    CompWindow *moreToBePaintedPrev; // doubly linked list for windows underneath that
-    CompWindow *moreToBePaintedNext; //   raise together with this one
-    Bool created;
-    Bool configureNotified;     // was configureNotified before restack check
-    CompWindow *winPassingThrough; // win. passing through this one during focus effect
-
-    // for dodge
-    Bool isDodgeSubject;	// TRUE if this window is the cause of dodging
-    Bool skipPostPrepareScreen;
-    CompWindow *dodgeSubjectWin;// The window being dodged
-    float dodgeMaxAmount;	/* max # pixels it should dodge
-				   (neg. values dodge left) */
-    int dodgeOrder;		// dodge order (used temporarily)
-    Bool dodgeDirection;	// 0: up, down, left, right
-
-    CompWindow *dodgeChainStart;// for the subject window
-    CompWindow *dodgeChainPrev;	// for dodging windows
-    CompWindow *dodgeChainNext;	// for dodging windows
-    Bool walkerOverNewCopy;     // whether walker is on the copy at the new pos.
-    unsigned int walkerVisitCount; // how many times walker has visited this window
-} AnimWindow;
-
-#define GET_ANIM_DISPLAY(d)						\
-    ((AnimDisplay *) (d)->base.privates[animDisplayPrivateIndex].ptr)
-
-#define ANIM_DISPLAY(d)				\
-    AnimDisplay *ad = GET_ANIM_DISPLAY (d)
-
-#define GET_ANIM_SCREEN(s, ad)						\
-    ((AnimScreen *) (s)->base.privates[(ad)->screenPrivateIndex].ptr)
-
-#define ANIM_SCREEN(s)							\
-    AnimScreen *as = GET_ANIM_SCREEN (s, GET_ANIM_DISPLAY (s->display))
-
-#define GET_ANIM_WINDOW(w, as)						\
-    ((AnimWindow *) (w)->base.privates[(as)->windowPrivateIndex].ptr)
-
-#define ANIM_WINDOW(w)					     \
-    AnimWindow *aw = GET_ANIM_WINDOW (w,                     \
-		     GET_ANIM_SCREEN (w->screen,             \
-		     GET_ANIM_DISPLAY (w->screen->display)))
-
-// up, down, left, right
-#define DODGE_AMOUNT(w, dw, dir)			\
-    ((dir) == 0 ? BORDER_Y(w) - (BORDER_Y(dw) + BORDER_H(dw)) :	\
-     (dir) == 1 ? (BORDER_Y(w) + BORDER_H(w)) - BORDER_Y(dw) :	\
-     (dir) == 2 ? BORDER_X(w) - (BORDER_X(dw) + BORDER_W(dw)) :	\
-     (BORDER_X(w) + BORDER_W(w)) - BORDER_X(dw))
-
-// up, down, left, right
-#define DODGE_AMOUNT_BOX(box, dw, dir)				\
-    ((dir) == 0 ? (box).y - (BORDER_Y(dw) + BORDER_H(dw)) :		\
-     (dir) == 1 ? ((box).y + (box).height) - BORDER_Y(dw) :	\
-     (dir) == 2 ? (box).x - (BORDER_X(dw) + BORDER_W(dw)) :		\
-     ((box).x + (box).width) - BORDER_X(dw))
-
-// ratio of perceived length of animation compared to real duration
-// to make it appear to have the same speed with other animation effects
-
-#define DREAM_PERCEIVED_T 0.6f
-#define ROLLUP_PERCEIVED_T 0.6f
-
-
-/*
- * Function prototypes
- *
- */
-
-/* animation.c*/
- 
-void
-modelInitObjects (Model * model,
-		  int x, int y,
-		  int width, int height);
-
-void
-postAnimationCleanup (CompWindow * w);
-
-float
-defaultAnimProgress (CompWindow *w);
-
-float
-sigmoidAnimProgress (CompWindow *w);
-
-float
-decelerateProgressCustom (float progress,
-			  float minx, float maxx);
-
-float
-decelerateProgress (float progress);
-
-void
-applyTransformToObject (Object *obj, GLfloat *mat);
-
-AnimDirection
-getActualAnimDirection (CompWindow * w,
-			AnimDirection dir,
-			Bool openDir);
-
-void
-defaultAnimStep (CompWindow * w,
-		 float time);
-
-Bool
-defaultAnimInit (CompWindow * w);
-
-void
-defaultUpdateWindowTransform (CompWindow *w,
-			      CompTransform *wTransform);
-
-Bool
-animZoomToIcon (CompWindow *w);
-
-void
-animDrawWindowGeometry(CompWindow * w);
-
-Bool
-getMousePointerXY(CompScreen * s, short *x, short *y);
-
-void
-expandBoxWithBox (Box *target, Box *source);
-
-void
-expandBoxWithPoint (Box *target, float fx, float fy);
-
-void
-updateBBWindow (CompOutput *output,
-		CompWindow * w,
-		Box *BB);
-
-void
-updateBBScreen (CompOutput *output,
-		CompWindow * w,
-		Box *BB);
-
-void
-compTransformUpdateBB (CompOutput *output,
-		       CompWindow *w,
-		       Box *BB);
-
-void
-prepareTransform (CompScreen *s,
-		  CompOutput *output,
-		  CompTransform *resultTransform,
-		  CompTransform *transform);
-
-void
-perspectiveDistortAndResetZ (CompScreen *s,
-			     CompTransform *wTransform);
-
-void
-applyPerspectiveSkew (CompOutput *output,
-		      CompTransform *transform,
-		      Point *center);
-
-inline void
-applyTransform (CompTransform *wTransform,
-		CompTransform *transform);
-
-float
-getProgressAndCenter (CompWindow *w,
-		      Point *center);
-
-/* curvedfold.c */
-
-void
-fxCurvedFoldModelStep (CompWindow *w,
-		       float time);
-
-void
-fxFoldUpdateWindowAttrib (CompWindow * w,
-			  WindowPaintAttrib * wAttrib);
-
-Bool
-fxCurvedFoldZoomToIcon (CompWindow *w);
-
-/* dodge.c */
-
-void
-fxDodgePostPreparePaintScreen (CompWindow *w);
-
-void
-fxDodgeUpdateWindowTransform (CompWindow *w,
-			      CompTransform *wTransform);
-
-void
-fxDodgeAnimStep (CompWindow *w,
-		 float time);
-
-void
-fxDodgeUpdateBB (CompOutput *output,
-		 CompWindow * w,
-		 Box *BB);
-
-/* dream.c */
-
-Bool
-fxDreamAnimInit (CompWindow * w);
-
-void
-fxDreamModelStep (CompWindow * w,
-		  float time);
-
-void
-fxDreamUpdateWindowAttrib (CompWindow * w,
-			   WindowPaintAttrib * wAttrib);
-
-Bool
-fxDreamZoomToIcon (CompWindow *w);
-
-/* fade.c */
-
-void
-fxFadeUpdateWindowAttrib (CompWindow * w,
-			  WindowPaintAttrib *wAttrib);
-
-
-/* focusfade.c */
-
-void
-fxFocusFadeUpdateWindowAttrib (CompWindow * w,
-			       WindowPaintAttrib *wAttrib);
-
-/* glide.c */
-
-Bool
-fxGlideInit (CompWindow *w);
-
-void
-fxGlideUpdateWindowAttrib (CompWindow * w,
-			   WindowPaintAttrib *wAttrib);
-
-void
-fxGlideAnimStep (CompWindow *w,
-		 float time);
-
-float
-fxGlideAnimProgress (CompWindow *w);
-
-void
-fxGlideUpdateWindowTransform (CompWindow *w,
-			      CompTransform *wTransform);
-
-void
-fxGlidePrePaintWindow (CompWindow * w);
-
-void
-fxGlidePostPaintWindow (CompWindow * w);
-
-Bool
-fxGlideZoomToIcon (CompWindow *w);
-
-/* horizontalfold.c */
-
-void
-fxHorizontalFoldsModelStep (CompWindow *w,
-			    float time);
-
-void
-fxHorizontalFoldsInitGrid (CompWindow *w,
-			   int *gridWidth,
-			   int *gridHeight);
-
-Bool
-fxHorizontalFoldsZoomToIcon (CompWindow *w);
-
-/* magiclamp.c */
-
-void
-fxMagicLampInitGrid (CompWindow *w,
-		     int *gridWidth, 
-		     int *gridHeight);
-
-void
-fxVacuumInitGrid (CompWindow *w,
-		  int *gridWidth, 
-		  int *gridHeight);
-
-Bool
-fxMagicLampInit (CompWindow * w);
-
-void
-fxMagicLampModelStep (CompWindow * w,
-		      float time);
-
-/* options.c */
-
-void
-updateOptionSets (CompScreen *s,
-		  AnimEvent e);
-
-void
-freeAllOptionSets (AnimScreen *as);
-
-CompOptionValue *
-animGetPluginOptVal (CompWindow *w,
-		     ExtensionPluginInfo *pluginInfo,
-		     int optionId);
-
-OPTION_GETTERS_HDR
-
-/* rollup.c */
- 
-void
-fxRollUpModelStep (CompWindow *w,
-		   float time);
- 
-void fxRollUpInitGrid (CompWindow *w,
-		       int *gridWidth,
-		       int *gridHeight);
- 
-Bool
-fxRollUpAnimInit (CompWindow * w);
-
-/* wave.c */
- 
-void
-fxWaveModelStep (CompWindow * w,
-		 float time);
-
-
-/* zoomside.c */
-
-void
-fxZoomUpdateWindowAttrib (CompWindow * w,
-			  WindowPaintAttrib *wAttrib);
-
-void
-fxZoomAnimProgress (CompWindow *w,
-		    float *moveProgress,
-		    float *scaleProgress,
-		    Bool neverSpringy);
-
-Bool
-fxSidekickInit (CompWindow *w);
-
-Bool
-fxZoomInit (CompWindow * w);
-
-void
-applyZoomTransform (CompWindow * w);
-
-void
-getZoomCenterScale (CompWindow *w,
-		    Point *pCurCenter, Point *pCurScale);
+    friend class PrivateAnimScreen;
+    friend class AnimWindow;
+
+public:
+    PrivateAnimWindow (CompWindow *, AnimWindow *aw);
+    ~PrivateAnimWindow ();
+
+    void createFocusAnimation (AnimEffect effect, int duration);
+    inline void setShaded (bool shaded) { mNowShaded = shaded; }
+    inline Animation *curAnimation () { return mCurAnimation; }
+    inline PrivateAnimScreen *paScreen () { return mPAScreen; }
+    inline AnimWindow *aWindow () { return mAWindow; }
+    inline Box &BB () { return mBB; }
+    inline int curAnimSelectionRow () { return mCurAnimSelectionRow; }
+
+    void damageBoundingBox ();
+    void postAnimationCleanUp ();
+    void copyResetBB ();
+
+    GLWindow          *gWindow;
+
+private:
+    CompWindow        *mWindow;
+    CompositeWindow   *mCWindow;
+    AnimWindow        *mAWindow;
+
+    PrivateAnimScreen *mPAScreen;
+
+    unsigned int mState;
+    unsigned int mNewState;
+
+    Animation *mCurAnimation;
+
+    bool mUnshadePending;
+    bool mEventNotOpenClose;
+    bool mNowShaded;
+    bool mGrabbed;
+
+    int mUnmapCnt;
+    int mDestroyCnt;
+    int mUpdateFrameCnt;
+
+    bool mIgnoreDamage;
+    bool mFinishingAnim;
+
+    int mCurAnimSelectionRow;
+    int mPrevAnimSelectionRow;	///< For the case when one event interrupts another
+
+    Box mBB;       ///< Bounding box for damage region calc. of GLMatrix fx
+    Box mLastBB;   ///< Last bounding box
+
+    // Utility methods
+    unsigned int getState ();
+    void updateSelectionRow (int i);
+    void postAnimationCleanUpPrev (bool closing, bool clearMatchingRow);
+    void postAnimationCleanUpCustom (bool closing,
+				     bool destructing,
+				     bool clearMatchingRow);
+    void reverseAnimation ();
+
+    // WindowInterface methods
+    void resizeNotify (int dx, int dy, int dwidth, int dheight);
+    void moveNotify (int dx, int dy, bool immediate);
+    void windowNotify (CompWindowNotify n);
+    void grabNotify (int x, int y, unsigned int state, unsigned int mask);
+    void ungrabNotify ();
+
+    // GLWindowInterface methods
+    bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
+		  const CompRegion &, unsigned int);
+    void glAddGeometry (const GLTexture::MatrixList &,
+			const CompRegion &, const CompRegion &);
+    void glDrawTexture (GLTexture *texture, GLFragment::Attrib &,
+			unsigned int);
+    void glDrawGeometry ();
+};
+
+class RollUpAnim :
+    public GridAnim
+{
+public:
+    RollUpAnim (CompWindow *w,
+		WindowEvent curWindowEvent,
+		float duration,
+		const AnimEffect info,
+		const CompRect &icon);
+protected:
+    static const float kDurationFactor;
+
+    void initGrid ();
+    void step ();
+};
+
+class MagicLampAnim :
+    public GridAnim
+{
+public:
+    MagicLampAnim (CompWindow *w,
+    		   WindowEvent curWindowEvent,
+    		   float duration,
+    		   const AnimEffect info,
+    		   const CompRect &icon);
+    ~MagicLampAnim ();
+
+protected:
+    bool mTargetTop;
+
+    void initGrid ();
+    void step ();
+    void adjustPointerIconSize ();
+
+    virtual bool hasMovingEnd ();
+    virtual void filterTargetX (float &targetX, float x) { }
+};
+
+class MagicLampWavyAnim :
+    public MagicLampAnim
+{
+public:
+    MagicLampWavyAnim (CompWindow *w,
+    		       WindowEvent curWindowEvent,
+    		       float duration,
+    		       const AnimEffect info,
+    		       const CompRect &icon);
+    ~MagicLampWavyAnim ();
+
+protected:
+    struct WaveParam
+    {
+	float halfWidth;
+	float amp;
+	float pos;
+    };
+
+    unsigned int mNumWaves;
+    WaveParam *mWaves;
+
+    void initGrid ();
+    void adjustPointerIconSize ();
+
+    bool hasMovingEnd ();
+    void filterTargetX (float &targetX, float x);
+};
+
+class SidekickAnim :
+    public ZoomAnim
+{
+public:
+    SidekickAnim (CompWindow *w,
+		  WindowEvent curWindowEvent,
+		  float duration,
+		  const AnimEffect info,
+		  const CompRect &icon);
+protected:
+    float mNumRotations;
+
+    float getSpringiness ();
+    bool isZoomFromCenter ();
+    bool hasExtraTransform () { return true; }
+    void applyExtraTransform (float progress);
+    bool shouldAvoidParallelogramLook () { return true; }
+};
+
+class WaveAnim :
+    public GridTransformAnim
+{
+public:
+    WaveAnim (CompWindow *w,
+	      WindowEvent curWindowEvent,
+	      float duration,
+	      const AnimEffect info,
+	      const CompRect &icon);
+protected:
+    void adjustDuration ();
+    void initGrid ();
+    bool using3D () { return true; }
+    void step ();
+
+    static const float kMinDuration;
+};
+
+class GlideAnim :
+    public ZoomAnim
+{
+public:
+    GlideAnim (CompWindow *w,
+	       WindowEvent curWindowEvent,
+	       float duration,
+	       const AnimEffect info,
+	       const CompRect &icon);
+
+protected:
+    void prePaintWindow ();
+    bool postPaintWindowUsed () { return true; }
+    void postPaintWindow ();
+    void adjustDuration ();
+    bool zoomToIcon ();
+    void applyTransform ();
+    float getFadeProgress ();
+
+    float getProgress ();
+    virtual void getParams (float *finalDistFac,
+			    float *finalRotAng,
+			    float *thickness);
+
+    float glideModRotAngle;	///< The angle of rotation, modulo 360.
+};
+
+class Glide2Anim :
+    public GlideAnim
+{
+public:
+    Glide2Anim (CompWindow *w,
+		WindowEvent curWindowEvent,
+		float duration,
+		const AnimEffect info,
+		const CompRect &icon);
+protected:
+    bool zoomToIcon ();
+    void getParams (float *finalDistFac,
+		    float *finalRotAng,
+		    float *thickness);
+};
+
+class RestackPersistentData;
+
+class RestackAnim :
+    virtual public Animation
+{
+public:
+    RestackAnim (CompWindow *w,
+		 WindowEvent curWindowEvent,
+		 float duration,
+		 const AnimEffect info,
+		 const CompRect &icon);
+    void cleanUp (bool closing,
+		  bool destructing);
+    bool initiateRestackAnim (int duration);
+    bool moveUpdate () { return false; }
+    static bool onSameRestackChain (CompWindow *wSubject, CompWindow *wOther);
+
+    /// Find union of restack chain (group)
+    static CompRegion unionRestackChain (CompWindow *w);
+
+    virtual bool paintedElsewhere () { return false; }
+
+protected:
+    // Overridable methods
+    virtual void processCandidate (CompWindow *candidateWin,
+				   CompWindow *subjectWin,
+				   CompRegion &candidateAndSubjectIntersection,
+				   int &numSelectedCandidates) {}
+    virtual void postInitiateRestackAnim (int numSelectedCandidates,
+					  int duration,
+					  CompWindow *wStart,
+					  CompWindow *wEnd,
+					  bool raised) {}
+
+    // Other methods
+    bool overNewCopy (); ///< Is glPaint on the copy at the new position?
+
+    RestackPersistentData *mRestackData;
+};
+
+class RestackPersistentData :
+    public PersistentData
+{
+    friend class ExtensionPluginAnimation;
+    friend class RestackAnim;
+    friend class FocusFadeAnim;
+    friend class DodgeAnim;
+
+public:
+    RestackPersistentData ();
+    ~RestackPersistentData ();
+
+protected:
+    RestackInfo *restackInfo () { return mRestackInfo; }
+    void resetRestackInfo () { delete mRestackInfo; mRestackInfo = 0; }
+    void setRestackInfo (CompWindow *wRestacked,
+			 CompWindow *wStart,
+			 CompWindow *wEnd,
+			 CompWindow *wOldAbove,
+			 bool raised);
+    void getHostedOnWin (CompWindow *wGuest, CompWindow *wHost);
+
+    RestackInfo *mRestackInfo;   ///< restack info if window was restacked this paint round
+    CompWindow *mWinToBePaintedBeforeThis; ///< Window which should be painted before this
+    CompWindow *mWinThisIsPaintedBefore; ///< the inverse relation of mWinToBePaintedBeforeThis
+    CompWindow *mMoreToBePaintedPrev;
+    CompWindow *mMoreToBePaintedNext; ///< doubly linked list for windows underneath that
+    				     ///< raise together with this one
+    bool mConfigureNotified;     ///< was mConfigureNotified before restack check
+    CompWindow *mWinPassingThrough; ///< win. passing through this one during focus effect
+    bool mWalkerOverNewCopy;  ///< whether walker is on the copy at the new pos.
+    unsigned int mVisitCount; ///< how many times walker/glPaint has visited this window
+    bool mIsSecondary; ///< whether this is one of the secondary (non-topmost) in its restack chain
+};
+
+class FocusFadeAnim :
+    public RestackAnim,
+    public FadeAnim
+{
+public:
+    FocusFadeAnim (CompWindow *w,
+		   WindowEvent curWindowEvent,
+		   float duration,
+		   const AnimEffect info,
+		   const CompRect &icon);
+    void updateAttrib (GLWindowPaintAttrib &attrib);
+    void cleanUp (bool closing,
+		  bool destructing);
+
+protected:
+    void processCandidate (CompWindow *candidateWin,
+			   CompWindow *subjectWin,
+			   CompRegion &candidateAndSubjectIntersection,
+			   int &numSelectedCandidates);
+    GLushort computeOpacity (GLushort opacityInt);
+};
+
+typedef enum
+{
+    DodgeDirectionUp = 0,
+    DodgeDirectionRight,
+    DodgeDirectionDown,
+    DodgeDirectionLeft,
+    DodgeDirectionXY, // movement possibly in both X and Y (for subjects)
+    DodgeDirectionNone
+} DodgeDirection;
+
+class DodgePersistentData;
+
+class DodgeAnim :
+    public RestackAnim,
+    public TransformAnim
+{
+public:
+    DodgeAnim (CompWindow *w,
+	       WindowEvent curWindowEvent,
+	       float duration,
+	       const AnimEffect info,
+	       const CompRect &icon);
+    void cleanUp (bool closing,
+		  bool destructing);
+    static int getDodgeAmount (CompRect &rect,
+			       CompWindow *dw,
+			       DodgeDirection dir);
+    void step ();
+    void updateTransform (GLMatrix &wTransform);
+    bool shouldDamageWindowOnStart ();
+    void updateBB (CompOutput &output);
+    void postPreparePaint ();
+    void calculateDodgeAmounts ();
+    bool moveUpdate ();
+
+protected:
+    void processCandidate (CompWindow *candidateWin,
+			   CompWindow *subjectWin,
+			   CompRegion &candidateAndSubjectIntersection,
+			   int &numSelectedCandidates);
+    void postInitiateRestackAnim (int numSelectedCandidates,
+				  int duration,
+				  CompWindow *wStart,
+				  CompWindow *wEnd,
+				  bool raised);
+    bool paintedElsewhere ();
+    void applyDodgeTransform ();
+    float dodgeProgress ();
+    void updateDodgerDodgeAmount ();
+
+    DodgePersistentData *mDodgeData;
+
+    CompWindow *mDodgeSubjectWin;///< The window being dodged
+    float mDodgeMaxAmountX;	///< max # pixels it should dodge
+				///<  (neg. value dodges leftward)
+    float mDodgeMaxAmountY;	///< max # pixels it should dodge
+				///<  (neg. value dodges upward)
+    DodgeDirection mDodgeDirection;
+    int mDodgeMode;
+};
+
+class DodgePersistentData :
+    public PersistentData
+{
+    friend class ExtensionPluginAnimation;
+    friend class DodgeAnim;
+
+public:
+    DodgePersistentData ();
+
+private:
+    int dodgeOrder;		///< dodge order (used temporarily)
+
+    // TODO mov the below members into DodgeAnim
+    bool isDodgeSubject;	///< true if this window is the cause of dodging
+    bool skipPostPrepareScreen;
+    CompWindow *dodgeChainStart;///< for the subject window
+    CompWindow *dodgeChainPrev;	///< for dodging windows
+    CompWindow *dodgeChainNext;	///< for dodging windows
+};
+
+class DreamAnim :
+    public GridZoomAnim
+{
+public:
+    DreamAnim (CompWindow *w,
+	       WindowEvent curWindowEvent,
+	       float duration,
+	       const AnimEffect info,
+	       const CompRect &icon);
+protected:
+    void init ();
+    void initGrid ();
+    void step ();
+    void adjustDuration ();
+    float getFadeProgress ();
+    bool zoomToIcon ();
+
+    static const float kDurationFactor;
+};
+
+class FoldAnim :
+    public GridZoomAnim
+{
+public:
+    FoldAnim (CompWindow *w,
+	      WindowEvent curWindowEvent,
+	      float duration,
+	      const AnimEffect info,
+	      const CompRect &icon);
+protected:
+    bool using3D () { return true; }
+    float getFadeProgress ();
+    void updateWindowAttrib (GLWindowPaintAttrib &attrib);
+};
+
+class CurvedFoldAnim :
+    public FoldAnim
+{
+public:
+    CurvedFoldAnim (CompWindow *w,
+		    WindowEvent curWindowEvent,
+		    float duration,
+		    const AnimEffect info,
+		    const CompRect &icon);
+protected:
+    void initGrid ();
+    void step ();
+    bool zoomToIcon ();
+    float getObjectZ (GridAnim::GridModel *mModel,
+		      float forwardProgress,
+		      float sinForProg,
+		      float relDistToCenter,
+		      float curveMaxAmp);
+};
+
+class HorizontalFoldsAnim :
+    public FoldAnim
+{
+public:
+    HorizontalFoldsAnim (CompWindow *w,
+			 WindowEvent curWindowEvent,
+			 float duration,
+			 const AnimEffect info,
+			 const CompRect &icon);
+protected:
+    void initGrid ();
+    void step ();
+    bool zoomToIcon ();
+    float getObjectZ (GridAnim::GridModel *mModel,
+		      float forwardProgress,
+		      float sinForProg,
+		      float relDistToFoldCenter,
+		      float foldMaxAmp);
+};
 

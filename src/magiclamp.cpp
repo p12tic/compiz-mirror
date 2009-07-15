@@ -34,174 +34,206 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animation-internal.h"
+#include "private.h"
 
 void
-fxMagicLampInitGrid (CompWindow *w,
-		     int *gridWidth, int *gridHeight)
+MagicLampAnim::initGrid ()
 {
-    *gridWidth = 2;
-    *gridHeight = animGetI (w, ANIM_SCREEN_OPTION_MAGIC_LAMP_GRID_RES);
+    mGridWidth = 2;
+    mGridHeight = optValI (AnimationOptions::MagicLampGridRes);
 }
 
 void
-fxVacuumInitGrid (CompWindow *w,
-		  int *gridWidth, int *gridHeight)
+MagicLampWavyAnim::initGrid ()
 {
-    *gridWidth = 2;
-    *gridHeight = animGetI (w, ANIM_SCREEN_OPTION_VACUUM_GRID_RES);
+    mGridWidth = 2;
+    mGridHeight = optValI (AnimationOptions::MagicLampWavyGridRes);
 }
 
-Bool
-fxMagicLampInit (CompWindow * w)
+MagicLampAnim::MagicLampAnim (CompWindow *w,
+			      WindowEvent curWindowEvent,
+			      float duration,
+			      const AnimEffect info,
+			      const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    GridAnim::GridAnim (w, curWindowEvent, duration, info, icon)
 {
-    ANIM_WINDOW(w);
+    int screenHeight = screen->vpSize ().height ();
 
-    XRectangle *icon = &aw->com.icon;
-    int screenHeight = w->screen->height;
-    aw->minimizeToTop = (WIN_Y(w) + WIN_H(w) / 2) >
-	(icon->y + icon->height / 2);
-    int maxWaves;
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      w->outputRect ());
+
+    mTargetTop = ((outRect.y () + outRect.height () / 2) >
+		  (icon.y () + icon.height () / 2));
+
+    mUseQTexCoord = true;
+}
+
+MagicLampWavyAnim::MagicLampWavyAnim (CompWindow *w,
+				      WindowEvent curWindowEvent,
+				      float duration,
+				      const AnimEffect info,
+				      const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    MagicLampAnim::MagicLampAnim (w, curWindowEvent, duration, info, icon)
+{
+    unsigned int maxWaves;
     float waveAmpMin, waveAmpMax;
     float distance;
 
-    if (aw->com.curAnimEffect == AnimEffectMagicLamp)
-    {
-	maxWaves = animGetI (w, ANIM_SCREEN_OPTION_MAGIC_LAMP_MAX_WAVES);
-	waveAmpMin =
-	    animGetF (w, ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MIN);
-	waveAmpMax =
-	    animGetF (w, ANIM_SCREEN_OPTION_MAGIC_LAMP_WAVE_AMP_MAX);
-    }
-    else
-    {
-	maxWaves = 0;
-	waveAmpMin = 0;
-	waveAmpMax = 0;
-    }
+    maxWaves = optValI (AnimationOptions::MagicLampWavyMaxWaves);
+    waveAmpMin = optValF (AnimationOptions::MagicLampWavyAmpMin);
+    waveAmpMax = optValF (AnimationOptions::MagicLampWavyAmpMax);
+
     if (waveAmpMax < waveAmpMin)
 	waveAmpMax = waveAmpMin;
 
-    if (maxWaves == 0)
-    {
-	aw->magicLampWaveCount = 0;
-	return TRUE;
-    }
-
     // Initialize waves
 
-    if (aw->minimizeToTop)
-	distance = WIN_Y(w) + WIN_H(w) - icon->y;
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      w->outputRect ());
+    if (mTargetTop)
+	distance = outRect.y () + outRect.height () - mIcon.y ();
     else
-	distance = icon->y - WIN_Y(w);
+	distance = mIcon.y () - outRect.y ();
 
-    aw->magicLampWaveCount =
-	1 + (float)maxWaves *distance / screenHeight;
+    mNumWaves =
+	1 + (float)maxWaves *distance / ::screen->height ();
 
-    if (!(aw->magicLampWaves))
-    {
-	aw->magicLampWaves =
-	    calloc(aw->magicLampWaveCount, sizeof(WaveParam));
-	if (!aw->magicLampWaves)
-	{
-	    compLogMessage ("animation", CompLogLevelError,
-			    "Not enough memory");
-	    return FALSE;
-	}
-    }
+    mWaves = new WaveParam[mNumWaves];
+
     // Compute wave parameters
 
-    int ampDirection = (RAND_FLOAT() < 0.5 ? 1 : -1);
-    int i;
+    int ampDirection = (RAND_FLOAT () < 0.5 ? 1 : -1);
     float minHalfWidth = 0.22f;
     float maxHalfWidth = 0.38f;
 
-    for (i = 0; i < aw->magicLampWaveCount; i++)
+    for (int i = 0; i < mNumWaves; i++)
     {
-	aw->magicLampWaves[i].amp =
+	mWaves[i].amp =
 	    ampDirection * (waveAmpMax - waveAmpMin) *
-	    rand() / RAND_MAX + ampDirection * waveAmpMin;
-	aw->magicLampWaves[i].halfWidth =
-	    RAND_FLOAT() * (maxHalfWidth -
-			    minHalfWidth) + minHalfWidth;
+	    rand () / RAND_MAX + ampDirection * waveAmpMin;
+	mWaves[i].halfWidth =
+	    RAND_FLOAT () * (maxHalfWidth - minHalfWidth) + minHalfWidth;
 
 	// avoid offset at top and bottom part by added waves
-	float availPos = 1 - 2 * aw->magicLampWaves[i].halfWidth;
+	float availPos = 1 - 2 * mWaves[i].halfWidth;
 	float posInAvailSegment = 0;
 
 	if (i > 0)
 	    posInAvailSegment =
-		(availPos / aw->magicLampWaveCount) * rand() / RAND_MAX;
+		(availPos / mNumWaves) * RAND_FLOAT ();
 
-	aw->magicLampWaves[i].pos =
+	mWaves[i].pos =
 	    (posInAvailSegment +
-	     i * availPos / aw->magicLampWaveCount +
-	     aw->magicLampWaves[i].halfWidth);
+	     i * availPos / mNumWaves +
+	     mWaves[i].halfWidth);
 
 	// switch wave direction
 	ampDirection *= -1;
     }
+}
 
-    return TRUE;
+MagicLampWavyAnim::~MagicLampWavyAnim ()
+{
+    delete[] mWaves;
+}
+
+/// Makes sure the window gets fully damaged with
+/// effects that possibly have models that don't cover
+/// the whole window (like in MagicLampAnim with menus).
+MagicLampAnim::~MagicLampAnim ()
+{
+    mAWindow->expandBBWithWindow ();
+}
+
+bool
+MagicLampWavyAnim::hasMovingEnd ()
+{
+    return optValB (AnimationOptions::MagicLampWavyMovingEnd);
+}
+
+bool
+MagicLampAnim::hasMovingEnd ()
+{
+    return optValB (AnimationOptions::MagicLampMovingEnd);
+}
+
+/// Applies waves (at each step of the animation).
+void
+MagicLampWavyAnim::filterTargetX (float &targetX, float x)
+{
+    for (int i = 0; i < mNumWaves; i++)
+    {
+	float cosx = ((x - mWaves[i].pos) /
+		       mWaves[i].halfWidth);
+	if (cosx < -1 || cosx > 1)
+	    continue;
+	targetX += (mWaves[i].amp * mModel->scale ().x () *
+		    (cos (cosx * M_PI) + 1) / 2);
+    }
 }
 
 void
-fxMagicLampModelStep (CompWindow *w, float time)
+MagicLampAnim::step ()
 {
-    defaultAnimStep (w, time);
-
-    ANIM_WINDOW(w);
-
-    Model *model = aw->com.model;
-    XRectangle *icon = &aw->com.icon;
-
-    if ((aw->com.curWindowEvent == WindowEventOpen ||
-	 aw->com.curWindowEvent == WindowEventClose) &&
-	((aw->com.curAnimEffect == AnimEffectMagicLamp &&
-	  animGetB (w, ANIM_SCREEN_OPTION_MAGIC_LAMP_MOVING_END)) ||
-	 (aw->com.curAnimEffect == AnimEffectVacuum &&
-	  animGetB (w, ANIM_SCREEN_OPTION_VACUUM_MOVING_END))))
+    if ((curWindowEvent () == WindowEventOpen ||
+	 curWindowEvent () == WindowEventClose) &&
+	hasMovingEnd ())
     {
+	short x, y;
 	// Update icon position
-	getMousePointerXY (w->screen, &icon->x, &icon->y);
+	AnimScreen::get (::screen)->getMousePointerXY (&x, &y);
+	mIcon.setX (x);
+	mIcon.setY (y);
     }
-    float forwardProgress = defaultAnimProgress (w);
-
-    if (aw->magicLampWaveCount > 0 && !aw->magicLampWaves)
-	return;
+    float forwardProgress = progressLinear ();
 
     float iconCloseEndY;
     float iconFarEndY;
     float winFarEndY;
     float winVisibleCloseEndY;
 
+    CompRect inRect (mAWindow->savedRectsValid () ?
+		     mAWindow->savedInRect () :
+		     mWindow->inputRect ());
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
+    CompWindowExtents outExtents (mAWindow->savedRectsValid () ?
+				  mAWindow->savedOutExtents () :
+				  mWindow->output ());
+
     float iconShadowLeft =
-	((float)(w->output.left - w->input.left)) * 
-	icon->width / w->width;
+	((float)(outRect.x () - inRect.x ())) *
+	mIcon.width () / mWindow->width ();
     float iconShadowRight =
-	((float)(w->output.right - w->input.right)) * 
-	icon->width / w->width;
+	((float)(outRect.x2 () - inRect.x2 ())) *
+	mIcon.width () / mWindow->width ();
 
-    float sigmoid0 = sigmoid(0);
-    float sigmoid1 = sigmoid(1);
-    float winw = WIN_W(w);
-    float winh = WIN_H(w);
+    float sigmoid0 = sigmoid (0);
+    float sigmoid1 = sigmoid (1);
 
-    if (aw->minimizeToTop)
+    float winw = outRect.width ();
+    float winh = outRect.height ();
+
+    if (mTargetTop)
     {
-	iconFarEndY = icon->y;
-	iconCloseEndY = icon->y + icon->height;
-	winFarEndY = WIN_Y(w) + winh;
-	winVisibleCloseEndY = WIN_Y(w);
+	iconFarEndY = mIcon.y ();
+	iconCloseEndY = mIcon.y () + mIcon.height ();
+	winFarEndY = outRect.y () + winh;
+	winVisibleCloseEndY = outRect.y ();
 	if (winVisibleCloseEndY < iconCloseEndY)
 	    winVisibleCloseEndY = iconCloseEndY;
     }
     else
     {
-	iconFarEndY = icon->y + icon->height;
-	iconCloseEndY = icon->y;
-	winFarEndY = WIN_Y(w);
-	winVisibleCloseEndY = WIN_Y(w) + winh;
+	iconFarEndY = mIcon.y () + mIcon.height ();
+	iconCloseEndY = mIcon.y ();
+	winFarEndY = outRect.y ();
+	winVisibleCloseEndY = outRect.y () + winh;
 	if (winVisibleCloseEndY > iconCloseEndY)
 	    winVisibleCloseEndY = iconCloseEndY;
     }
@@ -223,7 +255,7 @@ fxMagicLampModelStep (CompWindow *w, float time)
 	preShapeProgress = forwardProgress / preShapePhaseEnd;
 
 	// Slow down "shaping" toward the end
-	preShapeProgress = 1 - decelerateProgress(1 - preShapeProgress);
+	preShapeProgress = 1 - progressDecelerate (1 - preShapeProgress);
     }
 
     if (forwardProgress < preShapePhaseEnd)
@@ -243,96 +275,108 @@ fxMagicLampModelStep (CompWindow *w, float time)
 	}
     }
 
-    Object *object = model->objects;
-    int i;
-    for (i = 0; i < model->numObjects; i++, object++)
+    GridModel::GridObject *object = mModel->objects ();
+    for (int i = 0; i < mModel->numObjects (); i++, object++)
     {
-	float origx = w->attrib.x + (winw * object->gridPosition.x -
-				     w->output.left) * model->scale.x;
-	float origy = w->attrib.y + (winh * object->gridPosition.y -
-				     w->output.top) * model->scale.y;
+	float origX = (mWindow->x () +
+		       (winw * object->gridPosition ().x () -
+			outExtents.left) *
+		       mModel->scale ().x ());
+	float origY = (mWindow->y () +
+		       (winh * object->gridPosition ().y () -
+			outExtents.top) *
+		       mModel->scale ().y ());
 
-	float iconx =
-	    (icon->x - iconShadowLeft) + 
-	    (icon->width + iconShadowLeft + iconShadowRight) *
-	    object->gridPosition.x;
-	float icony = icon->y + icon->height * object->gridPosition.y;
+	float iconX =
+	    (mIcon.x () - iconShadowLeft) +
+	    (mIcon.width () + iconShadowLeft + iconShadowRight) *
+	    object->gridPosition ().x ();
+	float iconY = (mIcon.y () +
+		       mIcon.height () * object->gridPosition ().y ());
 
 	float stretchedPos;
-	if (aw->minimizeToTop)
+	if (mTargetTop)
 	    stretchedPos =
-		object->gridPosition.y * origy +
-		(1 - object->gridPosition.y) * icony;
+		object->gridPosition ().y () * origY +
+		(1 - object->gridPosition ().y ()) * iconY;
 	else
 	    stretchedPos =
-		(1 - object->gridPosition.y) * origy +
-		object->gridPosition.y * icony;
+		(1 - object->gridPosition ().y ()) * origY +
+		object->gridPosition ().y () * iconY;
 
 	// Compute current y position
 	if (forwardProgress < preShapePhaseEnd)
 	{
-	    object->position.y =
-		(1 - stretchProgress) * origy +
-		stretchProgress * stretchedPos;
+	    object->position ().setY ((1 - stretchProgress) * origY +
+				    stretchProgress * stretchedPos);
 	}
 	else
 	{
 	    if (forwardProgress < stretchPhaseEnd)
 	    {
-		object->position.y =
-		    (1 - stretchProgress) * origy +
-		    stretchProgress * stretchedPos;
+		object->position ().setY ((1 - stretchProgress) * origY +
+					  stretchProgress * stretchedPos);
 	    }
 	    else
 	    {
-		object->position.y =
-		    (1 - postStretchProgress) *
-		    stretchedPos +
-		    postStretchProgress *
-		    (stretchedPos + (iconCloseEndY - winFarEndY));
+		object->position ().setY ((1 - postStretchProgress) *
+					  stretchedPos +
+					  postStretchProgress *
+					  (stretchedPos +
+					   (iconCloseEndY - winFarEndY)));
 	    }
 	}
 
-	// Compute "target shape" x position
-	float fx = ((iconCloseEndY - object->position.y) / 
-		    (iconCloseEndY - winFarEndY));
-	float fy = ((sigmoid(fx) - sigmoid0) /
-		    (sigmoid1 - sigmoid0));
-	float targetx = fy * (origx - iconx) + iconx;
-
-	// Apply waves
-	int i;
-	for (i = 0; i < aw->magicLampWaveCount; i++)
+	if (mTargetTop)
 	{
-	    float cosfx = ((fx - aw->magicLampWaves[i].pos) /
-			   aw->magicLampWaves[i].halfWidth);
-	    if (cosfx < -1 || cosfx > 1)
-		continue;
-	    targetx +=
-		aw->magicLampWaves[i].amp * model->scale.x *
-		(cos(cosfx * M_PI) + 1) / 2;
-	}
-
-	// Compute current x position
-	if (forwardProgress < preShapePhaseEnd)
-	    object->position.x =
-		(1 - preShapeProgress) * origx + preShapeProgress * targetx;
-	else	    
-	    object->position.x = targetx;
-
-	if (aw->minimizeToTop)
-	{
-	    if (object->position.y < iconFarEndY)
-		object->position.y = iconFarEndY;
+	    if (object->position ().y () < iconFarEndY)
+		object->position ().setY (iconFarEndY);
 	}
 	else
 	{
-	    if (object->position.y > iconFarEndY)
-		object->position.y = iconFarEndY;
+	    if (object->position ().y () > iconFarEndY)
+		object->position ().setY (iconFarEndY);
 	}
 
-	// No need to set object->position.z to 0, since they won't be used
-	// due to modelAnimIs3D being FALSE for magic lamp.
+
+	// Compute "target shape" x position
+	float fx = ((iconCloseEndY - object->position ().y ()) /
+		    (iconCloseEndY - winFarEndY));
+	float fy = ((sigmoid (fx) - sigmoid0) /
+		    (sigmoid1 - sigmoid0));
+	float targetX = fy * (origX - iconX) + iconX;
+
+	filterTargetX (targetX, fx);
+
+	// Compute current x position
+	if (forwardProgress < preShapePhaseEnd)
+	    object->position ().setX ((1 - preShapeProgress) * origX +
+				      preShapeProgress * targetX);
+	else
+	    object->position ().setX (targetX);
+
+	// No need to set object->position ().z () to 0, since they won't be used
+	// due to modelAnimIs3D being false for magic lamp.
     }
+}
+
+void
+MagicLampAnim::adjustPointerIconSize ()
+{
+    mIcon.setWidth (MAX (4, optValI
+    			 (AnimationOptions::MagicLampOpenStartWidth)));
+
+    // Adjust position so that the icon is centered at the original position.
+    mIcon.setX (mIcon.x () - mIcon.width () / 2);
+}
+
+void
+MagicLampWavyAnim::adjustPointerIconSize ()
+{
+    mIcon.setWidth (MAX (4, optValI
+    			 (AnimationOptions::MagicLampWavyOpenStartWidth)));
+
+    // Adjust position so that the icon is centered at the original position.
+    mIcon.setX (mIcon.x () - mIcon.width () / 2);
 }
 
