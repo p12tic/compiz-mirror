@@ -359,6 +359,29 @@ MagicLampAnim::step ()
 }
 
 void
+MagicLampAnim::updateBB (CompOutput &output)
+{
+    unsigned int n = mModel->numObjects ();
+    for (unsigned int i = 0; i < n; i++)
+    {
+    	GridModel::GridObject &object = mModel->objects ()[i];
+	mAWindow->expandBBWithPoint (object.position ().x () + 0.5,
+				     object.position ().y () + 0.5);
+
+	// skip to the last row after considering the first row
+	// (each row has 2 objects)
+	if (i == 1)
+	    i = n - 3;
+    }
+}
+
+void
+MagicLampWavyAnim::updateBB (CompOutput &output)
+{
+    GridAnim::updateBB (output);
+}
+
+void
 MagicLampAnim::adjustPointerIconSize ()
 {
     mIcon.setWidth (MAX (4, optValI

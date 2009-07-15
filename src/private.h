@@ -415,6 +415,7 @@ protected:
 
     void initGrid ();
     void step ();
+    void updateBB (CompOutput &output);
     void adjustPointerIconSize ();
 
     virtual bool hasMovingEnd ();
@@ -444,6 +445,7 @@ protected:
     WaveParam *mWaves;
 
     void initGrid ();
+    void updateBB (CompOutput &output);
     void adjustPointerIconSize ();
 
     bool hasMovingEnd ();
