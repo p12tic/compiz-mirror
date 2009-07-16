@@ -76,54 +76,69 @@ RollUpAnim::step ()
     GridModel::GridObject *object = mModel->objects ();
     for (int i = 0; i < mModel->numObjects (); i++, object++)
     {
-	float origx = outRect.x () + outRect.width () * object->gridPosition ().x ();
-
 	// Executing shade mode
 
-	// find position in window contents
-	// (window contents correspond to 0.0-1.0 range)
-	float relPosInWinContents =
-	    (object->gridPosition ().y () * outRect.height () -
-	     mDecorTopHeight) / mWindow->height ();
-
-	object->position ().setX (origx);
-
-	if (object->gridPosition ().y () == 0)
+	if (i % 2 == 0) // object is at the left side
 	{
-	    object->position ().setY (outRect.y ());
-	}
-	else if (object->gridPosition ().y () == 1)
-	{
-	    object->position ().setY (
-		(1 - forwardProgress) *
-		(outRect.y () +
-		 outRect.height () * object->gridPosition ().y ()) +
-		forwardProgress * (outRect.y () +
-				   mDecorTopHeight + mDecorBottomHeight));
-	}
-	else
-	{
-	    if (relPosInWinContents > forwardProgress)
+	    if (object->gridPosition ().y () == 0)
+	    {
+		object->position ().setY (outRect.y ());
+	    }
+	    else if (object->gridPosition ().y () == 1)
 	    {
 		object->position ().setY (
 		    (1 - forwardProgress) *
 		    (outRect.y () +
 		     outRect.height () * object->gridPosition ().y ()) +
-		    forwardProgress * (outRect.y () + mDecorTopHeight));
-
-		if (fixedInterior)
-		    object->offsetTexCoordForQuadBefore ().
-			setY (-forwardProgress * mWindow->height ());
+		    forwardProgress * (outRect.y () +
+				       mDecorTopHeight + mDecorBottomHeight));
 	    }
 	    else
 	    {
-		object->position ().setY (outRect.y () + mDecorTopHeight);
-		if (!fixedInterior)
-		    object->offsetTexCoordForQuadAfter ().
-			setY ((forwardProgress - relPosInWinContents) *
-			      mWindow->height ());
+		// find position in window contents
+		// (window contents correspond to 0.0-1.0 range)
+		float relPosInWinContents =
+		    (object->gridPosition ().y () * outRect.height () -
+		     mDecorTopHeight) / mWindow->height ();
+
+		if (relPosInWinContents > forwardProgress)
+		{
+		    object->position ().setY (
+			(1 - forwardProgress) *
+			(outRect.y () +
+			 outRect.height () * object->gridPosition ().y ()) +
+			forwardProgress * (outRect.y () + mDecorTopHeight));
+
+		    if (fixedInterior)
+			object->offsetTexCoordForQuadBefore ().
+			    setY (-forwardProgress * mWindow->height ());
+		}
+		else
+		{
+		    object->position ().setY (outRect.y () + mDecorTopHeight);
+		    if (!fixedInterior)
+			object->offsetTexCoordForQuadAfter ().
+			    setY ((forwardProgress - relPosInWinContents) *
+				  mWindow->height ());
+		}
 	    }
 	}
+	else // object is at the right side
+	{
+	    // Set y position to the y position of the object at the left
+	    // on the same row (previous object)
+	    object->position ().setY ((object - 1)->position ().y ());
+
+	    // Also copy offset texture y coordinates
+	    object->offsetTexCoordForQuadBefore ().
+		setY ((object - 1)->offsetTexCoordForQuadBefore ().y ());
+	    object->offsetTexCoordForQuadAfter ().
+		setY ((object - 1)->offsetTexCoordForQuadAfter ().y ());
+	}
+
+	float origx = outRect.x () + outRect.width () * object->gridPosition ().x ();
+
+	object->position ().setX (origx);
     }
 }
 

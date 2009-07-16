@@ -102,19 +102,28 @@ DreamAnim::step ()
     GridModel::GridObject *object = mModel->objects ();
     for (int i = 0; i < mModel->numObjects (); i++, object++)
     {
+    	if (i % 2 == 0) // object is at the left side
+    	{
+	    float origy = (winRect.y () +
+			   (outRect.height () * object->gridPosition ().y () -
+			    outExtents.top) * mModel->scale ().y ());
+	    object->position ().setY (origy);
+	}
+	else // object is at the right side
+	{
+	    // Set y position to the y position of the object at the left
+	    // on the same row (previous object)
+	    object->position ().setY ((object - 1)->position ().y ());
+	}
+
 	float origx = (winRect.x () +
 		       (outRect.width () * object->gridPosition ().x () -
 			outExtents.left) * mModel->scale ().x ());
-	float origy = (winRect.y () +
-		       (outRect.height () * object->gridPosition ().y () -
-			outExtents.top) * mModel->scale ().y ());
-
 	object->position ().setX (
 	    origx +
 	    forwardProgress * waveAmpMax * mModel->scale ().x () *
 	    sin (object->gridPosition ().y () * M_PI * waveWidth +
 		waveSpeed * forwardProgress));
-	object->position ().setY (origy);
     }
 }
 

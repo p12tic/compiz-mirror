@@ -273,73 +273,83 @@ MagicLampAnim::step ()
 	}
     }
 
+    float fx;
     GridModel::GridObject *object = mModel->objects ();
     for (int i = 0; i < mModel->numObjects (); i++, object++)
     {
+	if (i % 2 == 0) // object is at the left side
+	{
+	    float origY = (mWindow->y () +
+			   (winh * object->gridPosition ().y () -
+			    outExtents.top) *
+			   mModel->scale ().y ());
+	    float iconY = (mIcon.y () +
+			   mIcon.height () * object->gridPosition ().y ());
+
+	    float stretchedPos;
+	    if (mTargetTop)
+		stretchedPos =
+		    object->gridPosition ().y () * origY +
+		    (1 - object->gridPosition ().y ()) * iconY;
+	    else
+		stretchedPos =
+		    (1 - object->gridPosition ().y ()) * origY +
+		    object->gridPosition ().y () * iconY;
+
+	    // Compute current y position
+	    if (forwardProgress < preShapePhaseEnd)
+	    {
+		object->position ().setY ((1 - stretchProgress) * origY +
+					stretchProgress * stretchedPos);
+	    }
+	    else
+	    {
+		if (forwardProgress < stretchPhaseEnd)
+		{
+		    object->position ().setY ((1 - stretchProgress) * origY +
+					      stretchProgress * stretchedPos);
+		}
+		else
+		{
+		    object->position ().setY ((1 - postStretchProgress) *
+					      stretchedPos +
+					      postStretchProgress *
+					      (stretchedPos +
+					       (iconCloseEndY - winFarEndY)));
+		}
+	    }
+
+	    if (mTargetTop)
+	    {
+		if (object->position ().y () < iconFarEndY)
+		    object->position ().setY (iconFarEndY);
+	    }
+	    else
+	    {
+		if (object->position ().y () > iconFarEndY)
+		    object->position ().setY (iconFarEndY);
+	    }
+
+	    fx = ((iconCloseEndY - object->position ().y ()) /
+	    	  (iconCloseEndY - winFarEndY));
+	}
+	else // object is at the right side
+	{
+	    // Set y position to the y position of the object at the left
+	    // on the same row (previous object)
+	    object->position ().setY ((object - 1)->position ().y ());
+	}
+
 	float origX = (mWindow->x () +
 		       (winw * object->gridPosition ().x () -
 			outExtents.left) *
 		       mModel->scale ().x ());
-	float origY = (mWindow->y () +
-		       (winh * object->gridPosition ().y () -
-			outExtents.top) *
-		       mModel->scale ().y ());
-
 	float iconX =
 	    (mIcon.x () - iconShadowLeft) +
 	    (mIcon.width () + iconShadowLeft + iconShadowRight) *
 	    object->gridPosition ().x ();
-	float iconY = (mIcon.y () +
-		       mIcon.height () * object->gridPosition ().y ());
-
-	float stretchedPos;
-	if (mTargetTop)
-	    stretchedPos =
-		object->gridPosition ().y () * origY +
-		(1 - object->gridPosition ().y ()) * iconY;
-	else
-	    stretchedPos =
-		(1 - object->gridPosition ().y ()) * origY +
-		object->gridPosition ().y () * iconY;
-
-	// Compute current y position
-	if (forwardProgress < preShapePhaseEnd)
-	{
-	    object->position ().setY ((1 - stretchProgress) * origY +
-				    stretchProgress * stretchedPos);
-	}
-	else
-	{
-	    if (forwardProgress < stretchPhaseEnd)
-	    {
-		object->position ().setY ((1 - stretchProgress) * origY +
-					  stretchProgress * stretchedPos);
-	    }
-	    else
-	    {
-		object->position ().setY ((1 - postStretchProgress) *
-					  stretchedPos +
-					  postStretchProgress *
-					  (stretchedPos +
-					   (iconCloseEndY - winFarEndY)));
-	    }
-	}
-
-	if (mTargetTop)
-	{
-	    if (object->position ().y () < iconFarEndY)
-		object->position ().setY (iconFarEndY);
-	}
-	else
-	{
-	    if (object->position ().y () > iconFarEndY)
-		object->position ().setY (iconFarEndY);
-	}
-
 
 	// Compute "target shape" x position
-	float fx = ((iconCloseEndY - object->position ().y ()) /
-		    (iconCloseEndY - winFarEndY));
 	float fy = ((sigmoid (fx) - sigmoid0) /
 		    (sigmoid1 - sigmoid0));
 	float targetX = fy * (origX - iconX) + iconX;

@@ -115,59 +115,68 @@ HorizontalFoldsAnim::step ()
     GridModel::GridObject *object = mModel->objects ();
     for (int i = 0; i < mModel->numObjects (); i++, object++)
     {
-	int rowNo = i / mGridWidth;
-	float origx = (winRect.x () +
-		       (outRect.width () * object->gridPosition ().x () -
-			outExtents.left) * mModel->scale ().x ());
-	float origy = (winRect.y () +
-		       (outRect.height () * object->gridPosition ().y () -
-			outExtents.top) * mModel->scale ().y ());
-
-	object->position ().setX (origx);
-
-	if (mCurWindowEvent == WindowEventShade ||
-	    mCurWindowEvent == WindowEventUnshade)
+	if (i % 2 == 0) // object is at the left side
 	{
-	    // Execute shade mode
-
-	    float relDistToFoldCenter = (rowNo % 2 == 1 ? 0.5 : 0);
-
-	    if (object->gridPosition ().y () == 0)
+	    int rowNo = i / mGridWidth;
+	    float origy = (winRect.y () +
+			   (outRect.height () * object->gridPosition ().y () -
+			    outExtents.top) * mModel->scale ().y ());
+	    if (mCurWindowEvent == WindowEventShade ||
+		mCurWindowEvent == WindowEventUnshade)
 	    {
-		object->position ().setY (outRect.y ());
-		object->position ().setZ (0);
-	    }
-	    else if (object->gridPosition ().y () == 1)
-	    {
-		object->position ().setY (
-		    (1 - forwardProgress) * origy +
-		    forwardProgress *
-		    (outRect.y () + mDecorTopHeight + mDecorBottomHeight));
-		object->position ().setZ (0);
+		// Execute shade mode
+
+		if (object->gridPosition ().y () == 0)
+		{
+		    object->position ().setY (outRect.y ());
+		    object->position ().setZ (0);
+		}
+		else if (object->gridPosition ().y () == 1)
+		{
+		    object->position ().setY (
+			(1 - forwardProgress) * origy +
+			forwardProgress *
+			(outRect.y () + mDecorTopHeight + mDecorBottomHeight));
+		    object->position ().setZ (0);
+		}
+		else
+		{
+		    float relDistToFoldCenter = (rowNo % 2 == 1 ? 0.5 : 0);
+
+		    object->position ().setY (
+			(1 - forwardProgress) * origy +
+			forwardProgress * (outRect.y () + mDecorTopHeight));
+		    object->position ().setZ (
+			getObjectZ (mModel, forwardProgress, sinForProg,
+				    relDistToFoldCenter, foldMaxAmp));
+		}
 	    }
 	    else
 	    {
+		// Execute normal mode
+
+		float relDistToFoldCenter = (rowNo % 2 == 0 ? 0.5 : 0);
+
 		object->position ().setY (
 		    (1 - forwardProgress) * origy +
-		    forwardProgress * (outRect.y () + mDecorTopHeight));
+		    forwardProgress * (inRect.y () + inRect.height () / 2.0));
 		object->position ().setZ (
-		    getObjectZ (mModel, forwardProgress, sinForProg,
-				relDistToFoldCenter, foldMaxAmp));
+			getObjectZ (mModel, forwardProgress, sinForProg,
+				    relDistToFoldCenter, foldMaxAmp));
 	    }
 	}
-	else
+	else // object is at the right side
 	{
-	    // Execute normal mode
-
-	    float relDistToFoldCenter = (rowNo % 2 == 0 ? 0.5 : 0);
-
-	    object->position ().setY (
-		(1 - forwardProgress) * origy +
-		forwardProgress * (inRect.y () + inRect.height () / 2.0));
-	    object->position ().setZ (
-		    getObjectZ (mModel, forwardProgress, sinForProg,
-				relDistToFoldCenter, foldMaxAmp));
+	    // Set y/z position to the y/z position of the object at the left
+	    // on the same row (previous object)
+	    object->position ().setY ((object - 1)->position ().y ());
+	    object->position ().setZ ((object - 1)->position ().z ());
 	}
+
+	float origx = (winRect.x () +
+		       (outRect.width () * object->gridPosition ().x () -
+			outExtents.left) * mModel->scale ().x ());
+	object->position ().setX (origx);
     }
 }
 
