@@ -36,6 +36,8 @@
 
 #include "private.h"
 
+// =====================  Effect: Magic Lamp  =========================
+
 void
 MagicLampAnim::initGrid ()
 {
@@ -144,7 +146,12 @@ MagicLampWavyAnim::~MagicLampWavyAnim ()
 /// the whole window (like in MagicLampAnim with menus).
 MagicLampAnim::~MagicLampAnim ()
 {
-    mAWindow->expandBBWithWindow ();
+    if (mCurWindowEvent == WindowEventOpen ||
+    	mCurWindowEvent == WindowEventUnminimize ||
+    	mCurWindowEvent == WindowEventUnshade)
+    {
+	mAWindow->expandBBWithWindow ();
+    }
 }
 
 bool
@@ -273,9 +280,14 @@ MagicLampAnim::step ()
 	}
     }
 
+    // The other objects are squeezed into a horizontal line behind the icon
+    int topmostMovingObjectIdx = -1;
+    int bottommostMovingObjectIdx = -1;
+
+    int n = mModel->numObjects ();
     float fx;
     GridModel::GridObject *object = mModel->objects ();
-    for (int i = 0; i < mModel->numObjects (); i++, object++)
+    for (int i = 0; i < n; i++, object++)
     {
 	if (i % 2 == 0) // object is at the left side
 	{
@@ -321,11 +333,21 @@ MagicLampAnim::step ()
 
 	    if (mTargetTop)
 	    {
+	    	// pick the first one that is below icon's bottom (close) edge
+		if (object->position ().y () > iconCloseEndY &&
+		    topmostMovingObjectIdx < 0)
+		    topmostMovingObjectIdx = i;
+
 		if (object->position ().y () < iconFarEndY)
 		    object->position ().setY (iconFarEndY);
 	    }
 	    else
 	    {
+	    	// pick the first one that is below icon's top (close) edge
+		if (object->position ().y () > iconCloseEndY &&
+		    bottommostMovingObjectIdx < 0)
+		    bottommostMovingObjectIdx = i;
+
 		if (object->position ().y () > iconFarEndY)
 		    object->position ().setY (iconFarEndY);
 	    }
@@ -366,6 +388,29 @@ MagicLampAnim::step ()
 	// No need to set object->position ().z () to 0, since they won't be used
 	// due to modelAnimIs3D being false for magic lamp.
     }
+
+    if (stepRegionUsed ())
+    {
+    	// Pick objects that will act as the corners of rectangles subtracted
+    	// from this step's damaged region
+
+	const float topCornerRowRatio =
+	    (mTargetTop ? 0.55 : 0.35);// 0.46 0.42; // rectangle corner row ratio
+	const float bottomCornerRowRatio =
+	    (mTargetTop ? 0.65 : 0.42);// 0.46 0.42; // rectangle corner row ratio
+
+	if (topmostMovingObjectIdx < 0)
+	    topmostMovingObjectIdx = 0;
+	if (bottommostMovingObjectIdx < 0)
+	    bottommostMovingObjectIdx = n - 2;
+
+	int nRows = (bottommostMovingObjectIdx - topmostMovingObjectIdx) / 2;
+	int firstMovingRow = topmostMovingObjectIdx / 2;
+	mTopLeftCornerObject = &mModel->objects ()
+	    [(int)(firstMovingRow + topCornerRowRatio * nRows) * 2];
+	mBottomLeftCornerObject = &mModel->objects ()
+	    [(int)(firstMovingRow + bottomCornerRowRatio * nRows) * 2];
+    }
 }
 
 void
@@ -382,6 +427,59 @@ MagicLampAnim::updateBB (CompOutput &output)
 	// (each row has 2 objects)
 	if (i == 1)
 	    i = n - 3;
+    }
+
+    // Subtract a rectangle from each bounding box corner left empty by
+    // the animation
+
+    mAWindow->resetStepRegionWithBB ();
+    BoxPtr BB = mAWindow->BB ();
+    CompRegion &region = mAWindow->stepRegion ();
+
+    // Left side
+    if (mModel->objects ()[0].position ().x () >
+    	mModel->objects ()[n-2].position ().x ())
+    {
+    	// Top-left corner is empty
+
+    	// Position of grid object to pick as the corner of the subtracted rect.
+    	Point3d &objPos = mTopLeftCornerObject->position ();
+	region -= CompRect (BB->x1,
+			    BB->y1,
+			    objPos.x () - BB->x1,
+			    objPos.y () - BB->y1);
+    }
+    else // Bottom-left corner is empty
+    {
+    	// Position of grid object to pick as the corner of the subtracted rect.
+    	Point3d &objPos = mBottomLeftCornerObject->position ();
+    	region -= CompRect (BB->x1,
+			    objPos.y (),
+			    objPos.x () - BB->x1,
+			    BB->y2);
+    }
+
+    // Right side
+    if (mModel->objects ()[1].position ().x () <
+    	mModel->objects ()[n-1].position ().x ())
+    {
+    	// Top-right corner is empty
+
+    	// Position of grid object to pick as the corner of the subtracted rect.
+    	Point3d &objPos = (mTopLeftCornerObject + 1)->position ();
+    	region -= CompRect (objPos.x (),
+			    BB->y1,
+			    BB->x2,
+			    objPos.y () - BB->y1);
+    }
+    else // Bottom-right corner is empty
+    {
+    	// Position of grid object to pick as the corner of the subtracted rect.
+    	Point3d &objPos = (mBottomLeftCornerObject + 1)->position ();
+    	region -= CompRect (objPos.x (),
+			    objPos.y (),
+			    BB->x2,
+			    BB->y2);
     }
 }
 

@@ -323,7 +323,7 @@ public:
 
     void damageBoundingBox ();
     void postAnimationCleanUp ();
-    void copyResetBB ();
+    void copyResetStepRegion ();
 
     GLWindow          *gWindow;
 
@@ -354,8 +354,10 @@ private:
     int mCurAnimSelectionRow;
     int mPrevAnimSelectionRow;	///< For the case when one event interrupts another
 
-    Box mBB;       ///< Bounding box for damage region calc. of GLMatrix fx
-    Box mLastBB;   ///< Last bounding box
+    Box mBB;       ///< Bounding box of area to be damaged
+
+    CompRegion mStepRegion;     ///< Region to damage this step
+    CompRegion mLastStepRegion; ///< Region damaged last step
 
     // Utility methods
     unsigned int getState ();
@@ -412,10 +414,13 @@ public:
 
 protected:
     bool mTargetTop;
+    GridModel::GridObject *mTopLeftCornerObject;
+    GridModel::GridObject *mBottomLeftCornerObject;
 
     void initGrid ();
     void step ();
     void updateBB (CompOutput &output);
+    bool stepRegionUsed () { return true; }
     void adjustPointerIconSize ();
 
     virtual bool hasMovingEnd ();
@@ -446,6 +451,7 @@ protected:
 
     void initGrid ();
     void updateBB (CompOutput &output);
+    bool stepRegionUsed () { return false; }
     void adjustPointerIconSize ();
 
     bool hasMovingEnd ();

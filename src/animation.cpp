@@ -711,10 +711,24 @@ Animation::progressDecelerate (float progress)
     return progressDecelerateCustom (progress, 0.5, 0.75);
 }
 
-void
-PrivateAnimWindow::copyResetBB ()
+BoxPtr
+AnimWindow::BB ()
 {
-    memcpy (&mLastBB, &mBB, sizeof (Box));
+    return &priv->mBB;
+}
+
+CompRegion &
+AnimWindow::stepRegion ()
+{
+    return priv->mStepRegion;
+}
+
+void
+PrivateAnimWindow::copyResetStepRegion ()
+{
+    mLastStepRegion = mStepRegion;
+
+    // Reset bounding box for current step
     mBB.x1 = mBB.y1 = MAXSHORT;
     mBB.x2 = mBB.y2 = MINSHORT;
 }
@@ -855,6 +869,17 @@ Animation::prepareTransform (CompOutput &output,
     resultTransform = sTransform * transform;
 }
 
+void
+AnimWindow::resetStepRegionWithBB ()
+{
+    // Have a 1 pixel margin to prevent occasional 1 pixel line artifact
+    CompRegion region (priv->mBB.x1 - 1,
+    		       priv->mBB.y1 - 1,
+    		       priv->mBB.x2 - priv->mBB.x1 + 2,
+    		       priv->mBB.y2 - priv->mBB.y1 + 2);
+    priv->mStepRegion = region;
+}
+
 /// Damage the union of window's bounding box
 /// before and after animStepFunc does its job.
 void
@@ -863,21 +888,14 @@ PrivateAnimWindow::damageBoundingBox ()
     if (mBB.x1 == MAXSHORT) // unintialized BB
 	return;
 
-    // Find union of BB and lastBB
+    if (mCurAnimation && !mCurAnimation->stepRegionUsed ())
+    	// only BB is used, so reset step region here with BB
+	mAWindow->resetStepRegionWithBB ();
 
-    // Have a 1 pixel margin to prevent occasional 1 pixel line artifact
-    CompRegion regionToDamage (mBB.x1 - 1,
-			       mBB.y1 - 1,
-			       mBB.x2 - mBB.x1 + 2,
-			       mBB.y2 - mBB.y1 + 2);
-    CompRect rect (mLastBB.x1 - 1,
-		   mLastBB.y1 - 1,
-		   mLastBB.x2 - mLastBB.x1 + 2,
-		   mLastBB.y2 - mLastBB.y1 + 2);
+    // Find union of the regions for this step and last step
+    CompRegion totalRegionToDamage (mStepRegion + mLastStepRegion);
 
-    regionToDamage += rect;
-
-    mPAScreen->cScreen->damageRegion (regionToDamage);
+    mPAScreen->cScreen->damageRegion (totalRegionToDamage);
 }
 
 CompOutput &
@@ -1020,6 +1038,7 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 
     foreach (ExtensionPluginInfo *extPlugin, mPAScreen->mExtensionPlugins)
 	extPlugin->cleanUpAnimation (closing, destructing);
+    //printf ("%lX Animation finished \n\n", (unsigned long)mWindow);
 }
 
 void
@@ -1131,6 +1150,8 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	    // handle clock rollback
 	    if (msSinceLastPaintActual < 0)
 		msSinceLastPaintActual = 0;
+
+	    //printf ("msSinceLastPaintActual: %d\n", msSinceLastPaintActual);
 	}
 	else
 	    msSinceLastPaintActual = 20; // assume 20 ms passed
@@ -1180,7 +1201,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 
 		    if (curAnim->updateBBUsed ())
 		    {
-			aw->copyResetBB ();
+			aw->copyResetStepRegion ();
 
 			if (!curAnim->initialized () &&
 			    curAnim->shouldDamageWindowOnStart ())

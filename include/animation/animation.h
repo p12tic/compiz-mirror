@@ -304,6 +304,11 @@ public:
     /// any animation that doesn't update the whole screen.
     virtual void updateBB (CompOutput &) {}
     virtual bool updateBBUsed () { return false; }
+
+    /// Should return true for effects that make use of a region
+    /// instead of just a bounding box for damaged area.
+    virtual bool stepRegionUsed () { return false; }
+
     virtual bool shouldDamageWindowOnStart ();
     virtual void refresh () {}
     virtual bool moveUpdate ();
@@ -659,6 +664,10 @@ class AnimWindow :
 public:
     AnimWindow (CompWindow *);
     ~AnimWindow ();
+
+    BoxPtr BB ();
+    CompRegion &stepRegion ();
+    void resetStepRegionWithBB ();
 
     void expandBBWithWindow ();
     void expandBBWithScreen ();
