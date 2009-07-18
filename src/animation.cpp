@@ -1021,11 +1021,13 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
     if (!destructing)
     {
 	mIgnoreDamage = true;
-	while (mUnmapCnt)
+	while (mUnmapCnt > 0)
 	{
 	    mWindow->unmap ();
 	    mUnmapCnt--;
 	}
+	if (mUnmapCnt < 0)
+	    mUnmapCnt = 0;
 	mIgnoreDamage = false;
     }
 
@@ -1537,11 +1539,13 @@ PrivateAnimWindow::reverseAnimation ()
     mCurAnimation->reverse ();
 
     // Inflict the pending unmaps
-    while (mUnmapCnt)
+    while (mUnmapCnt > 0)
     {
 	mWindow->unmap ();
 	mUnmapCnt--;
     }
+    if (mUnmapCnt < 0)
+	mUnmapCnt = 0;
 }
 
 void
