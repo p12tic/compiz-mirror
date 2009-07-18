@@ -1040,7 +1040,6 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 
     foreach (ExtensionPluginInfo *extPlugin, mPAScreen->mExtensionPlugins)
 	extPlugin->cleanUpAnimation (closing, destructing);
-    //printf ("%lX Animation finished \n\n", (unsigned long)mWindow);
 }
 
 void
@@ -1152,8 +1151,6 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	    // handle clock rollback
 	    if (msSinceLastPaintActual < 0)
 		msSinceLastPaintActual = 0;
-
-	    //printf ("msSinceLastPaintActual: %d\n", msSinceLastPaintActual);
 	}
 	else
 	    msSinceLastPaintActual = 20; // assume 20 ms passed
@@ -1229,18 +1226,6 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 		else
 		    animStillInProgress = true;
 	    }
-
-	    /* TODO Check if still necessary
-	    if (aw->com.animRemainingTime <= 0)
-	    {
-		if (aw->curAnimation ||
-		    aw->mUnmapCnt > 0 || aw->mDestroyCnt > 0)
-		{
-		    postAnimationCleanUp (w);
-		}
-		aw->com.curWindowEvent = WindowEventNone;
-		aw->curAnimation = AnimEffectNone;
-	    }*/
 	}
 
 	foreach (CompWindow *w, ::screen->windows ())
@@ -1386,17 +1371,6 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     if (mCurAnimation)
     {
-	/* TODO check if this is necessary now
-	if (!as->animInProgress)
-	{
-	    // This window shouldn't really be undergoing animation,
-	    // because it won't make progress with false as->animInProgress.
-	    postAnimationCleanUp (w);
-
-	    status = gWindow->glPaint (attrib, transform, region, mask);
-	    return status;
-	}*/
-
 	foreach (ExtensionPluginInfo *extPlugin, mPAScreen->mExtensionPlugins)
 	{
 	    if (extPlugin->paintShouldSkipWindow (mWindow))
@@ -1574,13 +1548,6 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 	if (aw->curAnimation ())
 	    curWindowEvent = aw->curAnimation ()->curWindowEvent ();
 
-	/* TODO
-	if (aw->com.animRemainingTime > 0 &&
-	    aw->com.curWindowEvent != WindowEventOpen)
-	{
-	    tmpSteps = aw->com.animRemainingTime;
-	    aw->com.animRemainingTime = 0;
-	}*/
 	if (curWindowEvent != WindowEventNone)
 	{
 	    if (curWindowEvent == WindowEventOpen)
@@ -2102,13 +2069,6 @@ PrivateAnimWindow::resizeNotify (int dx,
 	    mPAScreen->updateAnimStillInProgress ();
 	}
     }
-    /* TODO check if still necessary
-    if (com.mModel)
-    {
-	modelInitObjects (com.mModel,
-			  WIN_X (window), WIN_Y (window),
-			  WIN_W (window), WIN_H (window));
-    }*/
 
     mWindow->resizeNotify (dx, dy, dwidth, dheight);
 }
