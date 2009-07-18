@@ -2661,6 +2661,7 @@ AnimScreen::AnimScreen (CompScreen *s) :
     PluginClassHandler<AnimScreen, CompScreen, ANIMATION_ABI> (s),
     priv (new PrivateAnimScreen (s, this))
 {
+    priv->initAnimationList ();
 }
 
 AnimScreen::~AnimScreen ()
