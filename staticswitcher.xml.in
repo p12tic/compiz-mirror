@@ -3,6 +3,9 @@
 	<_short>Static Application Switcher</_short>
 	<_long>Static Application Switcher</_long>
 	<deps>
+	    <requirement>
+		<plugin>opengl</plugin>
+	    </requirement>
 	    <relation type="after">
 		<plugin>fade</plugin>
 	    </relation>
@@ -11,7 +14,7 @@
 	    </relation>
 	</deps>
 	<category>Window Management</category>
-	<display>
+	<options>
 	    <group>
 		<_short>Bindings</_short>
 		<option name="next_button" type="button">
@@ -99,8 +102,7 @@
 		    <_long>Select previous panel type window.</_long>
 		</option>
 	    </group>
-	</display>
-	<screen>
+
 	    <group>
 		<_short>Behaviour</_short>
 		<option name="speed" type="float">
@@ -272,6 +274,6 @@
 		    </option>
 		</subgroup>
 	    </group>
-	</screen>
+	</options>
     </plugin>
 </compiz>

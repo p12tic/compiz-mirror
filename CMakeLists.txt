@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (staticswitcher)
+include (CompizPlugin)
+
+compiz_plugin (staticswitcher PLUGINDEPS composite opengl LIBRARIES ${COMPIZ_LIBDIR}/compiz/libcompiztoolbox.so)
