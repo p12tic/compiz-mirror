@@ -1,3 +1,6 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (bench)
+include (CompizPlugin)
+
+compiz_plugin (bench PLUGINDEPS composite opengl)
+
