@@ -86,49 +86,59 @@ WaveAnim::step ()
 				  mAWindow->savedOutExtents () :
 				  mWindow->output ());
 
-    float waveHalfWidth = (outRect.height () * mModel->scale ().y () *
+    int wx = winRect.x ();
+    int wy = winRect.y ();
+
+    int oy = outRect.y ();
+    int owidth = outRect.width ();
+    int oheight = outRect.height ();
+
+    float waveHalfWidth = (oheight * mModel->scale ().y () *
 			   optValF (AnimationOptions::WaveWidth) / 2);
 
-    float waveAmp = (pow ((float)outRect.height () / ::screen->height (), 0.4) *
+    float waveAmp = (pow ((float)oheight / ::screen->height (), 0.4) *
 		     0.04 * optValF (AnimationOptions::WaveAmpMult));
 
     float wavePosition =
-	outRect.y () - waveHalfWidth +
-	forwardProgress * (outRect.height () * mModel->scale ().y () +
-			   2 * waveHalfWidth);
+	oy - waveHalfWidth +
+	forwardProgress * (oheight * mModel->scale ().y () + 2 * waveHalfWidth);
 
     GridModel::GridObject *object = mModel->objects ();
-    for (int i = 0; i < mModel->numObjects (); i++, object++)
+    int n = mModel->numObjects ();
+    for (int i = 0; i < n; i++, object++)
     {
+	Point3d &objPos = object->position ();
+
 	if (i % 2 == 0) // object is at the left side
 	{
-	    float origy = winRect.y () + mModel->scale ().y () *
-		(outRect.height () * object->gridPosition ().y () -
+	    float origy = wy + mModel->scale ().y () *
+		(oheight * object->gridPosition ().y () -
 		 outExtents.top);
-	    object->position ().setY (origy);
+	    objPos.setY (origy);
 
 	    float distFromWaveCenter =
-		fabs (object->position ().y () - wavePosition);
+		fabs (objPos.y () - wavePosition);
 
 	    if (distFromWaveCenter < waveHalfWidth)
-		object->position ().
+		objPos.
 		    setZ (waveAmp * (cos (distFromWaveCenter *
 					  M_PI / waveHalfWidth) + 1) / 2);
 	    else
-		object->position ().setZ (0);
+		objPos.setZ (0);
 	}
 	else // object is at the right side
 	{
 	    // Set y/z position to the y/z position of the object at the left
 	    // on the same row (previous object)
-	    object->position ().setY ((object - 1)->position ().y ());
-	    object->position ().setZ ((object - 1)->position ().z ());
+	    Point3d &leftObjPos = (object - 1)->position ();
+	    objPos.setY (leftObjPos.y ());
+	    objPos.setZ (leftObjPos.z ());
 	}
 
-	float origx = winRect.x () + mModel->scale ().x () *
-	    (outRect.width () * object->gridPosition ().x () -
+	float origx = wx + mModel->scale ().x () *
+	    (owidth * object->gridPosition ().x () -
 	     outExtents.left);
-	object->position ().setX (origx);
+	objPos.setX (origx);
     }
 }
 

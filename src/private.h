@@ -267,7 +267,7 @@ public:
 
     void initAnimationList ();
     bool isAnimEffectPossible (AnimEffect theEffect);
-    CompOutput &output () { return *mOutput; }
+    inline CompOutput &output () { return *mOutput; }
     AnimEffect getActualEffect (AnimEffect effect,
 				AnimEvent animEvent);
     bool shouldIgnoreWindowForAnim (CompWindow *w, bool checkPixmap);
@@ -420,7 +420,7 @@ protected:
     void initGrid ();
     void step ();
     void updateBB (CompOutput &output);
-    bool stepRegionUsed () { return true; }
+    inline bool stepRegionUsed () { return true; }
     void adjustPointerIconSize ();
 
     virtual bool hasMovingEnd ();
@@ -451,7 +451,7 @@ protected:
 
     void initGrid ();
     void updateBB (CompOutput &output);
-    bool stepRegionUsed () { return false; }
+    inline bool stepRegionUsed () { return false; }
     void adjustPointerIconSize ();
 
     bool hasMovingEnd ();
@@ -472,9 +472,9 @@ protected:
 
     float getSpringiness ();
     bool isZoomFromCenter ();
-    bool hasExtraTransform () { return true; }
+    inline bool hasExtraTransform () { return true; }
     void applyExtraTransform (float progress);
-    bool shouldAvoidParallelogramLook () { return true; }
+    inline bool shouldAvoidParallelogramLook () { return true; }
 };
 
 class WaveAnim :
@@ -489,7 +489,7 @@ public:
 protected:
     void adjustDuration ();
     void initGrid ();
-    bool using3D () { return true; }
+    inline bool using3D () { return true; }
     void step ();
 
     static const float kMinDuration;
@@ -507,7 +507,7 @@ public:
 
 protected:
     void prePaintWindow ();
-    bool postPaintWindowUsed () { return true; }
+    inline bool postPaintWindowUsed () { return true; }
     void postPaintWindow ();
     void adjustDuration ();
     bool zoomToIcon ();
@@ -552,7 +552,7 @@ public:
     void cleanUp (bool closing,
 		  bool destructing);
     bool initiateRestackAnim (int duration);
-    bool moveUpdate () { return false; }
+    inline bool moveUpdate () { return false; }
     static bool onSameRestackChain (CompWindow *wSubject, CompWindow *wOther);
 
     /// Find union of restack chain (group)
@@ -591,7 +591,7 @@ public:
     ~RestackPersistentData ();
 
 protected:
-    RestackInfo *restackInfo () { return mRestackInfo; }
+    inline RestackInfo *restackInfo () { return mRestackInfo; }
     void resetRestackInfo (bool alsoResetChain = false);
     void setRestackInfo (CompWindow *wRestacked,
 			 CompWindow *wStart,
@@ -746,7 +746,7 @@ public:
 	      const AnimEffect info,
 	      const CompRect &icon);
 protected:
-    bool using3D () { return true; }
+    inline bool using3D () { return true; }
     float getFadeProgress ();
     void updateWindowAttrib (GLWindowPaintAttrib &attrib);
 };
@@ -763,6 +763,7 @@ public:
 protected:
     void initGrid ();
     void step ();
+    void updateBB (CompOutput &output);
     bool zoomToIcon ();
     float getObjectZ (GridAnim::GridModel *mModel,
 		      float forwardProgress,

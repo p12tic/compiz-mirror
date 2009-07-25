@@ -73,24 +73,32 @@ RollUpAnim::step ()
 		      mAWindow->savedOutRect () :
 		      mWindow->outputRect ());
 
+    int ox = outRect.x ();
+    int oy = outRect.y ();
+    int owidth = outRect.width ();
+    int oheight = outRect.height ();
+
     GridModel::GridObject *object = mModel->objects ();
-    for (int i = 0; i < mModel->numObjects (); i++, object++)
+    int n = mModel->numObjects ();
+    for (int i = 0; i < n; i++, object++)
     {
 	// Executing shade mode
 
+	Point3d &objPos = object->position ();
+
 	if (i % 2 == 0) // object is at the left side
 	{
-	    if (object->gridPosition ().y () == 0)
+	    float objGridY = object->gridPosition ().y ();
+
+	    if (objGridY == 0)
 	    {
-		object->position ().setY (outRect.y ());
+		objPos.setY (oy);
 	    }
-	    else if (object->gridPosition ().y () == 1)
+	    else if (objGridY == 1)
 	    {
-		object->position ().setY (
-		    (1 - forwardProgress) *
-		    (outRect.y () +
-		     outRect.height () * object->gridPosition ().y ()) +
-		    forwardProgress * (outRect.y () +
+		objPos.setY (
+		    (1 - forwardProgress) * (oy + oheight * objGridY) +
+		    forwardProgress * (oy +
 				       mDecorTopHeight + mDecorBottomHeight));
 	    }
 	    else
@@ -98,16 +106,14 @@ RollUpAnim::step ()
 		// find position in window contents
 		// (window contents correspond to 0.0-1.0 range)
 		float relPosInWinContents =
-		    (object->gridPosition ().y () * outRect.height () -
+		    (objGridY * oheight -
 		     mDecorTopHeight) / mWindow->height ();
 
 		if (relPosInWinContents > forwardProgress)
 		{
-		    object->position ().setY (
-			(1 - forwardProgress) *
-			(outRect.y () +
-			 outRect.height () * object->gridPosition ().y ()) +
-			forwardProgress * (outRect.y () + mDecorTopHeight));
+		    objPos.setY (
+			(1 - forwardProgress) * (oy + oheight * objGridY) +
+			forwardProgress * (oy + mDecorTopHeight));
 
 		    if (fixedInterior)
 			object->offsetTexCoordForQuadBefore ().
@@ -115,7 +121,7 @@ RollUpAnim::step ()
 		}
 		else
 		{
-		    object->position ().setY (outRect.y () + mDecorTopHeight);
+		    objPos.setY (oy + mDecorTopHeight);
 		    if (!fixedInterior)
 			object->offsetTexCoordForQuadAfter ().
 			    setY ((forwardProgress - relPosInWinContents) *
@@ -127,7 +133,7 @@ RollUpAnim::step ()
 	{
 	    // Set y position to the y position of the object at the left
 	    // on the same row (previous object)
-	    object->position ().setY ((object - 1)->position ().y ());
+	    objPos.setY ((object - 1)->position ().y ());
 
 	    // Also copy offset texture y coordinates
 	    object->offsetTexCoordForQuadBefore ().
@@ -136,9 +142,9 @@ RollUpAnim::step ()
 		setY ((object - 1)->offsetTexCoordForQuadAfter ().y ());
 	}
 
-	float origx = outRect.x () + outRect.width () * object->gridPosition ().x ();
+	float origx = ox + owidth * object->gridPosition ().x ();
 
-	object->position ().setX (origx);
+	objPos.setX (origx);
     }
 }
 

@@ -222,11 +222,10 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
     GLushort *i;
     GLfloat *v;
     int x1, y1, x2, y2;
-    float width, height;
     float winContentsY, winContentsHeight;
     float deformedX, deformedY;
     float deformedZ = 0;
-    int nVertX, nVertY, wx, wy;
+    int nVertX, nVertY;
     int vSize;
     float gridW, gridH;
     bool rect = true;
@@ -253,15 +252,15 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 				  mAWindow->savedOutExtents () :
 				  mWindow->output ());
 
-    // window (decorations + shadows) coordinates and size
-    wx = outRect.x ();
-    wy = outRect.y ();
-    width = outRect.width ();
-    height = outRect.height ();
+    // window output (contents + decorations + shadows) coordinates and size
+    int ox = outRect.x ();
+    int oy = outRect.y ();
+    int owidth = outRect.width ();
+    int oheight = outRect.height ();
 
     // to be used if event is shade/unshade
-    winContentsY = wy + outExtents.top;
-    winContentsHeight = height - outExtents.top - outExtents.bottom;
+    winContentsY = oy + outExtents.top;
+    winContentsHeight = oheight - outExtents.top - outExtents.bottom;
 
     geometry.texUnits = nMatrix;
 
@@ -288,7 +287,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	x2 = pClip.x2 ();
 	y2 = pClip.y2 ();
 
-	gridW = (float)width / (mGridWidth - 1);
+	gridW = (float)owidth / (mGridWidth - 1);
 
 	if (mCurWindowEvent == WindowEventShade ||
 	    mCurWindowEvent == WindowEventUnshade)
@@ -304,12 +303,12 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	    else			// in window contents (only in Y coords)
 	    {
 		float winContentsHeight =
-		    height - (mDecorTopHeight + mDecorBottomHeight);
+		    oheight - (mDecorTopHeight + mDecorBottomHeight);
 		gridH = winContentsHeight / (mGridHeight - 3);
 	    }
 	}
 	else
-	    gridH = (float)height / (mGridHeight - 1);
+	    gridH = (float)oheight / (mGridHeight - 1);
 
 	// nVertX, nVertY: number of vertices for this clip in x and y dimensions
 	// + 2 to avoid running short of vertices in some cases
@@ -354,6 +353,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	float rowTexCoordQ = 1;
 	float prevRowCellWidth = 0;	// this initial value won't be used
 	float rowCellWidth = 0;
+	int clipRowSize = nVertX * vSize;
 
 	// For each vertex
 	float y = y1;
@@ -373,7 +373,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	    {
 		if (y1 < winContentsY)	// if at top part
 		{
-		    topiyFloat = (y - outRect.y ()) / mDecorTopHeight;
+		    topiyFloat = (y - oy) / mDecorTopHeight;
 		    topiyFloat = MIN (topiyFloat, 0.999);	// avoid 1.0
 		    applyOffsets = false;
 		}
@@ -393,7 +393,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	    }
 	    else
 	    {
-		topiyFloat = (mGridHeight - 1) * (y - wy) / height;
+		topiyFloat = (mGridHeight - 1) * (y - oy) / oheight;
 	    }
 	    // topiy should be at most (mGridHeight - 2)
 	    int topiy = (int)(topiyFloat + 1e-4);
@@ -402,6 +402,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		topiy--;
 	    int bottomiy = topiy + 1;
 	    float iny = topiyFloat - topiy;
+	    float inyRest = 1 - iny;
 
 	    // End of calculations for y
 
@@ -413,7 +414,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
 		// find containing grid cell (leftix rightix) x (topiy bottomiy)
 		float leftixFloat =
-		    (mGridWidth - 1) * (x - wx) / width;
+		    (mGridWidth - 1) * (x - ox) / owidth;
 		int leftix = (int)(leftixFloat + 1e-4);
 
 		if (leftix == mGridWidth - 1)
@@ -430,35 +431,35 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		GridModel::GridObject *objToBottomRight =
 		    &(mModel->mObjects[bottomiy * mGridWidth + rightix]);
 
+		Point3d &objToTopLeftPos = objToTopLeft->mPosition;
+		Point3d &objToTopRightPos = objToTopRight->mPosition;
+		Point3d &objToBottomLeftPos = objToBottomLeft->mPosition;
+		Point3d &objToBottomRightPos = objToBottomRight->mPosition;
+
 		// find position in cell by taking remainder of flooring
 		float inx = leftixFloat - leftix;
+		float inxRest = 1 - inx;
 
 		// Interpolate to find deformed coordinates
 
-		float hor1x = (1 - inx) *
-		    objToTopLeft->mPosition.x () +
-		    inx * objToTopRight->mPosition.x ();
-		float hor1y = (1 - inx) *
-		    objToTopLeft->mPosition.y () +
-		    inx * objToTopRight->mPosition.y ();
-		float hor1z = notUsing3dCoords ? 0 :
-		    (1 - inx) *
-		    objToTopLeft->mPosition.z () +
-		    inx * objToTopRight->mPosition.z ();
-		float hor2x = (1 - inx) *
-		    objToBottomLeft->mPosition.x () +
-		    inx * objToBottomRight->mPosition.x ();
-		float hor2y = (1 - inx) *
-		    objToBottomLeft->mPosition.y () +
-		    inx * objToBottomRight->mPosition.y ();
-		float hor2z = notUsing3dCoords ? 0 :
-		    (1 - inx) *
-		    objToBottomLeft->mPosition.z () +
-		    inx * objToBottomRight->mPosition.z ();
+		float hor1x = (inxRest * objToTopLeftPos.x () +
+			       inx * objToTopRightPos.x ());
+		float hor1y = (inxRest * objToTopLeftPos.y () +
+			       inx * objToTopRightPos.y ());
+		float hor1z = (notUsing3dCoords ? 0 :
+			       inxRest * objToTopLeftPos.z () +
+			       inx * objToTopRightPos.z ());
+		float hor2x = (inxRest * objToBottomLeftPos.x () +
+			       inx * objToBottomRightPos.x ());
+		float hor2y = (inxRest * objToBottomLeftPos.y () +
+			       inx * objToBottomRightPos.y ());
+		float hor2z = (notUsing3dCoords ? 0 :
+			       inxRest * objToBottomLeftPos.z () +
+			       inx * objToBottomRightPos.z ());
 
-		deformedX = (1 - iny) * hor1x + iny * hor2x;
-		deformedY = (1 - iny) * hor1y + iny * hor2y;
-		deformedZ = (1 - iny) * hor1z + iny * hor2z;
+		deformedX = inyRest * hor1x + iny * hor2x;
+		deformedY = inyRest * hor1y + iny * hor2y;
+		deformedZ = inyRest * hor1z + iny * hor2z;
 
 		// Texture coordinates (s, t, r, q)
 
@@ -513,9 +514,8 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		    if (0 < jy && jy < nVertY - 1)
 		    {
 			// copy s, t, r to duplicate row
-			memcpy (v + nVertX * vSize, v,
-				3 * sizeof (GLfloat));
-			v[3 + nVertX * vSize] = 1; // q
+			memcpy (v + clipRowSize, v, 3 * sizeof (GLfloat));
+			v[3 + clipRowSize] = 1; // q
 		    }
 
 		    if (applyOffsets &&
@@ -559,12 +559,12 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
 		// Copy vertex coordinates to duplicate row
 		if (0 < jy && jy < nVertY - 1)
-		    memcpy (v + nVertX * vSize, v, 3 * sizeof (GLfloat));
+		    memcpy (v + clipRowSize, v, 3 * sizeof (GLfloat));
 
 		nVertices++;
 
 		// increment x properly (so that coordinates fall on grid intersections)
-		x = rightix * gridW + wx;
+		x = rightix * gridW + ox;
 
 		v += 3; // move on to next vertex
 	    }
@@ -573,7 +573,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
 	    if (0 < jy && jy < nVertY - 1)
 	    {
-		v += nVertX * vSize;	// skip the duplicate row
+		v += clipRowSize;	// skip the duplicate row
 		nVertices += nVertX;
 	    }
 	    // increment y properly (so that coordinates fall on grid intersections)
@@ -584,7 +584,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	    }
 	    else
 	    {
-		y = bottomiy * gridH + wy;
+		y = bottomiy * gridH + oy;
 	    }
 	}
     }
@@ -679,7 +679,8 @@ GridTransformAnim::updateBB (CompOutput &output)
     else
     {
 	GridModel::GridObject *object = mModel->objects ();
-	for (int i = 0; i < mModel->numObjects (); i++, object++)
+	int n = mModel->numObjects ();
+	for (int i = 0; i < n; i++, object++)
 	{
 	    GLVector coords (object->mPosition.x (),
 			     object->mPosition.y (), 0, 1);

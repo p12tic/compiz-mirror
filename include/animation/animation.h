@@ -268,7 +268,7 @@ public:
     // TODO make protected
     inline bool       optValB (int optionId) { return optVal (optionId).b (); }
 
-    AnimEffect info () { return mInfo; }
+    inline AnimEffect info () { return mInfo; }
 
     // Overridable animation methods.
 
@@ -344,7 +344,7 @@ public:
 				  GLMatrix &resultTransform,
 				  GLMatrix &transform);
     void setInitialized () { mInitialized = true; }
-    bool initialized () { return mInitialized; }
+    inline bool initialized () { return mInitialized; }
     inline void setCurPaintAttrib (GLFragment::Attrib &newAttrib)
     { mCurPaintAttrib = newAttrib; }
 };
@@ -681,11 +681,11 @@ public:
 					GridAnim::GridModel::GridObject *objects,
 					int            nPoints);
 
-    bool savedRectsValid () { return mSavedRectsValid; }
-    CompRect & saveWinRect () { return mSavedWinRect; }
-    CompRect & savedInRect () { return mSavedInRect; }
-    CompRect & savedOutRect () { return mSavedOutRect; }
-    CompWindowExtents & savedOutExtents () { return mSavedOutExtents; }
+    inline bool savedRectsValid () { return mSavedRectsValid; }
+    inline CompRect & saveWinRect () { return mSavedWinRect; }
+    inline CompRect & savedInRect () { return mSavedInRect; }
+    inline CompRect & savedOutRect () { return mSavedOutRect; }
+    inline CompWindowExtents & savedOutExtents () { return mSavedOutExtents; }
 
     Animation *curAnimation ();
     void createFocusAnimation (AnimEffect effect, int duration = 0);

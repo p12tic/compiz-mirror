@@ -95,34 +95,44 @@ DreamAnim::step ()
 				  mAWindow->savedOutExtents () :
 				  mWindow->output ());
 
-    float waveAmpMax = MIN (outRect.height (), outRect.width ()) * 0.125f;
+    int wx = winRect.x ();
+    int wy = winRect.y ();
+
+    int owidth = outRect.width ();
+    int oheight = outRect.height ();
+
+    float waveAmpMax = MIN (oheight, owidth) * 0.125f;
     float waveWidth = 10.0f;
     float waveSpeed = 7.0f;
 
     GridModel::GridObject *object = mModel->objects ();
-    for (int i = 0; i < mModel->numObjects (); i++, object++)
+    int n = mModel->numObjects ();
+    for (int i = 0; i < n; i++, object++)
     {
-    	if (i % 2 == 0) // object is at the left side
-    	{
-	    float origy = (winRect.y () +
-			   (outRect.height () * object->gridPosition ().y () -
-			    outExtents.top) * mModel->scale ().y ());
-	    object->position ().setY (origy);
+	Point3d &objPos = object->position ();
+	Point &objGridPos = object->gridPosition ();
+
+	if (i % 2 == 0) // object is at the left side
+	{
+	    float origy = (wy +
+			   (oheight * objGridPos.y () - outExtents.top) *
+			   mModel->scale ().y ());
+	    objPos.setY (origy);
 	}
 	else // object is at the right side
 	{
 	    // Set y position to the y position of the object at the left
 	    // on the same row (previous object)
-	    object->position ().setY ((object - 1)->position ().y ());
+	    objPos.setY ((object - 1)->position ().y ());
 	}
 
-	float origx = (winRect.x () +
-		       (outRect.width () * object->gridPosition ().x () -
+	float origx = (wx +
+		       (owidth * objGridPos.x () -
 			outExtents.left) * mModel->scale ().x ());
-	object->position ().setX (
+	objPos.setX (
 	    origx +
 	    forwardProgress * waveAmpMax * mModel->scale ().x () *
-	    sin (object->gridPosition ().y () * M_PI * waveWidth +
+	    sin (objGridPos.y () * M_PI * waveWidth +
 		waveSpeed * forwardProgress));
     }
 }

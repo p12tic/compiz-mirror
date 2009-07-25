@@ -289,87 +289,82 @@ MagicLampAnim::step ()
     GridModel::GridObject *object = mModel->objects ();
     for (int i = 0; i < n; i++, object++)
     {
+	Point3d &objPos = object->position ();
+	float objGridX = object->gridPosition ().x ();
+
 	if (i % 2 == 0) // object is at the left side
 	{
+	    float objGridY = object->gridPosition ().y ();
+
 	    float origY = (mWindow->y () +
-			   (winh * object->gridPosition ().y () -
-			    outExtents.top) *
+	    		   (winh * objGridY - outExtents.top) *
 			   mModel->scale ().y ());
-	    float iconY = (mIcon.y () +
-			   mIcon.height () * object->gridPosition ().y ());
+	    float iconY = (mIcon.y () + mIcon.height () * objGridY);
 
 	    float stretchedPos;
 	    if (mTargetTop)
-		stretchedPos =
-		    object->gridPosition ().y () * origY +
-		    (1 - object->gridPosition ().y ()) * iconY;
+		stretchedPos = objGridY * origY + (1 - objGridY) * iconY;
 	    else
-		stretchedPos =
-		    (1 - object->gridPosition ().y ()) * origY +
-		    object->gridPosition ().y () * iconY;
+		stretchedPos = (1 - objGridY) * origY + objGridY * iconY;
 
 	    // Compute current y position
 	    if (forwardProgress < preShapePhaseEnd)
 	    {
-		object->position ().setY ((1 - stretchProgress) * origY +
-					stretchProgress * stretchedPos);
+		objPos.setY ((1 - stretchProgress) * origY +
+			     stretchProgress * stretchedPos);
 	    }
 	    else
 	    {
 		if (forwardProgress < stretchPhaseEnd)
 		{
-		    object->position ().setY ((1 - stretchProgress) * origY +
-					      stretchProgress * stretchedPos);
+		    objPos.setY ((1 - stretchProgress) * origY +
+		    		 stretchProgress * stretchedPos);
 		}
 		else
 		{
-		    object->position ().setY ((1 - postStretchProgress) *
-					      stretchedPos +
-					      postStretchProgress *
-					      (stretchedPos +
-					       (iconCloseEndY - winFarEndY)));
+		    objPos.setY ((1 - postStretchProgress) * stretchedPos +
+		    		 postStretchProgress *
+		    		 (stretchedPos + (iconCloseEndY - winFarEndY)));
 		}
 	    }
 
 	    if (mTargetTop)
 	    {
 	    	// pick the first one that is below icon's bottom (close) edge
-		if (object->position ().y () > iconCloseEndY &&
+		if (objPos.y () > iconCloseEndY &&
 		    topmostMovingObjectIdx < 0)
 		    topmostMovingObjectIdx = i;
 
-		if (object->position ().y () < iconFarEndY)
-		    object->position ().setY (iconFarEndY);
+		if (objPos.y () < iconFarEndY)
+		    objPos.setY (iconFarEndY);
 	    }
 	    else
 	    {
 	    	// pick the first one that is below icon's top (close) edge
-		if (object->position ().y () > iconCloseEndY &&
+		if (objPos.y () > iconCloseEndY &&
 		    bottommostMovingObjectIdx < 0)
 		    bottommostMovingObjectIdx = i;
 
-		if (object->position ().y () > iconFarEndY)
-		    object->position ().setY (iconFarEndY);
+		if (objPos.y () > iconFarEndY)
+		    objPos.setY (iconFarEndY);
 	    }
 
-	    fx = ((iconCloseEndY - object->position ().y ()) /
+	    fx = ((iconCloseEndY - objPos.y ()) /
 	    	  (iconCloseEndY - winFarEndY));
 	}
 	else // object is at the right side
 	{
 	    // Set y position to the y position of the object at the left
 	    // on the same row (previous object)
-	    object->position ().setY ((object - 1)->position ().y ());
+	    objPos.setY ((object - 1)->position ().y ());
 	}
 
 	float origX = (mWindow->x () +
-		       (winw * object->gridPosition ().x () -
-			outExtents.left) *
+		       (winw * objGridX - outExtents.left) *
 		       mModel->scale ().x ());
 	float iconX =
 	    (mIcon.x () - iconShadowLeft) +
-	    (mIcon.width () + iconShadowLeft + iconShadowRight) *
-	    object->gridPosition ().x ();
+	    (mIcon.width () + iconShadowLeft + iconShadowRight) * objGridX;
 
 	// Compute "target shape" x position
 	float fy = ((sigmoid (fx) - sigmoid0) /
@@ -380,12 +375,12 @@ MagicLampAnim::step ()
 
 	// Compute current x position
 	if (forwardProgress < preShapePhaseEnd)
-	    object->position ().setX ((1 - preShapeProgress) * origX +
-				      preShapeProgress * targetX);
+	    objPos.setX ((1 - preShapeProgress) * origX +
+	    		 preShapeProgress * targetX);
 	else
-	    object->position ().setX (targetX);
+	    objPos.setX (targetX);
 
-	// No need to set object->position ().z () to 0, since they won't be used
+	// No need to set objPos.z () to 0, since they won't be used
 	// due to modelAnimIs3D being false for magic lamp.
     }
 
@@ -416,12 +411,15 @@ MagicLampAnim::step ()
 void
 MagicLampAnim::updateBB (CompOutput &output)
 {
+    // Just consider the corner objects
+
+    GridModel::GridObject *objects = mModel->objects ();
     unsigned int n = mModel->numObjects ();
     for (unsigned int i = 0; i < n; i++)
     {
-    	GridModel::GridObject &object = mModel->objects ()[i];
-	mAWindow->expandBBWithPoint (object.position ().x () + 0.5,
-				     object.position ().y () + 0.5);
+	Point3d &objPos = objects[i].position ();
+	mAWindow->expandBBWithPoint (objPos.x () + 0.5,
+				     objPos.y () + 0.5);
 
 	// skip to the last row after considering the first row
 	// (each row has 2 objects)
@@ -437,8 +435,8 @@ MagicLampAnim::updateBB (CompOutput &output)
     CompRegion &region = mAWindow->stepRegion ();
 
     // Left side
-    if (mModel->objects ()[0].position ().x () >
-    	mModel->objects ()[n-2].position ().x ())
+    if (objects[0].position ().x () >
+    	objects[n-2].position ().x ())
     {
     	// Top-left corner is empty
 
@@ -460,8 +458,8 @@ MagicLampAnim::updateBB (CompOutput &output)
     }
 
     // Right side
-    if (mModel->objects ()[1].position ().x () <
-    	mModel->objects ()[n-1].position ().x ())
+    if (objects[1].position ().x () <
+    	objects[n-1].position ().x ())
     {
     	// Top-right corner is empty
 

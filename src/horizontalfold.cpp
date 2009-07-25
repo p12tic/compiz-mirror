@@ -92,6 +92,14 @@ HorizontalFoldsAnim::step ()
     CompWindowExtents outExtents (mAWindow->savedRectsValid () ?
 				  mAWindow->savedOutExtents () :
 				  mWindow->output ());
+
+    int wx = winRect.x ();
+    int wy = winRect.y ();
+
+    int oy = outRect.y ();
+    int owidth = outRect.width ();
+    int oheight = outRect.height ();
+
     float winHeight = 0;
     if (mCurWindowEvent == WindowEventShade ||
 	mCurWindowEvent == WindowEventUnshade)
@@ -113,40 +121,45 @@ HorizontalFoldsAnim::step ()
     float sinForProg = sin (forwardProgress * M_PI / 2);
 
     GridModel::GridObject *object = mModel->objects ();
-    for (int i = 0; i < mModel->numObjects (); i++, object++)
+    int n = mModel->numObjects ();
+    for (int i = 0; i < n; i++, object++)
     {
+	Point3d &objPos = object->position ();
+
 	if (i % 2 == 0) // object is at the left side
 	{
+	    float objGridY = object->gridPosition ().y ();
+
 	    int rowNo = i / mGridWidth;
-	    float origy = (winRect.y () +
-			   (outRect.height () * object->gridPosition ().y () -
+	    float origy = (wy +
+			   (oheight * objGridY -
 			    outExtents.top) * mModel->scale ().y ());
 	    if (mCurWindowEvent == WindowEventShade ||
 		mCurWindowEvent == WindowEventUnshade)
 	    {
 		// Execute shade mode
 
-		if (object->gridPosition ().y () == 0)
+		if (objGridY == 0)
 		{
-		    object->position ().setY (outRect.y ());
-		    object->position ().setZ (0);
+		    objPos.setY (oy);
+		    objPos.setZ (0);
 		}
-		else if (object->gridPosition ().y () == 1)
+		else if (objGridY == 1)
 		{
-		    object->position ().setY (
+		    objPos.setY (
 			(1 - forwardProgress) * origy +
 			forwardProgress *
-			(outRect.y () + mDecorTopHeight + mDecorBottomHeight));
-		    object->position ().setZ (0);
+			(oy + mDecorTopHeight + mDecorBottomHeight));
+		    objPos.setZ (0);
 		}
 		else
 		{
 		    float relDistToFoldCenter = (rowNo % 2 == 1 ? 0.5 : 0);
 
-		    object->position ().setY (
+		    objPos.setY (
 			(1 - forwardProgress) * origy +
-			forwardProgress * (outRect.y () + mDecorTopHeight));
-		    object->position ().setZ (
+			forwardProgress * (oy + mDecorTopHeight));
+		    objPos.setZ (
 			getObjectZ (mModel, forwardProgress, sinForProg,
 				    relDistToFoldCenter, foldMaxAmp));
 		}
@@ -157,10 +170,10 @@ HorizontalFoldsAnim::step ()
 
 		float relDistToFoldCenter = (rowNo % 2 == 0 ? 0.5 : 0);
 
-		object->position ().setY (
+		objPos.setY (
 		    (1 - forwardProgress) * origy +
 		    forwardProgress * (inRect.y () + inRect.height () / 2.0));
-		object->position ().setZ (
+		objPos.setZ (
 			getObjectZ (mModel, forwardProgress, sinForProg,
 				    relDistToFoldCenter, foldMaxAmp));
 	    }
@@ -169,14 +182,15 @@ HorizontalFoldsAnim::step ()
 	{
 	    // Set y/z position to the y/z position of the object at the left
 	    // on the same row (previous object)
-	    object->position ().setY ((object - 1)->position ().y ());
-	    object->position ().setZ ((object - 1)->position ().z ());
+	    Point3d &leftObjPos = (object - 1)->position ();
+	    objPos.setY (leftObjPos.y ());
+	    objPos.setZ (leftObjPos.z ());
 	}
 
-	float origx = (winRect.x () +
-		       (outRect.width () * object->gridPosition ().x () -
+	float origx = (wx +
+		       (owidth * object->gridPosition ().x () -
 			outExtents.left) * mModel->scale ().x ());
-	object->position ().setX (origx);
+	objPos.setX (origx);
     }
 }
 

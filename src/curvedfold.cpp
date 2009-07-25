@@ -114,19 +114,32 @@ CurvedFoldAnim::step ()
 				  mAWindow->savedOutExtents () :
 				  mWindow->output ());
 
-    float curveMaxAmp = (0.4 * pow ((float)outRect.height () /
+    int wx = winRect.x ();
+    int wy = winRect.y ();
+    int wheight = winRect.height ();
+
+    int oy = outRect.y ();
+    int owidth = outRect.width ();
+    int oheight = outRect.height ();
+
+    float curveMaxAmp = (0.4 * pow ((float)oheight /
 				    ::screen->height (), 0.4) *
 			 optValF (AnimationOptions::CurvedFoldAmpMult));
 
     float sinForProg = sin (forwardProgress * M_PI / 2);
 
     GridModel::GridObject *object = mModel->objects ();
-    for (int i = 0; i < mModel->numObjects (); i++, object++)
+    int n = mModel->numObjects ();
+    for (int i = 0; i < n; i++, object++)
     {
+	Point3d &objPos = object->position ();
+
 	if (i % 2 == 0) // object is at the left side
 	{
-	    float origy = (winRect.y () +
-			   (outRect.height () * object->gridPosition ().y () -
+	    float objGridY = object->gridPosition ().y ();
+
+	    float origy = (wy +
+			   (oheight * objGridY -
 			    outExtents.top) * mModel->scale ().y ());
 
 	    if (mCurWindowEvent == WindowEventShade ||
@@ -137,29 +150,29 @@ CurvedFoldAnim::step ()
 		// find position in window contents
 		// (window contents correspond to 0.0-1.0 range)
 		float relPosInWinContents =
-		    (object->gridPosition ().y () * outRect.height () -
-		     mDecorTopHeight) / winRect.height ();
+		    (objGridY * oheight -
+		     mDecorTopHeight) / wheight;
 		float relDistToCenter = fabs (relPosInWinContents - 0.5);
 
-		if (object->gridPosition ().y () == 0)
+		if (objGridY == 0)
 		{
-		    object->position ().setY (outRect.y ());
-		    object->position ().setZ (0);
+		    objPos.setY (oy);
+		    objPos.setZ (0);
 		}
-		else if (object->gridPosition ().y () == 1)
+		else if (objGridY == 1)
 		{
-		    object->position ().setY (
+		    objPos.setY (
 			(1 - forwardProgress) * origy +
 			forwardProgress *
-			(outRect.y () + mDecorTopHeight + mDecorBottomHeight));
-		    object->position ().setZ (0);
+			(oy + mDecorTopHeight + mDecorBottomHeight));
+		    objPos.setZ (0);
 		}
 		else
 		{
-		    object->position ().setY (
+		    objPos.setY (
 			(1 - forwardProgress) * origy +
-			forwardProgress * (outRect.y () + mDecorTopHeight));
-		    object->position ().setZ (
+			forwardProgress * (oy + mDecorTopHeight));
+		    objPos.setZ (
 			getObjectZ (mModel, forwardProgress, sinForProg, relDistToCenter,
 				    curveMaxAmp));
 		}
@@ -171,18 +184,18 @@ CurvedFoldAnim::step ()
 		// find position within window borders
 		// (border contents correspond to 0.0-1.0 range)
 		float relPosInWinBorders =
-		    (object->gridPosition ().y () * outRect.height () -
-		     (inRect.y () - outRect.y ())) / inRect.height ();
+		    (objGridY * oheight -
+		     (inRect.y () - oy)) / inRect.height ();
 		float relDistToCenter = fabs (relPosInWinBorders - 0.5);
 
 		// prevent top & bottom shadows from extending too much
 		if (relDistToCenter > 0.5)
 		    relDistToCenter = 0.5;
 
-		object->position ().setY (
+		objPos.setY (
 		    (1 - forwardProgress) * origy +
 		    forwardProgress * (inRect.y () + inRect.height () / 2.0));
-		object->position ().setZ (
+		objPos.setZ (
 		    getObjectZ (mModel, forwardProgress, sinForProg, relDistToCenter,
 				curveMaxAmp));
 	    }
@@ -191,14 +204,43 @@ CurvedFoldAnim::step ()
 	{
 	    // Set y/z position to the y/z position of the object at the left
 	    // on the same row (previous object)
-	    object->position ().setY ((object - 1)->position ().y ());
-	    object->position ().setZ ((object - 1)->position ().z ());
+	    Point3d &leftObjPos = (object - 1)->position ();
+	    objPos.setY (leftObjPos.y ());
+	    objPos.setZ (leftObjPos.z ());
 	}
 
-	float origx = (winRect.x () +
-		       (outRect.width () * object->gridPosition ().x () -
+	float origx = (wx +
+		       (owidth * object->gridPosition ().x () -
 			outExtents.left) * mModel->scale ().x ());
-	object->position ().setX (origx);
+	objPos.setX (origx);
+    }
+}
+
+void
+CurvedFoldAnim::updateBB (CompOutput &output)
+{
+    if (optValF (AnimationOptions::CurvedFoldAmpMult) < 0) // if outward
+    {
+	GridZoomAnim::updateBB (output); // goes through all objects
+	return;
+    }
+
+    // Just consider the corner objects
+
+    GridModel::GridObject *objects = mModel->objects ();
+    unsigned int n = mModel->numObjects ();
+    for (unsigned int i = 0; i < n; i++)
+    {
+	Point3d &objPos = objects[i].position ();
+	mAWindow->expandBBWithPoint (objPos.x () + 0.5,
+				     objPos.y () + 0.5);
+
+	if (i == 1)
+	{
+	    // skip to the last row after considering the first row
+	    // (each row has 2 objects)
+	    i = n - 3;
+	}
     }
 }
 
