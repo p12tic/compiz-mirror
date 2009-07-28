@@ -1,1 +1,0 @@
-/usr/lib/ccache/c++  -fPIC -g  -shared -Wl,-soname,libautoresize.so -o libautoresize.so CMakeFiles/autoresize.dir/src/autoresize.cpp.o -L/opt/compiz/lib/compiz -lXdamage -lXcomposite -lX11-xcb -lXrandr -lXinerama -lSM -lxslt -lz -lm -lstartup-notification-1 -lXfixes -lX11 -lxcb -lICE -lxml2 -Wl,-rpath,/opt/compiz/lib/compiz 
