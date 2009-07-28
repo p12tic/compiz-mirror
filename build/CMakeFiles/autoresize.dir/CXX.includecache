@@ -1,0 +1,12 @@
+#IncludeRegexLine: ^[ 	]*#[ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/smspillaz/Source/compiz/dev/plugins/autoresize/src/autoresize.cpp
+snap.h
+/home/smspillaz/Source/compiz/dev/plugins/autoresize/src/snap.h
+
