@@ -73,7 +73,6 @@ class BenchScreen :
 	float  mFps;
 	float  mAlpha;
 
-	struct timeval mInitTime;
 	struct timeval mLastRedraw;
 
 	float mCtime;
@@ -84,7 +83,11 @@ class BenchScreen :
 
 	bool mActive;
 
+	CompositeFPSLimiterMode mOldLimiterMode;
+
 	bool initiate (CompOption::Vector &options);
+
+	void limiterModeChanged (CompOption *opt);
 
 	void preparePaint (int msSinceLastPaint);
 	void donePaint ();

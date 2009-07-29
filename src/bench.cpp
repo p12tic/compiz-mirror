@@ -62,7 +62,7 @@ BenchScreen::preparePaint (int msSinceLastPaint)
 	}
     }
 
-    cScreen->preparePaint ((mAlpha > 0.0) ? timediff : msSinceLastPaint);
+    cScreen->preparePaint (msSinceLastPaint);
 
     if (mActive)
 	mAlpha += timediff / 1000.0;
@@ -80,15 +80,6 @@ BenchScreen::donePaint ()
 	cScreen->damageScreen ();
 	glFlush();
 	XSync (::screen->dpy (), false);
-
-	if (optionGetDisableLimiter ())
-	{
-	    cScreen->setLastRedraw (mInitTime);
-	    cScreen->resetTimeMult ();
-	}
-
-	if (!mActive)
-	    cScreen->resetTimeMult ();
     }
 
     cScreen->donePaint ();
@@ -264,6 +255,14 @@ BenchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
     return status;
 }
 
+void
+BenchScreen::limiterModeChanged (CompOption *opt)
+{
+    if (mActive)
+	cScreen->setFPSLimiterMode ((CompositeFPSLimiterMode)
+				    opt->value ().i ());
+}
+
 BenchScreen::BenchScreen (CompScreen *screen) :
     PluginClassHandler<BenchScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
@@ -271,10 +270,15 @@ BenchScreen::BenchScreen (CompScreen *screen) :
     mAlpha (0),
     mCtime (0),
     mFrames (0),
-    mActive (false)
+    mActive (false),
+    mOldLimiterMode ((CompositeFPSLimiterMode)
+    		     BenchOptions::FpsLimiterModeDefaultLimiter)
 {
     optionSetInitiateKeyInitiate (boost::bind (&BenchScreen::initiate, this,
 					       _3));
+
+    optionSetFpsLimiterModeNotify
+	(boost::bind (&BenchScreen::limiterModeChanged, this, _1));
 
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen, false);
@@ -362,12 +366,17 @@ BenchScreen::BenchScreen (CompScreen *screen) :
     glEnd();
     glEndList();
 
-    gettimeofday (&mInitTime, 0);
     gettimeofday (&mLastRedraw, 0);
 }
 
 BenchScreen::~BenchScreen ()
 {
+    if (mActive)
+    {
+    	// Restore FPS limiter mode
+    	cScreen->setFPSLimiterMode (mOldLimiterMode);
+    }
+
     glDeleteLists (mDList, 2);
 
     glDeleteTextures (10, mNumTex);
@@ -386,6 +395,20 @@ BenchScreen::initiate (CompOption::Vector &options)
 
     if (xid != ::screen->root ())
 	return false;
+
+    if (mActive)
+    {
+    	// Store current FPS limiter mode
+    	mOldLimiterMode = cScreen->FPSLimiterMode ();
+
+    	cScreen->setFPSLimiterMode ((CompositeFPSLimiterMode)
+				    optionGetFpsLimiterMode ());
+    }
+    else
+    {
+    	// Restore FPS limiter mode
+    	cScreen->setFPSLimiterMode (mOldLimiterMode);
+    }
 
     cScreen->preparePaintSetEnabled (this, mActive);
     cScreen->donePaintSetEnabled (this, mActive);
