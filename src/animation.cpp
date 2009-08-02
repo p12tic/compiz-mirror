@@ -157,22 +157,24 @@ PrivateAnimScreen::updateEventEffects (AnimEvent e,
     EffectSet *effectSet;
     if (forRandom)
     {
-	listVal = &getOptions ()[randomEffectOptionIds[e]].value ().list ();
+	listVal = &getOptions ()[(unsigned)randomEffectOptionIds[e]].value ().
+	    list ();
 	effectSet = &mRandomEffects[e];
     }
     else
     {
-	listVal = &getOptions ()[chosenEffectOptionIds[e]].value ().list ();
+	listVal = &getOptions ()[(unsigned)chosenEffectOptionIds[e]].value ().
+	    list ();
 	effectSet = &mEventEffects[e];
     }
-    int n = listVal->size ();
+    unsigned int n = listVal->size ();
 
     effectSet->effects.clear ();
     effectSet->effects.reserve (n);
 
     AnimEffectVector &eventEffectsAllowed = mEventEffectsAllowed[e];
 
-    for (int r = 0; r < n; r++) // for each row
+    for (unsigned int r = 0; r < n; r++) // for each row
     {
 	const CompString &animName = (*listVal)[r].s ();
 
@@ -221,8 +223,8 @@ PrivateAnimScreen::isAnimEffectPossibleForEvent (AnimEffect theEffect,
 						 AnimEvent event)
 {
     // Check all rows to see if the effect is chosen there
-    int nRows = mEventEffects[event].effects.size ();
-    for (int i = 0; i < nRows; i++)
+    unsigned int nRows = mEventEffects[event].effects.size ();
+    for (unsigned int i = 0; i < nRows; i++)
     {
 	AnimEffect chosenEffect = mEventEffects[event].effects[i];
 	// if chosen directly
@@ -250,11 +252,12 @@ bool
 PrivateAnimScreen::isRestackAnimPossible ()
 {
     // Check all rows to see if the chosen effect is a restack animation
-    int nRows = mEventEffects[AnimEventFocus].effects.size ();
+    unsigned int nRows = mEventEffects[AnimEventFocus].effects.size ();
 
-    for (int i = 0; i < nRows; i++)
+    for (unsigned int i = 0; i < nRows; i++)
     {
-	AnimEffect chosenEffect = mEventEffects[AnimEventFocus].effects[i];
+	AnimEffect chosenEffect = mEventEffects[(unsigned)AnimEventFocus].
+	    effects[i];
 	if (chosenEffect->isRestackAnim)
 	    return true;
     }
@@ -358,7 +361,8 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 
     const char *firstEffectName = extensionPluginInfo->effects[0]->name;
     CompString pluginName (firstEffectName,
-			   strchr (firstEffectName, ':') - firstEffectName);
+			   (unsigned)(strchr (firstEffectName, ':') -
+			   	      firstEffectName));
 
     for (int e = 0; e < AnimEventNum; e++)
     {
@@ -448,7 +452,7 @@ Animation::~Animation ()
 }
 
 CompOption::Value &
-Animation::optVal (int optionId)
+Animation::optVal (unsigned int optionId)
 {
     return mAWindow->pluginOptVal (getExtensionPluginInfo (), optionId, this);
 }
@@ -519,10 +523,10 @@ PartialWindowAnim::PartialWindowAnim (CompWindow *w,
 }
 
 void
-PrivateAnimWindow::updateSelectionRow (int r)
+PrivateAnimWindow::updateSelectionRow (unsigned int r)
 {
     mPrevAnimSelectionRow = mCurAnimSelectionRow;
-    mCurAnimSelectionRow = r;
+    mCurAnimSelectionRow = (int)r;
 }
 
 // Assumes events in the metadata are in
@@ -538,11 +542,11 @@ PrivateAnimScreen::getMatchingAnimSelection (CompWindow *w,
 
     EffectSet *eventEffects = &mEventEffects[e];
     CompOption::Value &valMatch =
-	getOptions ()[matchOptionIds[e]].value ();
+	getOptions ()[(unsigned)matchOptionIds[e]].value ();
     CompOption::Value &valDuration =
-	getOptions ()[durationOptionIds[e]].value ();
+	getOptions ()[(unsigned)durationOptionIds[e]].value ();
     CompOption::Value &valCustomOptions =
-	getOptions ()[customOptionOptionIds[e]].value ();
+	getOptions ()[(unsigned)customOptionOptionIds[e]].value ();
 
     unsigned int nRows = valMatch.list ().size ();
     if (nRows != eventEffects->effects.size () ||
@@ -792,12 +796,12 @@ AnimWindow::expandBBWithPoints3DTransform (CompOutput     &output,
 					   GLMatrix       &transform,
 					   const float    *points,
 					   GridAnim::GridModel::GridObject *objects,
-					   int            nPoints)
+					   unsigned int   nPoints)
 {
     GLdouble dModel[16];
     GLdouble dProjection[16];
     GLdouble x, y, z;
-    for (int i = 0; i < 16; i++)
+    for (unsigned int i = 0; i < 16; i++)
     {
 	dModel[i] = transform[i];
 	dProjection[i] = GLScreen::get (::screen)->projectionMatrix ()[i];

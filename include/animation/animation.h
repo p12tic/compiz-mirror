@@ -245,12 +245,13 @@ protected:
 
     GLTexture::List *texturesCache;
 
-    CompOption::Value &optVal (int optionId);
+    CompOption::Value &optVal (unsigned int optionId);
 
-    inline int        optValI (int optionId) { return optVal (optionId).i (); }
-    inline float      optValF (int optionId) { return optVal (optionId).f (); }
-    inline CompString optValS (int optionId) { return optVal (optionId).s (); }
-    inline unsigned short *optValC (int optionId) { return optVal (optionId).c (); }
+    inline bool       optValB (unsigned int optionId) { return optVal (optionId).b (); }
+    inline int        optValI (unsigned int optionId) { return optVal (optionId).i (); }
+    inline float      optValF (unsigned int optionId) { return optVal (optionId).f (); }
+    inline CompString optValS (unsigned int optionId) { return optVal (optionId).s (); }
+    inline unsigned short *optValC (unsigned int optionId) { return optVal (optionId).c (); }
 
     /// Gets info about the (extension) plugin that implements this animation.
     /// Should be overriden by a base animation class in every extension plugin.
@@ -264,9 +265,6 @@ public:
 	       const AnimEffect info,
 	       const CompRect &icon);
     virtual ~Animation ();
-
-    // TODO make protected
-    inline bool       optValB (int optionId) { return optVal (optionId).b (); }
 
     inline AnimEffect info () { return mInfo; }
 
@@ -399,7 +397,7 @@ public:
 	};
 
 	inline GridObject *objects () { return mObjects; }
-	inline int numObjects () { return mNumObjects; }
+	inline unsigned int numObjects () { return mNumObjects; }
 	inline Point &scale () { return mScale; }
 
     private:
@@ -679,7 +677,7 @@ public:
 					GLMatrix       &transform,
 					const float    *points,
 					GridAnim::GridModel::GridObject *objects,
-					int            nPoints);
+					unsigned int   nPoints);
 
     inline bool savedRectsValid () { return mSavedRectsValid; }
     inline CompRect & saveWinRect () { return mSavedWinRect; }
@@ -710,7 +708,7 @@ private:
     CompWindowExtents mSavedOutExtents; ///< Saved window output extents
 
     CompOption::Value &pluginOptVal (ExtensionPluginInfo *pluginInfo,
-				     int optionId,
+				     unsigned int optionId,
 				     Animation *anim);
 };
 

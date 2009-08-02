@@ -62,7 +62,7 @@ GridAnim::GridModel::GridModel (CompWindow *w,
     mScale (1.0f, 1.0f),
     mScaleOrigin (0, 0)
 {
-    mNumObjects = gridWidth * gridHeight;
+    mNumObjects = (unsigned)(gridWidth * gridHeight);
     mObjects = new GridObject[mNumObjects];
 
     initObjects (curWindowEvent,
@@ -217,7 +217,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		       const CompRegion            &region,
 		       const CompRegion            &clip)
 {
-    int nMatrix = matrix.size ();
+    unsigned int nMatrix = matrix.size ();
     int nVertices, nIndices;
     GLushort *i;
     GLfloat *v;
@@ -236,7 +236,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
     GLWindow::Geometry &geometry = GLWindow::get (mWindow)->geometry ();
 
-    for (int it = 0; it < nMatrix; it++)
+    for (unsigned int it = 0; it < nMatrix; it++)
     {
 	if (matrix[it].xy != 0.0f || matrix[it].yx != 0.0f)
 	{
@@ -262,7 +262,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
     winContentsY = oy + outExtents.top;
     winContentsHeight = oheight - outExtents.top - outExtents.bottom;
 
-    geometry.texUnits = nMatrix;
+    geometry.texUnits = (int)nMatrix;
 
     if (geometry.vCount == 0)
     {
@@ -473,7 +473,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		    {
 			rowTexCoordQ = (rowCellWidth / prevRowCellWidth);
 
-			for (int it = 0; it < nMatrix; it++, v += 4)
+			for (unsigned int it = 0; it < nMatrix; it++, v += 4)
 			{
 			    // update first column
 			    // (since we didn't know rowTexCoordQ before)
@@ -487,7 +487,7 @@ GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 
 		// Loop for each texture element
 		// (4 texture coordinates for each one)
-		for (int it = 0; it < nMatrix; it++, v += 4)
+		for (unsigned int it = 0; it < nMatrix; it++, v += 4)
 		{
 		    float offsetY = 0;
 
@@ -602,7 +602,7 @@ GridAnim::drawGeometry ()
     int     stride = geometry.vertexStride;
     GLfloat *vertices = geometry.vertices + (stride - 3);
 
-    stride *= sizeof (GLfloat);
+    stride *= (int) sizeof (GLfloat);
 
     glVertexPointer (3, GL_FLOAT, stride, vertices);
 
@@ -610,7 +610,7 @@ GridAnim::drawGeometry ()
     {
 	if (texUnit != currentTexUnit)
 	{
-	    (*GL::clientActiveTexture) (GL_TEXTURE0_ARB + texUnit);
+	    (*GL::clientActiveTexture) ((GLenum)(GL_TEXTURE0_ARB + texUnit));
 	    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 	    currentTexUnit = texUnit;
 	}
@@ -628,7 +628,7 @@ GridAnim::drawGeometry ()
     {
 	while (--texUnit)
 	{
-	    (*GL::clientActiveTexture) (GL_TEXTURE0_ARB + texUnit);
+	    (*GL::clientActiveTexture) ((GLenum)(GL_TEXTURE0_ARB + texUnit));
 	    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 	}
 
@@ -679,8 +679,8 @@ GridTransformAnim::updateBB (CompOutput &output)
     else
     {
 	GridModel::GridObject *object = mModel->objects ();
-	int n = mModel->numObjects ();
-	for (int i = 0; i < n; i++, object++)
+	unsigned int n = mModel->numObjects ();
+	for (unsigned int i = 0; i < n; i++, object++)
 	{
 	    GLVector coords (object->mPosition.x (),
 			     object->mPosition.y (), 0, 1);

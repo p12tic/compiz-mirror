@@ -82,7 +82,7 @@ MagicLampWavyAnim::MagicLampWavyAnim (CompWindow *w,
     float waveAmpMin, waveAmpMax;
     float distance;
 
-    maxWaves = optValI (AnimationOptions::MagicLampWavyMaxWaves);
+    maxWaves = (unsigned) optValI (AnimationOptions::MagicLampWavyMaxWaves);
     waveAmpMin = optValF (AnimationOptions::MagicLampWavyAmpMin);
     waveAmpMax = optValF (AnimationOptions::MagicLampWavyAmpMax);
 
@@ -284,10 +284,10 @@ MagicLampAnim::step ()
     int topmostMovingObjectIdx = -1;
     int bottommostMovingObjectIdx = -1;
 
-    int n = mModel->numObjects ();
+    unsigned int n = mModel->numObjects ();
     float fx;
     GridModel::GridObject *object = mModel->objects ();
-    for (int i = 0; i < n; i++, object++)
+    for (unsigned int i = 0; i < n; i++, object++)
     {
 	Point3d &objPos = object->position ();
 	float objGridX = object->gridPosition ().x ();
@@ -333,7 +333,7 @@ MagicLampAnim::step ()
 	    	// pick the first one that is below icon's bottom (close) edge
 		if (objPos.y () > iconCloseEndY &&
 		    topmostMovingObjectIdx < 0)
-		    topmostMovingObjectIdx = i;
+		    topmostMovingObjectIdx = (int)i;
 
 		if (objPos.y () < iconFarEndY)
 		    objPos.setY (iconFarEndY);
@@ -343,7 +343,7 @@ MagicLampAnim::step ()
 	    	// pick the first one that is below icon's top (close) edge
 		if (objPos.y () > iconCloseEndY &&
 		    bottommostMovingObjectIdx < 0)
-		    bottommostMovingObjectIdx = i;
+		    bottommostMovingObjectIdx = (int)i;
 
 		if (objPos.y () > iconFarEndY)
 		    objPos.setY (iconFarEndY);
@@ -397,7 +397,7 @@ MagicLampAnim::step ()
 	if (topmostMovingObjectIdx < 0)
 	    topmostMovingObjectIdx = 0;
 	if (bottommostMovingObjectIdx < 0)
-	    bottommostMovingObjectIdx = n - 2;
+	    bottommostMovingObjectIdx = (int)n - 2;
 
 	int nRows = (bottommostMovingObjectIdx - topmostMovingObjectIdx) / 2;
 	int firstMovingRow = topmostMovingObjectIdx / 2;

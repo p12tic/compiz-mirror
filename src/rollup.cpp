@@ -79,8 +79,8 @@ RollUpAnim::step ()
     int oheight = outRect.height ();
 
     GridModel::GridObject *object = mModel->objects ();
-    int n = mModel->numObjects ();
-    for (int i = 0; i < n; i++, object++)
+    unsigned int n = mModel->numObjects ();
+    for (unsigned int i = 0; i < n; i++, object++)
     {
 	// Executing shade mode
 

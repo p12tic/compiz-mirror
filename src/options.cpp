@@ -84,7 +84,7 @@ IdValuePair::matchesPluginOption (ExtensionPluginInfo *testPluginInfo,
 
 CompOption::Value &
 AnimWindow::pluginOptVal (ExtensionPluginInfo *pluginInfo,
-			  int optionId,
+			  unsigned int optionId,
 			  Animation *anim)
 {
     PrivateAnimWindow *aw = priv;
@@ -109,14 +109,14 @@ PrivateAnimScreen::getOptionSetForSelectedRow (PrivateAnimWindow *aw,
 {
     return (&mEventOptionSets[win2AnimEventMap
 	    [anim->curWindowEvent ()]].
-	    sets[aw->curAnimSelectionRow ()]);
+	    sets[(unsigned) aw->curAnimSelectionRow ()]);
 }
 
 void
 PrivateAnimScreen::updateOptionSet (OptionSet *os,
 				    const char *optNamesValuesOrig)
 {
-    int len = strlen (optNamesValuesOrig);
+    unsigned int len = strlen (optNamesValuesOrig);
     char *optNamesValues = (char *)calloc (len + 1, 1);
 
     // Find the first substring with no spaces in it
@@ -137,7 +137,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 
     // Count number of pairs
     char *pairToken = (char *)optNamesValuesOrig; // TODO do with CompString
-    int nPairs = 1;
+    unsigned int nPairs = 1;
 
     while ((pairToken = strchr (pairToken, betweenPairs[0])))
     {
@@ -152,7 +152,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
     name = strtok (optNamesValues, betweenOptVal);
 
     int errorNo = -1;
-    int i;
+    unsigned int i;
     for (i = 0; name && i < nPairs; i++)
     {
 	errorNo = 0;
@@ -184,11 +184,11 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 	int optId = -1;
 	foreach (ExtensionPluginInfo *extensionPlugin, mExtensionPlugins)
 	{
-	    int nOptions = extensionPlugin->effectOptions->size ();
-	    for (optId = extensionPlugin->firstEffectOptionIndex;
-		 optId < nOptions; optId++)
+	    unsigned int nOptions = extensionPlugin->effectOptions->size ();
+	    for (optId = (int)extensionPlugin->firstEffectOptionIndex;
+		 optId < (int)nOptions; optId++)
 	    {
-		o = &(*extensionPlugin->effectOptions)[optId];
+		o = &(*extensionPlugin->effectOptions)[(unsigned)optId];
 
 		if (strcasecmp (nameTrimmed, o->name ().c_str ()) == 0)
 		{
@@ -341,13 +341,13 @@ PrivateAnimScreen::updateOptionSets (AnimEvent e)
 {
     OptionSets *oss = &mEventOptionSets[e];
     CompOption::Value::Vector *listVal =
-	&getOptions ()[customOptionOptionIds[e]].value ().list ();
-    int n = listVal->size ();
+	&getOptions ()[(unsigned) customOptionOptionIds[e]].value ().list ();
+    unsigned int n = listVal->size ();
 
     oss->sets.clear ();
     oss->sets.reserve (n);
 
-    for (int i = 0; i < n; i++)
+    for (unsigned int i = 0; i < n; i++)
     {
 	oss->sets.push_back (OptionSet ());
 	updateOptionSet (&oss->sets[i], (*listVal)[i].s ().c_str ());

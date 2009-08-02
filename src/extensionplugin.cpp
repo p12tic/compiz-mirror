@@ -372,12 +372,12 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 	    {
 		if (changeStart < 0)
 		{
-		    changeStart = i;
+		    changeStart = (int)i;
 		    wChangeStart = wi; // make use of already found w
 		}
 		else
 		{
-		    changeEnd = i;
+		    changeEnd = (int)i;
 		    wChangeEnd = wi;
 		}
 	    }
@@ -394,8 +394,10 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 	    bool onlyTwo = false;
 
 	    if (wChangeEnd &&
-		clients[changeEnd] == mLastClientList[changeStart] &&
-		clients[changeStart] == mLastClientList[changeEnd])
+		clients[(unsigned)changeEnd] ==
+		mLastClientList[(unsigned)changeStart] &&
+		clients[(unsigned)changeStart] ==
+		mLastClientList[(unsigned)changeEnd])
 	    {
 		// Check if the window coming on top was
 		// mConfigureNotified (clicked on)
@@ -419,7 +421,8 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 
 	    if (preferRaised ||
 		(!onlyTwo &&
-		 clients[changeEnd] == mLastClientList[changeStart]))
+		 clients[(unsigned)changeEnd] ==
+		 mLastClientList[(unsigned)changeStart]))
 	    {
 		// raised
 		raised = true;
@@ -428,8 +431,8 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 		wEnd = wRestacked;
 		wOldAbove = wStart;
 	    }
-	    else if (clients[changeStart] ==
-		     mLastClientList[changeEnd] && // lowered
+	    else if (clients[(unsigned)changeStart] ==
+		     mLastClientList[(unsigned)changeEnd] && // lowered
 		     // We don't animate lowering if there is no
 		     // window above this window, since this window needs
 		     // to be drawn on such a "host" in animPaintWindow
@@ -439,7 +442,7 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 		wRestacked = wChangeStart;
 		wStart = wRestacked;
 		wEnd = wChangeEnd;
-		wOldAbove = mLastClientList[changeEnd + 1];
+		wOldAbove = mLastClientList[(unsigned)(changeEnd + 1)];
 	    }
 	    for (; wOldAbove; wOldAbove = wOldAbove->next)
 	    {

@@ -361,7 +361,7 @@ private:
 
     // Utility methods
     unsigned int getState ();
-    void updateSelectionRow (int i);
+    void updateSelectionRow (unsigned int i);
     void postAnimationCleanUpPrev (bool closing, bool clearMatchingRow);
     void postAnimationCleanUpCustom (bool closing,
 				     bool destructing,
@@ -609,7 +609,7 @@ protected:
     bool mConfigureNotified;     ///< was mConfigureNotified before restack check
     CompWindow *mWinPassingThrough; ///< win. passing through this one during focus effect
     bool mWalkerOverNewCopy;  ///< whether walker is on the copy at the new pos.
-    unsigned int mVisitCount; ///< how many times walker/glPaint has visited this window
+    int mVisitCount; ///< how many times walker/glPaint has visited this window
     bool mIsSecondary; ///< whether this is one of the secondary (non-topmost) in its restack chain
 };
 

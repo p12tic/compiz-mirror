@@ -121,8 +121,8 @@ HorizontalFoldsAnim::step ()
     float sinForProg = sin (forwardProgress * M_PI / 2);
 
     GridModel::GridObject *object = mModel->objects ();
-    int n = mModel->numObjects ();
-    for (int i = 0; i < n; i++, object++)
+    unsigned int n = mModel->numObjects ();
+    for (unsigned int i = 0; i < n; i++, object++)
     {
 	Point3d &objPos = object->position ();
 
@@ -130,7 +130,7 @@ HorizontalFoldsAnim::step ()
 	{
 	    float objGridY = object->gridPosition ().y ();
 
-	    int rowNo = i / mGridWidth;
+	    int rowNo = (int)i / mGridWidth;
 	    float origy = (wy +
 			   (oheight * objGridY -
 			    outExtents.top) * mModel->scale ().y ());
