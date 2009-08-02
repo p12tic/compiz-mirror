@@ -12,7 +12,7 @@
 	<plugin>regex</plugin>
       </requirement>
       <relation type="after">
-	<plugin>decoration</plugin>
+	<plugin>decor</plugin>
 	<plugin>composite</plugin>
 	<plugin>opengl</plugin>
 	<plugin>regex</plugin>
