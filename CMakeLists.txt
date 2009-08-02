@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (mag PLUGINDEPS mousepoll)
+include (CompizPlugin)
+
+compiz_plugin (mag PLUGINDEPS composite opengl mousepoll)
