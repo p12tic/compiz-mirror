@@ -612,8 +612,11 @@ WidgetScreen::donePaint ()
 	    cScreen->damageScreen ();
 	else
 	{
-	    screen->removeGrab (grabIndex, NULL);
-	    grabIndex = 0;
+	    if (grabIndex)
+	    {
+		screen->removeGrab (grabIndex, NULL);
+		grabIndex = 0;
+	    }
 
 	    if (state == StateFadeIn)
 		state = StateOn;
