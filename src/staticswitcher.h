@@ -80,7 +80,7 @@ class StaticSwitchScreen :
 	void handleEvent (XEvent *event);
 	bool adjustVelocity ();
 	void paintRect (CompRect &box,
-			unsigned int offset,
+			int offset,
 			unsigned short *color,
 			int opacity);
 	void paintSelectionRect (int          x,
@@ -95,10 +95,10 @@ class StaticSwitchScreen :
 
 	Window clientLeader;
 
-	unsigned int previewWidth;
-	unsigned int previewHeight;
-	unsigned int previewBorder;
-	unsigned int xCount;
+	int previewWidth;
+	int previewHeight;
+	int previewBorder;
+	int xCount;
 
 	Bool switching;
 

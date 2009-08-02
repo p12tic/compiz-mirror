@@ -30,13 +30,13 @@ COMPIZ_PLUGIN_20090315 (staticswitcher, StaticSwitchPluginVTable)
 void
 StaticSwitchScreen::updatePopupWindow (int count)
 {
-    unsigned int winWidth, winHeight;
-    unsigned int newXCount, newYCount;
-    float        aspect;
-    double       dCount = count;
-    unsigned int w = PREVIEWSIZE, h = PREVIEWSIZE, b = BORDER;
-    XSizeHints xsh;
-    int x, y;
+    int    newXCount, newYCount;
+    int    winWidth, winHeight;
+    float  aspect;
+    double dCount = count;
+    int    w = PREVIEWSIZE, h = PREVIEWSIZE, b = BORDER;
+    int    x, y;
+    XSizeHints   xsh;
 
     /* maximum window size is 2/3 of the current output */
     winWidth  = ::screen->currentOutputDev ().width () * 2 / 3;
@@ -65,12 +65,12 @@ StaticSwitchScreen::updatePopupWindow (int count)
 	b = b * 9 / 10;
     }
 
-    winWidth = MIN (count, (int)newXCount);
+    winWidth = MIN (count, newXCount);
     winHeight = (count + newXCount - 1) / newXCount;
 
     winWidth = winWidth * w + (winWidth + 1) * b;
     winHeight = winHeight * h + (winHeight + 1) * b;
-    xCount = MIN ((int)newXCount, count);
+    xCount = MIN (newXCount, count);
 
     previewWidth = w;
     previewHeight = h;
@@ -98,7 +98,7 @@ StaticSwitchScreen::updatePopupWindow (int count)
     else
 	XMoveResizeWindow (::screen->dpy (), popupWindow,
 			   x - winWidth / 2, y - winHeight / 2,
-			   winWidth, winHeight);
+			   (unsigned)winWidth, (unsigned)winHeight);
 }
 
 void
@@ -389,11 +389,12 @@ switchTerminate (CompAction         *action,
 {
     Window     xid;
 
-    xid = CompOption::getIntOptionNamed (options, "root");
+    xid = (Window) CompOption::getIntOptionNamed (options, "root");
 
     if (action)
-	action->setState (action->state () & ~(CompAction::StateTermKey |
-					       CompAction::StateTermButton));
+	action->setState (action->state () &
+			  (unsigned)~(CompAction::StateTermKey |
+			  	      CompAction::StateTermButton));
 
     if (xid && xid != ::screen->root ())
 	return false;
@@ -461,7 +462,7 @@ switchInitiateCommon (CompAction            *action,
 {
     Window     xid;
 
-    xid = CompOption::getIntOptionNamed (options, "root");
+    xid = (Window) CompOption::getIntOptionNamed (options, "root");
 
     if (xid != ::screen->root ())
 	return false;
@@ -475,7 +476,7 @@ switchInitiateCommon (CompAction            *action,
 	    CompWindow *w;
 	    Window     xid;
 
-	    xid = CompOption::getIntOptionNamed (options, "window");
+	    xid = (Window) CompOption::getIntOptionNamed (options, "window");
 	    w = ::screen->findWindow (xid);
 	    if (w)
 		ss->clientLeader = (w->clientLeader ()) ?
@@ -615,18 +616,18 @@ StaticSwitchScreen::getRowXOffset (int y)
 {
     int retval = 0;
 
-    if (windows.size () - (y * xCount) >= xCount)
+    if ((int)windows.size () - (y * (int)xCount) >= (int)xCount)
 	return 0;
 
     switch (optionGetRowAlign ()) {
     case RowAlignLeft:
 	break;
     case RowAlignCentered:
-	retval = (xCount - windows.size () + (y * xCount)) *
+	retval = (xCount - (int)windows.size () + (y * (int)xCount)) *
 	         (previewWidth + previewBorder) / 2;
 	break;
     case RowAlignRight:
-	retval = (xCount - windows.size () + (y * xCount)) *
+	retval = (xCount - (int)windows.size () + (y * (int)xCount)) *
 	         (previewWidth + previewBorder);
 	break;
     }
@@ -644,8 +645,8 @@ StaticSwitchScreen::getWindowPosition (unsigned int index,
     if (index >= windows.size ())
 	return;
 
-    column = index % xCount;
-    row    = index / xCount;
+    column = (int)index % xCount;
+    row    = (int)index / xCount;
 
     *x = column * previewWidth + (column + 1) * previewBorder;
     *x += getRowXOffset (row);
@@ -662,7 +663,7 @@ StaticSwitchScreen::findWindowAt (int x,
     popup = ::screen->findWindow (popupWindow);
     if (popup)
     {
-	int i = 0;
+	unsigned int i = 0;
 	foreach (CompWindow *w, windows)
 	{
 	    int x1, x2, y1, y2;
@@ -779,7 +780,7 @@ StaticSwitchScreen::preparePaint (int msSinceLastPaint)
 
 void
 StaticSwitchScreen::paintRect (CompRect &box,
-			       unsigned int offset,
+			       int offset,
 			       unsigned short *color,
 			       int opacity)
 {
@@ -965,9 +966,8 @@ StaticSwitchScreen::paintSelectionRect (int          x,
 					float        dy,
 					unsigned int opacity)
 {
-    int            i;
-    float          color[4], op;
-    unsigned int   w, h;
+    float color[4], op;
+    int   w, h;
 
     w = previewWidth + previewBorder;
     h = previewHeight + previewBorder;
@@ -983,7 +983,7 @@ StaticSwitchScreen::paintSelectionRect (int          x,
     else
 	op = 1.0;
 
-    for (i = 0; i < 4; i++)
+    for (unsigned int i = 0; i < 4; i++)
 	color[i] = (float)fgColor[i] * opacity * op / 0xffffffff;
 
     glColor4fv (color);
@@ -1135,7 +1135,7 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
     if (window->id () == sScreen->popupWindow)
     {
 	GLenum         filter;
-	int            x, y, offX, i;
+	int            x, y, offX;
 	float          px, py, pos;
 
 	CompWindow::Geometry &g = window->geometry ();
@@ -1159,7 +1159,7 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	glEnable (GL_SCISSOR_TEST);
 	glScissor (g.x (), 0, g.width (), ::screen->height ());
 
-	i = 0;
+	unsigned int i = 0;
 	foreach (CompWindow *w, sScreen->windows)
 	{
 	    sScreen->getWindowPosition (i, &x, &y);
@@ -1216,18 +1216,18 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	GLWindowPaintAttrib sAttrib (attrib);
 	GLuint              value;
 
-	value = sScreen->optionGetSaturation ();
+	value = (GLuint) sScreen->optionGetSaturation ();
 	if (value != 100)
 	    sAttrib.saturation = sAttrib.saturation * value / 100;
 
-	value = sScreen->optionGetBrightness ();
+	value = (GLuint) sScreen->optionGetBrightness ();
 	if (value != 100)
 	    sAttrib.brightness = sAttrib.brightness * value / 100;
 
-	if (window->wmType () & ~(CompWindowTypeDockMask |
-				  CompWindowTypeDesktopMask))
+	if (window->wmType () & (unsigned)~(CompWindowTypeDockMask |
+					    CompWindowTypeDesktopMask))
 	{
-	    value = sScreen->optionGetOpacity ();
+	    value = (GLuint) sScreen->optionGetOpacity ();
 	    if (value != 100)
 		sAttrib.opacity = sAttrib.opacity * value / 100;
 	}
