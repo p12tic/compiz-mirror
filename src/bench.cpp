@@ -391,7 +391,7 @@ BenchScreen::initiate (CompOption::Vector &options)
 
     Window     xid;
 
-    xid = CompOption::getIntOptionNamed (options, "root");
+    xid = (Window) CompOption::getIntOptionNamed (options, "root");
 
     if (xid != ::screen->root ())
 	return false;
