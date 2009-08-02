@@ -34,7 +34,7 @@ rgbToBGRA (const JSAMPLE *source,
     int  height = size.height ();
     int  width = size.width ();
 
-    dest = (char *) malloc (height * width * 4);
+    dest = (char *) malloc ((unsigned)(height * width * 4));
     if (!dest)
 	return false;
 
@@ -50,9 +50,9 @@ rgbToBGRA (const JSAMPLE *source,
 	    dest[(pos * 4) + 1] = source[(pos * 3) + 0];    /* red */
 	    dest[(pos * 4) + 0] = alpha;
 #else
-	    dest[(pos * 4) + 0] = source[(pos * 3) + 2];    /* blue */
-	    dest[(pos * 4) + 1] = source[(pos * 3) + 1];    /* green */
-	    dest[(pos * 4) + 2] = source[(pos * 3) + 0];    /* red */
+	    dest[(pos * 4) + 0] = (char)source[(pos * 3) + 2];    /* blue */
+	    dest[(pos * 4) + 1] = (char)source[(pos * 3) + 1];    /* green */
+	    dest[(pos * 4) + 2] = (char)source[(pos * 3) + 0];    /* red */
 	    dest[(pos * 4) + 3] = alpha;
 #endif
 	}
@@ -72,7 +72,8 @@ rgbaToRGB (unsigned char *source,
     int     ps = stride / width;	/* pixel size */
     JSAMPLE *d;
 
-    d = (JSAMPLE *) malloc (height * width * 3 * sizeof (JSAMPLE));
+    d = (JSAMPLE *) malloc ((unsigned)height * (unsigned)width * 3 *
+			    sizeof (JSAMPLE));
     if (!d)
 	return false;
 
@@ -145,11 +146,12 @@ JpegScreen::readJPEG (FILE     *file,
 
     jpeg_start_decompress (&cinfo);
 
-    size.setHeight (cinfo.output_height);
-    size.setWidth (cinfo.output_width);
+    size.setHeight ((int)cinfo.output_height);
+    size.setWidth ((int)cinfo.output_width);
 
     buf = (JSAMPLE *) calloc (cinfo.output_height * cinfo.output_width *
-    			      cinfo.output_components, sizeof (JSAMPLE));
+			      (unsigned)cinfo.output_components,
+			      sizeof (JSAMPLE));
     if (!buf)
     {
 	jpeg_finish_decompress (&cinfo);
@@ -167,7 +169,8 @@ JpegScreen::readJPEG (FILE     *file,
     }
 
     for (unsigned int i = 0; i < cinfo.output_height; i++)
-	rows[i] = &buf[i * cinfo.output_width * cinfo.output_components];
+	rows[i] = &buf[i * cinfo.output_width *
+		       (unsigned)cinfo.output_components];
 
     while (cinfo.output_scanline < cinfo.output_height)
 	jpeg_read_scanlines (&cinfo, &rows[cinfo.output_scanline],
@@ -204,8 +207,8 @@ JpegScreen::writeJPEG (unsigned char *buffer,
 
     jpeg_stdio_dest (&cinfo, file);
 
-    cinfo.image_width      = size.width ();
-    cinfo.image_height     = size.height ();
+    cinfo.image_width      = (unsigned) size.width ();
+    cinfo.image_height     = (unsigned) size.height ();
     cinfo.input_components = 3;
     cinfo.in_color_space   = JCS_RGB;
 
@@ -217,7 +220,7 @@ JpegScreen::writeJPEG (unsigned char *buffer,
     {
 	row_pointer[0] =
 	    &data[(cinfo.image_height - cinfo.next_scanline - 1) *
-		  size.width () * 3];
+		  (unsigned) size.width () * 3];
 	jpeg_write_scanlines (&cinfo, row_pointer, 1);
     }
 
