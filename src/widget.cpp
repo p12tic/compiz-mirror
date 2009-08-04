@@ -41,38 +41,13 @@ class WidgetExp :
 	bool evaluate (CompWindow *w);
 
 	bool value;
-}
+};
 
-#warning : * [FIXME] Find reason for compile error on COMPIZ_PLUGIN_20090315 (widget, WidgetPluginVTable);
-
-/* For some reason COMPIZ_PLUGIN_20090315 (widget, WidgetPluginVTable)
-   compiles with errors:
-	error: expected initializer before ‘*’ token
-	error: ‘widgetVTable’ was not declared in this scope
-   This is a simple work-a-round for that until it can be solved */
-
-CompPlugin::VTable * widgetVTable = NULL;                             
-extern "C" {                                                          
-CompPlugin::VTable * getCompPluginVTable20090315_widget ()        
-{                                                                 
-    if (!widgetVTable)                                            
-    {                                                             
-        widgetVTable = new WidgetPluginVTable ();                          
-        widgetVTable->initVTable (TOSTRING (name), &widgetVTable);
-        return widgetVTable;                                      
-    }                                                             
-    else                                                          
-        return widgetVTable;                                      
-}                                                                 
-}
-
-//COMPIZ_PLUGIN_20090315 (widget, WidgetPluginVTable);
+COMPIZ_PLUGIN_20090315 (widget, WidgetPluginVTable);
 
 void
 WidgetWindow::updateTreeStatus ()
 {
-    WIDGET_SCREEN (screen);
-
     /* first clear out every reference to our window */
     foreach (CompWindow *win, screen->windows ())
     {
@@ -98,7 +73,6 @@ WidgetWindow::updateTreeStatus ()
 
 	if ((clientLeader == window->clientLeader ()) && (window->id () != win->id ()))
 	{
-	    WIDGET_SCREEN (screen);
 	    WIDGET_WINDOW (win);
 	    ww->parentWidget = window;
 	}
@@ -253,7 +227,7 @@ WidgetExp::evaluate (CompWindow *w)
 {
     WIDGET_WINDOW (w);
 
-    return (value && ww->isWidget || !value && !ww->isWidget);
+    return ((value && ww->isWidget) || (!value && !ww->isWidget));
 }
 
 CompMatch::Expression *
@@ -334,7 +308,6 @@ WidgetScreen::endWidgetMode (CompWindow *closedWidget)
 
     if (closedWidget)
     {
-	CompWindow *w;
 	/* end widget mode if the closed widget was the last one */
 
 	WIDGET_WINDOW (closedWidget);
@@ -405,7 +378,6 @@ WidgetScreen::handleEvent (XEvent      *event)
 	/* terminate widget mode if a non-widget window was clicked */
 	if (optionGetEndOnClick ())
 	{
-	    WIDGET_SCREEN (screen);
 	    if (state == StateOn)
 	    {
 		w = screen->findWindow (event->xbutton.window);
@@ -709,8 +681,8 @@ WidgetScreen::~WidgetScreen ()
 
 WidgetWindow::WidgetWindow (CompWindow *window) :
     PluginClassHandler <WidgetWindow, CompWindow> (window),
-    gWindow (GLWindow::get (window)),
     window (window),
+    gWindow (GLWindow::get (window)),
     isWidget (FALSE),
     wasUnmapped (FALSE),
     oldManaged (FALSE),
@@ -746,4 +718,6 @@ WidgetPluginVTable::init ()
 	return false;
     if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
 	return false;
+
+    return true;
 }
