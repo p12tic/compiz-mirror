@@ -783,11 +783,11 @@ MagScreen::paintFisheye ()
 
 
 bool
-MagScreen::glPaintOutput (GLScreenPaintAttrib &attrib,
-			  GLMatrix	      &transform,
-			  CompRegion	      &region,
-			  CompOutput	      *output,
-			  unsigned int	      mask)
+MagScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
+			  const GLMatrix	    &transform,
+			  const CompRegion	    &region,
+			  CompOutput	            *output,
+			  unsigned int	            mask)
 {
     bool status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 

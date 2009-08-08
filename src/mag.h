@@ -75,11 +75,11 @@ class MagScreen :
 	preparePaint (int ms);
 
 	bool
-	glPaintOutput (GLScreenPaintAttrib &attrib,
-		   GLMatrix	       &transform,
-		   CompRegion	       &region,
-		   CompOutput	       *output,
-		   unsigned int        mask);
+	glPaintOutput (const GLScreenPaintAttrib &attrib,
+		       const GLMatrix	         &transform,
+		       const CompRegion	         &region,
+		       CompOutput	         *output,
+		       unsigned int              mask);
 
 	void
 	donePaint ();
