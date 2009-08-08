@@ -55,7 +55,7 @@ ThumbScreen::damageThumbRegion (Thumbnail  *t)
     CompRect   rect (x, y, width, height);
 
     if (t->text)
-	rect.setHeight (t->text->getHeight () + TEXT_DISTANCE);
+	rect.setHeight (rect.height () + t->text->getHeight () + TEXT_DISTANCE);
 
     CompRegion region (rect);
 
@@ -491,82 +491,82 @@ ThumbScreen::paintTexture (int wx,
 {
     glBegin (GL_QUADS);
 
-    glTexCoord2f (1, 0);
+    glTexCoord2f (1, 1);
     glVertex2f (wx, wy);
     glVertex2f (wx, wy + height);
     glVertex2f (wx + width, wy + height);
     glVertex2f (wx + width, wy);
 
-    glTexCoord2f (0, 1);
-    glVertex2f (wx - off, wy - off);
     glTexCoord2f (0, 0);
+    glVertex2f (wx - off, wy - off);
+    glTexCoord2f (0, 1);
     glVertex2f (wx - off, wy);
-    glTexCoord2f (1, 0);
-    glVertex2f (wx, wy);
     glTexCoord2f (1, 1);
+    glVertex2f (wx, wy);
+    glTexCoord2f (1, 0);
     glVertex2f (wx, wy - off);
 
-    glTexCoord2f (1, 1);
-    glVertex2f (wx + width, wy - off);
     glTexCoord2f (1, 0);
+    glVertex2f (wx + width, wy - off);
+    glTexCoord2f (1, 1);
     glVertex2f (wx + width, wy);
-    glTexCoord2f (0, 0);
-    glVertex2f (wx + width + off, wy);
     glTexCoord2f (0, 1);
+    glVertex2f (wx + width + off, wy);
+    glTexCoord2f (0, 0);
     glVertex2f (wx + width + off, wy - off);
 
-    glTexCoord2f (0, 0);
-    glVertex2f (wx - off, wy + height);
     glTexCoord2f (0, 1);
+    glVertex2f (wx - off, wy + height);
+    glTexCoord2f (0, 0);
     glVertex2f (wx - off, wy + height + off);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx, wy + height + off);
     glTexCoord2f (1, 0);
+    glVertex2f (wx, wy + height + off);
+    glTexCoord2f (1, 1);
     glVertex2f (wx, wy + height);
 
-    glTexCoord2f (1, 0);
-    glVertex2f (wx + width, wy + height);
     glTexCoord2f (1, 1);
+    glVertex2f (wx + width, wy + height);
+    glTexCoord2f (1, 0);
     glVertex2f (wx + width, wy + height + off);
-    glTexCoord2f (0, 1);
-    glVertex2f (wx + width + off, wy + height + off);
     glTexCoord2f (0, 0);
+    glVertex2f (wx + width + off, wy + height + off);
+    glTexCoord2f (0, 1);
     glVertex2f (wx + width + off, wy + height);
 
-    glTexCoord2f (1, 1);
+    glTexCoord2f (1, 0);
     glVertex2f (wx, wy - off);
-    glTexCoord2f (1, 0);
-    glVertex2f (wx, wy);
-    glTexCoord2f (1, 0);
-    glVertex2f (wx + width, wy);
     glTexCoord2f (1, 1);
+    glVertex2f (wx, wy);
+    glTexCoord2f (1, 1);
+    glVertex2f (wx + width, wy);
+    glTexCoord2f (1, 0);
     glVertex2f (wx + width, wy - off);
 
-    glTexCoord2f (1, 0);
+    glTexCoord2f (1, 1);
     glVertex2f (wx, wy + height);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx, wy + height + off);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx + width, wy + height + off);
     glTexCoord2f (1, 0);
+    glVertex2f (wx, wy + height + off);
+    glTexCoord2f (1, 0);
+    glVertex2f (wx + width, wy + height + off);
+    glTexCoord2f (1, 1);
     glVertex2f (wx + width, wy + height);
 
-    glTexCoord2f (0, 0);
+    glTexCoord2f (0, 1);
     glVertex2f (wx - off, wy);
-    glTexCoord2f (0, 0);
+    glTexCoord2f (0, 1);
     glVertex2f (wx - off, wy + height);
-    glTexCoord2f (1, 0);
+    glTexCoord2f (1, 1);
     glVertex2f (wx, wy + height);
-    glTexCoord2f (1, 0);
+    glTexCoord2f (1, 1);
     glVertex2f (wx, wy);
 
-    glTexCoord2f (1, 0);
+    glTexCoord2f (1, 1);
     glVertex2f (wx + width, wy);
-    glTexCoord2f (1, 0);
+    glTexCoord2f (1, 1);
     glVertex2f (wx + width, wy + height);
-    glTexCoord2f (0, 0);
+    glTexCoord2f (0, 1);
     glVertex2f (wx + width + off, wy + height);
-    glTexCoord2f (0, 0);
+    glTexCoord2f (0, 1);
     glVertex2f (wx + width + off, wy);
 
     glEnd ();
@@ -604,8 +604,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
     {
 	int            off = t->offset;
 	GLenum         filter = gScreen->textureFilter ();
-	GLFragment::Attrib fragment (sAttrib);
-	GLMatrix       wTransform = *transform;
+	GLMatrix       wTransform (*transform);
 
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -667,6 +666,8 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 
 	if (optionGetMipmap ())
 	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
+
+	GLFragment::Attrib fragment (sAttrib);
 
 	wTransform.translate (w->x (), w->y (), 0.0f);
 	wTransform.scale (sAttrib.xScale, sAttrib.yScale, 1.0f);
