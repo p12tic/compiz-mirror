@@ -331,9 +331,15 @@ MagScreen::donePaint ()
 	glDisable (target);
     }
 
-    if (zoom == 1.0 && !adjust && poller.active ())
+    if (zoom == 1.0 && !adjust)
     {
-	poller.stop ();
+	// Mag mode has ended
+	cScreen->preparePaintSetEnabled (this, false);
+	cScreen->donePaintSetEnabled (this, false);
+	gScreen->glPaintOutputSetEnabled (this, false);
+
+    	if (poller.active ())
+    	    poller.stop ();
     }
 
     cScreen->donePaint ();
@@ -855,6 +861,11 @@ MagScreen::initiate (CompAction	  *action,
     adjust  = true;
     cScreen->damageScreen ();
 
+    // Mag mode is starting
+    cScreen->preparePaintSetEnabled (this, true);
+    cScreen->donePaintSetEnabled (this, true);
+    gScreen->glPaintOutputSetEnabled (this, true);
+
     return true;
 }
 
@@ -902,9 +913,9 @@ MagScreen::MagScreen (CompScreen *screen) :
     zoom (1.0f),
     program (0)
 {
-    ScreenInterface::setHandler (screen);
-    CompositeScreenInterface::setHandler (cScreen);
-    GLScreenInterface::setHandler (gScreen);
+    ScreenInterface::setHandler (screen, false);
+    CompositeScreenInterface::setHandler (cScreen, false);
+    GLScreenInterface::setHandler (gScreen, false);
 
     poller.setCallback (boost::bind (&MagScreen::positionUpdate, this, _1));
 
