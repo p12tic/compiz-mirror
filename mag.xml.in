@@ -9,6 +9,7 @@
 				<plugin>cube</plugin>
 			</relation>
 			<requirement>
+				<plugin>opengl</plugin>
 				<plugin>mousepoll</plugin>
 			</requirement>
 		</deps>
