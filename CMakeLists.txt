@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (addhelper)
+include (CompizPlugin)
+
+compiz_plugin (addhelper PLUGINDEPS composite opengl)

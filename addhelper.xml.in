@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <compiz>
   <plugin name="addhelper" useBcop="true">
-    <_short>ADD Helper</_short>
+    <_short>Dim Inactive</_short>
 	<_long>Make it slightly easier to concentrate by dimming all but the active window.</_long>
 	<category>Accessibility</category>
 	<deps>
@@ -9,7 +9,7 @@
 			<plugin>fade</plugin>
 		</relation>
 	</deps>
-    <display>
+    <options>
       <group>
         <_short>Bindings</_short>
         <option name="toggle_key" type="key">
@@ -52,6 +52,6 @@
           <max>100</max>
         </option>
       </group>
-    </display>
+    </options>
   </plugin>
 </compiz>
