@@ -849,6 +849,8 @@ MagScreen::initiate (CompAction	  *action,
     {
         if (factor != 1.0)
 	    factor = optionGetZoomFactor ();
+
+	zTarget = MAX (1.0, MIN (64.0, factor));
     }
     adjust  = true;
     cScreen->damageScreen ();
