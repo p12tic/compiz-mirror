@@ -246,7 +246,6 @@ WidgetScreen::matchInitExp (CompString &str)
 void
 WidgetScreen::matchExpHandlerChanged ()
 {
-
     screen->matchExpHandlerChanged ();
 
     /* match options are up to date after the call to matchExpHandlerChanged */
@@ -270,21 +269,23 @@ WidgetScreen::matchExpHandlerChanged ()
 
 bool
 WidgetScreen::toggle (CompAction         *action,
-		      CompAction::State  state,
+		      CompAction::State  aState,
 		      CompOption::Vector &options)
 {
     switch (state) {
+	case StateOn:
+	case StateFadeIn:
+	    setWidgetLayerMapState (false);
+	    fadeTime = 1000.0f * optionGetFadeTime ();
+	    state = StateFadeOut;
+	    break;
 	case StateOff:
 	case StateFadeOut:
 	    setWidgetLayerMapState (true);
 	    fadeTime = 1000.0f * optionGetFadeTime ();
 	    state = StateFadeIn;
 	    break;
-	case StateOn:
-	case StateFadeIn:
-	    setWidgetLayerMapState (false);
-	    fadeTime = 1000.0f * optionGetFadeTime ();
-	    state = StateFadeOut;
+	default:
 	    break;
     }
 
@@ -312,14 +313,15 @@ WidgetScreen::endWidgetMode (CompWindow *closedWidget)
 
 	WIDGET_WINDOW (closedWidget);
 	if (ww->isWidget)
-	    return;
-	foreach (CompWindow *w, screen->windows ())
 	{
+	    foreach (CompWindow *w, screen->windows ())
+	    {
 		WIDGET_WINDOW (w);
 		if (w == closedWidget)
 		    continue;
 		if (ww->isWidget)
 		    return;
+	    }
 	}
     }
 
@@ -637,14 +639,13 @@ WidgetScreen::WidgetScreen (CompScreen *screen) :
     cScreen (CompositeScreen::get (screen)),
     lastActiveWindow (None),
     compizWidgetAtom (XInternAtom (screen->dpy (), "_COMPIZ_WIDGET", false)),
-    state (StateOff),
     fadeTime (0),
     grabIndex (0),
     cursor (XCreateFontCursor (screen->dpy (), XC_watch))
 {
     CompTimer registerTimer;
     ScreenInterface::setHandler (screen);
-    CompositeScreenInterface::setHandler (cScreen, false);
+    CompositeScreenInterface::setHandler (cScreen);
 
 #define initiateSet(name)						       \
     optionSet##name##Initiate (						       \
@@ -667,6 +668,10 @@ optionSet##name##Notify(boost::bind(&WidgetScreen::optionChanged, this, _1, _2))
        after all screens and windows have been initialized */
     registerTimer.start (boost::bind(&WidgetScreen::registerExpHandler, this),
 			 0, 0);
+
+    state = StateOff;
+
+
 }
 
 WidgetScreen::~WidgetScreen ()
@@ -691,9 +696,10 @@ WidgetWindow::WidgetWindow (CompWindow *window) :
 {
 
     WindowInterface::setHandler (window);
-    GLWindowInterface::setHandler (gWindow, false);
+    GLWindowInterface::setHandler (gWindow);
 
-    widgetStatusUpdate.start (boost::bind (&WidgetScreen::updateStatus, WidgetScreen::get (screen), window),
+    widgetStatusUpdate.start (boost::bind (&WidgetScreen::updateStatus,
+				 WidgetScreen::get (screen), window),
 			      0, 0);
 }
 

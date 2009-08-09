@@ -50,9 +50,9 @@ class WidgetScreen :
 	enum WidgetState
 	{
 	    StateOff = 0,
-	    StateFadeIn,
-	    StateOn,
-	    StateFadeOut
+	    StateFadeIn = 1,
+	    StateOn = 2,
+	    StateFadeOut = 3
 	};
 
     public:
