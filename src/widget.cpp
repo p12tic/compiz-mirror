@@ -45,6 +45,20 @@ class WidgetExp :
 
 COMPIZ_PLUGIN_20090315 (widget, WidgetPluginVTable);
 
+static void enableFunctions (WidgetScreen *ws, bool enabled)
+{
+    ws->cScreen->preparePaintSetEnabled (ws, enabled);
+    ws->cScreen->donePaintSetEnabled (ws, enabled);
+
+    foreach (CompWindow *w, screen->windows ())
+    {
+	WIDGET_WINDOW (w);
+
+	ww->window->focusSetEnabled (ww, enabled);
+	ww->gWindow->glPaintSetEnabled (ww, enabled);
+    }
+}
+
 void
 WidgetWindow::updateTreeStatus ()
 {
@@ -291,6 +305,8 @@ WidgetScreen::toggle (CompAction         *action,
 
     if (!grabIndex)
 	grabIndex = screen->pushGrab (cursor, "widget");
+
+    enableFunctions (this, true);
 
     cScreen->damageScreen ();
 
@@ -553,6 +569,8 @@ WidgetWindow::focus ()
 
     WIDGET_SCREEN (screen);
 
+    /* Don't focus non-widget windows while widget mode is enabled */
+
     if (ws->state != WidgetScreen::StateOff && !isWidget && !parentWidget)
     {
 	status = FALSE;
@@ -597,6 +615,12 @@ WidgetScreen::donePaint ()
 	    else
 		state = StateOff;
 	}
+    }
+
+    if (state == StateOff)
+    {
+	cScreen->damageScreen ();
+	enableFunctions (this, false);
     }
 
     cScreen->donePaint ();
@@ -644,8 +668,8 @@ WidgetScreen::WidgetScreen (CompScreen *screen) :
     cursor (XCreateFontCursor (screen->dpy (), XC_watch))
 {
     CompTimer registerTimer;
-    ScreenInterface::setHandler (screen);
-    CompositeScreenInterface::setHandler (cScreen);
+    ScreenInterface::setHandler (screen, false);
+    CompositeScreenInterface::setHandler (cScreen, false);
 
 #define initiateSet(name)						       \
     optionSet##name##Initiate (						       \
@@ -696,7 +720,7 @@ WidgetWindow::WidgetWindow (CompWindow *window) :
 {
 
     WindowInterface::setHandler (window);
-    GLWindowInterface::setHandler (gWindow);
+    GLWindowInterface::setHandler (gWindow, false);
 
     widgetStatusUpdate.start (boost::bind (&WidgetScreen::updateStatus,
 				 WidgetScreen::get (screen), window),
