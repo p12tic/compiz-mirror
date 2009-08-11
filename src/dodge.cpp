@@ -237,7 +237,11 @@ DodgeAnim::postPreparePaint ()
 	    break;
     }
 
-    if (restackDataBottommost->restackInfo ()->raised &&
+    RestackInfo *bottommostRestackInfo = restackDataBottommost->restackInfo ();
+    if (!bottommostRestackInfo)
+    	return;
+
+    if (bottommostRestackInfo->raised &&
 	// if mWindow's host should change
     	dw != restackDataBottommost->mWinThisIsPaintedBefore)
     {
@@ -270,7 +274,7 @@ DodgeAnim::postPreparePaint ()
 	    wCur = dataCur->mMoreToBePaintedNext;
 	}
     }
-    else if (!restackDataBottommost->restackInfo ()->raised)
+    else if (!bottommostRestackInfo->raised)
     {
 	// Put the subject right in front of dw.
 	// But we need to find the (dodger) window above dw
