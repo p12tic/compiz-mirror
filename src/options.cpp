@@ -90,6 +90,10 @@ AnimWindow::pluginOptVal (ExtensionPluginInfo *pluginInfo,
     PrivateAnimWindow *aw = priv;
     PrivateAnimScreen *as = aw->paScreen ();
 
+    // Handle -1 case, used in Dodge for non-matching (stable) dodgers
+    if (aw->curAnimSelectionRow () < 0)
+    	return (*pluginInfo->effectOptions)[optionId].value ();
+
     OptionSet *os = as->getOptionSetForSelectedRow (aw, anim);
 
     IdValuePairVector::iterator it =
