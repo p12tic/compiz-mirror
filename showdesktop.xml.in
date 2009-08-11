@@ -10,7 +10,7 @@
 	    <plugin>fade</plugin>
 	</relation>
     </deps>
-    <screen>
+    <options>
       <group>
         <_short>Misc. Options</_short>
         <option name="speed" type="float">
@@ -88,6 +88,6 @@
           <max>300</max>
         </option>
       </group>
-    </screen>
+    </options>
   </plugin>
 </compiz>

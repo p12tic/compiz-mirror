@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (showdesktop)
+include (CompizPlugin)
+
+compiz_plugin (showdesktop PLUGINDEPS composite opengl)
