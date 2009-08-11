@@ -51,8 +51,8 @@
 #define OFF_TOP(w) ((w)->height () + (w)->input ().bottom)
 #define OFF_BOTTOM(w) ((w)->input ().top)
 
-#define MOVE_LEFT(w) ((WIN_X(w) + (WIN_W(w)/2)) < (screen->width ()/2))
-#define MOVE_UP(w) ((WIN_Y(w) + (WIN_H(w)/2)) < (screen->height ()/2))
+#define MOVE_LEFT(w) ((WIN_X (w) + (WIN_W (w) / 2)) < (screen->width () / 2))
+#define MOVE_UP(w) ((WIN_Y (w) + (WIN_H (w) / 2)) < (screen->height () / 2))
 
 #define SD_STATE_OFF          0
 #define SD_STATE_ACTIVATING   1
