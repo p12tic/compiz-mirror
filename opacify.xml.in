@@ -9,7 +9,7 @@
 			<plugin>fade</plugin>
 		</relation>
 	</deps>
-    <display>
+    <options>
       <group>
         <_short>Bindings</_short>
         <option name="toggle_key" type="key">
@@ -39,8 +39,6 @@
           <default>true</default>
         </option>
       </group>
-    </display>
-    <screen>
       <group>
         <_short>Misc. Options</_short>
         <option name="only_if_block" type="bool">
@@ -81,6 +79,6 @@
           </option>
         </subgroup>
       </group>
-    </screen>
+    </options>
   </plugin>
 </compiz>

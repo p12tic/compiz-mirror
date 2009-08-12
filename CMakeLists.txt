@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (opacify)
+include (CompizPlugin)
+
+compiz_plugin (opacify PLUGINDEPS composite opengl)
