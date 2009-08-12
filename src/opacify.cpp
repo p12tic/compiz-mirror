@@ -66,10 +66,7 @@ OpacifyScreen::resetOpacity (Window  id)
 void
 OpacifyScreen::clearPassive ()
 {
-    for (int i = 0; i < passiveNum; i++)
-	resetOpacity (passive[i]);
-
-    passiveNum = 0;
+    passive.clear ();
 }
 
 /* Dim an (inactive) window. Place it on the passive list and
@@ -81,19 +78,8 @@ OpacifyWindow::dim ()
 {
     OPACIFY_SCREEN (screen);
 
-    if (os->passiveNum >= MAX_WINDOWS - 1)
-    {
-#warning fixme: use std::vector <>
-	compLogMessage ("opacify", CompLogLevelWarn,
-			"Trying to store information "
-			"about too many windows, or you hit a bug.\nIf "
-			"you don't have around %d windows blocking the "
-			"currently targeted window, please report this.",
-			MAX_WINDOWS);
-	return;
-    }
+    os->passive.push_back (window->id ());
 
-    os->passive[os->passiveNum++] = window->id ();
     setOpacity (MIN (OPAQUE * os->optionGetPassiveOpacity () / 100,
 		     gWindow->paintAttrib ().opacity));
 }
@@ -111,6 +97,22 @@ OpacifyScreen::passiveWindows (CompRegion     fRegion)
 {
     bool       flag = false;
     int        i = 0;
+
+    /* Clear the list first to prevent memleaks */
+    foreach (Window xid, passive)
+    {
+	CompWindow *win = screen->findWindow (xid);
+
+	if (!win)
+	    continue;
+
+	OPACIFY_WINDOW (win);
+
+	resetOpacity (xid);
+	ow->setOpacity (MAX (OPAQUE * optionGetActiveOpacity () / 100,
+			ow->gWindow->paintAttrib ().opacity));
+    }
+    passive.clear ();
 
     foreach (CompWindow *w, screen->windows ())
     {
@@ -167,7 +169,6 @@ OpacifyWindow::handleEnter ()
     if (!window || os->active != window->id () || os->justMoved)
     {
 	os->justMoved = false;
-	os->clearPassive ();
 	os->resetOpacity (os->active);
 	os->active = 0;
     }
@@ -195,8 +196,8 @@ OpacifyWindow::handleEnter ()
 bool
 OpacifyScreen::handleTimeout ()
 {
-
-    OpacifyWindow::get (newActive)->handleEnter ();
+    if (newActive)
+        OpacifyWindow::get (newActive)->handleEnter ();
 
     return false;
 }
@@ -219,7 +220,7 @@ OpacifyScreen::checkDelay ()
     {
 	return FALSE;
     }
-    if (optionGetNoDelayChange () && passiveNum)
+    if (optionGetNoDelayChange () && passive.size ())
 	return TRUE;
 
     return FALSE;
@@ -371,7 +372,6 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     newActive (NULL),
     active (screen->activeWindow ()),
     intersect (emptyRegion),
-    passiveNum (0),
     justMoved (false)
 {
     ScreenInterface::setHandler (screen);

@@ -51,7 +51,7 @@ class OpacifyScreen :
 	CompWindow *newActive;
 
 	Window active;
-	Window passive[MAX_WINDOWS];
+	std::vector<Window> passive;
 	CompRegion intersect;
 	unsigned short int passiveNum;
 
