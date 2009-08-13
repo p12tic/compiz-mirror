@@ -410,7 +410,7 @@ public:
     		   float duration,
     		   const AnimEffect info,
     		   const CompRect &icon);
-    ~MagicLampAnim ();
+    virtual ~MagicLampAnim ();
 
 protected:
     bool mTargetTop;
