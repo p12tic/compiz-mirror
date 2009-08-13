@@ -303,7 +303,6 @@ public:
 
 class PrivateAnimWindow :
     public WindowInterface,
-    public CompositeWindowInterface,
     public GLWindowInterface
 {
     friend class PrivateAnimScreen;
@@ -329,7 +328,6 @@ public:
 
 private:
     CompWindow        *mWindow;
-    CompositeWindow   *mCWindow;
     AnimWindow        *mAWindow;
 
     PrivateAnimScreen *mPAScreen;
@@ -367,6 +365,7 @@ private:
 				     bool destructing,
 				     bool clearMatchingRow);
     void reverseAnimation ();
+    void enablePainting (bool enabling);
 
     // WindowInterface methods
     void resizeNotify (int dx, int dy, int dwidth, int dheight);

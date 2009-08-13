@@ -83,6 +83,7 @@
 #include <GL/glu.h>
 #include <core/atoms.h>
 #include <sys/time.h>
+#include <assert.h>
 #include "private.h"
 
 class AnimPluginVTable :
@@ -1010,6 +1011,8 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
     delete mCurAnimation;
     mCurAnimation = 0;
 
+    enablePainting (false);
+
     if (mBB.x1 != MAXSHORT)
 	damageBoundingBox ();
 
@@ -1077,6 +1080,17 @@ PrivateAnimScreen::activateEvent (bool activating)
 	if (mAnimInProgress)
 	    return;
     }
+    else
+    {
+	// Animations have finished for all windows
+	// (Keep preparePaint enabled)
+
+	cScreen->getWindowPaintListSetEnabled (this, false);
+	enablePrePaintWindowsBackToFront (false);
+    }
+    cScreen->donePaintSetEnabled (this, activating);
+    gScreen->glPaintOutputSetEnabled (this, activating);
+
     mAnimInProgress = activating;
 
     CompOption::Vector o (0);
@@ -1255,15 +1269,35 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	extPlugin->postPreparePaintGeneral ();
 
     cScreen->preparePaint (msSinceLastPaint);
+
+    if (mStartCountdown)
+    {
+	mStartCountdown--;
+	if (!mStartCountdown)
+	{
+	    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
+		extPlugin->postStartupCountdown ();
+	}
+    }
 }
 
 void
 PrivateAnimScreen::donePaint ()
 {
-    if (mAnimInProgress)
-	cScreen->damagePending ();
+    assert (mAnimInProgress);
+
+    cScreen->damagePending ();
 
     cScreen->donePaint ();
+}
+
+void
+PrivateAnimWindow::enablePainting (bool enabling)
+{
+    gWindow->glPaintSetEnabled (this, enabling);
+    gWindow->glAddGeometrySetEnabled (this, enabling);
+    gWindow->glDrawGeometrySetEnabled (this, enabling);
+    gWindow->glDrawTextureSetEnabled (this, enabling);
 }
 
 void
@@ -1373,62 +1407,57 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    mPAScreen->prePaintWindowsBackToFront ();
     }
 
-    if (mCurAnimation)
+    assert (mCurAnimation);
+
+    foreach (ExtensionPluginInfo *extPlugin, mPAScreen->mExtensionPlugins)
     {
-	foreach (ExtensionPluginInfo *extPlugin, mPAScreen->mExtensionPlugins)
-	{
-	    if (extPlugin->paintShouldSkipWindow (mWindow))
-		return false;
-	}
-
-	if (mCurAnimation->curWindowEvent () == WindowEventFocus &&
-	    mPAScreen->otherPluginsActive ())
-	{
-	    postAnimationCleanUp ();
-	    return gWindow->glPaint (attrib, transform, region, mask);
-	}
-
-	GLWindowPaintAttrib wAttrib = attrib;
-	GLMatrix wTransform (transform.getMatrix ());
-
-	/* TODO check if this is still necessary
-	if (mCurAnimation->addCustomGeometryFunc)
-	{
-	    // Use slightly smaller brightness to force core
-	    // to handle <max saturation case with <max brightness.
-	    // Otherwise polygon effects show fully unsaturated colors
-	    // in that case.
-	    wAttrib.brightness = MAX (0, wAttrib.brightness - 1);
-	} */
-
-	//w->indexCount = 0; // TODO check if this is still necessary
-
-	// TODO: should only happen for distorting effects
-	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
-
-	wAttrib.xScale = 1.0f;
-	wAttrib.yScale = 1.0f;
-
-	mCurAnimation->updateAttrib (wAttrib);
-	mCurAnimation->updateTransform (wTransform);
-	mCurAnimation->prePaintWindow ();
-
-	status = gWindow->glPaint (wAttrib, wTransform, region, mask);
-
-	if (mCurAnimation->postPaintWindowUsed ())
-	{
-	    // Transform to make post-paint coincide with the window
-	    glPushMatrix ();
-	    glLoadMatrixf (wTransform.getMatrix ());
-
-	    mCurAnimation->postPaintWindow ();
-
-	    glPopMatrix ();
-	}
+	if (extPlugin->paintShouldSkipWindow (mWindow))
+	    return false;
     }
-    else
+
+    if (mCurAnimation->curWindowEvent () == WindowEventFocus &&
+	mPAScreen->otherPluginsActive ())
     {
-	status = gWindow->glPaint (attrib, transform, region, mask);
+	postAnimationCleanUp ();
+	return gWindow->glPaint (attrib, transform, region, mask);
+    }
+
+    GLWindowPaintAttrib wAttrib = attrib;
+    GLMatrix wTransform (transform.getMatrix ());
+
+    /* TODO check if this is still necessary
+    if (mCurAnimation->addCustomGeometryFunc)
+    {
+	// Use slightly smaller brightness to force core
+	// to handle <max saturation case with <max brightness.
+	// Otherwise polygon effects show fully unsaturated colors
+	// in that case.
+	wAttrib.brightness = MAX (0, wAttrib.brightness - 1);
+    } */
+
+    //w->indexCount = 0; // TODO check if this is still necessary
+
+    // TODO: should only happen for distorting effects
+    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+
+    wAttrib.xScale = 1.0f;
+    wAttrib.yScale = 1.0f;
+
+    mCurAnimation->updateAttrib (wAttrib);
+    mCurAnimation->updateTransform (wTransform);
+    mCurAnimation->prePaintWindow ();
+
+    status = gWindow->glPaint (wAttrib, wTransform, region, mask);
+
+    if (mCurAnimation->postPaintWindowUsed ())
+    {
+	// Transform to make post-paint coincide with the window
+	glPushMatrix ();
+	glLoadMatrixf (wTransform.getMatrix ());
+
+	mCurAnimation->postPaintWindow ();
+
+	glPopMatrix ();
     }
 
     return status;
@@ -1447,12 +1476,11 @@ PrivateAnimScreen::getWindowPaintList ()
 void
 PrivateAnimScreen::prePaintWindowsBackToFront ()
 {
-    if (mAnimInProgress)
-    {
-	ExtensionPluginAnimation *extPlugin =
-	    static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
-	extPlugin->prePaintWindowsBackToFront ();
-    }
+    assert (mAnimInProgress);
+
+    ExtensionPluginAnimation *extPlugin =
+	static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
+    extPlugin->prePaintWindowsBackToFront ();
 }
 
 void
@@ -1591,6 +1619,7 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 					  effectToBePlayed, getIcon (w, true));
 	    aw->mCurAnimation->init ();
 	    aw->mCurAnimation->adjustPointerIconSize ();
+	    aw->enablePainting (true);
 	}
 
 	activateEvent (true);
@@ -1735,6 +1764,7 @@ PrivateAnimScreen::initiateMinimizeAnim (PrivateAnimWindow *aw)
 		effectToBePlayed->create (w, WindowEventMinimize, duration,
 					  effectToBePlayed, getIcon (w, false));
 	    aw->mCurAnimation->init ();
+	    aw->enablePainting (true);
 	}
 
 	activateEvent (true);
@@ -1792,6 +1822,7 @@ PrivateAnimScreen::initiateShadeAnim (PrivateAnimWindow *aw)
 		effectToBePlayed->create (w, WindowEventShade, duration,
 					  effectToBePlayed, getIcon (w, false));
 	    aw->mCurAnimation->init ();
+	    aw->enablePainting (true);
 	}
 
 	activateEvent (true);
@@ -1860,6 +1891,7 @@ PrivateAnimScreen::initiateOpenAnim (PrivateAnimWindow *aw)
 					      getIcon (w, true));
 		aw->mCurAnimation->init ();
 		aw->mCurAnimation->adjustPointerIconSize ();
+		aw->enablePainting (true);
 	    }
 	}
 
@@ -1930,6 +1962,7 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 					      duration, effectToBePlayed,
 					      getIcon (w, false));
 		aw->mCurAnimation->init ();
+		aw->enablePainting (true);
 	    }
 	}
 
@@ -1994,6 +2027,7 @@ PrivateAnimScreen::initiateUnshadeAnim (PrivateAnimWindow *aw)
 					      duration, effectToBePlayed,
 					      getIcon (w, false));
 		aw->mCurAnimation->init ();
+		aw->enablePainting (true);
 	    }
 	}
 
@@ -2146,33 +2180,18 @@ PrivateAnimScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 				  CompOutput                *output,
 				  unsigned int               mask)
 {
-    bool status;
+    assert (mAnimInProgress);
 
-    if (mAnimInProgress)
-    {
-	mStartingNewPaintRound = true;
+    mStartingNewPaintRound = true;
 
-	foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
-	    extPlugin->prePaintOutput (output);
+    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
+	extPlugin->prePaintOutput (output);
 
-	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
-    }
+    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     mOutput = output;
 
-    status = gScreen->glPaintOutput (attrib, matrix, region, output, mask);
-
-    if (mStartCountdown)
-    {
-	mStartCountdown--;
-	if (!mStartCountdown)
-	{
-	    foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
-		extPlugin->postStartupCountdown ();
-	}
-    }
-
-    return status;
+    return gScreen->glPaintOutput (attrib, matrix, region, output, mask);
 }
 
 AnimEffectInfo::AnimEffectInfo (const char *name,
@@ -2202,14 +2221,6 @@ AnimEffectInfo::matchesPluginName (const CompString &pluginName)
 {
     return (0 == strncmp (pluginName.c_str (), name, pluginName.length ()));
 }
-
-/* TODO
-PrivateAnimScreen::setEnabled (bool active)
-{
-    cScreen->preparePaintSetEnabled (this, active);
-    cScreen->donePaintSetEnabled (this, active);
-    gScreen->glPaintOutputSetEnabled (this, active);
-}*/
 
 AnimEffect animEffects[NUM_EFFECTS];
 
@@ -2295,7 +2306,7 @@ PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
 
     ScreenInterface::setHandler (::screen);
     CompositeScreenInterface::setHandler (cScreen, false);
-    GLScreenInterface::setHandler (gScreen);
+    GLScreenInterface::setHandler (gScreen, false);
 }
 
 PrivateAnimScreen::~PrivateAnimScreen ()
@@ -2387,14 +2398,12 @@ PrivateAnimScreen::initAnimationList ()
     updateAllEventEffects ();
 
     cScreen->preparePaintSetEnabled (this, true);
-    cScreen->donePaintSetEnabled (this, true);
 }
 
 PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
 				      AnimWindow *aw) :
     gWindow (GLWindow::get (w)),
     mWindow (w),
-    mCWindow (CompositeWindow::get (w)),
     mAWindow (aw),
     mPAScreen (AnimScreen::get (::screen)->priv),
     mCurAnimation (0),
@@ -2427,8 +2436,7 @@ PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
     }
 
     WindowInterface::setHandler (mWindow, true);
-    GLWindowInterface::setHandler (gWindow, true);
-    CompositeWindowInterface::setHandler (mCWindow, true);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 PrivateAnimWindow::~PrivateAnimWindow ()
@@ -2623,6 +2631,7 @@ PrivateAnimWindow::createFocusAnimation (AnimEffect effect, int duration)
 			effect,
 			CompRect ());
     mCurAnimation->init ();
+    enablePainting (true);
 }
 
 AnimScreen::AnimScreen (CompScreen *s) :
