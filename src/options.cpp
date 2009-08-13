@@ -258,13 +258,6 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 	}
 	case CompOption::TypeString:
 	{
-	    char *vs = (char *)calloc (strlen (valueStr) + 1, 1); // TODO: not freed
-	    if (!vs)
-	    {
-		compLogMessage ("animation", CompLogLevelError,
-				"Not enough memory");
-		return;
-	    }
 	    v.set (CompString (valueStr));
 	    valueRead = 1;
 	    break;
