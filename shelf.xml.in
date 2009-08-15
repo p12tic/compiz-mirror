@@ -9,7 +9,7 @@
 	    <plugin>wall</plugin>
 	</relation>
     </deps>
-    <display>
+    <options>
       <group>
         <_short>Bindings</_short>
         <option name="trigger_key" type="key">
@@ -52,6 +52,6 @@
        <max>0.999</max>
        <precision>0.001</precision>
       </option>
-    </display>
+    </options>
   </plugin>
 </compiz>

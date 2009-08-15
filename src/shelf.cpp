@@ -1,0 +1,853 @@
+/*
+ * Compiz Shelf plugin
+ *
+ * shelf.h
+ *
+ * Copyright (C) 2007  Canonical Ltd.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * Author(s): 
+ * Kristian Lyngstøl <kristian@bohemians.org>
+ * Danny Baumann <maniac@opencompositing.org>
+ * Sam Spilsbury <smspillaz@gmail.com>
+ *
+ * Description:
+ *
+ * This plugin visually resizes a window to allow otherwise obtrusive
+ * windows to be visible in a monitor-fashion. Use case: Anything with
+ * progress bars, notification programs, etc.
+ *
+ * Todo: 
+ *  - Check for XShape events
+ *  - Handle input in a sane way
+ *  - Mouse-over?
+ */
+
+#include "shelf.h"
+
+COMPIZ_PLUGIN_20090315 (shelf, ShelfPluginVTable);
+
+/* Enables / Disables screen paint functions */
+static void
+toggleScreenFunctions (bool enabled)
+{
+    SHELF_SCREEN (screen);
+
+    screen->handleEventSetEnabled (ss, enabled);
+    ss->cScreen->preparePaintSetEnabled (ss, enabled);
+    ss->gScreen->glPaintOutputSetEnabled (ss, enabled);
+    ss->cScreen->donePaintSetEnabled (ss, enabled);
+}
+
+static void
+toggleWindowFunctions (CompWindow *w, bool enabled)
+{
+    SHELF_WINDOW (w);
+
+    sw->window->moveNotifySetEnabled (sw, enabled);
+    sw->cWindow->damageRectSetEnabled (sw, enabled);
+    sw->gWindow->glPaintSetEnabled (sw, enabled);
+}
+
+/* Checks if w is a ipw and returns the real window */
+CompWindow *
+ShelfWindow::getRealWindow ()
+{
+    ShelfedWindowInfo *run;
+
+    SHELF_SCREEN (screen);
+
+    foreach (run, ss->shelfedWindows)
+    {
+	if (window->id () == run->ipw)
+	    return run->w;
+    }
+
+    return NULL;
+}
+
+void
+ShelfWindow::saveInputShape (XRectangle **retRects,
+			     int       *retCount,
+			     int       *retOrdering)
+{
+    XRectangle *rects;
+    int        count = 0, ordering;
+    Display    *dpy = screen->dpy ();
+
+    rects = XShapeGetRectangles (dpy, window->id (), ShapeInput, &count, &ordering);
+
+    /* check if the returned shape exactly matches the window shape -
+       if that is true, the window currently has no set input shape */
+    if ((count == 1) &&
+	(rects[0].x == -window->serverGeometry ().border ()) &&
+	(rects[0].y == -window->serverGeometry ().border ()) &&
+	(rects[0].width == (window->serverWidth () +
+			    window->serverGeometry ().border ())) &&
+	(rects[0].height == (window->serverHeight () +
+			     window->serverGeometry (). border ())))
+    {
+	count = 0;
+    }
+    
+    *retRects    = rects;
+    *retCount    = count;
+    *retOrdering = ordering;
+}
+
+/* Shape the input of the window when scaled.
+ * Since the IPW will be dealing with the input, removing input
+ * from the window entirely is a perfectly good solution. */
+void
+ShelfWindow::shapeInput ()
+{
+    CompWindow *fw;
+    Display    *dpy = screen->dpy ();
+
+    /* save old shape */
+    saveInputShape (&info->inputRects, 
+		    &info->nInputRects, &info->inputRectOrdering);
+
+    if (info->nInputRects)
+	fprintf (stderr, "saved nInputRects\n");
+
+   fprintf (stderr, "shaped\n");
+
+    fw = screen->findWindow (window->frame ());
+    if (fw)
+    {
+	saveInputShape(&info->frameInputRects,
+		       &info->frameNInputRects,
+		       &info->frameInputRectOrdering);
+    }
+    else
+    {
+	info->frameInputRects        = NULL;
+	info->frameNInputRects       = -1;
+	info->frameInputRectOrdering = 0;
+    }
+
+    /* clear shape */
+    XShapeSelectInput (dpy, window->id (), NoEventMask);
+    XShapeCombineRectangles  (dpy, window->id (), ShapeInput, 0, 0,
+			      NULL, 0, ShapeSet, 0);
+    
+    if (window->frame ())
+	XShapeCombineRectangles  (dpy, window->frame (), ShapeInput, 0, 0,
+				  NULL, 0, ShapeSet, 0);
+
+    XShapeSelectInput (dpy, window->id (), ShapeNotify);
+}
+
+#warning: function ShelfWindow::unshapeInput is broken
+/* This function is broken.
+ * What should happen is that no custom shape was defined, so nInputRects should
+ * be 0 and calling XShapeCombineMask should restore the original shape. However,
+ * it doesn't actually seem to and the window's input shape remains cleared
+ */
+void
+ShelfWindow::unshapeInput ()
+{
+    Display *dpy = screen->dpy ();
+
+    if (info->nInputRects)
+    {
+	XShapeCombineRectangles (dpy, window->id (), ShapeInput, 0, 0,
+				 info->inputRects, info->nInputRects,
+				 ShapeSet, info->inputRectOrdering);
+	fprintf (stderr, "unshaped window by restoring rects\n");
+    }
+    else
+    {
+	XShapeCombineMask (dpy, window->id (), ShapeInput, 0, 0, None, ShapeSet);
+	fprintf (stderr, "unshaped window by setting shape\n");
+    }
+
+    if (info->frameNInputRects >= 0)
+    {
+	if (info->frameInputRects)
+	{
+	    XShapeCombineRectangles (dpy, window->frame (), ShapeInput, 0, 0,
+				     info->frameInputRects,
+				     info->frameNInputRects,
+				     ShapeSet,
+				     info->frameInputRectOrdering);
+	}
+	else
+	{
+	    XShapeCombineMask (dpy, window->frame (), ShapeInput, 0, 0, None,
+								      ShapeSet);
+	}
+    }
+}
+
+void
+ShelfScreen::preparePaint (int msSinceLastPaint)
+{
+    float      steps;
+
+    steps =  (float) msSinceLastPaint / (float) optionGetAnimtime ();
+
+    if (steps < 0.005)
+	steps = 0.005;
+
+    /* FIXME: should only loop over all windows if at least one animation
+       is running */
+    foreach (CompWindow *w, screen->windows ())
+	ShelfWindow::get (w)->steps = steps;
+
+    cScreen->preparePaint (msSinceLastPaint);
+}
+
+void
+ShelfScreen::addWindowToList (ShelfedWindowInfo *info)
+{
+    shelfedWindows.push_back (info);
+}
+
+void
+ShelfScreen::removeWindowFromList (ShelfedWindowInfo *info)
+{
+    shelfedWindows.remove (info);
+}
+
+/* Adjust size and location of the input prevention window
+ */
+
+#warning: function ShelfWindow::adjustIPW is broken
+
+/* This function is broken.
+ * For some reason, even though the IPW should be of the correct size (as shown
+ * by the fprintfs, it seems that it does not actually 'configure' - so it could
+ * be moved but it will still be in the same place. Perhaps the new restack code
+ * has broken it?
+ */
+void
+ShelfWindow::adjustIPW ()
+{
+    //fprintf (stderr, "adjustIPW\n");
+    XWindowChanges xwc;
+    Display        *dpy = screen->dpy ();
+    float          width, height;
+
+    if (!info || !info->ipw)
+	return;
+
+    fprintf (stderr, "adjusting\n");
+
+    width  = window->width () + 2 * window->geometry ().border () +
+	     window->input ().left + window->input ().right + 2.0f;
+    fprintf (stderr, "width is %f\n", width);
+    width  *= targetScale;
+    fprintf (stderr, "width is now %f\n", width);
+    height = window->height () + 2 * window->geometry ().border () +
+	     window->input ().top + window->input ().bottom + 2.0f;
+    height *= targetScale;
+
+    xwc.x          = window->x () - window->input ().left;
+    xwc.y          = window->y () - window->input ().top;
+    xwc.width      = (int) width;
+    xwc.height     = (int) height;
+    xwc.stack_mode = Above;
+    xwc.sibling    = window->id ();
+
+    //fprintf (stderr, "width %f height %f x %i y %i\n", width, height, xwc.x, xwc.y);
+    //fprintf (stderr, "window props width %i height %i x %i y %i\n", window->width(), window->height(), window->x (),window->y());
+
+    XConfigureWindow (dpy, info->ipw,
+		      CWSibling | CWStackMode | CWX | CWY | CWWidth | CWHeight,
+		      &xwc);
+    XMapWindow (dpy, info->ipw);
+}
+
+void
+ShelfScreen::adjustIPWStacking ()
+{
+
+    foreach (ShelfedWindowInfo *run, shelfedWindows)
+    {
+	if (!run->w->prev || run->w->prev->id () != run->ipw)
+	    ShelfWindow::get (run->w)->adjustIPW ();
+    }
+}
+
+/* Create an input prevention window */
+void
+ShelfWindow::createIPW ()
+{
+    Window               ipw;
+    XSetWindowAttributes attrib;
+
+    if (!info || info->ipw)
+	return;
+
+    attrib.override_redirect = TRUE;
+    attrib.event_mask        = 0;
+
+    ipw = XCreateWindow (screen->dpy (),
+			 screen->root (),
+			 window->serverX () - window->input ().left,
+			 window->serverY () - window->input ().top,
+			 window->serverWidth () +
+					 window->input ().left +
+					 window->input ().right,
+			 window->serverHeight () + window->input ().top
+						 + window->input ().bottom,
+			 0, CopyFromParent, InputOnly, CopyFromParent,
+			 CWEventMask | CWOverrideRedirect,
+			 &attrib);
+ 
+    info->ipw = ipw;
+}
+
+ShelfedWindowInfo::ShelfedWindowInfo (CompWindow *window) :
+    w (window),
+    ipw (None),
+    inputRects (NULL),
+    nInputRects (0),
+    inputRectOrdering (0),
+    frameInputRects (NULL),
+    frameNInputRects (0),
+    frameInputRectOrdering (0)
+{
+}
+
+ShelfedWindowInfo::~ShelfedWindowInfo ()
+{
+}
+
+
+bool
+ShelfWindow::handleShelfInfo ()
+{
+    SHELF_SCREEN (screen);
+
+    if (targetScale == 1.0f && info)
+    {
+	if (info->ipw)
+	    XDestroyWindow (screen->dpy (), info->ipw);
+
+	unshapeInput ();
+	ss->removeWindowFromList (info);
+
+	delete info;
+	info = NULL;
+
+	return false;
+    }
+    else if (targetScale != 1.0f && !info)
+    {
+	info = new ShelfedWindowInfo (window);
+	if (!info)
+	    return false;
+
+	shapeInput ();
+	createIPW ();
+	ss->addWindowToList (info);
+	fprintf (stderr, "created IPW\n");
+    }
+
+    return true;
+}
+
+/* Sets the scale level and adjust the shape */
+void
+ShelfWindow::scale (float fScale)
+{
+    if (window->wmType () & (CompWindowTypeDesktopMask | CompWindowTypeDockMask))
+	return;
+
+    targetScale = MIN (fScale, 1.0f);
+
+    if ((float) window->width () * targetScale < SHELF_MIN_SIZE)
+	targetScale = SHELF_MIN_SIZE / (float) window->width ();
+
+    if (handleShelfInfo ())
+	adjustIPW ();
+
+    cWindow->addDamage ();
+}
+
+/* Binding for toggle mode. 
+ * Toggles through three preset scale levels, 
+ * currently hard coded to 1.0f (no scale), 0.5f and 0.25f.
+ */
+bool
+ShelfScreen::trigger (CompAction         *action,
+		      CompAction::State  state,
+		      CompOption::Vector options)
+{
+    CompWindow *w = screen->findWindow (screen->activeWindow ());
+    if (!w)
+	return TRUE;
+
+    SHELF_WINDOW (w);
+
+    if (sw->targetScale > 0.5f)
+	sw->scale (0.5f);
+    else if (sw->targetScale <= 0.5f && sw->targetScale > 0.25)
+	sw->scale (0.25f);
+    else 
+	sw->scale (1.0f);
+
+    toggleWindowFunctions (w, true);
+    toggleScreenFunctions (true);
+
+    return TRUE;
+}
+
+/* Reset window to 1.0f scale */
+bool
+ShelfScreen::reset (CompAction         *action,
+		    CompAction::State  state,
+		    CompOption::Vector options)
+{
+    CompWindow *w = screen->findWindow (screen->activeWindow ());
+    if (!w)
+	return TRUE;
+
+    SHELF_WINDOW (w);
+
+    sw->scale (1.0f);
+
+    toggleWindowFunctions (w, true);
+    toggleScreenFunctions (true);
+
+    return TRUE;
+}
+
+/* Returns the ratio to multiply by to get a window that's 1/ration the
+ * size of the screen.
+ */
+static inline float
+shelfRat (CompWindow *w,
+	  float      ratio)
+{
+    float winHeight    = (float) w->height ();
+    float winWidth     = (float) w->width ();
+    float screenHeight = (float) screen->height ();
+    float screenWidth  = (float) screen->width ();
+    float ret;
+
+    if (winHeight / screenHeight < winWidth / screenWidth)
+	ret = screenWidth / winWidth;
+    else
+	ret = screenHeight / winHeight;
+
+    return ret / ratio;
+}
+
+bool
+ShelfScreen::triggerScreen (CompAction         *action,
+			    CompAction::State  state,
+			    CompOption::Vector options)
+{
+    CompWindow *w = screen->findWindow (screen->activeWindow ());
+    if (!w)
+	return TRUE;
+
+    SHELF_WINDOW (w);
+
+    /* FIXME: better should save calculated ratio and reuse it */
+    if (sw->targetScale > shelfRat (w, 2.0f))
+	sw->scale (shelfRat (w, 2.0f));
+    else if (sw->targetScale <= shelfRat (w, 2.0f) && 
+	     sw->targetScale > shelfRat (w, 3.0f))
+	sw->scale (shelfRat (w, 3.0f));
+    else if (sw->targetScale <= shelfRat (w, 3.0f) && 
+	     sw->targetScale > shelfRat (w, 6.0f))
+	sw->scale (shelfRat (w, 6.0f));
+    else 
+	sw->scale (1.0f);
+
+    toggleWindowFunctions (w, true);
+    toggleScreenFunctions (true);
+
+    return TRUE;
+}
+
+/* shelfInc and shelfDec are matcing functions and bindings;
+ * They increase and decrease the scale factor by 'interval'.
+ */
+
+bool
+ShelfScreen::inc (CompAction         *action,
+		  CompAction::State  state,
+		  CompOption::Vector options)
+{
+    CompWindow *w = screen->findWindow (screen->activeWindow ());
+    if (!w)
+	return TRUE;
+
+    SHELF_WINDOW (w);
+
+    sw->scale (sw->targetScale / optionGetInterval ());
+
+    toggleWindowFunctions (w, true);
+    toggleScreenFunctions (true);
+
+    return TRUE;
+}
+
+bool
+ShelfScreen::dec (CompAction         *action,
+		  CompAction::State  state,
+		  CompOption::Vector options)
+{
+    CompWindow *w = screen->findWindow (screen->activeWindow ());
+    if (!w)
+	return TRUE;
+
+    SHELF_WINDOW (w);
+
+    sw->scale (sw->targetScale * optionGetInterval ());
+
+    toggleWindowFunctions (w, true);
+    toggleScreenFunctions (true);
+
+    return TRUE;
+}
+
+void
+ShelfWindow::handleButtonPress (unsigned int x,
+				unsigned int y)
+{
+    SHELF_SCREEN (screen);
+
+    if (!screen->otherGrabExist ("shelf", 0))
+    {
+	window->activate ();
+	ss->grabbedWindow = window->id ();
+	ss->grabIndex = screen->pushGrab (ss->moveCursor, "shelf");
+
+	ss->lastPointerX = x;
+	ss->lastPointerY = y;
+    }
+}
+
+void
+ShelfScreen::handleMotionEvent (unsigned int x,
+				unsigned int y)
+{
+    CompWindow   *w;
+    unsigned int dx, dy;
+
+    if (!grabIndex)
+	return;
+
+    w = screen->findWindow (grabbedWindow);
+    if (!w)
+	return;
+
+    dx = x - lastPointerX;
+    dy = y - lastPointerY;
+
+    w->move (dx, dy, TRUE);
+    w->syncPosition ();
+
+    lastPointerX += dx;
+    lastPointerY += dy;
+}
+
+void
+ShelfWindow::handleButtonRelease ()
+{
+    SHELF_SCREEN (screen);
+
+    ss->grabbedWindow = None;
+    if (ss->grabIndex)
+    {
+	window->moveInputFocusTo ();
+	screen->removeGrab (ss->grabIndex, NULL);
+	ss->grabIndex = 0;
+    }
+}
+
+void
+ShelfWindow::handleEnter (XEvent *event)
+{
+    XEvent enterEvent;
+
+    memcpy (&enterEvent.xcrossing, &event->xcrossing,
+	    sizeof (XCrossingEvent));
+    enterEvent.xcrossing.window = window->id ();
+
+    XSendEvent (screen->dpy (), window->id (),
+		FALSE, EnterWindowMask, &enterEvent);
+}
+
+CompWindow *
+ShelfScreen::findRealWindowID (Window wid)
+{
+    CompWindow *orig;
+
+    orig = screen->findWindow (wid);
+    if (!orig)
+	return NULL;
+
+    return ShelfWindow::get (orig)->getRealWindow ();
+}
+
+void
+ShelfScreen::handleEvent (XEvent *event)
+{
+    CompWindow *w, *oldPrev, *oldNext;
+
+    switch (event->type)
+    {
+	case EnterNotify:
+	    w = findRealWindowID (event->xcrossing.window);
+	    if (w)
+		ShelfWindow::get (w)->handleEnter (event);
+	    break;
+	case ButtonPress:
+	    w = findRealWindowID (event->xbutton.window);
+	    if (w)
+		ShelfWindow::get (w)->handleButtonPress (event->xbutton.x_root,
+				   			 event->xbutton.y_root);
+	    break;
+	case ButtonRelease:
+	    w = screen->findWindow (grabbedWindow);
+	    if (w)
+		ShelfWindow::get (w)->handleButtonRelease ();
+	    break;
+	case MotionNotify:
+	    handleMotionEvent (event->xmotion.x_root,
+			       event->xmotion.y_root);
+	    break;
+	case ConfigureNotify:
+	    w = screen->findWindow (event->xconfigure.window);
+	    if (w)
+	    {
+		oldPrev = w->prev;
+		oldNext = w->next;
+	    }
+	    break;
+    }
+
+    screen->handleEvent (event);
+
+    switch (event->type)
+    {
+	case ConfigureNotify:
+	    if (w) /* already assigned above */
+	    {
+		if (w->prev != oldPrev || w->next != oldNext)
+		{
+		    /* restacking occured, ensure ipw stacking */
+		    adjustIPWStacking ();
+		}
+	    }
+	    break;
+    }
+}
+
+/* The window was damaged, adjust the damage to fit the actual area we
+ * care about.
+ */
+
+bool
+ShelfWindow::damageRect (bool     initial,
+			 CompRect &rect)
+{
+    Bool status = FALSE;
+
+    if (mScale != 1.0f)
+    {
+	float xTranslate, yTranslate;
+
+	xTranslate = window->input ().left * (mScale - 1.0f);
+	yTranslate = window->input ().top * (mScale - 1.0f);
+
+	cWindow->damageTransformedRect (mScale, mScale,
+				        xTranslate, yTranslate, rect);
+	status = TRUE;
+    }
+
+    status |= cWindow->damageRect (initial, rect);
+
+    return status;
+}
+
+/* Scale the window if it is supposed to be scaled.
+ * Translate into place.
+ *
+ * FIXME: Merge the two translations.
+ */
+bool
+ShelfWindow::glPaint (const GLWindowPaintAttrib &attrib,
+		      const GLMatrix		&transform,
+		      const CompRegion		&region,
+		      unsigned int		mask)
+{
+    if (targetScale != mScale && steps)
+    {
+	mScale += (float) steps * (targetScale - mScale);
+	if (fabsf (targetScale - mScale) < 0.005)
+	    mScale = targetScale;
+    }
+
+    if (mScale != 1.0f)
+    {
+	GLMatrix      mTransform = transform;
+	float         xTranslate, yTranslate;
+
+	xTranslate = window->input ().left * (mScale - 1.0f);
+	yTranslate = window->input ().top * (mScale - 1.0f);
+
+	mTransform.translate (window->x (), window->y (), 0);
+	mTransform.scale (mScale, mScale, 0);
+	mTransform.translate (xTranslate / mScale - window->x (),
+			      yTranslate / mScale - window->y (),
+			      0.0f);
+	
+	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+
+	return gWindow->glPaint (attrib, mTransform, region, mask);  
+    }
+    else
+    {
+	return gWindow->glPaint (attrib, transform, region, mask);
+    }
+}
+
+bool
+ShelfScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
+			    const GLMatrix	      &transform,
+			    const CompRegion	      &region,
+			    CompOutput		      *output,
+			    unsigned int	      mask)
+{
+    if (!shelfedWindows.empty ())
+	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+
+    return gScreen->glPaintOutput (attrib, transform, region, output, mask);
+}
+
+/* Checks to see if we need to adjust the window further and hence
+ * damages it's area. Also checks if we still need to paint the area of the
+ * window
+ */
+void
+ShelfScreen::donePaint ()
+{
+    bool stillPainting = false;
+    /* Fixme: should create internal window list */
+    foreach (CompWindow *w, screen->windows ())
+    {
+	SHELF_WINDOW (w);
+
+	if (sw->mScale != sw->targetScale)
+        {
+	    sw->cWindow->addDamage ();
+	}
+
+	if (sw->mScale == 1.0f && sw->targetScale == 1.0f)
+	    toggleWindowFunctions (w, false);
+	else
+	    stillPainting = true;
+    }
+
+    if (!stillPainting)
+	toggleScreenFunctions (false);
+
+    cScreen->donePaint ();
+}
+
+void
+ShelfWindow::moveNotify (int dx, int dy, bool immediate)
+{
+    if (targetScale != 1.00f)
+	adjustIPW ();
+
+    window->moveNotify (dx, dy, immediate);
+}
+
+/* Configuration, initialization, boring stuff. --------------------- */
+ShelfScreen::ShelfScreen (CompScreen *screen) :
+    PluginClassHandler <ShelfScreen, CompScreen> (screen),
+    cScreen (CompositeScreen::get (screen)),
+    gScreen (GLScreen::get (screen)),
+    grabIndex (0),
+    grabbedWindow (None),
+    moveCursor (XCreateFontCursor (screen->dpy (), XC_fleur)),
+    lastPointerX (0),
+    lastPointerY (0)
+{
+    ScreenInterface::setHandler (screen, false);
+    CompositeScreenInterface::setHandler (cScreen, false);
+    GLScreenInterface::setHandler (gScreen, false);
+
+    optionSetTriggerKeyInitiate (boost::bind (&ShelfScreen::trigger, this, _1,
+						_2, _3));
+    optionSetResetKeyInitiate (boost::bind (&ShelfScreen::reset, this, _1 , _2,
+					     _3));
+    optionSetTriggerscreenKeyInitiate (boost::bind (&ShelfScreen::triggerScreen,
+						    this, _1, _2, _3));
+    optionSetIncButtonInitiate (boost::bind (&ShelfScreen::inc, this, _1, _2,
+								_3));
+    optionSetDecButtonInitiate (boost::bind (&ShelfScreen::dec, this, _1, _2,
+								_3));
+}
+
+ShelfScreen::~ShelfScreen ()
+{
+    if (moveCursor)
+	XFreeCursor (screen->dpy (), moveCursor);
+}
+
+ShelfWindow::ShelfWindow (CompWindow *window) :
+    PluginClassHandler <ShelfWindow, CompWindow> (window),
+    window (window),
+    cWindow (CompositeWindow::get (window)),
+    gWindow (GLWindow::get (window)),
+    mScale (1.0f),
+    targetScale (1.0f),
+    steps (0),
+    info (NULL)
+{
+    WindowInterface::setHandler (window, false);
+    CompositeWindowInterface::setHandler (cWindow, false);
+    GLWindowInterface::setHandler (gWindow, false);
+}
+
+ShelfWindow::~ShelfWindow ()
+{
+    if (info)
+    {
+	targetScale = 1.0f;
+	/* implicitly frees sw->info */
+	handleShelfInfo ();
+    }
+}
+
+/* Check for necessary plugin dependencies and for Xorg shape extension.
+ * If we don't have either, bail out */
+bool
+ShelfPluginVTable::init ()
+{
+    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	return false;
+    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
+	return false;
+    if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return false;
+
+    if (!screen->XShape ())
+    {
+	compLogMessage ("shelf", CompLogLevelError,
+			"No Shape extension found. Shelfing not possible \n");
+	return false;
+    }
+
+    return true;
+}
