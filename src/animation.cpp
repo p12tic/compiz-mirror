@@ -2257,7 +2257,9 @@ PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
     mLastRedrawTimeFresh (false),
     mSwitcherPostWait (0),
     mStartCountdown (2), // start the countdown
+    mLastActiveWindow (0),
     mAnimInProgress (false),
+    mStartingNewPaintRound (false),
     mPrePaintWindowsBackToFrontEnabled (false),
     mOutput (0)
 {
@@ -2518,7 +2520,8 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 	    }
 	    break;
 	case CompWindowNotifyFocusChange:
-	    if (mPAScreen->mLastActiveWindow != mWindow->id ())
+	    if (!mPAScreen->mLastActiveWindow ||
+	    	mPAScreen->mLastActiveWindow != mWindow->id ())
 	    {
 		mPAScreen->mLastActiveWindow = mWindow->id ();
 
