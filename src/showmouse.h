@@ -26,10 +26,76 @@
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <mousepoll/mousepoll.h>
-#include <particlesystem/particlesystem.h>
 
 #include "showmouse_options.h"
 #include "showmouse_tex.h"
+
+class Particle
+{
+    public:
+
+	float life;			// particle life
+	float fade;			// fade speed
+	float width;			// particle width
+	float height;			// particle height
+	float w_mod;			// particle size modification during life
+	float h_mod;			// particle size modification during life
+	float r;			// red value
+	float g;			// green value
+	float b;			// blue value
+	float a;			// alpha value
+	float x;			// X position
+	float y;			// Y position
+	float z;			// Z position
+	float xi;			// X direction
+	float yi;			// Y direction
+	float zi;			// Z direction
+	float xg;			// X gravity
+	float yg;			// Y gravity
+	float zg;			// Z gravity
+	float xo;			// orginal X position
+	float yo;			// orginal Y position
+	float zo;			// orginal Z position
+};
+
+class ParticleSystem
+{
+    public:
+	ParticleSystem ();
+	~ParticleSystem ();
+
+	int      numParticles;
+	Particle *particles;
+	float    slowdown;
+	GLuint   tex;
+	Bool     active;
+	int      x, y;
+	float    darken;
+	GLuint   blendMode;
+
+	// Moved from drawParticles to get rid of spurious malloc's
+	GLfloat *vertices_cache;
+	int     vertex_cache_count;
+	GLfloat *coords_cache;
+	int     coords_cache_count;
+	GLfloat *colors_cache;
+	int     color_cache_count;
+	GLfloat *dcolors_cache;
+	int     dcolors_cache_count;
+
+	void
+	initParticles (int f_numParticles);
+
+	void
+	drawParticles ();
+
+	void
+	updateParticles (float f_time);
+
+	void
+	finiParticles ();
+
+};
 
 class ShowmouseScreen :
     public PluginClassHandler <ShowmouseScreen, CompScreen>,
