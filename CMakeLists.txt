@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (firepaint)
+include (CompizPlugin)
+
+compiz_plugin (firepaint PLUGINDEPS composite opengl)
