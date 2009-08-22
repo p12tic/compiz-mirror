@@ -2256,7 +2256,7 @@ PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
     aScreen (as),
     mLastRedrawTimeFresh (false),
     mSwitcherPostWait (0),
-    mStartCountdown (2), // start the countdown
+    mStartCountdown (20), // start the countdown
     mLastActiveWindow (0),
     mAnimInProgress (false),
     mStartingNewPaintRound (false),
