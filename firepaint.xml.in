@@ -6,9 +6,6 @@
 	    <requirement>
 		<plugin>opengl</plugin>
 	    </requirement>
-	    <requirement>
-		<plugin>particlesystem</plugin>
-	    </requirement>
 	</deps>
 	<category>Effects</category>
 	<options>
