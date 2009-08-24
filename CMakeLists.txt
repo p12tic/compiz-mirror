@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (mblur)
+include (CompizPlugin)
+
+compiz_plugin (mblur PLUGINDEPS composite opengl)

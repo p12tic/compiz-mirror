@@ -4,7 +4,12 @@
     <_short>Motion blur</_short>
     <_long>Motion blur effect</_long>
 	<category>Effects</category>
-    <display>
+    <deps>
+	<requirement>
+	    <plugin>opengl</plugin>
+	</requirement>
+    </deps>
+    <options>
       <group>
         <_short>Main</_short>
         <subgroup>
@@ -16,8 +21,6 @@
           </option>
         </subgroup>
       </group>
-    </display>
-    <screen>
       <group>
         <_short>Main</_short>
         <subgroup>
@@ -55,6 +58,6 @@
           </option>
         </subgroup>
       </group>
-    </screen>
+    </options>
   </plugin>
 </compiz>
