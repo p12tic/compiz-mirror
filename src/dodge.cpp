@@ -515,10 +515,8 @@ DodgeAnim::postInitiateRestackAnim (int numSelectedCandidates,
     dataSubject->dodgeChainStart = 0;
 
     if (mRestackData && mRestackData->mIsSecondary)
-    {
-    	mTransformStartProgress = 0;
-    	return; // We're done here
-    }
+	return; // We're done here
+
     float maxTransformTotalProgress = 0;
     float dodgeMaxStartProgress =
 	numSelectedCandidates * optValF (AnimationOptions::DodgeGapRatio) *
@@ -573,10 +571,7 @@ DodgeAnim::postInitiateRestackAnim (int numSelectedCandidates,
 		    dodgeMaxStartProgress *
 		    (1 - (float)dataDodger->dodgeOrder / numSelectedCandidates);
 	}
-	else
-	{
-	    animDodger->mTransformStartProgress = 0;
-	}
+
 	float transformTotalProgress =
 	    1 + animDodger->mTransformStartProgress;
 

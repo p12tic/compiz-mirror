@@ -41,7 +41,9 @@ TransformAnim::TransformAnim (CompWindow *w,
 			      float duration,
 			      const AnimEffect info,
 			      const CompRect &icon) :
-    Animation::Animation (w, curWindowEvent, duration, info, icon)
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    mTransformStartProgress (0.0f),
+    mTransformProgress (0.0f)
 {
 }
 
