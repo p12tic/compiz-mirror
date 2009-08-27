@@ -915,6 +915,9 @@ ThumbScreen::ThumbScreen (CompScreen *screen) :
     thumb.text = NULL;
     oldThumb.text = NULL;
 
+    thumb.opacity = 0.0f;
+    oldThumb.opacity = 0.0f;
+
     poller.setCallback (boost::bind (&ThumbScreen::positionUpdate, this, _1));
 }
 
