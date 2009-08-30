@@ -11,8 +11,12 @@
 				<plugin>png</plugin>
 				<plugin>imgjpeg</plugin>
 			</relation>
+			<requirement>
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
+			</requirement>
 		</deps>
-		<screen>
+		<options>
 			<group>
 				<_short>Main</_short>
 				<option name="file" type="string">
@@ -49,6 +53,6 @@
 					<default>true</default>
 				</option>
 			</group>
-		</screen>
+		</options>
 	</plugin>
 </compiz>
