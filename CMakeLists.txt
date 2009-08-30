@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (bicubic)
+include (CompizPlugin)
+
+compiz_plugin (bicubic PLUGINDEPS composite opengl)
