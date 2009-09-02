@@ -289,6 +289,9 @@ ThumbScreen::positionUpdate (const CompPoint &p)
     {
 	THUMB_WINDOW (cw);
 
+	if (cw->destroyed ())
+	    continue;
+
 	if (cw->iconGeometry ().isEmpty ())
 	    continue;
 
@@ -956,6 +959,9 @@ ThumbWindow::~ThumbWindow ()
 	ts->oldThumb.win = NULL;
 	ts->oldThumb.opacity = 0;
     }
+
+    if (ts->pointedWin == window)
+	ts->pointedWin = NULL;
 }
 
 
