@@ -1,2 +1,0 @@
-PLUGIN = workarounds
-CFLAGS_ADD = -I./build

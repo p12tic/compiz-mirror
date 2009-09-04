@@ -3,11 +3,20 @@
     <!-- workarounds metadata -->
     <plugin name="workarounds" useBcop="true">
         <category>Utility</category>
-        <deps>
-        </deps>
         <_short>Workarounds</_short>
         <_long>Metacity-like workarounds.</_long>
-        <display>
+	<deps>
+	        <relation type="after">
+			<plugin>composite</plugin>
+			<plugin>opengl</plugin>
+	        </relation>
+		<requirement>
+			<plugin>composite</plugin>
+			<plugin>opengl</plugin>
+		</requirement>
+			
+	</deps>
+        <options>
             <option type="bool" name="legacy_fullscreen">
                 <_short>Legacy Fullscreen Support</_short>
                 <_long>Make Wine and legacy applications fullscreen properly.</_long>
@@ -71,8 +80,6 @@
                     <default>any</default>
                 </option>
             </subgroup>
-        </display>
-        <screen>
-        </screen>
+        </options>
     </plugin>
 </compiz>
