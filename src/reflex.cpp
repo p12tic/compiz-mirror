@@ -129,6 +129,10 @@ ReflexWindow::updateMatch ()
     if (f_active != active)
     {
 	active = f_active;
+	if (active)
+	    gWindow->glDrawTextureSetEnabled (this, true);
+	else
+	    gWindow->glDrawTextureSetEnabled (this, false);
 	cWindow->addDamage ();
     }
 }
@@ -167,6 +171,21 @@ ReflexScreen::optionChanged (CompOption         *opt,
 	cScreen->damageScreen ();
 	break;
 
+    case ReflexOptions::Window:
+    case ReflexOptions::Decoration:
+	{
+	    bool shouldEnable = (optionGetWindow () ||
+				 optionGetDecoration ());
+
+	    foreach (CompWindow *w, screen->windows ())
+	    {
+		REFLEX_WINDOW (w);
+		shouldEnable |= optionGetMatch ().evaluate (w);
+		rw->gWindow->glDrawTextureSetEnabled (rw, shouldEnable);
+	    }
+	    cScreen->damageScreen ();
+	}
+
     default:
 	/* FIXME: this isn't right.... */
 	cScreen->damageScreen ();
@@ -183,8 +202,6 @@ ReflexWindow::glDrawTexture (GLTexture		      *texture,
 
     bool enabled;
     bool windowTexture = false;
-
-    //fprintf (stderr, "drawing the window texture \n");
 
     foreach (GLTexture *tex, gWindow->textures ())
     {
@@ -247,6 +264,8 @@ ReflexWindow::glDrawTexture (GLTexture		      *texture,
 		GL::programEnvParameter4f (GL_FRAGMENT_PROGRAM_ARB, param + 1,
 					   dx, 0.0f,
 					   rs->optionGetThreshold (), 0.0f);
+
+		tex->disable ();
 	    }
 
 	}
@@ -263,7 +282,6 @@ ReflexWindow::glDrawTexture (GLTexture		      *texture,
     }
     else
     {
-	//fprintf (stderr, "called glDrawTex\n");
 	gWindow->glDrawTexture (texture, attrib, mask);
     }
 }
@@ -336,7 +354,12 @@ ReflexWindow::ReflexWindow (CompWindow *window) :
     gWindow (GLWindow::get (window)),
     active (false)
 {
-    GLWindowInterface::setHandler (gWindow);
+    REFLEX_SCREEN (screen);
+
+    GLWindowInterface::setHandler (gWindow, false);
+
+    if (rs->optionGetWindow () || rs->optionGetDecoration ())
+	gWindow->glDrawTextureSetEnabled (this, true);
 
     updateMatch ();
 }
