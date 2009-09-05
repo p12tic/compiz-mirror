@@ -522,8 +522,8 @@ WallWindow::activate ()
 }
 
 void
-WallScreen::checkAmount (unsigned int dx,
-			 unsigned int dy,
+WallScreen::checkAmount (int 	      dx,
+			 int 	      dy,
 			 int          &amountX,
 			 int          &amountY)
 {
