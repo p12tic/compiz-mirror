@@ -191,24 +191,26 @@ ParticleSystem::drawParticles ()
 
     glEnableClientState(GL_COLOR_ARRAY);
 
-    glTexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), coords_cache);
-    glVertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), vertices_cache);
+    glTexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), coords);
+    glVertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), vertices);
 
     // darken the background
     if (darken > 0)
     {
 	glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-	glColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), dcolors_cache);
+	glColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), dcolors);
 	glDrawArrays(GL_QUADS, 0, numActive);
     }
     // draw particles
     glBlendFunc(GL_SRC_ALPHA, blendMode);
 
-    glColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), colors_cache);
+    glColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), colors);
 
     glDrawArrays(GL_QUADS, 0, numActive);
 
     glDisableClientState(GL_COLOR_ARRAY);
+
+    fprintf (stderr, "drew particles\n");
 
     glPopMatrix();
     glColor4usv(defaultColor);
@@ -224,7 +226,7 @@ ParticleSystem::updateParticles (float f_time)
     int i;
     Particle *part;
     float speed    = (f_time / 50.0);
-    float slowdown = slowdown * (1 - MAX(0.99, f_time / 1000.0)) * 1000;
+    float f_slowdown = slowdown * (1 - MAX(0.99, f_time / 1000.0)) * 1000;
 
     active = FALSE;
 
@@ -531,7 +533,7 @@ ShowmouseScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     if (!ps || !ps->active)
 	return status;
 
-    sTransform.reset ();
+    //sTransform.reset ();
 
     sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
@@ -539,8 +541,6 @@ ShowmouseScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     glLoadMatrixf (sTransform.getMatrix ());
 
     ps->drawParticles ();
-
-    fprintf (stderr, "drawing particles\n");
 
     glPopMatrix();
 
