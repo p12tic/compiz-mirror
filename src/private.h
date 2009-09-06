@@ -72,15 +72,15 @@ class TextSurface
 	bool render (const CompText::Attrib &attrib,
 		     const CompString       &text);
 
-	unsigned int mWidth;
-	unsigned int mHeight;
+	int          mWidth;
+	int          mHeight;
 	Pixmap       mPixmap;
 
     private:
-	bool initCairo (unsigned int w,
-			unsigned int h);
-	bool update (unsigned int w,
-		     unsigned int h);
+	bool initCairo (int w,
+			int h);
+	bool update (int w,
+		     int h);
 	void drawBackground (int x, int y,
 			     int width, int height,
 			     int radius);

@@ -22,7 +22,7 @@
 #ifndef _COMPIZ_TEXT_H
 #define _COMPIZ_TEXT_H
 
-#define COMPIZ_TEXT_ABI 20090118
+#define COMPIZ_TEXT_ABI 20090905
 
 class CompText
 {
@@ -74,16 +74,16 @@ class CompText
 	void clear ();
 
 	Pixmap getPixmap ();
-	unsigned int getWidth () const;
-	unsigned int getHeight () const;
+	int getWidth () const;
+	int getHeight () const;
 
 	void draw (float x,
 		   float y,
 		   float alpha) const;
 
     private:
-	unsigned int width;
-	unsigned int height;
+	int width;
+	int height;
 
 	Pixmap          pixmap;
 	GLTexture::List texture;

@@ -137,8 +137,8 @@ TextSurface::drawBackground (int     x,
 }
 
 bool
-TextSurface::initCairo (unsigned int width,
-			unsigned int height)
+TextSurface::initCairo (int width,
+			int height)
 {
     Display *dpy = screen->dpy ();
 
@@ -181,8 +181,8 @@ TextSurface::initCairo (unsigned int width,
 }
 
 bool
-TextSurface::update (unsigned int width,
-		     unsigned int height)
+TextSurface::update (int width,
+		     int height)
 {
     Display *dpy = screen->dpy ();
 
@@ -474,13 +474,13 @@ CompText::getPixmap ()
     return retval;
 }
 
-unsigned int
+int
 CompText::getWidth () const
 {
     return width;
 }
 
-unsigned int
+int
 CompText::getHeight () const
 {
     return height;
