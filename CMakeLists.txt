@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (colorfilter)
+include (CompizPlugin)
+
+compiz_plugin (colorfilter PLUGINDEPS composite opengl)

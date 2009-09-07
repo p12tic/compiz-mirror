@@ -1,10 +1,18 @@
 /*
  * Compiz fragment program parser
  *
+ * parser.cpp
+ *
+ * This should be usable on almost any plugin that wishes to parse fragment
+ * program files separately, maybe it should become a separate plugin?
+ *
  * Author : Guillaume Seguin
  * Email : guillaume@segu.in
  *
  * Copyright (c) 2007 Guillaume Seguin <guillaume@segu.in>
+ * 
+ * Basic C++ port of this by:
+ * Copyright (c) 2009 Sam Spilsbury <smspillaz@gmail.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,19 +29,20 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
+/* FIXME: This is a really really really really really really really really
+	  really really really really really really terrible C++ port. It could
+	  have been done SO much better but I honestly suck at working with
+	  strings. Can someone fix this to remove all the uses of char * and
+	  replace with CompString &? Thanks.
+		-Sam Spilsbury <smspillaz@gmail.com>
+ */
+#ifndef _GNU_SOURCE
 #define _GNU_SOURCE
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
+#endif
+#include <cstring>
 #include <ctype.h>
 
-#include <compiz-core.h>
 #include "parser.h"
-
-/* Internal prototypes ------------------------------------------------------ */
-
-static char *
-programFindOffset (FragmentOffset *offset, char *name);
 
 /* General helper functions ------------------------------------------------- */
 
@@ -42,10 +51,10 @@ programFindOffset (FragmentOffset *offset, char *name);
  * e.g. basename ("/home/user/blah.c") == "blah.c"
  * special case : basename ("/home/user/") == "user"
  */
-char *
-base_name (char *str)
+CompString
+FragmentParser::base_name (CompString str)
 {
-    char *current = str;
+    char *current = strdup (str.c_str ());
     int length;
     while (*current)
     {
@@ -60,26 +69,27 @@ base_name (char *str)
 	else
 	    current++;
     }
-    length = strlen (str);
+    length = str.size ();
     /* Duplicate result string for trimming */
-    current = strdup (str);
+    current = strdup (str.c_str ());
     if (!current)
 	return NULL;
     /* Trim terminating '/' if needed */
     if (length > 0 && current[(length - 1)] == '/')
 	current[(length - 1)] = 0;
-    return current;
+    return CompString (current);
 }
 
 /*
  * Left trimming function
  */
-static char *
-ltrim (char *string)
+CompString
+FragmentParser::ltrim (CompString string)
 {
-    while (*string && (*string == ' ' || *string == '\t'))
-	string++;
-    return string;
+    const char *str = string.c_str ();
+    while (*str && (*str == ' ' || *str == '\t'))
+	str++;
+    return CompString (str);
 }
 
 /* General fragment program related functions ------------------------------- */
@@ -87,12 +97,12 @@ ltrim (char *string)
 /*
  * Clean program name string
  */
-static char *
-programCleanName (char *name)
+CompString
+FragmentParser::programCleanName (CompString name)
 {
     char *dest, *current;
 
-    current = dest = strdup (name);
+    current = dest = strdup (name.c_str ());
     
     /* Replace every non alphanumeric char by '_' */
     while (*current)
@@ -102,26 +112,26 @@ programCleanName (char *name)
 	current++;
     }
 
-    return dest;
+    return CompString (dest);
 }
 
 /*
  * File reader function
  */
-static char *
-programReadSource (char *fname)
+CompString
+FragmentParser::programReadSource (CompString fname)
 {
     FILE   *fp;
     char   *data, *path = NULL, *home = getenv ("HOME");
     int     length;
 
     /* Try to open file fname as is */
-    fp = fopen (fname, "r");
+    fp = fopen (fname.c_str (), "r");
 
     /* If failed, try as user filter file (in ~/.compiz/data/filters) */
     if (!fp && home && strlen (home))
     {
-	asprintf (&path, "%s/.compiz/data/filters/%s", home, fname);
+	asprintf (&path, "%s/.compiz/data/filters/%s", home, fname.c_str ());
 	fp = fopen (path, "r");
 	free (path);
     }
@@ -130,7 +140,7 @@ programReadSource (char *fname)
      * (in PREFIX/share/compiz/filters) */
     if (!fp)
     {
-	asprintf (&path, "%s/filters/%s", DATADIR, fname);
+	asprintf (&path, "%s/filters/%s", DATADIR, fname.c_str ());
 	fp = fopen (path, "r");
 	free (path);
     }
@@ -145,7 +155,7 @@ programReadSource (char *fname)
     rewind (fp);
 
     /* Alloc memory */
-    data = malloc (sizeof (char) * (length + 1));
+    data = (char *) malloc (sizeof (char) * (length + 1));
     if (!data)
     {
 	fclose (fp);
@@ -160,7 +170,7 @@ programReadSource (char *fname)
     /* Close file */
     fclose (fp);
 
-    return data;
+    return CompString (data);
 }
 
 /*
@@ -171,8 +181,8 @@ programReadSource (char *fname)
  * This function returns NULL if no argument found
  * or a malloc'ed string that will have to be freed later.
  */
-static char *
-getFirstArgument (char **source)
+CompString
+FragmentParser::getFirstArgument (char **source)
 {
     char *next, *arg, *temp;
     char *string, *orig;
@@ -182,7 +192,7 @@ getFirstArgument (char **source)
 	return NULL;
 
     /* Left trim */
-    orig = string = ltrim (*source);
+    orig = string = strdup (ltrim (CompString (*source)).c_str ());
 
     /* Find next comma or semicolon (which isn't that useful since we
      * are working on tokens delimited by semicolons) */
@@ -209,7 +219,7 @@ getFirstArgument (char **source)
     }
 
     /* Allocate, copy and end string */
-    arg = malloc (sizeof (char) * (length + 1));
+    arg = (char *) malloc (sizeof (char) * (length + 1));
     if (!arg) return NULL;
 
     strncpy (arg, string, length);
@@ -221,7 +231,7 @@ getFirstArgument (char **source)
     else
 	**source = 0;
 
-    return arg;
+    return CompString (arg);
 }
 
 /* Texture offset related functions ----------------------------------------- */
@@ -229,33 +239,35 @@ getFirstArgument (char **source)
 /*
  * Add a new fragment offset to the offsets stack from an ADD op string
  */
-static FragmentOffset *
-programAddOffsetFromAddOp (FragmentOffset *offsets, char *source)
+FragmentParser::FragmentOffset *
+FragmentParser::programAddOffsetFromAddOp (char *source)
 {
     FragmentOffset  *offset;
     char	    *op, *orig_op;
     char	    *name;
     char	    *offset_string;
     char	    *temp;
+    std::list <FragmentOffset *>::iterator it = offsets.begin ();
 
     if (strlen (source) < 5)
-	return offsets;
+	return offsets.front ();
 
     orig_op = op = strdup (source);
 
     op += 3;
-    if (!(name = getFirstArgument (&op)))
+    if (!(name = strdup (getFirstArgument (&op).c_str ())))
     {
 	free (orig_op);
-	return offsets;
+	return offsets.front ();
     }
 
     /* If an offset with the same name is already registered, skeep this one */
-    if (programFindOffset (offsets, name) || !(temp = getFirstArgument (&op)))
+    if (!programFindOffset (it, name).empty () ||
+	!(temp = strdup (getFirstArgument (&op).c_str ())))
     {
 	free (name);
 	free (orig_op);
-	return offsets;
+	return (*it); // ???
     }
 
     /* We don't need this, let's free it immediately */
@@ -263,26 +275,27 @@ programAddOffsetFromAddOp (FragmentOffset *offsets, char *source)
 
     /* Just use the end of the op as the offset */
     op += 1;
-    offset_string = strdup (ltrim (op));
+    offset_string = strdup (ltrim (op).c_str ());
     if (!offset_string)
     {
 	free (name);
 	free (orig_op);
-	return offsets;
+	return offsets.front ();
     }
 
-    offset = malloc (sizeof (FragmentOffset));
+    offset = new FragmentOffset ();
     if (!offset)
     {
 	free (offset_string);
 	free (name);
 	free (orig_op);
-	return offsets;
+	return (*it);
     }
 
-    offset->name =  strdup (name);
-    offset->offset = strdup (offset_string);
-    offset->next = offsets;
+    offset->name =  CompString (name);
+    offset->offset = CompString (offset_string);
+
+    offsets.push_back (offset);
 
     free (offset_string);
     free (name);
@@ -294,32 +307,26 @@ programAddOffsetFromAddOp (FragmentOffset *offsets, char *source)
 /*
  * Find an offset according to its name
  */
-static char *
-programFindOffset (FragmentOffset *offset, char *name)
+CompString
+FragmentParser::programFindOffset (std::list<FragmentOffset *>::iterator it,
+				   char *name)
 {
-    if (!offset)
+    if (!(*it))
 	return NULL;
 
-    if (strcmp (offset->name, name) == 0)
-	return strdup (offset->offset);
+    if ((*it)->name.compare (CompString (name)) == 0)
+	return CompString ((*it)->offset);
 
-    return programFindOffset (offset->next, name);
+    return programFindOffset ((it++), name);
 }
 
 /*
  * Recursively free offsets stack
  */
-static void
-programFreeOffset (FragmentOffset *offset)
+void
+FragmentParser::programFreeOffset ()
 {
-    if (!offset)
-	return;
-
-    programFreeOffset (offset->next);
-
-    free (offset->name);
-    free (offset->offset);
-    free (offset);
+    offsets.clear ();
 }
 
 /* Actual parsing/loading functions ----------------------------------------- */
@@ -328,14 +335,14 @@ programFreeOffset (FragmentOffset *offset)
  * Parse the source buffer op by op and add each op to function data
  */
 /* FIXME : I am more than 200 lines long, I feel so heavy! */
-static void
-programParseSource (CompFunctionData *data,
-		    int target, char *source)
+void
+FragmentParser::programParseSource (GLFragment::FunctionData *data,
+		    		    int target, char *source)
 {
     char *line, *next, *current;
     char *strtok_ptr;
     int   length, oplength, type;
-    FragmentOffset *offsets = NULL;
+    FragmentOffset *offset = NULL;
 
     char *arg1, *arg2, *temp;
 
@@ -360,7 +367,7 @@ programParseSource (CompFunctionData *data,
     while (line)
     {
 	line = strdup (line);
-	current = ltrim (line);
+	current = strdup (ltrim (line).c_str ());
 
 	/* Find instruction type */
 	type = NoOp;
@@ -404,7 +411,7 @@ programParseSource (CompFunctionData *data,
 	else if (strncmp (current, "ADD", 3) == 0)
 	{
 	    if (strstr (current, "fragment.texcoord"))
-		offsets = programAddOffsetFromAddOp (offsets, current);
+		offset = programAddOffsetFromAddOp (current); // ???
 	    else
 		type = DataOp;
 	}
@@ -427,7 +434,7 @@ programParseSource (CompFunctionData *data,
 	    /* Data op : just copy paste the whole instruction plus a ";" */
 	    case DataOp:
 		asprintf (&arg1, "%s;", current);
-		addDataOpToFunctionData (data, arg1);
+		data->addDataOp (arg1);
 		free (arg1);
 		break;
 	    /* Parse arguments one by one */
@@ -441,7 +448,7 @@ programParseSource (CompFunctionData *data,
 		if (length < oplength + 2) break;
 		current += oplength + 1;
 		while (current && *current &&
-		       (arg1 = getFirstArgument (&current)))
+		       (arg1 = strdup (getFirstArgument (&current).c_str ())))
 		{
 		    /* "output" is a reserved word, skip it */
 		    if (strncmp (arg1, "output", 6) == 0)
@@ -451,11 +458,11 @@ programParseSource (CompFunctionData *data,
 		    }
 		    /* Add ops */
 		    if (type == TempOp)
-			addTempHeaderOpToFunctionData (data, arg1);
+			data->addTempHeaderOp (arg1);
 		    else if (type == ParamOp)
-			addParamHeaderOpToFunctionData (data, arg1);
+			data->addParamHeaderOp (arg1);
 		    else if (type == AttribOp)
-			addAttribHeaderOpToFunctionData (data, arg1);
+			data->addAttribHeaderOp (arg1);
 		    free (arg1);
 		}
 		break;
@@ -464,21 +471,22 @@ programParseSource (CompFunctionData *data,
 		 * "tmp" is dest name, while "coord" is either 
 		 * fragment.texcoord[0] or an offset */
 		current += 3;
-		if ((arg1 = getFirstArgument (&current)))
+		if ((arg1 = strdup (getFirstArgument (&current).c_str ())))
 		{
-		    if (!(temp = getFirstArgument (&current)))
+		    if (!(temp = strdup (getFirstArgument (&current).c_str ())))
 		    {
 			free (arg1);
 			break;
 		    }
 		    if (strcmp (temp, "fragment.texcoord[0]") == 0)
-			addFetchOpToFunctionData (data, arg1, NULL, target);
+			data->addFetchOp (arg1, NULL, target);
 		    else
 		    {
-			arg2 = programFindOffset (offsets, temp); 
+			arg2 = strdup (programFindOffset (
+					      offsets.begin (), temp).c_str ());
 			if (arg2)
 			{
-			    addFetchOpToFunctionData (data, arg1, arg2, target);
+			    data->addFetchOp (arg1, arg2, target);
 			    free (arg2);
 			}
 		    }
@@ -492,10 +500,11 @@ programParseSource (CompFunctionData *data,
 		    /* Example : MUL output, fragment.color, output;
 		     * MOV arg1, fragment.color, arg2 */
 		    current += 3;
-		    if  (!(arg1 = getFirstArgument (&current)))
+		    if  (!(arg1 = strdup (getFirstArgument (
+						&current).c_str ())))
 			break;
 
-		    if (!(temp = getFirstArgument (&current)))
+		    if (!(temp = strdup (getFirstArgument (&current).c_str ())))
 		    {
 			free (arg1);
 			break;
@@ -503,13 +512,13 @@ programParseSource (CompFunctionData *data,
 
 		    free (temp);
 
-		    if (!(arg2 = getFirstArgument (&current)))
+		    if (!(arg2 = strdup (getFirstArgument (&current).c_str ())))
 		    {
 			free (arg1);
 			break;
 		    }
 
-		    addColorOpToFunctionData (data, arg1, arg2);
+		    data->addColorOp (arg1, arg2);
 		    free (arg1);
 		    free (arg2);
 		}
@@ -518,9 +527,9 @@ programParseSource (CompFunctionData *data,
 		    /* Example : MOV result.color, output;
 		     * MOV result.color, arg1; */
 		    current = strstr (current, ",") + 1;
-		    if ((arg1 = getFirstArgument (&current)))
+		    if ((arg1 = strdup (getFirstArgument (&current).c_str ())))
 		    {
-			addColorOpToFunctionData (data, "output", arg1);
+			data->addColorOp ("output", arg1);
 			free (arg1);
 		    }
 		}
@@ -531,53 +540,59 @@ programParseSource (CompFunctionData *data,
 	free (line);
 	line = strtok_r (NULL, ";", &strtok_ptr);
     }
-    programFreeOffset (offsets);
-    offsets = NULL;
+    programFreeOffset ();
+    offset = NULL;
 }
 
 /*
  * Build a Compiz Fragment Function from a source string
  */
-int
-buildFragmentProgram (char *source, char *name,
-		      CompScreen *s, int target)
+GLFragment::FunctionId
+FragmentParser::buildFragmentProgram (char *source, char *name, int target)
 {
-    CompFunctionData *data;
+    GLFragment::FunctionData *data;
     int handle;
     /* Create the function data */
-    data = createFunctionData ();
+    data = new GLFragment::FunctionData ();
     if (!data)
 	return 0;
     /* Parse the source and fill the function data */
     programParseSource (data, target, source);
     /* Create the function */
-    handle = createFragmentFunction (s, name, data);
+    handle = data->createFragmentFunction (name);
     /* Clean things */
-    destroyFunctionData (data);
+    delete data;
     return handle;
 }
 
 /*
  * Load a source file and build a Compiz Fragment Function from it
  */
-int
-loadFragmentProgram (char *file, char *name,
-		     CompScreen *s, int target)
+GLFragment::FunctionId
+FragmentParser::loadFragmentProgram (CompString &file,
+				     CompString &name,
+				     int target)
 {
-    char *source;
-    int handle;
+    CompString source;
+    GLFragment::FunctionId handle;
+    char *source_c, *name_c;
+
     /* Clean fragment program name */
     name = programCleanName (name);
     /* Read the source file */
     source = programReadSource (file);
-    if (!source)
+    if (source.empty ())
     {
-	free (name);
 	return 0;
     }
+    source_c = strdup (source.c_str ());
+    name_c   = strdup (name.c_str ());
+
     /* Build the Compiz Fragment Program */
-    handle = buildFragmentProgram (source, name, s, target);
-    free (name);
-    free (source);
+    handle = buildFragmentProgram (strdup (source.c_str ()),
+				   strdup (name.c_str ()), target);
+
+    free (name_c);
+    free (source_c);
     return handle;
 }

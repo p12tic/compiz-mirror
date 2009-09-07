@@ -5,11 +5,17 @@
     <_long>Filter colors for accessibility purposes</_long>
     <category>Accessibility</category>
     <deps>
+      <requirement>
+	<plugin>composite</plugin>
+	<plugin>opengl</plugin>
+      </requirement>
       <relation type="after">
 	<plugin>blur</plugin>
+	<plugin>composite</plugin>
+	<plugin>opengl</plugin>
       </relation>
     </deps>
-    <display>
+    <options>
       <option name="toggle_window_key" type="key">
         <_short>Toggle window filtering</_short>
         <_long>Toggle filtering for currently focused window.</_long>
@@ -25,8 +31,6 @@
         <_long>Select filter to use from filters list : either apply all filters or only one specific filter (triggering this action switches filters one by one and eventually comes back to the "all filters" mode).</_long>
         <default>&lt;Control&gt;&lt;Super&gt;s</default>
       </option>
-    </display>
-    <screen>
       <option name="filters" type="list">
         <_short>Filters files</_short>
         <_long>List of plain text filter files that should be applied when filtering windows or screen.</_long>
@@ -52,13 +56,11 @@
         <_long>Windows to be filtered by default.</_long>
         <default>any</default>
       </option>
-    </screen>
-    <screen>
       <option name="exclude_match" type="match">
         <_short>Exclude windows</_short>
         <_long>Windows to exclude from filtering.</_long>
         <default>type=Desktop</default>
       </option>
-    </screen>
+    </options>
   </plugin>
 </compiz>
