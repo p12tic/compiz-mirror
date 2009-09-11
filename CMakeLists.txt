@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (ring PLUGINDEPS text)
+include (CompizPlugin)
+
+compiz_plugin (ring PLUGINDEPS composite opengl text)

@@ -9,7 +9,7 @@
 				<plugin>text</plugin>
 			</relation>
 		</deps>
-		<display>
+		<options>
 			<group>
 				<_short>Key bindings</_short>
 				<option name="next_key" type="key">
@@ -65,8 +65,6 @@
 					<_long>Show switcher if not visible and select previous window of the current application.</_long>
 				</option>
 			</group>
-		</display>
-		<screen>
 			<group>
 				<_short>Misc. Options</_short>
 				<option name="speed" type="float">
@@ -243,6 +241,6 @@
 					</desc>
 				</option>
 			</group>
-		</screen>
+		</options>
 	</plugin>
 </compiz>
