@@ -33,6 +33,24 @@ COMPIZ_PLUGIN_20090315 (ring, RingPluginVTable);
 
 bool textAvailable;
 
+static void
+toggleFunctions (bool enabled)
+{
+    RING_SCREEN (screen);
+
+    rs->cScreen->preparePaintSetEnabled (rs, enabled);
+    rs->cScreen->donePaintSetEnabled (rs, enabled);
+    rs->gScreen->glPaintOutputSetEnabled (rs, enabled);
+    screen->handleEventSetEnabled (rs, enabled);
+
+    foreach (CompWindow *w, screen->windows ())
+    {
+	RING_WINDOW (w);
+	rw->gWindow->glPaintSetEnabled (rw, enabled);
+	rw->cWindow->damageRectSetEnabled (rw, enabled);
+    }
+}
+
 bool
 RingWindow::is ()
 {
@@ -857,7 +875,10 @@ RingScreen::donePaint ()
 		cScreen->damageScreen ();
 
 	    if (state == RingStateIn)
+	    {
+		toggleFunctions (false);
 		state = RingStateNone;
+	    }
 	    else if (state == RingStateOut)
 		state = RingStateSwitching;
 	}
@@ -956,6 +977,7 @@ RingScreen::initiate (CompAction         *action,
 	rotTarget = 0;
 
     	moreAdjust = true;
+	toggleFunctions (true);
 	cScreen->damageScreen ();
     }
 
@@ -1238,9 +1260,9 @@ RingScreen::RingScreen (CompScreen *screen) :
     selectedWindow (None)
 {
 
-    ScreenInterface::setHandler (screen);
-    CompositeScreenInterface::setHandler (cScreen);
-    GLScreenInterface::setHandler (gScreen);
+    ScreenInterface::setHandler (screen, false);
+    CompositeScreenInterface::setHandler (cScreen, false);
+    GLScreenInterface::setHandler (gScreen, false);
 
     optionSetNextKeyInitiate (boost::bind (&RingScreen::doSwitch, this, _1, _2,
 					   _3, true, RingTypeNormal));
@@ -1316,8 +1338,8 @@ RingWindow::RingWindow (CompWindow *window) :
     scale (1.0f),
     adjust (false)
 {
-    CompositeWindowInterface::setHandler (cWindow);
-    GLWindowInterface::setHandler (gWindow);
+    CompositeWindowInterface::setHandler (cWindow, false);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 RingWindow::~RingWindow ()
