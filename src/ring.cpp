@@ -1097,7 +1097,7 @@ RingScreen::windowRemove (Window id)
     if (w)
     {
 	bool   inList = false;
-	int    j, i = 0;
+	int    i = 0;
 	Window selected;
 	std::vector <CompWindow *>::iterator it = windows.end ();
 
@@ -1106,14 +1106,16 @@ RingScreen::windowRemove (Window id)
 	if (state == RingStateNone)
 	    return;
 
-	if (rw->is ())
+	if (!rw->is ())
     	    return;
 
 	selected = selectedWindow;
 
 	while (it != windows.begin ())
 	{
-    	    if ((*it) && id == (*it)->id ())
+	    CompWindow *w = *it;
+
+    	    if (w && id == (*it)->id ())
 	    {
 		inList = true;
 
@@ -1128,6 +1130,7 @@ RingScreen::windowRemove (Window id)
 		}
 
 		windows.erase (it); // ???
+		break;
 
 	    }
 	    it--;
