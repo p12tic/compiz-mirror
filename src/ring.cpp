@@ -793,7 +793,6 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     if (state != RingStateNone)
     {
-	int           i;
 	GLMatrix      sTransform = transform;
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
@@ -1120,7 +1119,6 @@ RingScreen::windowRemove (Window id)
     if (w)
     {
 	bool   inList = false;
-	int    i = 0;
 	Window selected;
 	std::vector <CompWindow *>::iterator it = windows.end ();
 
