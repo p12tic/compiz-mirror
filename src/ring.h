@@ -191,6 +191,9 @@ class RingScreen :
 	void
 	windowRemove (Window id);
 
+	void
+	switchActivateEvent (bool);
+
 };
 
 class RingWindow :

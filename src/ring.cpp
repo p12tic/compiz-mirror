@@ -51,6 +51,24 @@ toggleFunctions (bool enabled)
     }
 }
 
+void
+RingScreen::switchActivateEvent (bool activating)
+{
+    CompOption::Vector o;
+
+    CompOption o1 ("root", CompOption::TypeInt);
+    o1.value ().set ((int) screen->root ());
+
+    o.push_back (o1);
+
+    CompOption o2 ("active", CompOption::TypeBool);
+    o2.value ().set (activating);
+
+    o.push_back (o2);
+
+    screen->handleCompizEvent ("ring", "activate", o);
+}
+
 bool
 RingWindow::is ()
 {
@@ -853,7 +871,10 @@ RingScreen::preparePaint (int msSinceLastPaint)
 	    }
 
 	    if (!moreAdjust && !rotateAdjust)
+	    {
+		switchActivateEvent (false);
 		break;
+	    }
 	}
     }
 
@@ -979,6 +1000,8 @@ RingScreen::initiate (CompAction         *action,
     	moreAdjust = true;
 	toggleFunctions (true);
 	cScreen->damageScreen ();
+
+	switchActivateEvent (true);
     }
 
     return true;
