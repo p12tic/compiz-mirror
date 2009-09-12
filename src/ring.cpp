@@ -31,6 +31,8 @@
 
 COMPIZ_PLUGIN_20090315 (ring, RingPluginVTable);
 
+bool textAvailable;
+
 bool
 RingWindow::is ()
 {
@@ -94,6 +96,9 @@ RingScreen::freeWindowTitle ()
 void
 RingScreen::renderWindowTitle ()
 {
+    if (!textAvailable)
+	return;
+
     CompText::Attrib attrib;
     CompRect       oe;
     int            ox1, ox2, oy1, oy2;
@@ -140,6 +145,8 @@ RingScreen::renderWindowTitle ()
 void
 RingScreen::drawWindowTitle ()
 {
+    if (!textAvailable)
+	return;
     float      x, y;
     CompRect   r;
     int        ox1, ox2, oy1, oy2;
@@ -1319,16 +1326,22 @@ RingWindow::~RingWindow ()
 	delete slot;
 }
 
-/* TODO: Work without text plugin */
-
 bool
 RingPluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
         !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
-        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
-	!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
-	return false;
+        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+    	return false;
+
+    if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+    {
+	compLogMessage ("ring", CompLogLevelWarn, "No compatible text plugin"\
+						  " loaded");
+	textAvailable = false;
+    }
+    else
+	textAvailable = true;
 
     return true;
 }

@@ -39,6 +39,8 @@
 
 #include "ring_options.h"
 
+extern bool textAvailable;
+
 class RingScreen :
     public PluginClassHandler <RingScreen, CompScreen>,
     public RingOptions,
