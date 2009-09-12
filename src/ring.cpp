@@ -939,7 +939,7 @@ RingScreen::initiate (CompAction         *action,
 {
     int       count; 
 
-    if (screen->otherGrabExist ("ring", 0))
+    if (screen->otherGrabExist ("ring", NULL))
 	return false;
 	   
     currentMatch = optionGetWindowMatch ();
