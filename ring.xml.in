@@ -8,6 +8,9 @@
 			<relation type="after">
 				<plugin>text</plugin>
 			</relation>
+			<requirement>
+				<plugin>opengl</plugin>
+			</requirement>
 		</deps>
 		<options>
 			<group>
