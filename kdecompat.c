@@ -149,17 +149,20 @@ kdecompatPaintWindow (CompWindow		 *w,
 
 		paintMask |= PAINT_WINDOW_BLEND_MASK;
 
-#if 0 /* draw the icon as large as possible */
-		xScale = (float) rect->width / icon->width;
-		yScale = (float) rect->height / icon->height;
-
-		if (xScale < yScale)
-		    yScale = xScale;
+		if (icon->width < rect->width && icon->height < rect->height)
+		{
+		    xScale = yScale = 1.0f;
+		}
 		else
-		    xScale = yScale;
-#else /* draw icon unscaled */
-		xScale = yScale = 1.0f;
-#endif
+		{
+		    xScale = (float) rect->width / icon->width;
+		    yScale = (float) rect->height / icon->height;
+
+		    if (xScale < yScale)
+			yScale = xScale;
+		    else
+			xScale = yScale;
+		}
 
 		xTranslate += rect->width / 2 - (icon->width * xScale / 2);
 		yTranslate += rect->height / 2 - (icon->height * yScale / 2);
