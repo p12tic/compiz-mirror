@@ -110,31 +110,90 @@ kdecompatPaintWindow (CompWindow		 *w,
 
     for (i = 0; i < kw->nPreviews; i++)
     {
-	CompWindow *tw = findWindowAtScreen (s, kw->previews[i].id);
-	XRectangle *rect = &kw->previews[i].thumb;
+	CompWindow   *tw = findWindowAtScreen (s, kw->previews[i].id);
+	XRectangle   *rect = &kw->previews[i].thumb;
+	unsigned int paintMask = mask | PAINT_WINDOW_TRANSFORMED_MASK;
+	float        xScale, yScale, xTranslate, yTranslate;
+	CompIcon     *icon = NULL;
+
+	xTranslate = rect->x + w->attrib.x - tw->attrib.x;
+	yTranslate = rect->y + w->attrib.y - tw->attrib.y;
 
 	if (tw->texture->pixmap)
 	{
+	    unsigned int width, height;
+
+	    width  = tw->attrib.width + tw->input.left + tw->input.right;
+	    height = tw->attrib.height + tw->input.top + tw->input.bottom;
+
+	    xScale = (float) rect->width / width;
+	    yScale = (float) rect->height / height;
+
+	    xTranslate += tw->input.left * xScale;
+	    yTranslate += tw->input.top * yScale;
+	}
+	else
+	{
+	    icon = getWindowIcon (tw, 256, 256);
+	    if (!icon)
+		icon = s->defaultIcon;
+
+	    if (icon)
+		if (!icon->texture.name && !iconToTexture (s, icon))
+		    icon = NULL;
+
+	    if (icon)
+	    {
+		REGION     iconReg;
+		CompMatrix matrix;
+
+		paintMask |= PAINT_WINDOW_BLEND_MASK;
+
+#if 0 /* draw the icon as large as possible */
+		xScale = (float) rect->width / icon->width;
+		yScale = (float) rect->height / icon->height;
+
+		if (xScale < yScale)
+		    yScale = xScale;
+		else
+		    xScale = yScale;
+#else /* draw icon unscaled */
+		xScale = yScale = 1.0f;
+#endif
+
+		xTranslate += rect->width / 2 - (icon->width * xScale / 2);
+		yTranslate += rect->height / 2 - (icon->height * yScale / 2);
+
+		iconReg.rects    = &iconReg.extents;
+		iconReg.numRects = 1;
+
+		iconReg.extents.x1 = tw->attrib.x;
+		iconReg.extents.y1 = tw->attrib.y;
+		iconReg.extents.x2 = tw->attrib.x + icon->width;
+		iconReg.extents.y2 = tw->attrib.y + icon->height;
+
+		matrix = icon->texture.matrix;
+		matrix.x0 -= (tw->attrib.x * icon->texture.matrix.xx);
+		matrix.y0 -= (tw->attrib.y * icon->texture.matrix.yy);
+
+		tw->vCount = tw->indexCount = 0;
+		(*s->addWindowGeometry) (tw, &matrix, 1,
+					 &iconReg, &infiniteRegion);
+
+		if (!tw->vCount)
+		    icon = NULL;
+	    }
+	}
+
+	if (tw->texture->pixmap || icon)
+	{
 	    FragmentAttrib fragment;
 	    CompTransform  wTransform = *transform;
-	    float          xScale, yScale, xTranslate, yTranslate;
-	    unsigned int   paintMask = mask | PAINT_WINDOW_TRANSFORMED_MASK;
-	    unsigned int   width, height;
 
 	    initFragmentAttrib (&fragment, attrib);
 
 	    if (tw->alpha || fragment.opacity != OPAQUE)
 		paintMask |= PAINT_WINDOW_TRANSLUCENT_MASK;
-
-	    width  = tw->attrib.width + tw->input.left + tw->input.right;
-	    height = tw->attrib.height + tw->input.top + tw->input.bottom;
-	    xScale = (float) rect->width / width;
-	    yScale = (float) rect->height / height;
-
-	    xTranslate = rect->x + w->attrib.x -
-		         tw->attrib.x + tw->input.left * xScale;
-	    yTranslate = rect->y + w->attrib.y -
-		         tw->attrib.y + tw->input.top * yScale;
 
 	    matrixTranslate (&wTransform, tw->attrib.x, tw->attrib.y, 0.0f);
 	    matrixScale (&wTransform, xScale, yScale, 1.0f);
@@ -146,8 +205,12 @@ kdecompatPaintWindow (CompWindow		 *w,
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.m);
 
-	    (*s->drawWindow) (tw, &wTransform, &fragment,
-			      &infiniteRegion, paintMask);
+	    if (tw->texture->pixmap)
+		(*s->drawWindow) (tw, &wTransform, &fragment,
+				  &infiniteRegion, paintMask);
+	    else if (icon)
+		(*s->drawWindowTexture) (tw, &icon->texture,
+					 &fragment, paintMask);
 
 	    glPopMatrix ();
 	}
