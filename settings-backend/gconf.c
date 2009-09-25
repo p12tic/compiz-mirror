@@ -172,9 +172,9 @@ const SpecialOption specialOptions[] = {
     {"fullscreen_visual_bell", "fade", TRUE,
      METACITY "/general/visual_bell_type", OptionSpecial},
 
-    {"next_key", "switcher", FALSE,
+    {"next_key", "staticswitcher", FALSE,
      METACITY "/global_keybindings/switch_windows", OptionKey},
-    {"prev_key", "switcher", FALSE,
+    {"prev_key", "staticswitcher", FALSE,
      METACITY "/global_keybindings/switch_windows_backward", OptionKey},
 
     {"toggle_sticky_key", "extrawm", FALSE,
