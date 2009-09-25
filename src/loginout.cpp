@@ -133,7 +133,7 @@ LoginoutWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	!(window->wmType () & CompWindowTypeDesktopMask) && ls->opacity < 1.0)
 	mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
-    gWindow->glPaint (attrib, transform, region, mask);
+    status = gWindow->glPaint (attrib, transform, region, mask);
 
     return status;
 }
