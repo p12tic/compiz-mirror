@@ -1834,17 +1834,20 @@ checkProfile (CCSContext *context)
     else
 	currentProfile = strdup (profile);
 
-    if (strcmp (lastProfile, currentProfile) != 0)
+    if (!lastProfile || strcmp (lastProfile, currentProfile) != 0)
     {
 	char *pathName;
 
-	/* copy /apps/compiz tree to profile path */
-	asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
-	if (pathName)
+	if (lastProfile)
 	{
-	    copyGconfTree (context, COMPIZ, pathName,
-	    		   TRUE, "/schemas" COMPIZ);
-	    free (pathName);
+	    /* copy /apps/compiz tree to profile path */
+	    asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
+	    if (pathName)
+	    {
+		copyGconfTree (context, COMPIZ, pathName,
+			       TRUE, "/schemas" COMPIZ);
+		free (pathName);
+	    }
 	}
 
 	/* reset /apps/compiz tree */
