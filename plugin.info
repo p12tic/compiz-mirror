@@ -1,3 +1,0 @@
-PLUGIN = shift
-PKG_DEP = compiz-text
-CHK_HEADERS = compiz-text.h

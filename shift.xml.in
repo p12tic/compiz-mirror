@@ -5,15 +5,21 @@
 		<_long>Shift Switcher Plugin</_long>
 		<category>Window Management</category>
 		<deps>
+			<requirement>
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
+			</requirement>
 			<relation type="before">
 				<plugin>fade</plugin>
 				<plugin>bs</plugin>
 			</relation>
 			<relation type="after">
 				<plugin>text</plugin>
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
 			</relation>
 		</deps>
-		<display>
+		<options>
 			<group>
 				<_short>Key bindings</_short>
 				<option name="initiate_key" type="key">
@@ -102,8 +108,6 @@
 				</option>
 				
 			</group>
-		</display>
-		<screen>
 			<group>
 				<_short>Misc. Options</_short>
 				<option name="speed" type="float">
@@ -355,6 +359,6 @@
 					</desc>
 				</option>
 			</group>
-		</screen>
+		</options>
 	</plugin>
 </compiz>
