@@ -113,7 +113,7 @@ kdecompatPaintWindow (CompWindow		 *w,
 	CompWindow   *tw = findWindowAtScreen (s, kw->previews[i].id);
 	XRectangle   *rect = &kw->previews[i].thumb;
 	unsigned int paintMask = mask | PAINT_WINDOW_TRANSFORMED_MASK;
-	float        xScale, yScale, xTranslate, yTranslate;
+	float        xScale = 1.0f, yScale = 1.0f, xTranslate, yTranslate;
 	CompIcon     *icon = NULL;
 
 	xTranslate = rect->x + w->attrib.x - tw->attrib.x;
@@ -149,11 +149,7 @@ kdecompatPaintWindow (CompWindow		 *w,
 
 		paintMask |= PAINT_WINDOW_BLEND_MASK;
 
-		if (icon->width < rect->width && icon->height < rect->height)
-		{
-		    xScale = yScale = 1.0f;
-		}
-		else
+		if (icon->width >= rect->width || icon->height >= rect->height)
 		{
 		    xScale = (float) rect->width / icon->width;
 		    yScale = (float) rect->height / icon->height;
