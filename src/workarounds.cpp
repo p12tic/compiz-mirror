@@ -42,6 +42,15 @@ WorkaroundsScreen::checkFunctions (bool checkWindow, bool checkScreen)
 	gScreen->glPaintOutputSetEnabled (this, false);
     }
 
+    if (haveOpenGL && optionGetForceSwapBuffers () && checkScreen)
+    {
+	cScreen->preparePaintSetEnabled (this, true);
+    }
+    else if (haveOpenGL && checkScreen)
+    {
+	cScreen->preparePaintSetEnabled (this, false);
+    }
+
     if ((optionGetLegacyFullscreen () ||
 	optionGetFirefoxMenuFix ()   ||
 	optionGetOooMenuFix ()	     ||
@@ -122,6 +131,33 @@ WorkaroundsScreen::updateParameterFix ()
 	GL::programEnvParameter4f = workaroundsProgramEnvParameter4f;
     else
 	GL::programEnvParameter4f = origProgramEnvParameter4f;
+}
+
+void
+WorkaroundsScreen::updateVideoSyncFix ()
+{
+    if ((!GL::getVideoSync || origGetVideoSync) ||
+	(!GL::waitVideoSync || origWaitVideoSync))
+	return;
+    if (optionGetNoWaitForVideoSync ())
+    {
+	GL::getVideoSync = NULL;
+	GL::waitVideoSync = NULL;
+    }
+    else
+    {
+	GL::getVideoSync = origGetVideoSync;
+	GL::waitVideoSync = origWaitVideoSync;
+    }
+}
+
+void
+WorkaroundsScreen::preparePaint (int ms)
+{
+    if (optionGetForceSwapBuffers ())
+	cScreen->damageScreen (); // Massive CPU usage here
+
+    cScreen->preparePaint (ms);
 }
 
 bool
@@ -475,6 +511,7 @@ WorkaroundsScreen::optionChanged (CompOption		      *opt,
     if (haveOpenGL)
     {
 	updateParameterFix ();
+	updateVideoSyncFix ();
 
 	if (optionGetFglrxXglFix ())
 	    GL::copySubBuffer = NULL;
@@ -595,7 +632,10 @@ WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
 {
     ScreenInterface::setHandler (screen, false);
     if (haveOpenGL)
+    {
+	CompositeScreenInterface::setHandler (cScreen, false);
 	GLScreenInterface::setHandler (gScreen, false);
+    }
 
     optionSetStickyAlldesktopsNotify (boost::bind (
 					&WorkaroundsScreen::optionChanged, this,
@@ -611,6 +651,12 @@ WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
     optionSetFglrxXglFixNotify (boost::bind (
 					&WorkaroundsScreen::optionChanged, this,
 					_1, _2));
+    optionSetForceSwapBuffersNotify (boost::bind (
+					&WorkaroundsScreen::optionChanged, this,
+					_1, _2));
+    optionSetNoWaitForVideoSyncNotify (boost::bind (
+					&WorkaroundsScreen::optionChanged, this,
+					_1, _2));
 
     if (haveOpenGL)
     {
@@ -619,7 +665,11 @@ WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
     		       gScreen->getProcAddress ("glProgramEnvParameter4dvARB");
 	origCopySubBuffer = GL::copySubBuffer;
 
+	origGetVideoSync = GL::getVideoSync;
+	origWaitVideoSync = GL::waitVideoSync;
+
 	updateParameterFix ();
+	updateVideoSyncFix ();
     }
 
     if (optionGetFglrxXglFix () && haveOpenGL)

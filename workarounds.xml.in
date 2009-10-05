@@ -67,6 +67,16 @@
                 <_long>Force synchronization between X and GLX, which may help for window parts not redrawing correctly when using Nvidia drivers, but also may decrease performance.</_long>
                 <default>false</default>
             </option>
+	    <option type="bool" name="no_wait_for_video_sync">
+		<_short>Don't wait for video sync</_short>
+		<_long>Don't wait for the next video sync time to redraw</_long>
+		<default>false</default>
+	    </option>
+	    <option type="bool" name="force_swap_buffers">
+		<_short>Force full screen redraws (buffer swap) on repaint</_short>
+		<_long>Forces the entire screen to redraw every repaint. Use with care, this will cause a massive increase in GPU and CPU usage</_long>
+		<default>false</default>
+	    </option>
             <subgroup>
                 <_short>Window stickyness</_short>
                 <option type="bool" name="sticky_alldesktops">

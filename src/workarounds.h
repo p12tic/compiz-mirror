@@ -45,6 +45,7 @@ class WorkaroundsScreen :
     public PluginClassHandler <WorkaroundsScreen, CompScreen>,
     public ScreenInterface,
     public GLScreenInterface,
+    public CompositeScreenInterface,
     public WorkaroundsOptions
 {
     public:
@@ -61,10 +62,16 @@ class WorkaroundsScreen :
 	GL::GLProgramParameter4fProc origProgramEnvParameter4f;
 	GLProgramParameter4dvProc    programEnvParameter4dv;
 
+	GL::GLXGetVideoSyncProc      origGetVideoSync;
+	GL::GLXWaitVideoSyncProc     origWaitVideoSync;
+
 	GL::GLXCopySubBufferProc     origCopySubBuffer;
 
 	void
 	handleEvent (XEvent *);
+
+	void
+	preparePaint (int);
 
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &,
@@ -81,6 +88,9 @@ class WorkaroundsScreen :
 
 	void
 	updateParameterFix ();
+
+	void
+	updateVideoSyncFix ();
 
 	void
 	optionChanged (CompOption		      *opt,
