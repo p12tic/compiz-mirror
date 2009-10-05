@@ -4,6 +4,17 @@
     <_short>Splash</_short>
     <_long>A simple splash plugin</_long>
 	<category>Extras</category>
+    <deps>
+      <requirement>
+        <plugin>composite</plugin>
+        <plugin>opengl</plugin>
+      </requirement>
+      <relation type="after">
+        <plugin>imgsvg</plugin>
+        <plugin>imgpng</plugin>
+        <plugin>imgjpeg</plugin>
+      </relation>
+    </deps>
     <options>
       <group>
         <_short>Main</_short>
