@@ -71,6 +71,9 @@ void
 groupDestroyCairoLayer (CompScreen      *s,
 			GroupCairoLayer *layer)
 {
+    if (!layer)
+	return;
+
     if (layer->cairo)
 	cairo_destroy (layer->cairo);
 
