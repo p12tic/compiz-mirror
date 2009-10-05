@@ -681,7 +681,11 @@ WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
 WorkaroundsScreen::~WorkaroundsScreen ()
 {
     if (haveOpenGL)
+    {
 	GL::copySubBuffer = origCopySubBuffer;
+	GL::getVideoSync = origGetVideoSync;
+	GL::waitVideoSync = origWaitVideoSync;
+    }
 }
 
 WorkaroundsWindow::WorkaroundsWindow (CompWindow *window) :
