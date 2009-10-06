@@ -451,4 +451,6 @@ WinrulesPluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
 	return false;
+
+    return true;
 }
