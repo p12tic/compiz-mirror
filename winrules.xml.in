@@ -4,7 +4,7 @@
 		<_short>Window Rules</_short>
 		<_long>Set windows rules</_long>
 		<category>Window Management</category>
-		<screen>
+		<options>
 			<group>
 				<_short>Matches</_short>
 				<option name="skiptaskbar_match" type="match">
@@ -99,6 +99,6 @@
 					</option>
 				</subgroup>
 			</group>
-		</screen>
+		</options>
 	</plugin>
 </compiz>
