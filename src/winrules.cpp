@@ -63,6 +63,14 @@ WinrulesWindow::isFocussable ()
 }
 
 bool
+WinrulesWindow::focus ()
+{
+    window->focus ();
+
+    return false; // We only want to return false for the window we are wrapped
+}
+
+bool
 WinrulesWindow::alpha ()
 {
     window->alpha ();
@@ -82,6 +90,7 @@ WinrulesWindow::setNoFocus (int        optNum)
 
     if (ws->getOptions ().at (optNum). value ().match ().evaluate (window))
     {
+
 	if (window->protocols () & CompWindowProtocolTakeFocusMask)
 	{
 	    protocolSetMask |= (window->protocols () &
@@ -90,6 +99,8 @@ WinrulesWindow::setNoFocus (int        optNum)
 	}
 	window->isFocussableSetEnabled (this, true);// causes w->isFocussable ()
 						    // to return false
+	window->focusSetEnabled (this, true); // causes w->focus () to return
+					      // false for this window
     }
     else if ((protocolSetMask & CompWindowProtocolTakeFocusMask))
     {
@@ -97,6 +108,7 @@ WinrulesWindow::setNoFocus (int        optNum)
 	              (protocolSetMask & CompWindowProtocolTakeFocusMask);
 	protocolSetMask &= ~CompWindowProtocolTakeFocusMask;
 	window->isFocussableSetEnabled (this, false);
+	window->focusSetEnabled (this, true);
     }
 
     if (newProtocol != window->protocols ())
@@ -271,7 +283,7 @@ WinrulesScreen::optionChanged (CompOption	       *option,
 	case WinrulesOptions::FullscreenMatch:
 	    updateStateMask = CompWindowStateFullscreenMask;
 	break;
-	case WinrulesOptions::NoMaximizeMatch:
+	case WinrulesOptions::MaximizeMatch:
 	    updateStateMask = CompWindowStateMaximizedHorzMask |
 			      CompWindowStateMaximizedVertMask;
 	break;
@@ -284,14 +296,14 @@ WinrulesScreen::optionChanged (CompOption	       *option,
 	case WinrulesOptions::NoMinimizeMatch:
 	    updateActionsMask = CompWindowActionMinimizeMask;
 	break;
-	case WinrulesOptions::NoCloseMatch:
+	case WinrulesOptions::NoMaximizeMatch:
 	    updateActionsMask = CompWindowActionMaximizeVertMask |
 		                CompWindowActionMaximizeHorzMask;
 	break;
-	case WinrulesOptions::NoArgbMatch:
+	case WinrulesOptions::NoCloseMatch:
 	    updateActionsMask = CompWindowActionCloseMask;
 	break;
-	case WinrulesOptions::NoFocusMatch:
+	case WinrulesOptions::NoArgbMatch:
 	    foreach (CompWindow *w, screen->windows ())
 	    {
 		WINRULES_WINDOW (w);
@@ -408,8 +420,6 @@ void
 WinrulesWindow::getAllowedActions (unsigned int &setActions,
 				   unsigned int &clearActions)
 {
-    fprintf (stderr, "getAllowedActions called\n");
-
     window->getAllowedActions (setActions, clearActions);
 
     clearActions |= ~allowedActions;
@@ -515,6 +525,7 @@ WinrulesWindow::WinrulesWindow (CompWindow *window) :
 
     window->isFocussableSetEnabled (this, false);
     window->alphaSetEnabled (this, false);
+    window->focusSetEnabled (this, false);
 
     timer.setCallback (boost::bind(&WinrulesWindow::applyRules, this));
     timer.setTimes (0, 0);
@@ -531,3 +542,4 @@ WinrulesPluginVTable::init ()
 
     return true;
 }
+

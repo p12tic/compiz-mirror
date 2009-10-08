@@ -106,6 +106,7 @@ class WinrulesWindow :
 
 	bool alpha ();
 	bool isFocussable ();
+	bool focus ();
 
 	unsigned int allowedActions;
 	unsigned int stateSetMask;
