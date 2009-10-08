@@ -54,7 +54,22 @@ WinrulesWindow::is ()
     return true;
 }
 
-/* FIXME? Directly set inputHint, not a problem for now */
+bool
+WinrulesWindow::isFocussable ()
+{
+    window->isFocussable ();
+
+    return false; // We only want to return false else where we are not wrapped
+}
+
+bool
+WinrulesWindow::alpha ()
+{
+    window->alpha ();
+
+    return false; // We only want to return false else where we are not wrapped
+}
+
 void
 WinrulesWindow::setNoFocus (int        optNum)
 {
@@ -73,22 +88,15 @@ WinrulesWindow::setNoFocus (int        optNum)
 				CompWindowProtocolTakeFocusMask);
 	    newProtocol = window->protocols () & ~CompWindowProtocolTakeFocusMask;
 	}
-	oldIsFocussable = window->isFocussable ();
-#warning * [FIXME] Core patch needed top make isFocussable () wrappable
-/*
-	window->setInputHint (false);
-*/
+	window->isFocussableSetEnabled (this, true);// causes w->isFocussable ()
+						    // to return false
     }
-    else if (oldIsFocussable ||
-	     (protocolSetMask & CompWindowProtocolTakeFocusMask))
+    else if ((protocolSetMask & CompWindowProtocolTakeFocusMask))
     {
 	newProtocol = window->protocols () |
 	              (protocolSetMask & CompWindowProtocolTakeFocusMask);
 	protocolSetMask &= ~CompWindowProtocolTakeFocusMask;
-#warning * [FIXME] Core patch needed top make isFocussable () wrappable
-/*
-	window->setInputHint (oldIsFocussable);
-*/
+	window->isFocussableSetEnabled (this, false);
     }
 
     if (newProtocol != window->protocols ())
@@ -107,14 +115,12 @@ WinrulesWindow::setNoAlpha (int        optNum)
 
     if (ws->getOptions ().at (optNum). value ().match ().evaluate (window))
     {
-	hasAlpha = window->alpha ();
-#warning * [FIXME] Core patch needed to make window->alpha () wrappable
-	//window->setAlpha (false); Core patch needed
+	window->alphaSetEnabled (this, true); // Causes w->alpha () to return
+					      // false
     }
     else
     {
-#warning * [FIXME] Core patch needed for window->alpha () wrappable
-	//window->setAlpha (hasAlpha); Core patch needed
+	window->alphaSetEnabled (this, false);
     }
 }
 
@@ -402,6 +408,8 @@ void
 WinrulesWindow::getAllowedActions (unsigned int &setActions,
 				   unsigned int &clearActions)
 {
+    fprintf (stderr, "getAllowedActions called\n");
+
     window->getAllowedActions (setActions, clearActions);
 
     clearActions |= ~allowedActions;
@@ -435,18 +443,84 @@ WinrulesScreen::WinrulesScreen (CompScreen *screen) :
     PluginClassHandler <WinrulesScreen, CompScreen> (screen)
 {
     ScreenInterface::setHandler (screen);
+
+    optionSetSkiptaskbarMatchNotify (boost::bind
+					(&WinrulesScreen::optionChanged, this,
+					 _1, _2));
+
+    optionSetSkippagerMatchNotify (boost::bind
+				   (&WinrulesScreen::optionChanged, this,
+				    _1, _2));
+
+    optionSetAboveMatchNotify (boost::bind
+				(&WinrulesScreen::optionChanged, this,
+				 _1, _2));
+
+    optionSetBelowMatchNotify (boost::bind
+				(&WinrulesScreen::optionChanged, this,
+				 _1, _2));
+
+    optionSetFullscreenMatchNotify (boost::bind
+				    (&WinrulesScreen::optionChanged, this,
+				     _1, _2));
+
+    optionSetStickyMatchNotify (boost::bind
+				(&WinrulesScreen::optionChanged, this,
+				_1, _2));
+
+    optionSetMaximizeMatchNotify (boost::bind
+				  (&WinrulesScreen::optionChanged, this,
+				   _1, _2));
+
+    optionSetNoArgbMatchNotify (boost::bind
+				(&WinrulesScreen::optionChanged, this,
+				 _1, _2));
+
+    optionSetNoMoveMatchNotify (boost::bind
+				(&WinrulesScreen::optionChanged, this,
+				 _1, _2));
+
+    optionSetNoResizeMatchNotify (boost::bind
+				  (&WinrulesScreen::optionChanged, this,
+				   _1, _2));
+
+    optionSetNoMinimizeMatchNotify (boost::bind
+				    (&WinrulesScreen::optionChanged, this,
+				     _1, _2));
+
+    optionSetNoMaximizeMatchNotify (boost::bind
+				    (&WinrulesScreen::optionChanged, this,
+				     _1, _2));
+
+    optionSetNoCloseMatchNotify (boost::bind
+				 (&WinrulesScreen::optionChanged, this,
+				  _1, _2));
+
+    optionSetNoFocusMatchNotify (boost::bind
+				 (&WinrulesScreen::optionChanged, this,
+				  _1, _2));
+
 }
 
 WinrulesWindow::WinrulesWindow (CompWindow *window) :
     PluginClassHandler <WinrulesWindow, CompWindow> (window),
     window (window),
-    allowedActions (0),
+    allowedActions (~0),
     stateSetMask (0),
-    protocolSetMask (0),
-    oldIsFocussable (window->isFocussable ()),
-    hasAlpha (window->alpha ())
+    protocolSetMask (0)
 {
+    CompTimer timer;
+
     WindowInterface::setHandler (window);
+
+    window->isFocussableSetEnabled (this, false);
+    window->alphaSetEnabled (this, false);
+
+    timer.setCallback (boost::bind(&WinrulesWindow::applyRules, this));
+    timer.setTimes (0, 0);
+
+    timer.start ();
+
 }
 
 bool

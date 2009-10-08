@@ -23,6 +23,7 @@
 
 #include <core/core.h>
 #include <core/pluginclasshandler.h>
+#include <core/timer.h>
 #include <core/atoms.h>
 #include <X11/Xatom.h>
 #include "winrules_options.h"
@@ -103,12 +104,12 @@ class WinrulesWindow :
 
 	bool applyRules ();
 
+	bool alpha ();
+	bool isFocussable ();
+
 	unsigned int allowedActions;
 	unsigned int stateSetMask;
 	unsigned int protocolSetMask;
-
-	bool oldIsFocussable;
-	bool hasAlpha;
 };
 
 #define WINRULES_WINDOW(window)					       \
