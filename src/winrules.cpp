@@ -90,7 +90,6 @@ WinrulesWindow::setNoFocus (int        optNum)
 
     if (ws->getOptions ().at (optNum). value ().match ().evaluate (window))
     {
-
 	if (window->protocols () & CompWindowProtocolTakeFocusMask)
 	{
 	    protocolSetMask |= (window->protocols () &
@@ -108,7 +107,7 @@ WinrulesWindow::setNoFocus (int        optNum)
 	              (protocolSetMask & CompWindowProtocolTakeFocusMask);
 	protocolSetMask &= ~CompWindowProtocolTakeFocusMask;
 	window->isFocussableSetEnabled (this, false);
-	window->focusSetEnabled (this, true);
+	window->focusSetEnabled (this, false);
     }
 
     if (newProtocol != window->protocols ())
