@@ -393,6 +393,9 @@ WinrulesScreen::handleEvent (XEvent *event)
 	    ww->applyRules ();
 	}
     }
+
+    screen->handleEvent (event);
+
 }
 
 void
