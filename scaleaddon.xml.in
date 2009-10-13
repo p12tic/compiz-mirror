@@ -12,7 +12,7 @@
 		<plugin>scale</plugin>
 	    </requirement>
 	</deps>
-	<display>
+	<options>
 	    <group>
 		<_short>Bindings</_short>
 		<option name="close_key" type="key">
@@ -55,8 +55,6 @@
 		    <internal/>
 		</option>
 	    </group>
-	</display>
-	<screen>
 	    <group>
 		<_short>Appearance</_short>
 		<subgroup>
@@ -171,6 +169,6 @@
 		    </option>
 		</subgroup>
 	    </group>
-	</screen>
+	</options>
     </plugin>
 </compiz>

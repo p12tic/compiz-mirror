@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (scaleaddon PLUGINDEPS text scale)
+include (CompizPlugin)
+
+compiz_plugin (scaleaddon PLUGINDEPS composite opengl text scale)
