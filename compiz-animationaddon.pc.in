@@ -7,6 +7,6 @@ Name: compiz-animationaddon
 Description: Animation Addon plugin for compiz
 Version: @VERSION@
 
-Requires:
-Libs:
+Requires: compiz compiz-composite compiz-opengl compiz-animation
+Libs: -L${libdir} -lanimationaddon
 Cflags: @COMPIZ_CFLAGS@

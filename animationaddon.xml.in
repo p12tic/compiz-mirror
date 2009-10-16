@@ -1,6 +1,6 @@
 <compiz>
   <!-- animationaddon metadata -->
-  <plugin name="animationaddon">
+  <plugin name="animationaddon" useBcop="true">
     <_short>Animations Add-On</_short>
     <_long>Extra window animations and animation engines</_long>
     <category>Effects</category>
@@ -13,12 +13,7 @@
       </relation>
     </deps>
 
-    <display>
-      <option name="abi" type="int" read_only="true"/>
-      <option name="index" type="int" read_only="true"/>
-    </display>
-
-    <screen>
+    <options>
 
       <group>
 	<_short>Effect Settings</_short>
@@ -471,7 +466,7 @@
 	</option>
       </group> 
 
-    </screen>
+    </options>
 
     <extension base_plugin="animation">
       <base_option>open_effects</base_option>
