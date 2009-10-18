@@ -183,7 +183,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 	// Warning: Assumes that option names in different extension plugins
 	// will be different.
 	bool matched = false;
-	const ExtensionPluginInfo *extensionPluginInfo;
+	const ExtensionPluginInfo *chosenExtensionPlugin = NULL;
 	CompOption *o = 0;
 	int optId = -1;
 	foreach (ExtensionPluginInfo *extensionPlugin, mExtensionPlugins)
@@ -197,6 +197,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 		if (strcasecmp (nameTrimmed, o->name ().c_str ()) == 0)
 		{
 		    matched = true;
+		    chosenExtensionPlugin = extensionPlugin;
 		    break;
 		}
 	    }
@@ -213,7 +214,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 	os->pairs.push_back (IdValuePair ());
 	IdValuePair *pair = &os->pairs[i];
 
-	pair->pluginInfo = extensionPluginInfo;
+	pair->pluginInfo = chosenExtensionPlugin;
 	pair->optionId = optId;
 	int valueRead = -1;
 	switch (o->type ())
