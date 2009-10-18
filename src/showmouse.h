@@ -156,6 +156,9 @@ class ShowmouseScreen :
 
 };
 
+#define SHOWMOUSE_SCREEN(s)						       \
+    ShowmouseScreen *ss = ShowmouseScreen::get (s);
+
 class ShowmousePluginVTable :
     public CompPlugin::VTableForScreen <ShowmouseScreen>
 {

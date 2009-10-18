@@ -327,6 +327,15 @@ ParticleSystem::finiParticles ()
     }
 }
 
+static void
+toggleFunctions (bool enabled)
+{
+    SHOWMOUSE_SCREEN (screen);
+    ss->cScreen->preparePaintSetEnabled (ss, enabled);
+    ss->gScreen->glPaintOutputSetEnabled (ss, enabled);
+    ss->cScreen->donePaintSetEnabled (ss, enabled);
+}
+
 void
 ShowmouseScreen::genNewParticles (int f_time)
 {
@@ -546,6 +555,7 @@ ShowmouseScreen::donePaint ()
 	ps->finiParticles ();
 	delete ps;
 	ps = NULL;
+	toggleFunctions (false);
     }
 
     cScreen->donePaint ();
@@ -603,6 +613,8 @@ ShowmouseScreen::initiate (CompAction         *action,
 	return terminate (action, state, options);
 
     active = true;
+
+    toggleFunctions (true);
 
     return true;
 }
