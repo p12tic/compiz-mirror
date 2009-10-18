@@ -61,11 +61,12 @@ class Particle
 class ParticleSystem
 {
     public:
+
+	ParticleSystem (int);
 	ParticleSystem ();
 	~ParticleSystem ();
 
-	int      numParticles;
-	Particle *particles;
+	std::vector <Particle *> particles;
 	float    slowdown;
 	GLuint   tex;
 	Bool     active;
@@ -73,28 +74,28 @@ class ParticleSystem
 	float    darken;
 	GLuint   blendMode;
 
-	// Moved from drawParticles to get rid of spurious malloc's
+	/* Moved from drawParticles to get rid of spurious malloc's */
 	GLfloat *vertices_cache;
-	int     vertex_cache_count;
 	GLfloat *coords_cache;
-	int     coords_cache_count;
 	GLfloat *colors_cache;
-	int     color_cache_count;
 	GLfloat *dcolors_cache;
-	int     dcolors_cache_count;
+
+	int coords_cache_count;
+	int vertex_cache_count;
+	int color_cache_count;
+	int dcolors_cache_count;
 
 	void
-	initParticles (int f_numParticles);
+	initParticles (int            f_numParticles);
 
 	void
 	drawParticles ();
 
 	void
-	updateParticles (float f_time);
+	updateParticles (float          time);
 
 	void
 	finiParticles ();
-
 };
 
 class ShowmouseScreen :
