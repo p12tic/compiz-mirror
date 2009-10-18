@@ -263,9 +263,8 @@ ParticleSystem::drawParticles ()
 void
 ParticleSystem::updateParticles (float          time)
 {
-    int i;
     float speed = (time / 50.0);
-    float slowdown = slowdown * (1 - MAX (0.99, time / 1000.0) ) * 1000;
+    float f_slowdown = slowdown * (1 - MAX (0.99, time / 1000.0) ) * 1000;
 
     active = FALSE;
 
@@ -274,9 +273,9 @@ ParticleSystem::updateParticles (float          time)
 	if (part->life > 0.0f)
 	{
 	    // move particle
-	    part->x += part->xi / slowdown;
-	    part->y += part->yi / slowdown;
-	    part->z += part->zi / slowdown;
+	    part->x += part->xi / f_slowdown;
+	    part->y += part->yi / f_slowdown;
+	    part->z += part->zi / f_slowdown;
 
 	    // modify speed
 	    part->xi += part->xg * speed;
