@@ -351,7 +351,11 @@ FireScreen::fireAddPoint (int        x,
 	points[numPoints].x = x;
 	points[numPoints].y = y;
 	numPoints++;
+
+	toggleFunctions (true);
+
     }
+
 }
 
 
@@ -623,6 +627,8 @@ FireScreen::donePaint ()
     {
 	cScreen->damageScreen ();
     }
+    else
+	toggleFunctions (false);
 
     cScreen->donePaint ();
 }
@@ -659,9 +665,9 @@ FireScreen::FireScreen (CompScreen *screen) :
     brightness (1.0),
     grabIndex (0)
 {
-    ScreenInterface::setHandler (screen);
-    CompositeScreenInterface::setHandler (cScreen);
-    GLScreenInterface::setHandler (gScreen);
+    ScreenInterface::setHandler (screen, false);
+    CompositeScreenInterface::setHandler (cScreen, false);
+    GLScreenInterface::setHandler (gScreen, false);
 
     optionSetInitiateKeyInitiate (boost::bind (&FireScreen::initiate, this, _1,
 						_2, _3));
