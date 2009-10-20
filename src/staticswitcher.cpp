@@ -107,7 +107,7 @@ StaticSwitchScreen::updateWindowList (int count)
     pos  = 0;
     move = 0;
 
-    selectedWindow = windows.front ()->id ();
+    selectedWindow = windows.front ();
 
     if (popupWindow)
 	updatePopupWindow (count);
@@ -259,7 +259,7 @@ StaticSwitchScreen::initiate (SwitchWindowSelection selection,
 	return;
 
     this->selection      = selection;
-    selectedWindow = None;
+    selectedWindow       = NULL;
 
     count = countWindows ();
     if (count < 1)
@@ -424,14 +424,10 @@ switchTerminate (CompAction         *action,
 	ss->switching = false;
 
 	if (state & CompAction::StateCancel)
-	    ss->selectedWindow = None;
+	    ss->selectedWindow = NULL;
 
-	if (state && ss->selectedWindow)
-	{
-	    w = ::screen->findWindow (ss->selectedWindow);
-	    if (w)
-		::screen->sendWindowActivationRequest (w->id ());
-	}
+	if (state && ss->selectedWindow && !ss->selectedWindow->destroyed ())
+	    ::screen->sendWindowActivationRequest (ss->selectedWindow->id ());
 
 	::screen->removeGrab (ss->grabIndex, 0);
 	ss->grabIndex = NULL;
@@ -439,9 +435,8 @@ switchTerminate (CompAction         *action,
 	if (!ss->popupWindow)
 	    ::screen->handleEventSetEnabled (ss, false);
 
-	ss->selectedWindow = None;
+	ss->selectedWindow = NULL;
 
-	ss->activateEvent (false);
 	ss->setSelectedWindowHint ();
 
 	ss->lastActiveNum = 0;
@@ -510,20 +505,19 @@ StaticSwitchScreen::getMinimizedAndMatch (bool &minimizedOption,
 }
 
 void
-StaticSwitchScreen::windowRemove (Window id)
+StaticSwitchScreen::windowRemove (CompWindow *w)
 {
-    CompWindow *w;
-
-    w = ::screen->findWindow (id);
     if (w)
     {
 	bool   inList = false;
 	int    count;
-	Window selected, old;
+
+	CompWindow *selected;
+	CompWindow *old;
 
 	SWITCH_WINDOW (w);
 
-	if (!sw->isSwitchWin ())
+	if (!sw->isSwitchWin (true))
 	    return;
 
 	sw->cWindow->damageRectSetEnabled (sw, false);
@@ -538,13 +532,13 @@ StaticSwitchScreen::windowRemove (Window id)
 	    {
 		inList = true;
 
-		if (w->id () == selected)
+		if (w == selected)
 		{
 		    it++;
 		    if (it == windows.end ())
-			selected = windows.front ()->id ();
+			selected = windows.front ();
 		    else
-			selected = (*it)->id ();
+			selected = *it;
 		    it--;
 		}
 
@@ -579,7 +573,7 @@ StaticSwitchScreen::windowRemove (Window id)
 	int i = 0;
 	foreach (CompWindow *w, windows)
 	{
-	    selectedWindow = w->id ();
+	    selectedWindow = w;
 	    move = pos = i;
 
 	    if (selectedWindow == selected)
@@ -600,11 +594,11 @@ StaticSwitchScreen::windowRemove (Window id)
 
 	if (old != selectedWindow)
 	{
-	    doWindowDamage (w);
+	    CompositeWindow::get (selectedWindow)->addDamage ();
+	    CompositeWindow::get (w)->addDamage ();
 
-	    w = ::screen->findWindow (old);
-	    if (w)
-		doWindowDamage (w);
+	    if (old && !old->destroyed ())
+		CompositeWindow::get (old)->addDamage ();
 
 	    moreAdjust = true;
 	}
@@ -654,7 +648,7 @@ StaticSwitchScreen::getWindowPosition (unsigned int index,
     *y = row * previewHeight + (row + 1) * previewBorder;
 }
 
-Window
+CompWindow *
 StaticSwitchScreen::findWindowAt (int x,
 				  int y)
 {
@@ -677,13 +671,13 @@ StaticSwitchScreen::findWindowAt (int x,
 	    y2 = y1 + previewHeight;
 
 	    if (x >= x1 && x < x2 && y >= y1 && y < y2)
-		return w->id ();
+		return w;
 
 	    i++;
 	}
     }
 
-    return None;
+    return NULL;
 }
 
 void
@@ -696,7 +690,7 @@ StaticSwitchScreen::handleEvent (XEvent *event)
     case ButtonPress:
 	if (grabIndex && mouseSelect)
 	{
-	    Window selected;
+	    CompWindow *selected;
 
 	    selected = findWindowAt (event->xbutton.x_root,
 	    			     event->xbutton.y_root);
@@ -815,7 +809,7 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 
 	if (mode == HighlightModeBringSelectedToFront)
 	{
-	    zoomed = ::screen->findWindow (selectedWindow);
+	    zoomed = selectedWindow;
 	    if (zoomed)
 	    {
 		CompWindow *w;
@@ -865,7 +859,7 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 		if (zoomed)
 		    w = zoomed;
 		else
-		    w = ::screen->findWindow (selectedWindow);
+		    w = selectedWindow;
 
 		if (w)
 		{
@@ -944,6 +938,8 @@ StaticSwitchScreen::donePaint ()
     }
     else if (!grabIndex && !moreAdjust)
     {
+	activateEvent (false);
+
 	cScreen->preparePaintSetEnabled (this, false);
 	cScreen->donePaintSetEnabled (this, false);
 	gScreen->glPaintOutputSetEnabled (this, false);
@@ -1016,9 +1012,9 @@ StaticSwitchScreen::paintSelectionRect (int          x,
 }
 
 bool
-StaticSwitchWindow::isSwitchWin ()
+StaticSwitchWindow::isSwitchWin (bool removing)
 {
-    bool baseIsSwitchWin = BaseSwitchWindow::isSwitchWin ();
+    bool baseIsSwitchWin = BaseSwitchWindow::isSwitchWin (removing);
 
     if (baseIsSwitchWin && sScreen->selection == Group)
     {
@@ -1211,7 +1207,7 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	glPopAttrib ();
     }
     else if (sScreen->switching && !sScreen->popupDelayTimer.active () &&
-	     (window->id () != sScreen->selectedWindow))
+	     (window != sScreen->selectedWindow))
     {
 	GLWindowPaintAttrib sAttrib (attrib);
 	GLuint              value;

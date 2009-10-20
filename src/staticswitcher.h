@@ -70,13 +70,13 @@ class StaticSwitchScreen :
 	Cursor getCursor (bool mouseSelectOn);
 	void initiate (SwitchWindowSelection selection,
 		       bool                  shouldShowPopup);
-	void windowRemove (Window id);
+	void windowRemove (CompWindow *w);
 	int getRowXOffset (int y);
 	void getWindowPosition (unsigned int index,
 				int          *x,
 				int          *y);
-	Window findWindowAt (int x,
-			     int y);
+	CompWindow *findWindowAt (int x,
+				  int y);
 	void handleEvent (XEvent *event);
 	bool adjustVelocity ();
 	void paintRect (CompRect &box,
@@ -119,7 +119,7 @@ class StaticSwitchWindow :
     public:
 	StaticSwitchWindow (CompWindow *window);
 
-	bool isSwitchWin ();
+	bool isSwitchWin (bool removing = false);
 	bool damageRect (bool initial, const CompRect &rect);
 
 	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
