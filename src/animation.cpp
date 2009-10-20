@@ -1007,9 +1007,12 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 					       bool destructing,
 					       bool clearMatchingRow)
 {
-    mCurAnimation->cleanUp (closing, destructing);
-    delete mCurAnimation;
-    mCurAnimation = 0;
+    if (mCurAnimation)
+    {
+	mCurAnimation->cleanUp (closing, destructing);
+	delete mCurAnimation;
+	mCurAnimation = 0;
+    }
 
     enablePainting (false);
 
@@ -1564,6 +1567,12 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 
     if (shouldIgnoreWindowForAnim (w, true))
 	return;
+
+    if (!w->overrideRedirect ())
+    {
+	aw->mDestroyCnt++;
+	w->incrementDestroyReference ();
+    }
 
     int duration = 200;
     AnimEffect chosenEffect =
@@ -2443,8 +2452,7 @@ PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
 
 PrivateAnimWindow::~PrivateAnimWindow ()
 {
-    if (mCurAnimation)
-	postAnimationCleanUpCustom (false, true, true);
+    postAnimationCleanUpCustom (false, true, true);
 }
 
 void
@@ -2515,8 +2523,13 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 							 &duration))
 		    break;
 
-		mDestroyCnt++;
-		mWindow->incrementDestroyReference ();
+		// This should be done here for menu windows and
+		// in initiateCloseAnim for others.
+		if (mWindow->overrideRedirect ())
+		{
+		    mDestroyCnt++;
+		    mWindow->incrementDestroyReference ();
+		}
 	    }
 	    break;
 	case CompWindowNotifyFocusChange:
