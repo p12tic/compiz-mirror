@@ -47,8 +47,7 @@ ExpoScreen::dndInit (CompAction          *action,
     if (expoMode)
     {
 	dndState = DnDStart;
-	/* FIXME: replace |= */
-	action->setState (CompAction::StateTermButton);
+	action->setState (action->state () | CompAction::StateTermButton);
 	cScreen->damageScreen ();
 
 	return true;
@@ -74,8 +73,7 @@ ExpoScreen::dndFini (CompAction          *action,
 	dndState  = DnDNone;
 	dndWindow = NULL;
 
-	/* FIXME: replace &= */
-	action->setState (CompAction::StateInitButton);
+	action->setState (action->state () & CompAction::StateInitButton);
 	cScreen->damageScreen ();
 
 	return true;
