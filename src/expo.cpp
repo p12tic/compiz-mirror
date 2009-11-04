@@ -695,6 +695,12 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
     const float gapX = optionGetVpDistance () * 0.1f * screen->height () /
 		       screen->width () * expoCam;
 
+    int      glPaintTransformedOutputIndex = 
+	gScreen->glPaintTransformedOutputGetCurrentIndex ();
+
+    // Make sure that the base glPaintTransformedOutput function is called
+    gScreen->glPaintTransformedOutputSetCurrentIndex (MAXSHORT);
+
     /* Zoom animation stuff */
     /* camera position for the selected viewport */
     GLVector vpCamPos (0, 0, 0, 0);
@@ -883,7 +889,6 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 				       DEFAULT_Z_CAMERA - curveDistance);
 	    }
 
-	    /* TODO: should call base function */
 	    gScreen->glPaintTransformedOutput (attrib, sTransform3,
 					       screen->region (), output,
 					       mask);
@@ -992,6 +997,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 
     cScreen->setWindowPaintOffset (0, 0);
 
+    gScreen->glPaintTransformedOutputSetCurrentIndex (glPaintTransformedOutputIndex);
     gScreen->setTextureFilter (oldFilter);
 }
 
