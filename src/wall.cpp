@@ -1509,7 +1509,7 @@ WallScreen::WallScreen (CompScreen *screen) :
 
     // HACK: we have to keep libcairo loaded even if wall gets unloaded
     // to prevent crashes in XCloseDisplay
-    dlopen ("libcairo.so", RTLD_LAZY);
+    dlopen ("libcairo.so.2", RTLD_LAZY);
 
     memset (&switcherContext, 0, sizeof (WallCairoContext));
     memset (&thumbContext, 0, sizeof (WallCairoContext));
