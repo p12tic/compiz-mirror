@@ -1567,13 +1567,6 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 
     if (shouldIgnoreWindowForAnim (w, true))
 	return;
-
-    if (!w->overrideRedirect ())
-    {
-	aw->mDestroyCnt++;
-	w->incrementDestroyReference ();
-    }
-
     int duration = 200;
     AnimEffect chosenEffect =
 	getMatchingAnimSelection (w, AnimEventClose, &duration);
@@ -2523,13 +2516,8 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 							 &duration))
 		    break;
 
-		// This should be done here for menu windows and
-		// in initiateCloseAnim for others.
-		if (mWindow->overrideRedirect ())
-		{
-		    mDestroyCnt++;
-		    mWindow->incrementDestroyReference ();
-		}
+		mDestroyCnt++;
+		mWindow->incrementDestroyReference ();
 	    }
 	    break;
 	case CompWindowNotifyFocusChange:
