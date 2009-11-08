@@ -215,7 +215,9 @@ GridAnim::~GridAnim ()
 void
 GridAnim::addGeometry (const GLTexture::MatrixList &matrix,
 		       const CompRegion            &region,
-		       const CompRegion            &clip)
+		       const CompRegion            &clip,
+		       unsigned int                maxGridWidth,
+		       unsigned int                maxGridHeight)
 {
     unsigned int nMatrix = matrix.size ();
     int nVertices, nIndices;

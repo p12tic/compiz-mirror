@@ -378,7 +378,8 @@ private:
     bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
 		  const CompRegion &, unsigned int);
     void glAddGeometry (const GLTexture::MatrixList &,
-			const CompRegion &, const CompRegion &);
+			const CompRegion &, const CompRegion &,
+			unsigned int = MAXSHORT, unsigned int = MAXSHORT);
     void glDrawTexture (GLTexture *texture, GLFragment::Attrib &,
 			unsigned int);
     void glDrawGeometry ();

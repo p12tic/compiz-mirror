@@ -1306,16 +1306,20 @@ PrivateAnimWindow::enablePainting (bool enabling)
 void
 PrivateAnimWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 				  const CompRegion            &region,
-				  const CompRegion            &clip)
+				  const CompRegion            &clip,
+				  unsigned int                maxGridWidth,
+				  unsigned int                maxGridHeight)
 {
     // if window is being animated
     if (mCurAnimation)
     {
-	mCurAnimation->addGeometry (matrix, region, clip);
+	mCurAnimation->addGeometry (matrix, region, clip,
+				    maxGridWidth, maxGridHeight);
     }
     else
     {
-	gWindow->glAddGeometry (matrix, region, clip);
+	gWindow->glAddGeometry (matrix, region, clip,
+				maxGridWidth, maxGridHeight);
     }
 }
 
@@ -1330,24 +1334,31 @@ Animation::shouldDamageWindowOnStart ()
 void
 Animation::addGeometry (const GLTexture::MatrixList &matrix,
 			const CompRegion            &region,
-			const CompRegion            &clip)
+			const CompRegion            &clip,
+			unsigned int                maxGridWidth,
+			unsigned int                maxGridHeight)
 {
-    mAWindow->priv->gWindow->glAddGeometry (matrix, region, clip);
+    mAWindow->priv->gWindow->glAddGeometry (matrix, region, clip,
+					    maxGridWidth, maxGridHeight);
 }
 
 void
 PartialWindowAnim::addGeometry (const GLTexture::MatrixList &matrix,
 				const CompRegion            &region,
-				const CompRegion            &clip)
+				const CompRegion            &clip,
+				unsigned int                maxGridWidth,
+				unsigned int                maxGridHeight)
 {
     if (mUseDrawRegion)
     {
 	CompRegion awRegion (region.intersected (mDrawRegion));
-	Animation::addGeometry (matrix, awRegion, clip);
+	Animation::addGeometry (matrix, awRegion, clip,
+				maxGridWidth, maxGridHeight);
     }
     else
     {
-	Animation::addGeometry (matrix, region, clip);
+	Animation::addGeometry (matrix, region, clip,
+				maxGridWidth, maxGridHeight);
     }
 }
 

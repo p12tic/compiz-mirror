@@ -313,7 +313,9 @@ public:
     virtual void adjustPointerIconSize () {}
     virtual void addGeometry (const GLTexture::MatrixList &matrix,
 			      const CompRegion            &region,
-			      const CompRegion            &clip);
+			      const CompRegion            &clip,
+			      unsigned int                maxGridWidth,
+			      unsigned int                maxGridHeight);
     virtual void drawGeometry ();
 
     void drawTexture (GLTexture          *texture,
@@ -446,7 +448,9 @@ public:
     bool updateBBUsed () { return true; }
     void addGeometry (const GLTexture::MatrixList &matrix,
 		      const CompRegion            &region,
-		      const CompRegion            &clip);
+		      const CompRegion            &clip,
+		      unsigned int                maxGridWidth,
+		      unsigned int                maxGridHeight);
 };
 
 class TransformAnim :
@@ -510,7 +514,9 @@ public:
 
     void addGeometry (const GLTexture::MatrixList &matrix,
 		      const CompRegion            &region,
-		      const CompRegion            &clip);
+		      const CompRegion            &clip,
+		      unsigned int                maxGridWidth,
+		      unsigned int                maxGridHeight);
 
 protected:
     bool mUseDrawRegion;
