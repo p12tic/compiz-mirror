@@ -1143,7 +1143,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
     if (mSwitcherPostWait > 0)
     {
 	mSwitcherPostWait++;
-	if (mSwitcherPostWait > 2) // wait over
+	if (mSwitcherPostWait > 5) // wait over
 	{
 	    mSwitcherPostWait = 0;
 
