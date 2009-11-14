@@ -168,11 +168,6 @@ DodgeAnim::step ()
 	    (1 - mTransformStartProgress);
     }
 
-    if (!mDodgeData->isDodgeSubject && !mDodgeSubjectWin)
-	compLogMessage ("animation", CompLogLevelError,
-			"%s: %d: Dodge subject missing!",
-			__FILE__, __LINE__);
-
     mTransform.reset ();
     applyDodgeTransform ();
 }
@@ -426,6 +421,37 @@ DodgeAnim::cleanUp (bool closing,
 	    }
 	}
     }
+    else
+    {
+	DodgePersistentData *dodgeData = static_cast<DodgePersistentData *>
+		(mAWindow->persistentData["dodge"]);
+
+	if (dodgeData && dodgeData->isDodgeSubject)
+	{
+	    // Update this window's dodgers so that they no longer point
+	    // to this window as their subject
+	    DodgePersistentData *dodgeDataDodger;
+	    for (CompWindow *dw = dodgeData->dodgeChainStart; dw;
+		 dw = dodgeDataDodger->dodgeChainNext)
+	    {
+		AnimWindow *adw = AnimWindow::get (dw);
+		if (!adw)
+		    break;
+		dodgeDataDodger = static_cast<DodgePersistentData *>
+		    (adw->persistentData["dodge"]);
+
+		Animation *curAnim = adw->curAnimation ();
+
+		if (curAnim && curAnim->info () == AnimEffectDodge)
+		{
+		    DodgeAnim *animDodger = dynamic_cast<DodgeAnim *> (curAnim);
+		    if (animDodger->mDodgeSubjectWin == mWindow)
+			animDodger->mDodgeSubjectWin = NULL;
+		}
+	    }
+	}
+    }
+
     // Reset dodge parameters
     //if (!(restackData->mMoreToBePaintedPrev ||
 	//  restackData->mMoreToBePaintedNext))

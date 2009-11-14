@@ -2677,14 +2677,14 @@ AnimWindow::AnimWindow (CompWindow *w) :
 
 AnimWindow::~AnimWindow ()
 {
+    delete priv;
+
     // Destroy each persistent data object
     PersistentDataMap::iterator itData = persistentData.begin ();
     for (; itData != persistentData.end (); itData++)
 	delete itData->second;
 
     persistentData.clear ();
-
-    delete priv;
 }
 
 bool
