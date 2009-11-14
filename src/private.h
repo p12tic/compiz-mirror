@@ -102,10 +102,11 @@ typedef struct _PluginEventInfo
 typedef enum
 {
     WatchedPluginSwitcher = 0,
+    WatchedPluginRing,
+    WatchedPluginShift,
     WatchedPluginScale,
     WatchedPluginGroup,
     WatchedPluginFadedesktop,
-    WatchedPluginShift,
     WatchedPluginNum
 } WatchedPlugin;
 

@@ -1513,10 +1513,11 @@ AnimScreen::enableCustomPaintList (bool enabled)
 static const PluginEventInfo watchedPlugins[] =
 {
     {"switcher", "activate"},
+    {"ring", "activate"},
+    {"shift", "activate"},
     {"scale", "activate"},
     {"group", "tabChangeActivate"},
-    {"fadedesktop", "activate"},
-    {"shift", "activate"},
+    {"fadedesktop", "activate"}
 };
 
 void
@@ -1534,8 +1535,11 @@ PrivateAnimScreen::handleCompizEvent (const char         *pluginName,
 		mPluginActive[i] =
 		    CompOption::getBoolOptionNamed (options, "active", false);
 
-		if (i == WatchedPluginSwitcher &&
-		    !mPluginActive[i])
+		if (!mPluginActive[i] &&
+		    (i == WatchedPluginSwitcher ||
+		     i == WatchedPluginRing ||
+		     i == WatchedPluginShift ||
+		     i == WatchedPluginScale))
 		{
 		    mSwitcherPostWait = 1;
 		}
