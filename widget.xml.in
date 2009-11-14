@@ -8,10 +8,9 @@
 				<plugin>fade</plugin>
 				<plugin>animation</plugin>
 			</relation>
-			<requires>
-				<plugin>composite</plugin>
+			<requirement>
 				<plugin>opengl</plugin>
-			</requires>
+			</requirement>
 		</deps>
 		<options>
 			<option name="toggle_key" type="key">
