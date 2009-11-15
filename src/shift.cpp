@@ -916,8 +916,6 @@ ShiftScreen::updateWindowList ()
 bool
 ShiftScreen::createWindowList ()
 {
-    CompWindow *w;
-
     windows.clear ();
 
     foreach (CompWindow *w, screen->windows ())
@@ -985,7 +983,6 @@ ShiftScreen::switchToWindow (bool toNext)
 int
 ShiftScreen::countWindows ()
 {
-    CompWindow *w;
     int	       count = 0;
 
     foreach (CompWindow *w, screen->windows ())
@@ -1374,7 +1371,6 @@ ShiftScreen::preparePaint (int msSinceLastPaint)
     if (state != ShiftScreen::ShiftStateNone &&
 	(moreAdjust || moveAdjust))
     {
-	CompWindow *w;
 	int        steps;
 	float      amount, chunk;
 	int        i;
@@ -1446,8 +1442,6 @@ ShiftWindow::canStackRelativeTo ()
 void
 ShiftScreen::donePaint ()
 {
-    CompWindow *w;
-
     if (state != ShiftScreen::ShiftStateNone)
     {
 	if (moreAdjust)
@@ -1681,7 +1675,6 @@ ShiftScreen::initiate (CompAction         *action,
 		       CompAction::State  aState,
 		       CompOption::Vector options)
 {
-    Window     xid;
     bool       ret = true;
 
     type = ShiftTypeNormal;
@@ -1813,7 +1806,6 @@ ShiftScreen::handleEvent (XEvent *event)
 	    w = screen->findWindow (event->xproperty.window);
 	    if (w)
 	    {
-    		SHIFT_SCREEN (screen);
     		if (grabIndex && (w->id () == selectedWindow))
     		{
     		    renderWindowTitle ();
@@ -1901,7 +1893,6 @@ ShiftScreen::handleEvent (XEvent *event)
 	break;
     case MotionNotify:
 	{
-#warning fixme: This code is very slow, far slower than it should be
 	    if (state == ShiftScreen::ShiftStateSwitching || state == ShiftScreen::ShiftStateOut)
 	    {
 		if (buttonPressed)
