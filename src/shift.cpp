@@ -1550,19 +1550,15 @@ ShiftScreen::terminate (CompAction         *action,
 			CompAction::State  aState,
 			CompOption::Vector options)
 {
-    fprintf (stderr, "terminate called\n");
-
     term ((aState & CompAction::StateCancel));
 
     if (aState & CompAction::StateTermButton)
     {
-	fprintf (stderr, "removed terminate state button\n");
         action->setState (action->state () & (unsigned)~CompAction::StateTermButton);
     }
 
     if (aState & CompAction::StateTermKey)
     {
-	fprintf (stderr, "removed terminate state key\n");
         action->setState (action->state () & (unsigned)~CompAction::StateTermKey);
     }
 
@@ -1634,8 +1630,6 @@ ShiftScreen::doSwitch (CompAction         *action,
 {
     bool       ret = true;
     bool       initial = false;
-
-    fprintf (stderr, "doSwitch called\n");
 
     if ((state == ShiftScreen::ShiftStateNone) || (state == ShiftScreen::ShiftStateIn))
     {
