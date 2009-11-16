@@ -382,7 +382,7 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 	// Find the first animation effect with non-matching name,
 	// starting with itBeginEffect
 	AnimEffectVector::iterator itEndEffect =
-	    find_if (eventEffectsAllowed.begin (),
+	    find_if (itBeginEffect,
 		     eventEffectsAllowed.end (),
 		     boost::bind (&AnimEffectInfo::matchesPluginName,
 				  _1, pluginName) == false);
