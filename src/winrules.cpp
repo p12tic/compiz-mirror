@@ -321,7 +321,13 @@ WinrulesScreen::optionChanged (CompOption	       *option,
 
     if (updateStateMask)
     {
-	foreach (CompWindow *w, screen->windows ())
+	/* We traverse a copy of the list here because windows can be unhooked
+	 * on state change rather than the delayed unhook that happens in <0.8.x
+	 */
+
+	CompWindowList windows = screen->windows ();
+
+	foreach (CompWindow *w, windows)
 	{
 	    WINRULES_WINDOW (w);
 	    ww->updateState (num, updateStateMask);
