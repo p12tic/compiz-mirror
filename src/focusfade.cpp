@@ -54,7 +54,7 @@ FocusFadeAnim::FocusFadeAnim (CompWindow *w,
 GLushort
 FocusFadeAnim::computeOpacity (GLushort opacityInt)
 {
-    float progress = progressLinear ();
+    float progress = 1 - progressLinear ();
     float opacity = opacityInt / (float)OPAQUE;
     float multiplier;
 
@@ -81,6 +81,7 @@ FocusFadeAnim::computeOpacity (GLushort opacityInt)
     else
 	multiplier = progress;
 
+    multiplier = 1 - multiplier;
     float finalOpacity = opacity * multiplier;
     finalOpacity = MIN (finalOpacity, 1);
     finalOpacity = MAX (finalOpacity, 0);

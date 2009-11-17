@@ -703,11 +703,12 @@ Animation::progressEaseInEaseOut ()
 float
 Animation::progressDecelerateCustom (float progress, float minx, float maxx)
 {
-    float x = progress;
+    float x = 1 - progress;
     float s = 8;
 
-    return ((sigmoid2(minx + (x * (maxx - minx)), s) - sigmoid2(minx, s)) /
-	    (sigmoid2(maxx, s) - sigmoid2(minx, s)));
+    return
+	1 - ((sigmoid2 (minx + (x * (maxx - minx)), s) - sigmoid2 (minx, s)) /
+	     (sigmoid2 (maxx, s) - sigmoid2 (minx, s)));
 }
 
 float
