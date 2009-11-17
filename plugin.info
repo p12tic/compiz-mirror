@@ -1,3 +1,0 @@
-PLUGIN = gears
-PKG_DEP = compiz-cube
-CHK_HEADERS = compiz-cube.h

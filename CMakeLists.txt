@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (gears PLUGINDEPS cube)
+include (CompizPlugin)
+
+compiz_plugin (gears PLUGINDEPS composite opengl cube)

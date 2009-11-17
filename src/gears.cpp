@@ -1,7 +1,7 @@
 /*
  * Compiz cube gears plugin
  *
- * gears.c
+ * gears.cpp
  *
  * This is an example plugin to show how to render something inside
  * of the transparent cube
@@ -24,54 +24,10 @@
  *    http://cvsweb.xfree86.org/cvsweb/xc/programs/glxgears/glxgears.c
  */
 
-#include <stdlib.h>
-#include <string.h>
-#include <stdio.h>
-#include <signal.h>
-#include <unistd.h>
-#include <math.h>
+#include "gears.h"
 
-#include <compiz-core.h>
-#include <compiz-cube.h>
 
-static int displayPrivateIndex;
-
-static int cubeDisplayPrivateIndex;
-
-typedef struct _GearsDisplay
-{
-    int screenPrivateIndex;
-
-}
-GearsDisplay;
-
-typedef struct _GearsScreen
-{
-    DonePaintScreenProc    donePaintScreen;
-    PreparePaintScreenProc preparePaintScreen;
-
-    CubeClearTargetOutputProc clearTargetOutput;
-    CubePaintInsideProc       paintInside;
-
-    Bool damage;
-
-    float contentRotation;
-    GLuint gear1, gear2, gear3;
-    float angle;
-    float a1, a2, a3;
-}
-GearsScreen;
-
-#define GET_GEARS_DISPLAY(d) \
-    ((GearsDisplay *) (d)->base.privates[displayPrivateIndex].ptr)
-#define GEARS_DISPLAY(d) \
-    GearsDisplay *gd = GET_GEARS_DISPLAY(d);
-
-#define GET_GEARS_SCREEN(s, gd) \
-    ((GearsScreen *) (s)->base.privates[(gd)->screenPrivateIndex].ptr)
-#define GEARS_SCREEN(s) \
-    GearsScreen *gs = GET_GEARS_SCREEN(s, GET_GEARS_DISPLAY(s->display))
-
+COMPIZ_PLUGIN_20090315 (gears, GearsPluginVTable);
 
 static void
 gear (GLfloat inner_radius,
@@ -233,48 +189,42 @@ gear (GLfloat inner_radius,
     glEnd();
 }
 
-static void
-gearsClearTargetOutput (CompScreen *s,
-			float      xRotate,
-			float      vRotate)
+void
+GearsScreen::cubeClearTargetOutput (float      xRotate,
+				    float      vRotate)
 {
-    GEARS_SCREEN (s);
-    CUBE_SCREEN (s);
-
-    UNWRAP (gs, cs, clearTargetOutput);
-    (*cs->clearTargetOutput) (s, xRotate, vRotate);
-    WRAP (gs, cs, clearTargetOutput, gearsClearTargetOutput);
+    csScreen->cubeClearTargetOutput (xRotate, vRotate);
 
     glClear (GL_DEPTH_BUFFER_BIT);
 }
 
-static void
-gearsPaintInside (CompScreen              *s,
-		  const ScreenPaintAttrib *sAttrib,
-		  const CompTransform     *transform,
-		  CompOutput              *output,
-		  int                     size)
+
+void GearsScreen::cubePaintInside (const GLScreenPaintAttrib &sAttrib,
+			           const GLMatrix            &transform,
+				   CompOutput                *output,
+				   int                       size)
 {
-    GEARS_SCREEN (s);
-    CUBE_SCREEN (s);
+//    CUBE_SCREEN (screen);
 
     static GLfloat white[4] = { 1.0, 1.0, 1.0, 1.0 };
 
-    ScreenPaintAttrib sA = *sAttrib;
+    GLScreenPaintAttrib sA = sAttrib;
 
-    sA.yRotate += cs->invert * (360.0f / size) *
-		  (cs->xRotations - (s->x * cs->nOutput));
+    sA.yRotate += csScreen->invert () * (360.0f / size) *
+		  (csScreen->xRotations () - (screen->vp ().x () * csScreen->nOutput ()));
 
-    CompTransform mT = *transform;
+    //CompTransform mT = *transform;
+    GLMatrix mT = transform;
 
-    (*s->applyScreenTransform) (s, &sA, output, &mT);
+    gScreen->glApplyTransform (sA, output, &mT);
+//    (*s->applyScreenTransform) (s, &sA, output, &mT);
 
     glPushMatrix();
-    glLoadMatrixf (mT.m);
-    glTranslatef (cs->outputXOffset, -cs->outputYOffset, 0.0f);
-    glScalef (cs->outputXScale, cs->outputYScale, 1.0f);
+    glLoadMatrixf (mT.getMatrix ());
+    glTranslatef (csScreen->outputXOffset (), -csScreen->outputYOffset (), 0.0f);
+    glScalef (csScreen->outputXScale (), csScreen->outputYScale (), 1.0f);
 
-    Bool enabledCull = FALSE;
+    bool enabledCull = false;
 
     glPushAttrib (GL_COLOR_BUFFER_BIT | GL_TEXTURE_BIT);
 
@@ -282,13 +232,13 @@ gearsPaintInside (CompScreen              *s,
 
     if (!glIsEnabled (GL_CULL_FACE) )
     {
-	enabledCull = TRUE;
+	enabledCull = true;
 	glEnable (GL_CULL_FACE);
     }
 
     glPushMatrix();
 
-    glRotatef (gs->contentRotation, 0.0, 1.0, 0.0);
+    glRotatef (contentRotation, 0.0, 1.0, 0.0);
 
     glScalef (0.05, 0.05, 0.05);
     glColor4usv (defaultColor);
@@ -303,20 +253,20 @@ gearsPaintInside (CompScreen              *s,
 
     glPushMatrix();
     glTranslatef (-3.0, -2.0, 0.0);
-    glRotatef (gs->angle, 0.0, 0.0, 1.0);
-    glCallList (gs->gear1);
+    glRotatef (angle, 0.0, 0.0, 1.0);
+    glCallList (gear1);
     glPopMatrix();
 
     glPushMatrix();
     glTranslatef (3.1, -2.0, 0.0);
-    glRotatef (-2.0 * gs->angle - 9.0, 0.0, 0.0, 1.0);
-    glCallList (gs->gear2);
+    glRotatef (-2.0 * angle - 9.0, 0.0, 0.0, 1.0);
+    glCallList (gear2);
     glPopMatrix();
 
     glPushMatrix();
     glTranslatef (-3.1, 4.2, 0.0);
-    glRotatef (-2.0 * gs->angle - 25.0, 0.0, 0.0, 1.0);
-    glCallList (gs->gear3);
+    glRotatef (-2.0 * angle - 25.0, 0.0, 0.0, 1.0);
+    glCallList (gear3);
     glPopMatrix();
 
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, white);
@@ -327,7 +277,7 @@ gearsPaintInside (CompScreen              *s,
     glDisable (GL_NORMALIZE);
     glEnable (GL_COLOR_MATERIAL);
 
-    if (!s->lighting)
+    if (!gScreen->lighting ())
 	glDisable (GL_LIGHTING);
 
     glDisable (GL_DEPTH_TEST);
@@ -338,98 +288,57 @@ gearsPaintInside (CompScreen              *s,
     glPopMatrix();
     glPopAttrib();
 
-    gs->damage = TRUE;
+    damage = true;
 
-    UNWRAP (gs, cs, paintInside);
-    (*cs->paintInside) (s, sAttrib, transform, output, size);
-    WRAP (gs, cs, paintInside, gearsPaintInside);
+    csScreen->cubePaintInside (sAttrib, transform, output, size);
+}
+void
+GearsScreen::preparePaint (int ms)
+{
+
+    contentRotation += ms * 360.0 / 20000.0;
+    contentRotation = fmod (contentRotation, 360.0);
+    angle += ms * 360.0 / 8000.0;
+    angle = fmod (angle, 360.0);
+    a1 += ms * 360.0 / 3000.0;
+    a1 = fmod (a1, 360.0);
+    a2 += ms * 360.0 / 2000.0;
+    a2 = fmod (a2, 360.0);
+    a3 += ms * 360.0 / 1000.0;
+    a3 = fmod (a3, 360.0);
+
+    cScreen->preparePaint (ms);
 }
 
-static void
-gearsPreparePaintScreen (CompScreen *s,
-			 int        ms)
+void
+GearsScreen::donePaint ()
 {
-    GEARS_SCREEN (s);
-
-    gs->contentRotation += ms * 360.0 / 20000.0;
-    gs->contentRotation = fmod (gs->contentRotation, 360.0);
-    gs->angle += ms * 360.0 / 8000.0;
-    gs->angle = fmod (gs->angle, 360.0);
-    gs->a1 += ms * 360.0 / 3000.0;
-    gs->a1 = fmod (gs->a1, 360.0);
-    gs->a2 += ms * 360.0 / 2000.0;
-    gs->a2 = fmod (gs->a2, 360.0);
-    gs->a3 += ms * 360.0 / 1000.0;
-    gs->a3 = fmod (gs->a3, 360.0);
-
-    UNWRAP (gs, s, preparePaintScreen);
-    (*s->preparePaintScreen) (s, ms);
-    WRAP (gs, s, preparePaintScreen, gearsPreparePaintScreen);
-}
-
-static void
-gearsDonePaintScreen (CompScreen * s)
-{
-    GEARS_SCREEN (s);
-
-    if (gs->damage)
+    if (damage)
     {
-	damageScreen (s);
-	gs->damage = FALSE;
+	cScreen->damageScreen ();
+	damage = false;
     }
 
-    UNWRAP (gs, s, donePaintScreen);
-    (*s->donePaintScreen) (s);
-    WRAP (gs, s, donePaintScreen, gearsDonePaintScreen);
+    cScreen->donePaint ();
 }
 
-
-static Bool
-gearsInitDisplay (CompPlugin  *p,
-		  CompDisplay *d)
+GearsScreen::GearsScreen (CompScreen *screen) :
+    PluginClassHandler <GearsScreen, CompScreen> (screen), 
+    screen (screen),
+    cScreen (CompositeScreen::get (screen)),
+    gScreen (GLScreen::get (screen)),
+    csScreen (CubeScreen::get (screen)),
+    damage(false),
+    contentRotation(0.0),
+    angle(0.0),
+    a1(0.0),
+    a2(0.0),
+    a3(0.0)
 {
-    GearsDisplay *gd;
-
-    if (!checkPluginABI ("core", CORE_ABIVERSION) ||
-	!checkPluginABI ("cube", CUBE_ABIVERSION))
-	return FALSE;
-
-    if (!getPluginDisplayIndex (d, "cube", &cubeDisplayPrivateIndex))
-	return FALSE;
-
-    gd = malloc (sizeof (GearsDisplay));
-
-    if (!gd)
-	return FALSE;
-
-    gd->screenPrivateIndex = allocateScreenPrivateIndex (d);
-
-    if (gd->screenPrivateIndex < 0)
-    {
-	free (gd);
-	return FALSE;
-    }
-
-    d->base.privates[displayPrivateIndex].ptr = gd;
-
-    return TRUE;
-}
-
-static void
-gearsFiniDisplay (CompPlugin  *p,
-		  CompDisplay *d)
-{
-    GEARS_DISPLAY (d);
-
-    freeScreenPrivateIndex (d, gd->screenPrivateIndex);
-    free (gd);
-}
-
-static Bool
-gearsInitScreen (CompPlugin *p,
-		 CompScreen *s)
-{
-    GearsScreen *gs;
+    ScreenInterface::setHandler (screen); 
+    CompositeScreenInterface::setHandler (cScreen);
+    GLScreenInterface::setHandler (gScreen);
+    CubeScreenInterface::setHandler (csScreen);
 
     static GLfloat pos[4]         = { 5.0, 5.0, 10.0, 0.0 };
     static GLfloat red[4]         = { 0.8, 0.1, 0.0, 1.0 };
@@ -438,133 +347,47 @@ gearsInitScreen (CompPlugin *p,
     static GLfloat ambientLight[] = { 0.3f, 0.3f, 0.3f, 0.3f };
     static GLfloat diffuseLight[] = { 0.5f, 0.5f, 0.5f, 0.5f };
 
-    GEARS_DISPLAY (s->display);
-
-    CUBE_SCREEN (s);
-
-    gs = malloc (sizeof (GearsScreen) );
-
-    if (!gs)
-	return FALSE;
-
-    s->base.privates[gd->screenPrivateIndex].ptr = gs;
-
     glLightfv (GL_LIGHT1, GL_AMBIENT, ambientLight);
     glLightfv (GL_LIGHT1, GL_DIFFUSE, diffuseLight);
     glLightfv (GL_LIGHT1, GL_POSITION, pos);
 
-    gs->damage = FALSE;
-
-    gs->contentRotation = 0.0;
-
-    gs->gear1 = glGenLists (1);
-    glNewList (gs->gear1, GL_COMPILE);
+    gear1 = glGenLists (1);
+    glNewList (gear1, GL_COMPILE);
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, red);
     gear (1.0, 4.0, 1.0, 20, 0.7);
     glEndList();
 
-    gs->gear2 = glGenLists (1);
-    glNewList (gs->gear2, GL_COMPILE);
+    gear2 = glGenLists (1);
+    glNewList (gear2, GL_COMPILE);
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, green);
     gear (0.5, 2.0, 2.0, 10, 0.7);
     glEndList();
 
-    gs->gear3 = glGenLists (1);
-    glNewList (gs->gear3, GL_COMPILE);
+    gear3 = glGenLists (1);
+    glNewList (gear3, GL_COMPILE);
     glMaterialfv (GL_FRONT, GL_AMBIENT_AND_DIFFUSE, blue);
     gear (1.3, 2.0, 0.5, 10, 0.7);
     glEndList();
 
-    gs->angle = 0.0;
-    gs->a1    = 0.0;
-    gs->a2    = 0.0;
-    gs->a3    = 0.0;
-
-    WRAP (gs, s, donePaintScreen, gearsDonePaintScreen);
-    WRAP (gs, s, preparePaintScreen, gearsPreparePaintScreen);
-    WRAP (gs, cs, clearTargetOutput, gearsClearTargetOutput);
-    WRAP (gs, cs, paintInside, gearsPaintInside);
-
-    return TRUE;
 }
 
-static void
-gearsFiniScreen (CompPlugin *p,
-		 CompScreen *s)
+GearsScreen::~GearsScreen ()
 {
-    GEARS_SCREEN (s);
-    CUBE_SCREEN (s);
+    glDeleteLists (gear1, 1);
+    glDeleteLists (gear2, 1);
+    glDeleteLists (gear3, 1);
 
-    glDeleteLists (gs->gear1, 1);
-    glDeleteLists (gs->gear2, 1);
-    glDeleteLists (gs->gear3, 1);
-
-    UNWRAP (gs, s, donePaintScreen);
-    UNWRAP (gs, s, preparePaintScreen);
-
-    UNWRAP (gs, cs, clearTargetOutput);
-    UNWRAP (gs, cs, paintInside);
-
-    free (gs);
 }
 
-static Bool
-gearsInit (CompPlugin * p)
+bool
+GearsPluginVTable::init ()
 {
-    displayPrivateIndex = allocateDisplayPrivateIndex();
+    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
+	 return false;
+    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
+	 return false;
+    if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	 return false;
 
-    if (displayPrivateIndex < 0)
-	return FALSE;
-
-    return TRUE;
-}
-
-static void
-gearsFini (CompPlugin * p)
-{
-    if (displayPrivateIndex >= 0)
-	freeDisplayPrivateIndex (displayPrivateIndex);
-}
-
-static CompBool
-gearsInitObject (CompPlugin *p,
-		 CompObject *o)
-{
-    static InitPluginObjectProc dispTab[] = {
-	(InitPluginObjectProc) 0, /* InitCore */
-	(InitPluginObjectProc) gearsInitDisplay,
-	(InitPluginObjectProc) gearsInitScreen
-    };
-
-    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
-}
-
-static void
-gearsFiniObject (CompPlugin *p,
-		 CompObject *o)
-{
-    static FiniPluginObjectProc dispTab[] = {
-	(FiniPluginObjectProc) 0, /* FiniCore */
-	(FiniPluginObjectProc) gearsFiniDisplay,
-	(FiniPluginObjectProc) gearsFiniScreen
-    };
-
-    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
-}
-
-CompPluginVTable gearsVTable = {
-    "gears",
-    0,
-    gearsInit,
-    gearsFini,
-    gearsInitObject,
-    gearsFiniObject,
-    0,
-    0
-};
-
-CompPluginVTable *
-getCompPluginInfo20070830 (void)
-{
-    return &gearsVTable;
+    return true;
 }

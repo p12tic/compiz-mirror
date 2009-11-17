@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <compiz>
-	<plugin name="gears">
+	<plugin name="gears" useBcop="true">
 		<_short>Cube Gears</_short>
 		<_long>Render gears inside of the transparent cube</_long>
 		<category>Effects</category>
@@ -10,6 +10,8 @@
 		    </relation>
 		    <requirement>
 			    <plugin>cube</plugin>
+			    <plugin>opengl</plugin>
+			    <plugin>composite</plugin>
 		    </requirement>
 		</deps>
 	</plugin>
