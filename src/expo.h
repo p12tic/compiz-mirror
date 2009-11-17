@@ -142,7 +142,8 @@ class ExpoWindow :
 	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
 		      const CompRegion&, unsigned int);
 	void glAddGeometry (const GLTexture::MatrixList&,
-			    const CompRegion&, const CompRegion&);
+			    const CompRegion&, const CompRegion&,
+			    unsigned int, unsigned int);
 	void glDrawTexture (GLTexture *, GLFragment::Attrib& attrib,
 			    unsigned int);
 
