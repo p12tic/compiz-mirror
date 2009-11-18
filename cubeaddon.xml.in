@@ -17,7 +17,7 @@
 			<plugin>cube</plugin>
 		</requirement>
 		</deps>
-		<display>
+		<options>
 			<group>
 				<_short>Cube caps</_short>
 				<subgroup>
@@ -66,8 +66,6 @@
 					</option>
 				</subgroup>
 			</group>
-		</display>
-		<screen>
 			<group>
 				<_short>Reflection</_short>
 				<option name="reflection" type="bool">
@@ -290,6 +288,6 @@
 					</option>
 				</subgroup>
 			</group>
-		</screen>
+		</options>
 	</plugin>
 </compiz>

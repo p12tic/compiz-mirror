@@ -1,3 +1,6 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (cubeaddon PLUGINDEPS cube)
+include (CompizPlugin)
+
+compiz_plugin (cubeaddon PLUGINDEPS composite opengl cube)
+
