@@ -805,28 +805,34 @@ CubeaddonWindow::glDrawTexture (GLTexture           *texture,
     {
 	int       i;
 	int       sx1, sx2, sw, sy1, sy2, sh;
-	CompPoint offset;
+	int       offX = 0, offY = 0;
 	float     x, y, ym;
-	GLfloat   *v;
+	GLfloat   *v, *n;
 	float     inv;
+	
+	GLWindow::Geometry           &geometry = gWindow->geometry ();
+	CubeScreen::MultioutputMode  cMOM = cubeScreen->multioutputMode ();
+	float                        cDist = cubeScreen->distance ();
 
 	inv = (cubeScreen->invert () == 1) ? 1.0: -1.0;
 	ym  = (caScreen->optionGetDeformation () == CubeaddonScreen::DeformationCylinder) ? 0.0 : 1.0;
 	
-	if ((int) caScreen->mWinNormSize < gWindow->geometry ().vCount * 3)
+	if ((int) caScreen->mWinNormSize < geometry.vCount * 3)
 	{
 	    delete [] caScreen->mWinNormals;
-	    caScreen->mWinNormals = new GLfloat[gWindow->geometry ().vCount * 3];
-	    caScreen->mWinNormSize = gWindow->geometry ().vCount * 3;
+	    caScreen->mWinNormals = new GLfloat[geometry.vCount * 3];
+	    caScreen->mWinNormSize = geometry.vCount * 3;
 	}
 	
 	if (!window->onAllViewports ())
 	{
-	    offset = caScreen->cScreen->windowPaintOffset ();
+	    CompPoint offset = caScreen->cScreen->windowPaintOffset ();
 	    offset = window->getMovementForOffset (offset);
+	    offX = offset.x ();
+	    offY = offset.y ();
 	}
 	
-	if (cubeScreen->multioutputMode () == CubeScreen::OneBigCube)
+	if (cMOM == CubeScreen::OneBigCube)
 	{
 	    sx1 = 0;
 	    sx2 = screen->width ();
@@ -835,7 +841,7 @@ CubeaddonWindow::glDrawTexture (GLTexture           *texture,
 	    sy2 = screen->height ();
 	    sh  = screen->height ();
 	}
-	else if (cubeScreen->multioutputMode () == CubeScreen::MultipleCubes)
+	else if (cMOM == CubeScreen::MultipleCubes)
 	{
 	    sx1 = caScreen->mLast->x1 ();
 	    sx2 = caScreen->mLast->x2 ();
@@ -866,27 +872,28 @@ CubeaddonWindow::glDrawTexture (GLTexture           *texture,
 	    }
 	}
 	
-	v = gWindow->geometry ().vertices + (gWindow->geometry ().vertexStride - 3);
-	
-	for (i = 0; i < gWindow->geometry ().vCount; i++)
+	v = geometry.vertices + (geometry.vertexStride - 3);
+	n = caScreen->mWinNormals;
+
+	for (i = 0; i < geometry.vCount; i++)
 	{
-	    x = (((v[0] + offset.x () - sx1) / (float)sw) - 0.5);
-	    y = (((v[1] + offset.y () - sy1) / (float)sh) - 0.5);
+	    x = (((v[0] + offX - sx1) / (float)sw) - 0.5);
+	    y = (((v[1] + offY - sy1) / (float)sh) - 0.5);
 
 	    if (cubeScreen->paintOrder () == FTB)
 	    {
-		caScreen->mWinNormals[i * 3] = x / sw * caScreen->mDeform;
-		caScreen->mWinNormals[(i * 3) + 1] = y / sh * caScreen->mDeform * ym;
-		caScreen->mWinNormals[(i * 3) + 2] = v[2] + cubeScreen->distance ();
+		*(n)++ = x / sw * caScreen->mDeform;
+		*(n)++ = y / sh * caScreen->mDeform * ym;
+		*(n)++ = v[2] + cDist;
 	    }
 	    else
 	    {
-		caScreen->mWinNormals[i * 3] = -x / sw * caScreen->mDeform * inv;
-		caScreen->mWinNormals[(i * 3) + 1] = -y / sh * caScreen->mDeform * ym * inv;
-		caScreen->mWinNormals[(i * 3) + 2] = -(v[2] + cubeScreen->distance ());
+		*(n)++ = -x / sw * caScreen->mDeform * inv;
+		*(n)++ = -y / sh * caScreen->mDeform * ym * inv;
+		*(n)++ = -(v[2] + cDist);
 	    }
 
-	    v += gWindow->geometry ().vertexStride;
+	    v += geometry.vertexStride;
 	}
 	
 	glEnable (GL_NORMALIZE);
