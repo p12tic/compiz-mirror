@@ -47,6 +47,8 @@
 #define CAP_NIMGVERTEX (((CAP_ELEMENTS + 1) * (CAP_ELEMENTS + 1)) * 5)
 #define CAP_NIMGIDX (CAP_ELEMENTS * CAP_ELEMENTS * 4)
 
+#define RAD2I1024 162.9746617
+
 class CubeaddonScreen :
     public CompositeScreenInterface,
     public GLScreenInterface,
@@ -150,7 +152,9 @@ class CubeaddonScreen :
 
 	CubeCap mTopCap;
 	CubeCap mBottomCap;
-
+	
+	float mSinT[1024];
+	float mCosT[1024];
 };
 
 class CubeaddonWindow :

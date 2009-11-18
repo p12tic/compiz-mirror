@@ -607,43 +607,50 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 {
     if (caScreen->mDeform > 0.0)
     {
-	int         i, j, oldVCount = gWindow->geometry ().vCount;
-	GLfloat     *v;
-	CompPoint   offset;
-	int         sx1, sx2, sw, sy1, sy2, sh, cLast;
-	float       lastX, lastZ = 0.0, radSquare, last[2][4];
-	Bool        found;
-	float       inv = (cubeScreen->invert () == 1) ? 1.0 : -1.0;
+	GLWindow::Geometry &geometry = gWindow->geometry ();
+	int                i, j, oldVCount = geometry.vCount;
+	GLfloat            *v;
+	int                offX = 0, offY = 0;
+	int                sx1, sx2, sw, sy1, sy2, sh, cLast;
+	float              lastX, lastZ = 0.0, radSquare, last[2][4];
+	bool               found;
+	float              inv = (cubeScreen->invert () == 1) ? 1.0 : -1.0;
 
-	float       a1, a2, ang;
+	float              a1, a2, ang;
+	int                iang;
+	
+	CubeScreen::MultioutputMode   cMOM = cubeScreen->multioutputMode ();
+	int                           caD = caScreen->optionGetDeformation ();
+	float                         cDist = cubeScreen->distance ();
 	
 
-	if (caScreen->optionGetDeformation () == CubeaddonScreen::DeformationCylinder || 
-	    cubeScreen->unfolded ())
+	if (caD == CubeaddonScreen::DeformationCylinder || cubeScreen->unfolded ())
 	{
-	    radSquare = (cubeScreen->distance () * cubeScreen->distance ()) + 0.25;
+	    radSquare = (cDist * cDist) + 0.25;
 	}
 	else
 	{
 	    maxGridHeight = MIN (CUBEADDON_GRID_SIZE, maxGridHeight);
-	    radSquare = (cubeScreen->distance () * cubeScreen->distance ()) + 0.5;
+	    radSquare = (cDist * cDist) + 0.5;
 	}
 
 	gWindow->glAddGeometry (matrix, region, clip, 
 				MIN (CUBEADDON_GRID_SIZE, maxGridWidth),
 				maxGridHeight);
 	
-	v  = gWindow->geometry ().vertices;
-	v += gWindow->geometry ().vertexStride - 3;
-	v += gWindow->geometry ().vertexStride * oldVCount;
+	v  = geometry.vertices;
+	v += geometry.vertexStride - 3;
+	v += geometry.vertexStride * oldVCount;
 
 	if (!window->onAllViewports ())
 	{
-	    offset = caScreen->cScreen->windowPaintOffset ();
+	    CompPoint offset = caScreen->cScreen->windowPaintOffset ();
 	    offset = window->getMovementForOffset (offset);
+	    offX = offset.x ();
+	    offY = offset.y ();
 	}
 	
-	if (cubeScreen->multioutputMode () == CubeScreen::OneBigCube)
+	if (cMOM == CubeScreen::OneBigCube)
 	{
 	    sx1 = 0;
 	    sx2 = screen->width ();
@@ -652,7 +659,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	    sy2 = screen->height ();
 	    sh  = screen->height ();
 	}
-	else if (cubeScreen->multioutputMode () == CubeScreen::MultipleCubes)
+	else if (cMOM == CubeScreen::MultipleCubes)
 	{
 	    sx1 = caScreen->mLast->x1 ();
 	    sx2 = caScreen->mLast->x2 ();
@@ -683,25 +690,24 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	    }
 	}
 
-	if (caScreen->optionGetDeformation () == CubeaddonScreen::DeformationCylinder || 
-	    cubeScreen->unfolded ())
+	if (caD == CubeaddonScreen::DeformationCylinder || cubeScreen->unfolded ())
 	{
 	    lastX = -1000000000.0;
 	
-	    for (i = oldVCount; i < gWindow->geometry ().vCount; i++)
+	    for (i = oldVCount; i < geometry.vCount; i++)
 	    {
 		if (v[0] == lastX)
 		{
 		    v[2] = lastZ;
 		}
-		else if (v[0] + offset.x () >= sx1 - CUBEADDON_GRID_SIZE &&
-			 v[0] + offset.y () < sx2 + CUBEADDON_GRID_SIZE)
+		else if (v[0] + offX >= sx1 - CUBEADDON_GRID_SIZE &&
+			 v[0] + offY < sx2 + CUBEADDON_GRID_SIZE)
 		{
-		    ang = (((v[0] + offset.x() - sx1) / (float)sw) - 0.5);
+		    ang = (((v[0] + offX - sx1) / (float)sw) - 0.5);
 		    ang *= ang;
 		    if (ang < radSquare)
 		    {
-			v[2] = sqrtf (radSquare - ang) - cubeScreen->distance ();
+			v[2] = sqrtf (radSquare - ang) - cDist;
 			v[2] *= caScreen->mDeform * inv;
 		    }
 		}
@@ -709,7 +715,7 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		lastX = v[0];
 		lastZ = v[2];
 
-		v += gWindow->geometry ().vertexStride;
+		v += geometry.vertexStride;
 	    }
 	}
 	else
@@ -719,40 +725,40 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	    last[1][0] = -1000000000.0;
 
 	    cLast = 0;
-	    for (i = oldVCount; i < gWindow->geometry ().vCount; i++)
+	    for (i = oldVCount; i < geometry.vCount; i++)
 	    {
-		found = FALSE;
+		found = false;
 
 		for (j = 0; j < 2 && !found; j++)
 		    if (last[j][0] == v[0] && last[j][1] == v[1])
 		    {
 			v[0] = last[j][2];
 			v[2] = last[j][3];
-			found = TRUE;
+			found = true;
 		    }
 
-		if (!found && v[0] + offset.x () >= sx1 - CUBEADDON_GRID_SIZE &&
-		    v[0] + offset.x () < sx2 + CUBEADDON_GRID_SIZE &&
-		    v[1] + offset.y () >= sy1 - CUBEADDON_GRID_SIZE &&
-		    v[1] + offset.y () < sy2 + CUBEADDON_GRID_SIZE)
+		if (!found && v[0] + offX >= sx1 - CUBEADDON_GRID_SIZE &&
+		    v[0] + offX < sx2 + CUBEADDON_GRID_SIZE &&
+		    v[1] + offY >= sy1 - CUBEADDON_GRID_SIZE &&
+		    v[1] + offY < sy2 + CUBEADDON_GRID_SIZE)
 		{
 		    last[cLast][0] = v[0];
 		    last[cLast][1] = v[1];
-		    a1 = (((v[0] + offset.x () - sx1) / (float)sw) - 0.5);
-		    a2 = (((v[1] + offset.y () - sy1) / (float)sh) - 0.5);
+		    a1 = (((v[0] + offX - sx1) / (float)sw) - 0.5);
+		    a2 = (((v[1] + offY - sy1) / (float)sh) - 0.5);
 		    a2 *= a2;
 
-		    ang = atanf (a1 / cubeScreen->distance ());
+		    ang = atanf (a1 / cDist);
 		    a2 = sqrtf (radSquare - a2);
+		    iang = (((int)(ang * RAD2I1024)) + 1024) & 0x3ff;
 
-		    v[2] += ((cosf (ang) * a2) - cubeScreen->distance ()) *
-			    caScreen->mDeform * inv;
-		    v[0] += ((sinf (ang) * a2) - a1) * sw * caScreen->mDeform;
+		    v[2] += ((caScreen->mCosT [iang] * a2) - cDist) * caScreen->mDeform * inv;
+		    v[0] += ((caScreen->mSinT [iang] * a2) - a1) * sw * caScreen->mDeform;
 		    last[cLast][2] = v[0];
 		    last[cLast][3] = v[2];
 		    cLast = (cLast + 1) & 1;
 		}
-		v += gWindow->geometry ().vertexStride;
+		v += geometry.vertexStride;
 	    }
 	}
     }
@@ -1376,6 +1382,12 @@ CubeaddonScreen::CubeaddonScreen (CompScreen *s) :
 
     mTopCap.mFiles = optionGetTopImages ();
     mBottomCap.mFiles = optionGetBottomImages ();
+    
+    for (int i = 0; i < 1024; i++)
+    {
+	mSinT[i] = sinf(i / RAD2I1024);
+	mCosT[i] = cosf(i / RAD2I1024);
+    }
 
     changeCap (true, 0);
     changeCap (false, 0);
