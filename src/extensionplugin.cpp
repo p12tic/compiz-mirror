@@ -824,13 +824,13 @@ ExtensionPluginAnimation::walkNext (CompWindow *w)
     return wRet;
 }
 
-CompWindowList
+const CompWindowList &
 ExtensionPluginAnimation::getWindowPaintList ()
 {
-    CompWindowList list;
+    mWindowList.clear ();
     for (CompWindow *w = walkFirst (); w; w = walkNext (w))
-	list.push_back (w);
+	mWindowList.push_back (w);
 
-    return list;
+    return mWindowList;
 }
 

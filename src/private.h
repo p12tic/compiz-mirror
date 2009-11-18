@@ -146,7 +146,7 @@ public:
     void handleSingleRestack (AnimWindow *aw);
     void prePaintWindowsBackToFront ();
     bool paintShouldSkipWindow (CompWindow *w);
-    CompWindowList getWindowPaintList ();
+    const CompWindowList & getWindowPaintList ();
     void resetStackingInfo ();
     static CompWindow *getBottommostInExtendedFocusChain (CompWindow *wStartPoint);
     static CompWindow *getBottommostInRestackChain (CompWindow *wStartPoint);
@@ -175,6 +175,8 @@ private:
     int mRestackAnimCount; ///< Count of how many windows are currently involved in
 			   ///< animations that require walker (dodge & focus fade).
     std::vector<AnimWindow *> mRestackedWindows;
+
+    CompWindowList mWindowList;
 };
 
 class PrivateAnimScreen :
@@ -288,7 +290,7 @@ public:
     // CompositeScreenInterface methods
     void preparePaint (int);
     void donePaint ();
-    CompWindowList getWindowPaintList ();
+    const CompWindowList & getWindowPaintList ();
 
     // GLScreenInterface methods
     bool glPaintOutput (const GLScreenPaintAttrib &,

@@ -1479,7 +1479,7 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
 }
 
 /// This is enabled only during restack animations.
-CompWindowList
+const CompWindowList &
 PrivateAnimScreen::getWindowPaintList ()
 {
     ExtensionPluginAnimation *extPlugin =
