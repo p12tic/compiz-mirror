@@ -7,7 +7,7 @@
 		<feature>largedesktop</feature>
 		<deps>
 			<relation type="after">
-				<plugin>decoration</plugin>
+				<plugin>decor</plugin>
 			</relation>
 			<relation type="before">
 				<plugin>wobbly</plugin>
