@@ -28,6 +28,7 @@
 #include <math.h>
 #include <sys/time.h>
 #include <GL/glu.h>
+#include <dlfcn.h>
 
 #include <core/atoms.h>
 
@@ -1505,6 +1506,10 @@ WallScreen::WallScreen (CompScreen *screen) :
     ScreenInterface::setHandler (screen);
     CompositeScreenInterface::setHandler (cScreen);
     GLScreenInterface::setHandler (glScreen);
+
+    // HACK: we have to keep libcairo loaded even if wall gets unloaded
+    // to prevent crashes in XCloseDisplay
+    dlopen ("libcairo.so.2", RTLD_LAZY);
 
     memset (&switcherContext, 0, sizeof (WallCairoContext));
     memset (&thumbContext, 0, sizeof (WallCairoContext));
