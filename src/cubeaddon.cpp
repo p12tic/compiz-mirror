@@ -608,15 +608,14 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
     if (caScreen->mDeform > 0.0)
     {
 	GLWindow::Geometry &geometry = gWindow->geometry ();
-	int                i, j, oldVCount = geometry.vCount;
+	int                i, oldVCount = geometry.vCount;
 	GLfloat            *v;
 	int                offX = 0, offY = 0;
 	int                sx1, sx2, sw, sy1, sy2, sh, cLast;
 	float              lastX, lastZ = 0.0, radSquare, last[2][4];
-	bool               found;
 	float              inv = (cubeScreen->invert () == 1) ? 1.0 : -1.0;
 
-	float              a1, a2, ang;
+	float              a1, a2, ang, vpx, vpy, sx1g, sx2g, sy1g, sy2g;
 	int                iang;
 	
 	CubeScreen::MultioutputMode   cMOM = cubeScreen->multioutputMode ();
@@ -689,6 +688,11 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		sh  = sy2 - sy1;
 	    }
 	}
+	
+	sx1g = sx1 - CUBEADDON_GRID_SIZE;
+	sx2g = sx2 + CUBEADDON_GRID_SIZE;
+	sy1g = sy1 - CUBEADDON_GRID_SIZE;
+	sy2g = sy2 + CUBEADDON_GRID_SIZE;
 
 	if (caD == CubeaddonScreen::DeformationCylinder || cubeScreen->unfolded ())
 	{
@@ -700,8 +704,8 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 		{
 		    v[2] = lastZ;
 		}
-		else if (v[0] + offX >= sx1 - CUBEADDON_GRID_SIZE &&
-			 v[0] + offY < sx2 + CUBEADDON_GRID_SIZE)
+		else if (v[0] + offX >= sx1g &&
+			 v[0] + offY < sx2g)
 		{
 		    ang = (((v[0] + offX - sx1) / (float)sw) - 0.5);
 		    ang *= ang;
@@ -727,25 +731,31 @@ CubeaddonWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	    cLast = 0;
 	    for (i = oldVCount; i < geometry.vCount; i++)
 	    {
-		found = false;
-
-		for (j = 0; j < 2 && !found; j++)
-		    if (last[j][0] == v[0] && last[j][1] == v[1])
-		    {
-			v[0] = last[j][2];
-			v[2] = last[j][3];
-			found = true;
-		    }
-
-		if (!found && v[0] + offX >= sx1 - CUBEADDON_GRID_SIZE &&
-		    v[0] + offX < sx2 + CUBEADDON_GRID_SIZE &&
-		    v[1] + offY >= sy1 - CUBEADDON_GRID_SIZE &&
-		    v[1] + offY < sy2 + CUBEADDON_GRID_SIZE)
+		if (last[0][0] == v[0] && last[0][1] == v[1])
+		{
+		    v[0] = last[0][2];
+		    v[2] = last[0][3];
+		    v += geometry.vertexStride;
+		    continue;
+		}
+		else if (last[1][0] == v[0] && last[1][1] == v[1])
+		{
+		    v[0] = last[1][2];
+		    v[2] = last[1][3];
+		    v += geometry.vertexStride;
+		    continue;
+		}
+		
+		vpx = v[0] + offX;
+		vpy = v[1] + offY;
+		
+		if (vpx >= sx1g && vpx < sx2g &&
+		    vpy >= sy1g && vpy < sy2g)
 		{
 		    last[cLast][0] = v[0];
 		    last[cLast][1] = v[1];
-		    a1 = (((v[0] + offX - sx1) / (float)sw) - 0.5);
-		    a2 = (((v[1] + offY - sy1) / (float)sh) - 0.5);
+		    a1 = (((vpx - sx1) / (float)sw) - 0.5);
+		    a2 = (((vpy - sy1) / (float)sh) - 0.5);
 		    a2 *= a2;
 
 		    ang = atanf (a1 / cDist);
@@ -875,25 +885,33 @@ CubeaddonWindow::glDrawTexture (GLTexture           *texture,
 	v = geometry.vertices + (geometry.vertexStride - 3);
 	n = caScreen->mWinNormals;
 
-	for (i = 0; i < geometry.vCount; i++)
+	if (cubeScreen->paintOrder () == FTB)
 	{
-	    x = (((v[0] + offX - sx1) / (float)sw) - 0.5);
-	    y = (((v[1] + offY - sy1) / (float)sh) - 0.5);
-
-	    if (cubeScreen->paintOrder () == FTB)
+	    for (i = 0; i < geometry.vCount; i++)
 	    {
+		x = (((v[0] + offX - sx1) / (float)sw) - 0.5);
+		y = (((v[1] + offY - sy1) / (float)sh) - 0.5);
+
 		*(n)++ = x / sw * caScreen->mDeform;
 		*(n)++ = y / sh * caScreen->mDeform * ym;
 		*(n)++ = v[2] + cDist;
+
+		v += geometry.vertexStride;
 	    }
-	    else
+	}
+	else
+	{
+	    for (i = 0; i < geometry.vCount; i++)
 	    {
+		x = (((v[0] + offX - sx1) / (float)sw) - 0.5);
+		y = (((v[1] + offY - sy1) / (float)sh) - 0.5);
+
 		*(n)++ = -x / sw * caScreen->mDeform * inv;
 		*(n)++ = -y / sh * caScreen->mDeform * ym * inv;
 		*(n)++ = -(v[2] + cDist);
+    
+		v += geometry.vertexStride;
 	    }
-
-	    v += geometry.vertexStride;
 	}
 	
 	glEnable (GL_NORMALIZE);
