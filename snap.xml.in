@@ -7,7 +7,7 @@
 	<feature>edgeresistance</feature>
 	<deps>
 	    <relation type="after">
-		<plugin>decoration</plugin>
+		<plugin>decor</plugin>
 	    </relation>
 	</deps>
 	<options>
