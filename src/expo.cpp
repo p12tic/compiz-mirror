@@ -47,8 +47,7 @@ ExpoScreen::dndInit (CompAction          *action,
     if (expoMode)
     {
 	dndState = DnDStart;
-	/* FIXME: replace |= */
-	action->setState (CompAction::StateTermButton);
+	action->setState (action->state () | CompAction::StateTermButton);
 	cScreen->damageScreen ();
 
 	return true;
@@ -74,8 +73,7 @@ ExpoScreen::dndFini (CompAction          *action,
 	dndState  = DnDNone;
 	dndWindow = NULL;
 
-	/* FIXME: replace &= */
-	action->setState (CompAction::StateInitButton);
+	action->setState (action->state () & CompAction::StateInitButton);
 	cScreen->damageScreen ();
 
 	return true;
@@ -695,6 +693,12 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
     const float gapX = optionGetVpDistance () * 0.1f * screen->height () /
 		       screen->width () * expoCam;
 
+    int      glPaintTransformedOutputIndex = 
+	gScreen->glPaintTransformedOutputGetCurrentIndex ();
+
+    // Make sure that the base glPaintTransformedOutput function is called
+    gScreen->glPaintTransformedOutputSetCurrentIndex (MAXSHORT);
+
     /* Zoom animation stuff */
     /* camera position for the selected viewport */
     GLVector vpCamPos (0, 0, 0, 0);
@@ -883,7 +887,6 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 				       DEFAULT_Z_CAMERA - curveDistance);
 	    }
 
-	    /* TODO: should call base function */
 	    gScreen->glPaintTransformedOutput (attrib, sTransform3,
 					       screen->region (), output,
 					       mask);
@@ -992,6 +995,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 
     cScreen->setWindowPaintOffset (0, 0);
 
+    gScreen->glPaintTransformedOutputSetCurrentIndex (glPaintTransformedOutputIndex);
     gScreen->setTextureFilter (oldFilter);
 }
 
@@ -1097,45 +1101,24 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 void
 ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
 			   const CompRegion&            region,
-			   const CompRegion&            clip)
+			   const CompRegion&            clip,
+			   unsigned int                 maxGridWidth, 
+			   unsigned int                 maxGridHeight)
 {
     if (eScreen->expoCam > 0.0        &&
 	screen->desktopWindowCount () &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve)
     {
-	int         i, x1, x2, oldVCount = gWindow->geometry ().vCount;
-	CompRect    rect;
+	int         i, oldVCount = gWindow->geometry ().vCount;
 	GLfloat     *v;
 	CompPoint   offset;
 	float       lastX, lastZ = 0.0;
 	const float radSquare = pow (eScreen->curveDistance, 2) + 0.25;
 	float       ang;
 
-	rect = region.boundingRect ();
-
-	x1 = region.boundingRect ().x1 ();
-	x2 = MIN (x1 + EXPO_GRID_SIZE, region.boundingRect ().x2 ());
-
-	while (x1 < region.boundingRect ().x2 ())
-	{
-	    rect.setX (x1);
-	    rect.setWidth (x2 - x1);
-
-	    if (region.numRects () > 1)
-	    {
-		eScreen->tmpRegion = region.intersected (rect);
-		if (!eScreen->tmpRegion.isEmpty ())
-		    gWindow->glAddGeometry (matrices,
-					    eScreen->tmpRegion, clip);
-	    }
-	    else
-	    {
-		gWindow->glAddGeometry (matrices, rect, clip);
-	    }
-
-	    x1 = x2;
-	    x2 = MIN (x2 + EXPO_GRID_SIZE, region.boundingRect ().x2 ());
-	}
+	gWindow->glAddGeometry (matrices, region, clip, 
+				MIN(maxGridWidth , EXPO_GRID_SIZE), 
+				maxGridHeight);
 
 	v  = gWindow->geometry ().vertices;
 	v += gWindow->geometry ().vertexStride - 3;
@@ -1175,7 +1158,7 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
     }
     else
     {
-	gWindow->glAddGeometry (matrices, region, clip);
+	gWindow->glAddGeometry (matrices, region, clip, maxGridWidth, maxGridHeight);
     }
 }
 
