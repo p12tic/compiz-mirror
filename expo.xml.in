@@ -9,7 +9,7 @@
 		<plugin>opengl</plugin>
 	    </requirement>
 	    <relation type="after">
-		<plugin>decoration</plugin>
+		<plugin>decor</plugin>
 		<plugin>cube</plugin>
 		<plugin>cubeaddon</plugin>
 		<plugin>wobbly</plugin>
