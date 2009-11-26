@@ -796,11 +796,11 @@ CubeaddonWindow::glDraw (const GLMatrix     &transform,
 	}
 	
 	x1 = window->x () - window->output ().left + offset.x ();
-	x2 = window->x () + window->width () + window->output ().right + offset.y ();
+	x2 = window->x () + window->width () + window->output ().right + offset.x ();
 	if (x1 < 0 && x2 < 0)
-	    return FALSE;
+	    return false;
 	if (x1 > screen->width () && x2 > screen->width ())
-	    return FALSE;
+	    return false;
     }
 
     return gWindow->glDraw (transform, attrib, region, mask);
