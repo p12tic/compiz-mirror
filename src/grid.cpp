@@ -188,6 +188,7 @@ GridAnim::GridAnim (CompWindow *w,
 		    const AnimEffect info,
 		    const CompRect &icon) :
     Animation::Animation (w, curWindowEvent, duration, info, icon),
+    mModel (NULL),
     mUseQTexCoord (false)
 {
 }
@@ -209,7 +210,8 @@ GridAnim::init ()
 
 GridAnim::~GridAnim ()
 {
-    delete mModel;
+    if (mModel)
+	delete mModel;
 }
 
 void
