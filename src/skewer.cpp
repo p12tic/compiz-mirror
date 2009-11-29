@@ -1,3 +1,4 @@
+#if 0
 /**
  * Animation plugin for compiz/beryl
  *
@@ -31,7 +32,7 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA. 
  **/
 
-#include "animationaddon.h"
+#include "private.h"
 
 static void
 getDirection (int *dir, int *c, int direction)
@@ -84,18 +85,18 @@ getDirection (int *dir, int *c, int direction)
     }
 }
 
-Bool
+bool
 fxSkewerInit (CompWindow * w)
 {
     if (!polygonsAnimInit (w))
-	return FALSE;
+	return false;
 
     CompScreen *s = w->screen;
 
     ANIMADDON_WINDOW (w);
 
-    aw->com->animTotalTime /= SKEWER_PERCEIVED_T;
-    aw->com->animRemainingTime = aw->com->animTotalTime;
+    mTotalTime /= SKEWER_PERCEIVED_T;
+    mRemainingTime = mTotalTime;
 
     float thickness = animGetF (w, ANIMADDON_SCREEN_OPTION_SKEWER_THICKNESS);
     int rotation = animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_ROTATION);
@@ -111,25 +112,25 @@ fxSkewerInit (CompWindow * w)
     if (animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_TESS) == PolygonTessHex)
     {
 	if (!tessellateIntoHexagons (w, gridSizeX, gridSizeY, thickness))
-	    return FALSE;
+	    return false;
     }
     else
     {
 	if (!tessellateIntoRectangles (w, gridSizeX, gridSizeY, thickness))
-	    return FALSE;
+	    return false;
     }
 
     PolygonSet *pset = aw->eng.polygonSet;
-    PolygonObject *p = pset->polygons;
+    PolygonObject *p = mPolygons;
 
-    int times[pset->nPolygons];
-    int last_time = pset->nPolygons - 1;
+    int times[mNPolygons];
+    int last_time = mNPolygons - 1;
 
     int i;
-    for (i = 0; i < pset->nPolygons; i++)
+    for (i = 0; i < mNPolygons; i++)
 	times[i] = i;
 
-    for (i = 0; i < pset->nPolygons; i++, p++)
+    for (i = 0; i < mNPolygons; i++, p++)
     {
 	if (c > 0)
 	{
@@ -181,7 +182,7 @@ fxSkewerInit (CompWindow * w)
 	// choose random start_time
 	int rand_time = floor (RAND_FLOAT () * last_time);
 
-	p->moveStartTime = 0.8 / (float)pset->nPolygons * times[rand_time];
+	p->moveStartTime = 0.8 / (float)mNPolygons * times[rand_time];
 	p->moveDuration = 1 - p->moveStartTime;
 
 	p->fadeStartTime = p->moveStartTime + 0.2;
@@ -191,11 +192,11 @@ fxSkewerInit (CompWindow * w)
 	last_time--;		//descrease last_time
     }
 
-    pset->doDepthTest = TRUE;
-    pset->doLighting = TRUE;
-    pset->correctPerspective = CorrectPerspectiveWindow;
+    mDoDepthTest = true;
+    mDoLighting = true;
+    mCorrectPerspective = CorrectPerspectiveWindow;
 
-    return TRUE;
+    return true;
 }
 
 void
@@ -225,3 +226,4 @@ fxSkewerAnimStepPolygon (CompWindow *w,
     // rotate
     p->rotAngle = pow (moveProgress, 2) * p->finalRotAng + p->rotAngleStart;
 }
+#endif

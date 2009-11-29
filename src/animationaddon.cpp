@@ -56,7 +56,6 @@
  * - Voronoi tessellation
  * - Brick tessellation
  * - Triangle tessellation
- * - Hexagonal tessellation
  *
  * Effects:
  * - Circular action for tornado type fx
@@ -78,136 +77,20 @@
  *   after 45 deg. rotation)
  *
  */
-#include "animationaddon.h"
 
-int animDisplayPrivateIndex;
-int animAddonFunctionsPrivateIndex;
-CompMetadata animMetadata;
+#include "private.h"
 
-
-AnimEffect animEffects[NUM_EFFECTS];
-
-ExtensionPluginInfo animExtensionPluginInfo = {
-    .nEffects		= NUM_EFFECTS,
-    .effects		= animEffects,
-
-    .nEffectOptions	= ANIMADDON_SCREEN_OPTION_NUM - NUM_NONEFFECT_OPTIONS,
-
-    .prePaintOutputFunc	= polygonsPrePaintOutput
+class AnimAddonPluginVTable :
+    public CompPlugin::VTableForScreenAndWindow<AnimAddonScreen, AnimAddonWindow>
+{
+public:
+    bool init ();
+    void fini ();
 };
 
-OPTION_GETTERS (GET_ANIMADDON_DISPLAY(w->screen->display)->animBaseFunctions,
-		&animExtensionPluginInfo, NUM_NONEFFECT_OPTIONS)
+COMPIZ_PLUGIN_20090315 (animationaddon, AnimAddonPluginVTable);
 
-static Bool
-animSetScreenOptions(CompPlugin *plugin,
-		     CompScreen * screen,
-		     const char *name,
-		     CompOptionValue * value)
-{
-    CompOption *o;
-    int index;
-
-    ANIMADDON_SCREEN (screen);
-
-    o = compFindOption(as->opt, NUM_OPTIONS(as), name, &index);
-    if (!o)
-	return FALSE;
-
-    switch (index)
-    {
-    default:
-	return compSetScreenOption (screen, o, value);
-	break;
-    }
-
-    return FALSE;
-}
-
-static const CompMetadataOptionInfo animAddonDisplayOptionInfo[] = {
-    { "abi", "int", 0, 0, 0 },
-    { "index", "int", 0, 0, 0 }
-};
-
-static CompOption *
-animGetDisplayOptions (CompPlugin  *plugin,
-		       CompDisplay *display,
-		       int         *count)
-{
-    ANIMADDON_DISPLAY (display);
-    *count = NUM_OPTIONS (ad);
-    return ad->opt;
-}
-
-static Bool
-animSetDisplayOption (CompPlugin      *plugin,
-		      CompDisplay     *display,
-		      const char      *name,
-		      CompOptionValue *value)
-{
-    CompOption      *o;
-    int	            index;
-    ANIMADDON_DISPLAY (display);
-    o = compFindOption (ad->opt, NUM_OPTIONS (ad), name, &index);
-    if (!o)
-	return FALSE;
-
-    switch (index) {
-    case ANIMADDON_DISPLAY_OPTION_ABI:
-    case ANIMADDON_DISPLAY_OPTION_INDEX:
-        break;
-    default:
-        return compSetDisplayOption (display, o, value);
-    }
-
-    return FALSE;
-}
-
-static AnimWindowEngineData *
-getAnimWindowEngineData (CompWindow *w)
-{
-    ANIMADDON_WINDOW (w);
-
-    return &aw->eng;
-}
-
-int
-getIntenseTimeStep (CompScreen *s)
-{
-    ANIMADDON_SCREEN (s);
-
-    return as->opt[ANIMADDON_SCREEN_OPTION_TIME_STEP_INTENSE].value.i;
-}
-
-AnimAddonFunctions animAddonFunctions =
-{
-    .getAnimWindowEngineData		= getAnimWindowEngineData,
-    .getIntenseTimeStep			= getIntenseTimeStep,
-
-    .initParticles			= initParticles,
-    .finiParticles			= finiParticles,
-    .drawParticleSystems		= drawParticleSystems,
-    .particlesUpdateBB			= particlesUpdateBB,
-    .particlesCleanup			= particlesCleanup,
-    .particlesPrePrepPaintScreen	= particlesPrePrepPaintScreen,
-
-    .polygonsAnimInit			= polygonsAnimInit,
-    .polygonsAnimStep			= polygonsAnimStep,
-    .polygonsPrePaintWindow		= polygonsPrePaintWindow,
-    .polygonsPostPaintWindow		= polygonsPostPaintWindow,
-    .polygonsStoreClips			= polygonsStoreClips,
-    .polygonsDrawCustomGeometry		= polygonsDrawCustomGeometry,
-    .polygonsUpdateBB			= polygonsUpdateBB,
-    .polygonsPrePreparePaintScreen	= polygonsPrePreparePaintScreen,
-    .polygonsCleanup			= polygonsCleanup,
-    .polygonsRefresh			= polygonsRefresh,
-    .polygonsDeceleratingAnimStepPolygon= polygonsDeceleratingAnimStepPolygon,
-    .freePolygonObjects			= freePolygonObjects,
-    .tessellateIntoRectangles		= tessellateIntoRectangles,
-    .tessellateIntoHexagons		= tessellateIntoHexagons,
-    .tessellateIntoGlass                = tessellateIntoGlass
-};
-
+#if 0
 static const CompMetadataOptionInfo animAddonScreenOptionInfo[] = {
     // Misc. settings
     { "time_step_intense", "int", "<min>1</min>", 0, 0 },
@@ -249,45 +132,115 @@ static const CompMetadataOptionInfo animAddonScreenOptionInfo[] = {
     { "skewer_tessellation", "int", RESTOSTRING (0, LAST_POLYGON_TESS), 0, 0 },
     { "skewer_rotation", "int", 0, 0, 0 },
 };
+#endif
 
-static CompOption *
-animGetScreenOptions(CompPlugin *plugin, CompScreen * screen, int *count)
+
+
+
+AnimEffect animEffects[NUM_EFFECTS];
+
+ExtensionPluginAnimAddon animAddonExtPluginInfo (CompString ("animationaddon"),
+						 NUM_EFFECTS, animEffects, NULL,
+                                                 NUM_NONEFFECT_OPTIONS);
+
+ExtensionPluginInfo *
+BaseAddonAnim::getExtensionPluginInfo ()
 {
-    ANIMADDON_SCREEN (screen);
-
-    *count = NUM_OPTIONS(as);
-    return as->opt;
+    return &animAddonExtPluginInfo;
 }
 
-AnimAddonEffectProperties fxAirplaneExtraProp = {
-    .animStepPolygonFunc = fxAirplaneLinearAnimStepPolygon};
+BaseAddonAnim::BaseAddonAnim (CompWindow *w,
+			      WindowEvent curWindowEvent,
+			      float duration,
+			      const AnimEffect info,
+			      const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    mIntenseTimeStep (AnimAddonScreen::get (::screen)->getIntenseTimeStep ()),
+    mCScreen (CompositeScreen::get (::screen)),
+    mGScreen (GLScreen::get (::screen)),
+    mDoDepthTest (false)
+{
+}
 
-AnimAddonEffectProperties fxSkewerExtraProp = {
-    .animStepPolygonFunc = fxSkewerAnimStepPolygon};
+AnimEffect AnimEffectAirplane;
+AnimEffect AnimEffectBeamUp;
+AnimEffect AnimEffectBurn;
+AnimEffect AnimEffectDomino;
+AnimEffect AnimEffectExplode;
+AnimEffect AnimEffectFold;
+AnimEffect AnimEffectGlide3;
+AnimEffect AnimEffectLeafSpread;
+AnimEffect AnimEffectRazr;
+AnimEffect AnimEffectSkewer;
 
-AnimAddonEffectProperties fxFoldExtraProp = {
-    .animStepPolygonFunc = fxFoldAnimStepPolygon};
+int AnimAddonScreen::getIntenseTimeStep ()
+{
+    return priv->optionGetTimeStepIntense ();
+}
 
-AnimAddonEffectProperties fxGlide3ExtraProp = {
-    .animStepPolygonFunc = polygonsDeceleratingAnimStepPolygon};
+void
+PrivateAnimAddonScreen::initAnimationList ()
+{
+    int i = 0;
+#if 0
+    animEffects[i++] = AnimEffectAirplane =
+	new AnimEffectInfo ("animationaddon:Airplane",
+			    true, true, true, false, false,
+			    &createAnimation<AirplaneAnim>);
+    animEffects[i++] = AnimEffectBeamUp =
+	new AnimEffectInfo ("animationaddon:Beam Up",
+			    true, true, true, false, false,
+			    &createAnimation<BeamUpAnim>);
+#endif
+    animEffects[i++] = AnimEffectBurn =
+	new AnimEffectInfo ("animationaddon:Burn",
+			    true, true, true, false, false,
+			    &createAnimation<BurnAnim>);
+    animEffects[i++] = AnimEffectExplode =
+	new AnimEffectInfo ("animationaddon:Explode",
+			    true, true, true, false, false,
+			    &createAnimation<ExplodeAnim>);
+#if 0
+    animEffects[i++] = AnimEffectDomino =
+	new AnimEffectInfo ("animationaddon:Domino",
+			    true, true, true, false, false,
+			    &createAnimation<DominoAnim>);
+    animEffects[i++] = AnimEffectFold =
+	new AnimEffectInfo ("animationaddon:Fold",
+			    true, true, true, false, false,
+			    &createAnimation<FoldAnim>);
+    animEffects[i++] = AnimEffectGlide3 =
+	new AnimEffectInfo ("animationaddon:Glide 3",
+			    true, true, true, false, false,
+			    &createAnimation<Glide3Anim>);
+    animEffects[i++] = AnimEffectLeafSpread =
+	new AnimEffectInfo ("animationaddon:Leaf Spread",
+			    true, true, true, false, false,
+			    &createAnimation<LeafSpreadAnim>);
+    animEffects[i++] = AnimEffectRazr =
+	new AnimEffectInfo ("animationaddon:Razr",
+			    true, true, true, false, false,
+			    &createAnimation<RazrAnim>);
+    animEffects[i++] = AnimEffectSkewer =
+	new AnimEffectInfo ("animationaddon:Skewer",
+			    true, true, true, false, false,
+			    &createAnimation<SkewerAnim>);
+#endif
+    animAddonExtPluginInfo.effectOptions = &getOptions ();
 
-AnimEffect AnimEffectAirplane	= &(AnimEffectInfo) {};
-AnimEffect AnimEffectBeamUp	= &(AnimEffectInfo) {};
-AnimEffect AnimEffectBurn	= &(AnimEffectInfo) {};
-AnimEffect AnimEffectDomino	= &(AnimEffectInfo) {};
-AnimEffect AnimEffectExplode	= &(AnimEffectInfo) {};
-AnimEffect AnimEffectFold	= &(AnimEffectInfo) {};
-AnimEffect AnimEffectGlide3	= &(AnimEffectInfo) {};
-AnimEffect AnimEffectLeafSpread	= &(AnimEffectInfo) {};
-AnimEffect AnimEffectRazr	= &(AnimEffectInfo) {};
-AnimEffect AnimEffectSkewer	= &(AnimEffectInfo) {};
+    AnimScreen *as = AnimScreen::get (::screen);
 
+    // Extends animation plugin with this set of animation effects.
+    as->addExtension (&animAddonExtPluginInfo);
+}
+
+#if 0
 static void
 initEffectProperties (AnimAddonDisplay *ad)
 {
     memcpy ((AnimEffectInfo *)AnimEffectAirplane, (&(AnimEffectInfo)
 	{"animationaddon:Airplane",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.prePaintWindowFunc		= polygonsPrePaintWindow,
 	  .postPaintWindowFunc		= polygonsPostPaintWindow,
 	  .animStepFunc			= fxAirplaneAnimStep,
@@ -303,7 +256,7 @@ initEffectProperties (AnimAddonDisplay *ad)
 
     memcpy ((AnimEffectInfo *)AnimEffectBeamUp, (&(AnimEffectInfo)
 	{"animationaddon:Beam Up",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.updateWindowAttribFunc	= fxBeamupUpdateWindowAttrib,
 	  .postPaintWindowFunc		= drawParticleSystems,
 	  .animStepFunc			= fxBeamUpAnimStep,
@@ -315,7 +268,7 @@ initEffectProperties (AnimAddonDisplay *ad)
 
     memcpy ((AnimEffectInfo *)AnimEffectBurn, (&(AnimEffectInfo)
 	{"animationaddon:Burn",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.postPaintWindowFunc		= drawParticleSystems,
 	  .animStepFunc			= fxBurnAnimStep,
 	  .initFunc			= fxBurnInit,
@@ -326,7 +279,7 @@ initEffectProperties (AnimAddonDisplay *ad)
 
     memcpy ((AnimEffectInfo *)AnimEffectDomino, (&(AnimEffectInfo)
 	{"animationaddon:Domino",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.prePaintWindowFunc		= polygonsPrePaintWindow,
 	  .postPaintWindowFunc		= polygonsPostPaintWindow,
 	  .animStepFunc			= polygonsAnimStep,
@@ -341,7 +294,7 @@ initEffectProperties (AnimAddonDisplay *ad)
 
     memcpy ((AnimEffectInfo *)AnimEffectExplode, (&(AnimEffectInfo)
 	{"animationaddon:Explode",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.prePaintWindowFunc		= polygonsPrePaintWindow,
 	  .postPaintWindowFunc		= polygonsPostPaintWindow,
 	  .animStepFunc			= polygonsAnimStep,
@@ -356,7 +309,7 @@ initEffectProperties (AnimAddonDisplay *ad)
 
     memcpy ((AnimEffectInfo *)AnimEffectFold, (&(AnimEffectInfo)
 	{"animationaddon:Fold",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.prePaintWindowFunc		= polygonsPrePaintWindow,
 	  .postPaintWindowFunc		= polygonsPostPaintWindow,
 	  .animStepFunc			= polygonsAnimStep,
@@ -372,7 +325,7 @@ initEffectProperties (AnimAddonDisplay *ad)
 
     memcpy ((AnimEffectInfo *)AnimEffectGlide3, (&(AnimEffectInfo)
 	{"animationaddon:Glide 3",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.prePaintWindowFunc		= polygonsPrePaintWindow,
 	  .postPaintWindowFunc		= polygonsPostPaintWindow,
 	  .animStepFunc			= polygonsAnimStep,
@@ -388,7 +341,7 @@ initEffectProperties (AnimAddonDisplay *ad)
 
     memcpy ((AnimEffectInfo *)AnimEffectLeafSpread, (&(AnimEffectInfo)
 	{"animationaddon:Leaf Spread",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.prePaintWindowFunc		= polygonsPrePaintWindow,
 	  .postPaintWindowFunc		= polygonsPostPaintWindow,
 	  .animStepFunc			= polygonsAnimStep,
@@ -403,7 +356,7 @@ initEffectProperties (AnimAddonDisplay *ad)
 
     memcpy ((AnimEffectInfo *)AnimEffectRazr, (&(AnimEffectInfo)
 	{"animationaddon:Razr",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.prePaintWindowFunc		= polygonsPrePaintWindow,
 	  .postPaintWindowFunc		= polygonsPostPaintWindow,
 	  .animStepFunc			= polygonsAnimStep,
@@ -418,7 +371,7 @@ initEffectProperties (AnimAddonDisplay *ad)
 
     memcpy ((AnimEffectInfo *)AnimEffectSkewer, (&(AnimEffectInfo)
 	{"animationaddon:Skewer",
-	 {TRUE, TRUE, TRUE, FALSE, FALSE},
+	 {true, true, true, false, false},
 	 {.prePaintWindowFunc		= polygonsPrePaintWindow,
 	  .postPaintWindowFunc		= polygonsPostPaintWindow,
 	  .animStepFunc			= polygonsAnimStep,
@@ -431,300 +384,100 @@ initEffectProperties (AnimAddonDisplay *ad)
 	  .cleanupFunc			= polygonsCleanup,
 	  .refreshFunc			= polygonsRefresh}}),
 	  sizeof (AnimEffectInfo));
+    ...
+}
+#endif
 
-    AnimEffect animEffectsTmp[NUM_EFFECTS] =
-    {
-	AnimEffectAirplane,
-	AnimEffectBeamUp,
-	AnimEffectBurn,
-	AnimEffectDomino,
-	AnimEffectExplode,
-	AnimEffectFold,
-	AnimEffectGlide3,
-	AnimEffectLeafSpread,
-	AnimEffectRazr,
-	AnimEffectSkewer
-    };
-    memcpy (animEffects,
-	    animEffectsTmp,
-	    NUM_EFFECTS * sizeof (AnimEffect));
+PrivateAnimAddonScreen::PrivateAnimAddonScreen (CompScreen *s) :
+    //cScreen (CompositeScreen::get (s)),
+    //gScreen (GLScreen::get (s)),
+    //aScreen (as),
+    mOutput (s->fullscreenOutput ())
+{
+    initAnimationList ();
 }
 
-static Bool animInitDisplay(CompPlugin * p, CompDisplay * d)
+PrivateAnimAddonScreen::~PrivateAnimAddonScreen ()
 {
-    AnimAddonDisplay *ad;
-    int animFunctionIndex;
+    AnimScreen *as = AnimScreen::get (::screen);
 
-    if (!checkPluginABI ("core", CORE_ABIVERSION) ||
-        !checkPluginABI ("animation", ANIMATION_ABIVERSION))
-	return FALSE;
+    as->removeExtension (&animAddonExtPluginInfo);
 
-    if (!getPluginDisplayIndex (d, "animation", &animFunctionIndex))
-	return FALSE;
-
-    ad = calloc(1, sizeof(AnimAddonDisplay));
-    if (!ad)
-	return FALSE;
-
-    if (!compInitDisplayOptionsFromMetadata (d,
-					     &animMetadata,
-					     animAddonDisplayOptionInfo,
-					     ad->opt,
-					     ANIMADDON_DISPLAY_OPTION_NUM))
+    for (int i = 0; i < NUM_EFFECTS; i++)
     {
-	free (ad);
-	return FALSE;
+	delete animEffects[i];
+	animEffects[i] = NULL;
     }
-
-    ad->screenPrivateIndex = allocateScreenPrivateIndex(d);
-    if (ad->screenPrivateIndex < 0)
-    {
-	free(ad);
-	return FALSE;
-    }
-
-    ad->animBaseFunctions = d->base.privates[animFunctionIndex].ptr;
-
-    initEffectProperties (ad);
-
-    ad->opt[ANIMADDON_DISPLAY_OPTION_ABI].value.i   = ANIMATIONADDON_ABIVERSION;
-    ad->opt[ANIMADDON_DISPLAY_OPTION_INDEX].value.i = animAddonFunctionsPrivateIndex;
-
-    d->base.privates[animDisplayPrivateIndex].ptr = ad;
-    d->base.privates[animAddonFunctionsPrivateIndex].ptr = &animAddonFunctions;
-
-    return TRUE;
 }
 
-static void animFiniDisplay(CompPlugin * p, CompDisplay * d)
+AnimAddonScreen::AnimAddonScreen (CompScreen *s) :
+    PluginClassHandler<AnimAddonScreen, CompScreen, ANIMATIONADDON_ABI> (s),
+    priv (new PrivateAnimAddonScreen (s))
 {
-    ANIMADDON_DISPLAY (d);
-
-    freeScreenPrivateIndex(d, ad->screenPrivateIndex);
-
-    compFiniDisplayOptions (d, ad->opt, ANIMADDON_DISPLAY_OPTION_NUM);
-
-    free(ad);
 }
 
-static Bool animInitScreen(CompPlugin * p, CompScreen * s)
+AnimAddonScreen::~AnimAddonScreen ()
 {
-    AnimAddonScreen *as;
-
-    ANIMADDON_DISPLAY (s->display);
-
-    as = calloc(1, sizeof(AnimAddonScreen));
-    if (!as)
-	return FALSE;
-
-    if (!compInitScreenOptionsFromMetadata (s,
-					    &animMetadata,
-					    animAddonScreenOptionInfo,
-					    as->opt,
-					    ANIMADDON_SCREEN_OPTION_NUM))
-    {
-	free (as);
-	return FALSE;
-    }
-
-    as->windowPrivateIndex = allocateWindowPrivateIndex(s);
-    if (as->windowPrivateIndex < 0)
-    {
-	compFiniScreenOptions (s, as->opt, ANIMADDON_SCREEN_OPTION_NUM);
-	free(as);
-	return FALSE;
-    }
-
-    as->output = &s->fullscreenOutput;
-
-    animExtensionPluginInfo.effectOptions = &as->opt[NUM_NONEFFECT_OPTIONS];
-
-    ad->animBaseFunctions->addExtension (s, &animExtensionPluginInfo);
-
-    s->base.privates[ad->screenPrivateIndex].ptr = as;
-
-    return TRUE;
+    delete priv;
 }
 
-static void animFiniScreen(CompPlugin * p, CompScreen * s)
+CompOption::Vector &
+AnimAddonScreen::getOptions ()
 {
-    ANIMADDON_SCREEN (s);
-    ANIMADDON_DISPLAY (s->display);
-
-    ad->animBaseFunctions->removeExtension (s, &animExtensionPluginInfo);
-
-    freeWindowPrivateIndex(s, as->windowPrivateIndex);
-
-    compFiniScreenOptions (s, as->opt, ANIMADDON_SCREEN_OPTION_NUM);
-
-    free(as);
+    return priv->getOptions ();
 }
 
-static Bool animInitWindow(CompPlugin * p, CompWindow * w)
+bool
+AnimAddonScreen::setOption (const CompString  &name,
+                            CompOption::Value &value)
 {
-    CompScreen *s = w->screen;
-    AnimAddonWindow *aw;
-
-    ANIMADDON_DISPLAY (s->display);
-    ANIMADDON_SCREEN (s);
-
-    aw = calloc(1, sizeof(AnimAddonWindow));
-    if (!aw)
-	return FALSE;
-
-    aw->eng.polygonSet = NULL;
-    aw->eng.numPs = 0;
-    aw->eng.ps = NULL;
-
-    w->base.privates[as->windowPrivateIndex].ptr = aw;
-
-    aw->com = ad->animBaseFunctions->getAnimWindowCommon (w);
-
-    return TRUE;
+    return priv->setOption (name, value);
 }
 
-static void animFiniWindow(CompPlugin * p, CompWindow * w)
+AnimAddonWindow::AnimAddonWindow (CompWindow *w) :
+    PluginClassHandler<AnimAddonWindow, CompWindow> (w),
+    mWindow (w)
 {
-    ANIMADDON_WINDOW (w);
+}
+
+AnimAddonWindow::~AnimAddonWindow ()
+{
+    AnimWindow *aw = AnimWindow::get (mWindow);
+    Animation *curAnim = aw->curAnimation ();
+
+    if (!curAnim)
+	return;
 
     // We need to interrupt and clean up the animation currently being played
     // by animationaddon for this window (if any)
-    if (aw->com->animRemainingTime > 0 &&
-	(aw->com->curAnimEffect == AnimEffectAirplane ||
-	 aw->com->curAnimEffect == AnimEffectBeamUp ||
-	 aw->com->curAnimEffect == AnimEffectBurn ||
-	 aw->com->curAnimEffect == AnimEffectDomino ||
-	 aw->com->curAnimEffect == AnimEffectExplode ||
-	 aw->com->curAnimEffect == AnimEffectFold ||
-	 aw->com->curAnimEffect == AnimEffectGlide3 ||
-	 aw->com->curAnimEffect == AnimEffectLeafSpread ||
-	 aw->com->curAnimEffect == AnimEffectRazr ||
-	 aw->com->curAnimEffect == AnimEffectSkewer))
+    if (curAnim->remainingTime () > 0 &&
+	curAnim->getExtensionPluginInfo ()->name ==
+	    CompString ("animationaddon"))
     {
-	ANIMADDON_DISPLAY (w->screen->display);
-
-	ad->animBaseFunctions->postAnimationCleanup (w);
+	aw->postAnimationCleanUp ();
     }
-
-    free(aw);
 }
 
-static CompBool
-animInitObject (CompPlugin *p,
-		CompObject *o)
+bool
+AnimAddonPluginVTable::init ()
 {
-    static InitPluginObjectProc dispTab[] = {
-	(InitPluginObjectProc) 0, /* InitCore */
-	(InitPluginObjectProc) animInitDisplay,
-	(InitPluginObjectProc) animInitScreen,
-	(InitPluginObjectProc) animInitWindow
-    };
+    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) |
+        !CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) |
+        !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) |
+        !CompPlugin::checkPluginABI ("animation", ANIMATION_ABI))
+	 return false;
 
-    RETURN_DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), TRUE, (p, o));
+    CompPrivate p;
+    p.uval = ANIMATIONADDON_ABI;
+    ::screen->storeValue ("animationaddon_ABI", p);
+
+    return true;
 }
 
-static void
-animFiniObject (CompPlugin *p,
-		CompObject *o)
+void
+AnimAddonPluginVTable::fini ()
 {
-    static FiniPluginObjectProc dispTab[] = {
-	(FiniPluginObjectProc) 0, /* FiniCore */
-	(FiniPluginObjectProc) animFiniDisplay,
-	(FiniPluginObjectProc) animFiniScreen,
-	(FiniPluginObjectProc) animFiniWindow
-    };
-
-    DISPATCH (o, dispTab, ARRAY_SIZE (dispTab), (p, o));
+    ::screen->eraseValue ("animationaddon_ABI");
 }
 
-static CompOption *
-animGetObjectOptions (CompPlugin *plugin,
-		      CompObject *object,
-		      int	   *count)
-{
-    static GetPluginObjectOptionsProc dispTab[] = {
-	(GetPluginObjectOptionsProc) 0, /* GetCoreOptions */
-	(GetPluginObjectOptionsProc) animGetDisplayOptions,
-	(GetPluginObjectOptionsProc) animGetScreenOptions
-    };
-
-    *count = 0;
-    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab),
-		     NULL, (plugin, object, count));
-}
-
-static CompBool
-animSetObjectOption (CompPlugin      *plugin,
-		     CompObject      *object,
-		     const char      *name,
-		     CompOptionValue *value)
-{
-    static SetPluginObjectOptionProc dispTab[] = {
-	(SetPluginObjectOptionProc) 0, /* SetCoreOption */
-	(SetPluginObjectOptionProc) animSetDisplayOption,
-	(SetPluginObjectOptionProc) animSetScreenOptions
-    };
-
-    RETURN_DISPATCH (object, dispTab, ARRAY_SIZE (dispTab), FALSE,
-		     (plugin, object, name, value));
-}
-
-static Bool animInit(CompPlugin * p)
-{
-    if (!compInitPluginMetadataFromInfo (&animMetadata,
-					 p->vTable->name,
-					 0, 0,
-					 animAddonScreenOptionInfo,
-					 ANIMADDON_SCREEN_OPTION_NUM))
-	return FALSE;
-
-    animDisplayPrivateIndex = allocateDisplayPrivateIndex();
-    if (animDisplayPrivateIndex < 0)
-    {
-	compFiniMetadata (&animMetadata);
-	return FALSE;
-    }
-
-    animAddonFunctionsPrivateIndex = allocateDisplayPrivateIndex ();
-    if (animAddonFunctionsPrivateIndex < 0)
-    {
-	freeDisplayPrivateIndex (animDisplayPrivateIndex);
-	compFiniMetadata (&animMetadata);
-	return FALSE;
-    }
-
-    compAddMetadataFromFile (&animMetadata, p->vTable->name);
-
-    return TRUE;
-}
-
-static void animFini(CompPlugin * p)
-{
-    freeDisplayPrivateIndex(animDisplayPrivateIndex);
-    freeDisplayPrivateIndex (animAddonFunctionsPrivateIndex);
-    compFiniMetadata (&animMetadata);
-}
-
-static CompMetadata *
-animGetMetadata (CompPlugin *plugin)
-{
-    return &animMetadata;
-}
-
-CompPluginVTable animVTable = {
-    "animationaddon",
-    animGetMetadata,
-    animInit,
-    animFini,
-    animInitObject,
-    animFiniObject,
-    animGetObjectOptions,
-    animSetObjectOption,
-};
-
-CompPluginVTable*
-getCompPluginInfo20070830 (void)
-{
-    return &animVTable;
-}
 

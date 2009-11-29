@@ -1,25 +1,169 @@
-#define _GNU_SOURCE
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
 
-#include <compiz-core.h>
-#include <compiz-animation.h>
-#include "compiz-animationaddon.h"
+#include <core/core.h>
+#include <composite/composite.h>
+#include <opengl/opengl.h>
 
-extern int animDisplayPrivateIndex;
-extern CompMetadata animMetadata;
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
+#include <animation/animation.h>
+#include <animationaddon/animationaddon.h>
+
+#include "animationaddon_options.h"
 
 
-typedef struct _AirplaneEffectParameters
+extern AnimEffect AnimEffectBurn;
+extern AnimEffect AnimEffectExplode;
+extern AnimEffect AnimEffectAirplane;
+extern AnimEffect AnimEffectBeamUp;
+extern AnimEffect AnimEffectDomino;
+extern AnimEffect AnimEffectFold;
+extern AnimEffect AnimEffectGlide3;
+extern AnimEffect AnimEffectLeafSpread;
+extern AnimEffect AnimEffectRazr;
+extern AnimEffect AnimEffectSkewer;
+
+// TODO Update this for each added animation effect! (total: 10)
+#define NUM_EFFECTS 2
+
+// This must have the value of the first "effect setting" above
+// in AnimAddonScreenOptions
+#define NUM_NONEFFECT_OPTIONS AnimationaddonOptions::AirplanePathLength
+
+class ExtensionPluginAnimAddon : public ExtensionPluginInfo
 {
-    /// added for airplane folding and flying
-    // airplane fold phase.
+public:
+    ExtensionPluginAnimAddon (const CompString &name,
+			      unsigned int nEffects,
+			      AnimEffect *effects,
+			      CompOption::Vector *effectOptions,
+			      unsigned int firstEffectOptionIndex) :
+	ExtensionPluginInfo (name, nEffects, effects, effectOptions,
+			     firstEffectOptionIndex) {}
+    ~ExtensionPluginAnimAddon () {}
 
+    void prePaintOutput (CompOutput *output);
+    const CompOutput *output () { return mOutput; }
+
+private:
+    const CompOutput *mOutput;
+};
+
+class PrivateAnimAddonScreen :
+    public AnimationaddonOptions
+{
+    friend class AnimAddonScreen;
+
+public:
+    PrivateAnimAddonScreen (CompScreen *);
+    ~PrivateAnimAddonScreen ();
+
+protected:
+    void initAnimationList ();
+
+    CompOutput &mOutput;
+};
+
+class AnimAddonWindow :
+    public PluginClassHandler<AnimAddonWindow, CompWindow>
+{
+public:
+    AnimAddonWindow (CompWindow *);
+    ~AnimAddonWindow ();
+
+protected:
+    CompWindow *mWindow;    ///< Window being animated.
+};
+
+// ratio of perceived length of animation compared to real duration
+// to make it appear to have the same speed with other animation effects
+
+#define DOMINO_PERCEIVED_T 0.8f
+#define EXPLODE_PERCEIVED_T 0.7f
+#define FOLD_PERCEIVED_T 0.55f
+#define LEAFSPREAD_PERCEIVED_T 0.6f
+#define SKEWER_PERCEIVED_T 0.6f
+
+
+// Particle-based animations
+#if 0
+class BeamUpAnim : public ParticleAnim
+{
+public:
+    BeamUpAnim (CompWindow *w,
+		WindowEvent curWindowEvent,
+		float duration,
+		const AnimEffect info,
+		const CompRect &icon);
+
+protected:
+    void step ();
+    void updateAttrib (GLWindowPaintAttrib &);
+};
+#endif
+
+class BurnAnim : public ParticleAnim
+{
+public:
+    BurnAnim (CompWindow *w,
+              WindowEvent curWindowEvent,
+              float duration,
+              const AnimEffect info,
+              const CompRect &icon);
+
+protected:
+    void step ();
+    void genNewFire (int x,
+		     int y,
+		     int width,
+		     int height,
+		     float size,
+		     float time);
+    void genNewSmoke (int x,
+		      int y,
+		      int width,
+		      int height,
+		      float size,
+		      float time);
+
+    int mDirection;
+    bool mMysticalFire;
+    float mLife;
+    unsigned short *mColor;
+    float mSize;
+    bool mHasSmoke;
+
+    unsigned int mFirePSId;
+    unsigned int mSmokePSId;
+};
+
+// Polygon-based animations
+
+class ExplodeAnim : public PolygonAnim
+{
+public:
+    ExplodeAnim (CompWindow *w,
+		 WindowEvent curWindowEvent,
+		 float duration,
+		 const AnimEffect info,
+		 const CompRect &icon);
+
+protected:
+    static const float kDurationFactor;
+};
+
+#if 0
+/// Extended polygon object for airplane folding and flying airplane fold phase.
+class AirplanePolygonObject : public PolygonObject
+{
+public:
     Vector3d rotAxisA;			// Rotation axis vector A
     Vector3d rotAxisB;			// Rotation axis vector B
 
-    Point3d rotAxisOffsetA;		// Rotation axis translate amount A 
+    Point3d rotAxisOffsetA;		// Rotation axis translate amount A
     Point3d rotAxisOffsetB; 	        // Rotation axis translate amount B
 
     float rotAngleA;			// Rotation angle A
@@ -33,11 +177,11 @@ typedef struct _AirplaneEffectParameters
     Vector3d centerPosFly;	// center position (offset) during the flying phases
 
     Vector3d flyRotation;	// airplane rotation during the flying phases
-    Vector3d flyFinalRotation;	// airplane rotation during the flying phases 
+    Vector3d flyFinalRotation;	// airplane rotation during the flying phases
 
-    float flyScale;             // Scale for airplane flying effect 
-    float flyFinalScale;        // Final Scale for airplane flying effect 
-  
+    float flyScale;             // Scale for airplane flying effect
+    float flyFinalScale;        // Final Scale for airplane flying effect
+
     float flyTheta;		// Theta parameter for fly rotations and positions
 
     float moveStartTime2;		// Movement starts at this time ([0-1] range)
@@ -51,339 +195,99 @@ typedef struct _AirplaneEffectParameters
 
     float moveStartTime5;	        // Movement starts at this time ([0-1] range)
     float moveDuration5;		// Movement lasts this long     ([0-1] range)
-} AirplaneEffectParameters;
+};
 
-extern AnimEffect AnimEffectAirplane;
-extern AnimEffect AnimEffectBeamUp;
-extern AnimEffect AnimEffectBurn;
-extern AnimEffect AnimEffectDomino;
-extern AnimEffect AnimEffectExplode;
-extern AnimEffect AnimEffectFold;
-extern AnimEffect AnimEffectGlide3;
-extern AnimEffect AnimEffectLeafSpread;
-extern AnimEffect AnimEffectRazr;
-extern AnimEffect AnimEffectSkewer;
-
-#define NUM_EFFECTS 10
-
-typedef enum
+class AirplaneAnim :
+    public PolygonAnim
 {
-    // Misc. settings
-    ANIMADDON_SCREEN_OPTION_TIME_STEP_INTENSE = 0,
-    // Effect settings
-    ANIMADDON_SCREEN_OPTION_AIRPLANE_PATHLENGTH,
-    ANIMADDON_SCREEN_OPTION_AIRPLANE_FLY2TOM,
-    ANIMADDON_SCREEN_OPTION_BEAMUP_SIZE,
-    ANIMADDON_SCREEN_OPTION_BEAMUP_SPACING,
-    ANIMADDON_SCREEN_OPTION_BEAMUP_COLOR,
-    ANIMADDON_SCREEN_OPTION_BEAMUP_SLOWDOWN,
-    ANIMADDON_SCREEN_OPTION_BEAMUP_LIFE,
-    ANIMADDON_SCREEN_OPTION_DOMINO_DIRECTION,
-    ANIMADDON_SCREEN_OPTION_RAZR_DIRECTION,
-    ANIMADDON_SCREEN_OPTION_EXPLODE_THICKNESS,
-    ANIMADDON_SCREEN_OPTION_EXPLODE_GRIDSIZE_X,
-    ANIMADDON_SCREEN_OPTION_EXPLODE_GRIDSIZE_Y,
-    ANIMADDON_SCREEN_OPTION_EXPLODE_TIERS,
-    ANIMADDON_SCREEN_OPTION_EXPLODE_SPOKES,
-    ANIMADDON_SCREEN_OPTION_EXPLODE_TESS,
-    ANIMADDON_SCREEN_OPTION_FIRE_PARTICLES,
-    ANIMADDON_SCREEN_OPTION_FIRE_SIZE,
-    ANIMADDON_SCREEN_OPTION_FIRE_SLOWDOWN,
-    ANIMADDON_SCREEN_OPTION_FIRE_LIFE,
-    ANIMADDON_SCREEN_OPTION_FIRE_COLOR,
-    ANIMADDON_SCREEN_OPTION_FIRE_DIRECTION,
-    ANIMADDON_SCREEN_OPTION_FIRE_CONSTANT_SPEED,
-    ANIMADDON_SCREEN_OPTION_FIRE_SMOKE,
-    ANIMADDON_SCREEN_OPTION_FIRE_MYSTICAL,
-    ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_X,
-    ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_Y,
-    ANIMADDON_SCREEN_OPTION_FOLD_DIR,
-    ANIMADDON_SCREEN_OPTION_GLIDE3_AWAY_POS,
-    ANIMADDON_SCREEN_OPTION_GLIDE3_AWAY_ANGLE,
-    ANIMADDON_SCREEN_OPTION_GLIDE3_THICKNESS,
-    ANIMADDON_SCREEN_OPTION_SKEWER_GRIDSIZE_X,
-    ANIMADDON_SCREEN_OPTION_SKEWER_GRIDSIZE_Y,
-    ANIMADDON_SCREEN_OPTION_SKEWER_THICKNESS,
-    ANIMADDON_SCREEN_OPTION_SKEWER_DIRECTION,
-    ANIMADDON_SCREEN_OPTION_SKEWER_TESS,
-    ANIMADDON_SCREEN_OPTION_SKEWER_ROTATION,
+    void step ();
 
-    ANIMADDON_SCREEN_OPTION_NUM
-} AnimAddonScreenOptions;
+    void
+    fxAirplaneLinearAnimStepPolygon (CompWindow *w,
+				       PolygonObject *p,
+				       float forwardProgress);
 
-// This must have the value of the first "effect setting" above
-// in AnimAddonScreenOptions
-#define NUM_NONEFFECT_OPTIONS ANIMADDON_SCREEN_OPTION_AIRPLANE_PATHLENGTH
+    void
+    fxAirplaneDrawCustomGeometry (CompWindow *w);
 
-typedef enum _AnimAddonDisplayOptions
+    void
+    AirplaneExtraPolygonTransformFunc (PolygonObject * p);
+
+
+
+    AnimAddonEffectProperties fxAirplaneExtraProp = {
+	.animStepPolygonFunc = fxAirplaneLinearAnimStepPolygon};
+};
+
+class DominoAnim : public PolygonAnim
 {
-    ANIMADDON_DISPLAY_OPTION_ABI = 0,
-    ANIMADDON_DISPLAY_OPTION_INDEX,
-    ANIMADDON_DISPLAY_OPTION_NUM
-} AnimAddonDisplayOptions;
+public:
+    DominoAnim (CompWindow *w,
+		WindowEvent curWindowEvent,
+		float duration,
+		const AnimEffect info,
+		const CompRect &icon);
+};
 
-typedef struct _AnimAddonDisplay
+class FoldAnim : public PolygonAnim
 {
-    int screenPrivateIndex;
-    AnimBaseFunctions *animBaseFunctions;
+public:
+    FoldAnim (CompWindow *w,
+	      WindowEvent curWindowEvent,
+	      float duration,
+	      const AnimEffect info,
+	      const CompRect &icon);
 
-    CompOption opt[ANIMADDON_DISPLAY_OPTION_NUM];
-} AnimAddonDisplay;
+    void
+    fxFoldAnimStepPolygon (CompWindow *w,
+			     PolygonObject *p,
+			     float forwardProgress);
 
-typedef struct _AnimAddonScreen
+    AnimAddonEffectProperties fxFoldExtraProp = {
+	.animStepPolygonFunc = fxFoldAnimStepPolygon};
+};
+
+class Glide3Anim : public PolygonAnim
 {
-    int windowPrivateIndex;
+public:
+    Glide3Anim (CompWindow *w,
+		WindowEvent curWindowEvent,
+		float duration,
+		const AnimEffect info,
+		const CompRect &icon);
 
-    CompOutput *output;
+    bool deceleratingMotion () { return true; }
 
-    CompOption opt[ANIMADDON_SCREEN_OPTION_NUM];
-} AnimAddonScreen;
+    AnimAddonEffectProperties fxGlide3ExtraProp = {
+	.animStepPolygonFunc = polygonsDeceleratingAnimStepPolygon};
+};
 
-typedef struct _AnimAddonWindow
+class LeafSpreadAnim : public PolygonAnim
 {
-    AnimWindowCommon *com;
-    AnimWindowEngineData eng;
-
-    // for burn
-    int animFireDirection;
-
-    // for polygon engine
-    int nDrawGeometryCalls;
-    Bool deceleratingMotion;	// For effects that have decel. motion
-    int nClipsPassed;	        /* # of clips passed to animAddWindowGeometry so far
-				   in this draw step */
-    Bool clipsUpdated;          // whether stored clips are updated in this anim step
-} AnimAddonWindow;
-
-#define GET_ANIMADDON_DISPLAY(d)						\
-    ((AnimAddonDisplay *) (d)->base.privates[animDisplayPrivateIndex].ptr)
-
-#define ANIMADDON_DISPLAY(d)				\
-    AnimAddonDisplay *ad = GET_ANIMADDON_DISPLAY (d)
-
-#define GET_ANIMADDON_SCREEN(s, ad)						\
-    ((AnimAddonScreen *) (s)->base.privates[(ad)->screenPrivateIndex].ptr)
-
-#define ANIMADDON_SCREEN(s)							\
-    AnimAddonScreen *as = GET_ANIMADDON_SCREEN (s, GET_ANIMADDON_DISPLAY (s->display))
-
-#define GET_ANIMADDON_WINDOW(w, as)						\
-    ((AnimAddonWindow *) (w)->base.privates[(as)->windowPrivateIndex].ptr)
-
-#define ANIMADDON_WINDOW(w)					     \
-    AnimAddonWindow *aw = GET_ANIMADDON_WINDOW (w,                     \
-		     GET_ANIMADDON_SCREEN (w->screen,             \
-		     GET_ANIMADDON_DISPLAY (w->screen->display)))
-
-// ratio of perceived length of animation compared to real duration
-// to make it appear to have the same speed with other animation effects
-
-#define DOMINO_PERCEIVED_T 0.8f
-#define EXPLODE_PERCEIVED_T 0.7f
-#define FOLD_PERCEIVED_T 0.55f
-#define LEAFSPREAD_PERCEIVED_T 0.6f
-#define SKEWER_PERCEIVED_T 0.6f
-
-/*
- * Function prototypes
- *
- */
-
-OPTION_GETTERS_HDR
-
-int
-getIntenseTimeStep (CompScreen *s);
-
-
-/* airplane3d.c */
-
-Bool
-fxAirplaneInit (CompWindow *w);
-
-void
-fxAirplaneAnimStep (CompWindow *w,
-		      float time);
-
-void
-fxAirplaneLinearAnimStepPolygon (CompWindow *w,
-				   PolygonObject *p,
-				   float forwardProgress);
-
-void 
-fxAirplaneDrawCustomGeometry (CompWindow *w);
-
-void 
-AirplaneExtraPolygonTransformFunc (PolygonObject * p);
-
-
-/* beamup.c */
-
-void
-fxBeamupUpdateWindowAttrib (CompWindow *w,
-			    WindowPaintAttrib *wAttrib);
-
-void
-fxBeamUpAnimStep (CompWindow *w,
-		  float time);
-
-Bool
-fxBeamUpInit (CompWindow *w);
-
-
-/* burn.c */
-
-void
-fxBurnAnimStep (CompWindow *w,
-		float time);
-
-Bool
-fxBurnInit (CompWindow *w);
-
-/* domino.c */
-
-Bool
-fxDominoInit (CompWindow *w);
-
-/* explode3d.c */
-
-Bool
-fxExplodeInit (CompWindow *w);
-
-/* fold3d.c */
-
-Bool
-fxFoldInit (CompWindow *w);
-
-void
-fxFoldAnimStepPolygon (CompWindow *w,
-			 PolygonObject *p,
-			 float forwardProgress);
-
-/* glide3.c */
-
-Bool
-fxGlide3Init (CompWindow * w);
-
-/* leafspread.c */
-
-Bool
-fxLeafSpreadInit (CompWindow *w);
-
-/* particle.c */
-
-void
-initParticles (int numParticles,
-	       ParticleSystem * ps);
-
-void
-drawParticles (CompWindow * w,
-	       ParticleSystem * ps);
-
-void
-updateParticles (ParticleSystem * ps,
-		 float time);
-
-void
-finiParticles (ParticleSystem * ps);
-
-void
-drawParticleSystems (CompWindow *w);
-
-void
-particlesUpdateBB (CompOutput *output,
-		   CompWindow * w,
-		   Box *BB);
-
-void
-particlesCleanup (CompWindow * w);
-
-Bool
-particlesPrePrepPaintScreen (CompWindow * w,
-			     int msSinceLastPaint);
-
-/* polygon.c */
-
-Bool
-tessellateIntoRectangles (CompWindow * w,
-			  int gridSizeX,
-			  int gridSizeY,
-			  float thickness);
- 
-Bool
-tessellateIntoHexagons (CompWindow * w,
-			int gridSizeX,
-			int gridSizeY,
-			float thickness);
-
-Bool
-tessellateIntoGlass (CompWindow * w, 
-		     int spoke_num,
-		     int tier_num,
-		     float thickness);
-
-void
-polygonsStoreClips (CompWindow * w,
-		    int nClip, BoxPtr pClip,
-		    int nMatrix, CompMatrix * matrix);
- 
-void
-polygonsDrawCustomGeometry (CompWindow * w);
-
-void
-polygonsPrePaintWindow (CompWindow * w);
- 
-void
-polygonsPostPaintWindow (CompWindow * w);
-
-void
-freePolygonSet (AnimAddonWindow * aw);
-
-void
-freePolygonObjects (PolygonSet * pset);
- 
-void
-polygonsLinearAnimStepPolygon (CompWindow * w,
-			       PolygonObject *p,
-			       float forwardProgress);
-
-void
-polygonsDeceleratingAnimStepPolygon (CompWindow * w,
-				     PolygonObject *p,
-				     float forwardProgress);
-
-void
-polygonsUpdateBB (CompOutput *output,
-		  CompWindow * w,
-		  Box *BB);
-
-void
-polygonsAnimStep (CompWindow *w,
-		  float time);
-
-Bool
-polygonsPrePreparePaintScreen (CompWindow *w,
-			       int msSinceLastPaint);
-
-void
-polygonsCleanup (CompWindow *w);
-
-Bool
-polygonsAnimInit (CompWindow *w);
-
-void
-polygonsPrePaintOutput (CompScreen *s, CompOutput *output);
-
-void
-polygonsRefresh (CompWindow *w,
-		 Bool animInitialized);
-
-/* skewer.c */
-
-Bool
-fxSkewerInit (CompWindow * w);
-
-void
-fxSkewerAnimStepPolygon (CompWindow *w,
-			 PolygonObject *p,
-			 float forwardProgress);
-
+public:
+    LeafSpreadAnim (CompWindow *w,
+		    WindowEvent curWindowEvent,
+		    float duration,
+		    const AnimEffect info,
+		    const CompRect &icon);
+};
+
+class SkewerAnim : public PolygonAnim
+{
+public:
+    SkewerAnim (CompWindow *w,
+		WindowEvent curWindowEvent,
+		float duration,
+		const AnimEffect info,
+		const CompRect &icon);
+
+    void
+    fxSkewerAnimStepPolygon (CompWindow *w,
+			     PolygonObject *p,
+			     float forwardProgress);
+
+    AnimAddonEffectProperties fxSkewerExtraProp = {
+	.animStepPolygonFunc = fxSkewerAnimStepPolygon};
+};
+
+#endif

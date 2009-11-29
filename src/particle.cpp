@@ -34,90 +34,76 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animationaddon.h"
+#include "private.h"
+#include "animation_tex.h"
 
-void initParticles(int numParticles, ParticleSystem * ps)
+ParticleAnim::ParticleAnim (CompWindow *w,
+			    WindowEvent curWindowEvent,
+			    float duration,
+			    const AnimEffect info,
+			    const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    BaseAddonAnim::BaseAddonAnim (w, curWindowEvent, duration, info, icon),
+    PartialWindowAnim::PartialWindowAnim (w, curWindowEvent, duration, info,
+					  icon)
 {
-    if (ps->particles)
-	free(ps->particles);
-    ps->particles = calloc(numParticles, sizeof(Particle));
-    ps->tex = 0;
-    ps->numParticles = numParticles;
-    ps->slowdown = 1;
-    ps->active = FALSE;
-
-    // Initialize cache
-    ps->vertices_cache = NULL;
-    ps->colors_cache = NULL;
-    ps->coords_cache = NULL;
-    ps->dcolors_cache = NULL;
-    ps->vertex_cache_count = 0;
-    ps->color_cache_count = 0;
-    ps->coords_cache_count = 0;
-    ps->dcolors_cache_count = 0;
-
-    Particle *part = ps->particles;
-    int i;
-    for (i = 0; i < numParticles; i++, part++)
-	part->life = 0.0f;
 }
 
-void drawParticles (CompWindow * w, ParticleSystem * ps)
+ParticleSystem::ParticleSystem (int    numParticles,
+                                float  slowDown,
+                                float  darkenAmount,
+                                GLuint blendMode) :
+    mParticles (numParticles),
+    mSlowDown (slowDown),
+    mDarkenAmount (darkenAmount),
+    mBlendMode (blendMode),
+    mTex (0),
+    mActive (false),
+    mGScreen (GLScreen::get (::screen))
 {
-    CompScreen *s = w->screen;
+    glGenTextures (1, &mTex);
+    /*
+    glBindTexture (GL_TEXTURE_2D, mTex);
 
-    glPushMatrix();
-    if (w)
-	glTranslated(WIN_X(w) - ps->x, WIN_Y(w) - ps->y, 0);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    glEnable(GL_BLEND);
-    if (ps->tex)
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
+		 GL_RGBA, GL_UNSIGNED_BYTE, fireTex);
+    glBindTexture (GL_TEXTURE_2D, 0);
+    */
+}
+
+ParticleSystem::~ParticleSystem ()
+{
+    if (mTex)
+	glDeleteTextures (1, &mTex);
+}
+
+void
+ParticleSystem::draw (int offsetX, int offsetY)
+{
+    glPushMatrix ();
+    glTranslated (offsetX - mX, offsetY - mY, 0);
+
+    glEnable (GL_BLEND);
+    if (mTex)
     {
-	glBindTexture(GL_TEXTURE_2D, ps->tex);
-	glEnable(GL_TEXTURE_2D);
+	glBindTexture (GL_TEXTURE_2D, mTex);
+	glEnable (GL_TEXTURE_2D);
     }
-    glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    mGScreen->setTexEnvMode (GL_MODULATE);
 
-    /* Check that the cache is big enough */
-    if (ps->numParticles > ps->vertex_cache_count)
-    {
-	ps->vertices_cache =
-	    realloc(ps->vertices_cache,
-		    ps->numParticles * 4 * 3 * sizeof(GLfloat));
-	ps->vertex_cache_count = ps->numParticles;
-    }
+    mVerticesCache.resize (4 * 3 * mParticles.size ());
+    mCoordsCache.resize (4 * 2 * mParticles.size ());
+    mColorsCache.resize (4 * 4 * mParticles.size ());
+    if (mDarkenAmount > 0)
+	mDColorsCache.resize (4 * 4 * mParticles.size ());
 
-    if (ps->numParticles > ps->coords_cache_count)
-    {
-	ps->coords_cache =
-	    realloc(ps->coords_cache,
-		    ps->numParticles * 4 * 2 * sizeof(GLfloat));
-	ps->coords_cache_count = ps->numParticles;
-    }
-
-    if (ps->numParticles > ps->color_cache_count)
-    {
-	ps->colors_cache =
-	    realloc(ps->colors_cache,
-		    ps->numParticles * 4 * 4 * sizeof(GLfloat));
-	ps->color_cache_count = ps->numParticles;
-    }
-
-    if (ps->darken > 0)
-    {
-	if (ps->dcolors_cache_count < ps->numParticles)
-	{
-	    ps->dcolors_cache =
-		realloc(ps->dcolors_cache,
-			ps->numParticles * 4 * 4 * sizeof(GLfloat));
-	    ps->dcolors_cache_count = ps->numParticles;
-	}
-    }
-
-    GLfloat *dcolors = ps->dcolors_cache;
-    GLfloat *vertices = ps->vertices_cache;
-    GLfloat *coords = ps->coords_cache;
-    GLfloat *colors = ps->colors_cache;
+    GLfloat *dcolors = &mDColorsCache[0];
+    GLfloat *vertices = &mVerticesCache[0];
+    GLfloat *coords = &mCoordsCache[0];
+    GLfloat *colors = &mColorsCache[0];
 
     int cornersSize = sizeof (GLfloat) * 8;
     int colorSize = sizeof (GLfloat) * 4;
@@ -129,244 +115,211 @@ void drawParticles (CompWindow * w, ParticleSystem * ps)
 
     int numActive = 0;
 
-    Particle *part = ps->particles;
-    int i;
-    for (i = 0; i < ps->numParticles; i++, part++)
+    foreach (Particle &part, mParticles)
     {
-	if (part->life > 0.0f)
+	if (part.life <= 0.0f)	     // Ignore dead particles
+	    continue;
+
+	numActive += 4;
+
+	float w = part.width / 2;
+	float h = part.height / 2;
+
+	w += (w * part.w_mod) * part.life;
+	h += (h * part.h_mod) * part.life;
+
+	vertices[0] = part.x - w;
+	vertices[1] = part.y - h;
+	vertices[2] = part.z;
+
+	vertices[3] = part.x - w;
+	vertices[4] = part.y + h;
+	vertices[5] = part.z;
+
+	vertices[6] = part.x + w;
+	vertices[7] = part.y + h;
+	vertices[8] = part.z;
+
+	vertices[9] = part.x + w;
+	vertices[10] = part.y - h;
+	vertices[11] = part.z;
+
+	vertices += 12;
+
+	memcpy (coords, cornerCoords, cornersSize);
+
+	coords += 8;
+
+	colors[0] = part.r;
+	colors[1] = part.g;
+	colors[2] = part.b;
+	colors[3] = part.life * part.a;
+	memcpy (colors + 4, colors, colorSize);
+	memcpy (colors + 8, colors, colorSize);
+	memcpy (colors + 12, colors, colorSize);
+
+	colors += 16;
+
+	if (mDarkenAmount > 0)
 	{
-	    numActive += 4;
+	    dcolors[0] = part.r;
+	    dcolors[1] = part.g;
+	    dcolors[2] = part.b;
+	    dcolors[3] = part.life * part.a * mDarkenAmount;
+	    memcpy (dcolors + 4, dcolors, colorSize);
+	    memcpy (dcolors + 8, dcolors, colorSize);
+	    memcpy (dcolors + 12, dcolors, colorSize);
 
-	    float w = part->width / 2;
-	    float h = part->height / 2;
-
-	    w += (w * part->w_mod) * part->life;
-	    h += (h * part->h_mod) * part->life;
-
-	    vertices[0] = part->x - w;
-	    vertices[1] = part->y - h;
-	    vertices[2] = part->z;
-
-	    vertices[3] = part->x - w;
-	    vertices[4] = part->y + h;
-	    vertices[5] = part->z;
-
-	    vertices[6] = part->x + w;
-	    vertices[7] = part->y + h;
-	    vertices[8] = part->z;
-
-	    vertices[9] = part->x + w;
-	    vertices[10] = part->y - h;
-	    vertices[11] = part->z;
-
-	    vertices += 12;
-
-	    memcpy (coords, cornerCoords, cornersSize);
-
-	    coords += 8;
-
-	    colors[0] = part->r;
-	    colors[1] = part->g;
-	    colors[2] = part->b;
-	    colors[3] = part->life * part->a;
-	    memcpy (colors + 4, colors, colorSize);
-	    memcpy (colors + 8, colors, colorSize);
-	    memcpy (colors + 12, colors, colorSize);
-
-	    colors += 16;
-
-	    if (ps->darken > 0)
-	    {
-		dcolors[0] = part->r;
-		dcolors[1] = part->g;
-		dcolors[2] = part->b;
-		dcolors[3] = part->life * part->a * ps->darken;
-		memcpy (dcolors + 4, dcolors, colorSize);
-		memcpy (dcolors + 8, dcolors, colorSize);
-		memcpy (dcolors + 12, dcolors, colorSize);
-
-		dcolors += 16;
-	    }
+	    dcolors += 16;
 	}
     }
 
-    glEnableClientState(GL_COLOR_ARRAY);
+    glEnableClientState (GL_COLOR_ARRAY);
 
-    glTexCoordPointer(2, GL_FLOAT, 2 * sizeof(GLfloat), ps->coords_cache);
-    glVertexPointer(3, GL_FLOAT, 3 * sizeof(GLfloat), ps->vertices_cache);
+    glTexCoordPointer (2, GL_FLOAT, 2 * sizeof (GLfloat), &mCoordsCache[0]);
+    glVertexPointer (3, GL_FLOAT, 3 * sizeof (GLfloat), &mVerticesCache[0]);
 
     // darken the background
-    if (ps->darken > 0)
+    if (mDarkenAmount > 0)
     {
-	glBlendFunc(GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-	glColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), ps->dcolors_cache);
-	glDrawArrays(GL_QUADS, 0, numActive);
+	glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
+	glColorPointer (4, GL_FLOAT, 4 * sizeof (GLfloat), &mDColorsCache[0]);
+	glDrawArrays (GL_QUADS, 0, numActive);
     }
     // draw particles
-    glBlendFunc(GL_SRC_ALPHA, ps->blendMode);
+    glBlendFunc (GL_SRC_ALPHA, mBlendMode);
 
-    glColorPointer(4, GL_FLOAT, 4 * sizeof(GLfloat), ps->colors_cache);
+    glColorPointer (4, GL_FLOAT, 4 * sizeof (GLfloat), &mColorsCache[0]);
+    glDrawArrays (GL_QUADS, 0, numActive);
+    glDisableClientState (GL_COLOR_ARRAY);
 
-    glDrawArrays(GL_QUADS, 0, numActive);
+    glPopMatrix ();
+    glColor4usv (defaultColor);
 
-    glDisableClientState(GL_COLOR_ARRAY);
+    mGScreen->setTexEnvMode (GL_REPLACE);
 
-    glPopMatrix();
-    glColor4usv(defaultColor);
-    screenTexEnvMode(s, GL_REPLACE);
-    glBlendFunc(GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    glDisable(GL_TEXTURE_2D);
-    glDisable(GL_BLEND);
+    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable (GL_TEXTURE_2D);
+    glDisable (GL_BLEND);
 }
 
-void drawParticleSystems (CompWindow * w)
+void
+ParticleAnim::postPaintWindow ()
 {
-    ANIMADDON_WINDOW (w);
-
-    if (aw->eng.numPs && !WINDOW_INVISIBLE(w))
-    {
-	int i = 0;
-
-	for (i = 0; i < aw->eng.numPs; i++)
-	{
-	    if (aw->eng.ps[i].active)
-		drawParticles (w, &aw->eng.ps[i]);
-	}
-    }
+    foreach (ParticleSystem &ps, mParticleSystems)
+	if (ps.active ())
+	    // offset by window pos.
+	    ps.draw (mWindow->x () - mWindow->output ().left,
+	             mWindow->y () - mWindow->output ().top);
 }
 
-void updateParticles(ParticleSystem * ps, float time)
+void
+ParticleSystem::update (float time)
 {
-    int i;
-    Particle *part;
     float speed = (time / 50.0);
-    float slowdown = ps->slowdown * (1 - MAX(0.99, time / 1000.0)) * 1000;
+    float slowdown = mSlowDown * (1 - MAX (0.99, time / 1000.0)) * 1000;
 
-    ps->active = FALSE;
+    mActive = false;
 
-    part = ps->particles;
-
-    for (i = 0; i < ps->numParticles; i++, part++)
+    foreach (Particle &part, mParticles)
     {
-	if (part->life > 0.0f)
-	{
-	    // move particle
-	    part->x += part->xi / slowdown;
-	    part->y += part->yi / slowdown;
-	    part->z += part->zi / slowdown;
+	if (part.life <= 0.0f)	     // Ignore dead particles
+	    continue;
 
-	    // modify speed
-	    part->xi += part->xg * speed;
-	    part->yi += part->yg * speed;
-	    part->zi += part->zg * speed;
+	// move particle
+	part.x += part.xi / slowdown;
+	part.y += part.yi / slowdown;
+	part.z += part.zi / slowdown;
 
-	    // modify life
-	    part->life -= part->fade * speed;
-	    ps->active = TRUE;
-	}
+	// modify speed
+	part.xi += part.xg * speed;
+	part.yi += part.yg * speed;
+	part.zi += part.zg * speed;
+
+	// modify life
+	part.life -= part.fade * speed;
+	mActive = true;
     }
-}
-
-void finiParticles(ParticleSystem * ps)
-{
-    free(ps->particles);
-    if (ps->tex)
-	glDeleteTextures(1, &ps->tex);
-
-    if (ps->vertices_cache)
-	free(ps->vertices_cache);
-    if (ps->colors_cache)
-	free(ps->colors_cache);
-    if (ps->coords_cache)
-	free(ps->coords_cache);
-    if (ps->dcolors_cache)
-	free(ps->dcolors_cache);
 }
 
 void
-particlesUpdateBB (CompOutput *output,
-		   CompWindow * w,
-		   Box *BB)
+ParticleAnim::updateBB (CompOutput &output)
 {
-    ANIMADDON_DISPLAY (w->screen->display);
-    ANIMADDON_WINDOW (w);
-
-    int i;
-    for (i = 0; i < aw->eng.numPs; i++)
+    foreach (ParticleSystem &ps, mParticleSystems)
     {
-	ParticleSystem * ps = &aw->eng.ps[i];
-	if (ps->active)
+	if (!ps.active ())
+	    continue;
+
+	foreach (Particle &part, ps.particles ())
 	{
-	    Particle *part = ps->particles;
-	    int j;
-	    for (j = 0; j < ps->numParticles; j++, part++)
-	    {
-		if (part->life <= 0.0f)	     // Ignore dead particles
-		    continue;
+	    if (part.life <= 0.0f)	     // Ignore dead particles
+		continue;
 
-		float w = part->width / 2;
-		float h = part->height / 2;
+	    float w = part.width / 2;
+	    float h = part.height / 2;
 
-		w += (w * part->w_mod) * part->life;
-		h += (h * part->h_mod) * part->life;
+	    w += (w * part.w_mod) * part.life;
+	    h += (h * part.h_mod) * part.life;
 
-		Box particleBox =
-		    {part->x - w, part->x + w,
-		     part->y - h, part->y + h};
+	    Box particleBox =
+		{part.x - w, part.x + w,
+		 part.y - h, part.y + h};
 
-		ad->animBaseFunctions->expandBoxWithBox (BB, &particleBox);
-	    }
+	    mAWindow->expandBBWithBox (particleBox);
 	}
     }
-    if (aw->com->useDrawRegion)
-    {
-	int nClip = aw->com->drawRegion->numRects;
-	Box *pClip = aw->com->drawRegion->rects;
 
-	for (; nClip--; pClip++)
-	    ad->animBaseFunctions->expandBoxWithBox (BB, pClip);
-    }
+    if (mUseDrawRegion)
+	// expand BB with bounding box of draw region
+	mAWindow->expandBBWithBox (mDrawRegion.handle ()->extents);
     else // drawing full window
-	ad->animBaseFunctions->updateBBWindow (output, w, BB);
+	mAWindow->expandBBWithWindow ();
 }
 
-void
-particlesCleanup (CompWindow * w)
+bool
+ParticleAnim::prePreparePaint (int msSinceLastPaint)
 {
-    ANIMADDON_WINDOW (w);
+    bool particleAnimInProgress = false;
 
-    if (aw->eng.numPs)
+    foreach (ParticleSystem &ps, mParticleSystems)
     {
-	int i = 0;
+	if (!ps.active ())
+	    continue;
 
-	for (i = 0; i < aw->eng.numPs; i++)
-	    finiParticles (aw->eng.ps + i);
-	free (aw->eng.ps);
-	aw->eng.ps = NULL;
-	aw->eng.numPs = 0;
-    }
-}
+	ps.update (msSinceLastPaint);
+	particleAnimInProgress = true;
 
-Bool
-particlesPrePrepPaintScreen (CompWindow * w, int msSinceLastPaint)
-{
-    ANIMADDON_WINDOW (w);
+	// TODO
+	// The part below should be done in ParticleSystem constructor instead,
+	// but for some reason the texture image gets lost when we do that.
+	glBindTexture (GL_TEXTURE_2D, ps.mTex);
 
-    Bool particleAnimInProgress = FALSE;
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-    if (aw->eng.numPs)
-    {
-	int i;
-	for (i = 0; i < aw->eng.numPs; i++)
-	{
-	    if (aw->eng.ps[i].active)
-	    {
-		updateParticles (&aw->eng.ps[i], msSinceLastPaint);
-		particleAnimInProgress = TRUE;
-	    }
-	}
+	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
+		     GL_RGBA, GL_UNSIGNED_BYTE, fireTex);
+	glBindTexture (GL_TEXTURE_2D, 0);
     }
 
     return particleAnimInProgress;
+}
+
+void
+ParticleAnim::initLightDarkParticles (int numLightParticles,
+                                      int numDarkParticles,
+                                      float lightSlowDown,
+                                      float darkSlowDown)
+{
+    if (numLightParticles > 0)
+	mParticleSystems.push_back (ParticleSystem (numLightParticles,
+						    lightSlowDown,
+						    0.0f,
+						    GL_ONE_MINUS_SRC_ALPHA));
+    if (numDarkParticles > 0)
+	mParticleSystems.push_back (ParticleSystem (numDarkParticles,
+						    darkSlowDown,
+						    0.5f,
+						    GL_ONE));
 }
 

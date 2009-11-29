@@ -1,3 +1,4 @@
+#if 0
 /*
  * Animation plugin for compiz/beryl
  *
@@ -34,27 +35,27 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animationaddon.h"
+#include "private.h"
 
-Bool
+bool
 fxDominoInit (CompWindow * w)
 {
     if (!polygonsAnimInit (w))
-	return FALSE;
+	return false;
 
     ANIMADDON_DISPLAY (w->screen->display);
     ANIMADDON_WINDOW (w);
 
-    Bool isRazr = (aw->com->curAnimEffect == AnimEffectRazr);
+    bool isRazr = (aw->com->curAnimEffect == AnimEffectRazr);
 
     int fallDir;
 
     if (isRazr)
 	fallDir = ad->animBaseFunctions->getActualAnimDirection
-	    (w, animGetI (w, ANIMADDON_SCREEN_OPTION_RAZR_DIRECTION), TRUE);
+	    (w, animGetI (w, ANIMADDON_SCREEN_OPTION_RAZR_DIRECTION), true);
     else
 	fallDir = ad->animBaseFunctions->getActualAnimDirection
-	    (w, animGetI (w, ANIMADDON_SCREEN_OPTION_DOMINO_DIRECTION), TRUE);
+	    (w, animGetI (w, ANIMADDON_SCREEN_OPTION_DOMINO_DIRECTION), true);
 
     int defaultGridSize = 20;
     float minCellSize = 30;
@@ -72,40 +73,40 @@ fxDominoInit (CompWindow * w)
     // Determine sensible domino piece sizes
     if (fallDir == AnimDirectionDown || fallDir == AnimDirectionUp)
     {
-	if (minCellSize > BORDER_W(w))
-	    minCellSize = BORDER_W(w);
-	if (BORDER_W(w) / defaultGridSize < minCellSize)
-	    gridSizeX = (int)(BORDER_W(w) / minCellSize);
+	if (minCellSize > BORDER_W (w))
+	    minCellSize = BORDER_W (w);
+	if (BORDER_W (w) / defaultGridSize < minCellSize)
+	    gridSizeX = (int)(BORDER_W (w) / minCellSize);
 	else
 	    gridSizeX = defaultGridSize;
-	gridCellW = BORDER_W(w) / gridSizeX;
-	gridSizeY = (int)(BORDER_H(w) / (gridCellW * cellAspectRatio));
+	gridCellW = BORDER_W (w) / gridSizeX;
+	gridSizeY = (int)(BORDER_H (w) / (gridCellW * cellAspectRatio));
 	if (gridSizeY == 0)
 	    gridSizeY = 1;
-	gridCellH = BORDER_H(w) / gridSizeY;
+	gridCellH = BORDER_H (w) / gridSizeY;
 	fallDirGridSize = gridSizeY;
     }
     else
     {
-	if (minCellSize > BORDER_H(w))
-	    minCellSize = BORDER_H(w);
-	if (BORDER_H(w) / defaultGridSize < minCellSize)
-	    gridSizeY = (int)(BORDER_H(w) / minCellSize);
+	if (minCellSize > BORDER_H (w))
+	    minCellSize = BORDER_H (w);
+	if (BORDER_H (w) / defaultGridSize < minCellSize)
+	    gridSizeY = (int)(BORDER_H (w) / minCellSize);
 	else
 	    gridSizeY = defaultGridSize;
-	gridCellH = BORDER_H(w) / gridSizeY;
-	gridSizeX = (int)(BORDER_W(w) / (gridCellH * cellAspectRatio));
+	gridCellH = BORDER_H (w) / gridSizeY;
+	gridSizeX = (int)(BORDER_W (w) / (gridCellH * cellAspectRatio));
 	if (gridSizeX == 0)
 	    gridSizeX = 1;
-	gridCellW = BORDER_W(w) / gridSizeX;
+	gridCellW = BORDER_W (w) / gridSizeX;
 	fallDirGridSize = gridSizeX;
     }
     minDistStartEdge = (1.0 / fallDirGridSize) / 2;
 
-    float thickness = MIN(gridCellW, gridCellH) / 3.5;
+    float thickness = MIN (gridCellW, gridCellH) / 3.5;
 
-    if (!tessellateIntoRectangles(w, gridSizeX, gridSizeY, thickness))
-	return FALSE;
+    if (!tessellateIntoRectangles (w, gridSizeX, gridSizeY, thickness))
+	return false;
 
     float rotAxisX = 0;
     float rotAxisY = 0;
@@ -177,20 +178,20 @@ fxDominoInit (CompWindow * w)
 	fadeDuration = 0.18;
 	riseDuration = 0.2;
     }
-    float *riseTimeRandSeed = calloc(nFallingColumns, sizeof(float));
+    float *riseTimeRandSeed = calloc (nFallingColumns, sizeof (float));
 
     if (!riseTimeRandSeed)
 	// TODO: log error here
-	return FALSE;
+	return false;
     int i;
 
     for (i = 0; i < nFallingColumns; i++)
-	riseTimeRandSeed[i] = RAND_FLOAT();
+	riseTimeRandSeed[i] = RAND_FLOAT ();
 
     PolygonSet *pset = aw->eng.polygonSet;
-    PolygonObject *p = pset->polygons;
+    PolygonObject *p = mPolygons;
 
-    for (i = 0; i < pset->nPolygons; i++, p++)
+    for (i = 0; i < mNPolygons; i++, p++)
     {
 	p->rotAxis.x = rotAxisX;
 	p->rotAxis.y = rotAxisY;
@@ -264,13 +265,14 @@ fxDominoInit (CompWindow * w)
 	    p->fadeStartTime = 1 - fadeDuration;
 	p->fadeDuration = fadeDuration;
     }
-    free(riseTimeRandSeed);
-    pset->doDepthTest = TRUE;
-    pset->doLighting = TRUE;
-    pset->correctPerspective = CorrectPerspectivePolygon;
+    free (riseTimeRandSeed);
+    mDoDepthTest = true;
+    mDoLighting = true;
+    mCorrectPerspective = CorrectPerspectivePolygon;
 
-    aw->com->animTotalTime /= DOMINO_PERCEIVED_T;
-    aw->com->animRemainingTime = aw->com->animTotalTime;
+    mTotalTime /= DOMINO_PERCEIVED_T;
+    mRemainingTime = mTotalTime;
 
-    return TRUE;
+    return true;
 }
+#endif

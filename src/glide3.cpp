@@ -1,3 +1,4 @@
+#if 0
 /*
  * Animation plugin for compiz/beryl
  *
@@ -34,18 +35,26 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animationaddon.h"
+#include "private.h"
 
 // =====================  Effect: Slab  =========================
 
-Bool
-fxGlide3Init (CompWindow * w)
+bool
+Glide3Anim::Glide3Anim (CompWindow *w,
+                          WindowEvent curWindowEvent,
+                          float duration,
+                          const AnimEffect info,
+                          const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, kDurationFactor * duration, info,
+			  icon),
+    PolygonAnim::PolygonAnim (w, curWindowEvent, kDurationFactor * duration,
+                              info, icon)
 {
-    if (!polygonsAnimInit (w))
-	return FALSE;
+    //if (!polygonsAnimInit (w))
+	//return false;
 
     CompScreen *s = w->screen;
-    ANIMADDON_WINDOW(w);
+    ANIMADDON_WINDOW (w);
 
     float finalDistFac = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_AWAY_POS);
     float finalRotAng = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_AWAY_ANGLE);
@@ -53,16 +62,16 @@ fxGlide3Init (CompWindow * w)
 
     PolygonSet *pset = aw->eng.polygonSet;
 
-    pset->includeShadows = (thickness < 1e-5);
+    mIncludeShadows = (thickness < 1e-5);
 
-    if (!tessellateIntoRectangles(w, 1, 1, thickness))
-	return FALSE;
+    if (!tessellateIntoRectangles (w, 1, 1, thickness))
+	return false;
 
-    PolygonObject *p = pset->polygons;
+    PolygonObject *p = mPolygons;
 
     int i;
 
-    for (i = 0; i < pset->nPolygons; i++, p++)
+    for (i = 0; i < mNPolygons; i++, p++)
     {
 	p->rotAxis.x = 1;
 	p->rotAxis.y = 0;
@@ -74,11 +83,11 @@ fxGlide3Init (CompWindow * w)
 
 	p->finalRotAng = finalRotAng;
     }
-    pset->allFadeDuration = 1.0f;
-    pset->backAndSidesFadeDur = 0.2f;
-    pset->doLighting = TRUE;
-    pset->correctPerspective = CorrectPerspectivePolygon;
+    mAllFadeDuration = 1.0f;
+    mBackAndSidesFadeDur = 0.2f;
+    mDoLighting = true;
+    mCorrectPerspective = CorrectPerspectivePolygon;
 
-    return TRUE;
+    return true;
 }
-
+#endif

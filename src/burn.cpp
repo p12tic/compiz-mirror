@@ -34,127 +34,98 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animationaddon.h"
-#include "animation_tex.h"
+#include "private.h"
 
 // =====================  Effect: Burn  =========================
 
-Bool
-fxBurnInit (CompWindow * w)
+BurnAnim::BurnAnim (CompWindow *w,
+                    WindowEvent curWindowEvent,
+                    float duration,
+                    const AnimEffect info,
+                    const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
+    ParticleAnim::ParticleAnim (w, curWindowEvent, duration, info, icon)
 {
-    ANIMADDON_DISPLAY (w->screen->display);
-    ANIMADDON_WINDOW (w);
+    mDirection =
+	getActualAnimDirection ((AnimDirection) optValI
+	                        (AnimationaddonOptions::FireDirection),
+	                        false);
 
-    if (!aw->eng.numPs)
+    if (optValB (AnimationaddonOptions::FireConstantSpeed))
     {
-	aw->eng.ps = calloc(2, sizeof(ParticleSystem));
-	if (!aw->eng.ps)
-	{
-	    ad->animBaseFunctions->postAnimationCleanup (w);
-	    return FALSE;
-	}
+	int winHeight = w->height () + w->output ().top + w->output ().bottom;
 
-	aw->eng.numPs = 2;
-    }
-    initParticles (animGetI (w, ANIMADDON_SCREEN_OPTION_FIRE_PARTICLES)/
-		   10, &aw->eng.ps[0]);
-    initParticles (animGetI (w, ANIMADDON_SCREEN_OPTION_FIRE_PARTICLES),
-		   &aw->eng.ps[1]);
-    aw->eng.ps[1].slowdown = animGetF (w, ANIMADDON_SCREEN_OPTION_FIRE_SLOWDOWN);
-    aw->eng.ps[1].darken = 0.5;
-    aw->eng.ps[1].blendMode = GL_ONE;
-
-    aw->eng.ps[0].slowdown =
-	animGetF (w, ANIMADDON_SCREEN_OPTION_FIRE_SLOWDOWN) / 2.0;
-    aw->eng.ps[0].darken = 0.0;
-    aw->eng.ps[0].blendMode = GL_ONE_MINUS_SRC_ALPHA;
-
-    if (!aw->eng.ps[0].tex)
-	glGenTextures(1, &aw->eng.ps[0].tex);
-    glBindTexture(GL_TEXTURE_2D, aw->eng.ps[0].tex);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
-		 GL_RGBA, GL_UNSIGNED_BYTE, fireTex);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    if (!aw->eng.ps[1].tex)
-	glGenTextures(1, &aw->eng.ps[1].tex);
-    glBindTexture(GL_TEXTURE_2D, aw->eng.ps[1].tex);
-
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
-		 GL_RGBA, GL_UNSIGNED_BYTE, fireTex);
-    glBindTexture(GL_TEXTURE_2D, 0);
-
-    aw->animFireDirection = ad->animBaseFunctions->getActualAnimDirection
-	(w, animGetI (w, ANIMADDON_SCREEN_OPTION_FIRE_DIRECTION), FALSE);
-
-    if (animGetB (w, ANIMADDON_SCREEN_OPTION_FIRE_CONSTANT_SPEED))
-    {
-	aw->com->animTotalTime *= WIN_H(w) / 500.0;
-	aw->com->animRemainingTime *= WIN_H(w) / 500.0;
+	mTotalTime *= winHeight / 500.0;
+	mRemainingTime *= winHeight / 500.0;
     }
 
-    return TRUE;
+    mMysticalFire = optValB (AnimationaddonOptions::FireMystical);
+    mLife         = optValF (AnimationaddonOptions::FireLife);
+    mColor        = optValC (AnimationaddonOptions::FireColor);
+    mSize         = optValF (AnimationaddonOptions::FireSize);
+    mHasSmoke     = optValB (AnimationaddonOptions::FireSmoke);
+
+    mFirePSId  = mHasSmoke ? 1 : 0;
+    mSmokePSId = 0;
+
+    int numFireParticles = optValI (AnimationaddonOptions::FireParticles);
+    float slowDown = optValF (AnimationaddonOptions::FireSlowdown);
+
+    // Light ParticleSystem is for smoke, which is optional.
+    // Dark ParticleSystem is for fire.
+    initLightDarkParticles (mHasSmoke ? numFireParticles / 10 : 0,
+                            numFireParticles,
+                            slowDown / 2.0f, slowDown);
 }
 
-static void
-fxBurnGenNewFire(CompWindow * w,
-		 ParticleSystem * ps,
-		 int x,
-		 int y,
-		 int width,
-		 int height,
-		 float size,
-		 float time)
+void
+BurnAnim::genNewFire (int x,
+                      int y,
+                      int width,
+                      int height,
+                      float size,
+                      float time)
 {
-    Bool mysticalFire = animGetB (w, ANIMADDON_SCREEN_OPTION_FIRE_MYSTICAL);
-    float fireLife = animGetF (w, ANIMADDON_SCREEN_OPTION_FIRE_LIFE);
-    float fireLifeNeg = 1 - fireLife;
-    float fadeExtra = 0.2f * (1.01 - fireLife);
-    float max_new = ps->numParticles * (time / 50) * (1.05 - fireLife);
+    ParticleSystem &ps = mParticleSystems[mFirePSId];
 
-    // set color ABAB ANIMADDON_SCREEN_OPTION_FIRE_COLOR
-    unsigned short *c =
-	animGetC (w, ANIMADDON_SCREEN_OPTION_FIRE_COLOR);
-    float colr1 = (float)c[0] / 0xffff;
-    float colg1 = (float)c[1] / 0xffff;
-    float colb1 = (float)c[2] / 0xffff;
-    float colr2 = 1 / 1.7 * (float)c[0] / 0xffff;
-    float colg2 = 1 / 1.7 * (float)c[1] / 0xffff;
-    float colb2 = 1 / 1.7 * (float)c[2] / 0xffff;
-    float cola = (float)c[3] / 0xffff;
+    unsigned numParticles = ps.particles ().size ();
+
+    float fireLifeNeg = 1 - mLife;
+    float fadeExtra = 0.2f * (1.01 - mLife);
+    float max_new = numParticles * (time / 50) * (1.05 - mLife);
+
+    float colr1 = (float)mColor[0] / 0xffff;
+    float colg1 = (float)mColor[1] / 0xffff;
+    float colb1 = (float)mColor[2] / 0xffff;
+    float colr2 = 1 / 1.7 * (float)mColor[0] / 0xffff;
+    float colg2 = 1 / 1.7 * (float)mColor[1] / 0xffff;
+    float colb2 = 1 / 1.7 * (float)mColor[2] / 0xffff;
+    float cola = (float)mColor[3] / 0xffff;
     float rVal;
 
-    float partw = animGetF (w, ANIMADDON_SCREEN_OPTION_FIRE_SIZE);
+    float partw = mSize;
     float parth = partw * 1.5;
 
-    Particle *part = ps->particles;
-    int i;
-    for (i = 0; i < ps->numParticles && max_new > 0; i++, part++)
+    Particle *part = &ps.particles ()[0];
+    for (unsigned i = 0; i < numParticles && max_new > 0; i++, part++)
     {
 	if (part->life <= 0.0f)
 	{
 	    // give gt new life
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->life = 1.0f;
 	    part->fade = rVal * fireLifeNeg + fadeExtra; // Random Fade Value
 
 	    // set size
 	    part->width = partw;
 	    part->height = parth;
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->w_mod = part->h_mod = size * rVal;
 
 	    // choose random position
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->x = x + ((width > 1) ? (rVal * width) : 0);
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->y = y + ((height > 1) ? (rVal * height) : 0);
 	    part->z = 0.0;
 	    part->xo = part->x;
@@ -162,25 +133,25 @@ fxBurnGenNewFire(CompWindow * w,
 	    part->zo = part->z;
 
 	    // set speed and direction
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->xi = ((rVal * 20.0) - 10.0f);
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->yi = ((rVal * 20.0) - 15.0f);
 	    part->zi = 0.0f;
 
-	    if (mysticalFire)
+	    if (mMysticalFire)
 	    {
 		// Random colors! (aka Mystical Fire)
-		rVal = (float)(random() & 0xff) / 255.0;
+		rVal = (float)(random () & 0xff) / 255.0;
 		part->r = rVal;
-		rVal = (float)(random() & 0xff) / 255.0;
+		rVal = (float)(random () & 0xff) / 255.0;
 		part->g = rVal;
-		rVal = (float)(random() & 0xff) / 255.0;
+		rVal = (float)(random () & 0xff) / 255.0;
 		part->b = rVal;
 	    }
 	    else
 	    {
-		rVal = (float)(random() & 0xff) / 255.0;
+		rVal = (float)(random () & 0xff) / 255.0;
 		part->r = colr1 - rVal * colr2;
 		part->g = colg1 - rVal * colg2;
 		part->b = colb1 - rVal * colb2;
@@ -193,7 +164,7 @@ fxBurnGenNewFire(CompWindow * w,
 	    part->yg = -3.0f;
 	    part->zg = 0.0f;
 
-	    ps->active = TRUE;
+	    ps.activate ();
 	    max_new -= 1;
 	}
 	else
@@ -204,36 +175,34 @@ fxBurnGenNewFire(CompWindow * w,
 
 }
 
-static void
-fxBurnGenNewSmoke(CompWindow * w,
-		  ParticleSystem * ps,
-		  int x,
-		  int y,
-		  int width,
-		  int height,
-		  float size,
-		  float time)
+void
+BurnAnim::genNewSmoke (int x,
+		       int y,
+		       int width,
+		       int height,
+		       float size,
+		       float time)
 {
-    float max_new =
-	ps->numParticles * (time / 50) *
-	(1.05 - animGetF (w, ANIMADDON_SCREEN_OPTION_FIRE_LIFE));
+    ParticleSystem &ps = mParticleSystems[mSmokePSId];
+
+    unsigned numParticles = ps.particles ().size ();
+
+    float fireLifeNeg = 1 - mLife;
+    float fadeExtra = 0.2f * (1.01 - mLife);
+
+    float max_new = numParticles * (time / 50) * (1.05 - mLife);
     float rVal;
 
-    float fireLife = animGetF (w, ANIMADDON_SCREEN_OPTION_FIRE_LIFE);
-    float fireLifeNeg = 1 - fireLife;
-    float fadeExtra = 0.2f * (1.01 - fireLife);
-
-    float partSize = animGetF (w, ANIMADDON_SCREEN_OPTION_FIRE_SIZE) * size * 5;
+    float partSize = mSize * size * 5;
     float sizeNeg = -size;
 
-    Particle *part = ps->particles;
-    int i;
-    for (i = 0; i < ps->numParticles && max_new > 0; i++, part++)
+    Particle *part = &ps.particles ()[0];
+    for (unsigned i = 0; i < numParticles && max_new > 0; i++, part++)
     {
 	if (part->life <= 0.0f)
 	{
 	    // give gt new life
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->life = 1.0f;
 	    part->fade = rVal * fireLifeNeg + fadeExtra; // Random Fade Value
 
@@ -244,9 +213,9 @@ fxBurnGenNewSmoke(CompWindow * w,
 	    part->h_mod = -0.8;
 
 	    // choose random position
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->x = x + ((width > 1) ? (rVal * width) : 0);
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->y = y + ((height > 1) ? (rVal * height) : 0);
 	    part->z = 0.0;
 	    part->xo = part->x;
@@ -254,18 +223,18 @@ fxBurnGenNewSmoke(CompWindow * w,
 	    part->zo = part->z;
 
 	    // set speed and direction
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->xi = ((rVal * 20.0) - 10.0f);
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->yi = (rVal + 0.2) * -size;
 	    part->zi = 0.0f;
 
 	    // set color
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->r = rVal / 4.0;
 	    part->g = rVal / 4.0;
 	    part->b = rVal / 4.0;
-	    rVal = (float)(random() & 0xff) / 255.0;
+	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->a = 0.5 + (rVal / 2.0);
 
 	    // set gravity
@@ -273,7 +242,7 @@ fxBurnGenNewSmoke(CompWindow * w,
 	    part->yg = sizeNeg;
 	    part->zg = 0.0f;
 
-	    ps->active = TRUE;
+	    ps.activate ();
 	    max_new -= 1;
 	}
 	else
@@ -281,176 +250,167 @@ fxBurnGenNewSmoke(CompWindow * w,
 	    part->xg = (part->x < part->xo) ? size : sizeNeg;
 	}
     }
-
 }
 
 void
-fxBurnAnimStep (CompWindow *w, float time)
+BurnAnim::step ()
 {
-    CompScreen *s = w->screen;
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
 
-    ANIMADDON_WINDOW (w);
-
-    Bool smoke = animGetB (w, ANIMADDON_SCREEN_OPTION_FIRE_SMOKE);
-
-    float timestep = (s->slowAnimations ? 2 :	// For smooth slow-mo (refer to display.c)
-		      getIntenseTimeStep (s));
-    float old = 1 - (aw->com->animRemainingTime) / (aw->com->animTotalTime - timestep);
+    float timestep = mIntenseTimeStep;
+    float old = 1 - (mRemainingTime) / (mTotalTime - timestep);
     float stepSize;
 
-    aw->com->animRemainingTime -= timestep;
-    if (aw->com->animRemainingTime <= 0)
-	aw->com->animRemainingTime = 0;	// avoid sub-zero values
-    float new = 1 - (aw->com->animRemainingTime) / (aw->com->animTotalTime - timestep);
+    mRemainingTime -= timestep;
+    if (mRemainingTime <= 0)
+	mRemainingTime = 0;	// avoid sub-zero values
+    float newProgress = 1 - (mRemainingTime) / (mTotalTime - timestep);
 
-    stepSize = new - old;
+    stepSize = newProgress - old;
 
-    if (aw->com->curWindowEvent == WindowEventOpen ||
-	aw->com->curWindowEvent == WindowEventUnminimize ||
-	aw->com->curWindowEvent == WindowEventUnshade)
+    if (mCurWindowEvent == WindowEventOpen ||
+	mCurWindowEvent == WindowEventUnminimize ||
+	mCurWindowEvent == WindowEventUnshade)
     {
-	new = 1 - new;
+	newProgress = 1 - newProgress;
     }
-    if (!aw->com->drawRegion)
-	aw->com->drawRegion = XCreateRegion();
-    if (aw->com->animRemainingTime > 0)
-    {
-	XRectangle rect;
 
-	switch (aw->animFireDirection)
+    if (mRemainingTime > 0)
+    {
+	CompRect rect;
+
+	switch (mDirection)
 	{
 	case AnimDirectionUp:
-	    rect.x = 0;
-	    rect.y = 0;
-	    rect.width = WIN_W(w);
-	    rect.height = WIN_H(w) - (new * WIN_H(w));
+	    rect = CompRect (0, 0,
+	                     outRect.width (),
+	                     outRect.height () -
+	                     (newProgress * outRect.height ()));
 	    break;
 	case AnimDirectionRight:
-	    rect.x = (new * WIN_W(w));
-	    rect.y = 0;
-	    rect.width = WIN_W(w) - (new * WIN_W(w));
-	    rect.height = WIN_H(w);
+	    rect = CompRect (newProgress * outRect.width (),
+			     0,
+			     outRect.width () -
+			     (newProgress * outRect.width ()),
+			     outRect.height ());
 	    break;
 	case AnimDirectionLeft:
-	    rect.x = 0;
-	    rect.y = 0;
-	    rect.width = WIN_W(w) - (new * WIN_W(w));
-	    rect.height = WIN_H(w);
+	    rect = CompRect (0, 0,
+			     outRect.width () -
+			     (newProgress * outRect.width ()),
+			     outRect.height ());
 	    break;
 	case AnimDirectionDown:
 	default:
-	    rect.x = 0;
-	    rect.y = (new * WIN_H(w));
-	    rect.width = WIN_W(w);
-	    rect.height = WIN_H(w) - (new * WIN_H(w));
+	    rect = CompRect (0,
+			     newProgress * outRect.height (),
+			     outRect.width (),
+			     outRect.height () -
+			     (newProgress * outRect.height ()));
 	    break;
 	}
-	rect.x += WIN_X(w);
-	rect.y += WIN_Y(w);
-	XUnionRectWithRegion (&rect, &emptyRegion, aw->com->drawRegion);
+	rect.setX (rect.x () + outRect.x ());
+	rect.setY (rect.y () + outRect.y ());
+
+	mDrawRegion = CompRegion (rect);
     }
     else
     {
-	XUnionRegion (&emptyRegion, &emptyRegion, aw->com->drawRegion);
+	mDrawRegion = emptyRegion;
     }
-    aw->com->useDrawRegion = (fabs (new) > 1e-5);
+    mUseDrawRegion = (fabs (newProgress) > 1e-5);
 
-    if (aw->com->animRemainingTime > 0 && aw->eng.numPs)
+    if (mRemainingTime > 0)
     {
-	switch (aw->animFireDirection)
+	switch (mDirection)
 	{
 	case AnimDirectionUp:
-	    if (smoke)
-		fxBurnGenNewSmoke(w, &aw->eng.ps[0], WIN_X(w),
-				  WIN_Y(w) + ((1 - new) * WIN_H(w)),
-				  WIN_W(w), 1, WIN_W(w) / 40.0, time);
-	    fxBurnGenNewFire(w, &aw->eng.ps[1], WIN_X(w),
-			     WIN_Y(w) + ((1 - new) * WIN_H(w)),
-			     WIN_W(w), (stepSize) * WIN_H(w),
-			     WIN_W(w) / 40.0, time);
+	    if (mHasSmoke)
+		genNewSmoke (outRect.x (),
+			     outRect.y () + ((1 - newProgress) * outRect.height ()),
+			     outRect.width (), 1, outRect.width () / 40.0,
+			     mTimeSinceLastPaint);
+	    genNewFire (outRect.x (),
+			outRect.y () + ((1 - newProgress) * outRect.height ()),
+			outRect.width (), (stepSize) * outRect.height (),
+			outRect.width () / 40.0,
+			mTimeSinceLastPaint);
 	    break;
 	case AnimDirectionLeft:
-	    if (smoke)
-		fxBurnGenNewSmoke(w, &aw->eng.ps[0],
-				  WIN_X(w) + ((1 - new) * WIN_W(w)),
-				  WIN_Y(w),
-				  (stepSize) * WIN_W(w),
-				  WIN_H(w), WIN_H(w) / 40.0, time);
-	    fxBurnGenNewFire(w, &aw->eng.ps[1],
-			     WIN_X(w) + ((1 - new) * WIN_W(w)),
-			     WIN_Y(w), (stepSize) * WIN_W(w),
-			     WIN_H(w), WIN_H(w) / 40.0, time);
+	    if (mHasSmoke)
+		genNewSmoke (outRect.x () + ((1 - newProgress) * outRect.width ()),
+			     outRect.y (),
+			     (stepSize) * outRect.width (),
+			     outRect.height (), outRect.height () / 40.0,
+			     mTimeSinceLastPaint);
+	    genNewFire (outRect.x () + ((1 - newProgress) * outRect.width ()),
+			outRect.y (), (stepSize) * outRect.width (),
+			outRect.height (), outRect.height () / 40.0,
+			mTimeSinceLastPaint);
 	    break;
 	case AnimDirectionRight:
-	    if (smoke)
-		fxBurnGenNewSmoke(w, &aw->eng.ps[0],
-				  WIN_X(w) + (new * WIN_W(w)),
-				  WIN_Y(w),
-				  (stepSize) * WIN_W(w),
-				  WIN_H(w), WIN_H(w) / 40.0, time);
-	    fxBurnGenNewFire(w, &aw->eng.ps[1],
-			     WIN_X(w) + (new * WIN_W(w)),
-			     WIN_Y(w), (stepSize) * WIN_W(w),
-			     WIN_H(w), WIN_H(w) / 40.0, time);
+	    if (mHasSmoke)
+		genNewSmoke (outRect.x () + (newProgress * outRect.width ()),
+			     outRect.y (),
+			     (stepSize) * outRect.width (),
+			     outRect.height (), outRect.height () / 40.0,
+			     mTimeSinceLastPaint);
+	    genNewFire (outRect.x () + (newProgress * outRect.width ()),
+			outRect.y (), (stepSize) * outRect.width (),
+			outRect.height (), outRect.height () / 40.0,
+			mTimeSinceLastPaint);
 	    break;
 	case AnimDirectionDown:
 	default:
-	    if (smoke)
-		fxBurnGenNewSmoke(w, &aw->eng.ps[0], WIN_X(w),
-				  WIN_Y(w) + (new * WIN_H(w)),
-				  WIN_W(w), 1, WIN_W(w) / 40.0, time);
-	    fxBurnGenNewFire(w, &aw->eng.ps[1], WIN_X(w),
-			     WIN_Y(w) + (new * WIN_H(w)),
-			     WIN_W(w), (stepSize) * WIN_H(w),
-			     WIN_W(w) / 40.0, time);
+	    if (mHasSmoke)
+		genNewSmoke (outRect.x (),
+			     outRect.y () + (newProgress * outRect.height ()),
+			     outRect.width (), 1, outRect.width () / 40.0,
+			     mTimeSinceLastPaint);
+	    genNewFire (outRect.x (),
+			outRect.y () + (newProgress * outRect.height ()),
+			outRect.width (), (stepSize) * outRect.height (),
+			outRect.width () / 40.0,
+			mTimeSinceLastPaint);
 	    break;
 	}
 
     }
-    if (aw->com->animRemainingTime <= 0 && aw->eng.numPs
-	&& (aw->eng.ps[0].active || aw->eng.ps[1].active))
-	aw->com->animRemainingTime = timestep;
+    if (mRemainingTime <= 0 &&
+	(mParticleSystems[0].active () ||
+	 (mHasSmoke && mParticleSystems[1].active ())))
+	// force animation to continue until particle systems are done
+	mRemainingTime = timestep;
 
-    if (!aw->eng.numPs || !aw->eng.ps)
-    {
-	if (aw->eng.ps)
-	{
-	    finiParticles(aw->eng.ps);
-	    free(aw->eng.ps);
-	    aw->eng.ps = NULL;
-	}
-	// Abort animation
-	aw->com->animRemainingTime = 0;
-	return;
-    }
-
-    int i;
     int nParticles;
     Particle *part;
 
-    if (aw->com->animRemainingTime > 0 && smoke)
+    if (mRemainingTime > 0)
     {
-	float partxg = WIN_W(w) / 40.0;
-	float partxgNeg = -partxg;
+	if (mHasSmoke)
+	{
+	    float partxg = outRect.width () / 40.0;
+	    float partxgNeg = -partxg;
 
-	nParticles = aw->eng.ps[0].numParticles;
-	part = aw->eng.ps[0].particles;
+	    vector<Particle> &particles = mParticleSystems[mSmokePSId].particles ();
+	    nParticles = particles.size ();
+	    part = &particles[0];
 
-	for (i = 0; i < nParticles; i++, part++)
-	    part->xg = (part->x < part->xo) ? partxg : partxgNeg;
-    }
-    aw->eng.ps[0].x = WIN_X(w);
-    aw->eng.ps[0].y = WIN_Y(w);
+	    for (int i = 0; i < nParticles; i++, part++)
+		part->xg = (part->x < part->xo) ? partxg : partxgNeg;
 
-    if (aw->com->animRemainingTime > 0)
-    {
-	nParticles = aw->eng.ps[1].numParticles;
-	part = aw->eng.ps[1].particles;
+	    mParticleSystems[mSmokePSId].setOrigin (outRect.x (), outRect.y ());
+	}
 
-	for (i = 0; i < nParticles; i++, part++)
+	vector<Particle> &particles = mParticleSystems[mFirePSId].particles ();
+	nParticles = particles.size ();
+	part = &particles[0];
+
+	for (int i = 0; i < nParticles; i++, part++)
 	    part->xg = (part->x < part->xo) ? 1.0 : -1.0;
     }
-    aw->eng.ps[1].x = WIN_X(w);
-    aw->eng.ps[1].y = WIN_Y(w);
+    mParticleSystems[mFirePSId].setOrigin (outRect.x (), outRect.y ());
 }
 
