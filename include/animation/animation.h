@@ -1,7 +1,7 @@
 #ifndef _ANIMATION_H
 #define _ANIMATION_H
 
-#define ANIMATION_ABI 20090711
+#define ANIMATION_ABI 20091112
 
 #include <core/pluginclasshandler.h>
 #include <opengl/fragment.h>
@@ -99,11 +99,13 @@ Animation *createAnimation (CompWindow *w,
 class ExtensionPluginInfo
 {
 public:
-    ExtensionPluginInfo (unsigned int nEffects,
+    ExtensionPluginInfo (const CompString &name,
+			 unsigned int nEffects,
 			 AnimEffect *effects,
 			 CompOption::Vector *effectOptions,
 			 unsigned int firstEffectOptionIndex);
 
+    CompString name;
     unsigned int nEffects;
     AnimEffect *effects;
 
@@ -173,8 +175,10 @@ class Point
 	inline void setX (float x) { mX = x; }
 	inline void setY (float y) { mY = y; }
 
-	inline void add (const Point &p)
-	{ mX += p.x (); mY += p.y (); }
+	void set (float x, float y) { mX = x; mY = y; }
+	Point &operator= (const Point &p);
+
+	inline void add (const Point &p) { mX += p.x (); mY += p.y (); }
 
     private:
 	float mX, mY;
@@ -197,8 +201,12 @@ class Point3d
 	inline void setY (float y) { mY = y; }
 	inline void setZ (float z) { mZ = z; }
 
+	inline void set (float x, float y, float z) { mX = x; mY = y; mZ = z; }
+
 	inline void add (const Point3d &p)
 	{ mX += p.x (); mY += p.y (); mZ += p.z (); }
+	inline void add (float x, float y, float z)
+	{ mX += x; mY += y; mZ += z; }
 
     private:
 	float mX, mY, mZ;
@@ -229,6 +237,8 @@ protected:
     float mTimestep;		///< to store anim. timestep at anim. start
     float mTimeElapsedWithinTimeStep;
 
+    int mTimeSinceLastPaint;    ///< in milliseconds
+
     int mOverrideProgressDir;	///< 0: default dir, 1: forward, 2: backward
 
     GLFragment::Attrib mCurPaintAttrib;
@@ -252,10 +262,6 @@ protected:
     inline float      optValF (unsigned int optionId) { return optVal (optionId).f (); }
     inline CompString optValS (unsigned int optionId) { return optVal (optionId).s (); }
     inline unsigned short *optValC (unsigned int optionId) { return optVal (optionId).c (); }
-
-    /// Gets info about the (extension) plugin that implements this animation.
-    /// Should be overriden by a base animation class in every extension plugin.
-    virtual ExtensionPluginInfo *getExtensionPluginInfo ();
 
 public:
 
@@ -317,6 +323,10 @@ public:
 			      unsigned int                maxGridWidth,
 			      unsigned int                maxGridHeight);
     virtual void drawGeometry ();
+
+    /// Gets info about the (extension) plugin that implements this animation.
+    /// Should be overriden by a base animation class in every extension plugin.
+    virtual ExtensionPluginInfo *getExtensionPluginInfo ();
 
     void drawTexture (GLTexture          *texture,
 		      GLFragment::Attrib &attrib,
@@ -503,7 +513,7 @@ protected:
 };
 
 class PartialWindowAnim :
-    public Animation
+    virtual public Animation
 {
 public:
     PartialWindowAnim (CompWindow *w,
@@ -694,6 +704,8 @@ public:
     Animation *curAnimation ();
     void createFocusAnimation (AnimEffect effect, int duration = 0);
 
+    void postAnimationCleanUp ();
+
     // TODO: Group persistent data for a plugin and allow a plugin to only
     // delete its own data.
     void deletePersistentData (const char *name);
@@ -717,6 +729,15 @@ private:
 				     unsigned int optionId,
 				     Animation *anim);
 };
+
+
+inline Point &
+Point::operator= (const Point &p)
+{
+    mX = p.x (); mY = p.y ();
+    return *this;
+}
+
 
 
 #define RAND_FLOAT() ((float)rand() / RAND_MAX)

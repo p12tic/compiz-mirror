@@ -118,7 +118,8 @@ typedef enum
 class ExtensionPluginAnimation : public ExtensionPluginInfo
 {
 public:
-    ExtensionPluginAnimation (unsigned int nEffects,
+    ExtensionPluginAnimation (const CompString &name,
+			      unsigned int nEffects,
 			      AnimEffect *effects,
 			      CompOption::Vector *effectOptions,
 			      unsigned int firstEffectOptionIndex);

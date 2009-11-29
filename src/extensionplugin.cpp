@@ -38,11 +38,12 @@
 
 
 ExtensionPluginAnimation::ExtensionPluginAnimation
-    (unsigned int nEffects,
+    (const CompString &name,
+     unsigned int nEffects,
      AnimEffect *effects,
      CompOption::Vector *effectOptions,
      unsigned int firstEffectOptionIndex) :
-    ExtensionPluginInfo (nEffects, effects, effectOptions,
+    ExtensionPluginInfo (name, nEffects, effects, effectOptions,
 			 firstEffectOptionIndex),
     mAWinWasRestackedJustNow (false),
     mRestackAnimCount (0)

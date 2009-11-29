@@ -360,11 +360,6 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 
     // Also delete the "allowed effect" entries for that plugin
 
-    const char *firstEffectName = extensionPluginInfo->effects[0]->name;
-    CompString pluginName (firstEffectName,
-			   (unsigned)(strchr (firstEffectName, ':') -
-			   	      firstEffectName));
-
     for (int e = 0; e < AnimEventNum; e++)
     {
 	AnimEffectVector &eventEffectsAllowed = mEventEffectsAllowed[e];
@@ -374,7 +369,7 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 	    find_if (eventEffectsAllowed.begin (),
 		     eventEffectsAllowed.end (),
 		     boost::bind (&AnimEffectInfo::matchesPluginName,
-				  _1, pluginName));
+				  _1, extensionPluginInfo->name));
 
 	if (itBeginEffect == eventEffectsAllowed.end ())
 	    continue; // plugin didn't provide any effects for this event
@@ -385,7 +380,7 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 	    find_if (itBeginEffect,
 		     eventEffectsAllowed.end (),
 		     boost::bind (&AnimEffectInfo::matchesPluginName,
-				  _1, pluginName) == false);
+				  _1, extensionPluginInfo->name) == false);
 
 	eventEffectsAllowed.erase (itBeginEffect, itEndEffect);
 
@@ -403,10 +398,12 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
     }
 }
 
-ExtensionPluginInfo::ExtensionPluginInfo (unsigned int nEffects,
+ExtensionPluginInfo::ExtensionPluginInfo (const CompString &name,
+					  unsigned int nEffects,
 					  AnimEffect *effects,
 					  CompOption::Vector *effectOptions,
 					  unsigned int firstEffectOptionIndex) :
+    name (name),
     nEffects (nEffects),
     effects (effects),
     effectOptions (effectOptions),
@@ -1054,6 +1051,12 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 }
 
 void
+AnimWindow::postAnimationCleanUp ()
+{
+    priv->postAnimationCleanUp ();
+}
+
+void
 PrivateAnimWindow::postAnimationCleanUp ()
 {
     if (mCurAnimation->curWindowEvent () == WindowEventClose)
@@ -1134,6 +1137,8 @@ Animation::advanceTime (int msSinceLastPaint)
     mRemainingTime -= msSinceLastPaint;
     mRemainingTime = MAX (mRemainingTime, 0); // avoid sub-zero values
 
+    mTimeSinceLastPaint = msSinceLastPaint;
+
     return (mRemainingTime > 0);
 }
 
@@ -1189,6 +1194,9 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 
 	    if (curAnim)
 	    {
+		if (!curAnim->initialized ())
+		    curAnim->init ();
+
 		if (curAnim->prePreparePaint (msSinceLastPaint))
 		    animStillInProgress = true;
 
@@ -1218,8 +1226,6 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 
 		if (!animShouldSkipFrame)
 		{
-		    curAnim->step ();
-
 		    if (curAnim->updateBBUsed ())
 		    {
 			aw->copyResetStepRegion ();
@@ -1228,8 +1234,15 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 			    curAnim->shouldDamageWindowOnStart ())
 			    aw->aWindow ()->expandBBWithWindow ();
 		    }
-		    if (!curAnim->initialized ())
-			curAnim->setInitialized ();
+		}
+
+		if (!curAnim->initialized ())
+		    curAnim->setInitialized ();
+
+		if (!animShouldSkipFrame)
+		{
+		    curAnim->step ();
+
 		    if (curAnim->updateBBUsed ())
 		    {
 			foreach (CompOutput &output, ::screen->outputDevs ())
@@ -1635,7 +1648,6 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 	    aw->mCurAnimation =
 		effectToBePlayed->create (w, WindowEventClose, duration,
 					  effectToBePlayed, getIcon (w, true));
-	    aw->mCurAnimation->init ();
 	    aw->mCurAnimation->adjustPointerIconSize ();
 	    aw->enablePainting (true);
 	}
@@ -1781,7 +1793,6 @@ PrivateAnimScreen::initiateMinimizeAnim (PrivateAnimWindow *aw)
 	    aw->mCurAnimation =
 		effectToBePlayed->create (w, WindowEventMinimize, duration,
 					  effectToBePlayed, getIcon (w, false));
-	    aw->mCurAnimation->init ();
 	    aw->enablePainting (true);
 	}
 
@@ -1839,7 +1850,6 @@ PrivateAnimScreen::initiateShadeAnim (PrivateAnimWindow *aw)
 	    aw->mCurAnimation =
 		effectToBePlayed->create (w, WindowEventShade, duration,
 					  effectToBePlayed, getIcon (w, false));
-	    aw->mCurAnimation->init ();
 	    aw->enablePainting (true);
 	}
 
@@ -1907,7 +1917,6 @@ PrivateAnimScreen::initiateOpenAnim (PrivateAnimWindow *aw)
 		    effectToBePlayed->create (w, WindowEventOpen, duration,
 					      effectToBePlayed,
 					      getIcon (w, true));
-		aw->mCurAnimation->init ();
 		aw->mCurAnimation->adjustPointerIconSize ();
 		aw->enablePainting (true);
 	    }
@@ -1979,7 +1988,6 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 		    effectToBePlayed->create (w, WindowEventUnminimize,
 					      duration, effectToBePlayed,
 					      getIcon (w, false));
-		aw->mCurAnimation->init ();
 		aw->enablePainting (true);
 	    }
 	}
@@ -2044,7 +2052,6 @@ PrivateAnimScreen::initiateUnshadeAnim (PrivateAnimWindow *aw)
 		    effectToBePlayed->create (w, WindowEventUnshade,
 					      duration, effectToBePlayed,
 					      getIcon (w, false));
-		aw->mCurAnimation->init ();
 		aw->enablePainting (true);
 	    }
 	}
@@ -2242,7 +2249,8 @@ AnimEffectInfo::matchesPluginName (const CompString &pluginName)
 
 AnimEffect animEffects[NUM_EFFECTS];
 
-ExtensionPluginAnimation animExtensionPluginInfo (NUM_EFFECTS, animEffects, 0,
+ExtensionPluginAnimation animExtensionPluginInfo (CompString ("animation"),
+                                                  NUM_EFFECTS, animEffects, 0,
 						  NUM_NONEFFECT_OPTIONS);
 ExtensionPluginInfo *
 Animation::getExtensionPluginInfo ()
@@ -2650,7 +2658,6 @@ PrivateAnimWindow::createFocusAnimation (AnimEffect effect, int duration)
 			duration,
 			effect,
 			CompRect ());
-    mCurAnimation->init ();
     enablePainting (true);
 }
 
