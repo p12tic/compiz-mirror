@@ -1235,7 +1235,8 @@ PolygonAnim::processIntersectingPolygons ()
 void
 PolygonAnim::getPerspectiveCorrectionMat (PolygonObject *p,
                                           GLfloat *mat,
-                                          GLMatrix *matf)
+                                          GLMatrix *matf,
+                                          const CompOutput &output)
 {
     Point center;
     CompRect outRect (mAWindow->savedRectsValid () ?
@@ -1255,14 +1256,10 @@ PolygonAnim::getPerspectiveCorrectionMat (PolygonObject *p,
 	center.setY (outRect.y () + outRect.height () / 2);
     }
 
-    const CompOutput *output =
-	static_cast<ExtensionPluginAnimAddon*> (getExtensionPluginInfo ())->
-	output ();
-
-    GLfloat skewx = -(((center.x () - output->region ()->extents.x1) -
-		       output->width () / 2) * 1.15);
-    GLfloat skewy = -(((center.y () - output->region ()->extents.y1) -
-		       output->height () / 2) * 1.15);
+    GLfloat skewx = -(((center.x () - output.region ()->extents.x1) -
+		       output.width () / 2) * 1.15);
+    GLfloat skewy = -(((center.y () - output.region ()->extents.y1) -
+		       output.height () / 2) * 1.15);
 
     if (mat)
     {
@@ -1486,9 +1483,13 @@ PolygonAnim::drawGeometry ()
 	}
     }
 
+    const CompOutput *output =
+	static_cast<ExtensionPluginAnimAddon*> (getExtensionPluginInfo ())->
+	output ();
+
     GLfloat skewMat[16];
     if (mCorrectPerspective == CorrectPerspectiveWindow)
-	getPerspectiveCorrectionMat (NULL, skewMat, NULL);
+	getPerspectiveCorrectionMat (NULL, skewMat, NULL, *output);
 
     // pass: 0: draw opaque ones
     //       1: draw transparent ones
@@ -1547,7 +1548,7 @@ PolygonAnim::drawGeometry ()
 		glPushMatrix ();
 
 		if (mCorrectPerspective == CorrectPerspectivePolygon)
-		    getPerspectiveCorrectionMat (&p, skewMat, NULL);
+		    getPerspectiveCorrectionMat (&p, skewMat, NULL, *output);
 
 		if (mCorrectPerspective != CorrectPerspectiveNone)
 		    glMultMatrixf (skewMat);
@@ -1819,7 +1820,7 @@ PolygonAnim::updateBB (CompOutput &output)
     GLMatrix skewMat;
     if (mCorrectPerspective == CorrectPerspectiveWindow)
     {
-	getPerspectiveCorrectionMat (NULL, NULL, &skewMat);
+	getPerspectiveCorrectionMat (NULL, NULL, &skewMat, output);
 	wTransform2 = wTransform * skewMat;
     }
     if (mCorrectPerspective == CorrectPerspectiveWindow ||
@@ -1830,7 +1831,7 @@ PolygonAnim::updateBB (CompOutput &output)
     {
 	if (mCorrectPerspective == CorrectPerspectivePolygon)
 	{
-	    getPerspectiveCorrectionMat (&p, NULL, &skewMat);
+	    getPerspectiveCorrectionMat (&p, NULL, &skewMat, output);
 	    wTransform2 = wTransform * skewMat;
 	}
 

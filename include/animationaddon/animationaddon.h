@@ -1,7 +1,7 @@
 #ifndef _COMPIZ_ANIMATIONADDON_H
 #define _COMPIZ_ANIMATIONADDON_H
 
-#define ANIMATIONADDON_ABI 20091028
+#define ANIMATIONADDON_ABI 20091204
 
 #include <core/pluginclasshandler.h>
 
@@ -280,7 +280,8 @@ public:
 protected:
     void getPerspectiveCorrectionMat (PolygonObject *p,
 				      GLfloat *mat,
-				      GLMatrix *matf);
+				      GLMatrix *matf,
+				      const CompOutput &output);
     void processIntersectingPolygons ();
     void freePolygonObjects ();
     void freeClipsPolygons ();
