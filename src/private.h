@@ -324,7 +324,7 @@ public:
     inline Box &BB () { return mBB; }
     inline int curAnimSelectionRow () { return mCurAnimSelectionRow; }
 
-    void damageBoundingBox ();
+    void damageThisAndLastStepRegion ();
     void postAnimationCleanUp ();
     void copyResetStepRegion ();
 

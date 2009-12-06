@@ -231,9 +231,9 @@ CurvedFoldAnim::updateBB (CompOutput &output)
     unsigned int n = mModel->numObjects ();
     for (unsigned int i = 0; i < n; i++)
     {
-	Point3d &objPos = objects[i].position ();
-	mAWindow->expandBBWithPoint (objPos.x () + 0.5,
-				     objPos.y () + 0.5);
+	Point3d &pos = objects[i].position ();
+	GLVector coords (pos.x (), pos.y (), 0, 1);
+	mAWindow->expandBBWithPoint2DTransform (coords, mTransform);
 
 	if (i == 1)
 	{

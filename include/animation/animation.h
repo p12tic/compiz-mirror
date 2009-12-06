@@ -1,7 +1,7 @@
 #ifndef _ANIMATION_H
 #define _ANIMATION_H
 
-#define ANIMATION_ABI 20091112
+#define ANIMATION_ABI 20091205
 
 #include <core/pluginclasshandler.h>
 #include <opengl/fragment.h>
@@ -314,8 +314,15 @@ public:
     virtual bool stepRegionUsed () { return false; }
 
     virtual bool shouldDamageWindowOnStart ();
-    virtual void refresh () {}
-    virtual bool moveUpdate ();
+    virtual bool shouldDamageWindowOnEnd ();
+
+    /// Should return false if the animation should be stopped on move
+    virtual bool moveUpdate (int dx, int dy) { return true; }
+
+    /// Should return false if the animation should be stopped on resize
+    virtual bool resizeUpdate (int dx, int dy,
+                               int dwidth, int dheight) { return true; }
+
     virtual void adjustPointerIconSize () {}
     virtual void addGeometry (const GLTexture::MatrixList &matrix,
 			      const CompRegion            &region,

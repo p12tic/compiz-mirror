@@ -886,15 +886,8 @@ AnimWindow::resetStepRegionWithBB ()
 /// Damage the union of window's bounding box
 /// before and after animStepFunc does its job.
 void
-PrivateAnimWindow::damageBoundingBox ()
+PrivateAnimWindow::damageThisAndLastStepRegion ()
 {
-    if (mBB.x1 == MAXSHORT) // unintialized BB
-	return;
-
-    if (mCurAnimation && !mCurAnimation->stepRegionUsed ())
-    	// only BB is used, so reset step region here with BB
-	mAWindow->resetStepRegionWithBB ();
-
     // Find union of the regions for this step and last step
     CompRegion totalRegionToDamage (mStepRegion + mLastStepRegion);
 
@@ -1005,17 +998,32 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 					       bool destructing,
 					       bool clearMatchingRow)
 {
+    bool shouldDamageWindow = false;
+
+    if (mCurAnimation)
+    {
+	if (mCurAnimation->shouldDamageWindowOnEnd ())
+	    shouldDamageWindow = true;
+    }
+    enablePainting (false);
+
+    if (shouldDamageWindow)
+	mAWindow->expandBBWithWindow ();
+
+    if (shouldDamageWindow ||
+	(mCurAnimation &&
+	 !mCurAnimation->stepRegionUsed () &&
+	 mAWindow->BB ()->x1 != MAXSHORT)) // BB intialized
+	mAWindow->resetStepRegionWithBB ();
+
+    damageThisAndLastStepRegion ();
+
     if (mCurAnimation)
     {
 	mCurAnimation->cleanUp (closing, destructing);
 	delete mCurAnimation;
 	mCurAnimation = 0;
     }
-
-    enablePainting (false);
-
-    if (mBB.x1 != MAXSHORT)
-	damageBoundingBox ();
 
     mBB.x1 = mBB.y1 = MAXSHORT;
     mBB.x2 = mBB.y2 = MINSHORT;
@@ -1189,7 +1197,8 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 
 	foreach (CompWindow *w, ::screen->windows ())
 	{
-	    PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
+	    AnimWindow *animWin = AnimWindow::get (w);
+	    PrivateAnimWindow *aw = animWin->priv;
 	    Animation *curAnim = aw->curAnimation ();
 
 	    if (curAnim)
@@ -1234,13 +1243,10 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 			    curAnim->shouldDamageWindowOnStart ())
 			    aw->aWindow ()->expandBBWithWindow ();
 		    }
-		}
 
-		if (!curAnim->initialized ())
-		    curAnim->setInitialized ();
+		    if (!curAnim->initialized ())
+			curAnim->setInitialized ();
 
-		if (!animShouldSkipFrame)
-		{
 		    curAnim->step ();
 
 		    if (curAnim->updateBBUsed ())
@@ -1248,9 +1254,16 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 			foreach (CompOutput &output, ::screen->outputDevs ())
 			    curAnim->updateBB (output);
 
+			if (!curAnim->stepRegionUsed () &&
+			    aw->BB ().x1 != MAXSHORT) // BB initialized
+			{
+			    // BB is used instead of step region,
+			    // so reset step region here with BB.
+			    animWin->resetStepRegionWithBB ();
+			}
 			if (!(cScreen->damageMask () &
 			      COMPOSITE_SCREEN_DAMAGE_ALL_MASK))
-			    aw->damageBoundingBox ();
+			    aw->damageThisAndLastStepRegion ();
 		    }
 		}
 
@@ -1343,6 +1356,14 @@ Animation::shouldDamageWindowOnStart ()
     return (mCurWindowEvent == WindowEventClose ||
 	    mCurWindowEvent == WindowEventMinimize ||
 	    mCurWindowEvent == WindowEventShade);
+}
+
+bool
+Animation::shouldDamageWindowOnEnd ()
+{
+    return (mCurWindowEvent == WindowEventOpen ||
+	    mCurWindowEvent == WindowEventUnminimize ||
+	    mCurWindowEvent == WindowEventUnshade);
 }
 
 void
@@ -2110,7 +2131,7 @@ PrivateAnimWindow::resizeNotify (int dx,
 	mUnshadePending = false;
 	mPAScreen->initiateUnshadeAnim (this);
     }
-    else if (mCurAnimation &&
+    else if (mCurAnimation && mCurAnimation->inProgress () &&
 	// Don't let transient window open anim be interrupted with a resize notify
 	!(mCurAnimation->curWindowEvent () == WindowEventOpen &&
 	  (mWindow->wmType () &
@@ -2122,15 +2143,11 @@ PrivateAnimWindow::resizeNotify (int dx,
 	    CompWindowTypeComboMask |
 	    CompWindowTypeDndMask))) &&
 	// Ignore resize with dx=0, dy=0, dwidth=0, dheight=0
-	!(dx == 0 && dy == 0 && dwidth == 0 && dheight == 0))
+	!(dx == 0 && dy == 0 && dwidth == 0 && dheight == 0) &&
+	!mCurAnimation->resizeUpdate (dx, dy, dwidth, dheight))
     {
-	mCurAnimation->refresh ();
-
-	if (mCurAnimation->inProgress ())
-	{
-	    postAnimationCleanUp ();
-	    mPAScreen->updateAnimStillInProgress ();
-	}
+	postAnimationCleanUp ();
+	mPAScreen->updateAnimStillInProgress ();
     }
 
     mWindow->resizeNotify (dx, dy, dwidth, dheight);
@@ -2160,23 +2177,15 @@ PrivateAnimWindow::moveNotify (int  dx,
 			       int  dy,
 			       bool immediate)
 {
-    if (!immediate && mCurAnimation &&
-    	mCurAnimation->moveUpdate () &&
-    	mCurAnimation->inProgress () && mGrabbed)
+    if (mCurAnimation && mCurAnimation->inProgress () &&
+    	(mGrabbed || !mCurAnimation->moveUpdate (dx, dy)))
     {
+	// Stop the animation
     	postAnimationCleanUp ();
     	mPAScreen->updateAnimStillInProgress ();
     }
 
     mWindow->moveNotify (dx, dy, immediate);
-}
-
-bool
-Animation::moveUpdate ()
-{
-    refresh ();
-
-    return true;
 }
 
 void
