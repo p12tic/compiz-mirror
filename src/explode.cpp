@@ -50,6 +50,19 @@ ExplodeAnim::ExplodeAnim (CompWindow *w,
     PolygonAnim::PolygonAnim (w, curWindowEvent, kDurationFactor * duration,
                               info, icon)
 {
+    mAllFadeDuration = 0.3f;
+    mDoDepthTest = true;
+    mDoLighting = true;
+    mCorrectPerspective = CorrectPerspectivePolygon;
+    mBackAndSidesFadeDur = 0.2f;
+
+    mTotalTime /= EXPLODE_PERCEIVED_T;
+    mRemainingTime = mTotalTime;
+}
+
+void
+ExplodeAnim::init ()
+{
     switch (optValI (AnimationaddonOptions::ExplodeTessellation))
     {
     case PolygonTessRect:
@@ -100,12 +113,4 @@ ExplodeAnim::ExplodeAnim (CompWindow *w,
 	p.finalRelPos.set (x, y, z);
 	p.finalRotAng = RAND_FLOAT () * 540 - 270;
     }
-    mAllFadeDuration = 0.3f;
-    mDoDepthTest = true;
-    mDoLighting = true;
-    mCorrectPerspective = CorrectPerspectivePolygon;
-    mBackAndSidesFadeDur = 0.2f;
-
-    mTotalTime /= EXPLODE_PERCEIVED_T;
-    mRemainingTime = mTotalTime;
 }

@@ -151,6 +151,8 @@ public:
 		 const AnimEffect info,
 		 const CompRect &icon);
 
+    void init ();
+
 protected:
     static const float kDurationFactor;
 };

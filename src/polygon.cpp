@@ -1904,6 +1904,24 @@ PolygonAnim::prePreparePaint (int msSinceLastPaint)
     return false;
 }
 
+bool
+PolygonAnim::moveUpdate (int dx, int dy)
+{
+    foreach (PolygonObject &p, mPolygons)
+    {
+	p.centerPosStart.setX (p.centerPosStart.x () + dx);
+	p.centerPosStart.setY (p.centerPosStart.y () + dy);
+
+	p.centerPos.setX (p.centerPos.x () + dx);
+	p.centerPos.setY (p.centerPos.y () + dy);
+
+	p.finalRelPos.setX (p.finalRelPos.x () + dx);
+	p.finalRelPos.setY (p.finalRelPos.y () + dy);
+    }
+
+    return true;
+}
+
 void
 ExtensionPluginAnimAddon::prePaintOutput (CompOutput *output)
 {

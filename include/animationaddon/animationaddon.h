@@ -255,6 +255,7 @@ public:
     void updateBB (CompOutput &output);
     bool updateBBUsed () { return true; }
     bool prePreparePaint (int msSinceLastPaint);
+    bool moveUpdate (int dx, int dy);
 
     virtual void stepPolygon (PolygonObject &p,
 			      float forwardProgress);
