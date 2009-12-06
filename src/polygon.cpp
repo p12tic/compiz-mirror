@@ -104,8 +104,8 @@ PolygonAnim::freeClipsPolygons ()
 {
     foreach (Clip4Polygons &c, mClips)
     {
-	c.intersectingPolygons.clear ();
-	c.polygonVertexTexCoords.clear ();
+	foreach (PolygonClipInfo *pci, c.intersectingPolygonInfos)
+	    delete pci;
     }
 }
 
@@ -306,10 +306,10 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
 	    nor[4 * 3 + 2] = -1;
 
 	    // Determine bounding box (to test intersection with clips)
-	    p->boundingBox.x1 = -halfW + p->centerPos.x ();
-	    p->boundingBox.y1 = -halfH + p->centerPos.y ();
-	    p->boundingBox.x2 = ceil (halfW + p->centerPos.x ());
-	    p->boundingBox.y2 = ceil (halfH + p->centerPos.y ());
+	    p->boundingBox.x1 = -halfW;
+	    p->boundingBox.y1 = -halfH;
+	    p->boundingBox.x2 = halfW;
+	    p->boundingBox.y2 = halfH;
 
 	    p->boundSphereRadius =
 		sqrt (halfW * halfW + halfH * halfH + halfThick * halfThick);
@@ -628,10 +628,10 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 	    nor[6 * 3 + 2] = -1;
 
 	    // Determine bounding box (to test intersection with clips)
-	    p->boundingBox.x1 = topLeftX + p->centerPos.x;
-	    p->boundingBox.y1 = topY + p->centerPos.y;
-	    p->boundingBox.x2 = ceil (bottomRightX + p->centerPos.x);
-	    p->boundingBox.y2 = ceil (bottomY + p->centerPos.y);
+	    p->boundingBox.x1 = topLeftX;
+	    p->boundingBox.y1 = topY;
+	    p->boundingBox.x2 = bottomRightX;
+	    p->boundingBox.y2 = bottomY;
 
 	    p->boundSphereRadius = sqrt ((topRightX - topLeftX) * (topRightX - topLeftX) / 4 +
 					(bottomY - topY) * (bottomY - topY) / 4 +
@@ -1032,10 +1032,10 @@ PolygonAnim::tessellateIntoGlass (int spoke_multiplier,
 	    nor[4 * 3 + 2] = -1;
 
 	    // Determine bounding box (to test intersection with clips)
-	    p->boundingBox.x1 = p->centerPos.x - shards[yc][xc].pt3X;
-	    p->boundingBox.y1 = p->centerPos.y - shards[yc][xc].pt3Y;
-	    p->boundingBox.x2 = ceil (shards[yc][xc].pt1X + p->centerPos.x);
-	    p->boundingBox.y2 = ceil (shards[yc][xc].pt1Y + p->centerPos.y);
+	    p->boundingBox.x1 = -shards[yc][xc].pt3X;
+	    p->boundingBox.y1 = -shards[yc][xc].pt3Y;
+	    p->boundingBox.x2 = shards[yc][xc].pt1X;
+	    p->boundingBox.y2 = shards[yc][xc].pt1Y;
 
 	    float dist[4] = {0}, longest_dist = 0;
 	    dist[0] = sqrt (powf ((shards[yc][xc].centerX - shards[yc][xc].pt0X), 2) +
@@ -1096,6 +1096,11 @@ PolygonAnim::addGeometry (const GLTexture::MatrixList &matrix,
 	    memcmp (&matrix[0], &c->texMatrix, sizeof (GLTexture::Matrix)))
 	{
 	    // get rid of the clips from here (aw->nClipsPassed) to the end
+	    Clip4Polygons *curClip = c;
+	    for (unsigned i = mNumClipsPassed; i < mClips.size (); i++, curClip++)
+		foreach (PolygonClipInfo *pci,
+		         curClip->intersectingPolygonInfos)
+		    delete pci;
 	    mClips.resize (mNumClipsPassed);
 	    dontStoreClips = false;
 	}
@@ -1158,50 +1163,70 @@ PolygonAnim::addGeometry (const GLTexture::MatrixList &matrix,
     mClipsUpdated = true;
 }
 
-// For each rectangular clip, this function finds polygons which
-// have a bounding box that intersects the clip. For intersecting
-// polygons, it computes the texture coordinates for the vertices
-// of that polygon (to draw the clip texture).
+/// Allocates floats for texture coordinates:
+///  2 {x, y} * 2 {front, back} * <# of polygon vertices>
+PolygonClipInfo::PolygonClipInfo (const PolygonObject *p) :
+    p (p)
+{
+    vertexTexCoords.resize (4 * p->nSides);
+}
+
+/// For each rectangular clip, this function finds polygons which
+/// have a bounding box that intersects the clip. For intersecting
+/// polygons, it computes the texture coordinates for the vertices
+/// of that polygon (to draw the clip texture).
 void
 PolygonAnim::processIntersectingPolygons ()
 {
-    int numClips    = mClips.size ();
-    int numPolygons = mPolygons.size ();
+    int numClips = mClips.size ();
 
     Clip4Polygons *c = &mClips[mFirstNondrawnClip];
     for (int j = mFirstNondrawnClip; j < numClips; j++, c++)
     {
 	CompRect &cb = c->box;
-	int nFrontVerticesTilThisPoly = 0;
+	int nFrontVerticesTilThisPoly = 0; // only used when intersectsMostPolygons is true
 
-	assert (c->intersectingPolygons.empty ());
-
-	PolygonObject *p = &mPolygons[0];
-	for (int i = 0; i < numPolygons; i++, p++)
+	// if this clip is the "window contents" clip
+	if (cb == mWindow->geometry())
 	{
-	    Box *bb = &p->boundingBox;
+	    c->intersectsMostPolygons = true;
 
-	    if (bb->x2 <= cb.x1 () ||
-	        bb->y2 <= cb.y1 () ||
-	        bb->x1 >= cb.x2 () ||
-	        bb->y1 >= cb.y2 ())   // no intersection
-		continue;
+	    // allocate tex coords for all polygons
+	    // 2 {x, y} * 2 {front, back} *
+	    //     <total # of polygon front vertices>
+	    c->polygonVertexTexCoords.resize (4 * mNumTotalFrontVertices);
+	}
+	else
+	    c->intersectsMostPolygons = false;
 
-	    // There is intersection, add clip info
+	foreach (const PolygonObject &p, mPolygons)
+	{
+	    int nSides = p.nSides;
+	    float px = p.centerPosStart.x ();
+	    float py = p.centerPosStart.y ();
+	    const Boxf &pb = p.boundingBox;
+	    GLfloat *vTexCoords = NULL;
 
-	    if (c->polygonVertexTexCoords.empty ())
+	    if (c->intersectsMostPolygons)
+		vTexCoords =
+		    &c->polygonVertexTexCoords[4 * nFrontVerticesTilThisPoly];
+	    else
 	    {
-		// allocate tex coords
-		// 2 {x, y} * 2 {front, back} *
-		//     <total # of polygon front vertices>
-		c->polygonVertexTexCoords.resize (4 * mNumTotalFrontVertices);
+		if (pb.x2 + px <= cb.x1 () ||
+		    pb.y2 + py <= cb.y1 () ||
+		    pb.x1 + px >= cb.x2 () ||
+		    pb.y1 + py >= cb.y2 ())   // no intersection
+		    continue;
+
+		PolygonClipInfo *pci = new PolygonClipInfo (&p);
+		c->intersectingPolygonInfos.push_back (pci);
+		vTexCoords = &pci->vertexTexCoords[0];
 	    }
-	    c->intersectingPolygons.push_back (i);
 
-	    for (int k = 0; k < p->nSides; k++)
+	    for (int k = 0; k < nSides; k++)
 	    {
-		float x = p->vertices[3 * k]     + p->centerPosStart.x ();
-		float y = p->vertices[3 * k + 1] + p->centerPosStart.y ();
+		float x = p.vertices[3 * k]     + p.centerPosStart.x ();
+		float y = p.vertices[3 * k + 1] + p.centerPosStart.y ();
 		GLfloat tx;
 		GLfloat ty;
 		if (c->texMatrix.xy != 0.0f || c->texMatrix.yx != 0.0f)
@@ -1215,25 +1240,24 @@ PolygonAnim::processIntersectingPolygons ()
 		    ty = COMP_TEX_COORD_Y (c->texMatrix, y);
 		}
 		// for front vertices
-		int ti = 2 * (2 * nFrontVerticesTilThisPoly + k);
+		int ti = 2 * k;
 
-		c->polygonVertexTexCoords[ti] = tx;
-		c->polygonVertexTexCoords[ti + 1] = ty;
+		vTexCoords[ti] = tx;
+		vTexCoords[ti + 1] = ty;
 
 		// for back vertices
-		ti = 2 * (2 * nFrontVerticesTilThisPoly +
-			  (2 * p->nSides - 1 - k));
-		c->polygonVertexTexCoords[ti] = tx;
-		c->polygonVertexTexCoords[ti + 1] = ty;
+		ti = 2 * (2 * nSides - 1 - k);
+		vTexCoords[ti] = tx;
+		vTexCoords[ti + 1] = ty;
 	    }
-	    nFrontVerticesTilThisPoly += p->nSides;
+	    nFrontVerticesTilThisPoly += nSides;
 	}
     }
 }
 
 // Correct perspective appearance by skewing
 void
-PolygonAnim::getPerspectiveCorrectionMat (PolygonObject *p,
+PolygonAnim::getPerspectiveCorrectionMat (const PolygonObject *p,
                                           GLfloat *mat,
                                           GLMatrix *matf,
                                           const CompOutput &output)
@@ -1321,6 +1345,162 @@ PolygonAnim::prepareDrawingForAttrib (GLFragment::Attrib &attrib)
 	mGScreen->setTexEnvMode (GL_MODULATE);
 	glColor4us (color, color, color, attrib.getOpacity ());
     }
+}
+
+inline void
+PolygonAnim::drawPolygonClipIntersection (const PolygonObject &p,
+                                          const Clip4Polygons &c,
+                                          const GLfloat *vertexTexCoords,
+                                          int pass,
+                                          float forwardProgress,
+                                          GLdouble clipPlanes[4][4],
+                                          const CompOutput &output,
+                                          float newOpacity,
+                                          bool decelerates,
+                                          GLfloat skewMat[16])
+{
+    int nSides = p.nSides;
+    float newOpacityPolygon = newOpacity;
+
+    // if fade-out duration is specified per polygon
+    if (mAllFadeDuration == -1.0f)
+    {
+	float fadePassedBy = forwardProgress - p.fadeStartTime;
+	// if "fade out starting point" is passed
+	if (fadePassedBy > 1e-5)	// if true, then allFadeDuration > 0
+	{
+	    float opacityFac;
+
+	    if (decelerates)
+		opacityFac =
+		    1 - progressDecelerate (fadePassedBy /
+					    p.fadeDuration);
+	    else
+		opacityFac = 1 - fadePassedBy / p.fadeDuration;
+	    if (opacityFac < 0)
+		opacityFac = 0;
+	    if (opacityFac > 1)
+		opacityFac = 1;
+	    newOpacityPolygon = newOpacity * opacityFac;
+	}
+    }
+
+    if (newOpacityPolygon < 1e-5)	// if polygon object is invisible
+	return;
+
+    if (pass == 0)
+    {
+	if (newOpacityPolygon < 0.9999)	// if not fully opaque
+	    return;	// draw only opaque ones in pass 0
+    }
+    else if (newOpacityPolygon > 0.9999)	// if fully opaque
+	return;	// draw only non-opaque ones in pass 1
+
+    glPushMatrix ();
+
+    if (mCorrectPerspective == CorrectPerspectivePolygon)
+	getPerspectiveCorrectionMat (&p, skewMat, NULL, output);
+
+    if (mCorrectPerspective != CorrectPerspectiveNone)
+	glMultMatrixf (skewMat);
+
+    // Center
+    glTranslatef (p.centerPos.x (),
+		  p.centerPos.y (),
+		  p.centerPos.z ());
+
+    // Scale z first
+    glScalef (1.0f, 1.0f, 1.0f / ::screen->width ());
+
+    transformPolygon (p);
+
+    // Move by "rotation axis offset"
+    glTranslatef (p.rotAxisOffset.x (),
+		  p.rotAxisOffset.y (),
+		  p.rotAxisOffset.z ());
+
+    // Rotate by desired angle
+    glRotatef (p.rotAngle,
+	       p.rotAxis.x (), p.rotAxis.y (), p.rotAxis.z ());
+
+    // Move back to center
+    glTranslatef (-p.rotAxisOffset.x (),
+		  -p.rotAxisOffset.y (),
+		  -p.rotAxisOffset.z ());
+
+    // Scale back
+    glScalef (1.0f, 1.0f, ::screen->width ());
+
+    clipPlanes[0][3] = -(c.boxf.x1 - p.centerPosStart.x ());
+    clipPlanes[1][3] = -(c.boxf.y1 - p.centerPosStart.y ());
+    clipPlanes[2][3] = (c.boxf.x2 - p.centerPosStart.x ());
+    clipPlanes[3][3] = (c.boxf.y2 - p.centerPosStart.y ());
+    glClipPlane (GL_CLIP_PLANE0, clipPlanes[0]);
+    glClipPlane (GL_CLIP_PLANE1, clipPlanes[1]);
+    glClipPlane (GL_CLIP_PLANE2, clipPlanes[2]);
+    glClipPlane (GL_CLIP_PLANE3, clipPlanes[3]);
+
+    for (int k = 0; k < 4; k++)
+	glEnable (GL_CLIP_PLANE0 + k);
+    bool fadeBackAndSides =
+	mBackAndSidesFadeDur > 0 &&
+	forwardProgress <= mBackAndSidesFadeDur;
+
+    float newOpacityPolygon2 = newOpacityPolygon;
+
+    if (fadeBackAndSides)
+    {
+	// Fade-in opacity for back face and sides
+	newOpacityPolygon2 *=
+	    (forwardProgress / mBackAndSidesFadeDur);
+    }
+
+    GLFragment::Attrib attrib = mCurPaintAttrib;
+    attrib.setOpacity (newOpacityPolygon2 * OPAQUE);
+
+    prepareDrawingForAttrib (attrib);
+
+    // Draw back face
+    glVertexPointer (3, GL_FLOAT, 0, p.vertices + 3 * nSides);
+    if (mThickness > 0)
+	glNormalPointer (GL_FLOAT, 0, p.normals + 3 * nSides);
+    else
+	glNormal3f (0.0f, 0.0f, -1.0f);
+    glTexCoordPointer (2, GL_FLOAT, 0, &vertexTexCoords[2 * nSides]);
+    glDrawArrays (GL_POLYGON, 0, nSides);
+
+    // Vertex coords
+    glVertexPointer (3, GL_FLOAT, 0, p.vertices);
+    if (mThickness > 0)
+	glNormalPointer (GL_FLOAT, 0, p.normals);
+    else
+	glNormal3f (0.0f, 0.0f, 1.0f);
+    glTexCoordPointer (2, GL_FLOAT, 0, vertexTexCoords);
+
+    // Draw quads for sides
+    for (int k = 0; k < nSides; k++)
+    {
+	// GL_QUADS uses a different vertex normal than the first
+	// so I use GL_POLYGON to make sure the normals are right.
+	glDrawElements (GL_POLYGON, 4,
+		       GL_UNSIGNED_SHORT,
+		       p.sideIndices + k * 4);
+    }
+
+    // if opacity was changed just above
+    if (fadeBackAndSides)
+    {
+	// Go back to normal opacity for front face
+	attrib = mCurPaintAttrib;
+	attrib.setOpacity (newOpacityPolygon * OPAQUE);
+	prepareDrawingForAttrib (attrib);
+    }
+    // Draw front face
+    glDrawArrays (GL_POLYGON, 0, nSides);
+    for (int k = 0; k < 4; k++)
+	glDisable (GL_CLIP_PLANE0 + k);
+
+    glPopMatrix ();
 }
 
 void
@@ -1416,10 +1596,10 @@ PolygonAnim::drawGeometry ()
     }
 
     // Clip planes
-    GLdouble clipPlane0[] = { 1, 0, 0, 0 };
-    GLdouble clipPlane1[] = { 0, 1, 0, 0 };
-    GLdouble clipPlane2[] = { -1, 0, 0, 0 };
-    GLdouble clipPlane3[] = { 0, -1, 0, 0 };
+    GLdouble clipPlanes[4][4] = {{ 1, 0, 0, 0 },
+				 { 0, 1, 0, 0 },
+				 { -1, 0, 0, 0 },
+				 { 0, -1, 0, 0 }};
 
     // Save old color values
     GLfloat oldColor[4];
@@ -1498,164 +1678,34 @@ PolygonAnim::drawGeometry ()
 	Clip4Polygons *c = &mClips[mFirstNondrawnClip];
 	for (int j = mFirstNondrawnClip; j <= lastClip; j++, c++)
 	{
-	    int nFrontVerticesTilThisPoly = 0;
-	    int nNewSides = 0;
-	    list<int>::iterator itIntPoly;
-
-	    for (itIntPoly = c->intersectingPolygons.begin ();
-		 itIntPoly != c->intersectingPolygons.end ();
-		 itIntPoly++, nFrontVerticesTilThisPoly += nNewSides)
+	    if (c->intersectsMostPolygons)
 	    {
-		PolygonObject &p = mPolygons[*itIntPoly];
-		nNewSides = p.nSides;
-
-		float newOpacityPolygon = newOpacity;
-
-		// if fade-out duration is specified per polygon
-		if (mAllFadeDuration == -1.0f)
+		const GLfloat *vTexCoords = &c->polygonVertexTexCoords[0];
+		foreach (const PolygonObject &p, mPolygons)
 		{
-		    fadePassedBy = forwardProgress - p.fadeStartTime;
-		    // if "fade out starting point" is passed
-		    if (fadePassedBy > 1e-5)	// if true, then allFadeDuration > 0
-		    {
-			float opacityFac;
-
-			if (decelerates)
-			    opacityFac =
-				1 - progressDecelerate (fadePassedBy /
-				                        p.fadeDuration);
-			else
-			    opacityFac = 1 - fadePassedBy / p.fadeDuration;
-			if (opacityFac < 0)
-			    opacityFac = 0;
-			if (opacityFac > 1)
-			    opacityFac = 1;
-			newOpacityPolygon = newOpacity * opacityFac;
-		    }
+		    drawPolygonClipIntersection (p, *c,
+		                                 vTexCoords,
+						 pass, forwardProgress,
+						 clipPlanes, *output,
+						 newOpacity,
+						 decelerates,
+						 skewMat);
+		    vTexCoords += 4 * p.nSides;
 		}
-
-		if (newOpacityPolygon < 1e-5)	// if polygon object is invisible
-		    continue;
-
-		if (pass == 0)
+	    }
+	    else
+	    {
+		foreach (const PolygonClipInfo *pci,
+		         c->intersectingPolygonInfos)
 		{
-		    if (newOpacityPolygon < 0.9999)	// if not fully opaque
-			continue;	// draw only opaque ones in pass 0
+		    drawPolygonClipIntersection (*pci->p, *c,
+		                                 &pci->vertexTexCoords[0],
+						 pass, forwardProgress,
+						 clipPlanes, *output,
+						 newOpacity,
+						 decelerates,
+						 skewMat);
 		}
-		else if (newOpacityPolygon > 0.9999)	// if fully opaque
-		    continue;	// draw only non-opaque ones in pass 1
-
-		glPushMatrix ();
-
-		if (mCorrectPerspective == CorrectPerspectivePolygon)
-		    getPerspectiveCorrectionMat (&p, skewMat, NULL, *output);
-
-		if (mCorrectPerspective != CorrectPerspectiveNone)
-		    glMultMatrixf (skewMat);
-
-		// Center
-		glTranslatef (p.centerPos.x (),
-			      p.centerPos.y (),
-			      p.centerPos.z ());
-
-		// Scale z first
-		glScalef (1.0f, 1.0f, 1.0f / ::screen->width ());
-
-		transformPolygon (p);
-
-		// Move by "rotation axis offset"
-		glTranslatef (p.rotAxisOffset.x (),
-			      p.rotAxisOffset.y (),
-			      p.rotAxisOffset.z ());
-
-		// Rotate by desired angle
-		glRotatef (p.rotAngle,
-		           p.rotAxis.x (), p.rotAxis.y (), p.rotAxis.z ());
-
-		// Move back to center
-		glTranslatef (-p.rotAxisOffset.x (),
-			      -p.rotAxisOffset.y (),
-			      -p.rotAxisOffset.z ());
-
-		// Scale back
-		glScalef (1.0f, 1.0f, ::screen->width ());
-
-
-		clipPlane0[3] = -(c->boxf.x1 - p.centerPosStart.x ());
-		clipPlane1[3] = -(c->boxf.y1 - p.centerPosStart.y ());
-		clipPlane2[3] = (c->boxf.x2 - p.centerPosStart.x ());
-		clipPlane3[3] = (c->boxf.y2 - p.centerPosStart.y ());
-		glClipPlane (GL_CLIP_PLANE0, clipPlane0);
-		glClipPlane (GL_CLIP_PLANE1, clipPlane1);
-		glClipPlane (GL_CLIP_PLANE2, clipPlane2);
-		glClipPlane (GL_CLIP_PLANE3, clipPlane3);
-
-		for (int k = 0; k < 4; k++)
-		    glEnable (GL_CLIP_PLANE0 + k);
-		bool fadeBackAndSides =
-		    mBackAndSidesFadeDur > 0 &&
-		    forwardProgress <= mBackAndSidesFadeDur;
-
-		float newOpacityPolygon2 = newOpacityPolygon;
-
-		if (fadeBackAndSides)
-		{
-		    // Fade-in opacity for back face and sides
-		    newOpacityPolygon2 *=
-			(forwardProgress / mBackAndSidesFadeDur);
-		}
-
-		GLFragment::Attrib attrib = mCurPaintAttrib;
-		attrib.setOpacity (newOpacityPolygon2 * OPAQUE);
-
-		prepareDrawingForAttrib (attrib);
-
-		// Draw back face
-		glVertexPointer (3, GL_FLOAT, 0, p.vertices + 3 * p.nSides);
-		if (mThickness > 0)
-		    glNormalPointer (GL_FLOAT, 0, p.normals + 3 * p.nSides);
-		else
-		    glNormal3f (0.0f, 0.0f, -1.0f);
-		glTexCoordPointer (2, GL_FLOAT, 0,
-				   &c->polygonVertexTexCoords
-				   [2 * (2 * nFrontVerticesTilThisPoly +
-				         p.nSides)]);
-		glDrawArrays (GL_POLYGON, 0, p.nSides);
-
-		// Vertex coords
-		glVertexPointer (3, GL_FLOAT, 0, p.vertices);
-		if (mThickness > 0)
-		    glNormalPointer (GL_FLOAT, 0, p.normals);
-		else
-		    glNormal3f (0.0f, 0.0f, 1.0f);
-		glTexCoordPointer (2, GL_FLOAT, 0,
-				   &c->polygonVertexTexCoords
-				   [2 * 2 * nFrontVerticesTilThisPoly]);
-
-		// Draw quads for sides
-		for (int k = 0; k < p.nSides; k++)
-		{
-		    // GL_QUADS uses a different vertex normal than the first
-		    // so I use GL_POLYGON to make sure the normals are right.
-		    glDrawElements (GL_POLYGON, 4,
-				   GL_UNSIGNED_SHORT,
-				   p.sideIndices + k * 4);
-		}
-
-		// if opacity was changed just above
-		if (fadeBackAndSides)
-		{
-		    // Go back to normal opacity for front face
-		    attrib = mCurPaintAttrib;
-		    attrib.setOpacity (newOpacityPolygon * OPAQUE);
-		    prepareDrawingForAttrib (attrib);
-		}
-		// Draw front face
-		glDrawArrays (GL_POLYGON, 0, p.nSides);
-		for (int k = 0; k < 4; k++)
-		    glDisable (GL_CLIP_PLANE0 + k);
-
-		glPopMatrix ();
 	    }
 	}
     }
@@ -1827,7 +1877,7 @@ PolygonAnim::updateBB (CompOutput &output)
 	mCorrectPerspective == CorrectPerspectivePolygon)
 	modelViewTransform = &wTransform2;
 
-    foreach (PolygonObject &p, mPolygons)
+    foreach (const PolygonObject &p, mPolygons)
     {
 	if (mCorrectPerspective == CorrectPerspectivePolygon)
 	{

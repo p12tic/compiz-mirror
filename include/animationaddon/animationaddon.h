@@ -1,7 +1,7 @@
 #ifndef _COMPIZ_ANIMATIONADDON_H
 #define _COMPIZ_ANIMATIONADDON_H
 
-#define ANIMATIONADDON_ABI 20091204
+#define ANIMATIONADDON_ABI 20091206
 
 #include <core/pluginclasshandler.h>
 
@@ -187,7 +187,7 @@ public:
     GLushort *sideIndices;	///< Indices of quad strip for "sides"
     GLfloat *normals;		///< Surface normals for 2+nSides faces
 
-    Box boundingBox;		///< Bound. box to test intersection with clips
+    Boxf boundingBox;		///< Bound. box to test intersection with clips
 
     // Animation effect parameters
 
@@ -217,16 +217,39 @@ public:
     float boundSphereRadius;    ///< Radius of bounding sphere
 };
 
+/// Info about intersection of a polygon and clip
+class PolygonClipInfo
+{
+public:
+    PolygonClipInfo (const PolygonObject *p);
+
+    const PolygonObject *p; ///< the intersecting polygon-object
+
+    /// Texture coord.s for each vertex of the polygon-object
+    /// ordered as: Front v1.x, y, v2.x, y, ...,
+    ///             followed by back vertex texture coordinates.
+    vector<GLfloat> vertexTexCoords;
+};
+
 class Clip4Polygons	        ///< Rectangular clips
 {				///< (to hold clips passed to AddWindowGeometry)
 public:
     CompRect box;		///< Coords
     Boxf boxf;			///< Float coords (for small clipping adjustment)
     GLTexture::Matrix texMatrix;///< Corresponding texture coord. matrix
-    list<int> intersectingPolygons; ///< Clips (in PolygonSet) that intersect
 
-    /// Texture coord.s for each intersecting polygon and for each vertex
-    /// ordered as p1.v1.x, .y, p1.v2.x, .y, p2.v1.x, .y, ...
+    /// True if this clip likely intersects all polygons
+    /// (for the window-contents clip). Used for optimization purposes.
+    bool intersectsMostPolygons;
+
+    /// For polygons that intersect this clip.
+    /// Only used when intersectsMostPolygons is false.
+    list<PolygonClipInfo *> intersectingPolygonInfos;
+
+    /// Texture coord.s for each vertex of each polygon-object
+    /// ordered as: Front p1.v1.x, y, p1.v2.x, .y, p2.v1.x, .y, ...,
+    ///             followed by back vertex texture coordinates.
+    /// Only used when intersectsMostPolygons is true.
     vector<GLfloat> polygonVertexTexCoords;
 };
 
@@ -259,7 +282,7 @@ public:
 
     virtual void stepPolygon (PolygonObject &p,
 			      float forwardProgress);
-    virtual void transformPolygon (PolygonObject &p) {}
+    virtual void transformPolygon (const PolygonObject &p) {}
 
     /// For effects that have decel. motion
     virtual bool deceleratingMotion () { return false; }
@@ -279,7 +302,7 @@ public:
                                       float forwardProgress);
 
 protected:
-    void getPerspectiveCorrectionMat (PolygonObject *p,
+    void getPerspectiveCorrectionMat (const PolygonObject *p,
 				      GLfloat *mat,
 				      GLMatrix *matf,
 				      const CompOutput &output);
@@ -310,5 +333,17 @@ protected:
 				     If >-1, this overrides fadeDuration in PolygonObject */
 
     bool mIncludeShadows;        ///< Whether to include shadows in polygon
+
+private:
+    inline void drawPolygonClipIntersection (const PolygonObject &p,
+					     const Clip4Polygons &c,
+					     const GLfloat *vertexTexCoords,
+					     int pass,
+					     float forwardProgress,
+					     GLdouble clipPlane[4][4],
+					     const CompOutput &output,
+					     float newOpacity,
+					     bool decelerates,
+					     GLfloat skewMat[16]);
 };
 #endif
