@@ -140,16 +140,15 @@ StaticSwitchWindow::damageRect (bool initial, const CompRect &rect)
     return BaseSwitchWindow::damageRect (initial, rect);
 }
 
-bool
-StaticSwitchScreen::shouldShowIcon ()
+BaseSwitchWindow::IconMode
+StaticSwitchWindow::getIconMode ()
 {
-    return optionGetIcon ();
-}
+    if (sScreen->optionGetIconOnly ())
+	return ShowIconOnly;
+    if (!sScreen->optionGetIcon ())
+	return HideIcon;
 
-bool
-StaticSwitchScreen::showIconOnly ()
-{
-    return optionGetIconOnly ();
+    return ShowIcon;
 }
 
 bool
