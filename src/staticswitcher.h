@@ -60,6 +60,7 @@ class StaticSwitchScreen :
 	void updateWindowList (int count);
 	void createWindowList (int count);
 	bool shouldShowIcon ();
+	bool showIconOnly ();
 	bool getPaintRectangle (CompWindow *w,
 				CompRect   &rect,
 				int        *opacity);

@@ -147,6 +147,12 @@ StaticSwitchScreen::shouldShowIcon ()
 }
 
 bool
+StaticSwitchScreen::showIconOnly ()
+{
+    return optionGetIconOnly ();
+}
+
+bool
 StaticSwitchScreen::getPaintRectangle (CompWindow *w,
 				       CompRect   &rect,
 				       int        *opacity)
@@ -1128,6 +1134,9 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 {
     bool       status;
 
+    /* We are painting the switcher popup window:
+     * Paint the popup window first and then paint
+     * the relevant thumbnails */
     if (window->id () == sScreen->popupWindow)
     {
 	GLenum         filter;
@@ -1206,6 +1215,9 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	glDisable (GL_SCISSOR_TEST);
 	glPopAttrib ();
     }
+    /* Adjust opacity/brightness/saturation of windows that are
+     * not selected
+     */
     else if (sScreen->switching && !sScreen->popupDelayTimer.active () &&
 	     (window != sScreen->selectedWindow))
     {
@@ -1230,6 +1242,7 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	status = gWindow->glPaint (sAttrib, transform, region, mask);
     }
+    /* Fallback case for selected window */
     else
     {
 	status = gWindow->glPaint (attrib, transform, region, mask);
