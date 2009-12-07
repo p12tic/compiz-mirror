@@ -85,17 +85,17 @@ TrailfocusScreen::setWindows ()
 	    if (memcmp (&tw->attribs, &attribs[i], sizeof (TfAttribs)) != 0)
 		needDamage = true;
 
-	    if (!wasTfWindow)
+	    if (!wasTfWindow && tw->gWindow)
 		tw->gWindow->glPaintSetEnabled (tw, true);
 
 	    tw->attribs = attribs[i];
 	}
-	else if (wasTfWindow)
+	else if (wasTfWindow && tw->gWindow)
 	{
 	    tw->gWindow->glPaintSetEnabled (tw, false);
 	}
 
-	if (needDamage)
+	if (needDamage && tw->cWindow)
 	    tw->cWindow->addDamage ();
     }
 }
@@ -397,6 +397,12 @@ TrailfocusWindow::TrailfocusWindow (CompWindow *w) :
 
 TrailfocusWindow::~TrailfocusWindow ()
 {
+    /* Since we are popping the window from the stack
+     * gWindow and cWindow are invalidated. Set them to
+     * NULL so that their functions cannot be called
+     */
+    gWindow = NULL;
+    cWindow = NULL;
     TrailfocusScreen::get (screen)->popWindow (this);
 }
 
