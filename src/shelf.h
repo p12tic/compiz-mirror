@@ -155,8 +155,8 @@ class ShelfScreen :
 
 	Cursor		       moveCursor;
 
-	int		       lastPointerX;
-	int		       lastPointerY;
+	unsigned int	       lastPointerX;
+	unsigned int	       lastPointerY;
 
 	std::list <ShelfedWindowInfo *> shelfedWindows;
 

@@ -89,8 +89,8 @@ ShelfWindow::saveInputShape (XRectangle **retRects,
     /* check if the returned shape exactly matches the window shape -
        if that is true, the window currently has no set input shape */
     if ((count == 1) &&
-	(rects[0].x == -window->serverGeometry ().border ()) &&
-	(rects[0].y == -window->serverGeometry ().border ()) &&
+	(rects[0].x == -window->geometry ().border ()) &&
+	(rects[0].y == -window->geometry ().border ()) &&
 	(rects[0].width == (window->serverWidth () +
 			    window->serverGeometry ().border ())) &&
 	(rects[0].height == (window->serverHeight () +
@@ -110,25 +110,21 @@ ShelfWindow::saveInputShape (XRectangle **retRects,
 void
 ShelfWindow::shapeInput ()
 {
-    CompWindow *fw;
-    Display    *dpy = screen->dpy ();
+    Window     frame;
+    Display    *dpy = screen->dpy();
+    XRectangle *rects;
+    int        count = 0, ordering;
 
-    /* save old shape */
-    saveInputShape (&info->inputRects, 
-		    &info->nInputRects, &info->inputRectOrdering);
+    saveInputShape (&info->inputRects,
+		    &info->nInputRects,
+		    &info->inputRectOrdering);
 
-    if (info->nInputRects)
-	fprintf (stderr, "saved nInputRects\n");
-
-   fprintf (stderr, "shaped\n");
-
-    fw = screen->findWindow (window->frame ());
-    if (fw)
+    frame = window->frame();
+    if (frame)
     {
-	saveInputShape(&info->frameInputRects,
-		       &info->frameNInputRects,
-		       &info->frameInputRectOrdering);
-    }
+	saveInputShape (&info->frameInputRects, &info->frameNInputRects,
+			&info->frameInputRectOrdering);
+    } 
     else
     {
 	info->frameInputRects        = NULL;
@@ -137,22 +133,22 @@ ShelfWindow::shapeInput ()
     }
 
     /* clear shape */
-    XShapeSelectInput (dpy, window->id (), NoEventMask);
-    XShapeCombineRectangles  (dpy, window->id (), ShapeInput, 0, 0,
+    XShapeSelectInput (dpy, window->id(), NoEventMask);
+    XShapeCombineRectangles  (dpy, window->id(), ShapeInput, 0, 0,
 			      NULL, 0, ShapeSet, 0);
     
-    if (window->frame ())
-	XShapeCombineRectangles  (dpy, window->frame (), ShapeInput, 0, 0,
+    if (frame)
+	XShapeCombineRectangles  (dpy, window->frame(), ShapeInput, 0, 0,
 				  NULL, 0, ShapeSet, 0);
 
-    XShapeSelectInput (dpy, window->id (), ShapeNotify);
+    XShapeSelectInput (dpy, window->id(), ShapeNotify);
 }
 
-#warning: function ShelfWindow::unshapeInput is broken
-/* This function is broken.
- * What should happen is that no custom shape was defined, so nInputRects should
- * be 0 and calling XShapeCombineMask should restore the original shape. However,
- * it doesn't actually seem to and the window's input shape remains cleared
+/* Restores the shape of the window:
+ * If the window had a custom shape defined by inputRects then we restore
+ * that in order with XShapeCombineRectangles.
+ * Most windows have no specific defined shape so we can restore it with
+ * setting the shape to a 0x0 mask
  */
 void
 ShelfWindow::unshapeInput ()
@@ -161,22 +157,20 @@ ShelfWindow::unshapeInput ()
 
     if (info->nInputRects)
     {
-	XShapeCombineRectangles (dpy, window->id (), ShapeInput, 0, 0,
+	XShapeCombineRectangles (dpy, window->id(), ShapeInput, 0, 0,
 				 info->inputRects, info->nInputRects,
 				 ShapeSet, info->inputRectOrdering);
-	fprintf (stderr, "unshaped window by restoring rects\n");
     }
     else
     {
-	XShapeCombineMask (dpy, window->id (), ShapeInput, 0, 0, None, ShapeSet);
-	fprintf (stderr, "unshaped window by setting shape\n");
+	XShapeCombineMask (dpy, window->id(), ShapeInput, 0, 0, None, ShapeSet);
     }
 
     if (info->frameNInputRects >= 0)
     {
-	if (info->frameInputRects)
+	if (info->frameNInputRects)
 	{
-	    XShapeCombineRectangles (dpy, window->frame (), ShapeInput, 0, 0,
+	    XShapeCombineRectangles (dpy, window->frame(), ShapeInput, 0, 0,
 				     info->frameInputRects,
 				     info->frameNInputRects,
 				     ShapeSet,
@@ -184,8 +178,7 @@ ShelfWindow::unshapeInput ()
 	}
 	else
 	{
-	    XShapeCombineMask (dpy, window->frame (), ShapeInput, 0, 0, None,
-								      ShapeSet);
+	    XShapeCombineMask (dpy, window->frame(), ShapeInput, 0, 0, None, ShapeSet);
 	}
     }
 }
@@ -236,11 +229,15 @@ ShelfWindow::adjustIPW ()
 {
     //fprintf (stderr, "adjustIPW\n");
     XWindowChanges xwc;
+    XSetWindowAttributes attrib;
     Display        *dpy = screen->dpy ();
     float          width, height;
 
     if (!info || !info->ipw)
 	return;
+
+    attrib.override_redirect = TRUE;
+    attrib.event_mask        = 0;
 
     fprintf (stderr, "adjusting\n");
 
@@ -260,12 +257,31 @@ ShelfWindow::adjustIPW ()
     xwc.stack_mode = Above;
     xwc.sibling    = window->id ();
 
-    //fprintf (stderr, "width %f height %f x %i y %i\n", width, height, xwc.x, xwc.y);
-    //fprintf (stderr, "window props width %i height %i x %i y %i\n", window->width(), window->height(), window->x (),window->y());
+    fprintf (stderr, "width %f height %f x %i y %i\n", width, height, xwc.x, xwc.y);
+    fprintf (stderr, "window props width %i height %i x %i y %i\n", window->width(), window->height(), window->x (),window->y());
 
-    XConfigureWindow (dpy, info->ipw,
-		      CWSibling | CWStackMode | CWX | CWY | CWWidth | CWHeight,
-		      &xwc);
+    XDestroyWindow (dpy, info->ipw);
+
+    info->ipw = XCreateWindow (screen->dpy (),
+			 screen->root (),
+			 xwc.x,
+			 xwc.y,
+			 (int)width,
+			 (int)height,
+			 0, CopyFromParent, InputOnly, CopyFromParent,
+			 CWEventMask | CWOverrideRedirect,
+			 &attrib);
+
+
+    //XUnmapWindow (dpy, info->ipw);
+    /*CompWindow *ipw = screen->findWindow (info->ipw);
+
+    if (ipw)
+	ipw->configureXWindow ( CWX | CWY | CWWidth | CWHeight, &xwc);*/
+
+    //XConfigureWindow (dpy, info->ipw,
+	//	      CWSibling | CWStackMode | CWX | CWY | CWWidth | CWHeight,
+	//	      &xwc);
     XMapWindow (dpy, info->ipw);
 }
 
@@ -275,8 +291,8 @@ ShelfScreen::adjustIPWStacking ()
 
     foreach (ShelfedWindowInfo *run, shelfedWindows)
     {
-	if (!run->w->prev || run->w->prev->id () != run->ipw)
-	    ShelfWindow::get (run->w)->adjustIPW ();
+	/*if (!run->w->prev || run->w->prev->id () != run->ipw)
+	    ShelfWindow::get (run->w)->adjustIPW ();*/
     }
 }
 
@@ -351,7 +367,7 @@ ShelfWindow::handleShelfInfo ()
 	    return false;
 
 	shapeInput ();
-	createIPW ();
+	//createIPW ();
 	ss->addWindowToList (info);
 	fprintf (stderr, "created IPW\n");
     }
@@ -371,9 +387,12 @@ ShelfWindow::scale (float fScale)
     if ((float) window->width () * targetScale < SHELF_MIN_SIZE)
 	targetScale = SHELF_MIN_SIZE / (float) window->width ();
 
+    handleShelfInfo ();
+
+#if 0
     if (handleShelfInfo ())
 	adjustIPW ();
-
+#endif
     cWindow->addDamage ();
 }
 
@@ -539,7 +558,7 @@ ShelfScreen::handleMotionEvent (unsigned int x,
 				unsigned int y)
 {
     CompWindow   *w;
-    unsigned int dx, dy;
+    int dx, dy;
 
     if (!grabIndex)
 	return;
@@ -644,7 +663,7 @@ ShelfScreen::handleEvent (XEvent *event)
 		if (w->prev != oldPrev || w->next != oldNext)
 		{
 		    /* restacking occured, ensure ipw stacking */
-		    adjustIPWStacking ();
+		    //adjustIPWStacking ();
 		}
 	    }
 	    break;
@@ -766,8 +785,8 @@ ShelfScreen::donePaint ()
 void
 ShelfWindow::moveNotify (int dx, int dy, bool immediate)
 {
-    if (targetScale != 1.00f)
-	adjustIPW ();
+    /*if (targetScale != 1.00f)
+	adjustIPW ();*/
 
     window->moveNotify (dx, dy, immediate);
 }
