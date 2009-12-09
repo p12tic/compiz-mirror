@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (group PLUGINDEPS text PKGDEPS cairo cairo-xlib-xrender)
+include (CompizPlugin)
+
+compiz_plugin (group PLUGINDEPS composite opengl text mousepoll PKGDEPS cairo cairo-xlib-xrender)

@@ -11,7 +11,7 @@
 			<plugin>text</plugin>
 		</relation>
 	</deps>
-    <display>
+    <options>
       <group>
         <_short>Selection</_short>
         <subgroup>
@@ -89,8 +89,6 @@
           </option>
         </subgroup>
       </group>
-    </display>
-    <screen>
       <group>
         <_short>General</_short>
         <option name="move_all" type="bool">
@@ -481,6 +479,6 @@
 		  </desc>
         </option>
       </group>
-    </screen>
+    </options>
   </plugin>
 </compiz>
