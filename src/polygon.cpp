@@ -1526,7 +1526,7 @@ PolygonAnim::drawGeometry ()
     int numClips = mClips.size ();
 
     if (mFirstNondrawnClip < 0 ||
-	mFirstNondrawnClip > numClips)
+	mFirstNondrawnClip >= numClips)
     {
 	return;
     }
