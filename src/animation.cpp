@@ -2540,7 +2540,7 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 	    {
 		int duration;
 
-		if (mPAScreen->shouldIgnoreWindowForAnim (mWindow, false))// TODO was true))
+		if (mPAScreen->shouldIgnoreWindowForAnim (mWindow, true))
 		    break;
 
 		if (AnimEffectNone ==
