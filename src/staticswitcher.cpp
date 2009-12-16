@@ -814,8 +814,10 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 
 	if (mode == HighlightModeBringSelectedToFront)
 	{
+	    CompWindow *frontWindow = ::screen->clientList ().back ();
+
 	    zoomed = selectedWindow;
-	    if (zoomed)
+	    if (zoomed && zoomed != frontWindow)
 	    {
 		CompWindow *w;
 
@@ -824,8 +826,11 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 		zoomedAbove = (w) ? w->id () : None;
 
 		::screen->unhookWindow (zoomed);
-		::screen->insertWindow (zoomed,
-					::screen->clientList ().back ()->id ());
+		::screen->insertWindow (zoomed, frontWindow->id ());
+	    }
+	    else
+	    {
+		zoomed = NULL;
 	    }
 	}
 	else
