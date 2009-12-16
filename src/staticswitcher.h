@@ -56,15 +56,14 @@ class StaticSwitchScreen :
 			    const GLMatrix &, const CompRegion &,
 			    CompOutput *, unsigned int);
 
-	void updatePopupWindow (int count);
-	void updateWindowList (int count);
-	void createWindowList (int count);
+	void updatePopupWindow ();
+	void updateWindowList ();
+	void createWindowList ();
 	bool getPaintRectangle (CompWindow *w,
 				CompRect   &rect,
 				int        *opacity);
 	void doWindowDamage (CompWindow *w);
 	void handleSelectionChange (bool toNext, int nextIdx);
-	int countWindows ();
 	bool showPopup ();
 	Cursor getCursor (bool mouseSelectOn);
 	void initiate (SwitchWindowSelection selection,
