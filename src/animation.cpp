@@ -2513,6 +2513,7 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 		mPAScreen->initiateCloseAnim (this);
 	    break;
 	case CompWindowNotifyShow:
+	case CompWindowNotifyBeforeMap:
 	    // Prevent dialog disappearing when a dialog is reopened during
 	    // its close animation.
 	    if (mCurAnimation &&
