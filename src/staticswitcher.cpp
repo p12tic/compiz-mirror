@@ -864,10 +864,7 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	    {
 		CompWindow *w;
 
-		if (zoomed)
-		    w = zoomed;
-		else
-		    w = selectedWindow;
+		w = selectedWindow;
 
 		if (w)
 		{
