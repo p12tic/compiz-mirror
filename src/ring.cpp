@@ -448,15 +448,12 @@ RingWindow::compareWindows (CompWindow *w1,
 			    CompWindow *w2)
 {
     if (w1->mapNum () && !w2->mapNum ())
-	return false;
+	return true;
 
     if (w2->mapNum () && !w1->mapNum ())
-	return true;
+	return false;
 
-    if (w2->activeNum () - w1->activeNum ())
-	return true;
-    else
-	return false;\
+    return (w2->activeNum () < w1->activeNum ());
 }
 
 bool
