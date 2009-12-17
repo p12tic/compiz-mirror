@@ -132,7 +132,8 @@ class ShiftScreen :
 	ShiftDrawSlot *activeSlot;
 
 	Window clientLeader;
-	Window selectedWindow;
+
+	CompWindow *selectedWindow;
 
 	CompMatch match;
 	CompMatch currentMatch;
@@ -250,7 +251,7 @@ class ShiftScreen :
 			  CompOption::Vector options);
 
 	void
-	windowRemove (Window id);
+	windowRemove (CompWindow *w);
 
 
 
@@ -306,7 +307,7 @@ class ShiftWindow :
 	canStackRelativeTo ();
 
 	bool
-	is ();
+	is (bool removing = false);
 };
 
 #define SHIFT_WINDOW(w)						       \

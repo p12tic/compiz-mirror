@@ -81,10 +81,12 @@ ShiftScreen::activateEvent (bool       activating)
 }
 
 bool
-ShiftWindow::is ()
+ShiftWindow::is (bool removing)
 {
-
     SHIFT_SCREEN (screen);
+
+    if (!removing && window->destroyed ())
+	return false;
 
     if (window->overrideRedirect ())
 	return false;
@@ -92,7 +94,7 @@ ShiftWindow::is ()
     if (window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
 	return false;
 
-    if (!window->mapNum () || !window->isViewable ())
+    if (!removing && (!window->mapNum () || !window->isViewable ()))
     {
 	if (ss->optionGetMinimized ())
 	{
@@ -104,7 +106,7 @@ ShiftWindow::is ()
     	    return false;
     }
 
-    if (ss->type == ShiftScreen::ShiftTypeNormal)
+    if (!removing && ss->type == ShiftScreen::ShiftTypeNormal)
     {
 	if (!window->mapNum () || !window->isViewable ())
 	{
@@ -193,7 +195,8 @@ ShiftScreen::renderWindowTitle ()
     tA.bgColor[2] = optionGetTitleBackColorBlue ();
     tA.bgColor[3] = optionGetTitleBackColorAlpha ();
 
-    text.renderWindowTitle (selectedWindow, type == ShiftTypeAll, tA);
+    text.renderWindowTitle (selectedWindow ? selectedWindow->id () : None,
+			    type == ShiftTypeAll, tA);
 }
 
 void
@@ -788,7 +791,7 @@ ShiftScreen::layoutThumbsFlip ()
 		    sw->slots[i].opacity = 1.0;
 	    }
 
-	    if (distance > 0.0 && w->id () != selectedWindow)
+	    if (distance > 0.0 && w != selectedWindow)
 	    {
 	        sw->slots[i].primary = false;
 	    }
@@ -885,7 +888,7 @@ ShiftScreen::updateWindowList ()
     mvVelocity = 0;
     for (i = 0; i < windows.size (); i++)
     {
-	if (windows.at (i)->id () == selectedWindow)
+	if (windows.at (i) == selectedWindow)
 	    break;
 
 	mvTarget++;
@@ -929,7 +932,7 @@ ShiftScreen::createWindowList ()
 	}
     }
 
-    selectedWindow = windows.back ()->id (); // ??? This really shouldn't be here....
+    selectedWindow = windows.back (); // ??? This really shouldn't be here....
 
     return updateWindowList ();
 }
@@ -945,7 +948,7 @@ ShiftScreen::switchToWindow (bool toNext)
 
     foreach (w, windows)
     {
-	if (w->id () == selectedWindow)
+	if (w == selectedWindow)
 	    break;
 	cur++;
     }
@@ -963,10 +966,10 @@ ShiftScreen::switchToWindow (bool toNext)
     if (w)
     {
 
-	Window old = selectedWindow;
-	selectedWindow = w->id ();
+	CompWindow *old = selectedWindow;
+	selectedWindow = w;
 
-	if (old != w->id ())
+	if (old != w)
 	{
 	    if (toNext)
 		mvAdjust += 1;
@@ -1315,7 +1318,7 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    bool found;
 	    paintingAbove = true;
 
-	    w = screen->findWindow (selectedWindow);
+	    w = selectedWindow;
 	    
 	    for (; w; w = w->next)
 	    {
@@ -1497,12 +1500,10 @@ ShiftScreen::donePaint ()
 		    }
 		}
 
-		if (!canceled && selectedWindow)
+		if (!canceled && selectedWindow &&
+		    !selectedWindow->destroyed ())
 		{
-		    w = screen->findWindow (selectedWindow);
-
-		    if (w)
-			screen->sendWindowActivationRequest (w->id ());
+		    screen->sendWindowActivationRequest (selectedWindow->id ());
 		}
 	    }
 	}
@@ -1720,51 +1721,54 @@ ShiftScreen::initiateAll (CompAction         *action,
 
 
 void
-ShiftScreen::windowRemove (Window id)
+ShiftScreen::windowRemove (CompWindow *w)
 {
-    CompWindow *w = screen->findWindow (id);
     if (w)
     {
-
 	bool inList = false;
-	Window selected;
+	CompWindow *selected;
 
-	std::vector <CompWindow *>::iterator it = windows.end ();
+	std::vector <CompWindow *>::iterator it = windows.begin ();
 
 	SHIFT_WINDOW (w);
 
 	if (state == ShiftScreen::ShiftStateNone)
 	    return;
 
-	if (!sw->is ())
+	if (!sw->is (true))
     	    return;
 
 	selected = selectedWindow;
 
-	while (it != windows.begin ())
+	while (it != windows.end ())
 	{
-    	    if (w->id () == (*it)->id ())
+	    if (*it == w)
 	    {
 		inList = true;
 
-		if (w->id () == selected)
+		if (w == selected)
 		{
-		    if (it < windows.end ()--)
-			selected = (*(it + 1))->id ();
+		    it++;
+		    if (it != windows.end ())
+			selected = *it;
     		    else
-			selected = windows.front ()->id ();
+			selected = windows.front ();
+		    it--;
 
 		    selectedWindow = selected;
+		    renderWindowTitle ();
 		}
 
-		windows.erase (it); // ???
+		windows.erase (it);
 		break;
 	    }
-	    it--;
+	    it++;
 	}
 
 	if (!inList)
 	    return;
+
+	/* Terminate if the window closed was the last window in the list */
 
 	if (windows.size () == 0)
 	{
@@ -1795,6 +1799,19 @@ ShiftScreen::windowRemove (Window id)
 void
 ShiftScreen::handleEvent (XEvent *event)
 {
+    CompWindow *w = NULL;
+
+    switch (event->type) {
+    case DestroyNotify:
+	/* We need to get the CompWindow * for event->xdestroywindow.window
+	   here because in the ::screen->handleEvent call below, that
+	   CompWindow's id will become 1, so findWindow won't be
+	   able to find the CompWindow after that. */
+	   w = ::screen->findWindow (event->xdestroywindow.window);
+	break;
+    default:
+	break;
+    }
 
     screen->handleEvent (event);
 
@@ -1802,11 +1819,10 @@ ShiftScreen::handleEvent (XEvent *event)
     case PropertyNotify:
 	if (event->xproperty.atom == XA_WM_NAME)
 	{
-	    CompWindow *w;
 	    w = screen->findWindow (event->xproperty.window);
 	    if (w)
 	    {
-    		if (grabIndex && (w->id () == selectedWindow))
+    		if (grabIndex && (w == selectedWindow))
     		{
     		    renderWindowTitle ();
     		    cScreen->damageScreen ();
@@ -1815,10 +1831,11 @@ ShiftScreen::handleEvent (XEvent *event)
 	}
 	break;
     case UnmapNotify:
-	windowRemove (event->xunmap.window);
+	w = ::screen->findWindow (event->xunmap.window);
+	windowRemove (w);
 	break;
     case DestroyNotify:
-	windowRemove (event->xdestroywindow.window);
+	windowRemove (w);
 	break;
     case KeyPress:
 
@@ -1882,7 +1899,7 @@ ShiftScreen::handleEvent (XEvent *event)
 		    new_i += windows.size ();
 	        new_i = new_i % windows.size ();
 
-	        selectedWindow = windows.at (new_i)->id ();
+	        selectedWindow = windows.at (new_i);
 
 	        renderWindowTitle ();
 	        moveAdjust = true;
@@ -1951,9 +1968,9 @@ ShiftScreen::handleEvent (XEvent *event)
 		    }
 		    new_i = new_i % windows.size ();
 
-		    if (selectedWindow != windows.at (new_i)->id ())
+		    if (selectedWindow != windows.at (new_i))
 		    {
-		    	selectedWindow = windows.at (new_i)->id ();
+		    	selectedWindow = windows.at (new_i);
 			renderWindowTitle ();
 		    }	        
 
