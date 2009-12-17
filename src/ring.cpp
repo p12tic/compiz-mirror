@@ -624,7 +624,7 @@ RingScreen::switchToWindow (bool	   toNext)
 	cur++;
     }
 
-    if (cur == windows.size ())
+    if (cur == (int)windows.size ())
 	return;
 
     if (toNext)
