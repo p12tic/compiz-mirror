@@ -107,7 +107,8 @@ class RingScreen :
 	int			     nWindows;
 
 	Window clientLeader;
-	Window selectedWindow;
+
+	CompWindow *selectedWindow;
 
 	CompMatch match;
 	CompMatch currentMatch;
@@ -189,7 +190,7 @@ class RingScreen :
 			bool f_terminate);
 
 	void
-	windowRemove (Window id);
+	windowRemove (CompWindow *w);
 
 	void
 	switchActivateEvent (bool);
@@ -231,7 +232,7 @@ class RingWindow :
 	damageRect (bool, const CompRect &);
 
 	bool
-	is ();
+	is (bool removing = false);
 
 	static bool
 	compareWindows (CompWindow *w1,
