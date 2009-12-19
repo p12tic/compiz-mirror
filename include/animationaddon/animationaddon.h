@@ -6,6 +6,7 @@
 #include <core/pluginclasshandler.h>
 
 #include <vector>
+#include <boost/ptr_container/ptr_vector.hpp>
 
 using namespace::std;
 
@@ -145,7 +146,7 @@ public:
                                  float darkSlowDown);
 
 protected:
-    vector<ParticleSystem> mParticleSystems;
+    boost::ptr_vector<ParticleSystem> mParticleSystems;
 };
 
 // Polygon stuff

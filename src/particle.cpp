@@ -314,14 +314,14 @@ ParticleAnim::initLightDarkParticles (int numLightParticles,
                                       float darkSlowDown)
 {
     if (numLightParticles > 0)
-	mParticleSystems.push_back (ParticleSystem (numLightParticles,
-						    lightSlowDown,
-						    0.0f,
-						    GL_ONE_MINUS_SRC_ALPHA));
+	mParticleSystems.push_back (new ParticleSystem (numLightParticles,
+							lightSlowDown,
+							0.0f,
+							GL_ONE_MINUS_SRC_ALPHA));
     if (numDarkParticles > 0)
-	mParticleSystems.push_back (ParticleSystem (numDarkParticles,
-						    darkSlowDown,
-						    0.5f,
-						    GL_ONE));
+	mParticleSystems.push_back (new ParticleSystem (numDarkParticles,
+							darkSlowDown,
+							0.5f,
+							GL_ONE));
 }
 
