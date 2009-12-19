@@ -478,11 +478,11 @@
       <!--restriction>
 	<value>animationaddon:Airplane</value>
 	<_name>Airplane</_name>
-      </restriction>
+      </restriction-->
       <restriction>
 	<value>animationaddon:Beam Up</value>
 	<_name>Beam Up</_name>
-      </restriction-->
+      </restriction>
       <restriction>
 	<value>animationaddon:Burn</value>
 	<_name>Burn</_name>

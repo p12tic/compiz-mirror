@@ -187,11 +187,11 @@ PrivateAnimAddonScreen::initAnimationList ()
 	new AnimEffectInfo ("animationaddon:Airplane",
 			    true, true, true, false, false,
 			    &createAnimation<AirplaneAnim>);
+#endif
     animEffects[i++] = AnimEffectBeamUp =
 	new AnimEffectInfo ("animationaddon:Beam Up",
 			    true, true, true, false, false,
 			    &createAnimation<BeamUpAnim>);
-#endif
     animEffects[i++] = AnimEffectBurn =
 	new AnimEffectInfo ("animationaddon:Burn",
 			    true, true, true, false, false,

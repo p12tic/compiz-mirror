@@ -1,4 +1,3 @@
-#if 0
 /*
  * Animation plugin for compiz/beryl
  *
@@ -44,41 +43,43 @@ BeamUpAnim::BeamUpAnim (CompWindow *w,
                         float duration,
                         const AnimEffect info,
                         const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, duration, info, icon),
     ParticleAnim::ParticleAnim (w, curWindowEvent, duration, info, icon)
 {
+    mLife         = optValF (AnimationaddonOptions::BeamLife);
+    mColor        = optValC (AnimationaddonOptions::BeamColor);
+    mSize         = optValF (AnimationaddonOptions::BeamSize);
+    mSpacing      = optValI (AnimationaddonOptions::BeamSpacing);
+    mSlowdown     = optValF (AnimationaddonOptions::BeamSlowdown);
 }
 
 void
-BurnAnim::init ()
+BeamUpAnim::init ()
 {
-    int winWidth = w->width () + w->output ().left + w->output ().right;
-    float slowDown = optValF (AnimationaddonOptions::BeamSlowdown);
+    int winWidth = mWindow->width () +
+		   mWindow->output ().left + mWindow->output ().right;
 
-    initLightDarkParticles (winWidth / 10, winWidth,
-                            slowDown / 2.0f, slowDown);
+    initLightDarkParticles (0, winWidth / mSpacing, 0, mSlowdown);
 }
 
-static void
-fxBeamUpGenNewBeam (CompWindow * w,
-		   ParticleSystem * ps,
-		   int x,
-		   int y,
-		   int width,
-		   int height,
-		   float size,
-		   float time)
+void
+BeamUpAnim::genNewBeam (int x,
+			int y,
+			int width,
+			int height,
+			float size,
+			float time)
 {
-    ps->numParticles =
-	width / animGetI (w, ANIMADDON_SCREEN_OPTION_BEAMUP_SPACING);
+    ParticleSystem &ps = mParticleSystems[0];
 
-    float beaumUpLife = animGetF (w, ANIMADDON_SCREEN_OPTION_FIRE_LIFE);
-    float beaumUpLifeNeg = 1 - beaumUpLife;
-    float fadeExtra = 0.2f * (1.01 - beaumUpLife);
-    float max_new = ps->numParticles * (time / 50) * (1.05 - beaumUpLife);
+    unsigned numParticles = ps.particles ().size ();
+
+    float beamLifeNeg = 1 - mLife;
+    float fadeExtra = 0.2f * (1.01 - mLife);
+    float maxNew = numParticles * (time / 50) * (1.05 - mLife);
 
     // set color ABAB ANIMADDON_SCREEN_OPTION_BEAMUP_COLOR
-    unsigned short *c =
-	animGetC (w, ANIMADDON_SCREEN_OPTION_BEAMUP_COLOR);
+    unsigned short *c = mColor;
     float colr1 = (float)c[0] / 0xffff;
     float colg1 = (float)c[1] / 0xffff;
     float colb1 = (float)c[2] / 0xffff;
@@ -88,18 +89,17 @@ fxBeamUpGenNewBeam (CompWindow * w,
     float cola = (float)c[3] / 0xffff;
     float rVal;
 
-    float partw = 2.5 * animGetF (w, ANIMADDON_SCREEN_OPTION_BEAMUP_SIZE);
+    float partw = 2.5 * mSize;
 
-    Particle *part = ps->particles;
-
-    for (int i = 0; i < ps->numParticles && max_new > 0; i++, part++)
+    Particle *part = &ps.particles ()[0];
+    for (unsigned i = 0; i < numParticles && maxNew > 0; i++, part++)
     {
 	if (part->life <= 0.0f)
 	{
 	    // give gt new life
 	    rVal = (float)(random () & 0xff) / 255.0;
 	    part->life = 1.0f;
-	    part->fade = rVal * beaumUpLifeNeg + fadeExtra; // Random Fade Value
+	    part->fade = rVal * beamLifeNeg + fadeExtra; // Random Fade Value
 
 	    // set size
 	    part->width = partw;
@@ -131,125 +131,105 @@ fxBeamUpGenNewBeam (CompWindow * w,
 	    part->yg = 0.0f;
 	    part->zg = 0.0f;
 
-	    ps->active = true;
-	    max_new -= 1;
+	    if (!ps.active ())
+		ps.activate ();
+	    maxNew -= 1;
 	}
 	else
 	{
 	    part->xg = (part->x < part->xo) ? 1.0 : -1.0;
 	}
     }
-
 }
 
 void
 BeamUpAnim::step ()
 {
-    CompScreen *s = w->screen;
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
 
-    ANIMADDON_DISPLAY (s->display);
-    ANIMADDON_WINDOW (w);
-
-    float timestep = (s->slowAnimations ? 2 :	// For smooth slow-mo (refer to display.c)
-		      getIntenseTimeStep (s));
-
-    aw->com->timestep = timestep;
-
-    bool creating = (aw->com->curWindowEvent == WindowEventOpen ||
-		     aw->com->curWindowEvent == WindowEventUnminimize ||
-		     aw->com->curWindowEvent == WindowEventUnshade);
+    float timestep = mIntenseTimeStep;
+    float old = 1 - (mRemainingTime) / (mTotalTime - timestep);
+    float stepSize;
 
     mRemainingTime -= timestep;
     if (mRemainingTime <= 0)
 	mRemainingTime = 0;	// avoid sub-zero values
-    float new = 1 - (mRemainingTime) / (mTotalTime - timestep);
+
+    float newProgress = 1 - mRemainingTime / (mTotalTime - timestep);
+
+    stepSize = newProgress - old;
+
+    bool creating = (mCurWindowEvent == WindowEventOpen ||
+		     mCurWindowEvent == WindowEventUnminimize ||
+		     mCurWindowEvent == WindowEventUnshade);
 
     if (creating)
-	new = 1 - new;
+	newProgress = 1 - newProgress;
 
-    if (!aw->com->drawRegion)
-	aw->com->drawRegion = XCreateRegion ();
     if (mRemainingTime > 0)
     {
-	XRectangle rect;
+	CompRect rect (((newProgress / 2) * outRect.width ()),
+		       ((newProgress / 2) * outRect.height ()),
+		       (1 - newProgress) * outRect.width (),
+		       (1 - newProgress) * outRect.height ());
+	rect.setX (rect.x () + outRect.x ());
+	rect.setY (rect.y () + outRect.y ());
 
-	rect.x = outRect.x () + ((new / 2) * outRect.width ());
-	rect.width = (1 - new) * outRect.width ();
-	rect.y = outRect.y () + ((new / 2) * outRect.height ());
-	rect.height = (1 - new) * outRect.height ();
-	XUnionRectWithRegion (&rect, &emptyRegion, aw->com->drawRegion);
+	mDrawRegion = CompRegion (rect);
     }
     else
     {
-	XUnionRegion (&emptyRegion, &emptyRegion, aw->com->drawRegion);
+	mDrawRegion = emptyRegion;
     }
 
-    aw->com->useDrawRegion = (fabs (new) > 1e-5);
-
-    if (mRemainingTime > 0 && aw->eng.numPs)
-    {
-	fxBeamUpGenNewBeam (w, &aw->eng.ps[1], 
-			   outRect.x (), outRect.y () + (outRect.height () / 2), outRect.width (),
-			   creating ?
-			   (1 - new / 2) * outRect.height () : 
-			   (1 - new) * outRect.height (),
-			   outRect.width () / 40.0, time);
-
-    }
-    if (mRemainingTime <= 0 && aw->eng.numPs
-	&& (aw->eng.ps[0].active || aw->eng.ps[1].active))
-	mRemainingTime = 0.001f;
-
-    if (!aw->eng.numPs || !aw->eng.ps)
-    {
-	if (aw->eng.ps)
-	{
-	    finiParticles (aw->eng.ps);
-	    free (aw->eng.ps);
-	    aw->eng.ps = NULL;
-	}
-	// Abort animation
-	mRemainingTime = 0;
-	return;
-    }
-
-    aw->eng.ps[0].x = outRect.x ();
-    aw->eng.ps[0].y = outRect.y ();
+    mUseDrawRegion = (fabs (newProgress) > 1e-5);
 
     if (mRemainingTime > 0)
     {
-	int nParticles = aw->eng.ps[1].numParticles;
-	Particle *part = aw->eng.ps[1].particles;
+	genNewBeam (outRect.x (), outRect.y () + (outRect.height () / 2),
+	            outRect.width (),
+	            creating ? (1 - newProgress / 2) * outRect.height ()
+	                     : (1 - newProgress) * outRect.height (),
+		    outRect.width () / 40.0,
+		    mTimeSinceLastPaint);
+    }
+    if (mRemainingTime <= 0 && mParticleSystems[0].active ())
+	// force animation to continue until particle systems are done
+	mRemainingTime = 0.001f;
+
+    if (mRemainingTime > 0)
+    {
+	vector<Particle> &particles = mParticleSystems[0].particles ();
+	int nParticles = particles.size ();
+	Particle *part = &particles[0];
 
 	for (int i = 0; i < nParticles; i++, part++)
 	    part->xg = (part->x < part->xo) ? 1.0 : -1.0;
     }
-    aw->eng.ps[1].x = outRect.x ();
-    aw->eng.ps[1].y = outRect.y ();
+    mParticleSystems[0].setOrigin (outRect.x (), outRect.y ());
 }
 
 void
-fxBeamupUpdateWindowAttrib (CompWindow *w,
-			    WindowPaintAttrib * wAttrib)
+BeamUpAnim::updateAttrib (GLWindowPaintAttrib &attrib)
 {
-    ANIMADDON_WINDOW (w);
-
     float forwardProgress = 0;
-    if (mTotalTime - aw->com->timestep != 0)
+    if (mTotalTime - mIntenseTimeStep != 0)
 	forwardProgress =
-	    1 - mRemainingTime /
-	    (mTotalTime - aw->com->timestep);
-    forwardProgress = MIN (forwardProgress, 1);
-    forwardProgress = MAX (forwardProgress, 0);
+	    1 - (mRemainingTime) / (mTotalTime - mIntenseTimeStep);
+    forwardProgress = MIN(forwardProgress, 1);
+    forwardProgress = MAX(forwardProgress, 0);
+    //float forwardProgress = progressLinear ();
 
-    if (aw->com->curWindowEvent == WindowEventOpen ||
-	aw->com->curWindowEvent == WindowEventUnminimize)
+    if (mCurWindowEvent == WindowEventOpen ||
+	mCurWindowEvent == WindowEventUnminimize)
     {
+	//forwardProgress = 1 - forwardProgress;
 	forwardProgress = forwardProgress * forwardProgress;
 	forwardProgress = forwardProgress * forwardProgress;
 	forwardProgress = 1 - forwardProgress;
     }
 
-    wAttrib->opacity = (GLushort) (aw->com->storedOpacity * (1 - forwardProgress));
+    attrib.opacity = (GLushort) (mStoredOpacity * (1 - forwardProgress));
 }
-#endif

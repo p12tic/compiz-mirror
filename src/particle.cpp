@@ -83,6 +83,19 @@ ParticleSystem::~ParticleSystem ()
 void
 ParticleSystem::draw (int offsetX, int offsetY)
 {
+    // TODO
+    // The part below should ideally be done in ParticleSystem constructor
+    // instead, but for some reason the texture image gets lost when we do that.
+    glBindTexture (GL_TEXTURE_2D, mTex);
+
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
+		 GL_RGBA, GL_UNSIGNED_BYTE, fireTex);
+    glBindTexture (GL_TEXTURE_2D, 0);
+
+
     glPushMatrix ();
     glTranslated (offsetX - mX, offsetY - mY, 0);
 
@@ -238,7 +251,8 @@ ParticleSystem::update (float time)
 
 	// modify life
 	part.life -= part.fade * speed;
-	mActive = true;
+	if (!mActive)
+	    mActive = true;
     }
 }
 
@@ -288,18 +302,6 @@ ParticleAnim::prePreparePaint (int msSinceLastPaint)
 
 	ps.update (msSinceLastPaint);
 	particleAnimInProgress = true;
-
-	// TODO
-	// The part below should be done in ParticleSystem constructor instead,
-	// but for some reason the texture image gets lost when we do that.
-	glBindTexture (GL_TEXTURE_2D, ps.mTex);
-
-	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-	glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
-		     GL_RGBA, GL_UNSIGNED_BYTE, fireTex);
-	glBindTexture (GL_TEXTURE_2D, 0);
     }
 
     return particleAnimInProgress;

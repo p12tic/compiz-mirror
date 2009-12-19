@@ -27,7 +27,7 @@ extern AnimEffect AnimEffectRazr;
 extern AnimEffect AnimEffectSkewer;
 
 // TODO Update this for each added animation effect! (total: 10)
-#define NUM_EFFECTS 2
+#define NUM_EFFECTS 3
 
 // This must have the value of the first "effect setting" above
 // in AnimAddonScreenOptions
@@ -89,7 +89,6 @@ protected:
 
 
 // Particle-based animations
-#if 0
 class BeamUpAnim : public ParticleAnim
 {
 public:
@@ -100,10 +99,22 @@ public:
 		const CompRect &icon);
 
 protected:
+    void init ();
     void step ();
-    void updateAttrib (GLWindowPaintAttrib &);
+    void genNewBeam (int x,
+		     int y,
+		     int width,
+		     int height,
+		     float size,
+		     float time);
+    void updateAttrib (GLWindowPaintAttrib &wAttrib);
+
+    float mLife;
+    unsigned short *mColor;
+    float mSize;
+    int mSpacing;
+    float mSlowdown;
 };
-#endif
 
 class BurnAnim : public ParticleAnim
 {
