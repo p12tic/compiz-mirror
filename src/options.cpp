@@ -311,9 +311,9 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 			    optNamesValuesOrig);
 	    break;
 	case 4:
-	    compLogMessage ("animation", CompLogLevelError,
-			    "Unknown option \"%s\" in \"%s\"",
-			    nameTrimmed, optNamesValuesOrig);
+	    //compLogMessage ("animation", CompLogLevelError,
+	    //	    "Unknown option \"%s\" in \"%s\"",
+	    //	    nameTrimmed, optNamesValuesOrig);
 	    break;
 	case 6:
 	    compLogMessage ("animation", CompLogLevelError,
