@@ -91,6 +91,10 @@ BeamUpAnim::genNewBeam (int x,
 
     float partw = 2.5 * mSize;
 
+    // Limit max number of new particles created simultaneously
+    if (maxNew > numParticles)
+	maxNew = numParticles;
+
     Particle *part = &ps.particles ()[0];
     for (unsigned i = 0; i < numParticles && maxNew > 0; i++, part++)
     {

@@ -106,6 +106,10 @@ BurnAnim::genNewFire (int x,
     float partw = mSize;
     float parth = partw * 1.5;
 
+    // Limit max number of new particles created simultaneously
+    if (max_new > numParticles / 5)
+	max_new = numParticles / 5;
+
     Particle *part = &ps.particles ()[0];
     for (unsigned i = 0; i < numParticles && max_new > 0; i++, part++)
     {
@@ -195,6 +199,10 @@ BurnAnim::genNewSmoke (int x,
 
     float partSize = mSize * size * 5;
     float sizeNeg = -size;
+
+    // Limit max number of new particles created simultaneously
+    if (max_new > numParticles)
+	max_new = numParticles;
 
     Particle *part = &ps.particles ()[0];
     for (unsigned i = 0; i < numParticles && max_new > 0; i++, part++)
