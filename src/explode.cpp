@@ -36,7 +36,7 @@
 
 #include "private.h"
 
-// =====================  Effect: Zoom and Sidekick  =========================
+// =====================  Effect: Explode  =========================
 
 const float ExplodeAnim::kDurationFactor = 1.43;
 
@@ -55,9 +55,6 @@ ExplodeAnim::ExplodeAnim (CompWindow *w,
     mDoLighting = true;
     mCorrectPerspective = CorrectPerspectivePolygon;
     mBackAndSidesFadeDur = 0.2f;
-
-    mTotalTime /= EXPLODE_PERCEIVED_T;
-    mRemainingTime = mTotalTime;
 }
 
 void

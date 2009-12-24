@@ -82,7 +82,6 @@ protected:
 // to make it appear to have the same speed with other animation effects
 
 #define DOMINO_PERCEIVED_T 0.8f
-#define EXPLODE_PERCEIVED_T 0.7f
 #define FOLD_PERCEIVED_T 0.55f
 #define LEAFSPREAD_PERCEIVED_T 0.6f
 #define SKEWER_PERCEIVED_T 0.6f
