@@ -37,7 +37,6 @@
 #include <GL/glu.h>
 #include "private.h"
 
-#define CLIP_LIST_INCREMENT 20
 #define MIN_WINDOW_GRID_SIZE 10
 
 PolygonAnim::PolygonAnim (CompWindow *w,
@@ -314,6 +313,7 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
 	    p->boundSphereRadius =
 		sqrt (halfW * halfW + halfH * halfH + halfThick * halfThick);
 
+	    // Reset remaining members
 	    p->effectParameters = NULL;
 	    p->moveStartTime = 0;
 	    p->moveDuration = 0;
@@ -327,13 +327,11 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
 // Tessellates window into extruded hexagon objects
 bool
 PolygonAnim::tessellateIntoHexagons (int gridSizeX,
-                                     int gridSizeY,
-                                     float thickness)
+				     int gridSizeY,
+				     float thickness)
 {
-#if 0
-    ANIMADDON_WINDOW (w);
-
-    int winLimitsX;				// boundaries of polygon tessellation
+    // boundaries of polygon tessellation
+    int winLimitsX;
     int winLimitsY;
     int winLimitsW;
     int winLimitsH;
@@ -368,28 +366,11 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
     if (hexH < minSize)
 	gridSizeY = winLimitsH / minSize;	// int div.
 
-    int nPolygons = (gridSizeY + 1) * gridSizeX + (gridSizeY + 1) / 2;
+    mPolygons.resize ((gridSizeY + 1) * gridSizeX + (gridSizeY + 1) / 2);
 
-    if (mNPolygons != nPolygons)
-    {
-	if (mNPolygons > 0)
-	    freePolygonObjects (pset);
-
-	mNPolygons = nPolygons;
-
-	mPolygons = calloc (mNPolygons, sizeof (PolygonObject));
-	if (!mPolygons)
-	{
-	    compLogMessage ("animationaddon", CompLogLevelError,
-			    "Not enough memory");
-	    mNPolygons = 0;
-	    return false;
-	}
-    }
-
-    thickness /= w->screen->width;
+    thickness /= ::screen->width ();
     mThickness = thickness;
-    mNTotalFrontVertices = 0;
+    mNumTotalFrontVertices = 0;
 
     float cellW = (float)winLimitsW / gridSizeX;
     float cellH = (float)winLimitsH / gridSizeY;
@@ -398,23 +379,30 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
     float thirdH = cellH / 3;
 
     float halfThick = mThickness / 2;
-    PolygonObject *p = mPolygons;
+    PolygonObject *p = &mPolygons[0];
 
     for (int y = 0; y < gridSizeY+1; y++)
     {
 	float posY = winLimitsY + cellH * (y);
 	int numPolysinRow = (y%2==0) ? gridSizeX : (gridSizeX + 1);
+
 	// Clip polygons to the window dimensions
 	float topY, topRightY, topLeftY, bottomY, bottomLeftY, bottomRightY;
-	if (y == 0){
+
+	if (y == 0)
+	{
 	    topY = topRightY = topLeftY = 0;
 	    bottomY = twoThirdsH;
 	    bottomLeftY = bottomRightY = thirdH;
-	} else if (y == gridSizeY){
+	}
+	else if (y == gridSizeY)
+	{
 	    bottomY = bottomLeftY = bottomRightY = 0;
 	    topY = -twoThirdsH;
 	    topLeftY = topRightY = -thirdH;
-	} else {
+	}
+	else
+	{
 	    topY = -twoThirdsH;
 	    topLeftY = topRightY = -thirdH;
 	    bottomLeftY = bottomRightY = thirdH;
@@ -425,60 +413,62 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 	{
 	    // Clip odd rows when necessary
 	    float topLeftX, topRightX, bottomLeftX, bottomRightX;
-	    if (y%2 == 1){
-		if (x == 0){
+
+	    if (y%2 == 1)
+	    {
+		if (x == 0)
+		{
 		    topLeftX = bottomLeftX = 0;
 		    topRightX = halfW;
 		    bottomRightX = halfW;
-		} else if (x == numPolysinRow-1){
+		}
+		else if (x == numPolysinRow-1)
+		{
 		    topRightX = bottomRightX = 0;
 		    topLeftX = -halfW;
 		    bottomLeftX = -halfW;
-		} else {
+		}
+		else
+		{
 		    topLeftX = bottomLeftX = -halfW;
 		    topRightX = bottomRightX = halfW;
 		}
-	    } else {
+	    }
+	    else
+	    {
 		topLeftX = bottomLeftX = -halfW;
 		topRightX = bottomRightX = halfW;
 	    }
-			
-	    p->centerPos.x = p->centerPosStart.x =
-		winLimitsX + cellW * (x + (y%2 ? 0.0 : 0.5));
-	    p->centerPos.y = p->centerPosStart.y = posY;
-	    p->centerPos.z = p->centerPosStart.z = -halfThick;
+
+	    p->centerPos.set (winLimitsX + cellW * (x + (y%2 ? 0.0 : 0.5)),
+			      posY, -halfThick);
+	    p->centerPosStart = p->centerPos;
+
 	    p->rotAngle = p->rotAngleStart = 0;
 
-	    p->centerRelPos.x = (x + 0.5) / gridSizeX;
-	    p->centerRelPos.y = (y + 0.5) / gridSizeY;
-
+	    p->centerRelPos.set ((x + 0.5) / gridSizeX,
+				 (y + 0.5) / gridSizeY);
 	    p->nSides = 6;
 	    p->nVertices = 2 * 6;
-	    mNTotalFrontVertices += 6;
+	    mNumTotalFrontVertices += 6;
 
 	    // 6 front, 6 back vertices
+	    p->vertices = (GLfloat *)calloc (6 * 2 * 3, sizeof (GLfloat));
 	    if (!p->vertices)
 	    {
-		p->vertices = calloc (6 * 2 * 3, sizeof (GLfloat));
-		if (!p->vertices)
-		{
-		    compLogMessage ("animationaddon", CompLogLevelError,
-				    "Not enough memory");
-		    freePolygonObjects (pset);
-		    return false;
-		}
+		compLogMessage ("animationaddon", CompLogLevelError,
+				"Not enough memory");
+		freePolygonObjects ();
+		return false;
 	    }
 
 	    // Vertex normals
-	    if (!p->normals)
-	    {
-		p->normals = calloc (6 * 2 * 3, sizeof (GLfloat));
-	    }
+	    p->normals = (GLfloat *)calloc (6 * 2 * 3, sizeof (GLfloat));
 	    if (!p->normals)
 	    {
 		compLogMessage ("animationaddon", CompLogLevelError,
 				"Not enough memory");
-		freePolygonObjects (pset);
+		freePolygonObjects ();
 		return false;
 	    }
 
@@ -536,15 +526,12 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 	    pv[35] = -halfThick;
 
 	    // 24 indices per 6 sides (for quads)
-	    if (!p->sideIndices)
-	    {
-		p->sideIndices = calloc (4 * 6, sizeof (GLushort));
-	    }
+	    p->sideIndices = (GLushort *)calloc (4 * 6, sizeof (GLushort));
 	    if (!p->sideIndices)
 	    {
 		compLogMessage ("animationaddon", CompLogLevelError,
 				"Not enough memory");
-		freePolygonObjects (pset);
+		freePolygonObjects ();
 		return false;
 	    }
 
@@ -636,13 +623,15 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 	    p->boundSphereRadius = sqrt ((topRightX - topLeftX) * (topRightX - topLeftX) / 4 +
 					(bottomY - topY) * (bottomY - topY) / 4 +
 					halfThick * halfThick);
+
+	    // Reset remaining members
+	    p->effectParameters = NULL;
+	    p->moveStartTime = 0;
+	    p->moveDuration = 0;
+	    p->fadeStartTime = 0;
+	    p->fadeDuration = 0;
 	}
     }
-    if (mNPolygons != p - mPolygons)
-	compLogMessage ("animationaddon", CompLogLevelError,
-			"%s: Error in tessellateIntoHexagons at line %d!",
-			__FILE__, __LINE__);
-#endif
     return true;
 }
 
