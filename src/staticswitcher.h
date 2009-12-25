@@ -88,6 +88,7 @@ class StaticSwitchScreen :
 				 unsigned int opacity);
 	void getMinimizedAndMatch (bool &minimizedOption,
 				   CompMatch *&match);
+	bool getMipmap ();
 
 	CompTimer popupDelayTimer;
 

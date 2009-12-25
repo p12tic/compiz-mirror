@@ -507,6 +507,12 @@ StaticSwitchScreen::getMinimizedAndMatch (bool &minimizedOption,
     matchOption = &optionGetWindowMatch ();
 }
 
+bool
+StaticSwitchScreen::getMipmap ()
+{
+    return optionGetMipmap ();
+}
+
 void
 StaticSwitchScreen::windowRemove (CompWindow *w)
 {
@@ -1139,7 +1145,6 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
      * the relevant thumbnails */
     if (window->id () == sScreen->popupWindow)
     {
-	GLenum         filter;
 	int            x, y, offX;
 	float          px, py, pos;
 	int            count = sScreen->windows.size ();
@@ -1156,11 +1161,6 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	if (!(mask & PAINT_WINDOW_TRANSFORMED_MASK) && region.isEmpty ())
 	    return true;
 
-	filter = gScreen->textureFilter ();
-
-	if (sScreen->optionGetMipmap ())
-	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
-
 	glPushAttrib (GL_SCISSOR_BIT);
 
 	glEnable (GL_SCISSOR_TEST);
@@ -1175,8 +1175,6 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	       mask, x + g.x (), y + g.y ());
 	    i++;
 	}
-
-	gScreen->setTextureFilter (filter);
 
 	pos = fmod (sScreen->pos, count);
 	px  = fmod (pos, sScreen->xCount);
