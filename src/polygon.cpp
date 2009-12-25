@@ -56,26 +56,26 @@ typedef struct
     float dist;
     float x, y; // relative from center
 
-} spoke_vertex_t;
+} SpokeVertex;
 
 typedef struct
 {
     float direction;
     float length;
-    spoke_vertex_t * spoke_vertex;
+    SpokeVertex *spokeVertex;
 
-} spoke_t;
+} Spoke;
 
 typedef struct
 {
-    bool is_triangle;       // false if 4 sided, true if 3 sided
+    bool isTriangle;       // false if 4 sided, true if 3 sided
     float centerX, centerY;
     float pt0X, pt0Y,
 	  pt1X, pt1Y,
 	  pt2X, pt2Y,
 	  pt3X, pt3Y;     // if is_triangle is true, these are unused
 
-} shard_t;
+} Shard;
 
 // Frees up polygon objects in pset
 void
@@ -645,28 +645,26 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
  * glass or spiderweb appearance.
  */
 bool
-PolygonAnim::tessellateIntoGlass (int spoke_multiplier,
-                                  int tier_num,
-                                  float thickness)
+PolygonAnim::tessellateIntoGlass (int spokeMultiplier,
+				  int numTiers,
+				  float thickness)
 {
-#if 0
-    ANIMADDON_WINDOW (w);
-
-    int spoke_num = 4 * spoke_multiplier;
+    int numSpokes = 4 * spokeMultiplier;
     int winLimitsX, winLimitsY, winLimitsW, winLimitsH;
     float centerX, centerY;
-    float  spoke_range;
-    float top_bottom_length, left_right_length;
+    float  spokeRange;
+    float topBottomLength, leftRightLength;
 
-    spoke_t spoke[spoke_num];
-    memset (spoke, 0, sizeof (spoke_t) * spoke_num);
+    Spoke spokes[numSpokes];
+    memset (spokes, 0, sizeof (Spoke) * numSpokes);
 
-    for (int i = 0; i < spoke_num; i++)
+    for (int i = 0; i < numSpokes; i++)
     {
-	spoke[i].spoke_vertex = calloc (tier_num, sizeof (spoke_vertex_t));
+	spokes[i].spokeVertex =
+	    (SpokeVertex *) calloc (numTiers, sizeof (SpokeVertex));
     }
 
-    spoke_range = 2 * M_PI / spoke_num;
+    spokeRange = 2 * M_PI / numSpokes;
 
     CompRect inRect (mAWindow->savedRectsValid () ?
 		     mAWindow->savedInRect () :
@@ -699,103 +697,103 @@ PolygonAnim::tessellateIntoGlass (int spoke_multiplier,
     centerY = (winLimitsH / 2.0) + winLimitsY;
 
     /* Calculate corner angles */
-    float corner_angle[4];
-    corner_angle[0] = atanf ((centerY - winLimitsY) /
+    float cornerAngle[4];
+    cornerAngle[0] = atanf ((centerY - winLimitsY) /
 			     (winLimitsX + winLimitsW - centerX));
-    corner_angle[1] = M_PI - corner_angle[0];
-    corner_angle[2] = M_PI + corner_angle[0];
-    corner_angle[3] = 2 * M_PI - corner_angle[0];
+    cornerAngle[1] = M_PI - cornerAngle[0];
+    cornerAngle[2] = M_PI + cornerAngle[0];
+    cornerAngle[3] = 2 * M_PI - cornerAngle[0];
 
     float range;
 
     //calculate the vertex positions
-    for (int i = 0; i < spoke_num; i++)
+    for (int i = 0; i < numSpokes; i++)
     {
 	/* The spokes must go into the corners. The remaining spokes fit between the corner spokes */
-	if ((i % spoke_multiplier) == 0)
+	if ((i % spokeMultiplier) == 0)
 	{
-	    spoke[i].direction = corner_angle[i / spoke_multiplier];
+	    spokes[i].direction = cornerAngle[i / spokeMultiplier];
 	}
 	else
 	{
-	    range = corner_angle[((i / spoke_multiplier) + 1) % 4 ] -
-		corner_angle[i / spoke_multiplier];
+	    range = cornerAngle[((i / spokeMultiplier) + 1) % 4 ] -
+		cornerAngle[i / spokeMultiplier];
 	    if (range < 0)
-		range = 2 * M_PI - corner_angle[i / spoke_multiplier] +
-		    corner_angle[((i / spoke_multiplier) + 1) % 4 ];
+		range = 2 * M_PI - cornerAngle[i / spokeMultiplier] +
+		    cornerAngle[((i / spokeMultiplier) + 1) % 4 ];
 
-	    spoke[i].direction = corner_angle[i / spoke_multiplier] +
-		(i % spoke_multiplier) * range / spoke_multiplier;
+	    spokes[i].direction = cornerAngle[i / spokeMultiplier] +
+		(i % spokeMultiplier) * range / spokeMultiplier;
 
-	    if (spoke[i].direction > 2 * M_PI)
-		spoke[i].direction -= 2 * M_PI;
+	    if (spokes[i].direction > 2 * M_PI)
+		spokes[i].direction -= 2 * M_PI;
 
 	    // Random direction
-	    spoke[i].direction += range * (float) rand () / 3 / RAND_MAX;
+	    spokes[i].direction += range * (float) rand () / 3 / RAND_MAX;
 	}
 
 
 	//calculate the length of the spoke
 	//calculate top/bottom lenght
-	if ((spoke[i].direction < M_PI))
-	    top_bottom_length = (centerY - winLimitsY);
+	if ((spokes[i].direction < M_PI))
+	    topBottomLength = (centerY - winLimitsY);
 	else
-	    top_bottom_length = ((winLimitsY + winLimitsH)- centerY);
+	    topBottomLength = ((winLimitsY + winLimitsH)- centerY);
 
-	top_bottom_length /= sinf (spoke[i].direction);
-	if (top_bottom_length < 0) top_bottom_length *= -1;
+	topBottomLength /= sinf (spokes[i].direction);
+	if (topBottomLength < 0) topBottomLength *= -1;
 
 	//calculate left right length
-	if ((spoke[i].direction < M_PI / 2) || (spoke[i].direction > 3 * M_PI / 2))
-	    left_right_length = (winLimitsX + winLimitsW) - centerX;
+	if ((spokes[i].direction < M_PI / 2) || (spokes[i].direction > 3 * M_PI / 2))
+	    leftRightLength = (winLimitsX + winLimitsW) - centerX;
 	else
-	    left_right_length = centerX - winLimitsX;
+	    leftRightLength = centerX - winLimitsX;
 
-	left_right_length /= cosf (spoke[i].direction);
+	leftRightLength /= cosf (spokes[i].direction);
 
-	if (left_right_length < 0) left_right_length *= -1;
+	if (leftRightLength < 0) leftRightLength *= -1;
 
 	//take the smaller of the two
-	if (left_right_length < top_bottom_length)
-	    spoke[i].length = left_right_length;
+	if (leftRightLength < topBottomLength)
+	    spokes[i].length = leftRightLength;
 	else
-	    spoke[i].length = top_bottom_length;
+	    spokes[i].length = topBottomLength;
 
 
-	float percent = 1.0 / ((float) tier_num);
+	float percent = 1.0 / ((float) numTiers);
 	//calculate spoke vertexes
-	for (int j = 0 ; j < tier_num; j++)
+	for (int j = 0 ; j < numTiers; j++)
 	{
-	    spoke[i].spoke_vertex[j].dist = percent * (j + 1) * spoke[i].length;
+	    spokes[i].spokeVertex[j].dist = percent * (j + 1) * spokes[i].length;
 
-	    spoke[i].spoke_vertex[j].x =
-		centerX + (spoke[i].spoke_vertex[j].dist * cos (spoke[i].direction));
-	    spoke[i].spoke_vertex[j].y =
-		centerY + (spoke[i].spoke_vertex[j].dist * sin (spoke[i].direction));
+	    spokes[i].spokeVertex[j].x =
+		centerX + (spokes[i].spokeVertex[j].dist * cos (spokes[i].direction));
+	    spokes[i].spokeVertex[j].y =
+		centerY + (spokes[i].spokeVertex[j].dist * sin (spokes[i].direction));
 	}
     }
 
 
-    shard_t shards[spoke_num][tier_num];
+    Shard shards[numSpokes][numTiers];
 
     //calculate the center and bounds of each polygon
-    for (int i = 0; i < spoke_num; i++)
+    for (int i = 0; i < numSpokes; i++)
     {
-	for (int j = 0; j < tier_num; j++)
+	for (int j = 0; j < numTiers; j++)
 	{
 	    switch (j)
 	    {
 	    case 0:
 		//the first tier is triangles
-		shards[i][j].is_triangle = true;
+		shards[i][j].isTriangle = true;
 		shards[i][j].pt0X = centerX;
 		shards[i][j].pt0Y = centerY;
 
-		shards[i][j].pt1X = spoke[i].spoke_vertex[j].x;
-		shards[i][j].pt1Y = spoke[i].spoke_vertex[j].y;
+		shards[i][j].pt1X = spokes[i].spokeVertex[j].x;
+		shards[i][j].pt1Y = spokes[i].spokeVertex[j].y;
 
-		shards[i][j].pt2X = spoke[(i + 1) % spoke_num].spoke_vertex[j].x;
-		shards[i][j].pt2Y = spoke[(i + 1) % spoke_num].spoke_vertex[j].y;
+		shards[i][j].pt2X = spokes[(i + 1) % numSpokes].spokeVertex[j].x;
+		shards[i][j].pt2Y = spokes[(i + 1) % numSpokes].spokeVertex[j].y;
 
 		shards[i][j].pt3X = shards[i][j].pt0X;//fourth point is not used
 		shards[i][j].pt3Y = shards[i][j].pt0Y;
@@ -810,28 +808,28 @@ PolygonAnim::tessellateIntoGlass (int spoke_multiplier,
 
 	    default:
 		//the other tiers are 4 sided polygons
-		shards[i][j].is_triangle = false;
-		shards[i][j].pt0X = spoke[i].spoke_vertex[j - 1].x;
-		shards[i][j].pt0Y = spoke[i].spoke_vertex[j - 1].y;
+		shards[i][j].isTriangle = false;
+		shards[i][j].pt0X = spokes[i].spokeVertex[j - 1].x;
+		shards[i][j].pt0Y = spokes[i].spokeVertex[j - 1].y;
 
-		shards[i][j].pt1X = spoke[i].spoke_vertex[j].x;
-		shards[i][j].pt1Y = spoke[i].spoke_vertex[j].y;
+		shards[i][j].pt1X = spokes[i].spokeVertex[j].x;
+		shards[i][j].pt1Y = spokes[i].spokeVertex[j].y;
 
-		if (i != spoke_num - 1)
+		if (i != numSpokes - 1)
 		{
-		    shards[i][j].pt2X = spoke[i + 1].spoke_vertex[j].x;
-		    shards[i][j].pt2Y = spoke[i + 1].spoke_vertex[j].y;
+		    shards[i][j].pt2X = spokes[i + 1].spokeVertex[j].x;
+		    shards[i][j].pt2Y = spokes[i + 1].spokeVertex[j].y;
 
-		    shards[i][j].pt3X = spoke[i + 1].spoke_vertex[j - 1].x;
-		    shards[i][j].pt3Y = spoke[i + 1].spoke_vertex[j - 1].y;
+		    shards[i][j].pt3X = spokes[i + 1].spokeVertex[j - 1].x;
+		    shards[i][j].pt3Y = spokes[i + 1].spokeVertex[j - 1].y;
 		}
 		else
 		{
-		    shards[i][j].pt2X = spoke[0].spoke_vertex[j].x;
-		    shards[i][j].pt2Y = spoke[0].spoke_vertex[j].y;
+		    shards[i][j].pt2X = spokes[0].spokeVertex[j].x;
+		    shards[i][j].pt2Y = spokes[0].spokeVertex[j].y;
 
-		    shards[i][j].pt3X = spoke[0].spoke_vertex[j - 1].x;
-		    shards[i][j].pt3Y = spoke[0].spoke_vertex[j - 1].y;
+		    shards[i][j].pt3X = spokes[0].spokeVertex[j - 1].x;
+		    shards[i][j].pt3Y = spokes[0].spokeVertex[j - 1].y;
 		}
 
 		//calculate the center of the polygon
@@ -846,77 +844,54 @@ PolygonAnim::tessellateIntoGlass (int spoke_multiplier,
 
     }
 
-
     //set up polygons
-    if (mNPolygons != spoke_num * tier_num)
-    {
-	if (mNPolygons > 0)
-	    freePolygonObjects (pset);
 
-	mNPolygons = spoke_num * tier_num;
+    mPolygons.resize (numSpokes * numTiers);
 
-	mPolygons = calloc (mNPolygons, sizeof (PolygonObject));
-	if (!mPolygons)
-	{
-	    compLogMessage ("animationaddon",
-			    CompLogLevelError, "Not enough memory");
-	    mNPolygons = 0;
-	    return false;
-	}
-    }
-
-    thickness /= w->screen->width;
+    thickness /= ::screen->width ();
     mThickness = thickness;
-    mNTotalFrontVertices = 0;
+    mNumTotalFrontVertices = 0;
 
     float halfThick = mThickness / 2;
-    PolygonObject *p = mPolygons;
+    PolygonObject *p = &mPolygons[0];
 
-    for (int yc = 0; yc <  spoke_num; yc++) //spokes
+    for (int yc = 0; yc <  numSpokes; yc++) //spokes
     {
-	for (int xc = 0; xc < tier_num; xc++, p++) //tiers
+	for (int xc = 0; xc < numTiers; xc++, p++) //tiers
 	{
-	    p->centerPos.y = p->centerPosStart.y =
-		shards[yc][xc].centerY;
+	    p->centerPos.set (shards[yc][xc].centerX,
+			      shards[yc][xc].centerY, -halfThick);
+	    p->centerPosStart = p->centerPos;
 
-	    p->centerPos.x = p->centerPosStart.x =
-		shards[yc][xc].centerX;
-
-	    p->centerPos.z = p->centerPosStart.z = -halfThick;
-	    p->centerRelPos.x = (shards[yc][xc].centerX - winLimitsX) / winLimitsW;
-	    p->centerRelPos.y = (shards[yc][xc].centerY - winLimitsY) / winLimitsH;
+	    p->centerRelPos.set ((shards[yc][xc].centerX - winLimitsX) /
+				 winLimitsW,
+				 (shards[yc][xc].centerY - winLimitsY) /
+				 winLimitsH);
 
 	    p->rotAngle = p->rotAngleStart = 0;
 
 	    p->nSides = 4;
 	    p->nVertices = 2 * 4;
-	    mNTotalFrontVertices += 4;
+	    mNumTotalFrontVertices += 4;
 
 	    // 4 front, 4 back vertices
-	    if (!p->vertices)
-	    {
-		p->vertices = calloc (8 * 3, sizeof (GLfloat));
-	    }
-
+	    p->vertices = (GLfloat *)calloc (8 * 3, sizeof (GLfloat));
 	    if (!p->vertices)
 	    {
 		compLogMessage ("animationaddon",
 				CompLogLevelError, "Not enough memory");
-		freePolygonObjects (pset);
+		freePolygonObjects ();
 		return false;
 	    }
 
 	    // Vertex normals
-	    if (!p->normals)
-	    {
-		p->normals = calloc (8 * 3, sizeof (GLfloat));
-	    }
+	    p->normals = (GLfloat *)calloc (8 * 3, sizeof (GLfloat));
 	    if (!p->normals)
 	    {
 		compLogMessage ("animationaddon",
 				CompLogLevelError,
 				"Not enough memory");
-		freePolygonObjects (pset);
+		freePolygonObjects ();
 		return false;
 	    }
 
@@ -957,15 +932,12 @@ PolygonAnim::tessellateIntoGlass (int spoke_multiplier,
 	    pv[23] = -halfThick;
 
 	    // 16 indices for 4 sides (for quads)
-	    if (!p->sideIndices)
-	    {
-		p->sideIndices = calloc (4 * 4, sizeof (GLushort));
-	    }
+	    p->sideIndices = (GLushort *)calloc (4 * 4, sizeof (GLushort));
 	    if (!p->sideIndices)
 	    {
 		compLogMessage ("animationaddon",
 				CompLogLevelError, "Not enough memory");
-		freePolygonObjects (pset);
+		freePolygonObjects ();
 		return false;
 	    }
 
@@ -1026,7 +998,7 @@ PolygonAnim::tessellateIntoGlass (int spoke_multiplier,
 	    p->boundingBox.x2 = shards[yc][xc].pt1X;
 	    p->boundingBox.y2 = shards[yc][xc].pt1Y;
 
-	    float dist[4] = {0}, longest_dist = 0;
+	    float dist[4] = {0}, longestDist = 0;
 	    dist[0] = sqrt (powf ((shards[yc][xc].centerX - shards[yc][xc].pt0X), 2) +
 			    powf ((shards[yc][xc].centerY - shards[yc][xc].pt0Y), 2) +
 			    powf (thickness,2));
@@ -1042,14 +1014,20 @@ PolygonAnim::tessellateIntoGlass (int spoke_multiplier,
 
 	    for (int k = 0; k < 4; k++)
 	    {
-		if (dist[k] > longest_dist)
-		    longest_dist = dist[k];
+		if (dist[k] > longestDist)
+		    longestDist = dist[k];
 	    }
 
-	    p->boundSphereRadius = longest_dist;
+	    p->boundSphereRadius = longestDist;
+
+	    // Reset remaining members
+	    p->effectParameters = NULL;
+	    p->moveStartTime = 0;
+	    p->moveDuration = 0;
+	    p->fadeStartTime = 0;
+	    p->fadeDuration = 0;
 	}
     }
-#endif
 
     return true;
 }
