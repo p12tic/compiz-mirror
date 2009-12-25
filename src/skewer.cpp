@@ -1,4 +1,3 @@
-#if 0
 /**
  * Animation plugin for compiz/beryl
  *
@@ -33,6 +32,25 @@
  **/
 
 #include "private.h"
+
+// =====================  Effect: Skewer  =========================
+
+const float SkewerAnim::kDurationFactor = 1.67;
+
+SkewerAnim::SkewerAnim (CompWindow *w,
+			WindowEvent curWindowEvent,
+			float duration,
+			const AnimEffect info,
+			const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, kDurationFactor * duration, info,
+			  icon),
+    PolygonAnim::PolygonAnim (w, curWindowEvent, kDurationFactor * duration,
+			      info, icon)
+{
+    mDoDepthTest = true;
+    mDoLighting = true;
+    mCorrectPerspective = CorrectPerspectiveWindow;
+}
 
 static void
 getDirection (int *dir, int *c, int direction)
@@ -85,52 +103,43 @@ getDirection (int *dir, int *c, int direction)
     }
 }
 
-bool
-fxSkewerInit (CompWindow * w)
+void
+SkewerAnim::init ()
 {
-    if (!polygonsAnimInit (w))
-	return false;
-
-    CompScreen *s = w->screen;
-
-    ANIMADDON_WINDOW (w);
-
-    mTotalTime /= SKEWER_PERCEIVED_T;
-    mRemainingTime = mTotalTime;
-
-    float thickness = animGetF (w, ANIMADDON_SCREEN_OPTION_SKEWER_THICKNESS);
-    int rotation = animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_ROTATION);
-    int gridSizeX = animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_GRIDSIZE_X);
-    int gridSizeY = animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_GRIDSIZE_Y);
+    float thickness = optValF (AnimationaddonOptions::SkewerThickness);
+    int rotation = optValI (AnimationaddonOptions::SkewerRotation);
+    int gridSizeX = optValI (AnimationaddonOptions::SkewerGridx);
+    int gridSizeY = optValI (AnimationaddonOptions::SkewerGridy);
 
     int dir[2];			// directions array
     int c = 0;			// number of directions
 
     getDirection (dir, &c,
-		  animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_DIRECTION));
+		  (int) optValI (AnimationaddonOptions::SkewerDirection));
 
-    if (animGetI (w, ANIMADDON_SCREEN_OPTION_SKEWER_TESS) == PolygonTessHex)
+    if (optValI (AnimationaddonOptions::SkewerTessellation) ==
+	AnimationaddonOptions::SkewerTessellationHexagonal)
     {
-	if (!tessellateIntoHexagons (w, gridSizeX, gridSizeY, thickness))
-	    return false;
+	if (!tessellateIntoHexagons (gridSizeX, gridSizeY, thickness))
+	    return;
     }
     else
     {
-	if (!tessellateIntoRectangles (w, gridSizeX, gridSizeY, thickness))
-	    return false;
+	if (!tessellateIntoRectangles (gridSizeX, gridSizeY, thickness))
+	    return;
     }
 
-    PolygonSet *pset = aw->eng.polygonSet;
-    PolygonObject *p = mPolygons;
+    int numPolygons = mPolygons.size ();
+    int times[numPolygons];
+    int last_time = numPolygons - 1;
 
-    int times[mNPolygons];
-    int last_time = mNPolygons - 1;
+    int maxZ = .8 * DEFAULT_Z_CAMERA * ::screen->width ();
 
     int i;
-    for (i = 0; i < mNPolygons; i++)
+    for (i = 0; i < numPolygons; i++)
 	times[i] = i;
 
-    for (i = 0; i < mNPolygons; i++, p++)
+    foreach (PolygonObject &p, mPolygons)
     {
 	if (c > 0)
 	{
@@ -138,92 +147,82 @@ fxSkewerInit (CompWindow * w)
 	    {
 	    case 0:
 		// left
-		p->finalRelPos.x = -s->width;
-		p->rotAxis.x = rotation;
+		p.finalRelPos.setX (-::screen->width ());
+		p.rotAxis.setX (rotation);
 		break;
 
 	    case 1:
 		// right
-		p->finalRelPos.x = s->width;
-		p->rotAxis.x = rotation;
+		p.finalRelPos.setX (::screen->width ());
+		p.rotAxis.setX (rotation);
 		break;
 
 	    case 2:
 		// up
-		p->finalRelPos.y = -s->height;
-		p->rotAxis.y = rotation;
+		p.finalRelPos.setY (-::screen->height ());
+		p.rotAxis.setY (rotation);
 		break;
 
 	    case 3:
 		// down
-		p->finalRelPos.y = s->height;
-		p->rotAxis.y = rotation;
+		p.finalRelPos.setY (::screen->height ());
+		p.rotAxis.setY (rotation);
 		break;
 
 	    case 4:
 		// in
-		p->finalRelPos.z = -.8 * DEFAULT_Z_CAMERA * s->width;
-		p->rotAxis.x = rotation;
-		p->rotAxis.y = rotation;
+		p.finalRelPos.setZ (-maxZ);
+		p.rotAxis.setX (rotation);
+		p.rotAxis.setY (rotation);
 		break;
 
 	    case 5:
 		// out
-		p->finalRelPos.z = .8 * DEFAULT_Z_CAMERA * s->width;
-		p->rotAxis.x = rotation;
-		p->rotAxis.y = rotation;
+		p.finalRelPos.setZ (maxZ);
+		p.rotAxis.setX (rotation);
+		p.rotAxis.setY (rotation);
 		break;
 	    }
 
-	    p->finalRotAng = rotation;
+	    p.finalRotAng = rotation;
 	}
 	// if no direction is set - just fade
 
 	// choose random start_time
 	int rand_time = floor (RAND_FLOAT () * last_time);
 
-	p->moveStartTime = 0.8 / (float)mNPolygons * times[rand_time];
-	p->moveDuration = 1 - p->moveStartTime;
+	p.moveStartTime = 0.8 / (float)numPolygons * times[rand_time];
+	p.moveDuration = 1 - p.moveStartTime;
 
-	p->fadeStartTime = p->moveStartTime + 0.2;
-	p->fadeDuration = 1 - p->fadeStartTime;
+	p.fadeStartTime = p.moveStartTime + 0.2;
+	p.fadeDuration = 1 - p.fadeStartTime;
 
 	times[rand_time] = times[last_time];	// copy last one over times[rand_time]
 	last_time--;		//descrease last_time
     }
-
-    mDoDepthTest = true;
-    mDoLighting = true;
-    mCorrectPerspective = CorrectPerspectiveWindow;
-
-    return true;
 }
 
 void
-fxSkewerAnimStepPolygon (CompWindow *w,
-			 PolygonObject *p,
+SkewerAnim::stepPolygon (PolygonObject &p,
 			 float forwardProgress)
 {
-    float moveProgress = forwardProgress - p->moveStartTime;
+    float moveProgress = forwardProgress - p.moveStartTime;
 
-    if (p->moveDuration > 0)
-	moveProgress /= p->moveDuration;
+    if (p.moveDuration > 0)
+	moveProgress /= p.moveDuration;
     if (moveProgress < 0)
 	moveProgress = 0;
     else if (moveProgress > 1)
 	moveProgress = 1;
 
-    p->centerPos.x =
-	p->centerPosStart.x + pow (moveProgress, 2) * p->finalRelPos.x;
-
-    p->centerPos.y =
-	p->centerPosStart.y + pow (moveProgress, 2) * p->finalRelPos.y;
-
-    p->centerPos.z =
-	p->centerPosStart.z +
-	pow (moveProgress, 2) * p->finalRelPos.z * 1.0f / w->screen->width;
+    p.centerPos.set (pow (moveProgress, 2) * p.finalRelPos.x () +
+		     p.centerPosStart.x (),
+		     pow (moveProgress, 2) * p.finalRelPos.y () +
+		     p.centerPosStart.y (),
+		     1.0f / ::screen->width () *
+		     pow (moveProgress, 2) * p.finalRelPos.z () +
+		     p.centerPosStart.z ());
 
     // rotate
-    p->rotAngle = pow (moveProgress, 2) * p->finalRotAng + p->rotAngleStart;
+    p.rotAngle = pow (moveProgress, 2) * p.finalRotAng + p.rotAngleStart;
 }
-#endif

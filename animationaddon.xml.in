@@ -511,10 +511,10 @@
 	<value>animationaddon:Razr</value>
 	<_name>Razr</_name>
       </restriction>
-      <!--restriction>
+      <restriction>
 	<value>animationaddon:Skewer</value>
 	<_name>Skewer</_name>
-      </restriction-->
+      </restriction>
     </extension>
 
   </plugin>

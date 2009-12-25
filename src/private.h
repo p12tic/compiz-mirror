@@ -27,7 +27,7 @@ extern AnimEffect AnimEffectRazr;
 extern AnimEffect AnimEffectSkewer;
 
 // TODO Update this for each added animation effect! (total: 10)
-#define NUM_EFFECTS 6
+#define NUM_EFFECTS 7
 
 // This must have the value of the first "effect setting" above
 // in AnimAddonScreenOptions
@@ -82,7 +82,6 @@ protected:
 // to make it appear to have the same speed with other animation effects
 
 #define FOLD_PERCEIVED_T 0.55f
-#define SKEWER_PERCEIVED_T 0.6f
 
 
 // Particle-based animations
@@ -305,7 +304,6 @@ protected:
     static const float kDurationFactor;
 };
 
-#if 0
 class SkewerAnim : public PolygonAnim
 {
 public:
@@ -315,13 +313,10 @@ public:
 		const AnimEffect info,
 		const CompRect &icon);
 
-    void
-    fxSkewerAnimStepPolygon (CompWindow *w,
-			     PolygonObject *p,
-			     float forwardProgress);
+    void init ();
+    void stepPolygon (PolygonObject &p,
+		      float forwardProgress);
 
-    AnimAddonEffectProperties fxSkewerExtraProp = {
-	.animStepPolygonFunc = fxSkewerAnimStepPolygon};
+protected:
+    static const float kDurationFactor;
 };
-
-#endif

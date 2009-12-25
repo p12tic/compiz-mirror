@@ -222,12 +222,11 @@ PrivateAnimAddonScreen::initAnimationList ()
 	new AnimEffectInfo ("animationaddon:Razr",
 			    true, true, true, false, false,
 			    &createAnimation<RazrAnim>);
-#if 0
     animEffects[i++] = AnimEffectSkewer =
 	new AnimEffectInfo ("animationaddon:Skewer",
 			    true, true, true, false, false,
 			    &createAnimation<SkewerAnim>);
-#endif
+
     animAddonExtPluginInfo.effectOptions = &getOptions ();
 
     AnimScreen *as = AnimScreen::get (::screen);
