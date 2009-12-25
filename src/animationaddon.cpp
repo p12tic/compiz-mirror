@@ -196,15 +196,15 @@ PrivateAnimAddonScreen::initAnimationList ()
 	new AnimEffectInfo ("animationaddon:Burn",
 			    true, true, true, false, false,
 			    &createAnimation<BurnAnim>);
+    animEffects[i++] = AnimEffectDomino =
+	new AnimEffectInfo ("animationaddon:Domino",
+			    true, true, true, false, false,
+			    &createAnimation<DominoAnim>);
     animEffects[i++] = AnimEffectExplode =
 	new AnimEffectInfo ("animationaddon:Explode",
 			    true, true, true, false, false,
 			    &createAnimation<ExplodeAnim>);
 #if 0
-    animEffects[i++] = AnimEffectDomino =
-	new AnimEffectInfo ("animationaddon:Domino",
-			    true, true, true, false, false,
-			    &createAnimation<DominoAnim>);
     animEffects[i++] = AnimEffectFold =
 	new AnimEffectInfo ("animationaddon:Fold",
 			    true, true, true, false, false,
@@ -213,6 +213,7 @@ PrivateAnimAddonScreen::initAnimationList ()
 	new AnimEffectInfo ("animationaddon:Glide 3",
 			    true, true, true, false, false,
 			    &createAnimation<Glide3Anim>);
+#endif
     animEffects[i++] = AnimEffectLeafSpread =
 	new AnimEffectInfo ("animationaddon:Leaf Spread",
 			    true, true, true, false, false,
@@ -221,6 +222,7 @@ PrivateAnimAddonScreen::initAnimationList ()
 	new AnimEffectInfo ("animationaddon:Razr",
 			    true, true, true, false, false,
 			    &createAnimation<RazrAnim>);
+#if 0
     animEffects[i++] = AnimEffectSkewer =
 	new AnimEffectInfo ("animationaddon:Skewer",
 			    true, true, true, false, false,

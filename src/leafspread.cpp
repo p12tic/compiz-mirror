@@ -1,4 +1,3 @@
-#if 0
 /*
  * Animation plugin for compiz/beryl
  *
@@ -37,20 +36,35 @@
 
 #include "private.h"
 
-bool
-fxLeafSpreadInit (CompWindow * w)
+// =====================  Effect: Leaf Spread  =========================
+
+const float LeafSpreadAnim::kDurationFactor = 1.67;
+
+LeafSpreadAnim::LeafSpreadAnim (CompWindow *w,
+				WindowEvent curWindowEvent,
+				float duration,
+				const AnimEffect info,
+				const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, kDurationFactor * duration, info,
+			  icon),
+    PolygonAnim::PolygonAnim (w, curWindowEvent, kDurationFactor * duration,
+			      info, icon)
 {
-    if (!polygonsAnimInit (w))
-	return false;
+    mDoDepthTest = true;
+    mDoLighting = true;
+    mCorrectPerspective = CorrectPerspectivePolygon;
+}
 
-    CompScreen *s = w->screen;
-    ANIMADDON_WINDOW (w);
+void
+LeafSpreadAnim::init ()
+{
+    if (!tessellateIntoRectangles (20, 14, 15.0f))
+	return;
 
-    if (!tessellateIntoRectangles (w, 20, 14, 15.0f))
-	return false;
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
 
-    PolygonSet *pset = aw->eng.polygonSet;
-    PolygonObject *p = mPolygons;
     float fadeDuration = 0.26;
     float life = 0.4;
     float spreadFac = 3.5;
@@ -59,51 +73,35 @@ fxLeafSpreadInit (CompWindow * w)
     float winFacY = outRect.height () / 800.0;
     float winFacZ = (outRect.height () + outRect.width ()) / 2.0 / 800.0;
 
-    int i;
+    float screenSizeFactor = (0.8 * DEFAULT_Z_CAMERA * ::screen->width ());
 
-    for (i = 0; i < mNPolygons; i++, p++)
+    foreach (PolygonObject &p, mPolygons)
     {
-	p->rotAxis.x = RAND_FLOAT ();
-	p->rotAxis.y = RAND_FLOAT ();
-	p->rotAxis.z = RAND_FLOAT ();
+	p.rotAxis.set (RAND_FLOAT (), RAND_FLOAT (), RAND_FLOAT ());
 
-	float screenSizeFactor = (0.8 * DEFAULT_Z_CAMERA * s->width);
 	float speed = screenSizeFactor / 10 * (0.2 + RAND_FLOAT ());
 
-	float xx = 2 * (p->centerRelPos.x - 0.5);
-	float yy = 2 * (p->centerRelPos.y - 0.5);
+	float xx = 2 * (p.centerRelPos.x () - 0.5);
+	float yy = 2 * (p.centerRelPos.y () - 0.5);
 
-	float x =
-	    speed * winFacX * spreadFac * (xx +
-					   0.5 * (RAND_FLOAT () - 0.5));
-	float y =
-	    speed * winFacY * spreadFac * (yy +
-					   0.5 * (RAND_FLOAT () - 0.5));
+	float x = speed * winFacX * spreadFac * (xx +
+						 0.5 * (RAND_FLOAT () - 0.5));
+	float y = speed * winFacY * spreadFac * (yy +
+						 0.5 * (RAND_FLOAT () - 0.5));
 	float z = speed * winFacZ * 7 * ((RAND_FLOAT () - 0.5) / 0.5);
 
-	p->finalRelPos.x = x;
-	p->finalRelPos.y = y;
-	p->finalRelPos.z = z;
+	p.finalRelPos.set (x, y, z);
 
-	p->moveStartTime =
-	    p->centerRelPos.y * (1 - fadeDuration - randYMax) +
+	p.moveStartTime =
+	    p.centerRelPos.y () * (1 - fadeDuration - randYMax) +
 	    randYMax * RAND_FLOAT ();
-	p->moveDuration = 1;
+	p.moveDuration = 1;
 
-	p->fadeStartTime = p->moveStartTime + life;
-	if (p->fadeStartTime > 1 - fadeDuration)
-	    p->fadeStartTime = 1 - fadeDuration;
-	p->fadeDuration = fadeDuration;
+	p.fadeStartTime = p.moveStartTime + life;
+	if (p.fadeStartTime > 1 - fadeDuration)
+	    p.fadeStartTime = 1 - fadeDuration;
+	p.fadeDuration = fadeDuration;
 
-	p->finalRotAng = 150;
+	p.finalRotAng = 150;
     }
-    mDoDepthTest = true;
-    mDoLighting = true;
-    mCorrectPerspective = CorrectPerspectivePolygon;
-
-    mTotalTime /= LEAFSPREAD_PERCEIVED_T;
-    mRemainingTime = mTotalTime;
-
-    return true;
 }
-#endif

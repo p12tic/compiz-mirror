@@ -27,7 +27,7 @@ extern AnimEffect AnimEffectRazr;
 extern AnimEffect AnimEffectSkewer;
 
 // TODO Update this for each added animation effect! (total: 10)
-#define NUM_EFFECTS 3
+#define NUM_EFFECTS 6
 
 // This must have the value of the first "effect setting" above
 // in AnimAddonScreenOptions
@@ -81,9 +81,7 @@ protected:
 // ratio of perceived length of animation compared to real duration
 // to make it appear to have the same speed with other animation effects
 
-#define DOMINO_PERCEIVED_T 0.8f
 #define FOLD_PERCEIVED_T 0.55f
-#define LEAFSPREAD_PERCEIVED_T 0.6f
 #define SKEWER_PERCEIVED_T 0.6f
 
 
@@ -230,6 +228,7 @@ class AirplaneAnim :
     AnimAddonEffectProperties fxAirplaneExtraProp = {
 	.animStepPolygonFunc = fxAirplaneLinearAnimStepPolygon};
 };
+#endif
 
 class DominoAnim : public PolygonAnim
 {
@@ -239,8 +238,24 @@ public:
 		float duration,
 		const AnimEffect info,
 		const CompRect &icon);
+
+    void init ();
+
+protected:
+    static const float kDurationFactor;
 };
 
+class RazrAnim : public DominoAnim
+{
+public:
+    RazrAnim (CompWindow *w,
+	      WindowEvent curWindowEvent,
+	      float duration,
+	      const AnimEffect info,
+	      const CompRect &icon);
+};
+
+#if 0
 class FoldAnim : public PolygonAnim
 {
 public:
@@ -273,6 +288,7 @@ public:
     AnimAddonEffectProperties fxGlide3ExtraProp = {
 	.animStepPolygonFunc = polygonsDeceleratingAnimStepPolygon};
 };
+#endif
 
 class LeafSpreadAnim : public PolygonAnim
 {
@@ -282,8 +298,14 @@ public:
 		    float duration,
 		    const AnimEffect info,
 		    const CompRect &icon);
+
+    void init ();
+
+protected:
+    static const float kDurationFactor;
 };
 
+#if 0
 class SkewerAnim : public PolygonAnim
 {
 public:

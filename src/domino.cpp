@@ -1,4 +1,3 @@
-#if 0
 /*
  * Animation plugin for compiz/beryl
  *
@@ -37,25 +36,50 @@
 
 #include "private.h"
 
-bool
-fxDominoInit (CompWindow * w)
+// =====================  Effect: Domino and Razr  =========================
+
+const float DominoAnim::kDurationFactor = 1.25;
+
+DominoAnim::DominoAnim (CompWindow *w,
+				WindowEvent curWindowEvent,
+				float duration,
+				const AnimEffect info,
+				const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, kDurationFactor * duration, info,
+			  icon),
+    PolygonAnim::PolygonAnim (w, curWindowEvent, kDurationFactor * duration,
+			      info, icon)
 {
-    if (!polygonsAnimInit (w))
-	return false;
+    mDoDepthTest = true;
+    mDoLighting = true;
+    mCorrectPerspective = CorrectPerspectivePolygon;
+}
 
-    ANIMADDON_DISPLAY (w->screen->display);
-    ANIMADDON_WINDOW (w);
+RazrAnim::RazrAnim (CompWindow *w,
+		    WindowEvent curWindowEvent,
+		    float duration,
+		    const AnimEffect info,
+		    const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, kDurationFactor * duration, info,
+			  icon),
+    DominoAnim::DominoAnim (w, curWindowEvent, duration, info, icon)
+{
+}
 
-    bool isRazr = (aw->com->curAnimEffect == AnimEffectRazr);
-
+void
+DominoAnim::init ()
+{
+    bool isRazr = (typeid (*this) == typeid (RazrAnim));
     int fallDir;
 
     if (isRazr)
-	fallDir = ad->animBaseFunctions->getActualAnimDirection
-	    (w, animGetI (w, ANIMADDON_SCREEN_OPTION_RAZR_DIRECTION), true);
+	fallDir = getActualAnimDirection
+	    ((AnimDirection) optValI (AnimationaddonOptions::RazrDirection),
+	     true);
     else
-	fallDir = ad->animBaseFunctions->getActualAnimDirection
-	    (w, animGetI (w, ANIMADDON_SCREEN_OPTION_DOMINO_DIRECTION), true);
+	fallDir = getActualAnimDirection
+	    ((AnimDirection) optValI (AnimationaddonOptions::DominoDirection),
+	     true);
 
     int defaultGridSize = 20;
     float minCellSize = 30;
@@ -70,47 +94,51 @@ fxDominoInit (CompWindow * w)
     if (isRazr)
 	cellAspectRatio = 1;
 
+    CompRect outRect (mAWindow->savedRectsValid () ?
+		      mAWindow->savedOutRect () :
+		      mWindow->outputRect ());
+
     // Determine sensible domino piece sizes
     if (fallDir == AnimDirectionDown || fallDir == AnimDirectionUp)
     {
-	if (minCellSize > BORDER_W (w))
-	    minCellSize = BORDER_W (w);
-	if (BORDER_W (w) / defaultGridSize < minCellSize)
-	    gridSizeX = (int)(BORDER_W (w) / minCellSize);
+	if (minCellSize > outRect.width ())
+	    minCellSize = outRect.width ();
+	if (outRect.width () / defaultGridSize < minCellSize)
+	    gridSizeX = (int)(outRect.width () / minCellSize);
 	else
 	    gridSizeX = defaultGridSize;
-	gridCellW = BORDER_W (w) / gridSizeX;
-	gridSizeY = (int)(BORDER_H (w) / (gridCellW * cellAspectRatio));
+	gridCellW = outRect.width () / gridSizeX;
+	gridSizeY = (int)(outRect.height () / (gridCellW * cellAspectRatio));
 	if (gridSizeY == 0)
 	    gridSizeY = 1;
-	gridCellH = BORDER_H (w) / gridSizeY;
+	gridCellH = outRect.height () / gridSizeY;
 	fallDirGridSize = gridSizeY;
     }
     else
     {
-	if (minCellSize > BORDER_H (w))
-	    minCellSize = BORDER_H (w);
-	if (BORDER_H (w) / defaultGridSize < minCellSize)
-	    gridSizeY = (int)(BORDER_H (w) / minCellSize);
+	if (minCellSize > outRect.height ())
+	    minCellSize = outRect.height ();
+	if (outRect.height () / defaultGridSize < minCellSize)
+	    gridSizeY = (int)(outRect.height () / minCellSize);
 	else
 	    gridSizeY = defaultGridSize;
-	gridCellH = BORDER_H (w) / gridSizeY;
-	gridSizeX = (int)(BORDER_W (w) / (gridCellH * cellAspectRatio));
+	gridCellH = outRect.height () / gridSizeY;
+	gridSizeX = (int)(outRect.width () / (gridCellH * cellAspectRatio));
 	if (gridSizeX == 0)
 	    gridSizeX = 1;
-	gridCellW = BORDER_W (w) / gridSizeX;
+	gridCellW = outRect.width () / gridSizeX;
 	fallDirGridSize = gridSizeX;
     }
     minDistStartEdge = (1.0 / fallDirGridSize) / 2;
 
     float thickness = MIN (gridCellW, gridCellH) / 3.5;
 
-    if (!tessellateIntoRectangles (w, gridSizeX, gridSizeY, thickness))
-	return false;
+    if (!tessellateIntoRectangles (gridSizeX, gridSizeY, thickness))
+	return;
 
     float rotAxisX = 0;
     float rotAxisY = 0;
-    Point3d rotAxisOff = { 0, 0, thickness / 2 };
+    Point3d rotAxisOff (0, 0, thickness / 2);
     float posX = 0;				// position of standing piece
     float posY = 0;
     float posZ = 0;
@@ -123,7 +151,7 @@ fxDominoInit (CompWindow * w)
     case AnimDirectionDown:
 	rotAxisX = -1;
 	if (isRazr)
-	    rotAxisOff.y = -gridCellHalfH;
+	    rotAxisOff.setY (-gridCellHalfH);
 	else
 	{
 	    posY = -(gridCellHalfH + thickness);
@@ -133,7 +161,7 @@ fxDominoInit (CompWindow * w)
     case AnimDirectionLeft:
 	rotAxisY = -1;
 	if (isRazr)
-	    rotAxisOff.x = gridCellHalfW;
+	    rotAxisOff.setX (gridCellHalfW);
 	else
 	{
 	    posX = gridCellHalfW + thickness;
@@ -144,7 +172,7 @@ fxDominoInit (CompWindow * w)
     case AnimDirectionUp:
 	rotAxisX = 1;
 	if (isRazr)
-	    rotAxisOff.y = gridCellHalfH;
+	    rotAxisOff.setY (gridCellHalfH);
 	else
 	{
 	    posY = gridCellHalfH + thickness;
@@ -154,7 +182,7 @@ fxDominoInit (CompWindow * w)
     case AnimDirectionRight:
 	rotAxisY = 1;
 	if (isRazr)
-	    rotAxisOff.x = -gridCellHalfW;
+	    rotAxisOff.setX (-gridCellHalfW);
 	else
 	{
 	    posX = -(gridCellHalfW + thickness);
@@ -178,28 +206,16 @@ fxDominoInit (CompWindow * w)
 	fadeDuration = 0.18;
 	riseDuration = 0.2;
     }
-    float *riseTimeRandSeed = calloc (nFallingColumns, sizeof (float));
 
-    if (!riseTimeRandSeed)
-	// TODO: log error here
-	return false;
-    int i;
+    float riseTimeRandSeed[nFallingColumns];
 
-    for (i = 0; i < nFallingColumns; i++)
+    for (int i = 0; i < nFallingColumns; i++)
 	riseTimeRandSeed[i] = RAND_FLOAT ();
 
-    PolygonSet *pset = aw->eng.polygonSet;
-    PolygonObject *p = mPolygons;
-
-    for (i = 0; i < mNPolygons; i++, p++)
+    foreach (PolygonObject &p, mPolygons)
     {
-	p->rotAxis.x = rotAxisX;
-	p->rotAxis.y = rotAxisY;
-	p->rotAxis.z = 0;
-
-	p->finalRelPos.x = posX;
-	p->finalRelPos.y = posY;
-	p->finalRelPos.z = posZ;
+	p.rotAxis.set (rotAxisX, rotAxisY, 0);
+	p.finalRelPos.set (posX, posY, posZ);
 
 	// dist. from rise-start / fall-end edge in window ([0,1] range)
 	float distStartEdge = 0;
@@ -212,20 +228,20 @@ fxDominoInit (CompWindow * w)
 	switch (fallDir)
 	{
 	case AnimDirectionUp:
-	    distStartEdge = p->centerRelPos.y;
-	    distPerpEdge = p->centerRelPos.x;
+	    distStartEdge = p.centerRelPos.y ();
+	    distPerpEdge = p.centerRelPos.x ();
 	    break;
 	case AnimDirectionRight:
-	    distStartEdge = 1 - p->centerRelPos.x;
-	    distPerpEdge = p->centerRelPos.y;
+	    distStartEdge = 1 - p.centerRelPos.x ();
+	    distPerpEdge = p.centerRelPos.y ();
 	    break;
 	case AnimDirectionDown:
-	    distStartEdge = 1 - p->centerRelPos.y;
-	    distPerpEdge = p->centerRelPos.x;
+	    distStartEdge = 1 - p.centerRelPos.y ();
+	    distPerpEdge = p.centerRelPos.x ();
 	    break;
 	case AnimDirectionLeft:
-	    distStartEdge = p->centerRelPos.x;
-	    distPerpEdge = p->centerRelPos.y;
+	    distStartEdge = p.centerRelPos.x ();
+	    distPerpEdge = p.centerRelPos.y ();
 	    break;
 	}
 
@@ -233,7 +249,7 @@ fxDominoInit (CompWindow * w)
 	    riseTimeRandSeed[(int)(distPerpEdge * nFallingColumns)] *
 	    riseTimeRandMax;
 
-	p->moveDuration = riseDuration;
+	p.moveDuration = riseDuration;
 
 	float mult = 1;
 	if (fallDirGridSize > 1)
@@ -241,38 +257,25 @@ fxDominoInit (CompWindow * w)
 		    (1 - 2 * minDistStartEdge));
 	if (isRazr)
 	{
-	    p->moveStartTime =
-		mult *
+	    p.moveStartTime = mult *
 		(1 - riseDuration - riseTimeRandMax) + riseTimeRand;
-	    p->fadeStartTime = p->moveStartTime + riseDuration / 2;
-	    p->finalRotAng = -180;
+	    p.fadeStartTime = p.moveStartTime + riseDuration / 2;
+	    p.finalRotAng = -180;
 
-	    p->rotAxisOffset.x = rotAxisOff.x;
-	    p->rotAxisOffset.y = rotAxisOff.y;
-	    p->rotAxisOffset.z = rotAxisOff.z;
+	    p.rotAxisOffset = rotAxisOff;
 	}
 	else
 	{
-	    p->moveStartTime =
+	    p.moveStartTime =
 		mult *
 		(1 - riseDuration - riseTimeRandMax) +
 		riseTimeRand;
-	    p->fadeStartTime =
-		p->moveStartTime + riseDuration - riseTimeRand + 0.03;
-	    p->finalRotAng = -90;
+	    p.fadeStartTime =
+		p.moveStartTime + riseDuration - riseTimeRand + 0.03;
+	    p.finalRotAng = -90;
 	}
-	if (p->fadeStartTime > 1 - fadeDuration)
-	    p->fadeStartTime = 1 - fadeDuration;
-	p->fadeDuration = fadeDuration;
+	if (p.fadeStartTime > 1 - fadeDuration)
+	    p.fadeStartTime = 1 - fadeDuration;
+	p.fadeDuration = fadeDuration;
     }
-    free (riseTimeRandSeed);
-    mDoDepthTest = true;
-    mDoLighting = true;
-    mCorrectPerspective = CorrectPerspectivePolygon;
-
-    mTotalTime /= DOMINO_PERCEIVED_T;
-    mRemainingTime = mTotalTime;
-
-    return true;
 }
-#endif

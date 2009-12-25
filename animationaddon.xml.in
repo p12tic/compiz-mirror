@@ -487,10 +487,10 @@
 	<value>animationaddon:Burn</value>
 	<_name>Burn</_name>
       </restriction>
-      <!--restriction>
+      <restriction>
 	<value>animationaddon:Domino</value>
 	<_name>Domino</_name>
-      </restriction-->
+      </restriction>
       <restriction>
 	<value>animationaddon:Explode</value>
 	<_name>Explode</_name>
@@ -502,7 +502,7 @@
       <restriction>
 	<value>animationaddon:Glide 3</value>
 	<_name>Glide 3</_name>
-      </restriction>
+      </restriction-->
       <restriction>
 	<value>animationaddon:Leaf Spread</value>
 	<_name>Leaf Spread</_name>
@@ -511,7 +511,7 @@
 	<value>animationaddon:Razr</value>
 	<_name>Razr</_name>
       </restriction>
-      <restriction>
+      <!--restriction>
 	<value>animationaddon:Skewer</value>
 	<_name>Skewer</_name>
       </restriction-->
