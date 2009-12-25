@@ -176,9 +176,12 @@ class Point
 	inline void setY (float y) { mY = y; }
 
 	void set (float x, float y) { mX = x; mY = y; }
-	Point &operator= (const Point &p);
 
 	inline void add (const Point &p) { mX += p.x (); mY += p.y (); }
+
+	Point &operator= (const Point &p);
+	bool operator== (const Point &p) const;
+	bool operator!= (const Point &p) const;
 
     private:
 	float mX, mY;
@@ -207,6 +210,10 @@ class Point3d
 	{ mX += p.x (); mY += p.y (); mZ += p.z (); }
 	inline void add (float x, float y, float z)
 	{ mX += x; mY += y; mZ += z; }
+
+	Point3d &operator= (const Point3d &p);
+	bool operator== (const Point3d &p) const;
+	bool operator!= (const Point3d &p) const;
 
     private:
 	float mX, mY, mZ;
@@ -745,6 +752,36 @@ Point::operator= (const Point &p)
     return *this;
 }
 
+inline bool
+Point::operator== (const Point &p) const
+{
+    return (mX == p.x () && mY == p.y ());
+}
+
+inline bool
+Point::operator!= (const Point &p) const
+{
+    return !(*this == p);
+}
+
+inline Point3d &
+Point3d::operator= (const Point3d &p)
+{
+    mX = p.x (); mY = p.y (); mZ = p.z ();
+    return *this;
+}
+
+inline bool
+Point3d::operator== (const Point3d &p) const
+{
+    return (mX == p.x () && mY == p.y () && mZ == p.z ());
+}
+
+inline bool
+Point3d::operator!= (const Point3d &p) const
+{
+    return !(*this == p);
+}
 
 
 #define RAND_FLOAT() ((float)rand() / RAND_MAX)
