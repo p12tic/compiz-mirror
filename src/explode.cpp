@@ -48,7 +48,7 @@ ExplodeAnim::ExplodeAnim (CompWindow *w,
     Animation::Animation (w, curWindowEvent, kDurationFactor * duration, info,
 			  icon),
     PolygonAnim::PolygonAnim (w, curWindowEvent, kDurationFactor * duration,
-                              info, icon)
+			      info, icon)
 {
     mAllFadeDuration = 0.3f;
     mDoDepthTest = true;
@@ -62,19 +62,19 @@ ExplodeAnim::init ()
 {
     switch (optValI (AnimationaddonOptions::ExplodeTessellation))
     {
-    case PolygonTessRect:
+    case AnimationaddonOptions::ExplodeTessellationRectangular:
 	if (!tessellateIntoRectangles (optValI (AnimationaddonOptions::ExplodeGridx),
 				       optValI (AnimationaddonOptions::ExplodeGridy),
 				       optValF (AnimationaddonOptions::ExplodeThickness)))
 	    return;
 	break;
-    case PolygonTessHex:
+    case AnimationaddonOptions::ExplodeTessellationHexagonal:
 	if (!tessellateIntoHexagons (optValI (AnimationaddonOptions::ExplodeGridx),
 				     optValI (AnimationaddonOptions::ExplodeGridy),
 				     optValF (AnimationaddonOptions::ExplodeThickness)))
 	    return;
 	break;
-    case PolygonTessGlass:
+    case AnimationaddonOptions::ExplodeTessellationGlass:
 	if (!tessellateIntoGlass (optValI (AnimationaddonOptions::ExplodeSpokes),
 	                          optValI (AnimationaddonOptions::ExplodeTiers),
 	                          optValF (AnimationaddonOptions::ExplodeThickness)))

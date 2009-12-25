@@ -151,15 +151,6 @@ protected:
 
 // Polygon stuff
 
-/// Polygon tesselation type: Rectangular, Hexagonal
-typedef enum
-{
-    PolygonTessRect = 0,
-    PolygonTessHex,
-    PolygonTessGlass
-} PolygonTess;
-#define LAST_POLYGON_TESS 2
-
 typedef enum
 {
     CorrectPerspectiveNone = 0,
