@@ -31,6 +31,8 @@
 
 #include "private.h"
 
+const float FoldAnim::kDurationFactor = 1.82;
+
 bool
 fxFoldInit (CompWindow * w)
 {

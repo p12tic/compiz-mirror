@@ -78,11 +78,6 @@ protected:
     CompWindow *mWindow;    ///< Window being animated.
 };
 
-// ratio of perceived length of animation compared to real duration
-// to make it appear to have the same speed with other animation effects
-
-#define FOLD_PERCEIVED_T 0.55f
-
 
 // Particle-based animations
 class BeamUpAnim : public ParticleAnim
