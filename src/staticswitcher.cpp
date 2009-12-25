@@ -1048,10 +1048,8 @@ StaticSwitchWindow::updateIconTexturedWindow (GLWindowPaintAttrib  &sAttrib,
 {
     float xScale, yScale;
 
-    xScale = (icon->width () > ICON_SIZE) ?
-    	(float) ICON_SIZE / icon->width () : 1.0;
-    yScale = (icon->height () > ICON_SIZE) ?
-    	(float) ICON_SIZE / icon->height () : 1.0;
+    xScale = (float) ICON_SIZE / icon->width ();
+    yScale = (float) ICON_SIZE / icon->height ();
 
     if (xScale < yScale)
 	yScale = xScale;
@@ -1075,20 +1073,8 @@ StaticSwitchWindow::updateIconNontexturedWindow (GLWindowPaintAttrib  &sAttrib,
 						 int                  y,
 						 GLTexture            *icon)
 {
-    float iw, ih;
-
-    iw = width;
-    ih = height;
-
-    if (icon->width () < (iw / 2) || icon->width () > iw)
-	sAttrib.xScale = (iw / icon->width ());
-    else
-	sAttrib.xScale = 1.0f;
-
-    if (icon->height () < (ih / 2) || icon->height () > ih)
-	sAttrib.yScale = (ih / icon->height ());
-    else
-	sAttrib.yScale = 1.0f;
+    sAttrib.xScale = width / icon->width ();
+    sAttrib.yScale = height / icon->height ();
 
     if (sAttrib.xScale < sAttrib.yScale)
 	sAttrib.yScale = sAttrib.xScale;
