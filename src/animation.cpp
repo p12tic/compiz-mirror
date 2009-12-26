@@ -1340,8 +1340,9 @@ PrivateAnimWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
     // if window is being animated
     if (mCurAnimation)
     {
-	mCurAnimation->addGeometry (matrix, region, clip,
-				    maxGridWidth, maxGridHeight);
+	if (mCurAnimation->initialized ())
+	    mCurAnimation->addGeometry (matrix, region, clip,
+					maxGridWidth, maxGridHeight);
     }
     else
     {
@@ -1415,7 +1416,8 @@ PrivateAnimWindow::glDrawGeometry ()
 {
     if (mCurAnimation)
     {
-	mCurAnimation->drawGeometry ();
+	if (mCurAnimation->initialized ())
+	    mCurAnimation->drawGeometry ();
     }
     else
     {
