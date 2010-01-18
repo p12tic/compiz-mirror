@@ -112,8 +112,6 @@ ShelfWindow::shapeInput ()
 {
     Window     frame;
     Display    *dpy = screen->dpy();
-    XRectangle *rects;
-    int        count = 0, ordering;
 
     saveInputShape (&info->inputRects,
 		    &info->nInputRects,
