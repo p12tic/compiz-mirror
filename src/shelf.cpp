@@ -215,74 +215,37 @@ ShelfScreen::removeWindowFromList (ShelfedWindowInfo *info)
 
 /* Adjust size and location of the input prevention window
  */
-
-#warning: function ShelfWindow::adjustIPW is broken
-
-/* This function is broken.
- * For some reason, even though the IPW should be of the correct size (as shown
- * by the fprintfs, it seems that it does not actually 'configure' - so it could
- * be moved but it will still be in the same place. Perhaps the new restack code
- * has broken it?
- */
 void
 ShelfWindow::adjustIPW ()
 {
-    //fprintf (stderr, "adjustIPW\n");
     XWindowChanges xwc;
-    XSetWindowAttributes attrib;
     Display        *dpy = screen->dpy ();
-    float          width, height;
+    float          f_width, f_height;
 
     if (!info || !info->ipw)
 	return;
 
-    attrib.override_redirect = TRUE;
-    attrib.event_mask        = 0;
-
-    fprintf (stderr, "adjusting\n");
-
-    width  = window->width () + 2 * window->geometry ().border () +
+    f_width  = window->width () + 2 * window->geometry ().border () +
 	     window->input ().left + window->input ().right + 2.0f;
-    fprintf (stderr, "width is %f\n", width);
-    width  *= targetScale;
-    fprintf (stderr, "width is now %f\n", width);
-    height = window->height () + 2 * window->geometry ().border () +
+    f_width  *= targetScale;
+    f_height = window->height () + 2 * window->geometry ().border () +
 	     window->input ().top + window->input ().bottom + 2.0f;
-    height *= targetScale;
+    f_height *= targetScale;
 
     xwc.x          = window->x () - window->input ().left;
     xwc.y          = window->y () - window->input ().top;
-    xwc.width      = (int) width;
-    xwc.height     = (int) height;
-    xwc.stack_mode = Above;
-    xwc.sibling    = window->id ();
+    xwc.width      = (int) f_width;
+    xwc.height     = (int) f_height;
+    xwc.stack_mode = Below;
+    /* XXX: This causes XConfigureWindow to break */
+    //xwc.sibling    = window->id ();
 
-    fprintf (stderr, "width %f height %f x %i y %i\n", width, height, xwc.x, xwc.y);
-    fprintf (stderr, "window props width %i height %i x %i y %i\n", window->width(), window->height(), window->x (),window->y());
-
-    XDestroyWindow (dpy, info->ipw);
-
-    info->ipw = XCreateWindow (screen->dpy (),
-			 screen->root (),
-			 xwc.x,
-			 xwc.y,
-			 (int)width,
-			 (int)height,
-			 0, CopyFromParent, InputOnly, CopyFromParent,
-			 CWEventMask | CWOverrideRedirect,
-			 &attrib);
-
-
-    //XUnmapWindow (dpy, info->ipw);
-    /*CompWindow *ipw = screen->findWindow (info->ipw);
-
-    if (ipw)
-	ipw->configureXWindow ( CWX | CWY | CWWidth | CWHeight, &xwc);*/
-
-    //XConfigureWindow (dpy, info->ipw,
-	//	      CWSibling | CWStackMode | CWX | CWY | CWWidth | CWHeight,
-	//	      &xwc);
     XMapWindow (dpy, info->ipw);
+
+    XConfigureWindow (dpy, info->ipw,
+		      CWStackMode | CWX | CWY | CWWidth | CWHeight,
+		      &xwc);
+
 }
 
 void
@@ -291,8 +254,8 @@ ShelfScreen::adjustIPWStacking ()
 
     foreach (ShelfedWindowInfo *run, shelfedWindows)
     {
-	/*if (!run->w->prev || run->w->prev->id () != run->ipw)
-	    ShelfWindow::get (run->w)->adjustIPW ();*/
+	if (!run->w->prev || run->w->prev->id () != run->ipw)
+	    ShelfWindow::get (run->w)->adjustIPW ();
     }
 }
 
@@ -302,25 +265,29 @@ ShelfWindow::createIPW ()
 {
     Window               ipw;
     XSetWindowAttributes attrib;
+    XWindowChanges       xwc;
 
     if (!info || info->ipw)
 	return;
 
     attrib.override_redirect = TRUE;
-    attrib.event_mask        = 0;
-
+    //attrib.event_mask        = 0;
+    
     ipw = XCreateWindow (screen->dpy (),
-			 screen->root (),
-			 window->serverX () - window->input ().left,
-			 window->serverY () - window->input ().top,
-			 window->serverWidth () +
-					 window->input ().left +
-					 window->input ().right,
-			 window->serverHeight () + window->input ().top
-						 + window->input ().bottom,
-			 0, CopyFromParent, InputOnly, CopyFromParent,
-			 CWEventMask | CWOverrideRedirect,
-			 &attrib);
+    			 screen->root (),
+    			 0, 0, -100, -100, 0, CopyFromParent, InputOnly,
+    			 CopyFromParent, CWOverrideRedirect, &attrib);
+    			 
+    xwc.x = window->serverGeometry ().x () - window->input ().left;
+    xwc.y = window->serverGeometry ().y () - window->input ().top;
+    xwc.width = window->serverGeometry ().width () +
+    			window->input ().left + window->input ().right;
+    xwc.height = window->serverGeometry ().height () +
+    			window->input ().top  + window->input ().bottom;
+
+    XMapWindow (screen->dpy (), ipw);
+
+    XConfigureWindow (screen->dpy (), ipw, CWStackMode | CWX | CWY | CWWidth | CWHeight, &xwc);
  
     info->ipw = ipw;
 }
@@ -367,9 +334,8 @@ ShelfWindow::handleShelfInfo ()
 	    return false;
 
 	shapeInput ();
-	//createIPW ();
+	createIPW ();
 	ss->addWindowToList (info);
-	fprintf (stderr, "created IPW\n");
     }
 
     return true;
@@ -387,12 +353,9 @@ ShelfWindow::scale (float fScale)
     if ((float) window->width () * targetScale < SHELF_MIN_SIZE)
 	targetScale = SHELF_MIN_SIZE / (float) window->width ();
 
-    handleShelfInfo ();
-
-#if 0
     if (handleShelfInfo ())
 	adjustIPW ();
-#endif
+
     cWindow->addDamage ();
 }
 
@@ -663,7 +626,7 @@ ShelfScreen::handleEvent (XEvent *event)
 		if (w->prev != oldPrev || w->next != oldNext)
 		{
 		    /* restacking occured, ensure ipw stacking */
-		    //adjustIPWStacking ();
+		    adjustIPWStacking ();
 		}
 	    }
 	    break;
@@ -785,8 +748,8 @@ ShelfScreen::donePaint ()
 void
 ShelfWindow::moveNotify (int dx, int dy, bool immediate)
 {
-    /*if (targetScale != 1.00f)
-	adjustIPW ();*/
+    if (targetScale != 1.00f)
+	adjustIPW ();
 
     window->moveNotify (dx, dy, immediate);
 }
