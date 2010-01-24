@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (stackswitch PLUGINDEPS text)
+include (CompizPlugin)
+
+compiz_plugin (stackswitch PLUGINDEPS composite opengl text)
