@@ -1,18 +1,20 @@
 <?xml version="1.0"?>
 <compiz>
-	<plugin name="3d" useBcop="true">
+	<plugin name="td" useBcop="true">
 		<_short>3D Windows</_short>
 		<_long>Elevates windows while rotating the cube</_long>
 		<category>Effects</category>
 		<deps>
 			<requirement>
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
 				<plugin>cube</plugin>
 			</requirement>
 			<relation type="after">
 				<plugin>cube</plugin>
 			</relation>
 		</deps>
-		<screen>
+		<options>
 			<group>
 				<_short>Misc. Options</_short>
 				<option name="window_match" type="match">
@@ -101,7 +103,7 @@
 					</option>
 				</subgroup>
 			</group>
-		</screen>
+		</options>
 	</plugin>
 </compiz>
 

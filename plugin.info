@@ -1,4 +1,0 @@
-PLUGIN = 3d
-PKG_DEP = compiz-cube
-CHK_HEADERS = compiz-cube.h
-
