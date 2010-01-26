@@ -1,3 +1,4 @@
+#if 0
 /**
  * Animation plugin for compiz/beryl
  *
@@ -28,27 +29,29 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  **/
 
-#include "animationaddon.h"
+#include "private.h"
 
-Bool
+const float FoldAnim::kDurationFactor = 1.82;
+
+bool
 fxFoldInit (CompWindow * w)
 {
     if (!polygonsAnimInit (w))
-	return FALSE;
+	return false;
 
     ANIMADDON_WINDOW (w);
 
-    aw->com->animTotalTime /= FOLD_PERCEIVED_T;
-    aw->com->animRemainingTime = aw->com->animTotalTime;
+    mTotalTime /= FOLD_PERCEIVED_T;
+    mRemainingTime = mTotalTime;
 
     int gridSizeX = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_X);
     int gridSizeY = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_Y);
 
     if (!tessellateIntoRectangles (w, gridSizeX, gridSizeY, 1.0f))
-	return FALSE;
+	return false;
 
     PolygonSet *pset = aw->eng.polygonSet;
-    PolygonObject *p = pset->polygons;
+    PolygonObject *p = mPolygons;
 
     // handle other non-zero values
     int fold_in = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_DIR) == 0 ? 1 : 0;
@@ -74,9 +77,9 @@ fxFoldInit (CompWindow * w)
     int j = 0;
     int k = 0;
 
-    for (i = 0; i < pset->nPolygons; i++, p++)
+    for (i = 0; i < mNPolygons; i++, p++)
     {
-	if (i > pset->nPolygons - gridSizeX - 1)
+	if (i > mNPolygons - gridSizeX - 1)
 	{
 	    // bottom row polygons
 	    if (j < gridSizeX / 2)
@@ -133,11 +136,11 @@ fxFoldInit (CompWindow * w)
 	p->moveStartTime = start;
 	p->moveDuration = duration;
     }
-    pset->doDepthTest = TRUE;
-    pset->doLighting = TRUE;
-    pset->correctPerspective = CorrectPerspectiveWindow;
+    mDoDepthTest = true;
+    mDoLighting = true;
+    mCorrectPerspective = CorrectPerspectiveWindow;
 
-    return TRUE;
+    return true;
 }
 
 void
@@ -237,3 +240,4 @@ fxFoldAnimStepPolygon (CompWindow *w,
 				       const_x / 2.0f);
     }
 }
+#endif

@@ -1,6 +1,6 @@
 <compiz>
   <!-- animationaddon metadata -->
-  <plugin name="animationaddon">
+  <plugin name="animationaddon" useBcop="true">
     <_short>Animations Add-On</_short>
     <_long>Extra window animations and animation engines</_long>
     <category>Effects</category>
@@ -13,15 +13,18 @@
       </relation>
     </deps>
 
-    <display>
-      <option name="abi" type="int" read_only="true"/>
-      <option name="index" type="int" read_only="true"/>
-    </display>
-
-    <screen>
+    <options>
 
       <group>
 	<_short>Effect Settings</_short>
+
+	<option name="time_step_intense" type="int">
+	  <_short>Animation Time Step For Intense Effects</_short>
+	  <_long>The amount of time in milliseconds between each render of the intense animation (Ex. Burn, Beam). The higher the number, the jerkier the movements become.</_long>
+	  <default>30</default>
+	  <min>1</min>
+	  <max>400</max>
+	</option>
 
 	<subgroup>
 	  <_short>Airplane</_short>
@@ -461,17 +464,9 @@
 	    <precision>10</precision>
 	  </option>
 	</subgroup>
-
-	<option name="time_step_intense" type="int">
-	  <_short>Animation Time Step For Intense Effects</_short>
-	  <_long>The amount of time in milliseconds between each render of the intense animation (Ex. Burn, Beam). The higher the number, the jerkier the movements become.</_long>
-	  <default>30</default>
-	  <min>1</min>
-	  <max>400</max>
-	</option>
       </group> 
 
-    </screen>
+    </options>
 
     <extension base_plugin="animation">
       <base_option>open_effects</base_option>
@@ -480,10 +475,10 @@
       <base_option>close_random_effects</base_option>
       <base_option>minimize_effects</base_option>
       <base_option>minimize_random_effects</base_option>
-      <restriction>
+      <!--restriction>
 	<value>animationaddon:Airplane</value>
 	<_name>Airplane</_name>
-      </restriction>
+      </restriction-->
       <restriction>
 	<value>animationaddon:Beam Up</value>
 	<_name>Beam Up</_name>
@@ -500,14 +495,14 @@
 	<value>animationaddon:Explode</value>
 	<_name>Explode</_name>
       </restriction>
-      <restriction>
+      <!--restriction>
 	<value>animationaddon:Fold</value>
 	<_name>Fold</_name>
       </restriction>
       <restriction>
 	<value>animationaddon:Glide 3</value>
 	<_name>Glide 3</_name>
-      </restriction>
+      </restriction-->
       <restriction>
 	<value>animationaddon:Leaf Spread</value>
 	<_name>Leaf Spread</_name>

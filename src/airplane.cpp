@@ -1,3 +1,4 @@
+#if 0
 /*
  * Animation plugin for compiz/beryl
  *
@@ -29,11 +30,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
 
-#include "animationaddon.h"
+#include "private.h"
 
 // Divide the window in 8 polygons (6 quadrilaters and 2 triangles (all of them draw as quadrilaters))
 // Based on tessellateIntoRectangles and tessellateIntoHexagons. Improperly called tessellation.
-static Bool
+static bool
 tessellateIntoAirplane (CompWindow * w)
 {
     ANIMADDON_WINDOW (w);
@@ -41,7 +42,7 @@ tessellateIntoAirplane (CompWindow * w)
     PolygonSet *pset = aw->eng.polygonSet;
 
     if (!pset)
-	return FALSE;
+	return false;
 
     float winLimitsX;		// boundaries of polygon tessellation
     float winLimitsY;
@@ -54,33 +55,33 @@ tessellateIntoAirplane (CompWindow * w)
     winLimitsH = BORDER_H (w);
 
     int numpol = 8;
-    if (pset->nPolygons != numpol)
+    if (mNPolygons != numpol)
     {
-	if (pset->nPolygons > 0)
+	if (mNPolygons > 0)
 	    freePolygonObjects (pset);
 
-	pset->nPolygons = numpol;
+	mNPolygons = numpol;
 
-	pset->polygons = calloc (pset->nPolygons, sizeof (PolygonObject));
-	if (!pset->polygons)
+	mPolygons = calloc (mNPolygons, sizeof (PolygonObject));
+	if (!mPolygons)
 	{
 	    compLogMessage ("animationaddon", CompLogLevelError,
 			    "Not enough memory");
-	    pset->nPolygons = 0;
-	    return FALSE;
+	    mNPolygons = 0;
+	    return false;
 	}
     }
 
     float thickness = 0;
     thickness /= w->screen->width;
-    pset->thickness = thickness;
-    pset->nTotalFrontVertices = 0;
+    mThickness = thickness;
+    mNTotalFrontVertices = 0;
 
     float W = (float)winLimitsW;
     float H2 = (float)winLimitsH / 2;
     float H3 = (float)winLimitsH / 3;
     float H6 = (float)winLimitsH / 6;
-    float halfThick = pset->thickness / 2;
+    float halfThick = mThickness / 2;
 
     /**
      *
@@ -110,7 +111,7 @@ tessellateIntoAirplane (CompWindow * w)
      *
      */
 
-    PolygonObject *p = pset->polygons;
+    PolygonObject *p = mPolygons;
     int i;
 
     for (i = 0; i < 8; i++, p++)
@@ -125,7 +126,7 @@ tessellateIntoAirplane (CompWindow * w)
 
 	p->nSides = 4;
 	p->nVertices = 2 * 4;
-	pset->nTotalFrontVertices += 4;
+	mNTotalFrontVertices += 4;
 
 	switch (i)
 	{
@@ -221,7 +222,7 @@ tessellateIntoAirplane (CompWindow * w)
 	    compLogMessage ("animation", CompLogLevelError,
 			    "Not enough memory");
 	    freePolygonObjects (pset);
-	    return FALSE;
+	    return false;
 	}
 
 	GLfloat *pv = p->vertices;
@@ -270,7 +271,7 @@ tessellateIntoAirplane (CompWindow * w)
 	    compLogMessage ("animation", CompLogLevelError,
 			    "Not enough memory");
 	    freePolygonObjects (pset);
-	    return FALSE;
+	    return false;
 	}
 
 	GLushort *ind = p->sideIndices;
@@ -311,17 +312,17 @@ tessellateIntoAirplane (CompWindow * w)
 	    p->boundingBox.y2 = ceil (p->centerPos.y + bottomLeftY);
 	}
     }
-    return TRUE;
+    return true;
 }
 
-Bool
+bool
 fxAirplaneInit (CompWindow * w)
 {
     if (!polygonsAnimInit (w))
-	return FALSE;
+	return false;
 
     if (!tessellateIntoAirplane (w))
-	return FALSE;
+	return false;
 
     ANIMADDON_WINDOW (w);
 
@@ -329,7 +330,7 @@ fxAirplaneInit (CompWindow * w)
 	animGetF (w, ANIMADDON_SCREEN_OPTION_AIRPLANE_PATHLENGTH);
 
     PolygonSet *pset = aw->eng.polygonSet;
-    PolygonObject *p = pset->polygons;
+    PolygonObject *p = mPolygons;
 
     float winLimitsW;		// boundaries of polygon tessellation
     float winLimitsH;
@@ -341,7 +342,7 @@ fxAirplaneInit (CompWindow * w)
     float H6 = (float)winLimitsH / 6;
 
     int i;
-    for (i = 0; i < pset->nPolygons; i++, p++)
+    for (i = 0; i < mNPolygons; i++, p++)
     {
 	if (!p->effectParameters)
 	{
@@ -351,7 +352,7 @@ fxAirplaneInit (CompWindow * w)
 	{
 	    compLogMessage ("animation", CompLogLevelError,
 			    "Not enough memory");
-	    return FALSE;
+	    return false;
 	}
 
 	AirplaneEffectParameters *aep = p->effectParameters;
@@ -631,22 +632,22 @@ fxAirplaneInit (CompWindow * w)
     }
 
     if (airplanePathLength >= 1)
-	pset->allFadeDuration = 0.30f / airplanePathLength;
+	mAllFadeDuration = 0.30f / airplanePathLength;
     else
-	pset->allFadeDuration = 0.30f;
+	mAllFadeDuration = 0.30f;
 
-    pset->doDepthTest = TRUE;
-    pset->doLighting = TRUE;
-    pset->correctPerspective = CorrectPerspectivePolygon;
+    mDoDepthTest = true;
+    mDoLighting = true;
+    mCorrectPerspective = CorrectPerspectivePolygon;
 
-    pset->extraPolygonTransformFunc =
+    mExtraPolygonTransformFunc =
 	&AirplaneExtraPolygonTransformFunc;
 
     // Duration extension
-    aw->com->animTotalTime *= 2 + airplanePathLength;
-    aw->com->animRemainingTime = aw->com->animTotalTime;
+    mTotalTime *= 2 + airplanePathLength;
+    mRemainingTime = mTotalTime;
 
-    return TRUE;
+    return true;
 }
 
 void
@@ -658,7 +659,7 @@ fxAirplaneLinearAnimStepPolygon (CompWindow *w,
 
     float airplanePathLength =
 	animGetF (w, ANIMADDON_SCREEN_OPTION_AIRPLANE_PATHLENGTH);
-    Bool airplaneFly2TaskBar =
+    bool airplaneFly2TaskBar =
 	animGetB (w, ANIMADDON_SCREEN_OPTION_AIRPLANE_FLY2TOM);
 
     AirplaneEffectParameters *aep = p->effectParameters;
@@ -813,7 +814,7 @@ fxAirplaneLinearAnimStepPolygon (CompWindow *w,
 }
 
 void
-AirplaneExtraPolygonTransformFunc (PolygonObject * p)
+AirplaneAnim::transformPolygon (PolygonObject &p)
 {
     AirplaneEffectParameters *aep = p->effectParameters;
     if (!aep)
@@ -863,5 +864,6 @@ fxAirplaneAnimStep (CompWindow * w,
 
     // Make sure the airplane always flies towards mouse pointer
     if (aw->com->curWindowEvent == WindowEventClose)
-	ad->animBaseFunctions->getMousePointerXY(w->screen, &aw->com->icon.x, &aw->com->icon.y);
+	ad->animBaseFunctions->getMousePointerXY (w->screen, &aw->com->icon.x, &aw->com->icon.y);
 }
+#endif
