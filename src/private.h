@@ -27,7 +27,7 @@ extern AnimEffect AnimEffectRazr;
 extern AnimEffect AnimEffectSkewer;
 
 // TODO Update this for each added animation effect! (total: 10)
-#define NUM_EFFECTS 8
+#define NUM_EFFECTS 9
 
 // This must have the value of the first "effect setting" above
 // in AnimAddonScreenOptions
@@ -265,7 +265,7 @@ public:
 
     static const float kDurationFactor;
 };
-#if 0
+
 class Glide3Anim : public PolygonAnim
 {
 public:
@@ -276,11 +276,12 @@ public:
 		const CompRect &icon);
 
     bool deceleratingMotion () { return true; }
-
-    AnimAddonEffectProperties fxGlide3ExtraProp = {
-	.animStepPolygonFunc = polygonsDeceleratingAnimStepPolygon};
+    
+    static const float kDurationFactor;
+    
+    void
+    init ();
 };
-#endif
 
 class LeafSpreadAnim : public PolygonAnim
 {

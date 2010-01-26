@@ -1,4 +1,3 @@
-#if 0
 /*
  * Animation plugin for compiz/beryl
  *
@@ -39,7 +38,8 @@
 
 // =====================  Effect: Slab  =========================
 
-bool
+const float Glide3Anim::kDurationFactor = 1.82;
+
 Glide3Anim::Glide3Anim (CompWindow *w,
                           WindowEvent curWindowEvent,
                           float duration,
@@ -50,44 +50,35 @@ Glide3Anim::Glide3Anim (CompWindow *w,
     PolygonAnim::PolygonAnim (w, curWindowEvent, kDurationFactor * duration,
                               info, icon)
 {
+
+}
+
+void
+Glide3Anim::init ()
+{
     //if (!polygonsAnimInit (w))
 	//return false;
 
-    CompScreen *s = w->screen;
-    ANIMADDON_WINDOW (w);
+    float finalDistFac = optValF (AnimationaddonOptions::Glide3AwayPosition);
+    float finalRotAng = optValF (AnimationaddonOptions::Glide3AwayAngle);
+    float thickness = optValF (AnimationaddonOptions::Glide3Thickness);
 
-    float finalDistFac = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_AWAY_POS);
-    float finalRotAng = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_AWAY_ANGLE);
-    float thickness = animGetF (w, ANIMADDON_SCREEN_OPTION_GLIDE3_THICKNESS);
-
-    PolygonSet *pset = aw->eng.polygonSet;
+    //PolygonSet *pset = aw->eng.polygonSet;
 
     mIncludeShadows = (thickness < 1e-5);
 
-    if (!tessellateIntoRectangles (w, 1, 1, thickness))
-	return false;
+    if (!tessellateIntoRectangles (1, 1, thickness))
+	return;
 
-    PolygonObject *p = mPolygons;
-
-    int i;
-
-    for (i = 0; i < mNPolygons; i++, p++)
+    foreach (PolygonObject &p, mPolygons)
     {
-	p->rotAxis.x = 1;
-	p->rotAxis.y = 0;
-	p->rotAxis.z = 0;
+        p.rotAxis.set (1, 0, 0);
+        p.finalRelPos.set (0, 0, finalDistFac * 0.8 * DEFAULT_Z_CAMERA * screen->width ());
 
-	p->finalRelPos.x = 0;
-	p->finalRelPos.y = 0;
-	p->finalRelPos.z = finalDistFac * 0.8 * DEFAULT_Z_CAMERA * s->width;
-
-	p->finalRotAng = finalRotAng;
+	p.finalRotAng = finalRotAng;
     }
     mAllFadeDuration = 1.0f;
     mBackAndSidesFadeDur = 0.2f;
     mDoLighting = true;
     mCorrectPerspective = CorrectPerspectivePolygon;
-
-    return true;
 }
-#endif
