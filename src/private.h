@@ -27,7 +27,7 @@ extern AnimEffect AnimEffectRazr;
 extern AnimEffect AnimEffectSkewer;
 
 // TODO Update this for each added animation effect! (total: 10)
-#define NUM_EFFECTS 7
+#define NUM_EFFECTS 8
 
 // This must have the value of the first "effect setting" above
 // in AnimAddonScreenOptions
@@ -249,7 +249,7 @@ public:
 	      const CompRect &icon);
 };
 
-#if 0
+
 class FoldAnim : public PolygonAnim
 {
 public:
@@ -258,16 +258,14 @@ public:
 	      float duration,
 	      const AnimEffect info,
 	      const CompRect &icon);
+	      
+    void init ();
+    
+    void stepPolygon (PolygonObject &p, float);
 
-    void
-    fxFoldAnimStepPolygon (CompWindow *w,
-			     PolygonObject *p,
-			     float forwardProgress);
-
-    AnimAddonEffectProperties fxFoldExtraProp = {
-	.animStepPolygonFunc = fxFoldAnimStepPolygon};
+    static const float kDurationFactor;
 };
-
+#if 0
 class Glide3Anim : public PolygonAnim
 {
 public:

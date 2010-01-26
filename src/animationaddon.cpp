@@ -157,11 +157,12 @@ PrivateAnimAddonScreen::initAnimationList ()
 	new AnimEffectInfo ("animationaddon:Explode",
 			    true, true, true, false, false,
 			    &createAnimation<ExplodeAnim>);
-#if 0
+
     animEffects[i++] = AnimEffectFold =
 	new AnimEffectInfo ("animationaddon:Fold",
 			    true, true, true, false, false,
 			    &createAnimation<FoldAnim>);
+#if 0
     animEffects[i++] = AnimEffectGlide3 =
 	new AnimEffectInfo ("animationaddon:Glide 3",
 			    true, true, true, false, false,

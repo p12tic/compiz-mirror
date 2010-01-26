@@ -495,11 +495,11 @@
 	<value>animationaddon:Explode</value>
 	<_name>Explode</_name>
       </restriction>
-      <!--restriction>
+      <restriction>
 	<value>animationaddon:Fold</value>
 	<_name>Fold</_name>
       </restriction>
-      <restriction>
+      <!--restriction>
 	<value>animationaddon:Glide 3</value>
 	<_name>Glide 3</_name>
       </restriction-->

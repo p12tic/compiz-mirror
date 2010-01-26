@@ -1,4 +1,3 @@
-#if 0
 /**
  * Animation plugin for compiz/beryl
  *
@@ -31,30 +30,40 @@
 
 #include "private.h"
 
+#define BORDER_W(w) ((w)->width () + (w)->input ().left + (w)->input ().right)
+#define BORDER_H(w) ((w)->height () + (w)->input ().top + (w)->input ().bottom)
+
 const float FoldAnim::kDurationFactor = 1.82;
 
-bool
-fxFoldInit (CompWindow * w)
+FoldAnim::FoldAnim (CompWindow *w,
+		    WindowEvent curWindowEvent,
+		    float duration,
+		    const AnimEffect info,
+		    const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, kDurationFactor * duration, info,
+			  icon),
+    PolygonAnim::PolygonAnim (w, curWindowEvent, kDurationFactor * duration,
+			      info, icon)
 {
-    if (!polygonsAnimInit (w))
-	return false;
+}
 
-    ANIMADDON_WINDOW (w);
-
-    mTotalTime /= FOLD_PERCEIVED_T;
+void
+FoldAnim::init ()
+{
+    mTotalTime /= kDurationFactor;
     mRemainingTime = mTotalTime;
 
-    int gridSizeX = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_X);
-    int gridSizeY = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_Y);
+    unsigned int gridSizeX = optValI (AnimationaddonOptions::FoldGridx);
+    unsigned int gridSizeY = optValI (AnimationaddonOptions::FoldGridy);
 
-    if (!tessellateIntoRectangles (w, gridSizeX, gridSizeY, 1.0f))
-	return false;
+    if (!tessellateIntoRectangles (gridSizeX, gridSizeY, 1.0f))
+	return;
 
-    PolygonSet *pset = aw->eng.polygonSet;
-    PolygonObject *p = mPolygons;
+    /*PolygonSet *pset = aw->eng.polygonSet;
+    PolygonObject *p = mPolygons;*/
 
     // handle other non-zero values
-    int fold_in = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_DIR) == 0 ? 1 : 0;
+    int fold_in = optValI (AnimationaddonOptions::FoldDir) == 0 ? 1 : 0;
 
     float rows_duration;
     float fduration;
@@ -73,13 +82,13 @@ fxFoldInit (CompWindow * w)
 
     float duration = fduration * 2;
     float start;
-    int i;
-    int j = 0;
+    unsigned int i = 0;
+    unsigned int j = 0;
     int k = 0;
 
-    for (i = 0; i < mNPolygons; i++, p++)
+    foreach (PolygonObject &p, mPolygons)
     {
-	if (i > mNPolygons - gridSizeX - 1)
+	if (i > mPolygons.size () - gridSizeX - 1)
 	{
 	    // bottom row polygons
 	    if (j < gridSizeX / 2)
@@ -87,22 +96,22 @@ fxFoldInit (CompWindow * w)
 		// the left ones
 		start = rows_duration + duration * j++;
 
-		p->rotAxis.y = -180;
-		p->finalRotAng = 180;
+		p.rotAxis.setY (-180);
+		p.finalRotAng = 180;
 
-		p->fadeStartTime = start + fduration;
-		p->fadeDuration = fduration;
+		p.fadeStartTime =  start + fduration;
+		p.fadeDuration = fduration;
 	    }
 	    else if (j == gridSizeX / 2)
 	    {
 		// the middle one
 		start = rows_duration + j * duration;
 
-		p->rotAxis.y = 90;
-		p->finalRotAng = 90;
+		p.rotAxis.setY (90);
+		p.finalRotAng = 90;
 
-		p->fadeStartTime = start + fduration;
-		p->fadeDuration = fduration;
+		p.fadeStartTime = start + fduration;
+		p.fadeDuration = fduration;
 		j++;
 	    }
 	    else
@@ -110,11 +119,11 @@ fxFoldInit (CompWindow * w)
 		// the right ones
 		start = rows_duration + (j - 2) * duration + duration * k--;
 
-		p->rotAxis.y = 180;
-		p->finalRotAng = 180;
+		p.rotAxis.setY (180);
+		p.finalRotAng = 180;
 
-		p->fadeStartTime = start + fduration;
-		p->fadeDuration = fduration;
+		p.fadeStartTime = start + fduration;
+		p.fadeDuration = fduration;
 	    }
 	}
 	else
@@ -123,121 +132,122 @@ fxFoldInit (CompWindow * w)
 	    int row = i / gridSizeX;	// [0; gridSizeY-1]
 
 	    start = row * fduration;
-	    p->rotAxis.x = 180;
-	    p->finalRelPos.y = row; // number of row, not finalRelPos!!
-	    p->finalRotAng = 180;
+	    p.rotAxis.setX (180);
+	    p.finalRelPos.setX (row); // number of row, not finalRelPos!!
+	    p.finalRotAng = 180;
 
-	    p->fadeDuration = fduration;
-	    p->fadeStartTime = start;
+	    p.fadeDuration = fduration;
+	    p.fadeStartTime = start;
 
-	    if (row < gridSizeY - 2 || fold_in)
-		p->fadeStartTime += fduration;
+	    if (row < (int) gridSizeY - 2 || fold_in)
+		p.fadeStartTime += fduration;
 	}
-	p->moveStartTime = start;
-	p->moveDuration = duration;
+	p.moveStartTime = start;
+	p.moveDuration = duration;
+	
+	i++;
     }
     mDoDepthTest = true;
     mDoLighting = true;
     mCorrectPerspective = CorrectPerspectiveWindow;
 
-    return true;
+    return;
 }
 
 void
-fxFoldAnimStepPolygon (CompWindow *w,
-			 PolygonObject *p,
-			 float forwardProgress)
+FoldAnim::stepPolygon (PolygonObject &p,
+		       float	     forwardProgress)
 {
-    int dir = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_DIR) == 0 ? 1 : -1;
+    int dir = optValI (AnimationaddonOptions::FoldDir) == 0 ? 1 : -1;
 
-    int gridSizeX = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_X);
-    int gridSizeY = animGetI (w, ANIMADDON_SCREEN_OPTION_FOLD_GRIDSIZE_Y);
+    int gridSizeX = optValI (AnimationaddonOptions::FoldGridx);
+    int gridSizeY = optValI (AnimationaddonOptions::FoldGridx);
 
-    float moveProgress = forwardProgress - p->moveStartTime;
+    float moveProgress = forwardProgress - p.moveStartTime;
 
-    if (p->moveDuration > 0)
-	moveProgress /= p->moveDuration;
+    if (p.moveDuration > 0)
+	moveProgress /= p.moveDuration;
     if (moveProgress < 0)
 	moveProgress = 0;
     else if (moveProgress > 1)
 	moveProgress = 1;
 
-    float const_x = BORDER_W (w) / (float)gridSizeX;	//  width of single piece
-    float const_y = BORDER_H (w) / (float)gridSizeY;	// height of single piece
+    float const_x = BORDER_W (mWindow) / (float)gridSizeX;	//  width of single piece
+    float const_y = BORDER_H (mWindow) / (float)gridSizeY;	// height of single piece
 
-    p->rotAngle = dir * moveProgress * p->finalRotAng;
+    p.rotAngle = dir * moveProgress * p.finalRotAng;
 
-    if (p->rotAxis.x == 180)
+    if (p.rotAxis.x () == 180)
     {
-	if (p->finalRelPos.y == gridSizeY - 2)
+	if (p.finalRelPos.y () == gridSizeY - 2)
 	{
 	    // it means the last row
-	    p->centerPos.y =
-		p->centerPosStart.y + const_y / 2.0f -
-		cos (p->rotAngle * M_PI / 180.0f) * const_y / 2.0f;
-	    p->centerPos.z =
-		p->centerPosStart.z +
-		1.0f / w->screen->width * (sin (-p->rotAngle * M_PI / 180.0f) *
-					   const_y / 2.0f);
+	    p.centerPos.setY (
+		p.centerPosStart.y () + const_y / 2.0f -
+		cos (p.rotAngle * M_PI / 180.0f) * const_y / 2.0f);
+	    p.centerPos.setZ (
+		p.centerPosStart.z () +
+		1.0f / screen->width () * (sin (-p.rotAngle * M_PI / 180.0f) *
+					   const_y / 2.0f));
 	}
 	else
 	{
 	    // rows
-	    if (fabs (p->rotAngle) < 90)
+	    if (fabs (p.rotAngle) < 90)
 	    {
 		// 1. rotate 90
-		p->centerPos.y =
-		    p->centerPosStart.y + const_y / 2.0f -
-		    cos (p->rotAngle * M_PI / 180.0f) * const_y / 2.0f;
-		p->centerPos.z =
-		    p->centerPosStart.z +
-		    1.0f / w->screen->width *
-		    (sin (-p->rotAngle * M_PI / 180.0f) * const_y / 2.0f);
+		p.centerPos.setY (
+		    p.centerPosStart.y () + const_y / 2.0f -
+		    cos (p.rotAngle * M_PI / 180.0f) * const_y / 2.0f);
+		p.centerPos.setZ (
+		    p.centerPosStart.z () +
+		    1.0f / screen->width () *
+		    (sin (-p.rotAngle * M_PI / 180.0f) * const_y / 2.0f));
 	    }
 	    else
 	    {
 		// 2. rotate faster 180
-		float alpha = p->rotAngle - dir * 90;	// [0 - 45]
+		float alpha = p.rotAngle - dir * 90;	// [0 - 45]
 		float alpha2 = 2 * alpha;	// [0 - 90]
 
-		p->rotAngle = (p->rotAngle - dir * 90) * 2 + dir * 90;
+		p.rotAngle = (p.rotAngle - dir * 90) * 2 + dir * 90;
 
-		p->centerPos.y =
-		    p->centerPosStart.y + const_y / 2.0f + const_y -
+		p.centerPos.setY (
+		    p.centerPosStart.y () + const_y / 2.0f + const_y -
 		    cos (alpha * M_PI / 180.0f) * const_y + dir *
-		    sin (alpha2 * M_PI / 180.0f) * const_y / 2.0f;
+		    sin (alpha2 * M_PI / 180.0f) * const_y / 2.0f);
 
-		p->centerPos.z =
-		    p->centerPosStart.z +
-		    1.0f / w->screen->width *
+		p.centerPos.setZ (
+		    p.centerPosStart.z () +
+		    1.0f / screen->width () *
 		    (-sin (alpha * M_PI / 180.0f) * const_y - dir *
-		     cos (alpha2 * M_PI / 180.0f) * const_y / 2.0f);
+		     cos (alpha2 * M_PI / 180.0f) * const_y / 2.0f));
 	    }
 	}
     }
-    else if (p->rotAxis.y == -180)
+    else if (p.rotAxis.y () == -180)
     {
 	// simple blocks left
-	p->centerPos.x =
-	    p->centerPosStart.x + const_x / 2.0f -
-	    cos (p->rotAngle * M_PI / 180.0f) * const_x / 2.0f;
+	p.centerPos.setX (
+	    p.centerPosStart.x () + const_x / 2.0f -
+	    cos (p.rotAngle * M_PI / 180.0f) * const_x / 2.0f);
 
-	p->centerPos.z =
-	    p->centerPosStart.z -
-	    1.0f / w->screen->width * (sin (p->rotAngle * M_PI / 180.0f) *
-				       const_x / 2.0f);
+	p.centerPos.setZ (
+	    p.centerPosStart.z () -
+	    1.0f / screen->width () * (sin (p.rotAngle * M_PI / 180.0f) *
+				       const_x / 2.0f));
     }
-    else if (p->rotAxis.y == 180)
+    else if (p.rotAxis.y () == 180)
     {
 	// simple blocks right
-	p->centerPos.x =
-	    p->centerPosStart.x - const_x / 2.0f +
-	    cos (-p->rotAngle * M_PI / 180.0f) * const_x / 2.0f;
+	p.centerPos.setX (
+	    p.centerPosStart.x () - const_x / 2.0f +
+	    cos (-p.rotAngle * M_PI / 180.0f) * const_x / 2.0f);
 
-	p->centerPos.z =
-	    p->centerPosStart.z +
-	    1.0f / w->screen->width * (sin (-p->rotAngle * M_PI / 180.0f) *
-				       const_x / 2.0f);
+	p.centerPos.setZ (
+	    p.centerPosStart.z () +
+	    1.0f / screen->width () * (sin (-p.rotAngle * M_PI / 180.0f) *
+				       const_x / 2.0f));
     }
 }
-#endif
+
