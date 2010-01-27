@@ -75,14 +75,14 @@ LeafSpreadAnim::init ()
 
     float screenSizeFactor = (0.8 * DEFAULT_Z_CAMERA * ::screen->width ());
 
-    foreach (PolygonObject &p, mPolygons)
+    foreach (PolygonObject *p, mPolygons)
     {
-	p.rotAxis.set (RAND_FLOAT (), RAND_FLOAT (), RAND_FLOAT ());
+	p->rotAxis.set (RAND_FLOAT (), RAND_FLOAT (), RAND_FLOAT ());
 
 	float speed = screenSizeFactor / 10 * (0.2 + RAND_FLOAT ());
 
-	float xx = 2 * (p.centerRelPos.x () - 0.5);
-	float yy = 2 * (p.centerRelPos.y () - 0.5);
+	float xx = 2 * (p->centerRelPos.x () - 0.5);
+	float yy = 2 * (p->centerRelPos.y () - 0.5);
 
 	float x = speed * winFacX * spreadFac * (xx +
 						 0.5 * (RAND_FLOAT () - 0.5));
@@ -90,18 +90,18 @@ LeafSpreadAnim::init ()
 						 0.5 * (RAND_FLOAT () - 0.5));
 	float z = speed * winFacZ * 7 * ((RAND_FLOAT () - 0.5) / 0.5);
 
-	p.finalRelPos.set (x, y, z);
+	p->finalRelPos.set (x, y, z);
 
-	p.moveStartTime =
-	    p.centerRelPos.y () * (1 - fadeDuration - randYMax) +
+	p->moveStartTime =
+	    p->centerRelPos.y () * (1 - fadeDuration - randYMax) +
 	    randYMax * RAND_FLOAT ();
-	p.moveDuration = 1;
+	p->moveDuration = 1;
 
-	p.fadeStartTime = p.moveStartTime + life;
-	if (p.fadeStartTime > 1 - fadeDuration)
-	    p.fadeStartTime = 1 - fadeDuration;
-	p.fadeDuration = fadeDuration;
+	p->fadeStartTime = p->moveStartTime + life;
+	if (p->fadeStartTime > 1 - fadeDuration)
+	    p->fadeStartTime = 1 - fadeDuration;
+	p->fadeDuration = fadeDuration;
 
-	p.finalRotAng = 150;
+	p->finalRotAng = 150;
     }
 }

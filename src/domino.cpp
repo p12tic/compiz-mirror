@@ -212,10 +212,10 @@ DominoAnim::init ()
     for (int i = 0; i < nFallingColumns; i++)
 	riseTimeRandSeed[i] = RAND_FLOAT ();
 
-    foreach (PolygonObject &p, mPolygons)
+    foreach (PolygonObject *p, mPolygons)
     {
-	p.rotAxis.set (rotAxisX, rotAxisY, 0);
-	p.finalRelPos.set (posX, posY, posZ);
+	p->rotAxis.set (rotAxisX, rotAxisY, 0);
+	p->finalRelPos.set (posX, posY, posZ);
 
 	// dist. from rise-start / fall-end edge in window ([0,1] range)
 	float distStartEdge = 0;
@@ -228,20 +228,20 @@ DominoAnim::init ()
 	switch (fallDir)
 	{
 	case AnimDirectionUp:
-	    distStartEdge = p.centerRelPos.y ();
-	    distPerpEdge = p.centerRelPos.x ();
+	    distStartEdge = p->centerRelPos.y ();
+	    distPerpEdge = p->centerRelPos.x ();
 	    break;
 	case AnimDirectionRight:
-	    distStartEdge = 1 - p.centerRelPos.x ();
-	    distPerpEdge = p.centerRelPos.y ();
+	    distStartEdge = 1 - p->centerRelPos.x ();
+	    distPerpEdge = p->centerRelPos.y ();
 	    break;
 	case AnimDirectionDown:
-	    distStartEdge = 1 - p.centerRelPos.y ();
-	    distPerpEdge = p.centerRelPos.x ();
+	    distStartEdge = 1 - p->centerRelPos.y ();
+	    distPerpEdge = p->centerRelPos.x ();
 	    break;
 	case AnimDirectionLeft:
-	    distStartEdge = p.centerRelPos.x ();
-	    distPerpEdge = p.centerRelPos.y ();
+	    distStartEdge = p->centerRelPos.x ();
+	    distPerpEdge = p->centerRelPos.y ();
 	    break;
 	}
 
@@ -249,7 +249,7 @@ DominoAnim::init ()
 	    riseTimeRandSeed[(int)(distPerpEdge * nFallingColumns)] *
 	    riseTimeRandMax;
 
-	p.moveDuration = riseDuration;
+	p->moveDuration = riseDuration;
 
 	float mult = 1;
 	if (fallDirGridSize > 1)
@@ -257,25 +257,25 @@ DominoAnim::init ()
 		    (1 - 2 * minDistStartEdge));
 	if (isRazr)
 	{
-	    p.moveStartTime = mult *
+	    p->moveStartTime = mult *
 		(1 - riseDuration - riseTimeRandMax) + riseTimeRand;
-	    p.fadeStartTime = p.moveStartTime + riseDuration / 2;
-	    p.finalRotAng = -180;
+	    p->fadeStartTime = p->moveStartTime + riseDuration / 2;
+	    p->finalRotAng = -180;
 
-	    p.rotAxisOffset = rotAxisOff;
+	    p->rotAxisOffset = rotAxisOff;
 	}
 	else
 	{
-	    p.moveStartTime =
+	    p->moveStartTime =
 		mult *
 		(1 - riseDuration - riseTimeRandMax) +
 		riseTimeRand;
-	    p.fadeStartTime =
-		p.moveStartTime + riseDuration - riseTimeRand + 0.03;
-	    p.finalRotAng = -90;
+	    p->fadeStartTime =
+		p->moveStartTime + riseDuration - riseTimeRand + 0.03;
+	    p->finalRotAng = -90;
 	}
-	if (p.fadeStartTime > 1 - fadeDuration)
-	    p.fadeStartTime = 1 - fadeDuration;
-	p.fadeDuration = fadeDuration;
+	if (p->fadeStartTime > 1 - fadeDuration)
+	    p->fadeStartTime = 1 - fadeDuration;
+	p->fadeDuration = fadeDuration;
     }
 }

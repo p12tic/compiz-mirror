@@ -139,7 +139,7 @@ SkewerAnim::init ()
     for (i = 0; i < numPolygons; i++)
 	times[i] = i;
 
-    foreach (PolygonObject &p, mPolygons)
+    foreach (PolygonObject *p, mPolygons)
     {
 	if (c > 0)
 	{
@@ -147,55 +147,55 @@ SkewerAnim::init ()
 	    {
 	    case 0:
 		// left
-		p.finalRelPos.setX (-::screen->width ());
-		p.rotAxis.setX (rotation);
+		p->finalRelPos.setX (-::screen->width ());
+		p->rotAxis.setX (rotation);
 		break;
 
 	    case 1:
 		// right
-		p.finalRelPos.setX (::screen->width ());
-		p.rotAxis.setX (rotation);
+		p->finalRelPos.setX (::screen->width ());
+		p->rotAxis.setX (rotation);
 		break;
 
 	    case 2:
 		// up
-		p.finalRelPos.setY (-::screen->height ());
-		p.rotAxis.setY (rotation);
+		p->finalRelPos.setY (-::screen->height ());
+		p->rotAxis.setY (rotation);
 		break;
 
 	    case 3:
 		// down
-		p.finalRelPos.setY (::screen->height ());
-		p.rotAxis.setY (rotation);
+		p->finalRelPos.setY (::screen->height ());
+		p->rotAxis.setY (rotation);
 		break;
 
 	    case 4:
 		// in
-		p.finalRelPos.setZ (-maxZ);
-		p.rotAxis.setX (rotation);
-		p.rotAxis.setY (rotation);
+		p->finalRelPos.setZ (-maxZ);
+		p->rotAxis.setX (rotation);
+		p->rotAxis.setY (rotation);
 		break;
 
 	    case 5:
 		// out
-		p.finalRelPos.setZ (maxZ);
-		p.rotAxis.setX (rotation);
-		p.rotAxis.setY (rotation);
+		p->finalRelPos.setZ (maxZ);
+		p->rotAxis.setX (rotation);
+		p->rotAxis.setY (rotation);
 		break;
 	    }
 
-	    p.finalRotAng = rotation;
+	    p->finalRotAng = rotation;
 	}
 	// if no direction is set - just fade
 
 	// choose random start_time
 	int rand_time = floor (RAND_FLOAT () * last_time);
 
-	p.moveStartTime = 0.8 / (float)numPolygons * times[rand_time];
-	p.moveDuration = 1 - p.moveStartTime;
+	p->moveStartTime = 0.8 / (float)numPolygons * times[rand_time];
+	p->moveDuration = 1 - p->moveStartTime;
 
-	p.fadeStartTime = p.moveStartTime + 0.2;
-	p.fadeDuration = 1 - p.fadeStartTime;
+	p->fadeStartTime = p->moveStartTime + 0.2;
+	p->fadeDuration = 1 - p->fadeStartTime;
 
 	times[rand_time] = times[last_time];	// copy last one over times[rand_time]
 	last_time--;		//descrease last_time
@@ -203,26 +203,26 @@ SkewerAnim::init ()
 }
 
 void
-SkewerAnim::stepPolygon (PolygonObject &p,
+SkewerAnim::stepPolygon (PolygonObject *p,
 			 float forwardProgress)
 {
-    float moveProgress = forwardProgress - p.moveStartTime;
+    float moveProgress = forwardProgress - p->moveStartTime;
 
-    if (p.moveDuration > 0)
-	moveProgress /= p.moveDuration;
+    if (p->moveDuration > 0)
+	moveProgress /= p->moveDuration;
     if (moveProgress < 0)
 	moveProgress = 0;
     else if (moveProgress > 1)
 	moveProgress = 1;
 
-    p.centerPos.set (pow (moveProgress, 2) * p.finalRelPos.x () +
-		     p.centerPosStart.x (),
-		     pow (moveProgress, 2) * p.finalRelPos.y () +
-		     p.centerPosStart.y (),
+    p->centerPos.set (pow (moveProgress, 2) * p->finalRelPos.x () +
+		     p->centerPosStart.x (),
+		     pow (moveProgress, 2) * p->finalRelPos.y () +
+		     p->centerPosStart.y (),
 		     1.0f / ::screen->width () *
-		     pow (moveProgress, 2) * p.finalRelPos.z () +
-		     p.centerPosStart.z ());
+		     pow (moveProgress, 2) * p->finalRelPos.z () +
+		     p->centerPosStart.z ());
 
     // rotate
-    p.rotAngle = pow (moveProgress, 2) * p.finalRotAng + p.rotAngleStart;
+    p->rotAngle = pow (moveProgress, 2) * p->finalRotAng + p->rotAngleStart;
 }

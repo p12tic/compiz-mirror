@@ -27,7 +27,7 @@ extern AnimEffect AnimEffectRazr;
 extern AnimEffect AnimEffectSkewer;
 
 // TODO Update this for each added animation effect! (total: 10)
-#define NUM_EFFECTS 9
+#define NUM_EFFECTS 10
 
 // This must have the value of the first "effect setting" above
 // in AnimAddonScreenOptions
@@ -159,11 +159,11 @@ protected:
     static const float kDurationFactor;
 };
 
-#if 0
 /// Extended polygon object for airplane folding and flying airplane fold phase.
 class AirplanePolygonObject : public PolygonObject
 {
 public:
+
     Vector3d rotAxisA;			// Rotation axis vector A
     Vector3d rotAxisB;			// Rotation axis vector B
 
@@ -204,25 +204,37 @@ public:
 class AirplaneAnim :
     public PolygonAnim
 {
-    void step ();
+    public:
 
-    void
-    fxAirplaneLinearAnimStepPolygon (CompWindow *w,
-				       PolygonObject *p,
-				       float forwardProgress);
+	AirplaneAnim (CompWindow *w,
+		    WindowEvent curWindowEvent,
+		    float duration,
+		    const AnimEffect info,
+		    const CompRect &icon);
+		    
+	~AirplaneAnim ();
 
-    void
-    fxAirplaneDrawCustomGeometry (CompWindow *w);
+	void
+	stepPolygon (PolygonObject *p, float);
 
-    void
-    AirplaneExtraPolygonTransformFunc (PolygonObject * p);
+	void
+	init ();
 
+	void
+	transformPolygon (PolygonObject *p);
 
+	bool
+	tesselateIntoAirplane ();
+	
+	bool
+	updateBBUsed ();
+	
+	void
+	freePolygonObjects ();
 
-    AnimAddonEffectProperties fxAirplaneExtraProp = {
-	.animStepPolygonFunc = fxAirplaneLinearAnimStepPolygon};
+	static const float kDurationFactor;
 };
-#endif
+
 
 class DominoAnim : public PolygonAnim
 {
@@ -261,7 +273,7 @@ public:
 	      
     void init ();
     
-    void stepPolygon (PolygonObject &p, float);
+    void stepPolygon (PolygonObject *p, float);
 
     static const float kDurationFactor;
 };
@@ -308,7 +320,7 @@ public:
 		const CompRect &icon);
 
     void init ();
-    void stepPolygon (PolygonObject &p,
+    void stepPolygon (PolygonObject *p,
 		      float forwardProgress);
 
 protected:

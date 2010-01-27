@@ -135,12 +135,12 @@ void
 PrivateAnimAddonScreen::initAnimationList ()
 {
     int i = 0;
-#if 0
+
     animEffects[i++] = AnimEffectAirplane =
 	new AnimEffectInfo ("animationaddon:Airplane",
 			    true, true, true, false, false,
 			    &createAnimation<AirplaneAnim>);
-#endif
+
     animEffects[i++] = AnimEffectBeamUp =
 	new AnimEffectInfo ("animationaddon:Beam Up",
 			    true, true, true, false, false,

@@ -1,4 +1,3 @@
-#if 0
 /*
  * Animation plugin for compiz/beryl
  *
@@ -32,50 +31,60 @@
 
 #include "private.h"
 
+#define BORDER_W(w) ((w)->width () + (w)->input ().left + (w)->input ().right)
+#define BORDER_H(w) ((w)->height () + (w)->input ().top + (w)->input ().bottom)
+#define BORDER_X(w) ((w)->x () - (w)->input ().left)
+#define BORDER_Y(w) ((w)->y () - (w)->input ().top)
+
 // Divide the window in 8 polygons (6 quadrilaters and 2 triangles (all of them draw as quadrilaters))
 // Based on tessellateIntoRectangles and tessellateIntoHexagons. Improperly called tessellation.
-static bool
-tessellateIntoAirplane (CompWindow * w)
+
+const float AirplaneAnim::kDurationFactor = 1.82;
+
+AirplaneAnim::AirplaneAnim (CompWindow *w,
+		    WindowEvent curWindowEvent,
+		    float duration,
+		    const AnimEffect info,
+		    const CompRect &icon) :
+    Animation::Animation (w, curWindowEvent, kDurationFactor * duration, info,
+			  icon),
+    PolygonAnim::PolygonAnim (w, curWindowEvent, kDurationFactor * duration,
+			      info, icon)
 {
-    ANIMADDON_WINDOW (w);
+}
 
-    PolygonSet *pset = aw->eng.polygonSet;
+AirplaneAnim::~AirplaneAnim ()
+{
+    freePolygonObjects ();
+}
 
-    if (!pset)
-	return false;
 
+bool
+AirplaneAnim::tesselateIntoAirplane ()
+{
     float winLimitsX;		// boundaries of polygon tessellation
     float winLimitsY;
     float winLimitsW;
     float winLimitsH;
 
-    winLimitsX = BORDER_X (w);
-    winLimitsY = BORDER_Y (w);
-    winLimitsW = BORDER_W (w);
-    winLimitsH = BORDER_H (w);
+    winLimitsX = BORDER_X (mWindow);
+    winLimitsY = BORDER_Y (mWindow);
+    winLimitsW = BORDER_W (mWindow);
+    winLimitsH = BORDER_H (mWindow);
 
-    int numpol = 8;
-    if (mNPolygons != numpol)
+    unsigned int numpol = 8;
+    if (mPolygons.size () != numpol)
     {
-	if (mNPolygons > 0)
-	    freePolygonObjects (pset);
+	freePolygonObjects ();
 
-	mNPolygons = numpol;
-
-	mPolygons = calloc (mNPolygons, sizeof (PolygonObject));
-	if (!mPolygons)
-	{
-	    compLogMessage ("animationaddon", CompLogLevelError,
-			    "Not enough memory");
-	    mNPolygons = 0;
-	    return false;
-	}
+	for (int i = 0; i < numpol; i++)
+	    mPolygons.push_back (new AirplanePolygonObject);
     }
 
     float thickness = 0;
-    thickness /= w->screen->width;
+    thickness /= screen->width ();
     mThickness = thickness;
-    mNTotalFrontVertices = 0;
+    mNumTotalFrontVertices = 0;
 
     float W = (float)winLimitsW;
     float H2 = (float)winLimitsH / 2;
@@ -111,22 +120,26 @@ tessellateIntoAirplane (CompWindow * w)
      *
      */
 
-    PolygonObject *p = mPolygons;
-    int i;
+    int i = 0;
 
-    for (i = 0; i < 8; i++, p++)
+    foreach (PolygonObject *pol, mPolygons)
     {
+	AirplanePolygonObject *p = (AirplanePolygonObject *) pol;
+    
 	float topRightY, topLeftY, bottomLeftY, bottomRightY;
 	float topLeftX, topRightX, bottomLeftX, bottomRightX;
 
-	p->centerPos.x = p->centerPosStart.x = winLimitsX + H2;
-	p->centerPos.y = p->centerPosStart.y = winLimitsY + H2;
-	p->centerPos.z = p->centerPosStart.z = -halfThick;
+	p->centerPos.setX (winLimitsX + H2);
+	p->centerPosStart.setX (winLimitsX + H2);
+	p->centerPos.setY (winLimitsY + H2);
+	p->centerPosStart.setY (winLimitsY + H2);
+	p->centerPos.setZ (-halfThick + H2);
+	p->centerPosStart.setZ (-halfThick + H2);
 	p->rotAngle = p->rotAngleStart = 0;
 
 	p->nSides = 4;
 	p->nVertices = 2 * 4;
-	mNTotalFrontVertices += 4;
+	mNumTotalFrontVertices += 4;
 
 	switch (i)
 	{
@@ -213,15 +226,12 @@ tessellateIntoAirplane (CompWindow * w)
 	}
 
 	// 4 front, 4 back vertices
-	if (!p->vertices)
-	{
-	    p->vertices = calloc (8 * 3, sizeof (GLfloat));
-	}
+	p->vertices = (GLfloat *) calloc (8 * 3, sizeof (GLfloat));
 	if (!p->vertices)
 	{
 	    compLogMessage ("animation", CompLogLevelError,
 			    "Not enough memory");
-	    freePolygonObjects (pset);
+	    freePolygonObjects ();
 	    return false;
 	}
 
@@ -262,15 +272,12 @@ tessellateIntoAirplane (CompWindow * w)
 	pv[23] = -halfThick;
 
 	// 16 indices for 4 sides (for quad strip)
-	if (!p->sideIndices)
-	{
-	    p->sideIndices = calloc (4 * 4, sizeof (GLushort));
-	}
+	p->sideIndices = (GLushort *) calloc (4 * 4, sizeof (GLushort));
 	if (!p->sideIndices)
 	{
 	    compLogMessage ("animation", CompLogLevelError,
 			    "Not enough memory");
-	    freePolygonObjects (pset);
+	    freePolygonObjects ();
 	    return false;
 	}
 
@@ -299,336 +306,206 @@ tessellateIntoAirplane (CompWindow * w)
 
 	if (i < 4)
 	{
-	    p->boundingBox.x1 = p->centerPos.x + topLeftX;
-	    p->boundingBox.y1 = p->centerPos.y + topLeftY;
-	    p->boundingBox.x2 = ceil (p->centerPos.x + bottomRightX);
-	    p->boundingBox.y2 = ceil (p->centerPos.y + bottomRightY);
+	    p->boundingBox.x1 = p->centerPos.x () + topLeftX;
+	    p->boundingBox.y1 = p->centerPos.y () + topLeftY;
+	    p->boundingBox.x2 = ceil (p->centerPos.x () + bottomRightX);
+	    p->boundingBox.y2 = ceil (p->centerPos.y () + bottomRightY);
 	}
 	else
 	{
-	    p->boundingBox.x1 = p->centerPos.x + bottomLeftX;
-	    p->boundingBox.y1 = p->centerPos.y + topLeftY;
-	    p->boundingBox.x2 = ceil (p->centerPos.x + bottomRightX);
-	    p->boundingBox.y2 = ceil (p->centerPos.y + bottomLeftY);
+	    p->boundingBox.x1 = p->centerPos.x () + bottomLeftX;
+	    p->boundingBox.y1 = p->centerPos.y () + topLeftY;
+	    p->boundingBox.x2 = ceil (p->centerPos.x () + bottomRightX);
+	    p->boundingBox.y2 = ceil (p->centerPos.y () + bottomLeftY);
 	}
+	
+	i++;
     }
     return true;
 }
 
-bool
-fxAirplaneInit (CompWindow * w)
+void
+AirplaneAnim::init ()
 {
-    if (!polygonsAnimInit (w))
-	return false;
-
-    if (!tessellateIntoAirplane (w))
-	return false;
-
-    ANIMADDON_WINDOW (w);
+    if (!tesselateIntoAirplane ())
+	return;
 
     float airplanePathLength =
-	animGetF (w, ANIMADDON_SCREEN_OPTION_AIRPLANE_PATHLENGTH);
-
-    PolygonSet *pset = aw->eng.polygonSet;
-    PolygonObject *p = mPolygons;
+	optValF (AnimationaddonOptions::AirplanePathLength);
 
     float winLimitsW;		// boundaries of polygon tessellation
     float winLimitsH;
 
-    winLimitsW = BORDER_W (w);
-    winLimitsH = BORDER_H (w);
+    winLimitsW = BORDER_W (mWindow);
+    winLimitsH = BORDER_H (mWindow);
 
     float H4 = (float)winLimitsH / 4;
     float H6 = (float)winLimitsH / 6;
 
-    int i;
-    for (i = 0; i < mNPolygons; i++, p++)
+    int i = 0;
+    foreach (PolygonObject *pol, mPolygons)
     {
-	if (!p->effectParameters)
-	{
-	    p->effectParameters = calloc (1, sizeof (AirplaneEffectParameters));
-	}
-	if (!p->effectParameters)
-	{
-	    compLogMessage ("animation", CompLogLevelError,
-			    "Not enough memory");
-	    return false;
-	}
-
-	AirplaneEffectParameters *aep = p->effectParameters;
-
+	AirplanePolygonObject *p = (AirplanePolygonObject *) pol;
+    
 	p->moveStartTime = 0.00;
 	p->moveDuration = 0.19;
 
-	aep->moveStartTime2 = 0.19;
-	aep->moveDuration2 = 0.19;
+	p->moveStartTime2 = 0.19;
+	p->moveDuration2 = 0.19;
 
-	aep->moveStartTime3 = 0.38;
-	aep->moveDuration3 = 0.19;
+	p->moveStartTime3 = 0.38;
+	p->moveDuration3 = 0.19;
 
-	aep->moveStartTime4 = 0.58;
-	aep->moveDuration4 = 0.09;
+	p->moveStartTime4 = 0.58;
+	p->moveDuration4 = 0.09;
 
-	aep->moveDuration5 = 0.41;
+	p->moveDuration5 = 0.41;
 
-	aep->flyFinalRotation.x = 90;
-	aep->flyFinalRotation.y = 10;
+	p->flyFinalRotation.set (90, 10, 0);
 
-	aep->flyTheta = 0;
+	p->flyTheta = 0;
+	
+	p->centerPosFly.set (0, 0, 0);
 
-	aep->centerPosFly.x = 0;
-	aep->centerPosFly.y = 0;
-	aep->centerPosFly.z = 0;
-
-	aep->flyScale = 0;
-	aep->flyFinalScale = 6 * (winLimitsW / (w->screen->width / 2));
+	p->flyScale = 0;
+	p->flyFinalScale = 6 * (winLimitsW / (screen->width () / 2));
 
 	switch (i)
 	{
 	case 0:
-	    p->rotAxisOffset.x = -H4;
-	    p->rotAxisOffset.y = H4;
-
-	    p->rotAxis.x = 1.00;
-	    p->rotAxis.y = 1.00;
-	    p->rotAxis.z = 0.00;
-
+	    p->rotAxisOffset.set (-H4, H4, 0.0f); 	    
+	    p->rotAxis.set (1.00, 1.00, 0.00);
 	    p->finalRotAng = 179.5;
 
-	    aep->rotAxisOffsetA.x = 0;
-	    aep->rotAxisOffsetA.y = 0;
-
-	    aep->rotAxisA.x = 1.00;
-	    aep->rotAxisA.y = 0.00;
-	    aep->rotAxisA.z = 0.00;
-
-	    aep->finalRotAngA = 84;
-
-	    aep->rotAxisOffsetB.x = 0;
-	    aep->rotAxisOffsetB.y = 0;
-
-	    aep->rotAxisB.x = 0.00;
-	    aep->rotAxisB.y = 0.00;
-	    aep->rotAxisB.z = 0.00;
-
-	    aep->finalRotAngB = 0;
+	    p->rotAxisOffsetA.set (0, 0, 0);	    
+	    p->rotAxisA.set (1.00, 0.00, 0.00);
+	    p->finalRotAngA = 84;
+	    
+	    p->rotAxisOffsetB.set (0, 0, 0);	    
+	    p->rotAxisB.set (0.00, 0.00, 0.00);
+	    p->finalRotAngB = 0;
 	    break;
 
 	case 1:
-	    p->rotAxisOffset.x = -H4;
-	    p->rotAxisOffset.y = H4;
 
-	    p->rotAxis.x = 1.00;
-	    p->rotAxis.y = 1.00;
-	    p->rotAxis.z = 0.00;
-
+	    p->rotAxisOffset.set (-H4, H4, 0.0f);
+	    p->rotAxis.set (1.00, 1.00, 0.00);
 	    p->finalRotAng = 179.5;
-
-	    aep->rotAxisOffsetA.x = 0;
-	    aep->rotAxisOffsetA.y = 0;
-
-	    aep->rotAxisA.x = 1.00;
-	    aep->rotAxisA.y = 0.00;
-	    aep->rotAxisA.z = 0.00;
-
-	    aep->finalRotAngA = 84;
-
-	    aep->rotAxisOffsetB.x = 0;
-	    aep->rotAxisOffsetB.y = H6;
-
-	    aep->rotAxisB.x = 1.00;
-	    aep->rotAxisB.y = 0.00;
-	    aep->rotAxisB.z = 0.00;
-
-	    aep->finalRotAngB = -84;
+	    
+	    p->rotAxisOffsetA.set (0, 0, 0);
+	    p->rotAxisA.set (1.00, 0.00, 0.00);
+	    p->finalRotAngA = 84;
+	    
+	    p->rotAxisOffsetB.set (0, H6, 0);
+	    p->rotAxisB.set (1.00, 0.00, 0.00);
+	    p->finalRotAngB = -84;
 	    break;
 
 	case 2:
 	    p->moveDuration = 0.00;
-
-	    p->rotAxisOffset.x = 0;
-	    p->rotAxisOffset.y = 0;
-
-	    p->rotAxis.x = 0.00;
-	    p->rotAxis.y = 0.00;
-	    p->rotAxis.z = 0.00;
-
+	    
+	    p->rotAxisOffset.set (0, 0, 0);
+	    p->rotAxis.set (0, 0, 0);
 	    p->finalRotAng = 0;
 
-	    aep->rotAxisOffsetA.x = 0;
-	    aep->rotAxisOffsetA.y = 0;
+	    p->rotAxisOffsetA.set (0, 0, 0);
+	    p->rotAxisA.set (1.00, 0, 0);
+	    p->finalRotAngA = 84;
 
-	    aep->rotAxisA.x = 1.00;
-	    aep->rotAxisA.y = 0.00;
-	    aep->rotAxisA.z = 0.00;
+	    p->rotAxisOffsetB.set (0, H6, 0);
+	    p->rotAxisB.set (1.00, 0, 0);
+	    
+	    p->finalRotAngB = -84;
 
-	    aep->finalRotAngA = 84;
-
-	    aep->rotAxisOffsetB.x = 0;
-	    aep->rotAxisOffsetB.y = H6;
-
-	    aep->rotAxisB.x = 1.00;
-	    aep->rotAxisB.y = 0.00;
-	    aep->rotAxisB.z = 0.00;
-
-	    aep->finalRotAngB = -84;
 	    break;
 
 	case 3:
 	    p->moveDuration = 0.00;
-
-	    p->rotAxisOffset.x = 0;
-	    p->rotAxisOffset.y = 0;
-
-	    p->rotAxis.x = 0.00;
-	    p->rotAxis.y = 0.00;
-	    p->rotAxis.z = 0.00;
-
+	    
+	    p->rotAxisOffset.set (0, 0, 0);
+	    p->rotAxis.set (0, 0, 0);
 	    p->finalRotAng = 0;
+	    
+	    p->rotAxisOffsetA.set (0, 0, 0);
+	    p->rotAxisA.set (1.00, 0, 0);
+	    p->finalRotAngA = 84;
 
-	    aep->rotAxisOffsetA.x = 0;
-	    aep->rotAxisOffsetA.y = 0;
+	    p->moveDuration3 = 0.00;
+	    
+	    p->rotAxisOffsetB.set (0, 0, 0);
+	    p->rotAxisB.set (0, 0, 0);
+	    p->finalRotAngB = 0;
 
-	    aep->rotAxisA.x = 1.00;
-	    aep->rotAxisA.y = 0.00;
-	    aep->rotAxisA.z = 0.00;
-
-	    aep->finalRotAngA = 84;
-
-	    aep->moveDuration3 = 0.00;
-
-	    aep->rotAxisOffsetB.x = 0;
-	    aep->rotAxisOffsetB.y = 0;
-
-	    aep->rotAxisB.x = 0.00;
-	    aep->rotAxisB.y = 0.00;
-	    aep->rotAxisB.z = 0.00;
-
-	    aep->finalRotAngB = 0;
 	    break;
 
 	case 4:
 	    p->moveDuration = 0.00;
-
-	    p->rotAxisOffset.x = 0;
-	    p->rotAxisOffset.y = 0;
-
-	    p->rotAxis.x = 0.00;
-	    p->rotAxis.y = 0.00;
-	    p->rotAxis.z = 0.00;
-
+	    
+	    p->rotAxisOffset.set (0, 0, 0);
+	    p->rotAxis.set (0, 0, 0);
 	    p->finalRotAng = 0;
+	    
+	    p->rotAxisOffsetA.set (0, 0, 0);
+	    p->rotAxisA.set (1.00, 0, 0);
+	    p->finalRotAngA = -84;
 
-	    aep->rotAxisOffsetA.x = 0;
-	    aep->rotAxisOffsetA.y = 0;
-
-	    aep->rotAxisA.x = 1.00;
-	    aep->rotAxisA.y = 0.00;
-	    aep->rotAxisA.z = 0.00;
-
-	    aep->finalRotAngA = -84;
-
-	    aep->moveDuration3 = 0.00;
-
-	    aep->rotAxisOffsetB.x = 0;
-	    aep->rotAxisOffsetB.y = 0;
-
-	    aep->rotAxisB.x = 0.00;
-	    aep->rotAxisB.y = 0.00;
-	    aep->rotAxisB.z = 0.00;
-
-	    aep->finalRotAngB = 0;
+	    p->moveDuration3 = 0.00;
+	    
+	    p->rotAxisOffsetB.set (0, 0, 0);
+	    p->rotAxisB.set (0, 0, 0);
+	    p->finalRotAngB = 0;
+	    
 	    break;
 
 	case 5:
 	    p->moveDuration = 0.00;
-
-	    p->rotAxisOffset.x = 0;
-	    p->rotAxisOffset.y = 0;
-
-	    p->rotAxis.x = 0.00;
-	    p->rotAxis.y = 0.00;
-	    p->rotAxis.z = 0.00;
-
+	    
+	    p->rotAxisOffset.set (0, 0, 0);
+	    p->rotAxis.set (0, 0, 0);
 	    p->finalRotAng = 0;
+	    
+	    p->rotAxisOffsetA.set (0, 0, 0);
+	    p->rotAxisA.set (1.00, 0, 0);
+	    p->finalRotAngA = -84;
+	    
+	    p->rotAxisOffsetB.set (0, -H6, 0);
+	    p->rotAxisB.set (1.00, 0, 0);
+	    p->finalRotAngB = 84;
 
-	    aep->rotAxisOffsetA.x = 0;
-	    aep->rotAxisOffsetA.y = 0;
-
-	    aep->rotAxisA.x = 1.00;
-	    aep->rotAxisA.y = 0.00;
-	    aep->rotAxisA.z = 0.00;
-
-	    aep->finalRotAngA = -84;
-
-	    aep->rotAxisOffsetB.x = 0;
-	    aep->rotAxisOffsetB.y = -H6;
-
-	    aep->rotAxisB.x = 1.00;
-	    aep->rotAxisB.y = 0.00;
-	    aep->rotAxisB.z = 0.00;
-
-	    aep->finalRotAngB = 84;
 	    break;
 
 	case 6:
-	    p->rotAxisOffset.x = -H4;
-	    p->rotAxisOffset.y = -H4;
-
-	    p->rotAxis.x = 1.00;
-	    p->rotAxis.y = -1.00;
-	    p->rotAxis.z = 0.00;
-
+	    p->rotAxisOffset.set (-H4, -H4, 0);
+	    p->rotAxis.set (1.00, -1.00, 0.00);
 	    p->finalRotAng = -179.5;
+	    
+	    p->rotAxisOffsetA.set (0, 0, 0);
+	    p->rotAxisA.set (1.00, 0.00, 0.00);
+	    p->finalRotAngA = -84;
 
-	    aep->rotAxisOffsetA.x = 0;
-	    aep->rotAxisOffsetA.y = 0;
+	    p->rotAxisOffsetB.set (0, -H6, 0);
+	    p->rotAxisB.set (1.00, 0, 0);
+	    p->finalRotAngB = 84;
 
-	    aep->rotAxisA.x = 1.00;
-	    aep->rotAxisA.y = 0.00;
-	    aep->rotAxisA.z = 0.00;
-
-	    aep->finalRotAngA = -84;
-
-	    aep->rotAxisOffsetB.x = 0;
-	    aep->rotAxisOffsetB.y = -H6;
-
-	    aep->rotAxisB.x = 1.00;
-	    aep->rotAxisB.y = 0.00;
-	    aep->rotAxisB.z = 0.00;
-
-	    aep->finalRotAngB = 84;
 	    break;
 
 	case 7:
-	    p->rotAxisOffset.x = -H4;
-	    p->rotAxisOffset.y = -H4;
-
-	    p->rotAxis.x = 1.00;
-	    p->rotAxis.y = -1.00;
-	    p->rotAxis.z = 0.00;
-
+	    p->rotAxisOffset.set (-H4, -H4, 0);
+	    p->rotAxis.set (1.00, -1.00, 0.00);
 	    p->finalRotAng = -179.5;
 
-	    aep->rotAxisOffsetA.x = 0;
-	    aep->rotAxisOffsetA.y = 0;
+	    p->rotAxisOffsetA.set (0, 0, 0);
+	    p->rotAxisA.set (1, 0, 0);
+	    p->finalRotAngA = -84;
+	    
+	    p->rotAxisOffsetB.set (0, 0, 0);
+	    p->rotAxisB.set (0.00, 0.00, 0.00);
 
-	    aep->rotAxisA.x = 1.00;
-	    aep->rotAxisA.y = 0.00;
-	    aep->rotAxisA.z = 0.00;
-
-	    aep->finalRotAngA = -84;
-
-	    aep->rotAxisOffsetB.x = 0;
-	    aep->rotAxisOffsetB.y = 0;
-
-	    aep->rotAxisB.x = 0.00;
-	    aep->rotAxisB.y = 0.00;
-	    aep->rotAxisB.z = 0.00;
-
-	    aep->finalRotAngB = 0;
+	    p->finalRotAngB = 0;
 	    break;
 	}
+	
+	i++;
     }
 
     if (airplanePathLength >= 1)
@@ -639,39 +516,44 @@ fxAirplaneInit (CompWindow * w)
     mDoDepthTest = true;
     mDoLighting = true;
     mCorrectPerspective = CorrectPerspectivePolygon;
-
+    mBackAndSidesFadeDur = 0;
+/*
     mExtraPolygonTransformFunc =
 	&AirplaneExtraPolygonTransformFunc;
-
+*/
     // Duration extension
     mTotalTime *= 2 + airplanePathLength;
     mRemainingTime = mTotalTime;
-
-    return true;
 }
 
 void
-fxAirplaneLinearAnimStepPolygon (CompWindow *w,
-				   PolygonObject *p,
-				   float forwardProgress)
+AirplaneAnim::stepPolygon (PolygonObject *pol,
+			   float forwardProgress)
 {
-    ANIMADDON_WINDOW (w);
+    AirplanePolygonObject *p = (AirplanePolygonObject *) pol;
+    
+    /* A stupid hack */
+    if (pol == mPolygons.front ())
+    {
+    	short x, y;
+	// Make sure the airplane always flies towards mouse pointer
+	if (mCurWindowEvent == WindowEventClose)
+	    AnimScreen::get (screen)->getMousePointerXY (&x, &y);
 
+	mIcon.setX (x); mIcon.setY (y);
+    }
+    
     float airplanePathLength =
-	animGetF (w, ANIMADDON_SCREEN_OPTION_AIRPLANE_PATHLENGTH);
+	optValF (AnimationaddonOptions::AirplanePathLength);
     bool airplaneFly2TaskBar =
-	animGetB (w, ANIMADDON_SCREEN_OPTION_AIRPLANE_FLY2TOM);
-
-    AirplaneEffectParameters *aep = p->effectParameters;
-    if (!aep)
-	return;
+	optValB (AnimationaddonOptions::AirplaneFlyToTaskbar);
 
     /*  Phase1: folding: flaps, folding center, folding wings.
      *  Phase2: rotate and fly.
      */
 
     if (forwardProgress > p->moveStartTime &&
-	forwardProgress < aep->moveStartTime4)
+	forwardProgress < p->moveStartTime4)
 	// Phase1: folding: flaps, center, wings.
     {
 	float moveProgress1 = forwardProgress - p->moveStartTime;
@@ -684,9 +566,9 @@ fxAirplaneLinearAnimStepPolygon (CompWindow *w,
 	else if (moveProgress1 > 1)
 	    moveProgress1 = 1;
 
-	float moveProgress2 = forwardProgress - aep->moveStartTime2;
-	if (aep->moveDuration2 > 0)
-	    moveProgress2 /= aep->moveDuration2;
+	float moveProgress2 = forwardProgress - p->moveStartTime2;
+	if (p->moveDuration2 > 0)
+	    moveProgress2 /= p->moveDuration2;
 	else
 	    moveProgress2 = 0;
 	if (moveProgress2 < 0)
@@ -694,9 +576,9 @@ fxAirplaneLinearAnimStepPolygon (CompWindow *w,
 	else if (moveProgress2 > 1)
 	    moveProgress2 = 1;
 
-	float moveProgress3 = forwardProgress - aep->moveStartTime3;
-	if (aep->moveDuration3 > 0)
-	    moveProgress3 /= aep->moveDuration3;
+	float moveProgress3 = forwardProgress - p->moveStartTime3;
+	if (p->moveDuration3 > 0)
+	    moveProgress3 /= p->moveDuration3;
 	else
 	    moveProgress3 = 0;
 	if (moveProgress3 < 0)
@@ -704,33 +586,29 @@ fxAirplaneLinearAnimStepPolygon (CompWindow *w,
 	else if (moveProgress3 > 1)
 	    moveProgress3 = 1;
 
-	p->centerPos.x = p->centerPosStart.x;
-	p->centerPos.y = p->centerPosStart.y;
-	p->centerPos.z = p->centerPosStart.z;
+	p->centerPos = p->centerPosStart;
 
 	p->rotAngle = moveProgress1 * p->finalRotAng;
-	aep->rotAngleA = moveProgress2 * aep->finalRotAngA;
-	aep->rotAngleB = moveProgress3 * aep->finalRotAngB;
+	p->rotAngleA = moveProgress2 * p->finalRotAngA;
+	p->rotAngleB = moveProgress3 * p->finalRotAngB;
 
-	aep->flyRotation.x = 0;
-	aep->flyRotation.y = 0;
-	aep->flyRotation.z = 0;
-	aep->flyScale = 0;
+	p->flyRotation.set (0, 0, 0);
+	p->flyScale = 0;
     }
-    else if (forwardProgress >= aep->moveStartTime4)
+    else if (forwardProgress >= p->moveStartTime4)
 	// Phase2: rotate and fly 
     {
-	float moveProgress4 = forwardProgress - aep->moveStartTime4;
-	if (aep->moveDuration4 > 0)
-	    moveProgress4 /= aep->moveDuration4;
+	float moveProgress4 = forwardProgress - p->moveStartTime4;
+	if (p->moveDuration4 > 0)
+	    moveProgress4 /= p->moveDuration4;
 	if (moveProgress4 < 0)
 	    moveProgress4 = 0;
 	else if (moveProgress4 > 1)
 	    moveProgress4 = 1;
 
-	float moveProgress5 = forwardProgress - (aep->moveStartTime4 + .01);
-	if (aep->moveDuration5 > 0)
-	    moveProgress5 /= aep->moveDuration5;
+	float moveProgress5 = forwardProgress - (p->moveStartTime4 + .01);
+	if (p->moveDuration5 > 0)
+	    moveProgress5 /= p->moveDuration5;
 	if (moveProgress5 < 0)
 	    moveProgress5 = 0;
 	else if (moveProgress5 > 1)
@@ -738,132 +616,151 @@ fxAirplaneLinearAnimStepPolygon (CompWindow *w,
 
 
 	p->rotAngle = p->finalRotAng;
-	aep->rotAngleA = aep->finalRotAngA;
-	aep->rotAngleB = aep->finalRotAngB;
+	p->rotAngleA = p->finalRotAngA;
+	p->rotAngleB = p->finalRotAngB;
 
-	aep->flyRotation.x = moveProgress4 * aep->flyFinalRotation.x;
-	aep->flyRotation.y = moveProgress4 * aep->flyFinalRotation.y;
+	p->flyRotation.set (moveProgress4 * p->flyFinalRotation.x (),
+			    moveProgress4 * p->flyFinalRotation.y (), 0);
 
 	// flying path
 
 	float icondiffx = 0;
-	aep->flyTheta = moveProgress5 * -M_PI_2 * airplanePathLength;
-	aep->centerPosFly.x = w->screen->width * .4 * sin (2 * aep->flyTheta);
+	p->flyTheta = moveProgress5 * -M_PI_2 * airplanePathLength;
+	p->centerPosFly.setX (screen->width () * .4 * sin (2 * p->flyTheta));
 
-	if (((aw->com->curWindowEvent == WindowEventMinimize ||
-	      aw->com->curWindowEvent == WindowEventUnminimize) &&
+	if (((mCurWindowEvent == WindowEventMinimize ||
+	      mCurWindowEvent == WindowEventUnminimize) &&
 	     airplaneFly2TaskBar) ||
-	    aw->com->curWindowEvent == WindowEventOpen ||
-	    aw->com->curWindowEvent == WindowEventClose)
+	    mCurWindowEvent == WindowEventOpen ||
+	    mCurWindowEvent == WindowEventClose)
 	{
 	    // flying path ends at icon/pointer
 
 	    int sign = 1;
-	    if (aw->com->curWindowEvent == WindowEventUnminimize ||
-		aw->com->curWindowEvent == WindowEventOpen)
+	    if (mCurWindowEvent == WindowEventUnminimize ||
+		mCurWindowEvent == WindowEventOpen)
 		sign = -1;
 
 	    icondiffx =
-		(((aw->com->icon.x + aw->com->icon.width / 2)
-		  - (p->centerPosStart.x +
-		     sign * w->screen->width * .4 *
+		(((mIcon.x () + mIcon.width () / 2)
+		  - (p->centerPosStart.x () +
+		     sign * screen->width () * .4 *
 		     sin (2 * -M_PI_2 * airplanePathLength))) *
 		 moveProgress5);
-	    aep->centerPosFly.y =
-		((aw->com->icon.y + aw->com->icon.height / 2) -
-		 p->centerPosStart.y) *
-		-sin (aep->flyTheta / airplanePathLength);
+	    p->centerPosFly.setY (
+		((mIcon.y () + mIcon.height () / 2) -
+		 p->centerPosStart.y ()) *
+		-sin (p->flyTheta / airplanePathLength));
 	}
 	else
 	{
-	    if (p->centerPosStart.y < w->screen->height * .33 ||
-		p->centerPosStart.y > w->screen->height * .66)
-		aep->centerPosFly.y =
-		    w->screen->height * .6 * sin (aep->flyTheta / 3.4);
+	    if (p->centerPosStart.y () < screen->height () * .33 ||
+		p->centerPosStart.y () > screen->height () * .66)
+		p->centerPosFly.setY (
+		    screen->height () * .6 * sin (p->flyTheta / 3.4));
 	    else
-		aep->centerPosFly.y =
-		    w->screen->height * .4 * sin (aep->flyTheta / 3.4);
-	    if (p->centerPosStart.y < w->screen->height * .33)
-		aep->centerPosFly.y *= -1;
+		p->centerPosFly.setY (
+		    screen->height () * .4 * sin (p->flyTheta / 3.4));
+	    if (p->centerPosStart.y () < screen->height () * .33)
+		p->centerPosFly.setY (p->centerPosFly.y () * -1);
 	}
 
-	aep->flyFinalRotation.z =
-	    ((atan (2.0) + M_PI_2) * sin (aep->flyTheta) - M_PI_2) * 180 / M_PI;
-	aep->flyFinalRotation.z += 90;
+	p->flyFinalRotation.setZ (
+	    ((atan (2.0) + M_PI_2) * sin (p->flyTheta) - M_PI_2) * 180 / M_PI);
+	p->flyFinalRotation.add (0, 0, 90);
 
 
-	if (aw->com->curWindowEvent == WindowEventMinimize ||
-	    aw->com->curWindowEvent == WindowEventClose)
+	if (mCurWindowEvent == WindowEventMinimize ||
+	    mCurWindowEvent == WindowEventClose)
 	{
-	    aep->flyFinalRotation.z *= -1;
+	    p->flyFinalRotation.setZ (p->flyFinalRotation.z () * -1);
 	}
-	else if (aw->com->curWindowEvent == WindowEventUnminimize ||
-		 aw->com->curWindowEvent == WindowEventOpen)
+	else if (mCurWindowEvent == WindowEventUnminimize ||
+		 mCurWindowEvent == WindowEventOpen)
 	{
-	    aep->centerPosFly.x *= -1;
+	    p->centerPosFly.setX (p->centerPosFly.x () * -1);
 	}
 
-	aep->flyRotation.z = aep->flyFinalRotation.z;
+	p->flyRotation.setZ (p->flyFinalRotation.z ());
 
-	p->centerPos.x = p->centerPosStart.x + aep->centerPosFly.x + icondiffx;
-	p->centerPos.y = p->centerPosStart.y + aep->centerPosFly.y;
-	p->centerPos.z = p->centerPosStart.z + aep->centerPosFly.z;
+	p->centerPos.setX (p->centerPosStart.x () + p->centerPosFly.x () + icondiffx);
+	p->centerPos.setY (p->centerPosStart.y () + p->centerPosFly.y ());
+	p->centerPos.setZ (p->centerPosStart.z () + p->centerPosFly.z ());
 
-	aep->flyScale = moveProgress5 * aep->flyFinalScale;
+	p->flyScale = moveProgress5 * p->flyFinalScale;
     }
 }
 
 void
-AirplaneAnim::transformPolygon (PolygonObject &p)
+AirplaneAnim::transformPolygon (PolygonObject *pol)
 {
-    AirplaneEffectParameters *aep = p->effectParameters;
-    if (!aep)
-	return;
+    AirplanePolygonObject *p = (AirplanePolygonObject *) pol;
 
-    glRotatef (aep->flyRotation.x, 1, 0, 0);	//rotate on axis X
-    glRotatef (-aep->flyRotation.y, 0, 1, 0);	// rotate on axis Y
-    glRotatef (aep->flyRotation.z, 0, 0, 1);	// rotate on axis Z
 
-    glScalef (1.0 / (1.0 + aep->flyScale),
-	      1.0 / (1.0 + aep->flyScale), 1.0 / (1.0 + aep->flyScale));
+    glRotatef (p->flyRotation.x (), 1, 0, 0);	//rotate on axis X
+    glRotatef (-p->flyRotation.y (), 0, 1, 0);	// rotate on axis Y
+    glRotatef (p->flyRotation.z (), 0, 0, 1);	// rotate on axis Z
+
+    glScalef (1.0 / (1.0 + p->flyScale),
+	      1.0 / (1.0 + p->flyScale), 1.0 / (1.0 + p->flyScale));
 
     // Move by "rotation axis offset A"
-    glTranslatef (aep->rotAxisOffsetA.x, aep->rotAxisOffsetA.y,
-		  aep->rotAxisOffsetA.z);
+    glTranslatef (p->rotAxisOffsetA.x (), p->rotAxisOffsetA.y (),
+		  p->rotAxisOffsetA.z ());
 
     // Rotate by desired angle A
-    glRotatef (aep->rotAngleA, aep->rotAxisA.x, aep->rotAxisA.y,
-	       aep->rotAxisA.z);
+    glRotatef (p->rotAngleA, p->rotAxisA.x (), p->rotAxisA.y (),
+	       p->rotAxisA.z ());
 
     // Move back to center from  A
-    glTranslatef (-aep->rotAxisOffsetA.x, -aep->rotAxisOffsetA.y,
-		  -aep->rotAxisOffsetA.z);
+    glTranslatef (-p->rotAxisOffsetA.x (), -p->rotAxisOffsetA.y (),
+		  -p->rotAxisOffsetA.z ());
 
 
     // Move by "rotation axis offset B"
-    glTranslatef (aep->rotAxisOffsetB.x, aep->rotAxisOffsetB.y,
-		  aep->rotAxisOffsetB.z);
+    glTranslatef (p->rotAxisOffsetB.x (), p->rotAxisOffsetB.y (),
+		  p->rotAxisOffsetB.z ());
 
     // Rotate by desired angle B
-    glRotatef (aep->rotAngleB, aep->rotAxisB.x, aep->rotAxisB.y,
-	       aep->rotAxisB.z);
+    glRotatef (p->rotAngleB, p->rotAxisB.x (), p->rotAxisB.y (),
+	       p->rotAxisB.z ());
 
     // Move back to center from B
-    glTranslatef (-aep->rotAxisOffsetB.x, -aep->rotAxisOffsetB.y,
-		  -aep->rotAxisOffsetB.z);
+    glTranslatef (-p->rotAxisOffsetB.x (), -p->rotAxisOffsetB.y (),
+		  -p->rotAxisOffsetB.z ());
+}
+
+bool
+AirplaneAnim::updateBBUsed ()
+{
+    return false;
 }
 
 void
-fxAirplaneAnimStep (CompWindow * w,
-		      float time)
+AirplaneAnim::freePolygonObjects ()
 {
-    ANIMADDON_WINDOW (w);
-    ANIMADDON_DISPLAY (w->screen->display);
-
-    polygonsAnimStep (w, time);
-
-    // Make sure the airplane always flies towards mouse pointer
-    if (aw->com->curWindowEvent == WindowEventClose)
-	ad->animBaseFunctions->getMousePointerXY (w->screen, &aw->com->icon.x, &aw->com->icon.y);
+    while (!mPolygons.empty ())
+    {
+	AirplanePolygonObject *p = (AirplanePolygonObject *) mPolygons.back ();
+	
+	if (p->nVertices > 0)
+	{
+	    if (p->vertices)
+	    {
+		free (p->vertices);
+		p->vertices = NULL;
+	    }
+	    if (p->sideIndices)
+	    {
+		free (p->sideIndices);
+		p->sideIndices = NULL;
+	    }
+	}
+	    
+	delete p;
+	
+	mPolygons.pop_back ();
+    }
+    
+    mPolygons.clear ();
 }
-#endif

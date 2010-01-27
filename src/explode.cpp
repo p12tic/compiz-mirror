@@ -87,14 +87,14 @@ ExplodeAnim::init ()
     double sqrt2 = sqrt (2);
     float screenSizeFactor = (0.8 * DEFAULT_Z_CAMERA * ::screen->width ());
 
-    foreach (PolygonObject &p, mPolygons)
+    foreach (PolygonObject *p, mPolygons)
     {
-	p.rotAxis.set (RAND_FLOAT (), RAND_FLOAT (), RAND_FLOAT ());
+	p->rotAxis.set (RAND_FLOAT (), RAND_FLOAT (), RAND_FLOAT ());
 
 	float speed = screenSizeFactor / 10 * (0.2 + RAND_FLOAT ());
 
-	float xx = 2 * (p.centerRelPos.x () - 0.5);
-	float yy = 2 * (p.centerRelPos.y () - 0.5);
+	float xx = 2 * (p->centerRelPos.x () - 0.5);
+	float yy = 2 * (p->centerRelPos.y () - 0.5);
 
 	float x = speed * 2 * (xx + 0.5 * (RAND_FLOAT () - 0.5));
 	float y = speed * 2 * (yy + 0.5 * (RAND_FLOAT () - 0.5));
@@ -107,7 +107,7 @@ ExplodeAnim::init ()
 	    (zbias + RAND_FLOAT () *
 	     pow (moveMult, 0.5));
 
-	p.finalRelPos.set (x, y, z);
-	p.finalRotAng = RAND_FLOAT () * 540 - 270;
+	p->finalRelPos.set (x, y, z);
+	p->finalRotAng = RAND_FLOAT () * 540 - 270;
     }
 }

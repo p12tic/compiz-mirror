@@ -70,12 +70,12 @@ Glide3Anim::init ()
     if (!tessellateIntoRectangles (1, 1, thickness))
 	return;
 
-    foreach (PolygonObject &p, mPolygons)
+    foreach (PolygonObject *p, mPolygons)
     {
-        p.rotAxis.set (1, 0, 0);
-        p.finalRelPos.set (0, 0, finalDistFac * 0.8 * DEFAULT_Z_CAMERA * screen->width ());
+        p->rotAxis.set (1, 0, 0);
+        p->finalRelPos.set (0, 0, finalDistFac * 0.8 * DEFAULT_Z_CAMERA * screen->width ());
 
-	p.finalRotAng = finalRotAng;
+	p->finalRotAng = finalRotAng;
     }
     mAllFadeDuration = 1.0f;
     mBackAndSidesFadeDur = 0.2f;

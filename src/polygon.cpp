@@ -81,19 +81,25 @@ typedef struct
 void
 PolygonAnim::freePolygonObjects ()
 {
-    foreach (PolygonObject &p, mPolygons)
+    while (!mPolygons.empty ())
     {
-	if (p.nVertices > 0)
+        PolygonObject *p = mPolygons.back ();
+        
+	if (p->nVertices > 0)
 	{
-	    if (p.vertices)
-		free (p.vertices);
-	    if (p.sideIndices)
-		free (p.sideIndices);
-	    if (p.normals)
-		free (p.normals);
+	    if (p->vertices)
+		free (p->vertices);
+	    if (p->sideIndices)
+		free (p->sideIndices);
+	    if (p->normals)
+		free (p->normals);
 	}
-	if (p.effectParameters)
-	    delete p.effectParameters;
+	if (p->effectParameters)
+	    delete p->effectParameters;
+	    
+	delete p;
+	
+	mPolygons.pop_back ();
     }
 }
 
@@ -156,7 +162,14 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
     if (rectH < minRectSize)
 	gridSizeY = winLimitsH / minRectSize;	// int div.
 
-    mPolygons.resize (gridSizeX * gridSizeY);
+    freePolygonObjects ();
+    
+    mPolygons.clear ();
+    for (int i = 0; i < gridSizeX * gridSizeY; i++)
+    {
+        fprintf (stderr, "created new polygon object\n");
+	mPolygons.push_back (new PolygonObject);
+    }
 
     thickness /= ::screen->width ();
     mThickness = thickness;
@@ -168,14 +181,17 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
     float halfH = cellH / 2;
 
     float halfThick = mThickness / 2;
-    PolygonObject *p = &mPolygons[0];
+    vector<PolygonObject *>::iterator it = mPolygons.begin ();;
+
+    fprintf (stderr, "list has a size of %i\n", mPolygons.size ());
 
     for (int y = 0; y < gridSizeY; y++)
     {
 	float posY = winLimitsY + cellH * (y + 0.5);
 
-	for (int x = 0; x < gridSizeX; x++, p++)
+	for (int x = 0; x < gridSizeX; x++, it++)
 	{
+	    PolygonObject *p = *it;
 	    p->centerPos.set (winLimitsX + cellW * (x + 0.5), posY, -halfThick);
 	    p->centerPosStart = p->centerPos;
 
@@ -366,7 +382,9 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
     if (hexH < minSize)
 	gridSizeY = winLimitsH / minSize;	// int div.
 
-    mPolygons.resize ((gridSizeY + 1) * gridSizeX + (gridSizeY + 1) / 2);
+    freePolygonObjects ();
+    for (int i = 0; i < (gridSizeY + 1) * gridSizeX + ((gridSizeY + 1 ) / 2); i++)
+	mPolygons.push_back (new PolygonObject);
 
     thickness /= ::screen->width ();
     mThickness = thickness;
@@ -379,7 +397,7 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
     float thirdH = cellH / 3;
 
     float halfThick = mThickness / 2;
-    PolygonObject *p = &mPolygons[0];
+    vector<PolygonObject *>::iterator it  = mPolygons.begin ();
 
     for (int y = 0; y < gridSizeY+1; y++)
     {
@@ -409,8 +427,9 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 	    bottomY = twoThirdsH;
 	}
 
-	for (int x = 0; x < numPolysinRow; x++, p++)
+	for (int x = 0; x < numPolysinRow; x++, it++)
 	{
+	    PolygonObject *p = *it;    
 	    // Clip odd rows when necessary
 	    float topLeftX, topRightX, bottomLeftX, bottomRightX;
 
@@ -845,20 +864,22 @@ PolygonAnim::tessellateIntoGlass (int spokeMultiplier,
     }
 
     //set up polygons
-
-    mPolygons.resize (numSpokes * numTiers);
+    freePolygonObjects ();
+    for (int i = 0; i < numSpokes * numTiers; i++)
+	mPolygons.push_back (new PolygonObject);
 
     thickness /= ::screen->width ();
     mThickness = thickness;
     mNumTotalFrontVertices = 0;
 
     float halfThick = mThickness / 2;
-    PolygonObject *p = &mPolygons[0];
+    vector<PolygonObject *>::iterator it = mPolygons.begin ();
 
     for (int yc = 0; yc <  numSpokes; yc++) //spokes
     {
-	for (int xc = 0; xc < numTiers; xc++, p++) //tiers
+	for (int xc = 0; xc < numTiers; xc++, it++) //tiers
 	{
+	    PolygonObject *p = *it;
 	    p->centerPos.set (shards[yc][xc].centerX,
 			      shards[yc][xc].centerY, -halfThick);
 	    p->centerPosStart = p->centerPos;
@@ -1166,12 +1187,12 @@ PolygonAnim::processIntersectingPolygons ()
 	else
 	    c->intersectsMostPolygons = false;
 
-	foreach (const PolygonObject &p, mPolygons)
+	foreach (const PolygonObject *p, mPolygons)
 	{
-	    int nSides = p.nSides;
-	    float px = p.centerPosStart.x ();
-	    float py = p.centerPosStart.y ();
-	    const Boxf &pb = p.boundingBox;
+	    int nSides = p->nSides;
+	    float px = p->centerPosStart.x ();
+	    float py = p->centerPosStart.y ();
+	    const Boxf &pb = p->boundingBox;
 	    GLfloat *vTexCoords = NULL;
 
 	    if (c->intersectsMostPolygons)
@@ -1185,15 +1206,15 @@ PolygonAnim::processIntersectingPolygons ()
 		    pb.y1 + py >= cb.y2 ())   // no intersection
 		    continue;
 
-		PolygonClipInfo *pci = new PolygonClipInfo (&p);
+		PolygonClipInfo *pci = new PolygonClipInfo (p);
 		c->intersectingPolygonInfos.push_back (pci);
 		vTexCoords = &pci->vertexTexCoords[0];
 	    }
 
 	    for (int k = 0; k < nSides; k++)
 	    {
-		float x = p.vertices[3 * k]     + p.centerPosStart.x ();
-		float y = p.vertices[3 * k + 1] + p.centerPosStart.y ();
+		float x = p->vertices[3 * k]     + p->centerPosStart.x ();
+		float y = p->vertices[3 * k + 1] + p->centerPosStart.y ();
 		GLfloat tx;
 		GLfloat ty;
 		if (c->texMatrix.xy != 0.0f || c->texMatrix.yx != 0.0f)
@@ -1315,7 +1336,7 @@ PolygonAnim::prepareDrawingForAttrib (GLFragment::Attrib &attrib)
 }
 
 inline void
-PolygonAnim::drawPolygonClipIntersection (const PolygonObject &p,
+PolygonAnim::drawPolygonClipIntersection (const PolygonObject *p,
                                           const Clip4Polygons &c,
                                           const GLfloat *vertexTexCoords,
                                           int pass,
@@ -1326,13 +1347,13 @@ PolygonAnim::drawPolygonClipIntersection (const PolygonObject &p,
                                           bool decelerates,
                                           GLfloat skewMat[16])
 {
-    int nSides = p.nSides;
+    int nSides = p->nSides;
     float newOpacityPolygon = newOpacity;
 
     // if fade-out duration is specified per polygon
     if (mAllFadeDuration == -1.0f)
     {
-	float fadePassedBy = forwardProgress - p.fadeStartTime;
+	float fadePassedBy = forwardProgress - p->fadeStartTime;
 	// if "fade out starting point" is passed
 	if (fadePassedBy > 1e-5)	// if true, then allFadeDuration > 0
 	{
@@ -1341,9 +1362,9 @@ PolygonAnim::drawPolygonClipIntersection (const PolygonObject &p,
 	    if (decelerates)
 		opacityFac =
 		    1 - progressDecelerate (fadePassedBy /
-					    p.fadeDuration);
+					    p->fadeDuration);
 	    else
-		opacityFac = 1 - fadePassedBy / p.fadeDuration;
+		opacityFac = 1 - fadePassedBy / p->fadeDuration;
 	    if (opacityFac < 0)
 		opacityFac = 0;
 	    if (opacityFac > 1)
@@ -1366,15 +1387,15 @@ PolygonAnim::drawPolygonClipIntersection (const PolygonObject &p,
     glPushMatrix ();
 
     if (mCorrectPerspective == CorrectPerspectivePolygon)
-	getPerspectiveCorrectionMat (&p, skewMat, NULL, output);
+	getPerspectiveCorrectionMat (p, skewMat, NULL, output);
 
     if (mCorrectPerspective != CorrectPerspectiveNone)
 	glMultMatrixf (skewMat);
 
     // Center
-    glTranslatef (p.centerPos.x (),
-		  p.centerPos.y (),
-		  p.centerPos.z ());
+    glTranslatef (p->centerPos.x (),
+		  p->centerPos.y (),
+		  p->centerPos.z ());
 
     // Scale z first
     glScalef (1.0f, 1.0f, 1.0f / ::screen->width ());
@@ -1382,26 +1403,26 @@ PolygonAnim::drawPolygonClipIntersection (const PolygonObject &p,
     transformPolygon (p);
 
     // Move by "rotation axis offset"
-    glTranslatef (p.rotAxisOffset.x (),
-		  p.rotAxisOffset.y (),
-		  p.rotAxisOffset.z ());
+    glTranslatef (p->rotAxisOffset.x (),
+		  p->rotAxisOffset.y (),
+		  p->rotAxisOffset.z ());
 
     // Rotate by desired angle
-    glRotatef (p.rotAngle,
-	       p.rotAxis.x (), p.rotAxis.y (), p.rotAxis.z ());
+    glRotatef (p->rotAngle,
+	       p->rotAxis.x (), p->rotAxis.y (), p->rotAxis.z ());
 
     // Move back to center
-    glTranslatef (-p.rotAxisOffset.x (),
-		  -p.rotAxisOffset.y (),
-		  -p.rotAxisOffset.z ());
+    glTranslatef (-p->rotAxisOffset.x (),
+		  -p->rotAxisOffset.y (),
+		  -p->rotAxisOffset.z ());
 
     // Scale back
     glScalef (1.0f, 1.0f, ::screen->width ());
 
-    clipPlanes[0][3] = -(c.boxf.x1 - p.centerPosStart.x ());
-    clipPlanes[1][3] = -(c.boxf.y1 - p.centerPosStart.y ());
-    clipPlanes[2][3] = (c.boxf.x2 - p.centerPosStart.x ());
-    clipPlanes[3][3] = (c.boxf.y2 - p.centerPosStart.y ());
+    clipPlanes[0][3] = -(c.boxf.x1 - p->centerPosStart.x ());
+    clipPlanes[1][3] = -(c.boxf.y1 - p->centerPosStart.y ());
+    clipPlanes[2][3] = (c.boxf.x2 - p->centerPosStart.x ());
+    clipPlanes[3][3] = (c.boxf.y2 - p->centerPosStart.y ());
     glClipPlane (GL_CLIP_PLANE0, clipPlanes[0]);
     glClipPlane (GL_CLIP_PLANE1, clipPlanes[1]);
     glClipPlane (GL_CLIP_PLANE2, clipPlanes[2]);
@@ -1428,18 +1449,18 @@ PolygonAnim::drawPolygonClipIntersection (const PolygonObject &p,
     prepareDrawingForAttrib (attrib);
 
     // Draw back face
-    glVertexPointer (3, GL_FLOAT, 0, p.vertices + 3 * nSides);
+    glVertexPointer (3, GL_FLOAT, 0, p->vertices + 3 * nSides);
     if (mThickness > 0)
-	glNormalPointer (GL_FLOAT, 0, p.normals + 3 * nSides);
+	glNormalPointer (GL_FLOAT, 0, p->normals + 3 * nSides);
     else
 	glNormal3f (0.0f, 0.0f, -1.0f);
     glTexCoordPointer (2, GL_FLOAT, 0, &vertexTexCoords[2 * nSides]);
     glDrawArrays (GL_POLYGON, 0, nSides);
 
     // Vertex coords
-    glVertexPointer (3, GL_FLOAT, 0, p.vertices);
+    glVertexPointer (3, GL_FLOAT, 0, p->vertices);
     if (mThickness > 0)
-	glNormalPointer (GL_FLOAT, 0, p.normals);
+	glNormalPointer (GL_FLOAT, 0, p->normals);
     else
 	glNormal3f (0.0f, 0.0f, 1.0f);
     glTexCoordPointer (2, GL_FLOAT, 0, vertexTexCoords);
@@ -1451,7 +1472,7 @@ PolygonAnim::drawPolygonClipIntersection (const PolygonObject &p,
 	// so I use GL_POLYGON to make sure the normals are right.
 	glDrawElements (GL_POLYGON, 4,
 		       GL_UNSIGNED_SHORT,
-		       p.sideIndices + k * 4);
+		       p->sideIndices + k * 4);
     }
 
     // if opacity was changed just above
@@ -1648,7 +1669,7 @@ PolygonAnim::drawGeometry ()
 	    if (c->intersectsMostPolygons)
 	    {
 		const GLfloat *vTexCoords = &c->polygonVertexTexCoords[0];
-		foreach (const PolygonObject &p, mPolygons)
+		foreach (const PolygonObject *p, mPolygons)
 		{
 		    drawPolygonClipIntersection (p, *c,
 		                                 vTexCoords,
@@ -1657,7 +1678,7 @@ PolygonAnim::drawGeometry ()
 						 newOpacity,
 						 decelerates,
 						 skewMat);
-		    vTexCoords += 4 * p.nSides;
+		    vTexCoords += 4 * p->nSides;
 		}
 	    }
 	    else
@@ -1665,7 +1686,7 @@ PolygonAnim::drawGeometry ()
 		foreach (const PolygonClipInfo *pci,
 		         c->intersectingPolygonInfos)
 		{
-		    drawPolygonClipIntersection (*pci->p, *c,
+		    drawPolygonClipIntersection (pci->p, *c,
 		                                 &pci->vertexTexCoords[0],
 						 pass, forwardProgress,
 						 clipPlanes, *output,
@@ -1749,40 +1770,40 @@ PolygonAnim::postPaintWindow ()
 // Computes polygon's new position and orientation
 // with linear movement
 void
-PolygonAnim::stepPolygon (PolygonObject &p,
+PolygonAnim::stepPolygon (PolygonObject *p,
 			  float forwardProgress)
 {
-    float moveProgress = forwardProgress - p.moveStartTime;
+    float moveProgress = forwardProgress - p->moveStartTime;
 
-    if (p.moveDuration > 0)
-	moveProgress /= p.moveDuration;
+    if (p->moveDuration > 0)
+	moveProgress /= p->moveDuration;
     if (moveProgress < 0)
 	moveProgress = 0;
     else if (moveProgress > 1)
 	moveProgress = 1;
 
-    p.centerPos.setX (moveProgress * p.finalRelPos.x () +
-                       p.centerPosStart.x ());
-    p.centerPos.setY (moveProgress * p.finalRelPos.y () +
-                       p.centerPosStart.y ());
-    p.centerPos.setZ (1.0f / ::screen->width () *
-	moveProgress * p.finalRelPos.z () + p.centerPosStart.z ());
+    p->centerPos.setX (moveProgress * p->finalRelPos.x () +
+                       p->centerPosStart.x ());
+    p->centerPos.setY (moveProgress * p->finalRelPos.y () +
+                       p->centerPosStart.y ());
+    p->centerPos.setZ (1.0f / ::screen->width () *
+	moveProgress * p->finalRelPos.z () + p->centerPosStart.z ());
 
-    p.rotAngle = moveProgress * p.finalRotAng + p.rotAngleStart;
+    p->rotAngle = moveProgress * p->finalRotAng + p->rotAngleStart;
 }
 
 // Similar to stepPolygon,
 // but slightly ac/decelerates movement
 void
-PolygonAnim::deceleratingAnimStepPolygon (PolygonObject &p,
+PolygonAnim::deceleratingAnimStepPolygon (PolygonObject *p,
                                           float forwardProgress)
 {
     // TODO: Refactor
 
-    float moveProgress = forwardProgress - p.moveStartTime;
+    float moveProgress = forwardProgress - p->moveStartTime;
 
-    if (p.moveDuration > 0)
-	moveProgress /= p.moveDuration;
+    if (p->moveDuration > 0)
+	moveProgress /= p->moveDuration;
     if (moveProgress < 0)
 	moveProgress = 0;
     else if (moveProgress > 1)
@@ -1790,14 +1811,14 @@ PolygonAnim::deceleratingAnimStepPolygon (PolygonObject &p,
 
     moveProgress = progressDecelerate (moveProgress);
 
-    p.centerPos.setX (moveProgress * p.finalRelPos.x () +
-                       p.centerPosStart.x ());
-    p.centerPos.setY (moveProgress * p.finalRelPos.y () +
-                       p.centerPosStart.y ());
-    p.centerPos.setZ (1.0f / ::screen->width () *
-	moveProgress * p.finalRelPos.z () + p.centerPosStart.z ());
+    p->centerPos.setX (moveProgress * p->finalRelPos.x () +
+                       p->centerPosStart.x ());
+    p->centerPos.setY (moveProgress * p->finalRelPos.y () +
+                       p->centerPosStart.y ());
+    p->centerPos.setZ (1.0f / ::screen->width () *
+	moveProgress * p->finalRelPos.z () + p->centerPosStart.z ());
 
-    p.rotAngle = moveProgress * p.finalRotAng + p.rotAngleStart;
+    p->rotAngle = moveProgress * p->finalRotAng + p->rotAngleStart;
 }
 
 void
@@ -1805,13 +1826,17 @@ PolygonAnim::step ()
 {
     float forwardProgress = progressLinear ();
 
-    foreach (PolygonObject &p, mPolygons)
+    foreach (PolygonObject *p, mPolygons)
 	stepPolygon (p, forwardProgress);
 }
 
 void
 PolygonAnim::updateBB (CompOutput &output)
 {
+
+    if (!updateBBUsed ())
+	return;
+
     GLScreen *gScreen = GLScreen::get (::screen);
     GLMatrix wTransform;
     GLMatrix wTransform2;
@@ -1844,11 +1869,11 @@ PolygonAnim::updateBB (CompOutput &output)
 	mCorrectPerspective == CorrectPerspectivePolygon)
 	modelViewTransform = &wTransform2;
 
-    foreach (const PolygonObject &p, mPolygons)
+    foreach (const PolygonObject *p, mPolygons)
     {
 	if (mCorrectPerspective == CorrectPerspectivePolygon)
 	{
-	    getPerspectiveCorrectionMat (&p, NULL, &skewMat, output);
+	    getPerspectiveCorrectionMat (p, NULL, &skewMat, output);
 	    wTransform2 = wTransform * skewMat;
 	}
 
@@ -1858,8 +1883,8 @@ PolygonAnim::updateBB (CompOutput &output)
 	for (int j = 0; j < 16; j++)
 	    dModel[j] = modelViewMatrix[j];
 
-	Point3d center = p.centerPos;
-	float radius = p.boundSphereRadius + 2;
+	Point3d center = p->centerPos;
+	float radius = p->boundSphereRadius + 2;
 
 	// Take rotation axis offset into consideration and
 	// properly enclose polygon in the bounding cube
@@ -1867,14 +1892,14 @@ PolygonAnim::updateBB (CompOutput &output)
 
 	// Add rotation axis offset to center (rotated) polygon correctly
 	// within bounding cube
-	center.add (p.rotAxisOffset.x (),
-	            p.rotAxisOffset.y (),
-	            p.rotAxisOffset.z () / ::screen->width ());
+	center.add (p->rotAxisOffset.x (),
+	            p->rotAxisOffset.y (),
+	            p->rotAxisOffset.z () / ::screen->width ());
 
 	// Add rotation axis offset to radius to enlarge the bounding cube
-	radius += MAX (MAX (fabs (p.rotAxisOffset.x ()),
-			    fabs (p.rotAxisOffset.y ())),
-		       fabs (p.rotAxisOffset.z ()));
+	radius += MAX (MAX (fabs (p->rotAxisOffset.x ()),
+			    fabs (p->rotAxisOffset.y ())),
+		       fabs (p->rotAxisOffset.z ()));
 
 	float zradius = radius / ::screen->width ();
 
@@ -1924,16 +1949,16 @@ PolygonAnim::prePreparePaint (int msSinceLastPaint)
 bool
 PolygonAnim::moveUpdate (int dx, int dy)
 {
-    foreach (PolygonObject &p, mPolygons)
+    foreach (PolygonObject *p, mPolygons)
     {
-	p.centerPosStart.setX (p.centerPosStart.x () + dx);
-	p.centerPosStart.setY (p.centerPosStart.y () + dy);
+	p->centerPosStart.setX (p->centerPosStart.x () + dx);
+	p->centerPosStart.setY (p->centerPosStart.y () + dy);
 
-	p.centerPos.setX (p.centerPos.x () + dx);
-	p.centerPos.setY (p.centerPos.y () + dy);
+	p->centerPos.setX (p->centerPos.x () + dx);
+	p->centerPos.setY (p->centerPos.y () + dy);
 
-	p.finalRelPos.setX (p.finalRelPos.x () + dx);
-	p.finalRelPos.setY (p.finalRelPos.y () + dy);
+	p->finalRelPos.setX (p->finalRelPos.x () + dx);
+	p->finalRelPos.setY (p->finalRelPos.y () + dy);
     }
 
     return true;

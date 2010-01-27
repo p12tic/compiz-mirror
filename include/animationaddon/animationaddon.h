@@ -268,13 +268,13 @@ public:
                       unsigned int                maxGridHeight);
     void drawGeometry ();
     void updateBB (CompOutput &output);
-    bool updateBBUsed () { return true; }
+    virtual bool updateBBUsed () { return true; }
     bool prePreparePaint (int msSinceLastPaint);
     bool moveUpdate (int dx, int dy);
 
-    virtual void stepPolygon (PolygonObject &p,
+    virtual void stepPolygon (PolygonObject *p,
 			      float forwardProgress);
-    virtual void transformPolygon (const PolygonObject &p) {}
+    virtual void transformPolygon (const PolygonObject *p) {}
 
     /// For effects that have decel. motion
     virtual bool deceleratingMotion () { return false; }
@@ -290,7 +290,7 @@ public:
 			      float thickness);
 
     void prePaintOutput (CompOutput *output);
-    void deceleratingAnimStepPolygon (PolygonObject &p,
+    void deceleratingAnimStepPolygon (PolygonObject *p,
                                       float forwardProgress);
 
 protected:
@@ -299,7 +299,7 @@ protected:
 				      GLMatrix *matf,
 				      const CompOutput &output);
     void processIntersectingPolygons ();
-    void freePolygonObjects ();
+    virtual void freePolygonObjects ();
     void freeClipsPolygons ();
     void prepareDrawingForAttrib (GLFragment::Attrib &attrib);
 
@@ -316,7 +316,7 @@ protected:
     bool mDoLighting;            ///< Whether lighting should be used in the effect
     CorrectPerspective mCorrectPerspective;
 
-    vector<PolygonObject> mPolygons; ///< The polygons in this set
+    vector<PolygonObject *> mPolygons; ///< The polygons in this set
     float mThickness;		///< Window thickness (depth along z axis)
     int mNumTotalFrontVertices;	///< Total # of polygon vertices on front faces
     float mBackAndSidesFadeDur;	///< How long side and back faces should fade in/out
@@ -327,7 +327,7 @@ protected:
     bool mIncludeShadows;        ///< Whether to include shadows in polygon
 
 private:
-    inline void drawPolygonClipIntersection (const PolygonObject &p,
+    inline void drawPolygonClipIntersection (const PolygonObject *p,
 					     const Clip4Polygons &c,
 					     const GLfloat *vertexTexCoords,
 					     int pass,
