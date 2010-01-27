@@ -167,7 +167,6 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
     mPolygons.clear ();
     for (int i = 0; i < gridSizeX * gridSizeY; i++)
     {
-        fprintf (stderr, "created new polygon object\n");
 	mPolygons.push_back (new PolygonObject);
     }
 
@@ -181,9 +180,7 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
     float halfH = cellH / 2;
 
     float halfThick = mThickness / 2;
-    vector<PolygonObject *>::iterator it = mPolygons.begin ();;
-
-    fprintf (stderr, "list has a size of %i\n", mPolygons.size ());
+    vector<PolygonObject *>::iterator it = mPolygons.begin ();
 
     for (int y = 0; y < gridSizeY; y++)
     {
@@ -1833,10 +1830,6 @@ PolygonAnim::step ()
 void
 PolygonAnim::updateBB (CompOutput &output)
 {
-
-    if (!updateBBUsed ())
-	return;
-
     GLScreen *gScreen = GLScreen::get (::screen);
     GLMatrix wTransform;
     GLMatrix wTransform2;

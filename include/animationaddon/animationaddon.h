@@ -267,8 +267,8 @@ public:
                       unsigned int                maxGridWidth,
                       unsigned int                maxGridHeight);
     void drawGeometry ();
-    void updateBB (CompOutput &output);
-    virtual bool updateBBUsed () { return true; }
+    virtual void updateBB (CompOutput &output);
+    bool updateBBUsed () { return true; }
     bool prePreparePaint (int msSinceLastPaint);
     bool moveUpdate (int dx, int dy);
 

@@ -221,13 +221,13 @@ class AirplaneAnim :
 	init ();
 
 	void
-	transformPolygon (PolygonObject *p);
+	transformPolygon (const PolygonObject *p);
 
 	bool
 	tesselateIntoAirplane ();
 	
-	bool
-	updateBBUsed ();
+	void
+	updateBB (CompOutput &);
 	
 	void
 	freePolygonObjects ();

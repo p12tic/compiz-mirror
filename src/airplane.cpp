@@ -133,8 +133,8 @@ AirplaneAnim::tesselateIntoAirplane ()
 	p->centerPosStart.setX (winLimitsX + H2);
 	p->centerPos.setY (winLimitsY + H2);
 	p->centerPosStart.setY (winLimitsY + H2);
-	p->centerPos.setZ (-halfThick + H2);
-	p->centerPosStart.setZ (-halfThick + H2);
+	p->centerPos.setZ (-halfThick);
+	p->centerPosStart.setZ (-halfThick);
 	p->rotAngle = p->rotAngleStart = 0;
 
 	p->nSides = 4;
@@ -648,7 +648,7 @@ AirplaneAnim::stepPolygon (PolygonObject *pol,
 		     sin (2 * -M_PI_2 * airplanePathLength))) *
 		 moveProgress5);
 	    p->centerPosFly.setY (
-		((mIcon.y () + mIcon.height () / 2) -
+		(((int) mIcon.x () + (int) mIcon.height () / 2) -
 		 p->centerPosStart.y ()) *
 		-sin (p->flyTheta / airplanePathLength));
 	}
@@ -692,10 +692,9 @@ AirplaneAnim::stepPolygon (PolygonObject *pol,
 }
 
 void
-AirplaneAnim::transformPolygon (PolygonObject *pol)
+AirplaneAnim::transformPolygon (const PolygonObject *pol)
 {
     AirplanePolygonObject *p = (AirplanePolygonObject *) pol;
-
 
     glRotatef (p->flyRotation.x (), 1, 0, 0);	//rotate on axis X
     glRotatef (-p->flyRotation.y (), 0, 1, 0);	// rotate on axis Y
@@ -730,10 +729,14 @@ AirplaneAnim::transformPolygon (PolygonObject *pol)
 		  -p->rotAxisOffsetB.z ());
 }
 
-bool
-AirplaneAnim::updateBBUsed ()
+
+/* TODO: Damage a region, not the whole screen */
+void
+AirplaneAnim::updateBB (CompOutput &)
 {
-    return false;
+    Box screenBox = {0, screen->width (), 0, screen->height () };
+    
+    mAWindow->expandBBWithBox (screenBox);
 }
 
 void
