@@ -76,7 +76,9 @@ GroupScreen::optionChanged (CompOption            *opt,
 		{
 		    GROUP_WINDOW (w);
 
-		    //gw->glowQuads.computeGlowQuads (w, glowQuads.matrix);
+		    GLTexture::Matrix mat = glowTexture.texture.front ()->matrix ();
+
+		    gw->computeGlowQuads (&mat);
 		    if (!gw->glowQuads)
 		    {
 			gw->cWindow->damageOutputExtents ();
@@ -104,7 +106,9 @@ GroupScreen::optionChanged (CompOption            *opt,
 		    foreach (CompWindow *w, screen->windows ())
 		     {
 			GROUP_WINDOW (w);
-			//gw->glowQuads.computeGlowQuads (w, gw->glowQuads.matrix);
+			GLTexture::Matrix mat = glowTexture.texture.front ()->matrix ();
+
+			gw->computeGlowQuads (&mat);
 		     }
 
 		    cScreen->damageScreen ();
@@ -153,35 +157,50 @@ GroupScreen::applyInitialActions ()
 
 	/* read window property to see if window was grouped
 	   before - if it was, regroup */
-	/*if (gw->checkWindowProperty (id, tabbed, color))
+	if (gw->checkProperty (id, tabbed, color))
 	{
+	    Selection sel;
+	    Group *foundGroup = NULL;
+	    
 	    foreach (Group *group, groups)
 		if (group->identifier == id)
+		{
+		    foundGroup = group;
 		    break;
+		}
 
-	    gw->addToGroup (group, id);
+	    if (foundGroup)
+	        foundGroup->addWindow (w);
+	    else
+	    {
+		sel.push_back (w);
+		foundGroup = sel.toGroup ();
+	    }
 	    if (tabbed)
-		group->tab (w);
+		foundGroup->tab (w);
 
-	    gw->group->color[0] = color[0];
-	    gw->group->color[1] = color[1];
-	    gw->group->color[2] = color[2];
+	    foundGroup->color[0] = color[0];
+	    foundGroup->color[1] = color[1];
+	    foundGroup->color[2] = color[2];
 
-	    if (gw->group->tabBar && gw->group->tabBar->selectionLayer)
-		gw->group->tabBar->selectionLayer->renderTopTabHighlight (gw->group);
+	    if (foundGroup->tabBar && foundGroup->tabBar->selectionLayer)
+		foundGroup->tabBar->renderTopTabHighlight ();
 
-	    cScren->damageScreen ();
-	}*/
+	    cScreen->damageScreen ();
+	}
 
-	/*if (optionGetAutotabCreate (s) && gw->isGroupable ()))
+	if (optionGetAutotabCreate () && gw->is ())
 	{
 	    if (!gw->group && (gw->windowState == GroupWindow::WindowNormal))
 	    {
-		gw->addToGroup (NULL, 0);
+		Selection sel;
+		sel.push_back (w);
+		
+		sel.toGroup ();
 		if (gw->group)
-		    gw->group->tab ();
+		    gw->group->tab (w);
 	    }
-	}*/
+	}
 
 	it--;
     }
@@ -194,38 +213,7 @@ GroupScreen::applyInitialActions ()
  *
  */
 
-#if 0
-TabBar::~TabBar
-{
-		GroupTabBarSlot *slot, *nextSlot;
 
-		for (slot = group->tabBar->slots; slot;)
-		{
-		    if (slot->region)
-			XDestroyRegion (slot->region);
-
-		    nextSlot = slot->next;
-		    free (slot);
-		    slot = nextSlot;
-		}
-
-		groupDestroyCairoLayer (s, group->tabBar->textLayer);
-		groupDestroyCairoLayer (s, group->tabBar->bgLayer);
-		groupDestroyCairoLayer (s, group->tabBar->selectionLayer);
-
-		if (group->inputPrevention)
-		    XDestroyWindow (s->display->display,
-				    group->inputPrevention);
-
-		if (group->tabBar->region)
-		    XDestroyRegion (group->tabBar->region);
-
-		if (group->tabBar->timeoutHandle)
-		    compRemoveTimeout (group->tabBar->timeoutHandle);
-
-		free (group->tabBar);
-}
-#endif
 
 GroupScreen::GroupScreen (CompScreen *screen) :
     PluginClassHandler <GroupScreen, CompScreen> (screen),
@@ -236,6 +224,7 @@ GroupScreen::GroupScreen (CompScreen *screen) :
     lastRestackedGroup (NULL),
     groupWinPropertyAtom (XInternAtom (screen->dpy (), "_COMPIZ_GROUP", 0)),
     resizeNotifyAtom (XInternAtom (screen->dpy (), "_COMPIZ_RESIZE_NOTIFY", 0)),
+    queued (false),
     grabState (ScreenGrabNone),
     grabIndex (0),
     lastHoveredGroup (NULL),
@@ -244,6 +233,11 @@ GroupScreen::GroupScreen (CompScreen *screen) :
     prevX (0),
     prevY (0)   
 {
+
+    dequeueTimeoutHandle.setTimes (0, 0);
+    dequeueTimeoutHandle.setCallback (boost::bind (&GroupScreen::dequeue,
+									 this));
+    dequeueTimeoutHandle.stop ();
 
     ScreenInterface::setHandler (screen);
     CompositeScreenInterface::setHandler (cScreen);
@@ -262,25 +256,31 @@ GroupScreen::GroupScreen (CompScreen *screen) :
 						 this, _1, _2, _3));
     optionSetSelectSingleKeyInitiate (boost::bind (&GroupScreen::selectSingle,
 						   this, _1, _2, _3));
-/*
-    optionSetGroupKeyInitiate (boost::bind (&GroupScreen::groupWindows, this
+
+    optionSetGroupKeyInitiate (boost::bind (&GroupScreen::groupWindows, this,
 					     _1, _2, _3));
-    optionSetUngroupKeyInitiate (boost::bind (&GroupScreen::unGroupWindows,
+    optionSetUngroupKeyInitiate (boost::bind (&GroupScreen::ungroupWindows,
 					      this, _1, _2, _3));
+
     optionSetTabmodeKeyInitiate (boost::bind (&GroupScreen::initTab, this, _1,
 					      _2, _3));
-    optionSetChangeTabLeftKeyInitiate (boost::bind (&GroupScreen::changeTabLeft,
+    optionSetChangeTabLeftKeyInitiate (boost::bind (&GroupScreen::changeTabLeft, this,
 						     _1, _2, _3));
     optionSetChangeTabRightKeyInitiate (boost::bind (&GroupScreen::changeTabRight,
 						     this, _1, _2, _3));
+
     optionSetRemoveKeyInitiate (boost::bind (&GroupScreen::removeWindow, this,
 					     _1, _2, _3));
+
+
+
     optionSetCloseKeyInitiate (boost::bind (&GroupScreen::closeWindows, this,
 					    _1, _2, _3));
-    optionSetIgnoreKeyInitiate (boost::bind (&GroupScreen::setIgnore, this, _1
+    optionSetIgnoreKeyInitiate (boost::bind (&GroupScreen::setIgnore, this, _1,
 					     _2, _3));
     optionSetIgnoreKeyTerminate (boost::bind (&GroupScreen::unsetIgnore, this,
 					      _1, _2, _3));
+/*
     optionSetChangeColorKeyInitiate (boost::bind (&GroupScreen::changeColor,
 						  this, _1, _2, _3));
 */
@@ -299,8 +299,6 @@ GroupScreen::GroupScreen (CompScreen *screen) :
     optionSetThumbSpaceNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
     optionSetBorderWidthNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
     optionSetBorderRadiusNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-
-
 
     /* one-shot timeout for stuff that needs to be initialized after
        all screens and windows are initialized */
@@ -324,7 +322,7 @@ GroupScreen::~GroupScreen ()
     {
 	Group *group = groups.back ();
 
-	delete group;
+	group->destroy (true);
     }
 
     /*if (grabIndex)
@@ -349,6 +347,7 @@ GroupWindow::GroupWindow (CompWindow *window) :
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
+    glowQuads (NULL),
     selection (NULL),
     group (NULL),
     inSelection (false),
@@ -356,14 +355,16 @@ GroupWindow::GroupWindow (CompWindow *window) :
     tab (NULL),
     needsPosSync (false),
     windowHideInfo (NULL),
-    resizeGeometry (NULL),
+    resizeGeometry (0, 0, 0, 0),
     animateState (0),
     tx (0),
     ty (0),
     xVelocity (0.0),
     yVelocity (0.0)
 {
-    
+    GROUP_SCREEN (screen);
+    GLTexture::Matrix mat = gs->glowTexture.texture.front ()->matrix ();
+
     WindowInterface::setHandler (window);
     CompositeWindowInterface::setHandler (cWindow);
     GLWindowInterface::setHandler (gWindow);
@@ -375,7 +376,7 @@ GroupWindow::GroupWindow (CompWindow *window) :
     else
 	windowState = WindowNormal;
 
-    ///glowQuads.computeGlowQuads (window, glowQuads.matrix);
+    computeGlowQuads (&mat);
 }
 
 GroupWindow::~GroupWindow ()
@@ -384,14 +385,17 @@ GroupWindow::~GroupWindow ()
 	setVisibility (true);*/
 
     readOnlyProperty = TRUE;
+    
+    if (glowQuads)
+	delete[] glowQuads;
 
     /* FIXME: this implicitly calls the wrapped function activateWindow
        (via groupDeleteTabBarSlot -> groupUnhookTabBarSlot -> groupChangeTab)
        --> better wrap into removeObject and call it for removeWindow
        */
 
-    /*if (group)
-	deleteGroupWindow ();*/
+    if (group)
+	deleteGroupWindow ();
 }
 
 bool

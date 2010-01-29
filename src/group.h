@@ -24,12 +24,14 @@
  **/
 
 #ifndef _GROUP_H
+
 #define _GROUP_H
 
 #include <cstring>
 #include <cmath>
 #include <time.h>
 #include <X11/Xlib.h>
+#include <X11/Xatom.h>
 #include <cairo/cairo-xlib-xrender.h>
 
 #include <core/core.h>
@@ -110,21 +112,24 @@ class Layer :
 	CompScreen *screen;
 
 	PaintState state;
+	
+	int animationTime;
 
-#if 0
+/*
 
 	virtual void draw (int, int, float);
 
     private:
 	Layer ();
 	~Layer ();
-#endif
+*/
 };
 
 class CairoHelper
 {
     public :
 	GLTexture::List texture;
+	Pixmap		pixmap;
 
 	/* used if layer is used for cairo drawing */
 	unsigned char   *buffer;
@@ -132,32 +137,21 @@ class CairoHelper
 	cairo_t	    *cairo;
 
 	/* used if layer is used for text drawing */
-	Pixmap pixmap;
-
 	int texWidth;
 	int texHeight;
 
     public:
 
-#if 0
-
 	void
 	clear ();
 
-	void
-	destroy ();
-
-	void
-	renderTopTabHighlight (Group *group);
-
-	void
-	renderTabBarBackground (Group *group);
+	~CairoHelper ();
 
    private:
 
-	CairoHelper ();
-	~CairoHelper ();
-#endif
+    CairoHelper (int, int);
+    
+    friend class CairoLayer;
 
 };
 
@@ -166,25 +160,21 @@ class CairoLayer :
     public CairoHelper
 {
     public:
-#if 0
-	void draw ();
-	bool render ();
+
+	//void draw (); TODO
+	//bool render (); TODO
 
 	static CairoLayer *
-	rebuildCairoLayer (CompScreen      *s,
-			   CairoLayer *layer,
+	rebuildCairoLayer (CairoLayer *,
 			   int             width,
 			   int             height);
 
 	static CairoLayer *
-	createCairoLayer (CompScreen *s,
-			  int        width,
+	createCairoLayer (int        width,
 			  int        height);
-#endif 
-	int        animationTime;
 
     private:
-	//CairoLayer (int, int);
+	CairoLayer (int, int);
 };
 
 class TextLayer :
@@ -192,26 +182,50 @@ class TextLayer :
 {
     public:
 
+	//TextLayer ();
+	//~TextLayer ();
+	
+	/* used if layer is used for text drawing */
+	int texWidth;
+	int texHeight;
+
 	CompText text;
+
+	Pixmap   pixmap;
+	
+	GLTexture::List texture;
 #if 0
 	void draw ();
 	bool render ();
 	void clear ();
 
-	static TextLayer *
-	groupRenderWindowTitle (Group *group);
+#endif
 
    private:
-
-	TextLayer (Group *group);
-	~TextLayer ();
-#endif
 
 };
 
 class Tab
 {
     public:
+    
+    Tab (Group *, CompWindow *w);
+    ~Tab ();
+    
+    void
+    recalcPos (int slotPos);
+    
+    void
+    getDrawOffset (int &hoffset,
+		           int &voffset);
+		           
+	void
+	paint (Group *,
+		   const GLMatrix &,
+		   int);
+
+	TabBar *bar;
+
 	CompRegion region;
 
 	CompWindow *window;
@@ -223,6 +237,25 @@ class Tab
     private:
 };
 
+class TabList :
+    public std::list <Tab *>
+{
+    public:
+    
+        bool
+        getPrevTab (Tab *curr, Tab *&ret);
+        
+        bool
+        getNextTab (Tab *cur, Tab *&ret);
+        
+        iterator
+        getFirstTab () { return begin (); };
+        
+        reverse_iterator
+        getLastTab () { return rend (); };
+        
+};
+
 class TabBar
 {
     public:
@@ -232,13 +265,33 @@ class TabBar
 	    AnimationReflex
 	} GroupAnimationType;
 
-    public:
-#if 0
-	TabBar (Group *);
-	~TabBar ();
-#endif
+	/*
+	 * Rotation direction for change tab animation
+	 */
+	typedef enum _ChangeTabAnimationDirection {
+	    RotateUncertain = 0,
+	    RotateLeft,
+	    RotateRight
+	} ChangeTabAnimationDirection;
 
-	std::list <Tab *>	    tabs;
+	typedef enum _TabChangeState {
+	    NoTabChange = 0,
+	    TabChangeOldOut,
+	    TabChangeNewIn
+	} TabChangeState;
+
+	typedef enum _TabbingState {
+	    NoTabbing = 0,
+	    Tabbing,
+	    Untabbing
+	} TabbingState;
+
+    public:
+
+	TabBar (Group *, CompWindow *);
+	~TabBar ();
+
+	TabList	    tabs;
 
 	Tab *hoveredSlot;
 	Tab *textSlot;
@@ -255,8 +308,11 @@ class TabBar
 
 	CairoLayer::PaintState state;
 	int        animationTime;
-	Region     region;
+	CompRegion     region;
 	int        oldWidth;
+
+	Window inputPrevention;
+	bool   ipwMapped;
 
 	CompTimer  timeoutHandle;
 
@@ -264,7 +320,21 @@ class TabBar
 	int   leftSpringX, rightSpringX;
 	int   leftSpeed, rightSpeed;
 	float leftMsSinceLastMove, rightMsSinceLastMove;
-#if 0
+	
+	void
+	draw (const GLWindowPaintAttrib  &wAttrib,
+	      const GLMatrix		 &transform,
+	      unsigned int		 mask,
+	      CompRegion		 clipRegion);
+
+	void
+	renderWindowTitle ();
+
+	void
+	renderTopTabHighlight ();
+
+	void
+	renderTabBarBackground ();
 
 	void handleFade (int ms);
 
@@ -310,7 +380,6 @@ class TabBar
 	void resizeRegion (CompRect box, bool syncIPW);
 
 	void damageRegion ();
-#endif
 
     private:
 };
@@ -339,28 +408,13 @@ class Group
 	    UngroupSingle
 	} UngroupState;
 
-	/*
-	 * Rotation direction for change tab animation
-	 */
-	typedef enum _ChangeTabAnimationDirection {
-	    RotateUncertain = 0,
-	    RotateLeft,
-	    RotateRight
-	} ChangeTabAnimationDirection;
-
-	typedef enum _TabChangeState {
-	    NoTabChange = 0,
-	    TabChangeOldOut,
-	    TabChangeNewIn
-	} TabChangeState;
-
-	typedef enum _TabbingState {
-	    NoTabbing = 0,
-	    Tabbing,
-	    Untabbing
-	} TabbingState;
-
     public:
+
+	static Group *
+	create (unsigned int);
+	
+	void
+	destroy (bool);
 
 	CompWindowList windows;
 
@@ -370,6 +424,8 @@ class Group
 	Tab* topTab;
 	Tab* prevTopTab;
 
+/* Move this section to TabBar */
+
 	/* needed for untabbing animation */
 	CompWindow *lastTopTab;
 
@@ -377,30 +433,42 @@ class Group
 	when the tab was changed again during animation.
 	Another animation should be started again,
 	switching for this window. */
-	ChangeTabAnimationDirection nextDirection;
+	TabBar::ChangeTabAnimationDirection nextDirection;
 	Tab		             *nextTopTab;
 
 	/* check focus stealing prevention after changing tabs */
 	bool checkFocusAfterTabChange;
 
+/**/
+
 	TabBar *tabBar;
 
 	int            changeAnimationTime;
 	int            changeAnimationDirection;
-	TabChangeState changeState;
+	TabBar::TabChangeState changeState;
 
-	TabbingState tabbingState;
+	TabBar::TabbingState tabbingState;
 
 	UngroupState ungroupState;
 
 	Window       grabWindow;
 	unsigned int grabMask;
 
-	Window inputPrevention;
-	bool   ipwMapped;
-
 	GLushort color[4];
-#if 0
+
+	void
+	addWindow (CompWindow *w);
+
+	void
+	minimizeWindows (CompWindow *top, bool);
+
+	void
+	shadeWindows (CompWindow *top, bool);
+
+	void
+	raiseWindows (CompWindow *top);
+
+
 
 	void
 	handleAnimation ();
@@ -413,9 +481,26 @@ class Group
 
 	void tab (CompWindow *main);
 	void untab ();
-#endif
+	
+	void
+	finishTabbing ();
+	
+	void
+	drawTabAnimation (int            msSinceLastPaint);
+	
+	void
+	applyConstraining (CompRegion         constrainRegion,
+					   Window         constrainedWindow,
+					   int            dx,
+					   int            dy);
+					   
+	void
+	startTabbingAnimation (Bool           tab);
 
     private:
+    
+	Group (unsigned int);
+	~Group ();
 };
 
 class Selection :
@@ -426,7 +511,7 @@ class Selection :
 	toGroup ();
 
 	void
-	push_back (Selection);
+	push_back (Selection &);
 
 	void
 	push_back (CompWindow *w);
@@ -465,6 +550,8 @@ class SelectionRect :
 #define GLOWQUAD_LEFT		 6
 #define GLOWQUAD_RIGHT		 7
 #define NUM_GLOWQUADS		 8
+
+/* XXX: cleanup */
 
 class GlowTexture
 {
@@ -514,7 +601,7 @@ class GroupScreen :
 
 	typedef struct _GroupResizeInfo  {
 	    CompWindow *resizedWindow;
-	    XRectangle origGeometry;
+	    CompRect   origGeometry;
 	} GroupResizeInfo;
 
 	/* These form queues:
@@ -551,6 +638,11 @@ class GroupScreen :
 	    CompWindow        *w;
 	} PendingSyncs;
 
+	typedef struct _PendingNotifies {
+	    CompWindow	      *w;
+	    CompWindowNotify  n;
+	} PendingNotifies;
+
 
     public:
 
@@ -567,6 +659,12 @@ class GroupScreen :
 
 	Atom groupWinPropertyAtom;
 	Atom resizeNotifyAtom;
+	
+	CompPoint mouse;
+	
+
+	void
+	damagePaintRectangle (CompRect);
 
 	void
 	handleEvent (XEvent *);
@@ -588,6 +686,49 @@ class GroupScreen :
 	void donePaint ();
 
 	void handleMotionEvent (int, int);
+	void handleButtonPressEvent (XEvent *);
+	void handleButtonReleaseEvent (XEvent *);
+
+	bool
+	dequeue ();
+
+	void
+	enqueueMoveNotify (CompWindow *,
+			   int, int, bool, bool);
+
+	void
+	dequeueMoveNotifies ();
+
+	void
+	dequeueSyncs ();
+
+	void
+	enqueueGrabNotify (CompWindow *,
+			   int, int, unsigned int, unsigned int);
+
+	void
+	dequeueGrabNotifies ();
+
+	void
+	enqueueUngrabNotify (CompWindow *);
+
+	void
+	dequeueUngrabNotifies ();
+
+	void
+	enqueueWindowNotify (CompWindow *w, CompWindowNotify n);
+
+	void
+	dequeueWindowNotifies ();
+	
+	bool
+        tabBarTimeout (TabBar *bar);
+        
+        bool
+        dragHoverTimeout (CompWindow *w);
+    
+        void
+        tabChangeActivateEvent (bool activating);
 
 	bool
 	selectSingle (CompAction         *action,
@@ -604,10 +745,58 @@ class GroupScreen :
 			 CompAction::State  state,
 			 CompOption::Vector options);
 
-	std::list <PendingMoves >   pendingMoves;
-	std::list <PendingGrabs >   pendingGrabs;
-	std::list <PendingUngrabs > pendingUngrabs;
-	CompTimer			     dequeueTimeoutHandle;
+	bool
+	groupWindows (CompAction         *action,
+		      CompAction::State  state,
+		      CompOption::Vector options);
+
+	bool
+	ungroupWindows (CompAction         *action,
+			CompAction::State  state,
+			CompOption::Vector options);
+
+	bool
+	removeWindow (CompAction         *action,
+		      CompAction::State  state,
+		      CompOption::Vector options);
+
+	bool
+	closeWindows (CompAction         *action,
+		      CompAction::State  state,
+		      CompOption::Vector &options);
+
+	bool
+	setIgnore (CompAction         *action,
+		   CompAction::State  state,
+		   CompOption::Vector &options);
+
+	bool
+	unsetIgnore (CompAction         *action,
+		     CompAction::State  state,
+		     CompOption::Vector &options);
+
+	bool
+	initTab (CompAction         *action,
+		 CompAction::State  state,
+		 CompOption::Vector &options);
+
+	Bool
+	changeTabLeft (CompAction         *action,
+		       CompAction::State  state,
+		       CompOption::Vector options);
+
+	bool
+	changeTabRight (CompAction         *action,
+			CompAction::State  state,
+			CompOption::Vector options);
+
+	std::list <PendingMoves *>    pendingMoves;
+	std::list <PendingSyncs *>    pendingSyncs;
+	std::list <PendingGrabs *>    pendingGrabs;
+	std::list <PendingUngrabs *>  pendingUngrabs;
+	std::list <PendingNotifies *> pendingNotifies;
+
+	CompTimer		     dequeueTimeoutHandle;
 
 	std::list <Group *>	     groups;
 	SelectionRect                masterSelectionRect;
@@ -636,7 +825,7 @@ class GroupScreen :
 	int               prevX, prevY; /* Buffer for mouse coordinates */
 	MousePoller       poller;
 
-	//void positionUpdate (CompPoint &); // mousepoll callback function
+	void positionUpdate (const CompPoint &); // mousepoll callback function
 
 	CompTimer	      initialActionsTimeoutHandle;
 
@@ -650,12 +839,14 @@ class GroupScreen :
 	applyInitialActions ();
 
 	void grabScreen (GrabState);
-#if 0
+
 	void updateTabBars (Window);
 
-	void
-	groupDequeueMoveNotifies ();
-#endif
+	bool
+	showDelayTimeout (TabBar *);
+	
+	CompRegion
+	getConstrainRegion ();
 
 };
 
@@ -671,7 +862,7 @@ class GroupWindow :
     public:
 
 	typedef struct _HideInfo {
-	    Window frameWindow;
+	    Window shapeWindow;
 
 	    unsigned long skipState;
 	    unsigned long shapeMask;
@@ -715,16 +906,19 @@ class GroupWindow :
 	State    windowState;
 	HideInfo *windowHideInfo;
 
-	XRectangle *resizeGeometry;
+	CompRect  resizeGeometry;
 
 	/* For tab animation */
-	int    animateState;
-	XPoint mainTabOffset;
-	XPoint destination;
-	XPoint orgPos;
+	int       animateState;
+	CompPoint mainTabOffset;
+	CompPoint destination;
+	CompPoint orgPos;
 
 	float tx,ty;
 	float xVelocity, yVelocity;
+	
+	void
+	updateProperty ();
 
 	void
 	select ();
@@ -735,13 +929,12 @@ class GroupWindow :
 	bool
 	inRegion (CompRegion, float);
 
-#if 0
-
 	void
 	moveNotify (int, int, bool);
 
 	void
 	resizeNotify (int, int, int, int);
+
 
 	void
 	getOutputExtents (CompWindowExtents &);
@@ -755,18 +948,20 @@ class GroupWindow :
 	ungrabNotify ();
 
 	void
+	windowNotify (CompWindowNotify n);
+
+	void
 	stateChangeNotify (unsigned int);
+
 
 	void
 	activate ();
 
 	bool
 	glDraw (const GLMatrix &,
-		const GLFragment::Attrib &,
+		GLFragment::Attrib &,
 		const CompRegion	&,
-		unsigned int);
-
-#endif 
+		unsigned int); 
 
 	bool
 	glPaint (const GLWindowPaintAttrib &,
@@ -774,57 +969,54 @@ class GroupWindow :
 		 const CompRegion	   &,
 		 unsigned int		     );
 
-	/*bool
+	bool
 	damageRect (bool,
-		    const CompRect &);*/
+		    const CompRect &);
 
-#if 0
+	bool checkProperty (long int &id,
+			    bool     &tabbed,
+			    GLushort *color);
 
-	void updateWindowProperty ();
-
-	bool checkWindowProperty (long int &id,
-				  bool	   &tabbed,
-				  GLushort &color);
 
 	void deleteGroupWindow ();
 	void removeFromGroup ();
 
-	void addToGroup (Group *, long int initialIdent);
-
 	void
-	groupSetWindowVisibility (bool       visible);
+	setVisibility (bool       visible);
 
 	void
 	groupClearWindowInputShape (HideInfo *hideInfo);
 
 	CompRegion getClippingRegion ();
 
-	void
-	enqueueMoveNotify (int        dx,
-			   int        dy,
-			   bool       immediate,
-			   bool       sync);
-
-	void
-	enqueueGrabNotify (int          x,
-			   int          y,
-			   unsigned int state,
-			   unsigned int mask);
-
-	void
-	enqueueUngrabNotify ();
 
 	void
 	getStretchRectangle (CompRect     &pBox,
-			     float        &xScale,
-			     float        &yScale);
+			     float        *xScale,
+			     float        *yScale);
 
-#endif
+
+	unsigned int
+	updateResizeRectangle (CompRect, bool);
 
 	void
-	computeGlowQuads (GLTexture::Matrix &matrix);
-
+	computeGlowQuads (GLTexture::Matrix *matrix);
 	
+	void
+	clearInputShape (HideInfo *);
+	
+	void
+	restoreInputShape (HideInfo *);
+	
+	int
+	adjustTabVelocity ();
+    
+	bool
+	constrainMovement (CompRegion     constrainRegion,
+				int        dx,
+				int        dy,
+				int        &new_dx,
+				int        &new_dy);	
 };
 
 #define GROUP_WINDOW(w)							       \
@@ -837,5 +1029,7 @@ class GroupPluginVTable :
 
 	bool init ();
 };
+
+
 
 #endif

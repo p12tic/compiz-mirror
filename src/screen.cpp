@@ -65,66 +65,422 @@ void
 GroupScreen::handleMotionEvent (int        xRoot,
 				int        yRoot)
 {
+    Group *group;
+
     if (grabState == ScreenGrabTabDrag)
     {
-	#if 0
 	int    dx, dy;
 	int    vx, vy;
-	REGION reg;
-	Region draggedRegion = gs->draggedSlot->region;
+	CompRegion draggedRegion = draggedSlot->region;
 
-	reg.rects = &reg.extents;
-	reg.numRects = 1;
+	dx = xRoot - prevX;
+	dy = yRoot - prevY;
 
-	dx = xRoot - gs->prevX;
-	dy = yRoot - gs->prevY;
-
-	if (gs->dragged || abs (dx) > RADIUS || abs (dy) > RADIUS)
+	if (dragged || abs (dx) > RADIUS || abs (dy) > RADIUS)
 	{
-	    gs->prevX = xRoot;
-	    gs->prevY = yRoot;
+	    prevX = xRoot;
+	    prevY = yRoot;
 
-	    if (!gs->dragged)
+	    if (!dragged)
 	    {
-		GroupSelection *group;
-		BoxRec         *box;
+		CompRect box;
 
-		GROUP_WINDOW (gs->draggedSlot->window);
+		GROUP_WINDOW (draggedSlot->window);
 
-		gs->dragged = TRUE;
+		dragged = TRUE;
 
-		for (group = gs->groups; group; group = group->next)
-		    groupTabSetVisibility (group, TRUE, PERMANENT);
+		foreach (group, groups)
+		{
+		    if (group->tabBar)
+			group->tabBar->setVisibility (true, PERMANENT);
+		}
 
-		box = &gw->group->tabBar->region->extents;
-		groupRecalcTabBarPos (gw->group, (box->x1 + box->x2) / 2,
-				      box->x1, box->x2);
+		box = gw->group->tabBar->region.boundingRect ();
+		if (group->tabBar)
+		    group->tabBar->recalcPos ((box.x1 () + box.x2 ()) / 2,
+				      	       box.x1 (), box.x2 ());
 	    }
 
-	    groupGetDrawOffsetForSlot (gs->draggedSlot, &vx, &vy);
+	    draggedSlot->getDrawOffset (vx, vy);
 
-	    reg.extents.x1 = draggedRegion->extents.x1 + vx;
-	    reg.extents.y1 = draggedRegion->extents.y1 + vy;
-	    reg.extents.x2 = draggedRegion->extents.x2 + vx;
-	    reg.extents.y2 = draggedRegion->extents.y2 + vy;
-	    damageScreenRegion (s, &reg);
+	    CompRect rect;
+	    
+	    rect.setGeometry (draggedRegion.boundingRect ().x1 () + vx,
+	    		      draggedRegion.boundingRect ().y1 () + vy,
+	    		      draggedRegion.boundingRect ().width () + vx,
+	    		      draggedRegion.boundingRect ().height () +vy);
 
-	    XOffsetRegion (gs->draggedSlot->region, dx, dy);
-	    gs->draggedSlot->springX =
-		(gs->draggedSlot->region->extents.x1 +
-		 gs->draggedSlot->region->extents.x2) / 2;
+	    CompRegion reg (rect);
 
-	    reg.extents.x1 = draggedRegion->extents.x1 + vx;
-	    reg.extents.y1 = draggedRegion->extents.y1 + vy;
-	    reg.extents.x2 = draggedRegion->extents.x2 + vx;
-	    reg.extents.y2 = draggedRegion->extents.y2 + vy;
-	    damageScreenRegion (s, &reg);
+	    cScreen->damageRegion (reg);
+
+	    draggedSlot->region.translate (dx, dy);
+	    draggedSlot->springX =
+		(draggedSlot->region.boundingRect ().x1 () +
+		 draggedSlot->region.boundingRect ().x2 ()) / 2;
+
+	    rect.setGeometry (draggedRegion.boundingRect ().x1 () + vx,
+	    		      draggedRegion.boundingRect ().y1 () + vy,
+	    		      draggedRegion.boundingRect ().width () + vx,
+	    		      draggedRegion.boundingRect ().height () +vy);
+
+	    CompRegion reg2 (rect);
+
+	    cScreen->damageRegion (reg2);
 	}
-	#endif
     }
     else if (grabState == ScreenGrabSelect)
     {
 	masterSelectionRect.damage (xRoot, yRoot);
+    }
+}
+
+/*
+ * groupHandleButtonPressEvent
+ *
+ */
+void
+GroupScreen::handleButtonPressEvent (XEvent *event)
+{
+    Group          *group;
+    int            xRoot, yRoot, button;
+
+    xRoot  = event->xbutton.x_root;
+    yRoot  = event->xbutton.y_root;
+    button = event->xbutton.button;
+
+    
+
+    foreach (Group *group, groups)
+    {
+	if (!group->tabBar)
+	    continue;
+	    
+	if (group->tabBar->inputPrevention != event->xbutton.window)
+	    continue;
+
+	switch (button) {
+	case Button1:
+	    {
+		Tab *tab;
+
+		foreach (Tab *tab, group->tabBar->tabs)
+		{
+		    if (tab->region.contains (CompPoint (xRoot, yRoot)))
+		    {
+			draggedSlot = tab;
+			/* The slot isn't dragged yet */
+			dragged = FALSE;
+			prevX = xRoot;
+			prevY = yRoot;
+
+			if (!screen->otherGrabExist ("group", "group-drag", NULL))
+			    grabScreen (ScreenGrabTabDrag);
+		    }
+		}
+	    }
+	    break;
+
+	case Button4:
+	case Button5:
+	    {
+	        /* FIXME: Black magic */
+	        /* FIXME: should make a tabList class that has methods for
+	         * getPrevTab, getNextTab */
+	        
+		CompWindow  *ftopTab = NULL;
+		std::list <Tab *> &tabs = group->tabBar->tabs;
+		std::list <Tab *>::iterator currentTab;
+		GroupWindow *gw;
+
+		if (group->nextTopTab)
+		    ftopTab = NEXT_TOP_TAB (group);
+		else if (group->topTab)
+		{
+		    /* If there are no tabbing animations,
+		       topTab is never NULL. */
+		    ftopTab = TOP_TAB (group);
+		}
+
+		if (!ftopTab)
+		    return;
+
+		gw = GroupWindow::get (ftopTab);
+		
+		currentTab = std::find (tabs.begin (), tabs.end (), gw->tab);
+
+		if (button == Button4)
+		{
+		    if (currentTab != tabs.begin ())
+		    {
+		        currentTab--;
+			group->tabBar->changeTab (*currentTab, TabBar::RotateLeft);
+		    }
+		    else
+		    {
+			group->tabBar->changeTab (tabs.back (),
+					          TabBar::RotateLeft);
+		    }
+		}
+		else
+		{
+		    currentTab++;
+		    if (currentTab != tabs.end ())
+			group->tabBar->changeTab (*currentTab, TabBar::RotateRight);
+		    else
+			group->tabBar->changeTab (tabs.front (), TabBar::RotateRight);
+		}
+		break;
+	    }
+	}
+
+	break;
+    }
+}
+
+/*
+ * groupHandleButtonReleaseEvent
+ *
+ */
+void
+GroupScreen::handleButtonReleaseEvent (XEvent *event)
+{
+    int            vx, vy;
+    CompRegion     newRegion;
+    Bool           inserted = FALSE;
+    Bool           wasInTabBar = FALSE;
+
+    if (event->xbutton.button != 1)
+	return;
+
+    if (!draggedSlot)
+    {
+	return;
+    }
+
+    if (!dragged)
+    {
+	draggedSlot->bar->changeTab (draggedSlot, TabBar::RotateUncertain);
+	draggedSlot = NULL;
+
+	if (grabState == ScreenGrabTabDrag)
+	    grabScreen (ScreenGrabNone);
+
+	return;
+    }
+
+    GROUP_WINDOW (draggedSlot->window);
+
+    newRegion = newRegion.united (draggedSlot->region);
+    
+    draggedSlot->getDrawOffset (vx, vy);
+    
+    newRegion.translate (vx, vy);
+
+    foreach (Group *group, groups)
+    {
+	Bool            inTabBar;
+	CompRegion      clip, buf;
+	TabList::iterator it;
+	//Tab             *tab;
+
+	if (!group->tabBar || !HAS_TOP_WIN (group))
+	    continue;
+
+	/* create clipping region */
+	clip = GroupWindow::get (TOP_TAB (group))->getClippingRegion ();
+	if (clip.isEmpty ())
+	{
+	    continue;
+	}
+
+	buf = group->tabBar->region.intersected (newRegion);
+	buf = buf.subtracted (clip);
+
+	inTabBar = !buf.isEmpty ();
+
+	if (!inTabBar)
+	{
+	    continue;
+	}
+
+	wasInTabBar = TRUE;
+
+	for (it = group->tabBar->tabs.begin ();
+	     it != group->tabBar->tabs.end ();
+	     it++)
+	{
+	    Tab             *tab = *it;
+	    Tab             *tmpDraggedTab;
+	    Tab		    *prevTab = NULL, *nextTab = NULL;
+	    Tab		    *draggedSlotSideTab;
+	    Group           *tmpGroup;
+	    CompRegion      slotRegion, buf;
+	    CompRect        rect;
+	    Bool            inSlot;
+
+	    if (tab == draggedSlot)
+		continue;
+
+
+	    /* XXX: there must be stack smashing here */
+	    if (!group->tabBar->tabs.getPrevTab (tab, prevTab))
+	        prevTab = NULL;
+	    
+	    if (!group->tabBar->tabs.getNextTab (tab, nextTab))
+	        nextTab = NULL;
+
+	    if (prevTab && prevTab != draggedSlot)
+	    {
+		rect.setX (prevTab->region.boundingRect ().x2 ());
+	    }
+	    else if (prevTab && prevTab == draggedSlot
+	             && draggedSlot->bar->tabs.getPrevTab (draggedSlot,
+	             					   draggedSlotSideTab))
+	    {	        
+		rect.setX (draggedSlotSideTab->region.boundingRect ().x2 ());
+	    }
+	    else
+		rect.setY (group->tabBar->region.boundingRect ().x1 ());
+
+	    rect.setY (tab->region.boundingRect ().y1 ());
+
+	    if (nextTab && nextTab != draggedSlot)
+	    {
+		rect.setWidth (nextTab->region.boundingRect ().x1 () - rect.x ());
+	    }
+	    else if (nextTab && nextTab == draggedSlot &&
+	    	     draggedSlot->bar->tabs.getNextTab (draggedSlot,
+	    	     					draggedSlotSideTab))
+	    {
+	        rect.setWidth (draggedSlotSideTab->region.boundingRect ().x1 () - rect.x ());
+	    }
+	    else
+		rect.setWidth (group->tabBar->region.boundingRect ().x2 ());
+
+	    rect.setHeight (tab->region.boundingRect ().height ());
+
+	    slotRegion = CompRegion (rect);
+
+	    buf = slotRegion.intersected (newRegion);
+	    inSlot = !buf.isEmpty ();
+	    
+	    buf = CompRegion ();
+	    slotRegion = CompRegion ();
+
+	    if (!inSlot)
+	    {
+		continue;
+	    }
+
+	    tmpDraggedTab = draggedSlot;
+
+	    if (group != gw->group)
+	    {
+		CompWindow     *w = draggedSlot->window;
+		Group          *tmpGroup = gw->group;
+		int            oldPosX = WIN_CENTER_X (w);
+		int            oldPosY = WIN_CENTER_Y (w);
+
+		/* if the dragged window is not the top tab,
+		   move it onscreen */
+		if (tmpGroup->topTab && !IS_TOP_TAB (w, tmpGroup))
+		{
+		    CompWindow *tw = TOP_TAB (tmpGroup);
+
+		    oldPosX = WIN_CENTER_X (tw) + gw->mainTabOffset.x ();
+		    oldPosY = WIN_CENTER_Y (tw) + gw->mainTabOffset.y ();
+
+		    gw->setVisibility (true);
+		}
+
+		/* Change the group. */
+		GroupWindow::get (draggedSlot->window)->deleteGroupWindow ();
+		group->addWindow (draggedSlot->window);
+
+		/* we saved the original center position in oldPosX/Y before -
+		   now we should apply that to the new main tab offset */
+		if (HAS_TOP_WIN (group))
+		{
+		    CompWindow *tw = TOP_TAB (group);
+		    gw->mainTabOffset.setX (oldPosX - WIN_CENTER_X (tw));
+		    gw->mainTabOffset.setY (oldPosY - WIN_CENTER_Y (tw));
+		}
+	    }
+	    else
+		group->tabBar->unhookTab (draggedSlot, TRUE);
+
+	    draggedSlot = NULL;
+	    dragged = FALSE;
+	    inserted = TRUE;
+
+	    if ((tmpDraggedTab->region.boundingRect ().x1 () +
+		 tmpDraggedTab->region.boundingRect ().x2 () + (2 * vx)) / 2 >
+		(tab->region.boundingRect ().x1 () + tab->region.boundingRect ().x2 ()) / 2)
+	    {
+		group->tabBar->insertTabAfter (tmpDraggedTab, tab);
+	    }
+	    else
+	    {
+		group->tabBar->insertTabBefore (tmpDraggedTab, tab);
+	    }
+
+	    group->tabBar->damageRegion ();
+
+	    /* Hide tab-bars. */
+	    foreach (tmpGroup, groups)
+	    {
+		if (group == tmpGroup && tmpGroup->tabBar)
+		    tmpGroup->tabBar->setVisibility (TRUE, 0);
+		else if (tmpGroup->tabBar)
+		    tmpGroup->tabBar->setVisibility (FALSE, PERMANENT);
+	    }
+
+	    break;
+	}
+
+	if (inserted)
+	    break;
+    }
+
+    newRegion = CompRegion ();
+
+    if (!inserted)
+    {
+	CompWindow     *draggedSlotWindow = draggedSlot->window;
+	Group          *tmpGroup;
+
+	foreach (tmpGroup, groups)
+	{
+	    if (tmpGroup->tabBar)
+		tmpGroup->tabBar->setVisibility (FALSE, PERMANENT);
+	}
+
+	draggedSlot = NULL;
+	dragged = FALSE;
+
+	if (optionGetDndUngroupWindow () && !wasInTabBar)
+	{
+	    GroupWindow::get (draggedSlotWindow)->removeFromGroup ();
+	}
+	else if (gw->group && gw->group->topTab)
+	{
+	    gw->group->tabBar->recalcPos ((gw->group->tabBar->region.boundingRect ().x1 () +
+				   gw->group->tabBar->region.boundingRect ().x2 ()) / 2,
+				  gw->group->tabBar->region.boundingRect ().x1 (),
+				  gw->group->tabBar->region.boundingRect ().x2 ());
+	}
+
+	/* to remove the painted slot */
+	cScreen->damageScreen ();
+    }
+
+    if (grabState == ScreenGrabTabDrag)
+	grabScreen (ScreenGrabNone);
+
+    if (dragHoverTimeoutHandle.active ())
+    {
+        dragHoverTimeoutHandle.stop ();
     }
 }
 
@@ -147,11 +503,11 @@ GroupScreen::handleEvent (XEvent *event)
 	break;
 
     case ButtonPress:
-	//handleButtonPressEvent (event);
+	handleButtonPressEvent (event);
 	break;
 
     case ButtonRelease:
-	//handleButtonReleaseEvent (event);
+	handleButtonReleaseEvent (event);
 	break;
 
     case MapNotify:
@@ -175,29 +531,13 @@ GroupScreen::handleEvent (XEvent *event)
     case UnmapNotify:
 	/* Set internal window state depending on how the window was
 	 * unmapped. If it was a shade or a minimize, unmap all windows in
-	 * the group in the same way */
+	 * the group in the same way
+	 * XXX: Shoud really reimplement this using the new wrappable functions
+	 */
 	w = screen->findWindow (event->xunmap.window);
 	if (w)
 	{
 	    GROUP_WINDOW (w);
-
-	    if (w->pendingUnmaps ())
-	    {
-		if (w->shaded ())
-		{
-		    gw->windowState = GroupWindow::WindowShaded;
-
-		    //if (gw->group && optionGetShadeAll ())
-			//groupShadeWindows (w, gw->group, TRUE);
-		}
-		else if (w->minimized ())
-		{
-		    gw->windowState = GroupWindow::WindowMinimized;
-
-		    //if (gw->group && groupGetMinimizeAll (w->screen))
-			//groupMinimizeWindows (w, gw->group, TRUE);
-		}
-	    }
 
 	    if (gw->group)
 	    {
@@ -205,14 +545,14 @@ GroupScreen::handleEvent (XEvent *event)
 		{
 		    /* on unmap of the top tab, hide the tab bar and the
 		       input prevention window */
-		    //groupTabSetVisibility (gw->group, FALSE, PERMANENT);
+		    gw->group->tabBar->setVisibility (FALSE, PERMANENT);
 		}
 		if (!w->pendingUnmaps ())
 		{
 		    /* close event */
 		    if (!(gw->animateState & IS_UNGROUPING))
 		    {
-			//groupDeleteGroupWindow (w);
+			gw->deleteGroupWindow ();
 			cScreen->damageScreen ();
 		    }
 		}
@@ -232,7 +572,7 @@ GroupScreen::handleEvent (XEvent *event)
 		    !IS_TOP_TAB (w, gw->group))
 		{
 		    gw->group->checkFocusAfterTabChange = TRUE;
-		    //groupChangeTab (gw->slot, RotateUncertain);
+		    gw->group->tabBar->changeTab (gw->tab, TabBar::RotateUncertain);
 		}
 	    }
 	}
@@ -265,10 +605,12 @@ GroupScreen::handleEvent (XEvent *event)
 			GroupWindow *gcw;
 
 			gcw = GroupWindow::get (cw);
-			if (gcw->resizeGeometry)
+			if (!gcw->resizeGeometry.isEmpty ())
 			{
-			    //if (gcw->updateResizeRectangle (rect, true)
-				//cWindow->addDamage ();
+			    if (gcw->updateResizeRectangle (rect, true))
+			    {
+				gcw->cWindow->addDamage ();
+			    }
 			}
 		    }
 		}
@@ -288,8 +630,8 @@ GroupScreen::handleEvent (XEvent *event)
 		{
 		    GROUP_WINDOW (w);
 
-		    //if (gw->windowHideInfo)
-			//gw->clearInputShape (gw->windowHideInfo);
+		    if (gw->windowHideInfo)
+			gw->clearInputShape (gw->windowHideInfo);
 		}
 	    }
 	}
@@ -319,9 +661,11 @@ GroupScreen::handleEvent (XEvent *event)
 		    if (gw->group->tabBar->textLayer)
 			delete gw->group->tabBar->textLayer;
 
-		    //gw->group->tabBar->textLayer = TextLayer::renderWindowTitle (group);
+		    gw->group->tabBar->textLayer = new TextLayer;
 
-		    //gw->group->tabBar->damageRegion ();
+		    gw->group->tabBar->renderWindowTitle ();
+
+		    gw->group->tabBar->damageRegion ();
 		}
 	    }
 	}
@@ -331,35 +675,54 @@ GroupScreen::handleEvent (XEvent *event)
 	{
 	    CompWindow *w;
 	    w = screen->findWindow (event->xcrossing.window);
+	    
+	    if (!w)
+	    {
+	        foreach (CompWindow *cw, screen->windows ())
+	        {
+	            if (cw->frame () == event->xcrossing.window)
+	            {
+	        	w = cw;
+	        	break;
+	            }
+	        }
+	    }
+	        
+	    
 	    if (w)
 	    {
 		GROUP_WINDOW (w);
 
 		if (showDelayTimeoutHandle.active ())
 		    showDelayTimeoutHandle.stop ();
-
-		/*if (w->id () != screen->grabWindow ())
-		    updateTabBars (w->id ());*/
-
+		
 		if (gw->group)
 		{
+
+		    if (w->id () != gw->group->grabWindow)
+		        updateTabBars (event->xcrossing.window);
+
 		    if (draggedSlot && dragged &&
 			IS_TOP_TAB (w, gw->group))
 		    {
 			/* We entered a group with a dragged window slot */
 
-			#if 0
 			int hoverTime;
-			hoverTime = groupGetDragHoverTime (w->screen) * 1000;
-			if (gs->dragHoverTimeoutHandle)
-			    compRemoveTimeout (gs->dragHoverTimeoutHandle);
+			hoverTime = optionGetDragHoverTime () * 1000;
+			if (dragHoverTimeoutHandle.active ())
+			    dragHoverTimeoutHandle.stop ();
 
 			if (hoverTime > 0)
-			    gs->dragHoverTimeoutHandle =
-				compAddTimeout (hoverTime,
-						(float) hoverTime * 1.2,
-						groupDragHoverTimeout, w);
-			#endif
+			{
+			    dragHoverTimeoutHandle.setTimes (hoverTime,
+							     hoverTime * 1.2);
+
+			    dragHoverTimeoutHandle.setCallback (
+				boost::bind (&GroupScreen::dragHoverTimeout,
+					     this, w));
+
+			    dragHoverTimeoutHandle.start (); /* XXX */
+			}
 		    }
 		}
 	    }
@@ -377,7 +740,7 @@ GroupScreen::handleEvent (XEvent *event)
 
 		if (gw->group && gw->group->tabBar &&
 		    IS_TOP_TAB (w, gw->group)      &&
-		    gw->group->inputPrevention && gw->group->ipwMapped)
+		    gw->group->tabBar->inputPrevention && gw->group->tabBar->ipwMapped)
 		{
 		    XWindowChanges xwc;
 
@@ -385,20 +748,8 @@ GroupScreen::handleEvent (XEvent *event)
 		    xwc.sibling = w->id ();
 
 		    XConfigureWindow (screen->dpy (),
-				      gw->group->inputPrevention,
+				      gw->group->tabBar->inputPrevention,
 				      CWSibling | CWStackMode, &xwc);
-		}
-
-		if (event->xconfigure.above != None)
-		{
-		    if (gw->group && !gw->group->tabBar &&
-			(gw->group != lastRestackedGroup))
-		    {
-			//if (optionGetRaiseAll ())
-			    //gw->group->raiseWindows ();
-		    }
-		    if (w->managed () && !w->overrideRedirect ())
-			lastRestackedGroup = gw->group;
 		}
 	    }
 	}
@@ -406,6 +757,7 @@ GroupScreen::handleEvent (XEvent *event)
 
     default:
 	break;
+	
     }
 }
 
@@ -418,54 +770,51 @@ GroupScreen::handleEvent (XEvent *event)
 void
 GroupScreen::preparePaint (int        msSinceLastPaint)
 {
-    Group *group;
     std::list <Group *>::iterator it = groups.begin ();
-
     cScreen->preparePaint (msSinceLastPaint);
+    
+    /* TabBar::drawTabAnimation could call Group::finishTabbing which implicitly
+     * free's the *group here since the memory is free'd immediately.
+     */
 
-    foreach (Group *group, groups)
+    while (it != groups.end ())
     {
-#if 0
-
-	GroupTabBar *bar = group->tabBar;
+        Group *group = *it;
+        
+        it++;
+        
+        if (!group)
+            continue; /* XXX */
+        
+	TabBar *bar = group->tabBar;
 
 	if (bar)
 	{
-	    groupApplyForces (s, bar, (dragged) ? draggedSlot : NULL);
-	    groupApplySpeeds (s, group, msSinceLastPaint);
+	    bar->applyForces ((dragged) ? draggedSlot : NULL);
+	    bar->applySpeeds (msSinceLastPaint);
 
-	    if ((bar->state != PaintOff) && HAS_TOP_WIN (group))
-		groupHandleHoverDetection (group);
+	    if ((bar->state != Layer::PaintOff) && HAS_TOP_WIN (group))
+		group->handleHoverDetection ();
 
-	    if (bar->state == PaintFadeIn || bar->state == PaintFadeOut)
-		groupHandleTabBarFade (group, msSinceLastPaint);
+	    if (bar->state == Layer::PaintFadeIn || bar->state == Layer::PaintFadeOut)
+		bar->handleFade (msSinceLastPaint);
 
 	    if (bar->textLayer)
-		groupHandleTextFade (group, msSinceLastPaint);
+		bar->handleTextFade (msSinceLastPaint);
 
 	    if (bar->bgAnimation)
-		gro/0!	#DIV/0!	#DIV/0!	#DIV/0!	
-
-.
-							0				0	0	#DIV/0!	#DIV/0!	#DIV/0!	#DIV/0!	#DIV/0!	#DIV/0!	#DIV/0!	upHandleTabBarAnimation (group, msSinceLastPaint);
+		bar->handleAnimation (msSinceLastPaint);
 	}
 
-	if (group->changeState != NoTabChange)
+	if (group->changeState != TabBar::NoTabChange)
 	{
 	    group->changeAnimationTime -= msSinceLastPaint;
 	    if (group->changeAnimationTime <= 0)
-		groupHandleAnimation (group);
+		group->handleAnimation ();
 	}
 
-	/* groupDrawTabAnimation may delete the group, so better
-	   save the pointer to the next chain element */
-	next = group->next;
-
-	if (group->tabbingState != NoTabbing)
-	    groupDrawTabAnimation (group, msSinceLastPaint);
-
-	group = next;
-#endif
+	if (group->tabbingState != TabBar::NoTabbing)
+	    group->drawTabAnimation (msSinceLastPaint);
     }
 }
 
@@ -497,8 +846,8 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     {
 	foreach (Group *group, groups)
 	{
-	    if (group->changeState != Group::NoTabChange ||
-		group->tabbingState != Group::NoTabbing)
+	    if (group->changeState != TabBar::NoTabChange ||
+		group->tabbingState != TabBar::NoTabbing)
 	    {
 		mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 	    }
@@ -526,12 +875,11 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    glLoadMatrixf (wTransform.getMatrix ());
 
 	    /* prevent tab bar drawing.. */
-#if 0
+
 	    state = gw->group->tabBar->state;
-	    gw->group->tabBar->state = PaintOff;
-	    groupPaintThumb (NULL, draggedSlot, &wTransform, OPAQUE);
+	    gw->group->tabBar->state = Layer::PaintOff;
+	    draggedSlot->paint (gw->group, wTransform, OPAQUE);
 	    gw->group->tabBar->state = state;
-#endif
 
 	    glPopMatrix ();
 	}
@@ -574,7 +922,8 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.getMatrix ());
 
-	    //groupPaintThumb (NULL, draggedSlot, &wTransform, OPAQUE);
+	    draggedSlot->paint (GroupWindow::get (draggedSlot->window)->group,
+	    		        wTransform, OPAQUE);
 
 	    glPopMatrix ();
 	}
@@ -598,9 +947,9 @@ GroupScreen::donePaint ()
 
     foreach (Group *group, groups)
     {
-	if (group->tabbingState != Group::NoTabbing)
+	if (group->tabbingState != TabBar::NoTabbing)
 	    cScreen->damageScreen ();
-	else if (group->changeState != Group::NoTabChange)
+	else if (group->changeState != TabBar::NoTabChange)
 	    cScreen->damageScreen ();
 	else if (group->tabBar)
 	{
@@ -626,10 +975,9 @@ GroupScreen::donePaint ()
 
 	    if (draggedSlot)
 		needDamage = TRUE;
-#if 0
+
 	    if (needDamage)
-		groupDamageTabBarRegion (group);
-#endif
+		group->tabBar->damageRegion (); 
 	}
     }
 }

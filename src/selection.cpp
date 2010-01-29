@@ -1,6 +1,70 @@
 #include "group.h"
 
 /**
+ * Selection::toGroup ()
+ *
+ */
+
+Group *
+Selection::toGroup ()
+{
+    int            i;
+    Group          *retGroup = NULL;
+    Bool           tabbed = FALSE;
+
+    /* check if there is an existing group or if the group is tabbed */
+
+    foreach (CompWindow *w, *this)
+    {
+        GROUP_WINDOW (w);
+
+        if (gw->group)
+        {
+	    if (!tabbed || gw->group->tabBar)
+	        retGroup = gw->group;
+
+	    if (retGroup->tabBar)
+	        tabbed = TRUE;
+        }
+    }
+
+    if (!retGroup)
+	retGroup = Group::create (0);
+
+    /* we need to do one first to get the pointer of a new group */
+/*    cw = this->front ();
+    GROUP_WINDOW (cw);
+
+    if (gw->group && (group != gw->group))
+        gw->removeFromGroup ();
+    group->addWindow (cw, 0);
+    gw->cWindow->addDamage ();
+
+    gw->inSelection = false;
+    group = gw->group;*/
+
+    foreach (CompWindow *w, *this)
+    {
+        GROUP_WINDOW (w);
+
+        if (gw->group && (retGroup != gw->group))
+            gw->removeFromGroup ();
+        retGroup->addWindow (w);
+        gw->cWindow->addDamage ();
+
+        gw->inSelection = FALSE;
+	
+	gw->updateProperty ();
+
+    }
+
+    /* exit selection */
+    clear ();
+
+    return retGroup;
+}
+
+/**
  * Selection::push_back (CompWindow *)
  *
  */
@@ -18,7 +82,7 @@ Selection::push_back (CompWindow *w)
  */
 
 void
-Selection::push_back (Selection sel)
+Selection::push_back (Selection &sel)
 {
     /* First remove windows that are already in the list
      */
@@ -55,8 +119,6 @@ Selection::push_back (Selection sel)
 
     foreach (CompWindow *w, sel)
 	GroupWindow::get (w)->select ();
-
-    fprintf (stderr, "added windows to master selection\n");
 
 }
 
@@ -114,8 +176,6 @@ SelectionRect::paint (const GLScreenPaintAttrib &sa,
     fy1 = MIN (y1 (), y2 ());
     fx2 = MAX (x1 (), x2 ());
     fy2 = MAX (y1 (), y2 ());
-
-    fprintf (stderr, "paint called\n");
 
     if (gs->grabState == GroupScreen::ScreenGrabSelect)
     {
@@ -190,8 +250,6 @@ SelectionRect::toSelection ()
 	    sel.push_back (w);
 	}
     }
-
-    fprintf (stderr, "returning sel\n");
 
     return sel;
 }

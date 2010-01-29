@@ -35,7 +35,6 @@ GlowTexture::Properties::Properties () :
 
 GlowTexture::Properties::~Properties ()
 {
-    free (textureData);
 }
 
 GlowTexture::Quads::Quads ()
@@ -47,18 +46,20 @@ GlowTexture::Quads::~Quads ()
 }
 
 void
-GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
+GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
 {
     CompRect	      *box;
     GLTexture::Matrix *quadMatrix;
     int               glowSize, glowOffset;
 
     GROUP_SCREEN (screen);
+    
+    /* Glow is currently disabled until the matrix issues can be worked out */
 
-    if (gs->optionGetGlow ())
+    if (gs->optionGetGlow () && matrix && false)
     {
 	if (!glowQuads)
-	    glowQuads = (GlowTexture::Quads *) malloc (NUM_GLOWQUADS * sizeof (GlowTexture::Quads));
+	    glowQuads = new GlowTexture::Quads[NUM_GLOWQUADS];
 	if (!glowQuads)
 	    return;
     }
@@ -66,7 +67,7 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
     {
 	if (glowQuads)
 	{
-	    free (glowQuads);
+	    delete[] glowQuads;
 	    glowQuads = NULL;
 	}
 	return;
@@ -78,7 +79,7 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
 
     /* Top left corner */
     box = &glowQuads[GLOWQUAD_TOPLEFT].box;
-    glowQuads[GLOWQUAD_TOPLEFT].matrix = matrix;
+    glowQuads[GLOWQUAD_TOPLEFT].matrix = *matrix;
     quadMatrix = &glowQuads[GLOWQUAD_TOPLEFT].matrix;
 
     box->setX (WIN_REAL_X (window) - glowSize + glowOffset);
@@ -87,24 +88,24 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
     box->setHeight (WIN_REAL_Y (window) + glowOffset - box->y ());
 
     quadMatrix->xx = 1.0f / glowSize;
-    quadMatrix->yy = -1.0f / glowSize;
+    quadMatrix->yy = -1.0f / (glowSize);
     quadMatrix->x0 = -(box->x1 () * quadMatrix->xx);
     quadMatrix->y0 = 1.0 -(box->y1 () * quadMatrix->yy);
 
-    box->setWidth (MIN (WIN_REAL_X (window) + glowOffset,
-		   WIN_REAL_X (window) + (WIN_REAL_WIDTH (window) / 2)) - box->x ());
-    box->setHeight (MIN (WIN_REAL_Y (window) + glowOffset,
-		   WIN_REAL_Y (window) + (WIN_REAL_HEIGHT (window) / 2)) -box->y ());
+    box->setWidth (MIN (WIN_REAL_X (window) + glowOffset - box->x (),
+		   WIN_REAL_X (window) + (WIN_REAL_WIDTH (window) / 2) - box->x ()));
+    box->setHeight (MIN (WIN_REAL_Y (window) + glowOffset - box->y (),
+		   WIN_REAL_Y (window) + (WIN_REAL_HEIGHT (window) / 2) - box->y ()));
 
     /* Top right corner */
     box = &glowQuads[GLOWQUAD_TOPRIGHT].box;
-    glowQuads[GLOWQUAD_TOPRIGHT].matrix = matrix;
+    glowQuads[GLOWQUAD_TOPRIGHT].matrix = *matrix;
     quadMatrix = &glowQuads[GLOWQUAD_TOPRIGHT].matrix;
 
     box->setX (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) - glowOffset);
     box->setY (WIN_REAL_Y (window) - glowSize + glowOffset);
-    box->setWidth (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) + glowSize - glowOffset);
-    box->setHeight (WIN_REAL_Y (window) + glowOffset);
+    box->setWidth (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) + glowSize - glowOffset - box->x ());
+    box->setHeight (WIN_REAL_Y (window) + glowOffset - box->y ());
 
     quadMatrix->xx = -1.0f / glowSize;
     quadMatrix->yy = -1.0f / glowSize;
@@ -113,12 +114,12 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
 
     box->setX (MAX (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) - glowOffset,
 		   WIN_REAL_X (window) + (WIN_REAL_WIDTH (window) / 2)));
-    box->setY (MIN (WIN_REAL_Y (window) + glowOffset,
-		   WIN_REAL_Y (window) + (WIN_REAL_HEIGHT (window) / 2)));
+    box->setWidth (MIN (WIN_REAL_Y (window) + glowOffset - box->y (),
+		        WIN_REAL_Y (window) + (WIN_REAL_HEIGHT (window) / 2) - box->y ()));
 
     /* Bottom left corner */
     box = &glowQuads[GLOWQUAD_BOTTOMLEFT].box;
-    glowQuads[GLOWQUAD_BOTTOMLEFT].matrix = matrix;
+    glowQuads[GLOWQUAD_BOTTOMLEFT].matrix = *matrix;
     quadMatrix = &glowQuads[GLOWQUAD_BOTTOMLEFT].matrix;
 
     box->setX (WIN_REAL_X (window) - glowSize + glowOffset);
@@ -138,7 +139,7 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
 
     /* Bottom right corner */
     box = &glowQuads[GLOWQUAD_BOTTOMRIGHT].box;
-    glowQuads[GLOWQUAD_BOTTOMRIGHT].matrix = matrix;
+    glowQuads[GLOWQUAD_BOTTOMRIGHT].matrix = *matrix;
     quadMatrix = &glowQuads[GLOWQUAD_BOTTOMRIGHT].matrix;
 
     box->setX (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) - glowOffset);
@@ -158,13 +159,13 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
 
     /* Top edge */
     box = &glowQuads[GLOWQUAD_TOP].box;
-    glowQuads[GLOWQUAD_TOP].matrix = matrix;
+    glowQuads[GLOWQUAD_TOP].matrix = *matrix;
     quadMatrix = &glowQuads[GLOWQUAD_TOP].matrix;
 
     box->setX (WIN_REAL_X (window) + glowOffset);
     box->setY (WIN_REAL_Y (window) - glowSize + glowOffset);
-    box->setWidth (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) - glowOffset);
-    box->setHeight (WIN_REAL_Y (window) + glowOffset);
+    box->setWidth (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) - glowOffset - box->x ());
+    box->setHeight (WIN_REAL_Y (window) + glowOffset - box->y ());
 
     quadMatrix->xx = 0.0f;
     quadMatrix->yy = -1.0f / glowSize;
@@ -173,7 +174,7 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
 
     /* Bottom edge */
     box = &glowQuads[GLOWQUAD_BOTTOM].box;
-    glowQuads[GLOWQUAD_BOTTOM].matrix = matrix;
+    glowQuads[GLOWQUAD_BOTTOM].matrix = *matrix;
     quadMatrix = &glowQuads[GLOWQUAD_BOTTOM].matrix;
 
     box->setX (WIN_REAL_X (window) + glowOffset);
@@ -188,7 +189,7 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
 
     /* Left edge */
     box = &glowQuads[GLOWQUAD_LEFT].box;
-    glowQuads[GLOWQUAD_LEFT].matrix = matrix;
+    glowQuads[GLOWQUAD_LEFT].matrix = *matrix;
     quadMatrix = &glowQuads[GLOWQUAD_LEFT].matrix;
 
     box->setX (WIN_REAL_X (window) - glowSize + glowOffset);
@@ -203,7 +204,7 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix &matrix)
 
     /* Right edge */
     box = &glowQuads[GLOWQUAD_RIGHT].box;
-    glowQuads[GLOWQUAD_RIGHT].matrix = matrix;
+    glowQuads[GLOWQUAD_RIGHT].matrix = *matrix;
     quadMatrix = &glowQuads[GLOWQUAD_RIGHT].matrix;
 
     box->setX (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) - glowOffset);

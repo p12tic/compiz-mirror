@@ -12,8 +12,6 @@ GroupScreen::selectSingle (CompAction         *action,
     Window     xid;
     CompWindow *w;
 
-    fprintf (stderr, "select invoked\n");
-
     xid = CompOption::getIntOptionNamed (options, "window", 0);
     w   = screen->findWindow (xid);
     /* Adds the window to the master selection */
@@ -42,8 +40,6 @@ GroupScreen::select (CompAction         *action,
     {
 	if (grabState == ScreenGrabNone)
 	{
-	    fprintf (stderr, "started selection\n");
-
 	    grabScreen (ScreenGrabSelect);
 
 	    if (state & CompAction::StateInitKey)
@@ -73,18 +69,15 @@ GroupScreen::selectTerminate (CompAction         *action,
 			      CompAction::State  state,
 			      CompOption::Vector options)
 {
-    fprintf (stderr, "terminate called\n");
-
     if (grabState == ScreenGrabSelect)
     {
-	fprintf (stderr, "releasing grab and selectionofying\n");
-
         grabScreen (ScreenGrabNone);
 
         if (masterSelectionRect.x1 () != masterSelectionRect.x2 () &&
 	    masterSelectionRect.y1 () != masterSelectionRect.y2 ())
         {
 	    CompWindowList tempWindowList;
+	    Selection	   sel = masterSelectionRect.toSelection ();
 
 	    CompRegion reg (MIN (masterSelectionRect.x1 (), masterSelectionRect.x2 ()) - 2,
 			    MIN (masterSelectionRect.y1 (), masterSelectionRect.y2 ()) - 2,
@@ -95,7 +88,7 @@ GroupScreen::selectTerminate (CompAction         *action,
 
 	    cScreen->damageRegion (reg);
 
-	    masterSelection.push_back (masterSelectionRect.toSelection ());
+	    masterSelection.push_back (sel);
 #if 0
 		
 	        ws = findWindowsInRegion (reg)
@@ -121,155 +114,82 @@ GroupScreen::selectTerminate (CompAction         *action,
     return true;
 }
 
-#if 0
-/*
- * groupGroupWindows
- *
- */
+
 bool
-groupGroupWindows (CompDisplay     *d,
-		   CompAction      *action,
-		   CompActionState state,
-		   CompOption      *option,
-		   int             nOption)
+GroupScreen::groupWindows (CompAction         *action,
+			   CompAction::State  state,
+			   CompOption::Vector options)
 {
-    CompScreen *s;
-    Window     xid;
-
-    xid = getIntOptionNamed (option, nOption, "root", 0);
-    s = findScreenAtDisplay (d, xid);
-
-    if (s)
+    if (!masterSelection.empty ())
     {
-	GROUP_SCREEN (s);
-
-	if (gs->tmpSel.nWins > 0)
-	{
-	    int            i;
-	    CompWindow     *cw;
-	    GroupSelection *group = NULL;
-	    Bool           tabbed = FALSE;
-
-	    for (i = 0; i < gs->tmpSel.nWins; i++)
-	    {
-		cw = gs->tmpSel.windows[i];
-		GROUP_WINDOW (cw);
-
-		if (gw->group)
-		{
-		    if (!tabbed || group->tabBar)
-			group = gw->group;
-
-		    if (group->tabBar)
-			tabbed = TRUE;
-		}
-	    }
-
-	    /* we need to do one first to get the pointer of a new group */
-	    cw = gs->tmpSel.windows[0];
-	    GROUP_WINDOW (cw);
-
-	    if (gw->group && (group != gw->group))
-		groupDeleteGroupWindow (cw);
-	    groupAddWindowToGroup (cw, group, 0);
-	    addWindowDamage (cw);
-
-	    gw->inSelection = FALSE;
-	    group = gw->group;
-
-	    for (i = 1; i < gs->tmpSel.nWins; i++)
-	    {
-		cw = gs->tmpSel.windows[i];
-		GROUP_WINDOW (cw);
-
-		if (gw->group && (group != gw->group))
-		    groupDeleteGroupWindow (cw);
-		groupAddWindowToGroup (cw, group, 0);
-		addWindowDamage (cw);
-
-		gw->inSelection = FALSE;
-	    }
-
-	    /* exit selection */
-	    free (gs->tmpSel.windows);
-	    gs->tmpSel.windows = NULL;
-	    gs->tmpSel.nWins = 0;
-	}
+	masterSelection.toGroup ();
     }
 
-    return FALSE;
+    return true;
 }
 
 /*
- * groupUnGroupWindows
+ * GroupScreen::ungroupWindows
  *
  */
-Bool
-groupUnGroupWindows (CompDisplay     *d,
-		     CompAction      *action,
-		     CompActionState state,
-		     CompOption      *option,
-		     int             nOption)
+bool
+GroupScreen::ungroupWindows (CompAction         *action,
+			     CompAction::State  state,
+			     CompOption::Vector options)
 {
-    Window     xid;
-    CompWindow *w;
-
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w   = findTopLevelWindowAtDisplay (d, xid);
+    CompWindow *w = screen->findTopLevelWindow (
+			CompOption::getIntOptionNamed (options, "window", 0));
     if (w)
     {
 	GROUP_WINDOW (w);
 
 	if (gw->group)
-	    groupDeleteGroup (gw->group);
+	{
+	    gw->group->destroy (false);
+	}
     }
 
-    return FALSE;
+    return true;
 }
 
 /*
  * groupRemoveWindow
  *
  */
-Bool
-groupRemoveWindow (CompDisplay     *d,
-		   CompAction      *action,
-		   CompActionState state,
-		   CompOption      *option,
-		   int             nOption)
+bool
+GroupScreen::removeWindow (CompAction         *action,
+			   CompAction::State  state,
+			   CompOption::Vector options)
 {
-    Window     xid;
-    CompWindow *w;
+    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
+								       "window",
+									0));
 
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w   = findWindowAtDisplay (d, xid);
     if (w)
     {
 	GROUP_WINDOW (w);
 
 	if (gw->group)
-	    groupRemoveWindowFromGroup (w);
+	{
+	    gw->removeFromGroup ();
+	}
     }
 
-    return FALSE;
+    return true;
 }
 
 /*
- * groupCloseWindows
+ * GroupScreen::closeWindows
  *
  */
-Bool
-groupCloseWindows (CompDisplay     *d,
-		   CompAction      *action,
-		   CompActionState state,
-		   CompOption      *option,
-		   int             nOption)
+bool
+GroupScreen::closeWindows (CompAction         *action,
+			   CompAction::State  state,
+			   CompOption::Vector &options)
 {
-    Window     xid;
-    CompWindow *w;
-
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w   = findWindowAtDisplay (d, xid);
+    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
+								       "window",
+									0));
     if (w)
     {
 	GROUP_WINDOW (w);
@@ -278,15 +198,14 @@ groupCloseWindows (CompDisplay     *d,
 	{
 	    int i;
 
-	    for (i = 0; i < gw->group->nWins; i++)
-		closeWindow (gw->group->windows[i],
-			     getCurrentTimeFromDisplay (d));
+	    foreach (CompWindow *w, gw->group->windows)
+		w->close (screen->getCurrentTime ());
 	}
     }
 
-    return FALSE;
+    return true;
 }
-
+#if 0
 /*
  * groupChangeColor
  *
@@ -323,74 +242,56 @@ groupChangeColor (CompDisplay     *d,
 
     return FALSE;
 }
+#endif
 
 /*
- * groupSetIgnore
+ * GroupScreen::setIgnore
  *
  */
-Bool
-groupSetIgnore (CompDisplay     *d,
-		CompAction      *action,
-		CompActionState state,
-		CompOption      *option,
-		int             nOption)
+bool
+GroupScreen::setIgnore (CompAction         *action,
+			CompAction::State  state,
+			CompOption::Vector &options)
 {
-    GROUP_DISPLAY (d);
+    ignoreMode = TRUE;
 
-    gd->ignoreMode = TRUE;
-
-    if (state & CompActionStateInitKey)
-	action->state |= CompActionStateTermKey;
+    if (state & CompAction::StateInitKey)
+	action->setState (action->state () | CompAction::StateTermKey);
 
     return FALSE;
 }
 
-/*
- * groupUnsetIgnore
- *
- */
-Bool
-groupUnsetIgnore (CompDisplay     *d,
-		  CompAction      *action,
-		  CompActionState state,
-		  CompOption      *option,
-		  int             nOption)
+bool
+GroupScreen::unsetIgnore (CompAction         *action,
+			  CompAction::State  state,
+			  CompOption::Vector &options)
 {
-    GROUP_DISPLAY (d);
+    ignoreMode = FALSE;
 
-    gd->ignoreMode = FALSE;
-
-    action->state &= ~CompActionStateTermKey;
+    action->setState (action->state () & ~CompAction::StateTermKey);
 
     return FALSE;
 }
 
 
-/*
- * groupInitTab
- *
- */
-Bool
-groupInitTab (CompDisplay     *d,
-	      CompAction      *action,
-	      CompActionState state,
-	      CompOption      *option,
-	      int             nOption)
+bool
+GroupScreen::initTab (CompAction         *action,
+		      CompAction::State  state,
+		      CompOption::Vector &options)
 {
-    Window     xid;
-    CompWindow *w;
     Bool       allowUntab = TRUE;
 
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w   = findWindowAtDisplay (d, xid);
+    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
+								       "window",
+									0));
     if (!w)
-	return TRUE;
+	return true;
 
     GROUP_WINDOW (w);
 
     if (gw->inSelection)
     {
-	groupGroupWindows (d, action, state, option, nOption);
+	groupWindows (action, state, options);
 	/* If the window was selected, we don't want to
 	   untab the group, because the user probably
 	   wanted to tab the selected windows. */
@@ -401,38 +302,37 @@ groupInitTab (CompDisplay     *d,
 	return TRUE;
 
     if (!gw->group->tabBar)
-	groupTabGroup (w);
+	gw->group->tab (w);
     else if (allowUntab)
-	groupUntabGroup (gw->group);
+	gw->group->untab ();
 
-    damageScreen (w->screen);
+    cScreen->damageScreen ();
 
     return TRUE;
 }
 
 /*
- * groupChangeTabLeft
+ * GroupScreen::changeTabLeft
  *
  */
 Bool
-groupChangeTabLeft (CompDisplay     *d,
-		    CompAction      *action,
-		    CompActionState state,
-		    CompOption      *option,
-		    int             nOption)
+GroupScreen::changeTabLeft (CompAction         *action,
+			    CompAction::State  state,
+			    CompOption::Vector options)
 {
-    Window     xid;
-    CompWindow *w, *topTab;
+    CompWindow *topTab;
 
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w   = topTab = findWindowAtDisplay (d, xid);
+    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
+								       "window",
+									0));
+
+    topTab = w;
     if (!w)
 	return TRUE;
 
     GROUP_WINDOW (w);
-    GROUP_SCREEN (w->screen);
 
-    if (!gw->slot || !gw->group)
+    if (!gw->tab || !gw->group)
 	return TRUE;
 
     if (gw->group->nextTopTab)
@@ -444,37 +344,53 @@ groupChangeTabLeft (CompDisplay     *d,
 	topTab = TOP_TAB (gw->group);
     }
 
-    gw = GET_GROUP_WINDOW (topTab, gs);
+    gw = GroupWindow::get (topTab);
+    
+    std::list <Tab *> &tabs = gw->group->tabBar->tabs;
+    std::list <Tab *>::iterator currentTab = std::find (tabs.begin (),
+    							tabs.end (),
+    							gw->group->topTab);
 
-    if (gw->slot->prev)
-	return groupChangeTab (gw->slot->prev, RotateLeft);
-    else
-	return groupChangeTab (gw->group->tabBar->revSlots, RotateLeft);
+    /* FIXME: this is a bit of black magic */
+
+    if (currentTab != tabs.end ()) // Did we find a tab?
+    {        
+        if (currentTab != tabs.begin ()) // Is this not the first
+        {
+            currentTab--;
+	    return gw->group->tabBar->changeTab (*(currentTab),
+					         TabBar::RotateLeft);
+	}	
+        else
+            return gw->group->tabBar->changeTab (tabs.back (),
+					         TabBar::RotateLeft);
+    }
+
+    return true;
 }
 
 /*
- * groupChangeTabRight
+ * GroupScreen::changeTabRight
  *
  */
-Bool
-groupChangeTabRight (CompDisplay     *d,
-		     CompAction      *action,
-		     CompActionState state,
-		     CompOption      *option,
-		     int             nOption)
+bool
+GroupScreen::changeTabRight (CompAction         *action,
+		     	     CompAction::State  state,
+		     	     CompOption::Vector options)
 {
-    Window     xid;
-    CompWindow *w, *topTab;
+    CompWindow *topTab;
 
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w   = topTab = findWindowAtDisplay (d, xid);
+    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
+								       "window",
+									0));
+
+    topTab = w;
     if (!w)
 	return TRUE;
 
     GROUP_WINDOW (w);
-    GROUP_SCREEN (w->screen);
 
-    if (!gw->slot || !gw->group)
+    if (!gw->tab || !gw->group || !gw->group->tabBar)
 	return TRUE;
 
     if (gw->group->nextTopTab)
@@ -486,11 +402,28 @@ groupChangeTabRight (CompDisplay     *d,
 	topTab = TOP_TAB (gw->group);
     }
 
-    gw = GET_GROUP_WINDOW (topTab, gs);
+    gw = GroupWindow::get (topTab);
+    
+    std::list <Tab *> &tabs = gw->group->tabBar->tabs;
+    std::list <Tab *>::iterator currentTab = std::find (tabs.begin (),
+    							tabs.end (),
+    							gw->group->topTab);
 
-    if (gw->slot->next)
-	return groupChangeTab (gw->slot->next, RotateRight);
-    else
-	return groupChangeTab (gw->group->tabBar->slots, RotateRight);
+    /* FIXME: this is a bit of black magic */
+
+    if (currentTab != tabs.end ()) // Did we find a tab?
+    {
+        currentTab++;
+        
+        if (currentTab != tabs.end ()) // Is this not the last tab?
+	    return gw->group->tabBar->changeTab (*(currentTab),
+					         TabBar::RotateRight);
+	
+        else
+            return gw->group->tabBar->changeTab (tabs.front (),
+					     TabBar::RotateRight);
+    }
+
+
+    return true;
 }
-#endif
