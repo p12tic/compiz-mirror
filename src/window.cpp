@@ -92,13 +92,14 @@ GroupWindow::updateProperty ()
 	buffer[3] = group->color[1];
 	buffer[4] = group->color[2];
 
-	XChangeProperty (screen->dpy (), window->id (), gs->groupWinPropertyAtom,
-			 XA_CARDINAL, 32, PropModeReplace,
-			 (unsigned char *) buffer, 5);
+	XChangeProperty (screen->dpy (), window->id (),
+			 gs->groupWinPropertyAtom, XA_CARDINAL, 32,
+			 PropModeReplace,  (unsigned char *) buffer, 5);
     }
     else
     {
-	XDeleteProperty (screen->dpy (), window->id (), gs->groupWinPropertyAtom);
+	XDeleteProperty (screen->dpy (), window->id (),
+						      gs->groupWinPropertyAtom);
     }
 }
 
@@ -139,7 +140,8 @@ GroupWindow::getStretchRectangle (CompRect &pBox,
     box.setX (resizeGeometry.x () - window->input ().left);
     box.setY (resizeGeometry.y () - window->input ().top);
     box.setWidth (resizeGeometry.x () + resizeGeometry.width () +
-	     window->serverGeometry ().border () * 2 + window->input ().right - box.x ());;
+	     window->serverGeometry ().border () * 2 + window->input ().right -
+	     							      box.x ());
 
     if (window->shaded ())
     {
@@ -149,8 +151,8 @@ GroupWindow::getStretchRectangle (CompRect &pBox,
     else
     {
 	box.setHeight (resizeGeometry.height () +
-	         window->serverGeometry ().border () * 2 + window->input ().bottom
-		 + window->input ().top);
+	       window->serverGeometry ().border () * 2 + window->input ().bottom
+		+ window->input ().top);
     }
 
     width  = window->width ()  + window->input ().left + window->input ().right;
@@ -203,10 +205,12 @@ GroupWindow::updateResizeRectangle (CompRect   masterGeometry,
 
     widthDiff = masterGeometry.width () - gs->resizeInfo->origGeometry.width ();
     newGeometry.setWidth (MAX (1, WIN_WIDTH (window) + widthDiff));
-    heightDiff = masterGeometry.height () - gs->resizeInfo->origGeometry.height ();
+    heightDiff = masterGeometry.height () -
+    					 gs->resizeInfo->origGeometry.height ();
     newGeometry.setHeight (MAX (1, WIN_HEIGHT (window) + heightDiff));
 
-    if (window->constrainNewWindowSize (newGeometry.width (), newGeometry.height (),
+    if (window->constrainNewWindowSize (newGeometry.width (),
+    				        newGeometry.height (),
 					&newWidth, &newHeight))
     {
 
@@ -304,7 +308,8 @@ GroupWindow::stateChangeNotify (unsigned int lastState)
 
     if (group && !gs->ignoreMode)
     {
-	if (((lastState & MAXIMIZE_STATE) != (window->state () & MAXIMIZE_STATE)) &&
+	if (((lastState & MAXIMIZE_STATE) !=
+	      (window->state () & MAXIMIZE_STATE)) &&
 	    gs->optionGetMaximizeUnmaximizeAll ())
 	{
 	    int i;
@@ -869,13 +874,15 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
     {
 	doRotate = (group->changeState != TabBar::NoTabChange) &&
 	           HAS_TOP_WIN (group) && HAS_PREV_TOP_WIN (group) &&
-	           (IS_TOP_TAB (window, group) || IS_PREV_TOP_TAB (window, group));
+	           (IS_TOP_TAB (window, group) ||
+	            IS_PREV_TOP_TAB (window, group));
 
 	doTabbing = (animateState & (IS_ANIMATED | FINISHED_ANIMATION)) &&
 	            !(IS_TOP_TAB (window, group) &&
 		      (group->tabbingState == TabBar::Tabbing));
 
-	showTabbar = group->tabBar && (group->tabBar->state != Layer::PaintOff) &&
+	showTabbar = group->tabBar &&
+		     (group->tabBar->state != Layer::PaintOff) &&
 	             (((IS_TOP_TAB (window, group)) &&
 		       ((group->changeState == TabBar::NoTabChange) ||
 			(group->changeState == TabBar::TabChangeNewIn))) ||
@@ -1024,8 +1031,10 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    if (doRotate)
 		wTransform.scale (1.0f, 1.0f, 1.0f / screen->width ());
 
-	    wTransform.translate (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) / 2.0f,
-			          WIN_REAL_Y (window) + WIN_REAL_HEIGHT (window) / 2.0f,
+	    wTransform.translate (WIN_REAL_X (window) +
+	    			   WIN_REAL_WIDTH (window) / 2.0f,
+			          WIN_REAL_Y (window) +
+			           WIN_REAL_HEIGHT (window) / 2.0f,
 			          0.0f);
 
 	    if (doRotate)
@@ -1046,8 +1055,10 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	    wTransform.scale (animScaleX, animScaleY, 1.0f);
 
-	    wTransform.translate (-(WIN_REAL_X (window) + WIN_REAL_WIDTH (window) / 2.0f),
-				  -(WIN_REAL_Y (window) + WIN_REAL_HEIGHT (window) / 2.0f),
+	    wTransform.translate (-(WIN_REAL_X (window) +
+	    			     WIN_REAL_WIDTH (window) / 2.0f),
+				  -(WIN_REAL_Y (window) +
+				     WIN_REAL_HEIGHT (window) / 2.0f),
 				  0.0f);
 
 	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
@@ -1135,10 +1146,6 @@ GroupWindow::glDraw (const GLMatrix &transform,
 		fAttrib.setSaturation (COLOR);
 		fAttrib.setBrightness (BRIGHT);
 		
-		//gTransform.translate (WIN_REAL_X (window) / 2, WIN_REAL_Y (window) / 2, 0.0f);
-		//gTransform.scale (0.0f, -1.0f, 0.0f);
-		//gTransform.translate (-(WIN_REAL_X (window) / 2), -(WIN_REAL_Y (window) / 2), 0.0f);
-		
 		glPushMatrix ();
 		glLoadMatrixf (gTransform.getMatrix ());
 		
@@ -1167,7 +1174,7 @@ GroupWindow::glDraw (const GLMatrix &transform,
 	}
     }
 
-    status = gWindow->glDraw (transform, (GLFragment::Attrib &) attrib, (const CompRegion &) newRegion, (unsigned int) mask);
+    status = gWindow->glDraw (transform, attrib, newRegion, mask);
 
     return status;
 }

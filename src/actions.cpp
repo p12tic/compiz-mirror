@@ -103,14 +103,15 @@ GroupScreen::selectTerminate (CompAction         *action,
 	    masterSelectionRect.y1 () != masterSelectionRect.y2 ())
         {
 	    CompWindowList tempWindowList;
-	    Selection	   sel = masterSelectionRect.toSelection ();
+	    SelectionRect  &msr = masterSelectionRect;
+	    Selection	   sel = msr.toSelection ();
 
-	    CompRegion reg (MIN (masterSelectionRect.x1 (), masterSelectionRect.x2 ()) - 2,
-			    MIN (masterSelectionRect.y1 (), masterSelectionRect.y2 ()) - 2,
-			    (MAX (masterSelectionRect.x1 (), masterSelectionRect.x2 ()) -
-	                     MIN (masterSelectionRect.x1 (), masterSelectionRect.x2 ()) + 4),
-			    (MAX (masterSelectionRect.y1 (), masterSelectionRect.y2 ()) -
-	                     MIN (masterSelectionRect.y1 (), masterSelectionRect.y2 ()) + 4));
+	    CompRegion reg (MIN (msr.x1 (), msr.x2 ()) - 2,
+			    MIN (msr.y1 (), msr.y2 ()) - 2,
+			    (MAX (msr.x1 (), msr.x2 ()) -
+	                     MIN (msr.x1 (), msr.x2 ()) + 4),
+			    (MAX (msr.y1 (), msr.y2 ()) -
+	                     MIN (msr.y1 (), msr.y2 ()) + 4));
 
 	    cScreen->damageRegion (reg);
 

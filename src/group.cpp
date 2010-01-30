@@ -287,7 +287,8 @@ Group::addWindow (CompWindow *w)
 	    if (!gw->tab)
 	        gw->tab = new Tab (this, w);
 
-	    gw->destination.setX (WIN_CENTER_X (topTabWin) - (WIN_WIDTH (w) / 2));
+	    gw->destination.setX (WIN_CENTER_X (topTabWin) -
+	    			 (WIN_WIDTH (w) / 2));
 	    gw->destination.setY (WIN_CENTER_Y (topTabWin) -
 	                        (WIN_HEIGHT (w) / 2));
 	                        

@@ -78,7 +78,8 @@ GroupScreen::optionChanged (CompOption            *opt,
 		{
 		    GROUP_WINDOW (w);
 
-		    GLTexture::Matrix mat = glowTexture.texture.front ()->matrix ();
+		    GLTexture::Matrix mat =
+		    		        glowTexture.texture.front ()->matrix ();
 
 		    gw->computeGlowQuads (&mat);
 		    if (!gw->glowQuads)
@@ -108,7 +109,8 @@ GroupScreen::optionChanged (CompOption            *opt,
 		    foreach (CompWindow *w, screen->windows ())
 		     {
 			GROUP_WINDOW (w);
-			GLTexture::Matrix mat = glowTexture.texture.front ()->matrix ();
+			GLTexture::Matrix mat =
+				        glowTexture.texture.front ()->matrix ();
 
 			gw->computeGlowQuads (&mat);
 		     }
@@ -259,8 +261,8 @@ GroupScreen::GroupScreen (CompScreen *screen) :
 
     optionSetTabmodeKeyInitiate (boost::bind (&GroupScreen::initTab, this, _1,
 					      _2, _3));
-    optionSetChangeTabLeftKeyInitiate (boost::bind (&GroupScreen::changeTabLeft, this,
-						     _1, _2, _3));
+    optionSetChangeTabLeftKeyInitiate (boost::bind (&GroupScreen::changeTabLeft,
+    						     this, _1, _2, _3));
     optionSetChangeTabRightKeyInitiate (boost::bind (&GroupScreen::changeTabRight,
 						     this, _1, _2, _3));
 

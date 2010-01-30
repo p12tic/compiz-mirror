@@ -92,8 +92,11 @@ TabBar::createIPW ()
 
 	attrib.override_redirect = true;
 
-	inputPrevention = XCreateWindow (screen->dpy (), screen->root (), -100, -100, 1, 1, 0,
-			  CopyFromParent, InputOnly, CopyFromParent, CWOverrideRedirect, &attrib);
+	inputPrevention = XCreateWindow (screen->dpy (), screen->root (),
+					 -100, -100, 1, 1, 0,
+			  		 CopyFromParent, InputOnly,
+			  		 CopyFromParent, CWOverrideRedirect,
+			  		 &attrib);
 
 	XMapWindow (screen->dpy (), inputPrevention);
 
@@ -106,7 +109,8 @@ TabBar::createIPW ()
 
 	xwc.stack_mode = Above;
 
-	XConfigureWindow (screen->dpy (), inputPrevention, CWStackMode | CWX | CWY | CWWidth | CWHeight, &xwc);
+	XConfigureWindow (screen->dpy (), inputPrevention, CWStackMode | CWX |
+						CWY | CWWidth | CWHeight, &xwc);
 
 	XUnmapWindow (screen->dpy (), inputPrevention);
 
@@ -528,8 +532,10 @@ GroupWindow::clearInputShape (HideInfo *hideInfo)
     if ((count == 1) &&
 	(rects[0].x == -window->serverGeometry ().border ()) &&
 	(rects[0].y == -window->serverGeometry ().border ()) &&
-	(rects[0].width == (window->serverGeometry ().width () + window->serverGeometry ().border ())) &&
-	(rects[0].height == (window->serverGeometry ().height () + window->serverGeometry ().border ())))
+	(rects[0].width == (window->serverGeometry ().width () + 
+					window->serverGeometry ().border ())) &&
+	(rects[0].height == (window->serverGeometry ().height () + 
+					  window->serverGeometry ().border ())))
     {
 	count = 0;
     }
@@ -594,8 +600,8 @@ GroupWindow::setVisibility (bool visible)
 	info->nInputRects = 0;
 	info->shapeMask = XShapeInputSelected (screen->dpy (), window->id ());
 	
-	/* We are a reparenting window manager now, which means that we either shape
-         * the frame window, or if it does not exist, shape the window **/
+	/* We are a reparenting window manager now, which means that we either
+	 * shape the frame window, or if it does not exist, shape the window **/
 	
 	if (window->frame ())
 	{
@@ -620,9 +626,10 @@ GroupWindow::setVisibility (bool visible)
 
 	XShapeSelectInput (screen->dpy (), window->id (), info->shapeMask);
 
-	window->changeState ((window->state () & ~(CompWindowStateSkipPagerMask |
-					       CompWindowStateSkipTaskbarMask)) |
-			                       info->skipState);
+	window->changeState ((window->state ()
+					      & ~(CompWindowStateSkipPagerMask |
+					      CompWindowStateSkipTaskbarMask)) |
+			                      info->skipState);
 
 	delete info;
 	windowHideInfo = NULL;
@@ -710,7 +717,8 @@ TabBar::setVisibility (bool           visible,
     oldState = state;
 
     /* hide tab bars for invisible top windows */
-    if ((topTabWin->state () & CompWindowStateHiddenMask) || topTabWin->invisible ())
+    if ((topTabWin->state () & CompWindowStateHiddenMask) ||
+    	 topTabWin->invisible ())
     {
 	state = Layer::PaintOff;
 	switchTopTabInput (TRUE);
@@ -724,7 +732,8 @@ TabBar::setVisibility (bool           visible,
     {
 	state = Layer::PaintOn;
     }
-    else if (visible && (state == Layer::PaintOff || state == Layer::PaintFadeOut))
+    else if (visible && (state == Layer::PaintOff || 
+    	     state == Layer::PaintFadeOut))
     {
 	if (gs->optionGetBarAnimations ())
 	{
@@ -765,9 +774,7 @@ Tab::getDrawOffset (int &hoffset,
     CompWindow *w, *topTab;
     int        vx, vy, x, y;
     CompPoint  vp;
-    CompWindow::Geometry winGeometry (window->serverGeometry ());/*x, y, window->serverGeometry ().width (),
-				      window->serverGeometry ().height (),
-				      window->serverGeometry ().border ());*/
+    CompWindow::Geometry winGeometry (window->serverGeometry ());
 
     if (!window)
 	return;
@@ -944,7 +951,8 @@ TabBar::handleTextFade (int msSinceLastPaint)
     GROUP_SCREEN (screen);
 
     /* Fade in progress... */
-    if ((textLayer->state == Layer::PaintFadeIn || textLayer->state == Layer::PaintFadeOut) &&
+    if ((textLayer->state == Layer::PaintFadeIn ||
+    	 textLayer->state == Layer::PaintFadeOut) &&
 	textLayer->animationTime > 0)
     {
 	textLayer->animationTime -= msSinceLastPaint;
@@ -1311,12 +1319,14 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 		int newWidth;
 
 		/* handle the repaint of the background */
-		newWidth = region.boundingRect ().x2 () - region.boundingRect ().x1 ();
+		newWidth = region.boundingRect ().x2 () - 
+						   region.boundingRect ().x1 ();
 		if (bgLayer && (newWidth > bgLayer->texWidth))
 		    newWidth = bgLayer->texWidth;
 
 		wScale = (double) (region.boundingRect ().x2 () -
-				   region.boundingRect ().x1 ()) / (double) newWidth;
+				   region.boundingRect ().x1 ()) / 
+				   			      (double) newWidth;
 
 		/* FIXME: maybe move this over to groupResizeTabBarRegion -
 		   the only problem is that we would have 2 redraws if
@@ -1370,12 +1380,14 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 		CompRect regBox;
 		
 		regBox.setGeometry (region.boundingRect ().x1 () + 5,
-		                    region.boundingRect ().y2 () - textLayer->texHeight - 5,
+		                    region.boundingRect ().y2 () - 
+		                    	    textLayer->texHeight - 5,
 		                    textLayer->texWidth + 5,
 		                    textLayer->texHeight - 5);
 
 		if (regBox.x2 () > region.boundingRect ().x2 ())
-		    regBox.setWidth (region.boundingRect ().x2 () - region.boundingRect ().x1 ());
+		    regBox.setWidth (region.boundingRect ().x2 () - 
+		    				  region.boundingRect ().x1 ());
 
 		/* recalculate the alpha again for text fade... */
 		if (layer->state == Layer::PaintFadeIn)
@@ -1401,22 +1413,27 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 
 		/* remove the old x1 and y1 so we have a relative value */
 		
-		boxRect.setGeometry ((boxRect.x1 () - topTab->x ()) / wScale + topTab->x (),
-				     (boxRect.y1 () - topTab->y ()) / hScale + topTab->y (),
-				     boxRect.x2 () - boxRect.x1 (), boxRect.y2 () - boxRect.y1 ());
+		boxRect.setGeometry ((boxRect.x1 () - topTab->x ()) / wScale + 
+								   topTab->x (),
+				     (boxRect.y1 () - topTab->y ()) / hScale + 
+				     				   topTab->y (),
+				     boxRect.x2 () - boxRect.x1 (),
+				     		 boxRect.y2 () - boxRect.y1 ());
 
 		/* now add the new x1 and y1 so we have a absolute value again,
 		also we don't want to stretch the texture... */
 		if (boxRect.x2 () * wScale < layer->texWidth)
 		{
 		    boxRect.setX (boxRect.x1 ());
-		    boxRect.setWidth (boxRect.x1 () + boxRect.x2 () - boxRect.x1 ());
+		    boxRect.setWidth (boxRect.x1 () + boxRect.x2 () - 
+		    						 boxRect.x1 ());
 		}
 		else
 		    boxRect.setWidth (layer->texWidth);
 
 		if (boxRect.y2 () * hScale < layer->texHeight)
-		    boxRect.setHeight (boxRect.y2 () + box.boundingRect ().y1 () - boxRect.x1 ());
+		    boxRect.setHeight (boxRect.y2 () + 
+		    		     box.boundingRect ().y1 () - boxRect.x1 ());
 		else
 		    boxRect.setHeight (layer->texHeight);
 
@@ -1430,7 +1447,8 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 		
 		box = CompRegion (boxRect);
 
-		GLWindow::get (topTab)->glAddGeometry (matricies, box, clipRegion);
+		GLWindow::get (topTab)->glAddGeometry (matricies, box, 
+								    clipRegion);
 
 		if (GLWindow::get (topTab)->geometry ().vertices)
 		{
@@ -1439,8 +1457,10 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 
 		    wTransform.translate (WIN_X (topTab), WIN_Y (topTab), 0.0f);
 		    wTransform.scale (wScale, hScale, 1.0f);
-		    wTransform.translate (wAttrib.xTranslate / wScale - WIN_X (topTab),
-				          wAttrib.yTranslate / hScale - WIN_Y (topTab),
+		    wTransform.translate (wAttrib.xTranslate / wScale
+		    					       - WIN_X (topTab),
+				          wAttrib.yTranslate / hScale 
+				          		       - WIN_Y (topTab),
 				          0.0f);
 
 		    alpha = alpha * ((float) wAttrib.opacity / OPAQUE);
@@ -1686,7 +1706,8 @@ GroupScreen::updateTabBars (Window     enteredWin)
 	TabBar *bar = hoveredGroup->tabBar;
 	
 
-	if (bar && ((bar->state == Layer::PaintOff) || (bar->state == Layer::PaintFadeOut)))
+	if (bar && ((bar->state == Layer::PaintOff) ||
+					   (bar->state == Layer::PaintFadeOut)))
 	{
 	    int showDelayTime = optionGetTabbarShowDelay () * 1000;
 
@@ -1969,8 +1990,10 @@ Group::startTabbingAnimation (Bool           tab)
 
 		/* constrain the movement */
 		if (gw->constrainMovement (constrainRegion,
-					    gw->destination.x () - gw->orgPos.x (),
-					    gw->destination.y () - gw->orgPos.y (),
+					    gw->destination.x () - 
+					    			gw->orgPos.x (),
+					    gw->destination.y () - 
+					    			gw->orgPos.y (),
 					    dx, dy))
 		{
 		    /* handle the case where the window is outside the screen
@@ -2074,7 +2097,8 @@ TabBar::damageRegion ()
         bbox.setGeometry (MIN (reg.boundingRect ().x1 (), tabRect.x1 ()),
         		  MIN (reg.boundingRect ().y1 (), tabRect.y1 ()),
         		  MAX (reg.boundingRect ().width (), tabRect.width ()),
-        		  MAX (reg.boundingRect ().height (), tabRect.height ()));
+        		  MAX (reg.boundingRect ().height (),
+        		  				    tabRect.height ()));
     }
 
     reg = reg.united (CompRect (bbox.x1 () - DAMAGE_BUFFER,
@@ -2149,7 +2173,8 @@ TabBar::resizeRegion (CompRect box, bool syncIPW)
 	if (!ipwMapped)
 	    XMapWindow (screen->dpy (), inputPrevention);
 
-	XConfigureWindow (screen->dpy (), inputPrevention, CWStackMode | CWX | CWY | CWWidth | CWHeight, &xwc);
+	XConfigureWindow (screen->dpy (), inputPrevention, CWStackMode | CWX |
+					        CWY | CWWidth | CWHeight, &xwc);
 
 	if (!ipwMapped)
 	    XUnmapWindow (screen->dpy (), inputPrevention);
@@ -2501,13 +2526,13 @@ TabBar::applyForces (Tab *draggedSlot)
 	leftForce = groupDraggedSlotForce(region.boundingRect ().x1 () -
 					  SIZE / 2 - draggedCenterX,
 					  abs ((region.boundingRect ().y1 () +
-						region.boundingRect ().y2 ()) / 2 -
+					     region.boundingRect ().y2 ()) / 2 -
 					       draggedCenterY));
 
 	rightForce = groupDraggedSlotForce (region.boundingRect ().x2 () +
 					    SIZE / 2 - draggedCenterX,
 					    abs ((region.boundingRect ().y1 () +
-						  region.boundingRect ().y2 ()) / 2 -
+					     region.boundingRect ().y2 ()) / 2 -
 						 draggedCenterY));
 
 	if (leftForce < 0)
@@ -2518,8 +2543,10 @@ TabBar::applyForces (Tab *draggedSlot)
 
     foreach (tab, tabs)
     {
-	centerX = (tab->region.boundingRect ().x1 () + tab->region.boundingRect ().x2 ()) / 2;
-	centerY = (tab->region.boundingRect ().y1 () + tab->region.boundingRect ().y2 ()) / 2;
+	centerX = (tab->region.boundingRect ().x1 () +
+					 tab->region.boundingRect ().x2 ()) / 2;
+	centerY = (tab->region.boundingRect ().y1 () +
+					 tab->region.boundingRect ().y2 ()) / 2;
 
 	tab->speed += groupSpringForce (centerX, tab->springX);
 
@@ -2590,8 +2617,10 @@ TabBar::applySpeeds (int            msSinceLastRepaint)
     GROUP_SCREEN (screen);
 
     box.setGeometry (region.boundingRect ().x1 (), region.boundingRect ().y1 (),
-		     region.boundingRect ().x2 () - region.boundingRect ().x1 (),
-		     region.boundingRect ().y2 () - region.boundingRect ().y1 ());
+		     region.boundingRect ().x2 () -
+		     				   region.boundingRect ().x1 (),
+		     region.boundingRect ().y2 () -
+		     				  region.boundingRect ().y1 ());
 
     leftMsSinceLastMove += msSinceLastRepaint;
     rightMsSinceLastMove += msSinceLastRepaint;
@@ -2614,7 +2643,8 @@ TabBar::applySpeeds (int            msSinceLastRepaint)
 	/* Friction is preventing from the left border to get
 	   to its original position. */
 	box.setX (box.x () + leftSpringX - region.boundingRect ().x1 ());
-	box.setWidth (box.width () - leftSpringX - region.boundingRect ().x1 ());
+	box.setWidth (box.width () - leftSpringX -
+						  region.boundingRect ().x1 ());
 
 	leftMsSinceLastMove = 0;
 	updateTabBar = TRUE;
@@ -2638,7 +2668,8 @@ TabBar::applySpeeds (int            msSinceLastRepaint)
     {
 	/* Friction is preventing from the right border to get
 	   to its original position. */
-	box.setWidth (box.width () + leftSpringX - region.boundingRect ().x1 ());
+	box.setWidth (box.width () + leftSpringX -
+						  region.boundingRect ().x1 ());
 
 	leftMsSinceLastMove = 0;
 	updateTabBar = TRUE;

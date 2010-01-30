@@ -174,7 +174,8 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 			prevX = xRoot;
 			prevY = yRoot;
 
-			if (!screen->otherGrabExist ("group", "group-drag", NULL))
+			if (!screen->otherGrabExist ("group", "group-drag",
+									  NULL))
 			    grabScreen (ScreenGrabTabDrag);
 		    }
 		}
@@ -209,12 +210,15 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 		
 		currentTab = std::find (tabs.begin (), tabs.end (), gw->tab);
 
+		/* TODO: Use TabList */
+
 		if (button == Button4)
 		{
 		    if (currentTab != tabs.begin ())
 		    {
 		        currentTab--;
-			group->tabBar->changeTab (*currentTab, TabBar::RotateLeft);
+			group->tabBar->changeTab (*currentTab,
+							    TabBar::RotateLeft);
 		    }
 		    else
 		    {
@@ -226,9 +230,11 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 		{
 		    currentTab++;
 		    if (currentTab != tabs.end ())
-			group->tabBar->changeTab (*currentTab, TabBar::RotateRight);
+			group->tabBar->changeTab (*currentTab,
+							   TabBar::RotateRight);
 		    else
-			group->tabBar->changeTab (tabs.front (), TabBar::RotateRight);
+			group->tabBar->changeTab (tabs.front (),
+							   TabBar::RotateRight);
 		}
 		break;
 	    }
@@ -347,13 +353,15 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	    if (nextTab && nextTab != draggedSlot)
 	    {
-		rect.setWidth (nextTab->region.boundingRect ().x1 () - rect.x ());
+		rect.setWidth (nextTab->region.boundingRect ().x1 () - 
+								     rect.x ());
 	    }
 	    else if (nextTab && nextTab == draggedSlot &&
 	    	     draggedSlot->bar->tabs.getNextTab (draggedSlot,
 	    	     					draggedSlotSideTab))
 	    {
-	        rect.setWidth (draggedSlotSideTab->region.boundingRect ().x1 () - rect.x ());
+	        rect.setWidth (draggedSlotSideTab->region.boundingRect ().x1 () - 
+	        						     rect.x ());
 	    }
 	    else
 		rect.setWidth (group->tabBar->region.boundingRect ().x2 ());
@@ -416,7 +424,8 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	    if ((tmpDraggedTab->region.boundingRect ().x1 () +
 		 tmpDraggedTab->region.boundingRect ().x2 () + (2 * vx)) / 2 >
-		(tab->region.boundingRect ().x1 () + tab->region.boundingRect ().x2 ()) / 2)
+		(tab->region.boundingRect ().x1 () +
+					 tab->region.boundingRect ().x2 ()) / 2)
 	    {
 		group->tabBar->insertTabAfter (tmpDraggedTab, tab);
 	    }
@@ -465,10 +474,11 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	}
 	else if (gw->group && gw->group->topTab)
 	{
-	    gw->group->tabBar->recalcPos ((gw->group->tabBar->region.boundingRect ().x1 () +
-				   gw->group->tabBar->region.boundingRect ().x2 ()) / 2,
-				  gw->group->tabBar->region.boundingRect ().x1 (),
-				  gw->group->tabBar->region.boundingRect ().x2 ());
+	    gw->group->tabBar->recalcPos (
+	    		  (gw->group->tabBar->region.boundingRect ().x1 () +
+			   gw->group->tabBar->region.boundingRect ().x2 ()) / 2,
+			   gw->group->tabBar->region.boundingRect ().x1 (),
+			   gw->group->tabBar->region.boundingRect ().x2 ());
 	}
 
 	/* to remove the painted slot */
@@ -572,7 +582,8 @@ GroupScreen::handleEvent (XEvent *event)
 		    !IS_TOP_TAB (w, gw->group))
 		{
 		    gw->group->checkFocusAfterTabChange = TRUE;
-		    gw->group->tabBar->changeTab (gw->tab, TabBar::RotateUncertain);
+		    gw->group->tabBar->changeTab (gw->tab,
+		    				       TabBar::RotateUncertain);
 		}
 	    }
 	}
@@ -740,7 +751,8 @@ GroupScreen::handleEvent (XEvent *event)
 
 		if (gw->group && gw->group->tabBar &&
 		    IS_TOP_TAB (w, gw->group)      &&
-		    gw->group->tabBar->inputPrevention && gw->group->tabBar->ipwMapped)
+		    gw->group->tabBar->inputPrevention && 
+		    gw->group->tabBar->ipwMapped)
 		{
 		    XWindowChanges xwc;
 
@@ -796,7 +808,8 @@ GroupScreen::preparePaint (int        msSinceLastPaint)
 	    if ((bar->state != Layer::PaintOff) && HAS_TOP_WIN (group))
 		group->handleHoverDetection ();
 
-	    if (bar->state == Layer::PaintFadeIn || bar->state == Layer::PaintFadeOut)
+	    if (bar->state == Layer::PaintFadeIn ||
+	        bar->state == Layer::PaintFadeOut)
 		bar->handleFade (msSinceLastPaint);
 
 	    if (bar->textLayer)

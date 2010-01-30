@@ -249,12 +249,14 @@ SelectionRect::toSelection ()
 
     float      precision = gs->optionGetSelectPrecision () / 100.0f;
     Selection	sel;
-    CompRegion reg (MIN (gs->masterSelectionRect.x1 (), gs->masterSelectionRect.x2 ()) - 2,
-		    MIN (gs->masterSelectionRect.y1 (), gs->masterSelectionRect.y2 ()) - 2,
-		    (MAX (gs->masterSelectionRect.x1 (), gs->masterSelectionRect.x2 ()) -
-                     MIN (gs->masterSelectionRect.x1 (), gs->masterSelectionRect.x2 ()) + 4),
-		    (MAX (gs->masterSelectionRect.y1 (), gs->masterSelectionRect.y2 ()) -
-                     MIN (gs->masterSelectionRect.y1 (), gs->masterSelectionRect.y2 ()) + 4));
+    SelectionRect  &msr = gs->masterSelectionRect;
+    /* XXX: Why are we using masterSelectionRect here ... */
+    CompRegion reg (MIN (msr.x1 (), msr.x2 ()) - 2,
+		    MIN (msr.y1 (), msr.y2 ()) - 2,
+		    (MAX (msr.x1 (), msr.x2 ()) -
+                     MIN (msr.x1 (), msr.x2 ()) + 4),
+		    (MAX (msr.y1 (), msr.y2 ()) -
+                     MIN (msr.y1 (), msr.y2 ()) + 4));
     CompWindowList::iterator it = screen->windows ().end ();
 
 

@@ -78,7 +78,8 @@ Group::tab (CompWindow *main)
 	tabBar->textLayer->state = CairoLayer::PaintOff;
 	tabBar->textLayer->animationTime = 0;
 	tabBar->renderWindowTitle ();
-	tabBar->textLayer->animationTime = gs->optionGetChangeAnimationTime () * 1000;
+	tabBar->textLayer->animationTime =
+				     gs->optionGetChangeAnimationTime () * 1000;
 	tabBar->textLayer->state = CairoLayer::PaintFadeIn;
     }
 

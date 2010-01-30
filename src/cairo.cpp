@@ -223,7 +223,7 @@ TabBar::renderTopTabHighlight ()
 
     layer->texture = GLTexture::imageBufferToTexture ((char *) layer->buffer,
 						      CompSize (layer->texWidth,
-								layer->texHeight));
+							     layer->texHeight));
 }
 
 /*
@@ -646,7 +646,7 @@ TabBar::renderTabBarBackground ()
     cairo_restore (cr);
     layer->texture = GLTexture::imageBufferToTexture ((char*) layer->buffer,
 			  			      CompSize (layer->texWidth,
-							        layer->texHeight));
+							      layer->texHeight));
 							        
     bgLayer = layer;
 }
