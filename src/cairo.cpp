@@ -2,7 +2,7 @@
  *
  * Compiz group plugin
  *
- * cairo.c
+ * cairo.cpp
  *
  * Copyright : (C) 2006-2007 by Patrick Niklaus, Roi Cohen, Danny Baumann
  * Authors: Patrick Niklaus <patrick.niklaus@googlemail.com>
