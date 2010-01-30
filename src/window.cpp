@@ -25,15 +25,11 @@ GroupWindow::checkProperty (long int   &id,
     {
 	if (type == XA_CARDINAL && fmt == 32 && nitems == 5)
 	{
-	    if (id)
-		id = data[0];
-	    if (tabbed)
-		tabbed = (Bool) data[1];
-	    if (color) {
-		color[0] = (GLushort) data[2];
-		color[1] = (GLushort) data[3];
-		color[2] = (GLushort) data[4];
-	    }
+	    id = data[0];
+	    tabbed = (Bool) data[1];
+	    color[0] = (GLushort) data[2];
+	    color[1] = (GLushort) data[3];
+	    color[2] = (GLushort) data[4];
 
 	    XFree (data);
 	    return TRUE;

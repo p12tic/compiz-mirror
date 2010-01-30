@@ -29,6 +29,8 @@
 
 COMPIZ_PLUGIN_20090315 (group, GroupPluginVTable);
 
+bool textAvailable;
+
 void
 GroupScreen::optionChanged (CompOption            *opt,
 			    GroupOptions::Options num)
@@ -42,30 +44,30 @@ GroupScreen::optionChanged (CompOption            *opt,
 	case GroupOptions::TabStyle:
 	case GroupOptions::BorderRadius:
 	case GroupOptions::BorderWidth:
-	    /*foreach (Group *group, groups)
+	    foreach (Group *group, groups)
 		if (group->tabBar && group->tabBar->bgLayer)
-		    group->tabBar->bgLayer-renderTabBarBackground (group);*/
+		    group->tabBar->renderTabBarBackground ();
 	    break;
 	case GroupOptions::TabbarFontSize:
 	case GroupOptions::TabbarFontColor:
-	    /*foreach (Group *group, groups)
+	    foreach (Group *group, groups)
 	    {
 		if (group->tabBar && group->tabBar->textLayer)
 		    delete group->tabBar->textLayer;
-		group->tabBar->textLayer = TextLayer::renderWindowTitle (group);
-	    }*/
+		group->tabBar->renderWindowTitle ();
+	    }
 	    break;
 	case GroupOptions::ThumbSize:
 	case GroupOptions::ThumbSpace:
-	    /*foreach (Group *group, groups)
+	    foreach (Group *group, groups)
 	    {
 		if (group->tabBar)
 		{
-		    CompRect box = group->tabBar->region->boundingRect ();
-		    group->tabBar->recalcTabBarPos (box->x1 () + box->x2 () ) / 2,
-					  	    box->x1 (), box->x2 ());
+		    CompRect box = group->tabBar->region.boundingRect ();
+		    group->tabBar->recalcPos (box.x1 () + box.x2 ()  / 2,
+					      box.x1 (), box.x2 ());
 		}
-	    }*/
+	    }
 	    break;
 	case GroupOptions::Glow:
 	case GroupOptions::GlowSize:
@@ -132,22 +134,17 @@ GroupScreen::optionChanged (CompOption            *opt,
 bool
 GroupScreen::applyInitialActions ()
 {
-    CompWindowList::iterator it = screen->windows ().end ();
+    CompWindowList::reverse_iterator it = screen->windows ().rbegin ();
 
     initialActionsTimeoutHandle.stop ();
 
     /* we need to do it from top to buttom of the stack to avoid problems
        with a reload of Compiz and tabbed static groups. (topTab will always
        be above the other windows in the group) */
-    while (it != screen->windows ().begin ())
+    while (it != screen->windows ().rend ())
     {
-	CompWindow *w = *(it);
-
-	if (!w)
-        {
-	    it--;
-	    continue; // ???
-	}
+	CompWindow *w = *it;
+	it++;
 
 	bool     tabbed;
 	long int id;
@@ -201,8 +198,6 @@ GroupScreen::applyInitialActions ()
 		    gw->group->tab (w);
 	    }
 	}
-
-	it--;
     }
 
     return false;
@@ -404,9 +399,13 @@ GroupPluginVTable::init ()
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION) ||
 	!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI) ||
         !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
-	!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI) ||
 	!CompPlugin::checkPluginABI ("mousepoll", COMPIZ_MOUSEPOLL_ABI))
 	return false;
+	
+    if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
+	textAvailable = false;
+    else
+	textAvailable = true;
 
     return true;
 }

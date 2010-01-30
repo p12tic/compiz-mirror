@@ -503,14 +503,14 @@ GroupWindow::getClippingRegion ()
     CompWindowList::iterator it = (std::find (screen->windows ().begin (),
     					      screen->windows ().end (),
     					      window));
-    CompRegion  clip = CompRegion ();
+    CompRegion  clip = CompRegion (0, 0, 0, 0);
     
     it++;
 
     while (it != screen->windows ().end ())
     {
         CompWindow *cw = *it;
-	if (cw->invisible () && !(cw->state () & CompWindowStateHiddenMask))
+	if (!cw->invisible () && !(cw->state () & CompWindowStateHiddenMask))
 	{
 	    CompRect   rect;
 
@@ -852,13 +852,7 @@ Group::handleHoverDetection ()
     GROUP_SCREEN (screen);
 
     /* first get the current mouse position */
-#if 0
-    mouseOnScreen = groupGetCurrentMousePosition (group->screen,
-						  &mouseX, &mouseY);
-
-    if (!mouseOnScreen)
-	return;
-#endif
+    gs->mouse = gs->poller.getCurrentPosition ();
 
     /* then check if the mouse is in the last hovered slot --
        this saves a lot of CPU usage */
@@ -881,7 +875,8 @@ Group::handleHoverDetection ()
 	    CompRegion reg;
 
 	    reg = tab->region.subtracted (clip);
-
+	    
+	    CompRect tmpRegBox = reg.boundingRect ();
 	    if (reg.contains (gs->mouse))
 	    {
 		bar->hoveredSlot = tab;
@@ -890,20 +885,20 @@ Group::handleHoverDetection ()
 	}
 
 	if (bar->textLayer)
-	{
+	{	
 	    /* trigger a FadeOut of the text */
 	    if ((bar->hoveredSlot != bar->textSlot) &&
-		(bar->textLayer->state == TextLayer::PaintFadeIn ||
-		 bar->textLayer->state == TextLayer::PaintOn))
+		(bar->textLayer->state == Layer::PaintFadeIn ||
+		 bar->textLayer->state == Layer::PaintOn))
 	    {
 		bar->textLayer->animationTime =
 		    (gs->optionGetFadeTextTime () * 1000) -
 		    bar->textLayer->animationTime;
 		bar->textLayer->state = Layer::PaintFadeOut;
 	    }
-
 	    /* or trigger a FadeIn of the text */
-	    else if (bar->textLayer->state == Layer::PaintFadeOut &&
+	    else if ((bar->textLayer->state == Layer::PaintFadeOut ||
+	    	      bar->textLayer->state == Layer::PaintOff) &&
 		     bar->hoveredSlot == bar->textSlot && bar->hoveredSlot)
 	    {
 		bar->textLayer->animationTime =
@@ -987,11 +982,12 @@ TabBar::handleTextFade (int msSinceLastPaint)
 		textLayer->state = Layer::PaintOn;
 
 	    else if (textLayer->state == Layer::PaintFadeOut)
+	    {
 		textLayer->state = Layer::PaintOff;
+	    }
 	}
     }
-
-    if (textLayer->state == Layer::PaintOff && hoveredSlot)
+    if (hoveredSlot && textLayer->state == Layer::PaintOff)
     {
 	/* Start text animation for the new hovered slot. */
 	textSlot = hoveredSlot;
@@ -1001,8 +997,7 @@ TabBar::handleTextFade (int msSinceLastPaint)
 
 	renderWindowTitle ();
     }
-
-    else if (textLayer->state == Layer::PaintOff && textSlot)
+    else if (textSlot && textLayer->state == Layer::PaintOff)
     {
 	/* Clean Up. */
 	textSlot = NULL;
@@ -1326,8 +1321,7 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
     {
 	int             alpha = OPAQUE;
 	float           wScale = 1.0f, hScale = 1.0f;
-	CairoLayer      *layer = NULL;
-	TextLayer       *tLayer = NULL;
+	Layer           *layer = NULL;
 
 	if (state == Layer::PaintFadeIn)
 	    alpha -= alpha * animationTime / (gs->optionGetFadeTime () * 1000);
@@ -1353,7 +1347,7 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 		if (newWidth != oldWidth || bgAnimation)
 		    renderTabBarBackground ();
 		
-		layer = bgLayer;
+		layer = (Layer *) bgLayer;
 
 		oldWidth = newWidth;
 		box = region;
@@ -1363,7 +1357,7 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 	case PAINT_SEL:
 	    if (group->topTab != gs->draggedSlot)
 	    {
-		layer = selectionLayer;
+		layer = (Layer *) selectionLayer;
 		box = group->topTab->region;
 	    }
 	    break;
@@ -1394,7 +1388,7 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 	case PAINT_TEXT:
 	    if (textLayer && (textLayer->state != Layer::PaintOff))
 	    {
-		tLayer = textLayer;
+		layer = (Layer *) textLayer;
 
 		CompRect regBox;
 		
@@ -1407,19 +1401,20 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 		    regBox.setWidth (region.boundingRect ().x2 () - region.boundingRect ().x1 ());
 
 		/* recalculate the alpha again for text fade... */
-		if (tLayer->state == Layer::PaintFadeIn)
-		    alpha -= alpha * tLayer->animationTime /
+		if (layer->state == Layer::PaintFadeIn)
+		    alpha -= alpha * layer->animationTime /
 			     (gs->optionGetFadeTextTime () * 1000);
-		else if (tLayer->state == Layer::PaintFadeOut)
-		    alpha = alpha * tLayer->animationTime /
+		else if (layer->state == Layer::PaintFadeOut)
+		    alpha = alpha * layer->animationTime /
 			    (gs->optionGetFadeTextTime () * 1000);
+			    
+		box = CompRegion (regBox);
 	    }
 	    break;
 	}
 
 	if (layer)
-	{
-	
+	{	
 	    foreach (GLTexture *tex, layer->texture)
 	    {
 		GLTexture::Matrix matrix = tex->matrix ();
@@ -1489,74 +1484,6 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 		}
 	    }
 	}
-#if 0
-	if (tLayer)
-	{
-	    tLayer->draw (
-
-	    foreach (GLTexture *tex, tLayer->texture.matrix ())
-	    {
-
-		GLTexture::Matrix matrix = tex->matrix ();
-
-		CompRect boxRect (box.boundingRect ();
-
-		/* remove the old x1 and y1 so we have a relative value */
-
-		boxRect.setX2 (boxRect.x2 () - boxRect.x1 ());
-		boxRect.setY2 (boxRect.y2 () - boxRect.y1 ());
-		boxRect.setX1 ((boxRect.x1 () - topTab->x ()) / wScale +
-				topTab->x ());
-		boxRect.setY1 ((box.y1 () - topTab->x ()) / wScale +
-				 topTab>x ());
-
-
-		/* now add the new x1 and y1 so we have a absolute value again,
-		also we don't want to stretch the texture... */
-		if (boxRect.x2 () * wScale < layer->texWidth)
-		boxRect.setX2 (boxRect.x2 () + boxRect.y1 ());
-		else
-		boxRect.setX2 (boxRect.x1 () + layer->texWidth);
-
-		if (boxRect.y2 () * hScale < layer->texHeight)
-		box.setY2 (boxRect.y2 () += box.extents.y1);
-		else
-		boxRect.setY2 (boxRect.y1 () + layer->texHeight);
-
-		matrix.x0 -= boxRect.x1 () * matrix.xx;
-		matrix.y0 -= boxRect.y1 () * matrix.yy;
-		topTab->vCount = topTab->indexCount = 0;
-
-		GLWindow::get (topTab)->glAddGeometry (matrix, 1, box, clipRegion);
-
-		if (topTab->vCount)
-		{
-		GLFragment::Attrib fragment (wAttrib);
-		GLMatrix wTransform (transform);
-
-		wTransform.translate (WIN_X (topTab), WIN_Y (topTab), 0.0f);
-		wTransfrom.scale (wScale, hScale, 1.0f);
-		wTransform.translate (wAttrib->xTranslate / wScale - WIN_X (topTab),
-				      wAttrib->yTranslate / hScale - WIN_Y (topTab),
-				      0.0f);
-
-		glPushMatrix ();
-		glLoadMatrixf (wTransform.getMatrix ());
-
-		alpha = alpha * ((float)wAttrib->opacity / OPAQUE);
-
-		fragment.setOpacity (alpha);
-
-		GLWindow::get (topTab)->glDrawTexture (layer->texture, fragment,
-					               mask |
-					              PAINT_WINDOW_BLEND_MASK |
-					              PAINT_WINDOW_TRANSFORMED_MASK |
-					              PAINT_WINDOW_TRANSLUCENT_MASK);
-
-		glPopMatrix ();
-		}
-	    }
-#endif
     }
 }
 

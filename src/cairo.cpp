@@ -24,6 +24,30 @@
 
 #include "group.h"
 
+Layer::Layer (int width, int height) :
+    texWidth (width),
+    texHeight (height),
+    state (PaintOff),
+    animationTime (0)
+{
+}
+
+Layer::~Layer ()
+{
+}
+
+TextLayer::TextLayer () :
+    Layer (0, 0),
+    pixmap (None)
+{
+}
+
+TextLayer::~TextLayer ()
+{
+    if (pixmap)
+	XFreePixmap (screen->dpy (), pixmap);
+}
+
 /*
  * groupRebuildCairoLayer
  *
@@ -77,23 +101,22 @@ CairoHelper::~CairoHelper ()
 
     if (buffer)
 	free (buffer);
-
+	
     if (pixmap)
 	XFreePixmap (screen->dpy (), pixmap);
 }
 
 CairoHelper::CairoHelper (int width, int height) :
-    pixmap (None),
     buffer (NULL),
     surface (NULL),
     cairo (NULL),
-    texWidth (width),
-    texHeight (height)
+    pixmap (None)
 {
 }
 
 CairoLayer::CairoLayer (int width, int height) :
-    CairoHelper (width, height)
+    CairoHelper (width, height),
+    Layer (width, height)
 {
 }
 
@@ -635,6 +658,9 @@ TabBar::renderTabBarBackground ()
 void
 TabBar::renderWindowTitle ()
 {
+    if (!textAvailable)
+	return;
+
     TextLayer       *layer;
     int             width, height;
     Pixmap          pixmap = None;
@@ -646,10 +672,6 @@ TabBar::renderWindowTitle ()
 
     width = region.boundingRect ().x2 () - region.boundingRect ().x1 ();
     height = region.boundingRect ().y2 () - region.boundingRect ().y1 ();
-
-    delete textLayer;
-
-    textLayer = new TextLayer ();
 
     layer = textLayer;
     if (!layer)

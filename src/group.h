@@ -102,18 +102,25 @@ class Layer :
     public:
 	typedef enum _PaintState {
 	    PaintOff = 0,
-	    PaintFadeIn,
-	    PaintFadeOut,
-	    PaintOn,
-	    PaintPermanentOn
+	    PaintFadeIn = 1,
+	    PaintFadeOut = 2,
+	    PaintOn = 3,
+	    PaintPermanentOn = 4
 	} PaintState;
     public:
-
-	CompScreen *screen;
+    
+	Layer (int, int);
+        ~Layer ();
 
 	PaintState state;
 	
 	int animationTime;
+	
+	GLTexture::List texture;
+	
+	/* used if layer is used for text drawing */
+	int texWidth;
+	int texHeight;
 
 /*
 
@@ -128,17 +135,12 @@ class Layer :
 class CairoHelper
 {
     public :
-	GLTexture::List texture;
-	Pixmap		pixmap;
 
 	/* used if layer is used for cairo drawing */
 	unsigned char   *buffer;
 	cairo_surface_t *surface;
 	cairo_t	    *cairo;
-
-	/* used if layer is used for text drawing */
-	int texWidth;
-	int texHeight;
+	Pixmap		pixmap;
 
     public:
 
@@ -182,18 +184,11 @@ class TextLayer :
 {
     public:
 
-	//TextLayer ();
-	//~TextLayer ();
-	
-	/* used if layer is used for text drawing */
-	int texWidth;
-	int texHeight;
+	TextLayer ();
+	~TextLayer ();
 
 	CompText text;
-
-	Pixmap   pixmap;
-	
-	GLTexture::List texture;
+	Pixmap		pixmap;
 #if 0
 	void draw ();
 	bool render ();
@@ -204,6 +199,8 @@ class TextLayer :
    private:
 
 };
+
+extern bool textAvailable;
 
 class Tab
 {
