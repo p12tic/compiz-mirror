@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (kdecompat)
+include (CompizPlugin)
+
+compiz_plugin (kdecompat PLUGINDEPS composite opengl)
