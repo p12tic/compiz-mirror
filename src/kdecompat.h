@@ -61,18 +61,10 @@ class KDECompatScreen :
 	GLScreen	*gScreen;
 
 	Atom mKdePreviewAtom;
-	
 };
 
 #define KDECOMPAT_SCREEN(s)						       \
     KDECompatScreen *ks = KDECompatScreen::get (s)
-
-class Thumb
-{
-public:
-    Window id;
-    CompRect thumb;
-};
 
 class KDECompatWindow :
     public PluginClassHandler <KDECompatWindow, CompWindow>,
@@ -89,9 +81,14 @@ class KDECompatWindow :
 	GLWindow	*gWindow;
 
     public:
-    
-	std::list <Thumb *> mPreviews;
-	bool		    mIsPreview;
+
+	typedef struct {
+	    Window   id;
+	    CompRect thumb;
+	} Thumb;
+
+	std::list <Thumb> mPreviews;
+	bool		  mIsPreview;
 	
     public:
     
@@ -99,7 +96,7 @@ class KDECompatWindow :
 	glPaint (const GLWindowPaintAttrib &,
 		 const GLMatrix		   &,
 		 const CompRegion	   &,
-		 unsigned int		     );
+		 unsigned int);
 		 
 	bool
 	damageRect (bool,
@@ -113,7 +110,8 @@ class KDECompatWindow :
     KDECompatWindow *kw = KDECompatWindow::get(w)
 
 class KDECompatPluginVTable :
-    public CompPlugin::VTableForScreenAndWindow <KDECompatScreen, KDECompatWindow>
+    public CompPlugin::VTableForScreenAndWindow <KDECompatScreen,
+						 KDECompatWindow>
 {
     public:
 

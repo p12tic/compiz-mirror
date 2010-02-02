@@ -38,36 +38,36 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
     status = gWindow->glPaint (attrib, transform, region, mask);
 
     if (!ks->optionGetPlasmaThumbnails () ||
-	mPreviews.empty ()               ||
+	mPreviews.empty ()                ||
 	!window->mapNum ()                ||
 	(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
     {
 	return status;
     }
 
-    foreach (Thumb *thumb, mPreviews)
+    foreach (const Thumb& thumb, mPreviews)
     {
-	CompWindow   *tw = screen->findWindow (thumb->id);
-	CompRect     &rect = thumb->thumb;
-	unsigned int paintMask = mask | PAINT_WINDOW_TRANSFORMED_MASK;
-	float        xScale = 1.0f, yScale = 1.0f, xTranslate, yTranslate;
-	GLTexture   *icon = NULL;
+	CompWindow     *tw = screen->findWindow (thumb.id);
+	GLWindow       *gtw;
+	const CompRect &rect = thumb.thumb;
+	unsigned int   paintMask = mask | PAINT_WINDOW_TRANSFORMED_MASK;
+	float          xScale = 1.0f, yScale = 1.0f, xTranslate, yTranslate;
+	GLTexture      *icon = NULL;
 
 	if (!tw)
 	    continue;
 
+	gtw = GLWindow::get (tw);
+
 	xTranslate = rect.x () + window->x () - tw->x ();
 	yTranslate = rect.y () + window->x () - tw->y ();
 
-	if (GLWindow::get (tw)->textures ().size ())
+	if (!gtw->textures ().empty ())
 	{
-	    unsigned int width, height;
+	    CompRect     inputRect = tw->inputRect ();
 
-	    width  = tw->width () + tw->input ().left + tw->input ().right;
-	    height = tw->height () + tw->input ().top + tw->input ().bottom;
-
-	    xScale = (float) rect.width () / width;
-	    yScale = (float) rect.height () / height;
+	    xScale = (float) rect.width () / inputRect.width ();
+	    yScale = (float) rect.height () / inputRect.height ();
 
 	    xTranslate += tw->input ().left * xScale;
 	    yTranslate += tw->input ().top * yScale;
@@ -78,18 +78,17 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    if (!icon)
 		icon = ks->gScreen->defaultIcon ();
 
-	    if (icon)
-		if (!icon->name ())
-		    icon = NULL;
+	    if (icon && !icon->name ())
+		icon = NULL;
 
 	    if (icon)
 	    {
-		CompRegion iconReg (tw->x (), tw->y (), tw->width (), tw->height ());
-		GLTexture::MatrixList matl;
+		GLTexture::MatrixList matrices (1);
 
 		paintMask |= PAINT_WINDOW_BLEND_MASK;
 
-		if (icon->width () >= rect.width () || icon->height () >= rect.height ())
+		if (icon->width () >= rect.width () ||
+		    icon->height () >= rect.height ())
 		{
 		    xScale = (float) rect.width () / icon->width ();
 		    yScale = (float) rect.height () / icon->height ();
@@ -100,28 +99,27 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			xScale = yScale;
 		}
 
-		xTranslate += rect.width () / 2 - (icon->width () * xScale / 2);
-		yTranslate += rect.height () / 2 - (icon->height () * yScale / 2);
+		xTranslate += rect.width () / 2 -
+			      (icon->width () * xScale / 2);
+		yTranslate += rect.height () / 2 -
+			      (icon->height () * yScale / 2);
 
-		matl.resize (1);
+		matrices[0] = icon->matrix ();
+		matrices[0].x0 -= (tw->x () * icon->matrix ().xx);
+		matrices[0].y0 -= (tw->y () * icon->matrix ().yy);
 
-		matl[0] = icon->matrix ();
-		matl[0].x0 -= (tw->x () * icon->matrix ().xx);
-		matl[0].y0 -= (tw->y () * icon->matrix ().yy);
+		gtw->geometry ().reset ();
+		gtw->glAddGeometry (matl, tw->geometry (), infiniteRegion);
 
-		GLWindow::get (tw)->geometry ().reset ();
-		
-		GLWindow::get (tw)->glAddGeometry (matl, iconReg, infiniteRegion);
-
-		if (!GLWindow::get (tw)->geometry ().vertices)
+		if (!gtw->geometry ().vertices)
 		    icon = NULL;
 	    }
 	}
 
-	if (GLWindow::get (tw)->textures ().size () || icon)
+	if (!gtw->textures ().empty () || icon)
 	{
 	    GLFragment::Attrib fragment (attrib);
-	    GLMatrix  wTransform (transform);
+	    GLMatrix           wTransform (transform);
 
 	    if (tw->alpha () || fragment.getOpacity () != OPAQUE)
 		paintMask |= PAINT_WINDOW_TRANSLUCENT_MASK;
@@ -135,8 +133,9 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.getMatrix ());
 
-	    if (GLWindow::get (tw)->textures ().size ())
-		gWindow->glDraw (wTransform, fragment, infiniteRegion, paintMask);
+	    if (!gtw->textures ().empty ())
+		gWindow->glDraw (wTransform, fragment,
+				 infiniteRegion, paintMask);
 	    else if (icon)
 		gWindow->glDrawTexture (icon, fragment, paintMask);
 
@@ -158,9 +157,10 @@ KDECompatWindow::updatePreviews ()
 
     KDECOMPAT_SCREEN (screen);
 
-    nPreview = 0;
+    mPreviews.clear ();
 
-    result = XGetWindowProperty (screen->dpy (), window->id (), ks->mKdePreviewAtom, 0,
+    result = XGetWindowProperty (screen->dpy (), window->id (),
+				 ks->mKdePreviewAtom, 0,
 				 32768, FALSE, AnyPropertyType, &actual,
 				 &format, &n, &left, &propData);
 
@@ -168,30 +168,23 @@ KDECompatWindow::updatePreviews ()
     {
 	if (format == 32 && actual == ks->mKdePreviewAtom)
 	{
-	    long *data    = (long *) propData;
-	    unsigned int  nPreview = *data++;
+	    long         *data    = (long *) propData;
+	    unsigned int nPreview = *data++;
 
 	    if (n == (6 * nPreview + 1))
 	    {
-		while (!mPreviews.empty ())
-		{
-		    Thumb *t = mPreviews.front ();
-		    delete t;
-		    mPreviews.pop_front ();
-		}
-		
 		while (mPreviews.size () < nPreview)
 		{
+		    Thumb t;
+
 		    if (*data++ != 5)
 			break;
 
-		    Thumb *t = new Thumb ();
-
-		    t->id = *data++;
-		    t->thumb.setX (*data++);
-		    t->thumb.setY (*data++);
-		    t->thumb.setWidth (*data++);
-		    t->thumb.setHeight (*data++);
+		    t.id = *data++;
+		    t.thumb.setX (*data++);
+		    t.thumb.setY (*data++);
+		    t.thumb.setWidth (*data++);
+		    t.thumb.setHeight (*data++);
 
 		    mPreviews.push_back (t);
 		}
@@ -206,16 +199,17 @@ KDECompatWindow::updatePreviews ()
 	CompWindow      *rw;
 	KDECompatWindow *kcw = KDECompatWindow::get (cw);
 
-	kcw->mIsPreview = FALSE;
+	kcw->mIsPreview = false;
+
 	foreach (rw, screen->windows ())
 	{
 	    KDECompatWindow *krw = KDECompatWindow::get (rw);
 
-	    foreach (Thumb *t, krw->mPreviews)
+	    foreach (const Thumb& t, krw->mPreviews)
 	    {
-		if (t->id == cw->id ())
+		if (t.id == cw->id ())
 		{
-		    kcw->mIsPreview = TRUE;
+		    kcw->mIsPreview = true;
 		    break;
 		}
 	    }
@@ -246,7 +240,7 @@ KDECompatScreen::handleEvent (XEvent *event)
 }
 
 bool
-KDECompatWindow::damageRect (bool initial,
+KDECompatWindow::damageRect (bool           initial,
 			     const CompRect &rect)
 {
     Bool       status;
@@ -255,25 +249,21 @@ KDECompatWindow::damageRect (bool initial,
 
     if (mIsPreview && ks->optionGetPlasmaThumbnails ())
     {
-	CompRegion reg;
-	
 	foreach (CompWindow *cw, screen->windows ())
 	{
 	    KDECompatWindow *kdw = KDECompatWindow::get (cw);
 	
-	    foreach (Thumb *thumb, kdw->mPreviews)
+	    foreach (const Thumb& thumb, kdw->mPreviews)
 	    {
-	        CompRect region;
-
-	        if (thumb->id != window->id ())
+	        if (thumb.id != window->id ())
 		    continue;
 		
-	        region.setGeometry (thumb->thumb.x () + cw->x (),
-				    thumb->thumb.y () + cw->y (),
-				    thumb->thumb.width (),
-				    thumb->thumb.height ());
-	        		 
-	        ks->cScreen->damageRegion (region);
+		CompRect rect (thumb.thumb.x () + cw->x (),
+			       thumb.thumb.y () + cw->y (),
+			       thumb.thumb.width (),
+			       thumb.thumb.height ());
+
+		ks->cScreen->damageRegion (rect);
 	    }
         }
     }
@@ -317,7 +307,8 @@ KDECompatScreen::KDECompatScreen (CompScreen *screen) :
     ScreenInterface::setHandler (screen);
     
     advertiseThumbSupport (optionGetPlasmaThumbnails ());
-    optionSetPlasmaThumbnailsNotify (boost::bind (&KDECompatScreen::optionChanged, this, _1, _2));
+    optionSetPlasmaThumbnailsNotify (
+	boost::bind (&KDECompatScreen::optionChanged, this, _1, _2));
 }
 
 KDECompatScreen::~KDECompatScreen ()
