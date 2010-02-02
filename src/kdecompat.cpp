@@ -109,7 +109,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		matrices[0].y0 -= (tw->y () * icon->matrix ().yy);
 
 		gtw->geometry ().reset ();
-		gtw->glAddGeometry (matl, tw->geometry (), infiniteRegion);
+		gtw->glAddGeometry (matrices, tw->geometry (), infiniteRegion);
 
 		if (!gtw->geometry ().vertices)
 		    icon = NULL;
@@ -153,7 +153,6 @@ KDECompatWindow::updatePreviews ()
     int		    result, format;
     unsigned long   n, left;
     unsigned char   *propData;
-    unsigned int    nPreview;
 
     KDECOMPAT_SCREEN (screen);
 
