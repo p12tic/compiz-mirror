@@ -91,7 +91,7 @@ ExpoScreen::doExpo (CompAction          *action,
     if (xid != screen->root ())
 	return false;
 
-    if (screen->otherGrabExist ("expo", 0))
+    if (screen->otherGrabExist ("expo", NULL))
 	return false;
 
     if (!expoMode)
