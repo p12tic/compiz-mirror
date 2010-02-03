@@ -142,10 +142,10 @@ expandCorner (CompWindow        *w,
     bool touch = false;
 
 #define CHECKREC                                                               \
-    r.contains (CompRect (tmp.x () - w->input ().left,                         \
-			  tmp.y () - w->input ().top,                          \
-			  tmp.width () + w->input ().left + w->input ().right, \
-			  tmp.height () + w->input ().top + w->input ().bottom))
+    r.contains (CompRect (tmp.x () - LEFT_BORDER (w),                         \
+			  tmp.y () - TOP_BORDER (w),                          \
+			  tmp.width () + LEFT_BORDER (w) + RIGHT_BORDER (w), \
+			  tmp.height () + TOP_BORDER (w) + BOTTOM_BORDER (w)))
 
     while (CHECKREC) {
 	addToCorner (tmp, corner, direction);
@@ -461,9 +461,9 @@ PutScreen::getDistance (CompWindow         *w,
     case PutEmptyCenter:
     case PutCenter:
 	/* center of the screen */
-	dx = (workArea.width () / 2) - (w->serverWidth () / 2) -
+	dx = (workArea.width () / 2) - HALF_WIDTH (w) -
 	      w->serverGeometry ().border () - (x - workArea.x ());
-	dy = (workArea.height () / 2) - (w->serverHeight () / 2) -
+	dy = (workArea.height () / 2) - HALF_HEIGHT (w) -
 	      w->serverGeometry ().border () - (y - workArea.y ());
 	break;
     case PutLeft:
@@ -474,7 +474,7 @@ PutScreen::getDistance (CompWindow         *w,
 	break;
     case PutEmptyLeft:
 	/* center of the left edge */
-	workArea.setX (workArea.x () - w->input ().left);
+	workArea.setX (workArea.x () - LEFT_BORDER (w));
 	dx = -(x - workArea.x ()) + LEFT_BORDER (w) + ps->optionGetPadLeft ();
 	dy = (workArea.height () / 2) - HALF_HEIGHT (w) -
 	     (y - workArea.y ());
@@ -486,8 +486,8 @@ PutScreen::getDistance (CompWindow         *w,
 	break;
     case PutEmptyTopLeft:
 	/* top left corner */
-	workArea.setX (workArea.x () - w->input ().left);
-	workArea.setY (workArea.y () - w->input ().top);
+	workArea.setX (workArea.x () - LEFT_BORDER (w));
+	workArea.setY (workArea.y () - TOP_BORDER (w));
 	dx = -(x - workArea.x ()) + LEFT_BORDER (w) + ps->optionGetPadLeft ();
 	dy = -(y - workArea.y ()) + TOP_BORDER (w) + ps->optionGetPadTop ();
 	break;
@@ -499,7 +499,7 @@ PutScreen::getDistance (CompWindow         *w,
 	break;
     case PutEmptyTop:
 	/* center of top edge */
-	workArea.setY (workArea.x () - w->input ().top);
+	workArea.setY (workArea.x () - TOP_BORDER (w));
 	dx = (workArea.width () / 2) - HALF_WIDTH (w) -
 	     (x - workArea.x ());
 	dy = -(y - workArea.y ()) + TOP_BORDER (w) + ps->optionGetPadTop ();
@@ -507,16 +507,16 @@ PutScreen::getDistance (CompWindow         *w,
     case PutTopRight:
 	/* top right corner */
 	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
-	     w->input ().right - ps->optionGetPadRight ();
-	dy = -(y - workArea.y ()) + w->input ().top + ps->optionGetPadTop ();
+	     RIGHT_BORDER (w) - ps->optionGetPadRight ();
+	dy = -(y - workArea.y ()) + TOP_BORDER (w) + ps->optionGetPadTop ();
 	break;
     case PutEmptyTopRight:
 	/* top right corner */
-	workArea.setX (workArea.x () + w->input ().right);
-	workArea.setY (workArea.y () - w->input ().top);
+	workArea.setX (workArea.x () + RIGHT_BORDER (w));
+	workArea.setY (workArea.y () - TOP_BORDER (w));
 	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
-	     w->input ().right - ps->optionGetPadRight ();
-	dy = -(y - workArea.y ()) + w->input ().top + ps->optionGetPadTop ();
+	     RIGHT_BORDER (w) - ps->optionGetPadRight ();
+	dy = -(y - workArea.y ()) + TOP_BORDER (w) + ps->optionGetPadTop ();
 	break;
     case PutRight:
 	/* center of right edge */
@@ -527,7 +527,7 @@ PutScreen::getDistance (CompWindow         *w,
 	break;
     case PutEmptyRight:
 	/* center of right edge */
-	workArea.setX (workArea.x () + w->input ().right);
+	workArea.setX (workArea.x () + RIGHT_BORDER (w));
 	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
 	     RIGHT_BORDER (w) - ps->optionGetPadRight ();
 	dy = (workArea.height () / 2) - HALF_HEIGHT (w) -
@@ -542,8 +542,8 @@ PutScreen::getDistance (CompWindow         *w,
 	break;
     case PutEmptyBottomRight:
 	/* bottom right corner */
-	workArea.setX (workArea.x () + w->input ().right);
-	workArea.setY (workArea.y () + w->input ().bottom);
+	workArea.setX (workArea.x () + RIGHT_BORDER (w));
+	workArea.setY (workArea.y () + BOTTOM_BORDER (w));
 	dx = workArea.width () - w->serverWidth () - (x - workArea.x ()) -
 	     RIGHT_BORDER (w) - ps->optionGetPadRight ();
 	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
@@ -558,7 +558,7 @@ PutScreen::getDistance (CompWindow         *w,
 	break;
     case PutEmptyBottom:
 	/* center of bottom edge */
-	workArea.setY (workArea.y () + w->input ().bottom);
+	workArea.setY (workArea.y () + BOTTOM_BORDER (w));
 	dx = (workArea.width () / 2) - HALF_HEIGHT (w) -
 	     (x - workArea.x ());
 	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
@@ -572,8 +572,8 @@ PutScreen::getDistance (CompWindow         *w,
 	break;
     case PutEmptyBottomLeft:
 	/* bottom left corner */
-	workArea.setX (workArea.x () - w->input ().left);
-	workArea.setY (workArea.y () + w->input ().bottom);
+	workArea.setX (workArea.x () - LEFT_BORDER (w));
+	workArea.setY (workArea.y () + BOTTOM_BORDER (w));
 	dx = -(x - workArea.x ()) + LEFT_BORDER (w) + ps->optionGetPadLeft ();
 	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
 	     BOTTOM_BORDER (w) - ps->optionGetPadBottom ();
