@@ -152,9 +152,9 @@ OpacifyWindow::handleEnter ()
 {
     OPACIFY_SCREEN (screen);
 
-    if (screen->otherGrabExist (0))
+    if (screen->otherGrabExist (NULL))
     {
-	if (!screen->otherGrabExist ( "move", 0))
+	if (!screen->otherGrabExist ("move", NULL))
 	{
 	    os->justMoved = TRUE;
 	    return;
