@@ -382,7 +382,7 @@ FireScreen::initiate (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector options)
 {
-    if (screen->otherGrabExist (0) )
+    if (screen->otherGrabExist (NULL))
         return false;
 
     if (!grabIndex)
