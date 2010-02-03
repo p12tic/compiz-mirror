@@ -1042,7 +1042,7 @@ PutScreen::initiateCommon (CompAction         *action,
 	{
 	    /* this will keep put from working while something
 	       else has a screen grab */
-	    if (s->otherGrabExist ("put", 0))
+	    if (s->otherGrabExist ("put", NULL))
 		return false;
 
 	    /* we are ok, so grab the screen */
