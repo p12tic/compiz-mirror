@@ -4,7 +4,7 @@
 	<_short>Title Bar Info</_short>
 	<_long>Shows additional information in the window title bar</_long>
 	<category>Utility</category>
-	<screen>
+	<options>
 	    <option name="show_remote_machine" type="bool">
 		<_short>Show Remote Machine Name</_short>
 		<_long>Show name of remote machine if a certain application is executed remotely.</_long>
@@ -15,6 +15,6 @@
 		<_long>Show marker if you're logged in as root.</_long>
 		<default>true</default>
 	    </option>
-	</screen>
+	</options>
     </plugin>
 </compiz>
