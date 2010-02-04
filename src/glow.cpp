@@ -53,10 +53,8 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     int               glowSize, glowOffset;
 
     GROUP_SCREEN (screen);
-    
-    /* Glow is currently disabled until the matrix issues can be worked out */
 
-    if (gs->optionGetGlow () && matrix && false)
+    if (gs->optionGetGlow () && matrix)
     {
 	if (!glowQuads)
 	    glowQuads = new GlowTexture::Quads[NUM_GLOWQUADS];
@@ -88,9 +86,9 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     box->setHeight (WIN_REAL_Y (window) + glowOffset - box->y ());
 
     quadMatrix->xx = 1.0f / glowSize;
-    quadMatrix->yy = -1.0f / (glowSize);
+    quadMatrix->yy = 1.0f / (glowSize);
     quadMatrix->x0 = -(box->x1 () * quadMatrix->xx);
-    quadMatrix->y0 = 1.0 -(box->y1 () * quadMatrix->yy);
+    quadMatrix->y0 = -(box->y1 () * quadMatrix->yy);
 
     box->setWidth (MIN (WIN_REAL_X (window) + glowOffset - box->x (),
 		   WIN_REAL_X (window) + (WIN_REAL_WIDTH (window) / 2) - box->x ()));
@@ -108,9 +106,9 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     box->setHeight (WIN_REAL_Y (window) + glowOffset - box->y ());
 
     quadMatrix->xx = -1.0f / glowSize;
-    quadMatrix->yy = -1.0f / glowSize;
+    quadMatrix->yy = 1.0f / glowSize;
     quadMatrix->x0 = 1.0 - (box->x1 () * quadMatrix->xx);
-    quadMatrix->y0 = 1.0 - (box->y1 () * quadMatrix->yy);
+    quadMatrix->y0 = -(box->y1 () * quadMatrix->yy);
 
     box->setX (MAX (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) - glowOffset,
 		   WIN_REAL_X (window) + (WIN_REAL_WIDTH (window) / 2)));
@@ -128,9 +126,9 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     box->setHeight (WIN_REAL_Y (window) + WIN_REAL_HEIGHT (window) + glowSize - glowOffset -box->y ());
 
     quadMatrix->xx = 1.0f / glowSize;
-    quadMatrix->yy = 1.0f / glowSize;
+    quadMatrix->yy = -1.0f / glowSize;
     quadMatrix->x0 = -(box->x1 () * quadMatrix->xx);
-    quadMatrix->y0 = -(box->y1 () * quadMatrix->yy);
+    quadMatrix->y0 = 1.0f - (box->y1 () * quadMatrix->yy);
 
     box->setY (MAX (WIN_REAL_Y (window) + WIN_REAL_HEIGHT (window) - glowOffset,
 		   WIN_REAL_Y (window) + (WIN_REAL_HEIGHT (window) / 2)));
@@ -148,9 +146,9 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     box->setHeight (WIN_REAL_Y (window) + WIN_REAL_HEIGHT (window) + glowSize - glowOffset - box->y ());
 
     quadMatrix->xx = -1.0f / glowSize;
-    quadMatrix->yy = 1.0f / glowSize;
+    quadMatrix->yy = -1.0f / glowSize;
     quadMatrix->x0 = 1.0 - (box->x1 () * quadMatrix->xx);
-    quadMatrix->y0 = -(box->y1 () * quadMatrix->yy);
+    quadMatrix->y0 = 1.0 - (box->y1 () * quadMatrix->yy);
 
     box->setX (MAX (WIN_REAL_X (window) + WIN_REAL_WIDTH (window) - glowOffset,
 		   WIN_REAL_X (window) + (WIN_REAL_WIDTH (window) / 2)));
@@ -168,9 +166,9 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     box->setHeight (WIN_REAL_Y (window) + glowOffset - box->y ());
 
     quadMatrix->xx = 0.0f;
-    quadMatrix->yy = -1.0f / glowSize;
+    quadMatrix->yy = 1.0f / glowSize;
     quadMatrix->x0 = 1.0;
-    quadMatrix->y0 = 1.0 - (box->y1 () * quadMatrix->yy);
+    quadMatrix->y0 = -(box->y1 () * quadMatrix->yy);
 
     /* Bottom edge */
     box = &glowQuads[GLOWQUAD_BOTTOM].box;
@@ -183,9 +181,9 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     box->setHeight (WIN_REAL_Y (window) + WIN_REAL_HEIGHT (window) + glowSize - glowOffset - box->y ());
 
     quadMatrix->xx = 0.0f;
-    quadMatrix->yy = 1.0f / glowSize;
+    quadMatrix->yy = -1.0f / glowSize;
     quadMatrix->x0 = 1.0;
-    quadMatrix->y0 = -(box->y1 () * quadMatrix->yy);
+    quadMatrix->y0 = 1.0 - (box->y1 () * quadMatrix->yy);
 
     /* Left edge */
     box = &glowQuads[GLOWQUAD_LEFT].box;
@@ -200,7 +198,7 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     quadMatrix->xx = 1.0f / glowSize;
     quadMatrix->yy = 0.0f;
     quadMatrix->x0 = -(box->x1 () * quadMatrix->xx);
-    quadMatrix->y0 = 0.0;
+    quadMatrix->y0 = 1.0;
 
     /* Right edge */
     box = &glowQuads[GLOWQUAD_RIGHT].box;
@@ -215,5 +213,5 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     quadMatrix->xx = -1.0f / glowSize;
     quadMatrix->yy = 0.0f;
     quadMatrix->x0 = 1.0 - (box->x1 () * quadMatrix->xx);
-    quadMatrix->y0 = 0.0;
+    quadMatrix->y0 = 1.0;
 }

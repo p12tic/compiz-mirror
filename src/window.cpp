@@ -1145,31 +1145,22 @@ GroupWindow::glDraw (const GLMatrix &transform,
 		fAttrib.setOpacity (OPAQUE);
 		fAttrib.setSaturation (COLOR);
 		fAttrib.setBrightness (BRIGHT);
-		
-		glPushMatrix ();
-		glLoadMatrixf (gTransform.getMatrix ());
-		
-		foreach (GLTexture *tex, gs->glowTexture.texture)
-		{
 
-	            gs->gScreen->setTexEnvMode (GL_MODULATE);
-	            glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	            glColor4us (color[0], color[1], color[2], attrib.getOpacity ());
+		gs->gScreen->setTexEnvMode (GL_MODULATE);
+		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+		glColor4us (color[0], color[1], color[2], attrib.getOpacity ());
 
-	            /* we use PAINT_WINDOW_TRANSFORMED_MASK here to force
-	               the usage of a good texture filter */
+		/* we use PAINT_WINDOW_TRANSFORMED_MASK here to force
+		    the usage of a good texture filter */
 
-	            gWindow->glDrawTexture (tex, fAttrib,
-				            mask | PAINT_WINDOW_BLEND_MASK |
-				            PAINT_WINDOW_TRANSLUCENT_MASK |
-				            PAINT_WINDOW_TRANSFORMED_MASK);
+		gWindow->glDrawTexture (gs->glowTexture.texture[0], fAttrib,
+					mask | PAINT_WINDOW_BLEND_MASK |
+					PAINT_WINDOW_TRANSLUCENT_MASK |
+					PAINT_WINDOW_TRANSFORMED_MASK);
 
-	            glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	            gs->gScreen->setTexEnvMode (GL_REPLACE);
-	            glColor4usv (defaultColor);
-	        }
-	        
-	        glPopMatrix ();
+		glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+		gs->gScreen->setTexEnvMode (GL_REPLACE);
+		glColor4usv (defaultColor);
 	    }
 	}
     }
