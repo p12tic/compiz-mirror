@@ -368,7 +368,7 @@ ShowmouseScreen::genNewParticles (int f_time)
     int nE       = MIN (10, optionGetEmiters ());
     float rA     = (2 * M_PI) / nE;
     int radius   = optionGetRadius ();
-    for (i = 0; i < nE; i++)
+    for (i = 0; i < (unsigned int) nE; i++)
     {
 	pos[i][0]  = sin (rot + (i * rA)) * radius;
 	pos[i][0] += mousePos.x ();
@@ -449,7 +449,6 @@ ShowmouseScreen::genNewParticles (int f_time)
 void
 ShowmouseScreen::damageRegion ()
 {
-    unsigned int i;
     float        w, h, x1, x2, y1, y2;
 
     if (!ps)
