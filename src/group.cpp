@@ -194,9 +194,9 @@ Group::destroy (bool immediate)
 	    
 	        GROUP_WINDOW (cw);
 
-	        //damageWindowOutputExtents (cw);
+	        gw->cWindow->damageOutputExtents ();
 	        gw->group = NULL;
-	        //updateWindowOutputExtents (cw);
+	        gw->window->updateWindowOutputExtents ();
 	        gw->updateProperty ();
 
 	        if (gs->optionGetAutotabCreate () && gw->is ())
@@ -248,13 +248,13 @@ Group::addWindow (CompWindow *w)
 
     gw->group = this;
 
-    //updateWindowOutputExtents (w);
+    w->updateWindowOutputExtents ();
     gw->updateProperty ();
 
     if (windows.size () == 2)
     {
         /* first window in the group got its glow, too */
-        //updateWindowOutputExtents (group->windows[0]);
+        windows.front ()->updateWindowOutputExtents ();
     }
 
     if (tabBar)

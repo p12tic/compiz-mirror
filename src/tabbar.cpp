@@ -459,20 +459,6 @@ TabBar::recalcPos (int            middleX,
 }
 
 /*
- * groupGetCurrentMousePosition
- *
- * Description:
- * Return the current function of the pointer at the given screen.
- * The position is queried trough XQueryPointer directly from the xserver.
- *
- */
-void
-GroupScreen::positionUpdate (const CompPoint &p)
-{
-    mouse = p;
-}
-
-/*
  * groupGetClippingRegion
  *
  * Description:

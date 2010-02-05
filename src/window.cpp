@@ -739,8 +739,8 @@ GroupWindow::deleteGroupWindow ()
 	    if (group->windows.size () == 1)
 	    {
 		/* Glow was removed from this window, too */
-		//damageWindowOutputExtents (group->windows[0]);
-		//updateWindowOutputExtents (group->windows[0]);
+		CompositeWindow::get (group->windows.front ())->damageOutputExtents ();
+		group->windows.front ()->updateWindowOutputExtents ();
 
 		if (gs->optionGetAutoUngroup ())
 		{
@@ -770,8 +770,8 @@ GroupWindow::deleteGroupWindow ()
 	    group = NULL;
 	}
 
-	//damageWindowOutputExtents (w);
-	//updateWindowOutputExtents (w);
+	cWindow->damageOutputExtents ();
+	window->updateWindowOutputExtents ();
 	updateProperty ();
 
 	group = NULL;
