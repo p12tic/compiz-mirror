@@ -362,7 +362,7 @@ ShowmouseScreen::genNewParticles (int f_time)
     float partw = optionGetSize () * 5;
     float parth = partw;
 
-    int i, j;
+    unsigned int i, j;
 
     float pos[10][2];
     int nE       = MIN (10, optionGetEmiters ());
@@ -449,7 +449,7 @@ ShowmouseScreen::genNewParticles (int f_time)
 void
 ShowmouseScreen::damageRegion ()
 {
-    int          i;
+    unsigned int i;
     float        w, h, x1, x2, y1, y2;
 
     if (!ps)
