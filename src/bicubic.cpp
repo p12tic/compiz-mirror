@@ -60,7 +60,7 @@ BicubicScreen::getBicubicFragmentFunction (GLTexture   *texture,
 	    "hgX", "hgY", "cs00", "cs01", "cs10", "cs11"
 	};
 
-	for (int i = 0; i < sizeof (filterTemp) / sizeof (filterTemp[0]); i++)
+	for (unsigned int i = 0; i < sizeof (filterTemp) / sizeof (filterTemp[0]); i++)
 	    data->addTempHeaderOp (filterTemp[i]);
 
 
