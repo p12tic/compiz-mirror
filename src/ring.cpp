@@ -610,8 +610,8 @@ RingScreen::createWindowList ()
 void
 RingScreen::switchToWindow (bool	   toNext)
 {
-    CompWindow *w; // We need w to be in this scope
-    int        cur = 0;
+    CompWindow   *w; // We need w to be in this scope
+    unsigned int cur = 0;
 
     if (!grabIndex)
 	return;
@@ -787,7 +787,7 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     if (state != RingStateNone)
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
-    mask |= PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK;
+    //mask |= PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK;
 
     gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
@@ -1134,7 +1134,7 @@ RingScreen::windowRemove (Window id)
 
 	while (it != windows.begin ())
 	{
-	    CompWindow *w = *it;
+	    //CompWindow *w = *it;
 
     	    if (w && id == (*it)->id ())
 	    {
