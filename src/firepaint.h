@@ -81,10 +81,10 @@ class ParticleSystem
 	GLfloat *colors_cache;
 	GLfloat *dcolors_cache;
 
-	int coords_cache_count;
-	int vertex_cache_count;
-	int color_cache_count;
-	int dcolors_cache_count;
+	unsigned int coords_cache_count;
+	unsigned int vertex_cache_count;
+	unsigned int color_cache_count;
+	unsigned int dcolors_cache_count;
 
 	void
 	initParticles (int            f_numParticles);

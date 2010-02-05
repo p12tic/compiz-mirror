@@ -431,7 +431,7 @@ FireScreen::clear (CompAction         *action,
 void
 FireScreen::preparePaint (int      time)
 {
-    int i;
+    unsigned int i;
     Particle *part;
     float size = 4;
     float bg = (float) optionGetBgBrightness () / 100.0;
@@ -462,7 +462,7 @@ FireScreen::preparePaint (int      time)
 
     if (numPoints)
     {
-	float max_new = MIN (ps->particles.size (),  numPoints * 2) *
+	float max_new = MIN ((int) ps->particles.size (),  numPoints * 2) *
 			((float) time / 50.0) *
 			(1.05 -	optionGetFireLife());
 	float rVal;
