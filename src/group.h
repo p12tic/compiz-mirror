@@ -462,8 +462,6 @@ class Group
 	void
 	raiseWindows (CompWindow *top);
 
-
-
 	void
 	handleAnimation ();
 
@@ -822,8 +820,6 @@ class GroupScreen :
 	Bool              dragged;
 	int               prevX, prevY; /* Buffer for mouse coordinates */
 	MousePoller       poller;
-
-	void positionUpdate (const CompPoint &); // mousepoll callback function
 
 	CompTimer	      initialActionsTimeoutHandle;
 
