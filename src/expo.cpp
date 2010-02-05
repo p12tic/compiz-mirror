@@ -198,11 +198,11 @@ ExpoScreen::nextVp (CompAction          *action,
     newX = selectedVp.x () + 1;
     newY = selectedVp.y ();
 
-    if (newX >= screen->vpSize (). width ())
+    if (newX >= (unsigned int) screen->vpSize ().width ())
     {
 	newX = 0;
 	newY = newY + 1;
-	if (newY >= screen->vpSize ().height ())
+	if (newY >= (unsigned int) screen->vpSize ().height ())
 	    newY = 0;
     }
 
@@ -403,9 +403,9 @@ ExpoScreen::preparePaint (int msSinceLastPaint)
 		activity = 1.0f;
 	}
 
-	for (i = 0; i < screen->vpSize ().width (); i++)
+	for (i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
 	{
-	    for (j = 0; j < screen->vpSize ().height (); j++)
+	    for (j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
 	    {
 		vp = (j * screen->vpSize ().width ()) + i;
 
