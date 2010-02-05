@@ -230,23 +230,21 @@ GroupScreen::closeWindows (CompAction         *action,
 
     return true;
 }
-#if 0
+
 /*
- * groupChangeColor
+ * GroupScreen::changeColor
  *
  */
-Bool
-groupChangeColor (CompDisplay     *d,
-		  CompAction      *action,
-		  CompActionState state,
-		  CompOption      *option,
-		  int             nOption)
+bool
+GroupScreen::changeColor (CompAction         *action,
+			  CompAction::State  state,
+			  CompOption::Vector options)
 {
     Window     xid;
     CompWindow *w;
 
-    xid = getIntOptionNamed (option, nOption, "window", 0);
-    w   = findWindowAtDisplay (d, xid);
+    xid = CompOption::getIntOptionNamed (options, "window", 0);
+    w   = screen->findWindow (xid);
     if (w)
     {
 	GROUP_WINDOW (w);
@@ -260,14 +258,14 @@ groupChangeColor (CompDisplay     *d,
 	    color[1] = (int)(rand () / factor);
 	    color[2] = (int)(rand () / factor);
 
-	    groupRenderTopTabHighlight (gw->group);
-	    damageScreen (w->screen);
+	    if (gw->group->tabBar)
+		gw->group->tabBar->renderTopTabHighlight ();
+	    cScreen->damageScreen ();
 	}
     }
 
-    return FALSE;
+    return false;
 }
-#endif
 
 /*
  * GroupScreen::setIgnore

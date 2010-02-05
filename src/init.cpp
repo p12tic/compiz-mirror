@@ -275,10 +275,10 @@ GroupScreen::GroupScreen (CompScreen *screen) :
 					     _2, _3));
     optionSetIgnoreKeyTerminate (boost::bind (&GroupScreen::unsetIgnore, this,
 					      _1, _2, _3));
-/*
+
     optionSetChangeColorKeyInitiate (boost::bind (&GroupScreen::changeColor,
 						  this, _1, _2, _3));
-*/
+
     srand (time (NULL));
 
     optionSetTabHighlightColorNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
