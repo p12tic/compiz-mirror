@@ -48,6 +48,7 @@ class TitleinfoScreen :
     public:
 
 	TitleinfoScreen (CompScreen *);
+	~TitleinfoScreen ();
 
 	Atom visibleNameAtom;
 	Atom wmPidAtom;
@@ -55,12 +56,9 @@ class TitleinfoScreen :
 	void
 	handleEvent (XEvent *);
 
-	/* FIXME:
-	 * Need something like this in core to be wrappable
-	unsigned int
-	addSupportedAtoms (Atom    *atoms,
-			   unsigned int size);
-	 */
+
+	void
+	addSupportedAtoms (std::vector<Atom> &atoms);
 
 	CompString
 	getUtf8Property (Window      id,

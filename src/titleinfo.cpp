@@ -208,30 +208,15 @@ TitleinfoWindow::updateMachine ()
     if (ts->optionGetShowRemoteMachine ())
 	updateVisibleName ();
 }
-/*
-static unsigned int
-titleinfoAddSupportedAtoms (CompScreen   *s,
-			    Atom         *atoms,
-			    unsigned int size)
+
+void
+TitleinfoScreen::addSupportedAtoms (std::vector<Atom> &atoms)
 {
-    unsigned int count;
-
-    TITLEINFO_DISPLAY (s->display);
-    TITLEINFO_SCREEN (s);
-
-    UNWRAP (ts, s, addSupportedAtoms);
-    count = (*s->addSupportedAtoms) (s, atoms, size);
-    WRAP (ts, s, addSupportedAtoms, titleinfoAddSupportedAtoms);
-
-    if ((size - count) >= 2)
-    {
-	atoms[count++] = td->visibleNameAtom;
-	atoms[count++] = td->wmPidAtom;
-    }
-
-    return count;
+    screen->addSupportedAtoms (atoms);
+    
+    atoms.push_back (visibleNameAtom);
+    atoms.push_back (wmPidAtom);
 }
-*/
 
 void
 TitleinfoScreen::handleEvent (XEvent *event)
@@ -280,7 +265,16 @@ TitleinfoScreen::TitleinfoScreen (CompScreen *screen) :
     wmPidAtom (XInternAtom (screen->dpy (), "_NET_WM_PID", 0))
 {
     ScreenInterface::setHandler (screen);
+    
+    screen->updateSupportedWmHints ();
 };
+
+TitleinfoScreen::~TitleinfoScreen ()
+{
+    screen->addSupportedAtomsSetEnabled (this, false);
+    
+    screen->updateSupportedWmHints ();
+}
 
 TitleinfoWindow::TitleinfoWindow (CompWindow *window) :
     PluginClassHandler <TitleinfoWindow, CompWindow> (window),
