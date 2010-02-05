@@ -117,7 +117,16 @@ class Layer :
 	int texWidth;
 	int texHeight;
 	
-	virtual void draw (int, int, float) {};
+	void
+	draw (CompRegion &box,
+	      const float  &wScale,
+	      const float  &hScale,
+	      const GLWindowPaintAttrib &attrib,
+	      const GLMatrix	       &transform,
+	      const CompRegion	       &clipRegion,
+	      int	  	       alpha,
+	      unsigned int	       mask,
+	      TabBar		       *tb);
 
     protected:
 	Layer (int, int);
@@ -155,7 +164,6 @@ class CairoLayer :
 {
     public:
 
-	//void draw (); TODO
 	//bool render (); TODO
 
 	static CairoLayer *

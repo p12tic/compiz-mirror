@@ -1395,82 +1395,8 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 
 	if (layer)
 	{	
-	    foreach (GLTexture *tex, layer->texture)
-	    {
-		GLTexture::Matrix matrix = tex->matrix ();
-		GLTexture::MatrixList matricies;
-		
-		CompRect boxRect (box.boundingRect ());
-
-		/* remove the old x1 and y1 so we have a relative value */
-		
-		boxRect.setGeometry ((boxRect.x1 () - topTab->x ()) / wScale + 
-								   topTab->x (),
-				     (boxRect.y1 () - topTab->y ()) / hScale + 
-				     				   topTab->y (),
-				     boxRect.x2 () - boxRect.x1 (),
-				     		 boxRect.y2 () - boxRect.y1 ());
-
-		/* now add the new x1 and y1 so we have a absolute value again,
-		also we don't want to stretch the texture... */
-		if (boxRect.x2 () * wScale < layer->texWidth)
-		{
-		    boxRect.setX (boxRect.x1 ());
-		    boxRect.setWidth (boxRect.x1 () + boxRect.x2 () - 
-		    						 boxRect.x1 ());
-		}
-		else
-		    boxRect.setWidth (layer->texWidth);
-
-		if (boxRect.y2 () * hScale < layer->texHeight)
-		    boxRect.setHeight (boxRect.y2 () + 
-		    		     box.boundingRect ().y1 () - boxRect.x1 ());
-		else
-		    boxRect.setHeight (layer->texHeight);
-
-		matrix.x0 -= boxRect.x1 () * matrix.xx;
-		matrix.y0 -= boxRect.y1 () * matrix.yy;
-		
-		/* FIXME */
-		GLWindow::get (topTab)->geometry ().reset ();
-		
-		matricies.push_back (matrix);
-		
-		box = CompRegion (boxRect);
-
-		GLWindow::get (topTab)->glAddGeometry (matricies, box, 
-								    clipRegion);
-
-		if (GLWindow::get (topTab)->geometry ().vertices)
-		{
-		    GLFragment::Attrib fragment (wAttrib);
-		    GLMatrix wTransform (transform);
-
-		    wTransform.translate (WIN_X (topTab), WIN_Y (topTab), 0.0f);
-		    wTransform.scale (wScale, hScale, 1.0f);
-		    wTransform.translate (wAttrib.xTranslate / wScale
-		    					       - WIN_X (topTab),
-				          wAttrib.yTranslate / hScale 
-				          		       - WIN_Y (topTab),
-				          0.0f);
-
-		    alpha = alpha * ((float) wAttrib.opacity / OPAQUE);
-
-		    fragment.setOpacity (alpha);	
-		
-
-		    glPushMatrix ();
-		    glLoadMatrixf (wTransform.getMatrix ());
-
-		    GLWindow::get (topTab)->glDrawTexture (tex, fragment,
-					       mask |
-					      PAINT_WINDOW_BLEND_MASK |
-					      PAINT_WINDOW_TRANSFORMED_MASK |
-					      PAINT_WINDOW_TRANSLUCENT_MASK);
-					      
-		    glPopMatrix ();
-		}
-	    }
+	    layer->draw (box, wScale, hScale, wAttrib, transform, clipRegion,
+	    		 alpha, mask, this);
 	}
     }
 }
