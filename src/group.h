@@ -300,6 +300,12 @@ class TabBar
 
 	Group	   *group;
 	
+	int            changeAnimationTime;
+	int            changeAnimationDirection;
+	TabBar::TabChangeState changeState;
+
+	TabBar::TabbingState tabbingState;
+	
 	Tab* topTab;
 	Tab* prevTopTab;
 
@@ -436,12 +442,6 @@ class Group
 	long int identifier;
 
 	TabBar *tabBar;
-
-	int            changeAnimationTime;
-	int            changeAnimationDirection;
-	TabBar::TabChangeState changeState;
-
-	TabBar::TabbingState tabbingState;
 
 	UngroupState ungroupState;
 

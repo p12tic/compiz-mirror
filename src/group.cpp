@@ -121,10 +121,6 @@ Group::create (unsigned int initialIdent)
 Group::Group (unsigned int initialIdent) :
     identifier (initialIdent),
     tabBar (NULL),
-    changeAnimationTime (0),
-    changeAnimationDirection (0),
-    changeState (TabBar::NoTabChange),
-    tabbingState(TabBar::NoTabbing),
     ungroupState (UngroupNone),
     grabWindow (None),
     grabMask (0)

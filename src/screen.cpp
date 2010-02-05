@@ -812,17 +812,17 @@ GroupScreen::preparePaint (int        msSinceLastPaint)
 
 	    if (bar->bgAnimation)
 		bar->handleAnimation (msSinceLastPaint);
+	
+	    if (bar->changeState != TabBar::NoTabChange)
+	    {
+	        bar->changeAnimationTime -= msSinceLastPaint;
+	        if (bar->changeAnimationTime <= 0)
+		    group->handleAnimation ();
+	    }
+	    
+	    if (group->tabBar->tabbingState != TabBar::NoTabbing)
+		group->drawTabAnimation (msSinceLastPaint);
 	}
-
-	if (group->changeState != TabBar::NoTabChange)
-	{
-	    group->changeAnimationTime -= msSinceLastPaint;
-	    if (group->changeAnimationTime <= 0)
-		group->handleAnimation ();
-	}
-
-	if (group->tabbingState != TabBar::NoTabbing)
-	    group->drawTabAnimation (msSinceLastPaint);
     }
 }
 
@@ -853,8 +853,9 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     {
 	foreach (Group *group, groups)
 	{
-	    if (group->changeState != TabBar::NoTabChange ||
-		group->tabbingState != TabBar::NoTabbing)
+	    if (group->tabBar && (
+	    	group->tabBar->changeState != TabBar::NoTabChange ||
+		group->tabBar->tabbingState != TabBar::NoTabbing))
 	    {
 		mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 	    }
@@ -954,9 +955,9 @@ GroupScreen::donePaint ()
 
     foreach (Group *group, groups)
     {
-	if (group->tabbingState != TabBar::NoTabbing)
+	if (group->tabBar && group->tabBar->tabbingState != TabBar::NoTabbing)
 	    cScreen->damageScreen ();
-	else if (group->changeState != TabBar::NoTabChange)
+	else if (group->tabBar && group->tabBar->changeState != TabBar::NoTabChange)
 	    cScreen->damageScreen ();
 	else if (group->tabBar)
 	{

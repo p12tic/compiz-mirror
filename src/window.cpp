@@ -455,7 +455,7 @@ GroupWindow::moveNotify (int  dx,
      * - the grabed window is not grabbed for moving */
 
     if ((!gs->optionGetMoveAll () || gs->ignoreMode) ||
-	(group->tabbingState != TabBar::NoTabbing) ||
+	(group->tabBar && group->tabBar->tabbingState != TabBar::NoTabbing) ||
 	(group->grabWindow != window->id () || /* XXX: implement this */
 	!(group->grabMask & CompWindowGrabMoveMask)))
     {
@@ -745,7 +745,8 @@ GroupWindow::deleteGroupWindow ()
 		if (gs->optionGetAutoUngroup ())
 		{
 
-		    if (group->changeState != TabBar::NoTabChange)
+		    if (group->tabBar &&
+		    	group->tabBar->changeState != TabBar::NoTabChange)
 		    {
 			/* a change animation is pending: this most
 			   likely means that a window must be moved
@@ -864,22 +865,24 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     if (group)
     {
-	doRotate = (group->changeState != TabBar::NoTabChange) &&
+	doRotate = group->tabBar && 
+		    (group->tabBar->changeState != TabBar::NoTabChange) &&
 	           HAS_TOP_WIN (group) && HAS_PREV_TOP_WIN (group) &&
 	           (IS_TOP_TAB (window, group) ||
 	            IS_PREV_TOP_TAB (window, group));
 
-	doTabbing = (animateState & (IS_ANIMATED | FINISHED_ANIMATION)) &&
+	doTabbing = group->tabBar && 
+		    (animateState & (IS_ANIMATED | FINISHED_ANIMATION)) &&
 	            !(IS_TOP_TAB (window, group) &&
-		      (group->tabbingState == TabBar::Tabbing));
+		      (group->tabBar->tabbingState == TabBar::Tabbing));
 
 	showTabbar = group->tabBar &&
 		     (group->tabBar->state != Layer::PaintOff) &&
 	             (((IS_TOP_TAB (window, group)) &&
-		       ((group->changeState == TabBar::NoTabChange) ||
-			(group->changeState == TabBar::TabChangeNewIn))) ||
+		       ((group->tabBar->changeState == TabBar::NoTabChange) ||
+			(group->tabBar->changeState == TabBar::TabChangeNewIn))) ||
 		      (IS_PREV_TOP_TAB (window, group) &&
-		       (group->changeState == TabBar::TabChangeOldOut)));
+		       (group->tabBar->changeState == TabBar::TabChangeOldOut)));
     }
     else
     {
@@ -942,7 +945,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    animProgress = progress;
 
 	    progress = MAX (progress, 0.0f);
-	    if (group->tabbingState == TabBar::Tabbing)
+	    if (group->tabBar->tabbingState == TabBar::Tabbing)
 		progress = 1.0f - progress;
 
 	    wAttrib.opacity = (float) wAttrib.opacity * progress;
@@ -950,10 +953,10 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (doRotate)
 	{
-	    float timeLeft = group->changeAnimationTime;
+	    float timeLeft = group->tabBar->changeAnimationTime;
 	    int   animTime = gs->optionGetChangeAnimationTime () * 500;
 
-	    if (group->changeState == TabBar::TabChangeOldOut)
+	    if (group->tabBar->changeState == TabBar::TabChangeOldOut)
 		timeLeft += animTime;
 
 	    /* 0 at the beginning, 1 at the end */
@@ -990,7 +993,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	    if (doTabbing)
 	    {
-		if (group->tabbingState == TabBar::Tabbing)
+		if (group->tabBar->tabbingState == TabBar::Tabbing)
 		{
 		    morphBase   = window;
 		    morphTarget = TOP_TAB (group);
@@ -1035,7 +1038,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		if (IS_TOP_TAB (window, group))
 		    rotateAngle += 180.0f;
 
-		if (group->changeAnimationDirection < 0)
+		if (group->tabBar->changeAnimationDirection < 0)
 		    rotateAngle *= -1.0f;
 
 		wTransform.rotate (rotateAngle, 0.0f, 1.0f, 0.0f);

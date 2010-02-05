@@ -56,7 +56,7 @@ Group::tab (CompWindow *main)
 
     tabBar->createIPW ();
 
-    tabbingState = TabBar::NoTabbing;
+    tabBar->tabbingState = TabBar::NoTabbing;
 
     /* Slot is initialized after new TabBar (main); */
 
@@ -146,7 +146,6 @@ Group::tab (CompWindow *main)
 	gw->xVelocity = gw->yVelocity = 0.0f;
     }
 
-    //tabbingState = TabBar::NoTabbing;
     startTabbingAnimation (true);
 }
 
@@ -222,14 +221,8 @@ Group::untab ()
 	gw->xVelocity = gw->yVelocity = 0.0f;
     }
 
-    tabbingState = TabBar::NoTabbing;
+    tabBar->tabbingState = TabBar::NoTabbing;
     startTabbingAnimation (false);
-
-    delete tabBar;
-    tabBar = NULL;
-
-    changeAnimationTime = 0;
-    changeState = TabBar::NoTabChange;
 
     gs->cScreen->damageScreen ();
 }

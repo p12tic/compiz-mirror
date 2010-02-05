@@ -325,7 +325,9 @@ GroupScreen::initTab (CompAction         *action,
 	return TRUE;
 
     if (!gw->group->tabBar)
+    {
 	gw->group->tab (w);
+    }
     else if (allowUntab)
 	gw->group->untab ();
 
@@ -355,7 +357,7 @@ GroupScreen::changeTabLeft (CompAction         *action,
 
     GROUP_WINDOW (w);
 
-    if (!gw->tab || !gw->group)
+    if (!gw->tab || !gw->group || !gw->group->tabBar)
 	return TRUE;
 
     if (gw->group->tabBar->nextTopTab)
