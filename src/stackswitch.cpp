@@ -495,13 +495,13 @@ StackswitchWindow::compareStackswitchWindowDepth (StackswitchDrawSlot *a1,
 bool
 StackswitchScreen::layoutThumbs ()
 {
-    int        index;
+    unsigned int index;
     int        ww, wh;
     float      xScale, yScale;
     int        ox1, ox2, oy1, oy2;
     float      swi = 0.0, oh, rh, ow;
-    int        cols, rows, col = 0, row = 0, r, c;
-    int        cindex, ci, gap, hasActive = 0;
+    unsigned int cols, rows, col = 0, row = 0, r, c;
+    unsigned int cindex, ci, gap, hasActive = 0;
     bool       exit;
 
     if ((mState == StateNone) || (mState == StateIn))
@@ -901,10 +901,11 @@ StackswitchScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     
     status = gScreen->glPaintOutput (attrib, sTransform, region, output, mask);
 
-    if (mState != StateNone && (output->id () == ~0 ||
+    if (mState != StateNone &&
+    	 ((unsigned int) output->id () == (unsigned int) ~0 ||
 	screen->outputDevs ().at (screen->currentOutputDev ().id ()) == *output))
     {
-	int           i;
+	unsigned int  i;
 	CompWindow    *aw = NULL;
 	
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
