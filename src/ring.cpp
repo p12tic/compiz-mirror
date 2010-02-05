@@ -624,7 +624,7 @@ RingScreen::switchToWindow (bool	   toNext)
 	cur++;
     }
 
-    if (cur == (int)windows.size ())
+    if (cur == windows.size ())
 	return;
 
     if (toNext)
@@ -1133,8 +1133,6 @@ RingScreen::windowRemove (CompWindow *w)
 	while (it != windows.end ())
 	{
 	    if (*it == w)
-
-    	    if (w && id == (*it)->id ())
 	    {
 		inList = true;
 
