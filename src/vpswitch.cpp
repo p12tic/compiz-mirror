@@ -135,12 +135,12 @@ VPSwitchScreen::next (CompAction         *action,
     targetX = vp.x () + 1;
     targetY = vp.y ();
 
-    if (targetX >= vpsize.height ())
+    if (targetX >= (unsigned int) vpsize.height ())
     {
 	targetX = 0;
 	targetY++;
     }
-    if (targetY >= vpsize.width ())
+    if (targetY >= (unsigned int) vpsize.width ())
 	targetY = 0;
 
     gotovp (targetX, targetY);
@@ -191,13 +191,13 @@ VPSwitchScreen::movevp (CompAction	   *action,
     if (dx < 0 && vp.x () + dx < 0)
 	return false;
 
-    if (dx > 0 && vp.x () + dx > vpsize.width ())
+    if (dx > 0 && vp.x () + dx > (unsigned int) vpsize.width ())
 	return false;
 
     if (dy < 0 && vp.y () + dy < 0)
 	return false;
 
-    if (dy > 0 && vp.y () + dy > vpsize.height ())
+    if (dy > 0 && vp.y () + dy > (unsigned int) vpsize.height ())
 	return false;
 
     gotovp (vp.x () + dx, vp.y () + dy);
