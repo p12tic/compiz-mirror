@@ -113,10 +113,8 @@ class Layer :
 	Layer (int, int);
         ~Layer ();
 
-	PaintState state;
-	
-	int animationTime;
-	
+	PaintState state;	
+	int animationTime;	
 	GLTexture::List texture;
 	
 	/* used if layer is used for text drawing */
@@ -150,11 +148,11 @@ class CairoHelper
 
 	~CairoHelper ();
 
-   private:
+   protected:
 
-    CairoHelper (int, int);
-    
-    friend class CairoLayer;
+	CairoHelper (int, int);
+
+	friend class CairoLayer;
 
 };
 
@@ -190,12 +188,6 @@ class TextLayer :
 
 	CompText text;
 	Pixmap		pixmap;
-#if 0
-	void draw ();
-	bool render ();
-	void clear ();
-
-#endif
 
    private:
 
@@ -206,16 +198,35 @@ extern bool textAvailable;
 class Tab
 {
     public:
+	class List :
+	    public std::list <Tab *>
+	{
+	    public:
+	    
+		bool
+		getPrevTab (Tab *curr, Tab *&ret);
+		
+		bool
+		getNextTab (Tab *cur, Tab *&ret);
+		
+		iterator
+		getFirstTab () { return begin (); };
+		
+		reverse_iterator
+		getLastTab () { return rend (); };
+		
+	};
+    public:
     
-    Tab (Group *, CompWindow *w);
-    ~Tab ();
-    
-    void
-    recalcPos (int slotPos);
-    
-    void
-    getDrawOffset (int &hoffset,
-		           int &voffset);
+	Tab (Group *, CompWindow *w);
+	~Tab ();
+
+	void
+	recalcPos (int slotPos);
+
+	void
+	getDrawOffset (int &hoffset,
+		       int &voffset);
 		           
 	void
 	paint (Group *,
@@ -233,25 +244,6 @@ class Tab
 	int	  speed;
 	float msSinceLastMove;
     private:
-};
-
-class TabList :
-    public std::list <Tab *>
-{
-    public:
-    
-        bool
-        getPrevTab (Tab *curr, Tab *&ret);
-        
-        bool
-        getNextTab (Tab *cur, Tab *&ret);
-        
-        iterator
-        getFirstTab () { return begin (); };
-        
-        reverse_iterator
-        getLastTab () { return rend (); };
-        
 };
 
 class TabBar
@@ -289,7 +281,7 @@ class TabBar
 	TabBar (Group *, CompWindow *);
 	~TabBar ();
 
-	TabList	    tabs;
+	Tab::List    tabs;
 
 	Tab *hoveredSlot;
 	Tab *textSlot;
@@ -347,58 +339,55 @@ class TabBar
 	      unsigned int		 mask,
 	      CompRegion		 clipRegion);
 
+	/* TODO: Move to the Layer*s */
+
 	void
 	renderWindowTitle ();
-
 	void
 	renderTopTabHighlight ();
-
 	void
 	renderTabBarBackground ();
 
+	/* Animation */
+
+	void startTabbingAnimation (bool);
 	void handleFade (int ms);
-
 	void handleTextFade (int ms);
-
 	void handleAnimation (int ms);
-
 	void drawTabAnimation (int ms);
 
 	void setVisibility (bool, unsigned int);
-
 	void recalcPos (int, int, int);
 
+	/* Tab placement logic */
+
 	void insertTabAfter (Tab *tab, Tab *prev);
-
 	void insertTabBefore (Tab *tab, Tab *next);
-
 	void insertTab (Tab *tab);
-
 	void unhookTab (Tab *tab, bool temporary);
-
 	void deleteTab (Tab *tab);
-
 	Tab *
 	createTab (CompWindow *);
 
+	/* Physics engine */
+
 	void applyForces (Tab *draggedSlot);
-
 	void applySpeeds (int ms);
-
-	void startTabbingAnimation (bool);
 
 		
 	bool changeTab (Tab *topTab, ChangeTabAnimationDirection direction);
 
 	void switchTopTabInput (bool enable);
 
+	/* Handles input prevention window */
+
 	void createIPW ();
 	void destroyIPW ();
 
+	/* Controls the Tab Bar region and position */
+
 	void moveRegion (int dx, int dy, bool syncIPW);
-
 	void resizeRegion (CompRect box, bool syncIPW);
-
 	void damageRegion ();
 
     private:
@@ -499,6 +488,30 @@ class Selection :
     public CompWindowList
 {
     public:
+	class Rect :
+	   public CompRect
+	{
+	    public:
+
+		void
+		damageRect (CompScreen *s);
+
+		Selection
+		toSelection ();
+
+		void
+		paint (const GLScreenPaintAttrib &,
+		       const GLMatrix &,
+		       CompOutput *,
+		       bool);
+
+		void
+		damage (int, int);
+
+	
+	    private:
+	};
+    public:
 	Group *
 	toGroup ();
 
@@ -509,29 +522,7 @@ class Selection :
 	push_back (CompWindow *w);
 };
 
-class SelectionRect :
-   public CompRect
-{
-    public:
 
-	void
-	damageRect (CompScreen *s);
-
-	Selection
-	toSelection ();
-
-	void
-	paint (const GLScreenPaintAttrib &,
-	       const GLMatrix &,
-	       CompOutput *,
-	       bool);
-
-	void
-	damage (int, int);
-
-	
-    private:
-};
 
 #define GLOWQUAD_TOPLEFT	 0
 #define GLOWQUAD_TOPRIGHT	 1
@@ -542,8 +533,6 @@ class SelectionRect :
 #define GLOWQUAD_LEFT		 6
 #define GLOWQUAD_RIGHT		 7
 #define NUM_GLOWQUADS		 8
-
-/* XXX: cleanup */
 
 class GlowTexture
 {
@@ -683,42 +672,31 @@ class GroupScreen :
 
 	bool
 	dequeue ();
-
 	void
 	enqueueMoveNotify (CompWindow *,
 			   int, int, bool, bool);
-
 	void
 	dequeueMoveNotifies ();
-
 	void
 	dequeueSyncs ();
-
 	void
 	enqueueGrabNotify (CompWindow *,
 			   int, int, unsigned int, unsigned int);
-
 	void
 	dequeueGrabNotifies ();
-
 	void
 	enqueueUngrabNotify (CompWindow *);
-
 	void
 	dequeueUngrabNotifies ();
-
 	void
 	enqueueWindowNotify (CompWindow *w, CompWindowNotify n);
-
 	void
 	dequeueWindowNotifies ();
-	
+		
 	bool
-        tabBarTimeout (TabBar *bar);
-        
+        tabBarTimeout (TabBar *bar);        
         bool
-        dragHoverTimeout (CompWindow *w);
-    
+        dragHoverTimeout (CompWindow *w);    
         void
         tabChangeActivateEvent (bool activating);
 
@@ -786,6 +764,8 @@ class GroupScreen :
 			CompAction::State  state,
 			CompOption::Vector &options);
 
+	bool			     queued;
+
 	std::list <PendingMoves *>    pendingMoves;
 	std::list <PendingSyncs *>    pendingSyncs;
 	std::list <PendingGrabs *>    pendingGrabs;
@@ -795,14 +775,14 @@ class GroupScreen :
 	CompTimer		     dequeueTimeoutHandle;
 
 	std::list <Group *>	     groups;
-	SelectionRect                masterSelectionRect;
 
 	/* should rather be replaced with a list once we get mpx */
+	Selection::Rect                masterSelectionRect;
 	Selection 		     masterSelection;
 
-	bool			     queued;
+	/* Screen Grab State */
 
-	GrabState	     grabState;
+	GrabState	     	     grabState;
 	CompScreen::GrabHandle	     grabIndex;
 
 	Group			     *lastHoveredGroup;

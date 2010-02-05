@@ -149,12 +149,12 @@ Selection::push_back (Selection &sel)
 
 
 /**
- * SelectionRect::damage
+ * Selection::Rect::damage
  *
  */
 
 void
-SelectionRect::damage (int xRoot, int yRoot)
+Selection::Rect::damage (int xRoot, int yRoot)
 {
     GROUP_SCREEN (screen);
 
@@ -183,11 +183,11 @@ SelectionRect::damage (int xRoot, int yRoot)
 }
 
 /**
- * SelectionRect::paint
+ * Selection::Rect::paint
  *
  */
 void
-SelectionRect::paint (const GLScreenPaintAttrib &sa,
+Selection::Rect::paint (const GLScreenPaintAttrib &sa,
 		      const GLMatrix		&transform,
 		      CompOutput		*output,
 		      bool			transformed)
@@ -238,17 +238,17 @@ SelectionRect::paint (const GLScreenPaintAttrib &sa,
 }
 
 /*
- * SelectionRect::toSelection
+ * Selection::Rect::toSelection
  *
  */
 Selection
-SelectionRect::toSelection ()
+Selection::Rect::toSelection ()
 {
     GROUP_SCREEN (screen);
 
     float      precision = gs->optionGetSelectPrecision () / 100.0f;
     Selection	sel;
-    SelectionRect  &msr = gs->masterSelectionRect;
+    Selection::Rect  &msr = gs->masterSelectionRect;
     /* XXX: Why are we using masterSelectionRect here ... */
     CompRegion reg (MIN (msr.x1 (), msr.x2 ()) - 2,
 		    MIN (msr.y1 (), msr.y2 ()) - 2,

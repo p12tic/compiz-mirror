@@ -183,7 +183,7 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 	case Button5:
 	    {	        
 		CompWindow  *ftopTab = NULL;
-		TabList &tabs = group->tabBar->tabs;
+		Tab::List &tabs = group->tabBar->tabs;
 		GroupWindow *gw;
 
 		if (group->tabBar->nextTopTab)
@@ -279,7 +279,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
     {
 	Bool            inTabBar;
 	CompRegion      clip, buf;
-	TabList::iterator it;
+	Tab::List::iterator it;
 	//Tab             *tab;
 
 	if (!group->tabBar || !HAS_TOP_WIN (group))
@@ -321,7 +321,6 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 		continue;
 
 
-	    /* XXX: there must be stack smashing here */
 	    if (!group->tabBar->tabs.getPrevTab (tab, prevTab))
 	        prevTab = NULL;
 	    

@@ -255,7 +255,7 @@ GroupScreen::dragHoverTimeout (CompWindow *w)
     return FALSE;
 }
 
-/* TabList::getNextTab
+/* Tab::List::getNextTab
  *
  * Description: This function will not set ret to NULL unless the tab passed in
  * curr was not found in the list. ret is set to either the next tab, in
@@ -265,7 +265,7 @@ GroupScreen::dragHoverTimeout (CompWindow *w)
  */
 
 bool
-TabList::getNextTab (Tab *curr, Tab *&ret)
+Tab::List::getNextTab (Tab *curr, Tab *&ret)
 {
     iterator it = std::find (begin (), end (), curr);
     
@@ -290,7 +290,7 @@ TabList::getNextTab (Tab *curr, Tab *&ret)
     return true;
 }
 
-/* TabList::getNextTab
+/* Tab::List::getNextTab
  *
  * Description: This function will not set ret to NULL unless the tab passed in
  * curr was not found in the list. ret is set to either the previous tab, in
@@ -300,7 +300,7 @@ TabList::getNextTab (Tab *curr, Tab *&ret)
  */
 
 bool
-TabList::getPrevTab (Tab *curr, Tab *&ret)
+Tab::List::getPrevTab (Tab *curr, Tab *&ret)
 {
     iterator it = std::find (begin (), end (), curr);
     

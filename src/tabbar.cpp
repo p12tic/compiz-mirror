@@ -2211,7 +2211,7 @@ void
 TabBar::unhookTab (Tab *tab,
 		   bool            temporary)
 {
-    TabList::iterator tempit = tabs.begin ();
+    Tab::List::iterator tempit = tabs.begin ();
     CompWindow      *w = tab->window;
 
     GROUP_SCREEN (screen);

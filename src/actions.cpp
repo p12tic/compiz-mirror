@@ -103,7 +103,7 @@ GroupScreen::selectTerminate (CompAction         *action,
 	    masterSelectionRect.y1 () != masterSelectionRect.y2 ())
         {
 	    CompWindowList tempWindowList;
-	    SelectionRect  &msr = masterSelectionRect;
+	    Selection::Rect  &msr = masterSelectionRect;
 	    Selection	   sel = msr.toSelection ();
 
 	    CompRegion reg (MIN (msr.x1 (), msr.x2 ()) - 2,
