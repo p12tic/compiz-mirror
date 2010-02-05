@@ -77,7 +77,7 @@ AirplaneAnim::tesselateIntoAirplane ()
     {
 	freePolygonObjects ();
 
-	for (int i = 0; i < numpol; i++)
+	for (unsigned int i = 0; i < numpol; i++)
 	    mPolygons.push_back (new AirplanePolygonObject);
     }
 
