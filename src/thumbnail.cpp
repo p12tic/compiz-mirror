@@ -130,7 +130,8 @@ ThumbScreen::thumbUpdateThumbnail ()
 				 w->iconGeometry ().y () +
 				 (w->iconGeometry ().height () / 2));
 
-    if (screen->outputDevs ().size () == 1 || oDev > screen->outputDevs ().size ())
+    if (screen->outputDevs ().size () == 1 ||
+        (unsigned int) oDev > screen->outputDevs ().size ())
     {
 	ox1 = 0;
 	oy1 = 0;
@@ -280,10 +281,7 @@ ThumbScreen::checkPosition (CompWindow *w)
 void
 ThumbScreen::positionUpdate (const CompPoint &p)
 {
-    CompWindow *cw;
     CompWindow *found = NULL;
-    int x = p.x ();
-    int y = p.y ();
 
     foreach (CompWindow *cw, screen->windows ())
     {
