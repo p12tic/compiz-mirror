@@ -206,7 +206,7 @@ WinrulesWindow::matchSizeValue (CompOption::Value::Vector matches,
 	return false;
 
     min = MIN (matches.size (), widthValues.size ());
-    min = MIN (min, heightValues.size ());
+    min = MIN ((unsigned int) min, heightValues.size ());
 
     for (int i = 0; i < min; i++)
     {
