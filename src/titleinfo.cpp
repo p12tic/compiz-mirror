@@ -36,8 +36,6 @@ TitleinfoWindow::updateVisibleName ()
 
     TITLEINFO_SCREEN (screen);
 
-    fprintf (stderr, "title is %s\n", title.c_str ());
-
     f_title = title.size () ? title : "";
 
     if (ts->optionGetShowRoot () && owner == 0)
