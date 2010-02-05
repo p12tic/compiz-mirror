@@ -223,8 +223,6 @@ GroupScreen::closeWindows (CompAction         *action,
 
 	if (gw->group)
 	{
-	    int i;
-
 	    foreach (CompWindow *w, gw->group->windows)
 		w->close (screen->getCurrentTime ());
 	}

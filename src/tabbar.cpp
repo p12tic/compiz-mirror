@@ -55,7 +55,7 @@ TabBar::TabBar (Group *g, CompWindow *main) :
 
     foreach (CompWindow *w, group->windows)
     {
-	Tab *t = new Tab (group, w);
+	new Tab (group, w); // FIXME
     }
 
     recalcPos (WIN_CENTER_X (main), WIN_X (main), WIN_X (main) +
@@ -208,7 +208,8 @@ TabBar::changeTab (Tab             *topTab,
 	    group->changeAnimationDirection = -1;  /* right */
 
 	/* check if the opposite direction is shorter */
-	if (abs (distanceNew - distanceOld) > (group->tabBar->tabs.size () / 2))
+	if ((unsigned int) abs (distanceNew - distanceOld) >
+					      (group->tabBar->tabs.size () / 2))
 	    group->changeAnimationDirection *= -1;
     }
 
@@ -345,7 +346,6 @@ TabBar::recalcPos (int            middleX,
 		   int            minX1,
 		   int            maxX2)
 {
-    Tab             *tab;
     CompWindow      *topTab;
     Bool            isDraggedSlotGroup = FALSE;
     int             space, barWidth;
@@ -359,7 +359,6 @@ TabBar::recalcPos (int            middleX,
 
     GROUP_SCREEN (screen);
 
-    TabBar *bar = group->tabBar;
     topTab = TOP_TAB (group);
     space = gs->optionGetThumbSpace ();
 
@@ -664,7 +663,6 @@ GroupScreen::tabBarTimeout (TabBar *bar)
 bool
 GroupScreen::showDelayTimeout (TabBar *bar)
 {
-    int            mouseX, mouseY;
     CompWindow     *topTab;;
 
     if (!HAS_TOP_WIN (bar->group))
@@ -704,7 +702,6 @@ void
 TabBar::setVisibility (bool           visible,
 		       unsigned int   mask)
 {
-    Tab         *tab;
     CompWindow  *topTabWin;
     Layer::PaintState  oldState;
     
@@ -830,8 +827,7 @@ Group::handleHoverDetection ()
 {
     TabBar *bar = tabBar;
     CompWindow  *topTabWin = TOP_TAB (this);
-    int         mouseX, mouseY;
-    Bool        mouseOnScreen, inLastSlot;
+    Bool        inLastSlot;
 
     GROUP_SCREEN (screen);
 
@@ -1352,7 +1348,6 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 	case PAINT_THUMBS:
 	    {
 		GLenum          oldTextureFilter;
-		Tab 		*tab;
 
 		oldTextureFilter = gs->gScreen->textureFilter ();
 
@@ -1487,7 +1482,6 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 void
 Group::finishTabbing ()
 {
-    int        i;
     CompWindowList::iterator it;
 
     GROUP_SCREEN (screen);
@@ -1563,7 +1557,7 @@ Group::finishTabbing ()
 void
 Group::drawTabAnimation (int            msSinceLastPaint)
 {
-    int        steps, i;
+    int        steps;
     float      amount, chunk;
     Bool       doTabbing;
     
@@ -1742,7 +1736,7 @@ GroupScreen::getConstrainRegion ()
     CompRegion region;
     CompRegion r;
     CompRect   strutRect;
-    int        i;
+    unsigned int i;
 
     for (i = 0; i < screen->outputDevs ().size (); i++)
 	region = CompRegion (screen->outputDevs ().at (i)).united (region);
@@ -1870,9 +1864,6 @@ Group::applyConstraining (CompRegion         constrainRegion,
 			  int            dx,
 			  int            dy)
 {
-    int        i;
-    CompWindow *w;
-
     if (!dx && !dy)
 	return;
 
@@ -1930,7 +1921,6 @@ Group::applyConstraining (CompRegion         constrainRegion,
 void
 Group::startTabbingAnimation (Bool           tab)
 {
-    int        i;
     int        dx (0), dy (0);
     int        constrainStatus;
     
@@ -2039,44 +2029,6 @@ Group::startTabbingAnimation (Bool           tab)
 	}
     }
 }
-
-/*
- * groupRecalcSlotPos
- *
- */
- #if 0
-void
-Tab::recalcPos (int slotPos)
-{
-    Group *group;
-    CompRect       box;
-    int            space, thumbSize;
-
-    GROUP_WINDOW (tab->window);
-    GROUP_SCREEN (screen);
-
-
-    group = gw->group;
-
-    if (!HAS_TOP_WIN (group) || !group->tabBar)
-	return;
-
-    space = gs->optionGetThumbSpace ();
-    thumbSize = gs->optionGetThumbSize ();
-
-    EMPTY_REGION (slot->region);
-
-    box.setX (space + ((thumbSize + space) * slotPos));
-    box.setY (space);
-
-    box.setWidth (thumbSize);
-    box.setHeight (thumbSize);
-
-    CompRegion boxReg (box);
-
-    tab->region = tab->region.united (box);
-}
-#endif
 
 void
 TabBar::damageRegion ()
@@ -2236,10 +2188,6 @@ TabBar::insertTabAfter (Tab *tab, Tab *prevTab)
 void
 TabBar::insertTab (Tab *tab)
 {
-    CompWindow *w = tab->window;
-
-    GROUP_WINDOW (w);
-
     tabs.push_back (tab);
 
     /* Moving bar->region->extents.x1 / x2 as minX1 / maxX2 will work,
@@ -2261,8 +2209,6 @@ TabBar::unhookTab (Tab *tab,
 {
     TabList::iterator tempit = tabs.begin ();
     CompWindow      *w = tab->window;
-
-    GROUP_WINDOW (w);
 
     GROUP_SCREEN (screen);
 
@@ -2358,8 +2304,8 @@ Tab::~Tab ()
  *
  */
 Tab::Tab (Group *group, CompWindow *w) :
-    window (w),
     bar (group->tabBar),
+    window (w),
     springX (0),
     speed (0),
     msSinceLastMove (0)
@@ -2402,7 +2348,7 @@ groupSpringForce (int        centerX,
  * groupDraggedSlotForce
  *
  */
-static int
+static inline int
 groupDraggedSlotForce (int        distanceX,
 		       int        distanceY)
 {
@@ -2609,7 +2555,6 @@ TabBar::applyForces (Tab *draggedSlot)
 void
 TabBar::applySpeeds (int            msSinceLastRepaint)
 {
-    Tab *slot;
     int             move;
     CompRect        box;
     Bool            updateTabBar = FALSE;

@@ -255,6 +255,9 @@ GroupScreen::dequeueWindowNotifies ()
 	        }
 	        if (notify->w->managed () && !notify->w->overrideRedirect ())
 		    lastRestackedGroup = gw->group;
+		break;
+	    default:
+		break;
 	}
 
 	pendingNotifies.pop_front ();

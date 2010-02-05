@@ -34,7 +34,6 @@
 Group *
 Selection::toGroup ()
 {
-    int            i;
     Group          *retGroup = NULL;
     Bool           tabbed = FALSE;
 
@@ -270,8 +269,6 @@ SelectionRect::toSelection ()
 	if (gw->is () &&
 	    gw->inRegion (reg, precision))
 	{
-	    GROUP_WINDOW (w);
-
 	    /*if (gw->group && groupFindGroupInWindows (gw->group, ret, count))
 		continue;*/
 
