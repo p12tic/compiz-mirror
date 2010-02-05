@@ -36,8 +36,6 @@ TitleinfoWindow::updateVisibleName ()
 
     TITLEINFO_SCREEN (screen);
 
-    fprintf (stderr, "title is %s\n", title.c_str ());
-
     f_title = title.size () ? title : "";
 
     if (ts->optionGetShowRoot () && owner == 0)
@@ -120,7 +118,7 @@ TitleinfoScreen::getUtf8Property (Window      id,
     Atom          type;
     int           result, format;
     unsigned long nItems, bytesAfter;
-    char          *val,   *retval_c;
+    char          *val = NULL,   *retval_c = NULL;
     CompString    retval;
 
     result = XGetWindowProperty (screen->dpy (), id, atom, 0L, 65536, False,
