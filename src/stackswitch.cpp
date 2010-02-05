@@ -1199,9 +1199,9 @@ StackswitchScreen::windowRemove (Window id)
 
 	while (it != mWindows.begin ())
 	{
-	    //CompWindow *w = *it;
+	    CompWindow *cw = *it;
 
-    	    if (w && id == (*it)->id ())
+    	    if (w && id == cw->id ())
 	    {
 		inList = true;
 
@@ -1210,7 +1210,7 @@ StackswitchScreen::windowRemove (Window id)
 		    if (it < mWindows.end ()--)
 		    {
 		        it++;
-			selected = (*(it))->id ();
+			selected = cw->id ();
 			it--;
 		    }
     		    else
@@ -1219,11 +1219,12 @@ StackswitchScreen::windowRemove (Window id)
 		    mSelectedWindow = selected;
 		}
 
-		mWindows.erase (it); // ???
+		it--;
+
+		mWindows.remove (cw); // ???
 		break;
 
 	    }
-	    it--;
 	}
 
 	if (!inList)
