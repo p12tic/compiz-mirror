@@ -761,7 +761,11 @@ class GroupScreen :
 	closeWindows (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector &options);
-
+		      
+	bool
+	changeColor (CompAction	        *action,
+		     CompAction::State  state,
+		     CompOption::Vector option);
 	bool
 	setIgnore (CompAction         *action,
 		   CompAction::State  state,
