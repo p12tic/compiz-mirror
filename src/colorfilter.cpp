@@ -34,7 +34,7 @@ ColorfilterScreen::findFragmentFunction (int id)
 {
     foreach (ColorfilterFunction *function, filtersFunctions)
     {
-	if (function->id == id)
+	if (function->id == (unsigned int) id)
 	    return function;
     }
 
@@ -317,7 +317,7 @@ ColorfilterWindow::glDrawTexture (GLTexture 		   *texture,
 	    }
 	}
 	/* Single filter mode */
-	else if (cfs->currentFilter <= cfs->filtersFunctions.size ())
+	else if ((unsigned int) cfs->currentFilter <= cfs->filtersFunctions.size ())
 	{
 	    /* Enable the currently selected filter if possible (i.e. if it
 	     * was successfully loaded) */
