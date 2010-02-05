@@ -487,9 +487,9 @@ class Group
 	
 	void
 	applyConstraining (CompRegion         constrainRegion,
-					   Window         constrainedWindow,
-					   int            dx,
-					   int            dy);
+			   Window         constrainedWindow,
+			   int            dx,
+			   int            dy);
 					   
 	void
 	startTabbingAnimation (Bool           tab);
@@ -730,32 +730,32 @@ class GroupScreen :
 	bool
 	selectSingle (CompAction         *action,
 		      CompAction::State  state,
-		      CompOption::Vector options);
+		      CompOption::Vector &options);
 
 	bool
 	select (CompAction         *action,
 		CompAction::State  state,
-		CompOption::Vector options);
+		CompOption::Vector &options);
 
 	bool
 	selectTerminate (CompAction         *action,
 			 CompAction::State  state,
-			 CompOption::Vector options);
+			 CompOption::Vector &options);
 
 	bool
 	groupWindows (CompAction         *action,
 		      CompAction::State  state,
-		      CompOption::Vector options);
+		      CompOption::Vector &options);
 
 	bool
 	ungroupWindows (CompAction         *action,
 			CompAction::State  state,
-			CompOption::Vector options);
+			CompOption::Vector &options);
 
 	bool
 	removeWindow (CompAction         *action,
 		      CompAction::State  state,
-		      CompOption::Vector options);
+		      CompOption::Vector &options);
 
 	bool
 	closeWindows (CompAction         *action,
@@ -765,7 +765,7 @@ class GroupScreen :
 	bool
 	changeColor (CompAction	        *action,
 		     CompAction::State  state,
-		     CompOption::Vector option);
+		     CompOption::Vector &option);
 	bool
 	setIgnore (CompAction         *action,
 		   CompAction::State  state,
@@ -784,12 +784,12 @@ class GroupScreen :
 	Bool
 	changeTabLeft (CompAction         *action,
 		       CompAction::State  state,
-		       CompOption::Vector options);
+		       CompOption::Vector &options);
 
 	bool
 	changeTabRight (CompAction         *action,
 			CompAction::State  state,
-			CompOption::Vector options);
+			CompOption::Vector &options);
 
 	std::list <PendingMoves *>    pendingMoves;
 	std::list <PendingSyncs *>    pendingSyncs;

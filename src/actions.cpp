@@ -33,7 +33,7 @@
 bool
 GroupScreen::selectSingle (CompAction         *action,
 			   CompAction::State  state,
-			   CompOption::Vector options)
+			   CompOption::Vector &options)
 {
     Window     xid;
     CompWindow *w;
@@ -55,7 +55,7 @@ GroupScreen::selectSingle (CompAction         *action,
 bool
 GroupScreen::select (CompAction         *action,
 		     CompAction::State  state,
-		     CompOption::Vector options)
+		     CompOption::Vector &options)
 {
     Window     xid;
     CompWindow *w;
@@ -93,7 +93,7 @@ GroupScreen::select (CompAction         *action,
 bool
 GroupScreen::selectTerminate (CompAction         *action,
 			      CompAction::State  state,
-			      CompOption::Vector options)
+			      CompOption::Vector &options)
 {
     if (grabState == ScreenGrabSelect)
     {
@@ -145,7 +145,7 @@ GroupScreen::selectTerminate (CompAction         *action,
 bool
 GroupScreen::groupWindows (CompAction         *action,
 			   CompAction::State  state,
-			   CompOption::Vector options)
+			   CompOption::Vector &options)
 {
     if (!masterSelection.empty ())
     {
@@ -162,7 +162,7 @@ GroupScreen::groupWindows (CompAction         *action,
 bool
 GroupScreen::ungroupWindows (CompAction         *action,
 			     CompAction::State  state,
-			     CompOption::Vector options)
+			     CompOption::Vector &options)
 {
     CompWindow *w = screen->findTopLevelWindow (
 			CompOption::getIntOptionNamed (options, "window", 0));
@@ -186,7 +186,7 @@ GroupScreen::ungroupWindows (CompAction         *action,
 bool
 GroupScreen::removeWindow (CompAction         *action,
 			   CompAction::State  state,
-			   CompOption::Vector options)
+			   CompOption::Vector &options)
 {
     CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
 								       "window",
@@ -238,7 +238,7 @@ GroupScreen::closeWindows (CompAction         *action,
 bool
 GroupScreen::changeColor (CompAction         *action,
 			  CompAction::State  state,
-			  CompOption::Vector options)
+			  CompOption::Vector &options)
 {
     Window     xid;
     CompWindow *w;
@@ -341,7 +341,7 @@ GroupScreen::initTab (CompAction         *action,
 Bool
 GroupScreen::changeTabLeft (CompAction         *action,
 			    CompAction::State  state,
-			    CompOption::Vector options)
+			    CompOption::Vector &options)
 {
     CompWindow *topTab;
 
@@ -399,7 +399,7 @@ GroupScreen::changeTabLeft (CompAction         *action,
 bool
 GroupScreen::changeTabRight (CompAction         *action,
 		     	     CompAction::State  state,
-		     	     CompOption::Vector options)
+		     	     CompOption::Vector &options)
 {
     CompWindow *topTab;
 
