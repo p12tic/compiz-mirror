@@ -74,13 +74,14 @@
 #define WIN_REAL_HEIGHT(w) (w->height () + 2 * w->geometry ().border () + \
 			    w->input ().top + w->input ().bottom)
 
-#define TOP_TAB(g) ((g)->topTab->window)
-#define PREV_TOP_TAB(g) ((g)->prevTopTab->window)
-#define NEXT_TOP_TAB(g) ((g)->nextTopTab->window)
+#define TOP_TAB(g) ((g)->tabBar->topTab->window)
+#define PREV_TOP_TAB(g) ((g)->tabBar->prevTopTab->window)
+#define NEXT_TOP_TAB(g) ((g)->tabBar->nextTopTab->window)
 
-#define HAS_TOP_WIN(group) (((group)->topTab) && ((group)->topTab->window))
-#define HAS_PREV_TOP_WIN(group) (((group)->prevTopTab) && \
-				 ((group)->prevTopTab->window))
+#define HAS_TOP_WIN(group) (((group)->tabBar->topTab) && 		       \
+					      ((group)->tabBar->topTab->window))
+#define HAS_PREV_TOP_WIN(group) (((group)->tabBar->prevTopTab) && \
+				 ((group)->tabBar->prevTopTab->window))
 
 #define IS_TOP_TAB(w, group) (HAS_TOP_WIN (group) && \
 			      ((TOP_TAB (group)->id ()) == (w)->id ()))
@@ -298,6 +299,22 @@ class TabBar
 	CairoLayer *selectionLayer;
 
 	Group	   *group;
+	
+	Tab* topTab;
+	Tab* prevTopTab;
+
+	/* needed for untabbing animation */
+	CompWindow *lastTopTab;
+
+	/* Those two are only for the change-tab animation,
+	when the tab was changed again during animation.
+	Another animation should be started again,
+	switching for this window. */
+	TabBar::ChangeTabAnimationDirection nextDirection;
+	Tab		             *nextTopTab;
+
+	/* check focus stealing prevention after changing tabs */
+	bool checkFocusAfterTabChange;
 
 	/* For animations */
 	int                bgAnimationTime;
@@ -417,26 +434,6 @@ class Group
 
 	/* Unique identifier for this group */
 	long int identifier;
-
-	Tab* topTab;
-	Tab* prevTopTab;
-
-/* Move this section to TabBar */
-
-	/* needed for untabbing animation */
-	CompWindow *lastTopTab;
-
-	/* Those two are only for the change-tab animation,
-	when the tab was changed again during animation.
-	Another animation should be started again,
-	switching for this window. */
-	TabBar::ChangeTabAnimationDirection nextDirection;
-	Tab		             *nextTopTab;
-
-	/* check focus stealing prevention after changing tabs */
-	bool checkFocusAfterTabChange;
-
-/**/
 
 	TabBar *tabBar;
 

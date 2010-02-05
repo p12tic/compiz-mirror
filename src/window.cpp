@@ -1001,7 +1001,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		    if (HAS_TOP_WIN (group))
 			morphBase = TOP_TAB (group);
 		    else
-			morphBase = group->lastTopTab;
+			morphBase = group->tabBar->lastTopTab;
 		}
 	    }
 	    else

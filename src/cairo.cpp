@@ -185,10 +185,10 @@ TabBar::renderTopTabHighlight ()
 	return;
     }
 
-    width = group->topTab->region.boundingRect ().x2 () -
-	    group->topTab->region.boundingRect ().x1 ();
-    height = group->topTab->region.boundingRect ().y2 () -
-	     group->topTab->region.boundingRect ().y1 ();
+    width = topTab->region.boundingRect ().x2 () -
+	    topTab->region.boundingRect ().x1 ();
+    height = topTab->region.boundingRect ().y2 () -
+	     topTab->region.boundingRect ().y1 ();
 
     selectionLayer = CairoLayer::rebuildCairoLayer (selectionLayer,
 						         width, height);

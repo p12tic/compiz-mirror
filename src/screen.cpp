@@ -191,9 +191,9 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 		std::list <Tab *>::iterator currentTab;
 		GroupWindow *gw;
 
-		if (group->nextTopTab)
+		if (group->tabBar->nextTopTab)
 		    ftopTab = NEXT_TOP_TAB (group);
-		else if (group->topTab)
+		else if (group->tabBar->topTab)
 		{
 		    /* If there are no tabbing animations,
 		       topTab is never NULL. */
@@ -389,7 +389,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 		/* if the dragged window is not the top tab,
 		   move it onscreen */
-		if (tmpGroup->topTab && !IS_TOP_TAB (w, tmpGroup))
+		if (tmpGroup->tabBar->topTab && !IS_TOP_TAB (w, tmpGroup))
 		{
 		    CompWindow *tw = TOP_TAB (tmpGroup);
 
@@ -469,7 +469,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	{
 	    GroupWindow::get (draggedSlotWindow)->removeFromGroup ();
 	}
-	else if (gw->group && gw->group->topTab)
+	else if (gw->group && gw->group->tabBar->topTab)
 	{
 	    gw->group->tabBar->recalcPos (
 	    		  (gw->group->tabBar->region.boundingRect ().x1 () +
@@ -577,7 +577,7 @@ GroupScreen::handleEvent (XEvent *event)
 		if (gw->group && gw->group->tabBar &&
 		    !IS_TOP_TAB (w, gw->group))
 		{
-		    gw->group->checkFocusAfterTabChange = TRUE;
+		    gw->group->tabBar->checkFocusAfterTabChange = TRUE;
 		    gw->group->tabBar->changeTab (gw->tab,
 		    				       TabBar::RotateUncertain);
 		}

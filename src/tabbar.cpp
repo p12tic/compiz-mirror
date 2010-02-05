@@ -32,6 +32,12 @@ TabBar::TabBar (Group *g, CompWindow *main) :
     bgLayer (NULL),
     selectionLayer (NULL),
     group (g),
+    topTab (NULL),
+    prevTopTab (NULL),
+    lastTopTab (NULL),
+    nextDirection (RotateUncertain),
+    nextTopTab (NULL),
+    checkFocusAfterTabChange (false),
     bgAnimationTime (0),
     bgAnimation (AnimationNone),
     state (Layer::PaintOff),
@@ -138,17 +144,17 @@ TabBar::destroyIPW ()
  *
  */
 bool
-TabBar::changeTab (Tab             *topTab,
+TabBar::changeTab (Tab             *fTopTab,
 		   ChangeTabAnimationDirection direction)
 {
     CompWindow     *w, *oldTopTab;
 
-    if (!topTab)
+    if (!fTopTab)
     {
 	return TRUE;
     }
 
-    w = topTab->window;
+    w = fTopTab->window;
 
     GROUP_WINDOW (w);
     GROUP_SCREEN (screen);
@@ -160,20 +166,20 @@ TabBar::changeTab (Tab             *topTab,
 	return TRUE;
     }
 
-    if (group->changeState == NoTabChange && group->topTab == topTab)
+    if (group->changeState == NoTabChange && topTab == fTopTab)
     {
        	return TRUE;
     }
 
-    if (group->changeState != NoTabChange && group->nextTopTab == topTab)
+    if (group->changeState != NoTabChange && nextTopTab == fTopTab)
     {
 	return TRUE;
     }
 
-    oldTopTab = group->topTab ? group->topTab->window : NULL;
+    oldTopTab = topTab ? topTab->window : NULL;
 
     if (group->changeState != NoTabChange)
-	group->nextDirection = direction;
+	nextDirection = direction;
     else if (direction == RotateLeft)
 	group->changeAnimationDirection = 1;
     else if (direction == RotateRight)
@@ -182,7 +188,7 @@ TabBar::changeTab (Tab             *topTab,
     {
 	int             distanceOld = 0, distanceNew = 0;
 
-	if (group->topTab)
+	if (topTab)
 	{
 	    foreach (Tab *tab, tabs)
 	    {
@@ -215,12 +221,12 @@ TabBar::changeTab (Tab             *topTab,
 
     if (group->changeState != NoTabChange)
     {
-	if (group->prevTopTab == topTab)
+	if (prevTopTab == topTab)
 	{
 	    /* Reverse animation. */
-	    Tab *tmp = group->topTab;
-	    group->topTab = group->prevTopTab;
-	    group->prevTopTab = tmp;
+	    Tab *tmp = topTab;
+	    topTab = prevTopTab;
+	    prevTopTab = tmp;
 
 	    group->changeAnimationDirection *= -1;
 	    group->changeAnimationTime =
@@ -229,14 +235,14 @@ TabBar::changeTab (Tab             *topTab,
 	    group->changeState = (group->changeState == TabChangeOldOut) ?
 	    TabChangeNewIn : TabChangeOldOut;
 
-	    group->nextTopTab = NULL;
+	    nextTopTab = NULL;
 	}
 	else
-	    group->nextTopTab = topTab;
+	    nextTopTab = fTopTab;
     }
     else
     {
-	group->topTab = topTab;
+	topTab = fTopTab;
 
 	renderWindowTitle ();
 	renderTopTabHighlight ();
@@ -245,7 +251,7 @@ TabBar::changeTab (Tab             *topTab,
 	gw->cWindow->addDamage ();
     }
 
-    if (topTab != group->nextTopTab)
+    if (fTopTab != nextTopTab)
     {
 	gw->setVisibility (TRUE);
 	if (oldTopTab)
@@ -276,11 +282,11 @@ TabBar::changeTab (Tab             *topTab,
 
 	    /* No window to do animation with. */
 	    if (HAS_TOP_WIN (group))
-		group->prevTopTab = group->topTab;
+		prevTopTab = topTab;
 	    else
-		group->prevTopTab = NULL;
+		prevTopTab = NULL;
 
-	    activate = !group->checkFocusAfterTabChange;
+	    activate = !checkFocusAfterTabChange;
 	    if (!activate)
 	    {
 	    	/* XXX */
@@ -296,7 +302,7 @@ TabBar::changeTab (Tab             *topTab,
 	    if (activate)
 		w->activate ();
 
-	    group->checkFocusAfterTabChange = FALSE;
+	    checkFocusAfterTabChange = FALSE;
 	}
     }
 
@@ -1067,7 +1073,7 @@ Group::handleAnimation ()
 
 	changeState = TabBar::TabChangeNewIn;
 
-	activate = !checkFocusAfterTabChange;
+	activate = !tabBar->checkFocusAfterTabChange;
 	
 	/* XXX */
 	
@@ -1084,7 +1090,7 @@ Group::handleAnimation ()
 	if (activate)
 	    top->activate ();
 
-	checkFocusAfterTabChange = FALSE;
+	tabBar->checkFocusAfterTabChange = FALSE;
     }
 
     if (changeState == TabBar::TabChangeNewIn &&
@@ -1094,18 +1100,18 @@ Group::handleAnimation ()
 
 	gs->tabChangeActivateEvent (FALSE);
 
-	if (prevTopTab)
+	if (tabBar->prevTopTab)
 	    GroupWindow::get (PREV_TOP_TAB (this))->setVisibility (false);
 
-	prevTopTab = topTab;
+	tabBar->prevTopTab = tabBar->topTab;
 	changeState = TabBar::NoTabChange;
 
-	if (nextTopTab)
+	if (tabBar->nextTopTab)
 	{
-	    Tab *next = nextTopTab;
-	    nextTopTab = NULL;
+	    Tab *next = tabBar->nextTopTab;
+	    tabBar->nextTopTab = NULL;
 
-	    tabBar->changeTab (next, nextDirection);
+	    tabBar->changeTab (next, tabBar->nextDirection);
 
 	    if (changeState == TabBar::TabChangeOldOut)
 	    {
@@ -1338,10 +1344,10 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 	    break;
 
 	case PAINT_SEL:
-	    if (group->topTab != gs->draggedSlot)
+	    if (group->tabBar->topTab != gs->draggedSlot)
 	    {
 		layer = (Layer *) selectionLayer;
-		box = group->topTab->region;
+		box = group->tabBar->topTab->region;
 	    }
 	    break;
 
@@ -1500,13 +1506,13 @@ Group::finishTabbing ()
 
 	    GROUP_WINDOW (w);
 
-	    if (tab == topTab || (gw->animateState & IS_UNGROUPING))
+	    if (tab == tabBar->topTab || (gw->animateState & IS_UNGROUPING))
 		continue;
 
 	    gw->setVisibility (FALSE);
 	}
 
-	prevTopTab = topTab;
+	tabBar->prevTopTab = tabBar->topTab;
     }
     
     it = windows.begin ();
@@ -2223,12 +2229,12 @@ TabBar::unhookTab (Tab *tab,
     if (!temporary)
     {
 	if (IS_PREV_TOP_TAB (w, group))
-	    group->prevTopTab = NULL;
+	    prevTopTab = NULL;
 	if (IS_TOP_TAB (w, group))
 	{
 	    Tab *next, *prev;
 	    
-	    group->topTab = NULL;
+	    topTab = NULL;
 
 	    if (tabs.getNextTab (tab, next))
 		changeTab (next, RotateRight);
@@ -2292,8 +2298,8 @@ Tab::~Tab ()
 	    gs->grabScreen (GroupScreen::ScreenGrabNone);
     }
     
-    if (bar->group && this == bar->group->topTab)
-        bar->group->topTab = NULL; /* XXX: shouldn't toptab be something else here? */
+    if (bar->group && this == bar->topTab)
+        bar->topTab = NULL; /* XXX: shouldn't toptab be something else here? */
 
     gw->tab = NULL;
     gw->updateProperty ();

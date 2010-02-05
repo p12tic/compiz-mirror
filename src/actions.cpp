@@ -358,9 +358,9 @@ GroupScreen::changeTabLeft (CompAction         *action,
     if (!gw->tab || !gw->group)
 	return TRUE;
 
-    if (gw->group->nextTopTab)
+    if (gw->group->tabBar->nextTopTab)
 	topTab = NEXT_TOP_TAB (gw->group);
-    else if (gw->group->topTab)
+    else if (gw->group->tabBar->topTab)
     {
 	/* If there are no tabbing animations,
 	   topTab is never NULL. */
@@ -372,7 +372,7 @@ GroupScreen::changeTabLeft (CompAction         *action,
     std::list <Tab *> &tabs = gw->group->tabBar->tabs;
     std::list <Tab *>::iterator currentTab = std::find (tabs.begin (),
     							tabs.end (),
-    							gw->group->topTab);
+    							gw->group->tabBar->topTab);
 
     /* FIXME: this is a bit of black magic */
 
@@ -416,9 +416,9 @@ GroupScreen::changeTabRight (CompAction         *action,
     if (!gw->tab || !gw->group || !gw->group->tabBar)
 	return TRUE;
 
-    if (gw->group->nextTopTab)
+    if (gw->group->tabBar->nextTopTab)
 	topTab = NEXT_TOP_TAB (gw->group);
-    else if (gw->group->topTab)
+    else if (gw->group->tabBar->topTab)
     {
 	/* If there are no tabbing animations,
 	   topTab is never NULL. */
@@ -430,7 +430,7 @@ GroupScreen::changeTabRight (CompAction         *action,
     std::list <Tab *> &tabs = gw->group->tabBar->tabs;
     std::list <Tab *>::iterator currentTab = std::find (tabs.begin (),
     							tabs.end (),
-    							gw->group->topTab);
+    							gw->group->tabBar->topTab);
 
     /* FIXME: this is a bit of black magic */
 

@@ -96,10 +96,10 @@ Group::tab (CompWindow *main)
 	tabBar->renderTabBarBackground ();
     }
 
-    width = topTab->region.boundingRect ().x2 () -
-	    topTab->region.boundingRect ().x1 ();
-    height = topTab->region.boundingRect ().y2 () -
-	     topTab->region.boundingRect ().y1 ();
+    width = tabBar->topTab->region.boundingRect ().x2 () -
+	    tabBar->topTab->region.boundingRect ().x1 ();
+    height = tabBar->topTab->region.boundingRect ().y2 () -
+	     tabBar->topTab->region.boundingRect ().y1 ();
 
     tabBar->selectionLayer = CairoLayer::createCairoLayer (width, height);
     if (tabBar->selectionLayer)
@@ -159,13 +159,16 @@ Group::untab ()
 {
     int             oldX, oldY;
     CompWindow      *fprevTopTab;
+    
+    if (!tabBar)
+	return;
 
     if (!HAS_TOP_WIN (this))
 	return;
 
     GROUP_SCREEN (screen);
 
-    if (prevTopTab)
+    if (tabBar->prevTopTab)
 	fprevTopTab = PREV_TOP_TAB (this);
     else
     {
@@ -175,8 +178,8 @@ Group::untab ()
 	fprevTopTab = TOP_TAB (this);
     }
 
-    lastTopTab = TOP_TAB (this);
-    topTab = NULL;
+    tabBar->lastTopTab = TOP_TAB (this);
+    tabBar->topTab = NULL;
 
     foreach (Tab *tab, tabBar->tabs)
     {
@@ -227,8 +230,6 @@ Group::untab ()
 
     changeAnimationTime = 0;
     changeState = TabBar::NoTabChange;
-    nextTopTab = NULL;
-    prevTopTab = NULL;
 
     gs->cScreen->damageScreen ();
 }

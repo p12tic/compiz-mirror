@@ -120,10 +120,6 @@ Group::create (unsigned int initialIdent)
 
 Group::Group (unsigned int initialIdent) :
     identifier (initialIdent),
-    topTab (NULL),
-    prevTopTab (NULL),
-    nextTopTab (NULL),
-    checkFocusAfterTabChange (false),
     tabBar (NULL),
     changeAnimationTime (0),
     changeAnimationDirection (0),
@@ -273,8 +269,8 @@ Group::addWindow (CompWindow *w)
         else if (HAS_PREV_TOP_WIN (this))
         {
 	    topTabWin = PREV_TOP_TAB (this);
-	    topTab = prevTopTab;
-	    prevTopTab = NULL;
+	    tabBar->topTab = tabBar->prevTopTab;
+	    tabBar->prevTopTab = NULL;
         }
 
         if (topTabWin)
