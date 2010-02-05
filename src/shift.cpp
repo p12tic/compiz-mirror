@@ -285,7 +285,8 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
 	if (active &&
-	    (ss->output->id () == ss->usedOutput || ss->output->id () == ~0))
+	    ((unsigned int) ss->output->id () == (unsigned int) ss->usedOutput ||
+	     (unsigned int) ss->output->id () == (unsigned int) ~0))
 	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
 	status = gWindow->glPaint (sAttrib, transform, region, mask);
@@ -326,8 +327,8 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    /* FIXME: Core's occlusion detection is broken and if this check
 	     * is not disabled then nothing paints */
 
-	    /*if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
-		return false;*/
+	    if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
+		return false;
 
 	    fragment.setOpacity ((float)fragment.getOpacity () * sopacity);
 	    fragment.setBrightness ((float)fragment.getBrightness () *
@@ -569,7 +570,7 @@ bool
 ShiftScreen::layoutThumbsCover ()
 {
     CompWindow *w;
-    int index;
+    unsigned int index;
     int ww, wh;
     float xScale, yScale;
     float distance;
@@ -712,7 +713,7 @@ ShiftScreen::layoutThumbsFlip ()
 {
 #warning: fixme: correct opacity fadein/out is broken here
     CompWindow *w;
-    int index;
+    unsigned int index;
     int ww, wh;
     float xScale, yScale;
     float distance;
@@ -784,7 +785,7 @@ ShiftScreen::layoutThumbsFlip ()
 	        sw->slots[i].opacity = MAX (0.0, 1.0 - (distance * 1.0));
 	    else
 	    {
-	        if (((int)distance) < -(windows.size () - 1))
+	        if (((int) distance) < -((int) windows.size () - 1))
 	        	sw->slots[i].opacity = MAX (0.0, windows.size () +
 					        distance);
 	        else
@@ -879,7 +880,8 @@ ShiftScreen::addWindowToList (CompWindow *w)
 bool
 ShiftScreen::updateWindowList ()
 {
-    int        i, idx;
+    int        idx;
+    unsigned int i;
 
     std::sort (windows.begin (), windows.end (), ShiftWindow::compareWindows);
 
@@ -941,7 +943,7 @@ void
 ShiftScreen::switchToWindow (bool toNext)
 {
     CompWindow *w;
-    int	       cur = 0;
+    unsigned int cur = 0;
 
     if (!grabIndex)
 	return;
@@ -1162,11 +1164,12 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     status = gScreen->glPaintOutput (attrib, transform, region, f_output, mask);
 
     if (state != ShiftScreen::ShiftStateNone &&
-	(f_output->id () == usedOutput || f_output->id () == ~0))
+	((unsigned int) f_output->id () == (unsigned int) usedOutput ||
+	 (unsigned int) f_output->id () == (unsigned int) ~0))
     {
 	CompWindow    *w;
 	GLMatrix      sTransform = transform;
-	int           i;
+	unsigned int  i;
 	int           oy1 =
 			 screen->outputDevs ()[usedOutput].region ()->extents.y1;
 	int           oy2 =
@@ -1478,7 +1481,7 @@ ShiftScreen::donePaint ()
 		CompWindow *w;
 
 		CompWindow *pw = NULL;
-		int i;
+		unsigned int i;
 		
 		state = ShiftScreen::ShiftStateIn;
 		moreAdjust = true;
