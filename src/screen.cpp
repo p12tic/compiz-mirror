@@ -181,14 +181,9 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 
 	case Button4:
 	case Button5:
-	    {
-	        /* FIXME: Black magic */
-	        /* FIXME: should make a tabList class that has methods for
-	         * getPrevTab, getNextTab */
-	        
+	    {	        
 		CompWindow  *ftopTab = NULL;
-		std::list <Tab *> &tabs = group->tabBar->tabs;
-		std::list <Tab *>::iterator currentTab;
+		TabList &tabs = group->tabBar->tabs;
 		GroupWindow *gw;
 
 		if (group->tabBar->nextTopTab)
@@ -204,18 +199,14 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 		    return;
 
 		gw = GroupWindow::get (ftopTab);
-		
-		currentTab = std::find (tabs.begin (), tabs.end (), gw->tab);
-
-		/* TODO: Use TabList */
 
 		if (button == Button4)
 		{
-		    if (currentTab != tabs.begin ())
+		    if (gw->tab != tabs.front ())
 		    {
-		        currentTab--;
-			group->tabBar->changeTab (*currentTab,
-							    TabBar::RotateLeft);
+		        Tab *prev;
+		        tabs.getPrevTab (gw->tab, prev);
+			group->tabBar->changeTab (prev, TabBar::RotateLeft);
 		    }
 		    else
 		    {
@@ -225,13 +216,17 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 		}
 		else
 		{
-		    currentTab++;
-		    if (currentTab != tabs.end ())
-			group->tabBar->changeTab (*currentTab,
-							   TabBar::RotateRight);
+		    if (gw->tab != tabs.back ())
+		    {
+		        Tab *next;
+		        tabs.getNextTab (gw->tab, next);
+			group->tabBar->changeTab (next, TabBar::RotateRight);
+		    }
 		    else
+		    {
 			group->tabBar->changeTab (tabs.front (),
 							   TabBar::RotateRight);
+		    }
 		}
 		break;
 	    }
