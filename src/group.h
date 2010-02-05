@@ -109,26 +109,19 @@ class Layer :
 	    PaintPermanentOn = 4
 	} PaintState;
     public:
-    
-	Layer (int, int);
-        ~Layer ();
 
 	PaintState state;	
 	int animationTime;	
 	GLTexture::List texture;
 	
-	/* used if layer is used for text drawing */
 	int texWidth;
 	int texHeight;
+	
+	virtual void draw (int, int, float) {};
 
-/*
-
-	virtual void draw (int, int, float);
-
-    private:
-	Layer ();
-	~Layer ();
-*/
+    protected:
+	Layer (int, int);
+        ~Layer ();
 };
 
 class CairoHelper
