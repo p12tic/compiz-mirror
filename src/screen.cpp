@@ -142,7 +142,6 @@ GroupScreen::handleMotionEvent (int        xRoot,
 void
 GroupScreen::handleButtonPressEvent (XEvent *event)
 {
-    Group          *group;
     int            xRoot, yRoot, button;
 
     xRoot  = event->xbutton.x_root;
@@ -162,8 +161,6 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 	switch (button) {
 	case Button1:
 	    {
-		Tab *tab;
-
 		foreach (Tab *tab, group->tabBar->tabs)
 		{
 		    if (tab->region.contains (CompPoint (xRoot, yRoot)))
@@ -525,7 +522,6 @@ GroupScreen::handleEvent (XEvent *event)
 	w = screen->findWindow (event->xmap.window);
 	if (w)
 	{
-	    CompWindow *cw;
 	    foreach (CompWindow *cw, screen->windows ())
 	    {
 		if (w->id () == cw->frame ())
@@ -603,7 +599,6 @@ GroupScreen::handleEvent (XEvent *event)
 
 		if (gw->group)
 		{
-		    int        i;
 		    CompRect   rect;
 
 		    rect.setX (event->xclient.data.l[0]);
@@ -844,7 +839,6 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 			    CompOutput 		      *output,
 			    unsigned int	      mask)
 {
-    Group *group;
     bool           status;
 
     painted = FALSE;

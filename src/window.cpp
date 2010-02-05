@@ -312,7 +312,6 @@ GroupWindow::stateChangeNotify (unsigned int lastState)
 	      (window->state () & MAXIMIZE_STATE)) &&
 	    gs->optionGetMaximizeUnmaximizeAll ())
 	{
-	    int i;
 	    foreach (CompWindow *cw, group->windows)
 	    {
 		if (!cw)
@@ -402,7 +401,6 @@ GroupWindow::moveNotify (int  dx,
 			 bool immediate)
 {
     Bool       viewportChange;
-    int        i;
     GLTexture::Matrix mat;
 
     GROUP_SCREEN (screen);
@@ -468,12 +466,8 @@ GroupWindow::moveNotify (int  dx,
 	if (!cw)
 	    continue;
 
-	int id = cw->id ();
-
 	if (cw->id () == window->id ())
 	    continue;
-
-	GROUP_WINDOW (cw);
 
 	if (cw->state () & MAXIMIZE_STATE)
 	{
@@ -511,7 +505,6 @@ GroupWindow::grabNotify (int          x,
     if (group && !gs->ignoreMode && !gs->queued)
     {
 	Bool doResizeAll;
-	int  i;
 
 	doResizeAll = gs->optionGetResizeAll () &&
 	              (mask & CompWindowGrabResizeMask);
@@ -587,7 +580,6 @@ GroupWindow::ungrabNotify ()
 
     if (group && !gs->ignoreMode && !gs->queued)
     {
-	int        i;
 	CompRect   rect;
 
 	gs->dequeueMoveNotifies ();

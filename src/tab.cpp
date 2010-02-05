@@ -33,7 +33,6 @@
 void
 Group::tab (CompWindow *main)
 {
-    Tab    *slot;
     int             width, height;
     int             space, thumbSize;
 

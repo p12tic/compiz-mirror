@@ -25,10 +25,10 @@
 #include "group.h"
 
 Layer::Layer (int width, int height) :
-    texWidth (width),
-    texHeight (height),
     state (PaintOff),
-    animationTime (0)
+    animationTime (0),
+    texWidth (width),
+    texHeight (height)
 {
 }
 
@@ -115,8 +115,8 @@ CairoHelper::CairoHelper (int width, int height) :
 }
 
 CairoLayer::CairoLayer (int width, int height) :
-    CairoHelper (width, height),
-    Layer (width, height)
+    Layer (width, height),
+    CairoHelper (width, height)
 {
 }
 
@@ -178,8 +178,6 @@ TabBar::renderTopTabHighlight ()
     cairo_t         *cr;
     int             width, height;
     CairoLayer      *layer;
-
-    GROUP_SCREEN (screen);
 
     if (!HAS_TOP_WIN (group) ||
 	!selectionLayer || !selectionLayer->cairo)

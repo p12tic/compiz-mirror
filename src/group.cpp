@@ -39,7 +39,6 @@ void
 Group::minimizeWindows (CompWindow *top,
 			bool	   minimize)
 {
-    int i;
     foreach (CompWindow *w, windows)
     {
 	if (w->id () == top->id ())
@@ -64,7 +63,6 @@ void
 Group::shadeWindows(CompWindow     *top,
 		    bool           shade)
 {
-    int i;
     unsigned int state;
 
     foreach (CompWindow *w, windows)
@@ -147,7 +145,6 @@ Group::Group (unsigned int initialIdent) :
     {
         /* we got no valid group Id passed, so find out a new valid
            unique one */
-        Group *tg;
         bool           invalidID = FALSE;
 
         identifier = !gs->groups.empty () ? gs->groups.front ()->identifier : 0;
@@ -186,8 +183,6 @@ Group::destroy (bool immediate)
 
     if (windows.size ())
     {
-	int i;
-
 	if (tabBar && !immediate)
 	{
 	    /* set up untabbing animation and delete the group

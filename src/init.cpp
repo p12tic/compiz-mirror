@@ -72,8 +72,6 @@ GroupScreen::optionChanged (CompOption            *opt,
 	case GroupOptions::Glow:
 	case GroupOptions::GlowSize:
 	    {
-		CompWindow *w;
-
 		foreach (CompWindow *w, screen->windows ())
 		{
 		    GROUP_WINDOW (w);
