@@ -248,7 +248,8 @@ TabBar::changeTab (Tab             *fTopTab,
     {
 	topTab = fTopTab;
 
-	renderWindowTitle ();
+	if (textLayer)
+	    textLayer->renderWindowTitle (this);
 	renderTopTabHighlight ();
 	if (oldTopTab)
 	    CompositeWindow::get (oldTopTab)->addDamage ();
@@ -922,7 +923,7 @@ TabBar::handleFade (int            msSinceLastPaint)
 		textLayer->state = Layer::PaintOff;
 		textSlot = hoveredSlot = NULL;
 
-		renderWindowTitle ();
+		textLayer->renderWindowTitle (this);
 	    }
 	}
     }
@@ -972,13 +973,13 @@ TabBar::handleTextFade (int msSinceLastPaint)
 	textLayer->animationTime =
 	    (gs->optionGetFadeTextTime () * 1000);
 
-	renderWindowTitle ();
+	textLayer->renderWindowTitle (this);
     }
     else if (textSlot && textLayer->state == Layer::PaintOff)
     {
 	/* Clean Up. */
 	textSlot = NULL;
-	renderWindowTitle ();
+	textLayer->renderWindowTitle (this);
     }
 }
 

@@ -654,28 +654,23 @@ TabBar::renderTabBarBackground ()
  *
  */
 void
-TabBar::renderWindowTitle ()
+TextLayer::renderWindowTitle (TabBar *tabBar)
 {
     if (!textAvailable)
 	return;
 
-    TextLayer       *layer;
     int             width, height;
     Pixmap          pixmap = None;
     
     GROUP_SCREEN (screen);
 
-    if (!HAS_TOP_WIN (group) || !textLayer)
+    if (!HAS_TOP_WIN (tabBar->group))
 	return;
 
-    width = region.boundingRect ().x2 () - region.boundingRect ().x1 ();
-    height = region.boundingRect ().y2 () - region.boundingRect ().y1 ();
+    width = tabBar->region.boundingRect ().x2 () - tabBar->region.boundingRect ().x1 ();
+    height = tabBar->region.boundingRect ().y2 () - tabBar->region.boundingRect ().y1 ();
 
-    layer = textLayer;
-    if (!layer)
-	return;
-
-    if (textSlot && textSlot->window)
+    if (tabBar->textSlot && tabBar->textSlot->window)
     {
 	CompText::Attrib  textAttrib;
 
@@ -694,12 +689,12 @@ TabBar::renderWindowTitle ()
 	textAttrib.maxHeight = height;
 
 	
-	if (layer->text.renderWindowTitle (textSlot->window->id (), false,
-					   textAttrib))
+	if (text.renderWindowTitle (tabBar->textSlot->window->id (), false,
+				    textAttrib))
 	{
-	    pixmap = layer->text.getPixmap ();
-	    width = layer->text.getWidth ();
-	    height = layer->text.getHeight ();
+	    pixmap = text.getPixmap ();
+	    width = text.getWidth ();
+	    height = text.getHeight ();
 	}
     }
 
@@ -723,15 +718,15 @@ TabBar::renderWindowTitle ()
 	}
     }
 
-    layer->texWidth = width;
-    layer->texHeight = height;
+    texWidth = width;
+    texHeight = height;
 
     if (pixmap)
     {
-	layer->pixmap = pixmap;
-	layer->texture = GLTexture::bindPixmapToTexture (layer->pixmap,
-			     				 layer->texWidth,
-							 layer->texHeight, 32);
+	pixmap = pixmap;
+	texture = GLTexture::bindPixmapToTexture (pixmap,
+		     				  texWidth,
+						  texHeight, 32);
     }
 }
 

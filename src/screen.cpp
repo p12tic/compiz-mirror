@@ -662,8 +662,7 @@ GroupScreen::handleEvent (XEvent *event)
 			delete gw->group->tabBar->textLayer;
 
 		    gw->group->tabBar->textLayer = new TextLayer;
-
-		    gw->group->tabBar->renderWindowTitle ();
+		    gw->group->tabBar->textLayer->renderWindowTitle (gw->group->tabBar);
 
 		    gw->group->tabBar->damageRegion ();
 		}

@@ -189,6 +189,9 @@ class TextLayer :
 
 	CompText text;
 	Pixmap		pixmap;
+	
+	void
+	renderWindowTitle (TabBar *bar);
 
    private:
 
@@ -342,8 +345,6 @@ class TabBar
 
 	/* TODO: Move to the Layer*s */
 
-	void
-	renderWindowTitle ();
 	void
 	renderTopTabHighlight ();
 	void

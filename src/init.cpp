@@ -53,8 +53,7 @@ GroupScreen::optionChanged (CompOption            *opt,
 	    foreach (Group *group, groups)
 	    {
 		if (group->tabBar && group->tabBar->textLayer)
-		    delete group->tabBar->textLayer;
-		group->tabBar->renderWindowTitle ();
+		    group->tabBar->textLayer->renderWindowTitle (group->tabBar);
 	    }
 	    break;
 	case GroupOptions::ThumbSize:
@@ -83,7 +82,7 @@ GroupScreen::optionChanged (CompOption            *opt,
 		    if (!gw->glowQuads)
 		    {
 			gw->cWindow->damageOutputExtents ();
-			//w->updateOutputExtents ();
+			gw->window->updateWindowOutputExtents ();
 			gw->cWindow->damageOutputExtents ();
 		    }
 		}
