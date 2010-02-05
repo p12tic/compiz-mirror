@@ -118,11 +118,11 @@ WallScreen::drawSwitcherBackground ()
     cairo_restore (cr);
 
     cairo_save (cr);
-    for (i = 0; i < screen->vpSize ().height (); i++)
+    for (i = 0; i < (unsigned int) screen->vpSize ().height (); i++)
     {
 	cairo_translate (cr, 0.0, viewportBorder);
 	cairo_save (cr);
-	for (j = 0; j < screen->vpSize ().width (); j++)
+	for (j = 0; j < (unsigned int) screen->vpSize ().width (); j++)
 	{
 	    cairo_translate (cr, viewportBorder, 0.0);
 
@@ -329,10 +329,10 @@ WallScreen::checkDestination (unsigned int destX,
     if (point.x () - destX < 0)
 	return false;
 
-    if (point.x () - destX >= size.width ())
+    if (point.x () - destX >= (unsigned int) size.width ())
 	return false;
 
-    if (point.y () - destY >= size.height ())
+    if (point.y () - destY >= (unsigned int) size.height ())
 	return false;
 
     if (point.y () - destY < 0)
@@ -585,12 +585,13 @@ WallScreen::initiate (CompAction         *action,
 	    checkAmount (dx, dy, amountX, amountY);
 	    break;
 	case Next:
-	    if ((vpX == size.width () - 1) && (vpY == size.height () - 1))
+	    if ((vpX == (unsigned int) size.width () - 1) &&
+	    	(vpY == (unsigned int) size.height () - 1))
 	    {
 		amountX = -(size.width () - 1);
 		amountY = -(size.height () - 1);
 	    }
-	    else if (vpX == size.width () - 1)
+	    else if (vpX == (unsigned int) size.width () - 1)
 	    {
 		amountX = -(size.width () - 1);
 		amountY = 1;
@@ -848,9 +849,9 @@ WallScreen::drawCairoTextureOnScreen ()
 
     thumbContext.texture[0]->enable (GLTexture::Fast);
     glBegin (GL_QUADS);
-    for (i = 0; i < screen->vpSize ().width (); i++)
+    for (i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
     {
-	for (j = 0; j < screen->vpSize ().height (); j++)
+	for (j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
 	{
 	    if (i == gotoX && j == gotoY && moving)
 		continue;
@@ -1048,9 +1049,9 @@ WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    mSAttribs.opacity = OPAQUE * (1.0 + mSzCamera);
 	    mSAttribs.saturation = COLOR;
 
-	    for (j = 0; j < screen->vpSize ().height (); j++)
+	    for (j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
 	    {
-		for (i = 0; i < screen->vpSize ().width (); i++)
+		for (i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
 		{
 		    float        mx, my;
 		    unsigned int msMask;
