@@ -348,7 +348,8 @@ private:
 
     int mUnmapCnt;
     int mDestroyCnt;
-    int mUpdateFrameCnt;
+
+    bool mUnreparentInterrupted;
 
     bool mIgnoreDamage;
     bool mFinishingAnim;

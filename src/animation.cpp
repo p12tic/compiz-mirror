@@ -1023,6 +1023,14 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 	mCurAnimation->cleanUp (closing, destructing);
 	delete mCurAnimation;
 	mCurAnimation = 0;
+
+	if (mUnreparentInterrupted)
+	{
+	    mUnreparentInterrupted = false;
+
+	    // Do the unreparent windowNotify chain here instead.
+	    mWindow->windowNotify (CompWindowNotifyUnreparent);
+	}
     }
 
     mBB.x1 = mBB.y1 = MAXSHORT;
@@ -2452,7 +2460,7 @@ PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
     mGrabbed (false),
     mUnmapCnt (0),
     mDestroyCnt (0),
-    mUpdateFrameCnt (0),
+    mUnreparentInterrupted (false),
     mIgnoreDamage (false),
     mFinishingAnim (false),
     mCurAnimSelectionRow (-1)
@@ -2554,6 +2562,25 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 
 		mDestroyCnt++;
 		mWindow->incrementDestroyReference ();
+	    }
+	    break;
+	case CompWindowNotifyUnreparent:
+	    if (!mFinishingAnim)
+	    {
+		if (mPAScreen->shouldIgnoreWindowForAnim (mWindow, false))
+		    break;
+
+		// If unreparent is done during close animation
+		if (mCurAnimation &&
+		    mCurAnimation->curWindowEvent () == WindowEventClose)
+		{
+		    mUnreparentInterrupted = true;
+
+		    // To prevent window's pixmap from being released
+		    // in the composite plugin, don't continue with the
+		    // windowNotify chain here.
+		    return;
+		}
 	    }
 	    break;
 	case CompWindowNotifyFocusChange:
