@@ -216,9 +216,8 @@ CairoLayer::renderTopTabHighlight (TabBar *tb)
  *
  */
 void
-TabBar::renderTabBarBackground ()
+CairoLayer::renderTabBarBackground (TabBar *tb)
 {
-    CairoLayer      *layer;
     cairo_t         *cr;
     int             width, height, radius;
     int             borderWidth;
@@ -227,23 +226,22 @@ TabBar::renderTabBarBackground ()
 
     GROUP_SCREEN (screen);
 
-    if (!HAS_TOP_WIN (group) || !bgLayer || !bgLayer->cairo)
+    if (!HAS_TOP_WIN (tb->group) || !cairo)
 	return;
 
-    width = region.boundingRect ().x2 () - region.boundingRect ().x1 ();
-    height = region.boundingRect ().y2 () - region.boundingRect ().y1 ();
+    width = tb->region.boundingRect ().x2 () - tb->region.boundingRect ().x1 ();
+    height = tb->region.boundingRect ().y2 () - tb->region.boundingRect ().y1 ();
     radius = gs->optionGetBorderRadius ();
 
-    if (width > bgLayer->texWidth)
-	width = bgLayer->texWidth;
+    if (width > texWidth)
+	width = texWidth;
 
     if (radius > width / 2)
 	radius = width / 2;
 
-    layer = bgLayer;
-    cr = layer->cairo;
+    cr = cairo;
 
-    layer->clear ();
+    rebuild (width, height);
 
     borderWidth = gs->optionGetBorderWidth ();
     cairo_set_line_width (cr, borderWidth);
@@ -549,18 +547,18 @@ TabBar::renderTabBarBackground ()
     a = gs->optionGetTabBorderColorAlpha () / 65535.0f;
     cairo_set_source_rgba (cr, r, g, b, a);
 
-    if (bgAnimation != AnimationNone)
+    if (tb->bgAnimation != TabBar::AnimationNone)
 	cairo_stroke_preserve (cr);
     else
 	cairo_stroke (cr);
 
-    switch (bgAnimation) {
-    case AnimationPulse:
+    switch (tb->bgAnimation) {
+    case TabBar::AnimationPulse:
 	{
 	    double animationProgress;
 	    double alpha;
 
-	    animationProgress = bgAnimationTime /
+	    animationProgress = tb->bgAnimationTime /
 		                (gs->optionGetPulseTime () * 1000.0);
 	    alpha = sin ((2 * PI * animationProgress) - 1.55)*0.5 + 0.5;
 	    if (alpha <= 0)
@@ -576,16 +574,16 @@ TabBar::renderTabBarBackground ()
 	    break;
 	}
 
-    case AnimationReflex:
+    case TabBar::AnimationReflex:
 	{
 	    double          animationProgress;
 	    double          reflexWidth;
 	    double          posX, alpha;
 	    cairo_pattern_t *pattern;
 
-	    animationProgress = bgAnimationTime /
+	    animationProgress = tb->bgAnimationTime /
 		                (gs->optionGetReflexTime () * 1000.0);
-	    reflexWidth = (tabs.size () / 2.0) * 30;
+	    reflexWidth = (tb->tabs.size () / 2.0) * 30;
 	    posX = (width + reflexWidth * 2.0) * animationProgress;
 	    alpha = sin (PI * animationProgress) * 0.55;
 	    if (alpha <= 0)
@@ -609,7 +607,7 @@ TabBar::renderTabBarBackground ()
 	    break;
 	}
 
-    case AnimationNone:
+    case TabBar::AnimationNone:
     default:
 	break;
     }
@@ -629,11 +627,9 @@ TabBar::renderTabBarBackground ()
     cairo_stroke(cr);
 
     cairo_restore (cr);
-    layer->texture = GLTexture::imageBufferToTexture ((char*) layer->buffer,
-			  			      CompSize (layer->texWidth,
-							      layer->texHeight));
-							        
-    bgLayer = layer;
+    texture = GLTexture::imageBufferToTexture ((char*) buffer,
+		  			       CompSize (texWidth,
+						         texHeight));
 }
 
 /*

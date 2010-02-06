@@ -998,12 +998,12 @@ TabBar::handleAnimation (int            msSinceLastPaint)
 {
     bgAnimationTime -= msSinceLastPaint;
 
-    if (bgAnimationTime <= 0)
+    if (bgAnimationTime <= 0 && bgLayer)
     {
 	bgAnimationTime = 0;
 	bgAnimation = AnimationNone;
 
-	renderTabBarBackground ();
+	bgLayer->renderTabBarBackground (this);
     }
 }
 
@@ -1326,7 +1326,7 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 		   the only problem is that we would have 2 redraws if
 		   there is an animation */
 		if (newWidth != oldWidth || bgAnimation)
-		    renderTabBarBackground ();
+		    bgLayer->renderTabBarBackground (this);
 		
 		layer = (Layer *) bgLayer;
 
@@ -2025,10 +2025,19 @@ TabBar::resizeRegion (CompRect box, bool syncIPW)
 
     if (bgLayer && fOldWidth != box.width () && syncIPW)
     {
-	bgLayer->rebuild (box.width () + gs->optionGetThumbSpace () +
+	int timeBuf = bgLayer->animationTime;
+	Layer::PaintState paintBuf = bgLayer->state;
+	
+	delete bgLayer;
+	bgLayer = CairoLayer::createCairoLayer (box.width () +
+						    gs->optionGetThumbSpace () +
 						      gs->optionGetThumbSize (),
-			  box.height ());
-	renderTabBarBackground ();
+			  			box.height ());
+	
+	bgLayer->animationTime = timeBuf;
+	bgLayer->state = paintBuf;
+	if (bgLayer)
+	    bgLayer->renderTabBarBackground (this);
 
 	/* invalidate old width */
 	oldWidth = 0;

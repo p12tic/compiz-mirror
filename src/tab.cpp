@@ -93,7 +93,7 @@ Group::tab (CompWindow *main)
     {
 	tabBar->bgLayer->state = Layer::PaintOn;
 	tabBar->bgLayer->animationTime = 0;
-	tabBar->renderTabBarBackground ();
+	tabBar->bgLayer->renderTabBarBackground (tabBar);
     }
 
     width = tabBar->topTab->region.boundingRect ().x2 () -

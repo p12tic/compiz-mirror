@@ -166,6 +166,9 @@ class CairoLayer :
 
 	void
 	renderTopTabHighlight (TabBar *);
+	
+	void
+	renderTabBarBackground (TabBar *);
 
 	void
 	rebuild (int             width,
@@ -342,12 +345,6 @@ class TabBar
 	      const GLMatrix		 &transform,
 	      unsigned int		 mask,
 	      CompRegion		 clipRegion);
-
-	/* TODO: Move to the Layer*s */
-
-
-	void
-	renderTabBarBackground ();
 
 	/* Animation */
 

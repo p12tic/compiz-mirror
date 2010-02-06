@@ -46,7 +46,7 @@ GroupScreen::optionChanged (CompOption            *opt,
 	case GroupOptions::BorderWidth:
 	    foreach (Group *group, groups)
 		if (group->tabBar && group->tabBar->bgLayer)
-		    group->tabBar->renderTabBarBackground ();
+		    group->tabBar->bgLayer->renderTabBarBackground (group->tabBar);
 	    break;
 	case GroupOptions::TabbarFontSize:
 	case GroupOptions::TabbarFontColor:
