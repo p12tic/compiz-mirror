@@ -180,7 +180,8 @@ GroupScreen::applyInitialActions ()
 	    foundGroup->color[2] = color[2];
 
 	    if (foundGroup->tabBar && foundGroup->tabBar->selectionLayer)
-		foundGroup->tabBar->renderTopTabHighlight ();
+		foundGroup->tabBar->selectionLayer->renderTopTabHighlight (
+							foundGroup->tabBar);
 
 	    cScreen->damageScreen ();
 	}

@@ -250,7 +250,8 @@ TabBar::changeTab (Tab             *fTopTab,
 
 	if (textLayer)
 	    textLayer->renderWindowTitle (this);
-	renderTopTabHighlight ();
+	if (selectionLayer)
+	    selectionLayer->renderTopTabHighlight (this);
 	if (oldTopTab)
 	    CompositeWindow::get (oldTopTab)->addDamage ();
 	gw->cWindow->addDamage ();
@@ -2024,12 +2025,9 @@ TabBar::resizeRegion (CompRect box, bool syncIPW)
 
     if (bgLayer && fOldWidth != box.width () && syncIPW)
     {
-	bgLayer =
-	    CairoLayer::rebuildCairoLayer (bgLayer,
-					   box.width () +
-					   gs->optionGetThumbSpace () +
-					   gs->optionGetThumbSize (),
-					   box.height ());
+	bgLayer->rebuild (box.width () + gs->optionGetThumbSpace () +
+						      gs->optionGetThumbSize (),
+			  box.height ());
 	renderTabBarBackground ();
 
 	/* invalidate old width */

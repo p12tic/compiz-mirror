@@ -164,12 +164,12 @@ class CairoLayer :
 {
     public:
 
-	//bool render (); TODO
+	void
+	renderTopTabHighlight (TabBar *);
 
-	static CairoLayer *
-	rebuildCairoLayer (CairoLayer *,
-			   int             width,
-			   int             height);
+	void
+	rebuild (int             width,
+		 int             height);
 
 	static CairoLayer *
 	createCairoLayer (int        width,
@@ -345,8 +345,7 @@ class TabBar
 
 	/* TODO: Move to the Layer*s */
 
-	void
-	renderTopTabHighlight ();
+
 	void
 	renderTabBarBackground ();
 

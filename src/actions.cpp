@@ -258,8 +258,9 @@ GroupScreen::changeColor (CompAction         *action,
 	    color[1] = (int)(rand () / factor);
 	    color[2] = (int)(rand () / factor);
 
-	    if (gw->group->tabBar)
-		gw->group->tabBar->renderTopTabHighlight ();
+	    if (gw->group->tabBar && gw->group->tabBar->selectionLayer)
+		gw->group->tabBar->selectionLayer->renderTopTabHighlight (
+							     gw->group->tabBar);
 	    cScreen->damageScreen ();
 	}
     }

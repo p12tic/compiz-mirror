@@ -52,23 +52,16 @@ TextLayer::~TextLayer ()
  * groupRebuildCairoLayer
  *
  */
-CairoLayer *
-CairoLayer::rebuildCairoLayer (CairoLayer *layer,
-			       int        width,
-			       int        height)
+void
+CairoLayer::rebuild (int        width,
+		     int        height)
 {
-    int        timeBuf = layer->animationTime;
-    PaintState stateBuf = layer->state;
-
-    delete layer;
-    layer = CairoLayer::createCairoLayer (width, height);
-    if (!layer)
-	return NULL;
-
-    layer->animationTime = timeBuf;
-    layer->state = stateBuf;
-
-    return layer;
+    texWidth = width;
+    texHeight = height;
+    
+    texture.clear ();
+    
+    clear ();;
 }
 
 /*
@@ -173,38 +166,32 @@ CairoLayer::createCairoLayer (int width, int height)
  *
  */
 void
-TabBar::renderTopTabHighlight ()
+CairoLayer::renderTopTabHighlight (TabBar *tb)
 {
-    cairo_t         *cr;
     int             width, height;
-    CairoLayer      *layer;
 
-    if (!HAS_TOP_WIN (group) ||
-	!selectionLayer || !selectionLayer->cairo)
+    if (!HAS_TOP_WIN (tb->group) ||
+	!cairo)
     {
 	return;
     }
 
-    width = topTab->region.boundingRect ().x2 () -
-	    topTab->region.boundingRect ().x1 ();
-    height = topTab->region.boundingRect ().y2 () -
-	     topTab->region.boundingRect ().y1 ();
+    width = tb->topTab->region.boundingRect ().x2 () -
+	    tb->topTab->region.boundingRect ().x1 ();
+    height = tb->topTab->region.boundingRect ().y2 () -
+	     tb->topTab->region.boundingRect ().y1 ();
 
-    selectionLayer = CairoLayer::rebuildCairoLayer (selectionLayer,
-						         width, height);
-    if (!selectionLayer)
-	return;
+    rebuild (width, height);
 
-    layer = selectionLayer;
-    cr = selectionLayer->cairo;
+    cairo_t *&cr = cairo;
 
     /* fill */
     cairo_set_line_width (cr, 2);
     cairo_set_source_rgba (cr,
-			   (group->color[0] / 65535.0f),
-			   (group->color[1] / 65535.0f),
-			   (group->color[2] / 65535.0f),
-			   (group->color[3] / (65535.0f * 2)));
+			   (tb->group->color[0] / 65535.0f),
+			   (tb->group->color[1] / 65535.0f),
+			   (tb->group->color[2] / 65535.0f),
+			   (tb->group->color[3] / (65535.0f * 2)));
 
     cairo_move_to (cr, 0, 0);
     cairo_rectangle (cr, 0, 0, width, height);
@@ -213,15 +200,15 @@ TabBar::renderTopTabHighlight ()
 
     /* outline */
     cairo_set_source_rgba (cr,
-			   (group->color[0] / 65535.0f),
-			   (group->color[1] / 65535.0f),
-			   (group->color[2] / 65535.0f),
-			   (group->color[3] / 65535.0f));
+			   (tb->group->color[0] / 65535.0f),
+			   (tb->group->color[1] / 65535.0f),
+			   (tb->group->color[2] / 65535.0f),
+			   (tb->group->color[3] / 65535.0f));
     cairo_stroke (cr);
 
-    layer->texture = GLTexture::imageBufferToTexture ((char *) layer->buffer,
-						      CompSize (layer->texWidth,
-							     layer->texHeight));
+    texture = GLTexture::imageBufferToTexture ((char *) buffer,
+					       CompSize (texWidth,
+							 texHeight));
 }
 
 /*

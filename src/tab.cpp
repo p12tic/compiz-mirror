@@ -106,7 +106,7 @@ Group::tab (CompWindow *main)
     {
 	tabBar->selectionLayer->state = Layer::PaintOn;
 	tabBar->selectionLayer->animationTime = 0;
-	tabBar->renderTopTabHighlight ();
+	tabBar->selectionLayer->renderTopTabHighlight (tabBar);
     }
 
     if (!HAS_TOP_WIN (this))
