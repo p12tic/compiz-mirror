@@ -61,7 +61,7 @@ CairoLayer::rebuild (int        width,
     
     texture.clear ();
     
-    clear ();;
+    reinit (width, height);
 }
 
 /*
@@ -85,7 +85,15 @@ CairoHelper::clear ()
  */
 CairoHelper::~CairoHelper ()
 {
+    destroy ();
 
+    if (pixmap)
+	XFreePixmap (screen->dpy (), pixmap);
+}
+
+void
+CairoHelper::destroy ()
+{
     if (cairo)
 	cairo_destroy (cairo);
 
@@ -94,9 +102,53 @@ CairoHelper::~CairoHelper ()
 
     if (buffer)
 	free (buffer);
-	
-    if (pixmap)
-	XFreePixmap (screen->dpy (), pixmap);
+
+}
+
+bool
+CairoHelper::init (int width, int height)
+{
+    buffer = (unsigned char *)
+    			    calloc (4 * width * height, sizeof (unsigned char));
+    if (!buffer)
+    {
+	compLogMessage ("group", CompLogLevelError,
+			"Failed to allocate cairo layer buffer.");
+	return false;
+    }
+
+    surface = cairo_image_surface_create_for_data (buffer,
+						   CAIRO_FORMAT_ARGB32,
+						   width, height,
+						   4 * width);
+    if (cairo_surface_status (surface) != CAIRO_STATUS_SUCCESS)
+    {
+	compLogMessage ("group", CompLogLevelError,
+			"Failed to create cairo layer surface.");
+	free (buffer);
+	return false;
+    }
+
+    cairo = cairo_create (surface);
+    if (cairo_status (cairo) != CAIRO_STATUS_SUCCESS)
+    {
+	compLogMessage ("group", CompLogLevelError,
+			"Failed to create cairo layer context.");
+	free (buffer);
+	cairo_surface_destroy (surface);
+	return false;
+    }
+
+    clear ();
+    
+    return true;
+}
+
+bool
+CairoHelper::reinit (int width, int height)
+{
+    destroy ();
+    return init (width, height);
 }
 
 CairoHelper::CairoHelper (int width, int height) :
@@ -125,38 +177,7 @@ CairoLayer::createCairoLayer (int width, int height)
     if (!layer)
 	return NULL;
 
-    layer->buffer = (unsigned char *)
-    			    calloc (4 * width * height, sizeof (unsigned char));
-    if (!layer->buffer)
-    {
-	compLogMessage ("group", CompLogLevelError,
-			"Failed to allocate cairo layer buffer.");
-	delete layer;
-	return NULL;
-    }
-
-    layer->surface = cairo_image_surface_create_for_data (layer->buffer,
-							  CAIRO_FORMAT_ARGB32,
-							  width, height,
-							  4 * width);
-    if (cairo_surface_status (layer->surface) != CAIRO_STATUS_SUCCESS)
-    {
-	compLogMessage ("group", CompLogLevelError,
-			"Failed to create cairo layer surface.");
-	delete layer;
-	return NULL;
-    }
-
-    layer->cairo = cairo_create (layer->surface);
-    if (cairo_status (layer->cairo) != CAIRO_STATUS_SUCCESS)
-    {
-	compLogMessage ("group", CompLogLevelError,
-			"Failed to create cairo layer context.");
-	delete layer;
-	return NULL;
-    }
-
-    layer->clear ();
+    layer->init (width, height);
 
     return layer;
 }
@@ -239,9 +260,9 @@ CairoLayer::renderTabBarBackground (TabBar *tb)
     if (radius > width / 2)
 	radius = width / 2;
 
-    cr = cairo;
-
     rebuild (width, height);
+
+    cr = cairo;
 
     borderWidth = gs->optionGetBorderWidth ();
     cairo_set_line_width (cr, borderWidth);

@@ -147,6 +147,15 @@ class CairoHelper
 
 	void
 	clear ();
+	
+	void
+	destroy ();
+	
+	bool
+	init (int, int);
+	
+	bool
+	reinit (int, int);
 
 	~CairoHelper ();
 
