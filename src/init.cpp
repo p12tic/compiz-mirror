@@ -313,16 +313,7 @@ GroupScreen::GroupScreen (CompScreen *screen) :
 
 GroupScreen::~GroupScreen ()
 {
-    std::list <Group *>::iterator it = groups.begin ();
-
-    while (it != groups.end ())
-    {
-	Group *group = *it;
-	
-	it++;
-
-	group->destroy (true);
-    }
+    groups.clear ();
 
     if (grabIndex)
 	grabScreen (ScreenGrabNone);
@@ -384,9 +375,6 @@ GroupWindow::~GroupWindow ()
 	setVisibility (true);
 
     readOnlyProperty = true;
-    
-    if (glowQuads)
-	delete[] glowQuads;
 
     /* FIXME: this implicitly calls the wrapped function activateWindow
        (via groupDeleteTabBarSlot -> groupUnhookTabBarSlot -> groupChangeTab)
@@ -395,6 +383,9 @@ GroupWindow::~GroupWindow ()
 
     if (group)
 	deleteGroupWindow ();
+
+    if (glowQuads)
+	delete[] glowQuads;
 }
 
 bool

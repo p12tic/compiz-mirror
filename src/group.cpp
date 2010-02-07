@@ -224,7 +224,10 @@ Group::destroy (bool immediate)
     if (this == gs->lastRestackedGroup)
 	gs->lastRestackedGroup = NULL;
 
-    gs->groups.remove (this);
+    /* we clear the stack afterwards */
+
+    if (!immediate)
+	gs->groups.remove (this);
     
     delete this;
 }

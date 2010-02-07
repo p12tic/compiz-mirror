@@ -784,6 +784,7 @@ GroupWindow::deleteGroupWindow ()
 	}
 	else
 	{
+	    fprintf (stderr, "destroying group\n");
 	    group->destroy (false);
 	    group = NULL;
 	}
