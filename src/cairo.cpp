@@ -107,7 +107,8 @@ CairoHelper::init (int width, int height)
 {
     try
     {
-	buffer = new unsigned char[4 * width * height];
+    	int size = 4 * width * height;
+	buffer = new unsigned char[size];
     }
     catch (std::bad_alloc)
     {
@@ -136,7 +137,7 @@ CairoHelper::init (int width, int height)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to create cairo layer context.");
-	delete [] buffer;
+	delete[] buffer;
 	buffer = NULL;
 	cairo_surface_destroy (surface);
 	surface = NULL;
