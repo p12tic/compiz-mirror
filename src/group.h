@@ -78,9 +78,10 @@
 #define PREV_TOP_TAB(g) ((g)->tabBar->prevTopTab->window)
 #define NEXT_TOP_TAB(g) ((g)->tabBar->nextTopTab->window)
 
-#define HAS_TOP_WIN(group) (((group)->tabBar->topTab) && 		       \
+#define HAS_TOP_WIN(group) (group->tabBar && ((group)->tabBar->topTab) &&      \
 					      ((group)->tabBar->topTab->window))
-#define HAS_PREV_TOP_WIN(group) (((group)->tabBar->prevTopTab) && \
+#define HAS_PREV_TOP_WIN(group) (group->tabBar && 			       \
+				 ((group)->tabBar->prevTopTab) && \
 				 ((group)->tabBar->prevTopTab->window))
 
 #define IS_TOP_TAB(w, group) (HAS_TOP_WIN (group) && \
@@ -179,7 +180,7 @@ class CairoLayer :
 	void
 	renderTabBarBackground (TabBar *);
 
-	void
+	bool
 	rebuild (int             width,
 		 int             height);
 

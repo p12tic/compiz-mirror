@@ -313,15 +313,19 @@ GroupScreen::GroupScreen (CompScreen *screen) :
 
 GroupScreen::~GroupScreen ()
 {
-    while (!groups.empty ())
+    std::list <Group *>::iterator it = groups.begin ();
+
+    while (it != groups.end ())
     {
-	Group *group = groups.back ();
+	Group *group = *it;
+	
+	it++;
 
 	group->destroy (true);
     }
 
-    /*if (grabIndex)
-	grabScreen (ScreenGrabNone);*/
+    if (grabIndex)
+	grabScreen (ScreenGrabNone);
 
     if (dragHoverTimeoutHandle.active ())
 	dragHoverTimeoutHandle.stop ();

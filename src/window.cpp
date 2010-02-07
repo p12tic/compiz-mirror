@@ -55,6 +55,7 @@ GroupWindow::checkProperty (long int   &id,
 	if (type == XA_CARDINAL && fmt == 32 && nitems == 5)
 	{
 	    id = data[0];
+
 	    tabbed = (bool) data[1];
 	    color[0] = (GLushort) data[2];
 	    color[1] = (GLushort) data[3];
@@ -75,6 +76,7 @@ GroupWindow::checkProperty (long int   &id,
  *
  * On color change / group change / tabbing - update the X Window property
  *
+ * FIXME: broken
  */
 void
 GroupWindow::updateProperty ()

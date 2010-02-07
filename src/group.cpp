@@ -199,7 +199,8 @@ Group::destroy (bool immediate)
 	        gw->window->updateWindowOutputExtents ();
 	        gw->updateProperty ();
 
-	        if (gs->optionGetAutotabCreate () && gw->isGroupable ())
+	        if (gs->optionGetAutotabCreate () && gw->isGroupable () &&
+	            !immediate)
 	        {
 		    Selection sel;
 		    Group     *group;

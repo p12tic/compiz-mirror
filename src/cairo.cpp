@@ -40,7 +40,7 @@ TextLayer::~TextLayer ()
  * groupRebuildCairoLayer
  *
  */
-void
+bool
 CairoLayer::rebuild (int        width,
 		     int        height)
 {
@@ -49,7 +49,7 @@ CairoLayer::rebuild (int        width,
     
     texture.clear ();
     
-    reinit (width, height);
+    return reinit (width, height);
 }
 
 /*
@@ -83,22 +83,33 @@ void
 CairoHelper::destroy ()
 {
     if (cairo)
+    {
 	cairo_destroy (cairo);
+	cairo = NULL;
+    }
 
     if (surface)
+    {
 	cairo_surface_destroy (surface);
+	surface = NULL;
+    }
 
     if (buffer)
-	free (buffer);
+    {
+	delete[] buffer;
+	buffer = NULL;
+    }
 
 }
 
 bool
 CairoHelper::init (int width, int height)
 {
-    buffer = (unsigned char *)
-    			    calloc (4 * width * height, sizeof (unsigned char));
-    if (!buffer)
+    try
+    {
+	buffer = new unsigned char[4 * width * height];
+    }
+    catch (std::bad_alloc)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to allocate cairo layer buffer.");
@@ -113,7 +124,10 @@ CairoHelper::init (int width, int height)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to create cairo layer surface.");
-	free (buffer);
+	delete[] buffer;
+	buffer = NULL;
+	cairo_surface_destroy (surface);
+	surface = NULL;
 	return false;
     }
 
@@ -122,8 +136,12 @@ CairoHelper::init (int width, int height)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to create cairo layer context.");
-	free (buffer);
+	delete [] buffer;
+	buffer = NULL;
 	cairo_surface_destroy (surface);
+	surface = NULL;
+	cairo_destroy (cairo);
+	cairo = NULL;
 	return false;
     }
 
@@ -190,7 +208,8 @@ CairoLayer::renderTopTabHighlight (TabBar *tb)
     height = tb->topTab->region.boundingRect ().y2 () -
 	     tb->topTab->region.boundingRect ().y1 ();
 
-    rebuild (width, height);
+    if (!rebuild (width, height))
+	return;
 
     cairo_t *&cr = cairo;
 
@@ -248,7 +267,8 @@ CairoLayer::renderTabBarBackground (TabBar *tb)
     if (radius > width / 2)
 	radius = width / 2;
 
-    rebuild (width, height);
+    if (!rebuild (width, height))
+	return;
 
     cr = cairo;
 
