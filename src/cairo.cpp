@@ -24,18 +24,6 @@
 
 #include "group.h"
 
-Layer::Layer (int width, int height) :
-    state (PaintOff),
-    animationTime (0),
-    texWidth (width),
-    texHeight (height)
-{
-}
-
-Layer::~Layer ()
-{
-}
-
 TextLayer::TextLayer () :
     Layer (0, 0),
     pixmap (None)
@@ -604,7 +592,7 @@ CairoLayer::renderTabBarBackground (TabBar *tb)
 
 	    animationProgress = tb->bgAnimationTime /
 		                (gs->optionGetReflexTime () * 1000.0);
-	    reflexWidth = (tb->tabs.size () / 2.0) * 30;
+	    reflexWidth = (tb->size () / 2.0) * 30;
 	    posX = (width + reflexWidth * 2.0) * animationProgress;
 	    alpha = sin (PI * animationProgress) * 0.55;
 	    if (alpha <= 0)

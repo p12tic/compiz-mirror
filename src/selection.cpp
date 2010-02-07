@@ -35,7 +35,7 @@ Group *
 Selection::toGroup ()
 {
     Group          *retGroup = NULL;
-    Bool           tabbed = FALSE;
+    bool           tabbed = false;
 
     /* check if there is an existing group or if the group is tabbed */
 
@@ -49,24 +49,12 @@ Selection::toGroup ()
 	        retGroup = gw->group;
 
 	    if (retGroup->tabBar)
-	        tabbed = TRUE;
+	        tabbed = true;
         }
     }
 
     if (!retGroup)
 	retGroup = Group::create (0);
-
-    /* we need to do one first to get the pointer of a new group */
-/*    cw = this->front ();
-    GROUP_WINDOW (cw);
-
-    if (gw->group && (group != gw->group))
-        gw->removeFromGroup ();
-    group->addWindow (cw, 0);
-    gw->cWindow->addDamage ();
-
-    gw->inSelection = false;
-    group = gw->group;*/
 
     foreach (CompWindow *w, *this)
     {
@@ -77,7 +65,7 @@ Selection::toGroup ()
         retGroup->addWindow (w);
         gw->cWindow->addDamage ();
 
-        gw->inSelection = FALSE;
+        gw->inSelection = false;
 	
 	gw->updateProperty ();
 
@@ -266,7 +254,7 @@ Selection::Rect::toSelection ()
 
 	GROUP_WINDOW (w);
 
-	if (gw->is () &&
+	if (gw->isGroupable () &&
 	    gw->inRegion (reg, precision))
 	{
 	    /*if (gw->group && groupFindGroupInWindows (gw->group, ret, count))
@@ -277,4 +265,57 @@ Selection::Rect::toSelection ()
     }
 
     return sel;
+}
+
+
+/*
+ * GroupWindow::inRegion ()
+ *
+ * Determine if the window is in our selection region
+ *
+ */
+
+bool
+GroupWindow::inRegion (CompRegion reg,
+		       float      precision)
+{
+    CompRegion buf;
+    int    area = 0;
+
+    buf = reg.intersected (window->region ());
+
+    /* buf area */
+    area = buf.boundingRect ().width () * buf.boundingRect ().height ();
+
+    if (area >= WIN_WIDTH (window) * WIN_HEIGHT (window) * precision)
+    {
+	return true;
+    }
+
+    return false;
+}
+
+/*
+ * GroupWindow::select
+ *
+ * Description: add this window to the selection
+ *
+ */
+
+void
+GroupWindow::select ()
+{
+    GROUP_SCREEN (screen);
+
+    if (!inSelection)
+    {
+	gs->masterSelection.push_back (window);
+	selection = &gs->masterSelection;
+    }
+    else
+    {
+	selection = NULL;
+	gs->masterSelection.remove (window);
+    }
+    inSelection = !inSelection;
 }

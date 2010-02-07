@@ -186,7 +186,7 @@ GroupScreen::applyInitialActions ()
 	    cScreen->damageScreen ();
 	}
 
-	if (optionGetAutotabCreate () && gw->is ())
+	if (optionGetAutotabCreate () && gw->isGroupable ())
 	{
 	    if (!gw->group && (gw->windowState == GroupWindow::WindowNormal))
 	    {
@@ -376,10 +376,10 @@ GroupWindow::GroupWindow (CompWindow *window) :
 
 GroupWindow::~GroupWindow ()
 {
-    /*if (windowHideInfo)
-	setVisibility (true);*/
+    if (windowHideInfo)
+	setVisibility (true);
 
-    readOnlyProperty = TRUE;
+    readOnlyProperty = true;
     
     if (glowQuads)
 	delete[] glowQuads;

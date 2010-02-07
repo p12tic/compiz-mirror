@@ -65,7 +65,7 @@ TabBar::TabBar (Group *g, CompWindow *main) :
 
     foreach (CompWindow *w, group->windows)
     {
-	new Tab (group, w); // FIXME
+	createTab (w);
     }
 
     recalcPos (WIN_CENTER_X (main), WIN_X (main), WIN_X (main) +
@@ -155,7 +155,7 @@ TabBar::changeTab (Tab             *fTopTab,
 
     if (!fTopTab)
     {
-	return TRUE;
+	return true;
     }
 
     w = fTopTab->window;
@@ -167,17 +167,17 @@ TabBar::changeTab (Tab             *fTopTab,
 
     if (!group || group->tabBar->tabbingState != NoTabbing)
     {
-	return TRUE;
+	return true;
     }
 
     if (changeState == NoTabChange && topTab == fTopTab)
     {
-       	return TRUE;
+       	return true;
     }
 
     if (changeState != NoTabChange && nextTopTab == fTopTab)
     {
-	return TRUE;
+	return true;
     }
 
     oldTopTab = topTab ? topTab->window : NULL;
@@ -194,7 +194,7 @@ TabBar::changeTab (Tab             *fTopTab,
 
 	if (topTab)
 	{
-	    foreach (Tab *tab, tabs)
+	    foreach (Tab *tab, *this)
 	    {
 		if (tab == topTab)
 		    break;
@@ -204,7 +204,7 @@ TabBar::changeTab (Tab             *fTopTab,
         }
 
 
-	foreach (Tab *tab, tabs)
+	foreach (Tab *tab, *this)
 	{
 	    if (tab == topTab)
 		break;
@@ -219,7 +219,7 @@ TabBar::changeTab (Tab             *fTopTab,
 
 	/* check if the opposite direction is shorter */
 	if ((unsigned int) abs (distanceNew - distanceOld) >
-					      (group->tabBar->tabs.size () / 2))
+					      (size () / 2))
 	    changeAnimationDirection *= -1;
     }
 
@@ -259,7 +259,7 @@ TabBar::changeTab (Tab             *fTopTab,
 
     if (fTopTab != nextTopTab)
     {
-	gw->setVisibility (TRUE);
+	gw->setVisibility (true);
 	if (oldTopTab)
 	{
 	    int dx, dy;
@@ -267,10 +267,10 @@ TabBar::changeTab (Tab             *fTopTab,
 	    dx = WIN_CENTER_X (oldTopTab) - WIN_CENTER_X (w);
 	    dy = WIN_CENTER_Y (oldTopTab) - WIN_CENTER_Y (w);
 
-	    gs->queued = TRUE;
-	    w->move (dx, dy, FALSE);
+	    gs->queued = true;
+	    w->move (dx, dy, false);
 	    w->syncPosition ();
-	    gs->queued = FALSE;
+	    gs->queued = false;
 	}
 
 	if (HAS_PREV_TOP_WIN (group))
@@ -279,12 +279,12 @@ TabBar::changeTab (Tab             *fTopTab,
 	       the second half will be PaintFadeOut */
 	    changeAnimationTime =
 		gs->optionGetChangeAnimationTime () * 500;
-	    //groupTabChangeActivateEvent (s, TRUE); // FIXME
+	    //groupTabChangeActivateEvent (s, true); // FIXME
 	    changeState = TabChangeOldOut;
 	}
 	else
 	{
-	    Bool activate;
+	    bool activate;
 
 	    /* No window to do animation with. */
 	    if (HAS_TOP_WIN (group))
@@ -308,11 +308,11 @@ TabBar::changeTab (Tab             *fTopTab,
 	    if (activate)
 		w->activate ();
 
-	    checkFocusAfterTabChange = FALSE;
+	    checkFocusAfterTabChange = false;
 	}
     }
 
-    return TRUE;
+    return true;
 }
 
 /*
@@ -359,7 +359,7 @@ TabBar::recalcPos (int            middleX,
 		   int            maxX2)
 {
     CompWindow      *topTab;
-    Bool            isDraggedSlotGroup = FALSE;
+    bool            isDraggedSlotGroup = false;
     int             space, barWidth;
     int             thumbSize;
     int             tabsWidth = 0, tabsHeight = 0;
@@ -375,11 +375,11 @@ TabBar::recalcPos (int            middleX,
     space = gs->optionGetThumbSpace ();
 
     /* calculate the space which the tabs need */
-    foreach (Tab *tab, tabs)
+    foreach (Tab *tab, *this)
     {
 	if (tab == gs->draggedSlot && gs->dragged)
 	{
-	    isDraggedSlotGroup = TRUE;
+	    isDraggedSlotGroup = true;
 	    continue;
 	}
 
@@ -391,12 +391,12 @@ TabBar::recalcPos (int            middleX,
     /* just a little work-a-round for first call
        FIXME: remove this! */
     thumbSize = gs->optionGetThumbSize ();
-    if (!tabs.empty () && tabsWidth <= 0)
+    if (!empty () && tabsWidth <= 0)
     {
 	/* first call */
-	tabsWidth = thumbSize * tabs.size ();
+	tabsWidth = thumbSize * size ();
 
-	if (!tabs.empty () && tabsHeight < thumbSize)
+	if (!empty () && tabsHeight < thumbSize)
 	{
 	    /* we need to do the standard height too */
 	    tabsHeight = thumbSize;
@@ -406,7 +406,7 @@ TabBar::recalcPos (int            middleX,
 	    tabsWidth -= thumbSize;
     }
 
-    barWidth = space * (tabs.size () + 1) + tabsWidth;
+    barWidth = space * (size () + 1) + tabsWidth;
 
     if (isDraggedSlotGroup)
     {
@@ -427,11 +427,11 @@ TabBar::recalcPos (int            middleX,
     box.setWidth (barWidth);
     box.setHeight (space * 2 + tabsHeight);
 
-    resizeRegion (box, TRUE); // TODO
+    resizeRegion (box, true);
 
     /* recalc every slot region */
     currentSlot = 0;
-    foreach (Tab *tab, tabs)
+    foreach (Tab *tab, *this)
     {
 	if (tab == gs->draggedSlot && gs->dragged)
 	    continue;
@@ -665,7 +665,7 @@ GroupScreen::showDelayTimeout (TabBar *bar)
 
     if (!HAS_TOP_WIN (bar->group))
     {
-	return FALSE;	/* This will free the timer. */
+	return false;	/* This will free the timer. */
     }
 
     topTab = TOP_TAB (bar->group);
@@ -674,9 +674,9 @@ GroupScreen::showDelayTimeout (TabBar *bar)
 
     bar->recalcPos (mouse.x (), WIN_REAL_X (topTab),
 		    WIN_REAL_X (topTab) + WIN_REAL_WIDTH (topTab));
-    bar->setVisibility (TRUE, 0);
+    bar->setVisibility (true, 0);
 
-    return FALSE;	/* This will free the timer. */
+    return false;	/* This will free the timer. */
 }
 
 /*
@@ -689,8 +689,8 @@ GroupScreen::showDelayTimeout (TabBar *bar)
  * and PaintPermantOn.
  * Currently the mask paramater is mostely used for the PERMANENT mask.
  * This mask affects how the visible parameter is handled, for example if
- * visibule is set to TRUE and the mask to PERMANENT state it will set
- * PaintPermanentOn state for the tab bar. When visibile is FALSE, mask 0
+ * visibule is set to true and the mask to PERMANENT state it will set
+ * PaintPermanentOn state for the tab bar. When visibile is false, mask 0
  * and the current state of the tab bar is PaintPermanentOn it won't do
  * anything because its not strong enough to disable a
  * Permanent-State, for those you need the mask.
@@ -716,12 +716,12 @@ TabBar::setVisibility (bool           visible,
     	 topTabWin->invisible ())
     {
 	state = Layer::PaintOff;
-	switchTopTabInput (TRUE);
+	switchTopTabInput (true);
     }
     else if (visible && state != Layer::PaintPermanentOn && (mask & PERMANENT))
     {
 	state = Layer::PaintPermanentOn;
-	switchTopTabInput (FALSE);
+	switchTopTabInput (false);
     }
     else if (visible && state == Layer::PaintPermanentOn && !(mask & PERMANENT))
     {
@@ -736,7 +736,7 @@ TabBar::setVisibility (bool           visible,
 	    bgAnimationTime = gs->optionGetReflexTime () * 1000.0;
 	}
 	state = Layer::PaintFadeIn;
-	switchTopTabInput (FALSE);
+	switchTopTabInput (false);
     }
     else if (!visible &&
 	     (state != Layer::PaintPermanentOn || (mask & PERMANENT)) &&
@@ -744,7 +744,7 @@ TabBar::setVisibility (bool           visible,
 	      state == Layer::PaintFadeIn))
     {
 	state = Layer::PaintFadeOut;
-	switchTopTabInput (TRUE);
+	switchTopTabInput (true);
     }
 
     if (state == Layer::PaintFadeIn || state == Layer::PaintFadeOut)
@@ -825,7 +825,7 @@ Group::handleHoverDetection ()
 {
     TabBar *bar = tabBar;
     CompWindow  *topTabWin = TOP_TAB (this);
-    Bool        inLastSlot;
+    bool        inLastSlot;
 
     GROUP_SCREEN (screen);
 
@@ -844,7 +844,7 @@ Group::handleHoverDetection ()
 	bar->hoveredSlot = NULL;
 	clip = GroupWindow::get (topTabWin)->getClippingRegion ();
 
-	foreach (Tab *tab, bar->tabs)
+	foreach (Tab *tab, *bar)
 	{
 	    /* We need to clip the slot region with the clip region first.
 	       This is needed to respect the window stack, so if a window
@@ -1050,7 +1050,7 @@ Group::handleAnimation ()
     if (tabBar->changeState == TabBar::TabChangeOldOut && tabBar)
     {
 	CompWindow      *top = TOP_TAB (this);
-	Bool            activate;
+	bool            activate;
 
 	/* recalc here is needed (for y value)! */
 	tabBar->recalcPos ((tabBar->region.boundingRect ().x1 () +
@@ -1082,7 +1082,7 @@ Group::handleAnimation ()
 	if (activate)
 	    top->activate ();
 
-	tabBar->checkFocusAfterTabChange = FALSE;
+	tabBar->checkFocusAfterTabChange = false;
     }
 
     if (tabBar->changeState == TabBar::TabChangeNewIn &&
@@ -1090,7 +1090,7 @@ Group::handleAnimation ()
     {
 	int oldChangeAnimationTime = tabBar->changeAnimationTime;
 
-	gs->tabChangeActivateEvent (FALSE);
+	gs->tabChangeActivateEvent (false);
 
 	if (tabBar->prevTopTab)
 	    GroupWindow::get (PREV_TOP_TAB (this))->setVisibility (false);
@@ -1119,7 +1119,7 @@ Group::handleAnimation ()
 	else if (gs->optionGetVisibilityTime () != 0.0f &&
 		 tabBar->changeState == TabBar::NoTabChange)
 	{
-	    tabBar->setVisibility (TRUE, PERMANENT | SHOW_BAR_INSTANTLY_MASK);
+	    tabBar->setVisibility (true, PERMANENT | SHOW_BAR_INSTANTLY_MASK);
 
 	    if (tabBar->timeoutHandle.active ())
 		tabBar->timeoutHandle.stop ();
@@ -1352,7 +1352,7 @@ TabBar::draw (const GLWindowPaintAttrib  &wAttrib,
 		if (gs->optionGetMipmaps ())
 		    gs->gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
-		foreach (Tab *tab, tabs)
+		foreach (Tab *tab, *this)
 		{
 		    if (tab != gs->draggedSlot || !gs->dragged)
 		    {
@@ -1413,10 +1413,10 @@ Group::finishTabbing ()
     if (tabBar && tabBar->tabbingState == TabBar::Tabbing)
     {
 	tabBar->tabbingState = TabBar::NoTabbing;
-	gs->tabChangeActivateEvent (FALSE);
+	gs->tabChangeActivateEvent (false);
 
 	/* tabbing case - hide all non-toptab windows */
-	foreach (Tab *tab, tabBar->tabs)
+	foreach (Tab *tab, *tabBar)
 	{
 	    CompWindow *w = tab->window;
 	    if (!w)
@@ -1427,7 +1427,7 @@ Group::finishTabbing ()
 	    if (tab == tabBar->topTab || (gw->animateState & IS_UNGROUPING))
 		continue;
 
-	    gw->setVisibility (FALSE);
+	    gw->setVisibility (false);
 	}
 
 	tabBar->prevTopTab = tabBar->topTab;
@@ -1450,10 +1450,10 @@ Group::finishTabbing ()
 	it++;
 
 	/* move window to target position */
-	gs->queued = TRUE;
+	gs->queued = true;
 	w->move (gw->destination.x () - WIN_X (w),
-		 gw->destination.y ()- WIN_Y (w), TRUE);
-	gs->queued = FALSE;
+		 gw->destination.y ()- WIN_Y (w), true);
+	gs->queued = false;
 	w->syncPosition ();
 
 	if (ungroupState == UngroupSingle &&
@@ -1490,7 +1490,7 @@ Group::drawTabAnimation (int            msSinceLastPaint)
 {
     int        steps;
     float      amount, chunk;
-    Bool       doTabbing;
+    bool       doTabbing;
     
     GROUP_SCREEN (screen);
 
@@ -1502,7 +1502,7 @@ Group::drawTabAnimation (int            msSinceLastPaint)
 
     while (steps--)
     {
-	doTabbing = FALSE;
+	doTabbing = false;
 
 	foreach (CompWindow *cw, windows)
 	{
@@ -1623,7 +1623,7 @@ GroupScreen::updateTabBars (Window     enteredWin)
        (or left a tab bar), hide the old one */
     if (lastHoveredGroup && (hoveredGroup != lastHoveredGroup) &&
     	lastHoveredGroup->tabBar)
-	lastHoveredGroup->tabBar->setVisibility (FALSE, 0);
+	lastHoveredGroup->tabBar->setVisibility (false, 0);
 
     /* if we entered a tab bar (or title bar), show the tab bar */
     if (hoveredGroup && HAS_TOP_WIN (hoveredGroup) &&
@@ -1740,10 +1740,10 @@ GroupWindow::constrainMovement (CompRegion     constrainRegion,
     GROUP_WINDOW (window);
 
     if (!gw->group)
-	return FALSE;
+	return false;
 
     if (!dx && !dy)
-	return FALSE;
+	return false;
 
     x = gw->orgPos.x () - window->input ().left + dx;
     y = gw->orgPos.y () - window->input ().top + dy;
@@ -1851,7 +1851,7 @@ Group::applyConstraining (CompRegion         constrainRegion,
  *
  */
 void
-Group::startTabbingAnimation (Bool           tab)
+Group::startTabbingAnimation (bool           tab)
 {
     int        dx (0), dy (0);
     int        constrainStatus;
@@ -1862,13 +1862,13 @@ Group::startTabbingAnimation (Bool           tab)
 	return;
 
     tabBar->tabbingState = (tab) ? TabBar::Tabbing : TabBar::Untabbing;
-    gs->tabChangeActivateEvent (TRUE);
+    gs->tabChangeActivateEvent (true);
 
     if (!tab)
     {
 	/* we need to set up the X/Y constraining on untabbing */
 	CompRegion constrainRegion = gs->getConstrainRegion ();
-	Bool   constrainedWindows = TRUE;
+	bool   constrainedWindows = true;
 
 	if (constrainRegion.isEmpty ())
 	    return;
@@ -1886,7 +1886,7 @@ Group::startTabbingAnimation (Bool           tab)
 	   loop until all constraining dependencies are met */
 	while (constrainedWindows)
 	{
-	    constrainedWindows = FALSE;
+	    constrainedWindows = false;
 	    /* loop through all windows and try to constrain their
 	       animation path (going from gw->orgPos to
 	       gw->destination) to the active screen area */
@@ -1954,7 +1954,7 @@ Group::startTabbingAnimation (Bool           tab)
 			    gw->destination.setY (gw->orgPos.y () + dy);
 			}
 
-			constrainedWindows = TRUE;
+			constrainedWindows = true;
 		    }
 		}
 	    }
@@ -1975,9 +1975,9 @@ TabBar::damageRegion ()
 
 #define DAMAGE_BUFFER 20
 
-    if (group->tabBar->tabs.size ())
+    if (!empty ())
     {
-        CompRect tabRect = tabs.front ()->region.boundingRect ();
+        CompRect tabRect = front ()->region.boundingRect ();
         bbox.setGeometry (MIN (reg.boundingRect ().x1 (), tabRect.x1 ()),
         		  MIN (reg.boundingRect ().y1 (), tabRect.y1 ()),
         		  MAX (reg.boundingRect ().width (), tabRect.width ()),
@@ -2074,18 +2074,34 @@ TabBar::resizeRegion (CompRect box, bool syncIPW)
 }
 
 /*
+ * TabBar::createNewTab (CompWindow *
+ *
+ * Description: Creates a new tab bar slot in the TabBar
+ *
+ */
+Tab *
+TabBar::createTab (CompWindow *w)
+{
+    Tab *t = new Tab (group, w);
+
+    insertTab (t);
+    
+    return t;
+}
+
+/*
  * groupInsertTabBarSlotBefore
  *
  */
 void
 TabBar::insertTabBefore (Tab *tab, Tab *nextTab)
 {
-    std::list <Tab *>::iterator it = std::find (tabs.begin (), tabs.end (),
+    std::list <Tab *>::iterator it = std::find (begin (), end (),
 						nextTab);
 
     it--;
 
-    tabs.insert (it, tab);
+    insert (it, tab);
 
     /* Moving bar->region->extents.x1 / x2 as minX1 / maxX2 will work,
        because the tab-bar got wider now, so it will put it in
@@ -2103,12 +2119,12 @@ TabBar::insertTabBefore (Tab *tab, Tab *nextTab)
 void
 TabBar::insertTabAfter (Tab *tab, Tab *prevTab)
 {
-    std::list <Tab *>::iterator it = std::find (tabs.begin (), tabs.end (),
+    std::list <Tab *>::iterator it = std::find (begin (), end (),
 						prevTab);
 
     it++;
     
-    tabs.insert (it, tab);
+    insert (it, tab);
 
     /* Moving bar->region->extents.x1 / x2 as minX1 / maxX2 will work,
        because the tab-bar got wider now, so it will put it in the
@@ -2126,7 +2142,7 @@ TabBar::insertTabAfter (Tab *tab, Tab *prevTab)
 void
 TabBar::insertTab (Tab *tab)
 {
-    tabs.push_back (tab);
+    push_back (tab);
 
     /* Moving bar->region->extents.x1 / x2 as minX1 / maxX2 will work,
        because the tab-bar got wider now, so it will put it in
@@ -2145,18 +2161,18 @@ void
 TabBar::unhookTab (Tab *tab,
 		   bool            temporary)
 {
-    Tab::List::iterator tempit = tabs.begin ();
+    Tab::List::iterator tempit = begin ();
     CompWindow      *w = tab->window;
 
     GROUP_SCREEN (screen);
 
     /* check if slot is not already unhooked */
-    tempit = std::find (tabs.begin (), tabs.end (), tab);
+    tempit = std::find (begin (), end (), tab);
 
-    if (tempit == tabs.end ())
+    if (tempit == end ())
 	return;
 
-    tabs.remove (tab);
+    remove (tab);
 
     if (!temporary)
     {
@@ -2168,9 +2184,9 @@ TabBar::unhookTab (Tab *tab,
 	    
 	    topTab = NULL;
 
-	    if (tabs.getNextTab (tab, next))
+	    if (getNextTab (tab, next))
 		changeTab (next, RotateRight);
-	    else if (tabs.getPrevTab (tab, prev))
+	    else if (getPrevTab (tab, prev))
 		changeTab (prev, RotateLeft);
 
 	    if (gs->optionGetUntabOnClose ())
@@ -2219,12 +2235,12 @@ Tab::~Tab ()
     GROUP_WINDOW (w);
     GROUP_SCREEN (screen);
 
-    bar->tabs.remove (this);
+    bar->remove (this);
 
     if (this == gs->draggedSlot)
     {
 	gs->draggedSlot = NULL;
-	gs->dragged = FALSE;
+	gs->dragged = false;
 
 	if (gs->grabState == GroupScreen::ScreenGrabTabDrag)
 	    gs->grabScreen (GroupScreen::ScreenGrabNone);
@@ -2238,7 +2254,7 @@ Tab::~Tab ()
 }
 
 /*
- * groupCreateSlot
+ * Tab::Tab
  *
  */
 Tab::Tab (Group *group, CompWindow *w) :
@@ -2249,13 +2265,9 @@ Tab::Tab (Group *group, CompWindow *w) :
     msSinceLastMove (0)
 {
     GROUP_WINDOW (w);
-
-    if (group->tabBar)
-    {
-	group->tabBar->insertTab (this);
-	gw->tab = this;
-	gw->updateProperty ();
-    }
+    
+    gw->tab = this;
+    gw->updateProperty ();
 }
 
 #define SPRING_K     gs->optionGetDragSpringK()
@@ -2425,7 +2437,7 @@ TabBar::applyForces (Tab *draggedSlot)
 	    rightSpeed += rightForce;
     }
 
-    foreach (tab, tabs)
+    foreach (tab, *this)
     {
 	centerX = (tab->region.boundingRect ().x1 () +
 					 tab->region.boundingRect ().x2 ()) / 2;
@@ -2446,12 +2458,12 @@ TabBar::applyForces (Tab *draggedSlot)
 
 	    if (draggedSlotForce < 0)
 	    {
-		tabs.getPrevTab (tab, tab2);
+		getPrevTab (tab, tab2);
 		leftSpeed += draggedSlotForce;
 	    }
 	    else if (draggedSlotForce > 0)
 	    {
-		tabs.getNextTab (tab, tab2);
+		getNextTab (tab, tab2);
 		rightSpeed += draggedSlotForce;
 	    }
 
@@ -2462,10 +2474,10 @@ TabBar::applyForces (Tab *draggedSlot)
 		if (tab2 != draggedSlot)
 		    tab2->speed += draggedSlotForce;
 		    
-		if (!tabs.getPrevTab (tab2, prevTab2))
+		if (!getPrevTab (tab2, prevTab2))
 		    prevTab2 = NULL;
 		
-		if (!tabs.getNextTab (tab2, nextTab2))
+		if (!getNextTab (tab2, nextTab2))
 		    nextTab2 = NULL;
 		    
 		tab2 = (draggedSlotForce < 0) ? prevTab2 : nextTab2;
@@ -2473,7 +2485,7 @@ TabBar::applyForces (Tab *draggedSlot)
 	}
     }
 
-    foreach (Tab *tab, tabs)
+    foreach (Tab *tab, *this)
     {
 	groupApplyFriction (&tab->speed);
 	groupApplySpeedLimit (&tab->speed);
@@ -2495,7 +2507,7 @@ TabBar::applySpeeds (int            msSinceLastRepaint)
 {
     int             move;
     CompRect        box;
-    Bool            updateTabBar = FALSE;
+    bool            updateTabBar = false;
     
     GROUP_SCREEN (screen);
 
@@ -2516,7 +2528,7 @@ TabBar::applySpeeds (int            msSinceLastRepaint)
 	box.setWidth (box.width () - move);
 
 	leftMsSinceLastMove = 0;
-	updateTabBar = TRUE;
+	updateTabBar = true;
     }
     else if (leftSpeed == 0 &&
 	     region.boundingRect ().x1 () != leftSpringX &&
@@ -2530,7 +2542,7 @@ TabBar::applySpeeds (int            msSinceLastRepaint)
 						  region.boundingRect ().x1 ());
 
 	leftMsSinceLastMove = 0;
-	updateTabBar = TRUE;
+	updateTabBar = true;
     }
     else if (leftSpeed == 0)
 	leftMsSinceLastMove = 0;
@@ -2542,7 +2554,7 @@ TabBar::applySpeeds (int            msSinceLastRepaint)
 	box.setWidth (box.width () + move);
 
 	rightMsSinceLastMove = 0;
-	updateTabBar = TRUE;
+	updateTabBar = true;
     }
     else if (rightSpeed == 0 &&
 	     region.boundingRect ().x2 () != rightSpringX &&
@@ -2555,15 +2567,15 @@ TabBar::applySpeeds (int            msSinceLastRepaint)
 						  region.boundingRect ().x1 ());
 
 	leftMsSinceLastMove = 0;
-	updateTabBar = TRUE;
+	updateTabBar = true;
     }
     else if (rightSpeed == 0)
 	rightMsSinceLastMove = 0;
 
     if (updateTabBar)
-	resizeRegion (box, FALSE);
+	resizeRegion (box, false);
 
-    foreach (Tab *tab, tabs)
+    foreach (Tab *tab, *this)
     {
 	int slotCenter;
 

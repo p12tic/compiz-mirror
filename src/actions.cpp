@@ -83,7 +83,7 @@ GroupScreen::select (CompAction         *action,
 	return TRUE;
     }
 
-    return FALSE;
+    return false;
 }
 
 /*
@@ -282,7 +282,7 @@ GroupScreen::setIgnore (CompAction         *action,
     if (state & CompAction::StateInitKey)
 	action->setState (action->state () | CompAction::StateTermKey);
 
-    return FALSE;
+    return false;
 }
 
 bool
@@ -290,11 +290,11 @@ GroupScreen::unsetIgnore (CompAction         *action,
 			  CompAction::State  state,
 			  CompOption::Vector &options)
 {
-    ignoreMode = FALSE;
+    ignoreMode = false;
 
     action->setState (action->state () & ~CompAction::StateTermKey);
 
-    return FALSE;
+    return false;
 }
 
 
@@ -303,7 +303,7 @@ GroupScreen::initTab (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector &options)
 {
-    Bool       allowUntab = TRUE;
+    bool       allowUntab = TRUE;
 
     CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
 								       "window",
@@ -319,7 +319,7 @@ GroupScreen::initTab (CompAction         *action,
 	/* If the window was selected, we don't want to
 	   untab the group, because the user probably
 	   wanted to tab the selected windows. */
-	allowUntab = FALSE;
+	allowUntab = false;
     }
 
     if (!gw->group)
@@ -341,22 +341,23 @@ GroupScreen::initTab (CompAction         *action,
  * GroupScreen::changeTabLeft
  *
  */
-Bool
+bool
 GroupScreen::changeTabLeft (CompAction         *action,
 			    CompAction::State  state,
 			    CompOption::Vector &options)
 {
     CompWindow *topTab;
+    Tab	       *prev;
 
     CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
 								       "window",
 									0));
 
     topTab = w;
-    if (!w)
+    if (!topTab)
 	return TRUE;
 
-    GROUP_WINDOW (w);
+    GROUP_WINDOW (topTab);
 
     if (!gw->tab || !gw->group || !gw->group->tabBar)
 	return TRUE;
@@ -372,27 +373,9 @@ GroupScreen::changeTabLeft (CompAction         *action,
 
     gw = GroupWindow::get (topTab);
     
-    std::list <Tab *> &tabs = gw->group->tabBar->tabs;
-    std::list <Tab *>::iterator currentTab = std::find (tabs.begin (),
-    							tabs.end (),
-    							gw->group->tabBar->topTab);
-
-    /* FIXME: this is a bit of black magic */
-
-    if (currentTab != tabs.end ()) // Did we find a tab?
-    {        
-        if (currentTab != tabs.begin ()) // Is this not the first
-        {
-            currentTab--;
-	    return gw->group->tabBar->changeTab (*(currentTab),
-					         TabBar::RotateLeft);
-	}	
-        else
-            return gw->group->tabBar->changeTab (tabs.back (),
-					         TabBar::RotateLeft);
-    }
-
-    return true;
+    gw->group->tabBar->getPrevTab (gw->group->tabBar->topTab, prev);
+    
+    return gw->group->tabBar->changeTab (prev, TabBar::RotateLeft);
 }
 
 /*
@@ -405,6 +388,7 @@ GroupScreen::changeTabRight (CompAction         *action,
 		     	     CompOption::Vector &options)
 {
     CompWindow *topTab;
+    Tab	       *next;
 
     CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
 								       "window",
@@ -429,27 +413,8 @@ GroupScreen::changeTabRight (CompAction         *action,
     }
 
     gw = GroupWindow::get (topTab);
+
+    gw->group->tabBar->getNextTab (gw->group->tabBar->topTab, next);
     
-    std::list <Tab *> &tabs = gw->group->tabBar->tabs;
-    std::list <Tab *>::iterator currentTab = std::find (tabs.begin (),
-    							tabs.end (),
-    							gw->group->tabBar->topTab);
-
-    /* FIXME: this is a bit of black magic */
-
-    if (currentTab != tabs.end ()) // Did we find a tab?
-    {
-        currentTab++;
-        
-        if (currentTab != tabs.end ()) // Is this not the last tab?
-	    return gw->group->tabBar->changeTab (*(currentTab),
-					         TabBar::RotateRight);
-	
-        else
-            return gw->group->tabBar->changeTab (tabs.front (),
-					     TabBar::RotateRight);
-    }
-
-
-    return true;
+    return gw->group->tabBar->changeTab (next, TabBar::RotateRight);
 }

@@ -28,6 +28,9 @@
 
 /*
  * GroupWindow::checkProperty
+ * 
+ * Description: Checks our set window property on startup - groups windows
+ * according to those properties
  *
  */
 bool
@@ -52,23 +55,25 @@ GroupWindow::checkProperty (long int   &id,
 	if (type == XA_CARDINAL && fmt == 32 && nitems == 5)
 	{
 	    id = data[0];
-	    tabbed = (Bool) data[1];
+	    tabbed = (bool) data[1];
 	    color[0] = (GLushort) data[2];
 	    color[1] = (GLushort) data[3];
 	    color[2] = (GLushort) data[4];
 
 	    XFree (data);
-	    return TRUE;
+	    return true;
 	}
 	else if (fmt != 0)
 	    XFree (data);
     }
 
-    return FALSE;
+    return false;
 }
 
 /*
- * groupUpdateWindowProperty
+ * GroupWindow::updateProperty
+ *
+ * On color change / group change / tabbing - update the X Window property
  *
  */
 void
@@ -85,7 +90,7 @@ GroupWindow::updateProperty ()
 	long int buffer[5];
 
 	buffer[0] = group->identifier;
-	buffer[1] = (tab) ? TRUE : FALSE;
+	buffer[1] = (tab) ? true : false;
 
 	/* group color RGB */
 	buffer[2] = group->color[0];
@@ -400,7 +405,7 @@ GroupWindow::moveNotify (int  dx,
 			 int  dy,
 			 bool immediate)
 {
-    Bool       viewportChange;
+    bool       viewportChange;
     GLTexture::Matrix mat;
 
     GROUP_SCREEN (screen);
@@ -440,7 +445,7 @@ GroupWindow::moveNotify (int  dx,
 
 	group->tabBar->moveRegion (dx, dy, true);
 
-	foreach (Tab *tab, group->tabBar->tabs)
+	foreach (Tab *tab, *group->tabBar)
 	{
 	    tab->region.translate (dx, dy);
 	    tab->springX += dx;
@@ -450,13 +455,12 @@ GroupWindow::moveNotify (int  dx,
 
     /* Do not enqueue windows if:
      * - we have not specified to move all windows
-     * - 
-     * -
+     * - windows are currently being tabbed into or out of a group
      * - the grabed window is not grabbed for moving */
 
     if ((!gs->optionGetMoveAll () || gs->ignoreMode) ||
 	(group->tabBar && group->tabBar->tabbingState != TabBar::NoTabbing) ||
-	(group->grabWindow != window->id () || /* XXX: implement this */
+	(group->grabWindow != window->id () ||
 	!(group->grabMask & CompWindowGrabMoveMask)))
     {
 	return;
@@ -472,12 +476,12 @@ GroupWindow::moveNotify (int  dx,
 	if (cw->state () & MAXIMIZE_STATE)
 	{
 	    if (viewportChange)
-		gs->enqueueMoveNotify (cw, dx, dy, immediate, TRUE);
+		gs->enqueueMoveNotify (cw, dx, dy, immediate, true);
 	}
 	else if (!viewportChange)
 	{
-	    needsPosSync = TRUE;
-	    gs->enqueueMoveNotify (cw, dx, dy, immediate, TRUE);
+	    needsPosSync = true;
+	    gs->enqueueMoveNotify (cw, dx, dy, immediate, true);
 	}
     }
 }
@@ -504,7 +508,7 @@ GroupWindow::grabNotify (int          x,
 
     if (group && !gs->ignoreMode && !gs->queued)
     {
-	Bool doResizeAll;
+	bool doResizeAll;
 
 	doResizeAll = gs->optionGetResizeAll () &&
 	              (mask & CompWindowGrabResizeMask);
@@ -611,7 +615,7 @@ GroupWindow::ungrabNotify ()
 		    gw->resizeGeometry.setWidth (WIN_WIDTH (cw));
 		    gw->resizeGeometry.setHeight (WIN_HEIGHT (cw));
 
-		    mask = gw->updateResizeRectangle (rect, FALSE);
+		    mask = gw->updateResizeRectangle (rect, false);
 		    if (mask)
 		    {
 			XWindowChanges xwc;
@@ -635,7 +639,7 @@ GroupWindow::ungrabNotify ()
 		if (gw->needsPosSync)
 		{
 		    cw->syncPosition ();
-		    gw->needsPosSync = FALSE;
+		    gw->needsPosSync = false;
 		}
 
 
@@ -659,7 +663,15 @@ GroupWindow::ungrabNotify ()
     window->ungrabNotify ();
 }
 
-/* getOutputExtents */
+/*
+ * GroupWindow::getOutputExents
+ *
+ * Description: Our glow is painted outside the window texture (see
+ * addWindowGeometry. This wrapped function overrides the current output
+ * extents (w->output and w->outputRect) to include to glow, such that it
+ * will be damaged correctly by other plugins
+ *
+ */
 void
 GroupWindow::getOutputExtents (CompWindowExtents &output)
 {
@@ -687,7 +699,11 @@ GroupWindow::getOutputExtents (CompWindowExtents &output)
     }
 }
 
-/* activateWindow */
+/* GroupWindow::activate ()
+ *
+ * Change tab on a window activation
+ *
+ */
 void
 GroupWindow::activate ()
 {
@@ -721,7 +737,7 @@ GroupWindow::deleteGroupWindow ()
 	if (gs->draggedSlot && gs->dragged &&
 	    gs->draggedSlot->window->id () == window->id ())
 	{
-	    group->tabBar->unhookTab (tab, FALSE);
+	    group->tabBar->unhookTab (tab, false);
 	}
 	else
 	{
@@ -753,7 +769,7 @@ GroupWindow::deleteGroupWindow ()
 			   back onscreen, so we do that here */
 			CompWindow *lw = group->windows.front ();
 
-			GroupWindow::get (lw)->setVisibility (TRUE);
+			GroupWindow::get (lw)->setVisibility (true);
 		    }
 
 		    if (!gs->optionGetAutotabCreate ())
@@ -823,9 +839,9 @@ GroupWindow::removeFromGroup ()
 	/* Although when there is no top-tab, it will never really
 	   animate anything, if we don't start the animation,
 	   the window will never get removed. */
-	group->startTabbingAnimation (FALSE);
+	group->startTabbingAnimation (false);
 
-	GroupWindow::get (window)->setVisibility (TRUE);
+	GroupWindow::get (window)->setVisibility (true);
 	group->ungroupState = Group::UngroupSingle;
 	animateState |= IS_UNGROUPING;
     }
@@ -834,7 +850,7 @@ GroupWindow::removeFromGroup ()
 	/* no tab bar - delete immediately */
 	deleteGroupWindow ();
 
-	if (GroupScreen::get (screen)->optionGetAutotabCreate () && is ())
+	if (GroupScreen::get (screen)->optionGetAutotabCreate () && isGroupable ())
 	{
 	    Selection sel;
 	
@@ -850,6 +866,17 @@ GroupWindow::removeFromGroup ()
 /*
  * GroupWindow::glPaint ()
  *
+ * Description: Adjust window paint parameters. We need to account for animations
+ * such as tab into / untab and rotation between tabs. This uses
+ * some booleans to determine where to enter:
+ *
+ * doRotate: we should rotate this window as it is being tabbed
+ * doTabbing: this window is being tabbed into / out of a group
+ * showTabbar: we should draw the Tab Bar on this window texture
+ * inSelection: we should dim this window to show it is being selected for
+ * grouping
+ * !resizeGeometry.isEmpty () : we should stretch this window because it is
+ * being resized with its group
  */
 
 bool
@@ -858,8 +885,8 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		      const CompRegion		&region,
 		      unsigned int		mask)
 {
-    Bool       status;
-    Bool       doRotate, doTabbing, showTabbar;
+    bool       status;
+    bool       doRotate, doTabbing, showTabbar;
 
     GROUP_SCREEN (screen);
 
@@ -886,9 +913,9 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
     }
     else
     {
-	doRotate   = FALSE;
-	doTabbing  = FALSE;
-	showTabbar = FALSE;
+	doRotate   = false;
+	doTabbing  = false;
+	showTabbar = false;
     }
 
     if (windowHideInfo)
@@ -1076,6 +1103,8 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 /*
  * GroupWindow::glDraw
  *
+ * This adds the Glow geometry and paints it
+ *
  */
 bool
 GroupWindow::glDraw (const GLMatrix &transform,
@@ -1166,13 +1195,21 @@ GroupWindow::glDraw (const GLMatrix &transform,
 }
 
 
-/* XXX: should use new wrappable functions */
+/*
+ * GroupWindow::damageRect ()
+ *
+ * Description: Applies window damage / updates
+ *
+ * If initial is true and we should auto-tab, then automatically create
+ * a window group and tab it
+ *
+ */
 
 bool
 GroupWindow::damageRect (bool		initial,
 			 const CompRect &rect)
 {
-    Bool       status;
+    bool       status;
 
     GROUP_SCREEN (screen);
 
@@ -1180,7 +1217,7 @@ GroupWindow::damageRect (bool		initial,
 
     if (initial)
     {
-	if (gs->optionGetAutotabCreate () && is ())
+	if (gs->optionGetAutotabCreate () && isGroupable ())
 	{
 	    if (!group && (windowState == WindowNormal))
 	    {
@@ -1227,67 +1264,26 @@ GroupWindow::damageRect (bool		initial,
 
 
 /*
- * GroupWindow::is ()
+ * GroupWindow::isGroupable ()
+ *
+ * Description: Should we group this window
  *
  */
 
 bool
-GroupWindow::is ()
+GroupWindow::isGroupable ()
 {
     if (window->overrideRedirect ())
-	return FALSE;
+	return false;
 
     if (window->type () & CompWindowTypeDesktopMask)
-	return FALSE;
+	return false;
 
     if (window->invisible ())
-	return FALSE;
+	return false;
 
     if (!GroupScreen::get (screen)->optionGetWindowMatch ().evaluate (window))
-	return FALSE;
+	return false;
 
-    return TRUE;
-}
-
-/*
- * GroupWindow::inRegion ()
- *
- */
-
-bool
-GroupWindow::inRegion (CompRegion reg,
-		       float      precision)
-{
-    CompRegion buf;
-    int    area = 0;
-
-    buf = reg.intersected (window->region ());
-
-    /* buf area */
-    area = buf.boundingRect ().width () * buf.boundingRect ().height ();
-
-    if (area >= WIN_WIDTH (window) * WIN_HEIGHT (window) * precision)
-    {
-	return true;
-    }
-
-    return false;
-}
-
-void
-GroupWindow::select ()
-{
-    GROUP_SCREEN (screen);
-
-    if (!inSelection)
-    {
-	gs->masterSelection.push_back (window);
-	selection = &gs->masterSelection;
-    }
-    else
-    {
-	selection = NULL;
-	gs->masterSelection.remove (window);
-    }
-    inSelection = !inSelection;
+    return true;
 }

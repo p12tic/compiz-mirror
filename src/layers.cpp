@@ -26,6 +26,18 @@
 
 #include "group.h"
 
+Layer::Layer (int width, int height) :
+    state (PaintOff),
+    animationTime (0),
+    texWidth (width),
+    texHeight (height)
+{
+}
+
+Layer::~Layer ()
+{
+}
+
 void
 Layer::draw (CompRegion &box,
 	     const float  &wScale,
@@ -73,7 +85,6 @@ Layer::draw (CompRegion &box,
 	matrix.x0 -= boxRect.x1 () * matrix.xx;
 	matrix.y0 -= boxRect.y1 () * matrix.yy;
 	
-	/* FIXME */
 	GLWindow::get (tb->topTab->window)->geometry ().reset ();
 	
 	matricies.push_back (matrix);

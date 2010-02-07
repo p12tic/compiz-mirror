@@ -82,7 +82,7 @@ GroupScreen::dequeueMoveNotifies ()
 	    {
 		GROUP_WINDOW (move->w);
 
-		gw->needsPosSync = TRUE;
+		gw->needsPosSync = true;
 		pendingSync->w   = move->w;
 
 		pendingSyncs.push_back (pendingSync);
@@ -151,7 +151,7 @@ GroupScreen::enqueueGrabNotify (CompWindow   *w,
 void
 GroupScreen::dequeueGrabNotifies ()
 {
-    queued = TRUE;
+    queued = true;
 
     while (!pendingGrabs.empty ())
     {
@@ -164,7 +164,7 @@ GroupScreen::dequeueGrabNotifies ()
 	delete grab;
     }
 
-   queued = FALSE;
+   queued = false;
 }
 
 void
@@ -188,7 +188,7 @@ GroupScreen::enqueueUngrabNotify (CompWindow *w)
 void
 GroupScreen::dequeueUngrabNotifies ()
 {
-    queued = TRUE;
+    queued = true;
 
     while (!pendingUngrabs.empty ())
     {
@@ -201,7 +201,7 @@ GroupScreen::dequeueUngrabNotifies ()
 	delete ungrab;
     }
 
-    queued = FALSE;
+    queued = false;
 }
 
 void
@@ -235,16 +235,16 @@ GroupScreen::dequeueWindowNotifies ()
 	switch (notify->n)
 	{
 	    case CompWindowNotifyMinimize:
-		gw->group->minimizeWindows (notify->w, TRUE);
+		gw->group->minimizeWindows (notify->w, true);
 		break;
 	    case CompWindowNotifyUnminimize:
-		gw->group->minimizeWindows (notify->w, FALSE);
+		gw->group->minimizeWindows (notify->w, false);
 		break;
 	    case CompWindowNotifyShade:
-		gw->group->shadeWindows (notify->w, TRUE);
+		gw->group->shadeWindows (notify->w, true);
 		break;
 	    case CompWindowNotifyUnshade:
-		gw->group->shadeWindows (notify->w, FALSE);
+		gw->group->shadeWindows (notify->w, false);
 		break;
 	    case CompWindowNotifyRestack:
 	        if (gw->group && !gw->group->tabBar &&

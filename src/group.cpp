@@ -137,7 +137,7 @@ Group::Group (unsigned int initialIdent) :
     {
         /* we got no valid group Id passed, so find out a new valid
            unique one */
-        bool           invalidID = FALSE;
+        bool           invalidID = false;
 
         identifier = !gs->groups.empty () ? gs->groups.front ()->identifier : 0;
         do
@@ -199,7 +199,7 @@ Group::destroy (bool immediate)
 	        gw->window->updateWindowOutputExtents ();
 	        gw->updateProperty ();
 
-	        if (gs->optionGetAutotabCreate () && gw->is ())
+	        if (gs->optionGetAutotabCreate () && gw->isGroupable ())
 	        {
 		    Selection sel;
 		    Group     *group;
@@ -272,7 +272,7 @@ Group::addWindow (CompWindow *w)
         if (topTabWin)
         {
 	    if (!gw->tab)
-	        gw->tab = new Tab (this, w);
+	        tabBar->createTab (w);
 
 	    gw->destination.setX (WIN_CENTER_X (topTabWin) -
 	    			 (WIN_WIDTH (w) / 2));
@@ -288,7 +288,7 @@ Group::addWindow (CompWindow *w)
 
 	    gw->animateState = IS_ANIMATED;
 
-	    startTabbingAnimation (TRUE);
+	    startTabbingAnimation (true);
 
 	    gw->cWindow->addDamage ();
         }

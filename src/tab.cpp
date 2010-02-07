@@ -112,7 +112,7 @@ Group::tab (CompWindow *main)
     if (!HAS_TOP_WIN (this))
 	return;
 
-    foreach (Tab *tab, tabBar->tabs)
+    foreach (Tab *tab, *tabBar)
     {
 	CompWindow *cw = tab->window;
 
@@ -122,7 +122,7 @@ Group::tab (CompWindow *main)
 	{
 	    cw->move (gw->destination.x () - WIN_X (cw),
 		      gw->destination.y () - WIN_Y (cw),
-			FALSE);
+			false);
 	}
 
 	/* center the window to the main window */
@@ -180,7 +180,7 @@ Group::untab ()
     tabBar->lastTopTab = TOP_TAB (this);
     tabBar->topTab = NULL;
 
-    foreach (Tab *tab, tabBar->tabs)
+    foreach (Tab *tab, *tabBar)
     {
 	CompWindow *cw = tab->window;
 
@@ -188,11 +188,11 @@ Group::untab ()
 
 	if (gw->animateState & (IS_ANIMATED | FINISHED_ANIMATION))
 	{
-	    gs->queued = TRUE;
+	    gs->queued = true;
 	    cw->move (gw->destination.x () - WIN_X (cw),
 		      gw->destination.y () - WIN_Y (cw),
 		      false);
-	    gs->queued = FALSE;
+	    gs->queued = false;
 	}
 	
 	gw->setVisibility (true);
@@ -238,7 +238,7 @@ bool
 GroupScreen::dragHoverTimeout (CompWindow *w)
 {
     if (!w)
-	return FALSE;
+	return false;
 
     GROUP_WINDOW (w);
 
@@ -252,7 +252,7 @@ GroupScreen::dragHoverTimeout (CompWindow *w)
 
     w->activate ();
     
-    return FALSE;
+    return false;
 }
 
 /* Tab::List::getNextTab

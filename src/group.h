@@ -234,7 +234,6 @@ class Tab
 	};
     public:
     
-	Tab (Group *, CompWindow *w);
 	~Tab ();
 
 	void
@@ -260,9 +259,14 @@ class Tab
 	int	  speed;
 	float msSinceLastMove;
     private:
+
+	Tab (Group *, CompWindow *w);
+	
+    friend class TabBar;
 };
 
-class TabBar
+class TabBar :
+    public Tab::List
 {
     public:
 	typedef enum _GroupAnimationType {
@@ -296,8 +300,6 @@ class TabBar
 
 	TabBar (Group *, CompWindow *);
 	~TabBar ();
-
-	Tab::List    tabs;
 
 	Tab *hoveredSlot;
 	Tab *textSlot;
@@ -368,13 +370,12 @@ class TabBar
 
 	/* Tab placement logic */
 
+	Tab * createTab (CompWindow *w);
 	void insertTabAfter (Tab *tab, Tab *prev);
 	void insertTabBefore (Tab *tab, Tab *next);
 	void insertTab (Tab *tab);
 	void unhookTab (Tab *tab, bool temporary);
 	void deleteTab (Tab *tab);
-	Tab *
-	createTab (CompWindow *);
 
 	/* Physics engine */
 
@@ -483,7 +484,7 @@ class Group
 			   int            dy);
 					   
 	void
-	startTabbingAnimation (Bool           tab);
+	startTabbingAnimation (bool           tab);
 
     private:
     
@@ -543,7 +544,8 @@ class Selection :
 
 class GlowTexture
 {
-    public:
+    public:	bool
+	inRegion (CompRegion, float);
 	class Properties {
 	    public:
 
@@ -606,8 +608,8 @@ class GroupScreen :
 	    CompWindow        *w;
 	    int               dx;
 	    int               dy;
-	    Bool              immediate;
-	    Bool              sync;
+	    bool              immediate;
+	    bool              sync;
 	} PendingMoves;
 
 	typedef struct _PendingGrabs  {
@@ -761,7 +763,7 @@ class GroupScreen :
 		 CompAction::State  state,
 		 CompOption::Vector &options);
 
-	Bool
+	bool
 	changeTabLeft (CompAction         *action,
 		       CompAction::State  state,
 		       CompOption::Vector &options);
@@ -797,14 +799,14 @@ class GroupScreen :
 	CompTimer			     showDelayTimeoutHandle;
 
 	/* For selection */
-	Bool painted;
+	bool painted;
 	int  vpX, vpY;
 	int  x1, y1, x2, y2;
 
 	/* For d&d */
 	Tab		     *draggedSlot;
 	CompTimer         dragHoverTimeoutHandle;
-	Bool              dragged;
+	bool              dragged;
 	int               prevX, prevY; /* Buffer for mouse coordinates */
 	MousePoller       poller;
 
@@ -873,7 +875,7 @@ class GroupWindow :
 
 	Selection *selection;
 	Group	   *group;
-	Bool inSelection;
+	bool inSelection;
 
 	/* To prevent freeing the group
 	property in groupFiniWindow. */
@@ -901,24 +903,24 @@ class GroupWindow :
 	void
 	updateProperty ();
 
+	bool checkProperty (long int &id,
+			    bool     &tabbed,
+			    GLushort *color);
+
 	void
 	select ();
-
-	bool
-	is ();
-
+	
 	bool
 	inRegion (CompRegion, float);
+
+	bool
+	isGroupable ();
 
 	void
 	moveNotify (int, int, bool);
 
 	void
 	resizeNotify (int, int, int, int);
-
-
-	void
-	getOutputExtents (CompWindowExtents &);
 
 	void
 	grabNotify (int, int,
@@ -938,6 +940,9 @@ class GroupWindow :
 	void
 	activate ();
 
+	void
+	getOutputExtents (CompWindowExtents &);
+
 	bool
 	glDraw (const GLMatrix &,
 		GLFragment::Attrib &,
@@ -953,10 +958,6 @@ class GroupWindow :
 	bool
 	damageRect (bool,
 		    const CompRect &);
-
-	bool checkProperty (long int &id,
-			    bool     &tabbed,
-			    GLushort *color);
 
 
 	void deleteGroupWindow ();
