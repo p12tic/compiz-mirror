@@ -91,6 +91,9 @@ class WallpaperScreen :
 	void wallpaperCycleOptionChanged (CompOption *opt,
 					  Options    num);
 
+	void wallpaperToggleCycle	 (CompOption *opt,
+					  Options    num);
+
 	WallpaperBackground *getBackgroundForViewport (WallpaperBackgrounds&);
 
 	void

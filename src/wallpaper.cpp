@@ -329,6 +329,16 @@ WallpaperScreen::wallpaperCycleOptionChanged (CompOption *o,
     updateTimers ();
 }
 
+void
+WallpaperScreen::wallpaperToggleCycle (CompOption *o,
+				       Options    num)
+{
+    if (optionGetCycleWallpapers ())
+	rotateTimer.start (fadeTimeout, fadeTimeout * 1.2);
+    else
+	rotateTimer.stop ();
+}
+
 WallpaperBackground *
 WallpaperScreen::getBackgroundForViewport (WallpaperBackgrounds &bg)
 {
@@ -637,6 +647,8 @@ WallpaperScreen::WallpaperScreen (CompScreen *screen) :
     optionSetBgColor2Notify   (boost::bind (&WallpaperScreen::
 				wallpaperBackgroundsChanged, this, _1, _2));
 
+    optionSetCycleWallpapersNotify	(boost::bind (&WallpaperScreen::
+				    wallpaperToggleCycle, this, _1, _2));
     optionSetCycleTimeoutNotify		(boost::bind (&WallpaperScreen::
 				    wallpaperCycleOptionChanged, this, _1, _2));
     optionSetFadeDurationNotify		(boost::bind (&WallpaperScreen::
