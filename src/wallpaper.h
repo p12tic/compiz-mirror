@@ -53,6 +53,7 @@ class WallpaperScreen :
     public PluginClassHandler<WallpaperScreen,CompScreen>,
     public WallpaperOptions,
     public ScreenInterface,
+    public CompositeScreenInterface,
     public GLScreenInterface
 {
     public:
@@ -63,25 +64,43 @@ class WallpaperScreen :
 	CompositeScreen *cScreen;
         GLScreen        *gScreen;
 
-	bool                 propSet;
-	Window               fakeDesktop;
-	CompWindow           *desktop;
+	bool		propSet;
+	Window		fakeDesktop;
+	CompWindow	*desktop;
+	int		numBackgrounds;
 
-	WallpaperBackgrounds backgrounds;
+	CompTimer rotateTimer;
+	float fadeTimer, fadeTimeout, fadeDuration, alpha;
+
+	WallpaperBackgrounds backgroundsPrimary, backgroundsSecondary;
 
 	void createFakeDesktopWindow ();
 	void destroyFakeDesktopWindow ();
 
 	void updateProperty();
+	void blackenSecondary ();
 	void updateBackgrounds ();
-    
+	void rotateBackgrounds ();
+	void updateTimers ();
+
+	bool rotateTimeout ();
+
 	void wallpaperBackgroundsChanged (CompOption *opt,
 					  Options    num);
 
-	WallpaperBackground *getBackgroundForViewport ();
+	void wallpaperCycleOptionChanged (CompOption *opt,
+					  Options    num);
+
+	WallpaperBackground *getBackgroundForViewport (WallpaperBackgrounds&);
 
 	void
 	handleEvent (XEvent *);
+
+	void
+	preparePaint (int msSinceLastPaint);
+
+	void
+	donePaint ();
 
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &sAttrib,
@@ -108,6 +127,11 @@ class WallpaperWindow :
 	CompWindow      *window;
 	CompositeWindow *cWindow;
         GLWindow        *gWindow;
+
+	void
+	drawBackgrounds (GLFragment::Attrib &,
+			 const CompRegion &, unsigned int,
+			 WallpaperBackgrounds&, bool);
 
 	bool glDraw (const GLMatrix &, GLFragment::Attrib &,
 		     const CompRegion &, unsigned int);

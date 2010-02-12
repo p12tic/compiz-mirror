@@ -129,7 +129,7 @@ WallpaperScreen::destroyFakeDesktopWindow ()
 void
 WallpaperScreen::updateProperty ()
 {
-    if (backgrounds.empty())
+    if (backgroundsPrimary.empty())
     {
 	if (propSet)
 	    XDeleteProperty (screen->dpy (), screen->root (),
@@ -197,9 +197,30 @@ initBackground (WallpaperBackground *back)
 	back->fillTexMatrix.push_back (back->fillTex[0]->matrix());
 	back->fillTexMatrix[0].xx = 0.0;
 	back->fillTexMatrix[0].yy = 0.0;
+    }    
+}
+
+void
+WallpaperScreen::blackenSecondary ()
+{
+    unsigned short black [] = {1, 0, 0, 0};
+
+    backgroundsSecondary.clear ();
+
+    for (int i = 0; i < numBackgrounds; i++)
+    {
+	backgroundsSecondary.push_back (WallpaperBackground ());
+
+	backgroundsSecondary[i].image = "";
+	backgroundsSecondary[i].imagePos = 0;
+	backgroundsSecondary[i].fillType = 0;
+	memcpy (backgroundsSecondary[i].color1, black,
+		4 * sizeof(unsigned short));
+	memcpy (backgroundsSecondary[i].color2, black,
+		4 * sizeof(unsigned short));
+
+	initBackground (&backgroundsSecondary[i]);
     }
-    
-    
 }
 
 void
@@ -222,22 +243,70 @@ WallpaperScreen::updateBackgrounds ()
 	return;
     }
 
-    backgrounds.clear ();
+    numBackgrounds = cBgImage.size ();
+
+    backgroundsPrimary.clear ();
 
     for (int i = 0; i < cBgImage.size (); i++)
     {
-     	backgrounds.push_back (WallpaperBackground ());
+     	backgroundsPrimary.push_back (WallpaperBackground ());
 
-	backgrounds[i].image    = cBgImage[i].s ();
-	backgrounds[i].imagePos = cBgImagePos[i].i ();
-	backgrounds[i].fillType = cBgFillType[i].i ();
-	memcpy (backgrounds[i].color1, cBgColor1[i].c (),
+	backgroundsPrimary[i].image    = cBgImage[i].s ();
+	backgroundsPrimary[i].imagePos = cBgImagePos[i].i ();
+	backgroundsPrimary[i].fillType = cBgFillType[i].i ();
+	memcpy (backgroundsPrimary[i].color1, cBgColor1[i].c (),
 		4 * sizeof(unsigned short));
-	memcpy (backgrounds[i].color2, cBgColor2[i].c (),
+	memcpy (backgroundsPrimary[i].color2, cBgColor2[i].c (),
 		4 * sizeof(unsigned short));
 
-	initBackground (&backgrounds[i]);
+	initBackground (&backgroundsPrimary[i]);
     }
+
+    blackenSecondary ();
+
+    fadeDuration = optionGetCycleTimeout ();
+    fadeTimer = optionGetFadeDuration ();
+}
+
+void
+WallpaperScreen::rotateBackgrounds ()
+{
+    if (numBackgrounds)
+    {
+	WallpaperBackground item = backgroundsPrimary.front();
+
+	backgroundsSecondary = backgroundsPrimary;
+	backgroundsPrimary.erase (backgroundsPrimary.begin ());
+	backgroundsPrimary.push_back (item);
+    }
+
+    fadeTimer = fadeDuration;
+}
+
+void
+WallpaperScreen::updateTimers ()
+{
+    fadeTimeout = (optionGetCycleTimeout () * 1000 * 60);
+    fadeDuration = (optionGetFadeDuration () * 1000);
+    fadeTimer = fadeDuration;
+    if (optionGetCycleWallpapers ())
+	rotateTimer.start (fadeTimeout, fadeTimeout * 1.2);
+    else
+	rotateTimer.stop ();
+}
+
+bool
+WallpaperScreen::rotateTimeout ()
+{
+    rotateBackgrounds ();
+    updateProperty ();
+
+    cScreen->preparePaintSetEnabled (this, true);
+    cScreen->donePaintSetEnabled (this, true);
+
+    cScreen->damageScreen ();
+
+    return true;
 }
 
 /* Installed as a handler for the images setting changing through bcop */
@@ -247,11 +316,21 @@ WallpaperScreen::wallpaperBackgroundsChanged (CompOption *o,
 {
     updateBackgrounds ();
     updateProperty ();
+    updateTimers ();
+
     cScreen->damageScreen ();
 }
 
+void
+WallpaperScreen::wallpaperCycleOptionChanged (CompOption *o,
+			                      Options    num)
+{
+    blackenSecondary ();
+    updateTimers ();
+}
+
 WallpaperBackground *
-WallpaperScreen::getBackgroundForViewport ()
+WallpaperScreen::getBackgroundForViewport (WallpaperBackgrounds &bg)
 {
     CompPoint offset = cScreen->windowPaintOffset ();
     CompPoint vp = screen->vp ();
@@ -259,7 +338,7 @@ WallpaperScreen::getBackgroundForViewport ()
     CompRect  workarea = screen->workArea ();
     int x, y;
 
-    if (backgrounds.empty())
+    if (bg.empty())
 	return NULL;
 
     x = vp.x () - (offset.x () / (int) workarea.width ());
@@ -272,7 +351,7 @@ WallpaperScreen::getBackgroundForViewport ()
     if (y < 0)
 	y += vpSize.height ();
 
-    return &backgrounds[(x + (y * vpSize.width ())) % backgrounds.size()];
+    return &bg[(x + (y * vpSize.width ())) % bg.size()];
 }
 
 void
@@ -280,12 +359,37 @@ WallpaperScreen::handleEvent (XEvent *event)
 {
     screen->handleEvent (event);
 
-    if (!screen->desktopWindowCount () && fakeDesktop == None && backgrounds.size())
+    if (!screen->desktopWindowCount () && fakeDesktop == None && backgroundsPrimary.size())
 	createFakeDesktopWindow ();
 
-    if ((screen->desktopWindowCount () > 1 || backgrounds.empty())
+    if ((screen->desktopWindowCount () > 1 || backgroundsPrimary.empty())
 	&& fakeDesktop != None)
 	destroyFakeDesktopWindow ();
+}
+
+void
+WallpaperScreen::preparePaint (int msSinceLastPaint)
+{
+    fadeTimer -= msSinceLastPaint;
+    if (fadeTimer < 0)
+	fadeTimer = 0;
+    alpha = (fadeDuration - fadeTimer) / fadeDuration;
+
+    cScreen->preparePaint (msSinceLastPaint);
+}
+
+void
+WallpaperScreen::donePaint ()
+{
+    if (fadeTimer > 0)
+	cScreen->damageScreen ();
+    else
+    {
+	cScreen->preparePaintSetEnabled (this, false);
+	cScreen->donePaintSetEnabled (this, false);
+    }
+
+    cScreen->donePaint ();
 }
 
 bool
@@ -300,6 +404,153 @@ WallpaperScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
     return gScreen->glPaintOutput (sAttrib, transform, region, output, mask);
 }
 
+void
+WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
+				  const CompRegion &region,
+				  unsigned int mask,
+				  WallpaperBackgrounds& bg,
+				  bool fadingIn)
+{
+    WALLPAPER_SCREEN (screen);
+
+    CompRect            tmpRect;
+    GLTexture::Matrix   matrix;
+    GLTexture::MatrixList tmpMatrixList;
+    WallpaperBackground *back = ws->getBackgroundForViewport (bg);
+
+    tmpMatrixList.push_back (matrix);
+
+    gWindow->geometry().reset();
+
+    tmpMatrixList[0] = back->fillTexMatrix[0];
+
+    if (back->fillType == WallpaperOptions::BgFillTypeVerticalGradient)
+    {
+	tmpMatrixList[0].yy /= (float) screen->height () / 2.0;
+    }
+    else if (back->fillType == WallpaperOptions::BgFillTypeHorizontalGradient)
+    {
+	tmpMatrixList[0].xx /= (float) screen->width () / 2.0;
+    }
+
+    gWindow->glAddGeometry (tmpMatrixList, screen->region (),
+			    (mask & PAINT_WINDOW_TRANSFORMED_MASK) ?
+			    infiniteRegion : region);
+
+    if (ws->optionGetCycleWallpapers ())
+    {
+	if (fadingIn)
+	    attrib.setOpacity (OPAQUE * (1.0f - ws->alpha));
+	else
+	    attrib.setOpacity (OPAQUE * ws->alpha);
+    }
+	
+    if (attrib.getOpacity () != OPAQUE)
+	mask |= PAINT_WINDOW_BLEND_MASK;
+
+    if (gWindow->geometry ().vCount)
+	gWindow->glDrawTexture(back->fillTex[0], attrib, mask);
+
+    if (back->imgSize.width () && back->imgSize.height ())
+    {
+	CompRegion reg = screen->region ();
+	float  s1, s2;
+	int    x, y, xi;
+
+	gWindow->geometry ().vCount = gWindow->geometry ().indexCount = 0;
+	tmpMatrixList[0] = back->imgTex[0]->matrix ();
+
+	if (back->imagePos == WallpaperOptions::BgImagePosScaleAndCrop)
+	{
+	    s1 = (float) screen->width () / back->imgSize.width ();
+	    s2 = (float) screen->height () / back->imgSize.height ();
+
+	    s1 = MAX (s1, s2);
+
+	    tmpMatrixList[0].xx /= s1;
+	    tmpMatrixList[0].yy /= s1;
+
+	    x = (screen->width () - ((int)back->imgSize.width () * s1)) / 2.0;
+	    tmpMatrixList[0].x0 -= x * tmpMatrixList[0].xx;
+	    y = (screen->height () - ((int)back->imgSize.height () * s1)) / 2.0;
+	    tmpMatrixList[0].y0 -= y * tmpMatrixList[0].yy;
+	}
+	else if (back->imagePos == WallpaperOptions::BgImagePosScaled)
+	{
+	    s1 = (float) screen->width () / back->imgSize.width ();
+	    s2 = (float) screen->height () / back->imgSize.height ();
+	    tmpMatrixList[0].xx /= s1;
+	    tmpMatrixList[0].yy /= s2;
+	}
+	else if (back->imagePos == WallpaperOptions::BgImagePosCentered)
+	{
+	    x = (screen->width () - (int)back->imgSize.width ()) / 2;
+	    y = (screen->height () - (int)back->imgSize.height ()) / 2;
+	    tmpMatrixList[0].x0 -= x * tmpMatrixList[0].xx;
+	    tmpMatrixList[0].y0 -= y * tmpMatrixList[0].yy;
+
+	    tmpRect.setLeft (MAX (0, x));
+	    tmpRect.setTop (MAX (0, y));
+	    tmpRect.setRight (MIN (screen->width (), x + back->imgSize.width ()));
+	    tmpRect.setBottom (MIN (screen->height (), y + back->imgSize.height ()));
+
+	    reg = CompRegion (tmpRect);
+	}
+
+	if (back->imagePos == WallpaperOptions::BgImagePosTiled ||
+	    back->imagePos == WallpaperOptions::BgImagePosCenterTiled)
+	{
+	    if (back->imagePos == WallpaperOptions::BgImagePosCenterTiled)
+	    {
+		x = (screen->width () - (int)back->imgSize.width ()) / 2;
+		y = (screen->height () - (int)back->imgSize.height ()) / 2;
+
+		if (x > 0)
+		    x = (x % (int)back->imgSize.width ()) - (int)back->imgSize.width ();
+		if (y > 0)
+		    y = (y % (int)back->imgSize.height ()) - (int)back->imgSize.height ();
+	    }
+	    else
+	    {
+		x = 0;
+		y = 0;
+	    }
+
+	    while (y < (int) screen->height ())
+	    {
+		xi = x;
+		while (xi < (int) screen->width ())
+		{
+		    tmpMatrixList[0] = back->imgTex[0]->matrix ();
+
+		    tmpMatrixList[0].x0 -= xi * tmpMatrixList[0].xx;
+		    tmpMatrixList[0].y0 -= y * tmpMatrixList[0].yy;
+
+		    tmpRect.setLeft (MAX (0, xi));
+		    tmpRect.setTop (MAX (0, y));
+		    tmpRect.setRight (MIN (screen->width (), xi + back->imgSize.width ()));
+		    tmpRect.setBottom (MIN (screen->height (),
+						y + back->imgSize.height ()));
+
+		    reg = CompRegion (tmpRect);
+
+		    gWindow->glAddGeometry (tmpMatrixList, reg, region);
+
+		    xi += (int)back->imgSize.width ();
+		}
+		y += (int)back->imgSize.height ();
+	    }
+	}
+	else
+	{
+	    gWindow->glAddGeometry (tmpMatrixList, reg, region);
+	}
+
+	if (gWindow->geometry ().vCount)
+	    gWindow->glDrawTexture (back->imgTex[0], attrib, mask | PAINT_WINDOW_BLEND_MASK);
+    }
+}
+
 bool
 WallpaperWindow::glDraw (const GLMatrix &transform,
 			 GLFragment::Attrib &attrib,
@@ -308,17 +559,11 @@ WallpaperWindow::glDraw (const GLMatrix &transform,
 {
     WALLPAPER_SCREEN (screen);
 
-    if ((!ws->desktop || ws->desktop == window) && ws->backgrounds.size() &&
+    if ((!ws->desktop || ws->desktop == window) && ws->backgroundsPrimary.size() &&
 	window->alpha () && window->type () & CompWindowTypeDesktopMask)
     {
-	CompRect            tmpRect;
-        GLTexture::Matrix   matrix;
-        GLTexture::MatrixList tmpMatrixList;
+	int filterIdx;
 	GLTexture::Filter   saveFilter;
-	int                 filterIdx;
-	WallpaperBackground *back = ws->getBackgroundForViewport ();
-
-	tmpMatrixList.push_back (matrix);
 
 	if (mask & PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK)
 	    filterIdx = SCREEN_TRANS_FILTER;
@@ -328,142 +573,22 @@ WallpaperWindow::glDraw (const GLMatrix &transform,
 	    filterIdx = NOTHING_TRANS_FILTER;
 	
 	saveFilter = ws->gScreen->filter (filterIdx);
-
 	ws->gScreen->setFilter (filterIdx, GLTexture::Good);
-	
-	if (attrib.getOpacity () != OPAQUE)
-	    mask |= PAINT_WINDOW_BLEND_MASK;
 
-	gWindow->geometry ().vCount = gWindow->geometry ().indexCount = 0;
-	
-	tmpMatrixList[0] = back->fillTexMatrix[0];
+	if (ws->optionGetCycleWallpapers ())
+	    drawBackgrounds (attrib, region, mask,
+			     ws->backgroundsSecondary, true);
+	drawBackgrounds (attrib, region, mask,
+			 ws->backgroundsPrimary, false);
 
-	if (back->fillType == WallpaperOptions::BgFillTypeVerticalGradient)
-	{
-	    tmpMatrixList[0].yy /= (float) screen->height () / 2.0;
-	}
-	else if (back->fillType == WallpaperOptions::BgFillTypeHorizontalGradient)
-	{
-	    tmpMatrixList[0].xx /= (float) screen->width () / 2.0;
-	}
+	ws->gScreen->setFilter (filterIdx, saveFilter);
 
-	gWindow->glAddGeometry (tmpMatrixList, screen->region (),
-				(mask & PAINT_WINDOW_TRANSFORMED_MASK) ?
-				infiniteRegion : region);
-
-	if (gWindow->geometry ().vCount)
-	    gWindow->glDrawTexture(back->fillTex[0], attrib, mask);
-	
-	mask |= PAINT_WINDOW_BLEND_MASK;
-
-	if (back->imgSize.width () && back->imgSize.height ())
-	{
-	    CompRegion reg = screen->region ();
-	    float  s1, s2;
-	    int    x, y, xi;
-
-	    gWindow->geometry ().vCount = gWindow->geometry ().indexCount = 0;
-	    tmpMatrixList[0] = back->imgTex[0]->matrix ();
-
-	    if (back->imagePos == WallpaperOptions::BgImagePosScaleAndCrop)
-	    {
-		s1 = (float) screen->width () / back->imgSize.width ();
-		s2 = (float) screen->height () / back->imgSize.height ();
-		
-		s1 = MAX (s1, s2);
-
-		tmpMatrixList[0].xx /= s1;
-		tmpMatrixList[0].yy /= s1;
-		
-		x = (screen->width () - ((int)back->imgSize.width () * s1)) / 2.0;
-		tmpMatrixList[0].x0 -= x * tmpMatrixList[0].xx;
-		y = (screen->height () - ((int)back->imgSize.height () * s1)) / 2.0;
-		tmpMatrixList[0].y0 -= y * tmpMatrixList[0].yy;
-	    }
-	    else if (back->imagePos == WallpaperOptions::BgImagePosScaled)
-	    {
-		s1 = (float) screen->width () / back->imgSize.width ();
-		s2 = (float) screen->height () / back->imgSize.height ();
-		tmpMatrixList[0].xx /= s1;
-		tmpMatrixList[0].yy /= s2;
-	    }
-	    else if (back->imagePos == WallpaperOptions::BgImagePosCentered)
-	    {
-		x = (screen->width () - (int)back->imgSize.width ()) / 2;
-		y = (screen->height () - (int)back->imgSize.height ()) / 2;
-		tmpMatrixList[0].x0 -= x * tmpMatrixList[0].xx;
-		tmpMatrixList[0].y0 -= y * tmpMatrixList[0].yy;
-
-		tmpRect.setLeft (MAX (0, x));
-		tmpRect.setTop (MAX (0, y));
-		tmpRect.setRight (MIN (screen->width (), x + back->imgSize.width ()));
-		tmpRect.setBottom (MIN (screen->height (), y + back->imgSize.height ()));
-		
-		reg = CompRegion (tmpRect);
-	    }
-
-	    if (back->imagePos == WallpaperOptions::BgImagePosTiled ||
-		back->imagePos == WallpaperOptions::BgImagePosCenterTiled)
-	    {
-		if (back->imagePos == WallpaperOptions::BgImagePosCenterTiled)
-		{
-		    x = (screen->width () - (int)back->imgSize.width ()) / 2;
-		    y = (screen->height () - (int)back->imgSize.height ()) / 2;
-
-		    if (x > 0)
-			x = (x % (int)back->imgSize.width ()) - (int)back->imgSize.width ();
-		    if (y > 0)
-			y = (y % (int)back->imgSize.height ()) - (int)back->imgSize.height ();
-		}
-		else
-		{
-		    x = 0;
-		    y = 0;
-		}
-
-		while (y < (int) screen->height ())
-		{
-		    xi = x;
-		    while (xi < (int) screen->width ())
-		    {
-			tmpMatrixList[0] = back->imgTex[0]->matrix ();
-
-			tmpMatrixList[0].x0 -= xi * tmpMatrixList[0].xx;
-			tmpMatrixList[0].y0 -= y * tmpMatrixList[0].yy;
-
-			tmpRect.setLeft (MAX (0, xi));
-			tmpRect.setTop (MAX (0, y));
-			tmpRect.setRight (MIN (screen->width (), xi + back->imgSize.width ()));
-			tmpRect.setBottom (MIN (screen->height (),
-						    y + back->imgSize.height ()));
-
-                        reg = CompRegion (tmpRect);
-
-			gWindow->glAddGeometry (tmpMatrixList, reg, region);
-
-			xi += (int)back->imgSize.width ();
-		    }
-		    y += (int)back->imgSize.height ();
-		}
-	    }
-	    else
-	    {
-		gWindow->glAddGeometry (tmpMatrixList, reg, region);
-	    }
-
-	    if (gWindow->geometry ().vCount)
-	        gWindow->glDrawTexture (back->imgTex[0], attrib, mask);
-
-	    ws->gScreen->setFilter (filterIdx, saveFilter);
-	}
-	
 	ws->desktop = window;
 	attrib.setOpacity (OPAQUE);
     }
 
     return gWindow->glDraw (transform, attrib, region, mask);
 }
-
 
 bool
 WallpaperWindow::damageRect (bool            initial,
@@ -483,9 +608,11 @@ WallpaperScreen::WallpaperScreen (CompScreen *screen) :
     WallpaperOptions (),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
-    backgrounds ()
+    backgroundsPrimary (),
+    backgroundsSecondary ()
 {
     ScreenInterface::setHandler (screen, true);
+    CompositeScreenInterface::setHandler (cScreen, true);
     GLScreenInterface::setHandler (gScreen, true);
 
     compizWallpaperAtom = XInternAtom (screen->dpy (),
@@ -494,6 +621,10 @@ WallpaperScreen::WallpaperScreen (CompScreen *screen) :
     propSet = false;
     fakeDesktop = None;
     desktop = NULL;
+    fadeTimer = 0.0f;
+    fadeTimeout = 0.0f;
+    fadeDuration = 0.0f;
+    alpha = 0.0f;
 
     optionSetBgImageNotify    (boost::bind (&WallpaperScreen::
 				wallpaperBackgroundsChanged, this, _1, _2));
@@ -506,11 +637,18 @@ WallpaperScreen::WallpaperScreen (CompScreen *screen) :
     optionSetBgColor2Notify   (boost::bind (&WallpaperScreen::
 				wallpaperBackgroundsChanged, this, _1, _2));
 
+    optionSetCycleTimeoutNotify		(boost::bind (&WallpaperScreen::
+				    wallpaperCycleOptionChanged, this, _1, _2));
+    optionSetFadeDurationNotify		(boost::bind (&WallpaperScreen::
+				    wallpaperCycleOptionChanged, this, _1, _2));
+
+    rotateTimer.setCallback (boost::bind (&WallpaperScreen::rotateTimeout, this));
+
     updateBackgrounds ();
     updateProperty ();
     cScreen->damageScreen ();
 
-    if (!screen->desktopWindowCount () && backgrounds.size())
+    if (!screen->desktopWindowCount () && backgroundsPrimary.size())
 	createFakeDesktopWindow ();
 }
 
