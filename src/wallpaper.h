@@ -19,6 +19,10 @@
  *
  */
 
+#include <X11/Xatom.h>
+#include <X11/extensions/Xrender.h>
+#include <X11/extensions/shape.h>
+
 #include <core/core.h>
 #include <core/pluginclasshandler.h>
 #include <core/atoms.h>
@@ -38,7 +42,7 @@ class WallpaperBackground
 	unsigned short color2[4];
 
 	GLTexture::List imgTex;
-	CompSize	    imgSize;
+	CompSize	imgSize;
 	GLTexture::List fillTex;
 	GLTexture::MatrixList fillTexMatrix;
 };
@@ -59,6 +63,23 @@ class WallpaperScreen :
 	CompositeScreen *cScreen;
         GLScreen        *gScreen;
 
+	bool                 propSet;
+	Window               fakeDesktop;
+	CompWindow           *desktop;
+
+	WallpaperBackgrounds backgrounds;
+
+	void createFakeDesktopWindow ();
+	void destroyFakeDesktopWindow ();
+
+	void updateProperty();
+	void updateBackgrounds ();
+    
+	void wallpaperBackgroundsChanged (CompOption *opt,
+					  Options    num);
+
+	WallpaperBackground *getBackgroundForViewport ();
+
 	void
 	handleEvent (XEvent *);
 
@@ -69,28 +90,10 @@ class WallpaperScreen :
 		       CompOutput *output,
 		       unsigned int mask);
 
-	void createFakeDesktopWindow ();
-	void destroyFakeDesktopWindow ();
-
-	void updateBackgrounds ();
-	void updateProperty();
-
-	WallpaperBackground *getBackgroundForViewport ();
-
-	bool                 propSet;
-	Window               fakeDesktop;
-	CompWindow           *desktop;
-
 	/* _COMPIZ_WALLPAPER_SUPPORTED atom is used to indicate that
 	 * the wallpaper plugin or a plugin providing similar functionality is
 	 * active so that desktop managers can respond appropriately */
 	Atom compizWallpaperAtom;
-
-	WallpaperBackgrounds backgrounds;
-
-    
-	void wallpaperBackgroundsChanged (CompOption *opt,
-					  Options    num);
 };
 
 class WallpaperWindow :
@@ -101,22 +104,21 @@ class WallpaperWindow :
     public:
 
 	WallpaperWindow (CompWindow *);
-	~WallpaperWindow ();
 
 	CompWindow      *window;
 	CompositeWindow *cWindow;
         GLWindow        *gWindow;
 
-	bool damageRect (bool, const CompRect &);
-
 	bool glDraw (const GLMatrix &, GLFragment::Attrib &,
 		     const CompRegion &, unsigned int);
+
+	bool damageRect (bool, const CompRect &);
 };
 
-#define WALLPAPER_SCREEN(s)						      \
+#define WALLPAPER_SCREEN(s)				\
     WallpaperScreen *ws = WallpaperScreen::get (s);
 
-#define WALLPAPER_WINDOW(w)						       \
+#define WALLPAPER_WINDOW(w)				\
     WallpaperWindow *ww = WallpaperWindow::get (w);
 
 class WallpaperPluginVTable :

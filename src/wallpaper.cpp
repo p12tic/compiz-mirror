@@ -20,14 +20,6 @@
  *
  */
 
-#include <stdarg.h>
-#include <string.h>
-#include <math.h>
-
-#include <X11/Xatom.h>
-#include <X11/extensions/Xrender.h>
-#include <X11/extensions/shape.h>
-
 #include "wallpaper.h"
 
 COMPIZ_PLUGIN_20090315 (wallpaper, WallpaperPluginVTable);
@@ -210,15 +202,6 @@ initBackground (WallpaperBackground *back)
     
 }
 
-static void
-finiBackground (WallpaperBackground *back)
-{
-    back->imgTex.clear ();
-    back->fillTex.clear ();
-    back->fillTexMatrix.clear ();
-}
-
-
 void
 WallpaperScreen::updateBackgrounds ()
 {
@@ -256,7 +239,6 @@ WallpaperScreen::updateBackgrounds ()
 	initBackground (&backgrounds[i]);
     }
 }
-
 
 /* Installed as a handler for the images setting changing through bcop */
 void
@@ -305,7 +287,6 @@ WallpaperScreen::handleEvent (XEvent *event)
 	&& fakeDesktop != None)
 	destroyFakeDesktopWindow ();
 }
-
 
 bool
 WallpaperScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
@@ -550,11 +531,6 @@ WallpaperWindow::WallpaperWindow (CompWindow *window) :
 {
     CompositeWindowInterface::setHandler (cWindow, true);
     GLWindowInterface::setHandler (gWindow, true);
-}
-
-WallpaperWindow::~WallpaperWindow ()
-{
-
 }
 
 bool
