@@ -585,7 +585,7 @@ WallpaperWindow::glDraw (const GLMatrix &transform,
 	saveFilter = ws->gScreen->filter (filterIdx);
 	ws->gScreen->setFilter (filterIdx, GLTexture::Good);
 
-	if (ws->optionGetCycleWallpapers ())
+	if (ws->optionGetCycleWallpapers () && ws->rotateTimer.active ())
 	    drawBackgrounds (attrib, region, mask,
 			     ws->backgroundsSecondary, true);
 	drawBackgrounds (attrib, region, mask,
