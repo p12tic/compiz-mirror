@@ -374,7 +374,7 @@ WinrulesWindow::applyRules ()
     updateState (WinrulesOptions::FullscreenMatch,
 		 CompWindowStateFullscreenMask);
 
-    updateState (WinrulesOptions::NoMaximizeMatch,
+    updateState (WinrulesOptions::MaximizeMatch,
 		 CompWindowStateMaximizedHorzMask |
 		 CompWindowStateMaximizedVertMask);
 
