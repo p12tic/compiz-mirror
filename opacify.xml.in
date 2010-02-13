@@ -5,6 +5,9 @@
 	<_long>Make windows easily visible by hovering the mouse over them</_long>
 	<category>Accessibility</category>
 	<deps>
+		<requirement>
+			<plugin>opengl</plugin>
+		</requirement>
 		<relation type="after">
 			<plugin>fade</plugin>
 		</relation>
