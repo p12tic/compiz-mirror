@@ -25,6 +25,135 @@
 
 #include "kdecompat.h"
 
+void
+KDECompatWindow::stopCloseAnimation ()
+{
+    while (mUnmapCnt)
+    {
+	window->unmap ();
+	mUnmapCnt--;
+    }
+
+    while (mDestroyCnt)
+    {
+	window->destroy ();
+	mDestroyCnt--;
+    }
+}
+
+void
+KDECompatWindow::sendSlideEvent (bool start)
+{
+    CompOption::Vector  o;
+    
+    o.resize (2);
+
+    o.at (0) = CompOption ("window", CompOption::TypeInt);
+    o.at (0).value ().set ((int) window->id ());
+
+    o.at (1) = CompOption ("active", CompOption::TypeBool);
+    o.at (1).value ().set (start);
+    
+    screen->handleCompizEvent ("kdecompat", "slide", o);
+}
+
+void
+KDECompatWindow::startSlideAnimation (bool appearing)
+{
+    if (mSlideData)
+    {
+	SlideData *data = mSlideData;
+
+	KDECOMPAT_SCREEN (screen);
+
+	if (appearing)
+	    data->duration = ks->optionGetSlideInDuration ();
+	else
+	    data->duration = ks->optionGetSlideOutDuration ();
+
+	if (data->remaining > data->duration)
+	    data->remaining = data->duration;
+	else
+	    data->remaining = data->duration - data->remaining;
+
+	data->appearing      = appearing;
+	ks->mHasSlidingPopups = TRUE;
+	cWindow->addDamage ();
+	sendSlideEvent (TRUE);
+    }
+}
+
+void
+KDECompatWindow::endSlideAnimation ()
+{
+    if (mSlideData)
+    {
+	mSlideData->remaining = 0;
+	stopCloseAnimation ();
+	sendSlideEvent (FALSE);
+    }
+}
+
+void
+KDECompatScreen::preparePaint (int msSinceLastPaint)
+{
+    if (mHasSlidingPopups)
+    {
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    KDECOMPAT_WINDOW (w);
+
+	    if (!kw->mSlideData)
+		continue;
+
+	    kw->mSlideData->remaining -= msSinceLastPaint;
+	    if (kw->mSlideData->remaining <= 0)
+		kw->endSlideAnimation ();
+	}
+    }
+
+    cScreen->preparePaint (msSinceLastPaint);
+}
+
+bool
+KDECompatScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
+				const GLMatrix		  &transform,
+				const CompRegion	  &region,
+				CompOutput		  *output,
+				unsigned int		  mask)
+{
+    bool status;
+
+    if (mHasSlidingPopups)
+	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+
+    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
+
+    return status;
+}
+
+void
+KDECompatScreen::donePaint ()
+{
+    if (mHasSlidingPopups)
+    {
+	mHasSlidingPopups = FALSE;
+
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    KDECOMPAT_WINDOW (w);
+
+	    if (kw->mSlideData && kw->mSlideData->remaining)
+	    {
+		kw->cWindow->addDamage ();
+		mHasSlidingPopups = TRUE;
+	    }
+	}
+    }
+    
+    cScreen->donePaint ();
+}
+
 bool
 KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			  const GLMatrix	    &transform,
@@ -34,7 +163,72 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
     Bool         status;
 
     KDECOMPAT_SCREEN (screen);
-    
+
+    if (mSlideData && mSlideData->remaining)
+    {
+	GLFragment::Attrib fragment (gWindow->paintAttrib ());
+	GLMatrix           wTransform = transform;
+	SlideData          *data = mSlideData;
+	float              xTranslate = 0, yTranslate = 0, remainder;
+	CompRect           clipBox (window->x (), window->y (),
+				    window->width (), window->height ());
+
+	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
+	    return FALSE;
+
+	remainder = (float) data->remaining / data->duration;
+	if (!data->appearing)
+	    remainder = 1.0 - remainder;
+
+	switch (data->position) {
+	case East:
+	    xTranslate = (data->start - window->x ()) * remainder;
+	    clipBox.setWidth (data->start - clipBox.x ());
+	    break;
+	case West:
+	    xTranslate = (data->start - window->width ()) * remainder;
+	    clipBox.setX (data->start);
+	    break;
+	case North:
+	    yTranslate = (data->start - window->height ()) * remainder;
+	    clipBox.setY (data->start);
+	    break;
+	case South:
+	default:
+	    yTranslate = (data->start - window->y ()) * remainder;
+	    clipBox.setWidth (data->start - clipBox.y1 ());
+	    break;
+	}
+	
+	status = gWindow->glPaint (attrib, transform, region, mask |
+				   PAINT_WINDOW_NO_CORE_INSTANCE_MASK);
+
+	if (window->alpha () || fragment.getOpacity () != OPAQUE)
+	    mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
+
+	wTransform.translate (xTranslate, yTranslate, 0.0f);
+
+	glPushMatrix ();
+	glLoadMatrixf (wTransform.getMatrix ());
+
+	glPushAttrib (GL_SCISSOR_BIT);
+	glEnable (GL_SCISSOR_TEST);
+
+	glScissor (clipBox.x1 (), screen->height () - clipBox.y2 (),
+		   clipBox.x2 () - clipBox.x1 (), clipBox.y2 () - clipBox.y1 ());
+
+	gWindow->glDraw (wTransform, fragment, region,
+			 mask | PAINT_WINDOW_TRANSFORMED_MASK);
+
+	glDisable (GL_SCISSOR_TEST);
+	glPopAttrib ();
+	glPopMatrix ();
+    }
+    else
+    {
+	status = gWindow->glPaint (attrib, transform, region, mask);
+    }
+
     status = gWindow->glPaint (attrib, transform, region, mask);
 
     if (!ks->optionGetPlasmaThumbnails () ||
@@ -220,19 +414,106 @@ KDECompatWindow::updatePreviews ()
 }
 
 void
+KDECompatWindow::updateSlidePosition ()
+{
+    Atom	  actual;
+    int		  result, format;
+    unsigned long n, left;
+    unsigned char *propData;
+
+    
+    KDECOMPAT_SCREEN (screen);
+
+    if (mSlideData)
+    {
+	delete mSlideData;
+	mSlideData = NULL;
+    }
+
+    result = XGetWindowProperty (screen->dpy (), window->id (), ks->mKdeSlideAtom, 0,
+				 32768, FALSE, AnyPropertyType, &actual,
+				 &format, &n, &left, &propData);
+
+    if (result == Success && propData)
+    {
+	if (format == 32 && actual == ks->mKdeSlideAtom && n == 2)
+	{
+	    long *data = (long *) propData;
+
+	    mSlideData = new SlideData;
+	    if (mSlideData)
+	    {
+		mSlideData->remaining = 0;
+		mSlideData->start     = data[0];
+		mSlideData->position  = (KDECompatWindow::SlidePosition) data[1];
+	    }
+	}
+
+	XFree (propData);
+    }
+}
+
+void
+KDECompatWindow::handleClose (bool destroy)
+{
+    KDECOMPAT_SCREEN (screen);
+
+    if (mSlideData && ks->optionGetSlidingPopups ())
+    {
+	if (destroy)
+	{
+	    mDestroyCnt++;
+	    window->incrementDestroyReference ();
+	}
+	else
+	{
+	    mUnmapCnt++;
+	    window->incrementDestroyReference ();
+	}
+
+	if (mSlideData->appearing || !mSlideData->remaining)
+	    startSlideAnimation (FALSE);
+    }
+}
+
+void
 KDECompatScreen::handleEvent (XEvent *event)
-{    
+{
+    CompWindow *w;
+
+    switch (event->type) {
+    case DestroyNotify:
+	w = screen->findWindow (event->xdestroywindow.window);
+	if (w)
+	    KDECompatWindow::get (w)->handleClose (TRUE);
+	break;
+    case UnmapNotify:
+	w = screen->findWindow (event->xunmap.window);
+	if (w && !w->pendingUnmaps ())
+	    KDECompatWindow::get (w)->handleClose (FALSE);
+	break;
+    case MapNotify:
+	w = screen->findWindow (event->xmap.window);
+	if (w)
+	    KDECompatWindow::get (w)->stopCloseAnimation ();
+	break;
+    }
+
     screen->handleEvent (event);
 
     switch (event->type) {
     case PropertyNotify:
 	if (event->xproperty.atom == mKdePreviewAtom)
 	{
-	    CompWindow *w;
-
 	    w = screen->findWindow (event->xproperty.window);
 	    if (w)
 		KDECompatWindow::get (w)->updatePreviews ();
+	}
+	else if (event->xproperty.atom == mKdeSlideAtom)
+	{
+	    w = screen->findWindow (event->xproperty.window);
+	    if (w)
+		KDECompatWindow::get (w)->updateSlidePosition ();
 	}
 	break;
     }
@@ -266,6 +547,9 @@ KDECompatWindow::damageRect (bool           initial,
 	    }
         }
     }
+
+    if (initial && ks->optionGetSlidingPopups ())
+	startSlideAnimation (TRUE);
     
     status = cWindow->damageRect (initial, rect);
 
@@ -273,18 +557,19 @@ KDECompatWindow::damageRect (bool           initial,
 }
 
 void
-KDECompatScreen::advertiseThumbSupport (bool supportThumbs)
+KDECompatScreen::advertiseSupport (Atom atom,
+				   bool enable)
 {
-    if (supportThumbs)
+    if (enable)
     {
 	unsigned char value = 0;
 
-	XChangeProperty (screen->dpy (), screen->root (), mKdePreviewAtom,
+	XChangeProperty (screen->dpy (), screen->root (), atom,
 			 mKdePreviewAtom, 8, PropModeReplace, &value, 1);
     }
     else
     {
-	XDeleteProperty (screen->dpy (), screen->root (), mKdePreviewAtom);
+	XDeleteProperty (screen->dpy (), screen->root (), atom);
     }
 }
 
@@ -293,7 +578,9 @@ KDECompatScreen::optionChanged (CompOption                *option,
 				KdecompatOptions::Options num)
 {
     if (num == KdecompatOptions::PlasmaThumbnails)
-	advertiseThumbSupport (option->value ().b ());
+	advertiseSupport (mKdePreviewAtom, option->value ().b ());
+    else if (num == KdecompatOptions::SlidingPopups)
+	advertiseSupport (mKdeSlideAtom, option->value (). b ());
 }
 
 
@@ -305,13 +592,16 @@ KDECompatScreen::KDECompatScreen (CompScreen *screen) :
 {
     ScreenInterface::setHandler (screen);
     
-    advertiseThumbSupport (optionGetPlasmaThumbnails ());
+    advertiseSupport (mKdePreviewAtom, optionGetPlasmaThumbnails ());
+    advertiseSupport (mKdeSlideAtom, optionGetSlidingPopups ());
     optionSetPlasmaThumbnailsNotify (
 	boost::bind (&KDECompatScreen::optionChanged, this, _1, _2));
 }
 
 KDECompatScreen::~KDECompatScreen ()
 {
+    advertiseSupport (mKdePreviewAtom, FALSE);
+    advertiseSupport (mKdeSlideAtom, FALSE);
 }
 
 KDECompatWindow::KDECompatWindow (CompWindow *window) :
@@ -319,7 +609,10 @@ KDECompatWindow::KDECompatWindow (CompWindow *window) :
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
-    mIsPreview (false)
+    mIsPreview (false),
+    mSlideData (NULL),
+    mDestroyCnt (0),
+    mUnmapCnt (0)
 {
     CompositeWindowInterface::setHandler (cWindow);
     GLWindowInterface::setHandler (gWindow);
@@ -327,6 +620,10 @@ KDECompatWindow::KDECompatWindow (CompWindow *window) :
 
 KDECompatWindow::~KDECompatWindow ()
 {
+    stopCloseAnimation ();
+    
+    if (mSlideData)
+	delete mSlideData;
 }
     
 bool

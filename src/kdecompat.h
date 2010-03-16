@@ -51,16 +51,36 @@ class KDECompatScreen :
 	handleEvent (XEvent *);
 	
 	void
-	advertiseThumbSupport (bool supportThumbs);
+	advertiseSupport (Atom atom,
+			  bool enable);
 	
 	void
 	optionChanged (CompOption                *option,
 		       KdecompatOptions::Options num);
 	
+	void
+	preparePaint (int);
+	
+	bool
+	glPaintOutput (const GLScreenPaintAttrib &attrib,
+		       const GLMatrix		 &transform,
+		       const CompRegion		 &region,
+		       CompOutput		 *,
+		       unsigned int		 mask);
+	
+	void
+	donePaint ();
+	
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
 
 	Atom mKdePreviewAtom;
+	Atom mKdeSlideAtom;
+	
+	bool mHasSlidingPopups;
+	
+	int  mDestroyCnt;
+	int  mUnmapCnt;
 };
 
 #define KDECOMPAT_SCREEN(s)						       \
@@ -86,9 +106,28 @@ class KDECompatWindow :
 	    Window   id;
 	    CompRect thumb;
 	} Thumb;
+	
+	typedef enum {
+	    West = 0,
+	    North = 1,
+	    East = 2,
+	    South = 3
+	} SlidePosition;
+	
+	typedef struct {
+	    SlidePosition position;
+	    int           start;
+	    bool          appearing;
+	    int           remaining;
+	    int           duration;
+	} SlideData;
 
 	std::list <Thumb> mPreviews;
 	bool		  mIsPreview;
+	
+	SlideData	  *mSlideData;
+	int		  mDestroyCnt;
+	int		  mUnmapCnt;
 	
     public:
     
@@ -104,6 +143,24 @@ class KDECompatWindow :
 		    
 	void
 	updatePreviews ();
+	
+	void
+	stopCloseAnimation ();
+	
+	void
+	sendSlideEvent (bool start);
+	
+	void
+	startSlideAnimation (bool appearing);
+	
+	void
+	endSlideAnimation ();
+	
+	void
+	updateSlidePosition ();
+	
+	void
+	handleClose (bool);
 };
 
 #define KDECOMPAT_WINDOW(w)						       \
