@@ -47,6 +47,13 @@ class KDECompatScreen :
 
     public:
 
+	typedef struct {
+	    Window manager;
+	    std::vector <Window > windows;
+	} PresentWindowData;
+
+    public:
+
 	void
 	handleEvent (XEvent *);
 	
@@ -71,16 +78,39 @@ class KDECompatScreen :
 	void
 	donePaint ();
 	
+	void
+	handleCompizEvent (const char  *pluginName,
+			   const char  *eventName,
+			   CompOption::Vector  options);
+	
+	CompAction *
+	getScaleAction (const char *name);
+	
+	bool
+	scaleActivate (PresentWindowData *data);
+	
+	void
+	freeScaleTimeout ();
+	
+	
+	
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
 
 	Atom mKdePreviewAtom;
 	Atom mKdeSlideAtom;
+	Atom mKdePresentGroupAtom;
 	
 	bool mHasSlidingPopups;
 	
 	int  mDestroyCnt;
 	int  mUnmapCnt;
+	
+	CompPlugin *mScaleHandle;
+	bool	   mScaleActive;
+	CompTimer  mScaleTimeout;
+	
+	CompWindow *mPresentWindow;
 };
 
 #define KDECOMPAT_SCREEN(s)						       \
@@ -161,6 +191,9 @@ class KDECompatWindow :
 	
 	void
 	handleClose (bool);
+	
+	void
+	presentGroup ();
 };
 
 #define KDECOMPAT_WINDOW(w)						       \

@@ -476,6 +476,203 @@ KDECompatWindow::handleClose (bool destroy)
     }
 }
 
+CompAction *
+KDECompatScreen::getScaleAction (const char *name)
+{
+    CompPlugin *p = mScaleHandle;
+    
+    if (!p)
+	return NULL;
+	
+
+    foreach (CompOption &option, p->vTable->getOptions ())
+    {
+	if (option.type () == CompOption::TypeAction ||
+	    option.type () == CompOption::TypeButton ||
+	    option.type () == CompOption::TypeKey)
+	{
+	    if (strcmp (option.name ().c_str (), name) == 0)
+	    {
+		return &option.value ().action ();
+	    }
+	}
+    }
+
+    return NULL;
+}
+
+bool
+KDECompatScreen::scaleActivate (PresentWindowData *data)
+{
+    CompWindow        *w;
+
+    w = screen->findWindow (data->manager);
+    if (w && !mScaleActive)
+    {
+	CompOption::Vector   options;
+	CompMatch    *windowMatch;
+	CompAction   *action;
+	
+	options.resize (2);
+
+	options.at (0) = CompOption ("root", CompOption::TypeInt);
+	options.at (0).value ().set ((int) screen->root ());
+
+	options.at (1) = CompOption ("match", CompOption::TypeMatch);
+
+	mPresentWindow = w;
+
+	options.at (1).value ().set (CompMatch ());
+	windowMatch = &(options.at (1).value ().match ());
+
+	foreach (Window win, data->windows)
+	{
+	    CompString exp = (CompString ("xid=%ld", win));
+	    *windowMatch |= CompMatch (exp); // ???
+	}
+
+	windowMatch->update ();
+
+	action = getScaleAction ("initiate_all_key");
+	if (action && action->initiate ())
+	    action->initiate () (action, 0, options);
+    }
+
+    delete data;
+
+    return FALSE;
+}
+
+void
+KDECompatScreen::freeScaleTimeout ()
+{
+    //PresentWindowData *data = NULL;
+
+    if (mScaleTimeout.active ())
+    {
+	mScaleTimeout.stop ();
+	//if (data)
+	    //delete data; /// ???
+    }
+}
+
+void
+KDECompatWindow::presentGroup ()
+{
+    Atom          actual;
+    int           result, format;
+    unsigned long n, left;
+    unsigned char *propData;
+
+
+    KDECOMPAT_SCREEN (screen);
+
+    if (!ks->optionGetPresentWindows ())
+	return;
+
+    if (!ks->mScaleHandle)
+    {
+	compLogMessage ("kdecompat", CompLogLevelWarn,
+			"Scale plugin not loaded, present windows "
+			"effect not available!");
+	return;
+    }
+
+    result = XGetWindowProperty (screen->dpy (), window->id (),
+    				 ks->mKdePresentGroupAtom, 0,
+				 32768, FALSE, AnyPropertyType, &actual,
+				 &format, &n, &left, &propData);
+
+    if (result == Success && propData)
+    {
+	if (format == 32 && actual == ks->mKdePresentGroupAtom)
+	{
+	    long *property = (long *) propData;
+
+	    if (!n || !property[0])
+	    {
+		CompOption::Vector o;
+		CompAction *action;
+
+		/* end scale */
+
+		o.resize (1);
+
+		o.at (0) = CompOption ("root", CompOption::TypeInt);
+		o.at (0).value ().set ((int) screen->root ());
+
+		action = ks->getScaleAction ("initiate_all_key");
+		if (action && action->terminate ())
+		    action->terminate () (action, CompAction::StateCancel,
+		    				   o);
+
+	    }
+	    else
+	    {
+		KDECompatScreen::PresentWindowData *data;
+
+		/* Activate scale using a timeout - Rationale:
+		 * At the time we get the property notify event, Plasma
+		 * most likely holds a pointer grab due to the action being
+		 * initiated by a button click. As scale also wants to get
+		 * a pointer grab, we need to delay the activation a bit so
+		 * Plasma can release its grab.
+		 */
+
+		ks->freeScaleTimeout ();
+
+		data = (KDECompatScreen::PresentWindowData *)
+		      malloc (
+		          sizeof (KDECompatScreen::PresentWindowData) + 
+		          	  n * sizeof (Window));
+		if (data)
+		{
+		    unsigned int i = 0;
+
+		    data->manager  = window->id ();
+		    data->windows.resize (n);
+		    foreach (Window &win, data->windows)
+		    {
+			win = property[i];
+			i++;
+		    }
+
+		    ks->mScaleTimeout.setCallback (
+		        boost::bind (&KDECompatScreen::scaleActivate, ks,
+		        		(KDECompatScreen::PresentWindowData *)
+		        						data));
+		    ks->mScaleTimeout.start ();
+		}
+	    }
+	}
+
+	XFree (propData);
+    }
+}
+
+void
+KDECompatScreen::handleCompizEvent (const char  *pluginName,
+			    	    const char  *eventName,
+			    	    CompOption::Vector  options)
+{
+
+    screen->handleCompizEvent (pluginName, eventName, options);
+
+    if (mScaleHandle                   &&
+	strcmp (pluginName, "scale") == 0 &&
+	strcmp (eventName, "activate") == 0)
+    {
+	mScaleActive = CompOption::getBoolOptionNamed (options, "active", FALSE);
+
+	if (!mScaleActive)
+	{
+	    if (mPresentWindow)
+		XDeleteProperty (screen->dpy (), mPresentWindow->id (),
+				 mKdePresentGroupAtom);
+	}
+    }
+}
+
 void
 KDECompatScreen::handleEvent (XEvent *event)
 {
@@ -514,6 +711,12 @@ KDECompatScreen::handleEvent (XEvent *event)
 	    w = screen->findWindow (event->xproperty.window);
 	    if (w)
 		KDECompatWindow::get (w)->updateSlidePosition ();
+	}
+	else if (event->xproperty.atom == mKdePresentGroupAtom)
+	{
+	    w = screen->findWindow (event->xproperty.window);
+	    if (w)
+		KDECompatWindow::get (w)->presentGroup ();
 	}
 	break;
     }
@@ -581,6 +784,9 @@ KDECompatScreen::optionChanged (CompOption                *option,
 	advertiseSupport (mKdePreviewAtom, option->value ().b ());
     else if (num == KdecompatOptions::SlidingPopups)
 	advertiseSupport (mKdeSlideAtom, option->value (). b ());
+    else if (num == KdecompatOptions::PresentWindows)
+	advertiseSupport (mKdePresentGroupAtom, option->value ().b () &&
+						mScaleHandle);
 }
 
 
@@ -588,12 +794,21 @@ KDECompatScreen::KDECompatScreen (CompScreen *screen) :
     PluginClassHandler <KDECompatScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
-    mKdePreviewAtom (XInternAtom (screen->dpy (), "_KDE_WINDOW_PREVIEW", 0))
+    mKdePreviewAtom (XInternAtom (screen->dpy (), "_KDE_WINDOW_PREVIEW", 0)),
+    mKdeSlideAtom (XInternAtom (screen->dpy (), "_KDE_SLIDE", 0)),
+    mKdePresentGroupAtom (XInternAtom (screen->dpy (), "_KDE_PRESENT_WINDOWS_GROUP", 0)),
+    mScaleHandle (CompPlugin::find ("scale")),
+    mScaleActive (FALSE),
+    mPresentWindow (NULL)
 {
     ScreenInterface::setHandler (screen);
     
+    mScaleTimeout.setTimes (100, 200);
+    
     advertiseSupport (mKdePreviewAtom, optionGetPlasmaThumbnails ());
     advertiseSupport (mKdeSlideAtom, optionGetSlidingPopups ());
+    advertiseSupport (mKdePresentGroupAtom, optionGetPresentWindows () &&
+    					    mScaleHandle);
     optionSetPlasmaThumbnailsNotify (
 	boost::bind (&KDECompatScreen::optionChanged, this, _1, _2));
 }
@@ -602,6 +817,9 @@ KDECompatScreen::~KDECompatScreen ()
 {
     advertiseSupport (mKdePreviewAtom, FALSE);
     advertiseSupport (mKdeSlideAtom, FALSE);
+    advertiseSupport (mKdePresentGroupAtom, FALSE);
+    
+    freeScaleTimeout ();
 }
 
 KDECompatWindow::KDECompatWindow (CompWindow *window) :
@@ -624,6 +842,9 @@ KDECompatWindow::~KDECompatWindow ()
     
     if (mSlideData)
 	delete mSlideData;
+
+    if (KDECompatScreen::get (screen)->mPresentWindow == window)
+	KDECompatScreen::get (screen)->mPresentWindow = NULL;
 }
     
 bool

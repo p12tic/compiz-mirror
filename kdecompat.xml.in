@@ -15,6 +15,11 @@
 				<_long>Support window thumbnails in Plasma window tooltips</_long>
 				<default>true</default>
 			</option>
+			<option name="present_windows" type="bool">
+				<_short>Support Present Windows</_short>
+				<_long>Support the "present windows" effect for Plasma task groups</_long>
+				<default>true</default>
+			</option>
 			<group>
 				<_short>Popup Slide Effect</_short>
 				<option name="sliding_popups" type="bool">
