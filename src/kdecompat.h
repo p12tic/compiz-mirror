@@ -47,24 +47,17 @@ class KDECompatScreen :
 
     public:
 
-	typedef struct {
-	    Window manager;
-	    std::vector <Window > windows;
-	} PresentWindowData;
-
-    public:
-
 	void
 	handleEvent (XEvent *);
-	
+
 	void
 	advertiseSupport (Atom atom,
 			  bool enable);
-	
+
 	void
 	optionChanged (CompOption                *option,
 		       KdecompatOptions::Options num);
-	
+
 	void
 	preparePaint (int);
 	
@@ -72,45 +65,44 @@ class KDECompatScreen :
 	glPaintOutput (const GLScreenPaintAttrib &attrib,
 		       const GLMatrix		 &transform,
 		       const CompRegion		 &region,
-		       CompOutput		 *,
+		       CompOutput		 *output,
 		       unsigned int		 mask);
-	
+
 	void
 	donePaint ();
-	
+
 	void
-	handleCompizEvent (const char  *pluginName,
-			   const char  *eventName,
-			   CompOption::Vector  options);
+	handleCompizEvent (const char         *pluginName,
+			   const char         *eventName,
+			   CompOption::Vector options);
 	
 	CompAction *
 	getScaleAction (const char *name);
-	
+
 	bool
-	scaleActivate (PresentWindowData *data);
+	scaleActivate ();
 	
 	void
 	freeScaleTimeout ();
-	
-	
-	
+
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
 
 	Atom mKdePreviewAtom;
 	Atom mKdeSlideAtom;
 	Atom mKdePresentGroupAtom;
-	
+
 	bool mHasSlidingPopups;
-	
+
 	int  mDestroyCnt;
 	int  mUnmapCnt;
-	
+
 	CompPlugin *mScaleHandle;
 	bool	   mScaleActive;
 	CompTimer  mScaleTimeout;
-	
-	CompWindow *mPresentWindow;
+
+	CompWindow          *mPresentWindow;
+	std::vector<Window> mPresentWindowList;
 };
 
 #define KDECOMPAT_SCREEN(s)						       \
@@ -136,14 +128,14 @@ class KDECompatWindow :
 	    Window   id;
 	    CompRect thumb;
 	} Thumb;
-	
+
 	typedef enum {
-	    West = 0,
+	    West  = 0,
 	    North = 1,
-	    East = 2,
+	    East  = 2,
 	    South = 3
 	} SlidePosition;
-	
+
 	typedef struct {
 	    SlidePosition position;
 	    int           start;
@@ -152,46 +144,46 @@ class KDECompatWindow :
 	    int           duration;
 	} SlideData;
 
-	std::list <Thumb> mPreviews;
-	bool		  mIsPreview;
-	
-	SlideData	  *mSlideData;
-	int		  mDestroyCnt;
-	int		  mUnmapCnt;
-	
+	std::list<Thumb> mPreviews;
+	bool		 mIsPreview;
+
+	SlideData	 *mSlideData;
+	int		 mDestroyCnt;
+	int		 mUnmapCnt;
+
     public:
-    
+
 	bool
 	glPaint (const GLWindowPaintAttrib &,
 		 const GLMatrix		   &,
 		 const CompRegion	   &,
 		 unsigned int);
-		 
+
 	bool
 	damageRect (bool,
 		    const CompRect &);
-		    
+
 	void
 	updatePreviews ();
-	
+
 	void
 	stopCloseAnimation ();
-	
+
 	void
 	sendSlideEvent (bool start);
-	
+
 	void
 	startSlideAnimation (bool appearing);
-	
+
 	void
 	endSlideAnimation ();
-	
+
 	void
 	updateSlidePosition ();
-	
+
 	void
 	handleClose (bool);
-	
+
 	void
 	presentGroup ();
 };

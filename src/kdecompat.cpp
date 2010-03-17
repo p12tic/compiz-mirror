@@ -24,6 +24,7 @@
  */
 
 #include "kdecompat.h"
+#include <sstream>
 
 void
 KDECompatWindow::stopCloseAnimation ()
@@ -44,43 +45,40 @@ KDECompatWindow::stopCloseAnimation ()
 void
 KDECompatWindow::sendSlideEvent (bool start)
 {
-    CompOption::Vector  o;
-    
-    o.resize (2);
+    CompOption::Vector o (2);
 
-    o.at (0) = CompOption ("window", CompOption::TypeInt);
-    o.at (0).value ().set ((int) window->id ());
+    o[0] = CompOption ("window", CompOption::TypeInt);
+    o[0].value ().set ((int) window->id ());
 
-    o.at (1) = CompOption ("active", CompOption::TypeBool);
-    o.at (1).value ().set (start);
-    
+    o[1] = CompOption ("active", CompOption::TypeBool);
+    o[1].value ().set (start);
+
     screen->handleCompizEvent ("kdecompat", "slide", o);
 }
 
 void
 KDECompatWindow::startSlideAnimation (bool appearing)
 {
-    if (mSlideData)
-    {
-	SlideData *data = mSlideData;
+    if (!mSlideData)
+	return;
 
-	KDECOMPAT_SCREEN (screen);
+    KDECOMPAT_SCREEN (screen);
 
-	if (appearing)
-	    data->duration = ks->optionGetSlideInDuration ();
-	else
-	    data->duration = ks->optionGetSlideOutDuration ();
+    if (appearing)
+	mSlideData->duration = ks->optionGetSlideInDuration ();
+    else
+	mSlideData->duration = ks->optionGetSlideOutDuration ();
 
-	if (data->remaining > data->duration)
-	    data->remaining = data->duration;
-	else
-	    data->remaining = data->duration - data->remaining;
+    if (mSlideData->remaining > mSlideData->duration)
+	mSlideData->remaining = mSlideData->duration;
+    else
+	mSlideData->remaining = mSlideData->duration - mSlideData->remaining;
 
-	data->appearing      = appearing;
-	ks->mHasSlidingPopups = TRUE;
-	cWindow->addDamage ();
-	sendSlideEvent (TRUE);
-    }
+    mSlideData->appearing = appearing;
+    ks->mHasSlidingPopups = true;
+
+    cWindow->addDamage ();
+    sendSlideEvent (true);
 }
 
 void
@@ -90,7 +88,7 @@ KDECompatWindow::endSlideAnimation ()
     {
 	mSlideData->remaining = 0;
 	stopCloseAnimation ();
-	sendSlideEvent (FALSE);
+	sendSlideEvent (false);
     }
 }
 
@@ -137,7 +135,7 @@ KDECompatScreen::donePaint ()
 {
     if (mHasSlidingPopups)
     {
-	mHasSlidingPopups = FALSE;
+	mHasSlidingPopups = false;
 
 	foreach (CompWindow *w, screen->windows ())
 	{
@@ -146,11 +144,11 @@ KDECompatScreen::donePaint ()
 	    if (kw->mSlideData && kw->mSlideData->remaining)
 	    {
 		kw->cWindow->addDamage ();
-		mHasSlidingPopups = TRUE;
+		mHasSlidingPopups = true;
 	    }
 	}
     }
-    
+
     cScreen->donePaint ();
 }
 
@@ -160,7 +158,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			  const CompRegion	    &region,
 			  unsigned int		    mask)
 {
-    bool         status;
+    bool status;
 
     KDECOMPAT_SCREEN (screen);
 
@@ -174,7 +172,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 				    window->width (), window->height ());
 
 	if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
-	    return FALSE;
+	    return false;
 
 	remainder = (float) data->remaining / data->duration;
 	if (!data->appearing)
@@ -199,7 +197,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    clipBox.setWidth (data->start - clipBox.y1 ());
 	    break;
 	}
-	
+
 	status = gWindow->glPaint (attrib, transform, region, mask |
 				   PAINT_WINDOW_NO_CORE_INSTANCE_MASK);
 
@@ -229,8 +227,6 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	status = gWindow->glPaint (attrib, transform, region, mask);
     }
 
-    status = gWindow->glPaint (attrib, transform, region, mask);
-
     if (!ks->optionGetPlasmaThumbnails () ||
 	mPreviews.empty ()                ||
 	!window->mapNum ()                ||
@@ -258,7 +254,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (!gtw->textures ().empty ())
 	{
-	    CompRect     inputRect = tw->inputRect ();
+	    CompRect inputRect = tw->inputRect ();
 
 	    xScale = (float) rect.width () / inputRect.width ();
 	    yScale = (float) rect.height () / inputRect.height ();
@@ -321,8 +317,8 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    wTransform.translate (tw->x (), tw->y (), 0.0f);
 	    wTransform.scale (xScale, yScale, 1.0f);
 	    wTransform.translate (xTranslate / xScale - tw->x (),
-	    			  yTranslate / yScale - tw->y (),
-	    			  0.0f);
+				  yTranslate / yScale - tw->y (),
+				  0.0f);
 
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.getMatrix ());
@@ -421,7 +417,6 @@ KDECompatWindow::updateSlidePosition ()
     unsigned long n, left;
     unsigned char *propData;
 
-    
     KDECOMPAT_SCREEN (screen);
 
     if (mSlideData)
@@ -430,9 +425,10 @@ KDECompatWindow::updateSlidePosition ()
 	mSlideData = NULL;
     }
 
-    result = XGetWindowProperty (screen->dpy (), window->id (), ks->mKdeSlideAtom, 0,
-				 32768, FALSE, AnyPropertyType, &actual,
-				 &format, &n, &left, &propData);
+    result = XGetWindowProperty (screen->dpy (), window->id (),
+				 ks->mKdeSlideAtom, 0, 32768, FALSE,
+				 AnyPropertyType, &actual, &format, &n,
+				 &left, &propData);
 
     if (result == Success && propData)
     {
@@ -472,7 +468,7 @@ KDECompatWindow::handleClose (bool destroy)
 	}
 
 	if (mSlideData->appearing || !mSlideData->remaining)
-	    startSlideAnimation (FALSE);
+	    startSlideAnimation (false);
     }
 }
 
@@ -480,10 +476,9 @@ CompAction *
 KDECompatScreen::getScaleAction (const char *name)
 {
     CompPlugin *p = mScaleHandle;
-    
+
     if (!p)
 	return NULL;
-	
 
     foreach (CompOption &option, p->vTable->getOptions ())
     {
@@ -491,10 +486,8 @@ KDECompatScreen::getScaleAction (const char *name)
 	    option.type () == CompOption::TypeButton ||
 	    option.type () == CompOption::TypeKey)
 	{
-	    if (strcmp (option.name ().c_str (), name) == 0)
-	    {
+	    if (option.name () == name)
 		return &option.value ().action ();
-	    }
 	}
     }
 
@@ -502,58 +495,37 @@ KDECompatScreen::getScaleAction (const char *name)
 }
 
 bool
-KDECompatScreen::scaleActivate (PresentWindowData *data)
+KDECompatScreen::scaleActivate ()
 {
-    CompWindow        *w;
-
-    w = screen->findWindow (data->manager);
-    if (w && !mScaleActive)
+    if (mPresentWindow && !mScaleActive)
     {
-	CompOption::Vector   options;
-	CompMatch    *windowMatch;
-	CompAction   *action;
-	
-	options.resize (2);
+	CompOption::Vector options (2);
+	CompAction         *action;
 
-	options.at (0) = CompOption ("root", CompOption::TypeInt);
-	options.at (0).value ().set ((int) screen->root ());
+	options[0] = CompOption ("root", CompOption::TypeInt);
+	options[0].value ().set ((int) screen->root ());
 
-	options.at (1) = CompOption ("match", CompOption::TypeMatch);
+	options[1] = CompOption ("match", CompOption::TypeMatch);
+	options[1].value ().set (CompMatch ());
 
-	mPresentWindow = w;
+	CompMatch& windowMatch = options[1].value ().match ();
 
-	options.at (1).value ().set (CompMatch ());
-	windowMatch = &(options.at (1).value ().match ());
-
-	foreach (Window win, data->windows)
+	foreach (Window win, mPresentWindowList)
 	{
-	    CompString exp = (CompString ("xid=%ld", win));
-	    *windowMatch |= CompMatch (exp); // ???
+	    std::ostringstream exp;
+
+	    exp << "xid=" << win;
+	    windowMatch |= exp.str ();
 	}
 
-	windowMatch->update ();
+	windowMatch.update ();
 
 	action = getScaleAction ("initiate_all_key");
 	if (action && action->initiate ())
 	    action->initiate () (action, 0, options);
     }
 
-    delete data;
-
-    return FALSE;
-}
-
-void
-KDECompatScreen::freeScaleTimeout ()
-{
-    //PresentWindowData *data = NULL;
-
-    if (mScaleTimeout.active ())
-    {
-	mScaleTimeout.stop ();
-	//if (data)
-	    //delete data; /// ???
-    }
+    return false;
 }
 
 void
@@ -579,7 +551,7 @@ KDECompatWindow::presentGroup ()
     }
 
     result = XGetWindowProperty (screen->dpy (), window->id (),
-    				 ks->mKdePresentGroupAtom, 0,
+				 ks->mKdePresentGroupAtom, 0,
 				 32768, FALSE, AnyPropertyType, &actual,
 				 &format, &n, &left, &propData);
 
@@ -591,26 +563,21 @@ KDECompatWindow::presentGroup ()
 
 	    if (!n || !property[0])
 	    {
-		CompOption::Vector o;
+		CompOption::Vector o (1);
 		CompAction *action;
 
 		/* end scale */
-
-		o.resize (1);
-
-		o.at (0) = CompOption ("root", CompOption::TypeInt);
-		o.at (0).value ().set ((int) screen->root ());
+		o[0] = CompOption ("root", CompOption::TypeInt);
+		o[0].value ().set ((int) screen->root ());
 
 		action = ks->getScaleAction ("initiate_all_key");
 		if (action && action->terminate ())
-		    action->terminate () (action, CompAction::StateCancel,
-		    				   o);
+		    action->terminate () (action, CompAction::StateCancel, o);
 
+		ks->mPresentWindow = NULL;
 	    }
 	    else
 	    {
-		KDECompatScreen::PresentWindowData *data;
-
 		/* Activate scale using a timeout - Rationale:
 		 * At the time we get the property notify event, Plasma
 		 * most likely holds a pointer grab due to the action being
@@ -619,30 +586,15 @@ KDECompatWindow::presentGroup ()
 		 * Plasma can release its grab.
 		 */
 
-		ks->freeScaleTimeout ();
+		ks->mPresentWindow = window;
+		ks->mPresentWindowList.clear ();
 
-		data = (KDECompatScreen::PresentWindowData *)
-		      malloc (
-		          sizeof (KDECompatScreen::PresentWindowData) + 
-		          	  n * sizeof (Window));
-		if (data)
-		{
-		    unsigned int i = 0;
+		for (unsigned int i = 0; i < n; i++)
+		    ks->mPresentWindowList.push_back (property[i]);
 
-		    data->manager  = window->id ();
-		    data->windows.resize (n);
-		    foreach (Window &win, data->windows)
-		    {
-			win = property[i];
-			i++;
-		    }
-
-		    ks->mScaleTimeout.setCallback (
-		        boost::bind (&KDECompatScreen::scaleActivate, ks,
-		        		(KDECompatScreen::PresentWindowData *)
-		        						data));
-		    ks->mScaleTimeout.start ();
-		}
+		ks->mScaleTimeout.setCallback (
+		    boost::bind (&KDECompatScreen::scaleActivate, ks));
+		ks->mScaleTimeout.start ();
 	    }
 	}
 
@@ -652,24 +604,20 @@ KDECompatWindow::presentGroup ()
 
 void
 KDECompatScreen::handleCompizEvent (const char  *pluginName,
-			    	    const char  *eventName,
-			    	    CompOption::Vector  options)
+				    const char  *eventName,
+				    CompOption::Vector  options)
 {
 
     screen->handleCompizEvent (pluginName, eventName, options);
 
-    if (mScaleHandle                   &&
+    if (mScaleHandle                      &&
 	strcmp (pluginName, "scale") == 0 &&
 	strcmp (eventName, "activate") == 0)
     {
-	mScaleActive = CompOption::getBoolOptionNamed (options, "active", FALSE);
-
-	if (!mScaleActive)
-	{
-	    if (mPresentWindow)
-		XDeleteProperty (screen->dpy (), mPresentWindow->id (),
-				 mKdePresentGroupAtom);
-	}
+	mScaleActive = CompOption::getBoolOptionNamed (options, "active", false);
+	if (!mScaleActive && mPresentWindow)
+	    XDeleteProperty (screen->dpy (), mPresentWindow->id (),
+			     mKdePresentGroupAtom);
     }
 }
 
@@ -682,12 +630,12 @@ KDECompatScreen::handleEvent (XEvent *event)
     case DestroyNotify:
 	w = screen->findWindow (event->xdestroywindow.window);
 	if (w)
-	    KDECompatWindow::get (w)->handleClose (TRUE);
+	    KDECompatWindow::get (w)->handleClose (true);
 	break;
     case UnmapNotify:
 	w = screen->findWindow (event->xunmap.window);
 	if (w && !w->pendingUnmaps ())
-	    KDECompatWindow::get (w)->handleClose (FALSE);
+	    KDECompatWindow::get (w)->handleClose (false);
 	break;
     case MapNotify:
 	w = screen->findWindow (event->xmap.window);
@@ -735,12 +683,12 @@ KDECompatWindow::damageRect (bool           initial,
 	foreach (CompWindow *cw, screen->windows ())
 	{
 	    KDECompatWindow *kdw = KDECompatWindow::get (cw);
-	
+
 	    foreach (const Thumb& thumb, kdw->mPreviews)
 	    {
 	        if (thumb.id != window->id ())
 		    continue;
-		
+
 		CompRect rect (thumb.thumb.x () + cw->x (),
 			       thumb.thumb.y () + cw->y (),
 			       thumb.thumb.width (),
@@ -752,8 +700,8 @@ KDECompatWindow::damageRect (bool           initial,
     }
 
     if (initial && ks->optionGetSlidingPopups ())
-	startSlideAnimation (TRUE);
-    
+	startSlideAnimation (true);
+
     status = cWindow->damageRect (initial, rect);
 
     return status;
@@ -785,41 +733,40 @@ KDECompatScreen::optionChanged (CompOption                *option,
     else if (num == KdecompatOptions::SlidingPopups)
 	advertiseSupport (mKdeSlideAtom, option->value (). b ());
     else if (num == KdecompatOptions::PresentWindows)
-	advertiseSupport (mKdePresentGroupAtom, option->value ().b () &&
-						mScaleHandle);
+	advertiseSupport (mKdePresentGroupAtom,
+			  option->value ().b () && mScaleHandle);
 }
 
 
 KDECompatScreen::KDECompatScreen (CompScreen *screen) :
-    PluginClassHandler <KDECompatScreen, CompScreen> (screen),
+    PluginClassHandler<KDECompatScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     mKdePreviewAtom (XInternAtom (screen->dpy (), "_KDE_WINDOW_PREVIEW", 0)),
     mKdeSlideAtom (XInternAtom (screen->dpy (), "_KDE_SLIDE", 0)),
-    mKdePresentGroupAtom (XInternAtom (screen->dpy (), "_KDE_PRESENT_WINDOWS_GROUP", 0)),
+    mKdePresentGroupAtom (XInternAtom (screen->dpy (),
+			  "_KDE_PRESENT_WINDOWS_GROUP", 0)),
     mScaleHandle (CompPlugin::find ("scale")),
     mScaleActive (FALSE),
     mPresentWindow (NULL)
 {
     ScreenInterface::setHandler (screen);
-    
+
     mScaleTimeout.setTimes (100, 200);
-    
+
     advertiseSupport (mKdePreviewAtom, optionGetPlasmaThumbnails ());
     advertiseSupport (mKdeSlideAtom, optionGetSlidingPopups ());
     advertiseSupport (mKdePresentGroupAtom, optionGetPresentWindows () &&
-    					    mScaleHandle);
+					    mScaleHandle);
     optionSetPlasmaThumbnailsNotify (
 	boost::bind (&KDECompatScreen::optionChanged, this, _1, _2));
 }
 
 KDECompatScreen::~KDECompatScreen ()
 {
-    advertiseSupport (mKdePreviewAtom, FALSE);
-    advertiseSupport (mKdeSlideAtom, FALSE);
-    advertiseSupport (mKdePresentGroupAtom, FALSE);
-    
-    freeScaleTimeout ();
+    advertiseSupport (mKdePreviewAtom, false);
+    advertiseSupport (mKdeSlideAtom, false);
+    advertiseSupport (mKdePresentGroupAtom, false);
 }
 
 KDECompatWindow::KDECompatWindow (CompWindow *window) :
@@ -839,14 +786,14 @@ KDECompatWindow::KDECompatWindow (CompWindow *window) :
 KDECompatWindow::~KDECompatWindow ()
 {
     stopCloseAnimation ();
-    
+
     if (mSlideData)
 	delete mSlideData;
 
     if (KDECompatScreen::get (screen)->mPresentWindow == window)
 	KDECompatScreen::get (screen)->mPresentWindow = NULL;
 }
-    
+
 bool
 KDECompatPluginVTable::init ()
 {
