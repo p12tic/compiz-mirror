@@ -160,7 +160,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			  const CompRegion	    &region,
 			  unsigned int		    mask)
 {
-    Bool         status;
+    bool         status;
 
     KDECOMPAT_SCREEN (screen);
 
@@ -215,7 +215,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	glEnable (GL_SCISSOR_TEST);
 
 	glScissor (clipBox.x1 (), screen->height () - clipBox.y2 (),
-		   clipBox.x2 () - clipBox.x1 (), clipBox.y2 () - clipBox.y1 ());
+		   clipBox.width (), clipBox.height ());
 
 	gWindow->glDraw (wTransform, fragment, region,
 			 mask | PAINT_WINDOW_TRANSFORMED_MASK);
@@ -726,7 +726,7 @@ bool
 KDECompatWindow::damageRect (bool           initial,
 			     const CompRect &rect)
 {
-    Bool       status;
+    bool       status;
 
     KDECOMPAT_SCREEN (screen);
 
