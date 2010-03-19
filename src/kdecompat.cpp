@@ -25,6 +25,8 @@
 
 #include "kdecompat.h"
 
+COMPIZ_PLUGIN_20090315 (kdecompat, KDECompatPluginVTable);
+
 void
 KDECompatWindow::stopCloseAnimation ()
 {
