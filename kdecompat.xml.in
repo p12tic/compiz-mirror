@@ -7,7 +7,13 @@
 		<deps>
 			<relation type="after">
 				<plugin>animation</plugin>
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
 			</relation>
+			<requirement>
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
+			</requirement>
 		</deps>
 		<options>
 			<option name="plasma_thumbnails" type="bool">
