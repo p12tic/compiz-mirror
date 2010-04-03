@@ -5,18 +5,12 @@
 		<_long>Shift Switcher Plugin</_long>
 		<category>Window Management</category>
 		<deps>
-			<requirement>
-				<plugin>composite</plugin>
-				<plugin>opengl</plugin>
-			</requirement>
 			<relation type="before">
 				<plugin>fade</plugin>
 				<plugin>bs</plugin>
 			</relation>
 			<relation type="after">
 				<plugin>text</plugin>
-				<plugin>composite</plugin>
-				<plugin>opengl</plugin>
 			</relation>
 		</deps>
 		<options>

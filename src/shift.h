@@ -20,10 +20,6 @@
  * Copyright : (C) 2007 Robert Carr
  * E-mail    : racarr@beryl-project.org
  *
- * Ported to Compiz 0.9 by:
- * Copyright : (C) 2009 Sam Spilsbury
- * E-mail    : smspillaz@gmail.com
- *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; either version 2
@@ -36,42 +32,55 @@
  *
  */
 
+
 #include <core/core.h>
+#include <core/pluginclasshandler.h>
 #include <core/atoms.h>
+
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <text/text.h>
 
 #include <cmath>
+
 #include <X11/Xatom.h>
 #include <X11/cursorfont.h>
 
 #include "shift_options.h"
 
-extern bool textAvailable;
+typedef enum {
+    ShiftStateNone = 0,
+    ShiftStateOut,
+    ShiftStateSwitching,
+    ShiftStateFinish,
+    ShiftStateIn
+} ShiftState;
 
-class ShiftSlot
-{
-    public:
-	int   x, y;            /* thumb center coordinates */
-	float z;
-	float scale;           /* size scale (fit to maximal thumb size */
-	float opacity;
-	float rotation;
+typedef enum {
+    ShiftTypeNormal = 0,
+    ShiftTypeGroup,
+    ShiftTypeAll
+} ShiftType;
 
-	GLfloat tx;
-	GLfloat ty;
+typedef struct _ShiftSlot {
+    int   x, y;            /* thumb center coordinates */
+    float z;
+    float scale;           /* size scale (fit to maximal thumb size */
+    float opacity;
+    float rotation;
 
-	Bool    primary;
-};
+    GLfloat tx;
+    GLfloat ty;
 
-class ShiftDrawSlot
-{
-    public:
-	CompWindow *w;
-	ShiftSlot  *slot;
-	float      distance;
-};
+    Bool    primary;
+
+} ShiftSlot;
+
+typedef struct _ShiftDrawSlot {
+    CompWindow *w;
+    ShiftSlot  *slot;
+    float      distance;
+} ShiftDrawSlot;
 
 class ShiftScreen :
     public PluginClassHandler <ShiftScreen, CompScreen>,
@@ -81,102 +90,92 @@ class ShiftScreen :
     public ShiftOptions
 {
     public:
-	typedef enum {
-	    ShiftStateNone = 0,
-	    ShiftStateOut,
-	    ShiftStateSwitching,
-	    ShiftStateFinish,
-	    ShiftStateIn
-	} ShiftState;
-
-	typedef enum {
-	    ShiftTypeNormal = 0,
-	    ShiftTypeGroup,
-	    ShiftTypeAll
-	} ShiftType;
-    public:
+	
 	ShiftScreen (CompScreen *);
 	~ShiftScreen ();
-
+	
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
-
 	CompText	text;
-
-	KeyCode leftKey;
-	KeyCode rightKey;
-	KeyCode upKey;
-	KeyCode downKey;
-
-	CompScreen::GrabHandle grabIndex;
-
-	ShiftState state;
-	ShiftType  type;
-
-	bool moreAdjust;
-	bool moveAdjust;
-
-	float mvTarget;
-	float mvAdjust;
-	GLfloat mvVelocity;
-	bool	invert;
-
-	Cursor  cursor;
-
-	/* For sorting */
-
-	/* only used for sorting */
-	std::vector <CompWindow *> windows;
-	std::vector <ShiftDrawSlot> drawSlots;
-
-	ShiftDrawSlot *activeSlot;
-
-	Window clientLeader;
-
-	CompWindow *selectedWindow;
-
-	CompMatch match;
-	CompMatch currentMatch;
-
-	CompOutput *output;
-	int	   usedOutput;
-
-	float	   anim;
-	float      animVelocity;
-
-	float      reflectBrightness;
-	bool	   reflectActive;
-
-	int	  buttonPressTime;
-	Bool      buttonPressed;
-	int       startX;
-	int       startY;
-	float     startTarget;
-	float     lastTitle;
-
-	Bool      paintingAbove;
-
-	Bool      canceled;
+    
+    public:
 
 	void
 	handleEvent (XEvent *);
-
+	
 	void
 	preparePaint (int);
-
+	
 	void
-	paint (CompOutput::ptrList &outputs,
+	paint (CompOutput::ptrList &,
 	       unsigned int);
-
-	bool
-	glPaintOutput (const GLScreenPaintAttrib &,
-		       const GLMatrix		 &,
-		       const CompRegion		 &,
-		       CompOutput		 *,
-		       unsigned int		   );
-
+	
+	bool glPaintOutput (const GLScreenPaintAttrib &,
+			    const GLMatrix &, const CompRegion &,
+			    CompOutput *, unsigned int);
+	
 	void
 	donePaint ();
+
+    public:
+	
+	KeyCode mLeftKey;
+	KeyCode mRightKey;
+	KeyCode mUpKey;
+	KeyCode mDownKey;
+    
+	CompScreen::GrabHandle mGrabIndex;
+	
+	ShiftState	mState;
+	ShiftType	mType;
+	
+	bool		mMoreAdjust;
+	bool		mMoveAdjust;
+	
+	float		mMvTarget;
+	float		mMvAdjust;
+	float		mMvVelocity;
+	bool		mInvert;
+	
+	Cursor		mCursor;
+	
+	/* only used for sorting */
+	CompWindow	**mWindows;
+	int		mWindowsSize;
+	int		mNWindows;
+	
+	ShiftDrawSlot	*mDrawSlots;
+	int		mSlotsSize;
+	int		mNSlots;
+	ShiftDrawSlot	*mActiveSlot;
+	
+	Window		mClientLeader;
+	Window		mSelectedWindow;
+	
+	CompMatch	mMatch;
+	CompMatch	*mCurrentMatch;
+	
+	CompOutput	*mOutput;
+	int		mUsedOutput;
+	
+	float		mReflectBrightness;
+	bool		mReflectActive;
+	
+	float		mAnim;
+	float		mAnimVelocity;
+	
+	int		mButtonPressTime;
+	bool		mButtonPressed;
+	int		mStartX;
+	int		mStartY;
+	float		mStartTarget;
+	float		mLastTitle;
+	
+	bool		mPaintingAbove;
+	
+	bool		mCancelled;
+
+    public:
 
 	void
 	activateEvent (bool       activating);
@@ -225,95 +224,94 @@ class ShiftScreen :
 
 	bool
 	terminate (CompAction         *action,
-		   CompAction::State  aState,
-		   CompOption::Vector options);
+		    CompAction::State  aState,
+		    CompOption::Vector &options);
 
 	bool
 	initiateScreen (CompAction         *action,
 			CompAction::State  aState,
-			CompOption::Vector options);
+			CompOption::Vector &options);
 
 	bool
 	doSwitch (CompAction         *action,
-		  CompAction::State  aState,
-		  CompOption::Vector options,
-		  bool		  nextWindow,
-		  ShiftType	  type);
+		    CompAction::State  aState,
+		    CompOption::Vector &options,
+		    bool            nextWindow,
+		    ShiftType       type);
 
 	bool
 	initiate (CompAction         *action,
-		  CompAction::State  aState,
-		  CompOption::Vector options);
+		  CompAction::State    state,
+		  CompOption::Vector &options);
 
 	bool
 	initiateAll (CompAction         *action,
-			  CompAction::State  aState,
-			  CompOption::Vector options);
+			CompAction::State  aState,
+			CompOption::Vector &options);
 
 	void
-	windowRemove (CompWindow *w);
-
-
+	windowRemove (Window id);
 
 };
 
-#define SHIFT_SCREEN(s)							       \
-	ShiftScreen *ss = ShiftScreen::get (s)
-
 class ShiftWindow :
     public PluginClassHandler <ShiftWindow, CompWindow>,
+    public WindowInterface,
     public CompositeWindowInterface,
     public GLWindowInterface
 {
     public:
+
 	ShiftWindow (CompWindow *);
 	~ShiftWindow ();
-
-	CompWindow	*window;
+	
+	CompWindow *window;
 	CompositeWindow *cWindow;
 	GLWindow	*gWindow;
 
-	float opacity;
-	float brightness;
-	float opacityVelocity;
-	float brightnessVelocity;
-
-	ShiftSlot slots[2];
-
-	bool  active;
+    public:
 
 	bool
 	glPaint (const GLWindowPaintAttrib &,
 		 const GLMatrix		   &,
 		 const CompRegion	   &,
 		 unsigned int		     );
+		 
+	bool
+	damageRect (bool	initial,
+		    const CompRect &rect);
+
+    public:
+	
+	ShiftSlot	mSlots[2];
+	float		mOpacity;
+	float		mBrightness;
+	float		mOpacityVelocity;
+	float		mBrightnessVelocity;
+	
+	bool		mActive;
+    
+    public:
 
 	bool
-	damageRect (bool,
-		    const CompRect &);
-
-	static bool
-	compareWindows (CompWindow *w1,
-			CompWindow *w2);
-
-	static bool
-	compareShiftWindowDistance (ShiftDrawSlot elem1,
-				    ShiftDrawSlot elem2);
-
-	bool
-	adjustShiftWindowAttribs (float chunk);
+        adjustShiftAttribs (float chunk);
 
 	bool
 	canStackRelativeTo ();
 
 	bool
-	is (bool removing = false);
+	isShiftable ();
+
 };
 
-#define SHIFT_WINDOW(w)						       \
-	ShiftWindow *sw = ShiftWindow::get (w);
-
 #define PI 3.1415926
+
+#define SHIFT_WINDOW(w)							      \
+    ShiftWindow *sw = ShiftWindow::get (w)
+
+#define SHIFT_SCREEN(s)							      \
+    ShiftScreen *ss = ShiftScreen::get (s)
+
 
 class ShiftPluginVTable :
     public CompPlugin::VTableForScreenAndWindow <ShiftScreen, ShiftWindow>
