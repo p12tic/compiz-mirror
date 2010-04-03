@@ -107,6 +107,7 @@ KDECompatScreen::preparePaint (int msSinceLastPaint)
 		continue;
 
 	    kw->mSlideData->remaining -= msSinceLastPaint;
+
 	    if (kw->mSlideData->remaining <= 0)
 		kw->endSlideAnimation ();
 	}
@@ -165,7 +166,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
     KDECOMPAT_SCREEN (screen);
 
     if (mSlideData && mSlideData->remaining)
-    {
+    {      
 	GLFragment::Attrib fragment (gWindow->paintAttrib ());
 	GLMatrix           wTransform = transform;
 	SlideData          *data = mSlideData;
@@ -199,7 +200,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    clipBox.setWidth (data->start - clipBox.y1 ());
 	    break;
 	}
-
+	
 	status = gWindow->glPaint (attrib, transform, region, mask |
 				   PAINT_WINDOW_NO_CORE_INSTANCE_MASK);
 
@@ -213,7 +214,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	glPushAttrib (GL_SCISSOR_BIT);
 	glEnable (GL_SCISSOR_TEST);
-
+	
 	glScissor (clipBox.x1 (), screen->height () - clipBox.y2 (),
 		   clipBox.width (), clipBox.height ());
 
@@ -252,14 +253,17 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	gtw = GLWindow::get (tw);
 
 	xTranslate = rect.x () + window->x () - tw->x ();
-	yTranslate = rect.y () + window->x () - tw->y ();
+	yTranslate = rect.y () + window->y () - tw->y ();
 
 	if (!gtw->textures ().empty ())
 	{
-	    CompRect inputRect = tw->inputRect ();
-
-	    xScale = (float) rect.width () / inputRect.width ();
-	    yScale = (float) rect.height () / inputRect.height ();
+	    unsigned int width, height;
+	    
+	    width = tw->width () - tw->input ().left + tw->input ().right;
+	    height = tw->height () - tw->input ().top + tw->input ().bottom;
+	    
+	    xScale = (float) rect.width () / width;
+	    yScale = (float) rect.height () / height;
 
 	    xTranslate += tw->input ().left * xScale;
 	    yTranslate += tw->input ().top * yScale;
@@ -326,10 +330,10 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    glLoadMatrixf (wTransform.getMatrix ());
 
 	    if (!gtw->textures ().empty ())
-		gWindow->glDraw (wTransform, fragment,
+		gtw->glDraw (wTransform, fragment,
 				 infiniteRegion, paintMask);
 	    else if (icon)
-		gWindow->glDrawTexture (icon, fragment, paintMask);
+		gtw->glDrawTexture (icon, fragment, paintMask);
 
 	    glPopMatrix ();
 	}
@@ -376,6 +380,8 @@ KDECompatWindow::updatePreviews ()
 		    t.thumb.setY (*data++);
 		    t.thumb.setWidth (*data++);
 		    t.thumb.setHeight (*data++);
+		    
+		    CompWindow *test = screen->findWindow (t.id);
 
 		    mPreviews.push_back (t);
 		}
@@ -753,6 +759,8 @@ KDECompatScreen::KDECompatScreen (CompScreen *screen) :
     mPresentWindow (NULL)
 {
     ScreenInterface::setHandler (screen);
+    CompositeScreenInterface::setHandler (cScreen);
+    GLScreenInterface::setHandler (gScreen);
 
     mScaleTimeout.setTimes (100, 200);
 
