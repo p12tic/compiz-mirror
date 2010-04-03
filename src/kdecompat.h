@@ -37,6 +37,8 @@
  
 class KDECompatScreen :
     public PluginClassHandler <KDECompatScreen, CompScreen>,
+    public CompositeScreenInterface,
+    public GLScreenInterface,
     public ScreenInterface,
     public KdecompatOptions
 {

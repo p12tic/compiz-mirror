@@ -166,7 +166,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
     KDECOMPAT_SCREEN (screen);
 
     if (mSlideData && mSlideData->remaining)
-    {      
+    {
 	GLFragment::Attrib fragment (gWindow->paintAttrib ());
 	GLMatrix           wTransform = transform;
 	SlideData          *data = mSlideData;
@@ -200,7 +200,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    clipBox.setWidth (data->start - clipBox.y1 ());
 	    break;
 	}
-	
+
 	status = gWindow->glPaint (attrib, transform, region, mask |
 				   PAINT_WINDOW_NO_CORE_INSTANCE_MASK);
 
@@ -214,7 +214,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	glPushAttrib (GL_SCISSOR_BIT);
 	glEnable (GL_SCISSOR_TEST);
-	
+
 	glScissor (clipBox.x1 (), screen->height () - clipBox.y2 (),
 		   clipBox.width (), clipBox.height ());
 
@@ -380,8 +380,6 @@ KDECompatWindow::updatePreviews ()
 		    t.thumb.setY (*data++);
 		    t.thumb.setWidth (*data++);
 		    t.thumb.setHeight (*data++);
-		    
-		    CompWindow *test = screen->findWindow (t.id);
 
 		    mPreviews.push_back (t);
 		}
