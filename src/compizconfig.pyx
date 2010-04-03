@@ -639,7 +639,7 @@ cdef class Setting:
 
     property Hints:
         def __get__ (self):
-            if self.ccsSetting.hints == '':
+            if not self.ccsSetting.hints:
                 return []
             else:
                 return str (self.ccsSetting.hints).split (";")[:-1]
