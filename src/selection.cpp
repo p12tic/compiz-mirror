@@ -318,4 +318,6 @@ GroupWindow::select ()
 	gs->masterSelection.remove (window);
     }
     inSelection = !inSelection;
+
+    cWindow->addDamage ();
 }
