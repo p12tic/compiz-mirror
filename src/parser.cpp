@@ -147,7 +147,7 @@ FragmentParser::programReadSource (CompString fname)
 
     /* If failed again & again, abort */
     if (!fp)
-	return NULL;
+	return CompString ("");
 
     /* Get file length */
     fseek (fp, 0L, SEEK_END);
