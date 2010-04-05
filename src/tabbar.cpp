@@ -1465,12 +1465,6 @@ Group::finishTabbing ()
 	gw->animateState = 0;
 	gw->tx = gw->ty = gw->xVelocity = gw->yVelocity = 0.0f;
     }
-
-    if (ungroupState == UngroupAll)
-	destroy (true);
-    else
-	ungroupState = UngroupNone;
-
  
 }
 
