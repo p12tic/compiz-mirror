@@ -96,7 +96,7 @@ CairoHelper::destroy ()
 
     if (buffer)
     {
-	delete[] buffer;
+	free (buffer);
 	buffer = NULL;
     }
 
@@ -105,12 +105,19 @@ CairoHelper::destroy ()
 bool
 CairoHelper::init (int width, int height)
 {
-    try
+    int size = 4 * width * height;
+
+    if (fabs (size) != size)
     {
-    	int size = 4 * width * height;
-	buffer = new unsigned char[size];
+	compLogMessage ("group", CompLogLevelError,
+			"Strangely sized tab bar box, not allocating\n");
+	return false;
     }
-    catch (std::bad_alloc)
+
+    buffer = NULL;
+    buffer = (unsigned char *) malloc (size * sizeof (unsigned char));
+    
+    if (!buffer)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to allocate cairo layer buffer.");
@@ -125,7 +132,7 @@ CairoHelper::init (int width, int height)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to create cairo layer surface.");
-	delete[] buffer;
+	free (buffer);
 	buffer = NULL;
 	cairo_surface_destroy (surface);
 	surface = NULL;
@@ -137,7 +144,7 @@ CairoHelper::init (int width, int height)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to create cairo layer context.");
-	delete[] buffer;
+	free (buffer);
 	buffer = NULL;
 	cairo_surface_destroy (surface);
 	surface = NULL;
