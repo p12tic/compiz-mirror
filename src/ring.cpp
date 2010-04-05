@@ -384,16 +384,15 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		CompRegion iconReg (window->x (), window->y (),
 				    icon->width (), icon->height ());
 
-		matrix = icon->matrix (); // ???
+		matrix = icon->matrix ();
 		matrix.x0 -= (window->x () * matrix.xx);
 		matrix.y0 -= (window->y () * matrix.yy);
 
 		matricies.push_back (matrix);
 
-		gWindow->geometry ().vCount = 0;
-		gWindow->geometry ().indexCount =0;
+		gWindow->geometry ().reset ();
 
-		gWindow->glAddGeometry (matricies, iconReg, infiniteRegion); //???
+		gWindow->glAddGeometry (matricies, iconReg, iconReg);
 
 		if (gWindow->geometry ().vCount)
 		{
