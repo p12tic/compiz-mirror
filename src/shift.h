@@ -141,12 +141,13 @@ class ShiftScreen :
 	
 	/* only used for sorting */
 	CompWindow	**mWindows;
-	int		mWindowsSize;
 	int		mNWindows;
+	int		mWindowsSize;
+
 	
 	ShiftDrawSlot	*mDrawSlots;
-	int		mSlotsSize;
 	int		mNSlots;
+	int		mSlotsSize;
 	ShiftDrawSlot	*mActiveSlot;
 	
 	Window		mClientLeader;
