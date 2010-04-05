@@ -410,14 +410,13 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 
 		iconReg = CompRegion (0, 0, icon->width (), icon->height ());
 
-		gWindow->geometry ().moreVertices (0);
-		gWindow->geometry ().moreIndices (0);
+		gWindow->geometry ().reset ();
 
 		matl.push_back (icon->matrix ());
 
-		gWindow->glAddGeometry (matl, iconReg, infiniteRegion);
+		gWindow->glAddGeometry (matl, iconReg, iconReg);
 
-		if (gWindow->geometry ().vertices)
+		if (gWindow->geometry ().vCount)
 		{
 		    GLFragment::Attrib	fragment (sAttrib);
 		    GLMatrix		wTransform (transform);
