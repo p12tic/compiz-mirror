@@ -231,7 +231,7 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
     bool       status;
 
     SHIFT_SCREEN (screen);
-    if (ss->mState != ShiftStateNone && !ss->mPaintingAbove)
+    if (ss->mState != ShiftStateNone && !ss->mPaintingAbove && isShiftable ())
     {
 	GLWindowPaintAttrib sAttrib = attrib;
 	bool		  scaled = false;
