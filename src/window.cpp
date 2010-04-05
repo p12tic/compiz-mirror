@@ -789,8 +789,8 @@ GroupWindow::deleteGroupWindow ()
 	    group = NULL;
 	}
 
-	cWindow->damageOutputExtents ();
 	window->updateWindowOutputExtents ();
+	cWindow->damageOutputExtents ();
 	updateProperty ();
 
 	group = NULL;
@@ -1247,8 +1247,8 @@ GroupWindow::damageRect (bool		initial,
 
     if (tab)
     {
-	int    vx, vy;
-	CompRegion reg;
+	int    vx = 0, vy = 0;
+	CompRegion reg = emptyRegion;
 
 	tab->getDrawOffset (vx, vy);
 	if (vx || vy)

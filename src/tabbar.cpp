@@ -786,6 +786,9 @@ Tab::getDrawOffset (int &hoffset,
 	return;
     }
 
+    if (!gw->group)
+	return;
+
     if (HAS_TOP_WIN (gw->group))
 	topTab = TOP_TAB (gw->group);
     else if (HAS_PREV_TOP_WIN (gw->group))
@@ -1459,11 +1462,20 @@ Group::finishTabbing ()
 	if (ungroupState == UngroupSingle &&
 	    (gw->animateState & IS_UNGROUPING))
 	{
-	    gw->removeFromGroup ();
+	    if (it == windows.end ())
+	    {
+		gw->animateState = 0;
+		gw->tx = gw->ty = gw->xVelocity = gw->yVelocity = 0.0f;
+		gw->removeFromGroup ();
+		break;
+	    }
+	    else
+	    {
+		gw->removeFromGroup ();
+	    }
 	}
 
-	gw->animateState = 0;
-	gw->tx = gw->ty = gw->xVelocity = gw->yVelocity = 0.0f;
+	
     }
  
 }
