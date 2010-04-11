@@ -5,7 +5,13 @@
 	<_long>Display info on resize similar to metacity</_long>
 	<category>Utility</category>
 	<deps>
+	    <requirement>
+		<plugin>opengl</plugin>
+		<plugin>composite</plugin>
+	    </requirement>
 	    <relation type="after">
+		<plugin>opengl</plugin>
+		<plugin>composite</plugin>
 		<plugin>resize</plugin>
 	    </relation>
 	</deps>
