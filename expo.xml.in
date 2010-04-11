@@ -6,9 +6,12 @@
 	<category>Desktop</category>
 	<deps>
 	    <requirement>
+		<plugin>composite</plugin>
 		<plugin>opengl</plugin>
 	    </requirement>
 	    <relation type="after">
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
 		<plugin>decor</plugin>
 		<plugin>cube</plugin>
 		<plugin>cubeaddon</plugin>
