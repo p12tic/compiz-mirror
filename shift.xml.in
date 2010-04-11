@@ -12,6 +12,8 @@
 				<plugin>bs</plugin>
 			</relation>
 			<relation type="after">
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
 				<plugin>text</plugin>
 			</relation>
 			<requirement>
