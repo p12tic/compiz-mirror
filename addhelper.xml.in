@@ -5,7 +5,13 @@
 	<_long>Make it slightly easier to concentrate by dimming all but the active window.</_long>
 	<category>Accessibility</category>
 	<deps>
+		<requirement>
+			<plugin>composite</plugin>
+			<plugin>opengl</plugin>
+		</requirement>
 		<relation type="after">
+			<plugin>composite</plugin>
+			<plugin>opengl</plugin>
 			<plugin>fade</plugin>
 		</relation>
 	</deps>
