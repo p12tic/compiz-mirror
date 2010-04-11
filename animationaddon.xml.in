@@ -6,9 +6,13 @@
     <category>Effects</category>
     <deps>
       <requirement>
+	<plugin>opengl</plugin>
+	<plugin>composite</plugin>
 	<plugin>animation</plugin>
       </requirement>
       <relation type="after">
+	<plugin>opengl</plugin>
+	<plugin>composite</plugin>
 	<plugin>animation</plugin>
       </relation>
     </deps>
