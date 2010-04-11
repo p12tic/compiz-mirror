@@ -11,6 +11,8 @@
 				<plugin>cube</plugin>
 			</requirement>
 			<relation type="after">
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
 				<plugin>cube</plugin>
 			</relation>
 		</deps>
