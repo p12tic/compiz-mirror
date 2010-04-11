@@ -5,10 +5,14 @@
 	<category>Utility</category>
 	<deps>
 	    <relation type="after">
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
 		<plugin>scale</plugin>
 		<plugin>text</plugin>
 	    </relation>
 	    <requirement>
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
 		<plugin>scale</plugin>
 	    </requirement>
 	</deps>
