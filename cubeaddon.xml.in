@@ -6,14 +6,17 @@
 		<category>Effects</category>
 		<deps>
 		<relation type="after">
+			<plugin>composite</plugin>
+			<plugin>opengl</plugin>
 			<plugin>cube</plugin>
 			<plugin>rotate</plugin>
-			<plugin>cubecaps</plugin>
 			<plugin>svg</plugin>
 			<plugin>png</plugin>
 			<plugin>imgjpeg</plugin>
 		</relation>
 		<requirement>
+			<plugin>composite</plugin>
+			<plugin>opengl</plugin>
 			<plugin>cube</plugin>
 		</requirement>
 		</deps>
