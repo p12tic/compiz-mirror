@@ -6,6 +6,8 @@
 		<category>Accessibility</category>
 		<deps>
 			<relation type="after">
+				<plugin>opengl</plugin>
+				<plugin>mousepoll</plugin>
 				<plugin>cube</plugin>
 			</relation>
 			<requirement>
