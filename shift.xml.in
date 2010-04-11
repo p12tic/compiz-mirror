@@ -6,12 +6,18 @@
 		<category>Window Management</category>
 		<deps>
 			<relation type="before">
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
 				<plugin>fade</plugin>
 				<plugin>bs</plugin>
 			</relation>
 			<relation type="after">
 				<plugin>text</plugin>
 			</relation>
+			<requirement>
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
+			</requirement>
 		</deps>
 		<options>
 			<group>
