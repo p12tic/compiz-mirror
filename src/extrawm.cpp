@@ -24,6 +24,8 @@
 
 COMPIZ_PLUGIN_20090315 (extrawm, ExtraWMPluginVTable);
 
+bool compositeAvailable;
+
 void
 ExtraWMScreen::addAttentionWindow (CompWindow *w)
 {
@@ -159,6 +161,13 @@ ExtraWMScreen::toggleRedirect (CompAction         *action,
     xid = CompOption::getIntOptionNamed (options, "window");
     w   = screen->findTopLevelWindow (xid);
 
+    if (!compositeAvailable)
+    {
+	compLogMessage ("extrawm", CompLogLevelWarn, "composite plugin "\
+			"not loaded, cannot redirect/unredirect window\n");
+	return true;
+    }
+
     if (w)
     {
 	CompositeWindow *cWindow = CompositeWindow::get (w);
@@ -277,6 +286,11 @@ ExtraWMPluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
 	return false;
+
+    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
+	compositeAvailable = false;
+    else
+	compositeAvailable = true;
 
     return true;
 }
