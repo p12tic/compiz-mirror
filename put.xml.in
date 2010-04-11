@@ -6,6 +6,8 @@
 	<category>Window Management</category>
 	<deps>
 	    <relation type="after">
+		<plugin>opengl</plugin>
+		<plugin>composite</plugin>
 		<plugin>decoration</plugin>
 	    </relation>
 	    <relation type="before">
