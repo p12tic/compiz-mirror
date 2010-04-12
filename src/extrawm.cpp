@@ -164,7 +164,7 @@ ExtraWMScreen::toggleRedirect (CompAction         *action,
     if (!compositeAvailable)
     {
 	compLogMessage ("extrawm", CompLogLevelWarn, "composite plugin "\
-			"not loaded, cannot redirect/unredirect window\n");
+			"not loaded, cannot redirect/unredirect window");
 	return true;
     }
 
