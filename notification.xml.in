@@ -4,6 +4,12 @@
 	<_short>Error Notifications</_short>
 	<_long>Display errors and other messages using libnotify.</_long>
 	<category>Utility</category>
+	<deps>
+	    <relation type="after">
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
+	    </relation>
+	</deps>
 	<options>
 	    <option type="int" name="timeout">
 		<_short>Hide Timeout</_short>
