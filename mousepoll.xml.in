@@ -4,6 +4,10 @@
 	<_short>Mouse position polling</_short>
 	<_long>Updates the mouse pointer position from the xserver</_long>
 	<category>Utility</category>
+	<relation type="after">
+	    <plugin>opengl</plugin>
+	    <plugin>composite</plugin>
+	</relation>
 	<options>
 	    <_short>Misc</_short>
 	    <option type="int" name="mouse_poll_interval">
