@@ -7,6 +7,12 @@
 	<feature>imageext:jpeg</feature>
 	<feature>imageext:jpg</feature>
 	<feature>imagemime:image/jpeg</feature>
+	<deps>
+	    <relation type="after">
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
+	    </relation>
+	</deps>
 	<options>
 	    <option name="quality" type="int">
 		<_short>Compression Quality</_short>
