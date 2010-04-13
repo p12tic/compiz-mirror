@@ -1184,7 +1184,7 @@ StackswitchScreen::windowRemove (Window id)
     if (w)
     {
 	bool   inList = false;
-	std::vector <CompWindow *>::iterator it;
+	CompWindowVector::iterator it = mWindows.begin();
 	Window selected;
 	
 	STACKSWITCH_WINDOW (w);
@@ -1197,34 +1197,30 @@ StackswitchScreen::windowRemove (Window id)
 
 	selected = mSelectedWindow;
 
-	while (it != mWindows.begin ())
+	while (it != mWindows.end ())
 	{
 	    CompWindow *cw = *it;
 
-    	    if (w && id == cw->id ())
+    	    if (id == cw->id ())
 	    {
 		inList = true;
 
 		if (w->id () == selected)
 		{
-		    if (it < mWindows.end ()--)
-		    {
-		        it++;
-			selected = cw->id ();
-			it--;
-		    }
+		    it++;
+		    if (it != mWindows.end ())
+		        selected = (*it)->id();
     		    else
 			selected = mWindows.front ()->id ();
+		    it--;
 
 		    mSelectedWindow = selected;
 		}
 
-		it--;
-
-		mWindows.remove (cw); // ???
+		mWindows.erase (it);
 		break;
-
 	    }
+	    it++;
 	}
 
 	if (!inList)
