@@ -4,6 +4,10 @@
 		<_short>Window Rules</_short>
 		<_long>Set windows rules</_long>
 		<category>Window Management</category>
+		<relation type="after">
+		    <plugin>opengl</plugin>
+		    <plugin>composite</plugin>
+		</relation>
 		<options>
 			<group>
 				<_short>Matches</_short>
