@@ -107,8 +107,14 @@ typedef enum
     WatchedPluginScale,
     WatchedPluginGroup,
     WatchedPluginFadedesktop,
-    WatchedPluginNum
-} WatchedPlugin;
+    WatchedScreenPluginNum
+} WatchedScreenPlugin;
+
+typedef enum
+{
+    WatchedPluginKDECompat,
+    WatchedWindowPluginNum
+} WatchedWindowPlugin;
 
 // This must have the value of the first "effect setting" above
 // in PrivateAnimScreenOptions
@@ -198,7 +204,7 @@ private:
     struct timeval mLastRedrawTime;
     bool mLastRedrawTimeFresh;
 
-    bool mPluginActive[WatchedPluginNum];
+    bool mPluginActive[WatchedScreenPluginNum];
     int mSwitcherPostWait;
     int mStartCountdown;
     ///< To mark windows as "created" if they were opened before compiz
@@ -361,6 +367,8 @@ private:
 
     CompRegion mStepRegion;     ///< Region to damage this step
     CompRegion mLastStepRegion; ///< Region damaged last step
+
+    bool mPluginActive[WatchedWindowPluginNum];
 
     // Utility methods
     unsigned int getState ();
