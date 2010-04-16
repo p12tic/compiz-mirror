@@ -427,6 +427,7 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
     GLTexture::Matrix   matrix;
     GLTexture::MatrixList tmpMatrixList;
     WallpaperBackground *back = ws->getBackgroundForViewport (bg);
+	GLFragment::Attrib tmpAttrib = attrib;
 
     tmpMatrixList.push_back (matrix);
 
@@ -450,16 +451,16 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
     if (ws->optionGetCycleWallpapers ())
     {
 	if (fadingIn)
-	    attrib.setOpacity (OPAQUE * (1.0f - ws->alpha));
+	    tmpAttrib.setOpacity ((OPAQUE * (1.0f - ws->alpha)) * (attrib.getOpacity () / (float)OPAQUE));
 	else
-	    attrib.setOpacity (OPAQUE * ws->alpha);
+	    tmpAttrib.setOpacity ((OPAQUE * ws->alpha) * (attrib.getOpacity () / (float)OPAQUE));
     }
 	
-    if (attrib.getOpacity () != OPAQUE)
+    if (tmpAttrib.getOpacity () != OPAQUE)
 	mask |= PAINT_WINDOW_BLEND_MASK;
 
     if (gWindow->geometry ().vCount)
-	gWindow->glDrawTexture(back->fillTex[0], attrib, mask);
+	gWindow->glDrawTexture(back->fillTex[0], tmpAttrib, mask);
 
     if (back->imgSize.width () && back->imgSize.height ())
     {
@@ -557,7 +558,7 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
 	}
 
 	if (gWindow->geometry ().vCount)
-	    gWindow->glDrawTexture (back->imgTex[0], attrib, mask | PAINT_WINDOW_BLEND_MASK);
+	    gWindow->glDrawTexture (back->imgTex[0], tmpAttrib, mask | PAINT_WINDOW_BLEND_MASK);
     }
 }
 
