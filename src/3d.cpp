@@ -71,7 +71,7 @@ TdScreen::preparePaint (int msSinceLastPaint)
 
     cScreen->preparePaint (msSinceLastPaint);
     
-    cs->paintAllViewports (true);
+    cs->paintAllViewports (mActive);
 }
 
 #define DOBEVEL(corner) (tds->optionGetBevel##corner () ? bevel : 0)
