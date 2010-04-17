@@ -8,7 +8,7 @@ TdWindow::is3D ()
     if (window->overrideRedirect ())
 	return FALSE;
 
-    if (!(window->shaded () || !window->invisible ()))
+    if (!window->isViewable () || window->shaded ())
 	return FALSE;
 
     if (window->state () & (CompWindowStateSkipPagerMask |
@@ -52,6 +52,7 @@ TdScreen::preparePaint (int msSinceLastPaint)
 	    tdw->mIs3D = TRUE;
 	    mMaxDepth++;
 	    tdw->mDepth = mMaxDepth;
+
 	}
 
 	minScale =  MAX (minScale, 1.0 - (mMaxDepth * maxDiv));
@@ -70,7 +71,7 @@ TdScreen::preparePaint (int msSinceLastPaint)
 
     cScreen->preparePaint (msSinceLastPaint);
     
-    cs->paintAllViewports (cs->paintAllViewports () | mActive);
+    cs->paintAllViewports (true);
 }
 
 #define DOBEVEL(corner) (tds->optionGetBevel##corner () ? bevel : 0)
@@ -113,13 +114,13 @@ TdScreen::preparePaint (int msSinceLastPaint)
 	glVertex4fv (v);                     \
 
 bool
-TdWindow::glPaint (const GLWindowPaintAttrib &attrib,
-		   const GLMatrix	     &transform,
-		   const CompRegion	     &region,
-		   unsigned int		     mask)
+TdWindow::glPaintWithDepth (const GLWindowPaintAttrib &attrib,
+			    const GLMatrix	      &transform,
+			    const CompRegion	      &region,
+			    unsigned int	      mask)
 {
-    Bool           wasCulled;
-    Bool           status;
+    bool status;
+    bool wasCulled;
     int            wx, wy, ww, wh;
     int            bevel, cull, cullInv, temp;
     GLVector       point, tPoint;
@@ -127,15 +128,6 @@ TdWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     TD_SCREEN (screen);
     CUBE_SCREEN (screen);
-    
-    if (mDepth != 0.0f && !tds->mPainting3D && tds->mActive)
-	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
-
-    if (!(tds->mPainting3D && tds->optionGetWidth () && (mDepth != 0.0f) &&
-	tds->mWithDepth))
-    {
-	return gWindow->glPaint (attrib, transform, region, mask);
-    }
 
     wasCulled = glIsEnabled (GL_CULL_FACE);
 
@@ -272,6 +264,33 @@ TdWindow::glPaint (const GLWindowPaintAttrib &attrib,
     return status;
 }
 
+bool
+TdWindow::glPaint (const GLWindowPaintAttrib &attrib,
+		   const GLMatrix	     &transform,
+		   const CompRegion	     &region,
+		   unsigned int		     mask)
+{
+    Bool           wasCulled;
+    Bool           status;
+
+    TD_SCREEN (screen);
+    
+    if (mDepth != 0.0f && !tds->mPainting3D && tds->mActive)
+	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+
+    if (tds->mPainting3D && tds->optionGetWidth () && (mDepth != 0.0f) &&
+	tds->mWithDepth)
+    {
+	status = glPaintWithDepth (attrib, transform, region, mask);
+    }
+    else
+    {
+	status = gWindow->glPaint (attrib, transform, region, mask);
+    }
+
+    return status;
+}
+
 void
 TdScreen::glApplyTransform (const GLScreenPaintAttrib &attrib,
 			    CompOutput *output,
@@ -359,9 +378,9 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 	    if (w->destroyed ())
 		continue;
 
-	    if (!w->shaded ())
+	    if (!w->shaded () || !w->isViewable ())
 	    {
-		if (w->invisible () || !tdw->cWindow->damaged ())
+		if (!tdw->cWindow->damaged ())
 		    continue;
 	    }
 
@@ -417,6 +436,7 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 				  infiniteRegion, newMask);
 				  
 		gScreen->glDisableOutputClipping ();
+
 	    }
 	}
 
@@ -424,7 +444,9 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 
 	mPainting3D   = FALSE;
 	mCurrentScale = mBasicScale;
+
     }
+
 
     if (cs->paintOrder () == FTB)
     {

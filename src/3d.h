@@ -125,6 +125,12 @@ class TdWindow :
 		 const GLMatrix		   &,
 		 const CompRegion	   &,
 		 unsigned int		     );
+
+	bool
+	glPaintWithDepth (const GLWindowPaintAttrib &,
+		 	  const GLMatrix	    &,
+		 	  const CompRegion	    &,
+		 	  unsigned int		     );
 		 
 	bool
 	is3D ();
