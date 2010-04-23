@@ -1,9 +1,6 @@
 exec_program (${HAVE_PYREX} ${CMAKE_SOURCE_DIR}/src
 		  ARGS "compizconfig.pyx")
 
-message ("ccs includes are " ${CCS_PYTHON_LIBRARY_DIRS})
-message ("py includes are " ${PYTHON_INCLUDE_DIRS})
-
 include_directories (
 	     ${CCS_PYTHON_INCLUDE_DIRS}
 	     ${PYTHON_INCLUDE_DIRS}
