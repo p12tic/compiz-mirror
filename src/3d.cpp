@@ -120,7 +120,6 @@ TdWindow::glPaintWithDepth (const GLWindowPaintAttrib &attrib,
 			    unsigned int	      mask)
 {
     bool status;
-    bool wasCulled;
     int            wx, wy, ww, wh;
     int            bevel, cull, cullInv, temp;
     GLVector       point, tPoint;
@@ -129,7 +128,7 @@ TdWindow::glPaintWithDepth (const GLWindowPaintAttrib &attrib,
     TD_SCREEN (screen);
     CUBE_SCREEN (screen);
 
-    wasCulled = glIsEnabled (GL_CULL_FACE);
+    glIsEnabled (GL_CULL_FACE);
 
     wx = window->x () - window->input ().left;
     wy = window->y () - window->input ().top;
@@ -270,7 +269,6 @@ TdWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		   const CompRegion	     &region,
 		   unsigned int		     mask)
 {
-    Bool           wasCulled;
     Bool           status;
 
     TD_SCREEN (screen);
