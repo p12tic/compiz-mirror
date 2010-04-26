@@ -2,7 +2,7 @@
  *
  * Compiz stackswitch switcher plugin
  *
- * stackswitch.c
+ * stackswitch.cpp
  *
  * Copyright : (C) 2007 by Danny Baumann
  * E-mail    : maniac@opencompositing.org
@@ -25,7 +25,7 @@
 
 #include "stackswitch.h"
 
-COMPIZ_PLUGIN_20090315 (stackswitch, StackswitchPluginVTable);
+COMPIZ_PLUGIN_20090315 (stackswitch, StackswitchPluginVTable)
 
 bool textAvailable;
 
@@ -40,7 +40,7 @@ StackswitchWindow::isStackswitchable ()
     if (window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
 	return false;
 
-    if (!window->mapNum () || window->invisible ())
+    if (!window->mapNum () || !window->isViewable ())
     {
 	if (ss->optionGetMinimized ())
 	{
@@ -51,9 +51,9 @@ StackswitchWindow::isStackswitchable ()
     	    return false;
     }
 
-    if (ss->mType == StackswitchScreen::TypeNormal)
+    if (ss->mType == StackswitchTypeNormal)
     {
-	if (!window->mapNum () || window->invisible ())
+	if (!window->mapNum () || !window->isViewable ())
 	{
 	    if (window->serverX () + window->width ()  <= 0    ||
 		window->serverY () + window->height () <= 0    ||
@@ -67,7 +67,7 @@ StackswitchWindow::isStackswitchable ()
 		return false;
 	}
     }
-    else if (ss->mType == StackswitchScreen::TypeGroup &&
+    else if (ss->mType == StackswitchTypeGroup &&
 	     ss->mClientLeader != window->clientLeader () &&
 	     ss->mClientLeader != window->id ())
     {
@@ -125,7 +125,7 @@ StackswitchScreen::renderWindowTitle ()
     tA.bgColor[2] = optionGetTitleBackColorBlue ();
     tA.bgColor[3] = optionGetTitleBackColorAlpha ();
 
-    showViewport = mType == StackswitchScreen::TypeAll;
+    showViewport = (mType == StackswitchTypeAll);
     mText.renderWindowTitle (mSelectedWindow, showViewport, tA);
 }
 
@@ -136,10 +136,10 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
     GLboolean     wasBlend;
     GLint         oldBlendSrc, oldBlendDst;
     GLMatrix      wTransform (transform), mvp;
-    float         x, fY, tx, ix, width, height;
+    float         x, y, tx, ix, width, height;
     int           ox1, ox2, oy1, oy2;
     GLTexture::Matrix    m;
-    GLVector    v;
+    GLVector    vec;
     GLTexture     *icon;
     
     STACKSWITCH_WINDOW (w);
@@ -160,7 +160,7 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
     switch (optionGetTitleTextPlacement ())
     {
 	case StackswitchOptions::TitleTextPlacementOnThumbnail:
-	{
+	    {
 	    GLVector v (w->x () + (w->width () / 2.0),
 	    		w->y () + (w->width () / 2.0),
 			0.0f,
@@ -171,38 +171,40 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 	    wTransform.translate (sw->mTx, sw->mTy, 0.0f);
 	    wTransform.rotate (-mRotation, 1.0, 0.0, 0.0);
 	    wTransform.scale (sw->mScale, sw->mScale, 1.0);
-	    wTransform.translate (w->input ().left, 0.0 -(w->height () + w->input ().bottom), 0.0f);
+	    wTransform.translate (+w->input ().left, 0.0 - (w->height () +
+							    w->input ().bottom),
+							   0.0f);
 	    wTransform.translate (-w->x (), -w->y (), 0.0f);
 
-	    mvp = pm * wTransform;;
-	    v = mvp * v;
-	    v.homogenize ();
+	    mvp = pm * wTransform;
+	    vec = mvp * vec;
+	    vec.homogenize ();
 
-	    x = (v[GLVector::x] + 1.0) * (ox2 - ox1) * 0.5;
-	    fY = (v[GLVector::y] - 1.0) * (oy2 - oy1) * -0.5;
+	    x = (vec[GLVector::x] + 1.0) * (ox2 - ox1) * 0.5;
+	    y = (vec[GLVector::y] - 1.0) * (oy2 - oy1) * -0.5;
 
 	    x += ox1;
-	    fY += oy1;
+	    y += oy1;
 
 	    tx = MAX (ox1, x - (width / 2.0));
 	    if (tx + width > ox2)
 		tx = ox2 - width;
+            }
+	break;
+	case StackswitchOptions::TitleTextPlacementCenteredOnScreen:
+	    y = oy1 + ((oy2 - oy1) / 2) + (height / 2);
 	    break;
-	}
-	case TitleTextPlacementCenteredOnScreen:
-	    fY = oy1 + ((oy2 - oy1) / 2) + (height / 2);
-	    break;
-	case TitleTextPlacementAbove:
-	case TitleTextPlacementBelow:
+	case StackswitchOptions::TitleTextPlacementAbove:
+	case StackswitchOptions::TitleTextPlacementBelow:
 	    {
 		CompRect workArea;
 		workArea = screen->getWorkareaForOutput (screen->currentOutputDev ().id ());
 
 	    	if (optionGetTitleTextPlacement () ==
-		    TitleTextPlacementAbove)
-    		    fY = oy1 + workArea.y () + height;
+		    StackswitchOptions::TitleTextPlacementAbove)
+    		    y = oy1 + workArea.y () + height;
 		else
-		    fY = oy1 + workArea.y () + workArea.height () - 96;
+		    y = oy1 + workArea.y () + workArea.height () - 96;
 	    }
 	    break;
 	default:
@@ -211,7 +213,7 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
     }
 
     tx = floor (tx);
-    fY  = floor (fY);
+    y  = floor (y);
 
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
@@ -247,13 +249,13 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 	    glBegin (GL_QUADS);
 
 	    glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m ,0));
-	    glVertex2f (ix - off, fY - off);
+	    glVertex2f (ix - off, y - off);
 	    glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m, icon->height ()));
-	    glVertex2f (ix - off, fY + icon->height () + off);
+	    glVertex2f (ix - off, y + icon->height () + off);
 	    glTexCoord2f (COMP_TEX_COORD_X (m, icon->width ()), COMP_TEX_COORD_Y (m, icon->height ()));
-	    glVertex2f (ix + icon->width () + off, fY + icon->height () + off);
+	    glVertex2f (ix + icon->width () + off, y + icon->height () + off);
 	    glTexCoord2f (COMP_TEX_COORD_X (m, icon->width ()), COMP_TEX_COORD_Y (m, 0));
-	    glVertex2f (ix + icon->width () + off, fY - off);
+	    glVertex2f (ix + icon->width () + off, y - off);
 
 	    glEnd ();
 	}
@@ -263,38 +265,21 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 	glBegin (GL_QUADS);
 
 	glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m ,0));
-	glVertex2f (ix, fY);
+	glVertex2f (ix, y);
 	glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m, icon->height ()));
-	glVertex2f (ix, fY + icon->height ());
+	glVertex2f (ix, y + icon->height ());
 	glTexCoord2f (COMP_TEX_COORD_X (m, icon->width ()), COMP_TEX_COORD_Y (m, icon->height ()));
-	glVertex2f (ix + icon->width (), fY + icon->height ());
+	glVertex2f (ix + icon->width (), y + icon->height ());
 	glTexCoord2f (COMP_TEX_COORD_X (m, icon->width ()), COMP_TEX_COORD_Y (m, 0));
-	glVertex2f (ix + icon->width (), fY);
+	glVertex2f (ix + icon->width (), y);
 
 	glEnd ();
-	
+
 	icon->disable ();
     }
 
-    mText.draw (tx, fY, 1.0f);
-    #if 0
-    m = &textData->texture->matrix;
+    mText.draw (x - mText.getWidth () / 2, y, 1.0);
 
-    glBegin (GL_QUADS);
-
-    glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m ,0));
-    glVertex2f (tx, fY - height);
-    glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m, height));
-    glVertex2f (tx, fY);
-    glTexCoord2f (COMP_TEX_COORD_X (m, width), COMP_TEX_COORD_Y (m, height));
-    glVertex2f (tx + width, fY);
-    glTexCoord2f (COMP_TEX_COORD_X (m, width), COMP_TEX_COORD_Y (m, 0));
-    glVertex2f (tx + width, fY - height);
-
-    glEnd ();
-
-    disableTexture (s, textData->texture);
-    #endif
     glColor4usv (defaultColor);
 
     if (!wasBlend)
@@ -308,29 +293,29 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			    const CompRegion	      &region,
 			    unsigned int	      mask)
 {
-    bool       status;
+    Bool       status;
 
     STACKSWITCH_SCREEN (screen);
 
-    if (ss->mState != StackswitchScreen::StateNone)
+    if (ss->mState != StackswitchStateNone)
     {
 	GLWindowPaintAttrib sAttrib (attrib);
-	bool		  scaled = false;
+	Bool		  scaled = FALSE;
 	float             rotation;
 
     	if (window->mapNum ())
 	{
-	    if (!gWindow->textures ().empty ())
+	    if (!gWindow->textures ().size ())
 		gWindow->bind ();
 	}
 
 	if (mAdjust || mSlot)
 	{
-	    scaled = (mAdjust && ss->mState != StackswitchScreen::StateSwitching) ||
+	    scaled = (mAdjust && ss->mState != StackswitchStateSwitching) ||
 		     (mSlot && ss->mPaintingSwitcher);
 	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 	}
-	else if (ss->mState != StackswitchScreen::StateIn)
+	else if (ss->mState != StackswitchStateIn)
 	{
 	    if (ss->optionGetDarkenBack ())
 	    {
@@ -338,8 +323,8 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		sAttrib.brightness = sAttrib.brightness / 2;
 	    }
 	}
-	
-	status = gWindow->glPaint (sAttrib, transform, region, mask);
+
+	status = gWindow->glPaint (attrib, transform, region, mask);
 
 	if (ss->optionGetInactiveRotate ())
 	    rotation = MIN (mRotation, ss->mRotation);
@@ -352,18 +337,17 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    GLMatrix           wTransform (transform);
 
 	    if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
-		return false;
+		return FALSE;
 
 	    if (mSlot)
 	    {
 		if (window->id () != ss->mSelectedWindow)
 		    fragment.setOpacity ((float)fragment.getOpacity () *
-			                   ss->optionGetInactiveOpacity () / 100);
+			               ss->optionGetInactiveOpacity () / 100);
 	    }
 
 	    if (window->alpha () || fragment.getOpacity () != OPAQUE)
 		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
-
 
 	    wTransform.scale (1.0, 1.0, 1.0 / screen->height ());
 	    wTransform.translate (mTx, mTy, 0.0f);
@@ -371,30 +355,31 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    wTransform.rotate (-rotation, 1.0, 0.0, 0.0);
 	    wTransform.scale (mScale, mScale, 1.0);
 
-	    wTransform.translate (window->input ().left, 0.0 -(window->height () + window->input ().bottom), 0.0f);
+	    wTransform.translate (+window->input ().left,
+				  0.0 -(window->height () +
+				  window->input ().bottom), 0.0f);
 	    wTransform.translate (-window->x (), -window->y (), 0.0f);
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.getMatrix ());
 
-	    gWindow->glDraw (wTransform, fragment, region, mask |
-	    		     PAINT_WINDOW_TRANSFORMED_MASK);
+	    gWindow->glDraw (wTransform, fragment, region,
+			      mask | PAINT_WINDOW_TRANSFORMED_MASK);
 
 	    glPopMatrix ();
 	}
 
 	if (scaled && !gWindow->textures ().size ())
 	{
-	    GLTexture *icon;
-
-	    icon = gWindow->getIcon (96, 96);
+	    GLTexture *icon = gWindow->getIcon (96, 96);
 	    if (!icon)
 		icon = ss->gScreen->defaultIcon ();
 
 	    if (icon && (icon->name ()))
 	    {
-		CompRegion          iconReg (0, 0, icon->width (), icon->height ());
+		CompRegion          iconReg (0, 0,
+					     icon->width (),
+					     icon->height ());
 		GLTexture::Matrix   matrix;
-		GLTexture::MatrixList matl;
 		float               scale;
 
 		scale = MIN (window->width () / icon->width (),
@@ -409,20 +394,20 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
 		matrix = icon->matrix ();
+
+		GLTexture::MatrixList matl;
 		matl.push_back (matrix);
 
-		gWindow->geometry ().vCount =
-			 gWindow->geometry ().indexCount = 0;
+		gWindow->geometry ().reset ();
 		gWindow->glAddGeometry (matl, iconReg, infiniteRegion);
 
 		if (gWindow->geometry ().vCount)
 		{
+		    GLFragment::Attrib fragment (attrib);
 		    GLMatrix           wTransform (transform);
 
 		    if (!gWindow->textures ().size ())
-			sAttrib.opacity = gWindow->paintAttrib ().opacity;
-
-		    GLFragment::Attrib fragment (sAttrib);
+			fragment.setOpacity (gWindow->paintAttrib ().opacity);
 
 		    wTransform.scale (1.0, 1.0, 1.0 / screen->height ());
 		    wTransform.translate (mTx, mTy, 0.0f);
@@ -444,68 +429,68 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
     }
     else
     {
-        status = gWindow->glPaint (attrib, transform, region, mask);
+	status = gWindow->glPaint (attrib, transform, region, mask);
     }
 
     return status;
 }
 
-bool
-StackswitchWindow::compareWindows (CompWindow *w1,
-				   CompWindow *w2)
+int
+compareWindows (const void *elem1,
+		const void *elem2)
 {
+    CompWindow *w1 = *((CompWindow **) elem1);
+    CompWindow *w2 = *((CompWindow **) elem2);
+
     if (w1->mapNum () && !w2->mapNum ())
-	return false;
+	return -1;
 
     if (w2->mapNum () && !w1->mapNum ())
-	return true;
+	return 1;
 
-    if (w2->activeNum () - w1->activeNum ())
-	return true;
-    else
-	return false;
+    return w2->activeNum () - w1->activeNum ();
 }
 
-bool
-StackswitchWindow::compareStackswitchWindowDepth (StackswitchDrawSlot *a1,
-						  StackswitchDrawSlot *a2)
+int
+compareStackswitchWindowDepth (const void *elem1,
+			       const void *elem2)
 {
-    StackswitchSlot *s1 = *(a1->slot);
-    StackswitchSlot *s2 = *(a2->slot);
+    StackswitchSlot *a1   = *(((StackswitchDrawSlot *) elem1)->slot);
+    StackswitchSlot *a2   = *(((StackswitchDrawSlot *) elem2)->slot);
 
-    if (s1->y < s2->y)
-	return true;
-    else if (s1->y > s2->y)
-	return false;
+    if (a1->y < a2->y)
+	return -1;
+    else if (a1->y > a2->y)
+	return 1;
     else
     {
-	CompWindow *w1   = a1->w;
-        CompWindow *w2   = a2->w;
-
+	CompWindow *a1   = (((StackswitchDrawSlot *) elem1)->w);
+        CompWindow *a2   = (((StackswitchDrawSlot *) elem2)->w);
 	STACKSWITCH_SCREEN (screen);
-	if (w1->id () == ss->mSelectedWindow)
-	    return false;
-	else if (w2->id () == ss->mSelectedWindow)
-	    return true;
+	if (a1->id () == ss->mSelectedWindow)
+	    return 1;
+	else if (a2->id () == ss->mSelectedWindow)
+	    return -1;
 	else
-	    return false;
+	    return 0;
     }
 }
 
 bool
 StackswitchScreen::layoutThumbs ()
 {
-    unsigned int index;
+    CompWindow *w;
+    int        index;
     int        ww, wh;
     float      xScale, yScale;
     int        ox1, ox2, oy1, oy2;
     float      swi = 0.0, oh, rh, ow;
-    unsigned int cols, rows, col = 0, row = 0, r, c;
-    unsigned int cindex, ci, gap, hasActive = 0;
-    bool       exit;
+    int        cols, rows, col = 0, row = 0, r, c;
+    int        cindex, ci, gap, hasActive = 0;
+    Bool       exit;
 
-    if ((mState == StateNone) || (mState == StateIn))
-	return false;
+    if ((mState == StackswitchStateNone) || (mState == StackswitchStateIn))
+	return FALSE;
 
     CompRect output = screen->getCurrentOutputExtents ();
     
@@ -515,8 +500,10 @@ StackswitchScreen::layoutThumbs ()
     oy2 = output.y2 ();
     ow = (float)(ox2 - ox1) * 0.9;
 
-    foreach (CompWindow *w, mWindows)
+    for (index = 0; index < mNWindows; index++)
     {
+	w = mWindows[index];
+
 	ww = w->width ()  + w->input ().left + w->input ().right;
 	wh = w->height () + w->input ().top  + w->input ().bottom;
 
@@ -526,8 +513,10 @@ StackswitchScreen::layoutThumbs ()
     cols = ceil (sqrtf (swi));
 
     swi = 0.0;
-    foreach (CompWindow *w, mWindows)
+    for (index = 0; index < mNWindows; index++)
     {
+	w = mWindows[index];
+
 	ww = w->width ()  + w->input ().left + w->input ().right;
 	wh = w->height () + w->input ().top  + w->input ().bottom;
 
@@ -549,40 +538,33 @@ StackswitchScreen::layoutThumbs ()
 
     rh = ((float)(oy2 - oy1) * 0.8) / rows;
 
-    index = 0;
-    foreach (CompWindow *w, mWindows)
+    for (index = 0; index < mNWindows; index++)
     {
-	StackswitchDrawSlot *dSlot;
+	w = mWindows[index];
+
 	STACKSWITCH_WINDOW (w);
 
 	if (!sw->mSlot)
-	    sw->mSlot = new StackswitchSlot;
+	    sw->mSlot = (StackswitchSlot *) malloc (sizeof (StackswitchSlot));
 
 	if (!sw->mSlot)
-	    return false;
-	    
-	dSlot = new StackswitchDrawSlot;
+	    return FALSE;
 
-	mDrawSlots.at (index) = dSlot;
-
-	mDrawSlots.at (index)->w    = w;
-	mDrawSlots.at (index)->slot = &sw->mSlot;
-	
-	index++;
+	mDrawSlots[index].w    = w;
+	mDrawSlots[index].slot = &sw->mSlot;
     }
 
     index = 0;
 
-    for (r = 0; r < rows && index < mWindows.size (); r++)
+    for (r = 0; r < rows && index < mNWindows; r++)
     {
-        CompWindow *w;
 	c = 0;
 	swi = 0.0;
 	cindex = index;
-	exit = false;
-	while (index < mWindows.size () && !exit)
+	exit = FALSE;
+	while (index < mNWindows && !exit)
 	{
-	    w = mWindows.at (index);
+	    w = mWindows[index];
 
 	    STACKSWITCH_WINDOW (w);
 	    sw->mSlot->x = ox1 + swi;
@@ -606,7 +588,7 @@ StackswitchScreen::layoutThumbs ()
 
 	    if (swi + (ww * sw->mSlot->scale) > ow && cindex != index)
 	    {
-		exit = true;
+		exit = TRUE;
 		continue;
 	    }
 
@@ -625,7 +607,7 @@ StackswitchScreen::layoutThumbs ()
 	ci = 1;
 	while (ci <= c)
 	{
-	    w = mWindows.at (index);
+	    w = mWindows[index];
 
 	    STACKSWITCH_WINDOW (w);
 	    sw->mSlot->x += ci * gap;
@@ -644,42 +626,57 @@ StackswitchScreen::layoutThumbs ()
     /* sort the draw list so that the windows with the 
        lowest Y value (the windows being farest away)
        are drawn first */
-    sort (mDrawSlots.begin (), mDrawSlots.end (),
-    	  StackswitchWindow::compareStackswitchWindowDepth);
+    qsort (mDrawSlots, mNWindows, sizeof (StackswitchDrawSlot),
+	   compareStackswitchWindowDepth);
 
-    return true;
+    return TRUE;
 }
 
 void
-StackswitchWindow::addToList ()
+StackswitchScreen::addWindowToList (CompWindow *w)
 {
-    STACKSWITCH_SCREEN (screen);
-    
-    ss->mWindows.push_back (window);
-    ss->mDrawSlots.resize (ss->mWindows.size ());
+    if (mWindowsSize <= mNWindows)
+    {
+	mWindows = (CompWindow **) realloc (mWindows,
+			       		   sizeof (CompWindow *) * (mNWindows + 32));
+	if (!mWindows)
+	    return;
+
+	mDrawSlots = (StackswitchDrawSlot *) realloc (mDrawSlots,
+				 		   sizeof (StackswitchDrawSlot) * (mNWindows + 32));
+
+	if (!mDrawSlots)
+	    return;
+
+	mWindowsSize = mNWindows + 32;
+    }
+
+    mWindows[mNWindows++] = w;
 }
 
 bool
 StackswitchScreen::updateWindowList ()
 {
-    sort (mWindows.begin (), mWindows.end (), StackswitchWindow::compareWindows);
-    
+    qsort (mWindows, mNWindows, sizeof (CompWindow *), compareWindows);
+
     return layoutThumbs ();
 }
-
 
 bool
 StackswitchScreen::createWindowList ()
 {
+    mNWindows = 0;
+
     foreach (CompWindow *w, screen->windows ())
     {
-        STACKSWITCH_WINDOW (w);
+	STACKSWITCH_WINDOW (w);
+
 	if (sw->isStackswitchable ())
 	{
 	    STACKSWITCH_WINDOW (w);
 
-	    sw->addToList ();
-	    sw->mAdjust = true;
+	    addWindowToList (w);
+	    sw->mAdjust = TRUE;
 	}
     }
 
@@ -687,43 +684,27 @@ StackswitchScreen::createWindowList ()
 }
 
 void
-StackswitchScreen::switchToWindow (bool toNext)
+StackswitchScreen::switchToWindow (bool	   toNext)
 {
-    CompWindow *w = NULL, *itwin;
-    std::vector <CompWindow *>::iterator it;
+    CompWindow *w;
+    int	       cur;
 
     if (!mGrabIndex)
 	return;
 
-    foreach (itwin, screen->windows ())
+    for (cur = 0; cur < mNWindows; cur++)
     {
-	if (itwin->id () == mSelectedWindow)
+	if (mWindows[cur]->id () == mSelectedWindow)
 	    break;
     }
 
-    it = std::find (mWindows.begin (), mWindows.end (), itwin);
-
-    if (it == mWindows.end ())
+    if (cur == mNWindows)
 	return;
 
     if (toNext)
-    {
-        it++;
-        if (it == mWindows.end ())
-            w = mWindows.front ();
-        else
-            w = *it;
-    }
+	w = mWindows[(cur + 1) % mNWindows];
     else
-    {
-        if (it == mWindows.begin ())
-            w = mWindows.back ();
-        else
-        {
-            it--;
-            w = *it;
-        }
-    }
+	w = mWindows[(cur + mNWindows - 1) % mNWindows];
 
     if (w)
     {
@@ -732,12 +713,12 @@ StackswitchScreen::switchToWindow (bool toNext)
 	mSelectedWindow = w->id ();
 	if (old != w->id ())
 	{
-	    mRotateAdjust = true;
-	    mMoreAdjust = true;
-	    foreach (CompWindow *win, screen->windows ())
+	    mRotateAdjust = TRUE;
+	    mMoreAdjust = TRUE;
+	    foreach (CompWindow *w, screen->windows ())
 	    {
-		STACKSWITCH_WINDOW (win);
-		sw->mAdjust = true;
+		STACKSWITCH_WINDOW (w);
+		sw->mAdjust = TRUE;
 	    }
 
 	    cScreen->damageScreen ();
@@ -749,13 +730,12 @@ StackswitchScreen::switchToWindow (bool toNext)
 int
 StackswitchScreen::countWindows ()
 {
+    CompWindow *w;
     int	       count = 0;
 
-    foreach (CompWindow *w, screen->windows ())
+    foreach (w, screen->windows ())
     {
-        STACKSWITCH_WINDOW (w);
-        
-	if (sw->isStackswitchable ())
+	if (StackswitchWindow::get (w)->isStackswitchable ())
 	    count++;
     }
 
@@ -763,11 +743,11 @@ StackswitchScreen::countWindows ()
 }
 
 int
-StackswitchScreen::adjustStackswitchRotation (float chunk)
+StackswitchScreen::adjustStackswitchRotation (float      chunk)
 {
     float dx, adjust, amount, rot;
 
-    if (mState != StateNone && mState != StateIn)
+    if (mState != StackswitchStateNone && mState != StackswitchStateIn)
 	rot = optionGetTilt ();
     else
 	rot = 0.0;
@@ -787,18 +767,19 @@ StackswitchScreen::adjustStackswitchRotation (float chunk)
     {
 	mRVelocity = 0.0f;
 	mRotation = rot;
-	return false;
+	return FALSE;
     }
 
     mRotation += mRVelocity * chunk;
-    return true;
+    return TRUE;
 }
 
 int
-StackswitchWindow::adjustStackswitchVelocity ()
+StackswitchWindow::adjustVelocity ()
 {
     float dx, dy, ds, dr, adjust, amount;
     float x1, y1, scale, rot;
+
     STACKSWITCH_SCREEN (screen);
 
     if (mSlot)
@@ -881,64 +862,62 @@ StackswitchWindow::adjustStackswitchVelocity ()
 
 bool
 StackswitchScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
-				  const GLMatrix            &transform,
+				  const GLMatrix	    &transform,
 				  const CompRegion	    &region,
 				  CompOutput		    *output,
 				  unsigned int		    mask)
 {
-    bool status;
-    GLMatrix sTransform = transform;
+    Bool status;
+    GLMatrix sTransform (transform);
 
-    if (mState != StateNone || mRotation != 0.0)
+    if (mState != StackswitchStateNone || mRotation != 0.0)
     {
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 	mask |= PAINT_SCREEN_TRANSFORMED_MASK;
 	mask |= PAINT_SCREEN_CLEAR_MASK;
+
 	sTransform.translate (0.0, -0.5, -DEFAULT_Z_CAMERA);
 	sTransform.rotate (-mRotation, 1.0, 0.0, 0.0);
 	sTransform.translate (0.0, 0.5, DEFAULT_Z_CAMERA);
     }
-    
+
     status = gScreen->glPaintOutput (attrib, sTransform, region, output, mask);
 
-    if (mState != StateNone &&
+    if (mState != StackswitchStateNone &&
     	 ((unsigned int) output->id () == (unsigned int) ~0 ||
 	screen->outputDevs ().at (screen->currentOutputDev ().id ()) == *output))
     {
-	unsigned int  i;
+	int           i;
 	CompWindow    *aw = NULL;
-	
+
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
-	
 	glPushMatrix ();
 	glLoadMatrixf (sTransform.getMatrix ());
 
-	mPaintingSwitcher = true;
+	mPaintingSwitcher = TRUE;
 
-	for (i = 0; i < mWindows.size (); i++)
+	for (i = 0; i < mNWindows; i++)
 	{
-	    if (mDrawSlots.at (i)->slot && *(mDrawSlots.at (i)->slot))
+	    if (mDrawSlots[i].slot && *(mDrawSlots[i].slot))
 	    {
-		CompWindow *w = mDrawSlots.at (i)->w;
+		CompWindow *w = mDrawSlots[i].w;
 		if (w->id () == mSelectedWindow)
 		    aw = w;
 
 		STACKSWITCH_WINDOW (w);
-		
-		sw->gWindow->glPaint (sw->gWindow->paintAttrib (), sTransform,
-				      infiniteRegion, 0);
+
+		sw->gWindow->glPaint (sw->gWindow->paintAttrib (), sTransform, infiniteRegion, 0);
 	    }
 	}
 	
-
 	GLMatrix tTransform (transform);
 	tTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 	glLoadMatrixf (tTransform.getMatrix ());
 	
-	if ((mState != StateIn) && aw)
+	if (mText.getWidth () && (mState != StackswitchStateIn) && aw)
 	    drawWindowTitle (sTransform, aw);
 	
-	mPaintingSwitcher = false;
+	mPaintingSwitcher = FALSE;
 	
 	glPopMatrix ();
     }
@@ -949,8 +928,9 @@ StackswitchScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 void
 StackswitchScreen::preparePaint (int msSinceLastPaint)
 {
-    if (mState != StateNone && (mMoreAdjust || mRotateAdjust))
+    if (mState != StackswitchStateNone && (mMoreAdjust || mRotateAdjust))
     {
+	CompWindow *w;
 	int        steps;
 	float      amount, chunk;
 
@@ -965,15 +945,15 @@ StackswitchScreen::preparePaint (int msSinceLastPaint)
 	while (steps--)
 	{
 	    mRotateAdjust = adjustStackswitchRotation (chunk);
-	    mMoreAdjust = false;
+	    mMoreAdjust = FALSE;
 
-	    foreach (CompWindow *w, screen->windows ())
+	    foreach (w, screen->windows ())
 	    {
 		STACKSWITCH_WINDOW (w);
 
 		if (sw->mAdjust)
 		{
-		    sw->mAdjust = sw->adjustStackswitchVelocity ();
+		    sw->mAdjust = sw->adjustVelocity ();
 
 		    mMoreAdjust |= sw->mAdjust;
 
@@ -998,14 +978,14 @@ StackswitchScreen::preparePaint (int msSinceLastPaint)
 		break;
 	}
     }
-    
+
     cScreen->preparePaint (msSinceLastPaint);
 }
 
 void
 StackswitchScreen::donePaint ()
 {
-    if (mState != StateNone)
+    if (mState != StackswitchStateNone)
     {
 	if (mMoreAdjust)
 	{
@@ -1016,88 +996,88 @@ StackswitchScreen::donePaint ()
 	    if (mRotateAdjust)
 		cScreen->damageScreen ();
 
-	    if (mState == StateIn)
-		mState = StateNone;
-	    else if (mState == StateOut)
-		mState = StateSwitching;
+	    if (mState == StackswitchStateIn)
+		mState = StackswitchStateNone;
+	    else if (mState == StackswitchStateOut)
+		mState = StackswitchStateSwitching;
 	}
     }
-    
+
     cScreen->donePaint ();
 }
 
 bool
-StackswitchScreen::terminate (CompAction *action,
-			      CompAction::State state,
+StackswitchScreen::terminate (CompAction         *action,
+			      CompAction::State  state,
 			      CompOption::Vector options)
 {
-    if (mGrabIndex)
-    {
-        screen->removeGrab (mGrabIndex, 0);
-        mGrabIndex = 0;
-    }
+	if (mGrabIndex)
+    	{
+    	    screen->removeGrab (mGrabIndex, 0);
+    	    mGrabIndex = 0;
+	}
 
-    if (mState != StateNone)
-    {
-        CompWindow *w;
+	if (mState != StackswitchStateNone)
+    	{
+    	    CompWindow *w;
 
-        foreach (CompWindow *w, screen->windows ())
-        {
-	    STACKSWITCH_WINDOW (w);
-
-	    if (sw->mSlot)
-	    {
-	        delete sw->mSlot;
-	        sw->mSlot = NULL;
-
-	        sw->mAdjust = true;
-	    }
-        }
-        mMoreAdjust = true;
-        mState = StateIn;
-        cScreen->damageScreen ();
-
-        if (!(state & CompAction::StateCancel) && mSelectedWindow)
-        {
-	    w = screen->findWindow (mSelectedWindow);
-	    if (w)
-	        screen->sendWindowActivationRequest (w->id ());
-        }
-    }
+    	    foreach (CompWindow *w, screen->windows ())
+    	    {
+    		STACKSWITCH_WINDOW (w);
     
+		if (sw->mSlot)
+		{
+		    free (sw->mSlot);
+		    sw->mSlot = NULL;
+
+    		    sw->mAdjust = TRUE;
+		}
+	    }
+	    mMoreAdjust = TRUE;
+    	    mState = StackswitchStateIn;
+    	    cScreen->damageScreen ();
+
+	    if (!(state & CompAction::StateCancel) && mSelectedWindow)
+	    {
+		w = screen->findWindow (mSelectedWindow);
+		if (w)
+		    screen->sendWindowActivationRequest (w->id ());
+	    }
+	}
 
     if (action)
-	action->setState (action->state () & ~(CompAction::StateTermKey |
-			   		       CompAction::StateTermButton |
-			   		       CompAction::StateTermEdge));
+	action->setState (action->state ()  & ~(CompAction::StateTermKey |
+			   		        CompAction::StateTermButton |
+			   		        CompAction::StateTermEdge));
 
-    return false;
+    return FALSE;
 }
 
 bool
 StackswitchScreen::initiate (CompAction         *action,
 			     CompAction::State  state,
-			     CompOption::Vector options)
+		     	     CompOption::Vector options)
 {
     CompMatch  match;
-    CompMatch  nilMatch = CompMatch ();
-    int        count; 
+    int        count;
 
     if (screen->otherGrabExist ("stackswitch", 0))
-	return false;
+    {
+	return FALSE;
+    }
 	   
     mCurrentMatch = optionGetWindowMatch ();
 
-    match = CompOption::getMatchOptionNamed (options, "match", nilMatch);
-    if (!match.isEmpty ())
-    {
-        mCurrentMatch = match;
-    }
+    match = CompOption::getMatchOptionNamed (options, "match", CompMatch ());
+
+    mMatch = match;
 
     count = countWindows ();
 
     if (count < 1)
-	return false;
+    {
+	return FALSE;
+    }
 
     if (!mGrabIndex)
     {
@@ -1106,12 +1086,12 @@ StackswitchScreen::initiate (CompAction         *action,
 
     if (mGrabIndex)
     {
-	mState = StateOut;
+	mState = StackswitchStateOut;
 
 	if (!createWindowList ())
-	    return false;
+	    return FALSE;
 
-    	mSelectedWindow = mWindows.front ()->id ();
+    	mSelectedWindow = mWindows[0]->id ();
 	renderWindowTitle ();
 
 	foreach (CompWindow *w, screen->windows ())
@@ -1121,75 +1101,72 @@ StackswitchScreen::initiate (CompAction         *action,
 	    sw->mTx = w->x () - w->input ().left;
 	    sw->mTy = w->y () + w->height () + w->input ().bottom;
 	}
-    	mMoreAdjust = true;
+    	mMoreAdjust = TRUE;
 	cScreen->damageScreen ();
     }
 
-    return true;
+    return TRUE;
 }
 
 bool
-StackswitchScreen::doSwitch (CompAction         *action,
-			     CompAction::State  state,
-			     CompOption::Vector options,
-			     bool		nextWindow,
-			     StackswitchScreen::StackswitchType type)
+StackswitchScreen::doSwitch (CompAction           *action,
+			     CompAction::State    state,
+		     	     CompOption::Vector   options,
+		     	     bool                 nextWindow,
+		     	     StackswitchType      type)
 {
-    bool       ret = true;
+    bool       ret = TRUE;
 
-    if ((mState == StateNone) || (mState == StateIn))
-    {
-        if (type == TypeGroup)
-        {
-	    CompWindow *w;
-	    w = screen->findWindow (CompOption::getIntOptionNamed (options,
-							           "window",
-							           0));
-	    if (w)
+	if ((mState == StackswitchStateNone) || (mState == StackswitchStateIn))
+	{
+	    if (mType == StackswitchTypeGroup)
 	    {
-	        mType = TypeGroup;
-	        mClientLeader =
-		    (w->clientLeader ()) ? w->clientLeader () : w->id ();
-	        ret = initiate (action, state, options);
+    		CompWindow *w;
+    		w = screen->findWindow (CompOption::getIntOptionNamed (options, "window", 0));
+    		if (w)
+    		{
+    		    mType = StackswitchTypeGroup;
+    		    mClientLeader =
+			(w->clientLeader ()) ? w->clientLeader () : w->id ();
+		    ret = initiate (action, state, options);
+		}
 	    }
-        }
-        else
-        {
-	    mType = type;
-	    ret = initiate (action, state, options);
-        }
+	    else
+	    {
+		mType = type;
+		ret = initiate (action, state, options);
+	    }
 
-        if (state & CompAction::StateInitKey)
-	    action->setState (action->state () | CompAction::StateTermKey);
+	    if (state & CompAction::StateInitKey)
+		action->setState (action->state () | CompAction::StateTermKey);
 
-        if (state & CompAction::StateInitEdge)
-	    action->setState (action->state () | CompAction::StateTermEdge);
-        else if (state & CompAction::StateInitButton)
-	    action->setState (action->state () | CompAction::StateTermButton);
-    }
+	    if (state & CompAction::StateInitEdge)
+		action->setState (action->state () | CompAction::StateTermEdge);
+	    else if (state & CompAction::StateInitButton)
+		action->setState (action->state () | CompAction::StateTermButton);
+	}
 
-    if (ret)
-        switchToWindow (nextWindow);
-    
+	if (ret)
+    	    switchToWindow (nextWindow);
 
     return ret;
 }
 
-void
-StackswitchScreen::windowRemove (Window id)
+void 
+StackswitchScreen::windowRemove (Window      id)
 {
     CompWindow *w;
 
     w = screen->findWindow (id);
     if (w)
     {
-	bool   inList = false;
-	CompWindowVector::iterator it = mWindows.begin();
+	Bool   inList = FALSE;
+	int    j, i = 0;
 	Window selected;
-	
+
 	STACKSWITCH_WINDOW (w);
 
-	if (mState == StateNone)
+	if (mState == StackswitchStateNone)
 	    return;
 
 	if (sw->isStackswitchable ())
@@ -1197,43 +1174,40 @@ StackswitchScreen::windowRemove (Window id)
 
 	selected = mSelectedWindow;
 
-	while (it != mWindows.end ())
+	while (i < mNWindows)
 	{
-	    CompWindow *cw = *it;
-
-    	    if (id == cw->id ())
+    	    if (w->id () == mWindows[i]->id ())
 	    {
-		inList = true;
+		inList = TRUE;
 
 		if (w->id () == selected)
 		{
-		    it++;
-		    if (it != mWindows.end ())
-		        selected = (*it)->id();
+		    if (i < (mNWindows - 1))
+			selected = mWindows[i + 1]->id ();
     		    else
-			selected = mWindows.front ()->id ();
-		    it--;
+			selected = mWindows[0]->id ();
 
 		    mSelectedWindow = selected;
 		}
 
-		mWindows.erase (it);
-		break;
+		mNWindows--;
+		for (j = i; j < mNWindows; j++)
+		    mWindows[j] = mWindows[j + 1];
 	    }
-	    it++;
+	    else
+	    {
+		i++;
+	    }
 	}
 
 	if (!inList)
 	    return;
 
-	if (mWindows.size ())
+	if (mNWindows == 0)
 	{
-	    CompOption o ("root", CompOption::TypeInt);
-	    CompOption::Vector opts;
+	    CompOption::Vector o;
 
-	    o.value ().set ((int) screen->root ());
-
-	    terminate (NULL, 0, opts);
+	    terminate (NULL, 0, o);
 	    return;
 	}
 
@@ -1242,17 +1216,16 @@ StackswitchScreen::windowRemove (Window id)
 
 	if (updateWindowList ())
 	{
-	    mMoreAdjust = true;
-	    mState = StateOut;
+	    mMoreAdjust = TRUE;
+	    mState = StackswitchStateOut;
 	    cScreen->damageScreen ();
 	}
     }
 }
 
 void
-StackswitchScreen::handleEvent (XEvent *event)
+StackswitchScreen::handleEvent (XEvent      *event)
 {
-
     screen->handleEvent (event);
 
     switch (event->type) {
@@ -1281,10 +1254,10 @@ StackswitchScreen::handleEvent (XEvent *event)
 }
 
 bool
-StackswitchWindow::damageRect (bool	initial,
+StackswitchWindow::damageRect (bool initial,
 			       const CompRect &rect)
 {
-    bool       status = false;
+    Bool       status = FALSE;
 
     STACKSWITCH_SCREEN (screen);
 
@@ -1292,41 +1265,45 @@ StackswitchWindow::damageRect (bool	initial,
     {
 	if (ss->mGrabIndex && isStackswitchable ())
 	{
-	    addToList ();
+	    ss->addWindowToList (window);
 	    if (ss->updateWindowList ())
 	    {
-		mAdjust = true;
-		ss->mMoreAdjust = true;
-		ss->mState = StackswitchScreen::StateOut;
+		mAdjust = TRUE;
+		ss->mMoreAdjust = TRUE;
+		ss->mState = StackswitchStateOut;
 		ss->cScreen->damageScreen ();
 	    }
 	}
     }
-    else if (ss->mState == StackswitchScreen::StateSwitching)
+    else if (ss->mState == StackswitchStateSwitching)
     {
 	if (mSlot)
 	{
 	    ss->cScreen->damageScreen ();
-	    status = true;
+	    status = TRUE;
 	}
     }
-    
+
     status |= cWindow->damageRect (initial, rect);
 
     return status;
 }
+
 
 StackswitchScreen::StackswitchScreen (CompScreen *screen) :
     PluginClassHandler <StackswitchScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     mGrabIndex (0),
-    mState (StateNone),
+    mState (StackswitchStateNone),
     mMoreAdjust (false),
     mRotateAdjust (false),
     mPaintingSwitcher (false),
     mRVelocity (0.0f),
-    mRotation (0.0f),
+    mWindows (NULL),
+    mDrawSlots (NULL),
+    mWindowsSize (0),
+    mNWindows (0),
     mClientLeader (None),
     mSelectedWindow (None)
 {
@@ -1335,11 +1312,11 @@ StackswitchScreen::StackswitchScreen (CompScreen *screen) :
     GLScreenInterface::setHandler (gScreen);
     
     optionSetNextKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, TypeNormal));
+    					   _1, _2, _3, true, StackswitchTypeNormal));
     optionSetNextAllKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, TypeAll));
+    					   _1, _2, _3, true, StackswitchTypeAll));
     optionSetNextGroupKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, TypeGroup));
+    					   _1, _2, _3, true, StackswitchTypeGroup));
     optionSetNextKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
     					    _1, _2, _3));
     optionSetNextAllKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
@@ -1347,11 +1324,11 @@ StackswitchScreen::StackswitchScreen (CompScreen *screen) :
     optionSetNextGroupKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
     					    _1, _2, _3));
     optionSetPrevKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, TypeNormal));
+    					   _1, _2, _3, false, StackswitchTypeNormal));
     optionSetPrevAllKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, TypeAll));
+    					   _1, _2, _3, false, StackswitchTypeAll));
     optionSetPrevGroupKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, TypeGroup));
+    					   _1, _2, _3, false, StackswitchTypeGroup));
     optionSetPrevKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
     					    _1, _2, _3));
     optionSetPrevAllKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
@@ -1360,11 +1337,11 @@ StackswitchScreen::StackswitchScreen (CompScreen *screen) :
     					    _1, _2, _3));
     					    
     optionSetNextButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, TypeNormal));
+    					   _1, _2, _3, true, StackswitchTypeNormal));
     optionSetNextAllButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, TypeAll));
+    					   _1, _2, _3, true, StackswitchTypeAll));
     optionSetNextGroupButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, TypeGroup));
+    					   _1, _2, _3, true, StackswitchTypeGroup));
     optionSetNextButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
     					    _1, _2, _3));
     optionSetNextAllButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
@@ -1372,11 +1349,11 @@ StackswitchScreen::StackswitchScreen (CompScreen *screen) :
     optionSetNextGroupButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
     					    _1, _2, _3));
     optionSetPrevButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, TypeNormal));
+    					   _1, _2, _3, false, StackswitchTypeNormal));
     optionSetPrevAllButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, TypeAll));
+    					   _1, _2, _3, false, StackswitchTypeAll));
     optionSetPrevGroupButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, TypeGroup));
+    					   _1, _2, _3, false, StackswitchTypeGroup));
     optionSetPrevButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
     					    _1, _2, _3));
     optionSetPrevAllButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
@@ -1387,8 +1364,11 @@ StackswitchScreen::StackswitchScreen (CompScreen *screen) :
     
 StackswitchScreen::~StackswitchScreen ()
 {
-    mWindows.clear ();
-    mDrawSlots.clear ();
+    if (mWindows)
+	free (mWindows);
+
+    if (mDrawSlots)
+	free (mDrawSlots);
 }
 
 StackswitchWindow::StackswitchWindow (CompWindow *window) :
@@ -1414,7 +1394,7 @@ StackswitchWindow::StackswitchWindow (CompWindow *window) :
 StackswitchWindow::~StackswitchWindow ()
 {
     if (mSlot)
-	delete mSlot;
+	free (mSlot);
 }
 
 bool

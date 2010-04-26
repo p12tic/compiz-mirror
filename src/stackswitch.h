@@ -4,8 +4,8 @@
  *
  * stackswitch.h
  *
- * Copyright : (C) 2008 by Dennis Kasprzyk
- * E-mail    : onestone@beryl-project.org
+ * Copyright : (C) 2007 by Danny Baumann
+ * E-mail    : maniac@opencompositing.org
  *
  * Based on scale.c and switcher.c:
  * Copyright : (C) 2007 David Reveman
@@ -24,17 +24,29 @@
  */
 
 #include <cmath>
-#include <core/atoms.h>
+
 #include <X11/Xatom.h>
 #include <X11/cursorfont.h>
 
 #include <core/core.h>
-#include <core/pluginclasshandler.h>
+#include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <text/text.h>
-#include <composite/composite.h>
 
 #include "stackswitch_options.h"
+
+typedef enum {
+    StackswitchStateNone = 0,
+    StackswitchStateOut,
+    StackswitchStateSwitching,
+    StackswitchStateIn
+} StackswitchState;
+
+typedef enum {
+    StackswitchTypeNormal = 0,
+    StackswitchTypeGroup,
+    StackswitchTypeAll
+} StackswitchType;
 
 typedef struct _StackswitchSlot {
     int   x, y;            /* thumb center coordinates */
@@ -46,7 +58,7 @@ typedef struct _StackswitchDrawSlot {
     StackswitchSlot **slot;
 } StackswitchDrawSlot;
 
-class StackswitchScreen :
+class StackswitchScreen:
     public PluginClassHandler <StackswitchScreen, CompScreen>,
     public ScreenInterface,
     public CompositeScreenInterface,
@@ -54,58 +66,46 @@ class StackswitchScreen :
     public StackswitchOptions
 {
     public:
-    
+
 	StackswitchScreen (CompScreen *);
 	~StackswitchScreen ();
-	
-    public:
-    
-	typedef enum {
-	    StateNone = 0,
-	    StateOut,
-	    StateSwitching,
-	    StateIn
-	} StackswitchState;
 
-	typedef enum {
-	    TypeNormal = 0,
-	    TypeGroup,
-	    TypeAll
-	} StackswitchType;
-	
     public:
 
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
-	
-	/* text display support */
-	CompText	mText;
+
+    public:
 
 	void
 	handleEvent (XEvent *);
-	
+
 	void
 	preparePaint (int);
-	
+
+	void
+	donePaint ();
+
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &,
-		       const GLMatrix            &,
+		       const GLMatrix		 &,
 		       const CompRegion		 &,
 		       CompOutput		 *,
 		       unsigned int		   );
-		       
-	void
-	donePaint ();
+
+    public:
 
 	void
 	renderWindowTitle ();
 
 	void
-	drawWindowTitle (GLMatrix &transform,
-					    CompWindow *w);
+	drawWindowTitle (GLMatrix &transform, CompWindow *w);
 					    
 	bool
 	layoutThumbs ();
+
+	void
+	addWindowToList (CompWindow *w);
 
 	bool
 	updateWindowList ();
@@ -141,94 +141,96 @@ class StackswitchScreen :
 
 	void
 	windowRemove (Window id);
-	
+
+    public:
+
+	CompText mText;
+
 	CompScreen::GrabHandle mGrabIndex;
-	
+
 	StackswitchState mState;
 	StackswitchType  mType;
-	bool		 mMoreAdjust;
-	bool		 mRotateAdjust;
-	
-	bool		 mPaintingSwitcher;
-	
-	GLfloat		 mRVelocity;
-	GLfloat		 mRotation;
-	
+
+	bool	mMoreAdjust;
+	bool	mRotateAdjust;
+
+	bool	mPaintingSwitcher;
+
+	GLfloat mRVelocity;
+	GLfloat mRotation;
+
 	/* only used for sorting */
-	std::vector <CompWindow *>   mWindows;
-	std::vector <StackswitchDrawSlot *> mDrawSlots;
-	
-	Window		 mClientLeader;
-	Window		 mSelectedWindow;
-	
-	CompMatch	 mMatch;
-	CompMatch	 mCurrentMatch;
-	
+	CompWindow          **mWindows;
+	StackswitchDrawSlot *mDrawSlots;
+	int                 mWindowsSize;
+	int                 mNWindows;
+
+	Window mClientLeader;
+	Window mSelectedWindow;
+
+	CompMatch mMatch;
+	CompMatch mCurrentMatch;
 };
 
-#define STACKSWITCH_SCREEN(s)						       \
-    StackswitchScreen *ss = StackswitchScreen::get (s)
-	
-class StackswitchWindow :
+class StackswitchWindow:
     public PluginClassHandler <StackswitchWindow, CompWindow>,
     public CompositeWindowInterface,
     public GLWindowInterface
 {
     public:
-    
-	StackswitchWindow (CompWindow *w);
+
+	StackswitchWindow (CompWindow *);
 	~StackswitchWindow ();
-	
+
     public:
 
-	CompWindow	*window;
+	CompWindow *window;
 	CompositeWindow *cWindow;
 	GLWindow	*gWindow;
-	
-	bool
-	damageRect (bool, const CompRect &);
-	
+
+    public:
+
 	bool
 	glPaint (const GLWindowPaintAttrib &,
 		 const GLMatrix		   &,
 		 const CompRegion	   &,
 		 unsigned int		     );
-		 
+
+	bool
+	damageRect (bool,
+		    const CompRect &);
+
+    public:
+
 	int
-	adjustStackswitchVelocity ();
+	adjustVelocity ();
 
-	void
-	addToList ();
-
-	static bool
-	compareStackswitchWindowDepth (StackswitchDrawSlot *a1,
-				       StackswitchDrawSlot *a2);
-							  
-	static bool
-	compareWindows (CompWindow *w1,
-					   CompWindow *w2);
-					   
 	bool
 	isStackswitchable ();
 
+    public:
+
 	StackswitchSlot *mSlot;
-	
-	GLfloat 	mXVelocity;
-	GLfloat		mYVelocity;
-	GLfloat		mScaleVelocity;
-	GLfloat		mRotVelocity;
-	
-	GLfloat		mTx;
-	GLfloat		mTy;
-	GLfloat		mScale;
-	GLfloat		mRotation;
-	bool		mAdjust;
+
+	GLfloat mXVelocity;
+	GLfloat mYVelocity;
+	GLfloat mScaleVelocity;
+	GLfloat mRotVelocity;
+
+	GLfloat mTx;
+	GLfloat mTy;
+	GLfloat mScale;
+	GLfloat mRotation;
+	Bool    mAdjust;
 };
 
-#define STACKSWITCH_WINDOW(w)						       \
-    StackswitchWindow *sw = StackswitchWindow::get (w)
+#define STACKSWITCH_WINDOW(w)						      \
+    StackswitchWindow *sw = StackswitchWindow::get (w);
 
-class StackswitchPluginVTable :
+#define STACKSWITCH_SCREEN(s)						      \
+    StackswitchScreen *ss = StackswitchScreen::get (s);
+
+class StackswitchPluginVTable:
     public CompPlugin::VTableForScreenAndWindow <StackswitchScreen, StackswitchWindow>
 {
     public:

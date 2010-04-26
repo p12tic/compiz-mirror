@@ -5,13 +5,15 @@
 		<_long>Stack Window Switcher</_long>
 		<category>Window Management</category>
 		<deps>
-			<relation type="after">
-				<plugin>text</plugin>
-			</relation>
 			<requirement>
 				<plugin>composite</plugin>
 				<plugin>opengl</plugin>
 			</requirement>
+			<relation type="after">
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
+				<plugin>text</plugin>
+			</relation>
 		</deps>
 		<options>
 			<group>
