@@ -139,7 +139,6 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
     float         x, y, tx, ix, width, height;
     int           ox1, ox2, oy1, oy2;
     GLTexture::Matrix    m;
-    GLVector    vec;
     GLTexture     *icon;
     
     STACKSWITCH_WINDOW (w);
@@ -177,11 +176,11 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 	    wTransform.translate (-w->x (), -w->y (), 0.0f);
 
 	    mvp = pm * wTransform;
-	    vec = mvp * vec;
-	    vec.homogenize ();
+	    v = mvp * v;
+	    v.homogenize ();
 
-	    x = (vec[GLVector::x] + 1.0) * (ox2 - ox1) * 0.5;
-	    y = (vec[GLVector::y] - 1.0) * (oy2 - oy1) * -0.5;
+	    x = (v[GLVector::x] + 1.0) * (ox2 - ox1) * 0.5;
+	    y = (v[GLVector::y] - 1.0) * (oy2 - oy1) * -0.5;
 
 	    x += ox1;
 	    y += oy1;
@@ -226,6 +225,9 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     glColor4f (1.0, 1.0, 1.0, 1.0);
+
+    glPushMatrix ();
+    glLoadMatrixf (wTransform.getMatrix ());
 
     icon = sw->gWindow->getIcon (96, 96);
     if (!icon)
@@ -279,6 +281,8 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
     }
 
     mText.draw (x - mText.getWidth () / 2, y, 1.0);
+
+    glPopMatrix ();
 
     glColor4usv (defaultColor);
 
