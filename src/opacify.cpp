@@ -156,7 +156,7 @@ OpacifyWindow::handleEnter ()
     {
 	if (!screen->otherGrabExist ("move", NULL))
 	{
-	    os->justMoved = TRUE;
+	    os->justMoved = true;
 	    return;
 	}
 
@@ -212,18 +212,18 @@ OpacifyScreen::checkDelay ()
 	(newActive->id () == screen->activeWindow ()))
 	return true;
     if (!optionGetTimeout ())
-	return TRUE;
+	return true;
     if (!newActive || (newActive->id () == screen->root ()))
-	return FALSE;
+	return false;
     if (newActive->type () & (CompWindowTypeDesktopMask |
 			      CompWindowTypeDockMask))
     {
-	return FALSE;
+	return false;
     }
     if (optionGetNoDelayChange () && passive.size ())
-	return TRUE;
+	return true;
 
-    return FALSE;
+    return false;
 }
 
 bool
@@ -322,7 +322,7 @@ OpacifyScreen::toggle (CompAction         *action,
 	}
     }
 
-    return TRUE;
+    return true;
 }
 
 /* Configuration, initialization, boring stuff. ----------------------- */
