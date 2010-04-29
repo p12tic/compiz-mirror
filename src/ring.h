@@ -220,7 +220,7 @@ class RingWindow :
 	GLfloat tx;
 	GLfloat ty;
 	GLfloat scale;
-	Bool    adjust;
+	bool    adjust;
 
 	bool
 	glPaint (const GLWindowPaintAttrib &,
