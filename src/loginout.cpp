@@ -26,7 +26,7 @@ COMPIZ_PLUGIN_20090315 (loginout, LoginoutPluginVTable)
 void
 LoginoutScreen::updateWindowMatch (CompWindow *w)
 {
-    Bool curr;
+    bool curr;
 
     LOGINOUT_WINDOW (w);
 
