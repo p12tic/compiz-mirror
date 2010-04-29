@@ -72,7 +72,7 @@ typedef struct _ShiftSlot {
     GLfloat tx;
     GLfloat ty;
 
-    Bool    primary;
+    bool    primary;
 
 } ShiftSlot;
 
