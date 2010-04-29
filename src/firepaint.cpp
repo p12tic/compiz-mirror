@@ -54,7 +54,7 @@ ParticleSystem::initParticles (int            f_numParticles)
 
     tex = 0;
     slowdown = 1;
-    active = FALSE;
+    active = false;
 
     // Initialize cache
     vertices_cache = NULL;
@@ -266,7 +266,7 @@ ParticleSystem::updateParticles (float          time)
     float speed = (time / 50.0);
     float f_slowdown = slowdown * (1 - MAX (0.99, time / 1000.0) ) * 1000;
 
-    active = FALSE;
+    active = false;
 
     foreach (Particle *part, particles)
     {
@@ -284,7 +284,7 @@ ParticleSystem::updateParticles (float          time)
 
 	    // modify life
 	    part->life -= part->fade * speed;
-	    active = TRUE;
+	    active = true;
 	}
     }
 }
@@ -369,7 +369,7 @@ FireScreen::addParticle (CompAction         *action,
     x = CompOption::getFloatOptionNamed (options, "x", 0);
     y = CompOption::getFloatOptionNamed (options, "y", 0);
 
-    fireAddPoint (x, y, FALSE);
+    fireAddPoint (x, y, false);
 
     cScreen->damageScreen ();
 
@@ -394,9 +394,9 @@ FireScreen::initiate (CompAction         *action,
     if (state & CompAction::StateInitKey)
         action->setState (action->state () | CompAction::StateTermKey);
 
-    fireAddPoint (pointerX, pointerY, TRUE);
+    fireAddPoint (pointerX, pointerY, true);
 
-    return TRUE;
+    return true;
 }
 
 bool
@@ -414,7 +414,7 @@ FireScreen::terminate (CompAction         *action,
     action->setState (action->state () & ~(CompAction::StateTermKey |
 				           CompAction::StateTermButton));
 
-    return FALSE;
+    return false;
 }
 
 
@@ -439,7 +439,7 @@ FireScreen::preparePaint (int      time)
     if (init && numPoints)
     {
 	ps->initParticles (optionGetNumParticles ());
-	init = FALSE;
+	init = false;
 
 	glGenTextures (1, &ps->tex);
 	glBindTexture (GL_TEXTURE_2D, ps->tex);
@@ -535,7 +535,7 @@ FireScreen::preparePaint (int      time)
 		part->yg = -3.0f;
 		part->zg = 0.0f;
 
-		ps->active = TRUE;
+		ps->active = true;
 
 		max_new -= 1;
 	    }
@@ -565,7 +565,7 @@ FireScreen::preparePaint (int      time)
     if (!init && !numPoints && !ps->active)
     {
 	ps->finiParticles ();
-	init = TRUE;
+	init = true;
     }
 
     cScreen->preparePaint (time);
