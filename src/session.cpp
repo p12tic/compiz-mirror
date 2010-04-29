@@ -149,7 +149,7 @@ SessionScreen::getIsEmbedded (Window id)
     unsigned char *val;
 
     result = XGetWindowProperty (screen->dpy (), id, embedInfoAtom, 0L, 65536,
-				 FALSE, XA_CARDINAL, &type, &format, &nitems,
+				 false, XA_CARDINAL, &type, &format, &nitems,
                                  &bytesAfter, &val);
 
     if (result != Success)
