@@ -436,12 +436,8 @@ ShowmouseScreen::genNewParticles (int f_time)
 
 	    ps->active = true;
 	    max_new   -= 1;
-
-	    //fprintf (stderr, "particle has the attribs %f %f %f\n", part->x, part->y, part->z);
 	}
     }
-
-    //fprintf (stderr, "generated new particles at mean position %i %i\n", mousePos.x (), mousePos.y ());
 
 }
 
