@@ -356,7 +356,7 @@ KDECompatWindow::updatePreviews ()
 
     result = XGetWindowProperty (screen->dpy (), window->id (),
 				 ks->mKdePreviewAtom, 0,
-				 32768, FALSE, AnyPropertyType, &actual,
+				 32768, false, AnyPropertyType, &actual,
 				 &format, &n, &left, &propData);
 
     if (result == Success && propData)
@@ -432,7 +432,7 @@ KDECompatWindow::updateSlidePosition ()
     }
 
     result = XGetWindowProperty (screen->dpy (), window->id (),
-				 ks->mKdeSlideAtom, 0, 32768, FALSE,
+				 ks->mKdeSlideAtom, 0, 32768, false,
 				 AnyPropertyType, &actual, &format, &n,
 				 &left, &propData);
 
@@ -558,7 +558,7 @@ KDECompatWindow::presentGroup ()
 
     result = XGetWindowProperty (screen->dpy (), window->id (),
 				 ks->mKdePresentGroupAtom, 0,
-				 32768, FALSE, AnyPropertyType, &actual,
+				 32768, false, AnyPropertyType, &actual,
 				 &format, &n, &left, &propData);
 
     if (result == Success && propData)
@@ -753,7 +753,7 @@ KDECompatScreen::KDECompatScreen (CompScreen *screen) :
     mKdePresentGroupAtom (XInternAtom (screen->dpy (),
 			  "_KDE_PRESENT_WINDOWS_GROUP", 0)),
     mScaleHandle (CompPlugin::find ("scale")),
-    mScaleActive (FALSE),
+    mScaleActive (false),
     mPresentWindow (NULL)
 {
     ScreenInterface::setHandler (screen);
