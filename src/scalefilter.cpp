@@ -461,7 +461,7 @@ ScalefilterScreen::glPaintOutput (const GLScreenPaintAttrib& attrib,
 				  CompOutput                 *output,
 				  unsigned int               mask)
 {
-    Bool status;
+    bool status;
 
     status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
