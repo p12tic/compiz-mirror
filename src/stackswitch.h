@@ -221,7 +221,7 @@ class StackswitchWindow:
 	GLfloat mTy;
 	GLfloat mScale;
 	GLfloat mRotation;
-	Bool    mAdjust;
+	bool    mAdjust;
 };
 
 #define STACKSWITCH_WINDOW(w)						      \
