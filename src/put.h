@@ -184,7 +184,7 @@ class PutWindow :
 	int lastX, lastY;		/* starting position        */
 	int targetX, targetY;           /* target of the animation  */
 
-	Bool adjust;			/* animation flag           */
+	bool adjust;			/* animation flag           */
 
 	friend class PutScreen;
 };
