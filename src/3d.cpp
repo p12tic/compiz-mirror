@@ -6,25 +6,25 @@ bool
 TdWindow::is3D ()
 {
     if (window->overrideRedirect ())
-	return FALSE;
+	return false;
 
     if (!window->isViewable () || window->shaded ())
-	return FALSE;
+	return false;
 
     if (window->state () & (CompWindowStateSkipPagerMask |
 		    CompWindowStateSkipTaskbarMask))
-	return FALSE;
+	return false;
 	
     if (!TdScreen::get (screen)->optionGetWindowMatch ().evaluate (window))
-	return FALSE;
+	return false;
 
-    return TRUE;
+    return true;
 }
 
 void
 TdScreen::preparePaint (int msSinceLastPaint)
 {
-    Bool       active;
+    bool       active;
     
     CUBE_SCREEN (screen);
 
@@ -43,13 +43,13 @@ TdScreen::preparePaint (int msSinceLastPaint)
 	foreach (CompWindow *w, screen->windows ())
 	{
 	    TD_WINDOW (w);
-	    tdw->mIs3D = FALSE;
+	    tdw->mIs3D = false;
 	    tdw->mDepth = 0;
 
 	    if (!tdw->is3D ())
 		continue;
 
-	    tdw->mIs3D = TRUE;
+	    tdw->mIs3D = true;
 	    mMaxDepth++;
 	    tdw->mDepth = mMaxDepth;
 
@@ -269,7 +269,7 @@ TdWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		   const CompRegion	     &region,
 		   unsigned int		     mask)
 {
-    Bool           status;
+    bool           status;
 
     TD_SCREEN (screen);
     
@@ -356,7 +356,7 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 	}
 
 	mCurrentScale = mBasicScale;
-	mPainting3D   = TRUE;
+	mPainting3D   = true;
 
 	gScreen->setLighting (true);
 
@@ -440,7 +440,7 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 
 	glPopMatrix ();
 
-	mPainting3D   = FALSE;
+	mPainting3D   = false;
 	mCurrentScale = mBasicScale;
 
     }
@@ -458,7 +458,7 @@ TdScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &attrib,
 				   CompOutput		     *outputPtr,
 				   PaintOrder		     order)
 {
-    bool rv = FALSE;
+    bool rv = false;
 
     CUBE_SCREEN (screen);
     
@@ -467,7 +467,7 @@ TdScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &attrib,
     if (mActive)
     {
 	float pointZ = cs->invert () * cs->distance ();
-	Bool  ftb1, ftb2;
+	bool  ftb1, ftb2;
 	
 	std::vector<GLVector> vPoints;
 	
@@ -487,7 +487,7 @@ TdScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &attrib,
 	       (order == BTF && (!ftb1 || !ftb2)) || rv;
     }
 
-    return TRUE;
+    return true;
 }
 
 bool
@@ -507,7 +507,7 @@ TdScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	        PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK |
 		PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK;
 
-	mWithDepth = TRUE;
+	mWithDepth = true;
 	
 	p = CompPlugin::find ("cubeaddon");
 	if (p)
@@ -531,7 +531,7 @@ TdScreen::donePaint ()
 {
     if (mActive && mDamage)
     {
-	mDamage = FALSE;
+	mDamage = false;
 	cScreen->damageScreen ();
     }
     
