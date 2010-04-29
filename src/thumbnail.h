@@ -149,10 +149,10 @@ class ThumbScreen:
 	CompWindow *dock;
 	CompWindow *pointedWin;
 
-	Bool      showingThumb;
+	bool      showingThumb;
 	Thumbnail thumb;
 	Thumbnail oldThumb;
-	Bool      painted;
+	bool      painted;
 
 	CompTimer displayTimeout;
 
