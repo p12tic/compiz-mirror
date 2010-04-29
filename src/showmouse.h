@@ -69,7 +69,7 @@ class ParticleSystem
 	std::vector <Particle *> particles;
 	float    slowdown;
 	GLuint   tex;
-	Bool     active;
+	bool     active;
 	int      x, y;
 	float    darken;
 	GLuint   blendMode;
