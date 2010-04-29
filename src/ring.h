@@ -87,31 +87,31 @@ class RingScreen :
 	CompositeScreen *cScreen;
 	GLScreen        *gScreen;
 
-	CompText	text;
+	CompText	mText;
 
-	CompScreen::GrabHandle grabIndex;
+	CompScreen::GrabHandle mGrabIndex;
 
-	RingState state;
-	RingType  type;
-	bool      moreAdjust;
-	bool	  rotateAdjust;
+	RingState mState;
+	RingType  mType;
+	bool      mMoreAdjust;
+	bool	  mRotateAdjust;
 
-	int     rotTarget;
-	int     rotAdjust;
-	GLfloat rVelocity;
+	int     mRotTarget;
+	int     mRotAdjust;
+	GLfloat mRVelocity;
 
 	/* only used for sorting */
-	std::vector <CompWindow *>   windows;
-	std::vector <RingDrawSlot> drawSlots;
-	int			     windowsSize;
-	int			     nWindows;
+	std::vector <CompWindow *>   mWindows;
+	std::vector <RingDrawSlot>   mDrawSlots;
+	int			     mWindowsSize;
+	int			     mNWindows;
 
-	Window clientLeader;
+	Window mClientLeader;
 
-	CompWindow *selectedWindow;
+	CompWindow *mSelectedWindow;
 
-	CompMatch match;
-	CompMatch currentMatch;
+	CompMatch mMatch;
+	CompMatch mCurrentMatch;
 
     public:
 
@@ -211,16 +211,16 @@ class RingWindow :
 	CompositeWindow *cWindow;
 	GLWindow	*gWindow;
 
-	RingScreen::RingSlot *slot;
+	RingScreen::RingSlot *mSlot;
 
-	GLfloat xVelocity;
-	GLfloat yVelocity;
-	GLfloat scaleVelocity;
+	GLfloat mXVelocity;
+	GLfloat mYVelocity;
+	GLfloat mScaleVelocity;
 
-	GLfloat tx;
-	GLfloat ty;
-	GLfloat scale;
-	bool    adjust;
+	GLfloat mTx;
+	GLfloat mTy;
+	GLfloat mScale;
+	bool    mAdjust;
 
 	bool
 	glPaint (const GLWindowPaintAttrib &,
@@ -247,8 +247,8 @@ class RingWindow :
 };
 
 #define PI 3.1415926
-#define DIST_ROT (3600 / windows.size ())
-#define DIST_ROT_w (3600 / rs->windows.size ())
+#define DIST_ROT (3600 / mWindows.size ())
+#define DIST_ROT_w (3600 / rs->mWindows.size ())
 #define ICON_SIZE 64
 
 #define RING_SCREEN(s)							       \
