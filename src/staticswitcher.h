@@ -101,14 +101,14 @@ class StaticSwitchScreen :
 	int previewBorder;
 	int xCount;
 
-	Bool switching;
+	bool switching;
 
 	GLfloat mVelocity;
 
 	float pos;
 	float move;
 
-	Bool mouseSelect;
+	bool mouseSelect;
 };
 
 class StaticSwitchWindow :
