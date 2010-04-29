@@ -268,7 +268,7 @@ ShelfWindow::createIPW ()
     if (!info || info->ipw)
 	return;
 
-    attrib.override_redirect = TRUE;
+    attrib.override_redirect = true;
     //attrib.event_mask        = 0;
     
     ipw = XCreateWindow (screen->dpy (),
@@ -368,7 +368,7 @@ ShelfScreen::trigger (CompAction         *action,
 {
     CompWindow *w = screen->findWindow (screen->activeWindow ());
     if (!w)
-	return TRUE;
+	return true;
 
     SHELF_WINDOW (w);
 
@@ -382,7 +382,7 @@ ShelfScreen::trigger (CompAction         *action,
     toggleWindowFunctions (w, true);
     toggleScreenFunctions (true);
 
-    return TRUE;
+    return true;
 }
 
 /* Reset window to 1.0f scale */
@@ -393,7 +393,7 @@ ShelfScreen::reset (CompAction         *action,
 {
     CompWindow *w = screen->findWindow (screen->activeWindow ());
     if (!w)
-	return TRUE;
+	return true;
 
     SHELF_WINDOW (w);
 
@@ -402,7 +402,7 @@ ShelfScreen::reset (CompAction         *action,
     toggleWindowFunctions (w, true);
     toggleScreenFunctions (true);
 
-    return TRUE;
+    return true;
 }
 
 /* Returns the ratio to multiply by to get a window that's 1/ration the
@@ -433,7 +433,7 @@ ShelfScreen::triggerScreen (CompAction         *action,
 {
     CompWindow *w = screen->findWindow (screen->activeWindow ());
     if (!w)
-	return TRUE;
+	return true;
 
     SHELF_WINDOW (w);
 
@@ -452,7 +452,7 @@ ShelfScreen::triggerScreen (CompAction         *action,
     toggleWindowFunctions (w, true);
     toggleScreenFunctions (true);
 
-    return TRUE;
+    return true;
 }
 
 /* shelfInc and shelfDec are matcing functions and bindings;
@@ -466,7 +466,7 @@ ShelfScreen::inc (CompAction         *action,
 {
     CompWindow *w = screen->findWindow (screen->activeWindow ());
     if (!w)
-	return TRUE;
+	return true;
 
     SHELF_WINDOW (w);
 
@@ -475,7 +475,7 @@ ShelfScreen::inc (CompAction         *action,
     toggleWindowFunctions (w, true);
     toggleScreenFunctions (true);
 
-    return TRUE;
+    return true;
 }
 
 bool
@@ -485,7 +485,7 @@ ShelfScreen::dec (CompAction         *action,
 {
     CompWindow *w = screen->findWindow (screen->activeWindow ());
     if (!w)
-	return TRUE;
+	return true;
 
     SHELF_WINDOW (w);
 
@@ -494,7 +494,7 @@ ShelfScreen::dec (CompAction         *action,
     toggleWindowFunctions (w, true);
     toggleScreenFunctions (true);
 
-    return TRUE;
+    return true;
 }
 
 void
@@ -531,7 +531,7 @@ ShelfScreen::handleMotionEvent (unsigned int x,
     dx = x - lastPointerX;
     dy = y - lastPointerY;
 
-    w->move (dx, dy, TRUE);
+    w->move (dx, dy, true);
     w->syncPosition ();
 
     lastPointerX += dx;
@@ -562,7 +562,7 @@ ShelfWindow::handleEnter (XEvent *event)
     enterEvent.xcrossing.window = window->id ();
 
     XSendEvent (screen->dpy (), window->id (),
-		FALSE, EnterWindowMask, &enterEvent);
+		false, EnterWindowMask, &enterEvent);
 }
 
 CompWindow *
@@ -639,7 +639,7 @@ bool
 ShelfWindow::damageRect (bool     initial,
 			 CompRect &rect)
 {
-    Bool status = FALSE;
+    bool status = false;
 
     if (mScale != 1.0f)
     {
@@ -650,7 +650,7 @@ ShelfWindow::damageRect (bool     initial,
 
 	cWindow->damageTransformedRect (mScale, mScale,
 				        xTranslate, yTranslate, rect);
-	status = TRUE;
+	status = true;
     }
 
     status |= cWindow->damageRect (initial, rect);
