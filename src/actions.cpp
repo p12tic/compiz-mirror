@@ -45,7 +45,7 @@ GroupScreen::selectSingle (CompAction         *action,
     if (w)
 	GroupWindow::get (w)->select ();
 
-    return TRUE;
+    return true;
 }
 
 /*
@@ -80,7 +80,7 @@ GroupScreen::select (CompAction         *action,
 	    masterSelectionRect.setHeight (0);
 	}
 
-	return TRUE;
+	return true;
     }
 
     return false;
@@ -277,7 +277,7 @@ GroupScreen::setIgnore (CompAction         *action,
 			CompAction::State  state,
 			CompOption::Vector &options)
 {
-    ignoreMode = TRUE;
+    ignoreMode = true;
 
     if (state & CompAction::StateInitKey)
 	action->setState (action->state () | CompAction::StateTermKey);
@@ -303,7 +303,7 @@ GroupScreen::initTab (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector &options)
 {
-    bool       allowUntab = TRUE;
+    bool       allowUntab = true;
 
     CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (options,
 								       "window",
@@ -323,7 +323,7 @@ GroupScreen::initTab (CompAction         *action,
     }
 
     if (!gw->group)
-	return TRUE;
+	return true;
 
     if (!gw->group->tabBar)
     {
@@ -334,7 +334,7 @@ GroupScreen::initTab (CompAction         *action,
 
     cScreen->damageScreen ();
 
-    return TRUE;
+    return true;
 }
 
 /*
@@ -355,12 +355,12 @@ GroupScreen::changeTabLeft (CompAction         *action,
 
     topTab = w;
     if (!topTab)
-	return TRUE;
+	return true;
 
     GROUP_WINDOW (topTab);
 
     if (!gw->tab || !gw->group || !gw->group->tabBar)
-	return TRUE;
+	return true;
 
     if (gw->group->tabBar->nextTopTab)
 	topTab = NEXT_TOP_TAB (gw->group);
@@ -396,12 +396,12 @@ GroupScreen::changeTabRight (CompAction         *action,
 
     topTab = w;
     if (!w)
-	return TRUE;
+	return true;
 
     GROUP_WINDOW (w);
 
     if (!gw->tab || !gw->group || !gw->group->tabBar)
-	return TRUE;
+	return true;
 
     if (gw->group->tabBar->nextTopTab)
 	topTab = NEXT_TOP_TAB (gw->group);

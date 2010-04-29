@@ -245,8 +245,8 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 {
     int            vx, vy;
     CompRegion     newRegion;
-    Bool           inserted = false;
-    Bool           wasInTabBar = false;
+    bool           inserted = false;
+    bool           wasInTabBar = false;
 
     if (event->xbutton.button != 1)
 	return;
@@ -277,7 +277,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
     foreach (Group *group, groups)
     {
-	Bool            inTabBar;
+	bool            inTabBar;
 	CompRegion      clip, buf;
 	Tab::List::iterator it;
 	//Tab             *tab;
@@ -315,7 +315,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    Group           *tmpGroup;
 	    CompRegion      slotRegion, buf;
 	    CompRect        rect;
-	    Bool            inSlot;
+	    bool            inSlot;
 
 	    if (tab == draggedSlot)
 		continue;
@@ -954,7 +954,7 @@ GroupScreen::donePaint ()
 	    cScreen->damageScreen ();
 	else if (group->tabBar)
 	{
-	    Bool needDamage = false;
+	    bool needDamage = false;
 
 	    if ((group->tabBar->state == Layer::PaintFadeIn) ||
 		(group->tabBar->state == Layer::PaintFadeOut))
