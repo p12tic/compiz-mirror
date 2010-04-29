@@ -56,7 +56,7 @@ ColorfilterWindow::toggle ()
 
     /* Check exclude list */
     if (cfs->optionGetExcludeMatch ().evaluate (window))
-	isFiltered = FALSE;
+	isFiltered = false;
 
     /* Ensure window is going to be repainted */
     cWindow->addDamage ();
@@ -132,7 +132,7 @@ ColorfilterScreen::toggleWindow (CompAction         *action,
     if (w && GL::fragmentProgram)
 	ColorfilterWindow::get (w)->toggle ();
 
-    return TRUE;
+    return true;
 }
 
 /*
@@ -148,7 +148,7 @@ ColorfilterScreen::toggleScreen (CompAction         *action,
     if (GL::fragmentProgram)
 	toggle ();
 
-    return TRUE;
+    return true;
 }
 
 /*
@@ -162,7 +162,7 @@ ColorfilterScreen::filterSwitch (CompAction         *action,
     if (GL::fragmentProgram)
 	switchFilter ();
 
-    return TRUE;
+    return true;
 }
 
 /* Filters handling functions ----------------------------------------------- */
@@ -205,7 +205,7 @@ ColorfilterScreen::loadFilters (GLTexture *texture)
     /* Free previously loaded filters and malloc */
     unloadFilters ();
 
-    filtersLoaded = TRUE;
+    filtersLoaded = true;
 
     /* Fetch filters filenames */
     filters = optionGetFilters ();
@@ -341,8 +341,8 @@ ColorfilterScreen::windowAdd (CompWindow *w)
 {
     FILTER_WINDOW (w);
 
-    /* cfw->isFiltered is initialized to FALSE in InitWindow, so we only
-       have to toggle it to TRUE if necessary */
+    /* cfw->isFiltered is initialized to false in InitWindow, so we only
+       have to toggle it to true if necessary */
     if (cfw->isFiltered && optionGetFilterMatch ().evaluate (w))
 	cfw->toggle ();
 }
@@ -398,9 +398,9 @@ void
 ColorfilterScreen::filtersChanged (CompOption		       *opt,
 				   ColorfilterOptions::Options num)
 {
-    /* Just set the filtersLoaded boolean to FALSE, unloadFilters will be
+    /* Just set the filtersLoaded boolean to false, unloadFilters will be
      * called in loadFilters */
-    filtersLoaded = FALSE;
+    filtersLoaded = false;
 }
 
 /*
