@@ -191,13 +191,13 @@ ScaleAddonScreen::closeWindow (CompAction         *action,
     CompWindow *w;
 
     if (!sScreen->hasGrab ())
-        return FALSE;
+        return false;
 
     w = screen->findWindow (highlightedWindow);
     if (w)
     {
         w->close (screen->getCurrentTime ());
-        return TRUE;
+        return true;
     }
 
     return true;
@@ -211,7 +211,7 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
     CompWindow *w;
 
     if (!sScreen->hasGrab ())
-        return FALSE;
+        return false;
 
     w = screen->findWindow (highlightedWindow);
     if (w)
@@ -296,7 +296,7 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
 	        aw->cWindow->addDamage ();
 	    }
 	
-	    return TRUE;
+	    return true;
         }
     }
 
@@ -311,7 +311,7 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
     CompWindow *w;
 
     if (!sScreen->hasGrab ())
-        return FALSE;
+        return false;
 
     w = screen->findWindow (highlightedWindow);
     if (w)
@@ -323,7 +323,7 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
         int        head;
 
         if (!aw->sWindow->hasSlot ())
-	    return FALSE;
+	    return false;
 
         head      = screen->outputDeviceForPoint ( aw->sWindow->getSlot ().x1 (),
 						   aw->sWindow->getSlot ().y1 ());
@@ -348,7 +348,7 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
 	    /* backup old values */
 	    aw->origSlot = aw->sWindow->getSlot ();
 
-	    aw->rescaled = TRUE;
+	    aw->rescaled = true;
 
 	    x1 = (outputRect.width / 2) - (WIN_W(w) / 2) +
 		           w->input ().left + outputRect.x;
@@ -367,7 +367,7 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
 	    if (aw->oldAbove)
 	        w->restackBelow (aw->oldAbove);
 
-	    aw->rescaled = FALSE;
+	    aw->rescaled = false;
 	    aw->sWindow->setSlot (aw->origSlot);
         }
 
@@ -377,7 +377,7 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
 
         aw->cWindow->addDamage ();
 
-        return TRUE;
+        return true;
     }
 
     return true;
@@ -521,7 +521,7 @@ ScaleAddonScreen::handleCompizEvent (const char  *pluginName,
 	    foreach (CompWindow *w, screen->windows ())
 	    {
 		ADDON_WINDOW (w);
-		aw->rescaled = FALSE;
+		aw->rescaled = false;
 	    }
 
 	    screen->removeAction (&optionGetCloseKey ());
@@ -696,26 +696,6 @@ layoutOrganicFindBestVerticalPosition (CompScreen *s,
 
 	if (ss->slots[i].x1 < x2 &&
 	    ss->slots[i].x1 + WIN_W (w) * as->scale > x1)
-static Bool
-scaleaddonInitWindow (CompPlugin *p,
-		      CompWindow *w)
-{
-    ScaleAddonWindow *aw;
-
-    ADDON_SCREEN (w->screen);
-
-    aw = malloc (sizeof (ScaleAddonWindow));
-    if (!aw)
-	return FALSE;
-
-    aw->rescaled = FALSE;
-
-    w->base.privates[as->windowPrivateIndex].ptr = aw;
-
-    aw->textData = NULL;
-
-    return TRUE;
-}
 	{
 	    if (ss->slots[i].y1 - h >= 0 && ss->slots[i].y1 < areaHeight)
 	    {
@@ -763,12 +743,12 @@ scaleaddonInitWindow (CompPlugin *p,
     return bestOverlap;
 }
 
-static Bool
+static bool
 layoutOrganicLocalSearch (CompScreen *s,
 			  int        areaWidth,
 			  int        areaHeight)
 {
-    Bool   improvement;
+    bool   improvement;
     int    i;
     double totalOverlap;
 
@@ -776,17 +756,17 @@ layoutOrganicLocalSearch (CompScreen *s,
 
     do
     {
-	improvement = FALSE;
+	improvement = false;
 	for (i = 0; i < ss->nWindows; i++)
 	{
-	    Bool improved;
+	    bool improved;
 
 	    do
 	    {
 		int    newX, newY;
 		double oldOverlap, overlapH, overlapV;
 
-		improved = FALSE;
+		improved = false;
 		oldOverlap = layoutOrganicCalculateOverlap (s, i,
  							    ss->slots[i].x1,
 							    ss->slots[i].y1);
@@ -801,8 +781,8 @@ layoutOrganicLocalSearch (CompScreen *s,
 		if (overlapH < oldOverlap - 0.1 ||
 		    overlapV < oldOverlap - 0.1)
 		{
-		    improved = TRUE;
-		    improvement = TRUE;
+		    improved = true;
+		    improvement = true;
 		    if (overlapV > overlapH)
 			ss->slots[i].x1 = newX;
 		    else
@@ -821,26 +801,6 @@ layoutOrganicLocalSearch (CompScreen *s,
 						       ss->slots[i].x1,
 						       ss->slots[i].y1);
     }
-static Bool
-scaleaddonInitWindow (CompPlugin *p,
-		      CompWindow *w)
-{
-    ScaleAddonWindow *aw;
-
-    ADDON_SCREEN (w->screen);
-
-    aw = malloc (sizeof (ScaleAddonWindow));
-    if (!aw)
-	return FALSE;
-
-    aw->rescaled = FALSE;
-
-    w->base.privates[as->windowPrivateIndex].ptr = aw;
-
-    aw->textData = NULL;
-
-    return TRUE;
-}
 
     return (totalOverlap > 0.1);
 }
@@ -886,7 +846,7 @@ layoutOrganicRemoveOverlap (CompScreen *s,
     }
 }
 
-static Bool
+static bool
 layoutOrganicThumbs (CompScreen *s)
 {
     CompWindow *w;
@@ -964,10 +924,10 @@ layoutOrganicThumbs (CompScreen *s)
 	ss->slots[i].x2 += w->input.left + workArea.x;
 	ss->slots[i].y1 += w->input.top + workArea.y;
 	ss->slots[i].y2 += w->input.top + workArea.y;
-	sWindow->adjust = TRUE;
+	sWindow->adjust = true;
     }
 
-    return TRUE;
+    return true;
 }
 
 #endif
