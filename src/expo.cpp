@@ -1042,7 +1042,7 @@ ExpoScreen::glPaintTransformedOutput (const GLScreenPaintAttrib& attrib,
 	if (optionGetReflection ())
 	    paintWall (attrib, transform, region, output, mask, true);
 
-	paintWall (attrib, transform, region, output, mask, FALSE);
+	paintWall (attrib, transform, region, output, mask, false);
 	anyClick = false;
     }
 }
