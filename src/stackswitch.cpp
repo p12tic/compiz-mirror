@@ -1315,55 +1315,42 @@ StackswitchScreen::StackswitchScreen (CompScreen *screen) :
     CompositeScreenInterface::setHandler (cScreen);
     GLScreenInterface::setHandler (gScreen);
     
-    optionSetNextKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, StackswitchTypeNormal));
-    optionSetNextAllKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, StackswitchTypeAll));
-    optionSetNextGroupKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, StackswitchTypeGroup));
-    optionSetNextKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetNextAllKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetNextGroupKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetPrevKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, StackswitchTypeNormal));
-    optionSetPrevAllKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, StackswitchTypeAll));
-    optionSetPrevGroupKeyInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, StackswitchTypeGroup));
-    optionSetPrevKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetPrevAllKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetPrevGroupKeyTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    					    
-    optionSetNextButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, StackswitchTypeNormal));
-    optionSetNextAllButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, StackswitchTypeAll));
-    optionSetNextGroupButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, true, StackswitchTypeGroup));
-    optionSetNextButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetNextAllButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetNextGroupButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetPrevButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, StackswitchTypeNormal));
-    optionSetPrevAllButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, StackswitchTypeAll));
-    optionSetPrevGroupButtonInitiate (boost::bind (&StackswitchScreen::doSwitch, this,
-    					   _1, _2, _3, false, StackswitchTypeGroup));
-    optionSetPrevButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetPrevAllButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
-    optionSetPrevGroupButtonTerminate (boost::bind (&StackswitchScreen::terminate, this,
-    					    _1, _2, _3));
+#define STACKTERMBIND(opt, func)                                \
+    optionSet##opt##Terminate (boost::bind (&StackswitchScreen::func, \
+					    this, _1, _2, _3));
+
+#define STACKSWITCHBIND(opt, func, next, type)                 \
+    optionSet##opt##Initiate (boost::bind (&StackswitchScreen::func, \
+					    this, _1, _2, _3, \
+					    next, type));
+
+    STACKSWITCHBIND (NextKey, doSwitch, true, StackswitchTypeNormal);
+    STACKSWITCHBIND (PrevKey, doSwitch, false, StackswitchTypeNormal);
+    STACKSWITCHBIND (NextAllKey, doSwitch, true, StackswitchTypeAll);
+    STACKSWITCHBIND (PrevAllKey, doSwitch, false, StackswitchTypeAll);
+    STACKSWITCHBIND (NextGroupKey, doSwitch, true, StackswitchTypeGroup);
+    STACKSWITCHBIND (PrevGroupKey, doSwitch, false, StackswitchTypeGroup);
+
+    STACKTERMBIND (NextKey, terminate);
+    STACKTERMBIND (PrevKey, terminate);
+    STACKTERMBIND (NextAllKey, terminate);
+    STACKTERMBIND (PrevAllKey, terminate);
+    STACKTERMBIND (NextGroupKey, terminate);
+    STACKTERMBIND (PrevGroupKey, terminate);
+
+    STACKSWITCHBIND (NextButton, doSwitch, true, StackswitchTypeNormal);
+    STACKSWITCHBIND (PrevButton, doSwitch, false, StackswitchTypeNormal);
+    STACKSWITCHBIND (NextAllButton, doSwitch, true, StackswitchTypeAll);
+    STACKSWITCHBIND (PrevAllButton, doSwitch, false, StackswitchTypeAll);
+    STACKSWITCHBIND (NextGroupButton, doSwitch, true, StackswitchTypeGroup);
+    STACKSWITCHBIND (PrevGroupButton, doSwitch, false, StackswitchTypeGroup);
+
+    STACKTERMBIND (NextButton, terminate);
+    STACKTERMBIND (PrevButton, terminate);
+    STACKTERMBIND (NextAllButton, terminate);
+    STACKTERMBIND (PrevAllButton, terminate);
+    STACKTERMBIND (NextGroupButton, terminate);
+    STACKTERMBIND (PrevGroupButton, terminate);
 }
     
 StackswitchScreen::~StackswitchScreen ()
