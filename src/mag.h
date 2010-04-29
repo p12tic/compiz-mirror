@@ -49,7 +49,7 @@ class MagScreen :
 	int posX;
 	int posY;
 
-	Bool adjust;
+	bool adjust;
 
 	GLfloat zVelocity;
 	GLfloat zTarget;
