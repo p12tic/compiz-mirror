@@ -2022,89 +2022,69 @@ ShiftScreen::ShiftScreen (CompScreen *screen) :
     CompositeScreenInterface::setHandler (cScreen);
     GLScreenInterface::setHandler (gScreen);
 
+#define SHIFTINITBIND(opt, func)                                \
+    optionSet##opt##Terminate (boost::bind (&ShiftScreen::func, \
+					    this, _1, _2, _3));
+ 
+#define SHIFTTERMBIND(opt, func)                                \
+    optionSet##opt##Terminate (boost::bind (&ShiftScreen::func, \
+					    this, _1, _2, _3));
+
+#define SHIFTSWITCHBIND(opt, func, next, type)                 \
+    optionSet##opt##Initiate (boost::bind (&ShiftScreen::func, \
+					    this, _1, _2, _3, \
+					    next, type));
+					    
     /* Key actions */
 
-    optionSetInitiateKeyInitiate (boost::bind (&ShiftScreen::initiate, this,
-                                               _1, _2, _3));
-    optionSetInitiateKeyTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                               _1, _2, _3));
-    optionSetInitiateAllKeyInitiate (boost::bind (&ShiftScreen::initiateAll,
-                                                  this,  _1, _2, _3));
-    optionSetInitiateAllKeyTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                               _1, _2, _3));
-    optionSetNextKeyInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, true, ShiftTypeNormal));
-    optionSetNextKeyTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetPrevKeyInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, false, ShiftTypeNormal));
-    optionSetPrevKeyTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetNextAllKeyInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, true, ShiftTypeAll));
-    optionSetNextAllKeyTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetPrevAllKeyInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, false, ShiftTypeAll));
-    optionSetPrevAllKeyTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetNextGroupKeyInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, true, ShiftTypeGroup));
-    optionSetNextGroupKeyTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetPrevGroupKeyInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, false, ShiftTypeGroup));
-    optionSetPrevGroupKeyTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
+    SHIFTINITBIND (InitiateKey, initiate);
+    SHIFTINITBIND (InitiateAllKey, initiateAll);
+
+    SHIFTSWITCHBIND (NextKey, doSwitch, true, ShiftTypeNormal);
+    SHIFTSWITCHBIND (PrevKey, doSwitch, false, ShiftTypeNormal);
+    SHIFTSWITCHBIND (NextAllKey, doSwitch, true, ShiftTypeAll);
+    SHIFTSWITCHBIND (PrevAllKey, doSwitch, false, ShiftTypeAll);
+    SHIFTSWITCHBIND (NextGroupKey, doSwitch, true, ShiftTypeGroup);
+    SHIFTSWITCHBIND (PrevGroupKey, doSwitch, false, ShiftTypeGroup);
+
+    SHIFTTERMBIND (NextKey, terminate);
+    SHIFTTERMBIND (PrevKey, terminate);
+    SHIFTTERMBIND (NextAllKey, terminate);
+    SHIFTTERMBIND (PrevAllKey, terminate);
+    SHIFTTERMBIND (NextGroupKey, terminate);
+    SHIFTTERMBIND (PrevGroupKey, terminate);
+
+    SHIFTTERMBIND (InitiateKey, terminate);
+    SHIFTTERMBIND (InitiateAllKey, terminate);
 
     /* Button Actions */
 
-    optionSetInitiateButtonInitiate (boost::bind (&ShiftScreen::initiate, this,
-                                               _1, _2, _3));
-    optionSetInitiateButtonTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                               _1, _2, _3));
-    optionSetInitiateAllButtonInitiate (boost::bind (&ShiftScreen::initiateAll,
-                                                  this,  _1, _2, _3));
-    optionSetInitiateAllButtonTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                               _1, _2, _3));
-    optionSetNextButtonInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, true, ShiftTypeNormal));
-    optionSetNextButtonTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetPrevButtonInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, false, ShiftTypeNormal));
-    optionSetPrevButtonTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetNextAllButtonInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, true, ShiftTypeAll));
-    optionSetNextAllButtonTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetPrevAllButtonInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, false, ShiftTypeAll));
-    optionSetPrevAllButtonTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetNextGroupButtonInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, true, ShiftTypeGroup));
-    optionSetNextGroupButtonTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
-    optionSetPrevGroupButtonInitiate (boost::bind (&ShiftScreen::doSwitch, this,
-                                           _1, _2, _3, false, ShiftTypeGroup));
-    optionSetPrevGroupButtonTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                              _1, _2, _3));
+    SHIFTINITBIND (InitiateButton, initiate);
+    SHIFTINITBIND (InitiateAllButton, initiateAll);
+
+    SHIFTSWITCHBIND (NextButton, doSwitch, true, ShiftTypeNormal);
+    SHIFTSWITCHBIND (PrevButton, doSwitch, false, ShiftTypeNormal);
+    SHIFTSWITCHBIND (NextAllButton, doSwitch, true, ShiftTypeAll);
+    SHIFTSWITCHBIND (PrevAllButton, doSwitch, false, ShiftTypeAll);
+    SHIFTSWITCHBIND (NextGroupButton, doSwitch, true, ShiftTypeGroup);
+    SHIFTSWITCHBIND (PrevGroupButton, doSwitch, false, ShiftTypeGroup);
+
+    SHIFTTERMBIND (NextButton, terminate);
+    SHIFTTERMBIND (PrevButton, terminate);
+    SHIFTTERMBIND (NextAllButton, terminate);
+    SHIFTTERMBIND (PrevAllButton, terminate);
+    SHIFTTERMBIND (NextGroupButton, terminate);
+    SHIFTTERMBIND (PrevGroupButton, terminate);
+
+    SHIFTTERMBIND (InitiateButton, terminate);
+    SHIFTTERMBIND (InitiateAllButton, terminate);
 
     /* Edge Actions */
 
-    optionSetInitiateEdgeInitiate (boost::bind (&ShiftScreen::initiate, this,
-                                                _1, _2, _3));
-    optionSetInitiateEdgeTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                                _1, _2, _3));
-    optionSetInitiateAllEdgeInitiate (boost::bind (&ShiftScreen::initiateAll, this,
-                                                _1, _2, _3));
-    optionSetInitiateAllEdgeTerminate (boost::bind (&ShiftScreen::terminate, this,
-                                                _1, _2, _3));
-
-    optionSetTerminateButtonInitiate (boost::bind (&ShiftScreen::terminate,
-                                                   this, _1, _2, _3));
+    SHIFTINITBIND (InitiateEdge, initiate);
+    SHIFTINITBIND (InitiateAllEdge, initiateAll);
+    SHIFTTERMBIND (InitiateEdge, terminate);
+    SHIFTTERMBIND (InitiateAllEdge, terminate);
 }
 
 ShiftScreen::~ShiftScreen ()
