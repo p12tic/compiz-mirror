@@ -66,14 +66,14 @@ WidgetWindow::updateTreeStatus ()
     foreach (CompWindow *win, screen->windows ())
     {
 	WIDGET_WINDOW (win);
-	if (ww->parentWidget == win)
-	    ww->parentWidget = NULL;
+	if (ww->mParentWidget == win)
+	    ww->mParentWidget = NULL;
     }
 
     if (window->destroyed ())
 	return;
 
-    if (!isWidget)
+    if (!mIsWidget)
 	return;
 
     foreach (CompWindow *win, screen->windows ())
@@ -88,7 +88,7 @@ WidgetWindow::updateTreeStatus ()
 	if ((clientLeader == window->clientLeader ()) && (window->id () != win->id ()))
 	{
 	    WIDGET_WINDOW (win);
-	    ww->parentWidget = window;
+	    ww->mParentWidget = window;
 	}
     }
 }
@@ -96,28 +96,28 @@ WidgetWindow::updateTreeStatus ()
 bool
 WidgetWindow::updateWidgetStatus ()
 {
-    bool f_isWidget, retval, managed;
+    bool isWidget, retval, managed;
 
     WIDGET_SCREEN (screen);
 
-    switch (propertyState) {
+    switch (mPropertyState) {
     case PropertyWidget:
-	f_isWidget = true;
+	isWidget = true;
 	break;
     case PropertyNoWidget:
-	f_isWidget = false;
+	isWidget = false;
 	break;
     default:
-	managed = window->managed () || oldManaged;
+	managed = window->managed () || mOldManaged;
 	if (!managed || (window->wmType () & CompWindowTypeDesktopMask))
-	    f_isWidget = false;
+	    isWidget = false;
 	else
-	    f_isWidget = ws->optionGetMatch ().evaluate (window);
+	    isWidget = ws->optionGetMatch ().evaluate (window);
 	break;
     }
 
-    retval = (!f_isWidget && isWidget) || (f_isWidget && !isWidget);
-    isWidget = f_isWidget;
+    retval = (!isWidget && mIsWidget) || (isWidget && !mIsWidget);
+    mIsWidget = isWidget;
 
     return retval;
 }
@@ -132,7 +132,7 @@ WidgetWindow::updateWidgetPropertyState ()
 
     WIDGET_SCREEN (screen);
 
-    result = XGetWindowProperty (screen->dpy (), window->id (), ws->compizWidgetAtom,
+    result = XGetWindowProperty (screen->dpy (), window->id (), ws->mCompizWidgetAtom,
 				 0, 1L, false, AnyPropertyType, &retType,
 				 &format, &nitems, &remain, &data);
 
@@ -142,15 +142,15 @@ WidgetWindow::updateWidgetPropertyState ()
 	{
 	    unsigned long int *retData = (unsigned long int *) data;
 	    if (*retData)
-		propertyState = PropertyWidget;
+		mPropertyState = PropertyWidget;
 	    else
-		propertyState = PropertyNoWidget;
+		mPropertyState = PropertyNoWidget;
 	}
 
 	XFree (data);
     }
     else
-	propertyState = PropertyNotSet;
+	mPropertyState = PropertyNotSet;
 
     return updateWidgetStatus ();
 }
@@ -158,24 +158,24 @@ WidgetWindow::updateWidgetPropertyState ()
 void
 WidgetWindow::updateWidgetMapState (bool       map)
 {
-    if (map && wasUnmapped)
+    if (map && mWasUnmapped)
     {
 	XMapWindow (screen->dpy (), window->id ());
 	window->raise ();
-	wasUnmapped = false;
+	mWasUnmapped = false;
 #warning * [FIXME] Need to make managed var setter or wrappable in core
-	//window->setManaged (oldManaged); // ???
+	//window->setManaged (mOldManaged); // ???
     }
-    else if (!map && !wasUnmapped)
+    else if (!map && !mWasUnmapped)
     {
-	/* never set ww->wasUnmapped on previously unmapped windows -
+	/* never set ww->mWasUnmapped on previously unmapped windows -
 	   it might happen that we map windows when entering the
 	   widget mode which aren't supposed to be unmapped */
 	if (window->isViewable ())
 	{
 	    XUnmapWindow (screen->dpy (), window->id ());
-	    wasUnmapped = true;
-	    oldManaged = window->managed ();
+	    mWasUnmapped = true;
+	    mOldManaged = window->managed ();
 	}
     }
 }
@@ -190,7 +190,7 @@ WidgetScreen::setWidgetLayerMapState (bool map)
     {
 	WIDGET_WINDOW (window);
 
-	if (!ww->isWidget)
+	if (!ww->mIsWidget)
 	    continue;
 
 	if (window->activeNum () > highestActiveNum)
@@ -204,14 +204,14 @@ WidgetScreen::setWidgetLayerMapState (bool map)
 
     if (map && highest)
     {
-	if (!lastActiveWindow)
-	    lastActiveWindow = screen->activeWindow ();
+	if (!mLastActiveWindow)
+	    mLastActiveWindow = screen->activeWindow ();
 	highest->moveInputFocusTo ();
     }
     else if (!map)
     {
-	CompWindow *w = screen->findWindow (lastActiveWindow);
-	lastActiveWindow = None;
+	CompWindow *w = screen->findWindow (mLastActiveWindow);
+	mLastActiveWindow = None;
 	if (w)
 	    w->moveInputFocusTo ();
     }
@@ -241,7 +241,7 @@ WidgetExp::evaluate (CompWindow *w)
 {
     WIDGET_WINDOW (w);
 
-    return ((value && ww->isWidget) || (!value && !ww->isWidget));
+    return ((value && ww->mIsWidget) || (!value && !ww->mIsWidget));
 }
 
 CompMatch::Expression *
@@ -271,7 +271,7 @@ WidgetScreen::matchExpHandlerChanged ()
 	{
 	    bool map;
 
-	    map = !ww->isWidget || (state != StateOff);
+	    map = !ww->mIsWidget || (mState != StateOff);
 	    ww->updateWidgetMapState (map);
 
 	    ww->updateTreeStatus ();
@@ -283,28 +283,28 @@ WidgetScreen::matchExpHandlerChanged ()
 
 bool
 WidgetScreen::toggle (CompAction         *action,
-		      CompAction::State  aState,
+		      CompAction::State  state,
 		      CompOption::Vector &options)
 {
-    switch (state) {
+    switch (mState) {
 	case StateOn:
 	case StateFadeIn:
 	    setWidgetLayerMapState (false);
-	    fadeTime = 1000.0f * optionGetFadeTime ();
-	    state = StateFadeOut;
+	    mFadeTime = 1000.0f * optionGetFadeTime ();
+	    mState = StateFadeOut;
 	    break;
 	case StateOff:
 	case StateFadeOut:
 	    setWidgetLayerMapState (true);
-	    fadeTime = 1000.0f * optionGetFadeTime ();
-	    state = StateFadeIn;
+	    mFadeTime = 1000.0f * optionGetFadeTime ();
+	    mState = StateFadeIn;
 	    break;
 	default:
 	    break;
     }
 
-    if (!grabIndex)
-	grabIndex = screen->pushGrab (cursor, "widget");
+    if (!mGrabIndex)
+	mGrabIndex = screen->pushGrab (mCursor, "widget");
 
     enableFunctions (this, true);
 
@@ -320,7 +320,7 @@ WidgetScreen::endWidgetMode (CompWindow *closedWidget)
     CompOption o ("root", CompOption::TypeInt);
     CompOption::Value root = CompOption::Value ((int) screen->root ());
 
-    if (state != StateOn && state != StateFadeIn)
+    if (mState != StateOn && mState != StateFadeIn)
 	return;
 
     if (closedWidget)
@@ -328,14 +328,14 @@ WidgetScreen::endWidgetMode (CompWindow *closedWidget)
 	/* end widget mode if the closed widget was the last one */
 
 	WIDGET_WINDOW (closedWidget);
-	if (ww->isWidget)
+	if (ww->mIsWidget)
 	{
 	    foreach (CompWindow *w, screen->windows ())
 	    {
 		WIDGET_WINDOW (w);
 		if (w == closedWidget)
 		    continue;
-		if (ww->isWidget)
+		if (ww->mIsWidget)
 		    return;
 	    }
 	}
@@ -358,7 +358,7 @@ WidgetScreen::handleEvent (XEvent      *event)
     switch (event->type)
     {
     case PropertyNotify:
-	if (event->xproperty.atom == compizWidgetAtom)
+	if (event->xproperty.atom == mCompizWidgetAtom)
 	{
 	    w = screen->findWindow (event->xproperty.window);
 	    if (w)
@@ -368,7 +368,7 @@ WidgetScreen::handleEvent (XEvent      *event)
 		{
 		    bool map;
 
-		    map = !ww->isWidget || (state != StateOff);
+		    map = !ww->mIsWidget || (mState != StateOff);
 		    ww->updateWidgetMapState (map);
 		    ww->updateTreeStatus ();
 		    screen->matchPropertyChanged (w);
@@ -382,11 +382,11 @@ WidgetScreen::handleEvent (XEvent      *event)
 	    {
 		WIDGET_WINDOW (w);
 
-		if (ww->isWidget)
+		if (ww->mIsWidget)
 		    ww->updateTreeStatus ();
-		else if (ww->parentWidget)
+		else if (ww->mParentWidget)
 		{
-		    WidgetWindow *pww = WidgetWindow::get (ww->parentWidget);
+		    WidgetWindow *pww = WidgetWindow::get (ww->mParentWidget);
 		    pww->updateTreeStatus ();
 		}
 	    }
@@ -396,14 +396,14 @@ WidgetScreen::handleEvent (XEvent      *event)
 	/* terminate widget mode if a non-widget window was clicked */
 	if (optionGetEndOnClick ())
 	{
-	    if (state == StateOn)
+	    if (mState == StateOn)
 	    {
 		w = screen->findWindow (event->xbutton.window);
 		if (w && w->managed ())
 		{
 		    WIDGET_WINDOW (w);
 
-		    if (!ww->isWidget && !ww->parentWidget)
+		    if (!ww->mIsWidget && !ww->mParentWidget)
 			endWidgetMode (NULL);
 		}
 	    }
@@ -416,8 +416,8 @@ WidgetScreen::handleEvent (XEvent      *event)
 	    WIDGET_WINDOW (w);
 
 	    ww->updateWidgetStatus ();
-	    if (ww->isWidget)
-		ww->updateWidgetMapState (state != StateOff);
+	    if (ww->mIsWidget)
+		ww->updateWidgetMapState (mState != StateOff);
 	}
 	break;
     case UnmapNotify:
@@ -449,7 +449,7 @@ WidgetWindow::updateMatch ()
 	WIDGET_SCREEN (screen);
 
 	updateTreeStatus ();
-	updateWidgetMapState (ws->state != WidgetScreen::StateOff);
+	updateWidgetMapState (ws->mState != WidgetScreen::StateOff);
 	screen->matchPropertyChanged (window);
     }
 
@@ -464,14 +464,14 @@ WidgetScreen::updateStatus (CompWindow *w)
     WIDGET_WINDOW (w);
 
     if (ww->updateWidgetPropertyState ())
-	ww->updateWidgetMapState (state != StateOff);
+	ww->updateWidgetMapState (mState != StateOff);
 
 /*    if (w->overrideRedirect ())
 	clientLeader = getClientLeader (w); // ???
     else*/
 	clientLeader = w->clientLeader ();
 
-    if (ww->isWidget)
+    if (ww->mIsWidget)
     {
 	ww->updateTreeStatus ();
     }
@@ -485,10 +485,10 @@ WidgetScreen::updateStatus (CompWindow *w)
 	    WidgetWindow *lww;
 	    lww = WidgetWindow::get (lw);
 
-	    if (lww->isWidget)
-		ww->parentWidget = lw;
-	    else if (lww->parentWidget)
-		ww->parentWidget = lww->parentWidget;
+	    if (lww->mIsWidget)
+		ww->mParentWidget = lw;
+	    else if (lww->mParentWidget)
+		ww->mParentWidget = lww->mParentWidget;
 	}
     }
 
@@ -503,8 +503,8 @@ WidgetScreen::matchPropertyChanged (CompWindow  *w)
     /* one shot timeout which will update the widget status (timer
        is needed because we don't want to call wrapped functions
        recursively) */
-    if (!ww->matchUpdate.active ())
-	ww->matchUpdate.start (boost::bind (&WidgetWindow::updateMatch, ww),
+    if (!ww->mMatchUpdate.active ())
+	ww->mMatchUpdate.start (boost::bind (&WidgetWindow::updateMatch, ww),
 			       0, 0);
 
     screen->matchPropertyChanged (w);
@@ -520,26 +520,26 @@ WidgetWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     WIDGET_SCREEN (screen);
 
-    if (ws->state != WidgetScreen::StateOff)
+    if (ws->mState != WidgetScreen::StateOff)
     {
 	GLWindowPaintAttrib wAttrib = attrib;
 	float               fadeProgress;
 
-	if (ws->state == WidgetScreen::StateOn)
+	if (ws->mState == WidgetScreen::StateOn)
 	    fadeProgress = 1.0f;
 	else
 	{
 	    fadeProgress = ws->optionGetFadeTime ();
 	    if (fadeProgress)
-		fadeProgress = (float) ws->fadeTime / (1000.0f * fadeProgress);
+		fadeProgress = (float) ws->mFadeTime / (1000.0f * fadeProgress);
 	    fadeProgress = 1.0f - fadeProgress;
 	}
 
-	if (!isWidget && !parentWidget)
+	if (!mIsWidget && !mParentWidget)
 	{
 	    float progress;
 
-	    if ((ws->state == WidgetScreen::StateFadeIn) || (ws->state == WidgetScreen::StateOn))
+	    if ((ws->mState == WidgetScreen::StateFadeIn) || (ws->mState == WidgetScreen::StateOn))
 		fadeProgress = 1.0f - fadeProgress;
 
 	    progress = ws->optionGetBgSaturation () / 100.0f;
@@ -571,7 +571,7 @@ WidgetWindow::focus ()
 
     /* Don't focus non-widget windows while widget mode is enabled */
 
-    if (ws->state != WidgetScreen::StateOff && !isWidget && !parentWidget)
+    if (ws->mState != WidgetScreen::StateOff && !mIsWidget && !mParentWidget)
     {
 	status = false;
     }
@@ -586,10 +586,10 @@ WidgetWindow::focus ()
 void
 WidgetScreen::preparePaint (int msSinceLastPaint)
 {
-    if ((state == StateFadeIn) || (state == StateFadeOut))
+    if ((mState == StateFadeIn) || (mState == StateFadeOut))
     {
-	fadeTime -= msSinceLastPaint;
-	fadeTime = MAX (fadeTime, 0);
+	mFadeTime -= msSinceLastPaint;
+	mFadeTime = MAX (mFadeTime, 0);
     }
 
     cScreen->preparePaint (msSinceLastPaint);
@@ -598,26 +598,26 @@ WidgetScreen::preparePaint (int msSinceLastPaint)
 void
 WidgetScreen::donePaint ()
 {
-    if ((state == StateFadeIn) || (state == StateFadeOut))
+    if ((mState == StateFadeIn) || (mState == StateFadeOut))
     {
-	if (fadeTime)
+	if (mFadeTime)
 	    cScreen->damageScreen ();
 	else
 	{
-	    if (grabIndex)
+	    if (mGrabIndex)
 	    {
-		screen->removeGrab (grabIndex, NULL);
-		grabIndex = 0;
+		screen->removeGrab (mGrabIndex, NULL);
+		mGrabIndex = 0;
 	    }
 
-	    if (state == StateFadeIn)
-		state = StateOn;
+	    if (mState == StateFadeIn)
+		mState = StateOn;
 	    else
-		state = StateOff;
+		mState = StateOff;
 	}
     }
 
-    if (state == StateOff)
+    if (mState == StateOff)
     {
 	cScreen->damageScreen ();
 	enableFunctions (this, false);
@@ -642,7 +642,7 @@ WidgetScreen::optionChanged (CompOption              *option,
 		{
 		    bool map;
 
-		    map = !ww->isWidget || (state != StateOff);
+		    map = !ww->mIsWidget || (mState != StateOff);
 		    ww->updateWidgetMapState (map);
 
 		    ww->updateTreeStatus ();
@@ -661,11 +661,11 @@ WidgetScreen::optionChanged (CompOption              *option,
 WidgetScreen::WidgetScreen (CompScreen *screen) :
     PluginClassHandler <WidgetScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
-    lastActiveWindow (None),
-    compizWidgetAtom (XInternAtom (screen->dpy (), "_COMPIZ_WIDGET", false)),
-    fadeTime (0),
-    grabIndex (0),
-    cursor (XCreateFontCursor (screen->dpy (), XC_watch))
+    mLastActiveWindow (None),
+    mCompizWidgetAtom (XInternAtom (screen->dpy (), "_COMPIZ_WIDGET", false)),
+    mFadeTime (0),
+    mGrabIndex (0),
+    mCursor (XCreateFontCursor (screen->dpy (), XC_watch))
 {
     CompTimer registerTimer;
     ScreenInterface::setHandler (screen, false);
@@ -693,7 +693,7 @@ optionSet##name##Notify(boost::bind(&WidgetScreen::optionChanged, this, _1, _2))
     registerTimer.start (boost::bind(&WidgetScreen::registerExpHandler, this),
 			 0, 0);
 
-    state = StateOff;
+    mState = StateOff;
 
 
 }
@@ -702,9 +702,9 @@ WidgetScreen::~WidgetScreen ()
 {
     screen->matchExpHandlerChanged ();
 
-    if (cursor)
+    if (mCursor)
     {
-	XFreeCursor (screen->dpy (), cursor);
+	XFreeCursor (screen->dpy (), mCursor);
     }
 }
 
@@ -712,31 +712,31 @@ WidgetWindow::WidgetWindow (CompWindow *window) :
     PluginClassHandler <WidgetWindow, CompWindow> (window),
     window (window),
     gWindow (GLWindow::get (window)),
-    isWidget (false),
-    wasUnmapped (false),
-    oldManaged (false),
-    parentWidget (NULL),
-    propertyState (PropertyNotSet)
+    mIsWidget (false),
+    mWasUnmapped (false),
+    mOldManaged (false),
+    mParentWidget (NULL),
+    mPropertyState (PropertyNotSet)
 {
 
     WindowInterface::setHandler (window);
     GLWindowInterface::setHandler (gWindow, false);
 
-    widgetStatusUpdate.start (boost::bind (&WidgetScreen::updateStatus,
+    mWidgetStatusUpdate.start (boost::bind (&WidgetScreen::updateStatus,
 				 WidgetScreen::get (screen), window),
 			      0, 0);
 }
 
 WidgetWindow::~WidgetWindow ()
 {
-    if (wasUnmapped)
+    if (mWasUnmapped)
 	updateWidgetMapState (true);
 
-    if (matchUpdate.active ())
-	matchUpdate.stop ();
+    if (mMatchUpdate.active ())
+	mMatchUpdate.stop ();
 
-    if (widgetStatusUpdate.active ())
-	widgetStatusUpdate.stop ();
+    if (mWidgetStatusUpdate.active ())
+	mWidgetStatusUpdate.stop ();
 }
 
 bool

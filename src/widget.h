@@ -101,13 +101,13 @@ class WidgetScreen :
 	optionChanged (CompOption *,
 		       WidgetOptions::Options  num);
 
-	Window lastActiveWindow;
-	Atom   compizWidgetAtom;
+	Window mLastActiveWindow;
+	Atom   mCompizWidgetAtom;
 
-	WidgetState state;
-	int	    fadeTime;
-	CompScreen::GrabHandle  grabIndex;
-	Cursor	    cursor;
+	WidgetState mState;
+	int	    mFadeTime;
+	CompScreen::GrabHandle  mGrabIndex;
+	Cursor	    mCursor;
 };
 
 #define WIDGET_SCREEN(screen)						       \
@@ -157,13 +157,13 @@ class WidgetWindow :
 	bool
 	updateMatch ();
 
-	bool isWidget;
-	bool wasUnmapped;
-	bool oldManaged;
-	CompWindow *parentWidget;
-	CompTimer  matchUpdate;
-	CompTimer  widgetStatusUpdate;
-	WidgetPropertyState propertyState;
+	bool mIsWidget;
+	bool mWasUnmapped;
+	bool mOldManaged;
+	CompWindow *mParentWidget;
+	CompTimer  mMatchUpdate;
+	CompTimer  mWidgetStatusUpdate;
+	WidgetPropertyState mPropertyState;
 
 };
 
