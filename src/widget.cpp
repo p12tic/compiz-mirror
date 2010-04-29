@@ -96,21 +96,21 @@ WidgetWindow::updateTreeStatus ()
 bool
 WidgetWindow::updateWidgetStatus ()
 {
-    Bool f_isWidget, retval, managed;
+    bool f_isWidget, retval, managed;
 
     WIDGET_SCREEN (screen);
 
     switch (propertyState) {
     case PropertyWidget:
-	f_isWidget = TRUE;
+	f_isWidget = true;
 	break;
     case PropertyNoWidget:
-	f_isWidget = FALSE;
+	f_isWidget = false;
 	break;
     default:
 	managed = window->managed () || oldManaged;
 	if (!managed || (window->wmType () & CompWindowTypeDesktopMask))
-	    f_isWidget = FALSE;
+	    f_isWidget = false;
 	else
 	    f_isWidget = ws->optionGetMatch ().evaluate (window);
 	break;
@@ -133,7 +133,7 @@ WidgetWindow::updateWidgetPropertyState ()
     WIDGET_SCREEN (screen);
 
     result = XGetWindowProperty (screen->dpy (), window->id (), ws->compizWidgetAtom,
-				 0, 1L, FALSE, AnyPropertyType, &retType,
+				 0, 1L, false, AnyPropertyType, &retType,
 				 &format, &nitems, &remain, &data);
 
     if (result == Success && data)
@@ -162,7 +162,7 @@ WidgetWindow::updateWidgetMapState (bool       map)
     {
 	XMapWindow (screen->dpy (), window->id ());
 	window->raise ();
-	wasUnmapped = FALSE;
+	wasUnmapped = false;
 #warning * [FIXME] Need to make managed var setter or wrappable in core
 	//window->setManaged (oldManaged); // ???
     }
@@ -174,7 +174,7 @@ WidgetWindow::updateWidgetMapState (bool       map)
 	if (window->isViewable ())
 	{
 	    XUnmapWindow (screen->dpy (), window->id ());
-	    wasUnmapped = TRUE;
+	    wasUnmapped = true;
 	    oldManaged = window->managed ();
 	}
     }
@@ -222,7 +222,7 @@ WidgetScreen::registerExpHandler ()
 {
     screen->matchExpHandlerChanged ();
 
-    return FALSE;
+    return false;
 }
 
 /* Check to see if 'false' or 'true' is used in str,
@@ -310,7 +310,7 @@ WidgetScreen::toggle (CompAction         *action,
 
     cScreen->damageScreen ();
 
-    return TRUE;
+    return true;
 }
 
 void
@@ -453,7 +453,7 @@ WidgetWindow::updateMatch ()
 	screen->matchPropertyChanged (window);
     }
 
-    return FALSE;
+    return false;
 }
 
 bool
@@ -492,7 +492,7 @@ WidgetScreen::updateStatus (CompWindow *w)
 	}
     }
 
-    return FALSE;
+    return false;
 }
 
 void
@@ -565,7 +565,7 @@ WidgetWindow::glPaint (const GLWindowPaintAttrib &attrib,
 bool
 WidgetWindow::focus ()
 {
-    Bool       status;
+    bool       status;
 
     WIDGET_SCREEN (screen);
 
@@ -573,7 +573,7 @@ WidgetWindow::focus ()
 
     if (ws->state != WidgetScreen::StateOff && !isWidget && !parentWidget)
     {
-	status = FALSE;
+	status = false;
     }
     else
     {
@@ -712,9 +712,9 @@ WidgetWindow::WidgetWindow (CompWindow *window) :
     PluginClassHandler <WidgetWindow, CompWindow> (window),
     window (window),
     gWindow (GLWindow::get (window)),
-    isWidget (FALSE),
-    wasUnmapped (FALSE),
-    oldManaged (FALSE),
+    isWidget (false),
+    wasUnmapped (false),
+    oldManaged (false),
     parentWidget (NULL),
     propertyState (PropertyNotSet)
 {
