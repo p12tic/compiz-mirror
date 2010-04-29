@@ -59,7 +59,7 @@ ParticleSystem::initParticles (int            f_numParticles)
 
     tex = 0;
     slowdown = 1;
-    active = FALSE;
+    active = false;
 
     // Initialize cache
     vertices_cache = NULL;
@@ -271,7 +271,7 @@ ParticleSystem::updateParticles (float          time)
     float speed = (time / 50.0);
     float f_slowdown = slowdown * (1 - MAX (0.99, time / 1000.0) ) * 1000;
 
-    active = FALSE;
+    active = false;
 
     foreach (Particle *part, particles)
     {
@@ -289,7 +289,7 @@ ParticleSystem::updateParticles (float          time)
 
 	    // modify life
 	    part->life -= part->fade * speed;
-	    active = TRUE;
+	    active = true;
 	}
     }
 }
@@ -342,7 +342,7 @@ ShowmouseScreen::genNewParticles (int f_time)
     if (!ps)
 	return;
 
-    Bool rColor     = optionGetRandom ();
+    bool rColor     = optionGetRandom ();
     float life      = optionGetLife ();
     float lifeNeg   = 1 - life;
     float fadeExtra = 0.2f * (1.01 - life);
@@ -434,7 +434,7 @@ ShowmouseScreen::genNewParticles (int f_time)
 	    part->yg = 0.0f;
 	    part->zg = 0.0f;
 
-	    ps->active = TRUE;
+	    ps->active = true;
 	    max_new   -= 1;
 
 	    //fprintf (stderr, "particle has the attribs %f %f %f\n", part->x, part->y, part->z);
