@@ -1015,39 +1015,39 @@ StackswitchScreen::terminate (CompAction         *action,
 			      CompAction::State  state,
 			      CompOption::Vector options)
 {
-	if (mGrabIndex)
-    	{
-    	    screen->removeGrab (mGrabIndex, 0);
-    	    mGrabIndex = 0;
-	}
+    if (mGrabIndex)
+    {
+        screen->removeGrab (mGrabIndex, 0);
+        mGrabIndex = 0;
+    }
 
-	if (mState != StackswitchStateNone)
-    	{
-    	    CompWindow *w;
+    if (mState != StackswitchStateNone)
+    {
+        CompWindow *w;
 
-    	    foreach (CompWindow *w, screen->windows ())
-    	    {
-    		STACKSWITCH_WINDOW (w);
-    
-		if (sw->mSlot)
-		{
-		    free (sw->mSlot);
-		    sw->mSlot = NULL;
+        foreach (CompWindow *w, screen->windows ())
+        {
+	    STACKSWITCH_WINDOW (w);
 
-    		    sw->mAdjust = true;
-		}
-	    }
-	    mMoreAdjust = true;
-    	    mState = StackswitchStateIn;
-    	    cScreen->damageScreen ();
-
-	    if (!(state & CompAction::StateCancel) && mSelectedWindow)
+	    if (sw->mSlot)
 	    {
-		w = screen->findWindow (mSelectedWindow);
-		if (w)
-		    screen->sendWindowActivationRequest (w->id ());
+	        free (sw->mSlot);
+	        sw->mSlot = NULL;
+
+	        sw->mAdjust = true;
 	    }
-	}
+        }
+        mMoreAdjust = true;
+        mState = StackswitchStateIn;
+        cScreen->damageScreen ();
+
+        if (!(state & CompAction::StateCancel) && mSelectedWindow)
+        {
+	    w = screen->findWindow (mSelectedWindow);
+	    if (w)
+	        screen->sendWindowActivationRequest (w->id ());
+        }
+    }
 
     if (action)
 	action->setState (action->state ()  & ~(CompAction::StateTermKey |
@@ -1121,37 +1121,37 @@ StackswitchScreen::doSwitch (CompAction           *action,
 {
     bool       ret = true;
 
-	if ((mState == StackswitchStateNone) || (mState == StackswitchStateIn))
-	{
-	    if (mType == StackswitchTypeGroup)
+    if ((mState == StackswitchStateNone) || (mState == StackswitchStateIn))
+    {
+        if (mType == StackswitchTypeGroup)
+        {
+	    CompWindow *w;
+	    w = screen->findWindow (CompOption::getIntOptionNamed (options, "window", 0));
+	    if (w)
 	    {
-    		CompWindow *w;
-    		w = screen->findWindow (CompOption::getIntOptionNamed (options, "window", 0));
-    		if (w)
-    		{
-    		    mType = StackswitchTypeGroup;
-    		    mClientLeader =
-			(w->clientLeader ()) ? w->clientLeader () : w->id ();
-		    ret = initiate (action, state, options);
-		}
+	        mType = StackswitchTypeGroup;
+	        mClientLeader =
+		    (w->clientLeader ()) ? w->clientLeader () : w->id ();
+	        ret = initiate (action, state, options);
 	    }
-	    else
-	    {
-		mType = type;
-		ret = initiate (action, state, options);
-	    }
+        }
+        else
+        {
+	    mType = type;
+	    ret = initiate (action, state, options);
+        }
 
-	    if (state & CompAction::StateInitKey)
-		action->setState (action->state () | CompAction::StateTermKey);
+        if (state & CompAction::StateInitKey)
+	    action->setState (action->state () | CompAction::StateTermKey);
 
-	    if (state & CompAction::StateInitEdge)
-		action->setState (action->state () | CompAction::StateTermEdge);
-	    else if (state & CompAction::StateInitButton)
-		action->setState (action->state () | CompAction::StateTermButton);
-	}
+        if (state & CompAction::StateInitEdge)
+	    action->setState (action->state () | CompAction::StateTermEdge);
+        else if (state & CompAction::StateInitButton)
+	    action->setState (action->state () | CompAction::StateTermButton);
+    }
 
-	if (ret)
-    	    switchToWindow (nextWindow);
+    if (ret)
+    switchToWindow (nextWindow);
 
     return ret;
 }
