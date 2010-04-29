@@ -223,7 +223,7 @@ TextSurface::render (const CompText::Attrib &attrib,
     if (attrib.flags & CompText::Ellipsized)
 	pango_layout_set_ellipsize (layout, PANGO_ELLIPSIZE_END);
 
-    pango_layout_set_auto_dir (layout, FALSE);
+    pango_layout_set_auto_dir (layout, false);
     pango_layout_set_text (layout, text.c_str (), -1);
 
     pango_layout_get_pixel_size (layout, &width, &height);
