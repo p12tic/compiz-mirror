@@ -43,7 +43,7 @@ AddScreen::walkWindows ()
     {
 	ADD_WINDOW (w);
 
-	aw->dim = FALSE;
+	aw->dim = false;
 
 	if (!isToggle)
 	continue;
@@ -58,7 +58,7 @@ AddScreen::walkWindows ()
 	if (!optionGetWindowTypes ().evaluate (w))
 	continue;
 
-	aw->dim = TRUE;
+	aw->dim = true;
 
 	cScreen->damageScreen ();
     }
