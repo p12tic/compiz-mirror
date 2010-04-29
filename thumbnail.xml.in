@@ -6,6 +6,8 @@
 	<category>Extras</category>
 	<deps>
 		<relation type="after">
+			<plugin>opengl</plugin>
+			<plugin>mousepoll</plugin>
 			<plugin>text</plugin>
 		</relation>
 		<requirement>
