@@ -9,8 +9,13 @@
 				<plugin>animation</plugin>
 			</relation>
 			<requirement>
+				<plugin>composite</plugin>
 				<plugin>opengl</plugin>
 			</requirement>
+			<relation type="after">
+				<plugin>composite</plugin>
+				<plugin>opengl</plugin>
+			</relation>
 		</deps>
 		<options>
 			<option name="toggle_key" type="key">
