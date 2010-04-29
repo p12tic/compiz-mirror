@@ -204,7 +204,7 @@ ExtraWMScreen::toggleAlwaysOnTop (CompAction         *action,
 	w->updateAttributes (CompStackingUpdateModeNormal);
     }
 
-    return TRUE;
+    return true;
 }
 
 bool
@@ -225,7 +225,7 @@ ExtraWMScreen::toggleSticky (CompAction         *action,
 	w->changeState (newState);
     }
 
-    return TRUE;
+    return true;
 }
 
 void
