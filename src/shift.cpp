@@ -118,8 +118,7 @@ void
 ShiftScreen::renderWindowTitle ()
 {
     CompText::Attrib tA;
-    CompRegion       ox;
-    int              ox1, ox2, oy1, oy2;
+    CompRect	     oe;
 
     freeWindowTitle ();
 
@@ -132,20 +131,13 @@ ShiftScreen::renderWindowTitle ()
     if (optionGetMultioutputMode () ==
                                     ShiftOptions::MultioutputModeOneBigSwitcher)
     {
-        ox1 = oy1 = 0;
-        ox2 = screen->width ();
-        oy2 = screen->height ();
+        oe.setGeometry (0, 0, screen->width (), screen->height ());
     }
     else
-        ox = screen->getCurrentOutputExtents ();
-
-    ox1 = ox.handle ()->extents.x1;
-    oy1 = ox.handle ()->extents.y1;
-    ox2 = ox.handle ()->extents.x2;
-    oy2 = ox.handle ()->extents.y2;
+        oe = screen->getCurrentOutputExtents ();
 
     /* 75% of the output device as maximum width */
-    tA.maxWidth = (ox2 - ox1) * 3 / 4;
+    tA.maxWidth = (oe.x2 () - oe.x1 ()) * 3 / 4;
     tA.maxHeight = 100;
 
     tA.family = "Sans";
@@ -174,33 +166,28 @@ void
 ShiftScreen::drawWindowTitle ()
 {
     float width, height, border = 10.0f;
-    int ox1, ox2, oy1, oy2;
+    CompRect oe;
 
     width = text.getWidth ();
     height = text.getHeight ();
 
     if (optionGetMultioutputMode () == MultioutputModeOneBigSwitcher)
     {
-        ox1 = oy1 = 0;
-        ox2 = screen->width ();
-        oy2 = screen->height ();
+        oe.setGeometry (0, 0, screen->width (), screen->height ());
     }
     else
     {
-        ox1 = screen->outputDevs ()[mUsedOutput].region ()->extents.x1;
-        ox2 = screen->outputDevs ()[mUsedOutput].region ()->extents.x2;
-        oy1 = screen->outputDevs ()[mUsedOutput].region ()->extents.y1;
-        oy2 = screen->outputDevs ()[mUsedOutput].region ()->extents.y2;
+    	oe = (CompRect) screen->outputDevs ()[mUsedOutput];
     }
 
-    float x = ox1 + ((ox2 - ox1) / 2) - (text.getWidth () / 2);
+    float x = oe.x1 () + ((oe.x2 () - oe.x1 ()) / 2) - (text.getWidth () / 2);
     float y;
 
     /* assign y (for the lower corner!) according to the setting */
     switch (optionGetTitleTextPlacement ())
     {
     case TitleTextPlacementCenteredOnScreen:
-        y = oy1 + ((oy2 - oy1) / 2) + (height / 2);
+        y = oe.y1 () + ((oe.y2 () - oe.y1 ()) / 2) + (height / 2);
         break;
     case TitleTextPlacementAbove:
     case TitleTextPlacementBelow:
@@ -210,9 +197,9 @@ ShiftScreen::drawWindowTitle ()
 
             if (optionGetTitleTextPlacement () ==
                 TitleTextPlacementAbove)
-                y = oy1 + workArea.y () + (2 * border) + height;
+                y = oe.y1 () + workArea.y () + (2 * border) + height;
             else
-                y = oy1 + workArea.y () + workArea.height () - (2 * border);
+                y = oe.y1 () + workArea.y () + workArea.height () - (2 * border);
         }
         break;
     default:
@@ -540,29 +527,24 @@ ShiftScreen::layoutThumbsCover ()
     float distance;
     int i;
 
-    int ox1, ox2, oy1, oy2;
+    CompRect oe;
 
     if (optionGetMultioutputMode () == ShiftScreen::MultioutputModeOneBigSwitcher)
     {
-	ox1 = oy1 = 0;
-	ox2 = screen->width ();
-	oy2 = screen->height ();
+	oe.setGeometry (0, 0, screen->width (), screen->height ());
     }
     else
     {
-        ox1 = screen->outputDevs ()[mUsedOutput].region ()->extents.x1;
-        ox2 = screen->outputDevs ()[mUsedOutput].region ()->extents.x2;
-        oy1 = screen->outputDevs ()[mUsedOutput].region ()->extents.y1;
-        oy2 = screen->outputDevs ()[mUsedOutput].region ()->extents.y2;
+	oe = (CompRect) screen->outputDevs ()[mUsedOutput];
     }
     
     /* the center of the ellipse is in the middle 
        of the used output device */
-    int centerX = ox1 + (ox2 - ox1) / 2;
-    int centerY = oy1 + (oy2 - oy1) / 2;
+    int centerX = oe.x1 () + (oe.x2 () - oe.x1 ()) / 2;
+    int centerY = oe.y1 () + (oe.y2 () - oe.y1 ()) / 2;
 
-    int maxThumbWidth  = (ox2 - ox1) * optionGetSize () / 100;
-    int maxThumbHeight = (oy2 - oy1) * optionGetSize () / 100;
+    int maxThumbWidth  = (oe.x2 () - oe.x1 ()) * optionGetSize () / 100;
+    int maxThumbHeight = (oe.y2 () - oe.y1 ()) * optionGetSize () / 100;
     
     for (index = 0; index < mNWindows; index++)
     {
@@ -621,25 +603,25 @@ ShiftScreen::layoutThumbsCover ()
 	    {
 		sw->mSlots[i].x  = centerX + (sin(pos * PI * 0.5) * space);
 		sw->mSlots[i].z  = fabs (distance);
-		sw->mSlots[i].z *= -(maxThumbWidth / (2.0 * (ox2 - ox1)));
+		sw->mSlots[i].z *= -(maxThumbWidth / (2.0 * (oe.x2 () - oe.x1 ())));
 
 		sw->mSlots[i].rotation = sin(pos * PI * 0.5) * -60;
 	    }
 	    else 
 	    {
-		float rad = (space / (ox2 - ox1)) / sin(PI / 6.0);
+		float rad = (space / (oe.x2 () - oe.x1 ())) / sin(PI / 6.0);
 
 		float ang = (PI / MAX(72.0, mNWindows * 2)) *
 			    (distance - pos) + (pos * (PI / 6.0));
     
 		sw->mSlots[i].x  = centerX;
-		sw->mSlots[i].x += sin(ang) * rad * (ox2 - ox1);
+		sw->mSlots[i].x += sin(ang) * rad * (oe.x2 () - oe.x1 ());
 		    
 		sw->mSlots[i].rotation  = 90;
 		sw->mSlots[i].rotation -= fabs(ang) * 180.0 / PI;
 		sw->mSlots[i].rotation *= -pos;
 
-		sw->mSlots[i].z  = -(maxThumbWidth / (2.0 * (ox2 - ox1)));
+		sw->mSlots[i].z  = -(maxThumbWidth / (2.0 * (oe.x2 () - oe.x1 ())));
 		sw->mSlots[i].z += -(cos(PI / 6.0) * rad);
 		sw->mSlots[i].z += (cos(ang) * rad);
 	    }
@@ -684,29 +666,24 @@ ShiftScreen::layoutThumbsFlip ()
     float angle;
     int slotNum;
 
-    int ox1, ox2, oy1, oy2;
+    CompRect oe;
 
     if (optionGetMultioutputMode () == ShiftOptions::MultioutputModeOneBigSwitcher)
     {
-	ox1 = oy1 = 0;
-	ox2 = screen->width ();
-	oy2 = screen->height ();
+	oe.setGeometry (0, 0, screen->width (), screen->height ());
     }
     else
     {
-        ox1 = screen->outputDevs ()[mUsedOutput].region ()->extents.x1;
-        ox2 = screen->outputDevs ()[mUsedOutput].region ()->extents.x2;
-        oy1 = screen->outputDevs ()[mUsedOutput].region ()->extents.y1;
-        oy2 = screen->outputDevs ()[mUsedOutput].region ()->extents.y2;
+	oe = screen->outputDevs ()[mUsedOutput];
     }
     
     /* the center of the ellipse is in the middle 
        of the used output device */
-    int centerX = ox1 + (ox2 - ox1) / 2;
-    int centerY = oy1 + (oy2 - oy1) / 2;
+    int centerX = oe.x1 () + (oe.x2 () - oe.x1 ()) / 2;
+    int centerY = oe.y1 () + (oe.y2 () - oe.y1 ()) / 2;
 
-    int maxThumbWidth  = (ox2 - ox1) * optionGetSize () / 100;
-    int maxThumbHeight = (oy2 - oy1) * optionGetSize () / 100;
+    int maxThumbWidth  = (oe.x2 () - oe.x1 ()) * optionGetSize () / 100;
+    int maxThumbHeight = (oe.y2 () - oe.y1 ()) * optionGetSize () / 100;
 
     slotNum = 0;
     
@@ -772,7 +749,7 @@ ShiftScreen::layoutThumbsFlip ()
 	    sw->mSlots[i].z  = cos(angle) * distance;
 	    if (distance > 0)
 		sw->mSlots[i].z *= 1.5;
-	    sw->mSlots[i].z *= (maxThumbWidth / (2.0 * (ox2 - ox1)));
+	    sw->mSlots[i].z *= (maxThumbWidth / (2.0 * (oe.x2 () - oe.x1 ())));
 
 	    sw->mSlots[i].rotation = optionGetFlipRotation ();
 
@@ -1875,26 +1852,21 @@ ShiftScreen::handleEvent (XEvent      *event)
 	{
 	    if (mButtonPressed)
 	    {
-		int ox1, ox2, oy1, oy2;
+		CompRect oe = screen->outputDevs ()[mUsedOutput];
 		float div = 0;
 		int   wx  = 0;
 		int   wy  = 0;
 		int   iNew;
-
-		ox1 = screen->outputDevs ()[mUsedOutput].region ()->extents.x1;
-		ox2 = screen->outputDevs ()[mUsedOutput].region ()->extents.x2;
-		oy1 = screen->outputDevs ()[mUsedOutput].region ()->extents.y1;
-		oy2 = screen->outputDevs ()[mUsedOutput].region ()->extents.y2;
 		
 		switch (optionGetMode ())
 		{
 		    case ShiftOptions::ModeCover:
 			div = event->xmotion.x_root - mStartX;
-			div /= (ox2 - ox1) / optionGetMouseSpeed ();
+			div /= (oe.x2 () - oe.x1 ()) / optionGetMouseSpeed ();
 			break;
 		    case ShiftOptions::ModeFlip:
 			div = event->xmotion.y_root - mStartY;
-			div /= (oy2 - oy1) / optionGetMouseSpeed ();
+			div /= (oe.y2 () - oe.y1 ()) / optionGetMouseSpeed ();
 			break;
 		}
 
