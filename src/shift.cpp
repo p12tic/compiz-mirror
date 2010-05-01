@@ -66,7 +66,7 @@ ShiftWindow::isShiftable ()
     if (window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
 	return false;
 
-    if (!window->mapNum () || window->invisible ())
+    if (!window->mapNum () || !window->isViewable ())
     {
 	if (ss->optionGetMinimized ())
 	{
@@ -79,7 +79,7 @@ ShiftWindow::isShiftable ()
 
     if (ss->mType == ShiftTypeNormal)
     {
-	if (!window->mapNum () || !window->invisible ())
+	if (!window->mapNum () || !window->isViewable ())
 	{
 	    if (window->serverGeometry ().x () + window->serverGeometry ().width () <= 0    ||
 		window->serverGeometry ().y () + window->serverGeometry ().height () <= 0    ||
