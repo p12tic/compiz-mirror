@@ -73,7 +73,7 @@ ThumbScreen::thumbUpdateThumbnail ()
     int        tPos[2], tmpPos[2];
     float      distance = 1000000;
     int        off, oDev, tHeight;
-    int        ox1, oy1, ox2, oy2, ow, oh;
+    CompRect   oGeom;
     float      maxSize = optionGetThumbSize ();
     double     scale  = 1.0;
     CompWindow *w;
@@ -133,21 +133,11 @@ ThumbScreen::thumbUpdateThumbnail ()
     if (screen->outputDevs ().size () == 1 ||
         (unsigned int) oDev > screen->outputDevs ().size ())
     {
-	ox1 = 0;
-	oy1 = 0;
-	ox2 = screen->width ();
-	oy2 = screen->height ();
-	ow  = screen->width ();
-	oh  = screen->height ();
+	oGeom.setGeometry (0, 0, screen->width (), screen->height ());
     }
     else
     {
-	ox1 = screen->outputDevs ()[oDev].x1 ();
-	ox2 = screen->outputDevs ()[oDev].x2 ();
-	oy1 = screen->outputDevs ()[oDev].y1 ();
-	oy2 = screen->outputDevs ()[oDev].y2 ();
-	ow  = ox2 - ox1;
-	oh  = oy2 - oy1;
+	oGeom = (CompRect) screen->outputDevs ()[oDev];
     }
 
     tHeight = thumb.height;
@@ -167,15 +157,15 @@ ThumbScreen::thumbUpdateThumbnail ()
     // above
     tmpPos[0] = igMidPoint[0] - (thumb.width / 2.0);
 
-    if (tmpPos[0] - off < ox1)
-	tmpPos[0] = ox1 + off;
+    if (tmpPos[0] - off < oGeom.x1 ())
+	tmpPos[0] = oGeom.x1 () + off;
 
-    if (tmpPos[0] + off + thumb.width > ox2)
+    if (tmpPos[0] + off + thumb.width > oGeom.x2 ())
     {
-	if (thumb.width + (2 * off) <= ow)
-	    tmpPos[0] = ox2 - thumb.width - off;
+	if (thumb.width + (2 * off) <= oGeom.width ())
+	    tmpPos[0] = oGeom.x2 () - thumb.width - off;
 	else
-	    tmpPos[0] = ox1 + off;
+	    tmpPos[0] = oGeom.x1 () + off;
     }
 
     tMidPoint[0] = tmpPos[0] + (thumb.width / 2.0);
@@ -183,7 +173,7 @@ ThumbScreen::thumbUpdateThumbnail ()
     tmpPos[1] = WIN_Y (dock) - tHeight - off;
     tMidPoint[1] = tmpPos[1] + (tHeight / 2.0);
 
-    if (tmpPos[1] > oy1)
+    if (tmpPos[1] > oGeom.y1 ())
     {
 	tPos[0]  = tmpPos[0];
 	tPos[1]  = tmpPos[1];
@@ -195,7 +185,7 @@ ThumbScreen::thumbUpdateThumbnail ()
 
     tMidPoint[1] = tmpPos[1] + (tHeight / 2.0);
 
-    if (tmpPos[1] + tHeight + off < oy2 &&
+    if (tmpPos[1] + tHeight + off < oGeom.y2 () &&
 	GET_DISTANCE (igMidPoint, tMidPoint) < distance)
     {
 	tPos[0]  = tmpPos[0];
@@ -206,15 +196,15 @@ ThumbScreen::thumbUpdateThumbnail ()
     // left
     tmpPos[1] = igMidPoint[1] - (tHeight / 2.0);
 
-    if (tmpPos[1] - off < oy1)
-	tmpPos[1] = oy1 + off;
+    if (tmpPos[1] - off < oGeom.y1 ())
+	tmpPos[1] = oGeom.y1 () + off;
 
-    if (tmpPos[1] + off + tHeight > oy2)
+    if (tmpPos[1] + off + tHeight > oGeom.y2 ())
     {
-	if (tHeight + (2 * off) <= oh)
-	    tmpPos[1] = oy2 - thumb.height - off;
+	if (tHeight + (2 * off) <= oGeom.height ())
+	    tmpPos[1] = oGeom.y2 () - thumb.height - off;
 	else
-	    tmpPos[1] = oy1 + off;
+	    tmpPos[1] = oGeom.y1 () + off;
     }
 
     tMidPoint[1] = tmpPos[1] + (tHeight / 2.0);
@@ -222,7 +212,7 @@ ThumbScreen::thumbUpdateThumbnail ()
     tmpPos[0] = WIN_X (dock) - thumb.width - off;
     tMidPoint[0] = tmpPos[0] + (thumb.width / 2.0);
 
-    if (tmpPos[0] > ox1 && GET_DISTANCE (igMidPoint, tMidPoint) < distance)
+    if (tmpPos[0] > oGeom.x1 () && GET_DISTANCE (igMidPoint, tMidPoint) < distance)
     {
 	tPos[0]  = tmpPos[0];
 	tPos[1]  = tmpPos[1];
@@ -234,7 +224,7 @@ ThumbScreen::thumbUpdateThumbnail ()
 
     tMidPoint[0] = tmpPos[0] + (thumb.width / 2.0);
 
-    if (tmpPos[0] + thumb.width + off < ox2 &&
+    if (tmpPos[0] + thumb.width + off < oGeom.x2 () &&
 	GET_DISTANCE (igMidPoint, tMidPoint) < distance)
     {
 	tPos[0]  = tmpPos[0];
