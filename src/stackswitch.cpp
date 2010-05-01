@@ -87,7 +87,6 @@ void
 StackswitchScreen::renderWindowTitle ()
 {
     CompText::Attrib tA;
-    int            ox1, ox2, oy1, oy2;
     bool           showViewport;
 
     if (!textAvailable)
@@ -96,15 +95,10 @@ StackswitchScreen::renderWindowTitle ()
     if (!optionGetWindowTitle ())
 	return;
 
-    CompRect output = screen->getCurrentOutputExtents ();
-    
-    ox1 = output.x ();
-    oy1 = output.y ();
-    ox2 = output.x2 ();
-    oy2 = output.y2 ();
+    CompRect oe = screen->getCurrentOutputExtents ();
 
     /* 75% of the output device as maximum width */
-    tA.maxWidth = (ox2 - ox1) * 3 / 4;
+    tA.maxWidth = (oe.x2 () - oe.x1 ()) * 3 / 4;
     tA.maxHeight = 100;
 
     tA.family = "Sans";
@@ -137,23 +131,17 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
     GLint         oldBlendSrc, oldBlendDst;
     GLMatrix      wTransform (transform), mvp;
     float         x, y, tx, ix, width, height;
-    int           ox1, ox2, oy1, oy2;
     GLTexture::Matrix    m;
     GLTexture     *icon;
     
     STACKSWITCH_WINDOW (w);
 
-    CompRect output = screen->getCurrentOutputExtents ();
-    
-    ox1 = output.x ();
-    oy1 = output.y ();
-    ox2 = output.x2 ();
-    oy2 = output.y2 ();
+    CompRect oe = screen->getCurrentOutputExtents ();
 
     width = mText.getWidth ();
     height = mText.getHeight ();
 
-    x = ox1 + ((ox2 - ox1) / 2);
+    x = oe.x1 () + ((oe.x2 () - oe.x1 ()) / 2);
     tx = x - (mText.getWidth () / 2);
 
     switch (optionGetTitleTextPlacement ())
@@ -179,19 +167,19 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 	    v = mvp * v;
 	    v.homogenize ();
 
-	    x = (v[GLVector::x] + 1.0) * (ox2 - ox1) * 0.5;
-	    y = (v[GLVector::y] - 1.0) * (oy2 - oy1) * -0.5;
+	    x = (v[GLVector::x] + 1.0) * (oe.x2 () - oe.x1 ()) * 0.5;
+	    y = (v[GLVector::y] - 1.0) * (oe.y2 () - oe.y1 ()) * -0.5;
 
-	    x += ox1;
-	    y += oy1;
+	    x += oe.x1 ();
+	    y += oe.y1 ();
 
-	    tx = MAX (ox1, x - (width / 2.0));
-	    if (tx + width > ox2)
-		tx = ox2 - width;
+	    tx = MAX (oe.x1 (), x - (width / 2.0));
+	    if (tx + width > oe.x2 ())
+		tx = oe.x2 () - width;
             }
 	break;
 	case StackswitchOptions::TitleTextPlacementCenteredOnScreen:
-	    y = oy1 + ((oy2 - oy1) / 2) + (height / 2);
+	    y = oe.y1 () + ((oe.y2 () - oe.y1 ()) / 2) + (height / 2);
 	    break;
 	case StackswitchOptions::TitleTextPlacementAbove:
 	case StackswitchOptions::TitleTextPlacementBelow:
@@ -201,9 +189,9 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 
 	    	if (optionGetTitleTextPlacement () ==
 		    StackswitchOptions::TitleTextPlacementAbove)
-    		    y = oy1 + workArea.y () + height;
+    		    y = oe.y1 () + workArea.y () + height;
 		else
-		    y = oy1 + workArea.y () + workArea.height () - 96;
+		    y = oe.y1 () + workArea.y () + workArea.height () - 96;
 	    }
 	    break;
 	default:
@@ -487,8 +475,7 @@ StackswitchScreen::layoutThumbs ()
     int        index;
     int        ww, wh;
     float      xScale, yScale;
-    int        ox1, ox2, oy1, oy2;
-    float      swi = 0.0, oh, rh, ow;
+    float      swi = 0.0, rh;
     int        cols, rows, col = 0, row = 0, r, c;
     int        cindex, ci, gap, hasActive = 0;
     bool       exit;
@@ -496,13 +483,7 @@ StackswitchScreen::layoutThumbs ()
     if ((mState == StackswitchStateNone) || (mState == StackswitchStateIn))
 	return false;
 
-    CompRect output = screen->getCurrentOutputExtents ();
-    
-    ox1 = output.x ();
-    oy1 = output.y ();
-    ox2 = output.x2 ();
-    oy2 = output.y2 ();
-    ow = (float)(ox2 - ox1) * 0.9;
+    CompRect oe = screen->getCurrentOutputExtents ();
 
     for (index = 0; index < mNWindows; index++)
     {
@@ -511,7 +492,7 @@ StackswitchScreen::layoutThumbs ()
 	ww = w->width ()  + w->input ().left + w->input ().right;
 	wh = w->height () + w->input ().top  + w->input ().bottom;
 
-	swi += ((float)ww / (float)wh) * (ow / (float)(oy2 - oy1));
+	swi += ((float)ww / (float)wh) * (oe.width () / (float)(oe.y2 () - oe.y1 ()));
     }
 
     cols = ceil (sqrtf (swi));
@@ -537,10 +518,11 @@ StackswitchScreen::layoutThumbs ()
     }
     rows = row + 1;
 
-    oh = ow / cols;
-    oh *= (float)(oy2 - oy1) / (float)(oy2 - oy1);
+    oe.setHeight ((oe.width () / cols));
+    oe.setHeight ((oe.height () * (float)(oe.y2 () - oe.y1 ()) /
+    						 (float)(oe.y2 () - oe.y1 ())));
 
-    rh = ((float)(oy2 - oy1) * 0.8) / rows;
+    rh = ((float)(oe.y2 () - oe.y1 ()) * 0.8) / rows;
 
     for (index = 0; index < mNWindows; index++)
     {
@@ -571,26 +553,26 @@ StackswitchScreen::layoutThumbs ()
 	    w = mWindows[index];
 
 	    STACKSWITCH_WINDOW (w);
-	    sw->mSlot->x = ox1 + swi;
-	    sw->mSlot->y = oy2 - (rh * r) - ((oy2 - oy1) * 0.1);
+	    sw->mSlot->x = oe.x1 () + swi;
+	    sw->mSlot->y = oe.y2 () - (rh * r) - ((oe.y2 () - oe.y1 ()) * 0.1);
 
 
 	    ww = w->width ()  + w->input ().left + w->input ().right;
 	    wh = w->height () + w->input ().top  + w->input ().bottom;
 
-	    if (ww > ow)
-		xScale = ow / (float) ww;
+	    if (ww > oe.width ())
+		xScale = oe.width () / (float) ww;
 	    else
 		xScale = 1.0f;
 
-	    if (wh > oh)
-		yScale = oh / (float) wh;
+	    if (wh > oe.height ())
+		yScale = oe.height () / (float) wh;
 	    else
 		yScale = 1.0f;
 
 	    sw->mSlot->scale = MIN (xScale, yScale);
 
-	    if (swi + (ww * sw->mSlot->scale) > ow && cindex != index)
+	    if (swi + (ww * sw->mSlot->scale) > oe.width () && cindex != index)
 	    {
 		exit = true;
 		continue;
@@ -604,7 +586,7 @@ StackswitchScreen::layoutThumbs ()
 	    index++;
 	}
 
-	gap = ox2 - ox1 - swi;
+	gap = oe.x2 () - oe.x1 () - swi;
 	gap /= c + 1;
 
 	index = cindex;
@@ -617,7 +599,7 @@ StackswitchScreen::layoutThumbs ()
 	    sw->mSlot->x += ci * gap;
 
 	    if (hasActive == 0)
-		sw->mSlot->y += sqrt(2 * oh * oh) - rh;
+		sw->mSlot->y += sqrt(2 * oe.height () * oe.height ()) - rh;
 
 	    ci++;
 	    index++;
