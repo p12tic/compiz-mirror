@@ -140,7 +140,6 @@ RingScreen::renderWindowTitle ()
 
     CompText::Attrib attrib;
     CompRect       oe;
-    int            ox1, ox2, oy1, oy2;
 
     freeWindowTitle ();
 
@@ -152,13 +151,8 @@ RingScreen::renderWindowTitle ()
 
     oe = screen->getCurrentOutputExtents ();
 
-    ox1 = oe.x1 ();
-    ox2 = oe.x2 ();
-    oy1 = oe.y1 ();
-    oy2 = oe.y2 ();
-
     /* 75% of the output device as maximum width */
-    attrib.maxWidth = (ox2 - ox1) * 3 / 4;
+    attrib.maxWidth = (oe.x2 () - oe.x1 ()) * 3 / 4;
     attrib.maxHeight = 100;
 
     attrib.size = optionGetTitleFontSize ();
@@ -188,23 +182,17 @@ RingScreen::drawWindowTitle ()
     if (!textAvailable)
 	return;
     float      x, y;
-    CompRect   r;
-    int        ox1, ox2, oy1, oy2;
+    CompRect   oe;
 
-    r = screen->getCurrentOutputExtents ();
+    oe = screen->getCurrentOutputExtents ();
 
-    ox1 = r.x1 ();
-    ox2 = r.x2 ();
-    oy1 = r.y1 ();
-    oy2 = r.y2 ();
-
-    x = ox1 + ((ox2 - ox1) / 2) - (mText.getWidth () / 2);
+    x = oe.x1 () + ((oe.x2 () - oe.x1 ()) / 2) - (mText.getWidth () / 2);
 
     /* assign y (for the lower corner!) according to the setting */
     switch (optionGetTitleTextPlacement ())
     {
 	case RingOptions::TitleTextPlacementCenteredOnScreen:
-	    y = oy1 + ((oy2 - oy1) / 2) + (mText.getHeight () / 2);
+	    y = oe.y1 () + ((oe.y2 () - oe.y1 ()) / 2) + (mText.getHeight () / 2);
 	    break;
 	case RingOptions::TitleTextPlacementAboveRing:
 	case RingOptions::TitleTextPlacementBelowRing:
@@ -216,9 +204,9 @@ RingScreen::drawWindowTitle ()
 
 	    	if (optionGetTitleTextPlacement () ==
 		    RingOptions::TitleTextPlacementAboveRing)
-    		    y = oy1 + workArea.y () + mText.getHeight ();
+    		    y = oe.y1 () + workArea.y () + mText.getHeight ();
 		else
-		    y = oy1 + workArea.y () + workArea.height ();
+		    y = oe.y1 () + workArea.y () + workArea.height ();
 	    }
 	    break;
 	default:
@@ -477,7 +465,6 @@ RingScreen::layoutThumbs ()
     int        index = 0;
     int        ww, wh;
     float      xScale, yScale;
-    int        ox1, ox2, oy1, oy2;
     int        centerX, centerY;
     int        ellipseA, ellipseB;
     CompRect   oe;
@@ -489,17 +476,12 @@ RingScreen::layoutThumbs ()
 
     oe = screen->getCurrentOutputExtents ();
 
-    ox1 = oe.x1 ();
-    ox2 = oe.x2 ();
-    oy1 = oe.y1 ();
-    oy2 = oe.y2 ();
-
     /* the center of the ellipse is in the middle 
        of the used output device */
-    centerX = ox1 + (ox2 - ox1) / 2;
-    centerY = oy1 + (oy2 - oy1) / 2;
-    ellipseA = ((ox2 - ox1) * optionGetRingWidth ()) / 200;
-    ellipseB = ((oy2 - oy1) * optionGetRingHeight ()) / 200;
+    centerX = oe.x1 () + (oe.x2 () - oe.x1 ()) / 2;
+    centerY = oe.y1 () + (oe.y2 () - oe.y1 ()) / 2;
+    ellipseA = ((oe.x2 () - oe.x1 ()) * optionGetRingWidth ()) / 200;
+    ellipseB = ((oe.y2 () - oe.y1 ()) * optionGetRingHeight ()) / 200;
 
     mDrawSlots.resize (mWindows.size ());
 
