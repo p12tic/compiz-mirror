@@ -157,8 +157,7 @@ class WidgetWindow :
 	updateMatch ();
 
 	bool mIsWidget;
-	bool mWasUnmapped;
-	bool mOldManaged;
+	bool mWasHidden;
 	CompWindow *mParentWidget;
 	CompTimer  mMatchUpdate;
 	CompTimer  mWidgetStatusUpdate;

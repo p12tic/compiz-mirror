@@ -92,7 +92,7 @@ WidgetWindow::updateTreeStatus ()
 bool
 WidgetWindow::updateWidgetStatus ()
 {
-    bool isWidget, retval, managed;
+    bool isWidget, retval;
 
     WIDGET_SCREEN (screen);
 
@@ -104,11 +104,15 @@ WidgetWindow::updateWidgetStatus ()
 	isWidget = false;
 	break;
     default:
-	managed = window->managed () || mOldManaged;
-	if (!managed || (window->wmType () & CompWindowTypeDesktopMask))
+	if (!window->managed () ||
+	    (window->wmType () & CompWindowTypeDesktopMask))
+	{
 	    isWidget = false;
+	}
 	else
+	{
 	    isWidget = ws->optionGetMatch ().evaluate (window);
+	}
 	break;
     }
 
@@ -155,24 +159,21 @@ WidgetWindow::updateWidgetPropertyState ()
 void
 WidgetWindow::updateWidgetMapState (bool map)
 {
-    if (map && mWasUnmapped)
+    if (map && mWasHidden)
     {
-	XMapWindow (screen->dpy (), window->id ());
+	window->show ();
 	window->raise ();
-	mWasUnmapped = false;
-#warning * [FIXME] Need to make managed var setter or wrappable in core
-	//window->setManaged (mOldManaged); // ???
+	mWasHidden = false;
     }
-    else if (!map && !mWasUnmapped)
+    else if (!map && !mWasHidden)
     {
-	/* never set ww->mWasUnmapped on previously unmapped windows -
+	/* never set ww->mHidden on previously unmapped windows -
 	   it might happen that we map windows when entering the
 	   widget mode which aren't supposed to be unmapped */
 	if (window->isViewable ())
 	{
-	    XUnmapWindow (screen->dpy (), window->id ());
-	    mWasUnmapped = true;
-	    mOldManaged = window->managed ();
+	    window->hide ();
+	    mWasHidden = true;
 	}
     }
 }
@@ -680,8 +681,7 @@ WidgetWindow::WidgetWindow (CompWindow *window) :
     window (window),
     gWindow (GLWindow::get (window)),
     mIsWidget (false),
-    mWasUnmapped (false),
-    mOldManaged (false),
+    mWasHidden (false),
     mParentWidget (NULL),
     mPropertyState (PropertyNotSet)
 {
@@ -695,7 +695,7 @@ WidgetWindow::WidgetWindow (CompWindow *window) :
 
 WidgetWindow::~WidgetWindow ()
 {
-    if (mWasUnmapped)
+    if (mWasHidden)
 	updateWidgetMapState (true);
 
     if (mMatchUpdate.active ())
