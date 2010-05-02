@@ -40,11 +40,6 @@
 
 #include "scaleaddon_options.h"
 
-#define WIN_X(w) ((w)->x () - (w)->input ().left)
-#define WIN_Y(w) ((w)->y () - (w)->input ().top)
-#define WIN_W(w) ((w)->width () + (w)->input ().left + (w)->input ().right)
-#define WIN_H(w) ((w)->height () + (w)->input ().top + (w)->input ().bottom)
-
 class ScaleAddonScreen :
     public PluginClassHandler <ScaleAddonScreen, CompScreen>,
     public ScreenInterface,
@@ -53,13 +48,10 @@ class ScaleAddonScreen :
     public ScaleaddonOptions
 {
     public:
-
 	ScaleAddonScreen (CompScreen *);
 
 	CompositeScreen *cScreen;
 	ScaleScreen	*sScreen;
-
-	/* FIXME: This should better be a queue */
 
 	Window		highlightedWindow;
 	Window		lastHighlightedWindow;
@@ -68,11 +60,14 @@ class ScaleAddonScreen :
 
 	float		scale;
 
-	void		handleEvent (XEvent *);
+	void
+	handleEvent (XEvent *);
 
-	bool		layoutSlotsAndAssignWindows ();
+	bool
+	layoutSlotsAndAssignWindows ();
 
-	void		donePaint ();
+	void
+	donePaint ();
 
 	void
 	checkWindowHighlight ();
@@ -93,17 +88,16 @@ class ScaleAddonScreen :
 		    CompOption::Vector options);
 
 	void
-	handleCompizEvent (const char  *pluginName,
-			   const char  *eventName,
-			   CompOption::Vector  &options);
+	handleCompizEvent (const char         *pluginName,
+			   const char         *eventName,
+			   CompOption::Vector &options);
 
 	void
-	optionChanged (CompOption              *opt,
+	optionChanged (CompOption                 *opt,
 		       ScaleaddonOptions::Options num);
-
 };
 
-#define ADDON_SCREEN(s)						       \
+#define ADDON_SCREEN(s)				     \
      ScaleAddonScreen *as = ScaleAddonScreen::get (s)
 
 class ScaleAddonWindow :
@@ -111,7 +105,6 @@ class ScaleAddonWindow :
     public ScaleWindowInterface
 {
     public:
-
 	ScaleAddonWindow (CompWindow *);
 
 	CompWindow *window;
@@ -135,9 +128,6 @@ class ScaleAddonWindow :
 	scaleSelectWindow ();
 
 	void
-	freeTitle ();
-
-	void
 	renderTitle ();
 
 	void
@@ -145,20 +135,16 @@ class ScaleAddonWindow :
 
 	void
 	drawHighlight ();
-
-
-
-
 };
 
-#define ADDON_WINDOW(w)						       \
+#define ADDON_WINDOW(w)				     \
      ScaleAddonWindow *aw = ScaleAddonWindow::get (w)
 
 
 class ScaleAddonPluginVTable :
-    public CompPlugin::VTableForScreenAndWindow <ScaleAddonScreen, ScaleAddonWindow>
+    public CompPlugin::VTableForScreenAndWindow <ScaleAddonScreen,
+						 ScaleAddonWindow>
 {
     public:
-
 	bool init ();
 };
