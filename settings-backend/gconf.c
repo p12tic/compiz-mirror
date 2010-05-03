@@ -166,6 +166,9 @@ const SpecialOption specialOptions[] = {
      METACITY "/window_keybindings/activate_window_menu", OptionSpecial},
     {"mouse_button_modifier", NULL, FALSE,
      METACITY "/general/mouse_button_modifier", OptionSpecial},
+    /* integration of the Metacity's option to swap mouse buttons */
+    {"resize_with_right_button", NULL, FALSE,
+     METACITY "/general/resize_with_right_button", OptionSpecial},
 
     {"visual_bell", "fade", TRUE,
      METACITY "/general/visual_bell", OptionBool},
@@ -381,8 +384,8 @@ const SpecialOption specialOptions[] = {
 
 static CCSSetting *
 findDisplaySettingForPlugin (CCSContext *context,
-			     char       *plugin,
-			     char       *setting)
+			     const char *plugin,
+			     const char *setting)
 {
     CCSPlugin  *p;
     CCSSetting *s;
@@ -544,8 +547,10 @@ gnomeValueChanged (GConfClient *client,
 	if (num < 0)
 	    break;
 
-	if (strcmp (specialOptions[num].settingName,
-		    "mouse_button_modifier") == 0)
+	if ((strcmp (specialOptions[num].settingName,
+		     "mouse_button_modifier") == 0) ||
+	    (strcmp (specialOptions[num].settingName,
+		    "resize_with_right_button") == 0))
 	{
 	    CCSSetting *s;
 
@@ -955,6 +960,24 @@ getGnomeMouseButtonModifier(void)
     return modMask;
 }
 
+static unsigned int
+getButtonBindingForSetting (CCSContext   *context,
+			    const char   *plugin,
+			    const char   *setting)
+{
+    CCSSetting *s;
+
+    s = findDisplaySettingForPlugin (context, plugin, setting);
+    if (!s)
+	return 0;
+
+    if (s->type != TypeButton)
+	return 0;
+
+    return s->value->value.asButton.button;
+}
+
+
 static Bool
 readIntegratedOption (CCSContext *context,
 		      CCSSetting *setting,
@@ -1086,15 +1109,23 @@ readIntegratedOption (CCSContext *context,
 		      ((strcmp (settingName, "window_menu_button") == 0) &&
 		       (strcmp (pluginName, "core") == 0)))
 	    {
+		gboolean              resizeWithRightButton;
 		CCSSettingButtonValue button;
+
 		memset (&button, 0, sizeof (CCSSettingButtonValue));
 		ccsGetButton (setting, &button);
 
 		button.buttonModMask = getGnomeMouseButtonModifier ();
+		
+		resizeWithRightButton =
+		    gconf_client_get_bool (client, METACITY
+					   "/general/resize_with_right_button",
+					   &err);
+
 		if (strcmp (settingName, "window_menu_button") == 0)
-		    button.button = 3;
+		    button.button = resizeWithRightButton ? 2 : 3;
 		else if (strcmp (pluginName, "resize") == 0)
-		    button.button = 2;
+		    button.button = resizeWithRightButton ? 3 : 2;
 		else
 		    button.button = 1;
 
@@ -1453,7 +1484,7 @@ setButtonBindingForSetting (CCSContext   *context,
     CCSSetting            *s;
     CCSSettingButtonValue value;
 
-    s = findDisplaySettingForPlugin (context, (char*) plugin, (char*) setting);
+    s = findDisplaySettingForPlugin (context, plugin, setting);
     if (!s)
 	return;
 
@@ -1611,6 +1642,30 @@ writeIntegratedOption (CCSContext *context,
 		       (strcmp (pluginName, "core") == 0)))
 	    {
 		unsigned int modMask;
+		Bool         resizeWithRightButton = FALSE;
+		gboolean     currentValue;
+
+		if ((getButtonBindingForSetting (context, "resize",
+						 "initiate_button") == 3) ||
+		    (getButtonBindingForSetting (context, "core",
+						 "window_menu_button") == 2))
+		{
+		     resizeWithRightButton = TRUE;
+		}
+
+		currentValue =
+		    gconf_client_get_bool (client, METACITY
+					   "/general/resize_with_right_button",
+					   &err);
+
+		if (!err && ((currentValue && !resizeWithRightButton) ||
+			     (!currentValue && resizeWithRightButton)))
+		{
+		    gconf_client_set_bool (client,
+					   METACITY
+					   "/general/resize_with_right_button",
+					   resizeWithRightButton, NULL);
+		}
 
 		modMask = setting->value->value.asButton.buttonModMask;
 		if (setGnomeMouseButtonModifier (modMask))
@@ -1618,10 +1673,13 @@ writeIntegratedOption (CCSContext *context,
 		    setButtonBindingForSetting (context, "move",
 						"initiate_button", 1, modMask);
 		    setButtonBindingForSetting (context, "resize",
-						"initiate_button", 2, modMask);
+						"initiate_button", 
+						resizeWithRightButton ? 3 : 2,
+						modMask);
 		    setButtonBindingForSetting (context, "core",
 						"window_menu_button",
-						3, modMask);
+						resizeWithRightButton ? 2 : 3,
+						modMask);
 		}
 	    }
 	}
