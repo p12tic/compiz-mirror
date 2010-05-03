@@ -4,14 +4,16 @@
 	<_short>Benchmark</_short>
 	<_long>A simple benchmark plugin</_long>
 	<category>Extras</category>
-	<requirement>
-	    <plugin>composite</plugin>
-	    <plugin>opengl</plugin>
-	</requirement>
-	<relation type="after">
-	    <plugin>composite</plugin>
-	    <plugin>opengl</plugin>
-	</relation>
+	<deps>
+	  <requirement>
+	      <plugin>composite</plugin>
+	      <plugin>opengl</plugin>
+	  </requirement>
+	  <relation type="after">
+	      <plugin>composite</plugin>
+	      <plugin>opengl</plugin>
+	  </relation>
+	</deps>
 	<options>
 	    <group>
 		<_short>Main</_short>
