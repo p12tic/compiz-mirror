@@ -213,7 +213,7 @@ FadedesktopScreen::leaveShowDesktopMode (CompWindow *w)
 		cw->setShowDesktopMode (false);
 		cw->show ();
 		fw->isHidden = false;
-		fw->fading = false;
+		fw->fading = true;
 	    }
 	    else if (fw->fading)
 	    {

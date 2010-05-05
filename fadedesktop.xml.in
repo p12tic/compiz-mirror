@@ -5,6 +5,10 @@
 	<_long>Easily access your desktop</_long>
 	<category>Desktop</category>
 	<deps>
+	    <relation type="after">
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
+	    </relation>
 	    <relation type="before">
 		<plugin>fade</plugin>
 	    </relation>
