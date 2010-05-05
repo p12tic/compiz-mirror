@@ -140,14 +140,16 @@ FragmentParser::programReadSource (CompString fname)
      * (in PREFIX/share/compiz/filters) */
     if (!fp)
     {
-	asprintf (&path, "%s/filters/%s", DATADIR, fname.c_str ());
+	asprintf (&path, "%s/data/filters/%s", DATADIR, fname.c_str ());
 	fp = fopen (path, "r");
 	free (path);
     }
 
     /* If failed again & again, abort */
     if (!fp)
+    {
 	return CompString ("");
+    }
 
     /* Get file length */
     fseek (fp, 0L, SEEK_END);
