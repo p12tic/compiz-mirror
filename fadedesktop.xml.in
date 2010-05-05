@@ -5,12 +5,16 @@
 	<_long>Easily access your desktop</_long>
 	<category>Desktop</category>
 	<deps>
+	    <requirement>
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
+	    </requirement>
+	    <relation type="before">
+		<plugin>fade</plugin>
+	    </relation>
 	    <relation type="after">
 		<plugin>composite</plugin>
 		<plugin>opengl</plugin>
-	    </relation>
-	    <relation type="before">
-		<plugin>fade</plugin>
 	    </relation>
 	</deps>
 	<feature>showdesktop</feature>
