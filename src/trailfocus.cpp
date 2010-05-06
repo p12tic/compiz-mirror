@@ -60,7 +60,7 @@ TrailfocusScreen::isTrailfocusWindow (CompWindow *w)
  * focused window.
  */
 void
-TrailfocusScreen::setWindows ()
+TrailfocusScreen::setWindows (TrailfocusWindow *removedWindow)
 {
     bool wasTfWindow;
 
@@ -68,6 +68,9 @@ TrailfocusScreen::setWindows ()
     {
 	TrailfocusWindow *tw = TrailfocusWindow::get (w);
 	bool             needDamage;
+	
+	if (removedWindow == tw)
+	    continue;
 
 	wasTfWindow    = tw->isTfWindow;
 	tw->isTfWindow = isTrailfocusWindow (w);
@@ -205,7 +208,7 @@ TrailfocusScreen::popWindow (TrailfocusWindow *tw)
     if (best)
 	windows.push_back (TrailfocusWindow::get (best));
 
-    setWindows ();
+    setWindows (tw);
 }
 
 static bool
@@ -247,13 +250,13 @@ TrailfocusScreen::handleEvent (XEvent *event)
     switch (event->type) {
     case FocusIn:
 	if (pushWindow (event->xfocus.window))
-	    setWindows ();
+	    setWindows (NULL);
 	break;
     case PropertyNotify:
 	if (event->xproperty.atom == Atoms::desktopViewport)
 	{
 	    refillList ();
-	    setWindows ();
+	    setWindows (NULL);
 	}
 	break;
     default:
@@ -347,7 +350,7 @@ TrailfocusScreen::optionChanged (CompOption *opt,
     }
 
     refillList ();
-    setWindows ();
+    setWindows (NULL);
 }
 
 bool
@@ -356,7 +359,7 @@ TrailfocusScreen::setupTimerCb ()
     TrailfocusScreen *ts = TrailfocusScreen::get (screen);
 
     ts->refillList ();
-    ts->setWindows ();
+    ts->setWindows (NULL);
 
     return false;
 }
@@ -392,6 +395,10 @@ TrailfocusWindow::TrailfocusWindow (CompWindow *w) :
     cWindow (CompositeWindow::get (w)),
     gWindow (GLWindow::get (w))
 {
+    attribs.opacity = OPAQUE;
+    attribs.brightness = BRIGHT;
+    attribs.saturation = COLOR;
+
     GLWindowInterface::setHandler (gWindow, false);
 }
 

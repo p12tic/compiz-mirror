@@ -74,7 +74,7 @@ class TrailfocusScreen :
 
     private:
 	bool isTrailfocusWindow (CompWindow *);
-	void setWindows ();
+	void setWindows (TrailfocusWindow *);
 	void refillList ();
 	void recalculateAttributes ();
 	void optionChanged (CompOption *, Options);
