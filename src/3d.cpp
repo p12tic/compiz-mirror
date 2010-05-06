@@ -544,6 +544,7 @@ TdScreen::TdScreen (CompScreen *screen) :
     gScreen (GLScreen::get (screen)),
     cubeScreen (CubeScreen::get (screen)),
     mActive (false),
+    mPainting3D (false),
     mCurrentScale (1.0f),
     mBasicScale (1.0f)
 {
