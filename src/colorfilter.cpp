@@ -182,6 +182,8 @@ ColorfilterScreen::unloadFilters ()
 	    if (function->id)
 		GLFragment::destroyFragmentFunction (function->id);
 
+	    delete function;
+
 	    filtersFunctions.pop_back ();
 	}
 	/* Reset current filter */
@@ -261,6 +263,8 @@ ColorfilterScreen::loadFilters (GLTexture *texture)
 	if (cfw->isFiltered)
 	    cfw->cWindow->addDamage (w);
     }
+    
+    delete parser;
 
     return loaded;
 }

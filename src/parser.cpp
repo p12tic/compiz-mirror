@@ -123,6 +123,7 @@ FragmentParser::programReadSource (CompString fname)
 {
     FILE   *fp;
     char   *data, *path = NULL, *home = getenv ("HOME");
+    CompString retData;
     int     length;
 
     /* Try to open file fname as is */
@@ -171,8 +172,12 @@ FragmentParser::programReadSource (CompString fname)
 
     /* Close file */
     fclose (fp);
+    
+    retData = CompString (data);
+    
+    free (data);
 
-    return CompString (data);
+    return retData;
 }
 
 /*
@@ -189,6 +194,7 @@ FragmentParser::getFirstArgument (char **source)
     char *next, *arg, *temp;
     char *string, *orig;
     int length;
+    CompString retArg;
 
     if (!**source)
 	return NULL;
@@ -204,6 +210,7 @@ FragmentParser::getFirstArgument (char **source)
 	if (!length)
 	{
 	    (*source)++;
+	    free (orig);
 	    return getFirstArgument (source);
 	}
 	if ((temp = strstr (string, "{")) && temp < next &&
@@ -222,7 +229,11 @@ FragmentParser::getFirstArgument (char **source)
 
     /* Allocate, copy and end string */
     arg = (char *) malloc (sizeof (char) * (length + 1));
-    if (!arg) return NULL;
+    if (!arg)
+    {
+        free (orig);
+	return NULL;
+    }
 
     strncpy (arg, string, length);
     arg[length] = 0;
@@ -233,7 +244,12 @@ FragmentParser::getFirstArgument (char **source)
     else
 	**source = 0;
 
-    return CompString (arg);
+    retArg = CompString (arg);
+    
+    free (arg);
+    free (orig);
+
+    return retArg;
 }
 
 /* Texture offset related functions ----------------------------------------- */
@@ -378,6 +394,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 	if (strncmp (current, "#", 1) == 0)
 	{
 	    free (line);
+	    free (current);
 	    line = strtok_r (NULL, ";", &strtok_ptr);
 	    continue;
 	}
@@ -539,6 +556,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 	    default:
 		break;
 	}
+	free (current);
 	free (line);
 	line = strtok_r (NULL, ";", &strtok_ptr);
     }
@@ -591,8 +609,8 @@ FragmentParser::loadFragmentProgram (CompString &file,
     name_c   = strdup (name.c_str ());
 
     /* Build the Compiz Fragment Program */
-    handle = buildFragmentProgram (strdup (source.c_str ()),
-				   strdup (name.c_str ()), target);
+    handle = buildFragmentProgram (source_c,
+				   name_c, target);
 
     free (name_c);
     free (source_c);
