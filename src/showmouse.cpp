@@ -29,6 +29,7 @@
 COMPIZ_PLUGIN_20090315 (showmouse, ShowmousePluginVTable);
 
 ParticleSystem::ParticleSystem (int n) :
+    tex (0),
     active (false),
     particles (NULL),
     vertices_cache (NULL),
@@ -40,6 +41,7 @@ ParticleSystem::ParticleSystem (int n) :
 }
 
 ParticleSystem::ParticleSystem () :
+    tex (0),
     active (false),
     particles (NULL),
     vertices_cache (NULL),
