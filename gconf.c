@@ -60,11 +60,7 @@
 #define BUFSIZE 512
 
 #define KEYNAME     char keyName[BUFSIZE]; \
-                    if (setting->isScreen) \
-                        snprintf (keyName, BUFSIZE, "screen%d", \
-				  setting->screenNum); \
-                    else \
-                        snprintf (keyName, BUFSIZE, "allscreens");
+                    snprintf (keyName, BUFSIZE, "allscreens");
 
 #define PATHNAME    char pathName[BUFSIZE]; \
                     if (!setting->parent->name || \
@@ -394,7 +390,7 @@ findDisplaySettingForPlugin (CCSContext *context,
     if (!p)
 	return NULL;
 
-    s = ccsFindSetting (p, setting, FALSE, 0);
+    s = ccsFindSetting (p, setting);
     if (!s)
 	return NULL;
 
@@ -426,11 +422,6 @@ isIntegratedOption (CCSSetting *setting,
 	    if (opt->pluginName)
 		continue;
 	}
-
-	if (setting->isScreen && !opt->screen)
-	    continue;
-	if (!setting->isScreen && opt->screen)
-	    continue;
 
 	if (index)
 	    *index = i;
@@ -499,7 +490,7 @@ valueChanged (GConfClient *client,
     if (!token)
 	return;
 
-    setting = ccsFindSetting (plugin, token, isScreen, screenNum);
+    setting = ccsFindSetting (plugin, token);
     if (!setting)
 	return;
 
@@ -584,17 +575,13 @@ gnomeValueChanged (GConfClient *client,
 	    plugin = ccsFindPlugin (context, (char*) opt->pluginName);
 	    if (plugin)
 	    {
-		for (i = 0; i < context->numScreens; i++)
+		for (i = 0; i < 1; i++)
 		{
 		    unsigned int screen;
 
-		    if (opt->screen)
-			screen = context->screens[i];
-		    else
-			screen = 0;
+		    screen = 0;
 
-		    setting = ccsFindSetting (plugin, (char*) opt->settingName,
-					      opt->screen, screen);
+		    setting = ccsFindSetting (plugin, (char*) opt->settingName);
 
 		    if (setting)
 		    {
@@ -608,8 +595,6 @@ gnomeValueChanged (GConfClient *client,
 
 		    /* do not read display settings multiple
 		       times for multiscreen environments */
-		    if (!opt->screen)
-			i = context->numScreens;
 		}
 	    }
 	}
