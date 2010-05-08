@@ -40,6 +40,26 @@ COMPIZ_PLUGIN_20090315 (shift, ShiftPluginVTable);
 bool textAvailable = false;
 
 void
+setFunctions (bool enabled)
+{
+    SHIFT_SCREEN (screen);
+    
+    screen->handleEventSetEnabled (ss, enabled);
+    ss->cScreen->preparePaintSetEnabled (ss, enabled);
+    ss->cScreen->paintSetEnabled (ss, enabled);
+    ss->gScreen->glPaintOutputSetEnabled (ss, enabled);
+    ss->cScreen->donePaintSetEnabled (ss, enabled);
+    
+    foreach (CompWindow *w, screen->windows ())
+    {
+	SHIFT_WINDOW (w);
+	
+	sw->gWindow->glPaintSetEnabled (sw, enabled);
+	sw->cWindow->damageRectSetEnabled (sw, enabled);
+    }
+}
+
+void
 ShiftScreen::activateEvent (bool	activating)
 {
     CompOption::Vector o;
@@ -1412,6 +1432,7 @@ ShiftScreen::donePaint ()
 		    SHIFT_WINDOW (w);
 		    sw->mActive = false;
 		}
+		setFunctions (false);
 		cScreen->damageScreen ();
 	    }
 	    else if (mState == ShiftStateOut)
@@ -1564,6 +1585,8 @@ ShiftScreen::initiateScreen (CompAction         *action,
     }
 
     mUsedOutput = screen->currentOutputDev ().id ();
+    
+    setFunctions (true);
     
     return true;
 }
@@ -1990,9 +2013,9 @@ ShiftScreen::ShiftScreen (CompScreen *screen) :
     mStartY (0),
     mStartTarget (0.0f)
 {
-    ScreenInterface::setHandler (screen);
-    CompositeScreenInterface::setHandler (cScreen);
-    GLScreenInterface::setHandler (gScreen);
+    ScreenInterface::setHandler (screen, false);
+    CompositeScreenInterface::setHandler (cScreen, false);
+    GLScreenInterface::setHandler (gScreen, false);
 
 #define SHIFTINITBIND(opt, func)                                \
     optionSet##opt##Terminate (boost::bind (&ShiftScreen::func, \
@@ -2081,8 +2104,8 @@ ShiftWindow::ShiftWindow (CompWindow *window) :
     mOpacity (1.0),
     mBrightness (1.0)
 {
-    CompositeWindowInterface::setHandler (cWindow);
-    GLWindowInterface::setHandler (gWindow);
+    CompositeWindowInterface::setHandler (cWindow, false);
+    GLWindowInterface::setHandler (gWindow, false);
 
     mSlots[0].scale = 1.0;
     mSlots[1].scale = 1.0;
