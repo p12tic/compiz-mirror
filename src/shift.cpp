@@ -2103,7 +2103,8 @@ ShiftWindow::ShiftWindow (CompWindow *window) :
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
     mOpacity (1.0),
-    mBrightness (1.0)
+    mBrightness (1.0),
+    mActive (false)
 {
     CompositeWindowInterface::setHandler (cWindow, false);
     GLWindowInterface::setHandler (gWindow, false);
