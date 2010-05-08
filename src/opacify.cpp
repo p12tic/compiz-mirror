@@ -28,6 +28,21 @@
 
 COMPIZ_PLUGIN_20090315 (opacify, OpacifyPluginVTable);
 
+void
+setFunctions (bool enabled)
+{
+    OPACIFY_SCREEN (screen);
+    
+    screen->handleEventSetEnabled (os, enabled);
+    
+    foreach (CompWindow *w, screen->windows ())
+    {
+	OPACIFY_WINDOW (w);
+	
+	ow->gWindow->glPaintSetEnabled (ow, enabled);
+    }
+}
+
 /* Core opacify functions. These do the real work. ---------------------*/
 
 /* Sets the real opacity and damages the window if actual opacity and 
@@ -321,6 +336,8 @@ OpacifyScreen::toggle (CompAction         *action,
 	    active = 0;
 	}
     }
+    
+    setFunctions (isToggle);
 
     return true;
 }
@@ -339,6 +356,7 @@ OpacifyScreen::optionChanged (CompOption              *option,
     switch (num) {
     case OpacifyOptions::InitToggle:
 	isToggle = option->value ().b ();
+	setFunctions (isToggle);
 	break;
     default:
 	break;
@@ -358,7 +376,7 @@ OpacifyWindow::OpacifyWindow (CompWindow *window) :
     opacified (false),
     opacity (100)
 {
-    GLWindowInterface::setHandler (gWindow);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 /** Constructor for OpacifyWindow. This is called whenever a new window 
@@ -374,7 +392,7 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     intersect (emptyRegion),
     justMoved (false)
 {
-    ScreenInterface::setHandler (screen);
+    ScreenInterface::setHandler (screen, false);
 
     timeoutHandle.setTimes (optionGetTimeout (), optionGetTimeout () * 1.2);
     timeoutHandle.setCallback (boost::bind (&OpacifyScreen::handleTimeout,
