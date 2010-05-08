@@ -2,6 +2,25 @@
 
 COMPIZ_PLUGIN_20090315 (td, TdPluginVTable);
 
+void
+setFunctions (bool enabled)
+{
+    TD_SCREEN (screen);
+    
+    tds->gScreen->glPaintOutputSetEnabled (tds, enabled);
+    tds->gScreen->glApplyTransformSetEnabled (tds, enabled); 
+    tds->cScreen->donePaintSetEnabled (tds, enabled);
+    tds->cubeScreen->cubePaintViewportSetEnabled (tds, enabled);
+    tds->cubeScreen->cubeShouldPaintViewportSetEnabled (tds, enabled);
+    
+    foreach (CompWindow *w, screen->windows ())
+    {
+	TD_WINDOW (w);
+	
+	tdw->gWindow->glPaintSetEnabled (tdw, enabled);
+    }
+}
+
 bool
 TdWindow::is3D ()
 {
@@ -71,6 +90,7 @@ TdScreen::preparePaint (int msSinceLastPaint)
 
     cScreen->preparePaint (msSinceLastPaint);
     
+    setFunctions (mActive);    
     cs->paintAllViewports (mActive);
 }
 
@@ -548,9 +568,11 @@ TdScreen::TdScreen (CompScreen *screen) :
     mCurrentScale (1.0f),
     mBasicScale (1.0f)
 {
-    CompositeScreenInterface::setHandler (cScreen);
-    GLScreenInterface::setHandler (gScreen);
-    CubeScreenInterface::setHandler (cubeScreen);
+    CompositeScreenInterface::setHandler (cScreen, false);
+    GLScreenInterface::setHandler (gScreen, false);
+    CubeScreenInterface::setHandler (cubeScreen, false);
+    
+    cScreen->preparePaintSetEnabled (this, true);
 }
 
 TdScreen::~TdScreen ()
@@ -565,7 +587,7 @@ TdWindow::TdWindow (CompWindow *window) :
     mIs3D (false),
     mDepth (0.0f)
 {
-    GLWindowInterface::setHandler (gWindow);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 TdWindow::~TdWindow ()
