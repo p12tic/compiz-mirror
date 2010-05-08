@@ -1111,7 +1111,7 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     if (mState != ShiftStateNone &&
 	((unsigned int) output->id () == (unsigned int) mUsedOutput ||
-	 (unsigned int) output->id () == (unsigned int) ~0))
+	((unsigned int) output->id () == (unsigned int) ~0)))
     {
 	CompWindow    *w;
 	GLMatrix      sTransform (transform);
@@ -1305,7 +1305,7 @@ ShiftScreen::paint (CompOutput::ptrList &outputs,
 {
 
     if (mState != ShiftStateNone && outputs.size () > 0 &&
-        optionGetMultioutputMode () != ShiftOptions::MultioutputModeDisabled)
+        optionGetMultioutputMode () == ShiftOptions::MultioutputModeOneBigSwitcher)
     {
 	CompOutput::ptrList newOutputs;
 	newOutputs.push_back (&screen->fullscreenOutput ());
