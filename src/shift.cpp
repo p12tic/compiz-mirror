@@ -2004,6 +2004,7 @@ ShiftScreen::ShiftScreen (CompScreen *screen) :
     mNSlots (0),
     mSlotsSize (0),
     mActiveSlot (NULL),
+    mSelectedWindow (0),
     mCurrentMatch (NULL),
     mUsedOutput (0),
     mAnim (0.0),
@@ -2104,6 +2105,8 @@ ShiftWindow::ShiftWindow (CompWindow *window) :
     gWindow (GLWindow::get (window)),
     mOpacity (1.0),
     mBrightness (1.0),
+    mOpacityVelocity (0.0f),
+    mBrightnessVelocity (0.0f),
     mActive (false)
 {
     CompositeWindowInterface::setHandler (cWindow, false);
