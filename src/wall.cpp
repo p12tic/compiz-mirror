@@ -68,6 +68,9 @@ WallScreen::drawSwitcherBackground ()
     int             width, height, radius;
     float           r, g, b, a;
     unsigned int    i, j;
+    
+    destroyCairoContext (switcherContext);
+    setupCairoContext (switcherContext);
 
     cr = switcherContext.cr;
     clearCairoLayer (cr);
@@ -153,6 +156,9 @@ WallScreen::drawThumb ()
     float           outline = 2.0f;
     int             width, height;
 
+    destroyCairoContext (thumbContext);
+    setupCairoContext (thumbContext);
+
     cr = thumbContext.cr;
     clearCairoLayer (cr);
 
@@ -191,6 +197,9 @@ WallScreen::drawHighlight ()
     float           r, g, b, a;
     float           outline = 2.0f;
 
+    destroyCairoContext (highlightContext);
+    setupCairoContext (highlightContext);
+
     cr = highlightContext.cr;
     clearCairoLayer (cr);
 
@@ -226,6 +235,9 @@ WallScreen::drawArrow ()
     cairo_t *cr;
     float   outline = 2.0f;
     float   r, g, b, a;
+
+    destroyCairoContext (arrowContext);
+    setupCairoContext (arrowContext);
 
     cr = arrowContext.cr;
     clearCairoLayer (cr);
