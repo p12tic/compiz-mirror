@@ -4,12 +4,15 @@
 	<_long>Static Application Switcher</_long>
 	<deps>
 	    <requirement>
+		<plugin>composite</plugin>
 		<plugin>opengl</plugin>
 	    </requirement>
 	    <relation type="after">
 		<plugin>fade</plugin>
 	    </relation>
 	    <relation type="before">
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
 		<plugin>bs</plugin>
 	    </relation>
 	</deps>

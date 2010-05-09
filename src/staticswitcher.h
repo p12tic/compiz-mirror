@@ -56,17 +56,14 @@ class StaticSwitchScreen :
 			    const GLMatrix &, const CompRegion &,
 			    CompOutput *, unsigned int);
 
-	void updatePopupWindow (int count);
-	void updateWindowList (int count);
-	void createWindowList (int count);
-	bool shouldShowIcon ();
-	bool showIconOnly ();
+	void updatePopupWindow ();
+	void updateWindowList ();
+	void createWindowList ();
 	bool getPaintRectangle (CompWindow *w,
 				CompRect   &rect,
 				int        *opacity);
 	void doWindowDamage (CompWindow *w);
 	void handleSelectionChange (bool toNext, int nextIdx);
-	int countWindows ();
 	bool showPopup ();
 	Cursor getCursor (bool mouseSelectOn);
 	void initiate (SwitchWindowSelection selection,
@@ -91,6 +88,7 @@ class StaticSwitchScreen :
 				 unsigned int opacity);
 	void getMinimizedAndMatch (bool &minimizedOption,
 				   CompMatch *&match);
+	bool getMipmap ();
 
 	CompTimer popupDelayTimer;
 
@@ -148,6 +146,8 @@ class StaticSwitchWindow :
 			    int   y,
 			    float width,
 			    float height);
+
+	IconMode getIconMode ();
 
 	StaticSwitchScreen    *sScreen;
 };

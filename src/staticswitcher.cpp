@@ -28,11 +28,12 @@
 COMPIZ_PLUGIN_20090315 (staticswitcher, StaticSwitchPluginVTable)
 
 void
-StaticSwitchScreen::updatePopupWindow (int count)
+StaticSwitchScreen::updatePopupWindow ()
 {
     int    newXCount, newYCount;
     int    winWidth, winHeight;
     float  aspect;
+    int    count = windows.size ();
     double dCount = count;
     int    w = PREVIEWSIZE, h = PREVIEWSIZE, b = BORDER;
     int    x, y;
@@ -102,7 +103,7 @@ StaticSwitchScreen::updatePopupWindow (int count)
 }
 
 void
-StaticSwitchScreen::updateWindowList (int count)
+StaticSwitchScreen::updateWindowList ()
 {
     pos  = 0;
     move = 0;
@@ -110,19 +111,20 @@ StaticSwitchScreen::updateWindowList (int count)
     selectedWindow = windows.front ();
 
     if (popupWindow)
-	updatePopupWindow (count);
+	updatePopupWindow ();
 }
 
 void
-StaticSwitchScreen::createWindowList (int count)
+StaticSwitchScreen::createWindowList ()
 {
     windows.clear ();
 
     foreach (CompWindow *w, ::screen->windows ())
     {
-	if (StaticSwitchWindow::get (w)->isSwitchWin ())
+	SWITCH_WINDOW (w);
+
+	if (sw->isSwitchWin ())
 	{
-	    SWITCH_WINDOW (w);
 	    windows.push_back (w);
 
 	    sw->cWindow->damageRectSetEnabled (sw, true);
@@ -131,7 +133,7 @@ StaticSwitchScreen::createWindowList (int count)
 
     windows.sort (BaseSwitchScreen::compareWindows);
 
-    updateWindowList (count);
+    updateWindowList ();
 }
 
 bool
@@ -140,16 +142,15 @@ StaticSwitchWindow::damageRect (bool initial, const CompRect &rect)
     return BaseSwitchWindow::damageRect (initial, rect);
 }
 
-bool
-StaticSwitchScreen::shouldShowIcon ()
+BaseSwitchWindow::IconMode
+StaticSwitchWindow::getIconMode ()
 {
-    return optionGetIcon ();
-}
+    if (sScreen->optionGetIconOnly ())
+	return ShowIconOnly;
+    if (!sScreen->optionGetIcon ())
+	return HideIcon;
 
-bool
-StaticSwitchScreen::showIconOnly ()
-{
-    return optionGetIconOnly ();
+    return ShowIcon;
 }
 
 bool
@@ -217,18 +218,6 @@ StaticSwitchScreen::handleSelectionChange (bool toNext, int nextIdx)
     moreAdjust = true;
 }
 
-int
-StaticSwitchScreen::countWindows ()
-{
-    int count = 0;
-
-    foreach (CompWindow *w, ::screen->windows ())
-	if (StaticSwitchWindow::get (w)->isSwitchWin ())
-	    count++;
-
-    return count;
-}
-
 bool
 StaticSwitchScreen::showPopup ()
 {
@@ -258,7 +247,7 @@ void
 StaticSwitchScreen::initiate (SwitchWindowSelection selection,
 			      bool                  shouldShowPopup)
 {
-    int  count;
+    bool noSwitchWindows;
     bool newMouseSelect;
 
     if (::screen->otherGrabExist ("switcher", "scale", "cube", 0))
@@ -267,8 +256,16 @@ StaticSwitchScreen::initiate (SwitchWindowSelection selection,
     this->selection      = selection;
     selectedWindow       = NULL;
 
-    count = countWindows ();
-    if (count < 1)
+    noSwitchWindows = true;
+    foreach (CompWindow *w, ::screen->windows ())
+    {
+	if (StaticSwitchWindow::get (w)->isSwitchWin ())
+	{
+	    noSwitchWindows = false;
+	    break;
+	}
+    }
+    if (noSwitchWindows)
 	return;
 
     if (!popupWindow && shouldShowPopup)
@@ -342,7 +339,7 @@ StaticSwitchScreen::initiate (SwitchWindowSelection selection,
 	{
 	    lastActiveNum = ::screen->activeNum ();
 
-	    createWindowList (count);
+	    createWindowList ();
 
 	    if (popupWindow && shouldShowPopup)
 	    {
@@ -510,13 +507,18 @@ StaticSwitchScreen::getMinimizedAndMatch (bool &minimizedOption,
     matchOption = &optionGetWindowMatch ();
 }
 
+bool
+StaticSwitchScreen::getMipmap ()
+{
+    return optionGetMipmap ();
+}
+
 void
 StaticSwitchScreen::windowRemove (CompWindow *w)
 {
     if (w)
     {
 	bool   inList = false;
-	int    count;
 
 	CompWindow *selected;
 	CompWindow *old;
@@ -559,8 +561,6 @@ StaticSwitchScreen::windowRemove (CompWindow *w)
 	if (!inList)
 	    return;
 
-	count = windows.size ();
-
 	if (windows.size () == 0)
 	{
 	    CompOption::Vector o (0);
@@ -574,7 +574,7 @@ StaticSwitchScreen::windowRemove (CompWindow *w)
 	if (!grabIndex)
 	    return;
 
-	updateWindowList (count);
+	updateWindowList ();
 
 	int i = 0;
 	foreach (CompWindow *w, windows)
@@ -615,19 +615,20 @@ int
 StaticSwitchScreen::getRowXOffset (int y)
 {
     int retval = 0;
+    int count = windows.size ();
 
-    if ((int)windows.size () - (y * (int)xCount) >= (int)xCount)
+    if (count - (y * (int)xCount) >= (int)xCount)
 	return 0;
 
     switch (optionGetRowAlign ()) {
     case RowAlignLeft:
 	break;
     case RowAlignCentered:
-	retval = (xCount - (int)windows.size () + (y * (int)xCount)) *
+	retval = (xCount - count + (y * (int)xCount)) *
 	         (previewWidth + previewBorder) / 2;
 	break;
     case RowAlignRight:
-	retval = (xCount - (int)windows.size () + (y * (int)xCount)) *
+	retval = (xCount - count + (y * (int)xCount)) *
 	         (previewWidth + previewBorder);
 	break;
     }
@@ -721,12 +722,13 @@ bool
 StaticSwitchScreen::adjustVelocity ()
 {
     float dx, adjust, amount;
+    int   count = windows.size ();
 
     dx = move - pos;
-    if (abs (dx) > abs (dx + windows.size ()))
-	dx += windows.size ();
-    if (abs (dx) > abs (dx - windows.size ()))
-	dx -= windows.size ();
+    if (abs (dx) > abs (dx + count))
+	dx += count;
+    if (abs (dx) > abs (dx - count))
+	dx -= count;
 
     adjust = dx * 0.15f;
     amount = fabs (dx) * 1.5f;
@@ -753,6 +755,7 @@ StaticSwitchScreen::preparePaint (int msSinceLastPaint)
     {
 	int   steps;
 	float amount, chunk;
+	int   count = windows.size ();
 
 	amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
 	steps  = amount / (0.5f * optionGetTimestep ());
@@ -769,9 +772,9 @@ StaticSwitchScreen::preparePaint (int msSinceLastPaint)
 	    }
 
 	    pos += mVelocity * chunk;
-	    pos = fmod (pos, windows.size ());
+	    pos = fmod (pos, count);
 	    if (pos < 0.0)
-		pos += windows.size ();
+		pos += count;
 	}
     }
 
@@ -815,8 +818,10 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 
 	if (mode == HighlightModeBringSelectedToFront)
 	{
+	    CompWindow *frontWindow = ::screen->clientList ().back ();
+
 	    zoomed = selectedWindow;
-	    if (zoomed)
+	    if (zoomed && zoomed != frontWindow)
 	    {
 		CompWindow *w;
 
@@ -825,8 +830,11 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 		zoomedAbove = (w) ? w->id () : None;
 
 		::screen->unhookWindow (zoomed);
-		::screen->insertWindow (zoomed,
-					::screen->clientList ().back ()->id ());
+		::screen->insertWindow (zoomed, frontWindow->id ());
+	    }
+	    else
+	    {
+		zoomed = NULL;
 	    }
 	}
 	else
@@ -862,10 +870,7 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	    {
 		CompWindow *w;
 
-		if (zoomed)
-		    w = zoomed;
-		else
-		    w = selectedWindow;
+		w = selectedWindow;
 
 		if (w)
 		{
@@ -970,6 +975,7 @@ StaticSwitchScreen::paintSelectionRect (int          x,
 {
     float color[4], op;
     int   w, h;
+    int   count = windows.size ();
 
     w = previewWidth + previewBorder;
     h = previewHeight + previewBorder;
@@ -978,8 +984,8 @@ StaticSwitchScreen::paintSelectionRect (int          x,
 
     if (dx > xCount - 1)
 	op = 1.0 - MIN (1.0, dx - (xCount - 1));
-    else if (dx + (dy * xCount) > windows.size () - 1)
-	op = 1.0 - MIN (1.0, dx - (windows.size () - 1 - (dy * xCount)));
+    else if (dx + (dy * xCount) > count - 1)
+	op = 1.0 - MIN (1.0, dx - (count - 1 - (dy * xCount)));
     else if (dx < 0.0)
 	op = 1.0 + MAX (-1.0, dx);
     else
@@ -1042,10 +1048,8 @@ StaticSwitchWindow::updateIconTexturedWindow (GLWindowPaintAttrib  &sAttrib,
 {
     float xScale, yScale;
 
-    xScale = (icon->width () > ICON_SIZE) ?
-    	(float) ICON_SIZE / icon->width () : 1.0;
-    yScale = (icon->height () > ICON_SIZE) ?
-    	(float) ICON_SIZE / icon->height () : 1.0;
+    xScale = (float) ICON_SIZE / icon->width ();
+    yScale = (float) ICON_SIZE / icon->height ();
 
     if (xScale < yScale)
 	yScale = xScale;
@@ -1069,20 +1073,8 @@ StaticSwitchWindow::updateIconNontexturedWindow (GLWindowPaintAttrib  &sAttrib,
 						 int                  y,
 						 GLTexture            *icon)
 {
-    float iw, ih;
-
-    iw = width;
-    ih = height;
-
-    if (icon->width () < (iw / 2) || icon->width () > iw)
-	sAttrib.xScale = (iw / icon->width ());
-    else
-	sAttrib.xScale = 1.0f;
-
-    if (icon->height () < (ih / 2) || icon->height () > ih)
-	sAttrib.yScale = (ih / icon->height ());
-    else
-	sAttrib.yScale = 1.0f;
+    sAttrib.xScale = width / icon->width ();
+    sAttrib.yScale = height / icon->height ();
 
     if (sAttrib.xScale < sAttrib.yScale)
 	sAttrib.yScale = sAttrib.xScale;
@@ -1139,9 +1131,10 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
      * the relevant thumbnails */
     if (window->id () == sScreen->popupWindow)
     {
-	GLenum         filter;
 	int            x, y, offX;
 	float          px, py, pos;
+	int            count = sScreen->windows.size ();
+
 
 	CompWindow::Geometry &g = window->geometry ();
 
@@ -1153,11 +1146,6 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (!(mask & PAINT_WINDOW_TRANSFORMED_MASK) && region.isEmpty ())
 	    return true;
-
-	filter = gScreen->textureFilter ();
-
-	if (sScreen->optionGetMipmap ())
-	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
 	glPushAttrib (GL_SCISSOR_BIT);
 
@@ -1174,17 +1162,15 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    i++;
 	}
 
-	gScreen->setTextureFilter (filter);
-
-	pos = fmod (sScreen->pos, sScreen->windows.size ());
+	pos = fmod (sScreen->pos, count);
 	px  = fmod (pos, sScreen->xCount);
 	py  = floor (pos / sScreen->xCount);
 
 	offX = sScreen->getRowXOffset (py);
 
-	if (pos > sScreen->windows.size () - 1)
+	if (pos > count - 1)
 	{
-	    px = fmod (pos - sScreen->windows.size (), sScreen->xCount);
+	    px = fmod (pos - count, sScreen->xCount);
 	    sScreen->paintSelectionRect (g.x (), g.y (), px, 0.0,
 	    				 gWindow->lastPaintAttrib ().opacity);
 
@@ -1198,8 +1184,7 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    sScreen->paintSelectionRect (g.x (), g.y (), px, py,
 	    				 gWindow->lastPaintAttrib ().opacity);
 
-	    py = fmod (py + 1, ceil ((double) sScreen->windows.size () /
-	    			     sScreen->xCount));
+	    py = fmod (py + 1, ceil ((double) count / sScreen->xCount));
 	    offX = sScreen->getRowXOffset (py);
 
 	    sScreen->paintSelectionRect (g.x () + offX, g.y (),
