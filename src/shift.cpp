@@ -498,14 +498,14 @@ compareWindows (const void *elem1,
     if (w1 == w2)
 	return 0;
 
-    if (!w1->shaded () && w1->invisible () &&
-        (w2->shaded () || w2->invisible ()))
+    if (!w1->shaded () && !w1->isViewable () &&
+        (w2->shaded () || w2->isViewable ()))
     {
 	return 1;
     }
 
-    if (!w2->shaded () && w2->invisible () &&
-        (w1->shaded ()|| w1->invisible ()))
+    if (!w2->shaded () && !w2->isViewable () &&
+        (w1->shaded () || w1->isViewable ()))
     {
 	return -1;
     }
@@ -1294,7 +1294,7 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 		if (!w->shaded ())
 		{
-		    if (!w->invisible () || !CompositeWindow::get (w)->damaged ())
+		    if (!w->isViewable () || !CompositeWindow::get (w)->damaged ())
 			continue;
 		}
 
@@ -1406,7 +1406,7 @@ ShiftWindow::canStackRelativeTo ()
 
     if (!window->shaded () && !window->pendingMaps ())
     {
-        if (window->invisible () || window->mapNum () == 0)
+        if (!window->isViewable () || window->mapNum () == 0)
             return false;
     }
 
