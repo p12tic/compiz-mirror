@@ -556,7 +556,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 	    default:
 		break;
 	}
-	free (current);
+	//free (current);
 	free (line);
 	line = strtok_r (NULL, ";", &strtok_ptr);
     }
