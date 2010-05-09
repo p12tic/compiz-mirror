@@ -1065,8 +1065,8 @@ ShiftWindow::adjustShiftAttribs (float chunk)
     /* FIXME: There is a possible floating point overflow here,
      * can be worked-around but not particularly nice */
 
-    if ((fabs (dp) < 0.01f && fabs (mOpacityVelocity) < 0.02f &&
-	fabs (db) < 0.01f && fabs (mBrightnessVelocity) < 0.02f) ||
+    if ((fabs (dp) < 0.1f && fabs (mOpacityVelocity) < 0.2f &&
+	fabs (db) < 0.1f && fabs (mBrightnessVelocity) < 0.2f) ||
 	(fabs(db) != fabs (db) || fabs (mOpacityVelocity) != fabs (mOpacityVelocity) ||
 	fabs (dp) != fabs (dp) || fabs (mBrightnessVelocity) != fabs (mBrightnessVelocity)))
     {
