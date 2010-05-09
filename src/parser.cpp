@@ -385,7 +385,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
     while (line)
     {
 	line = strdup (line);
-	current = strdup (ltrim (line).c_str ());
+	char *origcurrent = current = strdup (ltrim (line).c_str ());
 
 	/* Find instruction type */
 	type = NoOp;
@@ -556,7 +556,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 	    default:
 		break;
 	}
-	//free (current);
+	free (origcurrent);
 	free (line);
 	line = strtok_r (NULL, ";", &strtok_ptr);
     }
