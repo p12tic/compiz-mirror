@@ -2020,7 +2020,7 @@ ShiftScreen::ShiftScreen (CompScreen *screen) :
     GLScreenInterface::setHandler (gScreen, false);
 
 #define SHIFTINITBIND(opt, func)                                \
-    optionSet##opt##Terminate (boost::bind (&ShiftScreen::func, \
+    optionSet##opt##Initiate (boost::bind (&ShiftScreen::func, \
 					    this, _1, _2, _3));
  
 #define SHIFTTERMBIND(opt, func)                                \
