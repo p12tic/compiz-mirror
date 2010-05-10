@@ -140,7 +140,7 @@ OpacifyScreen::passiveWindows (CompRegion     fRegion)
 	    continue;
 	if (!optionGetWindowMatch ().evaluate (w))
 	    continue;
-	if (w->invisible () || w->minimized ())
+	if (!w->isViewable () || w->minimized ())
 	    continue;
 
 	intersect = w->region ().intersected (fRegion);
