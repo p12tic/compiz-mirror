@@ -255,7 +255,7 @@ AnimAddonWindow::~AnimAddonWindow ()
 	curAnim->getExtensionPluginInfo ()->name ==
 	    CompString ("animationaddon"))
     {
-	aw->postAnimationCleanUp ();
+	aWindow->postAnimationCleanUp ();
     }
 }
 
