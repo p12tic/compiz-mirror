@@ -1662,7 +1662,7 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 		getActualEffect (chosenEffect, AnimEventClose);
 
 	    // handle empty random effect list
-	    if (effectToBePlayed == AnimEffectNone)
+	    if (effectToBePlayed && effectToBePlayed == AnimEffectNone)
 	    {
 		aw->mState = aw->mNewState;
 		return;

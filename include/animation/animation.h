@@ -221,6 +221,7 @@ class Point3d
 
 typedef Point3d Vector3d;
 
+/* XXX: change this to CompRect */
 typedef struct
 {
     float x1, x2, y1, y2;
