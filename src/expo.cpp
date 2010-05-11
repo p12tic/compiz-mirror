@@ -1302,6 +1302,7 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
     dndWindow (NULL),
     origVp (s->vp ()),
     selectedVp (s->vp ()),
+    vpUpdateMode (VPUpdateNone),
     clickTime (0),
     doubleClick (false),
     vpNormals (360 * 3),
