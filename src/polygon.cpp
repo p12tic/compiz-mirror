@@ -1062,6 +1062,14 @@ PolygonAnim::addGeometry (const GLTexture::MatrixList &matrix,
     //if (!pset)
     //return;
 
+    /* Some plugins (such as blur) pass a null argument to glAddGeometry
+     * because they don't have such data and they need to calculate region
+     * projections. In this case, we should not add polygon geometry
+     * since the matrices will be null */
+
+    if (!matrix.size ())
+	return
+
     GLWindow::Geometry &geometry = GLWindow::get (mWindow)->geometry ();
     geometry.vCount = 1; // Force glDrawGeometry to be called
 
