@@ -1068,7 +1068,7 @@ PolygonAnim::addGeometry (const GLTexture::MatrixList &matrix,
      * since the matrices will be null */
 
     if (!matrix.size ())
-	return
+	return;
 
     GLWindow::Geometry &geometry = GLWindow::get (mWindow)->geometry ();
     geometry.vCount = 1; // Force glDrawGeometry to be called
