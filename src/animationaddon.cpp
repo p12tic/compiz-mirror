@@ -237,14 +237,14 @@ AnimAddonScreen::setOption (const CompString  &name,
 
 AnimAddonWindow::AnimAddonWindow (CompWindow *w) :
     PluginClassHandler<AnimAddonWindow, CompWindow> (w),
-    mWindow (w)
+    mWindow (w),
+    aWindow (AnimWindow::get (w))
 {
 }
 
 AnimAddonWindow::~AnimAddonWindow ()
 {
-    AnimWindow *aw = AnimWindow::get (mWindow);
-    Animation *curAnim = aw->curAnimation ();
+    Animation *curAnim = aWindow->curAnimation ();
 
     if (!curAnim)
 	return;

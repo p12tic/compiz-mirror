@@ -76,6 +76,7 @@ public:
 
 protected:
     CompWindow *mWindow;    ///< Window being animated.
+    AnimWindow *aWindow;
 };
 
 
