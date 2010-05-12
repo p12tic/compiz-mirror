@@ -94,7 +94,7 @@ StaticSwitchScreen::updatePopupWindow ()
     CompWindow *popup = screen->findWindow (popupWindow);
 
     XWindowChanges xwc;
-    unsigned int valueMask;
+    unsigned int valueMask = 0;
 
     valueMask |= (CWX | CWY | CWWidth | CWHeight);
 
