@@ -93,13 +93,21 @@ StaticSwitchScreen::updatePopupWindow ()
 
     CompWindow *popup = screen->findWindow (popupWindow);
 
+    XWindowChanges xwc;
+    unsigned int valueMask;
+
+    valueMask |= (CWX | CWY | CWWidth | CWHeight);
+
+    xwc.x = x - winWidth / 2;
+    xwc.y = y - winHeight / 2;
+    xwc.width = winWidth;
+    xwc.height = winHeight;
+
     if (popup)
-	popup->resize (x - winWidth / 2, y - winHeight / 2,
-		       winWidth, winHeight);
+	popup->configureXWindow (valueMask, &xwc);
     else
-	XMoveResizeWindow (::screen->dpy (), popupWindow,
-			   x - winWidth / 2, y - winHeight / 2,
-			   (unsigned)winWidth, (unsigned)winHeight);
+	XConfigureWindow (::screen->dpy (), popupWindow,
+			   valueMask, &xwc);
 }
 
 void
