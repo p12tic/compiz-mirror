@@ -6,7 +6,11 @@
 	<category>Window Management</category>
 	<deps>
 	    <relation type="before">
-		<plugin>decoration</plugin>
+		<plugin>decor</plugin>
+	    </relation>
+	    <relation type="after">
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
 	    </relation>
 	</deps>
 	<options>
