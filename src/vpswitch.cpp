@@ -37,15 +37,13 @@ VPSwitchScreen::initPluginAction (CompAction         *action,
 {
     GET_DATA;
 
-    CompOption::Vector opts;
     CompPlugin *plugin = CompPlugin::find (optionGetInitPlugin ().c_str ());
     bool       rv = false;
 
     if (!plugin)
 	return false;
 
-    options = plugin->vTable->getOptions ();
-    foreach (CompOption opt, options)
+    foreach (CompOption &opt, plugin->vTable->getOptions ())
     {
 	if (opt.type () == CompOption::TypeAction ||
 	    opt.type () == CompOption::TypeKey ||
@@ -61,7 +59,7 @@ VPSwitchScreen::initPluginAction (CompAction         *action,
     }
 
     if (rv)
-	action->setState(CompAction::StateTermButton);
+	action->setState(action->state () | CompAction::StateTermButton);
 
     return rv;
 }
@@ -71,15 +69,13 @@ VPSwitchScreen::termPluginAction (CompAction         *action,
 		  		  CompAction::State  state,
 		  		  CompOption::Vector &options)
 {
-    CompOption::Vector opts;
     CompPlugin *plugin = CompPlugin::find (optionGetInitPlugin ().c_str ());
     bool       rv = false;
 
     if (!plugin)
 	return false;
 
-    options = plugin->vTable->getOptions ();
-    foreach (CompOption opt, options)
+    foreach (CompOption &opt, plugin->vTable->getOptions ())
     {
 	if (opt.type () == CompOption::TypeAction ||
 	    opt.type () == CompOption::TypeKey ||
@@ -260,7 +256,7 @@ VPSwitchScreen::initiateNumbered (CompAction         *action,
     numberedActive = true;
 
     if (state & CompAction::StateInitKey)
-	action->setState (CompAction::StateTermKey);
+	action->setState (action->state () | CompAction::StateTermKey);
 
     return true;
 }
