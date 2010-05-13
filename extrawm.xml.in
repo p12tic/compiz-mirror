@@ -4,10 +4,12 @@
 	<_short>Extra WM Actions</_short>
 	<_long>Provides less commonly used WM actions</_long>
 	<category>Window Management</category>
-	<relation type="after">
-	    <plugin>composite</plugin>
-	    <plugin>opengl</plugin>
-	</relation>
+	<deps>
+	    <relation type="after">
+		<plugin>composite</plugin>
+		<plugin>opengl</plugin>
+	    </relation>
+	</deps>
 	<options>
 	    <option name="activate" type="action">
 		<_short>Activate Window</_short>
