@@ -5,6 +5,8 @@
 	<category>Utility</category>
 	<deps>
 	    <relation type="after">
+		<plugin>composite</plugin>
+		<pluign>opengl</plugin>
 		<plugin>place</plugin>
 	    </relation>
 	</deps>
