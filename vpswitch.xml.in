@@ -4,10 +4,12 @@
 		<_short>Viewport Switcher</_short>
 		<_long>Initiate viewport changes through several events</_long>
 		<category>Desktop</category>
-		<relation type="after">
-		    <plugin>opengl</plugin>
-		    <plugin>composite</plugin>
-		</relation>
+		<deps>
+			<relation type="after">
+			    <plugin>opengl</plugin>
+			    <plugin>composite</plugin>
+			</relation>
+		</deps>
 		<options>
 			<group>
 				<_short>Number-Based Viewport Switching</_short>
