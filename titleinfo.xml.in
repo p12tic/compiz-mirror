@@ -4,10 +4,12 @@
 	<_short>Title Bar Info</_short>
 	<_long>Shows additional information in the window title bar</_long>
 	<category>Utility</category>
-	<relation type="after">
-	    <plugin>opengl</plugin>
-	    <plugin>composite</plugin>
-	</relation>
+	<deps>
+		<relation type="after">
+			<plugin>composite</plugin>
+			<plugin>opengl</plugin>
+		</relation>
+	</deps>
 	<options>
 	    <option name="show_remote_machine" type="bool">
 		<_short>Show Remote Machine Name</_short>
