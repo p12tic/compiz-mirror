@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <compiz>
     <plugin name="notification" useBcop="true">
-	<_short>Error Notifications</_short>
-	<_long>Display errors and other messages using libnotify.</_long>
+	<_short>Notification</_short>
+	<_long>Use libnotify to graphically display error messages</_long>
 	<category>Utility</category>
 	<deps>
 	    <relation type="after">
 		<plugin>composite</plugin>
 		<plugin>opengl</plugin>
+		<plugin>place</plugin>
 	    </relation>
 	</deps>
 	<options>
