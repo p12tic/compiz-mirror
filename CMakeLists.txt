@@ -12,5 +12,9 @@ set (COMPIZCONFIG_GCONF_VERSION_MINOR 9)
 set (COMPIZCONFIG_GCONF_VERSION_MICRO 0)
 set (VERSION ${COMPIZCONFIG_GCONF_VERSION_MAJOR}.${COMPIZCONFIG_GCONF_VERSION_MINOR}.${COMPIZCONFIG_GCONF_VERSION_MICRO})
 
-compiz_print_configure_header ("CompizConfig Backend GConf")
+compiz_print_configure_header ("CompizConfig GConf Storage Backend")
 compiz_print_configure_footer ()
+
+compiz_add_uninstall ()
+compiz_add_package_generation ("CompizConfig GConf Storage Backend")
+compiz_add_git_dist ()
