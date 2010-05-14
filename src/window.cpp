@@ -902,7 +902,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	            IS_PREV_TOP_TAB (window, group));
 
 	doTabbing = group->tabBar && 
-		    (animateState & (IS_ANIMATED | FINISHED_ANIMATION)) &&
+		    (animateState & (IS_ANIMATED)) &&
 	            !(IS_TOP_TAB (window, group) &&
 		      (group->tabBar->tabbingState == TabBar::Tabbing));
 
@@ -1088,7 +1088,6 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 	}
-
 
 	status = gWindow->glPaint (wAttrib, wTransform, region, mask);
 
