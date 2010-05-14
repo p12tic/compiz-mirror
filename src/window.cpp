@@ -454,7 +454,6 @@ GroupWindow::moveNotify (int  dx,
 	}
     }
 
-
     /* Do not enqueue windows if:
      * - we have not specified to move all windows
      * - windows are currently being tabbed into or out of a group
@@ -486,6 +485,7 @@ GroupWindow::moveNotify (int  dx,
 	    gs->enqueueMoveNotify (cw, dx, dy, immediate, true);
 	}
     }
+
 }
 
 /*

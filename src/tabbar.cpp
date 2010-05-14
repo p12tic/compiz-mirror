@@ -1583,10 +1583,7 @@ GroupScreen::updateTabBars (Window     enteredWin)
 	    mouse = poller.getCurrentPosition ();
 	    /* it is grouped and tabbed, so now we have to
 	       check if we hovered the title bar or the frame */
-#if 0
-	    if (groupGetCurrentMousePosition (s, &mouseX, &mouseY))
-	    {
-#endif
+
 	    CompRect   rect;
 	    CompRegion reg;
 
@@ -1603,7 +1600,6 @@ GroupScreen::updateTabBars (Window     enteredWin)
 	    {
 		hoveredGroup = gw->group;
 	    }
-	    //}
 	}
     }
 
