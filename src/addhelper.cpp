@@ -43,6 +43,9 @@ AddScreen::walkWindows ()
     {
 	ADD_WINDOW (w);
 
+	if (!aw->dim)
+	    aw->cWindow->addDamage ();
+
 	aw->dim = false;
 
 	if (!isToggle)
@@ -58,9 +61,9 @@ AddScreen::walkWindows ()
 	if (!optionGetWindowTypes ().evaluate (w))
 	continue;
 
-	aw->dim = true;
+	aw->cWindow->addDamage ();
 
-	cScreen->damageScreen ();
+	aw->dim = true;
     }
 }
 
@@ -137,6 +140,7 @@ AddScreen::toggle (CompAction         *action,
 	{
 	    ADD_WINDOW (w);
 	    aw->gWindow->glPaintSetEnabled (aw, false);
+	    aw->cWindow->addDamage ();
 	}
 	screen->handleEventSetEnabled (this, false);
     }
@@ -162,6 +166,13 @@ AddScreen::optionChanged (CompOption                *options,
 	    break;
 	case AddhelperOptions::Ononinit: // <- Turn AddHelper on on initiation
 	    isToggle = optionGetOnoninit ();
+	    foreach (CompWindow *w, screen->windows ())
+	    {
+		ADD_WINDOW (w);
+		aw->gWindow->glPaintSetEnabled (aw, isToggle);
+		aw->cWindow->addDamage ();
+	    }
+	    screen->handleEventSetEnabled (this, isToggle);
 	    break;
 	default:
 	    break;
@@ -171,6 +182,7 @@ AddScreen::optionChanged (CompOption                *options,
 AddWindow::AddWindow (CompWindow *window) :
     PluginClassHandler <AddWindow, CompWindow> (window),
     window (window),
+    cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
     dim (false)
 {
@@ -184,6 +196,12 @@ AddWindow::AddWindow (CompWindow *window) :
 	dim = true;
 }
 
+AddWindow::~AddWindow ()
+{
+    if (dim)
+	cWindow->addDamage ();
+}
+
 AddScreen::AddScreen (CompScreen *screen) :
     PluginClassHandler <AddScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
@@ -192,7 +210,6 @@ AddScreen::AddScreen (CompScreen *screen) :
     saturation ((optionGetSaturation () * 0xffff) / 100),
     isToggle (optionGetOnoninit ())
 {
-
     ScreenInterface::setHandler (screen, false);
 
     optionSetToggleKeyInitiate (boost::bind (&AddScreen::toggle, this,
