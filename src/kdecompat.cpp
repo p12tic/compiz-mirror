@@ -349,8 +349,11 @@ KDECompatWindow::updatePreviews ()
     int		    result, format;
     unsigned long   n, left;
     unsigned char   *propData;
+    unsigned int    oldPreviewsSize;
 
     KDECOMPAT_SCREEN (screen);
+
+    oldPreviewsSize = mPreviews.size ();
 
     mPreviews.clear ();
 
@@ -388,6 +391,9 @@ KDECompatWindow::updatePreviews ()
 
 	XFree (propData);
     }
+    
+    if (oldPreviewsSize != mPreviews.size ())
+	cWindow->damageOutputExtents ();
 
     foreach (CompWindow *cw, screen->windows ())
     {
