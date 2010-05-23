@@ -78,8 +78,10 @@ class AddWindow :
 {
     public:
 	AddWindow (CompWindow *window);
+	~AddWindow ();
 
 	CompWindow *window;
+	CompositeWindow *cWindow;
 	GLWindow   *gWindow;
 
 
