@@ -27,6 +27,7 @@
 #include <core/core.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
+#include <compiztoolbox/compiztoolbox.h>
 
 #include "opacify_options.h"
 
@@ -45,6 +46,9 @@ class OpacifyScreen :
 	GLScreen	*gScreen;
 
 	bool isToggle;
+	
+	PropertyWriter toggleState;
+	CompTimer      checkStateTimer;
 
 	CompTimer timeoutHandle;
 
@@ -83,6 +87,9 @@ class OpacifyScreen :
 	void
 	optionChanged (CompOption              *option,
 		       OpacifyOptions::Options num);
+		       
+	bool
+	checkStateTimeout ();
 };
 
 class OpacifyWindow :
