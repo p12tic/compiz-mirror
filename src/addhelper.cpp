@@ -120,6 +120,9 @@ AddScreen::toggle (CompAction         *action,
 		   CompAction::State  state,
 		   CompOption::Vector options)
 {
+    CompOption::Vector opts = toggleState.getReadTemplate ();
+    CompOption::Value  v;
+
     isToggle = !isToggle;
     if (isToggle)
     {
@@ -140,6 +143,11 @@ AddScreen::toggle (CompAction         *action,
 	}
 	screen->handleEventSetEnabled (this, false);
     }
+
+    v = CompOption::Value (isToggle);
+    opts.at (0).set (v);
+    
+    toggleState.updateProperty (screen->root (), opts, false, XA_CARDINAL);
 
     return true;
 
@@ -162,10 +170,76 @@ AddScreen::optionChanged (CompOption                *options,
 	    break;
 	case AddhelperOptions::Ononinit: // <- Turn AddHelper on on initiation
 	    isToggle = optionGetOnoninit ();
+	    if (isToggle)
+	    {
+		walkWindows ();
+		foreach (CompWindow *w, screen->windows ())
+		{
+		    ADD_WINDOW (w);
+		    aw->gWindow->glPaintSetEnabled (aw, true);
+		}
+		screen->handleEventSetEnabled (this, true);
+	    }
+	    else
+	    {
+		foreach (CompWindow *w, screen->windows ())
+		{
+		    ADD_WINDOW (w);
+		    aw->gWindow->glPaintSetEnabled (aw, false);
+		}
+		screen->handleEventSetEnabled (this, false);
+	    }
+
 	    break;
 	default:
 	    break;
     }
+}
+
+bool
+AddScreen::checkStateTimeout ()
+{
+    CompOption::Vector atomTemplate;
+    CompOption::Vector currentToggleState;
+    CompOption::Value  v;
+    
+    atomTemplate.resize (1);
+    atomTemplate.at (0).setName ("toggled", CompOption::TypeBool);
+    
+    toggleState = PropertyWriter ("_COMPIZ_ADDHELPER_TOGGLE_STATE", atomTemplate);
+    
+    /* Attempt to read the property on the root window
+     * from where we may have previously set data
+     */
+     
+    currentToggleState = toggleState.readProperty (screen->root ());
+    
+    if (!currentToggleState.empty ())
+    {
+	isToggle = currentToggleState.at (0).value ().b ();
+	if (isToggle)
+	{
+	    walkWindows ();
+	    foreach (CompWindow *w, screen->windows ())
+	    {
+		ADD_WINDOW (w);
+		aw->gWindow->glPaintSetEnabled (aw, true);
+	    }
+	    screen->handleEventSetEnabled (this, true);
+	}
+	else
+	{
+	    foreach (CompWindow *w, screen->windows ())
+	    {
+		ADD_WINDOW (w);
+		aw->gWindow->glPaintSetEnabled (aw, false);
+	    }
+	    screen->handleEventSetEnabled (this, false);
+	}
+
+    }
+    
+    return false;
 }
 
 AddWindow::AddWindow (CompWindow *window) :
@@ -192,8 +266,12 @@ AddScreen::AddScreen (CompScreen *screen) :
     saturation ((optionGetSaturation () * 0xffff) / 100),
     isToggle (optionGetOnoninit ())
 {
-
     ScreenInterface::setHandler (screen, false);
+
+    checkStateTimer.setTimes (0, 0);
+    checkStateTimer.setCallback (boost::bind (&AddScreen::checkStateTimeout,
+    					      this));
+    checkStateTimer.start ();
 
     optionSetToggleKeyInitiate (boost::bind (&AddScreen::toggle, this,
 						_1, _2, _3));

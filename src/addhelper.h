@@ -29,6 +29,7 @@
 #include <core/core.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
+#include <compiztoolbox/compiztoolbox.h>
 
 #include "addhelper_options.h"
 
@@ -41,12 +42,17 @@ class AddScreen :
 	AddScreen (CompScreen *screen);
 
 	CompositeScreen *cScreen;
+	
+	PropertyWriter      toggleState;
+	CompTimer	    checkStateTimer;
 
 	GLushort	    opacity;
 	GLushort	    brightness;
 	GLushort	    saturation;
 
 	bool	    isToggle;
+
+	bool	    checkStateTimeout ();
 
 	void
 	handleEvent (XEvent *event);
