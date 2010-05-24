@@ -139,7 +139,7 @@ RingScreen::renderWindowTitle ()
 	return;
 
     CompText::Attrib attrib;
-    CompRect       oe;
+    CompRect         oe;
 
     freeWindowTitle ();
 
@@ -152,7 +152,7 @@ RingScreen::renderWindowTitle ()
     oe = screen->getCurrentOutputExtents ();
 
     /* 75% of the output device as maximum width */
-    attrib.maxWidth = (oe.x2 () - oe.x1 ()) * 3 / 4;
+    attrib.maxWidth = oe.width () * 3 / 4;
     attrib.maxHeight = 100;
 
     attrib.size = optionGetTitleFontSize ();
@@ -186,27 +186,24 @@ RingScreen::drawWindowTitle ()
 
     oe = screen->getCurrentOutputExtents ();
 
-    x = oe.x1 () + ((oe.x2 () - oe.x1 ()) / 2) - (mText.getWidth () / 2);
+    x = oe.centerX () - mText.getWidth () / 2;
 
     /* assign y (for the lower corner!) according to the setting */
     switch (optionGetTitleTextPlacement ())
     {
 	case RingOptions::TitleTextPlacementCenteredOnScreen:
-	    y = oe.y1 () + ((oe.y2 () - oe.y1 ()) / 2) + (mText.getHeight () / 2);
+	    y = oe.centerY () + mText.getHeight () / 2;
 	    break;
 	case RingOptions::TitleTextPlacementAboveRing:
 	case RingOptions::TitleTextPlacementBelowRing:
 	    {
-		CompRect workArea;
-		workArea =
-		    screen->getWorkareaForOutput (
-					     screen->currentOutputDev ().id ());
+		CompRect workArea = screen->currentOutputDev ().workArea ();
 
 	    	if (optionGetTitleTextPlacement () ==
 		    RingOptions::TitleTextPlacementAboveRing)
     		    y = oe.y1 () + workArea.y () + mText.getHeight ();
 		else
-		    y = oe.y1 () + workArea.y () + workArea.height ();
+		    y = oe.y1 () + workArea.y2 ();
 	    }
 	    break;
 	default:
@@ -478,10 +475,10 @@ RingScreen::layoutThumbs ()
 
     /* the center of the ellipse is in the middle 
        of the used output device */
-    centerX = oe.x1 () + (oe.x2 () - oe.x1 ()) / 2;
-    centerY = oe.y1 () + (oe.y2 () - oe.y1 ()) / 2;
-    ellipseA = ((oe.x2 () - oe.x1 ()) * optionGetRingWidth ()) / 200;
-    ellipseB = ((oe.y2 () - oe.y1 ()) * optionGetRingHeight ()) / 200;
+    centerX  = oe.centerX ();
+    centerY  = oe.centerY ();
+    ellipseA = oe.width () * optionGetRingWidth () / 200;
+    ellipseB = oe.height () * optionGetRingHeight () / 200;
 
     mDrawSlots.resize (mWindows.size ());
 
