@@ -551,7 +551,7 @@ PutScreen::getDistance (CompWindow         *w,
 	break;
     case PutBottom:
 	/* center of bottom edge */
-	dx = (workArea.width () / 2) - HALF_HEIGHT (w) -
+	dx = (workArea.width () / 2) - HALF_WIDTH (w) -
 	     (x - workArea.x ());
 	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
 	     BOTTOM_BORDER (w) - ps->optionGetPadBottom ();
@@ -559,7 +559,7 @@ PutScreen::getDistance (CompWindow         *w,
     case PutEmptyBottom:
 	/* center of bottom edge */
 	workArea.setY (workArea.y () + BOTTOM_BORDER (w));
-	dx = (workArea.width () / 2) - HALF_HEIGHT (w) -
+	dx = (workArea.width () / 2) - HALF_WIDTH (w) -
 	     (x - workArea.x ());
 	dy = workArea.height () - w->serverHeight () - (y - workArea.y ()) -
 	     BOTTOM_BORDER (w) - ps->optionGetPadBottom ();
