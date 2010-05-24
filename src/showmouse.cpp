@@ -626,8 +626,8 @@ ShowmouseScreen::ShowmouseScreen (CompScreen *screen) :
     ps (new ParticleSystem ()),
     rot (0.0f)
 {
-    CompositeScreenInterface::setHandler (cScreen);
-    GLScreenInterface::setHandler (gScreen);
+    CompositeScreenInterface::setHandler (cScreen, false);
+    GLScreenInterface::setHandler (gScreen, false);
 
     pollHandle.setCallback (boost::bind (&ShowmouseScreen::positionUpdate, this,
 					 _1));
