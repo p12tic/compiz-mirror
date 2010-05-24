@@ -1023,6 +1023,14 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 	mCurAnimation->cleanUp (closing, destructing);
 	delete mCurAnimation;
 	mCurAnimation = 0;
+
+	if (mUnreparentInterrupted)
+	{
+	    mUnreparentInterrupted = false;
+
+	    // Do the unreparent windowNotify chain here instead.
+	    mWindow->windowNotify (CompWindowNotifyUnreparent);
+	}
     }
 
     mBB.x1 = mBB.y1 = MAXSHORT;
@@ -1122,7 +1130,7 @@ PrivateAnimScreen::activateEvent (bool activating)
 bool
 PrivateAnimScreen::otherPluginsActive ()
 {
-    for (int i = 0; i < WatchedPluginNum; i++)
+    for (int i = 0; i < WatchedScreenPluginNum; i++)
 	if (mPluginActive[i])
 	    return true;
     return false;
@@ -1547,7 +1555,7 @@ AnimScreen::enableCustomPaintList (bool enabled)
     priv->enablePrePaintWindowsBackToFront (enabled);
 }
 
-static const PluginEventInfo watchedPlugins[] =
+static const PluginEventInfo watchedScreenPlugins[] =
 {
     {"switcher", "activate"},
     {"ring", "activate"},
@@ -1557,6 +1565,11 @@ static const PluginEventInfo watchedPlugins[] =
     {"fadedesktop", "activate"}
 };
 
+static const PluginEventInfo watchedWindowPlugins[] =
+{
+    {"kdecompat", "slide"},
+};
+
 void
 PrivateAnimScreen::handleCompizEvent (const char         *pluginName,
 				      const char         *eventName,
@@ -1564,10 +1577,11 @@ PrivateAnimScreen::handleCompizEvent (const char         *pluginName,
 {
     ::screen->handleCompizEvent (pluginName, eventName, options);
 
-    for (int i = 0; i < WatchedPluginNum; i++)
-	if (strcmp (pluginName, watchedPlugins[i].pluginName) == 0)
+    for (int i = 0; i < WatchedScreenPluginNum; i++)
+	if (strcmp (pluginName, watchedScreenPlugins[i].pluginName) == 0)
 	{
-	    if (strcmp (eventName, watchedPlugins[i].activateEventName) == 0)
+	    if (strcmp (eventName, 
+			watchedScreenPlugins[i].activateEventName) == 0)
 	    {
 		mPluginActive[i] =
 		    CompOption::getBoolOptionNamed (options, "active", false);
@@ -1583,6 +1597,31 @@ PrivateAnimScreen::handleCompizEvent (const char         *pluginName,
 	    }
 	    break;
 	}
+
+    for (int i = 0; i < WatchedWindowPluginNum; i++)
+	if (strcmp (pluginName,
+		    watchedWindowPlugins[i].pluginName) == 0)
+	{
+	    if (strcmp (eventName,
+			watchedWindowPlugins[i].activateEventName) == 0)
+	    {
+		Window xid = CompOption::getIntOptionNamed (options,
+							    "window",
+							     0);
+		CompWindow *w = screen->findWindow (xid);
+
+		if (w)
+		{
+		    AnimWindow *aw = AnimWindow::get (w);
+		    PrivateAnimWindow *pw = aw->priv;
+		    pw->mPluginActive[i] = CompOption::getBoolOptionNamed (
+								    options,
+								    "active",
+								    false);
+		}
+	    }
+	    break;
+	}
 }
 
 /// Returns true for windows that don't have a pixmap or certain properties,
@@ -1590,6 +1629,12 @@ PrivateAnimScreen::handleCompizEvent (const char         *pluginName,
 inline bool
 PrivateAnimScreen::shouldIgnoreWindowForAnim (CompWindow *w, bool checkPixmap)
 {
+    AnimWindow *aw = AnimWindow::get (w);
+
+    for (int i = 0; i < WatchedWindowPluginNum; i++)
+	if (aw->priv->mPluginActive[i])
+	    return true;
+
     return ((checkPixmap && !CompositeWindow::get (w)->pixmap ()) ||
 	    mNeverAnimateMatch.evaluate (w));
 }
@@ -2300,7 +2345,10 @@ PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
     mPrePaintWindowsBackToFrontEnabled (false),
     mOutput (0)
 {
-    for (int i = 0; i < WatchedPluginNum; i++)
+    for (int i = 0; i < WatchedScreenPluginNum; i++)
+	mPluginActive[i] = false;
+
+    for (int i = 0; i < WatchedWindowPluginNum; i++)
 	mPluginActive[i] = false;
 
     // Never animate screen-dimming layer of logout window and gksu.
@@ -2452,7 +2500,7 @@ PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
     mGrabbed (false),
     mUnmapCnt (0),
     mDestroyCnt (0),
-    mUpdateFrameCnt (0),
+    mUnreparentInterrupted (false),
     mIgnoreDamage (false),
     mFinishingAnim (false),
     mCurAnimSelectionRow (-1)
@@ -2554,6 +2602,25 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 
 		mDestroyCnt++;
 		mWindow->incrementDestroyReference ();
+	    }
+	    break;
+	case CompWindowNotifyUnreparent:
+	    if (!mFinishingAnim)
+	    {
+		if (mPAScreen->shouldIgnoreWindowForAnim (mWindow, false))
+		    break;
+
+		// If unreparent is done during close animation
+		if (mCurAnimation &&
+		    mCurAnimation->curWindowEvent () == WindowEventClose)
+		{
+		    mUnreparentInterrupted = true;
+
+		    // To prevent window's pixmap from being released
+		    // in the composite plugin, don't continue with the
+		    // windowNotify chain here.
+		    return;
+		}
 	    }
 	    break;
 	case CompWindowNotifyFocusChange:
