@@ -86,6 +86,14 @@ AirplaneAnim::tesselateIntoAirplane ()
     mThickness = thickness;
     mNumTotalFrontVertices = 0;
 
+    
+    fprintf (stderr, "inputRect is %i %i %i %i\n", mWindow->inputRect ().x (),
+    						   mWindow->inputRect ().y (),
+    						   mWindow->inputRect ().width (),
+    						   mWindow->inputRect ().height ());
+    
+    fprintf (stderr, "limits are %f %f %f %f\n", winLimitsX, winLimitsY, winLimitsW, winLimitsH);
+
     float W = (float)winLimitsW;
     float H2 = (float)winLimitsH / 2;
     float H3 = (float)winLimitsH / 3;
