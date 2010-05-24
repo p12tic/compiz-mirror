@@ -13,7 +13,7 @@
 			<relation type="after">
 				<plugin>composite</plugin>
 				<plugin>opengl</plugin>
-				<plugin>decoration</plugin>
+				<plugin>decor</plugin>
 			</relation>
 		</deps>
 		<screen>
