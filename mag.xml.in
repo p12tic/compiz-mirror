@@ -10,6 +10,7 @@
 				<plugin>opengl</plugin>
 				<plugin>mousepoll</plugin>
 				<plugin>cube</plugin>
+				<plugin>decor</plugin>
 			</relation>
 			<requirement>
 				<plugin>opengl</plugin>
