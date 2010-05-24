@@ -9,6 +9,7 @@
 		<plugin>opengl</plugin>
 		<plugin>scale</plugin>
 		<plugin>text</plugin>
+		<plugin>decor</plugin>
 	    </relation>
 	    <requirement>
 		<plugin>composite</plugin>
