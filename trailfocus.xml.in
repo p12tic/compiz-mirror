@@ -13,6 +13,7 @@
 		<plugin>composite</plugin>
 		<plugin>opengl</plugin>
 		<plugin>fade</plugin>
+		<plugin>decor</plugin>
 	    </relation>
 	</deps>
 	<options>
