@@ -8,6 +8,7 @@
 			<relation type="after">
 			    <plugin>opengl</plugin>
 			    <plugin>composite</plugin>
+			    <plugin>decor</plugin>
 			</relation>
 		</deps>
 		<options>
