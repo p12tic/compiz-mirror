@@ -8,6 +8,7 @@
 		<plugin>composite</plugin>
 		<pluign>opengl</plugin>
 		<plugin>place</plugin>
+		<plugin>decor</plugin>
 	    </relation>
 	</deps>
 	<options>
