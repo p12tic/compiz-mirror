@@ -8,7 +8,7 @@
 	    <relation type="after">
 		<plugin>opengl</plugin>
 		<plugin>composite</plugin>
-		<plugin>decoration</plugin>
+		<plugin>decor</plugin>
 	    </relation>
 	    <relation type="before">
 		<plugin>wobbly</plugin>
