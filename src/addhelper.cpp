@@ -192,6 +192,7 @@ AddScreen::optionChanged (CompOption                *options,
 		    aw->gWindow->glPaintSetEnabled (aw, false);
 		}
 		screen->handleEventSetEnabled (this, false);
+		}
 	    break;
 	default:
 	    break;
