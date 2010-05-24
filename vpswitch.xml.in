@@ -6,9 +6,9 @@
 		<category>Desktop</category>
 		<deps>
 			<relation type="after">
-			    <plugin>opengl</plugin>
 			    <plugin>composite</plugin>
 			    <plugin>decor</plugin>
+			    <plugin>opengl</plugin>
 			</relation>
 		</deps>
 		<options>
