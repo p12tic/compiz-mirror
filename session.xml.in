@@ -6,7 +6,7 @@
 	<deps>
 	    <relation type="after">
 		<plugin>composite</plugin>
-		<pluign>opengl</plugin>
+		<plugin>opengl</plugin>
 		<plugin>place</plugin>
 		<plugin>decor</plugin>
 	    </relation>
