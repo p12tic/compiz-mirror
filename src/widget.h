@@ -56,7 +56,6 @@ class WidgetScreen :
 	};
 
     public:
-
 	WidgetScreen (CompScreen *screen);
 	~WidgetScreen ();
 
@@ -152,19 +151,17 @@ class WidgetWindow :
 	updateWidgetPropertyState ();
 
 	void
-	updateWidgetMapState (bool       map);
+	updateWidgetMapState (bool map);
 
 	bool
 	updateMatch ();
 
 	bool mIsWidget;
-	bool mWasUnmapped;
-	bool mOldManaged;
+	bool mWasHidden;
 	CompWindow *mParentWidget;
 	CompTimer  mMatchUpdate;
 	CompTimer  mWidgetStatusUpdate;
 	WidgetPropertyState mPropertyState;
-
 };
 
 #define WIDGET_WINDOW(window)						       \
