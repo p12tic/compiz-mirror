@@ -137,7 +137,7 @@ ThumbScreen::thumbUpdateThumbnail ()
     }
     else
     {
-	oGeom = (CompRect) screen->outputDevs ()[oDev];
+	oGeom = screen->outputDevs ()[oDev];
     }
 
     tHeight = thumb.height;
