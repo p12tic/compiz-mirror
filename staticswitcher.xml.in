@@ -13,6 +13,7 @@
 		<plugin>opengl</plugin>
 		<plugin>fade</plugin>
 		<plugin>compiztoolbox</plugin>
+		<plugin>decor</plugin>
 	    </relation>
 	    <relation type="before">
 		<plugin>bs</plugin>
