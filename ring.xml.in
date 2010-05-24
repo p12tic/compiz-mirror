@@ -9,6 +9,7 @@
 				<plugin>text</plugin>
 				<plugin>switcher</plugin>
 				<plugin>staticswitcher</plugin>
+				<plugin>decor</plugin>
 			</relation>
 			<requirement>
 				<plugin>opengl</plugin>
