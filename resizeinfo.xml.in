@@ -13,6 +13,7 @@
 		<plugin>opengl</plugin>
 		<plugin>composite</plugin>
 		<plugin>resize</plugin>
+		<plugin>decor</plugin>
 	    </relation>
 	</deps>
 	<options>

@@ -446,7 +446,7 @@ void
 InfoScreen::handleEvent (XEvent *event)
 {
     switch (event->type) {
-    case ClientMessage:
+    case ClientMessage:    
 	if (event->xclient.message_type == resizeInfoAtom)
 	{
 	    CompWindow *w;
