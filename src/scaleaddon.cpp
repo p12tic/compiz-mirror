@@ -35,37 +35,29 @@ COMPIZ_PLUGIN_20090315 (scaleaddon, ScaleAddonPluginVTable);
 bool textAvailable;
 
 void
-ScaleAddonWindow::freeTitle ()
-{
-    CompText empty;
-
-    text = empty;
-
-}
-
-void
 ScaleAddonWindow::renderTitle ()
 {
-    CompText::Attrib            attrib;
-    float                       scale;
+    CompText::Attrib attrib;
+    float            scale;
+    int              titleOpt;
 
     ADDON_SCREEN (screen);
-
-    freeTitle ();
 
     if (!textAvailable)
 	return;
 
+    text.clear ();
+
     if (!sWindow->hasSlot ())
 	return;
 
-    if (as->optionGetWindowTitle () ==
-				        ScaleaddonOptions::WindowTitleNoDisplay)
+    titleOpt = as->optionGetWindowTitle ();
+
+    if (titleOpt == ScaleaddonOptions::WindowTitleNoDisplay)
 	return;
 
-    if (as->optionGetWindowTitle () ==
-			  ScaleaddonOptions::WindowTitleHighlightedWindowOnly &&
-			  as->highlightedWindow != window->id ())
+    if (titleOpt == ScaleaddonOptions::WindowTitleHighlightedWindowOnly &&
+	as->highlightedWindow != window->id ())
     {
 	return;
     }
@@ -92,20 +84,23 @@ ScaleAddonWindow::renderTitle ()
     attrib.bgColor[2] = as->optionGetBackColorBlue ();
     attrib.bgColor[3] = as->optionGetBackColorAlpha ();
 
-    text.renderWindowTitle (window->id (), as->sScreen->getType () == ScaleTypeAll, attrib);
+    text.renderWindowTitle (window->id (),
+			    as->sScreen->getType () == ScaleTypeAll,
+			    attrib);
 }
 
 void
 ScaleAddonWindow::drawTitle ()
 {
-    float      x, y, width, height;
+    float         x, y, width, height;
     ScalePosition pos = sWindow->getCurrentPosition ();
+    CompRect      geom = window->inputRect ();
 
-    width = text.getWidth ();
+    width  = text.getWidth ();
     height = text.getHeight ();
 
-    x = pos.x () + window->x () + ((WIN_W (window) * pos.scale) / 2) - (width / 2);
-    y = pos.y () + window->y () + ((WIN_H (window) * pos.scale) / 2) - (height / 2);
+    x = pos.x () + window->x () + geom.width () * pos.scale / 2 - width / 2;
+    y = pos.y () + window->y () + geom.height () * pos.scale / 2 - height / 2;
 
     text.draw (floor (x), floor (y), 1.0f);
 }
@@ -113,20 +108,21 @@ ScaleAddonWindow::drawTitle ()
 void
 ScaleAddonWindow::drawHighlight ()
 {
-    GLboolean  wasBlend;
-    GLint      oldBlendSrc, oldBlendDst;
-    float      x, y, width, height;
+    GLboolean     wasBlend;
+    GLint         oldBlendSrc, oldBlendDst;
+    float         x, y, width, height;
     ScalePosition pos = sWindow->getCurrentPosition ();
+    CompRect      geom = window->inputRect ();
 
     ADDON_SCREEN (screen);
 
     if (rescaled)
 	return;
 
-    x      = pos.x () + window->x () - (window->input ().left * sWindow->getCurrentPosition ().scale);
-    y      = pos.y () + window->y () - (window->input ().top * sWindow->getCurrentPosition ().scale);
-    width  = WIN_W (window) * sWindow->getCurrentPosition ().scale;
-    height = WIN_H (window) * sWindow->getCurrentPosition ().scale;
+    x      = pos.x () + window->x () - (window->input ().left * pos.scale);
+    y      = pos.y () + window->y () - (window->input ().top * pos.scale);
+    width  = geom.width () * pos.scale;
+    height = geom.height () * pos.scale;
 
     /* we use a poor replacement for roundf()
      * (available in C99 only) here */
@@ -191,14 +187,11 @@ ScaleAddonScreen::closeWindow (CompAction         *action,
     CompWindow *w;
 
     if (!sScreen->hasGrab ())
-        return false;
+	return false;
 
     w = screen->findWindow (highlightedWindow);
     if (w)
-    {
-        w->close (screen->getCurrentTime ());
-        return true;
-    }
+	w->close (screen->getCurrentTime ());
 
     return true;
 }
@@ -211,49 +204,49 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
     CompWindow *w;
 
     if (!sScreen->hasGrab ())
-        return false;
+	return false;
 
     w = screen->findWindow (highlightedWindow);
     if (w)
     {
-        int x, y, vx, vy;
+	int       x, y, xOffset, yOffset;
 	CompPoint vp;
 
-        vp = w->defaultViewport ();
+	vp = w->defaultViewport ();
 
-	vx = vp.x ();
-	vy = vp.y ();
+	xOffset = (screen->vp ().x () - vp.x ()) * screen->width ();
+	yOffset = (screen->vp ().y () - vp.y ()) * screen->height ();
 
-        x = w->x () + (screen->vp ().x () - vx) * screen->width ();
-        y = w->y () + (screen->vp ().y () - vy) * screen->height ();
+	x = w->x () + xOffset;
+	y = w->y () + yOffset;
 
-        if (optionGetConstrainPullToScreen ())
-        {
-            CompRect            workArea;
-	    CompWindowExtents   extents;
+	if (optionGetConstrainPullToScreen ())
+	{
+	    CompRect workArea, extents;
 
 	    workArea = screen->outputDevs ()[w->outputDevice ()].workArea ();
+	    extents  = w->inputRect ();
 
-	    extents.left   = x - w->input ().left;
-	    extents.right  = x + w->width () + w->input ().right;
-	    extents.top    = y - w->input ().top;
-	    extents.bottom = y + w->height () + w->input ().bottom;
+	    extents.setX (extents.x () + xOffset);
+	    extents.setY (extents.y () + yOffset);
 
-	    if (extents.left < workArea.x ())
-	        x += workArea.x () - extents.left;
-	    else if (extents.right > workArea.x () + workArea.width ())
-	        x += workArea.x () + workArea.width () - extents.right;
+	    if (extents.x1 () < workArea.x1 ())
+	        x += workArea.x1 () - extents.x1 ();
+	    else if (extents.x2 () > workArea.x2 ())
+	        x += workArea.x2 () - extents.x2 ();
 
-	    if (extents.top < workArea.y ())
-	        y += workArea.y () - extents.top;
-	    else if (extents.bottom > workArea.y () + workArea.height ())
-	        y += workArea.y () + workArea.height () - extents.bottom;
-        }
+	    if (extents.y1 () < workArea.y1 ())
+	        y += workArea.y1 () - extents.y1 ();
+	    else if (extents.y2 () > workArea.y2 ())
+	        y += workArea.y2 () - extents.y2 ();
+	}
 
-        if (x != w->x () || y != w->y ())
-        {
+	if (x != w->x () || y != w->y ())
+	{
+	    ScalePosition pos, oldPos;
 	    ADDON_WINDOW (w);
-	    ScalePosition pos;
+
+	    oldPos = aw->sWindow->getCurrentPosition ();
 
 	    w->moveToViewportPosition (x, y, true);
 
@@ -261,43 +254,41 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
 	    aw->sWindow->scaleSelectWindow ();
 
 	    /* stop scaled window dissapearing */
-	    pos.setX (aw->sWindow->getCurrentPosition ().x () - (screen->vp ().x () - vx) * screen->width ());
-	    pos.setY (aw->sWindow->getCurrentPosition ().y () -(screen->vp ().y () - vy) * screen->height ());
+	    pos.setX (oldPos.x () - xOffset);
+	    pos.setY (oldPos.y () - yOffset);
 
 	    if (optionGetExitAfterPull ())
 	    {
-	        CompOption         opt, o1 ("root", CompOption::TypeInt);
-	        CompAction         action;
-	        CompOption::Vector o;
-		CompOption::Value  root = CompOption::Value ((int) screen->root ());
+		CompAction         *action;
+		CompOption::Vector o;
+		CompOption         *opt;
 
-	        opt = *(CompOption::findOption (sScreen->getOptions (),
-					       "initiate_key", 0));
-	        action = opt.value ().action ();
+		o.push_back (CompOption ("root", CompOption::TypeInt));
+		o[0].value ().set ((int) screen->root ());
 
-	        o1.set (root);
+		opt = CompOption::findOption (sScreen->getOptions (),
+					      "initiate_key", 0);
+		action = &opt->value ().action ();
 
-		o.push_back (o1);
-
-	        if (action.terminate ())
-		    action.terminate () (&action, 0, o);
+		if (action->terminate ())
+		    action->terminate () (action, 0, o);
 	    }
 	    else
 	    {
-	        /* provide a simple animation */
-	        aw->cWindow->addDamage ();
+		ScaleSlot slot = aw->sWindow->getSlot ();
 
-	        pos.setX (aw->sWindow->getCurrentPosition ().x () -  (aw->sWindow->getSlot ().x2 () - aw->sWindow->getSlot ().x1 ()) / 20);
-	        pos.setY (aw->sWindow->getCurrentPosition ().y () - (aw->sWindow->getSlot ().y2 () - aw->sWindow->getSlot ().y1 ()) / 20);
-	        pos.scale = aw->sWindow->getCurrentPosition ().scale * 1.1f;
+		/* provide a simple animation */
+		aw->cWindow->addDamage ();
+
+		pos.setX (oldPos.x () -  slot.width () / 20);
+		pos.setY (oldPos.y () - slot.height () / 20);
+		pos.scale = oldPos.scale * 1.1f;
 
 		aw->sWindow->setCurrentPosition (pos);
 
-	        aw->cWindow->addDamage ();
+		aw->cWindow->addDamage ();
 	    }
-	
-	    return true;
-        }
+	}
     }
 
     return true;
@@ -311,73 +302,62 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
     CompWindow *w;
 
     if (!sScreen->hasGrab ())
-        return false;
+	return false;
 
     w = screen->findWindow (highlightedWindow);
     if (w)
     {
-        ADDON_WINDOW (w);
+	CompRect output;
+	int      head;
 
-        XRectangle outputRect;
-        BOX        outputBox;
-        int        head;
+	ADDON_WINDOW (w);
 
-        if (!aw->sWindow->hasSlot ())
+	if (!aw->sWindow->hasSlot ())
 	    return false;
 
-        head      = screen->outputDeviceForPoint ( aw->sWindow->getSlot ().x1 (),
-						   aw->sWindow->getSlot ().y1 ());
-        outputBox = screen->outputDevs ()[head].region ()->extents;
+	head   = screen->outputDeviceForPoint (aw->sWindow->getSlot ().pos ());
+	output = screen->outputDevs ()[head];
 
-        outputRect.x      = outputBox.x1;
-        outputRect.y      = outputBox.y1;
-        outputRect.width  = outputBox.x2 - outputBox.x1;
-        outputRect.height = outputBox.y2 - outputBox.y1;
+	/* damage old rect */
+	aw->cWindow->addDamage ();
 
-        /* damage old rect */
-        aw->cWindow->addDamage ();
-
-        if (!aw->rescaled)
-        {
-	    ScaleSlot slot;
-	    int x1, x2, y1, y2;
+	if (!aw->rescaled)
+	{
+	    ScaleSlot slot = aw->sWindow->getSlot ();
+	    int       x1, x2, y1, y2;
+	    CompRect  geom = w->inputRect ();
 
 	    aw->oldAbove = w->next;
 	    w->raise ();
 
 	    /* backup old values */
-	    aw->origSlot = aw->sWindow->getSlot ();
-
+	    aw->origSlot = slot;
 	    aw->rescaled = true;
 
-	    x1 = (outputRect.width / 2) - (WIN_W(w) / 2) +
-		           w->input ().left + outputRect.x;
-	    y1 = (outputRect.height / 2) - (WIN_H(w) / 2) +
-		           w->input ().top + outputRect.y;
-	    x2 = aw->sWindow->getSlot ().x1 () + WIN_W (w);
-	    y2 = aw->sWindow->getSlot ().y1 () + WIN_H (w);
+	    x1 = output.centerX () - geom.width () / 2 + w->input ().left;
+	    y1 = output.centerY () - geom.height () / 2 + w->input ().top;
+	    x2 = slot.x () + geom.width ();
+	    y2 = slot.y () + geom.height ();
+
 	    slot.scale = 1.0f;
 	    slot.setGeometry (x1, y1, x2 - x1, y2 - y1);
 
 	    aw->sWindow->setSlot (slot);
-
-        }
-        else
-        {
+	}
+	else
+	{
 	    if (aw->oldAbove)
 	        w->restackBelow (aw->oldAbove);
 
 	    aw->rescaled = false;
 	    aw->sWindow->setSlot (aw->origSlot);
-        }
+	}
 
-        /* slot size may have changed, so
-         * update window title */
-        aw->renderTitle ();
+	/* slot size may have changed, so
+	 * update window title */
+	aw->renderTitle ();
 
-        aw->cWindow->addDamage ();
-
-        return true;
+	aw->cWindow->addDamage ();
     }
 
     return true;
@@ -391,31 +371,24 @@ ScaleAddonScreen::handleEvent (XEvent *event)
     switch (event->type)
     {
     case PropertyNotify:
+	if (event->xproperty.atom == XA_WM_NAME && sScreen->hasGrab ())
 	{
-	    if (event->xproperty.atom == XA_WM_NAME)
-	    {
-		CompWindow *w;
+	    CompWindow *w;
 
-		w = screen->findWindow (event->xproperty.window);
-		if (w)
-		{
-		    ADDON_WINDOW (w);
-		    if (sScreen->hasGrab ())
-		    {
-			aw->renderTitle ();
-			aw->cWindow->addDamage ();
-		    }
-		}
+	    w = screen->findWindow (event->xproperty.window);
+	    if (w)
+	    {
+		ADDON_WINDOW (w);
+		aw->renderTitle ();
+		aw->cWindow->addDamage ();
 	    }
 	}
 	break;
     case MotionNotify:
+	if (sScreen->hasGrab ())
 	{
-	    if (sScreen->hasGrab ())
-	    {
-		highlightedWindow = sScreen->getHoveredWindow ();
-		checkWindowHighlight ();
-	    }
+	    highlightedWindow = sScreen->getHoveredWindow ();
+	    checkWindowHighlight ();
 	}
 	break;
     default:
@@ -425,15 +398,18 @@ ScaleAddonScreen::handleEvent (XEvent *event)
 
 void
 ScaleAddonWindow::scalePaintDecoration (const GLWindowPaintAttrib &attrib,
-				        const GLMatrix	     	  &transform,
+				        const GLMatrix		  &transform,
 					const CompRegion          &region,
 					unsigned int		  mask)
 {
+    ScaleScreen::State state;
+
     ADDON_SCREEN (screen);
 
+    state = as->sScreen->getState ();
     sWindow->scalePaintDecoration (attrib, transform, region, mask);
 
-    if ((as->sScreen->getState () == ScaleScreen::Wait) || (as->sScreen->getState () == ScaleScreen::Out))
+    if (state == ScaleScreen::Wait || state == ScaleScreen::Out)
     {
 	if (as->optionGetWindowHighlight ())
 	{
@@ -451,8 +427,7 @@ ScaleAddonWindow::scaleSelectWindow ()
 {
     ADDON_SCREEN (screen);
 
-    as->highlightedWindow     = window->id ();
-
+    as->highlightedWindow = window->id ();
     as->checkWindowHighlight ();
 
     sWindow->scaleSelectWindow ();
@@ -461,42 +436,42 @@ ScaleAddonWindow::scaleSelectWindow ()
 void
 ScaleAddonScreen::donePaint ()
 {
-    if (sScreen->getState () != ScaleScreen::Idle &&
-	lastState == ScaleScreen::Idle)
+    ScaleScreen::State state = sScreen->getState ();
+
+    if (state != ScaleScreen::Idle && lastState == ScaleScreen::Idle)
     {
 	foreach (CompWindow *w, screen->windows ())
 	    ScaleAddonWindow::get (w)->renderTitle ();
     }
-    else if (sScreen->getState () == ScaleScreen::Idle &&
-	     lastState != ScaleScreen::Idle)
+    else if (state == ScaleScreen::Idle && lastState != ScaleScreen::Idle)
     {
 	foreach (CompWindow *w, screen->windows ())
-	    ScaleAddonWindow::get (w)->freeTitle ();
+	    ScaleAddonWindow::get (w)->text.clear ();
     }
 
-    if (sScreen->getState () == ScaleScreen::Out &&
-	lastState != ScaleScreen::Out)
+    if (state == ScaleScreen::Out && lastState != ScaleScreen::Out)
     {
 	lastHighlightedWindow = None;
 	checkWindowHighlight ();
     }
 
-    lastState = sScreen->getState ();
+    lastState = state;
 
     cScreen->donePaint ();
 }
 
 void
-ScaleAddonScreen::handleCompizEvent (const char  *pluginName,
-			     	     const char  *eventName,
-			     	     CompOption::Vector  &options)
+ScaleAddonScreen::handleCompizEvent (const char         *pluginName,
+				     const char         *eventName,
+				     CompOption::Vector &options)
 {
     screen->handleCompizEvent (pluginName, eventName, options);
 
     if ((strcmp (pluginName, "scale") == 0) &&
 	(strcmp (eventName, "activate") == 0))
     {
-	bool activated = CompOption::getBoolOptionNamed (options, "active", false);
+	bool activated =
+	    CompOption::getBoolOptionNamed (options, "active", false);
 
 	if (activated)
 	{
@@ -940,7 +915,8 @@ ScaleAddonScreen::layoutSlotsAndAssignWindows ()
     switch (optionGetLayoutMode ())
     {
     case LayoutModeOrganicExperimental:
-	//status = layoutOrganicThumbs ();
+	/* status = layoutOrganicThumbs (); */
+	status = false;
 	break;
     case LayoutModeNormal:
     default:
@@ -952,7 +928,7 @@ ScaleAddonScreen::layoutSlotsAndAssignWindows ()
 }
 
 void
-ScaleAddonScreen::optionChanged (CompOption              *opt,
+ScaleAddonScreen::optionChanged (CompOption                 *opt,
 				 ScaleaddonOptions::Options num)
 {
     switch (num)
@@ -963,13 +939,12 @@ ScaleAddonScreen::optionChanged (CompOption              *opt,
 	case ScaleaddonOptions::BorderSize:
 	case ScaleaddonOptions::FontColor:
 	case ScaleaddonOptions::BackColor:
+	    if (textAvailable)
 	    {
 		foreach (CompWindow *w, screen->windows ())
 		{
 		    ADDON_WINDOW (w);
-
-		    if (textAvailable)
-			aw->renderTitle ();
+		    aw->renderTitle ();
 		}
 	    }
 	    break;
@@ -987,31 +962,33 @@ ScaleAddonScreen::ScaleAddonScreen (CompScreen *) :
     lastState (ScaleScreen::Idle),
     scale (1.0f)
 {
+    CompAction::CallBack cb;
+    ChangeNotify         notify;
+
     ScreenInterface::setHandler (screen, true);
     CompositeScreenInterface::setHandler (cScreen, true);
     ScaleScreenInterface::setHandler (sScreen, true);
 
-    optionSetCloseKeyInitiate (boost::bind (&ScaleAddonScreen::closeWindow, this,
-					    _1, _2 ,_3));
-    optionSetZoomKeyInitiate (boost::bind (&ScaleAddonScreen::zoomWindow, this,
-					   _1, _2, _3));
-    optionSetPullKeyInitiate (boost::bind (&ScaleAddonScreen::pullWindow, this,
-					   _1, _2, _3));
-    optionSetCloseButtonInitiate (boost::bind (&ScaleAddonScreen::closeWindow, this,
-					       _1, _2, _3));
-    optionSetZoomButtonInitiate (boost::bind (&ScaleAddonScreen::zoomWindow, this,
-					      _1, _2, _3));
-    optionSetPullButtonInitiate (boost::bind (&ScaleAddonScreen::pullWindow, this,
-					      _1, _2, _3));
+    cb = boost::bind (&ScaleAddonScreen::closeWindow, this, _1, _2, _3);
+    optionSetCloseKeyInitiate (cb);
+    optionSetCloseButtonInitiate (cb);
 
-    optionSetWindowTitleNotify (boost::bind (&ScaleAddonScreen::optionChanged, this, _1, _2));
-    optionSetTitleBoldNotify (boost::bind (&ScaleAddonScreen::optionChanged, this, _1, _2));
-    optionSetTitleSizeNotify (boost::bind (&ScaleAddonScreen::optionChanged, this, _1, _2));
-    optionSetBorderSizeNotify (boost::bind (&ScaleAddonScreen::optionChanged, this, _1, _2));
-    optionSetFontColorNotify (boost::bind (&ScaleAddonScreen::optionChanged, this, _1, _2));
-    optionSetBackColorNotify (boost::bind (&ScaleAddonScreen::optionChanged, this, _1, _2));
+    cb = boost::bind (&ScaleAddonScreen::zoomWindow, this, _1, _2, _3);
+    optionSetZoomKeyInitiate (cb);
+    optionSetZoomButtonInitiate (cb);
+
+    cb = boost::bind (&ScaleAddonScreen::pullWindow, this, _1, _2, _3);
+    optionSetPullKeyInitiate (cb);
+    optionSetPullButtonInitiate (cb);
+
+    notify = boost::bind (&ScaleAddonScreen::optionChanged, this, _1, _2);
+    optionSetWindowTitleNotify (notify);
+    optionSetTitleBoldNotify (notify);
+    optionSetTitleSizeNotify (notify);
+    optionSetBorderSizeNotify (notify);
+    optionSetFontColorNotify (notify);
+    optionSetBackColorNotify (notify);
 }
-
 
 ScaleAddonWindow::ScaleAddonWindow (CompWindow *window) :
     PluginClassHandler <ScaleAddonWindow, CompWindow> (window),
@@ -1035,7 +1012,8 @@ ScaleAddonPluginVTable::init ()
 
     if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
     {
-	compLogMessage ("scaleaddon", CompLogLevelInfo, "Text Plugin not loaded, no text will be drawn\n");
+	compLogMessage ("scaleaddon", CompLogLevelInfo,
+			"Text Plugin not loaded, no text will be drawn.");
 	textAvailable = false;
     }
     else
@@ -1043,4 +1021,3 @@ ScaleAddonPluginVTable::init ()
 
     return true;
 }
-
