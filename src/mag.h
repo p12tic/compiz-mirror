@@ -26,6 +26,7 @@
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <mousepoll/mousepoll.h>
+#include <compiztoolbox/compiztoolbox.h>
 
 #include "mag_options.h"
 
@@ -70,6 +71,12 @@ class MagScreen :
 	GLuint program;
 
 	MousePoller poller;
+	
+	PropertyWriter toggleState;
+	CompTimer      checkStateTimer;
+	
+	bool
+	checkStateTimeout ();
 
 	void
 	preparePaint (int ms);
