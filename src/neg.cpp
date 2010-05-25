@@ -29,7 +29,11 @@ COMPIZ_PLUGIN_20090315 (neg, NegPluginVTable);
 void
 NegWindow::toggle ()
 {
+    CompOption::Vector opts;
+    CompOption::Value  toggled;
     NEG_SCREEN (screen);
+
+    opts = ns->toggleState.getReadTemplate ();
 
     /* toggle window negative flag */
     isNeg = !isNeg;
@@ -45,6 +49,11 @@ NegWindow::toggle ()
 	gWindow->glDrawTextureSetEnabled (this, true);
     else
 	gWindow->glDrawTextureSetEnabled (this, false);
+
+    toggled = CompOption::Value (isNeg);
+    opts.at (0).set (toggled);
+    
+    ns->toggleState.updateProperty (window->id (), opts, false, XA_CARDINAL);
 }
 
 void
@@ -512,6 +521,47 @@ NegScreen::optionChanged (CompOption          *opt,
     }
 }
 
+bool
+NegScreen::checkStateTimeout ()
+{
+    CompOption::Vector atomTemplate;
+    CompOption::Vector currentToggleState;
+    CompOption::Value  v;
+    
+    atomTemplate.resize (1);
+    atomTemplate.at (0).setName ("toggled", CompOption::TypeBool);
+    
+    toggleState = PropertyWriter ("_COMPIZ_NEG_TOGGLE_STATE", atomTemplate);
+    
+    /* Attempt to read the property on the root window
+     * from where we may have previously set data
+     */
+     
+    foreach (CompWindow *w, screen->windows ())
+    {
+	NEG_WINDOW (w);
+
+	/* check exclude list */
+	if (optionGetExcludeMatch ().evaluate (w))
+	    continue;
+	
+	currentToggleState = toggleState.readProperty (w->id ());
+    
+	if (!currentToggleState.empty ())
+	{
+	    nw->isNeg = currentToggleState.at (0).value ().b ();
+
+	    if (nw->isNeg)
+	    {
+		nw->cWindow->addDamage ();
+		nw->gWindow->glDrawTextureSetEnabled (nw, true);
+	    }
+	}
+    }
+    
+    return false;
+}
+
 NegScreen::NegScreen (CompScreen *screen) :
     PluginClassHandler <NegScreen, CompScreen> (screen),
     NegOptions (),
@@ -520,6 +570,13 @@ NegScreen::NegScreen (CompScreen *screen) :
     isNeg (false),
     gScreen (GLScreen::get (screen))
 {
+
+    checkStateTimer.setTimes (0, 0);
+    checkStateTimer.setCallback (boost::bind (&NegScreen::checkStateTimeout,
+    					      this));
+    checkStateTimer.start ();
+
+
     optionSetWindowToggleKeyInitiate (boost::bind (&NegScreen::toggle, this,
 						   _1, _2, _3,
 						   false));

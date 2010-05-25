@@ -26,6 +26,7 @@
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
+#include <compiztoolbox/compiztoolbox.h>
 
 #include "neg_options.h"
 
@@ -41,6 +42,12 @@ class NegScreen :
 	int negAlphaFunction;
 
 	bool isNeg;
+	
+	PropertyWriter toggleState;
+	CompTimer      checkStateTimer;
+	
+	bool
+	checkStateTimeout ();
 
 	void
 	optionChanged (CompOption          *opt,
