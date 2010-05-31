@@ -62,12 +62,20 @@ BenchScreen::preparePaint (int msSinceLastPaint)
 	}
     }
 
-    cScreen->preparePaint (msSinceLastPaint);
+    cScreen->preparePaint ((mAlpha > 0.0) ? timediff : msSinceLastPaint);
 
     if (mActive)
 	mAlpha += timediff / 1000.0;
     else
+    {
+	if (mAlpha <= 0.0)
+	{
+	    cScreen->preparePaintSetEnabled (this, false);
+	    cScreen->donePaintSetEnabled (this, false);
+	    gScreen->glPaintOutputSetEnabled (this, false);
+	}
 	mAlpha -= timediff / 1000.0;
+    }
 
     mAlpha = MIN (1.0, MAX (0.0, mAlpha) );
 }
@@ -365,8 +373,6 @@ BenchScreen::BenchScreen (CompScreen *screen) :
     glVertex2f (16, 0);
     glEnd();
     glEndList();
-
-    gettimeofday (&mLastRedraw, 0);
 }
 
 BenchScreen::~BenchScreen ()
@@ -403,6 +409,10 @@ BenchScreen::initiate (CompOption::Vector &options)
 
     	cScreen->setFPSLimiterMode ((CompositeFPSLimiterMode)
 				    optionGetFpsLimiterMode ());
+
+	cScreen->preparePaintSetEnabled (this, true);
+	cScreen->donePaintSetEnabled (this, true);
+	gScreen->glPaintOutputSetEnabled (this, true);
     }
     else
     {
@@ -410,13 +420,11 @@ BenchScreen::initiate (CompOption::Vector &options)
     	cScreen->setFPSLimiterMode (mOldLimiterMode);
     }
 
-    cScreen->preparePaintSetEnabled (this, mActive);
-    cScreen->donePaintSetEnabled (this, mActive);
-    gScreen->glPaintOutputSetEnabled (this, mActive);
-
     cScreen->damageScreen ();
     mCtime = 0;
     mFrames = 0;
+
+    gettimeofday (&mLastRedraw, 0);
 
     return false;
 }
