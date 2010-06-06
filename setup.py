@@ -1,11 +1,24 @@
 # -*- coding: utf-8 -*-
 from distutils.core import setup
+from distutils.command.build import build as _build
 from distutils.command.install import install as _install
 from distutils.command.install_data import install_data as _install_data
 from distutils.extension import Extension
 from Cython.Distutils import build_ext
 import os
 import subprocess
+import commands
+
+def pkgconfig(*packages, **kw):
+    if os.getenv ("COMPIZ_DISABLE_RPATH") is "1":
+        flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
+    else:
+        flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-L': 'runtime_library_dirs'}
+
+    for token in commands.getoutput("pkg-config --libs --cflags %s" % ' '.join(packages)).split():
+        kw.setdefault(flag_map.get(token[:2]), []).append(token[2:])
+    
+    return kw
 
 VERSION_FILE = os.path.join (os.path.dirname (__file__), "VERSION")
 
@@ -14,7 +27,7 @@ pkgconfig_libs = subprocess.Popen (["pkg-config", "--libs", "libcompizconfig"], 
 if len (pkgconfig_libs) is 0:
   print "CompizConfig Python [ERROR]: No libcompizconfig.pc found in the pkg-config search path"
   print "Ensure that libcompizonfig is installed or libcompizconfig.pc is in your $PKG_CONFIG_PATH"
-
+  exit (1);
 libs = pkgconfig_libs[2:].split (" ")[0]
 
 INSTALLED_FILES = "installed_files"
@@ -82,14 +95,13 @@ class uninstall (_install):
 setup (
   name = "compizconfig-python",
   version = open (VERSION_FILE).read ().split ("=")[1],
-  ext_modules=[ 
-    Extension ("compizconfig", ["src/compizconfig.pyx"],
-	       library_dirs = [libs],
-               libraries = ["compizconfig"])
-    ],
     cmdclass         = {"uninstall" : uninstall,
                         "install" : install,
                         "install_data" : install_data,
-                        "build_ext" : build_ext}
+                        "build_ext" : build_ext},
+  ext_modules=[ 
+    Extension ("compizconfig", ["src/compizconfig.pyx"],
+	       **pkgconfig("libcompizconfig"))
+    ]
 )
 
