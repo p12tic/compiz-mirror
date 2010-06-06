@@ -16,5 +16,5 @@ compiz_print_configure_header ("CompizConfig GConf Storage Backend")
 compiz_print_configure_footer ()
 
 compiz_add_uninstall ()
-compiz_add_package_generation ("CompizConfig GConf Storage Backend")
+compiz_package_generation ("CompizConfig GConf Storage Backend")
 compiz_add_git_dist ()
