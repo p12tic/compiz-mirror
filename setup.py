@@ -85,7 +85,6 @@ setup (
   ext_modules=[ 
     Extension ("compizconfig", ["src/compizconfig.pyx"],
 	       library_dirs = [libs],
-	       runtime_library_dirs = [libs],
                libraries = ["compizconfig"])
     ],
     cmdclass         = {"uninstall" : uninstall,
