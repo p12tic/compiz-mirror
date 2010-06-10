@@ -279,7 +279,7 @@ VPSwitchScreen::terminateNumbered (CompAction         *action,
 	return false;
 
     nx = (destination - 1 ) % vpsize.width ();
-    ny = (destination - 1 ) / vpsize.height ();
+    ny = (destination - 1 ) / vpsize.width ();
 
     gotovp (nx, ny);
 
@@ -297,6 +297,7 @@ VPSwitchScreen::switchto (CompAction         *action,
 
     destination = num;
 
+    numberedActive = true;
     return terminateNumbered (action, state, options);
 }
 
