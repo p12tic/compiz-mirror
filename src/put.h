@@ -91,6 +91,13 @@ class PutScreen :
 	initiate (CompAction         *action,
 		  CompAction::State  state,
 		  CompOption::Vector &option);
+	
+	bool
+	toViewport (CompAction         *action,
+                    CompAction::State  state,
+                    CompOption::Vector &option,
+                    int vp);
+
     private:
 
 	CompRegion

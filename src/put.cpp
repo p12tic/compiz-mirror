@@ -596,23 +596,23 @@ PutScreen::getDistance (CompWindow         *w,
 
 	    /* split 1D viewport value into 2D x and y viewport */
 	    vpX = viewport % s->vpSize ().width ();
-	    vpY = viewport / s->vpSize ().height () ;
-	    if (vpY > (int) s->vpSize ().width ())
-		vpY = s->vpSize ().width () - 1;
+	    vpY = viewport / s->vpSize ().width ();
+	    if (vpY > (int) s->vpSize ().height ())
+		vpY = s->vpSize ().height () - 1;
 
 	    /* take the shortest horizontal path to the destination viewport */
 	    hDirection = (vpX - s->vp ().x ());
-	    if (hDirection > (int) s->vpSize ().height () / 2)
-		hDirection = (hDirection - s->vpSize ().height ());
-	    else if (hDirection < - ((int) s->vpSize ().height ()) / 2)
-		hDirection = (hDirection + s->vpSize ().height ());
+	    if (hDirection > (int) s->vpSize ().width () / 2)
+		hDirection = (hDirection - s->vpSize ().width ());
+	    else if (hDirection < - ((int) s->vpSize ().width ()) / 2)
+		hDirection = (hDirection + s->vpSize ().width ());
 
 	    /* we need to do this for the vertical destination viewport too */
 	    vDirection = (vpY - s->vp ().y ());
-	    if (vDirection > (int) s->vpSize ().width () / 2)
-		vDirection = (vDirection - s->vpSize ().width ());
-	    else if (vDirection < -((int) s->vpSize ().width ()) / 2)
-		vDirection = (vDirection + s->vpSize ().width ());
+	    if (vDirection > (int) s->vpSize ().height () / 2)
+		vDirection = (vDirection - s->vpSize ().height ());
+	    else if (vDirection < -((int) s->vpSize ().height ()) / 2)
+		vDirection = (vDirection + s->vpSize ().height ());
 
 	    dx = s->width () * hDirection;
 	    dy = s->height () * vDirection;
@@ -1175,6 +1175,20 @@ PutScreen::initiate (CompAction         *action,
     return initiateCommon (action, state, option,type);
 }
 
+bool
+PutScreen::toViewport (CompAction         *action,
+		       CompAction::State  state,
+		       CompOption::Vector &option,
+		       int vp)
+{
+    int last = option.size ();
+    option.resize(last+1);
+    option[last].setName ("viewport",CompOption::TypeInt);
+    option[last].value ().set (vp-1);
+
+    return initiateCommon (action, state, option, (PutType) PutViewport);
+}
+
 
 PutScreen::PutScreen (CompScreen *screen) :
     PluginClassHandler <PutScreen, CompScreen> (screen),
@@ -1218,6 +1232,30 @@ PutScreen::PutScreen (CompScreen *screen) :
     setAction (PutEmptyBottomleft, PutEmptyBottomLeft);
     setAction (PutBottomright, PutBottomRight);
     setAction (PutEmptyBottomright, PutEmptyBottomRight);
+
+#define setViewportAction(num)						       \
+    optionSetPutViewport##num##KeyInitiate(boost::bind (&PutScreen::toViewport,\
+				this, _1,_2,_3,num));
+
+    setViewportAction(1);
+    setViewportAction(2);
+    setViewportAction(3);
+    setViewportAction(4);
+    setViewportAction(5);
+    setViewportAction(6);
+    setViewportAction(7);
+    setViewportAction(8);
+    setViewportAction(9);
+    setViewportAction(10);
+    setViewportAction(11);
+    setViewportAction(12);
+
+    /*
+    optionSetPutViewportInitiate (boost::bind (&PutScreen::initiateCommon,     \
+	                                  this, _1,_2,_3,(PutType)PutViewport));
+    optionSetPutViewport1KeyInitiate (boost::bind (&PutScreen::initiateCommon, \
+	                                  this, _1,_2,_3,(PutType)PutViewport));
+    */
 }
 
 PutWindow::PutWindow (CompWindow *window) :
