@@ -28,27 +28,40 @@
 
 COMPIZ_PLUGIN_20090315 (showmouse, ShowmousePluginVTable);
 
-ParticleSystem::ParticleSystem (int n) :
-    tex (0),
-    active (false),
-    particles (NULL),
-    vertices_cache (NULL),
-    coords_cache (NULL),
-    colors_cache (NULL),
-    dcolors_cache (NULL)
+Particle::Particle () :
+    life (0),
+    fade (0),
+    width (0),
+    height (0),
+    w_mod (0),
+    h_mod (0),
+    r (0),
+    g (0),
+    b (0),
+    a (0),
+    x (0),
+    y (0),
+    z (0),
+    xi (0),
+    yi (0),
+    zi (0),
+    xg (0),
+    yg (0),
+    zg (0),
+    xo (0),
+    yo (0),
+    zo (0)
+{
+}
+
+ParticleSystem::ParticleSystem (int n)
 {
     initParticles (n);
 }
 
-ParticleSystem::ParticleSystem () :
-    tex (0),
-    active (false),
-    particles (NULL),
-    vertices_cache (NULL),
-    coords_cache (NULL),
-    colors_cache (NULL),
-    dcolors_cache (NULL)
+ParticleSystem::ParticleSystem ()
 {
+    initParticles (0);
 }
 
 ParticleSystem::~ParticleSystem ()
@@ -64,24 +77,30 @@ ParticleSystem::initParticles (int            f_numParticles)
     tex = 0;
     slowdown = 1;
     active = false;
+    darken = 0;
 
     // Initialize cache
-    vertices_cache = NULL;
-    colors_cache   = NULL;
-    coords_cache   = NULL;
-    dcolors_cache  = NULL;
+    vertices_cache.cache = NULL;
+    colors_cache.cache   = NULL;
+    coords_cache.cache   = NULL;
+    dcolors_cache.cache  = NULL;
 
-    vertex_cache_count  = 0;
-    color_cache_count   = 0;
-    coords_cache_count  = 0;
-    dcolors_cache_count = 0;
+    vertices_cache.count  = 0;
+    colors_cache.count   = 0;
+    coords_cache.count  = 0;
+    dcolors_cache.count = 0;
+
+    vertices_cache.size  = 0;
+    colors_cache.size   = 0;
+    coords_cache.size  = 0;
+    dcolors_cache.size = 0;
 
     int i;
 
     for (i = 0; i < f_numParticles; i++)
     {
-	Particle *p = new Particle ();
-	p->life = 0.0f;
+	Particle p;
+	p.life = 0.0f;
 	particles.push_back (p);
     }
 }
@@ -108,75 +127,79 @@ ParticleSystem::drawParticles ()
 
     /* Check that the cache is big enough */
 
-    if (particles.size () > vertex_cache_count)
+    if (particles.size () > vertices_cache.count)
     {
-	vertices_cache = (GLfloat *) realloc (vertices_cache,
-				      	      particles.size () * 4 * 3 *
-				      	      sizeof (GLfloat));
-	vertex_cache_count = particles.size ();
+	vertices_cache.cache = (GLfloat *) realloc (vertices_cache.cache,
+						    particles.size () * 4 * 3 *
+						    sizeof (GLfloat));
+	vertices_cache.size = particles.size () * 4 * 3;
+	vertices_cache.count = particles.size ();
     }
 
-    if (particles.size () > coords_cache_count)
+    if (particles.size () > coords_cache.count)
     {
-	coords_cache = (GLfloat *) realloc (coords_cache,
-				    	    particles.size () * 4 * 2 *
-				    	    sizeof (GLfloat));
-	coords_cache_count = particles.size ();
+	coords_cache.cache = (GLfloat *) realloc (coords_cache.cache,
+						  particles.size () * 4 * 2 *
+						  sizeof (GLfloat));
+	coords_cache.size = particles.size () * 4 * 2;
+	coords_cache.count = particles.size ();
     }
 
-    if (particles.size () > color_cache_count)
+    if (particles.size () > colors_cache.count)
     {
-	colors_cache = (GLfloat *) realloc (colors_cache,
-				    	    particles.size () * 4 * 4 *
-				    	    sizeof (GLfloat));
-	color_cache_count = particles.size ();
+	colors_cache.cache = (GLfloat *) realloc (colors_cache.cache,
+						  particles.size () * 4 * 4 *
+						  sizeof (GLfloat));
+	colors_cache.size = particles.size () * 4 * 4;
+	colors_cache.count = particles.size ();
     }
 
     if (darken > 0)
     {
-	if (dcolors_cache_count < particles.size ())
+	if (dcolors_cache.count < particles.size ())
 	{
-	    dcolors_cache = (GLfloat *) realloc (dcolors_cache,
-					 	 particles.size () * 4 * 4 *
-					 	 sizeof (GLfloat));
-	    dcolors_cache_count = particles.size ();
+	    dcolors_cache.cache = (GLfloat *) realloc (dcolors_cache.cache,
+						       particles.size () * 4 * 4 *
+						       sizeof (GLfloat));
+	    dcolors_cache.size = particles.size () * 4 * 4;
+	    dcolors_cache.count = particles.size ();
 	}
     }
 
-    dcolors  = dcolors_cache;
-    vertices = vertices_cache;
-    coords   = coords_cache;
-    colors   = colors_cache;
+    dcolors  = dcolors_cache.cache;
+    vertices = vertices_cache.cache;
+    coords   = coords_cache.cache;
+    colors   = colors_cache.cache;
 
     int numActive = 0;
 
-    foreach (Particle *part, particles)
+    foreach (Particle &part, particles)
     {
-	if (part->life > 0.0f)
+	if (part.life > 0.0f)
 	{
 	    numActive += 4;
 
-	    float w = part->width / 2;
-	    float h = part->height / 2;
+	    float w = part.width / 2;
+	    float h = part.height / 2;
 
-	    w += (w * part->w_mod) * part->life;
-	    h += (h * part->h_mod) * part->life;
+	    w += (w * part.w_mod) * part.life;
+	    h += (h * part.h_mod) * part.life;
 
-	    vertices[0]  = part->x - w;
-	    vertices[1]  = part->y - h;
-	    vertices[2]  = part->z;
+	    vertices[0]  = part.x - w;
+	    vertices[1]  = part.y - h;
+	    vertices[2]  = part.z;
 
-	    vertices[3]  = part->x - w;
-	    vertices[4]  = part->y + h;
-	    vertices[5]  = part->z;
+	    vertices[3]  = part.x - w;
+	    vertices[4]  = part.y + h;
+	    vertices[5]  = part.z;
 
-	    vertices[6]  = part->x + w;
-	    vertices[7]  = part->y + h;
-	    vertices[8]  = part->z;
+	    vertices[6]  = part.x + w;
+	    vertices[7]  = part.y + h;
+	    vertices[8]  = part.z;
 
-	    vertices[9]  = part->x + w;
-	    vertices[10] = part->y - h;
-	    vertices[11] = part->z;
+	    vertices[9]  = part.x + w;
+	    vertices[10] = part.y - h;
+	    vertices[11] = part.z;
 
 	    vertices += 12;
 
@@ -194,44 +217,44 @@ ParticleSystem::drawParticles ()
 
 	    coords += 8;
 
-	    colors[0]  = part->r;
-	    colors[1]  = part->g;
-	    colors[2]  = part->b;
-	    colors[3]  = part->life * part->a;
-	    colors[4]  = part->r;
-	    colors[5]  = part->g;
-	    colors[6]  = part->b;
-	    colors[7]  = part->life * part->a;
-	    colors[8]  = part->r;
-	    colors[9]  = part->g;
-	    colors[10] = part->b;
-	    colors[11] = part->life * part->a;
-	    colors[12] = part->r;
-	    colors[13] = part->g;
-	    colors[14] = part->b;
-	    colors[15] = part->life * part->a;
+	    colors[0]  = part.r;
+	    colors[1]  = part.g;
+	    colors[2]  = part.b;
+	    colors[3]  = part.life * part.a;
+	    colors[4]  = part.r;
+	    colors[5]  = part.g;
+	    colors[6]  = part.b;
+	    colors[7]  = part.life * part.a;
+	    colors[8]  = part.r;
+	    colors[9]  = part.g;
+	    colors[10] = part.b;
+	    colors[11] = part.life * part.a;
+	    colors[12] = part.r;
+	    colors[13] = part.g;
+	    colors[14] = part.b;
+	    colors[15] = part.life * part.a;
 
 	    colors += 16;
 
 	    if (darken > 0)
 	    {
 
-		dcolors[0]  = part->r;
-		dcolors[1]  = part->g;
-		dcolors[2]  = part->b;
-		dcolors[3]  = part->life * part->a * darken;
-		dcolors[4]  = part->r;
-		dcolors[5]  = part->g;
-		dcolors[6]  = part->b;
-		dcolors[7]  = part->life * part->a * darken;
-		dcolors[8]  = part->r;
-		dcolors[9]  = part->g;
-		dcolors[10] = part->b;
-		dcolors[11] = part->life * part->a * darken;
-		dcolors[12] = part->r;
-		dcolors[13] = part->g;
-		dcolors[14] = part->b;
-		dcolors[15] = part->life * part->a * darken;
+		dcolors[0]  = part.r;
+		dcolors[1]  = part.g;
+		dcolors[2]  = part.b;
+		dcolors[3]  = part.life * part.a * darken;
+		dcolors[4]  = part.r;
+		dcolors[5]  = part.g;
+		dcolors[6]  = part.b;
+		dcolors[7]  = part.life * part.a * darken;
+		dcolors[8]  = part.r;
+		dcolors[9]  = part.g;
+		dcolors[10] = part.b;
+		dcolors[11] = part.life * part.a * darken;
+		dcolors[12] = part.r;
+		dcolors[13] = part.g;
+		dcolors[14] = part.b;
+		dcolors[15] = part.life * part.a * darken;
 
 		dcolors += 16;
 	    }
@@ -240,22 +263,22 @@ ParticleSystem::drawParticles ()
 
     glEnableClientState (GL_COLOR_ARRAY);
 
-    glTexCoordPointer (2, GL_FLOAT, 2 * sizeof (GLfloat), coords_cache);
-    glVertexPointer (3, GL_FLOAT, 3 * sizeof (GLfloat), vertices_cache);
+    glTexCoordPointer (2, GL_FLOAT, 2 * sizeof (GLfloat), coords_cache.cache);
+    glVertexPointer (3, GL_FLOAT, 3 * sizeof (GLfloat), vertices_cache.cache);
 
     // darken the background
 
     if (darken > 0)
     {
 	glBlendFunc (GL_ZERO, GL_ONE_MINUS_SRC_ALPHA);
-	glColorPointer (4, GL_FLOAT, 4 * sizeof (GLfloat), dcolors_cache);
+	glColorPointer (4, GL_FLOAT, 4 * sizeof (GLfloat), dcolors_cache.cache);
 	glDrawArrays (GL_QUADS, 0, numActive);
     }
 
     // draw particles
     glBlendFunc (GL_SRC_ALPHA, blendMode);
 
-    glColorPointer (4, GL_FLOAT, 4 * sizeof (GLfloat), colors_cache);
+    glColorPointer (4, GL_FLOAT, 4 * sizeof (GLfloat), colors_cache.cache);
     glDrawArrays (GL_QUADS, 0, numActive);
     glDisableClientState (GL_COLOR_ARRAY);
 
@@ -277,22 +300,22 @@ ParticleSystem::updateParticles (float          time)
 
     active = false;
 
-    foreach (Particle *part, particles)
+    foreach (Particle &part, particles)
     {
-	if (part->life > 0.0f)
+	if (part.life > 0.0f)
 	{
 	    // move particle
-	    part->x += part->xi / f_slowdown;
-	    part->y += part->yi / f_slowdown;
-	    part->z += part->zi / f_slowdown;
+	    part.x += part.xi / f_slowdown;
+	    part.y += part.yi / f_slowdown;
+	    part.z += part.zi / f_slowdown;
 
 	    // modify speed
-	    part->xi += part->xg * speed;
-	    part->yi += part->yg * speed;
-	    part->zi += part->zg * speed;
+	    part.xi += part.xg * speed;
+	    part.yi += part.yg * speed;
+	    part.zi += part.zg * speed;
 
 	    // modify life
-	    part->life -= part->fade * speed;
+	    part.life -= part.fade * speed;
 	    active = true;
 	}
     }
@@ -306,28 +329,28 @@ ParticleSystem::finiParticles ()
     if (tex)
 	glDeleteTextures (1, &tex);
 
-    if (vertices_cache)
+    if (vertices_cache.cache)
     {
-	free (vertices_cache);
-	vertices_cache = NULL;
+	free (vertices_cache.cache);
+	vertices_cache.cache = NULL;
     }
 
-    if (colors_cache)
+    if (colors_cache.cache)
     {
-	free (colors_cache);
-	colors_cache = NULL;
+	free (colors_cache.cache);
+	colors_cache.cache = NULL;
     }
 
-    if (coords_cache)
+    if (coords_cache.cache)
     {
-	free (coords_cache);
-	coords_cache = NULL;
+	free (coords_cache.cache);
+	coords_cache.cache = NULL;
     }
 
-    if (dcolors_cache)
+    if (dcolors_cache.cache)
     {
-	free (dcolors_cache);
-	dcolors_cache = NULL;
+	free (dcolors_cache.cache);
+	dcolors_cache.cache = NULL;
     }
 }
 
@@ -343,14 +366,11 @@ toggleFunctions (bool enabled)
 void
 ShowmouseScreen::genNewParticles (int f_time)
 {
-    if (!ps)
-	return;
-
     bool rColor     = optionGetRandom ();
     float life      = optionGetLife ();
     float lifeNeg   = 1 - life;
     float fadeExtra = 0.2f * (1.01 - life);
-    float max_new   = ps->particles.size () * ((float)f_time / 50) * (1.05 - life);
+    float max_new   = ps.particles.size () * ((float)f_time / 50) * (1.05 - life);
 
     unsigned short *c = optionGetColor ();
 
@@ -380,65 +400,65 @@ ShowmouseScreen::genNewParticles (int f_time)
 	pos[i][1] += mousePos.y ();
     }
 
-    for (i = 0; i < ps->particles.size () && max_new > 0; i++)
+    for (i = 0; i < ps.particles.size () && max_new > 0; i++)
     {
-	Particle *part = ps->particles.at (i);
-	if (part->life <= 0.0f)
+	Particle &part = ps.particles.at (i);
+	if (part.life <= 0.0f)
 	{
 	    // give gt new life
 	    rVal = (float)(random() & 0xff) / 255.0;
-	    part->life = 1.0f;
-	    part->fade = rVal * lifeNeg + fadeExtra; // Random Fade Value
+	    part.life = 1.0f;
+	    part.fade = rVal * lifeNeg + fadeExtra; // Random Fade Value
 
 	    // set size
-	    part->width = partw;
-	    part->height = parth;
+	    part.width = partw;
+	    part.height = parth;
 	    rVal = (float)(random() & 0xff) / 255.0;
-	    part->w_mod = part->h_mod = -1;
+	    part.w_mod = part.h_mod = -1;
 
 	    // choose random position
 
 	    j        = random() % nE;
-	    part->x  = pos[j][0];
-	    part->y  = pos[j][1];
-	    part->z  = 0.0;
-	    part->xo = part->x;
-	    part->yo = part->y;
-	    part->zo = part->z;
+	    part.x  = pos[j][0];
+	    part.y  = pos[j][1];
+	    part.z  = 0.0;
+	    part.xo = part.x;
+	    part.yo = part.y;
+	    part.zo = part.z;
 
 	    // set speed and direction
 	    rVal     = (float)(random() & 0xff) / 255.0;
-	    part->xi = ((rVal * 20.0) - 10.0f);
+	    part.xi = ((rVal * 20.0) - 10.0f);
 	    rVal     = (float)(random() & 0xff) / 255.0;
-	    part->yi = ((rVal * 20.0) - 10.0f);
-	    part->zi = 0.0f;
+	    part.yi = ((rVal * 20.0) - 10.0f);
+	    part.zi = 0.0f;
 
 	    if (rColor)
 	    {
 		// Random colors! (aka Mystical Fire)
 		rVal    = (float)(random() & 0xff) / 255.0;
-		part->r = rVal;
+		part.r = rVal;
 		rVal    = (float)(random() & 0xff) / 255.0;
-		part->g = rVal;
+		part.g = rVal;
 		rVal    = (float)(random() & 0xff) / 255.0;
-		part->b = rVal;
+		part.b = rVal;
 	    }
 	    else
 	    {
 		rVal    = (float)(random() & 0xff) / 255.0;
-		part->r = colr1 - rVal * colr2;
-		part->g = colg1 - rVal * colg2;
-		part->b = colb1 - rVal * colb2;
+		part.r = colr1 - rVal * colr2;
+		part.g = colg1 - rVal * colg2;
+		part.b = colb1 - rVal * colb2;
 	    }
 	    // set transparancy
-	    part->a = cola;
+	    part.a = cola;
 
 	    // set gravity
-	    part->xg = 0.0f;
-	    part->yg = 0.0f;
-	    part->zg = 0.0f;
+	    part.xg = 0.0f;
+	    part.yg = 0.0f;
+	    part.zg = 0.0f;
 
-	    ps->active = true;
+	    ps.active = true;
 	    max_new   -= 1;
 	}
     }
@@ -451,29 +471,23 @@ ShowmouseScreen::damageRegion ()
 {
     float        w, h, x1, x2, y1, y2;
 
-    if (!ps)
-	return;
-
     x1 = screen->width ();
     x2 = 0;
     y1 = screen->height ();
     y2 = 0;
 
-    foreach (Particle *p, ps->particles)
+    foreach (Particle &p, ps.particles)
     {
-	if (!p)
-	    break;
+	w = p.width / 2;
+	h = p.height / 2;
 
-	w = p->width / 2;
-	h = p->height / 2;
-
-	w += (w * p->w_mod) * p->life;
-	h += (h * p->h_mod) * p->life;
+	w += (w * p.w_mod) * p.life;
+	h += (h * p.h_mod) * p.life;
 	
-	x1 = MIN (x1, p->x - w);
-	x2 = MAX (x2, p->x + w);
-	y1 = MIN (y1, p->y - h);
-	y2 = MAX (y2, p->y + h);
+	x1 = MIN (x1, p.x - w);
+	x2 = MAX (x2, p.x + w);
+	y1 = MIN (y1, p.y - h);
+	y2 = MAX (y2, p.y + h);
     }
 
     CompRegion r (floor (x1), floor (y1), (ceil (x2) - floor (x1)),
@@ -497,23 +511,17 @@ ShowmouseScreen::preparePaint (int f_time)
 	pollHandle.start ();
     }
 
-    if (active && !ps)
+    if (active && !ps.active)
     {
-	ps = new ParticleSystem ();
-	if (!ps)
-	{
-	    cScreen->preparePaint (f_time);
-	    return;
-	}
-
-	ps->initParticles (optionGetNumParticles ());
-	ps->slowdown = optionGetSlowdown ();
-	ps->darken = optionGetDarken ();
-	ps->blendMode = (optionGetBlend()) ? GL_ONE :
+	ps.initParticles (optionGetNumParticles ());
+	ps.slowdown = optionGetSlowdown ();
+	ps.darken = optionGetDarken ();
+	ps.blendMode = (optionGetBlend()) ? GL_ONE :
 			    GL_ONE_MINUS_SRC_ALPHA;
+	ps.active = true;
 
-	glGenTextures(1, &ps->tex);
-	glBindTexture(GL_TEXTURE_2D, ps->tex);
+	glGenTextures(1, &ps.tex);
+	glBindTexture(GL_TEXTURE_2D, ps.tex);
 
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -526,13 +534,13 @@ ShowmouseScreen::preparePaint (int f_time)
     rot = fmod (rot + (((float)f_time / 1000.0) * 2 * M_PI *
 		    optionGetRotationSpeed ()), 2 * M_PI);
 
-    if (ps && ps->active)
+    if (ps.active)
     {
-	ps->updateParticles (f_time);
+	ps.updateParticles (f_time);
 	damageRegion ();
     }
 
-    if (ps && active)
+    if (active)
 	genNewParticles (f_time);
 
     cScreen->preparePaint (f_time);
@@ -541,7 +549,7 @@ ShowmouseScreen::preparePaint (int f_time)
 void
 ShowmouseScreen::donePaint ()
 {
-    if (active || (ps && ps->active))
+    if (active || (ps.active))
 	damageRegion ();
 
     if (!active && pollHandle.active ())
@@ -549,11 +557,9 @@ ShowmouseScreen::donePaint ()
 	pollHandle.stop ();
     }
 
-    if (!active && ps && !ps->active)
+    if (!active && !ps.active)
     {
-	ps->finiParticles ();
-	delete ps;
-	ps = NULL;
+	ps.finiParticles ();
 	toggleFunctions (false);
     }
 
@@ -573,7 +579,7 @@ ShowmouseScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
-    if (!ps || !ps->active)
+    if (!ps.active)
 	return status;
 
     //sTransform.reset ();
@@ -583,7 +589,7 @@ ShowmouseScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     glPushMatrix ();
     glLoadMatrixf (sTransform.getMatrix ());
 
-    ps->drawParticles ();
+    ps.drawParticles ();
 
     glPopMatrix();
 
@@ -618,12 +624,49 @@ ShowmouseScreen::initiate (CompAction         *action,
     return true;
 }
 
+void
+ShowmouseScreen::postLoad ()
+{
+    if (ps.particles.empty ())
+    {
+	return;
+    }
+
+    toggleFunctions (true);
+
+    // Initialize cache
+    ps.vertices_cache.cache = NULL;
+    ps.colors_cache.cache   = NULL;
+    ps.coords_cache.cache   = NULL;
+    ps.dcolors_cache.cache  = NULL;
+
+    ps.vertices_cache.count  = 0;
+    ps.colors_cache.count   = 0;
+    ps.coords_cache.count  = 0;
+    ps.dcolors_cache.count = 0;
+
+    ps.vertices_cache.size  = 0;
+    ps.colors_cache.size   = 0;
+    ps.coords_cache.size  = 0;
+    ps.dcolors_cache.size = 0;
+
+    glGenTextures (1, &ps.tex);
+    glBindTexture (GL_TEXTURE_2D, ps.tex);
+
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, 32, 32, 0,
+	          GL_RGBA, GL_UNSIGNED_BYTE, starTex);
+    glBindTexture (GL_TEXTURE_2D, 0);
+}
+
 ShowmouseScreen::ShowmouseScreen (CompScreen *screen) :
     PluginClassHandler <ShowmouseScreen, CompScreen> (screen),
+    PluginStateWriter <ShowmouseScreen> (this, "SHOWMOUSE", screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     active (false),
-    ps (new ParticleSystem ()),
     rot (0.0f)
 {
     CompositeScreenInterface::setHandler (cScreen, false);
@@ -650,11 +693,9 @@ ShowmouseScreen::ShowmouseScreen (CompScreen *screen) :
 
 ShowmouseScreen::~ShowmouseScreen ()
 {
-    if (ps)
-    {
-	ps->finiParticles ();
-	delete ps;
-    }
+    writeSerializedData ();
+
+    ps.finiParticles ();
 
     if (pollHandle.active ())
 	pollHandle.stop ();

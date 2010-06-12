@@ -23,6 +23,7 @@
 #include <cmath>
 
 #include <core/core.h>
+#include <core/serialization.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <mousepoll/mousepoll.h>
@@ -30,32 +31,71 @@
 #include "showmouse_options.h"
 #include "showmouse_tex.h"
 
+/* =====================  Particle engine  ========================= */
+
 class Particle
 {
     public:
 
-	float life;			// particle life
-	float fade;			// fade speed
-	float width;			// particle width
-	float height;			// particle height
-	float w_mod;			// particle size modification during life
-	float h_mod;			// particle size modification during life
-	float r;			// red value
-	float g;			// green value
-	float b;			// blue value
-	float a;			// alpha value
-	float x;			// X position
-	float y;			// Y position
-	float z;			// Z position
-	float xi;			// X direction
-	float yi;			// Y direction
-	float zi;			// Z direction
-	float xg;			// X gravity
-	float yg;			// Y gravity
-	float zg;			// Z gravity
-	float xo;			// orginal X position
-	float yo;			// orginal Y position
-	float zo;			// orginal Z position
+	Particle ();
+    
+	float life;		/* particle life */
+	float fade;		/* fade speed */
+	float width;		/* particle width */
+	float height;		/* particle height */
+	float w_mod;		/* particle size modification during life */
+	float h_mod;		/* particle size modification during life */
+	float r;		/* red value */
+	float g;		/* green value */
+	float b;		/* blue value */
+	float a;		/* alpha value */
+	float x;		/* X position */
+	float y;		/* Y position */
+	float z;		/* Z position */
+	float xi;		/* X direction */
+	float yi;		/* Y direction */
+	float zi;		/* Z direction */
+	float xg;		/* X gravity */
+	float yg;		/* Y gravity */
+	float zg;		/* Z gravity */
+	float xo;		/* orginal X position */
+	float yo;		/* orginal Y position */
+	float zo;		/* orginal Z position */
+
+	template <class Archive>
+	void serialize (Archive &ar, const unsigned int version)
+	{
+	    ar & life;
+	    ar & fade;
+	    ar & width;
+	    ar & w_mod;
+	    ar & h_mod;
+	    ar & r;
+	    ar & g;
+	    ar & b;
+	    ar & a;
+	    ar & x;
+	    ar & y;
+	    ar & z;
+	    ar & xi;
+	    ar & yi;
+	    ar & zi;
+	    ar & xg;
+	    ar & yg;
+	    ar & zg;
+	    ar & xo;
+	    ar & yo;
+	    ar & zo;
+	};
+};
+
+class ParticleCache
+{
+    public:
+
+	GLfloat *cache;
+	unsigned int count;
+	unsigned int size;
 };
 
 class ParticleSystem
@@ -66,7 +106,7 @@ class ParticleSystem
 	ParticleSystem ();
 	~ParticleSystem ();
 
-	std::vector <Particle *> particles;
+	std::vector <Particle> particles;
 	float    slowdown;
 	GLuint   tex;
 	bool     active;
@@ -75,15 +115,23 @@ class ParticleSystem
 	GLuint   blendMode;
 
 	/* Moved from drawParticles to get rid of spurious malloc's */
-	GLfloat *vertices_cache;
-	GLfloat *coords_cache;
-	GLfloat *colors_cache;
-	GLfloat *dcolors_cache;
+	ParticleCache vertices_cache;
+	ParticleCache coords_cache;
+	ParticleCache colors_cache;
+	ParticleCache dcolors_cache;
 
-	unsigned int coords_cache_count;
-	unsigned int vertex_cache_count;
-	unsigned int color_cache_count;
-	unsigned int dcolors_cache_count;
+	template <class Archive>
+	void serialize (Archive &ar,
+			const unsigned int version)
+	{
+	    ar & particles;
+	    ar & slowdown;
+	    ar & active;
+	    ar & x;
+	    ar & y;
+	    ar & darken;
+	    ar & blendMode;
+	}
 
 	void
 	initParticles (int            f_numParticles);
@@ -100,6 +148,7 @@ class ParticleSystem
 
 class ShowmouseScreen :
     public PluginClassHandler <ShowmouseScreen, CompScreen>,
+    public PluginStateWriter <ShowmouseScreen>,
     public ShowmouseOptions,
     public CompositeScreenInterface,
     public GLScreenInterface
@@ -116,11 +165,21 @@ class ShowmouseScreen :
 
 	bool	       active;
 
-	ParticleSystem *ps;
+	ParticleSystem ps;
 
 	float	       rot;
 
 	MousePoller    pollHandle;
+	
+	template <class Archive>
+	void serialize (Archive &ar, const unsigned int version)
+	{
+	    ar & active;
+	    ar & ps;
+	    ar & rot;
+	}
+	
+	void postLoad ();
 
 	void
 	preparePaint (int);
