@@ -826,19 +826,9 @@ MagScreen::terminate (CompAction	  *action,
 	      	      CompAction::State   state,
 	      	      CompOption::Vector options)
 {
-    CompOption::Vector opts = toggleState.getReadTemplate ();
-    CompOption::Value  v;
-
     zTarget = 1.0;
     adjust  = true;
     cScreen->damageScreen ();
-
-    v = CompOption::Value (false);
-    opts.at (0).set (v);
-    v = CompOption::Value (zTarget);
-    opts.at (1).set (v);
-    
-    toggleState.updateProperty (screen->root (), opts, false, XA_CARDINAL);
     return true;
 }
 
@@ -847,8 +837,6 @@ MagScreen::initiate (CompAction	  *action,
 		     CompAction::State   state,
 		     CompOption::Vector options)
 {
-    CompOption::Vector opts = toggleState.getReadTemplate ();
-    CompOption::Value  v;
     float      factor;
     factor = CompOption::getFloatOptionNamed (options, "factor", 0);
 
@@ -878,13 +866,6 @@ MagScreen::initiate (CompAction	  *action,
     cScreen->donePaintSetEnabled (this, true);
     gScreen->glPaintOutputSetEnabled (this, true);
 
-    v = CompOption::Value (true);
-    opts.at (0).set (v);
-    v = CompOption::Value (zTarget);
-    opts.at (1).set (v);
-
-    toggleState.updateProperty (screen->root (), opts, false, XA_CARDINAL);
-
     return true;
 }
 
@@ -893,9 +874,6 @@ MagScreen::zoomIn (CompAction	  *action,
 		   CompAction::State   state,
 		   CompOption::Vector options)
 {
-    CompOption::Vector opts = toggleState.getReadTemplate ();
-    CompOption::Value  v;
-
     if (mode == MagOptions::ModeFisheye)
         zTarget = MIN (10.0, zTarget + 1.0);
     else
@@ -908,23 +886,14 @@ MagScreen::zoomIn (CompAction	  *action,
     cScreen->donePaintSetEnabled (this, true);
     gScreen->glPaintOutputSetEnabled (this, true);
 
-    v = CompOption::Value (true);
-    opts.at (0).set (v);
-    v = CompOption::Value (zTarget);
-    opts.at (1).set (v);
-    
-    toggleState.updateProperty (screen->root (), opts, false, XA_CARDINAL);
-
     return true;
 }
 
 bool
 MagScreen::zoomOut (CompAction	  *action,
-		   CompAction::State   state,
-		   CompOption::Vector options)
+		    CompAction::State   state,
+		    CompOption::Vector options)
 {
-    CompOption::Vector opts = toggleState.getReadTemplate ();
-    CompOption::Value  v;
     if (mode == MagOptions::ModeFisheye)
         zTarget = MAX (1.0, zTarget - 1.0);
     else
@@ -932,63 +901,25 @@ MagScreen::zoomOut (CompAction	  *action,
     adjust  = true;
     cScreen->damageScreen ();
 
-    v = CompOption::Value (zTarget);
-    opts.at (1).set (v);
-
-    if (zTarget == 1.0)
-    {
-	v = CompOption::Value (false);
-	opts.at (0).set (v);
-    }
-    
-    toggleState.updateProperty (screen->root (), opts, false, XA_CARDINAL);
-
     return true;
 }
 
-bool
-MagScreen::checkStateTimeout ()
+void
+MagScreen::postLoad ()
 {
-    CompOption::Vector atomTemplate;
-    CompOption::Vector currentToggleState;
-    CompOption::Value  v;
-    bool	       currentlyToggled;
-    
-    atomTemplate.resize (2);
-    atomTemplate.at (0).setName ("toggled", CompOption::TypeBool);
-    atomTemplate.at (1).setName ("zTarget", CompOption::TypeFloat);
-    
-    toggleState = PropertyWriter ("_COMPIZ_MAG_TOGGLE_STATE", atomTemplate);
-    
-    /* Attempt to read the property on the root window
-     * from where we may have previously set data
-     */
-     
-    currentToggleState = toggleState.readProperty (screen->root ());
-    
-    if (currentToggleState.size () == 2)
+    if (zTarget != 1.0f || zVelocity != 0.0f || zoom != 1.0f)
     {
-	currentlyToggled = currentToggleState.at (0).value ().b ();
+	cScreen->preparePaintSetEnabled (this, true);
+	cScreen->donePaintSetEnabled (this, true);
+	gScreen->glPaintOutputSetEnabled (this, true);
 	
-	if (currentlyToggled)
-	{
-	    zTarget = currentToggleState.at (1).value ().f ();
-	    adjust  = true;
-	    cScreen->damageScreen ();
-
-	    // Mag mode is starting
-	    cScreen->preparePaintSetEnabled (this, true);
-	    cScreen->donePaintSetEnabled (this, true);
-	    gScreen->glPaintOutputSetEnabled (this, true);
-	}
-	
+	cScreen->damageScreen ();
     }
-    
-    return false;
 }
 
 MagScreen::MagScreen (CompScreen *screen) :
     PluginClassHandler <MagScreen, CompScreen> (screen),
+    PluginStateWriter <MagScreen> (this, "MAG", screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     posX (0),
@@ -999,11 +930,6 @@ MagScreen::MagScreen (CompScreen *screen) :
     zoom (1.0f),
     program (0)
 {
-    checkStateTimer.setTimes (0, 0);
-    checkStateTimer.setCallback (boost::bind (&MagScreen::checkStateTimeout,
-    					      this));
-    checkStateTimer.start ();
-
     ScreenInterface::setHandler (screen, false);
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen, false);
@@ -1085,6 +1011,8 @@ MagScreen::MagScreen (CompScreen *screen) :
 
 MagScreen::~MagScreen ()
 {
+    writeSerializedData ();
+
     poller.stop ();
 
     if (zoom)
