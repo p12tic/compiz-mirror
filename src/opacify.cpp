@@ -326,9 +326,6 @@ OpacifyScreen::toggle (CompAction         *action,
 		       CompAction::State  state,
 		       CompOption::Vector options)
 {
-    CompOption::Vector opts = toggleState.getReadTemplate ();
-    CompOption::Value  toggled;
-
     isToggle = !isToggle;
     if (!isToggle && optionGetToggleReset ())
     {
@@ -341,10 +338,6 @@ OpacifyScreen::toggle (CompAction         *action,
     }
     
     setFunctions (isToggle);
-    toggled = CompOption::Value (isToggle);
-    opts.at (0).set (toggled);
-    
-    toggleState.updateProperty (screen->root (), opts, false, XA_CARDINAL);
 
     return true;
 }
@@ -392,40 +385,20 @@ OpacifyWindow::OpacifyWindow (CompWindow *window) :
     GLWindowInterface::setHandler (gWindow, false);
 }
 
-bool
-OpacifyScreen::checkStateTimeout ()
+void
+OpacifyScreen::postLoad ()
 {
-    CompOption::Vector atomTemplate;
-    CompOption::Vector currentToggleState;
-    CompOption::Value  v;
-    
-    atomTemplate.resize (1);
-    atomTemplate.at (0).setName ("toggled", CompOption::TypeBool);
-    
-    toggleState = PropertyWriter ("_COMPIZ_OPACIFY_TOGGLE_STATE", atomTemplate);
-    
-    /* Attempt to read the property on the root window
-     * from where we may have previously set data
-     */
-     
-    currentToggleState = toggleState.readProperty (screen->root ());
-    
-    if (!currentToggleState.empty ())
-    {
-	isToggle = currentToggleState.at (0).value ().b ();
-	setFunctions (isToggle);
-    }
-    
-    return false;
+    setFunctions (isToggle);
 }
 
-/** Constructor for OpacifyWindow. This is called whenever a new window 
+/** Constructor for OpacifyScreen. This is called whenever a new screen
  *  is created and we set our custom variables to it and also register to
  *  handle X.org events when they come through
  */
 
 OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     PluginClassHandler <OpacifyScreen, CompScreen> (screen),
+    PluginStateWriter <OpacifyScreen> (this, "OPACIFY", screen->root ()),
     isToggle (false),
     newActive (NULL),
     active (screen->activeWindow ()),
@@ -433,11 +406,6 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     justMoved (false)
 {
     ScreenInterface::setHandler (screen, false);
-    
-    checkStateTimer.setTimes (0, 0);
-    checkStateTimer.setCallback (boost::bind (&OpacifyScreen::checkStateTimeout,
-    					      this));
-    checkStateTimer.start ();
 
     timeoutHandle.setTimes (optionGetTimeout (), optionGetTimeout () * 1.2);
     timeoutHandle.setCallback (boost::bind (&OpacifyScreen::handleTimeout,
@@ -449,6 +417,11 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
 								 this, _1, _2));
 }
 
+OpacifyScreen::~OpacifyScreen ()
+{
+    writeSerializedData ();
+}
+
 bool
 OpacifyPluginVTable::init ()
 {
@@ -457,9 +430,6 @@ OpacifyPluginVTable::init ()
     if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
 	return false;
     if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
-	return false;
-    if (!CompPlugin::checkPluginABI ("compiztoolbox", 
-    					       COMPIZ_COMPIZTOOLBOX_ABI))
 	return false;
 
 

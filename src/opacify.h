@@ -25,9 +25,9 @@
  */
 
 #include <core/core.h>
+#include <core/serialization.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
-#include <compiztoolbox/compiztoolbox.h>
 
 #include "opacify_options.h"
 
@@ -36,19 +36,18 @@
 
 class OpacifyScreen :
     public PluginClassHandler <OpacifyScreen, CompScreen>,
+    public PluginStateWriter <OpacifyScreen>,
     public OpacifyOptions,
     public ScreenInterface
 {
     public:
 	OpacifyScreen (CompScreen *);
+	~OpacifyScreen ();
 
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
 
 	bool isToggle;
-	
-	PropertyWriter toggleState;
-	CompTimer      checkStateTimer;
 
 	CompTimer timeoutHandle;
 
@@ -58,6 +57,14 @@ class OpacifyScreen :
 	std::vector<Window> passive;
 	CompRegion intersect;
 	unsigned short int passiveNum;
+	
+	template <class Archive>
+	void serialize (Archive &ar, const unsigned int version)
+	{
+	    ar & isToggle;
+	};
+	
+	void postLoad ();
 
 	bool justMoved;
 
