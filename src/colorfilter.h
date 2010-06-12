@@ -30,6 +30,7 @@
 #include <core/core.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
+#include <compiztoolbox/compiztoolbox.h>
 
 #include "colorfilter_options.h"
 
@@ -43,6 +44,7 @@ class ColorfilterFunction
 
 class ColorfilterScreen :
     public PluginClassHandler <ColorfilterScreen, CompScreen>,
+    public CompPluginStateWriter <ColorfilterScreen>,
     public ColorfilterOptions
 {
     public:
@@ -64,6 +66,14 @@ class ColorfilterScreen :
 
 	bool	  			    filtersLoaded;
 	std::vector <ColorfilterFunction *> filtersFunctions;
+
+	
+	template <class Archive>
+	void serialize (Archive &ar)
+	{
+	    ar & isFiltered;
+	    ar & currentFilter;
+	}
 
 	ColorfilterFunction *
 	findFragmentFunction (int id);
@@ -124,6 +134,7 @@ class ColorfilterScreen :
 
 class ColorfilterWindow :
     public PluginClassHandler <ColorfilterWindow, CompWindow>,
+    public CompPluginStateWriter <ColorfilterWindow>,
     public GLWindowInterface
 {
     public:
@@ -136,6 +147,15 @@ class ColorfilterWindow :
 	GLWindow	*gWindow;
 
 	bool		isFiltered;
+	
+	void
+	postLoad ();
+	
+	template <class Archive>
+	void serialize (Archive &ar)
+	{
+	    ar & isFiltered;
+	}
 
 	void
 	glDrawTexture (GLTexture	  	*texture,

@@ -43,6 +43,12 @@ ColorfilterScreen::findFragmentFunction (int id)
 
 /* Actions handling functions ----------------------------------------------- */
 
+void
+toggleWindowFunctions (ColorfilterWindow *cfw, bool enabled)
+{
+    cfw->gWindow->glDrawTextureSetEnabled (cfw, enabled);
+}
+
 /*
  * Toggle filtering for a specific window
  */
@@ -60,6 +66,7 @@ ColorfilterWindow::toggle ()
 
     /* Ensure window is going to be repainted */
     cWindow->addDamage ();
+    toggleWindowFunctions (this, isFiltered);
 }
 
 /*
@@ -417,9 +424,10 @@ ColorfilterScreen::damageDecorations (CompOption		  *opt,
     cScreen->damageScreen ();
 }
 
-
 ColorfilterScreen::ColorfilterScreen (CompScreen *screen) :
     PluginClassHandler <ColorfilterScreen, CompScreen> (screen),
+    CompPluginStateWriter <ColorfilterScreen> (this, "COLORFILTER",
+    						screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     isFiltered (false),
@@ -452,21 +460,31 @@ ColorfilterScreen::ColorfilterScreen (CompScreen *screen) :
 
 ColorfilterScreen::~ColorfilterScreen ()
 {
+    writeSerializedData ();
     unloadFilters ();
+}
+
+void
+ColorfilterWindow::postLoad ()
+{
+    toggleWindowFunctions (this, isFiltered);
 }
 
 ColorfilterWindow::ColorfilterWindow (CompWindow *window) :
     PluginClassHandler <ColorfilterWindow, CompWindow> (window),
+    CompPluginStateWriter <ColorfilterWindow> (this, "COLORFILTER",
+    						window->id ()),
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
     isFiltered (false)
 {
-    GLWindowInterface::setHandler (gWindow);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 ColorfilterWindow::~ColorfilterWindow ()
 {
+    writeSerializedData ();
 }
 
 bool
