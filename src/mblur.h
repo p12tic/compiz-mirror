@@ -26,6 +26,7 @@
 #include <cmath>
 
 #include <core/core.h>
+#include <core/serialization.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
@@ -33,6 +34,7 @@
 
 class MblurScreen :
     public PluginClassHandler <MblurScreen, CompScreen>,
+    public PluginStateWriter <MblurScreen>,
     public CompositeScreenInterface,
     public GLScreenInterface,
     public MblurOptions
@@ -51,6 +53,14 @@ class MblurScreen :
 	float    alpha; /* motion blur blending value */
 	float    timer; /* motion blur fadeout time */
 	bool     activated;
+	
+	template <class Archive>
+	void serialize (Archive &ar, const unsigned int version)
+	{
+	    ar & activated;
+	}
+	
+	void postLoad ();
 
 	GLuint   texture;
 

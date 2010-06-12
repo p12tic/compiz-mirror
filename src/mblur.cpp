@@ -264,10 +264,19 @@ MblurScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
     gScreen->glPaintTransformedOutput (attrib, transform, region, output, mask);
 }
 
+void
+MblurScreen::postLoad ()
+{
+    if (activated | active)
+	toggleFunctions (true);
+}
+
 MblurScreen::MblurScreen (CompScreen *screen) :
     PluginClassHandler <MblurScreen, CompScreen> (screen),
+    PluginStateWriter <MblurScreen> (this, "MBLUR", screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
+    active (false),
     update (true),
     timer (500),
     activated (false),
@@ -286,6 +295,8 @@ MblurScreen::MblurScreen (CompScreen *screen) :
 
 MblurScreen::~MblurScreen ()
 {
+    writeSerializedData ();
+
     if (texture)
 	glDeleteTextures (1, &texture);
 }
