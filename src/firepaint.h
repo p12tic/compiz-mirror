@@ -24,8 +24,10 @@
  */
 
 #include <core/core.h>
+#include <core/serialization.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
+
 
 #include "firepaint_options.h"
 #include "firepaint_tex.h"
@@ -35,6 +37,9 @@
 class Particle
 {
     public:
+
+	Particle ();
+    
 	float life;		/* particle life */
 	float fade;		/* fade speed */
 	float width;		/* particle width */
@@ -57,6 +62,41 @@ class Particle
 	float xo;		/* orginal X position */
 	float yo;		/* orginal Y position */
 	float zo;		/* orginal Z position */
+
+	template <class Archive>
+	void serialize (Archive &ar, const unsigned int version)
+	{
+	    ar & life;
+	    ar & fade;
+	    ar & width;
+	    ar & w_mod;
+	    ar & h_mod;
+	    ar & r;
+	    ar & g;
+	    ar & b;
+	    ar & a;
+	    ar & x;
+	    ar & y;
+	    ar & z;
+	    ar & xi;
+	    ar & yi;
+	    ar & zi;
+	    ar & xg;
+	    ar & yg;
+	    ar & zg;
+	    ar & xo;
+	    ar & yo;
+	    ar & zo;
+	};
+};
+
+class ParticleCache
+{
+    public:
+
+	GLfloat *cache;
+	unsigned int count;
+	unsigned int size;
 };
 
 class ParticleSystem
@@ -67,7 +107,7 @@ class ParticleSystem
 	ParticleSystem ();
 	~ParticleSystem ();
 
-	std::vector <Particle *> particles;
+	std::vector <Particle> particles;
 	float    slowdown;
 	GLuint   tex;
 	bool     active;
@@ -76,15 +116,23 @@ class ParticleSystem
 	GLuint   blendMode;
 
 	/* Moved from drawParticles to get rid of spurious malloc's */
-	GLfloat *vertices_cache;
-	GLfloat *coords_cache;
-	GLfloat *colors_cache;
-	GLfloat *dcolors_cache;
+	ParticleCache vertices_cache;
+	ParticleCache coords_cache;
+	ParticleCache colors_cache;
+	ParticleCache dcolors_cache;
 
-	unsigned int coords_cache_count;
-	unsigned int vertex_cache_count;
-	unsigned int color_cache_count;
-	unsigned int dcolors_cache_count;
+	template <class Archive>
+	void serialize (Archive &ar,
+			const unsigned int version)
+	{
+	    ar & particles;
+	    ar & slowdown;
+	    ar & active;
+	    ar & x;
+	    ar & y;
+	    ar & darken;
+	    ar & blendMode;
+	}
 
 	void
 	initParticles (int            f_numParticles);
@@ -101,8 +149,22 @@ class ParticleSystem
 
 #define NUM_ADD_POINTS 1000
 
+namespace boost
+{
+    namespace serialization
+    {
+	template <class Archive>
+	void serialize (Archive &ar, XPoint &p, const unsigned int version)
+	{
+	    ar & p.x;
+	    ar & p.y;
+	}
+    }
+}
+
 class FireScreen:
     public PluginClassHandler <FireScreen, CompScreen>,
+    public PluginStateWriter <FireScreen>,
     public FirepaintOptions,
     public ScreenInterface,
     public GLScreenInterface,
@@ -116,17 +178,26 @@ class FireScreen:
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
 
-	ParticleSystem  *ps;
+	ParticleSystem  ps;
 
 	bool		init;
 
-	XPoint          *points;
-	int		pointsSize;
-	int		numPoints;
-
+	std::vector	<XPoint> points;
 	float		brightness;
 
 	CompScreen::GrabHandle grabIndex;
+
+	template <class Archive>
+	void serialize (Archive &ar, const unsigned int version)
+	{
+	    ar & init;
+	    ar & points;
+	    ar & brightness;
+	    ar & ps;
+	}
+	
+	void
+	postLoad ();
 
 	void
 	handleEvent (XEvent *);
