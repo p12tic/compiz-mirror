@@ -275,6 +275,8 @@ BenchScreen::BenchScreen (CompScreen *screen) :
     PluginClassHandler<BenchScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
+    mRrVal (0),
+    mFps (0),
     mAlpha (0),
     mCtime (0),
     mFrames (0),
