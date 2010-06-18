@@ -44,7 +44,7 @@ class ColorfilterFunction
 
 class ColorfilterScreen :
     public PluginClassHandler <ColorfilterScreen, CompScreen>,
-    public PluginStateWriter <ColorfilterScreen>,
+    //public PluginStateWriter <ColorfilterScreen>,
     public ColorfilterOptions
 {
     public:
