@@ -758,6 +758,9 @@ KDECompatScreen::KDECompatScreen (CompScreen *screen) :
     mKdeSlideAtom (XInternAtom (screen->dpy (), "_KDE_SLIDE", 0)),
     mKdePresentGroupAtom (XInternAtom (screen->dpy (),
 			  "_KDE_PRESENT_WINDOWS_GROUP", 0)),
+    mHasSlidingPopups (false),
+    mDestroyCnt (0),
+    mUnmapCnt (0),
     mScaleHandle (CompPlugin::find ("scale")),
     mScaleActive (false),
     mPresentWindow (NULL)
