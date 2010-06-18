@@ -10,13 +10,19 @@ import subprocess
 import commands
 
 def pkgconfig(*packages, **kw):
-    if os.getenv ("COMPIZ_DISABLE_RPATH") is "1":
-        flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries'}
-    else:
-        flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-L': 'runtime_library_dirs'}
+    flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-R': 'runtime_library_dirs'}
 
-    for token in commands.getoutput("pkg-config --libs --cflags %s" % ' '.join(packages)).split():
-        kw.setdefault(flag_map.get(token[:2]), []).append(token[2:])
+    tokens = commands.getoutput("pkg-config --libs --cflags %s" % ' '.join(packages)).split()
+    
+    for t in tokens:
+	if '-L' in t[:2]:
+	    kw.setdefault (flag_map.get ("-L"), []).append (t[2:])
+	    if not os.getenv ("COMPIZ_DISABLE_RPATH") is "1":
+		kw.setdefault (flag_map.get ("-R"), []).append (t[2:])
+	elif '-I' in t[:2]:
+	    kw.setdefault (flag_map.get ("-I"), []).append (t[2:])
+	elif '-l' in t[:2]:
+	    kw.setdefault (flag_map.get ("-l"), []).append (t[2:])
     
     return kw
 
