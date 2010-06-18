@@ -11,6 +11,9 @@
 				<plugin>mousepoll</plugin>
 				<plugin>cube</plugin>
 				<plugin>decor</plugin>
+				<plugin>imgsvg</plugin>
+				<plugin>imgpng</plugin>
+				<plugin>imgjpeg</plugin>
 			</relation>
 			<requirement>
 				<plugin>opengl</plugin>
