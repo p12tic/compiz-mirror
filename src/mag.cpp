@@ -919,7 +919,7 @@ MagScreen::postLoad ()
 
 MagScreen::MagScreen (CompScreen *screen) :
     PluginClassHandler <MagScreen, CompScreen> (screen),
-    PluginStateWriter <MagScreen> (this, "MAG", screen->root ()),
+    PluginStateWriter <MagScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     posX (0),
