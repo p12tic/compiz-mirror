@@ -547,7 +547,7 @@ NegWindow::postLoad ()
 
 NegWindow::NegWindow (CompWindow *window) :
     PluginClassHandler <NegWindow, CompWindow> (window),
-    PluginStateWriter <NegWindow> (this, "NEG", window->id ()),
+    PluginStateWriter <NegWindow> (this, window->id ()),
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
