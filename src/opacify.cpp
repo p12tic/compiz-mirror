@@ -398,7 +398,7 @@ OpacifyScreen::postLoad ()
 
 OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     PluginClassHandler <OpacifyScreen, CompScreen> (screen),
-    PluginStateWriter <OpacifyScreen> (this, "OPACIFY", screen->root ()),
+    PluginStateWriter <OpacifyScreen> (this, screen->root ()),
     isToggle (false),
     newActive (NULL),
     active (screen->activeWindow ()),
