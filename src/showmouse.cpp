@@ -663,7 +663,7 @@ ShowmouseScreen::postLoad ()
 
 ShowmouseScreen::ShowmouseScreen (CompScreen *screen) :
     PluginClassHandler <ShowmouseScreen, CompScreen> (screen),
-    PluginStateWriter <ShowmouseScreen> (this, "SHOWMOUSE", screen->root ()),
+    PluginStateWriter <ShowmouseScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     active (false),
