@@ -716,7 +716,7 @@ FireScreen::postLoad ()
 
 FireScreen::FireScreen (CompScreen *screen) :
     PluginClassHandler <FireScreen, CompScreen> (screen),
-    PluginStateWriter <FireScreen> (this, "FIREPAINT", screen->root ()),
+    PluginStateWriter <FireScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     init (true),
