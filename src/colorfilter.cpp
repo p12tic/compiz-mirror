@@ -426,8 +426,8 @@ ColorfilterScreen::damageDecorations (CompOption		  *opt,
 
 ColorfilterScreen::ColorfilterScreen (CompScreen *screen) :
     PluginClassHandler <ColorfilterScreen, CompScreen> (screen),
-    PluginStateWriter <ColorfilterScreen> (this, "COLORFILTER",
-    						screen->root ()),
+    PluginStateWriter <ColorfilterScreen> (this,
+    					   screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     isFiltered (false),
@@ -472,8 +472,8 @@ ColorfilterWindow::postLoad ()
 
 ColorfilterWindow::ColorfilterWindow (CompWindow *window) :
     PluginClassHandler <ColorfilterWindow, CompWindow> (window),
-    PluginStateWriter <ColorfilterWindow> (this, "COLORFILTER",
-    						window->id ()),
+    PluginStateWriter <ColorfilterWindow> (this, 
+    					   window->id ()),
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
