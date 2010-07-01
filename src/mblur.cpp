@@ -273,7 +273,7 @@ MblurScreen::postLoad ()
 
 MblurScreen::MblurScreen (CompScreen *screen) :
     PluginClassHandler <MblurScreen, CompScreen> (screen),
-    PluginStateWriter <MblurScreen> (this, "MBLUR", screen->root ()),
+    PluginStateWriter <MblurScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     active (false),
