@@ -200,7 +200,7 @@ AddWindow::postLoad ()
 
 AddWindow::AddWindow (CompWindow *window) :
     PluginClassHandler <AddWindow, CompWindow> (window),
-    PluginStateWriter <AddWindow> (this, "ADDHELPER", window->id ()),
+    PluginStateWriter <AddWindow> (this, window->id ()),
     window (window),
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window)),
@@ -233,7 +233,7 @@ AddScreen::postLoad ()
 
 AddScreen::AddScreen (CompScreen *screen) :
     PluginClassHandler <AddScreen, CompScreen> (screen),
-    PluginStateWriter <AddScreen> (this, "ADDHELPER", screen->root ()),
+    PluginStateWriter <AddScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     opacity ((optionGetOpacity () * 0xffff) / 100),
     brightness ((optionGetBrightness () * 0xffff) / 100),
