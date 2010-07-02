@@ -604,7 +604,10 @@ ShowmouseScreen::terminate (CompAction         *action,
 			    CompOption::Vector options)
 {
     active = false;
+
     damageRegion ();
+
+    gScreen->glPaintOutputSetEnabled (gScreen, false);
 
     return true;
 }
@@ -620,6 +623,8 @@ ShowmouseScreen::initiate (CompAction         *action,
     active = true;
 
     toggleFunctions (true);
+
+    gScreen->glPaintOutputSetEnabled (gScreen, true);
 
     return true;
 }
