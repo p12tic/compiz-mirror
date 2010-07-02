@@ -21,6 +21,7 @@
  **/
 
 #include <core/core.h>
+#include <core/serialization.h>
 #include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
@@ -59,6 +60,7 @@ class BenchScreen :
     public CompositeScreenInterface,
     public GLScreenInterface,
     public PluginClassHandler<BenchScreen, CompScreen>,
+    public PluginStateWriter <BenchScreen>,
     public BenchOptions
 {
     public:
@@ -84,6 +86,14 @@ class BenchScreen :
 	bool mActive;
 
 	CompositeFPSLimiterMode mOldLimiterMode;
+
+	void postLoad ();
+
+	template <class Archive>
+	void serialize (Archive & ar, const unsigned int count)
+	{
+	    ar & mActive;
+	}
 
 	bool initiate (CompOption::Vector &options);
 
