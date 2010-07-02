@@ -25,6 +25,7 @@
 #include <string.h>
 
 #include <core/core.h>
+#include <core/serialization.h>
 #include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
@@ -35,12 +36,23 @@
 class ShowrepaintScreen :
     public GLScreenInterface,
     public PluginClassHandler <ShowrepaintScreen, CompScreen>,
+    public PluginStateWriter <ShowrepaintScreen>,
     public ShowrepaintOptions
 {
     public:
 
 	ShowrepaintScreen (CompScreen *);
 	~ShowrepaintScreen ();
+
+	void postLoad ();
+
+	friend class boost::serialization::access;
+
+	template <class Archive>
+	void serialize (Archive & ar, const unsigned int count)
+	{
+	    ar & active;
+	}
 
     private:
 

@@ -72,6 +72,12 @@ ShowrepaintScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     return status;
 }
 
+void
+ShowrepaintScreen::postLoad ()
+{
+    gScreen->glPaintOutputSetEnabled (this, active);
+}
+
 bool
 ShowrepaintScreen::toggle (CompAction         *action,
 			   CompAction::State  state,
@@ -91,6 +97,7 @@ ShowrepaintScreen::toggle (CompAction         *action,
 
 ShowrepaintScreen::ShowrepaintScreen (CompScreen *screen) :
     PluginClassHandler <ShowrepaintScreen, CompScreen> (screen),
+    PluginStateWriter <ShowrepaintScreen> (this, screen->root ()),
     ShowrepaintOptions (),
     active (false),
     cScreen (CompositeScreen::get (screen)),
@@ -104,6 +111,7 @@ ShowrepaintScreen::ShowrepaintScreen (CompScreen *screen) :
 
 ShowrepaintScreen::~ShowrepaintScreen ()
 {
+    writeSerializedData ();
     // Request the screen to be repainted on exit
     cScreen->damageScreen ();
 }
