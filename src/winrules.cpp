@@ -312,6 +312,11 @@ WinrulesScreen::optionChanged (CompOption	       *option,
 	    return;
 	break;
 	case WinrulesOptions::SizeMatches:
+	    foreach (CompOption::Value &v, option->value ().list ())
+	    {
+	        CompMatch &m = v.match ();
+		m.update ();
+	    }
 	    return;
 	break;
 	default:
