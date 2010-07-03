@@ -1,3 +1,5 @@
+project (compizconfig-backend-gconf)
+
 find_package (CompizConfig REQUIRED)
 
 include (LibCompizConfigCommon)
