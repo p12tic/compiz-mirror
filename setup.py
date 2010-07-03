@@ -9,6 +9,11 @@ import os
 import subprocess
 import commands
 
+version_file = open ("VERSION", "r")
+version = version_file.read ().strip ()
+if "=" in version:
+    version = version.split ("=")[1]
+
 def pkgconfig(*packages, **kw):
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-R': 'runtime_library_dirs'}
 
@@ -100,7 +105,10 @@ class uninstall (_install):
 
 setup (
   name = "compizconfig-python",
-  version = open (VERSION_FILE).read ().split ("=")[1],
+  version = version,
+  description      = "CompizConfig Python",
+  url              = "http://www.compiz.org/",
+  license          = "GPL",
     cmdclass         = {"uninstall" : uninstall,
                         "install" : install,
                         "install_data" : install_data,
