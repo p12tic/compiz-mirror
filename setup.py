@@ -109,6 +109,8 @@ setup (
   description      = "CompizConfig Python",
   url              = "http://www.compiz.org/",
   license          = "GPL",
+  maintainer	   = "Guillaume Seguin",
+  maintainer_email = "guillaume@segu.in",
     cmdclass         = {"uninstall" : uninstall,
                         "install" : install,
                         "install_data" : install_data,
