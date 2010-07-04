@@ -226,8 +226,6 @@ WinrulesWindow::matchSize (int	      *width,
 			   int	      *height)
 {
     WINRULES_SCREEN (screen);
-    
-    fprintf (stderr, "matchSize called!\n");
 
     return matchSizeValue (ws->optionGetSizeMatches (),
 			   ws->optionGetSizeWidthValues (),
