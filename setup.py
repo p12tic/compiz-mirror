@@ -3,11 +3,19 @@ from distutils.core import setup
 from distutils.command.build import build as _build
 from distutils.command.install import install as _install
 from distutils.command.install_data import install_data as _install_data
+from distutils.command.sdist import sdist as _sdist
 from distutils.extension import Extension
-from Cython.Distutils import build_ext
 import os
 import subprocess
 import commands
+
+# If src/compizconfig.pyx exists, build using Cython
+if os.path.exists ("src/compizconfig.pyx"):
+    from Cython.Distutils import build_ext
+    ext_module_src = "src/compizconfig.pyx"
+else: # Otherwise build directly from C source
+    from distutils.command.build_ext import build_ext
+    ext_module_src = "src/compizconfig.c"
 
 version_file = open ("VERSION", "r")
 version = version_file.read ().strip ()
@@ -103,6 +111,23 @@ class uninstall (_install):
             except:
                 self.warn ("Could not remove file %s" % file)
 
+class sdist (_sdist):
+
+    def run (self):
+        # Build C file
+        if os.path.exists ("src/compizconfig.pyx"):
+            from Cython.Compiler.Main import compile as cython_compile
+            cython_compile ("src/compizconfig.pyx")
+        # Run regular sdist
+        _sdist.run (self)
+
+    def add_defaults (self):
+        _sdist.add_defaults (self)
+        # Remove pyx source and add c source
+        if os.path.exists ("src/compizconfig.pyx"):
+            self.filelist.exclude_pattern ("src/compizconfig.pyx")
+            self.filelist.append ("src/compizconfig.c")
+
 setup (
   name = "compizconfig-python",
   version = version,
@@ -111,12 +136,13 @@ setup (
   license          = "GPL",
   maintainer	   = "Guillaume Seguin",
   maintainer_email = "guillaume@segu.in",
-    cmdclass         = {"uninstall" : uninstall,
-                        "install" : install,
-                        "install_data" : install_data,
-                        "build_ext" : build_ext},
+  cmdclass         = {"uninstall" : uninstall,
+                      "install" : install,
+                      "install_data" : install_data,
+                      "build_ext" : build_ext,
+                      "sdist" : sdist},
   ext_modules=[ 
-    Extension ("compizconfig", ["src/compizconfig.pyx"],
+    Extension ("compizconfig", [ext_module_src],
 	       **pkgconfig("libcompizconfig"))
     ]
 )
