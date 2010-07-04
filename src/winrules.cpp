@@ -197,8 +197,6 @@ WinrulesWindow::matchSizeValue (CompOption::Value::Vector matches,
 {
     int min;
 
-    WINRULES_SCREEN (screen);
-
     if (!is ())
 	return false;
 
