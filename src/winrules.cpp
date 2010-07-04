@@ -211,10 +211,8 @@ WinrulesWindow::matchSizeValue (CompOption::Value::Vector matches,
 
     for (unsigned int i = 0; i < min; i++)
     {
-	fprintf (stderr, "checking %i\n", i);
 	if ((matches.at (i).match ().evaluate (window)))
 	{
-	    fprintf (stderr, "found one!\n");
 	    *width = widthValues.at (i).i ();
 	    *height = heightValues.at (i).i ();
 	
