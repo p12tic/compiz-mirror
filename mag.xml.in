@@ -19,7 +19,6 @@
 				<plugin>opengl</plugin>
 				<plugin>composite</plugin>
 				<plugin>mousepoll</plugin>
-				<plugin>compiztoolbox</plugin>
 			</requirement>
 		</deps>
 		<options>
