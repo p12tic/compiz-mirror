@@ -207,11 +207,14 @@ WinrulesWindow::matchSizeValue (CompOption::Value::Vector matches,
 
     min = MIN (matches.size (), widthValues.size ());
     min = MIN ((unsigned int) min, heightValues.size ());
+    min = MIN ((unsigned int) min, matches.size ());
 
-    for (int i = 0; i < min; i++)
+    for (unsigned int i = 0; i < min; i++)
     {
-	if ((ws->getOptions ().at (i).value ().match ().evaluate (window)))
+	fprintf (stderr, "checking %i\n", i);
+	if ((matches.at (i).match ().evaluate (window)))
 	{
+	    fprintf (stderr, "found one!\n");
 	    *width = widthValues.at (i).i ();
 	    *height = heightValues.at (i).i ();
 	
@@ -227,6 +230,8 @@ WinrulesWindow::matchSize (int	      *width,
 			   int	      *height)
 {
     WINRULES_SCREEN (screen);
+    
+    fprintf (stderr, "matchSize called!\n");
 
     return matchSizeValue (ws->optionGetSizeMatches (),
 			   ws->optionGetSizeWidthValues (),

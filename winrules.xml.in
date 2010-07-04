@@ -10,6 +10,9 @@
 			    <plugin>composite</plugin>
 			    <plugin>decor</plugin>
 			</relation>
+			<requirement>
+			    <plugin>regex</plugin>
+			</requirement>
 		</deps>
 		<options>
 			<group>
