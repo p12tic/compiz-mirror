@@ -2,4 +2,4 @@ find_package (Compiz REQUIRED)
 
 include (CompizPlugin)
 
-compiz_plugin (mag PLUGINDEPS composite opengl mousepoll compiztoolbox)
+compiz_plugin (mag PLUGINDEPS composite opengl mousepoll)
