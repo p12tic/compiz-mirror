@@ -136,11 +136,11 @@ setup (
   license          = "GPL",
   maintainer	   = "Guillaume Seguin",
   maintainer_email = "guillaume@segu.in",
-    cmdclass         = {"uninstall" : uninstall,
-                        "install" : install,
-                        "install_data" : install_data,
-                        "build_ext" : build_ext,
-                        "sdist" : sdist},
+  cmdclass         = {"uninstall" : uninstall,
+                      "install" : install,
+                      "install_data" : install_data,
+                      "build_ext" : build_ext,
+                      "sdist" : sdist},
   ext_modules=[ 
     Extension ("compizconfig", [ext_module_src],
 	       **pkgconfig("libcompizconfig"))
