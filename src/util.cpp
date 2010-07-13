@@ -54,16 +54,13 @@
 
 /* Rotate and project individual vectors */
 void
-FWRotateProjectVector (CompWindow *w,
-		       CompVector vector,
-                       CompTransform transform,
-           	       GLdouble *resultX,
-           	       GLdouble *resultY,
-           	       GLdouble *resultZ,
-           	       Bool report)
+FWScreen::rotateProjectVector (GLVector &vector,
+			       GLMatrix &transform,
+			       GLdouble *resultX,
+			       GLdouble *resultY,
+			       GLdouble *resultZ)
 {
-
-    matrixMultiplyVector(&vector, &vector, &transform);
+    vector = transform * vector;
 
     GLint viewport[4]; // Viewport
     GLdouble modelview[16]; // Modelview Matrix
@@ -73,12 +70,12 @@ FWRotateProjectVector (CompWindow *w,
     glGetDoublev (GL_MODELVIEW_MATRIX, modelview);
     glGetDoublev (GL_PROJECTION_MATRIX, projection);
 
-    gluProject (vector.x, vector.y, vector.z,
+    gluProject (vector[GLVector::x], vector[GLVector::y], vector[GLVector::z],
                 modelview, projection, viewport,
                 resultX, resultY, resultZ);
 
     /* Y must be negated */
-    *resultY = w->screen->height - *resultY;
+    *resultY = screen->height () - *resultY;
 }
 
 // Scales z by 0 and does perspective distortion so that it
@@ -87,11 +84,10 @@ FWRotateProjectVector (CompWindow *w,
 /* This code taken from animation.c,
  * Copyright (c) 2006 Erkin Bahceci
  */
-static void
-perspectiveDistortAndResetZ (CompScreen *s,
-			     CompTransform *transform)
+void
+FWScreen::perspectiveDistortAndResetZ (GLMatrix &transform)
 {
-    float v = -1.0 / s->width;
+    float v = -1.0 / ::screen->width ();
     /*
       This does
       transform = M * transform, where M is
@@ -100,37 +96,33 @@ perspectiveDistortAndResetZ (CompScreen *s,
       0, 0, 0, v,
       0, 0, 0, 1
     */
-    float *m = transform->m;
-    m[8] = v * m[12];
-    m[9] = v * m[13];
-    m[10] = v * m[14];
-    m[11] = v * m[15];
+
+    transform[8] = v * transform[12];
+    transform[9] = v * transform[13];
+    transform[10] = v * transform[14];
+    transform[11] = v * transform[15];
 }
 
 void
-FWModifyMatrix  (CompWindow *w, CompTransform *mTransform,
-                 float angX, float angY, float angZ,
-                 float tX, float tY, float tZ,
-                 float scX, float scY, float scZ,
-                 float adjustX, float adjustY, Bool paint)
+FWScreen::modifyMatrix  (GLMatrix &transform,
+			 float angX, float angY, float angZ,
+			 float tX, float tY, float tZ,
+			 float scX, float scY, float scZ,
+			 float adjustX, float adjustY, bool paint)
 {
     /* Create our transformation Matrix */
     
-    matrixTranslate(mTransform, 
-	    tX, 
-	    tY, 0.0);
+    transform.translate (tX, tY, 0.0);
     if (paint)
-	perspectiveDistortAndResetZ (w->screen, mTransform);
+	perspectiveDistortAndResetZ (transform);
     else
-	matrixScale (mTransform, 1.0f, 1.0f, 1.0f / w->screen->width);
-    matrixRotate (mTransform, angX, 1.0f, 0.0f, 0.0f);
-    matrixRotate (mTransform, angY, 0.0f, 1.0f, 0.0f);
-    matrixRotate (mTransform, angZ, 0.0f, 0.0f, 1.0f);
-    matrixScale(mTransform, scX, 1.0f, 0.0f);
-    matrixScale(mTransform, 1.0f, scY, 0.0f);
-    matrixTranslate(mTransform, 
-            -(tX), 
-            -(tY), 0.0f);
+	transform.scale (1.0f, 1.0f, 1.0f / screen->width ());
+    transform.rotate (angX, 1.0f, 0.0f, 0.0f);
+    transform.rotate (angY, 0.0f, 1.0f, 0.0f);
+    transform.rotate (angZ, 0.0f, 0.0f, 1.0f);
+    transform.scale (scX, 1.0f, 0.0f);
+    transform.scale (1.0f, scY, 0.0f);
+    transform.translate (-(tX), -(tY), 0.0f);
 }
 
 /*
@@ -245,15 +237,15 @@ static void FWFindInverseMatrix(CompTransform *m, CompTransform *r){
 */
 
 /* Create a rect from 4 screen points */
-Box
-FWCreateSizedRect (float xScreen1,
-                   float xScreen2,
-                   float xScreen3,
-                   float xScreen4,
-                   float yScreen1,
-                   float yScreen2,
-                   float yScreen3,
-                   float yScreen4)
+CompRect
+FWScreen::createSizedRect (float xScreen1,
+			   float xScreen2,
+			   float xScreen3,
+			   float xScreen4,
+			   float yScreen1,
+			   float yScreen2,
+			   float yScreen3,
+			   float yScreen4)
 {
         float leftmost, rightmost, topmost, bottommost;
         Box rect;
@@ -315,123 +307,95 @@ FWCreateSizedRect (float xScreen1,
         rect.y1 = topmost;
         rect.y2 = bottommost;
 
-        return rect;
+        return CompRect (leftmost, topmost, rightmost - leftmost, bottommost - topmost);
 }
 
-Box
-FWCalculateWindowRect (CompWindow *w,
-                       CompVector c1,
-                       CompVector c2,
-                       CompVector c3,
-                       CompVector c4)
+CompRect
+FWWindow::calculateWindowRect (GLVector c1,
+			       GLVector c2,
+			       GLVector c3,
+			       GLVector c4)
 {
+	FREEWINS_SCREEN (screen);
 
-        FREEWINS_WINDOW (w);
 
-        CompTransform transform;
+        GLMatrix transform;
         GLdouble xScreen1 = 0.0f, yScreen1 = 0.0f, zScreen1 = 0.0f;
         GLdouble xScreen2 = 0.0f, yScreen2 = 0.0f, zScreen2 = 0.0f;
         GLdouble xScreen3 = 0.0f, yScreen3 = 0.0f, zScreen3 = 0.0f;
         GLdouble xScreen4 = 0.0f, yScreen4 = 0.0f, zScreen4 = 0.0f;
 
-        matrixGetIdentity(&transform);
-        FWModifyMatrix (w, &transform,
-                        fww->transform.angX,
-                        fww->transform.angY,
-                        fww->transform.angZ,
-                        fww->iMidX, fww->iMidY, 0.0f,
-                        fww->transform.scaleX,
-                        fww->transform.scaleY, 0.0f, 0.0f, 0.0f, FALSE);  
+        transform.reset ();
+        fws->modifyMatrix (transform,
+			mTransform.angX,
+			mTransform.angY,
+			mTransform.angZ,
+			mIMidX, mIMidY, 0.0f,
+			mTransform.scaleX,
+			mTransform.scaleY, 0.0f, 0.0f, 0.0f, false);  
 
-        FWRotateProjectVector(w, c1, transform, &xScreen1, &yScreen1, &zScreen1, FALSE);
-        FWRotateProjectVector(w, c2, transform, &xScreen2, &yScreen2, &zScreen2, FALSE);
-        FWRotateProjectVector(w, c3, transform, &xScreen3, &yScreen3, &zScreen3, FALSE);
-        FWRotateProjectVector(w, c4, transform, &xScreen4, &yScreen4, &zScreen4, FALSE);
+        fws->rotateProjectVector(c1, transform, &xScreen1, &yScreen1, &zScreen1);
+        fws->rotateProjectVector(c2, transform, &xScreen2, &yScreen2, &zScreen2);
+        fws->rotateProjectVector(c3, transform, &xScreen3, &yScreen3, &zScreen3);
+        fws->rotateProjectVector(c4, transform, &xScreen4, &yScreen4, &zScreen4);
        
 	/* Save the non-rectangular points so that we can shape the rectangular IPW */        
 
-    	fww->output.shapex1 = xScreen1;
-    	fww->output.shapex2 = xScreen2;
-    	fww->output.shapex3 = xScreen3;
-    	fww->output.shapex4 = xScreen4;
-    	fww->output.shapey1 = yScreen1;
-    	fww->output.shapey2 = yScreen2;
-    	fww->output.shapey3 = yScreen3;
-    	fww->output.shapey4 = yScreen4;
+    	mOutput.shapex1 = xScreen1;
+    	mOutput.shapex2 = xScreen2;
+    	mOutput.shapex3 = xScreen3;
+    	mOutput.shapex4 = xScreen4;
+    	mOutput.shapey1 = yScreen1;
+    	mOutput.shapey2 = yScreen2;
+    	mOutput.shapey3 = yScreen3;
+    	mOutput.shapey4 = yScreen4;
 
 
-        return FWCreateSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
-                                 yScreen1, yScreen2, yScreen3, yScreen4);
+        return fws->createSizedRect(xScreen1, xScreen2, xScreen3, xScreen4,
+				    yScreen1, yScreen2, yScreen3, yScreen4);
            
 }
 
 void
-FWCalculateOutputRect (CompWindow *w)
+FWWindow::calculateOutputRect ()
 {
-    if (w)
-    {
+    GLVector corner1 = GLVector (WIN_OUTPUT_X (window), WIN_OUTPUT_Y (window), 1.0f, 1.0f);
+    GLVector corner2 = GLVector (WIN_OUTPUT_X (window) + WIN_OUTPUT_W (window), WIN_OUTPUT_Y (window), 1.0f, 1.0f);
+    GLVector corner3 = GLVector (WIN_OUTPUT_X (window), WIN_OUTPUT_Y (window) + WIN_OUTPUT_H (window), 1.0f, 1.0f);
+    GLVector corner4 = GLVector (WIN_OUTPUT_X (window) + WIN_OUTPUT_W (window), WIN_OUTPUT_Y (window) + WIN_OUTPUT_H (window), 1.0f, 1.0f);
 
-    FREEWINS_WINDOW (w);
-
-    CompVector corner1 =
-    { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
-    CompVector corner2 =
-    { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w), 1.0f, 1.0f } };
-    CompVector corner3 =
-    { .v = { WIN_OUTPUT_X (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
-    CompVector corner4 =
-    { .v = { WIN_OUTPUT_X (w) + WIN_OUTPUT_W (w), WIN_OUTPUT_Y (w) + WIN_OUTPUT_H (w), 1.0f, 1.0f } };
-
-    fww->outputRect = FWCalculateWindowRect (w, corner1, corner2, corner3, corner4);
-    }
+    mOutputRect = calculateWindowRect (corner1, corner2, corner3, corner4);
 }
 
 void
-FWCalculateInputRect (CompWindow *w)
+FWWindow::calculateInputRect ()
 {
+    GLVector corner1 = GLVector (WIN_REAL_X (window), WIN_REAL_Y (window), 1.0f, 1.0f);
+    GLVector corner2 = GLVector (WIN_REAL_X (window) + WIN_REAL_W (window), WIN_REAL_Y (window), 1.0f, 1.0f);
+    GLVector corner3 = GLVector (WIN_REAL_X (window), WIN_REAL_Y (window) + WIN_REAL_H (window), 1.0f, 1.0f);
+    GLVector corner4 = GLVector (WIN_REAL_X (window) + WIN_REAL_W (window), WIN_REAL_Y (window) + WIN_REAL_H (window), 1.0f, 1.0f);
 
-    if (w)
-    {
-
-    FREEWINS_WINDOW (w);
-
-    CompVector corner1 =
-    { .v = { WIN_REAL_X (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
-    CompVector corner2 =
-    { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 1.0f, 1.0f } };
-    CompVector corner3 =
-    { .v = { WIN_REAL_X (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
-    CompVector corner4 =
-    { .v = { WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w) + WIN_REAL_H (w), 1.0f, 1.0f } };
-
-    fww->inputRect = FWCalculateWindowRect (w, corner1, corner2, corner3, corner4);
-    }
+    mInputRect = calculateWindowRect (corner1, corner2, corner3, corner4);
 
 }
 
 void
-FWCalculateInputOrigin (CompWindow *w, float x, float y)
+FWWindow::calculateInputOrigin (float x, float y)
 {
-
-    FREEWINS_WINDOW (w);
-
-    fww->iMidX = x;
-    fww->iMidY = y;
+    mIMidX = x;
+    mIMidY = y;
 }
 
 void
-FWCalculateOutputOrigin (CompWindow *w, float x, float y)
+FWWindow::calculateOutputOrigin (float x, float y)
 {
-
-    FREEWINS_WINDOW (w);
-
     float dx, dy;
 
-    dx = x - WIN_OUTPUT_X (w);
-    dy = y - WIN_OUTPUT_Y (w);
+    dx = x - WIN_OUTPUT_X (window);
+    dy = y - WIN_OUTPUT_Y (window);
 
-    fww->oMidX = WIN_OUTPUT_X (w) + dx * fww->transform.scaleX;
-    fww->oMidY = WIN_OUTPUT_Y (w) + dy * fww->transform.scaleY;
+    mOMidX = WIN_OUTPUT_X (window) + dx * mTransform.scaleX;
+    mOMidY = WIN_OUTPUT_Y (window) + dy * mTransform.scaleY;
 }
 
 /* Change angles more than 360 into angles out of 360 */
@@ -450,16 +414,13 @@ FWCalculateOutputOrigin (CompWindow *w, float x, float y)
 
 /* Determine if we clicked in the z-axis region */
 void
-FWDetermineZAxisClick (CompWindow *w,
-					  int px,
-					  int py,
-					  Bool motion)
+FWWindow::determineZAxisClick (int px,
+			       int py,
+			       bool motion)
 {
-    FREEWINS_WINDOW (w);
+    bool directionChange = FALSE;
 
-    Bool directionChange = FALSE;
-
-    if (!fww->can2D && motion)
+    if (!mCan2D && motion)
     {
 
         static int steps;
@@ -488,10 +449,10 @@ FWDetermineZAxisClick (CompWindow *w,
             else
                 direction = UpDown;
 
-            if (fww->direction != direction)
+            if (direction != direction)
                 directionChange = TRUE;
 
-            fww->direction = direction;
+            direction = direction;
         }
 
         steps++;
@@ -505,36 +466,37 @@ FWDetermineZAxisClick (CompWindow *w,
 
         float clickRadiusFromCenter;
 
-        int x = (WIN_REAL_X(w) + WIN_REAL_W(w)/2.0);
-	    int y = (WIN_REAL_Y(w) + WIN_REAL_H(w)/2.0);
+        int x = (WIN_REAL_X(window) + WIN_REAL_W(window)/2.0);
+	    int y = (WIN_REAL_Y(window) + WIN_REAL_H(window)/2.0);
 
         clickRadiusFromCenter = sqrt(pow((x - px), 2) + pow((y - py), 2));
 
-        if (clickRadiusFromCenter > fww->radius * (freewinsGet3dPercent (w->screen) / 100))
+        if (clickRadiusFromCenter > mRadius * (FWScreen::get (screen)->optionGetTdPercent () / 100))
         {
-            fww->can2D = TRUE;
-            fww->can3D = FALSE;
+            mCan2D = TRUE;
+            mCan3D = FALSE;
         }
         else
         {
-            fww->can2D = FALSE;
-            fww->can3D = TRUE;
+            mCan2D = FALSE;
+            mCan3D = TRUE;
         }
     }
 }
 
 /* Check to see if we can shape a window */
-Bool
-FWCanShape (CompWindow *w)
+bool
+FWWindow::canShape ()
 {
+    FREEWINS_SCREEN (screen);
 
-    if (!freewinsGetShapeInput (w->screen))
+    if (!fws->optionGetDoShapeInput ())
     	return FALSE;
     
-    if (!w->screen->display->shapeExtension)
+    if (!screen->XShape ())
     	return FALSE;
     
-    if (!matchEval (freewinsGetShapeWindowTypes (w->screen), w))
+    if (!fws->optionGetShapeWindowTypes ().evaluate (window))
     	return FALSE;
     
     return TRUE;
@@ -542,15 +504,13 @@ FWCanShape (CompWindow *w)
 
 /* Checks if w is a ipw and returns the real window */
 CompWindow *
-FWGetRealWindow (CompWindow *w)
+FWScreen::getRealWindow (CompWindow *w)
 {
     FWWindowInputInfo *info;
 
-    FREEWINS_SCREEN (w->screen);
-
-    for (info = fws->transformedWindows; info; info = info->next)
+    foreach (info, mTransformedWindows)
     {
-	if (w->id == info->ipw)
+	if (w->id () == info->ipw)
 	    return info->w;
     }
 
@@ -558,21 +518,20 @@ FWGetRealWindow (CompWindow *w)
 }
 
 void
-FWHandleSnap (CompWindow *w)
+FWWindow::handleSnap ()
 {
-    FREEWINS_WINDOW (w);
-    FREEWINS_DISPLAY (w->screen->display);
+    FREEWINS_SCREEN (screen);
     
     /* Handle Snapping */
-    if (freewinsGetSnap (w->screen) || fwd->snap)
+    if (fws->optionGetSnap () || fws->mSnap)
     {
-        int snapFactor = freewinsGetSnapThreshold (w->screen);
-        fww->animate.destAngX = ((int) (fww->transform.unsnapAngX) / snapFactor) * snapFactor;
-        fww->animate.destAngY = ((int) (fww->transform.unsnapAngY) / snapFactor) * snapFactor;
-        fww->animate.destAngZ = ((int) (fww->transform.unsnapAngZ) / snapFactor) * snapFactor;
-        fww->transform.scaleX =
-        ((float) ( (int) (fww->transform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
-        fww->transform.scaleY =
-        ((float) ( (int) (fww->transform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
+        int snapFactor = fws->optionGetSnapThreshold ();
+        mAnimate.destAngX = ((int) (mTransform.unsnapAngX) / snapFactor) * snapFactor;
+        mAnimate.destAngY = ((int) (mTransform.unsnapAngY) / snapFactor) * snapFactor;
+        mAnimate.destAngZ = ((int) (mTransform.unsnapAngZ) / snapFactor) * snapFactor;
+        mTransform.scaleX =
+        ((float) ( (int) (mTransform.unsnapScaleX * (21 - snapFactor) + 0.5))) / (21 - snapFactor); 
+        mTransform.scaleY =
+        ((float) ( (int) (mTransform.unsnapScaleY * (21 - snapFactor) + 0.5))) / (21 - snapFactor);
     }
 }
