@@ -343,6 +343,12 @@ VPSwitchScreen::VPSwitchScreen (CompScreen *screen):
     optionSetBeginKeyTerminate (boost::bind (&VPSwitchScreen::terminateNumbered,
 					      this, _1, _2, _3));
 
+    optionSetNextButtonInitiate (boost::bind
+					(&VPSwitchScreen::next,
+					 this, _1, _2, _3));
+    optionSetPrevButtonInitiate (boost::bind 
+					(&VPSwitchScreen::prev,
+					 this, _1, _2, _3));
     optionSetInitiateButtonInitiate (boost::bind 
 					(&VPSwitchScreen::initPluginAction,
 					 this, _1, _2, _3));
