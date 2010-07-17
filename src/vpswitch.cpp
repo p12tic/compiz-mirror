@@ -122,7 +122,7 @@ VPSwitchScreen::next (CompAction         *action,
       		      CompAction::State  state,
       		      CompOption::Vector &options)
 {
-    unsigned int targetX, targetY;
+    int targetX, targetY;
     CompPoint vp (screen->vp ());
     CompSize vpsize (screen->vpSize ());
 
@@ -131,12 +131,12 @@ VPSwitchScreen::next (CompAction         *action,
     targetX = vp.x () + 1;
     targetY = vp.y ();
 
-    if (targetX >= (unsigned int) vpsize.height ())
+    if (targetX >= vpsize.width ())
     {
 	targetX = 0;
 	targetY++;
     }
-    if (targetY >= (unsigned int) vpsize.width ())
+    if (targetY >= vpsize.height ())
 	targetY = 0;
 
     gotovp (targetX, targetY);
