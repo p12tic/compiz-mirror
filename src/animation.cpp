@@ -2348,9 +2348,6 @@ PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
     for (int i = 0; i < WatchedScreenPluginNum; i++)
 	mPluginActive[i] = false;
 
-    for (int i = 0; i < WatchedWindowPluginNum; i++)
-	mPluginActive[i] = false;
-
     // Never animate screen-dimming layer of logout window and gksu.
     mNeverAnimateMatch |= "title=gksu";
     mNeverAnimateMatch |= "title=x-session-manager";
@@ -2507,6 +2504,9 @@ PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
 {
     mBB.x1 = mBB.y1 = MAXSHORT;
     mBB.x2 = mBB.y2 = MINSHORT;
+
+    for (int i = 0; i < WatchedWindowPluginNum; i++)
+	mPluginActive[i] = false;
 
     if (w->minimized ())
     {
