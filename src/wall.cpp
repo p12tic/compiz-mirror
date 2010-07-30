@@ -1600,6 +1600,7 @@ WallWindow::WallWindow (CompWindow *window) :
     isSliding = !ws->optionGetNoSlideMatch ().evaluate (window);
 
     GLWindowInterface::setHandler (glWindow);
+    WindowInterface::setHandler (window);
 }
 
 bool
