@@ -637,7 +637,7 @@ ShelfScreen::handleEvent (XEvent *event)
 
 bool
 ShelfWindow::damageRect (bool     initial,
-			 CompRect &rect)
+			 const CompRect &rect)
 {
     bool status = false;
 

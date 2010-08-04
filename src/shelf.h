@@ -87,7 +87,7 @@ class ShelfWindow :
 	moveNotify (int, int, bool);
 
 	bool
-	damageRect (bool, CompRect &);
+	damageRect (bool, const CompRect &);
 
 	bool
 	glPaint (const GLWindowPaintAttrib &,
