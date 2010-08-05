@@ -654,7 +654,8 @@ WorkaroundsScreen::handleEvent (XEvent *event)
 	else if (event->xproperty.atom == Atoms::clientList) {
 	    if (optionGetJavaTaskbarFix ()) {
 		foreach (CompWindow *w, screen->windows ()) {
-		    setWindowState (w->state (), w->id ());
+		    if (w->managed ())
+			setWindowState (w->state (), w->id ());
 		}
 	    }
 	}
