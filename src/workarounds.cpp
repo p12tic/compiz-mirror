@@ -268,6 +268,49 @@ WorkaroundsWindow::updateUrgencyState ()
     }
 }
 
+/* Use this function to forcibly refresh java window properties when they
+ * have been unmarked as transient. This is just a copy of
+ * PrivateScreen::setWindowState. I would use CompWindow::changeState, but
+ * it checks whether oldstate==newstate
+ */
+void
+WorkaroundsScreen::setWindowState (unsigned int state, Window id)
+{
+    Atom data[32];
+    int  i = 0;
+
+    if (state & CompWindowStateModalMask)
+        data[i++] = Atoms::winStateModal;
+    if (state & CompWindowStateStickyMask)
+        data[i++] = Atoms::winStateSticky;
+    if (state & CompWindowStateMaximizedVertMask)
+        data[i++] = Atoms::winStateMaximizedVert;
+    if (state & CompWindowStateMaximizedHorzMask)
+        data[i++] = Atoms::winStateMaximizedHorz;
+    if (state & CompWindowStateShadedMask)
+        data[i++] = Atoms::winStateShaded;
+    if (state & CompWindowStateSkipTaskbarMask)
+        data[i++] = Atoms::winStateSkipTaskbar;
+    if (state & CompWindowStateSkipPagerMask)
+        data[i++] = Atoms::winStateSkipPager;
+    if (state & CompWindowStateHiddenMask)
+        data[i++] = Atoms::winStateHidden;
+    if (state & CompWindowStateFullscreenMask)
+        data[i++] = Atoms::winStateFullscreen;
+    if (state & CompWindowStateAboveMask)
+        data[i++] = Atoms::winStateAbove;
+    if (state & CompWindowStateBelowMask)
+        data[i++] = Atoms::winStateBelow;
+    if (state & CompWindowStateDemandsAttentionMask)
+        data[i++] = Atoms::winStateDemandsAttention;
+    if (state & CompWindowStateDisplayModalMask)
+        data[i++] = Atoms::winStateDisplayModal;
+
+    XChangeProperty (screen->dpy (), id, Atoms::winState,
+                     XA_ATOM, 32, PropModeReplace,
+                     (unsigned char *) data, i);
+}
+
 void
 WorkaroundsWindow::getAllowedActions (unsigned int &setActions,
 				      unsigned int &clearActions)
@@ -605,6 +648,13 @@ WorkaroundsScreen::handleEvent (XEvent *event)
 		{
 		    WORKAROUNDS_WINDOW (w);
 		    ww->updateUrgencyState ();
+		}
+	    }
+	}
+	else if (event->xproperty.atom == Atoms::clientList) {
+	    if (optionGetJavaTaskbarFix ()) {
+		foreach (CompWindow *w, screen->windows ()) {
+		    setWindowState (w->state (), w->id ());
 		}
 	    }
 	}
