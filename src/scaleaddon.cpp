@@ -931,8 +931,8 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 
     foreach (ScaleWindow *w, windows)
     {
-        bounds = CompRegion (bounds).united (w->window->geometry()).boundingRect ();
-        targets[w] = CompRegion (w->window->geometry());
+        bounds = CompRegion (bounds).united (w->window->outputRect ()).boundingRect ();
+        targets[w] = CompRegion (w->window->outputRect ());
     }
         
     do
