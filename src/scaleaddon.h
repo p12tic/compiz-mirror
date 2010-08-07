@@ -71,6 +71,11 @@ class ScaleAddonScreen :
 	bool
 	layoutNaturalThumbs ();
 
+	bool
+	isOverlappingAny (ScaleWindow *w,
+			  const std::map <ScaleWindow *, CompRegion>,
+			  const CompRegion &border);
+
 	void
 	donePaint ();
 

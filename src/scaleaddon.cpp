@@ -917,6 +917,25 @@ layoutOrganicThumbs (CompScreen *s)
  */
 
 bool
+ScaleAddonScreen::isOverlappingAny (ScaleWindow *w,
+				    std::map <ScaleWindow *, CompRegion> targets,
+				    const CompRegion &border)
+{
+    if (border.intersects (targets[w]))
+	return true;
+    // Is there a better way to do this?
+    std::map <ScaleWindow *, CompRegion>::const_iterator i;
+    for (i = targets.begin (); i != targets.end (); ++i)
+    {
+	if (w == (*i).first)
+	    continue;
+	if (targets[w].intersects ((*i).second))
+	    return true;
+    }
+    return false;
+}
+
+bool
 ScaleAddonScreen::layoutNaturalThumbs ()
 {
     ScaleScreen::WindowList windows = ScaleScreen::get (screen)->getWindows ();
@@ -924,6 +943,9 @@ ScaleAddonScreen::layoutNaturalThumbs ()
     CompRect area = screen->workArea ();
     CompRect bounds = area;
     std::map <ScaleWindow *, CompRegion> targets;
+    std::map <ScaleWindow *, int> directions;
+    int				  direction = 0;
+    int				  iterCount = 0;
 
     if (windows.size () == 1)
     {
@@ -940,6 +962,12 @@ ScaleAddonScreen::layoutNaturalThumbs ()
     {
         bounds = CompRegion (bounds).united (w->window->outputRect ()).boundingRect ();
         targets[w] = CompRegion (w->window->outputRect ());
+	// Reuse the unused "slot" as a preferred direction attribute. This is used when the window
+	// is on the edge of the screen to try to use as much screen real estate as possible.
+	directions[w] = direction;
+	direction++;
+	if (direction == 4)
+	    direction = 0;
     }
         
     do
@@ -951,13 +979,13 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 	    {
 		if (e->window->id () != w->window->id () && targets[w].intersects (targets[e]))
 		{
+		    int moveX = targets[w].boundingRect ().centerX () - targets[e].boundingRect ().centerX ();
+		    int moveY = targets[w].boundingRect ().centerY () - targets[e].boundingRect ().centerY ();
+		    //int xSection, ySection;
 		    // Overlap detected, determine direction to push
 		    
 		    overlapping = true;
-		    
-		    int moveX = targets[w].boundingRect ().centerX () - targets[e].boundingRect ().centerX ();
-		    int moveY = targets[w].boundingRect ().centerY () - targets[e].boundingRect ().centerY ();
-		    
+
 		    moveX /= optionGetNaturalPrecision ();
 		    moveY /= optionGetNaturalPrecision ();
 		    
@@ -969,6 +997,54 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 		    
 		    targets[w] = targets[w].translated (moveX, moveY);
 		    targets[e] = targets[e].translated (-moveX, -moveY);
+		    
+		    /* Try to keep the bounding rect the same aspect as the screen so that more
+		     * screen real estate is utilised. We do this by splitting the screen into nine
+		     * equal sections, if the window center is in any of the corner sections pull the
+		     * window towards the outer corner. If it is in any of the other edge sections
+		     * alternate between each corner on that edge. We don't want to determine it
+		     * randomly as it will not produce consistant locations when using the filter.
+		     * Only move one window so we don't cause large amounts of unnecessary zooming
+		     * in some situations. We need to do this even when expanding later just in case
+		     * all windows are the same size.
+		     * (We are using an old bounding rect for this, hopefully it doesn't matter)
+		     * FIXME: Disabled for now
+		     *
+		    xSection = (targets[w].boundingRect ().x () - bounds.x ()) / (bounds.width () / 3);
+		    ySection = (targets[w].boundingRect ().y () - bounds.y ()) / (bounds.height () / 3);
+		    moveX = 0;
+		    moveY = 0;
+		    if (xSection != 1 || ySection != 1) // Remove this if you want the center to pull as well
+		    {
+			if (xSection == 1)
+			    xSection = (directions[w] / 2 ? 2 : 0);
+			if (ySection == 1)
+			    ySection = (directions[w] % 2 ? 2 : 0);
+		    }
+		    
+                    if (xSection == 0 && ySection == 0)
+		    {
+			moveX = bounds.left () - targets[w].boundingRect ().centerX ();
+			moveY = bounds.top () - targets[w].boundingRect ().centerY ();
+		    }
+                    if (xSection == 2 && ySection == 0)
+		    {
+			moveX = bounds.right () - targets[w].boundingRect ().centerX ();
+			moveY = bounds.top () - targets[w].boundingRect ().centerY ();
+		    }
+                    if (xSection == 2 && ySection == 2)
+		    {
+			moveX = bounds.right () - targets[w].boundingRect ().centerX ();
+			moveY = bounds.bottom () - targets[w].boundingRect ().centerY ();
+		    }
+                    if (xSection == 0 && ySection == 2)
+		    {
+			moveX = bounds.left () - targets[w].boundingRect ().centerX ();
+			moveY = bounds.right () - targets[w].boundingRect ().centerY ();
+		    }
+                    if (moveX != 0 || moveY != 0)
+                        targets[w].translate (moveX, moveY);
+		    */
 		}
 		
 		// Update bounding rect
@@ -1011,6 +1087,107 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 	
 	w->setSlot (slt);
     }
+
+    // Don't expand onto or over the border
+    CompRegion borderRegion = CompRegion (area);
+    CompRegion areaRegion = CompRegion (area);
+    borderRegion.translate (-200, -200);
+    borderRegion.shrink (-200, -200); // actually expands the region
+    areaRegion.translate (10 / scale, 10 / scale);
+    areaRegion.shrink (10 / scale, 10 / scale);
+    
+    borderRegion ^= areaRegion;
+
+    bool moved = false;
+    do
+    {
+	moved = false;
+	foreach (ScaleWindow *w, windows)
+	{
+	    CompRegion oldRegion;
+	    
+	    // This may cause some slight distortion if the windows are enlarged a large amount
+	    int widthDiff = optionGetNaturalPrecision ();
+	    int heightDiff = ((w->window->height () / w->window->width ()) * 
+	    (targets[w].boundingRect ().width() + widthDiff)) - targets[w].boundingRect ().height ();
+	    int xDiff = widthDiff / 2;  // Also move a bit in the direction of the enlarge, allows the
+	    int yDiff = heightDiff / 2; // center windows to be enlarged if there is gaps on the side.
+	    
+	    // Attempt enlarging to the top-right
+	    oldRegion = targets[w];
+	    targets[w] = CompRegion (
+				     targets[w].boundingRect ().x () + xDiff,
+				     targets[w].boundingRect ().y () - yDiff - heightDiff,
+				     targets[w].boundingRect ().width () + widthDiff,
+				     targets[w].boundingRect ().height () + heightDiff
+					);
+	    if (isOverlappingAny (w, targets, borderRegion))
+		targets[w] = oldRegion;
+	    else
+		moved = true;
+	    
+	    // Attempt enlarging to the bottom-right
+	    oldRegion = targets[w];
+	    targets[w] = CompRegion(
+				    targets[w].boundingRect ().x () + xDiff,
+				    targets[w].boundingRect ().y () + yDiff,
+				    targets[w].boundingRect ().width () + widthDiff,
+				    targets[w].boundingRect ().height () + heightDiff
+				    );
+	    if (isOverlappingAny (w, targets, borderRegion))
+		targets[w] = oldRegion;
+	    else
+		moved = true;
+		
+	    // Attempt enlarging to the bottom-left
+	    oldRegion = targets[w];
+	    targets[w] = CompRegion (
+				    targets[w].boundingRect ().x() - xDiff - widthDiff,
+				    targets[w].boundingRect ().y() + yDiff,
+				    targets[w].boundingRect ().width() + widthDiff,
+				    targets[w].boundingRect ().height() + heightDiff
+				    );
+	    if (isOverlappingAny (w, targets, borderRegion))
+		targets[w] = oldRegion;
+	    else
+		moved = true;
+		    
+	    // Attempt enlarging to the top-left
+	    oldRegion = targets[w];
+	    targets[w] = CompRegion (
+				    targets[w].boundingRect ().x() - xDiff - widthDiff,
+				    targets[w].boundingRect ().y() - yDiff - heightDiff,
+				    targets[w].boundingRect ().width() + widthDiff,
+				    targets[w].boundingRect ().height() + heightDiff
+				    );
+	    if (isOverlappingAny (w, targets, borderRegion))
+		targets[w] = oldRegion;
+	    else
+		moved = true;
+	}
+	
+	iterCount++;
+    }
+    while (moved && iterCount < 100);
+
+    // The expanding code above can actually enlarge windows over 1.0/2.0 scale, we don't like this
+    // We can't add this to the loop above as it would cause a never-ending loop so we have to make
+    // do with the less-than-optimal space usage with using this method.
+    foreach (ScaleWindow *w, windows)
+    {
+	double scale = targets[w].boundingRect ().width() / double( w->window->width());
+	if (scale > 2.0 || (scale > 1.0 && (w->window->width() > 300 || w->window->height() > 300)))
+	{
+	    scale = (w->window->width () > 300 || w->window->height () > 300) ? 1.0 : 2.0;
+	    targets[w] = CompRegion (
+				    targets[w].boundingRect ().center().x() - int (w->window->width() * scale) / 2,
+				    targets[w].boundingRect ().center().y() - int (w->window->height () * scale) / 2,
+				    w->window->width() * scale,
+				    w->window->height() * scale
+				    );
+	}
+    }
+
     return true;
 
 }
