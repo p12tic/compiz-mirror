@@ -149,7 +149,7 @@
 		    <_long>Selects the mode to layout the windows in scale mode</_long>
 		    <min>0</min>
 		    <!-- note: don't offer the organic mode for now as it's utterly broken -->
-		    <max>0</max>
+		    <max>1</max>
 		    <default>0</default>
 		    <desc>
 			<value>0</value>
@@ -157,7 +157,7 @@
 		    </desc>
 		    <desc>
 			<value>1</value>
-			<_name>Organic - EXPERIMENTAL</_name>
+			<_name>Natural</_name>
 		    </desc>
 		</option>
 		<subgroup>

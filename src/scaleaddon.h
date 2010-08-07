@@ -59,12 +59,17 @@ class ScaleAddonScreen :
 	int		lastState;
 
 	float		scale;
+	
+	std::vector <ScaleSlot> paintSlots;
 
 	void
 	handleEvent (XEvent *);
 
 	bool
 	layoutSlotsAndAssignWindows ();
+	
+	bool
+	layoutNaturalThumbs ();
 
 	void
 	donePaint ();

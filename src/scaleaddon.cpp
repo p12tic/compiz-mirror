@@ -29,6 +29,7 @@
  */
 
 #include "scaleaddon.h"
+#include <iostream>
 
 COMPIZ_PLUGIN_20090315 (scaleaddon, ScaleAddonPluginVTable);
 
@@ -906,6 +907,96 @@ layoutOrganicThumbs (CompScreen *s)
 }
 
 #endif
+    
+
+bool
+ScaleAddonScreen::layoutNaturalThumbs ()
+{
+    ScaleScreen::WindowList windows = ScaleScreen::get (screen)->getWindows ();
+    bool overlapping;
+    CompRect area = screen->workArea ();
+    CompRect bounds = area;
+    std::map <ScaleWindow *, CompRegion> targets;
+
+    if (windows.size () == 1)
+    {
+	// Just move the window to its original location to save time
+	if (screen->fullscreenOutput ().workArea ().contains (windows.front ()->window->geometry ()))
+	{
+	    ScaleSlot slot ((CompRect &) windows.front ()->window->geometry ());
+	    windows.front ()->setSlot (slot);
+	    return true;
+	}
+    }
+
+    foreach (ScaleWindow *w, windows)
+    {
+        bounds = CompRegion (bounds).united (w->window->geometry()).boundingRect ();
+        targets[w] = CompRegion (w->window->geometry());
+    }
+        
+    do
+    {
+	overlapping = false;
+	foreach (ScaleWindow *w, windows)
+	{
+	    foreach (ScaleWindow *e, windows)
+	    {
+		if (e->window->id () != w->window->id () && targets[w].intersects (targets[e]))
+		{
+		    // Overlap detected, determine direction to push
+		    
+		    overlapping = true;
+		    
+		    int moveX = targets[w].boundingRect ().centerX () - targets[e].boundingRect ().centerX ();
+		    int moveY = targets[w].boundingRect ().centerY () - targets[e].boundingRect ().centerY ();
+		    
+		    targets[w] = w->window->region ().translated (moveX, moveY);
+		}
+		
+		// Update bounding rect
+		bounds = CompRegion (bounds).united (targets[w]).boundingRect ();
+		bounds = CompRegion (bounds).united (targets[e]).boundingRect ();
+	    }
+	}
+    }
+    while (overlapping);
+
+    // Work out scaling by getting the most top-left and most bottom-right window coords.
+    // The 20's and 10's are so that the windows don't touch the edge of the screen.
+    double scale;
+    if( bounds == area )
+        scale = 1.0; // Don't add borders to the screen
+    else if (area.width() / double (bounds.width()) < area.height () / double (bounds.height()))
+        scale = (area.width() - 20) / double (bounds.width ());
+    else
+        scale = (area.height() - 20) / double (bounds.height ());
+    // Make bounding rect fill the screen size for later steps
+    bounds = CompRect (
+        bounds.x () - (area.width () - 20 - bounds.width () * scale ) / 2 - 10 / scale,
+        bounds.y () - (area.height () - 20 - bounds.height () * scale ) / 2 - 10 / scale,
+        area.width () / scale,
+        area.height () / scale
+        );
+    
+    // Move all windows back onto the screen and set their scale
+    foreach (ScaleWindow *w, windows)
+    {
+        targets[w] = CompRect (
+            (targets[w].boundingRect ().x () - bounds.x () ) * scale + area.x (),
+	    (targets[w].boundingRect ().y () - bounds.y ()) * scale + area.y (),
+	    targets[w].boundingRect ().width () * scale,
+	    targets[w].boundingRect ().height () * scale
+            );
+	ScaleSlot slt (targets[w].boundingRect ());
+	slt.scale = scale;
+	slt.filled = true;
+	
+	w->setSlot (slt);
+    }
+    return true;
+
+}
 
 bool
 ScaleAddonScreen::layoutSlotsAndAssignWindows ()
@@ -914,9 +1005,8 @@ ScaleAddonScreen::layoutSlotsAndAssignWindows ()
 
     switch (optionGetLayoutMode ())
     {
-    case LayoutModeOrganicExperimental:
-	/* status = layoutOrganicThumbs (); */
-	status = false;
+    case LayoutModeNatural:
+	status = layoutNaturalThumbs ();
 	break;
     case LayoutModeNormal:
     default:
