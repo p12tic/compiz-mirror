@@ -951,6 +951,9 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 		    int moveX = targets[w].boundingRect ().centerX () - targets[e].boundingRect ().centerX ();
 		    int moveY = targets[w].boundingRect ().centerY () - targets[e].boundingRect ().centerY ();
 		    
+		    moveX /= optionGetNaturalPrecision ();
+		    moveY /= optionGetNaturalPrecision ();
+		    
 		    targets[w] = w->window->region ().translated (moveX, moveY);
 		}
 		
@@ -965,12 +968,12 @@ ScaleAddonScreen::layoutNaturalThumbs ()
     // Work out scaling by getting the most top-left and most bottom-right window coords.
     // The 20's and 10's are so that the windows don't touch the edge of the screen.
     double scale;
-    if( bounds == area )
+    if (bounds == area)
         scale = 1.0; // Don't add borders to the screen
-    else if (area.width() / double (bounds.width()) < area.height () / double (bounds.height()))
-        scale = (area.width() - 20) / double (bounds.width ());
+    else if (area.width () / double (bounds.width ()) < area.height () / double (bounds.height ()))
+        scale = (area.width () - 20) / double (bounds.width ());
     else
-        scale = (area.height() - 20) / double (bounds.height ());
+        scale = (area.height () - 20) / double (bounds.height ());
     // Make bounding rect fill the screen size for later steps
     bounds = CompRect (
         bounds.x () - (area.width () - 20 - bounds.width () * scale ) / 2 - 10 / scale,

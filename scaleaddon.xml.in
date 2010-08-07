@@ -148,7 +148,6 @@
 		    <_short>Window Layout Mode</_short>
 		    <_long>Selects the mode to layout the windows in scale mode</_long>
 		    <min>0</min>
-		    <!-- note: don't offer the organic mode for now as it's utterly broken -->
 		    <max>1</max>
 		    <default>0</default>
 		    <desc>
@@ -160,6 +159,16 @@
 			<_name>Natural</_name>
 		    </desc>
 		</option>
+		<subgroup>
+		    <_short>Natural Scale Mode</_short>
+		    <option name="natural_precision" type="float">
+			<_short>Precision</_short>
+			<_long>How precisely windows should be pushed apart. Increasing this makes windows that are further apart closer together, but also increases CPU usage</_long>
+			<min>1.0</min>
+			<max>20.0</max>
+			<default>2.0</default>
+		    </option>
+		</subgroup>
 		<subgroup>
 		    <_short>Window Pull</_short>
 		    <option name="constrain_pull_to_screen" type="bool">
