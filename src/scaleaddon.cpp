@@ -954,7 +954,14 @@ ScaleAddonScreen::layoutNaturalThumbs ()
 		    moveX /= optionGetNaturalPrecision ();
 		    moveY /= optionGetNaturalPrecision ();
 		    
-		    targets[w] = w->window->region ().translated (moveX, moveY);
+		    /* Force movement */
+		    if (moveX == 0)
+			moveX = optionGetNaturalPrecision ();
+		    if (moveY == 0)
+			moveY = optionGetNaturalPrecision ();
+		    
+		    targets[w] = targets[w].translated (moveX, moveY);
+		    targets[e] = targets[e].translated (-moveX, -moveY);
 		}
 		
 		// Update bounding rect
