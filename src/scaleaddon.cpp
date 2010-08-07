@@ -907,7 +907,14 @@ layoutOrganicThumbs (CompScreen *s)
 }
 
 #endif
-    
+
+/*
+ * Inspired by KWin - the KDE Window Manager
+ * presentwindows.cpp
+ * Copyright (C) 2007 Rivo Laks <rivolaks@hot.ee>
+ * Copyright (C) 2008 Lucas Murray <lmurray@undefinedfire.com>
+ * 
+ */
 
 bool
 ScaleAddonScreen::layoutNaturalThumbs ()
