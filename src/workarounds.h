@@ -31,7 +31,9 @@
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <core/atoms.h>
+#include <core/propertywriter.h>
 #include <X11/Xatom.h>
+#include <X11/extensions/shape.h>
 
 #include "workarounds_options.h"
 
@@ -58,6 +60,8 @@ class WorkaroundsScreen :
 
 	Atom		roleAtom;
 	std::list <Window> mfwList;
+	
+	PropertyWriter	inputDisabledAtom;
 
 	GL::GLProgramParameter4fProc origProgramEnvParameter4f;
 	GLProgramParameter4dvProc    programEnvParameter4dv;
@@ -110,8 +114,23 @@ class WorkaroundsScreen :
 
 class WorkaroundsWindow :
     public PluginClassHandler <WorkaroundsWindow, CompWindow>,
-    public WindowInterface
+    public WindowInterface,
+    public GLWindowInterface
 {
+    public:
+	
+	typedef struct _HideInfo {
+	    Window shapeWindow;
+	    
+	    unsigned long skipState;
+	    unsigned long shapeMask;
+	    
+	    XRectangle *inputRects;
+	    int        nInputRects;
+	    int        inputRectOrdering;
+	    
+	} HideInfo;
+	
     public:
 
 	WorkaroundsWindow (CompWindow *);
@@ -126,13 +145,30 @@ class WorkaroundsWindow :
 	bool madeFullscreen;
 	bool isFullscreen;
 	bool madeDemandAttention;
+	bool isMinimized;
 
+	HideInfo *windowHideInfo;
+	
+	bool
+	isGroupTransient (Window);
+	
 	void
 	resizeNotify (int, int, int, int);
 
 	void
 	getAllowedActions (unsigned int &,
 			   unsigned int &);
+	
+	void minimize ();
+	void unminimize ();
+	bool minimized ();
+	
+	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
+		      const CompRegion &, unsigned int);
+	
+	void setVisibility (bool);
+	void restoreInputShape (HideInfo *);
+	void clearInputShape (HideInfo *);
 
 	void
 	removeSticky ();

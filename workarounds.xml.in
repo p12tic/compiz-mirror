@@ -18,6 +18,11 @@
 			
 	</deps>
         <options>
+	    <option type="bool" name="keep_minimized_windows">
+		<_short>Keep previews of minimized windows</_short>
+		<_long>Don't delete window contents on minimize. This does not work with some applications</_long>
+		<default>false</default>
+	    </option>
             <option type="bool" name="legacy_fullscreen">
                 <_short>Legacy Fullscreen Support</_short>
                 <_long>Make Wine and legacy applications fullscreen properly.</_long>

@@ -30,6 +30,251 @@ bool haveOpenGL;
 
 COMPIZ_PLUGIN_20090315 (workarounds, WorkaroundsPluginVTable);
 
+/*
+ * WorkaroundsWindow::clearInputShape
+ *
+ */
+void
+WorkaroundsWindow::clearInputShape (HideInfo *hideInfo)
+{
+    XRectangle  *rects;
+    int         count = 0, ordering;
+    Window      xid = hideInfo->shapeWindow;
+    
+    rects = XShapeGetRectangles (screen->dpy (), xid, ShapeInput,
+				 &count, &ordering);
+    
+    if (count == 0)
+	return;
+    
+    /* check if the returned shape exactly matches the window shape -
+     *      if that is true, the window currently has no set input shape */
+    if ((count == 1) &&
+	(rects[0].x == -window->serverGeometry ().border ()) &&
+	(rects[0].y == -window->serverGeometry ().border ()) &&
+	(rects[0].width == (window->serverGeometry ().width () + 
+	window->serverGeometry ().border ())) &&
+	(rects[0].height == (window->serverGeometry ().height () + 
+	window->serverGeometry ().border ())))
+    {
+	count = 0;
+    }
+
+    if (hideInfo->inputRects)
+	XFree (hideInfo->inputRects);
+
+    hideInfo->inputRects = rects;
+    hideInfo->nInputRects = count;
+    hideInfo->inputRectOrdering = ordering;
+
+    XShapeSelectInput (screen->dpy (), xid, NoEventMask);
+
+    XShapeCombineRectangles (screen->dpy (), xid, ShapeInput, 0, 0,
+			     NULL, 0, ShapeSet, 0);
+
+    XShapeSelectInput (screen->dpy (), xid, ShapeNotify);
+}
+
+/*
+ * GroupWindow::restoreInputShape
+ *
+ */
+void
+WorkaroundsWindow::restoreInputShape (HideInfo *info)
+{
+    Window xid = info->shapeWindow;
+
+    if (info->nInputRects)
+    {
+        XShapeCombineRectangles (screen->dpy (), xid, ShapeInput, 0, 0,
+			         info->inputRects, info->nInputRects,
+			         ShapeSet, info->inputRectOrdering);
+    }
+    else
+    {
+        XShapeCombineMask (screen->dpy (), xid, ShapeInput,
+		           0, 0, None, ShapeSet);
+    }
+
+    if (info->inputRects)
+        XFree (info->inputRects);
+
+    XShapeSelectInput (screen->dpy (), xid, info->shapeMask);
+}
+/*
+ * groupSetWindowVisibility
+ *
+ */
+void
+WorkaroundsWindow::setVisibility (bool visible)
+{
+    if (!visible && !windowHideInfo)
+    {
+	HideInfo *info;
+
+	windowHideInfo = info = new HideInfo ();
+	if (!windowHideInfo)
+	    return;
+
+	info->inputRects = NULL;
+	info->nInputRects = 0;
+	info->shapeMask = XShapeInputSelected (screen->dpy (), window->id ());
+	
+	/* We are a reparenting window manager now, which means that we either
+	 * shape the frame window, or if it does not exist, shape the window **/
+	
+	if (window->frame ())
+	    info->shapeWindow = window->frame ();
+	else
+	    info->shapeWindow = window->id ();
+	
+	clearInputShape (info);
+
+	info->skipState = window->state () & (CompWindowStateSkipPagerMask |
+				              CompWindowStateSkipTaskbarMask);
+    }
+    else if (visible && windowHideInfo)
+    {
+	HideInfo *info = windowHideInfo;
+
+	restoreInputShape (info);
+
+	XShapeSelectInput (screen->dpy (), window->id (), info->shapeMask);
+	delete info;
+	windowHideInfo = NULL;
+    }
+    
+    cWindow->addDamage ();
+    gWindow->glPaintSetEnabled (this, !visible);
+}
+
+bool
+WorkaroundsWindow::isGroupTransient (Window clientLeader)
+{
+    if (!clientLeader)
+	return false;
+    
+    if (window->transientFor () == None || window->transientFor () == screen->root ())
+    {
+	if (window->type () & (CompWindowTypeUtilMask    |
+				CompWindowTypeToolbarMask |
+				CompWindowTypeMenuMask    |
+				CompWindowTypeDialogMask  |
+				CompWindowTypeModalDialogMask))
+	{
+	    if (window->clientLeader () == clientLeader)
+		return true;
+	}
+    }
+
+    return false;
+}
+
+void
+WorkaroundsWindow::minimize ()
+{  
+    if (!window->managed ())
+	return;
+    
+    if (!window->minimized ())
+    {
+	WORKAROUNDS_SCREEN (screen);
+	
+	unsigned long data[2];
+	int	      state = IconicState;
+	CompOption::Vector propTemplate = ws->inputDisabledAtom.getReadTemplate ();
+	CompOption::Value enabled = CompOption::Value (true);
+	
+	window->windowNotify (CompWindowNotifyMinimize);
+	
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    if (w->transientFor () == window->id () ||
+		WorkaroundsWindow::get (w)->isGroupTransient (window->clientLeader ()))
+		w->unminimize ();
+	}
+	
+	setVisibility (false);
+
+	/* HACK ATTACK */
+	
+	data[0] = state;
+	data[1] = None;
+
+	XChangeProperty (screen->dpy (), window->id (),
+			Atoms::wmState, Atoms::wmState,
+			32, PropModeReplace, (unsigned char *) data, 2);
+	
+	
+	propTemplate.at (0).set (enabled);
+	ws->inputDisabledAtom.updateProperty (window->id (),
+					      propTemplate,
+					      XA_CARDINAL);
+			 
+	
+	isMinimized = true;
+    }
+}
+
+void
+WorkaroundsWindow::unminimize ()
+{  
+    if (isMinimized)
+    {
+	WORKAROUNDS_SCREEN (screen);
+	
+	unsigned long data[2];
+	int	      state = NormalState;
+	CompOption::Vector propTemplate = ws->inputDisabledAtom.getReadTemplate ();
+	CompOption::Value enabled = CompOption::Value (false);	
+	
+	window->windowNotify (CompWindowNotifyUnminimize);
+	
+	isMinimized = false;
+	
+	setVisibility (true);
+	
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    if (w->transientFor () == window->id () ||
+		WorkaroundsWindow::get (w)->isGroupTransient (window->clientLeader ()))
+		w->unminimize ();
+	}
+
+	/* HACK ATTACK */
+	
+	data[0] = state;
+	data[1] = None;
+	
+	XChangeProperty (screen->dpy (), window->id (),
+			 Atoms::wmState, Atoms::wmState,
+			 32, PropModeReplace, (unsigned char *) data, 2);
+
+	propTemplate.at (0).set (enabled);
+	ws->inputDisabledAtom.updateProperty (window->id (),
+					      propTemplate,
+					      XA_CARDINAL);
+    }
+}
+
+bool
+WorkaroundsWindow::minimized ()
+{
+    return isMinimized;
+}
+
+bool
+WorkaroundsWindow::glPaint (const GLWindowPaintAttrib &attrib,
+			    const GLMatrix	      &transform,
+			    const CompRegion	      &region,
+			    unsigned int	      mask)
+{    
+    if (isMinimized)
+	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+    
+    return gWindow->glPaint (attrib, transform, region, mask);
+}
+
 void
 WorkaroundsScreen::checkFunctions (bool checkWindow, bool checkScreen)
 {
@@ -561,6 +806,40 @@ WorkaroundsScreen::optionChanged (CompOption		      *opt,
 	else
 	    GL::copySubBuffer = origCopySubBuffer;
     }
+    
+    if (optionGetKeepMinimizedWindows ())
+    {
+	foreach (CompWindow *window, screen->windows ())
+	{
+	    WORKAROUNDS_WINDOW (window);
+	    bool m = window->minimized ();
+	    if (m)
+		window->unminimize ();
+	    window->minimizeSetEnabled (ww, true);
+	    window->unminimizeSetEnabled (ww, true);
+	    window->minimizedSetEnabled (ww, true);
+	    if (m)
+		window->minimize ();
+	}
+    }
+    else
+    {
+	foreach (CompWindow *window, screen->windows ())
+	{
+	    WORKAROUNDS_WINDOW (window);
+	    bool m = window->minimized ();
+	    if (m)
+		window->unminimize ();
+	    window->minimizeSetEnabled (ww, false);
+	    window->unminimizeSetEnabled (ww, false);
+	    window->minimizedSetEnabled (ww, false);
+	    if (m)
+	    {
+		ww->isMinimized = false;
+		window->minimize ();
+	    }
+	}
+    }
 }
 
 void
@@ -681,12 +960,17 @@ WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
     gScreen (GLScreen::get (screen)),
     roleAtom (XInternAtom (screen->dpy (), "WM_WINDOW_ROLE", 0))
 {
+    CompOption::Vector		propTemplate;
+    
     ScreenInterface::setHandler (screen, false);
     if (haveOpenGL)
     {
 	CompositeScreenInterface::setHandler (cScreen, false);
 	GLScreenInterface::setHandler (gScreen, false);
     }
+    
+    propTemplate.push_back (CompOption ("enabled", CompOption::TypeBool));    
+    inputDisabledAtom = PropertyWriter ("COMPIZ_NET_WM_INPUT_DISABLED", propTemplate);
 
     optionSetStickyAlldesktopsNotify (boost::bind (
 					&WorkaroundsScreen::optionChanged, this,
@@ -708,7 +992,10 @@ WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
     optionSetNoWaitForVideoSyncNotify (boost::bind (
 					&WorkaroundsScreen::optionChanged, this,
 					_1, _2));
-
+    optionSetKeepMinimizedWindowsNotify (boost::bind (
+					 &WorkaroundsScreen::optionChanged, this,
+					 _1, _2));
+    
     if (haveOpenGL)
     {
 	origProgramEnvParameter4f = GL::programEnvParameter4f;
@@ -748,9 +1035,12 @@ WorkaroundsWindow::WorkaroundsWindow (CompWindow *window) :
     madeSticky (false),
     madeFullscreen (false),
     isFullscreen (false),
-    madeDemandAttention (false)
+    madeDemandAttention (false),
+    isMinimized (window->minimized ()),
+    windowHideInfo (NULL)
 {
     WindowInterface::setHandler (window, false);
+    GLWindowInterface::setHandler (gWindow, false);
 
     WORKAROUNDS_SCREEN (screen);
 
@@ -759,11 +1049,26 @@ WorkaroundsWindow::WorkaroundsWindow (CompWindow *window) :
 	window->getAllowedActionsSetEnabled (this, false);
 	window->resizeNotifySetEnabled (this, false);
     }
+    if (ws->optionGetKeepMinimizedWindows ())
+    {
+	window->minimizeSetEnabled (this, true);
+	window->unminimizeSetEnabled (this, true);
+	window->minimizedSetEnabled (this, true);
+    }
 }
 
 
 WorkaroundsWindow::~WorkaroundsWindow ()
 {
+    if (isMinimized)
+    {
+	window->unminimize ();
+	window->minimizeSetEnabled (this, false);
+	window->unminimizeSetEnabled (this, false);
+	window->minimizedSetEnabled (this, false);
+	window->minimize ();
+    }
+
     if (!window->destroyed ())
     {
 	if (adjustedWinType)
