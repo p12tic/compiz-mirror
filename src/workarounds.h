@@ -99,7 +99,8 @@ class WorkaroundsScreen :
 	void
 	checkFunctions (bool window, bool screen);
 
-
+	void
+	setWindowState (unsigned int state, Window id);
 
 
 };
