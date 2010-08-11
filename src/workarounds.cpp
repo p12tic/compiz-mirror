@@ -169,6 +169,7 @@ WorkaroundsWindow::isGroupTransient (Window clientLeader)
 
     return false;
 }
+    
 
 void
 WorkaroundsWindow::minimize ()
@@ -176,7 +177,7 @@ WorkaroundsWindow::minimize ()
     if (!window->managed ())
 	return;
     
-    if (!window->minimized ())
+    if (!isMinimized)
     {
 	WORKAROUNDS_SCREEN (screen);
 	
@@ -186,6 +187,7 @@ WorkaroundsWindow::minimize ()
 	CompOption::Value enabled = CompOption::Value (true);
 	
 	window->windowNotify (CompWindowNotifyMinimize);
+	window->changeState (window->state () | CompWindowStateHiddenMask);
 	
 	foreach (CompWindow *w, screen->windows ())
 	{
@@ -205,7 +207,6 @@ WorkaroundsWindow::minimize ()
 			Atoms::wmState, Atoms::wmState,
 			32, PropModeReplace, (unsigned char *) data, 2);
 	
-	
 	propTemplate.at (0).set (enabled);
 	ws->inputDisabledAtom.updateProperty (window->id (),
 					      propTemplate,
@@ -218,7 +219,7 @@ WorkaroundsWindow::minimize ()
 
 void
 WorkaroundsWindow::unminimize ()
-{  
+{    
     if (isMinimized)
     {
 	WORKAROUNDS_SCREEN (screen);
@@ -229,6 +230,7 @@ WorkaroundsWindow::unminimize ()
 	CompOption::Value enabled = CompOption::Value (false);	
 	
 	window->windowNotify (CompWindowNotifyUnminimize);
+	window->changeState (window->state () & ~CompWindowStateHiddenMask);
 	
 	isMinimized = false;
 	
@@ -311,24 +313,27 @@ WorkaroundsScreen::checkFunctions (bool checkWindow, bool checkScreen)
 	screen->handleEventSetEnabled (this, false);
     }
 
-    if (optionGetLegacyFullscreen () && checkWindow)
+    if (checkWindow)
     {
+	bool legacyFullscreen = optionGetLegacyFullscreen ();
+	bool keepMinimized = optionGetKeepMinimizedWindows ();
+	
 	foreach (CompWindow *w, screen->windows ())
 	{
 	    WORKAROUNDS_WINDOW (w);
 
-	    ww->window->getAllowedActionsSetEnabled (ww, true);
-	    ww->window->resizeNotifySetEnabled (ww, true);
-	}
-    }
-    else if (checkWindow)
-    {
-	foreach (CompWindow *w, screen->windows ())
-	{
-	    WORKAROUNDS_WINDOW (w);
+	    bool m = ww->window->minimized ();
 
-	    ww->window->getAllowedActionsSetEnabled (ww, false);
-	    ww->window->resizeNotifySetEnabled (ww, false);
+	    ww->window->getAllowedActionsSetEnabled (ww, legacyFullscreen);
+	    ww->window->resizeNotifySetEnabled (ww, legacyFullscreen);
+
+	    if (m)
+		ww->window->unminimize ();
+	    ww->window->minimizeSetEnabled (ww, keepMinimized);
+	    ww->window->unminimizeSetEnabled (ww, keepMinimized);
+	    ww->window->minimizedSetEnabled (ww, keepMinimized);
+	    if (m)
+		ww->window->minimize ();
 	}
     }
 }
