@@ -1182,7 +1182,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	extPlugin->prePreparePaintGeneral ();
 
     if (mAnimInProgress)
-    {
+    {	
 	int msSinceLastPaintActual;
 
 	struct timeval curTime;
@@ -1210,7 +1210,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	    Animation *curAnim = aw->curAnimation ();
 
 	    if (curAnim)
-	    {
+	    {		
 		if (!curAnim->initialized ())
 		    curAnim->init ();
 
@@ -1275,7 +1275,8 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 		    }
 		}
 
-		if (curAnim->remainingTime () <= 0) // Animation is done
+		bool finished = (curAnim->remainingTime () <= 0);
+		if (finished) // Animation is done
 		{
 		    aw->postAnimationCleanUp ();
 		}
@@ -1506,7 +1507,10 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
     mCurAnimation->updateTransform (wTransform);
     mCurAnimation->prePaintWindow ();
 
-    status = gWindow->glPaint (wAttrib, wTransform, region, mask);
+    if (mCurAnimation->paintWindowUsed ())
+	status = mCurAnimation->paintWindow (gWindow, wAttrib, wTransform, region, mask);
+    else
+	status = gWindow->glPaint (wAttrib, wTransform, region, mask);
 
     if (mCurAnimation->postPaintWindowUsed ())
     {
@@ -2330,7 +2334,6 @@ AnimEffect AnimEffectRollUp;
 AnimEffect AnimEffectSidekick;
 AnimEffect AnimEffectWave;
 AnimEffect AnimEffectZoom;
-
 
 PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
     cScreen (CompositeScreen::get (s)),

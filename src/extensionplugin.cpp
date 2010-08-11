@@ -559,6 +559,10 @@ ExtensionPluginAnimation::initPersistentData (AnimWindow *aw)
     {
 	aw->persistentData["dodge"] = new DodgePersistentData ();
     }
+    if (aw->persistentData.find ("multi") == aw->persistentData.end ())
+    {
+	aw->persistentData["multi"] = new MultiPersistentData ();
+    }
 }
 
 void

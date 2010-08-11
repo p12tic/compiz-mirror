@@ -89,7 +89,7 @@ extern AnimEffect AnimEffectSidekick;
 extern AnimEffect AnimEffectWave;
 extern AnimEffect AnimEffectZoom;
 
-#define NUM_EFFECTS 16
+#define NUM_EFFECTS 17
 
 extern int customOptionOptionIds[AnimEventNum];
 
@@ -804,4 +804,3 @@ protected:
 		      float relDistToFoldCenter,
 		      float foldMaxAmp);
 };
-
