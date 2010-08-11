@@ -89,7 +89,7 @@ extern AnimEffect AnimEffectSidekick;
 extern AnimEffect AnimEffectWave;
 extern AnimEffect AnimEffectZoom;
 
-#define NUM_EFFECTS 16
+#define NUM_EFFECTS 17
 
 extern int customOptionOptionIds[AnimEventNum];
 
@@ -805,3 +805,17 @@ protected:
 		      float foldMaxAmp);
 };
 
+class MultiZoomAnim :
+    public MultiAnim <ZoomAnim, 2>
+{
+    public:
+	MultiZoomAnim (CompWindow *w,
+		       WindowEvent curWindowEvent,
+		       float	   duration,
+		       const	   AnimEffect info,
+		       const	   CompRect   icon) :
+	    MultiAnim <ZoomAnim, 2> (w, curWindowEvent,
+				    duration, info,
+				    icon)
+	    {}
+};
