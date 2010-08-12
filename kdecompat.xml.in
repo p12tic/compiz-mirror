@@ -27,6 +27,11 @@
 				<_long>Support the "present windows" effect for Plasma task groups</_long>
 				<default>true</default>
 			</option>
+			<option name="window_blur" type="bool">
+				<_short>Support Blur Effect</_short>
+				<_long>Support the "blur behind windows effect (requires the blur plugin to be loaded)</_long>
+				<default>true</default>
+			</option>
 			<group>
 				<_short>Popup Slide Effect</_short>
 				<option name="sliding_popups" type="bool">

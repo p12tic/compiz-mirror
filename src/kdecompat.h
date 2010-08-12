@@ -27,6 +27,7 @@
 #include <core/pluginclasshandler.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
+#include <decoration.h>
 
 #include <X11/Xatom.h>
 #include <core/atoms.h>
@@ -93,6 +94,8 @@ class KDECompatScreen :
 	Atom mKdePreviewAtom;
 	Atom mKdeSlideAtom;
 	Atom mKdePresentGroupAtom;
+	Atom mKdeBlurBehindRegionAtom;
+	Atom mCompizWindowBlurAtom;
 
 	bool mHasSlidingPopups;
 
@@ -102,6 +105,8 @@ class KDECompatScreen :
 	CompPlugin *mScaleHandle;
 	bool	   mScaleActive;
 	CompTimer  mScaleTimeout;
+
+	bool	   mBlurLoaded;
 
 	CompWindow          *mPresentWindow;
 	std::vector<Window> mPresentWindowList;
@@ -153,6 +158,8 @@ class KDECompatWindow :
 	int		 mDestroyCnt;
 	int		 mUnmapCnt;
 
+	bool		mBlurPropertySet;
+
     public:
 
 	bool
@@ -182,6 +189,9 @@ class KDECompatWindow :
 
 	void
 	updateSlidePosition ();
+
+	void
+	updateBlurProperty (bool enabled);
 
 	void
 	handleClose (bool);

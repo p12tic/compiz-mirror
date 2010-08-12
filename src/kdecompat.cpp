@@ -634,6 +634,100 @@ KDECompatScreen::handleCompizEvent (const char  *pluginName,
 }
 
 void
+KDECompatWindow::updateBlurProperty (bool enabled)
+{
+    Atom actual;
+    int	 result, format;
+    unsigned long n, left;
+    unsigned char *propData;
+    bool	  validProperty = false;
+
+    KDECOMPAT_SCREEN (screen);
+
+    if (!ks->mBlurLoaded || !ks->optionGetWindowBlur ())
+	return;
+
+    if (!enabled)
+    {
+	if (mBlurPropertySet)
+	    XDeleteProperty (screen->dpy (), window->id (),
+			     KDECompatScreen::get (screen)->mCompizWindowBlurAtom);
+	return;
+    }
+
+    
+    if (!mBlurPropertySet)
+    {
+	result = XGetWindowProperty (screen->dpy (), window->id (),
+				     ks->mCompizWindowBlurAtom, 0, 32768,
+				     false, AnyPropertyType, &actual,
+				     &format, &n, &left, &propData);
+
+	if (result == Success && propData)
+	{
+	    /* somebody else besides us already set a property,
+	     * don't touch that property
+	     */
+
+	    XFree (propData);
+	    return;
+	}
+    }
+
+    result = XGetWindowProperty (screen->dpy (), window->id (),
+				 ks->mKdeBlurBehindRegionAtom, 0, 32768,
+				 false, AnyPropertyType, &actual, &format,
+				 &n, &left, &propData);
+
+    if (result == Success && propData)
+    {
+	if (format == 32 && actual == XA_CARDINAL &&
+	    n > 0 && (n % 4 == 0))
+	{
+	    long	 *data = (long *) propData;
+	    unsigned int nBox = n / 4;
+	    long	 compizProp[nBox * 6 + 2];
+	    unsigned int i = 2;
+
+	    compizProp[0] = 2; /* threshold */
+	    compizProp[1] = 0; /* filter */
+
+	    while (nBox--)
+	    {
+		int x, y, w, h;
+		x = *data++;
+		y = *data++;
+		w = *data++;
+		h = *data++;
+
+		compizProp[i++] = GRAVITY_NORTH | GRAVITY_WEST; /* P1 gravity */
+		compizProp[i++] = x;                            /* P1 X */
+		compizProp[i++] = y;                            /* P1 Y */
+		compizProp[i++] = GRAVITY_NORTH | GRAVITY_WEST; /* P2 gravity */
+		compizProp[i++] = x + w;                        /* P2 X */
+		compizProp[i++] = y + h;                        /* P2 Y */
+	    }
+
+	    XChangeProperty (screen->dpy (), window->id (), ks->mCompizWindowBlurAtom,
+			     XA_INTEGER, 32, PropModeReplace,
+			     (unsigned char *) compizProp, i);
+
+	    mBlurPropertySet = true;
+	    validProperty       = TRUE;
+	}
+
+	XFree (propData);
+    }
+
+    if (mBlurPropertySet && !validProperty)
+    {
+	mBlurPropertySet = FALSE;
+	XDeleteProperty (screen->dpy (), window->id (), ks->mKdeBlurBehindRegionAtom);
+    }
+}
+
+
+void
 KDECompatScreen::handleEvent (XEvent *event)
 {
     CompWindow *w;
@@ -677,6 +771,12 @@ KDECompatScreen::handleEvent (XEvent *event)
 	    w = screen->findWindow (event->xproperty.window);
 	    if (w)
 		KDECompatWindow::get (w)->presentGroup ();
+	}
+	else if (event->xproperty.atom == mKdeBlurBehindRegionAtom)
+	{
+	    w = screen->findWindow (event->xproperty.window);
+	    if (w)
+		KDECompatWindow::get (w)->updateBlurProperty (true);
 	}
 	break;
     }
@@ -747,6 +847,13 @@ KDECompatScreen::optionChanged (CompOption                *option,
     else if (num == KdecompatOptions::PresentWindows)
 	advertiseSupport (mKdePresentGroupAtom,
 			  option->value ().b () && mScaleHandle);
+    else if (num == KdecompatOptions::WindowBlur)
+    {
+	advertiseSupport (mKdeBlurBehindRegionAtom,
+			  option->value ().b () && mBlurLoaded);
+	foreach (CompWindow *w, screen->windows ())
+	    KDECompatWindow::get (w)->updateBlurProperty (option->value ().b ());
+    }
 }
 
 
@@ -758,11 +865,17 @@ KDECompatScreen::KDECompatScreen (CompScreen *screen) :
     mKdeSlideAtom (XInternAtom (screen->dpy (), "_KDE_SLIDE", 0)),
     mKdePresentGroupAtom (XInternAtom (screen->dpy (),
 			  "_KDE_PRESENT_WINDOWS_GROUP", 0)),
+    mKdeBlurBehindRegionAtom (XInternAtom (screen->dpy (),
+					   "_KDE_NET_WM_BLUR_BEHIND_REGION",
+					   0)),
+    mCompizWindowBlurAtom (XInternAtom (screen->dpy (),
+					      "_COMPIZ_WM_WINDOW_BLUR", 0)),
     mHasSlidingPopups (false),
     mDestroyCnt (0),
     mUnmapCnt (0),
     mScaleHandle (CompPlugin::find ("scale")),
     mScaleActive (false),
+    mBlurLoaded ((CompPlugin::find ("blur") != NULL)),
     mPresentWindow (NULL)
 {
     ScreenInterface::setHandler (screen);
@@ -794,10 +907,13 @@ KDECompatWindow::KDECompatWindow (CompWindow *window) :
     mIsPreview (false),
     mSlideData (NULL),
     mDestroyCnt (0),
-    mUnmapCnt (0)
+    mUnmapCnt (0),
+    mBlurPropertySet (false)
 {
     CompositeWindowInterface::setHandler (cWindow);
     GLWindowInterface::setHandler (gWindow);
+    
+    updateBlurProperty (KDECompatScreen::get (screen)->optionGetWindowBlur ());
 }
 
 KDECompatWindow::~KDECompatWindow ()
@@ -809,6 +925,8 @@ KDECompatWindow::~KDECompatWindow ()
 
     if (KDECompatScreen::get (screen)->mPresentWindow == window)
 	KDECompatScreen::get (screen)->mPresentWindow = NULL;
+
+    updateBlurProperty (false);
 }
 
 bool
