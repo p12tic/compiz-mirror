@@ -197,7 +197,7 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	case South:
 	default:
 	    yTranslate = (data->start - window->y ()) * remainder;
-	    clipBox.setWidth (data->start - clipBox.y1 ());
+	    clipBox.setHeight (data->start - clipBox.y1 ());
 	    break;
 	}
 
