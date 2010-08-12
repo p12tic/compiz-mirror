@@ -12,11 +12,6 @@ setFunctions (bool enabled)
     tds->cScreen->donePaintSetEnabled (tds, enabled);
     tds->cubeScreen->cubePaintViewportSetEnabled (tds, enabled);
     tds->cubeScreen->cubeShouldPaintViewportSetEnabled (tds, enabled);
-
-    if (enabled)
-	fprintf (stderr, "enabled\n");
-    else
-	fprintf (stderr, "nope!\n");
     
     foreach (CompWindow *w, screen->windows ())
     {
