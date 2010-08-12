@@ -101,11 +101,17 @@
 						<_short>Width</_short>
 						<_long>Width values</_long>
 						<type>int</type>
+						<min>0</min>
+						<max>4096</max>
+						<default>500</default>
 					</option>
 					<option name="size_height_values" type="list">
 						<_short>Height</_short>
 						<_long>Height values</_long>
 						<type>int</type>
+						<min>0</min>
+						<max>4096</max>
+						<default>500</default>
 					</option>
 				</subgroup>
 			</group>
