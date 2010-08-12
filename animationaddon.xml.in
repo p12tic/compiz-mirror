@@ -493,6 +493,10 @@
 	<_name>Burn</_name>
       </restriction>
       <restriction>
+	<value>animationaddon:Dissolve</value>
+	<_name>Dissolve</_name>
+      </restriction>
+      <restriction>
 	<value>animationaddon:Domino</value>
 	<_name>Domino</_name>
       </restriction>
