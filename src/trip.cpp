@@ -133,7 +133,8 @@ TripScreen::adjustZoom (float chunk, Ripple &r)
 void
 TripScreen::preparePaint (int        time)
 {
-
+    /* Be careful not to allow too much intensity.
+     * Otherwise, we might have a bad trip ;-) */
     if (intensity > 70)
 	intensity = 70;
 
