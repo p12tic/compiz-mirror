@@ -117,6 +117,7 @@ class KDECompatScreen :
 
 class KDECompatWindow :
     public PluginClassHandler <KDECompatWindow, CompWindow>,
+    public WindowInterface,
     public CompositeWindowInterface,
     public GLWindowInterface
 {
@@ -198,6 +199,9 @@ class KDECompatWindow :
 
 	void
 	presentGroup ();
+
+	void
+	windowNotify (CompWindowNotify n);
 };
 
 #define KDECOMPAT_WINDOW(w)						       \

@@ -476,7 +476,7 @@ KDECompatWindow::handleClose (bool destroy)
 	else
 	{
 	    mUnmapCnt++;
-	    window->incrementDestroyReference ();
+	    window->incrementUnmapReference ();
 	}
 
 	if (mSlideData->appearing || !mSlideData->remaining)
@@ -726,29 +726,33 @@ KDECompatWindow::updateBlurProperty (bool enabled)
     }
 }
 
+void
+KDECompatWindow::windowNotify (CompWindowNotify n)
+{
+    if (!KDECompatScreen::get (screen)->optionGetSlidingPopups ())
+	return window->windowNotify (n);
+
+    switch (n)
+    {
+	case CompWindowNotifyClose:
+	    handleClose (false);
+	    break;
+	case CompWindowNotifyBeforeDestroy:
+	    handleClose (true);
+	    break;
+	case CompWindowNotifyBeforeMap:
+	    startSlideAnimation (true);
+	    break;
+	default:
+	    break;
+    }
+}
+
 
 void
 KDECompatScreen::handleEvent (XEvent *event)
 {
     CompWindow *w;
-
-    switch (event->type) {
-    case DestroyNotify:
-	w = screen->findWindow (event->xdestroywindow.window);
-	if (w)
-	    KDECompatWindow::get (w)->handleClose (true);
-	break;
-    case UnmapNotify:
-	w = screen->findWindow (event->xunmap.window);
-	if (w && !w->pendingUnmaps ())
-	    KDECompatWindow::get (w)->handleClose (false);
-	break;
-    case MapNotify:
-	w = screen->findWindow (event->xmap.window);
-	if (w)
-	    KDECompatWindow::get (w)->stopCloseAnimation ();
-	break;
-    }
 
     screen->handleEvent (event);
 
@@ -810,9 +814,6 @@ KDECompatWindow::damageRect (bool           initial,
 	    }
         }
     }
-
-    if (initial && ks->optionGetSlidingPopups ())
-	startSlideAnimation (true);
 
     status = cWindow->damageRect (initial, rect);
 
@@ -910,6 +911,7 @@ KDECompatWindow::KDECompatWindow (CompWindow *window) :
     mUnmapCnt (0),
     mBlurPropertySet (false)
 {
+    WindowInterface::setHandler (window);
     CompositeWindowInterface::setHandler (cWindow);
     GLWindowInterface::setHandler (gWindow);
     
