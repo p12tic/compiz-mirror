@@ -22,17 +22,17 @@
 		<option name="take_hit" type="key">
 		    <_short>Take Hit</_short>
 		    <_long>Take another hit</_long>
-		    <default>&lt;Super&gt;m</default>
+		    <default>&lt;Super&gt;&lt;Alt&gt;h</default>
 		</option>
 		<option name="increase_intensity" type="button">
 		    <_short>Increase effect</_short>
 		    <_long>Increase intensity of effect</_long>
-		    <default>&lt;Super&gt;&lt;Shift&gt;Button4</default>
+		    <default>&lt;Super&gt;&lt;Alt&gt;Button4</default>
 		</option>
 		<option name="sober" type="button">
 		    <_short>Stop effect</_short>
 		    <_long>Stops tripping</_long>
-		    <default>&lt;Super&gt;&lt;Shift&gt;Button5</default>
+		    <default>&lt;Super&gt;&lt;Alt&gt;Button5</default>
 		</option>
 	    </group>
 	    <group>
