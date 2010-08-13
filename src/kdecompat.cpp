@@ -28,6 +28,22 @@
 
 COMPIZ_PLUGIN_20090315 (kdecompat, KDECompatPluginVTable);
 
+inline void
+KDECompatWindow::checkPaintFunctions ()
+{
+    bool enabled = (mPreviews.size () || mIsPreview ||
+		    (mSlideData && mSlideData->remaining > 0.0));
+  
+    KDECOMPAT_SCREEN (screen);
+  
+    ks->gScreen->glPaintOutputSetEnabled (ks, enabled);
+    ks->cScreen->donePaintSetEnabled (ks, enabled);
+    ks->cScreen->preparePaintSetEnabled (ks, enabled);
+    
+    gWindow->glPaintSetEnabled (this, enabled);
+    cWindow->damageRectSetEnabled (this, enabled);
+}
+
 void
 KDECompatWindow::stopCloseAnimation ()
 {
@@ -65,7 +81,7 @@ KDECompatWindow::startSlideAnimation (bool appearing)
 	return;
 
     KDECOMPAT_SCREEN (screen);
-
+    
     if (appearing)
 	mSlideData->duration = ks->optionGetSlideInDuration ();
     else
@@ -79,6 +95,8 @@ KDECompatWindow::startSlideAnimation (bool appearing)
     mSlideData->appearing = appearing;
     ks->mHasSlidingPopups = true;
 
+    checkPaintFunctions ();
+    
     cWindow->addDamage ();
     sendSlideEvent (true);
 }
@@ -92,6 +110,8 @@ KDECompatWindow::endSlideAnimation ()
 	stopCloseAnimation ();
 	sendSlideEvent (false);
     }
+
+   checkPaintFunctions ();
 }
 
 void
@@ -418,6 +438,8 @@ KDECompatWindow::updatePreviews ()
 	    if (kcw->mIsPreview)
 		break;
 	}
+	
+	checkPaintFunctions ();
     }
 }
 
@@ -456,9 +478,13 @@ KDECompatWindow::updateSlidePosition ()
 		mSlideData->position  = (KDECompatWindow::SlidePosition) data[1];
 	    }
 	}
+	
+	window->windowNotifySetEnabled (this, true);
 
 	XFree (propData);
     }
+    else
+	window->windowNotifySetEnabled (this, false);
 }
 
 void
@@ -880,8 +906,8 @@ KDECompatScreen::KDECompatScreen (CompScreen *screen) :
     mPresentWindow (NULL)
 {
     ScreenInterface::setHandler (screen);
-    CompositeScreenInterface::setHandler (cScreen);
-    GLScreenInterface::setHandler (gScreen);
+    CompositeScreenInterface::setHandler (cScreen, false);
+    GLScreenInterface::setHandler (gScreen, false);
 
     mScaleTimeout.setTimes (100, 200);
 
@@ -911,9 +937,9 @@ KDECompatWindow::KDECompatWindow (CompWindow *window) :
     mUnmapCnt (0),
     mBlurPropertySet (false)
 {
-    WindowInterface::setHandler (window);
-    CompositeWindowInterface::setHandler (cWindow);
-    GLWindowInterface::setHandler (gWindow);
+    WindowInterface::setHandler (window, false);
+    CompositeWindowInterface::setHandler (cWindow, false);
+    GLWindowInterface::setHandler (gWindow, false);
     
     updateBlurProperty (KDECompatScreen::get (screen)->optionGetWindowBlur ());
 }

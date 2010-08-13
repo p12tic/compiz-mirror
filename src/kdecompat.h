@@ -202,6 +202,9 @@ class KDECompatWindow :
 
 	void
 	windowNotify (CompWindowNotify n);
+	
+	inline void
+	checkPaintFunctions ();
 };
 
 #define KDECOMPAT_WINDOW(w)						       \
