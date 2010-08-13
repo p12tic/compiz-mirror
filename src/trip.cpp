@@ -134,8 +134,8 @@ void
 TripScreen::preparePaint (int        time)
 {
 
-    if (intensity > 65)
-	intensity = 65;
+    if (intensity > 70)
+	intensity = 70;
 
     for (unsigned int i = 0; i < ripples.size (); i++)
     {
