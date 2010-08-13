@@ -432,11 +432,24 @@ TripScreen::takeHit (CompAction	  *action,
 }
 
 bool
+TripScreen::untensify (CompAction	  *action,
+		       CompAction::State   state,
+		       CompOption::Vector options)
+{
+    intensity -= 5;
+
+    if (intensity < 15)
+	quiet = true;
+
+    return true;
+}
+
+bool
 TripScreen::intensify (CompAction	  *action,
 		       CompAction::State   state,
 		       CompOption::Vector options)
 {
-    intensity += 1;
+    intensity += 2;
     cScreen->damageScreen ();
 
     if (quiet)
@@ -453,11 +466,12 @@ TripScreen::intensify (CompAction	  *action,
 
 bool
 TripScreen::soberUp (CompAction	  *action,
-		    CompAction::State   state,
-		    CompOption::Vector options)
+		     CompAction::State   state,
+		     CompOption::Vector options)
 {
     /* Time to end ripples quickly */
     quiet = true;
+
     intensity -= 5;
 
     cScreen->damageScreen ();
@@ -513,10 +527,16 @@ TripScreen::TripScreen (CompScreen *screen) :
     optionSetTakeHitInitiate (boost::bind (&TripScreen::takeHit, this, _1, _2,
 						_3));
 
+    optionSetDecreaseIntensityInitiate (boost::bind (&TripScreen::untensify, this, _1, _2,
+						_3));
+
     optionSetIncreaseIntensityInitiate (boost::bind (&TripScreen::intensify, this, _1, _2,
 						_3));
 
-    optionSetSoberInitiate (boost::bind (&TripScreen::soberUp, this, _1, _2,
+    optionSetSoberKeyInitiate (boost::bind (&TripScreen::soberUp, this, _1, _2,
+						_3));
+
+    optionSetSoberButtonInitiate (boost::bind (&TripScreen::soberUp, this, _1, _2,
 						_3));
 
     populateRippleSet ();

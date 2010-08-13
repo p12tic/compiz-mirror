@@ -105,6 +105,11 @@ class TripScreen :
 		 CompOption::Vector options);
 
 	bool
+	untensify (CompAction	  *action,
+		   CompAction::State   state,
+		   CompOption::Vector options);
+
+	bool
 	intensify (CompAction	  *action,
 		   CompAction::State   state,
 		   CompOption::Vector options);
