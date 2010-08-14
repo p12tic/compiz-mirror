@@ -88,6 +88,9 @@ class KDECompatScreen :
 	void
 	freeScaleTimeout ();
 
+	inline void
+	checkPaintFunctions ();
+
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
 
@@ -202,9 +205,6 @@ class KDECompatWindow :
 
 	void
 	windowNotify (CompWindowNotify n);
-	
-	inline void
-	checkPaintFunctions ();
 };
 
 #define KDECOMPAT_WINDOW(w)						       \

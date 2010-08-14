@@ -29,19 +29,27 @@
 COMPIZ_PLUGIN_20090315 (kdecompat, KDECompatPluginVTable);
 
 inline void
-KDECompatWindow::checkPaintFunctions ()
+KDECompatScreen::checkPaintFunctions ()
 {
-    bool enabled = (mPreviews.size () || mIsPreview ||
-		    (mSlideData && mSlideData->remaining > 0.0));
+    bool enabled = false;
+
+    foreach (CompWindow *w, screen->windows ())
+    {
+	KDECompatWindow *kcw = KDECompatWindow::get (w);
+	bool	wEnabled = (kcw->mPreviews.size () || kcw->mIsPreview ||
+			     (kcw->mSlideData &&
+			      kcw->mSlideData->remaining > 0.0));
+	enabled |= wEnabled;
+
+	kcw->gWindow->glPaintSetEnabled (kcw, enabled);
+	kcw->cWindow->damageRectSetEnabled (kcw, enabled);
+    }	
   
     KDECOMPAT_SCREEN (screen);
   
-    ks->gScreen->glPaintOutputSetEnabled (ks, enabled);
-    ks->cScreen->donePaintSetEnabled (ks, enabled);
-    ks->cScreen->preparePaintSetEnabled (ks, enabled);
-    
-    gWindow->glPaintSetEnabled (this, enabled);
-    cWindow->damageRectSetEnabled (this, enabled);
+    gScreen->glPaintOutputSetEnabled (ks, enabled);
+    cScreen->donePaintSetEnabled (ks, enabled);
+    cScreen->preparePaintSetEnabled (ks, enabled);
 }
 
 void
@@ -95,7 +103,7 @@ KDECompatWindow::startSlideAnimation (bool appearing)
     mSlideData->appearing = appearing;
     ks->mHasSlidingPopups = true;
 
-    checkPaintFunctions ();
+    ks->checkPaintFunctions ();
     
     cWindow->addDamage ();
     sendSlideEvent (true);
@@ -111,7 +119,7 @@ KDECompatWindow::endSlideAnimation ()
 	sendSlideEvent (false);
     }
 
-   checkPaintFunctions ();
+   KDECompatScreen::get (screen)->checkPaintFunctions ();
 }
 
 void
@@ -439,7 +447,7 @@ KDECompatWindow::updatePreviews ()
 		break;
 	}
 	
-	checkPaintFunctions ();
+	ks->checkPaintFunctions ();
     }
 }
 
