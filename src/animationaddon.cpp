@@ -118,6 +118,7 @@ BaseAddonAnim::BaseAddonAnim (CompWindow *w,
 AnimEffect AnimEffectAirplane;
 AnimEffect AnimEffectBeamUp;
 AnimEffect AnimEffectBurn;
+AnimEffect AnimEffectDissolve;
 AnimEffect AnimEffectDomino;
 AnimEffect AnimEffectExplode;
 AnimEffect AnimEffectFold;
@@ -149,6 +150,10 @@ PrivateAnimAddonScreen::initAnimationList ()
 	new AnimEffectInfo ("animationaddon:Burn",
 			    true, true, true, false, false,
 			    &createAnimation<BurnAnim>);
+    animEffects[i++] = AnimEffectDissolve =
+	new AnimEffectInfo ("animationaddon:Dissolve",
+			    true, true, true, false, false,
+			    &createAnimation<DissolveAnim>);
     animEffects[i++] = AnimEffectDomino =
 	new AnimEffectInfo ("animationaddon:Domino",
 			    true, true, true, false, false,
