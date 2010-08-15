@@ -625,7 +625,7 @@ ShiftScreen::layoutThumbsCover ()
 		sw->mSlots[i].z  = fabs (distance);
 		sw->mSlots[i].z *= -(maxThumbWidth / (2.0 * oe.width ()));
 
-		sw->mSlots[i].rotation = sin(pos * PI * 0.5) * -60;
+		sw->mSlots[i].rotation = sin(pos * PI * 0.5) * -optionGetCoverAngle ();
 	    }
 	    else 
 	    {
@@ -637,7 +637,7 @@ ShiftScreen::layoutThumbsCover ()
 		sw->mSlots[i].x  = centerX;
 		sw->mSlots[i].x += sin(ang) * rad * oe.width ();
 		    
-		sw->mSlots[i].rotation  = 90;
+		sw->mSlots[i].rotation  = optionGetCoverAngle () + 30;
 		sw->mSlots[i].rotation -= fabs(ang) * 180.0 / PI;
 		sw->mSlots[i].rotation *= -pos;
 

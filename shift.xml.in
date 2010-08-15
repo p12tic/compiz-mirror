@@ -242,21 +242,35 @@
 						<precision>0.01</precision>
 					</option>
 				</subgroup>
-				<option name="flip_rotation" type="int">
-					<_short>Flip angle</_short>
-					<_long>Rotation angle of the flip animation</_long>
-					<default>30</default>
-					<min>-80</min>
-					<max>80</max>
-				</option>
-				<option name="cover_offset" type="float">
-					<_short>Cover offset</_short>
-					<_long>Cover movement offset.</_long>
-					<default>0.0</default>
-					<min>-0.4</min>
-					<max>0.4</max>
-					<precision>0.01</precision>
-				</option>
+				<subgroup>
+					<_short>Flip</_short>
+					<option name="flip_rotation" type="int">
+						<_short>Flip angle</_short>
+						<_long>Rotation angle of the flip animation</_long>
+						<default>30</default>
+						<min>-80</min>
+						<max>80</max>
+					</option>
+				</subgroup>
+				<subgroup>
+					<_short>Cover</_short>
+					<option name="cover_offset" type="float">
+						<_short>Cover offset</_short>
+						<_long>Cover movement offset.</_long>
+						<default>0.0</default>
+						<min>-0.4</min>
+						<max>0.4</max>
+						<precision>0.01</precision>
+					</option>
+					<option name="cover_angle" type="float">
+						<_short>Cover angle</_short>
+						<_long>How much windows should be tilted.</_long>
+						<default>90</default>
+						<min>0</min>
+						<max>360</max>
+						<precision>0.1</precision>
+					</option>
+				</subgroup>
 				<option name="overlay_icon" type="int">
 					<_short>Overlay Icon</_short>
 					<_long>Overlay an icon on windows in the shift switcher</_long>
