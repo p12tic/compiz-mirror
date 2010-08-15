@@ -89,6 +89,8 @@ class CubeaddonScreen :
 				      const GLMatrix            &transform,
 				      CompOutput                *output,
 				      PaintOrder                order);
+	
+	bool cubeShouldPaintAllViewports ();
 
 	class CubeCap
 	{

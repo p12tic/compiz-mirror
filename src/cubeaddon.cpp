@@ -930,6 +930,18 @@ CubeaddonWindow::glDrawTexture (GLTexture           *texture,
     gWindow->glDrawTexture (texture, attrib, mask);
 }
 
+bool
+CubeaddonScreen::cubeShouldPaintAllViewports ()
+{
+    bool status = cubeScreen->cubeShouldPaintAllViewports ();
+    return (!optionGetDrawTop () ||
+	    !optionGetDrawBottom () ||
+	    (optionGetTopColorAlpha () != OPAQUE) ||
+	    (optionGetBottomColorAlpha () != OPAQUE) ||
+	    (mDeform > 0.0) ||
+	    status);
+}
+
 void 
 CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 					   const GLMatrix            &transform,
@@ -979,12 +991,7 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	mDeform = 0.0;
     }
 
-    cubeScreen->paintAllViewports (cubeScreen->paintAllViewports () ||
-				   !optionGetDrawTop () ||
-				   !optionGetDrawBottom () ||
-				   (optionGetTopColorAlpha () != OPAQUE) ||
-			           (optionGetBottomColorAlpha () != OPAQUE) ||
-		                   (mDeform > 0.0));
+    cubeScreen->cubeShouldPaintAllViewportsSetEnabled (this, true);
 
     if (mCapDistance != cDist)
     {
@@ -1325,6 +1332,8 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	cubeScreen->repaintCaps ();
 	mReflection = false;
     }
+    else
+	cubeScreen->cubeShouldPaintAllViewportsSetEnabled (this, false);
 
     if (!optionGetReflection ())
     {
