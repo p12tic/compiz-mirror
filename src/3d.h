@@ -91,6 +91,9 @@ class TdScreen :
 				 const GLMatrix		   &,
 				 CompOutput		   *,
 				 PaintOrder		    );
+	
+	bool
+	cubeShouldPaintAllViewports ();
 				 
 	bool mActive;
 	bool mPainting3D;

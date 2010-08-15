@@ -12,6 +12,7 @@ setFunctions (bool enabled)
     tds->cScreen->donePaintSetEnabled (tds, enabled);
     tds->cubeScreen->cubePaintViewportSetEnabled (tds, enabled);
     tds->cubeScreen->cubeShouldPaintViewportSetEnabled (tds, enabled);
+    tds->cubeScreen->cubeShouldPaintAllViewportsSetEnabled (tds, enabled);
     
     foreach (CompWindow *w, screen->windows ())
     {
@@ -91,8 +92,6 @@ TdScreen::preparePaint (int msSinceLastPaint)
     cScreen->preparePaint (msSinceLastPaint);
     
     setFunctions (mActive);
-    if (mActive)
-	cs->paintAllViewports (true);
 }
 
 #define DOBEVEL(corner) (tds->optionGetBevel##corner () ? bevel : 0)
@@ -471,6 +470,12 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
     {
         cs->cubePaintViewport (attrib, transform, region, output, mask);
     }
+}
+
+bool
+TdScreen::cubeShouldPaintAllViewports ()
+{
+    return true;
 }
 
 bool
