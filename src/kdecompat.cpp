@@ -189,9 +189,18 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			  const CompRegion	    &region,
 			  unsigned int		    mask)
 {
-    bool status;
+    bool status = false;
 
     KDECOMPAT_SCREEN (screen);
+
+    if ((!(ks->optionGetPlasmaThumbnails () || mPreviews.empty ()) &&
+        !(mSlideData || mSlideData->remaining)) ||
+	!window->mapNum ()                ||
+	(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
+    {
+	status = gWindow->glPaint (attrib, transform, region, mask);
+	return status;
+    }
 
     if (mSlideData && mSlideData->remaining)
     {
@@ -246,24 +255,12 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	glScissor (clipBox.x1 (), screen->height () - clipBox.y2 (),
 		   clipBox.width (), clipBox.height ());
 
-	gWindow->glDraw (wTransform, fragment, region,
+	status = gWindow->glDraw (wTransform, fragment, region,
 			 mask | PAINT_WINDOW_TRANSFORMED_MASK);
 
 	glDisable (GL_SCISSOR_TEST);
 	glPopAttrib ();
 	glPopMatrix ();
-    }
-    else
-    {
-	status = gWindow->glPaint (attrib, transform, region, mask);
-    }
-
-    if (!ks->optionGetPlasmaThumbnails () ||
-	mPreviews.empty ()                ||
-	!window->mapNum ()                ||
-	(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
-    {
-	return status;
     }
 
     foreach (const Thumb& thumb, mPreviews)
@@ -366,6 +363,9 @@ KDECompatWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    glPopMatrix ();
 	}
     }
+    
+    if (!status)
+	status = gWindow->glPaint (attrib, transform, region, mask);
 
     return status;
 }
