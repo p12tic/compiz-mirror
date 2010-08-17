@@ -1,3 +1,6 @@
+#ifndef ANIMATION_SCREEN_H
+#define ANIMATION_SCREEN_H
+#include "animation.h"
 class AnimScreen :
     public PluginClassHandler<AnimScreen, CompScreen, ANIMATION_ABI>,
     public CompOption::Class
@@ -28,4 +31,5 @@ public:
 private:
     PrivateAnimScreen *priv;
     
-}; 
+};
+#endif

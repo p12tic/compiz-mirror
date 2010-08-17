@@ -1,3 +1,5 @@
+#ifndef ANIMATION_MULTI_H
+#define ANIMATION_MULTI_H
 #include "animation.h"
 /// Special class, allows multiple copies of an animation to happen
 /// at any one time. Create your "single copy" animation class first
@@ -402,4 +404,5 @@ public:
 	std::vector <GLMatrix>		    mGlPaintTransforms;
 	std::vector <SingleAnim *> animList;
 	int	    currentAnim;
-}; 
+};
+#endif

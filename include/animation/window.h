@@ -1,3 +1,5 @@
+#ifndef ANIMATION_WINDOW_H
+#define ANIMATION_WINDOW_H
 #include "animation.h"
 class AnimWindow :
     public PluginClassHandler<AnimWindow, CompWindow, ANIMATION_ABI>
@@ -62,3 +64,4 @@ private:
 				      Animation *anim);
      
 };
+#endif

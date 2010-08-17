@@ -1,3 +1,5 @@
+#ifndef ANIMATION_ZOOM_H
+#define ANIMATION_ZOOM_H
 #include "animation.h"
 
 class ZoomAnim :
@@ -65,3 +67,4 @@ public:
     bool scaleAroundIcon () { return false; }
     void adjustDuration ();
 };
+#endif

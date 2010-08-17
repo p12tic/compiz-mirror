@@ -1,3 +1,5 @@
+#ifndef ANIMATION_GRIDTRANSFORM_H
+#define ANIMATION_GRIDTRANSFORM_H
 #include "animation.h"
 class GridTransformAnim :
 public GridAnim,
@@ -17,3 +19,4 @@ protected:
     
     bool mUsingTransform; ///< whether transform matrix is used (default: true)
 };
+#endif

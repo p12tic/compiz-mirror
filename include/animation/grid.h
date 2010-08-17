@@ -1,3 +1,5 @@
+#ifndef ANIMATION_GRID_H
+#define ANIMATION_GRID_H
 #include "animation.h"
 class GridAnim :
     virtual public Animation
@@ -102,3 +104,4 @@ public:
 		      unsigned int                maxGridWidth,
 		      unsigned int                maxGridHeight);
 };
+#endif

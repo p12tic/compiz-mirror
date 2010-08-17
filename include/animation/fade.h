@@ -1,3 +1,5 @@
+#ifndef ANIMATION_FADE_H
+#define ANIMATION_FADE_H
 #include "animation.h"
 class FadeAnim :
 virtual public Animation
@@ -14,3 +16,4 @@ public:
      void updateAttrib (GLWindowPaintAttrib &wAttrib);
      virtual float getFadeProgress () { return progressLinear (); }
 };
+#endif

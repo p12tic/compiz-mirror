@@ -1,3 +1,5 @@
+#ifndef ANIMATION_TRANSFORM_H
+#define ANIMATION_TRANSFORM_H
 #include "animation.h"
 class TransformAnim :
 virtual public Animation
@@ -29,3 +31,4 @@ protected:
     virtual Point getCenter ();
     
 };
+#endif

@@ -1,3 +1,6 @@
+#ifndef ANIMATION_PERSISTENT_H
+#define ANIMATION_PERSISTENT_H
+
 #include "animation.h"
 class PersistentData
 {
@@ -12,3 +15,4 @@ public:
     MultiPersistentData () : num (0) {}
     int num;
 };
+#endif

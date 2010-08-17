@@ -1,3 +1,5 @@
+#ifndef ANIMATION_PARTIALWINDOW_H
+#define ANIMATION_PARTIALWINDOW_H
 #include "animation.h"
 class PartialWindowAnim :
 virtual public Animation
@@ -20,3 +22,4 @@ protected:
     CompRegion mDrawRegion;
     
 };
+#endif

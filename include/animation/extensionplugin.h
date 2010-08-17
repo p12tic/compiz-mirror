@@ -1,3 +1,5 @@
+#ifndef ANIMATION_EXTENSIONPLUGIN_H
+#define ANIMATION_EXTENSIONPLUGIN_H
 #include "animation.h"
 
 class ExtensionPluginInfo
@@ -66,3 +68,4 @@ public:
 
     virtual void processAllRestacks () {}
 };
+#endif

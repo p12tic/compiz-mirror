@@ -1,3 +1,5 @@
+#ifndef ANIMATION_ANIMEFFECT_H
+#define ANIMATION_ANIMEFFECT_H
 #include "animation.h"
 
 typedef Animation *(*CreateAnimFunc) (CompWindow *w,
@@ -204,3 +206,4 @@ public:
     inline void setCurPaintAttrib (GLFragment::Attrib &newAttrib)
     { mCurPaintAttrib = newAttrib; }
 };
+#endif

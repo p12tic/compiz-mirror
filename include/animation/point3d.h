@@ -1,3 +1,5 @@
+#ifndef ANIMATION_POINT_H
+#define ANIMATION_POINT_H
 #include "animation.h"
 
 class Point
@@ -100,3 +102,4 @@ Point3d::operator!= (const Point3d &p) const
 {
     return !(*this == p);
 }
+#endif
