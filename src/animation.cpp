@@ -1000,8 +1000,6 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 {
     bool shouldDamageWindow = false;
     
-    fprintf (stderr, "postAnimationCleanUpCustom %i\n", mCurAnimation->curWindowEvent ());
-    
     notifyAnimation (false);
 
     if (mCurAnimation)
@@ -1135,6 +1133,10 @@ void
 PrivateAnimWindow::notifyAnimation (bool activation)
 {
     CompOption::Vector o (0);
+    
+    if (!mCurAnimation)
+	return;
+    
     o.push_back (CompOption ("root", CompOption::TypeInt));
     o.push_back (CompOption ("window", CompOption::TypeInt));
     o.push_back (CompOption ("type", CompOption::TypeString));
@@ -1142,48 +1144,40 @@ PrivateAnimWindow::notifyAnimation (bool activation)
     
     o[0].value ().set ((int) ::screen->root ());
     o[1].value ().set ((int) mWindow->id ());
-    
-    if (mCurAnimation)
+        
+    switch (mCurAnimation->curWindowEvent ())
     {
-	fprintf (stderr, "there is an animation\n");
-      
-	switch (mCurAnimation->curWindowEvent ())
-	{
-	    case WindowEventOpen:
-		o[2].value ().set ("open");
-		break;
-	    case WindowEventClose:
-		o[2].value ().set ("close");
-		break;
-	    case WindowEventMinimize:
-		o[2].value ().set ("minimize");
-		break;
-	    case WindowEventUnminimize:
-		o[2].value ().set ("unminimize");
-		break;
-	    case WindowEventShade:
-		o[2].value ().set ("shade");
-		break;
-	    case WindowEventUnshade:
-		o[2].value ().set ("unshade");
-		break;
-	    case WindowEventFocus:
-		o[2].value ().set ("focus");
-		break;
-	    case WindowEventNum:
-	    case WindowEventNone:
-	    default:
-		o[2].value ().set ("none");
-		break;
-	}
+	case WindowEventOpen:
+	    o[2].value ().set ("open");
+	    break;
+	case WindowEventClose:
+	    o[2].value ().set ("close");
+	    break;
+	case WindowEventMinimize:
+	    o[2].value ().set ("minimize");
+	    break;
+	case WindowEventUnminimize:
+	    o[2].value ().set ("unminimize");
+	    break;
+	case WindowEventShade:
+	    o[2].value ().set ("shade");
+	    break;
+	case WindowEventUnshade:
+	    o[2].value ().set ("unshade");
+	    break;
+	case WindowEventFocus:
+	    o[2].value ().set ("focus");
+	    break;
+	case WindowEventNum:
+	case WindowEventNone:
+	default:
+	    o[2].value ().set ("none");
+	    break;
     }
     
     o[3].value ().set (activation);
-    
-    if (mCurAnimation)
-    {
-	screen->handleCompizEvent ("animation", "window_activate", o);
-    }
+
+    screen->handleCompizEvent ("animation", "window_activate", o);
 }
 
 bool
