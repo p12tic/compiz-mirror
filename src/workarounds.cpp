@@ -872,7 +872,7 @@ WorkaroundsScreen::handleCompizEvent (const char 	      *pluginName,
 				      CompOption::Vector      &o)
 {  
     if (strncmp (pluginName, "animation", 9) == 0 &&
-        strncmp (eventName, "window_activate", 15) == 0)
+        strncmp (eventName, "window_animation", 16) == 0)
     {
 	if (CompOption::getStringOptionNamed (o, "type", "") == "minimize")
 	{
