@@ -10,6 +10,7 @@
 #define foreach BOOST_FOREACH
 
 #include <animation/animation.h>
+#include <animation/multi.h>
 #include <animationaddon/animationaddon.h>
 
 #include "animationaddon_options.h"
@@ -329,6 +330,46 @@ protected:
     static const float kDurationFactor;
 };
 
+/* TODO: Make a MultiAnim */
+
+class DissolveSingleAnim :
+    virtual public Animation,
+    virtual public TransformAnim
+{
+public:
+    DissolveSingleAnim (CompWindow *w,
+			WindowEvent curWindowEvent,
+			float duration,
+			const AnimEffect info,
+			const CompRect &icon);
+    
+    void step () { TransformAnim::step (); }
+    
+    void updateBB (CompOutput &output);
+    bool updateBBUsed () { return true; }
+    
+    void updateTransform (GLMatrix &);
+    
+    void updateAttrib (GLWindowPaintAttrib &wAttrib);
+    virtual float getDissolveSingleProgress () { return progressLinear (); }
+};
+
+class DissolveAnim :
+    public MultiAnim <DissolveSingleAnim, 5>
+{
+public:
+    DissolveAnim (CompWindow *w,
+		  WindowEvent curWindowEvent,
+		  float duration,
+		  const AnimEffect info,
+		  const CompRect &icon) :
+	MultiAnim <DissolveSingleAnim, 5>::MultiAnim
+		(w, curWindowEvent, duration, info, icon)
+    {
+    }
+};
+
+#if 0
 class DissolveAnim :
     virtual public Animation
 {
@@ -353,3 +394,4 @@ public:
 
     float mRadius;
 };
+#endif

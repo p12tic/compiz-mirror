@@ -16,56 +16,52 @@
 
 #include "private.h"
 
-DissolveAnim::DissolveAnim (CompWindow *w,
-		    WindowEvent curWindowEvent,
-		    float duration,
-		    const AnimEffect info,
-		    const CompRect &icon) :
-    Animation::Animation (w, curWindowEvent, duration, info, icon)
-{
-    mRadius = 3;
-}
+DissolveSingleAnim::DissolveSingleAnim (CompWindow *w,
+					WindowEvent curWindowEvent,
+					float duration,
+					const AnimEffect info,
+					const CompRect &icon) :
+					Animation::Animation (w, curWindowEvent, duration, info, icon),
+					TransformAnim::TransformAnim (w, curWindowEvent, duration, info, icon)
+					{
+					}
 
-bool DissolveAnim::paintWindow (GLWindow                  *gWindow,
-			  	      const GLWindowPaintAttrib &attrib,
-				      const GLMatrix            &transform,
-				      const CompRegion          &region,
-				      unsigned int              mask)
-{
-    bool ret = false;
-
-    GLWindowPaintAttrib a (attrib);
+void
+DissolveSingleAnim::updateAttrib (GLWindowPaintAttrib &attrib)
+{  
+    float layer = MultiAnim <DissolveSingleAnim, 5>::getCurrAnimNumber (mAWindow);
     float o = 0.2;
-
-    a.opacity = attrib.opacity * o/(1.-4*o);
-    ret |= gWindow->glPaint (a, transform, region, mask);
-
-    GLMatrix t (transform);
-
-    a.opacity = attrib.opacity * o/(1.-3*o);
-    t.translate (mRadius*getDissolveProgress (), 0.f, 0.f);
-    ret |= gWindow->glPaint (a, t, region, mask);
-
-    a.opacity = attrib.opacity * o/(1.-2*o);
-    t = transform;
-    t.translate (-mRadius*getDissolveProgress (), 0.f, 0.f);
-    ret |= gWindow->glPaint (a, t, region, mask);
-
-    a.opacity = attrib.opacity * o/(1.-o);
-    t = transform;
-    t.translate (0.f, mRadius*getDissolveProgress (), 0.f);
-    ret |= gWindow->glPaint (a, t, region, mask);
-
-    a.opacity = attrib.opacity * o;
-    t = transform;
-    t.translate (0.f, -mRadius*getDissolveProgress (), 0.f);
-    ret |= gWindow->glPaint (a, t, region, mask);
-
-    return ret;
+    float nO = (attrib.opacity * o) / 5;
+    float factor = (4 - layer) * o;
+    
+    attrib.opacity = (GLushort) (nO / (1.0 - factor));
 }
 
 void
-DissolveAnim::updateBB (CompOutput &output)
+DissolveSingleAnim::updateTransform (GLMatrix &transform)
+{
+    int layer = MultiAnim <DissolveSingleAnim, 5>::getCurrAnimNumber (mAWindow);
+    
+    switch (layer) {
+	case 1:
+	    transform.translate (3.*getDissolveSingleProgress (), 0.f, 0.f);
+	    break;
+	case 2:
+	    transform.translate (-3.*getDissolveSingleProgress (), 0.f, 0.f);
+	    break;
+	case 3:
+	    transform.translate (0.f, 3.*getDissolveSingleProgress (), 0.f);
+	    break;
+	case 4:
+	    transform.translate (0.f, -3.*getDissolveSingleProgress (), 0.f);
+	    break;
+	default:
+	    break;
+    }
+}
+
+void
+DissolveSingleAnim::updateBB (CompOutput &output)
 {
     mAWindow->expandBBWithWindow ();
 }
