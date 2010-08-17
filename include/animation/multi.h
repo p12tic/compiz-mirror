@@ -138,9 +138,9 @@ public:
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		GLWindowPaintAttrib &attr = mGlPaintAttribs.at (count);
-		attr = attrib;
+		GLWindowPaintAttrib attr (attrib);
 		a->updateAttrib (attr);
+		mGlPaintAttribs.at (count) = attr;
 		count++;
 	    }
 	}
@@ -148,12 +148,13 @@ public:
 	void updateTransform (GLMatrix &transform)
 	{
 	    int count = 0;
+	    
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
-		GLMatrix &mat = mGlPaintTransforms.at (count);
-		mat = transform;
+		GLMatrix mat (transform);
 		a->updateTransform (mat);
+		mGlPaintTransforms.at (count) = mat;
 		count++;
 	    }
 	}
@@ -376,8 +377,8 @@ public:
 
 	    for (unsigned int i = 0; i < animList.size (); i++)
 	    {
-		GLWindowPaintAttrib &wAttrib (mGlPaintAttribs.at (i));
-		GLMatrix 	    &wTransform (mGlPaintTransforms.at (i));
+		GLWindowPaintAttrib wAttrib (mGlPaintAttribs.at (i));
+		GLMatrix 	    wTransform (mGlPaintTransforms.at (i));
 
 		setCurrAnimNumber (mAWindow, count);
 		count++;
@@ -387,7 +388,9 @@ public:
 							    wTransform,
 							    region, mask);
 		else
+		{
 		    status |= gWindow->glPaint (wAttrib, wTransform, region, mask);
+		}
 	    }
 
 	    return status;

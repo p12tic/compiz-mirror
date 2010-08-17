@@ -1870,9 +1870,6 @@ PrivateAnimScreen::initiateMinimizeAnim (PrivateAnimWindow *aw)
 
 	activateEvent (true);
 
-	aw->mUnmapCnt++;
-	w->incrementUnmapReference ();
-
 	cScreen->damagePending ();
     }
     else
@@ -2588,6 +2585,13 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 			mCurAnimation->curWindowEvent () == WindowEventOpen)))
 		mPAScreen->initiateOpenAnim (this);
 	    mEventNotOpenClose = false;
+	    break;
+	case CompWindowNotifyBeforeUnmap:
+	    if (mCurAnimation && mCurAnimation->curWindowEvent () == WindowEventMinimize)
+	    {
+		mUnmapCnt++;
+		mWindow->incrementUnmapReference ();
+	    }
 	    break;
 	case CompWindowNotifyBeforeDestroy:
 	    if (!mFinishingAnim)

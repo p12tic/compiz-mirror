@@ -67,6 +67,7 @@ typedef AnimEffectInfo * AnimEffect;
 #include "partialwindow.h"
 #include "gridtransform.h"
 #include "zoom.h"
+#include "multi.h"
 
 
 // ratio of perceived length of animation compared to real duration
