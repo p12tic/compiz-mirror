@@ -10,6 +10,7 @@
 			<plugin>composite</plugin>
 			<plugin>opengl</plugin>
 			<plugin>decor</plugin>
+			<plugin>animation</plugin>
 	        </relation>
 		<requirement>
 			<plugin>composite</plugin>
