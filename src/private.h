@@ -379,6 +379,8 @@ private:
 				     bool clearMatchingRow);
     void reverseAnimation ();
     void enablePainting (bool enabling);
+    
+    void notifyAnimation (bool activation);
 
     // WindowInterface methods
     void resizeNotify (int dx, int dy, int dwidth, int dheight);

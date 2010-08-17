@@ -999,6 +999,10 @@ PrivateAnimWindow::postAnimationCleanUpCustom (bool closing,
 					       bool clearMatchingRow)
 {
     bool shouldDamageWindow = false;
+    
+    fprintf (stderr, "postAnimationCleanUpCustom %i\n", mCurAnimation->curWindowEvent ());
+    
+    notifyAnimation (false);
 
     if (mCurAnimation)
     {
@@ -1125,6 +1129,61 @@ PrivateAnimScreen::activateEvent (bool activating)
     o[1].value ().set (activating);
 
     ::screen->handleCompizEvent ("animation", "activate", o);
+}
+
+void
+PrivateAnimWindow::notifyAnimation (bool activation)
+{
+    CompOption::Vector o (0);
+    o.push_back (CompOption ("root", CompOption::TypeInt));
+    o.push_back (CompOption ("window", CompOption::TypeInt));
+    o.push_back (CompOption ("type", CompOption::TypeString));
+    o.push_back (CompOption ("active", CompOption::TypeBool));
+    
+    o[0].value ().set ((int) ::screen->root ());
+    o[1].value ().set ((int) mWindow->id ());
+    
+    if (mCurAnimation)
+    {
+	fprintf (stderr, "there is an animation\n");
+      
+	switch (mCurAnimation->curWindowEvent ())
+	{
+	    case WindowEventOpen:
+		o[2].value ().set ("open");
+		break;
+	    case WindowEventClose:
+		o[2].value ().set ("close");
+		break;
+	    case WindowEventMinimize:
+		o[2].value ().set ("minimize");
+		break;
+	    case WindowEventUnminimize:
+		o[2].value ().set ("unminimize");
+		break;
+	    case WindowEventShade:
+		o[2].value ().set ("shade");
+		break;
+	    case WindowEventUnshade:
+		o[2].value ().set ("unshade");
+		break;
+	    case WindowEventFocus:
+		o[2].value ().set ("focus");
+		break;
+	    case WindowEventNum:
+	    case WindowEventNone:
+	    default:
+		o[2].value ().set ("none");
+		break;
+	}
+    }
+    
+    o[3].value ().set (activation);
+    
+    if (mCurAnimation)
+    {
+	screen->handleCompizEvent ("animation", "window_activate", o);
+    }
 }
 
 bool
@@ -1278,6 +1337,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 		bool finished = (curAnim->remainingTime () <= 0);
 		if (finished) // Animation is done
 		{
+		    aw->notifyAnimation (false);
 		    aw->postAnimationCleanUp ();
 		}
 		else
@@ -1725,6 +1785,7 @@ PrivateAnimScreen::initiateCloseAnim (PrivateAnimWindow *aw)
 	}
 
 	activateEvent (true);
+	aw->notifyAnimation (true);
 
 	// Increment 3 times to make sure close animation works
 	// (e.g. for popup menus).
@@ -1869,6 +1930,7 @@ PrivateAnimScreen::initiateMinimizeAnim (PrivateAnimWindow *aw)
 	}
 
 	activateEvent (true);
+	aw->notifyAnimation (true);
 
 	cScreen->damagePending ();
     }
@@ -1923,6 +1985,7 @@ PrivateAnimScreen::initiateShadeAnim (PrivateAnimWindow *aw)
 	}
 
 	activateEvent (true);
+	aw->notifyAnimation (true);
 
 	aw->mUnmapCnt++;
 	w->incrementUnmapReference ();
@@ -1994,6 +2057,7 @@ PrivateAnimScreen::initiateOpenAnim (PrivateAnimWindow *aw)
 	if (playEffect)
 	{
 	    activateEvent (true);
+	    aw->notifyAnimation (true);
 	    cScreen->damagePending ();
 	}
     }
@@ -2064,6 +2128,7 @@ PrivateAnimScreen::initiateUnminimizeAnim (PrivateAnimWindow *aw)
 	if (playEffect)
 	{
 	    activateEvent (true);
+	    aw->notifyAnimation (true);
 	    cScreen->damagePending ();
 	}
     }
@@ -2128,6 +2193,7 @@ PrivateAnimScreen::initiateUnshadeAnim (PrivateAnimWindow *aw)
 	if (playEffect)
 	{
 	    activateEvent (true);
+	    aw->notifyAnimation (true);
 	    cScreen->damagePending ();
 	}
     }
@@ -2162,6 +2228,7 @@ PrivateAnimScreen::initiateFocusAnim (PrivateAnimWindow *aw)
 	}
 
 	activateEvent (true);
+	aw->notifyAnimation (true);
 	cScreen->damagePending ();
 	return true;
     }
@@ -2213,6 +2280,10 @@ PrivateAnimScreen::updateAnimStillInProgress ()
 	{
 	    animStillInProgress = true;
 	    break;
+	}
+	else
+	{
+	    aw->notifyAnimation (false);
 	}
     }
 
@@ -2528,6 +2599,7 @@ PrivateAnimWindow::PrivateAnimWindow (CompWindow *w,
 
 PrivateAnimWindow::~PrivateAnimWindow ()
 {
+    notifyAnimation (false);
     postAnimationCleanUpCustom (false, true, true);
 }
 
