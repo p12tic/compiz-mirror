@@ -1177,7 +1177,7 @@ PrivateAnimWindow::notifyAnimation (bool activation)
     
     o[3].value ().set (activation);
 
-    screen->handleCompizEvent ("animation", "window_activate", o);
+    screen->handleCompizEvent ("animation", "window_animation", o);
 }
 
 bool
