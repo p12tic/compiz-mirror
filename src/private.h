@@ -29,7 +29,7 @@ extern AnimEffect AnimEffectRazr;
 extern AnimEffect AnimEffectSkewer;
 
 // TODO Update this for each added animation effect! (total: 11)
-#define NUM_EFFECTS 11
+#define NUM_EFFECTS 12
 
 // This must have the value of the first "effect setting" above
 // in AnimAddonScreenOptions
@@ -368,30 +368,3 @@ public:
     {
     }
 };
-
-#if 0
-class DissolveAnim :
-    virtual public Animation
-{
-public:
-    DissolveAnim (CompWindow *w,
-                WindowEvent curWindowEvent,
-                float duration,
-                const AnimEffect info,
-                const CompRect &icon);
-
-    bool paintWindowUsed () { return true; }
-    bool paintWindow (GLWindow                  *gWindow,
-                      const GLWindowPaintAttrib &attrib,
-                      const GLMatrix            &transform,
-                      const CompRegion          &region,
-                      unsigned int              mask);
-    
-    void updateBB (CompOutput &output); 
-    bool updateBBUsed () { return true; }
-
-    virtual float getDissolveProgress () { return progressLinear (); }
-
-    float mRadius;
-};
-#endif
