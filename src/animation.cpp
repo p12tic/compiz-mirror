@@ -1499,6 +1499,9 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     // TODO: should only happen for distorting effects
     mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+    
+    if (mask & PAINT_WINDOW_NO_CORE_INSTANCE_MASK)
+	mask &= ~PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
     wAttrib.xScale = 1.0f;
     wAttrib.yScale = 1.0f;
