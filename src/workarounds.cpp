@@ -185,7 +185,10 @@ WorkaroundsWindow::minimize ()
 	CompOption::Vector propTemplate = ws->inputDisabledAtom.getReadTemplate ();
 	CompOption::Value enabled = CompOption::Value (true);
 	
+	screen->handleCompizEventSetEnabled (ws, true);
+	
 	window->windowNotify (CompWindowNotifyMinimize);
+	window->changeState (window->state () | CompWindowStateHiddenMask);
 	
 	foreach (CompWindow *w, screen->windows ())
 	{
@@ -193,6 +196,8 @@ WorkaroundsWindow::minimize ()
 		WorkaroundsWindow::get (w)->isGroupTransient (window->clientLeader ()))
 		w->unminimize ();
 	}
+	
+	window->windowNotify (CompWindowNotifyHide);
 	
 	setVisibility (false);
 
@@ -229,8 +234,11 @@ WorkaroundsWindow::unminimize ()
 	CompOption::Value enabled = CompOption::Value (false);	
 	
 	window->windowNotify (CompWindowNotifyUnminimize);
+	window->changeState (window->state () & ~CompWindowStateHiddenMask);
 	
 	isMinimized = false;
+	
+	window->windowNotify (CompWindowNotifyShow);
 	
 	setVisibility (true);
 	
@@ -270,7 +278,20 @@ WorkaroundsWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			    unsigned int	      mask)
 {    
     if (isMinimized)
-	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+    {
+	WORKAROUNDS_SCREEN (screen);
+	bool doMask = true;
+	
+	foreach (CompWindow *w, ws->minimizingWindows)
+	{
+	    if (w->id () == window->id ())
+		doMask = false;
+	    break;
+	}
+	
+	if (doMask)
+	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
+    }
     
     return gWindow->glPaint (attrib, transform, region, mask);
 }
@@ -840,6 +861,34 @@ WorkaroundsScreen::optionChanged (CompOption		      *opt,
 	    }
 	}
     }
+}
+
+void
+WorkaroundsScreen::handleCompizEvent (const char 	      *pluginName,
+				      const char 	      *eventName,
+				      CompOption::Vector      &o)
+{  
+    if (strncmp (pluginName, "animation", 9) == 0 &&
+        strncmp (eventName, "window_activate", 15) == 0)
+    {
+	if (CompOption::getStringOptionNamed (o, "type", "") == "minimize")
+	{
+	    CompWindow *w = screen->findWindow (CompOption::getIntOptionNamed (
+						      o, "window", 0));
+	    if (w)
+	    {
+		if (CompOption::getBoolOptionNamed (o, "active", false))
+		    minimizingWindows.push_back (w);
+		else
+		    minimizingWindows.remove (w);
+	    }
+	}
+    }
+    
+    if (!CompOption::getBoolOptionNamed (o, "active", false))
+	screen->handleCompizEventSetEnabled (this, false);
+    
+    screen->handleCompizEvent (pluginName, eventName, o);
 }
 
 void
