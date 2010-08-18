@@ -585,10 +585,11 @@ ShiftScreen::layoutThumbsCover ()
 	    yScale = 1.0f;
 
 
-	float val1 = floor((float) mNWindows / 2.0);
+	float val1 = floor((float) MIN (mNWindows,
+					optionGetCoverMaxVisibleWindows ()) / 2.0);
 
 	float pos;
-	float space = maxThumbWidth / 2;
+	float space = (maxThumbWidth / 2);
 	space *= cos (sin (PI / 4) * PI / 3);
 	space *= 2;
 	//space += (space / sin (PI / 4)) - space;
@@ -611,8 +612,7 @@ ShiftScreen::layoutThumbsCover ()
 
 	    pos = MIN (1.0, MAX (-1.0, distance));	
 
-	    sw->mSlots[i].opacity = 1.0 - MIN (1.0,
-				    MAX (0.0, fabs(distance) - val1));
+	    sw->mSlots[i].opacity = 1.0 - MIN (1.0, MAX (0.0, fabs(distance) - val1));
 	    sw->mSlots[i].scale   = MIN (xScale, yScale);
 	    
 	    sw->mSlots[i].y = centerY + (maxThumbHeight / 2.0) -
@@ -621,7 +621,7 @@ ShiftScreen::layoutThumbsCover ()
 
 	    if (fabs(distance) < 1.0)
 	    {
-		sw->mSlots[i].x  = centerX + (sin(pos * PI * 0.5) * space);
+		sw->mSlots[i].x  = centerX + (sin(pos * PI * 0.5) * space * optionGetCoverExtraSpace ());
 		sw->mSlots[i].z  = fabs (distance);
 		sw->mSlots[i].z *= -(maxThumbWidth / (2.0 * oe.width ()));
 
@@ -635,7 +635,7 @@ ShiftScreen::layoutThumbsCover ()
 			    (distance - pos) + (pos * (PI / 6.0));
     
 		sw->mSlots[i].x  = centerX;
-		sw->mSlots[i].x += sin(ang) * rad * oe.width ();
+		sw->mSlots[i].x += sin(ang) * rad * oe.width () * optionGetCoverExtraSpace ();
 		    
 		sw->mSlots[i].rotation  = optionGetCoverAngle () + 30;
 		sw->mSlots[i].rotation -= fabs(ang) * 180.0 / PI;

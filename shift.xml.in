@@ -270,6 +270,21 @@
 						<max>360</max>
 						<precision>0.1</precision>
 					</option>
+					<option name="cover_extra_space" type="float">
+						<_short>Space Factor</_short>
+						<_long>How much windows should be spaced apart</_long>
+						<default>0</default>
+						<min>1</min>
+						<max>2</max>
+						<precision>0.1</precision>
+					</option>
+					<option name="cover_max_visible_windows" type="int">
+						<_short>Maximum number of visible windows</_short>
+						<_long>How many windows should be visible at maximum in the cover mode</_long>
+						<default>10</default>
+						<min>1</min>
+						<max>100</max>
+					</option>
 				</subgroup>
 				<option name="overlay_icon" type="int">
 					<_short>Overlay Icon</_short>
