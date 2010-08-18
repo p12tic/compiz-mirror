@@ -265,7 +265,7 @@ SnapWindow::updateScreenEdges ()
 		 BottomEdge, true);
 	addEdge (0, area.bottom (), area.left (), area.right () - 1,
 		 TopEdge, true);
-	addEdge (0, area.left ()-1, area.top (), area.bottom () - 1,
+	addEdge (0, area.left (), area.top (), area.bottom () - 1,
 		 RightEdge, true);
 	addEdge (0, area.right (), area.top (), area.bottom () - 1,
 		 LeftEdge, true);
