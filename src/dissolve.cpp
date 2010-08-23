@@ -29,12 +29,11 @@ DissolveSingleAnim::DissolveSingleAnim (CompWindow *w,
 void
 DissolveSingleAnim::updateAttrib (GLWindowPaintAttrib &attrib)
 {  
-    float layer = MultiAnim <DissolveSingleAnim, 5>::getCurrAnimNumber (mAWindow);
+    int layer = MultiAnim <DissolveSingleAnim, 5>::getCurrAnimNumber (mAWindow);
     float o = 0.2;
-    float nO = (attrib.opacity * o) / 5;
     float factor = (4 - layer) * o;
     
-    attrib.opacity = (GLushort) (nO / (1.0 - factor));
+    attrib.opacity *= o / (1.0 - factor);
 }
 
 void
