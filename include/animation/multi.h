@@ -329,32 +329,6 @@ public:
 	    }
 	}
 
-	void addGeometry (const GLTexture::MatrixList &matrix,
-			    const CompRegion            &region,
-			    const CompRegion            &clip,
-			    unsigned int                maxGridWidth,
-			    unsigned int                maxGridHeight)
-	{
-	    int count = 0;
-	    foreach (SingleAnim *a, animList)
-	    {
-		setCurrAnimNumber (mAWindow, count);
-		count++;
-		a->addGeometry (matrix, region, clip, maxGridWidth, maxGridHeight);
-	    }
-	}
-
-	void drawGeometry ()
-	{
-	    int count = 0;
-	    foreach (SingleAnim *a, animList)
-	    {
-		setCurrAnimNumber (mAWindow, count);
-		count++;
-		a->drawGeometry ();
-	    }
-	}
-
 	bool paintWindowUsed ()
 	{
 	    int count = 0;
