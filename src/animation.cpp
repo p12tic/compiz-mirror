@@ -1562,13 +1562,7 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
     mCurAnimation->prePaintWindow ();
 
     if (mCurAnimation->paintWindowUsed ())
-    {
-	// Animations can call glPaint again, so avoid recursive calls
-	gWindow->glPaintSetEnabled (this, false);
-	status = mCurAnimation->paintWindow
-		(gWindow, wAttrib, wTransform, region, mask);
-	gWindow->glPaintSetEnabled (this, true);
-    }
+	status = mCurAnimation->paintWindow (gWindow, wAttrib, wTransform, region, mask);
     else
 	status = gWindow->glPaint (wAttrib, wTransform, region, mask);
 
