@@ -335,24 +335,15 @@ public:
 			    unsigned int                maxGridWidth,
 			    unsigned int                maxGridHeight)
 	{
-	    int count = 0;
-	    foreach (SingleAnim *a, animList)
-	    {
-		setCurrAnimNumber (mAWindow, count);
-		count++;
-		a->addGeometry (matrix, region, clip, maxGridWidth, maxGridHeight);
-	    }
+	    setCurrAnimNumber (mAWindow, currentAnim);
+	    animList.at (currentAnim)->addGeometry
+		    (matrix, region, clip, maxGridWidth, maxGridHeight);
 	}
 
 	void drawGeometry ()
 	{
-	    int count = 0;
-	    foreach (SingleAnim *a, animList)
-	    {
-		setCurrAnimNumber (mAWindow, count);
-		count++;
-		a->drawGeometry ();
-	    }
+	    setCurrAnimNumber (mAWindow, currentAnim);
+	    animList.at (currentAnim)->drawGeometry ();
 	}
 
 	bool paintWindowUsed ()
@@ -377,22 +368,20 @@ public:
 	    int count = 0;
 	    bool status = false;
 
-	    for (unsigned int i = 0; i < animList.size (); i++)
+	    for (currentAnim = 0; currentAnim < animList.size (); currentAnim++)
 	    {
-		GLWindowPaintAttrib wAttrib (mGlPaintAttribs.at (i));
-		GLMatrix 	    wTransform (mGlPaintTransforms.at (i));
+		GLWindowPaintAttrib wAttrib (mGlPaintAttribs.at (currentAnim));
+		GLMatrix wTransform (mGlPaintTransforms.at (currentAnim));
 
 		setCurrAnimNumber (mAWindow, count);
 		count++;
 
-		if (animList.at (i)->paintWindowUsed ())
-		    status |= animList.at (i)->paintWindow (gWindow, wAttrib,
-							    wTransform,
-							    region, mask);
+		if (animList.at (currentAnim)->paintWindowUsed ())
+		    status |= animList.at (currentAnim)->paintWindow
+			    (gWindow, wAttrib, wTransform, region, mask);
 		else
-		{
-		    status |= gWindow->glPaint (wAttrib, wTransform, region, mask);
-		}
+		    status |= gWindow->glPaint
+			    (wAttrib, wTransform, region, mask);
 	    }
 
 	    return status;
@@ -403,6 +392,6 @@ public:
 	std::vector <GLWindowPaintAttrib>   mGlPaintAttribs;
 	std::vector <GLMatrix>		    mGlPaintTransforms;
 	std::vector <SingleAnim *> animList;
-	int	    currentAnim;
+	unsigned int	    currentAnim;
 };
 #endif
