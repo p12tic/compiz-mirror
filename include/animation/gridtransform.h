@@ -11,12 +11,12 @@ public:
 		       float duration,
 		       const AnimEffect info,
 		       const CompRect &icon);
-protected:
     void init ();
     void updateTransform (GLMatrix &wTransform);
     void updateBB (CompOutput &output);
     bool updateBBUsed () { return true; }
     
+protected:
     bool mUsingTransform; ///< whether transform matrix is used (default: true)
 };
 #endif

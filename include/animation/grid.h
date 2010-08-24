@@ -80,8 +80,6 @@ protected:
 
     GLWindow::Geometry mGeometry; ///< geometry for grid mesh
 
-    void drawGeometry ();
-
     virtual bool using3D () { return false; }
 
     virtual void initGrid ();	///< Initializes grid width/height.
@@ -103,5 +101,6 @@ public:
 		      const CompRegion            &clip,
 		      unsigned int                maxGridWidth,
 		      unsigned int                maxGridHeight);
+    void drawGeometry ();
 };
 #endif
