@@ -1,3 +1,5 @@
-include (CompizFusion)
+find_package (Compiz REQUIRED)
 
-compiz_fusion_plugin (workspacenames PLUGINDEPS text)
+include (CompizPlugin)
+
+compiz_plugin (workspacenames PLUGINDEPS composite opengl text)

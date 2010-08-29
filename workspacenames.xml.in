@@ -6,10 +6,16 @@
 	<category>Window Management</category>
 	<deps>
 	    <relation type="after">
+		<plugin>opengl</plugin>
+		<plugin>composite</plugin>
 		<plugin>text</plugin>
 	    </relation>
+	    <requirement>
+		<plugin>opengl</plugin>
+		<plugin>composite</plugin>
+	    </requirement>
 	</deps>
-	<screen>
+	<options>
 	    <group>
 		<_short>Names</_short>
 		<subgroup>
@@ -104,6 +110,6 @@
 		    </option>
 		</subgroup>
 	    </group>
-	</screen>	
+	</options>	
     </plugin>
 </compiz>
