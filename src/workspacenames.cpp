@@ -185,7 +185,7 @@ WSNamesScreen::hideTimeout ()
 {
     timer = optionGetFadeTime () * 1000;
     if (!timer)
-	freeText ();
+	textData.clear ();
 
     cScreen->damageScreen ();
 
