@@ -52,9 +52,6 @@ class WSNamesScreen :
 	CompTimer	timeoutHandle;
 	int		timer;
 
-	void
-	freeText ();
-
 	CompString
 	getCurrentWSName ();
 

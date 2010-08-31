@@ -24,17 +24,6 @@
 
 #include "workspacenames.h"
 
-void
-WSNamesScreen::freeText ()
-{
-
-    if (textData.getWidth () == 0 &&
-	textData.getHeight () == 0)
-	return;
-
-    textData.clear ();
-}
-
 CompString
 WSNamesScreen::getCurrentWSName ()
 {
@@ -48,12 +37,12 @@ WSNamesScreen::getCurrentWSName ()
     names     = optionGetNames ();
 
     currentVp = screen->vp ().y () * screen->vpSize ().width () +
-						    screen->vp ().x () + 1;
+		screen->vp ().x () + 1;
     listSize  = MIN (vpNumbers.size (), names.size ());
 
     for (i = 0; i < listSize; i++)
-	if (vpNumbers.at (i).i () == currentVp)
-	    return names.at (i).s ();
+	if (vpNumbers[i].i () == currentVp)
+	    return names[i].s ();
 
     return ret;
 }
@@ -61,20 +50,18 @@ WSNamesScreen::getCurrentWSName ()
 void
 WSNamesScreen::renderNameText ()
 {
-    CompText::Attrib	attrib;
-    CompString		name;
+    CompText::Attrib attrib;
+    CompString	     name;
 
-    freeText ();
+    textData.clear ();
 
     name = getCurrentWSName ();
 
     if (name.empty ())
 	return;
 
-    CompRect oe = screen->getCurrentOutputExtents ();
-
     /* 75% of the output device as maximum width */
-    attrib.maxWidth  = oe.width () * 3 / 4;
+    attrib.maxWidth  = screen->getCurrentOutputExtents ().width () * 3 / 4;
     attrib.maxHeight = 100;
 
     attrib.family = "Sans";
@@ -102,9 +89,8 @@ WSNamesScreen::renderNameText ()
 void
 WSNamesScreen::drawText ()
 {
-    GLfloat   alpha;
-    float     x, y, border = 10.0f;
-
+    GLfloat  alpha;
+    float    x, y, border = 10.0f;
     CompRect oe = screen->getCurrentOutputExtents ();
 
     x = oe.centerX ();
@@ -120,11 +106,13 @@ WSNamesScreen::drawText ()
 	    {
 		CompRect workArea = screen->currentOutputDev ().workArea ();
 
-	    	if (optionGetTextPlacement () ==
+		if (optionGetTextPlacement () ==
 		    WorkspacenamesOptions::TextPlacementTopOfScreen)
-    		    y = oe.y1 () + workArea.y () + (2 * border) + textData.getHeight ();
+    		    y = oe.y1 () + workArea.y () +
+			(2 * border) + textData.getHeight ();
 		else
-		    y = oe.y1 () + workArea.y () + workArea.height () - (2 * border);
+		    y = oe.y1 () + workArea.y () +
+			workArea.height () - (2 * border);
 	    }
 	    break;
 	default:
@@ -151,8 +139,7 @@ WSNamesScreen::glPaintOutput (const GLScreenPaintAttrib	&attrib,
 
     status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
-    if (!(textData.getWidth () == 0 &&
-	textData.getHeight () == 0))
+    if (textData.getWidth () && textData.getHeight ())
     {
 	GLMatrix sTransform (transform);
 
@@ -169,7 +156,7 @@ WSNamesScreen::glPaintOutput (const GLScreenPaintAttrib	&attrib,
 }
 
 void
-WSNamesScreen::preparePaint (int	msSinceLastPaint)
+WSNamesScreen::preparePaint (int msSinceLastPaint)
 {
     if (timer)
     {
@@ -177,7 +164,7 @@ WSNamesScreen::preparePaint (int	msSinceLastPaint)
 	timer = MAX (timer, 0);
 
 	if (!timer)
-	    freeText ();
+	    textData.clear ();
     }
 
     cScreen->preparePaint (msSinceLastPaint);
@@ -208,7 +195,7 @@ WSNamesScreen::hideTimeout ()
 }
 
 void
-WSNamesScreen::handleEvent (XEvent	*event)
+WSNamesScreen::handleEvent (XEvent *event)
 {
     screen->handleEvent (event);
 
@@ -246,7 +233,6 @@ WSNamesScreen::WSNamesScreen (CompScreen *screen) :
 
 WSNamesScreen::~WSNamesScreen ()
 {
-    freeText ();
 }
 
 bool
@@ -259,6 +245,6 @@ WorkspacenamesPluginVTable::init ()
 
     if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
 	compLogMessage ("workspacenames", CompLogLevelWarn,
-					    "No compatible text plugin loaded");
+			"No compatible text plugin loaded");
     return true;
 }
