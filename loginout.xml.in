@@ -16,7 +16,7 @@
 				<plugin>decor</plugin>
 			</relation>
 		</deps>
-		<screen>
+		<options>
 			<group>
 				<_short>Login</_short>
 				<option name="in_match" type="match">
@@ -97,6 +97,6 @@
 					<precision>0.1</precision>
 				</option>
 			</group>
-		</screen>
+		</options>
 	</plugin>
 </compiz>
