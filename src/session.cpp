@@ -248,11 +248,27 @@ SessionScreen::isSessionWindow (CompWindow *w)
 }
 
 void
-SessionScreen::writeWindow (CompWindow *w)
+addIntegerPropToNode (xmlNodePtr node,
+		      const char *name,
+		      int	 value)
+{
+    xmlChar *string = xmlXPathCastNumberToString (value);
+
+    if (!string)
+	return;
+
+    xmlNewProp (node, BAD_CAST name, string);
+    xmlFree (string);
+}
+
+void
+SessionScreen::addWindowNode (CompWindow *w,
+			      xmlNodePtr rootNode)
 {
     CompString clientId, command, string;
     CompString resName, resClass;
     int        x, y, width, height;
+    xmlNodePtr node, childNode;
 
     if (!getClientLeaderProperty (w, clientIdAtom, clientId) &&
 	!optionGetSaveLegacy ())
@@ -264,77 +280,84 @@ SessionScreen::writeWindow (CompWindow *w)
     if (clientId.empty () && command.empty ())
 	return;
 
-    file << "  <window ";
+    node = xmlNewChild (rootNode, NULL, BAD_CAST "window", NULL);
+    if (!node)
+	return;
+
     if (!clientId.empty ())
-	file << "id=\"" << clientId << "\"";
+	xmlNewProp (node, BAD_CAST "id",  BAD_CAST clientId.c_str ());
 
     if (getWindowTitle (w->id (), string))
-	file << "title=\"" << string << "\"";
+	xmlNewProp (node, BAD_CAST "title", BAD_CAST string.c_str ());
 
     if (getWindowClass (w->id (), resName, resClass))
     {
 	if (!resClass.empty ())
-	    file << " class=\"" << resClass << "\"";
+	    xmlNewProp (node, BAD_CAST "class", BAD_CAST resClass.c_str ());
 	if (!resName.empty ())
-	    file << " name=\"" << resName << "\"";
+	    xmlNewProp (node, BAD_CAST "name", BAD_CAST resName.c_str ());
     }
 
     if (getTextProperty (w->id (), roleAtom, string))
-	file << "role=\"" << string << "\"";
+	xmlNewProp (node, BAD_CAST "role", BAD_CAST string.c_str ());
 
     if (!command.empty ())
-	file << "command=\"" << command << "\"";
-
-    file << ">" << std::endl;
+	xmlNewProp (node, BAD_CAST "command", BAD_CAST command.c_str ());
 
     /* save geometry, relative to viewport 0, 0 */
-    x = (w->saveMask () & CWX) ? w->saveWc ().x : w->serverX ();
-    y = (w->saveMask () & CWY) ? w->saveWc ().y : w->serverY ();
-    if (!w->onAllViewports ())
+    childNode = xmlNewChild (node, NULL, BAD_CAST "geometry", NULL);
+    if (childNode)
     {
-	x += screen->vp ().x () * screen->width ();
-	y += screen->vp ().y () * screen->height ();
+	x = (w->saveMask () & CWX) ? w->saveWc ().x : w->serverX ();
+	y = (w->saveMask () & CWY) ? w->saveWc ().y : w->serverY ();
+	if (!w->onAllViewports ())
+	{
+	    x += screen->vp ().x () * screen->width ();
+	    y += screen->vp ().y () * screen->height ();
+	}
+
+	x -= w->input ().left;
+	y -= w->input ().top;
+
+	width  = (w->saveMask () & CWWidth) ? w->saveWc ().width :
+			                  w->serverWidth ();
+	height = (w->saveMask () & CWHeight) ? w->saveWc ().height :
+			                   w->serverHeight ();
+
+	addIntegerPropToNode (childNode, "x", x);
+	addIntegerPropToNode (childNode, "y", y);
+	addIntegerPropToNode (childNode, "width", width);
+	addIntegerPropToNode (childNode, "height", height);
     }
-
-    x -= w->input ().left;
-    y -= w->input ().top;
-
-    width  = (w->saveMask () & CWWidth) ? w->saveWc ().width :
-	                                  w->serverWidth ();
-    height = (w->saveMask () & CWHeight) ? w->saveWc ().height :
-	                                   w->serverHeight ();
-
-    file << "    <geometry x=\"" << x << "\" y=\"" << y << "\" ";
-    file << "width=\"" << width << "\" height=\"" << height << "\"";
-    file << "/>" << std::endl;
 
     /* save various window states */
     if (w->state () & CompWindowStateShadedMask)
-	file << "    <shaded/>" << std::endl;
+	xmlNewChild (node, NULL, BAD_CAST "shaded", NULL);
     if (w->state () & CompWindowStateStickyMask)
-	file << "    <sticky/>" << std::endl;
+	xmlNewChild (node, NULL, BAD_CAST "sticky", NULL);
     if (w->state () & CompWindowStateFullscreenMask)
-	file << "    <fullscreen/>" << std::endl;
+	xmlNewChild (node, NULL, BAD_CAST "fullscreen", NULL);
     if (w->minimized ())
-	file << "    <minimized/>" << std::endl;
+	xmlNewChild (node, NULL, BAD_CAST "minimized", NULL);
     if (w->state () & MAXIMIZE_STATE)
     {
-	file << "    <maximized ";
-	if (w->state () & CompWindowStateMaximizedVertMask)
-	    file << "vert=\"yes\" ";
-	if (w->state () & CompWindowStateMaximizedHorzMask)
-	    file << "horiz=\"yes\"";
-	file << "/>" << std::endl;
+	childNode = xmlNewChild (node, NULL, BAD_CAST "maximized", NULL);
+	if (childNode)
+	{
+	    if (w->state () & CompWindowStateMaximizedVertMask)
+		xmlNewProp (childNode, BAD_CAST "vert", BAD_CAST "yes");
+	    if (w->state () & CompWindowStateMaximizedHorzMask)
+		xmlNewProp (childNode, BAD_CAST "horz", BAD_CAST "yes");
+	}
     }
 
     /* save workspace */
     if (!(w->type () & (CompWindowTypeDesktopMask | CompWindowTypeDockMask)))
     {
-	file << "    <workspace index=\"" << w->desktop ();
-	file << "\"/>" << std::endl;
+	childNode = xmlNewChild (node, NULL, BAD_CAST "workspace", NULL);
+	if (childNode)
+	    addIntegerPropToNode (childNode, "index", w->desktop ());
     }
-
-    file << "  </window>" << std::endl;
 }
 
 CompString
@@ -380,31 +403,45 @@ void
 SessionScreen::saveState (const CompString& clientId)
 {
     CompString fileName = getFileName (clientId);
+    xmlDocPtr  doc = NULL;
+    xmlSaveCtxtPtr ctx = NULL;
 
     if (!createDir (fileName.substr (0, fileName.rfind ('/'))))
 	return;
 
-    file.open (fileName.c_str (), std::ios::out);
-    if (file.fail ())
+    ctx = xmlSaveToFilename (fileName.c_str (), NULL, XML_SAVE_FORMAT);
+    if (!ctx)
 	return;
 
-    file << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
-    file << "<compiz_session id=\"" << clientId << ">" << std::endl;
-
     /* write out all windows on this screen */
-    foreach (CompWindow *w, screen->windows ())
+    doc = xmlNewDoc (BAD_CAST "1.0");
+    if (doc)
     {
-	if (!isSessionWindow (w))
-	    continue;
+	xmlNodePtr rootNode;
+	rootNode = xmlNewNode (NULL, BAD_CAST "compiz_session");
+	if (rootNode)
+	{
+	    xmlNewProp (rootNode, BAD_CAST "id", BAD_CAST clientId.c_str ());
+	    xmlDocSetRootElement (doc, rootNode);
 
-	if (!w->managed ())
-	    continue;
+	    foreach (CompWindow *w, screen->windows ())
+	    {
+		if (!isSessionWindow (w))
+		    continue;
 
-	writeWindow (w);
+		if (!w->managed ())
+		    continue;
+
+		addWindowNode (w, rootNode);
+	    }
+
+	    xmlSaveDoc (ctx, doc);
+	}
+
+	xmlFreeDoc (doc);
     }
 
-    file << "</compiz_session>" << std::endl;
-    file.close ();
+    xmlSaveClose (ctx);
 }
 
 bool

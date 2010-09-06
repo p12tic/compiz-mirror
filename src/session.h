@@ -32,6 +32,7 @@
 #include <libxml/xmlmemory.h>
 #include <libxml/parser.h>
 #include <libxml/xpath.h>
+#include <libxml/xmlsave.h>
 
 #include <iostream>
 #include <fstream>
@@ -80,7 +81,7 @@ class SessionScreen :
 	CompString getStringForProp (xmlNodePtr, const char *);
 
 	bool isSessionWindow (CompWindow *);
-	void writeWindow (CompWindow *);
+	void addWindowNode (CompWindow *, xmlNodePtr);
 
 	void saveState (const CompString &);
 	void readState (xmlNodePtr);
