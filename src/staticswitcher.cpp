@@ -2,7 +2,7 @@
  *
  * Compiz application switcher plugin
  *
- * staticswitcher.c
+ * staticswitcher.cpp
  *
  * Copyright : (C) 2008 by Danny Baumann
  * E-mail    : maniac@compiz-fusion.org
@@ -371,6 +371,7 @@ StaticSwitchScreen::initiate (SwitchWindowSelection selection,
 		setSelectedWindowHint ();
 	    }
 
+	    lastActiveWindow = screen->activeWindow ();
 	    activateEvent (true);
 	}
 
@@ -447,6 +448,14 @@ switchTerminate (CompAction         *action,
 	    ::screen->handleEventSetEnabled (ss, false);
 
 	ss->selectedWindow = NULL;
+	
+	if (screen->activeWindow () != ss->lastActiveWindow)
+	{
+	    CompWindow *w = screen->findWindow (ss->lastActiveWindow);
+	    
+	    if (w)
+		w->moveInputFocusTo ();
+	}
 
 	ss->setSelectedWindowHint ();
 

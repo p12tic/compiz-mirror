@@ -2,7 +2,7 @@
  *
  * Compiz application switcher plugin
  *
- * staticswitcher.c
+ * staticswitcher.h
  *
  * Copyright : (C) 2008 by Danny Baumann
  * E-mail    : maniac@compiz-fusion.org
@@ -89,6 +89,8 @@ class StaticSwitchScreen :
 	void getMinimizedAndMatch (bool &minimizedOption,
 				   CompMatch *&match);
 	bool getMipmap ();
+	
+	Window    lastActiveWindow;
 
 	CompTimer popupDelayTimer;
 
