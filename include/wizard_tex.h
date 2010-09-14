@@ -7,6 +7,9 @@
  * Written by : Sebastian Kuhlen
  * E-mail     : DiCon@tankwar.de
  *
+ * Ported to Compiz 0.9.x
+ * Copyright : (c) 2010 Scott Moreau <oreaus@gmail.com>
+ *
  * This plugin and parts of its code have been inspired by the showmouse plugin
  * by Dennis Kasprzyk
  *
