@@ -2,14 +2,12 @@
  *
  * Compiz group plugin
  *
- * queues.cpp
+ * queues.c
  *
- * Copyright : (C) 2006-2009 by Patrick Niklaus, Roi Cohen, Danny Baumann,
- *				Sam Spilsbury
+ * Copyright : (C) 2006-2007 by Patrick Niklaus, Roi Cohen, Danny Baumann
  * Authors: Patrick Niklaus <patrick.niklaus@googlemail.com>
  *          Roi Cohen       <roico.beryl@gmail.com>
  *          Danny Baumann   <maniac@opencompositing.org>
- *	    Sam Spilsbury   <smspillaz@gmail.com>
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -26,246 +24,225 @@
 
 #include "group.h"
 
-bool
-GroupScreen::dequeue ()
-{
-    dequeueMoveNotifies ();
-    dequeueGrabNotifies ();
-    dequeueUngrabNotifies ();
-    dequeueWindowNotifies ();
-    return false;
-}
+/*
+ * functions enqueuing pending notifies
+ *
+ */
+
+/* forward declaration */
 
 void
-GroupScreen::enqueueMoveNotify (CompWindow *w,
-				int	   dx,
-				int	   dy,
-				bool	   immediate,
-				bool	   sync)
+GroupWindow::groupEnqueueMoveNotify (int  dx,
+				     int  dy,
+				     bool immediate,
+				     bool sync)
 {
-    PendingMoves *move = new PendingMoves;
+    GroupPendingMoves *move;
 
+    GROUP_SCREEN (screen);
+
+    move = (GroupPendingMoves *) malloc (sizeof (GroupPendingMoves));
     if (!move)
 	return;
 
-    move->w  = w;
+    move->w  = window;
     move->dx = dx;
     move->dy = dy;
 
     move->immediate = immediate;
     move->sync      = sync;
+    move->next      = NULL;
 
-    pendingMoves.push_back (move);
-
-    if (!dequeueTimeoutHandle.active ())
+    if (gs->mPendingMoves)
     {
-	dequeueTimeoutHandle.start ();
+	GroupPendingMoves *temp;
+	for (temp = gs->mPendingMoves; temp->next; temp = temp->next);
+
+	temp->next = move;
+    }
+    else
+	gs->mPendingMoves = move;
+
+    if (!gs->mDequeueTimeoutHandle.active ())
+    {
+	gs->mDequeueTimeoutHandle.start ();
     }
 }
 
 void
-GroupScreen::dequeueMoveNotifies ()
+GroupScreen::groupDequeueSyncs (GroupPendingSyncs *syncs)
 {
-    /* Do not enqueue windows as a result of this dequeue */
-    queued = true;
+    GroupPendingSyncs *sync;
 
-    while (!pendingMoves.empty ())
+    while (syncs)
     {
-	PendingMoves *move = pendingMoves.front ();
+	sync = syncs;
+	syncs = sync->next;
+	
+	GROUP_WINDOW (sync->w);
+	if (gw->mNeedsPosSync)
+	{
+	    sync->w->syncPosition ();
+	    gw->mNeedsPosSync = FALSE;
+	}
+
+	free (sync);
+    }
+
+}
+
+void
+GroupScreen::groupDequeueMoveNotifies ()
+{
+    GroupPendingMoves *move;
+    GroupPendingSyncs *syncs = NULL, *sync;
+
+    mQueued = TRUE;
+
+    while (mPendingMoves)
+    {
+	move = mPendingMoves;
+	mPendingMoves = move->next;
 
 	move->w->move (move->dx, move->dy, move->immediate);
-
 	if (move->sync)
 	{
-	    PendingSyncs *pendingSync = new PendingSyncs;
-	    if (pendingSync)
+	    sync = (GroupPendingSyncs *) malloc (sizeof (GroupPendingSyncs));
+	    if (sync)
 	    {
 		GROUP_WINDOW (move->w);
 
-		gw->needsPosSync = true;
-		pendingSync->w   = move->w;
-
-		pendingSyncs.push_back (pendingSync);
+		gw->mNeedsPosSync = TRUE;
+		sync->w          = move->w;
+		sync->next       = syncs;
+		syncs            = sync;
 	    }
 	}
-
-	pendingMoves.pop_front ();
-	
-	delete move;
+	free (move);
     }
 
-    if (!pendingSyncs.empty ())
-	dequeueSyncs ();
+    if (syncs)
+	groupDequeueSyncs (syncs);
 
-    queued = false;
+    mQueued = FALSE;
 }
 
 void
-GroupScreen::dequeueSyncs ()
+GroupWindow::groupEnqueueGrabNotify (int          x,
+				     int          y,
+				     unsigned int state,
+				     unsigned int mask)
 {
-    while (!pendingSyncs.empty ())
-    {
-	PendingSyncs *pendingSync = pendingSyncs.front ();
-	
-	GROUP_WINDOW (pendingSync->w);
-	if (gw->needsPosSync)
-	{
-	    pendingSync->w->syncPosition ();
-	    gw->needsPosSync = false;
-	}
+    GroupPendingGrabs *grab;
+    
+    GROUP_SCREEN (screen);
 
-	pendingSyncs.pop_front ();
-
-	delete pendingSync;
-    }
-
-}
-
-void
-GroupScreen::enqueueGrabNotify (CompWindow   *w,
-				int          x,
-				int          y,
-				unsigned int state,
-				unsigned int mask)
-{
-    PendingGrabs *grab = new PendingGrabs;
-
+    grab = (GroupPendingGrabs *) malloc (sizeof (GroupPendingGrabs));
     if (!grab)
 	return;
 
-    grab->w = w;
+    grab->w = window;
     grab->x = x;
     grab->y = y;
 
     grab->state = state;
     grab->mask  = mask;
+    grab->next  = NULL;
 
-    pendingGrabs.push_back (grab);
-
-    if (!dequeueTimeoutHandle.active ())
+    if (gs->mPendingGrabs)
     {
-	dequeueTimeoutHandle.start ();
+	GroupPendingGrabs *temp;
+	for (temp = gs->mPendingGrabs; temp->next; temp = temp->next);
+
+	temp->next = grab;
+    }
+    else
+	gs->mPendingGrabs = grab;
+
+    if (!gs->mDequeueTimeoutHandle.active ())
+    {
+	gs->mDequeueTimeoutHandle.start ();
     }
 }
 
 void
-GroupScreen::dequeueGrabNotifies ()
+GroupScreen::groupDequeueGrabNotifies ()
 {
-    queued = true;
+    GroupPendingGrabs *grab;
 
-    while (!pendingGrabs.empty ())
+    mQueued = TRUE;
+
+    while (mPendingGrabs)
     {
-	PendingGrabs *grab = pendingGrabs.front ();
+	grab = mPendingGrabs;
+	mPendingGrabs = mPendingGrabs->next;
 
-	grab->w->grabNotify (grab->x, grab->y, grab->state, grab->mask);
+	grab->w->grabNotify (grab->x, grab->y,
+			     grab->state, grab->mask);
 
-	pendingGrabs.pop_front ();
-
-	delete grab;
+	free (grab);
     }
 
-   queued = false;
+    mQueued = FALSE;
 }
 
 void
-GroupScreen::enqueueUngrabNotify (CompWindow *w)
+GroupWindow::groupEnqueueUngrabNotify ()
 {
-    PendingUngrabs *ungrab = new PendingUngrabs;
+    GroupPendingUngrabs *ungrab;
+
+    GROUP_SCREEN (screen);
+
+    ungrab = (GroupPendingUngrabs *) malloc (sizeof (GroupPendingUngrabs));
 
     if (!ungrab)
 	return;
 
-    ungrab->w    = w;
+    ungrab->w    = window;
+    ungrab->next = NULL;
 
-    pendingUngrabs.push_back (ungrab);
-
-    if (!dequeueTimeoutHandle.active ())
+    if (gs->mPendingUngrabs)
     {
-	dequeueTimeoutHandle.start ();
+	GroupPendingUngrabs *temp;
+	for (temp = gs->mPendingUngrabs; temp->next; temp = temp->next);
+
+	temp->next = ungrab;
+    }
+    else
+	gs->mPendingUngrabs = ungrab;
+
+    if (!gs->mDequeueTimeoutHandle.active ())
+    {
+	gs->mDequeueTimeoutHandle.start ();
     }
 }
 
 void
-GroupScreen::dequeueUngrabNotifies ()
+GroupScreen::groupDequeueUngrabNotifies ()
 {
-    queued = true;
+    GroupPendingUngrabs *ungrab;
 
-    while (!pendingUngrabs.empty ())
+    mQueued = TRUE;
+
+    while (mPendingUngrabs)
     {
-	PendingUngrabs *ungrab = pendingUngrabs.front ();
+	ungrab = mPendingUngrabs;
+	mPendingUngrabs = mPendingUngrabs->next;
 
 	ungrab->w->ungrabNotify ();
 
-	pendingUngrabs.pop_front ();
-
-	delete ungrab;
+	free (ungrab);
     }
 
-    queued = false;
+    mQueued = FALSE;
 }
 
-void
-GroupScreen::enqueueWindowNotify (CompWindow *w, CompWindowNotify n)
+bool
+GroupScreen::groupDequeueTimer ()
 {
-    PendingNotifies *notify = new PendingNotifies;
+    groupDequeueMoveNotifies ();
+    groupDequeueGrabNotifies ();
+    groupDequeueUngrabNotifies ();
 
-    if (!notify)	
-	return;
-
-    notify->w = w;
-    notify->n = n;
-
-    pendingNotifies.push_back (notify);
-
-    if (!dequeueTimeoutHandle.active ())
-	dequeueTimeoutHandle.start ();
+    return false;
 }
-
-void
-GroupScreen::dequeueWindowNotifies ()
-{
-    queued = true;
-
-    while (!pendingNotifies.empty ())
-    {
-	PendingNotifies *notify = pendingNotifies.front ();
-
-	GROUP_WINDOW (notify->w);
-
-	switch (notify->n)
-	{
-	    case CompWindowNotifyMinimize:
-		gw->group->minimizeWindows (notify->w, true);
-		break;
-	    case CompWindowNotifyUnminimize:
-		gw->group->minimizeWindows (notify->w, false);
-		break;
-	    case CompWindowNotifyShade:
-		gw->group->shadeWindows (notify->w, true);
-		break;
-	    case CompWindowNotifyUnshade:
-		gw->group->shadeWindows (notify->w, false);
-		break;
-	    case CompWindowNotifyRestack:
-	        if (gw->group && !gw->group->tabBar &&
-		    (gw->group != lastRestackedGroup))
-	        {
-		    if (optionGetRaiseAll ())
-		        gw->group->raiseWindows (notify->w);
-	        }
-	        if (notify->w->managed () && !notify->w->overrideRedirect ())
-		    lastRestackedGroup = gw->group;
-		break;
-	    default:
-		break;
-	}
-
-	pendingNotifies.pop_front ();
-
-	delete notify;
-
-    }
-
-    queued = false;
-}
-

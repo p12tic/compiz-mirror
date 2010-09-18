@@ -2,14 +2,12 @@
  *
  * Compiz group plugin
  *
- * selection.cpp
+ * selection.c
  *
- * Copyright : (C) 2006-2009 by Patrick Niklaus, Roi Cohen, Danny Baumann,
- *				Sam Spilsbury
+ * Copyright : (C) 2006-2007 by Patrick Niklaus, Roi Cohen, Danny Baumann
  * Authors: Patrick Niklaus <patrick.niklaus@googlemail.com>
  *          Roi Cohen       <roico.beryl@gmail.com>
  *          Danny Baumann   <maniac@opencompositing.org>
- *	    Sam Spilsbury   <smspillaz@gmail.com>
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -26,298 +24,344 @@
 
 #include "group.h"
 
-/**
- * Selection::toGroup ()
- *
- */
-
-Group *
-Selection::toGroup ()
-{
-    Group          *retGroup = NULL;
-    bool           tabbed = false;
-
-    /* check if there is an existing group or if the group is tabbed */
-
-    foreach (CompWindow *w, *this)
-    {
-        GROUP_WINDOW (w);
-
-        if (gw->group)
-        {
-	    if (!tabbed || gw->group->tabBar)
-	        retGroup = gw->group;
-
-	    if (retGroup->tabBar)
-	        tabbed = true;
-        }
-    }
-
-    if (!retGroup)
-	retGroup = Group::create (0);
-
-    foreach (CompWindow *w, *this)
-    {
-        GROUP_WINDOW (w);
-
-        if (gw->group && (retGroup != gw->group))
-            gw->removeFromGroup ();
-        retGroup->addWindow (w);
-        gw->cWindow->addDamage ();
-
-        gw->inSelection = false;
-	
-	gw->updateProperty ();
-
-    }
-
-    /* exit selection */
-    clear ();
-
-    return retGroup;
-}
-
-/**
- * Selection::push_back (CompWindow *)
- *
- */
-
-void
-Selection::push_back (CompWindow *w)
-{
-    CompWindowList::push_back (w);
-}
-
-/**
- * Selection::push_back (Selection)
- * This function doesn't really add a whole selection as a list item
- * but adds the windows within it that are not already selected
- */
-
-void
-Selection::push_back (Selection &sel)
-{
-    /* First remove windows that are already in the list
-     */
-
-    Selection::iterator it1 = this->end ();
-    bool ok;
-
-    while (it1 != this->begin ())
-    {
-	ok = true;
-	CompWindow *list = *it1;
-
-	Selection::iterator it2 = sel.end ();
-
-	while (it2 != sel.end ())
-	{
-	    CompWindow *selection = *it2;
-
-	    if (list == selection)
-	    {
-		this->erase (it1);
-		sel.erase (it2);
-
-		ok = false;
-		break;
-	    }
-	}
-
-	if (!ok)
-	    it1 = this->end ();
-	else
-	    it1--;
-    }
-
-    foreach (CompWindow *w, sel)
-	GroupWindow::get (w)->select ();
-
-}
-
-
-/**
- * Selection::Rect::damage
- *
- */
-
-void
-Selection::Rect::damage (int xRoot, int yRoot)
-{
-    GROUP_SCREEN (screen);
-
-    CompRect damageRect;
-
-    damageRect.setX (MIN (x1 (), x2 ()) - 5);
-    damageRect.setY (MIN (y1 (), y2 ()) - 5);
-    damageRect.setWidth ((MAX (x1 (), x2 ()) + 5) - (MIN (x1 (), x2 ()) - 5));
-    damageRect.setHeight ((MAX (y1 (), y2 ()) + 5) - (MIN (y1 (), y2 ()) - 5));
-
-    CompRegion oldDamageRegion (damageRect);
-
-    gs->cScreen->damageRegion (oldDamageRegion);
-
-    setWidth (xRoot - x1 ());
-    setHeight (yRoot - y1 ());
-
-    damageRect.setX (MIN (x1 (), x2 ()) - 5);
-    damageRect.setY (MIN (y1 (), y2 ()) - 5);
-    damageRect.setWidth ((MAX (x1 (), x2 ()) + 5) - (MIN (x1 (), x2 ()) - 5));
-    damageRect.setHeight ((MAX (y1 (), y2 ()) + 5) - (MIN (y1 (), y2 ()) - 5));
-
-    CompRegion newDamageRegion (damageRect);
-
-    gs->cScreen->damageRegion (newDamageRegion);
-}
-
-/**
- * Selection::Rect::paint
- *
- */
-void
-Selection::Rect::paint (const GLScreenPaintAttrib &sa,
-		      const GLMatrix		&transform,
-		      CompOutput		*output,
-		      bool			transformed)
-{
-
-    int fx1, fx2, fy1, fy2;
-
-    GROUP_SCREEN (screen);
-
-    fx1 = MIN (x1 (), x2 ());
-    fy1 = MIN (y1 (), y2 ());
-    fx2 = MAX (x1 (), x2 ());
-    fy2 = MAX (y1 (), y2 ());
-
-    if (gs->grabState == GroupScreen::ScreenGrabSelect)
-    {
-	GLMatrix sTransform (transform);
-
-	if (transformed)
-	{
-	    gs->gScreen->glApplyTransform (sa, output, &sTransform);
-	    sTransform.toScreenSpace (output, -sa.zTranslate);
-	} else
-	    sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
-
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
-	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-	glEnable (GL_BLEND);
-
-	glColor4usv (gs->optionGetFillColor ());
-	glRecti (fx1, fy2, fx2, fy1);
-
-	glColor4usv (gs->optionGetLineColor ());
-	glBegin (GL_LINE_LOOP);
-	glVertex2i (fx1, fy1);
-	glVertex2i (fx2, fy1);
-	glVertex2i (fx2, fy2);
-	glVertex2i (fx1, fy2);
-	glEnd ();
-
-	glColor4usv (defaultColor);
-	glDisable (GL_BLEND);
-	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-	glPopMatrix ();
-    }
-}
-
 /*
- * Selection::Rect::toSelection
+ * groupWindowInRegion
  *
  */
-Selection
-Selection::Rect::toSelection ()
-{
-    GROUP_SCREEN (screen);
-
-    float      precision = gs->optionGetSelectPrecision () / 100.0f;
-    Selection	sel;
-    Selection::Rect  &msr = gs->masterSelectionRect;
-    /* XXX: Why are we using masterSelectionRect here ... */
-    CompRegion reg (MIN (msr.x1 (), msr.x2 ()) - 2,
-		    MIN (msr.y1 (), msr.y2 ()) - 2,
-		    (MAX (msr.x1 (), msr.x2 ()) -
-                     MIN (msr.x1 (), msr.x2 ()) + 4),
-		    (MAX (msr.y1 (), msr.y2 ()) -
-                     MIN (msr.y1 (), msr.y2 ()) + 4));
-    CompWindowList::iterator it = screen->windows ().end ();
-
-
-    while (it != screen->windows ().begin ())
-    {
-	it--;
-	CompWindow *w = *it;
-
-	GROUP_WINDOW (w);
-
-	if (gw->isGroupable () &&
-	    gw->inRegion (reg, precision))
-	{
-	    /*if (gw->group && groupFindGroupInWindows (gw->group, ret, count))
-		continue;*/
-
-	    sel.push_back (w);
-	}
-    }
-
-    return sel;
-}
-
-
-/*
- * GroupWindow::inRegion ()
- *
- * Determine if the window is in our selection region
- *
- */
-
 bool
-GroupWindow::inRegion (CompRegion reg,
-		       float      precision)
+GroupWindow::groupWindowInRegion (Region src,
+				  float  precision)
 {
-    CompRegion buf;
+    Region buf;
+    int    i;
     int    area = 0;
+    BOX    *box;
 
-    buf = reg.intersected (window->region ());
+    buf = XCreateRegion ();
+    if (!buf)
+	return false;
+
+    XIntersectRegion (window->region ().handle (), src, buf);
 
     /* buf area */
-    area = buf.boundingRect ().width () * buf.boundingRect ().height ();
+    for (i = 0; i < buf->numRects; i++)
+    {
+	box = &buf->rects[i];
+	area += (box->x2 - box->x1) * (box->y2 - box->y1); /* width * height */
+    }
+
+    XDestroyRegion (buf);
 
     if (area >= WIN_WIDTH (window) * WIN_HEIGHT (window) * precision)
     {
-	return true;
+	XSubtractRegion (src, window->region ().handle (), src);
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+/*
+ * groupFindGroupInWindows
+ *
+ */
+bool
+GroupScreen::groupFindGroupInWindows (GroupSelection *group,
+				      CompWindowList &windows)
+{
+    foreach (CompWindow *cw, windows)
+    {
+	GROUP_WINDOW (cw);
+
+	if (gw->mGroup == group)
+	    return true;
     }
 
     return false;
 }
 
 /*
- * GroupWindow::select
- *
- * Description: add this window to the selection
+ * groupFindWindowsInRegion
  *
  */
+CompWindowList
+GroupScreen::groupFindWindowsInRegion (Region     reg)
+{
+    float      	   precision = optionGetSelectPrecision () / 100.0f;
+    CompWindowList ret;
+    int		   count;
+    CompWindowList::reverse_iterator rit = screen->windows ().rbegin ();
 
+    while (rit != screen->windows ().rend ())
+    {
+	CompWindow *w = *rit;
+	GROUP_WINDOW (w);
+
+	if (gw->groupIsGroupWindow () &&
+	    gw->groupWindowInRegion (reg, precision))
+	{
+	    if (gw->mGroup && groupFindGroupInWindows (gw->mGroup, ret))
+		continue;
+
+	    ret.push_back (w);
+
+	    count++;
+	}
+	
+	rit++;
+    }
+
+    return ret;
+}
+
+/*
+ * groupDeleteSelectionWindow
+ *
+ */
 void
-GroupWindow::select ()
+GroupWindow::groupDeleteSelectionWindow ()
+{
+    GROUP_SCREEN (screen);
+	
+    if (gs->mTmpSel.nWins > 0 && gs->mTmpSel.windows)
+    {
+	CompWindow **buf = gs->mTmpSel.windows;
+	int        counter = 0;
+	int        i;
+
+	gs->mTmpSel.windows = (CompWindow **) calloc (gs->mTmpSel.nWins - 1,
+				     sizeof (CompWindow *));
+
+	for (i = 0; i < gs->mTmpSel.nWins; i++)
+	{
+	    if (buf[i]->id () == window->id ())
+		continue;
+
+	    gs->mTmpSel.windows[counter++] = buf[i];
+	}
+
+	gs->mTmpSel.nWins = counter;
+	free (buf);
+    }
+
+    mInSelection = FALSE;
+}
+
+/*
+ * groupAddWindowToSelection
+ *
+ */
+void
+GroupWindow::addWindowToSelection ()
 {
     GROUP_SCREEN (screen);
 
-    if (!inSelection)
+    gs->mTmpSel.windows = (CompWindow **) realloc (gs->mTmpSel.windows,
+						   sizeof (CompWindow *) *
+						   (gs->mTmpSel.nWins + 1));
+
+    gs->mTmpSel.windows[gs->mTmpSel.nWins] = window;
+    gs->mTmpSel.nWins++;
+
+    mInSelection = true;
+}
+
+/*
+ * groupSelectWindow
+ *
+ */
+void
+GroupWindow::groupSelectWindow ()
+{
+    GROUP_SCREEN (screen);
+
+    /* filter out windows we don't want to be groupable */
+    if (!groupIsGroupWindow ())
+	return;
+
+    if (mInSelection)
     {
-	gs->masterSelection.push_back (window);
-	selection = &gs->masterSelection;
+	if (mGroup)
+	{
+	    /* unselect group */
+	    GroupSelection *group = mGroup;
+	    CompWindow     **buf = gs->mTmpSel.windows;
+	    int            i, counter = 0;
+
+	    /* Faster than doing groupDeleteSelectionWindow
+	       for each window in this group. */
+	    gs->mTmpSel.windows = (CompWindow **)
+				     calloc (gs->mTmpSel.nWins - mGroup->nWins,
+					     sizeof (CompWindow *));
+
+	    for (i = 0; i < gs->mTmpSel.nWins; i++)
+	    {
+		CompWindow *cw = buf[i];
+		GROUP_WINDOW (cw);
+
+		if (gw->mGroup == group)
+		{
+		    gw->mInSelection = FALSE;
+		    cWindow->addDamage ();
+		    continue;
+		}
+
+		gs->mTmpSel.windows[counter++] = buf[i];
+	    }
+	    gs->mTmpSel.nWins = counter;
+	    free (buf);
+	}
+	else
+	{
+	    /* unselect single window */
+	    groupDeleteSelectionWindow ();
+	    cWindow->addDamage ();
+	}
     }
     else
     {
-	selection = NULL;
-	gs->masterSelection.remove (window);
-    }
-    inSelection = !inSelection;
+	if (mGroup)
+	{
+	    /* select group */
+	    int i;
+	    for (i = 0; i < mGroup->nWins; i++)
+	    {
+		CompWindow *cw = mGroup->windows[i];
 
-    cWindow->addDamage ();
+		GROUP_WINDOW (cw);
+
+		gw->addWindowToSelection ();
+		gw->cWindow->addDamage ();
+	    }
+	}
+	else
+	{
+	    /* select single window */
+	    addWindowToSelection ();
+	    cWindow->addDamage ();
+	}
+    }
+}
+
+/*
+ * groupSelectSingle
+ *
+ */
+bool
+GroupScreen::groupSelectSingle (CompAction         *action,
+				CompAction::State  state,
+				CompOption::Vector options)
+{
+    Window     xid;
+    CompWindow *w;
+
+    xid = CompOption::getIntOptionNamed (options, "window", 0);
+    w   = screen->findWindow (xid);
+    if (w)
+	GroupWindow::get (w)->groupSelectWindow ();
+
+    return true;
+}
+
+/*
+ * groupSelect
+ *
+ */
+bool
+GroupScreen::groupSelect (CompAction         *action,
+			  CompAction::State  state,
+			  CompOption::Vector options)
+{
+    if (mGrabState == ScreenGrabNone)
+    {
+	groupGrabScreen (ScreenGrabSelect);
+
+	if (state & CompAction::StateInitButton)
+	{
+	    action->setState (state | CompAction::StateTermButton);
+	}
+
+	mX1 = mX2 = pointerX;
+	mY1 = mY2 = pointerY;
+    }
+    
+    return true;
+}
+
+/*
+ * groupSelectTerminate
+ *
+ */
+bool
+GroupScreen::groupSelectTerminate (CompAction         *action,
+				   CompAction::State  state,
+				   CompOption::Vector options)
+{
+    if (mGrabState == ScreenGrabSelect)
+    {
+        groupGrabScreen (ScreenGrabNone);
+
+        if (mX1 != mX2 && mY1 != mY2)
+        {		
+	    CompRegion reg;
+	    CompRect   rect;
+	    CompWindowList ws;
+	    
+	    int x      = MIN (mX1, mX2) - 2;
+	    int y      = MIN (mY1, mY2) - 2;
+	    int width  = MAX (mX1, mX2) -
+			  MIN (mX1, mX2) + 4;
+	    int height = MAX (mY1, mY2) -
+			  MIN (mY1, mY2) + 4;
+	
+	    rect = CompRect (x, y, width, height);
+	    reg = emptyRegion.united (rect);
+
+	    cScreen->damageRegion (reg);
+
+	    ws = groupFindWindowsInRegion (reg.handle ());
+	    if (ws.size ())
+	    {
+		/* select windows */
+		foreach (CompWindow *w, screen->windows ())
+		    GroupWindow::get (w)->groupSelectWindow ();
+
+		if (optionGetAutoGroup ())
+		{
+		    CompOption::Vector dummy;
+		    groupGroupWindows (NULL, 0, dummy);
+		}
+	    }
+        }
+    }
+
+    action->setState (action->state () & ~(CompAction::StateTermButton | CompAction::StateTermKey));
+
+    return false;
+}
+
+/*
+ * groupDamageSelectionRect
+ *
+ */
+void
+GroupScreen::groupDamageSelectionRect (int xRoot,
+				       int yRoot)
+{
+    CompRegion reg (mX1 - 5, mY1 - 5, mX2 - mX1 + 5,
+				      mY2 - mY1 + 5);
+
+    cScreen->damageRegion (reg);
+
+    mX2 = xRoot;
+    mY2 = yRoot;
+
+    reg = CompRegion (MIN (mX1, mX2) - 5,
+		      MIN (mY1, mY2) - 5,
+		      MAX (mX1, mX2) + 5 - 
+		      MIN (mX1, mX2) - 5,
+		      MAX (mY1, mY2) + 5 -
+		      MIN (mY1, mY2) - 5);
+
+    cScreen->damageRegion (reg);
 }
