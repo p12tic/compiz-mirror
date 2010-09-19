@@ -33,16 +33,16 @@ GroupScreen::groupRebuildCairoLayer (GroupCairoLayer *layer,
 				     int             width,
 				     int             height)
 {
-    int        timeBuf = layer->animationTime;
-    PaintState stateBuf = layer->state;
+    int        timeBuf = layer->mAnimationTime;
+    PaintState stateBuf = layer->mState;
 
     groupDestroyCairoLayer (layer);
     layer = groupCreateCairoLayer (width, height);
     if (!layer)
 	return NULL;
 
-    layer->animationTime = timeBuf;
-    layer->state = stateBuf;
+    layer->mAnimationTime = timeBuf;
+    layer->mState = stateBuf;
 
     return layer;
 }
@@ -54,7 +54,7 @@ GroupScreen::groupRebuildCairoLayer (GroupCairoLayer *layer,
 void
 GroupScreen::groupClearCairoLayer (GroupCairoLayer *layer)
 {
-    cairo_t *cr = layer->cairo;
+    cairo_t *cr = layer->mCairo;
 
     cairo_save (cr);
     cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
@@ -72,17 +72,17 @@ GroupScreen::groupDestroyCairoLayer (GroupCairoLayer *layer)
     if (!layer)
 	return;
 
-    if (layer->cairo)
-	cairo_destroy (layer->cairo);
+    if (layer->mCairo)
+	cairo_destroy (layer->mCairo);
 
-    if (layer->surface)
-	cairo_surface_destroy (layer->surface);
+    if (layer->mSurface)
+	cairo_surface_destroy (layer->mSurface);
 
-    if (layer->pixmap)
-	XFreePixmap (screen->dpy (), layer->pixmap);
+    if (layer->mPixmap)
+	XFreePixmap (screen->dpy (), layer->mPixmap);
 
-    if (layer->buffer)
-	free (layer->buffer);
+    if (layer->mBuffer)
+	free (layer->mBuffer);
 
     delete layer;
 }
@@ -102,19 +102,19 @@ GroupScreen::groupCreateCairoLayer (int        width,
     if (!layer)
         return NULL;
 
-    layer->surface = NULL;
-    layer->cairo   = NULL;
-    layer->buffer  = NULL;
-    layer->pixmap  = None;
+    layer->mSurface = NULL;
+    layer->mCairo   = NULL;
+    layer->mBuffer  = NULL;
+    layer->mPixmap  = None;
 
-    layer->animationTime = 0;
-    layer->state         = PaintOff;
+    layer->mAnimationTime = 0;
+    layer->mState         = PaintOff;
 
-    layer->texWidth  = width;
-    layer->texHeight = height;
+    layer->mTexWidth  = width;
+    layer->mTexHeight = height;
 
-    layer->buffer = (unsigned char *) calloc (4 * width * height, sizeof (unsigned char));
-    if (!layer->buffer)
+    layer->mBuffer = (unsigned char *) calloc (4 * width * height, sizeof (unsigned char));
+    if (!layer->mBuffer)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to allocate cairo layer buffer.");
@@ -122,11 +122,11 @@ GroupScreen::groupCreateCairoLayer (int        width,
 	return NULL;
     }
 
-    layer->surface = cairo_image_surface_create_for_data (layer->buffer,
+    layer->mSurface = cairo_image_surface_create_for_data (layer->mBuffer,
 							  CAIRO_FORMAT_ARGB32,
 							  width, height,
 							  4 * width);
-    if (cairo_surface_status (layer->surface) != CAIRO_STATUS_SUCCESS)
+    if (cairo_surface_status (layer->mSurface) != CAIRO_STATUS_SUCCESS)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to create cairo layer surface.");
@@ -134,8 +134,8 @@ GroupScreen::groupCreateCairoLayer (int        width,
 	return NULL;
     }
 
-    layer->cairo = cairo_create (layer->surface);
-    if (cairo_status (layer->cairo) != CAIRO_STATUS_SUCCESS)
+    layer->mCairo = cairo_create (layer->mSurface);
+    if (cairo_status (layer->mCairo) != CAIRO_STATUS_SUCCESS)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to create cairo layer context.");
@@ -155,37 +155,37 @@ GroupScreen::groupCreateCairoLayer (int        width,
 void
 GroupScreen::groupRenderTopTabHighlight (GroupSelection *group)
 {
-    GroupTabBar     *bar = group->tabBar;
+    GroupTabBar     *bar = group->mTabBar;
     GroupCairoLayer *layer;
     cairo_t         *cr;
     int             width, height;
 
     if (!bar || !HAS_TOP_WIN (group) ||
-	!bar->selectionLayer || !bar->selectionLayer->cairo)
+	!bar->mSelectionLayer || !bar->mSelectionLayer->mCairo)
     {
 	return;
     }
 
-    width = group->topTab->region->extents.x2 -
-	    group->topTab->region->extents.x1;
-    height = group->topTab->region->extents.y2 -
-	     group->topTab->region->extents.y1;
+    width = group->mTopTab->mRegion->extents.x2 -
+	    group->mTopTab->mRegion->extents.x1;
+    height = group->mTopTab->mRegion->extents.y2 -
+	     group->mTopTab->mRegion->extents.y1;
 
-    bar->selectionLayer = groupRebuildCairoLayer (bar->selectionLayer,
+    bar->mSelectionLayer = groupRebuildCairoLayer (bar->mSelectionLayer,
 						  width, height);
-    if (!bar->selectionLayer)
+    if (!bar->mSelectionLayer)
 	return;
 
-    layer = bar->selectionLayer;
-    cr = bar->selectionLayer->cairo;
+    layer = bar->mSelectionLayer;
+    cr = bar->mSelectionLayer->mCairo;
 
     /* fill */
     cairo_set_line_width (cr, 2);
     cairo_set_source_rgba (cr,
-			   (group->color[0] / 65535.0f),
-			   (group->color[1] / 65535.0f),
-			   (group->color[2] / 65535.0f),
-			   (group->color[3] / (65535.0f * 2)));
+			   (group->mColor[0] / 65535.0f),
+			   (group->mColor[1] / 65535.0f),
+			   (group->mColor[2] / 65535.0f),
+			   (group->mColor[3] / (65535.0f * 2)));
 
     cairo_move_to (cr, 0, 0);
     cairo_rectangle (cr, 0, 0, width, height);
@@ -194,14 +194,14 @@ GroupScreen::groupRenderTopTabHighlight (GroupSelection *group)
 
     /* outline */
     cairo_set_source_rgba (cr,
-			   (group->color[0] / 65535.0f),
-			   (group->color[1] / 65535.0f),
-			   (group->color[2] / 65535.0f),
-			   (group->color[3] / 65535.0f));
+			   (group->mColor[0] / 65535.0f),
+			   (group->mColor[1] / 65535.0f),
+			   (group->mColor[2] / 65535.0f),
+			   (group->mColor[3] / 65535.0f));
     cairo_stroke (cr);
 
-    layer->texture = GLTexture::imageBufferToTexture ((char*) layer->buffer,
-			 		  CompSize (layer->texWidth, layer->texHeight));
+    layer->mTexture = GLTexture::imageBufferToTexture ((char*) layer->mBuffer,
+			 		  CompSize (layer->mTexWidth, layer->mTexHeight));
 }
 
 /*
@@ -217,23 +217,23 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
     int             borderWidth;
     float           r, g, b, a;
     double          x0, y0, x1, y1;
-    GroupTabBar     *bar = group->tabBar;
+    GroupTabBar     *bar = group->mTabBar;
 
-    if (!bar || !HAS_TOP_WIN (group) || !bar->bgLayer || !bar->bgLayer->cairo)
+    if (!bar || !HAS_TOP_WIN (group) || !bar->mBgLayer || !bar->mBgLayer->mCairo)
 	return;
 
-    width = bar->region->extents.x2 - bar->region->extents.x1;
-    height = bar->region->extents.y2 - bar->region->extents.y1;
+    width = bar->mRegion->extents.x2 - bar->mRegion->extents.x1;
+    height = bar->mRegion->extents.y2 - bar->mRegion->extents.y1;
     radius = optionGetBorderRadius ();
 
-    if (width > bar->bgLayer->texWidth)
-	width = bar->bgLayer->texWidth;
+    if (width > bar->mBgLayer->mTexWidth)
+	width = bar->mBgLayer->mTexWidth;
 
     if (radius > width / 2)
 	radius = width / 2;
 
-    layer = bar->bgLayer;
-    cr = layer->cairo;
+    layer = bar->mBgLayer;
+    cr = layer->mCairo;
 
     groupClearCairoLayer (layer);
 
@@ -541,18 +541,18 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
     a = optionGetTabBorderColorAlpha () / 65535.0f;
     cairo_set_source_rgba (cr, r, g, b, a);
 
-    if (bar->bgAnimation != AnimationNone)
+    if (bar->mBgAnimation != AnimationNone)
 	cairo_stroke_preserve (cr);
     else
 	cairo_stroke (cr);
 
-    switch (bar->bgAnimation) {
+    switch (bar->mBgAnimation) {
     case AnimationPulse:
 	{
 	    double animationProgress;
 	    double alpha;
 
-	    animationProgress = bar->bgAnimationTime /
+	    animationProgress = bar->mBgAnimationTime /
 		                (optionGetPulseTime () * 1000.0);
 	    alpha = sin ((2 * PI * animationProgress) - 1.55)*0.5 + 0.5;
 	    if (alpha <= 0)
@@ -575,9 +575,9 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 	    double          posX, alpha;
 	    cairo_pattern_t *pattern;
 
-	    animationProgress = bar->bgAnimationTime /
+	    animationProgress = bar->mBgAnimationTime /
 		                (optionGetReflexTime () * 1000.0);
-	    reflexWidth = (bar->nSlots / 2.0) * 30;
+	    reflexWidth = (bar->mNSlots / 2.0) * 30;
 	    posX = (width + reflexWidth * 2.0) * animationProgress;
 	    alpha = sin (PI * animationProgress) * 0.55;
 	    if (alpha <= 0)
@@ -622,8 +622,8 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 
     cairo_restore (cr);
 
-    layer->texture = GLTexture::imageBufferToTexture ((char*) layer->buffer,
-			  		  CompSize (layer->texWidth, layer->texHeight));
+    layer->mTexture = GLTexture::imageBufferToTexture ((char*) layer->mBuffer,
+			  		  CompSize (layer->mTexWidth, layer->mTexHeight));
 }
 
 /*
@@ -636,20 +636,20 @@ GroupScreen::groupRenderWindowTitle (GroupSelection *group)
     GroupCairoLayer *layer;
     int             width, height;
     Pixmap          pixmap = None;
-    GroupTabBar     *bar = group->tabBar;
+    GroupTabBar     *bar = group->mTabBar;
 
-    if (!bar || !HAS_TOP_WIN (group) || !bar->textLayer)
+    if (!bar || !HAS_TOP_WIN (group) || !bar->mTextLayer)
 	return;
 
-    width = bar->region->extents.x2 - bar->region->extents.x1;
-    height = bar->region->extents.y2 - bar->region->extents.y1;
+    width = bar->mRegion->extents.x2 - bar->mRegion->extents.x1;
+    height = bar->mRegion->extents.y2 - bar->mRegion->extents.y1;
 
-    bar->textLayer = groupRebuildCairoLayer (bar->textLayer, width, height);
-    layer = bar->textLayer;
+    bar->mTextLayer = groupRebuildCairoLayer (bar->mTextLayer, width, height);
+    layer = bar->mTextLayer;
     if (!layer)
 	return;
 
-    if (bar->textSlot && bar->textSlot->window && textAvailable)
+    if (bar->mTextSlot && bar->mTextSlot->mWindow && textAvailable)
     {
 	CompText::Attrib  textAttrib;
 
@@ -667,7 +667,7 @@ GroupScreen::groupRenderWindowTitle (GroupSelection *group)
 	textAttrib.maxWidth = width;
 	textAttrib.maxHeight = height;
 
-	if (mText.renderWindowTitle (bar->textSlot->window->id (),
+	if (mText.renderWindowTitle (bar->mTextSlot->mWindow->id (),
 				     false, textAttrib))
 	{
 	    pixmap = mText.getPixmap ();
@@ -695,15 +695,15 @@ GroupScreen::groupRenderWindowTitle (GroupSelection *group)
 	}
     }
 
-    layer->texWidth = width;
-    layer->texHeight = height;
+    layer->mTexWidth = width;
+    layer->mTexHeight = height;
 
     if (pixmap)
     {
-	layer->texture.clear ();
-	layer->pixmap = pixmap;
-	layer->texture = GLTexture::bindPixmapToTexture (layer->pixmap,
-							 layer->texWidth, layer->texHeight, 32);
+	layer->mTexture.clear ();
+	layer->mPixmap = pixmap;
+	layer->mTexture = GLTexture::bindPixmapToTexture (layer->mPixmap,
+							 layer->mTexWidth, layer->mTexHeight, 32);
     }
 }
 

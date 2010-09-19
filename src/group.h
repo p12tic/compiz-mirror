@@ -88,13 +88,13 @@
 #define WIN_REAL_HEIGHT(w) (w->height () + 2 * w->geometry ().border () + \
 			    w->input ().top + w->input ().bottom)
 
-#define TOP_TAB(g) ((g)->topTab->window)
-#define PREV_TOP_TAB(g) ((g)->prevTopTab->window)
-#define NEXT_TOP_TAB(g) ((g)->nextTopTab->window)
+#define TOP_TAB(g) ((g)->mTopTab->mWindow)
+#define PREV_TOP_TAB(g) ((g)->mPrevTopTab->mWindow)
+#define NEXT_TOP_TAB(g) ((g)->mNextTopTab->mWindow)
 
-#define HAS_TOP_WIN(group) (((group)->topTab) && ((group)->topTab->window))
-#define HAS_PREV_TOP_WIN(group) (((group)->prevTopTab) && \
-				 ((group)->prevTopTab->window))
+#define HAS_TOP_WIN(group) (((group)->mTopTab) && ((group)->mTopTab->mWindow))
+#define HAS_PREV_TOP_WIN(group) (((group)->mPrevTopTab) && \
+				 ((group)->mPrevTopTab->mWindow))
 
 #define IS_TOP_TAB(w, group) (HAS_TOP_WIN (group) && \
 			      ((TOP_TAB (group)->id ()) == (w)->id ()))
@@ -236,21 +236,21 @@ class GroupCairoLayer
     
         GroupCairoLayer () {};
     
-	GLTexture::List  texture;
+	GLTexture::List  mTexture;
 
 	/* used if layer is used for cairo drawing */
-	unsigned char   *buffer;
-	cairo_surface_t *surface;
-	cairo_t	    *cairo;
+	unsigned char   *mBuffer;
+	cairo_surface_t *mSurface;
+	cairo_t	    *mCairo;
 
 	/* used if layer is used for text drawing */
-	Pixmap pixmap;
+	Pixmap mPixmap;
 
-	int texWidth;
-	int texHeight;
+	int mTexWidth;
+	int mTexHeight;
 
-	PaintState state;
-	int        animationTime;
+	PaintState mState;
+	int        mAnimationTime;
 };
 
 /*
@@ -258,49 +258,49 @@ class GroupCairoLayer
  */
 typedef struct _GroupTabBarSlot GroupTabBarSlot;
 struct _GroupTabBarSlot {
-    GroupTabBarSlot *prev;
-    GroupTabBarSlot *next;
+    GroupTabBarSlot *mPrev;
+    GroupTabBarSlot *mNext;
 
-    Region region;
+    Region mRegion;
 
-    CompWindow *window;
+    CompWindow *mWindow;
 
     /* For DnD animations */
-    int	  springX;
-    int	  speed;
-    float msSinceLastMove;
+    int	  mSpringX;
+    int	  mSpeed;
+    float mMsSinceLastMove;
 };
 
 /*
  * GroupTabBar
  */
 typedef struct _GroupTabBar {
-    GroupTabBarSlot *slots;
-    GroupTabBarSlot *revSlots;
-    int		    nSlots;
+    GroupTabBarSlot *mSlots;
+    GroupTabBarSlot *mRevSlots;
+    int		    mNSlots;
 
-    GroupTabBarSlot *hoveredSlot;
-    GroupTabBarSlot *textSlot;
+    GroupTabBarSlot *mHoveredSlot;
+    GroupTabBarSlot *mTextSlot;
 
-    GroupCairoLayer *textLayer;
-    GroupCairoLayer *bgLayer;
-    GroupCairoLayer *selectionLayer;
+    GroupCairoLayer *mTextLayer;
+    GroupCairoLayer *mBgLayer;
+    GroupCairoLayer *mSelectionLayer;
 
     /* For animations */
-    int                bgAnimationTime;
-    GroupAnimationType bgAnimation;
+    int                mBgAnimationTime;
+    GroupAnimationType mBgAnimation;
 
-    PaintState state;
-    int        animationTime;
-    Region     region;
-    int        oldWidth;
+    PaintState mState;
+    int        mAnimationTime;
+    Region     mRegion;
+    int        mOldWidth;
 
-    CompTimer timeoutHandle;
+    CompTimer mTimeoutHandle;
 
     /* For DnD animations */
-    int   leftSpringX, rightSpringX;
-    int   leftSpeed, rightSpeed;
-    float leftMsSinceLastMove, rightMsSinceLastMove;
+    int   mLeftSpringX, mRightSpringX;
+    int   mLeftSpeed, mRightSpeed;
+    float mLeftMsSinceLastMove, mRightMsSinceLastMove;
 } GroupTabBar;
 
 /*
@@ -308,8 +308,8 @@ typedef struct _GroupTabBar {
  */
 
 typedef struct _GlowQuad {
-    BoxRec	      box;
-    GLTexture::Matrix matrix;
+    BoxRec	      mBox;
+    GLTexture::Matrix mMatrix;
 } GlowQuad;
 
 #define GLOWQUAD_TOPLEFT	 0
@@ -327,65 +327,65 @@ typedef struct _GlowQuad {
  */
 typedef struct _GroupSelection GroupSelection;
 struct _GroupSelection {
-    GroupSelection *prev;
-    GroupSelection *next;
+    GroupSelection *mPrev;
+    GroupSelection *mNext;
 
-    CompScreen *screen;
-    CompWindow **windows;
-    int        nWins;
+    CompScreen *mScreen;
+    CompWindow **mWindows;
+    int        mNWins;
 
     /* Unique identifier for this group */
-    long int identifier;
+    long int mIdentifier;
 
-    GroupTabBarSlot* topTab;
-    GroupTabBarSlot* prevTopTab;
+    GroupTabBarSlot* mTopTab;
+    GroupTabBarSlot* mPrevTopTab;
 
     /* needed for untabbing animation */
-    CompWindow *lastTopTab;
+    CompWindow *mLastTopTab;
 
     /* Those two are only for the change-tab animation,
        when the tab was changed again during animation.
        Another animation should be started again,
        switching for this window. */
-    ChangeTabAnimationDirection nextDirection;
-    GroupTabBarSlot             *nextTopTab;
+    ChangeTabAnimationDirection mNextDirection;
+    GroupTabBarSlot             *mNextTopTab;
 
     /* check focus stealing prevention after changing tabs */
-    Bool checkFocusAfterTabChange;
+    Bool mCheckFocusAfterTabChange;
 
-    GroupTabBar *tabBar;
+    GroupTabBar *mTabBar;
 
-    int            changeAnimationTime;
-    int            changeAnimationDirection;
-    TabChangeState changeState;
+    int            mChangeAnimationTime;
+    int            mChangeAnimationDirection;
+    TabChangeState mChangeState;
 
-    TabbingState tabbingState;
+    TabbingState mTabbingState;
 
-    GroupUngroupState ungroupState;
+    GroupUngroupState mUngroupState;
 
-    Window       grabWindow;
-    unsigned int grabMask;
+    Window       mGrabWindow;
+    unsigned int mGrabMask;
 
-    Window inputPrevention;
-    Bool   ipwMapped;
+    Window mInputPrevention;
+    Bool   mIpwMapped;
 
-    GLushort color[4];
+    GLushort mColor[4];
 };
 
 typedef struct _GroupWindowHideInfo {
-    Window shapeWindow;
+    Window mShapeWindow;
 
-    unsigned long skipState;
-    unsigned long shapeMask;
+    unsigned long mSkipState;
+    unsigned long mShapeMask;
 
-    XRectangle *inputRects;
-    int        nInputRects;
-    int        inputRectOrdering;
+    XRectangle *mInputRects;
+    int        mNInputRects;
+    int        mInputRectOrdering;
 } GroupWindowHideInfo;
 
 typedef struct _GroupResizeInfo {
-    CompWindow *resizedWindow;
-    XRectangle origGeometry;
+    CompWindow *mResizedWindow;
+    XRectangle mOrigGeometry;
 } GroupResizeInfo;
 
 /*

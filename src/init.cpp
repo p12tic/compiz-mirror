@@ -50,21 +50,21 @@ GroupScreen::optionChanged (CompOption *opt,
 	case GroupOptions::TabStyle:
 	case GroupOptions::BorderRadius:
 	case GroupOptions::BorderWidth:
-	    for (group = mGroups; group; group = group->next)
-		if (group->tabBar)
+	    for (group = mGroups; group; group = group->mNext)
+		if (group->mTabBar)
 		    groupRenderTabBarBackground (group);
 	    break;
 	case GroupOptions::TabbarFontSize:
 	case GroupOptions::TabbarFontColor:
-	    for (group = mGroups; group; group = group->next)
+	    for (group = mGroups; group; group = group->mNext)
 		groupRenderWindowTitle (group);
 	    break;
 	case GroupOptions::ThumbSize:
 	case GroupOptions::ThumbSpace:
-	    for (group = mGroups; group; group = group->next)
-		if (group->tabBar)
+	    for (group = mGroups; group; group = group->mNext)
+		if (group->mTabBar)
 		{
-		    BoxPtr box = &group->tabBar->region->extents;
+		    BoxPtr box = &group->mTabBar->mRegion->extents;
 		    groupRecalcTabBarPos (group, (box->x1 + box->x2 ) / 2,
 					  box->x1, box->x2);
 		}
@@ -148,17 +148,17 @@ GroupScreen::groupApplyInitialActions ()
 	{
 	    GroupSelection *group;
 
-	    for (group = mGroups; group; group = group->next)
-		if (group->identifier == id)
+	    for (group = mGroups; group; group = group->mNext)
+		if (group->mIdentifier == id)
 		    break;
 
 	    gw->groupAddWindowToGroup (group, id);
 	    if (tabbed)
 		groupTabGroup (w);
 
-	    gw->mGroup->color[0] = color[0];
-	    gw->mGroup->color[1] = color[1];
-	    gw->mGroup->color[2] = color[2];
+	    gw->mGroup->mColor[0] = color[0];
+	    gw->mGroup->mColor[1] = color[1];
+	    gw->mGroup->mColor[2] = color[2];
 
 	    groupRenderTopTabHighlight (gw->mGroup);
 	    cScreen->damageScreen ();
@@ -218,8 +218,8 @@ GroupScreen::GroupScreen (CompScreen *s) :
     GLScreenInterface::setHandler (gScreen);
     CompositeScreenInterface::setHandler (cScreen);
     
-    mTmpSel.windows = NULL;
-    mTmpSel.nWins = 0;
+    mTmpSel.mWindows = NULL;
+    mTmpSel.mNWins = 0;
 
     int glowType = optionGetGlowType ();
     /* one-shot timeout for stuff that needs to be initialized after
@@ -289,45 +289,45 @@ GroupScreen::~GroupScreen ()
 
 	for (group = mGroups; group;)
 	{
-	    if (group->tabBar)
+	    if (group->mTabBar)
 	    {
 		GroupTabBarSlot *slot, *nextSlot;
 
-		for (slot = group->tabBar->slots; slot;)
+		for (slot = group->mTabBar->mSlots; slot;)
 		{
-		    if (slot->region)
-			XDestroyRegion (slot->region);
+		    if (slot->mRegion)
+			XDestroyRegion (slot->mRegion);
 
-		    nextSlot = slot->next;
+		    nextSlot = slot->mNext;
 		    free (slot);
 		    slot = nextSlot;
 		}
 
-		groupDestroyCairoLayer (group->tabBar->textLayer);
-		groupDestroyCairoLayer (group->tabBar->bgLayer);
-		groupDestroyCairoLayer (group->tabBar->selectionLayer);
+		groupDestroyCairoLayer (group->mTabBar->mTextLayer);
+		groupDestroyCairoLayer (group->mTabBar->mBgLayer);
+		groupDestroyCairoLayer (group->mTabBar->mSelectionLayer);
 
-		if (group->inputPrevention)
+		if (group->mInputPrevention)
 		    XDestroyWindow (screen->dpy (),
-				    group->inputPrevention);
+				    group->mInputPrevention);
 
-		if (group->tabBar->region)
-		    XDestroyRegion (group->tabBar->region);
+		if (group->mTabBar->mRegion)
+		    XDestroyRegion (group->mTabBar->mRegion);
 
-		if (group->tabBar->timeoutHandle.active ())
-		    group->tabBar->timeoutHandle.stop ();
+		if (group->mTabBar->mTimeoutHandle.active ())
+		    group->mTabBar->mTimeoutHandle.stop ();
 
-		free (group->tabBar);
+		free (group->mTabBar);
 	    }
 
-	    nextGroup = group->next;
+	    nextGroup = group->mNext;
 	    free (group);
 	    group = nextGroup;
 	}
     }
 
-    if (mTmpSel.windows)
-	free (mTmpSel.windows);
+    if (mTmpSel.mWindows)
+	free (mTmpSel.mWindows);
 
     if (mGrabIndex)
 	groupGrabScreen (ScreenGrabNone);

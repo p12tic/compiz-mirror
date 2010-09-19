@@ -34,15 +34,15 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
 			      const GLMatrix	   &transform,
 			      int		   targetOpacity)
 {
-    CompWindow            *w = slot->window;
+    CompWindow            *w = slot->mWindow;
     unsigned int	  oldGlAddGeometryIndex;
     GLWindowPaintAttrib   wAttrib (GLWindow::get (w)->paintAttrib ());
     int                   tw, th;
 
     GROUP_WINDOW (w);
 
-    tw = slot->region->extents.x2 - slot->region->extents.x1;
-    th = slot->region->extents.y2 - slot->region->extents.y1;
+    tw = slot->mRegion->extents.x2 - slot->mRegion->extents.x1;
+    th = slot->mRegion->extents.y2 - slot->mRegion->extents.y1;
 
     /* Wrap drawWindowGeometry to make sure the general
        drawWindowGeometry function is used */
@@ -50,14 +50,14 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
     gw->gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
 
     /* animate fade */
-    if (group && group->tabBar->state == PaintFadeIn)
+    if (group && group->mTabBar->mState == PaintFadeIn)
     {
-	wAttrib.opacity -= wAttrib.opacity * group->tabBar->animationTime /
+	wAttrib.opacity -= wAttrib.opacity * group->mTabBar->mAnimationTime /
 	                   (optionGetFadeTime () * 1000);
     }
-    else if (group && group->tabBar->state == PaintFadeOut)
+    else if (group && group->mTabBar->mState == PaintFadeOut)
     {
-	wAttrib.opacity = wAttrib.opacity * group->tabBar->animationTime /
+	wAttrib.opacity = wAttrib.opacity * group->mTabBar->mAnimationTime /
 	                  (optionGetFadeTime () * 1000);
     }
 
@@ -89,16 +89,16 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
 
 	/* FIXME: do some more work on the highlight on hover feature
 	// Highlight on hover
-	if (group && group->tabBar && group->tabBar->hoveredSlot == slot) {
+	if (group && group->mTabBar && group->mTabBar->hoveredSlot == slot) {
 	wAttrib.saturation = 0;
 	wAttrib.brightness /= 1.25f;
 	}*/
 
 	groupGetDrawOffsetForSlot (slot, vx, vy);
 
-	wAttrib.xTranslate = (slot->region->extents.x1 +
-			      slot->region->extents.x2) / 2 + vx;
-	wAttrib.yTranslate = slot->region->extents.y1 + vy;
+	wAttrib.xTranslate = (slot->mRegion->extents.x1 +
+			      slot->mRegion->extents.x2) / 2 + vx;
+	wAttrib.yTranslate = slot->mRegion->extents.y1 + vy;
 
 	wTransform.translate (wAttrib.xTranslate, wAttrib.yTranslate, 0.0f);
 	wTransform.scale (wAttrib.xScale, wAttrib.yScale, 1.0f);
@@ -130,7 +130,7 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 			       Region			 clipRegion)
 {
     CompWindow      *topTab;
-    GroupTabBar     *bar = group->tabBar;
+    GroupTabBar     *bar = group->mTabBar;
     int             count;
     REGION          box;
 
@@ -154,42 +154,42 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 	float           wScale = 1.0f, hScale = 1.0f;
 	GroupCairoLayer *layer = NULL;
 
-	if (bar->state == PaintFadeIn)
-	    alpha -= alpha * bar->animationTime / (optionGetFadeTime () * 1000);
-	else if (bar->state == PaintFadeOut)
-	    alpha = alpha * bar->animationTime / (optionGetFadeTime () * 1000);
+	if (bar->mState == PaintFadeIn)
+	    alpha -= alpha * bar->mAnimationTime / (optionGetFadeTime () * 1000);
+	else if (bar->mState == PaintFadeOut)
+	    alpha = alpha * bar->mAnimationTime / (optionGetFadeTime () * 1000);
 
 	switch (count) {
 	case PAINT_BG:
 	    {
 		int newWidth;
 
-		layer = bar->bgLayer;
+		layer = bar->mBgLayer;
 
 		/* handle the repaint of the background */
-		newWidth = bar->region->extents.x2 - bar->region->extents.x1;
-		if (layer && (newWidth > layer->texWidth))
-		    newWidth = layer->texWidth;
+		newWidth = bar->mRegion->extents.x2 - bar->mRegion->extents.x1;
+		if (layer && (newWidth > layer->mTexWidth))
+		    newWidth = layer->mTexWidth;
 
-		wScale = (double) (bar->region->extents.x2 -
-				   bar->region->extents.x1) / (double) newWidth;
+		wScale = (double) (bar->mRegion->extents.x2 -
+				   bar->mRegion->extents.x1) / (double) newWidth;
 
 		/* FIXME: maybe move this over to groupResizeTabBarRegion -
 		   the only problem is that we would have 2 redraws if
 		   there is an animation */
-		if (newWidth != bar->oldWidth || bar->bgAnimation)
+		if (newWidth != bar->mOldWidth || bar->mBgAnimation)
 		    groupRenderTabBarBackground (group);
 
-		bar->oldWidth = newWidth;
-		box.extents = bar->region->extents;
+		bar->mOldWidth = newWidth;
+		box.extents = bar->mRegion->extents;
 	    }
 	    break;
 
 	case PAINT_SEL:
-	    if (group->topTab != mDraggedSlot)
+	    if (group->mTopTab != mDraggedSlot)
 	    {
-		layer = bar->selectionLayer;
-		box.extents = group->topTab->region->extents;
+		layer = bar->mSelectionLayer;
+		box.extents = group->mTopTab->mRegion->extents;
 	    }
 	    break;
 
@@ -203,7 +203,7 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 		if (optionGetMipmaps ())
 		    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
-		for (slot = bar->slots; slot; slot = slot->next)
+		for (slot = bar->mSlots; slot; slot = slot->mNext)
 		{
 		    if (slot != mDraggedSlot || !mDragged)
 			groupPaintThumb (group, slot, transform,
@@ -215,26 +215,26 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 	    break;
 
 	case PAINT_TEXT:
-	    if (bar->textLayer && (bar->textLayer->state != PaintOff))
+	    if (bar->mTextLayer && (bar->mTextLayer->mState != PaintOff))
 	    {
-		layer = bar->textLayer;
+		layer = bar->mTextLayer;
 
-		box.extents.x1 = bar->region->extents.x1 + 5;
-		box.extents.x2 = bar->region->extents.x1 +
-		                 bar->textLayer->texWidth + 5;
-		box.extents.y1 = bar->region->extents.y2 -
-		                 bar->textLayer->texHeight - 5;
-		box.extents.y2 = bar->region->extents.y2 - 5;
+		box.extents.x1 = bar->mRegion->extents.x1 + 5;
+		box.extents.x2 = bar->mRegion->extents.x1 +
+		                 bar->mTextLayer->mTexWidth + 5;
+		box.extents.y1 = bar->mRegion->extents.y2 -
+		                 bar->mTextLayer->mTexHeight - 5;
+		box.extents.y2 = bar->mRegion->extents.y2 - 5;
 
-		if (box.extents.x2 > bar->region->extents.x2)
-		    box.extents.x2 = bar->region->extents.x2;
+		if (box.extents.x2 > bar->mRegion->extents.x2)
+		    box.extents.x2 = bar->mRegion->extents.x2;
 
 		/* recalculate the alpha again for text fade... */
-		if (layer->state == PaintFadeIn)
-		    alpha -= alpha * layer->animationTime /
+		if (layer->mState == PaintFadeIn)
+		    alpha -= alpha * layer->mAnimationTime /
 			     (optionGetFadeTextTime() * 1000);
-		else if (layer->state == PaintFadeOut)
-		    alpha = alpha * layer->animationTime /
+		else if (layer->mState == PaintFadeOut)
+		    alpha = alpha * layer->mAnimationTime /
 			    (optionGetFadeTextTime() * 1000);
 	    }
 	    break;
@@ -244,7 +244,7 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 	{
 	    GroupWindow *gwTopTab = GroupWindow::get (topTab);
 
-	    foreach (GLTexture *tex, layer->texture)
+	    foreach (GLTexture *tex, layer->mTexture)
 	    {
 		GLTexture::Matrix matrix = tex->matrix ();
 		GLTexture::MatrixList matl;
@@ -260,15 +260,15 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 
 		/* now add the new x1 and y1 so we have a absolute value again,
 		also we don't want to stretch the texture... */
-		if (box.extents.x2 * wScale < layer->texWidth)
+		if (box.extents.x2 * wScale < layer->mTexWidth)
 		    box.extents.x2 += box.extents.x1;
 		else
-		    box.extents.x2 = box.extents.x1 + layer->texWidth;
+		    box.extents.x2 = box.extents.x1 + layer->mTexWidth;
 
-		if (box.extents.y2 * hScale < layer->texHeight)
+		if (box.extents.y2 * hScale < layer->mTexHeight)
 		    box.extents.y2 += box.extents.y1;
 		else
-		    box.extents.y2 = box.extents.y1 + layer->texHeight;
+		    box.extents.y2 = box.extents.y1 + layer->mTexHeight;
 
 		matrix.x0 -= box.extents.x1 * matrix.xx;
 		matrix.y0 -= box.extents.y1 * matrix.yy;
@@ -386,38 +386,38 @@ GroupScreen::preparePaint (int msSinceLastPaint)
     group = mGroups;
     while (group)
     {
-	GroupTabBar *bar = group->tabBar;
+	GroupTabBar *bar = group->mTabBar;
 
 	if (bar)
 	{
 	    groupApplyForces (bar, (mDragged) ? mDraggedSlot : NULL);
 	    groupApplySpeeds (group, msSinceLastPaint);
 
-	    if ((bar->state != PaintOff) && HAS_TOP_WIN (group))
+	    if ((bar->mState != PaintOff) && HAS_TOP_WIN (group))
 		groupHandleHoverDetection (group);
 
-	    if (bar->state == PaintFadeIn || bar->state == PaintFadeOut)
+	    if (bar->mState == PaintFadeIn || bar->mState == PaintFadeOut)
 		groupHandleTabBarFade (group, msSinceLastPaint);
 
-	    if (bar->textLayer)
+	    if (bar->mTextLayer)
 		groupHandleTextFade (group, msSinceLastPaint);
 
-	    if (bar->bgAnimation)
+	    if (bar->mBgAnimation)
 		groupHandleTabBarAnimation (group, msSinceLastPaint);
 	}
 
-	if (group->changeState != NoTabChange)
+	if (group->mChangeState != NoTabChange)
 	{
-	    group->changeAnimationTime -= msSinceLastPaint;
-	    if (group->changeAnimationTime <= 0)
+	    group->mChangeAnimationTime -= msSinceLastPaint;
+	    if (group->mChangeAnimationTime <= 0)
 		groupHandleAnimation (group);
 	}
 
 	/* groupDrawTabAnimation may delete the group, so better
 	   save the pointer to the next chain element */
-	next = group->next;
+	next = group->mNext;
 
-	if (group->tabbingState != NoTabbing)
+	if (group->mTabbingState != NoTabbing)
 	    drawTabAnimation (group, msSinceLastPaint);
 
 	group = next;
@@ -448,14 +448,14 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     }
     else
     {
-	for (group = mGroups; group; group = group->next)
+	for (group = mGroups; group; group = group->mNext)
 	{
-	    if (group->changeState != NoTabChange ||
-		group->tabbingState != NoTabbing)
+	    if (group->mChangeState != NoTabChange ||
+		group->mTabbingState != NoTabbing)
 	    {
 		mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 	    }
-	    else if (group->tabBar && (group->tabBar->state != PaintOff))
+	    else if (group->mTabBar && (group->mTabBar->mState != PaintOff))
 	    {
 		mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 	    }
@@ -471,7 +471,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    GLMatrix wTransform (transform);
 	    PaintState    state;
 
-	    GROUP_WINDOW (mDraggedSlot->window);
+	    GROUP_WINDOW (mDraggedSlot->mWindow);
 
 	    wTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
@@ -479,10 +479,10 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    glLoadMatrixf (wTransform.getMatrix ());
 
 	    /* prevent tab bar drawing.. */
-	    state = gw->mGroup->tabBar->state;
-	    gw->mGroup->tabBar->state = PaintOff;
+	    state = gw->mGroup->mTabBar->mState;
+	    gw->mGroup->mTabBar->mState = PaintOff;
 	    groupPaintThumb (NULL, mDraggedSlot, wTransform, OPAQUE);
-	    gw->mGroup->tabBar->state = state;
+	    gw->mGroup->mTabBar->mState = state;
 
 	    glPopMatrix ();
 	}
@@ -544,32 +544,32 @@ GroupScreen::donePaint ()
 
     cScreen->donePaint ();
 
-    for (group = mGroups; group; group = group->next)
+    for (group = mGroups; group; group = group->mNext)
     {
-	if (group->tabbingState != NoTabbing)
+	if (group->mTabbingState != NoTabbing)
 	    cScreen->damageScreen ();
-	else if (group->changeState != NoTabChange)
+	else if (group->mChangeState != NoTabChange)
 	    cScreen->damageScreen ();
-	else if (group->tabBar)
+	else if (group->mTabBar)
 	{
 	    bool needDamage = FALSE;
 
-	    if ((group->tabBar->state == PaintFadeIn) ||
-		(group->tabBar->state == PaintFadeOut))
+	    if ((group->mTabBar->mState == PaintFadeIn) ||
+		(group->mTabBar->mState == PaintFadeOut))
 	    {
 		needDamage = TRUE;
 	    }
 
-	    if (group->tabBar->textLayer)
+	    if (group->mTabBar->mTextLayer)
 	    {
-		if ((group->tabBar->textLayer->state == PaintFadeIn) ||
-		    (group->tabBar->textLayer->state == PaintFadeOut))
+		if ((group->mTabBar->mTextLayer->mState == PaintFadeIn) ||
+		    (group->mTabBar->mTextLayer->mState == PaintFadeOut))
 		{
 		    needDamage = TRUE;
 		}
 	    }
 
-	    if (group->tabBar->bgAnimation)
+	    if (group->mTabBar->mBgAnimation)
 		needDamage = TRUE;
 
 	    if (mDraggedSlot)
@@ -615,9 +615,9 @@ GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
 		  gs->mGlowTextureProperties[glowType].textureSize) + 1;
 
     /* Top left corner */
-    box = &mGlowQuads[GLOWQUAD_TOPLEFT].box;
-    mGlowQuads[GLOWQUAD_TOPLEFT].matrix = *matrix;
-    quadMatrix = &mGlowQuads[GLOWQUAD_TOPLEFT].matrix;
+    box = &mGlowQuads[GLOWQUAD_TOPLEFT].mBox;
+    mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix = *matrix;
+    quadMatrix = &mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix;
 
     box->x1 = WIN_REAL_X (w) - glowSize + glowOffset;
     box->y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
@@ -635,9 +635,9 @@ GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
 		   WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
 
     /* Top right corner */
-    box = &mGlowQuads[GLOWQUAD_TOPRIGHT].box;
-    mGlowQuads[GLOWQUAD_TOPRIGHT].matrix = *matrix;
-    quadMatrix = &mGlowQuads[GLOWQUAD_TOPRIGHT].matrix;
+    box = &mGlowQuads[GLOWQUAD_TOPRIGHT].mBox;
+    mGlowQuads[GLOWQUAD_TOPRIGHT].mMatrix = *matrix;
+    quadMatrix = &mGlowQuads[GLOWQUAD_TOPRIGHT].mMatrix;
 
     box->x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
     box->y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
@@ -655,9 +655,9 @@ GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
 		   WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
 
     /* Bottom left corner */
-    box = &mGlowQuads[GLOWQUAD_BOTTOMLEFT].box;
-    mGlowQuads[GLOWQUAD_BOTTOMLEFT].matrix = *matrix;
-    quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOMLEFT].matrix;
+    box = &mGlowQuads[GLOWQUAD_BOTTOMLEFT].mBox;
+    mGlowQuads[GLOWQUAD_BOTTOMLEFT].mMatrix = *matrix;
+    quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOMLEFT].mMatrix;
 
     box->x1 = WIN_REAL_X (w) - glowSize + glowOffset;
     box->y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
@@ -675,9 +675,9 @@ GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
 		   WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
 
     /* Bottom right corner */
-    box = &mGlowQuads[GLOWQUAD_BOTTOMRIGHT].box;
-    mGlowQuads[GLOWQUAD_BOTTOMRIGHT].matrix = *matrix;
-    quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOMRIGHT].matrix;
+    box = &mGlowQuads[GLOWQUAD_BOTTOMRIGHT].mBox;
+    mGlowQuads[GLOWQUAD_BOTTOMRIGHT].mMatrix = *matrix;
+    quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOMRIGHT].mMatrix;
 
     box->x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
     box->y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
@@ -695,9 +695,9 @@ GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
 		   WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
 
     /* Top edge */
-    box = &mGlowQuads[GLOWQUAD_TOP].box;
-    mGlowQuads[GLOWQUAD_TOP].matrix = *matrix;
-    quadMatrix = &mGlowQuads[GLOWQUAD_TOP].matrix;
+    box = &mGlowQuads[GLOWQUAD_TOP].mBox;
+    mGlowQuads[GLOWQUAD_TOP].mMatrix = *matrix;
+    quadMatrix = &mGlowQuads[GLOWQUAD_TOP].mMatrix;
 
     box->x1 = WIN_REAL_X (w) + glowOffset;
     box->y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
@@ -710,9 +710,9 @@ GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
     quadMatrix->y0 = -(box->y1 * quadMatrix->yy);
 
     /* Bottom edge */
-    box = &mGlowQuads[GLOWQUAD_BOTTOM].box;
-    mGlowQuads[GLOWQUAD_BOTTOM].matrix = *matrix;
-    quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOM].matrix;
+    box = &mGlowQuads[GLOWQUAD_BOTTOM].mBox;
+    mGlowQuads[GLOWQUAD_BOTTOM].mMatrix = *matrix;
+    quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOM].mMatrix;
 
     box->x1 = WIN_REAL_X (w) + glowOffset;
     box->y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
@@ -725,9 +725,9 @@ GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
     quadMatrix->y0 = 1.0 - (box->y1 * quadMatrix->yy);
 
     /* Left edge */
-    box = &mGlowQuads[GLOWQUAD_LEFT].box;
-    mGlowQuads[GLOWQUAD_LEFT].matrix = *matrix;
-    quadMatrix = &mGlowQuads[GLOWQUAD_LEFT].matrix;
+    box = &mGlowQuads[GLOWQUAD_LEFT].mBox;
+    mGlowQuads[GLOWQUAD_LEFT].mMatrix = *matrix;
+    quadMatrix = &mGlowQuads[GLOWQUAD_LEFT].mMatrix;
 
     box->x1 = WIN_REAL_X (w) - glowSize + glowOffset;
     box->y1 = WIN_REAL_Y (w) + glowOffset;
@@ -740,9 +740,9 @@ GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
     quadMatrix->y0 = 1.0;
 
     /* Right edge */
-    box = &mGlowQuads[GLOWQUAD_RIGHT].box;
-    mGlowQuads[GLOWQUAD_RIGHT].matrix = *matrix;
-    quadMatrix = &mGlowQuads[GLOWQUAD_RIGHT].matrix;
+    box = &mGlowQuads[GLOWQUAD_RIGHT].mBox;
+    mGlowQuads[GLOWQUAD_RIGHT].mMatrix = *matrix;
+    quadMatrix = &mGlowQuads[GLOWQUAD_RIGHT].mMatrix;
 
     box->x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
     box->y1 = WIN_REAL_Y (w) + glowOffset;
@@ -770,7 +770,7 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 
     GROUP_SCREEN (screen);
 
-    if (mGroup && (mGroup->nWins > 1) && mGlowQuads)
+    if (mGroup && (mGroup->mNWins > 1) && mGlowQuads)
     {
 	if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
 	    paintRegion = CompRegion (infiniteRegion);
@@ -788,7 +788,7 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 
 	    for (i = 0; i < NUM_GLOWQUADS; i++)
 	    {
-		box.extents = mGlowQuads[i].box;
+		box.extents = mGlowQuads[i].mBox;
 
 		if (box.extents.x1 < box.extents.x2 &&
 		    box.extents.y1 < box.extents.y2)
@@ -798,7 +798,7 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 			  	      box.extents.x2 - box.extents.x1,
 			  	      box.extents.y2 - box.extents.y1);
 
-		    matl.push_back (mGlowQuads[i].matrix);
+		    matl.push_back (mGlowQuads[i].mMatrix);
 		    gWindow->glAddGeometry (matl, reg, paintRegion);
 		}
 	    }
@@ -807,9 +807,9 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 	    {
 		GLFragment::Attrib fAttrib (attrib);
 		GLushort       average;
-		GLushort       color[3] = {mGroup->color[0],
-		                           mGroup->color[1],
-		                           mGroup->color[2]};
+		GLushort       color[3] = {mGroup->mColor[0],
+		                           mGroup->mColor[1],
+		                           mGroup->mColor[2]};
 
 		/* Apply brightness to color. */
 		color[0] *= (float)attrib.getBrightness () / BRIGHT;
@@ -937,20 +937,20 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
     {
 	GroupSelection *group = mGroup;
 
-	doRotate = (group->changeState != NoTabChange) &&
+	doRotate = (group->mChangeState != NoTabChange) &&
 	           HAS_TOP_WIN (group) && HAS_PREV_TOP_WIN (group) &&
 	           (IS_TOP_TAB (w, group) || IS_PREV_TOP_TAB (w, group));
 
 	doTabbing = (mAnimateState & (IS_ANIMATED | FINISHED_ANIMATION)) &&
 	            !(IS_TOP_TAB (w, group) &&
-		      (group->tabbingState == Tabbing));
+		      (group->mTabbingState == Tabbing));
 
-	showTabbar = group->tabBar && (group->tabBar->state != PaintOff) &&
+	showTabbar = group->mTabBar && (group->mTabBar->mState != PaintOff) &&
 	             (((IS_TOP_TAB (w, group)) &&
-		       ((group->changeState == NoTabChange) ||
-			(group->changeState == TabChangeNewIn))) ||
+		       ((group->mChangeState == NoTabChange) ||
+			(group->mChangeState == TabChangeNewIn))) ||
 		      (IS_PREV_TOP_TAB (w, group) &&
-		       (group->changeState == TabChangeOldOut)));
+		       (group->mChangeState == TabChangeOldOut)));
     }
     else
     {
@@ -1011,7 +1011,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    animProgress = progress;
 
 	    progress = MAX (progress, 0.0f);
-	    if (mGroup->tabbingState == Tabbing)
+	    if (mGroup->mTabbingState == Tabbing)
 		progress = 1.0f - progress;
 
 	    wAttrib.opacity = (float)wAttrib.opacity * progress;
@@ -1019,10 +1019,10 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (doRotate)
 	{
-	    float timeLeft = mGroup->changeAnimationTime;
+	    float timeLeft = mGroup->mChangeAnimationTime;
 	    int   animTime = gs->optionGetChangeAnimationTime () * 500;
 
-	    if (mGroup->changeState == TabChangeOldOut)
+	    if (mGroup->mChangeState == TabChangeOldOut)
 		timeLeft += animTime;
 
 	    /* 0 at the beginning, 1 at the end */
@@ -1058,7 +1058,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	    if (doTabbing)
 	    {
-		if (mGroup->tabbingState == Tabbing)
+		if (mGroup->mTabbingState == Tabbing)
 		{
 		    morphBase   = w;
 		    morphTarget = TOP_TAB (mGroup);
@@ -1069,7 +1069,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		    if (HAS_TOP_WIN (mGroup))
 			morphBase = TOP_TAB (mGroup);
 		    else
-			morphBase = mGroup->lastTopTab;
+			morphBase = mGroup->mLastTopTab;
 		}
 	    }
 	    else
@@ -1101,7 +1101,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		if (IS_TOP_TAB (w, mGroup))
 		    rotateAngle += 180.0f;
 
-		if (mGroup->changeAnimationDirection < 0)
+		if (mGroup->mChangeAnimationDirection < 0)
 		    rotateAngle *= -1.0f;
 
 		wTransform.rotate (rotateAngle, 0.0f, 1.0f, 0.0f);

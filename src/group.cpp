@@ -61,10 +61,10 @@ GroupWindow::groupDragHoverTimeout ()
 
     if (gs->optionGetBarAnimations ())
     {
-	GroupTabBar *bar = mGroup->tabBar;
+	GroupTabBar *bar = mGroup->mTabBar;
 
-	bar->bgAnimation = AnimationPulse;
-	bar->bgAnimationTime = gs->optionGetPulseTime () * 1000;
+	bar->mBgAnimation = AnimationPulse;
+	bar->mBgAnimationTime = gs->optionGetPulseTime () * 1000;
     }
 
     window->activate ();
@@ -135,13 +135,13 @@ GroupWindow::groupUpdateWindowProperty ()
     {
 	long int buffer[5];
 
-	buffer[0] = mGroup->identifier;
+	buffer[0] = mGroup->mIdentifier;
 	buffer[1] = (mSlot) ? TRUE : FALSE;
 
 	/* group color RGB */
-	buffer[2] = mGroup->color[0];
-	buffer[3] = mGroup->color[1];
-	buffer[4] = mGroup->color[2];
+	buffer[2] = mGroup->mColor[0];
+	buffer[3] = mGroup->mColor[1];
+	buffer[4] = mGroup->mColor[2];
 
 	XChangeProperty (screen->dpy (), window->id (), gs->mGroupWinPropertyAtom,
 			 XA_CARDINAL, 32, PropModeReplace,
@@ -168,13 +168,13 @@ GroupWindow::groupUpdateResizeRectangle (XRectangle *masterGeometry,
 	return 0;
 
     newGeometry.x = WIN_X (window) + (masterGeometry->x -
-				 gs->mResizeInfo->origGeometry.x);
+				 gs->mResizeInfo->mOrigGeometry.x);
     newGeometry.y = WIN_Y (window) + (masterGeometry->y -
-				 gs->mResizeInfo->origGeometry.y);
+				 gs->mResizeInfo->mOrigGeometry.y);
 
-    widthDiff = masterGeometry->width - gs->mResizeInfo->origGeometry.width;
+    widthDiff = masterGeometry->width - gs->mResizeInfo->mOrigGeometry.width;
     newGeometry.width = MAX (1, WIN_WIDTH (window) + widthDiff);
-    heightDiff = masterGeometry->height - gs->mResizeInfo->origGeometry.height;
+    heightDiff = masterGeometry->height - gs->mResizeInfo->mOrigGeometry.height;
     newGeometry.height = MAX (1, WIN_HEIGHT (window) + heightDiff);
 
     if (window->constrainNewWindowSize (newGeometry.width, newGeometry.height,
@@ -253,10 +253,10 @@ GroupScreen::groupRaiseWindows (CompWindow     *top,
     CompWindow **stack;
     int        count = 0, i;
 
-    if (group->nWins == 1)
+    if (group->mNWins == 1)
 	return;
 
-    stack = (CompWindow **) malloc ((group->nWins - 1) * sizeof (CompWindow *));
+    stack = (CompWindow **) malloc ((group->mNWins - 1) * sizeof (CompWindow *));
     if (!stack)
 	return;
 
@@ -283,9 +283,9 @@ GroupScreen::groupMinimizeWindows (CompWindow     *top,
 				   Bool           minimize)
 {
     int i;
-    for (i = 0; i < group->nWins; i++)
+    for (i = 0; i < group->mNWins; i++)
     {
-	CompWindow *w = group->windows[i];
+	CompWindow *w = group->mWindows[i];
 	if (w->id () == top->id ())
 	    continue;
 
@@ -308,9 +308,9 @@ GroupScreen::groupShadeWindows (CompWindow     *top,
     int i;
     unsigned int state;
 
-    for (i = 0; i < group->nWins; i++)
+    for (i = 0; i < group->mNWins; i++)
     {
-	CompWindow *w = group->windows[i];
+	CompWindow *w = group->mWindows[i];
 	if (w->id () == top->id ())
 	    continue;
 
@@ -340,50 +340,50 @@ GroupWindow::groupDeleteGroupWindow ()
 
     group = mGroup;
 
-    if (group->tabBar && mSlot)
+    if (group->mTabBar && mSlot)
     {
 	if (gs->mDraggedSlot && gs->mDragged &&
-	    gs->mDraggedSlot->window->id () == window->id ())
+	    gs->mDraggedSlot->mWindow->id () == window->id ())
 	{
-	    gs->groupUnhookTabBarSlot (group->tabBar, mSlot, FALSE);
+	    gs->groupUnhookTabBarSlot (group->mTabBar, mSlot, FALSE);
 	}
 	else
-	    gs->groupDeleteTabBarSlot (group->tabBar, mSlot);
+	    gs->groupDeleteTabBarSlot (group->mTabBar, mSlot);
     }
 
-    if (group->nWins && group->windows)
+    if (group->mNWins && group->mWindows)
     {
-	CompWindow **buf = group->windows;
+	CompWindow **buf = group->mWindows;
 
-	if (group->nWins > 1)
+	if (group->mNWins > 1)
 	{
 	    int counter = 0;
 	    int i;
 
-	    group->windows = (CompWindow ** ) calloc (group->nWins - 1, sizeof(CompWindow *));
+	    group->mWindows = (CompWindow ** ) calloc (group->mNWins - 1, sizeof(CompWindow *));
 
-	    for (i = 0; i < group->nWins; i++)
+	    for (i = 0; i < group->mNWins; i++)
 	    {
 		if (buf[i]->id () == window->id ())
 		    continue;
-		group->windows[counter++] = buf[i];
+		group->mWindows[counter++] = buf[i];
 	    }
-	    group->nWins = counter;
+	    group->mNWins = counter;
 
-	    if (group->nWins == 1)
+	    if (group->mNWins == 1)
 	    {
 		/* Glow was removed from this window, too */
-		CompositeWindow::get (group->windows[0])->damageOutputExtents ();
-		group->windows[0]->updateWindowOutputExtents ();
+		CompositeWindow::get (group->mWindows[0])->damageOutputExtents ();
+		group->mWindows[0]->updateWindowOutputExtents ();
 
 		if (gs->optionGetAutoUngroup ())
 		{
-		    if (group->changeState != NoTabChange)
+		    if (group->mChangeState != NoTabChange)
 		    {
 			/* a change animation is pending: this most
 			   likely means that a window must be moved
 			   back onscreen, so we do that here */
-			CompWindow *lw = group->windows[0];
+			CompWindow *lw = group->mWindows[0];
 
 			GroupWindow::get (lw)->groupSetWindowVisibility (true);
 		    }
@@ -394,7 +394,7 @@ GroupWindow::groupDeleteGroupWindow ()
 	}
 	else
 	{
-	    group->windows = NULL;
+	    group->mWindows = NULL;
 	    gs->groupDeleteGroup (group);
 	}
 
@@ -415,8 +415,8 @@ GroupWindow::groupRemoveWindowFromGroup ()
     if (!mGroup)
 	return;
 
-    if (mGroup->tabBar && !(mAnimateState & IS_UNGROUPING) &&
-	(mGroup->nWins > 1))
+    if (mGroup->mTabBar && !(mAnimateState & IS_UNGROUPING) &&
+	(mGroup->mNWins > 1))
     {
 	GroupSelection *group = mGroup;
 
@@ -454,7 +454,7 @@ GroupWindow::groupRemoveWindowFromGroup ()
 	gs->groupStartTabbingAnimation (group, FALSE);
 
 	groupSetWindowVisibility (TRUE);
-	group->ungroupState = UngroupSingle;
+	group->mUngroupState = UngroupSingle;
 	mAnimateState |= IS_UNGROUPING;
     }
     else
@@ -479,22 +479,22 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
 {
     GroupSelection *next, *prev;
 
-    if (group->windows)
+    if (group->mWindows)
     {
 	int i;
 
-	if (group->tabBar)
+	if (group->mTabBar)
 	{
 	    /* set up untabbing animation and delete the group
 	       at the end of the animation */
 	    groupUntabGroup (group);
-	    group->ungroupState = UngroupAll;
+	    group->mUngroupState = UngroupAll;
 	    return;
 	}
 
-	for (i = 0; i < group->nWins; i++)
+	for (i = 0; i < group->mNWins; i++)
 	{
-	    CompWindow *cw = group->windows[i];
+	    CompWindow *cw = group->mWindows[i];
 	    GROUP_WINDOW (cw);
 
 	    CompositeWindow::get (cw)->damageOutputExtents ();
@@ -509,14 +509,14 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
 	    }
 	}
 
-	free (group->windows);
-	group->windows = NULL;
+	free (group->mWindows);
+	group->mWindows = NULL;
     }
-    else if (group->tabBar)
+    else if (group->mTabBar)
 	groupDeleteTabBar (group);
 
-    prev = group->prev;
-    next = group->next;
+    prev = group->mPrev;
+    next = group->mNext;
 
     /* relink stack */
     if (prev || next)
@@ -524,17 +524,17 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
 	if (prev)
 	{
 	    if (next)
-		prev->next = next;
+		prev->mNext = next;
 	    else
-		prev->next = NULL;
+		prev->mNext = NULL;
 	}
 	if (next)
 	{
 	    if (prev)
-		next->prev = prev;
+		next->mPrev = prev;
 	    else
 	    {
-		next->prev = NULL;
+		next->mPrev = NULL;
 		mGroups = next;
 	    }
 	}
@@ -567,30 +567,30 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
     {
 	CompWindow *topTab = NULL;
 
-	group->windows = (CompWindow **) realloc (group->windows,
-				  sizeof (CompWindow *) * (group->nWins + 1));
-	group->windows[group->nWins] = window;
-	group->nWins++;
+	group->mWindows = (CompWindow **) realloc (group->mWindows,
+				  sizeof (CompWindow *) * (group->mNWins + 1));
+	group->mWindows[group->mNWins] = window;
+	group->mNWins++;
 	mGroup = group;
 
 	window->updateWindowOutputExtents ();
 	groupUpdateWindowProperty ();
 
-	if (group->nWins == 2)
+	if (group->mNWins == 2)
 	{
 	    /* first window in the group got its glow, too */
-	    group->windows[0]->updateWindowOutputExtents ();
+	    group->mWindows[0]->updateWindowOutputExtents ();
 	}
 
-	if (group->tabBar)
+	if (group->mTabBar)
 	{
 	    if (HAS_TOP_WIN (group))
 		topTab = TOP_TAB (group);
 	    else if (HAS_PREV_TOP_WIN (group))
 	    {
 		topTab = PREV_TOP_TAB (group);
-		group->topTab = group->prevTopTab;
-		group->prevTopTab = NULL;
+		group->mTopTab = group->mPrevTopTab;
+		group->mPrevTopTab = NULL;
 	    }
 
 	    if (topTab)
@@ -623,46 +623,46 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	if (!g)
 	    return;
 
-	g->windows = (CompWindow **) malloc (sizeof (CompWindow *));
-	if (!g->windows)
+	g->mWindows = (CompWindow **) malloc (sizeof (CompWindow *));
+	if (!g->mWindows)
 	{
 	    free (g);
 	    return;
 	}
 
-	g->windows[0] = window;
-	g->screen     = screen;
-	g->nWins      = 1;
+	g->mWindows[0] = window;
+	g->mScreen     = screen;
+	g->mNWins      = 1;
 
-	g->topTab      = NULL;
-	g->prevTopTab  = NULL;
-	g->nextTopTab  = NULL;
+	g->mTopTab      = NULL;
+	g->mPrevTopTab  = NULL;
+	g->mNextTopTab  = NULL;
 
-	g->changeAnimationTime      = 0;
-	g->changeAnimationDirection = 0;
+	g->mChangeAnimationTime      = 0;
+	g->mChangeAnimationDirection = 0;
 
-	g->changeState  = NoTabChange;
-	g->tabbingState = NoTabbing;
-	g->ungroupState = UngroupNone;
+	g->mChangeState  = NoTabChange;
+	g->mTabbingState = NoTabbing;
+	g->mUngroupState = UngroupNone;
 
-	g->tabBar = NULL;
+	g->mTabBar = NULL;
 
-	g->checkFocusAfterTabChange = FALSE;
+	g->mCheckFocusAfterTabChange = FALSE;
 
-	g->grabWindow = None;
-	g->grabMask   = 0;
+	g->mGrabWindow = None;
+	g->mGrabMask   = 0;
 
-	g->inputPrevention = None;
-	g->ipwMapped       = FALSE;
+	g->mInputPrevention = None;
+	g->mIpwMapped       = FALSE;
 
 	/* glow color */
-	g->color[0] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
-	g->color[1] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
-	g->color[2] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
-	g->color[3] = 0xffff;
+	g->mColor[0] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
+	g->mColor[1] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
+	g->mColor[2] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
+	g->mColor[3] = 0xffff;
 
 	if (initialIdent)
-	    g->identifier = initialIdent;
+	    g->mIdentifier = initialIdent;
 	else
 	{
 	    /* we got no valid group Id passed, so find out a new valid
@@ -670,17 +670,17 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	    GroupSelection *tg;
 	    Bool           invalidID = FALSE;
 
-	    g->identifier = gs->mGroups ? gs->mGroups->identifier : 0;
+	    g->mIdentifier = gs->mGroups ? gs->mGroups->mIdentifier : 0;
 	    do
 	    {
 		invalidID = FALSE;
-		for (tg = gs->mGroups; tg; tg = tg->next)
+		for (tg = gs->mGroups; tg; tg = tg->mNext)
 		{
-		    if (tg->identifier == g->identifier)
+		    if (tg->mIdentifier == g->mIdentifier)
 		    {
 			invalidID = TRUE;
 
-			g->identifier++;
+			g->mIdentifier++;
 			break;
 		    }
 		}
@@ -690,10 +690,10 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 
 	/* relink stack */
 	if (gs->mGroups)
-	    gs->mGroups->prev = g;
+	    gs->mGroups->mPrev = g;
 
-	g->next = gs->mGroups;
-	g->prev = NULL;
+	g->mNext = gs->mGroups;
+	g->mPrev = NULL;
 	gs->mGroups = g;
 
 	mGroup = g;
@@ -711,30 +711,30 @@ GroupScreen::groupGroupWindows (CompAction         *action,
 				CompAction::State  state,
 				CompOption::Vector options)
 {
-    if (mTmpSel.nWins > 0)
+    if (mTmpSel.mNWins > 0)
     {
         int            i;
         CompWindow     *cw;
         GroupSelection *group = NULL;
         Bool           tabbed = FALSE;
 
-        for (i = 0; i < mTmpSel.nWins; i++)
+        for (i = 0; i < mTmpSel.mNWins; i++)
         {
-	    cw = mTmpSel.windows[i];
+	    cw = mTmpSel.mWindows[i];
 	    GROUP_WINDOW (cw);
 
 	    if (gw->mGroup)
 	    {
-	        if (!tabbed || group->tabBar)
+	        if (!tabbed || group->mTabBar)
 		    group = gw->mGroup;
 
-	        if (group->tabBar)
+	        if (group->mTabBar)
 		    tabbed = TRUE;
 	    }
         }
 
         /* we need to do one first to get the pointer of a new group */
-        cw = mTmpSel.windows[0];
+        cw = mTmpSel.mWindows[0];
         GROUP_WINDOW (cw);
 
         if (gw->mGroup && (group != gw->mGroup))
@@ -745,9 +745,9 @@ GroupScreen::groupGroupWindows (CompAction         *action,
         gw->mInSelection = FALSE;
         group = gw->mGroup;
 
-        for (i = 1; i < mTmpSel.nWins; i++)
+        for (i = 1; i < mTmpSel.mNWins; i++)
         {
-	    cw = mTmpSel.windows[i];
+	    cw = mTmpSel.mWindows[i];
 	    GROUP_WINDOW (cw);
 
 	    if (gw->mGroup && (group != gw->mGroup))
@@ -759,9 +759,9 @@ GroupScreen::groupGroupWindows (CompAction         *action,
         }
 
         /* exit selection */
-        free (mTmpSel.windows);
-        mTmpSel.windows = NULL;
-        mTmpSel.nWins = 0;
+        free (mTmpSel.mWindows);
+        mTmpSel.mWindows = NULL;
+        mTmpSel.mNWins = 0;
     }
 
     return FALSE;
@@ -839,8 +839,8 @@ GroupScreen::groupCloseWindows (CompAction           *action,
 	{
 	    int i;
 
-	    for (i = 0; i < gw->mGroup->nWins; i++)
-		gw->mGroup->windows[i]->close (screen->getCurrentTime ());
+	    for (i = 0; i < gw->mGroup->mNWins; i++)
+		gw->mGroup->mWindows[i]->close (screen->getCurrentTime ());
 	}
     }
 
@@ -867,7 +867,7 @@ GroupScreen::groupChangeColor (CompAction           *action,
 
 	if (gw->mGroup)
 	{
-	    GLushort *color = gw->mGroup->color;
+	    GLushort *color = gw->mGroup->mColor;
 	    float    factor = ((float)RAND_MAX + 1) / 0xffff;
 
 	    color[0] = (int)(rand () / factor);
@@ -929,12 +929,12 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
     yRoot  = event->xbutton.y_root;
     button = event->xbutton.button;
 
-    for (group = mGroups; group; group = group->next)
+    for (group = mGroups; group; group = group->mNext)
     {
-	if (group->inputPrevention != event->xbutton.window)
+	if (group->mInputPrevention != event->xbutton.window)
 	    continue;
 
-	if (!group->tabBar)
+	if (!group->mTabBar)
 	    continue;
 
 	switch (button) {
@@ -942,9 +942,9 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
 	    {
 		GroupTabBarSlot *slot;
 
-		for (slot = group->tabBar->slots; slot; slot = slot->next)
+		for (slot = group->mTabBar->mSlots; slot; slot = slot->mNext)
 		{
-		    if (XPointInRegion (slot->region, xRoot, yRoot))
+		    if (XPointInRegion (slot->mRegion, xRoot, yRoot))
 		    {
 			mDraggedSlot = slot;
 			/* The slot isn't dragged yet */
@@ -965,9 +965,9 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
 		CompWindow  *topTab = NULL;
 		GroupWindow *gw;
 
-		if (group->nextTopTab)
+		if (group->mNextTopTab)
 		    topTab = NEXT_TOP_TAB (group);
-		else if (group->topTab)
+		else if (group->mTopTab)
 		{
 		    /* If there are no tabbing animations,
 		       topTab is never NULL. */
@@ -981,18 +981,18 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
 
 		if (button == Button4)
 		{
-		    if (gw->mSlot->prev)
-			groupChangeTab (gw->mSlot->prev, RotateLeft);
+		    if (gw->mSlot->mPrev)
+			groupChangeTab (gw->mSlot->mPrev, RotateLeft);
 		    else
-			groupChangeTab (gw->mGroup->tabBar->revSlots,
+			groupChangeTab (gw->mGroup->mTabBar->mRevSlots,
 					RotateLeft);
 		}
 		else
 		{
-		    if (gw->mSlot->next)
-			groupChangeTab (gw->mSlot->next, RotateRight);
+		    if (gw->mSlot->mNext)
+			groupChangeTab (gw->mSlot->mNext, RotateRight);
 		    else
-			groupChangeTab (gw->mGroup->tabBar->slots, RotateRight);
+			groupChangeTab (gw->mGroup->mTabBar->mSlots, RotateRight);
 		}
 		break;
 	    }
@@ -1032,24 +1032,24 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	return;
     }
 
-    GROUP_WINDOW (mDraggedSlot->window);
+    GROUP_WINDOW (mDraggedSlot->mWindow);
 
     newRegion = XCreateRegion ();
     if (!newRegion)
 	return;
 
-    XUnionRegion (newRegion, mDraggedSlot->region, newRegion);
+    XUnionRegion (newRegion, mDraggedSlot->mRegion, newRegion);
 
     groupGetDrawOffsetForSlot (mDraggedSlot, vx, vy);
     XOffsetRegion (newRegion, vx, vy);
 
-    for (group = mGroups; group; group = group->next)
+    for (group = mGroups; group; group = group->mNext)
     {
 	Bool            inTabBar;
 	Region          clip, buf;
 	GroupTabBarSlot *slot;
 
-	if (!group->tabBar || !HAS_TOP_WIN (group))
+	if (!group->mTabBar || !HAS_TOP_WIN (group))
 	    continue;
 
 	/* create clipping region */
@@ -1064,7 +1064,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    continue;
 	}
 
-	XIntersectRegion (newRegion, group->tabBar->region, buf);
+	XIntersectRegion (newRegion, group->mTabBar->mRegion, buf);
 	XSubtractRegion (buf, clip, buf);
 	XDestroyRegion (clip);
 
@@ -1076,7 +1076,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	wasInTabBar = TRUE;
 
-	for (slot = group->tabBar->slots; slot; slot = slot->next)
+	for (slot = group->mTabBar->mSlots; slot; slot = slot->mNext)
 	{
 	    GroupTabBarSlot *tmpDraggedSlot;
 	    GroupSelection  *tmpGroup;
@@ -1091,33 +1091,33 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    if (!slotRegion)
 		continue;
 
-	    if (slot->prev && slot->prev != mDraggedSlot)
+	    if (slot->mPrev && slot->mPrev != mDraggedSlot)
 	    {
-		rect.x = slot->prev->region->extents.x2;
+		rect.x = slot->mPrev->mRegion->extents.x2;
 	    }
-	    else if (slot->prev && slot->prev == mDraggedSlot &&
-		     mDraggedSlot->prev)
+	    else if (slot->mPrev && slot->mPrev == mDraggedSlot &&
+		     mDraggedSlot->mPrev)
 	    {
-		rect.x = mDraggedSlot->prev->region->extents.x2;
-	    }
-	    else
-		rect.x = group->tabBar->region->extents.x1;
-
-	    rect.y = slot->region->extents.y1;
-
-	    if (slot->next && slot->next != mDraggedSlot)
-	    {
-		rect.width = slot->next->region->extents.x1 - rect.x;
-	    }
-	    else if (slot->next && slot->next == mDraggedSlot &&
-		     mDraggedSlot->next)
-	    {
-		rect.width = mDraggedSlot->next->region->extents.x1 - rect.x;
+		rect.x = mDraggedSlot->mPrev->mRegion->extents.x2;
 	    }
 	    else
-		rect.width = group->tabBar->region->extents.x2;
+		rect.x = group->mTabBar->mRegion->extents.x1;
 
-	    rect.height = slot->region->extents.y2 - slot->region->extents.y1;
+	    rect.y = slot->mRegion->extents.y1;
+
+	    if (slot->mNext && slot->mNext != mDraggedSlot)
+	    {
+		rect.width = slot->mNext->mRegion->extents.x1 - rect.x;
+	    }
+	    else if (slot->mNext && slot->mNext == mDraggedSlot &&
+		     mDraggedSlot->mNext)
+	    {
+		rect.width = mDraggedSlot->mNext->mRegion->extents.x1 - rect.x;
+	    }
+	    else
+		rect.width = group->mTabBar->mRegion->extents.x2;
+
+	    rect.height = slot->mRegion->extents.y2 - slot->mRegion->extents.y1;
 
 	    XUnionRectWithRegion (&rect, slotRegion, slotRegion);
 
@@ -1138,14 +1138,14 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	    if (group != gw->mGroup)
 	    {
-		CompWindow     *w = mDraggedSlot->window;
+		CompWindow     *w = mDraggedSlot->mWindow;
 		GroupSelection *tmpGroup = gw->mGroup;
 		int            oldPosX = WIN_CENTER_X (w);
 		int            oldPosY = WIN_CENTER_Y (w);
 
 		/* if the dragged window is not the top tab,
 		   move it onscreen */
-		if (tmpGroup->topTab && !IS_TOP_TAB (w, tmpGroup))
+		if (tmpGroup->mTopTab && !IS_TOP_TAB (w, tmpGroup))
 		{
 		    CompWindow *tw = TOP_TAB (tmpGroup);
 
@@ -1156,8 +1156,8 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 		}
 
 		/* Change the group. */
-		GroupWindow::get (mDraggedSlot->window)->groupDeleteGroupWindow ();
-		GroupWindow::get (mDraggedSlot->window)->groupAddWindowToGroup (group, 0);
+		GroupWindow::get (mDraggedSlot->mWindow)->groupDeleteGroupWindow ();
+		GroupWindow::get (mDraggedSlot->mWindow)->groupAddWindowToGroup (group, 0);
 
 		/* we saved the original center position in oldPosX/Y before -
 		   now we should apply that to the new main tab offset */
@@ -1169,27 +1169,27 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 		}
 	    }
 	    else
-		groupUnhookTabBarSlot (group->tabBar, mDraggedSlot, TRUE);
+		groupUnhookTabBarSlot (group->mTabBar, mDraggedSlot, TRUE);
 
 	    mDraggedSlot = NULL;
 	    mDragged = FALSE;
 	    inserted = TRUE;
 
-	    if ((tmpDraggedSlot->region->extents.x1 +
-		 tmpDraggedSlot->region->extents.x2 + (2 * vx)) / 2 >
-		(slot->region->extents.x1 + slot->region->extents.x2) / 2)
+	    if ((tmpDraggedSlot->mRegion->extents.x1 +
+		 tmpDraggedSlot->mRegion->extents.x2 + (2 * vx)) / 2 >
+		(slot->mRegion->extents.x1 + slot->mRegion->extents.x2) / 2)
 	    {
-		groupInsertTabBarSlotAfter (group->tabBar,
+		groupInsertTabBarSlotAfter (group->mTabBar,
 					    tmpDraggedSlot, slot);
 	    }
 	    else
-		groupInsertTabBarSlotBefore (group->tabBar,
+		groupInsertTabBarSlotBefore (group->mTabBar,
 					     tmpDraggedSlot, slot);
 
 	    groupDamageTabBarRegion (group);
 
 	    /* Hide tab-bars. */
-	    for (tmpGroup = mGroups; tmpGroup; tmpGroup = tmpGroup->next)
+	    for (tmpGroup = mGroups; tmpGroup; tmpGroup = tmpGroup->mNext)
 	    {
 		if (group == tmpGroup)
 		    groupTabSetVisibility (tmpGroup, TRUE, 0);
@@ -1208,10 +1208,10 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
     if (!inserted)
     {
-	CompWindow     *draggedSlotWindow = mDraggedSlot->window;
+	CompWindow     *draggedSlotWindow = mDraggedSlot->mWindow;
 	GroupSelection *tmpGroup;
 
-	for (tmpGroup = mGroups; tmpGroup; tmpGroup = tmpGroup->next)
+	for (tmpGroup = mGroups; tmpGroup; tmpGroup = tmpGroup->mNext)
 	    groupTabSetVisibility (tmpGroup, FALSE, PERMANENT);
 
 	mDraggedSlot = NULL;
@@ -1221,13 +1221,13 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	{
 	    GroupWindow::get(draggedSlotWindow)->groupRemoveWindowFromGroup ();
 	}
-	else if (gw->mGroup && gw->mGroup->topTab)
+	else if (gw->mGroup && gw->mGroup->mTopTab)
 	{
 	    groupRecalcTabBarPos (gw->mGroup,
-				  (gw->mGroup->tabBar->region->extents.x1 +
-				   gw->mGroup->tabBar->region->extents.x2) / 2,
-				  gw->mGroup->tabBar->region->extents.x1,
-				  gw->mGroup->tabBar->region->extents.x2);
+				  (gw->mGroup->mTabBar->mRegion->extents.x1 +
+				   gw->mGroup->mTabBar->mRegion->extents.x2) / 2,
+				  gw->mGroup->mTabBar->mRegion->extents.x1,
+				  gw->mGroup->mTabBar->mRegion->extents.x2);
 	}
 
 	/* to remove the painted slot */
@@ -1260,7 +1260,7 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 	int    dx, dy;
 	int    vx, vy;
 	REGION reg;
-	Region draggedRegion = mDraggedSlot->region;
+	Region draggedRegion = mDraggedSlot->mRegion;
 
 	reg.rects = &reg.extents;
 	reg.numRects = 1;
@@ -1279,14 +1279,14 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 		GroupSelection *group;
 		BoxRec         *box;
 
-		GROUP_WINDOW (mDraggedSlot->window);
+		GROUP_WINDOW (mDraggedSlot->mWindow);
 
 		mDragged = TRUE;
 
-		for (group = mGroups; group; group = group->next)
+		for (group = mGroups; group; group = group->mNext)
 		    groupTabSetVisibility (group, TRUE, PERMANENT);
 
-		box = &gw->mGroup->tabBar->region->extents;
+		box = &gw->mGroup->mTabBar->mRegion->extents;
 		groupRecalcTabBarPos (gw->mGroup, (box->x1 + box->x2) / 2,
 				      box->x1, box->x2);
 	    }
@@ -1304,10 +1304,10 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 
 	    cScreen->damageRegion (cReg);
 
-	    XOffsetRegion (mDraggedSlot->region, dx, dy);
-	    mDraggedSlot->springX =
-		(mDraggedSlot->region->extents.x1 +
-		 mDraggedSlot->region->extents.x2) / 2;
+	    XOffsetRegion (mDraggedSlot->mRegion, dx, dy);
+	    mDraggedSlot->mSpringX =
+		(mDraggedSlot->mRegion->extents.x1 +
+		 mDraggedSlot->mRegion->extents.x2) / 2;
 
 	    reg.extents.x1 = draggedRegion->extents.x1 + vx;
 	    reg.extents.y1 = draggedRegion->extents.y1 + vy;
@@ -1391,7 +1391,7 @@ GroupScreen::handleEvent (XEvent      *event)
 
 	    if (gw->mGroup)
 	    {
-		if (gw->mGroup->tabBar && IS_TOP_TAB (w, gw->mGroup))
+		if (gw->mGroup->mTabBar && IS_TOP_TAB (w, gw->mGroup))
 		{
 		    /* on unmap of the top tab, hide the tab bar and the
 		       input prevention window */
@@ -1418,10 +1418,10 @@ GroupScreen::handleEvent (XEvent      *event)
 	    {
 		GROUP_WINDOW (w);
 
-		if (gw->mGroup && gw->mGroup->tabBar &&
+		if (gw->mGroup && gw->mGroup->mTabBar &&
 		    !IS_TOP_TAB (w, gw->mGroup))
 		{
-		    gw->mGroup->checkFocusAfterTabChange = TRUE;
+		    gw->mGroup->mCheckFocusAfterTabChange = TRUE;
 		    groupChangeTab (gw->mSlot, RotateUncertain);
 		}
 	    }
@@ -1431,7 +1431,7 @@ GroupScreen::handleEvent (XEvent      *event)
 	    CompWindow *w;
 	    w = screen->findWindow (event->xclient.window);
 
-	    if (w && mResizeInfo && (w == mResizeInfo->resizedWindow))
+	    if (w && mResizeInfo && (w == mResizeInfo->mResizedWindow))
 	    {
 		GROUP_WINDOW (w);
 
@@ -1445,9 +1445,9 @@ GroupScreen::handleEvent (XEvent      *event)
 		    rect.width  = event->xclient.data.l[2];
 		    rect.height = event->xclient.data.l[3];
 
-		    for (i = 0; i < gw->mGroup->nWins; i++)
+		    for (i = 0; i < gw->mGroup->mNWins; i++)
 		    {
-			CompWindow  *cw = gw->mGroup->windows[i];
+			CompWindow  *cw = gw->mGroup->mWindows[i];
 			GroupWindow *gcw;
 
 			gcw = GroupWindow::get (cw);
@@ -1496,9 +1496,9 @@ GroupScreen::handleEvent (XEvent      *event)
 	    {
 		GROUP_WINDOW (w);
 
-		if (gw->mGroup && gw->mGroup->tabBar &&
-		    gw->mGroup->tabBar->textSlot    &&
-		    gw->mGroup->tabBar->textSlot->window == w)
+		if (gw->mGroup && gw->mGroup->mTabBar &&
+		    gw->mGroup->mTabBar->mTextSlot    &&
+		    gw->mGroup->mTabBar->mTextSlot->mWindow == w)
 		{
 		    /* make sure we are using the updated name */
 		    groupRenderWindowTitle (gw->mGroup);
@@ -1556,9 +1556,9 @@ GroupScreen::handleEvent (XEvent      *event)
 	    {
 		GROUP_WINDOW (w);
 
-		if (gw->mGroup && gw->mGroup->tabBar &&
+		if (gw->mGroup && gw->mGroup->mTabBar &&
 		    IS_TOP_TAB (w, gw->mGroup)      &&
-		    gw->mGroup->inputPrevention && gw->mGroup->ipwMapped)
+		    gw->mGroup->mInputPrevention && gw->mGroup->mIpwMapped)
 		{
 		    XWindowChanges xwc;
 
@@ -1566,13 +1566,13 @@ GroupScreen::handleEvent (XEvent      *event)
 		    xwc.sibling = w->id ();
 
 		    XConfigureWindow (screen->dpy (),
-				      gw->mGroup->inputPrevention,
+				      gw->mGroup->mInputPrevention,
 				      CWSibling | CWStackMode, &xwc);
 		}
 
 		if (event->xconfigure.above != None)
 		{
-		    if (gw->mGroup && !gw->mGroup->tabBar &&
+		    if (gw->mGroup && !gw->mGroup->mTabBar &&
 			(gw->mGroup != mLastRestackedGroup))
 		    {
 			if (optionGetRaiseAll ())
@@ -1601,7 +1601,7 @@ GroupWindow::getOutputExtents (CompWindowExtents &output)
 
     window->getOutputExtents (output);
 
-    if (mGroup && mGroup->nWins > 1)
+    if (mGroup && mGroup->mNWins > 1)
     {
 	int glowSize = gs->optionGetGlowSize ();
 	int glowType = gs->optionGetGlowType ();
@@ -1648,9 +1648,9 @@ GroupWindow::resizeNotify (int dx,
 	groupComputeGlowQuads (&tMat);
     }
 
-    if (mGroup && mGroup->tabBar && IS_TOP_TAB (window, mGroup))
+    if (mGroup && mGroup->mTabBar && IS_TOP_TAB (window, mGroup))
     {
-	if (mGroup->tabBar->state != PaintOff)
+	if (mGroup->mTabBar->mState != PaintOff)
 	{
 	    gs->groupRecalcTabBarPos (mGroup, pointerX,
 				  WIN_X (window), WIN_X (window) + WIN_WIDTH (window));
@@ -1696,34 +1696,34 @@ GroupWindow::moveNotify (int    dx,
 	mDestination.y += dy;
     }
 
-    if (mGroup->tabBar && IS_TOP_TAB (window, mGroup))
+    if (mGroup->mTabBar && IS_TOP_TAB (window, mGroup))
     {
 	GroupTabBarSlot *slot;
-	GroupTabBar     *bar = mGroup->tabBar;
+	GroupTabBar     *bar = mGroup->mTabBar;
 
-	bar->rightSpringX += dx;
-	bar->leftSpringX += dx;
+	bar->mRightSpringX += dx;
+	bar->mLeftSpringX += dx;
 
 	gs->groupMoveTabBarRegion (mGroup, dx, dy, TRUE);
 
-	for (slot = bar->slots; slot; slot = slot->next)
+	for (slot = bar->mSlots; slot; slot = slot->mNext)
 	{
-	    XOffsetRegion (slot->region, dx, dy);
-	    slot->springX += dx;
+	    XOffsetRegion (slot->mRegion, dx, dy);
+	    slot->mSpringX += dx;
 	}
     }
 
     if (!gs->optionGetMoveAll () || gs->mIgnoreMode ||
-	(mGroup->tabbingState != NoTabbing) ||
-	(mGroup->grabWindow != window->id ()) ||
-	!(mGroup->grabMask & CompWindowGrabMoveMask))
+	(mGroup->mTabbingState != NoTabbing) ||
+	(mGroup->mGrabWindow != window->id ()) ||
+	!(mGroup->mGrabMask & CompWindowGrabMoveMask))
     {
 	return;
     }
 
-    for (i = 0; i < mGroup->nWins; i++)
+    for (i = 0; i < mGroup->mNWins; i++)
     {
-	CompWindow *cw = mGroup->windows[i];
+	CompWindow *cw = mGroup->mWindows[i];
 	if (!cw)
 	    continue;
 
@@ -1763,12 +1763,12 @@ GroupWindow::grabNotify (int          x,
 	doResizeAll = gs->optionGetResizeAll () &&
 	              (mask & CompWindowGrabResizeMask);
 
-	if (mGroup->tabBar)
+	if (mGroup->mTabBar)
 	    gs->groupTabSetVisibility (mGroup, FALSE, 0);
 
-	for (i = 0; i < mGroup->nWins; i++)
+	for (i = 0; i < mGroup->mNWins; i++)
 	{
-	    CompWindow *cw = mGroup->windows[i];
+	    CompWindow *cw = mGroup->mWindows[i];
 	    if (!cw)
 		continue;
 
@@ -1802,16 +1802,16 @@ GroupWindow::grabNotify (int          x,
 
 	    if (gs->mResizeInfo)
 	    {
-		gs->mResizeInfo->resizedWindow       = window;
-		gs->mResizeInfo->origGeometry.x      = WIN_X (window);
-		gs->mResizeInfo->origGeometry.y      = WIN_Y (window);
-		gs->mResizeInfo->origGeometry.width  = WIN_WIDTH (window);
-		gs->mResizeInfo->origGeometry.height = WIN_HEIGHT (window);
+		gs->mResizeInfo->mResizedWindow       = window;
+		gs->mResizeInfo->mOrigGeometry.x      = WIN_X (window);
+		gs->mResizeInfo->mOrigGeometry.y      = WIN_Y (window);
+		gs->mResizeInfo->mOrigGeometry.width  = WIN_WIDTH (window);
+		gs->mResizeInfo->mOrigGeometry.height = WIN_HEIGHT (window);
 	    }
 	}
 
-	mGroup->grabWindow = window->id ();
-	mGroup->grabMask = mask;
+	mGroup->mGrabWindow = window->id ();
+	mGroup->mGrabMask = mask;
     }
 
     window->grabNotify (x, y, state, mask);
@@ -1839,9 +1839,9 @@ GroupWindow::ungrabNotify ()
 	    rect.height = WIN_HEIGHT (window);
 	}
 
-	for (i = 0; i < mGroup->nWins; i++)
+	for (i = 0; i < mGroup->mNWins; i++)
 	{
-	    CompWindow *cw = mGroup->windows[i];
+	    CompWindow *cw = mGroup->mWindows[i];
 	    if (!cw)
 		continue;
 
@@ -1893,8 +1893,8 @@ GroupWindow::ungrabNotify ()
 	    gs->mResizeInfo = NULL;
 	}
 
-	mGroup->grabWindow = None;
-	mGroup->grabMask = 0;
+	mGroup->mGrabWindow = None;
+	mGroup->mGrabMask = 0;
     }
 
     window->ungrabNotify ();
@@ -1963,11 +1963,11 @@ GroupWindow::damageRect (bool	        initial,
 	if (vx || vy)
 	{
 	    reg = XCreateRegion ();
-	    XUnionRegion (reg, mSlot->region, reg);
+	    XUnionRegion (reg, mSlot->mRegion, reg);
 	    XOffsetRegion (reg, vx, vy);
 	}
 	else
-	    reg = mSlot->region;
+	    reg = mSlot->mRegion;
 
 	cReg = CompRegion (reg->extents.x1, reg->extents.y1,
 		           reg->extents.x2 - reg->extents.x1,
@@ -1991,9 +1991,9 @@ GroupWindow::stateChangeNotify (unsigned int lastState)
 	    gs->optionGetMaximizeUnmaximizeAll ())
 	{
 	    int i;
-	    for (i = 0; i < mGroup->nWins; i++)
+	    for (i = 0; i < mGroup->mNWins; i++)
 	    {
-		CompWindow *cw = mGroup->windows[i];
+		CompWindow *cw = mGroup->mWindows[i];
 		if (!cw)
 		    continue;
 
@@ -2013,7 +2013,7 @@ GroupWindow::activate ()
 {
     GROUP_SCREEN (screen);
 
-    if (mGroup && mGroup->tabBar && !IS_TOP_TAB (window, mGroup))
+    if (mGroup && mGroup->mTabBar && !IS_TOP_TAB (window, mGroup))
 	gs->groupChangeTab (mSlot, RotateUncertain);
 
     window->activate ();

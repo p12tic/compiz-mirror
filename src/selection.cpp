@@ -123,24 +123,24 @@ GroupWindow::groupDeleteSelectionWindow ()
 {
     GROUP_SCREEN (screen);
 	
-    if (gs->mTmpSel.nWins > 0 && gs->mTmpSel.windows)
+    if (gs->mTmpSel.mNWins > 0 && gs->mTmpSel.mWindows)
     {
-	CompWindow **buf = gs->mTmpSel.windows;
+	CompWindow **buf = gs->mTmpSel.mWindows;
 	int        counter = 0;
 	int        i;
 
-	gs->mTmpSel.windows = (CompWindow **) calloc (gs->mTmpSel.nWins - 1,
+	gs->mTmpSel.mWindows = (CompWindow **) calloc (gs->mTmpSel.mNWins - 1,
 				     sizeof (CompWindow *));
 
-	for (i = 0; i < gs->mTmpSel.nWins; i++)
+	for (i = 0; i < gs->mTmpSel.mNWins; i++)
 	{
 	    if (buf[i]->id () == window->id ())
 		continue;
 
-	    gs->mTmpSel.windows[counter++] = buf[i];
+	    gs->mTmpSel.mWindows[counter++] = buf[i];
 	}
 
-	gs->mTmpSel.nWins = counter;
+	gs->mTmpSel.mNWins = counter;
 	free (buf);
     }
 
@@ -156,12 +156,12 @@ GroupWindow::addWindowToSelection ()
 {
     GROUP_SCREEN (screen);
 
-    gs->mTmpSel.windows = (CompWindow **) realloc (gs->mTmpSel.windows,
+    gs->mTmpSel.mWindows = (CompWindow **) realloc (gs->mTmpSel.mWindows,
 						   sizeof (CompWindow *) *
-						   (gs->mTmpSel.nWins + 1));
+						   (gs->mTmpSel.mNWins + 1));
 
-    gs->mTmpSel.windows[gs->mTmpSel.nWins] = window;
-    gs->mTmpSel.nWins++;
+    gs->mTmpSel.mWindows[gs->mTmpSel.mNWins] = window;
+    gs->mTmpSel.mNWins++;
 
     mInSelection = true;
 }
@@ -185,16 +185,16 @@ GroupWindow::groupSelectWindow ()
 	{
 	    /* unselect group */
 	    GroupSelection *group = mGroup;
-	    CompWindow     **buf = gs->mTmpSel.windows;
+	    CompWindow     **buf = gs->mTmpSel.mWindows;
 	    int            i, counter = 0;
 
 	    /* Faster than doing groupDeleteSelectionWindow
 	       for each window in this group. */
-	    gs->mTmpSel.windows = (CompWindow **)
-				     calloc (gs->mTmpSel.nWins - mGroup->nWins,
+	    gs->mTmpSel.mWindows = (CompWindow **)
+				     calloc (gs->mTmpSel.mNWins - mGroup->mNWins,
 					     sizeof (CompWindow *));
 
-	    for (i = 0; i < gs->mTmpSel.nWins; i++)
+	    for (i = 0; i < gs->mTmpSel.mNWins; i++)
 	    {
 		CompWindow *cw = buf[i];
 		GROUP_WINDOW (cw);
@@ -206,9 +206,9 @@ GroupWindow::groupSelectWindow ()
 		    continue;
 		}
 
-		gs->mTmpSel.windows[counter++] = buf[i];
+		gs->mTmpSel.mWindows[counter++] = buf[i];
 	    }
-	    gs->mTmpSel.nWins = counter;
+	    gs->mTmpSel.mNWins = counter;
 	    free (buf);
 	}
 	else
@@ -224,9 +224,9 @@ GroupWindow::groupSelectWindow ()
 	{
 	    /* select group */
 	    int i;
-	    for (i = 0; i < mGroup->nWins; i++)
+	    for (i = 0; i < mGroup->mNWins; i++)
 	    {
-		CompWindow *cw = mGroup->windows[i];
+		CompWindow *cw = mGroup->mWindows[i];
 
 		GROUP_WINDOW (cw);
 
