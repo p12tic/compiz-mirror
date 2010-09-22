@@ -36,6 +36,7 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
 {
     CompWindow            *w = slot->mWindow;
     unsigned int	  oldGlAddGeometryIndex;
+    unsigned int	  oldGlDrawIndex;
     GLWindowPaintAttrib   wAttrib (GLWindow::get (w)->paintAttrib ());
     int                   tw, th;
 
@@ -108,9 +109,11 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
 	glPushMatrix ();
 	glLoadMatrixf (wTransform.getMatrix ());
 
+	oldGlDrawIndex = gw->gWindow->glDrawGetCurrentIndex ();
 	gw->gWindow->glDraw (wTransform, fragment, infiniteRegion,
 			  PAINT_WINDOW_TRANSFORMED_MASK |
 			  PAINT_WINDOW_TRANSLUCENT_MASK);
+	gw->gWindow->glDrawSetCurrentIndex (oldGlDrawIndex);
 
 	glPopMatrix ();
     }
@@ -864,18 +867,18 @@ GroupWindow::groupGetStretchRectangle (BoxPtr pBox,
     int    width, height;
     float  xScale, yScale;
 
-    box.x1 = mResizeGeometry->x - window->input ().left;
-    box.y1 = mResizeGeometry->y - window->input ().top;
-    box.x2 = mResizeGeometry->x + mResizeGeometry->width +
+    box.x1 = mResizeGeometry.x () - window->input ().left;
+    box.y1 = mResizeGeometry.y () - window->input ().top;
+    box.x2 = mResizeGeometry.x () + mResizeGeometry.width () +
 	     window->serverGeometry ().border () * 2 + window->input ().right;
 
     if (window->shaded ())
     {
-	box.y2 = mResizeGeometry->y + window->height () + window->input ().bottom;
+	box.y2 = mResizeGeometry.y () + window->height () + window->input ().bottom;
     }
     else
     {
-	box.y2 = mResizeGeometry->y + mResizeGeometry->height +
+	box.y2 = mResizeGeometry.y () + mResizeGeometry.height () +
 	         window->serverGeometry ().border () * 2 + window->input ().bottom;
     }
 
@@ -962,7 +965,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
     if (mWindowHideInfo)
 	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
-    if (mInSelection || mResizeGeometry || doRotate ||
+    if (mInSelection || !mResizeGeometry.isEmpty () || doRotate ||
 	doTabbing || showTabbar)
     {
 	GLWindowPaintAttrib wAttrib (attrib);
@@ -1029,7 +1032,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    animProgress = 1 - (timeLeft / (2 * animTime));
 	}
 
-	if (mResizeGeometry)
+	if (!mResizeGeometry.isEmpty ())
 	{
 	    int    xOrigin, yOrigin;
 	    float  xScale, yScale;
@@ -1042,9 +1045,9 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	    wTransform.translate (xOrigin, yOrigin, 0.0f);
 	    wTransform.scale (xScale, yScale, 1.0f);
-	    wTransform.translate ((mResizeGeometry->x - window->x ()) /
+	    wTransform.translate ((mResizeGeometry.x () - window->x ()) /
 			     	   xScale - xOrigin,
-			     	  (mResizeGeometry->y - window->y ()) /
+			     	  (mResizeGeometry.y () - window->y ()) /
 			     	   yScale - yOrigin,
 			     	  0.0f);
 

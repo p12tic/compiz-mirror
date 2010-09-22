@@ -361,7 +361,7 @@ GroupWindow::GroupWindow (CompWindow *w) :
     mNeedsPosSync (false),
     mGlowQuads (NULL),
     mWindowHideInfo (NULL),
-    mResizeGeometry (NULL),
+    mResizeGeometry (CompRect (0, 0, 0, 0)),
     mAnimateState (0),
     mTx (0.0f),
     mTy (0.0f),

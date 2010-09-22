@@ -70,38 +70,32 @@ Region
 GroupWindow::groupGetClippingRegion ()
 {
     CompWindow *cw;
-    Region     clip;
+    CompRegion     clip;
+    Region	   ret = XCreateRegion ();
 
-    clip = XCreateRegion ();
-    if (!clip)
+    if (!ret)
 	return NULL;
 
     for (cw = window->next; cw; cw = cw->next)
     {
 	if (!cw->invisible () && !(cw->state () & CompWindowStateHiddenMask))
 	{
-	    XRectangle rect;
-	    Region     buf;
+	    CompRect rect;
+	    CompRegion     buf;
 
-	    buf = XCreateRegion ();
-	    if (!buf)
-	    {
-		XDestroyRegion (clip);
-		return NULL;
-	    }
+	    rect = CompRect (WIN_REAL_X (cw),
+			     WIN_REAL_Y (cw),
+			     WIN_REAL_WIDTH (cw),
+			     WIN_REAL_HEIGHT (cw));
 
-	    rect.x      = WIN_REAL_X (cw);
-	    rect.y      = WIN_REAL_Y (cw);
-	    rect.width  = WIN_REAL_WIDTH (cw);
-	    rect.height = WIN_REAL_HEIGHT (cw);
-	    XUnionRectWithRegion (&rect, buf, buf);
-
-	    XUnionRegion (clip, buf, clip);
-	    XDestroyRegion (buf);
+	    buf = buf.united (rect);
+	    clip = buf.united (clip);
 	}
     }
 
-    return clip;
+    XUnionRegion (clip.handle (), ret, ret);
+
+    return ret;
 }
 
 
@@ -439,6 +433,9 @@ GroupScreen::groupHandleHoverDetection (GroupSelection *group)
 
 	bar->mHoveredSlot = NULL;
 	clip = GroupWindow::get (topTab)->groupGetClippingRegion ();
+
+	if (!clip)
+	    return;
 
 	for (slot = bar->mSlots; slot; slot = slot->mNext)
 	{
@@ -945,21 +942,18 @@ GroupScreen::groupUpdateTabBars (Window enteredWin)
 	       check if we hovered the title bar or the frame */
 	    if (groupGetCurrentMousePosition (mouseX, mouseY))
 	    {
-		XRectangle rect;
-		Region     reg = XCreateRegion();
-		if (!reg)
-		    return;
+		CompRect rect;
+		CompRegion     reg;
 
-		rect.x      = WIN_X (w) - w->input ().left;
-		rect.y      = WIN_Y (w) - w->input ().top;
-		rect.width  = WIN_WIDTH (w) + w->input ().right;
-		rect.height = WIN_Y (w) - rect.y;
-		XUnionRectWithRegion (&rect, reg, reg);
+		rect = CompRect (WIN_X (w) - w->input ().left,
+				 WIN_Y (w) - w->input ().top,
+				 WIN_WIDTH (w) + w->input ().right,
+				 WIN_Y (w) - (WIN_Y (w) - w->input ().top));
 
-		if (XPointInRegion (reg, mouseX, mouseY))
+		reg = reg.united (rect);
+
+		if (reg.contains (CompPoint (mouseX, mouseY)))
 		    hoveredGroup = gw->mGroup;
-
-		XDestroyRegion (reg);
 	    }
 	}
     }
@@ -1670,7 +1664,8 @@ GroupScreen::groupRecalcSlotPos (GroupTabBarSlot *slot,
 				 int		 slotPos)
 {
     GroupSelection *group;
-    XRectangle     box;
+    CompRect       box;
+    XRectangle     xbox;
     int            space, thumbSize;
 
     GROUP_WINDOW (slot->mWindow);
@@ -1684,13 +1679,18 @@ GroupScreen::groupRecalcSlotPos (GroupTabBarSlot *slot,
 
     EMPTY_REGION (slot->mRegion);
 
-    box.x = space + ((thumbSize + space) * slotPos);
-    box.y = space;
+    box.setX (space + ((thumbSize + space) * slotPos));
+    box.setY (space);
 
-    box.width = thumbSize;
-    box.height = thumbSize;
+    box.setWidth (thumbSize);
+    box.setHeight (thumbSize);
 
-    XUnionRectWithRegion (&box, slot->mRegion, slot->mRegion);
+    xbox.x = box.x ();
+    xbox.y = box.y ();
+    xbox.width = box.width ();
+    xbox.height = box.height ();
+
+    XUnionRectWithRegion (&xbox, slot->mRegion, slot->mRegion);
 }
 
 /*
@@ -1711,7 +1711,7 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
     int             thumbSize;
     int             tabsWidth = 0, tabsHeight = 0;
     int             currentSlot;
-    XRectangle      box;
+    CompRect	    box;
 
     if (!HAS_TOP_WIN (group) || !group->mTabBar)
 	return;
@@ -1761,19 +1761,19 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
     }
 
     if (maxX2 - minX1 < barWidth)
-	box.x = (maxX2 + minX1) / 2 - barWidth / 2;
+	box.setX ((maxX2 + minX1) / 2 - barWidth / 2);
     else if (middleX - barWidth / 2 < minX1)
-	box.x = minX1;
+	box.setX (minX1);
     else if (middleX + barWidth / 2 > maxX2)
-	box.x = maxX2 - barWidth;
+	box.setX (maxX2 - barWidth);
     else
-	box.x = middleX - barWidth / 2;
+	box.setX (middleX - barWidth / 2);
 
-    box.y = WIN_Y (topTab);
-    box.width = barWidth;
-    box.height = space * 2 + tabsHeight;
+    box.setY (WIN_Y (topTab));
+    box.setWidth (barWidth);
+    box.setHeight (space * 2 + tabsHeight);
 
-    resizeTabBarRegion (group, &box, TRUE);
+    resizeTabBarRegion (group, box, TRUE);
 
     /* recalc every slot region */
     currentSlot = 0;
@@ -1795,8 +1795,8 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
 	currentSlot++;
     }
 
-    bar->mLeftSpringX = box.x;
-    bar->mRightSpringX = box.x + box.width;
+    bar->mLeftSpringX = box.x ();
+    bar->mRightSpringX = box.x () + box.width ();
 
     bar->mRightSpeed = 0;
     bar->mLeftSpeed = 0;
@@ -1868,41 +1868,47 @@ GroupScreen::groupMoveTabBarRegion (GroupSelection *group,
 
 void
 GroupScreen::resizeTabBarRegion (GroupSelection *group,
-				 XRectangle     *box,
+				 CompRect	&box,
 				 Bool           syncIPW)
 {
     int oldWidth;
+    XRectangle xbox;
 
     groupDamageTabBarRegion (group);
 
     oldWidth = group->mTabBar->mRegion->extents.x2 -
 	group->mTabBar->mRegion->extents.x1;
 
-    if (group->mTabBar->mBgLayer && oldWidth != box->width && syncIPW)
+    if (group->mTabBar->mBgLayer && oldWidth != box.width () && syncIPW)
     {
 	group->mTabBar->mBgLayer =
 	    groupRebuildCairoLayer (group->mTabBar->mBgLayer,
-				    box->width +
+				    box.width () +
 				    optionGetThumbSpace () +
 				    optionGetThumbSize (),
-				    box->height);
+				    box.height ());
 	groupRenderTabBarBackground (group);
 
 	/* invalidate old width */
 	group->mTabBar->mOldWidth = 0;
     }
 
+    xbox.x = box.x ();
+    xbox.y = box.y ();
+    xbox.width = box.width ();
+    xbox.height = box.height ();
+
     EMPTY_REGION (group->mTabBar->mRegion);
-    XUnionRectWithRegion (box, group->mTabBar->mRegion, group->mTabBar->mRegion);
+    XUnionRectWithRegion (&xbox, group->mTabBar->mRegion, group->mTabBar->mRegion);
 
     if (syncIPW)
     {
 	XWindowChanges xwc;
 
-	xwc.x = box->x;
-	xwc.y = box->y;
-	xwc.width = box->width;
-	xwc.height = box->height;
+	xwc.x = box.x ();
+	xwc.y = box.y ();
+	xwc.width = box.width ();
+	xwc.height = box.height ();
 
 	if (!group->mIpwMapped)
 	    XMapWindow (screen->dpy (), group->mInputPrevention);
@@ -2410,13 +2416,13 @@ GroupScreen::groupApplySpeeds (GroupSelection *group,
     GroupTabBar     *bar = group->mTabBar;
     GroupTabBarSlot *slot;
     int             move;
-    XRectangle      box;
+    CompRect	    box;
     Bool            updateTabBar = FALSE;
 
-    box.x = bar->mRegion->extents.x1;
-    box.y = bar->mRegion->extents.y1;
-    box.width = bar->mRegion->extents.x2 - bar->mRegion->extents.x1;
-    box.height = bar->mRegion->extents.y2 - bar->mRegion->extents.y1;
+    box.setX (bar->mRegion->extents.x1);
+    box.setY (bar->mRegion->extents.y1);
+    box.setWidth (bar->mRegion->extents.x2 - bar->mRegion->extents.x1);
+    box.setHeight (bar->mRegion->extents.y2 - bar->mRegion->extents.y1);
 
     bar->mLeftMsSinceLastMove += msSinceLastRepaint;
     bar->mRightMsSinceLastMove += msSinceLastRepaint;
@@ -2425,8 +2431,8 @@ GroupScreen::groupApplySpeeds (GroupSelection *group,
     move = bar->mLeftSpeed * bar->mLeftMsSinceLastMove / 1000;
     if (move)
     {
-	box.x += move;
-	box.width -= move;
+	box.setX (box.x () + move);
+	box.setWidth (box.width () - move);
 
 	bar->mLeftMsSinceLastMove = 0;
 	updateTabBar = TRUE;
@@ -2438,8 +2444,8 @@ GroupScreen::groupApplySpeeds (GroupSelection *group,
     {
 	/* Friction is preventing from the left border to get
 	   to its original position. */
-	box.x += bar->mLeftSpringX - bar->mRegion->extents.x1;
-	box.width -= bar->mLeftSpringX - bar->mRegion->extents.x1;
+	box.setX (box.x () + bar->mLeftSpringX - bar->mRegion->extents.x1);
+	box.setWidth (box.width () - bar->mLeftSpringX - bar->mRegion->extents.x1);
 
 	bar->mLeftMsSinceLastMove = 0;
 	updateTabBar = TRUE;
@@ -2451,7 +2457,7 @@ GroupScreen::groupApplySpeeds (GroupSelection *group,
     move = bar->mRightSpeed * bar->mRightMsSinceLastMove / 1000;
     if (move)
     {
-	box.width += move;
+	box.setWidth (box.width () + move);
 
 	bar->mRightMsSinceLastMove = 0;
 	updateTabBar = TRUE;
@@ -2463,7 +2469,7 @@ GroupScreen::groupApplySpeeds (GroupSelection *group,
     {
 	/* Friction is preventing from the right border to get
 	   to its original position. */
-	box.width += bar->mLeftSpringX - bar->mRegion->extents.x1;
+	box.setWidth (box.width () + bar->mLeftSpringX - bar->mRegion->extents.x1);
 
 	bar->mLeftMsSinceLastMove = 0;
 	updateTabBar = TRUE;
@@ -2472,7 +2478,7 @@ GroupScreen::groupApplySpeeds (GroupSelection *group,
 	bar->mRightMsSinceLastMove = 0;
 
     if (updateTabBar)
-	resizeTabBarRegion (group, &box, FALSE);
+	resizeTabBarRegion (group, box, FALSE);
 
     for (slot = bar->mSlots; slot; slot = slot->mNext)
     {

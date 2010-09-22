@@ -323,7 +323,7 @@ GroupScreen::groupSelectTerminate (CompAction         *action,
 	    if (ws.size ())
 	    {
 		/* select windows */
-		foreach (CompWindow *w, screen->windows ())
+		foreach (CompWindow *w, ws)
 		    GroupWindow::get (w)->groupSelectWindow ();
 
 		if (optionGetAutoGroup ())

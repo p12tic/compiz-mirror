@@ -154,63 +154,61 @@ GroupWindow::groupUpdateWindowProperty ()
 }
 
 unsigned int
-GroupWindow::groupUpdateResizeRectangle (XRectangle *masterGeometry,
+GroupWindow::groupUpdateResizeRectangle (CompRect   masterGeometry,
 					 bool	    damage)
 {
-    XRectangle   newGeometry;
+    CompRect     newGeometry;
     unsigned int mask = 0;
     int          newWidth, newHeight;
     int          widthDiff, heightDiff;
 
     GROUP_SCREEN (screen);
 
-    if (!mResizeGeometry || !gs->mResizeInfo)
+    if (mResizeGeometry.isEmpty () || !gs->mResizeInfo)
 	return 0;
 
-    newGeometry.x = WIN_X (window) + (masterGeometry->x -
-				 gs->mResizeInfo->mOrigGeometry.x);
-    newGeometry.y = WIN_Y (window) + (masterGeometry->y -
-				 gs->mResizeInfo->mOrigGeometry.y);
+    newGeometry.setX (WIN_X (window) + (masterGeometry.x () -
+				 gs->mResizeInfo->mOrigGeometry.x ()));
+    newGeometry.setY (WIN_Y (window) + (masterGeometry.y () -
+				 gs->mResizeInfo->mOrigGeometry.y ()));
 
-    widthDiff = masterGeometry->width - gs->mResizeInfo->mOrigGeometry.width;
-    newGeometry.width = MAX (1, WIN_WIDTH (window) + widthDiff);
-    heightDiff = masterGeometry->height - gs->mResizeInfo->mOrigGeometry.height;
-    newGeometry.height = MAX (1, WIN_HEIGHT (window) + heightDiff);
+    widthDiff = masterGeometry.width () - gs->mResizeInfo->mOrigGeometry.width ();
+    newGeometry.setWidth (MAX (1, WIN_WIDTH (window) + widthDiff));
+    heightDiff = masterGeometry.height () - gs->mResizeInfo->mOrigGeometry.height ();
+    newGeometry.setHeight (MAX (1, WIN_HEIGHT (window) + heightDiff));
 
-    if (window->constrainNewWindowSize (newGeometry.width, newGeometry.height,
+    if (window->constrainNewWindowSize (newGeometry.width (), newGeometry.height (),
 					&newWidth, &newHeight))
     {
-	newGeometry.width  = newWidth;
-	newGeometry.height = newHeight;
+	newGeometry.setSize (CompSize (newWidth, newHeight));
     }
 
     if (damage)
     {
-	if (memcmp (&newGeometry, mResizeGeometry,
-		    sizeof (newGeometry)) != 0)
+	if (mResizeGeometry != newGeometry)
 	{
 	    cWindow->addDamage ();
 	}
     }
 
-    if (newGeometry.x != mResizeGeometry->x)
+    if (newGeometry.x () != mResizeGeometry.x ())
     {
-	mResizeGeometry->x = newGeometry.x;
+	mResizeGeometry.setX (newGeometry.x ());
 	mask |= CWX;
     }
-    if (newGeometry.y != mResizeGeometry->y)
+    if (newGeometry.y () != mResizeGeometry.y ())
     {
-	mResizeGeometry->y = newGeometry.y;
+	mResizeGeometry.setY (newGeometry.y ());
 	mask |= CWY;
     }
-    if (newGeometry.width != mResizeGeometry->width)
+    if (newGeometry.width () != mResizeGeometry.width ())
     {
-	mResizeGeometry->width = newGeometry.width;
+	mResizeGeometry.setWidth (newGeometry.width ());
 	mask |= CWWidth;
     }
-    if (newGeometry.height != mResizeGeometry->height)
+    if (newGeometry.height () != mResizeGeometry.height ())
     {
-	mResizeGeometry->height = newGeometry.height;
+	mResizeGeometry.setHeight (newGeometry.height ());
 	mask |= CWHeight;
     }
 
@@ -1080,56 +1078,51 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	{
 	    GroupTabBarSlot *tmpDraggedSlot;
 	    GroupSelection  *tmpGroup;
-	    Region          slotRegion, buf;
-	    XRectangle      rect;
+	    CompRegion      slotRegion;
+	    CompRegion	    tmpNewRegion;
+	    CompRect	    rect;
 	    Bool            inSlot;
 
 	    if (slot == mDraggedSlot)
 		continue;
 
-	    slotRegion = XCreateRegion ();
-	    if (!slotRegion)
-		continue;
-
 	    if (slot->mPrev && slot->mPrev != mDraggedSlot)
 	    {
-		rect.x = slot->mPrev->mRegion->extents.x2;
+		rect.setX (slot->mPrev->mRegion->extents.x2);
 	    }
 	    else if (slot->mPrev && slot->mPrev == mDraggedSlot &&
 		     mDraggedSlot->mPrev)
 	    {
-		rect.x = mDraggedSlot->mPrev->mRegion->extents.x2;
+		rect.setX (mDraggedSlot->mPrev->mRegion->extents.x2);
 	    }
 	    else
-		rect.x = group->mTabBar->mRegion->extents.x1;
+		rect.setX (group->mTabBar->mRegion->extents.x1);
 
-	    rect.y = slot->mRegion->extents.y1;
+	    rect.setY (slot->mRegion->extents.y1);
 
 	    if (slot->mNext && slot->mNext != mDraggedSlot)
 	    {
-		rect.width = slot->mNext->mRegion->extents.x1 - rect.x;
+		rect.setWidth (slot->mNext->mRegion->extents.x1 - rect.x ());
 	    }
 	    else if (slot->mNext && slot->mNext == mDraggedSlot &&
 		     mDraggedSlot->mNext)
 	    {
-		rect.width = mDraggedSlot->mNext->mRegion->extents.x1 - rect.x;
+		rect.setWidth (mDraggedSlot->mNext->mRegion->extents.x1 - rect.x ());
 	    }
 	    else
-		rect.width = group->mTabBar->mRegion->extents.x2;
+		rect.setWidth (group->mTabBar->mRegion->extents.x2);
 
-	    rect.height = slot->mRegion->extents.y2 - slot->mRegion->extents.y1;
+	    rect.setY (slot->mRegion->extents.y1);
+	    rect.setHeight (slot->mRegion->extents.y2 - slot->mRegion->extents.y1);
 
-	    XUnionRectWithRegion (&rect, slotRegion, slotRegion);
+	    slotRegion = CompRegion (rect);
 
-	    buf = XCreateRegion ();
-	    if (!buf)
-		continue;
+	    tmpNewRegion = CompRegion (newRegion->extents.x1,
+				       newRegion->extents.y1,
+				       newRegion->extents.x2 - newRegion->extents.x1,
+				       newRegion->extents.y2 - newRegion->extents.y1);
 
-	    XIntersectRegion (newRegion, slotRegion, buf);
-	    inSlot = !XEmptyRegion (buf);
-
-	    XDestroyRegion (buf);
-	    XDestroyRegion (slotRegion);
+	    inSlot = slotRegion.intersects (tmpNewRegion);
 
 	    if (!inSlot)
 		continue;
@@ -1300,7 +1293,7 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 
 	    cReg = CompRegion (reg.extents.x1, reg.extents.y1,
 			       reg.extents.x2 - reg.extents.x1,
-			       reg.extents.y2 - reg.extents.y2);
+			       reg.extents.y2 - reg.extents.y1);
 
 	    cScreen->damageRegion (cReg);
 
@@ -1316,7 +1309,7 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 
 	    cReg = CompRegion (reg.extents.x1, reg.extents.y1,
 			       reg.extents.x2 - reg.extents.x1,
-			       reg.extents.y2 - reg.extents.y2);
+			       reg.extents.y2 - reg.extents.y1);
 
 	    cScreen->damageRegion (cReg);
 	}
@@ -1438,12 +1431,10 @@ GroupScreen::handleEvent (XEvent      *event)
 		if (gw->mGroup)
 		{			
 		    int        i;
-		    XRectangle rect;
-
-		    rect.x      = event->xclient.data.l[0];
-		    rect.y      = event->xclient.data.l[1];
-		    rect.width  = event->xclient.data.l[2];
-		    rect.height = event->xclient.data.l[3];
+		    CompRect rect (event->xclient.data.l[0],
+			      	   event->xclient.data.l[1],
+			      	   event->xclient.data.l[2],
+			      	   event->xclient.data.l[3]);
 
 		    for (i = 0; i < gw->mGroup->mNWins; i++)
 		    {
@@ -1451,9 +1442,9 @@ GroupScreen::handleEvent (XEvent      *event)
 			GroupWindow *gcw;
 
 			gcw = GroupWindow::get (cw);
-			if (gcw->mResizeGeometry)
+			if (!gcw->mResizeGeometry.isEmpty ())
 			{
-			    if (gcw->groupUpdateResizeRectangle (&rect, TRUE))
+			    if (gcw->groupUpdateResizeRectangle (rect, TRUE))
 			    {
 				gcw->cWindow->addDamage ();
 			    }
@@ -1632,10 +1623,9 @@ GroupWindow::resizeNotify (int dx,
 {
     GROUP_SCREEN (screen);
 
-    if (mResizeGeometry)
+    if (!mResizeGeometry.isEmpty ())
     {
-	free (mResizeGeometry);
-	mResizeGeometry = NULL;
+	mResizeGeometry = CompRect (0, 0, 0, 0);
     }
 
     window->resizeNotify (dx, dy, dwidth, dheight);
@@ -1740,7 +1730,7 @@ GroupWindow::moveNotify (int    dx,
 	else if (!viewportChange)
 	{
 	    gw->mNeedsPosSync = TRUE;
-	    gw->groupEnqueueMoveNotify (dx, dy, immediate, FALSE);
+	    gw->groupEnqueueMoveNotify (dx, dy, immediate, true);
 	}
     }
 }
@@ -1780,16 +1770,12 @@ GroupWindow::grabNotify (int          x,
 
 		if (doResizeAll && !(cw->state () & MAXIMIZE_STATE))
 		{
-		    if (!gcw->mResizeGeometry)
+		    if (gcw->mResizeGeometry.isEmpty ())
 		    {
-			gcw->mResizeGeometry = (XRectangle *) malloc (sizeof (XRectangle));
-		    }
-		    if (gcw->mResizeGeometry)
-		    {
-			gcw->mResizeGeometry->x      = WIN_X (cw);
-			gcw->mResizeGeometry->y      = WIN_Y (cw);
-			gcw->mResizeGeometry->width  = WIN_WIDTH (cw);
-			gcw->mResizeGeometry->height = WIN_HEIGHT (cw);
+			gcw->mResizeGeometry = CompRect (WIN_X (cw),
+							 WIN_Y (cw),
+							 WIN_WIDTH (cw),
+							 WIN_HEIGHT (cw));
 		    }
 		}
 	    }
@@ -1803,10 +1789,10 @@ GroupWindow::grabNotify (int          x,
 	    if (gs->mResizeInfo)
 	    {
 		gs->mResizeInfo->mResizedWindow       = window;
-		gs->mResizeInfo->mOrigGeometry.x      = WIN_X (window);
-		gs->mResizeInfo->mOrigGeometry.y      = WIN_Y (window);
-		gs->mResizeInfo->mOrigGeometry.width  = WIN_WIDTH (window);
-		gs->mResizeInfo->mOrigGeometry.height = WIN_HEIGHT (window);
+		gs->mResizeInfo->mOrigGeometry = CompRect (WIN_X (window),
+							   WIN_Y (window),
+							   WIN_WIDTH (window),
+							   WIN_HEIGHT (window));
 	    }
 	}
 
@@ -1827,16 +1813,15 @@ GroupWindow::ungrabNotify ()
     if (mGroup && !gs->mIgnoreMode && !gs->mQueued)
     {
 	int        i;
-	XRectangle rect;
-
+	CompRect   rect;
 	gs->groupDequeueMoveNotifies ();
 
 	if (gs->mResizeInfo)
 	{
-	    rect.x      = WIN_X (window);
-	    rect.y      = WIN_Y (window);
-	    rect.width  = WIN_WIDTH (window);
-	    rect.height = WIN_HEIGHT (window);
+	    rect = CompRect (WIN_X (window),
+			     WIN_Y (window),
+			     WIN_WIDTH (window),
+			     WIN_HEIGHT (window));
 	}
 
 	for (i = 0; i < mGroup->mNWins; i++)
@@ -1849,23 +1834,23 @@ GroupWindow::ungrabNotify ()
 	    {
 		GROUP_WINDOW (cw);
 
-		if (gw->mResizeGeometry)
+		if (!gw->mResizeGeometry.isEmpty ())
 		{
 		    unsigned int mask;
 
-		    gw->mResizeGeometry->x      = WIN_X (cw);
-		    gw->mResizeGeometry->y      = WIN_Y (cw);
-		    gw->mResizeGeometry->width  = WIN_WIDTH (cw);
-		    gw->mResizeGeometry->height = WIN_HEIGHT (cw);
+		    gw->mResizeGeometry = CompRect (WIN_X (cw),
+						    WIN_Y (cw),
+						    WIN_WIDTH (cw),
+						    WIN_HEIGHT (cw));
 
-		    mask = gw->groupUpdateResizeRectangle (&rect, FALSE);
+		    mask = gw->groupUpdateResizeRectangle (rect, FALSE);
 		    if (mask)
 		    {
 			XWindowChanges xwc;
-			xwc.x      = gw->mResizeGeometry->x;
-			xwc.y      = gw->mResizeGeometry->y;
-			xwc.width  = gw->mResizeGeometry->width;
-			xwc.height = gw->mResizeGeometry->height;
+			xwc.x      = gw->mResizeGeometry.x ();
+			xwc.y      = gw->mResizeGeometry.y ();
+			xwc.width  = gw->mResizeGeometry.width ();
+			xwc.height = gw->mResizeGeometry.height ();
 
 			if (window->mapNum () && (mask & (CWWidth | CWHeight)))
 			    window->sendSyncRequest ();
@@ -1874,8 +1859,7 @@ GroupWindow::ungrabNotify ()
 		    }
 		    else
 		    {
-			free (mResizeGeometry);
-			gw->mResizeGeometry =  NULL;
+			mResizeGeometry = CompRect (0, 0, 0, 0);
 		    }
 		}
 		if (mNeedsPosSync)
@@ -1944,7 +1928,7 @@ GroupWindow::damageRect (bool	        initial,
 	mWindowState = WindowNormal;
     }
 
-    if (mResizeGeometry)
+    if (!mResizeGeometry.isEmpty ())
     {
 	BoxRec box;
 	float  dummy = 1;
@@ -1971,7 +1955,7 @@ GroupWindow::damageRect (bool	        initial,
 
 	cReg = CompRegion (reg->extents.x1, reg->extents.y1,
 		           reg->extents.x2 - reg->extents.x1,
-		           reg->extents.y2 - reg->extents.y2);
+		           reg->extents.y2 - reg->extents.y1);
 
 	if (vx || vy)
 	    XDestroyRegion (reg);

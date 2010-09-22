@@ -385,7 +385,7 @@ typedef struct _GroupWindowHideInfo {
 
 typedef struct _GroupResizeInfo {
     CompWindow *mResizedWindow;
-    XRectangle mOrigGeometry;
+    CompRect    mOrigGeometry;
 } GroupResizeInfo;
 
 /*
@@ -700,7 +700,7 @@ class GroupScreen :
 
 	void
 	resizeTabBarRegion (GroupSelection *group,
-			    XRectangle     *box,
+			    CompRect       &box,
 			    Bool           syncIPW);
 
 	void
@@ -947,8 +947,8 @@ class GroupWindow :
 	groupUpdateWindowProperty ();
 
 	unsigned int
-	groupUpdateResizeRectangle (XRectangle *masterGeometry,
-				 bool	    damage);
+	groupUpdateResizeRectangle (CompRect	    masterGeometry,
+				    bool	    damage);
 
 	void
 	groupDeleteGroupWindow ();
@@ -1002,7 +1002,7 @@ class GroupWindow :
 	GroupWindowState    mWindowState;
 	GroupWindowHideInfo *mWindowHideInfo;
 
-	XRectangle *mResizeGeometry;
+	CompRect	    mResizeGeometry;
 
 	/* For tab animation */
 	int    mAnimateState;

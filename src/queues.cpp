@@ -122,7 +122,9 @@ GroupScreen::groupDequeueMoveNotifies ()
     }
 
     if (syncs)
+    {
 	groupDequeueSyncs (syncs);
+    }
 
     mQueued = FALSE;
 }
