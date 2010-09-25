@@ -135,7 +135,7 @@ GroupScreen::groupApplyInitialActions ()
        be above the other windows in the group) */
     while (rit != screen->windows ().rend ())
     {
-	Bool     tabbed;
+	bool     tabbed;
 	long int id;
 	GLushort color[3];
 	CompWindow *w = *rit;
@@ -176,7 +176,7 @@ GroupScreen::groupApplyInitialActions ()
 	rit++;
     }
 
-    return FALSE;
+    return false;
 }
 
 /*

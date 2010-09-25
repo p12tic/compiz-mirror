@@ -48,10 +48,10 @@ GroupWindow::groupWindowInRegion (CompRegion src,
     if (area >= WIN_WIDTH (window) * WIN_HEIGHT (window) * precision)
     {
 	src = window->region ().subtracted (src);
-	return TRUE;
+	return true;
     }
 
-    return FALSE;
+    return false;
 }
 
 /*
@@ -140,7 +140,7 @@ GroupWindow::groupDeleteSelectionWindow ()
 	free (buf);
     }
 
-    mInSelection = FALSE;
+    mInSelection = false;
 }
 
 /*
@@ -197,7 +197,7 @@ GroupWindow::groupSelectWindow ()
 
 		if (gw->mGroup == group)
 		{
-		    gw->mInSelection = FALSE;
+		    gw->mInSelection = false;
 		    cWindow->addDamage ();
 		    continue;
 		}

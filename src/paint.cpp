@@ -436,7 +436,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     GroupSelection *group;
     bool           status;
 
-    mPainted = FALSE;
+    mPainted = false;
     mVpX = screen->vp ().x ();
     mVpY = screen->vp ().y ();
 
@@ -486,7 +486,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	}
 	else  if (mGrabState == ScreenGrabSelect)
 	{
-	    groupPaintSelectionOutline (attrib, transform, output, FALSE);
+	    groupPaintSelectionOutline (attrib, transform, output, false);
 	}
     }
 
@@ -508,7 +508,7 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 
     if ((mVpX == screen->vp ().x ()) && (mVpY == screen->vp ().y ()))
     {
-	mPainted = TRUE;
+	mPainted = true;
 
 	if ((mGrabState == ScreenGrabTabDrag) &&
 	    mDraggedSlot && mDragged)
@@ -526,7 +526,7 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	}
 	else if (mGrabState == ScreenGrabSelect)
 	{
-	    groupPaintSelectionOutline (attrib, transform, output, TRUE);
+	    groupPaintSelectionOutline (attrib, transform, output, true);
 	}
     }
 }
@@ -550,12 +550,12 @@ GroupScreen::donePaint ()
 	    cScreen->damageScreen ();
 	else if (group->mTabBar)
 	{
-	    bool needDamage = FALSE;
+	    bool needDamage = false;
 
 	    if ((group->mTabBar->mState == PaintFadeIn) ||
 		(group->mTabBar->mState == PaintFadeOut))
 	    {
-		needDamage = TRUE;
+		needDamage = true;
 	    }
 
 	    if (group->mTabBar->mTextLayer)
@@ -563,15 +563,15 @@ GroupScreen::donePaint ()
 		if ((group->mTabBar->mTextLayer->mState == PaintFadeIn) ||
 		    (group->mTabBar->mTextLayer->mState == PaintFadeOut))
 		{
-		    needDamage = TRUE;
+		    needDamage = true;
 		}
 	    }
 
 	    if (group->mTabBar->mBgAnimation)
-		needDamage = TRUE;
+		needDamage = true;
 
 	    if (mDraggedSlot)
-		needDamage = TRUE;
+		needDamage = true;
 
 	    if (needDamage)
 		groupDamageTabBarRegion (group);
@@ -952,9 +952,9 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
     }
     else
     {
-	doRotate   = FALSE;
-	doTabbing  = FALSE;
-	showTabbar = FALSE;
+	doRotate   = false;
+	doTabbing  = false;
+	showTabbar = false;
     }
 
     if (mWindowHideInfo)

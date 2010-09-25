@@ -156,8 +156,8 @@ struct _GroupPendingMoves {
     CompWindow        *w;
     int               dx;
     int               dy;
-    Bool              immediate;
-    Bool              sync;
+    bool              immediate;
+    bool              sync;
     GroupPendingMoves *next;
 };
 
@@ -351,7 +351,7 @@ struct _GroupSelection {
     GroupTabBarSlot             *mNextTopTab;
 
     /* check focus stealing prevention after changing tabs */
-    Bool mCheckFocusAfterTabChange;
+    bool mCheckFocusAfterTabChange;
 
     GroupTabBar *mTabBar;
 
@@ -367,7 +367,7 @@ struct _GroupSelection {
     unsigned int mGrabMask;
 
     Window mInputPrevention;
-    Bool   mIpwMapped;
+    bool   mIpwMapped;
 
     GLushort mColor[4];
 };
@@ -548,12 +548,12 @@ class GroupScreen :
 	void
 	groupMinimizeWindows (CompWindow     *top,
 			   GroupSelection *group,
-			   Bool           minimize);
+			   bool           minimize);
 
 	void
 	groupShadeWindows (CompWindow     *top,
 			GroupSelection *group,
-			Bool           shade);
+			bool           shade);
 
 	void
 	groupDeleteGroup (GroupSelection *group);
@@ -616,7 +616,7 @@ class GroupScreen :
 
 	void
 	groupTabSetVisibility (GroupSelection *group,
-				Bool           visible,
+				bool           visible,
 				unsigned int   mask);
 
 	void
@@ -667,7 +667,7 @@ class GroupScreen :
 
 	void
 	groupStartTabbingAnimation (GroupSelection *group,
-				   Bool           tab);
+				   bool           tab);
 
 	void
 	groupTabGroup (CompWindow *main);
@@ -701,7 +701,7 @@ class GroupScreen :
 	void
 	resizeTabBarRegion (GroupSelection *group,
 			    CompRect       &box,
-			    Bool           syncIPW);
+			    bool           syncIPW);
 
 	void
 	groupInsertTabBarSlotBefore (GroupTabBar     *bar,
@@ -720,7 +720,7 @@ class GroupScreen :
 	void
 	groupUnhookTabBarSlot (GroupTabBar     *bar,
 				GroupTabBarSlot *slot,
-				Bool            temporary);
+				bool            temporary);
 
 	void
 	groupDeleteTabBarSlot (GroupTabBar     *bar,
@@ -798,14 +798,14 @@ class GroupScreen :
 	CompTimer       mShowDelayTimeoutHandle;
 
 	/* For selection */
-	Bool mPainted;
+	bool mPainted;
 	int  mVpX, mVpY;
 	int  mX1, mY1, mX2, mY2;
 
 	/* For d&d */
 	GroupTabBarSlot   *mDraggedSlot;
 	CompTimer	  mDragHoverTimeoutHandle;
-	Bool              mDragged;
+	bool              mDragged;
 	int               mPrevX, mPrevY; /* Buffer for mouse coordinates */
 
 	CompTimer	  mInitialActionsTimeoutHandle;
@@ -940,7 +940,7 @@ class GroupWindow :
 	bool
 	groupCheckWindowProperty (CompWindow *w,
 			       long int   *id,
-			       Bool       *tabbed,
+			       bool       *tabbed,
 			       GLushort   *color);
 
 	void
@@ -986,16 +986,16 @@ class GroupWindow :
     public:
 
 	GroupSelection *mGroup;
-	Bool mInSelection;
+	bool mInSelection;
 
 	/* To prevent freeing the group
 	property in groupFiniWindow. */
-	Bool mReadOnlyProperty;
+	bool mReadOnlyProperty;
 
 	/* For the tab bar */
 	GroupTabBarSlot *mSlot;
 
-	Bool mNeedsPosSync;
+	bool mNeedsPosSync;
 
 	GlowQuad *mGlowQuads;
 

@@ -83,7 +83,7 @@ GroupScreen::groupDequeueSyncs (GroupPendingSyncs *syncs)
 	if (gw->mNeedsPosSync)
 	{
 	    sync->w->syncPosition ();
-	    gw->mNeedsPosSync = FALSE;
+	    gw->mNeedsPosSync = false;
 	}
 
 	free (sync);
@@ -97,7 +97,7 @@ GroupScreen::groupDequeueMoveNotifies ()
     GroupPendingMoves *move;
     GroupPendingSyncs *syncs = NULL, *sync;
 
-    mQueued = TRUE;
+    mQueued = true;
 
     while (mPendingMoves)
     {
@@ -112,7 +112,7 @@ GroupScreen::groupDequeueMoveNotifies ()
 	    {
 		GROUP_WINDOW (move->w);
 
-		gw->mNeedsPosSync = TRUE;
+		gw->mNeedsPosSync = true;
 		sync->w          = move->w;
 		sync->next       = syncs;
 		syncs            = sync;
@@ -126,7 +126,7 @@ GroupScreen::groupDequeueMoveNotifies ()
 	groupDequeueSyncs (syncs);
     }
 
-    mQueued = FALSE;
+    mQueued = false;
 }
 
 void
@@ -172,7 +172,7 @@ GroupScreen::groupDequeueGrabNotifies ()
 {
     GroupPendingGrabs *grab;
 
-    mQueued = TRUE;
+    mQueued = true;
 
     while (mPendingGrabs)
     {
@@ -185,7 +185,7 @@ GroupScreen::groupDequeueGrabNotifies ()
 	free (grab);
     }
 
-    mQueued = FALSE;
+    mQueued = false;
 }
 
 void
@@ -224,7 +224,7 @@ GroupScreen::groupDequeueUngrabNotifies ()
 {
     GroupPendingUngrabs *ungrab;
 
-    mQueued = TRUE;
+    mQueued = true;
 
     while (mPendingUngrabs)
     {
@@ -236,7 +236,7 @@ GroupScreen::groupDequeueUngrabNotifies ()
 	free (ungrab);
     }
 
-    mQueued = FALSE;
+    mQueued = false;
 }
 
 bool
