@@ -942,7 +942,8 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
 
 		for (slot = group->mTabBar->mSlots; slot; slot = slot->mNext)
 		{
-		    if (XPointInRegion (slot->mRegion, xRoot, yRoot))
+		    if (slot->mRegion.contains (CompPoint (xRoot,
+							   yRoot)))
 		    {
 			mDraggedSlot = slot;
 			/* The slot isn't dragged yet */
@@ -1009,7 +1010,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 {
     GroupSelection *group;
     int            vx, vy;
-    Region         newRegion;
+    CompRegion     newRegion;
     Bool           inserted = FALSE;
     Bool           wasInTabBar = FALSE;
 
@@ -1032,19 +1033,15 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
     GROUP_WINDOW (mDraggedSlot->mWindow);
 
-    newRegion = XCreateRegion ();
-    if (!newRegion)
-	return;
-
-    XUnionRegion (newRegion, mDraggedSlot->mRegion, newRegion);
+    newRegion = mDraggedSlot->mRegion;
 
     groupGetDrawOffsetForSlot (mDraggedSlot, vx, vy);
-    XOffsetRegion (newRegion, vx, vy);
+    newRegion.translate (vx, vy);
 
     for (group = mGroups; group; group = group->mNext)
     {
 	Bool            inTabBar;
-	Region          clip, buf;
+	CompRegion      clip, buf;
 	GroupTabBarSlot *slot;
 
 	if (!group->mTabBar || !HAS_TOP_WIN (group))
@@ -1052,22 +1049,11 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	/* create clipping region */
 	clip = GroupWindow::get (TOP_TAB (group))->groupGetClippingRegion ();
-	if (!clip)
-	    continue;
 
-	buf = XCreateRegion ();
-	if (!buf)
-	{
-	    XDestroyRegion (clip);
-	    continue;
-	}
+	buf = newRegion.intersected (group->mTabBar->mRegion);
+	buf = buf.subtracted (clip);
 
-	XIntersectRegion (newRegion, group->mTabBar->mRegion, buf);
-	XSubtractRegion (buf, clip, buf);
-	XDestroyRegion (clip);
-
-	inTabBar = !XEmptyRegion (buf);
-	XDestroyRegion (buf);
+	inTabBar = !buf.isEmpty ();
 
 	if (!inTabBar)
 	    continue;
@@ -1079,7 +1065,6 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    GroupTabBarSlot *tmpDraggedSlot;
 	    GroupSelection  *tmpGroup;
 	    CompRegion      slotRegion;
-	    CompRegion	    tmpNewRegion;
 	    CompRect	    rect;
 	    Bool            inSlot;
 
@@ -1088,41 +1073,36 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	    if (slot->mPrev && slot->mPrev != mDraggedSlot)
 	    {
-		rect.setX (slot->mPrev->mRegion->extents.x2);
+		rect.setX (slot->mPrev->mRegion.boundingRect ().x2 ());
 	    }
 	    else if (slot->mPrev && slot->mPrev == mDraggedSlot &&
 		     mDraggedSlot->mPrev)
 	    {
-		rect.setX (mDraggedSlot->mPrev->mRegion->extents.x2);
+		rect.setX (mDraggedSlot->mPrev->mRegion.boundingRect ().x2 ());
 	    }
 	    else
-		rect.setX (group->mTabBar->mRegion->extents.x1);
+		rect.setX (group->mTabBar->mRegion.boundingRect ().x1 ());
 
-	    rect.setY (slot->mRegion->extents.y1);
+	    rect.setY (slot->mRegion.boundingRect ().y1 ());
 
 	    if (slot->mNext && slot->mNext != mDraggedSlot)
 	    {
-		rect.setWidth (slot->mNext->mRegion->extents.x1 - rect.x ());
+		rect.setWidth (slot->mNext->mRegion.boundingRect ().x1 () - rect.x ());
 	    }
 	    else if (slot->mNext && slot->mNext == mDraggedSlot &&
 		     mDraggedSlot->mNext)
 	    {
-		rect.setWidth (mDraggedSlot->mNext->mRegion->extents.x1 - rect.x ());
+		rect.setWidth (mDraggedSlot->mNext->mRegion.boundingRect ().x1 () - rect.x ());
 	    }
 	    else
-		rect.setWidth (group->mTabBar->mRegion->extents.x2);
+		rect.setWidth (group->mTabBar->mRegion.boundingRect ().x2 ());
 
-	    rect.setY (slot->mRegion->extents.y1);
-	    rect.setHeight (slot->mRegion->extents.y2 - slot->mRegion->extents.y1);
+	    rect.setY (slot->mRegion.boundingRect ().y1 ());
+	    rect.setHeight (slot->mRegion.boundingRect ().y2 () - slot->mRegion.boundingRect ().y1 ());
 
 	    slotRegion = CompRegion (rect);
 
-	    tmpNewRegion = CompRegion (newRegion->extents.x1,
-				       newRegion->extents.y1,
-				       newRegion->extents.x2 - newRegion->extents.x1,
-				       newRegion->extents.y2 - newRegion->extents.y1);
-
-	    inSlot = slotRegion.intersects (tmpNewRegion);
+	    inSlot = slotRegion.intersects (newRegion);
 
 	    if (!inSlot)
 		continue;
@@ -1168,9 +1148,9 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    mDragged = FALSE;
 	    inserted = TRUE;
 
-	    if ((tmpDraggedSlot->mRegion->extents.x1 +
-		 tmpDraggedSlot->mRegion->extents.x2 + (2 * vx)) / 2 >
-		(slot->mRegion->extents.x1 + slot->mRegion->extents.x2) / 2)
+	    if ((tmpDraggedSlot->mRegion.boundingRect ().x1 () +
+		 tmpDraggedSlot->mRegion.boundingRect ().x2 () + (2 * vx)) / 2 >
+		(slot->mRegion.boundingRect ().x1 () + slot->mRegion.boundingRect ().x2 ()) / 2)
 	    {
 		groupInsertTabBarSlotAfter (group->mTabBar,
 					    tmpDraggedSlot, slot);
@@ -1197,8 +1177,6 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    break;
     }
 
-    XDestroyRegion (newRegion);
-
     if (!inserted)
     {
 	CompWindow     *draggedSlotWindow = mDraggedSlot->mWindow;
@@ -1217,10 +1195,10 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	else if (gw->mGroup && gw->mGroup->mTopTab)
 	{
 	    groupRecalcTabBarPos (gw->mGroup,
-				  (gw->mGroup->mTabBar->mRegion->extents.x1 +
-				   gw->mGroup->mTabBar->mRegion->extents.x2) / 2,
-				  gw->mGroup->mTabBar->mRegion->extents.x1,
-				  gw->mGroup->mTabBar->mRegion->extents.x2);
+				  (gw->mGroup->mTabBar->mRegion.boundingRect ().x1 () +
+				   gw->mGroup->mTabBar->mRegion.boundingRect ().x2 ()) / 2,
+				  gw->mGroup->mTabBar->mRegion.boundingRect ().x1 (),
+				  gw->mGroup->mTabBar->mRegion.boundingRect ().x2 ());
 	}
 
 	/* to remove the painted slot */
@@ -1253,7 +1231,7 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 	int    dx, dy;
 	int    vx, vy;
 	REGION reg;
-	Region draggedRegion = mDraggedSlot->mRegion;
+	CompRegion &draggedRegion = mDraggedSlot->mRegion;
 
 	reg.rects = &reg.extents;
 	reg.numRects = 1;
@@ -1270,7 +1248,6 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 	    if (!mDragged)
 	    {
 		GroupSelection *group;
-		BoxRec         *box;
 
 		GROUP_WINDOW (mDraggedSlot->mWindow);
 
@@ -1279,17 +1256,16 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 		for (group = mGroups; group; group = group->mNext)
 		    groupTabSetVisibility (group, TRUE, PERMANENT);
 
-		box = &gw->mGroup->mTabBar->mRegion->extents;
-		groupRecalcTabBarPos (gw->mGroup, (box->x1 + box->x2) / 2,
-				      box->x1, box->x2);
+		CompRect box = gw->mGroup->mTabBar->mRegion.boundingRect ();		groupRecalcTabBarPos (gw->mGroup, (box.x1 () + box.x2 ()) / 2,
+				      box.x1 (), box.x2 ());
 	    }
 
 	    groupGetDrawOffsetForSlot (mDraggedSlot, vx, vy);
 
-	    reg.extents.x1 = draggedRegion->extents.x1 + vx;
-	    reg.extents.y1 = draggedRegion->extents.y1 + vy;
-	    reg.extents.x2 = draggedRegion->extents.x2 + vx;
-	    reg.extents.y2 = draggedRegion->extents.y2 + vy;
+	    reg.extents.x1 = draggedRegion.boundingRect ().x1 () + vx;
+	    reg.extents.y1 = draggedRegion.boundingRect ().y1 () + vy;
+	    reg.extents.x2 = draggedRegion.boundingRect ().x2 () + vx;
+	    reg.extents.y2 = draggedRegion.boundingRect ().y2 () + vy;
 
 	    cReg = CompRegion (reg.extents.x1, reg.extents.y1,
 			       reg.extents.x2 - reg.extents.x1,
@@ -1297,15 +1273,15 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 
 	    cScreen->damageRegion (cReg);
 
-	    XOffsetRegion (mDraggedSlot->mRegion, dx, dy);
+	    mDraggedSlot->mRegion.translate (dx, dy);
 	    mDraggedSlot->mSpringX =
-		(mDraggedSlot->mRegion->extents.x1 +
-		 mDraggedSlot->mRegion->extents.x2) / 2;
+		(mDraggedSlot->mRegion.boundingRect ().x1 () +
+		 mDraggedSlot->mRegion.boundingRect ().x2 ()) / 2;
 
-	    reg.extents.x1 = draggedRegion->extents.x1 + vx;
-	    reg.extents.y1 = draggedRegion->extents.y1 + vy;
-	    reg.extents.x2 = draggedRegion->extents.x2 + vx;
-	    reg.extents.y2 = draggedRegion->extents.y2 + vy;
+	    reg.extents.x1 = draggedRegion.boundingRect ().x1 () + vx;
+	    reg.extents.y1 = draggedRegion.boundingRect ().y1 () + vy;
+	    reg.extents.x2 = draggedRegion.boundingRect ().x2 () + vx;
+	    reg.extents.y2 = draggedRegion.boundingRect ().y2 () + vy;
 
 	    cReg = CompRegion (reg.extents.x1, reg.extents.y1,
 			       reg.extents.x2 - reg.extents.x1,
@@ -1698,7 +1674,7 @@ GroupWindow::moveNotify (int    dx,
 
 	for (slot = bar->mSlots; slot; slot = slot->mNext)
 	{
-	    XOffsetRegion (slot->mRegion, dx, dy);
+	    slot->mRegion.translate (dx, dy);
 	    slot->mSpringX += dx;
 	}
     }
@@ -1940,25 +1916,18 @@ GroupWindow::damageRect (bool	        initial,
     if (mSlot)
     {
 	int    vx, vy;
-	Region reg;
-	CompRegion cReg;
+	CompRegion reg;
 
 	gs->groupGetDrawOffsetForSlot (mSlot, vx, vy);
 	if (vx || vy)
 	{
-	    reg = XCreateRegion ();
-	    XUnionRegion (reg, mSlot->mRegion, reg);
-	    XOffsetRegion (reg, vx, vy);
+	    reg = reg.united (mSlot->mRegion);
+	    reg.translate (vx, vy);
 	}
 	else
 	    reg = mSlot->mRegion;
 
-	cReg = CompRegion (reg->extents.x1, reg->extents.y1,
-		           reg->extents.x2 - reg->extents.x1,
-		           reg->extents.y2 - reg->extents.y1);
-
-	if (vx || vy)
-	    XDestroyRegion (reg);
+	screen->damageRegion (reg);
     }
 
     return status;

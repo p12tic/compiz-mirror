@@ -42,8 +42,8 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
 
     GROUP_WINDOW (w);
 
-    tw = slot->mRegion->extents.x2 - slot->mRegion->extents.x1;
-    th = slot->mRegion->extents.y2 - slot->mRegion->extents.y1;
+    tw = slot->mRegion.boundingRect ().width ();
+    th = slot->mRegion.boundingRect ().height ();
 
     /* Wrap drawWindowGeometry to make sure the general
        drawWindowGeometry function is used */
@@ -97,9 +97,9 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
 
 	groupGetDrawOffsetForSlot (slot, vx, vy);
 
-	wAttrib.xTranslate = (slot->mRegion->extents.x1 +
-			      slot->mRegion->extents.x2) / 2 + vx;
-	wAttrib.yTranslate = slot->mRegion->extents.y1 + vy;
+	wAttrib.xTranslate = (slot->mRegion.boundingRect ().x1 () +
+			      slot->mRegion.boundingRect ().x2 ()) / 2 + vx;
+	wAttrib.yTranslate = slot->mRegion.boundingRect ().y1 () + vy;
 
 	wTransform.translate (wAttrib.xTranslate, wAttrib.yTranslate, 0.0f);
 	wTransform.scale (wAttrib.xScale, wAttrib.yScale, 1.0f);
@@ -130,7 +130,7 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 			       const GLWindowPaintAttrib &attrib,
 			       const GLMatrix		 &transform,
 			       unsigned int		 mask,
-			       Region			 clipRegion)
+			       CompRegion		 clipRegion)
 {
     CompWindow      *topTab;
     GroupTabBar     *bar = group->mTabBar;
@@ -170,12 +170,12 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 		layer = bar->mBgLayer;
 
 		/* handle the repaint of the background */
-		newWidth = bar->mRegion->extents.x2 - bar->mRegion->extents.x1;
+		newWidth = bar->mRegion.boundingRect ().x2 () - bar->mRegion.boundingRect ().x1 ();
 		if (layer && (newWidth > layer->mTexWidth))
 		    newWidth = layer->mTexWidth;
 
-		wScale = (double) (bar->mRegion->extents.x2 -
-				   bar->mRegion->extents.x1) / (double) newWidth;
+		wScale = (double) (bar->mRegion.boundingRect ().x2 () -
+				   bar->mRegion.boundingRect ().x1 ()) / (double) newWidth;
 
 		/* FIXME: maybe move this over to groupResizeTabBarRegion -
 		   the only problem is that we would have 2 redraws if
@@ -184,7 +184,7 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 		    groupRenderTabBarBackground (group);
 
 		bar->mOldWidth = newWidth;
-		box.extents = bar->mRegion->extents;
+		box.extents = bar->mRegion.handle ()->extents;
 	    }
 	    break;
 
@@ -192,7 +192,7 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 	    if (group->mTopTab != mDraggedSlot)
 	    {
 		layer = bar->mSelectionLayer;
-		box.extents = group->mTopTab->mRegion->extents;
+		box.extents = group->mTopTab->mRegion.handle ()->extents;
 	    }
 	    break;
 
@@ -222,15 +222,15 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 	    {
 		layer = bar->mTextLayer;
 
-		box.extents.x1 = bar->mRegion->extents.x1 + 5;
-		box.extents.x2 = bar->mRegion->extents.x1 +
+		box.extents.x1 = bar->mRegion.boundingRect ().x1 () + 5;
+		box.extents.x2 = bar->mRegion.boundingRect ().x1 () +
 		                 bar->mTextLayer->mTexWidth + 5;
-		box.extents.y1 = bar->mRegion->extents.y2 -
+		box.extents.y1 = bar->mRegion.boundingRect ().y2 () -
 		                 bar->mTextLayer->mTexHeight - 5;
-		box.extents.y2 = bar->mRegion->extents.y2 - 5;
+		box.extents.y2 = bar->mRegion.boundingRect ().y2 () - 5;
 
-		if (box.extents.x2 > bar->mRegion->extents.x2)
-		    box.extents.x2 = bar->mRegion->extents.x2;
+		if (box.extents.x2 > bar->mRegion.boundingRect ().x2 ())
+		    box.extents.x2 = bar->mRegion.boundingRect ().x2 ();
 
 		/* recalculate the alpha again for text fade... */
 		if (layer->mState == PaintFadeIn)
@@ -251,7 +251,7 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 	    {
 		GLTexture::Matrix matrix = tex->matrix ();
 		GLTexture::MatrixList matl;
-		CompRegion reg, compClipReg;
+		CompRegion reg;
 
 		/* remove the old x1 and y1 so we have a relative value */
 		box.extents.x2 -= box.extents.x1;
@@ -281,15 +281,10 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 		reg = CompRegion (box.extents.x1, box.extents.y1,
 				  box.extents.x2 - box.extents.x1,
 				  box.extents.y2 - box.extents.y1);
-
-		compClipReg = CompRegion (clipRegion->extents.x1,
-					  clipRegion->extents.y1,
-				  clipRegion->extents.x2 - clipRegion->extents.x1,
-				  clipRegion->extents.y2 - clipRegion->extents.y1);
 		
 		gwTopTab->gWindow->geometry ().reset ();
 
-		gwTopTab->gWindow->glAddGeometry (matl, reg, compClipReg);
+		gwTopTab->gWindow->glAddGeometry (matl, reg, clipRegion);
 
 		if (gwTopTab->gWindow->geometry ().vertices)
 		{
@@ -1128,7 +1123,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	if (showTabbar)
 	{
 	    gWindow->glPaintSetEnabled (this, false);
-	    gs->groupPaintTabBar (mGroup, wAttrib, wTransform, mask, region.handle ());
+	    gs->groupPaintTabBar (mGroup, wAttrib, wTransform, mask, region);
 	    gWindow->glPaintSetEnabled (this, true);
 	}
     }

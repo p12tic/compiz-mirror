@@ -261,7 +261,7 @@ struct _GroupTabBarSlot {
     GroupTabBarSlot *mPrev;
     GroupTabBarSlot *mNext;
 
-    Region mRegion;
+    CompRegion mRegion;
 
     CompWindow *mWindow;
 
@@ -292,7 +292,7 @@ typedef struct _GroupTabBar {
 
     PaintState mState;
     int        mAnimationTime;
-    Region     mRegion;
+    CompRegion mRegion;
     int        mOldWidth;
 
     CompTimer mTimeoutHandle;
@@ -481,7 +481,7 @@ class GroupScreen :
 		       const GLWindowPaintAttrib &attrib,
 		       const GLMatrix		 &transform,
 		       unsigned int		 mask,
-		       Region			 clipRegion);
+		       CompRegion		 clipRegion);
 
 	void
 	groupPaintSelectionOutline (const GLScreenPaintAttrib sa,
@@ -516,7 +516,7 @@ class GroupScreen :
 			      CompWindowList &windows);
 
 	CompWindowList
-	groupFindWindowsInRegion (Region     reg);
+	groupFindWindowsInRegion (CompRegion     reg);
 
 	bool
 	groupSelectSingle (CompAction         *action,
@@ -655,12 +655,12 @@ class GroupScreen :
 	void
 	groupUpdateTabBars (Window enteredWin);
 
-	Region
+	CompRegion
 	groupGetConstrainRegion ();
 
 	void
 	groupApplyConstraining (GroupSelection *group,
-				Region	    constrainRegion,
+				CompRegion  constrainRegion,
 				Window	    constrainedWindow,
 				int	    dx,
 				int	    dy);
@@ -917,7 +917,7 @@ class GroupWindow :
 	/* selection.c */
 
 	bool
-	groupWindowInRegion (Region src,
+	groupWindowInRegion (CompRegion src,
 			  float  precision);
 
 	void
@@ -962,7 +962,7 @@ class GroupWindow :
 
 	/* tab.cpp */
 
-	Region
+	CompRegion
 	groupGetClippingRegion ();
 
 	void
@@ -975,7 +975,7 @@ class GroupWindow :
 	adjustTabVelocity ();
 
 	bool
-	groupConstrainMovement (Region     constrainRegion,
+	groupConstrainMovement (CompRegion constrainRegion,
 				int        dx,
 				int        dy,
 				int        &new_dx,

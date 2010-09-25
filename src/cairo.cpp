@@ -166,10 +166,10 @@ GroupScreen::groupRenderTopTabHighlight (GroupSelection *group)
 	return;
     }
 
-    width = group->mTopTab->mRegion->extents.x2 -
-	    group->mTopTab->mRegion->extents.x1;
-    height = group->mTopTab->mRegion->extents.y2 -
-	     group->mTopTab->mRegion->extents.y1;
+    width = group->mTopTab->mRegion.boundingRect ().x2 () -
+	    group->mTopTab->mRegion.boundingRect ().x1 ();
+    height = group->mTopTab->mRegion.boundingRect ().y2 () -
+	     group->mTopTab->mRegion.boundingRect ().y1 ();
 
     bar->mSelectionLayer = groupRebuildCairoLayer (bar->mSelectionLayer,
 						  width, height);
@@ -222,8 +222,8 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
     if (!bar || !HAS_TOP_WIN (group) || !bar->mBgLayer || !bar->mBgLayer->mCairo)
 	return;
 
-    width = bar->mRegion->extents.x2 - bar->mRegion->extents.x1;
-    height = bar->mRegion->extents.y2 - bar->mRegion->extents.y1;
+    width = bar->mRegion.boundingRect ().x2 () - bar->mRegion.boundingRect ().x1 ();
+    height = bar->mRegion.boundingRect ().y2 () - bar->mRegion.boundingRect ().y1 ();
     radius = optionGetBorderRadius ();
 
     if (width > bar->mBgLayer->mTexWidth)
@@ -641,8 +641,8 @@ GroupScreen::groupRenderWindowTitle (GroupSelection *group)
     if (!bar || !HAS_TOP_WIN (group) || !bar->mTextLayer)
 	return;
 
-    width = bar->mRegion->extents.x2 - bar->mRegion->extents.x1;
-    height = bar->mRegion->extents.y2 - bar->mRegion->extents.y1;
+    width = bar->mRegion.boundingRect ().x2 () - bar->mRegion.boundingRect ().x1 ();
+    height = bar->mRegion.boundingRect ().y2 () - bar->mRegion.boundingRect ().y1 ();
 
     bar->mTextLayer = groupRebuildCairoLayer (bar->mTextLayer, width, height);
     layer = bar->mTextLayer;

@@ -29,32 +29,25 @@
  *
  */
 bool
-GroupWindow::groupWindowInRegion (Region src,
+GroupWindow::groupWindowInRegion (CompRegion src,
 				  float  precision)
 {
-    Region buf;
     int    i;
     int    area = 0;
-    BOX    *box;
+    CompRegion buf;
 
-    buf = XCreateRegion ();
-    if (!buf)
-	return false;
-
-    XIntersectRegion (window->region ().handle (), src, buf);
+    buf = window->region ().intersected (src);
 
     /* buf area */
-    for (i = 0; i < buf->numRects; i++)
+    for (i = 0; i < buf.numRects (); i++)
     {
-	box = &buf->rects[i];
-	area += (box->x2 - box->x1) * (box->y2 - box->y1); /* width * height */
+	CompRect &box = buf.rects ().at (i);
+	area += (box.x2 () - box.x1 ()) * (box.y2 () - box.y1 ()); /* width * height */
     }
-
-    XDestroyRegion (buf);
 
     if (area >= WIN_WIDTH (window) * WIN_HEIGHT (window) * precision)
     {
-	XSubtractRegion (src, window->region ().handle (), src);
+	src = window->region ().subtracted (src);
 	return TRUE;
     }
 
@@ -85,7 +78,7 @@ GroupScreen::groupFindGroupInWindows (GroupSelection *group,
  *
  */
 CompWindowList
-GroupScreen::groupFindWindowsInRegion (Region     reg)
+GroupScreen::groupFindWindowsInRegion (CompRegion     reg)
 {
     float      	   precision = optionGetSelectPrecision () / 100.0f;
     CompWindowList ret;
@@ -101,7 +94,10 @@ GroupScreen::groupFindWindowsInRegion (Region     reg)
 	    gw->groupWindowInRegion (reg, precision))
 	{
 	    if (gw->mGroup && groupFindGroupInWindows (gw->mGroup, ret))
+	    {
+		rit++;
 		continue;
+	    }
 
 	    ret.push_back (w);
 
@@ -319,7 +315,7 @@ GroupScreen::groupSelectTerminate (CompAction         *action,
 
 	    cScreen->damageRegion (reg);
 
-	    ws = groupFindWindowsInRegion (reg.handle ());
+	    ws = groupFindWindowsInRegion (reg);
 	    if (ws.size ())
 	    {
 		/* select windows */

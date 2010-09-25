@@ -64,9 +64,9 @@ GroupScreen::optionChanged (CompOption *opt,
 	    for (group = mGroups; group; group = group->mNext)
 		if (group->mTabBar)
 		{
-		    BoxPtr box = &group->mTabBar->mRegion->extents;
-		    groupRecalcTabBarPos (group, (box->x1 + box->x2 ) / 2,
-					  box->x1, box->x2);
+		    CompRect box = group->mTabBar->mRegion.boundingRect ();
+		    groupRecalcTabBarPos (group, (box.x1 () + box.x2 ()) / 2,
+					  box.x1 (), box.x2 ());
 		}
 	    break;
 	case GroupOptions::Glow:
@@ -295,9 +295,6 @@ GroupScreen::~GroupScreen ()
 
 		for (slot = group->mTabBar->mSlots; slot;)
 		{
-		    if (slot->mRegion)
-			XDestroyRegion (slot->mRegion);
-
 		    nextSlot = slot->mNext;
 		    free (slot);
 		    slot = nextSlot;
@@ -310,9 +307,6 @@ GroupScreen::~GroupScreen ()
 		if (group->mInputPrevention)
 		    XDestroyWindow (screen->dpy (),
 				    group->mInputPrevention);
-
-		if (group->mTabBar->mRegion)
-		    XDestroyRegion (group->mTabBar->mRegion);
 
 		if (group->mTabBar->mTimeoutHandle.active ())
 		    group->mTabBar->mTimeoutHandle.stop ();
