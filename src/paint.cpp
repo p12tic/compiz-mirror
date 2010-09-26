@@ -377,13 +377,14 @@ GroupScreen::groupPaintSelectionOutline (const GLScreenPaintAttrib sa,
 void
 GroupScreen::preparePaint (int msSinceLastPaint)
 {
-    GroupSelection *group, *next;
+    GroupSelection *group;
+    GroupSelection::List::iterator it = mGroups.begin ();
 
     cScreen->preparePaint (msSinceLastPaint);
 
-    group = mGroups;
-    while (group)
+    while (it != mGroups.end ())
     {
+	group = *it;
 	GroupTabBar *bar = group->mTabBar;
 
 	if (bar)
@@ -413,12 +414,11 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 
 	/* groupDrawTabAnimation may delete the group, so better
 	   save the pointer to the next chain element */
-	next = group->mNext;
 
 	if (group->mTabbingState != NoTabbing)
 	    drawTabAnimation (group, msSinceLastPaint);
 
-	group = next;
+	it++;
     }
 }
 
@@ -446,7 +446,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     }
     else
     {
-	for (group = mGroups; group; group = group->mNext)
+	foreach (group, mGroups)
 	{
 	    if (group->mChangeState != NoTabChange ||
 		group->mTabbingState != NoTabbing)
@@ -542,7 +542,7 @@ GroupScreen::donePaint ()
 
     cScreen->donePaint ();
 
-    for (group = mGroups; group; group = group->mNext)
+    foreach (group, mGroups)
     {
 	if (group->mTabbingState != NoTabbing)
 	    cScreen->damageScreen ();

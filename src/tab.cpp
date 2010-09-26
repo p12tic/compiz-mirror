@@ -946,7 +946,7 @@ GroupScreen::groupUpdateTabBars (Window enteredWin)
     {
 	GroupSelection *group;
 
-	for (group = mGroups; group; group = group->mNext)
+	foreach (group, mGroups)
 	{
 	    if (group->mInputPrevention == enteredWin)
 	    {

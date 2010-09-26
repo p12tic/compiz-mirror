@@ -475,8 +475,6 @@ GroupWindow::groupRemoveWindowFromGroup ()
 void
 GroupScreen::groupDeleteGroup (GroupSelection *group)
 {
-    GroupSelection *next, *prev;
-
     if (group->mWindows)
     {
 	int i;
@@ -513,39 +511,14 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
     else if (group->mTabBar)
 	groupDeleteTabBar (group);
 
-    prev = group->mPrev;
-    next = group->mNext;
-
-    /* relink stack */
-    if (prev || next)
-    {
-	if (prev)
-	{
-	    if (next)
-		prev->mNext = next;
-	    else
-		prev->mNext = NULL;
-	}
-	if (next)
-	{
-	    if (prev)
-		next->mPrev = prev;
-	    else
-	    {
-		next->mPrev = NULL;
-		mGroups = next;
-	    }
-	}
-    }
-    else
-	mGroups = NULL;
+    mGroups.remove (group);
 
     if (group == mLastHoveredGroup)
 	mLastHoveredGroup = NULL;
     if (group == mLastRestackedGroup)
 	mLastRestackedGroup = NULL;
 
-    free (group);
+    delete group;
 }
 
 /*
@@ -569,7 +542,6 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 				  sizeof (CompWindow *) * (group->mNWins + 1));
 	group->mWindows[group->mNWins] = window;
 	group->mNWins++;
-	mGroup = group;
 
 	window->updateWindowOutputExtents ();
 	groupUpdateWindowProperty ();
@@ -668,11 +640,11 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	    GroupSelection *tg;
 	    bool           invalidID = false;
 
-	    g->mIdentifier = gs->mGroups ? gs->mGroups->mIdentifier : 0;
+	    g->mIdentifier = gs->mGroups.size () ? gs->mGroups.front ()->mIdentifier : 0;
 	    do
 	    {
 		invalidID = false;
-		for (tg = gs->mGroups; tg; tg = tg->mNext)
+		foreach (tg, gs->mGroups)
 		{
 		    if (tg->mIdentifier == g->mIdentifier)
 		    {
@@ -686,18 +658,14 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	    while (invalidID);
 	}
 
-	/* relink stack */
-	if (gs->mGroups)
-	    gs->mGroups->mPrev = g;
-
-	g->mNext = gs->mGroups;
-	g->mPrev = NULL;
-	gs->mGroups = g;
-
-	mGroup = g;
+	gs->mGroups.push_front (g);
 
 	groupUpdateWindowProperty ();
+
+	group = g;
     }
+
+    mGroup = group;
 }
 
 /*
@@ -742,6 +710,8 @@ GroupScreen::groupGroupWindows (CompAction         *action,
 
         gw->mInSelection = false;
         group = gw->mGroup;
+
+	fprintf (stderr, "group is 0x%x\n", group);
 
         for (i = 1; i < mTmpSel.mNWins; i++)
         {
@@ -927,7 +897,7 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
     yRoot  = event->xbutton.y_root;
     button = event->xbutton.button;
 
-    for (group = mGroups; group; group = group->mNext)
+    foreach (group, mGroups)
     {
 	if (group->mInputPrevention != event->xbutton.window)
 	    continue;
@@ -1038,7 +1008,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
     groupGetDrawOffsetForSlot (mDraggedSlot, vx, vy);
     newRegion.translate (vx, vy);
 
-    for (group = mGroups; group; group = group->mNext)
+    foreach (group, mGroups)
     {
 	bool            inTabBar;
 	CompRegion      clip, buf;
@@ -1162,7 +1132,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    groupDamageTabBarRegion (group);
 
 	    /* Hide tab-bars. */
-	    for (tmpGroup = mGroups; tmpGroup; tmpGroup = tmpGroup->mNext)
+	    foreach (tmpGroup, mGroups)
 	    {
 		if (group == tmpGroup)
 		    groupTabSetVisibility (tmpGroup, true, 0);
@@ -1182,7 +1152,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	CompWindow     *draggedSlotWindow = mDraggedSlot->mWindow;
 	GroupSelection *tmpGroup;
 
-	for (tmpGroup = mGroups; tmpGroup; tmpGroup = tmpGroup->mNext)
+	foreach (tmpGroup, mGroups)
 	    groupTabSetVisibility (tmpGroup, false, PERMANENT);
 
 	mDraggedSlot = NULL;
@@ -1253,7 +1223,7 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 
 		mDragged = true;
 
-		for (group = mGroups; group; group = group->mNext)
+		foreach (group, mGroups)
 		    groupTabSetVisibility (group, true, PERMANENT);
 
 		CompRect box = gw->mGroup->mTabBar->mRegion.boundingRect ();		groupRecalcTabBarPos (gw->mGroup, (box.x1 () + box.x2 ()) / 2,

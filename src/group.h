@@ -256,8 +256,9 @@ class GroupCairoLayer
 /*
  * GroupTabBarSlot
  */
-typedef struct _GroupTabBarSlot GroupTabBarSlot;
-struct _GroupTabBarSlot {
+class GroupTabBarSlot
+{
+public:
     GroupTabBarSlot *mPrev;
     GroupTabBarSlot *mNext;
 
@@ -274,7 +275,9 @@ struct _GroupTabBarSlot {
 /*
  * GroupTabBar
  */
-typedef struct _GroupTabBar {
+class GroupTabBar
+{
+public:
     GroupTabBarSlot *mSlots;
     GroupTabBarSlot *mRevSlots;
     int		    mNSlots;
@@ -301,7 +304,7 @@ typedef struct _GroupTabBar {
     int   mLeftSpringX, mRightSpringX;
     int   mLeftSpeed, mRightSpeed;
     float mLeftMsSinceLastMove, mRightMsSinceLastMove;
-} GroupTabBar;
+};
 
 /*
  * GroupGlow
@@ -325,10 +328,13 @@ typedef struct _GlowQuad {
 /*
  * GroupSelection
  */
-typedef struct _GroupSelection GroupSelection;
-struct _GroupSelection {
-    GroupSelection *mPrev;
-    GroupSelection *mNext;
+class GroupSelection
+{
+public:
+
+    typedef std::list <GroupSelection *> List;
+
+public:
 
     CompScreen *mScreen;
     CompWindow **mWindows;
@@ -785,8 +791,8 @@ class GroupScreen :
 	GroupPendingUngrabs *mPendingUngrabs;
 	CompTimer	    mDequeueTimeoutHandle;
 
-	GroupSelection *mGroups;
-	GroupSelection mTmpSel;
+	GroupSelection::List mGroups;
+	GroupSelection	     mTmpSel;
 
 	bool mQueued;
 

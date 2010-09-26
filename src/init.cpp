@@ -50,18 +50,18 @@ GroupScreen::optionChanged (CompOption *opt,
 	case GroupOptions::TabStyle:
 	case GroupOptions::BorderRadius:
 	case GroupOptions::BorderWidth:
-	    for (group = mGroups; group; group = group->mNext)
+	    foreach (group, mGroups)
 		if (group->mTabBar)
 		    groupRenderTabBarBackground (group);
 	    break;
 	case GroupOptions::TabbarFontSize:
 	case GroupOptions::TabbarFontColor:
-	    for (group = mGroups; group; group = group->mNext)
+	    foreach (group, mGroups)
 		groupRenderWindowTitle (group);
 	    break;
 	case GroupOptions::ThumbSize:
 	case GroupOptions::ThumbSpace:
-	    for (group = mGroups; group; group = group->mNext)
+	    foreach (group, mGroups)
 		if (group->mTabBar)
 		{
 		    CompRect box = group->mTabBar->mRegion.boundingRect ();
@@ -101,7 +101,7 @@ GroupScreen::optionChanged (CompOption *opt,
 					      glowProperty->textureSize),
 				    GL_RGBA, GL_UNSIGNED_BYTE);
 
-		if (optionGetGlow () && mGroups)
+		if (optionGetGlow () && mGroups.size ())
 		{
 		    foreach (CompWindow *w, screen->windows ())
 		    {
@@ -148,7 +148,7 @@ GroupScreen::groupApplyInitialActions ()
 	{
 	    GroupSelection *group;
 
-	    for (group = mGroups; group; group = group->mNext)
+	    foreach (group, mGroups)
 		if (group->mIdentifier == id)
 		    break;
 
@@ -283,12 +283,15 @@ GroupScreen::GroupScreen (CompScreen *s) :
  */
 GroupScreen::~GroupScreen ()
 {
-    if (mGroups)
+    if (mGroups.size ())
     {
-	GroupSelection *group, *nextGroup;
+	GroupSelection *group;
+	GroupSelection::List::iterator it = mGroups.end ();
 
-	for (group = mGroups; group;)
+	while (it != mGroups.begin ())
 	{
+	    group = *it;
+	    
 	    if (group->mTabBar)
 	    {
 		GroupTabBarSlot *slot, *nextSlot;
@@ -311,12 +314,11 @@ GroupScreen::~GroupScreen ()
 		if (group->mTabBar->mTimeoutHandle.active ())
 		    group->mTabBar->mTimeoutHandle.stop ();
 
-		free (group->mTabBar);
+		delete group->mTabBar;
 	    }
 
-	    nextGroup = group->mNext;
-	    free (group);
-	    group = nextGroup;
+	    delete group;
+	    it--;
 	}
     }
 
