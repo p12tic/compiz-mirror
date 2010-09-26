@@ -282,7 +282,7 @@ GroupScreen::groupTabSetVisibility (GroupSelection *group,
     CompWindow  *topTab;
     PaintState  oldState;
 
-    if (!group || !group->mWindows || !group->mTabBar || !HAS_TOP_WIN (group))
+    if (!group || !group->mWindows.size () || !group->mTabBar || !HAS_TOP_WIN (group))
 	return;
 
     bar = group->mTabBar;
@@ -763,8 +763,6 @@ GroupWindow::adjustTabVelocity ()
 void
 GroupScreen::finishTabbing (GroupSelection *group)
 {
-    int        i;
-
     group->mTabbingState = NoTabbing;
     groupTabChangeActivateEvent (false);
 
@@ -789,9 +787,8 @@ GroupScreen::finishTabbing (GroupSelection *group)
 	group->mPrevTopTab = group->mTopTab;
     }
 
-    for (i = 0; i < group->mNWins; i++)
+    foreach (CompWindow *w, group->mWindows)
     {
-	CompWindow *w = group->mWindows[i];
 	GROUP_WINDOW (w);
 
 	/* move window to target position */
@@ -832,7 +829,7 @@ void
 GroupScreen::drawTabAnimation (GroupSelection *group,
 			       int	      msSinceLastPaint)
 {
-    int        steps, i;
+    int        steps;
     float      amount, chunk;
     bool       doTabbing;
 
@@ -846,9 +843,8 @@ GroupScreen::drawTabAnimation (GroupSelection *group,
     {
 	doTabbing = false;
 
-	for (i = 0; i < group->mNWins; i++)
+	foreach (CompWindow *cw, group->mWindows)
 	{
-	    CompWindow *cw = group->mWindows[i];
 	    if (!cw)
 		continue;
 
@@ -1118,15 +1114,11 @@ GroupScreen::groupApplyConstraining (GroupSelection *group,
 				     int	    dx,
 				     int	    dy)
 {
-    int        i;
-    CompWindow *w;
-
     if (!dx && !dy)
 	return;
 
-    for (i = 0; i < group->mNWins; i++)
+    foreach (CompWindow *w, group->mWindows)
     {
-	w = group->mWindows[i];
 	GROUP_WINDOW (w);
 
 	/* ignore certain windows: we don't want to apply the constraining
@@ -1178,7 +1170,6 @@ void
 GroupScreen::groupStartTabbingAnimation (GroupSelection *group,
 			    		 bool           tab)
 {
-    int        i;
     int        dx, dy;
     int        constrainStatus;
 
@@ -1195,9 +1186,9 @@ GroupScreen::groupStartTabbingAnimation (GroupSelection *group,
 	bool   constrainedWindows = true;
 
 	/* reset all flags */
-	for (i = 0; i < group->mNWins; i++)
+	foreach (CompWindow *cw, group->mWindows)
 	{
-	    GROUP_WINDOW (group->mWindows[i]);
+	    GROUP_WINDOW (cw);
 	    gw->mAnimateState &= ~(CONSTRAINED_X | CONSTRAINED_Y |
 				  DONT_CONSTRAIN);
 	}
@@ -1211,9 +1202,8 @@ GroupScreen::groupStartTabbingAnimation (GroupSelection *group,
 	    /* loop through all windows and try to constrain their
 	       animation path (going from gw->mOrgPos to
 	       gw->mDestination) to the active screen area */
-	    for (i = 0; i < group->mNWins; i++)
+	    foreach (CompWindow *w, group->mWindows)
 	    {
-		CompWindow *w = group->mWindows[i];
 		GroupWindow *gw = GroupWindow::get (w);
 		CompRect   statusRect (gw->mOrgPos.x - w->input ().left,
 				       gw->mOrgPos.y - w->input ().top,
@@ -2474,7 +2464,6 @@ GroupScreen::groupInitTabBar (GroupSelection *group,
 			      CompWindow     *topTab)
 {
     GroupTabBar *bar;
-    int         i;
 
     if (group->mTabBar)
 	return;
@@ -2497,8 +2486,8 @@ GroupScreen::groupInitTabBar (GroupSelection *group,
     bar->mOldWidth = 0;
     group->mTabBar = bar;
 
-    for (i = 0; i < group->mNWins; i++)
-	groupCreateSlot (group, group->mWindows[i]);
+    foreach (CompWindow *cw, group->mWindows)
+	groupCreateSlot (group, cw);
 
     groupCreateInputPreventionWindow (group);
 

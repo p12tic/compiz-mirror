@@ -217,9 +217,6 @@ GroupScreen::GroupScreen (CompScreen *s) :
     ScreenInterface::setHandler (screen);
     GLScreenInterface::setHandler (gScreen);
     CompositeScreenInterface::setHandler (cScreen);
-    
-    mTmpSel.mWindows = NULL;
-    mTmpSel.mNWins = 0;
 
     int glowType = optionGetGlowType ();
     /* one-shot timeout for stuff that needs to be initialized after
@@ -322,8 +319,7 @@ GroupScreen::~GroupScreen ()
 	}
     }
 
-    if (mTmpSel.mWindows)
-	free (mTmpSel.mWindows);
+    mTmpSel.mWindows.clear ();
 
     if (mGrabIndex)
 	groupGrabScreen (ScreenGrabNone);

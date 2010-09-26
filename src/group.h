@@ -337,8 +337,7 @@ public:
 public:
 
     CompScreen *mScreen;
-    CompWindow **mWindows;
-    int        mNWins;
+    CompWindowList mWindows;
 
     /* Unique identifier for this group */
     long int mIdentifier;

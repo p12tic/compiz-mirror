@@ -248,27 +248,28 @@ void
 GroupScreen::groupRaiseWindows (CompWindow     *top,
 				GroupSelection *group)
 {
-    CompWindow **stack;
-    int        count = 0, i;
+    CompWindowList stack;
+    CompWindowList::iterator it;
 
-    if (group->mNWins == 1)
+    if (group->mWindows.size () == 1)
 	return;
 
-    stack = (CompWindow **) malloc ((group->mNWins - 1) * sizeof (CompWindow *));
-    if (!stack)
-	return;
+    stack.resize (group->mWindows.size () - 1);
+
+    it = stack.begin ();
 
     foreach (CompWindow *w, screen->windows ())
     {
 	GROUP_WINDOW (w);
 	if ((w->id () != top->id ()) && (gw->mGroup == group))
-	    stack[count++] = w;
+	{
+	    (*it) = w;
+	    it++;
+	}
     }
 
-    for (i = 0; i < count; i++)
-	stack[i]->restackBelow (top);
-
-    free (stack);
+    foreach (CompWindow *cw, stack)
+	cw->restackBelow (top);
 }
 
 /*
@@ -280,10 +281,8 @@ GroupScreen::groupMinimizeWindows (CompWindow     *top,
 				   GroupSelection *group,
 				   bool           minimize)
 {
-    int i;
-    for (i = 0; i < group->mNWins; i++)
+    foreach (CompWindow *w, group->mWindows)
     {
-	CompWindow *w = group->mWindows[i];
 	if (w->id () == top->id ())
 	    continue;
 
@@ -303,12 +302,10 @@ GroupScreen::groupShadeWindows (CompWindow     *top,
 				GroupSelection *group,
 				bool           shade)
 {
-    int i;
     unsigned int state;
 
-    for (i = 0; i < group->mNWins; i++)
+    foreach (CompWindow *w, group->mWindows)
     {
-	CompWindow *w = group->mWindows[i];
 	if (w->id () == top->id ())
 	    continue;
 
@@ -349,30 +346,17 @@ GroupWindow::groupDeleteGroupWindow ()
 	    gs->groupDeleteTabBarSlot (group->mTabBar, mSlot);
     }
 
-    if (group->mNWins && group->mWindows)
+    if (group->mWindows.size ())
     {
-	CompWindow **buf = group->mWindows;
-
-	if (group->mNWins > 1)
+	if (group->mWindows.size () > 1)
 	{
-	    int counter = 0;
-	    int i;
+	    group->mWindows.remove (window);
 
-	    group->mWindows = (CompWindow ** ) calloc (group->mNWins - 1, sizeof(CompWindow *));
-
-	    for (i = 0; i < group->mNWins; i++)
-	    {
-		if (buf[i]->id () == window->id ())
-		    continue;
-		group->mWindows[counter++] = buf[i];
-	    }
-	    group->mNWins = counter;
-
-	    if (group->mNWins == 1)
+	    if (group->mWindows.size () == 1)
 	    {
 		/* Glow was removed from this window, too */
-		CompositeWindow::get (group->mWindows[0])->damageOutputExtents ();
-		group->mWindows[0]->updateWindowOutputExtents ();
+		CompositeWindow::get (group->mWindows.front ())->damageOutputExtents ();
+		group->mWindows.front ()->updateWindowOutputExtents ();
 
 		if (gs->optionGetAutoUngroup ())
 		{
@@ -381,7 +365,7 @@ GroupWindow::groupDeleteGroupWindow ()
 			/* a change animation is pending: this most
 			   likely means that a window must be moved
 			   back onscreen, so we do that here */
-			CompWindow *lw = group->mWindows[0];
+			CompWindow *lw = group->mWindows.front ();
 
 			GroupWindow::get (lw)->groupSetWindowVisibility (true);
 		    }
@@ -392,11 +376,9 @@ GroupWindow::groupDeleteGroupWindow ()
 	}
 	else
 	{
-	    group->mWindows = NULL;
+	    group->mWindows.clear ();
 	    gs->groupDeleteGroup (group);
 	}
-
-	free (buf);
 
 	cWindow->damageOutputExtents ();
 	mGroup = NULL;
@@ -414,7 +396,7 @@ GroupWindow::groupRemoveWindowFromGroup ()
 	return;
 
     if (mGroup->mTabBar && !(mAnimateState & IS_UNGROUPING) &&
-	(mGroup->mNWins > 1))
+	(mGroup->mWindows.size () > 1))
     {
 	GroupSelection *group = mGroup;
 
@@ -475,10 +457,8 @@ GroupWindow::groupRemoveWindowFromGroup ()
 void
 GroupScreen::groupDeleteGroup (GroupSelection *group)
 {
-    if (group->mWindows)
+    if (group->mWindows.size ())
     {
-	int i;
-
 	if (group->mTabBar)
 	{
 	    /* set up untabbing animation and delete the group
@@ -488,9 +468,8 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
 	    return;
 	}
 
-	for (i = 0; i < group->mNWins; i++)
+	foreach (CompWindow *cw, group->mWindows)
 	{
-	    CompWindow *cw = group->mWindows[i];
 	    GROUP_WINDOW (cw);
 
 	    CompositeWindow::get (cw)->damageOutputExtents ();
@@ -505,8 +484,7 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
 	    }
 	}
 
-	free (group->mWindows);
-	group->mWindows = NULL;
+	group->mWindows.clear ();
     }
     else if (group->mTabBar)
 	groupDeleteTabBar (group);
@@ -538,18 +516,15 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
     {
 	CompWindow *topTab = NULL;
 
-	group->mWindows = (CompWindow **) realloc (group->mWindows,
-				  sizeof (CompWindow *) * (group->mNWins + 1));
-	group->mWindows[group->mNWins] = window;
-	group->mNWins++;
+	group->mWindows.push_back (window);
 
 	window->updateWindowOutputExtents ();
 	groupUpdateWindowProperty ();
 
-	if (group->mNWins == 2)
+	if (group->mWindows.size () == 2)
 	{
 	    /* first window in the group got its glow, too */
-	    group->mWindows[0]->updateWindowOutputExtents ();
+	    group->mWindows.front ()->updateWindowOutputExtents ();
 	}
 
 	if (group->mTabBar)
@@ -589,20 +564,12 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
     else
     {
 	/* create new group */
-	GroupSelection *g = (GroupSelection *) malloc (sizeof (GroupSelection));
+	GroupSelection *g = new GroupSelection;
 	if (!g)
 	    return;
 
-	g->mWindows = (CompWindow **) malloc (sizeof (CompWindow *));
-	if (!g->mWindows)
-	{
-	    free (g);
-	    return;
-	}
-
-	g->mWindows[0] = window;
+	g->mWindows.push_back (window);
 	g->mScreen     = screen;
-	g->mNWins      = 1;
 
 	g->mTopTab      = NULL;
 	g->mPrevTopTab  = NULL;
@@ -677,16 +644,15 @@ GroupScreen::groupGroupWindows (CompAction         *action,
 				CompAction::State  state,
 				CompOption::Vector options)
 {
-    if (mTmpSel.mNWins > 0)
+    if (mTmpSel.mWindows.size () > 0)
     {
-        int            i;
-        CompWindow     *cw;
+        CompWindowList::iterator it = mTmpSel.mWindows.begin ();
+	CompWindow	         *cw;
         GroupSelection *group = NULL;
         bool           tabbed = false;
 
-        for (i = 0; i < mTmpSel.mNWins; i++)
-        {
-	    cw = mTmpSel.mWindows[i];
+	foreach (cw, mTmpSel.mWindows)
+	{
 	    GROUP_WINDOW (cw);
 
 	    if (gw->mGroup)
@@ -700,7 +666,7 @@ GroupScreen::groupGroupWindows (CompAction         *action,
         }
 
         /* we need to do one first to get the pointer of a new group */
-        cw = mTmpSel.mWindows[0];
+        cw = *it;
         GROUP_WINDOW (cw);
 
         if (gw->mGroup && (group != gw->mGroup))
@@ -711,11 +677,9 @@ GroupScreen::groupGroupWindows (CompAction         *action,
         gw->mInSelection = false;
         group = gw->mGroup;
 
-	fprintf (stderr, "group is 0x%x\n", group);
-
-        for (i = 1; i < mTmpSel.mNWins; i++)
+        for (; it != mTmpSel.mWindows.end (); it++)
         {
-	    cw = mTmpSel.mWindows[i];
+	    cw = *it;
 	    GROUP_WINDOW (cw);
 
 	    if (gw->mGroup && (group != gw->mGroup))
@@ -727,9 +691,7 @@ GroupScreen::groupGroupWindows (CompAction         *action,
         }
 
         /* exit selection */
-        free (mTmpSel.mWindows);
-        mTmpSel.mWindows = NULL;
-        mTmpSel.mNWins = 0;
+        mTmpSel.mWindows.clear ();
     }
 
     return false;
@@ -805,10 +767,8 @@ GroupScreen::groupCloseWindows (CompAction           *action,
 
 	if (gw->mGroup)
 	{
-	    int i;
-
-	    for (i = 0; i < gw->mGroup->mNWins; i++)
-		gw->mGroup->mWindows[i]->close (screen->getCurrentTime ());
+	    foreach (CompWindow *cw, gw->mGroup->mWindows)
+		cw->close (screen->getCurrentTime ());
 	}
     }
 
@@ -1376,15 +1336,13 @@ GroupScreen::handleEvent (XEvent      *event)
 
 		if (gw->mGroup)
 		{			
-		    int        i;
 		    CompRect rect (event->xclient.data.l[0],
 			      	   event->xclient.data.l[1],
 			      	   event->xclient.data.l[2],
 			      	   event->xclient.data.l[3]);
 
-		    for (i = 0; i < gw->mGroup->mNWins; i++)
+		    foreach (CompWindow *cw, gw->mGroup->mWindows)
 		    {
-			CompWindow  *cw = gw->mGroup->mWindows[i];
 			GroupWindow *gcw;
 
 			gcw = GroupWindow::get (cw);
@@ -1538,7 +1496,7 @@ GroupWindow::getOutputExtents (CompWindowExtents &output)
 
     window->getOutputExtents (output);
 
-    if (mGroup && mGroup->mNWins > 1)
+    if (mGroup && mGroup->mWindows.size () > 1)
     {
 	int glowSize = gs->optionGetGlowSize ();
 	int glowType = gs->optionGetGlowType ();
@@ -1604,7 +1562,6 @@ GroupWindow::moveNotify (int    dx,
 			 bool   immediate)
 {
     bool       viewportChange;
-    int        i;
 
     GROUP_SCREEN (screen);
 
@@ -1657,9 +1614,8 @@ GroupWindow::moveNotify (int    dx,
 	return;
     }
 
-    for (i = 0; i < mGroup->mNWins; i++)
+    foreach (CompWindow *cw, mGroup->mWindows)
     {
-	CompWindow *cw = mGroup->mWindows[i];
 	if (!cw)
 	    continue;
 
@@ -1694,7 +1650,6 @@ GroupWindow::grabNotify (int          x,
     if (mGroup && !gs->mIgnoreMode && !gs->mQueued)
     {
 	bool doResizeAll;
-	int  i;
 
 	doResizeAll = gs->optionGetResizeAll () &&
 	              (mask & CompWindowGrabResizeMask);
@@ -1702,9 +1657,8 @@ GroupWindow::grabNotify (int          x,
 	if (mGroup->mTabBar)
 	    gs->groupTabSetVisibility (mGroup, false, 0);
 
-	for (i = 0; i < mGroup->mNWins; i++)
+	foreach (CompWindow *cw, mGroup->mWindows)
 	{
-	    CompWindow *cw = mGroup->mWindows[i];
 	    if (!cw)
 		continue;
 
@@ -1758,7 +1712,6 @@ GroupWindow::ungrabNotify ()
 
     if (mGroup && !gs->mIgnoreMode && !gs->mQueued)
     {
-	int        i;
 	CompRect   rect;
 	gs->groupDequeueMoveNotifies ();
 
@@ -1770,9 +1723,8 @@ GroupWindow::ungrabNotify ()
 			     WIN_HEIGHT (window));
 	}
 
-	for (i = 0; i < mGroup->mNWins; i++)
+	foreach (CompWindow *cw, mGroup->mWindows)
 	{
-	    CompWindow *cw = mGroup->mWindows[i];
 	    if (!cw)
 		continue;
 
@@ -1913,10 +1865,8 @@ GroupWindow::stateChangeNotify (unsigned int lastState)
 	if (((lastState & MAXIMIZE_STATE) != (window->state () & MAXIMIZE_STATE)) &&
 	    gs->optionGetMaximizeUnmaximizeAll ())
 	{
-	    int i;
-	    for (i = 0; i < mGroup->mNWins; i++)
+	    foreach (CompWindow *cw, mGroup->mWindows)
 	    {
-		CompWindow *cw = mGroup->mWindows[i];
 		if (!cw)
 		    continue;
 
