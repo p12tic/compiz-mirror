@@ -436,12 +436,12 @@ WorkaroundsWindow::getRoleAtom ()
                                  (unsigned char **) &str);
 
     if (result != Success)
-        return NULL;
+        return "";
 
     if (type != XA_STRING)
     {
         XFree (str);
-        return NULL;
+        return "";
     }
 
     retval = CompString ((const char *) str);
