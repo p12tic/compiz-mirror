@@ -60,6 +60,7 @@ class WorkaroundsScreen :
 
 	Atom		roleAtom;
 	std::list <Window> mfwList;
+	CompWindowList  minimizingWindows;
 	
 	PropertyWriter	inputDisabledAtom;
 
@@ -83,6 +84,11 @@ class WorkaroundsScreen :
 		       const CompRegion	   	 &,
 		       CompOutput		 *,
 		       unsigned int		   );
+	
+	void
+	handleCompizEvent (const char 	      *pluginName,
+			   const char 	      *eventName,
+			   CompOption::Vector &o);
 
 	void
 	addToFullscreenList (CompWindow *w);
