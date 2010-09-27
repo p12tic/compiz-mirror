@@ -455,6 +455,22 @@ public:
     void
     drawTabAnimation (int	      msSinceLastPaint);
 
+    void
+    startTabbingAnimation (bool           tab);
+
+    void
+    recalcTabBarPos (int		  middleX,
+			  int		  minX1,
+			  int		  maxX2);
+
+    void
+    damageTabBarRegion ();
+
+    void
+    moveTabBarRegion (int		   dx,
+		      int		   dy,
+		      bool		   syncIPW);
+
     /* TODO: Move to GroupTabBarSlot */
     void paintThumb (GroupTabBarSlot      *slot,
 		     const GLMatrix	   &transform,
@@ -686,10 +702,6 @@ class GroupScreen :
 	CompRegion
 	groupGetConstrainRegion ();
 
-	void
-	groupStartTabbingAnimation (GroupSelection *group,
-				   bool           tab);
-
 	bool
 	groupChangeTab (GroupTabBarSlot             *topTab,
 		        ChangeTabAnimationDirection direction);
@@ -697,21 +709,6 @@ class GroupScreen :
 	void
 	groupRecalcSlotPos (GroupTabBarSlot *slot,
 			    int		 slotPos);
-
-	void
-	groupRecalcTabBarPos (GroupSelection *group,
-				int		  middleX,
-				int		  minX1,
-				int		  maxX2);
-
-	void
-	groupDamageTabBarRegion (GroupSelection *group);
-
-	void
-	groupMoveTabBarRegion (GroupSelection *group,
-				int		   dx,
-				int		   dy,
-				bool	   syncIPW);
 
 	void
 	resizeTabBarRegion (GroupSelection *group,

@@ -241,7 +241,7 @@ GroupSelection::showDelayTimeout ()
 
     gs->groupGetCurrentMousePosition (mouseX, mouseY);
 
-    gs->groupRecalcTabBarPos (this, mouseX, WIN_REAL_X (topTab),
+    recalcTabBarPos (mouseX, WIN_REAL_X (topTab),
 			  WIN_REAL_X (topTab) + WIN_REAL_WIDTH (topTab));
 
     tabSetVisibility (true, 0);
@@ -322,7 +322,7 @@ GroupSelection::tabSetVisibility (bool           visible,
 	bar->mAnimationTime = (gs->optionGetFadeTime () * 1000) - bar->mAnimationTime;
 
     if (bar->mState != oldState)
-	gs->groupDamageTabBarRegion (this);
+	damageTabBarRegion ();
 }
 
 /*
@@ -635,11 +635,10 @@ GroupSelection::handleAnimation ()
 	bool            activate;
 
 	/* recalc here is needed (for y value)! */
-	gs->groupRecalcTabBarPos (this,
-			      (mTabBar->mRegion.boundingRect ().x1 () +
-			       mTabBar->mRegion.boundingRect ().x2 ()) / 2,
-			      WIN_REAL_X (top),
-			      WIN_REAL_X (top) + WIN_REAL_WIDTH (top));
+	recalcTabBarPos ((mTabBar->mRegion.boundingRect ().x1 () +
+			  mTabBar->mRegion.boundingRect ().x2 ()) / 2,
+			  WIN_REAL_X (top),
+			  WIN_REAL_X (top) + WIN_REAL_WIDTH (top));
 
 	mChangeAnimationTime += gs->optionGetChangeAnimationTime () * 500;
 
@@ -1175,26 +1174,27 @@ GroupSelection::applyConstraining (CompRegion	    constrainRegion,
  *
  */
 void
-GroupScreen::groupStartTabbingAnimation (GroupSelection *group,
-			    		 bool           tab)
+GroupSelection::startTabbingAnimation (bool           tab)
 {
     int        dx, dy;
     int        constrainStatus;
 
-    if (!group || (group->mTabbingState != NoTabbing))
+    GROUP_SCREEN (screen);
+
+    if ((mTabbingState != NoTabbing))
 	return;
 
-    group->mTabbingState = (tab) ? Tabbing : Untabbing;
-    groupTabChangeActivateEvent (true);
+    mTabbingState = (tab) ? Tabbing : Untabbing;
+    gs->groupTabChangeActivateEvent (true);
 
     if (!tab)
     {
 	/* we need to set up the X/Y constraining on untabbing */
-	CompRegion constrainRegion = groupGetConstrainRegion ();
+	CompRegion constrainRegion = gs->groupGetConstrainRegion ();
 	bool   constrainedWindows = true;
 
 	/* reset all flags */
-	foreach (CompWindow *cw, group->mWindows)
+	foreach (CompWindow *cw, mWindows)
 	{
 	    GROUP_WINDOW (cw);
 	    gw->mAnimateState &= ~(CONSTRAINED_X | CONSTRAINED_Y |
@@ -1210,7 +1210,7 @@ GroupScreen::groupStartTabbingAnimation (GroupSelection *group,
 	    /* loop through all windows and try to constrain their
 	       animation path (going from gw->mOrgPos to
 	       gw->mDestination) to the active screen area */
-	    foreach (CompWindow *w, group->mWindows)
+	    foreach (CompWindow *w, mWindows)
 	    {
 		GroupWindow *gw = GroupWindow::get (w);
 		CompRect   statusRect (gw->mOrgPos.x - w->input ().left,
@@ -1251,7 +1251,7 @@ GroupScreen::groupStartTabbingAnimation (GroupSelection *group,
 			/* if we found a valid target position, apply
 			   the change also to other windows to retain
 			   the distance between the windows */
-			group->applyConstraining (constrainRegion, w->id (),
+			gw->mGroup->applyConstraining (constrainRegion, w->id (),
 						dx - gw->mDestination.x +
 						gw->mOrgPos.x,
 						dy - gw->mDestination.y +
@@ -1310,7 +1310,7 @@ GroupSelection::tabGroup (CompWindow *main)
     mTabbingState = NoTabbing;
     /* Slot is initialized after groupInitTabBar(group); */
     gs->groupChangeTab (gw->mSlot, RotateUncertain);
-    gs->groupRecalcTabBarPos (gw->mGroup, WIN_CENTER_X (main),
+    gw->mGroup->recalcTabBarPos (WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
 
     width = mTabBar->mRegion.boundingRect ().x2 () -
@@ -1396,7 +1396,7 @@ GroupSelection::tabGroup (CompWindow *main)
 	gw->mXVelocity = gw->mYVelocity = 0.0f;
     }
 
-    gs->groupStartTabbingAnimation (this, true);
+    startTabbingAnimation (true);
 }
 
 /*
@@ -1469,7 +1469,7 @@ GroupSelection::untabGroup ()
     }
 
     mTabbingState = NoTabbing;
-    gs->groupStartTabbingAnimation (this, false);
+    startTabbingAnimation (false);
 
     gs->groupDeleteTabBar (this);
     mChangeAnimationTime = 0;
@@ -1660,14 +1660,13 @@ GroupScreen::groupRecalcSlotPos (GroupTabBarSlot *slot,
 }
 
 /*
- * groupRecalcTabBarPos
+ * GroupSelection::recalcTabBarPos
  *
  */
 void
-GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
-				   int		  middleX,
-				   int		  minX1,
-				   int		  maxX2)
+GroupSelection::recalcTabBarPos (int		middleX,
+				 int		minX1,
+				 int		maxX2)
 {
     GroupTabBarSlot *slot;
     GroupTabBar     *bar;
@@ -1679,17 +1678,19 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
     int             currentSlot;
     CompRect	    box;
 
-    if (!HAS_TOP_WIN (group) || !group->mTabBar)
+    GROUP_SCREEN (screen);
+
+    if (!HAS_TOP_WIN (this) || !mTabBar)
 	return;
 
-    bar = group->mTabBar;
-    topTab = TOP_TAB (group);
-    space = optionGetThumbSpace ();
+    bar = mTabBar;
+    topTab = TOP_TAB (this);
+    space = gs->optionGetThumbSpace ();
 
     /* calculate the space which the tabs need */
     foreach (slot, bar->mSlots)
     {
-	if (slot == mDraggedSlot && mDragged)
+	if (slot == gs->mDraggedSlot && gs->mDragged)
 	{
 	    isDraggedSlotGroup = true;
 	    continue;
@@ -1702,7 +1703,7 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
 
     /* just a little work-a-round for first call
        FIXME: remove this! */
-    thumbSize = optionGetThumbSize ();
+    thumbSize = gs->optionGetThumbSize ();
     if (bar->mSlots.size () && tabsWidth <= 0)
     {
 	/* first call */
@@ -1739,16 +1740,16 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
     box.setWidth (barWidth);
     box.setHeight (space * 2 + tabsHeight);
 
-    resizeTabBarRegion (group, box, true);
+    gs->resizeTabBarRegion (this, box, true);
 
     /* recalc every slot region */
     currentSlot = 0;
     foreach (slot, bar->mSlots)
     {
-	if (slot == mDraggedSlot && mDragged)
+	if (slot == gs->mDraggedSlot && gs->mDragged)
 	    continue;
 
-	groupRecalcSlotPos (slot, currentSlot);
+	gs->groupRecalcSlotPos (slot, currentSlot);
 	slot->mRegion.translate (bar->mRegion.boundingRect ().x1 (),
 				 bar->mRegion.boundingRect ().y1 ());
 
@@ -1771,7 +1772,7 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
 }
 
 void
-GroupScreen::groupDamageTabBarRegion (GroupSelection *group)
+GroupSelection::damageTabBarRegion ()
 {
     REGION reg;
     CompRegion cReg;
@@ -1786,18 +1787,18 @@ GroupScreen::groupDamageTabBarRegion (GroupSelection *group)
 
 #define DAMAGE_BUFFER 20
 
-    reg.extents = group->mTabBar->mRegion.handle ()->extents;
+    reg.extents = mTabBar->mRegion.handle ()->extents;
 
-    if (group->mTabBar->mSlots.size ())
+    if (mTabBar->mSlots.size ())
     {
 	reg.extents.x1 = MIN (reg.extents.x1,
-			      group->mTabBar->mSlots.front ()->mRegion.boundingRect ().x1 ());
+			      mTabBar->mSlots.front ()->mRegion.boundingRect ().x1 ());
 	reg.extents.y1 = MIN (reg.extents.y1,
-			      group->mTabBar->mSlots.front ()->mRegion.boundingRect ().y1 ());
+			      mTabBar->mSlots.front ()->mRegion.boundingRect ().y1 ());
 	reg.extents.x2 = MAX (reg.extents.x2,
-			      group->mTabBar->mSlots.back ()->mRegion.boundingRect ().x2 ());
+			      mTabBar->mSlots.back ()->mRegion.boundingRect ().x2 ());
 	reg.extents.y2 = MAX (reg.extents.y2,
-			      group->mTabBar->mSlots.back ()->mRegion.boundingRect ().y2 ());
+			      mTabBar->mSlots.back ()->mRegion.boundingRect ().y2 ());
     }
 
     reg.extents.x1 -= DAMAGE_BUFFER;
@@ -1809,26 +1810,25 @@ GroupScreen::groupDamageTabBarRegion (GroupSelection *group)
 		       reg.extents.x2 - reg.extents.x1,
 		       reg.extents.y2 - reg.extents.y1);
 
-    cScreen->damageRegion (cReg);
+    GroupScreen::get (screen)->cScreen->damageRegion (cReg);
 }
 
 void
-GroupScreen::groupMoveTabBarRegion (GroupSelection *group,
-				    int		   dx,
-				    int		   dy,
-				    bool	   syncIPW)
+GroupSelection::moveTabBarRegion (int		   dx,
+				  int		   dy,
+				  bool	   syncIPW)
 {
-    groupDamageTabBarRegion (group);
+    damageTabBarRegion ();
 
-    group->mTabBar->mRegion.translate (dx, dy);
+    mTabBar->mRegion.translate (dx, dy);
 
     if (syncIPW)
 	XMoveWindow (screen->dpy (),
-		     group->mInputPrevention,
-		     group->mTabBar->mLeftSpringX,
-		     group->mTabBar->mRegion.boundingRect ().y1 ());
+		     mInputPrevention,
+		     mTabBar->mLeftSpringX,
+		     mTabBar->mRegion.boundingRect ().y1 ());
 
-    groupDamageTabBarRegion (group);
+    damageTabBarRegion ();
 }
 
 void
@@ -1838,7 +1838,7 @@ GroupScreen::resizeTabBarRegion (GroupSelection *group,
 {
     int oldWidth;
 
-    groupDamageTabBarRegion (group);
+    group->damageTabBarRegion ();
 
     oldWidth = group->mTabBar->mRegion.boundingRect ().x2 () -
 	group->mTabBar->mRegion.boundingRect ().x1 ();
@@ -1877,7 +1877,7 @@ GroupScreen::resizeTabBarRegion (GroupSelection *group,
 	    XUnmapWindow (screen->dpy (), group->mInputPrevention);
     }
 
-    groupDamageTabBarRegion (group);
+    group->damageTabBarRegion ();
 }
 
 /*
@@ -1916,8 +1916,7 @@ GroupScreen::groupInsertTabBarSlotBefore (GroupTabBar     *bar,
        because the tab-bar got wider now, so it will put it in
        the average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
-    groupRecalcTabBarPos (gw->mGroup,
-			  (bar->mRegion.boundingRect ().x1 () +
+    gw->mGroup->recalcTabBarPos ((bar->mRegion.boundingRect ().x1 () +
 			   bar->mRegion.boundingRect ().x2 ()) / 2,
 			  bar->mRegion.boundingRect ().x1 (), bar->mRegion.boundingRect ().x2 ());
 }
@@ -1958,8 +1957,7 @@ GroupScreen::groupInsertTabBarSlotAfter (GroupTabBar     *bar,
        because the tab-bar got wider now, so it will put it in the
        average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
-    groupRecalcTabBarPos (gw->mGroup,
-			  (bar->mRegion.boundingRect ().x1 () +
+    gw->mGroup->recalcTabBarPos ((bar->mRegion.boundingRect ().x1 () +
 			   bar->mRegion.boundingRect ().x2 ()) / 2,
 			  bar->mRegion.boundingRect ().x1 (), bar->mRegion.boundingRect ().x2 ());
 }
@@ -1994,8 +1992,7 @@ GroupScreen::groupInsertTabBarSlot (GroupTabBar     *bar,
        because the tab-bar got wider now, so it will put it in
        the average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
-    groupRecalcTabBarPos (gw->mGroup,
-			  (bar->mRegion.boundingRect ().x1 () +
+    gw->mGroup->recalcTabBarPos ((bar->mRegion.boundingRect ().x1 () +
 			   bar->mRegion.boundingRect ().x2 ()) / 2,
 			  bar->mRegion.boundingRect ().x1 (), bar->mRegion.boundingRect ().x2 ());
 }
@@ -2080,8 +2077,7 @@ GroupScreen::groupUnhookTabBarSlot (GroupTabBar     *bar,
        because the tab-bar got thiner now, so
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2
        Won't cause the new x1 / x2 to be outside the original region. */
-    groupRecalcTabBarPos (group,
-			  (bar->mRegion.boundingRect ().x1 () +
+    group->recalcTabBarPos ((bar->mRegion.boundingRect ().x1 () +
 			   bar->mRegion.boundingRect ().x2 ()) / 2,
 			  bar->mRegion.boundingRect ().x1 (),
 			  bar->mRegion.boundingRect ().x2 ());
@@ -2501,7 +2497,7 @@ GroupScreen::groupInitTabBar (GroupSelection *group,
 
     group->createInputPreventionWindow ();
 
-    groupRecalcTabBarPos (group, WIN_CENTER_X (topTab),
+    group->recalcTabBarPos (WIN_CENTER_X (topTab),
 			  WIN_X (topTab), WIN_X (topTab) + WIN_WIDTH (topTab));
 }
 

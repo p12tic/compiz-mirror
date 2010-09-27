@@ -592,7 +592,7 @@ GroupWindow::groupRemoveWindowFromGroup ()
 	/* Although when there is no top-tab, it will never really
 	   animate anything, if we don't start the animation,
 	   the window will never get removed. */
-	gs->groupStartTabbingAnimation (group, false);
+	group->startTabbingAnimation (false);
 
 	groupSetWindowVisibility (true);
 	group->mUngroupState = UngroupSingle;
@@ -722,7 +722,7 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 
 		mAnimateState = IS_ANIMATED;
 
-		gs->groupStartTabbingAnimation (group, true);
+		group->startTabbingAnimation (true);
 
 		cWindow->addDamage ();
 	    }
@@ -1256,7 +1256,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 		groupInsertTabBarSlotBefore (group->mTabBar,
 					     tmpDraggedSlot, slot);
 
-	    groupDamageTabBarRegion (group);
+	    group->damageTabBarRegion ();
 
 	    /* Hide tab-bars. */
 	    foreach (tmpGroup, mGroups)
@@ -1291,8 +1291,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	}
 	else if (gw->mGroup && gw->mGroup->mTopTab)
 	{
-	    groupRecalcTabBarPos (gw->mGroup,
-				  (gw->mGroup->mTabBar->mRegion.boundingRect ().x1 () +
+	    gw->mGroup->recalcTabBarPos ((gw->mGroup->mTabBar->mRegion.boundingRect ().x1 () +
 				   gw->mGroup->mTabBar->mRegion.boundingRect ().x2 ()) / 2,
 				  gw->mGroup->mTabBar->mRegion.boundingRect ().x1 (),
 				  gw->mGroup->mTabBar->mRegion.boundingRect ().x2 ());
@@ -1353,7 +1352,8 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 		foreach (group, mGroups)
 		    group->tabSetVisibility (true, PERMANENT);
 
-		CompRect box = gw->mGroup->mTabBar->mRegion.boundingRect ();		groupRecalcTabBarPos (gw->mGroup, (box.x1 () + box.x2 ()) / 2,
+		CompRect box = gw->mGroup->mTabBar->mRegion.boundingRect ();
+		gw->mGroup->recalcTabBarPos ((box.x1 () + box.x2 ()) / 2,
 				      box.x1 (), box.x2 ());
 	    }
 
@@ -1557,7 +1557,7 @@ GroupScreen::handleEvent (XEvent      *event)
 		{
 		    /* make sure we are using the updated name */
 		    gw->mGroup->renderWindowTitle ();
-		    groupDamageTabBarRegion (gw->mGroup);
+		    gw->mGroup->damageTabBarRegion ();
 		}
 	    }
 	}
@@ -1706,7 +1706,7 @@ GroupWindow::resizeNotify (int dx,
     {
 	if (mGroup->mTabBar->mState != PaintOff)
 	{
-	    gs->groupRecalcTabBarPos (mGroup, pointerX,
+	    mGroup->recalcTabBarPos (pointerX,
 				  WIN_X (window), WIN_X (window) + WIN_WIDTH (window));
 	}
     }
@@ -1757,7 +1757,7 @@ GroupWindow::moveNotify (int    dx,
 	bar->mRightSpringX += dx;
 	bar->mLeftSpringX += dx;
 
-	gs->groupMoveTabBarRegion (mGroup, dx, dy, true);
+	mGroup->moveTabBarRegion (dx, dy, true);
 
 	foreach (slot, bar->mSlots)
 	{
