@@ -416,6 +416,17 @@ public:
     void createInputPreventionWindow ();
     void destroyInputPreventionWindow ();
 
+    void paintTabBar (const GLWindowPaintAttrib &attrib,
+		      const GLMatrix		 &transform,
+		      unsigned int		 mask,
+		      CompRegion		 clipRegion);
+
+    /* TODO: Move to GroupTabBarSlot */
+    void paintThumb (GroupTabBarSlot      *slot,
+		     const GLMatrix	   &transform,
+		     int		   targetOpacity,
+		     bool		   dontPaint);
+
     void fini ();
 
 public:
@@ -463,7 +474,7 @@ public:
 };
 
 /*
- * GroupDisplay structure
+ * GroupScreen structure
  */
 class GroupScreen :
     public PluginClassHandler <GroupScreen, CompScreen>,
@@ -535,18 +546,6 @@ class GroupScreen :
 	GroupCairoLayer*
 	groupCreateCairoLayer (int        width,
 			    int	       height);
-
-	void
-	groupPaintThumb (GroupSelection       *group,
-		      GroupTabBarSlot      *slot,
-		      const GLMatrix	   &transform,
-		      int		   targetOpacity);
-	void
-	groupPaintTabBar (GroupSelection            *group,
-		       const GLWindowPaintAttrib &attrib,
-		       const GLMatrix		 &transform,
-		       unsigned int		 mask,
-		       CompRegion		 clipRegion);
 
 	void
 	groupDamagePaintRectangle (BoxPtr pBox);

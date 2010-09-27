@@ -29,10 +29,10 @@
  *
  */
 void
-GroupScreen::groupPaintThumb (GroupSelection       *group,
-			      GroupTabBarSlot      *slot,
-			      const GLMatrix	   &transform,
-			      int		   targetOpacity)
+GroupSelection::paintThumb (GroupTabBarSlot      *slot,
+			    const GLMatrix	   &transform,
+			    int		   targetOpacity,
+			    bool		   fade)
 {
     CompWindow            *w = slot->mWindow;
     unsigned int	  oldGlAddGeometryIndex;
@@ -41,6 +41,7 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
     int                   tw, th;
 
     GROUP_WINDOW (w);
+    GROUP_SCREEN (screen);
 
     tw = slot->mRegion.boundingRect ().width ();
     th = slot->mRegion.boundingRect ().height ();
@@ -51,15 +52,15 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
     gw->gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
 
     /* animate fade */
-    if (group && group->mTabBar->mState == PaintFadeIn)
+    if (fade && mTabBar->mState == PaintFadeIn)
     {
-	wAttrib.opacity -= wAttrib.opacity * group->mTabBar->mAnimationTime /
-	                   (optionGetFadeTime () * 1000);
+	wAttrib.opacity -= wAttrib.opacity * mTabBar->mAnimationTime /
+	                   (gs->optionGetFadeTime () * 1000);
     }
-    else if (group && group->mTabBar->mState == PaintFadeOut)
+    else if (fade && mTabBar->mState == PaintFadeOut)
     {
-	wAttrib.opacity = wAttrib.opacity * group->mTabBar->mAnimationTime /
-	                  (optionGetFadeTime () * 1000);
+	wAttrib.opacity = wAttrib.opacity * mTabBar->mAnimationTime /
+	                  (gs->optionGetFadeTime () * 1000);
     }
 
     wAttrib.opacity = wAttrib.opacity * targetOpacity / OPAQUE;
@@ -95,7 +96,7 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
 	wAttrib.brightness /= 1.25f;
 	}*/
 
-	groupGetDrawOffsetForSlot (slot, vx, vy);
+	gs->groupGetDrawOffsetForSlot (slot, vx, vy);
 
 	wAttrib.xTranslate = (slot->mRegion.boundingRect ().x1 () +
 			      slot->mRegion.boundingRect ().x2 ()) / 2 + vx;
@@ -126,30 +127,28 @@ GroupScreen::groupPaintThumb (GroupSelection       *group,
  *
  */
 void
-GroupScreen::groupPaintTabBar (GroupSelection            *group,
-			       const GLWindowPaintAttrib &attrib,
-			       const GLMatrix		 &transform,
-			       unsigned int		 mask,
-			       CompRegion		 clipRegion)
+GroupSelection::paintTabBar (const GLWindowPaintAttrib   &attrib,
+			     const GLMatrix		 &transform,
+			     unsigned int		 mask,
+			     CompRegion		 	 clipRegion)
 {
     CompWindow      *topTab;
-    GroupTabBar     *bar = group->mTabBar;
+    GroupTabBar     *bar = mTabBar;
     int             count;
-    REGION          box;
+    CompRect        box;
+    
+    GROUP_SCREEN (screen);
 
-    if (HAS_TOP_WIN (group))
-	topTab = TOP_TAB (group);
+    if (HAS_TOP_WIN (this))
+	topTab = TOP_TAB (this);
     else
-	topTab = PREV_TOP_TAB (group);
+	topTab = PREV_TOP_TAB (this);
 
 #define PAINT_BG     0
 #define PAINT_SEL    1
 #define PAINT_THUMBS 2
 #define PAINT_TEXT   3
 #define PAINT_MAX    4
-
-    box.rects = &box.extents;
-    box.numRects = 1;
 
     for (count = 0; count < PAINT_MAX; count++)
     {
@@ -158,9 +157,9 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 	GroupCairoLayer *layer = NULL;
 
 	if (bar->mState == PaintFadeIn)
-	    alpha -= alpha * bar->mAnimationTime / (optionGetFadeTime () * 1000);
+	    alpha -= alpha * bar->mAnimationTime / (gs->optionGetFadeTime () * 1000);
 	else if (bar->mState == PaintFadeOut)
-	    alpha = alpha * bar->mAnimationTime / (optionGetFadeTime () * 1000);
+	    alpha = alpha * bar->mAnimationTime / (gs->optionGetFadeTime () * 1000);
 
 	switch (count) {
 	case PAINT_BG:
@@ -181,18 +180,18 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 		   the only problem is that we would have 2 redraws if
 		   there is an animation */
 		if (newWidth != bar->mOldWidth || bar->mBgAnimation)
-		    group->renderTabBarBackground ();
+		    renderTabBarBackground ();
 
 		bar->mOldWidth = newWidth;
-		box.extents = bar->mRegion.handle ()->extents;
+		box	       = bar->mRegion.boundingRect ();
 	    }
 	    break;
 
 	case PAINT_SEL:
-	    if (group->mTopTab != mDraggedSlot)
+	    if (mTopTab != gs->mDraggedSlot)
 	    {
 		layer = bar->mSelectionLayer;
-		box.extents = group->mTopTab->mRegion.handle ()->extents;
+		box   = mTopTab->mRegion.boundingRect ();
 	    }
 	    break;
 
@@ -201,19 +200,19 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 		GLenum          oldTextureFilter;
 		GroupTabBarSlot *slot;
 
-		oldTextureFilter = gScreen->textureFilter ();
+		oldTextureFilter = gs->gScreen->textureFilter ();
 
-		if (optionGetMipmaps ())
-		    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
+		if (gs->optionGetMipmaps ())
+		    gs->gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
 		foreach (slot, bar->mSlots)
 		{
-		    if (slot != mDraggedSlot || !mDragged)
-			groupPaintThumb (group, slot, transform,
-					 attrib.opacity);
+		    if (slot != gs->mDraggedSlot || !gs->mDragged)
+			paintThumb (slot, transform,
+				    attrib.opacity, true);
 		}
 
-		gScreen->setTextureFilter (oldTextureFilter);
+		gs->gScreen->setTextureFilter (oldTextureFilter);
 	    }
 	    break;
 
@@ -222,23 +221,25 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 	    {
 		layer = bar->mTextLayer;
 
-		box.extents.x1 = bar->mRegion.boundingRect ().x1 () + 5;
-		box.extents.x2 = bar->mRegion.boundingRect ().x1 () +
-		                 bar->mTextLayer->mTexWidth + 5;
-		box.extents.y1 = bar->mRegion.boundingRect ().y2 () -
-		                 bar->mTextLayer->mTexHeight - 5;
-		box.extents.y2 = bar->mRegion.boundingRect ().y2 () - 5;
+		int x1 = bar->mRegion.boundingRect ().x1 () + 5;
+		int x2 = bar->mRegion.boundingRect ().x1 () +
+			 bar->mTextLayer->mTexWidth + 5;
+		int y1 = bar->mRegion.boundingRect ().y2 () -
+			 bar->mTextLayer->mTexHeight - 5;
+		int y2 = bar->mRegion.boundingRect ().y2 () - 5;
 
-		if (box.extents.x2 > bar->mRegion.boundingRect ().x2 ())
-		    box.extents.x2 = bar->mRegion.boundingRect ().x2 ();
+		if (x2 > bar->mRegion.boundingRect ().x2 ())
+		    x2 = bar->mRegion.boundingRect ().x2 ();
 
 		/* recalculate the alpha again for text fade... */
 		if (layer->mState == PaintFadeIn)
 		    alpha -= alpha * layer->mAnimationTime /
-			     (optionGetFadeTextTime() * 1000);
+			     (gs->optionGetFadeTextTime () * 1000);
 		else if (layer->mState == PaintFadeOut)
 		    alpha = alpha * layer->mAnimationTime /
-			    (optionGetFadeTextTime() * 1000);
+			    (gs->optionGetFadeTextTime () * 1000);
+		
+		box = CompRect (x1, y1, x2 - x1, y2 - y1);
 	    }
 	    break;
 	}
@@ -252,35 +253,40 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 		GLTexture::Matrix matrix = tex->matrix ();
 		GLTexture::MatrixList matl;
 		CompRegion reg;
+		
+		int x1 = box.x1 ();
+		int y1 = box.y1 ();
+		int x2 = box.x2 ();
+		int y2 = box.y2 ();
 
 		/* remove the old x1 and y1 so we have a relative value */
-		box.extents.x2 -= box.extents.x1;
-		box.extents.y2 -= box.extents.y1;
-		box.extents.x1 = (box.extents.x1 - topTab->x ()) / wScale +
+		x2 -= x1;
+		y2 -= y1;
+		x1 = (x1 - topTab->x ()) / wScale +
 			     topTab->x ();
-		box.extents.y1 = (box.extents.y1 - topTab->y ()) / hScale +
+		y1 = (y1 - topTab->y ()) / hScale +
 			     topTab->y ();
 
 		/* now add the new x1 and y1 so we have a absolute value again,
 		also we don't want to stretch the texture... */
-		if (box.extents.x2 * wScale < layer->mTexWidth)
-		    box.extents.x2 += box.extents.x1;
+		if (x2 * wScale < layer->mTexWidth)
+		    x2 += x1;
 		else
-		    box.extents.x2 = box.extents.x1 + layer->mTexWidth;
+		    x2 = x1 + layer->mTexWidth;
 
-		if (box.extents.y2 * hScale < layer->mTexHeight)
-		    box.extents.y2 += box.extents.y1;
+		if (y2 * hScale < layer->mTexHeight)
+		    y2 += y1;
 		else
-		    box.extents.y2 = box.extents.y1 + layer->mTexHeight;
+		    y2 = y1 + layer->mTexHeight;
 
-		matrix.x0 -= box.extents.x1 * matrix.xx;
-		matrix.y0 -= box.extents.y1 * matrix.yy;
+		matrix.x0 -= x1 * matrix.xx;
+		matrix.y0 -= y1 * matrix.yy;
 
 		matl.push_back (matrix);
 
-		reg = CompRegion (box.extents.x1, box.extents.y1,
-				  box.extents.x2 - box.extents.x1,
-				  box.extents.y2 - box.extents.y1);
+		reg = CompRegion (x1, y1,
+				  x2 - x1,
+				  y2 - y1);
 		
 		gwTopTab->gWindow->geometry ().reset ();
 
@@ -480,7 +486,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    /* prevent tab bar drawing.. */
 	    state = gw->mGroup->mTabBar->mState;
 	    gw->mGroup->mTabBar->mState = PaintOff;
-	    groupPaintThumb (NULL, mDraggedSlot, wTransform, OPAQUE);
+	    gw->mGroup->paintThumb (mDraggedSlot, wTransform, OPAQUE, true);
 	    gw->mGroup->mTabBar->mState = state;
 
 	    glPopMatrix ();
@@ -521,7 +527,8 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.getMatrix ());
 
-	    groupPaintThumb (NULL, mDraggedSlot, wTransform, OPAQUE);
+	    mGroups.front ()->paintThumb (mDraggedSlot,
+					  wTransform, OPAQUE, false);
 
 	    glPopMatrix ();
 	}
@@ -1124,7 +1131,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	if (showTabbar)
 	{
 	    gWindow->glPaintSetEnabled (this, false);
-	    gs->groupPaintTabBar (mGroup, wAttrib, wTransform, mask, region);
+	    mGroup->paintTabBar (wAttrib, wTransform, mask, region);
 	    gWindow->glPaintSetEnabled (this, true);
 	}
     }
