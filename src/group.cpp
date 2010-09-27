@@ -317,6 +317,41 @@ GroupSelection::shadeWindows (CompWindow     *top,
 }
 
 /*
+ * GroupSelection::moveWindows
+ *
+ */
+
+void
+GroupSelection::moveWindows (CompWindow *top,
+			     int 	dx,
+			     int 	dy,
+			     bool 	immediate,
+			     bool	viewportChange)
+{
+    foreach (CompWindow *cw, mWindows)
+    {
+	if (!cw)
+	    continue;
+
+	if (cw->id () == top->id ())
+	    continue;
+
+	GROUP_WINDOW (cw);
+
+	if (cw->state () & MAXIMIZE_STATE)
+	{
+	    if (viewportChange)
+		gw->groupEnqueueMoveNotify (-dx, -dy, immediate, true);
+	}
+	else if (!viewportChange)
+	{
+	    gw->mNeedsPosSync = true;
+	    gw->groupEnqueueMoveNotify (dx, dy, immediate, true);
+	}
+    }
+}
+
+/*
  * groupDeleteGroupWindow
  *
  */
@@ -1554,7 +1589,7 @@ GroupWindow::resizeNotify (int dx,
 }
 
 /*
- * groupWindowMoveNotify
+ * GroupWindow::moveNotify
  *
  */
 void
@@ -1615,27 +1650,7 @@ GroupWindow::moveNotify (int    dx,
 	return;
     }
 
-    foreach (CompWindow *cw, mGroup->mWindows)
-    {
-	if (!cw)
-	    continue;
-
-	if (cw->id () == window->id ())
-	    continue;
-
-	GROUP_WINDOW (cw);
-
-	if (cw->state () & MAXIMIZE_STATE)
-	{
-	    if (viewportChange)
-		gw->groupEnqueueMoveNotify (-dx, -dy, immediate, true);
-	}
-	else if (!viewportChange)
-	{
-	    gw->mNeedsPosSync = true;
-	    gw->groupEnqueueMoveNotify (dx, dy, immediate, true);
-	}
-    }
+    mGroup->moveWindows (window, dx, dy, immediate, viewportChange);
 }
 
 void

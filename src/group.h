@@ -382,6 +382,11 @@ public:
 			  bool	     minimize);
     void shadeWindows (CompWindow  *top,
 		       bool	   shade);
+    void moveWindows (CompWindow *top,
+		      int 	 dx,
+		      int 	 dy,
+		      bool 	 immediate,
+		      bool	 viewportChange = false);
 
     void createInputPreventionWindow ();
     void destroyInputPreventionWindow ();
