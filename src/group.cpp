@@ -241,27 +241,26 @@ GroupScreen::groupGrabScreen (GroupScreenGrabState newState)
 }
 
 /*
- * groupRaiseWindows
+ * GroupSelection::raiseWindows
  *
  */
 void
-GroupScreen::groupRaiseWindows (CompWindow     *top,
-				GroupSelection *group)
+GroupSelection::raiseWindows (CompWindow     *top)
 {
     CompWindowList stack;
     CompWindowList::iterator it;
 
-    if (group->mWindows.size () == 1)
+    if (mWindows.size () == 1)
 	return;
 
-    stack.resize (group->mWindows.size () - 1);
+    stack.resize (mWindows.size () - 1);
 
     it = stack.begin ();
 
     foreach (CompWindow *w, screen->windows ())
     {
 	GROUP_WINDOW (w);
-	if ((w->id () != top->id ()) && (gw->mGroup == group))
+	if ((w->id () != top->id ()) && (gw->mGroup == this))
 	{
 	    (*it) = w;
 	    it++;
@@ -277,11 +276,10 @@ GroupScreen::groupRaiseWindows (CompWindow     *top,
  *
  */
 void
-GroupScreen::groupMinimizeWindows (CompWindow     *top,
-				   GroupSelection *group,
-				   bool           minimize)
+GroupSelection::minimizeWindows (CompWindow     *top,
+				 bool           minimize)
 {
-    foreach (CompWindow *w, group->mWindows)
+    foreach (CompWindow *w, mWindows)
     {
 	if (w->id () == top->id ())
 	    continue;
@@ -298,13 +296,12 @@ GroupScreen::groupMinimizeWindows (CompWindow     *top,
  *
  */
 void
-GroupScreen::groupShadeWindows (CompWindow     *top,
-				GroupSelection *group,
-				bool           shade)
+GroupSelection::shadeWindows (CompWindow     *top,
+			      bool           shade)
 {
     unsigned int state;
 
-    foreach (CompWindow *w, group->mWindows)
+    foreach (CompWindow *w, mWindows)
     {
 	if (w->id () == top->id ())
 	    continue;
@@ -1279,14 +1276,14 @@ GroupScreen::handleEvent (XEvent      *event)
 		    gw->mWindowState = WindowShaded;
 
 		    if (gw->mGroup && optionGetShadeAll ())
-			groupShadeWindows (w, gw->mGroup, true);
+			gw->mGroup->shadeWindows (w, true);
 		}
 		else if (w->minimized ())
 		{
 		    gw->mWindowState = WindowMinimized;
 
 		    if (gw->mGroup && optionGetMinimizeAll ())
-			groupMinimizeWindows (w, gw->mGroup, true);
+			gw->mGroup->minimizeWindows (w, true);
 		}
 	    }
 
@@ -1473,7 +1470,7 @@ GroupScreen::handleEvent (XEvent      *event)
 			(gw->mGroup != mLastRestackedGroup))
 		    {
 			if (optionGetRaiseAll ())
-			    groupRaiseWindows (w, gw->mGroup);
+			    gw->mGroup->raiseWindows (w);
 		    }
 		    if (w->managed () && !w->overrideRedirect ())
 			mLastRestackedGroup = gw->mGroup;
@@ -1817,12 +1814,12 @@ GroupWindow::damageRect (bool	        initial,
 	    if (mWindowState == WindowMinimized)
 	    {
 		if (gs->optionGetMinimizeAll ())
-		    gs->groupMinimizeWindows (window, mGroup, false);
+		    mGroup->minimizeWindows (window, false);
 	    }
 	    else if (mWindowState == WindowShaded)
 	    {
 		if (gs->optionGetShadeAll ())
-		    gs->groupShadeWindows (window, mGroup, false);
+		    mGroup->shadeWindows (window, false);
 	    }
 	}
 

@@ -377,8 +377,13 @@ public:
     void tabGroup (CompWindow *main);
     void untabGroup ();
 
-public:
+    void raiseWindows (CompWindow *top);
+    void minimizeWindows (CompWindow *top,
+			  bool	     minimize);
+    void shadeWindows (CompWindow  *top,
+		       bool	   shade);
 
+public:
     CompScreen *mScreen;
     CompWindowList mWindows;
 
@@ -571,20 +576,6 @@ class GroupScreen :
 
 	void
 	groupGrabScreen (GroupScreenGrabState newState);
-
-	void
-	groupRaiseWindows (CompWindow     *top,
-			GroupSelection *group);
-
-	void
-	groupMinimizeWindows (CompWindow     *top,
-			   GroupSelection *group,
-			   bool           minimize);
-
-	void
-	groupShadeWindows (CompWindow     *top,
-			GroupSelection *group,
-			bool           shade);
 
 	void
 	groupDeleteGroup (GroupSelection *group);
