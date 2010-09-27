@@ -464,7 +464,7 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
 	{
 	    /* set up untabbing animation and delete the group
 	       at the end of the animation */
-	    groupUntabGroup (group);
+	    group->untabGroup ();
 	    group->mUngroupState = UngroupAll;
 	    return;
 	}
