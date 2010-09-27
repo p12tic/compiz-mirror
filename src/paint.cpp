@@ -402,16 +402,16 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	    groupApplySpeeds (group, msSinceLastPaint);
 
 	    if ((bar->mState != PaintOff) && HAS_TOP_WIN (group))
-		groupHandleHoverDetection (group);
+		group->handleHoverDetection ();
 
 	    if (bar->mState == PaintFadeIn || bar->mState == PaintFadeOut)
-		groupHandleTabBarFade (group, msSinceLastPaint);
+		group->handleTabBarFade (msSinceLastPaint);
 
 	    if (bar->mTextLayer)
-		groupHandleTextFade (group, msSinceLastPaint);
+		group->handleTextFade (msSinceLastPaint);
 
 	    if (bar->mBgAnimation)
-		groupHandleTabBarAnimation (group, msSinceLastPaint);
+		group->handleTabBarAnimation (msSinceLastPaint);
 	}
 
 	if (group->mChangeState != NoTabChange)

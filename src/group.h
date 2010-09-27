@@ -434,6 +434,17 @@ public:
     tabSetVisibility (bool           visible,
 		      unsigned int   mask);
 
+    void
+    handleHoverDetection ();
+
+    void
+    handleTabBarFade (int msSinceLastPaint);
+
+    void
+    handleTextFade (int msSinceLastPaint);
+
+    void
+    handleTabBarAnimation (int msSinceLastPaint);
 
     /* TODO: Move to GroupTabBarSlot */
     void paintThumb (GroupTabBarSlot      *slot,
@@ -563,6 +574,11 @@ class GroupScreen :
 
 	void
 	groupDamagePaintRectangle (BoxPtr pBox);
+	
+	void
+	groupGetDrawOffsetForSlot (GroupTabBarSlot *slot,
+				   int &hoffset,
+				   int &voffset);
 
 	/* queues.c */
 
@@ -651,26 +667,6 @@ class GroupScreen :
 
 	bool
 	groupGetCurrentMousePosition (int &x, int &y);
-
-	void
-	groupGetDrawOffsetForSlot (GroupTabBarSlot *slot,
-				   int &hoffset,
-				   int &voffset);
-
-	void
-	groupHandleHoverDetection (GroupSelection *group);
-
-	void
-	groupHandleTabBarFade (GroupSelection *group,
-			       int		   msSinceLastPaint);
-
-	void
-	groupHandleTextFade (GroupSelection *group,
-			     int		 msSinceLastPaint);
-
-	void
-	groupHandleTabBarAnimation (GroupSelection *group,
-				    int            msSinceLastPaint);
 
 	void
 	groupTabChangeActivateEvent (bool activating);

@@ -387,7 +387,7 @@ GroupScreen::groupGetDrawOffsetForSlot (GroupTabBarSlot *slot,
 }
 
 /*
- * groupHandleHoverDetection
+ * GroupSelection::handleHoverDetection
  *
  * Description:
  * This function is called from groupPreparePaintScreen to handle
@@ -397,15 +397,17 @@ GroupScreen::groupGetDrawOffsetForSlot (GroupTabBarSlot *slot,
  * FIXME: we should better have a timer for that ...
  */
 void
-GroupScreen::groupHandleHoverDetection (GroupSelection *group)
+GroupSelection::handleHoverDetection ()
 {
-    GroupTabBar *bar = group->mTabBar;
-    CompWindow  *topTab = TOP_TAB (group);
+    GroupTabBar *bar = mTabBar;
+    CompWindow  *topTab = TOP_TAB (this);
     int         mouseX, mouseY;
     bool        mouseOnScreen, inLastSlot;
 
+    GROUP_SCREEN (screen);
+
     /* first get the current mouse position */
-    mouseOnScreen = groupGetCurrentMousePosition (mouseX, mouseY);
+    mouseOnScreen = gs->groupGetCurrentMousePosition (mouseX, mouseY);
 
     if (!mouseOnScreen)
 	return;
@@ -447,7 +449,7 @@ GroupScreen::groupHandleHoverDetection (GroupSelection *group)
 		 bar->mTextLayer->mState == PaintOn))
 	    {
 		bar->mTextLayer->mAnimationTime =
-		    (optionGetFadeTextTime () * 1000) -
+		    (gs->optionGetFadeTextTime () * 1000) -
 		    bar->mTextLayer->mAnimationTime;
 		bar->mTextLayer->mState = PaintFadeOut;
 	    }
@@ -457,7 +459,7 @@ GroupScreen::groupHandleHoverDetection (GroupSelection *group)
 		     bar->mHoveredSlot == bar->mTextSlot && bar->mHoveredSlot)
 	    {
 		bar->mTextLayer->mAnimationTime =
-		    (optionGetFadeTextTime () * 1000) -
+		    (gs->optionGetFadeTextTime () * 1000) -
 		    bar->mTextLayer->mAnimationTime;
 		bar->mTextLayer->mState = PaintFadeIn;
 	    }
@@ -466,7 +468,7 @@ GroupScreen::groupHandleHoverDetection (GroupSelection *group)
 }
 
 /*
- * groupHandleTabBarFade
+ * GroupSelection::handleTabBarFade
  *
  * Description:
  * This function is called from groupPreparePaintScreen
@@ -475,10 +477,9 @@ GroupScreen::groupHandleHoverDetection (GroupSelection *group)
  *
  */
 void
-GroupScreen::groupHandleTabBarFade (GroupSelection *group,
-				    int		   msSinceLastPaint)
+GroupSelection::handleTabBarFade (int		   msSinceLastPaint)
 {
-    GroupTabBar *bar = group->mTabBar;
+    GroupTabBar *bar = mTabBar;
 
     bar->mAnimationTime -= msSinceLastPaint;
 
@@ -504,14 +505,14 @@ GroupScreen::groupHandleTabBarFade (GroupSelection *group,
 		bar->mTextLayer->mState = PaintOff;
 		bar->mTextSlot = bar->mHoveredSlot = NULL;
 
-		group->renderWindowTitle ();
+		renderWindowTitle ();
 	    }
 	}
     }
 }
 
 /*
- * groupHandleTextFade
+ * GroupSelection::handleTextFade
  *
  * Description:
  * This function is called from groupPreparePaintScreen
@@ -520,10 +521,9 @@ GroupScreen::groupHandleTabBarFade (GroupSelection *group,
  *
  */
 void
-GroupScreen::groupHandleTextFade (GroupSelection *group,
-				  int		 msSinceLastPaint)
+GroupSelection::handleTextFade (int	       msSinceLastPaint)
 {
-    GroupTabBar     *bar = group->mTabBar;
+    GroupTabBar     *bar = mTabBar;
     GroupCairoLayer *textLayer = bar->mTextLayer;
 
     /* Fade in progress... */
@@ -552,21 +552,21 @@ GroupScreen::groupHandleTextFade (GroupSelection *group,
 	bar->mTextSlot = bar->mHoveredSlot;
 	textLayer->mState = PaintFadeIn;
 	textLayer->mAnimationTime =
-	    (optionGetFadeTextTime () * 1000);
+	    (GroupScreen::get (screen)->optionGetFadeTextTime () * 1000);
 
-	group->renderWindowTitle ();
+	renderWindowTitle ();
     }
 
     else if (textLayer->mState == PaintOff && bar->mTextSlot)
     {
 	/* Clean Up. */
 	bar->mTextSlot = NULL;
-	group->renderWindowTitle ();
+	renderWindowTitle ();
     }
 }
 
 /*
- * groupHandleTabBarAnimation
+ * GroupSelection::handleTabBarAnimation
  *
  * Description: Handles the different animations for the tab bar defined in
  * GroupAnimationType. Basically that means this function updates
@@ -575,10 +575,9 @@ GroupScreen::groupHandleTextFade (GroupSelection *group,
  *
  */
 void
-GroupScreen::groupHandleTabBarAnimation (GroupSelection *group,
-			    		 int            msSinceLastPaint)
+GroupSelection::handleTabBarAnimation (int            msSinceLastPaint)
 {
-    GroupTabBar *bar = group->mTabBar;
+    GroupTabBar *bar = mTabBar;
 
     bar->mBgAnimationTime -= msSinceLastPaint;
 
@@ -587,7 +586,7 @@ GroupScreen::groupHandleTabBarAnimation (GroupSelection *group,
 	bar->mBgAnimationTime = 0;
 	bar->mBgAnimation = AnimationNone;
 
-	group->renderTabBarBackground ();
+	renderTabBarBackground ();
     }
 }
 /*
