@@ -206,7 +206,7 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 		if (optionGetMipmaps ())
 		    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
-		for (slot = bar->mSlots; slot; slot = slot->mNext)
+		foreach (slot, bar->mSlots)
 		{
 		    if (slot != mDraggedSlot || !mDragged)
 			groupPaintThumb (group, slot, transform,

@@ -146,11 +146,20 @@ GroupScreen::groupApplyInitialActions ()
 	   before - if it was, regroup */
 	if (gw->groupCheckWindowProperty (w, &id, &tabbed, color))
 	{
-	    GroupSelection *group;
+	    GroupSelection *group = NULL;
+	    bool	   found = false;
 
 	    foreach (group, mGroups)
+	    {
 		if (group->mIdentifier == id)
+		{
+		    found = true;
 		    break;
+		}
+	    }
+	    
+	    if (!found)
+		group = NULL;
 
 	    gw->groupAddWindowToGroup (group, id);
 	    if (tabbed)
@@ -293,10 +302,10 @@ GroupScreen::~GroupScreen ()
 	    {
 		GroupTabBarSlot *slot, *nextSlot;
 
-		for (slot = group->mTabBar->mSlots; slot;)
+		while (slot)
 		{
 		    nextSlot = slot->mNext;
-		    free (slot);
+		    delete slot;
 		    slot = nextSlot;
 		}
 

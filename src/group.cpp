@@ -515,6 +515,8 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
     if (group)
     {
 	CompWindow *topTab = NULL;
+	
+	mGroup = group;
 
 	group->mWindows.push_back (window);
 
@@ -567,6 +569,8 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	GroupSelection *g = new GroupSelection;
 	if (!g)
 	    return;
+	    
+	mGroup = g;
 
 	g->mWindows.push_back (window);
 	g->mScreen     = screen;
@@ -628,11 +632,7 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	gs->mGroups.push_front (g);
 
 	groupUpdateWindowProperty ();
-
-	group = g;
     }
-
-    mGroup = group;
 }
 
 /*
@@ -870,7 +870,7 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
 	    {
 		GroupTabBarSlot *slot;
 
-		for (slot = group->mTabBar->mSlots; slot; slot = slot->mNext)
+		foreach (slot, group->mTabBar->mSlots)
 		{
 		    if (slot->mRegion.contains (CompPoint (xRoot,
 							   yRoot)))
@@ -913,7 +913,7 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
 		    if (gw->mSlot->mPrev)
 			groupChangeTab (gw->mSlot->mPrev, RotateLeft);
 		    else
-			groupChangeTab (gw->mGroup->mTabBar->mRevSlots,
+			groupChangeTab (gw->mGroup->mTabBar->mSlots.back (),
 					RotateLeft);
 		}
 		else
@@ -921,7 +921,7 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
 		    if (gw->mSlot->mNext)
 			groupChangeTab (gw->mSlot->mNext, RotateRight);
 		    else
-			groupChangeTab (gw->mGroup->mTabBar->mSlots, RotateRight);
+			groupChangeTab (gw->mGroup->mTabBar->mSlots.front (), RotateRight);
 		}
 		break;
 	    }
@@ -990,7 +990,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	wasInTabBar = true;
 
-	for (slot = group->mTabBar->mSlots; slot; slot = slot->mNext)
+	foreach (slot, group->mTabBar->mSlots)
 	{
 	    GroupTabBarSlot *tmpDraggedSlot;
 	    GroupSelection  *tmpGroup;
@@ -1599,7 +1599,7 @@ GroupWindow::moveNotify (int    dx,
 
 	gs->groupMoveTabBarRegion (mGroup, dx, dy, true);
 
-	for (slot = bar->mSlots; slot; slot = slot->mNext)
+	foreach (slot, bar->mSlots)
 	{
 	    slot->mRegion.translate (dx, dy);
 	    slot->mSpringX += dx;

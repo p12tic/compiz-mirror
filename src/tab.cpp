@@ -429,7 +429,7 @@ GroupScreen::groupHandleHoverDetection (GroupSelection *group)
 	bar->mHoveredSlot = NULL;
 	clip = GroupWindow::get (topTab)->groupGetClippingRegion ();
 
-	for (slot = bar->mSlots; slot; slot = slot->mNext)
+	foreach (slot, bar->mSlots)
 	{
 	    /* We need to clip the slot region with the clip region first.
 	       This is needed to respect the window stack, so if a window
@@ -771,7 +771,7 @@ GroupScreen::finishTabbing (GroupSelection *group)
 	/* tabbing case - hide all non-toptab windows */
 	GroupTabBarSlot *slot;
 
-	for (slot = group->mTabBar->mSlots; slot; slot = slot->mNext)
+	foreach (slot, group->mTabBar->mSlots)
 	{
 	    CompWindow *w = slot->mWindow;
 	    if (!w)
@@ -1358,7 +1358,7 @@ GroupScreen::groupTabGroup (CompWindow *main)
     if (!HAS_TOP_WIN (group))
 	return;
 
-    for (slot = group->mTabBar->mSlots; slot; slot = slot->mNext)
+    foreach (slot, group->mTabBar->mSlots)
     {
 	CompWindow *cw = slot->mWindow;
 
@@ -1419,7 +1419,7 @@ GroupScreen::groupUntabGroup (GroupSelection *group)
     group->mLastTopTab = TOP_TAB (group);
     group->mTopTab = NULL;
 
-    for (slot = group->mTabBar->mSlots; slot; slot = slot->mNext)
+    foreach (slot, group->mTabBar->mSlots)
     {
 	CompWindow *cw = slot->mWindow;
 
@@ -1511,14 +1511,14 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
     else
     {
 	int             distanceOld = 0, distanceNew = 0;
-	GroupTabBarSlot *slot;
+	GroupTabBarSlot::List::iterator it = group->mTabBar->mSlots.begin ();
 
 	if (group->mTopTab)
-	    for (slot = group->mTabBar->mSlots; slot && (slot != group->mTopTab);
-		 slot = slot->mNext, distanceOld++);
+	    for (; (*it) && ((*it) != group->mTopTab);
+		 it++, distanceOld++);
 
-	for (slot = group->mTabBar->mSlots; slot && (slot != topTab);
-	     slot = slot->mNext, distanceNew++);
+	for (it = group->mTabBar->mSlots.begin (); (*it) && ((*it) != topTab);
+	     it++, distanceNew++);
 
 	if (distanceNew < distanceOld)
 	    group->mChangeAnimationDirection = 1;   /*left */
@@ -1526,7 +1526,7 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 	    group->mChangeAnimationDirection = -1;  /* right */
 
 	/* check if the opposite direction is shorter */
-	if (abs (distanceNew - distanceOld) > (group->mTabBar->mNSlots / 2))
+	if (abs (distanceNew - distanceOld) > ((int) group->mTabBar->mSlots.size () / 2))
 	    group->mChangeAnimationDirection *= -1;
     }
 
@@ -1678,7 +1678,7 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
     space = optionGetThumbSpace ();
 
     /* calculate the space which the tabs need */
-    for (slot = bar->mSlots; slot; slot = slot->mNext)
+    foreach (slot, bar->mSlots)
     {
 	if (slot == mDraggedSlot && mDragged)
 	{
@@ -1694,12 +1694,12 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
     /* just a little work-a-round for first call
        FIXME: remove this! */
     thumbSize = optionGetThumbSize ();
-    if (bar->mNSlots && tabsWidth <= 0)
+    if (bar->mSlots.size () && tabsWidth <= 0)
     {
 	/* first call */
-	tabsWidth = thumbSize * bar->mNSlots;
+	tabsWidth = thumbSize * bar->mSlots.size ();
 
-	if (bar->mNSlots && tabsHeight < thumbSize)
+	if (bar->mSlots.size () && tabsHeight < thumbSize)
 	{
 	    /* we need to do the standard height too */
 	    tabsHeight = thumbSize;
@@ -1709,7 +1709,7 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
 	    tabsWidth -= thumbSize;
     }
 
-    barWidth = space * (bar->mNSlots + 1) + tabsWidth;
+    barWidth = space * (bar->mSlots.size () + 1) + tabsWidth;
 
     if (isDraggedSlotGroup)
     {
@@ -1734,7 +1734,7 @@ GroupScreen::groupRecalcTabBarPos (GroupSelection *group,
 
     /* recalc every slot region */
     currentSlot = 0;
-    for (slot = bar->mSlots; slot; slot = slot->mNext)
+    foreach (slot, bar->mSlots)
     {
 	if (slot == mDraggedSlot && mDragged)
 	    continue;
@@ -1779,16 +1779,16 @@ GroupScreen::groupDamageTabBarRegion (GroupSelection *group)
 
     reg.extents = group->mTabBar->mRegion.handle ()->extents;
 
-    if (group->mTabBar->mSlots)
+    if (group->mTabBar->mSlots.size ())
     {
 	reg.extents.x1 = MIN (reg.extents.x1,
-			      group->mTabBar->mSlots->mRegion.boundingRect ().x1 ());
+			      group->mTabBar->mSlots.front ()->mRegion.boundingRect ().x1 ());
 	reg.extents.y1 = MIN (reg.extents.y1,
-			      group->mTabBar->mSlots->mRegion.boundingRect ().y1 ());
+			      group->mTabBar->mSlots.front ()->mRegion.boundingRect ().y1 ());
 	reg.extents.x2 = MAX (reg.extents.x2,
-			      group->mTabBar->mRevSlots->mRegion.boundingRect ().x2 ());
+			      group->mTabBar->mSlots.back ()->mRegion.boundingRect ().x2 ());
 	reg.extents.y2 = MAX (reg.extents.y2,
-			      group->mTabBar->mRevSlots->mRegion.boundingRect ().y2 ());
+			      group->mTabBar->mSlots.back ()->mRegion.boundingRect ().y2 ());
     }
 
     reg.extents.x1 -= DAMAGE_BUFFER;
@@ -1881,7 +1881,12 @@ GroupScreen::groupInsertTabBarSlotBefore (GroupTabBar     *bar,
 					  GroupTabBarSlot *nextSlot)
 {
     GroupTabBarSlot *prev = nextSlot->mPrev;
+    GroupTabBarSlot::List::iterator pos = std::find (bar->mSlots.begin (),
+						     bar->mSlots.end (),
+						     nextSlot);
     CompWindow      *w = slot->mWindow;
+    
+    bar->mSlots.insert (pos, slot);
 
     GROUP_WINDOW (w);
 
@@ -1892,13 +1897,11 @@ GroupScreen::groupInsertTabBarSlotBefore (GroupTabBar     *bar,
     }
     else
     {
-	bar->mSlots = slot;
 	slot->mPrev = NULL;
     }
 
     slot->mNext = nextSlot;
     nextSlot->mPrev = slot;
-    bar->mNSlots++;
 
     /* Moving bar->mRegion.boundingRect ().x1 () / x2 as minX1 / maxX2 will work,
        because the tab-bar got wider now, so it will put it in
@@ -1920,7 +1923,12 @@ GroupScreen::groupInsertTabBarSlotAfter (GroupTabBar     *bar,
 					 GroupTabBarSlot *prevSlot)
 {
     GroupTabBarSlot *next = prevSlot->mNext;
+    GroupTabBarSlot::List::iterator pos = std::find (bar->mSlots.begin (),
+						     bar->mSlots.end (),
+						     next);
     CompWindow      *w = slot->mWindow;
+
+    bar->mSlots.insert (pos, slot);
 
     GROUP_WINDOW (w);
 
@@ -1931,13 +1939,11 @@ GroupScreen::groupInsertTabBarSlotAfter (GroupTabBar     *bar,
     }
     else
     {
-	bar->mRevSlots = slot;
 	slot->mNext = NULL;
     }
 
     slot->mPrev = prevSlot;
     prevSlot->mNext = slot;
-    bar->mNSlots++;
 
     /* Moving bar->mRegion.boundingRect ().x1 () / x2 as minX1 / maxX2 will work,
        because the tab-bar got wider now, so it will put it in the
@@ -1961,21 +1967,19 @@ GroupScreen::groupInsertTabBarSlot (GroupTabBar     *bar,
 
     GROUP_WINDOW (w);
 
-    if (bar->mSlots)
+    if (bar->mSlots.size ())
     {
-	bar->mRevSlots->mNext = slot;
-	slot->mPrev = bar->mRevSlots;
+	bar->mSlots.back ()->mNext = slot;
+	slot->mPrev = bar->mSlots.back ();
 	slot->mNext = NULL;
     }
     else
     {
 	slot->mPrev = NULL;
 	slot->mNext = NULL;
-	bar->mSlots = slot;
     }
 
-    bar->mRevSlots = slot;
-    bar->mNSlots++;
+    bar->mSlots.push_back (slot);
 
     /* Moving bar->mRegion.boundingRect ().x1 () / x2 as minX1 / maxX2 will work,
        because the tab-bar got wider now, so it will put it in
@@ -2007,7 +2011,7 @@ GroupScreen::groupUnhookTabBarSlot (GroupTabBar     *bar,
     group = gw->mGroup;
 
     /* check if slot is not already unhooked */
-    for (tempSlot = bar->mSlots; tempSlot; tempSlot = tempSlot->mNext)
+    foreach (tempSlot, bar->mSlots)
 	if (tempSlot == slot)
 	    break;
 
@@ -2016,17 +2020,14 @@ GroupScreen::groupUnhookTabBarSlot (GroupTabBar     *bar,
 
     if (prev)
 	prev->mNext = next;
-    else
-	bar->mSlots = next;
 
     if (next)
 	next->mPrev = prev;
-    else
-	bar->mRevSlots = prev;
 
     slot->mPrev = NULL;
     slot->mNext = NULL;
-    bar->mNSlots--;
+    
+    bar->mSlots.remove (slot);
 
     if (!temporary)
     {
@@ -2300,7 +2301,7 @@ GroupScreen::groupApplyForces (GroupTabBar     *bar,
 	    bar->mRightSpeed += rightForce;
     }
 
-    for (slot = bar->mSlots; slot; slot = slot->mNext)
+    foreach (slot, bar->mSlots)
     {
 	centerX = (slot->mRegion.boundingRect ().x1 () + slot->mRegion.boundingRect ().x2 ()) / 2;
 	centerY = (slot->mRegion.boundingRect ().y1 () + slot->mRegion.boundingRect ().y2 ()) / 2;
@@ -2338,7 +2339,7 @@ GroupScreen::groupApplyForces (GroupTabBar     *bar,
 	}
     }
 
-    for (slot = bar->mSlots; slot; slot = slot->mNext)
+    foreach (slot, bar->mSlots)
     {
 	groupApplyFriction (screen, &slot->mSpeed);
 	groupApplySpeedLimit (screen, &slot->mSpeed);
@@ -2426,7 +2427,7 @@ GroupScreen::groupApplySpeeds (GroupSelection *group,
     if (updateTabBar)
 	resizeTabBarRegion (group, box, false);
 
-    for (slot = bar->mSlots; slot; slot = slot->mNext)
+    foreach (slot, bar->mSlots)
     {
 	int slotCenter;
 
@@ -2472,8 +2473,8 @@ GroupScreen::groupInitTabBar (GroupSelection *group,
     if (!bar)
 	return;
 
-    bar->mSlots = NULL;
-    bar->mNSlots = 0;
+    bar->mSlots.clear ();
+    bar->mSlots.size ();
     bar->mBgAnimation = AnimationNone;
     bar->mBgAnimationTime = 0;
     bar->mState = PaintOff;
@@ -2513,8 +2514,8 @@ GroupScreen::groupDeleteTabBar (GroupSelection *group)
     if (bar->mTimeoutHandle.active ())
 	bar->mTimeoutHandle.stop ();
 
-    while (bar->mSlots)
-	groupDeleteTabBarSlot (bar, bar->mSlots);
+    while (bar->mSlots.size ())
+	groupDeleteTabBarSlot (bar, bar->mSlots.front ());
 
     delete bar;
     group->mTabBar = NULL;
@@ -2598,7 +2599,7 @@ GroupScreen::groupChangeTabLeft (CompAction          *action,
     if (gw->mSlot->mPrev)
 	return groupChangeTab (gw->mSlot->mPrev, RotateLeft);
     else
-	return groupChangeTab (gw->mGroup->mTabBar->mRevSlots, RotateLeft);
+	return groupChangeTab (gw->mGroup->mTabBar->mSlots.back (), RotateLeft);
 }
 
 /*
@@ -2637,7 +2638,7 @@ GroupScreen::groupChangeTabRight (CompAction         *action,
     if (gw->mSlot->mNext)
 	return groupChangeTab (gw->mSlot->mNext, RotateRight);
     else
-	return groupChangeTab (gw->mGroup->mTabBar->mSlots, RotateRight);
+	return groupChangeTab (gw->mGroup->mTabBar->mSlots.front (), RotateRight);
 }
 
 /*

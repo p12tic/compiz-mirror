@@ -259,6 +259,9 @@ class GroupCairoLayer
 class GroupTabBarSlot
 {
 public:
+    typedef std::list <GroupTabBarSlot *> List;
+
+public:
     GroupTabBarSlot *mPrev;
     GroupTabBarSlot *mNext;
 
@@ -278,9 +281,7 @@ public:
 class GroupTabBar
 {
 public:
-    GroupTabBarSlot *mSlots;
-    GroupTabBarSlot *mRevSlots;
-    int		    mNSlots;
+    GroupTabBarSlot::List mSlots;
 
     GroupTabBarSlot *mHoveredSlot;
     GroupTabBarSlot *mTextSlot;

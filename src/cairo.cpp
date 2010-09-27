@@ -577,7 +577,7 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 
 	    animationProgress = bar->mBgAnimationTime /
 		                (optionGetReflexTime () * 1000.0);
-	    reflexWidth = (bar->mNSlots / 2.0) * 30;
+	    reflexWidth = (bar->mSlots.size () / 2.0) * 30;
 	    posX = (width + reflexWidth * 2.0) * animationProgress;
 	    alpha = sin (PI * animationProgress) * 0.55;
 	    if (alpha <= 0)
