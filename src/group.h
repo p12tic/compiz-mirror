@@ -363,6 +363,22 @@ public:
     int  mX1, mY1, mX2, mY2;
 };
 
+typedef struct _GroupWindowHideInfo {
+    Window mShapeWindow;
+
+    unsigned long mSkipState;
+    unsigned long mShapeMask;
+
+    XRectangle *mInputRects;
+    int        mNInputRects;
+    int        mInputRectOrdering;
+} GroupWindowHideInfo;
+
+typedef struct _GroupResizeInfo {
+    CompWindow *mResizedWindow;
+    CompRect    mOrigGeometry;
+} GroupResizeInfo;
+
 /*
  * GroupSelection
  */
@@ -428,23 +444,9 @@ public:
     bool   mIpwMapped;
 
     GLushort mColor[4];
+    
+    GroupResizeInfo *mResizeInfo;
 };
-
-typedef struct _GroupWindowHideInfo {
-    Window mShapeWindow;
-
-    unsigned long mSkipState;
-    unsigned long mShapeMask;
-
-    XRectangle *mInputRects;
-    int        mNInputRects;
-    int        mInputRectOrdering;
-} GroupWindowHideInfo;
-
-typedef struct _GroupResizeInfo {
-    CompWindow *mResizedWindow;
-    CompRect    mOrigGeometry;
-} GroupResizeInfo;
 
 /*
  * GroupDisplay structure
@@ -784,7 +786,6 @@ class GroupScreen :
     public:
 
 	bool		mIgnoreMode;
-	GroupResizeInfo *mResizeInfo;
 	GlowTextureProperties *mGlowTextureProperties;
 	GroupSelection	*mLastRestackedGroup;
 	Atom		mGroupWinPropertyAtom;

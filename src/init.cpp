@@ -198,7 +198,6 @@ GroupScreen::GroupScreen (CompScreen *s) :
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     mIgnoreMode (false),
-    mResizeInfo (NULL),
     mGlowTextureProperties ((GlowTextureProperties *) glowTextureProperties),
     mLastRestackedGroup (NULL),
     mGroupWinPropertyAtom (XInternAtom (screen->dpy (), "_COMPIZ_GROUP", 0)),

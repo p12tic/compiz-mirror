@@ -162,19 +162,17 @@ GroupWindow::groupUpdateResizeRectangle (CompRect   masterGeometry,
     int          newWidth, newHeight;
     int          widthDiff, heightDiff;
 
-    GROUP_SCREEN (screen);
-
-    if (mResizeGeometry.isEmpty () || !gs->mResizeInfo)
+    if (mResizeGeometry.isEmpty () || !mGroup->mResizeInfo)
 	return 0;
 
     newGeometry.setX (WIN_X (window) + (masterGeometry.x () -
-				 gs->mResizeInfo->mOrigGeometry.x ()));
+				 mGroup->mResizeInfo->mOrigGeometry.x ()));
     newGeometry.setY (WIN_Y (window) + (masterGeometry.y () -
-				 gs->mResizeInfo->mOrigGeometry.y ()));
+				 mGroup->mResizeInfo->mOrigGeometry.y ()));
 
-    widthDiff = masterGeometry.width () - gs->mResizeInfo->mOrigGeometry.width ();
+    widthDiff = masterGeometry.width () - mGroup->mResizeInfo->mOrigGeometry.width ();
     newGeometry.setWidth (MAX (1, WIN_WIDTH (window) + widthDiff));
-    heightDiff = masterGeometry.height () - gs->mResizeInfo->mOrigGeometry.height ();
+    heightDiff = masterGeometry.height () - mGroup->mResizeInfo->mOrigGeometry.height ();
     newGeometry.setHeight (MAX (1, WIN_HEIGHT (window) + heightDiff));
 
     if (window->constrainNewWindowSize (newGeometry.width (), newGeometry.height (),
@@ -602,6 +600,8 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	g->mColor[1] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
 	g->mColor[2] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
 	g->mColor[3] = 0xffff;
+	
+	g->mResizeInfo = NULL;
 
 	if (initialIdent)
 	    g->mIdentifier = initialIdent;
@@ -1331,18 +1331,23 @@ GroupScreen::handleEvent (XEvent      *event)
 	    CompWindow *w;
 	    w = screen->findWindow (event->xclient.window);
 
-	    if (w && mResizeInfo && (w == mResizeInfo->mResizedWindow))
+	    if (!w)
+		break;
+		
+	    foreach (GroupSelection *group, mGroups)
 	    {
-		GROUP_WINDOW (w);
+		if (!(group->mResizeInfo &&
+		      w == group->mResizeInfo->mResizedWindow))
+		      continue;
 
-		if (gw->mGroup)
+		if (group)
 		{			
 		    CompRect rect (event->xclient.data.l[0],
 			      	   event->xclient.data.l[1],
 			      	   event->xclient.data.l[2],
 			      	   event->xclient.data.l[3]);
 
-		    foreach (CompWindow *cw, gw->mGroup->mWindows)
+		    foreach (CompWindow *cw, group->mWindows)
 		    {
 			GroupWindow *gcw;
 
@@ -1684,16 +1689,16 @@ GroupWindow::grabNotify (int          x,
 
 	if (doResizeAll)
 	{
-	    if (!gs->mResizeInfo)
-		gs->mResizeInfo = (GroupResizeInfo *) malloc (sizeof (GroupResizeInfo));
+	    if (!mGroup->mResizeInfo)
+		mGroup->mResizeInfo = (GroupResizeInfo *) malloc (sizeof (GroupResizeInfo));
 
-	    if (gs->mResizeInfo)
+	    if (mGroup->mResizeInfo)
 	    {
-		gs->mResizeInfo->mResizedWindow       = window;
-		gs->mResizeInfo->mOrigGeometry = CompRect (WIN_X (window),
-							   WIN_Y (window),
-							   WIN_WIDTH (window),
-							   WIN_HEIGHT (window));
+		mGroup->mResizeInfo->mResizedWindow       = window;
+		mGroup->mResizeInfo->mOrigGeometry = CompRect (WIN_X (window),
+								WIN_Y (window),
+								WIN_WIDTH (window),
+								WIN_HEIGHT (window));
 	    }
 	}
 
@@ -1716,7 +1721,7 @@ GroupWindow::ungrabNotify ()
 	CompRect   rect;
 	gs->groupDequeueMoveNotifies ();
 
-	if (gs->mResizeInfo)
+	if (mGroup->mResizeInfo)
 	{
 	    rect = CompRect (WIN_X (window),
 			     WIN_Y (window),
@@ -1770,10 +1775,10 @@ GroupWindow::ungrabNotify ()
 	    }
 	}
 
-	if (gs->mResizeInfo)
+	if (mGroup->mResizeInfo)
 	{
-	    free (gs->mResizeInfo);
-	    gs->mResizeInfo = NULL;
+	    free (mGroup->mResizeInfo);
+	    mGroup->mResizeInfo = NULL;
 	}
 
 	mGroup->mGrabWindow = None;

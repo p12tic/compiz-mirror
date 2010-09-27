@@ -443,23 +443,21 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     mTmpSel.mVpX = screen->vp ().x ();
     mTmpSel.mVpY = screen->vp ().y ();
 
-    if (mResizeInfo)
+    foreach (group, mGroups)
     {
-	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+	if (group->mResizeInfo)
+	    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
     }
-    else
+    foreach (group, mGroups)
     {
-	foreach (group, mGroups)
+	if (group->mChangeState != NoTabChange ||
+	    group->mTabbingState != NoTabbing)
 	{
-	    if (group->mChangeState != NoTabChange ||
-		group->mTabbingState != NoTabbing)
-	    {
-		mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
-	    }
-	    else if (group->mTabBar && (group->mTabBar->mState != PaintOff))
-	    {
-		mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
-	    }
+	    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+	}
+	else if (group->mTabBar && (group->mTabBar->mState != PaintOff))
+	{
+	    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 	}
     }
 
