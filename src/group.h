@@ -387,6 +387,8 @@ public:
 		      int 	 dy,
 		      bool 	 immediate,
 		      bool	 viewportChange = false);
+    void resizeWindows (CompWindow *top);
+			
 
     void createInputPreventionWindow ();
     void destroyInputPreventionWindow ();

@@ -351,6 +351,79 @@ GroupSelection::moveWindows (CompWindow *top,
     }
 }
 
+void
+GroupSelection::resizeWindows (CompWindow *top)
+{
+    CompRect   rect;
+    
+    GROUP_SCREEN (screen);
+    
+    gs->groupDequeueMoveNotifies ();
+
+    if (gs->mResizeInfo)
+    {
+	rect = CompRect (WIN_X (top),
+			 WIN_Y (top),
+			 WIN_WIDTH (top),
+			 WIN_HEIGHT (top));
+    }
+
+    foreach (CompWindow *cw, mWindows)
+    {
+	if (!cw)
+	    continue;
+
+	if (cw->id () != top->id ())
+	{
+	    GROUP_WINDOW (cw);
+
+	    if (!gw->mResizeGeometry.isEmpty ())
+	    {
+		unsigned int mask;
+
+		gw->mResizeGeometry = CompRect (WIN_X (cw),
+						WIN_Y (cw),
+						WIN_WIDTH (cw),
+						WIN_HEIGHT (cw));
+
+		mask = gw->groupUpdateResizeRectangle (rect, false);
+		if (mask)
+		{
+		    XWindowChanges xwc;
+		    xwc.x      = gw->mResizeGeometry.x ();
+		    xwc.y      = gw->mResizeGeometry.y ();
+		    xwc.width  = gw->mResizeGeometry.width ();
+		    xwc.height = gw->mResizeGeometry.height ();
+
+		    if (top->mapNum () && (mask & (CWWidth | CWHeight)))
+			top->sendSyncRequest ();
+
+		    cw->configureXWindow (mask, &xwc);
+		}
+		else
+		{
+		    GroupWindow::get (top)->mResizeGeometry = CompRect (0, 0, 0, 0);
+		}
+	    }
+	    if (GroupWindow::get (top)->mNeedsPosSync)
+	    {
+		cw->syncPosition ();
+		GroupWindow::get (top)->mNeedsPosSync = false;
+	    }
+	    GroupWindow::get (top)->groupEnqueueUngrabNotify ();
+	}
+    }
+
+    if (gs->mResizeInfo)
+    {
+	free (gs->mResizeInfo);
+	gs->mResizeInfo = NULL;
+    }
+
+    mGrabWindow = None;
+    mGrabMask = 0;
+}
+
 /*
  * groupDeleteGroupWindow
  *
@@ -1728,71 +1801,7 @@ GroupWindow::ungrabNotify ()
 
     if (mGroup && !gs->mIgnoreMode && !gs->mQueued)
     {
-	CompRect   rect;
-	gs->groupDequeueMoveNotifies ();
-
-	if (gs->mResizeInfo)
-	{
-	    rect = CompRect (WIN_X (window),
-			     WIN_Y (window),
-			     WIN_WIDTH (window),
-			     WIN_HEIGHT (window));
-	}
-
-	foreach (CompWindow *cw, mGroup->mWindows)
-	{
-	    if (!cw)
-		continue;
-
-	    if (cw->id () != window->id ())
-	    {
-		GROUP_WINDOW (cw);
-
-		if (!gw->mResizeGeometry.isEmpty ())
-		{
-		    unsigned int mask;
-
-		    gw->mResizeGeometry = CompRect (WIN_X (cw),
-						    WIN_Y (cw),
-						    WIN_WIDTH (cw),
-						    WIN_HEIGHT (cw));
-
-		    mask = gw->groupUpdateResizeRectangle (rect, false);
-		    if (mask)
-		    {
-			XWindowChanges xwc;
-			xwc.x      = gw->mResizeGeometry.x ();
-			xwc.y      = gw->mResizeGeometry.y ();
-			xwc.width  = gw->mResizeGeometry.width ();
-			xwc.height = gw->mResizeGeometry.height ();
-
-			if (window->mapNum () && (mask & (CWWidth | CWHeight)))
-			    window->sendSyncRequest ();
-
-			cw->configureXWindow (mask, &xwc);
-		    }
-		    else
-		    {
-			mResizeGeometry = CompRect (0, 0, 0, 0);
-		    }
-		}
-		if (mNeedsPosSync)
-		{
-		    cw->syncPosition ();
-		    mNeedsPosSync = false;
-		}
-		groupEnqueueUngrabNotify ();
-	    }
-	}
-
-	if (gs->mResizeInfo)
-	{
-	    free (gs->mResizeInfo);
-	    gs->mResizeInfo = NULL;
-	}
-
-	mGroup->mGrabWindow = None;
-	mGroup->mGrabMask = 0;
+	mGroup->resizeWindows (window); // should really include the size info here
     }
 
     window->ungrabNotify ();
