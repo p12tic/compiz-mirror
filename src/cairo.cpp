@@ -149,29 +149,31 @@ GroupScreen::groupCreateCairoLayer (int        width,
 }
 
 /*
- * groupRenderTopTabHighlight
+ * GroupSelection::renderTopTabHighlight
  *
  */
 void
-GroupScreen::groupRenderTopTabHighlight (GroupSelection *group)
+GroupSelection::renderTopTabHighlight ()
 {
-    GroupTabBar     *bar = group->mTabBar;
+    GroupTabBar     *bar = mTabBar;
     GroupCairoLayer *layer;
     cairo_t         *cr;
     int             width, height;
+    
+    GROUP_SCREEN (screen);
 
-    if (!bar || !HAS_TOP_WIN (group) ||
+    if (!bar || !HAS_TOP_WIN (this) ||
 	!bar->mSelectionLayer || !bar->mSelectionLayer->mCairo)
     {
 	return;
     }
 
-    width = group->mTopTab->mRegion.boundingRect ().x2 () -
-	    group->mTopTab->mRegion.boundingRect ().x1 ();
-    height = group->mTopTab->mRegion.boundingRect ().y2 () -
-	     group->mTopTab->mRegion.boundingRect ().y1 ();
+    width = mTopTab->mRegion.boundingRect ().x2 () -
+	    mTopTab->mRegion.boundingRect ().x1 ();
+    height = mTopTab->mRegion.boundingRect ().y2 () -
+	     mTopTab->mRegion.boundingRect ().y1 ();
 
-    bar->mSelectionLayer = groupRebuildCairoLayer (bar->mSelectionLayer,
+    bar->mSelectionLayer = gs->groupRebuildCairoLayer (bar->mSelectionLayer,
 						  width, height);
     if (!bar->mSelectionLayer)
 	return;
@@ -182,10 +184,10 @@ GroupScreen::groupRenderTopTabHighlight (GroupSelection *group)
     /* fill */
     cairo_set_line_width (cr, 2);
     cairo_set_source_rgba (cr,
-			   (group->mColor[0] / 65535.0f),
-			   (group->mColor[1] / 65535.0f),
-			   (group->mColor[2] / 65535.0f),
-			   (group->mColor[3] / (65535.0f * 2)));
+			   (mColor[0] / 65535.0f),
+			   (mColor[1] / 65535.0f),
+			   (mColor[2] / 65535.0f),
+			   (mColor[3] / (65535.0f * 2)));
 
     cairo_move_to (cr, 0, 0);
     cairo_rectangle (cr, 0, 0, width, height);
@@ -194,10 +196,10 @@ GroupScreen::groupRenderTopTabHighlight (GroupSelection *group)
 
     /* outline */
     cairo_set_source_rgba (cr,
-			   (group->mColor[0] / 65535.0f),
-			   (group->mColor[1] / 65535.0f),
-			   (group->mColor[2] / 65535.0f),
-			   (group->mColor[3] / 65535.0f));
+			   (mColor[0] / 65535.0f),
+			   (mColor[1] / 65535.0f),
+			   (mColor[2] / 65535.0f),
+			   (mColor[3] / 65535.0f));
     cairo_stroke (cr);
 
     layer->mTexture = GLTexture::imageBufferToTexture ((char*) layer->mBuffer,
@@ -205,11 +207,11 @@ GroupScreen::groupRenderTopTabHighlight (GroupSelection *group)
 }
 
 /*
- * groupRenderTabBarBackground
+ * GroupSelection::renderTabBarBackground
  *
  */
 void
-GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
+GroupSelection::renderTabBarBackground ()
 {
     GroupCairoLayer *layer;
     cairo_t         *cr;
@@ -217,14 +219,16 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
     int             borderWidth;
     float           r, g, b, a;
     double          x0, y0, x1, y1;
-    GroupTabBar     *bar = group->mTabBar;
+    GroupTabBar     *bar = mTabBar;
+    
+    GROUP_SCREEN (screen);
 
-    if (!bar || !HAS_TOP_WIN (group) || !bar->mBgLayer || !bar->mBgLayer->mCairo)
+    if (!bar || !HAS_TOP_WIN (this) || !bar->mBgLayer || !bar->mBgLayer->mCairo)
 	return;
 
     width = bar->mRegion.boundingRect ().x2 () - bar->mRegion.boundingRect ().x1 ();
     height = bar->mRegion.boundingRect ().y2 () - bar->mRegion.boundingRect ().y1 ();
-    radius = optionGetBorderRadius ();
+    radius = gs->optionGetBorderRadius ();
 
     if (width > bar->mBgLayer->mTexWidth)
 	width = bar->mBgLayer->mTexWidth;
@@ -235,9 +239,9 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
     layer = bar->mBgLayer;
     cr = layer->mCairo;
 
-    groupClearCairoLayer (layer);
+    gs->groupClearCairoLayer (layer);
 
-    borderWidth = optionGetBorderWidth ();
+    borderWidth = gs->optionGetBorderWidth ();
     cairo_set_line_width (cr, borderWidth);
 
     cairo_save (cr);
@@ -254,38 +258,38 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 
     cairo_close_path  (cr);
 
-    switch (optionGetTabStyle ()) {
-    case TabStyleSimple:
+    switch (gs->optionGetTabStyle ()) {
+    case GroupOptions::TabStyleSimple:
 	{
 	    /* base color */
-	    r = optionGetTabBaseColorRed () / 65535.0f;
-	    g = optionGetTabBaseColorGreen () / 65535.0f;
-	    b = optionGetTabBaseColorBlue () / 65535.0f;
-	    a = optionGetTabBaseColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabBaseColorRed () / 65535.0f;
+	    g = gs->optionGetTabBaseColorGreen () / 65535.0f;
+	    b = gs->optionGetTabBaseColorBlue () / 65535.0f;
+	    a = gs->optionGetTabBaseColorAlpha () / 65535.0f;
 	    cairo_set_source_rgba (cr, r, g, b, a);
 
     	    cairo_fill_preserve (cr);
 	    break;
 	}
 
-    case TabStyleGradient:
+    case GroupOptions::TabStyleGradient:
 	{
 	    /* fill */
 	    cairo_pattern_t *pattern;
 	    pattern = cairo_pattern_create_linear (0, 0, width, height);
 
 	    /* highlight color */
-	    r = optionGetTabHighlightColorRed () / 65535.0f;
-	    g = optionGetTabHighlightColorGreen () / 65535.0f;
-	    b = optionGetTabHighlightColorBlue () / 65535.0f;
-	    a = optionGetTabHighlightColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabHighlightColorRed () / 65535.0f;
+	    g = gs->optionGetTabHighlightColorGreen () / 65535.0f;
+	    b = gs->optionGetTabHighlightColorBlue () / 65535.0f;
+	    a = gs->optionGetTabHighlightColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 0.0f, r, g, b, a);
 
 	    /* base color */
-	    r = optionGetTabBaseColorRed () / 65535.0f;
-	    g = optionGetTabBaseColorGreen () / 65535.0f;
-	    b = optionGetTabBaseColorBlue () / 65535.0f;
-	    a = optionGetTabBaseColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabBaseColorRed () / 65535.0f;
+	    g = gs->optionGetTabBaseColorGreen () / 65535.0f;
+	    b = gs->optionGetTabBaseColorBlue () / 65535.0f;
+	    a = gs->optionGetTabBaseColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 1.0f, r, g, b, a);
 
 	    cairo_set_source (cr, pattern);
@@ -294,7 +298,7 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 	    break;
 	}
 
-    case TabStyleGlass:
+    case GroupOptions::TabStyleGlass:
 	{
 	    cairo_pattern_t *pattern;
 
@@ -311,17 +315,17 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 	    pattern = cairo_pattern_create_linear (0, 0, 0, height);
 
 	    /* highlight color */
-	    r = optionGetTabHighlightColorRed () / 65535.0f;
-	    g = optionGetTabHighlightColorGreen () / 65535.0f;
-	    b = optionGetTabHighlightColorBlue () / 65535.0f;
-	    a = optionGetTabHighlightColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabHighlightColorRed () / 65535.0f;
+	    g = gs->optionGetTabHighlightColorGreen () / 65535.0f;
+	    b = gs->optionGetTabHighlightColorBlue () / 65535.0f;
+	    a = gs->optionGetTabHighlightColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 0.0f, r, g, b, a);
 
 	    /* base color */
-	    r = optionGetTabBaseColorRed () / 65535.0f;
-	    g = optionGetTabBaseColorGreen () / 65535.0f;
-	    b = optionGetTabBaseColorBlue () / 65535.0f;
-	    a = optionGetTabBaseColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabBaseColorRed () / 65535.0f;
+	    g = gs->optionGetTabBaseColorGreen () / 65535.0f;
+	    b = gs->optionGetTabBaseColorBlue () / 65535.0f;
+	    a = gs->optionGetTabBaseColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 0.6f, r, g, b, a);
 
 	    cairo_set_source (cr, pattern);
@@ -336,21 +340,21 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 
 	    /* we don't want to use a full highlight here
 	       so we mix the colors */
-	    r = (optionGetTabHighlightColorRed () +
-		 optionGetTabBaseColorRed ()) / (2 * 65535.0f);
-	    g = (optionGetTabHighlightColorGreen () +
-		 optionGetTabBaseColorGreen ()) / (2 * 65535.0f);
-	    b = (optionGetTabHighlightColorBlue () +
-		 optionGetTabBaseColorBlue ()) / (2 * 65535.0f);
-	    a = (optionGetTabHighlightColorAlpha () +
-		 optionGetTabBaseColorAlpha ()) / (2 * 65535.0f);
+	    r = (gs->optionGetTabHighlightColorRed () +
+		 gs->optionGetTabBaseColorRed ()) / (2 * 65535.0f);
+	    g = (gs->optionGetTabHighlightColorGreen () +
+		 gs->optionGetTabBaseColorGreen ()) / (2 * 65535.0f);
+	    b = (gs->optionGetTabHighlightColorBlue () +
+		 gs->optionGetTabBaseColorBlue ()) / (2 * 65535.0f);
+	    a = (gs->optionGetTabHighlightColorAlpha () +
+		 gs->optionGetTabBaseColorAlpha ()) / (2 * 65535.0f);
 	    cairo_pattern_add_color_stop_rgba (pattern, 1.0f, r, g, b, a);
 
 	    /* base color */
-	    r = optionGetTabBaseColorRed () / 65535.0f;
-	    g = optionGetTabBaseColorGreen () / 65535.0f;
-	    b = optionGetTabBaseColorBlue () / 65535.0f;
-	    a = optionGetTabBaseColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabBaseColorRed () / 65535.0f;
+	    g = gs->optionGetTabBaseColorGreen () / 65535.0f;
+	    b = gs->optionGetTabBaseColorBlue () / 65535.0f;
+	    a = gs->optionGetTabBaseColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 0.5f, r, g, b, a);
 
 	    cairo_set_source (cr, pattern);
@@ -373,31 +377,31 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 	    break;
 	}
 
-    case TabStyleMetal:
+    case GroupOptions::TabStyleMetal:
 	{
 	    /* fill */
 	    cairo_pattern_t *pattern;
 	    pattern = cairo_pattern_create_linear (0, 0, 0, height);
 
 	    /* base color #1 */
-	    r = optionGetTabBaseColorRed () / 65535.0f;
-	    g = optionGetTabBaseColorGreen () / 65535.0f;
-	    b = optionGetTabBaseColorBlue () / 65535.0f;
-	    a = optionGetTabBaseColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabBaseColorRed () / 65535.0f;
+	    g = gs->optionGetTabBaseColorGreen () / 65535.0f;
+	    b = gs->optionGetTabBaseColorBlue () / 65535.0f;
+	    a = gs->optionGetTabBaseColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 0.0f, r, g, b, a);
 
 	    /* highlight color */
-	    r = optionGetTabHighlightColorRed () / 65535.0f;
-	    g = optionGetTabHighlightColorGreen () / 65535.0f;
-	    b = optionGetTabHighlightColorBlue () / 65535.0f;
-	    a = optionGetTabHighlightColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabHighlightColorRed () / 65535.0f;
+	    g = gs->optionGetTabHighlightColorGreen () / 65535.0f;
+	    b = gs->optionGetTabHighlightColorBlue () / 65535.0f;
+	    a = gs->optionGetTabHighlightColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 0.55f, r, g, b, a);
 
 	    /* base color #2 */
-	    r = optionGetTabBaseColorRed () / 65535.0f;
-	    g = optionGetTabBaseColorGreen () / 65535.0f;
-	    b = optionGetTabBaseColorBlue () / 65535.0f;
-	    a = optionGetTabBaseColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabBaseColorRed () / 65535.0f;
+	    g = gs->optionGetTabBaseColorGreen () / 65535.0f;
+	    b = gs->optionGetTabBaseColorBlue () / 65535.0f;
+	    a = gs->optionGetTabBaseColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 1.0f, r, g, b, a);
 
 	    cairo_set_source (cr, pattern);
@@ -406,7 +410,7 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 	    break;
 	}
 
-    case TabStyleMurrina:
+    case GroupOptions::TabStyleMurrina:
 	{
 	    double          ratio, transX;
 	    cairo_pattern_t *pattern;
@@ -429,21 +433,21 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 
 	    /* we don't want to use a full highlight here
 	       so we mix the colors */
-	    r = (optionGetTabHighlightColorRed () +
-		 optionGetTabBaseColorRed ()) / (2 * 65535.0f);
-	    g = (optionGetTabHighlightColorGreen () +
-		 optionGetTabBaseColorGreen ()) / (2 * 65535.0f);
-	    b = (optionGetTabHighlightColorBlue () +
-		 optionGetTabBaseColorBlue ()) / (2 * 65535.0f);
-	    a = (optionGetTabHighlightColorAlpha () +
-		 optionGetTabBaseColorAlpha ()) / (2 * 65535.0f);
+	    r = (gs->optionGetTabHighlightColorRed () +
+		 gs->optionGetTabBaseColorRed ()) / (2 * 65535.0f);
+	    g = (gs->optionGetTabHighlightColorGreen () +
+		 gs->optionGetTabBaseColorGreen ()) / (2 * 65535.0f);
+	    b = (gs->optionGetTabHighlightColorBlue () +
+		 gs->optionGetTabBaseColorBlue ()) / (2 * 65535.0f);
+	    a = (gs->optionGetTabHighlightColorAlpha () +
+		 gs->optionGetTabBaseColorAlpha ()) / (2 * 65535.0f);
 	    cairo_pattern_add_color_stop_rgba (pattern, 0.0f, r, g, b, a);
 
 	    /* highlight color */
-	    r = optionGetTabHighlightColorRed () / 65535.0f;
-	    g = optionGetTabHighlightColorGreen () / 65535.0f;
-	    b = optionGetTabHighlightColorBlue () / 65535.0f;
-	    a = optionGetTabHighlightColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabHighlightColorRed () / 65535.0f;
+	    g = gs->optionGetTabHighlightColorGreen () / 65535.0f;
+	    b = gs->optionGetTabHighlightColorBlue () / 65535.0f;
+	    a = gs->optionGetTabHighlightColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 1.0f, r, g, b, a);
 
 	    cairo_set_source (cr, pattern);
@@ -484,22 +488,22 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 	    pattern = cairo_pattern_create_linear (0, 0, 0, height);
 
 	    /* base color */
-	    r = optionGetTabBaseColorRed () / 65535.0f;
-	    g = optionGetTabBaseColorGreen () / 65535.0f;
-	    b = optionGetTabBaseColorBlue () / 65535.0f;
-	    a = optionGetTabBaseColorAlpha () / 65535.0f;
+	    r = gs->optionGetTabBaseColorRed () / 65535.0f;
+	    g = gs->optionGetTabBaseColorGreen () / 65535.0f;
+	    b = gs->optionGetTabBaseColorBlue () / 65535.0f;
+	    a = gs->optionGetTabBaseColorAlpha () / 65535.0f;
 	    cairo_pattern_add_color_stop_rgba (pattern, 0.0f, r, g, b, a);
 
 	    /* we don't want to use a full highlight here
 	       so we mix the colors */
-	    r = (optionGetTabHighlightColorRed () +
-		 optionGetTabBaseColorRed ()) / (2 * 65535.0f);
-	    g = (optionGetTabHighlightColorGreen () +
-		 optionGetTabBaseColorGreen ()) / (2 * 65535.0f);
-	    b = (optionGetTabHighlightColorBlue () +
-		 optionGetTabBaseColorBlue ()) / (2 * 65535.0f);
-	    a = (optionGetTabHighlightColorAlpha () +
-		 optionGetTabBaseColorAlpha ()) / (2 * 65535.0f);
+	    r = (gs->optionGetTabHighlightColorRed () +
+		 gs->optionGetTabBaseColorRed ()) / (2 * 65535.0f);
+	    g = (gs->optionGetTabHighlightColorGreen () +
+		 gs->optionGetTabBaseColorGreen ()) / (2 * 65535.0f);
+	    b = (gs->optionGetTabHighlightColorBlue () +
+		 gs->optionGetTabBaseColorBlue ()) / (2 * 65535.0f);
+	    a = (gs->optionGetTabHighlightColorAlpha () +
+		 gs->optionGetTabBaseColorAlpha ()) / (2 * 65535.0f);
 	    cairo_pattern_add_color_stop_rgba (pattern, 1.0f, r, g, b, a);
 
 	    cairo_set_operator (cr, CAIRO_OPERATOR_SOURCE);
@@ -515,7 +519,7 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 	    y0 = borderWidth / 2.0;
 	    x1 = width  - borderWidth / 2.0;
 	    y1 = height - borderWidth / 2.0;
-	    radius = optionGetBorderRadius ();
+	    radius = gs->optionGetBorderRadius ();
 
 	    cairo_move_to (cr, x0 + radius, y0);
 	    cairo_arc (cr, x1 - radius, y0 + radius,
@@ -535,10 +539,10 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
     }
 
     /* outline */
-    r = optionGetTabBorderColorRed () / 65535.0f;
-    g = optionGetTabBorderColorGreen () / 65535.0f;
-    b = optionGetTabBorderColorBlue () / 65535.0f;
-    a = optionGetTabBorderColorAlpha () / 65535.0f;
+    r = gs->optionGetTabBorderColorRed () / 65535.0f;
+    g = gs->optionGetTabBorderColorGreen () / 65535.0f;
+    b = gs->optionGetTabBorderColorBlue () / 65535.0f;
+    a = gs->optionGetTabBorderColorAlpha () / 65535.0f;
     cairo_set_source_rgba (cr, r, g, b, a);
 
     if (bar->mBgAnimation != AnimationNone)
@@ -553,7 +557,7 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 	    double alpha;
 
 	    animationProgress = bar->mBgAnimationTime /
-		                (optionGetPulseTime () * 1000.0);
+		                (gs->optionGetPulseTime () * 1000.0);
 	    alpha = sin ((2 * PI * animationProgress) - 1.55)*0.5 + 0.5;
 	    if (alpha <= 0)
 		break;
@@ -576,7 +580,7 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 	    cairo_pattern_t *pattern;
 
 	    animationProgress = bar->mBgAnimationTime /
-		                (optionGetReflexTime () * 1000.0);
+		                (gs->optionGetReflexTime () * 1000.0);
 	    reflexWidth = (bar->mSlots.size () / 2.0) * 30;
 	    posX = (width + reflexWidth * 2.0) * animationProgress;
 	    alpha = sin (PI * animationProgress) * 0.55;
@@ -627,24 +631,26 @@ GroupScreen::groupRenderTabBarBackground (GroupSelection *group)
 }
 
 /*
- * groupRenderWindowTitle
+ * GroupSelection::enderWindowTitle
  *
  */
 void
-GroupScreen::groupRenderWindowTitle (GroupSelection *group)
+GroupSelection::renderWindowTitle ()
 {
     GroupCairoLayer *layer;
     int             width, height;
     Pixmap          pixmap = None;
-    GroupTabBar     *bar = group->mTabBar;
+    GroupTabBar     *bar = mTabBar;
+    
+    GROUP_SCREEN (screen);
 
-    if (!bar || !HAS_TOP_WIN (group) || !bar->mTextLayer)
+    if (!bar || !HAS_TOP_WIN (this) || !bar->mTextLayer)
 	return;
 
     width = bar->mRegion.boundingRect ().x2 () - bar->mRegion.boundingRect ().x1 ();
     height = bar->mRegion.boundingRect ().y2 () - bar->mRegion.boundingRect ().y1 ();
 
-    bar->mTextLayer = groupRebuildCairoLayer (bar->mTextLayer, width, height);
+    bar->mTextLayer = gs->groupRebuildCairoLayer (bar->mTextLayer, width, height);
     layer = bar->mTextLayer;
     if (!layer)
 	return;
@@ -654,25 +660,25 @@ GroupScreen::groupRenderWindowTitle (GroupSelection *group)
 	CompText::Attrib  textAttrib;
 
 	textAttrib.family = "Sans";
-	textAttrib.size   = optionGetTabbarFontSize ();
+	textAttrib.size   = gs->optionGetTabbarFontSize ();
 
 	textAttrib.flags = CompText::StyleBold | CompText::Ellipsized |
 	                   CompText::NoAutoBinding;
 
-	textAttrib.color[0] = optionGetTabbarFontColorRed ();
-	textAttrib.color[1] = optionGetTabbarFontColorGreen ();
-	textAttrib.color[2] = optionGetTabbarFontColorBlue ();
-	textAttrib.color[3] = optionGetTabbarFontColorAlpha ();
+	textAttrib.color[0] = gs->optionGetTabbarFontColorRed ();
+	textAttrib.color[1] = gs->optionGetTabbarFontColorGreen ();
+	textAttrib.color[2] = gs->optionGetTabbarFontColorBlue ();
+	textAttrib.color[3] = gs->optionGetTabbarFontColorAlpha ();
 
 	textAttrib.maxWidth = width;
 	textAttrib.maxHeight = height;
 
-	if (mText.renderWindowTitle (bar->mTextSlot->mWindow->id (),
-				     false, textAttrib))
+	if (gs->mText.renderWindowTitle (bar->mTextSlot->mWindow->id (),
+				         false, textAttrib))
 	{
-	    pixmap = mText.getPixmap ();
-	    width = mText.getWidth ();
-	    height = mText.getHeight ();
+	    pixmap = gs->mText.getPixmap ();
+	    width = gs->mText.getWidth ();
+	    height = gs->mText.getHeight ();
 	}
     }
 

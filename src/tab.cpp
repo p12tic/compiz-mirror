@@ -148,7 +148,8 @@ GroupWindow::groupSetWindowVisibility (bool visible)
 	info->mShapeMask = XShapeInputSelected (screen->dpy (), window->id ());
 
 	/* We are a reparenting window manager now, which means that we either
-	 * shape the frame window, or if it does not exist, shape the window **/
+	 * shape the frame window, or if it does not exist, shape the window
+	 */
 	
 	if (window->frame ())
 	{
@@ -500,7 +501,7 @@ GroupScreen::groupHandleTabBarFade (GroupSelection *group,
 		bar->mTextLayer->mState = PaintOff;
 		bar->mTextSlot = bar->mHoveredSlot = NULL;
 
-		groupRenderWindowTitle (group);
+		group->renderWindowTitle ();
 	    }
 	}
     }
@@ -550,14 +551,14 @@ GroupScreen::groupHandleTextFade (GroupSelection *group,
 	textLayer->mAnimationTime =
 	    (optionGetFadeTextTime () * 1000);
 
-	groupRenderWindowTitle (group);
+	group->renderWindowTitle ();
     }
 
     else if (textLayer->mState == PaintOff && bar->mTextSlot)
     {
 	/* Clean Up. */
 	bar->mTextSlot = NULL;
-	groupRenderWindowTitle (group);
+	group->renderWindowTitle ();
     }
 }
 
@@ -583,7 +584,7 @@ GroupScreen::groupHandleTabBarAnimation (GroupSelection *group,
 	bar->mBgAnimationTime = 0;
 	bar->mBgAnimation = AnimationNone;
 
-	groupRenderTabBarBackground (group);
+	group->renderTabBarBackground ();
     }
 }
 /*
@@ -1314,7 +1315,7 @@ GroupSelection::tabGroup (CompWindow *main)
 	layer = mTabBar->mTextLayer;
 	layer->mState = PaintOff;
 	layer->mAnimationTime = 0;
-	gs->groupRenderWindowTitle (this);
+	renderWindowTitle ();
     }
     if (mTabBar->mTextLayer)
     {
@@ -1334,7 +1335,7 @@ GroupSelection::tabGroup (CompWindow *main)
     {
 	mTabBar->mBgLayer->mState = PaintOn;
 	mTabBar->mBgLayer->mAnimationTime = 0;
-	gs->groupRenderTabBarBackground (this);
+	renderTabBarBackground ();
     }
 
     width = mTopTab->mRegion.boundingRect ().x2 () -
@@ -1347,7 +1348,7 @@ GroupSelection::tabGroup (CompWindow *main)
     {
 	mTabBar->mSelectionLayer->mState = PaintOn;
 	mTabBar->mSelectionLayer->mAnimationTime = 0;
-	gs->groupRenderTopTabHighlight (this);
+	renderTopTabHighlight ();
     }
 
     if (!HAS_TOP_WIN (this))
@@ -1552,8 +1553,8 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
     {
 	group->mTopTab = topTab;
 
-	groupRenderWindowTitle (group);
-	groupRenderTopTabHighlight (group);
+	group->renderWindowTitle ();
+	group->renderTopTabHighlight ();
 	if (oldTopTab)
 	    CompositeWindow::get (oldTopTab)->addDamage ();
 	CompositeWindow::get (w)->addDamage ();
@@ -1839,7 +1840,7 @@ GroupScreen::resizeTabBarRegion (GroupSelection *group,
 				    optionGetThumbSpace () +
 				    optionGetThumbSize (),
 				    box.height ());
-	groupRenderTabBarBackground (group);
+	group->renderTabBarBackground ();
 
 	/* invalidate old width */
 	group->mTabBar->mOldWidth = 0;

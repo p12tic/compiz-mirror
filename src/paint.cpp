@@ -181,7 +181,7 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 		   the only problem is that we would have 2 redraws if
 		   there is an animation */
 		if (newWidth != bar->mOldWidth || bar->mBgAnimation)
-		    groupRenderTabBarBackground (group);
+		    group->renderTabBarBackground ();
 
 		bar->mOldWidth = newWidth;
 		box.extents = bar->mRegion.handle ()->extents;

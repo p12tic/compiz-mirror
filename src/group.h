@@ -406,7 +406,12 @@ public:
     void prepareResizeWindows (CompRect &resizeRect);
     void resizeWindows (CompWindow *top);
     void maximizeWindows (CompWindow *top);
-			
+
+    /* TODO: Move to TabBar */
+
+    void renderTopTabHighlight ();
+    void renderTabBarBackground ();
+    void renderWindowTitle ();
 
     void createInputPreventionWindow ();
     void destroyInputPreventionWindow ();
@@ -530,15 +535,6 @@ class GroupScreen :
 	GroupCairoLayer*
 	groupCreateCairoLayer (int        width,
 			    int	       height);
-
-	void
-	groupRenderTopTabHighlight (GroupSelection *group);
-
-	void
-	groupRenderTabBarBackground (GroupSelection *group);
-
-	void
-	groupRenderWindowTitle (GroupSelection *group);
 
 	void
 	groupPaintThumb (GroupSelection       *group,
@@ -685,7 +681,7 @@ class GroupScreen :
 
 	void
 	drawTabAnimation (GroupSelection *group,
-				       int	      msSinceLastPaint);
+			  int	      msSinceLastPaint);
 
 	void
 	groupUpdateTabBars (Window enteredWin);
