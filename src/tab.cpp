@@ -756,7 +756,6 @@ GroupScreen::finishTabbing (GroupSelection *group)
 {
     group->mTabbingState = NoTabbing;
     groupTabChangeActivateEvent (false);
-    CompWindowList::iterator it = group->mWindows.begin ();
 
     if (group->mTabBar)
     {
@@ -779,10 +778,8 @@ GroupScreen::finishTabbing (GroupSelection *group)
 	group->mPrevTopTab = group->mTopTab;
     }
 
-    while (it != group->mWindows.end ())
+    foreach (CompWindow *w, group->mWindows)
     {
-	CompWindow *w = (*it);
-	
 	GROUP_WINDOW (w);
 
 	/* move window to target position */
@@ -795,18 +792,11 @@ GroupScreen::finishTabbing (GroupSelection *group)
 	if (group->mUngroupState == UngroupSingle &&
 	    (gw->mAnimateState & IS_UNGROUPING))
 	{
-	    /* groupRemoveWindowFromGroup () breaks our current
-	     * stack, so better just clean up here and then re-sync
-	     * the list
-	     */
 	    gw->groupRemoveWindowFromGroup ();
-	    gw->mAnimateState = 0;
-	    gw->mTx = gw->mTy = gw->mXVelocity = gw->mYVelocity = 0.0f;
-	    
-	    it = group->mWindows.begin ();
 	}
 
-	it++;
+	gw->mAnimateState = 0;
+	gw->mTx = gw->mTy = gw->mXVelocity = gw->mYVelocity = 0.0f;
     }
 
     if (group->mUngroupState == UngroupAll)
@@ -1393,35 +1383,33 @@ GroupSelection::tabGroup (CompWindow *main)
 }
 
 /*
- * GroupSelection::untab
+ * groupUntabGroup
  *
  */
 void
-GroupSelection::untabGroup ()
+GroupScreen::groupUntabGroup (GroupSelection *group)
 {
     int             oldX, oldY;
     CompWindow      *prevTopTab;
     GroupTabBarSlot *slot;
 
-    GROUP_SCREEN (screen);
-
-    if (!HAS_TOP_WIN (this))
+    if (!HAS_TOP_WIN (group))
 	return;
 
-    if (mPrevTopTab)
-	prevTopTab = PREV_TOP_TAB (this);
+    if (group->mPrevTopTab)
+	prevTopTab = PREV_TOP_TAB (group);
     else
     {
 	/* If prevTopTab isn't set, we have no choice but using topTab.
 	   It happens when there is still animation, which
 	   means the tab wasn't changed anyway. */
-	prevTopTab = TOP_TAB (this);
+	prevTopTab = TOP_TAB (group);
     }
 
-    mLastTopTab = TOP_TAB (this);
-    mTopTab = NULL;
+    group->mLastTopTab = TOP_TAB (group);
+    group->mTopTab = NULL;
 
-    foreach (slot, mTabBar->mSlots)
+    foreach (slot, group->mTabBar->mSlots)
     {
 	CompWindow *cw = slot->mWindow;
 
@@ -1429,10 +1417,10 @@ GroupSelection::untabGroup ()
 
 	if (gw->mAnimateState & (IS_ANIMATED | FINISHED_ANIMATION))
 	{
-	    gs->mQueued = true;
+	    mQueued = true;
 	    cw->move(gw->mDestination.x - WIN_X (cw),
 		     gw->mDestination.y - WIN_Y (cw), true);
-	    gs->mQueued = false;
+	    mQueued = false;
 	}
 
 	gw->groupSetWindowVisibility (true);
@@ -1461,16 +1449,16 @@ GroupSelection::untabGroup ()
 	gw->mXVelocity = gw->mYVelocity = 0.0f;
     }
 
-    mTabbingState = NoTabbing;
-    gs->groupStartTabbingAnimation (this, false);
+    group->mTabbingState = NoTabbing;
+    groupStartTabbingAnimation (group, false);
 
-    gs->groupDeleteTabBar (this);
-    mChangeAnimationTime = 0;
-    mChangeState = NoTabChange;
-    mNextTopTab = NULL;
-    mPrevTopTab = NULL;
+    groupDeleteTabBar (group);
+    group->mChangeAnimationTime = 0;
+    group->mChangeState = NoTabChange;
+    group->mNextTopTab = NULL;
+    group->mPrevTopTab = NULL;
 
-    gs->cScreen->damageScreen ();
+    cScreen->damageScreen ();
 }
 
 /*
@@ -2045,7 +2033,7 @@ GroupScreen::groupUnhookTabBarSlot (GroupTabBar     *bar,
 		groupChangeTab (prev, RotateLeft);
 
 	    if (optionGetUntabOnClose ())
-		group->untabGroup ();
+		groupUntabGroup (group);
 	}
     }
 
@@ -2558,8 +2546,8 @@ GroupScreen::groupInitTab (CompAction         *action,
     if (!gw->mGroup->mTabBar)
 	gw->mGroup->tabGroup (w);
     else if (allowUntab)
-	gw->mGroup->untabGroup ();
-	
+	groupUntabGroup (gw->mGroup);
+
     cScreen->damageScreen ();
 
     return true;

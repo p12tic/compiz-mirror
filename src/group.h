@@ -375,7 +375,6 @@ public:
 public:
 
     void tabGroup (CompWindow *main);
-    void untabGroup ();
 
 public:
 
@@ -699,6 +698,9 @@ class GroupScreen :
 	void
 	groupStartTabbingAnimation (GroupSelection *group,
 				   bool           tab);
+
+	void
+	groupUntabGroup (GroupSelection *group);
 
 	bool
 	groupChangeTab (GroupTabBarSlot             *topTab,
