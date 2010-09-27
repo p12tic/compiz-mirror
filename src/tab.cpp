@@ -1105,16 +1105,15 @@ GroupWindow::groupConstrainMovement (CompRegion constrainRegion,
  *
  */
 void
-GroupScreen::groupApplyConstraining (GroupSelection *group,
-				     CompRegion	    constrainRegion,
-				     Window	    constrainedWindow,
-				     int	    dx,
-				     int	    dy)
+GroupSelection::applyConstraining (CompRegion	    constrainRegion,
+				   Window	    constrainedWindow,
+				   int	    	    dx,
+				   int	    	    dy)
 {
     if (!dx && !dy)
 	return;
 
-    foreach (CompWindow *w, group->mWindows)
+    foreach (CompWindow *w, mWindows)
     {
 	GROUP_WINDOW (w);
 
@@ -1240,7 +1239,7 @@ GroupScreen::groupStartTabbingAnimation (GroupSelection *group,
 			/* if we found a valid target position, apply
 			   the change also to other windows to retain
 			   the distance between the windows */
-			groupApplyConstraining (group, constrainRegion, w->id (),
+			group->applyConstraining (constrainRegion, w->id (),
 						dx - gw->mDestination.x +
 						gw->mOrgPos.x,
 						dy - gw->mDestination.y +

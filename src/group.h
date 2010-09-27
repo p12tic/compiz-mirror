@@ -421,6 +421,13 @@ public:
 		      unsigned int		 mask,
 		      CompRegion		 clipRegion);
 
+    void
+    applyConstraining (CompRegion  constrainRegion,
+		       Window	   constrainedWindow,
+		       int	   dx,
+		       int	   dy);
+
+
     /* TODO: Move to GroupTabBarSlot */
     void paintThumb (GroupTabBarSlot      *slot,
 		     const GLMatrix	   &transform,
@@ -687,13 +694,6 @@ class GroupScreen :
 
 	CompRegion
 	groupGetConstrainRegion ();
-
-	void
-	groupApplyConstraining (GroupSelection *group,
-				CompRegion  constrainRegion,
-				Window	    constrainedWindow,
-				int	    dx,
-				int	    dy);
 
 	void
 	groupStartTabbingAnimation (GroupSelection *group,
