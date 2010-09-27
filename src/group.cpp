@@ -367,14 +367,14 @@ GroupWindow::groupDeleteGroupWindow ()
 			GroupWindow::get (lw)->groupSetWindowVisibility (true);
 		    }
 		    if (!gs->optionGetAutotabCreate ())
-			gs->groupDeleteGroup (group);
+			group->fini ();
 		}
 	    }
 	}
 	else
 	{
 	    group->mWindows.clear ();
-	    gs->groupDeleteGroup (group);
+	    group->fini ();
 	}
 
 	cWindow->damageOutputExtents ();
@@ -453,20 +453,22 @@ GroupWindow::groupRemoveWindowFromGroup ()
  *
  */
 void
-GroupScreen::groupDeleteGroup (GroupSelection *group)
+GroupSelection::fini ()
 {
-    if (group->mWindows.size ())
+    GROUP_SCREEN (screen);
+	
+    if (mWindows.size ())
     {
-	if (group->mTabBar)
+	if (mTabBar)
 	{
 	    /* set up untabbing animation and delete the group
 	       at the end of the animation */
-	    group->untabGroup ();
-	    group->mUngroupState = UngroupAll;
+	    untabGroup ();
+	    mUngroupState = UngroupAll;
 	    return;
 	}
 
-	foreach (CompWindow *cw, group->mWindows)
+	foreach (CompWindow *cw, mWindows)
 	{
 	    GROUP_WINDOW (cw);
 
@@ -475,7 +477,7 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
 	    cw->updateWindowOutputExtents ();
 	    gw->groupUpdateWindowProperty ();
 
-	    if (optionGetAutotabCreate () && gw->groupIsGroupWindow ())
+	    if (gs->optionGetAutotabCreate () && gw->groupIsGroupWindow ())
 	    {
 		gw->groupAddWindowToGroup (NULL, 0);
 		if (GroupWindow::get (cw)->mGroup)
@@ -483,19 +485,19 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
 	    }
 	}
 
-	group->mWindows.clear ();
+	mWindows.clear ();
     }
-    else if (group->mTabBar)
-	groupDeleteTabBar (group);
+    else if (mTabBar)
+	gs->groupDeleteTabBar (this);
 
-    mGroups.remove (group);
+    gs->mGroups.remove (this);
 
-    if (group == mLastHoveredGroup)
-	mLastHoveredGroup = NULL;
-    if (group == mLastRestackedGroup)
-	mLastRestackedGroup = NULL;
+    if (this == gs->mLastHoveredGroup)
+	gs->mLastHoveredGroup = NULL;
+    if (this == gs->mLastRestackedGroup)
+	gs->mLastRestackedGroup = NULL;
 
-    delete group;
+    delete this;
 }
 
 /*
@@ -715,7 +717,7 @@ GroupScreen::groupUnGroupWindows (CompAction          *action,
 	GROUP_WINDOW (w);
 
 	if (gw->mGroup)
-	    groupDeleteGroup (gw->mGroup);
+	    gw->mGroup->fini ();
     }
 
     return false;

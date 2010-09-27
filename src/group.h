@@ -386,6 +386,8 @@ public:
     void createInputPreventionWindow ();
     void destroyInputPreventionWindow ();
 
+    void fini ();
+
 public:
     CompScreen *mScreen;
     CompWindowList mWindows;
@@ -579,9 +581,6 @@ class GroupScreen :
 
 	void
 	groupGrabScreen (GroupScreenGrabState newState);
-
-	void
-	groupDeleteGroup (GroupSelection *group);
 
 	bool
 	groupGroupWindows (CompAction         *action,

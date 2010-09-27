@@ -805,7 +805,7 @@ GroupScreen::finishTabbing (GroupSelection *group)
     }
 
     if (group->mUngroupState == UngroupAll)
-	groupDeleteGroup (group);
+	group->fini ();
     else
 	group->mUngroupState = UngroupNone;
 }
