@@ -48,9 +48,9 @@
 
 
 /* General TODO:
- * 1) Use std::list/vector etc
- * 2) Use s/XRectangle/CompRect/
- * 3) Use s/Region/CompRegion/
+ * 1) Use std::list/vector etc (done)
+ * 2) Use s/XRectangle/CompRect/ (done)
+ * 3) Use s/Region/CompRegion/ (done)
  * 5) Derive SelectionObject from CompRect and CompWindowList
  * 6) Make GroupObject from CompWindowList, move all related methods into there
  * 7) Make Queues their own object
@@ -326,6 +326,43 @@ typedef struct _GlowQuad {
 #define GLOWQUAD_RIGHT		 7
 #define NUM_GLOWQUADS		 8
 
+class GroupSelection;
+
+/*
+ * Selection
+ */
+
+class Selection :
+    public CompWindowList
+{
+public:
+    Selection () :
+	mPainted (false),
+	mVpX (0),
+	mVpY (0),
+	mX1 (0),
+	mY1 (0),
+	mX2 (0),
+	mY2 (0) {};
+
+    void checkWindow (CompWindow *w);
+    void deselect (CompWindow *w);
+    void deselect (GroupSelection *group);
+    void select (CompWindow *w);
+    void select (GroupSelection *g);
+    void toGroup ();
+    void damage (int, int);
+    void paint (const GLScreenPaintAttrib sa,
+		const GLMatrix		  transform,
+		CompOutput		  *output,
+		bool			  transformed);
+
+    /* For selection */
+    bool mPainted;
+    int  mVpX, mVpY;
+    int  mX1, mY1, mX2, mY2;
+};
+
 /*
  * GroupSelection
  */
@@ -490,12 +527,6 @@ class GroupScreen :
 		       CompRegion		 clipRegion);
 
 	void
-	groupPaintSelectionOutline (const GLScreenPaintAttrib sa,
-				 const GLMatrix	           transform,
-				 CompOutput                *output,
-				 bool                      transformed);
-
-	void
 	groupDamagePaintRectangle (BoxPtr pBox);
 
 	/* queues.c */
@@ -518,13 +549,6 @@ class GroupScreen :
 	/* selection.c */
 
 	bool
-	groupFindGroupInWindows (GroupSelection *group,
-			      CompWindowList &windows);
-
-	CompWindowList
-	groupFindWindowsInRegion (CompRegion     reg);
-
-	bool
 	groupSelectSingle (CompAction         *action,
 			CompAction::State  state,
 			CompOption::Vector options);
@@ -537,10 +561,6 @@ class GroupScreen :
 	groupSelectTerminate (CompAction         *action,
 			   CompAction::State  state,
 			   CompOption::Vector options);
-
-	void
-	groupDamageSelectionRect (int xRoot,
-			       int yRoot);
 
 	/* group.c */
 
@@ -792,7 +812,7 @@ class GroupScreen :
 	CompTimer	    mDequeueTimeoutHandle;
 
 	GroupSelection::List mGroups;
-	GroupSelection	     mTmpSel;
+	Selection	     mTmpSel;
 
 	bool mQueued;
 
@@ -802,11 +822,6 @@ class GroupScreen :
 	GroupSelection *mLastHoveredGroup;
 
 	CompTimer       mShowDelayTimeoutHandle;
-
-	/* For selection */
-	bool mPainted;
-	int  mVpX, mVpY;
-	int  mX1, mY1, mX2, mY2;
 
 	/* For d&d */
 	GroupTabBarSlot   *mDraggedSlot;
@@ -925,15 +940,6 @@ class GroupWindow :
 	bool
 	groupWindowInRegion (CompRegion src,
 			  float  precision);
-
-	void
-	groupDeleteSelectionWindow ();
-
-	void
-	addWindowToSelection ();
-
-	void
-	groupSelectWindow ();
 
 	/* group.c */
 

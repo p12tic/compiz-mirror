@@ -644,14 +644,14 @@ GroupScreen::groupGroupWindows (CompAction         *action,
 				CompAction::State  state,
 				CompOption::Vector options)
 {
-    if (mTmpSel.mWindows.size () > 0)
+    if (mTmpSel.size () > 0)
     {
-        CompWindowList::iterator it = mTmpSel.mWindows.begin ();
+        CompWindowList::iterator it = mTmpSel.begin ();
 	CompWindow	         *cw;
         GroupSelection *group = NULL;
         bool           tabbed = false;
 
-	foreach (cw, mTmpSel.mWindows)
+	foreach (cw, mTmpSel)
 	{
 	    GROUP_WINDOW (cw);
 
@@ -677,7 +677,7 @@ GroupScreen::groupGroupWindows (CompAction         *action,
         gw->mInSelection = false;
         group = gw->mGroup;
 
-        for (; it != mTmpSel.mWindows.end (); it++)
+        for (; it != mTmpSel.end (); it++)
         {
 	    cw = *it;
 	    GROUP_WINDOW (cw);
@@ -691,7 +691,7 @@ GroupScreen::groupGroupWindows (CompAction         *action,
         }
 
         /* exit selection */
-        mTmpSel.mWindows.clear ();
+        mTmpSel.clear ();
     }
 
     return false;
@@ -1222,7 +1222,7 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
     }
     else if (mGrabState == ScreenGrabSelect)
     {
-	groupDamageSelectionRect (xRoot, yRoot);
+	mTmpSel.damage (xRoot, yRoot);
     }
 }
 

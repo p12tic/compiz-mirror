@@ -210,13 +210,6 @@ GroupScreen::GroupScreen (CompScreen *s) :
     mGrabState (ScreenGrabNone),
     mGrabIndex (0),
     mLastHoveredGroup (NULL),
-    mPainted (false),
-    mVpX (0),
-    mVpY (0),
-    mX1 (0),
-    mY1 (0),
-    mX2 (0),
-    mY2 (0),
     mDraggedSlot (NULL),
     mDragged (false),
     mPrevX (0),
@@ -328,7 +321,7 @@ GroupScreen::~GroupScreen ()
 	}
     }
 
-    mTmpSel.mWindows.clear ();
+    mTmpSel.clear ();
 
     if (mGrabIndex)
 	groupGrabScreen (ScreenGrabNone);

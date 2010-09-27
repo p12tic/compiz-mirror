@@ -319,15 +319,17 @@ GroupScreen::groupPaintTabBar (GroupSelection            *group,
 }
 
 /*
- * groupPaintSelectionOutline
+ * Selection::paint
  *
  */
 void
-GroupScreen::groupPaintSelectionOutline (const GLScreenPaintAttrib sa,
-					 const GLMatrix	           transform,
-					 CompOutput                *output,
-					 bool                      transformed)
+Selection::paint (const GLScreenPaintAttrib sa,
+		  const GLMatrix	    transform,
+		  CompOutput                *output,
+		  bool                      transformed)
 {
+    GROUP_SCREEN (screen);
+	
     int x1, x2, y1, y2;
 
     x1 = MIN (mX1, mX2);
@@ -335,15 +337,16 @@ GroupScreen::groupPaintSelectionOutline (const GLScreenPaintAttrib sa,
     x2 = MAX (mX1, mX2);
     y2 = MAX (mY1, mY2);
 
-    if (mGrabState == ScreenGrabSelect)
+    if (gs->mGrabState == ScreenGrabSelect)
     {
 	GLMatrix sTransform (transform);
 
 	if (transformed)
 	{
-	    gScreen->glApplyTransform (sa, output, &sTransform);
+	    gs->gScreen->glApplyTransform (sa, output, &sTransform);
 	    sTransform.toScreenSpace (output, -sa.zTranslate);
-	} else
+	}
+	else
 	    sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
 	glPushMatrix ();
@@ -352,10 +355,10 @@ GroupScreen::groupPaintSelectionOutline (const GLScreenPaintAttrib sa,
 	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 	glEnable (GL_BLEND);
 
-	glColor4usv (optionGetFillColor ());
+	glColor4usv (gs->optionGetFillColor ());
 	glRecti (x1, y2, x2, y1);
 
-	glColor4usv (optionGetLineColor ());
+	glColor4usv (gs->optionGetLineColor ());
 	glBegin (GL_LINE_LOOP);
 	glVertex2i (x1, y1);
 	glVertex2i (x2, y1);
@@ -415,10 +418,10 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	/* groupDrawTabAnimation may delete the group, so better
 	   save the pointer to the next chain element */
 
+	it++;
+
 	if (group->mTabbingState != NoTabbing)
 	    drawTabAnimation (group, msSinceLastPaint);
-
-	it++;
     }
 }
 
@@ -436,9 +439,9 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     GroupSelection *group;
     bool           status;
 
-    mPainted = false;
-    mVpX = screen->vp ().x ();
-    mVpY = screen->vp ().y ();
+    mTmpSel.mPainted = false;
+    mTmpSel.mVpX = screen->vp ().x ();
+    mTmpSel.mVpY = screen->vp ().y ();
 
     if (mResizeInfo)
     {
@@ -462,7 +465,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
-    if (status && !mPainted)
+    if (status && !mTmpSel.mPainted)
     {
 	if ((mGrabState == ScreenGrabTabDrag) && mDraggedSlot)
 	{
@@ -486,7 +489,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	}
 	else  if (mGrabState == ScreenGrabSelect)
 	{
-	    groupPaintSelectionOutline (attrib, transform, output, false);
+	    mTmpSel.paint (attrib, transform, output, false);
 	}
     }
 
@@ -506,9 +509,9 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 {
     gScreen->glPaintTransformedOutput (attrib, transform, region, output, mask);
 
-    if ((mVpX == screen->vp ().x ()) && (mVpY == screen->vp ().y ()))
+    if ((mTmpSel.mVpX == screen->vp ().x ()) && (mTmpSel.mVpY == screen->vp ().y ()))
     {
-	mPainted = true;
+	mTmpSel.mPainted = true;
 
 	if ((mGrabState == ScreenGrabTabDrag) &&
 	    mDraggedSlot && mDragged)
@@ -526,7 +529,7 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	}
 	else if (mGrabState == ScreenGrabSelect)
 	{
-	    groupPaintSelectionOutline (attrib, transform, output, true);
+	    mTmpSel.paint (attrib, transform, output, true);
 	}
     }
 }
