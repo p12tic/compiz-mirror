@@ -425,6 +425,26 @@ GroupSelection::resizeWindows (CompWindow *top)
 }
 
 /*
+ * GroupSelection::maximizeWindows
+ *
+ */
+
+void
+GroupSelection::maximizeWindows (CompWindow *top)
+{
+    foreach (CompWindow *cw, mWindows)
+    {
+	if (!cw)
+	    continue;
+
+	if (cw->id () == top->id ())
+	    continue;
+
+	cw->maximize (top->state () & MAXIMIZE_STATE);
+    }
+}
+
+/*
  * groupDeleteGroupWindow
  *
  */
@@ -1891,16 +1911,7 @@ GroupWindow::stateChangeNotify (unsigned int lastState)
 	if (((lastState & MAXIMIZE_STATE) != (window->state () & MAXIMIZE_STATE)) &&
 	    gs->optionGetMaximizeUnmaximizeAll ())
 	{
-	    foreach (CompWindow *cw, mGroup->mWindows)
-	    {
-		if (!cw)
-		    continue;
-
-		if (cw->id () == window->id ())
-		    continue;
-
-		cw->maximize (window->state () & MAXIMIZE_STATE);
-	    }
+	    mGroup->maximizeWindows (window);
 	}
     }
 

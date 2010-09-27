@@ -388,6 +388,7 @@ public:
 		      bool 	 immediate,
 		      bool	 viewportChange = false);
     void resizeWindows (CompWindow *top);
+    void maximizeWindows (CompWindow *top);
 			
 
     void createInputPreventionWindow ();
