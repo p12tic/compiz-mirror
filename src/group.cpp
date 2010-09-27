@@ -1262,9 +1262,9 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    foreach (tmpGroup, mGroups)
 	    {
 		if (group == tmpGroup)
-		    groupTabSetVisibility (tmpGroup, true, 0);
+		    tmpGroup->tabSetVisibility (true, 0);
 		else
-		    groupTabSetVisibility (tmpGroup, false, PERMANENT);
+		    tmpGroup->tabSetVisibility (false, PERMANENT);
 	    }
 
 	    break;
@@ -1280,7 +1280,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	GroupSelection *tmpGroup;
 
 	foreach (tmpGroup, mGroups)
-	    groupTabSetVisibility (tmpGroup, false, PERMANENT);
+	    tmpGroup->tabSetVisibility (false, PERMANENT);
 
 	mDraggedSlot = NULL;
 	mDragged = false;
@@ -1351,7 +1351,7 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 		mDragged = true;
 
 		foreach (group, mGroups)
-		    groupTabSetVisibility (group, true, PERMANENT);
+		    group->tabSetVisibility (true, PERMANENT);
 
 		CompRect box = gw->mGroup->mTabBar->mRegion.boundingRect ();		groupRecalcTabBarPos (gw->mGroup, (box.x1 () + box.x2 ()) / 2,
 				      box.x1 (), box.x2 ());
@@ -1461,7 +1461,7 @@ GroupScreen::handleEvent (XEvent      *event)
 		{
 		    /* on unmap of the top tab, hide the tab bar and the
 		       input prevention window */
-		    groupTabSetVisibility (gw->mGroup, false, PERMANENT);
+		    gw->mGroup->tabSetVisibility (false, PERMANENT);
 		}
 		if (!w->pendingUnmaps ())
 		{
@@ -1795,7 +1795,7 @@ GroupWindow::grabNotify (int          x,
 	              (mask & CompWindowGrabResizeMask);
 
 	if (mGroup->mTabBar)
-	    gs->groupTabSetVisibility (mGroup, false, 0);
+	    mGroup->tabSetVisibility (false, 0);
 
 	foreach (CompWindow *cw, mGroup->mWindows)
 	{

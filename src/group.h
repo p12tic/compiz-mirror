@@ -426,6 +426,13 @@ public:
 		       Window	   constrainedWindow,
 		       int	   dx,
 		       int	   dy);
+		       
+    bool tabBarTimeout ();
+    bool showDelayTimeout ();
+
+    void
+    tabSetVisibility (bool           visible,
+		      unsigned int   mask);
 
 
     /* TODO: Move to GroupTabBarSlot */
@@ -645,17 +652,6 @@ class GroupScreen :
 	bool
 	groupGetCurrentMousePosition (int &x, int &y);
 
-	bool
-	groupTabBarTimeout (GroupSelection *group);
-
-	bool
-	groupShowDelayTimeout (GroupSelection *group);
-
-	void
-	groupTabSetVisibility (GroupSelection *group,
-				bool           visible,
-				unsigned int   mask);
-
 	void
 	groupGetDrawOffsetForSlot (GroupTabBarSlot *slot,
 				   int &hoffset,
@@ -674,7 +670,7 @@ class GroupScreen :
 
 	void
 	groupHandleTabBarAnimation (GroupSelection *group,
-				    		 int            msSinceLastPaint);
+				    int            msSinceLastPaint);
 
 	void
 	groupTabChangeActivateEvent (bool activating);

@@ -212,9 +212,9 @@ GroupWindow::groupSetWindowVisibility (bool visible)
  *
  */
 bool
-GroupScreen::groupTabBarTimeout (GroupSelection *group)
+GroupSelection::tabBarTimeout ()
 {
-    groupTabSetVisibility (group, false, PERMANENT);
+    tabSetVisibility (false, PERMANENT);
 
     return false;	/* This will free the timer. */
 }
@@ -224,27 +224,29 @@ GroupScreen::groupTabBarTimeout (GroupSelection *group)
  *
  */
 bool
-GroupScreen::groupShowDelayTimeout (GroupSelection *group)
+GroupSelection::showDelayTimeout ()
 {
     int            mouseX, mouseY;
     CompWindow     *topTab;
+    
+    GROUP_SCREEN (screen);
 
-    if (!HAS_TOP_WIN (group))
+    if (!HAS_TOP_WIN (this))
     {
-	mShowDelayTimeoutHandle.stop ();
+	gs->mShowDelayTimeoutHandle.stop ();
 	return false;	/* This will free the timer. */
     }
 
-    topTab = TOP_TAB (group);
+    topTab = TOP_TAB (this);
 
-    groupGetCurrentMousePosition (mouseX, mouseY);
+    gs->groupGetCurrentMousePosition (mouseX, mouseY);
 
-    groupRecalcTabBarPos (group, mouseX, WIN_REAL_X (topTab),
+    gs->groupRecalcTabBarPos (this, mouseX, WIN_REAL_X (topTab),
 			  WIN_REAL_X (topTab) + WIN_REAL_WIDTH (topTab));
 
-    groupTabSetVisibility (group, true, 0);
+    tabSetVisibility (true, 0);
 
-    mShowDelayTimeoutHandle.stop ();
+    gs->mShowDelayTimeoutHandle.stop ();
     return false;	/* This will free the timer. */
 }
 
@@ -266,31 +268,32 @@ GroupScreen::groupShowDelayTimeout (GroupSelection *group)
  *
  */
 void
-GroupScreen::groupTabSetVisibility (GroupSelection *group,
-				    bool           visible,
-				    unsigned int   mask)
+GroupSelection::tabSetVisibility (bool           visible,
+				  unsigned int   mask)
 {
     GroupTabBar *bar;
     CompWindow  *topTab;
     PaintState  oldState;
+    
+    GROUP_SCREEN (screen);
 
-    if (!group || !group->mWindows.size () || !group->mTabBar || !HAS_TOP_WIN (group))
+    if (!mWindows.size () || !mTabBar || !HAS_TOP_WIN (this))
 	return;
 
-    bar = group->mTabBar;
-    topTab = TOP_TAB (group);
+    bar = mTabBar;
+    topTab = TOP_TAB (this);
     oldState = bar->mState;
 
     /* hide tab bars for invisible top windows */
     if ((topTab->state () & CompWindowStateHiddenMask) || topTab->invisible ())
     {
 	bar->mState = PaintOff;
-	groupSwitchTopTabInput (group, true);
+	gs->groupSwitchTopTabInput (this, true);
     }
     else if (visible && bar->mState != PaintPermanentOn && (mask & PERMANENT))
     {
 	bar->mState = PaintPermanentOn;
-	groupSwitchTopTabInput (group, false);
+	gs->groupSwitchTopTabInput (this, false);
     }
     else if (visible && bar->mState == PaintPermanentOn && !(mask & PERMANENT))
     {
@@ -298,13 +301,13 @@ GroupScreen::groupTabSetVisibility (GroupSelection *group,
     }
     else if (visible && (bar->mState == PaintOff || bar->mState == PaintFadeOut))
     {
-	if (optionGetBarAnimations ())
+	if (gs->optionGetBarAnimations ())
 	{
 	    bar->mBgAnimation = AnimationReflex;
-	    bar->mBgAnimationTime = optionGetReflexTime () * 1000.0;
+	    bar->mBgAnimationTime = gs->optionGetReflexTime () * 1000.0;
 	}
 	bar->mState = PaintFadeIn;
-	groupSwitchTopTabInput (group, false);
+	gs->groupSwitchTopTabInput (this, false);
     }
     else if (!visible &&
 	     (bar->mState != PaintPermanentOn || (mask & PERMANENT)) &&
@@ -312,14 +315,14 @@ GroupScreen::groupTabSetVisibility (GroupSelection *group,
 	      bar->mState == PaintFadeIn))
     {
 	bar->mState = PaintFadeOut;
-	groupSwitchTopTabInput (group, true);
+	gs->groupSwitchTopTabInput (this, true);
     }
 
     if (bar->mState == PaintFadeIn || bar->mState == PaintFadeOut)
-	bar->mAnimationTime = (optionGetFadeTime () * 1000) - bar->mAnimationTime;
+	bar->mAnimationTime = (gs->optionGetFadeTime () * 1000) - bar->mAnimationTime;
 
     if (bar->mState != oldState)
-	groupDamageTabBarRegion (group);
+	gs->groupDamageTabBarRegion (this);
 }
 
 /*
@@ -694,8 +697,8 @@ GroupScreen::groupHandleAnimation (GroupSelection *group)
 	else if (optionGetVisibilityTime () != 0.0f &&
 		 group->mChangeState == NoTabChange)
 	{
-	    groupTabSetVisibility (group, true,
-				   PERMANENT | SHOW_BAR_INSTANTLY_MASK);
+	    group->tabSetVisibility (true, PERMANENT |
+					   SHOW_BAR_INSTANTLY_MASK);
 
 	    if (group->mTabBar->mTimeoutHandle.active ())
 		group->mTabBar->mTimeoutHandle.stop ();
@@ -703,7 +706,9 @@ GroupScreen::groupHandleAnimation (GroupSelection *group)
 	    group->mTabBar->mTimeoutHandle.setTimes (optionGetVisibilityTime () * 1000,
 						   optionGetVisibilityTime () * 1200);
 
-	    group->mTabBar->mTimeoutHandle.setCallback (boost::bind (&GroupScreen::groupTabBarTimeout, this, group));
+	    group->mTabBar->mTimeoutHandle.setCallback (
+			   boost::bind (&GroupSelection::tabBarTimeout,
+					group));
 
 	    group->mTabBar->mTimeoutHandle.start ();
 	}
@@ -956,7 +961,7 @@ GroupScreen::groupUpdateTabBars (Window enteredWin)
     /* if we found a hovered tab bar different than the last one
        (or left a tab bar), hide the old one */
     if (mLastHoveredGroup && (hoveredGroup != mLastHoveredGroup))
-	groupTabSetVisibility (mLastHoveredGroup, false, 0);
+	mLastHoveredGroup->tabSetVisibility (false, 0);
 
     /* if we entered a tab bar (or title bar), show the tab bar */
     if (hoveredGroup && HAS_TOP_WIN (hoveredGroup) &&
@@ -977,11 +982,13 @@ GroupScreen::groupUpdateTabBars (Window enteredWin)
 
 		mShowDelayTimeoutHandle.setTimes (showDelayTime, showDelayTime * 1.2);
 
-		mShowDelayTimeoutHandle.setCallback (boost::bind (&GroupScreen::groupShowDelayTimeout, this, hoveredGroup));
+		mShowDelayTimeoutHandle.setCallback (
+			boost::bind (&GroupSelection::showDelayTimeout,
+				     hoveredGroup));
 		mShowDelayTimeoutHandle.start ();
 	    }
 	    else
-		groupShowDelayTimeout (hoveredGroup);
+		hoveredGroup->showDelayTimeout ();
 	}
     }
 
