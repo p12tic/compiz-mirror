@@ -446,6 +446,15 @@ public:
     void
     handleTabBarAnimation (int msSinceLastPaint);
 
+    void
+    handleAnimation ();
+
+    void
+    finishTabbing ();
+
+    void
+    drawTabAnimation (int	      msSinceLastPaint);
+
     /* TODO: Move to GroupTabBarSlot */
     void paintThumb (GroupTabBarSlot      *slot,
 		     const GLMatrix	   &transform,
@@ -670,16 +679,6 @@ class GroupScreen :
 
 	void
 	groupTabChangeActivateEvent (bool activating);
-
-	void
-	groupHandleAnimation (GroupSelection *group);
-
-	void
-	finishTabbing (GroupSelection *group);
-
-	void
-	drawTabAnimation (GroupSelection *group,
-			  int	      msSinceLastPaint);
 
 	void
 	groupUpdateTabBars (Window enteredWin);

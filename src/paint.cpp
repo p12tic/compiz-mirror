@@ -418,7 +418,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	{
 	    group->mChangeAnimationTime -= msSinceLastPaint;
 	    if (group->mChangeAnimationTime <= 0)
-		groupHandleAnimation (group);
+		group->handleAnimation ();
 	}
 
 	/* groupDrawTabAnimation may delete the group, so better
@@ -427,7 +427,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	it++;
 
 	if (group->mTabbingState != NoTabbing)
-	    drawTabAnimation (group, msSinceLastPaint);
+	    group->drawTabAnimation (msSinceLastPaint);
     }
 }
 
