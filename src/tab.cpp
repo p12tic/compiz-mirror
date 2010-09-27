@@ -35,22 +35,13 @@
 bool
 GroupScreen::groupGetCurrentMousePosition (int &x, int &y)
 {
-    unsigned int rmask;
-    int          mouseX, mouseY, winX, winY;
-    Window       root;
-    Window       child;
-    bool         result;
+    MousePoller poller;
+    CompPoint pos = poller.getCurrentPosition ();
+    
+    x = pos.x ();
+    y = pos.y ();
 
-    result = XQueryPointer (screen->dpy (), screen->root (), &root,
-			    &child, &mouseX, &mouseY, &winX, &winY, &rmask);
-
-    if (result)
-    {
-	x = mouseX;
-	y = mouseY;
-    }
-
-    return result;
+    return (x != 0 && y != 0);
 }
 
 /*
