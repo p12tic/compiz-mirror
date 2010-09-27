@@ -374,6 +374,10 @@ public:
 
 public:
 
+    void tabGroup (CompWindow *main);
+
+public:
+
     CompScreen *mScreen;
     CompWindowList mWindows;
 
@@ -694,9 +698,6 @@ class GroupScreen :
 	void
 	groupStartTabbingAnimation (GroupSelection *group,
 				   bool           tab);
-
-	void
-	groupTabGroup (CompWindow *main);
 
 	void
 	groupUntabGroup (GroupSelection *group);

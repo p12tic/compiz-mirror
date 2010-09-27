@@ -445,7 +445,8 @@ GroupWindow::groupRemoveWindowFromGroup ()
 	if (gs->optionGetAutotabCreate () && groupIsGroupWindow ())
 	{
 	    groupAddWindowToGroup (NULL, 0);
-	    gs->groupTabGroup (window);
+	    if (GroupWindow::get (window)->mGroup)
+		GroupWindow::get (window)->mGroup->tabGroup (window);
 	}
     }
 }
@@ -480,7 +481,8 @@ GroupScreen::groupDeleteGroup (GroupSelection *group)
 	    if (optionGetAutotabCreate () && gw->groupIsGroupWindow ())
 	    {
 		gw->groupAddWindowToGroup (NULL, 0);
-		groupTabGroup (cw);
+		if (GroupWindow::get (cw)->mGroup)
+		    GroupWindow::get (cw)->mGroup->tabGroup (cw);
 	    }
 	}
 
@@ -1805,7 +1807,8 @@ GroupWindow::damageRect (bool	        initial,
 	    if (!mGroup && (mWindowState == WindowNormal))
 	    {
 		groupAddWindowToGroup (NULL, 0);
-		gs->groupTabGroup (window);
+		if (GroupWindow::get (window)->mGroup)
+		    GroupWindow::get (window)->mGroup->tabGroup (window);
 	    }
 	}
 

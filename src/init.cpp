@@ -163,7 +163,7 @@ GroupScreen::groupApplyInitialActions ()
 
 	    gw->groupAddWindowToGroup (group, id);
 	    if (tabbed)
-		groupTabGroup (w);
+		gw->mGroup->tabGroup (w);
 
 	    gw->mGroup->mColor[0] = color[0];
 	    gw->mGroup->mColor[1] = color[1];
@@ -178,7 +178,8 @@ GroupScreen::groupApplyInitialActions ()
 	    if (!gw->mGroup && (gw->mWindowState == WindowNormal))
 	    {
 		gw->groupAddWindowToGroup (NULL, 0);
-		groupTabGroup (w);
+		if (gw->mGroup)
+		    gw->mGroup->tabGroup (w);
 	    }
 	}
 	

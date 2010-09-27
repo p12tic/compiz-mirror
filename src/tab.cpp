@@ -1263,21 +1263,20 @@ GroupScreen::groupStartTabbingAnimation (GroupSelection *group,
 }
 
 /*
- * groupTabGroup
+ * GroupSelection::tabGroup
  *
  */
 void
-GroupScreen::groupTabGroup (CompWindow *main)
+GroupSelection::tabGroup (CompWindow *main)
 {
-    GroupSelection  *group;
     GroupTabBarSlot *slot;
     int             width, height;
     int             space, thumbSize;
 
     GROUP_WINDOW (main);
+    GROUP_SCREEN (screen);
 
-    group = gw->mGroup;
-    if (!group || group->mTabBar)
+    if (mTabBar)
 	return;
 
     if (!screen->XShape ())
@@ -1287,69 +1286,69 @@ GroupScreen::groupTabGroup (CompWindow *main)
 	return;
     }
 
-    groupInitTabBar (group, main);
-    if (!group->mTabBar)
+    gs->groupInitTabBar (this, main);
+    if (!mTabBar)
 	return;
 
-    group->mTabbingState = NoTabbing;
+    mTabbingState = NoTabbing;
     /* Slot is initialized after groupInitTabBar(group); */
-    groupChangeTab (gw->mSlot, RotateUncertain);
-    groupRecalcTabBarPos (gw->mGroup, WIN_CENTER_X (main),
+    gs->groupChangeTab (gw->mSlot, RotateUncertain);
+    gs->groupRecalcTabBarPos (gw->mGroup, WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
 
-    width = group->mTabBar->mRegion.boundingRect ().x2 () -
-	    group->mTabBar->mRegion.boundingRect ().x1 ();
-    height = group->mTabBar->mRegion.boundingRect ().y2 () -
-	     group->mTabBar->mRegion.boundingRect ().y1 ();
+    width = mTabBar->mRegion.boundingRect ().x2 () -
+	    mTabBar->mRegion.boundingRect ().x1 ();
+    height = mTabBar->mRegion.boundingRect ().y2 () -
+	     mTabBar->mRegion.boundingRect ().y1 ();
 
-    group->mTabBar->mTextLayer = groupCreateCairoLayer (width, height);
-    if (group->mTabBar->mTextLayer)
+    mTabBar->mTextLayer = gs->groupCreateCairoLayer (width, height);
+    if (mTabBar->mTextLayer)
     {
 	GroupCairoLayer *layer;
 
-	layer = group->mTabBar->mTextLayer;
+	layer = mTabBar->mTextLayer;
 	layer->mState = PaintOff;
 	layer->mAnimationTime = 0;
-	groupRenderWindowTitle (group);
+	gs->groupRenderWindowTitle (this);
     }
-    if (group->mTabBar->mTextLayer)
+    if (mTabBar->mTextLayer)
     {
 	GroupCairoLayer *layer;
 
-	layer = group->mTabBar->mTextLayer;
-	layer->mAnimationTime = optionGetFadeTextTime () * 1000;
+	layer = mTabBar->mTextLayer;
+	layer->mAnimationTime = gs->optionGetFadeTextTime () * 1000;
 	layer->mState = PaintFadeIn;
     }
 
     /* we need a buffer for DnD here */
-    space = optionGetThumbSpace ();
-    thumbSize = optionGetThumbSize ();
-    group->mTabBar->mBgLayer = groupCreateCairoLayer (width + space + thumbSize,
+    space = gs->optionGetThumbSpace ();
+    thumbSize = gs->optionGetThumbSize ();
+    mTabBar->mBgLayer = gs->groupCreateCairoLayer (width + space + thumbSize,
 						    height);
-    if (group->mTabBar->mBgLayer)
+    if (mTabBar->mBgLayer)
     {
-	group->mTabBar->mBgLayer->mState = PaintOn;
-	group->mTabBar->mBgLayer->mAnimationTime = 0;
-	groupRenderTabBarBackground (group);
+	mTabBar->mBgLayer->mState = PaintOn;
+	mTabBar->mBgLayer->mAnimationTime = 0;
+	gs->groupRenderTabBarBackground (this);
     }
 
-    width = group->mTopTab->mRegion.boundingRect ().x2 () -
-	    group->mTopTab->mRegion.boundingRect ().x1 ();
-    height = group->mTopTab->mRegion.boundingRect ().y2 () -
-	     group->mTopTab->mRegion.boundingRect ().y1 ();
+    width = mTopTab->mRegion.boundingRect ().x2 () -
+	    mTopTab->mRegion.boundingRect ().x1 ();
+    height = mTopTab->mRegion.boundingRect ().y2 () -
+	     mTopTab->mRegion.boundingRect ().y1 ();
 
-    group->mTabBar->mSelectionLayer = groupCreateCairoLayer (width, height);
-    if (group->mTabBar->mSelectionLayer)
+    mTabBar->mSelectionLayer = gs->groupCreateCairoLayer (width, height);
+    if (mTabBar->mSelectionLayer)
     {
-	group->mTabBar->mSelectionLayer->mState = PaintOn;
-	group->mTabBar->mSelectionLayer->mAnimationTime = 0;
-	groupRenderTopTabHighlight (group);
+	mTabBar->mSelectionLayer->mState = PaintOn;
+	mTabBar->mSelectionLayer->mAnimationTime = 0;
+	gs->groupRenderTopTabHighlight (this);
     }
 
-    if (!HAS_TOP_WIN (group))
+    if (!HAS_TOP_WIN (this))
 	return;
 
-    foreach (slot, group->mTabBar->mSlots)
+    foreach (slot, mTabBar->mSlots)
     {
 	CompWindow *cw = slot->mWindow;
 
@@ -1380,7 +1379,7 @@ GroupScreen::groupTabGroup (CompWindow *main)
 	gw->mXVelocity = gw->mYVelocity = 0.0f;
     }
 
-    groupStartTabbingAnimation (group, true);
+    gs->groupStartTabbingAnimation (this, true);
 }
 
 /*
@@ -2545,7 +2544,7 @@ GroupScreen::groupInitTab (CompAction         *action,
 	return true;
 
     if (!gw->mGroup->mTabBar)
-	groupTabGroup (w);
+	gw->mGroup->tabGroup (w);
     else if (allowUntab)
 	groupUntabGroup (gw->mGroup);
 
