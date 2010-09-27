@@ -398,6 +398,15 @@ public:
 			  bool	     minimize);
     void shadeWindows (CompWindow  *top,
 		       bool	   shade);
+    void moveWindows (CompWindow *top,
+		      int 	 dx,
+		      int 	 dy,
+		      bool 	 immediate,
+		      bool	 viewportChange = false);
+    void prepareResizeWindows (CompRect &resizeRect);
+    void resizeWindows (CompWindow *top);
+    void maximizeWindows (CompWindow *top);
+			
 
     void createInputPreventionWindow ();
     void destroyInputPreventionWindow ();
