@@ -2487,7 +2487,7 @@ GroupScreen::groupInitTabBar (GroupSelection *group,
     foreach (CompWindow *cw, group->mWindows)
 	groupCreateSlot (group, cw);
 
-    groupCreateInputPreventionWindow (group);
+    group->createInputPreventionWindow ();
 
     groupRecalcTabBarPos (group, WIN_CENTER_X (topTab),
 			  WIN_X (topTab), WIN_X (topTab) + WIN_WIDTH (topTab));
@@ -2506,7 +2506,7 @@ GroupScreen::groupDeleteTabBar (GroupSelection *group)
     groupDestroyCairoLayer (bar->mBgLayer);
     groupDestroyCairoLayer (bar->mSelectionLayer);
 
-    groupDestroyInputPreventionWindow (group);
+    group->destroyInputPreventionWindow ();
 
     if (bar->mTimeoutHandle.active ())
 	bar->mTimeoutHandle.stop ();
@@ -2650,7 +2650,7 @@ GroupScreen::groupSwitchTopTabInput (GroupSelection *group,
 	return;
 
     if (!group->mInputPrevention)
-	groupCreateInputPreventionWindow (group);
+	group->createInputPreventionWindow ();
 
     if (!enable)
     {
@@ -2668,40 +2668,40 @@ GroupScreen::groupSwitchTopTabInput (GroupSelection *group,
 }
 
 /*
- * groupCreateInputPreventionWindow
+ * GroupSelection::createInputPreventionWindow
  *
  */
 void
-GroupScreen::groupCreateInputPreventionWindow (GroupSelection *group)
+GroupSelection::createInputPreventionWindow ()
 {	
-    if (!group->mInputPrevention)
+    if (!mInputPrevention)
     {
 	XSetWindowAttributes attrib;
 	attrib.override_redirect = true;
 
-	group->mInputPrevention = 
+	mInputPrevention = 
 	    XCreateWindow (screen->dpy (),
 			   screen->root (), -100, -100, 1, 1, 0,
 			   CopyFromParent, InputOnly,
 			   CopyFromParent, CWOverrideRedirect, &attrib);
 	
-	group->mIpwMapped = false;
+	mIpwMapped = false;
     }
 }
 
 /*
- * groupDestroyInputPreventionWindow
+ * GroupSelection::destroyInputPreventionWindow
  *
  */
 void
-GroupScreen::groupDestroyInputPreventionWindow (GroupSelection *group)
+GroupSelection::destroyInputPreventionWindow ()
 {
-    if (group->mInputPrevention)
+    if (mInputPrevention)
     {
 	XDestroyWindow (screen->dpy (),
-			group->mInputPrevention);
+			mInputPrevention);
 
-	group->mInputPrevention = None;
-	group->mIpwMapped = true;
+	mInputPrevention = None;
+	mIpwMapped = true;
     }
 }

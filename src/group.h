@@ -383,6 +383,9 @@ public:
     void shadeWindows (CompWindow  *top,
 		       bool	   shade);
 
+    void createInputPreventionWindow ();
+    void destroyInputPreventionWindow ();
+
 public:
     CompScreen *mScreen;
     CompWindowList mWindows;
@@ -778,12 +781,6 @@ class GroupScreen :
 	void
 	groupSwitchTopTabInput (GroupSelection *group,
 				bool	    enable);
-
-	void
-	groupCreateInputPreventionWindow (GroupSelection *group);
-
-	void
-	groupDestroyInputPreventionWindow (GroupSelection *group);
 
     public:
 
