@@ -1472,6 +1472,7 @@ GroupSelection::untabGroup ()
     startTabbingAnimation (false);
 
     delete mTabBar;
+    mTabBar = NULL;
     mChangeAnimationTime = 0;
     mChangeState = NoTabChange;
     mNextTopTab = NULL;
@@ -2519,8 +2520,6 @@ GroupTabBar::~GroupTabBar ()
 
     while (mSlots.size ())
 	mGroup->deleteTabBarSlot (mSlots.front ());
-
-    mGroup->mTabBar = NULL;
 }
 
 /*

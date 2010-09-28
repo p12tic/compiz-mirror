@@ -612,10 +612,12 @@ GroupWindow::groupRemoveWindowFromGroup ()
     }
 }
 
-GroupSelection::~GroupSelection () {}
+GroupSelection::~GroupSelection ()
+{
+}
 
 /*
- * groupDeleteGroup
+ * GroupSelection::fini
  *
  */
 void
@@ -654,7 +656,10 @@ GroupSelection::fini ()
 	mWindows.clear ();
     }
     else if (mTabBar)
+    {
 	delete mTabBar;
+	mTabBar = NULL;
+    }
 
     gs->mGroups.remove (this);
 
