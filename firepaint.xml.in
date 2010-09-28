@@ -4,7 +4,6 @@
 	<_long>Paint fire or other particles on the screen</_long>
 	<deps>
 	    <requirement>
-		<plugin>composite</plugin>
 		<plugin>opengl</plugin>
 	    </requirement>
 	    <relation type="after">
