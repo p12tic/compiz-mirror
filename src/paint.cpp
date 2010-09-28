@@ -398,8 +398,8 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 
 	if (bar)
 	{
-	    groupApplyForces (bar, (mDragged) ? mDraggedSlot : NULL);
-	    groupApplySpeeds (group, msSinceLastPaint);
+	    group->applyForces ((mDragged) ? mDraggedSlot : NULL);
+	    group->applySpeeds (msSinceLastPaint);
 
 	    if ((bar->mState != PaintOff) && HAS_TOP_WIN (group))
 		group->handleHoverDetection ();

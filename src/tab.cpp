@@ -2117,14 +2117,13 @@ GroupSelection::deleteTabBarSlot (GroupTabBarSlot *slot)
  *
  */
 void
-GroupScreen::groupCreateSlot (GroupSelection *group,
-			      CompWindow      *w)
+GroupSelection::createSlot (CompWindow      *w)
 {
     GroupTabBarSlot *slot;
 
     GROUP_WINDOW (w);
 
-    if (!group->mTabBar)
+    if (!mTabBar)
 	return;
 
     slot = new GroupTabBarSlot ();
@@ -2133,7 +2132,7 @@ GroupScreen::groupCreateSlot (GroupSelection *group,
 
     slot->mWindow = w;
 
-    group->insertTabBarSlot (slot);
+    insertTabBarSlot (slot);
     gw->mSlot = slot;
     gw->groupUpdateWindowProperty ();
 }
@@ -2250,18 +2249,20 @@ groupApplySpeedLimit (CompScreen *s,
  *
  */
 void
-GroupScreen::groupApplyForces (GroupTabBar     *bar,
-			       GroupTabBarSlot *draggedSlot)
+GroupSelection::applyForces (GroupTabBarSlot *draggedSlot)
 {
+    GroupTabBar     *bar = mTabBar;
     GroupTabBarSlot *slot, *slot2;
     int             centerX, centerY;
     int             draggedCenterX, draggedCenterY;
+
+    GROUP_SCREEN (screen);
 
     if (draggedSlot)
     {
 	int vx, vy;
 
-	groupGetDrawOffsetForSlot (draggedSlot, vx, vy);
+	gs->groupGetDrawOffsetForSlot (draggedSlot, vx, vy);
 
 	draggedCenterX = ((draggedSlot->mRegion.boundingRect ().x1 () +
 			   draggedSlot->mRegion.boundingRect ().x2 ()) / 2) + vx;
@@ -2361,10 +2362,9 @@ GroupScreen::groupApplyForces (GroupTabBar     *bar,
  *
  */
 void
-GroupScreen::groupApplySpeeds (GroupSelection *group,
-			       int            msSinceLastRepaint)
+GroupSelection::applySpeeds (int            msSinceLastRepaint)
 {
-    GroupTabBar     *bar = group->mTabBar;
+    GroupTabBar     *bar = mTabBar;
     GroupTabBarSlot *slot;
     int             move;
     CompRect	    box;
@@ -2429,7 +2429,7 @@ GroupScreen::groupApplySpeeds (GroupSelection *group,
 	bar->mRightMsSinceLastMove = 0;
 
     if (updateTabBar)
-	group->resizeTabBarRegion (box, false);
+	resizeTabBarRegion (box, false);
 
     foreach (slot, bar->mSlots)
     {
@@ -2492,7 +2492,7 @@ GroupScreen::groupInitTabBar (GroupSelection *group,
     group->mTabBar = bar;
 
     foreach (CompWindow *cw, group->mWindows)
-	groupCreateSlot (group, cw);
+	group->createSlot (cw);
 
     group->createInputPreventionWindow ();
 

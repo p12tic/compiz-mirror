@@ -499,6 +499,15 @@ public:
 		     int		   targetOpacity,
 		     bool		   dontPaint);
 
+    void
+    createSlot (CompWindow      *w);
+
+    void
+    applyForces (GroupTabBarSlot *draggedSlot);
+
+    void
+    applySpeeds (int            msSinceLastRepaint);
+
     void fini ();
 
 public:
@@ -731,18 +740,6 @@ class GroupScreen :
 	void
 	groupRecalcSlotPos (GroupTabBarSlot *slot,
 			    int		 slotPos);
-
-	void
-	groupCreateSlot (GroupSelection *group,
-			 CompWindow      *w);
-
-	void
-	groupApplyForces (GroupTabBar     *bar,
-			  GroupTabBarSlot *draggedSlot);
-
-	void
-	groupApplySpeeds (GroupSelection *group,
-			  int            msSinceLastRepaint);
 
 	void
 	groupInitTabBar (GroupSelection *group,

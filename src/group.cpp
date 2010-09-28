@@ -708,7 +708,7 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	    if (topTab)
 	    {
 		if (!mSlot)
-		    gs->groupCreateSlot (group, window);
+		    group->createSlot (window);
 
 		mDestination.x = WIN_CENTER_X (topTab) - (WIN_WIDTH (window) / 2);
 		mDestination.y = WIN_CENTER_Y (topTab) -
