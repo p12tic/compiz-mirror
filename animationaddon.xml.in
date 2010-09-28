@@ -7,7 +7,6 @@
     <deps>
       <requirement>
 	<plugin>opengl</plugin>
-	<plugin>composite</plugin>
 	<plugin>animation</plugin>
       </requirement>
       <relation type="after">
