@@ -13,7 +13,6 @@
 		    <requirement>
 			    <plugin>cube</plugin>
 			    <plugin>opengl</plugin>
-			    <plugin>composite</plugin>
 		    </requirement>
 		</deps>
 	</plugin>
