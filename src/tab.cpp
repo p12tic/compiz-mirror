@@ -468,7 +468,7 @@ GroupSelection::handleHoverDetection ()
 }
 
 /*
- * GroupSelection::handleTabBarFade
+ * GroupTabBar::handleTabBarFade
  *
  * Description:
  * This function is called from groupPreparePaintScreen
@@ -477,42 +477,40 @@ GroupSelection::handleHoverDetection ()
  *
  */
 void
-GroupSelection::handleTabBarFade (int		   msSinceLastPaint)
+GroupTabBar::handleTabBarFade (int		   msSinceLastPaint)
 {
-    GroupTabBar *bar = mTabBar;
+    mAnimationTime -= msSinceLastPaint;
 
-    bar->mAnimationTime -= msSinceLastPaint;
-
-    if (bar->mAnimationTime < 0)
-	bar->mAnimationTime = 0;
+    if (mAnimationTime < 0)
+	mAnimationTime = 0;
 
     /* Fade finished */
-    if (bar->mAnimationTime == 0)
+    if (mAnimationTime == 0)
     {
-	if (bar->mState == PaintFadeIn)
+	if (mState == PaintFadeIn)
 	{
-	    bar->mState = PaintOn;
+	    mState = PaintOn;
 	}
-	else if (bar->mState == PaintFadeOut)
+	else if (mState == PaintFadeOut)
 	{
-	    bar->mState = PaintOff;
+	    mState = PaintOff;
 
-	    if (bar->mTextLayer)
+	    if (mTextLayer)
 	    {
 		/* Tab-bar is no longer painted, clean up
 		   text animation variables. */
-		bar->mTextLayer->mAnimationTime = 0;
-		bar->mTextLayer->mState = PaintOff;
-		bar->mTextSlot = bar->mHoveredSlot = NULL;
+		mTextLayer->mAnimationTime = 0;
+		mTextLayer->mState = PaintOff;
+		mTextSlot = mHoveredSlot = NULL;
 
-		bar->renderWindowTitle ();
+		renderWindowTitle ();
 	    }
 	}
     }
 }
 
 /*
- * GroupSelection::handleTextFade
+ * GroupTabBar::handleTextFade
  *
  * Description:
  * This function is called from groupPreparePaintScreen
@@ -521,10 +519,9 @@ GroupSelection::handleTabBarFade (int		   msSinceLastPaint)
  *
  */
 void
-GroupSelection::handleTextFade (int	       msSinceLastPaint)
+GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 {
-    GroupTabBar     *bar = mTabBar;
-    GroupCairoLayer *textLayer = bar->mTextLayer;
+    GroupCairoLayer *textLayer = mTextLayer;
 
     /* Fade in progress... */
     if ((textLayer->mState == PaintFadeIn || textLayer->mState == PaintFadeOut) &&
@@ -546,27 +543,27 @@ GroupSelection::handleTextFade (int	       msSinceLastPaint)
 	}
     }
 
-    if (textLayer->mState == PaintOff && bar->mHoveredSlot)
+    if (textLayer->mState == PaintOff && mHoveredSlot)
     {
 	/* Start text animation for the new hovered slot. */
-	bar->mTextSlot = bar->mHoveredSlot;
+	mTextSlot = mHoveredSlot;
 	textLayer->mState = PaintFadeIn;
 	textLayer->mAnimationTime =
 	    (GroupScreen::get (screen)->optionGetFadeTextTime () * 1000);
 
-	bar->renderWindowTitle ();
+	renderWindowTitle ();
     }
 
-    else if (textLayer->mState == PaintOff && bar->mTextSlot)
+    else if (textLayer->mState == PaintOff && mTextSlot)
     {
 	/* Clean Up. */
-	bar->mTextSlot = NULL;
-	bar->renderWindowTitle ();
+	mTextSlot = NULL;
+	renderWindowTitle ();
     }
 }
 
 /*
- * GroupSelection::handleTabBarAnimation
+ * GroupTabBar::handleTabBarAnimation
  *
  * Description: Handles the different animations for the tab bar defined in
  * GroupAnimationType. Basically that means this function updates
@@ -575,18 +572,16 @@ GroupSelection::handleTextFade (int	       msSinceLastPaint)
  *
  */
 void
-GroupSelection::handleTabBarAnimation (int            msSinceLastPaint)
+GroupTabBar::handleTabBarAnimation (int            msSinceLastPaint)
 {
-    GroupTabBar *bar = mTabBar;
+    mBgAnimationTime -= msSinceLastPaint;
 
-    bar->mBgAnimationTime -= msSinceLastPaint;
-
-    if (bar->mBgAnimationTime <= 0)
+    if (mBgAnimationTime <= 0)
     {
-	bar->mBgAnimationTime = 0;
-	bar->mBgAnimation = AnimationNone;
+	mBgAnimationTime = 0;
+	mBgAnimation = AnimationNone;
 
-	bar->renderTabBarBackground ();
+	renderTabBarBackground ();
     }
 }
 /*

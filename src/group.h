@@ -373,8 +373,12 @@ public:
 
     void paint (const GLWindowPaintAttrib &attrib,
 		const GLMatrix		 &transform,
-		unsigned int		 mask,
+		unsigned int		 mask,		
 		CompRegion		 clipRegion);
+
+    void handleTabBarFade (int msSinceLastPaint);
+    void handleTextFade (int msSinceLastPaint);
+    void handleTabBarAnimation (int msSinceLastPaint);
 
 public:
     GroupTabBarSlot::List mSlots;
@@ -457,14 +461,6 @@ public:
     void
     handleHoverDetection ();
 
-    void
-    handleTabBarFade (int msSinceLastPaint);
-
-    void
-    handleTextFade (int msSinceLastPaint);
-
-    void
-    handleTabBarAnimation (int msSinceLastPaint);
 
     void
     handleAnimation ();
