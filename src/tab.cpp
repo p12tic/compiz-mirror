@@ -505,7 +505,7 @@ GroupSelection::handleTabBarFade (int		   msSinceLastPaint)
 		bar->mTextLayer->mState = PaintOff;
 		bar->mTextSlot = bar->mHoveredSlot = NULL;
 
-		renderWindowTitle ();
+		bar->renderWindowTitle ();
 	    }
 	}
     }
@@ -554,14 +554,14 @@ GroupSelection::handleTextFade (int	       msSinceLastPaint)
 	textLayer->mAnimationTime =
 	    (GroupScreen::get (screen)->optionGetFadeTextTime () * 1000);
 
-	renderWindowTitle ();
+	bar->renderWindowTitle ();
     }
 
     else if (textLayer->mState == PaintOff && bar->mTextSlot)
     {
 	/* Clean Up. */
 	bar->mTextSlot = NULL;
-	renderWindowTitle ();
+	bar->renderWindowTitle ();
     }
 }
 
@@ -586,7 +586,7 @@ GroupSelection::handleTabBarAnimation (int            msSinceLastPaint)
 	bar->mBgAnimationTime = 0;
 	bar->mBgAnimation = AnimationNone;
 
-	renderTabBarBackground ();
+	bar->renderTabBarBackground ();
     }
 }
 /*
@@ -1326,7 +1326,7 @@ GroupSelection::tabGroup (CompWindow *main)
 	layer = mTabBar->mTextLayer;
 	layer->mState = PaintOff;
 	layer->mAnimationTime = 0;
-	renderWindowTitle ();
+	mTabBar->renderWindowTitle ();
     }
     if (mTabBar->mTextLayer)
     {
@@ -1346,7 +1346,7 @@ GroupSelection::tabGroup (CompWindow *main)
     {
 	mTabBar->mBgLayer->mState = PaintOn;
 	mTabBar->mBgLayer->mAnimationTime = 0;
-	renderTabBarBackground ();
+	mTabBar->renderTabBarBackground ();
     }
 
     width = mTopTab->mRegion.boundingRect ().x2 () -
@@ -1359,7 +1359,7 @@ GroupSelection::tabGroup (CompWindow *main)
     {
 	mTabBar->mSelectionLayer->mState = PaintOn;
 	mTabBar->mSelectionLayer->mAnimationTime = 0;
-	renderTopTabHighlight ();
+	mTabBar->renderTopTabHighlight ();
     }
 
     if (!HAS_TOP_WIN (this))
@@ -1565,8 +1565,8 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
     {
 	group->mTopTab = topTab;
 
-	group->renderWindowTitle ();
-	group->renderTopTabHighlight ();
+	group->mTabBar->renderWindowTitle ();
+	group->mTabBar->renderTopTabHighlight ();
 	if (oldTopTab)
 	    CompositeWindow::get (oldTopTab)->addDamage ();
 	CompositeWindow::get (w)->addDamage ();
@@ -1853,7 +1853,7 @@ GroupSelection::resizeTabBarRegion (CompRect	&box,
 				    gs->optionGetThumbSpace () +
 				    gs->optionGetThumbSize (),
 				    box.height ());
-	renderTabBarBackground ();
+	mTabBar->renderTabBarBackground ();
 
 	/* invalidate old width */
 	mTabBar->mOldWidth = 0;

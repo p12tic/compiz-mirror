@@ -52,12 +52,13 @@ GroupScreen::optionChanged (CompOption *opt,
 	case GroupOptions::BorderWidth:
 	    foreach (group, mGroups)
 		if (group->mTabBar)
-		    group->renderTabBarBackground ();
+		    group->mTabBar->renderTabBarBackground ();
 	    break;
 	case GroupOptions::TabbarFontSize:
 	case GroupOptions::TabbarFontColor:
 	    foreach (group, mGroups)
-		group->renderWindowTitle ();
+		if (group->mTabBar)
+		    group->mTabBar->renderWindowTitle ();
 	    break;
 	case GroupOptions::ThumbSize:
 	case GroupOptions::ThumbSpace:
@@ -169,7 +170,7 @@ GroupScreen::groupApplyInitialActions ()
 	    gw->mGroup->mColor[1] = color[1];
 	    gw->mGroup->mColor[2] = color[2];
 
-	    gw->mGroup->renderTopTabHighlight ();
+	    gw->mGroup->mTabBar->renderTopTabHighlight ();
 	    cScreen->damageScreen ();
 	}
 

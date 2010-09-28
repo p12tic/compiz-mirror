@@ -59,6 +59,7 @@
  * 10) Use windowNotify
  * 11) TabList class
  * 12) Rename from groupFoo to just foo
+ * 13) Optimize (use const references where appropriate etc)
  */
 
 /*
@@ -277,44 +278,7 @@ public:
 
 class GroupSelection;
 
-/*
- * GroupTabBar
- */
-class GroupTabBar
-{
-public:
 
-    GroupTabBar (GroupSelection *, CompWindow *);
-    ~GroupTabBar ();
-
-public:
-    GroupTabBarSlot::List mSlots;
-
-    GroupSelection  *mGroup;
-
-    GroupTabBarSlot *mHoveredSlot;
-    GroupTabBarSlot *mTextSlot;
-
-    GroupCairoLayer *mTextLayer;
-    GroupCairoLayer *mBgLayer;
-    GroupCairoLayer *mSelectionLayer;
-
-    /* For animations */
-    int                mBgAnimationTime;
-    GroupAnimationType mBgAnimation;
-
-    PaintState mState;
-    int        mAnimationTime;
-    CompRegion mRegion;
-    int        mOldWidth;
-
-    CompTimer mTimeoutHandle;
-
-    /* For DnD animations */
-    int   mLeftSpringX, mRightSpringX;
-    int   mLeftSpeed, mRightSpeed;
-    float mLeftMsSinceLastMove, mRightMsSinceLastMove;
-};
 
 /*
  * GroupGlow
@@ -389,6 +353,51 @@ typedef struct _GroupResizeInfo {
 } GroupResizeInfo;
 
 /*
+ * GroupTabBar
+ */
+class GroupTabBar
+{
+public:
+
+    GroupTabBar (GroupSelection *, CompWindow *);
+    ~GroupTabBar ();
+
+public:
+
+    void renderTopTabHighlight ();
+    void renderTabBarBackground ();
+    void renderWindowTitle ();
+
+public:
+    GroupTabBarSlot::List mSlots;
+
+    GroupSelection  *mGroup;
+
+    GroupTabBarSlot *mHoveredSlot;
+    GroupTabBarSlot *mTextSlot;
+
+    GroupCairoLayer *mTextLayer;
+    GroupCairoLayer *mBgLayer;
+    GroupCairoLayer *mSelectionLayer;
+
+    /* For animations */
+    int                mBgAnimationTime;
+    GroupAnimationType mBgAnimation;
+
+    PaintState mState;
+    int        mAnimationTime;
+    CompRegion mRegion;
+    int        mOldWidth;
+
+    CompTimer mTimeoutHandle;
+
+    /* For DnD animations */
+    int   mLeftSpringX, mRightSpringX;
+    int   mLeftSpeed, mRightSpeed;
+    float mLeftMsSinceLastMove, mRightMsSinceLastMove;
+};
+
+/*
  * GroupSelection
  */
 class GroupSelection
@@ -420,10 +429,6 @@ public:
     void maximizeWindows (CompWindow *top);
 
     /* TODO: Move to TabBar */
-
-    void renderTopTabHighlight ();
-    void renderTabBarBackground ();
-    void renderWindowTitle ();
 
     void createInputPreventionWindow ();
     void destroyInputPreventionWindow ();

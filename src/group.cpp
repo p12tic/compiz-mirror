@@ -978,7 +978,7 @@ GroupScreen::groupChangeColor (CompAction           *action,
 	    color[1] = (int)(rand () / factor);
 	    color[2] = (int)(rand () / factor);
 
-	    gw->mGroup->renderTopTabHighlight ();
+	    gw->mGroup->mTabBar->renderTopTabHighlight ();
 	    cScreen->damageScreen ();
 	}
     }
@@ -1563,7 +1563,7 @@ GroupScreen::handleEvent (XEvent      *event)
 		    gw->mGroup->mTabBar->mTextSlot->mWindow == w)
 		{
 		    /* make sure we are using the updated name */
-		    gw->mGroup->renderWindowTitle ();
+		    gw->mGroup->mTabBar->renderWindowTitle ();
 		    gw->mGroup->damageTabBarRegion ();
 		}
 	    }
