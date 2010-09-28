@@ -307,9 +307,9 @@ GroupScreen::~GroupScreen ()
 		groupDestroyCairoLayer (group->mTabBar->mBgLayer);
 		groupDestroyCairoLayer (group->mTabBar->mSelectionLayer);
 
-		if (group->mInputPrevention)
+		if (group->mTabBar->mInputPrevention)
 		    XDestroyWindow (screen->dpy (),
-				    group->mInputPrevention);
+				    group->mTabBar->mInputPrevention);
 
 		if (group->mTabBar->mTimeoutHandle.active ())
 		    group->mTabBar->mTimeoutHandle.stop ();

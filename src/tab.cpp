@@ -950,10 +950,10 @@ GroupScreen::groupUpdateTabBars (Window enteredWin)
 
 	foreach (group, mGroups)
 	{
-	    if (group->mInputPrevention == enteredWin)
+	    if (group->mTabBar->mInputPrevention == enteredWin)
 	    {
 		/* only accept it if the IPW is mapped */
-		if (group->mIpwMapped)
+		if (group->mTabBar->mIpwMapped)
 		{
 		    hoveredGroup = group;
 		    break;
@@ -1825,7 +1825,7 @@ GroupSelection::moveTabBarRegion (int		   dx,
 
     if (syncIPW)
 	XMoveWindow (screen->dpy (),
-		     mInputPrevention,
+		     mTabBar->mInputPrevention,
 		     mTabBar->mLeftSpringX,
 		     mTabBar->mRegion.boundingRect ().y1 ());
 
@@ -1870,13 +1870,13 @@ GroupSelection::resizeTabBarRegion (CompRect	&box,
 	xwc.width = box.width ();
 	xwc.height = box.height ();
 
-	if (!mIpwMapped)
-	    XMapWindow (screen->dpy (), mInputPrevention);
+	if (!mTabBar->mIpwMapped)
+	    XMapWindow (screen->dpy (), mTabBar->mInputPrevention);
 
-	XMoveResizeWindow (screen->dpy (), mInputPrevention, xwc.x, xwc.y, xwc.width, xwc.height);
+	XMoveResizeWindow (screen->dpy (), mTabBar->mInputPrevention, xwc.x, xwc.y, xwc.width, xwc.height);
 	
-	if (!mIpwMapped)
-	    XUnmapWindow (screen->dpy (), mInputPrevention);
+	if (!mTabBar->mIpwMapped)
+	    XUnmapWindow (screen->dpy (), mTabBar->mInputPrevention);
     }
 
     damageTabBarRegion ();
@@ -2467,23 +2467,25 @@ GroupSelection::applySpeeds (int            msSinceLastRepaint)
  */
 GroupTabBar::GroupTabBar (GroupSelection *group, 
 			  CompWindow     *topTab) :
-	mGroup (group),
-	mHoveredSlot (NULL),
-	mTextSlot (NULL),
-	mTextLayer (NULL),
-	mBgLayer (NULL),
-	mSelectionLayer (NULL),
-	mBgAnimationTime (0),
-	mBgAnimation (AnimationNone),
-	mState (PaintOff),
-	mAnimationTime (0),
-	mOldWidth (0),
-	mLeftSpringX (0),
-	mRightSpringX (0),
-	mLeftSpeed (0),
-	mRightSpeed (0),
-	mLeftMsSinceLastMove (0),
-	mRightMsSinceLastMove (0)
+    mGroup (group),
+    mHoveredSlot (NULL),
+    mTextSlot (NULL),
+    mTextLayer (NULL),
+    mBgLayer (NULL),
+    mSelectionLayer (NULL),
+    mBgAnimationTime (0),
+    mBgAnimation (AnimationNone),
+    mState (PaintOff),
+    mAnimationTime (0),
+    mOldWidth (0),
+    mLeftSpringX (0),
+    mRightSpringX (0),
+    mLeftSpeed (0),
+    mRightSpeed (0),
+    mLeftMsSinceLastMove (0),
+    mRightMsSinceLastMove (0),
+    mInputPrevention (None),
+    mIpwMapped (false)
 {
     mGroup->mTabBar = this; /* only need to do this because
 			     * GroupSelection::createSlot checks
@@ -2494,7 +2496,7 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
     foreach (CompWindow *cw, mGroup->mWindows)
 	mGroup->createSlot (cw);
 
-    mGroup->createInputPreventionWindow ();
+    mGroup->mTabBar->createInputPreventionWindow ();
     mGroup->mTopTab = GroupWindow::get (topTab)->mSlot;
 
     mGroup->recalcTabBarPos (WIN_CENTER_X (topTab),
@@ -2513,7 +2515,7 @@ GroupTabBar::~GroupTabBar ()
     gs->groupDestroyCairoLayer (mBgLayer);
     gs->groupDestroyCairoLayer (mSelectionLayer);
 
-    mGroup->destroyInputPreventionWindow ();
+    mGroup->mTabBar->destroyInputPreventionWindow ();
 
     if (mTimeoutHandle.active ())
 	mTimeoutHandle.stop ();
@@ -2653,31 +2655,31 @@ GroupScreen::groupSwitchTopTabInput (GroupSelection *group,
     if (!group->mTabBar || !HAS_TOP_WIN (group))
 	return;
 
-    if (!group->mInputPrevention)
-	group->createInputPreventionWindow ();
+    if (!group->mTabBar->mInputPrevention)
+	group->mTabBar->createInputPreventionWindow ();
 
     if (!enable)
     {
 	XMapWindow (screen->dpy (),
-		    group->mInputPrevention);
+		    group->mTabBar->mInputPrevention);
 		    
     }
     else
     {
 	XUnmapWindow (screen->dpy (),
-		      group->mInputPrevention);
+		      group->mTabBar->mInputPrevention);
     }
 
-    group->mIpwMapped = !enable;
+    group->mTabBar->mIpwMapped = !enable;
 }
 
 /*
- * GroupSelection::createInputPreventionWindow
+ * GroupTabBar::createInputPreventionWindow
  *
  */
 void
-GroupSelection::createInputPreventionWindow ()
-{	
+GroupTabBar::createInputPreventionWindow ()
+{
     if (!mInputPrevention)
     {
 	XSetWindowAttributes attrib;
@@ -2694,11 +2696,11 @@ GroupSelection::createInputPreventionWindow ()
 }
 
 /*
- * GroupSelection::destroyInputPreventionWindow
+ * GroupTabBar::destroyInputPreventionWindow
  *
  */
 void
-GroupSelection::destroyInputPreventionWindow ()
+GroupTabBar::destroyInputPreventionWindow ()
 {
     if (mInputPrevention)
     {

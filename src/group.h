@@ -367,6 +367,9 @@ public:
     void renderTopTabHighlight ();
     void renderTabBarBackground ();
     void renderWindowTitle ();
+    
+    void createInputPreventionWindow ();
+    void destroyInputPreventionWindow ();
 
 public:
     GroupTabBarSlot::List mSlots;
@@ -395,6 +398,9 @@ public:
     int   mLeftSpringX, mRightSpringX;
     int   mLeftSpeed, mRightSpeed;
     float mLeftMsSinceLastMove, mRightMsSinceLastMove;
+
+    Window mInputPrevention;
+    bool   mIpwMapped;
 };
 
 /*
@@ -429,9 +435,6 @@ public:
     void maximizeWindows (CompWindow *top);
 
     /* TODO: Move to TabBar */
-
-    void createInputPreventionWindow ();
-    void destroyInputPreventionWindow ();
 
     void paintTabBar (const GLWindowPaintAttrib &attrib,
 		      const GLMatrix		 &transform,
@@ -562,9 +565,6 @@ public:
 
     Window       mGrabWindow;
     unsigned int mGrabMask;
-
-    Window mInputPrevention;
-    bool   mIpwMapped;
 
     GLushort mColor[4];
     

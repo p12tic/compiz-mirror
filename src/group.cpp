@@ -692,8 +692,6 @@ GroupSelection::GroupSelection (CompWindow *startingWindow,
     mUngroupState (UngroupNone),
     mGrabWindow (None),
     mGrabMask (0),
-    mInputPrevention (None),
-    mIpwMapped (false),
     mResizeInfo (NULL) 
 {
     mWindows.push_back (startingWindow);
@@ -1035,10 +1033,10 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
 
     foreach (group, mGroups)
     {
-	if (group->mInputPrevention != event->xbutton.window)
+	if (!group->mTabBar)
 	    continue;
 
-	if (!group->mTabBar)
+	if (group->mTabBar->mInputPrevention != event->xbutton.window)
 	    continue;
 
 	switch (button) {
@@ -1620,7 +1618,8 @@ GroupScreen::handleEvent (XEvent      *event)
 
 		if (gw->mGroup && gw->mGroup->mTabBar &&
 		    IS_TOP_TAB (w, gw->mGroup)      &&
-		    gw->mGroup->mInputPrevention && gw->mGroup->mIpwMapped)
+		    gw->mGroup->mTabBar->mInputPrevention &&
+		    gw->mGroup->mTabBar->mIpwMapped)
 		{
 		    XWindowChanges xwc;
 
@@ -1628,7 +1627,7 @@ GroupScreen::handleEvent (XEvent      *event)
 		    xwc.sibling = w->id ();
 
 		    XConfigureWindow (screen->dpy (),
-				      gw->mGroup->mInputPrevention,
+				      gw->mGroup->mTabBar->mInputPrevention,
 				      CWSibling | CWStackMode, &xwc);
 		}
 
