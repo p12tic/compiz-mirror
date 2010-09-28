@@ -66,7 +66,7 @@ GroupScreen::optionChanged (CompOption *opt,
 		if (group->mTabBar)
 		{
 		    CompRect box = group->mTabBar->mRegion.boundingRect ();
-		    group->recalcTabBarPos ((box.x1 () + box.x2 ()) / 2,
+		    group->mTabBar->recalcTabBarPos ((box.x1 () + box.x2 ()) / 2,
 					  box.x1 (), box.x2 ());
 		}
 	    break;

@@ -389,6 +389,10 @@ public:
     void resizeTabBarRegion (CompRect       &box,
 			     bool           syncIPW);
 
+    void recalcTabBarPos (int		  middleX,
+			  int		  minX1,
+			  int		  maxX2);
+
 public:
     GroupTabBarSlot::List mSlots;
 
@@ -482,11 +486,6 @@ public:
 
     void
     startTabbingAnimation (bool           tab);
-
-    void
-    recalcTabBarPos (int		  middleX,
-			  int		  minX1,
-			  int		  maxX2);
 
     void
     insertTabBarSlotBefore (GroupTabBarSlot *slot,

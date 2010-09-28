@@ -1296,7 +1296,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	}
 	else if (gw->mGroup && gw->mGroup->mTopTab)
 	{
-	    gw->mGroup->recalcTabBarPos ((gw->mGroup->mTabBar->mRegion.boundingRect ().x1 () +
+	    gw->mGroup->mTabBar->recalcTabBarPos ((gw->mGroup->mTabBar->mRegion.boundingRect ().x1 () +
 				   gw->mGroup->mTabBar->mRegion.boundingRect ().x2 ()) / 2,
 				  gw->mGroup->mTabBar->mRegion.boundingRect ().x1 (),
 				  gw->mGroup->mTabBar->mRegion.boundingRect ().x2 ());
@@ -1358,7 +1358,7 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 		    group->tabSetVisibility (true, PERMANENT);
 
 		CompRect box = gw->mGroup->mTabBar->mRegion.boundingRect ();
-		gw->mGroup->recalcTabBarPos ((box.x1 () + box.x2 ()) / 2,
+		gw->mGroup->mTabBar->recalcTabBarPos ((box.x1 () + box.x2 ()) / 2,
 				      box.x1 (), box.x2 ());
 	    }
 
@@ -1712,7 +1712,7 @@ GroupWindow::resizeNotify (int dx,
     {
 	if (mGroup->mTabBar->mState != PaintOff)
 	{
-	    mGroup->recalcTabBarPos (pointerX,
+	    mGroup->mTabBar->recalcTabBarPos (pointerX,
 				  WIN_X (window), WIN_X (window) + WIN_WIDTH (window));
 	}
     }
