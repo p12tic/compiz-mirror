@@ -1736,7 +1736,7 @@ GroupSelection::recalcTabBarPos (int		middleX,
     box.setWidth (barWidth);
     box.setHeight (space * 2 + tabsHeight);
 
-    resizeTabBarRegion (box, true);
+    bar->resizeTabBarRegion (box, true);
 
     /* recalc every slot region */
     currentSlot = 0;
@@ -1810,51 +1810,51 @@ GroupTabBar::damageRegion ()
 }
 
 void
-GroupSelection::moveTabBarRegion (int		   dx,
-				  int		   dy,
-				  bool	   syncIPW)
+GroupTabBar::moveTabBarRegion (int		   dx,
+			       int		   dy,
+			       bool	   	   syncIPW)
 {
-    mTabBar->damageRegion ();
+    damageRegion ();
 
-    mTabBar->mRegion.translate (dx, dy);
+    mRegion.translate (dx, dy);
 
     if (syncIPW)
 	XMoveWindow (screen->dpy (),
-		     mTabBar->mInputPrevention,
-		     mTabBar->mLeftSpringX,
-		     mTabBar->mRegion.boundingRect ().y1 ());
+		     mInputPrevention,
+		     mLeftSpringX,
+		     mRegion.boundingRect ().y1 ());
 
-    mTabBar->damageRegion ();
+    damageRegion ();
 }
 
 void
-GroupSelection::resizeTabBarRegion (CompRect	&box,
-				    bool        syncIPW)
+GroupTabBar::resizeTabBarRegion (CompRect	&box,
+				 bool           syncIPW)
 {
     int oldWidth;
 
     GROUP_SCREEN (screen);
 
-    mTabBar->damageRegion ();
+    damageRegion ();
 
-    oldWidth = mTabBar->mRegion.boundingRect ().x2 () -
-	mTabBar->mRegion.boundingRect ().x1 ();
+    oldWidth = mRegion.boundingRect ().x2 () -
+	mRegion.boundingRect ().x1 ();
 
-    if (mTabBar->mBgLayer && oldWidth != box.width () && syncIPW)
+    if (mBgLayer && oldWidth != box.width () && syncIPW)
     {
-	mTabBar->mBgLayer =
-	    gs->groupRebuildCairoLayer (mTabBar->mBgLayer,
+	mBgLayer =
+	    gs->groupRebuildCairoLayer (mBgLayer,
 				    box.width () +
 				    gs->optionGetThumbSpace () +
 				    gs->optionGetThumbSize (),
 				    box.height ());
-	mTabBar->renderTabBarBackground ();
+	renderTabBarBackground ();
 
 	/* invalidate old width */
-	mTabBar->mOldWidth = 0;
+	mOldWidth = 0;
     }    
 
-    mTabBar->mRegion = CompRegion (box);
+    mRegion = CompRegion (box);
 
     if (syncIPW)
     {
@@ -1865,16 +1865,16 @@ GroupSelection::resizeTabBarRegion (CompRect	&box,
 	xwc.width = box.width ();
 	xwc.height = box.height ();
 
-	if (!mTabBar->mIpwMapped)
-	    XMapWindow (screen->dpy (), mTabBar->mInputPrevention);
+	if (!mIpwMapped)
+	    XMapWindow (screen->dpy (), mInputPrevention);
 
-	XMoveResizeWindow (screen->dpy (), mTabBar->mInputPrevention, xwc.x, xwc.y, xwc.width, xwc.height);
+	XMoveResizeWindow (screen->dpy (), mInputPrevention, xwc.x, xwc.y, xwc.width, xwc.height);
 	
-	if (!mTabBar->mIpwMapped)
-	    XUnmapWindow (screen->dpy (), mTabBar->mInputPrevention);
+	if (!mIpwMapped)
+	    XUnmapWindow (screen->dpy (), mInputPrevention);
     }
 
-    mTabBar->damageRegion ();
+    damageRegion ();
 }
 
 /*
@@ -2425,7 +2425,7 @@ GroupSelection::applySpeeds (int            msSinceLastRepaint)
 	bar->mRightMsSinceLastMove = 0;
 
     if (updateTabBar)
-	resizeTabBarRegion (box, false);
+	bar->resizeTabBarRegion (box, false);
 
     foreach (slot, bar->mSlots)
     {

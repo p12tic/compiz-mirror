@@ -382,6 +382,13 @@ public:
     void handleTextFade (int msSinceLastPaint);
     void handleTabBarAnimation (int msSinceLastPaint);
 
+    void moveTabBarRegion (int		   dx,
+			   int		   dy,
+			   bool		   syncIPW);
+
+    void resizeTabBarRegion (CompRect       &box,
+			     bool           syncIPW);
+
 public:
     GroupTabBarSlot::List mSlots;
 
@@ -480,15 +487,6 @@ public:
     recalcTabBarPos (int		  middleX,
 			  int		  minX1,
 			  int		  maxX2);
-
-    void
-    moveTabBarRegion (int		   dx,
-		      int		   dy,
-		      bool		   syncIPW);
-
-    void
-    resizeTabBarRegion (CompRect       &box,
-			bool           syncIPW);
 
     void
     insertTabBarSlotBefore (GroupTabBarSlot *slot,

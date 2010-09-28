@@ -1763,7 +1763,7 @@ GroupWindow::moveNotify (int    dx,
 	bar->mRightSpringX += dx;
 	bar->mLeftSpringX += dx;
 
-	mGroup->moveTabBarRegion (dx, dy, true);
+	bar->moveTabBarRegion (dx, dy, true);
 
 	foreach (slot, bar->mSlots)
 	{
