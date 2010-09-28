@@ -5,7 +5,6 @@
 		<_long>Bicubic texture filtering</_long>
 		<deps>
 			<requirement>
-				<plugin>composite</plugin>
 				<plugin>opengl</plugin>
 			</requirement>
 		</deps>
