@@ -5,6 +5,9 @@
 	<_long>Freely transform windows</_long>
 	<category>Effects</category>
 	<deps>
+		<requirement>
+			<plugin>opengl</plugin>
+		</requirement>
 		<relation type="after">
 			<plugin>scale</plugin>
 			<plugin>ring</plugin>
