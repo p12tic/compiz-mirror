@@ -15,7 +15,6 @@
 			<plugin>imgjpeg</plugin>
 		</relation>
 		<requirement>
-			<plugin>composite</plugin>
 			<plugin>opengl</plugin>
 			<plugin>cube</plugin>
 		</requirement>
