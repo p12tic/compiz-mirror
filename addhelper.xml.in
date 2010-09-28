@@ -6,7 +6,6 @@
 	<category>Accessibility</category>
 	<deps>
 		<requirement>
-			<plugin>composite</plugin>
 			<plugin>opengl</plugin>
 		</requirement>
 		<relation type="after">
