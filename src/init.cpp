@@ -401,7 +401,9 @@ GroupWindow::~GroupWindow ()
     mReadOnlyProperty = true;
 
     /* FIXME: this implicitly calls the wrapped function activateWindow
-       (via groupDeleteTabBarSlot -> groupUnhookTabBarSlot -> groupChangeTab)
+       * (via GroupSelection::deleteTabBarSlot -> 
+       * GrouppSelection::unhookTabBarSlot ->
+       * GroupSelection::changeTab)
        --> better wrap into removeObject and call it for removeWindow
        */
     if (mGroup)

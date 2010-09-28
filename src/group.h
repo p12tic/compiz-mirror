@@ -508,6 +508,11 @@ public:
     void
     applySpeeds (int            msSinceLastRepaint);
 
+    void
+    initTabBar (CompWindow     *topTab);
+
+    void deleteTabBar ();
+
     void fini ();
 
 public:
@@ -740,13 +745,6 @@ class GroupScreen :
 	void
 	groupRecalcSlotPos (GroupTabBarSlot *slot,
 			    int		 slotPos);
-
-	void
-	groupInitTabBar (GroupSelection *group,
-		         CompWindow     *topTab);
-
-	void
-	groupDeleteTabBar (GroupSelection *group);
 
 	bool
 	groupInitTab (CompAction         *aciton,

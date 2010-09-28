@@ -1303,12 +1303,12 @@ GroupSelection::tabGroup (CompWindow *main)
 	return;
     }
 
-    gs->groupInitTabBar (this, main);
+    initTabBar (main);
     if (!mTabBar)
 	return;
 
     mTabbingState = NoTabbing;
-    /* Slot is initialized after groupInitTabBar(group); */
+    /* Slot is initialized after group->initTabBar; */
     gs->groupChangeTab (gw->mSlot, RotateUncertain);
     gw->mGroup->recalcTabBarPos (WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
@@ -1471,7 +1471,7 @@ GroupSelection::untabGroup ()
     mTabbingState = NoTabbing;
     startTabbingAnimation (false);
 
-    gs->groupDeleteTabBar (this);
+    deleteTabBar ();
     mChangeAnimationTime = 0;
     mChangeState = NoTabChange;
     mNextTopTab = NULL;
@@ -2083,7 +2083,7 @@ GroupSelection::unhookTabBarSlot (GroupTabBarSlot *slot,
 }
 
 /*
- * groupDeleteTabBarSlot
+ * GroupSelection::deleteTabBarSlot
  *
  */
 void
@@ -2461,16 +2461,15 @@ GroupSelection::applySpeeds (int            msSinceLastRepaint)
 }
 
 /*
- * groupInitTabBar
+ * GroupSelection::initTabBar
  *
  */
 void
-GroupScreen::groupInitTabBar (GroupSelection *group,
-			      CompWindow     *topTab)
+GroupSelection::initTabBar (CompWindow     *topTab)
 {
     GroupTabBar *bar;
 
-    if (group->mTabBar)
+    if (mTabBar)
 	return;
 
     bar = new GroupTabBar ();
@@ -2489,14 +2488,14 @@ GroupScreen::groupInitTabBar (GroupSelection *group,
     bar->mHoveredSlot = NULL;
     bar->mTextSlot = NULL;
     bar->mOldWidth = 0;
-    group->mTabBar = bar;
+    mTabBar = bar;
 
-    foreach (CompWindow *cw, group->mWindows)
-	group->createSlot (cw);
+    foreach (CompWindow *cw, mWindows)
+	createSlot (cw);
 
-    group->createInputPreventionWindow ();
+    createInputPreventionWindow ();
 
-    group->recalcTabBarPos (WIN_CENTER_X (topTab),
+    recalcTabBarPos (WIN_CENTER_X (topTab),
 			  WIN_X (topTab), WIN_X (topTab) + WIN_WIDTH (topTab));
 }
 
@@ -2505,24 +2504,26 @@ GroupScreen::groupInitTabBar (GroupSelection *group,
  *
  */
 void
-GroupScreen::groupDeleteTabBar (GroupSelection *group)
+GroupSelection::deleteTabBar ()
 {
-    GroupTabBar *bar = group->mTabBar;
+    GroupTabBar *bar = mTabBar;
 
-    groupDestroyCairoLayer (bar->mTextLayer);
-    groupDestroyCairoLayer (bar->mBgLayer);
-    groupDestroyCairoLayer (bar->mSelectionLayer);
+    GROUP_SCREEN (screen);
 
-    group->destroyInputPreventionWindow ();
+    gs->groupDestroyCairoLayer (bar->mTextLayer);
+    gs->groupDestroyCairoLayer (bar->mBgLayer);
+    gs->groupDestroyCairoLayer (bar->mSelectionLayer);
+
+    destroyInputPreventionWindow ();
 
     if (bar->mTimeoutHandle.active ())
 	bar->mTimeoutHandle.stop ();
 
     while (bar->mSlots.size ())
-	group->deleteTabBarSlot (bar->mSlots.front ());
+	deleteTabBarSlot (bar->mSlots.front ());
 
     delete bar;
-    group->mTabBar = NULL;
+    mTabBar = NULL;
 }
 
 /*
