@@ -612,6 +612,8 @@ GroupWindow::groupRemoveWindowFromGroup ()
     }
 }
 
+GroupSelection::~GroupSelection () {}
+
 /*
  * groupDeleteGroup
  *
@@ -665,6 +667,71 @@ GroupSelection::fini ()
 }
 
 /*
+ * GroupSelection::GroupSelection
+ * 
+ */
+
+GroupSelection::GroupSelection (CompWindow *startingWindow,
+				long int initialIdent) :
+    mScreen (screen),
+    mTopTab (NULL),
+    mPrevTopTab (NULL),
+    mLastTopTab (NULL),
+    mNextTopTab (NULL),
+    mCheckFocusAfterTabChange (false),
+    mTabBar (NULL),
+    mChangeAnimationTime (0),
+    mChangeAnimationDirection (0),
+    mChangeState (NoTabChange),
+    mTabbingState (NoTabbing),
+    mUngroupState (UngroupNone),
+    mGrabWindow (None),
+    mGrabMask (0),
+    mInputPrevention (None),
+    mIpwMapped (false),
+    mResizeInfo (NULL) 
+{
+    mWindows.push_back (startingWindow);
+    
+    GROUP_SCREEN (screen);
+
+    /* glow color */
+    mColor[0] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
+    mColor[1] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
+    mColor[2] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
+    mColor[3] = 0xffff;
+
+    if (initialIdent)
+	mIdentifier = initialIdent;
+    else
+    {
+	/* we got no valid group Id passed, so find out a new valid
+	unique one */
+	GroupSelection *tg;
+	bool           invalidID = false;
+
+	mIdentifier = gs->mGroups.size () ? gs->mGroups.front ()->mIdentifier : 0;
+	do
+	{
+	    invalidID = false;
+	    foreach (tg, gs->mGroups)
+	    {
+		if (tg->mIdentifier == mIdentifier)
+		{
+		    invalidID = true;
+
+		    mIdentifier++;
+		    break;
+		}
+	    }
+	}
+	while (invalidID);
+    }
+
+    gs->mGroups.push_front (this);
+}
+
+/*
  * groupAddWindowToGroup
  *
  */
@@ -672,8 +739,6 @@ void
 GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 				    long int       initialIdent)
 {
-    GROUP_SCREEN (screen);
-
     if (mGroup)
 	return;
 
@@ -731,72 +796,11 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
     else
     {
 	/* create new group */
-	GroupSelection *g = new GroupSelection;
+	GroupSelection *g = new GroupSelection (window, initialIdent);
 	if (!g)
 	    return;
 	    
 	mGroup = g;
-
-	g->mWindows.push_back (window);
-	g->mScreen     = screen;
-
-	g->mTopTab      = NULL;
-	g->mPrevTopTab  = NULL;
-	g->mNextTopTab  = NULL;
-
-	g->mChangeAnimationTime      = 0;
-	g->mChangeAnimationDirection = 0;
-
-	g->mChangeState  = NoTabChange;
-	g->mTabbingState = NoTabbing;
-	g->mUngroupState = UngroupNone;
-
-	g->mTabBar = NULL;
-
-	g->mCheckFocusAfterTabChange = false;
-
-	g->mGrabWindow = None;
-	g->mGrabMask   = 0;
-
-	g->mInputPrevention = None;
-	g->mIpwMapped       = false;
-
-	/* glow color */
-	g->mColor[0] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
-	g->mColor[1] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
-	g->mColor[2] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
-	g->mColor[3] = 0xffff;
-	
-	g->mResizeInfo = NULL;
-
-	if (initialIdent)
-	    g->mIdentifier = initialIdent;
-	else
-	{
-	    /* we got no valid group Id passed, so find out a new valid
-	       unique one */
-	    GroupSelection *tg;
-	    bool           invalidID = false;
-
-	    g->mIdentifier = gs->mGroups.size () ? gs->mGroups.front ()->mIdentifier : 0;
-	    do
-	    {
-		invalidID = false;
-		foreach (tg, gs->mGroups)
-		{
-		    if (tg->mIdentifier == g->mIdentifier)
-		    {
-			invalidID = true;
-
-			g->mIdentifier++;
-			break;
-		    }
-		}
-	    }
-	    while (invalidID);
-	}
-
-	gs->mGroups.push_front (g);
 
 	groupUpdateWindowProperty ();
     }
