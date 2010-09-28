@@ -9,6 +9,7 @@
 			<plugin>opengl</plugin>
 		</requirement>
 		<relation type="after">
+			<plugin>opengl</plugin>
 			<plugin>scale</plugin>
 			<plugin>ring</plugin>
 			<plugin>shift</plugin>
