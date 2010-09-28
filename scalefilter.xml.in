@@ -11,7 +11,6 @@
 		<plugin>text</plugin>
 	    </relation>
 	    <requirement>
-		<plugin>composite</plugin>
 		<plugin>opengl</plugin>
 		<plugin>scale</plugin>
 		<plugin>regex</plugin>
