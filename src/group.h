@@ -275,13 +275,22 @@ public:
     float mMsSinceLastMove;
 };
 
+class GroupSelection;
+
 /*
  * GroupTabBar
  */
 class GroupTabBar
 {
 public:
+
+    GroupTabBar (GroupSelection *, CompWindow *);
+    ~GroupTabBar ();
+
+public:
     GroupTabBarSlot::List mSlots;
+
+    GroupSelection  *mGroup;
 
     GroupTabBarSlot *mHoveredSlot;
     GroupTabBarSlot *mTextSlot;
@@ -507,11 +516,6 @@ public:
 
     void
     applySpeeds (int            msSinceLastRepaint);
-
-    void
-    initTabBar (CompWindow     *topTab);
-
-    void deleteTabBar ();
 
     void fini ();
 

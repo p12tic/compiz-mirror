@@ -652,7 +652,7 @@ GroupSelection::fini ()
 	mWindows.clear ();
     }
     else if (mTabBar)
-	deleteTabBar ();
+	delete mTabBar;
 
     gs->mGroups.remove (this);
 
