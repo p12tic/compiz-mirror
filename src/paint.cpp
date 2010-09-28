@@ -581,7 +581,7 @@ GroupScreen::donePaint ()
 		needDamage = true;
 
 	    if (needDamage)
-		group->damageTabBarRegion ();
+		group->mTabBar->damageRegion ();
 	}
     }
 }

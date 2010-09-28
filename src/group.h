@@ -376,6 +376,8 @@ public:
 		unsigned int		 mask,		
 		CompRegion		 clipRegion);
 
+    void damageRegion ();
+
     void handleTabBarFade (int msSinceLastPaint);
     void handleTextFade (int msSinceLastPaint);
     void handleTabBarAnimation (int msSinceLastPaint);
@@ -478,9 +480,6 @@ public:
     recalcTabBarPos (int		  middleX,
 			  int		  minX1,
 			  int		  maxX2);
-
-    void
-    damageTabBarRegion ();
 
     void
     moveTabBarRegion (int		   dx,

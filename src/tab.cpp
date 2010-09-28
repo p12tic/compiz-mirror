@@ -322,7 +322,7 @@ GroupSelection::tabSetVisibility (bool           visible,
 	bar->mAnimationTime = (gs->optionGetFadeTime () * 1000) - bar->mAnimationTime;
 
     if (bar->mState != oldState)
-	damageTabBarRegion ();
+	bar->damageRegion ();
 }
 
 /*
@@ -1768,7 +1768,7 @@ GroupSelection::recalcTabBarPos (int		middleX,
 }
 
 void
-GroupSelection::damageTabBarRegion ()
+GroupTabBar::damageRegion ()
 {
     REGION reg;
     CompRegion cReg;
@@ -1783,18 +1783,18 @@ GroupSelection::damageTabBarRegion ()
 
 #define DAMAGE_BUFFER 20
 
-    reg.extents = mTabBar->mRegion.handle ()->extents;
+    reg.extents = mRegion.handle ()->extents;
 
-    if (mTabBar->mSlots.size ())
+    if (mSlots.size ())
     {
 	reg.extents.x1 = MIN (reg.extents.x1,
-			      mTabBar->mSlots.front ()->mRegion.boundingRect ().x1 ());
+			      mSlots.front ()->mRegion.boundingRect ().x1 ());
 	reg.extents.y1 = MIN (reg.extents.y1,
-			      mTabBar->mSlots.front ()->mRegion.boundingRect ().y1 ());
+			      mSlots.front ()->mRegion.boundingRect ().y1 ());
 	reg.extents.x2 = MAX (reg.extents.x2,
-			      mTabBar->mSlots.back ()->mRegion.boundingRect ().x2 ());
+			      mSlots.back ()->mRegion.boundingRect ().x2 ());
 	reg.extents.y2 = MAX (reg.extents.y2,
-			      mTabBar->mSlots.back ()->mRegion.boundingRect ().y2 ());
+			      mSlots.back ()->mRegion.boundingRect ().y2 ());
     }
 
     reg.extents.x1 -= DAMAGE_BUFFER;
@@ -1814,7 +1814,7 @@ GroupSelection::moveTabBarRegion (int		   dx,
 				  int		   dy,
 				  bool	   syncIPW)
 {
-    damageTabBarRegion ();
+    mTabBar->damageRegion ();
 
     mTabBar->mRegion.translate (dx, dy);
 
@@ -1824,7 +1824,7 @@ GroupSelection::moveTabBarRegion (int		   dx,
 		     mTabBar->mLeftSpringX,
 		     mTabBar->mRegion.boundingRect ().y1 ());
 
-    damageTabBarRegion ();
+    mTabBar->damageRegion ();
 }
 
 void
@@ -1835,7 +1835,7 @@ GroupSelection::resizeTabBarRegion (CompRect	&box,
 
     GROUP_SCREEN (screen);
 
-    damageTabBarRegion ();
+    mTabBar->damageRegion ();
 
     oldWidth = mTabBar->mRegion.boundingRect ().x2 () -
 	mTabBar->mRegion.boundingRect ().x1 ();
@@ -1874,7 +1874,7 @@ GroupSelection::resizeTabBarRegion (CompRect	&box,
 	    XUnmapWindow (screen->dpy (), mTabBar->mInputPrevention);
     }
 
-    damageTabBarRegion ();
+    mTabBar->damageRegion ();
 }
 
 /*

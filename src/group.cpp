@@ -1261,7 +1261,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    else
 		group->insertTabBarSlotBefore (tmpDraggedSlot, slot);
 
-	    group->damageTabBarRegion ();
+	    group->mTabBar->damageRegion ();
 
 	    /* Hide tab-bars. */
 	    foreach (tmpGroup, mGroups)
@@ -1562,7 +1562,7 @@ GroupScreen::handleEvent (XEvent      *event)
 		{
 		    /* make sure we are using the updated name */
 		    gw->mGroup->mTabBar->renderWindowTitle ();
-		    gw->mGroup->damageTabBarRegion ();
+		    gw->mGroup->mTabBar->damageRegion ();
 		}
 	    }
 	}
