@@ -123,26 +123,25 @@ GroupSelection::paintThumb (GroupTabBarSlot      *slot,
 }
 
 /*
- * groupPaintTabBar
+ * GroupTabBar::paint
  *
  */
 void
-GroupSelection::paintTabBar (const GLWindowPaintAttrib   &attrib,
-			     const GLMatrix		 &transform,
-			     unsigned int		 mask,
-			     CompRegion		 	 clipRegion)
+GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
+		    const GLMatrix		 &transform,
+		    unsigned int		 mask,
+		    CompRegion		 	 clipRegion)
 {
     CompWindow      *topTab;
-    GroupTabBar     *bar = mTabBar;
     int             count;
     CompRect        box;
     
     GROUP_SCREEN (screen);
 
-    if (HAS_TOP_WIN (this))
-	topTab = TOP_TAB (this);
+    if (HAS_TOP_WIN (mGroup))
+	topTab = TOP_TAB (mGroup);
     else
-	topTab = PREV_TOP_TAB (this);
+	topTab = PREV_TOP_TAB (mGroup);
 
 #define PAINT_BG     0
 #define PAINT_SEL    1
@@ -156,42 +155,42 @@ GroupSelection::paintTabBar (const GLWindowPaintAttrib   &attrib,
 	float           wScale = 1.0f, hScale = 1.0f;
 	GroupCairoLayer *layer = NULL;
 
-	if (bar->mState == PaintFadeIn)
-	    alpha -= alpha * bar->mAnimationTime / (gs->optionGetFadeTime () * 1000);
-	else if (bar->mState == PaintFadeOut)
-	    alpha = alpha * bar->mAnimationTime / (gs->optionGetFadeTime () * 1000);
+	if (mState == PaintFadeIn)
+	    alpha -= alpha * mAnimationTime / (gs->optionGetFadeTime () * 1000);
+	else if (mState == PaintFadeOut)
+	    alpha = alpha * mAnimationTime / (gs->optionGetFadeTime () * 1000);
 
 	switch (count) {
 	case PAINT_BG:
 	    {
 		int newWidth;
 
-		layer = bar->mBgLayer;
+		layer = mBgLayer;
 
 		/* handle the repaint of the background */
-		newWidth = bar->mRegion.boundingRect ().x2 () - bar->mRegion.boundingRect ().x1 ();
+		newWidth = mRegion.boundingRect ().x2 () - mRegion.boundingRect ().x1 ();
 		if (layer && (newWidth > layer->mTexWidth))
 		    newWidth = layer->mTexWidth;
 
-		wScale = (double) (bar->mRegion.boundingRect ().x2 () -
-				   bar->mRegion.boundingRect ().x1 ()) / (double) newWidth;
+		wScale = (double) (mRegion.boundingRect ().x2 () -
+				   mRegion.boundingRect ().x1 ()) / (double) newWidth;
 
 		/* FIXME: maybe move this over to groupResizeTabBarRegion -
 		   the only problem is that we would have 2 redraws if
 		   there is an animation */
-		if (newWidth != bar->mOldWidth || bar->mBgAnimation)
-		    bar->renderTabBarBackground ();
+		if (newWidth != mOldWidth || mBgAnimation)
+		    renderTabBarBackground ();
 
-		bar->mOldWidth = newWidth;
-		box	       = bar->mRegion.boundingRect ();
+		mOldWidth = newWidth;
+		box	       = mRegion.boundingRect ();
 	    }
 	    break;
 
 	case PAINT_SEL:
-	    if (mTopTab != gs->mDraggedSlot)
+	    if (mGroup->mTopTab != gs->mDraggedSlot)
 	    {
-		layer = bar->mSelectionLayer;
-		box   = mTopTab->mRegion.boundingRect ();
+		layer = mSelectionLayer;
+		box   = mGroup->mTopTab->mRegion.boundingRect ();
 	    }
 	    break;
 
@@ -205,10 +204,10 @@ GroupSelection::paintTabBar (const GLWindowPaintAttrib   &attrib,
 		if (gs->optionGetMipmaps ())
 		    gs->gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
-		foreach (slot, bar->mSlots)
+		foreach (slot, mSlots)
 		{
 		    if (slot != gs->mDraggedSlot || !gs->mDragged)
-			paintThumb (slot, transform,
+			mGroup->paintThumb (slot, transform,
 				    attrib.opacity, true);
 		}
 
@@ -217,19 +216,19 @@ GroupSelection::paintTabBar (const GLWindowPaintAttrib   &attrib,
 	    break;
 
 	case PAINT_TEXT:
-	    if (bar->mTextLayer && (bar->mTextLayer->mState != PaintOff))
+	    if (mTextLayer && (mTextLayer->mState != PaintOff))
 	    {
-		layer = bar->mTextLayer;
+		layer = mTextLayer;
 
-		int x1 = bar->mRegion.boundingRect ().x1 () + 5;
-		int x2 = bar->mRegion.boundingRect ().x1 () +
-			 bar->mTextLayer->mTexWidth + 5;
-		int y1 = bar->mRegion.boundingRect ().y2 () -
-			 bar->mTextLayer->mTexHeight - 5;
-		int y2 = bar->mRegion.boundingRect ().y2 () - 5;
+		int x1 = mRegion.boundingRect ().x1 () + 5;
+		int x2 = mRegion.boundingRect ().x1 () +
+			 mTextLayer->mTexWidth + 5;
+		int y1 = mRegion.boundingRect ().y2 () -
+			 mTextLayer->mTexHeight - 5;
+		int y2 = mRegion.boundingRect ().y2 () - 5;
 
-		if (x2 > bar->mRegion.boundingRect ().x2 ())
-		    x2 = bar->mRegion.boundingRect ().x2 ();
+		if (x2 > mRegion.boundingRect ().x2 ())
+		    x2 = mRegion.boundingRect ().x2 ();
 
 		/* recalculate the alpha again for text fade... */
 		if (layer->mState == PaintFadeIn)
@@ -1131,7 +1130,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	if (showTabbar)
 	{
 	    gWindow->glPaintSetEnabled (this, false);
-	    mGroup->paintTabBar (wAttrib, wTransform, mask, region);
+	    mGroup->mTabBar->paint (wAttrib, wTransform, mask, region);
 	    gWindow->glPaintSetEnabled (this, true);
 	}
     }

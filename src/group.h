@@ -371,6 +371,11 @@ public:
     void createInputPreventionWindow ();
     void destroyInputPreventionWindow ();
 
+    void paint (const GLWindowPaintAttrib &attrib,
+		const GLMatrix		 &transform,
+		unsigned int		 mask,
+		CompRegion		 clipRegion);
+
 public:
     GroupTabBarSlot::List mSlots;
 
@@ -435,11 +440,6 @@ public:
     void maximizeWindows (CompWindow *top);
 
     /* TODO: Move to TabBar */
-
-    void paintTabBar (const GLWindowPaintAttrib &attrib,
-		      const GLMatrix		 &transform,
-		      unsigned int		 mask,
-		      CompRegion		 clipRegion);
 
     void
     applyConstraining (CompRegion  constrainRegion,
