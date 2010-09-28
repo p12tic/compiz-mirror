@@ -501,10 +501,10 @@ GroupWindow::groupDeleteGroupWindow ()
 	if (gs->mDraggedSlot && gs->mDragged &&
 	    gs->mDraggedSlot->mWindow->id () == window->id ())
 	{
-	    group->unhookTabBarSlot (mSlot, false);
+	    group->mTabBar->unhookTabBarSlot (mSlot, false);
 	}
 	else
-	    group->deleteTabBarSlot (mSlot);
+	    group->mTabBar->deleteTabBarSlot (mSlot);
     }
 
     if (group->mWindows.size ())
@@ -776,7 +776,7 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	    if (topTab)
 	    {
 		if (!mSlot)
-		    group->createSlot (window);
+		    group->mTabBar->createSlot (window);
 
 		mDestination.x = WIN_CENTER_X (topTab) - (WIN_WIDTH (window) / 2);
 		mDestination.y = WIN_CENTER_Y (topTab) -
@@ -1246,7 +1246,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 		}
 	    }
 	    else
-		group->unhookTabBarSlot (mDraggedSlot, true);
+		group->mTabBar->unhookTabBarSlot (mDraggedSlot, true);
 
 	    mDraggedSlot = NULL;
 	    mDragged = false;
@@ -1256,10 +1256,10 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 		 tmpDraggedSlot->mRegion.boundingRect ().x2 () + (2 * vx)) / 2 >
 		(slot->mRegion.boundingRect ().x1 () + slot->mRegion.boundingRect ().x2 ()) / 2)
 	    {
-		group->insertTabBarSlotAfter (tmpDraggedSlot, slot);
+		group->mTabBar->insertTabBarSlotAfter (tmpDraggedSlot, slot);
 	    }
 	    else
-		group->insertTabBarSlotBefore (tmpDraggedSlot, slot);
+		group->mTabBar->insertTabBarSlotBefore (tmpDraggedSlot, slot);
 
 	    group->mTabBar->damageRegion ();
 

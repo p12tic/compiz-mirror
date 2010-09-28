@@ -1876,23 +1876,19 @@ GroupTabBar::resizeTabBarRegion (CompRect	&box,
 }
 
 /*
- * GroupSelection::insertTabBarSlotBefore
+ * GroupTabBar::insertTabBarSlotBefore
  *
  */
 void
-GroupSelection::insertTabBarSlotBefore (GroupTabBarSlot *slot,
-					GroupTabBarSlot *nextSlot)
+GroupTabBar::insertTabBarSlotBefore (GroupTabBarSlot *slot,
+				     GroupTabBarSlot *nextSlot)
 {
-    GroupTabBar	    *bar  = mTabBar;
     GroupTabBarSlot *prev = nextSlot->mPrev;
-    GroupTabBarSlot::List::iterator pos = std::find (bar->mSlots.begin (),
-						     bar->mSlots.end (),
+    GroupTabBarSlot::List::iterator pos = std::find (mSlots.begin (),
+						     mSlots.end (),
 						     nextSlot);
-    CompWindow      *w = slot->mWindow;
     
-    bar->mSlots.insert (pos, slot);
-
-    GROUP_WINDOW (w);
+    mSlots.insert (pos, slot);
 
     if (prev)
     {
@@ -1911,9 +1907,9 @@ GroupSelection::insertTabBarSlotBefore (GroupTabBarSlot *slot,
        because the tab-bar got wider now, so it will put it in
        the average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
-    gw->mGroup->mTabBar->recalcTabBarPos ((bar->mRegion.boundingRect ().x1 () +
-			   bar->mRegion.boundingRect ().x2 ()) / 2,
-			  bar->mRegion.boundingRect ().x1 (), bar->mRegion.boundingRect ().x2 ());
+    recalcTabBarPos ((mRegion.boundingRect ().x1 () +
+		      mRegion.boundingRect ().x2 ()) / 2,
+		      mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
 }
 
 /*
@@ -1921,19 +1917,15 @@ GroupSelection::insertTabBarSlotBefore (GroupTabBarSlot *slot,
  *
  */
 void
-GroupSelection::insertTabBarSlotAfter (GroupTabBarSlot *slot,
-				       GroupTabBarSlot *prevSlot)
+GroupTabBar::insertTabBarSlotAfter (GroupTabBarSlot *slot,
+				    GroupTabBarSlot *prevSlot)
 {
-    GroupTabBar     *bar  = mTabBar;
     GroupTabBarSlot *next = prevSlot->mNext;
-    GroupTabBarSlot::List::iterator pos = std::find (bar->mSlots.begin (),
-						     bar->mSlots.end (),
+    GroupTabBarSlot::List::iterator pos = std::find (mSlots.begin (),
+						     mSlots.end (),
 						     next);
-    CompWindow      *w = slot->mWindow;
 
-    bar->mSlots.insert (pos, slot);
-
-    GROUP_WINDOW (w);
+    mSlots.insert (pos, slot);
 
     if (next)
     {
@@ -1952,9 +1944,9 @@ GroupSelection::insertTabBarSlotAfter (GroupTabBarSlot *slot,
        because the tab-bar got wider now, so it will put it in the
        average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
-    gw->mGroup->mTabBar->recalcTabBarPos ((bar->mRegion.boundingRect ().x1 () +
-			   bar->mRegion.boundingRect ().x2 ()) / 2,
-			  bar->mRegion.boundingRect ().x1 (), bar->mRegion.boundingRect ().x2 ());
+    recalcTabBarPos ((mRegion.boundingRect ().x1 () +
+		      mRegion.boundingRect ().x2 ()) / 2,
+		      mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
 }
 
 /*
@@ -1962,17 +1954,12 @@ GroupSelection::insertTabBarSlotAfter (GroupTabBarSlot *slot,
  *
  */
 void
-GroupSelection::insertTabBarSlot (GroupTabBarSlot *slot)
+GroupTabBar::insertTabBarSlot (GroupTabBarSlot *slot)
 {
-    GroupTabBar *bar = mTabBar;
-    CompWindow  *w = slot->mWindow;
-
-    GROUP_WINDOW (w);
-
-    if (bar->mSlots.size ())
+    if (mSlots.size ())
     {
-	bar->mSlots.back ()->mNext = slot;
-	slot->mPrev = bar->mSlots.back ();
+	mSlots.back ()->mNext = slot;
+	slot->mPrev = mSlots.back ();
 	slot->mNext = NULL;
     }
     else
@@ -1981,36 +1968,35 @@ GroupSelection::insertTabBarSlot (GroupTabBarSlot *slot)
 	slot->mNext = NULL;
     }
 
-    bar->mSlots.push_back (slot);
+    mSlots.push_back (slot);
 
     /* Moving bar->mRegion.boundingRect ().x1 () / x2 as minX1 / maxX2 will work,
        because the tab-bar got wider now, so it will put it in
        the average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
-    gw->mGroup->mTabBar->recalcTabBarPos ((bar->mRegion.boundingRect ().x1 () +
-			   bar->mRegion.boundingRect ().x2 ()) / 2,
-			  bar->mRegion.boundingRect ().x1 (), bar->mRegion.boundingRect ().x2 ());
+    recalcTabBarPos ((mRegion.boundingRect ().x1 () +
+		      mRegion.boundingRect ().x2 ()) / 2,
+		      mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
 }
 
 /*
- * GroupSelection::unhookTabBarSlot
+ * GroupTabBar::unhookTabBarSlot
  *
  */
 void
-GroupSelection::unhookTabBarSlot (GroupTabBarSlot *slot,
-				  bool            temporary)
+GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
+			       bool            temporary)
 {
-    GroupTabBar	    *bar = mTabBar;
     GroupTabBarSlot *tempSlot;
     GroupTabBarSlot *prev = slot->mPrev;
     GroupTabBarSlot *next = slot->mNext;
     CompWindow      *w = slot->mWindow;
-    GroupSelection  *group = this;
+    GroupSelection  *group = mGroup;
     
     GROUP_SCREEN (screen);
 
     /* check if slot is not already unhooked */
-    foreach (tempSlot, bar->mSlots)
+    foreach (tempSlot, mSlots)
 	if (tempSlot == slot)
 	    break;
 
@@ -2026,7 +2012,7 @@ GroupSelection::unhookTabBarSlot (GroupTabBarSlot *slot,
     slot->mPrev = NULL;
     slot->mNext = NULL;
     
-    bar->mSlots.remove (slot);
+    mSlots.remove (slot);
 
     if (!temporary)
     {
@@ -2046,22 +2032,22 @@ GroupSelection::unhookTabBarSlot (GroupTabBarSlot *slot,
 	}
     }
 
-    if (slot == bar->mHoveredSlot)
-	bar->mHoveredSlot = NULL;
+    if (slot == mHoveredSlot)
+	mHoveredSlot = NULL;
 
-    if (slot == bar->mTextSlot)
+    if (slot == mTextSlot)
     {
-	bar->mTextSlot = NULL;
+	mTextSlot = NULL;
 
-	if (bar->mTextLayer)
+	if (mTextLayer)
 	{
-	    if (bar->mTextLayer->mState == PaintFadeIn ||
-		bar->mTextLayer->mState == PaintOn)
+	    if (mTextLayer->mState == PaintFadeIn ||
+		mTextLayer->mState == PaintOn)
 	    {
-		bar->mTextLayer->mAnimationTime =
+		mTextLayer->mAnimationTime =
 		    (gs->optionGetFadeTextTime () * 1000) -
-		    bar->mTextLayer->mAnimationTime;
-		bar->mTextLayer->mState = PaintFadeOut;
+		    mTextLayer->mAnimationTime;
+		mTextLayer->mState = PaintFadeOut;
 	    }
 	}
     }
@@ -2070,10 +2056,10 @@ GroupSelection::unhookTabBarSlot (GroupTabBarSlot *slot,
        because the tab-bar got thiner now, so
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2
        Won't cause the new x1 / x2 to be outside the original region. */
-    bar->recalcTabBarPos ((bar->mRegion.boundingRect ().x1 () +
-			   bar->mRegion.boundingRect ().x2 ()) / 2,
-			  bar->mRegion.boundingRect ().x1 (),
-			  bar->mRegion.boundingRect ().x2 ());
+    recalcTabBarPos ((mRegion.boundingRect ().x1 () +
+		      mRegion.boundingRect ().x2 ()) / 2,
+		      mRegion.boundingRect ().x1 (),
+		      mRegion.boundingRect ().x2 ());
 }
 
 /*
@@ -2081,7 +2067,7 @@ GroupSelection::unhookTabBarSlot (GroupTabBarSlot *slot,
  *
  */
 void
-GroupSelection::deleteTabBarSlot (GroupTabBarSlot *slot)
+GroupTabBar::deleteTabBarSlot (GroupTabBarSlot *slot)
 {
     CompWindow *w = slot->mWindow;
 
@@ -2111,14 +2097,11 @@ GroupSelection::deleteTabBarSlot (GroupTabBarSlot *slot)
  *
  */
 void
-GroupSelection::createSlot (CompWindow      *w)
+GroupTabBar::createSlot (CompWindow      *w)
 {
     GroupTabBarSlot *slot;
 
     GROUP_WINDOW (w);
-
-    if (!mTabBar)
-	return;
 
     slot = new GroupTabBarSlot ();
     if (!slot)
@@ -2481,13 +2464,13 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
     mIpwMapped (false)
 {
     mGroup->mTabBar = this; /* only need to do this because
-			     * GroupSelection::createSlot checks
+			     * GroupTabBar::createSlot checks
 			     * for mTabBar
 			     */
 
     mSlots.clear ();
     foreach (CompWindow *cw, mGroup->mWindows)
-	mGroup->createSlot (cw);
+	createSlot (cw);
 
     mGroup->mTabBar->createInputPreventionWindow ();
     mGroup->mTopTab = GroupWindow::get (topTab)->mSlot;
@@ -2514,7 +2497,7 @@ GroupTabBar::~GroupTabBar ()
 	mTimeoutHandle.stop ();
 
     while (mSlots.size ())
-	mGroup->deleteTabBarSlot (mSlots.front ());
+	deleteTabBarSlot (mSlots.front ());
 }
 
 /*

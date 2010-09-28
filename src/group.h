@@ -364,12 +364,18 @@ public:
 
 public:
 
+    /* Rendering */
+
     void renderTopTabHighlight ();
     void renderTabBarBackground ();
     void renderWindowTitle ();
-    
+
+    /* Input Prevention */
+
     void createInputPreventionWindow ();
     void destroyInputPreventionWindow ();
+
+    /* Drawing */
 
     void paint (const GLWindowPaintAttrib &attrib,
 		const GLMatrix		 &transform,
@@ -378,9 +384,13 @@ public:
 
     void damageRegion ();
 
+    /* Animation */
+
     void handleTabBarFade (int msSinceLastPaint);
     void handleTextFade (int msSinceLastPaint);
     void handleTabBarAnimation (int msSinceLastPaint);
+
+    /* Region and position management */
 
     void moveTabBarRegion (int		   dx,
 			   int		   dy,
@@ -392,6 +402,23 @@ public:
     void recalcTabBarPos (int		  middleX,
 			  int		  minX1,
 			  int		  maxX2);
+
+    /* Slot management */
+    void insertTabBarSlotBefore (GroupTabBarSlot *slot,
+				 GroupTabBarSlot *nextSlot);
+
+    void insertTabBarSlotAfter (GroupTabBarSlot *slot,
+				GroupTabBarSlot *prevSlot);
+
+    void insertTabBarSlot (GroupTabBarSlot *slot);
+
+    void unhookTabBarSlot (GroupTabBarSlot *slot,
+			   bool            temporary);
+
+    void deleteTabBarSlot (GroupTabBarSlot *slot);
+
+    void createSlot (CompWindow      *w);
+
 
 public:
     GroupTabBarSlot::List mSlots;
@@ -487,32 +514,13 @@ public:
     void
     startTabbingAnimation (bool           tab);
 
-    void
-    insertTabBarSlotBefore (GroupTabBarSlot *slot,
-			    GroupTabBarSlot *nextSlot);
 
-    void
-    insertTabBarSlotAfter (GroupTabBarSlot *slot,
-			   GroupTabBarSlot *prevSlot);
-
-    void
-    insertTabBarSlot (GroupTabBarSlot *slot);
-
-    void
-    unhookTabBarSlot (GroupTabBarSlot *slot,
-		      bool            temporary);
-
-    void
-    deleteTabBarSlot (GroupTabBarSlot *slot);
 
     /* TODO: Move to GroupTabBarSlot */
     void paintThumb (GroupTabBarSlot      *slot,
 		     const GLMatrix	   &transform,
 		     int		   targetOpacity,
 		     bool		   dontPaint);
-
-    void
-    createSlot (CompWindow      *w);
 
     void
     applyForces (GroupTabBarSlot *draggedSlot);
