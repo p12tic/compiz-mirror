@@ -1740,7 +1740,7 @@ GroupSelection::recalcTabBarPos (int		middleX,
     box.setWidth (barWidth);
     box.setHeight (space * 2 + tabsHeight);
 
-    gs->resizeTabBarRegion (this, box, true);
+    resizeTabBarRegion (box, true);
 
     /* recalc every slot region */
     currentSlot = 0;
@@ -1832,32 +1832,33 @@ GroupSelection::moveTabBarRegion (int		   dx,
 }
 
 void
-GroupScreen::resizeTabBarRegion (GroupSelection *group,
-				 CompRect	&box,
-				 bool           syncIPW)
+GroupSelection::resizeTabBarRegion (CompRect	&box,
+				    bool        syncIPW)
 {
     int oldWidth;
 
-    group->damageTabBarRegion ();
+    GROUP_SCREEN (screen);
 
-    oldWidth = group->mTabBar->mRegion.boundingRect ().x2 () -
-	group->mTabBar->mRegion.boundingRect ().x1 ();
+    damageTabBarRegion ();
 
-    if (group->mTabBar->mBgLayer && oldWidth != box.width () && syncIPW)
+    oldWidth = mTabBar->mRegion.boundingRect ().x2 () -
+	mTabBar->mRegion.boundingRect ().x1 ();
+
+    if (mTabBar->mBgLayer && oldWidth != box.width () && syncIPW)
     {
-	group->mTabBar->mBgLayer =
-	    groupRebuildCairoLayer (group->mTabBar->mBgLayer,
+	mTabBar->mBgLayer =
+	    gs->groupRebuildCairoLayer (mTabBar->mBgLayer,
 				    box.width () +
-				    optionGetThumbSpace () +
-				    optionGetThumbSize (),
+				    gs->optionGetThumbSpace () +
+				    gs->optionGetThumbSize (),
 				    box.height ());
-	group->renderTabBarBackground ();
+	renderTabBarBackground ();
 
 	/* invalidate old width */
-	group->mTabBar->mOldWidth = 0;
+	mTabBar->mOldWidth = 0;
     }    
 
-    group->mTabBar->mRegion = CompRegion (box);
+    mTabBar->mRegion = CompRegion (box);
 
     if (syncIPW)
     {
@@ -1868,27 +1869,27 @@ GroupScreen::resizeTabBarRegion (GroupSelection *group,
 	xwc.width = box.width ();
 	xwc.height = box.height ();
 
-	if (!group->mIpwMapped)
-	    XMapWindow (screen->dpy (), group->mInputPrevention);
+	if (!mIpwMapped)
+	    XMapWindow (screen->dpy (), mInputPrevention);
 
-	XMoveResizeWindow (screen->dpy (), group->mInputPrevention, xwc.x, xwc.y, xwc.width, xwc.height);
+	XMoveResizeWindow (screen->dpy (), mInputPrevention, xwc.x, xwc.y, xwc.width, xwc.height);
 	
-	if (!group->mIpwMapped)
-	    XUnmapWindow (screen->dpy (), group->mInputPrevention);
+	if (!mIpwMapped)
+	    XUnmapWindow (screen->dpy (), mInputPrevention);
     }
 
-    group->damageTabBarRegion ();
+    damageTabBarRegion ();
 }
 
 /*
- * groupInsertTabBarSlotBefore
+ * GroupSelection::insertTabBarSlotBefore
  *
  */
 void
-GroupScreen::groupInsertTabBarSlotBefore (GroupTabBar     *bar,
-					  GroupTabBarSlot *slot,
-					  GroupTabBarSlot *nextSlot)
+GroupSelection::insertTabBarSlotBefore (GroupTabBarSlot *slot,
+					GroupTabBarSlot *nextSlot)
 {
+    GroupTabBar	    *bar  = mTabBar;
     GroupTabBarSlot *prev = nextSlot->mPrev;
     GroupTabBarSlot::List::iterator pos = std::find (bar->mSlots.begin (),
 						     bar->mSlots.end (),
@@ -1922,14 +1923,14 @@ GroupScreen::groupInsertTabBarSlotBefore (GroupTabBar     *bar,
 }
 
 /*
- * groupInsertTabBarSlotAfter
+ * GroupSelection::insertTabBarSlotAfter
  *
  */
 void
-GroupScreen::groupInsertTabBarSlotAfter (GroupTabBar     *bar,
-					 GroupTabBarSlot *slot,
-					 GroupTabBarSlot *prevSlot)
+GroupSelection::insertTabBarSlotAfter (GroupTabBarSlot *slot,
+				       GroupTabBarSlot *prevSlot)
 {
+    GroupTabBar     *bar  = mTabBar;
     GroupTabBarSlot *next = prevSlot->mNext;
     GroupTabBarSlot::List::iterator pos = std::find (bar->mSlots.begin (),
 						     bar->mSlots.end (),
@@ -1963,14 +1964,14 @@ GroupScreen::groupInsertTabBarSlotAfter (GroupTabBar     *bar,
 }
 
 /*
- * groupInsertTabBarSlot
+ * GroupSelection::insertTabBarSlot
  *
  */
 void
-GroupScreen::groupInsertTabBarSlot (GroupTabBar     *bar,
-				    GroupTabBarSlot *slot)
+GroupSelection::insertTabBarSlot (GroupTabBarSlot *slot)
 {
-    CompWindow *w = slot->mWindow;
+    GroupTabBar *bar = mTabBar;
+    CompWindow  *w = slot->mWindow;
 
     GROUP_WINDOW (w);
 
@@ -1998,23 +1999,21 @@ GroupScreen::groupInsertTabBarSlot (GroupTabBar     *bar,
 }
 
 /*
- * groupUnhookTabBarSlot
+ * GroupSelection::unhookTabBarSlot
  *
  */
 void
-GroupScreen::groupUnhookTabBarSlot (GroupTabBar     *bar,
-				    GroupTabBarSlot *slot,
-				    bool            temporary)
+GroupSelection::unhookTabBarSlot (GroupTabBarSlot *slot,
+				  bool            temporary)
 {
+    GroupTabBar	    *bar = mTabBar;
     GroupTabBarSlot *tempSlot;
     GroupTabBarSlot *prev = slot->mPrev;
     GroupTabBarSlot *next = slot->mNext;
     CompWindow      *w = slot->mWindow;
-    GroupSelection  *group;
-
-    GROUP_WINDOW (w);
-
-    group = gw->mGroup;
+    GroupSelection  *group = this;
+    
+    GROUP_SCREEN (screen);
 
     /* check if slot is not already unhooked */
     foreach (tempSlot, bar->mSlots)
@@ -2044,11 +2043,11 @@ GroupScreen::groupUnhookTabBarSlot (GroupTabBar     *bar,
 	    group->mTopTab = NULL;
 
 	    if (next)
-		groupChangeTab (next, RotateRight);
+		gs->groupChangeTab (next, RotateRight);
 	    else if (prev)
-		groupChangeTab (prev, RotateLeft);
+		gs->groupChangeTab (prev, RotateLeft);
 
-	    if (optionGetUntabOnClose ())
+	    if (gs->optionGetUntabOnClose ())
 		group->untabGroup ();
 	}
     }
@@ -2066,7 +2065,7 @@ GroupScreen::groupUnhookTabBarSlot (GroupTabBar     *bar,
 		bar->mTextLayer->mState == PaintOn)
 	    {
 		bar->mTextLayer->mAnimationTime =
-		    (optionGetFadeTextTime () * 1000) -
+		    (gs->optionGetFadeTextTime () * 1000) -
 		    bar->mTextLayer->mAnimationTime;
 		bar->mTextLayer->mState = PaintFadeOut;
 	    }
@@ -2088,24 +2087,24 @@ GroupScreen::groupUnhookTabBarSlot (GroupTabBar     *bar,
  *
  */
 void
-GroupScreen::groupDeleteTabBarSlot (GroupTabBar     *bar,
-				    GroupTabBarSlot *slot)
+GroupSelection::deleteTabBarSlot (GroupTabBarSlot *slot)
 {
     CompWindow *w = slot->mWindow;
 
     GROUP_WINDOW (w);
+    GROUP_SCREEN (screen);
 
-    groupUnhookTabBarSlot (bar, slot, false);
+    unhookTabBarSlot (slot, false);
 
     slot->mRegion = CompRegion ();
 
-    if (slot == mDraggedSlot)
+    if (slot == gs->mDraggedSlot)
     {
-	mDraggedSlot = NULL;
-	mDragged = false;
+	gs->mDraggedSlot = NULL;
+	gs->mDragged = false;
 
-	if (mGrabState == ScreenGrabTabDrag)
-	    groupGrabScreen (ScreenGrabNone);
+	if (gs->mGrabState == ScreenGrabTabDrag)
+	    gs->groupGrabScreen (ScreenGrabNone);
     }
 
     gw->mSlot = NULL;
@@ -2134,7 +2133,7 @@ GroupScreen::groupCreateSlot (GroupSelection *group,
 
     slot->mWindow = w;
 
-    groupInsertTabBarSlot (group->mTabBar, slot);
+    group->insertTabBarSlot (slot);
     gw->mSlot = slot;
     gw->groupUpdateWindowProperty ();
 }
@@ -2430,7 +2429,7 @@ GroupScreen::groupApplySpeeds (GroupSelection *group,
 	bar->mRightMsSinceLastMove = 0;
 
     if (updateTabBar)
-	resizeTabBarRegion (group, box, false);
+	group->resizeTabBarRegion (box, false);
 
     foreach (slot, bar->mSlots)
     {
@@ -2520,7 +2519,7 @@ GroupScreen::groupDeleteTabBar (GroupSelection *group)
 	bar->mTimeoutHandle.stop ();
 
     while (bar->mSlots.size ())
-	groupDeleteTabBarSlot (bar, bar->mSlots.front ());
+	group->deleteTabBarSlot (bar->mSlots.front ());
 
     delete bar;
     group->mTabBar = NULL;

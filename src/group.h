@@ -471,6 +471,28 @@ public:
 		      int		   dy,
 		      bool		   syncIPW);
 
+    void
+    resizeTabBarRegion (CompRect       &box,
+			bool           syncIPW);
+
+    void
+    insertTabBarSlotBefore (GroupTabBarSlot *slot,
+			    GroupTabBarSlot *nextSlot);
+
+    void
+    insertTabBarSlotAfter (GroupTabBarSlot *slot,
+			   GroupTabBarSlot *prevSlot);
+
+    void
+    insertTabBarSlot (GroupTabBarSlot *slot);
+
+    void
+    unhookTabBarSlot (GroupTabBarSlot *slot,
+		      bool            temporary);
+
+    void
+    deleteTabBarSlot (GroupTabBarSlot *slot);
+
     /* TODO: Move to GroupTabBarSlot */
     void paintThumb (GroupTabBarSlot      *slot,
 		     const GLMatrix	   &transform,
@@ -709,34 +731,6 @@ class GroupScreen :
 	void
 	groupRecalcSlotPos (GroupTabBarSlot *slot,
 			    int		 slotPos);
-
-	void
-	resizeTabBarRegion (GroupSelection *group,
-			    CompRect       &box,
-			    bool           syncIPW);
-
-	void
-	groupInsertTabBarSlotBefore (GroupTabBar     *bar,
-				     GroupTabBarSlot *slot,
-				     GroupTabBarSlot *nextSlot);
-
-	void
-	groupInsertTabBarSlotAfter (GroupTabBar     *bar,
-				    GroupTabBarSlot *slot,
-				    GroupTabBarSlot *prevSlot);
-
-	void
-	groupInsertTabBarSlot (GroupTabBar     *bar,
-			       GroupTabBarSlot *slot);
-
-	void
-	groupUnhookTabBarSlot (GroupTabBar     *bar,
-				GroupTabBarSlot *slot,
-				bool            temporary);
-
-	void
-	groupDeleteTabBarSlot (GroupTabBar     *bar,
-			       GroupTabBarSlot *slot);
 
 	void
 	groupCreateSlot (GroupSelection *group,
