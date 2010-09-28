@@ -6,9 +6,11 @@
 		<category>Effects</category>
 		<deps>
 			<relation type="after">
+				<plugin>opengl</plugin>
 				<plugin>cube</plugin>
 			</relation>
 			<requirement>
+				<plugin>opengl</plugin>
 				<plugin>mousepoll</plugin>
 			</requirement>
 		</deps>
