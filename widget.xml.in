@@ -9,7 +9,6 @@
 				<plugin>animation</plugin>
 			</relation>
 			<requirement>
-				<plugin>composite</plugin>
 				<plugin>opengl</plugin>
 			</requirement>
 			<relation type="after">
