@@ -17,7 +17,6 @@
 			</relation>
 			<requirement>
 				<plugin>opengl</plugin>
-				<plugin>composite</plugin>
 				<plugin>mousepoll</plugin>
 			</requirement>
 		</deps>
