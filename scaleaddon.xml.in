@@ -12,7 +12,6 @@
 		<plugin>decor</plugin>
 	    </relation>
 	    <requirement>
-		<plugin>composite</plugin>
 		<plugin>opengl</plugin>
 		<plugin>scale</plugin>
 	    </requirement>
