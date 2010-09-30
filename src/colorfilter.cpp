@@ -94,7 +94,7 @@ ColorfilterScreen::switchFilter ()
     ColorfilterFunction *function;
 
     /* % (count + 1) because of the cumulative filters mode */
-    currentFilter = ++currentFilter % (filtersFunctions.size () + 1);
+    currentFilter = (currentFilter + 1) % (filtersFunctions.size () + 1);
     if (currentFilter == 0)
 	compLogMessage ("colorfilter", CompLogLevelInfo,
 			"Cumulative filters mode");
