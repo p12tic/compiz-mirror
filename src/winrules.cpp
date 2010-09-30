@@ -207,7 +207,7 @@ WinrulesWindow::matchSizeValue (CompOption::Value::Vector matches,
     min = MIN ((unsigned int) min, heightValues.size ());
     min = MIN ((unsigned int) min, matches.size ());
 
-    for (unsigned int i = 0; i < min; i++)
+    for (int i = 0; i < min; i++)
     {
 	if ((matches.at (i).match ().evaluate (window)))
 	{
