@@ -29,9 +29,9 @@ BicubicScreen::getBicubicFragmentFunction (GLTexture   *texture,
 					   int         param,
 					   int         unit)
 {
-    GLFragment::FunctionData *data;
-    int		             target;
-    char	             *targetString;
+    GLFragment::FunctionData	*data;
+    int				target;
+    CompString			targetString;
 
     if (texture->target () == GL_TEXTURE_2D)
     {
@@ -55,13 +55,13 @@ BicubicScreen::getBicubicFragmentFunction (GLTexture   *texture,
     {
 	int  handle = 0;
 	BicubicFunction *function = NULL;
-	
-	static char *filterTemp[] = {
+
+	CompString filterTemp[] = {
 	    "hgX", "hgY", "cs00", "cs01", "cs10", "cs11"
 	};
 
 	for (unsigned int i = 0; i < sizeof (filterTemp) / sizeof (filterTemp[0]); i++)
-	    data->addTempHeaderOp (filterTemp[i]);
+	    data->addTempHeaderOp (filterTemp[i].c_str());
 
 
 	data->addDataOp (
@@ -96,13 +96,13 @@ BicubicScreen::getBicubicFragmentFunction (GLTexture   *texture,
 		"ADD cs11, cs11, fragment.texcoord[0];");
 
 	data->addDataOp ( 
-		"TEX cs00, cs00, texture[0], %s;", targetString);
+		"TEX cs00, cs00, texture[0], %s;", targetString.c_str());
 	data->addDataOp (
-		"TEX cs01, cs01, texture[0], %s;", targetString);
+		"TEX cs01, cs01, texture[0], %s;", targetString.c_str());
 	data->addDataOp ( 
-		"TEX cs10, cs10, texture[0], %s;", targetString);
+		"TEX cs10, cs10, texture[0], %s;", targetString.c_str());
 	data->addDataOp ( 
-		"TEX cs11, cs11, texture[0], %s;", targetString);
+		"TEX cs11, cs11, texture[0], %s;", targetString.c_str());
 
 	data->addDataOp ( "LRP cs00, hgY.z, cs00, cs01;");
 	data->addDataOp ( "LRP cs10, hgY.z, cs10, cs11;");
