@@ -378,8 +378,7 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
 			   CompOutput                *output,
 			   int                       size,
 			   bool                      top,
-			   bool                      adjust,
-			   unsigned short            *color)
+			   bool                      adjust)
 {
     GLScreenPaintAttrib sa;
     GLMatrix            sTransform;
@@ -389,9 +388,14 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
     float               cInv = (top) ? 1.0: -1.0;
     CubeCap             *cap;
     bool                cScale, cAspect;
+    unsigned short	*color;
 
     glGetIntegerv (GL_CULL_FACE_MODE, &cullNorm);
     cullInv   = (cullNorm == GL_BACK)? GL_FRONT : GL_BACK;
+    if (top)
+	color = cubeScreen->topColor ();
+    else
+	color = cubeScreen->bottomColor ();
 
     opacity = cubeScreen->desktopOpacity () * color[3] / 0xffff;
 
@@ -572,13 +576,10 @@ CubeaddonScreen::cubePaintTop (const GLScreenPaintAttrib &sAttrib,
     if (!optionGetDrawTop ())
         return;
 
-    paintCap (sAttrib, transform, output, size, true,
-	      optionGetAdjustTop (), optionGetTopColor());
+    paintCap (sAttrib, transform, output, size,
+	      true, optionGetAdjustTop ());
 }
 
-/*
- * Paint bottom cube face
- */
 void 
 CubeaddonScreen::cubePaintBottom (const GLScreenPaintAttrib &sAttrib,
 				  const GLMatrix            &transform,
@@ -594,8 +595,8 @@ CubeaddonScreen::cubePaintBottom (const GLScreenPaintAttrib &sAttrib,
     if (!optionGetDrawBottom ())
         return;
 
-    paintCap (sAttrib, transform, output, size, false,
-	      optionGetAdjustBottom (), optionGetBottomColor());
+    paintCap (sAttrib, transform, output, size,
+	      false, optionGetAdjustBottom ());
 }
 
 void 
@@ -936,8 +937,6 @@ CubeaddonScreen::cubeShouldPaintAllViewports ()
     bool status = cubeScreen->cubeShouldPaintAllViewports ();
     return (!optionGetDrawTop () ||
 	    !optionGetDrawBottom () ||
-	    (optionGetTopColorAlpha () != OPAQUE) ||
-	    (optionGetBottomColorAlpha () != OPAQUE) ||
 	    (mDeform > 0.0) ||
 	    status);
 }

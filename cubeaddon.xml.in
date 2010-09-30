@@ -249,27 +249,9 @@
 					</option>
 				</subgroup>
 				<subgroup>
-					<_short>Appearance</_short>
-					<option name="top_color" type="color">
-						<_short>Cube Top Color</_short>
-						<_long>Color of top face of the cube</_long>
-						<default>
-							<red>0xffff</red>
-							<green>0xffff</green>
-							<blue>0xffff</blue>
-						</default>
-					</option>
-					<option name="bottom_color" type="color">
-						<_short>Cube Bottom Color</_short>
-						<_long>Color of bottom face of the cube</_long>
-						<default>
-							<red>0xffff</red>
-							<green>0xffff</green>
-							<blue>0xffff</blue>
-						</default>
-					</option>
+					<_short>Top</_short>
 					<option name="top_images" type="list">
-						<_short>Top image files</_short>
+						<_short>Image files</_short>
 						<_long>List of PNG and SVG files that should be rendered on top face of cube</_long>
 						<type>string</type>
 						<hints>file;image;</hints>
@@ -278,8 +260,11 @@
 						</default>
 						<hints>file;image;</hints>
 					</option>
+				</subgroup>
+				<subgroup>
+					<_short>Bottom</_short>
 					<option name="bottom_images" type="list">
-						<_short>Bottom image files</_short>
+						<_short>Image files</_short>
 						<_long>List of PNG and SVG files that should be rendered on bottom face of cube</_long>
 						<type>string</type>
 						<hints>file;image;</hints>

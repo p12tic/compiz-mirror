@@ -118,8 +118,7 @@ class CubeaddonScreen :
 		       CompOutput                *output,
 		       int                       size,
 		       bool                      top,
-		       bool                      adjust,
-		       unsigned short            *color);
+		       bool                      adjust);
 
     private:
 	
