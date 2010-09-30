@@ -170,7 +170,8 @@ GroupScreen::groupApplyInitialActions ()
 	    gw->mGroup->mColor[1] = color[1];
 	    gw->mGroup->mColor[2] = color[2];
 
-	    gw->mGroup->mTabBar->renderTopTabHighlight ();
+	    if (gw->mGroup->mTabBar)
+		gw->mGroup->mTabBar->renderTopTabHighlight ();
 	    cScreen->damageScreen ();
 	}
 

@@ -1139,7 +1139,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
     newRegion = mDraggedSlot->mRegion;
 
-    groupGetDrawOffsetForSlot (mDraggedSlot, vx, vy);
+    mDraggedSlot->getDrawOffset (vx, vy);
     newRegion.translate (vx, vy);
 
     foreach (group, mGroups)
@@ -1362,7 +1362,7 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 				      box.x1 (), box.x2 ());
 	    }
 
-	    groupGetDrawOffsetForSlot (mDraggedSlot, vx, vy);
+	    mDraggedSlot->getDrawOffset (vx, vy);
 
 	    reg.extents.x1 = draggedRegion.boundingRect ().x1 () + vx;
 	    reg.extents.y1 = draggedRegion.boundingRect ().y1 () + vy;
@@ -1923,7 +1923,7 @@ GroupWindow::damageRect (bool	        initial,
 	int    vx, vy;
 	CompRegion reg;
 
-	gs->groupGetDrawOffsetForSlot (mSlot, vx, vy);
+	mSlot->getDrawOffset (vx, vy);
 	if (vx || vy)
 	{
 	    reg = reg.united (mSlot->mRegion);

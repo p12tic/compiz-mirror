@@ -96,7 +96,7 @@ GroupSelection::paintThumb (GroupTabBarSlot      *slot,
 	wAttrib.brightness /= 1.25f;
 	}*/
 
-	gs->groupGetDrawOffsetForSlot (slot, vx, vy);
+	slot->getDrawOffset (vx, vy);
 
 	wAttrib.xTranslate = (slot->mRegion.boundingRect ().x1 () +
 			      slot->mRegion.boundingRect ().x2 ()) / 2 + vx;

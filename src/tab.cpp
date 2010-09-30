@@ -326,7 +326,7 @@ GroupSelection::tabSetVisibility (bool           visible,
 }
 
 /*
- * groupGetDrawOffsetForSlot
+ * GroupTabBarSlot::getDrawOffset ()
  *
  * Description:
  * Its used when the draggedSlot is dragged to another viewport.
@@ -334,23 +334,23 @@ GroupSelection::tabSetVisibility (bool           visible,
  *
  */
 void
-GroupScreen::groupGetDrawOffsetForSlot (GroupTabBarSlot *slot,
-					int &hoffset,
-					int &voffset)
+GroupTabBarSlot::getDrawOffset (int &hoffset,
+				int &voffset)
 {
     CompWindow *w, *topTab;
     int        x, y, vx, vy;
     CompPoint  vp;
     CompWindow::Geometry winGeometry;
 
-    if (!slot || !slot->mWindow)
+    if (!mWindow)
 	return;
 
-    w = slot->mWindow;
+    w = mWindow;
 
     GROUP_WINDOW (w);
+    GROUP_SCREEN (screen);
 
-    if (slot != mDraggedSlot)
+    if (this != gs->mDraggedSlot)
     {
 	hoffset = 0;
 	voffset = 0;
@@ -945,7 +945,8 @@ GroupScreen::groupUpdateTabBars (Window enteredWin)
 
 	foreach (group, mGroups)
 	{
-	    if (group->mTabBar->mInputPrevention == enteredWin)
+	    if (group->mTabBar && 
+		group->mTabBar->mInputPrevention == enteredWin)
 	    {
 		/* only accept it if the IPW is mapped */
 		if (group->mTabBar->mIpwMapped)
@@ -2233,13 +2234,11 @@ GroupSelection::applyForces (GroupTabBarSlot *draggedSlot)
     int             centerX, centerY;
     int             draggedCenterX, draggedCenterY;
 
-    GROUP_SCREEN (screen);
-
     if (draggedSlot)
     {
 	int vx, vy;
 
-	gs->groupGetDrawOffsetForSlot (draggedSlot, vx, vy);
+	draggedSlot->getDrawOffset (vx, vy);
 
 	draggedCenterX = ((draggedSlot->mRegion.boundingRect ().x1 () +
 			   draggedSlot->mRegion.boundingRect ().x2 ()) / 2) + vx;

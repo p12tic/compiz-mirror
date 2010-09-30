@@ -263,6 +263,12 @@ public:
     typedef std::list <GroupTabBarSlot *> List;
 
 public:
+
+    void
+    getDrawOffset (int &hoffset,
+		   int &voffset);
+
+public:
     GroupTabBarSlot *mPrev;
     GroupTabBarSlot *mNext;
 
@@ -647,11 +653,6 @@ class GroupScreen :
 
 	void
 	groupDamagePaintRectangle (BoxPtr pBox);
-	
-	void
-	groupGetDrawOffsetForSlot (GroupTabBarSlot *slot,
-				   int &hoffset,
-				   int &voffset);
 
 	/* queues.c */
 
