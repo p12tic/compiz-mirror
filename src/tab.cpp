@@ -2227,9 +2227,8 @@ groupApplySpeedLimit (CompScreen *s,
  *
  */
 void
-GroupSelection::applyForces (GroupTabBarSlot *draggedSlot)
+GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
 {
-    GroupTabBar     *bar = mTabBar;
     GroupTabBarSlot *slot, *slot2;
     int             centerX, centerY;
     int             draggedCenterX, draggedCenterY;
@@ -2251,38 +2250,38 @@ GroupSelection::applyForces (GroupTabBarSlot *draggedSlot)
 	draggedCenterY = 0;
     }
 
-    bar->mLeftSpeed += groupSpringForce(screen,
-				       bar->mRegion.boundingRect ().x1 (),
-				       bar->mLeftSpringX);
-    bar->mRightSpeed += groupSpringForce(screen,
-					bar->mRegion.boundingRect ().x2 (),
-					bar->mRightSpringX);
+    mLeftSpeed += groupSpringForce(screen,
+				   mRegion.boundingRect ().x1 (),
+				   mLeftSpringX);
+    mRightSpeed += groupSpringForce(screen,
+				    mRegion.boundingRect ().x2 (),
+				    mRightSpringX);
 
     if (draggedSlot)
     {
 	int leftForce, rightForce;
 
 	leftForce = groupDraggedSlotForce(screen,
-					  bar->mRegion.boundingRect ().x1 () -
+					  mRegion.boundingRect ().x1 () -
 					  SIZE / 2 - draggedCenterX,
-					  abs ((bar->mRegion.boundingRect ().y1 () +
-						bar->mRegion.boundingRect ().y2 ()) / 2 -
+					  abs ((mRegion.boundingRect ().y1 () +
+						mRegion.boundingRect ().y2 ()) / 2 -
 					       draggedCenterY));
 
 	rightForce = groupDraggedSlotForce (screen,
-					    bar->mRegion.boundingRect ().x2 () +
+					    mRegion.boundingRect ().x2 () +
 					    SIZE / 2 - draggedCenterX,
-					    abs ((bar->mRegion.boundingRect ().y1 () +
-						  bar->mRegion.boundingRect ().y2 ()) / 2 -
+					    abs ((mRegion.boundingRect ().y1 () +
+						  mRegion.boundingRect ().y2 ()) / 2 -
 						 draggedCenterY));
 
 	if (leftForce < 0)
-	    bar->mLeftSpeed += leftForce;
+	    mLeftSpeed += leftForce;
 	if (rightForce > 0)
-	    bar->mRightSpeed += rightForce;
+	    mRightSpeed += rightForce;
     }
 
-    foreach (slot, bar->mSlots)
+    foreach (slot, mSlots)
     {
 	centerX = (slot->mRegion.boundingRect ().x1 () + slot->mRegion.boundingRect ().x2 ()) / 2;
 	centerY = (slot->mRegion.boundingRect ().y1 () + slot->mRegion.boundingRect ().y2 ()) / 2;
@@ -2302,12 +2301,12 @@ GroupSelection::applyForces (GroupTabBarSlot *draggedSlot)
 	    if (draggedSlotForce < 0)
 	    {
 		slot2 = slot->mPrev;
-		bar->mLeftSpeed += draggedSlotForce;
+		mLeftSpeed += draggedSlotForce;
 	    }
 	    else if (draggedSlotForce > 0)
 	    {
 		slot2 = slot->mNext;
-		bar->mRightSpeed += draggedSlotForce;
+		mRightSpeed += draggedSlotForce;
 	    }
 
 	    while (slot2)
@@ -2320,17 +2319,17 @@ GroupSelection::applyForces (GroupTabBarSlot *draggedSlot)
 	}
     }
 
-    foreach (slot, bar->mSlots)
+    foreach (slot, mSlots)
     {
 	groupApplyFriction (screen, &slot->mSpeed);
 	groupApplySpeedLimit (screen, &slot->mSpeed);
     }
 
-    groupApplyFriction (screen, &bar->mLeftSpeed);
-    groupApplySpeedLimit (screen, &bar->mLeftSpeed);
+    groupApplyFriction (screen, &mLeftSpeed);
+    groupApplySpeedLimit (screen, &mLeftSpeed);
 
-    groupApplyFriction (screen, &bar->mRightSpeed);
-    groupApplySpeedLimit (screen, &bar->mRightSpeed);
+    groupApplyFriction (screen, &mRightSpeed);
+    groupApplySpeedLimit (screen, &mRightSpeed);
 }
 
 /*
@@ -2338,76 +2337,75 @@ GroupSelection::applyForces (GroupTabBarSlot *draggedSlot)
  *
  */
 void
-GroupSelection::applySpeeds (int            msSinceLastRepaint)
+GroupTabBar::applySpeeds (int            msSinceLastRepaint)
 {
-    GroupTabBar     *bar = mTabBar;
     GroupTabBarSlot *slot;
     int             move;
     CompRect	    box;
     bool            updateTabBar = false;
 
-    box.setX (bar->mRegion.boundingRect ().x1 ());
-    box.setY (bar->mRegion.boundingRect ().y1 ());
-    box.setWidth (bar->mRegion.boundingRect ().x2 () - bar->mRegion.boundingRect ().x1 ());
-    box.setHeight (bar->mRegion.boundingRect ().y2 () - bar->mRegion.boundingRect ().y1 ());
+    box.setX (mRegion.boundingRect ().x1 ());
+    box.setY (mRegion.boundingRect ().y1 ());
+    box.setWidth (mRegion.boundingRect ().x2 () - mRegion.boundingRect ().x1 ());
+    box.setHeight (mRegion.boundingRect ().y2 () - mRegion.boundingRect ().y1 ());
 
-    bar->mLeftMsSinceLastMove += msSinceLastRepaint;
-    bar->mRightMsSinceLastMove += msSinceLastRepaint;
+    mLeftMsSinceLastMove += msSinceLastRepaint;
+    mRightMsSinceLastMove += msSinceLastRepaint;
 
     /* Left */
-    move = bar->mLeftSpeed * bar->mLeftMsSinceLastMove / 1000;
+    move = mLeftSpeed * mLeftMsSinceLastMove / 1000;
     if (move)
     {
 	box.setX (box.x () + move);
 	box.setWidth (box.width () - move);
 
-	bar->mLeftMsSinceLastMove = 0;
+	mLeftMsSinceLastMove = 0;
 	updateTabBar = true;
     }
-    else if (bar->mLeftSpeed == 0 &&
-	     bar->mRegion.boundingRect ().x1 () != bar->mLeftSpringX &&
-	     (SPRING_K * abs (bar->mRegion.boundingRect ().x1 () - bar->mLeftSpringX) <
+    else if (mLeftSpeed == 0 &&
+	     mRegion.boundingRect ().x1 () != mLeftSpringX &&
+	     (SPRING_K * abs (mRegion.boundingRect ().x1 () - mLeftSpringX) <
 	      FRICTION))
     {
 	/* Friction is preventing from the left border to get
 	   to its original position. */
-	box.setX (box.x () + bar->mLeftSpringX - bar->mRegion.boundingRect ().x1 ());
-	box.setWidth (box.width () - bar->mLeftSpringX - bar->mRegion.boundingRect ().x1 ());
+	box.setX (box.x () + mLeftSpringX - mRegion.boundingRect ().x1 ());
+	box.setWidth (box.width () - mLeftSpringX - mRegion.boundingRect ().x1 ());
 
-	bar->mLeftMsSinceLastMove = 0;
+	mLeftMsSinceLastMove = 0;
 	updateTabBar = true;
     }
-    else if (bar->mLeftSpeed == 0)
-	bar->mLeftMsSinceLastMove = 0;
+    else if (mLeftSpeed == 0)
+	mLeftMsSinceLastMove = 0;
 
     /* Right */
-    move = bar->mRightSpeed * bar->mRightMsSinceLastMove / 1000;
+    move = mRightSpeed * mRightMsSinceLastMove / 1000;
     if (move)
     {
 	box.setWidth (box.width () + move);
 
-	bar->mRightMsSinceLastMove = 0;
+	mRightMsSinceLastMove = 0;
 	updateTabBar = true;
     }
-    else if (bar->mRightSpeed == 0 &&
-	     bar->mRegion.boundingRect ().x2 () != bar->mRightSpringX &&
-	     (SPRING_K * abs (bar->mRegion.boundingRect ().x2 () - bar->mRightSpringX) <
+    else if (mRightSpeed == 0 &&
+	     mRegion.boundingRect ().x2 () != mRightSpringX &&
+	     (SPRING_K * abs (mRegion.boundingRect ().x2 () - mRightSpringX) <
 	      FRICTION))
     {
 	/* Friction is preventing from the right border to get
 	   to its original position. */
-	box.setWidth (box.width () + bar->mLeftSpringX - bar->mRegion.boundingRect ().x1 ());
+	box.setWidth (box.width () + mLeftSpringX - mRegion.boundingRect ().x1 ());
 
-	bar->mLeftMsSinceLastMove = 0;
+	mLeftMsSinceLastMove = 0;
 	updateTabBar = true;
     }
-    else if (bar->mRightSpeed == 0)
-	bar->mRightMsSinceLastMove = 0;
+    else if (mRightSpeed == 0)
+	mRightMsSinceLastMove = 0;
 
     if (updateTabBar)
-	bar->resizeTabBarRegion (box, false);
+	resizeTabBarRegion (box, false);
 
-    foreach (slot, bar->mSlots)
+    foreach (slot, mSlots)
     {
 	int slotCenter;
 

@@ -25,16 +25,15 @@
 #include "group.h"
 
 /*
- * groupPaintThumb - taken from switcher and modified for tab bar
+ * GroupTabBarSlot::paint - taken from switcher and modified for tab bar
  *
  */
 void
-GroupSelection::paintThumb (GroupTabBarSlot      *slot,
-			    const GLMatrix	   &transform,
-			    int		   targetOpacity,
-			    bool		   fade)
+GroupTabBarSlot::paint (GroupSelection     *group,
+			const GLMatrix	    &transform,
+			int		    targetOpacity)
 {
-    CompWindow            *w = slot->mWindow;
+    CompWindow            *w = mWindow;
     unsigned int	  oldGlAddGeometryIndex;
     unsigned int	  oldGlDrawIndex;
     GLWindowPaintAttrib   wAttrib (GLWindow::get (w)->paintAttrib ());
@@ -43,8 +42,8 @@ GroupSelection::paintThumb (GroupTabBarSlot      *slot,
     GROUP_WINDOW (w);
     GROUP_SCREEN (screen);
 
-    tw = slot->mRegion.boundingRect ().width ();
-    th = slot->mRegion.boundingRect ().height ();
+    tw = mRegion.boundingRect ().width ();
+    th = mRegion.boundingRect ().height ();
 
     /* Wrap drawWindowGeometry to make sure the general
        drawWindowGeometry function is used */
@@ -52,14 +51,14 @@ GroupSelection::paintThumb (GroupTabBarSlot      *slot,
     gw->gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
 
     /* animate fade */
-    if (fade && mTabBar->mState == PaintFadeIn)
+    if (group && group->mTabBar->mState == PaintFadeIn)
     {
-	wAttrib.opacity -= wAttrib.opacity * mTabBar->mAnimationTime /
+	wAttrib.opacity -= wAttrib.opacity * group->mTabBar->mAnimationTime /
 	                   (gs->optionGetFadeTime () * 1000);
     }
-    else if (fade && mTabBar->mState == PaintFadeOut)
+    else if (group && group->mTabBar->mState == PaintFadeOut)
     {
-	wAttrib.opacity = wAttrib.opacity * mTabBar->mAnimationTime /
+	wAttrib.opacity = wAttrib.opacity * group->mTabBar->mAnimationTime /
 	                  (gs->optionGetFadeTime () * 1000);
     }
 
@@ -96,11 +95,11 @@ GroupSelection::paintThumb (GroupTabBarSlot      *slot,
 	wAttrib.brightness /= 1.25f;
 	}*/
 
-	slot->getDrawOffset (vx, vy);
+	getDrawOffset (vx, vy);
 
-	wAttrib.xTranslate = (slot->mRegion.boundingRect ().x1 () +
-			      slot->mRegion.boundingRect ().x2 ()) / 2 + vx;
-	wAttrib.yTranslate = slot->mRegion.boundingRect ().y1 () + vy;
+	wAttrib.xTranslate = (mRegion.boundingRect ().x1 () +
+			      mRegion.boundingRect ().x2 ()) / 2 + vx;
+	wAttrib.yTranslate = mRegion.boundingRect ().y1 () + vy;
 
 	wTransform.translate (wAttrib.xTranslate, wAttrib.yTranslate, 0.0f);
 	wTransform.scale (wAttrib.xScale, wAttrib.yScale, 1.0f);
@@ -207,8 +206,8 @@ GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
 		foreach (slot, mSlots)
 		{
 		    if (slot != gs->mDraggedSlot || !gs->mDragged)
-			mGroup->paintThumb (slot, transform,
-				    attrib.opacity, true);
+			slot->paint (mGroup, transform,
+				    attrib.opacity);
 		}
 
 		gs->gScreen->setTextureFilter (oldTextureFilter);
@@ -397,8 +396,8 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 
 	if (bar)
 	{
-	    group->applyForces ((mDragged) ? mDraggedSlot : NULL);
-	    group->applySpeeds (msSinceLastPaint);
+	    bar->applyForces ((mDragged) ? mDraggedSlot : NULL);
+	    bar->applySpeeds (msSinceLastPaint);
 
 	    if ((bar->mState != PaintOff) && HAS_TOP_WIN (group))
 		group->handleHoverDetection ();
@@ -485,7 +484,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    /* prevent tab bar drawing.. */
 	    state = gw->mGroup->mTabBar->mState;
 	    gw->mGroup->mTabBar->mState = PaintOff;
-	    gw->mGroup->paintThumb (mDraggedSlot, wTransform, OPAQUE, true);
+	    mDraggedSlot->paint (NULL, wTransform, OPAQUE);
 	    gw->mGroup->mTabBar->mState = state;
 
 	    glPopMatrix ();
@@ -526,8 +525,7 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.getMatrix ());
 
-	    mGroups.front ()->paintThumb (mDraggedSlot,
-					  wTransform, OPAQUE, false);
+	    mDraggedSlot->paint (NULL, wTransform, OPAQUE);
 
 	    glPopMatrix ();
 	}

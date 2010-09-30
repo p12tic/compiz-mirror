@@ -231,6 +231,8 @@ typedef enum {
     Untabbing
 } TabbingState;
 
+class GroupSelection;
+
 class GroupCairoLayer
 {
     public:
@@ -264,9 +266,12 @@ public:
 
 public:
 
-    void
-    getDrawOffset (int &hoffset,
-		   int &voffset);
+    void getDrawOffset (int &hoffset,
+			int &voffset);
+
+    void paint (GroupSelection     *group,
+		const GLMatrix	   &transform,
+		int		   targetOpacity);
 
 public:
     GroupTabBarSlot *mPrev;
@@ -425,6 +430,10 @@ public:
 
     void createSlot (CompWindow      *w);
 
+    void applyForces (GroupTabBarSlot *);
+
+    void applySpeeds (int            msSinceLastRepaint);
+
 
 public:
     GroupTabBarSlot::List mSlots;
@@ -523,16 +532,6 @@ public:
 
 
     /* TODO: Move to GroupTabBarSlot */
-    void paintThumb (GroupTabBarSlot      *slot,
-		     const GLMatrix	   &transform,
-		     int		   targetOpacity,
-		     bool		   dontPaint);
-
-    void
-    applyForces (GroupTabBarSlot *draggedSlot);
-
-    void
-    applySpeeds (int            msSinceLastRepaint);
 
     void fini ();
 
