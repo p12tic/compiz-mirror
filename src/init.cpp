@@ -304,7 +304,9 @@ GroupScreen::~GroupScreen ()
 		    slot = nextSlot;
 		}
 
-		groupDestroyCairoLayer (group->mTabBar->mTextLayer);
+		if (group->mTabBar->mTextLayer->mPixmap)
+		    XFreePixmap (screen->dpy (),
+				 group->mTabBar->mTextLayer->mPixmap);
 		groupDestroyCairoLayer (group->mTabBar->mBgLayer);
 		groupDestroyCairoLayer (group->mTabBar->mSelectionLayer);
 

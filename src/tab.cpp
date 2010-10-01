@@ -521,7 +521,7 @@ GroupTabBar::handleTabBarFade (int		   msSinceLastPaint)
 void
 GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 {
-    GroupCairoLayer *textLayer = mTextLayer;
+    TextLayer *textLayer = mTextLayer;
 
     /* Fade in progress... */
     if ((textLayer->mState == PaintFadeIn || textLayer->mState == PaintFadeOut) &&
@@ -1322,10 +1322,12 @@ GroupSelection::tabGroup (CompWindow *main)
     height = mTabBar->mRegion.boundingRect ().y2 () -
 	     mTabBar->mRegion.boundingRect ().y1 ();
 
-    mTabBar->mTextLayer = gs->groupCreateCairoLayer (width, height);
+    mTabBar->mTextLayer = new TextLayer ();
+    mTabBar->mTextLayer->setWidth (width);
+    mTabBar->mTextLayer->setHeight (height);
     if (mTabBar->mTextLayer)
     {
-	GroupCairoLayer *layer;
+	TextLayer *layer;
 
 	layer = mTabBar->mTextLayer;
 	layer->mState = PaintOff;
@@ -1334,7 +1336,7 @@ GroupSelection::tabGroup (CompWindow *main)
     }
     if (mTabBar->mTextLayer)
     {
-	GroupCairoLayer *layer;
+	TextLayer *layer;
 
 	layer = mTabBar->mTextLayer;
 	layer->mAnimationTime = gs->optionGetFadeTextTime () * 1000;
@@ -2496,7 +2498,9 @@ GroupTabBar::~GroupTabBar ()
     while (mSlots.size ())
 	deleteTabBarSlot (mSlots.front ());
 
-    gs->groupDestroyCairoLayer (mTextLayer);
+    if (mTextLayer->mPixmap)
+	XFreePixmap (screen->dpy (), mTextLayer->mPixmap);
+    delete mTextLayer;
     gs->groupDestroyCairoLayer (mBgLayer);
     gs->groupDestroyCairoLayer (mSelectionLayer);
 

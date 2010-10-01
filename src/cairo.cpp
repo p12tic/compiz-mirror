@@ -28,8 +28,8 @@
  * groupRebuildCairoLayer
  *
  */
-GroupCairoLayer*
-GroupScreen::groupRebuildCairoLayer (GroupCairoLayer *layer,
+CairoLayer*
+GroupScreen::groupRebuildCairoLayer (CairoLayer *layer,
 				     int             width,
 				     int             height)
 {
@@ -52,7 +52,7 @@ GroupScreen::groupRebuildCairoLayer (GroupCairoLayer *layer,
  *
  */
 void
-GroupScreen::groupClearCairoLayer (GroupCairoLayer *layer)
+GroupScreen::groupClearCairoLayer (CairoLayer *layer)
 {
     cairo_t *cr = layer->mCairo;
 
@@ -67,7 +67,7 @@ GroupScreen::groupClearCairoLayer (GroupCairoLayer *layer)
  *
  */
 void
-GroupScreen::groupDestroyCairoLayer (GroupCairoLayer *layer)
+GroupScreen::groupDestroyCairoLayer (CairoLayer *layer)
 {
     if (!layer)
 	return;
@@ -77,9 +77,6 @@ GroupScreen::groupDestroyCairoLayer (GroupCairoLayer *layer)
 
     if (layer->mSurface)
 	cairo_surface_destroy (layer->mSurface);
-
-    if (layer->mPixmap)
-	XFreePixmap (screen->dpy (), layer->mPixmap);
 
     if (layer->mBuffer)
 	free (layer->mBuffer);
@@ -91,27 +88,26 @@ GroupScreen::groupDestroyCairoLayer (GroupCairoLayer *layer)
  * groupCreateCairoLayer
  *
  */
-GroupCairoLayer*
+CairoLayer*
 GroupScreen::groupCreateCairoLayer (int        width,
 				    int	       height)
 {
-    GroupCairoLayer *layer;
+    CairoLayer *layer;
 
 
-    layer = new GroupCairoLayer ();
+    layer = new CairoLayer ();
     if (!layer)
         return NULL;
 
     layer->mSurface = NULL;
     layer->mCairo   = NULL;
     layer->mBuffer  = NULL;
-    layer->mPixmap  = None;
 
     layer->mAnimationTime = 0;
     layer->mState         = PaintOff;
 
-    layer->mTexWidth  = width;
-    layer->mTexHeight = height;
+    layer->setWidth (width);
+    layer->setHeight (height);
 
     layer->mBuffer = (unsigned char *) calloc (4 * width * height, sizeof (unsigned char));
     if (!layer->mBuffer)
@@ -155,7 +151,7 @@ GroupScreen::groupCreateCairoLayer (int        width,
 void
 GroupTabBar::renderTopTabHighlight ()
 {
-    GroupCairoLayer *layer;
+    CairoLayer *layer;
     cairo_t         *cr;
     int             width, height;
     
@@ -202,7 +198,7 @@ GroupTabBar::renderTopTabHighlight ()
     cairo_stroke (cr);
 
     layer->mTexture = GLTexture::imageBufferToTexture ((char*) layer->mBuffer,
-			 		  CompSize (layer->mTexWidth, layer->mTexHeight));
+			 		  (CompSize &) *layer);
 }
 
 /*
@@ -212,7 +208,7 @@ GroupTabBar::renderTopTabHighlight ()
 void
 GroupTabBar::renderTabBarBackground ()
 {
-    GroupCairoLayer *layer;
+    CairoLayer *layer;
     cairo_t         *cr;
     int             width, height, radius;
     int             borderWidth;
@@ -228,8 +224,8 @@ GroupTabBar::renderTabBarBackground ()
     height = mRegion.boundingRect ().y2 () - mRegion.boundingRect ().y1 ();
     radius = gs->optionGetBorderRadius ();
 
-    if (width > mBgLayer->mTexWidth)
-	width = mBgLayer->mTexWidth;
+    if (width > mBgLayer->width ())
+	width = mBgLayer->width ();
 
     if (radius > width / 2)
 	radius = width / 2;
@@ -625,7 +621,7 @@ GroupTabBar::renderTabBarBackground ()
     cairo_restore (cr);
 
     layer->mTexture = GLTexture::imageBufferToTexture ((char*) layer->mBuffer,
-			  		  CompSize (layer->mTexWidth, layer->mTexHeight));
+			  		  (CompSize &) *layer);
 }
 
 /*
@@ -635,7 +631,7 @@ GroupTabBar::renderTabBarBackground ()
 void
 GroupTabBar::renderWindowTitle ()
 {
-    GroupCairoLayer *layer;
+    TextLayer 	   *layer;
     int             width, height;
     Pixmap          pixmap = None;
     
@@ -647,8 +643,11 @@ GroupTabBar::renderWindowTitle ()
     width = mRegion.boundingRect ().x2 () - mRegion.boundingRect ().x1 ();
     height = mRegion.boundingRect ().y2 () - mRegion.boundingRect ().y1 ();
 
-    mTextLayer = gs->groupRebuildCairoLayer (mTextLayer, width, height);
-    layer = mTextLayer;
+    if (mTextLayer->mPixmap)
+	XFreePixmap (screen->dpy (), mTextLayer->mPixmap);
+
+    delete mTextLayer;
+    layer = mTextLayer = new TextLayer ();
     if (!layer)
 	return;
 
@@ -698,15 +697,15 @@ GroupTabBar::renderWindowTitle ()
 	}
     }
 
-    layer->mTexWidth = width;
-    layer->mTexHeight = height;
+    layer->setWidth  (width);
+    layer->setHeight (height);
 
     if (pixmap)
     {
 	layer->mTexture.clear ();
 	layer->mPixmap = pixmap;
 	layer->mTexture = GLTexture::bindPixmapToTexture (layer->mPixmap,
-							 layer->mTexWidth, layer->mTexHeight, 32);
+							 layer->width (), layer->height (), 32);
     }
 }
 

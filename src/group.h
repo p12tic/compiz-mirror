@@ -102,10 +102,9 @@
 #define IS_PREV_TOP_TAB(w, group) (HAS_PREV_TOP_WIN (group) && \
 				   ((PREV_TOP_TAB (group)->id ()) == (w)->id ()))
 
-/*
- * Structs
- *
- */
+class GroupSelection;
+class GroupTabBarSlot;
+class GroupTabBar;
 
 /*
  * Window states
@@ -231,29 +230,46 @@ typedef enum {
     Untabbing
 } TabbingState;
 
-class GroupSelection;
-
-class GroupCairoLayer
+class Layer :
+    public CompSize
 {
     public:
-    
-        GroupCairoLayer () {};
-    
-	GLTexture::List  mTexture;
+	virtual void paint () {};
+	virtual void damage () {};
+	
+	virtual void destroy () {};
+
+	PaintState mState;
+	int        mAnimationTime;
+};
+
+class TextureLayer :
+    public Layer
+{
+    public:
+
+	GLTexture::List mTexture;
+	
+};
+
+class CairoLayer :
+    public TextureLayer
+{
+    public:
 
 	/* used if layer is used for cairo drawing */
 	unsigned char   *mBuffer;
 	cairo_surface_t *mSurface;
 	cairo_t	    *mCairo;
+};
+
+class TextLayer :
+    public TextureLayer
+{
+    public:
 
 	/* used if layer is used for text drawing */
 	Pixmap mPixmap;
-
-	int mTexWidth;
-	int mTexHeight;
-
-	PaintState mState;
-	int        mAnimationTime;
 };
 
 /*
@@ -463,9 +479,9 @@ public:
     GroupTabBarSlot *mHoveredSlot;
     GroupTabBarSlot *mTextSlot;
 
-    GroupCairoLayer *mTextLayer;
-    GroupCairoLayer *mBgLayer;
-    GroupCairoLayer *mSelectionLayer;
+    TextLayer *mTextLayer;
+    CairoLayer *mBgLayer;
+    CairoLayer *mSelectionLayer;
 
     /* For animations */
     int                mBgAnimationTime;
@@ -549,10 +565,6 @@ public:
     void
     startTabbingAnimation (bool           tab);
 
-
-
-    /* TODO: Move to GroupTabBarSlot */
-
     void fini ();
 
 public:
@@ -634,19 +646,19 @@ class GroupScreen :
 
 	/* cairo.c */
 
-	GroupCairoLayer*
-	groupRebuildCairoLayer (GroupCairoLayer *layer,
+	CairoLayer*
+	groupRebuildCairoLayer (CairoLayer *layer,
 			     int             width,
 			     int             height);
 
 	void
-	groupClearCairoLayer (GroupCairoLayer *layer);
+	groupClearCairoLayer (CairoLayer *layer);
 
 
 	void
-	groupDestroyCairoLayer (GroupCairoLayer *layer);
+	groupDestroyCairoLayer (CairoLayer *layer);
 
-	GroupCairoLayer*
+	CairoLayer*
 	groupCreateCairoLayer (int        width,
 			    int	       height);
 

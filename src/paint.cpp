@@ -152,7 +152,7 @@ GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
     {
 	int             alpha = OPAQUE;
 	float           wScale = 1.0f, hScale = 1.0f;
-	GroupCairoLayer *layer = NULL;
+	Layer *layer = NULL;
 
 	if (mState == PaintFadeIn)
 	    alpha -= alpha * mAnimationTime / (gs->optionGetFadeTime () * 1000);
@@ -164,12 +164,12 @@ GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
 	    {
 		int newWidth;
 
-		layer = mBgLayer;
+		layer = (Layer *) mBgLayer;
 
 		/* handle the repaint of the background */
 		newWidth = mRegion.boundingRect ().x2 () - mRegion.boundingRect ().x1 ();
-		if (layer && (newWidth > layer->mTexWidth))
-		    newWidth = layer->mTexWidth;
+		if (layer && (newWidth > layer->width ()))
+		    newWidth = layer->width ();
 
 		wScale = (double) (mRegion.boundingRect ().x2 () -
 				   mRegion.boundingRect ().x1 ()) / (double) newWidth;
@@ -188,7 +188,7 @@ GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
 	case PAINT_SEL:
 	    if (mGroup->mTabBar->mTopTab != gs->mDraggedSlot)
 	    {
-		layer = mSelectionLayer;
+		layer = (Layer *) mSelectionLayer;
 		box   = mGroup->mTabBar->mTopTab->mRegion.boundingRect ();
 	    }
 	    break;
@@ -221,9 +221,9 @@ GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
 
 		int x1 = mRegion.boundingRect ().x1 () + 5;
 		int x2 = mRegion.boundingRect ().x1 () +
-			 mTextLayer->mTexWidth + 5;
+			 mTextLayer->width () + 5;
 		int y1 = mRegion.boundingRect ().y2 () -
-			 mTextLayer->mTexHeight - 5;
+			 mTextLayer->height () - 5;
 		int y2 = mRegion.boundingRect ().y2 () - 5;
 
 		if (x2 > mRegion.boundingRect ().x2 ())
@@ -246,7 +246,7 @@ GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
 	{
 	    GroupWindow *gwTopTab = GroupWindow::get (topTab);
 
-	    foreach (GLTexture *tex, layer->mTexture)
+	    foreach (GLTexture *tex, ((TextureLayer *) layer)->mTexture)
 	    {
 		GLTexture::Matrix matrix = tex->matrix ();
 		GLTexture::MatrixList matl;
@@ -267,15 +267,15 @@ GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
 
 		/* now add the new x1 and y1 so we have a absolute value again,
 		also we don't want to stretch the texture... */
-		if (x2 * wScale < layer->mTexWidth)
+		if (x2 * wScale < layer->width ())
 		    x2 += x1;
 		else
-		    x2 = x1 + layer->mTexWidth;
+		    x2 = x1 + layer->width ();
 
-		if (y2 * hScale < layer->mTexHeight)
+		if (y2 * hScale < layer->height ())
 		    y2 += y1;
 		else
-		    y2 = y1 + layer->mTexHeight;
+		    y2 = y1 + layer->height ();
 
 		matrix.x0 -= x1 * matrix.xx;
 		matrix.y0 -= y1 * matrix.yy;
