@@ -634,6 +634,8 @@ GroupTabBar::renderWindowTitle ()
     TextLayer 	   *layer;
     int             width, height;
     Pixmap          pixmap = None;
+    PaintState      pStateBuf;
+    int		    aTimeBuf;
     
     GROUP_SCREEN (screen);
 
@@ -643,13 +645,22 @@ GroupTabBar::renderWindowTitle ()
     width = mRegion.boundingRect ().x2 () - mRegion.boundingRect ().x1 ();
     height = mRegion.boundingRect ().y2 () - mRegion.boundingRect ().y1 ();
 
-    if (mTextLayer->mPixmap)
-	XFreePixmap (screen->dpy (), mTextLayer->mPixmap);
+    /* general cleanup func ... for now */
+    if (mTextLayer)
+    {
+	if (mTextLayer->mPixmap)
+	    XFreePixmap (screen->dpy (), mTextLayer->mPixmap);
 
-    delete mTextLayer;
-    layer = mTextLayer = new TextLayer ();
-    if (!layer)
-	return;
+	pStateBuf = mTextLayer->mState;
+	aTimeBuf = mTextLayer->mAnimationTime;
+	delete mTextLayer;
+	layer = mTextLayer = new TextLayer ();
+	if (!layer)
+	    return;
+	
+	layer->mState = pStateBuf;
+	layer->mAnimationTime = aTimeBuf;
+    }
 
     if (mTextSlot && mTextSlot->mWindow && textAvailable)
     {

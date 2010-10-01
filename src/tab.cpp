@@ -404,7 +404,7 @@ GroupSelection::handleHoverDetection ()
     int         mouseX, mouseY;
     bool        mouseOnScreen, inLastSlot;
 
-    GROUP_SCREEN (screen);
+    GROUP_SCREEN (screen)
 
     /* first get the current mouse position */
     mouseOnScreen = gs->groupGetCurrentMousePosition (mouseX, mouseY);
@@ -455,8 +455,9 @@ GroupSelection::handleHoverDetection ()
 	    }
 
 	    /* or trigger a FadeIn of the text */
-	    else if (bar->mTextLayer->mState == PaintFadeOut &&
-		     bar->mHoveredSlot == bar->mTextSlot && bar->mHoveredSlot)
+	    else if ((bar->mTextLayer->mState == PaintFadeOut  ||
+		      bar->mTextLayer->mState == PaintOff) &&
+		      bar->mHoveredSlot == bar->mTextSlot && bar->mHoveredSlot)
 	    {
 		bar->mTextLayer->mAnimationTime =
 		    (gs->optionGetFadeTextTime () * 1000) -
