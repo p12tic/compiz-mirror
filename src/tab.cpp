@@ -1894,6 +1894,7 @@ GroupTabBar::insertTabBarSlotBefore (GroupTabBarSlot *slot,
 						     nextSlot);
     
     mSlots.insert (pos, slot);
+    slot->mTabBar = this;
 
     if (prev)
     {
@@ -1931,6 +1932,7 @@ GroupTabBar::insertTabBarSlotAfter (GroupTabBarSlot *slot,
 						     next);
 
     mSlots.insert (pos, slot);
+    slot->mTabBar = this;
 
     if (next)
     {
@@ -1974,6 +1976,7 @@ GroupTabBar::insertTabBarSlot (GroupTabBarSlot *slot)
     }
 
     mSlots.push_back (slot);
+    slot->mTabBar = this;
 
     /* Moving bar->mRegion.boundingRect ().x1 () / x2 as minX1 / maxX2 will work,
        because the tab-bar got wider now, so it will put it in
@@ -2016,6 +2019,7 @@ GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
 
     slot->mPrev = NULL;
     slot->mNext = NULL;
+    slot->mTabBar = NULL;
     
     mSlots.remove (slot);
 
@@ -2097,6 +2101,12 @@ GroupTabBar::deleteTabBarSlot (GroupTabBarSlot *slot)
     delete slot;
 }
 
+GroupTabBarSlot::GroupTabBarSlot (CompWindow *w, GroupTabBar *bar) :
+    mWindow (w),
+    mTabBar (bar)
+{
+}
+
 /*
  * groupCreateSlot
  *
@@ -2108,11 +2118,9 @@ GroupTabBar::createSlot (CompWindow      *w)
 
     GROUP_WINDOW (w);
 
-    slot = new GroupTabBarSlot ();
+    slot = new GroupTabBarSlot (w, this);
     if (!slot)
         return;
-
-    slot->mWindow = w;
 
     insertTabBarSlot (slot);
     gw->mSlot = slot;

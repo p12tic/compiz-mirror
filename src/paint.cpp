@@ -24,19 +24,25 @@
 
 #include "group.h"
 
+void
+GroupTabBarSlot::setTargetOpacity (int tOpacity)
+{
+    mOpacity = tOpacity;
+}
+
 /*
  * GroupTabBarSlot::paint - taken from switcher and modified for tab bar
  *
  */
 void
-GroupTabBarSlot::paint (GroupSelection     *group,
-			const GLMatrix	    &transform,
-			int		    targetOpacity)
+GroupTabBarSlot::paint (const GLWindowPaintAttrib &attrib,
+			const GLMatrix	          &transform,
+			const CompRegion	  &region)
 {
     CompWindow            *w = mWindow;
     unsigned int	  oldGlAddGeometryIndex;
     unsigned int	  oldGlDrawIndex;
-    GLWindowPaintAttrib   wAttrib (GLWindow::get (w)->paintAttrib ());
+    GLWindowPaintAttrib   wAttrib (GLWindow::get (mWindow)->paintAttrib ());
     int                   tw, th;
 
     GROUP_WINDOW (w);
@@ -51,18 +57,18 @@ GroupTabBarSlot::paint (GroupSelection     *group,
     gw->gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
 
     /* animate fade */
-    if (group && group->mTabBar->mState == PaintFadeIn)
+    if (mTabBar->mState == PaintFadeIn)
     {
-	wAttrib.opacity -= wAttrib.opacity * group->mTabBar->mAnimationTime /
+	wAttrib.opacity -= wAttrib.opacity * mTabBar->mAnimationTime /
 	                   (gs->optionGetFadeTime () * 1000);
     }
-    else if (group && group->mTabBar->mState == PaintFadeOut)
+    else if (mTabBar->mState == PaintFadeOut)
     {
-	wAttrib.opacity = wAttrib.opacity * group->mTabBar->mAnimationTime /
+	wAttrib.opacity = wAttrib.opacity * mTabBar->mAnimationTime /
 	                  (gs->optionGetFadeTime () * 1000);
     }
 
-    wAttrib.opacity = wAttrib.opacity * targetOpacity / OPAQUE;
+    wAttrib.opacity = wAttrib.opacity * mOpacity / OPAQUE;
 
     if (w->mapNum ())
     {
@@ -126,7 +132,7 @@ GroupTabBarSlot::paint (GroupSelection     *group,
  *
  */
 void
-GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
+GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 		    const GLMatrix		 &transform,
 		    unsigned int		 mask,
 		    CompRegion		 	 clipRegion)
@@ -181,7 +187,7 @@ GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
 		    renderTabBarBackground ();
 
 		mOldWidth = newWidth;
-		box	       = mRegion.boundingRect ();
+		box	  = mRegion.boundingRect ();
 	    }
 	    break;
 
@@ -206,8 +212,10 @@ GroupTabBar::paint (const GLWindowPaintAttrib   &attrib,
 		foreach (slot, mSlots)
 		{
 		    if (slot != gs->mDraggedSlot || !gs->mDragged)
-			slot->paint (mGroup, transform,
-				    attrib.opacity);
+		    {
+			slot->setTargetOpacity (attrib.opacity);
+			slot->paint (attrib, transform, clipRegion);
+		    }
 		}
 
 		gs->gScreen->setTextureFilter (oldTextureFilter);
@@ -473,18 +481,17 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    GLMatrix wTransform (transform);
 	    PaintState    state;
 
-	    GROUP_WINDOW (mDraggedSlot->mWindow);
-
 	    wTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.getMatrix ());
 
 	    /* prevent tab bar drawing.. */
-	    state = gw->mGroup->mTabBar->mState;
-	    gw->mGroup->mTabBar->mState = PaintOff;
-	    mDraggedSlot->paint (NULL, wTransform, OPAQUE);
-	    gw->mGroup->mTabBar->mState = state;
+	    state = mDraggedSlot->mTabBar->mState;
+	    mDraggedSlot->mTabBar->mState = PaintOff;
+	    mDraggedSlot->setTargetOpacity (OPAQUE);
+	    mDraggedSlot->paint (GLWindow::get (mDraggedSlot->mWindow)->paintAttrib (), wTransform, region);
+	    mDraggedSlot->mTabBar->mState = state;
 
 	    glPopMatrix ();
 	}
@@ -508,6 +515,7 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 				       CompOutput		*output,
 				       unsigned int		mask)
 {
+    PaintState state;
     gScreen->glPaintTransformedOutput (attrib, transform, region, output, mask);
 
     if ((mTmpSel.mVpX == screen->vp ().x ()) && (mTmpSel.mVpY == screen->vp ().y ()))
@@ -524,7 +532,12 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.getMatrix ());
 
-	    mDraggedSlot->paint (NULL, wTransform, OPAQUE);
+	    /* prevent tab bar drawing.. */
+	    state = mDraggedSlot->mTabBar->mState;
+	    mDraggedSlot->mTabBar->mState = PaintOff;
+	    mDraggedSlot->setTargetOpacity (OPAQUE);
+	    mDraggedSlot->paint (GLWindow::get (mDraggedSlot->mWindow)->paintAttrib (), wTransform, region);
+	    mDraggedSlot->mTabBar->mState = state;
 
 	    glPopMatrix ();
 	}

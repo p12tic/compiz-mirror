@@ -237,10 +237,10 @@ class Layer :
 	Layer (CompSize &size) :
 	    CompSize::CompSize (size) {}
     public:
-	virtual void paint () {};
+	virtual void paint (const GLScreenPaintAttrib &attrib,
+			    const GLMatrix	      &transform,
+			    const CompRegion	      &region) {};
 	virtual void damage () {};
-	
-	virtual void destroy () {};
 
 	PaintState mState;
 	int        mAnimationTime;
@@ -312,9 +312,11 @@ public:
     void getDrawOffset (int &hoffset,
 			int &voffset);
 
-    void paint (GroupSelection     *group,
-		const GLMatrix	   &transform,
-		int		   targetOpacity);
+    void setTargetOpacity (int);
+    
+    void paint (const GLWindowPaintAttrib &sa,
+		const GLMatrix	          &transform,
+		const CompRegion	  &region);
 
 public:
     GroupTabBarSlot *mPrev;
@@ -323,16 +325,19 @@ public:
     CompRegion mRegion;
 
     CompWindow *mWindow;
+    GroupTabBar *mTabBar;
 
     /* For DnD animations */
     int	  mSpringX;
     int	  mSpeed;
     float mMsSinceLastMove;
+    int   mOpacity;
+private:
+
+    GroupTabBarSlot (CompWindow *, GroupTabBar *);
+    
+    friend class GroupTabBar;
 };
-
-class GroupSelection;
-
-
 
 /*
  * GroupGlow
