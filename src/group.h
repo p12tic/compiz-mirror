@@ -89,13 +89,13 @@
 #define WIN_REAL_HEIGHT(w) (w->height () + 2 * w->geometry ().border () + \
 			    w->input ().top + w->input ().bottom)
 
-#define TOP_TAB(g) ((g)->mTopTab->mWindow)
-#define PREV_TOP_TAB(g) ((g)->mPrevTopTab->mWindow)
-#define NEXT_TOP_TAB(g) ((g)->mNextTopTab->mWindow)
+#define TOP_TAB(g) ((g)->mTabBar->mTopTab->mWindow)
+#define PREV_TOP_TAB(g) ((g)->mTabBar->mPrevTopTab->mWindow)
+#define NEXT_TOP_TAB(g) ((g)->mTabBar->mNextTopTab->mWindow)
 
-#define HAS_TOP_WIN(group) (((group)->mTopTab) && ((group)->mTopTab->mWindow))
-#define HAS_PREV_TOP_WIN(group) (((group)->mPrevTopTab) && \
-				 ((group)->mPrevTopTab->mWindow))
+#define HAS_TOP_WIN(group) (((group)->mTabBar->mTopTab) && ((group)->mTabBar->mTopTab->mWindow))
+#define HAS_PREV_TOP_WIN(group) (((group)->mTabBar->mPrevTopTab) && \
+				 ((group)->mTabBar->mPrevTopTab->mWindow))
 
 #define IS_TOP_TAB(w, group) (HAS_TOP_WIN (group) && \
 			      ((TOP_TAB (group)->id ()) == (w)->id ()))
@@ -440,6 +440,26 @@ public:
 
     GroupSelection  *mGroup;
 
+    GroupTabBarSlot* mTopTab;
+    GroupTabBarSlot* mPrevTopTab;
+
+    /* needed for untabbing animation */
+    CompWindow *mLastTopTab;
+
+    /* Those two are only for the change-tab animation,
+       when the tab was changed again during animation.
+       Another animation should be started again,
+       switching for this window. */
+    ChangeTabAnimationDirection mNextDirection;
+    GroupTabBarSlot             *mNextTopTab;
+
+    /* check focus stealing prevention after changing tabs */
+    bool mCheckFocusAfterTabChange;
+
+    int            mChangeAnimationTime;
+    int            mChangeAnimationDirection;
+    TabChangeState mChangeState;
+
     GroupTabBarSlot *mHoveredSlot;
     GroupTabBarSlot *mTextSlot;
 
@@ -542,27 +562,7 @@ public:
     /* Unique identifier for this group */
     long int mIdentifier;
 
-    GroupTabBarSlot* mTopTab;
-    GroupTabBarSlot* mPrevTopTab;
-
-    /* needed for untabbing animation */
-    CompWindow *mLastTopTab;
-
-    /* Those two are only for the change-tab animation,
-       when the tab was changed again during animation.
-       Another animation should be started again,
-       switching for this window. */
-    ChangeTabAnimationDirection mNextDirection;
-    GroupTabBarSlot             *mNextTopTab;
-
-    /* check focus stealing prevention after changing tabs */
-    bool mCheckFocusAfterTabChange;
-
     GroupTabBar *mTabBar;
-
-    int            mChangeAnimationTime;
-    int            mChangeAnimationDirection;
-    TabChangeState mChangeState;
 
     TabbingState mTabbingState;
 

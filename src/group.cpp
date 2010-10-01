@@ -521,7 +521,7 @@ GroupWindow::groupDeleteGroupWindow ()
 
 		if (gs->optionGetAutoUngroup ())
 		{
-		    if (group->mChangeState != NoTabChange)
+		    if (group->mTabBar->mChangeState != NoTabChange)
 		    {
 			/* a change animation is pending: this most
 			   likely means that a window must be moved
@@ -679,15 +679,7 @@ GroupSelection::fini ()
 GroupSelection::GroupSelection (CompWindow *startingWindow,
 				long int initialIdent) :
     mScreen (screen),
-    mTopTab (NULL),
-    mPrevTopTab (NULL),
-    mLastTopTab (NULL),
-    mNextTopTab (NULL),
-    mCheckFocusAfterTabChange (false),
     mTabBar (NULL),
-    mChangeAnimationTime (0),
-    mChangeAnimationDirection (0),
-    mChangeState (NoTabChange),
     mTabbingState (NoTabbing),
     mUngroupState (UngroupNone),
     mGrabWindow (None),
@@ -769,8 +761,8 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 	    else if (HAS_PREV_TOP_WIN (group))
 	    {
 		topTab = PREV_TOP_TAB (group);
-		group->mTopTab = group->mPrevTopTab;
-		group->mPrevTopTab = NULL;
+		group->mTabBar->mTopTab = group->mTabBar->mPrevTopTab;
+		group->mTabBar->mPrevTopTab = NULL;
 	    }
 
 	    if (topTab)
@@ -1068,9 +1060,9 @@ GroupScreen::groupHandleButtonPressEvent (XEvent *event)
 		CompWindow  *topTab = NULL;
 		GroupWindow *gw;
 
-		if (group->mNextTopTab)
+		if (group->mTabBar->mNextTopTab)
 		    topTab = NEXT_TOP_TAB (group);
-		else if (group->mTopTab)
+		else if (group->mTabBar->mTopTab)
 		{
 		    /* If there are no tabbing animations,
 		       topTab is never NULL. */
@@ -1222,7 +1214,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 		/* if the dragged window is not the top tab,
 		   move it onscreen */
-		if (tmpGroup->mTopTab && !IS_TOP_TAB (w, tmpGroup))
+		if (tmpGroup->mTabBar->mTopTab && !IS_TOP_TAB (w, tmpGroup))
 		{
 		    CompWindow *tw = TOP_TAB (tmpGroup);
 
@@ -1294,7 +1286,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	{
 	    GroupWindow::get(draggedSlotWindow)->groupRemoveWindowFromGroup ();
 	}
-	else if (gw->mGroup && gw->mGroup->mTopTab)
+	else if (gw->mGroup && gw->mGroup->mTabBar->mTopTab)
 	{
 	    gw->mGroup->mTabBar->recalcTabBarPos ((gw->mGroup->mTabBar->mRegion.boundingRect ().x1 () +
 				   gw->mGroup->mTabBar->mRegion.boundingRect ().x2 ()) / 2,
@@ -1492,7 +1484,7 @@ GroupScreen::handleEvent (XEvent      *event)
 		if (gw->mGroup && gw->mGroup->mTabBar &&
 		    !IS_TOP_TAB (w, gw->mGroup))
 		{
-		    gw->mGroup->mCheckFocusAfterTabChange = true;
+		    gw->mGroup->mTabBar->mCheckFocusAfterTabChange = true;
 		    groupChangeTab (gw->mSlot, RotateUncertain);
 		}
 	    }

@@ -624,7 +624,7 @@ GroupSelection::handleAnimation ()
 {
     GROUP_SCREEN (screen);
 	
-    if (mChangeState == TabChangeOldOut)
+    if (mTabBar->mChangeState == TabChangeOldOut)
     {
 	CompWindow      *top = TOP_TAB (this);
 	bool            activate;
@@ -635,14 +635,14 @@ GroupSelection::handleAnimation ()
 			  WIN_REAL_X (top),
 			  WIN_REAL_X (top) + WIN_REAL_WIDTH (top));
 
-	mChangeAnimationTime += gs->optionGetChangeAnimationTime () * 500;
+	mTabBar->mChangeAnimationTime += gs->optionGetChangeAnimationTime () * 500;
 
-	if (mChangeAnimationTime <= 0)
-	    mChangeAnimationTime = 0;
+	if (mTabBar->mChangeAnimationTime <= 0)
+	    mTabBar->mChangeAnimationTime = 0;
 
-	mChangeState = TabChangeNewIn;
+	mTabBar->mChangeState = TabChangeNewIn;
 
-	activate = !mCheckFocusAfterTabChange;
+	activate = !mTabBar->mCheckFocusAfterTabChange;
 	if (!activate)
 	{
 /*
@@ -655,42 +655,42 @@ GroupSelection::handleAnimation ()
 	if (activate)
 	    top->activate ();
 
-	mCheckFocusAfterTabChange = false;
+	mTabBar->mCheckFocusAfterTabChange = false;
     }
 
-    if (mChangeState == TabChangeNewIn &&
-	mChangeAnimationTime <= 0)
+    if (mTabBar->mChangeState == TabChangeNewIn &&
+	mTabBar->mChangeAnimationTime <= 0)
     {
-	int oldChangeAnimationTime = mChangeAnimationTime;
+	int oldChangeAnimationTime = mTabBar->mChangeAnimationTime;
 
 	gs->groupTabChangeActivateEvent (false);
 
-	if (mPrevTopTab)
+	if (mTabBar->mPrevTopTab)
 	    GroupWindow::get (PREV_TOP_TAB (this))->groupSetWindowVisibility (false);
 
-	mPrevTopTab = mTopTab;
-	mChangeState = NoTabChange;
+	mTabBar->mPrevTopTab = mTabBar->mTopTab;
+	mTabBar->mChangeState = NoTabChange;
 
-	if (mNextTopTab)
+	if (mTabBar->mNextTopTab)
 	{
-	    GroupTabBarSlot *next = mNextTopTab;
-	    mNextTopTab = NULL;
+	    GroupTabBarSlot *next = mTabBar->mNextTopTab;
+	    mTabBar->mNextTopTab = NULL;
 
-	    gs->groupChangeTab (next, mNextDirection);
+	    gs->groupChangeTab (next, mTabBar->mNextDirection);
 
-	    if (mChangeState == TabChangeOldOut)
+	    if (mTabBar->mChangeState == TabChangeOldOut)
 	    {
 		/* If a new animation was started. */
-		mChangeAnimationTime += oldChangeAnimationTime;
+		mTabBar->mChangeAnimationTime += oldChangeAnimationTime;
 	    }
 	}
 
-	if (mChangeAnimationTime <= 0)
+	if (mTabBar->mChangeAnimationTime <= 0)
 	{
-	    mChangeAnimationTime = 0;
+	    mTabBar->mChangeAnimationTime = 0;
 	}
 	else if (gs->optionGetVisibilityTime () != 0.0f &&
-		 mChangeState == NoTabChange)
+		 mTabBar->mChangeState == NoTabChange)
 	{
 	    tabSetVisibility (true, PERMANENT |
 				    SHOW_BAR_INSTANTLY_MASK);
@@ -755,9 +755,17 @@ GroupWindow::adjustTabVelocity ()
 void
 GroupSelection::finishTabbing ()
 {
-    mTabbingState = NoTabbing;
-    
     GROUP_SCREEN (screen);
+
+    /* Complete untabbing case, delete the tab bar */
+    if (mTabbingState == Untabbing &&
+	mUngroupState != UngroupSingle)
+    {
+	delete mTabBar;
+	mTabBar = NULL;
+    }
+	
+    mTabbingState = NoTabbing;
     
     gs->groupTabChangeActivateEvent (false);
 
@@ -774,12 +782,12 @@ GroupSelection::finishTabbing ()
 
 	    GROUP_WINDOW (w);
 
-	    if (slot == mTopTab || (gw->mAnimateState & IS_UNGROUPING))
+	    if (slot == mTabBar->mTopTab || (gw->mAnimateState & IS_UNGROUPING))
 		continue;
 
 	    gw->groupSetWindowVisibility (false);
 	}
-	mPrevTopTab = mTopTab;
+	mTabBar->mPrevTopTab = mTabBar->mTopTab;
     }
 
     for (CompWindowList::iterator it = mWindows.begin ();
@@ -1345,10 +1353,10 @@ GroupSelection::tabGroup (CompWindow *main)
 	mTabBar->renderTabBarBackground ();
     }
 
-    width = mTopTab->mRegion.boundingRect ().x2 () -
-	    mTopTab->mRegion.boundingRect ().x1 ();
-    height = mTopTab->mRegion.boundingRect ().y2 () -
-	     mTopTab->mRegion.boundingRect ().y1 ();
+    width = mTabBar->mTopTab->mRegion.boundingRect ().x2 () -
+	    mTabBar->mTopTab->mRegion.boundingRect ().x1 ();
+    height = mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
+	     mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
 
     mTabBar->mSelectionLayer = gs->groupCreateCairoLayer (width, height);
     if (mTabBar->mSelectionLayer)
@@ -1411,7 +1419,7 @@ GroupSelection::untabGroup ()
     if (!HAS_TOP_WIN (this))
 	return;
 
-    if (mPrevTopTab)
+    if (mTabBar->mPrevTopTab)
 	prevTopTab = PREV_TOP_TAB (this);
     else
     {
@@ -1421,8 +1429,8 @@ GroupSelection::untabGroup ()
 	prevTopTab = TOP_TAB (this);
     }
 
-    mLastTopTab = TOP_TAB (this);
-    mTopTab = NULL;
+    mTabBar->mLastTopTab = TOP_TAB (this);
+    mTabBar->mTopTab = NULL;
 
     foreach (slot, mTabBar->mSlots)
     {
@@ -1467,13 +1475,6 @@ GroupSelection::untabGroup ()
     mTabbingState = NoTabbing;
     startTabbingAnimation (false);
 
-    delete mTabBar;
-    mTabBar = NULL;
-    mChangeAnimationTime = 0;
-    mChangeState = NoTabChange;
-    mNextTopTab = NULL;
-    mPrevTopTab = NULL;
-
     gs->cScreen->damageScreen ();
 }
 
@@ -1497,69 +1498,69 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 
     group = gw->mGroup;
 
-    if (!group || group->mTabbingState != NoTabbing)
+    if (!group || !group->mTabBar || group->mTabbingState != NoTabbing)
 	return true;
 
-    if (group->mChangeState == NoTabChange && group->mTopTab == topTab)
+    if (group->mTabBar->mChangeState == NoTabChange && group->mTabBar->mTopTab == topTab)
 	return true;
 
-    if (group->mChangeState != NoTabChange && group->mNextTopTab == topTab)
+    if (group->mTabBar->mChangeState != NoTabChange && group->mTabBar->mNextTopTab == topTab)
 	return true;
 
-    oldTopTab = group->mTopTab ? group->mTopTab->mWindow : NULL;
+    oldTopTab = group->mTabBar->mTopTab ? group->mTabBar->mTopTab->mWindow : NULL;
 
-    if (group->mChangeState != NoTabChange)
-	group->mNextDirection = direction;
+    if (group->mTabBar->mChangeState != NoTabChange)
+	group->mTabBar->mNextDirection = direction;
     else if (direction == RotateLeft)
-	group->mChangeAnimationDirection = 1;
+	group->mTabBar->mChangeAnimationDirection = 1;
     else if (direction == RotateRight)
-	group->mChangeAnimationDirection = -1;
+	group->mTabBar->mChangeAnimationDirection = -1;
     else
     {
 	int             distanceOld = 0, distanceNew = 0;
 	GroupTabBarSlot::List::iterator it = group->mTabBar->mSlots.begin ();
 
-	if (group->mTopTab)
-	    for (; (*it) && ((*it) != group->mTopTab);
+	if (group->mTabBar->mTopTab)
+	    for (; (*it) && ((*it) != group->mTabBar->mTopTab);
 		 it++, distanceOld++);
 
 	for (it = group->mTabBar->mSlots.begin (); (*it) && ((*it) != topTab);
 	     it++, distanceNew++);
 
 	if (distanceNew < distanceOld)
-	    group->mChangeAnimationDirection = 1;   /*left */
+	    group->mTabBar->mChangeAnimationDirection = 1;   /*left */
 	else
-	    group->mChangeAnimationDirection = -1;  /* right */
+	    group->mTabBar->mChangeAnimationDirection = -1;  /* right */
 
 	/* check if the opposite direction is shorter */
 	if (abs (distanceNew - distanceOld) > ((int) group->mTabBar->mSlots.size () / 2))
-	    group->mChangeAnimationDirection *= -1;
+	    group->mTabBar->mChangeAnimationDirection *= -1;
     }
 
-    if (group->mChangeState != NoTabChange)
+    if (group->mTabBar->mChangeState != NoTabChange)
     {
-	if (group->mPrevTopTab == topTab)
+	if (group->mTabBar->mPrevTopTab == topTab)
 	{
 	    /* Reverse animation. */
-	    GroupTabBarSlot *tmp = group->mTopTab;
-	    group->mTopTab = group->mPrevTopTab;
-	    group->mPrevTopTab = tmp;
+	    GroupTabBarSlot *tmp = group->mTabBar->mTopTab;
+	    group->mTabBar->mTopTab = group->mTabBar->mPrevTopTab;
+	    group->mTabBar->mPrevTopTab = tmp;
 
-	    group->mChangeAnimationDirection *= -1;
-	    group->mChangeAnimationTime =
+	    group->mTabBar->mChangeAnimationDirection *= -1;
+	    group->mTabBar->mChangeAnimationTime =
 		optionGetChangeAnimationTime () * 500 -
-		group->mChangeAnimationTime;
-	    group->mChangeState = (group->mChangeState == TabChangeOldOut) ?
+		group->mTabBar->mChangeAnimationTime;
+	    group->mTabBar->mChangeState = (group->mTabBar->mChangeState == TabChangeOldOut) ?
 		TabChangeNewIn : TabChangeOldOut;
 
-	    group->mNextTopTab = NULL;
+	    group->mTabBar->mNextTopTab = NULL;
 	}
 	else
-	    group->mNextTopTab = topTab;
+	    group->mTabBar->mNextTopTab = topTab;
     }
     else
     {
-	group->mTopTab = topTab;
+	group->mTabBar->mTopTab = topTab;
 
 	group->mTabBar->renderWindowTitle ();
 	group->mTabBar->renderTopTabHighlight ();
@@ -1568,7 +1569,7 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 	CompositeWindow::get (w)->addDamage ();
     }
 
-    if (topTab != group->mNextTopTab)
+    if (topTab != group->mTabBar->mNextTopTab)
     {
 	gw->groupSetWindowVisibility (true);
 	if (oldTopTab)
@@ -1588,10 +1589,10 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 	{
 	    /* we use only the half time here -
 	       the second half will be PaintFadeOut */
-	    group->mChangeAnimationTime =
+	    group->mTabBar->mChangeAnimationTime =
 		optionGetChangeAnimationTime () * 500;
 	    groupTabChangeActivateEvent (true);
-	    group->mChangeState = TabChangeOldOut;
+	    group->mTabBar->mChangeState = TabChangeOldOut;
 	}
 	else
 	{
@@ -1599,11 +1600,11 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 
 	    /* No window to do animation with. */
 	    if (HAS_TOP_WIN (group))
-		group->mPrevTopTab = group->mTopTab;
+		group->mTabBar->mPrevTopTab = group->mTabBar->mTopTab;
 	    else
-		group->mPrevTopTab = NULL;
+		group->mTabBar->mPrevTopTab = NULL;
 
-	    activate = !group->mCheckFocusAfterTabChange;
+	    activate = !group->mTabBar->mCheckFocusAfterTabChange;
 	    if (!activate)
 	    {
 		/*
@@ -1617,7 +1618,7 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 	    if (activate)
 		w->activate ();
 
-	    group->mCheckFocusAfterTabChange = false;
+	    group->mTabBar->mCheckFocusAfterTabChange = false;
 	}
     }
 
@@ -2018,10 +2019,10 @@ GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
     if (!temporary)
     {
 	if (IS_PREV_TOP_TAB (w, group))
-	    group->mPrevTopTab = NULL;
+	    group->mTabBar->mPrevTopTab = NULL;
 	if (IS_TOP_TAB (w, group))
 	{
-	    group->mTopTab = NULL;
+	    group->mTabBar->mTopTab = NULL;
 
 	    if (next)
 		gs->groupChangeTab (next, RotateRight);
@@ -2441,6 +2442,14 @@ GroupTabBar::applySpeeds (int            msSinceLastRepaint)
 GroupTabBar::GroupTabBar (GroupSelection *group, 
 			  CompWindow     *topTab) :
     mGroup (group),
+    mTopTab (NULL),
+    mPrevTopTab (NULL),
+    mLastTopTab (NULL),
+    mNextTopTab (NULL),
+    mCheckFocusAfterTabChange (false),
+    mChangeAnimationTime (0),
+    mChangeAnimationDirection (0),
+    mChangeState (NoTabChange),
     mHoveredSlot (NULL),
     mTextSlot (NULL),
     mTextLayer (NULL),
@@ -2470,7 +2479,7 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
 	createSlot (cw);
 
     mGroup->mTabBar->createInputPreventionWindow ();
-    mGroup->mTopTab = GroupWindow::get (topTab)->mSlot;
+    mGroup->mTabBar->mTopTab = GroupWindow::get (topTab)->mSlot;
 
     mGroup->mTabBar->recalcTabBarPos (WIN_CENTER_X (topTab),
 			  WIN_X (topTab), WIN_X (topTab) + WIN_WIDTH (topTab));
@@ -2484,6 +2493,9 @@ GroupTabBar::~GroupTabBar ()
 {
     GROUP_SCREEN (screen);
 
+    while (mSlots.size ())
+	deleteTabBarSlot (mSlots.front ());
+
     gs->groupDestroyCairoLayer (mTextLayer);
     gs->groupDestroyCairoLayer (mBgLayer);
     gs->groupDestroyCairoLayer (mSelectionLayer);
@@ -2492,9 +2504,6 @@ GroupTabBar::~GroupTabBar ()
 
     if (mTimeoutHandle.active ())
 	mTimeoutHandle.stop ();
-
-    while (mSlots.size ())
-	deleteTabBarSlot (mSlots.front ());
 }
 
 /*
@@ -2558,12 +2567,13 @@ GroupScreen::groupChangeTabLeft (CompAction          *action,
 
     GROUP_WINDOW (w);
 
-    if (!gw->mSlot || !gw->mGroup)
+    if (!gw->mSlot || !gw->mGroup || !gw->mGroup->mTabBar ||
+	!gw->mGroup->mTabBar->mTopTab)
 	return true;
 
-    if (gw->mGroup->mNextTopTab)
+    if (gw->mGroup->mTabBar->mNextTopTab)
 	topTab = NEXT_TOP_TAB (gw->mGroup);
-    else if (gw->mGroup->mTopTab)
+    else if (gw->mGroup->mTabBar->mTopTab)
     {
 	/* If there are no tabbing animations,
 	   topTab is never NULL. */
@@ -2597,12 +2607,12 @@ GroupScreen::groupChangeTabRight (CompAction         *action,
 
     GROUP_WINDOW (w);
 
-    if (!gw->mSlot || !gw->mGroup)
+    if (!gw->mSlot || !gw->mGroup || !gw->mGroup->mTabBar)
 	return true;
 
-    if (gw->mGroup->mNextTopTab)
+    if (gw->mGroup->mTabBar->mNextTopTab)
 	topTab = NEXT_TOP_TAB (gw->mGroup);
-    else if (gw->mGroup->mTopTab)
+    else if (gw->mGroup->mTabBar->mTopTab)
     {
 	/* If there are no tabbing animations,
 	   topTab is never NULL. */

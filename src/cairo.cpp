@@ -167,10 +167,10 @@ GroupTabBar::renderTopTabHighlight ()
 	return;
     }
 
-    width = mGroup->mTopTab->mRegion.boundingRect ().x2 () -
-	    mGroup->mTopTab->mRegion.boundingRect ().x1 ();
-    height = mGroup->mTopTab->mRegion.boundingRect ().y2 () -
-	     mGroup->mTopTab->mRegion.boundingRect ().y1 ();
+    width = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().x2 () -
+	    mGroup->mTabBar->mTopTab->mRegion.boundingRect ().x1 ();
+    height = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
+	     mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
 
     mSelectionLayer = gs->groupRebuildCairoLayer (mSelectionLayer,
 						  width, height);
