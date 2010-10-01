@@ -399,9 +399,6 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	    bar->applyForces ((mDragged) ? mDraggedSlot : NULL);
 	    bar->applySpeeds (msSinceLastPaint);
 
-	    if ((bar->mState != PaintOff) && HAS_TOP_WIN (group))
-		group->handleHoverDetection ();
-
 	    if (bar->mState == PaintFadeIn || bar->mState == PaintFadeOut)
 		bar->handleTabBarFade (msSinceLastPaint);
 

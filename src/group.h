@@ -577,7 +577,7 @@ public:
 		      unsigned int   mask);
 
     void
-    handleHoverDetection ();
+    handleHoverDetection (const CompPoint &);
 
     void
     handleAnimation ();
@@ -596,6 +596,8 @@ public:
 public:
     CompScreen *mScreen;
     CompWindowList mWindows;
+    
+    MousePoller	mPoller;
 
     /* Unique identifier for this group */
     long int mIdentifier;

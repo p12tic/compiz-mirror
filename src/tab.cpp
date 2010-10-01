@@ -251,7 +251,7 @@ GroupSelection::showDelayTimeout ()
 }
 
 /*
- * groupTabSetVisibility
+ * GroupSelection::tabSetVisibility
  *
  * Description:
  * This function is used to set the visibility of the tab bar.
@@ -283,6 +283,11 @@ GroupSelection::tabSetVisibility (bool           visible,
     bar = mTabBar;
     topTab = TOP_TAB (this);
     oldState = bar->mState;
+
+    if (visible)
+	mPoller.start ();
+    else
+	mPoller.stop ();
 
     /* hide tab bars for invisible top windows */
     if ((topTab->state () & CompWindowStateHiddenMask) || topTab->invisible ())
@@ -397,26 +402,21 @@ GroupTabBarSlot::getDrawOffset (int &hoffset,
  * FIXME: we should better have a timer for that ...
  */
 void
-GroupSelection::handleHoverDetection ()
+GroupSelection::handleHoverDetection (const CompPoint &p)
 {
     GroupTabBar *bar = mTabBar;
     CompWindow  *topTab = TOP_TAB (this);
-    int         mouseX, mouseY;
-    bool        mouseOnScreen, inLastSlot;
-
-    GROUP_SCREEN (screen)
-
-    /* first get the current mouse position */
-    mouseOnScreen = gs->groupGetCurrentMousePosition (mouseX, mouseY);
-
-    if (!mouseOnScreen)
+    bool        inLastSlot;
+    
+    GROUP_SCREEN (screen);
+    
+    if ((bar->mState != PaintOff) && !HAS_TOP_WIN (this))
 	return;
 
     /* then check if the mouse is in the last hovered slot --
        this saves a lot of CPU usage */
     inLastSlot = bar->mHoveredSlot &&
-		 bar->mHoveredSlot->mRegion.contains (CompPoint (mouseX,
-								 mouseY));
+		 bar->mHoveredSlot->mRegion.contains (p);
 
     if (!inLastSlot)
     {
@@ -434,7 +434,7 @@ GroupSelection::handleHoverDetection ()
 	       for in-slot-detection. */
 	    CompRegion reg = slot->mRegion.subtracted (clip);
 
-	    if (reg.contains (CompPoint (mouseX, mouseY)))
+	    if (reg.contains (p))
 	    {
 		bar->mHoveredSlot = slot;
 		break;
@@ -466,6 +466,8 @@ GroupSelection::handleHoverDetection ()
 	    }
 	}
     }
+    
+    return;
 }
 
 /*
@@ -885,7 +887,7 @@ GroupSelection::drawTabAnimation (int	      msSinceLastPaint)
 }
 
 /*
- * groupUpdateTabBars
+ * GroupScreen::groupUpdateTabBars
  *
  * Description:
  * This function is responsible for showing / unshowing the tab-bars,

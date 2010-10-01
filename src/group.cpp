@@ -688,6 +688,9 @@ GroupSelection::GroupSelection (CompWindow *startingWindow,
 {
     mWindows.push_back (startingWindow);
     
+    mPoller.setCallback (boost::bind (&GroupSelection::handleHoverDetection,
+				  this, _1));
+    
     GROUP_SCREEN (screen);
 
     /* glow color */
