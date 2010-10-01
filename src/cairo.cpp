@@ -25,19 +25,18 @@
 #include "group.h"
 
 /*
- * groupRebuildCairoLayer
+ * CairoLayer::rebuild
  *
  */
 CairoLayer*
-GroupScreen::groupRebuildCairoLayer (CairoLayer *layer,
-				     int             width,
-				     int             height)
+CairoLayer::rebuild (CairoLayer *layer,
+		     CompSize   size)
 {
     int        timeBuf = layer->mAnimationTime;
     PaintState stateBuf = layer->mState;
 
-    groupDestroyCairoLayer (layer);
-    layer = groupCreateCairoLayer (width, height);
+    delete layer;
+    layer = CairoLayer::create (size);
     if (!layer)
 	return NULL;
 
@@ -52,9 +51,9 @@ GroupScreen::groupRebuildCairoLayer (CairoLayer *layer,
  *
  */
 void
-GroupScreen::groupClearCairoLayer (CairoLayer *layer)
+CairoLayer::clear ()
 {
-    cairo_t *cr = layer->mCairo;
+    cairo_t *cr = mCairo;
 
     cairo_save (cr);
     cairo_set_operator (cr, CAIRO_OPERATOR_CLEAR);
@@ -63,25 +62,19 @@ GroupScreen::groupClearCairoLayer (CairoLayer *layer)
 }
 
 /*
- * groupDestroyCairoLayer
+ * CairoLayer::~CairoLayer ()
  *
  */
-void
-GroupScreen::groupDestroyCairoLayer (CairoLayer *layer)
+CairoLayer::~CairoLayer ()
 {
-    if (!layer)
-	return;
+    if (mCairo)
+	cairo_destroy (mCairo);
 
-    if (layer->mCairo)
-	cairo_destroy (layer->mCairo);
+    if (mSurface)
+	cairo_surface_destroy (mSurface);
 
-    if (layer->mSurface)
-	cairo_surface_destroy (layer->mSurface);
-
-    if (layer->mBuffer)
-	free (layer->mBuffer);
-
-    delete layer;
+    if (mBuffer)
+	free (mBuffer);
 }
 
 /*
@@ -89,13 +82,12 @@ GroupScreen::groupDestroyCairoLayer (CairoLayer *layer)
  *
  */
 CairoLayer*
-GroupScreen::groupCreateCairoLayer (int        width,
-				    int	       height)
+CairoLayer::create (CompSize size)
 {
     CairoLayer *layer;
 
 
-    layer = new CairoLayer ();
+    layer = new CairoLayer (size);
     if (!layer)
         return NULL;
 
@@ -106,27 +98,27 @@ GroupScreen::groupCreateCairoLayer (int        width,
     layer->mAnimationTime = 0;
     layer->mState         = PaintOff;
 
-    layer->setWidth (width);
-    layer->setHeight (height);
-
-    layer->mBuffer = (unsigned char *) calloc (4 * width * height, sizeof (unsigned char));
+    layer->mBuffer = (unsigned char *) 
+		   calloc (4 * layer->width () * layer->height (),
+			   sizeof (unsigned char));
     if (!layer->mBuffer)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to allocate cairo layer buffer.");
-	groupDestroyCairoLayer (layer);
+	delete layer;
 	return NULL;
     }
 
     layer->mSurface = cairo_image_surface_create_for_data (layer->mBuffer,
 							  CAIRO_FORMAT_ARGB32,
-							  width, height,
-							  4 * width);
+							  layer->width (),
+							  layer->height (),
+							  4 * layer->width ());
     if (cairo_surface_status (layer->mSurface) != CAIRO_STATUS_SUCCESS)
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to create cairo layer surface.");
-	groupDestroyCairoLayer (layer);
+	delete layer;
 	return NULL;
     }
 
@@ -135,11 +127,11 @@ GroupScreen::groupCreateCairoLayer (int        width,
     {
 	compLogMessage ("group", CompLogLevelError,
 			"Failed to create cairo layer context.");
-	groupDestroyCairoLayer (layer);
+	delete layer;
 	return NULL;
     }
 
-    groupClearCairoLayer (layer);
+    layer->clear ();
 
     return layer;
 }
@@ -154,8 +146,6 @@ GroupTabBar::renderTopTabHighlight ()
     CairoLayer *layer;
     cairo_t         *cr;
     int             width, height;
-    
-    GROUP_SCREEN (screen);
 
     if (!HAS_TOP_WIN (mGroup) ||
 	!mSelectionLayer || !mSelectionLayer->mCairo)
@@ -168,8 +158,8 @@ GroupTabBar::renderTopTabHighlight ()
     height = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
 	     mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
 
-    mSelectionLayer = gs->groupRebuildCairoLayer (mSelectionLayer,
-						  width, height);
+    mSelectionLayer = CairoLayer::rebuild (mSelectionLayer,
+					   CompSize (width, height));
     if (!mSelectionLayer)
 	return;
 
@@ -233,7 +223,7 @@ GroupTabBar::renderTabBarBackground ()
     layer = mBgLayer;
     cr = layer->mCairo;
 
-    gs->groupClearCairoLayer (layer);
+    layer->clear ();
 
     borderWidth = gs->optionGetBorderWidth ();
     cairo_set_line_width (cr, borderWidth);
@@ -636,6 +626,7 @@ GroupTabBar::renderWindowTitle ()
     Pixmap          pixmap = None;
     PaintState      pStateBuf;
     int		    aTimeBuf;
+    CompSize	    sBuf;
     
     GROUP_SCREEN (screen);
 
@@ -653,8 +644,9 @@ GroupTabBar::renderWindowTitle ()
 
 	pStateBuf = mTextLayer->mState;
 	aTimeBuf = mTextLayer->mAnimationTime;
+	sBuf = (CompSize ) *mTextLayer; 
 	delete mTextLayer;
-	layer = mTextLayer = new TextLayer ();
+	layer = mTextLayer = new TextLayer (sBuf);
 	if (!layer)
 	    return;
 	

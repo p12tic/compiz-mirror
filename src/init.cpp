@@ -307,8 +307,8 @@ GroupScreen::~GroupScreen ()
 		if (group->mTabBar->mTextLayer->mPixmap)
 		    XFreePixmap (screen->dpy (),
 				 group->mTabBar->mTextLayer->mPixmap);
-		groupDestroyCairoLayer (group->mTabBar->mBgLayer);
-		groupDestroyCairoLayer (group->mTabBar->mSelectionLayer);
+		delete group->mTabBar->mBgLayer;
+		delete group->mTabBar->mSelectionLayer;
 
 		if (group->mTabBar->mInputPrevention)
 		    XDestroyWindow (screen->dpy (),

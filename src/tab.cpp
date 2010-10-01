@@ -1323,9 +1323,7 @@ GroupSelection::tabGroup (CompWindow *main)
     height = mTabBar->mRegion.boundingRect ().y2 () -
 	     mTabBar->mRegion.boundingRect ().y1 ();
 
-    mTabBar->mTextLayer = new TextLayer ();
-    mTabBar->mTextLayer->setWidth (width);
-    mTabBar->mTextLayer->setHeight (height);
+    mTabBar->mTextLayer = new TextLayer (CompSize (width, height));
     if (mTabBar->mTextLayer)
     {
 	TextLayer *layer;
@@ -1347,8 +1345,8 @@ GroupSelection::tabGroup (CompWindow *main)
     /* we need a buffer for DnD here */
     space = gs->optionGetThumbSpace ();
     thumbSize = gs->optionGetThumbSize ();
-    mTabBar->mBgLayer = gs->groupCreateCairoLayer (width + space + thumbSize,
-						    height);
+    mTabBar->mBgLayer = CairoLayer::create (CompSize (width + space + thumbSize,
+						      height));
     if (mTabBar->mBgLayer)
     {
 	mTabBar->mBgLayer->mState = PaintOn;
@@ -1361,7 +1359,7 @@ GroupSelection::tabGroup (CompWindow *main)
     height = mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
 	     mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
 
-    mTabBar->mSelectionLayer = gs->groupCreateCairoLayer (width, height);
+    mTabBar->mSelectionLayer = CairoLayer::create (CompSize (width, height));
     if (mTabBar->mSelectionLayer)
     {
 	mTabBar->mSelectionLayer->mState = PaintOn;
@@ -1846,11 +1844,11 @@ GroupTabBar::resizeTabBarRegion (CompRect	&box,
     if (mBgLayer && oldWidth != box.width () && syncIPW)
     {
 	mBgLayer =
-	    gs->groupRebuildCairoLayer (mBgLayer,
-				    box.width () +
+	    CairoLayer::rebuild (mBgLayer,
+				 CompSize (box.width () +
 				    gs->optionGetThumbSpace () +
 				    gs->optionGetThumbSize (),
-				    box.height ());
+				    box.height ()));
 	renderTabBarBackground ();
 
 	/* invalidate old width */
@@ -2494,16 +2492,14 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
  */
 GroupTabBar::~GroupTabBar ()
 {
-    GROUP_SCREEN (screen);
-
     while (mSlots.size ())
 	deleteTabBarSlot (mSlots.front ());
 
     if (mTextLayer->mPixmap)
 	XFreePixmap (screen->dpy (), mTextLayer->mPixmap);
     delete mTextLayer;
-    gs->groupDestroyCairoLayer (mBgLayer);
-    gs->groupDestroyCairoLayer (mSelectionLayer);
+    delete mBgLayer;
+    delete mSelectionLayer;
 
     mGroup->mTabBar->destroyInputPreventionWindow ();
 

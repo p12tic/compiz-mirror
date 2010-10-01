@@ -234,6 +234,9 @@ class Layer :
     public CompSize
 {
     public:
+	Layer (CompSize &size) :
+	    CompSize::CompSize (size) {}
+    public:
 	virtual void paint () {};
 	virtual void damage () {};
 	
@@ -247,6 +250,9 @@ class TextureLayer :
     public Layer
 {
     public:
+	TextureLayer (CompSize &size) :
+	    Layer::Layer (size) {}
+    public:
 
 	GLTexture::List mTexture;
 	
@@ -257,15 +263,36 @@ class CairoLayer :
 {
     public:
 
+	~CairoLayer ();
+
+    public:
+
+	static CairoLayer * create (CompSize);
+	static CairoLayer * rebuild (CairoLayer *,
+				     CompSize);
+	
+
+	void clear ();
+
+    public:
+
 	/* used if layer is used for cairo drawing */
 	unsigned char   *mBuffer;
 	cairo_surface_t *mSurface;
 	cairo_t	    *mCairo;
+
+    private:
+	CairoLayer (CompSize &size) :
+	    TextureLayer::TextureLayer (size) {}
 };
 
 class TextLayer :
     public TextureLayer
 {
+    public:
+
+	TextLayer (CompSize size) :
+	    TextureLayer::TextureLayer (size) {}
     public:
 
 	/* used if layer is used for text drawing */
@@ -552,7 +579,6 @@ public:
     void
     handleHoverDetection ();
 
-
     void
     handleAnimation ();
 
@@ -645,22 +671,6 @@ class GroupScreen :
 	groupApplyInitialActions ();
 
 	/* cairo.c */
-
-	CairoLayer*
-	groupRebuildCairoLayer (CairoLayer *layer,
-			     int             width,
-			     int             height);
-
-	void
-	groupClearCairoLayer (CairoLayer *layer);
-
-
-	void
-	groupDestroyCairoLayer (CairoLayer *layer);
-
-	CairoLayer*
-	groupCreateCairoLayer (int        width,
-			    int	       height);
 
 	void
 	groupDamagePaintRectangle (BoxPtr pBox);
