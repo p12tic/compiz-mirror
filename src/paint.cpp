@@ -222,6 +222,43 @@ TextureLayer::paint (const GLWindowPaintAttrib &attrib,
     }
 }
 
+void
+BackgroundLayer::paint (const GLWindowPaintAttrib &attrib,
+			const GLMatrix	          &transform,
+			const CompRegion	  &paintRegion,
+			const CompRegion	  &clipRegion,
+			int		          mask)
+{
+    int   newWidth;
+    float wScale = 1.0f, hScale = 1.0f;
+    int alpha = OPAQUE;
+    GLWindowPaintAttrib wAttrib (attrib);
+    CompRect box = paintRegion.boundingRect ();
+
+    /* handle the repaint of the background */
+    newWidth = mGroup->mTabBar->mRegion.boundingRect ().width ();
+    if (newWidth > width ())
+	newWidth = width ();
+
+    wScale = (double) (mGroup->mTabBar->mRegion.boundingRect ().width () / 
+		       (double) newWidth);
+
+    /* FIXME: maybe move this over to groupResizeTabBarRegion -
+     * the only problem is that we would have 2 redraws if
+     * here is an animation */
+    if (newWidth != mGroup->mTabBar->mOldWidth || mGroup->mTabBar->mBgAnimation)
+	render ();
+
+    mGroup->mTabBar->mOldWidth = newWidth;
+    box	  = mGroup->mTabBar->mRegion.boundingRect ();
+    
+    wAttrib.xScale = wScale;
+    wAttrib.yScale = hScale;
+    wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
+    
+    TextureLayer::paint (wAttrib, transform, box, clipRegion, mask);
+}
+
 /*
  * GroupTabBar::paint
  *
@@ -263,26 +300,8 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 	switch (count) {
 	case PAINT_BG:
 	    {
-		int newWidth;
-
-		layer = (Layer *) mBgLayer;
-
-		/* handle the repaint of the background */
-		newWidth = mRegion.boundingRect ().x2 () - mRegion.boundingRect ().x1 ();
-		if (layer && (newWidth > layer->width ()))
-		    newWidth = layer->width ();
-
-		wScale = (double) (mRegion.boundingRect ().x2 () -
-				   mRegion.boundingRect ().x1 ()) / (double) newWidth;
-
-		/* FIXME: maybe move this over to groupResizeTabBarRegion -
-		   the only problem is that we would have 2 redraws if
-		   there is an animation */
-		if (newWidth != mOldWidth || mBgAnimation)
-		    mBgLayer->render ();
-
-		mOldWidth = newWidth;
-		box	  = mRegion.boundingRect ();
+		mBgLayer->setPaintWindow (topTab);
+		mBgLayer->paint (attrib, transform, box, clipRegion, mask);
 	    }
 	    break;
 

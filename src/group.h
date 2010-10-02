@@ -277,6 +277,11 @@ class CairoLayer :
 	
 	void clear ();
 	virtual void render () = 0;
+	virtual void paint (const GLWindowPaintAttrib &attrib,
+			    const GLMatrix	      &transform,
+			    const CompRegion	      &paintRegion,
+			    const CompRegion	      &clipRegion,
+			    int			      mask) = 0;
 
     public:
 
@@ -301,6 +306,11 @@ class BackgroundLayer :
 				     CompSize);
 
 	void render ();
+	void paint (const GLWindowPaintAttrib &attrib,
+		    const GLMatrix	      &transform,
+		    const CompRegion	      &paintRegion,
+		    const CompRegion	      &clipRegion,
+		    int			      mask);
 
     private:
 	BackgroundLayer (CompSize &size, GroupSelection *group) :
@@ -317,6 +327,11 @@ class SelectionLayer :
 					 CompSize);
 
 	void render ();
+	void paint (const GLWindowPaintAttrib &attrib,
+		    const GLMatrix	      &transform,
+		    const CompRegion	      &paintRegion,
+		    const CompRegion	      &clipRegion,
+		    int			      mask) {};
 
     private:
 	SelectionLayer (CompSize &size, GroupSelection *group) :
