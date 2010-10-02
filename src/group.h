@@ -183,16 +183,20 @@ public:
     int  mX1, mY1, mX2, mY2;
 };
 
-typedef struct _GroupResizeInfo {
-    CompWindow *mResizedWindow;
-    CompRect    mOrigGeometry;
-} GroupResizeInfo;
-
 /*
  * GroupSelection
  */
 class GroupSelection
 {
+    public:
+
+	class ResizeInfo
+	{
+	    public:
+		CompWindow *mResizedWindow;
+		CompRect    mOrigGeometry;
+	};
+
     public:
 	/*
 	 * Ungrouping states
@@ -285,7 +289,7 @@ public:
 
     GLushort mColor[4];
     
-    GroupResizeInfo *mResizeInfo;
+    ResizeInfo *mResizeInfo;
 };
 
 extern bool textAvailable;

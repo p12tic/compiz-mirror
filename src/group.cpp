@@ -1834,7 +1834,7 @@ GroupWindow::grabNotify (int          x,
 	if (doResizeAll)
 	{
 	    if (!mGroup->mResizeInfo)
-		mGroup->mResizeInfo = (GroupResizeInfo *) malloc (sizeof (GroupResizeInfo));
+		mGroup->mResizeInfo = (GroupSelection::ResizeInfo *) malloc (sizeof (GroupSelection::ResizeInfo));
 
 	    if (mGroup->mResizeInfo)
 	    {
