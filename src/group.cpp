@@ -521,7 +521,7 @@ GroupWindow::deleteGroupWindow ()
 
 		if (gs->optionGetAutoUngroup ())
 		{
-		    if (group->mTabBar->mChangeState != NoTabChange)
+		    if (group->mTabBar->mChangeState != GroupTabBar::NoTabChange)
 		    {
 			/* a change animation is pending: this most
 			   likely means that a window must be moved

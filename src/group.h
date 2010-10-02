@@ -181,12 +181,6 @@ typedef enum {
     AnimationReflex
 } GroupAnimationType;
 
-typedef enum {
-    NoTabChange = 0,
-    TabChangeOldOut,
-    TabChangeNewIn
-} TabChangeState;
-
 
 
 /*
@@ -264,8 +258,6 @@ class GlowQuad {
 #define GLOWQUAD_RIGHT		 7
 #define NUM_GLOWQUADS		 8
 
-class GroupSelection;
-
 /*
  * Selection
  */
@@ -322,117 +314,125 @@ typedef struct _GroupResizeInfo {
  */
 class GroupTabBar
 {
-public:
+    public:
 
-    GroupTabBar (GroupSelection *, CompWindow *);
-    ~GroupTabBar ();
+	typedef enum {
+	    NoTabChange = 0,
+	    TabChangeOldOut,
+	    TabChangeNewIn
+	} TabChangeState;
 
-public:
+    public:
 
-    /* Input Prevention */
+	GroupTabBar (GroupSelection *, CompWindow *);
+	~GroupTabBar ();
 
-    void createInputPreventionWindow ();
-    void destroyInputPreventionWindow ();
+    public:
 
-    /* Drawing */
+	/* Input Prevention */
 
-    void paint (const GLWindowPaintAttrib &attrib,
-		const GLMatrix		 &transform,
-		unsigned int		 mask,		
-		CompRegion		 clipRegion);
+	void createInputPreventionWindow ();
+	void destroyInputPreventionWindow ();
 
-    void damageRegion ();
+	/* Drawing */
 
-    /* Animation */
+	void paint (const GLWindowPaintAttrib &attrib,
+		    const GLMatrix		 &transform,
+		    unsigned int		 mask,		
+		    CompRegion		 clipRegion);
 
-    void handleTabBarFade (int msSinceLastPaint);
-    void handleTextFade (int msSinceLastPaint);
-    void handleTabBarAnimation (int msSinceLastPaint);
+	void damageRegion ();
 
-    /* Region and position management */
+	/* Animation */
 
-    void moveTabBarRegion (int		   dx,
-			   int		   dy,
-			   bool		   syncIPW);
+	void handleTabBarFade (int msSinceLastPaint);
+	void handleTextFade (int msSinceLastPaint);
+	void handleTabBarAnimation (int msSinceLastPaint);
 
-    void resizeTabBarRegion (CompRect       &box,
-			     bool           syncIPW);
+	/* Region and position management */
 
-    void recalcTabBarPos (int		  middleX,
-			  int		  minX1,
-			  int		  maxX2);
+	void moveTabBarRegion (int		   dx,
+			       int		   dy,
+			       bool		   syncIPW);
 
-    /* Slot management */
-    void insertTabBarSlotBefore (GroupTabBarSlot *slot,
-				 GroupTabBarSlot *nextSlot);
+	void resizeTabBarRegion (CompRect       &box,
+			         bool           syncIPW);
 
-    void insertTabBarSlotAfter (GroupTabBarSlot *slot,
-				GroupTabBarSlot *prevSlot);
+	void recalcTabBarPos (int		  middleX,
+			      int		  minX1,
+			      int		  maxX2);
 
-    void insertTabBarSlot (GroupTabBarSlot *slot);
+	/* Slot management */
+	void insertTabBarSlotBefore (GroupTabBarSlot *slot,
+				     GroupTabBarSlot *nextSlot);
 
-    void unhookTabBarSlot (GroupTabBarSlot *slot,
-			   bool            temporary);
+	void insertTabBarSlotAfter (GroupTabBarSlot *slot,
+				    GroupTabBarSlot *prevSlot);
 
-    void deleteTabBarSlot (GroupTabBarSlot *slot);
+	void insertTabBarSlot (GroupTabBarSlot *slot);
 
-    void createSlot (CompWindow      *w);
+	void unhookTabBarSlot (GroupTabBarSlot *slot,
+			       bool            temporary);
 
-    void applyForces (GroupTabBarSlot *);
+	void deleteTabBarSlot (GroupTabBarSlot *slot);
 
-    void applySpeeds (int            msSinceLastRepaint);
+	void createSlot (CompWindow      *w);
+
+	void applyForces (GroupTabBarSlot *);
+
+	void applySpeeds (int            msSinceLastRepaint);
 
 
-public:
-    GroupTabBarSlot::List mSlots;
+    public:
+	GroupTabBarSlot::List mSlots;
 
-    GroupSelection  *mGroup;
+	GroupSelection  *mGroup;
 
-    GroupTabBarSlot* mTopTab;
-    GroupTabBarSlot* mPrevTopTab;
+	GroupTabBarSlot* mTopTab;
+	GroupTabBarSlot* mPrevTopTab;
 
-    /* needed for untabbing animation */
-    CompWindow *mLastTopTab;
+	/* needed for untabbing animation */
+	CompWindow *mLastTopTab;
 
-    /* Those two are only for the change-tab animation,
-       when the tab was changed again during animation.
-       Another animation should be started again,
-       switching for this window. */
-    ChangeTabAnimationDirection mNextDirection;
-    GroupTabBarSlot             *mNextTopTab;
+	/* Those two are only for the change-tab animation,
+	when the tab was changed again during animation.
+	Another animation should be started again,
+	switching for this window. */
+	ChangeTabAnimationDirection mNextDirection;
+	GroupTabBarSlot             *mNextTopTab;
 
-    /* check focus stealing prevention after changing tabs */
-    bool mCheckFocusAfterTabChange;
+	/* check focus stealing prevention after changing tabs */
+	bool mCheckFocusAfterTabChange;
 
-    int            mChangeAnimationTime;
-    int            mChangeAnimationDirection;
-    TabChangeState mChangeState;
+	int            mChangeAnimationTime;
+	int            mChangeAnimationDirection;
+	GroupTabBar::TabChangeState mChangeState;
 
-    GroupTabBarSlot *mHoveredSlot;
-    GroupTabBarSlot *mTextSlot;
+	GroupTabBarSlot *mHoveredSlot;
+	GroupTabBarSlot *mTextSlot;
 
-    TextLayer *mTextLayer;
-    BackgroundLayer *mBgLayer;
-    SelectionLayer *mSelectionLayer;
+	TextLayer *mTextLayer;
+	BackgroundLayer *mBgLayer;
+	SelectionLayer *mSelectionLayer;
 
-    /* For animations */
-    int                mBgAnimationTime;
-    GroupAnimationType mBgAnimation;
+	/* For animations */
+	int                mBgAnimationTime;
+	GroupAnimationType mBgAnimation;
 
-    PaintState mState;
-    int        mAnimationTime;
-    CompRegion mRegion;
-    int        mOldWidth;
+	PaintState mState;
+	int        mAnimationTime;
+	CompRegion mRegion;
+	int        mOldWidth;
 
-    CompTimer mTimeoutHandle;
+	CompTimer mTimeoutHandle;
 
-    /* For DnD animations */
-    int   mLeftSpringX, mRightSpringX;
-    int   mLeftSpeed, mRightSpeed;
-    float mLeftMsSinceLastMove, mRightMsSinceLastMove;
+	/* For DnD animations */
+	int   mLeftSpringX, mRightSpringX;
+	int   mLeftSpeed, mRightSpeed;
+	float mLeftMsSinceLastMove, mRightMsSinceLastMove;
 
-    Window mInputPrevention;
-    bool   mIpwMapped;
+	Window mInputPrevention;
+	bool   mIpwMapped;
 };
 
 /*

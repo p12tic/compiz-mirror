@@ -474,7 +474,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	}
 
 	if (group->mTabBar &&
-	    group->mTabBar->mChangeState != NoTabChange)
+	    group->mTabBar->mChangeState != GroupTabBar::NoTabChange)
 	{
 	    group->mTabBar->mChangeAnimationTime -= msSinceLastPaint;
 	    if (group->mTabBar->mChangeAnimationTime <= 0)
@@ -517,7 +517,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     foreach (group, mGroups)
     {
 	if ((group->mTabBar &&
-	     group->mTabBar->mChangeState != NoTabChange) ||
+	     group->mTabBar->mChangeState != GroupTabBar::NoTabChange) ||
 	    group->mTabbingState != GroupSelection::NoTabbing)
 	{
 	    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
@@ -622,7 +622,7 @@ GroupScreen::donePaint ()
 	if (group->mTabbingState != GroupSelection::NoTabbing)
 	    cScreen->damageScreen ();
 	else if (group->mTabBar &&
-		 group->mTabBar->mChangeState != NoTabChange)
+		 group->mTabBar->mChangeState != GroupTabBar::NoTabChange)
 	    cScreen->damageScreen ();
 	else if (group->mTabBar)
 	{
@@ -1016,7 +1016,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	GroupSelection *group = mGroup;
 
 	doRotate = (group->mTabBar &&
-		    group->mTabBar->mChangeState != NoTabChange) &&
+		    group->mTabBar->mChangeState != GroupTabBar::NoTabChange) &&
 	           HAS_TOP_WIN (group) && HAS_PREV_TOP_WIN (group) &&
 	           (IS_TOP_TAB (w, group) || IS_PREV_TOP_TAB (w, group));
 
@@ -1026,10 +1026,10 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	showTabbar = group->mTabBar && (group->mTabBar->mState != PaintOff) &&
 	             (((IS_TOP_TAB (w, group)) &&
-		       ((group->mTabBar->mChangeState == NoTabChange) ||
-			(group->mTabBar->mChangeState == TabChangeNewIn))) ||
+		       ((group->mTabBar->mChangeState == GroupTabBar::NoTabChange) ||
+			(group->mTabBar->mChangeState == GroupTabBar::TabChangeNewIn))) ||
 		      (IS_PREV_TOP_TAB (w, group) &&
-		       (group->mTabBar->mChangeState == TabChangeOldOut)));
+		       (group->mTabBar->mChangeState == GroupTabBar::TabChangeOldOut)));
     }
     else
     {
@@ -1101,7 +1101,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    float timeLeft = mGroup->mTabBar->mChangeAnimationTime;
 	    int   animTime = gs->optionGetChangeAnimationTime () * 500;
 
-	    if (mGroup->mTabBar->mChangeState == TabChangeOldOut)
+	    if (mGroup->mTabBar->mChangeState == GroupTabBar::TabChangeOldOut)
 		timeLeft += animTime;
 
 	    /* 0 at the beginning, 1 at the end */
