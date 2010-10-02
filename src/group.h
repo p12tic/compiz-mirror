@@ -274,17 +274,6 @@ public:
     int  mX1, mY1, mX2, mY2;
 };
 
-typedef struct _GroupWindowHideInfo {
-    Window mShapeWindow;
-
-    unsigned long mSkipState;
-    unsigned long mShapeMask;
-
-    XRectangle *mInputRects;
-    int        mNInputRects;
-    int        mInputRectOrdering;
-} GroupWindowHideInfo;
-
 typedef struct _GroupResizeInfo {
     CompWindow *mResizedWindow;
     CompRect    mOrigGeometry;
@@ -785,6 +774,18 @@ class GroupWindow :
 	    WindowShaded
 	} State;
 
+	class HideInfo {
+	    public:
+		Window mShapeWindow;
+
+		unsigned long mSkipState;
+		unsigned long mShapeMask;
+
+		XRectangle *mInputRects;
+		int        mNInputRects;
+		int        mInputRectOrdering;
+	};
+
     public:
 
 	GroupWindow (CompWindow *);
@@ -913,7 +914,7 @@ class GroupWindow :
 	getClippingRegion ();
 
 	void
-	clearWindowInputShape (GroupWindowHideInfo *hideInfo);
+	clearWindowInputShape (GroupWindow::HideInfo *hideInfo);
 
 	void
 	setWindowVisibility (bool visible);
@@ -947,7 +948,7 @@ class GroupWindow :
 	GlowQuad *mGlowQuads;
 
 	GroupWindow::State    mWindowState;
-	GroupWindowHideInfo   *mWindowHideInfo;
+	GroupWindow::HideInfo   *mWindowHideInfo;
 
 	CompRect	    mResizeGeometry;
 

@@ -89,7 +89,7 @@ GroupWindow::getClippingRegion ()
  *
  */
 void
-GroupWindow::clearWindowInputShape (GroupWindowHideInfo *hideInfo)
+GroupWindow::clearWindowInputShape (GroupWindow::HideInfo *hideInfo)
 {
     XRectangle  *rects;
     int         count = 0, ordering;
@@ -137,9 +137,9 @@ GroupWindow::setWindowVisibility (bool visible)
 {
     if (!visible && !mWindowHideInfo)
     {
-	GroupWindowHideInfo *info;
+	GroupWindow::HideInfo *info;
 
-	mWindowHideInfo = info = (GroupWindowHideInfo *) malloc (sizeof (GroupWindowHideInfo));
+	mWindowHideInfo = info = (GroupWindow::HideInfo *) malloc (sizeof (GroupWindow::HideInfo));
 	if (!mWindowHideInfo)
 	    return;
 
@@ -169,7 +169,7 @@ GroupWindow::setWindowVisibility (bool visible)
     }
     else if (visible && mWindowHideInfo)
     {
-	GroupWindowHideInfo *info = mWindowHideInfo;
+	GroupWindow::HideInfo *info = mWindowHideInfo;
 
 	if (info->mNInputRects)
 	{
