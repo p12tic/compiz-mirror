@@ -30,6 +30,12 @@ GroupTabBarSlot::setTargetOpacity (int tOpacity)
     mOpacity = tOpacity;
 }
 
+void
+TextureLayer::setPaintWindow (CompWindow *w)
+{
+    mPaintWindow = w;
+}
+
 /*
  * GroupTabBarSlot::paint - taken from switcher and modified for tab bar
  *
@@ -37,7 +43,9 @@ GroupTabBarSlot::setTargetOpacity (int tOpacity)
 void
 GroupTabBarSlot::paint (const GLWindowPaintAttrib &attrib,
 			const GLMatrix	          &transform,
-			const CompRegion	  &region)
+			const CompRegion	  &region,
+			const CompRegion	  &clipRegion,
+			int			  mask)
 {
     CompWindow            *w = mWindow;
     unsigned int	  oldGlAddGeometryIndex;
@@ -116,8 +124,8 @@ GroupTabBarSlot::paint (const GLWindowPaintAttrib &attrib,
 	glLoadMatrixf (wTransform.getMatrix ());
 
 	oldGlDrawIndex = gw->gWindow->glDrawGetCurrentIndex ();
-	gw->gWindow->glDraw (wTransform, fragment, infiniteRegion,
-			  PAINT_WINDOW_TRANSFORMED_MASK |
+	gw->gWindow->glDraw (wTransform, fragment, clipRegion,
+			  mask | PAINT_WINDOW_TRANSFORMED_MASK |
 			  PAINT_WINDOW_TRANSLUCENT_MASK);
 	gw->gWindow->glDrawSetCurrentIndex (oldGlDrawIndex);
 
@@ -125,6 +133,93 @@ GroupTabBarSlot::paint (const GLWindowPaintAttrib &attrib,
     }
 
     gw->gWindow->glAddGeometrySetCurrentIndex (oldGlAddGeometryIndex);
+}
+
+/*
+ * TextureLayer::paint
+ *
+ */
+
+void
+TextureLayer::paint (const GLWindowPaintAttrib &attrib,
+		     const GLMatrix	       &transform,
+		     const CompRegion	       &paintRegion,
+		     const CompRegion	       &clipRegion,
+		     int		       mask)
+{
+    GroupWindow *gwTopTab = GroupWindow::get (mPaintWindow);
+    const CompRect &box = paintRegion.boundingRect ();
+
+    foreach (GLTexture *tex, mTexture)
+    {
+	GLTexture::Matrix matrix = tex->matrix ();
+	GLTexture::MatrixList matl;
+	CompRegion reg;
+	
+	int x1 = box.x1 ();
+	int y1 = box.y1 ();
+	int x2 = box.x2 ();
+	int y2 = box.y2 ();
+
+	/* remove the old x1 and y1 so we have a relative value */
+	x2 -= x1;
+	y2 -= y1;
+	x1 = (x1 - mPaintWindow->x ()) / attrib.xScale +
+		     mPaintWindow->x ();
+	y1 = (y1 - mPaintWindow->y ()) / attrib.yScale +
+		     mPaintWindow->y ();
+
+	/* now add the new x1 and y1 so we have a absolute value again,
+	also we don't want to stretch the texture... */
+	if (x2 * attrib.xScale < width ())
+	    x2 += x1;
+	else
+	    x2 = x1 + width ();
+
+	if (y2 * attrib.yScale < height ())
+	    y2 += y1;
+	else
+	    y2 = y1 + height ();
+
+	matrix.x0 -= x1 * matrix.xx;
+	matrix.y0 -= y1 * matrix.yy;
+
+	matl.push_back (matrix);
+
+	reg = CompRegion (x1, y1,
+			  x2 - x1,
+			  y2 - y1);
+	
+	gwTopTab->gWindow->geometry ().reset ();
+
+	gwTopTab->gWindow->glAddGeometry (matl, reg, clipRegion);
+
+	if (gwTopTab->gWindow->geometry ().vertices)
+	{
+	    GLFragment::Attrib fragment (attrib);
+	    GLMatrix	       wTransform (transform);
+
+	    wTransform.translate (WIN_X (mPaintWindow),
+				  WIN_Y (mPaintWindow), 0.0f);
+	    wTransform.scale (attrib.xScale, attrib.yScale, 1.0f);
+	    wTransform.translate (
+			 attrib.xTranslate / attrib.xScale - WIN_X (mPaintWindow),
+			 attrib.yTranslate / attrib.yScale - WIN_Y (mPaintWindow),
+			 0.0f);
+
+	    glPushMatrix ();
+	    glLoadMatrixf (wTransform.getMatrix ());
+
+	    fragment.setOpacity (attrib.opacity);
+
+	    gwTopTab->glDrawTexture (tex, fragment, mask |
+					PAINT_WINDOW_BLEND_MASK |
+					PAINT_WINDOW_TRANSFORMED_MASK |
+					PAINT_WINDOW_TRANSLUCENT_MASK);
+
+	    glPopMatrix ();
+	}
+    }
 }
 
 /*
@@ -214,7 +309,8 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 		    if (slot != gs->mDraggedSlot || !gs->mDragged)
 		    {
 			slot->setTargetOpacity (attrib.opacity);
-			slot->paint (attrib, transform, clipRegion);
+			slot->paint (attrib, transform, clipRegion,
+				     clipRegion, mask);
 		    }
 		}
 
@@ -252,80 +348,17 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 
 	if (layer)
 	{
-	    GroupWindow *gwTopTab = GroupWindow::get (topTab);
+	    TextureLayer *texLayer = (TextureLayer *) layer;
+	    GLWindowPaintAttrib wAttrib (attrib);
+	    
+	    wAttrib.xScale = wScale;
+	    wAttrib.yScale = hScale;
+	    wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
+	    
+	    texLayer->setPaintWindow (topTab);
+	    texLayer->paint (attrib, transform, box, clipRegion, mask);
 
-	    foreach (GLTexture *tex, ((TextureLayer *) layer)->mTexture)
-	    {
-		GLTexture::Matrix matrix = tex->matrix ();
-		GLTexture::MatrixList matl;
-		CompRegion reg;
-		
-		int x1 = box.x1 ();
-		int y1 = box.y1 ();
-		int x2 = box.x2 ();
-		int y2 = box.y2 ();
-
-		/* remove the old x1 and y1 so we have a relative value */
-		x2 -= x1;
-		y2 -= y1;
-		x1 = (x1 - topTab->x ()) / wScale +
-			     topTab->x ();
-		y1 = (y1 - topTab->y ()) / hScale +
-			     topTab->y ();
-
-		/* now add the new x1 and y1 so we have a absolute value again,
-		also we don't want to stretch the texture... */
-		if (x2 * wScale < layer->width ())
-		    x2 += x1;
-		else
-		    x2 = x1 + layer->width ();
-
-		if (y2 * hScale < layer->height ())
-		    y2 += y1;
-		else
-		    y2 = y1 + layer->height ();
-
-		matrix.x0 -= x1 * matrix.xx;
-		matrix.y0 -= y1 * matrix.yy;
-
-		matl.push_back (matrix);
-
-		reg = CompRegion (x1, y1,
-				  x2 - x1,
-				  y2 - y1);
-		
-		gwTopTab->gWindow->geometry ().reset ();
-
-		gwTopTab->gWindow->glAddGeometry (matl, reg, clipRegion);
-
-		if (gwTopTab->gWindow->geometry ().vertices)
-		{
-		    GLWindowPaintAttrib wAttrib (attrib);
-		    GLFragment::Attrib fragment (wAttrib);
-		    GLMatrix	       wTransform (transform);
-
-		    wTransform.translate (WIN_X (topTab), WIN_Y (topTab), 0.0f);
-		    wTransform.scale (wScale, hScale, 1.0f);
-		    wTransform.translate (
-				 wAttrib.xTranslate / wScale - WIN_X (topTab),
-				 wAttrib.yTranslate / hScale - WIN_Y (topTab),
-				 0.0f);
-
-		    glPushMatrix ();
-		    glLoadMatrixf (wTransform.getMatrix ());
-
-		    alpha = alpha * ((float) wAttrib.opacity / OPAQUE);
-
-		    fragment.setOpacity (alpha);
-
-		    gwTopTab->glDrawTexture (tex, fragment, mask |
-						PAINT_WINDOW_BLEND_MASK |
-						PAINT_WINDOW_TRANSFORMED_MASK |
-						PAINT_WINDOW_TRANSLUCENT_MASK);
-
-		    glPopMatrix ();
-		}
-	    }
+	    
 	}
     }
 }
@@ -490,7 +523,8 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    state = mDraggedSlot->mTabBar->mState;
 	    mDraggedSlot->mTabBar->mState = PaintOff;
 	    mDraggedSlot->setTargetOpacity (OPAQUE);
-	    mDraggedSlot->paint (GLWindow::get (mDraggedSlot->mWindow)->paintAttrib (), wTransform, region);
+	    mDraggedSlot->paint (GLWindow::get (mDraggedSlot->mWindow)->paintAttrib (),
+				 wTransform, region, region, 0);
 	    mDraggedSlot->mTabBar->mState = state;
 
 	    glPopMatrix ();
@@ -536,7 +570,8 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    state = mDraggedSlot->mTabBar->mState;
 	    mDraggedSlot->mTabBar->mState = PaintOff;
 	    mDraggedSlot->setTargetOpacity (OPAQUE);
-	    mDraggedSlot->paint (GLWindow::get (mDraggedSlot->mWindow)->paintAttrib (), wTransform, region);
+	    mDraggedSlot->paint (GLWindow::get (mDraggedSlot->mWindow)->paintAttrib (),
+				 wTransform, region, region, 0);
 	    mDraggedSlot->mTabBar->mState = state;
 
 	    glPopMatrix ();

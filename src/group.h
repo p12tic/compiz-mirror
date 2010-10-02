@@ -237,9 +237,6 @@ class Layer :
 	Layer (CompSize &size) :
 	    CompSize::CompSize (size) {}
     public:
-	virtual void paint (const GLScreenPaintAttrib &attrib,
-			    const GLMatrix	      &transform,
-			    const CompRegion	      &region) {};
 	virtual void damage () {};
 
 	PaintState mState;
@@ -252,9 +249,20 @@ class TextureLayer :
     public:
 	TextureLayer (CompSize &size) :
 	    Layer::Layer (size) {}
+
+    public:
+
+	void setPaintWindow (CompWindow *);
+	virtual void paint (const GLWindowPaintAttrib &attrib,
+			    const GLMatrix	      &transform,
+			    const CompRegion	      &paintRegion,
+			    const CompRegion	      &clipRegion,
+			    int			      mask);
     public:
 
 	GLTexture::List mTexture;
+	CompWindow	*mPaintWindow; /* the window we are going to
+					* paint with geometry */
 	
 };
 
@@ -316,7 +324,9 @@ public:
     
     void paint (const GLWindowPaintAttrib &sa,
 		const GLMatrix	          &transform,
-		const CompRegion	  &region);
+		const CompRegion	  &paintRegion,
+		const CompRegion	  &clipRegion,
+		int 			  mask);
 
 public:
     GroupTabBarSlot *mPrev;
