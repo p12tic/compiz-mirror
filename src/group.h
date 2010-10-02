@@ -331,7 +331,7 @@ class SelectionLayer :
 		    const GLMatrix	      &transform,
 		    const CompRegion	      &paintRegion,
 		    const CompRegion	      &clipRegion,
-		    int			      mask) {};
+		    int			      mask);
 
     private:
 	SelectionLayer (CompSize &size, GroupSelection *group) :

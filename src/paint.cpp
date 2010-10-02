@@ -230,8 +230,6 @@ BackgroundLayer::paint (const GLWindowPaintAttrib &attrib,
 			int		          mask)
 {
     int   newWidth;
-    float wScale = 1.0f, hScale = 1.0f;
-    int alpha = OPAQUE;
     GLWindowPaintAttrib wAttrib (attrib);
     CompRect box = paintRegion.boundingRect ();
 
@@ -240,7 +238,7 @@ BackgroundLayer::paint (const GLWindowPaintAttrib &attrib,
     if (newWidth > width ())
 	newWidth = width ();
 
-    wScale = (double) (mGroup->mTabBar->mRegion.boundingRect ().width () / 
+    wAttrib.xScale = (double) (mGroup->mTabBar->mRegion.boundingRect ().width () / 
 		       (double) newWidth);
 
     /* FIXME: maybe move this over to groupResizeTabBarRegion -
@@ -252,11 +250,17 @@ BackgroundLayer::paint (const GLWindowPaintAttrib &attrib,
     mGroup->mTabBar->mOldWidth = newWidth;
     box	  = mGroup->mTabBar->mRegion.boundingRect ();
     
-    wAttrib.xScale = wScale;
-    wAttrib.yScale = hScale;
-    wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
-    
     TextureLayer::paint (wAttrib, transform, box, clipRegion, mask);
+}
+
+void
+SelectionLayer::paint (const GLWindowPaintAttrib &attrib,
+		       const GLMatrix	         &transform,
+		       const CompRegion	  	 &paintRegion,
+		       const CompRegion	  	 &clipRegion,
+		       int		         mask)
+{
+    TextureLayer::paint (attrib, transform, paintRegion, clipRegion, mask);
 }
 
 /*
@@ -288,28 +292,35 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 
     for (count = 0; count < PAINT_MAX; count++)
     {
-	int             alpha = OPAQUE;
-	float           wScale = 1.0f, hScale = 1.0f;
-	Layer *layer = NULL;
+	GLWindowPaintAttrib wAttrib (attrib);
+	int            	    alpha = OPAQUE;
+	Layer 		    *layer = NULL;
+	
+	wAttrib.xScale = 1.0f;
+	wAttrib.yScale = 1.0f;
 
 	if (mState == PaintFadeIn)
 	    alpha -= alpha * mAnimationTime / (gs->optionGetFadeTime () * 1000);
 	else if (mState == PaintFadeOut)
 	    alpha = alpha * mAnimationTime / (gs->optionGetFadeTime () * 1000);
 
+	wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
+
 	switch (count) {
 	case PAINT_BG:
 	    {
 		mBgLayer->setPaintWindow (topTab);
-		mBgLayer->paint (attrib, transform, box, clipRegion, mask);
+		mBgLayer->paint (wAttrib, transform, box, clipRegion, mask);
 	    }
 	    break;
 
 	case PAINT_SEL:
 	    if (mGroup->mTabBar->mTopTab != gs->mDraggedSlot)
 	    {
-		layer = (Layer *) mSelectionLayer;
-		box   = mGroup->mTabBar->mTopTab->mRegion.boundingRect ();
+		mSelectionLayer->setPaintWindow (topTab);
+		mSelectionLayer->paint (wAttrib, transform,
+					mGroup->mTabBar->mTopTab->mRegion,
+					clipRegion, mask);
 	    }
 	    break;
 
@@ -370,8 +381,6 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 	    TextureLayer *texLayer = (TextureLayer *) layer;
 	    GLWindowPaintAttrib wAttrib (attrib);
 	    
-	    wAttrib.xScale = wScale;
-	    wAttrib.yScale = hScale;
 	    wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
 	    
 	    texLayer->setPaintWindow (topTab);

@@ -226,6 +226,8 @@ SelectionLayer::render ()
 
     mTexture = GLTexture::imageBufferToTexture ((char*) mBuffer,
 			 		  (CompSize &) *this);
+    
+    
 }
 
 /*
