@@ -263,6 +263,47 @@ SelectionLayer::paint (const GLWindowPaintAttrib &attrib,
     TextureLayer::paint (attrib, transform, paintRegion, clipRegion, mask);
 }
 
+void
+TextLayer::paint (const GLWindowPaintAttrib &attrib,
+	          const GLMatrix	    &transform,
+	          const CompRegion	    &paintRegion,
+	          const CompRegion	    &clipRegion,
+	          int		            mask)
+{
+    /* add a slight buffer around the clipping region
+     * to account for the text
+     */
+    CompRect	        box;
+    int			alpha = OPAQUE;
+    GLWindowPaintAttrib wAttrib (attrib);
+    
+    GROUP_SCREEN (screen);
+
+    int x1 = paintRegion.boundingRect ().x1 () + 5;
+    int x2 = paintRegion.boundingRect ().x1 () +
+	     width () + 5;
+    int y1 = paintRegion.boundingRect ().y2 () -
+	     height () - 5;
+    int y2 = paintRegion.boundingRect ().y2 () - 5;
+
+    if (x2 > paintRegion.boundingRect ().x2 ())
+	x2 = paintRegion.boundingRect ().x2 ();
+
+    box = CompRect (x1, y1, x2 - x1, y2 - y1);
+
+    /* recalculate the alpha again for text fade... */
+    if (mState == PaintFadeIn)
+	alpha -= alpha * mAnimationTime /
+	     (gs->optionGetFadeTextTime () * 1000);
+    else if (mState == PaintFadeOut)
+	alpha = alpha * mAnimationTime /
+	    (gs->optionGetFadeTextTime () * 1000);
+
+    wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
+    
+    TextureLayer::paint (wAttrib, transform, box, clipRegion, mask);
+}
+
 /*
  * GroupTabBar::paint
  *
@@ -351,27 +392,12 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 	case PAINT_TEXT:
 	    if (mTextLayer && (mTextLayer->mState != PaintOff))
 	    {
-		layer = mTextLayer;
-
-		int x1 = mRegion.boundingRect ().x1 () + 5;
-		int x2 = mRegion.boundingRect ().x1 () +
-			 mTextLayer->width () + 5;
-		int y1 = mRegion.boundingRect ().y2 () -
-			 mTextLayer->height () - 5;
-		int y2 = mRegion.boundingRect ().y2 () - 5;
-
-		if (x2 > mRegion.boundingRect ().x2 ())
-		    x2 = mRegion.boundingRect ().x2 ();
-
-		/* recalculate the alpha again for text fade... */
-		if (layer->mState == PaintFadeIn)
-		    alpha -= alpha * layer->mAnimationTime /
-			     (gs->optionGetFadeTextTime () * 1000);
-		else if (layer->mState == PaintFadeOut)
-		    alpha = alpha * layer->mAnimationTime /
-			    (gs->optionGetFadeTextTime () * 1000);
-		
-		box = CompRect (x1, y1, x2 - x1, y2 - y1);
+		/* Using the base attrib here intended since we
+		 * need to use a special opacity
+		 */
+		mTextLayer->setPaintWindow (topTab);
+		mTextLayer->paint (attrib, transform, mRegion,
+				   clipRegion, mask);
 	    }
 	    break;
 	}

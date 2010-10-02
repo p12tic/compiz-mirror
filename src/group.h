@@ -343,6 +343,14 @@ class TextLayer :
 {
     public:
 
+	void paint (const GLWindowPaintAttrib &attrib,
+		    const GLMatrix	      &transform,
+		    const CompRegion	      &paintRegion,
+		    const CompRegion	      &clipRegion,
+		    int			      mask);
+
+    public:
+
 	TextLayer (CompSize size) :
 	    TextureLayer::TextureLayer (size),
 	    mPixmap (None) {}
