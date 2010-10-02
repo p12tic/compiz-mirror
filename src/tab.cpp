@@ -1324,7 +1324,7 @@ GroupSelection::tabGroup (CompWindow *main)
 
     mTabbingState = NoTabbing;
     /* Slot is initialized after GroupTabBar is created */
-    gs->changeTab (gw->mSlot, RotateUncertain);
+    gs->changeTab (gw->mSlot, GroupTabBar::RotateUncertain);
     gw->mGroup->mTabBar->recalcTabBarPos (WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
 
@@ -1502,7 +1502,7 @@ GroupSelection::untabGroup ()
  */
 bool
 GroupScreen::changeTab (GroupTabBarSlot             *topTab,
-			     ChangeTabAnimationDirection direction)
+			     GroupTabBar::ChangeAnimationDirection direction)
 {
     CompWindow     *w, *oldTopTab;
     GroupSelection *group;
@@ -1531,9 +1531,9 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 
     if (group->mTabBar->mChangeState != GroupTabBar::NoTabChange)
 	group->mTabBar->mNextDirection = direction;
-    else if (direction == RotateLeft)
+    else if (direction == GroupTabBar::RotateLeft)
 	group->mTabBar->mChangeAnimationDirection = 1;
-    else if (direction == RotateRight)
+    else if (direction == GroupTabBar::RotateRight)
 	group->mTabBar->mChangeAnimationDirection = -1;
     else
     {
@@ -2618,9 +2618,9 @@ GroupScreen::changeTabLeft (CompAction          *action,
     gw = GroupWindow::get (topTab);
 
     if (gw->mSlot->mPrev)
-	return changeTab (gw->mSlot->mPrev, RotateLeft);
+	return changeTab (gw->mSlot->mPrev, GroupTabBar::RotateLeft);
     else
-	return changeTab (gw->mGroup->mTabBar->mSlots.back (), RotateLeft);
+	return changeTab (gw->mGroup->mTabBar->mSlots.back (), GroupTabBar::RotateLeft);
 }
 
 /*
@@ -2657,9 +2657,9 @@ GroupScreen::changeTabRight (CompAction         *action,
     gw = GroupWindow::get (topTab);
 
     if (gw->mSlot->mNext)
-	return changeTab (gw->mSlot->mNext, RotateRight);
+	return changeTab (gw->mSlot->mNext, GroupTabBar::RotateRight);
     else
-	return changeTab (gw->mGroup->mTabBar->mSlots.front (), RotateRight);
+	return changeTab (gw->mGroup->mTabBar->mSlots.front (), GroupTabBar::RotateRight);
 }
 
 /*

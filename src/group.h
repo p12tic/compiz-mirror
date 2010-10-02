@@ -107,17 +107,6 @@ class GroupTabBar;
 #define IS_PREV_TOP_TAB(w, group) (HAS_PREV_TOP_WIN (group) && \
 				   ((PREV_TOP_TAB (group)->id ()) == (w)->id ()))
 
-
-
-/*
- * Rotation direction for change tab animation
- */
-typedef enum {
-    RotateUncertain = 0,
-    RotateLeft,
-    RotateRight
-} ChangeTabAnimationDirection;
-
 typedef struct _GlowTextureProperties {
     char *textureData;
     int  textureSize;
@@ -322,6 +311,15 @@ class GroupTabBar
 	    TabChangeNewIn
 	} TabChangeState;
 
+	/*
+	 * Rotation direction for change tab animation
+	 */
+	typedef enum {
+	    RotateUncertain = 0,
+	    RotateLeft,
+	    RotateRight
+	} ChangeAnimationDirection;
+
     public:
 
 	GroupTabBar (GroupSelection *, CompWindow *);
@@ -398,7 +396,7 @@ class GroupTabBar
 	when the tab was changed again during animation.
 	Another animation should be started again,
 	switching for this window. */
-	ChangeTabAnimationDirection mNextDirection;
+	GroupTabBar::ChangeAnimationDirection mNextDirection;
 	GroupTabBarSlot             *mNextTopTab;
 
 	/* check focus stealing prevention after changing tabs */
@@ -706,7 +704,7 @@ class GroupScreen :
 
 	bool
 	changeTab (GroupTabBarSlot             *topTab,
-		        ChangeTabAnimationDirection direction);
+		        GroupTabBar::ChangeAnimationDirection direction);
 
 	void
 	recalcSlotPos (GroupTabBarSlot *slot,

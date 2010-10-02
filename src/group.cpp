@@ -1088,17 +1088,17 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 		if (button == Button4)
 		{
 		    if (gw->mSlot->mPrev)
-			changeTab (gw->mSlot->mPrev, RotateLeft);
+			changeTab (gw->mSlot->mPrev, GroupTabBar::RotateLeft);
 		    else
 			changeTab (gw->mGroup->mTabBar->mSlots.back (),
-					RotateLeft);
+					GroupTabBar::RotateLeft);
 		}
 		else
 		{
 		    if (gw->mSlot->mNext)
-			changeTab (gw->mSlot->mNext, RotateRight);
+			changeTab (gw->mSlot->mNext, GroupTabBar::RotateRight);
 		    else
-			changeTab (gw->mGroup->mTabBar->mSlots.front (), RotateRight);
+			changeTab (gw->mGroup->mTabBar->mSlots.front (), GroupTabBar::RotateRight);
 		}
 		break;
 	    }
@@ -1129,7 +1129,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
     if (!mDragged)
     {
-	changeTab (mDraggedSlot, RotateUncertain);
+	changeTab (mDraggedSlot, GroupTabBar::RotateUncertain);
 	mDraggedSlot = NULL;
 
 	if (mGrabState == ScreenGrabTabDrag)
@@ -1493,7 +1493,7 @@ GroupScreen::handleEvent (XEvent      *event)
 		    !IS_TOP_TAB (w, gw->mGroup))
 		{
 		    gw->mGroup->mTabBar->mCheckFocusAfterTabChange = true;
-		    changeTab (gw->mSlot, RotateUncertain);
+		    changeTab (gw->mSlot, GroupTabBar::RotateUncertain);
 		}
 	    }
 	}
@@ -1964,7 +1964,7 @@ GroupWindow::activate ()
     GROUP_SCREEN (screen);
 
     if (mGroup && mGroup->mTabBar && !IS_TOP_TAB (window, mGroup))
-	gs->changeTab (mSlot, RotateUncertain);
+	gs->changeTab (mSlot, GroupTabBar::RotateUncertain);
 
     window->activate ();
 }
