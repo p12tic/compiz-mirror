@@ -1,5 +1,5 @@
-#ifndef _GROUP_GLOW_H
-#define _GROUP_GLOW_H
+#ifndef _GROUP_GLOWTEX_H
+#define _GROUP_GLOWTEX_H
 
 /**
  *

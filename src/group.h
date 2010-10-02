@@ -50,6 +50,7 @@ class GroupScreen;
 
 #include "layers.h"
 #include "tabbar.h"
+#include "glow.h"
 #include "group_options.h"
 
 /*
@@ -114,11 +115,7 @@ extern bool gTextAvailable;
 #define IS_PREV_TOP_TAB(w, group) (HAS_PREV_TOP_WIN (group) && \
 				   ((PREV_TOP_TAB (group)->id ()) == (w)->id ()))
 
-typedef struct _GlowTextureProperties {
-    char *textureData;
-    int  textureSize;
-    int  glowOffset;
-} GlowTextureProperties;
+
 
 /* Mask values for groupTabSetVisibility */
 #define SHOW_BAR_INSTANTLY_MASK (1 << 0)
@@ -131,28 +128,6 @@ typedef struct _GlowTextureProperties {
 #define CONSTRAINED_Y		(1 << 3)
 #define DONT_CONSTRAIN		(1 << 4)
 #define IS_UNGROUPING           (1 << 5)
-
-
-
-/*
- * GroupGlow
- */
-
-class GlowQuad {
-    public:
-	CompRect	  mBox;
-	GLTexture::Matrix mMatrix;
-};
-
-#define GLOWQUAD_TOPLEFT	 0
-#define GLOWQUAD_TOPRIGHT	 1
-#define GLOWQUAD_BOTTOMLEFT	 2
-#define GLOWQUAD_BOTTOMRIGHT     3
-#define GLOWQUAD_TOP		 4
-#define GLOWQUAD_BOTTOM		 5
-#define GLOWQUAD_LEFT		 6
-#define GLOWQUAD_RIGHT		 7
-#define NUM_GLOWQUADS		 8
 
 /*
  * Selection
