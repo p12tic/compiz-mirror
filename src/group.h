@@ -45,12 +45,11 @@
 #include <limits.h>
 
 class GroupSelection;
-class GroupTabBarSlot;
-class GroupTabBar;
 class GroupWindow;
 class GroupScreen;
 
 #include "layers.h"
+#include "tabbar.h"
 #include "group_options.h"
 
 
@@ -127,60 +126,7 @@ typedef struct _GlowTextureProperties {
 #define DONT_CONSTRAIN		(1 << 4)
 #define IS_UNGROUPING           (1 << 5)
 
-/*
- * GroupTabBarSlot
- */
-class GroupTabBarSlot :
-    public GLLayer
-{
-public:
-    class List :
-        public std::list <GroupTabBarSlot *>,
-	public GLLayer
-    {
-	public:
-	    List (const CompSize &size, GroupSelection *g) :
-	        GLLayer::GLLayer (size, g) {};
-	
-	    void paint (const GLWindowPaintAttrib &attrib,
-		        const GLMatrix	          &transform,
-			const CompRegion	  &region,
-		        const CompRegion	  &clipRegion,
-			int			  mask);
-    };
-public:
 
-    void getDrawOffset (int &hoffset,
-			int &voffset);
-
-    void setTargetOpacity (int);
-    
-    void paint (const GLWindowPaintAttrib &sa,
-		const GLMatrix	          &transform,
-		const CompRegion	  &paintRegion,
-		const CompRegion	  &clipRegion,
-		int 			  mask);
-
-public:
-    GroupTabBarSlot *mPrev;
-    GroupTabBarSlot *mNext;
-
-    CompRegion mRegion;
-
-    CompWindow *mWindow;
-    GroupTabBar *mTabBar;
-
-    /* For DnD animations */
-    int	  mSpringX;
-    int	  mSpeed;
-    float mMsSinceLastMove;
-    int   mOpacity;
-private:
-
-    GroupTabBarSlot (CompWindow *, GroupTabBar *);
-    
-    friend class GroupTabBar;
-};
 
 /*
  * GroupGlow
@@ -241,136 +187,6 @@ typedef struct _GroupResizeInfo {
     CompWindow *mResizedWindow;
     CompRect    mOrigGeometry;
 } GroupResizeInfo;
-
-/*
- * GroupTabBar
- */
-class GroupTabBar
-{
-    public:
-
-	typedef enum {
-	    NoTabChange = 0,
-	    TabChangeOldOut,
-	    TabChangeNewIn
-	} TabChangeState;
-
-	/*
-	 * Rotation direction for change tab animation
-	 */
-	typedef enum {
-	    RotateUncertain = 0,
-	    RotateLeft,
-	    RotateRight
-	} ChangeAnimationDirection;
-
-    public:
-
-	GroupTabBar (GroupSelection *, CompWindow *);
-	~GroupTabBar ();
-
-    public:
-
-	/* Input Prevention */
-
-	void createInputPreventionWindow ();
-	void destroyInputPreventionWindow ();
-
-	/* Drawing */
-
-	void paint (const GLWindowPaintAttrib &attrib,
-		    const GLMatrix		 &transform,
-		    unsigned int		 mask,		
-		    CompRegion		 clipRegion);
-
-	void damageRegion ();
-
-	/* Animation */
-
-	void handleTabBarFade (int msSinceLastPaint);
-	void handleTextFade (int msSinceLastPaint);
-
-	/* Region and position management */
-
-	void moveTabBarRegion (int		   dx,
-			       int		   dy,
-			       bool		   syncIPW);
-
-	void resizeTabBarRegion (CompRect       &box,
-			         bool           syncIPW);
-
-	void recalcTabBarPos (int		  middleX,
-			      int		  minX1,
-			      int		  maxX2);
-
-	/* Slot management */
-	void insertTabBarSlotBefore (GroupTabBarSlot *slot,
-				     GroupTabBarSlot *nextSlot);
-
-	void insertTabBarSlotAfter (GroupTabBarSlot *slot,
-				    GroupTabBarSlot *prevSlot);
-
-	void insertTabBarSlot (GroupTabBarSlot *slot);
-
-	void unhookTabBarSlot (GroupTabBarSlot *slot,
-			       bool            temporary);
-
-	void deleteTabBarSlot (GroupTabBarSlot *slot);
-
-	void createSlot (CompWindow      *w);
-
-	void applyForces (GroupTabBarSlot *);
-
-	void applySpeeds (int            msSinceLastRepaint);
-
-
-    public:
-	GroupTabBarSlot::List mSlots;
-
-	GroupSelection  *mGroup;
-
-	GroupTabBarSlot* mTopTab;
-	GroupTabBarSlot* mPrevTopTab;
-
-	/* needed for untabbing animation */
-	CompWindow *mLastTopTab;
-
-	/* Those two are only for the change-tab animation,
-	when the tab was changed again during animation.
-	Another animation should be started again,
-	switching for this window. */
-	GroupTabBar::ChangeAnimationDirection mNextDirection;
-	GroupTabBarSlot             *mNextTopTab;
-
-	/* check focus stealing prevention after changing tabs */
-	bool mCheckFocusAfterTabChange;
-
-	int            mChangeAnimationTime;
-	int            mChangeAnimationDirection;
-	GroupTabBar::TabChangeState mChangeState;
-
-	GroupTabBarSlot *mHoveredSlot;
-	GroupTabBarSlot *mTextSlot;
-
-	TextLayer *mTextLayer;
-	BackgroundLayer *mBgLayer;
-	SelectionLayer *mSelectionLayer;
-
-	PaintState mState;
-	int        mAnimationTime;
-	CompRegion mRegion;
-	int        mOldWidth;
-
-	CompTimer mTimeoutHandle;
-
-	/* For DnD animations */
-	int   mLeftSpringX, mRightSpringX;
-	int   mLeftSpeed, mRightSpeed;
-	float mLeftMsSinceLastMove, mRightMsSinceLastMove;
-
-	Window mInputPrevention;
-	bool   mIpwMapped;
-};
 
 /*
  * GroupSelection
