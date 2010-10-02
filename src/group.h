@@ -379,10 +379,17 @@ class GroupWindow :
 
     public:
 
-	/* paint.c */
-
+	/* glow.cpp */
+	
+	void
+	paintGlow (GLFragment::Attrib        &attrib,
+		   const CompRegion	     &paintRegion,
+		   unsigned int		     mask);
+		   
 	void
 	computeGlowQuads (GLTexture::Matrix *matrix);
+
+	/* paint.c */
 
 	void
 	getStretchRectangle (CompRect &box,

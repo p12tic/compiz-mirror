@@ -669,8 +669,6 @@ GroupWindow::glDraw (const GLMatrix           &transform,
     bool       status;
     CompRegion paintRegion (region);
 
-    GROUP_SCREEN (screen);
-
     if (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads)
     {
 	if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
@@ -678,73 +676,9 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 
 	if (paintRegion.numRects ())
 	{
-	    CompRegion reg;
-	    int    i;
-
 	    gWindow->geometry ().reset ();
 
-	    for (i = 0; i < NUM_GLOWQUADS; i++)
-	    {
-		reg = CompRegion (mGlowQuads[i].mBox);
-
-		if (reg.boundingRect ().x1 () < reg.boundingRect ().x2 () &&
-		    reg.boundingRect ().y1 () < reg.boundingRect ().y2 ())
-		{
-		    GLTexture::MatrixList matl;
-		    reg = CompRegion (reg.boundingRect ().x1 (),
-				      reg.boundingRect ().y1 (),
-			  	      reg.boundingRect ().width (),
-				      reg.boundingRect ().height ());
-
-		    matl.push_back (mGlowQuads[i].mMatrix);
-		    gWindow->glAddGeometry (matl, reg, paintRegion);
-		}
-	    }
-
-	    if (gWindow->geometry ().vertices)
-	    {
-		GLFragment::Attrib fAttrib (attrib);
-		GLushort       average;
-		GLushort       color[3] = {mGroup->mColor[0],
-		                           mGroup->mColor[1],
-		                           mGroup->mColor[2]};
-
-		/* Apply brightness to color. */
-		color[0] *= (float)attrib.getBrightness () / BRIGHT;
-		color[1] *= (float)attrib.getBrightness () / BRIGHT;
-		color[2] *= (float)attrib.getBrightness () / BRIGHT;
-
-		/* Apply saturation to color. */
-		average = (color[0] + color[1] + color[2]) / 3;
-		color[0] = average + (color[0] - average) *
-		           attrib.getSaturation () / COLOR;
-		color[1] = average + (color[1] - average) *
-		           attrib.getSaturation () / COLOR;
-		color[2] = average + (color[2] - average) *
-		           attrib.getSaturation () / COLOR;
-
-		fAttrib.setOpacity (OPAQUE);
-		fAttrib.setSaturation (COLOR);
-		fAttrib.setBrightness  (BRIGHT);
-
-		gs->gScreen->setTexEnvMode (GL_MODULATE);
-		glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-		glColor4us (color[0], color[1], color[2], attrib.getOpacity ());
-
-		/* we use PAINT_WINDOW_TRANSFORMED_MASK here to force
-		   the usage of a good texture filter */
-		foreach (GLTexture *tex, gs->mGlowTexture)
-		{
-		    gWindow->glDrawTexture (tex, fAttrib, mask | 
-						PAINT_WINDOW_BLEND_MASK       |
-						PAINT_WINDOW_TRANSLUCENT_MASK |
-						PAINT_WINDOW_TRANSFORMED_MASK);
-		}
-
-		glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-		gs->gScreen->setTexEnvMode (GL_REPLACE);
-		glColor4usv (defaultColor);
-	    }
+	    paintGlow (attrib, paintRegion, mask);
 	}
     }
 
