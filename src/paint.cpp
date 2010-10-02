@@ -470,7 +470,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 		bar->handleTextFade (msSinceLastPaint);
 
 	    if (bar->mBgLayer && bar->mBgLayer->mBgAnimation)
-		bar->handleTabBarAnimation (msSinceLastPaint);
+		bar->mBgLayer->handleAnimation (msSinceLastPaint);
 	}
 
 	if (group->mTabBar &&

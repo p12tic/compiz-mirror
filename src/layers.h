@@ -142,6 +142,8 @@ class BackgroundLayer :
 		    const CompRegion	      &paintRegion,
 		    const CompRegion	      &clipRegion,
 		    int			      mask);
+	
+	void handleAnimation (int msSinceLastPaint);
 
     public:
 

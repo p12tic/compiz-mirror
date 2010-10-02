@@ -584,19 +584,16 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
  *
  */
 void
-GroupTabBar::handleTabBarAnimation (int            msSinceLastPaint)
+BackgroundLayer::handleAnimation (int            msSinceLastPaint)
 {
-    if (!mBgLayer)
-	return;
+    mBgAnimationTime -= msSinceLastPaint;
 
-    mBgLayer->mBgAnimationTime -= msSinceLastPaint;
-
-    if (mBgLayer->mBgAnimationTime <= 0)
+    if (mBgAnimationTime <= 0)
     {
-	mBgLayer->mBgAnimationTime = 0;
-	mBgLayer->mBgAnimation = BackgroundLayer::AnimationNone;
+	mBgAnimationTime = 0;
+	mBgAnimation = AnimationNone;
 
-	mBgLayer->render ();
+	render ();
     }
 }
 /*
