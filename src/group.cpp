@@ -1776,7 +1776,7 @@ GroupWindow::moveNotify (int    dx,
     }
 
     if (!gs->optionGetMoveAll () || gs->mIgnoreMode ||
-	(mGroup->mTabbingState != NoTabbing) ||
+	(mGroup->mTabbingState != GroupSelection::NoTabbing) ||
 	(mGroup->mGrabWindow != window->id ()) ||
 	!(mGroup->mGrabMask & CompWindowGrabMoveMask))
     {

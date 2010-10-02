@@ -1516,7 +1516,7 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 
     group = gw->mGroup;
 
-    if (!group || !group->mTabBar || group->mTabbingState != NoTabbing)
+    if (!group || !group->mTabBar || group->mTabbingState != GroupSelection::NoTabbing)
 	return true;
 
     if (group->mTabBar->mChangeState == NoTabChange && group->mTabBar->mTopTab == topTab)

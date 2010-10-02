@@ -486,7 +486,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 
 	it++;
 
-	if (group->mTabbingState != NoTabbing)
+	if (group->mTabbingState != GroupSelection::NoTabbing)
 	    group->drawTabAnimation (msSinceLastPaint);
     }
 }
@@ -518,7 +518,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     {
 	if ((group->mTabBar &&
 	     group->mTabBar->mChangeState != NoTabChange) ||
-	    group->mTabbingState != NoTabbing)
+	    group->mTabbingState != GroupSelection::NoTabbing)
 	{
 	    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 	}
@@ -619,7 +619,7 @@ GroupScreen::donePaint ()
 
     foreach (group, mGroups)
     {
-	if (group->mTabbingState != NoTabbing)
+	if (group->mTabbingState != GroupSelection::NoTabbing)
 	    cScreen->damageScreen ();
 	else if (group->mTabBar &&
 		 group->mTabBar->mChangeState != NoTabChange)
@@ -1022,7 +1022,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	doTabbing = (mAnimateState & (IS_ANIMATED | FINISHED_ANIMATION)) &&
 	            !(group->mTabBar && IS_TOP_TAB (w, group) &&
-		      (group->mTabbingState == Tabbing));
+		      (group->mTabbingState == GroupSelection::Tabbing));
 
 	showTabbar = group->mTabBar && (group->mTabBar->mState != PaintOff) &&
 	             (((IS_TOP_TAB (w, group)) &&
@@ -1090,7 +1090,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    animProgress = progress;
 
 	    progress = MAX (progress, 0.0f);
-	    if (mGroup->mTabbingState == Tabbing)
+	    if (mGroup->mTabbingState == GroupSelection::Tabbing)
 		progress = 1.0f - progress;
 
 	    wAttrib.opacity = (float)wAttrib.opacity * progress;
@@ -1137,7 +1137,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	    if (doTabbing)
 	    {
-		if (mGroup->mTabbingState == Tabbing)
+		if (mGroup->mTabbingState == GroupSelection::Tabbing)
 		{
 		    morphBase   = w;
 		    morphTarget = TOP_TAB (mGroup);

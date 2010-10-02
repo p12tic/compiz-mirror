@@ -187,12 +187,6 @@ typedef enum {
     TabChangeNewIn
 } TabChangeState;
 
-typedef enum {
-    NoTabbing = 0,
-    Tabbing,
-    Untabbing
-} TabbingState;
-
 
 
 /*
@@ -455,6 +449,12 @@ class GroupSelection
 	    UngroupAll,
 	    UngroupSingle
 	} UngroupState;
+	
+	typedef enum {
+	    NoTabbing = 0,
+	    Tabbing,
+	    Untabbing
+	} TabbingState;
 
     public:
 
@@ -523,7 +523,7 @@ public:
 
     GroupTabBar *mTabBar;
 
-    TabbingState mTabbingState;
+    GroupSelection::TabbingState mTabbingState;
 
     UngroupState mUngroupState;
 
