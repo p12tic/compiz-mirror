@@ -966,12 +966,18 @@ GroupScreen::groupChangeColor (CompAction           *action,
 	{
 	    GLushort *color = gw->mGroup->mColor;
 	    float    factor = ((float)RAND_MAX + 1) / 0xffff;
+	    CompSize size (gw->mGroup->mTabBar->mTopTab->mRegion.boundingRect ().width (),
+			   gw->mGroup->mTabBar->mTopTab->mRegion.boundingRect ().height ());
 
 	    color[0] = (int)(rand () / factor);
 	    color[1] = (int)(rand () / factor);
 	    color[2] = (int)(rand () / factor);
 
-	    gw->mGroup->mTabBar->renderTopTabHighlight ();
+	    gw->mGroup->mTabBar->mSelectionLayer =
+	       SelectionLayer::rebuild (gw->mGroup->mTabBar->mSelectionLayer,
+					size);
+	    if (gw->mGroup->mTabBar->mSelectionLayer)
+		gw->mGroup->mTabBar->mSelectionLayer->render ();
 	    cScreen->damageScreen ();
 	}
     }

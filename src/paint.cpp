@@ -279,7 +279,7 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 		   the only problem is that we would have 2 redraws if
 		   there is an animation */
 		if (newWidth != mOldWidth || mBgAnimation)
-		    renderTabBarBackground ();
+		    mBgLayer->render ();
 
 		mOldWidth = newWidth;
 		box	  = mRegion.boundingRect ();

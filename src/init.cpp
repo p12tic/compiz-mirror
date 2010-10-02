@@ -52,7 +52,7 @@ GroupScreen::optionChanged (CompOption *opt,
 	case GroupOptions::BorderWidth:
 	    foreach (group, mGroups)
 		if (group->mTabBar)
-		    group->mTabBar->renderTabBarBackground ();
+		    group->mTabBar->mBgLayer->render ();
 	    break;
 	case GroupOptions::TabbarFontSize:
 	case GroupOptions::TabbarFontColor:
@@ -171,7 +171,15 @@ GroupScreen::groupApplyInitialActions ()
 	    gw->mGroup->mColor[2] = color[2];
 
 	    if (gw->mGroup->mTabBar)
-		gw->mGroup->mTabBar->renderTopTabHighlight ();
+	    {
+		CompSize size (gw->mGroup->mTabBar->mTopTab->mRegion.boundingRect ().width (),
+			       gw->mGroup->mTabBar->mTopTab->mRegion.boundingRect ().height ());
+		gw->mGroup->mTabBar->mSelectionLayer =
+		       SelectionLayer::rebuild (gw->mGroup->mTabBar->mSelectionLayer,
+						size);
+		if (gw->mGroup->mTabBar->mSelectionLayer)
+		    gw->mGroup->mTabBar->mSelectionLayer->render ();
+	    }
 	    cScreen->damageScreen ();
 	}
 

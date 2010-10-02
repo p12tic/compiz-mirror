@@ -32,11 +32,12 @@ SelectionLayer*
 SelectionLayer::rebuild (SelectionLayer *layer,
 			 CompSize   size)
 {
-    int        timeBuf = layer->mAnimationTime;
-    PaintState stateBuf = layer->mState;
+    int              timeBuf = layer->mAnimationTime;
+    PaintState       stateBuf = layer->mState;
+    GroupSelection   *gBuf   = layer->mGroup;
 
     delete layer;
-    layer = SelectionLayer::create (size);
+    layer = SelectionLayer::create (size, gBuf);
     if (!layer)
 	return NULL;
 
@@ -50,11 +51,12 @@ BackgroundLayer*
 BackgroundLayer::rebuild (BackgroundLayer *layer,
 			  CompSize   size)
 {
-    int        timeBuf = layer->mAnimationTime;
-    PaintState stateBuf = layer->mState;
+    int              timeBuf = layer->mAnimationTime;
+    PaintState       stateBuf = layer->mState;
+    GroupSelection   *gBuf = layer->mGroup;
 
     delete layer;
-    layer = BackgroundLayer::create (size);
+    layer = BackgroundLayer::create (size, gBuf);
     if (!layer)
 	return NULL;
 
@@ -95,13 +97,14 @@ CairoLayer::~CairoLayer ()
 	free (mBuffer);
 }
 
-CairoLayer::CairoLayer (CompSize &size) :
+CairoLayer::CairoLayer (CompSize &size, GroupSelection *g) :
     TextureLayer::TextureLayer (size)
 {
     mFailed = true;
     mSurface = NULL;
     mCairo   = NULL;
     mBuffer  = NULL;
+    mGroup   = g;
 
     mAnimationTime = 0;
     mState         = PaintOff;
@@ -153,11 +156,11 @@ CairoLayer::CairoLayer (CompSize &size) :
  *
  */
 BackgroundLayer*
-BackgroundLayer::create (CompSize size)
+BackgroundLayer::create (CompSize size, GroupSelection *g)
 {
     BackgroundLayer *layer;
 
-    layer = new BackgroundLayer (size);
+    layer = new BackgroundLayer (size, g);
     if (!layer || layer->mFailed)
         return NULL;
 
@@ -165,11 +168,11 @@ BackgroundLayer::create (CompSize size)
 }
 
 SelectionLayer*
-SelectionLayer::create (CompSize size)
+SelectionLayer::create (CompSize size, GroupSelection *g)
 {
     SelectionLayer *layer;
 
-    layer = new SelectionLayer (size);
+    layer = new SelectionLayer (size, g);
     if (!layer || layer->mFailed)
         return NULL;
 
@@ -183,14 +186,12 @@ SelectionLayer::create (CompSize size)
  *
  */
 void
-GroupTabBar::renderTopTabHighlight ()
+SelectionLayer::render ()
 {
-    CairoLayer *layer;
     cairo_t         *cr;
     int             width, height;
 
-    if (!HAS_TOP_WIN (mGroup) ||
-	!mSelectionLayer || !mSelectionLayer->mCairo)
+    if (!HAS_TOP_WIN (mGroup) || !mCairo)
     {
 	return;
     }
@@ -200,13 +201,7 @@ GroupTabBar::renderTopTabHighlight ()
     height = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
 	     mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
 
-    mSelectionLayer = SelectionLayer::rebuild (mSelectionLayer,
-					   CompSize (width, height));
-    if (!mSelectionLayer)
-	return;
-
-    layer = mSelectionLayer;
-    cr = mSelectionLayer->mCairo;
+    cr = mCairo;
 
     /* fill */
     cairo_set_line_width (cr, 2);
@@ -229,8 +224,8 @@ GroupTabBar::renderTopTabHighlight ()
 			   (mGroup->mColor[3] / 65535.0f));
     cairo_stroke (cr);
 
-    layer->mTexture = GLTexture::imageBufferToTexture ((char*) layer->mBuffer,
-			 		  (CompSize &) *layer);
+    mTexture = GLTexture::imageBufferToTexture ((char*) mBuffer,
+			 		  (CompSize &) *this);
 }
 
 /*
@@ -238,34 +233,32 @@ GroupTabBar::renderTopTabHighlight ()
  *
  */
 void
-GroupTabBar::renderTabBarBackground ()
+BackgroundLayer::render ()
 {
-    CairoLayer *layer;
     cairo_t         *cr;
-    int             width, height, radius;
+    int             twidth, theight, radius;
     int             borderWidth;
     float           r, g, b, a;
     double          x0, y0, x1, y1;
     
     GROUP_SCREEN (screen);
 
-    if (!HAS_TOP_WIN (mGroup) || !mBgLayer || !mBgLayer->mCairo)
+    if (!HAS_TOP_WIN (mGroup) || !mCairo)
 	return;
 
-    width = mRegion.boundingRect ().x2 () - mRegion.boundingRect ().x1 ();
-    height = mRegion.boundingRect ().y2 () - mRegion.boundingRect ().y1 ();
+    twidth = mGroup->mTabBar->mRegion.boundingRect ().width ();
+    theight = mGroup->mTabBar->mRegion.boundingRect ().height ();
     radius = gs->optionGetBorderRadius ();
 
-    if (width > mBgLayer->width ())
-	width = mBgLayer->width ();
+    if (twidth > width ())
+	twidth = width ();
 
-    if (radius > width / 2)
-	radius = width / 2;
+    if (radius > twidth / 2)
+	radius = twidth / 2;
 
-    layer = mBgLayer;
-    cr = layer->mCairo;
+    cr = mCairo;
 
-    layer->clear ();
+    clear ();
 
     borderWidth = gs->optionGetBorderWidth ();
     cairo_set_line_width (cr, borderWidth);
@@ -274,8 +267,8 @@ GroupTabBar::renderTabBarBackground ()
 
     x0 = borderWidth / 2.0f;
     y0 = borderWidth / 2.0f;
-    x1 = width  - borderWidth / 2.0f;
-    y1 = height - borderWidth / 2.0f;
+    x1 = twidth  - borderWidth / 2.0f;
+    y1 = theight - borderWidth / 2.0f;
     cairo_move_to (cr, x0 + radius, y0);
     cairo_arc (cr, x1 - radius, y0 + radius, radius, M_PI * 1.5, M_PI * 2.0);
     cairo_arc (cr, x1 - radius, y1 - radius, radius, 0.0, M_PI * 0.5);
@@ -302,7 +295,7 @@ GroupTabBar::renderTabBarBackground ()
 	{
 	    /* fill */
 	    cairo_pattern_t *pattern;
-	    pattern = cairo_pattern_create_linear (0, 0, width, height);
+	    pattern = cairo_pattern_create_linear (0, 0, twidth, theight);
 
 	    /* highlight color */
 	    r = gs->optionGetTabHighlightColorRed () / 65535.0f;
@@ -337,8 +330,8 @@ GroupTabBar::renderTabBarBackground ()
 
 	    /* make draw the shape for the highlight and
 	       create a pattern for it */
-	    cairo_rectangle (cr, 0, 0, width, height / 2);
-	    pattern = cairo_pattern_create_linear (0, 0, 0, height);
+	    cairo_rectangle (cr, 0, 0, twidth, theight / 2);
+	    pattern = cairo_pattern_create_linear (0, 0, 0, theight);
 
 	    /* highlight color */
 	    r = gs->optionGetTabHighlightColorRed () / 65535.0f;
@@ -361,8 +354,8 @@ GroupTabBar::renderTabBarBackground ()
 	    /* ==== SHADOW ===== */
 
 	    /* make draw the shape for the show and create a pattern for it */
-	    cairo_rectangle (cr, 0, height / 2, width, height);
-	    pattern = cairo_pattern_create_linear (0, 0, 0, height);
+	    cairo_rectangle (cr, 0, theight / 2, twidth, theight);
+	    pattern = cairo_pattern_create_linear (0, 0, 0, theight);
 
 	    /* we don't want to use a full highlight here
 	       so we mix the colors */
@@ -407,7 +400,7 @@ GroupTabBar::renderTabBarBackground ()
 	{
 	    /* fill */
 	    cairo_pattern_t *pattern;
-	    pattern = cairo_pattern_create_linear (0, 0, 0, height);
+	    pattern = cairo_pattern_create_linear (0, 0, 0, theight);
 
 	    /* base color #1 */
 	    r = gs->optionGetTabBaseColorRed () / 65535.0f;
@@ -450,12 +443,12 @@ GroupTabBar::renderTabBarBackground ()
 
 	    x0 = borderWidth / 2.0;
 	    y0 = borderWidth / 2.0;
-	    x1 = width  - borderWidth / 2.0;
-	    y1 = height - borderWidth / 2.0;
+	    x1 = twidth  - borderWidth / 2.0;
+	    y1 = theight - borderWidth / 2.0;
 	    radius = (y1 - y0) / 2;
 
 	    /* setup pattern */
-	    pattern = cairo_pattern_create_linear (0, 0, 0, height);
+	    pattern = cairo_pattern_create_linear (0, 0, 0, theight);
 
 	    /* we don't want to use a full highlight here
 	       so we mix the colors */
@@ -485,22 +478,22 @@ GroupTabBar::renderTabBarBackground ()
 
 	    x0 = borderWidth / 2.0;
 	    y0 = borderWidth / 2.0;
-	    x1 = width  - borderWidth / 2.0;
-	    y1 = height - borderWidth / 2.0;
+	    x1 = twidth  - borderWidth / 2.0;
+	    y1 = theight - borderWidth / 2.0;
 	    radius = (y1 - y0) / 2;
 
-	    ratio = (double)width / (double)height;
-	    transX = width - (width * ratio);
+	    ratio = (double)twidth / (double)theight;
+	    transX = twidth - (twidth * ratio);
 
 	    cairo_move_to (cr, x1, y1);
 	    cairo_line_to (cr, x1, y0);
-	    if (width < height)
+	    if (twidth < theight)
 	    {
 		cairo_translate (cr, transX, 0);
 		cairo_scale (cr, ratio, 1.0);
 	    }
 	    cairo_arc (cr, x1 - radius, y0, radius, 0.0, M_PI * 0.5);
-	    if (width < height)
+	    if (twidth < theight)
 	    {
 		cairo_scale (cr, 1.0 / ratio, 1.0);
 		cairo_translate (cr, -transX, 0);
@@ -511,7 +504,7 @@ GroupTabBar::renderTabBarBackground ()
 	    cairo_close_path (cr);
 
 	    /* setup pattern */
-	    pattern = cairo_pattern_create_linear (0, 0, 0, height);
+	    pattern = cairo_pattern_create_linear (0, 0, 0, theight);
 
 	    /* base color */
 	    r = gs->optionGetTabBaseColorRed () / 65535.0f;
@@ -543,8 +536,8 @@ GroupTabBar::renderTabBarBackground ()
 	    /* draw shape again for the outline */
 	    x0 = borderWidth / 2.0;
 	    y0 = borderWidth / 2.0;
-	    x1 = width  - borderWidth / 2.0;
-	    y1 = height - borderWidth / 2.0;
+	    x1 = twidth  - borderWidth / 2.0;
+	    y1 = theight - borderWidth / 2.0;
 	    radius = gs->optionGetBorderRadius ();
 
 	    cairo_move_to (cr, x0 + radius, y0);
@@ -571,18 +564,18 @@ GroupTabBar::renderTabBarBackground ()
     a = gs->optionGetTabBorderColorAlpha () / 65535.0f;
     cairo_set_source_rgba (cr, r, g, b, a);
 
-    if (mBgAnimation != AnimationNone)
+    if (mGroup->mTabBar->mBgAnimation != AnimationNone)
 	cairo_stroke_preserve (cr);
     else
 	cairo_stroke (cr);
 
-    switch (mBgAnimation) {
+    switch (mGroup->mTabBar->mBgAnimation) {
     case AnimationPulse:
 	{
 	    double animationProgress;
 	    double alpha;
 
-	    animationProgress = mBgAnimationTime /
+	    animationProgress = mGroup->mTabBar->mBgAnimationTime /
 		                (gs->optionGetPulseTime () * 1000.0);
 	    alpha = sin ((2 * PI * animationProgress) - 1.55)*0.5 + 0.5;
 	    if (alpha <= 0)
@@ -591,7 +584,7 @@ GroupTabBar::renderTabBarBackground ()
 	    cairo_save (cr);
 	    cairo_clip (cr);
 	    cairo_set_operator (cr, CAIRO_OPERATOR_XOR);
-	    cairo_rectangle (cr, 0.0, 0.0, width, height);
+	    cairo_rectangle (cr, 0.0, 0.0, twidth, theight);
 	    cairo_set_source_rgba (cr, 1.0, 1.0, 1.0, alpha);
 	    cairo_fill (cr);
 	    cairo_restore (cr);
@@ -605,10 +598,10 @@ GroupTabBar::renderTabBarBackground ()
 	    double          posX, alpha;
 	    cairo_pattern_t *pattern;
 
-	    animationProgress = mBgAnimationTime /
+	    animationProgress = mGroup->mTabBar->mBgAnimationTime /
 		                (gs->optionGetReflexTime () * 1000.0);
-	    reflexWidth = (mSlots.size () / 2.0) * 30;
-	    posX = (width + reflexWidth * 2.0) * animationProgress;
+	    reflexWidth = (mGroup->mTabBar->mSlots.size () / 2.0) * 30;
+	    posX = (twidth + reflexWidth * 2.0) * animationProgress;
 	    alpha = sin (PI * animationProgress) * 0.55;
 	    if (alpha <= 0)
 		break;
@@ -616,14 +609,14 @@ GroupTabBar::renderTabBarBackground ()
 	    cairo_save (cr);
 	    cairo_clip (cr);
 	    pattern = cairo_pattern_create_linear (posX - reflexWidth,
-						   0.0, posX, height);
+						   0.0, posX, theight);
 	    cairo_pattern_add_color_stop_rgba (pattern,
 					       0.0f, 1.0, 1.0, 1.0, 0.0);
 	    cairo_pattern_add_color_stop_rgba (pattern,
 					       0.5f, 1.0, 1.0, 1.0, alpha);
 	    cairo_pattern_add_color_stop_rgba (pattern,
 					       1.0f, 1.0, 1.0, 1.0, 0.0);
-	    cairo_rectangle (cr, 0.0, 0.0, width, height);
+	    cairo_rectangle (cr, 0.0, 0.0, twidth, theight);
 	    cairo_set_source (cr, pattern);
 	    cairo_fill (cr);
 	    cairo_restore (cr);
@@ -652,12 +645,12 @@ GroupTabBar::renderTabBarBackground ()
 
     cairo_restore (cr);
 
-    layer->mTexture = GLTexture::imageBufferToTexture ((char*) layer->mBuffer,
-			  		  (CompSize &) *layer);
+    mTexture = GLTexture::imageBufferToTexture ((char*) mBuffer,
+			  		  (CompSize &) *this);
 }
 
 /*
- * GroupSelection::enderWindowTitle
+ * GroupSelection::renderWindowTitle
  *
  */
 void

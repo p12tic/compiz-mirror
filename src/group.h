@@ -276,17 +276,19 @@ class CairoLayer :
     public:
 	
 	void clear ();
+	virtual void render () = 0;
 
     public:
 
 	/* used if layer is used for cairo drawing */
 	unsigned char   *mBuffer;
 	cairo_surface_t *mSurface;
-	cairo_t	    *mCairo;
-	bool	    mFailed;
+	cairo_t	        *mCairo;
+	bool	        mFailed;
+	GroupSelection  *mGroup;
 
     protected:
-	CairoLayer (CompSize &size);
+	CairoLayer (CompSize &size, GroupSelection *group);
 };
 
 class BackgroundLayer :
@@ -294,13 +296,15 @@ class BackgroundLayer :
 {
     public:
 
-	static BackgroundLayer * create (CompSize);
+	static BackgroundLayer * create (CompSize, GroupSelection *);
 	static BackgroundLayer * rebuild (BackgroundLayer *,
 				     CompSize);
 
+	void render ();
+
     private:
-	BackgroundLayer (CompSize &size) :
-	    CairoLayer::CairoLayer (size) {}
+	BackgroundLayer (CompSize &size, GroupSelection *group) :
+	    CairoLayer::CairoLayer (size, group) {}
 };
 
 class SelectionLayer :
@@ -308,13 +312,15 @@ class SelectionLayer :
 {
     public:
 
-	static SelectionLayer * create (CompSize);
+	static SelectionLayer * create (CompSize, GroupSelection *);
 	static SelectionLayer * rebuild (SelectionLayer *,
 					 CompSize);
 
+	void render ();
+
     private:
-	SelectionLayer (CompSize &size) :
-	    CairoLayer::CairoLayer (size) {}
+	SelectionLayer (CompSize &size, GroupSelection *group) :
+	    CairoLayer::CairoLayer (size, group) {}
 };
 
 class TextLayer :
@@ -323,7 +329,8 @@ class TextLayer :
     public:
 
 	TextLayer (CompSize size) :
-	    TextureLayer::TextureLayer (size) {}
+	    TextureLayer::TextureLayer (size),
+	    mPixmap (None) {}
     public:
 
 	/* used if layer is used for text drawing */
@@ -458,8 +465,6 @@ public:
 
     /* Rendering */
 
-    void renderTopTabHighlight ();
-    void renderTabBarBackground ();
     void renderWindowTitle ();
 
     /* Input Prevention */
