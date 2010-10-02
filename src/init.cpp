@@ -191,7 +191,8 @@ GroupScreen::applyInitialActions ()
 
 	if (optionGetAutotabCreate () && gw->isGroupWindow ())
 	{
-	    if (!gw->mGroup && (gw->mWindowState == WindowNormal))
+	    if (!gw->mGroup && (gw->mWindowState ==
+				GroupWindow::WindowNormal))
 	    {
 		gw->addWindowToGroup (NULL, 0);
 		if (gw->mGroup)

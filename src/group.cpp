@@ -1446,14 +1446,14 @@ GroupScreen::handleEvent (XEvent      *event)
 	    {
 		if (w->shaded ())
 		{
-		    gw->mWindowState = WindowShaded;
+		    gw->mWindowState = GroupWindow::WindowShaded;
 
 		    if (gw->mGroup && optionGetShadeAll ())
 			gw->mGroup->shadeWindows (w, true);
 		}
 		else if (w->minimized ())
 		{
-		    gw->mWindowState = WindowMinimized;
+		    gw->mWindowState = GroupWindow::WindowMinimized;
 
 		    if (gw->mGroup && optionGetMinimizeAll ())
 			gw->mGroup->minimizeWindows (w, true);

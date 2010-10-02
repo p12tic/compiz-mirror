@@ -107,16 +107,6 @@ class GroupTabBar;
 #define IS_PREV_TOP_TAB(w, group) (HAS_PREV_TOP_WIN (group) && \
 				   ((PREV_TOP_TAB (group)->id ()) == (w)->id ()))
 
-
-/*
- * Window states
- */
-typedef enum {
-    WindowNormal = 0,
-    WindowMinimized,
-    WindowShaded
-} GroupWindowState;
-
 /*
  * Screengrab states
  */
@@ -793,6 +783,17 @@ class GroupWindow :
 {
     public:
 
+	/*
+	 * Window states
+	 */
+	typedef enum {
+	    WindowNormal = 0,
+	    WindowMinimized,
+	    WindowShaded
+	} State;
+
+    public:
+
 	GroupWindow (CompWindow *);
 	~GroupWindow ();
 
@@ -952,8 +953,8 @@ class GroupWindow :
 
 	GlowQuad *mGlowQuads;
 
-	GroupWindowState    mWindowState;
-	GroupWindowHideInfo *mWindowHideInfo;
+	GroupWindow::State    mWindowState;
+	GroupWindowHideInfo   *mWindowHideInfo;
 
 	CompRect	    mResizeGeometry;
 
