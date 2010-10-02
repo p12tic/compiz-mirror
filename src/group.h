@@ -115,20 +115,6 @@ extern bool gTextAvailable;
 #define IS_PREV_TOP_TAB(w, group) (HAS_PREV_TOP_WIN (group) && \
 				   ((PREV_TOP_TAB (group)->id ()) == (w)->id ()))
 
-
-
-/* Mask values for groupTabSetVisibility */
-#define SHOW_BAR_INSTANTLY_MASK (1 << 0)
-#define PERMANENT		(1 << 1)
-
-/* Mask values for tabbing animation */
-#define IS_ANIMATED		(1 << 0)
-#define FINISHED_ANIMATION	(1 << 1)
-#define CONSTRAINED_X		(1 << 2)
-#define CONSTRAINED_Y		(1 << 3)
-#define DONT_CONSTRAIN		(1 << 4)
-#define IS_UNGROUPING           (1 << 5)
-
 /*
  * Selection
  */
