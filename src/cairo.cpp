@@ -97,7 +97,7 @@ CairoLayer::~CairoLayer ()
 	free (mBuffer);
 }
 
-CairoLayer::CairoLayer (CompSize &size, GroupSelection *g) :
+CairoLayer::CairoLayer (const CompSize &size, GroupSelection *g) :
     TextureLayer::TextureLayer (size, g)
 {
     mFailed = true;

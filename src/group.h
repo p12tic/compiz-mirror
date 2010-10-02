@@ -224,7 +224,8 @@ typedef enum {
 /*
  * GroupTabBarSlot
  */
-class GroupTabBarSlot
+class GroupTabBarSlot :
+    public GLLayer
 {
 public:
     typedef std::list <GroupTabBarSlot *> List;

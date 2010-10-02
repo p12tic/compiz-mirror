@@ -39,7 +39,7 @@ class Layer :
     public CompSize
 {
     public:
-	Layer (CompSize &size, GroupSelection *g) :
+	Layer (const CompSize &size, GroupSelection *g) :
 	    CompSize::CompSize (size),
 	    mGroup (g) {}
     public:
@@ -54,7 +54,7 @@ class GLLayer :
     public Layer
 {
     public:
-	GLLayer (CompSize &size, GroupSelection *g) :
+	GLLayer (const CompSize &size, GroupSelection *g) :
 	    Layer::Layer (size, g) {}
 
     public:
@@ -71,7 +71,7 @@ class TextureLayer :
     public GLLayer
 {
     public:
-	TextureLayer (CompSize &size, GroupSelection *g) :
+	TextureLayer (const CompSize &size, GroupSelection *g) :
 	    GLLayer::GLLayer (size, g) {}
 
     public:
@@ -116,7 +116,7 @@ class CairoLayer :
 	bool	        mFailed;
 
     protected:
-	CairoLayer (CompSize &size, GroupSelection *group);
+	CairoLayer (const CompSize &size, GroupSelection *group);
 };
 
 class BackgroundLayer :
@@ -136,7 +136,7 @@ class BackgroundLayer :
 		    int			      mask);
 
     private:
-	BackgroundLayer (CompSize &size, GroupSelection *group) :
+	BackgroundLayer (const CompSize &size, GroupSelection *group) :
 	    CairoLayer::CairoLayer (size, group) {}
 };
 
@@ -157,7 +157,7 @@ class SelectionLayer :
 		    int			      mask);
 
     private:
-	SelectionLayer (CompSize &size, GroupSelection *group) :
+	SelectionLayer (const CompSize &size, GroupSelection *group) :
 	    CairoLayer::CairoLayer (size, group) {}
 };
 
@@ -179,7 +179,7 @@ class TextLayer :
 
     public:
 
-	TextLayer (CompSize size, GroupSelection *g) :
+	TextLayer (const CompSize &size, GroupSelection *g) :
 	    TextureLayer::TextureLayer (size, g),
 	    mPixmap (None) {}
     public:

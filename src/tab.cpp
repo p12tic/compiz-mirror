@@ -2131,6 +2131,7 @@ GroupTabBar::deleteTabBarSlot (GroupTabBarSlot *slot)
 }
 
 GroupTabBarSlot::GroupTabBarSlot (CompWindow *w, GroupTabBar *bar) :
+    GLLayer (CompSize (0,0), bar->mGroup), // FIXME: make this the size?
     mWindow (w),
     mTabBar (bar)
 {
