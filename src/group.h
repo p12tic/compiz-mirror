@@ -108,15 +108,6 @@ class GroupTabBar;
 				   ((PREV_TOP_TAB (group)->id ()) == (w)->id ()))
 
 /*
- * Screengrab states
- */
-typedef enum {
-    ScreenGrabNone = 0,
-    ScreenGrabSelect,
-    ScreenGrabTabDrag
-} GroupScreenGrabState;
-
-/*
  * Ungrouping states
  */
 typedef enum {
@@ -555,6 +546,17 @@ class GroupScreen :
 {
     public:
 
+	/*
+	 * Screengrab states
+	 */
+	typedef enum {
+	    ScreenGrabNone = 0,
+	    ScreenGrabSelect,
+	    ScreenGrabTabDrag
+	} GrabState;
+
+    public:
+
 	GroupScreen (CompScreen *);
 	~GroupScreen ();
 
@@ -640,7 +642,7 @@ class GroupScreen :
 	/* group.c */
 
 	void
-	grabScreen (GroupScreenGrabState newState);
+	grabScreen (GroupScreen::GrabState newState);
 
 	bool
 	groupWindows (CompAction         *action,
@@ -747,7 +749,7 @@ class GroupScreen :
 
 	bool mQueued;
 
-	GroupScreenGrabState   mGrabState;
+	GroupScreen::GrabState   mGrabState;
 	CompScreen::GrabHandle mGrabIndex;
 
 	GroupSelection *mLastHoveredGroup;

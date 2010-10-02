@@ -2112,8 +2112,8 @@ GroupTabBar::deleteTabBarSlot (GroupTabBarSlot *slot)
 	gs->mDraggedSlot = NULL;
 	gs->mDragged = false;
 
-	if (gs->mGrabState == ScreenGrabTabDrag)
-	    gs->grabScreen (ScreenGrabNone);
+	if (gs->mGrabState == GroupScreen::ScreenGrabTabDrag)
+	    gs->grabScreen (GroupScreen::ScreenGrabNone);
     }
 
     gw->mSlot = NULL;

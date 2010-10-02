@@ -405,7 +405,7 @@ Selection::paint (const GLScreenPaintAttrib sa,
     x2 = MAX (mX1, mX2);
     y2 = MAX (mY1, mY2);
 
-    if (gs->mGrabState == ScreenGrabSelect)
+    if (gs->mGrabState == GroupScreen::ScreenGrabSelect)
     {
 	GLMatrix sTransform (transform);
 

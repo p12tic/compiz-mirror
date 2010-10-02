@@ -218,7 +218,7 @@ GroupWindow::updateResizeRectangle (CompRect   masterGeometry,
  *
  */
 void
-GroupScreen::grabScreen (GroupScreenGrabState newState)
+GroupScreen::grabScreen (GroupScreen::GrabState newState)
 {
     if ((mGrabState != newState) && mGrabIndex)
     {
