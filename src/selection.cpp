@@ -25,11 +25,11 @@
 #include "group.h"
 
 /*
- * groupWindowInRegion
+ * windowInRegion
  *
  */
 bool
-GroupWindow::groupWindowInRegion (CompRegion src,
+GroupWindow::windowInRegion (CompRegion src,
 				  float  precision)
 {
     int    i;
@@ -90,8 +90,8 @@ groupFindWindowsInRegion (CompRegion     reg)
 	CompWindow *w = *rit;
 	GROUP_WINDOW (w);
 
-	if (gw->groupIsGroupWindow () &&
-	    gw->groupWindowInRegion (reg, precision))
+	if (gw->isGroupWindow () &&
+	    gw->windowInRegion (reg, precision))
 	{
 	    if (gw->mGroup && groupFindGroupInWindows (gw->mGroup, ret))
 	    {
@@ -210,7 +210,7 @@ Selection::toGroup ()
 	if (gs->optionGetAutoGroup ())
 	{
 	    CompOption::Vector dummy;
-	    gs->groupGroupWindows (NULL, 0, dummy);
+	    gs->groupWindows (NULL, 0, dummy);
 	}
     }
 }
@@ -225,7 +225,7 @@ Selection::checkWindow (CompWindow *w)
     GROUP_WINDOW (w);
 
     /* filter out windows we don't want to be groupable */
-    if (!gw->groupIsGroupWindow ())
+    if (!gw->isGroupWindow ())
 	return;
 
     if (gw->mInSelection)
@@ -256,11 +256,11 @@ Selection::checkWindow (CompWindow *w)
 }
 
 /*
- * groupSelectSingle
+ * selectSingle
  *
  */
 bool
-GroupScreen::groupSelectSingle (CompAction         *action,
+GroupScreen::selectSingle (CompAction         *action,
 				CompAction::State  state,
 				CompOption::Vector options)
 {
@@ -276,17 +276,17 @@ GroupScreen::groupSelectSingle (CompAction         *action,
 }
 
 /*
- * groupSelect
+ * select
  *
  */
 bool
-GroupScreen::groupSelect (CompAction         *action,
+GroupScreen::select (CompAction         *action,
 			  CompAction::State  state,
 			  CompOption::Vector options)
 {
     if (mGrabState == ScreenGrabNone)
     {
-	groupGrabScreen (ScreenGrabSelect);
+	grabScreen (ScreenGrabSelect);
 
 	if (state & CompAction::StateInitButton)
 	{
@@ -301,17 +301,17 @@ GroupScreen::groupSelect (CompAction         *action,
 }
 
 /*
- * groupSelectTerminate
+ * selectTerminate
  *
  */
 bool
-GroupScreen::groupSelectTerminate (CompAction         *action,
+GroupScreen::selectTerminate (CompAction         *action,
 				   CompAction::State  state,
 				   CompOption::Vector options)
 {
     if (mGrabState == ScreenGrabSelect)
     {
-        groupGrabScreen (ScreenGrabNone);
+        grabScreen (ScreenGrabNone);
 
         if (mTmpSel.mX1 != mTmpSel.mX2 && mTmpSel.mY1 != mTmpSel.mY2)
         {

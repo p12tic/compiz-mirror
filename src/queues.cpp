@@ -32,7 +32,7 @@
 /* forward declaration */
 
 void
-GroupWindow::groupEnqueueMoveNotify (int  dx,
+GroupWindow::enqueueMoveNotify (int  dx,
 				     int  dy,
 				     bool immediate,
 				     bool sync)
@@ -70,7 +70,7 @@ GroupWindow::groupEnqueueMoveNotify (int  dx,
 }
 
 void
-GroupScreen::groupDequeueSyncs (GroupPendingSyncs *syncs)
+GroupScreen::dequeueSyncs (GroupPendingSyncs *syncs)
 {
     GroupPendingSyncs *sync;
 
@@ -92,7 +92,7 @@ GroupScreen::groupDequeueSyncs (GroupPendingSyncs *syncs)
 }
 
 void
-GroupScreen::groupDequeueMoveNotifies ()
+GroupScreen::dequeueMoveNotifies ()
 {
     GroupPendingMoves *move;
     GroupPendingSyncs *syncs = NULL, *sync;
@@ -123,14 +123,14 @@ GroupScreen::groupDequeueMoveNotifies ()
 
     if (syncs)
     {
-	groupDequeueSyncs (syncs);
+	dequeueSyncs (syncs);
     }
 
     mQueued = false;
 }
 
 void
-GroupWindow::groupEnqueueGrabNotify (int          x,
+GroupWindow::enqueueGrabNotify (int          x,
 				     int          y,
 				     unsigned int state,
 				     unsigned int mask)
@@ -168,7 +168,7 @@ GroupWindow::groupEnqueueGrabNotify (int          x,
 }
 
 void
-GroupScreen::groupDequeueGrabNotifies ()
+GroupScreen::dequeueGrabNotifies ()
 {
     GroupPendingGrabs *grab;
 
@@ -189,7 +189,7 @@ GroupScreen::groupDequeueGrabNotifies ()
 }
 
 void
-GroupWindow::groupEnqueueUngrabNotify ()
+GroupWindow::enqueueUngrabNotify ()
 {
     GroupPendingUngrabs *ungrab;
 
@@ -220,7 +220,7 @@ GroupWindow::groupEnqueueUngrabNotify ()
 }
 
 void
-GroupScreen::groupDequeueUngrabNotifies ()
+GroupScreen::dequeueUngrabNotifies ()
 {
     GroupPendingUngrabs *ungrab;
 
@@ -240,11 +240,11 @@ GroupScreen::groupDequeueUngrabNotifies ()
 }
 
 bool
-GroupScreen::groupDequeueTimer ()
+GroupScreen::dequeueTimer ()
 {
-    groupDequeueMoveNotifies ();
-    groupDequeueGrabNotifies ();
-    groupDequeueUngrabNotifies ();
+    dequeueMoveNotifies ();
+    dequeueGrabNotifies ();
+    dequeueUngrabNotifies ();
 
     return false;
 }

@@ -656,7 +656,7 @@ GroupScreen::donePaint ()
 }
 
 void
-GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
+GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
 {
     CompRect	      *box;
     int		      x1, x2, y1, y2;
@@ -944,7 +944,7 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 }
 
 void
-GroupWindow::groupGetStretchRectangle (CompRect &box,
+GroupWindow::getStretchRectangle (CompRect &box,
 				       float    &xScaleRet,
 				       float    &yScaleRet)
 {
@@ -985,7 +985,7 @@ GroupWindow::groupGetStretchRectangle (CompRect &box,
 }
 
 void
-GroupScreen::groupDamagePaintRectangle (const CompRect &box)
+GroupScreen::damagePaintRectangle (const CompRect &box)
 {
     CompRegion reg (box);
 
@@ -1114,7 +1114,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    float  xScale, yScale;
 	    CompRect box;
 
-	    groupGetStretchRectangle (box, xScale, yScale);
+	    getStretchRectangle (box, xScale, yScale);
 
 	    xOrigin = window->x () - w->input ().left;
 	    yOrigin = window->y () - w->input ().top;

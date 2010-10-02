@@ -607,135 +607,135 @@ class GroupScreen :
 		       Options    num);
 
 	bool
-	groupApplyInitialActions ();
+	applyInitialActions ();
 
 	/* cairo.c */
 
 	void
-	groupDamagePaintRectangle (const CompRect &box);
+	damagePaintRectangle (const CompRect &box);
 
 	/* queues.c */
 
 	void
-	groupDequeueSyncs (GroupPendingSyncs *syncs);
+	dequeueSyncs (GroupPendingSyncs *syncs);
 
 	void
-	groupDequeueMoveNotifies ();
+	dequeueMoveNotifies ();
 
 	void
-	groupDequeueGrabNotifies ();
+	dequeueGrabNotifies ();
 
 	void
-	groupDequeueUngrabNotifies ();
+	dequeueUngrabNotifies ();
 
 	bool
-	groupDequeueTimer ();
+	dequeueTimer ();
 
 	/* selection.c */
 
 	bool
-	groupSelectSingle (CompAction         *action,
+	selectSingle (CompAction         *action,
 			CompAction::State  state,
 			CompOption::Vector options);
 	bool
-	groupSelect (CompAction         *action,
+	select (CompAction         *action,
 		  CompAction::State  state,
 		  CompOption::Vector options);
 
 	bool
-	groupSelectTerminate (CompAction         *action,
+	selectTerminate (CompAction         *action,
 			   CompAction::State  state,
 			   CompOption::Vector options);
 
 	/* group.c */
 
 	void
-	groupGrabScreen (GroupScreenGrabState newState);
+	grabScreen (GroupScreenGrabState newState);
 
 	bool
-	groupGroupWindows (CompAction         *action,
+	groupWindows (CompAction         *action,
 			CompAction::State  state,
 			CompOption::Vector options);
 
 	bool
-	groupUnGroupWindows (CompAction          *action,
+	ungroupWindows (CompAction          *action,
 			  CompAction::State   state,
 			  CompOption::Vector  options);
 
 	bool
-	groupRemoveWindow (CompAction         *action,
+	removeWindow (CompAction         *action,
 			CompAction::State  state,
 			CompOption::Vector options);
 
 	bool
-	groupCloseWindows (CompAction           *action,
+	closeWindows (CompAction           *action,
 			CompAction::State    state,
 			CompOption::Vector   options);
 
 	bool
-	groupChangeColor (CompAction           *action,
+	changeColor (CompAction           *action,
 		       CompAction::State    state,
 		       CompOption::Vector   options);
 
 	bool
-	groupSetIgnore (CompAction         *action,
+	setIgnore (CompAction         *action,
 		     CompAction::State  state,
 		     CompOption::Vector options);
 
 	bool
-	groupUnsetIgnore (CompAction          *action,
+	unsetIgnore (CompAction          *action,
 		       CompAction::State   state,
 		       CompOption::Vector  options);
 
 	void
-	groupHandleButtonPressEvent (XEvent *event);
+	handleButtonPressEvent (XEvent *event);
 
 	void
 	handleButtonReleaseEvent (XEvent *event);
 
 	void
-	groupHandleMotionEvent (int xRoot,
+	handleMotionEvent (int xRoot,
 			     int yRoot);
 
 	/* tab.c */
 
 	bool
-	groupGetCurrentMousePosition (int &x, int &y);
+	getCurrentMousePosition (int &x, int &y);
 
 	void
-	groupTabChangeActivateEvent (bool activating);
+	tabChangeActivateEvent (bool activating);
 
 	void
-	groupUpdateTabBars (Window enteredWin);
+	updateTabBars (Window enteredWin);
 
 	CompRegion
-	groupGetConstrainRegion ();
+	getConstrainRegion ();
 
 	bool
-	groupChangeTab (GroupTabBarSlot             *topTab,
+	changeTab (GroupTabBarSlot             *topTab,
 		        ChangeTabAnimationDirection direction);
 
 	void
-	groupRecalcSlotPos (GroupTabBarSlot *slot,
-			    int		 slotPos);
+	recalcSlotPos (GroupTabBarSlot *slot,
+		       int		 slotPos);
 
 	bool
-	groupInitTab (CompAction         *aciton,
-		      CompAction::State  state,
-		      CompOption::Vector options);
+	initTab (CompAction         *aciton,
+		 CompAction::State  state,
+		 CompOption::Vector options);
 
 	bool
-	groupChangeTabLeft (CompAction          *action,
-			    CompAction::State   state,
-			    CompOption::Vector  options);
+	changeTabLeft (CompAction          *action,
+		       CompAction::State   state,
+		       CompOption::Vector  options);
 	bool
-	groupChangeTabRight (CompAction         *action,
-			     CompAction::State  state,
-			     CompOption::Vector options);
+	changeTabRight (CompAction         *action,
+			CompAction::State  state,
+			CompOption::Vector options);
 
 	void
-	groupSwitchTopTabInput (GroupSelection *group,
-				bool	    enable);
+	switchTopTabInput (GroupSelection *group,
+			   bool		  enable);
 
     public:
 
@@ -852,87 +852,87 @@ class GroupWindow :
 	/* paint.c */
 
 	void
-	groupComputeGlowQuads (GLTexture::Matrix *matrix);
+	computeGlowQuads (GLTexture::Matrix *matrix);
 
 	void
-	groupGetStretchRectangle (CompRect &box,
-			          float  &xScaleRet,
-			          float  &yScaleRet);
+	getStretchRectangle (CompRect &box,
+			     float  &xScaleRet,
+			     float  &yScaleRet);
 
 	/* queues.c */
 
 	void
-	groupEnqueueMoveNotify (int  dx,
-			     int  dy,
-			     bool immediate,
-			     bool sync);
+	enqueueMoveNotify (int  dx,
+			   int  dy,
+			   bool immediate,
+			   bool sync);
 
 	void
-	groupEnqueueGrabNotify (int          x,
-			     int          y,
-			     unsigned int state,
-			     unsigned int mask);
+	enqueueGrabNotify (int          x,
+			   int          y,
+			   unsigned int state,
+			   unsigned int mask);
 
 	void
-	groupEnqueueUngrabNotify ();
+	enqueueUngrabNotify ();
 
 	/* selection.c */
 
 	bool
-	groupWindowInRegion (CompRegion src,
+	windowInRegion (CompRegion src,
 			  float  precision);
 
 	/* group.c */
 
 	bool
-	groupIsGroupWindow ();
+	isGroupWindow ();
 
 	bool
-	groupDragHoverTimeout ();
+	dragHoverTimeout ();
 
 	bool
-	groupCheckWindowProperty (CompWindow *w,
+	checkWindowProperty (CompWindow *w,
 			       long int   *id,
 			       bool       *tabbed,
 			       GLushort   *color);
 
 	void
-	groupUpdateWindowProperty ();
+	updateWindowProperty ();
 
 	unsigned int
-	groupUpdateResizeRectangle (CompRect	    masterGeometry,
+	updateResizeRectangle (CompRect	    masterGeometry,
 				    bool	    damage);
 
 	void
-	groupDeleteGroupWindow ();
+	deleteGroupWindow ();
 
 	void
-	groupRemoveWindowFromGroup ();
+	removeWindowFromGroup ();
 
 	void
-	groupAddWindowToGroup (GroupSelection *group,
+	addWindowToGroup (GroupSelection *group,
 			    long int       initialIdent);
 
 	/* tab.cpp */
 
 	CompRegion
-	groupGetClippingRegion ();
+	getClippingRegion ();
 
 	void
-	groupClearWindowInputShape (GroupWindowHideInfo *hideInfo);
+	clearWindowInputShape (GroupWindowHideInfo *hideInfo);
 
 	void
-	groupSetWindowVisibility (bool visible);
+	setWindowVisibility (bool visible);
 
 	int
 	adjustTabVelocity ();
 
 	bool
-	groupConstrainMovement (CompRegion constrainRegion,
-				int        dx,
-				int        dy,
-				int        &new_dx,
-				int        &new_dy);
+	constrainMovement (CompRegion constrainRegion,
+			   int        dx,
+			   int        dy,
+			   int        &new_dx,
+			   int        &new_dy);
 
 
 

@@ -25,7 +25,7 @@
 #include "group.h"
 
 /*
- * groupGetCurrentMousePosition
+ * getCurrentMousePosition
  *
  * Description:
  * Return the current function of the pointer at the given screen.
@@ -33,7 +33,7 @@
  *
  */
 bool
-GroupScreen::groupGetCurrentMousePosition (int &x, int &y)
+GroupScreen::getCurrentMousePosition (int &x, int &y)
 {
     MousePoller poller;
     CompPoint pos = poller.getCurrentPosition ();
@@ -45,7 +45,7 @@ GroupScreen::groupGetCurrentMousePosition (int &x, int &y)
 }
 
 /*
- * groupGetClippingRegion
+ * getClippingRegion
  *
  * Description:
  * This function returns a clipping region which is used to clip
@@ -58,7 +58,7 @@ GroupScreen::groupGetCurrentMousePosition (int &x, int &y)
  *
  */
 CompRegion
-GroupWindow::groupGetClippingRegion ()
+GroupWindow::getClippingRegion ()
 {
     CompWindow *cw;
     CompRegion     clip;
@@ -85,11 +85,11 @@ GroupWindow::groupGetClippingRegion ()
 
 
 /*
- * groupClearWindowInputShape
+ * clearWindowInputShape
  *
  */
 void
-GroupWindow::groupClearWindowInputShape (GroupWindowHideInfo *hideInfo)
+GroupWindow::clearWindowInputShape (GroupWindowHideInfo *hideInfo)
 {
     XRectangle  *rects;
     int         count = 0, ordering;
@@ -129,11 +129,11 @@ GroupWindow::groupClearWindowInputShape (GroupWindowHideInfo *hideInfo)
 }
 
 /*
- * groupSetWindowVisibility
+ * setWindowVisibility
  *
  */
 void
-GroupWindow::groupSetWindowVisibility (bool visible)
+GroupWindow::setWindowVisibility (bool visible)
 {
     if (!visible && !mWindowHideInfo)
     {
@@ -158,7 +158,7 @@ GroupWindow::groupSetWindowVisibility (bool visible)
 	else
 	    info->mShapeWindow = window->id ();
 
-	groupClearWindowInputShape (info);
+	clearWindowInputShape (info);
 
 	info->mSkipState = window->state () & (CompWindowStateSkipPagerMask |
 				              CompWindowStateSkipTaskbarMask);
@@ -204,7 +204,7 @@ GroupWindow::groupSetWindowVisibility (bool visible)
  * Description:
  * This function is called when the time expired (== timeout).
  * We use this to realize a delay with the bar hiding after tab change.
- * groupHandleAnimation sets up a timer after the animation has finished.
+ * handleAnimation sets up a timer after the animation has finished.
  * This function itself basically just sets the tab bar to a PaintOff status
  * through calling groupSetTabBarVisibility.
  * The PERMANENT mask allows you to force hiding even of
@@ -239,7 +239,7 @@ GroupSelection::showDelayTimeout ()
 
     topTab = TOP_TAB (this);
 
-    gs->groupGetCurrentMousePosition (mouseX, mouseY);
+    gs->getCurrentMousePosition (mouseX, mouseY);
 
     mTabBar->recalcTabBarPos (mouseX, WIN_REAL_X (topTab),
 			  WIN_REAL_X (topTab) + WIN_REAL_WIDTH (topTab));
@@ -293,12 +293,12 @@ GroupSelection::tabSetVisibility (bool           visible,
     if ((topTab->state () & CompWindowStateHiddenMask) || topTab->invisible ())
     {
 	bar->mState = PaintOff;
-	gs->groupSwitchTopTabInput (this, true);
+	gs->switchTopTabInput (this, true);
     }
     else if (visible && bar->mState != PaintPermanentOn && (mask & PERMANENT))
     {
 	bar->mState = PaintPermanentOn;
-	gs->groupSwitchTopTabInput (this, false);
+	gs->switchTopTabInput (this, false);
     }
     else if (visible && bar->mState == PaintPermanentOn && !(mask & PERMANENT))
     {
@@ -312,7 +312,7 @@ GroupSelection::tabSetVisibility (bool           visible,
 	    bar->mBgAnimationTime = gs->optionGetReflexTime () * 1000.0;
 	}
 	bar->mState = PaintFadeIn;
-	gs->groupSwitchTopTabInput (this, false);
+	gs->switchTopTabInput (this, false);
     }
     else if (!visible &&
 	     (bar->mState != PaintPermanentOn || (mask & PERMANENT)) &&
@@ -320,7 +320,7 @@ GroupSelection::tabSetVisibility (bool           visible,
 	      bar->mState == PaintFadeIn))
     {
 	bar->mState = PaintFadeOut;
-	gs->groupSwitchTopTabInput (this, true);
+	gs->switchTopTabInput (this, true);
     }
 
     if (bar->mState == PaintFadeIn || bar->mState == PaintFadeOut)
@@ -424,7 +424,7 @@ GroupSelection::handleHoverDetection (const CompPoint &p)
 	GroupTabBarSlot *slot;
 
 	bar->mHoveredSlot = NULL;
-	clip = GroupWindow::get (topTab)->groupGetClippingRegion ();
+	clip = GroupWindow::get (topTab)->getClippingRegion ();
 
 	foreach (slot, bar->mSlots)
 	{
@@ -597,13 +597,13 @@ GroupTabBar::handleTabBarAnimation (int            msSinceLastPaint)
     }
 }
 /*
- * groupTabChangeActivateEvent
+ * tabChangeActivateEvent
  *
  * Description: Creates a compiz event to let other plugins know about
  * the starting and ending point of the tab changing animation
  */
 void
-GroupScreen::groupTabChangeActivateEvent (bool activating)
+GroupScreen::tabChangeActivateEvent (bool activating)
 {
     CompOption::Vector o;
 
@@ -625,7 +625,7 @@ GroupScreen::groupTabChangeActivateEvent (bool activating)
  *
  * Description:
  * This function handles the change animation. It's called
- * from groupHandleChanges. Don't let the changeState
+ * from handleChanges. Don't let the changeState
  * confuse you, PaintFadeIn equals with the start of the
  * rotate animation and PaintFadeOut is the end of these
  * animation.
@@ -675,10 +675,10 @@ GroupSelection::handleAnimation ()
     {
 	int oldChangeAnimationTime = mTabBar->mChangeAnimationTime;
 
-	gs->groupTabChangeActivateEvent (false);
+	gs->tabChangeActivateEvent (false);
 
 	if (mTabBar->mPrevTopTab)
-	    GroupWindow::get (PREV_TOP_TAB (this))->groupSetWindowVisibility (false);
+	    GroupWindow::get (PREV_TOP_TAB (this))->setWindowVisibility (false);
 
 	mTabBar->mPrevTopTab = mTabBar->mTopTab;
 	mTabBar->mChangeState = NoTabChange;
@@ -688,7 +688,7 @@ GroupSelection::handleAnimation ()
 	    GroupTabBarSlot *next = mTabBar->mNextTopTab;
 	    mTabBar->mNextTopTab = NULL;
 
-	    gs->groupChangeTab (next, mTabBar->mNextDirection);
+	    gs->changeTab (next, mTabBar->mNextDirection);
 
 	    if (mTabBar->mChangeState == TabChangeOldOut)
 	    {
@@ -779,7 +779,7 @@ GroupSelection::finishTabbing ()
 	
     mTabbingState = NoTabbing;
     
-    gs->groupTabChangeActivateEvent (false);
+    gs->tabChangeActivateEvent (false);
 
     if (mTabBar)
     {
@@ -797,7 +797,7 @@ GroupSelection::finishTabbing ()
 	    if (slot == mTabBar->mTopTab || (gw->mAnimateState & IS_UNGROUPING))
 		continue;
 
-	    gw->groupSetWindowVisibility (false);
+	    gw->setWindowVisibility (false);
 	}
 	mTabBar->mPrevTopTab = mTabBar->mTopTab;
     }
@@ -820,7 +820,7 @@ GroupSelection::finishTabbing ()
 	    (gw->mAnimateState & IS_UNGROUPING))
 	{
 	    /* Possibility of stack breakage here, stop here */
-	    gw->groupRemoveWindowFromGroup ();
+	    gw->removeWindowFromGroup ();
 	    it = mWindows.end ();	    
 	}
 
@@ -896,7 +896,7 @@ GroupSelection::drawTabAnimation (int	      msSinceLastPaint)
 }
 
 /*
- * GroupScreen::groupUpdateTabBars
+ * GroupScreen::updateTabBars
  *
  * Description:
  * This function is responsible for showing / unshowing the tab-bars,
@@ -909,7 +909,7 @@ GroupSelection::drawTabAnimation (int	      msSinceLastPaint)
  *
  */
 void
-GroupScreen::groupUpdateTabBars (Window enteredWin)
+GroupScreen::updateTabBars (Window enteredWin)
 {
     CompWindow     *w = NULL;
     GroupSelection *hoveredGroup = NULL;
@@ -937,7 +937,7 @@ GroupScreen::groupUpdateTabBars (Window enteredWin)
 	    int mouseX, mouseY;
 	    /* it is grouped and tabbed, so now we have to
 	       check if we hovered the title bar or the frame */
-	    if (groupGetCurrentMousePosition (mouseX, mouseY))
+	    if (getCurrentMousePosition (mouseX, mouseY))
 	    {
 		CompRect rect;
 		CompRegion     reg;
@@ -1018,11 +1018,11 @@ GroupScreen::groupUpdateTabBars (Window enteredWin)
 
 
 /*
- * groupGetConstrainRegion
+ * getConstrainRegion
  *
  */
 CompRegion
-GroupScreen::groupGetConstrainRegion ()
+GroupScreen::getConstrainRegion ()
 {
     CompRegion     region;
     CompRect       r;
@@ -1071,11 +1071,11 @@ GroupScreen::groupGetConstrainRegion ()
 }
 
 /*
- * groupConstrainMovement
+ * constrainMovement
  *
  */
 bool
-GroupWindow::groupConstrainMovement (CompRegion constrainRegion,
+GroupWindow::constrainMovement (CompRegion constrainRegion,
 				     int        dx,
 				     int        dy,
 				     int        &new_dx,
@@ -1165,7 +1165,7 @@ GroupSelection::applyConstraining (CompRegion	    constrainRegion,
 	    /* applying the constraining result of another window
 	       might move the window offscreen, too, so check
 	       if this is not the case */
-	    if (gw->groupConstrainMovement (constrainRegion, dx, 0, dx, dummy))
+	    if (gw->constrainMovement (constrainRegion, dx, 0, dx, dummy))
 		gw->mAnimateState |= CONSTRAINED_X;
 
 	    gw->mDestination.setX (gw->mDestination.x () + dx);
@@ -1177,7 +1177,7 @@ GroupSelection::applyConstraining (CompRegion	    constrainRegion,
 	    gw->mAnimateState |= IS_ANIMATED;
 
 	    /* analog to X case */
-	    if (gw->groupConstrainMovement (constrainRegion, 0, dy, dummy, dy))
+	    if (gw->constrainMovement (constrainRegion, 0, dy, dummy, dy))
 		gw->mAnimateState |= CONSTRAINED_Y;
 
 	    gw->mDestination.setY (gw->mDestination.y () + dy);
@@ -1201,12 +1201,12 @@ GroupSelection::startTabbingAnimation (bool           tab)
 	return;
 
     mTabbingState = (tab) ? Tabbing : Untabbing;
-    gs->groupTabChangeActivateEvent (true);
+    gs->tabChangeActivateEvent (true);
 
     if (!tab)
     {
 	/* we need to set up the X/Y constraining on untabbing */
-	CompRegion constrainRegion = gs->groupGetConstrainRegion ();
+	CompRegion constrainRegion = gs->getConstrainRegion ();
 	bool   constrainedWindows = true;
 
 	/* reset all flags */
@@ -1246,7 +1246,7 @@ GroupSelection::startTabbingAnimation (bool           tab)
 		constrainStatus = constrainRegion.contains (statusRect);
 
 		/* constrain the movement */
-		if (gw->groupConstrainMovement (constrainRegion,
+		if (gw->constrainMovement (constrainRegion,
 					    gw->mDestination.x () - gw->mOrgPos.x (),
 					    gw->mDestination.y () - gw->mOrgPos.y (),
 					    dx, dy))
@@ -1324,7 +1324,7 @@ GroupSelection::tabGroup (CompWindow *main)
 
     mTabbingState = NoTabbing;
     /* Slot is initialized after GroupTabBar is created */
-    gs->groupChangeTab (gw->mSlot, RotateUncertain);
+    gs->changeTab (gw->mSlot, RotateUncertain);
     gw->mGroup->mTabBar->recalcTabBarPos (WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
 
@@ -1466,7 +1466,7 @@ GroupSelection::untabGroup ()
 	    gs->mQueued = false;
 	}
 
-	gw->groupSetWindowVisibility (true);
+	gw->setWindowVisibility (true);
 
 	/* save the old original position - we might need it
 	   if constraining fails */
@@ -1497,11 +1497,11 @@ GroupSelection::untabGroup ()
 }
 
 /*
- * groupChangeTab
+ * changeTab
  *
  */
 bool
-GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
+GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 			     ChangeTabAnimationDirection direction)
 {
     CompWindow     *w, *oldTopTab;
@@ -1598,7 +1598,7 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 
     if (topTab != group->mTabBar->mNextTopTab)
     {
-	gw->groupSetWindowVisibility (true);
+	gw->setWindowVisibility (true);
 	if (oldTopTab)
 	{
 	    int dx, dy;
@@ -1618,7 +1618,7 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 	       the second half will be PaintFadeOut */
 	    group->mTabBar->mChangeAnimationTime =
 		optionGetChangeAnimationTime () * 500;
-	    groupTabChangeActivateEvent (true);
+	    tabChangeActivateEvent (true);
 	    group->mTabBar->mChangeState = TabChangeOldOut;
 	}
 	else
@@ -1653,11 +1653,11 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 }
 
 /*
- * groupRecalcSlotPos
+ * recalcSlotPos
  *
  */
 void
-GroupScreen::groupRecalcSlotPos (GroupTabBarSlot *slot,
+GroupScreen::recalcSlotPos (GroupTabBarSlot *slot,
 				 int		 slotPos)
 {
     GroupSelection *group;
@@ -1772,7 +1772,7 @@ GroupTabBar::recalcTabBarPos (int		middleX,
 	if (slot == gs->mDraggedSlot && gs->mDragged)
 	    continue;
 
-	gs->groupRecalcSlotPos (slot, currentSlot);
+	gs->recalcSlotPos (slot, currentSlot);
 	slot->mRegion.translate (mRegion.boundingRect ().x1 (),
 				 mRegion.boundingRect ().y1 ());
 
@@ -2052,9 +2052,9 @@ GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
 	    group->mTabBar->mTopTab = NULL;
 
 	    if (next)
-		gs->groupChangeTab (next, RotateRight);
+		gs->changeTab (next, RotateRight);
 	    else if (prev)
-		gs->groupChangeTab (prev, RotateLeft);
+		gs->changeTab (prev, RotateLeft);
 
 	    if (gs->optionGetUntabOnClose ())
 		group->untabGroup ();
@@ -2113,11 +2113,11 @@ GroupTabBar::deleteTabBarSlot (GroupTabBarSlot *slot)
 	gs->mDragged = false;
 
 	if (gs->mGrabState == ScreenGrabTabDrag)
-	    gs->groupGrabScreen (ScreenGrabNone);
+	    gs->grabScreen (ScreenGrabNone);
     }
 
     gw->mSlot = NULL;
-    gw->groupUpdateWindowProperty ();
+    gw->updateWindowProperty ();
     delete slot;
 }
 
@@ -2145,7 +2145,7 @@ GroupTabBar::createSlot (CompWindow      *w)
 
     insertTabBarSlot (slot);
     gw->mSlot = slot;
-    gw->groupUpdateWindowProperty ();
+    gw->updateWindowProperty ();
 }
 
 #define SPRING_K     GroupScreen::get (screen)->optionGetDragSpringK()
@@ -2540,11 +2540,11 @@ GroupTabBar::~GroupTabBar ()
 }
 
 /*
- * groupInitTab
+ * initTab
  *
  */
 bool
-GroupScreen::groupInitTab (CompAction         *action,
+GroupScreen::initTab (CompAction         *action,
 			   CompAction::State  state,
 			   CompOption::Vector options)
 {
@@ -2561,7 +2561,7 @@ GroupScreen::groupInitTab (CompAction         *action,
 
     if (gw->mInSelection)
     {
-	groupGroupWindows (action, state, options);
+	groupWindows (action, state, options);
 	/* If the window was selected, we don't want to
 	   untab the group, because the user probably
 	   wanted to tab the selected windows. */
@@ -2582,11 +2582,11 @@ GroupScreen::groupInitTab (CompAction         *action,
 }
 
 /*
- * groupChangeTabLeft
+ * changeTabLeft
  *
  */
 bool
-GroupScreen::groupChangeTabLeft (CompAction          *action,
+GroupScreen::changeTabLeft (CompAction          *action,
 				 CompAction::State   state,
 				 CompOption::Vector  options)
 {
@@ -2616,17 +2616,17 @@ GroupScreen::groupChangeTabLeft (CompAction          *action,
     gw = GroupWindow::get (topTab);
 
     if (gw->mSlot->mPrev)
-	return groupChangeTab (gw->mSlot->mPrev, RotateLeft);
+	return changeTab (gw->mSlot->mPrev, RotateLeft);
     else
-	return groupChangeTab (gw->mGroup->mTabBar->mSlots.back (), RotateLeft);
+	return changeTab (gw->mGroup->mTabBar->mSlots.back (), RotateLeft);
 }
 
 /*
- * groupChangeTabRight
+ * changeTabRight
  *
  */
 bool
-GroupScreen::groupChangeTabRight (CompAction         *action,
+GroupScreen::changeTabRight (CompAction         *action,
 				  CompAction::State  state,
 				  CompOption::Vector options)
 {
@@ -2655,17 +2655,17 @@ GroupScreen::groupChangeTabRight (CompAction         *action,
     gw = GroupWindow::get (topTab);
 
     if (gw->mSlot->mNext)
-	return groupChangeTab (gw->mSlot->mNext, RotateRight);
+	return changeTab (gw->mSlot->mNext, RotateRight);
     else
-	return groupChangeTab (gw->mGroup->mTabBar->mSlots.front (), RotateRight);
+	return changeTab (gw->mGroup->mTabBar->mSlots.front (), RotateRight);
 }
 
 /*
- * groupSwitchTopTabInput
+ * switchTopTabInput
  *
  */
 void
-GroupScreen::groupSwitchTopTabInput (GroupSelection *group,
+GroupScreen::switchTopTabInput (GroupSelection *group,
 				     bool	    enable)
 {
     if (!group->mTabBar || !HAS_TOP_WIN (group))
