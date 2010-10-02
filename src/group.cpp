@@ -567,22 +567,21 @@ GroupWindow::groupRemoveWindowFromGroup ()
 	if (HAS_TOP_WIN (group))
 	{
 	    CompWindow *tw = TOP_TAB (group);
-	    int        oldX = mOrgPos.x;
-	    int        oldY = mOrgPos.y;
+	    int        oldX = mOrgPos.x ();
+	    int        oldY = mOrgPos.y ();
 
-	    mOrgPos.x = WIN_CENTER_X (tw) - (WIN_WIDTH (window) / 2);
-	    mOrgPos.y = WIN_CENTER_Y (tw) - (WIN_HEIGHT (window) / 2);
+	    mOrgPos =
+	       CompPoint (WIN_CENTER_X (tw) - (WIN_WIDTH (window) / 2),
+			  WIN_CENTER_Y (tw) - (WIN_HEIGHT (window) / 2));
 
-	    mDestination.x = mOrgPos.x + mMainTabOffset.x;
-	    mDestination.y = mOrgPos.y + mMainTabOffset.y;
+	    mDestination = mOrgPos + mMainTabOffset;
 
-	    mMainTabOffset.x = oldX;
-	    mMainTabOffset.y = oldY;
+	    mMainTabOffset = CompPoint (oldX, oldY);
 
 	    if (mTx || mTy)
 	    {
-		mTx -= (mOrgPos.x - oldX);
-		mTy -= (mOrgPos.y - oldY);
+		mTx -= (mOrgPos.x () - oldX);
+		mTy -= (mOrgPos.y () - oldY);
 	    }
 
 	    mAnimateState = IS_ANIMATED;
@@ -773,13 +772,16 @@ GroupWindow::groupAddWindowToGroup (GroupSelection *group,
 		if (!mSlot)
 		    group->mTabBar->createSlot (window);
 
-		mDestination.x = WIN_CENTER_X (topTab) - (WIN_WIDTH (window) / 2);
-		mDestination.y = WIN_CENTER_Y (topTab) -
-		                    (WIN_HEIGHT (window) / 2);
-		mMainTabOffset.x = WIN_X (window) - mDestination.x;
-		mMainTabOffset.y = WIN_Y (window) - mDestination.y;
-		mOrgPos.x = WIN_X (window);
-		mOrgPos.y = WIN_Y (window);
+		mDestination = CompPoint (WIN_CENTER_X (topTab) -
+					  (WIN_WIDTH (window) / 2),
+					  WIN_CENTER_Y (topTab) -
+					  (WIN_HEIGHT (window) / 2));
+
+		mMainTabOffset = CompPoint (WIN_X (window),
+					    WIN_Y (window)) -
+				 mDestination;
+
+		mOrgPos = CompPoint (WIN_X (window), WIN_Y (window));
 
 		mXVelocity = mYVelocity = 0.0f;
 
@@ -1227,8 +1229,8 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 		{
 		    CompWindow *tw = TOP_TAB (tmpGroup);
 
-		    oldPosX = WIN_CENTER_X (tw) + gw->mMainTabOffset.x;
-		    oldPosY = WIN_CENTER_Y (tw) + gw->mMainTabOffset.y;
+		    oldPosX = WIN_CENTER_X (tw) + gw->mMainTabOffset.x ();
+		    oldPosY = WIN_CENTER_Y (tw) + gw->mMainTabOffset.y ();
 
 		    GroupWindow::get (w)->groupSetWindowVisibility (true);
 		}
@@ -1242,8 +1244,8 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 		if (HAS_TOP_WIN (group))
 		{
 		    CompWindow *tw = TOP_TAB (group);
-		    gw->mMainTabOffset.x = oldPosX - WIN_CENTER_X (tw);
-		    gw->mMainTabOffset.y = oldPosY - WIN_CENTER_Y (tw);
+		    gw->mMainTabOffset.setX (oldPosX - WIN_CENTER_X (tw));
+		    gw->mMainTabOffset.setY (oldPosY - WIN_CENTER_Y (tw));
 		}
 	    }
 	    else
@@ -1332,11 +1334,8 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
     {
 	int    dx, dy;
 	int    vx, vy;
-	REGION reg;
+	int    x1, x2, y1, y2;
 	CompRegion &draggedRegion = mDraggedSlot->mRegion;
-
-	reg.rects = &reg.extents;
-	reg.numRects = 1;
 
 	dx = xRoot - mPrevX;
 	dy = yRoot - mPrevY;
@@ -1365,14 +1364,14 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 
 	    mDraggedSlot->getDrawOffset (vx, vy);
 
-	    reg.extents.x1 = draggedRegion.boundingRect ().x1 () + vx;
-	    reg.extents.y1 = draggedRegion.boundingRect ().y1 () + vy;
-	    reg.extents.x2 = draggedRegion.boundingRect ().x2 () + vx;
-	    reg.extents.y2 = draggedRegion.boundingRect ().y2 () + vy;
+	    x1 = draggedRegion.boundingRect ().x1 () + vx;
+	    y1 = draggedRegion.boundingRect ().y1 () + vy;
+	    x2 = draggedRegion.boundingRect ().x2 () + vx;
+	    y2 = draggedRegion.boundingRect ().y2 () + vy;
 
-	    cReg = CompRegion (reg.extents.x1, reg.extents.y1,
-			       reg.extents.x2 - reg.extents.x1,
-			       reg.extents.y2 - reg.extents.y1);
+	    cReg = CompRegion (x1, y1,
+			       x2 - x1,
+			       y2 - y1);
 
 	    cScreen->damageRegion (cReg);
 
@@ -1381,14 +1380,14 @@ GroupScreen::groupHandleMotionEvent (int xRoot,
 		(mDraggedSlot->mRegion.boundingRect ().x1 () +
 		 mDraggedSlot->mRegion.boundingRect ().x2 ()) / 2;
 
-	    reg.extents.x1 = draggedRegion.boundingRect ().x1 () + vx;
-	    reg.extents.y1 = draggedRegion.boundingRect ().y1 () + vy;
-	    reg.extents.x2 = draggedRegion.boundingRect ().x2 () + vx;
-	    reg.extents.y2 = draggedRegion.boundingRect ().y2 () + vy;
+	    x1 = draggedRegion.boundingRect ().x1 () + vx;
+	    y1 = draggedRegion.boundingRect ().y1 () + vy;
+	    x2 = draggedRegion.boundingRect ().x2 () + vx;
+	    y2 = draggedRegion.boundingRect ().y2 () + vy;
 
-	    cReg = CompRegion (reg.extents.x1, reg.extents.y1,
-			       reg.extents.x2 - reg.extents.x1,
-			       reg.extents.y2 - reg.extents.y1);
+	    cReg = CompRegion (x1, y1,
+			       x2 - x1,
+			       y2 - y1);
 
 	    cScreen->damageRegion (cReg);
 	}
@@ -1756,8 +1755,7 @@ GroupWindow::moveNotify (int    dx,
 
     if (viewportChange && (mAnimateState & IS_ANIMATED))
     {
-	mDestination.x += dx;
-	mDestination.y += dy;
+	mDestination += CompPoint (dx, dy);
     }
 
     if (mGroup->mTabBar && IS_TOP_TAB (window, mGroup))
@@ -1916,11 +1914,11 @@ GroupWindow::damageRect (bool	        initial,
 
     if (!mResizeGeometry.isEmpty ())
     {
-	BoxRec box;
+	CompRect box;
 	float  dummy = 1;
 
-	groupGetStretchRectangle (&box, dummy, dummy);
-	gs->groupDamagePaintRectangle (&box);
+	groupGetStretchRectangle (box, dummy, dummy);
+	gs->groupDamagePaintRectangle (box);
     }
 
     if (mSlot)

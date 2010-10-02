@@ -280,10 +280,11 @@ private:
  * GroupGlow
  */
 
-typedef struct _GlowQuad {
-    BoxRec	      mBox;
-    GLTexture::Matrix mMatrix;
-} GlowQuad;
+class GlowQuad {
+    public:
+	CompRect	  mBox;
+	GLTexture::Matrix mMatrix;
+};
 
 #define GLOWQUAD_TOPLEFT	 0
 #define GLOWQUAD_TOPRIGHT	 1
@@ -611,7 +612,7 @@ class GroupScreen :
 	/* cairo.c */
 
 	void
-	groupDamagePaintRectangle (BoxPtr pBox);
+	groupDamagePaintRectangle (const CompRect &box);
 
 	/* queues.c */
 
@@ -854,9 +855,9 @@ class GroupWindow :
 	groupComputeGlowQuads (GLTexture::Matrix *matrix);
 
 	void
-	groupGetStretchRectangle (BoxPtr pBox,
-			       float  &xScaleRet,
-			       float  &yScaleRet);
+	groupGetStretchRectangle (CompRect &box,
+			          float  &xScaleRet,
+			          float  &yScaleRet);
 
 	/* queues.c */
 
@@ -957,10 +958,10 @@ class GroupWindow :
 	CompRect	    mResizeGeometry;
 
 	/* For tab animation */
-	int    mAnimateState;
-	XPoint mMainTabOffset;
-	XPoint mDestination;
-	XPoint mOrgPos;
+	int       mAnimateState;
+	CompPoint mMainTabOffset;
+	CompPoint mDestination;
+	CompPoint mOrgPos;
 
 	float mTx,mTy;
 	float mXVelocity, mYVelocity;

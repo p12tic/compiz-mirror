@@ -729,10 +729,10 @@ GroupWindow::adjustTabVelocity ()
     float dx, dy, adjust, amount;
     float x1, y1;
 
-    x1 = mDestination.x;
-    y1 = mDestination.y;
+    x1 = mDestination.x ();
+    y1 = mDestination.y ();
 
-    dx = x1 - (mOrgPos.x + mTx);
+    dx = x1 - (mOrgPos.x () + mTx);
     adjust = dx * 0.15f;
     amount = fabs (dx) * 1.5f;
     if (amount < 0.5f)
@@ -742,7 +742,7 @@ GroupWindow::adjustTabVelocity ()
 
     mXVelocity = (amount * mXVelocity + adjust) / (amount + 1.0f);
 
-    dy = y1 - (mOrgPos.y + mTy);
+    dy = y1 - (mOrgPos.y () + mTy);
     adjust = dy * 0.15f;
     amount = fabs (dy) * 1.5f;
     if (amount < 0.5f)
@@ -811,8 +811,8 @@ GroupSelection::finishTabbing ()
 
 	/* move window to target position */
 	gs->mQueued = true;
-	w->move (gw->mDestination.x - WIN_X (w),
-		 gw->mDestination.y - WIN_Y (w), true);
+	w->move (gw->mDestination.x () - WIN_X (w),
+		 gw->mDestination.y () - WIN_Y (w), true);
 	gs->mQueued = false;
 	w->syncPosition ();
 
@@ -1092,8 +1092,8 @@ GroupWindow::groupConstrainMovement (CompRegion constrainRegion,
     if (!dx && !dy)
 	return false;
 
-    x = mOrgPos.x - w->input ().left + dx;
-    y = mOrgPos.y - w->input ().top + dy;
+    x = mOrgPos.x () - w->input ().left + dx;
+    y = mOrgPos.y ()- w->input ().top + dy;
     width = WIN_REAL_WIDTH (w);
     height = WIN_REAL_HEIGHT (w);
 
@@ -1107,7 +1107,7 @@ GroupWindow::groupConstrainMovement (CompRegion constrainRegion,
 	if (xStatus != RectangleIn)
 	    dx += (dx < 0) ? 1 : -1;
 
-	x = mOrgPos.x - w->input ().left + dx;
+	x = mOrgPos.x () - w->input ().left + dx;
     }
 
     while (dy && (status != RectangleIn))
@@ -1117,7 +1117,7 @@ GroupWindow::groupConstrainMovement (CompRegion constrainRegion,
 	if (status != RectangleIn)
 	    dy += (dy < 0) ? 1 : -1;
 
-	y = mOrgPos.y - w->input ().top + dy;
+	y = mOrgPos.y () - w->input ().top + dy;
     }
 
     new_dx = dx;
@@ -1168,7 +1168,7 @@ GroupSelection::applyConstraining (CompRegion	    constrainRegion,
 	    if (gw->groupConstrainMovement (constrainRegion, dx, 0, dx, dummy))
 		gw->mAnimateState |= CONSTRAINED_X;
 
-	    gw->mDestination.x += dx;
+	    gw->mDestination.setX (gw->mDestination.x () + dx);
 	}
 
 	if (!(gw->mAnimateState & CONSTRAINED_Y))
@@ -1180,7 +1180,7 @@ GroupSelection::applyConstraining (CompRegion	    constrainRegion,
 	    if (gw->groupConstrainMovement (constrainRegion, 0, dy, dummy, dy))
 		gw->mAnimateState |= CONSTRAINED_Y;
 
-	    gw->mDestination.y += dy;
+	    gw->mDestination.setY (gw->mDestination.y () + dy);
 	}
     }
 }
@@ -1229,8 +1229,8 @@ GroupSelection::startTabbingAnimation (bool           tab)
 	    foreach (CompWindow *w, mWindows)
 	    {
 		GroupWindow *gw = GroupWindow::get (w);
-		CompRect   statusRect (gw->mOrgPos.x - w->input ().left,
-				       gw->mOrgPos.y - w->input ().top,
+		CompRect   statusRect (gw->mOrgPos.x () - w->input ().left,
+				       gw->mOrgPos.y () - w->input ().top,
 				       WIN_REAL_WIDTH (w),
 				       WIN_REAL_HEIGHT (w));
 
@@ -1247,8 +1247,8 @@ GroupSelection::startTabbingAnimation (bool           tab)
 
 		/* constrain the movement */
 		if (gw->groupConstrainMovement (constrainRegion,
-					    gw->mDestination.x - gw->mOrgPos.x,
-					    gw->mDestination.y - gw->mOrgPos.y,
+					    gw->mDestination.x () - gw->mOrgPos.x (),
+					    gw->mDestination.y () - gw->mOrgPos.y (),
 					    dx, dy))
 		{
 		    /* handle the case where the window is outside the screen
@@ -1259,8 +1259,7 @@ GroupSelection::startTabbingAnimation (bool           tab)
 			gw->mAnimateState |= CONSTRAINED_X | CONSTRAINED_Y;
 
 			/* use the original position as last resort */
-			gw->mDestination.x = gw->mMainTabOffset.x;
-			gw->mDestination.y = gw->mMainTabOffset.y;
+			gw->mDestination = gw->mMainTabOffset;
 		    }
 		    else
 		    {
@@ -1268,23 +1267,23 @@ GroupSelection::startTabbingAnimation (bool           tab)
 			   the change also to other windows to retain
 			   the distance between the windows */
 			gw->mGroup->applyConstraining (constrainRegion, w->id (),
-						dx - gw->mDestination.x +
-						gw->mOrgPos.x,
-						dy - gw->mDestination.y +
-						gw->mOrgPos.y);
+						dx - gw->mDestination.x () +
+						gw->mOrgPos.x (),
+						dy - gw->mDestination.y () +
+						gw->mOrgPos.y ());
 
 			/* if we hit constraints, adjust the mask and the
 			   target position accordingly */
-			if (dx != (gw->mDestination.x - gw->mOrgPos.x))
+			if (dx != (gw->mDestination.x () - gw->mOrgPos.x ()))
 			{
 			    gw->mAnimateState |= CONSTRAINED_X;
-			    gw->mDestination.x = gw->mOrgPos.x + dx;
+			    gw->mDestination.setX (gw->mOrgPos.x () + dx);
 			}
 
-			if (dy != (gw->mDestination.y - gw->mOrgPos.y))
+			if (dy != (gw->mDestination.y () - gw->mOrgPos.y ()))
 			{
 			    gw->mAnimateState |= CONSTRAINED_Y;
-			    gw->mDestination.y = gw->mOrgPos.y + dy;
+			    gw->mDestination.setY (gw->mOrgPos.y () + dy);
 			}
 
 			constrainedWindows = true;
@@ -1398,25 +1397,24 @@ GroupSelection::tabGroup (CompWindow *main)
 	GROUP_WINDOW (cw);
 
 	if (gw->mAnimateState & (IS_ANIMATED | FINISHED_ANIMATION))
-	    cw->move (gw->mDestination.x - WIN_X (cw),
-		      gw->mDestination.y - WIN_Y (cw), true);
+	    cw->move (gw->mDestination.x () - WIN_X (cw),
+		      gw->mDestination.y () - WIN_Y (cw), true);
 
 	/* center the window to the main window */
-	gw->mDestination.x = WIN_CENTER_X (main) - (WIN_WIDTH (cw) / 2);
-	gw->mDestination.y = WIN_CENTER_Y (main) - (WIN_HEIGHT (cw) / 2);
+	gw->mDestination = CompPoint (WIN_CENTER_X (main) - (WIN_WIDTH (cw) / 2),
+				      WIN_CENTER_Y (main) - (WIN_HEIGHT (cw) / 2));
 
 	/* Distance from destination. */
-	gw->mMainTabOffset.x = WIN_X (cw) - gw->mDestination.x;
-	gw->mMainTabOffset.y = WIN_Y (cw) - gw->mDestination.y;
+	gw->mMainTabOffset = CompPoint (WIN_X (cw), WIN_Y (cw)) -
+					gw->mDestination;
 
 	if (gw->mTx || gw->mTy)
 	{
-	    gw->mTx -= (WIN_X (cw) - gw->mOrgPos.x);
-	    gw->mTy -= (WIN_Y (cw) - gw->mOrgPos.y);
+	    gw->mTx -= (WIN_X (cw) - gw->mOrgPos.x ());
+	    gw->mTy -= (WIN_Y (cw) - gw->mOrgPos.y ());
 	}
 
-	gw->mOrgPos.x = WIN_X (cw);
-	gw->mOrgPos.y = WIN_Y (cw);
+	gw->mOrgPos = CompPoint (WIN_X (cw), WIN_Y (cw));
 
 	gw->mAnimateState = IS_ANIMATED;
 	gw->mXVelocity = gw->mYVelocity = 0.0f;
@@ -1463,8 +1461,8 @@ GroupSelection::untabGroup ()
 	if (gw->mAnimateState & (IS_ANIMATED | FINISHED_ANIMATION))
 	{
 	    gs->mQueued = true;
-	    cw->move(gw->mDestination.x - WIN_X (cw),
-		     gw->mDestination.y - WIN_Y (cw), true);
+	    cw->move(gw->mDestination.x () - WIN_X (cw),
+		     gw->mDestination.y () - WIN_Y (cw), true);
 	    gs->mQueued = false;
 	}
 
@@ -1472,23 +1470,21 @@ GroupSelection::untabGroup ()
 
 	/* save the old original position - we might need it
 	   if constraining fails */
-	oldX = gw->mOrgPos.x;
-	oldY = gw->mOrgPos.y;
+	oldX = gw->mOrgPos.x ();
+	oldY = gw->mOrgPos.y ();
 
-	gw->mOrgPos.x = WIN_CENTER_X (prevTopTab) - WIN_WIDTH (cw) / 2;
-	gw->mOrgPos.y = WIN_CENTER_Y (prevTopTab) - WIN_HEIGHT (cw) / 2;
+	gw->mOrgPos = CompPoint (WIN_CENTER_X (prevTopTab) - WIN_WIDTH (cw) / 2,
+				 WIN_CENTER_Y (prevTopTab) - WIN_HEIGHT (cw) / 2);
 
-	gw->mDestination.x = gw->mOrgPos.x + gw->mMainTabOffset.x;
-	gw->mDestination.y = gw->mOrgPos.y + gw->mMainTabOffset.y;
+	gw->mDestination = gw->mOrgPos + gw->mMainTabOffset;
 
 	if (gw->mTx || gw->mTy)
 	{
-	    gw->mTx -= (gw->mOrgPos.x - oldX);
-	    gw->mTy -= (gw->mOrgPos.y - oldY);
+	    gw->mTx -= (gw->mOrgPos.x () - oldX);
+	    gw->mTy -= (gw->mOrgPos.y () - oldY);
 	}
 
-	gw->mMainTabOffset.x = oldX;
-	gw->mMainTabOffset.y = oldY;
+	gw->mMainTabOffset = CompPoint (oldX, oldY);
 
 	gw->mAnimateState = IS_ANIMATED;
 	gw->mXVelocity = gw->mYVelocity = 0.0f;
@@ -1801,11 +1797,11 @@ GroupTabBar::recalcTabBarPos (int		middleX,
 void
 GroupTabBar::damageRegion ()
 {
-    REGION reg;
-    CompRegion cReg;
-
-    reg.rects = &reg.extents;
-    reg.numRects = 1;
+    CompRegion reg (mRegion);
+    int x1 = reg.boundingRect ().x1 ();
+    int x2 = reg.boundingRect ().x2 ();
+    int y1 = reg.boundingRect ().y1 ();
+    int y2 = reg.boundingRect ().y2 ();
 
     /* we use 15 pixels as damage buffer here, as there is a 10 pixel wide
        border around the selected slot which also needs to be damaged
@@ -1814,30 +1810,25 @@ GroupTabBar::damageRegion ()
 
 #define DAMAGE_BUFFER 20
 
-    reg.extents = mRegion.handle ()->extents;
-
     if (mSlots.size ())
     {
-	reg.extents.x1 = MIN (reg.extents.x1,
-			      mSlots.front ()->mRegion.boundingRect ().x1 ());
-	reg.extents.y1 = MIN (reg.extents.y1,
-			      mSlots.front ()->mRegion.boundingRect ().y1 ());
-	reg.extents.x2 = MAX (reg.extents.x2,
-			      mSlots.back ()->mRegion.boundingRect ().x2 ());
-	reg.extents.y2 = MAX (reg.extents.y2,
-			      mSlots.back ()->mRegion.boundingRect ().y2 ());
+	const CompRect &bnd = mSlots.front ()->mRegion.boundingRect ();
+	x1 = MIN (x1, bnd.x1 ());
+	y1 = MIN (y1, bnd.y1 ());
+	x2 = MAX (x2, bnd.x2 ());
+	y2 = MAX (y2, bnd.y2 ());
     }
 
-    reg.extents.x1 -= DAMAGE_BUFFER;
-    reg.extents.y1 -= DAMAGE_BUFFER;
-    reg.extents.x2 += DAMAGE_BUFFER;
-    reg.extents.y2 += DAMAGE_BUFFER;
+    x1 -= DAMAGE_BUFFER;
+    y1 -= DAMAGE_BUFFER;
+    x2 += DAMAGE_BUFFER;
+    y2 += DAMAGE_BUFFER;
 
-    cReg = CompRegion (reg.extents.x1, reg.extents.y1,
-		       reg.extents.x2 - reg.extents.x1,
-		       reg.extents.y2 - reg.extents.y1);
+    reg = CompRegion (x1, y1,
+		      x2 - x1,
+		      y2 - y1);
 
-    GroupScreen::get (screen)->cScreen->damageRegion (cReg);
+    GroupScreen::get (screen)->cScreen->damageRegion (reg);
 }
 
 void

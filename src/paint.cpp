@@ -658,7 +658,8 @@ GroupScreen::donePaint ()
 void
 GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
 {
-    BoxRec            *box;
+    CompRect	      *box;
+    int		      x1, x2, y1, y2;
     GLTexture::Matrix *quadMatrix;
     int               glowSize, glowOffset;
     int		      glowType;
@@ -693,140 +694,156 @@ GroupWindow::groupComputeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix;
 
-    box->x1 = WIN_REAL_X (w) - glowSize + glowOffset;
-    box->y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
-    box->x2 = WIN_REAL_X (w) + glowOffset;
-    box->y2 = WIN_REAL_Y (w) + glowOffset;
+    x1 = WIN_REAL_X (w) - glowSize + glowOffset;
+    y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
+    x2 = WIN_REAL_X (w) + glowOffset;
+    y2 = WIN_REAL_Y (w) + glowOffset;
 
     quadMatrix->xx = 1.0f / glowSize;
     quadMatrix->yy = 1.0f / (glowSize);
-    quadMatrix->x0 = -(box->x1 * quadMatrix->xx);
-    quadMatrix->y0 = -(box->y1 * quadMatrix->yy);
+    quadMatrix->x0 = -(x1 * quadMatrix->xx);
+    quadMatrix->y0 = -(y1 * quadMatrix->yy);
 
-    box->x2 = MIN (WIN_REAL_X (w) + glowOffset,
-		   WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
-    box->y2 = MIN (WIN_REAL_Y (w) + glowOffset,
-		   WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+    x2 = MIN (WIN_REAL_X (w) + glowOffset,
+	      WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
+    y2 = MIN (WIN_REAL_Y (w) + glowOffset,
+	      WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+
+    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
     /* Top right corner */
     box = &mGlowQuads[GLOWQUAD_TOPRIGHT].mBox;
     mGlowQuads[GLOWQUAD_TOPRIGHT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_TOPRIGHT].mMatrix;
 
-    box->x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    box->y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
-    box->x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
-    box->y2 = WIN_REAL_Y (w) + glowOffset;
+    x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
+    y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
+    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
+    y2 = WIN_REAL_Y (w) + glowOffset;
 
     quadMatrix->xx = -1.0f / glowSize;
     quadMatrix->yy = 1.0f / glowSize;
-    quadMatrix->x0 = 1.0 - (box->x1 * quadMatrix->xx);
-    quadMatrix->y0 = -(box->y1 * quadMatrix->yy);
+    quadMatrix->x0 = 1.0 - (x1 * quadMatrix->xx);
+    quadMatrix->y0 = -(y1 * quadMatrix->yy);
 
-    box->x1 = MAX (WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset,
-		   WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
-    box->y2 = MIN (WIN_REAL_Y (w) + glowOffset,
-		   WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+    x1 = MAX (WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset,
+	      WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
+    y2 = MIN (WIN_REAL_Y (w) + glowOffset,
+	      WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+
+    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
     /* Bottom left corner */
     box = &mGlowQuads[GLOWQUAD_BOTTOMLEFT].mBox;
     mGlowQuads[GLOWQUAD_BOTTOMLEFT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOMLEFT].mMatrix;
 
-    box->x1 = WIN_REAL_X (w) - glowSize + glowOffset;
-    box->y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
-    box->x2 = WIN_REAL_X (w) + glowOffset;
-    box->y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
+    x1 = WIN_REAL_X (w) - glowSize + glowOffset;
+    y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
+    x2 = WIN_REAL_X (w) + glowOffset;
+    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
 
     quadMatrix->xx = 1.0f / glowSize;
     quadMatrix->yy = -1.0f / glowSize;
-    quadMatrix->x0 = -(box->x1 * quadMatrix->xx);
-    quadMatrix->y0 = 1.0f - (box->y1 * quadMatrix->yy);
+    quadMatrix->x0 = -(x1 * quadMatrix->xx);
+    quadMatrix->y0 = 1.0f - (y1 * quadMatrix->yy);
 
-    box->y1 = MAX (WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset,
-		   WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
-    box->x2 = MIN (WIN_REAL_X (w) + glowOffset,
-		   WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
+    y1 = MAX (WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset,
+	      WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+    x2 = MIN (WIN_REAL_X (w) + glowOffset,
+	      WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
+
+    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
     /* Bottom right corner */
     box = &mGlowQuads[GLOWQUAD_BOTTOMRIGHT].mBox;
     mGlowQuads[GLOWQUAD_BOTTOMRIGHT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOMRIGHT].mMatrix;
 
-    box->x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    box->y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
-    box->x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
-    box->y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
+    x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
+    y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
+    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
+    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
 
     quadMatrix->xx = -1.0f / glowSize;
     quadMatrix->yy = -1.0f / glowSize;
-    quadMatrix->x0 = 1.0 - (box->x1 * quadMatrix->xx);
-    quadMatrix->y0 = 1.0 - (box->y1 * quadMatrix->yy);
+    quadMatrix->x0 = 1.0 - (x1 * quadMatrix->xx);
+    quadMatrix->y0 = 1.0 - (y1 * quadMatrix->yy);
 
-    box->x1 = MAX (WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset,
-		   WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
-    box->y1 = MAX (WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset,
-		   WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+    x1 = MAX (WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset,
+	      WIN_REAL_X (w) + (WIN_REAL_WIDTH (w) / 2));
+    y1 = MAX (WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset,
+	      WIN_REAL_Y (w) + (WIN_REAL_HEIGHT (w) / 2));
+
+    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
     /* Top edge */
     box = &mGlowQuads[GLOWQUAD_TOP].mBox;
     mGlowQuads[GLOWQUAD_TOP].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_TOP].mMatrix;
 
-    box->x1 = WIN_REAL_X (w) + glowOffset;
-    box->y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
-    box->x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    box->y2 = WIN_REAL_Y (w) + glowOffset;
+    x1 = WIN_REAL_X (w) + glowOffset;
+    y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
+    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
+    y2 = WIN_REAL_Y (w) + glowOffset;
 
     quadMatrix->xx = 0.0f;
     quadMatrix->yy = 1.0f / glowSize;
     quadMatrix->x0 = 1.0;
-    quadMatrix->y0 = -(box->y1 * quadMatrix->yy);
+    quadMatrix->y0 = -(y1 * quadMatrix->yy);
+
+    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
     /* Bottom edge */
     box = &mGlowQuads[GLOWQUAD_BOTTOM].mBox;
     mGlowQuads[GLOWQUAD_BOTTOM].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_BOTTOM].mMatrix;
 
-    box->x1 = WIN_REAL_X (w) + glowOffset;
-    box->y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
-    box->x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    box->y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
+    x1 = WIN_REAL_X (w) + glowOffset;
+    y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
+    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
+    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
 
     quadMatrix->xx = 0.0f;
     quadMatrix->yy = -1.0f / glowSize;
     quadMatrix->x0 = 1.0;
-    quadMatrix->y0 = 1.0 - (box->y1 * quadMatrix->yy);
+    quadMatrix->y0 = 1.0 - (y1 * quadMatrix->yy);
+
+    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
     /* Left edge */
     box = &mGlowQuads[GLOWQUAD_LEFT].mBox;
     mGlowQuads[GLOWQUAD_LEFT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_LEFT].mMatrix;
 
-    box->x1 = WIN_REAL_X (w) - glowSize + glowOffset;
-    box->y1 = WIN_REAL_Y (w) + glowOffset;
-    box->x2 = WIN_REAL_X (w) + glowOffset;
-    box->y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
+    x1 = WIN_REAL_X (w) - glowSize + glowOffset;
+    y1 = WIN_REAL_Y (w) + glowOffset;
+    x2 = WIN_REAL_X (w) + glowOffset;
+    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
 
     quadMatrix->xx = 1.0f / glowSize;
     quadMatrix->yy = 0.0f;
-    quadMatrix->x0 = -(box->x1 * quadMatrix->xx);
+    quadMatrix->x0 = -(x1 * quadMatrix->xx);
     quadMatrix->y0 = 1.0;
+
+    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
     /* Right edge */
     box = &mGlowQuads[GLOWQUAD_RIGHT].mBox;
     mGlowQuads[GLOWQUAD_RIGHT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_RIGHT].mMatrix;
 
-    box->x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
-    box->y1 = WIN_REAL_Y (w) + glowOffset;
-    box->x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
-    box->y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
+    x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
+    y1 = WIN_REAL_Y (w) + glowOffset;
+    x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
+    y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
 
     quadMatrix->xx = -1.0f / glowSize;
     quadMatrix->yy = 0.0f;
-    quadMatrix->x0 = 1.0 - (box->x1 * quadMatrix->xx);
+    quadMatrix->x0 = 1.0 - (x1 * quadMatrix->xx);
     quadMatrix->y0 = 1.0;
+
+    *box = CompRect (x1, y1, x2 - x1, y2 - y1);
 }
 
 /*
@@ -851,26 +868,23 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 
 	if (paintRegion.numRects ())
 	{
-	    REGION box;
 	    CompRegion reg;
 	    int    i;
-
-	    box.rects = &box.extents;
-	    box.numRects = 1;
 
 	    gWindow->geometry ().reset ();
 
 	    for (i = 0; i < NUM_GLOWQUADS; i++)
 	    {
-		box.extents = mGlowQuads[i].mBox;
+		reg = CompRegion (mGlowQuads[i].mBox);
 
-		if (box.extents.x1 < box.extents.x2 &&
-		    box.extents.y1 < box.extents.y2)
+		if (reg.boundingRect ().x1 () < reg.boundingRect ().x2 () &&
+		    reg.boundingRect ().y1 () < reg.boundingRect ().y2 ())
 		{
 		    GLTexture::MatrixList matl;
-		    reg = CompRegion (box.extents.x1, box.extents.y1,
-			  	      box.extents.x2 - box.extents.x1,
-			  	      box.extents.y2 - box.extents.y1);
+		    reg = CompRegion (reg.boundingRect ().x1 (),
+				      reg.boundingRect ().y1 (),
+			  	      reg.boundingRect ().width (),
+				      reg.boundingRect ().height ());
 
 		    matl.push_back (mGlowQuads[i].mMatrix);
 		    gWindow->glAddGeometry (matl, reg, paintRegion);
@@ -930,65 +944,55 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 }
 
 void
-GroupWindow::groupGetStretchRectangle (BoxPtr pBox,
-				       float  &xScaleRet,
-				       float  &yScaleRet)
+GroupWindow::groupGetStretchRectangle (CompRect &box,
+				       float    &xScaleRet,
+				       float    &yScaleRet)
 {
-    BoxRec box;
+    int    x1, x2, y1, y2;
     int    width, height;
     float  xScale, yScale;
 
-    box.x1 = mResizeGeometry.x () - window->input ().left;
-    box.y1 = mResizeGeometry.y () - window->input ().top;
-    box.x2 = mResizeGeometry.x () + mResizeGeometry.width () +
+    x1 = mResizeGeometry.x () - window->input ().left;
+    y1 = mResizeGeometry.y () - window->input ().top;
+    x2 = mResizeGeometry.x () + mResizeGeometry.width () +
 	     window->serverGeometry ().border () * 2 + window->input ().right;
 
     if (window->shaded ())
     {
-	box.y2 = mResizeGeometry.y () + window->height () + window->input ().bottom;
+	y2 = mResizeGeometry.y () + window->height () + window->input ().bottom;
     }
     else
     {
-	box.y2 = mResizeGeometry.y () + mResizeGeometry.height () +
+	y2 = mResizeGeometry.y () + mResizeGeometry.height () +
 	         window->serverGeometry ().border () * 2 + window->input ().bottom;
     }
 
     width  = window->width ()  + window->input ().left + window->input ().right;
     height = window->height () + window->input ().top  + window->input ().bottom;
 
-    xScale = (width)  ? (box.x2 - box.x1) / (float) width  : 1.0f;
-    yScale = (height) ? (box.y2 - box.y1) / (float) height : 1.0f;
+    xScale = (width)  ? (x2 - x1) / (float) width  : 1.0f;
+    yScale = (height) ? (y2 - y1) / (float) height : 1.0f;
 
-    pBox->x1 = box.x1 - (window->output ().left - window->input ().left) * xScale;
-    pBox->y1 = box.y1 - (window->output ().top - window->input ().top) * yScale;
-    pBox->x2 = box.x2 + window->output ().right * xScale;
-    pBox->y2 = box.y2 + window->output ().bottom * yScale;
+    x1 = x1 - (window->output ().left - window->input ().left) * xScale;
+    y1 = y1 - (window->output ().top - window->input ().top) * yScale;
+    x2 = x2 + window->output ().right * xScale;
+    y2 = y2 + window->output ().bottom * yScale;
+    
+    box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
     xScaleRet = xScale;
     yScaleRet = yScale;
 }
 
 void
-GroupScreen::groupDamagePaintRectangle (BoxPtr pBox)
+GroupScreen::groupDamagePaintRectangle (const CompRect &box)
 {
-    REGION reg;
-    CompRegion cReg;
+    CompRegion reg (box);
 
-    reg.rects    = &reg.extents;
-    reg.numRects = 1;
+    reg.translate (-1, -1);
+    reg.shrink (1, 1);
 
-    reg.extents = *pBox;
-
-    reg.extents.x1 -= 1;
-    reg.extents.y1 -= 1;
-    reg.extents.x2 += 1;
-    reg.extents.y2 += 1;
-
-    cReg = CompRegion (reg.extents.x1, reg.extents.y1,
-		       reg.extents.x2 - reg.extents.x1,
-		       reg.extents.y2 - reg.extents.y1);
-
-    cScreen->damageRegion (cReg);
+    cScreen->damageRegion (reg);
 }
 
 /*
@@ -1061,21 +1065,21 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	    if (mAnimateState & FINISHED_ANIMATION)
 	    {
-		drawnPosX = mDestination.x;
-		drawnPosY = mDestination.y;
+		drawnPosX = mDestination.x ();
+		drawnPosY = mDestination.y ();
 	    }
 	    else
 	    {
-		drawnPosX = mOrgPos.x + mTx;
-		drawnPosY = mOrgPos.y + mTy;
+		drawnPosX = mOrgPos.x () + mTx;
+		drawnPosY = mOrgPos.y () + mTy;
 	    }
 
-	    distanceX = drawnPosX - mDestination.x;
-	    distanceY = drawnPosY - mDestination.y;
+	    distanceX = drawnPosX - mDestination.x ();
+	    distanceY = drawnPosY - mDestination.y ();
 	    distance = sqrt (pow (distanceX, 2) + pow (distanceY, 2));
 
-	    distanceX = (mOrgPos.x - mDestination.x);
-	    distanceY = (mOrgPos.y - mDestination.y);
+	    distanceX = (mOrgPos.x () - mDestination.x ());
+	    distanceY = (mOrgPos.y () - mDestination.y ());
 	    origDistance = sqrt (pow (distanceX, 2) + pow (distanceY, 2));
 
 	    if (!distanceX && !distanceY)
@@ -1108,9 +1112,9 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	{
 	    int    xOrigin, yOrigin;
 	    float  xScale, yScale;
-	    BoxRec box;
+	    CompRect box;
 
-	    groupGetStretchRectangle (&box, xScale, yScale);
+	    groupGetStretchRectangle (box, xScale, yScale);
 
 	    xOrigin = window->x () - w->input ().left;
 	    yOrigin = window->y () - w->input ().top;

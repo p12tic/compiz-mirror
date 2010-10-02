@@ -390,12 +390,9 @@ GroupWindow::GroupWindow (CompWindow *w) :
     CompositeWindowInterface::setHandler (cWindow);
     GLWindowInterface::setHandler (gWindow);
 
-    mOrgPos.x = 0;
-    mOrgPos.y = 0;
-    mMainTabOffset.x = 0;
-    mMainTabOffset.y = 0;
-    mDestination.x = 0;
-    mDestination.y = 0;
+    mOrgPos = CompPoint (0, 0);
+    mMainTabOffset = CompPoint (0, 0);
+    mDestination = CompPoint (0, 0);
 
     if (w->minimized ())
 	mWindowState = WindowMinimized;
