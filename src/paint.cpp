@@ -356,7 +356,7 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 	    wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
 	    
 	    texLayer->setPaintWindow (topTab);
-	    texLayer->paint (attrib, transform, box, clipRegion, mask);
+	    texLayer->paint (wAttrib, transform, box, clipRegion, mask);
 
 	    
 	}
