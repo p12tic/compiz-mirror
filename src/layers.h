@@ -143,9 +143,14 @@ class BackgroundLayer :
 		    const CompRegion	      &clipRegion,
 		    int			      mask);
 
+    public:
+
+	/* For animations */
+	int           mBgAnimationTime;
+	AnimationType mBgAnimation;
+
     private:
-	BackgroundLayer (const CompSize &size, GroupSelection *group) :
-	    CairoLayer::CairoLayer (size, group) {}
+	BackgroundLayer (const CompSize &size, GroupSelection *group);
 };
 
 class SelectionLayer :

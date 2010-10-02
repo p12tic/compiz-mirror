@@ -264,7 +264,7 @@ BackgroundLayer::paint (const GLWindowPaintAttrib &attrib,
     /* FIXME: maybe move this over to groupResizeTabBarRegion -
      * the only problem is that we would have 2 redraws if
      * here is an animation */
-    if (newWidth != mGroup->mTabBar->mOldWidth || mGroup->mTabBar->mBgAnimation)
+    if (newWidth != mGroup->mTabBar->mOldWidth || mGroup->mTabBar->mBgLayer->mBgAnimation)
 	render ();
 
     mGroup->mTabBar->mOldWidth = newWidth;
@@ -469,7 +469,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	    if (bar->mTextLayer)
 		bar->handleTextFade (msSinceLastPaint);
 
-	    if (bar->mBgAnimation)
+	    if (bar->mBgLayer && bar->mBgLayer->mBgAnimation)
 		bar->handleTabBarAnimation (msSinceLastPaint);
 	}
 
@@ -643,7 +643,8 @@ GroupScreen::donePaint ()
 		}
 	    }
 
-	    if (group->mTabBar->mBgAnimation)
+	    if (group->mTabBar->mBgLayer &&
+		group->mTabBar->mBgLayer->mBgAnimation)
 		needDamage = true;
 
 	    if (mDraggedSlot)

@@ -306,10 +306,10 @@ GroupSelection::tabSetVisibility (bool           visible,
     }
     else if (visible && (bar->mState == PaintOff || bar->mState == PaintFadeOut))
     {
-	if (gs->optionGetBarAnimations ())
+	if (gs->optionGetBarAnimations () && bar->mBgLayer)
 	{
-	    bar->mBgAnimation = BackgroundLayer::AnimationReflex;
-	    bar->mBgAnimationTime = gs->optionGetReflexTime () * 1000.0;
+	    bar->mBgLayer->mBgAnimation = BackgroundLayer::AnimationReflex;
+	    bar->mBgLayer->mBgAnimationTime = gs->optionGetReflexTime () * 1000.0;
 	}
 	bar->mState = PaintFadeIn;
 	gs->switchTopTabInput (this, false);
@@ -586,12 +586,15 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 void
 GroupTabBar::handleTabBarAnimation (int            msSinceLastPaint)
 {
-    mBgAnimationTime -= msSinceLastPaint;
+    if (!mBgLayer)
+	return;
 
-    if (mBgAnimationTime <= 0)
+    mBgLayer->mBgAnimationTime -= msSinceLastPaint;
+
+    if (mBgLayer->mBgAnimationTime <= 0)
     {
-	mBgAnimationTime = 0;
-	mBgAnimation = BackgroundLayer::AnimationNone;
+	mBgLayer->mBgAnimationTime = 0;
+	mBgLayer->mBgAnimation = BackgroundLayer::AnimationNone;
 
 	mBgLayer->render ();
     }
@@ -2490,8 +2493,6 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
     mTextLayer (NULL),
     mBgLayer (NULL),
     mSelectionLayer (NULL),
-    mBgAnimationTime (0),
-    mBgAnimation (BackgroundLayer::AnimationNone),
     mState (PaintOff),
     mAnimationTime (0),
     mOldWidth (0),

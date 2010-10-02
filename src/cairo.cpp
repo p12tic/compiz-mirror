@@ -150,6 +150,14 @@ CairoLayer::CairoLayer (const CompSize &size, GroupSelection *g) :
     }
 }
 
+BackgroundLayer::BackgroundLayer (const CompSize &size,
+				  GroupSelection *g) :
+    CairoLayer::CairoLayer (size, g),
+    mBgAnimationTime (0),
+    mBgAnimation (BackgroundLayer::AnimationNone)
+{
+}
+
 /*
  * groupCreateCairoLayer
  *
@@ -565,18 +573,18 @@ BackgroundLayer::render ()
     a = gs->optionGetTabBorderColorAlpha () / 65535.0f;
     cairo_set_source_rgba (cr, r, g, b, a);
 
-    if (mGroup->mTabBar->mBgAnimation != AnimationNone)
+    if (mBgAnimation != AnimationNone)
 	cairo_stroke_preserve (cr);
     else
 	cairo_stroke (cr);
 
-    switch (mGroup->mTabBar->mBgAnimation) {
+    switch (mBgAnimation) {
     case AnimationPulse:
 	{
 	    double animationProgress;
 	    double alpha;
 
-	    animationProgress = mGroup->mTabBar->mBgAnimationTime /
+	    animationProgress = mBgAnimationTime /
 		                (gs->optionGetPulseTime () * 1000.0);
 	    alpha = sin ((2 * PI * animationProgress) - 1.55)*0.5 + 0.5;
 	    if (alpha <= 0)
@@ -599,7 +607,7 @@ BackgroundLayer::render ()
 	    double          posX, alpha;
 	    cairo_pattern_t *pattern;
 
-	    animationProgress = mGroup->mTabBar->mBgAnimationTime /
+	    animationProgress = mBgAnimationTime /
 		                (gs->optionGetReflexTime () * 1000.0);
 	    reflexWidth = (mGroup->mTabBar->mSlots.size () / 2.0) * 30;
 	    posX = (twidth + reflexWidth * 2.0) * animationProgress;

@@ -59,12 +59,13 @@ GroupWindow::dragHoverTimeout ()
 {
     GROUP_SCREEN (screen);
 
-    if (gs->optionGetBarAnimations ())
+    if (gs->optionGetBarAnimations () && mGroup->mTabBar &&
+	mGroup->mTabBar->mBgLayer)
     {
 	GroupTabBar *bar = mGroup->mTabBar;
 
-	bar->mBgAnimation = BackgroundLayer::AnimationPulse;
-	bar->mBgAnimationTime = gs->optionGetPulseTime () * 1000;
+	bar->mBgLayer->mBgAnimation = BackgroundLayer::AnimationPulse;
+	bar->mBgLayer->mBgAnimationTime = gs->optionGetPulseTime () * 1000;
     }
 
     window->activate ();

@@ -357,10 +357,6 @@ class GroupTabBar
 	BackgroundLayer *mBgLayer;
 	SelectionLayer *mSelectionLayer;
 
-	/* For animations */
-	int                mBgAnimationTime;
-	BackgroundLayer::AnimationType mBgAnimation;
-
 	PaintState mState;
 	int        mAnimationTime;
 	CompRegion mRegion;
