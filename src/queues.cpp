@@ -37,11 +37,11 @@ GroupWindow::enqueueMoveNotify (int  dx,
 				     bool immediate,
 				     bool sync)
 {
-    GroupPendingMoves *move;
+    GroupWindow::PendingMoves *move;
 
     GROUP_SCREEN (screen);
 
-    move = (GroupPendingMoves *) malloc (sizeof (GroupPendingMoves));
+    move = (GroupWindow::PendingMoves *) malloc (sizeof (GroupWindow::PendingMoves));
     if (!move)
 	return;
 
@@ -55,7 +55,7 @@ GroupWindow::enqueueMoveNotify (int  dx,
 
     if (gs->mPendingMoves)
     {
-	GroupPendingMoves *temp;
+	GroupWindow::PendingMoves *temp;
 	for (temp = gs->mPendingMoves; temp->next; temp = temp->next);
 
 	temp->next = move;
@@ -70,9 +70,9 @@ GroupWindow::enqueueMoveNotify (int  dx,
 }
 
 void
-GroupScreen::dequeueSyncs (GroupPendingSyncs *syncs)
+GroupScreen::dequeueSyncs (GroupWindow::PendingSyncs *syncs)
 {
-    GroupPendingSyncs *sync;
+    GroupWindow::PendingSyncs *sync;
 
     while (syncs)
     {
@@ -94,8 +94,8 @@ GroupScreen::dequeueSyncs (GroupPendingSyncs *syncs)
 void
 GroupScreen::dequeueMoveNotifies ()
 {
-    GroupPendingMoves *move;
-    GroupPendingSyncs *syncs = NULL, *sync;
+    GroupWindow::PendingMoves *move;
+    GroupWindow::PendingSyncs *syncs = NULL, *sync;
 
     mQueued = true;
 
@@ -107,7 +107,7 @@ GroupScreen::dequeueMoveNotifies ()
 	move->w->move (move->dx, move->dy, move->immediate);
 	if (move->sync)
 	{
-	    sync = (GroupPendingSyncs *) malloc (sizeof (GroupPendingSyncs));
+	    sync = (GroupWindow::PendingSyncs *) malloc (sizeof (GroupWindow::PendingSyncs));
 	    if (sync)
 	    {
 		GROUP_WINDOW (move->w);
@@ -135,11 +135,11 @@ GroupWindow::enqueueGrabNotify (int          x,
 				     unsigned int state,
 				     unsigned int mask)
 {
-    GroupPendingGrabs *grab;
+    GroupWindow::PendingGrabs *grab;
     
     GROUP_SCREEN (screen);
 
-    grab = (GroupPendingGrabs *) malloc (sizeof (GroupPendingGrabs));
+    grab = (GroupWindow::PendingGrabs *) malloc (sizeof (GroupWindow::PendingGrabs));
     if (!grab)
 	return;
 
@@ -153,7 +153,7 @@ GroupWindow::enqueueGrabNotify (int          x,
 
     if (gs->mPendingGrabs)
     {
-	GroupPendingGrabs *temp;
+	GroupWindow::PendingGrabs *temp;
 	for (temp = gs->mPendingGrabs; temp->next; temp = temp->next);
 
 	temp->next = grab;
@@ -170,7 +170,7 @@ GroupWindow::enqueueGrabNotify (int          x,
 void
 GroupScreen::dequeueGrabNotifies ()
 {
-    GroupPendingGrabs *grab;
+    GroupWindow::PendingGrabs *grab;
 
     mQueued = true;
 
@@ -191,11 +191,11 @@ GroupScreen::dequeueGrabNotifies ()
 void
 GroupWindow::enqueueUngrabNotify ()
 {
-    GroupPendingUngrabs *ungrab;
+    GroupWindow::PendingUngrabs *ungrab;
 
     GROUP_SCREEN (screen);
 
-    ungrab = (GroupPendingUngrabs *) malloc (sizeof (GroupPendingUngrabs));
+    ungrab = (GroupWindow::PendingUngrabs *) malloc (sizeof (GroupWindow::PendingUngrabs));
 
     if (!ungrab)
 	return;
@@ -205,7 +205,7 @@ GroupWindow::enqueueUngrabNotify ()
 
     if (gs->mPendingUngrabs)
     {
-	GroupPendingUngrabs *temp;
+	GroupWindow::PendingUngrabs *temp;
 	for (temp = gs->mPendingUngrabs; temp->next; temp = temp->next);
 
 	temp->next = ungrab;
@@ -222,7 +222,7 @@ GroupWindow::enqueueUngrabNotify ()
 void
 GroupScreen::dequeueUngrabNotifies ()
 {
-    GroupPendingUngrabs *ungrab;
+    GroupWindow::PendingUngrabs *ungrab;
 
     mQueued = true;
 
