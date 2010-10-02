@@ -58,7 +58,13 @@ GroupScreen::optionChanged (CompOption *opt,
 	case GroupOptions::TabbarFontColor:
 	    foreach (group, mGroups)
 		if (group->mTabBar)
-		    group->mTabBar->renderWindowTitle ();
+		{
+		    group->mTabBar->mTextLayer =
+		      TextLayer::rebuild (group->mTabBar->mTextLayer);
+			
+		    if (group->mTabBar->mTextLayer)
+			group->mTabBar->mTextLayer->render ();
+		}
 	    break;
 	case GroupOptions::ThumbSize:
 	case GroupOptions::ThumbSpace:

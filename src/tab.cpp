@@ -506,7 +506,10 @@ GroupTabBar::handleTabBarFade (int		   msSinceLastPaint)
 		mTextLayer->mState = PaintOff;
 		mTextSlot = mHoveredSlot = NULL;
 
-		renderWindowTitle ();
+		mTextLayer = TextLayer::rebuild (mTextLayer);
+	
+		if (mTextLayer)
+		    mTextLayer->render ();
 	    }
 	}
     }
@@ -554,14 +557,20 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 	textLayer->mAnimationTime =
 	    (GroupScreen::get (screen)->optionGetFadeTextTime () * 1000);
 
-	renderWindowTitle ();
+	mTextLayer = textLayer = TextLayer::rebuild (textLayer);
+	
+	if (textLayer)
+	    mTextLayer->render ();
     }
 
     else if (textLayer->mState == PaintOff && mTextSlot)
     {
 	/* Clean Up. */
 	mTextSlot = NULL;
-	renderWindowTitle ();
+	mTextLayer = textLayer = TextLayer::rebuild (textLayer);
+	
+	if (textLayer)
+	    mTextLayer->render ();
     }
 }
 
@@ -1325,7 +1334,8 @@ GroupSelection::tabGroup (CompWindow *main)
     height = mTabBar->mRegion.boundingRect ().y2 () -
 	     mTabBar->mRegion.boundingRect ().y1 ();
 
-    mTabBar->mTextLayer = new TextLayer (CompSize (width, height));
+    mTabBar->mTextLayer = new TextLayer (CompSize (width, height),
+					 this);
     if (mTabBar->mTextLayer)
     {
 	TextLayer *layer;
@@ -1333,7 +1343,10 @@ GroupSelection::tabGroup (CompWindow *main)
 	layer = mTabBar->mTextLayer;
 	layer->mState = PaintOff;
 	layer->mAnimationTime = 0;
-	mTabBar->renderWindowTitle ();
+	mTabBar->mTextLayer = TextLayer::rebuild (mTabBar->mTextLayer);
+	
+	if (mTabBar->mTextLayer)
+	    mTabBar->mTextLayer->render ();
     }
     if (mTabBar->mTextLayer)
     {
@@ -1573,7 +1586,10 @@ GroupScreen::groupChangeTab (GroupTabBarSlot             *topTab,
 		       group->mTabBar->mTopTab->mRegion.boundingRect ().height ());
 	group->mTabBar->mTopTab = topTab;
 
-	group->mTabBar->renderWindowTitle ();
+	group->mTabBar->mTextLayer = TextLayer::rebuild (group->mTabBar->mTextLayer);
+	
+	if (group->mTabBar->mTextLayer)
+	    group->mTabBar->mTextLayer->render ();
 	group->mTabBar->mSelectionLayer =
 	       SelectionLayer::rebuild (group->mTabBar->mSelectionLayer,
 					size);

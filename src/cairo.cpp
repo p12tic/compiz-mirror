@@ -98,13 +98,12 @@ CairoLayer::~CairoLayer ()
 }
 
 CairoLayer::CairoLayer (CompSize &size, GroupSelection *g) :
-    TextureLayer::TextureLayer (size)
+    TextureLayer::TextureLayer (size, g)
 {
     mFailed = true;
     mSurface = NULL;
     mCairo   = NULL;
     mBuffer  = NULL;
-    mGroup   = g;
 
     mAnimationTime = 0;
     mState         = PaintOff;
@@ -651,47 +650,52 @@ BackgroundLayer::render ()
 			  		  (CompSize &) *this);
 }
 
-/*
- * GroupSelection::renderWindowTitle
- *
- */
-void
-GroupTabBar::renderWindowTitle ()
+TextLayer *
+TextLayer::rebuild (TextLayer *layer)
 {
-    TextLayer 	   *layer;
-    int             width, height;
-    Pixmap          pixmap = None;
-    PaintState      pStateBuf;
-    int		    aTimeBuf;
-    CompSize	    sBuf;
-    
-    GROUP_SCREEN (screen);
-
-    if (!HAS_TOP_WIN (mGroup) || !mTextLayer)
-	return;
-
-    width = mRegion.boundingRect ().x2 () - mRegion.boundingRect ().x1 ();
-    height = mRegion.boundingRect ().y2 () - mRegion.boundingRect ().y1 ();
-
     /* general cleanup func ... for now */
-    if (mTextLayer)
+    if (layer)
     {
-	if (mTextLayer->mPixmap)
-	    XFreePixmap (screen->dpy (), mTextLayer->mPixmap);
+	if (layer->mPixmap)
+	    XFreePixmap (screen->dpy (), layer->mPixmap);
 
-	pStateBuf = mTextLayer->mState;
-	aTimeBuf = mTextLayer->mAnimationTime;
-	sBuf = (CompSize ) *mTextLayer; 
-	delete mTextLayer;
-	layer = mTextLayer = new TextLayer (sBuf);
+	PaintState     pStateBuf = layer->mState;
+	int 	       aTimeBuf = layer->mAnimationTime;
+	CompSize       sBuf = (CompSize ) *layer; 
+	GroupSelection *gBuf = layer->mGroup;
+	
+	delete layer;
+	layer = new TextLayer (sBuf, gBuf);
 	if (!layer)
-	    return;
+	    return NULL;
 	
 	layer->mState = pStateBuf;
 	layer->mAnimationTime = aTimeBuf;
     }
+    
+    return layer;
+}
 
-    if (mTextSlot && mTextSlot->mWindow && textAvailable)
+/*
+ * TextLayer::render
+ *
+ */
+void
+TextLayer::render ()
+{
+    int             twidth, theight;
+    Pixmap          pixmap = None;
+    
+    GROUP_SCREEN (screen);
+
+    if (!HAS_TOP_WIN (mGroup))
+	return;
+
+    twidth = mGroup->mTabBar->mRegion.boundingRect ().width ();
+    theight = mGroup->mTabBar->mRegion.boundingRect ().height ();
+
+    if (mGroup->mTabBar->mTextSlot &&
+        mGroup->mTabBar->mTextSlot->mWindow && textAvailable)
     {
 	CompText::Attrib  textAttrib;
 
@@ -706,22 +710,23 @@ GroupTabBar::renderWindowTitle ()
 	textAttrib.color[2] = gs->optionGetTabbarFontColorBlue ();
 	textAttrib.color[3] = gs->optionGetTabbarFontColorAlpha ();
 
-	textAttrib.maxWidth = width;
-	textAttrib.maxHeight = height;
+	textAttrib.maxWidth = twidth;
+	textAttrib.maxHeight = theight;
 
-	if (gs->mText.renderWindowTitle (mTextSlot->mWindow->id (),
-				         false, textAttrib))
+	if (gs->mText.renderWindowTitle (
+		             mGroup->mTabBar->mTextSlot->mWindow->id (),
+						     false, textAttrib))
 	{
 	    pixmap = gs->mText.getPixmap ();
-	    width = gs->mText.getWidth ();
-	    height = gs->mText.getHeight ();
+	    twidth = gs->mText.getWidth ();
+	    theight = gs->mText.getHeight ();
 	}
     }
 
     if (!pixmap)
     {
 	/* getting the pixmap failed, so create an empty one */
-	pixmap = XCreatePixmap (screen->dpy (), screen->root (), width, height, 32);
+	pixmap = XCreatePixmap (screen->dpy (), screen->root (), twidth, theight, 32);
 
 	if (pixmap)
 	{
@@ -732,20 +737,20 @@ GroupTabBar::renderWindowTitle ()
 	    gcv.plane_mask = 0xffffffff;
 
 	    gc = XCreateGC (screen->dpy (), pixmap, GCForeground, &gcv);
-	    XFillRectangle (screen->dpy (), pixmap, gc, 0, 0, width, height);
+	    XFillRectangle (screen->dpy (), pixmap, gc, 0, 0, twidth, theight);
 	    XFreeGC (screen->dpy (), gc);
 	}
     }
 
-    layer->setWidth  (width);
-    layer->setHeight (height);
+    setWidth  (twidth);
+    setHeight (theight);
 
     if (pixmap)
     {
-	layer->mTexture.clear ();
-	layer->mPixmap = pixmap;
-	layer->mTexture = GLTexture::bindPixmapToTexture (layer->mPixmap,
-							 layer->width (), layer->height (), 32);
+	mTexture.clear ();
+	mPixmap = pixmap;
+	mTexture = GLTexture::bindPixmapToTexture (mPixmap,
+						   width (), height (), 32);
     }
 }
 

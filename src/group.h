@@ -234,21 +234,23 @@ class Layer :
     public CompSize
 {
     public:
-	Layer (CompSize &size) :
-	    CompSize::CompSize (size) {}
+	Layer (CompSize &size, GroupSelection *g) :
+	    CompSize::CompSize (size),
+	    mGroup (g) {}
     public:
 	virtual void damage () {};
 
-	PaintState mState;
-	int        mAnimationTime;
+	GroupSelection  *mGroup;
+	PaintState      mState;
+	int             mAnimationTime;
 };
 
 class TextureLayer :
     public Layer
 {
     public:
-	TextureLayer (CompSize &size) :
-	    Layer::Layer (size) {}
+	TextureLayer (CompSize &size, GroupSelection *g) :
+	    Layer::Layer (size, g) {}
 
     public:
 
@@ -290,7 +292,6 @@ class CairoLayer :
 	cairo_surface_t *mSurface;
 	cairo_t	        *mCairo;
 	bool	        mFailed;
-	GroupSelection  *mGroup;
 
     protected:
 	CairoLayer (CompSize &size, GroupSelection *group);
@@ -342,17 +343,22 @@ class TextLayer :
     public TextureLayer
 {
     public:
+    
+	static TextLayer *
+	rebuild (TextLayer *);
 
 	void paint (const GLWindowPaintAttrib &attrib,
 		    const GLMatrix	      &transform,
 		    const CompRegion	      &paintRegion,
 		    const CompRegion	      &clipRegion,
 		    int			      mask);
+	
+	void render ();
 
     public:
 
-	TextLayer (CompSize size) :
-	    TextureLayer::TextureLayer (size),
+	TextLayer (CompSize size, GroupSelection *g) :
+	    TextureLayer::TextureLayer (size, g),
 	    mPixmap (None) {}
     public:
 
@@ -485,10 +491,6 @@ public:
     ~GroupTabBar ();
 
 public:
-
-    /* Rendering */
-
-    void renderWindowTitle ();
 
     /* Input Prevention */
 

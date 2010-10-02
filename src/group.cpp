@@ -1562,7 +1562,11 @@ GroupScreen::handleEvent (XEvent      *event)
 		    gw->mGroup->mTabBar->mTextSlot->mWindow == w)
 		{
 		    /* make sure we are using the updated name */
-		    gw->mGroup->mTabBar->renderWindowTitle ();
+		    gw->mGroup->mTabBar->mTextLayer = 
+		        TextLayer::rebuild (gw->mGroup->mTabBar->mTextLayer);
+
+		    if (gw->mGroup->mTabBar->mTextLayer)
+			gw->mGroup->mTabBar->mTextLayer->render ();
 		    gw->mGroup->mTabBar->damageRegion ();
 		}
 	    }
