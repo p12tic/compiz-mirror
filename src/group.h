@@ -274,10 +274,6 @@ class CairoLayer :
 	~CairoLayer ();
 
     public:
-
-	static CairoLayer * create (CompSize);
-	static CairoLayer * rebuild (CairoLayer *,
-				     CompSize);
 	
 	void clear ();
 
@@ -289,8 +285,36 @@ class CairoLayer :
 	cairo_t	    *mCairo;
 	bool	    mFailed;
 
-    private:
+    protected:
 	CairoLayer (CompSize &size);
+};
+
+class BackgroundLayer :
+    public CairoLayer
+{
+    public:
+
+	static BackgroundLayer * create (CompSize);
+	static BackgroundLayer * rebuild (BackgroundLayer *,
+				     CompSize);
+
+    private:
+	BackgroundLayer (CompSize &size) :
+	    CairoLayer::CairoLayer (size) {}
+};
+
+class SelectionLayer :
+    public CairoLayer
+{
+    public:
+
+	static SelectionLayer * create (CompSize);
+	static SelectionLayer * rebuild (SelectionLayer *,
+					 CompSize);
+
+    private:
+	SelectionLayer (CompSize &size) :
+	    CairoLayer::CairoLayer (size) {}
 };
 
 class TextLayer :
@@ -521,8 +545,8 @@ public:
     GroupTabBarSlot *mTextSlot;
 
     TextLayer *mTextLayer;
-    CairoLayer *mBgLayer;
-    CairoLayer *mSelectionLayer;
+    BackgroundLayer *mBgLayer;
+    SelectionLayer *mSelectionLayer;
 
     /* For animations */
     int                mBgAnimationTime;

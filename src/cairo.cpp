@@ -28,15 +28,33 @@
  * CairoLayer::rebuild
  *
  */
-CairoLayer*
-CairoLayer::rebuild (CairoLayer *layer,
-		     CompSize   size)
+SelectionLayer*
+SelectionLayer::rebuild (SelectionLayer *layer,
+			 CompSize   size)
 {
     int        timeBuf = layer->mAnimationTime;
     PaintState stateBuf = layer->mState;
 
     delete layer;
-    layer = CairoLayer::create (size);
+    layer = SelectionLayer::create (size);
+    if (!layer)
+	return NULL;
+
+    layer->mAnimationTime = timeBuf;
+    layer->mState = stateBuf;
+
+    return layer;
+}
+
+BackgroundLayer*
+BackgroundLayer::rebuild (BackgroundLayer *layer,
+			  CompSize   size)
+{
+    int        timeBuf = layer->mAnimationTime;
+    PaintState stateBuf = layer->mState;
+
+    delete layer;
+    layer = BackgroundLayer::create (size);
     if (!layer)
 	return NULL;
 
@@ -134,12 +152,24 @@ CairoLayer::CairoLayer (CompSize &size) :
  * groupCreateCairoLayer
  *
  */
-CairoLayer*
-CairoLayer::create (CompSize size)
+BackgroundLayer*
+BackgroundLayer::create (CompSize size)
 {
-    CairoLayer *layer;
+    BackgroundLayer *layer;
 
-    layer = new CairoLayer (size);
+    layer = new BackgroundLayer (size);
+    if (!layer || layer->mFailed)
+        return NULL;
+
+    return layer;
+}
+
+SelectionLayer*
+SelectionLayer::create (CompSize size)
+{
+    SelectionLayer *layer;
+
+    layer = new SelectionLayer (size);
     if (!layer || layer->mFailed)
         return NULL;
 
@@ -170,7 +200,7 @@ GroupTabBar::renderTopTabHighlight ()
     height = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
 	     mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
 
-    mSelectionLayer = CairoLayer::rebuild (mSelectionLayer,
+    mSelectionLayer = SelectionLayer::rebuild (mSelectionLayer,
 					   CompSize (width, height));
     if (!mSelectionLayer)
 	return;

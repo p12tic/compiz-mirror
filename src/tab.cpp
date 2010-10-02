@@ -1347,7 +1347,7 @@ GroupSelection::tabGroup (CompWindow *main)
     /* we need a buffer for DnD here */
     space = gs->optionGetThumbSpace ();
     thumbSize = gs->optionGetThumbSize ();
-    mTabBar->mBgLayer = CairoLayer::create (CompSize (width + space + thumbSize,
+    mTabBar->mBgLayer = BackgroundLayer::create (CompSize (width + space + thumbSize,
 						      height));
     if (mTabBar->mBgLayer)
     {
@@ -1361,7 +1361,7 @@ GroupSelection::tabGroup (CompWindow *main)
     height = mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
 	     mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
 
-    mTabBar->mSelectionLayer = CairoLayer::create (CompSize (width, height));
+    mTabBar->mSelectionLayer = SelectionLayer::create (CompSize (width, height));
     if (mTabBar->mSelectionLayer)
     {
 	mTabBar->mSelectionLayer->mState = PaintOn;
@@ -1846,7 +1846,7 @@ GroupTabBar::resizeTabBarRegion (CompRect	&box,
     if (mBgLayer && oldWidth != box.width () && syncIPW)
     {
 	mBgLayer =
-	    CairoLayer::rebuild (mBgLayer,
+	    BackgroundLayer::rebuild (mBgLayer,
 				 CompSize (box.width () +
 				    gs->optionGetThumbSpace () +
 				    gs->optionGetThumbSize (),
