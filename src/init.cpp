@@ -23,18 +23,11 @@
  **/
 
 #include "group.h"
-#include "group_glow.h"
+
 
 COMPIZ_PLUGIN_20090315 (group, GroupPluginVTable);
 
 bool gTextAvailable;
-
-static const GlowTextureProperties glowTextureProperties[2] = {
-    /* GlowTextureRectangular */
-    {glowTexRect, 32, 21},
-    /* GlowTextureRing */
-    {glowTexRing, 32, 16}
-};
 
 void
 GroupScreen::optionChanged (CompOption *opt,

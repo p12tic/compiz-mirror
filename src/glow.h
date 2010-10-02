@@ -54,4 +54,6 @@ class GlowQuad {
 	GLTexture::Matrix mMatrix;
 };
 
+extern const GlowTextureProperties glowTextureProperties[2];
+
 #endif

@@ -1657,36 +1657,6 @@ GroupScreen::handleEvent (XEvent      *event)
 }
 
 /*
- * groupGetOutputExtentsForWindow
- *
- */
-void
-GroupWindow::getOutputExtents (CompWindowExtents &output)
-{
-    GROUP_SCREEN (screen);
-
-    window->getOutputExtents (output);
-
-    if (mGroup && mGroup->mWindows.size () > 1)
-    {
-	int glowSize = gs->optionGetGlowSize ();
-	int glowType = gs->optionGetGlowType ();
-	int glowTextureSize = gs->mGlowTextureProperties[glowType].textureSize;
-	int glowOffset = gs->mGlowTextureProperties[glowType].glowOffset;
-
-	glowSize = glowSize * (glowTextureSize - glowOffset) / glowTextureSize;
-
-	/* glowSize is the size of the glow outside the window decoration
-	 * (w->input), while w->output includes the size of w->input
-	 * this is why we have to add w->input here */
-	output.left   = MAX (output.left, glowSize + window->input ().left);
-	output.right  = MAX (output.right, glowSize + window->input ().right);
-	output.top    = MAX (output.top, glowSize + window->input ().top);
-	output.bottom = MAX (output.bottom, glowSize + window->input ().bottom);
-    }
-}
-
-/*
  * groupWindowResizeNotify
  *
  */

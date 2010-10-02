@@ -61,17 +61,8 @@ extern bool gTextAvailable;
 
 
 /* General TODO:
- * 1) Use std::list/vector etc (done)
- * 2) Use s/XRectangle/CompRect/ (done)
- * 3) Use s/Region/CompRegion/ (done)
- * 5) Derive SelectionObject from CompRect and CompWindowList
- * 6) Make GroupObject from CompWindowList, move all related methods into there
  * 7) Make Queues their own object
- * 8) Move tabbar stuff into it's own object, and move related methods
- * 9) Split rendering into layers
  * 10) Use windowNotify
- * 11) TabList class
- * 12) Rename from groupFoo to just foo
  * 13) Optimize (use const references where appropriate etc)
  */
 
