@@ -335,7 +335,6 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
     {
 	GLWindowPaintAttrib wAttrib (attrib);
 	int            	    alpha = OPAQUE;
-	Layer 		    *layer = NULL;
 	
 	wAttrib.xScale = 1.0f;
 	wAttrib.yScale = 1.0f;
@@ -400,19 +399,6 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 				   clipRegion, mask);
 	    }
 	    break;
-	}
-
-	if (layer)
-	{
-	    TextureLayer *texLayer = (TextureLayer *) layer;
-	    GLWindowPaintAttrib wAttrib (attrib);
-	    
-	    wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
-	    
-	    texLayer->setPaintWindow (topTab);
-	    texLayer->paint (wAttrib, transform, box, clipRegion, mask);
-
-	    
 	}
     }
 }
