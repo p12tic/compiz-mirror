@@ -541,8 +541,8 @@ GroupWindow::groupDeleteGroupWindow ()
 	    group->fini ();
 	}
 
-	cWindow->damageOutputExtents ();
 	mGroup = NULL;
+	cWindow->damageOutputExtents ();
 	window->updateWindowOutputExtents ();
 	groupUpdateWindowProperty ();
     }

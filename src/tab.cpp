@@ -355,7 +355,7 @@ GroupTabBarSlot::getDrawOffset (int &hoffset,
     GROUP_WINDOW (w);
     GROUP_SCREEN (screen);
 
-    if (this != gs->mDraggedSlot)
+    if (this != gs->mDraggedSlot || !gw->mGroup)
     {
 	hoffset = 0;
 	voffset = 0;
