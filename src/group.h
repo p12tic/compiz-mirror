@@ -2,7 +2,7 @@
  *
  * Compiz group plugin
  *
- * group-internal.h
+ * group.h
  *
  * Copyright : (C) 2006-2007 by Patrick Niklaus, Roi Cohen, Danny Baumann
  * Authors: Patrick Niklaus <patrick.niklaus@googlemail.com>
@@ -44,6 +44,11 @@
 #include <math.h>
 #include <limits.h>
 
+class GroupSelection;
+class GroupTabBarSlot;
+class GroupTabBar;
+
+#include "layers.h"
 #include "group_options.h"
 
 
@@ -102,9 +107,6 @@
 #define IS_PREV_TOP_TAB(w, group) (HAS_PREV_TOP_WIN (group) && \
 				   ((PREV_TOP_TAB (group)->id ()) == (w)->id ()))
 
-class GroupSelection;
-class GroupTabBarSlot;
-class GroupTabBar;
 
 /*
  * Window states
@@ -184,11 +186,6 @@ struct _GroupPendingSyncs {
 };
 
 /*
- * Pointer to display list
- */
-extern int groupDisplayPrivateIndex;
-
-/*
  * PaintState
  */
 
@@ -203,14 +200,6 @@ extern int groupDisplayPrivateIndex;
 #define CONSTRAINED_Y		(1 << 3)
 #define DONT_CONSTRAIN		(1 << 4)
 #define IS_UNGROUPING           (1 << 5)
-
-typedef enum {
-    PaintOff = 0,
-    PaintFadeIn,
-    PaintFadeOut,
-    PaintOn,
-    PaintPermanentOn
-} PaintState;
 
 typedef enum {
     AnimationNone = 0,
@@ -230,141 +219,7 @@ typedef enum {
     Untabbing
 } TabbingState;
 
-class Layer :
-    public CompSize
-{
-    public:
-	Layer (CompSize &size, GroupSelection *g) :
-	    CompSize::CompSize (size),
-	    mGroup (g) {}
-    public:
-	virtual void damage () {};
 
-	GroupSelection  *mGroup;
-	PaintState      mState;
-	int             mAnimationTime;
-};
-
-class TextureLayer :
-    public Layer
-{
-    public:
-	TextureLayer (CompSize &size, GroupSelection *g) :
-	    Layer::Layer (size, g) {}
-
-    public:
-
-	void setPaintWindow (CompWindow *);
-	virtual void paint (const GLWindowPaintAttrib &attrib,
-			    const GLMatrix	      &transform,
-			    const CompRegion	      &paintRegion,
-			    const CompRegion	      &clipRegion,
-			    int			      mask);
-    public:
-
-	GLTexture::List mTexture;
-	CompWindow	*mPaintWindow; /* the window we are going to
-					* paint with geometry */
-	
-};
-
-class CairoLayer :
-    public TextureLayer
-{
-    public:
-
-	~CairoLayer ();
-
-    public:
-	
-	void clear ();
-	virtual void render () = 0;
-	virtual void paint (const GLWindowPaintAttrib &attrib,
-			    const GLMatrix	      &transform,
-			    const CompRegion	      &paintRegion,
-			    const CompRegion	      &clipRegion,
-			    int			      mask) = 0;
-
-    public:
-
-	/* used if layer is used for cairo drawing */
-	unsigned char   *mBuffer;
-	cairo_surface_t *mSurface;
-	cairo_t	        *mCairo;
-	bool	        mFailed;
-
-    protected:
-	CairoLayer (CompSize &size, GroupSelection *group);
-};
-
-class BackgroundLayer :
-    public CairoLayer
-{
-    public:
-
-	static BackgroundLayer * create (CompSize, GroupSelection *);
-	static BackgroundLayer * rebuild (BackgroundLayer *,
-				     CompSize);
-
-	void render ();
-	void paint (const GLWindowPaintAttrib &attrib,
-		    const GLMatrix	      &transform,
-		    const CompRegion	      &paintRegion,
-		    const CompRegion	      &clipRegion,
-		    int			      mask);
-
-    private:
-	BackgroundLayer (CompSize &size, GroupSelection *group) :
-	    CairoLayer::CairoLayer (size, group) {}
-};
-
-class SelectionLayer :
-    public CairoLayer
-{
-    public:
-
-	static SelectionLayer * create (CompSize, GroupSelection *);
-	static SelectionLayer * rebuild (SelectionLayer *,
-					 CompSize);
-
-	void render ();
-	void paint (const GLWindowPaintAttrib &attrib,
-		    const GLMatrix	      &transform,
-		    const CompRegion	      &paintRegion,
-		    const CompRegion	      &clipRegion,
-		    int			      mask);
-
-    private:
-	SelectionLayer (CompSize &size, GroupSelection *group) :
-	    CairoLayer::CairoLayer (size, group) {}
-};
-
-class TextLayer :
-    public TextureLayer
-{
-    public:
-    
-	static TextLayer *
-	rebuild (TextLayer *);
-
-	void paint (const GLWindowPaintAttrib &attrib,
-		    const GLMatrix	      &transform,
-		    const CompRegion	      &paintRegion,
-		    const CompRegion	      &clipRegion,
-		    int			      mask);
-	
-	void render ();
-
-    public:
-
-	TextLayer (CompSize size, GroupSelection *g) :
-	    TextureLayer::TextureLayer (size, g),
-	    mPixmap (None) {}
-    public:
-
-	/* used if layer is used for text drawing */
-	Pixmap mPixmap;
-};
 
 /*
  * GroupTabBarSlot
