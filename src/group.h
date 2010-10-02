@@ -279,7 +279,6 @@ class CairoLayer :
 	static CairoLayer * rebuild (CairoLayer *,
 				     CompSize);
 	
-
 	void clear ();
 
     public:
@@ -288,10 +287,10 @@ class CairoLayer :
 	unsigned char   *mBuffer;
 	cairo_surface_t *mSurface;
 	cairo_t	    *mCairo;
+	bool	    mFailed;
 
     private:
-	CairoLayer (CompSize &size) :
-	    TextureLayer::TextureLayer (size) {}
+	CairoLayer (CompSize &size);
 };
 
 class TextLayer :

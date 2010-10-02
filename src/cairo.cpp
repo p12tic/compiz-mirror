@@ -77,6 +77,59 @@ CairoLayer::~CairoLayer ()
 	free (mBuffer);
 }
 
+CairoLayer::CairoLayer (CompSize &size) :
+    TextureLayer::TextureLayer (size)
+{
+    mFailed = true;
+    mSurface = NULL;
+    mCairo   = NULL;
+    mBuffer  = NULL;
+
+    mAnimationTime = 0;
+    mState         = PaintOff;
+
+    mBuffer = (unsigned char *) 
+		   calloc (4 * width () * height (),
+			   sizeof (unsigned char));
+    if (mBuffer)
+    {
+	mSurface = cairo_image_surface_create_for_data (mBuffer,
+							  CAIRO_FORMAT_ARGB32,
+							  width (),
+							  height (),
+							  4 * width ());
+
+	if (cairo_surface_status (mSurface) == CAIRO_STATUS_SUCCESS)
+	{
+	    mCairo = cairo_create (mSurface);
+
+	    if (cairo_status (mCairo) == CAIRO_STATUS_SUCCESS)
+	    {
+		clear ();
+		mFailed = false;
+	    }
+	    else
+	    {
+		compLogMessage ("group", CompLogLevelError,
+				"Failed to create cairo layer context.");
+		cairo_surface_destroy (mSurface);
+		free (mBuffer);
+	    }
+	}
+	else
+	{
+	    compLogMessage ("group", CompLogLevelError,
+			    "Failed to create cairo layer surface");
+	    free (mBuffer);
+	}
+    }
+    else
+    {
+	compLogMessage ("group", CompLogLevelError,
+			"Failed to allocate cairo layer buffer.");
+    }
+}
+
 /*
  * groupCreateCairoLayer
  *
@@ -86,52 +139,11 @@ CairoLayer::create (CompSize size)
 {
     CairoLayer *layer;
 
-
     layer = new CairoLayer (size);
-    if (!layer)
+    if (!layer || layer->mFailed)
         return NULL;
 
-    layer->mSurface = NULL;
-    layer->mCairo   = NULL;
-    layer->mBuffer  = NULL;
 
-    layer->mAnimationTime = 0;
-    layer->mState         = PaintOff;
-
-    layer->mBuffer = (unsigned char *) 
-		   calloc (4 * layer->width () * layer->height (),
-			   sizeof (unsigned char));
-    if (!layer->mBuffer)
-    {
-	compLogMessage ("group", CompLogLevelError,
-			"Failed to allocate cairo layer buffer.");
-	delete layer;
-	return NULL;
-    }
-
-    layer->mSurface = cairo_image_surface_create_for_data (layer->mBuffer,
-							  CAIRO_FORMAT_ARGB32,
-							  layer->width (),
-							  layer->height (),
-							  4 * layer->width ());
-    if (cairo_surface_status (layer->mSurface) != CAIRO_STATUS_SUCCESS)
-    {
-	compLogMessage ("group", CompLogLevelError,
-			"Failed to create cairo layer surface.");
-	delete layer;
-	return NULL;
-    }
-
-    layer->mCairo = cairo_create (layer->mSurface);
-    if (cairo_status (layer->mCairo) != CAIRO_STATUS_SUCCESS)
-    {
-	compLogMessage ("group", CompLogLevelError,
-			"Failed to create cairo layer context.");
-	delete layer;
-	return NULL;
-    }
-
-    layer->clear ();
 
     return layer;
 }
