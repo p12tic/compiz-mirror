@@ -63,7 +63,7 @@ GroupWindow::dragHoverTimeout ()
     {
 	GroupTabBar *bar = mGroup->mTabBar;
 
-	bar->mBgAnimation = AnimationPulse;
+	bar->mBgAnimation = BackgroundLayer::AnimationPulse;
 	bar->mBgAnimationTime = gs->optionGetPulseTime () * 1000;
     }
 

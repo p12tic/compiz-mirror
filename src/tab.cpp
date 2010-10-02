@@ -308,7 +308,7 @@ GroupSelection::tabSetVisibility (bool           visible,
     {
 	if (gs->optionGetBarAnimations ())
 	{
-	    bar->mBgAnimation = AnimationReflex;
+	    bar->mBgAnimation = BackgroundLayer::AnimationReflex;
 	    bar->mBgAnimationTime = gs->optionGetReflexTime () * 1000.0;
 	}
 	bar->mState = PaintFadeIn;
@@ -578,7 +578,7 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
  * GroupTabBar::handleTabBarAnimation
  *
  * Description: Handles the different animations for the tab bar defined in
- * GroupAnimationType. Basically that means this function updates
+ * BackgroundLayer::AnimationType. Basically that means this function updates
  * tabBar->animation->time as well as checking if the animation is already
  * finished.
  *
@@ -591,7 +591,7 @@ GroupTabBar::handleTabBarAnimation (int            msSinceLastPaint)
     if (mBgAnimationTime <= 0)
     {
 	mBgAnimationTime = 0;
-	mBgAnimation = AnimationNone;
+	mBgAnimation = BackgroundLayer::AnimationNone;
 
 	mBgLayer->render ();
     }
@@ -2491,7 +2491,7 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
     mBgLayer (NULL),
     mSelectionLayer (NULL),
     mBgAnimationTime (0),
-    mBgAnimation (AnimationNone),
+    mBgAnimation (BackgroundLayer::AnimationNone),
     mState (PaintOff),
     mAnimationTime (0),
     mOldWidth (0),

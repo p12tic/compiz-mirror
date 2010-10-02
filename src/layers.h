@@ -124,6 +124,14 @@ class BackgroundLayer :
 {
     public:
 
+	typedef enum {
+	    AnimationNone = 0,
+	    AnimationPulse,
+	    AnimationReflex
+	} AnimationType;
+
+    public:
+
 	static BackgroundLayer * create (CompSize, GroupSelection *);
 	static BackgroundLayer * rebuild (BackgroundLayer *,
 				     CompSize);

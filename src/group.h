@@ -164,14 +164,6 @@ struct _GroupPendingSyncs {
 #define DONT_CONSTRAIN		(1 << 4)
 #define IS_UNGROUPING           (1 << 5)
 
-typedef enum {
-    AnimationNone = 0,
-    AnimationPulse,
-    AnimationReflex
-} GroupAnimationType;
-
-
-
 /*
  * GroupTabBarSlot
  */
@@ -415,7 +407,7 @@ class GroupTabBar
 
 	/* For animations */
 	int                mBgAnimationTime;
-	GroupAnimationType mBgAnimation;
+	BackgroundLayer::AnimationType mBgAnimation;
 
 	PaintState mState;
 	int        mAnimationTime;
