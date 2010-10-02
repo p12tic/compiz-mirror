@@ -52,6 +52,12 @@ class GroupScreen;
 #include "tabbar.h"
 #include "group_options.h"
 
+/*
+ * Used to check if we can use the text plugin
+ * 
+ */
+extern bool gTextAvailable;
+
 
 /* General TODO:
  * 1) Use std::list/vector etc (done)
@@ -291,11 +297,6 @@ public:
     
     ResizeInfo *mResizeInfo;
 };
-
-extern bool textAvailable;
-
-#define GROUP_SCREEN(s)							       \
-    GroupScreen *gs = GroupScreen::get (s);
 
 /*
  * GroupWindow structure
@@ -778,6 +779,9 @@ class GroupScreen :
 	
 	Window		  mLastGrabbedWindow;
 };
+
+#define GROUP_SCREEN(s)							       \
+    GroupScreen *gs = GroupScreen::get (s);
 
 #define GROUP_WINDOW(w)							       \
     GroupWindow *gw = GroupWindow::get (w);

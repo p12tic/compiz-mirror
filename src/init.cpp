@@ -27,7 +27,7 @@
 
 COMPIZ_PLUGIN_20090315 (group, GroupPluginVTable);
 
-bool textAvailable;
+bool gTextAvailable;
 
 static const GlowTextureProperties glowTextureProperties[2] = {
     /* GlowTextureRectangular */
@@ -439,9 +439,9 @@ GroupPluginVTable::init ()
 	return false;
 	
     if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
-	textAvailable = false;
+	gTextAvailable = false;
     else
-	textAvailable = true;
+	gTextAvailable = true;
 
     return true;
 }

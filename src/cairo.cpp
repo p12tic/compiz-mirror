@@ -703,7 +703,7 @@ TextLayer::render ()
     theight = mGroup->mTabBar->mRegion.boundingRect ().height ();
 
     if (mGroup->mTabBar->mTextSlot &&
-        mGroup->mTabBar->mTextSlot->mWindow && textAvailable)
+        mGroup->mTabBar->mTextSlot->mWindow && gTextAvailable)
     {
 	CompText::Attrib  textAttrib;
 
