@@ -594,7 +594,7 @@ GroupWindow::removeWindowFromGroup ()
 	group->startTabbingAnimation (false);
 
 	setWindowVisibility (true);
-	group->mUngroupState = UngroupSingle;
+	group->mUngroupState = GroupSelection::UngroupSingle;
 	mAnimateState |= IS_UNGROUPING;
     }
     else

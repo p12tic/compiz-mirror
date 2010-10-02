@@ -107,14 +107,7 @@ class GroupTabBar;
 #define IS_PREV_TOP_TAB(w, group) (HAS_PREV_TOP_WIN (group) && \
 				   ((PREV_TOP_TAB (group)->id ()) == (w)->id ()))
 
-/*
- * Ungrouping states
- */
-typedef enum {
-    UngroupNone = 0,
-    UngroupAll,
-    UngroupSingle
-} GroupUngroupState;
+
 
 /*
  * Rotation direction for change tab animation
@@ -453,63 +446,71 @@ public:
  */
 class GroupSelection
 {
-public:
+    public:
+	/*
+	 * Ungrouping states
+	 */
+	typedef enum {
+	    UngroupNone = 0,
+	    UngroupAll,
+	    UngroupSingle
+	} UngroupState;
 
-    typedef std::list <GroupSelection *> List;
-    
-    GroupSelection (CompWindow *, long int);
-    ~GroupSelection ();
+    public:
 
-public:
+	typedef std::list <GroupSelection *> List;
 
-    void tabGroup (CompWindow *main);
-    void untabGroup ();
+	GroupSelection (CompWindow *, long int);
+	~GroupSelection ();
 
-    void raiseWindows (CompWindow *top);
-    void minimizeWindows (CompWindow *top,
+    public:
+
+	void tabGroup (CompWindow *main);
+	void untabGroup ();
+
+	void raiseWindows (CompWindow *top);
+	void minimizeWindows (CompWindow *top,
 			  bool	     minimize);
-    void shadeWindows (CompWindow  *top,
+	void shadeWindows (CompWindow  *top,
 		       bool	   shade);
-    void moveWindows (CompWindow *top,
-		      int 	 dx,
-		      int 	 dy,
-		      bool 	 immediate,
-		      bool	 viewportChange = false);
-    void prepareResizeWindows (CompRect &resizeRect);
-    void resizeWindows (CompWindow *top);
-    void maximizeWindows (CompWindow *top);
+	void moveWindows (CompWindow *top,
+			  int 	 dx,
+			  int 	 dy,
+			  bool 	 immediate,
+			  bool	 viewportChange = false);
+	void prepareResizeWindows (CompRect &resizeRect);
+	void resizeWindows (CompWindow *top);
+	void maximizeWindows (CompWindow *top);
 
-    /* TODO: Move to TabBar */
-
-    void
-    applyConstraining (CompRegion  constrainRegion,
-		       Window	   constrainedWindow,
-		       int	   dx,
-		       int	   dy);
+	void
+	applyConstraining (CompRegion  constrainRegion,
+			   Window	   constrainedWindow,
+			   int	   dx,
+			   int	   dy);
 		       
-    bool tabBarTimeout ();
-    bool showDelayTimeout ();
+	bool tabBarTimeout ();
+	bool showDelayTimeout ();
 
-    void
-    tabSetVisibility (bool           visible,
-		      unsigned int   mask);
+	void
+	tabSetVisibility (bool           visible,
+			  unsigned int   mask);
 
-    void
-    handleHoverDetection (const CompPoint &);
+	void
+	handleHoverDetection (const CompPoint &);
 
-    void
-    handleAnimation ();
+	void
+	handleAnimation ();
 
-    void
-    finishTabbing ();
+	void
+	finishTabbing ();
 
-    void
-    drawTabAnimation (int	      msSinceLastPaint);
+	void
+	drawTabAnimation (int	      msSinceLastPaint);
 
-    void
-    startTabbingAnimation (bool           tab);
+	void
+	startTabbingAnimation (bool           tab);
 
-    void fini ();
+	void fini ();
 
 public:
     CompScreen *mScreen;
@@ -524,7 +525,7 @@ public:
 
     TabbingState mTabbingState;
 
-    GroupUngroupState mUngroupState;
+    UngroupState mUngroupState;
 
     Window       mGrabWindow;
     unsigned int mGrabMask;
