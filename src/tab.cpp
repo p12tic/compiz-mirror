@@ -2482,6 +2482,7 @@ GroupTabBar::applySpeeds (int            msSinceLastRepaint)
  */
 GroupTabBar::GroupTabBar (GroupSelection *group, 
 			  CompWindow     *topTab) :
+    mSlots (CompSize (0,0), group),
     mGroup (group),
     mTopTab (NULL),
     mPrevTopTab (NULL),

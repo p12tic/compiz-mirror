@@ -228,8 +228,20 @@ class GroupTabBarSlot :
     public GLLayer
 {
 public:
-    typedef std::list <GroupTabBarSlot *> List;
-
+    class List :
+        public std::list <GroupTabBarSlot *>,
+	public GLLayer
+    {
+	public:
+	    List (const CompSize &size, GroupSelection *g) :
+	        GLLayer::GLLayer (size, g) {};
+	
+	    void paint (const GLWindowPaintAttrib &attrib,
+		        const GLMatrix	          &transform,
+			const CompRegion	  &region,
+		        const CompRegion	  &clipRegion,
+			int			  mask);
+    };
 public:
 
     void getDrawOffset (int &hoffset,

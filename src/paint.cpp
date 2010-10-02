@@ -36,6 +36,26 @@ TextureLayer::setPaintWindow (CompWindow *w)
     mPaintWindow = w;
 }
 
+void
+GroupTabBarSlot::List::paint (const GLWindowPaintAttrib &attrib,
+			      const GLMatrix	        &transform,
+			      const CompRegion	        &region,
+			      const CompRegion	        &clipRegion,
+			      int			mask)
+{
+    GROUP_SCREEN (screen);
+	
+    foreach (GroupTabBarSlot *slot, *this)
+    {
+	if (slot != gs->mDraggedSlot || !gs->mDragged)
+	{
+	    slot->setTargetOpacity (attrib.opacity);
+	    slot->paint (attrib, transform, clipRegion,
+			  clipRegion, mask);
+	}
+    }
+}
+
 /*
  * GroupTabBarSlot::paint - taken from switcher and modified for tab bar
  *
@@ -260,7 +280,9 @@ SelectionLayer::paint (const GLWindowPaintAttrib &attrib,
 		       const CompRegion	  	 &clipRegion,
 		       int		         mask)
 {
-    TextureLayer::paint (attrib, transform, paintRegion, clipRegion, mask);
+    TextureLayer::paint (attrib, transform,
+			 mGroup->mTabBar->mTopTab->mRegion,
+			 clipRegion, mask);
 }
 
 void
@@ -279,15 +301,15 @@ TextLayer::paint (const GLWindowPaintAttrib &attrib,
     
     GROUP_SCREEN (screen);
 
-    int x1 = paintRegion.boundingRect ().x1 () + 5;
-    int x2 = paintRegion.boundingRect ().x1 () +
+    int x1 = mGroup->mTabBar->mRegion.boundingRect ().x1 () + 5;
+    int x2 = mGroup->mTabBar->mRegion.boundingRect ().x1 () +
 	     width () + 5;
-    int y1 = paintRegion.boundingRect ().y2 () -
+    int y1 = mGroup->mTabBar->mRegion.boundingRect ().y2 () -
 	     height () - 5;
-    int y2 = paintRegion.boundingRect ().y2 () - 5;
+    int y2 = mGroup->mTabBar->mRegion.boundingRect ().y2 () - 5;
 
-    if (x2 > paintRegion.boundingRect ().x2 ())
-	x2 = paintRegion.boundingRect ().x2 ();
+    if (x2 > mGroup->mTabBar->mRegion.boundingRect ().x2 ())
+	x2 = mGroup->mTabBar->mRegion.boundingRect ().x2 ();
 
     box = CompRect (x1, y1, x2 - x1, y2 - y1);
 
@@ -315,7 +337,7 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 		    CompRegion		 	 clipRegion)
 {
     CompWindow      *topTab;
-    int             count;
+    std::vector <GLLayer *> paintList;
     CompRect        box;
     
     GROUP_SCREEN (screen);
@@ -325,19 +347,32 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
     else
 	topTab = PREV_TOP_TAB (mGroup);
 
-#define PAINT_BG     0
-#define PAINT_SEL    1
-#define PAINT_THUMBS 2
-#define PAINT_TEXT   3
-#define PAINT_MAX    4
+    mBgLayer->setPaintWindow (topTab);
+    mSelectionLayer->setPaintWindow (topTab);
 
-    for (count = 0; count < PAINT_MAX; count++)
+    paintList.push_back (mBgLayer);
+    paintList.push_back (mSelectionLayer);
+    paintList.push_back (&mSlots);
+    
+    if (mTextLayer && (mTextLayer->mState != PaintOff))
+    {
+	mTextLayer->setPaintWindow (topTab);
+	paintList.push_back (mTextLayer);
+    }
+
+    foreach (GLLayer *layer, paintList)
     {
 	GLWindowPaintAttrib wAttrib (attrib);
+	GLenum              oldTextureFilter;
 	int            	    alpha = OPAQUE;
 	
 	wAttrib.xScale = 1.0f;
 	wAttrib.yScale = 1.0f;
+	
+	oldTextureFilter = gs->gScreen->textureFilter ();
+
+	if (gs->optionGetMipmaps ())
+	    gs->gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
 	if (mState == PaintFadeIn)
 	    alpha -= alpha * mAnimationTime / (gs->optionGetFadeTime () * 1000);
@@ -345,61 +380,9 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 	    alpha = alpha * mAnimationTime / (gs->optionGetFadeTime () * 1000);
 
 	wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
-
-	switch (count) {
-	case PAINT_BG:
-	    {
-		mBgLayer->setPaintWindow (topTab);
-		mBgLayer->paint (wAttrib, transform, box, clipRegion, mask);
-	    }
-	    break;
-
-	case PAINT_SEL:
-	    if (mGroup->mTabBar->mTopTab != gs->mDraggedSlot)
-	    {
-		mSelectionLayer->setPaintWindow (topTab);
-		mSelectionLayer->paint (wAttrib, transform,
-					mGroup->mTabBar->mTopTab->mRegion,
-					clipRegion, mask);
-	    }
-	    break;
-
-	case PAINT_THUMBS:
-	    {
-		GLenum          oldTextureFilter;
-		GroupTabBarSlot *slot;
-
-		oldTextureFilter = gs->gScreen->textureFilter ();
-
-		if (gs->optionGetMipmaps ())
-		    gs->gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
-
-		foreach (slot, mSlots)
-		{
-		    if (slot != gs->mDraggedSlot || !gs->mDragged)
-		    {
-			slot->setTargetOpacity (attrib.opacity);
-			slot->paint (attrib, transform, clipRegion,
-				     clipRegion, mask);
-		    }
-		}
-
-		gs->gScreen->setTextureFilter (oldTextureFilter);
-	    }
-	    break;
-
-	case PAINT_TEXT:
-	    if (mTextLayer && (mTextLayer->mState != PaintOff))
-	    {
-		/* Using the base attrib here intended since we
-		 * need to use a special opacity
-		 */
-		mTextLayer->setPaintWindow (topTab);
-		mTextLayer->paint (attrib, transform, mRegion,
-				   clipRegion, mask);
-	    }
-	    break;
-	}
+	layer->paint (wAttrib, transform, clipRegion, clipRegion, mask);
+	
+	gs->gScreen->setTextureFilter (oldTextureFilter);
     }
 }
 
