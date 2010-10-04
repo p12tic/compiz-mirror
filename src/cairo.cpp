@@ -25,7 +25,13 @@
 #include "group.h"
 
 /*
- * CairoLayer::rebuild
+ * SelectionLayer::rebuild
+ *
+ * This function takes an existing SelectionLayer (CairoLayer),
+ * saves it's properties into a buffer, deletes it and re-creates
+ * it with those properties. This is generally less error-prone
+ * than only deleting the bits of the layer we need (since there is
+ * a lot of sensitive cairo code in there
  *
  */
 SelectionLayer*
@@ -47,6 +53,16 @@ SelectionLayer::rebuild (SelectionLayer *layer,
     return layer;
 }
 
+/*
+ * BackgroundLayer::rebuild
+ *
+ * This function takes an existing SelectionLayer (CairoLayer),
+ * saves it's properties into a buffer, deletes it and re-creates
+ * it with those properties. This is generally less error-prone
+ * than only deleting the bits of the layer we need (since there is
+ * a lot of sensitive cairo code in there
+ *
+ */
 BackgroundLayer*
 BackgroundLayer::rebuild (BackgroundLayer *layer,
 			  CompSize   size)
@@ -67,7 +83,9 @@ BackgroundLayer::rebuild (BackgroundLayer *layer,
 }
 
 /*
- * groupClearCairoLayer
+ * CairoLayer::clear
+ *
+ * This function clears any drawing on a cairo layer
  *
  */
 void
@@ -97,8 +115,25 @@ CairoLayer::~CairoLayer ()
 	free (mBuffer);
 }
 
+/*
+ * CairoLayer::CairoLayer
+ *
+ * Constructor for CairoLayer,
+ *
+ * Since there is no ability to return a NULL object, we have
+ * to set a validity state and continue to construct the
+ * layer based on the success of cairo object construction
+ *
+ */
+
 CairoLayer::CairoLayer (const CompSize &size, GroupSelection *g) :
-    TextureLayer::TextureLayer (size, g)
+    TextureLayer::TextureLayer (size, g)/*
+ * BackgroundLayer::create
+ *
+ * Factory method for BackgroundLayer. Automatically checks
+ * for failure to create cairo objects
+ *
+ */
 {
     mFailed = true;
     mSurface = NULL;
@@ -159,7 +194,10 @@ BackgroundLayer::BackgroundLayer (const CompSize &size,
 }
 
 /*
- * groupCreateCairoLayer
+ * BackgroundLayer::create
+ *
+ * Factory method for BackgroundLayer. Automatically checks
+ * for failure to create cairo objects
  *
  */
 BackgroundLayer*
@@ -174,6 +212,13 @@ BackgroundLayer::create (CompSize size, GroupSelection *g)
     return layer;
 }
 
+/*
+ * SelectionLayer::create
+ *
+ * Factory method for SelectionLayer. Automatically checks
+ * for failure to create cairo objects
+ *
+ */
 SelectionLayer*
 SelectionLayer::create (CompSize size, GroupSelection *g)
 {
@@ -189,24 +234,26 @@ SelectionLayer::create (CompSize size, GroupSelection *g)
 }
 
 /*
- * GroupTabBar::renderTopTabHighlight
+ * SelectionLayer::render
+ *
+ * Renders the group color highlight behind the active tab using cairo
  *
  */
 void
 SelectionLayer::render ()
 {
     cairo_t         *cr;
-    int             width, height;
+    int             selWidth, selHeight;
 
     if (!HAS_TOP_WIN (mGroup) || !mCairo)
-    {
 	return;
-    }
 
-    width = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().x2 () -
-	    mGroup->mTabBar->mTopTab->mRegion.boundingRect ().x1 ();
-    height = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
-	     mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
+    /* Dimentions are the top tab's dimentions */ 
+
+    selWidth = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().x2 () -
+	       mGroup->mTabBar->mTopTab->mRegion.boundingRect ().x1 ();
+    selHeight = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
+	        mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
 
     cr = mCairo;
 
@@ -219,7 +266,7 @@ SelectionLayer::render ()
 			   (mGroup->mColor[3] / (65535.0f * 2)));
 
     cairo_move_to (cr, 0, 0);
-    cairo_rectangle (cr, 0, 0, width, height);
+    cairo_rectangle (cr, 0, 0, selWidth, selHeight);
 
     cairo_fill_preserve (cr);
 
@@ -238,7 +285,9 @@ SelectionLayer::render ()
 }
 
 /*
- * GroupTabBar::renderTabBarBackground
+ * BackgroundLayer::render
+ *
+ * Render the background to the tab bar, also render the tab bar animation
  *
  */
 void
@@ -255,37 +304,58 @@ BackgroundLayer::render ()
     if (!HAS_TOP_WIN (mGroup) || !mCairo)
 	return;
 
+    /* Dimentions are the tab bar's region */
     twidth = mGroup->mTabBar->mRegion.boundingRect ().width ();
     theight = mGroup->mTabBar->mRegion.boundingRect ().height ();
     radius = gs->optionGetBorderRadius ();
 
+    /* Do not draw more than the tab bar width */
     if (twidth > width ())
 	twidth = width ();
 
+    /* Border radius should not exceed
+     * half of the tab bar height */
     if (radius > twidth / 2)
 	radius = twidth / 2;
 
     cr = mCairo;
 
+    /* Clear the layer */
     clear ();
+
+    /* Draw the border around the tab bar */
 
     borderWidth = gs->optionGetBorderWidth ();
     cairo_set_line_width (cr, borderWidth);
 
     cairo_save (cr);
 
+    /* Move to the center of where we want to draw the line */
     x0 = borderWidth / 2.0f;
     y0 = borderWidth / 2.0f;
+    /* The center of where we want to draw the opposite line */
     x1 = twidth  - borderWidth / 2.0f;
     y1 = theight - borderWidth / 2.0f;
     cairo_move_to (cr, x0 + radius, y0);
+
+    /* Arc the top right corner */
     cairo_arc (cr, x1 - radius, y0 + radius, radius, M_PI * 1.5, M_PI * 2.0);
+    /* Arc the bottom right corner */
     cairo_arc (cr, x1 - radius, y1 - radius, radius, 0.0, M_PI * 0.5);
+    /* Arc the bottom left corner */
     cairo_arc (cr, x0 + radius, y1 - radius, radius, M_PI * 0.5, M_PI);
+    /* Arc the top left corner */
     cairo_arc (cr, x0 + radius, y0 + radius, radius, M_PI, M_PI * 1.5);
 
     cairo_close_path  (cr);
 
+    /* There are 5 different tab styles here:
+     * Simple: draws a simple filled rect
+     * Gradient: left to right gradient between base and highlight
+     * Glass: left to right gradient, stopping at 60% and drawing a shadow
+     * Metal: base -> highlight -> base gradient
+     * Murrina: draws an arc between the two corners blending base and highlight
+     */
     switch (gs->optionGetTabStyle ()) {
     case GroupOptions::TabStyleSimple:
 	{
@@ -573,25 +643,41 @@ BackgroundLayer::render ()
     a = gs->optionGetTabBorderColorAlpha () / 65535.0f;
     cairo_set_source_rgba (cr, r, g, b, a);
 
+    /* If there is an animation running, stroke preserved
+     * so that we can paint directly on top (and blend!)
+     * the new animation with the existing tab bar.
+     * Otherwise just stroke normally, this is less expensive
+     */
     if (mBgAnimation != AnimationNone)
 	cairo_stroke_preserve (cr);
     else
 	cairo_stroke (cr);
 
+    /* There are two animations here:
+     * Pulse: Highlight tab bar in and out (used for tab hover)
+     * Reflex: Paint a diagonal gradient moving from right to left
+     *         on the tab bar when it appears
+     */
     switch (mBgAnimation) {
     case AnimationPulse:
 	{
 	    double animationProgress;
 	    double alpha;
 
+	    /* Progress here is measured in the current time */
 	    animationProgress = mBgAnimationTime /
 		                (gs->optionGetPulseTime () * 1000.0);
+	    /* The highlight pulsates in and out, so the alpha here should run
+	     * on a sine wave */
 	    alpha = sin ((2 * PI * animationProgress) - 1.55)*0.5 + 0.5;
+
+	    /* If the alpha of the animation is < 0, don't bother painting */
 	    if (alpha <= 0)
 		break;
 
 	    cairo_save (cr);
 	    cairo_clip (cr);
+	    /* Paint highlight over the tab bar */
 	    cairo_set_operator (cr, CAIRO_OPERATOR_XOR);
 	    cairo_rectangle (cr, 0.0, 0.0, twidth, theight);
 	    cairo_set_source_rgba (cr, 1.0, 1.0, 1.0, alpha);
@@ -607,8 +693,10 @@ BackgroundLayer::render ()
 	    double          posX, alpha;
 	    cairo_pattern_t *pattern;
 
+	    /* Progress is measured in current time */
 	    animationProgress = mBgAnimationTime /
 		                (gs->optionGetReflexTime () * 1000.0);
+	    /* Position here is the tab bar width plus the reflection width * 2 */
 	    reflexWidth = (mGroup->mTabBar->mSlots.size () / 2.0) * 30;
 	    posX = (twidth + reflexWidth * 2.0) * animationProgress;
 	    alpha = sin (PI * animationProgress) * 0.55;
@@ -658,6 +746,14 @@ BackgroundLayer::render ()
 			  		  (CompSize &) *this);
 }
 
+/*
+ * TextLayer::rebuild
+ *
+ * Take a text layer, save it's properties into a buffer
+ * and re-create it with those properties
+ *
+ */
+
 TextLayer *
 TextLayer::rebuild (TextLayer *layer)
 {
@@ -687,6 +783,9 @@ TextLayer::rebuild (TextLayer *layer)
 /*
  * TextLayer::render
  *
+ * Renders some text without a background, without automatically
+ * binding the text pixmap to a texture (since we need to bind it later)
+ *
  */
 void
 TextLayer::render ()
@@ -699,6 +798,7 @@ TextLayer::render ()
     if (!HAS_TOP_WIN (mGroup))
 	return;
 
+    /* Maximum text width is the tab bar width */
     twidth = mGroup->mTabBar->mRegion.boundingRect ().width ();
     theight = mGroup->mTabBar->mRegion.boundingRect ().height ();
 
@@ -710,6 +810,8 @@ TextLayer::render ()
 	textAttrib.family = "Sans";
 	textAttrib.size   = gs->optionGetTabbarFontSize ();
 
+	/* Bold text, ellipsize if there is not enough room and do not
+	 * automatically bind pixmap to texture */
 	textAttrib.flags = CompText::StyleBold | CompText::Ellipsized |
 	                   CompText::NoAutoBinding;
 
@@ -721,6 +823,7 @@ TextLayer::render ()
 	textAttrib.maxWidth = twidth;
 	textAttrib.maxHeight = theight;
 
+	/* Render title of the top window */
 	if (gs->mText.renderWindowTitle (
 		             mGroup->mTabBar->mTextSlot->mWindow->id (),
 						     false, textAttrib))
@@ -757,6 +860,9 @@ TextLayer::render ()
     {
 	mTexture.clear ();
 	mPixmap = pixmap;
+	/* Text layer's texture is bound here, this can be re used
+	 * in TextureLayer::paint
+	 */
 	mTexture = GLTexture::bindPixmapToTexture (mPixmap,
 						   width (), height (), 32);
     }

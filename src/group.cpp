@@ -25,7 +25,10 @@
 #include "group.h"
 
 /*
- * isGroupWindow
+ * GroupWindow::isGroupWindow
+ *
+ * Simple set of condensed checks on the window to check if it
+ * makes sense to handle this window with the group plugin
  *
  */
 
@@ -48,7 +51,7 @@ GroupWindow::isGroupWindow ()
 }
 
 /*
- * dragHoverTimeout
+ * GroupWindow::dragHoverTimeout
  *
  * Description:
  * Activates a window after a certain time a slot has been dragged over it.
@@ -74,7 +77,11 @@ GroupWindow::dragHoverTimeout ()
 }
 
 /*
- * checkWindowProperty
+ * GroupWindow::checkWindowProperty
+ *
+ * Reads the X Window Property for the group plugin
+ * on this window, and returns some information about
+ * this window as saved in the property
  *
  */
 bool
@@ -99,6 +106,7 @@ GroupWindow::checkWindowProperty (CompWindow *w,
     {
 	if (type == XA_CARDINAL && fmt == 32 && nitems == 5)
 	{
+	    /* id here is the group->identifier */
 	    if (id)
 		*id = data[0];
 	    if (tabbed)
@@ -120,7 +128,12 @@ GroupWindow::checkWindowProperty (CompWindow *w,
 }
 
 /*
- * updateWindowProperty
+ * GroupWindow::updateWindowProperty
+ *
+ * Whenever we change the group, color or tabbed state
+ * of a group or window, then we must update the relevant
+ * X11 window properties (so we can survive compiz restarts,
+ * crashes and the like)
  *
  */
 void
@@ -154,6 +167,18 @@ GroupWindow::updateWindowProperty ()
     }
 }
 
+/*
+ * GroupWindow::updateResizeRectangle
+ *
+ * Updates the new resize rect of grouped windows of a group
+ * which is currently being resized. This checks the difference
+ * of the "master geometry" and the original geometry of the grabbed
+ * window of the group and applies it to this window. Obviously, 
+ * we can't do anything like resize past boundaries so constrain the
+ * window size if this happens.
+ * Also set the relevant configure masks
+ */
+
 unsigned int
 GroupWindow::updateResizeRectangle (CompRect   masterGeometry,
 					 bool	    damage)
@@ -166,10 +191,18 @@ GroupWindow::updateResizeRectangle (CompRect   masterGeometry,
     if (mResizeGeometry.isEmpty () || !mGroup->mResizeInfo)
 	return 0;
 
+    /* New geometry //position// is the difference between the master geometry
+     * and the original geometry
+     */
+
     newGeometry.setX (WIN_X (window) + (masterGeometry.x () -
 				 mGroup->mResizeInfo->mOrigGeometry.x ()));
     newGeometry.setY (WIN_Y (window) + (masterGeometry.y () -
 				 mGroup->mResizeInfo->mOrigGeometry.y ()));
+
+    /* New geometry //size// is the difference in sizes between the master and original
+     * geometry, plus the size of this window (obviously check for negative values)
+     */
 
     widthDiff = masterGeometry.width () - mGroup->mResizeInfo->mOrigGeometry.width ();
     newGeometry.setWidth (MAX (1, WIN_WIDTH (window) + widthDiff));
@@ -189,6 +222,8 @@ GroupWindow::updateResizeRectangle (CompRect   masterGeometry,
 	    cWindow->addDamage ();
 	}
     }
+
+    /* Set appropriate XConfigure masks */
 
     if (newGeometry.x () != mResizeGeometry.x ())
     {
@@ -215,7 +250,10 @@ GroupWindow::updateResizeRectangle (CompRect   masterGeometry,
 }
 
 /*
- * grabScreen
+ * GroupScreen::grabScreen
+ *
+ * Convenience function to grab the screen with different grab
+ * masks, etc
  *
  */
 void
@@ -241,6 +279,15 @@ GroupScreen::grabScreen (GroupScreen::GrabState newState)
 
 /*
  * GroupSelection::raiseWindows
+ *
+ * Raises all windows in a group
+ *
+ * Creates a list of all windows that need to be raised
+ * and then raises them all in one go (restacks them below the top
+ * window).
+ *
+ * FIXME: Doesn't appear to work with 0.9, perhaps because of the changes
+ * in the restacking code
  *
  */
 void
@@ -271,7 +318,10 @@ GroupSelection::raiseWindows (CompWindow     *top)
 }
 
 /*
- * groupMinimizeWindows
+ * GroupSelection::minimizeWindows
+ *
+ * Minimizes all windows in a group. Don't minimize the principal
+ * window twice, obviously
  *
  */
 void
@@ -291,7 +341,11 @@ GroupSelection::minimizeWindows (CompWindow     *top,
 }
 
 /*
- * groupShadeWindows
+ * GroupSelection::shadeWindows
+ *
+ * Shade all windows in a group
+ *
+ * After shading we need to update the window attributes
  *
  */
 void
@@ -318,6 +372,16 @@ GroupSelection::shadeWindows (CompWindow     *top,
 /*
  * GroupSelection::moveWindows
  *
+ * Move all windows in a group
+ *
+ * This does not move all windows straight away, rather it enqueues a
+ * a w->move () into the window structure itself, to be batch-dequeued
+ * at before the next handleEvent () call. This is because calling
+ * wrapped functions half way through the wrap chain is just going
+ * to be problematic for us.
+ *
+ * Also if a window is maximized and there was a viewport change,
+ * move the window backwards. Otherwise ignore viewport changes.
  */
 
 void
@@ -464,6 +528,8 @@ GroupSelection::resizeWindows (CompWindow *top)
 /*
  * GroupSelection::maximizeWindows
  *
+ * Maximizes every window in a group, simply changing it's state
+ *
  */
 
 void
@@ -482,7 +548,10 @@ GroupSelection::maximizeWindows (CompWindow *top)
 }
 
 /*
- * deleteGroupWindow
+ * GroupWindow::deleteGroupWindow ()
+ *
+ * Finitializes any remaining group related bits on a window
+ * structure after we have detached from a group.
  *
  */
 void
@@ -497,6 +566,8 @@ GroupWindow::deleteGroupWindow ()
 
     group = mGroup;
 
+    /* If this is the dragged slot in the group, unhook it
+     * from the tab bar. Otherwise get rid of it */
     if (group->mTabBar && mSlot)
     {
 	if (gs->mDraggedSlot && gs->mDragged &&
@@ -508,15 +579,27 @@ GroupWindow::deleteGroupWindow ()
 	    group->mTabBar->deleteTabBarSlot (mSlot);
     }
 
+    /* If the group has any windows left ... */
     if (group->mWindows.size ())
     {
+	/* If the group has more than one window left, and, if
+	 * after removing the window, there is only one window left,
+	 * then there makes no sense to paint glow on the "group"
+	 * with just one window left, (the window *is* grouped, but
+	 * for the purposes of what the user can see, the window is just
+	 * like any other window, and when we add it to another group,
+	 * it will just re-use some of the structures we have already
+	 */
 	if (group->mWindows.size () > 1)
 	{
 	    group->mWindows.remove (window);
 
 	    if (group->mWindows.size () == 1)
 	    {
-		/* Glow was removed from this window, too */
+		/* Glow was removed from this window, too.
+		 * Since there is only one window left here,
+		 * it is safe to use front ()
+		 */
 		CompositeWindow::get (group->mWindows.front ())->damageOutputExtents ();
 		group->mWindows.front ()->updateWindowOutputExtents ();
 
@@ -549,6 +632,16 @@ GroupWindow::deleteGroupWindow ()
     }
 }
 
+/*
+ * GroupWindow::removeWindowFromGroup
+ *
+ * Takes a window out of a group, there might be a tab bar, so this
+ * is really just a wrapper function to handle the untabbing of
+ * the single window //first// before going ahead and getting rid
+ * of the window from the group.
+ *
+ */
+
 void
 GroupWindow::removeWindowFromGroup ()
 {
@@ -571,13 +664,20 @@ GroupWindow::removeWindowFromGroup ()
 	    int        oldX = mOrgPos.x ();
 	    int        oldY = mOrgPos.y ();
 
+	    /* The "original position" of the window for the purposes of the untabbing animation
+	     * is centered to the top tab */
 	    mOrgPos =
 	       CompPoint (WIN_CENTER_X (tw) - (WIN_WIDTH (window) / 2),
 			  WIN_CENTER_Y (tw) - (WIN_HEIGHT (window) / 2));
 
+	    /* Destination is here is the "original" position of the window
+	     * relative to how far away it was from the main tab */
 	    mDestination = mOrgPos + mMainTabOffset;
 
+	    /* The new "main tab offset" is now the original position */
 	    mMainTabOffset = CompPoint (oldX, oldY);
+
+	    /* Kick off the animation */
 
 	    if (mTx || mTy)
 	    {
@@ -619,6 +719,12 @@ GroupSelection::~GroupSelection ()
 /*
  * GroupSelection::fini
  *
+ * This is //essentially// like a destructor, although it handles
+ * setting up the untabbing animation before the group is freed.
+ *
+ * We cannot put this code in the destructor, since there is no way
+ * to prevent the object from being freed if we need to do things
+ * like trigger animations
  */
 void
 GroupSelection::fini ()
@@ -636,6 +742,15 @@ GroupSelection::fini ()
 	    return;
 	}
 
+	/* For every window in the group, we need to do a few
+	 * tear down related things (faster than calling
+	 * removeWindowFromGroup on every single one)
+	 * which includes damaging the current glow region
+	 * (output extents), updating the X11 window property
+	 * reflect that this window is now gone from the group
+	 * and creating new autotabbed groups from the windows
+	 * when they are removed
+	 */
 	foreach (CompWindow *cw, mWindows)
 	{
 	    GROUP_WINDOW (cw);
@@ -661,18 +776,29 @@ GroupSelection::fini ()
 	mTabBar = NULL;
     }
 
+    /* Pop this group from the groups list */
     gs->mGroups.remove (this);
 
+    /* Make sure there are no dangling pointers to this in GroupScreen */
     if (this == gs->mLastHoveredGroup)
 	gs->mLastHoveredGroup = NULL;
     if (this == gs->mLastRestackedGroup)
 	gs->mLastRestackedGroup = NULL;
 
+    /* This is slightly evil, but necessary, since it is not possible
+     * to make the destructor private (since the object would be
+     * non-instantiatable). Also, we don't use the class at all
+     * after this, so we can let it's memory go, really
+     */
     delete this;
 }
 
 /*
  * GroupSelection::GroupSelection
+ *
+ * Constructor for GroupSelection. Set up the initial top window
+ * for this group, set up the color and determine a new
+ * ID number for it
  * 
  */
 
@@ -730,8 +856,14 @@ GroupSelection::GroupSelection (CompWindow *startingWindow,
 }
 
 /*
- * addWindowToGroup
+ * GroupWindow::addWindowToGroup
  *
+ * Adds a window to a group.
+ *
+ * Note that if NULL is passed, a new group is created. "initialIdent"
+ * is there for restoring from window properties, otherwise you can just
+ * pass 0.
+ * 
  */
 void
 GroupWindow::addWindowToGroup (GroupSelection *group,
@@ -742,21 +874,28 @@ GroupWindow::addWindowToGroup (GroupSelection *group,
 
     if (group)
     {
+	/* If a group was specified, just add this window to it */
 	CompWindow *topTab = NULL;
 	
 	mGroup = group;
 
 	group->mWindows.push_back (window);
 
+	/* Update glow regions and X11 property */
+
 	window->updateWindowOutputExtents ();
 	updateWindowProperty ();
 
+	/* If we have more than one window in this group just recently,
+	 * then update the first window too, */
 	if (group->mWindows.size () == 2)
 	{
 	    /* first window in the group got its glow, too */
 	    group->mWindows.front ()->updateWindowOutputExtents ();
 	}
 
+	/* If there is a tab bar for this group, then we need to set up
+	 * the tabbing animation */
 	if (group->mTabBar)
 	{
 	    if (HAS_TOP_WIN (group))
@@ -808,7 +947,11 @@ GroupWindow::addWindowToGroup (GroupSelection *group,
 }
 
 /*
- * groupWindows
+ * GroupScreen::groupWindows
+ *
+ * Triggerable action to group windows, just adds all the
+ * windows in the current selection to a group, or creates a new
+ * one and adds them to that.
  *
  */
 bool
@@ -870,7 +1013,9 @@ GroupScreen::groupWindows (CompAction         *action,
 }
 
 /*
- * ungroupWindows
+ * GroupScreen::ungroupWindows
+ *
+ * Actions to ungroup the windows
  *
  */
 bool
@@ -887,6 +1032,7 @@ GroupScreen::ungroupWindows (CompAction          *action,
     {
 	GROUP_WINDOW (w);
 
+	/* Find the group of the selected window, kill it */
 	if (gw->mGroup)
 	    gw->mGroup->fini ();
     }
@@ -895,7 +1041,9 @@ GroupScreen::ungroupWindows (CompAction          *action,
 }
 
 /*
- * removeWindow
+ * GroupScreen::removeWindow
+ *
+ * Triggerable action to remove a single window from a group
  *
  */
 bool
@@ -920,7 +1068,7 @@ GroupScreen::removeWindow (CompAction         *action,
 }
 
 /*
- * closeWindows
+ * GroupScreen::closeWindows
  *
  */
 bool
@@ -948,7 +1096,9 @@ GroupScreen::closeWindows (CompAction           *action,
 }
 
 /*
- * changeColor
+ * GroupScreen::changeColor
+ * 
+ * Action to change the color of a group
  *
  */
 bool
@@ -967,6 +1117,7 @@ GroupScreen::changeColor (CompAction           *action,
 
 	if (gw->mGroup)
 	{
+	    /* Generate new color */
 	    GLushort *color = gw->mGroup->mColor;
 	    float    factor = ((float)RAND_MAX + 1) / 0xffff;
 	    CompSize size (gw->mGroup->mTabBar->mTopTab->mRegion.boundingRect ().width (),
@@ -976,6 +1127,7 @@ GroupScreen::changeColor (CompAction           *action,
 	    color[1] = (int)(rand () / factor);
 	    color[2] = (int)(rand () / factor);
 
+	    /* Re-render the selection layer, if it is there */
 	    gw->mGroup->mTabBar->mSelectionLayer =
 	       SelectionLayer::rebuild (gw->mGroup->mTabBar->mSelectionLayer,
 					size);
@@ -989,7 +1141,10 @@ GroupScreen::changeColor (CompAction           *action,
 }
 
 /*
- * setIgnore
+ * GroupScreen::setIgnore
+ * 
+ * Triggerable action to make this group not behave like a group
+ * for a short amount of time
  *
  */
 bool
@@ -1006,7 +1161,9 @@ GroupScreen::setIgnore (CompAction         *action,
 }
 
 /*
- * unsetIgnore
+ * GroupScreen::unsetIgnore
+ *
+ * Triggerable action to make this group behave like a group
  *
  */
 bool
@@ -1022,7 +1179,11 @@ GroupScreen::unsetIgnore (CompAction          *action,
 }
 
 /*
- * handleButtonPressEvent
+ * GroupScreen::handleButtonPressEvent
+ *
+ * Generally delegated from GroupScreen::handleEvent,
+ * do things like handling clicks on tab thumbnails,
+ * scrolling on the tab bar etc
  *
  */
 void
@@ -1040,10 +1201,12 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 	if (!group->mTabBar)
 	    continue;
 
+	/* if we didn't click on a tab bar, we don't care*/
 	if (group->mTabBar->mInputPrevention != event->xbutton.window)
 	    continue;
 
 	switch (button) {
+	/* Left mouse button on the tab bar, did we click on a slot? */
 	case Button1:
 	    {
 		GroupTabBarSlot *slot;
@@ -1053,6 +1216,8 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 		    if (slot->mRegion.contains (CompPoint (xRoot,
 							   yRoot)))
 		    {
+			/* Set the draggedSlot to this one, don't select the tab yet, we
+			 * are supposed to do that in ::handleButtonReleaseEvent */
 			mDraggedSlot = slot;
 			/* The slot isn't dragged yet */
 			mDragged = false;
@@ -1065,7 +1230,7 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 		}
 	    }
 	    break;
-
+	/* Scroll up or down on the bar */
 	case Button4:
 	case Button5:
 	    {
@@ -1086,6 +1251,7 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 
 		gw = GroupWindow::get (topTab);
 
+		/* Change tab left */
 		if (button == Button4)
 		{
 		    if (gw->mSlot->mPrev)
@@ -1094,6 +1260,7 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 			changeTab (gw->mGroup->mTabBar->mSlots.back (),
 					GroupTabBar::RotateLeft);
 		}
+		/* Change tab right */
 		else
 		{
 		    if (gw->mSlot->mNext)
@@ -1110,7 +1277,11 @@ GroupScreen::handleButtonPressEvent (XEvent *event)
 }
 
 /*
- * handleButtonReleaseEvent
+ * GroupScreen::handleButtonReleaseEvent
+ *
+ * Delegated from ::handleEvent, this handles any button release
+ * event on the tab bar, so we need to "deposit" dragged slots
+ * as well as changing tabs
  *
  */
 void
@@ -1125,9 +1296,16 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
     if (event->xbutton.button != 1)
 	return;
 
+    /* If there is no dragged slot, return
+     * Note that this doesn't necessarily mean that
+     * we are not //dragging// a slot (since a slot gets picked
+     * as mDraggedSlot as soon as it is clicked, not dragged
+     */
     if (!mDraggedSlot)
 	return;
 
+    /* If we were not dragged, then we were simply just selecting
+     * this tab! Just change to this tab */
     if (!mDragged)
     {
 	changeTab (mDraggedSlot, GroupTabBar::RotateUncertain);
@@ -1142,6 +1320,9 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
     GROUP_WINDOW (mDraggedSlot->mWindow);
 
     newRegion = mDraggedSlot->mRegion;
+
+    /* newRegion is the region which we are dragging the tab into,
+     * which has draw offset corrections applied */
 
     mDraggedSlot->getDrawOffset (vx, vy);
     newRegion.translate (vx, vy);
@@ -1158,6 +1339,8 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	/* create clipping region */
 	clip = GroupWindow::get (TOP_TAB (group))->getClippingRegion ();
 
+	/* if our tab region doesn't intersect the tabbar at all, then we aren't in
+	 * the tab bar, so just check the next group */
 	buf = newRegion.intersected (group->mTabBar->mRegion);
 	buf = buf.subtracted (clip);
 
@@ -1165,6 +1348,9 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	if (!inTabBar)
 	    continue;
+
+	/* wasInTabBar has a higher scope than here - if it is false then the window
+	 * is removed from the parent group */
 
 	wasInTabBar = true;
 
@@ -1179,6 +1365,8 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    if (slot == mDraggedSlot)
 		continue;
 
+	    /* Construct a rectangle of "acceptable drop area" for the tab, which is usually in the
+	     * spring-created space between the two tabs which we want to drop this one */
 	    if (slot->mPrev && slot->mPrev != mDraggedSlot)
 	    {
 		rect.setX (slot->mPrev->mRegion.boundingRect ().x2 ());
@@ -1212,11 +1400,14 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	    inSlot = slotRegion.intersects (newRegion);
 
+	    /* If we failed that, try the next slot, and so on */
+
 	    if (!inSlot)
 		continue;
 
 	    tmpDraggedSlot = mDraggedSlot;
 
+	    /* The window is now in a new group */
 	    if (group != gw->mGroup)
 	    {
 		CompWindow     *w = mDraggedSlot->mWindow;
@@ -1252,9 +1443,13 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    else
 		group->mTabBar->unhookTabBarSlot (mDraggedSlot, true);
 
+	    /* reset dragged state */
+
 	    mDraggedSlot = NULL;
 	    mDragged = false;
 	    inserted = true;
+
+	    /* Insert the slot before or after depending on the position */
 
 	    if ((tmpDraggedSlot->mRegion.boundingRect ().x1 () +
 		 tmpDraggedSlot->mRegion.boundingRect ().x2 () + (2 * vx)) / 2 >
@@ -1282,6 +1477,9 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	if (inserted)
 	    break;
     }
+
+    /* If there was no successful inseration, then remove the dragged slot
+     * from it's original group */
 
     if (!inserted)
     {
@@ -1320,7 +1518,11 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 }
 
 /*
- * handleMotionEvent
+ * GroupScreen::handleMotionEvent
+ *
+ * When dragging tabs, make sure that we are damaging the screen region around the tab.
+ * Also, if we have "dragged" a "non-dragged" tab enough (>5px) then mark it as "dragged"
+ * and make it's parent tab bar always visible
  *
  */
 
@@ -1400,7 +1602,11 @@ GroupScreen::handleMotionEvent (int xRoot,
 }
 
 /*
- * handleEvent
+ * GroupScreen::handleEvent
+ *
+ * Wrappable function to handle X11 Events.
+ * 
+ * Handle group minimize, unmap, close etc.
  *
  */
 void

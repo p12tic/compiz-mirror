@@ -33,7 +33,12 @@ const GlowTextureProperties glowTextureProperties[2] = {
 };
 
 /*
- * groupGetOutputExtentsForWindow
+ * GroupWindow::getOutputExtents
+ *
+ * Wrappable function, return the extents of how much we expect to be painting
+ * on the window including the glow (since the glow goes outside the default
+ * clip region, so we need to let core know that the clip region needs to be
+ * /slightly/ larger
  *
  */
 void
@@ -43,6 +48,7 @@ GroupWindow::getOutputExtents (CompWindowExtents &output)
 
     window->getOutputExtents (output);
 
+    /* Only bother if this window would have glow */
     if (mGroup && mGroup->mWindows.size () > 1)
     {
 	int glowSize = gs->optionGetGlowSize ();
@@ -62,6 +68,15 @@ GroupWindow::getOutputExtents (CompWindowExtents &output)
     }
 }
 
+/*
+ * GroupWindow::paintGlow
+ *
+ * Takes our glow texture, stretches the appropriate positions in the glow texture,
+ * adds those geometries (so plugins like wobby and deform this texture correctly)
+ * and then draws the glow texture with this geometry (plugins like wobbly and friends
+ * will automatically deform the texture based on our set geometry)
+ */
+
 void
 GroupWindow::paintGlow (GLFragment::Attrib        &attrib,
 			const CompRegion	  &paintRegion,
@@ -72,8 +87,12 @@ GroupWindow::paintGlow (GLFragment::Attrib        &attrib,
     
     GROUP_SCREEN (screen);
 
+    /* There are 8 glow parts of the glow texture which we wish to paint
+     * separately with different transformations
+     */
     for (i = 0; i < NUM_GLOWQUADS; i++)
     {
+	/* Using precalculated quads here */
 	reg = CompRegion (mGlowQuads[i].mBox);
 
 	if (reg.boundingRect ().x1 () < reg.boundingRect ().x2 () &&
@@ -90,6 +109,7 @@ GroupWindow::paintGlow (GLFragment::Attrib        &attrib,
 	}
     }
 
+    /* If the geometry add succeeded */
     if (gWindow->geometry ().vertices)
     {
 	GLFragment::Attrib fAttrib (attrib);
@@ -136,6 +156,43 @@ GroupWindow::paintGlow (GLFragment::Attrib        &attrib,
     }
 }
 
+/*
+ * GroupWindow::computeGlowQuads
+ *
+ * This function computures the matrix transformation required for each
+ * part of the glow texture which we wish to stretch to some rectangular
+ * dimentions
+ *
+ * There are eight quads different parts of the texture which we wish to
+ * paint here, the 4 sides and four corners, eg:
+ *
+ *		     ------------------
+ *		     | 1 |   4    | 6 |
+ * -------------     ------------------
+ * | 1 | 4 | 6 |     |   |        |   |
+ * -------------     |   |	  |   |
+ * | 2 | n | 7 | ->  | 2 |   n    | 7 |
+ * -------------     |   |        |   |
+ * | 3 | 5 | 8 |     |   |        |   |
+ * -------------     ------------------
+ *		     | 3 |   5    | 8 |
+ *		     ------------------
+ *
+ * In this example here, 2, 4, 5 and 7 are stretched, and the matrices for
+ * each quad rect adjusted accordingly for it's size compared to the original
+ * texture size.
+ *
+ * When we are adjusting the matrices here, the initial size of each corner has
+ * a size of of "1.0f", so according to 2x2 matrix rules,
+ * the scale factor is the inverse of the size of the glow (which explains
+ * while you will see here that matrix->xx is (1 / glowSize)
+ * where glowSize is the size the user specifies they want their glow to extend.
+ * (likewise, matrix->yy is adjusted similarly for corners and for top/bottom)
+ *
+ * matrix->x0 and matrix->y0 here are set to be the top left edge of the rect
+ * adjusted by the matrix scale factor (matrix->xx and matrix->yy)
+ *
+ */
 void
 GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
 {
@@ -147,6 +204,9 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     CompWindow	      *w = window;
 
     GROUP_SCREEN (screen);
+
+    /* Passing NULL to this function frees the glow quads
+     * (so the window is not painted with glow) */
 
     if (gs->optionGetGlow () && matrix)
     {
@@ -175,10 +235,24 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_TOPLEFT].mMatrix;
 
+    /* Set the desired rect dimentions
+     * for the part of the glow we are painting */
+
     x1 = WIN_REAL_X (w) - glowSize + glowOffset;
     y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
     x2 = WIN_REAL_X (w) + glowOffset;
     y2 = WIN_REAL_Y (w) + glowOffset;
+
+    /* 2x2 Matrix here, adjust both x and y scale factors
+     * and the x and y position
+     *
+     * Scaling both parts of the texture in a positive direction
+     * here (left to right top to bottom)
+     *
+     * The base position (x0 and y0) here requires us to move backwards
+     * on the x and y dimentions by the calculated rect dimentions
+     * multiplied by the scale factors
+     */
 
     quadMatrix->xx = 1.0f / glowSize;
     quadMatrix->yy = 1.0f / (glowSize);
@@ -197,10 +271,26 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     mGlowQuads[GLOWQUAD_TOPRIGHT].mMatrix = *matrix;
     quadMatrix = &mGlowQuads[GLOWQUAD_TOPRIGHT].mMatrix;
 
+    /* Set the desired rect dimentions
+     * for the part of the glow we are painting */
+
     x1 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
     y1 = WIN_REAL_Y (w) - glowSize + glowOffset;
     x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
     y2 = WIN_REAL_Y (w) + glowOffset;
+
+    /* 2x2 Matrix here, adjust both x and y scale factors
+     * and the x and y position
+     *
+     * Scaling the y part of the texture in a positive direction
+     * and the x part in a negative direction here
+     * (right to left top to bottom)
+     *
+     * The base position (x0 and y0) here requires us to move backwards
+     * on the y dimention and forwards on x by the calculated rect dimentions
+     * multiplied by the scale factors (since we are moving forward on x we
+     * need the inverse of that which is 1 - x1 * xx
+     */
 
     quadMatrix->xx = -1.0f / glowSize;
     quadMatrix->yy = 1.0f / glowSize;
@@ -224,6 +314,19 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     x2 = WIN_REAL_X (w) + glowOffset;
     y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
 
+    /* 2x2 Matrix here, adjust both x and y scale factors
+     * and the x and y position
+     *
+     * Scaling the x part of the texture in a positive direction
+     * and the y part in a negative direction here
+     * (left to right bottom to top)
+     *
+     * The base position (x0 and y0) here requires us to move backwards
+     * on the x dimention and forwards on y by the calculated rect dimentions
+     * multiplied by the scale factors (since we are moving forward on x we
+     * need the inverse of that which is 1 - y1 * yy
+     */
+
     quadMatrix->xx = 1.0f / glowSize;
     quadMatrix->yy = -1.0f / glowSize;
     quadMatrix->x0 = -(x1 * quadMatrix->xx);
@@ -245,6 +348,17 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
     x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
     y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
+
+    /* 2x2 Matrix here, adjust both x and y scale factors
+     * and the x and y position
+     *
+     * Scaling the both parts of the texture in a negative direction
+     * (right to left bottom to top)
+     *
+     * The base position (x0 and y0) here requires us to move forwards
+     * on both dimentions by the calculated rect dimentions
+     * multiplied by the scale factors
+     */
 
     quadMatrix->xx = -1.0f / glowSize;
     quadMatrix->yy = -1.0f / glowSize;
@@ -268,6 +382,17 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
     y2 = WIN_REAL_Y (w) + glowOffset;
 
+    /* 2x2 Matrix here, adjust both x and y scale factors
+     * and the x and y position
+     *
+     * No need to scale the x part of the texture here, but we
+     * are scaling on the y part in a positive direciton
+     *
+     * The base position (y0) here requires us to move backwards
+     * on the x dimention and forwards on y by the calculated rect dimentions
+     * multiplied by the scale factors
+     */
+
     quadMatrix->xx = 0.0f;
     quadMatrix->yy = 1.0f / glowSize;
     quadMatrix->x0 = 1.0;
@@ -284,6 +409,17 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     y1 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
     x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) - glowOffset;
     y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) + glowSize - glowOffset;
+
+    /* 2x2 Matrix here, adjust both x and y scale factors
+     * and the x and y position
+     *
+     * No need to scale the x part of the texture here, but we
+     * are scaling on the y part in a negative direciton
+     *
+     * The base position (y0) here requires us to move forwards
+     * on y by the calculated rect dimentions
+     * multiplied by the scale factors
+     */
 
     quadMatrix->xx = 0.0f;
     quadMatrix->yy = -1.0f / glowSize;
@@ -302,6 +438,17 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     x2 = WIN_REAL_X (w) + glowOffset;
     y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
 
+    /* 2x2 Matrix here, adjust both x and y scale factors
+     * and the x and y position
+     *
+     * No need to scale the y part of the texture here, but we
+     * are scaling on the x part in a positive direciton
+     *
+     * The base position (x0) here requires us to move backwards
+     * on x by the calculated rect dimentions
+     * multiplied by the scale factors
+     */
+
     quadMatrix->xx = 1.0f / glowSize;
     quadMatrix->yy = 0.0f;
     quadMatrix->x0 = -(x1 * quadMatrix->xx);
@@ -318,6 +465,17 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     y1 = WIN_REAL_Y (w) + glowOffset;
     x2 = WIN_REAL_X (w) + WIN_REAL_WIDTH (w) + glowSize - glowOffset;
     y2 = WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) - glowOffset;
+
+    /* 2x2 Matrix here, adjust both x and y scale factors
+     * and the x and y position
+     *
+     * No need to scale the y part of the texture here, but we
+     * are scaling on the x part in a negative direciton
+     *
+     * The base position (x0) here requires us to move forwards
+     * on x by the calculated rect dimentions
+     * multiplied by the scale factors
+     */
 
     quadMatrix->xx = -1.0f / glowSize;
     quadMatrix->yy = 0.0f;

@@ -26,11 +26,6 @@
 #define _GROUP_GLOW_H
 
 #include "group.h"
-
-
-/*
- * GroupGlow
- */
  
 #define GLOWQUAD_TOPLEFT	 0
 #define GLOWQUAD_TOPRIGHT	 1
@@ -42,11 +37,23 @@
 #define GLOWQUAD_RIGHT		 7
 #define NUM_GLOWQUADS		 8
 
+/* Represents a particular glow texture, so here
+ * we have hardcoded in the texture data, the offset
+ * and the size of the texture
+ */
+
 typedef struct _GlowTextureProperties {
     char *textureData;
     int  textureSize;
     int  glowOffset;
 } GlowTextureProperties;
+
+/* Each glow quad contains a 2x2 scale + positional matrix
+ * (the 3rd column is not used since that is for matrix skew
+ *  operations which we do not care about)
+ * and also a CompRect which describes the size and position of
+ * the quad on the glow
+ */
 
 class GlowQuad {
     public:
