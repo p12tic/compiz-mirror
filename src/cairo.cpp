@@ -56,7 +56,7 @@ SelectionLayer::rebuild (SelectionLayer *layer,
 /*
  * BackgroundLayer::rebuild
  *
- * This function takes an existing SelectionLayer (CairoLayer),
+ * This function takes an existing BackgroundLayer (CairoLayer),
  * saves it's properties into a buffer, deletes it and re-creates
  * it with those properties. This is generally less error-prone
  * than only deleting the bits of the layer we need (since there is
