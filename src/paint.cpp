@@ -24,17 +24,37 @@
 
 #include "group.h"
 
+/*
+ * GroupTabBarSlot::setTargetOpacity
+ * 
+ * Convenience function to set the target opacity for the tab bar
+ */
+
 void
 GroupTabBarSlot::setTargetOpacity (int tOpacity)
 {
     mOpacity = tOpacity;
 }
 
+/*
+ * TextureLayer::setPaintWindow
+ * 
+ * Convenience function to set the window we are painting on top of
+ * for a texture for the tab bar
+ */
+
 void
 TextureLayer::setPaintWindow (CompWindow *w)
 {
     mPaintWindow = w;
 }
+
+/*
+ * GroupTabBarSlot::List::paint
+ * 
+ * Paint all tabs in a list
+ * 
+ */
 
 void
 GroupTabBarSlot::List::paint (const GLWindowPaintAttrib &attrib,
@@ -58,6 +78,12 @@ GroupTabBarSlot::List::paint (const GLWindowPaintAttrib &attrib,
 
 /*
  * GroupTabBarSlot::paint - taken from switcher and modified for tab bar
+ * 
+ * We need to scale down the window to a small thumbnail, skip the
+ * geometry modification stage (so we don't get wobbly uglyness)
+ * and paint it directly to the screen for a second time.
+ * 
+ * Also fade in and out.
  *
  */
 void
@@ -79,8 +105,8 @@ GroupTabBarSlot::paint (const GLWindowPaintAttrib &attrib,
     tw = mRegion.boundingRect ().width ();
     th = mRegion.boundingRect ().height ();
 
-    /* Wrap drawWindowGeometry to make sure the general
-       drawWindowGeometry function is used */
+    /* Wrap glDrawGeometry to make sure the general
+       glDrawGeometry function is used */
     oldGlAddGeometryIndex = gw->gWindow->glAddGeometryGetCurrentIndex ();
     gw->gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
 
@@ -135,6 +161,9 @@ GroupTabBarSlot::paint (const GLWindowPaintAttrib &attrib,
 			      mRegion.boundingRect ().x2 ()) / 2 + vx;
 	wAttrib.yTranslate = mRegion.boundingRect ().y1 () + vy;
 
+	/* Translate matrix to the first point in the drawn region
+	 * and then scale (scales to the top right corner) to our
+	 * desired size */
 	wTransform.translate (wAttrib.xTranslate, wAttrib.yTranslate, 0.0f);
 	wTransform.scale (wAttrib.xScale, wAttrib.yScale, 1.0f);
 	wTransform.translate (-(WIN_X (w) + WIN_WIDTH (w) / 2),
@@ -143,6 +172,9 @@ GroupTabBarSlot::paint (const GLWindowPaintAttrib &attrib,
 	glPushMatrix ();
 	glLoadMatrixf (wTransform.getMatrix ());
 
+	/* Skip to the end of glDraw, so we don't end up with wobbly
+	 * and all that (we also loaded with a simple matrix, so we
+	 * miss the one in glPaint) */
 	oldGlDrawIndex = gw->gWindow->glDrawGetCurrentIndex ();
 	gw->gWindow->glDraw (wTransform, fragment, clipRegion,
 			  mask | PAINT_WINDOW_TRANSFORMED_MASK |
@@ -157,6 +189,12 @@ GroupTabBarSlot::paint (const GLWindowPaintAttrib &attrib,
 
 /*
  * TextureLayer::paint
+ * 
+ * Paint some texture on with a window's geometry. This involves
+ * putting the texture in the right place, adding it's geometry to the
+ * window geometry (so it can be modified by wobbly and friends), 
+ * adding it, setting the texture layer opacity and then painting it
+ * with the window geometry
  *
  */
 
@@ -170,6 +208,7 @@ TextureLayer::paint (const GLWindowPaintAttrib &attrib,
     GroupWindow *gwTopTab = GroupWindow::get (mPaintWindow);
     const CompRect &box = paintRegion.boundingRect ();
 
+    /* Handle tiled textures */
     foreach (GLTexture *tex, mTexture)
     {
 	GLTexture::Matrix matrix = tex->matrix ();
@@ -201,15 +240,17 @@ TextureLayer::paint (const GLWindowPaintAttrib &attrib,
 	else
 	    y2 = y1 + height ();
 
+	/* Set the x-position to our x1 minus the scale factor */
 	matrix.x0 -= x1 * matrix.xx;
 	matrix.y0 -= y1 * matrix.yy;
 
 	matl.push_back (matrix);
-
 	reg = CompRegion (x1, y1,
 			  x2 - x1,
 			  y2 - y1);
-	
+
+	/* Reset current window geometry and re-add it with this
+	 * new geometry for the tab bar */
 	gwTopTab->gWindow->geometry ().reset ();
 
 	gwTopTab->gWindow->glAddGeometry (matl, reg, clipRegion);
@@ -219,6 +260,8 @@ TextureLayer::paint (const GLWindowPaintAttrib &attrib,
 	    GLFragment::Attrib fragment (attrib);
 	    GLMatrix	       wTransform (transform);
 
+	    /* Translate to where we want to paint, and scale
+	     * (via a 3x3 matrix) */
 	    wTransform.translate (WIN_X (mPaintWindow),
 				  WIN_Y (mPaintWindow), 0.0f);
 	    wTransform.scale (attrib.xScale, attrib.yScale, 1.0f);
@@ -242,6 +285,13 @@ TextureLayer::paint (const GLWindowPaintAttrib &attrib,
     }
 }
 
+/*
+ * BackgroundLayer::paint
+ * 
+ * Paint the backgroud layer. It might need to be scaled a bit
+ * if it is expanding
+ */
+
 void
 BackgroundLayer::paint (const GLWindowPaintAttrib &attrib,
 			const GLMatrix	          &transform,
@@ -258,13 +308,16 @@ BackgroundLayer::paint (const GLWindowPaintAttrib &attrib,
     if (newWidth > width ())
 	newWidth = width ();
 
+    /* if the region expanded and we haven't re-rended ,just scale
+     * the tab bar up slightly */
     wAttrib.xScale = (double) (mGroup->mTabBar->mRegion.boundingRect ().width () / 
 		       (double) newWidth);
 
     /* FIXME: maybe move this over to groupResizeTabBarRegion -
      * the only problem is that we would have 2 redraws if
      * here is an animation */
-    if (newWidth != mGroup->mTabBar->mOldWidth || mGroup->mTabBar->mBgLayer->mBgAnimation)
+    if (newWidth != mGroup->mTabBar->mOldWidth ||
+        mGroup->mTabBar->mBgLayer->mBgAnimation)
 	render ();
 
     mGroup->mTabBar->mOldWidth = newWidth;
@@ -272,6 +325,14 @@ BackgroundLayer::paint (const GLWindowPaintAttrib &attrib,
     
     TextureLayer::paint (wAttrib, transform, box, clipRegion, mask);
 }
+
+/*
+ * SelectionLayer::paint
+ * 
+ * Paint the selection background behind the selection tab. This is
+ * just a regular texture to paint that normally
+ * 
+ */
 
 void
 SelectionLayer::paint (const GLWindowPaintAttrib &attrib,
@@ -284,6 +345,15 @@ SelectionLayer::paint (const GLWindowPaintAttrib &attrib,
 			 mGroup->mTabBar->mTopTab->mRegion,
 			 clipRegion, mask);
 }
+
+/*
+ * TextLayer::paint
+ * 
+ * Paint the text layer on top of the selection layer,
+ * 
+ * We need to adjust the region here and paint faded in or out (then
+ * just paint like a normal texture here)
+ */
 
 void
 TextLayer::paint (const GLWindowPaintAttrib &attrib,
@@ -328,6 +398,11 @@ TextLayer::paint (const GLWindowPaintAttrib &attrib,
 
 /*
  * GroupTabBar::paint
+ * 
+ * Paint the tab bar. This involves determining the window we want to
+ * paint with geometry (the top tab usually, unless animating). All
+ * of the other layers have paint functions, so add those to a list
+ * and batch-paint them
  *
  */
 void
@@ -347,8 +422,13 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
     else
 	topTab = PREV_TOP_TAB (mGroup);
 
+    /* Set the windows we want to paint with */
+
     mBgLayer->setPaintWindow (topTab);
     mSelectionLayer->setPaintWindow (topTab);
+
+    /* Paint background, then selection, then slots and then
+     * if we can, the text */
 
     paintList.push_back (mBgLayer);
     paintList.push_back (mSelectionLayer);
@@ -359,6 +439,9 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 	mTextLayer->setPaintWindow (topTab);
 	paintList.push_back (mTextLayer);
     }
+
+    /* On each layer, set up texture filtering, fade in and out and
+     * paint the layer */
 
     foreach (GLLayer *layer, paintList)
     {
@@ -388,6 +471,9 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 
 /*
  * Selection::paint
+ * 
+ * Paint the selection outline here, basically just draw a basic outline
+ * shape with opengl and paint with the right transformation matrix
  *
  */
 void
@@ -443,6 +529,12 @@ Selection::paint (const GLScreenPaintAttrib sa,
 
 /*
  * GroupScreen::preparePaint
+ * 
+ * Called before ::glPaint, this tells us how long it has been
+ * since the last screen paint cycle, so we can handle animation.
+ * 
+ * Go through the groups, handle the switch, tabbing, and fade
+ * animations
  *
  */
 void
@@ -492,7 +584,10 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 }
 
 /*
- * groupPaintOutput
+ * GroupScreen::glPaintOutput
+ * 
+ * The base output-paint function. Here we just need to paint the
+ * selection layer and the dragged slot on top of everything else
  *
  */
 bool
@@ -505,9 +600,12 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     GroupSelection *group;
     bool           status;
 
+    /* Keep track of viewports */
     mTmpSel.mPainted = false;
     mTmpSel.mVpX = screen->vp ().x ();
     mTmpSel.mVpY = screen->vp ().y ();
+
+    /* Allow us to paint windows transformed */
 
     foreach (group, mGroups)
     {
@@ -530,6 +628,8 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
+    /* Just double check that we didn't get called again and that
+     * we are still wanting to paint these things */
     if (status && !mTmpSel.mPainted)
     {
 	if ((mGrabState == ScreenGrabTabDrag) && mDraggedSlot)
@@ -552,7 +652,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    glPopMatrix ();
 	}
-	else  if (mGrabState == ScreenGrabSelect)
+	else if (mGrabState == ScreenGrabSelect)
 	{
 	    mTmpSel.paint (attrib, transform, output, false);
 	}
@@ -562,7 +662,11 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 }
 
 /*
- * groupPaintTransformedOutput
+ * GroupScreen::glPaintTransformedOutput
+ * 
+ * This gets called if the screen is transformed, since there are
+ * are different conditions here, we want to ensure that our
+ * tab drag animation is still painted correctly
  *
  */
 void
@@ -575,6 +679,7 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
     PaintState state;
     gScreen->glPaintTransformedOutput (attrib, transform, region, output, mask);
 
+    /* If we are on the same viewport here, then we are OK to paint */
     if ((mTmpSel.mVpX == screen->vp ().x ()) && (mTmpSel.mVpY == screen->vp ().y ()))
     {
 	mTmpSel.mPainted = true;
@@ -607,7 +712,11 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 }
 
 /*
- * groupDonePaintScreen
+ * GroupScreen::donePaint
+ * 
+ * Damage everything that needs to be damaged (usually the screen
+ * for animations [FIXME] or tab bar / text regions if they are
+ * currently animating
  *
  */
 void
@@ -619,6 +728,7 @@ GroupScreen::donePaint ()
 
     foreach (group, mGroups)
     {
+	/* Animations are a special case, damage the whole screen */
 	if (group->mTabbingState != GroupSelection::NoTabbing)
 	    cScreen->damageScreen ();
 	else if (group->mTabBar &&
@@ -650,6 +760,8 @@ GroupScreen::donePaint ()
 	    if (mDraggedSlot)
 		needDamage = true;
 
+	    /* If we needed damage, then damage the whole tab bar
+	     * region */
 	    if (needDamage)
 		group->mTabBar->damageRegion ();
 	}
@@ -657,7 +769,10 @@ GroupScreen::donePaint ()
 }
 
 /*
- * groupDrawWindow
+ * GroupWindow::glDraw
+ * 
+ * Our matrix is initialized here, so we can paint the glow here
+ * (since we are free to paint with geometry)
  *
  */
 bool
@@ -669,6 +784,7 @@ GroupWindow::glDraw (const GLMatrix           &transform,
     bool       status;
     CompRegion paintRegion (region);
 
+    /* Don't bother if we don't need to paint glow */
     if (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads)
     {
 	if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
@@ -676,6 +792,7 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 
 	if (paintRegion.numRects ())
 	{
+	    /* reset geometry and paint */
 	    gWindow->geometry ().reset ();
 
 	    paintGlow (attrib, paintRegion, mask);
@@ -686,6 +803,12 @@ GroupWindow::glDraw (const GLMatrix           &transform,
 
     return status;
 }
+
+/*
+ * GroupWindow::getStretchRectangle
+ * 
+ * Return how much to scale on the X and Y axis for some box
+ * provided compared to the window geometry */
 
 void
 GroupWindow::getStretchRectangle (CompRect &box,
@@ -728,6 +851,12 @@ GroupWindow::getStretchRectangle (CompRect &box,
     yScaleRet = yScale;
 }
 
+/*
+ * GroupScreen::damagePaintRectangle
+ * 
+ * Damage some region, with 1px padding
+ */
+
 void
 GroupScreen::damagePaintRectangle (const CompRect &box)
 {
@@ -740,7 +869,14 @@ GroupScreen::damagePaintRectangle (const CompRect &box)
 }
 
 /*
- * groupPaintWindow
+ * GroupWindow::glPaint
+ * 
+ * This is different to GLDraw, since we can still modify the compiz
+ * matrix.
+ * 
+ * In this function, we handle painting of the tabbing/untabbing
+ * stretched windows for resize and rotation of windows when switching
+ * tabs
  *
  */
 bool
@@ -759,14 +895,58 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
     {
 	GroupSelection *group = mGroup;
 
+	/* Rotate the window if we are changing tabs, and if the window
+	 * passes the following safety checks:
+	 * -> It has a top tab (and associated window) AND
+	 * -> It has a previous top tab (the window that we are
+	 * 				 switching from) AND
+	 * Either
+	 *  -> It is a top tab (and associated window) or OR
+	 *  -> It is a previous top tab (and associated window) OR
+	 * 
+	 * In essense, we can only do the rotate animation if there is
+	 * a window we are switching to or from (since the animation
+	 * has a "from" stage and a "to" stage)
+	 */
+
 	doRotate = (group->mTabBar &&
 		    group->mTabBar->mChangeState != GroupTabBar::NoTabChange) &&
 	           HAS_TOP_WIN (group) && HAS_PREV_TOP_WIN (group) &&
 	           (IS_TOP_TAB (w, group) || IS_PREV_TOP_TAB (w, group));
 
+	/* Do the tabbing animation if we are currently in an animated
+	 * state and the following check fails
+	 * -> We have a tab bar AND
+	 * -> This is the top tab for the window AND
+	 * -> We are in a tabbing state
+	 * 
+	 * In essence, we want to animate all windows in this group
+	 * in the tabbing animation, except where the current window
+	 * is the "prinicpal" window (ignoring a situation where
+	 * we are ungrouping a single window, in which case we animate
+	 * all windows)
+	 */
+
 	doTabbing = (mAnimateState & (IS_ANIMATED | FINISHED_ANIMATION)) &&
 	            !(group->mTabBar && IS_TOP_TAB (w, group) &&
 		      (group->mTabbingState == GroupSelection::Tabbing));
+
+	/* Show the tab bar if it exists, and is set to be painted and
+	 * the following checks pass:
+	 * Either:
+	 * -> This window is the top tab for the group AND
+	 *    Either:
+	 *    -> We aren't changing tabs OR
+	 *    -> We are changing to this tab
+	 * OR:
+	 * -> This window is the previous top tab AND
+	 * -> We are changing away from this window
+	 * 
+	 * The tab bar should be visible during the rotate animation.
+	 * All other times it should be invisible, except when hovering
+	 * over it
+	 *
+	 */
 
 	showTabbar = group->mTabBar && (group->mTabBar->mState != PaintOff) &&
 	             (((IS_TOP_TAB (w, group)) &&
@@ -782,9 +962,17 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	showTabbar = false;
     }
 
+    /* If this window is hidden, then don't draw it on screen */
     if (mWindowHideInfo)
 	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
+    /* If the window is being:
+     * -> Selected
+     * -> Group Resized
+     * -> Rotated
+     * -> Tabbed
+     * -> Has a tab bar
+     */
     if (mInSelection || !mResizeGeometry.isEmpty () || doRotate ||
 	doTabbing || showTabbar)
     {
@@ -793,6 +981,8 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	float               animProgress = 0.0f;
 	int                 drawnPosX = 0, drawnPosY = 0;
 
+	/* If it's selected, show that by changing it's paint
+	 * attributes (such as brightness, opacity, saturation */
 	if (mInSelection)
 	{
 	    wAttrib.opacity    = OPAQUE * gs->optionGetSelectOpacity () / 100;
@@ -807,6 +997,8 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    int   distanceX, distanceY;
 	    float origDistance, distance;
 
+	    /* If we are finished the animation, draw in the destination
+	     * not at the translation speed */
 	    if (mAnimateState & FINISHED_ANIMATION)
 	    {
 		drawnPosX = mDestination.x ();
@@ -814,10 +1006,12 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    }
 	    else
 	    {
+		/* Add new translation points to drawn position */
 		drawnPosX = mOrgPos.x () + mTx;
 		drawnPosY = mOrgPos.y () + mTy;
 	    }
 
+	    /* Determine progress as distance towards the destination */
 	    distanceX = drawnPosX - mDestination.x ();
 	    distanceY = drawnPosY - mDestination.y ();
 	    distance = sqrt (pow (distanceX, 2) + pow (distanceY, 2));
@@ -826,22 +1020,34 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    distanceY = (mOrgPos.y () - mDestination.y ());
 	    origDistance = sqrt (pow (distanceX, 2) + pow (distanceY, 2));
 
+	    /* Avoid div0 */
 	    if (!distanceX && !distanceY)
 		progress = 1.0f;
 	    else
+		/* Fading progress is 1 - the distance on the ratio
+		 * of current difference to original distance */
 		progress = 1.0f - (distance / origDistance);
 
 	    animProgress = progress;
 
+	    /* If we are tabbing the group, invert that (since we are
+	     * fading out here) */
 	    progress = MAX (progress, 0.0f);
 	    if (mGroup->mTabbingState == GroupSelection::Tabbing)
 		progress = 1.0f - progress;
 
+	    /* Paint with a progressional opacity */
 	    wAttrib.opacity = (float)wAttrib.opacity * progress;
 	}
 
 	if (doRotate)
 	{
+	    /* Determine animation progress for rotation, here,
+	     * "2" is the maximum point, so at "1" the window switching
+	     * should have reached a half-way point, and we will no
+	     * longer paint that window and instead paint the new
+	     * incoming window
+	     */
 	    float timeLeft = mGroup->mTabBar->mChangeAnimationTime;
 	    int   animTime = gs->optionGetChangeAnimationTime () * 500;
 
@@ -852,12 +1058,15 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    animProgress = 1 - (timeLeft / (2 * animTime));
 	}
 
+	/* Determine resize geometry scale (window stretch on group
+	 * resize) */
 	if (!mResizeGeometry.isEmpty ())
 	{
 	    int    xOrigin, yOrigin;
 	    float  xScale, yScale;
 	    CompRect box;
 
+	    /* Get the scale amount for the resize box */
 	    getStretchRectangle (box, xScale, yScale);
 
 	    xOrigin = window->x () - w->input ().left;
@@ -879,6 +1088,19 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    float      animScaleX, animScaleY;
 	    CompWindow *morphBase, *morphTarget;
 
+	    /* morphBase and morphTarget here are for both animations,
+	     * since during the course of the animation, they scale
+	     * the window to the size of the new relevant window
+	     * the user will see.
+	     * 
+	     * In the tabbing animation, the windows morph into the
+	     * size of the top tab of the window group, or if untabbing
+	     * then they morph from the size of the top tab, and morph
+	     * to their original size.
+	     * 
+	     * In the rotate animation, the outgoing window morphs into
+	     * the same size as the incoming window
+	     */
 	    if (doTabbing)
 	    {
 		if (mGroup->mTabbingState == GroupSelection::Tabbing)
@@ -895,29 +1117,38 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			morphBase = mGroup->mTabBar->mLastTopTab;
 		}
 	    }
-	    else
+	    else /* doRotate */
 	    {
 		morphBase   = PREV_TOP_TAB (mGroup);
 		morphTarget = TOP_TAB (mGroup);
 	    }
 
+	    /* Morph progressively based on the animation progress */
 	    animWidth = (1 - animProgress) * WIN_REAL_WIDTH (morphBase) +
 		        animProgress * WIN_REAL_WIDTH (morphTarget);
 	    animHeight = (1 - animProgress) * WIN_REAL_HEIGHT (morphBase) +
 		         animProgress * WIN_REAL_HEIGHT (morphTarget);
 
+	    /* Don't allow absurdly small values or div0 */
 	    animWidth = MAX (1.0f, animWidth);
 	    animHeight = MAX (1.0f, animHeight);
 	    animScaleX = animWidth / WIN_REAL_WIDTH (w);
 	    animScaleY = animHeight / WIN_REAL_HEIGHT (w);
 
+	    /* If we are rotating, we need to scale on z by 1 / z */
 	    if (doRotate)
 		wTransform.scale (1.0f, 1.0f, 1.0f / screen->width ());
 
+	    /* Translate to the window center so we can paint windows
+	     * translated and rotated */
 	    wTransform.translate (WIN_REAL_X (w) + WIN_REAL_WIDTH (w) / 2.0f,
 			          WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) / 2.0f,
 			          0.0f);
 
+	    /* Rotate the window based on the animation progress in the
+	     * rotating case. If this is the top window, then invert
+	     * the rotation start point. If the change direction 
+	     * is left, then invert the rotating direction */
 	    if (doRotate)
 	    {
 		float rotateAngle = animProgress * 180.0f;
@@ -930,12 +1161,16 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		wTransform.rotate (rotateAngle, 0.0f, 1.0f, 0.0f);
 	    }
 
+	    /* Draw the window translated depending on position */
 	    if (doTabbing)
 		wTransform.translate (drawnPosX - WIN_X (w),
 				      drawnPosY - WIN_Y (w), 0.0f);
 
+	    /* Since we are still centered, we can scale directly to
+	     * our morphing targets */
 	    wTransform.scale (animScaleX, animScaleY, 1.0f);
 
+	    /* Recorrect translation matrix for next plugin */
 	    wTransform.translate (-(WIN_REAL_X (w) + WIN_REAL_WIDTH (w) / 2.0f),
 			          -(WIN_REAL_Y (w) + WIN_REAL_HEIGHT (w) / 2.0f),
 			         0.0f);
@@ -947,6 +1182,14 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	if (showTabbar)
 	{
+	    /* Paint the tab bar (only gets the geometry it got from
+	     * glPaint so far, so it doesn't wobbly or anything strange
+	     * like that, though maybe FIXME this should be changed)
+	     * 
+	     * Disable our glPaint function here to avoid recursive
+	     * calls within GroupTabBar::paint, since we need to paint
+	     * this window geometry a few more times
+	     */
 	    gWindow->glPaintSetEnabled (this, false);
 	    mGroup->mTabBar->paint (wAttrib, wTransform, mask, region);
 	    gWindow->glPaintSetEnabled (this, true);

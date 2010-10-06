@@ -25,7 +25,11 @@
 #include "group.h"
 
 /*
- * windowInRegion
+ * GroupWindow::windowInRegion
+ * 
+ * Determine if a prescribed region intersects a window and determine
+ * if the region intersects an adequate percentage of that window
+ * (specified by precision) intersects the window
  *
  */
 bool
@@ -36,6 +40,7 @@ GroupWindow::windowInRegion (CompRegion src,
     int    area = 0;
     CompRegion buf;
 
+    /* Intersecting region */
     buf = window->region ().intersected (src);
 
     /* buf area */
@@ -56,6 +61,9 @@ GroupWindow::windowInRegion (CompRegion src,
 
 /*
  * groupFindGroupInWindows
+ * 
+ * Inline utility function, returns true if a group is in a list
+ * of windows
  *
  */
 static inline bool
@@ -75,6 +83,11 @@ groupFindGroupInWindows (GroupSelection *group,
 
 /*
  * groupFindWindowsInRegion
+ * 
+ * Utility function, finds all the windows in a region and returns
+ * a list of them.
+ * 
+ * FIXME: This copies a list. That's bad.
  *
  */
 static CompWindowList
@@ -85,14 +98,20 @@ groupFindWindowsInRegion (CompRegion     reg)
     int		   count;
     CompWindowList::reverse_iterator rit = screen->windows ().rbegin ();
 
+    /* Go back-to-front with selection */
     while (rit != screen->windows ().rend ())
     {
 	CompWindow *w = *rit;
 	GROUP_WINDOW (w);
 
+	/* If the window is groupable and in our region */
 	if (gw->isGroupWindow () &&
 	    gw->windowInRegion (reg, precision))
 	{
+	    /* Don't bother if this window has a group and there are
+	     * windows from this group in the selection (all windows
+	     * from the group get added to the selection automatically)
+	     */
 	    if (gw->mGroup && groupFindGroupInWindows (gw->mGroup, ret))
 	    {
 		rit++;
@@ -111,19 +130,27 @@ groupFindWindowsInRegion (CompRegion     reg)
 }
 
 /*
- * groupDeleteSelectionWindow
+ * Selection::deselect (CompWindow variant)
+ * 
+ * Remove a window from selection
  *
  */
 void
 Selection::deselect (CompWindow *w)
 {	
     if (size ())
-    {
 	remove (w);
-    }
 
     GroupWindow::get (w)->mInSelection = false;
 }
+
+/*
+ * Selection::deselect (GroupSelection variant)
+ * 
+ * Deselect all windows in a group, but don't just call
+ * deselect on all windows in the group since that is slow, instead
+ * compare lists and pop matching windows
+ */
 
 void
 Selection::deselect (GroupSelection *group)
@@ -152,8 +179,11 @@ Selection::deselect (GroupSelection *group)
 	it++;
     }
 }
+
 /*
  * Selection::select
+ * 
+ * Add a CompWindow to this selection (animate its fade too)
  *
  */
 void
@@ -164,6 +194,13 @@ Selection::select (CompWindow *w)
     GroupWindow::get (w)->mInSelection = true;
     GroupWindow::get (w)->cWindow->addDamage ();
 }
+
+/* 
+ * Selection::select
+ * 
+ * Add a group to this selection (select every window in the group)
+ * 
+ */
 
 void
 Selection::select (GroupSelection *g)
@@ -177,6 +214,11 @@ Selection::select (GroupSelection *g)
 /*
  * Selection::toGroup
  *
+ * Create a new group from this selection. Also "unselect" all of these
+ * windows since they are grouped now!
+ * 
+ * FIXME: it should return the new group pointer
+ * 
  */
 
 void
@@ -203,7 +245,7 @@ Selection::toGroup ()
     ws = groupFindWindowsInRegion (reg);
     if (ws.size ())
     {
-	/* select windows */
+	/* (un)select windows */
 	foreach (CompWindow *w, ws)
 	    checkWindow (w);
 
@@ -217,6 +259,8 @@ Selection::toGroup ()
 
 /*
  * Selection::checkWindow
+ * 
+ * Select or deselect a window or group if this window has one.
  *
  */
 void
@@ -256,7 +300,9 @@ Selection::checkWindow (CompWindow *w)
 }
 
 /*
- * selectSingle
+ * GroupScreen::selectSingle
+ * 
+ * Action to select a single window
  *
  */
 bool
@@ -276,7 +322,9 @@ GroupScreen::selectSingle (CompAction         *action,
 }
 
 /*
- * select
+ * GroupScreen::select
+ * 
+ * Action to initiate the dragging of the selection rect
  *
  */
 bool
@@ -301,7 +349,10 @@ GroupScreen::select (CompAction         *action,
 }
 
 /*
- * selectTerminate
+ * GroupSelection::selectTerminate
+ * 
+ * Action to terminate selection rect and select all windows in that
+ * rect.
  *
  */
 bool
@@ -326,6 +377,8 @@ GroupScreen::selectTerminate (CompAction         *action,
 
 /*
  * Selection::damage
+ * 
+ * Damage the selection rect
  *
  */
 void

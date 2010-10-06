@@ -27,8 +27,16 @@
 
 COMPIZ_PLUGIN_20090315 (group, GroupPluginVTable);
 
+/* If this is false, then there is no point in trying to render text
+ * since it will fail */
 bool gTextAvailable;
 
+/* 
+ * GroupScreen::optionChanged
+ * 
+ * An option was just changed. Since we aren't constantly re-rendering
+ * things like glow, the tab bar, the font, etc, we need to re-render
+ * applicable things */
 void
 GroupScreen::optionChanged (CompOption *opt,
 			    Options    num)
@@ -72,6 +80,8 @@ GroupScreen::optionChanged (CompOption *opt,
 	case GroupOptions::Glow:
 	case GroupOptions::GlowSize:
 	    {
+		/* We have new output extents, so update them
+		 * and damage them */
 		foreach (CompWindow *w, screen->windows ())
 		{
 		    GROUP_WINDOW (w);
@@ -91,6 +101,9 @@ GroupScreen::optionChanged (CompOption *opt,
 	    {
 		int		      glowType;
 		GlowTextureProperties *glowProperty;
+
+		/* Since we have a new glow texture, we have to rebind
+		 * it and recalculate it */
 
 		glowType = optionGetGlowType ();
 		glowProperty = &mGlowTextureProperties[glowType];
@@ -120,7 +133,7 @@ GroupScreen::optionChanged (CompOption *opt,
 }
 
 /*
- * applyInitialActions
+ * GroupScreen::applyInitialActions
  *
  * timer callback for stuff that needs to be called after all
  * screens and windows are initialized
@@ -161,14 +174,18 @@ GroupScreen::applyInitialActions ()
 	    if (!found)
 		group = NULL;
 
+	    /* Add this window to a group (with that id) */
 	    gw->addWindowToGroup (group, id);
 	    if (tabbed)
 		gw->mGroup->tabGroup (w);
 
+
+	    /* Restore color */
 	    gw->mGroup->mColor[0] = color[0];
 	    gw->mGroup->mColor[1] = color[1];
 	    gw->mGroup->mColor[2] = color[2];
 
+	    /* if there was a tab bar, re-render it */
 	    if (gw->mGroup->mTabBar)
 	    {
 		CompSize size (gw->mGroup->mTabBar->mTopTab->mRegion.boundingRect ().width (),
@@ -182,6 +199,8 @@ GroupScreen::applyInitialActions ()
 	    cScreen->damageScreen ();
 	}
 
+	/* Otherwise, add this window to a group on it's own if we are
+	 * auto-tabbing */
 	if (optionGetAutotabCreate () && gw->isGroupWindow ())
 	{
 	    if (!gw->mGroup && (gw->mWindowState ==
@@ -200,7 +219,9 @@ GroupScreen::applyInitialActions ()
 }
 
 /*
- * groupInitDisplay
+ * GroupScreen::GroupScreen
+ * 
+ * Constructor for GroupScreen. Set up atoms, glow texture, queues, etc
  *
  */
 GroupScreen::GroupScreen (CompScreen *s) :
@@ -241,12 +262,14 @@ GroupScreen::GroupScreen (CompScreen *s) :
 				       &GroupScreen::dequeueTimer, this));
     mDequeueTimeoutHandle.setTimes (0, 0);
 
+    /* Bind the glow texture now */
     mGlowTexture =
     GLTexture::imageDataToTexture (mGlowTextureProperties[glowType].textureData,
 				   CompSize (mGlowTextureProperties[glowType].textureSize,
 					     mGlowTextureProperties[glowType].textureSize),
 				   GL_RGBA, GL_UNSIGNED_BYTE);
 
+    /* Set option callback code */
     optionSetTabHighlightColorNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
     optionSetTabBaseColorNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
     optionSetTabBorderColorNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
@@ -278,16 +301,10 @@ GroupScreen::GroupScreen (CompScreen *s) :
 }
 
 /*
- * groupFiniDisplay
- *
- */
-/*
- * groupInitScreen
- *
- */
-
-/*
- * groupFiniScreen
+ * GroupScreen::~GroupScreen
+ * 
+ * Screen properties tear-down, delete all the groups, destroy IPWs
+ * etc
  *
  */
 GroupScreen::~GroupScreen ()
@@ -352,7 +369,10 @@ GroupScreen::~GroupScreen ()
 }
 
 /*
- * groupInitWindow
+ * GroupWindow::GroupWindow
+ * 
+ * Constructor for GroupWindow, set up the hide info, animation state
+ * resize geometry, glow quads etc
  *
  */
 GroupWindow::GroupWindow (CompWindow *w) :
@@ -399,7 +419,9 @@ GroupWindow::GroupWindow (CompWindow *w) :
 }
 
 /*
- * groupFiniWindow
+ * GroupWindow::~GroupWindow
+ * 
+ * Tear down for when we don't need group data on a window anymore
  *
  */
 GroupWindow::~GroupWindow ()
