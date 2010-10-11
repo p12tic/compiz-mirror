@@ -568,6 +568,8 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	if (group->mTabBar &&
 	    group->mTabBar->mChangeState != GroupTabBar::NoTabChange)
 	{
+	    /* Only change to the new tab once the animation is done
+	     */
 	    group->mTabBar->mChangeAnimationTime -= msSinceLastPaint;
 	    if (group->mTabBar->mChangeAnimationTime <= 0)
 		group->handleAnimation ();
