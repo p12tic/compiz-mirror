@@ -19,6 +19,26 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ * 
+ * Some terminology used in this plugin:
+ * 
+ * 1. The "top tab" means the currently selected visible tab in the
+ * group. All other windows in the tabbed group are invisible.
+ * 
+ * 2. There are two animations, "Tabbing/Untabbing" and the "Change"
+ * animation. The "Tabbing/Untabbing" one is probably the most complex.
+ * This is where we center windows to some central top tab and then
+ * animate them to appear to be morphing into this window. We also
+ * do a similar animation when animating out (which is why we need
+ * to save their relevant distance from the main window initially).
+ * There is also the "change" animation, which is where we switch
+ * between a number of top tabs 
+ * 
+ * 3. The glow around windows is actually in fact a small texture which
+ * is strectched according to some gloq quads and then painted.
+ * 
+ * 4. Each "layer" here is a GUI object which is painted on screen
+ * (such as the tab bar, the text, the selection highlight, etc)
  *
  **/
 
