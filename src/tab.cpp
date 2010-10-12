@@ -532,7 +532,7 @@ GroupSelection::handleHoverDetection (const CompPoint &p)
  * GroupTabBar::handleTabBarFade
  *
  * Description:
- * This function is called from groupPreparePaintScreen
+ * This function is called from preparePaint
  * to handle the tab bar fade. It checks the animationTime and updates it,
  * so we can calculate the alpha of the tab bar in the painting code with it.
  *
@@ -1517,20 +1517,10 @@ GroupSelection::tabGroup (CompWindow *main)
 	TextLayer *layer;
 
 	layer = mTabBar->mTextLayer;
-	layer->mState = PaintOff;
-	layer->mAnimationTime = 0;
-	mTabBar->mTextLayer = TextLayer::rebuild (mTabBar->mTextLayer);
-	
-	if (mTabBar->mTextLayer)
-	    mTabBar->mTextLayer->render ();
-    }
-    if (mTabBar->mTextLayer)
-    {
-	TextLayer *layer;
-
-	layer = mTabBar->mTextLayer;
-	layer->mAnimationTime = gs->optionGetFadeTextTime () * 1000;
 	layer->mState = PaintFadeIn;
+	layer->mAnimationTime = gs->optionGetFadeTextTime () * 1000;
+	
+	layer->render ();
     }
 
     /* we need a buffer for DnD here */
