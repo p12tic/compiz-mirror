@@ -31,7 +31,7 @@
  * saves it's properties into a buffer, deletes it and re-creates
  * it with those properties. This is generally less error-prone
  * than only deleting the bits of the layer we need (since there is
- * a lot of sensitive cairo code in there
+ * a lot of sensitive cairo code in there)
  *
  */
 SelectionLayer*
@@ -60,7 +60,7 @@ SelectionLayer::rebuild (SelectionLayer *layer,
  * saves it's properties into a buffer, deletes it and re-creates
  * it with those properties. This is generally less error-prone
  * than only deleting the bits of the layer we need (since there is
- * a lot of sensitive cairo code in there
+ * a lot of sensitive cairo code in there)
  *
  */
 BackgroundLayer*
@@ -237,17 +237,9 @@ void
 SelectionLayer::render ()
 {
     cairo_t         *cr;
-    int             selWidth, selHeight;
 
     if (!HAS_TOP_WIN (mGroup) || !mCairo)
 	return;
-
-    /* Dimentions are the top tab's dimentions */ 
-
-    selWidth = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().x2 () -
-	       mGroup->mTabBar->mTopTab->mRegion.boundingRect ().x1 ();
-    selHeight = mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
-	        mGroup->mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
 
     cr = mCairo;
 
@@ -260,7 +252,7 @@ SelectionLayer::render ()
 			   (mGroup->mColor[3] / (65535.0f * 2)));
 
     cairo_move_to (cr, 0, 0);
-    cairo_rectangle (cr, 0, 0, selWidth, selHeight);
+    cairo_rectangle (cr, 0, 0, width (), height ());
 
     cairo_fill_preserve (cr);
 
