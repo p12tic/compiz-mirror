@@ -47,7 +47,7 @@ GroupWindow::windowInRegion (CompRegion src,
     for (i = 0; i < buf.numRects (); i++)
     {
 	CompRect box = buf.rects ().at (i);
-	area += (box.x2 () - box.x1 ()) * (box.y2 () - box.y1 ()); /* width * height */
+	area += (box.width ()) * (box.height ()); /* width * height */
     }
 
     if (area >= WIN_WIDTH (window) * WIN_HEIGHT (window) * precision)

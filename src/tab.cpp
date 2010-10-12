@@ -705,8 +705,7 @@ GroupSelection::handleAnimation ()
 	bool            activate;
 
 	/* recalc here is needed (for y value)! */
-	mTabBar->recalcTabBarPos ((mTabBar->mRegion.boundingRect ().x1 () +
-			  mTabBar->mRegion.boundingRect ().x2 ()) / 2,
+	mTabBar->recalcTabBarPos (mTabBar->mRegion.boundingRect ().centerX (),
 			  WIN_REAL_X (top),
 			  WIN_REAL_X (top) + WIN_REAL_WIDTH (top));
 
@@ -1969,9 +1968,9 @@ GroupTabBar::recalcTabBarPos (int		middleX,
 	}
 
 	/* Add the slot region to our current tabs width */
-	tabsWidth += (slot->mRegion.boundingRect ().x2 () - slot->mRegion.boundingRect ().x1 ());
-	if ((slot->mRegion.boundingRect ().y2 () - slot->mRegion.boundingRect ().y1 ()) > tabsHeight)
-	    tabsHeight = slot->mRegion.boundingRect ().y2 () - slot->mRegion.boundingRect ().y1 ();
+	tabsWidth += (slot->mRegion.boundingRect ().width ());
+	if ((slot->mRegion.boundingRect ().height ()) > tabsHeight)
+	    tabsHeight = slot->mRegion.boundingRect ().height ();
     }
 
     /* just a little work-a-round for first call
@@ -2045,8 +2044,7 @@ GroupTabBar::recalcTabBarPos (int		middleX,
 				 mRegion.boundingRect ().y1 ());
 
 	/* Set spring area to the center of the slot */
-	slot->mSpringX = (slot->mRegion.boundingRect ().x1 () +
-			 slot->mRegion.boundingRect ().x2 ()) / 2;
+	slot->mSpringX = (slot->mRegion.boundingRect ().centerX ());
 	slot->mSpeed = 0;
 	slot->mMsSinceLastMove = 0;
 
@@ -2086,7 +2084,8 @@ GroupTabBar::damageRegion ()
 
 #define DAMAGE_BUFFER 20
 
-    /* If there are slots in this bar, then damage the bounding rect */
+    /* If there is a front slot in this bar, then we need to damage
+     * areas just outside where the slot might be sitting */
     if (mSlots.size ())
     {
 	const CompRect &bnd = mSlots.front ()->mRegion.boundingRect ();
@@ -2154,8 +2153,7 @@ GroupTabBar::resizeTabBarRegion (CompRect	&box,
 
     damageRegion ();
 
-    oldWidth = mRegion.boundingRect ().x2 () -
-	mRegion.boundingRect ().x1 ();
+    oldWidth = mRegion.boundingRect ().width ();
 
     /* If the old width is not the same as the new one and we are
      * syncing the IPW, rebuild the background layer */
@@ -2232,10 +2230,9 @@ GroupTabBar::insertTabBarSlotBefore (GroupTabBarSlot *slot,
     /* Moving bar->mRegion.boundingRect ().x1 () / x2 as minX1 / maxX2 will work,
        because the tab-bar got wider now, so it will put it in
        the average between them, which is
-       (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
-    recalcTabBarPos ((mRegion.boundingRect ().x1 () +
-		      mRegion.boundingRect ().x2 ()) / 2,
-		      mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
+       (bar->mRegion.boundingRect ().centerX ()) anyway. */
+    recalcTabBarPos (mRegion.boundingRect ().centerX (),
+		     mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
 }
 
 /*
@@ -2274,9 +2271,8 @@ GroupTabBar::insertTabBarSlotAfter (GroupTabBarSlot *slot,
        because the tab-bar got wider now, so it will put it in the
        average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
-    recalcTabBarPos ((mRegion.boundingRect ().x1 () +
-		      mRegion.boundingRect ().x2 ()) / 2,
-		      mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
+    recalcTabBarPos (mRegion.boundingRect ().centerX (),
+		     mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
 }
 
 /*
@@ -2308,8 +2304,7 @@ GroupTabBar::insertTabBarSlot (GroupTabBarSlot *slot)
        because the tab-bar got wider now, so it will put it in
        the average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
-    recalcTabBarPos ((mRegion.boundingRect ().x1 () +
-		      mRegion.boundingRect ().x2 ()) / 2,
+    recalcTabBarPos ((mRegion.boundingRect ().centerX ()),
 		      mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
 }
 
@@ -2404,8 +2399,7 @@ GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
        because the tab-bar got thiner now, so
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2
        Won't cause the new x1 / x2 to be outside the original region. */
-    recalcTabBarPos ((mRegion.boundingRect ().x1 () +
-		      mRegion.boundingRect ().x2 ()) / 2,
+    recalcTabBarPos (mRegion.boundingRect ().centerX (),
 		      mRegion.boundingRect ().x1 (),
 		      mRegion.boundingRect ().x2 ());
 }
@@ -2605,10 +2599,8 @@ GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
 
 	draggedSlot->getDrawOffset (vx, vy);
 
-	draggedCenterX = ((draggedSlot->mRegion.boundingRect ().x1 () +
-			   draggedSlot->mRegion.boundingRect ().x2 ()) / 2) + vx;
-	draggedCenterY = ((draggedSlot->mRegion.boundingRect ().y1 () +
-			   draggedSlot->mRegion.boundingRect ().y2 ()) / 2) + vy;
+	draggedCenterX = draggedSlot->mRegion.boundingRect ().centerX () + vx;
+	draggedCenterY = draggedSlot->mRegion.boundingRect ().centerY () + vy;
     }
     else
     {
@@ -2640,15 +2632,13 @@ GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
 	leftForce = groupDraggedSlotForce(screen,
 					  mRegion.boundingRect ().x1 () -
 					  SIZE / 2 - draggedCenterX,
-					  abs ((mRegion.boundingRect ().y1 () +
-						mRegion.boundingRect ().y2 ()) / 2 -
+					  abs ((mRegion.boundingRect ().centerY ()) / 2 -
 					       draggedCenterY));
 
 	rightForce = groupDraggedSlotForce (screen,
 					    mRegion.boundingRect ().x2 () +
 					    SIZE / 2 - draggedCenterX,
-					    abs ((mRegion.boundingRect ().y1 () +
-						  mRegion.boundingRect ().y2 ()) / 2 -
+					    abs ((mRegion.boundingRect ().centerY ()) / 2 -
 						 draggedCenterY));
 
 	if (leftForce < 0)
@@ -2660,8 +2650,8 @@ GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
     /* Now apply the spring force on each slot */
     foreach (slot, mSlots)
     {
-	centerX = (slot->mRegion.boundingRect ().x1 () + slot->mRegion.boundingRect ().x2 ()) / 2;
-	centerY = (slot->mRegion.boundingRect ().y1 () + slot->mRegion.boundingRect ().y2 ()) / 2;
+	centerX = slot->mRegion.boundingRect ().centerX ();
+	centerY = slot->mRegion.boundingRect ().centerY ();
 
 	/* Slot gets faster or slower for difference in calculated center
 	 * X and precalculated spring x */
@@ -2730,13 +2720,8 @@ GroupTabBar::applySpeeds (int            msSinceLastRepaint)
 {
     GroupTabBarSlot *slot;
     int             move;
-    CompRect	    box;
+    CompRect	    box = mRegion.boundingRect ();
     bool            updateTabBar = false;
-
-    box.setX (mRegion.boundingRect ().x1 ());
-    box.setY (mRegion.boundingRect ().y1 ());
-    box.setWidth (mRegion.boundingRect ().x2 () - mRegion.boundingRect ().x1 ());
-    box.setHeight (mRegion.boundingRect ().y2 () - mRegion.boundingRect ().y1 ());
 
     /* For animation purposes we need to know how many ms there have
      * been since the last movement */
@@ -2812,8 +2797,7 @@ GroupTabBar::applySpeeds (int            msSinceLastRepaint)
 	/* Move slots by precalculated speeds */
 	slot->mMsSinceLastMove += msSinceLastRepaint;
 	move = slot->mSpeed * slot->mMsSinceLastMove / 1000;
-	slotCenter = (slot->mRegion.boundingRect ().x1 () +
-		      slot->mRegion.boundingRect ().x2 ()) / 2;
+	slotCenter = slot->mRegion.boundingRect ().centerX ();
 
 	if (move)
 	{
