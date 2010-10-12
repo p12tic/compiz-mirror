@@ -1474,7 +1474,7 @@ void
 GroupSelection::tabGroup (CompWindow *main)
 {
     GroupTabBarSlot *slot;
-    int             width, height;
+    CompSize 	    layerSize;
     int             space, thumbSize;
 
     GROUP_WINDOW (main);
@@ -1507,14 +1507,11 @@ GroupSelection::tabGroup (CompWindow *main)
     gw->mGroup->mTabBar->recalcTabBarPos (WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
 
-    width = mTabBar->mRegion.boundingRect ().x2 () -
-	    mTabBar->mRegion.boundingRect ().x1 ();
-    height = mTabBar->mRegion.boundingRect ().y2 () -
-	     mTabBar->mRegion.boundingRect ().y1 ();
+    layerSize = CompSize (mTabBar->mRegion.boundingRect ().width (),
+			  mTabBar->mRegion.boundingRect ().height ());
 
     /* set up the text layer */
-    mTabBar->mTextLayer = new TextLayer (CompSize (width, height),
-					 this);
+    mTabBar->mTextLayer = TextLayer::create (layerSize, this);
     if (mTabBar->mTextLayer)
     {
 	TextLayer *layer;
@@ -1540,9 +1537,11 @@ GroupSelection::tabGroup (CompWindow *main)
     space = gs->optionGetThumbSpace ();
     thumbSize = gs->optionGetThumbSize ();
     
+    layerSize = CompSize (layerSize.width () + space + thumbSize,
+			  layerSize.height ());
+    
     /* create background layer */
-    mTabBar->mBgLayer = BackgroundLayer::create (CompSize (width + space + thumbSize,
-						      height), this);
+    mTabBar->mBgLayer = BackgroundLayer::create (layerSize, this);
     if (mTabBar->mBgLayer)
     {
 	mTabBar->mBgLayer->mState = PaintOn;
@@ -1550,13 +1549,11 @@ GroupSelection::tabGroup (CompWindow *main)
 	mTabBar->mBgLayer->render ();
     }
 
-    width = mTabBar->mTopTab->mRegion.boundingRect ().x2 () -
-	    mTabBar->mTopTab->mRegion.boundingRect ().x1 ();
-    height = mTabBar->mTopTab->mRegion.boundingRect ().y2 () -
-	     mTabBar->mTopTab->mRegion.boundingRect ().y1 ();
+    layerSize = CompSize (mTabBar->mTopTab->mRegion.boundingRect ().width (),
+			  mTabBar->mTopTab->mRegion.boundingRect ().height ());
 
     /* create selection layer */
-    mTabBar->mSelectionLayer = SelectionLayer::create (CompSize (width, height), this);
+    mTabBar->mSelectionLayer = SelectionLayer::create (layerSize, this);
     if (mTabBar->mSelectionLayer)
     {
 	CompSize size = 

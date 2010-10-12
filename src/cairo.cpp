@@ -127,13 +127,7 @@ CairoLayer::~CairoLayer ()
  */
 
 CairoLayer::CairoLayer (const CompSize &size, GroupSelection *g) :
-    TextureLayer::TextureLayer (size, g)/*
- * BackgroundLayer::create
- *
- * Factory method for BackgroundLayer. Automatically checks
- * for failure to create cairo objects
- *
- */
+    TextureLayer::TextureLayer (size, g)
 {
     mFailed = true;
     mSurface = NULL;
@@ -744,6 +738,26 @@ BackgroundLayer::render ()
 
     mTexture = GLTexture::imageBufferToTexture ((char*) mBuffer,
 			  		  (CompSize &) *this);
+}
+
+/*
+ * TextLayer::create
+ * 
+ * Factory method of text layer. Returns nothing
+ * if the text is not valid
+ *
+ */
+
+TextLayer *
+TextLayer::create (CompSize       &size,
+		   GroupSelection *group)
+{
+    TextLayer *layer = new TextLayer (size, group);
+    
+    if (!layer)
+	return NULL;
+
+    return layer;
 }
 
 /*

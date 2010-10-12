@@ -182,6 +182,9 @@ class TextLayer :
     public:
     
 	static TextLayer *
+	create (CompSize &, GroupSelection *);
+
+	static TextLayer *
 	rebuild (TextLayer *);
 
 	void paint (const GLWindowPaintAttrib &attrib,
@@ -192,11 +195,12 @@ class TextLayer :
 	
 	void render ();
 
-    public:
+    private:
 
 	TextLayer (const CompSize &size, GroupSelection *g) :
 	    TextureLayer::TextureLayer (size, g),
 	    mPixmap (None) {}
+
     public:
 
 	/* used if layer is used for text drawing */
