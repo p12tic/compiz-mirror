@@ -2,12 +2,14 @@
  *
  * Compiz group plugin
  *
- * tab.c
+ * tab.cpp
  *
- * Copyright : (C) 2006-2007 by Patrick Niklaus, Roi Cohen, Danny Baumann
+ * Copyright : (C) 2006-2010 by Patrick Niklaus, Roi Cohen,
+ * 				Danny Baumann, Sam Spilsbury
  * Authors: Patrick Niklaus <patrick.niklaus@googlemail.com>
  *          Roi Cohen       <roico.beryl@gmail.com>
  *          Danny Baumann   <maniac@opencompositing.org>
+ * 	    Sam Spilsbury   <smspillaz@gmail.com>
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -1810,9 +1812,9 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
      */
     else
     {
+	group->mTabBar->mTopTab = topTab;
 	CompSize size (group->mTabBar->mTopTab->mRegion.boundingRect ().width (),
 		       group->mTabBar->mTopTab->mRegion.boundingRect ().height ());
-	group->mTabBar->mTopTab = topTab;
 
 	/* Rebuild layers and render */
 	group->mTabBar->mTextLayer = TextLayer::rebuild (group->mTabBar->mTextLayer);

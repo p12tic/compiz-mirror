@@ -7,10 +7,12 @@
  *
  * group_glow.h
  *
- * Copyright : (C) 2006-2007 by Patrick Niklaus, Roi Cohen, Danny Baumann
+ * Copyright : (C) 2006-2010 by Patrick Niklaus, Roi Cohen,
+ * 				Danny Baumann, Sam Spilsbury
  * Authors: Patrick Niklaus <patrick.niklaus@googlemail.com>
  *          Roi Cohen       <roico.beryl@gmail.com>
  *          Danny Baumann   <maniac@opencompositing.org>
+ * 	    Sam Spilsbury   <smspillaz@gmail.com>
  *
  *
  * This program is free software; you can redistribute it and/or

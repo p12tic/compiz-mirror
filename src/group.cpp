@@ -2,12 +2,14 @@
  *
  * Compiz group plugin
  *
- * group.c
+ * group.cpp
  *
- * Copyright : (C) 2006-2007 by Patrick Niklaus, Roi Cohen, Danny Baumann
+ * Copyright : (C) 2006-2010 by Patrick Niklaus, Roi Cohen,
+ * 				Danny Baumann, Sam Spilsbury
  * Authors: Patrick Niklaus <patrick.niklaus@googlemail.com>
  *          Roi Cohen       <roico.beryl@gmail.com>
  *          Danny Baumann   <maniac@opencompositing.org>
+ * 	    Sam Spilsbury   <smspillaz@gmail.com>
  *
  *
  * This program is free software; you can redistribute it and/or
@@ -1660,6 +1662,101 @@ GroupScreen::handleMotionEvent (int xRoot,
 }
 
 /*
+ * GroupWindow::windowNotify
+ * 
+ * Function called on window events - on these events do
+ * certain grouped actions, such as Shade/Unshade,
+ * Minimize/Unminimize etc
+ * 
+ */
+void
+GroupWindow::windowNotify (CompWindowNotify n)
+{
+    GROUP_SCREEN (screen);
+    bool 	 visible;
+
+    if (!mGroup)
+	return window->windowNotify (n);
+    
+    switch (n)
+    {
+	/* Minimize or shade all windows if this window has just 
+	 * been minimized or shaded */
+	case CompWindowNotifyShade:
+
+	    mWindowState = GroupWindow::WindowShaded;
+	    visible = false;
+	    
+	    if (mGroup && gs->optionGetShadeAll ())
+		mGroup->shadeWindows (window, true);
+
+	    break;
+	    
+	case CompWindowNotifyMinimize:
+
+	    mWindowState = GroupWindow::WindowMinimized;
+	    visible = false;
+	    
+	    if (mGroup && gs->optionGetMinimizeAll ())
+		mGroup->minimizeWindows (window, true);
+	
+	    break;
+
+	/* Unminimize/Unshade */
+	case CompWindowNotifyUnminimize:
+
+	    if (gs->optionGetMinimizeAll ())
+		mGroup->minimizeWindows (window, false);
+
+	    visible = true;
+	    break;
+
+	case CompWindowNotifyUnshade:
+
+	    if (gs->optionGetShadeAll ())
+		mGroup->shadeWindows (window, false);
+
+	    visible = true;
+	    break;
+
+	case CompWindowNotifyClose:
+	    /* The window was closed. In this case delete the, if
+	     * the group is not already ungrouping, then delete
+	     * this window from the group */
+	    /* close event */
+	    if (!(mAnimateState & IS_UNGROUPING))
+	    {
+		/* mGroup is going to be set to NULL here, so better
+		 * just return early */
+		deleteGroupWindow ();
+		gs->cScreen->damageScreen ();
+	        return window->windowNotify (n);
+	    }
+
+	    break;
+	default:
+	    return window->windowNotify (n);
+	    break;
+    }
+
+    if (visible)
+	mWindowState = WindowNormal;
+    else
+    {
+	/* Since the group is not visible, we can do some
+	* tear-down, for now */
+	if (mGroup->mTabBar && IS_TOP_TAB (window, mGroup))
+	{
+	    /* on unmap of the top tab, hide the tab bar and the
+	       input prevention window */
+	    mGroup->tabSetVisibility (false, PERMANENT);
+	}
+    }
+
+    return window->windowNotify (n);
+}
+
+/*
  * GroupScreen::handleEvent
  *
  * Wrappable function to handle X11 Events.
@@ -1706,50 +1803,6 @@ GroupScreen::handleEvent (XEvent      *event)
 	if (w)
 	{
 	    GROUP_WINDOW (w);
-
-	    /* Minimize or shade all windows if this window has just 
-	     * been minimized or shaded */
-	    if (w->pendingUnmaps ())
-	    {
-		if (w->shaded ())
-		{
-		    gw->mWindowState = GroupWindow::WindowShaded;
-
-		    if (gw->mGroup && optionGetShadeAll ())
-			gw->mGroup->shadeWindows (w, true);
-		}
-		else if (w->minimized ())
-		{
-		    gw->mWindowState = GroupWindow::WindowMinimized;
-
-		    if (gw->mGroup && optionGetMinimizeAll ())
-			gw->mGroup->minimizeWindows (w, true);
-		}
-	    }
-
-	    /* Since the group is not visible, we can do some
-	     * tear-down, for now */
-	    if (gw->mGroup)
-	    {
-		if (gw->mGroup->mTabBar && IS_TOP_TAB (w, gw->mGroup))
-		{
-		    /* on unmap of the top tab, hide the tab bar and the
-		       input prevention window */
-		    gw->mGroup->tabSetVisibility (false, PERMANENT);
-		}
-		/* The window was closed. In this case delete the, if
-		 * the group is not already ungrouping, then delete
-		 * this window from the group */
-		if (!w->pendingUnmaps ())
-		{
-		    /* close event */
-		    if (!(gw->mAnimateState & IS_UNGROUPING))
-		    {
-			gw->deleteGroupWindow ();
-			cScreen->damageScreen ();
-		    }
-		}
-	    }
 	}
 	break;
 
@@ -2185,19 +2238,6 @@ GroupWindow::ungrabNotify ()
 }
 
 /*
- * GroupWindow::windowNotify
- * 
- * FIXME: Currently unimplemented
- * 
- */
-
-void
-GroupWindow::windowNotify (CompWindowNotify n)
-{
-    return window->windowNotify (n);
-}
-
-/*
  * GroupWindow::damageRect
  * 
  * A request was made to damage everything in this window.
@@ -2232,23 +2272,6 @@ GroupWindow::damageRect (bool	        initial,
 		    GroupWindow::get (window)->mGroup->tabGroup (window);
 	    }
 	}
-
-	/* Unminimize/Unshade */
-	if (mGroup)
-	{
-	    if (mWindowState == WindowMinimized)
-	    {
-		if (gs->optionGetMinimizeAll ())
-		    mGroup->minimizeWindows (window, false);
-	    }
-	    else if (mWindowState == WindowShaded)
-	    {
-		if (gs->optionGetShadeAll ())
-		    mGroup->shadeWindows (window, false);
-	    }
-	}
-
-	mWindowState = WindowNormal;
     }
 
     /* Damage resize rectangle */
