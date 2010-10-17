@@ -93,13 +93,13 @@ WSNamesScreen::drawText ()
     float    x, y, border = 10.0f;
     CompRect oe = screen->getCurrentOutputExtents ();
 
-    x = oe.centerX ();
+    x = oe.centerX () - textData.getWidth () / 2;
 
     /* assign y (for the lower corner!) according to the setting */
     switch (optionGetTextPlacement ())
     {
 	case WorkspacenamesOptions::TextPlacementCenteredOnScreen:
-	    y = oe.centerY ();
+	    y = oe.centerY () + textData.getHeight () / 2;
 	    break;
 	case WorkspacenamesOptions::TextPlacementTopOfScreen:
 	case WorkspacenamesOptions::TextPlacementBottomOfScreen:
