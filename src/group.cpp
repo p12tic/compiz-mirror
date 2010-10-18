@@ -1798,14 +1798,6 @@ GroupScreen::handleEvent (XEvent      *event)
 	}
 	break;
 
-    case UnmapNotify:
-	w = screen->findWindow (event->xunmap.window);
-	if (w)
-	{
-	    GROUP_WINDOW (w);
-	}
-	break;
-
     case ClientMessage:
 	/* New active window */
 	if (event->xclient.message_type == Atoms::winActive)
