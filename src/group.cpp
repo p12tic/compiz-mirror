@@ -2261,16 +2261,48 @@ GroupWindow::damageRect (bool	        initial,
 
     status = cWindow->damageRect (initial, rect);
 
+    /* Window just appeared */
     if (initial)
     {
-	if (gs->optionGetAutotabCreate () && isGroupWindow ())
+	if ((gs->optionGetAutotabWindows ().size () ||
+	     gs->optionGetAutotabCreate ()) &&
+	     !mGroup && mWindowState == WindowNormal)
 	{
-	    if (!mGroup && (mWindowState == WindowNormal))
+	    GroupSelection *g = NULL;
+	    /* First check if this window should be added to an
+	     * existing group */
+	     
+	    foreach (CompOption::Value &v, gs->optionGetAutotabWindows ())
 	    {
-		addWindowToGroup (NULL, 0);
-		if (GroupWindow::get (window)->mGroup)
-		    GroupWindow::get (window)->mGroup->tabGroup (window);
+		if (v.match ().evaluate (window))
+		{
+		    bool foundGroup = false;
+		    foreach (GroupSelection *lg, gs->mGroups)
+		    {
+			foreach (CompWindow *w, lg->mWindows)
+			{
+			    if (v.match ().evaluate (w))
+			    {
+				foundGroup = true;
+				g = lg;
+				break;
+			    }
+			}
+			
+			if (foundGroup)
+			    break;
+		    }
+
+		    if (foundGroup)
+			break;
+		}
 	    }
+	    
+	    /* If 'g' is NULL here then a new group will be created
+	     * so better use mGroup here instead */
+	    addWindowToGroup (g, g ? g->mIdentifier : 0);
+	    if (mGroup && !g)
+		mGroup->tabGroup (window);
 	}
     }
 

@@ -82,12 +82,6 @@ class GroupScreen;
 extern bool gTextAvailable;
 
 
-/* General TODO:
- * 7) Make Queues their own object
- * 10) Use windowNotify
- * 13) Optimize (use const references where appropriate etc)
- */
-
 /*
  * Constants
  *

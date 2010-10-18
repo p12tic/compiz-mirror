@@ -217,6 +217,11 @@
             <_long>Autotab windows with themselves on window creation</_long>
             <default>false</default>
           </option>
+          <option name="autotab_windows" type="list">
+                <_short>Autotabbed window matches</_short>
+                <_long>Automatically tab matched windows into their own group on creation</_long>
+                <type>match</type>
+          </option>
           <option name="tabbar_show_delay" type="float">
             <_short>Tab Bar Show Delay</_short>
             <_long>Time (in s) before the tab bar is shown after hovering the title bar</_long>
