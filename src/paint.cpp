@@ -268,8 +268,10 @@ TextureLayer::paint (const GLWindowPaintAttrib &attrib,
 				  WIN_Y (mPaintWindow), 0.0f);
 	    wTransform.scale (attrib.xScale, attrib.yScale, 1.0f);
 	    wTransform.translate (
-			 attrib.xTranslate / attrib.xScale - WIN_X (mPaintWindow),
-			 attrib.yTranslate / attrib.yScale - WIN_Y (mPaintWindow),
+			 attrib.xTranslate / attrib.xScale 
+						 - WIN_X (mPaintWindow),
+			 attrib.yTranslate / attrib.yScale
+						 - WIN_Y (mPaintWindow),
 			 0.0f);
 
 	    glPushMatrix ();
@@ -460,9 +462,11 @@ GroupTabBar::paint (const GLWindowPaintAttrib    &attrib,
 	    gs->gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
 	if (mState == PaintFadeIn)
-	    alpha -= alpha * mAnimationTime / (gs->optionGetFadeTime () * 1000);
+	    alpha -= alpha * mAnimationTime /
+				      (gs->optionGetFadeTime () * 1000);
 	else if (mState == PaintFadeOut)
-	    alpha = alpha * mAnimationTime / (gs->optionGetFadeTime () * 1000);
+	    alpha = alpha * mAnimationTime /
+				      (gs->optionGetFadeTime () * 1000);
 
 	wAttrib.opacity = alpha * ((float) wAttrib.opacity / OPAQUE);
 	layer->paint (wAttrib, transform, clipRegion, clipRegion, mask);
@@ -630,7 +634,8 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	}
     }
 
-    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
+    status = gScreen->glPaintOutput (attrib, transform, region, output,
+				     mask);
 
     /* Just double check that we didn't get called again and that
      * we are still wanting to paint these things */
@@ -639,6 +644,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	if ((mGrabState == ScreenGrabTabDrag) && mDraggedSlot)
 	{
 	    GLMatrix wTransform (transform);
+	    GLWindow *gWindow = GLWindow::get (mDraggedSlot->window);
 	    PaintState    state;
 
 	    wTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
@@ -650,7 +656,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    state = mDraggedSlot->mTabBar->mState;
 	    mDraggedSlot->mTabBar->mState = PaintOff;
 	    mDraggedSlot->setTargetOpacity (OPAQUE);
-	    mDraggedSlot->paint (GLWindow::get (mDraggedSlot->mWindow)->paintAttrib (),
+	    mDraggedSlot->paint (gWindow->paintAttrib (),
 				 wTransform, region, region, 0);
 	    mDraggedSlot->mTabBar->mState = state;
 
@@ -684,7 +690,8 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
     gScreen->glPaintTransformedOutput (attrib, transform, region, output, mask);
 
     /* If we are on the same viewport here, then we are OK to paint */
-    if ((mTmpSel.mVpX == screen->vp ().x ()) && (mTmpSel.mVpY == screen->vp ().y ()))
+    if ((mTmpSel.mVpX == screen->vp ().x ()) && 
+         (mTmpSel.mVpY == screen->vp ().y ()))
     {
 	mTmpSel.mPainted = true;
 
@@ -692,6 +699,7 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    mDraggedSlot && mDragged)
 	{
 	    GLMatrix wTransform (transform);
+	    GLWindow *gWindow = GLWindow::get (mDraggedSlot->window);
 
 	    gScreen->glApplyTransform (attrib, output, &wTransform);
 	    wTransform.toScreenSpace (output, -attrib.zTranslate);
@@ -702,7 +710,7 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    state = mDraggedSlot->mTabBar->mState;
 	    mDraggedSlot->mTabBar->mState = PaintOff;
 	    mDraggedSlot->setTargetOpacity (OPAQUE);
-	    mDraggedSlot->paint (GLWindow::get (mDraggedSlot->mWindow)->paintAttrib (),
+	    mDraggedSlot->paint (gWindow->paintAttrib (),
 				 wTransform, region, region, 0);
 	    mDraggedSlot->mTabBar->mState = state;
 
@@ -736,7 +744,8 @@ GroupScreen::donePaint ()
 	if (group->mTabbingState != GroupSelection::NoTabbing)
 	    cScreen->damageScreen ();
 	else if (group->mTabBar &&
-		 group->mTabBar->mChangeState != GroupTabBar::NoTabChange)
+		 group->mTabBar->mChangeState !=
+					      GroupTabBar::NoTabChange)
 	    cScreen->damageScreen ();
 	else if (group->mTabBar)
 	{
@@ -835,11 +844,14 @@ GroupWindow::getStretchRectangle (CompRect &box,
     else
     {
 	y2 = mResizeGeometry.y () + mResizeGeometry.height () +
-	         window->serverGeometry ().border () * 2 + window->input ().bottom;
+	     window->serverGeometry ().border () * 2 + 
+	     window->input ().bottom;
     }
 
-    width  = window->width ()  + window->input ().left + window->input ().right;
-    height = window->height () + window->input ().top  + window->input ().bottom;
+    width  = window->width ()  + window->input ().left +
+	     window->input ().right;
+    height = window->height () + window->input ().top  + 
+	     window->input ().bottom;
 
     xScale = (width)  ? (x2 - x1) / (float) width  : 1.0f;
     yScale = (height) ? (y2 - y1) / (float) height : 1.0f;

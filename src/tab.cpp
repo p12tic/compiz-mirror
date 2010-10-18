@@ -71,7 +71,8 @@ GroupWindow::getClippingRegion ()
     {
 	/* Ignore small invidible windows or hidden ones in our clipping
 	 * region */
-	if (!cw->invisible () && !(cw->state () & CompWindowStateHiddenMask))
+	if (!cw->invisible () &&
+	    !(cw->state () & CompWindowStateHiddenMask))
 	{
 	    CompRect rect;
 	    CompRegion     buf;
@@ -107,8 +108,8 @@ GroupWindow::clearWindowInputShape (GroupWindow::HideInfo *hideInfo)
     int         count = 0, ordering;
 
     /* Get the shape rects */
-    rects = XShapeGetRectangles (screen->dpy (), window->id (), ShapeInput,
-				 &count, &ordering);
+    rects = XShapeGetRectangles (screen->dpy (), window->id (), 
+				 ShapeInput, &count, &ordering);
 
     if (count == 0)
 	return;
@@ -142,11 +143,12 @@ GroupWindow::clearWindowInputShape (GroupWindow::HideInfo *hideInfo)
     XShapeSelectInput (screen->dpy (), hideInfo->mShapeWindow, NoEventMask);
 
     /* In ShapeInput, combine NULL with the input shape */
-    XShapeCombineRectangles (screen->dpy (), hideInfo->mShapeWindow, ShapeInput, 0, 0,
-			     NULL, 0, ShapeSet, 0);
+    XShapeCombineRectangles (screen->dpy (), hideInfo->mShapeWindow,
+			     ShapeInput, 0, 0, NULL, 0, ShapeSet, 0);
 
     /* Get XShape events again */
-    XShapeSelectInput (screen->dpy (), hideInfo->mShapeWindow, ShapeNotify);
+    XShapeSelectInput (screen->dpy (), hideInfo->mShapeWindow,
+		       ShapeNotify);
 }
 
 /*
@@ -165,17 +167,19 @@ GroupWindow::setWindowVisibility (bool visible)
 	GroupWindow::HideInfo *info;
 
 	/* Allocate a hide info structure */
-	mWindowHideInfo = info = (GroupWindow::HideInfo *) malloc (sizeof (GroupWindow::HideInfo));
+	mWindowHideInfo = info = new GroupWindow::HideInfo;
 	if (!mWindowHideInfo)
 	    return;
 
 	/* ensure the input rects are NULL and get the shape mask */
 	info->mInputRects = NULL;
 	info->mNInputRects = 0;
-	info->mShapeMask = XShapeInputSelected (screen->dpy (), window->id ());
+	info->mShapeMask = XShapeInputSelected (screen->dpy (),
+						window->id ());
 
-	/* We are a reparenting window manager now, which means that we either
-	 * shape the frame window, or if it does not exist, shape the window
+	/* We are a reparenting window manager now, 
+	 * which means that we either shape the frame window,
+	 * or if it does not exist, shape the window
 	 */	
 	if (window->frame ())
 	{
@@ -188,12 +192,13 @@ GroupWindow::setWindowVisibility (bool visible)
 
 	/* Do not allow the window to be displated on the taskbar or
 	 * pager */
-	info->mSkipState = window->state () & (CompWindowStateSkipPagerMask |
-				              CompWindowStateSkipTaskbarMask);
+	info->mSkipState =
+		window->state () & (CompWindowStateSkipPagerMask |
+				    CompWindowStateSkipTaskbarMask);
 
 	window->changeState (window->state () |
-			   CompWindowStateSkipPagerMask |
-			   CompWindowStateSkipTaskbarMask);
+			     CompWindowStateSkipPagerMask |
+			     CompWindowStateSkipTaskbarMask);
     }
     else if (visible && mWindowHideInfo)
     {
@@ -202,23 +207,26 @@ GroupWindow::setWindowVisibility (bool visible)
 	/* If there are saved input rects, restore them */
 	if (info->mNInputRects)
 	{
-	    XShapeCombineRectangles (screen->dpy (), info->mShapeWindow, ShapeInput, 
-				     0, 0, info->mInputRects, info->mNInputRects,
-				     ShapeSet, info->mInputRectOrdering);
+	    XShapeCombineRectangles (screen->dpy (), info->mShapeWindow,
+				     ShapeInput, 0, 0,
+				     info->mInputRects,
+				     info->mNInputRects, ShapeSet,
+				     info->mInputRectOrdering);
 	}
 	/* Otherwise combine with a null mask (automatically restores
 	 * single rect input shape) */
 	else
 	{
-	    XShapeCombineMask (screen->dpy (), info->mShapeWindow, ShapeInput,
-			       0, 0, None, ShapeSet);
+	    XShapeCombineMask (screen->dpy (), info->mShapeWindow,
+			       ShapeInput, 0, 0, None, ShapeSet);
 	}
 
 	if (info->mInputRects)
 	    XFree (info->mInputRects);
 
 	/* Recieve shape events again */
-	XShapeSelectInput (screen->dpy (), info->mShapeWindow, info->mShapeMask);
+	XShapeSelectInput (screen->dpy (),
+			   info->mShapeWindow, info->mShapeMask);
 
 	/* Put the window back on the taskbar and pager */
 	window->changeState ((window->state () &
@@ -336,27 +344,31 @@ GroupSelection::tabSetVisibility (bool           visible,
 	mPoller.stop ();
 
     /* hide tab bars for invisible top windows */
-    if ((topTab->state () & CompWindowStateHiddenMask) || topTab->invisible ())
+    if ((topTab->state () & CompWindowStateHiddenMask) ||
+	 topTab->invisible ())
     {
 	bar->mState = PaintOff;
 	gs->switchTopTabInput (this, true);
     }
     /* Make the tab bar painted permanently in the case that we specify
      * a permanent mask */
-    else if (visible && bar->mState != PaintPermanentOn && (mask & PERMANENT))
+    else if (visible && bar->mState != PaintPermanentOn &&
+	     (mask & PERMANENT))
     {
 	bar->mState = PaintPermanentOn;
 	gs->switchTopTabInput (this, false);
     }
     /* If there is no longer an need to paint permanently, then just
      * paint this normally */
-    else if (visible && bar->mState == PaintPermanentOn && !(mask & PERMANENT))
+    else if (visible && bar->mState == PaintPermanentOn &&
+	     !(mask & PERMANENT))
     {
 	bar->mState = PaintOn;
     }
     /* If we're visible and need to fade in or out, re-render the tab
      * bar animations */
-    else if (visible && (bar->mState == PaintOff || bar->mState == PaintFadeOut))
+    else if (visible && (bar->mState == PaintOff ||
+			 bar->mState == PaintFadeOut))
     {
 	/* Set up the tab bar animations */
 	if (gs->optionGetBarAnimations () && bar->mBgLayer)
@@ -446,9 +458,11 @@ GroupTabBarSlot::getDrawOffset (int &hoffset,
     vy = vp.y ();
 
     /* the offset is the distance from the left edge of the initial viewport */
-    hoffset = ((screen->vp ().x () - vx) % screen->vpSize ().width ()) * screen->width ();
+    hoffset = ((screen->vp ().x () - vx) % screen->vpSize ().width ())
+	      * screen->width ();
 
-    voffset = ((screen->vp ().y () - vy) % screen->vpSize ().height ()) * screen->height ();
+    voffset = ((screen->vp ().y () - vy) % screen->vpSize ().height ())
+	      * screen->height ();
 }
 
 /*
@@ -540,7 +554,7 @@ GroupSelection::handleHoverDetection (const CompPoint &p)
  *
  */
 void
-GroupTabBar::handleTabBarFade (int		   msSinceLastPaint)
+GroupTabBar::handleTabBarFade (int msSinceLastPaint)
 {
     mAnimationTime -= msSinceLastPaint;
 
@@ -590,7 +604,8 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
     TextLayer *textLayer = mTextLayer;
 
     /* Fade in progress... */
-    if ((textLayer->mState == PaintFadeIn || textLayer->mState == PaintFadeOut) &&
+    if ((textLayer->mState == PaintFadeIn ||
+	 textLayer->mState == PaintFadeOut) &&
 	textLayer->mAnimationTime > 0)
     {
 	textLayer->mAnimationTime -= msSinceLastPaint;
@@ -707,13 +722,15 @@ GroupSelection::handleAnimation ()
 	bool            activate;
 
 	/* recalc here is needed (for y value)! */
-	mTabBar->recalcTabBarPos (mTabBar->mRegion.boundingRect ().centerX (),
+	mTabBar->recalcTabBarPos (
+			  mTabBar->mRegion.boundingRect ().centerX (),
 			  WIN_REAL_X (top),
 			  WIN_REAL_X (top) + WIN_REAL_WIDTH (top));
 
 	/* Add time progress to the animation again. Don't
 	 * have a negative value */
-	mTabBar->mChangeAnimationTime += gs->optionGetChangeAnimationTime () * 500;
+	mTabBar->mChangeAnimationTime +=
+			      gs->optionGetChangeAnimationTime () * 500;
 
 	if (mTabBar->mChangeAnimationTime <= 0)
 	    mTabBar->mChangeAnimationTime = 0;
@@ -1129,7 +1146,8 @@ GroupScreen::updateTabBars (Window enteredWin)
 	 * the show delay time and make the tab bar appear (don't
 	 * delay on fade out though)
 	 */
-	if (bar && ((bar->mState == PaintOff) || (bar->mState == PaintFadeOut)))
+	if (bar && ((bar->mState == PaintOff) ||
+	    (bar->mState == PaintFadeOut)))
 	{
 	    int showDelayTime = optionGetTabbarShowDelay () * 1000;
 
@@ -1140,7 +1158,8 @@ GroupScreen::updateTabBars (Window enteredWin)
 		if (mShowDelayTimeoutHandle.active ())
 		    mShowDelayTimeoutHandle.stop ();
 
-		mShowDelayTimeoutHandle.setTimes (showDelayTime, showDelayTime * 1.2);
+		mShowDelayTimeoutHandle.setTimes (showDelayTime,
+						  showDelayTime * 1.2);
 
 		mShowDelayTimeoutHandle.setCallback (
 			boost::bind (&GroupSelection::showDelayTimeout,
@@ -1273,7 +1292,8 @@ GroupWindow::constrainMovement (CompRegion constrainRegion,
 	/* check if, with dy taken out (so the rect will only be
 	 * outside the region by some x amount) if the rect is still
 	 * outside the reigon */
-	status = constrainRegion.contains (CompRect (x, y, width, height));
+	status = constrainRegion.contains (CompRect
+						(x, y, width, height));
 
 	/* If it is, then move it slightly left or right based 
 	 * on which direction it was moving on */
@@ -1726,7 +1746,8 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
     group = gw->mGroup;
 
     /* Don't change if we are still constructing the tab bar */
-    if (!group || !group->mTabBar || group->mTabbingState != GroupSelection::NoTabbing)
+    if (!group || !group->mTabBar ||
+	group->mTabbingState != GroupSelection::NoTabbing)
 	return true;
 
     /* Don't change if we are not currently changing and the requested
@@ -1744,7 +1765,8 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	return true;
 
     /* We need this for movement and damage purposes */
-    oldTopTab = group->mTabBar->mTopTab ? group->mTabBar->mTopTab->mWindow : NULL;
+    oldTopTab = group->mTabBar->mTopTab ? 
+		group->mTabBar->mTopTab->mWindow : NULL;
 
     /* If we are currently changing, set the next direction so that
      * the animation will start again there */
@@ -1791,6 +1813,8 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	{
 	    /* Reverse animation. */
 	    GroupTabBarSlot *tmp = group->mTabBar->mTopTab;
+	    bool changeOldOut = (group->mTabBar->mChangeState ==
+				 GroupTabBar::TabChangeOldOut)
 	    group->mTabBar->mTopTab = group->mTabBar->mPrevTopTab;
 	    group->mTabBar->mPrevTopTab = tmp;
 
@@ -1798,8 +1822,8 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	    group->mTabBar->mChangeAnimationTime =
 		optionGetChangeAnimationTime () * 500 -
 		group->mTabBar->mChangeAnimationTime;
-	    group->mTabBar->mChangeState = (group->mTabBar->mChangeState == GroupTabBar::TabChangeOldOut) ?
-		GroupTabBar::TabChangeNewIn : GroupTabBar::TabChangeOldOut;
+	    group->mTabBar->mChangeState = changeOldOut ?
+	     GroupTabBar::TabChangeNewIn : GroupTabBar::TabChangeOldOut;
 
 	    group->mTabBar->mNextTopTab = NULL;
 	}
@@ -2274,7 +2298,8 @@ GroupTabBar::insertTabBarSlotAfter (GroupTabBarSlot *slot,
        average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
     recalcTabBarPos (mRegion.boundingRect ().centerX (),
-		     mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
+		     mRegion.boundingRect ().x1 (),
+		     mRegion.boundingRect ().x2 ());
 }
 
 /*
@@ -2307,7 +2332,8 @@ GroupTabBar::insertTabBarSlot (GroupTabBarSlot *slot)
        the average between them, which is
        (bar->mRegion.boundingRect ().x1 () + bar->mRegion.boundingRect ().x2 ()) / 2 anyway. */
     recalcTabBarPos ((mRegion.boundingRect ().centerX ()),
-		      mRegion.boundingRect ().x1 (), mRegion.boundingRect ().x2 ());
+		      mRegion.boundingRect ().x1 (),
+		      mRegion.boundingRect ().x2 ());
 }
 
 /*
@@ -3024,7 +3050,8 @@ GroupScreen::changeTabRight (CompAction         *action,
     if (gw->mSlot->mNext)
 	return changeTab (gw->mSlot->mNext, GroupTabBar::RotateRight);
     else
-	return changeTab (gw->mGroup->mTabBar->mSlots.front (), GroupTabBar::RotateRight);
+	return changeTab (gw->mGroup->mTabBar->mSlots.front (),
+			  GroupTabBar::RotateRight);
 }
 
 /*
@@ -3035,7 +3062,7 @@ GroupScreen::changeTabRight (CompAction         *action,
  */
 void
 GroupScreen::switchTopTabInput (GroupSelection *group,
-				     bool	    enable)
+				bool	    enable)
 {
     if (!group->mTabBar || !HAS_TOP_WIN (group))
 	return;

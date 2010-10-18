@@ -75,7 +75,8 @@ GroupScreen::optionChanged (CompOption *opt,
 		if (group->mTabBar)
 		{
 		    CompRect box = group->mTabBar->mRegion.boundingRect ();
-		    group->mTabBar->recalcTabBarPos ((box.x1 () + box.x2 ()) / 2,
+		    group->mTabBar->recalcTabBarPos (
+					 (box.x1 () + box.x2 ()) / 2,
 					  box.x1 (), box.x2 ());
 		}
 	    break;
@@ -87,7 +88,8 @@ GroupScreen::optionChanged (CompOption *opt,
 		foreach (CompWindow *w, screen->windows ())
 		{
 		    GROUP_WINDOW (w);
-		    GLTexture::Matrix tMat = mGlowTexture.at (0)->matrix ();
+		    GLTexture::Matrix tMat =
+					 mGlowTexture.at (0)->matrix ();
 
 		    gw->computeGlowQuads (&tMat);
 		    if (gw->mGlowQuads)
@@ -190,11 +192,13 @@ GroupScreen::applyInitialActions ()
 	    /* if there was a tab bar, re-render it */
 	    if (gw->mGroup->mTabBar)
 	    {
-		CompSize size (gw->mGroup->mTabBar->mTopTab->mRegion.boundingRect ().width (),
-			       gw->mGroup->mTabBar->mTopTab->mRegion.boundingRect ().height ());
+		CompRegion     &r = gw->mGroup->mTabBar->mRegion;
+		SelectionLayer *l = gw->mGroup->mTabBar->mSelectionLayer;
+
+		CompSize size (r.boundingRect ().width (),
+			       r.boundingRect ().height ());
 		gw->mGroup->mTabBar->mSelectionLayer =
-		       SelectionLayer::rebuild (gw->mGroup->mTabBar->mSelectionLayer,
-						size);
+		       SelectionLayer::rebuild (l, size);
 		if (gw->mGroup->mTabBar->mSelectionLayer)
 		    gw->mGroup->mTabBar->mSelectionLayer->render ();
 	    }
@@ -233,8 +237,10 @@ GroupScreen::GroupScreen (CompScreen *s) :
     mIgnoreMode (false),
     mGlowTextureProperties ((GlowTextureProperties *) glowTextureProperties),
     mLastRestackedGroup (NULL),
-    mGroupWinPropertyAtom (XInternAtom (screen->dpy (), "_COMPIZ_GROUP", 0)),
-    mResizeNotifyAtom (XInternAtom (screen->dpy (), "_COMPIZ_RESIZE_NOTIFY", 0)),
+    mGroupWinPropertyAtom (XInternAtom (screen->dpy (),
+					"_COMPIZ_GROUP", 0)),
+    mResizeNotifyAtom (XInternAtom (screen->dpy (),
+				    "_COMPIZ_RESIZE_NOTIFY", 0)),
     mPendingMoves (NULL),
     mPendingGrabs (NULL),
     mPendingUngrabs (NULL),
@@ -254,6 +260,8 @@ GroupScreen::GroupScreen (CompScreen *s) :
     CompositeScreenInterface::setHandler (cScreen);
 
     int glowType = optionGetGlowType ();
+    boost::function oSetCb = boost::bind (&GroupScreen::optionChanged,
+					  this, _1, _2);
     /* one-shot timeout for stuff that needs to be initialized after
        all screens and windows are initialized */
     mInitialActionsTimeoutHandle.start (boost::bind (
@@ -272,33 +280,53 @@ GroupScreen::GroupScreen (CompScreen *s) :
 				   GL_RGBA, GL_UNSIGNED_BYTE);
 
     /* Set option callback code */
-    optionSetTabHighlightColorNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetTabBaseColorNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetTabBorderColorNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetTabbarFontSizeNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetTabbarFontColorNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetGlowNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetGlowTypeNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetGlowSizeNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetTabStyleNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetThumbSizeNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetThumbSpaceNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetBorderWidthNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
-    optionSetBorderRadiusNotify (boost::bind (&GroupScreen::optionChanged, this, _1, _2));
+    optionSetTabHighlightColorNotify (oSetCb);
+    optionSetTabBaseColorNotify (oSetCb);
+    optionSetTabBorderColorNotify (oSetCb);
+    optionSetTabbarFontSizeNotify (oSetCb);
+    optionSetTabbarFontColorNotify (oSetCb);
+    optionSetGlowNotify (oSetCb);
+    optionSetGlowTypeNotify (oSetCb);
+    optionSetGlowSizeNotify (oSetCb);
+    optionSetTabStyleNotify (oSetCb);
+    optionSetThumbSizeNotify (oSetCb);
+    optionSetThumbSpaceNotify (oSetCb);
+    optionSetBorderWidthNotify (oSetCb);
+    optionSetBorderRadiusNotify (oSetCb);
 
-    optionSetSelectButtonInitiate (boost::bind (&GroupScreen::select, this, _1, _2, _3));
-    optionSetSelectButtonTerminate (boost::bind (&GroupScreen::selectTerminate, this, _1, _2, _3));
-    optionSetSelectSingleKeyInitiate (boost::bind (&GroupScreen::selectSingle, this, _1, _2, _3));
-    optionSetGroupKeyInitiate (boost::bind (&GroupScreen::groupWindows, this, _1, _2, _3));
-    optionSetUngroupKeyInitiate (boost::bind (&GroupScreen::ungroupWindows, this, _1, _2, _3));
-    optionSetTabmodeKeyInitiate (boost::bind (&GroupScreen::initTab, this, _1, _2, _3));
-    optionSetChangeTabLeftKeyInitiate (boost::bind (&GroupScreen::changeTabLeft, this, _1, _2, _3));
-    optionSetChangeTabRightKeyInitiate (boost::bind (&GroupScreen::changeTabRight, this, _1, _2, _3));
-    optionSetRemoveKeyInitiate (boost::bind (&GroupScreen::removeWindow, this, _1, _2, _3));
-    optionSetCloseKeyInitiate (boost::bind (&GroupScreen::closeWindows, this, _1, _2, _3));
-    optionSetIgnoreKeyInitiate (boost::bind (&GroupScreen::setIgnore, this, _1, _2, _3));
-    optionSetIgnoreKeyTerminate (boost::bind (&GroupScreen::unsetIgnore, this, _1, _2, _3));
-    optionSetChangeColorKeyInitiate (boost::bind (&GroupScreen::changeColor, this, _1, _2, _3));
+    optionSetSelectButtonInitiate (boost::bind (&GroupScreen::select,
+						     this, _1, _2, _3));
+    optionSetSelectButtonTerminate (boost::bind 
+					(&GroupScreen::selectTerminate,
+						     this, _1, _2, _3));
+    optionSetSelectSingleKeyInitiate (boost::bind 
+					(&GroupScreen::selectSingle,
+						     this, _1, _2, _3));
+    optionSetGroupKeyInitiate (boost::bind 
+					(&GroupScreen::groupWindows,
+						     this, _1, _2, _3));
+    optionSetUngroupKeyInitiate (boost::bind 
+					(&GroupScreen::ungroupWindows,
+						     this, _1, _2, _3));
+    optionSetTabmodeKeyInitiate (boost::bind (&GroupScreen::initTab,
+						     this, _1, _2, _3));
+    optionSetChangeTabLeftKeyInitiate (boost::bind 
+					   (&GroupScreen::changeTabLeft,
+						     this, _1, _2, _3));
+    optionSetChangeTabRightKeyInitiate (boost::bind 
+					  (&GroupScreen::changeTabRight,
+						     this, _1, _2, _3));
+    optionSetRemoveKeyInitiate (boost::bind (&GroupScreen::removeWindow,
+						     this, _1, _2, _3));
+    optionSetCloseKeyInitiate (boost::bind (&GroupScreen::closeWindows,
+						     this, _1, _2, _3));
+    optionSetIgnoreKeyInitiate (boost::bind (&GroupScreen::setIgnore,
+						     this, _1, _2, _3));
+    optionSetIgnoreKeyTerminate (boost::bind (&GroupScreen::unsetIgnore,
+						     this, _1, _2, _3));
+    optionSetChangeColorKeyInitiate (boost::bind
+					     (&GroupScreen::changeColor,
+						     this, _1, _2, _3));
 
 }
 

@@ -145,10 +145,10 @@ CairoLayer::CairoLayer (const CompSize &size, GroupSelection *g) :
     if (mBuffer)
     {
 	mSurface = cairo_image_surface_create_for_data (mBuffer,
-							  CAIRO_FORMAT_ARGB32,
-							  width (),
-							  height (),
-							  4 * width ());
+						CAIRO_FORMAT_ARGB32,
+						width (),
+						height (),
+						4 * width ());
 
 	if (cairo_surface_status (mSurface) == CAIRO_STATUS_SUCCESS)
 	{
@@ -845,7 +845,8 @@ TextLayer::render ()
     if (!pixmap)
     {
 	/* getting the pixmap failed, so create an empty one */
-	pixmap = XCreatePixmap (screen->dpy (), screen->root (), twidth, theight, 32);
+	pixmap = XCreatePixmap (screen->dpy (), screen->root (), twidth,
+							   theight, 32);
 
 	if (pixmap)
 	{
@@ -856,7 +857,8 @@ TextLayer::render ()
 	    gcv.plane_mask = 0xffffffff;
 
 	    gc = XCreateGC (screen->dpy (), pixmap, GCForeground, &gcv);
-	    XFillRectangle (screen->dpy (), pixmap, gc, 0, 0, twidth, theight);
+	    XFillRectangle (screen->dpy (), pixmap, gc, 0, 0, twidth,
+							       theight);
 	    XFreeGC (screen->dpy (), gc);
 	}
     }
@@ -872,7 +874,8 @@ TextLayer::render ()
 	 * in TextureLayer::paint
 	 */
 	mTexture = GLTexture::bindPixmapToTexture (mPixmap,
-						   width (), height (), 32);
+						   width (), height (),
+						   32);
     }
 }
 

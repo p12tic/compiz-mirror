@@ -95,7 +95,9 @@ groupFindGroupInWindows (GroupSelection *group,
 static CompWindowList
 groupFindWindowsInRegion (CompRegion     reg)
 {
-    float      	   precision = GroupScreen::get (screen)->optionGetSelectPrecision () / 100.0f;
+    GROUP_SCREEN (screen);
+	
+    float      	   precision = gs->optionGetSelectPrecision () / 100.0f;
     Selection      ret;
     int		   count;
     CompWindowList::reverse_iterator rit = screen->windows ().rbegin ();
@@ -372,7 +374,8 @@ GroupScreen::selectTerminate (CompAction         *action,
         }
     }
 
-    action->setState (action->state () & ~(CompAction::StateTermButton | CompAction::StateTermKey));
+    action->setState (action->state () & 
+	     ~(CompAction::StateTermButton | CompAction::StateTermKey));
 
     return false;
 }
