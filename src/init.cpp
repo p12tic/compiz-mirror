@@ -260,7 +260,8 @@ GroupScreen::GroupScreen (CompScreen *s) :
     CompositeScreenInterface::setHandler (cScreen);
 
     int glowType = optionGetGlowType ();
-    boost::function oSetCb = boost::bind (&GroupScreen::optionChanged,
+    boost::function <void (CompOption *, GroupOptions::Options)> oSetCb
+	    = boost::bind (&GroupScreen::optionChanged,
 					  this, _1, _2);
     /* one-shot timeout for stuff that needs to be initialized after
        all screens and windows are initialized */

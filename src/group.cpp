@@ -190,7 +190,7 @@ GroupWindow::updateResizeRectangle (CompRect   masterGeometry,
 					 bool	    damage)
 {
     CompRect     newGeometry;
-    CompRect	 &origGeometry = mGroup->mResizeINfo->mOrigGeometry
+    CompRect	 &origGeometry = mGroup->mResizeInfo->mOrigGeometry;
     unsigned int mask = 0;
     int          newWidth, newHeight;
     int          widthDiff, heightDiff;
@@ -609,7 +609,7 @@ GroupWindow::deleteGroupWindow ()
 		 * it is safe to use front ()
 		 */
 		GROUP_WINDOW (group->mWindows.front ());
-		gw->damageOutputExtents ();
+		gw->cWindow->damageOutputExtents ();
 		gw->window->updateWindowOutputExtents ();
 
 		if (gs->optionGetAutoUngroup ())
@@ -823,7 +823,7 @@ GroupSelection::GroupSelection (CompWindow *startingWindow,
     mGrabMask (0),
     mResizeInfo (NULL) 
 {
-    boost::function cb =
+    boost::function<void (const CompPoint &)> cb =
 		boost::bind (&GroupSelection::handleHoverDetection,
 			     this, _1);
 
@@ -1451,7 +1451,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	     * of the rect to get a relative width) */
 	    if (slot->mNext && slot->mNext != mDraggedSlot)
 	    {
-		CompRect &r = slot->mNext->mRegion.boundingRect ();
+		const CompRect &r = slot->mNext->mRegion.boundingRect ();
 		rect.setWidth (r.x1 () - rect.x ());
 	    }
 	    /* Otherwise, if the slot to the right of this one is the
@@ -1460,7 +1460,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    else if (slot->mNext && slot->mNext == mDraggedSlot &&
 		     mDraggedSlot->mNext)
 	    {
-		CompRegion &r = mDraggedSlot->mNext->mRegion;
+		const CompRegion &r = mDraggedSlot->mNext->mRegion;
 		rect.setWidth (r.boundingRect ().x1 () - rect.x ());
 	    }
 	    /* Otherwise, this is the rightmost edge of the tab bar, so
@@ -1468,7 +1468,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	     * x-point of insertion region */
 	    else
 	    {
-		CompRect &r = group->mTabBar->mRegion.boundingRect ();
+		const CompRect &r = group->mTabBar->mRegion.boundingRect ();
 		rect.setWidth (r.x2 ()); // FIXME: wrong ?
 	    }
 
@@ -1652,7 +1652,7 @@ GroupScreen::handleMotionEvent (int xRoot, int yRoot)
 		foreach (group, mGroups)
 		    group->tabSetVisibility (true, PERMANENT);
 
-		CompRect &box = 
+		const CompRect &box = 
 			   gw->mGroup->mTabBar->mRegion.boundingRect ();
 		gw->mGroup->mTabBar->recalcTabBarPos (
 				      (box.x1 () + box.x2 ()) / 2,

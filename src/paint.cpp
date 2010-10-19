@@ -644,7 +644,7 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	if ((mGrabState == ScreenGrabTabDrag) && mDraggedSlot)
 	{
 	    GLMatrix wTransform (transform);
-	    GLWindow *gWindow = GLWindow::get (mDraggedSlot->window);
+	    GLWindow *gWindow = GLWindow::get (mDraggedSlot->mWindow);
 	    PaintState    state;
 
 	    wTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
@@ -699,7 +699,7 @@ GroupScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    mDraggedSlot && mDragged)
 	{
 	    GLMatrix wTransform (transform);
-	    GLWindow *gWindow = GLWindow::get (mDraggedSlot->window);
+	    GLWindow *gWindow = GLWindow::get (mDraggedSlot->mWindow);
 
 	    gScreen->glApplyTransform (attrib, output, &wTransform);
 	    wTransform.toScreenSpace (output, -attrib.zTranslate);

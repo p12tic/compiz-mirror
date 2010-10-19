@@ -1814,7 +1814,7 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	    /* Reverse animation. */
 	    GroupTabBarSlot *tmp = group->mTabBar->mTopTab;
 	    bool changeOldOut = (group->mTabBar->mChangeState ==
-				 GroupTabBar::TabChangeOldOut)
+				 GroupTabBar::TabChangeOldOut);
 	    group->mTabBar->mTopTab = group->mTabBar->mPrevTopTab;
 	    group->mTabBar->mPrevTopTab = tmp;
 
