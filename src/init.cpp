@@ -472,7 +472,7 @@ GroupWindow::~GroupWindow ()
 	deleteGroupWindow ();
 
     if (mGlowQuads)
-	free (mGlowQuads);
+	delete[] mGlowQuads;
 }
 
 bool

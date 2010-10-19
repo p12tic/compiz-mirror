@@ -43,7 +43,7 @@ GroupWindow::enqueueMoveNotify (int  dx,
 
     GROUP_SCREEN (screen);
 
-    move = (GroupWindow::PendingMoves *) malloc (sizeof (GroupWindow::PendingMoves));
+    move = new GroupWindow::PendingMoves;
     if (!move)
 	return;
 
@@ -88,7 +88,7 @@ GroupScreen::dequeueSyncs (GroupWindow::PendingSyncs *syncs)
 	    gw->mNeedsPosSync = false;
 	}
 
-	free (sync);
+	delete sync;
     }
 
 }
@@ -109,7 +109,7 @@ GroupScreen::dequeueMoveNotifies ()
 	move->w->move (move->dx, move->dy, move->immediate);
 	if (move->sync)
 	{
-	    sync = (GroupWindow::PendingSyncs *) malloc (sizeof (GroupWindow::PendingSyncs));
+	    sync = new GroupWindow::PendingSyncs;
 	    if (sync)
 	    {
 		GROUP_WINDOW (move->w);
@@ -120,7 +120,7 @@ GroupScreen::dequeueMoveNotifies ()
 		syncs            = sync;
 	    }
 	}
-	free (move);
+	delete move;
     }
 
     if (syncs)
@@ -141,7 +141,7 @@ GroupWindow::enqueueGrabNotify (int          x,
     
     GROUP_SCREEN (screen);
 
-    grab = (GroupWindow::PendingGrabs *) malloc (sizeof (GroupWindow::PendingGrabs));
+    grab = new GroupWindow::PendingGrabs;
     if (!grab)
 	return;
 
@@ -184,7 +184,7 @@ GroupScreen::dequeueGrabNotifies ()
 	grab->w->grabNotify (grab->x, grab->y,
 			     grab->state, grab->mask);
 
-	free (grab);
+	delete grab;
     }
 
     mQueued = false;
@@ -197,7 +197,7 @@ GroupWindow::enqueueUngrabNotify ()
 
     GROUP_SCREEN (screen);
 
-    ungrab = (GroupWindow::PendingUngrabs *) malloc (sizeof (GroupWindow::PendingUngrabs));
+    ungrab = new GroupWindow::PendingUngrabs;
 
     if (!ungrab)
 	return;
@@ -235,7 +235,7 @@ GroupScreen::dequeueUngrabNotifies ()
 
 	ungrab->w->ungrabNotify ();
 
-	free (ungrab);
+	delete ungrab;
     }
 
     mQueued = false;

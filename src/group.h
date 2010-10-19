@@ -50,7 +50,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <malloc.h>
 #include <time.h>
 #include <X11/Xlib.h>
 #include <cairo/cairo-xlib-xrender.h>

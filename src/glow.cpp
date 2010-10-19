@@ -213,7 +213,7 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     if (gs->optionGetGlow () && matrix)
     {
 	if (!mGlowQuads)
-	    mGlowQuads = (GlowQuad *) malloc (NUM_GLOWQUADS * sizeof (GlowQuad));
+	    mGlowQuads = new GlowQuad[NUM_GLOWQUADS];
 	if (!mGlowQuads)
 	    return;
     }
@@ -221,7 +221,7 @@ GroupWindow::computeGlowQuads (GLTexture::Matrix *matrix)
     {
 	if (mGlowQuads)
 	{
-	    free (mGlowQuads);
+	    delete[] mGlowQuads;
 	    mGlowQuads = NULL;
 	}
 	return;

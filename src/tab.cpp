@@ -234,7 +234,7 @@ GroupWindow::setWindowVisibility (bool visible)
 				   CompWindowStateSkipTaskbarMask)) |
 			      info->mSkipState);
 
-	free (info);
+	delete info;
 	mWindowHideInfo = NULL;
     }
 }

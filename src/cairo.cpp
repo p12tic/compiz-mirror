@@ -114,7 +114,7 @@ CairoLayer::~CairoLayer ()
 	cairo_surface_destroy (mSurface);
 
     if (mBuffer)
-	free (mBuffer);
+	delete[] mBuffer;
 }
 
 /*
@@ -131,6 +131,7 @@ CairoLayer::~CairoLayer ()
 CairoLayer::CairoLayer (const CompSize &size, GroupSelection *g) :
     TextureLayer::TextureLayer (size, g)
 {
+    unsigned int bufSize = 4 * width () * height ();
     mFailed = true;
     mSurface = NULL;
     mCairo   = NULL;
@@ -139,9 +140,7 @@ CairoLayer::CairoLayer (const CompSize &size, GroupSelection *g) :
     mAnimationTime = 0;
     mState         = PaintOff;
 
-    mBuffer = (unsigned char *) 
-		   calloc (4 * width () * height (),
-			   sizeof (unsigned char));
+    mBuffer = new unsigned char[bufSize];
     if (mBuffer)
     {
 	mSurface = cairo_image_surface_create_for_data (mBuffer,
@@ -164,14 +163,14 @@ CairoLayer::CairoLayer (const CompSize &size, GroupSelection *g) :
 		compLogMessage ("group", CompLogLevelError,
 				"Failed to create cairo layer context.");
 		cairo_surface_destroy (mSurface);
-		free (mBuffer);
+		delete[] mBuffer;
 	    }
 	}
 	else
 	{
 	    compLogMessage ("group", CompLogLevelError,
 			    "Failed to create cairo layer surface");
-	    free (mBuffer);
+	    delete[] mBuffer;
 	}
     }
     else

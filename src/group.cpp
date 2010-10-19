@@ -525,7 +525,7 @@ GroupSelection::resizeWindows (CompWindow *top)
 
     if (mResizeInfo)
     {
-	free (mResizeInfo);
+	delete mResizeInfo;
 	mResizeInfo = NULL;
     }
 
