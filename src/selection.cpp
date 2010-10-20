@@ -301,6 +301,8 @@ Selection::checkWindow (CompWindow *w)
 	    select (w);
 	}
     }
+
+    GroupWindow::get (w)->checkFunctions ();
 }
 
 /*

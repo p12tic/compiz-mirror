@@ -285,6 +285,8 @@ GroupSelection::showDelayTimeout ()
     }
 
     topTab = TOP_TAB (this);
+    
+    GROUP_WINDOW (topTab);
 
     gs->getCurrentMousePosition (mouseX, mouseY);
 
@@ -293,6 +295,8 @@ GroupSelection::showDelayTimeout ()
 			  WIN_REAL_X (topTab) + WIN_REAL_WIDTH (topTab));
 
     tabSetVisibility (true, 0);
+    
+    gw->checkFunctions ();
 
     gs->mShowDelayTimeoutHandle.stop ();
     return false;	/* This will free the timer. */
@@ -962,6 +966,7 @@ GroupSelection::finishTabbing ()
 
 	gw->mAnimateState = 0;
 	gw->mTx = gw->mTy = gw->mXVelocity = gw->mYVelocity = 0.0f;
+	gw->checkFunctions ();
     }
 
     /* Kill the group if we just ungrouped the whole thing */
@@ -1478,7 +1483,18 @@ GroupSelection::startTabbingAnimation (bool           tab)
 			constrainedWindows = true;
 		    }
 		}
+		
+		gw->checkFunctions ();
 	    }
+	}
+    }
+    else
+    {
+	foreach (CompWindow *w, mWindows)
+	{
+	    GROUP_WINDOW (w);
+	    
+	    gw->checkFunctions ();
 	}
     }
 }
@@ -1731,7 +1747,7 @@ GroupSelection::untabGroup ()
  */
 bool
 GroupScreen::changeTab (GroupTabBarSlot             *topTab,
-			     GroupTabBar::ChangeAnimationDirection direction)
+			GroupTabBar::ChangeAnimationDirection direction)
 {
     CompWindow     *w, *oldTopTab;
     GroupSelection *group;
@@ -1911,6 +1927,18 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 
 	    group->mTabBar->mCheckFocusAfterTabChange = false;
 	}
+    }
+    
+    if (group->mTabBar->mPrevTopTab)
+    {
+	CompWindow *pw = group->mTabBar->mPrevTopTab->mWindow;
+	GroupWindow::get (pw)->checkFunctions ();
+    }
+
+    if (group->mTabBar->mTopTab)
+    {
+	CompWindow *tw = group->mTabBar->mTopTab->mWindow;
+	GroupWindow::get (tw)->checkFunctions ();
     }
 
     return true;

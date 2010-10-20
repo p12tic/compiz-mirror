@@ -396,6 +396,10 @@ class GroupWindow :
 
 	/* glow.cpp */
 	
+	bool checkTabbing ();
+	bool checkRotating ();
+	bool checkShowTabBar ();
+	
 	void
 	paintGlow (GLFragment::Attrib        &attrib,
 		   const CompRegion	     &paintRegion,
@@ -486,6 +490,9 @@ class GroupWindow :
 			   int        &new_dx,
 			   int        &new_dy);
 
+	/* init.cpp */
+	
+	void checkFunctions ();
 
 
     public:

@@ -400,6 +400,45 @@ GroupScreen::~GroupScreen ()
 }
 
 /*
+ * GroupWindow::checkFunctions
+ * 
+ * Function to check if we need to enable any of our wrapped
+ * functions.
+ * 
+ */
+
+void
+GroupWindow::checkFunctions ()
+{
+    bool doGlPaint, doGlDraw;
+    bool doDamageRect, doGetOutputExtents;
+    bool doMoveNotify, doResizeNotify, doGrabNotify, doUngrabNotify;
+    bool doWindowNotify, doStateChangeNotify, doActivate;
+    
+    /* For glPaint, the window must either be:
+     * -> In an animation (eg rotating, tabbing, etc)
+     * -> Having its tab bar shown
+     * -> "Selected" (but not yet grouped)
+     * -> Being Stretched
+     * -> Have a hide info struct (since we need to hide the window)
+     */
+
+    doGlPaint = (checkRotating () || checkTabbing () || checkShowTabBar ()
+		 || !mResizeGeometry.isEmpty () || mWindowHideInfo
+		 || mInSelection);
+
+    /* For glDraw, the window must be:
+     * -> Window must be in a group
+     * -> Window must have glow quads
+     */
+     
+    doGlDraw = (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads);
+
+    gWindow->glPaintSetEnabled (this, doGlPaint);
+    gWindow->glDrawSetEnabled (this, doGlDraw);
+}
+
+/*
  * GroupWindow::GroupWindow
  * 
  * Constructor for GroupWindow, set up the hide info, animation state
@@ -431,9 +470,12 @@ GroupWindow::GroupWindow (CompWindow *w) :
 
     mat = gs->mGlowTexture.front ()->matrix ();
 
-    WindowInterface::setHandler (window);
-    CompositeWindowInterface::setHandler (cWindow);
-    GLWindowInterface::setHandler (gWindow);
+    WindowInterface::setHandler (window, true);
+    CompositeWindowInterface::setHandler (cWindow, true);
+    GLWindowInterface::setHandler (gWindow, true);
+    
+    gWindow->glDrawSetEnabled (this, false);
+    gWindow->glPaintSetEnabled (this, false);
 
     mOrgPos = CompPoint (0, 0);
     mMainTabOffset = CompPoint (0, 0);

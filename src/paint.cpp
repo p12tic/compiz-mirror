@@ -777,6 +777,15 @@ GroupScreen::donePaint ()
 	     * region */
 	    if (needDamage)
 		group->mTabBar->damageRegion ();
+	    else
+	    {
+		foreach (CompWindow *w, group->mWindows)
+		{
+		    GROUP_WINDOW (w);
+		    
+		    gw->checkFunctions ();
+		}
+	    }
 	}
     }
 }
@@ -885,6 +894,106 @@ GroupScreen::damagePaintRectangle (const CompRect &box)
 }
 
 /*
+ * GroupWindow::checkTabbing
+ * 
+ * Check if this window should be tabbing
+ *
+ */
+bool
+GroupWindow::checkTabbing ()
+{
+    /* Do the tabbing animation if we are currently in an animated
+     * state and the following check fails
+     * -> We have a tab bar AND
+     * -> This is the top tab for the window AND
+     * -> We are in a tabbing state
+     * 
+     * In essence, we want to animate all windows in this group
+     * in the tabbing animation, except where the current window
+     * is the "prinicpal" window (ignoring a situation where
+     * we are ungrouping a single window, in which case we animate
+     * all windows)
+     */
+
+    if (!mGroup || !mGroup->mTabBar)
+	return false;
+
+    return  (mAnimateState & (IS_ANIMATED | FINISHED_ANIMATION)) &&
+	     !(mGroup->mTabBar && IS_TOP_TAB (window, mGroup) &&
+	      (mGroup->mTabbingState == GroupSelection::Tabbing));
+}
+
+/*
+ * GroupWindow::checkRotating
+ * 
+ * Check if this window should be rotating
+ *
+ */
+bool
+GroupWindow::checkRotating ()
+{
+    /* Rotate the window if we are changing tabs, and if the window
+     * passes the following safety checks:
+     * -> It has a top tab (and associated window) AND
+     * -> It has a previous top tab (the window that we are
+     * 				 switching from) AND
+     * Either
+     *  -> It is a top tab (and associated window) or OR
+     *  -> It is a previous top tab (and associated window) OR
+     * 
+     * In essense, we can only do the rotate animation if there is
+     * a window we are switching to or from (since the animation
+     * has a "from" stage and a "to" stage)
+     */
+
+    if (!mGroup)
+	return false;
+
+    return (mGroup->mTabBar &&
+	    mGroup->mTabBar->mChangeState != GroupTabBar::NoTabChange) &&
+	     HAS_TOP_WIN (mGroup) && HAS_PREV_TOP_WIN (mGroup) &&
+	     (IS_TOP_TAB (window , mGroup) ||
+	      IS_PREV_TOP_TAB (window, mGroup));
+}
+
+/*
+ * GroupWindow::checkShowTabBar
+ * 
+ * Check if this window should show it's tab bar
+ * 
+ */
+bool
+GroupWindow::checkShowTabBar ()
+{
+    /* Show the tab bar if it exists, and is set to be painted and
+     * the following checks pass:
+     * Either:
+     * -> This window is the top tab for the group AND
+     *    Either:
+     *    -> We aren't changing tabs OR
+     *    -> We are changing to this tab
+     * OR:
+     * -> This window is the previous top tab AND
+     * -> We are changing away from this window
+     * 
+     * The tab bar should be visible during the rotate animation.
+     * All other times it should be invisible, except when hovering
+     * over it
+     *
+     */
+
+    if (!mGroup)
+	return false;
+
+    return mGroup->mTabBar && (mGroup->mTabBar->mState != PaintOff) &&
+	     (((IS_TOP_TAB (window, mGroup)) &&
+	       ((mGroup->mTabBar->mChangeState == GroupTabBar::NoTabChange) ||
+		(mGroup->mTabBar->mChangeState == GroupTabBar::TabChangeNewIn))) ||
+	      (IS_PREV_TOP_TAB (window, mGroup) &&
+	       (mGroup->mTabBar->mChangeState == GroupTabBar::TabChangeOldOut)));
+}
+
+/*
  * GroupWindow::glPaint
  * 
  * This is different to GLDraw, since we can still modify the compiz
@@ -902,81 +1011,12 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		      unsigned int		mask)
 {
     bool       status;
-    bool       doRotate, doTabbing, showTabbar;
+    bool       doRotate = checkRotating ();
+    bool       doTabbing = checkTabbing ();
+    bool       showTabbar = checkShowTabBar ();
     CompWindow *w = window;
 
     GROUP_SCREEN (screen);
-
-    if (mGroup)
-    {
-	GroupSelection *group = mGroup;
-
-	/* Rotate the window if we are changing tabs, and if the window
-	 * passes the following safety checks:
-	 * -> It has a top tab (and associated window) AND
-	 * -> It has a previous top tab (the window that we are
-	 * 				 switching from) AND
-	 * Either
-	 *  -> It is a top tab (and associated window) or OR
-	 *  -> It is a previous top tab (and associated window) OR
-	 * 
-	 * In essense, we can only do the rotate animation if there is
-	 * a window we are switching to or from (since the animation
-	 * has a "from" stage and a "to" stage)
-	 */
-
-	doRotate = (group->mTabBar &&
-		    group->mTabBar->mChangeState != GroupTabBar::NoTabChange) &&
-	           HAS_TOP_WIN (group) && HAS_PREV_TOP_WIN (group) &&
-	           (IS_TOP_TAB (w, group) || IS_PREV_TOP_TAB (w, group));
-
-	/* Do the tabbing animation if we are currently in an animated
-	 * state and the following check fails
-	 * -> We have a tab bar AND
-	 * -> This is the top tab for the window AND
-	 * -> We are in a tabbing state
-	 * 
-	 * In essence, we want to animate all windows in this group
-	 * in the tabbing animation, except where the current window
-	 * is the "prinicpal" window (ignoring a situation where
-	 * we are ungrouping a single window, in which case we animate
-	 * all windows)
-	 */
-
-	doTabbing = (mAnimateState & (IS_ANIMATED | FINISHED_ANIMATION)) &&
-	            !(group->mTabBar && IS_TOP_TAB (w, group) &&
-		      (group->mTabbingState == GroupSelection::Tabbing));
-
-	/* Show the tab bar if it exists, and is set to be painted and
-	 * the following checks pass:
-	 * Either:
-	 * -> This window is the top tab for the group AND
-	 *    Either:
-	 *    -> We aren't changing tabs OR
-	 *    -> We are changing to this tab
-	 * OR:
-	 * -> This window is the previous top tab AND
-	 * -> We are changing away from this window
-	 * 
-	 * The tab bar should be visible during the rotate animation.
-	 * All other times it should be invisible, except when hovering
-	 * over it
-	 *
-	 */
-
-	showTabbar = group->mTabBar && (group->mTabBar->mState != PaintOff) &&
-	             (((IS_TOP_TAB (w, group)) &&
-		       ((group->mTabBar->mChangeState == GroupTabBar::NoTabChange) ||
-			(group->mTabBar->mChangeState == GroupTabBar::TabChangeNewIn))) ||
-		      (IS_PREV_TOP_TAB (w, group) &&
-		       (group->mTabBar->mChangeState == GroupTabBar::TabChangeOldOut)));
-    }
-    else
-    {
-	doRotate   = false;
-	doTabbing  = false;
-	showTabbar = false;
-    }
 
     /* If this window is hidden, then don't draw it on screen */
     if (mWindowHideInfo)
@@ -989,6 +1029,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
      * -> Tabbed
      * -> Has a tab bar
      */
+     
     if (mInSelection || !mResizeGeometry.isEmpty () || doRotate ||
 	doTabbing || showTabbar)
     {

@@ -721,6 +721,8 @@ GroupWindow::removeWindowFromGroup ()
 		GroupWindow::get (window)->mGroup->tabGroup (window);
 	}
     }
+    
+    checkFunctions ();
 }
 
 GroupSelection::~GroupSelection ()
@@ -777,6 +779,8 @@ GroupSelection::fini ()
 		if (GroupWindow::get (cw)->mGroup)
 		    GroupWindow::get (cw)->mGroup->tabGroup (cw);
 	    }
+	    
+	    gw->checkFunctions ();
 	}
 
 	mWindows.clear ();
@@ -907,6 +911,7 @@ GroupWindow::addWindowToGroup (GroupSelection *group,
 	{
 	    /* first window in the group got its glow, too */
 	    group->mWindows.front ()->updateWindowOutputExtents ();
+	    GroupWindow::get (group->mWindows.front ())->checkFunctions ();
 	}
 
 	/* If there is a tab bar for this group, then we need to set up
@@ -959,6 +964,8 @@ GroupWindow::addWindowToGroup (GroupSelection *group,
 
 	updateWindowProperty ();
     }
+    
+    checkFunctions ();
 }
 
 /*
