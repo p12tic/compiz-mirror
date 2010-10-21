@@ -131,6 +131,18 @@ GroupScreen::optionChanged (CompOption *opt,
 		break;
 	    }
 
+	case GroupOptions::MoveAll:
+	case GroupOptions::ResizeAll:
+	case GroupOptions::MinimizeAll:
+	case GroupOptions::ShadeAll:
+	case GroupOptions::MaximizeUnmaximizeAll:
+	case GroupOptions::RaiseAll:
+	    foreach (GroupSelection *group, mGroups)
+		foreach (CompWindow *w, group->mWindows)
+		    GroupWindow::get (w)->checkFunctions ();
+	
+	    break;
+
 	default:
 	    break;
     }
