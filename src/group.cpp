@@ -902,7 +902,10 @@ GroupWindow::addWindowToGroup (GroupSelection *group,
 
 	/* Update glow regions and X11 property */
 
-	window->updateWindowOutputExtents ();
+	checkFunctions ();
+	window->updateWindowOutputExtents ();	    
+	cWindow->damageOutputExtents ();
+	
 	updateWindowProperty ();
 
 	/* If we have more than one window in this group just recently,
@@ -910,8 +913,9 @@ GroupWindow::addWindowToGroup (GroupSelection *group,
 	if (group->mWindows.size () == 2)
 	{
 	    /* first window in the group got its glow, too */
-	    group->mWindows.front ()->updateWindowOutputExtents ();
 	    GroupWindow::get (group->mWindows.front ())->checkFunctions ();
+	    group->mWindows.front ()->updateWindowOutputExtents ();	    
+	    CompositeWindow::get (group->mWindows.front ())->damageOutputExtents ();
 	}
 
 	/* If there is a tab bar for this group, then we need to set up
@@ -2122,7 +2126,7 @@ GroupWindow::moveNotify (int    dx,
 	computeGlowQuads (&tMat);
     }
 
-    /* Don't bother if the window is not moved */
+    /* Don't bother if the window is not grouped */
     if (!mGroup || gs->mQueued)
 	return;
 
@@ -2408,7 +2412,10 @@ GroupWindow::stateChangeNotify (unsigned int lastState)
 /*
  * GroupWindow::activate
  * 
- * Window got activated, change the tab to the new active window */
+ * Window got activated, change the tab to the new active window
+ * 
+ * FIXME: broken
+ */
 void
 GroupWindow::activate ()
 {

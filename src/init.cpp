@@ -423,6 +423,8 @@ GroupWindow::checkFunctions ()
 {
     unsigned long functionsMask = 0;
     
+    GROUP_SCREEN (screen);
+    
     /* For glPaint, the window must either be:
      * -> In an animation (eg rotating, tabbing, etc)
      * -> Having its tab bar shown
@@ -443,7 +445,7 @@ GroupWindow::checkFunctions ()
      */
      
     if (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads);
-	functionsMask |= GL_DRAW;
+	functionsMask |= (GL_DRAW | GET_OUTPUT_EXTENTS);
 
     /* For damageRect, the window must be:
      * -> Non empty resize rectangle (we need to update the resize
@@ -458,9 +460,45 @@ GroupWindow::checkFunctions ()
     if (mSlot || !mResizeGeometry.isEmpty ())
 	functionsMask |= DAMAGE_RECT;
 
+    /* For the various notification functions, the window
+     * needs to be in a group, but we should disable them
+     * if the options say we don't need to handle that particular
+     * funciton
+     */
+
+    if (mGroup)
+    {
+	/* Even if we are not resizing all windows we still need
+	 * to recalc the tab bar position anyways, so do that
+	 */
+	 
+	if (gs->optionGetResizeAll () ||
+	    (mGroup->mTabBar && IS_TOP_TAB (window, mGroup)))
+	    functionsMask |= RESIZE_NOTIFY;
+	if (mGlowQuads || gs->optionGetMoveAll () ||
+	    (mGroup->mTabBar && IS_TOP_TAB (window, mGroup)))
+	    functionsMask |= MOVE_NOTIFY;
+	if (gs->optionGetMaximizeUnmaximizeAll ())
+	    functionsMask |= STATECHANGE_NOTIFY;
+	if (gs->optionGetRaiseAll ())
+	    functionsMask |= ACTIVATE_NOTIFY;
+	
+	functionsMask |= WINDOW_NOTIFY;
+    }
+	
+
     gWindow->glPaintSetEnabled (this, functionsMask & GL_PAINT);
     gWindow->glDrawSetEnabled (this, functionsMask & GL_DRAW);
     cWindow->damageRectSetEnabled (this, functionsMask & DAMAGE_RECT);
+    window->getOutputExtentsSetEnabled (this, functionsMask &
+					      GET_OUTPUT_EXTENTS);
+    window->resizeNotifySetEnabled (this, functionsMask &
+					  RESIZE_NOTIFY);
+    window->moveNotifySetEnabled (this, functionsMask & MOVE_NOTIFY);
+    window->stateChangeNotifySetEnabled (this, functionsMask &
+					        STATECHANGE_NOTIFY);
+    window->activateSetEnabled (this, functionsMask & ACTIVATE_NOTIFY);
+    window->windowNotifySetEnabled (this, functionsMask & WINDOW_NOTIFY);
 }
 
 /*
@@ -495,12 +533,12 @@ GroupWindow::GroupWindow (CompWindow *w) :
 
     mat = gs->mGlowTexture.front ()->matrix ();
 
-    WindowInterface::setHandler (window, true);
+    WindowInterface::setHandler (window, false);
     CompositeWindowInterface::setHandler (cWindow, true);
-    GLWindowInterface::setHandler (gWindow, true);
+    GLWindowInterface::setHandler (gWindow, false);
     
-    gWindow->glDrawSetEnabled (this, false);
-    gWindow->glPaintSetEnabled (this, false);
+    window->grabNotifySetEnabled (this, true);
+    window->ungrabNotifySetEnabled (this, true);
 
     mOrgPos = CompPoint (0, 0);
     mMainTabOffset = CompPoint (0, 0);
