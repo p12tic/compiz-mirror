@@ -2225,6 +2225,7 @@ GroupWindow::grabNotify (int          x,
 						  WIN_Y (cw),
 						  WIN_WIDTH (cw),
 						  WIN_HEIGHT (cw));
+			gcw->checkFunctions ();
 		    }
 		}
 	    }
@@ -2345,6 +2346,8 @@ GroupWindow::damageRect (bool	        initial,
 	    if (mGroup && !g)
 		mGroup->tabGroup (window);
 	}
+	
+	checkFunctions (); // we don't need damageRect after this
     }
 
     /* Damage resize rectangle */

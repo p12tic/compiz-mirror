@@ -555,14 +555,18 @@ GroupSelection::handleHoverDetection (const CompPoint &p)
  * This function is called from preparePaint
  * to handle the tab bar fade. It checks the animationTime and updates it,
  * so we can calculate the alpha of the tab bar in the painting code with it.
+ * 
+ * Returns true if there is animation still remaining
  *
  */
-void
+bool
 GroupTabBar::handleTabBarFade (int msSinceLastPaint)
 {
     mAnimationTime -= msSinceLastPaint;
 
-    if (mAnimationTime < 0)
+    if (mAnimationTime > 0)
+	return true;
+    else
 	mAnimationTime = 0;
 
     /* Fade finished */
@@ -591,6 +595,8 @@ GroupTabBar::handleTabBarFade (int msSinceLastPaint)
 	    }
 	}
     }
+    
+    return false;
 }
 
 /*
@@ -600,12 +606,15 @@ GroupTabBar::handleTabBarFade (int msSinceLastPaint)
  * This function is called from groupPreparePaintScreen
  * to handle the text fade. It checks the animationTime and updates it,
  * so we can calculate the alpha of the text in the painting code with it.
+ * 
+ * Returns true if there is still animation remaining
  *
  */
-void
+bool
 GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 {
     TextLayer *textLayer = mTextLayer;
+    bool		   continuePainting = true;
 
     /* Fade in progress... */
     if ((textLayer->mState == PaintFadeIn ||
@@ -625,10 +634,13 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 
 	    else if (textLayer->mState == PaintFadeOut)
 		textLayer->mState = PaintOff;
+	
+	    continuePainting = false;
 	}
     }
 
-    if (textLayer->mState == PaintOff && mHoveredSlot)
+    if (textLayer->mState == PaintOff && mHoveredSlot &&
+	mHoveredSlot != mTextSlot)
     {
 	/* Start text animation for the new hovered slot. */
 	mTextSlot = mHoveredSlot;
@@ -651,6 +663,9 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 	if (textLayer)
 	    mTextLayer->render ();
     }
+    
+    return continuePainting;
+    
 }
 
 /*
@@ -661,8 +676,10 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
  * tabBar->animation->time as well as checking if the animation is already
  * finished.
  *
+ * Returns true if more animation needed
+ * 
  */
-void
+bool
 BackgroundLayer::handleAnimation (int            msSinceLastPaint)
 {
     mBgAnimationTime -= msSinceLastPaint;
@@ -673,7 +690,11 @@ BackgroundLayer::handleAnimation (int            msSinceLastPaint)
 	mBgAnimation = AnimationNone;
 
 	render ();
+	
+	return false;
     }
+    
+    return true;
 }
 /*
  * tabChangeActivateEvent
@@ -774,6 +795,8 @@ GroupSelection::handleAnimation ()
 	    GroupWindow::get (PREV_TOP_TAB (this))->setWindowVisibility (false);
 
 	/* Now the new previous top tab is the current one */
+	GroupWindow::get (PREV_TOP_TAB (this))->checkFunctions ();
+	GroupWindow::get (TOP_TAB (this))->checkFunctions ();
 	mTabBar->mPrevTopTab = mTabBar->mTopTab;
 	mTabBar->mChangeState = GroupTabBar::NoTabChange;
 

@@ -145,7 +145,7 @@ class BackgroundLayer :
 		    const CompRegion	      &clipRegion,
 		    int			      mask);
 	
-	void handleAnimation (int msSinceLastPaint);
+	bool handleAnimation (int msSinceLastPaint);
 
     public:
 

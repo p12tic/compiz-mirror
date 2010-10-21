@@ -143,8 +143,8 @@ class GroupTabBar
 
 	/* Animation */
 
-	void handleTabBarFade (int msSinceLastPaint);
-	void handleTextFade (int msSinceLastPaint);
+	bool handleTabBarFade (int msSinceLastPaint);
+	bool handleTextFade (int msSinceLastPaint);
 
 	/* Region and position management */
 

@@ -445,8 +445,22 @@ GroupWindow::checkFunctions ()
     if (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads);
 	functionsMask |= GL_DRAW;
 
+    /* For damageRect, the window must be:
+     * -> Non empty resize rectangle (we need to update the resize
+     * rect region of this window)
+     * -> Have a slot (we need to damage the slot area)
+     * Strictly speaking, we also use damageRect to check for initial
+     * damages (for when a window was first painted on screen), but
+     * since we don't start checking functions until after that happens
+     * we dont need to worry about this case here)
+     */
+
+    if (mSlot || !mResizeGeometry.isEmpty ())
+	functionsMask |= DAMAGE_RECT;
+
     gWindow->glPaintSetEnabled (this, functionsMask & GL_PAINT);
     gWindow->glDrawSetEnabled (this, functionsMask & GL_DRAW);
+    cWindow->damageRectSetEnabled (this, functionsMask & DAMAGE_RECT);
 }
 
 /*

@@ -558,17 +558,20 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 
 	if (bar)
 	{
+	    bool keepPainting = false;
+
 	    bar->applyForces ((mDragged) ? mDraggedSlot : NULL);
 	    bar->applySpeeds (msSinceLastPaint);
 
-	    if (bar->mState == PaintFadeIn || bar->mState == PaintFadeOut)
-		bar->handleTabBarFade (msSinceLastPaint);
+	    if (bar->mState == PaintFadeIn ||
+	        bar->mState == PaintFadeOut)
+		keepPainting |= bar->handleTabBarFade (msSinceLastPaint);
 
 	    if (bar->mTextLayer)
-		bar->handleTextFade (msSinceLastPaint);
+		keepPainting |= bar->handleTextFade (msSinceLastPaint);
 
 	    if (bar->mBgLayer && bar->mBgLayer->mBgAnimation)
-		bar->mBgLayer->handleAnimation (msSinceLastPaint);
+		keepPainting |= bar->mBgLayer->handleAnimation (msSinceLastPaint);
 	}
 
 	if (group->mTabBar &&
@@ -777,15 +780,6 @@ GroupScreen::donePaint ()
 	     * region */
 	    if (needDamage)
 		group->mTabBar->damageRegion ();
-	    else
-	    {
-		foreach (CompWindow *w, group->mWindows)
-		{
-		    GROUP_WINDOW (w);
-		    
-		    gw->checkFunctions ();
-		}
-	    }
 	}
     }
 }
