@@ -112,7 +112,7 @@ extern bool gTextAvailable;
 #define PREV_TOP_TAB(g) ((g)->mTabBar->mPrevTopTab->mWindow)
 #define NEXT_TOP_TAB(g) ((g)->mTabBar->mNextTopTab->mWindow)
 
-#define HAS_TOP_WIN(group) (((group)->mTabBar->mTopTab) && ((group)->mTabBar->mTopTab->mWindow))
+#define HAS_TOP_WIN(group) (((group)->mTabBar && (group)->mTabBar->mTopTab) && ((group)->mTabBar->mTopTab->mWindow))
 #define HAS_PREV_TOP_WIN(group) (((group)->mTabBar->mPrevTopTab) && \
 				 ((group)->mTabBar->mPrevTopTab->mWindow))
 
@@ -585,6 +585,9 @@ class GroupScreen :
 	
 
     public:
+    
+        void
+        checkFunctions ();
 
 	void
 	optionChanged (CompOption *opt,

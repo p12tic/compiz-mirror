@@ -616,7 +616,9 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     mTmpSel.mVpX = screen->vp ().x ();
     mTmpSel.mVpY = screen->vp ().y ();
 
-    /* Allow us to paint windows transformed */
+    /* Allow us to paint windows transformed
+     * FIXME: Really ugly code
+     */
 
     foreach (group, mGroups)
     {

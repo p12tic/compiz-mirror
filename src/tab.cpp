@@ -842,6 +842,8 @@ GroupSelection::handleAnimation ()
 	    mTabBar->mTimeoutHandle.start ();
 	}
     }
+    
+    gs->checkFunctions ();
 }
 
 /* 
@@ -991,6 +993,8 @@ GroupSelection::finishTabbing ()
 	gw->mTx = gw->mTy = gw->mXVelocity = gw->mYVelocity = 0.0f;
 	gw->checkFunctions ();
     }
+    
+    gs->checkFunctions ();
 
     /* Kill the group if we just ungrouped the whole thing */
     if (mUngroupState == UngroupAll)
@@ -1520,6 +1524,8 @@ GroupSelection::startTabbingAnimation (bool           tab)
 	    gw->checkFunctions ();
 	}
     }
+    
+    gs->checkFunctions ();
 }
 
 /*

@@ -282,6 +282,8 @@ GroupScreen::grabScreen (GroupScreen::GrabState newState)
     }
 
     mGrabState = newState;
+    
+    checkFunctions ();
 }
 
 /*
@@ -2258,6 +2260,8 @@ GroupWindow::grabNotify (int          x,
 	mGroup->mGrabMask = mask;
     }
 
+    gs->checkFunctions ();
+
     window->grabNotify (x, y, state, mask);
 }
 
@@ -2279,6 +2283,8 @@ GroupWindow::ungrabNotify ()
     {
 	mGroup->resizeWindows (window); // should really include the size info here
     }
+    
+    gs->checkFunctions ();
 
     window->ungrabNotify ();
 }

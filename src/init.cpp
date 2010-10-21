@@ -237,6 +237,67 @@ GroupScreen::applyInitialActions ()
 }
 
 /*
+ * GroupScreen::checkFunctions
+ * 
+ * Checks to enable and disable interfaced functions in GroupScreen
+ * if we do or don't need them. Keeping them enabled costs CPU usage
+ * so do this only when needed
+ *
+ */
+
+#define HANDLE_EVENT (1 << 0)
+#define GL_PAINT_OUTPUT (1 << 1)
+#define GL_PAINT_TRANSFORMED_OUTPUT (1 << 2)
+#define PREPARE_PAINT (1 << 3)
+#define DONE_PAINT (1 << 4)
+
+void
+GroupScreen::checkFunctions ()
+{
+    unsigned long functionsMask = 0;
+    
+    /* We need to enable our output paint hook if we are
+     * -> Painting a selection rect
+     * -> Painting a dragged tab
+     * -> We have some groups AND
+     *    -> There is a "stretched window" OR 
+     *    -> We are doing the tab change animation OR
+     *    -> We are doing the tabbing/untabbing animation OR
+     *    -> We are painting the tab bar
+     *    (Since we need to enable the
+     *     PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK which
+     *     allows for matrix transformation of windows)
+     */
+     
+     if (mGrabState == GroupScreen::ScreenGrabSelect ||
+	 mGrabState == GroupScreen::ScreenGrabTabDrag)
+	 functionsMask |= (GL_PAINT_OUTPUT |
+			   GL_PAINT_TRANSFORMED_OUTPUT);
+     else if (mGroups.size ())
+     {
+	foreach (GroupSelection *group, mGroups)
+	{
+	    if ((group->mTabbingState != GroupSelection::NoTabbing) ||
+	        (group->mTabBar && 
+		 (group->mTabBar->mChangeState == GroupTabBar::NoTabChange ||
+		  group->mTabBar->mState != PaintOff)) ||
+		 group->mResizeInfo)
+	    {
+		functionsMask |= (GL_PAINT_OUTPUT |
+				  GL_PAINT_TRANSFORMED_OUTPUT);
+		break;
+	    }
+	}
+     }
+     
+     gScreen->glPaintOutputSetEnabled (this, functionsMask &
+					     GL_PAINT_OUTPUT);
+     gScreen->glPaintTransformedOutputSetEnabled (this, functionsMask &
+					   GL_PAINT_TRANSFORMED_OUTPUT);
+}
+    
+
+/*
  * GroupScreen::GroupScreen
  * 
  * Constructor for GroupScreen. Set up atoms, glow texture, queues, etc
@@ -268,7 +329,7 @@ GroupScreen::GroupScreen (CompScreen *s) :
     mLastGrabbedWindow (None)  
 {
     ScreenInterface::setHandler (screen);
-    GLScreenInterface::setHandler (gScreen);
+    GLScreenInterface::setHandler (gScreen, false);
     CompositeScreenInterface::setHandler (cScreen);
 
     int glowType = optionGetGlowType ();
