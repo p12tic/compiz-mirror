@@ -407,9 +407,21 @@ GroupScreen::~GroupScreen ()
  * 
  */
 
+#define GL_PAINT (1 << 0)
+#define GL_DRAW (1 << 1)
+#define DAMAGE_RECT (1 << 2)
+#define GET_OUTPUT_EXTENTS (1 << 3)
+#define MOVE_NOTIFY (1 << 4)
+#define RESIZE_NOTIFY (1 << 5)
+#define GRAB_NOTIFY (1 << 6)
+#define WINDOW_NOTIFY (1 << 7)
+#define STATECHANGE_NOTIFY (1 << 8)
+#define ACTIVATE_NOTIFY (1 << 9)
+
 void
 GroupWindow::checkFunctions ()
 {
+    unsigned long functionsMask = 0;
     bool doGlPaint, doGlDraw;
     bool doDamageRect, doGetOutputExtents;
     bool doMoveNotify, doResizeNotify, doGrabNotify, doUngrabNotify;
@@ -423,19 +435,22 @@ GroupWindow::checkFunctions ()
      * -> Have a hide info struct (since we need to hide the window)
      */
 
-    doGlPaint = (checkRotating () || checkTabbing () || checkShowTabBar ()
-		 || !mResizeGeometry.isEmpty () || mWindowHideInfo
-		 || mInSelection);
-
+    if (checkRotating () || checkTabbing () || checkShowTabBar ()
+	|| !mResizeGeometry.isEmpty () || mWindowHideInfo
+	|| mInSelection)
+	functionsMask |= GL_PAINT;
+	
+ 
     /* For glDraw, the window must be:
      * -> Window must be in a group
      * -> Window must have glow quads
      */
      
-    doGlDraw = (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads);
+    if (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads);
+	functionsMask |= GL_DRAW;
 
-    gWindow->glPaintSetEnabled (this, doGlPaint);
-    gWindow->glDrawSetEnabled (this, doGlDraw);
+    gWindow->glPaintSetEnabled (this, functionsMask & GL_PAINT);
+    gWindow->glDrawSetEnabled (this, functionsMask & GL_DRAW);
 }
 
 /*
