@@ -422,10 +422,6 @@ void
 GroupWindow::checkFunctions ()
 {
     unsigned long functionsMask = 0;
-    bool doGlPaint, doGlDraw;
-    bool doDamageRect, doGetOutputExtents;
-    bool doMoveNotify, doResizeNotify, doGrabNotify, doUngrabNotify;
-    bool doWindowNotify, doStateChangeNotify, doActivate;
     
     /* For glPaint, the window must either be:
      * -> In an animation (eg rotating, tabbing, etc)
