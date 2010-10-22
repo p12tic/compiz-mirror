@@ -313,7 +313,6 @@ GroupScreen::checkFunctions ()
 	       group->mTabBar->mBgLayer->mBgAnimation) ||
 	      (group->mTabBar->mSlots.size () && mDraggedSlot))))
 	{
-	    fprintf (stderr, "enabling preparePaint\n");
 	    functionsMask |= (PREPARE_PAINT | DONE_PAINT);
 	    break;
 	}
