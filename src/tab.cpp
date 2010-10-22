@@ -543,7 +543,12 @@ GroupSelection::handleHoverDetection (const CompPoint &p)
 		    bar->mTextLayer->mAnimationTime;
 		bar->mTextLayer->mState = PaintFadeIn;
 	    }
+	    
+	    bar->damageRegion ();
+	    GroupWindow::get (topTab)->checkFunctions ();
 	}
+	
+	gs->checkFunctions ();
     }
     
     return;
