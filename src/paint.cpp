@@ -548,6 +548,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 {
     GroupSelection *group;
     GroupSelection::List::iterator it = mGroups.begin ();
+    bool	   keepPainting = false;
 
     cScreen->preparePaint (msSinceLastPaint);
 
@@ -558,9 +559,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 
 	if (bar)
 	{
-	    bool keepPainting = false;
-
-	    bar->applyForces ((mDragged) ? mDraggedSlot : NULL);
+	    keepPainting |= bar->applyForces ((mDragged) ? mDraggedSlot : NULL);
 	    bar->applySpeeds (msSinceLastPaint);
 
 	    if (bar->mState == PaintFadeIn ||
@@ -581,7 +580,9 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	     */
 	    group->mTabBar->mChangeAnimationTime -= msSinceLastPaint;
 	    if (group->mTabBar->mChangeAnimationTime <= 0)
-		group->handleAnimation ();
+		keepPainting |= group->handleAnimation ();
+	    else
+		keepPainting = true;
 	}
 
 	/* groupDrawTabAnimation may delete the group, so better
@@ -590,8 +591,21 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	it++;
 
 	if (group->mTabbingState != GroupSelection::NoTabbing)
-	    group->drawTabAnimation (msSinceLastPaint);
+	    keepPainting |= group->drawTabAnimation (msSinceLastPaint);
     }
+    
+    /* We just need to disable preparePaint here directly, since
+     * checkFunctions will enable it again if there are groups with
+     * animations or groups with tab bars with a dragged slot */
+    
+    if (!keepPainting)
+	cScreen->preparePaintSetEnabled (this, false);
+
+    /* Always enable donePaint here (since there might be some
+     * damage or whatever)
+     */
+     
+    cScreen->donePaintSetEnabled (this, true);
 }
 
 /*
@@ -740,6 +754,7 @@ void
 GroupScreen::donePaint ()
 {
     GroupSelection *group;
+    bool	   damaged = false;
 
     cScreen->donePaint ();
 
@@ -747,11 +762,17 @@ GroupScreen::donePaint ()
     {
 	/* Animations are a special case, damage the whole screen */
 	if (group->mTabbingState != GroupSelection::NoTabbing)
+	{
 	    cScreen->damageScreen ();
+	    damaged = true;
+	}
 	else if (group->mTabBar &&
 		 group->mTabBar->mChangeState !=
 					      GroupTabBar::NoTabChange)
+	{
 	    cScreen->damageScreen ();
+	    damaged = true;
+	}
 	else if (group->mTabBar)
 	{
 	    bool needDamage = false;
@@ -782,8 +803,17 @@ GroupScreen::donePaint ()
 	     * region */
 	    if (needDamage)
 		group->mTabBar->damageRegion ();
+		
+	    damaged |= needDamage;
 	}
     }
+    
+    
+    /* If nothing needed damaging we can disable donePaint for now:
+     * it will come back again when we call preparePaint anyways
+     */
+    if (!damaged)
+	cScreen->donePaintSetEnabled (this, false);
 }
 
 /*

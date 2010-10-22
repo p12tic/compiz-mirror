@@ -269,12 +269,12 @@ GroupScreen::checkFunctions ()
      *     allows for matrix transformation of windows)
      */
      
-     if (mGrabState == GroupScreen::ScreenGrabSelect ||
+    if (mGrabState == GroupScreen::ScreenGrabSelect ||
 	 mGrabState == GroupScreen::ScreenGrabTabDrag)
 	 functionsMask |= (GL_PAINT_OUTPUT |
 			   GL_PAINT_TRANSFORMED_OUTPUT);
-     else if (mGroups.size ())
-     {
+    else if (mGroups.size ())
+    {
 	foreach (GroupSelection *group, mGroups)
 	{
 	    if ((group->mTabbingState != GroupSelection::NoTabbing) ||
@@ -288,11 +288,42 @@ GroupScreen::checkFunctions ()
 		break;
 	    }
 	}
-     }
+    }
      
-     gScreen->glPaintOutputSetEnabled (this, functionsMask &
+     /* We need to enable preparePaint if:
+      * -> There is an animation going on
+      * -> There is a tab bar with slots visible and a dragged slot
+      *    (since this creates forces on the other slots)
+      * 
+      * enabling preparePaint implicitly enabled donePaint
+      * 
+      */
+
+    foreach (GroupSelection *group, mGroups)
+    {
+	if ((group->mTabbingState != GroupSelection::NoTabbing) ||
+	    (group->mTabBar &&
+	     (group->mTabBar->mChangeState == GroupTabBar::NoTabChange ||
+	      (group->mTabBar->mState == PaintFadeIn ||
+	       group->mTabBar->mState == PaintFadeOut) ||
+	      (group->mTabBar->mTextLayer &&
+	       (group->mTabBar->mTextLayer->mState == PaintFadeIn ||
+	        group->mTabBar->mTextLayer->mState == PaintFadeOut)) ||
+	      (group->mTabBar->mBgLayer &&
+	       group->mTabBar->mBgLayer->mBgAnimation) ||
+	      (group->mTabBar->mSlots.size () && mDraggedSlot))))
+	{
+	    fprintf (stderr, "enabling preparePaint\n");
+	    functionsMask |= (PREPARE_PAINT | DONE_PAINT);
+	    break;
+	}
+    }
+    
+    cScreen->preparePaintSetEnabled (this, functionsMask & PREPARE_PAINT);
+    cScreen->donePaintSetEnabled (this, functionsMask & DONE_PAINT);     
+    gScreen->glPaintOutputSetEnabled (this, functionsMask &
 					     GL_PAINT_OUTPUT);
-     gScreen->glPaintTransformedOutputSetEnabled (this, functionsMask &
+    gScreen->glPaintTransformedOutputSetEnabled (this, functionsMask &
 					   GL_PAINT_TRANSFORMED_OUTPUT);
 }
     

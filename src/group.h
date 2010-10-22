@@ -228,13 +228,13 @@ class GroupSelection
 	void
 	handleHoverDetection (const CompPoint &);
 
-	void
+	bool
 	handleAnimation ();
 
 	void
 	finishTabbing ();
 
-	void
+	bool
 	drawTabAnimation (int	      msSinceLastPaint);
 
 	void

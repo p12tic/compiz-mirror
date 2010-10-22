@@ -1670,6 +1670,8 @@ GroupScreen::handleMotionEvent (int xRoot, int yRoot)
 		gw->mGroup->mTabBar->recalcTabBarPos (
 				      (box.x1 () + box.x2 ()) / 2,
 				      box.x1 (), box.x2 ());
+				      
+		checkFunctions ();
 	    }
 
 	    /* Damage slot region */

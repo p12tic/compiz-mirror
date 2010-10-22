@@ -297,6 +297,7 @@ GroupSelection::showDelayTimeout ()
     tabSetVisibility (true, 0);
     
     gw->checkFunctions ();
+    gs->checkFunctions ();
 
     gs->mShowDelayTimeoutHandle.stop ();
     return false;	/* This will free the timer. */
@@ -614,7 +615,7 @@ bool
 GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 {
     TextLayer *textLayer = mTextLayer;
-    bool		   continuePainting = true;
+    bool		   continuePainting = false;
 
     /* Fade in progress... */
     if ((textLayer->mState == PaintFadeIn ||
@@ -634,9 +635,9 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 
 	    else if (textLayer->mState == PaintFadeOut)
 		textLayer->mState = PaintOff;
-	
-	    continuePainting = false;
 	}
+	else
+	    continuePainting = true;
     }
 
     if (textLayer->mState == PaintOff && mHoveredSlot &&
@@ -652,6 +653,8 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 	
 	if (textLayer)
 	    mTextLayer->render ();
+	
+	continuePainting = true;
     }
 
     else if (textLayer->mState == PaintOff && mTextSlot)
@@ -669,7 +672,7 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 }
 
 /*
- * GroupTabBar::handleTabBarAnimation
+ * BackgroundLayer::handleAnimation
  *
  * Description: Handles the different animations for the tab bar defined in
  * BackgroundLayer::AnimationType. Basically that means this function updates
@@ -735,9 +738,11 @@ GroupScreen::tabChangeActivateEvent (bool activating)
  * state and focussing the new windows and such.
  *
  */
-void
+bool
 GroupSelection::handleAnimation ()
 {
+    bool newAnim = false;
+
     GROUP_SCREEN (screen);
 
     /* This was an outgoing tab */
@@ -779,6 +784,7 @@ GroupSelection::handleAnimation ()
 	    top->activate ();
 
 	mTabBar->mCheckFocusAfterTabChange = false;
+	newAnim = true;
     }
 
     /* This was an incoming tab (animation reversed) */
@@ -841,9 +847,13 @@ GroupSelection::handleAnimation ()
 
 	    mTabBar->mTimeoutHandle.start ();
 	}
+	
+	newAnim = true;
     }
     
     gs->checkFunctions ();
+    
+    return newAnim;
 }
 
 /* 
@@ -1014,7 +1024,7 @@ GroupSelection::finishTabbing ()
  * and then checks if the animation is finished for that window.
  *
  */
-void
+bool
 GroupSelection::drawTabAnimation (int	      msSinceLastPaint)
 {
     int        steps;
@@ -1075,6 +1085,8 @@ GroupSelection::drawTabAnimation (int	      msSinceLastPaint)
 	    break;
 	}
     }
+    
+    return doTabbing;
 }
 
 /*
@@ -1202,6 +1214,8 @@ GroupScreen::updateTabBars (Window enteredWin)
 		hoveredGroup->showDelayTimeout ();
 	}
     }
+    else
+	checkFunctions ();
 
     mLastHoveredGroup = hoveredGroup;
 }
@@ -1969,6 +1983,8 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	CompWindow *tw = group->mTabBar->mTopTab->mWindow;
 	GroupWindow::get (tw)->checkFunctions ();
     }
+    
+    GroupScreen::get (screen)->checkFunctions ();
 
     return true;
 }
@@ -2669,12 +2685,13 @@ groupApplySpeedLimit (CompScreen *s,
  * Apply forces to slots, move them around accordingly
  *
  */
-void
+bool
 GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
 {
     GroupTabBarSlot *slot, *slot2;
     int             centerX, centerY;
     int             draggedCenterX, draggedCenterY;
+    bool	    forces = false;
 
     /* Calculate the dragged slot center to calculate forces on the
      * other tabs */
@@ -2786,6 +2803,8 @@ GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
     {
 	groupApplyFriction (screen, &slot->mSpeed);
 	groupApplySpeedLimit (screen, &slot->mSpeed);
+	
+	forces |= (slot->mSpeed != 0);
     }
 
     /* Apply frictions and speed limits to the left and right sides */
@@ -2794,6 +2813,10 @@ GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
 
     groupApplyFriction (screen, &mRightSpeed);
     groupApplySpeedLimit (screen, &mRightSpeed);
+    
+    forces |= (mLeftSpeed != 0 || mRightSpeed != 0);
+    
+    return forces;
 }
 
 /*

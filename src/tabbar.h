@@ -175,7 +175,7 @@ class GroupTabBar
 
 	void createSlot (CompWindow      *w);
 
-	void applyForces (GroupTabBarSlot *);
+	bool applyForces (GroupTabBarSlot *);
 
 	void applySpeeds (int            msSinceLastRepaint);
 
