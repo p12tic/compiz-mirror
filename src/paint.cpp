@@ -579,12 +579,8 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	    /* Only change to the new tab once the animation is done
 	     */
 	    group->mTabBar->mChangeAnimationTime -= msSinceLastPaint;
-	    fprintf (stderr, "mChangeAnimationTime is now %i\n", group->mTabBar->mChangeAnimationTime);
 	    if (group->mTabBar->mChangeAnimationTime <= 0)
-	    {
 		keepPainting |= group->handleAnimation ();
-		fprintf (stderr, "keepPainting %i\n", keepPainting);
-	    }
 	    else
 		keepPainting = true;
 	}
