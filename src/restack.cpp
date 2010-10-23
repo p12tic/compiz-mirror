@@ -352,6 +352,7 @@ RestackPersistentData::RestackPersistentData () :
     mWinThisIsPaintedBefore (0),
     mMoreToBePaintedPrev (0),
     mMoreToBePaintedNext (0),
+    mConfigureNotified (false),
     mWinPassingThrough (0),
     mWalkerOverNewCopy (false),
     mVisitCount (0),

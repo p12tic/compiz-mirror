@@ -37,7 +37,7 @@ public:
     IdValuePair () : pluginInfo (0), optionId (-1), value () {}
 
     bool matchesPluginOption (ExtensionPluginInfo *pluginInfo,
-			      int optionId);
+			      int optionId) const;
 
     const ExtensionPluginInfo *pluginInfo;
     int optionId;
@@ -379,7 +379,7 @@ private:
 				     bool clearMatchingRow);
     void reverseAnimation ();
     void enablePainting (bool enabling);
-    
+
     void notifyAnimation (bool activation);
 
     // WindowInterface methods

@@ -76,7 +76,7 @@ PrivateAnimScreen::getCorrespondingAnimEvent (AnimationOptions::Options optionId
 
 bool
 IdValuePair::matchesPluginOption (ExtensionPluginInfo *testPluginInfo,
-				  int testOptionId)
+				  int testOptionId) const
 {
     return (pluginInfo == testPluginInfo &&
 	    optionId == testOptionId);
@@ -125,7 +125,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 
     // Find the first substring with no spaces in it
     sscanf (optNamesValuesOrig, " %s ", optNamesValues);
-    if (strlen (optNamesValues) == 0)
+    if (!strlen (optNamesValues))
     {
 	free (optNamesValues);
 	return;
@@ -167,7 +167,7 @@ PrivateAnimScreen::updateOptionSet (OptionSet *os,
 	}
 
 	sscanf (name, " %s ", nameTrimmed);
-	if (strlen (nameTrimmed) == 0)
+	if (!strlen (nameTrimmed))
 	{
 	    errorNo = 2;
 	    break;

@@ -84,10 +84,6 @@ GridAnim::GridModel::initObjects (WindowEvent curWindowEvent,
 {
     int gridX, gridY;
     int nGridCellsX, nGridCellsY;
-    float x0, y0;
-
-    x0 = mScaleOrigin.x ();
-    y0 = mScaleOrigin.y ();
 
     // number of grid cells in x direction
     nGridCellsX = gridWidth - 1;
