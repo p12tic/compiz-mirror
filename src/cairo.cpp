@@ -129,13 +129,13 @@ CairoLayer::~CairoLayer ()
  */
 
 CairoLayer::CairoLayer (const CompSize &size, GroupSelection *g) :
-    TextureLayer::TextureLayer (size, g)
+    TextureLayer::TextureLayer (size, g),
+    mBuffer (NULL),
+    mSurface (NULL),
+    mCairo (NULL),
+    mFailed (true)
 {
     unsigned int bufSize = 4 * width () * height ();
-    mFailed = true;
-    mSurface = NULL;
-    mCairo   = NULL;
-    mBuffer  = NULL;
 
     mAnimationTime = 0;
     mState         = PaintOff;
@@ -283,7 +283,7 @@ BackgroundLayer::render ()
     int             borderWidth;
     float           r, g, b, a;
     double          x0, y0, x1, y1;
-    
+
     GROUP_SCREEN (screen);
 
     if (!HAS_TOP_WIN (mGroup) || !mCairo)
@@ -733,7 +733,7 @@ BackgroundLayer::render ()
 
 /*
  * TextLayer::create
- * 
+ *
  * Factory method of text layer. Returns nothing
  * if the text is not valid
  *
@@ -744,7 +744,7 @@ TextLayer::create (CompSize       &size,
 		   GroupSelection *group)
 {
     TextLayer *layer = new TextLayer (size, group);
-    
+
     if (!layer)
 	return NULL;
 
@@ -770,18 +770,18 @@ TextLayer::rebuild (TextLayer *layer)
 
 	PaintState     pStateBuf = layer->mState;
 	int 	       aTimeBuf = layer->mAnimationTime;
-	CompSize       sBuf = (CompSize ) *layer; 
+	CompSize       sBuf = (CompSize ) *layer;
 	GroupSelection *gBuf = layer->mGroup;
-	
+
 	delete layer;
 	layer = new TextLayer (sBuf, gBuf);
 	if (!layer)
 	    return NULL;
-	
+
 	layer->mState = pStateBuf;
 	layer->mAnimationTime = aTimeBuf;
     }
-    
+
     return layer;
 }
 
@@ -797,7 +797,7 @@ TextLayer::render ()
 {
     int             twidth, theight;
     Pixmap          pixmap = None;
-    
+
     GROUP_SCREEN (screen);
 
     if (!HAS_TOP_WIN (mGroup))

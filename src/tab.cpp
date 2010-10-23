@@ -32,7 +32,7 @@
  * Description:
  * Return the current function of the pointer at the given screen.
  * The position is queried trough XQueryPointer directly from the xserver.
- * 
+ *
  * TODO: Depricate this function and use mousepoll directly
  *
  */
@@ -41,7 +41,7 @@ GroupScreen::getCurrentMousePosition (int &x, int &y)
 {
     MousePoller poller;
     CompPoint pos = poller.getCurrentPosition ();
-    
+
     x = pos.x ();
     y = pos.y ();
 
@@ -93,7 +93,7 @@ GroupWindow::getClippingRegion ()
 
 /*
  * GroupWindow::clearWindowInputShape
- * 
+ *
  * We are not painting this window, so we don't want to interact with
  * it using X11. We can use XShape to read the input shape rects and
  * save the. We then combine the shape rects with NULL, so that the
@@ -108,7 +108,7 @@ GroupWindow::clearWindowInputShape (GroupWindow::HideInfo *hideInfo)
     int         count = 0, ordering;
 
     /* Get the shape rects */
-    rects = XShapeGetRectangles (screen->dpy (), window->id (), 
+    rects = XShapeGetRectangles (screen->dpy (), window->id (),
 				 ShapeInput, &count, &ordering);
 
     if (count == 0)
@@ -153,7 +153,7 @@ GroupWindow::clearWindowInputShape (GroupWindow::HideInfo *hideInfo)
 
 /*
  * GroupWindow::setWindowVisibility
- * 
+ *
  * Set the window to be painted or not (visible) and clear and restore
  * the input shape as necessary. Set the window to skip the taskbar
  * and pager as necessary.
@@ -177,10 +177,10 @@ GroupWindow::setWindowVisibility (bool visible)
 	info->mShapeMask = XShapeInputSelected (screen->dpy (),
 						window->id ());
 
-	/* We are a reparenting window manager now, 
+	/* We are a reparenting window manager now,
 	 * which means that we either shape the frame window,
 	 * or if it does not exist, shape the window
-	 */	
+	 */
 	if (window->frame ())
 	{
 	    info->mShapeWindow = window->frame ();
@@ -262,7 +262,7 @@ GroupSelection::tabBarTimeout ()
 
 /*
  * GroupSelection::showDelayTimeout
- * 
+ *
  * Show the tab bar at the mouse position after a timeout
  *
  */
@@ -271,7 +271,7 @@ GroupSelection::showDelayTimeout ()
 {
     int            mouseX, mouseY;
     CompWindow     *topTab;
-    
+
     GROUP_SCREEN (screen);
 
     /* If this isn't the top window of the group, then don't bother
@@ -285,7 +285,7 @@ GroupSelection::showDelayTimeout ()
     }
 
     topTab = TOP_TAB (this);
-    
+
     GROUP_WINDOW (topTab);
 
     gs->getCurrentMousePosition (mouseX, mouseY);
@@ -295,7 +295,7 @@ GroupSelection::showDelayTimeout ()
 			  WIN_REAL_X (topTab) + WIN_REAL_WIDTH (topTab));
 
     tabSetVisibility (true, 0);
-    
+
     gw->checkFunctions ();
     gs->checkFunctions ();
 
@@ -318,8 +318,8 @@ GroupSelection::showDelayTimeout ()
  * and the current state of the tab bar is PaintPermanentOn it won't do
  * anything because its not strong enough to disable a
  * Permanent-State, for those you need the mask.
- * 
- * Determine the cases where we want to show the tab bar. Set up the 
+ *
+ * Determine the cases where we want to show the tab bar. Set up the
  * render and the animation.
  *
  */
@@ -330,7 +330,7 @@ GroupSelection::tabSetVisibility (bool           visible,
     GroupTabBar *bar;
     CompWindow  *topTab;
     PaintState  oldState;
-    
+
     GROUP_SCREEN (screen);
 
     /* Don't bother if this isn't the top window or there is no tab bar
@@ -484,9 +484,9 @@ GroupSelection::handleHoverDetection (const CompPoint &p)
     GroupTabBar *bar = mTabBar;
     CompWindow  *topTab = TOP_TAB (this);
     bool        inLastSlot;
-    
+
     GROUP_SCREEN (screen);
-    
+
     if ((bar->mState != PaintOff) && !HAS_TOP_WIN (this))
 	return;
 
@@ -541,14 +541,14 @@ GroupSelection::handleHoverDetection (const CompPoint &p)
 		    bar->mTextLayer->mAnimationTime;
 		bar->mTextLayer->mState = PaintFadeIn;
 	    }
-	    
+
 	    bar->damageRegion ();
 	    GroupWindow::get (topTab)->checkFunctions ();
 	}
-	
+
 	gs->checkFunctions ();
     }
-    
+
     return;
 }
 
@@ -559,7 +559,7 @@ GroupSelection::handleHoverDetection (const CompPoint &p)
  * This function is called from preparePaint
  * to handle the tab bar fade. It checks the animationTime and updates it,
  * so we can calculate the alpha of the tab bar in the painting code with it.
- * 
+ *
  * Returns true if there is animation still remaining
  *
  */
@@ -593,13 +593,13 @@ GroupTabBar::handleTabBarFade (int msSinceLastPaint)
 		mTextSlot = mHoveredSlot = NULL;
 
 		mTextLayer = TextLayer::rebuild (mTextLayer);
-	
+
 		if (mTextLayer)
 		    mTextLayer->render ();
 	    }
 	}
     }
-    
+
     return false;
 }
 
@@ -610,7 +610,7 @@ GroupTabBar::handleTabBarFade (int msSinceLastPaint)
  * This function is called from groupPreparePaintScreen
  * to handle the text fade. It checks the animationTime and updates it,
  * so we can calculate the alpha of the text in the painting code with it.
- * 
+ *
  * Returns true if there is still animation remaining
  *
  */
@@ -653,10 +653,10 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 	    (GroupScreen::get (screen)->optionGetFadeTextTime () * 1000);
 
 	mTextLayer = textLayer = TextLayer::rebuild (textLayer);
-	
+
 	if (textLayer)
 	    mTextLayer->render ();
-	
+
 	continuePainting = true;
     }
 
@@ -665,13 +665,13 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
 	/* Clean Up. */
 	mTextSlot = NULL;
 	mTextLayer = textLayer = TextLayer::rebuild (textLayer);
-	
+
 	if (textLayer)
 	    mTextLayer->render ();
     }
-    
+
     return continuePainting;
-    
+
 }
 
 /*
@@ -683,7 +683,7 @@ GroupTabBar::handleTextFade (int	       msSinceLastPaint)
  * finished.
  *
  * Returns true if more animation needed
- * 
+ *
  */
 bool
 BackgroundLayer::handleAnimation (int            msSinceLastPaint)
@@ -696,10 +696,10 @@ BackgroundLayer::handleAnimation (int            msSinceLastPaint)
 	mBgAnimation = AnimationNone;
 
 	render ();
-	
+
 	return false;
     }
-    
+
     return true;
 }
 /*
@@ -735,7 +735,7 @@ GroupScreen::tabChangeActivateEvent (bool activating)
  * confuse you, PaintFadeIn equals with the start of the
  * rotate animation and PaintFadeOut is the end of these
  * animation.
- * 
+ *
  * This gets called when a window has finished rotating to 90 degrees to
  * the viewer (so it is just invisible). Handle setting up the tab
  * state and focussing the new windows and such.
@@ -850,19 +850,19 @@ GroupSelection::handleAnimation ()
 
 	    mTabBar->mTimeoutHandle.start ();
 	}
-	
+
 	newAnim = true;
     }
-    
+
     gs->checkFunctions ();
-    
+
     return newAnim;
 }
 
-/* 
+/*
  * GroupWindow::adjustTabVelocity
- * 
- * adjust velocity for each animation step (adapted from the scale plugin) 
+ *
+ * adjust velocity for each animation step (adapted from the scale plugin)
  */
 int
 GroupWindow::adjustTabVelocity ()
@@ -925,7 +925,7 @@ GroupWindow::adjustTabVelocity ()
 
 /*
  * GroupSelection::finishTabbing
- * 
+ *
  * Cleans up the tab bar related things - called from
  * donePaint after the tabbing animation. In the case of
  * tabbing, then set appropriate window visibilities
@@ -952,7 +952,7 @@ GroupSelection::finishTabbing ()
 
     /* We are finished tabbing now */
     mTabbingState = NoTabbing;
-    
+
     gs->tabChangeActivateEvent (false);
 
     if (mTabBar)
@@ -968,7 +968,7 @@ GroupSelection::finishTabbing ()
 
 	    GROUP_WINDOW (w);
 
-	    /* Don't hide this window if we are ungrouping or if 
+	    /* Don't hide this window if we are ungrouping or if
 	     * this is the top tab */
 	    if (slot == mTabBar->mTopTab || (gw->mAnimateState & IS_UNGROUPING))
 		continue;
@@ -1000,14 +1000,14 @@ GroupSelection::finishTabbing ()
 	{
 	    /* Possibility of stack breakage here, stop here */
 	    gw->removeWindowFromGroup ();
-	    it = mWindows.end ();	    
+	    it = mWindows.end ();
 	}
 
 	gw->mAnimateState = 0;
 	gw->mTx = gw->mTy = gw->mXVelocity = gw->mYVelocity = 0.0f;
 	gw->checkFunctions ();
     }
-    
+
     gs->checkFunctions ();
 
     /* Kill the group if we just ungrouped the whole thing */
@@ -1034,7 +1034,7 @@ GroupSelection::drawTabAnimation (int	      msSinceLastPaint)
     int        steps;
     float      amount, chunk;
     bool       doTabbing;
-    
+
     GROUP_SCREEN (screen);
 
     /* a higher amount here means that more steps are calculated in the velocity,
@@ -1089,7 +1089,7 @@ GroupSelection::drawTabAnimation (int	      msSinceLastPaint)
 	    break;
 	}
     }
-    
+
     return doTabbing;
 }
 
@@ -1166,7 +1166,7 @@ GroupScreen::updateTabBars (Window enteredWin)
 
 	foreach (group, mGroups)
 	{
-	    if (group->mTabBar && 
+	    if (group->mTabBar &&
 		group->mTabBar->mInputPrevention == enteredWin)
 	    {
 		/* only accept it if the IPW is mapped */
@@ -1187,7 +1187,7 @@ GroupScreen::updateTabBars (Window enteredWin)
     /* if we entered a tab bar (or title bar), show the tab bar */
     if (hoveredGroup && HAS_TOP_WIN (hoveredGroup) &&
 	!TOP_TAB (hoveredGroup)->grabbed ())
-    {	    
+    {
 	GroupTabBar *bar = hoveredGroup->mTabBar;
 
 	/* If the tab bar isn't painting or is fading out, set up
@@ -1228,7 +1228,7 @@ GroupScreen::updateTabBars (Window enteredWin)
 
 /*
  * GroupScreen::getConstrainRegion
- * 
+ *
  * Description: Get the region on screen where windows are allowed to
  * move to during the untabbing animation
  *
@@ -1327,7 +1327,7 @@ GroupWindow::constrainMovement (CompRegion constrainRegion,
 	 * outside the reigon */
 	xStatus = constrainRegion.contains (CompRect (x, y - dy, width, height));
 
-	/* If it is, then move it slightly left or right based 
+	/* If it is, then move it slightly left or right based
 	 * on which direction it was moving on */
 	if (xStatus != RectangleIn)
 	    dx += (dx < 0) ? 1 : -1;
@@ -1345,7 +1345,7 @@ GroupWindow::constrainMovement (CompRegion constrainRegion,
 	status = constrainRegion.contains (CompRect
 						(x, y, width, height));
 
-	/* If it is, then move it slightly left or right based 
+	/* If it is, then move it slightly left or right based
 	 * on which direction it was moving on */
 	if (status != RectangleIn)
 	    dy += (dy < 0) ? 1 : -1;
@@ -1356,7 +1356,7 @@ GroupWindow::constrainMovement (CompRegion constrainRegion,
 
     new_dx = dx;
     new_dy = dy;
-    
+
     /* return changed */
     return ((dx != origDx) || (dy != origDy));
 }
@@ -1422,7 +1422,7 @@ GroupSelection::applyConstraining (CompRegion	    constrainRegion,
 
 /*
  * GroupSelection::startTabbingAnimation
- * 
+ *
  * Set up the tabbing animation, which will eventually set up
  * the tab structures too. "tab" here indicates whether we are
  * tabbing or untabbing (and takes appropriate action)
@@ -1431,9 +1431,6 @@ GroupSelection::applyConstraining (CompRegion	    constrainRegion,
 void
 GroupSelection::startTabbingAnimation (bool           tab)
 {
-    int        dx, dy;
-    int        constrainStatus;
-
     GROUP_SCREEN (screen);
 
     if ((mTabbingState != NoTabbing))
@@ -1467,6 +1464,8 @@ GroupSelection::startTabbingAnimation (bool           tab)
 	       gw->mDestination) to the active screen area */
 	    foreach (CompWindow *w, mWindows)
 	    {
+		int        dx, dy;\
+		int        constrainStatus;
 		GroupWindow *gw = GroupWindow::get (w);
 		CompRect   statusRect (gw->mOrgPos.x () - w->input ().left,
 				       gw->mOrgPos.y () - w->input ().top,
@@ -1528,7 +1527,7 @@ GroupSelection::startTabbingAnimation (bool           tab)
 			constrainedWindows = true;
 		    }
 		}
-		
+
 		gw->checkFunctions ();
 	    }
 	}
@@ -1538,17 +1537,17 @@ GroupSelection::startTabbingAnimation (bool           tab)
 	foreach (CompWindow *w, mWindows)
 	{
 	    GROUP_WINDOW (w);
-	    
+
 	    gw->checkFunctions ();
 	}
     }
-    
+
     gs->checkFunctions ();
 }
 
 /*
  * GroupSelection::tabGroup
- * 
+ *
  * Set up the tab bar structures in this group, render layers
  * and set up the original positions and destinations in the tabbing
  * animation
@@ -1586,7 +1585,7 @@ GroupSelection::tabGroup (CompWindow *main)
     mTabbingState = NoTabbing;
     /* Slot is initialized after GroupTabBar is created */
     gs->changeTab (gw->mSlot, GroupTabBar::RotateUncertain);
-    
+
     /* Set up tab bar dimentions */
     gw->mGroup->mTabBar->recalcTabBarPos (WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
@@ -1603,17 +1602,17 @@ GroupSelection::tabGroup (CompWindow *main)
 	layer = mTabBar->mTextLayer;
 	layer->mState = PaintFadeIn;
 	layer->mAnimationTime = gs->optionGetFadeTextTime () * 1000;
-	
+
 	layer->render ();
     }
 
     /* we need a buffer for DnD here */
     space = gs->optionGetThumbSpace ();
     thumbSize = gs->optionGetThumbSize ();
-    
+
     layerSize = CompSize (layerSize.width () + space + thumbSize,
 			  layerSize.height ());
-    
+
     /* create background layer */
     mTabBar->mBgLayer = BackgroundLayer::create (layerSize, this);
     if (mTabBar->mBgLayer)
@@ -1630,7 +1629,7 @@ GroupSelection::tabGroup (CompWindow *main)
     mTabBar->mSelectionLayer = SelectionLayer::create (layerSize, this);
     if (mTabBar->mSelectionLayer)
     {
-	CompSize size = 
+	CompSize size =
 	    CompSize (mTabBar->mTopTab->mRegion.boundingRect ().width (),
 		      mTabBar->mTopTab->mRegion.boundingRect ().height ());
 	mTabBar->mSelectionLayer->mState = PaintOn;
@@ -1671,7 +1670,7 @@ GroupSelection::tabGroup (CompWindow *main)
 					gw->mDestination;
 
 	/* Initial translation is negative the window position minus
-	 * the last original position */ 
+	 * the last original position */
 	if (gw->mTx || gw->mTy)
 	{
 	    gw->mTx -= (WIN_X (cw) - gw->mOrgPos.x ());
@@ -1704,7 +1703,7 @@ GroupSelection::untabGroup ()
     int             oldX, oldY;
     CompWindow      *prevTopTab;
     GroupTabBarSlot *slot;
-    
+
     GROUP_SCREEN (screen);
 
     if (!HAS_TOP_WIN (this))
@@ -1791,7 +1790,7 @@ GroupSelection::untabGroup ()
  * Change the tab to a new topTab by some direction. Passing
  * DirectionUncertain will cause this function to calculate the most
  * appropriate direction for this tab
- * 
+ *
  */
 bool
 GroupScreen::changeTab (GroupTabBarSlot             *topTab,
@@ -1829,7 +1828,7 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	return true;
 
     /* We need this for movement and damage purposes */
-    oldTopTab = group->mTabBar->mTopTab ? 
+    oldTopTab = group->mTabBar->mTopTab ?
 		group->mTabBar->mTopTab->mWindow : NULL;
 
     /* If we are currently changing, set the next direction so that
@@ -1908,7 +1907,7 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 
 	/* Rebuild layers and render */
 	group->mTabBar->mTextLayer = TextLayer::rebuild (group->mTabBar->mTextLayer);
-	
+
 	if (group->mTabBar->mTextLayer)
 	    group->mTabBar->mTextLayer->render ();
 	group->mTabBar->mSelectionLayer =
@@ -1978,7 +1977,7 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	    group->mTabBar->mCheckFocusAfterTabChange = false;
 	}
     }
-    
+
     if (group->mTabBar->mPrevTopTab)
     {
 	CompWindow *pw = group->mTabBar->mPrevTopTab->mWindow;
@@ -1990,7 +1989,7 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	CompWindow *tw = group->mTabBar->mTopTab->mWindow;
 	GroupWindow::get (tw)->checkFunctions ();
     }
-    
+
     GroupScreen::get (screen)->checkFunctions ();
 
     return true;
@@ -2032,7 +2031,7 @@ GroupScreen::recalcSlotPos (GroupTabBarSlot *slot,
 
 /*
  * GroupSelection::recalcTabBarPos
- * 
+ *
  * Recalculate the tab bar region (size and position) given a maximum
  * size and a central position
  *
@@ -2171,7 +2170,7 @@ GroupTabBar::recalcTabBarPos (int		middleX,
 
 /*
  * GroupTabBar::damageRegion
- * 
+ *
  * Damage the tab bar region
  */
 void
@@ -2215,7 +2214,7 @@ GroupTabBar::damageRegion ()
 
 /*
  * GroupTabBar::moveTabBarRegion
- * 
+ *
  * Move the reigon of the tab bar (which moves the drawn texture
  * and tabs). syncIPW is whether or not to move the X11 input prevention
  * window - usually false if we are just animating the tab bar around
@@ -2242,7 +2241,7 @@ GroupTabBar::moveTabBarRegion (int		   dx,
 
 /*
  * GroupTabBar::resizeTabBarRegion
- * 
+ *
  * Resize the region that the tab bar covers by some CompRect.
  * syncIPW is whether or not to XConfigure the input prevention
  * window (don't use this unless the tab bar position is being set
@@ -2276,7 +2275,7 @@ GroupTabBar::resizeTabBarRegion (CompRect	&box,
 
 	/* invalidate old width */
 	mOldWidth = 0;
-    }    
+    }
 
     mRegion = CompRegion (box);
 
@@ -2294,7 +2293,7 @@ GroupTabBar::resizeTabBarRegion (CompRect	&box,
 	    XMapWindow (screen->dpy (), mInputPrevention);
 
 	XMoveResizeWindow (screen->dpy (), mInputPrevention, xwc.x, xwc.y, xwc.width, xwc.height);
-	
+
 	if (!mIpwMapped)
 	    XUnmapWindow (screen->dpy (), mInputPrevention);
     }
@@ -2304,7 +2303,7 @@ GroupTabBar::resizeTabBarRegion (CompRect	&box,
 
 /*
  * GroupTabBar::insertTabBarSlotBefore
- * 
+ *
  * Insert a tab bar slot before some other slot and relink stack
  *
  */
@@ -2316,7 +2315,7 @@ GroupTabBar::insertTabBarSlotBefore (GroupTabBarSlot *slot,
     GroupTabBarSlot::List::iterator pos = std::find (mSlots.begin (),
 						     mSlots.end (),
 						     nextSlot);
-    
+
     mSlots.insert (pos, slot);
     slot->mTabBar = this;
 
@@ -2343,7 +2342,7 @@ GroupTabBar::insertTabBarSlotBefore (GroupTabBarSlot *slot,
 
 /*
  * GroupSelection::insertTabBarSlotAfter
- * 
+ *
  * Insert a tab bar slot after some previous slot and relink the
  * stack
  *
@@ -2384,7 +2383,7 @@ GroupTabBar::insertTabBarSlotAfter (GroupTabBarSlot *slot,
 
 /*
  * GroupSelection::insertTabBarSlot
- * 
+ *
  * Insert a tab bar slot into the tab bar. This inserts it directly
  * into the end of the tab bar
  *
@@ -2418,7 +2417,7 @@ GroupTabBar::insertTabBarSlot (GroupTabBarSlot *slot)
 
 /*
  * GroupTabBar::unhookTabBarSlot
- * 
+ *
  * Take out a tab bar slot from the tab bar and make it a dragged
  * slot. If temporary is false, then remove this window from the
  * group
@@ -2434,7 +2433,7 @@ GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
     GroupTabBarSlot *next = slot->mNext;
     CompWindow      *w = slot->mWindow;
     GroupSelection  *group = mGroup;
-    
+
     GROUP_SCREEN (screen);
 
     /* check if slot is not already unhooked */
@@ -2456,7 +2455,7 @@ GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
     slot->mPrev = NULL;
     slot->mNext = NULL;
     slot->mTabBar = NULL;
-    
+
     mSlots.remove (slot);
 
     /* If it isn't temporary. Change to another tab */
@@ -2515,7 +2514,7 @@ GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
 
 /*
  * GroupSelection::deleteTabBarSlot
- * 
+ *
  * Destroys a tab bar slot structure
  *
  */
@@ -2559,7 +2558,7 @@ GroupTabBarSlot::GroupTabBarSlot (CompWindow *w, GroupTabBar *bar) :
 
 /*
  * GroupTabBar::groupCreateSlot
- * 
+ *
  * Factory function to create a new tab bar slot for some window
  * (automatically inserts it into the tab bar)
  *
@@ -2690,7 +2689,7 @@ groupApplySpeedLimit (CompScreen *s,
 
 /*
  * GroupTabBar::applyForces
- * 
+ *
  * Apply forces to slots, move them around accordingly
  *
  */
@@ -2739,7 +2738,7 @@ GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
 	 * dragged center point and the center y point of the tab bar
 	 * minus the dragged y center
 	 */
-	 
+
 	leftForce = groupDraggedSlotForce(screen,
 					  mRegion.boundingRect ().x1 () -
 					  SIZE / 2 - draggedCenterX,
@@ -2812,7 +2811,7 @@ GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
     {
 	groupApplyFriction (screen, &slot->mSpeed);
 	groupApplySpeedLimit (screen, &slot->mSpeed);
-	
+
 	forces |= (slot->mSpeed != 0);
     }
 
@@ -2822,9 +2821,9 @@ GroupTabBar::applyForces (GroupTabBarSlot *draggedSlot)
 
     groupApplyFriction (screen, &mRightSpeed);
     groupApplySpeedLimit (screen, &mRightSpeed);
-    
+
     forces |= (mLeftSpeed != 0 || mRightSpeed != 0);
-    
+
     return forces;
 }
 
@@ -2938,13 +2937,13 @@ GroupTabBar::applySpeeds (int            msSinceLastRepaint)
 
 /*
  * GroupTabBar::GroupTabBar
- * 
+ *
  * Constructor for the tab bar - initialize it based on a parent group
  * and a top tab. Make sure that X windows are created  and create
  * slots for this tab bar
  *
  */
-GroupTabBar::GroupTabBar (GroupSelection *group, 
+GroupTabBar::GroupTabBar (GroupSelection *group,
 			  CompWindow     *topTab) :
     mSlots (CompSize (0,0), group),
     mGroup (group),
@@ -2993,7 +2992,7 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
 
 /*
  * GroupTabBar::~GroupTabBar
- * 
+ *
  * Destructor for GroupTabBar, kill the cairo layers and kill the
  * input prevention window
  *
@@ -3017,7 +3016,7 @@ GroupTabBar::~GroupTabBar ()
 
 /*
  * GroupScreen::initTab
- * 
+ *
  * Action to tab the windows in a group
  *
  */
@@ -3064,7 +3063,7 @@ GroupScreen::initTab (CompAction         *action,
 
 /*
  * GroupScreen::changeTabLeft
- * 
+ *
  * Action to change the top tab of the group to the tab to the left
  * of the top tab
  *
@@ -3147,7 +3146,7 @@ GroupScreen::changeTabRight (CompAction         *action,
 
 /*
  * switchTopTabInput
- * 
+ *
  * If the IPW is created, then map it accordingly
  *
  */
@@ -3165,7 +3164,7 @@ GroupScreen::switchTopTabInput (GroupSelection *group,
     {
 	XMapWindow (screen->dpy (),
 		    group->mTabBar->mInputPrevention);
-		    
+
     }
     else
     {
@@ -3188,12 +3187,12 @@ GroupTabBar::createInputPreventionWindow ()
 	XSetWindowAttributes attrib;
 	attrib.override_redirect = true;
 
-	mInputPrevention = 
+	mInputPrevention =
 	    XCreateWindow (screen->dpy (),
 			   screen->root (), -100, -100, 1, 1, 0,
 			   CopyFromParent, InputOnly,
 			   CopyFromParent, CWOverrideRedirect, &attrib);
-	
+
 	mIpwMapped = false;
     }
 }

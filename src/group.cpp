@@ -38,7 +38,7 @@ bool
 GroupWindow::isGroupWindow ()
 {
     GROUP_SCREEN (screen);
-	
+
     if (window->overrideRedirect ())
 	return false;
 
@@ -86,7 +86,7 @@ GroupWindow::dragHoverTimeout ()
  * Updates the new resize rect of grouped windows of a group
  * which is currently being resized. This checks the difference
  * of the "master geometry" and the original geometry of the grabbed
- * window of the group and applies it to this window. Obviously, 
+ * window of the group and applies it to this window. Obviously,
  * we can't do anything like resize past boundaries so constrain the
  * window size if this happens.
  * Also set the relevant configure masks
@@ -189,7 +189,7 @@ GroupScreen::grabScreen (GroupScreen::GrabState newState)
     }
 
     mGrabState = newState;
-    
+
     checkFunctions ();
 }
 
@@ -332,10 +332,10 @@ GroupSelection::moveWindows (CompWindow *top,
 
 /*
  * GroupSelection::prepareResizeWindows
- * 
+ *
  * Description: Sets the resize geometry of this group
  * and makes windows appear "stretched".
- * 
+ *
  * Use it for animation or something. Currently used to
  * paint windows as stretched while the primary window
  * is resizing (eg through rectangle, outline or stretch mode)
@@ -362,7 +362,7 @@ GroupSelection::prepareResizeWindows (CompRect &rect)
 
 /*
  * GroupSelection::resizeWindows
- * 
+ *
  * Description: Configures windows according to set resize geometry
  * in prepareResizeWindows
  *
@@ -372,9 +372,9 @@ void
 GroupSelection::resizeWindows (CompWindow *top)
 {
     CompRect   rect;
-    
+
     GROUP_SCREEN (screen);
-    
+
     gs->dequeueMoveNotifies ();
 
     if (mResizeInfo)
@@ -635,7 +635,7 @@ GroupWindow::removeWindowFromGroup ()
 		g->tabGroup (window);
 	}
     }
-    
+
     checkFunctions ();
 }
 
@@ -657,7 +657,7 @@ void
 GroupSelection::fini ()
 {
     GROUP_SCREEN (screen);
-	
+
     if (mWindows.size ())
     {
 	if (mTabBar)
@@ -696,7 +696,7 @@ GroupSelection::fini ()
 		if (g)
 		    g->tabGroup (cw);
 	    }
-	    
+
 	    gw->checkFunctions ();
 	}
 
@@ -758,8 +758,8 @@ GroupSelection::changeColor ()
  * GroupSelection::GroupSelection
  *
  * Constructor for GroupSelection. Creates an empty group, sets up
- * the color and determines a new ID number. 
- * 
+ * the color and determines a new ID number.
+ *
  */
 
 GroupSelection::GroupSelection () :
@@ -775,7 +775,7 @@ GroupSelection::GroupSelection () :
     boost::function<void (const CompPoint &)> cb =
 		boost::bind (&GroupSelection::handleHoverDetection,
 			     this, _1);
-    
+
     mPoller.setCallback (cb);
 
     /* glow color */
@@ -790,7 +790,7 @@ GroupSelection::GroupSelection () :
  * Note that if NULL is passed, a new group is created. "initialIdent"
  * is there for restoring from window properties, otherwise you can just
  * pass 0.
- * 
+ *
  */
 void
 GroupWindow::addWindowToGroup (GroupSelection *group)
@@ -801,10 +801,10 @@ GroupWindow::addWindowToGroup (GroupSelection *group)
 	return;
 
     if (group)
-    {	    
+    {
 	/* If a group was specified, just add this window to it */
 	CompWindow *topTab = NULL;
-	
+
 	mGroup = group;
 
 	group->mWindows.push_back (window);
@@ -813,9 +813,9 @@ GroupWindow::addWindowToGroup (GroupSelection *group)
 	/* Update glow regions and X11 property */
 
 	checkFunctions ();
-	window->updateWindowOutputExtents ();	    
+	window->updateWindowOutputExtents ();
 	cWindow->damageOutputExtents ();
-	
+
 	gs->writeSerializedData ();
 
 	/* If we have more than one window in this group just recently,
@@ -824,7 +824,7 @@ GroupWindow::addWindowToGroup (GroupSelection *group)
 	{
 	    /* first window in the group got its glow, too */
 	    GroupWindow::get (group->mWindows.front ())->checkFunctions ();
-	    group->mWindows.front ()->updateWindowOutputExtents ();	    
+	    group->mWindows.front ()->updateWindowOutputExtents ();
 	    CompositeWindow::get (group->mWindows.front ())->damageOutputExtents ();
 	}
 
@@ -868,9 +868,9 @@ GroupWindow::addWindowToGroup (GroupSelection *group)
 	    }
 	}
     }
-    
+
     gs->writeSerializedData ();
-    
+
     checkFunctions ();
 }
 
@@ -949,7 +949,7 @@ GroupScreen::removeWindow (CompAction         *action,
 
 /*
  * GroupScreen::closeWindows
- * 
+ *
  * Action to close all windows in a group
  *
  */
@@ -979,7 +979,7 @@ GroupScreen::closeWindows (CompAction           *action,
 
 /*
  * GroupScreen::changeColor
- * 
+ *
  * Action to change the color of a group
  *
  */
@@ -1006,7 +1006,7 @@ GroupScreen::changeColor (CompAction           *action,
 
 /*
  * GroupScreen::setIgnore
- * 
+ *
  * Triggerable action to make this group not behave like a group
  * for a short amount of time
  *
@@ -1248,9 +1248,9 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	    /* Construct a rectangle of "acceptable drop area"
 	     * for the tab, which is usually in the spring-created space
 	     * between the two tabs which we want to drop this one
-	     * 
+	     *
 	     * It should be this one :
-	     * 
+	     *
 	     * |-------------------------------|
 	     * | |-------| |        | |-------||
 	     * | |  TAB  | | REGION | |  TAB  ||
@@ -1261,7 +1261,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 	     *             | DRAGGED |
 	     *             |---------|
 	     * */
-	     
+
 	    /* If there is a slot to the left, then set the leftmost
 	     * point of the insertion region at the rightmost point
 	     * of the left slot */
@@ -1324,7 +1324,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 	    /* We are ok to insert this slot into the tab bar at this
 	     * position if the slot region (newRegion) intersects the
-	     * calculated insertion region (slotRegion) */ 
+	     * calculated insertion region (slotRegion) */
 	    inSlot = slotRegion.intersects (newRegion);
 
 	    /* If we failed that, try the next slot, and so on */
@@ -1469,8 +1469,6 @@ GroupScreen::handleMotionEvent (int xRoot, int yRoot)
     if (mGrabState == ScreenGrabTabDrag)
     {
 	int    dx, dy;
-	int    vx, vy;
-	int    x1, x2, y1, y2;
 	CompRegion &draggedRegion = mDraggedSlot->mRegion;
 
 	dx = xRoot - mPrevX;
@@ -1482,6 +1480,8 @@ GroupScreen::handleMotionEvent (int xRoot, int yRoot)
 	if (mDragged || abs (dx) > RADIUS || abs (dy) > RADIUS)
 	{
 	    CompRegion cReg;
+	    int        vx, vy;
+	    int        x1, x2, y1, y2;
 	    mPrevX = xRoot;
 	    mPrevY = yRoot;
 
@@ -1497,12 +1497,12 @@ GroupScreen::handleMotionEvent (int xRoot, int yRoot)
 		foreach (group, mGroups)
 		    group->tabSetVisibility (true, PERMANENT);
 
-		const CompRect &box = 
+		const CompRect &box =
 			   gw->mGroup->mTabBar->mRegion.boundingRect ();
 		gw->mGroup->mTabBar->recalcTabBarPos (
 				      (box.x1 () + box.x2 ()) / 2,
 				      box.x1 (), box.x2 ());
-				      
+
 		checkFunctions ();
 	    }
 
@@ -1546,11 +1546,11 @@ GroupScreen::handleMotionEvent (int xRoot, int yRoot)
 
 /*
  * GroupWindow::windowNotify
- * 
+ *
  * Function called on window events - on these events do
  * certain grouped actions, such as Shade/Unshade,
  * Minimize/Unminimize etc
- * 
+ *
  */
 void
 GroupWindow::windowNotify (CompWindowNotify n)
@@ -1560,29 +1560,29 @@ GroupWindow::windowNotify (CompWindowNotify n)
 
     if (!mGroup)
 	return window->windowNotify (n);
-    
+
     switch (n)
     {
-	/* Minimize or shade all windows if this window has just 
+	/* Minimize or shade all windows if this window has just
 	 * been minimized or shaded */
 	case CompWindowNotifyShade:
 
 	    mWindowState = GroupWindow::WindowShaded;
 	    visible = false;
-	    
+
 	    if (mGroup && gs->optionGetShadeAll ())
 		mGroup->shadeWindows (window, true);
 
 	    break;
-	    
+
 	case CompWindowNotifyMinimize:
 
 	    mWindowState = GroupWindow::WindowMinimized;
 	    visible = false;
-	    
+
 	    if (mGroup && gs->optionGetMinimizeAll ())
 		mGroup->minimizeWindows (window, true);
-	
+
 	    break;
 
 	/* Unminimize/Unshade */
@@ -1643,7 +1643,7 @@ GroupWindow::windowNotify (CompWindowNotify n)
  * GroupScreen::handleEvent
  *
  * Wrappable function to handle X11 Events.
- * 
+ *
  * Handle group minimize, unmap, close etc.
  *
  */
@@ -1725,7 +1725,7 @@ GroupScreen::handleEvent (XEvent      *event)
 		      continue;
 
 		if (group)
-		{			
+		{
 		    CompRect rect (event->xclient.data.l[0],
 			      	   event->xclient.data.l[1],
 			      	   event->xclient.data.l[2],
@@ -1778,7 +1778,7 @@ GroupScreen::handleEvent (XEvent      *event)
 		{
 		    /* make sure we are using the updated name */
 		    TextLayer *l = gw->mGroup->mTabBar->mTextLayer;
-		    gw->mGroup->mTabBar->mTextLayer = 
+		    gw->mGroup->mTabBar->mTextLayer =
 		        TextLayer::rebuild (l);
 
 		    if (gw->mGroup->mTabBar->mTextLayer)
@@ -1793,11 +1793,11 @@ GroupScreen::handleEvent (XEvent      *event)
 	{
 	    CompWindow *w;
 	    w = screen->findWindow (event->xcrossing.window);
-	    
+
 	    /* Whenever we enter a new window, we must update the screen
-	     * to only show relevant tab bars */	    
+	     * to only show relevant tab bars */
 	    updateTabBars (event->xcrossing.window);
-	    
+
 	    if (w)
 	    {
 		GROUP_WINDOW (w);
@@ -1884,15 +1884,15 @@ GroupScreen::handleEvent (XEvent      *event)
 
 /*
  * GroupWindow::resizeNotify
- * 
+ *
  * Description: We get resizeNotify once the window is actually
  * configured (note the difference between the COMPIZ_RESIZE_NOTIFY)
  * ClientMessage above.
- * 
+ *
  * If this window had a resize geometry, set it to zero-size. If
  * the window had glow quads, we need to recalculate them. We also
  * need to recalculate the tab bar position.
- * 
+ *
  * Note that we don't handle grouped resize here, since that would
  * mean that we have to handle queuing (since the function is wrapped).
  * Instead we handle that in ConfigureNotify in
@@ -1928,7 +1928,7 @@ GroupWindow::resizeNotify (int dx,
 	if (mGroup->mTabBar->mState != PaintOff)
 	{
 	    mGroup->mTabBar->recalcTabBarPos (pointerX,
-				  WIN_X (window), 
+				  WIN_X (window),
 				  WIN_X (window) + WIN_WIDTH (window));
 	}
     }
@@ -1936,7 +1936,7 @@ GroupWindow::resizeNotify (int dx,
 
 /*
  * GroupWindow::moveNotify
- * 
+ *
  * We need to recalculate the glow quads here (since the position
  * changed, and they are contained in the quads). We also need to
  * update the tab bar positon and move windows in the group (queued).
@@ -2016,7 +2016,7 @@ GroupWindow::moveNotify (int    dx,
 
 /*
  * GroupWindow::grabNotify
- * 
+ *
  * Description: when the window is grabbed, it might be grabbed
  * for a resize, in which case we need to set up the resize-all bits
  * (including resize geometry)
@@ -2029,7 +2029,7 @@ GroupWindow::grabNotify (int          x,
 			 unsigned int mask)
 {
     GROUP_SCREEN (screen);
-    
+
     gs->mLastGrabbedWindow = window->id ();
 
     if (mGroup && !gs->mIgnoreMode && !gs->mQueued)
@@ -2060,7 +2060,7 @@ GroupWindow::grabNotify (int          x,
 		{
 		    if (gcw->mResizeGeometry.isEmpty ())
 		    {
-			gcw->mResizeGeometry = 
+			gcw->mResizeGeometry =
 					CompRect (WIN_X (cw),
 						  WIN_Y (cw),
 						  WIN_WIDTH (cw),
@@ -2070,10 +2070,10 @@ GroupWindow::grabNotify (int          x,
 		}
 	    }
 	}
-	
+
 	/* Set up a new master resize info with this window as the
 	 * master window and the current geometry as the master geometry
-	 */	
+	 */
 	if (doResizeAll)
 	{
 	    if (!mGroup->mResizeInfo)
@@ -2082,7 +2082,7 @@ GroupWindow::grabNotify (int          x,
 	    if (mGroup->mResizeInfo)
 	    {
 		mGroup->mResizeInfo->mResizedWindow       = window;
-		mGroup->mResizeInfo->mOrigGeometry = 
+		mGroup->mResizeInfo->mOrigGeometry =
 					CompRect (WIN_X (window),
 						  WIN_Y (window),
 						  WIN_WIDTH (window),
@@ -2101,7 +2101,7 @@ GroupWindow::grabNotify (int          x,
 
 /*
  * GroupWindow::ungrabNotify
- * 
+ *
  * When the window is ungrabbed, resize them according to our set
  * resizeGeometry (handled in mGroup->resizeWindows)
  */
@@ -2110,14 +2110,14 @@ void
 GroupWindow::ungrabNotify ()
 {
     GROUP_SCREEN (screen);
-    
+
     gs->mLastGrabbedWindow = None;
 
     if (mGroup && !gs->mIgnoreMode && !gs->mQueued)
     {
 	mGroup->resizeWindows (window); // should really include the size info here
     }
-    
+
     gs->checkFunctions ();
 
     window->ungrabNotify ();
@@ -2125,14 +2125,14 @@ GroupWindow::ungrabNotify ()
 
 /*
  * GroupWindow::damageRect
- * 
+ *
  * A request was made to damage everything in this window.
- * 
+ *
  * If this window just appeared (initial) then add it to an autotabbed
  * group if we are doing that. Or it might be the case that the window
  * was just unshaded or unminimzied (initial as well) so apply
  * those actions to the group too
- * 
+ *
  * Otherwise, damage the stretch rectangle for the window, damage
  * the slot (since the group was just updated)
  */
@@ -2157,7 +2157,7 @@ GroupWindow::damageRect (bool	        initial,
 	    GroupSelection *g = NULL;
 	    /* First check if this window should be added to an
 	     * existing group */
-	     
+
 	    foreach (CompOption::Value &v, gs->optionGetAutotabWindows ())
 	    {
 		if (v.match ().evaluate (window))
@@ -2174,7 +2174,7 @@ GroupWindow::damageRect (bool	        initial,
 				break;
 			    }
 			}
-			
+
 			if (foundGroup)
 			    break;
 		    }
@@ -2183,7 +2183,7 @@ GroupWindow::damageRect (bool	        initial,
 			break;
 		}
 	    }
-	    
+
 	    if (!g)
 	    {
 		gs->mTmpSel.clear ();
@@ -2200,7 +2200,7 @@ GroupWindow::damageRect (bool	        initial,
 	    if (g)
 		g->tabGroup (window);
 	}
-	
+
 	checkFunctions (); // we don't need damageRect after this
     }
 
@@ -2237,7 +2237,7 @@ GroupWindow::damageRect (bool	        initial,
 
 /*
  * GroupWindow::stateChangeNotify
- * 
+ *
  * A change to the window state was detected (could be maximization)
  * so if it was, then apply that to the group (if applicable)
  */
@@ -2261,7 +2261,7 @@ GroupWindow::stateChangeNotify (unsigned int lastState)
 
 /*
  * GroupWindow::activate
- * 
+ *
  * Window got activated, change the tab to the new active window
  */
 void

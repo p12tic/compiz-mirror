@@ -10,7 +10,7 @@
  *          Roi Cohen       <roico.beryl@gmail.com>
  *          Danny Baumann   <maniac@opencompositing.org>
  * 	    Sam Spilsbury   <smspillaz@gmail.com>
- * 
+ *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -23,7 +23,7 @@
  * GNU General Public License for more details.
  *
  **/
- 
+
 #ifndef _GROUP_LAYERS_H
 #define _GROUP_LAYERS_H
 
@@ -43,8 +43,9 @@ class Layer :
     public:
 	Layer (const CompSize &size, GroupSelection *g) :
 	    CompSize::CompSize (size),
-	    mGroup (g) {}
-    public:
+	    mGroup (g),
+	    mState (PaintOff),
+	    mAnimationTime (0) {};
 	virtual void damage () {};
 
 	GroupSelection  *mGroup;
@@ -66,7 +67,7 @@ class GLLayer :
 			    const CompRegion	      &paintRegion,
 			    const CompRegion	      &clipRegion,
 			    int			      mask) = 0;
-	
+
 };
 
 class TextureLayer :
@@ -74,7 +75,8 @@ class TextureLayer :
 {
     public:
 	TextureLayer (const CompSize &size, GroupSelection *g) :
-	    GLLayer::GLLayer (size, g) {}
+	    GLLayer::GLLayer (size, g),
+	    mPaintWindow (NULL) {}
 
     public:
 
@@ -89,7 +91,7 @@ class TextureLayer :
 	GLTexture::List mTexture;
 	CompWindow	*mPaintWindow; /* the window we are going to
 					* paint with geometry */
-	
+
 };
 
 class CairoLayer :
@@ -100,7 +102,7 @@ class CairoLayer :
 	~CairoLayer ();
 
     public:
-	
+
 	void clear ();
 	virtual void render () = 0;
 	virtual void paint (const GLWindowPaintAttrib &attrib,
@@ -144,7 +146,7 @@ class BackgroundLayer :
 		    const CompRegion	      &paintRegion,
 		    const CompRegion	      &clipRegion,
 		    int			      mask);
-	
+
 	bool handleAnimation (int msSinceLastPaint);
 
     public:
@@ -182,7 +184,7 @@ class TextLayer :
     public TextureLayer
 {
     public:
-    
+
 	static TextLayer *
 	create (CompSize &, GroupSelection *);
 
@@ -194,7 +196,7 @@ class TextLayer :
 		    const CompRegion	      &paintRegion,
 		    const CompRegion	      &clipRegion,
 		    int			      mask);
-	
+
 	void render ();
 
     private:

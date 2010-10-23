@@ -28,7 +28,7 @@
 
 /*
  * GroupWindow::windowInRegion
- * 
+ *
  * Determine if a prescribed region intersects a window and determine
  * if the region intersects an adequate percentage of that window
  * (specified by precision) intersects the window
@@ -63,7 +63,7 @@ GroupWindow::windowInRegion (CompRegion src,
 
 /*
  * groupFindGroupInWindows
- * 
+ *
  * Inline utility function, returns true if a group is in a list
  * of windows
  *
@@ -85,7 +85,7 @@ groupFindGroupInWindows (GroupSelection *group,
 
 /*
  * groupFindWindowsInRegion
- * 
+ *
  * Utility function, finds all the windows in a region and returns
  * a list of them.
  *
@@ -94,14 +94,13 @@ static CompWindowList *
 groupFindWindowsInRegion (CompRegion     reg)
 {
     GROUP_SCREEN (screen);
-	
+
     float      	   precision = gs->optionGetSelectPrecision () / 100.0f;
     CompWindowList *ret;
-    int		   count;
     CompWindowList::reverse_iterator rit = screen->windows ().rbegin ();
 
     ret = new CompWindowList ();
-    
+
     if (!ret)
 	return NULL;
 
@@ -126,10 +125,8 @@ groupFindWindowsInRegion (CompRegion     reg)
 	    }
 
 	    ret->push_back (w);
-
-	    count++;
 	}
-	
+
 	rit++;
     }
 
@@ -138,13 +135,13 @@ groupFindWindowsInRegion (CompRegion     reg)
 
 /*
  * Selection::deselect (CompWindow variant)
- * 
+ *
  * Remove a window from selection
  *
  */
 void
 Selection::deselect (CompWindow *w)
-{	
+{
     if (size ())
 	remove (w);
 
@@ -153,7 +150,7 @@ Selection::deselect (CompWindow *w)
 
 /*
  * Selection::deselect (GroupSelection variant)
- * 
+ *
  * Deselect all windows in a group, but don't just call
  * deselect on all windows in the group since that is slow, instead
  * compare lists and pop matching windows
@@ -189,7 +186,7 @@ Selection::deselect (GroupSelection *group)
 
 /*
  * Selection::select
- * 
+ *
  * Add a CompWindow to this selection (animate its fade too)
  *
  */
@@ -197,16 +194,16 @@ void
 Selection::select (CompWindow *w)
 {
     push_back (w);
-    
+
     GroupWindow::get (w)->mInSelection = true;
     GroupWindow::get (w)->cWindow->addDamage ();
 }
 
-/* 
+/*
  * Selection::select
- * 
+ *
  * Add a group to this selection (select every window in the group)
- * 
+ *
  */
 
 void
@@ -223,20 +220,20 @@ Selection::select (GroupSelection *g)
  *
  * Create a new group from this selection. Also "unselect" all of these
  * windows since they are grouped now!
- * 
+ *
  * FIXME: it should return the new group pointer
- * 
+ *
  */
 
 void
 Selection::selectRegion ()
 {
     GROUP_SCREEN (screen);
-	
+
     CompRegion reg;
     CompRect   rect;
     CompWindowList *ws;
-    
+
     int x      = MIN (mX1, mX2) - 2;
     int y      = MIN (mY1, mY2) - 2;
     int width  = MAX (mX1, mX2) -
@@ -261,7 +258,7 @@ Selection::selectRegion ()
 	    toGroup ();
 	}
     }
-    
+
     delete ws;
 }
 
@@ -292,15 +289,15 @@ Selection::toGroup ()
 		    tabbed = true;
 	    }
         }
-	
+
 	if (!group)
 	{
 	    /* create new group */
 	    group = new GroupSelection (0);
-	    
+
 	    if (!group)
 		return NULL;
-	
+
 	    GroupScreen::get (screen)->mGroups.push_front (group);
 	}
 
@@ -319,16 +316,16 @@ Selection::toGroup ()
 
         /* exit selection */
         clear ();
-	
+
 	return group;
     }
-    
+
     return NULL;
 }
 
 /*
  * Selection::checkWindow
- * 
+ *
  * Select or deselect a window or group if this window has one.
  *
  */
@@ -372,7 +369,7 @@ Selection::checkWindow (CompWindow *w)
 
 /*
  * GroupScreen::selectSingle
- * 
+ *
  * Action to select a single window
  *
  */
@@ -394,7 +391,7 @@ GroupScreen::selectSingle (CompAction         *action,
 
 /*
  * GroupScreen::select
- * 
+ *
  * Action to initiate the dragging of the selection rect
  *
  */
@@ -415,13 +412,13 @@ GroupScreen::select (CompAction         *action,
 	mTmpSel.mX1 = mTmpSel.mX2 = pointerX;
 	mTmpSel.mY1 = mTmpSel.mY2 = pointerY;
     }
-    
+
     return true;
 }
 
 /*
  * GroupSelection::selectTerminate
- * 
+ *
  * Action to terminate selection rect and select all windows in that
  * rect.
  *
@@ -441,7 +438,7 @@ GroupScreen::selectTerminate (CompAction         *action,
         }
     }
 
-    action->setState (action->state () & 
+    action->setState (action->state () &
 	     ~(CompAction::StateTermButton | CompAction::StateTermKey));
 
     return false;
@@ -449,7 +446,7 @@ GroupScreen::selectTerminate (CompAction         *action,
 
 /*
  * Selection::damage
- * 
+ *
  * Damage the selection rect
  *
  */
@@ -458,7 +455,7 @@ Selection::damage (int xRoot,
 		   int yRoot)
 {
     GROUP_SCREEN (screen);
-	
+
     CompRegion reg (mX1 - 5, mY1 - 5, mX2 - mX1 + 5,
 				      mY2 - mY1 + 5);
 
@@ -469,7 +466,7 @@ Selection::damage (int xRoot,
 
     reg = CompRegion (MIN (mX1, mX2) - 5,
 		      MIN (mY1, mY2) - 5,
-		      MAX (mX1, mX2) + 5 - 
+		      MAX (mX1, mX2) + 5 -
 		      MIN (mX1, mX2) - 5,
 		      MAX (mY1, mY2) + 5 -
 		      MIN (mY1, mY2) - 5);
