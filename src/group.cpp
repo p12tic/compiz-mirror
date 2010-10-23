@@ -766,12 +766,12 @@ GroupSelection::changeColor ()
     GROUP_SCREEN (screen);
 
     /* Generate new color */
-    GLushort *color = mColor;
     float    factor = ((float)RAND_MAX + 1) / 0xffff;
 
-    color[0] = (int)(rand () / factor);
-    color[1] = (int)(rand () / factor);
-    color[2] = (int)(rand () / factor);
+    mColor[0] = (int)(rand () / factor);
+    mColor[1] = (int)(rand () / factor);
+    mColor[2] = (int)(rand () / factor);
+    mColor[3] = 0xffff;
 
     /* Re-render the selection layer, if it is there */
     if (mTabBar && mTabBar->mSelectionLayer)
