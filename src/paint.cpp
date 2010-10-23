@@ -599,9 +599,7 @@ GroupScreen::preparePaint (int msSinceLastPaint)
      * animations or groups with tab bars with a dragged slot */
     
     if (!keepPainting)
-    {
 	cScreen->preparePaintSetEnabled (this, false);
-    }
 
     /* Always enable donePaint here (since there might be some
      * damage or whatever)
