@@ -693,7 +693,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
     const float gapX = optionGetVpDistance () * 0.1f * screen->height () /
 		       screen->width () * expoCam;
 
-    int      glPaintTransformedOutputIndex = 
+    int      glPaintTransformedOutputIndex =
 	gScreen->glPaintTransformedOutputGetCurrentIndex ();
 
     // Make sure that the base glPaintTransformedOutput function is called
@@ -1102,7 +1102,7 @@ void
 ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
 			   const CompRegion&            region,
 			   const CompRegion&            clip,
-			   unsigned int                 maxGridWidth, 
+			   unsigned int                 maxGridWidth,
 			   unsigned int                 maxGridHeight)
 {
     if (eScreen->expoCam > 0.0        &&
@@ -1116,8 +1116,8 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
 	const float radSquare = pow (eScreen->curveDistance, 2) + 0.25;
 	float       ang;
 
-	gWindow->glAddGeometry (matrices, region, clip, 
-				MIN(maxGridWidth , EXPO_GRID_SIZE), 
+	gWindow->glAddGeometry (matrices, region, clip,
+				MIN(maxGridWidth , EXPO_GRID_SIZE),
 				maxGridHeight);
 
 	v  = gWindow->geometry ().vertices;
