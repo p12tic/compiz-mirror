@@ -1,5 +1,5 @@
 /**
- * Compiz Opacify 
+ * Compiz Opacify
  *
  * opacify.cpp
  *
@@ -20,7 +20,7 @@
  *
  * Opacify increases opacity on targeted windows and reduces it on
  * blocking windows, making whatever window you are targeting easily
- * visible. 
+ * visible.
  *
  */
 
@@ -32,20 +32,20 @@ void
 setFunctions (bool enabled)
 {
     OPACIFY_SCREEN (screen);
-    
+
     screen->handleEventSetEnabled (os, enabled);
-    
+
     foreach (CompWindow *w, screen->windows ())
     {
 	OPACIFY_WINDOW (w);
-	
+
 	ow->gWindow->glPaintSetEnabled (ow, enabled);
     }
 }
 
 /* Core opacify functions. These do the real work. ---------------------*/
 
-/* Sets the real opacity and damages the window if actual opacity and 
+/* Sets the real opacity and damages the window if actual opacity and
  * requested opacity differs. */
 
 void
@@ -101,8 +101,8 @@ OpacifyWindow::dim ()
 
 /* Walk through all windows, skip until we've passed the active
  * window, skip if it's invisible, hidden or minimized, skip if
- * it's not a window type we're looking for. 
- * Dim it if it intersects. 
+ * it's not a window type we're looking for.
+ * Dim it if it intersects.
  *
  * Returns number of changed windows.
  */
@@ -160,7 +160,7 @@ OpacifyScreen::passiveWindows (CompRegion     fRegion)
  * passive list. justMoved is to make sure we recalculate opacity after
  * moving. We can't reset before moving because if we're using a delay
  * and the window being moved is not the active but overlapping, it will
- * be reset, which would conflict with move's opacity change. 
+ * be reset, which would conflict with move's opacity change.
  */
 void
 OpacifyWindow::handleEnter ()
@@ -223,7 +223,7 @@ OpacifyScreen::handleTimeout ()
 bool
 OpacifyScreen::checkDelay ()
 {
-    if (optionGetFocusInstant () && newActive && 
+    if (optionGetFocusInstant () && newActive &&
 	(newActive->id () == screen->activeWindow ()))
 	return true;
     if (!optionGetTimeout ())
@@ -247,8 +247,6 @@ OpacifyWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			const CompRegion	  &region,
 			unsigned int		  mask)
 {
-    bool       status;
-
     if (opacified)
     {
 	GLWindowPaintAttrib wAttrib = attrib;
@@ -262,13 +260,13 @@ OpacifyWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	return gWindow->glPaint (attrib, transform, region, mask);
     }
 
-    return status;
+    return false;
 }
 
-/* Takes the inital event. 
- * If we were configured, recalculate the opacify-windows if 
- * it was our window. 
- * If a window was entered: call upon handle_timeout after od->timeout 
+/* Takes the inital event.
+ * If we were configured, recalculate the opacify-windows if
+ * it was our window.
+ * If a window was entered: call upon handle_timeout after od->timeout
  * micro seconds, or directly if od->timeout is 0 (no delay).
  *
  */
@@ -318,7 +316,7 @@ OpacifyScreen::handleEvent (XEvent *event)
 }
 
 /* Toggle opacify on/off. We are in Display-context, make sure we handle all
- * screens. 
+ * screens.
  */
 
 bool
@@ -336,7 +334,7 @@ OpacifyScreen::toggle (CompAction         *action,
 	    active = 0;
 	}
     }
-    
+
     setFunctions (isToggle);
 
     return true;
@@ -369,8 +367,8 @@ OpacifyScreen::optionChanged (CompOption              *option,
     }
 }
 
-/** Constructor for OpacifyWindow. This is called whenever a new window 
- *  is created and we set our custom variables to it and also register to 
+/** Constructor for OpacifyWindow. This is called whenever a new window
+ *  is created and we set our custom variables to it and also register to
  *  paint this window
  */
 
