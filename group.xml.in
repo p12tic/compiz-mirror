@@ -5,15 +5,15 @@
     <_long>With this plugin you can group and tab windows</_long>
 	<category>Window Management</category>
 	<deps>
+		<requirement>
+		    <plugin>opengl</plugin>
+		    <plugin>mousepoll</plugin>
+		</requirement>
 		<relation type="after">
 			<plugin>fade</plugin>
 			<plugin>place</plugin>
 			<plugin>text</plugin>
 		</relation>
-		<requirement>
-			<plugin>mousepoll</plugin>
-			<plugin>opengl</plugin>
-		</requirement>
 	</deps>
     <options>
       <group>
