@@ -2421,8 +2421,6 @@ GroupWindow::stateChangeNotify (unsigned int lastState)
  * GroupWindow::activate
  * 
  * Window got activated, change the tab to the new active window
- * 
- * FIXME: broken
  */
 void
 GroupWindow::activate ()

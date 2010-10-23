@@ -580,7 +580,9 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 	     */
 	    group->mTabBar->mChangeAnimationTime -= msSinceLastPaint;
 	    if (group->mTabBar->mChangeAnimationTime <= 0)
+	    {
 		keepPainting |= group->handleAnimation ();
+	    }
 	    else
 		keepPainting = true;
 	}
@@ -599,7 +601,9 @@ GroupScreen::preparePaint (int msSinceLastPaint)
      * animations or groups with tab bars with a dragged slot */
     
     if (!keepPainting)
+    {
 	cScreen->preparePaintSetEnabled (this, false);
+    }
 
     /* Always enable donePaint here (since there might be some
      * damage or whatever)
@@ -631,25 +635,18 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     mTmpSel.mVpY = screen->vp ().y ();
 
     /* Allow us to paint windows transformed
-     * FIXME: Really ugly code
      */
 
     foreach (group, mGroups)
     {
-	if (group->mResizeInfo)
-	    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
-    }
-    foreach (group, mGroups)
-    {
-	if ((group->mTabBar &&
-	     group->mTabBar->mChangeState != GroupTabBar::NoTabChange) ||
+	if (group->mResizeInfo ||
+	    (group->mTabBar && 
+	     (group->mTabBar->mChangeState != GroupTabBar::NoTabChange ||
+	      group->mTabBar->mState != PaintOff)) ||
 	    group->mTabbingState != GroupSelection::NoTabbing)
 	{
 	    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
-	}
-	else if (group->mTabBar && (group->mTabBar->mState != PaintOff))
-	{
-	    mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
+	    break;
 	}
     }
 
