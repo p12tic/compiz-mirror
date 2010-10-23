@@ -280,7 +280,7 @@ ParticleSystem::drawParticles ()
     glPopMatrix ();
     glColor4usv (defaultColor);
 
-    GLScreen::get(screen)->setTexEnvMode (GL_REPLACE); // ??? 
+    GLScreen::get(screen)->setTexEnvMode (GL_REPLACE); // ???
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glDisable (GL_TEXTURE_2D);
@@ -368,10 +368,10 @@ FireScreen::fireAddPoint (int        x,
     if (!requireGrab || grabIndex)
     {
 	XPoint p;
-	
+
 	p.x = x;
 	p.y = y;
-	
+
 	points.push_back (p);
 
 	toggleFunctions (true);
@@ -453,7 +453,6 @@ FireScreen::clear (CompAction         *action,
 void
 FireScreen::preparePaint (int      time)
 {
-    unsigned int i;
     float size = 4;
     float bg = (float) optionGetBgBrightness () / 100.0;
 
@@ -489,7 +488,8 @@ FireScreen::preparePaint (int      time)
 	float rVal;
 	int rVal2;
 
-	for (i = 0; i < ps.particles.size () && max_new > 0; i++)
+	for (unsigned int i = 0;
+	     i < ps.particles.size () && max_new > 0; i++)
 	{
 	    Particle &part = ps.particles.at (i);
 	    if (part.life <= 0.0f)
