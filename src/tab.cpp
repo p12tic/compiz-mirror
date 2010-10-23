@@ -947,6 +947,7 @@ GroupSelection::finishTabbing ()
     {
 	delete mTabBar;
 	mTabBar = NULL;
+	mTopId = None;
     }
 
     /* We are finished tabbing now */
@@ -1879,6 +1880,7 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
 	    bool changeOldOut = (group->mTabBar->mChangeState ==
 				 GroupTabBar::TabChangeOldOut);
 	    group->mTabBar->mTopTab = group->mTabBar->mPrevTopTab;
+	    group->mTopId = group->mTabBar->mTopTab->mWindow->id ();
 	    group->mTabBar->mPrevTopTab = tmp;
 
 	    group->mTabBar->mChangeAnimationDirection *= -1;
@@ -1900,6 +1902,7 @@ GroupScreen::changeTab (GroupTabBarSlot             *topTab,
     else
     {
 	group->mTabBar->mTopTab = topTab;
+	group->mTopId = topTab->mWindow->id ();
 	CompSize size (group->mTabBar->mTopTab->mRegion.boundingRect ().width (),
 		       group->mTabBar->mTopTab->mRegion.boundingRect ().height ());
 
@@ -2465,6 +2468,7 @@ GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
 	if (IS_TOP_TAB (w, group))
 	{
 	    group->mTabBar->mTopTab = NULL;
+	    group->mTopId = None;
 
 	    /* Change to the next tab first, otherwise the previous one
 	     */
@@ -2542,7 +2546,7 @@ GroupTabBar::deleteTabBarSlot (GroupTabBarSlot *slot)
 
     /* This window now has no slot */
     gw->mSlot = NULL;
-    gw->updateWindowProperty ();
+    gs->writeSerializedData ();
     delete slot;
 }
 
@@ -2566,6 +2570,7 @@ GroupTabBar::createSlot (CompWindow      *w)
     GroupTabBarSlot *slot;
 
     GROUP_WINDOW (w);
+    GROUP_SCREEN (screen);
 
     slot = new GroupTabBarSlot (w, this);
     if (!slot)
@@ -2573,7 +2578,7 @@ GroupTabBar::createSlot (CompWindow      *w)
 
     insertTabBarSlot (slot);
     gw->mSlot = slot;
-    gw->updateWindowProperty ();
+    gs->writeSerializedData ();
 }
 
 #define SPRING_K     GroupScreen::get (screen)->optionGetDragSpringK()
@@ -2972,6 +2977,7 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
 			     * GroupTabBar::createSlot checks
 			     * for mTabBar
 			     */
+    mGroup->mTopId = topTab->id ();
 
     mSlots.clear ();
     foreach (CompWindow *cw, mGroup->mWindows)
@@ -2979,6 +2985,7 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
 
     mGroup->mTabBar->createInputPreventionWindow ();
     mGroup->mTabBar->mTopTab = GroupWindow::get (topTab)->mSlot;
+    group->mTopId = topTab->id ();
 
     mGroup->mTabBar->recalcTabBarPos (WIN_CENTER_X (topTab),
 			  WIN_X (topTab), WIN_X (topTab) + WIN_WIDTH (topTab));

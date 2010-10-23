@@ -81,99 +81,6 @@ GroupWindow::dragHoverTimeout ()
 }
 
 /*
- * GroupWindow::checkWindowProperty
- *
- * Reads the X Window Property for the group plugin
- * on this window, and returns some information about
- * this window as saved in the property
- *
- */
-bool
-GroupWindow::checkWindowProperty (CompWindow *w,
-				       long int   *id,
-				       bool       *tabbed,
-				       GLushort   *color)
-{
-    Atom          type;
-    int           retval, fmt;
-    unsigned long nitems, exbyte;
-    long int      *data;
-
-    GROUP_SCREEN (screen);
-
-    retval = XGetWindowProperty (screen->dpy (), window->id (),
-	     			 gs->mGroupWinPropertyAtom, 0, 5, False,
-	     			 XA_CARDINAL, &type, &fmt, &nitems,
-	     			 &exbyte, (unsigned char **)&data);
-
-    if (retval == Success)
-    {
-	if (type == XA_CARDINAL && fmt == 32 && nitems == 5)
-	{
-	    /* id here is the group->identifier */
-	    if (id)
-		*id = data[0];
-	    if (tabbed)
-		*tabbed = (bool) data[1];
-	    if (color) {
-		color[0] = (GLushort) data[2];
-		color[1] = (GLushort) data[3];
-		color[2] = (GLushort) data[4];
-	    }
-
-	    XFree (data);
-	    return true;
-	}
-	else if (fmt != 0)
-	    XFree (data);
-    }
-
-    return false;
-}
-
-/*
- * GroupWindow::updateWindowProperty
- *
- * Whenever we change the group, color or tabbed state
- * of a group or window, then we must update the relevant
- * X11 window properties (so we can survive compiz restarts,
- * crashes and the like)
- *
- */
-void
-GroupWindow::updateWindowProperty ()
-{
-    GROUP_SCREEN (screen);
-
-    // Do not change anything in this case
-    if (mReadOnlyProperty)
-	return;
-
-    if (mGroup)
-    {
-	long int buffer[5];
-
-	buffer[0] = mGroup->mIdentifier;
-	buffer[1] = (mSlot) ? true : false;
-
-	/* group color RGB */
-	buffer[2] = mGroup->mColor[0];
-	buffer[3] = mGroup->mColor[1];
-	buffer[4] = mGroup->mColor[2];
-
-	XChangeProperty (screen->dpy (), window->id (),
-			 gs->mGroupWinPropertyAtom,
-			 XA_CARDINAL, 32, PropModeReplace,
-			 (unsigned char *) buffer, 5);
-    }
-    else
-    {
-	XDeleteProperty (screen->dpy (), window->id (),
-			 gs->mGroupWinPropertyAtom);
-    }
-}
-
-/*
  * GroupWindow::updateResizeRectangle
  *
  * Updates the new resize rect of grouped windows of a group
@@ -603,6 +510,7 @@ GroupWindow::deleteGroupWindow ()
 	if (group->mWindows.size () > 1)
 	{
 	    group->mWindows.remove (window);
+	    group->mWindowIds.remove (window->id ());
 
 	    if (group->mWindows.size () == 1)
 	    {
@@ -635,13 +543,14 @@ GroupWindow::deleteGroupWindow ()
 	else
 	{
 	    group->mWindows.clear ();
+	    group->mWindowIds.clear ();
 	    group->fini ();
 	}
 
 	mGroup = NULL;
 	cWindow->damageOutputExtents ();
 	window->updateWindowOutputExtents ();
-	updateWindowProperty ();
+	gs->writeSerializedData ();
     }
 }
 
@@ -775,7 +684,7 @@ GroupSelection::fini ()
 	    CompositeWindow::get (cw)->damageOutputExtents ();
 	    gw->mGroup = NULL;
 	    cw->updateWindowOutputExtents ();
-	    gw->updateWindowProperty ();
+	    gs->writeSerializedData ();
 
 	    if (gs->optionGetAutotabCreate () && gw->isGroupWindow ())
 	    {
@@ -795,6 +704,7 @@ GroupSelection::fini ()
     {
 	delete mTabBar;
 	mTabBar = NULL;
+	mTopId = None;
     }
 
     /* Pop this group from the groups list */
@@ -814,36 +724,10 @@ GroupSelection::fini ()
     delete this;
 }
 
-/*
- * GroupSelection::GroupSelection
- *
- * Constructor for GroupSelection. Creates an empty group, sets up
- * the color and determines a new ID number. 
- * 
- */
-
-GroupSelection::GroupSelection (long int initialIdent) :
-    mScreen (screen),
-    mTabBar (NULL),
-    mTabbingState (NoTabbing),
-    mUngroupState (UngroupNone),
-    mGrabWindow (None),
-    mGrabMask (0),
-    mResizeInfo (NULL) 
+void
+GroupSelection::setIdentifier (long int initialIdent)
 {
-    boost::function<void (const CompPoint &)> cb =
-		boost::bind (&GroupSelection::handleHoverDetection,
-			     this, _1);
-    
-    mPoller.setCallback (cb);
-    
     GROUP_SCREEN (screen);
-
-    /* glow color */
-    mColor[0] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
-    mColor[1] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
-    mColor[2] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
-    mColor[3] = 0xffff;
 
     /* We need to have initialIdent here for property save/restore
      * (although really we should use PluginStateWriter) */
@@ -874,8 +758,94 @@ GroupSelection::GroupSelection (long int initialIdent) :
 	}
 	while (invalidID);
     }
+}
+
+void
+GroupSelection::changeColor ()
+{
+    GROUP_SCREEN (screen);
+
+    /* Generate new color */
+    GLushort *color = mColor;
+    float    factor = ((float)RAND_MAX + 1) / 0xffff;
+
+    color[0] = (int)(rand () / factor);
+    color[1] = (int)(rand () / factor);
+    color[2] = (int)(rand () / factor);
+
+    /* Re-render the selection layer, if it is there */
+    if (mTabBar && mTabBar->mSelectionLayer)
+    {
+	const CompRect &bRect = mTabBar->mTopTab->mRegion.boundingRect ();
+	CompSize size (bRect.width (),
+		       bRect.height ());
+	SelectionLayer *sl = mTabBar->mSelectionLayer;
+	SelectionLayer::rebuild (sl, size);
+
+	if (mTabBar->mSelectionLayer)
+	    mTabBar->mSelectionLayer->render ();
+	gs->cScreen->damageScreen ();
+    }
+}
+
+/*
+ * GroupSelection::GroupSelection
+ *
+ * Constructor for GroupSelection. Creates an empty group, sets up
+ * the color and determines a new ID number. 
+ * 
+ */
+
+GroupSelection::GroupSelection (long int initialIdent) :
+    mScreen (screen),
+    mTabBar (NULL),
+    mTabbingState (NoTabbing),
+    mUngroupState (UngroupNone),
+    mGrabWindow (None),
+    mGrabMask (0),
+    mResizeInfo (NULL),
+    mTopId (None)
+{
+    GROUP_SCREEN (screen);
+    boost::function<void (const CompPoint &)> cb =
+		boost::bind (&GroupSelection::handleHoverDetection,
+			     this, _1);
+    
+    mPoller.setCallback (cb);
+    
+    setIdentifier (0);
+
+    /* glow color */
+    changeColor ();
 
     gs->mGroups.push_front (this);
+}
+
+/*
+ * GroupSelection::GroupSelection
+ * 
+ * Creates a new group with an identifier of 0 (to start with).
+ * Used for serialization
+ */
+
+GroupSelection::GroupSelection () :
+    mScreen (screen),
+    mTabBar (NULL),
+    mTabbingState (NoTabbing),
+    mUngroupState (UngroupNone),
+    mGrabWindow (None),
+    mGrabMask (0),
+    mResizeInfo (NULL),
+    mTopId (None)
+{
+    boost::function<void (const CompPoint &)> cb =
+		boost::bind (&GroupSelection::handleHoverDetection,
+			     this, _1);
+    
+    mPoller.setCallback (cb);
+
+    /* glow color */
+    changeColor ();
 }
 
 /*
@@ -891,17 +861,20 @@ GroupSelection::GroupSelection (long int initialIdent) :
 void
 GroupWindow::addWindowToGroup (GroupSelection *group)
 {
+    GROUP_SCREEN (screen);
+
     if (mGroup)
 	return;
 
     if (group)
-    {
+    {	    
 	/* If a group was specified, just add this window to it */
 	CompWindow *topTab = NULL;
 	
 	mGroup = group;
 
 	group->mWindows.push_back (window);
+	group->mWindowIds.push_back (window->id ());
 
 	/* Update glow regions and X11 property */
 
@@ -909,7 +882,7 @@ GroupWindow::addWindowToGroup (GroupSelection *group)
 	window->updateWindowOutputExtents ();	    
 	cWindow->damageOutputExtents ();
 	
-	updateWindowProperty ();
+	gs->writeSerializedData ();
 
 	/* If we have more than one window in this group just recently,
 	 * then update the first window too, */
@@ -935,6 +908,7 @@ GroupWindow::addWindowToGroup (GroupSelection *group)
 	    {
 		topTab = PREV_TOP_TAB (group);
 		group->mTabBar->mTopTab = group->mTabBar->mPrevTopTab;
+		group->mTopId = group->mTabBar->mTopTab->mWindow->id ();
 		group->mTabBar->mPrevTopTab = NULL;
 	    }
 
@@ -961,7 +935,7 @@ GroupWindow::addWindowToGroup (GroupSelection *group)
 	}
     }
     
-    updateWindowProperty ();
+    gs->writeSerializedData ();
     
     checkFunctions ();
 }
@@ -1090,27 +1064,7 @@ GroupScreen::changeColor (CompAction           *action,
 	GROUP_WINDOW (w);
 
 	if (gw->mGroup)
-	{
-	    /* Generate new color */
-	    GLushort *color = gw->mGroup->mColor;
-	    float    factor = ((float)RAND_MAX + 1) / 0xffff;
-	    const CompRect &bRect =
-		gw->mGroup->mTabBar->mTopTab->mRegion.boundingRect ();
-	    CompSize size (bRect.width (),
-			   bRect.height ());
-
-	    color[0] = (int)(rand () / factor);
-	    color[1] = (int)(rand () / factor);
-	    color[2] = (int)(rand () / factor);
-
-	    /* Re-render the selection layer, if it is there */
-	    SelectionLayer *sl = gw->mGroup->mTabBar->mSelectionLayer;
-	    SelectionLayer::rebuild (sl, size);
-
-	    if (gw->mGroup->mTabBar->mSelectionLayer)
-		gw->mGroup->mTabBar->mSelectionLayer->render ();
-	    cScreen->damageScreen ();
-	}
+	    gw->mGroup->changeColor ();
     }
 
     return false;

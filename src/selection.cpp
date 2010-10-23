@@ -265,7 +265,7 @@ Selection::selectRegion ()
     delete ws;
 }
 
-void
+GroupSelection *
 Selection::toGroup ()
 {
     if (!empty ())
@@ -299,7 +299,7 @@ Selection::toGroup ()
 	    group = new GroupSelection (0);
 	    
 	    if (!group)
-		return;
+		return NULL;
 	}
 
         for (; it != end (); it++)
@@ -317,7 +317,11 @@ Selection::toGroup ()
 
         /* exit selection */
         clear ();
+	
+	return group;
     }
+    
+    return NULL;
 }
 
 /*

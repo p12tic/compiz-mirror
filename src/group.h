@@ -74,6 +74,8 @@ class GroupScreen;
 #include "glow.h"
 #include "group_options.h"
 
+#include <core/serialization.h>
+
 /*
  * Used to check if we can use the text plugin
  * 
@@ -144,7 +146,7 @@ public:
     void select (CompWindow *w);
     void select (GroupSelection *g);
     void selectRegion ();
-    void toGroup ();
+    GroupSelection * toGroup ();
     void damage (int, int);
     void paint (const GLScreenPaintAttrib sa,
 		const GLMatrix		  transform,
@@ -192,6 +194,7 @@ class GroupSelection
 	typedef std::list <GroupSelection *> List;
 
 	GroupSelection (long int);
+	GroupSelection ();
 	~GroupSelection ();
 
     public:
@@ -212,6 +215,9 @@ class GroupSelection
 	void prepareResizeWindows (CompRect &resizeRect);
 	void resizeWindows (CompWindow *top);
 	void maximizeWindows (CompWindow *top);
+	
+	void setIdentifier (long int);
+	void changeColor ();
 
 	void
 	applyConstraining (CompRegion  constrainRegion,
@@ -264,6 +270,23 @@ public:
     GLushort mColor[4];
     
     ResizeInfo *mResizeInfo;
+    
+    /* It's easier to keep track of these things, serialize them
+     * and rebuild what the group would have looked like later
+     */
+
+    std::list <Window> mWindowIds;
+    Window	       mTopId;
+
+public:
+
+    template <class Archive>
+    void serialize (Archive &ar, const unsigned int version = 0)
+    {
+	ar & mWindowIds;
+	ar & mTopId;
+	ar & mColor;
+    }
 };
 
 /*
@@ -447,15 +470,6 @@ class GroupWindow :
 	bool
 	dragHoverTimeout ();
 
-	bool
-	checkWindowProperty (CompWindow *w,
-			       long int   *id,
-			       bool       *tabbed,
-			       GLushort   *color);
-
-	void
-	updateWindowProperty ();
-
 	unsigned int
 	updateResizeRectangle (CompRect	    masterGeometry,
 				    bool	    damage);
@@ -500,10 +514,6 @@ class GroupWindow :
 	GroupSelection *mGroup;
 	bool mInSelection;
 
-	/* To prevent freeing the group
-	property in groupFiniWindow. */
-	bool mReadOnlyProperty;
-
 	/* For the tab bar */
 	GroupTabBarSlot *mSlot;
 
@@ -534,7 +544,8 @@ class GroupScreen :
     public GroupOptions,
     public ScreenInterface,
     public CompositeScreenInterface,
-    public GLScreenInterface
+    public GLScreenInterface,
+    public PluginStateWriter <GroupScreen>
 {
     public:
 
@@ -729,7 +740,6 @@ class GroupScreen :
 	bool		mIgnoreMode;
 	GlowTextureProperties *mGlowTextureProperties;
 	GroupSelection	*mLastRestackedGroup;
-	Atom		mGroupWinPropertyAtom;
 	Atom		mResizeNotifyAtom;
 
 	CompText	mText;
@@ -762,6 +772,16 @@ class GroupScreen :
 	GLTexture::List   mGlowTexture;
 	
 	Window		  mLastGrabbedWindow;
+
+    public:
+
+	template <class Archive>
+	void serialize (Archive &ar, const unsigned int version = 0)
+	{
+	    ar & mGroups;
+	}
+	
+	void postLoad ();
 };
 
 #define GROUP_SCREEN(s)							       \

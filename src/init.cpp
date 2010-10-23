@@ -164,64 +164,9 @@ GroupScreen::applyInitialActions ()
        be above the other windows in the group) */
     while (rit != screen->windows ().rend ())
     {
-	bool     tabbed;
-	long int id;
-	GLushort color[3];
 	CompWindow *w = *rit;
 
 	GROUP_WINDOW (w);
-
-	/* read window property to see if window was grouped
-	   before - if it was, regroup */
-	if (gw->checkWindowProperty (w, &id, &tabbed, color))
-	{
-	    GroupSelection *group = NULL;
-	    bool	   found = false;
-
-	    foreach (group, mGroups)
-	    {
-		if (group->mIdentifier == id)
-		{
-		    found = true;
-		    break;
-		}
-	    }
-	    
-	    if (!found)
-	    {
-		mTmpSel.clear ();
-		mTmpSel.select (w);
-		mTmpSel.toGroup ();
-	    }
-	    else
-		gw->addWindowToGroup (group);
-
-	    /* Add this window to a group (with that id) */
-	    gw->addWindowToGroup (group);
-	    if (tabbed)
-		gw->mGroup->tabGroup (w);
-
-
-	    /* Restore color */
-	    gw->mGroup->mColor[0] = color[0];
-	    gw->mGroup->mColor[1] = color[1];
-	    gw->mGroup->mColor[2] = color[2];
-
-	    /* if there was a tab bar, re-render it */
-	    if (gw->mGroup->mTabBar)
-	    {
-		CompRegion     &r = gw->mGroup->mTabBar->mRegion;
-		SelectionLayer *l = gw->mGroup->mTabBar->mSelectionLayer;
-
-		CompSize size (r.boundingRect ().width (),
-			       r.boundingRect ().height ());
-		gw->mGroup->mTabBar->mSelectionLayer =
-		       SelectionLayer::rebuild (l, size);
-		if (gw->mGroup->mTabBar->mSelectionLayer)
-		    gw->mGroup->mTabBar->mSelectionLayer->render ();
-	    }
-	    cScreen->damageScreen ();
-	}
 
 	/* Otherwise, add this window to a group on it's own if we are
 	 * auto-tabbing */
@@ -335,6 +280,66 @@ GroupScreen::checkFunctions ()
 					   GL_PAINT_TRANSFORMED_OUTPUT);
 }
     
+/*
+ * GroupScreen::postLoad
+ * 
+ * Load all information about this group that was previously saved
+ *
+ */
+
+void
+GroupScreen::postLoad ()
+{    
+    foreach (GroupSelection *group, mGroups)
+    {	
+	for (std::list <Window>::iterator it = group->mWindowIds.begin ();
+	     it != group->mWindowIds.end ();
+	     it++)
+	{
+	    CompWindow *w = screen->findWindow (*it);
+	    
+	    if (w)
+		GroupWindow::get (w)->addWindowToGroup (group);
+	    else
+	    {
+		group->mWindowIds.erase (it);
+		it = group->mWindowIds.begin ();
+	    }
+	}
+	
+	if (group->mTopId)
+	{
+	    CompWindow *w;
+	    
+	    w = screen->findWindow (group->mTopId);
+	    
+	    if (w)
+		group->tabGroup (w);
+	    else
+	    {
+		w = screen->findWindow (group->mWindowIds.front ());
+		
+		if (w)
+		    group->tabGroup (w);
+	    }
+	    
+	    /* if there was a tab bar, re-render it */
+	    if (group->mTabBar)
+	    {
+		CompRegion     &r = group->mTabBar->mRegion;
+		SelectionLayer *l = group->mTabBar->mSelectionLayer;
+
+		CompSize size (r.boundingRect ().width (),
+			       r.boundingRect ().height ());
+		group->mTabBar->mSelectionLayer =
+		       SelectionLayer::rebuild (l, size);
+		if (group->mTabBar->mSelectionLayer)
+		    group->mTabBar->mSelectionLayer->render ();
+	    }
+	}
+	
+    }
+}
 
 /*
  * GroupScreen::GroupScreen
@@ -344,13 +349,12 @@ GroupScreen::checkFunctions ()
  */
 GroupScreen::GroupScreen (CompScreen *s) :
     PluginClassHandler <GroupScreen, CompScreen> (s),
+    PluginStateWriter <GroupScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
     mIgnoreMode (false),
     mGlowTextureProperties ((GlowTextureProperties *) glowTextureProperties),
     mLastRestackedGroup (NULL),
-    mGroupWinPropertyAtom (XInternAtom (screen->dpy (),
-					"_COMPIZ_GROUP", 0)),
     mResizeNotifyAtom (XInternAtom (screen->dpy (),
 				    "_COMPIZ_RESIZE_NOTIFY", 0)),
     mPendingMoves (NULL),
@@ -452,44 +456,44 @@ GroupScreen::GroupScreen (CompScreen *s) :
  */
 GroupScreen::~GroupScreen ()
 {
+    writeSerializedData ();
+	
     if (mGroups.size ())
     {
 	GroupSelection *group;
-	GroupSelection::List::iterator it = mGroups.end ();
+	GroupSelection::List::reverse_iterator rit = mGroups.rbegin ();
 
-	while (it != mGroups.begin ())
+	while (rit != mGroups.rend ())
 	{
-	    group = *it;
+	    group = *rit;
+	    
+	    group->mWindows.clear ();
+	    group->mWindowIds.clear ();
 	    
 	    if (group->mTabBar)
 	    {
-		GroupTabBarSlot *slot, *nextSlot;
+		GroupTabBarSlot *slot = group->mTabBar->mSlots.front ();
+		GroupTabBarSlot *nextSlot = NULL;
 
+		/* We need to delete the slots first since otherwise
+		 * the tab bar will automatically try to change to
+		 * the next slot after the one that was deleted, but
+		 * it can't since we have already deleted all of our
+		 * window structures */
 		while (slot)
 		{
 		    nextSlot = slot->mNext;
 		    delete slot;
 		    slot = nextSlot;
 		}
-
-		if (group->mTabBar->mTextLayer->mPixmap)
-		    XFreePixmap (screen->dpy (),
-				 group->mTabBar->mTextLayer->mPixmap);
-		delete group->mTabBar->mBgLayer;
-		delete group->mTabBar->mSelectionLayer;
-
-		if (group->mTabBar->mInputPrevention)
-		    XDestroyWindow (screen->dpy (),
-				    group->mTabBar->mInputPrevention);
-
-		if (group->mTabBar->mTimeoutHandle.active ())
-		    group->mTabBar->mTimeoutHandle.stop ();
+		
+		group->mTabBar->mSlots.clear ();
 
 		delete group->mTabBar;
 	    }
 
 	    delete group;
-	    it--;
+	    rit++;
 	}
     }
 
@@ -627,7 +631,6 @@ GroupWindow::GroupWindow (CompWindow *w) :
     gWindow (GLWindow::get (w)),
     mGroup (NULL),
     mInSelection (false),
-    mReadOnlyProperty (false),
     mSlot (NULL),
     mNeedsPosSync (false),
     mGlowQuads (NULL),
@@ -676,17 +679,6 @@ GroupWindow::~GroupWindow ()
 {
     if (mWindowHideInfo)
 	setWindowVisibility (true);
-
-    mReadOnlyProperty = true;
-
-    /* FIXME: this implicitly calls the wrapped function activateWindow
-       * (via GroupSelection::deleteTabBarSlot -> 
-       * GrouppSelection::unhookTabBarSlot ->
-       * GroupSelection::changeTab)
-       --> better wrap into removeObject and call it for removeWindow
-       */
-    if (mGroup)
-	deleteGroupWindow ();
 
     if (mGlowQuads)
 	delete[] mGlowQuads;
