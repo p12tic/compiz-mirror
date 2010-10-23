@@ -175,12 +175,13 @@ GroupScreen::applyInitialActions ()
 	    if (!gw->mGroup && (gw->mWindowState ==
 				GroupWindow::WindowNormal))
 	    {
+		GroupSelection *g;
 		mTmpSel.clear ();
 		mTmpSel.select (w);
-		mTmpSel.toGroup ();
+		g = mTmpSel.toGroup ();
 		
-		if (gw->mGroup)
-		    gw->mGroup->tabGroup (w);
+		if (g)
+		    g->tabGroup (w);
 	    }
 	}
 	

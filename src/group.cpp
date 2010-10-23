@@ -627,11 +627,12 @@ GroupWindow::removeWindowFromGroup ()
 
 	if (gs->optionGetAutotabCreate () && isGroupWindow ())
 	{
+	    GroupSelection *g;
 	    gs->mTmpSel.clear ();
 	    gs->mTmpSel.select (window);
-	    gs->mTmpSel.toGroup ();
-	    if (mGroup)
-		mGroup->tabGroup (window);
+	    g = gs->mTmpSel.toGroup ();
+	    if (g)
+		g->tabGroup (window);
 	}
     }
     
@@ -688,11 +689,12 @@ GroupSelection::fini ()
 
 	    if (gs->optionGetAutotabCreate () && gw->isGroupWindow ())
 	    {
+		GroupSelection *g;
 		gs->mTmpSel.clear ();
 		gs->mTmpSel.select (cw);
-		gs->mTmpSel.toGroup ();
-		if (GroupWindow::get (cw)->mGroup)
-		    GroupWindow::get (cw)->mGroup->tabGroup (cw);
+		g = gs->mTmpSel.toGroup ();
+		if (g)
+		    g->tabGroup (cw);
 	    }
 	    
 	    gw->checkFunctions ();
@@ -2254,7 +2256,7 @@ GroupWindow::damageRect (bool	        initial,
 	    {
 		gs->mTmpSel.clear ();
 		gs->mTmpSel.select (window);
-		gs->mTmpSel.toGroup ();
+		g = gs->mTmpSel.toGroup ();
 	    }
 	    else
 	    {
@@ -2263,8 +2265,8 @@ GroupWindow::damageRect (bool	        initial,
 
 	    /* If 'g' is NULL here then a new group will be created
 	     * so better use mGroup here instead */
-	    if (mGroup && !g)
-		mGroup->tabGroup (window);
+	    if (g)
+		g->tabGroup (window);
 	}
 	
 	checkFunctions (); // we don't need damageRect after this

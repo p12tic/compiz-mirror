@@ -267,8 +267,6 @@ SelectionLayer::render ()
 
     mTexture = GLTexture::imageBufferToTexture ((char*) mBuffer,
 			 		  (CompSize &) *this);
-					  
-    cairo_surface_write_to_png (mSurface, "/home/smspillaz/test.png");
 }
 
 /*
