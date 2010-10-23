@@ -474,11 +474,9 @@ GroupTabBarSlot::getDrawOffset (int &hoffset,
  * GroupSelection::handleHoverDetection
  *
  * Description:
- * This function is called from groupPreparePaintScreen to handle
- * the hover detection. This is needed for the text showing up,
- * when you hover a thumb on the thumb bar.
- *
- * FIXME: we should better have a timer for that ...
+ * This function is called on the mousepoll update to handle whether a
+ * new tab has been hovered on the bar (and then it updates the text
+ * accordingly)
  */
 void
 GroupSelection::handleHoverDetection (const CompPoint &p)

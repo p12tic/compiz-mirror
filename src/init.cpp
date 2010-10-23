@@ -312,7 +312,7 @@ GroupScreen::checkFunctions ()
     {
 	if ((group->mTabbingState != GroupSelection::NoTabbing) ||
 	    (group->mTabBar &&
-	     (group->mTabBar->mChangeState == GroupTabBar::NoTabChange ||
+	     (group->mTabBar->mChangeState != GroupTabBar::NoTabChange ||
 	      (group->mTabBar->mState == PaintFadeIn ||
 	       group->mTabBar->mState == PaintFadeOut) ||
 	      (group->mTabBar->mTextLayer &&
