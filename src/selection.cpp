@@ -293,17 +293,28 @@ Selection::toGroup ()
 	    }
         }
 
-        /* we need to do one first to get the pointer of a new group */
         cw = *it;
         GROUP_WINDOW (cw);
+	
+	if (!group)
+	{
+	    /* create new group */
+	    group = new GroupSelection (0);
+	    
+	    if (!group)
+		return;
+	}
 
+	/* add the first window to this group. If it's part of another
+	 * group then delete it from that group and add it to this one */
         if (gw->mGroup && (group != gw->mGroup))
 	    gw->deleteGroupWindow ();
         gw->addWindowToGroup (group, 0);
         gw->cWindow->addDamage ();
 
         gw->mInSelection = false;
-        group = gw->mGroup;
+	
+	it++;
 
         for (; it != end (); it++)
         {

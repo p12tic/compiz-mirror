@@ -191,7 +191,7 @@ class GroupSelection
 
 	typedef std::list <GroupSelection *> List;
 
-	GroupSelection (CompWindow *, long int);
+	GroupSelection (long int);
 	~GroupSelection ();
 
     public:

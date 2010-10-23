@@ -1727,6 +1727,7 @@ GroupSelection::untabGroup ()
      * to NULL). */
     mTabBar->mLastTopTab = TOP_TAB (this);
     mTabBar->mTopTab = NULL;
+    mTabBar->mChangeState = GroupTabBar::NoTabChange;
 
     foreach (slot, mTabBar->mSlots)
     {

@@ -718,9 +718,11 @@ GroupWindow::removeWindowFromGroup ()
 
 	if (gs->optionGetAutotabCreate () && isGroupWindow ())
 	{
-	    addWindowToGroup (NULL, 0);
-	    if (GroupWindow::get (window)->mGroup)
-		GroupWindow::get (window)->mGroup->tabGroup (window);
+	    gs->mTmpSel.clear ();
+	    gs->mTmpSel.select (window);
+	    gs->mTmpSel.toGroup ();
+	    if (mGroup)
+		mGroup->tabGroup (window);
 	}
     }
     
@@ -777,7 +779,9 @@ GroupSelection::fini ()
 
 	    if (gs->optionGetAutotabCreate () && gw->isGroupWindow ())
 	    {
-		gw->addWindowToGroup (NULL, 0);
+		gs->mTmpSel.clear ();
+		gs->mTmpSel.select (cw);
+		gs->mTmpSel.toGroup ();
 		if (GroupWindow::get (cw)->mGroup)
 		    GroupWindow::get (cw)->mGroup->tabGroup (cw);
 	    }
@@ -813,14 +817,12 @@ GroupSelection::fini ()
 /*
  * GroupSelection::GroupSelection
  *
- * Constructor for GroupSelection. Set up the initial top window
- * for this group, set up the color and determine a new
- * ID number for it
+ * Constructor for GroupSelection. Creates an empty group, sets up
+ * the color and determines a new ID number. 
  * 
  */
 
-GroupSelection::GroupSelection (CompWindow *startingWindow,
-				long int initialIdent) :
+GroupSelection::GroupSelection (long int initialIdent) :
     mScreen (screen),
     mTabBar (NULL),
     mTabbingState (NoTabbing),
@@ -832,8 +834,6 @@ GroupSelection::GroupSelection (CompWindow *startingWindow,
     boost::function<void (const CompPoint &)> cb =
 		boost::bind (&GroupSelection::handleHoverDetection,
 			     this, _1);
-
-    mWindows.push_back (startingWindow);
     
     mPoller.setCallback (cb);
     
@@ -845,6 +845,8 @@ GroupSelection::GroupSelection (CompWindow *startingWindow,
     mColor[2] = (int)(rand () / (((double)RAND_MAX + 1) / 0xffff));
     mColor[3] = 0xffff;
 
+    /* We need to have initialIdent here for property save/restore
+     * (although really we should use PluginStateWriter) */
     if (initialIdent)
 	mIdentifier = initialIdent;
     else
@@ -959,17 +961,8 @@ GroupWindow::addWindowToGroup (GroupSelection *group,
 	    }
 	}
     }
-    else
-    {
-	/* create new group */
-	GroupSelection *g = new GroupSelection (window, initialIdent);
-	if (!g)
-	    return;
-	    
-	mGroup = g;
-
-	updateWindowProperty ();
-    }
+    
+    updateWindowProperty ();
     
     checkFunctions ();
 }
@@ -2304,9 +2297,19 @@ GroupWindow::damageRect (bool	        initial,
 		}
 	    }
 	    
+	    if (!g)
+	    {
+		gs->mTmpSel.clear ();
+		gs->mTmpSel.select (window);
+		gs->mTmpSel.toGroup ();
+	    }
+	    else
+	    {
+		addWindowToGroup (g, g->mIdentifier);
+	    }
+
 	    /* If 'g' is NULL here then a new group will be created
 	     * so better use mGroup here instead */
-	    addWindowToGroup (g, g ? g->mIdentifier : 0);
 	    if (mGroup && !g)
 		mGroup->tabGroup (window);
 	}

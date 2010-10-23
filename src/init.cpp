@@ -188,7 +188,13 @@ GroupScreen::applyInitialActions ()
 	    }
 	    
 	    if (!found)
-		group = NULL;
+	    {
+		mTmpSel.clear ();
+		mTmpSel.select (w);
+		mTmpSel.toGroup ();
+	    }
+	    else
+		gw->addWindowToGroup (group, id);
 
 	    /* Add this window to a group (with that id) */
 	    gw->addWindowToGroup (group, id);
@@ -224,7 +230,10 @@ GroupScreen::applyInitialActions ()
 	    if (!gw->mGroup && (gw->mWindowState ==
 				GroupWindow::WindowNormal))
 	    {
-		gw->addWindowToGroup (NULL, 0);
+		mTmpSel.clear ();
+		mTmpSel.select (w);
+		mTmpSel.toGroup ();
+		
 		if (gw->mGroup)
 		    gw->mGroup->tabGroup (w);
 	    }
