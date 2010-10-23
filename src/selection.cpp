@@ -300,6 +300,8 @@ Selection::toGroup ()
 	    
 	    if (!group)
 		return NULL;
+	
+	    GroupScreen::get (screen)->mGroups.push_front (group);
 	}
 
         for (; it != end (); it++)

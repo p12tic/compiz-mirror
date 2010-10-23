@@ -772,7 +772,6 @@ GroupSelection::GroupSelection () :
     mResizeInfo (NULL),
     mTopId (None)
 {
-    GROUP_SCREEN (screen);
     boost::function<void (const CompPoint &)> cb =
 		boost::bind (&GroupSelection::handleHoverDetection,
 			     this, _1);
@@ -781,8 +780,6 @@ GroupSelection::GroupSelection () :
 
     /* glow color */
     changeColor ();
-
-    gs->mGroups.push_front (this);
 }
 
 /*
