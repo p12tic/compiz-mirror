@@ -16,7 +16,6 @@
 				<plugin>decor</plugin>
 			</relation>
 			<requirement>
-				<plugin>composite</plugin>
 				<plugin>opengl</plugin>
 			</requirement>
 		</deps>
