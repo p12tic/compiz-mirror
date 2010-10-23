@@ -292,9 +292,6 @@ Selection::toGroup ()
 		    tabbed = true;
 	    }
         }
-
-        cw = *it;
-        GROUP_WINDOW (cw);
 	
 	if (!group)
 	{
@@ -304,17 +301,6 @@ Selection::toGroup ()
 	    if (!group)
 		return;
 	}
-
-	/* add the first window to this group. If it's part of another
-	 * group then delete it from that group and add it to this one */
-        if (gw->mGroup && (group != gw->mGroup))
-	    gw->deleteGroupWindow ();
-        gw->addWindowToGroup (group, 0);
-        gw->cWindow->addDamage ();
-
-        gw->mInSelection = false;
-	
-	it++;
 
         for (; it != end (); it++)
         {
