@@ -6,18 +6,18 @@ void
 setFunctions (bool enabled)
 {
     TD_SCREEN (screen);
-    
+
     tds->gScreen->glPaintOutputSetEnabled (tds, enabled);
-    tds->gScreen->glApplyTransformSetEnabled (tds, enabled); 
+    tds->gScreen->glApplyTransformSetEnabled (tds, enabled);
     tds->cScreen->donePaintSetEnabled (tds, enabled);
     tds->cubeScreen->cubePaintViewportSetEnabled (tds, enabled);
     tds->cubeScreen->cubeShouldPaintViewportSetEnabled (tds, enabled);
     tds->cubeScreen->cubeShouldPaintAllViewportsSetEnabled (tds, enabled);
-    
+
     foreach (CompWindow *w, screen->windows ())
     {
 	TD_WINDOW (w);
-	
+
 	tdw->gWindow->glPaintSetEnabled (tdw, enabled);
     }
 }
@@ -34,7 +34,7 @@ TdWindow::is3D ()
     if (window->state () & (CompWindowStateSkipPagerMask |
 		    CompWindowStateSkipTaskbarMask))
 	return false;
-	
+
     if (!TdScreen::get (screen)->optionGetWindowMatch ().evaluate (window))
 	return false;
 
@@ -45,7 +45,7 @@ void
 TdScreen::preparePaint (int msSinceLastPaint)
 {
     bool       active;
-    
+
     CUBE_SCREEN (screen);
 
     active = (cs->rotationState () != CubeScreen::RotationNone) && screen->vpSize ().width () > 2 &&
@@ -56,7 +56,7 @@ TdScreen::preparePaint (int msSinceLastPaint)
 	float maxDiv = (float) optionGetMaxWindowSpace () / 100;
 	float minScale = (float) optionGetMinCubeSize () / 100;
 	float x, progress;
-	
+
 	cs->cubeGetRotation (x, x, progress);
 
 	mMaxDepth = 0;
@@ -90,7 +90,7 @@ TdScreen::preparePaint (int msSinceLastPaint)
     mCurrentScale = mBasicScale;
 
     cScreen->preparePaint (msSinceLastPaint);
-    
+
     setFunctions (mActive);
 }
 
@@ -141,7 +141,7 @@ TdWindow::glPaintWithDepth (const GLWindowPaintAttrib &attrib,
 {
     bool status;
     int            wx, wy, ww, wh;
-    int            bevel, cull, cullInv, temp;
+    int            bevel, cull, cullInv;
     GLVector       point, tPoint;
     unsigned short *c;
 
@@ -166,16 +166,18 @@ TdWindow::glPaintWithDepth (const GLWindowPaintAttrib &attrib,
 	(cs->paintOrder () == BTF && !mFtb)))
     {
         float v[4];
+	int   temp;
+
 	/* Paint window depth. */
 	glPushMatrix ();
 	glLoadIdentity ();
 
 	if (cs->paintOrder () == BTF)
 	    glCullFace (cullInv);
-	
+
 	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	
+
 	if (window->id () == screen->activeWindow ())
 	    c = tds->optionGetWidthColor ();
 	else
@@ -273,7 +275,7 @@ TdWindow::glPaintWithDepth (const GLWindowPaintAttrib &attrib,
 	if (cs->paintOrder () == BTF)
 	    glCullFace (cull);
     }
-    
+
     if (cs->paintOrder () == BTF)
 	status = gWindow->glPaint (attrib, transform, region, mask);
     else
@@ -292,7 +294,7 @@ TdWindow::glPaint (const GLWindowPaintAttrib &attrib,
     bool           status;
 
     TD_SCREEN (screen);
-    
+
     if (mDepth != 0.0f && !tds->mPainting3D && tds->mActive)
 	mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
@@ -316,7 +318,7 @@ TdScreen::glApplyTransform (const GLScreenPaintAttrib &attrib,
 {
 
     gScreen->glApplyTransform (attrib, output, transform);
-    
+
     transform->scale (mCurrentScale, mCurrentScale, mCurrentScale);
 }
 
@@ -384,7 +386,7 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 	screenSpace.toScreenSpace (output, -attrib.zTranslate);
 
 	glPushMatrix ();
-	
+
 	pl = cScreen->getWindowPaintList ();
 
 	/* paint all windows from bottom to top */
@@ -392,7 +394,7 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 	{
 	    CompWindow *w = (*it);
 	    tdw = TdWindow::get (w);
-	    
+
 	    if (w->destroyed ())
 		continue;
 
@@ -452,7 +454,7 @@ TdScreen::cubePaintViewport (const GLScreenPaintAttrib &attrib,
 
 		tdw->gWindow->glPaint (tdw->gWindow->paintAttrib (), mTransform,
 				  infiniteRegion, newMask);
-				  
+
 		gScreen->glDisableOutputClipping ();
 
 	    }
@@ -487,22 +489,22 @@ TdScreen::cubeShouldPaintViewport (const GLScreenPaintAttrib &attrib,
     bool rv = false;
 
     CUBE_SCREEN (screen);
-    
+
     rv = cs->cubeShouldPaintViewport (attrib, transform, outputPtr, order);
 
     if (mActive)
     {
 	float pointZ = cs->invert () * cs->distance ();
 	bool  ftb1, ftb2;
-	
+
 	std::vector<GLVector> vPoints;
-	
+
 	vPoints.push_back (GLVector (-0.5, 0.0, pointZ, 1.0));
 	vPoints.push_back (GLVector (0.0, 0.5, pointZ, 1.0));
 	vPoints.push_back (GLVector (0.0, 0.0, pointZ, 1.0));
 
 	mCurrentScale = 1.0;
-	
+
 	ftb1 = cs->cubeCheckOrientation (attrib, transform, outputPtr, vPoints);
 
 	mCurrentScale = mBasicScale;
@@ -534,14 +536,14 @@ TdScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK;
 
 	mWithDepth = true;
-	
+
 	p = CompPlugin::find ("cubeaddon");
 	if (p)
 	{
 	    CompOption::Vector &options = p->vTable->getOptions ();
 	    CompOption option;
-	    
-	    mWithDepth = (CompOption::getIntOptionNamed 
+
+	    mWithDepth = (CompOption::getIntOptionNamed
 					      (options, "deformation", 0) == 0);
 	}
     }
@@ -560,7 +562,7 @@ TdScreen::donePaint ()
 	mDamage = false;
 	cScreen->damageScreen ();
     }
-    
+
     cScreen->donePaint ();
 }
 
@@ -577,7 +579,7 @@ TdScreen::TdScreen (CompScreen *screen) :
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen, false);
     CubeScreenInterface::setHandler (cubeScreen, false);
-    
+
     cScreen->preparePaintSetEnabled (this, true);
 }
 
