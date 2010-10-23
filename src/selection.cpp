@@ -88,19 +88,22 @@ groupFindGroupInWindows (GroupSelection *group,
  * 
  * Utility function, finds all the windows in a region and returns
  * a list of them.
- * 
- * FIXME: This copies a list. That's bad.
  *
  */
-static CompWindowList
+static CompWindowList *
 groupFindWindowsInRegion (CompRegion     reg)
 {
     GROUP_SCREEN (screen);
 	
     float      	   precision = gs->optionGetSelectPrecision () / 100.0f;
-    Selection      ret;
+    CompWindowList *ret;
     int		   count;
     CompWindowList::reverse_iterator rit = screen->windows ().rbegin ();
+
+    ret = new CompWindowList ();
+    
+    if (!ret)
+	return NULL;
 
     /* Go back-to-front with selection */
     while (rit != screen->windows ().rend ())
@@ -116,13 +119,13 @@ groupFindWindowsInRegion (CompRegion     reg)
 	     * windows from this group in the selection (all windows
 	     * from the group get added to the selection automatically)
 	     */
-	    if (gw->mGroup && groupFindGroupInWindows (gw->mGroup, ret))
+	    if (gw->mGroup && groupFindGroupInWindows (gw->mGroup, *ret))
 	    {
 		rit++;
 		continue;
 	    }
 
-	    ret.push_back (w);
+	    ret->push_back (w);
 
 	    count++;
 	}
@@ -232,7 +235,7 @@ Selection::toGroup ()
 	
     CompRegion reg;
     CompRect   rect;
-    CompWindowList ws;
+    CompWindowList *ws;
     
     int x      = MIN (mX1, mX2) - 2;
     int y      = MIN (mY1, mY2) - 2;
@@ -247,10 +250,10 @@ Selection::toGroup ()
     gs->cScreen->damageRegion (reg);
 
     ws = groupFindWindowsInRegion (reg);
-    if (ws.size ())
+    if (ws->size ())
     {
 	/* (un)select windows */
-	foreach (CompWindow *w, ws)
+	foreach (CompWindow *w, *ws)
 	    checkWindow (w);
 
 	if (gs->optionGetAutoGroup ())
@@ -259,6 +262,8 @@ Selection::toGroup ()
 	    gs->groupWindows (NULL, 0, dummy);
 	}
     }
+    
+    delete ws;
 }
 
 /*
