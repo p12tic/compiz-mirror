@@ -119,9 +119,9 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 	break;
     case ShowdesktopOptions::DirectionDown:
 	placer->offScreenX = window->x ();
-	placer->offScreenY = screen->workArea ().y () + 
-	                         screen->workArea ().height () 
-							+ OFF_BOTTOM (window) - 
+	placer->offScreenY = screen->workArea ().y () +
+	                         screen->workArea ().height ()
+							+ OFF_BOTTOM (window) -
 				 ss->optionGetWindowPartSize ();
 	break;
     case ShowdesktopOptions::DirectionLeft:
@@ -131,7 +131,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 	break;
     case ShowdesktopOptions::DirectionRight:
 	placer->offScreenX = screen->workArea ().x () +
-	                         screen->workArea ().width () 
+	                         screen->workArea ().width ()
 							+ OFF_RIGHT (window) -
 				 ss->optionGetWindowPartSize ();
 	placer->offScreenY = window->y ();
@@ -143,7 +143,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 		                     ss->optionGetWindowPartSize ();
 	else
 	    placer->offScreenY = screen->workArea ().y () +
-		                     screen->workArea ().height () 
+		                     screen->workArea ().height ()
 							+ OFF_BOTTOM (window) -
 				     ss->optionGetWindowPartSize ();
 	break;
@@ -154,7 +154,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 		                     ss->optionGetWindowPartSize ();
 	else
 	    placer->offScreenX = screen->workArea ().x () +
-		                     screen->workArea ().width () 
+		                     screen->workArea ().width ()
 							+ OFF_RIGHT (window) -
 				     ss->optionGetWindowPartSize ();
 	break;
@@ -164,7 +164,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 		                     ss->optionGetWindowPartSize ();
 	else
 	    placer->offScreenX = screen->workArea ().x () +
-		                     screen->workArea ().width () 
+		                     screen->workArea ().width ()
 							+ OFF_RIGHT (window) -
 				     ss->optionGetWindowPartSize ();
 	if (MOVE_UP(window))
@@ -172,7 +172,7 @@ ShowdesktopWindow::repositionPlacer (int oldState)
 		                     ss->optionGetWindowPartSize ();
 	else
 	    placer->offScreenY = screen->workArea ().y () +
-		                     screen->workArea ().height () 
+		                     screen->workArea ().height ()
 							+ OFF_BOTTOM (window) -
 		     		     ss->optionGetWindowPartSize ();
 	break;
@@ -338,7 +338,7 @@ ShowdesktopScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	mask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
 
     return gScreen->glPaintOutput (attrib, transform, region, output, mask);
-} 
+}
 
 void
 ShowdesktopScreen::donePaint ()
@@ -474,11 +474,9 @@ ShowdesktopWindow::getAllowedActions (unsigned int &setActions,
 void
 ShowdesktopScreen::enterShowDesktopMode ()
 {
-    int count = 0;
-
     if (state == SD_STATE_OFF || state == SD_STATE_DEACTIVATING)
     {
-	count = prepareWindows (state);
+	int count = prepareWindows (state);
 	if (count > 0)
 	{
 	    XSetInputFocus (screen->dpy (), screen->root (),
@@ -513,17 +511,17 @@ ShowdesktopScreen::leaveShowDesktopMode (CompWindow *w)
 		sw->ty += (sw->placer->onScreenY - sw->placer->offScreenY);
 
 		sw->placer->onScreenX += (sw->placer->origViewportX -
-					  screen->vp (). x ()) 
+					  screen->vp (). x ())
 							* screen->width ();
 		sw->placer->onScreenY += (sw->placer->origViewportY -
-					  screen->vp ().y ()) 
+					  screen->vp ().y ())
 							* screen->height ();
 
 		cw->move   (sw->placer->onScreenX - cw->x (),
-			    sw->placer->onScreenY - cw->y (), 
+			    sw->placer->onScreenY - cw->y (),
 			    true);
 		cw->syncPosition ();
-		
+
 		sw->setHints (false);
 		cw->setShowDesktopMode (false);
 	    }
