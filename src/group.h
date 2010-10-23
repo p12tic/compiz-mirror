@@ -467,8 +467,7 @@ class GroupWindow :
 	removeWindowFromGroup ();
 
 	void
-	addWindowToGroup (GroupSelection *group,
-			    long int       initialIdent);
+	addWindowToGroup (GroupSelection *group);
 
 	/* tab.cpp */
 

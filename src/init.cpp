@@ -194,10 +194,10 @@ GroupScreen::applyInitialActions ()
 		mTmpSel.toGroup ();
 	    }
 	    else
-		gw->addWindowToGroup (group, id);
+		gw->addWindowToGroup (group);
 
 	    /* Add this window to a group (with that id) */
-	    gw->addWindowToGroup (group, id);
+	    gw->addWindowToGroup (group);
 	    if (tabbed)
 		gw->mGroup->tabGroup (w);
 

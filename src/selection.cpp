@@ -309,7 +309,7 @@ Selection::toGroup ()
 
 	    if (gw->mGroup && (group != gw->mGroup))
 	        gw->deleteGroupWindow ();
-	    gw->addWindowToGroup (group, 0);
+	    gw->addWindowToGroup (group);
 	    gw->cWindow->addDamage ();
 
 	    gw->mInSelection = false;

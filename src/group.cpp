@@ -889,8 +889,7 @@ GroupSelection::GroupSelection (long int initialIdent) :
  * 
  */
 void
-GroupWindow::addWindowToGroup (GroupSelection *group,
-			       long int       initialIdent)
+GroupWindow::addWindowToGroup (GroupSelection *group)
 {
     if (mGroup)
 	return;
@@ -1471,7 +1470,7 @@ GroupScreen::handleButtonReleaseEvent (XEvent *event)
 
 		/* Change the group. */
 		gdw->deleteGroupWindow ();
-		gdw->addWindowToGroup (group, 0);
+		gdw->addWindowToGroup (group);
 
 		/* we saved the original center position in oldPosX/Y before -
 		   now we should apply that to the new main tab offset */
@@ -2305,7 +2304,7 @@ GroupWindow::damageRect (bool	        initial,
 	    }
 	    else
 	    {
-		addWindowToGroup (g, g->mIdentifier);
+		addWindowToGroup (g);
 	    }
 
 	    /* If 'g' is NULL here then a new group will be created
