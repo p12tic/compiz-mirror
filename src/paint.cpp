@@ -653,8 +653,8 @@ GroupScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     status = gScreen->glPaintOutput (attrib, transform, region, output,
 				     mask);
 
-    /* Just double check that we didn't get called again and that
-     * we are still wanting to paint these things */
+    /* Just double check that we haven't painted our dragged tab
+     * and selection rect on a transformed screen */
     if (status && !mTmpSel.mPainted)
     {
 	if ((mGrabState == ScreenGrabTabDrag) && mDraggedSlot)
