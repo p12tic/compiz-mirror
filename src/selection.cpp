@@ -229,7 +229,7 @@ Selection::select (GroupSelection *g)
  */
 
 void
-Selection::toGroup ()
+Selection::selectRegion ()
 {
     GROUP_SCREEN (screen);
 	
@@ -264,6 +264,64 @@ Selection::toGroup ()
     }
     
     delete ws;
+}
+
+void
+Selection::toGroup ()
+{
+    if (!empty ())
+    {
+        CompWindowList::iterator it = begin ();
+	CompWindow	         *cw;
+        GroupSelection *group = NULL;
+        bool           tabbed = false;
+
+	/* Try to find existing groups in this selection and
+	 * add windows to that rather than going and creating new
+	 * groups
+	 */
+	foreach (cw, *this)
+	{
+	    GROUP_WINDOW (cw);
+
+	    if (gw->mGroup)
+	    {
+	        if (!tabbed || group->mTabBar)
+		    group = gw->mGroup;
+
+	        if (group->mTabBar)
+		    tabbed = true;
+	    }
+        }
+
+        /* we need to do one first to get the pointer of a new group */
+        cw = *it;
+        GROUP_WINDOW (cw);
+
+        if (gw->mGroup && (group != gw->mGroup))
+	    gw->deleteGroupWindow ();
+        gw->addWindowToGroup (group, 0);
+        gw->cWindow->addDamage ();
+
+        gw->mInSelection = false;
+        group = gw->mGroup;
+
+        for (; it != end (); it++)
+        {
+	    cw = *it;
+	    GROUP_WINDOW (cw);
+
+	    if (gw->mGroup && (group != gw->mGroup))
+	        gw->deleteGroupWindow ();
+	    gw->addWindowToGroup (group, 0);
+	    gw->cWindow->addDamage ();
+
+	    gw->mInSelection = false;
+        }
+
+        /* exit selection */
+        clear ();
+    }
 }
 
 /*
@@ -377,7 +435,7 @@ GroupScreen::selectTerminate (CompAction         *action,
 
         if (mTmpSel.mX1 != mTmpSel.mX2 && mTmpSel.mY1 != mTmpSel.mY2)
         {
-	    mTmpSel.toGroup ();
+	    mTmpSel.selectRegion ();
         }
     }
 

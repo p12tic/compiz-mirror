@@ -143,6 +143,7 @@ public:
     void deselect (GroupSelection *group);
     void select (CompWindow *w);
     void select (GroupSelection *g);
+    void selectRegion ();
     void toGroup ();
     void damage (int, int);
     void paint (const GLScreenPaintAttrib sa,

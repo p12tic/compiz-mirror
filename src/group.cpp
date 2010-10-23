@@ -987,55 +987,7 @@ GroupScreen::groupWindows (CompAction         *action,
 			   CompAction::State  state,
 			   CompOption::Vector options)
 {
-    if (mTmpSel.size () > 0)
-    {
-        CompWindowList::iterator it = mTmpSel.begin ();
-	CompWindow	         *cw;
-        GroupSelection *group = NULL;
-        bool           tabbed = false;
-
-	foreach (cw, mTmpSel)
-	{
-	    GROUP_WINDOW (cw);
-
-	    if (gw->mGroup)
-	    {
-	        if (!tabbed || group->mTabBar)
-		    group = gw->mGroup;
-
-	        if (group->mTabBar)
-		    tabbed = true;
-	    }
-        }
-
-        /* we need to do one first to get the pointer of a new group */
-        cw = *it;
-        GROUP_WINDOW (cw);
-
-        if (gw->mGroup && (group != gw->mGroup))
-	    gw->deleteGroupWindow ();
-        gw->addWindowToGroup (group, 0);
-        gw->cWindow->addDamage ();
-
-        gw->mInSelection = false;
-        group = gw->mGroup;
-
-        for (; it != mTmpSel.end (); it++)
-        {
-	    cw = *it;
-	    GROUP_WINDOW (cw);
-
-	    if (gw->mGroup && (group != gw->mGroup))
-	        gw->deleteGroupWindow ();
-	    gw->addWindowToGroup (group, 0);
-	    gw->cWindow->addDamage ();
-
-	    gw->mInSelection = false;
-        }
-
-        /* exit selection */
-        mTmpSel.clear ();
-    }
+    mTmpSel.toGroup ();
 
     return false;
 }
