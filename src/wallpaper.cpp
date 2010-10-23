@@ -166,13 +166,13 @@ initBackground (WallpaperBackground *back)
 	    back->imgSize.setHeight (0);
 	}
     }
-	
+
     color = back->color1;
     c[0] = ((color[3] << 16) & 0xff000000) |
 	    ((color[0] * color[3] >> 8) & 0xff0000) |
 	    ((color[1] * color[3] >> 16) & 0xff00) |
 	    ((color[2] * color[3] >> 24) & 0xff);
-	
+
     color = back->color2;
     c[1] = ((color[3] << 16) & 0xff000000) |
 	    ((color[0] * color[3] >> 8) & 0xff0000) |
@@ -197,7 +197,7 @@ initBackground (WallpaperBackground *back)
 	back->fillTexMatrix.push_back (back->fillTex[0]->matrix());
 	back->fillTexMatrix[0].xx = 0.0;
 	back->fillTexMatrix[0].yy = 0.0;
-    }    
+    }
 }
 
 void
@@ -455,7 +455,7 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
 	else
 	    tmpAttrib.setOpacity ((OPAQUE * ws->alpha) * (attrib.getOpacity () / (float)OPAQUE));
     }
-	
+
     if (tmpAttrib.getOpacity () != OPAQUE)
 	mask |= PAINT_WINDOW_BLEND_MASK;
 
@@ -466,7 +466,7 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
     {
 	CompRegion reg = screen->region ();
 	float  s1, s2;
-	int    x, y, xi;
+	int    x, y;
 
 	gWindow->geometry ().vCount = gWindow->geometry ().indexCount = 0;
 	tmpMatrixList[0] = back->imgTex[0]->matrix ();
@@ -529,7 +529,7 @@ WallpaperWindow::drawBackgrounds (GLFragment::Attrib &attrib,
 
 	    while (y < (int) screen->height ())
 	    {
-		xi = x;
+		int xi = x;
 		while (xi < (int) screen->width ())
 		{
 		    tmpMatrixList[0] = back->imgTex[0]->matrix ();
@@ -582,7 +582,7 @@ WallpaperWindow::glDraw (const GLMatrix &transform,
 	    filterIdx = WINDOW_TRANS_FILTER;
 	else
 	    filterIdx = NOTHING_TRANS_FILTER;
-	
+
 	saveFilter = ws->gScreen->filter (filterIdx);
 	ws->gScreen->setFilter (filterIdx, GLTexture::Good);
 
