@@ -727,42 +727,6 @@ GroupSelection::fini ()
 }
 
 void
-GroupSelection::setIdentifier (long int initialIdent)
-{
-    GROUP_SCREEN (screen);
-
-    /* We need to have initialIdent here for property save/restore
-     * (although really we should use PluginStateWriter) */
-    if (initialIdent)
-	mIdentifier = initialIdent;
-    else
-    {
-	/* we got no valid group Id passed, so find out a new valid
-	unique one */
-	GroupSelection *tg;
-	bool           invalidID = false;
-
-	mIdentifier = gs->mGroups.size () ?
-				  gs->mGroups.front ()->mIdentifier : 0;
-	do
-	{
-	    invalidID = false;
-	    foreach (tg, gs->mGroups)
-	    {
-		if (tg->mIdentifier == mIdentifier)
-		{
-		    invalidID = true;
-
-		    mIdentifier++;
-		    break;
-		}
-	    }
-	}
-	while (invalidID);
-    }
-}
-
-void
 GroupSelection::changeColor ()
 {
     GROUP_SCREEN (screen);
@@ -798,7 +762,7 @@ GroupSelection::changeColor ()
  * 
  */
 
-GroupSelection::GroupSelection (long int initialIdent) :
+GroupSelection::GroupSelection () :
     mScreen (screen),
     mTabBar (NULL),
     mTabbingState (NoTabbing),
@@ -814,40 +778,11 @@ GroupSelection::GroupSelection (long int initialIdent) :
 			     this, _1);
     
     mPoller.setCallback (cb);
-    
-    setIdentifier (0);
 
     /* glow color */
     changeColor ();
 
     gs->mGroups.push_front (this);
-}
-
-/*
- * GroupSelection::GroupSelection
- * 
- * Creates a new group with an identifier of 0 (to start with).
- * Used for serialization
- */
-
-GroupSelection::GroupSelection () :
-    mScreen (screen),
-    mTabBar (NULL),
-    mTabbingState (NoTabbing),
-    mUngroupState (UngroupNone),
-    mGrabWindow (None),
-    mGrabMask (0),
-    mResizeInfo (NULL),
-    mTopId (None)
-{
-    boost::function<void (const CompPoint &)> cb =
-		boost::bind (&GroupSelection::handleHoverDetection,
-			     this, _1);
-    
-    mPoller.setCallback (cb);
-
-    /* glow color */
-    changeColor ();
 }
 
 /*

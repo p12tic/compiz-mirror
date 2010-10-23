@@ -215,8 +215,6 @@ class GroupSelection
 	void prepareResizeWindows (CompRect &resizeRect);
 	void resizeWindows (CompWindow *top);
 	void maximizeWindows (CompWindow *top);
-	
-	void setIdentifier (long int);
 	void changeColor ();
 
 	void
@@ -254,9 +252,6 @@ public:
     CompWindowList mWindows;
     
     MousePoller	mPoller;
-
-    /* Unique identifier for this group */
-    long int mIdentifier;
 
     GroupTabBar *mTabBar;
 
