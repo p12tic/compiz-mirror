@@ -258,8 +258,7 @@ Selection::selectRegion ()
 
 	if (gs->optionGetAutoGroup ())
 	{
-	    CompOption::Vector dummy;
-	    gs->groupWindows (NULL, 0, dummy);
+	    toGroup ();
 	}
     }
     
