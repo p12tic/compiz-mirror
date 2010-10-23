@@ -285,7 +285,7 @@ ThumbScreen::positionUpdate (const CompPoint &p)
 
 	if (!cw->isMapped ())
 	    continue;
-	
+
 	if (cw->state () & CompWindowStateSkipTaskbarMask)
 	    continue;
 
@@ -601,7 +601,7 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-	
+
 	if (optionGetWindowLike ())
 	{
 	    glColor4f (1.0, 1.0, 1.0, t->opacity);
@@ -763,7 +763,7 @@ ThumbScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	newMask |= PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK;
     }
 
-    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
+    status = gScreen->glPaintOutput (attrib, transform, region, output, newMask);
 
     if (optionGetAlwaysOnTop () && !painted)
     {
@@ -928,7 +928,7 @@ ThumbWindow::ThumbWindow (CompWindow *window) :
     gWindow (GLWindow::get (window))
 {
 }
-    
+
 
 ThumbWindow::~ThumbWindow ()
 {
