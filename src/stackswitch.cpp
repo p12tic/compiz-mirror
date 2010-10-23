@@ -130,10 +130,10 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
     GLboolean     wasBlend;
     GLint         oldBlendSrc, oldBlendDst;
     GLMatrix      wTransform (transform), mvp;
-    float         x, y, tx, ix, width, height;
+    float         x, y, tx, width, height;
     GLTexture::Matrix    m;
     GLTexture     *icon;
-    
+
     STACKSWITCH_WINDOW (w);
 
     CompRect oe = screen->getCurrentOutputExtents ();
@@ -223,9 +223,7 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
     if (icon && (icon->name ()))
     {
 	int                 off;
-
-	ix = x - (icon->width () / 2.0);
-	ix  = floor (ix);
+	float ix = floor (x - (icon->width () / 2.0));
 
 	icon->enable (GLTexture::Good);
 
@@ -248,7 +246,7 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 
 	    glEnd ();
 	}
-	
+
 	glColor4f (1.0, 1.0, 1.0, 1.0);
 
 	glBegin (GL_QUADS);
@@ -378,7 +376,7 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		scale *= mScale;
 
 		mask |= PAINT_WINDOW_BLEND_MASK;
-		
+
 		/* if we paint the icon for a minimized window, we need
 		   to force the usage of a good texture filter */
 		if (!gWindow->textures ().size ())
@@ -604,7 +602,7 @@ StackswitchScreen::layoutThumbs ()
 	    hasActive++;
     }
 
-    /* sort the draw list so that the windows with the 
+    /* sort the draw list so that the windows with the
        lowest Y value (the windows being farest away)
        are drawn first */
     qsort (mDrawSlots, mNWindows, sizeof (StackswitchDrawSlot),
@@ -627,7 +625,10 @@ StackswitchScreen::addWindowToList (CompWindow *w)
 				 		   sizeof (StackswitchDrawSlot) * (mNWindows + 32));
 
 	if (!mDrawSlots)
+	{
+	    free (mDrawSlots);
 	    return;
+	}
 
 	mWindowsSize = mNWindows + 32;
     }
@@ -823,7 +824,7 @@ StackswitchWindow::adjustVelocity ()
 	amount = 2.0f;
 
     mRotVelocity = (amount * mRotVelocity + adjust) / (amount + 1.0f);
-    
+
     if (fabs (dx) < 0.1f && fabs (mXVelocity) < 0.2f &&
 	fabs (dy) < 0.1f && fabs (mYVelocity) < 0.2f &&
 	fabs (ds) < 0.001f && fabs (mScaleVelocity) < 0.002f &&
@@ -890,16 +891,16 @@ StackswitchScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		sw->gWindow->glPaint (sw->gWindow->paintAttrib (), sTransform, infiniteRegion, 0);
 	    }
 	}
-	
+
 	GLMatrix tTransform (transform);
 	tTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 	glLoadMatrixf (tTransform.getMatrix ());
-	
+
 	if (mText.getWidth () && (mState != StackswitchStateIn) && aw)
 	    drawWindowTitle (sTransform, aw);
-	
+
 	mPaintingSwitcher = false;
-	
+
 	glPopMatrix ();
     }
 
@@ -918,7 +919,7 @@ StackswitchScreen::preparePaint (int msSinceLastPaint)
 	amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
 	steps  = amount / (0.5f * optionGetTimestep ());
 
-	if (!steps) 
+	if (!steps)
 	    steps = 1;
 	chunk  = amount / (float) steps;
 
@@ -1046,7 +1047,7 @@ StackswitchScreen::initiate (CompAction         *action,
     {
 	return false;
     }
-	   
+
     mCurrentMatch = optionGetWindowMatch ();
 
     match = CompOption::getMatchOptionNamed (options, "match", CompMatch ());
@@ -1133,7 +1134,7 @@ StackswitchScreen::doSwitch (CompAction           *action,
     return ret;
 }
 
-void 
+void
 StackswitchScreen::windowRemove (Window      id)
 {
     CompWindow *w;
@@ -1291,7 +1292,7 @@ StackswitchScreen::StackswitchScreen (CompScreen *screen) :
     ScreenInterface::setHandler (screen);
     CompositeScreenInterface::setHandler (cScreen);
     GLScreenInterface::setHandler (gScreen);
-    
+
 #define STACKTERMBIND(opt, func)                                \
     optionSet##opt##Terminate (boost::bind (&StackswitchScreen::func, \
 					    this, _1, _2, _3));
@@ -1329,7 +1330,7 @@ StackswitchScreen::StackswitchScreen (CompScreen *screen) :
     STACKTERMBIND (NextGroupButton, terminate);
     STACKTERMBIND (PrevGroupButton, terminate);
 }
-    
+
 StackswitchScreen::~StackswitchScreen ()
 {
     if (mWindows)
