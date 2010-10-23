@@ -68,7 +68,7 @@ WallScreen::drawSwitcherBackground ()
     int             width, height, radius;
     float           r, g, b, a;
     unsigned int    i, j;
-    
+
     destroyCairoContext (switcherContext);
     setupCairoContext (switcherContext);
 
@@ -888,7 +888,6 @@ WallScreen::drawCairoTextureOnScreen ()
     if (moving || showPreview)
     {
 	/* draw highlight */
-	int aW, aH;
 
 	box.x1 = screen->vp ().x () * (width + border) + topLeftX + border;
 	box.x2 = box.x1 + width;
@@ -909,8 +908,8 @@ WallScreen::drawCairoTextureOnScreen ()
 	if (direction >= 0)
 	{
 	    arrowContext.texture[0]->enable (GLTexture::Fast);
-	    aW = arrowContext.width;
-	    aH = arrowContext.height;
+	    int aW = arrowContext.width;
+	    int aH = arrowContext.height;
 
 	    /* if we have a viewport preview we just paint the
 	       arrow outside the switcher */
@@ -1208,7 +1207,6 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	GLMatrix             sMatrix (matrix);
 	float                xTranslate, yTranslate;
 	float                px, py;
-	int                  tx, ty;
 	bool                 movingX, movingY;
 	CompPoint            point (screen->vp ());
 	CompRegion           outputRegion (*output);
@@ -1227,14 +1225,12 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 
 	if (movingY)
 	{
-	    ty = ceil (py) - point.y ();
 	    yTranslate = fmod (py, 1) - 1;
 
 	    sMatrix.translate (0.0f, yTranslate, 0.0f);
 
 	    if (movingX)
 	    {
-		tx = ceil (px) - point.x ();
 		xTranslate = 1 - fmod (px, 1);
 
 		cScreen->setWindowPaintOffset ((point.x () - ceil (px)) *
@@ -1249,8 +1245,6 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 
 		sMatrix.translate (-xTranslate, 0.0f, 0.0f);
 	    }
-
-	    tx = floor (px) - point.x ();
 	    xTranslate = -fmod (px, 1);
 
 	    cScreen->setWindowPaintOffset ((point.x () - floor (px)) *
@@ -1265,14 +1259,12 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    sMatrix.translate (-xTranslate, -yTranslate, 0.0f);
 	}
 
-	ty = floor (py) - point.y ();
 	yTranslate = fmod (py, 1);
 
 	sMatrix.translate (0.0f, yTranslate, 0.0f);
 
 	if (movingX)
 	{
-	    tx = ceil (px) - point.x ();
 	    xTranslate = 1 - fmod (px, 1);
 
 	    cScreen->setWindowPaintOffset ((point.x () - ceil (px)) *
@@ -1288,7 +1280,6 @@ WallScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 	    sMatrix.translate (-xTranslate, 0.0f, 0.0f);
 	}
 
-	tx = floor (px) - point.x ();
 	xTranslate = -fmod (px, 1);
 
 	cScreen->setWindowPaintOffset ((point.x () - floor (px)) *
