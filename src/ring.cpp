@@ -291,7 +291,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	}
 
 	if (scaled && (rs->mState != RingScreen::RingStateIn) &&
-	    ((rs->optionGetOverlayIcon () != RingOptions::OverlayIconNone) || 
+	    ((rs->optionGetOverlayIcon () != RingOptions::OverlayIconNone) ||
 	     !pixmap))
 	{
 	    GLTexture *icon;
@@ -360,7 +360,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		y += mTy;
 
 		mask |= PAINT_WINDOW_BLEND_MASK;
-		
+
 		/* if we paint the icon for a minimized window, we need
 		   to force the usage of a good texture filter */
 		if (!pixmap)
@@ -389,7 +389,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 		    if (mSlot)
 			fragment.setBrightness (
-					(float) fragment.getBrightness () * 
+					(float) fragment.getBrightness () *
 					mSlot->depthBrightness);
 
 		    wTransform.translate (window->x (), window->y (), 0.0f);
@@ -418,9 +418,9 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
     return status;
 }
 
-static inline float 
-ringLinearInterpolation (float valX, 
-			 float minX, float maxX, 
+static inline float
+ringLinearInterpolation (float valX,
+			 float minX, float maxX,
 			 float minY, float maxY)
 {
     double factor = (maxY - minY) / (maxX - minX);
@@ -473,7 +473,7 @@ RingScreen::layoutThumbs ()
 
     oe = screen->getCurrentOutputExtents ();
 
-    /* the center of the ellipse is in the middle 
+    /* the center of the ellipse is in the middle
        of the used output device */
     centerX  = oe.centerX ();
     centerY  = oe.centerY ();
@@ -492,11 +492,11 @@ RingScreen::layoutThumbs ()
 	if (!rw->mSlot)
 	    return false;
 
-	/* we subtract the angle from the base angle 
+	/* we subtract the angle from the base angle
 	   to order the windows clockwise */
 	angle = baseAngle - (index * (2 * PI / mWindows.size ()));
 
-	rw->mSlot->x = centerX + (optionGetRingClockwise () ? -1 : 1) * 
+	rw->mSlot->x = centerX + (optionGetRingClockwise () ? -1 : 1) *
 	                        ((float) ellipseA * sin (angle));
 	rw->mSlot->y = centerY + ((float) ellipseB * cos (angle));
 
@@ -519,14 +519,14 @@ RingScreen::layoutThumbs ()
 	   polation - the y positions are the x values for the interpolation
 	   (the larger Y is, the nearer is the window), and scale/brightness
 	   are the y values for the interpolation */
-	rw->mSlot->depthScale = 
-	    ringLinearInterpolation (rw->mSlot->y, 
-				     centerY - ellipseB, centerY + ellipseB, 
+	rw->mSlot->depthScale =
+	    ringLinearInterpolation (rw->mSlot->y,
+				     centerY - ellipseB, centerY + ellipseB,
 				     optionGetMinScale (), 1.0f);
 
-	rw->mSlot->depthBrightness = 
-	    ringLinearInterpolation (rw->mSlot->y, 
-				     centerY - ellipseB, centerY + ellipseB, 
+	rw->mSlot->depthBrightness =
+	    ringLinearInterpolation (rw->mSlot->y,
+				     centerY - ellipseB, centerY + ellipseB,
 				     optionGetMinBrightness (), 1.0f);
 
 	mDrawSlots.at (index).w    = w;
@@ -535,7 +535,7 @@ RingScreen::layoutThumbs ()
 	index++;
     }
 
-    /* sort the draw list so that the windows with the 
+    /* sort the draw list so that the windows with the
        lowest Y value (the windows being farest away)
        are drawn first */
 
@@ -768,7 +768,7 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     //mask |= PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK;
 
-    gScreen->glPaintOutput (attrib, transform, region, output, mask);
+    status = gScreen->glPaintOutput (attrib, transform, region, output, mask);
 
     if (mState != RingStateNone)
     {
@@ -790,14 +790,14 @@ RingScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 		RING_WINDOW (w);
 
-		status = rw->gWindow->glPaint (rw->gWindow->paintAttrib (),
+		status |= rw->gWindow->glPaint (rw->gWindow->paintAttrib (),
 					   sTransform, infiniteRegion, 0);
 	    }
 	}
 
 	if (mState != RingStateIn)
 	    drawWindowTitle ();
-	
+
 	glPopMatrix ();
     }
 
@@ -815,7 +815,7 @@ RingScreen::preparePaint (int msSinceLastPaint)
 	amount = msSinceLastPaint * 0.05f * optionGetSpeed ();
 	steps  = amount / (0.5f * optionGetTimestep ());
 
-	if (!steps) 
+	if (!steps)
 	    steps = 1;
 	chunk  = amount / (float) steps;
 
@@ -843,7 +843,7 @@ RingScreen::preparePaint (int msSinceLastPaint)
 		    rw->mScale = rw->mSlot->scale * rw->mSlot->depthScale;
 	    	    rw->mTx = rw->mSlot->x - w->x () -
 			     (w->width () * rw->mScale) / 2;
-	    	    rw->mTy = rw->mSlot->y - w->y () - 
+	    	    rw->mTy = rw->mSlot->y - w->y () -
 			     (w->height () * rw->mScale) / 2;
 		}
 	    }
@@ -935,11 +935,11 @@ RingScreen::initiate (CompAction         *action,
 		      CompAction::State  state,
 		      CompOption::Vector options)
 {
-    int       count; 
+    int       count;
 
     if (screen->otherGrabExist ("ring", NULL))
 	return false;
-	   
+
     mCurrentMatch = optionGetWindowMatch ();
 
     mMatch = CompOption::getMatchOptionNamed (options, "match", CompMatch ());
@@ -1004,7 +1004,7 @@ RingScreen::doSwitch (CompAction         *action,
 	    if (w)
 	    {
 	        mType = RingTypeGroup;
-	        mClientLeader = 
+	        mClientLeader =
 		    (w->clientLeader ()) ? w->clientLeader () : w->id ();
 	        ret = initiate (action, state, options);
 	    }
@@ -1041,8 +1041,8 @@ RingScreen::windowSelectAt (int  x,
 
     if (!optionGetSelectWithMouse ())
 	return;
- 
-    /* first find the top-most window the mouse 
+
+    /* first find the top-most window the mouse
        pointer is over */
     foreach (CompWindow *w, mWindows)
     {
@@ -1203,7 +1203,7 @@ RingScreen::handleEvent (XEvent *event)
 	if (event->xbutton.button == Button1)
 	{
 	    if (mGrabIndex)
-	        windowSelectAt (event->xbutton.x_root, 
+	        windowSelectAt (event->xbutton.x_root,
 				event->xbutton.y_root,
 				true);
 	}
@@ -1247,7 +1247,7 @@ RingWindow::damageRect (bool     initial,
     }
     else if (rs->mState == RingScreen::RingStateSwitching)
     {
-	
+
 	if (mSlot)
 	{
 	    cWindow->damageTransformedRect (mScale, mScale,
@@ -1255,7 +1255,7 @@ RingWindow::damageRect (bool     initial,
 					    rect);
 	    status = true;
 	}
-	
+
     }
 
     status |= cWindow->damageRect (initial, rect);
