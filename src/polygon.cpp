@@ -84,7 +84,7 @@ PolygonAnim::freePolygonObjects ()
     while (!mPolygons.empty ())
     {
         PolygonObject *p = mPolygons.back ();
-        
+
 	if (p->nVertices > 0)
 	{
 	    if (p->vertices)
@@ -96,9 +96,9 @@ PolygonAnim::freePolygonObjects ()
 	}
 	if (p->effectParameters)
 	    delete p->effectParameters;
-	    
+
 	delete p;
-	
+
 	mPolygons.pop_back ();
     }
 }
@@ -163,7 +163,7 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
 	gridSizeY = winLimitsH / minRectSize;	// int div.
 
     freePolygonObjects ();
-    
+
     mPolygons.clear ();
     for (int i = 0; i < gridSizeX * gridSizeY; i++)
     {
@@ -270,7 +270,7 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
 	    GLfloat *nor = p->normals;
 
 	    int id = 0;
-	    
+
 	    // Left face
 	    ind[id++] = 6; // First vertex
 	    ind[id++] = 1;
@@ -426,7 +426,7 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 
 	for (int x = 0; x < numPolysinRow; x++, it++)
 	{
-	    PolygonObject *p = *it;    
+	    PolygonObject *p = *it;
 	    // Clip odd rows when necessary
 	    float topLeftX, topRightX, bottomLeftX, bottomRightX;
 
@@ -515,7 +515,7 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 	    pv[15] = topRightX;
 	    pv[16] = topRightY;
 	    pv[17] = halfThick;
-			
+
 	    // Determine 6 back vertices in cw direction
 	    pv[18] = topRightX;
 	    pv[19] = topRightY;
@@ -524,7 +524,7 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 	    pv[21] = bottomRightX;
 	    pv[22] = bottomRightY;
 	    pv[23] = -halfThick;
-			
+
 	    pv[24] = 0;
 	    pv[25] = bottomY;
 	    pv[26] = -halfThick;
@@ -532,7 +532,7 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 	    pv[27] = bottomLeftX;
 	    pv[28] = bottomLeftY;
 	    pv[29] = -halfThick;
-			
+
 	    pv[30] = topLeftX;
 	    pv[31] = topLeftY;
 	    pv[32] = -halfThick;
@@ -668,7 +668,6 @@ PolygonAnim::tessellateIntoGlass (int spokeMultiplier,
     int numSpokes = 4 * spokeMultiplier;
     int winLimitsX, winLimitsY, winLimitsW, winLimitsH;
     float centerX, centerY;
-    float  spokeRange;
     float topBottomLength, leftRightLength;
 
     Spoke spokes[numSpokes];
@@ -679,8 +678,6 @@ PolygonAnim::tessellateIntoGlass (int spokeMultiplier,
 	spokes[i].spokeVertex =
 	    (SpokeVertex *) calloc (numTiers, sizeof (SpokeVertex));
     }
-
-    spokeRange = 2 * M_PI / numSpokes;
 
     CompRect inRect (mAWindow->savedRectsValid () ?
 		     mAWindow->savedInRect () :

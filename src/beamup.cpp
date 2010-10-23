@@ -155,15 +155,12 @@ BeamUpAnim::step ()
 
     float timestep = mIntenseTimeStep;
     float old = 1 - (mRemainingTime) / (mTotalTime - timestep);
-    float stepSize;
 
     mRemainingTime -= timestep;
     if (mRemainingTime <= 0)
 	mRemainingTime = 0;	// avoid sub-zero values
 
     float newProgress = 1 - mRemainingTime / (mTotalTime - timestep);
-
-    stepSize = newProgress - old;
 
     bool creating = (mCurWindowEvent == WindowEventOpen ||
 		     mCurWindowEvent == WindowEventUnminimize ||

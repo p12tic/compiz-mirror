@@ -214,7 +214,7 @@ class AirplaneAnim :
 		    float duration,
 		    const AnimEffect info,
 		    const CompRect &icon);
-		    
+
 	~AirplaneAnim ();
 
 	void
@@ -228,10 +228,10 @@ class AirplaneAnim :
 
 	bool
 	tesselateIntoAirplane ();
-	
+
 	void
 	updateBB (CompOutput &);
-	
+
 	void
 	freePolygonObjects ();
 
@@ -273,9 +273,9 @@ public:
 	      float duration,
 	      const AnimEffect info,
 	      const CompRect &icon);
-	      
+
     void init ();
-    
+
     void stepPolygon (PolygonObject *p, float);
 
     static const float kDurationFactor;
@@ -291,9 +291,9 @@ public:
 		const CompRect &icon);
 
     bool deceleratingMotion () { return true; }
-    
+
     static const float kDurationFactor;
-    
+
     void
     init ();
 };
@@ -342,14 +342,14 @@ public:
 			float duration,
 			const AnimEffect info,
 			const CompRect &icon);
-    
+
     void step () { TransformAnim::step (); }
-    
+
     void updateBB (CompOutput &output);
     bool updateBBUsed () { return true; }
-    
+
     void updateTransform (GLMatrix &);
-    
+
     void updateAttrib (GLWindowPaintAttrib &wAttrib);
     virtual float getDissolveSingleProgress () { return progressLinear (); }
 };
