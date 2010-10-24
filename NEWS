@@ -5,3 +5,7 @@ Development release.
 Added simple setuptools/cython based buildsystem.
 
 Update for libcompizconfig API changes
+
+Release 0.9.2 (2010-10-24 Sam Spilsbury <smspillaz@gmail.com>)
+==============================================================
+Development release.
