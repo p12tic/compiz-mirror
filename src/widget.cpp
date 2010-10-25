@@ -652,6 +652,8 @@ WidgetScreen::WidgetScreen (CompScreen *screen) :
     ScreenInterface::setHandler (screen, false);
     CompositeScreenInterface::setHandler (cScreen, false);
 
+    screen->handleEventSetEnabled (this, true);
+
     cb = boost::bind (&WidgetScreen::toggle, this, _1, _2, _3);
     optionSetToggleKeyInitiate (cb);
     optionSetToggleButtonInitiate (cb);
