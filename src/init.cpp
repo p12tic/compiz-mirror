@@ -33,9 +33,9 @@ COMPIZ_PLUGIN_20090315 (group, GroupPluginVTable);
  * since it will fail */
 bool gTextAvailable;
 
-/* 
+/*
  * GroupScreen::optionChanged
- * 
+ *
  * An option was just changed. Since we aren't constantly re-rendering
  * things like glow, the tab bar, the font, etc, we need to re-render
  * applicable things */
@@ -64,7 +64,7 @@ GroupScreen::optionChanged (CompOption *opt,
 		{
 		    group->mTabBar->mTextLayer =
 		      TextLayer::rebuild (group->mTabBar->mTextLayer);
-			
+
 		    if (group->mTabBar->mTextLayer)
 			group->mTabBar->mTextLayer->render ();
 		}
@@ -140,7 +140,7 @@ GroupScreen::optionChanged (CompOption *opt,
 	    foreach (GroupSelection *group, mGroups)
 		foreach (CompWindow *w, group->mWindows)
 		    GroupWindow::get (w)->checkFunctions ();
-	
+
 	    break;
 
 	default:
@@ -179,12 +179,12 @@ GroupScreen::applyInitialActions ()
 		mTmpSel.clear ();
 		mTmpSel.select (w);
 		g = mTmpSel.toGroup ();
-		
+
 		if (g)
 		    g->tabGroup (w);
 	    }
 	}
-	
+
 	rit++;
     }
 
@@ -193,7 +193,7 @@ GroupScreen::applyInitialActions ()
 
 /*
  * GroupScreen::checkFunctions
- * 
+ *
  * Checks to enable and disable interfaced functions in GroupScreen
  * if we do or don't need them. Keeping them enabled costs CPU usage
  * so do this only when needed
@@ -210,12 +210,12 @@ void
 GroupScreen::checkFunctions ()
 {
     unsigned long functionsMask = 0;
-    
+
     /* We need to enable our output paint hook if we are
      * -> Painting a selection rect
      * -> Painting a dragged tab
      * -> We have some groups AND
-     *    -> There is a "stretched window" OR 
+     *    -> There is a "stretched window" OR
      *    -> We are doing the tab change animation OR
      *    -> We are doing the tabbing/untabbing animation OR
      *    -> We are painting the tab bar
@@ -223,7 +223,7 @@ GroupScreen::checkFunctions ()
      *     PAINT_SCREEN_WITH_TRANSFORMED_WINDOWS_MASK which
      *     allows for matrix transformation of windows)
      */
-     
+
     if (mGrabState == GroupScreen::ScreenGrabSelect ||
 	 mGrabState == GroupScreen::ScreenGrabTabDrag)
 	 functionsMask |= (GL_PAINT_OUTPUT |
@@ -233,7 +233,7 @@ GroupScreen::checkFunctions ()
 	foreach (GroupSelection *group, mGroups)
 	{
 	    if ((group->mTabbingState != GroupSelection::NoTabbing) ||
-	        (group->mTabBar && 
+	        (group->mTabBar &&
 		 (group->mTabBar->mChangeState == GroupTabBar::NoTabChange ||
 		  group->mTabBar->mState != PaintOff)) ||
 		 group->mResizeInfo)
@@ -244,18 +244,27 @@ GroupScreen::checkFunctions ()
 	    }
 	}
     }
-     
+
      /* We need to enable preparePaint if:
       * -> There is an animation going on
       * -> There is a tab bar with slots visible and a dragged slot
       *    (since this creates forces on the other slots)
-      * 
+      *
       * enabling preparePaint implicitly enabled donePaint
-      * 
+      *
       */
+
+
 
     foreach (GroupSelection *group, mGroups)
     {
+    /*fprintf (stderr, "%i %i %i %i %i %i\n",(group->mTabbingState != GroupSelection::NoTabbing), group->mTabBar->mChangeState != GroupTabBar::NoTabChange, (group->mTabBar->mState == PaintFadeIn ||
+	       group->mTabBar->mState == PaintFadeOut), (group->mTabBar->mTextLayer &&
+	       (group->mTabBar->mTextLayer->mState == PaintFadeIn ||
+	        group->mTabBar->mTextLayer->mState == PaintFadeOut)),  (group->mTabBar->mBgLayer &&
+	       group->mTabBar->mBgLayer->mBgAnimation), (group->mTabBar->mSlots.size () && mDraggedSlot));*/
+
+
 	if ((group->mTabbingState != GroupSelection::NoTabbing) ||
 	    (group->mTabBar &&
 	     (group->mTabBar->mChangeState != GroupTabBar::NoTabChange ||
@@ -268,37 +277,38 @@ GroupScreen::checkFunctions ()
 	       group->mTabBar->mBgLayer->mBgAnimation) ||
 	      (group->mTabBar->mSlots.size () && mDraggedSlot))))
 	{
+	    //fprintf (stderr, "enabling preparePaint\n");
 	    functionsMask |= (PREPARE_PAINT | DONE_PAINT);
 	    break;
 	}
     }
-    
+
     cScreen->preparePaintSetEnabled (this, functionsMask & PREPARE_PAINT);
-    cScreen->donePaintSetEnabled (this, functionsMask & DONE_PAINT);     
+    cScreen->donePaintSetEnabled (this, functionsMask & DONE_PAINT);
     gScreen->glPaintOutputSetEnabled (this, functionsMask &
 					     GL_PAINT_OUTPUT);
     gScreen->glPaintTransformedOutputSetEnabled (this, functionsMask &
 					   GL_PAINT_TRANSFORMED_OUTPUT);
 }
-    
+
 /*
  * GroupScreen::postLoad
- * 
+ *
  * Load all information about this group that was previously saved
  *
  */
 
 void
 GroupScreen::postLoad ()
-{    
+{
     foreach (GroupSelection *group, mGroups)
-    {	
+    {
 	for (std::list <Window>::iterator it = group->mWindowIds.begin ();
 	     it != group->mWindowIds.end ();
 	     it++)
 	{
 	    CompWindow *w = screen->findWindow (*it);
-	    
+
 	    if (w)
 		GroupWindow::get (w)->addWindowToGroup (group);
 	    else
@@ -307,23 +317,23 @@ GroupScreen::postLoad ()
 		it = group->mWindowIds.begin ();
 	    }
 	}
-	
+
 	if (group->mTopId)
 	{
 	    CompWindow *w;
-	    
+
 	    w = screen->findWindow (group->mTopId);
-	    
+
 	    if (w)
 		group->tabGroup (w);
 	    else
 	    {
 		w = screen->findWindow (group->mWindowIds.front ());
-		
+
 		if (w)
 		    group->tabGroup (w);
 	    }
-	    
+
 	    /* if there was a tab bar, re-render it */
 	    if (group->mTabBar)
 	    {
@@ -338,13 +348,13 @@ GroupScreen::postLoad ()
 		    group->mTabBar->mSelectionLayer->render ();
 	    }
 	}
-	
+
     }
 }
 
 /*
  * GroupScreen::GroupScreen
- * 
+ *
  * Constructor for GroupScreen. Set up atoms, glow texture, queues, etc
  *
  */
@@ -370,7 +380,7 @@ GroupScreen::GroupScreen (CompScreen *s) :
     mDragged (false),
     mPrevX (0),
     mPrevY (0) ,
-    mLastGrabbedWindow (None)  
+    mLastGrabbedWindow (None)
 {
     ScreenInterface::setHandler (screen);
     GLScreenInterface::setHandler (gScreen, false);
@@ -414,24 +424,24 @@ GroupScreen::GroupScreen (CompScreen *s) :
 
     optionSetSelectButtonInitiate (boost::bind (&GroupScreen::select,
 						     this, _1, _2, _3));
-    optionSetSelectButtonTerminate (boost::bind 
+    optionSetSelectButtonTerminate (boost::bind
 					(&GroupScreen::selectTerminate,
 						     this, _1, _2, _3));
-    optionSetSelectSingleKeyInitiate (boost::bind 
+    optionSetSelectSingleKeyInitiate (boost::bind
 					(&GroupScreen::selectSingle,
 						     this, _1, _2, _3));
-    optionSetGroupKeyInitiate (boost::bind 
+    optionSetGroupKeyInitiate (boost::bind
 					(&GroupScreen::groupWindows,
 						     this, _1, _2, _3));
-    optionSetUngroupKeyInitiate (boost::bind 
+    optionSetUngroupKeyInitiate (boost::bind
 					(&GroupScreen::ungroupWindows,
 						     this, _1, _2, _3));
     optionSetTabmodeKeyInitiate (boost::bind (&GroupScreen::initTab,
 						     this, _1, _2, _3));
-    optionSetChangeTabLeftKeyInitiate (boost::bind 
+    optionSetChangeTabLeftKeyInitiate (boost::bind
 					   (&GroupScreen::changeTabLeft,
 						     this, _1, _2, _3));
-    optionSetChangeTabRightKeyInitiate (boost::bind 
+    optionSetChangeTabRightKeyInitiate (boost::bind
 					  (&GroupScreen::changeTabRight,
 						     this, _1, _2, _3));
     optionSetRemoveKeyInitiate (boost::bind (&GroupScreen::removeWindow,
@@ -450,7 +460,7 @@ GroupScreen::GroupScreen (CompScreen *s) :
 
 /*
  * GroupScreen::~GroupScreen
- * 
+ *
  * Screen properties tear-down, delete all the groups, destroy IPWs
  * etc
  *
@@ -458,7 +468,7 @@ GroupScreen::GroupScreen (CompScreen *s) :
 GroupScreen::~GroupScreen ()
 {
     writeSerializedData ();
-	
+
     if (mGroups.size ())
     {
 	GroupSelection *group;
@@ -467,10 +477,10 @@ GroupScreen::~GroupScreen ()
 	while (rit != mGroups.rend ())
 	{
 	    group = *rit;
-	    
+
 	    group->mWindows.clear ();
 	    group->mWindowIds.clear ();
-	    
+
 	    if (group->mTabBar)
 	    {
 		GroupTabBarSlot *slot = group->mTabBar->mSlots.front ();
@@ -487,7 +497,7 @@ GroupScreen::~GroupScreen ()
 		    delete slot;
 		    slot = nextSlot;
 		}
-		
+
 		group->mTabBar->mSlots.clear ();
 
 		delete group->mTabBar;
@@ -518,10 +528,10 @@ GroupScreen::~GroupScreen ()
 
 /*
  * GroupWindow::checkFunctions
- * 
+ *
  * Function to check if we need to enable any of our wrapped
  * functions.
- * 
+ *
  */
 
 #define GL_PAINT (1 << 0)
@@ -539,9 +549,9 @@ void
 GroupWindow::checkFunctions ()
 {
     unsigned long functionsMask = 0;
-    
+
     GROUP_SCREEN (screen);
-    
+
     /* For glPaint, the window must either be:
      * -> In an animation (eg rotating, tabbing, etc)
      * -> Having its tab bar shown
@@ -554,13 +564,13 @@ GroupWindow::checkFunctions ()
 	|| !mResizeGeometry.isEmpty () || mWindowHideInfo
 	|| mInSelection)
 	functionsMask |= GL_PAINT;
-	
- 
+
+
     /* For glDraw, the window must be:
      * -> Window must be in a group
      * -> Window must have glow quads
      */
-     
+
     if (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads);
 	functionsMask |= (GL_DRAW | GET_OUTPUT_EXTENTS);
 
@@ -588,7 +598,7 @@ GroupWindow::checkFunctions ()
 	/* Even if we are not resizing all windows we still need
 	 * to recalc the tab bar position anyways, so do that
 	 */
-	 
+
 	if (gs->optionGetResizeAll () ||
 	    (mGroup->mTabBar && IS_TOP_TAB (window, mGroup)))
 	    functionsMask |= RESIZE_NOTIFY;
@@ -599,10 +609,10 @@ GroupWindow::checkFunctions ()
 	    functionsMask |= STATECHANGE_NOTIFY;
 	if (gs->optionGetRaiseAll ())
 	    functionsMask |= ACTIVATE_NOTIFY;
-	
+
 	functionsMask |= WINDOW_NOTIFY;
     }
-	
+
 
     gWindow->glPaintSetEnabled (this, functionsMask & GL_PAINT);
     gWindow->glDrawSetEnabled (this, functionsMask & GL_DRAW);
@@ -620,7 +630,7 @@ GroupWindow::checkFunctions ()
 
 /*
  * GroupWindow::GroupWindow
- * 
+ *
  * Constructor for GroupWindow, set up the hide info, animation state
  * resize geometry, glow quads etc
  *
@@ -652,7 +662,7 @@ GroupWindow::GroupWindow (CompWindow *w) :
     WindowInterface::setHandler (window, false);
     CompositeWindowInterface::setHandler (cWindow, true);
     GLWindowInterface::setHandler (gWindow, false);
-    
+
     window->grabNotifySetEnabled (this, true);
     window->ungrabNotifySetEnabled (this, true);
 
@@ -672,7 +682,7 @@ GroupWindow::GroupWindow (CompWindow *w) :
 
 /*
  * GroupWindow::~GroupWindow
- * 
+ *
  * Tear down for when we don't need group data on a window anymore
  *
  */
@@ -693,7 +703,7 @@ GroupPluginVTable::init ()
         !CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI) ||
 	!CompPlugin::checkPluginABI ("mousepoll", COMPIZ_MOUSEPOLL_ABI))
 	return false;
-	
+
     if (!CompPlugin::checkPluginABI ("text", COMPIZ_TEXT_ABI))
 	gTextAvailable = false;
     else

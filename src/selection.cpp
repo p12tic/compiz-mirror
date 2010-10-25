@@ -216,12 +216,9 @@ Selection::select (GroupSelection *g)
 }
 
 /*
- * Selection::toGroup
+ * Selection::selectRegion
  *
- * Create a new group from this selection. Also "unselect" all of these
- * windows since they are grouped now!
- *
- * FIXME: it should return the new group pointer
+ * Selects all windows in the mouse selection region
  *
  */
 
@@ -261,6 +258,14 @@ Selection::selectRegion ()
 
     delete ws;
 }
+
+/*
+ * Selection::toGroup
+ *
+ * Create a new group from this selection. Also "unselect" all of these
+ * windows since they are grouped now!
+ *
+ */
 
 GroupSelection *
 Selection::toGroup ()
