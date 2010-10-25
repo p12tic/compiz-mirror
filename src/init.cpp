@@ -258,13 +258,6 @@ GroupScreen::checkFunctions ()
 
     foreach (GroupSelection *group, mGroups)
     {
-    /*fprintf (stderr, "%i %i %i %i %i %i\n",(group->mTabbingState != GroupSelection::NoTabbing), group->mTabBar->mChangeState != GroupTabBar::NoTabChange, (group->mTabBar->mState == PaintFadeIn ||
-	       group->mTabBar->mState == PaintFadeOut), (group->mTabBar->mTextLayer &&
-	       (group->mTabBar->mTextLayer->mState == PaintFadeIn ||
-	        group->mTabBar->mTextLayer->mState == PaintFadeOut)),  (group->mTabBar->mBgLayer &&
-	       group->mTabBar->mBgLayer->mBgAnimation), (group->mTabBar->mSlots.size () && mDraggedSlot));*/
-
-
 	if ((group->mTabbingState != GroupSelection::NoTabbing) ||
 	    (group->mTabBar &&
 	     (group->mTabBar->mChangeState != GroupTabBar::NoTabChange ||
@@ -277,7 +270,6 @@ GroupScreen::checkFunctions ()
 	       group->mTabBar->mBgLayer->mBgAnimation) ||
 	      (group->mTabBar->mSlots.size () && mDraggedSlot))))
 	{
-	    //fprintf (stderr, "enabling preparePaint\n");
 	    functionsMask |= (PREPARE_PAINT | DONE_PAINT);
 	    break;
 	}

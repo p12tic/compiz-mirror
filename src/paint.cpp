@@ -571,8 +571,6 @@ GroupScreen::preparePaint (int msSinceLastPaint)
 
 	    if (bar->mBgLayer && bar->mBgLayer->mBgAnimation)
 		keepPainting |= bar->mBgLayer->handleAnimation (msSinceLastPaint);
-
-	    //fprintf (stderr, "keepPainting is %i\n", keepPainting);
 	}
 
 	if (group->mTabBar &&
