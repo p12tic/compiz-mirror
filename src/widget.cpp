@@ -697,9 +697,6 @@ WidgetWindow::WidgetWindow (CompWindow *window) :
 
 WidgetWindow::~WidgetWindow ()
 {
-    if (mWasHidden)
-	updateWidgetMapState (true);
-
     if (mMatchUpdate.active ())
 	mMatchUpdate.stop ();
 
