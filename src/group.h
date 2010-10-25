@@ -21,12 +21,12 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
- * 
+ *
  * Some terminology used in this plugin:
- * 
+ *
  * 1. The "top tab" means the currently selected visible tab in the
  * group. All other windows in the tabbed group are invisible.
- * 
+ *
  * 2. There are two animations, "Tabbing/Untabbing" and the "Change"
  * animation. The "Tabbing/Untabbing" one is probably the most complex.
  * This is where we center windows to some central top tab and then
@@ -34,11 +34,11 @@
  * do a similar animation when animating out (which is why we need
  * to save their relevant distance from the main window initially).
  * There is also the "change" animation, which is where we switch
- * between a number of top tabs 
- * 
+ * between a number of top tabs
+ *
  * 3. The glow around windows is actually in fact a small texture which
  * is strectched according to some gloq quads and then painted.
- * 
+ *
  * 4. Each "layer" here is a GUI object which is painted on screen
  * (such as the tab bar, the text, the selection highlight, etc)
  *
@@ -78,7 +78,7 @@ class GroupScreen;
 
 /*
  * Used to check if we can use the text plugin
- * 
+ *
  */
 extern bool gTextAvailable;
 
@@ -182,7 +182,7 @@ class GroupSelection
 	    UngroupAll,
 	    UngroupSingle
 	} UngroupState;
-	
+
 	typedef enum {
 	    NoTabbing = 0,
 	    Tabbing,
@@ -193,7 +193,6 @@ class GroupSelection
 
 	typedef std::list <GroupSelection *> List;
 
-	GroupSelection (long int);
 	GroupSelection ();
 	~GroupSelection ();
 
@@ -222,7 +221,7 @@ class GroupSelection
 			   Window	   constrainedWindow,
 			   int	   dx,
 			   int	   dy);
-		       
+
 	bool tabBarTimeout ();
 	bool showDelayTimeout ();
 
@@ -250,7 +249,7 @@ class GroupSelection
 public:
     CompScreen *mScreen;
     CompWindowList mWindows;
-    
+
     MousePoller	mPoller;
 
     GroupTabBar *mTabBar;
@@ -263,9 +262,9 @@ public:
     unsigned int mGrabMask;
 
     GLushort mColor[4];
-    
+
     ResizeInfo *mResizeInfo;
-    
+
     /* It's easier to keep track of these things, serialize them
      * and rebuild what the group would have looked like later
      */
@@ -399,7 +398,7 @@ class GroupWindow :
 	glDraw (const GLMatrix &,
 		GLFragment::Attrib &,
 		const CompRegion	&,
-		unsigned int); 
+		unsigned int);
 
 	bool
 	glPaint (const GLWindowPaintAttrib &,
@@ -414,16 +413,16 @@ class GroupWindow :
     public:
 
 	/* glow.cpp */
-	
+
 	bool checkTabbing ();
 	bool checkRotating ();
 	bool checkShowTabBar ();
-	
+
 	void
 	paintGlow (GLFragment::Attrib        &attrib,
 		   const CompRegion	     &paintRegion,
 		   unsigned int		     mask);
-		   
+
 	void
 	computeGlowQuads (GLTexture::Matrix *matrix);
 
@@ -500,7 +499,7 @@ class GroupWindow :
 			   int        &new_dy);
 
 	/* init.cpp */
-	
+
 	void checkFunctions ();
 
 
@@ -588,10 +587,10 @@ class GroupScreen :
 				  CompOutput		    *,
 				  unsigned int		      );
 
-	
+
 
     public:
-    
+
         void
         checkFunctions ();
 
@@ -765,7 +764,7 @@ class GroupScreen :
 	CompTimer	  mInitialActionsTimeoutHandle;
 
 	GLTexture::List   mGlowTexture;
-	
+
 	Window		  mLastGrabbedWindow;
 
     public:
@@ -775,7 +774,7 @@ class GroupScreen :
 	{
 	    ar & mGroups;
 	}
-	
+
 	void postLoad ();
 };
 

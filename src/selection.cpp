@@ -293,7 +293,7 @@ Selection::toGroup ()
 	if (!group)
 	{
 	    /* create new group */
-	    group = new GroupSelection (0);
+	    group = new GroupSelection ();
 
 	    if (!group)
 		return NULL;
