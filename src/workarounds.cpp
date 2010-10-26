@@ -890,7 +890,8 @@ WorkaroundsScreen::handleCompizEvent (const char 	      *pluginName,
 	}
     }
 
-    if (!CompOption::getBoolOptionNamed (o, "active", false))
+    if (!CompOption::getBoolOptionNamed (o, "active", false) &&
+	minimizingWindows.empty ())
 	screen->handleCompizEventSetEnabled (this, false);
 
     screen->handleCompizEvent (pluginName, eventName, o);
