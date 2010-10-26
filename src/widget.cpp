@@ -183,8 +183,14 @@ WidgetScreen::setWidgetLayerMapState (bool map)
 {
     CompWindow   *highest = NULL;
     unsigned int highestActiveNum = 0;
+    CompWindowList copyWindows = screen->windows ();
 
-    foreach (CompWindow *window, screen->windows ())
+    /* We have to operate on a copy of the list, since it's possible
+     * for the screen->windows () to be re-ordered by
+     * WidgetWindow::updateWidgetMapState, (-> CompWindow::raise ->
+     * CompScreen::unhookWindow)
+     */
+    foreach (CompWindow *window, copyWindows)
     {
 	WIDGET_WINDOW (window);
 
