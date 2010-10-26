@@ -242,11 +242,14 @@ WorkaroundsWindow::unminimize ()
 
 	setVisibility (true);
 
-	foreach (CompWindow *w, screen->windows ())
+	if (!ws->skipTransients)
 	{
-	    if (w->transientFor () == window->id () ||
-		WorkaroundsWindow::get (w)->isGroupTransient (window->clientLeader ()))
-		w->unminimize ();
+	    foreach (CompWindow *w, screen->windows ())
+	    {
+		if (w->transientFor () == window->id () ||
+		    WorkaroundsWindow::get (w)->isGroupTransient (window->clientLeader ()))
+		    w->unminimize ();
+	    }
 	}
 
 	/* HACK ATTACK */
@@ -1009,7 +1012,8 @@ WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
     PluginClassHandler <WorkaroundsScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
-    roleAtom (XInternAtom (screen->dpy (), "WM_WINDOW_ROLE", 0))
+    roleAtom (XInternAtom (screen->dpy (), "WM_WINDOW_ROLE", 0)),
+    skipTransients (false)
 {
     CompOption::Vector		propTemplate;
 
@@ -1111,6 +1115,24 @@ WorkaroundsWindow::WorkaroundsWindow (CompWindow *window) :
 
 WorkaroundsWindow::~WorkaroundsWindow ()
 {
+    WORKAROUNDS_SCREEN (screen);
+
+    /* It is not safe to loop the whole window list at this point
+     * to _also_ unminimize transient windows because this could
+     * be the plugin tear-down stage and other WorkaroundWindow
+     * structures could be destroyed.
+     *
+     * It is ok to skip transients in this case, since it is likely
+     * that we will be unminimizing every single window as
+     * WorkaroundsWindow is destroyed (in the case that the window
+     * itself has been destroyed while the plugin is enabled, this
+     * is not much of a problem since the transient windows go with
+     * the destroyed window in this case)
+     *
+     * FIXME: We need a ::fini stage before we do this!
+     */
+    ws->skipTransients = true;
+
     if (isMinimized)
     {
 	unminimize ();
@@ -1134,6 +1156,8 @@ WorkaroundsWindow::~WorkaroundsWindow ()
 	    window->state () &= ~CompWindowStateStickyMask;
 	}
     }
+
+    ws->skipTransients = false;
 }
 
 bool

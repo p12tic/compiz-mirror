@@ -3,7 +3,7 @@
  *
  * Sticky window handling and OpenGL fixes:
  * Copyright (c) 2007 Dennis Kasprzyk <onestone@opencompositing.org>
- * 
+ *
  * Ported to Compiz 0.9:
  * Copyright (c) 2008 Sam Spilsbury <smspillaz@gmail.com>
  *
@@ -61,7 +61,8 @@ class WorkaroundsScreen :
 	Atom		roleAtom;
 	std::list <Window> mfwList;
 	CompWindowList  minimizingWindows;
-	
+	bool		skipTransients;
+
 	PropertyWriter	inputDisabledAtom;
 
 	GL::GLProgramParameter4fProc origProgramEnvParameter4f;
@@ -84,7 +85,7 @@ class WorkaroundsScreen :
 		       const CompRegion	   	 &,
 		       CompOutput		 *,
 		       unsigned int		   );
-	
+
 	void
 	handleCompizEvent (const char 	      *pluginName,
 			   const char 	      *eventName,
@@ -124,19 +125,19 @@ class WorkaroundsWindow :
     public GLWindowInterface
 {
     public:
-	
+
 	typedef struct _HideInfo {
 	    Window shapeWindow;
-	    
+
 	    unsigned long skipState;
 	    unsigned long shapeMask;
-	    
+
 	    XRectangle *inputRects;
 	    int        nInputRects;
 	    int        inputRectOrdering;
-	    
+
 	} HideInfo;
-	
+
     public:
 
 	WorkaroundsWindow (CompWindow *);
@@ -154,24 +155,24 @@ class WorkaroundsWindow :
 	bool isMinimized;
 
 	HideInfo *windowHideInfo;
-	
+
 	bool
 	isGroupTransient (Window);
-	
+
 	void
 	resizeNotify (int, int, int, int);
 
 	void
 	getAllowedActions (unsigned int &,
 			   unsigned int &);
-	
+
 	void minimize ();
 	void unminimize ();
 	bool minimized ();
-	
+
 	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
 		      const CompRegion &, unsigned int);
-	
+
 	void setVisibility (bool);
 	void restoreInputShape (HideInfo *);
 	void clearInputShape (HideInfo *);
