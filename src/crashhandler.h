@@ -24,12 +24,14 @@
 #include <core/pluginclasshandler.h>
 #include "crashhandler_options.h"
 
+#include <sys/prctl.h>
+
 class CrashScreen :
     public PluginClassHandler<CrashScreen,CompScreen>,
     public CrashhandlerOptions
 {
     public:
-	
+
 	CrashScreen (CompScreen *screen);
 	~CrashScreen ();
 

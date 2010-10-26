@@ -35,6 +35,13 @@ COMPIZ_PLUGIN_20090315 (crashhandler, CrashPluginVTable)
 static void
 crash_handler (int sig)
 {
+
+#ifndef PR_SET_PTRACER
+#define PR_SET_PTRACER 0x59616d61
+#endif
+
+    prctl (PR_SET_PTRACER, getpid (), 0, 0, 0);
+
     if (sig == SIGSEGV || sig == SIGFPE || sig == SIGILL || sig == SIGABRT)
     {
 	CrashScreen *cs = CrashScreen::get (screen);
@@ -46,7 +53,7 @@ crash_handler (int sig)
 	// backtrace
 	char cmd[1024];
 
-	snprintf (cmd, 1024, 
+	snprintf (cmd, 1024,
 		  "echo -e \"set prompt\nthread apply all bt full\n"
 	      	  "echo \\\\\\n\necho \\\\\\n\nbt\nquit\" > /tmp/gdb.tmp;"
 		  "gdb -q %s %i < /tmp/gdb.tmp | "
