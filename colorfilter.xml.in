@@ -42,7 +42,7 @@
 	    <value>sepia</value>
 	    <value>grayscale</value>
 	    <value>deuteranopia</value>
-	    <value>protonopia</value>
+	    <value>protanopia</value>
 	</default>
         <hints>file;</hints>
       </option>
