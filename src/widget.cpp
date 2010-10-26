@@ -323,10 +323,13 @@ WidgetScreen::endWidgetMode (CompWindow *closedWidget)
 		WIDGET_WINDOW (w);
 		if (w == closedWidget)
 		    continue;
+
 		if (ww->mIsWidget)
 		    return;
 	    }
 	}
+	else
+	    return;
     }
 
     options.push_back (CompOption ("root", CompOption::TypeInt));
@@ -381,7 +384,8 @@ WidgetScreen::handleEvent (XEvent *event)
 	break;
     case ButtonPress:
 	/* terminate widget mode if a non-widget window was clicked */
-	if (optionGetEndOnClick ())
+	if (optionGetEndOnClick () &&
+	    event->xbutton.button == Button1)
 	{
 	    if (mState == StateOn)
 	    {
