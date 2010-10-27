@@ -104,6 +104,7 @@ ThumbScreen::thumbUpdateThumbnail ()
     CompRect   oGeom;
     float      maxSize = optionGetThumbSize ();
     double     scale  = 1.0;
+    ThumbWindow *tw;
     CompWindow *w;
 
     if (thumb.win == pointedWin)
@@ -116,6 +117,15 @@ ThumbScreen::thumbUpdateThumbnail ()
 	damageThumbRegion (&thumb);
 
     freeThumbText (&oldThumb);
+
+    if (oldThumb.win)
+    {
+	tw = ThumbWindow::get (oldThumb.win);
+
+	/* Disable painting on the old thumb */
+	tw->cWindow->damageRectSetEnabled (tw, false);
+	tw->gWindow->glPaintSetEnabled (tw, false);
+    }
 
     oldThumb       = thumb;
     thumb.text     = NULL;
@@ -130,6 +140,10 @@ ThumbScreen::thumbUpdateThumbnail ()
     }
 
     w = thumb.win;
+    tw = ThumbWindow::get (w);
+
+    tw->cWindow->damageRectSetEnabled (tw, true);
+    tw->gWindow->glPaintSetEnabled (tw, true);
 
     /* do we nee to scale the window down? */
     if (WIN_W (w) > maxSize || WIN_H (w) > maxSize)
@@ -985,9 +999,9 @@ ThumbWindow::ThumbWindow (CompWindow *window) :
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window))
 {
-    WindowInterface::setHandler (window);
-    CompositeWindowInterface::setHandler (cWindow);
-    GLWindowInterface::setHandler (gWindow);
+    WindowInterface::setHandler (window, false);
+    CompositeWindowInterface::setHandler (cWindow, false);
+    GLWindowInterface::setHandler (gWindow, false);
 }
 
 
