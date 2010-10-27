@@ -400,16 +400,16 @@ ThumbScreen::positionUpdate (const CompPoint &p)
 
 
 void
-ThumbWindow::resize (int        dx,
-		     int        dy,
-		     int        dwidth,
-		     int        dheight)
+ThumbWindow::resizeNotify (int        dx,
+			   int        dy,
+			   int        dwidth,
+			   int        dheight)
 {
     THUMB_SCREEN (screen);
 
     ts->thumbUpdateThumbnail ();
 
-    window->resize (dx, dy, dwidth, dheight);
+    window->resizeNotify (dx, dy, dwidth, dheight);
 }
 
 void

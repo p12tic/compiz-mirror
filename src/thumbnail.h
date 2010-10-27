@@ -190,10 +190,10 @@ class ThumbWindow :
 		unsigned int		mask);
 
 	void
-	resize (int dx,
-		int dy,
-		int dwidth,
-		int dheight);
+	resizeNotify (int dx,
+		      int dy,
+		      int dwidth,
+		      int dheight);
 
 	bool
 	damageRect (bool initial,
