@@ -2,10 +2,14 @@
  *
  * Compiz thumbnail plugin
  *
- * thumbnail.c
+ * thumbnail.cpp
  *
  * Copyright : (C) 2007 by Dennis Kasprzyk
  * E-mail    : onestone@beryl-project.org
+ *
+ * Ported to Compiz 0.9
+ * Copyright : (C) 2009 by Sam Spilsbury
+ * E-mail    : smspillaz@gmail.com
  *
  * Based on thumbnail.c:
  * Copyright : (C) 2007 Stjepan Glavina
@@ -41,7 +45,6 @@
 #include <text/text.h>
 #include <mousepoll/mousepoll.h>
 
-#include "thumbnail_tex.h"
 #include "thumbnail_options.h"
 
 #define THUMB_SCREEN(s)						      \

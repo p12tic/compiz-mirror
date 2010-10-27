@@ -1,6 +1,34 @@
-/* copyright */
+/*
+ *
+ * Compiz thumbnail plugin
+ *
+ * thumbnail.cpp
+ *
+ * Copyright : (C) 2007 by Dennis Kasprzyk
+ * E-mail    : onestone@beryl-project.org
+ *
+ * Ported to Compiz 0.9
+ * Copyright : (C) 2009 by Sam Spilsbury
+ * E-mail    : smspillaz@gmail.com
+ *
+ * Based on thumbnail.c:
+ * Copyright : (C) 2007 Stjepan Glavina
+ * E-mail    : stjepang@gmail.com
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ */
 
 #include "thumbnail.h"
+#include "thumbnail_tex.h"
 
 COMPIZ_PLUGIN_20090315 (thumbnail, ThumbPluginVTable);
 
@@ -238,6 +266,9 @@ ThumbScreen::thumbUpdateThumbnail ()
     thumb.opacity = 0.0;
 
     damageThumbRegion (&thumb);
+
+    cScreen->preparePaintSetEnabled (this, true);
+    cScreen->donePaintSetEnabled (this, true);
 }
 
 bool
@@ -346,6 +377,9 @@ ThumbScreen::positionUpdate (const CompPoint &p)
 
 	pointedWin   = NULL;
 	showingThumb = false;
+
+	cScreen->preparePaintSetEnabled (this, true);
+	cScreen->donePaintSetEnabled (this, true);
     }
 }
 
@@ -446,7 +480,6 @@ ThumbScreen::handleEvent (XEvent * event)
 	w = screen->findWindow (event->xcrossing.window);
 	if (w)
 	{
-
 	    if (w->wmType () & CompWindowTypeDockMask)
 	    {
 		dock = NULL;
@@ -459,10 +492,15 @@ ThumbScreen::handleEvent (XEvent * event)
 		pointedWin   = NULL;
 		showingThumb = false;
 
+		cScreen->preparePaintSetEnabled (this, true);
+		cScreen->donePaintSetEnabled (this, true);
+
 		if (poller.active ())
 		{
 		    poller.stop ();
 		}
+
+
 	    }
 	}
 	break;
@@ -733,11 +771,24 @@ ThumbScreen::preparePaint (int ms)
 void
 ThumbScreen::donePaint ()
 {
+    std::vector <Thumbnail *> damageThumbs;
+
     if (thumb.opacity > 0.0 && thumb.opacity < 1.0)
-	damageThumbRegion (&thumb);
+	damageThumbs.push_back (&thumb);
 
     if (oldThumb.opacity > 0.0 && oldThumb.opacity < 1.0)
-	damageThumbRegion (&oldThumb);
+	damageThumbs.push_back (&oldThumb);
+
+    if (damageThumbs.size ())
+    {
+	foreach (Thumbnail *t, damageThumbs)
+	    damageThumbRegion (t);
+    }
+    else
+    {
+	cScreen->preparePaintSetEnabled (this, false);
+	cScreen->donePaintSetEnabled (this, false);
+    }
 
     cScreen->donePaint ();
 }
@@ -880,7 +931,6 @@ ThumbWindow::damageRect (bool initial,
     return cWindow->damageRect (initial, rect);
 }
 
-
 ThumbScreen::ThumbScreen (CompScreen *screen) :
     PluginClassHandler <ThumbScreen, CompScreen> (screen),
     gScreen (GLScreen::get (screen)),
@@ -897,7 +947,7 @@ ThumbScreen::ThumbScreen (CompScreen *screen) :
     y (0)
 {
     ScreenInterface::setHandler (screen);
-    CompositeScreenInterface::setHandler (cScreen);
+    CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen);
 
     thumb.win = NULL;
