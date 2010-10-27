@@ -125,6 +125,7 @@ ThumbScreen::thumbUpdateThumbnail ()
 	/* Disable painting on the old thumb */
 	tw->cWindow->damageRectSetEnabled (tw, false);
 	tw->gWindow->glPaintSetEnabled (tw, false);
+	tw->window->resizeNotifySetEnabled (tw, false);
     }
 
     oldThumb       = thumb;
@@ -144,6 +145,7 @@ ThumbScreen::thumbUpdateThumbnail ()
 
     tw->cWindow->damageRectSetEnabled (tw, true);
     tw->gWindow->glPaintSetEnabled (tw, true);
+    tw->window->resizeNotifySetEnabled (tw, true);
 
     /* do we nee to scale the window down? */
     if (WIN_W (w) > maxSize || WIN_H (w) > maxSize)
