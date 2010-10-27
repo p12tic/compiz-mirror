@@ -475,19 +475,19 @@ GroupScreen::~GroupScreen ()
 
 	    if (group->mTabBar)
 	    {
-		GroupTabBarSlot *slot = group->mTabBar->mSlots.front ();
-		GroupTabBarSlot *nextSlot = NULL;
+		std::list <GroupTabBarSlot *>::reverse_iterator rit =
+				      group->mTabBar->mSlots.rbegin ();
 
 		/* We need to delete the slots first since otherwise
 		 * the tab bar will automatically try to change to
 		 * the next slot after the one that was deleted, but
 		 * it can't since we have already deleted all of our
 		 * window structures */
-		while (slot)
+		while (rit != group->mTabBar->mSlots.rend ())
 		{
-		    nextSlot = slot->mNext;
+		    GroupTabBarSlot *slot = *rit;
 		    delete slot;
-		    slot = nextSlot;
+		    rit--;
 		}
 
 		group->mTabBar->mSlots.clear ();
