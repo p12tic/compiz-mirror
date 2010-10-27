@@ -269,6 +269,7 @@ ThumbScreen::thumbUpdateThumbnail ()
 
     cScreen->preparePaintSetEnabled (this, true);
     cScreen->donePaintSetEnabled (this, true);
+    gScreen->glPaintOutputSetEnabled (this, true);
 }
 
 bool
@@ -765,6 +766,13 @@ ThumbScreen::preparePaint (int ms)
 	}
     }
 
+    if (oldThumb.win == NULL && thumb.win == NULL)
+    {
+	cScreen->preparePaintSetEnabled (this, false);
+	cScreen->donePaintSetEnabled (this, false);
+	gScreen->glPaintOutputSetEnabled (this, false);
+    }
+
     cScreen->preparePaint (ms);
 }
 
@@ -948,7 +956,7 @@ ThumbScreen::ThumbScreen (CompScreen *screen) :
 {
     ScreenInterface::setHandler (screen);
     CompositeScreenInterface::setHandler (cScreen, false);
-    GLScreenInterface::setHandler (gScreen);
+    GLScreenInterface::setHandler (gScreen, false);
 
     thumb.win = NULL;
     oldThumb.win = NULL;
