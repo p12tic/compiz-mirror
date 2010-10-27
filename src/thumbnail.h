@@ -91,7 +91,7 @@ class ThumbScreen:
 	void handleEvent (XEvent *);
 
 	void preparePaint (int);
-	
+
 	bool
 	glPaintOutput (const GLScreenPaintAttrib &,
 		       const GLMatrix &,
@@ -168,6 +168,7 @@ class ThumbScreen:
 class ThumbWindow :
 	public PluginClassHandler <ThumbWindow, CompWindow>,
 	public WindowInterface,
+	public CompositeWindowInterface,
 	public GLWindowInterface
 {
     public:

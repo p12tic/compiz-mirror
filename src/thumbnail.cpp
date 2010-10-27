@@ -927,6 +927,9 @@ ThumbWindow::ThumbWindow (CompWindow *window) :
     cWindow (CompositeWindow::get (window)),
     gWindow (GLWindow::get (window))
 {
+    WindowInterface::setHandler (window);
+    CompositeWindowInterface::setHandler (cWindow);
+    GLWindowInterface::setHandler (gWindow);
 }
 
 
