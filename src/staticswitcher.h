@@ -64,6 +64,7 @@ class StaticSwitchScreen :
 				int        *opacity);
 	void doWindowDamage (CompWindow *w);
 	void handleSelectionChange (bool toNext, int nextIdx);
+	void createPopup ();
 	bool showPopup ();
 	Cursor getCursor (bool mouseSelectOn);
 	void initiate (SwitchWindowSelection selection,
@@ -89,7 +90,7 @@ class StaticSwitchScreen :
 	void getMinimizedAndMatch (bool &minimizedOption,
 				   CompMatch *&match);
 	bool getMipmap ();
-	
+
 	Window    lastActiveWindow;
 
 	CompTimer popupDelayTimer;

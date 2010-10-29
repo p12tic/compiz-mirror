@@ -226,57 +226,10 @@ StaticSwitchScreen::handleSelectionChange (bool toNext, int nextIdx)
     moreAdjust = true;
 }
 
-bool
-StaticSwitchScreen::showPopup ()
-{
-    CompWindow *w = ::screen->findWindow (popupWindow);
-    if (w && (w->state () & CompWindowStateHiddenMask))
-    	w->show ();
-    else
-	XMapWindow (::screen->dpy (), popupWindow);
-
-    cScreen->damageScreen ();
-
-    popupDelayTimer.stop ();
-
-    return false;
-}
-
-Cursor
-StaticSwitchScreen::getCursor (bool mouseSelectOn)
-{
-    if (mouseSelectOn)
-	return ::screen->normalCursor ();
-
-    return ::screen->invisibleCursor ();
-}
-
 void
-StaticSwitchScreen::initiate (SwitchWindowSelection selection,
-			      bool                  shouldShowPopup)
+StaticSwitchScreen::createPopup ()
 {
-    bool noSwitchWindows;
-    bool newMouseSelect;
-
-    if (::screen->otherGrabExist ("switcher", "scale", "cube", 0))
-	return;
-
-    this->selection      = selection;
-    selectedWindow       = NULL;
-
-    noSwitchWindows = true;
-    foreach (CompWindow *w, ::screen->windows ())
-    {
-	if (StaticSwitchWindow::get (w)->isSwitchWin ())
-	{
-	    noSwitchWindows = false;
-	    break;
-	}
-    }
-    if (noSwitchWindows)
-	return;
-
-    if (!popupWindow && shouldShowPopup)
+    if (!popupWindow)
     {
 	Display		     *dpy = ::screen->dpy ();
 	XWMHints	     xwmh;
@@ -329,7 +282,65 @@ StaticSwitchScreen::initiate (SwitchWindowSelection selection,
 	::screen->setWindowProp (popupWindow, Atoms::winDesktop, 0xffffffff);
 
 	setSelectedWindowHint ();
+
+	updatePopupWindow ();
     }
+}
+
+bool
+StaticSwitchScreen::showPopup ()
+{
+    CompWindow *w;
+
+    /* Always checks for an existing popup */
+    createPopup ();
+
+    w = ::screen->findWindow (popupWindow);
+    if (w && (w->state () & CompWindowStateHiddenMask))
+    	w->show ();
+    else
+	XMapWindow (::screen->dpy (), popupWindow);
+
+    cScreen->damageScreen ();
+
+    popupDelayTimer.stop ();
+
+    return false;
+}
+
+Cursor
+StaticSwitchScreen::getCursor (bool mouseSelectOn)
+{
+    if (mouseSelectOn)
+	return ::screen->normalCursor ();
+
+    return ::screen->invisibleCursor ();
+}
+
+void
+StaticSwitchScreen::initiate (SwitchWindowSelection selection,
+			      bool                  shouldShowPopup)
+{
+    bool noSwitchWindows;
+    bool newMouseSelect;
+
+    if (::screen->otherGrabExist ("switcher", "scale", "cube", 0))
+	return;
+
+    this->selection      = selection;
+    selectedWindow       = NULL;
+
+    noSwitchWindows = true;
+    foreach (CompWindow *w, ::screen->windows ())
+    {
+	if (StaticSwitchWindow::get (w)->isSwitchWin ())
+	{
+	    noSwitchWindows = false;
+	    break;
+	}
+    }
+    if (noSwitchWindows)
+	return;
 
     newMouseSelect = optionGetMouseSelect () &&
     	             selection != Panels && shouldShowPopup;
@@ -349,7 +360,7 @@ StaticSwitchScreen::initiate (SwitchWindowSelection selection,
 
 	    createWindowList ();
 
-	    if (popupWindow && shouldShowPopup)
+	    if (shouldShowPopup)
 	    {
 		unsigned int delay;
 
@@ -448,11 +459,11 @@ switchTerminate (CompAction         *action,
 	    ::screen->handleEventSetEnabled (ss, false);
 
 	ss->selectedWindow = NULL;
-	
+
 	if (screen->activeWindow () != ss->lastActiveWindow)
 	{
 	    CompWindow *w = screen->findWindow (ss->lastActiveWindow);
-	    
+
 	    if (w)
 		w->moveInputFocusTo ();
 	}
@@ -1151,7 +1162,6 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	int            x, y, offX;
 	float          px, py, pos;
 	int            count = sScreen->windows.size ();
-
 
 	CompWindow::Geometry &g = window->geometry ();
 
