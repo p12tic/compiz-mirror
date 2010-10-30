@@ -559,19 +559,23 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
  * Build a Compiz Fragment Function from a source string
  */
 GLFragment::FunctionId
-FragmentParser::buildFragmentProgram (char *source, char *name, int target)
+FragmentParser::buildFragmentProgram (CompString &source,
+				      CompString &name,
+				      int target)
 {
     GLFragment::FunctionData *data;
     int handle;
+    char *source_c = strdup (source.c_str ());
     /* Create the function data */
     data = new GLFragment::FunctionData ();
     if (!data)
 	return 0;
     /* Parse the source and fill the function data */
-    programParseSource (data, target, source);
+    programParseSource (data, target, source_c);
     /* Create the function */
-    handle = data->createFragmentFunction (name);
+    handle = data->createFragmentFunction (name.c_str ());
     /* Clean things */
+    free (source_c);
     delete data;
     return handle;
 }
@@ -586,7 +590,6 @@ FragmentParser::loadFragmentProgram (CompString &file,
 {
     CompString source;
     GLFragment::FunctionId handle;
-    char *source_c, *name_c;
 
     /* Clean fragment program name */
     name = programCleanName (name);
@@ -596,14 +599,10 @@ FragmentParser::loadFragmentProgram (CompString &file,
     {
 	return 0;
     }
-    source_c = strdup (source.c_str ());
-    name_c   = strdup (name.c_str ());
 
     /* Build the Compiz Fragment Program */
-    handle = buildFragmentProgram (source_c,
-				   name_c, target);
+    handle = buildFragmentProgram (source,
+				   name, target);
 
-    free (name_c);
-    free (source_c);
     return handle;
 }

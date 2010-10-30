@@ -10,7 +10,7 @@
  * Email : guillaume@segu.in
  *
  * Copyright (c) 2007 Guillaume Seguin <guillaume@segu.in>
- * 
+ *
  * Basic C++ port of this by:
  * Copyright (c) 2009 Sam Spilsbury <smspillaz@gmail.com>
  *
@@ -64,19 +64,19 @@ class FragmentParser
 
 	CompString
 	ltrim (CompString string);
-	
+
 	CompString
 	programCleanName (CompString name);
-	
+
 	CompString
 	programReadSource (CompString fname);
-	
+
 	CompString
 	getFirstArgument (char **source);
-	
+
 	FragmentOffset *
 	programAddOffsetFromAddOp (char *source);
-	
+
 	CompString
 	programFindOffset (std::list<FragmentOffset *>::iterator it,
 			   char *name);
@@ -89,7 +89,7 @@ class FragmentParser
 			    int target, char *source);
 
 	GLFragment::FunctionId
-	buildFragmentProgram (char *source, char *name, int target);
+	buildFragmentProgram (CompString &, CompString &, int target);
 
 	GLFragment::FunctionId
 	loadFragmentProgram (CompString &file,
