@@ -1868,7 +1868,10 @@ GroupScreen::handleEvent (XEvent      *event)
 			(gw->mGroup != mLastRestackedGroup))
 		    {
 			if (optionGetRaiseAll ())
+			{
+			    fprintf (stderr, "raising all windows\n");
 			    gw->mGroup->raiseWindows (w);
+			}
 		    }
 		    if (w->managed () && !w->overrideRedirect ())
 			mLastRestackedGroup = gw->mGroup;

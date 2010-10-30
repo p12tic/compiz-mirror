@@ -193,10 +193,16 @@ Selection::deselect (GroupSelection *group)
 void
 Selection::select (CompWindow *w)
 {
+    GROUP_WINDOW (w);
+
+    /* filter out windows we don't want to be groupable */
+    if (!gw->isGroupWindow ())
+	return;
+
     push_back (w);
 
-    GroupWindow::get (w)->mInSelection = true;
-    GroupWindow::get (w)->cWindow->addDamage ();
+    gw->mInSelection = true;
+    gw->cWindow->addDamage ();
 }
 
 /*
@@ -211,6 +217,9 @@ Selection::select (GroupSelection *g)
 {
     foreach (CompWindow *cw, g->mWindows)
     {
+	/* filter out windows we don't want to be groupable */
+	if (!GroupWindow::get (cw)->isGroupWindow ())
+	    return;
 	select (cw);
     }
 }
@@ -338,10 +347,6 @@ void
 Selection::checkWindow (CompWindow *w)
 {
     GROUP_WINDOW (w);
-
-    /* filter out windows we don't want to be groupable */
-    if (!gw->isGroupWindow ())
-	return;
 
     if (gw->mInSelection)
     {
