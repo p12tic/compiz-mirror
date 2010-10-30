@@ -10,7 +10,7 @@
  * Email : guillaume@segu.in
  *
  * Copyright (c) 2007 Guillaume Seguin <guillaume@segu.in>
- * 
+ *
  * Basic C++ port of this by:
  * Copyright (c) 2009 Sam Spilsbury <smspillaz@gmail.com>
  *
@@ -54,30 +54,26 @@
 CompString
 FragmentParser::base_name (CompString str)
 {
-    char *current = strdup (str.c_str ());
-    int length;
-    while (*current)
+    size_t pos = 0, foundPos = 0;
+    unsigned int length;
+    while (foundPos != std::string::npos)
     {
-	if (*current == '/')
+	foundPos = str.find ("/", pos);
+	if (foundPos != std::string::npos)
 	{
 	    /* '/' found, check if it is the latest char of the string,
 	     * if not update result string pointer */
-	    current++;
-	    if (!*current) break;
-	    str = current;
+	    if (pos + 1 > str.size ())
+		break;
+
+	    pos = foundPos;
 	}
-	else
-	    current++;
     }
     length = str.size ();
-    /* Duplicate result string for trimming */
-    current = strdup (str.c_str ());
-    if (!current)
-	return NULL;
     /* Trim terminating '/' if needed */
-    if (length > 0 && current[(length - 1)] == '/')
-	current[(length - 1)] = 0;
-    return CompString (current);
+    if (length > 0 && str.at (length - 1) == '/')
+	str = str.substr (pos, length - 1);
+    return str;
 }
 
 /*
@@ -103,7 +99,7 @@ FragmentParser::programCleanName (CompString name)
     char *dest, *current;
 
     current = dest = strdup (name.c_str ());
-    
+
     /* Replace every non alphanumeric char by '_' */
     while (*current)
     {
@@ -137,7 +133,7 @@ FragmentParser::programReadSource (CompString fname)
 	free (path);
     }
 
-    /* If failed again, try as system wide data file 
+    /* If failed again, try as system wide data file
      * (in PREFIX/share/compiz/filters) */
     if (!fp)
     {
@@ -172,9 +168,9 @@ FragmentParser::programReadSource (CompString fname)
 
     /* Close file */
     fclose (fp);
-    
+
     retData = CompString (data);
-    
+
     free (data);
 
     return retData;
@@ -245,7 +241,7 @@ FragmentParser::getFirstArgument (char **source)
 	**source = 0;
 
     retArg = CompString (arg);
-    
+
     free (arg);
     free (orig);
 
@@ -487,7 +483,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 		break;
 	    case FetchOp:
 		/* Example : TEX tmp, coord, texture[0], RECT;
-		 * "tmp" is dest name, while "coord" is either 
+		 * "tmp" is dest name, while "coord" is either
 		 * fragment.texcoord[0] or an offset */
 		current += 3;
 		if ((arg1 = strdup (getFirstArgument (&current).c_str ())))
