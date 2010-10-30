@@ -216,12 +216,7 @@ void
 Selection::select (GroupSelection *g)
 {
     foreach (CompWindow *cw, g->mWindows)
-    {
-	/* filter out windows we don't want to be groupable */
-	if (!GroupWindow::get (cw)->isGroupWindow ())
-	    return;
 	select (cw);
-    }
 }
 
 /*
