@@ -1617,6 +1617,25 @@ GroupWindow::windowNotify (CompWindowNotify n)
 	    }
 
 	    break;
+
+	case CompWindowNotifyRestack:
+	    /* If there are other windows in this group, then raise
+	     * all the windows (but ignore if this group was just
+	     * restacked then) */
+	    if (mGroup && !mGroup->mTabBar &&
+		(mGroup != gs->mLastRestackedGroup))
+	    {
+		if (gs->optionGetRaiseAll ())
+		{
+		    fprintf (stderr, "raising all windows\n");
+		    mGroup->raiseWindows (window);
+		}
+	    }
+	    if (window->managed () && !window->overrideRedirect ())
+		gs->mLastRestackedGroup = mGroup;
+
+	    break;
+
 	default:
 	    return window->windowNotify (n);
 	    break;
@@ -1857,24 +1876,6 @@ GroupScreen::handleEvent (XEvent      *event)
 		    XConfigureWindow (screen->dpy (),
 				      gw->mGroup->mTabBar->mInputPrevention,
 				      CWSibling | CWStackMode, &xwc);
-		}
-
-		/* If there are other windows in this group, then raise
-		 * all the windows (but ignore if this group was just
-		 * restacked then) */
-		if (event->xconfigure.above != None)
-		{
-		    if (gw->mGroup && !gw->mGroup->mTabBar &&
-			(gw->mGroup != mLastRestackedGroup))
-		    {
-			if (optionGetRaiseAll ())
-			{
-			    fprintf (stderr, "raising all windows\n");
-			    gw->mGroup->raiseWindows (w);
-			}
-		    }
-		    if (w->managed () && !w->overrideRedirect ())
-			mLastRestackedGroup = gw->mGroup;
 		}
 	    }
 	}
