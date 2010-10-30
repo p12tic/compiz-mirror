@@ -75,7 +75,7 @@ class FragmentParser
 	getFirstArgument (char **source);
 
 	FragmentOffset *
-	programAddOffsetFromAddOp (char *source);
+	programAddOffsetFromAddOp (CompString source);
 
 	CompString
 	programFindOffset (std::list<FragmentOffset *>::iterator it,

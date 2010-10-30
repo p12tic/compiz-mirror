@@ -249,66 +249,61 @@ FragmentParser::getFirstArgument (char **source)
  * Add a new fragment offset to the offsets stack from an ADD op string
  */
 FragmentParser::FragmentOffset *
-FragmentParser::programAddOffsetFromAddOp (char *source)
+FragmentParser::programAddOffsetFromAddOp (CompString source)
 {
     FragmentOffset  *offset;
-    char	    *op, *orig_op;
-    char	    *name;
-    char	    *offset_string;
-    char	    *temp;
+    CompString	    op, orig_op;
+    char	    *op_c;
+    CompString	    name;
+    CompString	    offset_string;
+    CompString	    temp;
     std::list <FragmentOffset *>::iterator it = offsets.begin ();
 
-    if (strlen (source) < 5)
+    if (source.size () < 5)
 	return offsets.front ();
 
-    orig_op = op = strdup (source);
-
-    op += 3;
-    if (!(name = strdup (getFirstArgument (&op).c_str ())))
+    orig_op = op = source;
+    op = op.substr (3);
+    op_c = strdup (op.c_str ());
+    name = CompString (getFirstArgument (&op_c));
+    if (name.empty ())
     {
-	free (orig_op);
+	free (op_c);
 	return offsets.front ();
     }
+
+    temp = CompString (getFirstArgument (&op_c));
 
     /* If an offset with the same name is already registered, skeep this one */
     if (!programFindOffset (it, CompString (name)).empty () ||
-	!(temp = strdup (getFirstArgument (&op).c_str ())))
+	temp.empty ())
     {
-	free (name);
-	free (orig_op);
+	free (op_c);
 	return (*it); // ???
     }
 
-    /* We don't need this, let's free it immediately */
-    free (temp);
-
     /* Just use the end of the op as the offset */
-    op += 1;
-    offset_string = strdup (ltrim (op).c_str ());
-    if (!offset_string)
+    op = op.substr (1);
+    offset_string = ltrim (op).c_str ();
+    if (offset_string.empty ())
     {
-	free (name);
-	free (orig_op);
+	free (op_c);
 	return offsets.front ();
     }
 
     offset = new FragmentOffset ();
     if (!offset)
     {
-	free (offset_string);
-	free (name);
-	free (orig_op);
+	free (op_c);
 	return (*it);
     }
 
-    offset->name =  CompString (name);
-    offset->offset = CompString (offset_string);
+    offset->name =  name;
+    offset->offset = offset_string;
 
     offsets.push_back (offset);
 
-    free (offset_string);
-    free (name);
-    free (orig_op);
+    free (op_c);
 
     return offset;
 }
