@@ -82,10 +82,16 @@ FragmentParser::base_name (CompString str)
 CompString
 FragmentParser::ltrim (CompString string)
 {
-    const char *str = string.c_str ();
-    while (*str && (*str == ' ' || *str == '\t'))
-	str++;
-    return CompString (str);
+    size_t pos = 0;
+    while (pos != std::string::npos)
+    {
+	if (string.at (pos) == ' ' || string.at (pos) == '\t')
+	    pos++;
+	else
+	    break;
+    }
+
+    return string.substr (pos);
 }
 
 /* General fragment program related functions ------------------------------- */
