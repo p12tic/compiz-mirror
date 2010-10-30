@@ -79,7 +79,7 @@ class FragmentParser
 
 	CompString
 	programFindOffset (std::list<FragmentOffset *>::iterator it,
-			   char *name);
+			   const CompString &name);
 
 	void
 	programFreeOffset ();

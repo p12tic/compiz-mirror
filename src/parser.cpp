@@ -271,7 +271,7 @@ FragmentParser::programAddOffsetFromAddOp (char *source)
     }
 
     /* If an offset with the same name is already registered, skeep this one */
-    if (!programFindOffset (it, name).empty () ||
+    if (!programFindOffset (it, CompString (name)).empty () ||
 	!(temp = strdup (getFirstArgument (&op).c_str ())))
     {
 	free (name);
@@ -318,12 +318,12 @@ FragmentParser::programAddOffsetFromAddOp (char *source)
  */
 CompString
 FragmentParser::programFindOffset (std::list<FragmentOffset *>::iterator it,
-				   char *name)
+				   const CompString &name)
 {
     if (!(*it))
 	return NULL;
 
-    if ((*it)->name.compare (CompString (name)) == 0)
+    if ((*it)->name.compare (name) == 0)
 	return CompString ((*it)->offset);
 
     return programFindOffset ((it++), name);
@@ -493,7 +493,8 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 		    else
 		    {
 			arg2 = strdup (programFindOffset (
-					      offsets.begin (), temp).c_str ());
+					      offsets.begin (),
+					      CompString (temp)).c_str ());
 			if (arg2)
 			{
 			    data->addFetchOp (arg1, arg2, target);
