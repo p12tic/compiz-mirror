@@ -42,6 +42,8 @@
 #include <cstring>
 #include <ctype.h>
 
+#include <iostream>
+#include <fstream>
 #include "parser.h"
 
 /* General helper functions ------------------------------------------------- */
@@ -83,7 +85,7 @@ CompString
 FragmentParser::ltrim (CompString string)
 {
     size_t pos = 0;
-    while (pos != std::string::npos)
+    while (!(pos > string.size ()))
     {
 	if (string.at (pos) == ' ' || string.at (pos) == '\t')
 	    pos++;
@@ -102,19 +104,23 @@ FragmentParser::ltrim (CompString string)
 CompString
 FragmentParser::programCleanName (CompString name)
 {
-    char *dest, *current;
+    unsigned int pos = 0;
+    CompString bit ("_foo");
 
-    current = dest = strdup (name.c_str ());
+    /* Strange hack (gcc seems not to like "_", but will take
+     * things like "_foo" for whatever reason) */
+    bit = bit.substr (0, 1);
 
     /* Replace every non alphanumeric char by '_' */
-    while (*current)
+    while (!(pos >= name.size ()))
     {
-	if (!isalnum (*current))
-	    *current = '_';
-	current++;
+	if (!isalnum (name.at (pos)))
+	    name.replace (pos, 1, bit);
+
+	pos++;
     }
 
-    return CompString (dest);
+    return name;
 }
 
 /*
@@ -123,61 +129,44 @@ FragmentParser::programCleanName (CompString name)
 CompString
 FragmentParser::programReadSource (CompString fname)
 {
-    FILE   *fp;
-    char   *data, *path = NULL, *home = getenv ("HOME");
+    std::ifstream fp;
+    CompString data, path, home = CompString (getenv ("HOME"));
     CompString retData;
-    int     length;
 
     /* Try to open file fname as is */
-    fp = fopen (fname.c_str (), "r");
+    fp.open ("filename.ext");
 
     /* If failed, try as user filter file (in ~/.compiz/data/filters) */
-    if (!fp && home && strlen (home))
+    if (!fp.is_open () && !home.empty ())
     {
-	asprintf (&path, "%s/.compiz/data/filters/%s", home, fname.c_str ());
-	fp = fopen (path, "r");
-	free (path);
+	path = home + "/.compiz/data/filters/" + fname;
+	fp.open (path.c_str ());
     }
 
     /* If failed again, try as system wide data file
      * (in PREFIX/share/compiz/filters) */
-    if (!fp)
+    if (!fp.is_open ())
     {
-	asprintf (&path, "%s/data/filters/%s", DATADIR, fname.c_str ());
-	fp = fopen (path, "r");
-	free (path);
+	path = CompString (DATADIR) + "/data/filters/" + fname;
+	fp.open (path.c_str ());
     }
 
     /* If failed again & again, abort */
-    if (!fp)
+    if (!fp.is_open ())
     {
 	return CompString ("");
     }
 
-    /* Get file length */
-    fseek (fp, 0L, SEEK_END);
-    length = ftell (fp);
-    rewind (fp);
-
-    /* Alloc memory */
-    data = (char *) malloc (sizeof (char) * (length + 1));
-    if (!data)
+    /* Read file */
+    while (fp.good ())
     {
-	fclose (fp);
-	return NULL;
+	CompString line;
+
+	std::getline (fp, line);
+	retData += line;
     }
 
-    /* Read file */
-    fread (data, length, 1, fp);
-
-    data[length] = 0;
-
-    /* Close file */
-    fclose (fp);
-
-    retData = CompString (data);
-
-    free (data);
+    fp.close ();
 
     return retData;
 }
