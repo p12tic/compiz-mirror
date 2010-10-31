@@ -620,23 +620,23 @@ PutScreen::getDistance (CompWindow         *w,
 	}
     case PutViewportLeft:
 	/* move to the viewport on the left */
-	dx = -s->width ();
+	dx = (s->vp ().x () >= 1) ? -s->width () : 0;
 	dy = 0;
 	break;
     case PutViewportRight:
 	/* move to the viewport on the right */
-	dx = s->width ();
+	dx = (s->vp ().x () < s->vpSize ().width ()-1) ? s->width () : 0;
 	dy = 0;
 	break;
     case PutViewportUp:
 	/* move to the viewport above */
 	dx = 0;
-	dy = -s->height ();
+	dy = (s->vp ().y () >= 1) ? -s->height () : 0;
 	break;
     case PutViewportDown:
 	/* move to the viewport below */
 	dx = 0;
-	dy = s->height ();
+	dy = (s->vp ().y () < s->vpSize ().height ()-1) ? s->height () : 0;
 	break;
     case PutNextOutput:
 	{
@@ -1214,6 +1214,9 @@ PutScreen::PutScreen (CompScreen *screen) :
     optionSet##action##ButtonInitiate (boost::bind (&PutScreen::initiateCommon,\
 					      this, _1,_2,_3,type))
 
+    setAction (PutRestore, PutRestore);
+    setAction (PutPointer, PutPointer);
+    setAction (PutNextOutput, PutNextOutput);
     setAction (PutCenter, PutCenter);
     setAction (PutEmptyCenter, PutEmptyCenter);
     setAction (PutLeft, PutLeft);
@@ -1250,12 +1253,14 @@ PutScreen::PutScreen (CompScreen *screen) :
     setViewportAction(11);
     setViewportAction(12);
 
-    /*
-    optionSetPutViewportInitiate (boost::bind (&PutScreen::initiateCommon,     \
-	                                  this, _1,_2,_3,(PutType)PutViewport));
-    optionSetPutViewport1KeyInitiate (boost::bind (&PutScreen::initiateCommon, \
-	                                  this, _1,_2,_3,(PutType)PutViewport));
-    */
+#define setDirectionAction(action) \
+    optionSet##action##KeyInitiate(boost::bind (&PutScreen::initiateCommon, \
+						this, _1,_2,_3,action))
+
+    setDirectionAction(PutViewportLeft);
+    setDirectionAction(PutViewportRight);
+    setDirectionAction(PutViewportUp);
+    setDirectionAction(PutViewportDown);
 }
 
 PutWindow::PutWindow (CompWindow *window) :
