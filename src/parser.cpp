@@ -49,28 +49,28 @@
  * special case : basename ("/home/user/") == "user"
  */
 CompString
-FragmentParser::base_name (CompString str)
+FragmentParser::baseFileName (CompString path)
 {
     size_t pos = 0, foundPos = 0;
     unsigned int length;
     while (foundPos != std::string::npos)
     {
-	foundPos = str.find ("/", pos);
+	foundPos = path.find ("/", pos);
 	if (foundPos != std::string::npos)
 	{
 	    /* '/' found, check if it is the latest char of the string,
 	     * if not update result string pointer */
-	    if (pos + 1 > str.size ())
+	    if (pos + 1 > path.size ())
 		break;
 
 	    pos = foundPos + 1;
 	}
     }
-    length = str.size ();
+    length = path.size ();
     /* Trim terminating '/' if needed */
-    if (length > 0 && str.at (length - 1) == '/')
-	str = str.substr (pos, length - 1);
-    return str;
+    if (length > 0 && path.at (length - 1) == '/')
+	path = path.substr (pos, length - 1);
+    return path;
 }
 
 /*

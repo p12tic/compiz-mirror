@@ -133,7 +133,7 @@ ColorfilterScreen::toggleWindow (CompAction         *action,
 				 CompOption::Vector options)
 {
 
-    CompWindow *w = 
+    CompWindow *w =
       screen->findWindow (CompOption::getIntOptionNamed (options, "window", 0));
 
     if (w && GL::fragmentProgram)
@@ -232,7 +232,7 @@ ColorfilterScreen::loadFilters (GLTexture *texture)
     loaded = 0;
     for (int i = 0; i < count; i++)
     {
-	name = parser->base_name (filters.at (i).s ());
+	name = FragmentParser::baseFileName (filters.at (i).s ());
 	file = filters.at (i).s ();
 	if (name.empty ())
 	{
@@ -270,7 +270,7 @@ ColorfilterScreen::loadFilters (GLTexture *texture)
 	if (cfw->isFiltered)
 	    cfw->cWindow->addDamage (w);
     }
-    
+
     delete parser;
 
     return loaded;
@@ -306,7 +306,7 @@ ColorfilterWindow::glDrawTexture (GLTexture 		   *texture,
      * Maybe should this check be done only if a filter is going to be applied
      * for this texture? */
     if (!cfs->filtersLoaded)
-	cfs->loadFilters (texture);    
+	cfs->loadFilters (texture);
 
     /* Filter texture if :
      *   o GL_ARB_fragment_program available
@@ -472,7 +472,7 @@ ColorfilterWindow::postLoad ()
 
 ColorfilterWindow::ColorfilterWindow (CompWindow *window) :
     PluginClassHandler <ColorfilterWindow, CompWindow> (window),
-    PluginStateWriter <ColorfilterWindow> (this, 
+    PluginStateWriter <ColorfilterWindow> (this,
     					   window->id ()),
     window (window),
     cWindow (CompositeWindow::get (window)),
