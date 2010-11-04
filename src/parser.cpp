@@ -100,17 +100,12 @@ void
 FragmentParser::programCleanName (CompString &name)
 {
     unsigned int pos = 0;
-    CompString bit ("_foo");
-
-    /* Strange hack (gcc seems not to like "_", but will take
-     * things like "_foo" for whatever reason) */
-    bit = bit.substr (0, 1);
 
     /* Replace every non alphanumeric char by '_' */
     while (!(pos >= name.size ()))
     {
 	if (!isalnum (name.at (pos)))
-	    name.replace (pos, 1, bit);
+	    name[pos] = '_';
 
 	pos++;
     }
