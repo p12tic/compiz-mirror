@@ -165,7 +165,11 @@ FragmentParser::programReadSource (CompString fname)
     fp.read (buffer, length);
     fp.close ();
 
-    return CompString (buffer);
+    data = CompString (buffer);
+
+    delete[] buffer;
+
+    return data;
 }
 
 /*
