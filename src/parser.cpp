@@ -240,7 +240,7 @@ FragmentParser::programAddOffsetFromAddOp (const CompString &source)
     CompString  op;
     size_t	    pos = 0;
     CompString	    name;
-    CompString	    offset_string;
+    CompString	    offsetString;
     CompString	    temp;
     std::list <FragmentOffset *>::iterator it = offsets.begin ();
 
@@ -266,8 +266,8 @@ FragmentParser::programAddOffsetFromAddOp (const CompString &source)
 
     /* Just use the end of the op as the offset */
     pos += 1;
-    offset_string = ltrim (op.substr (pos)).c_str ();
-    if (offset_string.empty ())
+    offsetString = ltrim (op.substr (pos));
+    if (offsetString.empty ())
 	return offsets.front ();
 
     offset = new FragmentOffset ();
@@ -275,7 +275,7 @@ FragmentParser::programAddOffsetFromAddOp (const CompString &source)
 	return (*it);
 
     offset->name =  name;
-    offset->offset = offset_string;
+    offset->offset = offsetString;
 
     offsets.push_back (offset);
 
