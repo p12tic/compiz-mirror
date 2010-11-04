@@ -117,16 +117,18 @@ FragmentParser::programReadSource (const CompString &fname)
     /* get length of file: */
     fp.seekg (0, std::ios::end);
     length = fp.tellg ();
+    length++;
     fp.seekg (0, std::ios::beg);
 
     /* allocate memory */
     buffer = new char [length];
 
     /* read data as a block: */
-    fp.read (buffer, length);
+    fp.read (buffer, length - 1);
+    buffer[length - 1] = '\0';
     fp.close ();
 
-    data = CompString (buffer);
+    data = buffer;
 
     delete[] buffer;
 
