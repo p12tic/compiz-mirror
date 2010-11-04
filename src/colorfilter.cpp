@@ -20,7 +20,6 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
  */
-
 #include "colorfilter.h"
 #include "parser.h"
 
@@ -232,7 +231,7 @@ ColorfilterScreen::loadFilters (GLTexture *texture)
     loaded = 0;
     for (int i = 0; i < count; i++)
     {
-	name = FragmentParser::baseFileName (filters.at (i).s ());
+	name = CompString (basename (filters.at (i).s ().c_str ()));
 	file = filters.at (i).s ();
 	if (name.empty ())
 	{

@@ -34,44 +34,12 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
+
 #include <cstring>
 #include <ctype.h>
-
 #include <sstream>
 #include <fstream>
 #include "parser.h"
-
-/* General helper functions ----------------------------------------- */
-
-/*
- * Helper function to get the basename of file from its path
- * e.g. basename ("/home/user/blah.c") == "blah.c"
- * special case : basename ("/home/user/") == "user"
- */
-CompString
-FragmentParser::baseFileName (const CompString &path)
-{
-    size_t pos = 0, foundPos = 0;
-    unsigned int length;
-    while (foundPos != std::string::npos)
-    {
-	foundPos = path.find ("/", pos);
-	if (foundPos != std::string::npos)
-	{
-	    /* '/' found, check if it is the latest char of the string,
-	     * if not update result string pointer */
-	    if (pos + 1 > path.size ())
-		break;
-
-	    pos = foundPos + 1;
-	}
-    }
-    length = path.size ();
-    /* Trim terminating '/' if needed */
-    if (length > 0 && path.at (length - 1) == '/')
-	return path.substr (pos, length - 1);
-    return path.substr (pos);
-}
 
 /*
  * Left trimming function

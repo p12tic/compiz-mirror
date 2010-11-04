@@ -89,9 +89,6 @@ class FragmentParser
 	friend class FragmentString;
 
 	static CompString
-	baseFileName (const CompString &path);
-
-	static CompString
 	ltrim (const CompString &string);
 
 	GLFragment::FunctionId
