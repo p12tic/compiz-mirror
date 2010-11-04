@@ -325,7 +325,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 	pos += 9;
     }
 
-    /* Strip comments TODO: read characters including linefeeds */
+    /* Strip comments */
     while ((strippos = source.find ("#", strippos)) != std::string::npos)
     {
 	size_t carriagepos = source.find ("\n", strippos);
@@ -343,7 +343,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 
     /* Strip linefeeds */
     while ((strippos = source.find ("\n", strippos)) != std::string::npos)
-	source.replace (strippos, 1, " ");
+	source[strippos] = ' ';
 
     /* Parse each instruction */
     while (!(pos >= (source.size () - 1)))
