@@ -74,14 +74,14 @@ class FragmentParser
 
 	std::list <FragmentOffset *> offsets;
 
-	CompString
-	programCleanName (CompString name);
+	void
+	programCleanName (CompString &name);
 
 	CompString
-	programReadSource (CompString fname);
+	programReadSource (const CompString &fname);
 
 	FragmentOffset *
-	programAddOffsetFromAddOp (CompString source);
+	programAddOffsetFromAddOp (const CompString &source);
 
 	CompString
 	programFindOffset (std::list<FragmentOffset *>::iterator it,

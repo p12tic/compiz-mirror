@@ -96,8 +96,8 @@ FragmentParser::ltrim (const CompString &string)
 /*
  * Clean program name string
  */
-CompString
-FragmentParser::programCleanName (CompString name)
+void
+FragmentParser::programCleanName (CompString &name)
 {
     unsigned int pos = 0;
     CompString bit ("_foo");
@@ -114,15 +114,13 @@ FragmentParser::programCleanName (CompString name)
 
 	pos++;
     }
-
-    return name;
 }
 
 /*
  * File reader function
  */
 CompString
-FragmentParser::programReadSource (CompString fname)
+FragmentParser::programReadSource (const CompString &fname)
 {
     std::ifstream fp;
     int length;
@@ -240,7 +238,7 @@ FragmentString::getFirstArgument (size_t &pos)
  * Add a new fragment offset to the offsets stack from an ADD op string
  */
 FragmentParser::FragmentOffset *
-FragmentParser::programAddOffsetFromAddOp (CompString source)
+FragmentParser::programAddOffsetFromAddOp (const CompString &source)
 {
     FragmentOffset  *offset;
     FragmentString  op, orig_op;
@@ -568,7 +566,7 @@ FragmentParser::loadFragmentProgram (CompString &file,
     GLFragment::FunctionId handle;
 
     /* Clean fragment program name */
-    name = programCleanName (name);
+    programCleanName (name);
     /* Read the source file */
     source = programReadSource (file);
     if (source.empty ())
