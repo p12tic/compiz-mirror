@@ -102,7 +102,7 @@ class FragmentParser
 	baseFileName (const CompString &path);
 
 	static CompString
-	ltrim (CompString string);
+	ltrim (const CompString &string);
 
 	GLFragment::FunctionId
 	buildFragmentProgram (CompString &, CompString &, int target);

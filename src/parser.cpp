@@ -77,7 +77,7 @@ FragmentParser::baseFileName (const CompString &path)
  * Left trimming function
  */
 CompString
-FragmentParser::ltrim (CompString string)
+FragmentParser::ltrim (const CompString &string)
 {
     size_t pos = 0;
     while (!(pos >= string.size ()))
