@@ -31,9 +31,24 @@
 
 #include "colorfilter.h"
 
-class FragmentParser
+class FragmentString :
+    public CompString
 {
     public:
+
+	FragmentString () :
+	    CompString () {};
+	FragmentString (const CompString &s) :
+	    CompString (s) {};
+
+	CompString
+	getFirstArgument (size_t &pos);
+};
+
+class FragmentParser
+{
+    private:
+
 	enum
 	{
 	    NoOp,
@@ -60,19 +75,10 @@ class FragmentParser
 	std::list <FragmentOffset *> offsets;
 
 	CompString
-	base_name (CompString str);
-
-	CompString
-	ltrim (CompString string);
-
-	CompString
 	programCleanName (CompString name);
 
 	CompString
 	programReadSource (CompString fname);
-
-	CompString
-	getFirstArgument (char **source);
 
 	FragmentOffset *
 	programAddOffsetFromAddOp (CompString source);
@@ -86,7 +92,17 @@ class FragmentParser
 
 	void
 	programParseSource (GLFragment::FunctionData *data,
-			    int target, char *source);
+			    int target, CompString &source);
+
+    public:
+
+	friend class FragmentString;
+
+	static CompString
+	base_name (CompString str);
+
+	static CompString
+	ltrim (CompString string);
 
 	GLFragment::FunctionId
 	buildFragmentProgram (CompString &, CompString &, int target);
