@@ -236,24 +236,22 @@ FragmentParser::getFirstArgument (const CompString &line,
 FragmentParser::FragmentOffset *
 FragmentParser::programAddOffsetFromAddOp (const CompString &source)
 {
-    FragmentOffset  *offset;
+    FragmentOffset  offset;
     CompString  op;
     size_t	    pos = 0;
     CompString	    name;
     CompString	    offsetString;
     CompString	    temp;
-    std::list <FragmentOffset *>::iterator it = offsets.begin ();
+    std::list <FragmentOffset>::iterator it = offsets.begin ();
 
     if (source.size () < 5)
-	return offsets.front ();
+	return NULL;
 
     op = source;
     pos += 3;
     name = getFirstArgument (op, pos);
     if (name.empty ())
-    {
-	return offsets.front ();
-    }
+	return NULL;
 
     temp = getFirstArgument (op, pos);
 
@@ -262,38 +260,31 @@ FragmentParser::programAddOffsetFromAddOp (const CompString &source)
     if ((!offsets.empty () &&
 	 !programFindOffset (it, name).empty ()) ||
 	 temp.empty ())
-	return (*it);
+	return &(*it);
 
     /* Just use the end of the op as the offset */
     pos += 1;
     offsetString = ltrim (op.substr (pos));
     if (offsetString.empty ())
-	return offsets.front ();
+	return NULL;
 
-    offset = new FragmentOffset ();
-    if (!offset)
-	return (*it);
-
-    offset->name =  name;
-    offset->offset = offsetString;
+    offset.name =  name;
+    offset.offset = offsetString;
 
     offsets.push_back (offset);
 
-    return offset;
+    return &(offsets.back ());
 }
 
 /*
  * Find an offset according to its name
  */
 CompString
-FragmentParser::programFindOffset (std::list<FragmentOffset *>::iterator it,
+FragmentParser::programFindOffset (std::list<FragmentOffset>::iterator it,
 				   const CompString &name)
 {
-    if (!(*it))
-	return CompString ("");
-
-    if ((*it)->name == name)
-	return (*it)->offset;
+    if (it->name == name)
+	return (*it).offset;
 
     return programFindOffset ((it++), name);
 }
@@ -323,7 +314,6 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
     CompString strtok;
     size_t     pos = 0, strippos = 0;
     int   length, oplength, type;
-    FragmentOffset *offset = NULL;
 
     CompString arg1, arg2, temp;
 
@@ -406,7 +396,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 	else if (current.substr (0, 3) == "ADD")
 	{
 	    if (current.find ("fragment.texcoord", 0) != std::string::npos)
-		offset = programAddOffsetFromAddOp (current.c_str ());
+		programAddOffsetFromAddOp (current.c_str ());
 	    else
 		type = DataOp;
 	}
@@ -525,7 +515,6 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 	pos = nPos;
     }
     programFreeOffset ();
-    offset = NULL;
 }
 
 /*

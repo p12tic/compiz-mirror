@@ -58,7 +58,7 @@ class FragmentParser
 		CompString offset;
 	};
 
-	std::list <FragmentOffset *> offsets;
+	std::list <FragmentOffset> offsets;
 
 	CompString
 	getFirstArgument (const CompString &line,
@@ -74,7 +74,7 @@ class FragmentParser
 	programAddOffsetFromAddOp (const CompString &source);
 
 	CompString
-	programFindOffset (std::list<FragmentOffset *>::iterator it,
+	programFindOffset (std::list<FragmentOffset>::iterator it,
 			   const CompString &name);
 
 	void
