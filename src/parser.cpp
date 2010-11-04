@@ -174,19 +174,20 @@ FragmentParser::programReadSource (const CompString &fname)
  * or a malloc'ed string that will have to be freed later.
  */
 CompString
-FragmentString::getFirstArgument (size_t &pos)
+FragmentParser::getFirstArgument (const CompString &line,
+				  size_t &pos)
 {
     CompString arg;
-    FragmentString string;
+    CompString string;
     size_t next, temp, orig;
     int length;
     CompString retArg;
 
-    if (pos >= this->size ())
+    if (pos >= line.size ())
 	return CompString ("");
 
     /* Left trim */
-    string = (FragmentString) FragmentParser::ltrim (this->substr (pos));
+    string = FragmentParser::ltrim (line.substr (pos));
 
     orig = pos;
     pos = 0;
@@ -200,7 +201,7 @@ FragmentString::getFirstArgument (size_t &pos)
 	if (!length)
 	{
 	    pos = orig + 1;
-	    return getFirstArgument (pos);
+	    return getFirstArgument (line, pos);
 	}
 	if ((temp = string.find ("{", pos) != std::string::npos) && temp < next &&
 	    (temp = string.find ("}", pos) != std::string::npos) && temp > next)
@@ -219,7 +220,7 @@ FragmentString::getFirstArgument (size_t &pos)
     arg = string.substr (pos, length);
 
     /* Increment source pointer */
-    if ((orig + arg.size () + 1) <= this->size ())
+    if ((orig + arg.size () + 1) <= line.size ())
 	pos += orig + arg.size () + 1;
     else
 	pos = std::string::npos;
@@ -236,7 +237,7 @@ FragmentParser::FragmentOffset *
 FragmentParser::programAddOffsetFromAddOp (const CompString &source)
 {
     FragmentOffset  *offset;
-    FragmentString  op, orig_op;
+    CompString  op;
     size_t	    pos = 0;
     CompString	    name;
     CompString	    offset_string;
@@ -246,20 +247,20 @@ FragmentParser::programAddOffsetFromAddOp (const CompString &source)
     if (source.size () < 5)
 	return offsets.front ();
 
-    orig_op = op = FragmentString (source);
+    op = source;
     pos += 3;
-    name = op.getFirstArgument (pos);
+    name = getFirstArgument (op, pos);
     if (name.empty ())
     {
 	return offsets.front ();
     }
 
-    temp = op.getFirstArgument (pos);
+    temp = getFirstArgument (op, pos);
 
     /* If an offset with the same name is
      * already registered, skip this one */
     if ((!offsets.empty () &&
-	 !programFindOffset (it, CompString (name)).empty ()) ||
+	 !programFindOffset (it, name).empty ()) ||
 	 temp.empty ())
 	return (*it);
 
@@ -292,7 +293,7 @@ FragmentParser::programFindOffset (std::list<FragmentOffset *>::iterator it,
 	return CompString ("");
 
     if ((*it)->name == name)
-	return CompString ((*it)->offset);
+	return (*it)->offset;
 
     return programFindOffset ((it++), name);
 }
@@ -318,7 +319,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 		    		    int target, CompString &source)
 {
     CompString line, next;
-    FragmentString current;
+    CompString current;
     CompString strtok;
     size_t     pos = 0, strippos = 0;
     int   length, oplength, type;
@@ -359,7 +360,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
     {
 	size_t nPos = source.find (";", pos + 1);
 	line = source.substr (pos + 1, nPos - pos);
-	FragmentString origcurrent = current = FragmentString (ltrim (line));
+	CompString origcurrent = current = ltrim (line);
 	/* Find instruction type */
 	type = NoOp;
 
@@ -445,7 +446,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 		cpos = oplength + 1;
 
 		while (current.size () && !(cpos >= current.size ()) &&
-		       (arg1 = current.getFirstArgument (cpos)).size ())
+		       (arg1 = getFirstArgument (current, cpos)).size ())
 		{
 		    /* "output" is a reserved word, skip it */
 		    if (arg1.substr (0, 6) == "output")
@@ -467,9 +468,9 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 		 * fragment.texcoord[0] or an offset */
 		cpos += 3;
 
-		if ((arg1 = current.getFirstArgument (cpos)).size ())
+		if ((arg1 = getFirstArgument (current, cpos)).size ())
 		{
-		    if (!(temp = current.getFirstArgument (cpos)).size ())
+		    if (!(temp = getFirstArgument (current, cpos)).size ())
 			break;
 
 		    if (temp == "fragment.texcoord[0]")
@@ -494,15 +495,15 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 		     * MOV arg1, fragment.color, arg2 */
 		    cpos += 3;
 
-		    if  (!(arg1 = current.getFirstArgument (cpos)).size ())
+		    if  (!(arg1 = getFirstArgument (current, cpos)).size ())
 		    {
 			break;
 		    }
 
-		    if (!(temp = current.getFirstArgument (cpos)).size ())
+		    if (!(temp = getFirstArgument (current, cpos)).size ())
 			break;
 
-		    if (!(arg2 = current.getFirstArgument (cpos)).size ())
+		    if (!(arg2 = getFirstArgument (current, cpos)).size ())
 			break;
 
 		    data->addColorOp (arg1.c_str (), arg2.c_str ());
@@ -513,7 +514,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
 		     * MOV result.color, arg1; */
 		    cpos = current.find (",") + 1;
 
-		    if ((arg1 = current.getFirstArgument (cpos)).size ())
+		    if ((arg1 = getFirstArgument (current, cpos)).size ())
 			data->addColorOp ("output", arg1.c_str ());
 		}
 		break;

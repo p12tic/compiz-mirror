@@ -31,20 +31,6 @@
 
 #include "colorfilter.h"
 
-class FragmentString :
-    public CompString
-{
-    public:
-
-	FragmentString () :
-	    CompString () {};
-	FragmentString (const CompString &s) :
-	    CompString (s) {};
-
-	CompString
-	getFirstArgument (size_t &pos);
-};
-
 class FragmentParser
 {
     private:
@@ -73,6 +59,10 @@ class FragmentParser
 	};
 
 	std::list <FragmentOffset *> offsets;
+
+	CompString
+	getFirstArgument (const CompString &line,
+			  size_t &pos);
 
 	void
 	programCleanName (CompString &name);
