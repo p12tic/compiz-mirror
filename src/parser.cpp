@@ -537,7 +537,7 @@ FragmentParser::programParseSource (GLFragment::FunctionData *data,
  */
 GLFragment::FunctionId
 FragmentParser::buildFragmentProgram (CompString &source,
-				      CompString &name,
+				      const CompString &name,
 				      int target)
 {
     GLFragment::FunctionData *data;
@@ -558,7 +558,7 @@ FragmentParser::buildFragmentProgram (CompString &source,
  * Load a source file and build a Compiz Fragment Function from it
  */
 GLFragment::FunctionId
-FragmentParser::loadFragmentProgram (CompString &file,
+FragmentParser::loadFragmentProgram (const CompString &file,
 				     CompString &name,
 				     int target)
 {

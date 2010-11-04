@@ -105,10 +105,12 @@ class FragmentParser
 	ltrim (const CompString &string);
 
 	GLFragment::FunctionId
-	buildFragmentProgram (CompString &, CompString &, int target);
+	buildFragmentProgram (CompString &,
+			      const CompString &,
+			      int target);
 
 	GLFragment::FunctionId
-	loadFragmentProgram (CompString &file,
+	loadFragmentProgram (const CompString &file,
 			     CompString &name,
 			     int target);
 
