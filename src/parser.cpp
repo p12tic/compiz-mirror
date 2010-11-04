@@ -82,7 +82,7 @@ FragmentParser::ltrim (const CompString &string)
     size_t pos = 0;
     while (!(pos >= string.size ()))
     {
-	if (string.at (pos) == ' ' || string.at (pos) == '\t')
+	if (isspace (string.at (pos)))
 	    pos++;
 	else
 	    break;
