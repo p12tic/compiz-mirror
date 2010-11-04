@@ -49,7 +49,7 @@
  * special case : basename ("/home/user/") == "user"
  */
 CompString
-FragmentParser::baseFileName (CompString path)
+FragmentParser::baseFileName (const CompString &path)
 {
     size_t pos = 0, foundPos = 0;
     unsigned int length;
@@ -69,8 +69,8 @@ FragmentParser::baseFileName (CompString path)
     length = path.size ();
     /* Trim terminating '/' if needed */
     if (length > 0 && path.at (length - 1) == '/')
-	path = path.substr (pos, length - 1);
-    return path;
+	return path.substr (pos, length - 1);
+    return path.substr (pos);
 }
 
 /*
@@ -130,7 +130,7 @@ FragmentParser::programReadSource (CompString fname)
     CompString data, path, home = CompString (getenv ("HOME"));
 
     /* Try to open file fname as is */
-    fp.open ("filename.ext");
+    fp.open (fname.c_str ());
 
     /* If failed, try as user filter file (in ~/.compiz/data/filters) */
     if (!fp.is_open () && !home.empty ())

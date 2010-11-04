@@ -99,7 +99,7 @@ class FragmentParser
 	friend class FragmentString;
 
 	static CompString
-	baseFileName (CompString path);
+	baseFileName (const CompString &path);
 
 	static CompString
 	ltrim (CompString string);
