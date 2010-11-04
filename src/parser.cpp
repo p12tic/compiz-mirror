@@ -11,8 +11,8 @@
  *
  * Copyright (c) 2007 Guillaume Seguin <guillaume@segu.in>
  *
- * Basic C++ port of this by:
- * Copyright (c) 2009 Sam Spilsbury <smspillaz@gmail.com>
+ * Port to std::string:
+ * Copyright (c) 2010 Canonical Ltd. <sam.spilsbury@canonical.com>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
