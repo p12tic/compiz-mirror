@@ -1626,10 +1626,7 @@ GroupWindow::windowNotify (CompWindowNotify n)
 		(mGroup != gs->mLastRestackedGroup))
 	    {
 		if (gs->optionGetRaiseAll ())
-		{
-		    fprintf (stderr, "raising all windows\n");
 		    mGroup->raiseWindows (window);
-		}
 	    }
 	    if (window->managed () && !window->overrideRedirect ())
 		gs->mLastRestackedGroup = mGroup;

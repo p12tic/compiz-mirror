@@ -1012,6 +1012,25 @@ GroupWindow::checkShowTabBar ()
 	       (mGroup->mTabBar->mChangeState == GroupTabBar::TabChangeOldOut)));
 }
 
+inline void
+perspectiveDistortAndResetZ (GLMatrix &transform)
+{
+    float v = -1.0 / screen->width ();
+    /*
+      This does
+      transform = M * transform, where M is
+      1, 0, 0, 0,
+      0, 1, 0, 0,
+      0, 0, 0, v,
+      0, 0, 0, 1
+    */
+
+    transform[8] = v * transform[12];
+    transform[9] = v * transform[13];
+    transform[10] = v * transform[14];
+    transform[11] = v * transform[15];
+}
+
 /*
  * GroupWindow::glPaint
  *
@@ -1234,6 +1253,7 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		if (mGroup->mTabBar->mChangeAnimationDirection < 0)
 		    rotateAngle *= -1.0f;
 
+		perspectiveDistortAndResetZ (wTransform);
 		wTransform.rotate (rotateAngle, 0.0f, 1.0f, 0.0f);
 	    }
 
