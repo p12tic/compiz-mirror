@@ -144,6 +144,7 @@ Selection::deselect (CompWindow *w)
 {
     if (size ())
     {
+	GroupWindow::get (w)->checkFunctions ();
 	CompositeWindow::get (w)->addDamage ();
 	remove (w);
     }
@@ -179,6 +180,7 @@ Selection::deselect (GroupSelection *group)
 	if (gw->mGroup == group)
 	{
 	    gw->mInSelection = false;
+	    gw->checkFunctions ();
 	    gw->cWindow->addDamage ();
 	    continue;
 	}
@@ -206,6 +208,7 @@ Selection::select (CompWindow *w)
     push_back (w);
 
     gw->mInSelection = true;
+    gw->checkFunctions ();
     gw->cWindow->addDamage ();
 }
 
@@ -372,8 +375,6 @@ Selection::checkWindow (CompWindow *w)
 	    select (w);
 	}
     }
-
-    GroupWindow::get (w)->checkFunctions ();
 }
 
 /*
