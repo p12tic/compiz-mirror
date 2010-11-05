@@ -143,7 +143,10 @@ void
 Selection::deselect (CompWindow *w)
 {
     if (size ())
+    {
+	CompositeWindow::get (w)->addDamage ();
 	remove (w);
+    }
 
     GroupWindow::get (w)->mInSelection = false;
 }
