@@ -464,8 +464,13 @@ Selection::damage (int xRoot,
 {
     GROUP_SCREEN (screen);
 
-    CompRegion reg (mX1 - 5, mY1 - 5, mX2 - mX1 + 5,
-				      mY2 - mY1 + 5);
+    CompRegion reg =
+	  CompRegion (MIN (mX1, mX2) - 5,
+		      MIN (mY1, mY2) - 5,
+		      MAX (mX1, mX2) -
+		      MIN (mX1, mX2) + 10,
+		      MAX (mY1, mY2) -
+		      MIN (mY1, mY2) + 10);
 
     gs->cScreen->damageRegion (reg);
 
@@ -474,10 +479,10 @@ Selection::damage (int xRoot,
 
     reg = CompRegion (MIN (mX1, mX2) - 5,
 		      MIN (mY1, mY2) - 5,
-		      MAX (mX1, mX2) + 5 -
-		      MIN (mX1, mX2) - 5,
-		      MAX (mY1, mY2) + 5 -
-		      MIN (mY1, mY2) - 5);
+		      MAX (mX1, mX2) -
+		      MIN (mX1, mX2) + 10,
+		      MAX (mY1, mY2) -
+		      MIN (mY1, mY2) + 10);
 
     gs->cScreen->damageRegion (reg);
 }
