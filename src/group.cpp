@@ -1631,6 +1631,8 @@ GroupWindow::windowNotify (CompWindowNotify n)
 	    if (window->managed () && !window->overrideRedirect ())
 		gs->mLastRestackedGroup = mGroup;
 
+	    return window->windowNotify (n);
+
 	    break;
 
 	default:
