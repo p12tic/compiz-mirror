@@ -1587,7 +1587,7 @@ GroupSelection::tabGroup (CompWindow *main)
     gs->changeTab (gw->mSlot, GroupTabBar::RotateUncertain);
 
     /* Set up tab bar dimentions */
-    gw->mGroup->mTabBar->recalcTabBarPos (WIN_CENTER_X (main),
+    mTabBar->recalcTabBarPos (WIN_CENTER_X (main),
 			  WIN_X (main), WIN_X (main) + WIN_WIDTH (main));
 
     layerSize = CompSize (mTabBar->mRegion.boundingRect ().width (),

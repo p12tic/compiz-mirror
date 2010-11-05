@@ -165,7 +165,8 @@ Selection::deselect (GroupSelection *group)
     /* unselect group */
     CompWindowList copy = (CompWindowList) *this;
     CompWindowList::iterator it = begin ();
-    unsigned int num = MAX (0, size () - group->mWindows.size ());
+    int nsize = size () - group->mWindows.size ();
+    unsigned int num = MAX (0, nsize);
 
     /* Faster than doing groupDeleteSelectionWindow
        for each window in this group. */
