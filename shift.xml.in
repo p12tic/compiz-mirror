@@ -106,7 +106,7 @@
 					<_short>Previous Window (Group)</_short>
 					<_long>Show switcher if not visible and select previous window of the current application.</_long>
 				</option>
-				
+
 			</group>
 			<group>
 				<_short>Misc. Options</_short>
@@ -264,7 +264,7 @@
 					<option name="cover_angle" type="float">
 						<_short>Cover angle</_short>
 						<_long>How much windows should be tilted.</_long>
-						<default>90</default>
+						<default>60</default>
 						<min>0</min>
 						<max>360</max>
 						<precision>0.1</precision>
@@ -272,7 +272,7 @@
 					<option name="cover_extra_space" type="float">
 						<_short>Space Factor</_short>
 						<_long>How much windows should be spaced apart</_long>
-						<default>0</default>
+						<default>1</default>
 						<min>1</min>
 						<max>2</max>
 						<precision>0.1</precision>
