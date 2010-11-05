@@ -2982,11 +2982,11 @@ GroupTabBar::GroupTabBar (GroupSelection *group,
     foreach (CompWindow *cw, mGroup->mWindows)
 	createSlot (cw);
 
-    mGroup->mTabBar->createInputPreventionWindow ();
-    mGroup->mTabBar->mTopTab = GroupWindow::get (topTab)->mSlot;
+    createInputPreventionWindow ();
+    mTopTab = GroupWindow::get (topTab)->mSlot;
     group->mTopId = topTab->id ();
 
-    mGroup->mTabBar->recalcTabBarPos (WIN_CENTER_X (topTab),
+    recalcTabBarPos (WIN_CENTER_X (topTab),
 			  WIN_X (topTab), WIN_X (topTab) + WIN_WIDTH (topTab));
 }
 

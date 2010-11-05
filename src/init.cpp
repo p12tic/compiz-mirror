@@ -295,6 +295,7 @@ GroupScreen::postLoad ()
 {
     foreach (GroupSelection *group, mGroups)
     {
+	bool topIdInGroup = false;
 	for (std::list <Window>::iterator it = group->mWindowIds.begin ();
 	     it != group->mWindowIds.end ();
 	     it++)
@@ -302,7 +303,11 @@ GroupScreen::postLoad ()
 	    CompWindow *w = screen->findWindow (*it);
 
 	    if (w)
+	    {
+		if (group->mTopId == (*it))
+		    topIdInGroup = true;
 		GroupWindow::get (w)->addWindowToGroup (group);
+	    }
 	    else
 	    {
 		group->mWindowIds.erase (it);
@@ -310,7 +315,7 @@ GroupScreen::postLoad ()
 	    }
 	}
 
-	if (group->mTopId)
+	if (group->mTopId && topIdInGroup)
 	{
 	    CompWindow *w;
 
@@ -340,6 +345,8 @@ GroupScreen::postLoad ()
 		    group->mTabBar->mSelectionLayer->render ();
 	    }
 	}
+	else
+	    group->mTopId = None;
 
     }
 }
