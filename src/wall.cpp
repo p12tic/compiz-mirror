@@ -519,25 +519,8 @@ void
 WallScreen::positionUpdate (const CompPoint &pos)
 {
     CompRegion noEdgeRegion (0, 0, screen->width (), screen->height ());
-    int        grabResult;
 
-    /* First of all check if the pointer is grabbed - since we don't
-     * want to be re-adding edge windows if some other client has
-     * grabbed the screen (because then the poller will get turned
-     * off here and when we re-enter the edge windows we won't get
-     * an EnterNotify and thus this poller won't be turned back on)
-     *
-     * FIXME: Again, expensive, although there isn't much we can do
-     * about it really
-     */
-
-    grabResult = XGrabPointer (screen->dpy (), screen->root (),
-			       NoEventMask, NoEventMask, GrabModeAsync,
-			       GrabModeAsync, None, None, CurrentTime);
-
-    if (grabResult == GrabSuccess)
-	XUngrabPointer (screen->dpy (), CurrentTime);
-    else if (grabResult == AlreadyGrabbed)
+    if (screen->grabbed ())
 	return;
 
     struct screenEdgeGeometry {
