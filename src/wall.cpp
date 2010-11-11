@@ -518,6 +518,13 @@ WallScreen::handleEvent (XEvent *event)
 	    else if (event->xfocus.mode == NotifyUngrab)
 		poller.stop ();
 	break;
+
+	case ConfigureNotify:
+
+	     if (event->xconfigure.window == screen->root ())
+		updateScreenEdgeRegions ();
+
+	break;
     }
 
     screen->handleEvent (event);
@@ -526,20 +533,15 @@ WallScreen::handleEvent (XEvent *event)
 /*
  * Borrowed this from PrivateScreen::updateScreenEdges
  *
- * FIXME: This is really expensive
- *
  */
 
 #define SCREEN_EDGE_NUM		8
 
 void
-WallScreen::positionUpdate (const CompPoint &pos)
+WallScreen::updateScreenEdgeRegions ()
 {
-    CompRegion noEdgeRegion (0, 0, screen->width (), screen->height ());
-    CompRegion allEdgeRegion (0, 0, screen->width (), screen->height ());
-
-    if (edgeDrag)
-	return;
+    edgeRegion = CompRegion (0, 0, screen->width (), screen->height ());
+    noEdgeRegion = CompRegion (0, 0, screen->width (), screen->height ());
 
     struct screenEdgeGeometry {
 	int xw, x0;
@@ -559,21 +561,30 @@ WallScreen::positionUpdate (const CompPoint &pos)
 
     for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
     {
-	CompRegion edgeRegion (geometry[i].xw * screen->width () +
-			       geometry[i].x0,
-			       geometry[i].yh * screen->height () +
-			       geometry[i].y0,
-			       geometry[i].ww * screen->width () +
-			       geometry[i].w0,
-			       geometry[i].hh * screen->height () +
-			       geometry[i].h0);
+	CompRegion edge (geometry[i].xw * screen->width () +
+			 geometry[i].x0,
+			 geometry[i].yh * screen->height () +
+			 geometry[i].y0,
+			 geometry[i].ww * screen->width () +
+			 geometry[i].w0,
+			 geometry[i].hh * screen->height () +
+			 geometry[i].h0);
 
 	noEdgeRegion -= edgeRegion;
     }
 
-    allEdgeRegion -= noEdgeRegion;
+    edgeRegion -= noEdgeRegion;
+}
 
-    if (allEdgeRegion.contains (pos))
+#undef SCREEN_EDGE_NUM
+
+void
+WallScreen::positionUpdate (const CompPoint &pos)
+{
+    if (edgeDrag)
+	return;
+
+    if (edgeRegion.contains (pos))
 	toggleEdges (false);
     else if (noEdgeRegion.contains (pos))
     {
@@ -582,8 +593,6 @@ WallScreen::positionUpdate (const CompPoint &pos)
 	toggleEdges (true);
     }
 }
-
-#undef SCREEN_EDGE_NUM
 
 void
 WallWindow::activate ()
@@ -1694,6 +1703,8 @@ WallScreen::WallScreen (CompScreen *screen) :
     setNotify (ArrowShadowColor);
     setNotify (NoSlideMatch);
     setNotify (EdgeflipPointer);
+
+    updateScreenEdgeRegions ();
 
     poller.setCallback (boost::bind (&WallScreen::positionUpdate, this,
 				     _1));

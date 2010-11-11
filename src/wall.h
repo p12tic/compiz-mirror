@@ -122,6 +122,7 @@ class WallScreen :
 	void toggleEdges (bool);
 
 	void positionUpdate (const CompPoint &pos);
+	void updateScreenEdgeRegions ();
 
 	CompositeScreen *cScreen;
 	GLScreen        *glScreen;
@@ -167,6 +168,8 @@ class WallScreen :
 
 	MousePoller	 poller;
 	bool		 edgeDrag;
+	CompRegion	 edgeRegion;
+	CompRegion	 noEdgeRegion;
 };
 
 class WallWindow :
