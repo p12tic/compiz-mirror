@@ -501,11 +501,83 @@ WallScreen::handleEvent (XEvent *event)
 
 	    moveViewport (-dx, -dy, None);
 	}
-	break;
     }
 
     screen->handleEvent (event);
 }
+
+/*
+ * Borrowed this from PrivateScreen::updateScreenEdges
+ *
+ * FIXME: This is really expensive
+ *
+ */
+
+#define SCREEN_EDGE_NUM		8
+
+void
+WallScreen::positionUpdate (const CompPoint &pos)
+{
+    CompRegion noEdgeRegion (0, 0, screen->width (), screen->height ());
+    int        grabResult;
+
+    /* First of all check if the pointer is grabbed - since we don't
+     * want to be re-adding edge windows if some other client has
+     * grabbed the screen (because then the poller will get turned
+     * off here and when we re-enter the edge windows we won't get
+     * an EnterNotify and thus this poller won't be turned back on)
+     *
+     * FIXME: Again, expensive, although there isn't much we can do
+     * about it really
+     */
+
+    grabResult = XGrabPointer (screen->dpy (), screen->root (),
+			       NoEventMask, NoEventMask, GrabModeAsync,
+			       GrabModeAsync, None, None, CurrentTime);
+
+    if (grabResult == GrabSuccess)
+	XUngrabPointer (screen->dpy (), CurrentTime);
+    else if (grabResult == AlreadyGrabbed)
+	return;
+
+    struct screenEdgeGeometry {
+	int xw, x0;
+	int yh, y0;
+	int ww, w0;
+	int hh, h0;
+    } geometry[SCREEN_EDGE_NUM] = {
+	{ 0,  0,   0,  2,   0,  2,   1, -4 }, /* left */
+	{ 1, -2,   0,  2,   0,  2,   1, -4 }, /* right */
+	{ 0,  2,   0,  0,   1, -4,   0,  2 }, /* top */
+	{ 0,  2,   1, -2,   1, -4,   0,  2 }, /* bottom */
+	{ 0,  0,   0,  0,   0,  2,   0,  2 }, /* top-left */
+	{ 1, -2,   0,  0,   0,  2,   0,  2 }, /* top-right */
+	{ 0,  0,   1, -2,   0,  2,   0,  2 }, /* bottom-left */
+	{ 1, -2,   1, -2,   0,  2,   0,  2 }  /* bottom-right */
+    };
+
+    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
+    {
+	CompRegion edgeRegion (geometry[i].xw * screen->width () +
+			       geometry[i].x0,
+			       geometry[i].yh * screen->height () +
+			       geometry[i].y0,
+			       geometry[i].ww * screen->width () +
+			       geometry[i].w0,
+			       geometry[i].hh * screen->height () +
+			       geometry[i].h0);
+
+	noEdgeRegion -= edgeRegion;
+    }
+
+    if (noEdgeRegion.contains (pos))
+    {
+	poller.stop ();
+	toggleEdges (true);
+    }
+}
+
+#undef SCREEN_EDGE_NUM
 
 void
 WallWindow::activate ()
@@ -698,7 +770,11 @@ WallScreen::initiateFlip (Direction         direction,
 	    return false;
     }
     else if (!optionGetEdgeflipPointer ())
+    {
+	toggleEdges (false);
+	poller.start ();
 	return false;
+    }
 
     switch (direction) {
     case Left:
@@ -1400,6 +1476,28 @@ WallScreen::createCairoContexts (bool initial)
     }
 }
 
+void
+WallScreen::toggleEdges (bool enabled)
+{
+    WALL_SCREEN (screen);
+
+    if (!enabled)
+    {
+	fprintf (stderr, "removing all edges\n");
+	screen->removeAction (&ws->optionGetFlipLeftEdge ());
+	screen->removeAction (&ws->optionGetFlipUpEdge ());
+	screen->removeAction (&ws->optionGetFlipRightEdge ());
+	screen->removeAction (&ws->optionGetFlipDownEdge ());
+    }
+    else
+    {
+	fprintf (stderr, "adding all edges\n");
+	screen->addAction (&ws->optionGetFlipLeftEdge ());
+	screen->addAction (&ws->optionGetFlipUpEdge ());
+	screen->addAction (&ws->optionGetFlipRightEdge ());
+	screen->addAction (&ws->optionGetFlipDownEdge ());
+    }
+}
 
 void
 WallScreen::optionChanged (CompOption           *opt,
@@ -1571,6 +1669,10 @@ WallScreen::WallScreen (CompScreen *screen) :
     setNotify (ArrowBaseColor);
     setNotify (ArrowShadowColor);
     setNotify (NoSlideMatch);
+    setNotify (EdgeflipPointer);
+
+    poller.setCallback (boost::bind (&WallScreen::positionUpdate, this,
+				     _1));
 }
 
 WallScreen::~WallScreen ()
@@ -1599,6 +1701,12 @@ WallPluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
         return false;
+    if (!CompPlugin::checkPluginABI ("composite", COMPIZ_COMPOSITE_ABI))
+	return false;
+    if (!CompPlugin::checkPluginABI ("opengl", COMPIZ_OPENGL_ABI))
+	return false;
+    if (!CompPlugin::checkPluginABI ("mousepoll", COMPIZ_MOUSEPOLL_ABI))
+	return false;
 
     return true;
 }

@@ -17,6 +17,7 @@
 			</relation>
 			<requirement>
 				<plugin>opengl</plugin>
+				<plugin>mousepoll</plugin>
 			</requirement>
 		</deps>
 		<options>
@@ -73,7 +74,7 @@
 				</option>
 				<subgroup>
 					<_short>Background Gradient</_short>
-					
+
 					<option name="background_gradient_base_color" type="color">
 						<_short>Base Color</_short>
 						<_long>First color for the background gradient of the switcher window.</_long>

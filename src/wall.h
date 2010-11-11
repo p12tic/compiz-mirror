@@ -26,6 +26,7 @@
 #include <core/pluginclasshandler.h>
 #include <composite/composite.h>
 #include <opengl/opengl.h>
+#include <mousepoll/mousepoll.h>
 
 #include <cairo-xlib-xrender.h>
 #include <cairo.h>
@@ -118,6 +119,9 @@ class WallScreen :
 	bool moveViewport (int, int, Window);
 
 	void optionChanged (CompOption *opt, WallOptions::Options num);
+	void toggleEdges (bool);
+
+	void positionUpdate (const CompPoint &pos);
 
 	CompositeScreen *cScreen;
 	GLScreen        *glScreen;
@@ -160,6 +164,8 @@ class WallScreen :
 	WallCairoContext thumbContext;
 	WallCairoContext highlightContext;
 	WallCairoContext arrowContext;
+
+	MousePoller	 poller;
 };
 
 class WallWindow :
