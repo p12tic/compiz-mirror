@@ -501,6 +501,23 @@ WallScreen::handleEvent (XEvent *event)
 
 	    moveViewport (-dx, -dy, None);
 	}
+	if (event->xclient.message_type == Atoms::xdndEnter)
+	{
+	    toggleEdges (true);
+	    edgeDrag = true;
+	}
+	else if (event->xclient.message_type == Atoms::xdndLeave)
+	    edgeDrag = false;
+
+	break;
+
+	case FocusIn:
+	case FocusOut:
+	    if (event->xfocus.mode == NotifyGrab)
+		poller.start ();
+	    else if (event->xfocus.mode == NotifyUngrab)
+		poller.stop ();
+	break;
     }
 
     screen->handleEvent (event);
@@ -519,8 +536,9 @@ void
 WallScreen::positionUpdate (const CompPoint &pos)
 {
     CompRegion noEdgeRegion (0, 0, screen->width (), screen->height ());
+    CompRegion allEdgeRegion (0, 0, screen->width (), screen->height ());
 
-    if (screen->grabbed ())
+    if (edgeDrag)
 	return;
 
     struct screenEdgeGeometry {
@@ -553,9 +571,14 @@ WallScreen::positionUpdate (const CompPoint &pos)
 	noEdgeRegion -= edgeRegion;
     }
 
-    if (noEdgeRegion.contains (pos))
+    allEdgeRegion -= noEdgeRegion;
+
+    if (allEdgeRegion.contains (pos))
+	toggleEdges (false);
+    else if (noEdgeRegion.contains (pos))
     {
-	poller.stop ();
+	if (!screen->grabbed ())
+	    poller.stop ();
 	toggleEdges (true);
     }
 }
@@ -587,6 +610,26 @@ WallWindow::activate ()
     }
 
     window->activate ();
+}
+
+void
+WallWindow::grabNotify (int          x,
+			int          y,
+			unsigned int width,
+			unsigned int height)
+{
+    WallScreen::get (screen)->toggleEdges (true);
+    WallScreen::get (screen)->edgeDrag = true;
+
+    window->grabNotify (x, y, width, height);
+}
+
+void
+WallWindow::ungrabNotify ()
+{
+    WallScreen::get (screen)->edgeDrag = false;
+
+    window->ungrabNotify ();
 }
 
 void

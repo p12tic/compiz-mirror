@@ -166,6 +166,7 @@ class WallScreen :
 	WallCairoContext arrowContext;
 
 	MousePoller	 poller;
+	bool		 edgeDrag;
 };
 
 class WallWindow :
@@ -177,6 +178,8 @@ class WallWindow :
 	WallWindow (CompWindow *);
 
 	virtual void activate ();
+	void grabNotify (int, int, unsigned int, unsigned int);
+	void ungrabNotify ();
 	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,
 		      const CompRegion &, unsigned int);
 
