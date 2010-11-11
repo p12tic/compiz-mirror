@@ -1483,7 +1483,6 @@ WallScreen::toggleEdges (bool enabled)
 
     if (!enabled)
     {
-	fprintf (stderr, "removing all edges\n");
 	screen->removeAction (&ws->optionGetFlipLeftEdge ());
 	screen->removeAction (&ws->optionGetFlipUpEdge ());
 	screen->removeAction (&ws->optionGetFlipRightEdge ());
@@ -1491,7 +1490,6 @@ WallScreen::toggleEdges (bool enabled)
     }
     else
     {
-	fprintf (stderr, "adding all edges\n");
 	screen->addAction (&ws->optionGetFlipLeftEdge ());
 	screen->addAction (&ws->optionGetFlipUpEdge ());
 	screen->addAction (&ws->optionGetFlipRightEdge ());
