@@ -93,6 +93,7 @@ class ExtraWMWindow :
     public:
 
 	ExtraWMWindow (CompWindow *);
+	~ExtraWMWindow ();
 
 	CompWindow *window;
 

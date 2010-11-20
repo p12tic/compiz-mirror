@@ -281,6 +281,11 @@ ExtraWMWindow::ExtraWMWindow (CompWindow *window) :
     WindowInterface::setHandler (window);
 }
 
+ExtraWMWindow::~ExtraWMWindow ()
+{
+    ExtraWMScreen::get (screen)->removeAttentionWindow (window);
+}
+
 bool
 ExtraWMPluginVTable::init ()
 {
