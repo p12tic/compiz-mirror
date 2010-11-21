@@ -457,8 +457,28 @@ void
 ExpoScreen::paint (CompOutput::ptrList& outputs,
 		   unsigned int         mask)
 {
+    int width = outputs.front ()->width ();
+    int height = outputs.front ()->height ();
+    bool sizeDiff = false;
+
+    /* "One big wall" does not make sense where outputs are different
+     * sizes, so force multiple walls in this case
+     *
+     * TODO: Is it possible to re-create "one big wall" using
+     * independent output painting in this case? */
+
+    foreach (CompOutput *o, outputs)
+    {
+	if (o->width () != width || o->height () != height)
+	{
+	    sizeDiff = true;
+	    break;
+	}
+    }
+
     if (expoCam > 0.0 && outputs.size () > 1 &&
-        optionGetMultioutputMode () == MultioutputModeOneBigWall)
+        optionGetMultioutputMode () == MultioutputModeOneBigWall &&
+	!sizeDiff)
     {
 	outputs.clear ();
 	outputs.push_back (&screen->fullscreenOutput ());
