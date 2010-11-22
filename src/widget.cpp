@@ -230,7 +230,7 @@ WidgetScreen::registerExpHandler ()
 }
 
 WidgetExp::WidgetExp (const CompString &str) :
-    value (strtol (str.c_str () + 7, NULL, 0))
+    value (strtol (str.c_str (), NULL, 0))
 {
 }
 
@@ -243,7 +243,7 @@ WidgetExp::evaluate (CompWindow *w)
 }
 
 CompMatch::Expression *
-WidgetScreen::matchInitExp (CompString &str)
+WidgetScreen::matchInitExp (const CompString &str)
 {
     /* Create a new match object */
 
@@ -663,6 +663,8 @@ WidgetScreen::WidgetScreen (CompScreen *screen) :
     CompositeScreenInterface::setHandler (cScreen, false);
 
     screen->handleEventSetEnabled (this, true);
+    screen->matchInitExpSetEnabled (this, true);
+    screen->matchExpHandlerChangedSetEnabled (this, true);
 
     cb = boost::bind (&WidgetScreen::toggle, this, _1, _2, _3);
     optionSetToggleKeyInitiate (cb);

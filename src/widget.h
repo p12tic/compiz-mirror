@@ -71,7 +71,7 @@ class WidgetScreen :
 	matchExpHandlerChanged ();
 
 	CompMatch::Expression *
-	matchInitExp (CompString &value);
+	matchInitExp (const CompString &value);
 
 	void
 	preparePaint (int);
