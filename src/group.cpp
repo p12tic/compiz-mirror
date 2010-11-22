@@ -26,6 +26,15 @@
 
 #include "group.h"
 
+/*
+ * GroupExp class
+ *
+ * A custom subclass of CompMatch::Expression which we can create
+ * on matchInitExp to evaluate whether or not a window is actually
+ * grouped.
+ *
+ */
+
 class GroupExp :
     public CompMatch::Expression
 {
@@ -37,11 +46,27 @@ class GroupExp :
 	bool value;
 };
 
+/*
+ * GroupExp::GroupExp
+ *
+ * Internal value here is the "1" or "0" of group=
+ * (eg we pass str.substr (6) to get that). Compare whether
+ * the window is actually in a group against this value when
+ * evaluating the match
+ *
+ */
 
 GroupExp::GroupExp (const CompString &str) :
     value (strtol (str.c_str (), NULL, 0))
 {
 }
+
+/*
+ * GroupExp::evaluate
+ *
+ * Compare if we wanted a window to be grouped and whether or not
+ * the window is actually in fact grouped
+ */
 
 bool
 GroupExp::evaluate (CompWindow *w)
@@ -50,6 +75,18 @@ GroupExp::evaluate (CompWindow *w)
 
     return ((value && gw->mGroup) || (!value && !gw->mGroup));
 }
+
+/*
+ * GroupScreen::matchInitExp
+ *
+ * Every time a match option is initialized, this wrapped function gets
+ * called so that we can create an expression if we need to.
+ *
+ * Note here that core parses each match string and tokenizes them
+ * based on spaces, so we only need to worry about matching
+ * "group=" and nothing else.
+ *
+ */
 
 CompMatch::Expression *
 GroupScreen::matchInitExp (const CompString &str)
@@ -62,10 +99,24 @@ GroupScreen::matchInitExp (const CompString &str)
     return screen->matchInitExp (str);
 }
 
+/*
+ * GroupScreen::matchExpHandlerChanged
+ *
+ * This gets called whenever some plugin needs to check all windows
+ * again to see if they still match, so go ahead and update match
+ * properties for windows if they are relevant here
+ */
+
 void
 GroupScreen::matchExpHandlerChanged ()
 {
     screen->matchExpHandlerChanged ();
+
+    foreach (CompWindow *w, screen->windows ())
+    {
+	if (GroupWindow::get (w)->mGroup)
+	    screen->matchPropertyChanged (w);
+    }
 }
 
 /*
