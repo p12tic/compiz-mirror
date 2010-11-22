@@ -26,6 +26,48 @@
 
 #include "group.h"
 
+class GroupExp :
+    public CompMatch::Expression
+{
+    public:
+	GroupExp (const CompString &str);
+
+	bool evaluate (CompWindow *w);
+
+	bool value;
+};
+
+
+GroupExp::GroupExp (const CompString &str) :
+    value (strtol (str.c_str (), NULL, 0))
+{
+}
+
+bool
+GroupExp::evaluate (CompWindow *w)
+{
+    GROUP_WINDOW (w);
+
+    return ((value && gw->mGroup) || (!value && !gw->mGroup));
+}
+
+CompMatch::Expression *
+GroupScreen::matchInitExp (const CompString &str)
+{
+    /* Create a new match object */
+
+    if (str.find ("group=") == 0)
+	return new GroupExp (str.substr (6));
+
+    return screen->matchInitExp (str);
+}
+
+void
+GroupScreen::matchExpHandlerChanged ()
+{
+    screen->matchExpHandlerChanged ();
+}
+
 /*
  * GroupWindow::isGroupWindow
  *
@@ -548,6 +590,8 @@ GroupWindow::deleteGroupWindow ()
 	}
 
 	mGroup = NULL;
+
+	screen->matchPropertyChanged (window);
 	cWindow->damageOutputExtents ();
 	window->updateWindowOutputExtents ();
 	gs->writeSerializedData ();
@@ -684,6 +728,8 @@ GroupSelection::fini ()
 
 	    CompositeWindow::get (cw)->damageOutputExtents ();
 	    gw->mGroup = NULL;
+
+	    screen->matchPropertyChanged (cw);
 	    cw->updateWindowOutputExtents ();
 	    gs->writeSerializedData ();
 
@@ -867,6 +913,8 @@ GroupWindow::addWindowToGroup (GroupSelection *group)
 		cWindow->addDamage ();
 	    }
 	}
+
+	screen->matchPropertyChanged (window);
     }
 
     gs->writeSerializedData ();

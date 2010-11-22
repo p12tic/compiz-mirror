@@ -587,6 +587,11 @@ class GroupScreen :
 				  CompOutput		    *,
 				  unsigned int		      );
 
+	CompMatch::Expression *
+	matchInitExp (const CompString &str);
+
+	void
+	matchExpHandlerChanged ();
 
 
     public:

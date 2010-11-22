@@ -370,7 +370,6 @@ GroupScreen::GroupScreen (CompScreen *s) :
     mPendingMoves (NULL),
     mPendingGrabs (NULL),
     mPendingUngrabs (NULL),
-    mGroups (NULL),
     mQueued (false),
     mGrabState (ScreenGrabNone),
     mGrabIndex (0),
@@ -378,7 +377,7 @@ GroupScreen::GroupScreen (CompScreen *s) :
     mDraggedSlot (NULL),
     mDragged (false),
     mPrevX (0),
-    mPrevY (0) ,
+    mPrevY (0),
     mLastGrabbedWindow (None)
 {
     ScreenInterface::setHandler (screen);
