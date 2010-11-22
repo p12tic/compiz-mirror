@@ -51,8 +51,8 @@
 #define CompScrollLockMask (1 << 22)
 
 #define METACITY     "/apps/metacity"
-#define COMPIZ       "/apps/compiz"
-#define COMPIZCONFIG "/apps/compizconfig"
+#define COMPIZ       "/apps/compiz-1"
+#define COMPIZCONFIG "/apps/compizconfig-1"
 #define PROFILEPATH  COMPIZCONFIG "/profiles"
 #define DEFAULTPROF "Default"
 #define CORE_NAME   "core"
@@ -1883,7 +1883,7 @@ checkProfile (CCSContext *context)
 
 	if (lastProfile)
 	{
-	    /* copy /apps/compiz tree to profile path */
+	    /* copy /apps/compiz-1 tree to profile path */
 	    asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
 	    if (pathName)
 	    {
@@ -1893,16 +1893,16 @@ checkProfile (CCSContext *context)
 	    }
 	}
 
-	/* reset /apps/compiz tree */
+	/* reset /apps/compiz-1 tree */
 	gconf_client_recursive_unset (client, COMPIZ, 0, NULL);
 
-	/* copy new profile tree to /apps/compiz */
+	/* copy new profile tree to /apps/compiz-1 */
 	asprintf (&pathName, "%s/%s", PROFILEPATH, currentProfile);
 	if (pathName)
 	{
     	    copyGconfTree (context, pathName, COMPIZ, FALSE, NULL);
 
-    	    /* delete the new profile tree in /apps/compizconfig
+    	    /* delete the new profile tree in /apps/compiz-1config
     	       to avoid user modification in the wrong tree */
     	    copyGconfTree (context, pathName, NULL, TRUE, NULL);
     	    free (pathName);
