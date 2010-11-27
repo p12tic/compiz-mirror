@@ -10,8 +10,8 @@
 			<plugin>opengl</plugin>
 			<plugin>cube</plugin>
 			<plugin>rotate</plugin>
-			<plugin>svg</plugin>
-			<plugin>png</plugin>
+			<plugin>imgpng</plugin>
+			<plugin>imgsvg</plugin>
 			<plugin>imgjpeg</plugin>
 		</relation>
 		<requirement>
