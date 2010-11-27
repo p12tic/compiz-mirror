@@ -102,7 +102,7 @@ PutScreen::boxCompare (const CompRect& a,
 
 /* Extends the given box for Window w to fit as much space in region r.
  * If XFirst is true, it will first expand in the X direction,
- * then Y. This is because it gives different results. 
+ * then Y. This is because it gives different results.
  * PS: Decorations are icky.
  */
 
@@ -859,7 +859,7 @@ PutScreen::preparePaint (int ms)
     	    }
 	}
     }
-    
+
     cScreen->preparePaint (ms);
 }
 
@@ -1207,6 +1207,9 @@ PutScreen::PutScreen (CompScreen *screen) :
 
     compizPutWindowAtom = XInternAtom(screen->dpy (),
 				      "_COMPIZ_PUT_WINDOW", 0);
+
+    optionSetPutPutInitiate (boost::bind (&PutScreen::initiate, this,
+					  _1, _2, _3));
 
 #define setAction(action, type) \
     optionSet##action##KeyInitiate (boost::bind (&PutScreen::initiateCommon,   \
