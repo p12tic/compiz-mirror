@@ -253,10 +253,27 @@ ScalefilterScreen::handleSpecialKeyPress (XKeyEvent *event,
 	if (filterInfo && filterInfo->hasText ())
 	{
 	    /* Return key - apply current filter persistently */
+	    unsigned int count = 0;
 	    persistentMatch = filterInfo->getMatch ();
 	    matchApplied    = true;
-	    drop            = true;
-	    needRelayout    = true;
+	    drop            = false;
+	    needRelayout    = false;
+
+	    /* Check whether there is just one window remaining on
+	     * this match, if so, no need to relayout */
+
+	    foreach (ScaleWindow *sw, sScreen->getWindows ())
+	    {
+		if (persistentMatch.evaluate (sw->window))
+		    count++;
+
+		if (count > 1)
+		{
+		    needRelayout = true;
+		    drop = true;
+		    break;
+		}
+	    }
 
 	    delete filterInfo;
 	    filterInfo = NULL;
