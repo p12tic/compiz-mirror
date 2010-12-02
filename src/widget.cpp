@@ -164,6 +164,7 @@ WidgetWindow::updateWidgetMapState (bool map)
 	window->show ();
 	window->raise ();
 	mWasHidden = false;
+	window->managedSetEnabled (this, true);
     }
     else if (!map && !mWasHidden)
     {
@@ -174,8 +175,15 @@ WidgetWindow::updateWidgetMapState (bool map)
 	{
 	    window->hide ();
 	    mWasHidden = true;
+	    window->managedSetEnabled (this, false);
 	}
     }
+}
+
+bool
+WidgetWindow::managed ()
+{
+    return false;
 }
 
 void
@@ -684,6 +692,7 @@ WidgetScreen::WidgetScreen (CompScreen *screen) :
 
 WidgetScreen::~WidgetScreen ()
 {
+    screen->matchExpHandlerChangedSetEnabled (this, false);
     screen->matchExpHandlerChanged ();
 
     if (mCursor)
@@ -701,6 +710,8 @@ WidgetWindow::WidgetWindow (CompWindow *window) :
 {
     WindowInterface::setHandler (window);
     GLWindowInterface::setHandler (gWindow, false);
+
+    window->managedSetEnabled (this, false);
 
     mWidgetStatusUpdate.start (boost::bind (&WidgetScreen::updateStatus,
 					    WidgetScreen::get (screen), window),

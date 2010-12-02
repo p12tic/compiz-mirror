@@ -156,6 +156,9 @@ class WidgetWindow :
 	bool
 	updateMatch ();
 
+	bool
+	managed ();
+
 	bool mIsWidget;
 	bool mWasHidden;
 	CompWindow *mParentWidget;
