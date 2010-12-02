@@ -426,7 +426,7 @@ CompText::renderWindowTitle (Window               window,
 	CompString title;
     	CompPoint  winViewport;
 	CompSize   viewportSize;
-	
+
 	title = ts->getWindowName (window);
 	if (!title.empty ())
 	{
@@ -440,7 +440,7 @@ CompText::renderWindowTitle (Window               window,
 		winViewport  = w->defaultViewport ();
 		viewportSize = screen->vpSize ();
 		viewport = winViewport.y () * viewportSize.width () +
-		           winViewport.y () + 1;
+		           winViewport.x () + 1;
 		text = compPrintf ("%s -[%d]-", title.c_str (), viewport);
 	    }
 	    else
@@ -464,7 +464,7 @@ Pixmap
 CompText::getPixmap ()
 {
     Pixmap retval = None;
- 
+
     if (texture.empty ())
     {
 	retval = pixmap;
