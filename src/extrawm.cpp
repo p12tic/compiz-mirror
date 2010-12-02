@@ -59,17 +59,6 @@ ExtraWMScreen::updateAttentionWindow (CompWindow *w)
     if (w->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
 	return;
 
-    if (!w->mapNum () || !w->isViewable ())
-    {
-	if (!w->minimized () &&
-	    !w->inShowDesktopMode () &&
-	    !w->shaded ())
-	    return;
-    }
-
-    if (w->state () & CompWindowStateSkipTaskbarMask)
-	return;
-
     hints = XGetWMHints (screen->dpy (), w->id ());
     if (hints)
     {
@@ -94,10 +83,30 @@ ExtraWMScreen::activateDemandsAttention (CompAction         *action,
 
     if (!es->attentionWindows.empty ())
     {
-	CompWindow *w = es->attentionWindows.front ();
+	CompWindowList::iterator it = es->attentionWindows.begin ();
 
-	es->attentionWindows.pop_front ();
-	w->activate ();
+	/* We want to keep these windows in the list and skip over them
+	 * if they are currently unmapped (since they could be mapped
+	 * again, and that would mean that we'd want to handle them
+	 * if they became wanting attention again) */
+
+	for (; it != es->attentionWindows.end (); it++)
+	{
+	    CompWindow *w = *it;
+
+	    if (!w->mapNum () || !w->isViewable ())
+	    {
+		if (!w->minimized () &&
+		    !w->inShowDesktopMode () &&
+		    !w->shaded ())
+		{
+		    continue;
+		}
+	    }
+
+	    w->activate ();
+	    break;
+	}
     }
 
     return false;
