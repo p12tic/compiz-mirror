@@ -164,7 +164,7 @@ WidgetWindow::updateWidgetMapState (bool map)
 	window->show ();
 	window->raise ();
 	mWasHidden = false;
-	window->managedSetEnabled (this, true);
+	window->managedSetEnabled (this, false);
     }
     else if (!map && !mWasHidden)
     {
@@ -175,7 +175,7 @@ WidgetWindow::updateWidgetMapState (bool map)
 	{
 	    window->hide ();
 	    mWasHidden = true;
-	    window->managedSetEnabled (this, false);
+	    window->managedSetEnabled (this, true);
 	}
     }
 }
