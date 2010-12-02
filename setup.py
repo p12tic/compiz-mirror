@@ -28,14 +28,14 @@ def pkgconfig(*packages, **kw):
     tokens = commands.getoutput("pkg-config --libs --cflags %s" % ' '.join(packages)).split()
     
     for t in tokens:
-	if '-L' in t[:2]:
-	    kw.setdefault (flag_map.get ("-L"), []).append (t[2:])
-	    if not os.getenv ("COMPIZ_DISABLE_RPATH") is "1":
-		kw.setdefault (flag_map.get ("-R"), []).append (t[2:])
-	elif '-I' in t[:2]:
-	    kw.setdefault (flag_map.get ("-I"), []).append (t[2:])
-	elif '-l' in t[:2]:
-	    kw.setdefault (flag_map.get ("-l"), []).append (t[2:])
+        if '-L' in t[:2]:
+            kw.setdefault (flag_map.get ("-L"), []).append (t[2:])
+            if not os.getenv ("COMPIZ_DISABLE_RPATH") is "1":
+                kw.setdefault (flag_map.get ("-R"), []).append (t[2:])
+        elif '-I' in t[:2]:
+            kw.setdefault (flag_map.get ("-I"), []).append (t[2:])
+        elif '-l' in t[:2]:
+            kw.setdefault (flag_map.get ("-l"), []).append (t[2:])
     
     return kw
 
