@@ -53,6 +53,23 @@ ExtraWMScreen::updateAttentionWindow (CompWindow *w)
     XWMHints *hints;
     bool     urgent = false;
 
+    if (w->overrideRedirect ())
+	return;
+
+    if (w->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
+	return;
+
+    if (!w->mapNum () || !w->isViewable ())
+    {
+	if (!w->minimized () &&
+	    !w->inShowDesktopMode () &&
+	    !w->shaded ())
+	    return;
+    }
+
+    if (w->state () & CompWindowStateSkipTaskbarMask)
+	return;
+
     hints = XGetWMHints (screen->dpy (), w->id ());
     if (hints)
     {
@@ -108,7 +125,7 @@ ExtraWMScreen::fullscreenWindow (CompWindow   *w,
 		  		 unsigned int state)
 {
     unsigned int newState = w->state ();
-	
+
     if (w->overrideRedirect ())
 	return;
 
