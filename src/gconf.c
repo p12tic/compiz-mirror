@@ -57,10 +57,15 @@
 #define DEFAULTPROF "Default"
 #define CORE_NAME   "core"
 
+/* HACK: Really we should support multiple screens, but this would
+ * require some work elsewhere so lets leave it at zero for now */
+
+#define DEFAULT_SCREEN_NUM 0
+
 #define BUFSIZE 512
 
-#define KEYNAME     char keyName[BUFSIZE]; \
-                    snprintf (keyName, BUFSIZE, "allscreens");
+#define KEYNAME(sn)     char keyName[BUFSIZE]; \
+                    snprintf (keyName, BUFSIZE, "screen%i", sn);
 
 #define PATHNAME    char pathName[BUFSIZE]; \
                     if (!setting->parent->name || \
@@ -474,13 +479,8 @@ valueChanged (GConfClient *client,
     if (!token)
 	return;
 
-    if (strcmp (token, "allscreens") == 0)
-	isScreen = FALSE;
-    else
-    {
-	isScreen = TRUE;
-	sscanf (token, "screen%d", &screenNum);
-    }
+    isScreen = TRUE;
+    sscanf (token, "screen%d", &screenNum);
 
     token = strsep (&keyName, "/"); /* 'options' */
     if (!token)
@@ -1136,7 +1136,7 @@ readOption (CCSSetting * setting)
     Bool       ret = FALSE;
     Bool       valid = TRUE;
 
-    KEYNAME;
+    KEYNAME(DEFAULT_SCREEN_NUM);
     PATHNAME;
 
     /* first check if the key is set */
@@ -1678,7 +1678,7 @@ writeIntegratedOption (CCSContext *context,
 static void
 resetOptionToDefault (CCSSetting * setting)
 {
-    KEYNAME;
+    KEYNAME (DEFAULT_SCREEN_NUM);
     PATHNAME;
 
     gconf_client_recursive_unset (client, pathName, 0, NULL);
@@ -1688,7 +1688,7 @@ resetOptionToDefault (CCSSetting * setting)
 static void
 writeOption (CCSSetting * setting)
 {
-    KEYNAME;
+    KEYNAME (DEFAULT_SCREEN_NUM);
     PATHNAME;
 
     switch (setting->type)
