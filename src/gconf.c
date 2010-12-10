@@ -1824,7 +1824,7 @@ updateCurrentProfileName (char *profile)
     gconf_schema_set_locale (schema, "C");
     gconf_schema_set_short_desc (schema, "Current profile");
     gconf_schema_set_long_desc (schema, "Current profile of gconf backend");
-    gconf_schema_set_owner (schema, "compizconfig");
+    gconf_schema_set_owner (schema, "compizconfig-1");
     gconf_value_set_string (value, profile);
     gconf_schema_set_default_value (schema, value);
 
@@ -1897,7 +1897,7 @@ checkProfile (CCSContext *context)
 	{
     	    copyGconfTree (context, pathName, COMPIZ, FALSE, NULL);
 
-    	    /* delete the new profile tree in /apps/compiz-1config
+    	    /* delete the new profile tree in /apps/compizconfig-1
     	       to avoid user modification in the wrong tree */
     	    copyGconfTree (context, pathName, NULL, TRUE, NULL);
     	    free (pathName);
