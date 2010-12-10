@@ -57,11 +57,6 @@
 #define DEFAULTPROF "Default"
 #define CORE_NAME   "core"
 
-/* HACK: Really we should support multiple screens, but this would
- * require some work elsewhere so lets leave it at zero for now */
-
-#define DEFAULT_SCREEN_NUM 0
-
 #define BUFSIZE 512
 
 #define KEYNAME(sn)     char keyName[BUFSIZE]; \
@@ -1136,7 +1131,7 @@ readOption (CCSSetting * setting)
     Bool       ret = FALSE;
     Bool       valid = TRUE;
 
-    KEYNAME(DEFAULT_SCREEN_NUM);
+    KEYNAME(setting->parent->context->screenNum);
     PATHNAME;
 
     /* first check if the key is set */
@@ -1678,7 +1673,7 @@ writeIntegratedOption (CCSContext *context,
 static void
 resetOptionToDefault (CCSSetting * setting)
 {
-    KEYNAME (DEFAULT_SCREEN_NUM);
+    KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
 
     gconf_client_recursive_unset (client, pathName, 0, NULL);
@@ -1688,7 +1683,7 @@ resetOptionToDefault (CCSSetting * setting)
 static void
 writeOption (CCSSetting * setting)
 {
-    KEYNAME (DEFAULT_SCREEN_NUM);
+    KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
 
     switch (setting->type)
