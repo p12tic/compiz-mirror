@@ -417,6 +417,8 @@ WallScreen::moveViewport (int    x,
 			  int    y,
 			  Window moveWin)
 {
+    CompOption::Vector o(0);
+
     if (!x && !y)
 	return false;
 
@@ -457,6 +459,8 @@ WallScreen::moveViewport (int    x,
     gotoY = screen->vp ().y () - y;
 
     determineMovementAngle ();
+
+    screen->handleCompizEvent ("wall", "start_viewport_switch", o);
 
     if (!grabIndex)
 	grabIndex = screen->pushGrab (screen->invisibleCursor (), "wall");
@@ -1249,6 +1253,7 @@ WallScreen::preparePaint (int msSinceLastPaint)
 
     if (moving && curPosX == gotoX && curPosY == gotoY)
     {
+	CompOption::Vector o (0);
 	moving = false;
 	timer  = 0;
 
@@ -1260,6 +1265,8 @@ WallScreen::preparePaint (int msSinceLastPaint)
 	    if (!screen->grabExist ("switcher"))
 		screen->focusDefaultWindow ();
 	}
+
+	screen->handleCompizEvent ("wall", "end_viewport_switch", o);
     }
 
     cScreen->preparePaint (msSinceLastPaint);
