@@ -41,8 +41,8 @@ KDECompatScreen::checkPaintFunctions ()
 			      kcw->mSlideData->remaining > 0.0));
 	enabled |= wEnabled;
 
-	kcw->gWindow->glPaintSetEnabled (kcw, enabled);
-	kcw->cWindow->damageRectSetEnabled (kcw, enabled);
+	kcw->gWindow->glPaintSetEnabled (kcw, wEnabled);
+	kcw->cWindow->damageRectSetEnabled (kcw, wEnabled);
     }	
   
     KDECOMPAT_SCREEN (screen);
@@ -493,6 +493,8 @@ KDECompatWindow::updateSlidePosition ()
     }
     else
 	window->windowNotifySetEnabled (this, false);
+
+    ks->checkPaintFunctions ();
 }
 
 void
