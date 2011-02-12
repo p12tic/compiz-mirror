@@ -570,7 +570,7 @@ cdef class Setting:
     cdef object extendedStrRestrictions
     cdef object baseStrRestrictions
 
-    def __new__ (self, Plugin plugin, name):
+    def __cinit__ (self, Plugin plugin, name):
         cdef CCSSettingType t
         cdef CCSSettingInfo * i
 
@@ -674,7 +674,7 @@ cdef class Setting:
 cdef class SSGroup:
     cdef object screen
 
-    def __new__ (self, screen):
+    def __cinit__ (self, screen):
         self.screen = screen
 
     property Screen:
@@ -692,7 +692,7 @@ cdef class Plugin:
     cdef object ranking
     cdef object hasExtendedString
     
-    def __new__ (self, Context context, name):
+    def __cinit__ (self, Context context, name):
         self.ccsPlugin = ccsFindPlugin (context.ccsContext, name)
         self.context = context
         self.screen = {}
@@ -1007,7 +1007,7 @@ cdef class Profile:
     cdef Context context
     cdef char * name
 
-    def __new__ (self, Context context, name):
+    def __cinit__ (self, Context context, name):
         self.context = context
         self.name = strdup (name)
 
@@ -1029,7 +1029,7 @@ cdef class Backend:
     cdef Bool profileSupport
     cdef Bool integrationSupport
 
-    def __new__ (self, Context context, info):
+    def __cinit__ (self, Context context, info):
         self.context = context
         self.name = strdup (info[0])
         self.shortDesc = strdup (info[1])
@@ -1072,7 +1072,7 @@ cdef class Context:
     cdef object currentBackend
     cdef Bool integration
 
-    def __new__ (self, screenNum = 0, plugins = [], basic_metadata = False):
+    def __cinit__ (self, screenNum = 0, plugins = [], basic_metadata = False):
         cdef CCSPlugin * pl
         cdef CCSList * pll
         if basic_metadata:
