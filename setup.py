@@ -7,7 +7,6 @@ from distutils.command.sdist import sdist as _sdist
 from distutils.extension import Extension
 import os
 import subprocess
-import commands
 
 # If src/compizconfig.pyx exists, build using Cython
 if os.path.exists ("src/compizconfig.pyx"):
@@ -25,7 +24,7 @@ if "=" in version:
 def pkgconfig(*packages, **kw):
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-R': 'runtime_library_dirs'}
 
-    tokens = commands.getoutput("pkg-config --libs --cflags %s" % ' '.join(packages)).split()
+    tokens = subprocess.Popen (['pkg-config', '--libs', '--cflags %s' % ' '.join (packages)], stdout=subprocess.PIPE, stderr=open(os.devnull, 'w')).communicate()[0].split ()
     
     for t in tokens:
         if '-L' in t[:2]:
@@ -44,8 +43,8 @@ VERSION_FILE = os.path.join (os.path.dirname (__file__), "VERSION")
 pkgconfig_libs = subprocess.Popen (["pkg-config", "--libs", "libcompizconfig"], stdout=subprocess.PIPE, stderr=open(os.devnull, 'w')).communicate ()[0]
 
 if len (pkgconfig_libs) is 0:
-  print "CompizConfig Python [ERROR]: No libcompizconfig.pc found in the pkg-config search path"
-  print "Ensure that libcompizonfig is installed or libcompizconfig.pc is in your $PKG_CONFIG_PATH"
+  print ("CompizConfig Python [ERROR]: No libcompizconfig.pc found in the pkg-config search path")
+  print ("Ensure that libcompizonfig is installed or libcompizconfig.pc is in your $PKG_CONFIG_PATH")
   exit (1);
 libs = pkgconfig_libs[2:].split (" ")[0]
 
@@ -105,7 +104,7 @@ class uninstall (_install):
             for counter in xrange (len (files)):
                 files[counter] = prepend + files[counter].rstrip ()
         for file in files:
-            print "Uninstalling %s" % file
+            print ("Uninstalling %s" % file)
             try:
                 os.unlink (file)
             except:
