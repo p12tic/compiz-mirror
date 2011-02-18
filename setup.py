@@ -25,10 +25,7 @@ def pkgconfig(*packages, **kw):
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-R': 'runtime_library_dirs'}
     cmd = ['pkg-config', '--libs', '--cflags']
 
-    for i in packages:
-        cmd.append (i)
-
-    tokens = subprocess.Popen (cmd, stdout=subprocess.PIPE, stderr=open(os.devnull, 'w')).communicate()[0].split ()
+    tokens = subprocess.Popen (cmd + list(packages), stdout=subprocess.PIPE, stderr=open(os.devnull, 'w')).communicate()[0].split ()
 
     for t in tokens:
         if '-L' in t[:2]:
