@@ -23,9 +23,13 @@ if "=" in version:
 
 def pkgconfig(*packages, **kw):
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-R': 'runtime_library_dirs'}
+    cmd = ['pkg-config', '--libs', '--cflags']
 
-    tokens = subprocess.Popen (['pkg-config', '--libs', '--cflags %s' % ' '.join (packages)], stdout=subprocess.PIPE, stderr=open(os.devnull, 'w')).communicate()[0].split ()
-    
+    for i in packages:
+        cmd.append (i)
+
+    tokens = subprocess.Popen (cmd, stdout=subprocess.PIPE, stderr=open(os.devnull, 'w')).communicate()[0].split ()
+
     for t in tokens:
         if '-L' in t[:2]:
             kw.setdefault (flag_map.get ("-L"), []).append (t[2:])
