@@ -253,12 +253,13 @@ StaticSwitchScreen::createPopup ()
 	attr.border_pixel     = 0;
 	attr.colormap	      = XCreateColormap (dpy, ::screen->root (), visual,
 						 AllocNone);
+	attr.override_redirect = 1;
 
 	popupWindow =
 	    XCreateWindow (dpy, ::screen->root (),
 	    		   -1, -1, 1, 1, 0,
 			   32, InputOutput, visual,
-			   CWBackPixel | CWBorderPixel | CWColormap, &attr);
+			   CWBackPixel | CWBorderPixel | CWColormap | CWOverrideRedirect, &attr);
 
 	XSetWMProperties (dpy, popupWindow, NULL, NULL,
 			  programArgv, programArgc,
