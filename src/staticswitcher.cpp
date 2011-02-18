@@ -291,16 +291,10 @@ StaticSwitchScreen::createPopup ()
 bool
 StaticSwitchScreen::showPopup ()
 {
-    CompWindow *w;
-
     /* Always checks for an existing popup */
     createPopup ();
 
-    w = ::screen->findWindow (popupWindow);
-    if (w && (w->state () & CompWindowStateHiddenMask))
-    	w->show ();
-    else
-	XMapWindow (::screen->dpy (), popupWindow);
+    XMapWindow (::screen->dpy (), popupWindow);
 
     cScreen->damageScreen ();
 
@@ -427,23 +421,11 @@ switchTerminate (CompAction         *action,
 
     if (ss->grabIndex)
     {
-	CompWindow *w;
-
 	if (ss->popupDelayTimer.active ())
 	    ss->popupDelayTimer.stop ();
 
 	if (ss->popupWindow)
-	{
-	    w = ::screen->findWindow (ss->popupWindow);
-	    if (w && w->managed () && w->mapNum ())
-	    {
-		w->hide ();
-	    }
-	    else
-	    {
-		XUnmapWindow (::screen->dpy (), ss->popupWindow);
-	    }
-	}
+	    XUnmapWindow (::screen->dpy (), ss->popupWindow);
 
 	ss->switching = false;
 
