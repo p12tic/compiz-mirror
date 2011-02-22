@@ -154,7 +154,6 @@ BeamUpAnim::step ()
 		      mWindow->outputRect ());
 
     float timestep = mIntenseTimeStep;
-    float old = 1 - (mRemainingTime) / (mTotalTime - timestep);
 
     mRemainingTime -= timestep;
     if (mRemainingTime <= 0)
