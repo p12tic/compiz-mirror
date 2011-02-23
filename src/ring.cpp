@@ -250,7 +250,7 @@ RingWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    }
 	}
 
-	gWindow->glPaint (sAttrib, transform, region, mask);
+	status = gWindow->glPaint (sAttrib, transform, region, mask);
 
 	pixmap = !gWindow->textures ().empty ();
 
