@@ -155,7 +155,8 @@ initBackground (WallpaperBackground *back)
 
     if (!back->image.empty ())
     {
-	back->imgTex = GLTexture::readImageToTexture (back->image,
+	CompString pname ("wallpaper");
+	back->imgTex = GLTexture::readImageToTexture (back->image, pname,
 						      back->imgSize);
 	if (back->imgTex.empty ())
 	{
