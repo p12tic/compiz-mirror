@@ -58,7 +58,8 @@ CubeaddonScreen::CubeCap::load (bool scale, bool aspect, bool clamp)
 
 
     CompString imgName = mFiles[mCurrent].s ();
-    mTexture = GLTexture::readImageToTexture (imgName, tSize);
+    CompString pname = "cubeaddon";
+    mTexture = GLTexture::readImageToTexture (imgName, pname, tSize);
 
     if (mTexture.empty ())
     {
