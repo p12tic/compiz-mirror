@@ -67,19 +67,20 @@ SplashScreen::preparePaint (int ms)
 	    mMove = 0.0;
 	    CompString back_s (optionGetBackground ());
 	    CompString logo_s (optionGetLogo ());
+	    CompString pname ("splash");
 
 	    back_img =
-		GLTexture::readImageToTexture (back_s,
+		GLTexture::readImageToTexture (back_s, pname,
 				    	       backSize);
 	    logo_img =
-		GLTexture::readImageToTexture (logo_s,
+		GLTexture::readImageToTexture (logo_s, pname,
 				    	       logoSize);
 
 	    if (!back_img.size ())
 	    {
 		CompString defaultBack (SPLASH_BACKGROUND_DEFAULT);
 		back_img =
-		    GLTexture::readImageToTexture (defaultBack, backSize);
+		    GLTexture::readImageToTexture (defaultBack, pname, backSize);
 
 		if (back_img.size ())
 		{
@@ -94,7 +95,7 @@ SplashScreen::preparePaint (int ms)
 	    {
 		CompString defaultLogo (SPLASH_LOGO_DEFAULT);
 		logo_img =
-		    GLTexture::readImageToTexture (defaultLogo, logoSize);
+		    GLTexture::readImageToTexture (defaultLogo, pname, logoSize);
 
 		if (logo_img.size ())
 		{
