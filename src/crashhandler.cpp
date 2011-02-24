@@ -3,7 +3,7 @@
  * Compiz crash handler plugin
  *
  * crashhandler.cpp
- *ma
+ *
  * Copyright : (C) 2008 by Dennis Kasprzyk
  * E-mail    : onestone@compiz-fusion.org
  *
