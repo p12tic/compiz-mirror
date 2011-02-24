@@ -141,6 +141,8 @@ void
 ReflexScreen::optionChanged (CompOption         *opt,
 			     ReflexOptions::Options num)
 {
+    CompString pname ("reflex");
+
     switch (num)
     {
 
@@ -153,6 +155,7 @@ ReflexScreen::optionChanged (CompOption         *opt,
 	    image.clear ();
 	}
 	image = GLTexture::readImageToTexture (string,
+					       pname,
 					       size);
 	imageLoaded = image.size ();
 
@@ -329,7 +332,8 @@ ReflexScreen::ReflexScreen (CompScreen *) :
 {
     CompSize size;
     CompString string (optionGetFile ());
-    image = GLTexture::readImageToTexture (string, size);
+    CompString pname ("reflex");
+    image = GLTexture::readImageToTexture (string, pname, size);
     imageLoaded = image.size ();
 
     width = size.width ();
