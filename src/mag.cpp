@@ -92,10 +92,11 @@ MagScreen::loadImages ()
 {
     CompString overlay_s = optionGetOverlay ();
     CompString mask_s = optionGetMask ();
+    CompString pname ("mag");
     if (!GL::multiTexCoord2f)
 	return false;
 
-    overlay = GLTexture::readImageToTexture (overlay_s,
+    overlay = GLTexture::readImageToTexture (overlay_s, pname,
 				    	       overlaySize);
     
     if (!overlay.size ())
@@ -106,7 +107,7 @@ MagScreen::loadImages ()
 	return false;
     }
 
-    mask = GLTexture::readImageToTexture (mask_s,
+    mask = GLTexture::readImageToTexture (mask_s, pname,
 				    	  maskSize);
 
     if (!mask.size ())
