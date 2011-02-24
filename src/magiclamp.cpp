@@ -357,8 +357,6 @@ MagicLampAnim::step ()
 	    // Set y position to the y position of the object at the left
 	    // on the same row (previous object)
 	    objPos.setY ((object - 1)->position ().y ());
-	    fx = ((iconCloseEndY - objPos.y ()) /
-	    	  (iconCloseEndY - winVisibleCloseEndY));
 	}
 
 	float origX = (mWindow->x () +
