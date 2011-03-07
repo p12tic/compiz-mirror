@@ -13,3 +13,11 @@ Development release.
 Release 0.9.2.1 (2010-11-06 Sam Spilsbury <sam.spilsbury@canonical.com>)
 ========================================================================
 Bugfix release.
+
+Release 0.9.4 (2010-02-24 Sam Spilsbury <sam.spilsbury@canonical.com>)
+========================================================================
+Development Release.
+
+Fix some settings going into /allscreens, they now go into /screen[n]
+
+Changed settings path so that 0.8 and 0.9 settings don't conflict
