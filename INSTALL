@@ -24,7 +24,7 @@ Command Line Arguments
    If you want to install to a particular prefix (eg /opt) then you would use
    the '--prefix' switch:
    
-   # python setup.py --prefix=/opt install
+   # python setup.py install --prefix=/opt
 
 Environment Variables
 =====================
