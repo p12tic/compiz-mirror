@@ -23,7 +23,7 @@ Command Line Arguments
 
    If you want to install to a particular prefix (eg /opt) then you would use
    the '--prefix' switch:
-   
+
    # python setup.py install --prefix=/opt
 
 Environment Variables
@@ -34,5 +34,5 @@ Environment Variables
    only PKG_CONFIG_PATH is supported, and this is used to find the
    pkgconfig file to determine the libcompizconfig install location for
    linking
-   
+
    # PKG_CONFIG_PATH=/opt/lib/pkgconfig python setup.py install
