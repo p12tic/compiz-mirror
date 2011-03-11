@@ -282,7 +282,7 @@ StaticSwitchScreen::createPopup ()
 
 	::screen->setWindowProp (popupWindow, Atoms::winDesktop, 0xffffffff);
 
-	setSelectedWindowHint ();
+	setSelectedWindowHint (false);
 
 	updatePopupWindow ();
     }
@@ -374,7 +374,7 @@ StaticSwitchScreen::initiate (SwitchWindowSelection selection,
 		    showPopup ();
 		}
 
-		setSelectedWindowHint ();
+		setSelectedWindowHint (optionGetFocusOnSwitch ());
 	    }
 
 	    lastActiveWindow = screen->activeWindow ();
@@ -451,7 +451,7 @@ switchTerminate (CompAction         *action,
 		w->moveInputFocusTo ();
 	}
 
-	ss->setSelectedWindowHint ();
+	ss->setSelectedWindowHint (false);
 
 	ss->lastActiveNum = 0;
 
@@ -505,7 +505,7 @@ switchInitiateCommon (CompAction            *action,
 	    action->setState (action->state () | CompAction::StateTermButton);
     }
 
-    ss->switchToWindow (nextWindow, ss->optionGetAutoChangeVp ());
+    ss->switchToWindow (nextWindow, ss->optionGetAutoChangeVp (), ss->optionGetFocusOnSwitch ());
 
     return false;
 }
@@ -606,7 +606,7 @@ StaticSwitchScreen::windowRemove (CompWindow *w)
 	    if (popup)
 		CompositeWindow::get (popup)->addDamage ();
 
-	    setSelectedWindowHint ();
+	    setSelectedWindowHint (optionGetFocusOnSwitch ());
 	}
 
 	if (old != selectedWindow)
