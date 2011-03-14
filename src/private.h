@@ -355,8 +355,6 @@ private:
     int mUnmapCnt;
     int mDestroyCnt;
 
-    bool mUnreparentInterrupted;
-
     bool mIgnoreDamage;
     bool mFinishingAnim;
 

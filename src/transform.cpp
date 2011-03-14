@@ -138,7 +138,7 @@ TransformAnim::getCenter ()
 {
     CompRect inRect (mAWindow->savedRectsValid () ?
 		     mAWindow->savedInRect () :
-		     mWindow->inputRect ());
+		     mWindow->borderRect ());
     Point center (inRect.x () + inRect.width () / 2,
 		  inRect.y () + inRect.height () / 2);
     return center;

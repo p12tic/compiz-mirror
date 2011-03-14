@@ -106,7 +106,7 @@ CurvedFoldAnim::step ()
 		      mWindow->geometry ());
     CompRect inRect (mAWindow->savedRectsValid () ?
 		     mAWindow->savedInRect () :
-		     mWindow->inputRect ());
+		     mWindow->borderRect ());
     CompRect outRect (mAWindow->savedRectsValid () ?
 		      mAWindow->savedOutRect () :
 		      mWindow->outputRect ());

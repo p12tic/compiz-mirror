@@ -405,7 +405,7 @@ ZoomAnim::getCenter ()
 
 	CompRect inRect (mAWindow->savedRectsValid () ?
 			 mAWindow->savedInRect () :
-			 mWindow->inputRect ());
+			 mWindow->borderRect ());
 
 	center.setX (inRect.x () + inRect.width () / 2.0);
 

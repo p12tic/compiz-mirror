@@ -467,13 +467,13 @@ DodgeAnim::getDodgeAmount (CompRect &rect,
 			   CompWindow *dw,
 			   DodgeDirection dir)
 {
-    CompRect dRect (dw->inputRect ().x () +
-    		    (dw->outputRect ().x () - dw->inputRect ().x ()) / 2,
-    		    dw->inputRect ().y () +
-    		    (dw->outputRect ().y () - dw->inputRect ().y ()) / 2,
-    		    (dw->inputRect ().width () +
+    CompRect dRect (dw->borderRect ().x () +
+		    (dw->outputRect ().x () - dw->borderRect ().x ()) / 2,
+		    dw->borderRect ().y () +
+		    (dw->outputRect ().y () - dw->borderRect ().y ()) / 2,
+		    (dw->borderRect ().width () +
 		     dw->outputRect ().width ()) / 2,
-    		    (dw->inputRect ().height () +
+		    (dw->borderRect ().height () +
 		     dw->outputRect ().height ()) / 2);
 
     int amount = 0;

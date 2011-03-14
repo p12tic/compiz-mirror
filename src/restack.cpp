@@ -216,7 +216,7 @@ RestackAnim::initiateRestackAnim (int duration)
 	    continue;
 
 	// Compute intersection of this (wCand) with subject
-	CompRegion candidateWinRegion (wCand->inputRect ());
+	CompRegion candidateWinRegion (wCand->borderRect ());
 	CompRegion candidateAndSubjectIntersection
 	    (candidateWinRegion.intersected (subjectsRegion));
 	fadeRegion += candidateAndSubjectIntersection;
@@ -309,7 +309,7 @@ RestackAnim::unionRestackChain (CompWindow *w)
     for (CompWindow *wCur = w; wCur;
 	 wCur = dataCur->mMoreToBePaintedNext)
     {
-	unionRegion += wCur->inputRect ();
+	unionRegion += wCur->borderRect ();
 	dataCur = static_cast<RestackPersistentData *>
 	    (AnimWindow::get (wCur)->persistentData["restack"]);
 	if (!dataCur)
@@ -322,7 +322,7 @@ RestackAnim::unionRestackChain (CompWindow *w)
     for (CompWindow *wCur = dataSubj->mMoreToBePaintedPrev; wCur;
 	 wCur = dataCur->mMoreToBePaintedPrev)
     {
-	unionRegion += wCur->inputRect ();
+	unionRegion += wCur->borderRect ();
 	dataCur = static_cast<RestackPersistentData *>
 	    (AnimWindow::get (wCur)->persistentData["restack"]);
 	if (!dataCur)
