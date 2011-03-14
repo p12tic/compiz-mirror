@@ -316,8 +316,8 @@ SessionScreen::addWindowNode (CompWindow *w,
 	    y += screen->vp ().y () * screen->height ();
 	}
 
-	x -= w->input ().left;
-	y -= w->input ().top;
+	x -= w->border ().left;
+	y -= w->border ().top;
 
 	width  = (w->saveMask () & CWWidth) ? w->saveWc ().width :
 			                  w->serverWidth ();
@@ -544,8 +544,8 @@ SessionScreen::readWindow (CompWindow *w)
 
 	xwcm = CWX | CWY;
 
-	xwc.x = item->geometry.x () + w->input ().left;
-	xwc.y = item->geometry.y () + w->input ().top;
+	xwc.x = item->geometry.x () + w->border ().left;
+	xwc.y = item->geometry.y () + w->border ().top;
 
 	if (!w->onAllViewports ())
 	{
