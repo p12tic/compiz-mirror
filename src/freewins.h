@@ -80,11 +80,11 @@
 #define WIN_OUTPUT_W(w) (w->width () + w->output ().left + w->output ().right)
 #define WIN_OUTPUT_H(w) (w->height () + w->output ().top + w->output ().bottom)
 
-#define WIN_REAL_X(w) (w->x () - w->input ().left)
-#define WIN_REAL_Y(w) (w->y () - w->input ().top)
+#define WIN_REAL_X(w) (w->x () - w->border ().left)
+#define WIN_REAL_Y(w) (w->y () - w->border ().top)
 
-#define WIN_REAL_W(w) (w->width () + w->input ().left + w->input ().right)
-#define WIN_REAL_H(w) (w->height () + w->input ().top + w->input ().bottom)
+#define WIN_REAL_W(w) (w->width () + w->border ().left + w->border ().right)
+#define WIN_REAL_H(w) (w->height () + w->border ().top + w->border ().bottom)
 
 #define WIN_CORNER1(w) GLVector ic1 = GLVector (WIN_REAL_X (w), WIN_REAL_Y (w), 0.0f, 1.0f);
 #define WIN_CORNER2(w) GLVector ic2 = GLVector (WIN_REAL_X (w) + WIN_REAL_W (w), WIN_REAL_Y (w), 0.0f, 1.0f);

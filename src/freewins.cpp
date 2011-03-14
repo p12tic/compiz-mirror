@@ -153,7 +153,7 @@ FWWindow::FWWindow (CompWindow *w) :
     mAdjustY (0.0f),
     mInput (NULL),
     mOutputRect (w->outputRect ()),
-    mInputRect (w->inputRect ()),
+    mInputRect (w->borderRect ()),
     mResetting (false),
     mIsAnimating (false),
     mCan2D (false),
