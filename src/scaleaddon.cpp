@@ -95,7 +95,7 @@ ScaleAddonWindow::drawTitle ()
 {
     float         x, y, width, height;
     ScalePosition pos = sWindow->getCurrentPosition ();
-    CompRect      geom = window->inputRect ();
+    CompRect      geom = window->borderRect ();
 
     width  = text.getWidth ();
     height = text.getHeight ();
@@ -113,15 +113,15 @@ ScaleAddonWindow::drawHighlight ()
     GLint         oldBlendSrc, oldBlendDst;
     float         x, y, width, height;
     ScalePosition pos = sWindow->getCurrentPosition ();
-    CompRect      geom = window->inputRect ();
+    CompRect      geom = window->borderRect ();
 
     ADDON_SCREEN (screen);
 
     if (rescaled)
 	return;
 
-    x      = pos.x () + window->x () - (window->input ().left * pos.scale);
-    y      = pos.y () + window->y () - (window->input ().top * pos.scale);
+    x      = pos.x () + window->x () - (window->border ().left * pos.scale);
+    y      = pos.y () + window->y () - (window->border ().top * pos.scale);
     width  = geom.width () * pos.scale;
     height = geom.height () * pos.scale;
 
@@ -226,7 +226,7 @@ ScaleAddonScreen::pullWindow (CompAction         *action,
 	    CompRect workArea, extents;
 
 	    workArea = screen->outputDevs ()[w->outputDevice ()].workArea ();
-	    extents  = w->inputRect ();
+	    extents  = w->borderRect ();
 
 	    extents.setX (extents.x () + xOffset);
 	    extents.setY (extents.y () + yOffset);
@@ -326,7 +326,7 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
 	{
 	    ScaleSlot slot = aw->sWindow->getSlot ();
 	    int       x1, x2, y1, y2;
-	    CompRect  geom = w->inputRect ();
+	    CompRect  geom = w->borderRect ();
 
 	    aw->oldAbove = w->next;
 	    w->raise ();
@@ -335,8 +335,8 @@ ScaleAddonScreen::zoomWindow (CompAction         *action,
 	    aw->origSlot = slot;
 	    aw->rescaled = true;
 
-	    x1 = output.centerX () - geom.width () / 2 + w->input ().left;
-	    y1 = output.centerY () - geom.height () / 2 + w->input ().top;
+	    x1 = output.centerX () - geom.width () / 2 + w->border ().left;
+	    y1 = output.centerY () - geom.height () / 2 + w->border ().top;
 	    x2 = slot.x () + geom.width ();
 	    y2 = slot.y () + geom.height ();
 
