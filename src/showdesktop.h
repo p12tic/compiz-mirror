@@ -41,15 +41,15 @@
 
 #include "showdesktop_options.h"
 
-#define WIN_X(w) ((w)->x () - (w)->input ().left)
-#define WIN_Y(w) ((w)->y () - (w)->input ().top)
-#define WIN_W(w) ((w)->width () + (w)->input ().left + (w)->input ().right)
-#define WIN_H(w) ((w)->height () + (w)->input ().top + (w)->input ().bottom)
+#define WIN_X(w) ((w)->x () - (w)->border ().left)
+#define WIN_Y(w) ((w)->y () - (w)->border ().top)
+#define WIN_W(w) ((w)->width () + (w)->border ().left + (w)->border ().right)
+#define WIN_H(w) ((w)->height () + (w)->border ().top + (w)->border ().bottom)
 
-#define OFF_LEFT(w) ((w)->width () + (w)->input ().right)
-#define OFF_RIGHT(w) ((w)->input ().left)
-#define OFF_TOP(w) ((w)->height () + (w)->input ().bottom)
-#define OFF_BOTTOM(w) ((w)->input ().top)
+#define OFF_LEFT(w) ((w)->width () + (w)->border ().right)
+#define OFF_RIGHT(w) ((w)->border ().left)
+#define OFF_TOP(w) ((w)->height () + (w)->border ().bottom)
+#define OFF_BOTTOM(w) ((w)->border ().top)
 
 #define MOVE_LEFT(w) ((WIN_X (w) + (WIN_W (w) / 2)) < (screen->width () / 2))
 #define MOVE_UP(w) ((WIN_Y (w) + (WIN_H (w) / 2)) < (screen->height () / 2))
