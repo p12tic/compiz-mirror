@@ -172,7 +172,7 @@ StaticSwitchScreen::getPaintRectangle (CompWindow *w,
 
     if (w->isViewable () || w->shaded ())
     {
-    	rect = w->inputRect ();
+    	rect = w->borderRect ();
 	return true;
     }
     else if (mode == HighlightRectHiddenTaskbarEntry &&
@@ -186,7 +186,7 @@ StaticSwitchScreen::getPaintRectangle (CompWindow *w,
     }
     else if (mode == HighlightRectHiddenOriginalWindowPosition)
     {
-    	rect = w->serverInputRect ();
+    	rect = w->serverBorderRect ();
 
 	if (opacity)
 	    *opacity /= 4;
