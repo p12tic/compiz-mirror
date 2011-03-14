@@ -64,7 +64,7 @@ MaximumizeScreen::findEmptyRegion (CompWindow      *window,
     CompRect   tmpRect, windowRect;
 
     if (optionGetIgnoreOverlapping ())
-	windowRect = window->serverInputRect ();
+	windowRect = window->serverBorderRect ();
 
     foreach (CompWindow *w, screen->windows ())
     {
@@ -100,7 +100,7 @@ MaximumizeScreen::findEmptyRegion (CompWindow      *window,
 	    continue;
 	}
 
-	tmpRect = w->serverInputRect ();
+	tmpRect = w->serverBorderRect ();
 
 	if (optionGetIgnoreOverlapping () &&
 	    substantialOverlap (tmpRect, windowRect))
@@ -163,10 +163,10 @@ MaximumizeScreen::addToCorner (CompRect&   rect,
 }
 
 #define CHECKREC \
-    r.contains (CompRect (tmp.x1 () - w->input ().left,   \
-			  tmp.y1 () - w->input ().top,    \
-			  tmp.width () + w->input ().right + w->input ().left,  \
-			  tmp.height () + w->input ().bottom + w->input ().top))
+    r.contains (CompRect (tmp.x1 () - w->border ().left,   \
+			  tmp.y1 () - w->border ().top,    \
+			  tmp.width () + w->border ().right + w->border ().left,  \
+			  tmp.height () + w->border ().bottom + w->border ().top))
 
 void
 MaximumizeScreen::growGeneric (CompWindow        *w,
