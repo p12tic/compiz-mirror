@@ -596,7 +596,6 @@ WallScreen::positionUpdate (const CompPoint &pos)
 	    poller.stop ();
 	toggleEdges (true);
     }
-
 }
 
 void
@@ -632,7 +631,7 @@ WallWindow::grabNotify (int          x,
 			unsigned int width,
 			unsigned int height)
 {
-    //WallScreen::get (screen)->toggleEdges (true);
+    WallScreen::get (screen)->toggleEdges (true);
     WallScreen::get (screen)->edgeDrag = true;
 
     window->grabNotify (x, y, width, height);
@@ -811,7 +810,7 @@ WallScreen::initiateFlip (Direction         direction,
     }
     else if (!optionGetEdgeflipPointer ())
     {
-	//toggleEdges (false);
+	toggleEdges (false);
 	poller.start ();
 	return false;
     }
@@ -1524,7 +1523,7 @@ WallScreen::toggleEdges (bool enabled)
 {
     WALL_SCREEN (screen);
 
-    if (false)
+    if (!enabled)
     {
 	screen->removeAction (&ws->optionGetFlipLeftEdge ());
 	screen->removeAction (&ws->optionGetFlipUpEdge ());
