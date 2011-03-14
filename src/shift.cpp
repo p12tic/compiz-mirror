@@ -571,8 +571,8 @@ ShiftScreen::layoutThumbsCover ()
 	w = mWindows[index];
 	SHIFT_WINDOW (w);
 
-	ww = w->width ()  + w->input ().left + w->input ().right;
-	wh = w->height () + w->input ().top  + w->input ().bottom;
+	ww = w->width ()  + w->border ().left + w->border ().right;
+	wh = w->height () + w->border ().top  + w->border ().bottom;
 
 	if (ww > maxThumbWidth)
 	    xScale = (float)(maxThumbWidth) / (float)ww;
@@ -616,7 +616,7 @@ ShiftScreen::layoutThumbsCover ()
 	    sw->mSlots[i].scale   = MIN (xScale, yScale);
 
 	    sw->mSlots[i].y = centerY + (maxThumbHeight / 2.0) -
-				(((w->height () / 2.0) + w->input ().bottom) *
+				(((w->height () / 2.0) + w->border ().bottom) *
 				sw->mSlots[i].scale);
 
 	    if (fabs(distance) < 1.0)
@@ -713,8 +713,8 @@ ShiftScreen::layoutThumbsFlip ()
 	w = mWindows[index];
 	SHIFT_WINDOW (w);
 
-	ww = w->width ()  + w->input ().left + w->input ().right;
-	wh = w->height () + w->input ().top  + w->input ().bottom;
+	ww = w->width ()  + w->border ().left + w->border ().right;
+	wh = w->height () + w->border ().top  + w->border ().bottom;
 
 	if (ww > maxThumbWidth)
 	    xScale = (float)(maxThumbWidth) / (float)ww;
@@ -759,7 +759,7 @@ ShiftScreen::layoutThumbsFlip ()
 	    sw->mSlots[i].scale   = MIN (xScale, yScale);
 
 	    sw->mSlots[i].y = centerY + (maxThumbHeight / 2.0) -
-				(((w->height () / 2.0) + w->input ().bottom) *
+				(((w->height () / 2.0) + w->border ().bottom) *
 				sw->mSlots[i].scale);
 
 	    sw->mSlots[i].x  = sin(angle) * distance * (maxThumbWidth / 2);
