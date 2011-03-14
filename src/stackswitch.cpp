@@ -158,8 +158,8 @@ StackswitchScreen::drawWindowTitle (GLMatrix &transform,
 	    wTransform.translate (sw->mTx, sw->mTy, 0.0f);
 	    wTransform.rotate (-mRotation, 1.0, 0.0, 0.0);
 	    wTransform.scale (sw->mScale, sw->mScale, 1.0);
-	    wTransform.translate (+w->input ().left, 0.0 - (w->height () +
-							    w->input ().bottom),
+	    wTransform.translate (+w->border ().left, 0.0 - (w->height () +
+							    w->border ().bottom),
 							   0.0f);
 	    wTransform.translate (-w->x (), -w->y (), 0.0f);
 
@@ -344,9 +344,9 @@ StackswitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    wTransform.rotate (-rotation, 1.0, 0.0, 0.0);
 	    wTransform.scale (mScale, mScale, 1.0);
 
-	    wTransform.translate (+window->input ().left,
+	    wTransform.translate (+window->border ().left,
 				  0.0 -(window->height () +
-				  window->input ().bottom), 0.0f);
+				  window->border ().bottom), 0.0f);
 	    wTransform.translate (-window->x (), -window->y (), 0.0f);
 	    glPushMatrix ();
 	    glLoadMatrixf (wTransform.getMatrix ());
@@ -486,8 +486,8 @@ StackswitchScreen::layoutThumbs ()
     {
 	w = mWindows[index];
 
-	ww = w->width ()  + w->input ().left + w->input ().right;
-	wh = w->height () + w->input ().top  + w->input ().bottom;
+	ww = w->width ()  + w->border ().left + w->border ().right;
+	wh = w->height () + w->border ().top  + w->border ().bottom;
 
 	swi += ((float) ww / (float) wh) * (oe.width () / (float) oe.height ());
     }
@@ -499,8 +499,8 @@ StackswitchScreen::layoutThumbs ()
     {
 	w = mWindows[index];
 
-	ww = w->width ()  + w->input ().left + w->input ().right;
-	wh = w->height () + w->input ().top  + w->input ().bottom;
+	ww = w->width ()  + w->border ().left + w->border ().right;
+	wh = w->height () + w->border ().top  + w->border ().bottom;
 
 	swi += (float)ww / (float)wh;
 
@@ -550,8 +550,8 @@ StackswitchScreen::layoutThumbs ()
 	    sw->mSlot->x = oe.x1 () + swi;
 	    sw->mSlot->y = oe.y2 () - (rh * r) - (oe.height () * 0.1);
 
-	    ww = w->width ()  + w->input ().left + w->input ().right;
-	    wh = w->height () + w->input ().top  + w->input ().bottom;
+	    ww = w->width ()  + w->border ().left + w->border ().right;
+	    wh = w->height () + w->border ().top  + w->border ().bottom;
 
 	    if (ww > oe.width ())
 		xScale = oe.width () / (float) ww;
@@ -773,8 +773,8 @@ StackswitchWindow::adjustVelocity ()
     else
     {
 	scale = 1.0f;
-	x1 = window->x () - window->input ().left;
-	y1 = window->y () + window->height () + window->input ().bottom;
+	x1 = window->x () - window->border ().left;
+	y1 = window->y () + window->height () + window->border ().bottom;
     }
 
     if (window->id () == ss->mSelectedWindow)
@@ -1080,8 +1080,8 @@ StackswitchScreen::initiate (CompAction         *action,
 	{
 	    STACKSWITCH_WINDOW (w);
 
-	    sw->mTx = w->x () - w->input ().left;
-	    sw->mTy = w->y () + w->height () + w->input ().bottom;
+	    sw->mTx = w->x () - w->border ().left;
+	    sw->mTy = w->y () + w->height () + w->border ().bottom;
 	}
     	mMoreAdjust = true;
 	cScreen->damageScreen ();
