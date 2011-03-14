@@ -53,10 +53,10 @@
 #define THUMB_WINDOW(w)						      \
     ThumbWindow *tw = ThumbWindow::get (w)
 
-#define WIN_X(w) ((w)->x () - (w)->input ().left)
-#define WIN_Y(w) ((w)->y () - (w)->input ().top)
-#define WIN_W(w) ((w)->width () + (w)->input ().left + (w)->input ().right)
-#define WIN_H(w) ((w)->height () + (w)->input ().top + (w)->input ().bottom)
+#define WIN_X(w) ((w)->x () - (w)->border ().left)
+#define WIN_Y(w) ((w)->y () - (w)->border ().top)
+#define WIN_W(w) ((w)->width () + (w)->border ().left + (w)->border ().right)
+#define WIN_H(w) ((w)->height () + (w)->border ().top + (w)->border ().bottom)
 
 #define TEXT_DISTANCE 10
 

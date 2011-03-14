@@ -707,8 +707,8 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	sAttrib.yScale = t->scale;
 	sAttrib.xScale = t->scale;
 
-	sAttrib.xTranslate = wx - w->x () + w->input ().left * sAttrib.xScale;
-	sAttrib.yTranslate = wy - w->y () + w->input ().top * sAttrib.yScale;
+	sAttrib.xTranslate = wx - w->x () + w->border ().left * sAttrib.xScale;
+	sAttrib.yTranslate = wy - w->y () + w->border ().top * sAttrib.yScale;
 
 	if (optionGetMipmap ())
 	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
