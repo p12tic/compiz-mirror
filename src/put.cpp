@@ -26,10 +26,10 @@ COMPIZ_PLUGIN_20090315 (put, PutPluginVTable);
 #define PUT_ONLY_EMPTY(type) (type >= PutEmptyBottomLeft && \
 			      type <= PutEmptyTopRight)
 
-#define TOP_BORDER(w) ((w)->input ().top)
-#define LEFT_BORDER(w) ((w)->input ().left)
-#define RIGHT_BORDER(w) ((w)->input ().right + 2 * (w)->serverGeometry ().border ())
-#define BOTTOM_BORDER(w) ((w)->input ().bottom + 2 * (w)->serverGeometry ().border ())
+#define TOP_BORDER(w) ((w)->border ().top)
+#define LEFT_BORDER(w) ((w)->border ().left)
+#define RIGHT_BORDER(w) ((w)->border ().right + 2 * (w)->serverGeometry ().border ())
+#define BOTTOM_BORDER(w) ((w)->border ().bottom + 2 * (w)->serverGeometry ().border ())
 
 #define HALF_WIDTH(w) ((w)->serverWidth () / 2 + (w)->serverGeometry ().border ())
 #define HALF_HEIGHT(w) ((w)->serverHeight () / 2 + (w)->serverGeometry ().border ())
@@ -80,7 +80,7 @@ PutScreen::emptyRegion (CompWindow      *window,
 	    continue;
 	}
 
-	newRegion -= w->serverInputRect ();
+	newRegion -= w->serverBorderRect ();
     }
 
     return newRegion;
