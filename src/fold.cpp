@@ -30,8 +30,8 @@
 
 #include "private.h"
 
-#define BORDER_W(w) ((w)->width () + (w)->input ().left + (w)->input ().right)
-#define BORDER_H(w) ((w)->height () + (w)->input ().top + (w)->input ().bottom)
+#define BORDER_W(w) ((w)->width () + (w)->border ().left + (w)->border ().right)
+#define BORDER_H(w) ((w)->height () + (w)->border ().top + (w)->border ().bottom)
 
 const float FoldAnim::kDurationFactor = 1.82;
 

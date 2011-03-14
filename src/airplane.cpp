@@ -31,10 +31,10 @@
 
 #include "private.h"
 
-#define BORDER_W(w) ((w)->width () + (w)->input ().left + (w)->input ().right)
-#define BORDER_H(w) ((w)->height () + (w)->input ().top + (w)->input ().bottom)
-#define BORDER_X(w) ((w)->x () - (w)->input ().left)
-#define BORDER_Y(w) ((w)->y () - (w)->input ().top)
+#define BORDER_W(w) ((w)->width () + (w)->border ().left + (w)->border ().right)
+#define BORDER_H(w) ((w)->height () + (w)->border ().top + (w)->border ().bottom)
+#define BORDER_X(w) ((w)->x () - (w)->border ().left)
+#define BORDER_Y(w) ((w)->y () - (w)->border ().top)
 
 // Divide the window in 8 polygons (6 quadrilaters and 2 triangles (all of them draw as quadrilaters))
 // Based on tessellateIntoRectangles and tessellateIntoHexagons. Improperly called tessellation.
@@ -85,14 +85,6 @@ AirplaneAnim::tesselateIntoAirplane ()
     thickness /= screen->width ();
     mThickness = thickness;
     mNumTotalFrontVertices = 0;
-
-    
-    fprintf (stderr, "inputRect is %i %i %i %i\n", mWindow->inputRect ().x (),
-    						   mWindow->inputRect ().y (),
-    						   mWindow->inputRect ().width (),
-    						   mWindow->inputRect ().height ());
-    
-    fprintf (stderr, "limits are %f %f %f %f\n", winLimitsX, winLimitsY, winLimitsW, winLimitsH);
 
     float W = (float)winLimitsW;
     float H2 = (float)winLimitsH / 2;

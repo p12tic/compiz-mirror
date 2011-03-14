@@ -134,7 +134,7 @@ PolygonAnim::tessellateIntoRectangles (int gridSizeX,
 
     CompRect inRect (mAWindow->savedRectsValid () ?
 		     mAWindow->savedInRect () :
-		     mWindow->inputRect ());
+		     mWindow->borderRect ());
     CompRect outRect (mAWindow->savedRectsValid () ?
 		      mAWindow->savedOutRect () :
 		      mWindow->outputRect ());
@@ -351,7 +351,7 @@ PolygonAnim::tessellateIntoHexagons (int gridSizeX,
 
     CompRect inRect (mAWindow->savedRectsValid () ?
 		     mAWindow->savedInRect () :
-		     mWindow->inputRect ());
+		     mWindow->borderRect ());
     CompRect outRect (mAWindow->savedRectsValid () ?
 		      mAWindow->savedOutRect () :
 		      mWindow->outputRect ());
@@ -681,7 +681,7 @@ PolygonAnim::tessellateIntoGlass (int spokeMultiplier,
 
     CompRect inRect (mAWindow->savedRectsValid () ?
 		     mAWindow->savedInRect () :
-		     mWindow->inputRect ());
+		     mWindow->borderRect ());
     CompRect outRect (mAWindow->savedRectsValid () ?
 		      mAWindow->savedOutRect () :
 		      mWindow->outputRect ());
@@ -1111,7 +1111,7 @@ PolygonAnim::addGeometry (const GLTexture::MatrixList &matrix,
     }
     CompRect inRect (mAWindow->savedRectsValid () ?
 		     mAWindow->savedInRect () :
-		     mWindow->inputRect ());
+		     mWindow->borderRect ());
 
     mClips.reserve (region.numRects ());
 
