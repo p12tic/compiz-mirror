@@ -1141,10 +1141,10 @@ GroupScreen::updateTabBars (Window enteredWin)
 		CompRegion     reg;
 
 		/* titlebar of the window */
-		rect = CompRect (WIN_X (w) - w->input ().left,
-				 WIN_Y (w) - w->input ().top,
-				 WIN_WIDTH (w) + w->input ().right,
-				 WIN_Y (w) - (WIN_Y (w) - w->input ().top));
+		rect = CompRect (WIN_X (w) - w->border ().left,
+				 WIN_Y (w) - w->border ().top,
+				 WIN_WIDTH (w) + w->border ().right,
+				 WIN_Y (w) - (WIN_Y (w) - w->border ().top));
 
 		reg = reg.united (rect);
 
@@ -1309,8 +1309,8 @@ GroupWindow::constrainMovement (CompRegion constrainRegion,
     if (!dx && !dy)
 	return false;
 
-    x = mOrgPos.x () - w->input ().left + dx;
-    y = mOrgPos.y ()- w->input ().top + dy;
+    x = mOrgPos.x () - w->border ().left + dx;
+    y = mOrgPos.y ()- w->border ().top + dy;
     width = WIN_REAL_WIDTH (w);
     height = WIN_REAL_HEIGHT (w);
 
@@ -1333,7 +1333,7 @@ GroupWindow::constrainMovement (CompRegion constrainRegion,
 	    dx += (dx < 0) ? 1 : -1;
 
 	/* new x value is based on our new dx value */
-	x = mOrgPos.x () - w->input ().left + dx;
+	x = mOrgPos.x () - w->border ().left + dx;
     }
 
     /* Adjust dx */
@@ -1351,7 +1351,7 @@ GroupWindow::constrainMovement (CompRegion constrainRegion,
 	    dy += (dy < 0) ? 1 : -1;
 
 	/* new x value is based on our new dx value */
-	y = mOrgPos.y () - w->input ().top + dy;
+	y = mOrgPos.y () - w->border ().top + dy;
     }
 
     new_dx = dx;
@@ -1467,8 +1467,8 @@ GroupSelection::startTabbingAnimation (bool           tab)
 		int        dx, dy;\
 		int        constrainStatus;
 		GroupWindow *gw = GroupWindow::get (w);
-		CompRect   statusRect (gw->mOrgPos.x () - w->input ().left,
-				       gw->mOrgPos.y () - w->input ().top,
+		CompRect   statusRect (gw->mOrgPos.x () - w->border ().left,
+				       gw->mOrgPos.y () - w->border ().top,
 				       WIN_REAL_WIDTH (w),
 				       WIN_REAL_HEIGHT (w));
 

@@ -103,12 +103,12 @@ extern bool gTextAvailable;
 #define WIN_CENTER_Y(w) (WIN_Y (w) + (WIN_HEIGHT (w) / 2))
 
 /* definitions used for glow painting */
-#define WIN_REAL_X(w) (w->x () - w->input ().left)
-#define WIN_REAL_Y(w) (w->y () - w->input ().top)
+#define WIN_REAL_X(w) (w->x () - w->border ().left)
+#define WIN_REAL_Y(w) (w->y () - w->border ().top)
 #define WIN_REAL_WIDTH(w) (w->width () + 2 * w->geometry ().border () + \
-			   w->input ().left + w->input ().right)
+			   w->border ().left + w->border ().right)
 #define WIN_REAL_HEIGHT(w) (w->height () + 2 * w->geometry ().border () + \
-			    w->input ().top + w->input ().bottom)
+			    w->border ().top + w->border ().bottom)
 
 #define TOP_TAB(g) ((g)->mTabBar->mTopTab->mWindow)
 #define PREV_TOP_TAB(g) ((g)->mTabBar->mPrevTopTab->mWindow)

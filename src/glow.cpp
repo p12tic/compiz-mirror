@@ -61,12 +61,12 @@ GroupWindow::getOutputExtents (CompWindowExtents &output)
 	glowSize = glowSize * (glowTextureSize - glowOffset) / glowTextureSize;
 
 	/* glowSize is the size of the glow outside the window decoration
-	 * (w->input), while w->output includes the size of w->input
+	 * (w->border), while w->output includes the size of w->border
 	 * this is why we have to add w->input here */
-	output.left   = MAX (output.left, glowSize + window->input ().left);
-	output.right  = MAX (output.right, glowSize + window->input ().right);
-	output.top    = MAX (output.top, glowSize + window->input ().top);
-	output.bottom = MAX (output.bottom, glowSize + window->input ().bottom);
+	output.left   = MAX (output.left, glowSize + window->border ().left);
+	output.right  = MAX (output.right, glowSize + window->border ().right);
+	output.top    = MAX (output.top, glowSize + window->border ().top);
+	output.bottom = MAX (output.bottom, glowSize + window->border ().bottom);
     }
 }
 

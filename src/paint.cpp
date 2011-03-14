@@ -860,32 +860,32 @@ GroupWindow::getStretchRectangle (CompRect &box,
     int    width, height;
     float  xScale, yScale;
 
-    x1 = mResizeGeometry.x () - window->input ().left;
-    y1 = mResizeGeometry.y () - window->input ().top;
+    x1 = mResizeGeometry.x () - window->border ().left;
+    y1 = mResizeGeometry.y () - window->border ().top;
     x2 = mResizeGeometry.x () + mResizeGeometry.width () +
-	     window->serverGeometry ().border () * 2 + window->input ().right;
+	     window->serverGeometry ().border () * 2 + window->border ().right;
 
     if (window->shaded ())
     {
-	y2 = mResizeGeometry.y () + window->height () + window->input ().bottom;
+	y2 = mResizeGeometry.y () + window->height () + window->border ().bottom;
     }
     else
     {
 	y2 = mResizeGeometry.y () + mResizeGeometry.height () +
 	     window->serverGeometry ().border () * 2 +
-	     window->input ().bottom;
+	     window->border ().bottom;
     }
 
-    width  = window->width ()  + window->input ().left +
-	     window->input ().right;
-    height = window->height () + window->input ().top  +
-	     window->input ().bottom;
+    width  = window->width ()  + window->border ().left +
+	     window->border ().right;
+    height = window->height () + window->border ().top  +
+	     window->border ().bottom;
 
     xScale = (width)  ? (x2 - x1) / (float) width  : 1.0f;
     yScale = (height) ? (y2 - y1) / (float) height : 1.0f;
 
-    x1 = x1 - (window->output ().left - window->input ().left) * xScale;
-    y1 = y1 - (window->output ().top - window->input ().top) * yScale;
+    x1 = x1 - (window->output ().left - window->border ().left) * xScale;
+    y1 = y1 - (window->output ().top - window->border ().top) * yScale;
     x2 = x2 + window->output ().right * xScale;
     y2 = y2 + window->output ().bottom * yScale;
 
@@ -1164,8 +1164,8 @@ GroupWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	    /* Get the scale amount for the resize box */
 	    getStretchRectangle (box, xScale, yScale);
 
-	    xOrigin = window->x () - w->input ().left;
-	    yOrigin = window->y () - w->input ().top;
+	    xOrigin = window->x () - w->border ().left;
+	    yOrigin = window->y () - w->border ().top;
 
 	    wTransform.translate (xOrigin, yOrigin, 0.0f);
 	    wTransform.scale (xScale, yScale, 1.0f);
