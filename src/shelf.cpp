@@ -224,14 +224,14 @@ ShelfWindow::adjustIPW ()
 	return;
 
     f_width  = window->width () + 2 * window->geometry ().border () +
-	     window->input ().left + window->input ().right + 2.0f;
+	     window->border ().left + window->border ().right + 2.0f;
     f_width  *= targetScale;
     f_height = window->height () + 2 * window->geometry ().border () +
-	     window->input ().top + window->input ().bottom + 2.0f;
+	     window->border ().top + window->border ().bottom + 2.0f;
     f_height *= targetScale;
 
-    xwc.x          = window->x () - window->input ().left;
-    xwc.y          = window->y () - window->input ().top;
+    xwc.x          = window->x () - window->border ().left;
+    xwc.y          = window->y () - window->border ().top;
     xwc.width      = (int) f_width;
     xwc.height     = (int) f_height;
     xwc.stack_mode = Below;
@@ -276,12 +276,12 @@ ShelfWindow::createIPW ()
     			 0, 0, -100, -100, 0, CopyFromParent, InputOnly,
     			 CopyFromParent, CWOverrideRedirect, &attrib);
     			 
-    xwc.x = window->serverGeometry ().x () - window->input ().left;
-    xwc.y = window->serverGeometry ().y () - window->input ().top;
+    xwc.x = window->serverGeometry ().x () - window->border ().left;
+    xwc.y = window->serverGeometry ().y () - window->border ().top;
     xwc.width = window->serverGeometry ().width () +
-    			window->input ().left + window->input ().right;
+			window->border ().left + window->border ().right;
     xwc.height = window->serverGeometry ().height () +
-    			window->input ().top  + window->input ().bottom;
+			window->border ().top  + window->border ().bottom;
 
     XMapWindow (screen->dpy (), ipw);
 
@@ -645,8 +645,8 @@ ShelfWindow::damageRect (bool     initial,
     {
 	float xTranslate, yTranslate;
 
-	xTranslate = window->input ().left * (mScale - 1.0f);
-	yTranslate = window->input ().top * (mScale - 1.0f);
+	xTranslate = window->border ().left * (mScale - 1.0f);
+	yTranslate = window->border ().top * (mScale - 1.0f);
 
 	cWindow->damageTransformedRect (mScale, mScale,
 				        xTranslate, yTranslate, rect);
@@ -681,8 +681,8 @@ ShelfWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	GLMatrix      mTransform = transform;
 	float         xTranslate, yTranslate;
 
-	xTranslate = window->input ().left * (mScale - 1.0f);
-	yTranslate = window->input ().top * (mScale - 1.0f);
+	xTranslate = window->border ().left * (mScale - 1.0f);
+	yTranslate = window->border ().top * (mScale - 1.0f);
 
 	mTransform.translate (window->x (), window->y (), 0);
 	mTransform.scale (mScale, mScale, 0);
