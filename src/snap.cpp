@@ -166,7 +166,7 @@ SnapWindow::updateWindowsEdges ()
 	    continue;
 	}
 
-	input = w->inputRect ();
+	input = w->borderRect ();
 	addEdge (w->id (), input.top (), input.left (),
 		 input.right (), TopEdge, false);
 	addEdge (w->id (), input.bottom (), input.left (),
@@ -430,7 +430,7 @@ SnapWindow::moveCheckNearestEdge (int position,
 void
 SnapWindow::moveCheckEdges ()
 {
-    CompRect input (window->inputRect ());
+    CompRect input (window->borderRect ());
     moveCheckNearestEdge (input.left (), input.top (), input.bottom (),
 			  true, RightEdge, HorizontalSnap);
     moveCheckNearestEdge (input.right (), input.top (), input.bottom (),
@@ -522,7 +522,7 @@ SnapWindow::resizeCheckNearestEdge (int position,
 void
 SnapWindow::resizeCheckEdges (int dx, int dy, int dwidth, int dheight)
 {
-    CompRect input (window->inputRect ());
+    CompRect input (window->borderRect ());
 
     resizeCheckNearestEdge (input.left (), input.top (), input.bottom (),
 			    true, RightEdge, HorizontalSnap);
