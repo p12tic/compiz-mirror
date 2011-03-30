@@ -545,8 +545,8 @@ ExpoScreen::donePaint ()
 	    int                              xOffset, yOffset;
 	    CompWindowList::reverse_iterator iter;
 
-	    xOffset = screen->vp ().x () * screen->width ();
-	    yOffset = screen->vp ().y () * screen->height ();
+	    xOffset = screen->vpSize ().width () * screen->width ();
+	    yOffset = screen->vpSize ().height () * screen->height ();
 
 	    dndState = DnDNone;
 
