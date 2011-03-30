@@ -55,7 +55,11 @@ NotificationScreen::logMessage (const char   *component,
     logLevel = (char *) logLevelToString (level);
 
     n = notify_notification_new (logLevel, message,
-				 iconUri.c_str (), NULL);
+				 iconUri.c_str ()
+#ifndef HAVE_LIBNOTIFY_0_6
+				 , NULL
+#endif				 
+				 );
 
     timeout = optionGetTimeout ();
     if (timeout > 0)
