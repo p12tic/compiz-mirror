@@ -56,7 +56,7 @@ NotificationScreen::logMessage (const char   *component,
 
     n = notify_notification_new (logLevel, message,
 				 iconUri.c_str ()
-#ifndef HAVE_LIBNOTIFY_0_6
+#ifndef HAVE_LIBNOTIFY_0_6_1
 				 , NULL
 #endif				 
 				 );
