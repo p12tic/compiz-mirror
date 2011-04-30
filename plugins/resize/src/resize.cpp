@@ -394,7 +394,7 @@ resizeInitiate (CompAction         *action,
 	rs->pointerDx = x - pointerX;
 	rs->pointerDy = y - pointerY;
 
-	rs->centered =  rs->optionGetResizeFromCenterMatch ().evaluate (w);
+        rs->centered |=  rs->optionGetResizeFromCenterMatch ().evaluate (w);
 
 	if ((w->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
 	{
@@ -1377,7 +1377,7 @@ ResizeScreen::handleEvent (XEvent *event)
 	    break;
     }
 
-    if (event->type == screen->xkbEvent () && w)
+    if (event->type == screen->xkbEvent ())
     {
 	XkbAnyEvent *xkbEvent = (XkbAnyEvent *) event;
 
@@ -1426,7 +1426,7 @@ ResizeScreen::handleEvent (XEvent *event)
 	    if (!modifierMode)
 		mode = optionGetMode ();
 
-	    if (oldMode != mode)
+            if (w && oldMode != mode)
 	    {
 		Box box;
 
@@ -1443,11 +1443,13 @@ ResizeScreen::handleEvent (XEvent *event)
 		damageRectangle (&box);
 	    }
 
-	    if ((stateEvent->mods & mods) == mods)
-		centered = true;
+            if ((stateEvent->mods & mods) == mods)
+                centered = true;
 	    else if ((w &&
 		      !optionGetResizeFromCenterMatch ().evaluate (w)))
 		centered = false;
+            else
+                centered = false;
 	}
     }
 
@@ -1680,7 +1682,7 @@ ResizeScreen::optionChanged (CompOption		    *option,
 	    mask = &stretchMask;
 	    valueMask = optionGetStretchModifierMask ();
 	    break;
-	case ResizeOptions::CenteredModifier:
+        case ResizeOptions::CenteredModifier:
 	    mask = &centeredMask;
 	    valueMask = optionGetCenteredModifierMask ();
 	    break;
