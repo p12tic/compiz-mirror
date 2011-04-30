@@ -1390,6 +1390,7 @@ ResizeScreen::handleEvent (XEvent *event)
 	    unsigned int mods = 0xffffffff;
 	    bool	 modifierMode = false;
 	    int		 oldMode = mode;
+
 	    if (outlineMask)
 		mods = outlineMask;
 
@@ -1422,6 +1423,34 @@ ResizeScreen::handleEvent (XEvent *event)
 	    mods = 0xffffffff;
 	    if (centeredMask)
 		mods = centeredMask;
+
+	    /* No modifier mode set, check match options */
+	    if (w)
+	    {
+		if (optionGetNormalMatch ().evaluate (w))
+		{
+		    modifierMode = true;
+		    mode = ResizeOptions::ModeNormal;
+		}
+
+		if (optionGetOutlineMatch ().evaluate (w))
+		{
+		    modifierMode = true;
+		    mode = ResizeOptions::ModeOutline;
+		}
+
+		if (optionGetRectangleMatch ().evaluate (w))
+		{
+		    modifierMode = true;
+		    mode = ResizeOptions::ModeRectangle;
+		}
+
+		if (optionGetStretchMatch ().evaluate (w))
+		{
+		    modifierMode = true;
+		    mode = ResizeOptions::ModeStretch;
+		}
+	    }
 
 	    if (!modifierMode)
 		mode = optionGetMode ();
