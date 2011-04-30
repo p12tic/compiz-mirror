@@ -987,6 +987,7 @@ CompScreen::handleEvent (XEvent *event)
 
     CompWindow *w = NULL;
     XWindowAttributes wa;
+    bool	      actionEventHandled = false;
 
     switch (event->type) {
     case ButtonPress:
@@ -1015,8 +1016,23 @@ CompScreen::handleEvent (XEvent *event)
 	if (priv->grabs.empty ())
 	    XAllowEvents (priv->dpy, AsyncPointer, event->xbutton.time);
 
-	return;
+	actionEventHandled = true;
     }
+
+    if (priv->grabs.empty ())
+    {
+	switch (event->type)
+	{
+	    case KeyPress:
+		XUngrabKeyboard (priv->dpy, event->xkey.time);
+		break;
+	    default:
+		break;
+	}
+    }
+
+    if (actionEventHandled)
+	return;
 
     switch (event->type) {
     case SelectionRequest:
