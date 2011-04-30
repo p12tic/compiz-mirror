@@ -394,7 +394,7 @@ resizeInitiate (CompAction         *action,
 	rs->pointerDx = x - pointerX;
 	rs->pointerDy = y - pointerY;
 
-        rs->centered |=  rs->optionGetResizeFromCenterMatch ().evaluate (w);
+	rs->centered |= rs->optionGetResizeFromCenterMatch ().evaluate (w);
 
 	if ((w->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
 	{
@@ -1426,7 +1426,7 @@ ResizeScreen::handleEvent (XEvent *event)
 	    if (!modifierMode)
 		mode = optionGetMode ();
 
-            if (w && oldMode != mode)
+	    if (w && oldMode != mode)
 	    {
 		Box box;
 
@@ -1443,8 +1443,8 @@ ResizeScreen::handleEvent (XEvent *event)
 		damageRectangle (&box);
 	    }
 
-            if ((stateEvent->mods & mods) == mods)
-                centered = true;
+	    if ((stateEvent->mods & mods) == mods)
+		centered = true;
 	    else if ((w &&
 		      !optionGetResizeFromCenterMatch ().evaluate (w)))
 		centered = false;
