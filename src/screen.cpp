@@ -3411,22 +3411,25 @@ CompScreen::runCommand (CompString command)
 
     if (fork () == 0)
     {
-	size_t     pos;
-	CompString env (priv->displayString);
+	size_t       pos;
+	CompString   env (priv->displayString);
 
 	setsid ();
 
 	pos = env.find (':');
 	if (pos != std::string::npos)
 	{
-	    if (env.find ('.', pos) != std::string::npos)
+            size_t pointPos = env.find ('.', pos);
+
+	    if (pointPos != std::string::npos)
 	    {
-		env.erase (env.find ('.', pos));
+		env.erase (pointPos);
 	    }
 	    else
 	    {
+                unsigned int displayNum = atoi (env.substr (pos + 1).c_str ());
 		env.erase (pos);
-		env.append (":0");
+		env.append (compPrintf (":%i", displayNum));
 	    }
 	}
 
