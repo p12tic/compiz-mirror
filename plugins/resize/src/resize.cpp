@@ -1522,8 +1522,20 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 				unsigned short            *borderColor,
 				unsigned short            *fillColor)
 {
-    BoxRec   box;
-    GLMatrix sTransform (transform);
+    BoxRec   	   box;
+    GLMatrix 	   sTransform (transform);
+    GLint    	   origSrc, origDst;
+    float_t	   fc[4], bc[4];
+
+    glGetIntegerv (GL_BLEND_SRC, &origSrc);
+    glGetIntegerv (GL_BLEND_DST, &origDst);
+
+    /* Premultiply the alpha values */
+    
+    bc[3] = (float) borderColor[3] / (float) 65535.0f;
+    bc[0] = ((float) borderColor[0] / 65535.0f) * bc[3];
+    bc[1] = ((float) borderColor[1] / 65535.0f) * bc[3];
+    bc[2] = ((float) borderColor[2] / 65535.0f) * bc[3];
 
     getPaintRectangle (&box);
 
@@ -1535,16 +1547,22 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 
     glDisableClientState (GL_TEXTURE_COORD_ARRAY);
     glEnable (GL_BLEND);
+    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     /* fill rectangle */
     if (fillColor)
     {
-	glColor4usv (fillColor);
+	fc[3] = (float) fillColor[3] / (float) 65535.0f;
+	fc[0] = ((float) fillColor[0] / 65535.0f) * fc[3];
+	fc[1] = ((float) fillColor[1] / 65535.0f) * fc[3];
+	fc[2] = ((float) fillColor[2] / 65535.0f) * fc[3];
+
+	glColor4f (fc[0], fc[1], fc[2], fc[3]);
 	glRecti (box.x1, box.y2, box.x2, box.y1);
     }
 
     /* draw outline */
-    glColor4usv (borderColor);
+    glColor4f (bc[0], bc[1], bc[2], bc[3]);
     glLineWidth (2.0);
     glBegin (GL_LINE_LOOP);
     glVertex2i (box.x1, box.y1);
