@@ -1595,10 +1595,13 @@ DecorScreen::handleEvent (XEvent *event)
 	    {
 		CompWindow    *w = screen->findWindow (event->xproperty.window);
 
-		DECOR_WINDOW (w);
+		if (w)
+		{
+		    DECOR_WINDOW (w);
 
-		if (dw->isSwitcher && !event->xproperty.state == PropertyDelete)
-		    dw->updateSwitcher ();
+		    if (dw->isSwitcher && !event->xproperty.state == PropertyDelete)
+			dw->updateSwitcher ();
+		}
 	    }
 	    else if (event->xproperty.atom == winDecorAtom)
 	    {
