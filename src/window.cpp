@@ -2034,6 +2034,7 @@ CompWindow::moveInputFocusToOtherWindow ()
 	{
 	    ancestor = screen->findWindow (priv->transientFor);
 	    if (ancestor &&
+		ancestor->focus () &&
 		!(ancestor->priv->type & (CompWindowTypeDesktopMask |
 					  CompWindowTypeDockMask)))
 	    {
