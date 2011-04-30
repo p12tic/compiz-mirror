@@ -1632,7 +1632,7 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
 	return;
 
     x      = ce->x + priv->input.left;
-    y      = ce->y + priv->input.top - priv->serverGeometry.border ();
+    y      = ce->y + priv->input.top;
     width  = ce->width - priv->serverGeometry.border () * 2 - priv->input.left - priv->input.right;
     height = ce->height - priv->serverGeometry.border () * 2 - priv->input.top - priv->input.bottom;
 
