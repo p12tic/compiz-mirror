@@ -46,7 +46,7 @@ typedef CompWindowExtents CompFullscreenMonitorSet;
 class PrivateWindow {
 
     public:
-	PrivateWindow (CoreWindow *window);
+	PrivateWindow ();
 	~PrivateWindow ();
 
 	void recalcNormalHints ();
@@ -304,24 +304,21 @@ class PrivateWindow {
 	Time lastCloseRequestTime;
 };
 
-/* Minimal tracking of the window which happens
- * on CreateNotify */
-
 class CoreWindow
 {
-    public:
+public:
 
-	CoreWindow (Window id);
+    CoreWindow (Window id);
 
-	CompWindow * manage (Window above, XWindowAttributes &wa);
+    CompWindow * manage (Window above, XWindowAttributes &wa);
 
-	friend class PrivateWindow;
-	friend class PrivateScreen;
-	friend class CompScreen;
+    friend class PrivateWindow;
+    friend class PrivateScreen;
+    friend class CompScreen;
 
-    private:
+private:
 
-	PrivateWindow *priv;
+    PrivateWindow *priv;
 };
 
 #endif

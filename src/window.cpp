@@ -5107,26 +5107,13 @@ CompWindow::syncAlarm ()
 CompWindow *
 CoreWindow::manage (Window aboveId, XWindowAttributes &wa)
 {
-    screen->priv->createdWindows.remove (this);
     return new CompWindow (aboveId, wa, priv);
 }
 
-/*
- * On CreateNotify we only want to do some very basic
- * initialization on the windows, and we need to be
- * tracking things like eg override-redirect windows
- * for compositing, although only on MapRequest do
- * we actually care about them (and let the plugins
- * care about them too)
- */
-
 CoreWindow::CoreWindow (Window id)
 {
-    priv = new PrivateWindow (this);
+    priv = new PrivateWindow ();
     assert (priv);
-
-    screen->priv->createdWindows.push_back (this);
-
     priv->id = id;
 }
 
@@ -5369,7 +5356,7 @@ CompWindow::~CompWindow ()
     delete priv;
 }
 
-PrivateWindow::PrivateWindow (CoreWindow *window) :
+PrivateWindow::PrivateWindow () :
     priv (this),
     refcnt (1),
     id (None),
@@ -5684,6 +5671,8 @@ PrivateWindow::reparent ()
     XWindowAttributes    wa;
     XWindowChanges       xwc;
     int                  mask;
+    unsigned int         nchildren;
+    Window		 *children, root_return, parent_return;
     CompWindow::Geometry &sg = serverGeometry;
     Display              *dpy = screen->dpy ();
     Visual		 *visual = DefaultVisual (screen->dpy (),
@@ -5703,6 +5692,22 @@ PrivateWindow::reparent ()
 	XSync (dpy, false);
 	return false;
     }
+
+    /* Don't ever reparent windows which have ended up
+     * reparented themselves on the server side but not
+     * on the client side */
+
+    XQueryTree (dpy, id, &root_return, &parent_return, &children, &nchildren);
+
+    if (parent_return != root_return)
+    {
+	XFree (children);
+	XUngrabServer (dpy);
+	XSync (dpy, false);
+	return false;
+    }
+
+    XFree (children);
 
     XChangeSaveSet (dpy, id, SetModeInsert);
     XSelectInput (dpy, id, NoEventMask);

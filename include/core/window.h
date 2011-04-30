@@ -557,6 +557,7 @@ class CompWindow :
 	friend class CoreWindow;
 
     private:
+
 	CompWindow (Window	      aboveId,
 		    XWindowAttributes &wa,
 		    PrivateWindow     *priv);

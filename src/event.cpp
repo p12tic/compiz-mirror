@@ -1083,24 +1083,14 @@ CompScreen::handleEvent (XEvent *event)
 	     * for FocusChangeMask. Also, we don't want to
 	     * manage it straight away - in reality we want
 	     * that to wait until the map request */
-	    if (failure || (wa.root == priv->root))
-	    {
-		/* Our SubstructureRedirectMask doesn't work on OverrideRedirect
-		 * windows so we need to track them directly here */
-		if (!event->xcreatewindow.override_redirect)
-		    new CoreWindow (event->xcreatewindow.window);
-		else
-		{
-		    CoreWindow *cw = 
-			new CoreWindow (event->xcreatewindow.window);
-		    
-		    if (cw)
-		    {
-			w = cw->manage (priv->getTopWindow (), wa);
-			delete cw;
-		    }
-		}
-	    }
+ 	    if (failure || (wa.root == priv->root))
+            {
+		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
+		cw->manage (priv->getTopWindow (), wa);
+
+		priv->createdWindows.remove (cw);
+		delete cw;
+            }
 	    else
 		XSelectInput (priv->dpy, event->xcreatewindow.window,
 			      FocusChangeMask);
@@ -1114,50 +1104,8 @@ CompScreen::handleEvent (XEvent *event)
 	    w->moveInputFocusToOtherWindow ();
 	    w->destroy ();
 	}
-	else
-	{
-	    foreach (CoreWindow *cw, priv->createdWindows)
-	    {
-		if (cw->priv->id == event->xdestroywindow.window)
-		{
-		    priv->createdWindows.remove (cw);
-		    delete cw;
-		    break;
-		}
-	    }
-	}
 	break;
     case MapNotify:
-
-	/* Some broken applications and toolkits (eg QT) will lie to
-	 * us about their override-redirect mask - not setting it on
-	 * the initial CreateNotify and then setting it later on
-	 * just after creation. Unfortunately, this means that QT
-	 * has successfully bypassed both of our window tracking
-	 * mechanisms (eg, not override-redirect at CreateNotify time
-	 * and then bypassing MapRequest because it *is* override-redirect
-	 * at XMapWindow time, so we need to catch this case and make
-	 * sure that windows are tracked here */
-       
-	foreach (CoreWindow *cw, priv->createdWindows)
-	{
-	    if (cw->priv->id == event->xmap.window)
-	    {
-		/* Failure means the window has been destroyed, but
-		 * still add it to the window list anyways since we
-		 * will soon handle the DestroyNotify event for it
-		 * and in between CreateNotify time and DestroyNotify
-		 * time there might be ConfigureRequests asking us
-		 * to stack windows relative to it
-		 */
-		if (!XGetWindowAttributes (screen->dpy (), cw->priv->id, &wa))
-		    priv->setDefaultWindowAttributes (&wa);
-
-		w = cw->manage (priv->getTopWindow (), wa);
-		delete cw;
-		break;
-	    }
-	}
 
 	/* Search in already-created windows for this window */
 	if (!w)
@@ -1247,13 +1195,11 @@ CompScreen::handleEvent (XEvent *event)
 	    if (!XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa))
 		priv->setDefaultWindowAttributes (&wa);
 
-	    CoreWindow *cw = new CoreWindow (event->xreparent.window);
+	    CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
+	    cw->manage (priv->getTopWindow (), wa);
 
-	    if (cw)
-	    {
-		cw->manage (priv->getTopWindow (), wa);
-		delete cw;
-	    }
+	    priv->createdWindows.remove (cw);
+	    delete cw;
 	}
 	else if (!(event->xreparent.parent == priv->root))
 	{
@@ -1744,6 +1690,27 @@ CompScreen::handleEvent (XEvent *event)
 		    priv->setDefaultWindowAttributes (&wa);
 
 		w = cw->manage (priv->getTopWindow (), wa);
+		delete cw;
+		break;
+	    }
+	}
+
+	foreach (CoreWindow *cw, priv->createdWindows)
+	{
+	    if (cw->priv->id == event->xmaprequest.window)
+	    {
+		/* Failure means the window has been destroyed, but
+		 * still add it to the window list anyways since we
+		 * will soon handle the DestroyNotify event for it
+		 * and in between CreateNotify time and DestroyNotify
+		 * time there might be ConfigureRequests asking us
+		 * to stack windows relative to it
+		 */
+		if (!XGetWindowAttributes (screen->dpy (), cw->priv->id, &wa))
+		    priv->setDefaultWindowAttributes (&wa);
+
+		w = cw->manage (priv->getTopWindow (), wa);
+		priv->createdWindows.remove (cw);
 		delete cw;
 		break;
 	    }
