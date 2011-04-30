@@ -1632,9 +1632,9 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
 	return;
 
     x      = ce->x + priv->input.left;
-    y      = ce->y + priv->input.top;
-    width  = ce->width - priv->input.left - priv->input.right;
-    height = ce->height - priv->input.top - priv->input.bottom;
+    y      = ce->y + priv->input.top - priv->serverGeometry.border ();
+    width  = ce->width - priv->serverGeometry.border () * 2 - priv->input.left - priv->input.right;
+    height = ce->height - priv->serverGeometry.border () * 2 - priv->input.top - priv->input.bottom;
 
     if (priv->syncWait)
     {
@@ -2429,10 +2429,10 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     {
 	XWindowChanges wc = *xwc;
 
-	wc.x      -= input.left;
-	wc.y      -= input.top;
-	wc.width  += input.left + input.right;
-	wc.height += input.top + input.bottom;
+	wc.x      -= input.left - serverGeometry.border ();
+	wc.y      -= input.top - serverGeometry.border ();
+	wc.width  += input.left + input.right + serverGeometry.border ();
+	wc.height += input.top + input.bottom + serverGeometry.border ();
 
 	XConfigureWindow (screen->dpy (), frame, valueMask, &wc);
 	valueMask &= ~(CWSibling | CWStackMode);
