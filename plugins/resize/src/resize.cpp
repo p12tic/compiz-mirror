@@ -1444,12 +1444,20 @@ ResizeScreen::handleEvent (XEvent *event)
 	    }
 
 	    if ((stateEvent->mods & mods) == mods)
+	    {
 		centered = true;
-	    else if ((w &&
-		      !optionGetResizeFromCenterMatch ().evaluate (w)))
+	    }
+	    else if (w)
+	    {
+		if (!optionGetResizeFromCenterMatch ().evaluate (w))
+		    centered = false;
+		else
+		    centered = true;
+	    }
+	    else
+	    {
 		centered = false;
-            else
-                centered = false;
+	    }
 	}
     }
 
