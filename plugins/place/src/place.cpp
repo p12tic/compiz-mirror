@@ -488,14 +488,13 @@ PlaceWindow::place (CompPoint &pos)
 CompRect
 PlaceWindow::doValidateResizeRequest (unsigned int &mask,
 				      XWindowChanges *xwc,
-				      unsigned int source,
+				      bool	   sizeOnly,
 				      bool	   clampToViewport)
 {
     CompRect workArea;
     int	     x, y, left, right, bottom, top;
     CompWindow::Geometry geom;
     int      output;
-    bool     sizeOnly = true;
 
     if (clampToViewport)
     {
