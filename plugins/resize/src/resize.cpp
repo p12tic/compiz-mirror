@@ -824,7 +824,7 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 	       already set as we don't have a use for the
 	       difference information otherwise */
 
-	    if (centered)
+	    if (centered || optionGetResizeFromCenter ())
 	    {
 		pointerDx += (xRoot - lastPointerX) * 2;
 		pointerDy += (yRoot - lastPointerY) * 2;
@@ -950,7 +950,7 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 	wWidth  = wi + w->border ().left + w->border ().right;
 	wHeight = he + w->border ().top + w->border ().bottom;
 
-	if (centered)
+	if (centered || optionGetResizeFromCenter ())
 	{
 	    if (mask & ResizeLeftMask)
 		wX = geometry.x + geometry.width -
@@ -1200,7 +1200,7 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 	    damageRectangle (&box);
 	}
 
-	if (centered)
+	if (centered || optionGetResizeFromCenter ())
 	{
 	    if ((mask & ResizeLeftMask) || (mask & ResizeRightMask))
 		geometry.x -= ((wi - geometry.width) / 2);

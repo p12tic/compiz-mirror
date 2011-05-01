@@ -48,6 +48,11 @@
 		    <_name>Stretch</_name>
 		</desc>
 	    </option>
+	    <option name="resize_from_center" type="bool">
+		<short>Resize From Center</short>
+		<long>Same as setting 'any' for resize_from_center_match</long>
+		<default>false</default>
+		</option>
 	    <option name="border_color" type="color">
 		<_short>Border Color</_short>
 		<_long>Border color used for outline and rectangle resize modes</_long>
