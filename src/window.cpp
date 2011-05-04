@@ -2032,7 +2032,33 @@ CompWindow::moveInputFocusTo ()
 	}
 
 	if (setFocus)
+	{
+	    CompWindowList dockWindows;
+	    XWindowChanges xwc;
+	    unsigned int   mask;
+
 	    screen->priv->nextActiveWindow = priv->id;
+
+	    /* Ensure that docks are stacked in the right place
+	     *
+	     * When a normal window gets the focus and is above a
+	     * fullscreen window, restack the docks to be above
+	     * the highest level mapped and visible normal window,
+	     * otherwise put them above the highest fullscreen window
+	     */
+	    if (PrivateWindow::stackDocks (this, dockWindows, &xwc, &mask))
+	    {
+		Window sibling = xwc.sibling;
+		xwc.stack_mode = Above;
+
+                /* Then update the dock windows */
+                foreach (CompWindow *dw, dockWindows)
+                {
+                    xwc.sibling = sibling;
+                    dw->configureXWindow (mask, &xwc);
+                }
+            }
+        }
 
 	if (!setFocus && !modalTransient)
 	{
@@ -2480,6 +2506,63 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 }
 
 bool
+PrivateWindow::stackDocks (CompWindow     *w,
+                           CompWindowList &updateList,
+                           XWindowChanges *xwc,
+                           unsigned int   *mask)
+{
+    CompWindow *firstFullscreenWindow = NULL;
+    CompWindow *belowDocks = NULL;
+
+    foreach (CompWindow *dw, screen->windows ())
+    {
+        /* fullscreen window found */
+        if (firstFullscreenWindow)
+        {
+            if (dw->focus () &&
+                !PrivateWindow::isAncestorTo (w, dw) &&
+                !(dw->type () & (CompWindowTypeFullscreenMask |
+                                 CompWindowTypeDockMask)) &&
+                !dw->overrideRedirect () &&
+                dw->defaultViewport () == screen->vp ())
+            {
+                belowDocks = dw;
+            }
+        }
+        else if (dw->type () & CompWindowTypeFullscreenMask)
+        {
+            firstFullscreenWindow = dw;
+            for (CompWindow *dww = dw->prev; dww; dww = dww->prev)
+            {
+                if (!(dww->type () & (CompWindowTypeFullscreenMask |
+                                      CompWindowTypeDockMask) &&
+                    !dww->overrideRedirect () &&
+                    dww->defaultViewport () == screen->vp ()))
+                {
+                    belowDocks = dww;
+                    break;
+                }
+            }
+        }
+    }
+
+    if (belowDocks)
+    {
+        *mask = CWSibling | CWStackMode;
+        xwc->sibling = ROOTPARENT (belowDocks);
+
+        /* Collect all dock windows first */
+        foreach (CompWindow *dw, screen->windows ())
+            if (dw->priv->type & CompWindowTypeDockMask)
+                updateList.push_front (dw);
+
+        return true;
+    }
+
+    return false;
+}
+
+bool
 PrivateWindow::stackTransients (CompWindow	*w,
 				CompWindow	*avoid,
 				XWindowChanges *xwc,
@@ -2592,6 +2675,7 @@ CompWindow::configureXWindow (unsigned int valueMask,
     {
 	CompWindowList transients;
 	CompWindowList ancestors;
+	CompWindowList docks;
 
 	/* Since the window list is being reordered in reconfigureXWindow
 	   the list of windows which need to be restacked must be stored
@@ -2622,6 +2706,19 @@ CompWindow::configureXWindow (unsigned int valueMask,
 		(*w)->priv->reconfigureXWindow (CWSibling | CWStackMode, xwc);
 		xwc->sibling = ROOTPARENT (*w);
 	    }
+
+	    if (PrivateWindow::stackDocks (this, docks, xwc, &valueMask))
+	    {
+		Window sibling = xwc->sibling;
+		xwc->stack_mode = Above;
+
+                /* Then update the dock windows */
+                foreach (CompWindow *dw, docks)
+                {
+                    xwc->sibling = sibling;
+                    dw->priv->reconfigureXWindow (valueMask, xwc);
+                }
+            }
 	}
     }
     else
@@ -3087,35 +3184,6 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 
 	    xwc->stack_mode = Above;
 	    xwc->sibling    = ROOTPARENT (sibling);
-	}
-    }
-
-    if (sibling && mask)
-    {
-	/* a normal window can be stacked above fullscreen windows but we
-	   don't want normal windows to be stacked above dock window so if
-	   the sibling we're stacking above is a fullscreen window we also
-	   update all dock windows. */
-	if ((sibling->priv->type & CompWindowTypeFullscreenMask) &&
-	    (!(type & (CompWindowTypeFullscreenMask |
-			  CompWindowTypeDockMask))) &&
-	    !isAncestorTo (window, sibling))
-	{
-	    CompWindow *dw;
-
-	    for (dw = screen->windows ().back (); dw; dw = dw->prev)
-		if (dw == sibling)
-		    break;
-
-	    /* Collect all dock windows first */
-	    CompWindowList dockWindows;
-	    for (; dw; dw = dw->prev)
-		if (dw->priv->type & CompWindowTypeDockMask)
-		    dockWindows.push_back (dw);
-
-	    /* Then update the dock windows */
-	    foreach (CompWindow *dw, dockWindows)
-		dw->configureXWindow (mask, xwc);
 	}
     }
 

@@ -1848,7 +1848,7 @@ CompScreen::handleEvent (XEvent *event)
 
 		    if (w->id () != priv->activeWindow)
 		    {
-			CompWindow *active = screen->findWindow (priv->activeWindow);
+			CompWindow     *active = screen->findWindow (priv->activeWindow);
 			w->windowNotify (CompWindowNotifyFocusChange);
 
 			priv->activeWindow = w->id ();
