@@ -276,7 +276,7 @@ main (int argc, char *argv[])
 		     FALSE);
 
     net_wm_state_atom = XInternAtom (xdisplay,"_NET_WM_STATE", 0);
-    net_wm_state_modal_atom = XInternAtom (xdisplay, "_NET_MW_STATE_MODAL", 0);
+    net_wm_state_modal_atom = XInternAtom (xdisplay, "_NET_WM_STATE_MODAL", 0);
 
     status = decor_acquire_dm_session (xdisplay,
 				       gdk_screen_get_number (gdkscreen),
