@@ -770,8 +770,7 @@ PrivateWindow::updateFrameWindow ()
 
     if (input.left || input.right || input.top || input.bottom)
     {
-	int	   x, y;
-	unsigned int width, height;
+        int	   x, y, width, height;
 	int	   bw = serverGeometry.border () * 2;
 
 	x      = serverGeometry.x () - input.left;
