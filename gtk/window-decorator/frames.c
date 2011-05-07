@@ -304,7 +304,6 @@ initialize_decorations ()
 {
     frame_info_table = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, destroy_frame_type);
 
-    gwd_decor_frame_add_type ("default", create_normal_frame, destroy_normal_frame);
     gwd_decor_frame_add_type ("normal", create_normal_frame, destroy_normal_frame);
     gwd_decor_frame_add_type ("dialog", create_normal_frame, destroy_normal_frame);
     gwd_decor_frame_add_type ("modal_dialog", create_normal_frame, destroy_normal_frame);

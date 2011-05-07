@@ -82,8 +82,13 @@ struct _pos pos[3][3] = {
     { 6, 2, 16, 16,   0, 0, 0, 0, 0, 0 }
 };
 
-const gchar * window_type_frames[WINDOW_TYPE_FRAMES_NUM] = {
-    "normal", "dialog", "menu", "utility"
+#define WINDOW_TYPE_FRAMES_NUM 5
+struct _default_frame_references default_frames[WINDOW_TYPE_FRAMES_NUM] = {
+    {"normal", NULL },
+    {"dialog", NULL },
+    {"modal_dialog", NULL },
+    {"menu", NULL },
+    {"utility", NULL}
 };
 
 char *program_name;
@@ -112,6 +117,10 @@ XRenderPictFormat *xformat_rgb;
 
 decor_settings_t *settings;
 
+const gchar * window_type_frames[WINDOW_TYPE_FRAMES_NUM] = {
+    "normal", "modal_dialog", "dialog", "menu", "utility"
+};
+
 int
 main (int argc, char *argv[])
 {
@@ -125,7 +134,7 @@ main (int argc, char *argv[])
     Window        root_ret, parent_ret;
     Window        *children = NULL;
     GList	  *windows, *win;
-    decor_frame_t *default_p, *bare_p, *switcher_p;
+    decor_frame_t *bare_p, *switcher_p;
 
 #ifdef USE_METACITY
     char       *meta_theme = NULL;
@@ -410,7 +419,6 @@ main (int argc, char *argv[])
     /* Keep the default, bare and switcher decorations around
      * since otherwise they will be spuriously recreated */
 
-    default_p = gwd_get_decor_frame ("default");
     bare_p = gwd_get_decor_frame ("bare");
     switcher_p = gwd_get_decor_frame ("switcher");
 
@@ -441,7 +449,6 @@ main (int argc, char *argv[])
     if (tip_window)
 	gtk_widget_destroy (GTK_WIDGET (tip_window));
 
-    gwd_decor_frame_unref (default_p);
     gwd_decor_frame_unref (bare_p);
     gwd_decor_frame_unref (switcher_p);
 
