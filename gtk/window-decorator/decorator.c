@@ -1035,7 +1035,7 @@ populate_frame_type (decor_t *d)
      * the only way we can get the modal_dialog type */
 
     const unsigned int n_type_strings = 5;
-    unsigned int       frame_type;
+    unsigned int       frame_type = 0;
     unsigned int i;
     struct typestrings {
         const char   *type;
@@ -1052,7 +1052,7 @@ populate_frame_type (decor_t *d)
     for (i = 0; i < n_type_strings; i++)
     {
         if (strcmp (d->frame->type, type_strings[i].type) == 0)
-            frame_type &= type_strings[i].flag;
+            frame_type |= type_strings[i].flag;
     }
 
     return frame_type;
@@ -1093,7 +1093,7 @@ populate_frame_state (decor_t *d)
     for (i = 0; i < n_state_bits; i++)
     {
         if (win_state & state_bits[i].wnck_flag)
-            frame_state &= state_bits[i].decor_flag;
+            frame_state |= state_bits[i].decor_flag;
     }
 
     return frame_state;
@@ -1143,7 +1143,7 @@ populate_frame_actions (decor_t *d)
     for (i = 0; i < n_action_bits; i++)
     {
         if (win_actions & action_bits[i].wnck_flag)
-            frame_actions &= action_bits[i].decor_flag;
+            frame_actions |= action_bits[i].decor_flag;
     }
 
     return frame_actions;
