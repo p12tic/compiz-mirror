@@ -166,8 +166,8 @@ decor_quads_to_property (long		 *data,
 			 int		 min_height,
 			 decor_quad_t    *quad,
 			 int		 nQuad,
-			 unsigned int	 frame_state,
-			 unsigned int    frame_type,
+			 unsigned int	 frame_type,
+			 unsigned int    frame_state,
 			 unsigned int    frame_actions)
 {
     /* FIXME: Allocating for N_QUAD_MAX is slightly inefficient, but there
@@ -197,8 +197,8 @@ decor_quads_to_property (long		 *data,
     *data++ = min_width;
     *data++ = min_height;
 
-    *data++ = frame_state;
     *data++ = frame_type;
+    *data++ = frame_state;
     *data++ = frame_actions;
 
     *data++ = nQuad;
@@ -236,8 +236,8 @@ decor_gen_window_property (long		   *data,
 			   decor_extents_t *max_input,
 			   int		   min_width,
 			   int		   min_height,
-			   unsigned int	   frame_state,
-			   unsigned int    frame_type,
+			   unsigned int	   frame_type,
+			   unsigned int    frame_state,
 			   unsigned int    frame_actions)
 {
     data += PROP_HEADER_SIZE + n * WINDOW_PROP_SIZE;
@@ -255,8 +255,8 @@ decor_gen_window_property (long		   *data,
     *data++ = min_width;
     *data++ = min_height;
 
-    *data++ = frame_state;
     *data++ = frame_type;
+    *data++ = frame_state;
     *data++ = frame_actions;
 }
 
@@ -289,8 +289,8 @@ decor_pixmap_property_to_quads (long		 *data,
 				decor_extents_t  *max_border,
 				int		 *min_width,
 				int		 *min_height,
-				unsigned int     *frame_state,
 				unsigned int     *frame_type,
+				unsigned int     *frame_state,
 				unsigned int     *frame_actions,
 				decor_quad_t     *quad)
 {
