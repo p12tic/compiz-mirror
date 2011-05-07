@@ -710,22 +710,22 @@ PlaceWindow::doPlacement (CompPoint &pos)
 	if (parent)
 	{
 	    /* center over parent horizontally */
-	    pos.setX (parent->serverX () +
-		      (parent->serverGeometry ().width () / 2) -
-		      (window->serverGeometry ().width () / 2));
+	    pos.setX (parent->serverBorderRect ().x () +
+		      (parent->serverBorderRect ().width () / 2) -
+		      (window->serverBorderRect ().width () / 2));
 
 	    /* "visually" center vertically, leaving twice as much space below
 	       as on top */
-	    pos.setY (parent->serverY () +
-		      (parent->serverGeometry ().height () -
-		       window->serverGeometry ().height ()) / 3);
+	    pos.setY (parent->serverBorderRect ().y () +
+		      (parent->serverBorderRect ().height () -
+		       window->serverBorderRect ().height ()) / 3);
 
 	    /* if parent is visible on current viewport, clip to work area;
 	       don't constrain further otherwise */
-	    if (parent->serverX () < screen->width ()           &&
-		parent->serverX () + parent->serverWidth () > 0 &&
-		parent->serverY () < screen->height ()          &&
-		parent->serverY () + parent->serverHeight () > 0)
+	    if (parent->serverBorderRect ().x () < screen->width ()           &&
+		parent->serverBorderRect ().x () + parent->serverBorderRect ().width () > 0 &&
+		parent->serverBorderRect ().y () < screen->height ()          &&
+		parent->serverBorderRect ().y () + parent->serverBorderRect ().height () > 0)
 	    {
 		targetVp = parent->defaultViewport ();
 		strategy = ConstrainOnly;
