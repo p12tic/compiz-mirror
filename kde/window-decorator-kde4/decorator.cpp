@@ -292,7 +292,8 @@ KWD::Decorator::updateShadow (void)
     if (mNoBorderShadow)
     {
 	decor_extents_t extents = { 0, 0, 0, 0 };
-	long	        data[256];
+	long	        *data;
+	unsigned int    n = 1, frame_type = 0, frame_state = 0, frame_actions = 0;
 	decor_quad_t    quads[N_QUADS_MAX];
 	int	        nQuad;
 	decor_layout_t  layout;
@@ -301,17 +302,20 @@ KWD::Decorator::updateShadow (void)
 
 	nQuad = decor_set_lSrStSbS_window_quads (quads, &context, &layout);
 
-	decor_quads_to_property (data, mNoBorderShadow->pixmap,
+	data = decor_alloc_property (n, WINDOW_DECORATION_TYPE_PIXMAP);
+	decor_quads_to_property (data, n - 1, mNoBorderShadow->pixmap,
 				 &extents, &extents, &extents, &extents,
-				 0, 0, quads, nQuad);
+				 0, 0, quads, nQuad, frame_type, frame_state, frame_actions);
 
 	KWD::trapXError ();
 	XChangeProperty (QX11Info::display (), QX11Info::appRootWindow (),
 			 Atoms::netWindowDecorBare,
 			 XA_INTEGER,
 			 32, PropModeReplace, (unsigned char *) data,
-			 BASE_PROP_SIZE + QUAD_PROP_SIZE * nQuad);
+			 PROP_HEADER_SIZE + BASE_PROP_SIZE + QUAD_PROP_SIZE * N_QUADS_MAX);
 	KWD::popXError ();
+
+        free (data);
     }
 }
 
