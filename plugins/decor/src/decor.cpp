@@ -401,15 +401,14 @@ computeQuadBox (decor_quad_t *q,
 }
 
 Decoration *
-Decoration::create (Window id,
-		    Atom   decorAtom)
+Decoration::create (Window        id,
+		    long          *prop,
+		    unsigned int  size,
+		    unsigned int  type,
+		    unsigned int  nOffset)
 {
     Decoration	    *decoration;
-    Atom	    actual;
-    int		    result, format;
-    unsigned long   n, nleft;
-    unsigned char   *data;
-    long	    *prop;
+    unsigned int    frameType, frameState, frameActions;
     Pixmap	    pixmap = None;
     decor_extents_t border;
     decor_extents_t input;
@@ -421,51 +420,29 @@ Decoration::create (Window id,
     int		    minHeight;
     int		    left, right, top, bottom;
     int		    x1, y1, x2, y2;
-    int		    type;
-
-    result = XGetWindowProperty (screen->dpy (), id,
-				 decorAtom, 0L, 1024L, false,
-				 XA_INTEGER, &actual, &format,
-				 &n, &nleft, &data);
-
-    if (result != Success || !n || !data)
-	return NULL;
-
-    prop = (long *) data;
-
-    if (decor_property_get_version (prop) != decor_version ())
-    {
-	compLogMessage ("decoration", CompLogLevelWarn,
-			"Property ignored because "
-			"version is %d and decoration plugin version is %d\n",
-			decor_property_get_version (prop), decor_version ());
-
-	XFree (data);
-	return NULL;
-    }
-
-    type = decor_property_get_type (prop);
 
     if (type ==  WINDOW_DECORATION_TYPE_PIXMAP &&
 	!DecorScreen::get (screen)->cmActive)
+    {
+        compLogMessage ("decor", CompLogLevelWarn, "requested a pixmap type decoration when compositing isn't available");
 	return NULL;
+    }
 
     if (type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
-	nQuad = (n - BASE_PROP_SIZE) / QUAD_PROP_SIZE;
+        nQuad = N_QUADS_MAX;
 
 	quad = new decor_quad_t [nQuad];
 	if (!quad)
 	{
-	    XFree (data);
+	    compLogMessage ("decor", CompLogLevelWarn, "failed to allocate %i quads\n", nQuad);
 	    return NULL;
 	}
 
-	nQuad = decor_pixmap_property_to_quads (prop, n, &pixmap, &input,
+	nQuad = decor_pixmap_property_to_quads (prop, nOffset, size, &pixmap, &input,
 						&border, &maxInput,
-						&maxBorder, &minWidth, &minHeight, quad);
-
-	XFree (data);
+						&maxBorder, &minWidth, &minHeight,
+						&frameType, &frameState, &frameActions, quad);
 
 	if (!nQuad)
 	{
@@ -475,20 +452,21 @@ Decoration::create (Window id,
     }
     else if (type == WINDOW_DECORATION_TYPE_WINDOW)
     {
-	if (!decor_window_property (prop, n, &input, &maxInput,
-				    &minWidth, &minHeight))
+        if (!decor_window_property (prop, nOffset, size, &input, &maxInput,
+                                    &minWidth, &minHeight, &frameType, &frameState, &frameActions))
 	{
-	    XFree (data);
+	    compLogMessage ("decor", CompLogLevelWarn, "malformed decoration - not a window");
 	    return NULL;
 	}
 
 	border = input;
 	maxBorder = maxInput;
-	
-	XFree (data);
     }
     else
+    {
+        compLogMessage ("decor", CompLogLevelWarn, "malformed decoration - undetermined type");
 	return NULL;
+    }
 
     decoration = new Decoration ();
     if (!decoration)
@@ -504,6 +482,7 @@ Decoration::create (Window id,
 
     if (!decoration->texture && type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
+        compLogMessage ("decor", CompLogLevelWarn, "failed to bind pixmap to texture");
 	delete decoration;
 	delete [] quad;
 	return NULL;
@@ -599,23 +578,97 @@ Decoration::release (Decoration *decoration)
     delete decoration;
 }
 
+DecorationList::DecorationList () :
+    mList (0)
+{
+}
+
+bool
+DecorationList::updateDecoration (Window   id,
+				  Atom     decorAtom)
+{
+    unsigned long   n, nleft;
+    unsigned char   *data;
+    long	    *prop;
+    Atom	    actual;
+    int		    result, format;
+    unsigned int    type;
+
+    /* FIXME: Should really check the property to see
+     * if the decoration changed, and /then/ release
+     * and re-update it, but for now just releasing all */
+    mList.clear ();
+
+    result = XGetWindowProperty (screen->dpy (), id,
+                                 decorAtom, 0L,
+                                 PROP_HEADER_SIZE + 6 * (BASE_PROP_SIZE +
+                                                         QUAD_PROP_SIZE * N_QUADS_MAX),
+                                 false, XA_INTEGER, &actual, &format,
+				 &n, &nleft, &data);
+
+    if (result != Success || !n || !data)
+        return false;
+
+    /* Attempted to read the reasonable amount of
+     * around 6 pixmap decorations, if there are more, we need
+     * an additional roundtrip to read everything else
+     */
+    if (nleft)
+    {
+        XFree (data);
+
+        result = XGetWindowProperty (screen->dpy (), id, decorAtom, 0L,
+                                     n + nleft, false, XA_INTEGER, &actual, &format,
+                                     &n, &nleft, &data);
+
+        if (result != Success || !n || !data)
+            return false;
+    }
+
+    prop = (long *) data;
+
+    if (decor_property_get_version (prop) != decor_version ())
+    {
+	compLogMessage ("decoration", CompLogLevelWarn,
+			"Property ignored because "
+			"version is %d and decoration plugin version is %d\n",
+			decor_property_get_version (prop), decor_version ());
+
+	XFree (data);
+	return false;
+    }
+
+    type = decor_property_get_type (prop);
+
+    for (int i = 0; i < decor_property_get_num (prop); i++)
+    {
+	Decoration *d = Decoration::create (id, prop, n, type, i);
+
+	if (!d)
+        {
+            XFree (data);
+            mList.clear ();
+            return false;
+        }
+        else
+            mList.push_back (d);
+    }
+
+    XFree (data);
+
+    return true;
+}
+
 void
 DecorWindow::updateDecoration ()
 {
-    Decoration *decoration;
-
     bindFailed = false;
-    decoration = Decoration::create (window->id (), dScreen->winDecorAtom);
 
-    if (decor)
-	Decoration::release (decor);
-
+    decor.updateDecoration (window->id (), dScreen->winDecorAtom);
     if (bindFailed)
 	pixmapFailed = true;
     else
 	pixmapFailed = false;
-
-    decor = decoration;
 }
 
 WindowDecoration *
@@ -750,10 +803,10 @@ DecorWindow::updateDecorationScale ()
 }
 
 bool
-DecorWindow::checkSize (Decoration *decor)
+DecorWindow::checkSize (Decoration *decoration)
 {
-    return (decor->minWidth <= (int) window->size ().width () &&
-	    decor->minHeight <= (int) window->size ().height ());
+    return (decoration->minWidth <= (int) window->size ().width () &&
+            decoration->minHeight <= (int) window->size ().height ());
 }
 
 int
@@ -801,6 +854,102 @@ decorOffsetMove (CompWindow *w, XWindowChanges xwc, unsigned int mask)
     w->configureXWindow (mask, &xwc);
     screen->handleCompizEvent ("decor", "window_decorated", o);
     return false;
+}
+
+bool
+DecorWindow::matchType (CompWindow *w,
+                        unsigned int decorType)
+{
+    const unsigned int nTypeStates = 5;
+    unsigned int i;
+    struct typestate {
+        unsigned int compFlag;
+        unsigned int decorFlag;
+    } typeStates[] =
+    {
+        { CompWindowTypeNormalMask, DECOR_WINDOW_TYPE_NORMAL },
+        { CompWindowTypeDialogMask, DECOR_WINDOW_TYPE_DIALOG },
+        { CompWindowTypeModalDialogMask, DECOR_WINDOW_TYPE_MODAL_DIALOG },
+        { CompWindowTypeMenuMask, DECOR_WINDOW_TYPE_MENU },
+        { CompWindowTypeUtilMask, DECOR_WINDOW_TYPE_UTILITY}
+    };
+
+    for (i = 0; i < nTypeStates; i++)
+    {
+        if ((decorType & typeStates[i].decorFlag) && (w->type () & typeStates[i].compFlag))
+            return true;
+    }
+
+    return false;
+}
+
+bool
+DecorWindow::matchState (CompWindow   *w,
+                         unsigned int decorState)
+{
+    const unsigned int nStateStates = 3;
+    unsigned int i;
+    struct statestate {
+        unsigned int compFlag;
+        unsigned int decorFlag;
+    } stateStates[] =
+    {
+        { CompWindowStateMaximizedVertMask, DECOR_WINDOW_STATE_MAXIMIZED_VERT },
+        { CompWindowStateMaximizedHorzMask, DECOR_WINDOW_STATE_MAXIMIZED_HORZ },
+        { CompWindowStateShadedMask, DECOR_WINDOW_STATE_SHADED }
+    };
+
+    /* Active is a separate check */
+
+    if (screen->activeWindow () == w->id ())
+        decorState &= ~(DECOR_WINDOW_STATE_FOCUS);
+
+    for (i = 0; i < nStateStates; i++)
+    {
+        if ((decorState & stateStates[i].decorFlag) && (w->state () & stateStates[i].compFlag))
+            decorState &= ~(stateStates[i].decorFlag);
+    }
+
+    return (decorState == 0);
+}
+
+bool
+DecorWindow::matchActions (CompWindow   *w,
+                           unsigned int decorActions)
+{
+    const unsigned int nActionStates =16;
+    unsigned int i;
+    struct actionstate {
+        unsigned int compFlag;
+        unsigned int decorFlag;
+    } actionStates[] =
+    {
+        { DECOR_WINDOW_ACTION_RESIZE_HORZ, CompWindowActionResizeMask },
+        { DECOR_WINDOW_ACTION_RESIZE_VERT, CompWindowActionResizeMask },
+        { DECOR_WINDOW_ACTION_CLOSE, CompWindowActionCloseMask },
+        { DECOR_WINDOW_ACTION_MINIMIZE, CompWindowActionMinimizeMask },
+        { DECOR_WINDOW_ACTION_UNMINIMIZE,CompWindowActionMinimizeMask },
+        { DECOR_WINDOW_ACTION_MAXIMIZE_HORZ, CompWindowActionMaximizeHorzMask },
+        { DECOR_WINDOW_ACTION_MAXIMIZE_VERT, CompWindowActionMaximizeVertMask },
+        { DECOR_WINDOW_ACTION_UNMAXIMIZE_HORZ, CompWindowActionMaximizeHorzMask },
+        { DECOR_WINDOW_ACTION_UNMAXIMIZE_VERT, CompWindowActionMaximizeVertMask },
+        { DECOR_WINDOW_ACTION_SHADE, CompWindowActionShadeMask },
+        { DECOR_WINDOW_ACTION_UNSHADE, CompWindowActionShadeMask },
+        { DECOR_WINDOW_ACTION_STICK, CompWindowActionStickMask },
+        { DECOR_WINDOW_ACTION_UNSTICK, CompWindowActionStickMask },
+        { DECOR_WINDOW_ACTION_FULLSCREEN, CompWindowActionFullscreenMask },
+        { DECOR_WINDOW_ACTION_ABOVE, CompWindowActionAboveMask },
+        { DECOR_WINDOW_ACTION_BELOW, CompWindowActionBelowMask },
+    };
+
+    /* Active is a separate check */
+    for (i = 0; i < nActionStates; i++)
+    {
+        if ((decorActions & actionStates[i].decorFlag) && (w->type () & actionStates[i].compFlag))
+            decorActions &= ~(actionStates[i].decorFlag);
+    }
+
+    return (decorActions == 0);
 }
 
 bool
@@ -853,20 +1002,156 @@ DecorWindow::update (bool allowDecoration)
 
     if (decorate)
     {
-	if (decor && checkSize (decor))
-	    decoration = decor;
-	else
-	{
+        /* Attempt to find a matching */
+        if (decor.mList.size ())
+        {
+            const unsigned int typeMatch = (1 << 0);
+            const unsigned int stateMatch = (1 << 1);
+            const unsigned int actionsMatch = (1 << 2);
 
+            unsigned int currentDecorState = 0;
+
+            decoration = checkSize (decor.mList.front ()) ? decor.mList.front () : NULL;
+
+	    foreach (Decoration *d, dScreen->decor[DECOR_ACTIVE].mList)
+	    {
+		if (matchType (window, d->frameType))
+		{
+		    if (!(typeMatch & currentDecorState) && checkSize (d))
+		    {
+			decoration = d;
+			currentDecorState |= typeMatch;
+		    }
+
+		    if (matchState (window, d->frameState) && checkSize (d))
+		    {
+			if (!(stateMatch & currentDecorState))
+			{
+			    decoration = d;
+			    currentDecorState |= stateMatch;
+			}
+
+			if (matchActions (window, d->frameActions) && checkSize (d))
+			{
+			    if (!(actionsMatch & currentDecorState))
+			    {
+				decoration = d;
+				currentDecorState |= actionsMatch;
+
+				/* Perfect match, no need to continue searching */
+				break;
+			    }
+			}
+		    }
+		}
+	    }
+	}
+
+	if (!decoration)
+	{
+	    /* Find an appropriate default decoration to use */
 	    if (dScreen->dmSupports & WINDOW_DECORATION_TYPE_PIXMAP &&
 	        dScreen->cmActive &&
 		!(dScreen->dmSupports & WINDOW_DECORATION_TYPE_WINDOW &&
 		  pixmapFailed))
 	    {
+		const unsigned int typeMatch = (1 << 0);
+		const unsigned int stateMatch = (1 << 1);
+		const unsigned int actionsMatch = (1 << 2);
+
+		unsigned int currentDecorState = 0;
+
+		/* First go with the first available decoration,
+		 * then lock decorations in based on first of all
+		 * the type, then the state, then the available
+		 * actions in that order
+		 *
+		 * FIXME: That's a lot of repeated code */
+
 		if (window->id () == screen->activeWindow ())
-		    decoration = dScreen->decor[DECOR_ACTIVE];
+		{
+		    if (dScreen->decor[DECOR_ACTIVE].mList.empty ())
+			compLogMessage ("decor", CompLogLevelWarn, "No default decoration found, placement will not be correct");
+		    else
+		    {
+			decoration = dScreen->decor[DECOR_ACTIVE].mList.front ();
+
+			foreach (Decoration *d, dScreen->decor[DECOR_ACTIVE].mList)
+			{
+			    if (d->frameType & window->type ())
+			    {
+				if (!(typeMatch & currentDecorState))
+				{
+				    decoration = d;
+				    currentDecorState |= typeMatch;
+				}
+
+				if (d->frameState & window->state ())
+				{
+				    if (!(stateMatch & currentDecorState))
+				    {
+					decoration = d;
+					currentDecorState |= stateMatch;
+				    }
+
+				    if (d->frameActions & window->actions ())
+				    {
+					if (!(actionsMatch & currentDecorState))
+					{
+					    decoration = d;
+					    currentDecorState |= actionsMatch;
+
+					    /* Perfect match, no need to continue searching */
+					    break;
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
 		else
-		    decoration = dScreen->decor[DECOR_NORMAL];
+		{
+		    if (dScreen->decor[DECOR_NORMAL].mList.empty ())
+			compLogMessage ("decor", CompLogLevelWarn, "No default decoration found, placement will not be correct");
+		    else
+		    {
+			decoration = dScreen->decor[DECOR_NORMAL].mList.front ();
+
+			foreach (Decoration *d, dScreen->decor[DECOR_NORMAL].mList)
+			{
+			    if (d->frameType & window->type ())
+			    {
+				if (!(typeMatch & currentDecorState))
+				{
+				    decoration = d;
+				    currentDecorState |= typeMatch;
+				}
+
+				if (d->frameState & window->state ())
+				{
+				    if (!(stateMatch & currentDecorState))
+				    {
+					decoration = d;
+					currentDecorState |= stateMatch;
+				    }
+
+				    if (d->frameActions & window->actions ())
+				    {
+					if (!(actionsMatch & currentDecorState))
+					{
+					    decoration = d;
+					    currentDecorState |= actionsMatch;
+
+					    /* Perfect match, no need to continue searching */
+					    break;
+					}
+				    }
+				}
+			    }
+			}
+		    }
+		}
 	    }
 	    else if (dScreen->dmSupports & WINDOW_DECORATION_TYPE_WINDOW)
 		decoration = &dScreen->windowDefault;
@@ -876,8 +1161,8 @@ DecorWindow::update (bool allowDecoration)
     {
 	if (dScreen->optionGetShadowMatch ().evaluate (window))
 	{
-	    if (window->region ().numRects () == 1 && !window->alpha ())
-		decoration = dScreen->decor[DECOR_BARE];
+	    if (window->region ().numRects () == 1 && !window->alpha () && dScreen->decor[DECOR_BARE].mList.size ())
+		decoration = dScreen->decor[DECOR_BARE].mList.front ();
 
 	    if (decoration)
 	    {
@@ -1350,37 +1635,30 @@ DecorScreen::checkForDm (bool updateWindows)
 	}
     }
 
+    /* Different decorator became active, update all decorations */
     if (dmWin != this->dmWin)
     {
 	int i;
 
 	this->dmSupports = dmSupports;
 
+	/* Create new default decorations */
 	if (dmWin)
 	{
 	    for (i = 0; i < DECOR_NUM; i++)
-		decor[i] = Decoration::create (screen->root (), decorAtom[i]);
+	    {
+		decor[i].updateDecoration (screen->root (), decorAtom[i]);
+	    }
 	}
 	else
 	{
+	    /* No decorator active, destroy all decorations */
 	    for (i = 0; i < DECOR_NUM; i++)
 	    {
-		if (decor[i])
-		{
-		    Decoration::release (decor[i]);
-		    decor[i] = 0;
-		}
-	    }
+		decor[i].clear ();
 
-	    foreach (CompWindow *w, screen->windows ())
-	    {
-		DecorWindow *dw = DecorWindow::get (w);
-
-		if (dw->decor)
-		{
-		    Decoration::release (dw->decor);
-		    dw->decor = 0;
-		}
+		foreach (CompWindow *w, screen->windows ())
+		    DecorWindow::get (w)->decor.mList.clear ();
 	    }
 	}
 
@@ -1646,12 +1924,8 @@ DecorScreen::handleEvent (XEvent *event)
 			{
 			    if (event->xproperty.atom == decorAtom[i])
 			    {
-				if (decor[i])
-				    Decoration::release (decor[i]);
-
-				decor[i] =
-				    Decoration::create (screen->root (),
-							decorAtom[i]);
+				decor[i].updateDecoration (screen->root (),
+							   decorAtom[i]);
 
 				foreach (CompWindow *w, screen->windows ())
 				    DecorWindow::get (w)->update (true);
@@ -1666,7 +1940,7 @@ DecorScreen::handleEvent (XEvent *event)
 	    if (w)
 	    {
 		DECOR_WINDOW (w);
-		if (!w->hasUnmapReference () && dw->decor)
+		if (!w->hasUnmapReference () && dw->wd && dw->wd->decor)
 		    dw->updateFrame ();
 	    }
 	    break;
@@ -2067,9 +2341,6 @@ DecorScreen::DecorScreen (CompScreen *s) :
     cmActive = (cScreen) ? cScreen->compositingActive () &&
                GLScreen::get (s) != NULL : false;
 
-    for (unsigned int i = 0; i < DECOR_NUM; i++)
-	decor[i] = NULL;
-
     checkForDm (false);
 
     decoratorStart.start (boost::bind (&DecorScreen::decoratorStartTimeout,
@@ -2083,8 +2354,7 @@ DecorScreen::DecorScreen (CompScreen *s) :
 DecorScreen::~DecorScreen ()
 {
     for (unsigned int i = 0; i < DECOR_NUM; i++)
-	if (decor[i])
-	    Decoration::release (decor[i]);
+        decor[i].clear ();
 
     screen->addSupportedAtomsSetEnabled (this, false);
     screen->updateSupportedWmHints ();
@@ -2097,7 +2367,6 @@ DecorWindow::DecorWindow (CompWindow *w) :
     cWindow (CompositeWindow::get (w)),
     dScreen (DecorScreen::get (screen)),
     wd (NULL),
-    decor (NULL),
     inputFrame (None),
     outputFrame (None),
     pixmapFailed (false),
@@ -2148,8 +2417,7 @@ DecorWindow::~DecorWindow ()
     if (wd)
 	WindowDecoration::destroy (wd);
 
-    if (decor)
-	Decoration::release (decor);
+    decor.mList.clear ();
 }
 
 bool
