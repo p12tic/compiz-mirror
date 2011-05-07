@@ -642,7 +642,7 @@ DecorationList::updateDecoration (Window   id,
 
     for (int i = 0; i < decor_property_get_num (prop); i++)
     {
-	Decoration *d = Decoration::create (id, prop, n, type, i);
+        Decoration *d = Decoration::create (id, prop, n, type, i);
 
 	if (!d)
         {
@@ -1013,7 +1013,7 @@ DecorWindow::update (bool allowDecoration)
 
             decoration = checkSize (decor.mList.front ()) ? decor.mList.front () : NULL;
 
-	    foreach (Decoration *d, dScreen->decor[DECOR_ACTIVE].mList)
+	    foreach (Decoration *d, decor.mList)
 	    {
 		if (matchType (window, d->frameType))
 		{
