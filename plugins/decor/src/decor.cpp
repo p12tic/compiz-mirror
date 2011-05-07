@@ -952,6 +952,60 @@ DecorWindow::matchActions (CompWindow   *w,
     return (decorActions == 0);
 }
 
+Decoration *
+DecorationList::findMatchingDecoration (CompWindow *w,
+                                        bool       sizeCheck)
+{
+    Decoration *decoration = NULL;
+    DECOR_WINDOW (w);
+
+    if (mList.size ())
+    {
+        const unsigned int typeMatch = (1 << 0);
+        const unsigned int stateMatch = (1 << 1);
+        const unsigned int actionsMatch = (1 << 2);
+
+        unsigned int currentDecorState = 0;
+
+        decoration = (sizeCheck ? dw->checkSize (mList.front ()) : true) ? mList.front () : NULL;
+
+	foreach (Decoration *d, mList)
+	{
+	    if (DecorWindow::matchType (w, d->frameType))
+	    {
+		if (!(typeMatch & currentDecorState) && (!sizeCheck || dw->checkSize (d)))
+		{
+		    decoration = d;
+		    currentDecorState |= typeMatch;
+		}
+
+		if (DecorWindow::matchState (w, d->frameState) && (!sizeCheck || dw->checkSize (d)))
+		{
+		    if (!(stateMatch & currentDecorState))
+		    {
+			decoration = d;
+			currentDecorState |= stateMatch;
+		    }
+
+		    if (DecorWindow::matchActions (w, d->frameActions) && (!sizeCheck || dw->checkSize (d)))
+		    {
+			if (!(actionsMatch & currentDecorState))
+			{
+			    decoration = d;
+			    currentDecorState |= actionsMatch;
+
+			    /* Perfect match, no need to continue searching */
+			    break;
+			}
+		    }
+		}
+	    }
+	}
+    }
+
+    return decoration;
+}
+
 bool
 DecorWindow::update (bool allowDecoration)
 {
@@ -1003,49 +1057,7 @@ DecorWindow::update (bool allowDecoration)
     if (decorate)
     {
         /* Attempt to find a matching */
-        if (decor.mList.size ())
-        {
-            const unsigned int typeMatch = (1 << 0);
-            const unsigned int stateMatch = (1 << 1);
-            const unsigned int actionsMatch = (1 << 2);
-
-            unsigned int currentDecorState = 0;
-
-            decoration = checkSize (decor.mList.front ()) ? decor.mList.front () : NULL;
-
-	    foreach (Decoration *d, decor.mList)
-	    {
-		if (matchType (window, d->frameType))
-		{
-		    if (!(typeMatch & currentDecorState) && checkSize (d))
-		    {
-			decoration = d;
-			currentDecorState |= typeMatch;
-		    }
-
-		    if (matchState (window, d->frameState) && checkSize (d))
-		    {
-			if (!(stateMatch & currentDecorState))
-			{
-			    decoration = d;
-			    currentDecorState |= stateMatch;
-			}
-
-			if (matchActions (window, d->frameActions) && checkSize (d))
-			{
-			    if (!(actionsMatch & currentDecorState))
-			    {
-				decoration = d;
-				currentDecorState |= actionsMatch;
-
-				/* Perfect match, no need to continue searching */
-				break;
-			    }
-			}
-		    }
-		}
-	    }
-	}
+        decoration = decor.findMatchingDecoration (window, true);
 
 	if (!decoration)
 	{
@@ -1055,103 +1067,13 @@ DecorWindow::update (bool allowDecoration)
 		!(dScreen->dmSupports & WINDOW_DECORATION_TYPE_WINDOW &&
 		  pixmapFailed))
 	    {
-		const unsigned int typeMatch = (1 << 0);
-		const unsigned int stateMatch = (1 << 1);
-		const unsigned int actionsMatch = (1 << 2);
-
-		unsigned int currentDecorState = 0;
-
-		/* First go with the first available decoration,
-		 * then lock decorations in based on first of all
-		 * the type, then the state, then the available
-		 * actions in that order
-		 *
-		 * FIXME: That's a lot of repeated code */
-
 		if (window->id () == screen->activeWindow ())
-		{
-		    if (dScreen->decor[DECOR_ACTIVE].mList.empty ())
-			compLogMessage ("decor", CompLogLevelWarn, "No default decoration found, placement will not be correct");
-		    else
-		    {
-			decoration = dScreen->decor[DECOR_ACTIVE].mList.front ();
-
-			foreach (Decoration *d, dScreen->decor[DECOR_ACTIVE].mList)
-			{
-			    if (d->frameType & window->type ())
-			    {
-				if (!(typeMatch & currentDecorState))
-				{
-				    decoration = d;
-				    currentDecorState |= typeMatch;
-				}
-
-				if (d->frameState & window->state ())
-				{
-				    if (!(stateMatch & currentDecorState))
-				    {
-					decoration = d;
-					currentDecorState |= stateMatch;
-				    }
-
-				    if (d->frameActions & window->actions ())
-				    {
-					if (!(actionsMatch & currentDecorState))
-					{
-					    decoration = d;
-					    currentDecorState |= actionsMatch;
-
-					    /* Perfect match, no need to continue searching */
-					    break;
-					}
-				    }
-				}
-			    }
-			}
-		    }
-		}
+		    decoration = dScreen->decor[DECOR_ACTIVE].findMatchingDecoration (window, false);
 		else
-		{
-		    if (dScreen->decor[DECOR_NORMAL].mList.empty ())
-			compLogMessage ("decor", CompLogLevelWarn, "No default decoration found, placement will not be correct");
-		    else
-		    {
-			decoration = dScreen->decor[DECOR_NORMAL].mList.front ();
+		    decoration = dScreen->decor[DECOR_NORMAL].findMatchingDecoration (window, false);
 
-			foreach (Decoration *d, dScreen->decor[DECOR_NORMAL].mList)
-			{
-			    if (d->frameType & window->type ())
-			    {
-				if (!(typeMatch & currentDecorState))
-				{
-				    decoration = d;
-				    currentDecorState |= typeMatch;
-				}
-
-				if (d->frameState & window->state ())
-				{
-				    if (!(stateMatch & currentDecorState))
-				    {
-					decoration = d;
-					currentDecorState |= stateMatch;
-				    }
-
-				    if (d->frameActions & window->actions ())
-				    {
-					if (!(actionsMatch & currentDecorState))
-					{
-					    decoration = d;
-					    currentDecorState |= actionsMatch;
-
-					    /* Perfect match, no need to continue searching */
-					    break;
-					}
-				    }
-				}
-			    }
-			}
-		    }
-		}
+		if (!decoration)
+		    compLogMessage ("decor", CompLogLevelWarn, "No default decoration found, placement will not be correct");
 	    }
 	    else if (dScreen->dmSupports & WINDOW_DECORATION_TYPE_WINDOW)
 		decoration = &dScreen->windowDefault;

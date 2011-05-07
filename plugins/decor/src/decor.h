@@ -97,6 +97,7 @@ class DecorationList
 {
     public:
         bool updateDecoration  (Window id, Atom decorAtom);
+        Decoration *findMatchingDecoration (CompWindow *w, bool sizeCheck);
         void clear ()
         {
             foreach (Decoration *d, mList)
@@ -105,7 +106,7 @@ class DecorationList
 
         DecorationList ();
 
-	std::vector <Decoration *> mList;
+        std::vector <Decoration *> mList;
 };
 
 struct ScaledQuad {
