@@ -83,7 +83,14 @@ struct _pos pos[3][3] = {
 };
 
 #define WINDOW_TYPE_FRAMES_NUM 5
-struct _default_frame_references default_frames[WINDOW_TYPE_FRAMES_NUM] = {
+struct _default_frame_references default_frames[WINDOW_TYPE_FRAMES_NUM  * 2] = {
+    /* active */
+    {"normal", NULL },
+    {"dialog", NULL },
+    {"modal_dialog", NULL },
+    {"menu", NULL },
+    {"utility", NULL},
+    /* inactive */
     {"normal", NULL },
     {"dialog", NULL },
     {"modal_dialog", NULL },
