@@ -45,9 +45,8 @@ struct Vector {
 
 /* FIXME: Remove */
 #define DECOR_BARE   0
-#define DECOR_NORMAL 1
-#define DECOR_ACTIVE 2
-#define DECOR_NUM    3
+#define DECOR_ACTIVE 1
+#define DECOR_NUM    2
 
 class DecorTexture {
 

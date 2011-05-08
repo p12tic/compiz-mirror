@@ -558,6 +558,12 @@ Decoration::create (Window        id,
     decoration->maxBorder.top    = maxBorder.top;
     decoration->maxBorder.bottom = maxBorder.bottom;
 
+    /* Decoration info */
+
+    decoration->frameType = frameType;
+    decoration->frameState = frameState;
+    decoration->frameActions = frameActions;
+
     decoration->refCount = 1;
     decoration->type = type;
 
@@ -645,7 +651,7 @@ DecorationList::updateDecoration (Window   id,
         Decoration *d = Decoration::create (id, prop, n, type, i);
 
 	if (!d)
-        {
+	{
             XFree (data);
             mList.clear ();
             return false;
@@ -1067,10 +1073,7 @@ DecorWindow::update (bool allowDecoration)
 		!(dScreen->dmSupports & WINDOW_DECORATION_TYPE_WINDOW &&
 		  pixmapFailed))
 	    {
-		if (window->id () == screen->activeWindow ())
-		    decoration = dScreen->decor[DECOR_ACTIVE].findMatchingDecoration (window, false);
-		else
-		    decoration = dScreen->decor[DECOR_NORMAL].findMatchingDecoration (window, false);
+		decoration = dScreen->decor[DECOR_ACTIVE].findMatchingDecoration (window, false);
 
 		if (!decoration)
 		    compLogMessage ("decor", CompLogLevelWarn, "No default decoration found, placement will not be correct");
@@ -2218,9 +2221,7 @@ DecorScreen::DecorScreen (CompScreen *s) :
     winDecorAtom =
 	XInternAtom (s->dpy (), DECOR_WINDOW_ATOM_NAME, 0);
     decorAtom[DECOR_BARE] =
-	XInternAtom (s->dpy (), DECOR_BARE_ATOM_NAME, 0);
-    decorAtom[DECOR_NORMAL] =
-	XInternAtom (s->dpy (), DECOR_NORMAL_ATOM_NAME, 0);
+        XInternAtom (s->dpy (), DECOR_BARE_ATOM_NAME, 0);
     decorAtom[DECOR_ACTIVE] =
 	XInternAtom (s->dpy (), DECOR_ACTIVE_ATOM_NAME, 0);
     inputFrameAtom =
