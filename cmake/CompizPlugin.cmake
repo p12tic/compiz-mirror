@@ -375,6 +375,9 @@ function (_build_compiz_plugin plugin)
             ${${_PLUGIN}_LIBDIRS}
             ${PLUGIN_LIBDIR}
             ${COMPIZ_LIBDIR}/compiz
+            ${CMAKE_PREFIX_PATH}/lib
+            ${CMAKE_PREFIX_PATH}/lib32
+            ${CMAKE_PREFIX_PATH}/lib64
 	)
 
 	add_library (
