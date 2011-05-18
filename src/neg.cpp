@@ -494,6 +494,12 @@ NegScreen::optionChanged (CompOption          *opt,
 	    }
 	}
 	break;
+	case NegOptions::NegDecorations:
+	{
+		foreach (CompWindow *w, screen->windows ())
+			if (NegWindow::get (w)->isNeg)
+				NegWindow::get (w)->cWindow->addDamage ();
+	}
     default:
 	break;
     }
@@ -518,6 +524,8 @@ NegScreen::NegScreen (CompScreen *screen) :
 					  _1, _2));
     optionSetExcludeMatchNotify (boost::bind (&NegScreen::optionChanged, this,
 					      _1, _2));
+	optionSetNegDecorationsNotify (boost::bind (&NegScreen::optionChanged, this,
+					  _1, _2));
 
 }
 
