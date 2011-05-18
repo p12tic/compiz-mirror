@@ -72,6 +72,7 @@ NegScreen::toggle (CompAction         *action,
     {
 	foreach (CompWindow *w, screen->windows ())
 	    NegWindow::get (w)->toggle ();
+	isNeg =!isNeg;
     }
     else
     {
