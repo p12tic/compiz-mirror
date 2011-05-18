@@ -57,6 +57,7 @@ NegScreen::toggle (CompAction         *action,
     {
 	foreach (CompWindow *w, screen->windows ())
 	    NegWindow::get (w)->toggle ();
+	/* toggle screen negative flag */
 	isNeg = !isNeg;
     }
     else
