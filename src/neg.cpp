@@ -47,21 +47,6 @@ NegWindow::toggle ()
 	gWindow->glDrawTextureSetEnabled (this, false);
 }
 
-void
-NegScreen::ToggleScreen ()
-{
-    /* toggle screen negative flag */
-    isNeg = !isNeg;
-
-    /* toggle every window */
-    foreach (CompWindow *w, screen->windows ())
-    {
-	NEG_WINDOW (w);
-
-	nw->toggle ();
-    }
-}
-
 bool
 NegScreen::toggle (CompAction         *action,
 		   CompAction::State  state,
