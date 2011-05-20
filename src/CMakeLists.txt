@@ -12,6 +12,8 @@ include_directories (
     ${compiz_BINARY_DIR}/generated
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${COMPIZ_INCLUDE_DIRS}
+    ${CMAKE_PREFIX_PATH}/include
+    ${CMAKE_INCLUDE_PATH}
 )
 
 add_definitions (
