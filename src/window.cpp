@@ -1313,6 +1313,15 @@ CompWindow::unmap ()
     if (priv->mapNum)
 	priv->mapNum = 0;
 
+    /* Even though we're still keeping the backing
+     * pixmap of the window around, it's safe to
+     * unmap the frame window since there's no use
+     * for it at this point anyways and it just blocks
+     * input */
+
+    XUnmapWindow (screen->dpy (), priv->wrapper);
+    XUnmapWindow (screen->dpy (), priv->frame);
+
     priv->unmapRefCnt--;
     if (priv->unmapRefCnt > 0)
 	return;
