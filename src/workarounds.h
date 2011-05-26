@@ -154,6 +154,8 @@ class WorkaroundsWindow :
 	bool madeDemandAttention;
 	bool isMinimized;
 
+	unsigned int oldWmType;
+
 	HideInfo *windowHideInfo;
 
 	bool

@@ -689,11 +689,14 @@ WorkaroundsWindow::updateFixedWindow (unsigned int newWmType)
     if (newWmType != window->wmType ())
     {
 	adjustedWinType = TRUE;
+	oldWmType = window->wmType ();
 
 	window->recalcType ();
 	window->recalcActions ();
 
 	screen->matchPropertyChanged (window);
+
+	window->wmType () = newWmType;
     }
 }
 
@@ -706,7 +709,7 @@ WorkaroundsWindow::getFixedWindowType ()
 
     WORKAROUNDS_SCREEN (screen);
 
-    newWmType = window->type (); // ???
+    newWmType = window->wmType ();
 
     if (!XGetClassHint (screen->dpy (), window->id (), &classHint) != Success)
 	return newWmType;
@@ -725,7 +728,6 @@ WorkaroundsWindow::getFixedWindowType ()
             resName.compare("notification-daemon") == 0)
         {
             newWmType = CompWindowTypeNotificationMask;
-	    updateFixedWindow (newWmType);
 	    return newWmType;
         }
     }
@@ -739,7 +741,6 @@ WorkaroundsWindow::getFixedWindowType ()
 		(resName.compare ( "popup") == 0))
 	    {
 		newWmType = CompWindowTypeDropdownMenuMask;
-	        updateFixedWindow (newWmType);
 	        return newWmType;
 	    }
 	}
@@ -753,7 +754,6 @@ WorkaroundsWindow::getFixedWindowType ()
 	    if (resName.compare ( "VCLSalFrame") == 0)
 	    {
 		newWmType = CompWindowTypeDropdownMenuMask;
-	        updateFixedWindow (newWmType);
 	        return newWmType;
 	    }
 	}
@@ -765,19 +765,16 @@ WorkaroundsWindow::getFixedWindowType ()
             (resName.compare ( "sun-awt-X11-XWindowPeer") == 0))
         {
             newWmType = CompWindowTypeDropdownMenuMask;
-	    updateFixedWindow (newWmType);
 	    return newWmType;
         }
         else if (resName.compare ( "sun-awt-X11-XDialogPeer") == 0)
         {
             newWmType = CompWindowTypeDialogMask;
-	    updateFixedWindow (newWmType);
 	    return newWmType;
         }
         else if (resName.compare ( "sun-awt-X11-XFramePeer") == 0)
         {
             newWmType = CompWindowTypeNormalMask;
-	    updateFixedWindow (newWmType);
 	    return newWmType;
         }
     }
@@ -794,7 +791,6 @@ WorkaroundsWindow::getFixedWindowType ()
                 (windowRole.compare ("qtooltip_label") == 0))
             {
                 newWmType = CompWindowTypeTooltipMask;
-		updateFixedWindow (newWmType);
 	        return newWmType;
             }
         }
@@ -805,7 +801,6 @@ WorkaroundsWindow::getFixedWindowType ()
 	    (newWmType == CompWindowTypeUnknownMask))
 	{
 	    newWmType = CompWindowTypeDropdownMenuMask;
-	    updateFixedWindow (newWmType);
 	    return newWmType;
 	}
     }
@@ -919,7 +914,7 @@ WorkaroundsScreen::handleEvent (XEvent *event)
 	{
 	    WORKAROUNDS_WINDOW (w);
 	    ww->updateSticky ();
-	    w->wmType () = ww->getFixedWindowType ();
+	    ww->updateFixedWindow (ww->getFixedWindowType ());
 	    ww->fixupFullscreen ();
 	}
 	break;
@@ -928,7 +923,7 @@ WorkaroundsScreen::handleEvent (XEvent *event)
 	if (w && w->overrideRedirect ())
 	{
 	    WORKAROUNDS_WINDOW (w);
-	    w->wmType () = ww->getFixedWindowType ();
+	    ww->updateFixedWindow (ww->getFixedWindowType ());
 	}
 	break;
     case DestroyNotify:
@@ -970,7 +965,7 @@ WorkaroundsScreen::handleEvent (XEvent *event)
 	    if (w)
 	    {
 		WORKAROUNDS_WINDOW (w);
-		w->wmType () = ww->getFixedWindowType ();
+		ww->updateFixedWindow (ww->getFixedWindowType ());
 	    }
 	}
 	else if (event->xproperty.atom == XA_WM_HINTS)
@@ -1093,6 +1088,7 @@ WorkaroundsWindow::WorkaroundsWindow (CompWindow *window) :
     isFullscreen (false),
     madeDemandAttention (false),
     isMinimized (window->minimized ()),
+    oldWmType (window->wmType ()),
     windowHideInfo (NULL)
 {
     WindowInterface::setHandler (window, false);
@@ -1147,7 +1143,7 @@ WorkaroundsWindow::~WorkaroundsWindow ()
     {
 	if (adjustedWinType)
 	{
-	    window->wmType () = window->type ();
+	    window->wmType () = oldWmType;
 	    window->recalcType ();
 	    window->recalcActions ();
 	}
