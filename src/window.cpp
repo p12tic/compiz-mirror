@@ -2413,19 +2413,6 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (valueMask & CWBorderWidth)
 	serverGeometry.setBorder (xwc->border_width);
 
-    /* Compiz's window list is immediately restacked on reconfigureXWindow
-       in order to ensure correct operation of the raise, lower and restacking
-       functions. This function should only recieve stack_mode == Above
-       but warn incase something else does get through, to make the cause
-       of any potential misbehaviour obvious. */
-    if (valueMask & (CWSibling | CWStackMode))
-    {
-	if (xwc->stack_mode == Above)
-	    restack (xwc->sibling);
-	else
-	    compLogMessage ("core", CompLogLevelWarn, "restack_mode not Above");
-    }
-
     if (frame)
     {
 	XWindowChanges wc = *xwc;
@@ -2447,6 +2434,36 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     }
 
     XConfigureWindow (screen->dpy (), id, valueMask, xwc);
+
+    /* Compiz's window list is immediately restacked on reconfigureXWindow
+       in order to ensure correct operation of the raise, lower and restacking
+       functions. This function should only recieve stack_mode == Above
+       but warn incase something else does get through, to make the cause
+       of any potential misbehaviour obvious. */
+    if (valueMask & (CWSibling | CWStackMode))
+    {
+	if (xwc->stack_mode == Above)
+	{
+	    /* FIXME: We shouldn't need to sync here, however
+	     * considering the fact that we are immediately
+	     * restacking the windows, we need to ensure
+	     * that when a client tries to restack a window
+	     * relative to this window that the window
+	     * actually goes where the client expects it to go
+	     * and not anywhere else
+	     *
+	     * The real solution here is to have a list of windows
+	     * last sent to server and a list of windows last
+	     * received from server or to have a sync () function
+	     * on the stack which looks through the last recieved
+	     * window stack and the current window stack then
+	     * sends the changes */
+	    XSync (screen->dpy (), false);
+	    restack (xwc->sibling);
+	}
+	else
+	    compLogMessage ("core", CompLogLevelWarn, "restack_mode not Above");
+    }
 }
 
 bool
@@ -3039,8 +3056,24 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 		    XLowerWindow (screen->dpy (), frame);
 
 		/* Restacking of compiz's window list happens
-		   immediately and since this path doesn't call
-		   reconfigureXWindow, restack must be called here. */
+		 * immediately and since this path doesn't call
+		 * reconfigureXWindow, restack must be called here.
+		 *
+		 * FIXME: We shouldn't need to sync here, however
+		 * considering the fact that we are immediately
+		 * restacking the windows, we need to ensure
+		 * that when a client tries to restack a window
+		 * relative to this window that the window
+		 * actually goes where the client expects it to go
+		 * and not anywhere else
+		 *
+		 * The real solution here is to have a list of windows
+		 * last sent to server and a list of windows last
+		 * received from server or to have a sync () function
+		 * on the stack which looks through the last recieved
+		 * window stack and the current window stack then
+		 * sends the changes */
+		XSync (screen->dpy (), false);
 		restack (0);
 	    }
 	    else if (sibling->priv->id != window->prev->priv->id)
@@ -3330,6 +3363,14 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	mask |= priv->addWindowStackChanges (&xwc, sibling);
     }
 
+    mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
+
+    if (priv->mapNum && (mask & (CWWidth | CWHeight)))
+	sendSyncRequest ();
+
+    if (mask)
+	configureXWindow (mask, &xwc);
+
     if ((stackingMode == CompStackingUpdateModeInitialMap) ||
 	(stackingMode == CompStackingUpdateModeInitialMapDeniedFocus))
     {
@@ -3340,18 +3381,26 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	   it was created */
 	if (mask & CWStackMode)
 	{
+	    /* FIXME: We shouldn't need to sync here, however
+	     * considering the fact that we are immediately
+	     * restacking the windows, we need to ensure
+	     * that when a client tries to restack a window
+	     * relative to this window that the window
+	     * actually goes where the client expects it to go
+	     * and not anywhere else
+	     *
+	     * The real solution here is to have a list of windows
+	     * last sent to server and a list of windows last
+	     * received from server or to have a sync () function
+	     * on the stack which looks through the last recieved
+	     * window stack and the current window stack then
+	     * sends the changes */
+	    XSync (screen->dpy (), false);
+
 	    Window above = (mask & CWSibling) ? xwc.sibling : 0;
 	    priv->restack (above);
 	}
     }
-
-    mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
-
-    if (priv->mapNum && (mask & (CWWidth | CWHeight)))
-	sendSyncRequest ();
-
-    if (mask)
-	configureXWindow (mask, &xwc);
 }
 
 void
