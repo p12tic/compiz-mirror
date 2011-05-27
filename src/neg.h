@@ -57,9 +57,6 @@ class NegScreen :
 		CompOption::Vector opt,
 		bool		   all);
 
-	void
-	ToggleScreen ();
-
 	int
 	getFragmentFunction (GLTexture *texture,
 			     bool      alpha);
