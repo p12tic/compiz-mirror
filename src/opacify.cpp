@@ -397,7 +397,7 @@ OpacifyScreen::postLoad ()
 OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     PluginClassHandler <OpacifyScreen, CompScreen> (screen),
     PluginStateWriter <OpacifyScreen> (this, screen->root ()),
-    isToggle (false),
+    isToggle (true),
     newActive (NULL),
     active (screen->activeWindow ()),
     intersect (emptyRegion),
@@ -413,6 +413,8 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
 								       _2, _3));
     optionSetInitToggleNotify (boost::bind (&OpacifyScreen::optionChanged,
 								 this, _1, _2));
+
+    screen->handleEventSetEnabled (this, optionGetInitToggle ());
 }
 
 OpacifyScreen::~OpacifyScreen ()
