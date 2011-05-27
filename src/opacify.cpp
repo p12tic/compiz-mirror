@@ -362,6 +362,9 @@ OpacifyScreen::optionChanged (CompOption              *option,
 	    active = 0;
 	}
 	break;
+	case OpacifyOptions::Timeout:
+	timeoutHandle.setTimes (optionGetTimeout (), optionGetTimeout () * 1.2);
+	break;
     default:
 	break;
     }
@@ -412,6 +415,8 @@ OpacifyScreen::OpacifyScreen (CompScreen *screen) :
     optionSetToggleKeyInitiate (boost::bind (&OpacifyScreen::toggle, this, _1,
 								       _2, _3));
     optionSetInitToggleNotify (boost::bind (&OpacifyScreen::optionChanged,
+								 this, _1, _2));
+    optionSetTimeoutNotify (boost::bind (&OpacifyScreen::optionChanged,
 								 this, _1, _2));
 
     screen->handleEventSetEnabled (this, optionGetInitToggle ());
