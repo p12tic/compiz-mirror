@@ -4406,7 +4406,7 @@ CompScreen::init (const char *name)
 
     CompScreen::checkForError (dpy);
 
-    XGrabServer (dpy);
+    //XGrabServer (dpy);
 
     XSelectInput (dpy, root,
 		  SubstructureRedirectMask |
