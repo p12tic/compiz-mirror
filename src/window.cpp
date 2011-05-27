@@ -5882,7 +5882,7 @@ PrivateWindow::unreparent ()
     }
 
     /* Also don't reparent back into root windows that have ended up
-     * reparented into other windows (and as such we are unmanaging them */
+     * reparented into other windows (and as such we are unmanaging them) */
 
     if (alive)
     {
