@@ -1424,9 +1424,9 @@ CompWindow::resize (int          x,
 bool
 CompWindow::resize (CompWindow::Geometry gm)
 {
-    if (priv->attrib.width        != gm.width ()  ||
-	priv->attrib.height       != gm.height () ||
-	priv->attrib.border_width != gm.border ())
+    if (priv->geometry.x ()       != gm.width ()  ||
+	priv->geometry.y ()       != gm.height () ||
+	priv->geometry.border ()  != gm.border ())
     {
 	int pw, ph;
 	int dx, dy, dwidth, dheight;
@@ -1463,7 +1463,7 @@ CompWindow::resize (CompWindow::Geometry gm)
 	priv->invisible = WINDOW_INVISIBLE (priv);
 	priv->updateFrameWindow ();
     }
-    else if (priv->attrib.x != gm.x () || priv->attrib.y != gm.y ())
+    else if (priv->geometry.x () != gm.x () || priv->geometry.y () != gm.y ())
     {
 	int dx, dy;
 
@@ -1603,10 +1603,8 @@ PrivateWindow::configure (XConfigureEvent *ce)
     priv->attrib.override_redirect = ce->override_redirect;
 
     if (priv->syncWait)
-    {
 	priv->syncGeometry.set (ce->x, ce->y, ce->width, ce->height,
 				ce->border_width);
-    }
     else
     {
 	if (ce->override_redirect)
@@ -5741,6 +5739,14 @@ PrivateWindow::reparent ()
 	XSync (dpy, false);
 	return false;
     }
+
+    /* Since we have read directly to our XWindowAttributes
+     * we need to update the size of a window since it might
+     * have changed during the reparent
+     */
+
+    window->resize (attrib.x, attrib.y, attrib.width, attrib.height,
+		    attrib.border_width);
 
     if (attrib.override_redirect)
 	return false;
