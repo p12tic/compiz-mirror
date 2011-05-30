@@ -823,32 +823,34 @@ DecorWindow::update (bool allowDecoration)
      * since the window gets reparented right away before plugins are done
      * with it */
 
-    switch (window->type ()) {
-	case CompWindowTypeDialogMask:
-	case CompWindowTypeModalDialogMask:
-	case CompWindowTypeUtilMask:
-	case CompWindowTypeMenuMask:
-	case CompWindowTypeNormalMask:
-	    if (window->mwmDecor () & (MwmDecorAll | MwmDecorTitle))
-		decorate = (window->frame () ||
-			    window->hasUnmapReference ()) ? true : false;
-	default:
-	    break;
-    }
-
-    if (window->overrideRedirect () && !isSwitcher)
-	decorate = false;
-
-    if (window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
-	decorate = false;
-
-    if (decorate)
+    if (!isSwitcher)
     {
-	if (!dScreen->optionGetDecorationMatch ().evaluate (window))
-	    decorate = false;
-    }
+        switch (window->type ()) {
+	    case CompWindowTypeDialogMask:
+	    case CompWindowTypeModalDialogMask:
+	    case CompWindowTypeUtilMask:
+	    case CompWindowTypeMenuMask:
+	    case CompWindowTypeNormalMask:
+		if (window->mwmDecor () & (MwmDecorAll | MwmDecorTitle))
+		    decorate = (window->frame () ||
+				window->hasUnmapReference ()) ? true : false;
+	    default:
+		break;
+	}
 
-    if (isSwitcher)
+	if (window->overrideRedirect ())
+	    decorate = false;
+
+	if (window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
+	    decorate = false;
+
+	if (decorate)
+	{
+	    if (!dScreen->optionGetDecorationMatch ().evaluate (window))
+		decorate = false;
+	}
+    }
+    else
 	decorate = true;
 
     if (decorate)
@@ -1132,8 +1134,13 @@ DecorWindow::updateInputFrame ()
 
 	XMoveResizeWindow (screen->dpy (), inputFrame, x, y,
 			   width, height);
-	XLowerWindow (screen->dpy (), inputFrame);
 
+	/* Non switcher decorations need to be lowered in
+	 * in the frame to ensure that they go below
+	 * the window contents (so that our set input shape
+	 * works correctly */
+	if (!isSwitcher)
+	    XLowerWindow (screen->dpy (), inputFrame);
 
 	rects[i].x	= 0;
 	rects[i].y	= 0;
@@ -1442,7 +1449,22 @@ DecorWindow::windowNotify (CompWindowNotify n)
     switch (n)
     {
 	case CompWindowNotifyMap:
+
+	    if (isSwitcher)
+	    {
+		update (true);
+		XMapWindow (screen->dpy (), inputFrame);
+		break;
+	    }
+
 	case CompWindowNotifyUnmap:
+
+	    if (isSwitcher)
+	    {
+		update (true);
+		XUnmapWindow (screen->dpy (), inputFrame);
+		break;
+	    }
 
 	    update (true);
 	    if (dScreen->cmActive)
