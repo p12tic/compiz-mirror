@@ -1424,9 +1424,9 @@ CompWindow::resize (int          x,
 bool
 CompWindow::resize (CompWindow::Geometry gm)
 {
-    if (priv->attrib.width        != gm.width ()  ||
-	priv->attrib.height       != gm.height () ||
-	priv->attrib.border_width != gm.border ())
+    if (priv->geometry.x ()       != gm.width ()  ||
+	priv->geometry.y ()       != gm.height () ||
+	priv->geometry.border ()  != gm.border ())
     {
 	int pw, ph;
 	int dx, dy, dwidth, dheight;
@@ -1463,7 +1463,7 @@ CompWindow::resize (CompWindow::Geometry gm)
 	priv->invisible = WINDOW_INVISIBLE (priv);
 	priv->updateFrameWindow ();
     }
-    else if (priv->attrib.x != gm.x () || priv->attrib.y != gm.y ())
+    else if (priv->geometry.x () != gm.x () || priv->geometry.y () != gm.y ())
     {
 	int dx, dy;
 
@@ -1603,10 +1603,8 @@ PrivateWindow::configure (XConfigureEvent *ce)
     priv->attrib.override_redirect = ce->override_redirect;
 
     if (priv->syncWait)
-    {
 	priv->syncGeometry.set (ce->x, ce->y, ce->width, ce->height,
 				ce->border_width);
-    }
     else
     {
 	if (ce->override_redirect)
@@ -5718,7 +5716,6 @@ bool
 PrivateWindow::reparent ()
 {
     XSetWindowAttributes attr;
-    XWindowAttributes    wa;
     XWindowChanges       xwc;
     int                  mask;
     unsigned int         nchildren;
@@ -5730,18 +5727,29 @@ PrivateWindow::reparent ()
     Colormap		 cmap = DefaultColormap (screen->dpy (),
 						 screen->screenNum ());
 
-    if (frame || attrib.override_redirect)
+    if (frame)
 	return false;
 
     XSync (dpy, false);
     XGrabServer (dpy);
 
-    if (!XGetWindowAttributes (dpy, id, &wa))
+    if (!XGetWindowAttributes (dpy, id, &attrib))
     {
 	XUngrabServer (dpy);
 	XSync (dpy, false);
 	return false;
     }
+
+    /* Since we have read directly to our XWindowAttributes
+     * we need to update the size of a window since it might
+     * have changed during the reparent
+     */
+
+    window->resize (attrib.x, attrib.y, attrib.width, attrib.height,
+		    attrib.border_width);
+
+    if (attrib.override_redirect)
+	return false;
 
     /* Don't ever reparent windows which have ended up
      * reparented themselves on the server side but not
@@ -5823,7 +5831,7 @@ PrivateWindow::reparent ()
 
     XChangeWindowAttributes (dpy, id, CWEventMask | CWDontPropagate, &attr);
 
-    if (wa.map_state == IsViewable || shaded)
+    if (attrib.map_state == IsViewable || shaded)
 	XMapWindow (dpy, frame);
 
     attr.event_mask = SubstructureRedirectMask | StructureNotifyMask |
@@ -5861,10 +5869,12 @@ PrivateWindow::reparent ()
 void
 PrivateWindow::unreparent ()
 {
-    Display        *dpy = screen->dpy ();
-    XEvent         e;
-    bool           alive = true;
-    XWindowChanges xwc;
+    Display        	 *dpy = screen->dpy ();
+    XEvent         	 e;
+    bool           	 alive = true;
+    XWindowChanges 	 xwc;
+    unsigned int         nchildren;
+    Window		 *children = NULL, root_return, parent_return;
 
     if (!frame)
 	return;
@@ -5875,6 +5885,17 @@ PrivateWindow::unreparent ()
     {
         XPutBackEvent (dpy, &e);
         alive = false;
+    }
+
+    /* Also don't reparent back into root windows that have ended up
+     * reparented into other windows (and as such we are unmanaging them) */
+
+    if (alive)
+    {
+	XQueryTree (dpy, id, &root_return, &parent_return, &children, &nchildren);
+
+	if (parent_return != wrapper)
+	    alive = false;
     }
 
     if ((!destroyed) && alive)
@@ -5921,6 +5942,9 @@ PrivateWindow::unreparent ()
 
 	XMoveWindow (dpy, id, serverGeometry.x (), serverGeometry.y ());
     }
+
+    if (children)
+	XFree (children);
 
     XDestroyWindow (dpy, wrapper);
     XDestroyWindow (dpy, frame);
