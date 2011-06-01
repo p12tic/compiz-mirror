@@ -563,7 +563,7 @@ inline void
         <xsl:param name="value"/>
         <xsl:text>    action = CompAction ();
 </xsl:text>
-        <xsl:text>    action.setState (state | CompAction::StateInitButton);
+        <xsl:text>    action.setState (state | CompAction::StateInitBell);
 </xsl:text>
         <xsl:if test="default/text() and default/text() = 'true'">
             <xsl:text>    action.setBell (true);
