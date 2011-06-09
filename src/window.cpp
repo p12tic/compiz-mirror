@@ -5296,6 +5296,7 @@ CompWindow::CompWindow (Window aboveId,
     priv->clientLeader = None;
 
     XSelectInput (screen->dpy (), priv->id,
+		  wa.your_event_mask |
 		  PropertyChangeMask |
 		  EnterWindowMask    |
 		  FocusChangeMask);
@@ -5907,8 +5908,8 @@ PrivateWindow::reparent ()
     /* Reparent the client into the wrapper window */
     XReparentWindow (dpy, id, wrapper, 0, 0);
 
-    attr.event_mask = PropertyChangeMask | FocusChangeMask |
-		      EnterWindowMask | LeaveWindowMask;
+    /* Restore events */
+    attr.event_mask = attrib.your_event_mask;
 
     /* We don't care about client events on the frame, and listening for them
      * will probably end up fighting the client anyways, so disable them */
@@ -5973,6 +5974,7 @@ PrivateWindow::unreparent ()
     XWindowChanges 	 xwc;
     unsigned int         nchildren;
     Window		 *children = NULL, root_return, parent_return;
+    XWindowAttributes	 wa;
 
     if (!frame)
 	return;
@@ -5983,6 +5985,11 @@ PrivateWindow::unreparent ()
     {
         XPutBackEvent (dpy, &e);
         alive = false;
+    }
+    else
+    {
+	if (!XGetWindowAttributes (dpy, id, &wa))
+	    alive = false;
     }
 
     /* Also don't reparent back into root windows that have ended up
@@ -6019,8 +6026,7 @@ PrivateWindow::unreparent ()
 
 	XUnmapWindow (dpy, frame);
 
-	XSelectInput (dpy, id, PropertyChangeMask | EnterWindowMask |
-		      FocusChangeMask);
+	XSelectInput (dpy, id, wa.your_event_mask);
 
 	XSelectInput (dpy, screen->root (),
 		  SubstructureRedirectMask |

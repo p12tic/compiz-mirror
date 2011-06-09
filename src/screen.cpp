@@ -4558,9 +4558,11 @@ CompScreen::init (const char *name)
 			 XA_ATOM, 32, PropModeReplace,
 			 (unsigned char *) &xdndVersion, 1);
 
+	/* CompWindow::CompWindow will select for
+	 * crossing events when it gets called on
+	 * CreateNotify of this window, so no need
+	 * to select for them here */
 	XSelectInput (dpy, priv->screenEdge[i].id,
-		      EnterWindowMask   |
-		      LeaveWindowMask   |
 		      ButtonPressMask   |
 		      ButtonReleaseMask |
 		      PointerMotionMask);
