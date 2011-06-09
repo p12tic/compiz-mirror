@@ -36,13 +36,17 @@ decor_update_meta_window_property (decor_t	  *d,
 				   Region	  left,
 				   Region	  right)
 {
-    long	    data[256];
+    long	    *data;
     Display	    *xdisplay =
 	GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
     gint	    nQuad;
     decor_extents_t win_extents = d->frame->win_extents;
     decor_extents_t max_win_extents = d->frame->max_win_extents;
     decor_quad_t    quads[N_QUADS_MAX];
+    unsigned int    nOffset = 1;
+    unsigned int   frame_type = populate_frame_type (d);
+    unsigned int   frame_state = populate_frame_state (d);
+    unsigned int   frame_actions = populate_frame_actions (d);
     gint            w, lh, rh;
     gint	    top_stretch_offset;
     gint	    bottom_stretch_offset;
@@ -81,21 +85,27 @@ decor_update_meta_window_property (decor_t	  *d,
     max_win_extents.top += d->frame->max_titlebar_height;
 
     if (d->frame_window)
-	decor_gen_window_property (data, &win_extents, &max_win_extents, 20, 20);
+    {
+        data = decor_alloc_property (nOffset, WINDOW_DECORATION_TYPE_WINDOW);
+        decor_gen_window_property (data, nOffset - 1, &win_extents, &max_win_extents, 20, 20, frame_type, frame_state, frame_actions);
+    }
     else
-	decor_quads_to_property (data, GDK_PIXMAP_XID (d->pixmap),
-				 &win_extents, &win_extents,
+    {
+        data = decor_alloc_property (nOffset, WINDOW_DECORATION_TYPE_PIXMAP);
+        decor_quads_to_property (data, nOffset - 1, GDK_PIXMAP_XID (d->pixmap),
+                                 &win_extents, &win_extents,
 				 &max_win_extents, &max_win_extents,
 				 ICON_SPACE + d->button_width,
 				 0,
-				 quads, nQuad);
+				 quads, nQuad, 0, 0, 0);
+    }
 
     gdk_error_trap_push ();
     XChangeProperty (xdisplay, d->prop_xid,
 		     win_decor_atom,
 		     XA_INTEGER,
 		     32, PropModeReplace, (guchar *) data,
-		     BASE_PROP_SIZE + QUAD_PROP_SIZE * nQuad);
+		     PROP_HEADER_SIZE + BASE_PROP_SIZE + QUAD_PROP_SIZE * N_QUADS_MAX);
     gdk_display_sync (gdk_display_get_default ());
     gdk_error_trap_pop ();
 
@@ -105,6 +115,8 @@ decor_update_meta_window_property (decor_t	  *d,
 				bottom, bottom_stretch_offset,
 				left, left_stretch_offset,
 				right, right_stretch_offset);
+
+    free (data);
 }
 
 static void
@@ -1588,7 +1600,6 @@ meta_update_border_extents (decor_frame_t *frame)
     MetaTheme *theme = meta_theme_get_current ();
 
     gwd_decor_frame_ref (frame);
-    decor_frame_t *default_frame = gwd_get_decor_frame ("default");
     MetaFrameType frame_type = meta_frame_type_from_string (frame->type);
     gint          top_height, bottom_height, left_width, right_width;
 
@@ -1604,7 +1615,7 @@ meta_update_border_extents (decor_frame_t *frame)
 				  &left_width,
 				  &right_width);
 
-    frame->win_extents.top    = default_frame->win_extents.top;
+    frame->win_extents.top    = frame->win_extents.top;
     frame->win_extents.bottom = bottom_height;
     frame->win_extents.left   = left_width;
     frame->win_extents.right  = right_width;
@@ -1620,7 +1631,7 @@ meta_update_border_extents (decor_frame_t *frame)
 				  &left_width,
 				  &right_width);
 
-    frame->max_win_extents.top    = default_frame->win_extents.top;
+    frame->max_win_extents.top    = frame->win_extents.top;
     frame->max_win_extents.bottom = bottom_height;
     frame->max_win_extents.left   = left_width;
     frame->max_win_extents.right  = right_width;
@@ -1628,7 +1639,6 @@ meta_update_border_extents (decor_frame_t *frame)
     frame->max_titlebar_height = top_height - frame->max_win_extents.top;
 
     gwd_decor_frame_unref (frame);
-    gwd_decor_frame_unref (default_frame);
 }
 
 #endif

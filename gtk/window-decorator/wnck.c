@@ -40,7 +40,6 @@ get_frame_type (WnckWindow *win)
 	    int		  result, format;
 	    unsigned long n, left;
 	    unsigned char *data;
-	    unsigned int  state = 0;
 
 	    result = XGetWindowProperty (gdk_x11_get_default_xdisplay (), wnck_window_get_xid (win),
 					 net_wm_state_atom,
@@ -176,7 +175,7 @@ decorations_changed (WnckScreen *screen)
 
     update_titlebar_font ();
     gwd_process_frames (update_frames_border_extents,
-			window_type_frames,
+                        window_type_frames,
 			WINDOW_TYPE_FRAMES_NUM,
 			NULL);
     update_shadow ();

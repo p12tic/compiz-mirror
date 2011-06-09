@@ -43,6 +43,7 @@ struct Vector {
     int	y0;
 };
 
+/* FIXME: Remove */
 #define DECOR_BARE   0
 #define DECOR_NORMAL 1
 #define DECOR_ACTIVE 2
@@ -67,7 +68,11 @@ class DecorWindow;
 class Decoration {
 
     public:
-	static Decoration * create (Window id, Atom decorAtom);
+        static Decoration * create (Window        id,
+                                    long          *prop,
+                                    unsigned int  size,
+                                    unsigned int  type,
+                                    unsigned int  nOffset);
 	static void release (Decoration *);
 
     public:
@@ -80,9 +85,28 @@ class Decoration {
 	CompWindowExtents	  maxInput;
 	int                       minWidth;
 	int                       minHeight;
+	unsigned int		  frameType;
+	unsigned int		  frameState;
+	unsigned int		  frameActions;
 	decor_quad_t              *quad;
 	int                       nQuad;
 	int                       type;
+};
+
+class DecorationList
+{
+    public:
+        bool updateDecoration  (Window id, Atom decorAtom);
+        Decoration *findMatchingDecoration (CompWindow *w, bool sizeCheck);
+        void clear ()
+        {
+            foreach (Decoration *d, mList)
+                Decoration::release (d);
+        };
+
+        DecorationList ();
+
+        std::vector <Decoration *> mList;
 };
 
 struct ScaledQuad {
@@ -98,7 +122,7 @@ class WindowDecoration {
 	static void destroy (WindowDecoration *);
 
     public:
-	Decoration *decor;
+        Decoration *decor;
 	ScaledQuad *quad;
 	int	   nQuad;
 };
@@ -150,8 +174,8 @@ class DecorScreen :
 	Window dmWin;
 	int    dmSupports;
 
-	Decoration *decor[DECOR_NUM];
-	Decoration windowDefault;
+	DecorationList decor[DECOR_NUM];
+	Decoration     windowDefault;
 
 	bool cmActive;
 
@@ -207,6 +231,10 @@ class DecorWindow :
 
 	void updateSwitcher ();
 
+	static bool matchType (CompWindow *w, unsigned int decorType);
+	static bool matchState (CompWindow *w, unsigned int decorState);
+	static bool matchActions (CompWindow *w, unsigned int decorActions);
+
     public:
 
 	CompWindow      *window;
@@ -215,7 +243,7 @@ class DecorWindow :
 	DecorScreen     *dScreen;
 
 	WindowDecoration *wd;
-	Decoration	 *decor;
+	DecorationList	 decor;
 
 	CompRegion frameRegion;
 	CompRegion shadowRegion;

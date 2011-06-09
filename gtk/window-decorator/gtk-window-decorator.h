@@ -289,10 +289,6 @@ extern decor_settings_t *settings;
 
 extern guint cmdline_options;
 
-/* default pixmaps FIXME: remove */
-extern GdkPixmap *decor_normal_pixmap;
-extern GdkPixmap *decor_active_pixmap;
-
 extern Atom frame_input_window_atom;
 extern Atom frame_output_window_atom;
 extern Atom win_decor_atom;
@@ -459,6 +455,15 @@ typedef struct _decor {
     void	      (*draw) (struct _decor *d);
 } decor_t;
 
+#define WINDOW_TYPE_FRAMES_NUM 5
+struct _default_frame_references
+{
+    char     *name;
+    decor_t  *active_d;
+    decor_t  *inactive_d;
+} extern default_frames[WINDOW_TYPE_FRAMES_NUM];
+const gchar * window_type_frames[WINDOW_TYPE_FRAMES_NUM];
+
 void     (*theme_draw_window_decoration)    (decor_t *d);
 gboolean (*theme_calc_decoration_size)      (decor_t *d,
 					     int     client_width,
@@ -468,6 +473,7 @@ gboolean (*theme_calc_decoration_size)      (decor_t *d,
 					     int     *height);
 void     (*theme_update_border_extents)     (decor_frame_t *frame);
 void     (*theme_get_event_window_position) (decor_t *d,
+
 					     gint    i,
 					     gint    j,
 					     gint    width,
@@ -490,9 +496,6 @@ extern char *program_name;
 
 /* list of all decorations */
 extern GHashTable    *frame_table;
-
-#define WINDOW_TYPE_FRAMES_NUM 4
-const gchar * window_type_frames[WINDOW_TYPE_FRAMES_NUM];
 
 /* action menu */
 extern GtkWidget     *action_menu;
@@ -610,6 +613,15 @@ update_window_decoration_name (WnckWindow *win);
 
 gint
 max_window_name_width (WnckWindow *win);
+
+unsigned int
+populate_frame_type (decor_t *d);
+
+unsigned int
+populate_frame_state (decor_t *d);
+
+unsigned int
+populate_frame_actions (decor_t *d);
 
 void
 update_default_decorations (GdkScreen *screen);

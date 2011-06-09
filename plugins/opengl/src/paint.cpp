@@ -360,10 +360,10 @@ GLScreen::glEnableOutputClipping (const GLMatrix   &transform,
 
     GLdouble h = screen->height ();
 
-    GLdouble p1[2] = { region.handle ()->extents.x1,
-		       h - region.handle ()->extents.y2 };
-    GLdouble p2[2] = { region.handle ()->extents.x2,
-		       h - region.handle ()->extents.y1 };
+    GLdouble p1[2] = { static_cast<GLdouble> (region.handle ()->extents.x1),
+                       static_cast<GLdouble> (h - region.handle ()->extents.y2) };
+    GLdouble p2[2] = { static_cast<GLdouble> (region.handle ()->extents.x2),
+                       static_cast<GLdouble> (h - region.handle ()->extents.y1) };
 
     GLdouble halfW = output->width () / 2.0;
     GLdouble halfH = output->height () / 2.0;

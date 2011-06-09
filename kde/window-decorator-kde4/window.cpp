@@ -1116,9 +1116,10 @@ KWD::Window::updateProperty (void)
 {
     Atom	    atom = Atoms::netWindowDecor;
     decor_extents_t maxExtents, normExtents;
-    long	    data[256];
     decor_quad_t    quads[N_QUADS_MAX];
     int		    nQuad = 0;
+    unsigned int    nOffset = 1, frameType = 0, frameState = 0, frameActions = 0;
+    long	    *data = NULL;
     int             left, right, top, bottom, width, height;
     unsigned int    saveState;
 
@@ -1147,6 +1148,7 @@ KWD::Window::updateProperty (void)
 
     if (mType != Normal2D)
     {
+      data = decor_alloc_property (nOffset, WINDOW_DECORATION_TYPE_PIXMAP);
       if (mType == Normal)
       {
 	  decor_quad_t *q = quads;
@@ -1237,21 +1239,25 @@ KWD::Window::updateProperty (void)
 	  
 	  q += n; nQuad += n;
       }
-      decor_quads_to_property (data, mPixmap, &mBorder, &mBorder,
+
+      decor_quads_to_property (data, nOffset - 1, mPixmap, &mBorder, &mBorder,
 			       &maxExtents, &maxExtents,
-			       1, 0, quads, nQuad);
+			       1, 0, quads, nQuad, frameType, frameState, frameActions);
     }
     else
     {
-	decor_gen_window_property (data, &normExtents, &maxExtents, 1, 0);
+        data = decor_alloc_property (nOffset, WINDOW_DECORATION_TYPE_WINDOW);
+        decor_gen_window_property (data, nOffset - 1, &normExtents, &maxExtents, 1, 0, frameType, frameState, frameActions);
     }
 
     KWD::trapXError ();
     XChangeProperty (QX11Info::display(), mClientId, atom,
 		     XA_INTEGER,
 		     32, PropModeReplace, (unsigned char *) data,
-		     BASE_PROP_SIZE + QUAD_PROP_SIZE * nQuad);
+		     PROP_HEADER_SIZE + BASE_PROP_SIZE + QUAD_PROP_SIZE * N_QUADS_MAX);
     KWD::popXError ();
+
+    free (data);
 
     mUpdateProperty = false;
 }

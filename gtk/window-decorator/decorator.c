@@ -181,7 +181,7 @@ update_titlebar_font ()
  * on the titlebar by wnck. Note here that for the pixmap mode we create actual
  * X windows but in the reparenting mode this is not possible so we create event
  * capture boxes on the window instead. The geometry of the decoration is retrieved
- * with wnck_window_get_client_window_geometry and adjusted for shade. Also we
+ * with window_get_client_window_geometry and adjusted for shade. Also we
  * need to query the theme for what window positions are appropriate here.
  *
  * This function works on the buttons and also the small event regions that we need
@@ -696,10 +696,7 @@ draw_border_shape (Display	   *xdisplay,
 
     memset (&d, 0, sizeof (d));
 
-    if (info)
-	d.frame = info->frame;
-    else
-	d.frame = gwd_get_decor_frame ("default");
+    d.frame = info->frame;
 
     d.pixmap  = gdk_pixmap_foreign_new_for_display (gdk_display_get_default (),
 						    pixmap);
@@ -1023,6 +1020,136 @@ update_shadow (void)
 }
 
 /*
+ * populate_type
+ *
+ * Returns: void
+ * Description: Sets the window type flags for compiz to know what window type
+ * this decoration is for
+ *
+ */
+unsigned int
+populate_frame_type (decor_t *d)
+{
+    /* FIXME: This would be nicer if Wnck actually worked here,
+     * but for now we need to use that frame string since that's
+     * the only way we can get the modal_dialog type */
+
+    const unsigned int n_type_strings = 5;
+    unsigned int       frame_type = 0;
+    unsigned int i;
+    struct typestrings {
+        const char   *type;
+        unsigned int flag;
+    } type_strings[] =
+    {
+        {"normal", DECOR_WINDOW_TYPE_NORMAL },
+        {"dialog", DECOR_WINDOW_TYPE_DIALOG },
+        {"modal_dialog", DECOR_WINDOW_TYPE_MODAL_DIALOG },
+        {"menu", DECOR_WINDOW_TYPE_MENU },
+        {"utility", DECOR_WINDOW_TYPE_UTILITY}
+    };
+
+    for (i = 0; i < n_type_strings; i++)
+    {
+        if (strcmp (d->frame->type, type_strings[i].type) == 0)
+            frame_type |= type_strings[i].flag;
+    }
+
+    return frame_type;
+}
+
+/*
+ * populate_state
+ *
+ * Returns void
+ * Description: Sets the window state flags for compiz to know what state of
+ * window this decoration is for
+ */
+unsigned int
+populate_frame_state (decor_t *d)
+{
+    unsigned int frame_state = 0;
+
+    if (!d->win)
+        return frame_state;
+
+    WnckWindowState win_state = wnck_window_get_state (d->win);
+    const unsigned int n_state_bits = 3;
+    unsigned int i;
+
+    if (d->active)
+        frame_state &= DECOR_WINDOW_STATE_FOCUS;
+
+    struct typestrings {
+        unsigned int wnck_flag;
+        unsigned int decor_flag;
+    } state_bits[] =
+    {
+        { WNCK_WINDOW_STATE_MAXIMIZED_VERTICALLY, DECOR_WINDOW_STATE_MAXIMIZED_VERT },
+        { WNCK_WINDOW_STATE_MAXIMIZED_HORIZONTALLY, DECOR_WINDOW_STATE_MAXIMIZED_HORZ },
+        { WNCK_WINDOW_STATE_SHADED, DECOR_WINDOW_STATE_SHADED }
+    };
+
+    for (i = 0; i < n_state_bits; i++)
+    {
+        if (win_state & state_bits[i].wnck_flag)
+            frame_state |= state_bits[i].decor_flag;
+    }
+
+    return frame_state;
+}
+
+/*
+ * populate_actions
+ *
+ * Returns void
+ * Description: Sets the window actions flags for compiz to know what state of
+ * window this decoration is for
+ */
+unsigned int
+populate_frame_actions (decor_t *d)
+{
+    unsigned int frame_actions = 0;
+
+    if (!d->win)
+        return frame_actions;
+
+    WnckWindowActions win_actions = wnck_window_get_actions (d->win);
+    const unsigned int n_action_bits = 16;
+    unsigned int i;
+    struct typestrings {
+        unsigned int decor_flag;
+        unsigned int wnck_flag;
+    } action_bits[] =
+    {
+        { DECOR_WINDOW_ACTION_RESIZE_HORZ, WNCK_WINDOW_ACTION_RESIZE },
+        { DECOR_WINDOW_ACTION_RESIZE_VERT, WNCK_WINDOW_ACTION_RESIZE },
+        { DECOR_WINDOW_ACTION_CLOSE, WNCK_WINDOW_ACTION_CLOSE },
+        { DECOR_WINDOW_ACTION_MINIMIZE, WNCK_WINDOW_ACTION_MINIMIZE },
+        { DECOR_WINDOW_ACTION_UNMINIMIZE, WNCK_WINDOW_ACTION_UNMINIMIZE },
+        { DECOR_WINDOW_ACTION_MAXIMIZE_HORZ, WNCK_WINDOW_ACTION_MAXIMIZE_HORIZONTALLY },
+        { DECOR_WINDOW_ACTION_MAXIMIZE_VERT, WNCK_WINDOW_ACTION_MAXIMIZE_VERTICALLY },
+        { DECOR_WINDOW_ACTION_UNMAXIMIZE_HORZ, WNCK_WINDOW_ACTION_UNMAXIMIZE_HORIZONTALLY },
+        { DECOR_WINDOW_ACTION_UNMAXIMIZE_VERT, WNCK_WINDOW_ACTION_UNMAXIMIZE_VERTICALLY },
+        { DECOR_WINDOW_ACTION_SHADE, WNCK_WINDOW_ACTION_SHADE },
+        { DECOR_WINDOW_ACTION_UNSHADE, WNCK_WINDOW_ACTION_UNSHADE },
+        { DECOR_WINDOW_ACTION_STICK, WNCK_WINDOW_ACTION_STICK },
+        { DECOR_WINDOW_ACTION_UNSTICK, WNCK_WINDOW_ACTION_UNSTICK },
+        { DECOR_WINDOW_ACTION_FULLSCREEN, WNCK_WINDOW_ACTION_FULLSCREEN },
+        { DECOR_WINDOW_ACTION_ABOVE, WNCK_WINDOW_ACTION_ABOVE },
+        { DECOR_WINDOW_ACTION_BELOW, WNCK_WINDOW_ACTION_BELOW },
+    };
+
+    for (i = 0; i < n_action_bits; i++)
+    {
+        if (win_actions & action_bits[i].wnck_flag)
+            frame_actions |= action_bits[i].decor_flag;
+    }
+
+    return frame_actions;
+}
+
+/*
  * update_window_decoration
  *
  * Returns: void
@@ -1129,17 +1256,15 @@ queue_decor_draw (decor_t *d)
 void
 update_default_decorations (GdkScreen *screen)
 {
-    long	    data[256];
+    long	    *active_data, *inactive_data;
     Window	    xroot;
     GdkDisplay	    *gdkdisplay = gdk_display_get_default ();
     Display	    *xdisplay = gdk_x11_display_get_xdisplay (gdkdisplay);
     Atom	    bareAtom, normalAtom, activeAtom;
-    decor_t	    d;
-    gint	    nQuad;
-    decor_quad_t    quads[N_QUADS_MAX];
     decor_frame_t   *frame;
     decor_frame_t   *bare_frame = gwd_get_decor_frame ("bare");
     decor_extents_t extents;
+    unsigned int    i;
 
     xroot = RootWindowOfScreen (gdk_x11_screen_get_xscreen (screen));
 
@@ -1150,22 +1275,29 @@ update_default_decorations (GdkScreen *screen)
     if (bare_frame->border_shadow)
     {
 	decor_layout_t layout;
+	unsigned int   frame_type = 0;
+	unsigned int   frame_state = 0;
+	unsigned int   frame_actions = 0;
+	unsigned int   nQuad;
+	decor_quad_t   quads[N_QUADS_MAX];
+
+	long *data = decor_alloc_property (1, WINDOW_DECORATION_TYPE_PIXMAP);
 
 	decor_get_default_layout (&bare_frame->window_context, 1, 1, &layout);
 
 	nQuad = decor_set_lSrStSbS_window_quads (quads, &bare_frame->window_context,
 						 &layout);
 
-	decor_quads_to_property (data, bare_frame->border_shadow->pixmap,
+	decor_quads_to_property (data, 0, bare_frame->border_shadow->pixmap,
 				 &bare_frame->win_extents, &bare_frame->win_extents,
 				 &bare_frame->win_extents, &bare_frame->win_extents,
-				 0, 0, quads, nQuad);
+				 0, 0, quads, nQuad, frame_type, frame_state, frame_actions);
 
 	XChangeProperty (xdisplay, xroot,
 			 bareAtom,
 			 XA_INTEGER,
 			 32, PropModeReplace, (guchar *) data,
-			 BASE_PROP_SIZE + QUAD_PROP_SIZE * nQuad);
+			 PROP_HEADER_SIZE + BASE_PROP_SIZE + QUAD_PROP_SIZE * N_QUADS_MAX);
 
 	if (minimal)
 	{
@@ -1173,13 +1305,15 @@ update_default_decorations (GdkScreen *screen)
 			     normalAtom,
 			     XA_INTEGER,
 			     32, PropModeReplace, (guchar *) data,
-			     BASE_PROP_SIZE + QUAD_PROP_SIZE * nQuad);
+			     PROP_HEADER_SIZE + BASE_PROP_SIZE + QUAD_PROP_SIZE * N_QUADS_MAX);
 	    XChangeProperty (xdisplay, xroot,
 			     activeAtom,
 			     XA_INTEGER,
 			     32, PropModeReplace, (guchar *) data,
-			     BASE_PROP_SIZE + QUAD_PROP_SIZE * nQuad);
+			     PROP_HEADER_SIZE + BASE_PROP_SIZE + QUAD_PROP_SIZE * N_QUADS_MAX);
 	}
+
+        free (data);
     }
     else
     {
@@ -1198,90 +1332,152 @@ update_default_decorations (GdkScreen *screen)
 	return;
     }
 
-    memset (&d, 0, sizeof (d));
+    XDeleteProperty (xdisplay, xroot,
+                     activeAtom);
 
-    frame = gwd_get_decor_frame ("default");
-    extents = frame->win_extents;
+    XDeleteProperty (xdisplay, xroot,
+                     normalAtom);
 
-    d.context = &frame->window_context;
-    d.shadow  = frame->border_shadow;
-    d.layout  = pango_layout_new (frame->pango_context);
+    active_data = decor_alloc_property (WINDOW_TYPE_FRAMES_NUM, WINDOW_DECORATION_TYPE_PIXMAP);
+    inactive_data = decor_alloc_property (WINDOW_TYPE_FRAMES_NUM, WINDOW_DECORATION_TYPE_PIXMAP);
 
-    decor_get_default_layout (d.context, 1, 1, &d.border_layout);
-
-    d.width  = d.border_layout.width;
-    d.height = d.border_layout.height;
-
-    d.frame = frame;
-
-    extents.top += frame->titlebar_height;
-
-    d.draw = theme_draw_window_decoration;
-
-    if (decor_normal_pixmap)
-	g_object_unref (G_OBJECT (decor_normal_pixmap));
-
-    nQuad = decor_set_lSrStSbS_window_quads (quads, d.context,
-					     &d.border_layout);
-
-    decor_normal_pixmap = create_pixmap (d.width, d.height, frame->style_window_rgba);
-
-    if (decor_normal_pixmap)
+    for (i = 0; i < WINDOW_TYPE_FRAMES_NUM; i++)
     {
-	d.pixmap  = decor_normal_pixmap;
-	d.active  = FALSE;
-	d.picture = XRenderCreatePicture (xdisplay,
-					  GDK_PIXMAP_XID (d.pixmap),
-					  xformat_rgba, 0, NULL);
+        frame = gwd_get_decor_frame (default_frames[i].name);
+        extents = frame->win_extents;
 
-	(*d.draw) (&d);
+        if (default_frames[i].active_d)
+        {
+            if (default_frames[i].active_d->pixmap)
+                g_object_unref (G_OBJECT (default_frames[i].active_d->pixmap));
 
-	XRenderFreePicture (xdisplay, d.picture);
+            free (default_frames[i].active_d);
+        }
 
-	decor_quads_to_property (data, GDK_PIXMAP_XID (d.pixmap),
-				 &extents, &extents,
-				 &extents, &extents, 0, 0, quads, nQuad);
+        if (default_frames[i].inactive_d)
+        {
+            if (default_frames[i].inactive_d->pixmap)
+                g_object_unref (G_OBJECT (default_frames[i].inactive_d->pixmap));
 
-	XChangeProperty (xdisplay, xroot,
-			 normalAtom,
-			 XA_INTEGER,
-			 32, PropModeReplace, (guchar *) data,
-			 BASE_PROP_SIZE + QUAD_PROP_SIZE * nQuad);
+            free (default_frames[i].inactive_d);
+        }
+
+        default_frames[i].active_d = calloc (1, sizeof (decor_t));
+        default_frames[i].inactive_d = calloc (1, sizeof (decor_t));
+
+        default_frames[i].active_d->context = &frame->window_context;
+        default_frames[i].inactive_d->context = &frame->window_context;
+        default_frames[i].active_d->shadow  = frame->border_shadow;
+        default_frames[i].inactive_d->shadow  = frame->border_shadow;
+        default_frames[i].active_d->layout  = pango_layout_new (frame->pango_context);
+        default_frames[i].inactive_d->layout  = pango_layout_new (frame->pango_context);
+
+        decor_get_default_layout (default_frames[i].active_d->context, 1, 1, &default_frames[i].active_d->border_layout);
+        decor_get_default_layout (default_frames[i].inactive_d->context, 1, 1, &default_frames[i].inactive_d->border_layout);
+
+        default_frames[i].active_d->width  = default_frames[i].active_d->border_layout.width;
+        default_frames[i].active_d->height = default_frames[i].active_d->border_layout.height;
+
+        default_frames[i].active_d->frame = frame;
+
+        default_frames[i].inactive_d->width  = default_frames[i].inactive_d->border_layout.width;
+        default_frames[i].inactive_d->height = default_frames[i].inactive_d->border_layout.height;
+
+        default_frames[i].inactive_d->frame = frame;
+
+        extents.top += frame->titlebar_height;
+
+        default_frames[i].inactive_d->draw = theme_draw_window_decoration;
+        default_frames[i].active_d->draw = theme_draw_window_decoration;
+
+        default_frames[i].active_d->pixmap = create_pixmap (default_frames[i].active_d->width, default_frames[i].active_d->height, frame->style_window_rgba);
+        default_frames[i].inactive_d->pixmap = create_pixmap (default_frames[i].active_d->width, default_frames[i].active_d->height, frame->style_window_rgba);
+
+	unsigned int j, k;
+
+	for (j = 0; j < 3; j++)
+	{
+	    for (k = 0; k < 3; k++)
+	    {
+		default_frames[i].active_d->event_windows[j][k].window = None;
+		default_frames[i].inactive_d->event_windows[j][k].window = None;
+	    }
+	}
+
+	for (j = 0; j < BUTTON_NUM; j++)
+	{
+	    default_frames[i].active_d->button_windows[j].window = None;
+	    default_frames[i].active_d->button_states[j] = 0;
+	    default_frames[i].inactive_d->button_windows[j].window = None;
+	    default_frames[i].inactive_d->button_states[j] = 0;
+	}
+
+        if (default_frames[i].active_d->pixmap)
+        {
+            gint	    nQuad;
+            unsigned int   frame_type = populate_frame_type (default_frames[i].active_d);
+            unsigned int   frame_state = populate_frame_state (default_frames[i].active_d);
+            unsigned int   frame_actions = populate_frame_actions (default_frames[i].active_d);
+            decor_quad_t    quads[N_QUADS_MAX];
+
+            nQuad = decor_set_lSrStSbS_window_quads (quads, default_frames[i].active_d->context,
+                                                     &default_frames[i].active_d->border_layout);
+
+            default_frames[i].active_d->active = TRUE;
+            default_frames[i].active_d->picture = XRenderCreatePicture (xdisplay,
+                                                                          GDK_PIXMAP_XID (default_frames[i].active_d->pixmap),
+                                                                          xformat_rgba, 0, NULL);
+
+            (*default_frames[i].active_d->draw) (default_frames[i].active_d);
+
+            decor_quads_to_property (active_data, i, GDK_PIXMAP_XID (default_frames[i].active_d->pixmap),
+                                     &extents, &extents,
+                                     &extents, &extents, 0, 0, quads, nQuad, frame_type, frame_state, frame_actions);
+        }
+
+        if (default_frames[i].inactive_d->pixmap)
+        {
+            gint	    nQuad;
+            unsigned int   frame_type = populate_frame_type (default_frames[i].inactive_d);
+            unsigned int   frame_state = populate_frame_state (default_frames[i].inactive_d);
+            unsigned int   frame_actions = populate_frame_actions (default_frames[i].inactive_d);
+            decor_quad_t    quads[N_QUADS_MAX];
+
+            nQuad = decor_set_lSrStSbS_window_quads (quads, default_frames[i].inactive_d->context,
+                                                     &default_frames[i].inactive_d->border_layout);
+
+            default_frames[i].inactive_d->active = FALSE;
+            default_frames[i].inactive_d->picture = XRenderCreatePicture (xdisplay,
+                                                                          GDK_PIXMAP_XID (default_frames[i].inactive_d->pixmap),
+                                                                          xformat_rgba, 0, NULL);
+
+            (*default_frames[i].inactive_d->draw) (default_frames[i].inactive_d);
+
+            decor_quads_to_property (inactive_data, i, GDK_PIXMAP_XID (default_frames[i].inactive_d->pixmap),
+                                     &extents, &extents,
+                                     &extents, &extents, 0, 0, quads, nQuad, frame_type, frame_state, frame_actions);
+        }
+
+        gwd_decor_frame_unref (frame);
     }
 
-    if (decor_active_pixmap)
-	g_object_unref (G_OBJECT (decor_active_pixmap));
+    XChangeProperty (xdisplay, xroot,
+                     activeAtom,
+                     XA_INTEGER,
+                     32, PropModeAppend, (guchar *) active_data,
+                     PROP_HEADER_SIZE + (WINDOW_TYPE_FRAMES_NUM) * (BASE_PROP_SIZE + QUAD_PROP_SIZE * N_QUADS_MAX));
 
-    decor_active_pixmap = create_pixmap (d.width, d.height, frame->style_window_rgba);
 
-    if (decor_active_pixmap)
-    {
-	d.pixmap  = decor_active_pixmap;
-	d.active  = TRUE;
-	d.picture = XRenderCreatePicture (xdisplay,
-					  GDK_PIXMAP_XID (d.pixmap),
-					  xformat_rgba, 0, NULL);
+    XChangeProperty (xdisplay, xroot,
+                     normalAtom,
+                     XA_INTEGER,
+                     32, PropModeAppend, (guchar *) inactive_data,
+                     PROP_HEADER_SIZE + (WINDOW_TYPE_FRAMES_NUM) * (BASE_PROP_SIZE + QUAD_PROP_SIZE * N_QUADS_MAX));
 
-	(*d.draw) (&d);
+    free (active_data);
+    free (inactive_data);
 
-	XRenderFreePicture (xdisplay, d.picture);
-
-	decor_quads_to_property (data, GDK_PIXMAP_XID (d.pixmap),
-				 &extents, &extents,
-				 &extents, &extents, 0, 0, quads, nQuad);
-
-	XChangeProperty (xdisplay, xroot,
-			 activeAtom,
-			 XA_INTEGER,
-			 32, PropModeReplace, (guchar *) data,
-			 BASE_PROP_SIZE + QUAD_PROP_SIZE * nQuad);
-    }
-
-    gwd_decor_frame_unref (frame);
     gwd_decor_frame_unref (bare_frame);
-
-    if (d.layout)
-	g_object_unref (G_OBJECT (d.layout));
 }
 
 /*
