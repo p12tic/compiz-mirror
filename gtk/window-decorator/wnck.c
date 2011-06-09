@@ -690,19 +690,19 @@ connect_screen (WnckScreen *screen)
     GList *windows;
 
     g_signal_connect_object (G_OBJECT (screen), "active_window_changed",
-			     G_CALLBACK (active_window_changed),
-			     0, 0);
+                             G_CALLBACK (active_window_changed),
+                             0, 0);
     g_signal_connect_object (G_OBJECT (screen), "window_opened",
-			     G_CALLBACK (window_opened),
-			     0, 0);
+                             G_CALLBACK (window_opened),
+                             0, 0);
     g_signal_connect_object (G_OBJECT (screen), "window_closed",
-			     G_CALLBACK (window_closed),
-			     0, 0);
+                             G_CALLBACK (window_closed),
+                             0, 0);
 
     windows = wnck_screen_get_windows (screen);
     while (windows != NULL)
     {
-	window_opened (screen, windows->data);
-	windows = windows->next;
+        window_opened (screen, windows->data);
+        windows = windows->next;
     }
 }

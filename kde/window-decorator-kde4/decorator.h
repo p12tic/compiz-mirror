@@ -108,6 +108,21 @@ class Decorator:public KApplication {
 	    return &mShadowOptions;
 	}
 
+	static KWD::Window *defaultNormal ()
+	{
+	    return mDecorNormal;
+	}
+
+	static KWD::Window *defaultActive ()
+	{
+	    return mDecorActive;
+	}
+
+	static KWD::Decorator *self ()
+	{
+	    return mSelf;
+	}
+
 	static void sendClientMessage (WId  eventWid,
 				       WId  wid,
 				       Atom atom,
@@ -152,8 +167,8 @@ class Decorator:public KApplication {
 	static NETRootInfo *mRootInfo;
 	static WId mActiveId;
 
-	KWD::Window *mDecorNormal;
-	KWD::Window *mDecorActive;
+	static KWD::Window *mDecorNormal;
+	static KWD::Window *mDecorActive;
 	QMap <WId, KWD::Window *>mClients;
 	QMap <WId, KWD::Window *>mFrames;
 	KConfig *mConfig;
@@ -162,6 +177,8 @@ class Decorator:public KApplication {
 	WId mCompositeWindow;
 
 	Switcher *mSwitcher;
+
+        static KWD::Decorator *mSelf; /* XXX: Remove */
     };
 }
 

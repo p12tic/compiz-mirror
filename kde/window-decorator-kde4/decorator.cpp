@@ -63,6 +63,10 @@ NETRootInfo *KWD::Decorator::mRootInfo;
 WId KWD::Decorator::mActiveId;
 decor_shadow_options_t KWD::Decorator::mShadowOptions;
 
+KWD::Window *KWD::Decorator::mDecorNormal = NULL;
+KWD::Window *KWD::Decorator::mDecorActive = NULL;
+KWD::Decorator *KWD::Decorator::mSelf = NULL;
+
 struct _cursor cursors[3][3] = {
     { C (top_left_corner), C (top_side), C (top_right_corner) },
     { C (left_side), C (left_ptr), C (right_side) },
@@ -87,6 +91,8 @@ KWD::Decorator::Decorator () :
 {
     XSetWindowAttributes attr;
     int			 i, j;
+
+    mSelf = this;
 
     mRootInfo = new NETRootInfo (QX11Info::display (), 0);
 
@@ -192,9 +198,10 @@ KWD::Decorator::enableDecorations (Time timestamp)
 
     updateShadow ();
 
+    /* FIXME: Implement proper decoration lists and remove this */
     mDecorNormal = new KWD::Window (mCompositeWindow,
-				    QX11Info::appRootWindow (),
-				    0, Window::Default);
+                                    QX11Info::appRootWindow (),
+                                    0, Window::Default);
     mDecorActive = new KWD::Window (mCompositeWindow,
 				    QX11Info::appRootWindow (),
 				    0, Window::DefaultActive);

@@ -459,9 +459,8 @@ typedef struct _decor {
 struct _default_frame_references
 {
     char     *name;
-    decor_t  *active_d;
-    decor_t  *inactive_d;
-} extern default_frames[WINDOW_TYPE_FRAMES_NUM];
+    decor_t  *d;
+} extern default_frames[WINDOW_TYPE_FRAMES_NUM * 2];
 const gchar * window_type_frames[WINDOW_TYPE_FRAMES_NUM];
 
 void     (*theme_draw_window_decoration)    (decor_t *d);
