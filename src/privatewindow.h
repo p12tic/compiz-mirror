@@ -82,6 +82,11 @@ class PrivateWindow {
 	void reconfigureXWindow (unsigned int   valueMask,
 				 XWindowChanges *xwc);
 
+	static bool stackDocks (CompWindow     *w,
+				CompWindowList &updateList,
+				XWindowChanges *xwc,
+				unsigned int   *mask);
+
 	static bool stackTransients (CompWindow     *w,
 				     CompWindow     *avoid,
 				     XWindowChanges *xwc,
