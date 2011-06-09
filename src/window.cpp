@@ -770,7 +770,8 @@ PrivateWindow::updateFrameWindow ()
 
     if (input.left || input.right || input.top || input.bottom)
     {
-	int	   x, y, width, height;
+	int	   x, y;
+	unsigned int width, height;
 	int	   bw = serverGeometry.border () * 2;
 
 	x      = serverGeometry.x () - input.left;
@@ -781,7 +782,36 @@ PrivateWindow::updateFrameWindow ()
 	if (shaded)
 	    height = input.top + input.bottom;
 
-	XMoveResizeWindow (screen->dpy (), frame, x, y, width, height);
+	/* Geometry is the same, so we're not going to get a ConfigureNotify
+	 * event when the window is configured, which means that other plugins
+	 * won't know that the client, frame and wrapper windows got shifted
+	 * around (and might result in display corruption, eg in OpenGL */
+	if (geometry.x () - input.left == x &&
+	    geometry.y () - input.top  == y &&
+	    geometry.width () + input.left + input.right + bw == width &&
+	    geometry.height () + input.top + input.bottom + bw == height)
+	{
+	    XConfigureEvent xev;
+
+	    xev.type   = ConfigureNotify;
+	    xev.event  = screen->root ();
+	    xev.window = priv->frame;
+
+	    xev.x		  = x;
+	    xev.y		  = y;
+	    xev.width	 	  = width;
+	    xev.height	 	  = height;
+	    xev.border_width 	  = window->priv->attrib.border_width;
+
+	    xev.above	      	  = (window->prev) ? ROOTPARENT (window->prev) : None;
+	    xev.override_redirect = window->priv->attrib.override_redirect;
+
+	    XSendEvent (screen->dpy (), screen->root (), false,
+			SubstructureNotifyMask, (XEvent *) &xev);
+	}
+	else
+	    XMoveResizeWindow (screen->dpy (), frame, x, y, width, height);
+
 	if (shaded)
 	{
 	    XUnmapWindow (screen->dpy (), wrapper);
@@ -823,13 +853,13 @@ PrivateWindow::updateFrameWindow ()
 	    XMoveResizeWindow (screen->dpy (), wrapper, 0, 0,
 			       serverGeometry.width (), serverGeometry.height ());
 	}
+
         XMoveResizeWindow (screen->dpy (), id, 0, 0,
 			   serverGeometry.width (), serverGeometry.height ());
         window->sendConfigureNotify ();
 	frameRegion = CompRegion ();
 	window->windowNotify (CompWindowNotifyFrameUpdate);
     }
-
     window->recalcActions ();
 }
 
@@ -3049,9 +3079,9 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 	{
 	    if (!sibling)
 	    {
-		XLowerWindow (screen->dpy (), id);
 		if (frame)
 		    XLowerWindow (screen->dpy (), frame);
+		XLowerWindow (screen->dpy (), id);
 
 		/* Restacking of compiz's window list happens
 		 * immediately and since this path doesn't call
@@ -5670,7 +5700,7 @@ CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 
     if (!i)
 	i = b;
-  
+
     if (priv->input.left   != i->left ||
 	priv->input.right  != i->right ||
 	priv->input.top    != i->top ||
@@ -5697,6 +5727,7 @@ CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 			 Atoms::frameExtents,
 			 XA_CARDINAL, 32, PropModeReplace,
 			 (unsigned char *) data, 4);
+
 	priv->updateSize ();
 	priv->updateFrameWindow ();
     }
@@ -5834,7 +5865,7 @@ PrivateWindow::reparent ()
     if (attrib.map_state == IsViewable || shaded)
 	XMapWindow (dpy, frame);
 
-    attr.event_mask = SubstructureRedirectMask | StructureNotifyMask |
+    attr.event_mask = SubstructureRedirectMask |
 		      SubstructureNotifyMask | EnterWindowMask |
 		      LeaveWindowMask;
 

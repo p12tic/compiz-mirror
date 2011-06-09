@@ -69,9 +69,9 @@ class PlaceWindow :
 	
 	CompRect
 	doValidateResizeRequest (unsigned int &,
-				      XWindowChanges *,
-				      unsigned int,
-				      bool);
+				 XWindowChanges *,
+				 bool,
+				 bool);
 	void validateResizeRequest (unsigned int   &mask,
 				    XWindowChanges *xwc,
 				    unsigned int   source);
