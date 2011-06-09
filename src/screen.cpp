@@ -2154,11 +2154,11 @@ PrivateScreen::configure (XConfigureEvent *ce)
     {
 	priv->attrib.width  = ce->width;
 	priv->attrib.height = ce->height;
+    }
 
 	priv->reshape (ce->width, ce->height);
 
 	priv->detectOutputDevices ();
-    }
 }
 
 void
