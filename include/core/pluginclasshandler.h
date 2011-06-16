@@ -53,6 +53,9 @@ class PluginClassHandler {
 	    return compPrintf ("%s_index_%lu", typeid (Tp).name (), ABI);
 	}
 
+	static bool initializeIndex ();
+	static inline Tp * getInstance (Tb *base);
+
     private:
 	bool mFailed;
 	Tb   *mBase;
@@ -75,44 +78,50 @@ PluginClassHandler<Tp,Tb,ABI>::PluginClassHandler (Tb *base) :
     else
     {
 	if (!mIndex.initiated)
-	{
-	    mIndex.index = Tb::allocPluginClassIndex ();
-	    if (mIndex.index != (unsigned)~0)
-	    {
-		mIndex.initiated = true;
-		mIndex.failed    = false;
-		mIndex.pcIndex = pluginClassHandlerIndex;
-
-		CompPrivate p;
-		p.uval = mIndex.index;
-
-		if (!screen->hasValue (keyName ()))
-		{
-		    screen->storeValue (keyName (), p);
-		    pluginClassHandlerIndex++;
-		}
-		else
-		{
-		    compLogMessage ("core", CompLogLevelFatal,
-			"Private index value \"%s\" already stored in screen.",
-			keyName ().c_str ());
-		}
-	    }
-	    else
-	    {
-		mIndex.failed = true;
-		mIndex.initiated = false;
-		mIndex.pcFailed = true;
-		mIndex.pcIndex = pluginClassHandlerIndex;
-		mFailed = true;
-	    }
-	}
+	    mFailed = !initializeIndex ();
 
 	if (!mIndex.failed)
 	{
 	    mIndex.refCount++;
 	    mBase->pluginClasses[mIndex.index] = static_cast<Tp *> (this);
 	}
+    }
+}
+
+template<class Tp, class Tb, int ABI>
+bool
+PluginClassHandler<Tp,Tb,ABI>::initializeIndex ()
+{
+    mIndex.index = Tb::allocPluginClassIndex ();
+    if (mIndex.index != (unsigned)~0)
+    {
+	mIndex.initiated = true;
+	mIndex.failed    = false;
+	mIndex.pcIndex = pluginClassHandlerIndex;
+
+	CompPrivate p;
+	p.uval = mIndex.index;
+
+	if (!screen->hasValue (keyName ()))
+	{
+	    screen->storeValue (keyName (), p);
+	    pluginClassHandlerIndex++;
+	}
+	else
+	{
+	    compLogMessage ("core", CompLogLevelFatal,
+		"Private index value \"%s\" already stored in screen.",
+		keyName ().c_str ());
+	}
+	return true;
+    }
+    else
+    {
+	mIndex.failed = true;
+	mIndex.initiated = false;
+	mIndex.pcFailed = true;
+	mIndex.pcIndex = pluginClassHandlerIndex;
+	return false;
     }
 }
 
@@ -137,67 +146,41 @@ PluginClassHandler<Tp,Tb,ABI>::~PluginClassHandler ()
 
 template<class Tp, class Tb, int ABI>
 Tp *
+PluginClassHandler<Tp,Tb,ABI>::getInstance (Tb *base)
+{
+    if (base->pluginClasses[mIndex.index])
+	return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
+    else
+    {
+	/* mIndex.index will be implicitly set by
+	 * the constructor */
+	Tp *pc = new Tp (base);
+
+	if (!pc)
+	    return NULL;
+
+	/* FIXME: If a plugin class fails to load for
+	 * whatever reason, then ::get is going to return
+	 * NULL, which is unsafe in cases that aren't
+	 * initScreen and initWindow */
+	if (pc->loadFailed ())
+	{
+	    delete pc;
+	    return NULL;
+	}
+
+	return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
+    }
+}
+
+template<class Tp, class Tb, int ABI>
+Tp *
 PluginClassHandler<Tp,Tb,ABI>::get (Tb *base)
 {
     if (!mIndex.initiated)
-    {
-	mIndex.index = Tb::allocPluginClassIndex ();
-	if (mIndex.index != (unsigned)~0)
-	{
-	    mIndex.initiated = true;
-	    mIndex.failed    = false;
-	    mIndex.pcIndex = pluginClassHandlerIndex;
-
-	    CompPrivate p;
-	    p.uval = mIndex.index;
-
-	    if (!screen->hasValue (keyName ()))
-	    {
-		screen->storeValue (keyName (), p);
-		pluginClassHandlerIndex++;
-	    }
-	    else
-	    {
-		compLogMessage ("core", CompLogLevelFatal,
-				"Private index value \"%s\" already stored in screen.",
-				keyName ().c_str ());
-	    }
-	}
-	else
-	{
-	    mIndex.failed = true;
-	    mIndex.initiated = false;
-	    mIndex.pcFailed = true;
-	    mIndex.pcIndex = pluginClassHandlerIndex;
-	}
-    }
-
+	initializeIndex ();
     if (mIndex.initiated && pluginClassHandlerIndex == mIndex.pcIndex)
-    {
-	if (base->pluginClasses[mIndex.index])
-	    return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
-	else
-	{
-	    /* mIndex.index will be implicitly set by
-	     * the constructor */
-	    Tp *pc = new Tp (base);
-
-	    if (!pc)
-		return NULL;
-
-	    /* FIXME: If a plugin class fails to load for
-	     * whatever reason, then ::get is going to return
-	     * NULL, which is unsafe in cases that aren't
-	     * initScreen and initWindow */
-	    if (pc->loadFailed ())
-	    {
-		delete pc;
-		return NULL;
-	    }
-
-	    return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
-	}
-    }
+	return getInstance (base);
     if (mIndex.failed && pluginClassHandlerIndex == mIndex.pcIndex)
 	return NULL;
 
@@ -208,29 +191,7 @@ PluginClassHandler<Tp,Tb,ABI>::get (Tb *base)
 	mIndex.failed    = false;
 	mIndex.pcIndex = pluginClassHandlerIndex;
 
-	if (base->pluginClasses[mIndex.index])
-	    return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
-	else
-	{
-	    /* mIndex.index will be implicitly set by
-	     * the constructor */
-	    Tp *pc = new Tp (base);
-
-	    if (!pc)
-		return NULL;
-
-	    /* FIXME: If a plugin class fails to load for
-	     * whatever reason, then ::get is going to return
-	     * NULL, which is unsafe in cases that aren't
-	     * initScreen and initWindow */
-	    if (pc->loadFailed ())
-	    {
-		delete pc;
-		return NULL;
-	    }
-
-	    return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
-	}
+	return getInstance (base);
     }
     else
     {
