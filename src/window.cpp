@@ -1462,8 +1462,8 @@ CompWindow::resize (int          x,
 bool
 CompWindow::resize (CompWindow::Geometry gm)
 {
-    if (priv->geometry.x ()       != gm.width ()  ||
-	priv->geometry.y ()       != gm.height () ||
+    if (priv->geometry.width ()   != gm.width ()  ||
+	priv->geometry.height ()  != gm.height () ||
 	priv->geometry.border ()  != gm.border ())
     {
 	int pw, ph;
