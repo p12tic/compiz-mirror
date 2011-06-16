@@ -139,10 +139,64 @@ template<class Tp, class Tb, int ABI>
 Tp *
 PluginClassHandler<Tp,Tb,ABI>::get (Tb *base)
 {
+    if (!mIndex.initiated)
+    {
+	mIndex.index = Tb::allocPluginClassIndex ();
+	if (mIndex.index != (unsigned)~0)
+	{
+	    mIndex.initiated = true;
+	    mIndex.failed    = false;
+	    mIndex.pcIndex = pluginClassHandlerIndex;
+
+	    CompPrivate p;
+	    p.uval = mIndex.index;
+
+	    if (!screen->hasValue (keyName ()))
+	    {
+		screen->storeValue (keyName (), p);
+		pluginClassHandlerIndex++;
+	    }
+	    else
+	    {
+		compLogMessage ("core", CompLogLevelFatal,
+				"Private index value \"%s\" already stored in screen.",
+				keyName ().c_str ());
+	    }
+	}
+	else
+	{
+	    mIndex.failed = true;
+	    mIndex.initiated = false;
+	    mIndex.pcFailed = true;
+	    mIndex.pcIndex = pluginClassHandlerIndex;
+	}
+    }
+
     if (mIndex.initiated && pluginClassHandlerIndex == mIndex.pcIndex)
     {
-	return static_cast<Tp *>
-	    (base->pluginClasses[mIndex.index]);
+	if (base->pluginClasses[mIndex.index])
+	    return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
+	else
+	{
+	    /* mIndex.index will be implicitly set by
+	     * the constructor */
+	    Tp *pc = new Tp (base);
+
+	    if (!pc)
+		return NULL;
+
+	    /* FIXME: If a plugin class fails to load for
+	     * whatever reason, then ::get is going to return
+	     * NULL, which is unsafe in cases that aren't
+	     * initScreen and initWindow */
+	    if (pc->loadFailed ())
+	    {
+		delete pc;
+		return NULL;
+	    }
+
+	    return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
+	}
     }
     if (mIndex.failed && pluginClassHandlerIndex == mIndex.pcIndex)
 	return NULL;
@@ -153,7 +207,30 @@ PluginClassHandler<Tp,Tb,ABI>::get (Tb *base)
 	mIndex.initiated = true;
 	mIndex.failed    = false;
 	mIndex.pcIndex = pluginClassHandlerIndex;
-	return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
+
+	if (base->pluginClasses[mIndex.index])
+	    return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
+	else
+	{
+	    /* mIndex.index will be implicitly set by
+	     * the constructor */
+	    Tp *pc = new Tp (base);
+
+	    if (!pc)
+		return NULL;
+
+	    /* FIXME: If a plugin class fails to load for
+	     * whatever reason, then ::get is going to return
+	     * NULL, which is unsafe in cases that aren't
+	     * initScreen and initWindow */
+	    if (pc->loadFailed ())
+	    {
+		delete pc;
+		return NULL;
+	    }
+
+	    return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
+	}
     }
     else
     {
