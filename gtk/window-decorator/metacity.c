@@ -658,11 +658,9 @@ meta_draw_window_decoration (decor_t *d)
 
 	if (d->frame_window)
 	{
-	    int         depth;
 	    GdkColormap *cmap;
 
 	    cmap   = get_colormap_for_drawable (GDK_DRAWABLE (d->pixmap));
-	    depth  = gdk_drawable_get_depth (GDK_DRAWABLE (d->frame_window));
 	    pixmap = create_pixmap (rect.width, size, d->frame->style_window_rgb);
 	    gdk_drawable_set_colormap (GDK_DRAWABLE (pixmap), cmap);
 	}
@@ -774,11 +772,9 @@ meta_draw_window_decoration (decor_t *d)
 
 	if (d->frame_window)
 	{
-	    int         depth;
 	    GdkColormap *cmap;
 
 	    cmap   = get_colormap_for_drawable (GDK_DRAWABLE (d->pixmap));
-	    depth  = gdk_drawable_get_depth (GDK_DRAWABLE (d->frame_window));
 	    pixmap = create_pixmap (size, rect.height, d->frame->style_window_rgb);
 	    gdk_drawable_set_colormap (GDK_DRAWABLE (pixmap), cmap);
 	}
@@ -1224,12 +1220,10 @@ meta_get_event_window_position (decor_t *d,
     MetaFrameGeometry fgeom;
     MetaFrameFlags    flags;
     MetaTheme	      *theme;
-    WnckWindowType    win_type;
     GdkRectangle      clip;
 
     theme = meta_theme_get_current ();
 
-    win_type = wnck_window_get_window_type (d->win);
     meta_get_decoration_geometry (d, theme, &flags, &fgeom, &button_layout,
 				  meta_frame_type_from_string (d->frame->type),
 				  &clip);
