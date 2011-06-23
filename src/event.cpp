@@ -1203,12 +1203,6 @@ CompScreen::handleEvent (XEvent *event)
 	}
 	else if (!(event->xreparent.parent == priv->root))
 	{
-	    bool     remove = false;
-	    Window   xid = event->xreparent.window;
-	    Window   root_return;
-	    unsigned int ui;
-	    int		 x, y;
-
 	    /* This is the only case where a window is removed but not
 	       destroyed. We must remove our event mask and all passive
 	       grabs. */
