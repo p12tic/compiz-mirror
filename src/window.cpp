@@ -2542,25 +2542,32 @@ PrivateWindow::stackDocks (CompWindow     *w,
         /* fullscreen window found */
         if (firstFullscreenWindow)
         {
+	    /* If there is another toplevel window above the fullscreen one
+	     * then we need to stack above that */
             if (dw->focus () &&
                 !PrivateWindow::isAncestorTo (w, dw) &&
                 !(dw->type () & (CompWindowTypeFullscreenMask |
                                  CompWindowTypeDockMask)) &&
                 !dw->overrideRedirect () &&
-                dw->defaultViewport () == screen->vp ())
+                dw->defaultViewport () == screen->vp () &&
+		dw->isViewable ())
             {
                 belowDocks = dw;
             }
         }
         else if (dw->type () & CompWindowTypeFullscreenMask)
         {
+	    /* First fullscreen window found when checking up the stack
+	     * now go back down to find a suitable candidate client
+	     * window to put the docks above */
             firstFullscreenWindow = dw;
             for (CompWindow *dww = dw->prev; dww; dww = dww->prev)
             {
                 if (!(dww->type () & (CompWindowTypeFullscreenMask |
-                                      CompWindowTypeDockMask) &&
+                                      CompWindowTypeDockMask)) &&
                     !dww->overrideRedirect () &&
-                    dww->defaultViewport () == screen->vp ()))
+                    dww->defaultViewport () == screen->vp () &&
+		    dww->isViewable ())
                 {
                     belowDocks = dww;
                     break;
@@ -3428,7 +3435,8 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	{
 	    /* put active or soon-to-be-active fullscreen windows over
 	       all others in their layer */
-	    if (priv->id == screen->activeWindow ())
+	    if (priv->id == screen->activeWindow () ||
+		priv->id == screen->priv->nextActiveWindow)
 	    {
 		aboveFs = true;
 	    }
