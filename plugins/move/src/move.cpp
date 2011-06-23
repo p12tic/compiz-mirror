@@ -127,7 +127,11 @@ moveInitiate (CompAction      *action,
 
 	    w->grabNotify (x, y, mods, grabMask);
 
-	    if (screen->getOption ("raise_on_click")->value ().b ())
+	    /* Click raise happens implicitly on buttons 1, 2 and 3 so don't
+	     * restack this window again if the action buttonbinding was from
+	     * one of those buttons */
+	    if (screen->getOption ("raise_on_click")->value ().b () &&
+		button != Button1 && button != Button2 && button != Button3)
 		w->updateAttributes (CompStackingUpdateModeAboveFullscreen);
 
 	    if (state & CompAction::StateInitKey)
