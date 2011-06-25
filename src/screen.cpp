@@ -302,43 +302,19 @@ CompScreen::removeWatchFd (CompWatchFdHandle handle)
 void
 CompScreen::storeValue (CompString key, CompPrivate value)
 {
-    std::map<CompString,CompPrivate>::iterator it;
-
-    it = priv->valueMap.find (key);
-
-    if (it != priv->valueMap.end ())
-    {
-	it->second = value;
-    }
-    else
-    {
-	priv->valueMap.insert (std::pair<CompString,CompPrivate> (key, value));
-    }
+    ValueHolder::Default ()->storeValue (key, value);
 }
 
 bool
 CompScreen::hasValue (CompString key)
 {
-    return (priv->valueMap.find (key) != priv->valueMap.end ());
+    return ValueHolder::Default ()->hasValue (key);
 }
 
 CompPrivate
 CompScreen::getValue (CompString key)
 {
-    CompPrivate p;
-
-    std::map<CompString,CompPrivate>::iterator it;
-    it = priv->valueMap.find (key);
-
-    if (it != priv->valueMap.end ())
-    {
-	return it->second;
-    }
-    else
-    {
-	p.uval = 0;
-	return p;
-    }
+    return ValueHolder::Default ()->getValue (key);
 }
 
 bool
@@ -377,13 +353,7 @@ CompWatchFd::internalCallback (Glib::IOCondition events)
 void
 CompScreen::eraseValue (CompString key)
 {
-    std::map<CompString,CompPrivate>::iterator it;
-    it = priv->valueMap.find (key);
-
-    if (it != priv->valueMap.end ())
-    {
-	priv->valueMap.erase (key);
-    }
+    ValueHolder::Default ()->eraseValue (key);
 }
 
 void
@@ -4773,6 +4743,8 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     xdndWindow (None),
     initialized (false)
 {
+    ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
+  
     gettimeofday (&lastTimeout, 0);
 
     pingTimer.setCallback (

@@ -28,6 +28,7 @@
 
 #include <compiz.h>
 #include <core/option.h>
+#include <core/privateunion.h>
 
 class CompScreen;
 extern CompScreen *screen;
@@ -65,13 +66,6 @@ typedef CompStringList (*ListPluginsProc) (const char *path);
 extern LoadPluginProc   loaderLoadPlugin;
 extern UnloadPluginProc loaderUnloadPlugin;
 extern ListPluginsProc  loaderListPlugins;
-
-union CompPrivate {
-    void	  *ptr;
-    long	  val;
-    unsigned long uval;
-    void	  *(*fptr) (void);
-};
 
 /**
  * Base plug-in interface for Compiz. All plugins must implement this

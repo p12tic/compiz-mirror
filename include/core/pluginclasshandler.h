@@ -30,7 +30,7 @@
 #include <boost/preprocessor/cat.hpp>
 
 #include <compiz.h>
-#include <core/screen.h>
+#include <core/valueholder.h>
 #include <core/pluginclasses.h>
 
 extern unsigned int pluginClassHandlerIndex;
@@ -102,9 +102,9 @@ PluginClassHandler<Tp,Tb,ABI>::initializeIndex ()
 	CompPrivate p;
 	p.uval = mIndex.index;
 
-	if (!screen->hasValue (keyName ()))
+	if (!ValueHolder::Default ()->hasValue (keyName ()))
 	{
-	    screen->storeValue (keyName (), p);
+	    ValueHolder::Default ()->storeValue (keyName (), p);
 	    pluginClassHandlerIndex++;
 	}
 	else
@@ -138,7 +138,7 @@ PluginClassHandler<Tp,Tb,ABI>::~PluginClassHandler ()
 	    mIndex.initiated = false;
 	    mIndex.failed = false;
 	    mIndex.pcIndex = pluginClassHandlerIndex;
-	    screen->eraseValue (keyName ());
+	    ValueHolder::Default ()->eraseValue (keyName ());
 	    pluginClassHandlerIndex++;
 	}
     }
@@ -184,9 +184,9 @@ PluginClassHandler<Tp,Tb,ABI>::get (Tb *base)
     if (mIndex.failed && pluginClassHandlerIndex == mIndex.pcIndex)
 	return NULL;
 
-    if (screen->hasValue (keyName ()))
+    if (ValueHolder::Default ()->hasValue (keyName ()))
     {
-	mIndex.index     = screen->getValue (keyName ()).uval;
+	mIndex.index     = ValueHolder::Default ()->getValue (keyName ()).uval;
 	mIndex.initiated = true;
 	mIndex.failed    = false;
 	mIndex.pcIndex = pluginClassHandlerIndex;

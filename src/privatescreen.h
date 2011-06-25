@@ -175,7 +175,10 @@ class CompEventSource:
 	int	      mConnectionFD;
 };
 
-class PrivateScreen : public CoreOptions {
+class PrivateScreen :
+    public ValueHolder,
+    public CoreOptions
+{
 
     public:
 	class KeyGrab {
