@@ -1135,40 +1135,6 @@ CompScreen::imageToFile (CompString &path,
     return false;
 }
 
-const char *
-logLevelToString (CompLogLevel level)
-{
-    switch (level) {
-    case CompLogLevelFatal:
-	return "Fatal";
-    case CompLogLevelError:
-	return "Error";
-    case CompLogLevelWarn:
-	return "Warn";
-    case CompLogLevelInfo:
-	return "Info";
-    case CompLogLevelDebug:
-	return "Debug";
-    default:
-	break;
-    }
-
-    return "Unknown";
-}
-
-static void
-logMessage (const char   *componentName,
-	    CompLogLevel level,
-	    const char   *message)
-{
-    if (!debugOutput && level >= CompLogLevelDebug)
-	return;
-
-    fprintf (stderr, "%s (%s) - %s: %s\n",
-	     programName, componentName,
-	     logLevelToString (level), message);
-}
-
 void
 CompScreen::logMessage (const char   *componentName,
 			CompLogLevel level,
@@ -1176,27 +1142,6 @@ CompScreen::logMessage (const char   *componentName,
 {
     WRAPABLE_HND_FUNC (13, logMessage, componentName, level, message)
     ::logMessage (componentName, level, message);
-}
-
-void
-compLogMessage (const char   *componentName,
-	        CompLogLevel level,
-	        const char   *format,
-	        ...)
-{
-    va_list args;
-    char    message[2048];
-
-    va_start (args, format);
-
-    vsnprintf (message, 2048, format, args);
-
-    if (screen)
-	screen->logMessage (componentName, level, message);
-    else
-	logMessage (componentName, level, message);
-
-    va_end (args);
 }
 
 int
