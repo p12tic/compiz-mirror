@@ -41,6 +41,7 @@ class FadeScreen :
 
 	bool setOption (const CompString &, CompOption::Value &);
 
+	bool bell (CompAction *, CompAction::State state, CompOption::Vector &);
 	void handleEvent (XEvent *);
 	void preparePaint (int);
 
