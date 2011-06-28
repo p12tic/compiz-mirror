@@ -64,11 +64,68 @@ function (compiz_ensure_linkage)
 endfunction ()
 
 macro (compiz_add_git_dist)
-    set(ARCHIVE_NAME ${CMAKE_PROJECT_NAME}-${VERSION})
-    add_custom_target(dist
-	COMMAND git archive --prefix=${ARCHIVE_NAME}/ HEAD
-		| bzip2 > ${CMAKE_BINARY_DIR}/${ARCHIVE_NAME}.tar.bz2
-	WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+	set (DIST_ARCHIVE_TYPE "bz2" CACHE STRING "Archive type to output when running make dist")
+
+	find_file (DGIT ".git" PATHS ${CMAKE_SOURCE_DIR})
+	find_file (DBZR ".bzr" PATHS ${CMAKE_SOURCE_DIR})
+
+	# Try to use the git and bzr inbuilt functions for generating
+	# archives first, otherwise do it manually
+	if (NOT (${DGIT} STREQUAL "DGIT-NOTFOUND"))
+		find_file (DGITMODULES ".gitmodules" PATHS ${CMAKE_SOURCE_DIR})
+
+		if (NOT (${DGITMODULES} STREQUAL "DGITMODULES-NOTFOUND"))
+			find_program (GIT_ARCHIVE_ALL git-archive-all.sh)
+
+			if (NOT (${GIT_ARCHIVE_ALL} STREQUAL "GIT_ARCHIVE_ALL-NOTFOUND"))
+				add_custom_target (dist_bz2 ${GIT_ARCHIVE_ALL} --prefix ${CMAKE_PROJECT_NAME}-${VERSION}/ ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
+						   COMMAND bzip2 ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
+						   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+						   COMMENT "Creating bz2 archive")
+				add_custom_target (dist_gz ${GIT_ARCHIVE_ALL} --prefix ${CMAKE_PROJECT_NAME}-${VERSION}/ ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
+						   COMMAND gzip ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
+						   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+						   COMMENT "Creating gz archive")
+			else (NOT (${GIT_ARCHIVE_ALL} STREQUAL "GIT_ARCHIVE_ALL-NOTFOUND"))
+				message ("[WARNING]: git-archive-all.sh is needed to make releases of git submodules, get it from https://github.com/meitar/git-archive-all.sh.git and install it into your PATH")
+			endif (NOT (${GIT_ARCHIVE_ALL} STREQUAL "GIT_ARCHIVE_ALL-NOTFOUND"))
+		else (NOT (${DGITMODULES} STREQUAL "DGITMODULES-NOTFOUND"))
+			add_custom_target (dist_bz2 git archive --prefix ${CMAKE_PROJECT_NAME}-${VERSION}/ -o ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
+						   COMMAND bzip2 ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
+						   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+						   COMMENT "Creating bz2 archive")
+			add_custom_target (dist_gz git archive --prefix ${CMAKE_PROJECT_NAME}-${VERSION}/ -o ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
+						   COMMAND gzip ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
+						   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+						   COMMENT "Creating gz archive")
+		endif (NOT (${DGITMODULES} STREQUAL "DGITMODULES-NOTFOUND"))
+	else (NOT (${DGIT} STREQUAL "DGIT-NOTFOUND"))
+		if (NOT (${DBZR} STREQUAL "DBZR-NOTFOUND"))
+			add_custom_target (dist_bz2
+					   COMMAND bzr export --root=${ARCHIVE_NAME} ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
+					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+			add_custom_target (dist_gz
+					   COMMAND bzr export --root=${ARCHIVE_NAME} ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.gz
+					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+		else (NOT (${DBZR} STREQUAL "DBZR-NOTFOUND"))
+			add_custom_target (dist_bz2 
+					   COMMAND tar -cvf ${CMAKE_SOURCE_DIR} | bzip2 > ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
+					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../)
+			add_custom_target (dist_gz 
+					   COMMAND tar -cvf ${CMAKE_SOURCE_DIR} | gzip > ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.gz
+					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../)
+		endif (NOT (${DBZR} STREQUAL "DBZR-NOTFOUND"))
+	endif (NOT (${DGIT} STREQUAL "DGIT-NOTFOUND"))
+
+	add_custom_target (dist)
+
+	if (${DIST_ARCHIVE_TYPE} STREQUAL "gz")
+		add_dependencies (dist dist_gz)
+	else (${DIST_ARCHIVE_TYPE} STREQUAL "gz")
+		if (${DIST_ARCHIVE_TYPE} STREQUAL "bz2")
+			add_dependencies (dist dist_bz2)
+		endif (${DIST_ARCHIVE_TYPE} STREQUAL "bz2")
+	endif (${DIST_ARCHIVE_TYPE} STREQUAL "gz")
 endmacro ()
 
 # unsets the given variable
