@@ -121,6 +121,7 @@ compiz_ensure_linkage ()
 compiz_package_generation ("Compiz")
 compiz_add_uninstall ()
 compiz_add_git_dist ()
+compiz_add_distcheck ()
 
 _print_configure_results ()
 

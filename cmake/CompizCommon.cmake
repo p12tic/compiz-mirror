@@ -102,10 +102,10 @@ macro (compiz_add_git_dist)
 	else (NOT (${DGIT} STREQUAL "DGIT-NOTFOUND"))
 		if (NOT (${DBZR} STREQUAL "DBZR-NOTFOUND"))
 			add_custom_target (dist_bz2
-					   COMMAND bzr export --root=${ARCHIVE_NAME} ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
+					   COMMAND bzr export --root=${CMAKE_PROJECT_NAME}-${VERSION} ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
 					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 			add_custom_target (dist_gz
-					   COMMAND bzr export --root=${ARCHIVE_NAME} ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.gz
+					   COMMAND bzr export --root=${CMAKE_PROJECT_NAME}-${VERSION} ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.gz
 					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 		else (NOT (${DBZR} STREQUAL "DBZR-NOTFOUND"))
 			add_custom_target (dist_bz2 
@@ -128,6 +128,17 @@ macro (compiz_add_git_dist)
 	endif (${DIST_ARCHIVE_TYPE} STREQUAL "gz")
 endmacro ()
 
+macro (compiz_add_distcheck)
+	add_custom_target (distcheck cp ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.${DIST_ARCHIVE_TYPE} /tmp
+			   COMMAND tar xvf /tmp/${CMAKE_PROJECT_NAME}-${VERSION}.tar.${DIST_ARCHIVE_TYPE}
+			   && mkdir /tmp/${CMAKE_PROJECT_NAME}-${VERSION}/build
+			   && cd /tmp/${CMAKE_PROJECT_NAME}-${VERSION}/build
+			   && cmake -DCMAKE_INSTALL_PREFIX=/tmp/ -DCOMPIZ_PLUGIN_INSTALL_TYPE='package' .. -DCMAKE_MODULE_PATH=/usr/share/cmake -DCOMPIZ_DISABLE_PLUGIN_KDE=ON
+			   && make -j4
+			   && make -j4 install
+			   WORKING_DIRECTORY /tmp)
+	add_dependencies (distcheck dist)
+endmacro ()
 # unsets the given variable
 macro (compiz_unset var)
     set (${var} "" CACHE INTERNAL "")
