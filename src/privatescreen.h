@@ -93,7 +93,7 @@ class CompTimeoutSource :
 
     private:
 
-	struct timespec mLastTimeout;
+	gint64 mLastTime;
 
     friend class CompTimer;
     friend class PrivateScreen;

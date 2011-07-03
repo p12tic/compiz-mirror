@@ -27,15 +27,12 @@
 #include <core/timer.h>
 #include <core/screen.h>
 #include "privatescreen.h"
+#include <cmath>
 
 CompTimeoutSource::CompTimeoutSource () :
     Glib::Source ()
 {
-    struct timespec ts;
-
-    clock_gettime (CLOCK_MONOTONIC, &ts);
-
-    mLastTimeout = ts;
+    mLastTime = get_time ();
 
     set_priority (G_PRIORITY_HIGH);
     attach (screen->priv->ctx);
@@ -63,10 +60,6 @@ CompTimeoutSource::create ()
 bool
 CompTimeoutSource::prepare (int &timeout)
 {
-    struct timespec ts;
-
-    clock_gettime (CLOCK_MONOTONIC, &ts);
-
     /* Determine time to wait */
 
     if (screen->priv->timers.empty ())
@@ -98,13 +91,16 @@ CompTimeoutSource::prepare (int &timeout)
 	    it++;
 	}
 
-	mLastTimeout = ts;
+	mLastTime = get_time ();
+
 	return false;
     }
     else
     {
-	mLastTimeout = ts;
 	timeout = 0;
+
+	mLastTime = get_time ();
+
 	return true;
     }
 }
@@ -112,19 +108,24 @@ CompTimeoutSource::prepare (int &timeout)
 bool
 CompTimeoutSource::check ()
 {
-    struct timespec ts;
-    int		    timeDiff;
+    gint64		    fixedTimeDiff;
+    gdouble		    timeDiff;
+    gint64		    currentTime = get_time ();
 
-    clock_gettime (CLOCK_MONOTONIC, &ts);
-    timeDiff = TIMESPECDIFF (&ts, &mLastTimeout);
+    timeDiff = (currentTime - mLastTime) / 1000.0;
+    
+    /* prefer over-estimating rather than waking up */
+    fixedTimeDiff = ceil (timeDiff);
 
-    if (timeDiff < 0)
-	timeDiff = 0;
-
+    /* Handle clock rollback */
+    if (fixedTimeDiff < 0)
+    {
+	fixedTimeDiff = 0;
+    }
     foreach (CompTimer *t, screen->priv->timers)
     {
-	t->mMinLeft -= timeDiff;
-	t->mMaxLeft -= timeDiff;
+	t->mMinLeft -= fixedTimeDiff;
+	t->mMaxLeft -= fixedTimeDiff;
     }
 
     return screen->priv->timers.front ()->mMinLeft <= 0;
