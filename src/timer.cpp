@@ -32,10 +32,11 @@
 CompTimeoutSource::CompTimeoutSource () :
     Glib::Source ()
 {
-    mLastTime = get_time ();
-
     set_priority (G_PRIORITY_HIGH);
     attach (screen->priv->ctx);
+
+    mLastTime = get_time ();
+    
     connect (sigc::mem_fun <bool, CompTimeoutSource> (this, &CompTimeoutSource::callback));
 }
 
@@ -220,7 +221,6 @@ CompTimer::start ()
 void
 CompTimer::start (unsigned int min, unsigned int max)
 {
-    stop ();
     setTimes (min, max);
     start ();
 }
@@ -229,7 +229,6 @@ void
 CompTimer::start (CompTimer::CallBack callback,
 		  unsigned int min, unsigned int max)
 {
-    stop ();
     setTimes (min, max);
     setCallback (callback);
     start ();
