@@ -27,7 +27,7 @@
 #define _COMPIZ_CORE_H
 
 
-#define CORE_ABIVERSION 20110322
+#define CORE_ABIVERSION 20110703
 
 #include <stdio.h>
 #include <assert.h>
@@ -84,5 +84,6 @@ typedef XBool Bool;
 #include <core/size.h>
 #include <core/region.h>
 #include <core/countedlist.h>
+#include <core/timeouthandler.h>
 
 #endif

@@ -28,7 +28,6 @@
 
 #include <boost/function.hpp>
 #include <sys/time.h>
-#include <core/core.h>
 #include <glibmm/main.h>
 
 class CompTimeoutSource;
@@ -97,9 +96,8 @@ class CompTimer {
 	 */
 	void stop ();
 
-	friend class CompScreen;
-	friend class PrivateScreen;
 	friend class CompTimeoutSource;
+	friend class TimeoutHandler;
 
     private:
 	bool         mActive;

@@ -213,11 +213,6 @@ class PrivateScreen : public CoreOptions {
 
 	void updatePassiveGrabs ();
 
-	void handleTimers (struct timeval *tv);
-
-	void addTimer (CompTimer *timer);
-	void removeTimer (CompTimer *timer);
-
 	void updatePlugins ();
 
 	bool triggerButtonPressBindings (CompOption::Vector &options,
@@ -385,9 +380,6 @@ class PrivateScreen : public CoreOptions {
 
 	CompFileWatchList   fileWatch;
 	CompFileWatchHandle lastFileWatchHandle;
-
-	std::list <CompTimer *> timers;
-	struct timeval         lastTimeout;
 
 	std::list<Glib::RefPtr <CompWatchFd> > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;

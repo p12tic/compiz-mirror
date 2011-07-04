@@ -63,7 +63,7 @@ CompTimeoutSource::prepare (int &timeout)
 {
     /* Determine time to wait */
 
-    if (screen->priv->timers.empty ())
+    if (TimeoutHandler::Default ()->timers ().empty ())
     {
 	/* This kind of sucks, but we have to do it, considering
 	 * that glib provides us no safe way to remove the source -
@@ -73,16 +73,17 @@ CompTimeoutSource::prepare (int &timeout)
 	 */
 
 	timeout = COMPIZ_TIMEOUT_WAIT;
+
 	return true;
     }
 
-    if (screen->priv->timers.front ()->mMinLeft > 0)
+    if (TimeoutHandler::Default ()->timers ().front ()->mMinLeft > 0)
     {
-	std::list<CompTimer *>::iterator it = screen->priv->timers.begin ();
+	std::list<CompTimer *>::iterator it = TimeoutHandler::Default ()->timers ().begin ();
 
 	CompTimer *t = (*it);
 	timeout = t->mMaxLeft;
-	while (it != screen->priv->timers.end ())
+	while (it != TimeoutHandler::Default ()->timers ().end ())
 	{
 	    t = (*it);
 	    if (t->mMinLeft >= timeout)
@@ -123,13 +124,13 @@ CompTimeoutSource::check ()
     {
 	fixedTimeDiff = 0;
     }
-    foreach (CompTimer *t, screen->priv->timers)
+    foreach (CompTimer *t, TimeoutHandler::Default ()->timers ())
     {
 	t->mMinLeft -= fixedTimeDiff;
 	t->mMaxLeft -= fixedTimeDiff;
     }
 
-    return screen->priv->timers.front ()->mMinLeft <= 0;
+    return TimeoutHandler::Default ()->timers ().front ()->mMinLeft <= 0;
 }
 
 bool
@@ -143,21 +144,21 @@ CompTimeoutSource::dispatch (sigc::slot_base *slot)
 bool
 CompTimeoutSource::callback ()
 {
-    while (screen->priv->timers.begin () != screen->priv->timers.end () &&
-	   screen->priv->timers.front ()->mMinLeft <= 0)
+    while (TimeoutHandler::Default ()->timers ().begin () != TimeoutHandler::Default ()->timers ().end () &&
+	   TimeoutHandler::Default ()->timers ().front ()->mMinLeft <= 0)
     {
-	CompTimer *t = screen->priv->timers.front ();
-	screen->priv->timers.pop_front ();
+	CompTimer *t = TimeoutHandler::Default ()->timers ().front ();
+	TimeoutHandler::Default ()->timers ().pop_front ();
 
 	t->mActive = false;
 	if (t->mCallBack ())
 	{
-	    screen->priv->addTimer (t);
+	    TimeoutHandler::Default ()->addTimer (t);
 	    t->mActive = true;
 	}
     }
 
-    return !screen->priv->timers.empty ();
+    return !TimeoutHandler::Default ()->timers ().empty ();
 }
 
 CompTimer::CompTimer () :
@@ -172,7 +173,7 @@ CompTimer::CompTimer () :
 
 CompTimer::~CompTimer ()
 {
-    screen->priv->removeTimer (this);
+    TimeoutHandler::Default ()->removeTimer (this);
 }
 
 void
@@ -209,13 +210,16 @@ CompTimer::start ()
 
     if (mCallBack.empty ())
     {
+#warning compLogMessage needs to be testable
+#if 0
 	compLogMessage ("core", CompLogLevelWarn,
 			"Attempted to start timer without callback.");
+#endif
 	return;
     }
 
     mActive = true;
-    screen->priv->addTimer (this);
+    TimeoutHandler::Default ()->addTimer (this);
 }
 
 void
@@ -238,7 +242,7 @@ void
 CompTimer::stop ()
 {
     mActive = false;
-    screen->priv->removeTimer (this);
+    TimeoutHandler::Default ()->removeTimer (this);
 }
 
 unsigned int
