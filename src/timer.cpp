@@ -24,10 +24,11 @@
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  */
 
-#include <core/timer.h>
 #include <boost/foreach.hpp>
 #include <cmath>
+
 #include "privatetimeoutsource.h"
+#include "privatetimer.h"
 
 #define foreach BOOST_FOREACH
 
@@ -79,19 +80,19 @@ CompTimeoutSource::prepare (int &timeout)
 	return true;
     }
 
-    if (TimeoutHandler::Default ()->timers ().front ()->mMinLeft > 0)
+    if (TimeoutHandler::Default ()->timers ().front ()->priv->mMinLeft > 0)
     {
 	std::list<CompTimer *>::iterator it = TimeoutHandler::Default ()->timers ().begin ();
 
 	CompTimer *t = (*it);
-	timeout = t->mMaxLeft;
+	timeout = t->priv->mMaxLeft;
 	while (it != TimeoutHandler::Default ()->timers ().end ())
 	{
 	    t = (*it);
-	    if (t->mMinLeft >= timeout)
+	    if (t->priv->mMinLeft >= timeout)
 		break;
-	    if (t->mMaxLeft < timeout)
-		timeout = t->mMaxLeft;
+	    if (t->priv->mMaxLeft < timeout)
+		timeout = t->priv->mMaxLeft;
 	    it++;
 	}
 
@@ -129,11 +130,11 @@ CompTimeoutSource::check ()
 
     foreach (CompTimer *t, TimeoutHandler::Default ()->timers ())
     {
-	t->mMinLeft -= fixedTimeDiff;
-	t->mMaxLeft -= fixedTimeDiff;
+	t->priv->mMinLeft -= fixedTimeDiff;
+	t->priv->mMaxLeft -= fixedTimeDiff;
     }
 
-    return TimeoutHandler::Default ()->timers ().front ()->mMinLeft <= 0;
+    return TimeoutHandler::Default ()->timers ().front ()->priv->mMinLeft <= 0;
 }
 
 bool
@@ -148,23 +149,23 @@ bool
 CompTimeoutSource::callback ()
 {
     while (TimeoutHandler::Default ()->timers ().begin () != TimeoutHandler::Default ()->timers ().end () &&
-	   TimeoutHandler::Default ()->timers ().front ()->mMinLeft <= 0)
+	   TimeoutHandler::Default ()->timers ().front ()->priv->mMinLeft <= 0)
     {
 	CompTimer *t = TimeoutHandler::Default ()->timers ().front ();
 	TimeoutHandler::Default ()->timers ().pop_front ();
 
-	t->mActive = false;
-	if (t->mCallBack ())
+	t->priv->mActive = false;
+	if (t->priv->mCallBack ())
 	{
 	    TimeoutHandler::Default ()->addTimer (t);
-	    t->mActive = true;
+	    t->priv->mActive = true;
 	}
     }
 
     return !TimeoutHandler::Default ()->timers ().empty ();
 }
 
-CompTimer::CompTimer () :
+PrivateTimer::PrivateTimer () :
     mActive (false),
     mMinTime (0),
     mMaxTime (0),
@@ -174,19 +175,30 @@ CompTimer::CompTimer () :
 {
 }
 
+PrivateTimer::~PrivateTimer ()
+{
+}
+
+CompTimer::CompTimer () :
+    priv (new PrivateTimer ())
+{
+    assert (priv);
+}
+
 CompTimer::~CompTimer ()
 {
     TimeoutHandler::Default ()->removeTimer (this);
+    delete priv;
 }
 
 void
 CompTimer::setTimes (unsigned int min, unsigned int max)
 {
-    bool wasActive = mActive;
-    if (mActive)
+    bool wasActive = priv->mActive;
+    if (priv->mActive)
 	stop ();
-    mMinTime = min;
-    mMaxTime = (min <= max)? max : min;
+    priv->mMinTime = min;
+    priv->mMaxTime = (min <= max)? max : min;
 
     if (wasActive)
 	start ();
@@ -195,18 +207,18 @@ CompTimer::setTimes (unsigned int min, unsigned int max)
 void
 CompTimer::setExpiryTimes (unsigned int min, unsigned int max)
 {
-    mMinLeft = min;
-    mMaxLeft = (min <= max) ? max : min;
+    priv->mMinLeft = min;
+    priv->mMaxLeft = (min <= max) ? max : min;
 }
 
 void
 CompTimer::setCallback (CompTimer::CallBack callback)
 {
-    bool wasActive = mActive;
-    if (mActive)
+    bool wasActive = priv->mActive;
+    if (priv->mActive)
 	stop ();
 
-    mCallBack = callback;
+    priv->mCallBack = callback;
 
     if (wasActive)
 	start ();
@@ -218,7 +230,7 @@ CompTimer::start ()
 {
     stop ();
 
-    if (mCallBack.empty ())
+    if (priv->mCallBack.empty ())
     {
 #warning compLogMessage needs to be testable
 #if 0
@@ -228,7 +240,7 @@ CompTimer::start ()
 	return;
     }
 
-    mActive = true;
+    priv->mActive = true;
     TimeoutHandler::Default ()->addTimer (this);
 }
 
@@ -251,36 +263,36 @@ CompTimer::start (CompTimer::CallBack callback,
 void
 CompTimer::stop ()
 {
-    mActive = false;
+    priv->mActive = false;
     TimeoutHandler::Default ()->removeTimer (this);
 }
 
 unsigned int
 CompTimer::minTime ()
 {
-    return mMinTime;
+    return priv->mMinTime;
 }
 
 unsigned int
 CompTimer::maxTime ()
 {
-    return mMaxTime;
+    return priv->mMaxTime;
 }
 
 unsigned int
 CompTimer::minLeft ()
 {
-    return (mMinLeft < 0)? 0 : mMinLeft;
+    return (priv->mMinLeft < 0)? 0 : priv->mMinLeft;
 }
 
 unsigned int
 CompTimer::maxLeft ()
 {
-    return (mMaxLeft < 0)? 0 : mMaxLeft;
+    return (priv->mMaxLeft < 0)? 0 : priv->mMaxLeft;
 }
 
 bool
 CompTimer::active ()
 {
-    return mActive;
+    return priv->mActive;
 }

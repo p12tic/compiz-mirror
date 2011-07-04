@@ -57,7 +57,7 @@ TimeoutHandler::addTimer (CompTimer *timer)
 	    break;
     }
 
-    timer->setExpiryTimes (timer->mMinTime, timer->mMaxTime);
+    timer->setExpiryTimes (timer->minTime (), timer->maxTime ());
 
     priv->mTimers.insert (it, timer);
 }

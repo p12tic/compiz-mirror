@@ -31,6 +31,7 @@
 #include <glibmm/main.h>
 
 class CompTimeoutSource;
+class PrivateTimer;
 /**
  * A simple timer for use with invoking a CallBack during a timed duration.
  */
@@ -105,14 +106,8 @@ class CompTimer {
 	friend class TimeoutHandler;
 
     private:
-	bool         mActive;
-	unsigned int mMinTime;
-	unsigned int mMaxTime;
-	int          mMinLeft;
-	int          mMaxLeft;
 
-    private:
-	CallBack      mCallBack;
+	PrivateTimer *priv;
 
 };
 
