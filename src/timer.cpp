@@ -25,15 +25,17 @@
  */
 
 #include <core/timer.h>
-#include <core/screen.h>
-#include "privatescreen.h"
+#include <boost/foreach.hpp>
 #include <cmath>
+#include "privatetimeoutsource.h"
 
-CompTimeoutSource::CompTimeoutSource () :
+#define foreach BOOST_FOREACH
+
+CompTimeoutSource::CompTimeoutSource (Glib::RefPtr <Glib::MainContext> &ctx) :
     Glib::Source ()
 {
     set_priority (G_PRIORITY_HIGH);
-    attach (screen->priv->ctx);
+    attach (ctx);
 
     mLastTime = get_time ();
     
@@ -51,9 +53,9 @@ CompTimeoutSource::connect (const sigc::slot <bool> &slot)
 }
 
 Glib::RefPtr <CompTimeoutSource>
-CompTimeoutSource::create ()
+CompTimeoutSource::create (Glib::RefPtr <Glib::MainContext> &ctx)
 {
-    return Glib::RefPtr <CompTimeoutSource> (new CompTimeoutSource ());
+    return Glib::RefPtr <CompTimeoutSource> (new CompTimeoutSource (ctx));
 }
 
 #define COMPIZ_TIMEOUT_WAIT 15
@@ -124,6 +126,7 @@ CompTimeoutSource::check ()
     {
 	fixedTimeDiff = 0;
     }
+
     foreach (CompTimer *t, TimeoutHandler::Default ()->timers ())
     {
 	t->mMinLeft -= fixedTimeDiff;
@@ -187,6 +190,13 @@ CompTimer::setTimes (unsigned int min, unsigned int max)
 
     if (wasActive)
 	start ();
+}
+
+void
+CompTimer::setExpiryTimes (unsigned int min, unsigned int max)
+{
+    mMinLeft = min;
+    mMaxLeft = (min <= max) ? max : min;
 }
 
 void

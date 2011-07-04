@@ -1,5 +1,4 @@
 /*
- * Copyright © 2008 Dennis Kasprzyk
  * Copyright © 2010 Canonical Ltd.
  *
  * Permission to use, copy, modify, distribute, and sell this software
@@ -24,71 +23,33 @@
  * Authored by: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
-#include "privatetimeouthandler.h"
+#ifndef _COMPIZ_PRIVATEIOSOURCE_H
+#define _COMPIZ_PRIVATEIOSOURCE_H
 
-namespace
+class CompWatchFd :
+    public Glib::IOSource
 {
-  static TimeoutHandler *gDefault;
-}
+    public:
 
-TimeoutHandler::TimeoutHandler () :
-    priv (new PrivateTimeoutHandler ())
-{
-}
+	static
+	Glib::RefPtr <CompWatchFd> create (int,
+					   Glib::IOCondition,
+					   FdWatchCallBack);
 
-TimeoutHandler::~TimeoutHandler ()
-{
-    delete priv;
-}
+    protected:
 
-void
-TimeoutHandler::addTimer (CompTimer *timer)
-{
-    std::list<CompTimer *>::iterator it;
+	explicit CompWatchFd (int, Glib::IOCondition, FdWatchCallBack);
+	bool		 internalCallback (Glib::IOCondition);
 
-    it = std::find (priv->mTimers.begin (), priv->mTimers.end (), timer);
+    private:
 
-    if (it != priv->mTimers.end ())
-	return;
+	int		  mFd;
+	FdWatchCallBack   mCallBack;
+	CompWatchFdHandle mHandle;
+	bool		  mForceFail;
+	bool		  mExecuting;
 
-    for (it = priv->mTimers.begin (); it != priv->mTimers.end (); it++)
-    {
-	if ((int) timer->minTime () < (*it)->minLeft ())
-	    break;
-    }
+    friend class CompScreen;
+};
 
-    timer->setExpiryTimes (timer->mMinTime, timer->mMaxTime);
-
-    priv->mTimers.insert (it, timer);
-}
-
-void
-TimeoutHandler::removeTimer (CompTimer *timer)
-{
-    std::list<CompTimer *>::iterator it;
-
-    it = std::find (priv->mTimers.begin (), priv->mTimers.end (), timer);
-
-    if (it == priv->mTimers.end ())
-	return;
-
-    priv->mTimers.erase (it);
-}
-
-std::list <CompTimer *> &
-TimeoutHandler::timers ()
-{
-    return priv->mTimers;
-}
-
-TimeoutHandler *
-TimeoutHandler::Default ()
-{
-    return gDefault;
-}
-
-void
-TimeoutHandler::SetDefault (TimeoutHandler *instance)
-{
-    gDefault = instance;
-}
+#endif

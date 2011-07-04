@@ -1,5 +1,4 @@
 /*
- * Copyright © 2008 Dennis Kasprzyk
  * Copyright © 2010 Canonical Ltd.
  *
  * Permission to use, copy, modify, distribute, and sell this software
@@ -24,71 +23,34 @@
  * Authored by: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
-#include "privatetimeouthandler.h"
+#ifndef _COMPIZ_PRIVATEEVENTSOURCE_H
+#define _COMPIZ_PRIVATEEVENTSOURCE_H
 
-namespace
+class CompEventSource:
+    public Glib::Source
 {
-  static TimeoutHandler *gDefault;
-}
+    public:
 
-TimeoutHandler::TimeoutHandler () :
-    priv (new PrivateTimeoutHandler ())
-{
-}
+	static
+	Glib::RefPtr <CompEventSource> create ();
 
-TimeoutHandler::~TimeoutHandler ()
-{
-    delete priv;
-}
+	sigc::connection connect (const sigc::slot <bool> &slot);
 
-void
-TimeoutHandler::addTimer (CompTimer *timer)
-{
-    std::list<CompTimer *>::iterator it;
+    protected:
 
-    it = std::find (priv->mTimers.begin (), priv->mTimers.end (), timer);
+	bool prepare (int &timeout);
+	bool check ();
+	bool dispatch (sigc::slot_base *slot);
+	bool callback ();
 
-    if (it != priv->mTimers.end ())
-	return;
+	explicit CompEventSource ();
+	virtual ~CompEventSource ();
 
-    for (it = priv->mTimers.begin (); it != priv->mTimers.end (); it++)
-    {
-	if ((int) timer->minTime () < (*it)->minLeft ())
-	    break;
-    }
+    private:
 
-    timer->setExpiryTimes (timer->mMinTime, timer->mMaxTime);
+	Display	      *mDpy;
+	Glib::PollFD  mPollFD;
+	int	      mConnectionFD;
+};
 
-    priv->mTimers.insert (it, timer);
-}
-
-void
-TimeoutHandler::removeTimer (CompTimer *timer)
-{
-    std::list<CompTimer *>::iterator it;
-
-    it = std::find (priv->mTimers.begin (), priv->mTimers.end (), timer);
-
-    if (it == priv->mTimers.end ())
-	return;
-
-    priv->mTimers.erase (it);
-}
-
-std::list <CompTimer *> &
-TimeoutHandler::timers ()
-{
-    return priv->mTimers;
-}
-
-TimeoutHandler *
-TimeoutHandler::Default ()
-{
-    return gDefault;
-}
-
-void
-TimeoutHandler::SetDefault (TimeoutHandler *instance)
-{
-    gDefault = instance;
-}
+#endif

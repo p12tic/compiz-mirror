@@ -61,6 +61,11 @@ class CompTimer {
 	unsigned int maxLeft ();
 
 	/**
+	 * FIXME: Remove from the public API
+	 */
+	void setExpiryTimes (unsigned int min, unsigned int max = 0);
+
+	/**
 	 * Sets the timing durations of this timer.
 	 */
 	void setTimes (unsigned int min, unsigned int max = 0);

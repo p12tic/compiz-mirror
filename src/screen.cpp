@@ -118,7 +118,7 @@ CompScreen::eventLoop ()
     priv->ctx = Glib::MainContext::get_default ();
     priv->mainloop = Glib::MainLoop::create (priv->ctx, false);
     priv->source = CompEventSource::create ();
-    priv->timeout = CompTimeoutSource::create ();
+    priv->timeout = CompTimeoutSource::create (priv->ctx);
 
     priv->source->attach (priv->ctx);
 
