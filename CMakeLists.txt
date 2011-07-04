@@ -114,6 +114,7 @@ add_subdirectory (kde)
 add_subdirectory (po)
 add_subdirectory (metadata)
 add_subdirectory (src)
+add_subdirectory (tests)
 add_subdirectory (xslt)
 add_subdirectory (plugins)
 
