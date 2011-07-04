@@ -67,6 +67,21 @@ class CompTimer {
 	void setExpiryTimes (unsigned int min, unsigned int max = 0);
 
 	/**
+	 * FIXME: Remove from the public API
+	 */
+	void decrement (unsigned int diff);
+
+	/**
+	 * FIXME: Remove from the public API
+	 */
+	void setActive (bool active);
+
+	/**
+	 * FIXME: Remove from the public API
+	 */
+	bool triggerCallback ();
+
+	/**
 	 * Sets the timing durations of this timer.
 	 */
 	void setTimes (unsigned int min, unsigned int max = 0);
@@ -101,9 +116,6 @@ class CompTimer {
 	 * be invoked.
 	 */
 	void stop ();
-
-	friend class CompTimeoutSource;
-	friend class TimeoutHandler;
 
     private:
 

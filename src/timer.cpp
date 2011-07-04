@@ -80,19 +80,19 @@ CompTimeoutSource::prepare (int &timeout)
 	return true;
     }
 
-    if (TimeoutHandler::Default ()->timers ().front ()->priv->mMinLeft > 0)
+    if (TimeoutHandler::Default ()->timers ().front ()->minLeft () > 0)
     {
 	std::list<CompTimer *>::iterator it = TimeoutHandler::Default ()->timers ().begin ();
 
 	CompTimer *t = (*it);
-	timeout = t->priv->mMaxLeft;
+	timeout = t->maxLeft ();
 	while (it != TimeoutHandler::Default ()->timers ().end ())
 	{
 	    t = (*it);
-	    if (t->priv->mMinLeft >= timeout)
+	    if (t->minLeft () >= timeout)
 		break;
-	    if (t->priv->mMaxLeft < timeout)
-		timeout = t->priv->mMaxLeft;
+	    if (t->maxLeft () < timeout)
+		timeout = t->maxLeft ();
 	    it++;
 	}
 
@@ -130,11 +130,10 @@ CompTimeoutSource::check ()
 
     foreach (CompTimer *t, TimeoutHandler::Default ()->timers ())
     {
-	t->priv->mMinLeft -= fixedTimeDiff;
-	t->priv->mMaxLeft -= fixedTimeDiff;
+	t->decrement (fixedTimeDiff);
     }
 
-    return TimeoutHandler::Default ()->timers ().front ()->priv->mMinLeft <= 0;
+    return TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0;
 }
 
 bool
@@ -149,16 +148,16 @@ bool
 CompTimeoutSource::callback ()
 {
     while (TimeoutHandler::Default ()->timers ().begin () != TimeoutHandler::Default ()->timers ().end () &&
-	   TimeoutHandler::Default ()->timers ().front ()->priv->mMinLeft <= 0)
+	   TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0)
     {
 	CompTimer *t = TimeoutHandler::Default ()->timers ().front ();
 	TimeoutHandler::Default ()->timers ().pop_front ();
 
-	t->priv->mActive = false;
-	if (t->priv->mCallBack ())
+	t->setActive (false);
+	if (t->triggerCallback ())
 	{
 	    TimeoutHandler::Default ()->addTimer (t);
-	    t->priv->mActive = true;
+	    t->setActive (true);
 	}
     }
 
@@ -209,6 +208,25 @@ CompTimer::setExpiryTimes (unsigned int min, unsigned int max)
 {
     priv->mMinLeft = min;
     priv->mMaxLeft = (min <= max) ? max : min;
+}
+
+void
+CompTimer::decrement (unsigned int diff)
+{
+    priv->mMinLeft -= diff;
+    priv->mMaxLeft -= diff;
+}
+
+void
+CompTimer::setActive (bool active)
+{
+    priv->mActive = active;
+}
+
+bool
+CompTimer::triggerCallback ()
+{
+    return priv->mCallBack ();
 }
 
 void
