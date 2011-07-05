@@ -25,8 +25,6 @@
 
 #include "test-timer.h"
 
-#warning definition of object is OBJECT
-
 bool
 CompTimerTestDiffs::cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t3)
 {
