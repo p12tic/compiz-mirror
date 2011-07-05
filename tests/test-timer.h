@@ -23,39 +23,67 @@
  * Authored by: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
-#include "test-timer.h"
+#ifndef _COMPIZ_TEST_TIMER_H
+#define _COMPIZ_TEST_TIMER_H
 
-CompTimerTest::CompTimerTest () :
-    mc (Glib::MainContext::get_default ()),
-    ml (Glib::MainLoop::create (mc, false)),
-    ts (CompTimeoutSource::create (mc)),
-    lastTimerTriggered (0)
+#include <glibmm/main.h>
+#include <core/timer.h>
+#include <privatetimeouthandler.h>
+#include <privatetimeoutsource.h>
+#include <iostream>
+#include <boost/bind.hpp>
+
+class CompTimerTest
 {
-}
+public:
 
-CompTimerTest::~CompTimerTest ()
+    CompTimerTest ();
+    virtual ~CompTimerTest ();
+
+    Glib::RefPtr <Glib::MainContext> mc;
+    Glib::RefPtr <Glib::MainLoop> ml;
+    Glib::RefPtr <CompTimeoutSource> ts;
+    std::list <CompTimer *> timers;
+
+    virtual void precallback () = 0;
+
+    int lastTimerTriggered;
+};
+
+class CompTimerTestCallbacks :
+    public CompTimerTest
 {
-    while (timers.size ())
-    {
-	CompTimer *t = timers.front ();
+public:
 
-	timers.pop_front ();
-	delete t;
-    }
-}
+    void precallback ();
+    bool cb (int timernum);
+};
 
-int
-main (int argc, char **argv)
+class CompTimerTestDiffs :
+    public CompTimerTest
 {
-    CompTimerTest  *ctt = static_cast <CompTimerTest *> (new OBJECT ());
-    TimeoutHandler *th = new TimeoutHandler ();
-    TimeoutHandler::SetDefault (th);
+public:
 
-    ctt->precallback ();
-    ctt->ml->run ();
+    void precallback ();
+    bool cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t3);
+};
 
-    delete ctt;
-    delete th;
+class CompTimerTestSetValues :
+    public CompTimerTest
+{
+public:
 
-    return 0;
-}
+    void precallback ();
+    bool cb (int timernum);
+};
+
+class CompTimerTestSetCalling :
+    public CompTimerTest
+{
+public:
+
+    void precallback ();
+    bool cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t3);
+};
+
+#endif

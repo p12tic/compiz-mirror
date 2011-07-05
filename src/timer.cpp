@@ -116,9 +116,12 @@ CompTimeoutSource::check ()
     gint64		    fixedTimeDiff;
     gdouble		    timeDiff;
     gint64		    currentTime = get_time ();
+    bool		    ready = false;
 
     timeDiff = (currentTime - mLastTime) / 1000.0;
-    
+
+    mLastTime = currentTime;
+
     /* prefer over-estimating rather than waking up */
     fixedTimeDiff = ceil (timeDiff);
 
@@ -133,14 +136,16 @@ CompTimeoutSource::check ()
 	t->decrement (fixedTimeDiff);
     }
 
-    return TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0;
+    ready = (!TimeoutHandler::Default ()->timers ().empty () &&
+	     TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0);
+
+    return ready;
 }
 
 bool
 CompTimeoutSource::dispatch (sigc::slot_base *slot)
 {
     (*static_cast <sigc::slot <bool> *> (slot)) ();
-
     return true;
 }
 
