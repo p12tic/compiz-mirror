@@ -50,11 +50,13 @@ CompTimerTest::test1cb (int timernum)
     if (lastTimerTriggered == 0 && timernum == 1)
     {
 	std::cout << "FAIL: timer with a higher timeout value triggered before the timer with the lower timeout" << std::endl;
+	exit (1);
 	return false;
     }
     else if (lastTimerTriggered == 2 && timernum != 1)
     {
 	std::cout << "FAIL: the second timer should have triggered" << std::endl;
+	exit (1);
 	return false;
     }
 
@@ -95,6 +97,8 @@ CompTimerTest::test2cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t
 			     "INFO: t->minTime " << t->minTime () << std::endl << \
 			     "INFO: t->maxTime " << t->maxTime () << std::endl;
 	    }
+
+	    exit (1);
 	}
     }
     else if (lastTimerTriggered == 1 && timernum == 2)
@@ -110,6 +114,8 @@ CompTimerTest::test2cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t
 			 "INFO: t->minTime " << t->minTime () << std::endl << \
 			 "INFO: t->maxTime " << t->maxTime () << std::endl;
 	}
+
+	exit (1);
     }
     else if (lastTimerTriggered == 2 && timernum != 1)
     {
@@ -124,6 +130,8 @@ CompTimerTest::test2cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t
 			 "INFO: t->minTime " << t->minTime () << std::endl << \
 			 "INFO: t->maxTime " << t->maxTime () << std::endl;
 	}
+
+	exit (1);
     }
 
     lastTimerTriggered = timernum;
@@ -158,7 +166,10 @@ main (int argc, char **argv)
 
     /* TimeoutHandler::timers should be empty */
     if (!TimeoutHandler::Default ()->timers ().empty ())
+    {
 	std::cout << "FAIL: timers list is not empty" << std::endl;
+	exit (1);
+    }
 
     ctt->timers.push_back (new CompTimer ());
     ctt->timers.back ()->setTimes (50, 90);
@@ -185,10 +196,14 @@ main (int argc, char **argv)
 	"INFO: TimeoutHandler::Default ().back->maxLeft " << TimeoutHandler::Default ()->timers ().back ()->maxLeft () << std::endl << \
 	"INFO: TimeoutHandler::Default ().back->minTime " << TimeoutHandler::Default ()->timers ().back ()->minTime () << std::endl << \
 	"INFO: TimeoutHandler::Default ().back->maxTime " << TimeoutHandler::Default ()->timers ().back ()->maxTime () << std::endl;
+	exit (1);
     }
 
     if (TimeoutHandler::Default ()->timers ().back () != ctt->timers.front ())
+    {
 	std::cout << "FAIL: timer with the most time is not at the back" << std::endl;
+	exit (1);
+    }
 
     ctt->ml->run ();
 
