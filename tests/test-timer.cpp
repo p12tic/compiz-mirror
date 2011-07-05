@@ -148,6 +148,7 @@ CompTimerTest::test2cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t
 int
 main (int argc, char **argv)
 {
+    CompTimer      *t1, *t2, *t3;
     CompTimerTest  *ctt = new CompTimerTest ();
     TimeoutHandler *th = new TimeoutHandler ();
     TimeoutHandler::SetDefault (th);
@@ -158,8 +159,107 @@ main (int argc, char **argv)
     ctt->ts = CompTimeoutSource::create (ctt->mc);    
     ctt->lastTimerTriggered = 0;
 
-    /* Test 1: Adding timers */
-    std::cout << "-= TEST 1: adding timers" << std::endl;
+    /* Test 1: Ensuring that the right values come out of the timers */
+    std::cout << "-= TEST 1: testing values" << std::endl;
+
+    t1 = new CompTimer ();
+
+    t1->setTimes (100, 90);
+    t1->setCallback (boost::bind (&CompTimerTest::test1cb, ctt, 1));
+    t1->start ();
+
+    if (t1->minTime () != 100)
+    {
+	std::cout << "-= FAIL: min time was not the min value passed" << std::endl;
+	exit (1);
+    }
+
+    if (t1->maxTime () != 100)
+    {
+	std::cout << "-= FAIL: max time was not the min value passed" << std::endl;
+	exit (1);
+    }
+
+    if (t1->minLeft () != 100)
+    {
+	std::cout << "-= FAIL: min left was not the min value passed " << std::endl;
+	exit (1);
+    }
+
+    if (t1->maxLeft () != 100)
+    {
+	std::cout << "-= FAIL: max left was not the min value passed" << std::endl;
+	exit (1);
+    }
+
+    t2 = new CompTimer ();
+
+    t2->setTimes (100, 110);
+    t2->setCallback (boost::bind (&CompTimerTest::test1cb, ctt, 2));
+    t2->start ();
+
+    if (t2->minTime () != 100)
+    {
+	std::cout << "-= FAIL: min time was not the min value passed" << std::endl;
+	exit (1);
+    }
+
+    if (t2->maxTime () != 110)
+    {
+	std::cout << "-= FAIL: max time was not the max value passed" << std::endl;
+	exit (1);
+    }
+
+    if (t2->minLeft () != 100)
+    {
+	std::cout << "-= FAIL: min left was not the min value passed " << std::endl;
+	exit (1);
+    }
+
+    if (t2->maxLeft () != 110)
+    {
+	std::cout << "-= FAIL: max left was not the max value passed" << std::endl;
+	exit (1);
+    }
+
+    t3 = new CompTimer ();
+
+    t3->setTimes (100);
+    t3->setCallback (boost::bind (&CompTimerTest::test1cb, ctt, 3));
+    t3->start ();
+
+    if (t3->minTime () != 100)
+    {
+	std::cout << "-= FAIL: min time was not the value passed" << std::endl;
+	exit (1);
+    }
+
+    if (t3->maxTime () != 100)
+    {
+	std::cout << "-= FAIL: max time was not the value passed" << std::endl;
+	exit (1);
+    }
+
+    if (t3->minLeft () != 100)
+    {
+	std::cout << "-= FAIL: min left was not the value passed" << t3->minLeft () << std::endl;
+	exit (1);
+    }
+
+    if (t3->maxLeft () != 100)
+    {
+	std::cout << "-= FAIL: max left was not the value passed" << std::endl;
+	exit (1);
+    }
+
+    delete t1;
+    delete t2;
+    delete t3;
+
+    std::cout << "PASS: basic value modification" << std::endl;
+
+    /* Test 2: Adding timers */
+    std::cout << "-= TEST 2: adding timers" << std::endl;
     ctt->timers.push_back (new CompTimer ());
     ctt->timers.front ()->setTimes (100, 110);
     ctt->timers.front ()->setCallback (boost::bind (&CompTimerTest::test1cb, ctt, 1));
@@ -225,13 +325,13 @@ main (int argc, char **argv)
 
     ctt->lastTimerTriggered = 0;
 
-    /* Test 2: Changing timeout time while timer is running */
+    /* Test 3: Changing timeout time while timer is running */
 
-    std::cout << "-= TEST 2: changing timeout time" << std::endl;
+    std::cout << "-= TEST 3: changing timeout time" << std::endl;
 
-    CompTimer *t1 = new CompTimer ();
-    CompTimer *t2 = new CompTimer ();
-    CompTimer *t3 = new CompTimer ();
+    t1 = new CompTimer ();
+    t2 = new CompTimer ();
+    t3 = new CompTimer ();
 
     ctt->timers.push_back (t1);
     ctt->timers.push_back (t2);
@@ -248,6 +348,10 @@ main (int argc, char **argv)
     t3->start ();
 
     ctt->ml->run ();
+
+    delete t1;
+    delete t2;
+    delete t3;
 
     delete th;
 
