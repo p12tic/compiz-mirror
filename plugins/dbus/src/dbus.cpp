@@ -586,6 +586,51 @@ dbusHandleOptionIntrospectMessage (DBusConnection *connection,
  * int32:`xwininfo -root | grep id: | awk '{ print $4 }'`
  *
  */
+
+static bool
+getTypeString (CompOption::Type st, CompString &str)
+{
+    switch (st) {
+	case CompOption::TypeBool:
+	    str = "bool";
+	    break;
+	case CompOption::TypeInt:
+	    str = "int";
+	    break;
+	case CompOption::TypeFloat:
+	    str = "float";
+	    break;
+	case CompOption::TypeColor:
+	    str = "color";
+	    break;
+	case CompOption::TypeString:
+	    str = "string";
+	    break;
+	case CompOption::TypeMatch:
+	    str = "match";
+	    break;
+	case CompOption::TypeKey:
+	    str = "key";
+	    break;
+	case CompOption::TypeButton:
+	    str = "button";
+	    break;
+	case CompOption::TypeEdge:
+	    str = "edge";
+	    break;
+	case CompOption::TypeBell:
+	    str = "bell";
+	    break;
+	case CompOption::TypeList:
+	    str = "list";
+	    break;
+	default:
+	    return false;
+    }
+
+    return true;
+}
+
 bool
 DbusScreen::handleActionMessage (DBusConnection                 *connection,
 				 DBusMessage                    *message,
@@ -600,6 +645,13 @@ DbusScreen::handleActionMessage (DBusConnection                 *connection,
     {
 	if (option.name () == path[2])
 	{
+	    CompString typestr;
+	    fprintf (stderr, "found option name %s matches path %s\n", option.name ().c_str (), path[2].c_str ());
+	    if (getTypeString (option.type (), typestr))
+		fprintf (stderr, "type is %s\n", typestr.c_str ());
+	    else
+		fprintf (stderr, "uh-oh \n");
+
 	    CompOption::Vector argument;
 	    DBusMessageIter    iter;
 	    CompAction         *action = &option.value ().action ();
