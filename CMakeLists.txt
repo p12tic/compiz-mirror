@@ -14,13 +14,10 @@ if (NOT CMAKE_BUILD_TYPE)
     set (CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type (Debug/Release/RelWithDebInfo/MinSizeRe)" FORCE)
 endif (NOT CMAKE_BUILD_TYPE)
 
-# compiz package version number
-# An odd micro number indicates in-progress development.
-# An even micro number indicates a released version.
-set (COMPIZ_VERSION_MAJOR 0)
-set (COMPIZ_VERSION_MINOR 9)
-set (COMPIZ_VERSION_MICRO 5)
-set (VERSION ${COMPIZ_VERSION_MAJOR}.${COMPIZ_VERSION_MINOR}.${COMPIZ_VERSION_MICRO})
+file (READ ${CMAKE_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
+string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
+
+set (VERSION ${COMPIZ_RELEASE_VERSION})
 
 set (DECOR_INTERFACE_VERSION 20110504)
 
@@ -122,6 +119,8 @@ compiz_package_generation ("Compiz")
 compiz_add_uninstall ()
 compiz_add_git_dist ()
 compiz_add_distcheck ()
+compiz_add_release ()
+compiz_add_release_signoff ()
 
 _print_configure_results ()
 

@@ -423,6 +423,12 @@ function (_build_compiz_plugin plugin)
 
 	compiz_add_uninstall ()
 
+	if (NOT COMPIZ_PLUGIN_PACK_BUILD)
+		compiz_add_git_dist ()
+		compiz_add_release ()
+		compiz_add_release_signoff ()
+	endif (NOT COMPIZ_PLUGIN_PACK_BUILD)
+
     else ()
 	message (STATUS "[WARNING] One or more dependencies for compiz plugin ${plugin} not found. Skipping plugin.")
 	message (STATUS "Missing dependencies :${COMPIZ_${_PLUGIN}_MISSING_DEPS}")
