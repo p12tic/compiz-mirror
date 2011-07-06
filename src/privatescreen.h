@@ -38,6 +38,10 @@
 
 #include <glibmm/main.h>
 
+#include "privatetimeoutsource.h"
+#include "privateiosource.h"
+#include "privateeventsource.h"
+
 #include "core_options.h"
 
 CompPlugin::VTable * getCoreVTable ();
@@ -46,58 +50,6 @@ class CoreWindow;
 
 extern bool shutDown;
 extern bool restartSignal;
-
-class CompWatchFd :
-    public Glib::IOSource
-{
-    public:
-
-	static
-	Glib::RefPtr <CompWatchFd> create (int,
-					   Glib::IOCondition,
-					   FdWatchCallBack);
-
-    protected:
-
-	explicit CompWatchFd (int, Glib::IOCondition, FdWatchCallBack);
-	bool		 internalCallback (Glib::IOCondition);
-
-    private:
-
-	int		  mFd;
-	FdWatchCallBack   mCallBack;
-	CompWatchFdHandle mHandle;
-	bool		  mForceFail;
-	bool		  mExecuting;
-
-    friend class CompScreen;
-};
-
-class CompTimeoutSource :
-    public Glib::Source
-{
-    public:
-
-	static Glib::RefPtr <CompTimeoutSource> create  ();
-	sigc::connection connect (const sigc::slot <bool> &slot);
-
-    protected:
-
-	bool prepare (int &timeout);
-	bool check ();
-	bool dispatch (sigc::slot_base *slot);
-	bool callback ();
-
-	explicit CompTimeoutSource ();
-	virtual ~CompTimeoutSource ();
-
-    private:
-
-	struct timespec mLastTimeout;
-
-    friend class CompTimer;
-    friend class PrivateScreen;
-};
 
 extern CompWindow *lastFoundWindow;
 extern bool	  useDesktopHints;
@@ -148,33 +100,6 @@ struct CompStartupSequence {
     unsigned int		viewportY;
 };
 
-class CompEventSource:
-    public Glib::Source
-{
-    public:
-
-	static
-	Glib::RefPtr <CompEventSource> create ();
-
-	sigc::connection connect (const sigc::slot <bool> &slot);
-
-    protected:
-
-	bool prepare (int &timeout);
-	bool check ();
-	bool dispatch (sigc::slot_base *slot);
-	bool callback ();
-
-	explicit CompEventSource ();
-	virtual ~CompEventSource ();
-
-    private:
-
-	Display	      *mDpy;
-	Glib::PollFD  mPollFD;
-	int	      mConnectionFD;
-};
-
 class PrivateScreen : public CoreOptions {
 
     public:
@@ -212,11 +137,6 @@ class PrivateScreen : public CoreOptions {
 	void removeDestroyed ();
 
 	void updatePassiveGrabs ();
-
-	void handleTimers (struct timeval *tv);
-
-	void addTimer (CompTimer *timer);
-	void removeTimer (CompTimer *timer);
 
 	void updatePlugins ();
 
@@ -385,9 +305,6 @@ class PrivateScreen : public CoreOptions {
 
 	CompFileWatchList   fileWatch;
 	CompFileWatchHandle lastFileWatchHandle;
-
-	std::list <CompTimer *> timers;
-	struct timeval         lastTimeout;
 
 	std::list<Glib::RefPtr <CompWatchFd> > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;

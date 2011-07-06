@@ -7,6 +7,7 @@ include (CompizCommon)
 include (CompizPackage)
 include (cmake/base.cmake)
 include (CheckFunctionExists)
+include (CTest)
 
 
 set (CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRe" CACHE INTERNAL "" FORCE)
@@ -116,6 +117,10 @@ add_subdirectory (metadata)
 add_subdirectory (src)
 add_subdirectory (xslt)
 add_subdirectory (plugins)
+
+if (BUILD_TESTING)
+	add_subdirectory (tests)
+endif (BUILD_TESTING)
 
 compiz_ensure_linkage ()
 compiz_package_generation ("Compiz")

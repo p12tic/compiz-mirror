@@ -118,7 +118,7 @@ CompScreen::eventLoop ()
     priv->ctx = Glib::MainContext::get_default ();
     priv->mainloop = Glib::MainLoop::create (priv->ctx, false);
     priv->source = CompEventSource::create ();
-    priv->timeout = CompTimeoutSource::create ();
+    priv->timeout = CompTimeoutSource::create (priv->ctx);
 
     priv->source->attach (priv->ctx);
 
@@ -177,41 +177,6 @@ const CompFileWatchList &
 CompScreen::getFileWatches () const
 {
     return priv->fileWatch;
-}
-
-void
-PrivateScreen::addTimer (CompTimer *timer)
-{
-    std::list<CompTimer *>::iterator it;
-
-    it = std::find (timers.begin (), timers.end (), timer);
-
-    if (it != timers.end ())
-	return;
-
-    for (it = timers.begin (); it != timers.end (); it++)
-    {
-	if ((int) timer->mMinTime < (*it)->mMinLeft)
-	    break;
-    }
-
-    timer->mMinLeft = timer->mMinTime;
-    timer->mMaxLeft = timer->mMaxTime;
-
-    timers.insert (it, timer);
-}
-
-void
-PrivateScreen::removeTimer (CompTimer *timer)
-{
-    std::list<CompTimer *>::iterator it;
-
-    it = std::find (timers.begin (), timers.end (), timer);
-
-    if (it == timers.end ())
-	return;
-
-    timers.erase (it);
 }
 
 CompWatchFd::CompWatchFd (int		    fd,
@@ -4773,7 +4738,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     xdndWindow (None),
     initialized (false)
 {
-    gettimeofday (&lastTimeout, 0);
+    TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
 
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));
@@ -4814,6 +4779,8 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 	CompScreen::toggleWinMaximizedVertically);
 
     optionSetToggleWindowShadedKeyInitiate (CompScreen::shadeWin);
+
+    TimeoutHandler::SetDefault (dTimeoutHandler);
 }
 
 PrivateScreen::~PrivateScreen ()

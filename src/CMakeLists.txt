@@ -52,6 +52,7 @@ add_executable (compiz
     modifierhandler.cpp
     propertywriter.cpp
     eventsource.cpp
+    timeouthandler.cpp
     ${_bcop_sources}
 )
 

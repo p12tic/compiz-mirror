@@ -24,21 +24,22 @@
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  */
 
-#include <core/timer.h>
-#include <core/screen.h>
-#include "privatescreen.h"
+#include <boost/foreach.hpp>
+#include <cmath>
 
-CompTimeoutSource::CompTimeoutSource () :
+#include "privatetimeoutsource.h"
+#include "privatetimer.h"
+
+#define foreach BOOST_FOREACH
+
+CompTimeoutSource::CompTimeoutSource (Glib::RefPtr <Glib::MainContext> &ctx) :
     Glib::Source ()
 {
-    struct timespec ts;
-
-    clock_gettime (CLOCK_MONOTONIC, &ts);
-
-    mLastTimeout = ts;
-
     set_priority (G_PRIORITY_HIGH);
-    attach (screen->priv->ctx);
+    attach (ctx);
+
+    mLastTime = get_time ();
+    
     connect (sigc::mem_fun <bool, CompTimeoutSource> (this, &CompTimeoutSource::callback));
 }
 
@@ -53,9 +54,9 @@ CompTimeoutSource::connect (const sigc::slot <bool> &slot)
 }
 
 Glib::RefPtr <CompTimeoutSource>
-CompTimeoutSource::create ()
+CompTimeoutSource::create (Glib::RefPtr <Glib::MainContext> &ctx)
 {
-    return Glib::RefPtr <CompTimeoutSource> (new CompTimeoutSource ());
+    return Glib::RefPtr <CompTimeoutSource> (new CompTimeoutSource (ctx));
 }
 
 #define COMPIZ_TIMEOUT_WAIT 15
@@ -63,13 +64,9 @@ CompTimeoutSource::create ()
 bool
 CompTimeoutSource::prepare (int &timeout)
 {
-    struct timespec ts;
-
-    clock_gettime (CLOCK_MONOTONIC, &ts);
-
     /* Determine time to wait */
 
-    if (screen->priv->timers.empty ())
+    if (TimeoutHandler::Default ()->timers ().empty ())
     {
 	/* This kind of sucks, but we have to do it, considering
 	 * that glib provides us no safe way to remove the source -
@@ -79,32 +76,36 @@ CompTimeoutSource::prepare (int &timeout)
 	 */
 
 	timeout = COMPIZ_TIMEOUT_WAIT;
+
 	return true;
     }
 
-    if (screen->priv->timers.front ()->mMinLeft > 0)
+    if (TimeoutHandler::Default ()->timers ().front ()->minLeft () > 0)
     {
-	std::list<CompTimer *>::iterator it = screen->priv->timers.begin ();
+	std::list<CompTimer *>::iterator it = TimeoutHandler::Default ()->timers ().begin ();
 
 	CompTimer *t = (*it);
-	timeout = t->mMaxLeft;
-	while (it != screen->priv->timers.end ())
+	timeout = t->maxLeft ();
+	while (it != TimeoutHandler::Default ()->timers ().end ())
 	{
 	    t = (*it);
-	    if (t->mMinLeft >= timeout)
+	    if (t->minLeft () >= timeout)
 		break;
-	    if (t->mMaxLeft < timeout)
-		timeout = t->mMaxLeft;
+	    if (t->maxLeft () < timeout)
+		timeout = t->maxLeft ();
 	    it++;
 	}
 
-	mLastTimeout = ts;
+	mLastTime = get_time ();
+
 	return false;
     }
     else
     {
-	mLastTimeout = ts;
 	timeout = 0;
+
+	mLastTime = get_time ();
+
 	return true;
     }
 }
@@ -112,53 +113,63 @@ CompTimeoutSource::prepare (int &timeout)
 bool
 CompTimeoutSource::check ()
 {
-    struct timespec ts;
-    int		    timeDiff;
+    gint64		    fixedTimeDiff;
+    gdouble		    timeDiff;
+    gint64		    currentTime = get_time ();
+    bool		    ready = false;
 
-    clock_gettime (CLOCK_MONOTONIC, &ts);
-    timeDiff = TIMESPECDIFF (&ts, &mLastTimeout);
+    timeDiff = (currentTime - mLastTime) / 1000.0;
 
-    if (timeDiff < 0)
-	timeDiff = 0;
+    mLastTime = currentTime;
 
-    foreach (CompTimer *t, screen->priv->timers)
+    /* prefer over-estimating rather than waking up */
+    fixedTimeDiff = ceil (timeDiff);
+
+    /* Handle clock rollback */
+    if (fixedTimeDiff < 0)
     {
-	t->mMinLeft -= timeDiff;
-	t->mMaxLeft -= timeDiff;
+	fixedTimeDiff = 0;
     }
 
-    return screen->priv->timers.front ()->mMinLeft <= 0;
+    foreach (CompTimer *t, TimeoutHandler::Default ()->timers ())
+    {
+	t->decrement (fixedTimeDiff);
+    }
+
+    ready = (!TimeoutHandler::Default ()->timers ().empty () &&
+	     TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0);
+
+    return ready;
 }
 
 bool
 CompTimeoutSource::dispatch (sigc::slot_base *slot)
 {
     (*static_cast <sigc::slot <bool> *> (slot)) ();
-
     return true;
 }
 
 bool
 CompTimeoutSource::callback ()
 {
-    while (screen->priv->timers.begin () != screen->priv->timers.end () &&
-	   screen->priv->timers.front ()->mMinLeft <= 0)
+    while (TimeoutHandler::Default ()->timers ().begin () != TimeoutHandler::Default ()->timers ().end () &&
+	   TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0)
     {
-	CompTimer *t = screen->priv->timers.front ();
-	screen->priv->timers.pop_front ();
+	CompTimer *t = TimeoutHandler::Default ()->timers ().front ();
+	TimeoutHandler::Default ()->timers ().pop_front ();
 
-	t->mActive = false;
-	if (t->mCallBack ())
+	t->setActive (false);
+	if (t->triggerCallback ())
 	{
-	    screen->priv->addTimer (t);
-	    t->mActive = true;
+	    TimeoutHandler::Default ()->addTimer (t);
+	    t->setActive (true);
 	}
     }
 
-    return !screen->priv->timers.empty ();
+    return !TimeoutHandler::Default ()->timers ().empty ();
 }
 
-CompTimer::CompTimer () :
+PrivateTimer::PrivateTimer () :
     mActive (false),
     mMinTime (0),
     mMaxTime (0),
@@ -168,32 +179,69 @@ CompTimer::CompTimer () :
 {
 }
 
+PrivateTimer::~PrivateTimer ()
+{
+}
+
+CompTimer::CompTimer () :
+    priv (new PrivateTimer ())
+{
+    assert (priv);
+}
+
 CompTimer::~CompTimer ()
 {
-    screen->priv->removeTimer (this);
+    TimeoutHandler::Default ()->removeTimer (this);
+    delete priv;
 }
 
 void
 CompTimer::setTimes (unsigned int min, unsigned int max)
 {
-    bool wasActive = mActive;
-    if (mActive)
+    bool wasActive = priv->mActive;
+    if (priv->mActive)
 	stop ();
-    mMinTime = min;
-    mMaxTime = (min <= max)? max : min;
+    priv->mMinTime = min;
+    priv->mMaxTime = (min <= max)? max : min;
 
     if (wasActive)
 	start ();
 }
 
 void
+CompTimer::setExpiryTimes (unsigned int min, unsigned int max)
+{
+    priv->mMinLeft = min;
+    priv->mMaxLeft = (min <= max) ? max : min;
+}
+
+void
+CompTimer::decrement (unsigned int diff)
+{
+    priv->mMinLeft -= diff;
+    priv->mMaxLeft -= diff;
+}
+
+void
+CompTimer::setActive (bool active)
+{
+    priv->mActive = active;
+}
+
+bool
+CompTimer::triggerCallback ()
+{
+    return priv->mCallBack ();
+}
+
+void
 CompTimer::setCallback (CompTimer::CallBack callback)
 {
-    bool wasActive = mActive;
-    if (mActive)
+    bool wasActive = priv->mActive;
+    if (priv->mActive)
 	stop ();
 
-    mCallBack = callback;
+    priv->mCallBack = callback;
 
     if (wasActive)
 	start ();
@@ -205,21 +253,23 @@ CompTimer::start ()
 {
     stop ();
 
-    if (mCallBack.empty ())
+    if (priv->mCallBack.empty ())
     {
+#warning compLogMessage needs to be testable
+#if 0
 	compLogMessage ("core", CompLogLevelWarn,
 			"Attempted to start timer without callback.");
+#endif
 	return;
     }
 
-    mActive = true;
-    screen->priv->addTimer (this);
+    priv->mActive = true;
+    TimeoutHandler::Default ()->addTimer (this);
 }
 
 void
 CompTimer::start (unsigned int min, unsigned int max)
 {
-    stop ();
     setTimes (min, max);
     start ();
 }
@@ -228,7 +278,6 @@ void
 CompTimer::start (CompTimer::CallBack callback,
 		  unsigned int min, unsigned int max)
 {
-    stop ();
     setTimes (min, max);
     setCallback (callback);
     start ();
@@ -237,36 +286,36 @@ CompTimer::start (CompTimer::CallBack callback,
 void
 CompTimer::stop ()
 {
-    mActive = false;
-    screen->priv->removeTimer (this);
+    priv->mActive = false;
+    TimeoutHandler::Default ()->removeTimer (this);
 }
 
 unsigned int
 CompTimer::minTime ()
 {
-    return mMinTime;
+    return priv->mMinTime;
 }
 
 unsigned int
 CompTimer::maxTime ()
 {
-    return mMaxTime;
+    return priv->mMaxTime;
 }
 
 unsigned int
 CompTimer::minLeft ()
 {
-    return (mMinLeft < 0)? 0 : mMinLeft;
+    return (priv->mMinLeft < 0)? 0 : priv->mMinLeft;
 }
 
 unsigned int
 CompTimer::maxLeft ()
 {
-    return (mMaxLeft < 0)? 0 : mMaxLeft;
+    return (priv->mMaxLeft < 0)? 0 : priv->mMaxLeft;
 }
 
 bool
 CompTimer::active ()
 {
-    return mActive;
+    return priv->mActive;
 }

@@ -28,10 +28,10 @@
 
 #include <boost/function.hpp>
 #include <sys/time.h>
-#include <core/core.h>
 #include <glibmm/main.h>
 
 class CompTimeoutSource;
+class PrivateTimer;
 /**
  * A simple timer for use with invoking a CallBack during a timed duration.
  */
@@ -60,6 +60,26 @@ class CompTimer {
 	unsigned int maxTime ();
 	unsigned int minLeft ();
 	unsigned int maxLeft ();
+
+	/**
+	 * FIXME: Remove from the public API
+	 */
+	void setExpiryTimes (unsigned int min, unsigned int max = 0);
+
+	/**
+	 * FIXME: Remove from the public API
+	 */
+	void decrement (unsigned int diff);
+
+	/**
+	 * FIXME: Remove from the public API
+	 */
+	void setActive (bool active);
+
+	/**
+	 * FIXME: Remove from the public API
+	 */
+	bool triggerCallback ();
 
 	/**
 	 * Sets the timing durations of this timer.
@@ -97,19 +117,9 @@ class CompTimer {
 	 */
 	void stop ();
 
-	friend class CompScreen;
-	friend class PrivateScreen;
-	friend class CompTimeoutSource;
-
     private:
-	bool         mActive;
-	unsigned int mMinTime;
-	unsigned int mMaxTime;
-	int          mMinLeft;
-	int          mMaxLeft;
 
-    private:
-	CallBack      mCallBack;
+	PrivateTimer *priv;
 
 };
 
