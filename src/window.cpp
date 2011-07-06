@@ -2976,15 +2976,15 @@ PrivateWindow::adjustConfigureRequestForGravity (XWindowChanges *xwc,
 	case WestGravity:
 	case SouthWestGravity:
 	    if (xwcm & CWX)
-		newX += priv->input.left * direction;
+		newX += priv->border.left * direction;
 	    break;
 
 	case NorthGravity:
 	case CenterGravity:
 	case SouthGravity:
 	    if (xwcm & CWX)
-		newX -= (xwc->width / 2 - priv->input.left +
-			(priv->input.left + priv->input.right) / 2) * direction;
+		newX -= (xwc->width / 2 - priv->border.left +
+			(priv->border.left + priv->border.right) / 2) * direction;
 	    else
 	        newX -= (xwc->width - priv->serverGeometry.width ()) * direction;
 	    break;
@@ -2993,7 +2993,7 @@ PrivateWindow::adjustConfigureRequestForGravity (XWindowChanges *xwc,
 	case EastGravity:
 	case SouthEastGravity:
 	    if (xwcm & CWX)
-		newX -= xwc->width + priv->input.right * direction;
+		newX -= xwc->width + priv->border.right * direction;
 	    else
 		newX -= (xwc->width - priv->serverGeometry.width ()) * direction;
 	    break;
