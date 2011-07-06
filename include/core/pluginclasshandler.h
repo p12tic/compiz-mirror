@@ -32,6 +32,7 @@
 #include <compiz.h>
 #include <core/valueholder.h>
 #include <core/pluginclasses.h>
+#include <cstdio>
 
 extern unsigned int pluginClassHandlerIndex;
 
@@ -117,6 +118,7 @@ PluginClassHandler<Tp,Tb,ABI>::initializeIndex ()
     }
     else
     {
+	mIndex.index = 0;
 	mIndex.failed = true;
 	mIndex.initiated = false;
 	mIndex.pcFailed = true;
