@@ -72,7 +72,7 @@ typedef std::list<CompString> CompStringList;
 CompString compPrintf (const char *format, ...);
 CompString compPrintf (const char *format, va_list ap);
 
-
+extern bool debugOutput;
 
 typedef enum {
     CompLogLevelFatal = 0,
@@ -81,6 +81,11 @@ typedef enum {
     CompLogLevelInfo,
     CompLogLevelDebug
 } CompLogLevel;
+
+void
+logMessage (const char   *componentName,
+	    CompLogLevel level,
+	    const char   *message);
 
 void
 compLogMessage (const char   *componentName,

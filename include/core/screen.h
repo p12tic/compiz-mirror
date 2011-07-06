@@ -36,6 +36,7 @@
 #include <core/pluginclasses.h>
 #include <core/region.h>
 #include <core/modifierhandler.h>
+#include <core/valueholder.h>
 
 class CompScreen;
 class PrivateScreen;

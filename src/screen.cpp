@@ -267,43 +267,19 @@ CompScreen::removeWatchFd (CompWatchFdHandle handle)
 void
 CompScreen::storeValue (CompString key, CompPrivate value)
 {
-    std::map<CompString,CompPrivate>::iterator it;
-
-    it = priv->valueMap.find (key);
-
-    if (it != priv->valueMap.end ())
-    {
-	it->second = value;
-    }
-    else
-    {
-	priv->valueMap.insert (std::pair<CompString,CompPrivate> (key, value));
-    }
+    ValueHolder::Default ()->storeValue (key, value);
 }
 
 bool
 CompScreen::hasValue (CompString key)
 {
-    return (priv->valueMap.find (key) != priv->valueMap.end ());
+    return ValueHolder::Default ()->hasValue (key);
 }
 
 CompPrivate
 CompScreen::getValue (CompString key)
 {
-    CompPrivate p;
-
-    std::map<CompString,CompPrivate>::iterator it;
-    it = priv->valueMap.find (key);
-
-    if (it != priv->valueMap.end ())
-    {
-	return it->second;
-    }
-    else
-    {
-	p.uval = 0;
-	return p;
-    }
+    return ValueHolder::Default ()->getValue (key);
 }
 
 bool
@@ -342,13 +318,7 @@ CompWatchFd::internalCallback (Glib::IOCondition events)
 void
 CompScreen::eraseValue (CompString key)
 {
-    std::map<CompString,CompPrivate>::iterator it;
-    it = priv->valueMap.find (key);
-
-    if (it != priv->valueMap.end ())
-    {
-	priv->valueMap.erase (key);
-    }
+    ValueHolder::Default ()->eraseValue (key);
 }
 
 void
@@ -1130,40 +1100,6 @@ CompScreen::imageToFile (CompString &path,
     return false;
 }
 
-const char *
-logLevelToString (CompLogLevel level)
-{
-    switch (level) {
-    case CompLogLevelFatal:
-	return "Fatal";
-    case CompLogLevelError:
-	return "Error";
-    case CompLogLevelWarn:
-	return "Warn";
-    case CompLogLevelInfo:
-	return "Info";
-    case CompLogLevelDebug:
-	return "Debug";
-    default:
-	break;
-    }
-
-    return "Unknown";
-}
-
-static void
-logMessage (const char   *componentName,
-	    CompLogLevel level,
-	    const char   *message)
-{
-    if (!debugOutput && level >= CompLogLevelDebug)
-	return;
-
-    fprintf (stderr, "%s (%s) - %s: %s\n",
-	     programName, componentName,
-	     logLevelToString (level), message);
-}
-
 void
 CompScreen::logMessage (const char   *componentName,
 			CompLogLevel level,
@@ -1171,27 +1107,6 @@ CompScreen::logMessage (const char   *componentName,
 {
     WRAPABLE_HND_FUNC (13, logMessage, componentName, level, message)
     ::logMessage (componentName, level, message);
-}
-
-void
-compLogMessage (const char   *componentName,
-	        CompLogLevel level,
-	        const char   *format,
-	        ...)
-{
-    va_list args;
-    char    message[2048];
-
-    va_start (args, format);
-
-    vsnprintf (message, 2048, format, args);
-
-    if (screen)
-	screen->logMessage (componentName, level, message);
-    else
-	logMessage (componentName, level, message);
-
-    va_end (args);
 }
 
 int
@@ -4739,6 +4654,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     initialized (false)
 {
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
+    ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
 
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));

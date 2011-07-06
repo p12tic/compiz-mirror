@@ -100,7 +100,10 @@ struct CompStartupSequence {
     unsigned int		viewportY;
 };
 
-class PrivateScreen : public CoreOptions {
+class PrivateScreen :
+    public ValueHolder,
+    public CoreOptions
+{
 
     public:
 	class KeyGrab {

@@ -28,6 +28,7 @@
 
 #include <compiz.h>
 #include <core/option.h>
+#include <core/privateunion.h>
 
 class CompScreen;
 extern CompScreen *screen;
@@ -65,13 +66,6 @@ typedef CompStringList (*ListPluginsProc) (const char *path);
 extern LoadPluginProc   loaderLoadPlugin;
 extern UnloadPluginProc loaderUnloadPlugin;
 extern ListPluginsProc  loaderListPlugins;
-
-union CompPrivate {
-    void	  *ptr;
-    long	  val;
-    unsigned long uval;
-    void	  *(*fptr) (void);
-};
 
 /**
  * Base plug-in interface for Compiz. All plugins must implement this
@@ -235,12 +229,10 @@ class CompPlugin {
 template <typename T, typename T2>
 bool CompPlugin::VTableForScreenAndWindow<T,T2>::initScreen (CompScreen *s)
 {
-    T * ps = new T (s);
-    if (ps->loadFailed ())
-    {
-	delete ps;
+    T * ps = T::get (s);
+    if (!ps)
 	return false;
-    }
+
     return true;
 }
 
@@ -254,12 +246,10 @@ void CompPlugin::VTableForScreenAndWindow<T,T2>::finiScreen (CompScreen *s)
 template <typename T, typename T2>
 bool CompPlugin::VTableForScreenAndWindow<T,T2>::initWindow (CompWindow *w)
 {
-    T2 * pw = new T2 (w);
-    if (pw->loadFailed ())
-    {
-	delete pw;
+    T2 * pw = T2::get (w);
+    if (!pw)
 	return false;
-    }
+
     return true;
 }
 
