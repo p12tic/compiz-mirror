@@ -1,51 +1,13 @@
-#include <core/pluginclasshandler.h>
-#include <core/pluginclasses.h>
-#include <list>
-#include <boost/foreach.hpp>
-
-#define foreach BOOST_FOREACH
+#include "test-pluginclasshandler.h"
 
 PluginClassStorage::Indices globalPluginClassIndices (0);
 unsigned int		    pluginClassHandlerIndex = 0;
 bool			    debugOutput;
 char			    *programName;
 
-class Base;
-
-class Global:
-    public ValueHolder
-{
-    public:
-
-	Global ();
-
-	std::list <Base *> bases;
-};
-
 namespace
 {
-    static Global *global;
-};
-
-class Base:
-    public PluginClassStorage
-{
-    public:
-
-	Base ();
-	~Base ();
-
-	static unsigned int allocPluginClassIndex ();
-	static void freePluginClassIndex (unsigned int index);
-};
-
-class Plugin:
-    public PluginClassHandler <Plugin, Base>
-{
-    public:
-
-	Plugin (Base *);
-	~Plugin ();
+    static CompizPCHTest *gTest;
 };
 
 Global::Global ()
@@ -57,7 +19,7 @@ Base::allocPluginClassIndex ()
 {
     unsigned int i = PluginClassStorage::allocatePluginClassIndex (globalPluginClassIndices);
 
-    foreach (Base *b, global->bases)
+    foreach (Base *b, gTest->global->bases)
     {
 	if (globalPluginClassIndices.size () != b->pluginClasses.size ())
 	    b->pluginClasses.resize (globalPluginClassIndices.size ());
@@ -71,7 +33,7 @@ Base::freePluginClassIndex (unsigned int index)
 {
     PluginClassStorage::freePluginClassIndex (globalPluginClassIndices, index);
 
-    foreach (Base *b, global->bases)
+    foreach (Base *b, gTest->global->bases)
     {
 	if (globalPluginClassIndices.size () != b->pluginClasses.size ())
 	    b->pluginClasses.resize (globalPluginClassIndices.size ());
@@ -81,16 +43,16 @@ Base::freePluginClassIndex (unsigned int index)
 Base::Base () :
     PluginClassStorage (globalPluginClassIndices)
 {
-    global->bases.push_back (this);
+    gTest->global->bases.push_back (this);
 }
 
 Base::~Base ()
 {
-    global->bases.remove (this);
+    gTest->global->bases.remove (this);
 }
 
 Plugin::Plugin (Base *base) :
-    PluginClassHandler <Plugin, Base> (base)
+    b (base)
 {
 }
 
@@ -98,21 +60,42 @@ Plugin::~Plugin ()
 {
 }
 
+CompizPCHTest::CompizPCHTest (Global *g) :
+    global (g)
+{
+    ValueHolder::SetDefault (static_cast<ValueHolder *> (global));
+}
+
+CompizPCHTest::~CompizPCHTest ()
+{
+    delete global;
+}
+
 int
 main (int argc, char **argv)
 {
     programName = argv[0];
 
-    global = new Global;
+    gTest = static_cast <CompizPCHTest *> (new OBJECT (new Global ()));
+    gTest->run ();
 
-    ValueHolder::SetDefault (static_cast<ValueHolder *> (global));
+    while (gTest->plugins.size ())
+    {
+	Plugin *p = gTest->plugins.front ();
+	gTest->plugins.pop_front ();
 
-    Base *b = new Base ();
-    Plugin *p = new Plugin (b);
+	delete p;
+    }
 
-    delete p;
-    delete b;
-    delete global;
+    while (gTest->bases.size ())
+    {
+	Base *b = gTest->bases.front ();
+	gTest->bases.pop_front ();
+
+	delete b;
+    }
+
+    delete gTest;
     
     return 0;
 }
