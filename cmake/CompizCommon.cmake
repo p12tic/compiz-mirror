@@ -99,6 +99,10 @@ macro (compiz_add_git_dist)
 						   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 						   COMMENT "Creating bz2 archive")
 			else (NOT (${GIT_ARCHIVE_ALL} STREQUAL "GIT_ARCHIVE_ALL-NOTFOUND"))
+				add_custom_target (dist
+						   COMMAND echo "[WARNING]: git-archive-all.sh is needed to make releases of git submodules, get it from https://github.com/meitar/git-archive-all.sh.git and install it into your PATH"
+						   COMMENT "Creating bz2 archive"
+						   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 				message ("[WARNING]: git-archive-all.sh is needed to make releases of git submodules, get it from https://github.com/meitar/git-archive-all.sh.git and install it into your PATH")
 			endif (NOT (${GIT_ARCHIVE_ALL} STREQUAL "GIT_ARCHIVE_ALL-NOTFOUND"))
 		else (${IS_GIT_SUBMODULES_REPO})
@@ -282,6 +286,10 @@ macro (compiz_add_release)
 					   COMMENT "Generating ChangeLog"
 					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 		else (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
+			add_custom_target (changelog
+					   COMMAND echo "[WARNING]: gen-git-log.sh is required to make releases, ensure that it is installed into your PATH"
+					   COMMENT "Generating ChangeLog"
+					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 			message ("[WARNING]: gen-git-log.sh is required to make releases, ensure that it is installed into your PATH")
 		endif (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
 
