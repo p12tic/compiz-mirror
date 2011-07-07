@@ -108,12 +108,14 @@ macro (compiz_add_git_dist)
 					   COMMAND bzr export --root=${CMAKE_PROJECT_NAME}-${VERSION} ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.gz
 					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 		else (NOT (${DBZR} STREQUAL "DBZR-NOTFOUND"))
-			add_custom_target (dist_bz2 
-					   COMMAND tar -cvf ${CMAKE_SOURCE_DIR} | bzip2 > ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
-					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../)
-			add_custom_target (dist_gz 
-					   COMMAND tar -cvf ${CMAKE_SOURCE_DIR} | gzip > ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.gz
-					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../)
+			add_custom_target (dist_bz2)
+			add_custom_target (dist_gz)
+			#add_custom_target (dist_bz2 
+			#		   COMMAND tar -cvf ${CMAKE_SOURCE_DIR} | bzip2 > ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
+			#		   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/../)
+			#add_custom_target (dist_gz 
+			#		   COMMAND tar -cvf ${CMAKE_SOURCE_DIR} | gzip > ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.gz
+			#		   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/../)
 		endif (NOT (${DBZR} STREQUAL "DBZR-NOTFOUND"))
 	endif (NOT (${DGIT} STREQUAL "DGIT-NOTFOUND"))
 
@@ -152,7 +154,7 @@ macro (compiz_add_release_signoff)
 
 	if (NOT ${DGIT} STREQUAL "DGIT-NOTFOUND")
 		add_custom_target (release-commits
-				   COMMAND git commit -a -m "Bump VERSION and NEWS for ${VERSION}"
+				   COMMAND git commit -a -m "Update NEWS for ${VERSION}"
 				   COMMENT "Release Commit"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 		add_custom_target (release-tags
@@ -160,17 +162,25 @@ macro (compiz_add_release_signoff)
 				   COMMENT "Release Tags"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 		add_custom_target (release-branch
-				   COMMAND git checkout -b compiz-${VERSION} && 
+				   COMMAND git checkout -b compiz-${VERSION}-series && 
 				   touch RELEASED && 
+				   git add RELEASED &&
+				   cat VERSION > RELEASED &&
 				   git commit -a -m "Add RELEASED file"
 				   COMMENT "Release Branch"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
+		add_custom_target (release-version-bump
+				   COMMAND git checkout master &&
+				   $ENV{EDITOR} VERSION &&
+				   git commit -a -m "Bump VERSION"
+				   COMMENT "Bumping VERSION"
+				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 	else (NOT ${DGIT} STREQUAL "DGIT-NOTFOUND")
 
 	    add_custom_target (release-commits)
 	    add_custom_target (release-tags)
 	    add_custom_target (release-branch)
+	    add_custom_target (release-version-bump)
 
 	endif (NOT ${DGIT} STREQUAL "DGIT-NOTFOUND")
 
@@ -188,9 +198,14 @@ macro (compiz_add_release_signoff)
 		endif (${DIST_ARCHIVE_TYPE} STREQUAL "bz2")
 	endif (${DIST_ARCHIVE_TYPE} STREQUAL "gz")
 	
+	add_dependencies (release-tags release-commits)
+	add_dependencies (release-branch release-tags)
+	add_dependencies (release-version-bump release-branch)
+	add_dependencies (release-sign-tarballs release-version-bump)
+
 	# This means that releasing needs to be done from a git repo for now
 	# But that's fine
-	add_dependencies (release-signoff release-prep distcheck release-commits release-tags release-branch release-sign-tarballs)
+	add_dependencies (release-signoff release-sign-tarballs)
 
 endmacro ()
 
@@ -200,14 +215,19 @@ macro (compiz_add_release)
 	find_file (DBZR ".bzr" PATHS ${CMAKE_SOURCE_DIR})
 
 	if (NOT ${DGIT} STREQUAL "DGIT-NOTFOUND")
+		find_program (GEN_GIT_LOG gen-git-log.sh)
 		add_custom_target (authors
 				   COMMAND git shortlog -se | cut -c8- > AUTHORS
 				   COMMENT "Generating AUTHORS"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-		add_custom_target (changelog
-				   COMMAND ${CMAKE_SOURCE_DIR}/releasing/git/gen-git-log.sh > ChangeLog
-				   COMMENT "Generating ChangeLog"
-				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+		if (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
+			add_custom_target (changelog
+					   COMMAND ${GEN_GIT_LOG} > ChangeLog
+					   COMMENT "Generating ChangeLog"
+					   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+		else (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
+			message ("[WARNING]: gen-git-log.sh is required to make releases, ensure that it is installed into your PATH")
+		endif (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
 
 		add_custom_target (news-header echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`git config user.name`' <'`git config user.email`'>)' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
 				   COMMAND $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update
@@ -226,7 +246,10 @@ macro (compiz_add_release)
 					   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
 					   COMMENT "Generating NEWS Header"
 					   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-
+		else (NOT ${DBZR} STREQUAL "DBZR-NOTFOUND")
+			add_custom_target (authors)
+			add_custom_target (changelog)
+			add_custom_target (news-header)
 		endif (NOT ${DBZR} STREQUAL "DBZR-NOTFOUND")
 	endif (NOT ${DGIT} STREQUAL "DGIT-NOTFOUND")
 
@@ -236,10 +259,12 @@ macro (compiz_add_release)
 				   cat ${CMAKE_BINARY_DIR}/NEWS.update > NEWS
 			   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 
+	add_dependencies (changelog authors)
+	add_dependencies (news-header changelog)
 	add_dependencies (news news-header)
 
 	add_custom_target (release-prep)
-	add_dependencies (release-prep authors changelog news)
+	add_dependencies (release-prep news)
 
 endmacro (compiz_add_release)
 
@@ -429,21 +454,23 @@ macro (compiz_add_uninstall)
 endmacro ()
 
 #posix 2008 scandir check
-include (CheckCXXSourceCompiles)
-CHECK_CXX_SOURCE_COMPILES (
-  "# include <dirent.h>
-   int func (const char *d, dirent ***list, void *sort)
-   {
-     int n = scandir(d, list, 0, (int(*)(const dirent **, const dirent **))sort);
-     return n;
-   }
+if (CMAKE_CXX_COMPILER)
+	include (CheckCXXSourceCompiles)
+	CHECK_CXX_SOURCE_COMPILES (
+	  "# include <dirent.h>
+	   int func (const char *d, dirent ***list, void *sort)
+	   {
+	     int n = scandir(d, list, 0, (int(*)(const dirent **, const dirent **))sort);
+	     return n;
+	   }
 
-   int main (int, char **)
-   {
-     return 0;
-   }
-  "
-  HAVE_SCANDIR_POSIX)
+	   int main (int, char **)
+	   {
+	     return 0;
+	   }
+	  "
+	  HAVE_SCANDIR_POSIX)
+endif (CMAKE_CXX_COMPILER)
 
 if (HAVE_SCANDIR_POSIX)
   add_definitions (-DHAVE_SCANDIR_POSIX)
