@@ -13,13 +13,16 @@ set (_headers
     pluginclasshandler.h
     pluginclasses.h
     propertywriter.h
+    privateunion.h
     rect.h
     region.h
     screen.h
     serialization.h
     session.h
     size.h
+    timeouthandler.h
     timer.h
+    valueholder.h
     window.h
     wrapsystem.h
 )
