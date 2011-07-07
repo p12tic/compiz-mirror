@@ -3,6 +3,11 @@ find_package (Compiz REQUIRED)
 include (CompizCommon)
 include (CompizPackage)
 
+file (READ ${CMAKE_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
+string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
+
+set (VERSION ${COMPIZ_RELEASE_VERSION})
+
 macro (_get_backend_parameters _prefix)
     set (_current_var _foo)
     set (_supported_var PKGDEPS LDFLAGSADD CFLAGSADD LIBRARIES LIBDIRS INCDIRS)
@@ -119,4 +124,12 @@ function (compizconfig_backend bname)
 	TARGETS ${bname}
 	DESTINATION ${COMPIZ_DESTDIR}${COMPIZCONFIG_LIBDIR}/compizconfig/backends
     )
+
+    if (NOT _COMPIZCONFIG_INTERNAL)
+	compiz_add_git_dist ()
+	compiz_add_distcheck ()
+	compiz_add_release ()
+	compiz_add_release_signoff ()
+	compiz_add_uninstall ()
+    endif (NOT _COMPIZCONFIG_INTERNAL)
 endfunction (compizconfig_backend bname)

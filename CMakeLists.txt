@@ -2,6 +2,10 @@ project (libcompizconfig)
 
 find_package (Compiz REQUIRED)
 
+set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
+set (LIBCOMPIZCONFIG_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LIBCOMPIZCONFIGZ_CMAKE_MODULE_PATH})
+
 include (CompizCommon)
 include (CompizPackage)
 include (CheckLibraryExists)
@@ -12,11 +16,10 @@ set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
 # libcompizconfig package version number
 # An odd micro number indicates in-progress development.
 # An even micro number indicates a released version.
-set (LIBCOMPIZCONFIG_VERSION_MAJOR 0)
-set (LIBCOMPIZCONFIG_VERSION_MINOR 9)
-set (LIBCOMPIZCONFIG_VERSION_MICRO 5)
-set (LIBCOMPIZCONFIG_VERSION_MACRO 0)
-set (VERSION ${LIBCOMPIZCONFIG_VERSION_MAJOR}.${LIBCOMPIZCONFIG_VERSION_MINOR}.${LIBCOMPIZCONFIG_VERSION_MICRO}.${LIBCOMPIZCONFIG_VERSION_MACRO})
+file (READ ${CMAKE_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
+string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
+
+set (VERSION ${COMPIZ_RELEASE_VERSION})
 
 set (_libcompizconfig_package_string "LibCompizConfig ${VERSION}")
 set (_libcompizconfig_package "LibCompizCompiz")
@@ -195,3 +198,6 @@ compiz_ensure_linkage ()
 compiz_package_generation ("CompizConfig Library")
 add_uninstall ()
 compiz_add_git_dist ()
+compiz_add_distcheck ()
+compiz_add_release ()
+compiz_add_release_signoff ()
