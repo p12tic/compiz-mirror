@@ -177,6 +177,7 @@ macro (compiz_add_release_signoff)
 	    add_custom_target (release-commits)
 	    add_custom_target (release-tags)
 	    add_custom_target (release-branch)
+	    add_custom_target (release-update-dist)
 	    add_custom_target (release-version-bump)
 
 	endif (${IS_GIT_REPO})
