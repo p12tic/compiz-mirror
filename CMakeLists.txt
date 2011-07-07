@@ -1,7 +1,7 @@
 find_package (CompizConfig REQUIRED)
 include (LibCompizConfigCommon)
 
-project (compizconfig-python C CXX)
+project (compizconfig-python)
 
 file (READ ${CMAKE_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
 string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
