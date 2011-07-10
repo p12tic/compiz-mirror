@@ -1927,6 +1927,8 @@ initBackend (CCSContext * context)
 {
     g_type_init ();
 
+    g_setenv ("GSETTINGS_BACKEND", "gconf", FALSE);
+
     conf = gconf_engine_get_default ();
     initClient (context);
 
@@ -2080,9 +2082,9 @@ deleteProfile (CCSContext *context,
 }
 
 static CCSBackendVTable gconfVTable = {
-    "gconf",
-    "GConf Configuration Backend",
-    "GConf Configuration Backend for libccs",
+    "gsettings",
+    "GSettings Configuration Backend",
+    "GSettings Configuration Backend for libccs",
     TRUE,
     TRUE,
     processEvents,
