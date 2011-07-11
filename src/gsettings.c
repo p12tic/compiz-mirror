@@ -52,6 +52,7 @@
 #define CompNumLockMask    (1 << 21)
 #define CompScrollLockMask (1 << 22)
 
+#define SCHEMA_ID   "org.freedesktop.compiz"
 #define METACITY     "/apps/metacity"
 #define COMPIZ       "/apps/compiz-1"
 #define COMPIZCONFIG "/apps/compizconfig-1"
@@ -60,6 +61,62 @@
 #define CORE_NAME   "core"
 
 #define BUFSIZE 512
+
+#define NUM_WATCHED_DIRS 3
+
+static GConfClient *client = NULL;
+static GList	   *settings_list = NULL;
+static GConfEngine *conf = NULL;
+static guint compizNotifyId;
+static guint gnomeNotifyIds[NUM_WATCHED_DIRS];
+static char *currentProfile = NULL;
+
+static gchar *
+gsettings_get_schema_name (char *plugin)
+{
+    gchar       *schema_name = g_strconcat (SCHEMA_ID, ".", plugin, NULL);
+
+    return schema_name;
+}
+
+static GSettings *
+gsettings_object_for_plugin (char *plugin)
+{
+    GSettings *settings_obj = NULL;
+    GList *l = settings_list;
+    gchar *schema_name = gsettings_get_schema_name (plugin);
+    
+
+    while (l)
+    {
+	settings_obj = (GSettings *) l->data;
+	gchar	  *name;
+
+	g_object_get (G_OBJECT (settings_obj),
+		      "schema",
+		      &name);
+
+	if (gstrcmp0 (name, schema_name))
+	{
+	    g_free (name);
+	    g_free (schema_name);
+
+	    g_object_ref (settings_obj);
+	    return settings_obj;
+	}
+
+	l = g_list_next (l);
+    }
+
+    /* No existing settings object found for this schema, create one */
+    settings_obj = g_settings_new (schema_name);
+    
+    settings_list = g_list_append (settings_list, (void *) settings_obj);
+
+    g_free (schema_name);
+
+    return settings_obj;
+}
 
 static inline gchar *
 gsettings_backend_clean (char *gsettingName)
@@ -113,14 +170,6 @@ static const char* watchedGnomeDirectories[] = {
     "/desktop/gnome/applications/terminal",
     "/apps/panel/applets/window_list/prefs"
 };
-#define NUM_WATCHED_DIRS 3
-
-static GConfClient *client = NULL;
-static GSettings   *settings = NULL;
-static GConfEngine *conf = NULL;
-static guint compizNotifyId;
-static guint gnomeNotifyIds[NUM_WATCHED_DIRS];
-static char *currentProfile = NULL;
 
 /* some forward declarations */
 static Bool readInit (CCSContext * context);
@@ -642,7 +691,7 @@ initClient (CCSContext *context)
     int i;
 
     client = gconf_client_get_for_engine (conf);
-
+/*
     compizNotifyId = gconf_client_notify_add (client, COMPIZ, valueChanged,
 					      context, NULL, NULL);
     gconf_client_add_dir (client, COMPIZ, GCONF_CLIENT_PRELOAD_NONE, NULL);
@@ -656,13 +705,14 @@ initClient (CCSContext *context)
 	gconf_client_add_dir (client, watchedGnomeDirectories[i],
 			      GCONF_CLIENT_PRELOAD_NONE, NULL);
     }
+*/
 }
 
 static void
 finiClient (void)
 {
     int i;
-
+/*
     if (compizNotifyId)
     {
 	gconf_client_notify_remove (client, compizNotifyId);
@@ -679,7 +729,7 @@ finiClient (void)
 	}
 	gconf_client_remove_dir (client, watchedGnomeDirectories[i], NULL);
     }
-
+*/
     gconf_client_suggest_sync (client, NULL);
 
     g_object_unref (client);
@@ -1166,6 +1216,7 @@ readIntegratedOption (CCSContext *context,
 static Bool
 readOption (CCSSetting * setting)
 {
+    GSettings  *settings = gsettings_object_for_plugin (setting->parent->name);
     GConfValue *gconfValue = NULL;
     GError     *err = NULL;
     Bool       ret = FALSE;
@@ -1181,12 +1232,14 @@ readOption (CCSSetting * setting)
     {
 	g_error_free (err);
 	CLEANUP_CLEAN_SETTING_NAME;
+	g_object_unref (settings);
 	return FALSE;
     }
     if (!gconfValue)
     {
 	/* value is not set */
 	CLEANUP_CLEAN_SETTING_NAME;
+	g_object_unref (settings);
 	return FALSE;
     }
 
@@ -1351,6 +1404,9 @@ readOption (CCSSetting * setting)
     if (gconfValue)
 	gconf_value_free (gconfValue);
 
+    CLEANUP_CLEAN_SETTING_NAME;
+    g_object_unref (settings);
+    
     return ret;
 }
 
@@ -1358,6 +1414,7 @@ static void
 writeListValue (CCSSetting *setting,
 		char       *pathName)
 {
+    GSettings  		*settings = gsettings_object_for_plugin (setting->parent->name);
     GSList              *valueList = NULL;
     GConfValueType      valueType;
     Bool                freeItems = FALSE;
@@ -1464,6 +1521,8 @@ writeListValue (CCSSetting *setting,
     }
     if (valueList)
 	g_slist_free (valueList);
+    
+    g_object_unref (settings);
 }
 
 static Bool
@@ -1718,6 +1777,8 @@ writeIntegratedOption (CCSContext *context,
 static void
 resetOptionToDefault (CCSSetting * setting)
 {
+    GSettings  *settings = gsettings_object_for_plugin (setting->parent->name);
+  
     CLEAN_SETTING_NAME;
     KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
@@ -1725,12 +1786,14 @@ resetOptionToDefault (CCSSetting * setting)
     gconf_client_recursive_unset (client, pathName, 0, NULL);
     gconf_client_suggest_sync (client, NULL);
 
+    g_object_unref (settings);
     CLEANUP_CLEAN_SETTING_NAME;
 }
 
 static void
 writeOption (CCSSetting * setting)
 {
+    GSettings  *settings = gsettings_object_for_plugin (setting->parent->name);
     CLEAN_SETTING_NAME;
     KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
@@ -1851,12 +1914,14 @@ writeOption (CCSSetting * setting)
 	break;
     }
 
+    g_object_unref (settings);
     CLEANUP_CLEAN_SETTING_NAME;
 }
 
 static void
 updateCurrentProfileName (char *profile)
 {
+/*
     GConfSchema *schema;
     GConfValue  *value;
     
@@ -1884,13 +1949,14 @@ updateCurrentProfileName (char *profile)
 
     gconf_schema_free (schema);
     gconf_value_free (value);
+*/
 }
 
 static char*
 getCurrentProfileName (void)
 {
     GConfSchema *schema = NULL;
-
+/*
     schema = gconf_client_get_schema (client,
     				      COMPIZCONFIG "/current_profile", NULL);
 
@@ -1906,7 +1972,7 @@ getCurrentProfileName (void)
 
 	return ret;
     }
-
+*/
     return strdup (DEFAULTPROF);
 }
 
@@ -1991,6 +2057,8 @@ initBackend (CCSContext * context)
 static Bool
 finiBackend (CCSContext * context)
 {
+    GList *l = settings_list;
+  
     processEvents (0);
 
     gconf_client_clear_cache (client);
@@ -2005,6 +2073,12 @@ finiBackend (CCSContext * context)
     gconf_engine_unref (conf);
     conf = NULL;
 
+    while (l)
+    {
+	g_object_unref (G_OBJECT (l->data));
+	l = g_list_next (l);
+    }
+    
     processEvents (0);
     return TRUE;
 }
