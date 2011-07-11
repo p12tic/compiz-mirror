@@ -94,10 +94,13 @@ gsettings_object_for_plugin (char *plugin)
 
 	g_object_get (G_OBJECT (settings_obj),
 		      "schema",
-		      &name);
+		      &name, NULL);
 
-	if (gstrcmp0 (name, schema_name))
+	g_debug ("Existing schema name %s requested schema_name %s strcmp? %i", name, schema_name);
+	
+	if (g_strcmp0 (name, schema_name) == 0)
 	{
+	    g_debug ("Returning existing schema %s", schema_name);
 	    g_free (name);
 	    g_free (schema_name);
 
@@ -113,6 +116,8 @@ gsettings_object_for_plugin (char *plugin)
     
     settings_list = g_list_append (settings_list, (void *) settings_obj);
 
+    g_debug ("Returning new schema %s", schema_name);
+    
     g_free (schema_name);
 
     return settings_obj;
@@ -134,7 +139,7 @@ gsettings_backend_clean (char *gsettingName)
     clean = g_strjoinv ("-", delimited);
 
     /* It can't be more than 32 chars, warn if that's the case */
-    gchar *ret = g_strndup (clean, 32);
+    gchar *ret = g_strndup (clean, 31);
 
     if (strlen (ret) != strlen (clean))
 	g_debug ("uh-oh, this setting %s has too many characters in its name and has been truncated to %s", clean, ret);
@@ -1222,6 +1227,7 @@ static Bool
 readOption (CCSSetting * setting)
 {
     GSettings  *settings = gsettings_object_for_plugin (setting->parent->name);
+    GVariant   *gsettingsValue = NULL;
     GConfValue *gconfValue = NULL;
     GError     *err = NULL;
     Bool       ret = FALSE;
@@ -1233,6 +1239,7 @@ readOption (CCSSetting * setting)
 
     /* first check if the key is set */
     gconfValue = gconf_client_get_without_default (client, pathName, &err);
+    gsettingsValue = g_settings_get_value (settings, cleanSettingName);
     if (err)
     {
 	g_error_free (err);
@@ -1275,12 +1282,41 @@ readOption (CCSSetting * setting)
     default:
 	break;
     }
+
+    switch (setting->type)
+    {
+    case TypeString:
+    case TypeMatch:
+    case TypeColor:
+    case TypeKey:
+    case TypeButton:
+    case TypeEdge:
+	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_STRING, g_variant_get_type (gsettingsValue)));
+	break;
+    case TypeInt:
+	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_INT32, g_variant_get_type (gsettingsValue)));
+	break;
+    case TypeBool:
+    case TypeBell:
+	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_BOOLEAN, g_variant_get_type (gsettingsValue)));
+	break;
+    case TypeFloat:
+	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_DOUBLE, g_variant_get_type (gsettingsValue)));
+	break;
+    case TypeList:
+	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_ARRAY, g_variant_get_type (gsettingsValue)));
+	break;
+    default:
+	break;
+    }
+
     if (!valid)
     {
-	printf ("GConf backend: There is an unsupported value at path %s. "
+	printf ("GSettings backend: There is an unsupported value at path %s. "
 		"Settings from this path won't be read. Try to remove "
 		"that value so that operation can continue properly.\n",
 		pathName);
+	g_variant_unref (gsettingsValue);
 	return FALSE;
     }
 
@@ -1289,7 +1325,7 @@ readOption (CCSSetting * setting)
     case TypeString:
 	{
 	    const char *value;
-	    value = gconf_value_get_string (gconfValue);
+	    value = g_variant_get_string (gsettingsValue, NULL);
 	    if (value)
 	    {
 		ccsSetString (setting, value);
@@ -1300,7 +1336,7 @@ readOption (CCSSetting * setting)
     case TypeMatch:
 	{
 	    const char * value;
-	    value = gconf_value_get_string (gconfValue);
+	    value = g_variant_get_string (gsettingsValue, NULL);
 	    if (value)
 	    {
 		ccsSetMatch (setting, value);
@@ -1311,7 +1347,7 @@ readOption (CCSSetting * setting)
     case TypeInt:
 	{
 	    int value;
-	    value = gconf_value_get_int (gconfValue);
+	    value = g_variant_get_int32 (gsettingsValue);
 
 	    ccsSetInt (setting, value);
 	    ret = TRUE;
@@ -1320,7 +1356,7 @@ readOption (CCSSetting * setting)
     case TypeBool:
 	{
 	    gboolean value;
-	    value = gconf_value_get_bool (gconfValue);
+	    value = g_variant_get_boolean (gsettingsValue);
 
 	    ccsSetBool (setting, value ? TRUE : FALSE);
 	    ret = TRUE;
@@ -1329,7 +1365,7 @@ readOption (CCSSetting * setting)
     case TypeFloat:
 	{
 	    double value;
-	    value = gconf_value_get_float (gconfValue);
+	    value = g_variant_get_double (gsettingsValue);
 
 	    ccsSetFloat (setting, (float)value);
     	    ret = TRUE;
@@ -1339,7 +1375,7 @@ readOption (CCSSetting * setting)
 	{
 	    const char           *value;
 	    CCSSettingColorValue color;
-	    value = gconf_value_get_string (gconfValue);
+	    value = g_variant_get_string (gsettingsValue, NULL);
 
 	    if (value && ccsStringToColor (value, &color))
 	    {
@@ -1352,7 +1388,7 @@ readOption (CCSSetting * setting)
 	{
 	    const char         *value;
 	    CCSSettingKeyValue key;
-	    value = gconf_value_get_string (gconfValue);
+	    value = g_variant_get_string (gsettingsValue, NULL);
 
 	    if (value && ccsStringToKeyBinding (value, &key))
 	    {
@@ -1365,7 +1401,7 @@ readOption (CCSSetting * setting)
 	{
 	    const char            *value;
 	    CCSSettingButtonValue button;
-	    value = gconf_value_get_string (gconfValue);
+	    value = g_variant_get_string (gsettingsValue, NULL);
 
 	    if (value && ccsStringToButtonBinding (value, &button))
 	    {
@@ -1377,7 +1413,7 @@ readOption (CCSSetting * setting)
     case TypeEdge:
 	{
 	    const char   *value;
-	    value = gconf_value_get_string (gconfValue);
+	    value = g_variant_get_string (gsettingsValue, NULL);
 
 	    if (value)
 	    {
@@ -1391,7 +1427,7 @@ readOption (CCSSetting * setting)
     case TypeBell:
 	{
 	    gboolean value;
-	    value = gconf_value_get_bool (gconfValue);
+	    value = g_variant_get_boolean (gsettingsValue);
 
 	    ccsSetBell (setting, value ? TRUE : FALSE);
 	    ret = TRUE;
@@ -1411,6 +1447,7 @@ readOption (CCSSetting * setting)
 
     CLEANUP_CLEAN_SETTING_NAME;
     g_object_unref (settings);
+    g_variant_unref (gsettingsValue);
     
     return ret;
 }
@@ -1814,34 +1851,49 @@ writeOption (CCSSetting * setting)
 	{
 	    char *value;
 	    if (ccsGetString (setting, &value))
-		gconf_client_set_string (client, pathName, value, NULL);
+	    {
+		g_settings_set (settings, cleanSettingName, "s", value, NULL);
+		//gconf_client_set_string (client, pathName, value, NULL);
+	    }
 	}
 	break;
     case TypeMatch:
 	{
 	    char *value;
 	    if (ccsGetMatch (setting, &value))
-		gconf_client_set_string (client, pathName, value, NULL);
+	    {
+		g_settings_set (settings, cleanSettingName, "s", value, NULL);
+		//gconf_client_set_string (client, pathName, value, NULL);
+	    }
 	}
     case TypeFloat:
 	{
 	    float value;
 	    if (ccsGetFloat (setting, &value))
-		gconf_client_set_float (client, pathName, value, NULL);
+	    {
+		g_settings_set (settings, cleanSettingName, "d", (double) value, NULL);
+		//gconf_client_set_float (client, pathName, value, NULL);
+	    }
 	}
 	break;
     case TypeInt:
 	{
 	    int value;
 	    if (ccsGetInt (setting, &value))
-		gconf_client_set_int (client, pathName, value, NULL);
+	    {
+		g_settings_set (settings, cleanSettingName, "i", value, NULL);
+		//gconf_client_set_int (client, pathName, value, NULL);
+	    }
 	}
 	break;
     case TypeBool:
 	{
 	    Bool value;
 	    if (ccsGetBool (setting, &value))
+	    {
+		g_settings_set (settings, cleanSettingName, "b", value, NULL);
 		gconf_client_set_bool (client, pathName, value, NULL);
+	    }
 	}
 	break;
     case TypeColor:
@@ -1856,7 +1908,8 @@ writeOption (CCSSetting * setting)
 	    if (!colString)
 		break;
 
-	    gconf_client_set_string (client, pathName, colString, NULL);
+	    g_settings_set (settings, cleanSettingName, "s", value, NULL);
+	    //gconf_client_set_string (client, pathName, colString, NULL);
 	    free (colString);
 	}
 	break;
@@ -1872,7 +1925,8 @@ writeOption (CCSSetting * setting)
 	    if (!keyString)
 		break;
 
-	    gconf_client_set_string (client, pathName, keyString, NULL);
+	    g_settings_set (settings, cleanSettingName, "s", keyString, NULL);
+	    //gconf_client_set_string (client, pathName, keyString, NULL);
 	    free (keyString);
 	}
 	break;
@@ -1888,7 +1942,8 @@ writeOption (CCSSetting * setting)
 	    if (!buttonString)
 		break;
 
-	    gconf_client_set_string (client, pathName, buttonString, NULL);
+	    g_settings_set (settings, cleanSettingName, "s", buttonString, NULL);
+	    //gconf_client_set_string (client, pathName, buttonString, NULL);
 	    free (buttonString);
 	}
 	break;
@@ -1904,7 +1959,8 @@ writeOption (CCSSetting * setting)
 	    if (!edgeString)
 		break;
 
-	    gconf_client_set_string (client, pathName, edgeString, NULL);
+	    g_settings_set (settings, cleanSettingName, "s", edgeString, NULL);
+	    //gconf_client_set_string (client, pathName, edgeString, NULL);
 	    free (edgeString);
 	}
 	break;
@@ -1912,14 +1968,17 @@ writeOption (CCSSetting * setting)
 	{
 	    Bool value;
 	    if (ccsGetBell (setting, &value))
-		gconf_client_set_bool (client, pathName, value, NULL);
+	    {
+		g_settings_set (settings, cleanSettingName, "s", value, NULL);
+		//gconf_client_set_bool (client, pathName, value, NULL);
+	    }
 	}
 	break;
     case TypeList:
 	writeListValue (setting, pathName);
 	break;
     default:
-	printf("GConf backend: attempt to write unsupported setting type %d\n",
+	printf("GSettings backend: attempt to write unsupported setting type %d\n",
 	       setting->type);
 	break;
     }
