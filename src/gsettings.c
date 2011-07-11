@@ -35,6 +35,8 @@
 #include <ccs.h>
 #include <ccs-backend.h>
 
+#include <gio/gio.h>
+
 #include <X11/X.h>
 #include <X11/Xlib.h>
 
@@ -59,6 +61,37 @@
 
 #define BUFSIZE 512
 
+static inline gchar *
+gsettings_backend_clean (char *gsettingName)
+{
+    gchar *clean        = NULL;
+    gchar **delimited   = NULL;
+
+    g_debug ("cleaning %s", gsettingName);
+
+    /* Replace underscores with dashes */
+    delimited = g_strsplit (gsettingName, "_", 0);
+
+    g_debug ("string ok");
+
+    clean = g_strjoinv ("-", delimited);
+
+    /* It can't be more than 32 chars, warn if that's the case */
+    gchar *ret = g_strndup (clean, 32);
+
+    if (strlen (ret) != strlen (clean))
+	g_debug ("uh-oh, this setting %s has too many characters in its name and has been truncated to %s", clean, ret);
+
+    g_free (clean);
+    g_strfreev (delimited);
+
+    g_debug ("returning cleaned string %s", ret);
+
+    return ret;
+}
+
+#define CLEAN_SETTING_NAME 	char *cleanSettingName = gsettings_backend_clean (setting->name)
+
 #define KEYNAME(sn)     char keyName[BUFSIZE]; \
                     snprintf (keyName, BUFSIZE, "screen%i", sn);
 
@@ -67,11 +100,13 @@
 			strcmp (setting->parent->name, "core") == 0) \
                         snprintf (pathName, BUFSIZE, \
 				 "%s/general/%s/options/%s", COMPIZ, \
-				 keyName, setting->name); \
+				 keyName, cleanSettingName); \
                     else \
 			snprintf(pathName, BUFSIZE, \
 				 "%s/plugins/%s/%s/options/%s", COMPIZ, \
-				 setting->parent->name, keyName, setting->name);
+				 setting->parent->name, keyName, cleanSettingName);
+
+#define CLEANUP_CLEAN_SETTING_NAME
 
 static const char* watchedGnomeDirectories[] = {
     METACITY,
@@ -81,6 +116,7 @@ static const char* watchedGnomeDirectories[] = {
 #define NUM_WATCHED_DIRS 3
 
 static GConfClient *client = NULL;
+static GSettings   *settings = NULL;
 static GConfEngine *conf = NULL;
 static guint compizNotifyId;
 static guint gnomeNotifyIds[NUM_WATCHED_DIRS];
@@ -403,11 +439,13 @@ isIntegratedOption (CCSSetting *setting,
 {
     unsigned int i;
 
+    CLEAN_SETTING_NAME;
+
     for (i = 0; i < N_SOPTIONS; i++)
     {
 	const SpecialOption *opt = &specialOptions[i];
 
-	if (strcmp (setting->name, opt->settingName) != 0)
+	if (strcmp (cleanSettingName, opt->settingName) != 0)
 	    continue;
 
 	if (setting->parent->name)
@@ -428,6 +466,8 @@ isIntegratedOption (CCSSetting *setting,
 
 	return TRUE;
     }
+
+    CLEANUP_CLEAN_SETTING_NAME;
 
     return FALSE;
 }
@@ -1131,6 +1171,7 @@ readOption (CCSSetting * setting)
     Bool       ret = FALSE;
     Bool       valid = TRUE;
 
+    CLEAN_SETTING_NAME;
     KEYNAME(setting->parent->context->screenNum);
     PATHNAME;
 
@@ -1139,11 +1180,15 @@ readOption (CCSSetting * setting)
     if (err)
     {
 	g_error_free (err);
+	CLEANUP_CLEAN_SETTING_NAME;
 	return FALSE;
     }
     if (!gconfValue)
+    {
 	/* value is not set */
+	CLEANUP_CLEAN_SETTING_NAME;
 	return FALSE;
+    }
 
     /* setting type sanity check */
     switch (setting->type)
@@ -1673,16 +1718,20 @@ writeIntegratedOption (CCSContext *context,
 static void
 resetOptionToDefault (CCSSetting * setting)
 {
+    CLEAN_SETTING_NAME;
     KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
 
     gconf_client_recursive_unset (client, pathName, 0, NULL);
     gconf_client_suggest_sync (client, NULL);
+
+    CLEANUP_CLEAN_SETTING_NAME;
 }
 
 static void
 writeOption (CCSSetting * setting)
 {
+    CLEAN_SETTING_NAME;
     KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
 
@@ -1801,6 +1850,8 @@ writeOption (CCSSetting * setting)
 	       setting->type);
 	break;
     }
+
+    CLEANUP_CLEAN_SETTING_NAME;
 }
 
 static void
@@ -1867,10 +1918,10 @@ checkProfile (CCSContext *context)
     lastProfile = currentProfile;
 
     profile = ccsGetProfile (context);
-    if (!profile || !strlen (profile))
+    //if (!profile || !strlen (profile))
 	currentProfile = strdup (DEFAULTPROF);
-    else
-	currentProfile = strdup (profile);
+    //else
+	//currentProfile = strdup (profile);
 
     if (!lastProfile || strcmp (lastProfile, currentProfile) != 0)
     {
@@ -1932,7 +1983,7 @@ initBackend (CCSContext * context)
     conf = gconf_engine_get_default ();
     initClient (context);
 
-    currentProfile = getCurrentProfileName ();
+    currentProfile = strdup (DEFAULTPROF);//getCurrentProfileName ();
 
     return TRUE;
 }
@@ -2098,8 +2149,8 @@ static CCSBackendVTable gconfVTable = {
     0,
     getSettingIsIntegrated,
     getSettingIsReadOnly,
-    getExistingProfiles,
-    deleteProfile
+    0,
+    0
 };
 
 CCSBackendVTable *
