@@ -176,6 +176,7 @@ static Bool readInit (CCSContext * context);
 static void readSetting (CCSContext * context, CCSSetting * setting);
 static Bool readOption (CCSSetting * setting);
 static Bool writeInit (CCSContext * context);
+static void writeOption (CCSSetting *setting);
 static void writeIntegratedOption (CCSContext *context, CCSSetting *setting,
 				   int        index);
 
@@ -1057,6 +1058,10 @@ readIntegratedOption (CCSContext *context,
     GError     *err = NULL;
     Bool       ret = FALSE;
 
+    g_debug ("Attempted to read integrated option %s which is not a supported operation yet", setting->name);
+    
+    ret = readOption (setting);
+#if 0
     gconfValue = gconf_client_get (client,
 				   specialOptions[index].gnomeName,
 				   &err);
@@ -1209,7 +1214,7 @@ readIntegratedOption (CCSContext *context,
     }
 
     gconf_value_free (gconfValue);
-
+#endif
     return ret;
 }
 
@@ -1594,6 +1599,11 @@ writeIntegratedOption (CCSContext *context,
     GError     *err = NULL;
     const char *optionName = specialOptions[index].gnomeName;
 
+    g_debug ("Attempted to write integrated option %s which is not supported option yet", setting->name);
+    
+    writeOption (setting);
+#if 0
+    
     switch (specialOptions[index].type)
     {
     case OptionInt:
@@ -1769,7 +1779,7 @@ writeIntegratedOption (CCSContext *context,
 	}
      	break;
     }
-
+#endif
     if (err)
 	g_error_free (err);
 }
