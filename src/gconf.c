@@ -1298,8 +1298,8 @@ readOption (CCSSetting * setting)
 	ret = readListValue (setting, gconfValue);
 	break;
     default:
-	printf("GConf backend: attempt to read unsupported setting type %d!\n",
-	       setting->type);
+	printf("GConf backend: attempt to read unsupported setting type %d from path %s!\n",
+	       setting->type, pathName);
 	break;
     }
 
@@ -1399,8 +1399,8 @@ writeListValue (CCSSetting *setting,
 	}
 	break;
     default:
-	printf("GConf backend: attempt to write unsupported list type %d!\n",
-	       setting->info.forList.listType);
+	printf("GConf backend: attempt to write unsupported list type %d at path %s!\n",
+	       setting->info.forList.listType, pathName);
 	valueType = GCONF_VALUE_INVALID;
 	break;
     }
