@@ -134,7 +134,7 @@ macro (compiz_add_distcheck)
 			   && tar xvf ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
 			   && mkdir -p ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}/build
 			   && cd ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}/build
-			   && cmake -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/dist-build/buildroot -DCOMPIZ_PLUGIN_INSTALL_TYPE='package' .. -DCMAKE_MODULE_PATH=/usr/share/cmake -DCOMPIZ_DISABLE_PLUGIN_KDE=ON
+			   && cmake -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/dist-build/buildroot -DCOMPIZ_PLUGIN_INSTALL_TYPE='package' .. -DCMAKE_MODULE_PATH=/usr/share/cmake -DCOMPIZ_DISABLE_PLUGIN_KDE=ON -DBUILD_KDE4=OFF
 			   && make -j4
 			   && make test
 			   && make -j4 install
@@ -266,11 +266,6 @@ macro (compiz_add_release_signoff)
 	set (COMPIZ_RELEASE_UPLOAD_DIR_VERSION	${COMPIZ_RELEASE_UPLOAD_BASE}/${VERSION}/)
 	set (COMPIZ_RELEASE_UPLOAD_DIR_COMPONENT ${COMPIZ_RELEASE_UPLOAD_BASE}/components/${CMAKE_PROJECT_NAME})
 
-	message ("releasing to " ${COMPIZ_RELEASE_UPLOAD_HOST})
-	message (" base: " ${COMPIZ_RELEASE_UPLOAD_BASE})
-	message (" version: " ${COMPIZ_RELEASE_UPLOAD_BASE}/${VERSION})
-	message (" component: ${COMPIZ_RELEASE_UPLOAD_BASE}/components/${CMAKE_PROJECT_NAME}")
-
 	add_custom_target (release-upload-version
 			   COMMAND ssh $ENV{USER}@${COMPIZ_RELEASE_UPLOAD_HOST} "mkdir -p ${COMPIZ_RELEASE_UPLOAD_BASE}/${VERSION}" && scp ${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2 $ENV{USER}@${COMPIZ_RELEASE_UPLOAD_HOST}:${COMPIZ_RELEASE_UPLOAD_DIR_VERSION}
 			   COMMENT "Uploading ${CMAKE_PROJECT_NAME}-${VERSION} to ${VERSION}"
@@ -339,7 +334,6 @@ macro (compiz_add_release)
 					   COMMENT "Generating ChangeLog")
 
 			if (AUTO_NEWS_UPDATE)
-				message ("running echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo '${AUTO_NEWS_UPDATE}' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update")
 				add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
 						   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo '${AUTO_NEWS_UPDATE}' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
 						   COMMENT "Generating NEWS Header"
