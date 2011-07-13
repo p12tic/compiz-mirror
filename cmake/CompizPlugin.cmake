@@ -424,8 +424,15 @@ function (_build_compiz_plugin plugin)
 	compiz_add_uninstall ()
 
 	if (NOT COMPIZ_PLUGIN_PACK_BUILD)
+		set (CMAKE_PROJECT_NAME plugin-${plugin})
+		file (READ ${CMAKE_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
+		string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
+
+		set (VERSION ${COMPIZ_RELEASE_VERSION})
+
 		compiz_add_git_dist ()
 		compiz_add_release ()
+		compiz_add_distcheck ()
 		compiz_add_release_signoff ()
 	endif (NOT COMPIZ_PLUGIN_PACK_BUILD)
 
