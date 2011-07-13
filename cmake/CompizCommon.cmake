@@ -58,11 +58,11 @@ else (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
     set(IS_GIT_REPO 0)
 endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
 
-if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.gitmodules)
+if (EXISTS ${CMAKE_SOURCE_DIR}/.gitmodules)
     set(IS_GIT_SUBMODULES_REPO 1)
-else (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.gitmodules)
+else (EXISTS ${CMAKE_SOURCE_DIR}/.gitmodules)
     set(IS_GIT_SUBMODULES_REPO 0)
-endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.gitmodules)
+endif (EXISTS ${CMAKE_SOURCE_DIR}/.gitmodules)
 
 if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 1)
@@ -134,7 +134,7 @@ macro (compiz_add_distcheck)
 			   && tar xvf ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
 			   && mkdir -p ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}/build
 			   && cd ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}/build
-			   && cmake -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/dist-build/buildroot -DCOMPIZ_PLUGIN_INSTALL_TYPE='package' .. -DCMAKE_MODULE_PATH=/usr/share/cmake -DCOMPIZ_DISABLE_PLUGIN_KDE=ON -DBUILD_KDE4=OFF
+			   && cmake -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/dist-build/buildroot -DCOMPIZ_PLUGIN_INSTALL_TYPE='package' .. -DCMAKE_MODULE_PATH=/usr/share/cmake -DCOMPIZ_DISABLE_PLUGIN_KDE=ON
 			   && make -j4
 			   && make test
 			   && make -j4 install
@@ -143,6 +143,12 @@ macro (compiz_add_distcheck)
 endmacro ()
 
 macro (compiz_add_release_signoff)
+
+	set (AUTO_VERSION_UPDATE "" CACHE STRING "Automatically update VERSION to this number")
+
+	if (AUTO_VERSION_UPDATE)
+		message ("-- Next version will be " ${AUTO_VERSION_UPDATE})
+	endif (AUTO_VERSION_UPDATE)
 
 	add_custom_target (release-signoff)
 
@@ -174,13 +180,25 @@ macro (compiz_add_release_signoff)
 				   make dist
 				   COMMENT "Updating bz2 archive"
 				   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-		add_custom_target (release-version-bump
-				   COMMAND git checkout master &&
-				   $ENV{EDITOR} VERSION &&
-				   git add VERSION &&
-				   git commit VERSION -m "Bump VERSION"
-				   COMMENT "Bumping VERSION"
-				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+
+		if (AUTO_VERSION_UPDATE)
+			add_custom_target (release-version-bump
+					   COMMAND git checkout master &&
+					   echo "${AUTO_VERSION_UPDATE}" > VERSION &&
+					   git add VERSION &&
+					   git commit VERSION -m "Bump VERSION"
+					   COMMENT "Bumping VERSION"
+					   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+		else (AUTO_VERSION_UPDATE)
+			add_custom_target (release-version-bump
+					   COMMAND git checkout master &&
+					   $ENV{EDITOR} VERSION &&
+					   git add VERSION &&		
+					   git commit VERSION -m "Bump VERSION"
+					   COMMENT "Bumping VERSION"
+					   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+		endif (AUTO_VERSION_UPDATE)
+
 	else (${IS_GIT_REPO})
 	    add_custom_target (release-commits)
 	    add_custom_target (release-tags)
@@ -274,6 +292,12 @@ endmacro ()
 
 macro (compiz_add_release)
 
+	set (AUTO_NEWS_UPDATE "" CACHE STRING "Value to insert into NEWS file, leave blank to get an editor when running make news-update")
+
+	if (AUTO_NEWS_UPDATE)
+		message ("-- Using auto news update: " ${AUTO_NEWS_UPDATE})
+	endif (AUTO_NEWS_UPDATE)
+
 	if (${IS_GIT_REPO})
 		find_program (GEN_GIT_LOG gen-git-log.sh)
 		add_custom_target (authors
@@ -293,10 +317,18 @@ macro (compiz_add_release)
 			message ("[WARNING]: gen-git-log.sh is required to make releases, ensure that it is installed into your PATH")
 		endif (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
 
-		add_custom_target (news-header echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`git config user.name`' <'`git config user.email`'>)' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
-				   COMMAND $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update
-				   COMMENT "Generating NEWS Header"
-				   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+		if (AUTO_NEWS_UPDATE)
+			add_custom_target (news-header echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`git config user.name`' <'`git config user.email`'>)' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update
+					   COMMAND echo "${AUTO_NEWS_UPDATE}" >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
+					   COMMENT "Generating NEWS Header"
+					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+		else (AUTO_NEWS_UPDATE)
+			add_custom_target (news-header echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`git config user.name`' <'`git config user.email`'>)' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update
+					   COMMAND $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
+					   COMMENT "Generating NEWS Header"
+					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+		endif (AUTO_NEWS_UPDATE)
+
 	else (${IS_GIT_REPO})
 		if (${IS_BZR_REPO})
 			add_custom_target (authors
@@ -306,10 +338,18 @@ macro (compiz_add_release)
 					   COMMAND bzr log --gnu-changelog > ChangeLog
 					   COMMENT "Generating ChangeLog")
 
-			add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
-					   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
-					   COMMENT "Generating NEWS Header"
-					   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+			if (AUTO_NEWS_UPDATE)
+				add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
+						   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo '${AUTO_NEWS_UPDATE}' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
+						   COMMENT "Generating NEWS Header"
+						   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+			else (AUTO_NEWS_UPDATE)
+				add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
+						   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
+						   COMMENT "Generating NEWS Header"
+						   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+			endif (AUTO_NEWS_UPDATE)
+
 		else (${IS_BZR_REPO})
 			add_custom_target (authors)
 			add_custom_target (changelog)
@@ -318,7 +358,8 @@ macro (compiz_add_release)
 	endif (${IS_GIT_REPO})
 
 	add_custom_target (news
-			   COMMAND cat ${CMAKE_SOURCE_DIR}/NEWS > NEWS.old &&
+			   COMMAND touch ${CMAKE_SOURCE_DIR}/NEWS
+				   cat ${CMAKE_SOURCE_DIR}/NEWS > NEWS.old &&
 				   cat NEWS.old >> ${CMAKE_BINARY_DIR}/NEWS.update &&
 				   cat NEWS.update > NEWS
 			   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
