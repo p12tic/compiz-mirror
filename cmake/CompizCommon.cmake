@@ -153,9 +153,11 @@ macro (compiz_add_release_signoff)
 	add_custom_target (release-signoff)
 
 	add_custom_target (release-update-working-tree
-			   COMMAND cp NEWS ${CMAKE_SOURCE_DIR} &&
-				   cp AUTHORS ${CMAKE_SOURCE_DIR} &&
-				   cp ChangeLog ${CMAKE_SOURCE_DIR}) 
+			   COMMAND cp NEWS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/NEWS &&
+				   cp AUTHORS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/AUTHORS && 
+				   cp ChangeLog ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/ChangeLog
+			   COMMENT "Updating working tree"
+			   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}) 
 
 	if (${IS_GIT_REPO})
 		add_custom_target (release-commits
@@ -241,8 +243,8 @@ macro (compiz_add_release_signoff)
 				   COMMENT "Pushing to master"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 		add_custom_target (push-release-branch
-				   COMMAND git push origin compiz-${VERISON}-series
-				   COMMENT "Pushing to compiz-${VERISON}-series"
+				   COMMAND git push origin compiz-${VERSION}-series
+				   COMMENT "Pushing to compiz-${VERSION}-series"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 		add_custom_target (push-tag
 				   COMMAND git push origin compiz-${VERSION}
@@ -334,6 +336,7 @@ macro (compiz_add_release)
 					   COMMENT "Generating ChangeLog")
 
 			if (AUTO_NEWS_UPDATE)
+
 				add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
 						   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo '${AUTO_NEWS_UPDATE}' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
 						   COMMENT "Generating NEWS Header"
