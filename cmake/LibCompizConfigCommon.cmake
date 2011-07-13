@@ -106,7 +106,7 @@ function (compizconfig_backend bname)
 
 	set_target_properties (
 	    ${bname} PROPERTIES
-	    INSTALL_RPATH "${COMPIZCONFIG_LIBDIR}"
+	    INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib"
 	    COMPILE_FLAGS "${${_BACKEND}_CFLAGSADD}"
 	    LINK_FLAGS "${${_BACKEND}_LDFLAGSADD}"
 	)
@@ -122,7 +122,7 @@ function (compizconfig_backend bname)
 
     install (
 	TARGETS ${bname}
-	DESTINATION ${COMPIZ_DESTDIR}${COMPIZCONFIG_LIBDIR}/compizconfig/backends
+	DESTINATION ${COMPIZ_DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/compizconfig/backends
     )
 
     if (NOT _COMPIZCONFIG_INTERNAL)
