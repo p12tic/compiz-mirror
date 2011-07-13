@@ -241,8 +241,8 @@ macro (compiz_add_release_signoff)
 				   COMMENT "Pushing to master"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 		add_custom_target (push-release-branch
-				   COMMAND git push origin compiz-${VERISON}-series
-				   COMMENT "Pushing to compiz-${VERISON}-series"
+				   COMMAND git push origin compiz-${VERSION}-series
+				   COMMENT "Pushing to compiz-${VERSION}-series"
 				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 		add_custom_target (push-tag
 				   COMMAND git push origin compiz-${VERSION}
