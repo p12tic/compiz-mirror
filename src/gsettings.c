@@ -81,43 +81,6 @@ gsettings_get_schema_name (char *plugin)
     return schema_name;
 }
 
-static GSettings *
-gsettings_object_for_plugin (char *plugin)
-{
-    GSettings *settings_obj = NULL;
-    GList *l = settings_list;
-    gchar *schema_name = gsettings_get_schema_name (plugin);
-    
-
-    while (l)
-    {
-	settings_obj = (GSettings *) l->data;
-	gchar	  *name;
-
-	g_object_get (G_OBJECT (settings_obj),
-		      "schema",
-		      &name, NULL);
-
-	if (g_strcmp0 (name, schema_name) == 0)
-	{
-	    g_free (name);
-	    g_free (schema_name);
-
-	    g_object_ref (settings_obj);
-	    return settings_obj;
-	}
-
-	l = g_list_next (l);
-    }
-
-    /* No existing settings object found for this schema, create one */
-    settings_obj = g_settings_new (schema_name);
-    g_object_ref (settings_obj);
-    settings_list = g_list_append (settings_list, (void *) settings_obj);
-
-    return settings_obj;
-}
-
 static inline gchar *
 gsettings_backend_clean (char *gsettingName)
 {
@@ -155,14 +118,55 @@ gsettings_backend_clean (char *gsettingName)
                     if (!setting->parent->name || \
 			strcmp (setting->parent->name, "core") == 0) \
                         snprintf (pathName, BUFSIZE, \
-				 "%s/general/%s/options/%s", COMPIZ, \
-				 keyName, cleanSettingName); \
+				 "%s/general/%s/options/", COMPIZ, \
+				 keyName); \
                     else \
 			snprintf(pathName, BUFSIZE, \
-				 "%s/plugins/%s/%s/options/%s", COMPIZ, \
-				 setting->parent->name, keyName, cleanSettingName);
+				 "%s/plugins/%s/%s/options/", COMPIZ, \
+				 setting->parent->name, keyName);
 
 #define CLEANUP_CLEAN_SETTING_NAME
+
+
+static GSettings *
+gsettings_object_for_setting (CCSSetting *setting)
+{
+    GSettings *settings_obj = NULL;
+    GList *l = settings_list;
+    gchar *schema_name = gsettings_get_schema_name (setting->parent->name);
+
+    KEYNAME(setting->parent->context->screenNum);
+    PATHNAME;    
+
+    while (l)
+    {
+	settings_obj = (GSettings *) l->data;
+	gchar	  *name = NULL;
+
+	g_object_get (G_OBJECT (settings_obj),
+		      "schema",
+		      &name, NULL);
+	if (g_strcmp0 (name, schema_name) == 0)
+	{
+	    g_free (name);
+	    g_free (schema_name);
+
+	    g_object_ref (settings_obj);
+	    return settings_obj;
+	}
+
+	l = g_list_next (l);
+    }
+
+    /* No existing settings object found for this schema, create one */
+    
+    settings_obj = g_settings_new_with_path (schema_name, pathName);
+
+    g_object_ref (settings_obj);
+    settings_list = g_list_append (settings_list, (void *) settings_obj);
+
+    return settings_obj;
+}
 
 static const char* watchedGnomeDirectories[] = {
     METACITY,
@@ -877,7 +881,7 @@ static Bool
 readListValue (CCSSetting *setting,
 	       GConfValue *gconfValue)
 {
-    GSettings		*settings = gsettings_object_for_plugin (setting->parent->name);
+    GSettings		*settings = gsettings_object_for_setting (setting);
     gchar		*variantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
@@ -1249,7 +1253,7 @@ readIntegratedOption (CCSContext *context,
 static Bool
 readOption (CCSSetting * setting)
 {
-    GSettings  *settings = gsettings_object_for_plugin (setting->parent->name);
+    GSettings  *settings = gsettings_object_for_setting (setting);
     GVariant   *gsettingsValue = NULL;
     GConfValue *gconfValue = NULL;
     GError     *err = NULL;
@@ -1316,8 +1320,10 @@ readOption (CCSSetting * setting)
 		"Settings from this path won't be read. Try to remove "
 		"that value so that operation can continue properly.\n",
 		pathName);
-	//g_variant_unref (gsettingsValue);
-	//return FALSE;
+	CLEANUP_CLEAN_SETTING_NAME;
+	g_object_unref (settings);
+	g_variant_unref (gsettingsValue);
+	return FALSE;
     }
 
     switch (setting->type)
@@ -1453,7 +1459,7 @@ static void
 writeListValue (CCSSetting *setting,
 		char       *pathName)
 {
-    GSettings  		*settings = gsettings_object_for_plugin (setting->parent->name);
+    GSettings  		*settings = gsettings_object_for_setting (setting);
     GVariant 		*value;
     GSList              *valueList = NULL;
     GConfValueType      valueType;
@@ -1843,7 +1849,7 @@ writeIntegratedOption (CCSContext *context,
 static void
 resetOptionToDefault (CCSSetting * setting)
 {
-    GSettings  *settings = gsettings_object_for_plugin (setting->parent->name);
+    GSettings  *settings = gsettings_object_for_setting (setting);
   
     CLEAN_SETTING_NAME;
     KEYNAME (setting->parent->context->screenNum);
@@ -1859,7 +1865,7 @@ resetOptionToDefault (CCSSetting * setting)
 static void
 writeOption (CCSSetting * setting)
 {
-    GSettings  *settings = gsettings_object_for_plugin (setting->parent->name);
+    GSettings  *settings = gsettings_object_for_setting (setting);
     CLEAN_SETTING_NAME;
     KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
@@ -1872,7 +1878,6 @@ writeOption (CCSSetting * setting)
 	    if (ccsGetString (setting, &value))
 	    {
 		g_settings_set (settings, cleanSettingName, "s", value, NULL);
-		//gconf_client_set_string (client, pathName, value, NULL);
 	    }
 	}
 	break;
@@ -1882,7 +1887,6 @@ writeOption (CCSSetting * setting)
 	    if (ccsGetMatch (setting, &value))
 	    {
 		g_settings_set (settings, cleanSettingName, "s", value, NULL);
-		//gconf_client_set_string (client, pathName, value, NULL);
 	    }
 	}
     case TypeFloat:
@@ -1891,7 +1895,6 @@ writeOption (CCSSetting * setting)
 	    if (ccsGetFloat (setting, &value))
 	    {
 		g_settings_set (settings, cleanSettingName, "d", (double) value, NULL);
-		//gconf_client_set_float (client, pathName, value, NULL);
 	    }
 	}
 	break;
@@ -1901,7 +1904,6 @@ writeOption (CCSSetting * setting)
 	    if (ccsGetInt (setting, &value))
 	    {
 		g_settings_set (settings, cleanSettingName, "i", value, NULL);
-		//gconf_client_set_int (client, pathName, value, NULL);
 	    }
 	}
 	break;
@@ -1911,7 +1913,6 @@ writeOption (CCSSetting * setting)
 	    if (ccsGetBool (setting, &value))
 	    {
 		g_settings_set (settings, cleanSettingName, "b", value, NULL);
-		gconf_client_set_bool (client, pathName, value, NULL);
 	    }
 	}
 	break;
@@ -1928,7 +1929,6 @@ writeOption (CCSSetting * setting)
 		break;
 
 	    g_settings_set (settings, cleanSettingName, "s", value, NULL);
-	    //gconf_client_set_string (client, pathName, colString, NULL);
 	    free (colString);
 	}
 	break;
@@ -1945,7 +1945,6 @@ writeOption (CCSSetting * setting)
 		break;
 
 	    g_settings_set (settings, cleanSettingName, "s", keyString, NULL);
-	    //gconf_client_set_string (client, pathName, keyString, NULL);
 	    free (keyString);
 	}
 	break;
@@ -1962,7 +1961,6 @@ writeOption (CCSSetting * setting)
 		break;
 
 	    g_settings_set (settings, cleanSettingName, "s", buttonString, NULL);
-	    //gconf_client_set_string (client, pathName, buttonString, NULL);
 	    free (buttonString);
 	}
 	break;
@@ -1979,7 +1977,6 @@ writeOption (CCSSetting * setting)
 		break;
 
 	    g_settings_set (settings, cleanSettingName, "s", edgeString, NULL);
-	    //gconf_client_set_string (client, pathName, edgeString, NULL);
 	    free (edgeString);
 	}
 	break;
@@ -1989,7 +1986,6 @@ writeOption (CCSSetting * setting)
 	    if (ccsGetBell (setting, &value))
 	    {
 		g_settings_set (settings, cleanSettingName, "s", value, NULL);
-		//gconf_client_set_bool (client, pathName, value, NULL);
 	    }
 	}
 	break;
