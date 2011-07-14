@@ -132,7 +132,6 @@ gsettings_backend_unclean (char *gsettingName)
 {
     gchar *clean        = NULL;
     gchar **delimited   = NULL;
-    guint i		= 0;
 
     /* Replace dashes with underscores */
     delimited = g_strsplit (gsettingName, "-", 0);
@@ -632,7 +631,6 @@ valueChanged (GSettings   *settings,
     char	 *path;
     char         *token;
     int          index;
-    Bool         isScreen;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
@@ -661,7 +659,6 @@ valueChanged (GSettings   *settings,
     if (!token)
 	return;
 
-    isScreen = TRUE;
     sscanf (token, "screen%d", &screenNum);
 
     uncleanKeyName = gsettings_backend_unclean (keyName);
@@ -761,10 +758,6 @@ gnomeGConfValueChanged (GConfClient *client,
 	    {
 		for (i = 0; i < 1; i++)
 		{
-		    unsigned int screen;
-
-		    screen = 0;
-
 		    setting = ccsFindSetting (plugin, (char*) opt->settingName);
 
 		    if (setting)
@@ -831,7 +824,6 @@ readListValue (CCSSetting *setting,
     gchar		*variantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
-    GSList              *valueList = NULL;
     GVariant		*value;
     GVariantIter	*iter;
 
@@ -1206,8 +1198,6 @@ readOption (CCSSetting * setting)
 {
     GSettings  *settings = gsettings_object_for_setting (setting);
     GVariant   *gsettingsValue = NULL;
-    GConfValue *gconfValue = NULL;
-    GError     *err = NULL;
     Bool       ret = FALSE;
     Bool       valid = TRUE;
 
@@ -1229,14 +1219,6 @@ readOption (CCSSetting * setting)
 
     /* first check if the key is set */
     gsettingsValue = g_settings_get_value (settings, cleanSettingName);
-    if (err)
-    {
-	g_error_free (err);
-	CLEANUP_CLEAN_SETTING_NAME;
-	g_object_unref (settings);
-	printf ("GSettings Backend: Warning: key name %s for path %s is not set!\n", cleanSettingName, pathName);
-	return FALSE;
-    }
 
     switch (setting->type)
     {
@@ -1412,18 +1394,14 @@ writeListValue (CCSSetting *setting,
 {
     GSettings  		*settings = gsettings_object_for_setting (setting);
     GVariant 		*value;
-    GSList              *valueList = NULL;
-    GConfValueType      valueType;
-    Bool                freeItems = FALSE;
     gchar		*variantType = NULL;
     CCSSettingValueList list;
-    gpointer            data;
 
     CLEAN_SETTING_NAME;
     
     if (!ccsGetList (setting, &list))
 	return;
-    
+
     switch (setting->info.forList.listType)
     {
     case TypeBool:
@@ -1437,7 +1415,6 @@ writeListValue (CCSSetting *setting,
 	    }
 	    value = g_variant_new ("ab", builder);
 	    g_variant_builder_unref (builder);
-	    valueType = GCONF_VALUE_BOOL;
 	}
 	break;
     case TypeInt:
@@ -1451,13 +1428,11 @@ writeListValue (CCSSetting *setting,
     	    }
     	    value = g_variant_new ("ai", builder);
 	    g_variant_builder_unref (builder);
-	    valueType = GCONF_VALUE_INT;
 	}
 	break;
     case TypeFloat:
 	{
 	    variantType = "ad";
-	    gdouble *item;
 	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ad"));
 	    while (list)
 	    {
@@ -1466,7 +1441,6 @@ writeListValue (CCSSetting *setting,
 	    }
 	    value = g_variant_new ("ad", builder);
 	    g_variant_builder_unref (builder);
-	    valueType = GCONF_VALUE_FLOAT;
 	}
 	break;
     case TypeString:
@@ -1480,7 +1454,6 @@ writeListValue (CCSSetting *setting,
 	    }
 	    value = g_variant_new ("as", builder);
 	    g_variant_builder_unref (builder);
-	    valueType = GCONF_VALUE_STRING;
 	}
 	break;
     case TypeMatch:
@@ -1494,7 +1467,6 @@ writeListValue (CCSSetting *setting,
 	    }
 	    value = g_variant_new ("as", builder);
 	    g_variant_builder_unref (builder);
-	    valueType = GCONF_VALUE_STRING;
 	}
 	break;
     case TypeColor:
@@ -1505,31 +1477,25 @@ writeListValue (CCSSetting *setting,
 	    while (list)
 	    {
 		item = ccsColorToString (&list->data->value.asColor);
-		g_variant_builder_add (builder, "s", list->data->value.asColor);
+		g_variant_builder_add (builder, "s", item);
 		list = list->next;
 	    }
 	    value = g_variant_new ("as", builder);
 	    g_variant_builder_unref (builder);
-	    freeItems = TRUE;
-	    valueType = GCONF_VALUE_STRING;
 	}
 	break;
     default:
 	printf("GSettings backend: attempt to write unsupported list type %d!\n",
 	       setting->info.forList.listType);
-	valueType = GCONF_VALUE_INVALID;
 	variantType = NULL;
 	break;
     }
 
-    if (valueType != GCONF_VALUE_INVALID &&
-	variantType != NULL)
+    if (variantType != NULL)
     {
 	g_settings_set_value (settings, cleanSettingName, value);
 	g_variant_unref (value);
     }
-    if (valueList)
-	g_slist_free (valueList);
     
     CLEANUP_CLEAN_SETTING_NAME;
     
@@ -1804,8 +1770,7 @@ resetOptionToDefault (CCSSetting * setting)
     KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
 
-    gconf_client_recursive_unset (client, pathName, 0, NULL);
-    gconf_client_suggest_sync (client, NULL);
+    g_settings_reset (settings, cleanSettingName);
 
     g_object_unref (settings);
     CLEANUP_CLEAN_SETTING_NAME;
@@ -2046,6 +2011,7 @@ initBackend (CCSContext * context)
 {
     const char *profilePath = "/org/freedesktop/compizconfig/profile/";
     char       *currentProfilePath;
+
     g_type_init ();
 
     compizconfig_settings = g_settings_new ("org.freedesktop.compizconfig");
