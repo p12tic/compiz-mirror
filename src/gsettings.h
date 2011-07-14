@@ -72,8 +72,6 @@
 
 #define NUM_WATCHED_DIRS 3
 
-#define CLEAN_SETTING_NAME 	char *cleanSettingName = translateKeyForGSettings (setting->name)
-
 #define KEYNAME(sn)     char keyName[BUFSIZE]; \
                     snprintf (keyName, BUFSIZE, "screen%i", sn);
 
@@ -87,8 +85,6 @@
 			snprintf(pathName, BUFSIZE, \
 				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
 				 setting->parent->name, keyName);
-
-#define CLEANUP_CLEAN_SETTING_NAME free (cleanSettingName);
 
 #define _GNU_SOURCE
 

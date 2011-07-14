@@ -298,7 +298,7 @@ readListValue (CCSSetting *setting)
     GVariant		*value;
     GVariantIter	*iter;
 
-    CLEAN_SETTING_NAME;
+    char *cleanSettingName = translateKeyForGSettings (setting->name);
     
     switch (setting->info.forList.listType)
     {
@@ -432,7 +432,7 @@ readListValue (CCSSetting *setting)
 	break;
     }
 
-    CLEANUP_CLEAN_SETTING_NAME;
+    free (cleanSettingName);
     g_object_unref (settings);
     free (variantType);
 
@@ -478,7 +478,7 @@ readOption (CCSSetting * setting)
 	return FALSE;
     }
 
-    CLEAN_SETTING_NAME;
+    char *cleanSettingName = translateKeyForGSettings (setting->name);
     KEYNAME(setting->parent->context->screenNum);
     PATHNAME;
 
@@ -518,7 +518,7 @@ readOption (CCSSetting * setting)
 		"Settings from this path won't be read. Try to remove "
 		"that value so that operation can continue properly.\n",
 		pathName);
-	CLEANUP_CLEAN_SETTING_NAME;
+	free (cleanSettingName);
 	g_object_unref (settings);
 	g_variant_unref (gsettingsValue);
 	return FALSE;
@@ -646,7 +646,7 @@ readOption (CCSSetting * setting)
 	break;
     }
 
-    CLEANUP_CLEAN_SETTING_NAME;
+    free (cleanSettingName);
     g_object_unref (settings);
     g_variant_unref (gsettingsValue);
 
@@ -662,7 +662,7 @@ writeListValue (CCSSetting *setting,
     gchar		*variantType = NULL;
     CCSSettingValueList list;
 
-    CLEAN_SETTING_NAME;
+    char *cleanSettingName = translateKeyForGSettings (setting->name);
     
     if (!ccsGetList (setting, &list))
 	return;
@@ -762,7 +762,7 @@ writeListValue (CCSSetting *setting,
 	g_variant_unref (value);
     }
     
-    CLEANUP_CLEAN_SETTING_NAME;
+    free (cleanSettingName);
     
     g_object_unref (settings);
 }
@@ -784,21 +784,21 @@ resetOptionToDefault (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
   
-    CLEAN_SETTING_NAME;
+    char *cleanSettingName = translateKeyForGSettings (setting->name);
     KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
 
     g_settings_reset (settings, cleanSettingName);
 
     g_object_unref (settings);
-    CLEANUP_CLEAN_SETTING_NAME;
+    free (cleanSettingName);
 }
 
 void
 writeOption (CCSSetting * setting)
 {
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
-    CLEAN_SETTING_NAME;
+    char *cleanSettingName = translateKeyForGSettings (setting->name);
     KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
 
@@ -931,7 +931,7 @@ writeOption (CCSSetting * setting)
     }
 
     g_object_unref (settings);
-    CLEANUP_CLEAN_SETTING_NAME;
+    free (cleanSettingName);
 }
 
 static void
