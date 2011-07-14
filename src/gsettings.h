@@ -75,16 +75,16 @@
 #define KEYNAME(sn)     char keyName[BUFSIZE]; \
                     snprintf (keyName, BUFSIZE, "screen%i", sn);
 
-#define PATHNAME    char pathName[BUFSIZE]; \
-                    if (!setting->parent->name || \
-			strcmp (setting->parent->name, "core") == 0) \
+#define PATHNAME(p,k)    char pathName[BUFSIZE]; \
+                    if (!p || \
+			strcmp (p, "core") == 0) \
                         snprintf (pathName, BUFSIZE, \
 				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
-				 setting->parent->name, keyName); \
+				 p, k); \
                     else \
 			snprintf(pathName, BUFSIZE, \
 				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
-				 setting->parent->name, keyName);
+				 p, k);
 
 #define _GNU_SOURCE
 

@@ -199,7 +199,7 @@ static GSettings *
 getSettingsObjectForCCSSetting (CCSSetting *setting)
 {
     KEYNAME(setting->parent->context->screenNum);
-    PATHNAME;
+    PATHNAME (setting->parent->name, keyName);
 
     return getSettingsObjectForPluginWithPath (setting->parent->name, pathName, setting->parent->context);
 }
@@ -480,7 +480,7 @@ readOption (CCSSetting * setting)
 
     char *cleanSettingName = translateKeyForGSettings (setting->name);
     KEYNAME(setting->parent->context->screenNum);
-    PATHNAME;
+    PATHNAME (setting->parent->name, keyName);
 
     /* first check if the key is set */
     gsettingsValue = g_settings_get_value (settings, cleanSettingName);
@@ -786,7 +786,7 @@ resetOptionToDefault (CCSSetting * setting)
   
     char *cleanSettingName = translateKeyForGSettings (setting->name);
     KEYNAME (setting->parent->context->screenNum);
-    PATHNAME;
+    PATHNAME (setting->parent->name, keyName);
 
     g_settings_reset (settings, cleanSettingName);
 
@@ -800,7 +800,7 @@ writeOption (CCSSetting * setting)
     GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     char *cleanSettingName = translateKeyForGSettings (setting->name);
     KEYNAME (setting->parent->context->screenNum);
-    PATHNAME;
+    PATHNAME (setting->parent->name, keyName);
 
     switch (setting->type)
     {
@@ -1185,19 +1185,9 @@ deleteProfile (CCSContext *context,
     while (g_variant_iter_loop (iter, "s", &plugin))
     {
 	GSettings *settings;
-	char      pathName[BUFSIZE]; 
 
-
-	/* FIXME: We should not be hardcoding to screen0 in this case */
-        if (!plugin || 
-	    strcmp (plugin, "core") == 0) \
-            snprintf (pathName, BUFSIZE, 
-		      "%s/%s/plugins/%s/%s/options/", COMPIZ, profile, plugin,
-		      "screen0"); 
-	else 
-	    snprintf (pathName, BUFSIZE, 
-		      "%s/%s/plugins/%s/%s/options/", COMPIZ, profile, plugin,
-		      "screen0");
+	KEYNAME (context->screenNum);
+	PATHNAME (plugin, keyName);
 
 	settings = getSettingsObjectForPluginWithPath (plugin, pathName, context);
 
