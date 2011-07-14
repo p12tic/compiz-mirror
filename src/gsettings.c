@@ -1948,6 +1948,22 @@ updateCurrentProfileName (char *profile)
     g_settings_set (compizconfig_settings, "current-profile", "s", profile, NULL);
 }
 
+static gboolean
+updateProfile (CCSContext *context)
+{
+    char *profile = strdup (ccsGetProfile (context));
+
+    if (!profile || !strlen (profile))
+	profile = strdup (DEFAULTPROF);
+
+    if (g_strcmp0 (profile, currentProfile))
+	updateCurrentProfileName (profile);
+
+    free (profile);
+
+    return TRUE;
+}
+
 static char*
 getCurrentProfileName (void)
 {
@@ -2029,7 +2045,7 @@ finiBackend (CCSContext * context)
 static Bool
 readInit (CCSContext * context)
 {
-    return TRUE;
+    return updateProfile (context);
 }
 
 static void
@@ -2054,7 +2070,7 @@ readSetting (CCSContext *context,
 static Bool
 writeInit (CCSContext * context)
 {
-    return TRUE;
+    return updateProfile (context);
 }
 
 static void
@@ -2100,14 +2116,14 @@ static CCSStringList
 getExistingProfiles (CCSContext *context)
 {
     GVariant      *value;
-    GVariant      *profile;
+    char	  *profile;
     GVariantIter  iter;
     CCSStringList ret = NULL;
 
     value = g_settings_get_value (compizconfig_settings,  "existing-profiles");
     g_variant_iter_init (&iter, value);
     while (g_variant_iter_loop (&iter, "s", &profile))
-	ret = ccsStringListAppend (ret, strdup (g_variant_get_string (profile, NULL)));
+	ret = ccsStringListAppend (ret, strdup (profile));
 
     g_variant_unref (value);
 
@@ -2128,7 +2144,7 @@ deleteProfile (CCSContext *context,
     plugins = g_settings_get_value (current_profile_settings, "plugins-with-set-values");
     profiles = g_settings_get_value (compizconfig_settings, "existing-profiles");
 
-    g_variant_iter_new (plugins);
+    iter = g_variant_iter_new (plugins);
     while (g_variant_iter_loop (iter, "s", &plugin))
     {
 	GSettings *settings;
@@ -2185,6 +2201,8 @@ deleteProfile (CCSContext *context,
     g_variant_unref (new_profiles);
     g_variant_builder_unref (new_profiles_builder);
 
+    updateProfile (context);
+
     return TRUE;
 }
 
@@ -2205,8 +2223,8 @@ static CCSBackendVTable gconfVTable = {
     0,
     getSettingIsIntegrated,
     getSettingIsReadOnly,
-    0,
-    0
+    getExistingProfiles,
+    deleteProfile
 };
 
 CCSBackendVTable *
