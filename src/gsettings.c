@@ -66,13 +66,15 @@
 
 static GConfClient *client = NULL;
 static GList	   *settings_list = NULL;
+static GSettings   *compizconfig_settings = NULL;
+static GSettings   *current_profile_settings = NULL;
 static GConfEngine *conf = NULL;
 static guint compizNotifyId;
 static guint gnomeNotifyIds[NUM_WATCHED_DIRS];
 static char *currentProfile = NULL;
 
 static gchar *
-gsettings_get_schema_name (char *plugin)
+gsettings_get_schema_name (const char *plugin)
 {
     gchar       *schema_name =  NULL;
 
@@ -118,25 +120,27 @@ gsettings_backend_clean (char *gsettingName)
                     if (!setting->parent->name || \
 			strcmp (setting->parent->name, "core") == 0) \
                         snprintf (pathName, BUFSIZE, \
-				 "%s/general/%s/options/", COMPIZ, \
-				 keyName); \
+				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
+				 setting->parent->name, keyName); \
                     else \
 			snprintf(pathName, BUFSIZE, \
-				 "%s/plugins/%s/%s/options/", COMPIZ, \
+				 "%s/%s/plugins/%s/%s/options/", COMPIZ, currentProfile, \
 				 setting->parent->name, keyName);
 
-#define CLEANUP_CLEAN_SETTING_NAME
-
+#define CLEANUP_CLEAN_SETTING_NAME free (cleanSettingName);
 
 static GSettings *
-gsettings_object_for_setting (CCSSetting *setting)
+gsettings_object_for_plugin_path (const char *plugin, const char *path)
 {
     GSettings *settings_obj = NULL;
     GList *l = settings_list;
-    gchar *schema_name = gsettings_get_schema_name (setting->parent->name);
-
-    KEYNAME(setting->parent->context->screenNum);
-    PATHNAME;    
+    gchar *schema_name = gsettings_get_schema_name (plugin);
+    GVariant        *written_plugins;
+    char	    *plug;
+    GVariant        *new_written_plugins;
+    GVariantBuilder *new_written_plugins_builder;
+    GVariantIter    *iter;
+    gboolean	    found = FALSE;
 
     while (l)
     {
@@ -160,12 +164,50 @@ gsettings_object_for_setting (CCSSetting *setting)
 
     /* No existing settings object found for this schema, create one */
     
-    settings_obj = g_settings_new_with_path (schema_name, pathName);
+    settings_obj = g_settings_new_with_path (schema_name, path);
 
     g_object_ref (settings_obj);
     settings_list = g_list_append (settings_list, (void *) settings_obj);
 
+    /* Also write the plugin name to the list of modified plugins so
+     * that when we delete the profile the keys for that profile are also
+     * unset FIXME: This could be a little more efficient, like we could
+     * store keys that have changed from their defaults ... though
+     * gsettings doesn't seem to give you a way to get all of the schemas */
+
+    written_plugins = g_settings_get_value (current_profile_settings, "plugins-with-set-keys");
+
+    new_written_plugins_builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+
+    iter = g_variant_iter_new (written_plugins);
+    while (g_variant_iter_loop (iter, "s", &plug))
+    {
+	g_variant_builder_add (new_written_plugins_builder, "s", plug);
+
+	if (!found)
+	    found = (g_strcmp0 (plug, plugin) == 0);
+    }
+
+    if (!found)
+	g_variant_builder_add (new_written_plugins_builder, "s", plugin);
+
+    new_written_plugins = g_variant_new ("as", new_written_plugins_builder);
+    g_settings_set_value (current_profile_settings, "plugins-with-set-keys", new_written_plugins);
+
+    g_variant_iter_free (iter);
+    g_variant_unref (new_written_plugins);
+    g_variant_builder_unref (new_written_plugins_builder);
+
     return settings_obj;
+}
+
+static GSettings *
+gsettings_object_for_setting (CCSSetting *setting)
+{
+    KEYNAME(setting->parent->context->screenNum);
+    PATHNAME;
+
+    return gsettings_object_for_plugin_path (setting->parent->name, pathName);
 }
 
 static const char* watchedGnomeDirectories[] = {
@@ -738,143 +780,6 @@ finiClient (void)
 
     g_object_unref (client);
     client = NULL;
-}
-
-static void
-copyGconfValues (GConfEngine *conf,
-		 const gchar *from,
-		 const gchar *to,
-		 Bool        associate,
-		 const gchar *schemaPath)
-{
-    GSList *values, *tmp;
-    GError *err = NULL;
-
-    values = gconf_engine_all_entries (conf, from, &err);
-    tmp = values;
-
-    while (tmp)
-    {
-	GConfEntry *entry = tmp->data;
-	GConfValue *value;
-	const char *key = gconf_entry_get_key (entry);
-	char       *name, *newKey, *newSchema = NULL;
-
-	name = strrchr (key, '/');
-	if (!name)
-	    continue;
-
-	if (to)
-	{
-	    asprintf (&newKey, "%s/%s", to, name + 1);
-
-	    if (associate && schemaPath)
-		asprintf (&newSchema, "%s/%s", schemaPath, name + 1);
-
-	    if (newKey && newSchema)
-		gconf_engine_associate_schema (conf, newKey, newSchema, NULL);
-
-	    if (newKey)
-	    {
-		value = gconf_engine_get_without_default (conf, key, NULL);
-		if (value)
-		{
-		    gconf_engine_set (conf, newKey, value, NULL);
-		    gconf_value_free (value);
-		}
-	    }
-
-	    if (newSchema)
-		free (newSchema);
-	    if (newKey)
-		free (newKey);
-	}
-	else
-	{
-	    if (associate)
-		gconf_engine_associate_schema (conf, key, NULL, NULL);
-	    gconf_engine_unset (conf, key, NULL);
-	}
-
-	gconf_entry_unref (entry);
-	tmp = g_slist_next (tmp);
-    }
-
-    if (values)
-	g_slist_free (values);
-}
-
-static void
-copyGconfRecursively (GConfEngine *conf,
-		      GSList      *subdirs,
-		      const gchar *to,
-		      Bool        associate,
-		      const gchar *schemaPath)
-{
-    GSList* tmp;
-
-    tmp = subdirs;
-
-    while (tmp)
-    {
- 	gchar *path = tmp->data;
-	char  *newKey, *newSchema = NULL, *name;
-
-	name = strrchr (path, '/');
-	if (name)
-	{
-  	    if (to)
-		asprintf (&newKey, "%s/%s", to, name + 1);
-	    else
-		newKey = NULL;
-
-	    if (associate && schemaPath)
-		asprintf (&newSchema, "%s/%s", schemaPath, name + 1);
-
-	    copyGconfValues (conf, path, newKey, associate, newSchema);
-	    copyGconfRecursively (conf,
-				  gconf_engine_all_dirs (conf, path, NULL),
-				  newKey, associate, newSchema);
-
-	    if (newSchema)
-		free (newSchema);
-
-	    if (newKey)
-		free (newKey);
-
-	    if (!to)
-		gconf_engine_remove_dir (conf, path, NULL);
-	}
-
-	g_free (path);
-	tmp = g_slist_next (tmp);
-    }
-
-    if (subdirs)
-	g_slist_free (subdirs);
-}
-
-static void
-copyGconfTree (CCSContext  *context,
-	       const gchar *from,
-	       const gchar *to,
-	       Bool        associate,
-	       const gchar *schemaPath)
-{
-    GSList* subdirs;
-
-    /* we aren't allowed to have an open GConfClient object while
-       using GConfEngine, so shut it down and open it again afterwards */
-    finiClient ();
-
-    subdirs = gconf_engine_all_dirs (conf, from, NULL);
-    gconf_engine_suggest_sync (conf, NULL);
-
-    copyGconfRecursively (conf, subdirs, to, associate, schemaPath);
-
-    gconf_engine_suggest_sync (conf, NULL);
-
-    initClient (context);
 }
 
 static Bool
@@ -1482,8 +1387,6 @@ writeListValue (CCSSetting *setting,
 	    while (list)
 	    {
 		g_variant_builder_add (builder, "b", list->data->value.asBool);
-		//data = GINT_TO_POINTER (list->data->value.asBool);
-		//valueList = g_slist_append (valueList, data);
 		list = list->next;
 	    }
 	    value = g_variant_new ("ab", builder);
@@ -1498,8 +1401,6 @@ writeListValue (CCSSetting *setting,
 	    while (list)
 	    {
 		g_variant_builder_add (builder, "i", list->data->value.asInt);
-		//data = GINT_TO_POINTER (list->data->value.asInt);
-		//valueList = g_slist_append(valueList, data);
 		list = list->next;
     	    }
     	    value = g_variant_new ("ai", builder);
@@ -1543,8 +1444,6 @@ writeListValue (CCSSetting *setting,
 	    while (list)
 	    {
 		g_variant_builder_add (builder, "s", list->data->value.asMatch);
-		//valueList = g_slist_append(valueList,
-		//   			   list->data->value.asMatch);
 		list = list->next;
 	    }
 	    value = g_variant_new ("as", builder);
@@ -1561,7 +1460,6 @@ writeListValue (CCSSetting *setting,
 	    {
 		item = ccsColorToString (&list->data->value.asColor);
 		g_variant_builder_add (builder, "s", list->data->value.asColor);
-		//valueList = g_slist_append (valueList, item);
 		list = list->next;
 	    }
 	    value = g_variant_new ("as", builder);
@@ -2005,112 +1903,65 @@ writeOption (CCSSetting * setting)
 static void
 updateCurrentProfileName (char *profile)
 {
-/*
-    GConfSchema *schema;
-    GConfValue  *value;
-    
-    schema = gconf_schema_new ();
-    if (!schema)
-	return;
+    GVariant        *profiles;
+    char	    *prof;
+    char	    *profilePath = "/org/freedesktop/compizconfig/profile/";
+    char	    *currentProfilePath;
+    GVariant        *new_profiles;
+    GVariantBuilder *new_profiles_builder;
+    GVariantIter    *iter;
+    gboolean        found = FALSE;
 
-    value = gconf_value_new (GCONF_VALUE_STRING);
-    if (!value)
+    profiles = g_settings_get_value (compizconfig_settings, "existing-profiles");
+
+    new_profiles_builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+
+    iter = g_variant_iter_new (profiles);
+    while (g_variant_iter_loop (iter, "s", &prof))
     {
-	gconf_schema_free (schema);
-	return;
+	g_variant_builder_add (new_profiles_builder, "s", prof);
+
+	if (!found)
+	    found = (g_strcmp0 (prof, profile) == 0);
     }
 
-    gconf_schema_set_type (schema, GCONF_VALUE_STRING);
-    gconf_schema_set_locale (schema, "C");
-    gconf_schema_set_short_desc (schema, "Current profile");
-    gconf_schema_set_long_desc (schema, "Current profile of gconf backend");
-    gconf_schema_set_owner (schema, "compizconfig-1");
-    gconf_value_set_string (value, profile);
-    gconf_schema_set_default_value (schema, value);
+    if (!found)
+	g_variant_builder_add (new_profiles_builder, "s", profile);
 
-    gconf_client_set_schema (client, COMPIZCONFIG "/current_profile",
-			     schema, NULL);
+    new_profiles = g_variant_new ("as", new_profiles_builder);
+    g_settings_set_value (compizconfig_settings, "existing-profiles", new_profiles);
 
-    gconf_schema_free (schema);
-    gconf_value_free (value);
-*/
+    g_variant_iter_free (iter);
+    g_variant_unref (new_profiles);
+    g_variant_builder_unref (new_profiles_builder);
+
+    /* Change the current profile and current profile settings */
+    free (currentProfile);
+    g_object_unref (current_profile_settings);
+
+    currentProfile = strdup (profile);
+    currentProfilePath = g_strconcat (profilePath, profile, "/", NULL);
+    current_profile_settings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", profilePath);
+
+    g_free (currentProfilePath);
+
+    g_settings_set (compizconfig_settings, "current-profile", "s", profile, NULL);
 }
 
 static char*
 getCurrentProfileName (void)
 {
-    GConfSchema *schema = NULL;
-/*
-    schema = gconf_client_get_schema (client,
-    				      COMPIZCONFIG "/current_profile", NULL);
+    GVariant *value;
+    char     *ret = NULL;
 
-    if (schema)
-    {
-	GConfValue *value;
-	char       *ret = NULL;
+    value = g_settings_get_value (compizconfig_settings, "current-profile");
 
-	value = gconf_schema_get_default_value (schema);
-	if (value)
-	    ret = strdup (gconf_value_get_string (value));
-	gconf_schema_free (schema);
+    if (value)
+	ret = strdup (g_variant_get_string (value, NULL));
+    else
+	ret = strdup (DEFAULTPROF);
 
-	return ret;
-    }
-*/
-    return strdup (DEFAULTPROF);
-}
-
-static Bool
-checkProfile (CCSContext *context)
-{
-    char *profile, *lastProfile;
-
-    lastProfile = currentProfile;
-
-    profile = ccsGetProfile (context);
-    //if (!profile || !strlen (profile))
-	currentProfile = strdup (DEFAULTPROF);
-    //else
-	//currentProfile = strdup (profile);
-
-    if (!lastProfile || strcmp (lastProfile, currentProfile) != 0)
-    {
-	char *pathName;
-
-	if (lastProfile)
-	{
-	    /* copy /apps/compiz-1 tree to profile path */
-	    asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
-	    if (pathName)
-	    {
-		copyGconfTree (context, COMPIZ, pathName,
-			       TRUE, "/schemas" COMPIZ);
-		free (pathName);
-	    }
-	}
-
-	/* reset /apps/compiz-1 tree */
-	gconf_client_recursive_unset (client, COMPIZ, 0, NULL);
-
-	/* copy new profile tree to /apps/compiz-1 */
-	asprintf (&pathName, "%s/%s", PROFILEPATH, currentProfile);
-	if (pathName)
-	{
-    	    copyGconfTree (context, pathName, COMPIZ, FALSE, NULL);
-
-    	    /* delete the new profile tree in /apps/compizconfig-1
-    	       to avoid user modification in the wrong tree */
-    	    copyGconfTree (context, pathName, NULL, TRUE, NULL);
-    	    free (pathName);
-	}
-
-	/* update current profile name */
-	updateCurrentProfileName (currentProfile);
-    }
-
-    free (lastProfile);
-
-    return TRUE;
+    return ret;
 }
 
 static void
@@ -2126,12 +1977,20 @@ processEvents (unsigned int flags)
 static Bool
 initBackend (CCSContext * context)
 {
+    const char *profilePath = "/org/freedesktop/compizconfig/profile/";
+    char       *currentProfilePath;
     g_type_init ();
+
+    compizconfig_settings = g_settings_new ("org.freedesktop.compizconfig");
 
     conf = gconf_engine_get_default ();
     initClient (context);
 
-    currentProfile = strdup (DEFAULTPROF);//getCurrentProfileName ();
+    currentProfile = getCurrentProfileName ();
+    currentProfilePath = g_strconcat (profilePath, currentProfile, "/", NULL);
+    current_profile_settings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", currentProfilePath);
+
+    g_free (currentProfilePath);
 
     return TRUE;
 }
@@ -2140,7 +1999,7 @@ static Bool
 finiBackend (CCSContext * context)
 {
     GList *l = settings_list;
-  
+
     processEvents (0);
 
     gconf_client_clear_cache (client);
@@ -2160,7 +2019,9 @@ finiBackend (CCSContext * context)
 	g_object_unref (G_OBJECT (l->data));
 	l = g_list_next (l);
     }
-    
+
+    g_object_unref (G_OBJECT (compizconfig_settings));
+
     processEvents (0);
     return TRUE;
 }
@@ -2168,7 +2029,7 @@ finiBackend (CCSContext * context)
 static Bool
 readInit (CCSContext * context)
 {
-    return checkProfile (context);
+    return TRUE;
 }
 
 static void
@@ -2193,7 +2054,7 @@ readSetting (CCSContext *context,
 static Bool
 writeInit (CCSContext * context)
 {
-    return checkProfile (context);
+    return TRUE;
 }
 
 static void
@@ -2238,29 +2099,17 @@ getSettingIsReadOnly (CCSSetting * setting)
 static CCSStringList
 getExistingProfiles (CCSContext *context)
 {
-    GSList        *data, *tmp;
+    GVariant      *value;
+    GVariant      *profile;
+    GVariantIter  iter;
     CCSStringList ret = NULL;
-    char          *name;
 
-    gconf_client_suggest_sync (client, NULL);
-    data = gconf_client_all_dirs (client, PROFILEPATH, NULL);
+    value = g_settings_get_value (compizconfig_settings,  "existing-profiles");
+    g_variant_iter_init (&iter, value);
+    while (g_variant_iter_loop (&iter, "s", &profile))
+	ret = ccsStringListAppend (ret, strdup (g_variant_get_string (profile, NULL)));
 
-    for (tmp = data; tmp; tmp = g_slist_next (tmp))
-    {
-	name = strrchr (tmp->data, '/');
-	if (name && (strcmp (name + 1, DEFAULTPROF) != 0))
-	    ret = ccsStringListAppend (ret, strdup (name + 1));
-
-	g_free (tmp->data);
-    }
-
-    g_slist_free (data);
-
-    name = getCurrentProfileName ();
-    if (strcmp (name, DEFAULTPROF) != 0)
-	ret = ccsStringListAppend (ret, name);
-    else
-	free (name);
+    g_variant_unref (value);
 
     return ret;
 }
@@ -2269,23 +2118,74 @@ static Bool
 deleteProfile (CCSContext *context,
 	       char       *profile)
 {
-    char     path[BUFSIZE];
-    gboolean status = FALSE;
+    GVariant        *plugins;
+    GVariant        *profiles;
+    GVariant        *new_profiles;
+    GVariantBuilder *new_profiles_builder;
+    char            *plugin, *prof;
+    GVariantIter    *iter;
 
-    checkProfile (context);
+    plugins = g_settings_get_value (current_profile_settings, "plugins-with-set-values");
+    profiles = g_settings_get_value (compizconfig_settings, "existing-profiles");
 
-    snprintf (path, BUFSIZE, "%s/%s", PROFILEPATH, profile);
-
-    if (gconf_client_dir_exists (client, path, NULL))
+    g_variant_iter_new (plugins);
+    while (g_variant_iter_loop (iter, "s", &plugin))
     {
-	status =
-	    gconf_client_recursive_unset (client, path,
-	   				  GCONF_UNSET_INCLUDING_SCHEMA_NAMES,
-					  NULL);
-	gconf_client_suggest_sync (client, NULL);
+	GSettings *settings;
+	char      pathName[BUFSIZE]; 
+
+
+	/* FIXME: We should not be hardcoding to screen0 in this case */
+        if (!plugin || 
+	    strcmp (plugin, "core") == 0) \
+            snprintf (pathName, BUFSIZE, 
+		      "%s/%s/plugins/%s/%s/options/", COMPIZ, profile, plugin,
+		      "screen0"); 
+	else 
+	    snprintf (pathName, BUFSIZE, 
+		      "%s/%s/plugins/%s/%s/options/", COMPIZ, profile, plugin,
+		      "screen0");
+
+	settings = gsettings_object_for_plugin_path (plugin, pathName);
+
+	/* The GSettings documentation says not to use this API
+	 * because we should know our own schema ... though really
+	 * we don't because we autogenerate schemas ... */
+	if (settings)
+	{
+	    char **keys = g_settings_list_keys (settings);
+	    char **key_ptr;
+
+	    /* Unset all the keys */
+	    for (key_ptr = keys; key_ptr; key_ptr++)
+		g_settings_reset (settings, *key_ptr);
+
+	    g_strfreev (keys);
+
+	    g_object_unref (settings);
+	}
     }
 
-    return status;
+    /* Remove the profile from existing-profiles */
+    g_variant_iter_free (iter);
+    g_settings_reset (current_profile_settings, "plugins-with-set-values");
+
+    iter = g_variant_iter_new (profiles);
+    new_profiles_builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+
+    while (g_variant_iter_loop (iter, "s", &prof))
+    {
+	if (g_strcmp0 (prof, profile))
+	    g_variant_builder_add (new_profiles_builder, "s", prof);
+    }
+
+    new_profiles = g_variant_new ("as", new_profiles_builder);
+    g_settings_set_value (compizconfig_settings, "existing-profiles", new_profiles);
+
+    g_variant_unref (new_profiles);
+    g_variant_builder_unref (new_profiles_builder);
+
+    return TRUE;
 }
 
 static CCSBackendVTable gconfVTable = {
