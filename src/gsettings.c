@@ -47,9 +47,11 @@
 #include <X11/X.h>
 #include <X11/Xlib.h>
 
+#ifdef USE_GCONF
 #include <gconf/gconf.h>
 #include <gconf/gconf-client.h>
 #include <gconf/gconf-value.h>
+#endif
 
 #define CompAltMask        (1 << 16)
 #define CompMetaMask       (1 << 17)
@@ -81,12 +83,16 @@ gnomeValueChanged (GSettings   *settings,
 		   gchar       *keyname,
 		   gpointer    user_data);
 
+#ifdef USE_GCONF
 static GConfClient *client = NULL;
+static guint gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
+#endif
+
 static GList	   *settings_list = NULL;
 static GSettings   *compizconfig_settings = NULL;
 static GSettings   *current_profile_settings = NULL;
-static GList	   *watched_gnome_settings;
-static guint gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
+static GList	   *watched_gnome_settings = NULL;
+
 static char *currentProfile = NULL;
 
 static gchar *
@@ -248,11 +254,15 @@ gsettings_object_for_setting (CCSSetting *setting)
     return gsettings_object_for_plugin_path (setting->parent->name, pathName, setting->parent->context);
 }
 
-static const char* watchedGnomeDirectories[] = {
+#ifdef USE_GCONF
+
+static const char* watchedGConfGnomeDirectories[] = {
     METACITY,
     "/desktop/gnome/applications/terminal",
     "/apps/panel/applets/window_list/prefs"
 };
+
+#endif
 
 /* some forward declarations */
 static Bool readInit (CCSContext * context);
@@ -279,6 +289,7 @@ typedef struct _SpecialOptionGSettings {
     const char*	      type;
 } SpecialOption;
 
+#ifdef USE_GCONF
 typedef struct _SpecialOptionGConf {
     const char*       settingName;
     const char*       pluginName;
@@ -555,6 +566,7 @@ const SpecialOptionGConf specialOptions[] = {
 };
 
 #define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOptionGConf))
+#endif
 
 static CCSSetting *
 findDisplaySettingForPlugin (CCSContext *context,
@@ -575,13 +587,12 @@ findDisplaySettingForPlugin (CCSContext *context,
     return s;
 }
 
+#ifdef USE_GCONF
 static Bool
-isIntegratedOption (CCSSetting *setting,
-		    int        *index)
+isGConfIntegratedOption (CCSSetting *setting,
+			 int	    *index)
 {
     unsigned int i;
-
-    CLEAN_SETTING_NAME;
 
     for (i = 0; i < N_SOPTIONS; i++)
     {
@@ -609,9 +620,19 @@ isIntegratedOption (CCSSetting *setting,
 	return TRUE;
     }
 
-    CLEANUP_CLEAN_SETTING_NAME;
-
     return FALSE;
+}
+#endif
+
+static Bool
+isIntegratedOption (CCSSetting *setting,
+		    int        *index)
+{
+#ifdef USE_GCONF
+    return isGConfIntegratedOption (setting, index);
+#else
+    return FALSE;
+#endif
 }
 
 static void
@@ -687,6 +708,7 @@ valueChanged (GSettings   *settings,
     free (uncleanKeyName);
 }
 
+#ifdef USE_GCONF
 static void
 gnomeGConfValueChanged (GConfClient *client,
 			guint       cnxn_id,
@@ -788,10 +810,10 @@ initGConfClient (CCSContext *context)
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
     {
 	gnomeGConfNotifyIds[i] = gconf_client_notify_add (client,
-						     watchedGnomeDirectories[i],
+						     watchedGConfGnomeDirectories[i],
 						     gnomeGConfValueChanged, context,
 						     NULL, NULL);
-	gconf_client_add_dir (client, watchedGnomeDirectories[i],
+	gconf_client_add_dir (client, watchedGConfGnomeDirectories[i],
 			      GCONF_CLIENT_PRELOAD_NONE, NULL);
     }
 }
@@ -808,17 +830,17 @@ finiGConfClient (void)
 	    gconf_client_notify_remove (client, gnomeGConfNotifyIds[0]);
 	    gnomeGConfNotifyIds[i] = 0;
 	}
-	gconf_client_remove_dir (client, watchedGnomeDirectories[i], NULL);
+	gconf_client_remove_dir (client, watchedGConfGnomeDirectories[i], NULL);
     }
     gconf_client_suggest_sync (client, NULL);
 
     g_object_unref (client);
     client = NULL;
 }
+#endif
 
 static Bool
-readListValue (CCSSetting *setting,
-	       GConfValue *gconfValue)
+readListValue (CCSSetting *setting)
 {
     GSettings		*settings = gsettings_object_for_setting (setting);
     gchar		*variantType;
@@ -975,6 +997,8 @@ readListValue (CCSSetting *setting,
     return FALSE;
 }
 
+#ifdef USE_GCONF
+
 static unsigned int
 getGnomeMouseButtonModifier(void)
 {
@@ -1001,6 +1025,8 @@ getGnomeMouseButtonModifier(void)
     return modMask;
 }
 
+#endif
+
 static unsigned int
 getButtonBindingForSetting (CCSContext   *context,
 			    const char   *plugin,
@@ -1017,6 +1043,8 @@ getButtonBindingForSetting (CCSContext   *context,
 
     return s->value->value.asButton.button;
 }
+
+#ifdef USE_GCONF
 
 static Bool
 readGConfIntegratedOption (CCSContext *context,
@@ -1185,12 +1213,18 @@ readGConfIntegratedOption (CCSContext *context,
     return ret;
 }
 
+#endif
+
 static Bool
 readIntegratedOption (CCSContext *context,
 		      CCSSetting *setting,
 		      int        index)
 {
+#ifdef USE_GCONF
     return readGConfIntegratedOption (context, setting, index);
+#else
+    return FALSE;
+#endif
 }
 
 static Bool
@@ -1373,7 +1407,7 @@ readOption (CCSSetting * setting)
 	}
 	break;
     case TypeList:
-	ret = readListValue (setting, NULL);
+	ret = readListValue (setting);
 	break;
     default:
 	printf("GSettings backend: attempt to read unsupported setting type %d!\n",
@@ -1502,6 +1536,7 @@ writeListValue (CCSSetting *setting,
     g_object_unref (settings);
 }
 
+#ifdef USE_GCONF
 static Bool
 setGnomeMouseButtonModifier (unsigned int modMask)
 {
@@ -1534,6 +1569,7 @@ setGnomeMouseButtonModifier (unsigned int modMask)
 
     return TRUE;
 }
+#endif
 
 static void
 setButtonBindingForSetting (CCSContext   *context,
@@ -1563,6 +1599,7 @@ setButtonBindingForSetting (CCSContext   *context,
     }
 }
 
+#ifdef USE_GCONF
 static void
 writeGConfIntegratedOption (CCSContext *context,
 			    CCSSetting *setting,
@@ -1750,13 +1787,16 @@ writeGConfIntegratedOption (CCSContext *context,
     if (err)
 	g_error_free (err);
 }
+#endif
 
 static void
 writeIntegratedOption (CCSContext *context,
 		       CCSSetting *setting,
 		       int        index)
 {
+#ifdef USE_GCONF
     writeGConfIntegratedOption (context, setting, index);
+#endif
 
     return;
 }
@@ -2016,7 +2056,9 @@ initBackend (CCSContext * context)
 
     compizconfig_settings = g_settings_new ("org.freedesktop.compizconfig");
 
+#ifdef USE_GCONF
     initGConfClient (context);
+#endif
 
     currentProfile = getCurrentProfileName ();
     currentProfilePath = g_strconcat (profilePath, currentProfile, "/", NULL);
@@ -2034,8 +2076,10 @@ finiBackend (CCSContext * context)
 
     processEvents (0);
 
+#ifdef USE_GCONF
     gconf_client_clear_cache (client);
     finiGConfClient ();
+#endif
 
     if (currentProfile)
     {
@@ -2225,7 +2269,7 @@ deleteProfile (CCSContext *context,
     return TRUE;
 }
 
-static CCSBackendVTable gconfVTable = {
+static CCSBackendVTable gsettingsVTable = {
     "gsettings",
     "GSettings Configuration Backend",
     "GSettings Configuration Backend for libccs",
@@ -2249,6 +2293,6 @@ static CCSBackendVTable gconfVTable = {
 CCSBackendVTable *
 getBackendInfo (void)
 {
-    return &gconfVTable;
+    return &gsettingsVTable;
 }
 
