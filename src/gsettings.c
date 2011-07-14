@@ -76,13 +76,18 @@ valueChanged (GSettings   *settings,
 	      gchar	  *keyname,
 	      gpointer    user_data);
 
+static void
+gnomeValueChanged (GSettings   *settings,
+		   gchar       *keyname,
+		   gpointer    user_data);
+
 static GConfClient *client = NULL;
 static GList	   *settings_list = NULL;
 static GSettings   *compizconfig_settings = NULL;
 static GSettings   *current_profile_settings = NULL;
+static GList	   *watched_gnome_settings;
 static GConfEngine *conf = NULL;
-static guint compizNotifyId;
-static guint gnomeNotifyIds[NUM_WATCHED_DIRS];
+static guint gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
 static char *currentProfile = NULL;
 
 static gchar *
@@ -268,15 +273,24 @@ typedef enum {
     OptionSpecial,
 } SpecialOptionType;
 
-typedef struct _SpecialOption {
+typedef struct _SpecialOptionGSettings {
+    const char*       settingName;
+    const char*       pluginName;
+    const char*       schemaName;
+    const char*	      keyName;
+    const char*	      type;
+} SpecialOption;
+
+typedef struct _SpecialOptionGConf {
     const char*       settingName;
     const char*       pluginName;
     Bool	      screen;
     const char*       gnomeName;
     SpecialOptionType type;
-} SpecialOption;
+} SpecialOptionGConf;
 
-const SpecialOption specialOptions[] = {
+
+const SpecialOptionGConf specialOptions[] = {
     {"run_key", "gnomecompat", FALSE,
      METACITY "/global_keybindings/panel_run_dialog", OptionKey},
     {"main_menu_key", "gnomecompat", FALSE,
@@ -542,7 +556,7 @@ const SpecialOption specialOptions[] = {
      METACITY "/general/num_workspaces", OptionInt},*/
 };
 
-#define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOption))
+#define N_SOPTIONS (sizeof (specialOptions) / sizeof (struct _SpecialOptionGConf))
 
 static CCSSetting *
 findDisplaySettingForPlugin (CCSContext *context,
@@ -573,7 +587,7 @@ isIntegratedOption (CCSSetting *setting,
 
     for (i = 0; i < N_SOPTIONS; i++)
     {
-	const SpecialOption *opt = &specialOptions[i];
+	const SpecialOptionGConf *opt = &specialOptions[i];
 
 	if (strcmp (cleanSettingName, opt->settingName) != 0)
 	    continue;
@@ -600,6 +614,13 @@ isIntegratedOption (CCSSetting *setting,
     CLEANUP_CLEAN_SETTING_NAME;
 
     return FALSE;
+}
+
+static void
+gnomeValueChanged (GSettings *settings,
+		   gchar     *keyName,
+		   gpointer  user_data)
+{
 }
 
 static void
@@ -671,10 +692,10 @@ valueChanged (GSettings   *settings,
 }
 
 static void
-gnomeValueChanged (GConfClient *client,
-		   guint       cnxn_id,
-		   GConfEntry  *entry,
-		   gpointer    user_data)
+gnomeGConfValueChanged (GConfClient *client,
+			guint       cnxn_id,
+			GConfEntry  *entry,
+			gpointer    user_data)
 {
     CCSContext *context = (CCSContext *)user_data;
     char       *keyName = (char*) gconf_entry_get_key (entry);
@@ -734,7 +755,7 @@ gnomeValueChanged (GConfClient *client,
 	{
 	    CCSPlugin     *plugin = NULL;
 	    CCSSetting    *setting;
-	    SpecialOption *opt = (SpecialOption *) &specialOptions[num];
+	    SpecialOptionGConf *opt = (SpecialOptionGConf *) &specialOptions[num];
 
 	    plugin = ccsFindPlugin (context, (char*) opt->pluginName);
 	    if (plugin)
@@ -766,50 +787,37 @@ gnomeValueChanged (GConfClient *client,
 }
 
 static void
-initClient (CCSContext *context)
+initGConfClient (CCSContext *context)
 {
     int i;
 
     client = gconf_client_get_for_engine (conf);
-/*
-    compizNotifyId = gconf_client_notify_add (client, COMPIZ, valueChanged,
-					      context, NULL, NULL);
-    gconf_client_add_dir (client, COMPIZ, GCONF_CLIENT_PRELOAD_NONE, NULL);
 
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
     {
-	gnomeNotifyIds[i] = gconf_client_notify_add (client,
+	gnomeGConfNotifyIds[i] = gconf_client_notify_add (client,
 						     watchedGnomeDirectories[i],
-						     gnomeValueChanged, context,
+						     gnomeGConfValueChanged, context,
 						     NULL, NULL);
 	gconf_client_add_dir (client, watchedGnomeDirectories[i],
 			      GCONF_CLIENT_PRELOAD_NONE, NULL);
     }
-*/
 }
 
 static void
-finiClient (void)
+finiGConfClient (void)
 {
     int i;
-/*
-    if (compizNotifyId)
-    {
-	gconf_client_notify_remove (client, compizNotifyId);
-	compizNotifyId = 0;
-    }
-    gconf_client_remove_dir (client, COMPIZ, NULL);
 
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
     {
-	if (gnomeNotifyIds[i])
+	if (gnomeGConfNotifyIds[i])
 	{
-	    gconf_client_notify_remove (client, gnomeNotifyIds[0]);
-	    gnomeNotifyIds[i] = 0;
+	    gconf_client_notify_remove (client, gnomeGConfNotifyIds[0]);
+	    gnomeGConfNotifyIds[i] = 0;
 	}
 	gconf_client_remove_dir (client, watchedGnomeDirectories[i], NULL);
     }
-*/
     gconf_client_suggest_sync (client, NULL);
 
     g_object_unref (client);
@@ -1019,20 +1027,17 @@ getButtonBindingForSetting (CCSContext   *context,
     return s->value->value.asButton.button;
 }
 
-
 static Bool
-readIntegratedOption (CCSContext *context,
-		      CCSSetting *setting,
-		      int        index)
+readGConfIntegratedOption (CCSContext *context,
+			   CCSSetting *setting,
+			   int	      index)
 {
     GConfValue *gconfValue;
     GError     *err = NULL;
     Bool       ret = FALSE;
-
-    g_debug ("Attempted to read integrated option %s which is not a supported operation yet", setting->name);
     
     ret = readOption (setting);
-#if 0
+
     gconfValue = gconf_client_get (client,
 				   specialOptions[index].gnomeName,
 				   &err);
@@ -1185,8 +1190,16 @@ readIntegratedOption (CCSContext *context,
     }
 
     gconf_value_free (gconfValue);
-#endif
+
     return ret;
+}
+
+static Bool
+readIntegratedOption (CCSContext *context,
+		      CCSSetting *setting,
+		      int        index)
+{
+    return readGConfIntegratedOption (context, setting, index);
 }
 
 static Bool
@@ -1586,17 +1599,12 @@ setButtonBindingForSetting (CCSContext   *context,
 }
 
 static void
-writeIntegratedOption (CCSContext *context,
-		       CCSSetting *setting,
-		       int        index)
+writeGConfIntegratedOption (CCSContext *context,
+			    CCSSetting *setting,
+			    int	       index)
 {
     GError     *err = NULL;
     const char *optionName = specialOptions[index].gnomeName;
-
-    g_debug ("Attempted to write integrated option %s which is not supported option yet", setting->name);
-    
-    writeOption (setting);
-#if 0
     
     switch (specialOptions[index].type)
     {
@@ -1773,9 +1781,19 @@ writeIntegratedOption (CCSContext *context,
 	}
      	break;
     }
-#endif
+
     if (err)
 	g_error_free (err);
+}
+
+static void
+writeIntegratedOption (CCSContext *context,
+		       CCSSetting *setting,
+		       int        index)
+{
+    writeGConfIntegratedOption (context, setting, index);
+
+    return;
 }
 
 static void
@@ -2034,7 +2052,7 @@ initBackend (CCSContext * context)
     compizconfig_settings = g_settings_new ("org.freedesktop.compizconfig");
 
     conf = gconf_engine_get_default ();
-    initClient (context);
+    initGConfClient (context);
 
     currentProfile = getCurrentProfileName ();
     currentProfilePath = g_strconcat (profilePath, currentProfile, "/", NULL);
@@ -2053,7 +2071,7 @@ finiBackend (CCSContext * context)
     processEvents (0);
 
     gconf_client_clear_cache (client);
-    finiClient ();
+    finiGConfClient ();
 
     if (currentProfile)
     {
