@@ -50,12 +50,25 @@ static GList	   *watchedGnomeSettings = NULL;
 
 char *currentProfile = NULL;
 
+/* some forward declarations */
+static void writeIntegratedOption (CCSContext *context,
+				   CCSSetting *setting,
+				   int        index);
+
+typedef struct _SpecialOptionGSettings {
+    const char*       settingName;
+    const char*       pluginName;
+    const char*       schemaName;
+    const char*	      keyName;
+    const char*	      type;
+} SpecialOption;
+
 static gchar *
 getSchemaNameForPlugin (const char *plugin)
 {
     gchar       *schemaName =  NULL;
 
-    schemaName = g_strconcat (SCHEMA_ID, ".", plugin, NULL);
+    schemaName = g_strconcat (COMPIZ_SCHEMA_ID, ".", plugin, NULL);
 
     return schemaName;
 }
@@ -190,19 +203,6 @@ getSettingsObjectForCCSSetting (CCSSetting *setting)
 
     return getSettingsObjectForPluginWithPath (setting->parent->name, pathName, setting->parent->context);
 }
-
-/* some forward declarations */
-static void writeIntegratedOption (CCSContext *context,
-				   CCSSetting *setting,
-				   int        index);
-
-typedef struct _SpecialOptionGSettings {
-    const char*       settingName;
-    const char*       pluginName;
-    const char*       schemaName;
-    const char*	      keyName;
-    const char*	      type;
-} SpecialOption;
 
 static Bool
 isIntegratedOption (CCSSetting *setting,
@@ -939,7 +939,7 @@ updateCurrentProfileName (char *profile)
 {
     GVariant        *profiles;
     char	    *prof;
-    char	    *profilePath = "/org/freedesktop/compizconfig/profile/";
+    char	    *profilePath = COMPIZ_PROFILEPATH;
     char	    *currentProfilePath;
     GVariant        *newProfiles;
     GVariantBuilder *newProfilesBuilder;
@@ -975,7 +975,7 @@ updateCurrentProfileName (char *profile)
 
     currentProfile = strdup (profile);
     currentProfilePath = g_strconcat (profilePath, profile, "/", NULL);
-    currentProfileSettings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", profilePath);
+    currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profilePath);
 
     g_free (currentProfilePath);
 
@@ -1027,12 +1027,12 @@ processEvents (unsigned int flags)
 static Bool
 initBackend (CCSContext * context)
 {
-    const char *profilePath = "/org/freedesktop/compizconfig/profile/";
+    const char *profilePath = PROFILEPATH;
     char       *currentProfilePath;
 
     g_type_init ();
 
-    compizconfigSettings = g_settings_new ("org.freedesktop.compizconfig");
+    compizconfigSettings = g_settings_new (COMPIZCONFIG_SCHEMA_ID);
 
 #ifdef USE_GCONF
     initGConfClient (context);
@@ -1040,7 +1040,7 @@ initBackend (CCSContext * context)
 
     currentProfile = getCurrentProfileName ();
     currentProfilePath = g_strconcat (profilePath, currentProfile, "/", NULL);
-    currentProfileSettings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", currentProfilePath);
+    currentProfileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, currentProfilePath);
 
     g_free (currentProfilePath);
 
@@ -1175,8 +1175,8 @@ deleteProfile (CCSContext *context,
     GVariantBuilder *newProfilesBuilder;
     char            *plugin, *prof;
     GVariantIter    *iter;
-    char            *profileSettingsPath = g_strconcat ("/org/freedesktop/compizconfig/profile/", profile, "/", NULL);
-    GSettings       *profile_settings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", profileSettingsPath);;
+    char            *profileSettingsPath = g_strconcat (PROFILEPATH, profile, "/", NULL);
+    GSettings       *profile_settings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
 
     plugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
     profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
