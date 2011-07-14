@@ -64,6 +64,11 @@
 
 #define NUM_WATCHED_DIRS 3
 
+static void
+valueChanged (GSettings   *settings,
+	      gchar	  *keyname,
+	      gpointer    user_data);
+
 static GConfClient *client = NULL;
 static GList	   *settings_list = NULL;
 static GSettings   *compizconfig_settings = NULL;
@@ -111,6 +116,25 @@ gsettings_backend_clean (char *gsettingName)
     return ret;
 }
 
+static inline gchar *
+gsettings_backend_unclean (char *gsettingName)
+{
+    gchar *clean        = NULL;
+    gchar **delimited   = NULL;
+    guint i		= 0;
+
+    /* Replace dashes with underscores */
+    delimited = g_strsplit (gsettingName, "-", 0);
+
+    clean = g_strjoinv ("_", delimited);
+
+    /* FIXME: Truncated and lowercased settings aren't going to work */
+
+    g_strfreev (delimited);
+
+    return clean;
+}
+
 #define CLEAN_SETTING_NAME 	char *cleanSettingName = gsettings_backend_clean (setting->name)
 
 #define KEYNAME(sn)     char keyName[BUFSIZE]; \
@@ -130,7 +154,9 @@ gsettings_backend_clean (char *gsettingName)
 #define CLEANUP_CLEAN_SETTING_NAME free (cleanSettingName);
 
 static GSettings *
-gsettings_object_for_plugin_path (const char *plugin, const char *path)
+gsettings_object_for_plugin_path (const char *plugin,
+				  const char *path,
+				  CCSContext *context)
 {
     GSettings *settings_obj = NULL;
     GList *l = settings_list;
@@ -165,6 +191,8 @@ gsettings_object_for_plugin_path (const char *plugin, const char *path)
     /* No existing settings object found for this schema, create one */
     
     settings_obj = g_settings_new_with_path (schema_name, path);
+
+    g_signal_connect (G_OBJECT (settings_obj), "changed", (GCallback) valueChanged, (gpointer) context);
 
     g_object_ref (settings_obj);
     settings_list = g_list_append (settings_list, (void *) settings_obj);
@@ -207,7 +235,7 @@ gsettings_object_for_setting (CCSSetting *setting)
     KEYNAME(setting->parent->context->screenNum);
     PATHNAME;
 
-    return gsettings_object_for_plugin_path (setting->parent->name, pathName);
+    return gsettings_object_for_plugin_path (setting->parent->name, pathName, setting->parent->context);
 }
 
 static const char* watchedGnomeDirectories[] = {
@@ -568,14 +596,13 @@ isIntegratedOption (CCSSetting *setting,
 }
 
 static void
-valueChanged (GConfClient *client,
-	      guint       cnxn_id,
-	      GConfEntry  *entry,
+valueChanged (GSettings   *settings,
+	      gchar	  *keyName,
 	      gpointer    user_data)
 {
     CCSContext   *context = (CCSContext *)user_data;
-    char         *keyName = (char*) gconf_entry_get_key (entry);
-    char         *pluginName;
+    char	 *uncleanKeyName;
+    char	 *path;
     char         *token;
     int          index;
     Bool         isScreen;
@@ -583,50 +610,48 @@ valueChanged (GConfClient *client,
     CCSPlugin    *plugin;
     CCSSetting   *setting;
 
-    keyName += strlen (COMPIZ) + 1;
+    g_object_get (G_OBJECT (settings), "path", &path, NULL);
 
-    token = strsep (&keyName, "/"); /* plugin */
+    path += strlen (COMPIZ) + 1;
+
+    token = strsep (&path, "/"); /* Profile name */
     if (!token)
 	return;
 
-    if (strcmp (token, "general") == 0)
-    {
-	pluginName = "core";
-    }
-    else
-    {
-	token = strsep (&keyName, "/");
-	if (!token)
-	    return;
-	pluginName = token;
-    }
+    token = strsep (&path, "/"); /* plugins */
+    if (!token)
+	return;
 
-    plugin = ccsFindPlugin (context, pluginName);
+    token = strsep (&path, "/"); /* plugin */
+    if (!token)
+	return;
+
+    plugin = ccsFindPlugin (context, token);
     if (!plugin)
 	return;
 
-    token = strsep (&keyName, "/");
+    token = strsep (&path, "/"); /* screen%i */
     if (!token)
 	return;
 
     isScreen = TRUE;
     sscanf (token, "screen%d", &screenNum);
 
-    token = strsep (&keyName, "/"); /* 'options' */
-    if (!token)
-	return;
+    uncleanKeyName = gsettings_backend_unclean (keyName);
 
-    token = strsep (&keyName, "/");
-    if (!token)
-	return;
-
-    setting = ccsFindSetting (plugin, token);
+    setting = ccsFindSetting (plugin, uncleanKeyName);
     if (!setting)
+    {
+	printf ("GSettings Backend: unable to find setting %s, for path %s\n", uncleanKeyName, path);
+	free (uncleanKeyName);
 	return;
+    }
 
     readInit (context);
     if (!readOption (setting))
+    {
 	ccsResetToDefault (setting);
+    }
 
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
@@ -634,6 +659,8 @@ valueChanged (GConfClient *client,
 	writeInit (context);
 	writeIntegratedOption (context, setting, index);
     }
+
+    free (uncleanKeyName);
 }
 
 static void
@@ -2164,7 +2191,7 @@ deleteProfile (CCSContext *context,
 		      "%s/%s/plugins/%s/%s/options/", COMPIZ, profile, plugin,
 		      "screen0");
 
-	settings = gsettings_object_for_plugin_path (plugin, pathName);
+	settings = gsettings_object_for_plugin_path (plugin, pathName, context);
 
 	/* The GSettings documentation says not to use this API
 	 * because we should know our own schema ... though really
