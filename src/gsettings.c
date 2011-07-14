@@ -2205,6 +2205,8 @@ deleteProfile (CCSContext *context,
 
     g_object_unref (profile_settings);
 
+    free (profileSettingsPath);
+
     updateProfile (context);
 
     return TRUE;
