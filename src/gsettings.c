@@ -86,7 +86,6 @@ static GList	   *settings_list = NULL;
 static GSettings   *compizconfig_settings = NULL;
 static GSettings   *current_profile_settings = NULL;
 static GList	   *watched_gnome_settings;
-static GConfEngine *conf = NULL;
 static guint gnomeGConfNotifyIds[NUM_WATCHED_DIRS];
 static char *currentProfile = NULL;
 
@@ -791,7 +790,7 @@ initGConfClient (CCSContext *context)
 {
     int i;
 
-    client = gconf_client_get_for_engine (conf);
+    client = gconf_client_get_default ();
 
     for (i = 0; i < NUM_WATCHED_DIRS; i++)
     {
@@ -2051,7 +2050,6 @@ initBackend (CCSContext * context)
 
     compizconfig_settings = g_settings_new ("org.freedesktop.compizconfig");
 
-    conf = gconf_engine_get_default ();
     initGConfClient (context);
 
     currentProfile = getCurrentProfileName ();
@@ -2078,9 +2076,6 @@ finiBackend (CCSContext * context)
 	free (currentProfile);
 	currentProfile = NULL;
     }
-
-    gconf_engine_unref (conf);
-    conf = NULL;
 
     while (l)
     {
