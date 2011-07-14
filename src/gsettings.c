@@ -43,25 +43,25 @@ gnomeValueChanged (GSettings   *settings,
 		   gchar       *keyname,
 		   gpointer    user_data);
 
-static GList	   *settings_list = NULL;
-static GSettings   *compizconfig_settings = NULL;
-static GSettings   *current_profile_settings = NULL;
-static GList	   *watched_gnome_settings = NULL;
+static GList	   *settingsList = NULL;
+static GSettings   *compizconfigSettings = NULL;
+static GSettings   *currentProfileSettings = NULL;
+static GList	   *watchedGnomeSettings = NULL;
 
 char *currentProfile = NULL;
 
 static gchar *
-gsettings_get_schema_name (const char *plugin)
+getSchemaNameForPlugin (const char *plugin)
 {
-    gchar       *schema_name =  NULL;
+    gchar       *schemaName =  NULL;
 
-    schema_name = g_strconcat (SCHEMA_ID, ".", plugin, NULL);
+    schemaName = g_strconcat (SCHEMA_ID, ".", plugin, NULL);
 
-    return schema_name;
+    return schemaName;
 }
 
 static inline gchar *
-gsettings_backend_clean (char *gsettingName)
+translateKeyForGSettings (char *gsettingName)
 {
     gchar *clean        = NULL;
     gchar **delimited   = NULL;
@@ -89,7 +89,7 @@ gsettings_backend_clean (char *gsettingName)
 }
 
 static inline gchar *
-gsettings_backend_unclean (char *gsettingName)
+translateKeyForCCS (char *gsettingName)
 {
     gchar *clean        = NULL;
     gchar **delimited   = NULL;
@@ -107,35 +107,35 @@ gsettings_backend_unclean (char *gsettingName)
 }
 
 static GSettings *
-gsettings_object_for_plugin_path (const char *plugin,
+getSettingsObjectForPluginWithPath (const char *plugin,
 				  const char *path,
 				  CCSContext *context)
 {
-    GSettings *settings_obj = NULL;
-    GList *l = settings_list;
-    gchar *schema_name = gsettings_get_schema_name (plugin);
-    GVariant        *written_plugins;
+    GSettings *settingsObj = NULL;
+    GList *l = settingsList;
+    gchar *schemaName = getSchemaNameForPlugin (plugin);
+    GVariant        *writtenPlugins;
     char	    *plug;
-    GVariant        *new_written_plugins;
-    GVariantBuilder *new_written_plugins_builder;
+    GVariant        *newWrittenPlugins;
+    GVariantBuilder *newWrittenPluginsBuilder;
     GVariantIter    *iter;
     gboolean	    found = FALSE;
 
     while (l)
     {
-	settings_obj = (GSettings *) l->data;
+	settingsObj = (GSettings *) l->data;
 	gchar	  *name = NULL;
 
-	g_object_get (G_OBJECT (settings_obj),
+	g_object_get (G_OBJECT (settingsObj),
 		      "schema",
 		      &name, NULL);
-	if (g_strcmp0 (name, schema_name) == 0)
+	if (g_strcmp0 (name, schemaName) == 0)
 	{
 	    g_free (name);
-	    g_free (schema_name);
+	    g_free (schemaName);
 
-	    g_object_ref (settings_obj);
-	    return settings_obj;
+	    g_object_ref (settingsObj);
+	    return settingsObj;
 	}
 
 	l = g_list_next (l);
@@ -143,12 +143,12 @@ gsettings_object_for_plugin_path (const char *plugin,
 
     /* No existing settings object found for this schema, create one */
     
-    settings_obj = g_settings_new_with_path (schema_name, path);
+    settingsObj = g_settings_new_with_path (schemaName, path);
 
-    g_signal_connect (G_OBJECT (settings_obj), "changed", (GCallback) valueChanged, (gpointer) context);
+    g_signal_connect (G_OBJECT (settingsObj), "changed", (GCallback) valueChanged, (gpointer) context);
 
-    g_object_ref (settings_obj);
-    settings_list = g_list_append (settings_list, (void *) settings_obj);
+    g_object_ref (settingsObj);
+    settingsList = g_list_append (settingsList, (void *) settingsObj);
 
     /* Also write the plugin name to the list of modified plugins so
      * that when we delete the profile the keys for that profile are also
@@ -156,43 +156,44 @@ gsettings_object_for_plugin_path (const char *plugin,
      * store keys that have changed from their defaults ... though
      * gsettings doesn't seem to give you a way to get all of the schemas */
 
-    written_plugins = g_settings_get_value (current_profile_settings, "plugins-with-set-keys");
+    writtenPlugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
 
-    new_written_plugins_builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    newWrittenPluginsBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
-    iter = g_variant_iter_new (written_plugins);
+    iter = g_variant_iter_new (writtenPlugins);
     while (g_variant_iter_loop (iter, "s", &plug))
     {
-	g_variant_builder_add (new_written_plugins_builder, "s", plug);
+	g_variant_builder_add (newWrittenPluginsBuilder, "s", plug);
 
 	if (!found)
 	    found = (g_strcmp0 (plug, plugin) == 0);
     }
 
     if (!found)
-	g_variant_builder_add (new_written_plugins_builder, "s", plugin);
+	g_variant_builder_add (newWrittenPluginsBuilder, "s", plugin);
 
-    new_written_plugins = g_variant_new ("as", new_written_plugins_builder);
-    g_settings_set_value (current_profile_settings, "plugins-with-set-keys", new_written_plugins);
+    newWrittenPlugins = g_variant_new ("as", newWrittenPluginsBuilder);
+    g_settings_set_value (currentProfileSettings, "plugins-with-set-keys", newWrittenPlugins);
 
     g_variant_iter_free (iter);
-    g_variant_unref (new_written_plugins);
-    g_variant_builder_unref (new_written_plugins_builder);
+    g_variant_unref (newWrittenPlugins);
+    g_variant_builder_unref (newWrittenPluginsBuilder);
 
-    return settings_obj;
+    return settingsObj;
 }
 
 static GSettings *
-gsettings_object_for_setting (CCSSetting *setting)
+getSettingsObjectForCCSSetting (CCSSetting *setting)
 {
     KEYNAME(setting->parent->context->screenNum);
     PATHNAME;
 
-    return gsettings_object_for_plugin_path (setting->parent->name, pathName, setting->parent->context);
+    return getSettingsObjectForPluginWithPath (setting->parent->name, pathName, setting->parent->context);
 }
 
 /* some forward declarations */
-static void writeIntegratedOption (CCSContext *context, CCSSetting *setting,
+static void writeIntegratedOption (CCSContext *context,
+				   CCSSetting *setting,
 				   int        index);
 
 typedef struct _SpecialOptionGSettings {
@@ -261,7 +262,7 @@ valueChanged (GSettings   *settings,
 
     sscanf (token, "screen%d", &screenNum);
 
-    uncleanKeyName = gsettings_backend_unclean (keyName);
+    uncleanKeyName = translateKeyForCCS (keyName);
 
     setting = ccsFindSetting (plugin, uncleanKeyName);
     if (!setting)
@@ -290,7 +291,7 @@ valueChanged (GSettings   *settings,
 static Bool
 readListValue (CCSSetting *setting)
 {
-    GSettings		*settings = gsettings_object_for_setting (setting);
+    GSettings		*settings = getSettingsObjectForCCSSetting (setting);
     gchar		*variantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
@@ -338,15 +339,15 @@ readListValue (CCSSetting *setting)
     case TypeBool:
 	{
 	    Bool *array = malloc (nItems * sizeof (Bool));
-	    Bool *array_counter = array;
+	    Bool *arrayCounter = array;
 
 	    if (!array)
 		break;
 	    
 	    /* Reads each item from the variant into the position pointed
-	     * at by array_counter */
-	    while (g_variant_iter_loop (iter, variantType, array_counter))
-		array_counter++;
+	     * at by arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
+		arrayCounter++;
 
 	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
 	    free (array);
@@ -355,15 +356,15 @@ readListValue (CCSSetting *setting)
     case TypeInt:
 	{
 	    int *array = malloc (nItems * sizeof (int));
-	    int *array_counter = array;
+	    int *arrayCounter = array;
 
 	    if (!array)
 		break;
 	    
 	    /* Reads each item from the variant into the position pointed
-	     * at by array_counter */
-	    while (g_variant_iter_loop (iter, variantType, array_counter))
-		array_counter++;
+	     * at by arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
+		arrayCounter++;
 
 	    list = ccsGetValueListFromIntArray (array, nItems, setting);
 	    free (array);
@@ -372,15 +373,15 @@ readListValue (CCSSetting *setting)
     case TypeFloat:
 	{
 	    double *array = malloc (nItems * sizeof (double));
-	    double *array_counter = array;
+	    double *arrayCounter = array;
 
 	    if (!array)
 		break;
 	    
 	    /* Reads each item from the variant into the position pointed
-	     * at by array_counter */
-	    while (g_variant_iter_loop (iter, variantType, array_counter))
-		array_counter++;
+	     * at by arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
+		arrayCounter++;
 
 	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, setting);
 	    free (array);
@@ -390,7 +391,7 @@ readListValue (CCSSetting *setting)
     case TypeMatch:
 	{
 	    char **array = calloc (1, (nItems + 1) * sizeof (char *));
-	    char **array_counter = array;
+	    char **arrayCounter = array;
 
 	    if (!array)
 	    {
@@ -398,9 +399,9 @@ readListValue (CCSSetting *setting)
 	    }
 	    
 	    /* Reads each item from the variant into the position pointed
-	     * at by array_counter */
-	    while (g_variant_iter_loop (iter, variantType, array_counter))
-		array_counter++;
+	     * at by arrayCounter */
+	    while (g_variant_iter_loop (iter, variantType, arrayCounter))
+		arrayCounter++;
 
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
 	    for (i = 0; i < nItems; i++)
@@ -460,7 +461,7 @@ readIntegratedOption (CCSContext *context,
 Bool
 readOption (CCSSetting * setting)
 {
-    GSettings  *settings = gsettings_object_for_setting (setting);
+    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     GVariant   *gsettingsValue = NULL;
     Bool       ret = FALSE;
     Bool       valid = TRUE;
@@ -656,7 +657,7 @@ static void
 writeListValue (CCSSetting *setting,
 		char       *pathName)
 {
-    GSettings  		*settings = gsettings_object_for_setting (setting);
+    GSettings  		*settings = getSettingsObjectForCCSSetting (setting);
     GVariant 		*value;
     gchar		*variantType = NULL;
     CCSSettingValueList list;
@@ -781,7 +782,7 @@ writeIntegratedOption (CCSContext *context,
 static void
 resetOptionToDefault (CCSSetting * setting)
 {
-    GSettings  *settings = gsettings_object_for_setting (setting);
+    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
   
     CLEAN_SETTING_NAME;
     KEYNAME (setting->parent->context->screenNum);
@@ -796,7 +797,7 @@ resetOptionToDefault (CCSSetting * setting)
 void
 writeOption (CCSSetting * setting)
 {
-    GSettings  *settings = gsettings_object_for_setting (setting);
+    GSettings  *settings = getSettingsObjectForCCSSetting (setting);
     CLEAN_SETTING_NAME;
     KEYNAME (setting->parent->context->screenNum);
     PATHNAME;
@@ -940,45 +941,45 @@ updateCurrentProfileName (char *profile)
     char	    *prof;
     char	    *profilePath = "/org/freedesktop/compizconfig/profile/";
     char	    *currentProfilePath;
-    GVariant        *new_profiles;
-    GVariantBuilder *new_profiles_builder;
+    GVariant        *newProfiles;
+    GVariantBuilder *newProfilesBuilder;
     GVariantIter    *iter;
     gboolean        found = FALSE;
 
-    profiles = g_settings_get_value (compizconfig_settings, "existing-profiles");
+    profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
 
-    new_profiles_builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
     iter = g_variant_iter_new (profiles);
     while (g_variant_iter_loop (iter, "s", &prof))
     {
-	g_variant_builder_add (new_profiles_builder, "s", prof);
+	g_variant_builder_add (newProfilesBuilder, "s", prof);
 
 	if (!found)
 	    found = (g_strcmp0 (prof, profile) == 0);
     }
 
     if (!found)
-	g_variant_builder_add (new_profiles_builder, "s", profile);
+	g_variant_builder_add (newProfilesBuilder, "s", profile);
 
-    new_profiles = g_variant_new ("as", new_profiles_builder);
-    g_settings_set_value (compizconfig_settings, "existing-profiles", new_profiles);
+    newProfiles = g_variant_new ("as", newProfilesBuilder);
+    g_settings_set_value (compizconfigSettings, "existing-profiles", newProfiles);
 
     g_variant_iter_free (iter);
-    g_variant_unref (new_profiles);
-    g_variant_builder_unref (new_profiles_builder);
+    g_variant_unref (newProfiles);
+    g_variant_builder_unref (newProfilesBuilder);
 
     /* Change the current profile and current profile settings */
     free (currentProfile);
-    g_object_unref (current_profile_settings);
+    g_object_unref (currentProfileSettings);
 
     currentProfile = strdup (profile);
     currentProfilePath = g_strconcat (profilePath, profile, "/", NULL);
-    current_profile_settings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", profilePath);
+    currentProfileSettings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", profilePath);
 
     g_free (currentProfilePath);
 
-    g_settings_set (compizconfig_settings, "current-profile", "s", profile, NULL);
+    g_settings_set (compizconfigSettings, "current-profile", "s", profile, NULL);
 }
 
 static gboolean
@@ -1003,7 +1004,7 @@ getCurrentProfileName (void)
     GVariant *value;
     char     *ret = NULL;
 
-    value = g_settings_get_value (compizconfig_settings, "current-profile");
+    value = g_settings_get_value (compizconfigSettings, "current-profile");
 
     if (value)
 	ret = strdup (g_variant_get_string (value, NULL));
@@ -1031,7 +1032,7 @@ initBackend (CCSContext * context)
 
     g_type_init ();
 
-    compizconfig_settings = g_settings_new ("org.freedesktop.compizconfig");
+    compizconfigSettings = g_settings_new ("org.freedesktop.compizconfig");
 
 #ifdef USE_GCONF
     initGConfClient (context);
@@ -1039,7 +1040,7 @@ initBackend (CCSContext * context)
 
     currentProfile = getCurrentProfileName ();
     currentProfilePath = g_strconcat (profilePath, currentProfile, "/", NULL);
-    current_profile_settings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", currentProfilePath);
+    currentProfileSettings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", currentProfilePath);
 
     g_free (currentProfilePath);
 
@@ -1049,7 +1050,7 @@ initBackend (CCSContext * context)
 static Bool
 finiBackend (CCSContext * context)
 {
-    GList *l = settings_list;
+    GList *l = settingsList;
 
     processEvents (0);
 
@@ -1070,7 +1071,7 @@ finiBackend (CCSContext * context)
 	l = g_list_next (l);
     }
 
-    g_object_unref (G_OBJECT (compizconfig_settings));
+    g_object_unref (G_OBJECT (compizconfigSettings));
 
     processEvents (0);
     return TRUE;
@@ -1154,7 +1155,7 @@ getExistingProfiles (CCSContext *context)
     GVariantIter  iter;
     CCSStringList ret = NULL;
 
-    value = g_settings_get_value (compizconfig_settings,  "existing-profiles");
+    value = g_settings_get_value (compizconfigSettings,  "existing-profiles");
     g_variant_iter_init (&iter, value);
     while (g_variant_iter_loop (&iter, "s", &profile))
 	ret = ccsStringListAppend (ret, strdup (profile));
@@ -1170,15 +1171,15 @@ deleteProfile (CCSContext *context,
 {
     GVariant        *plugins;
     GVariant        *profiles;
-    GVariant        *new_profiles;
-    GVariantBuilder *new_profiles_builder;
+    GVariant        *newProfiles;
+    GVariantBuilder *newProfilesBuilder;
     char            *plugin, *prof;
     GVariantIter    *iter;
     char            *profileSettingsPath = g_strconcat ("/org/freedesktop/compizconfig/profile/", profile, "/", NULL);
     GSettings       *profile_settings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", profileSettingsPath);;
 
-    plugins = g_settings_get_value (current_profile_settings, "plugins-with-set-keys");
-    profiles = g_settings_get_value (compizconfig_settings, "existing-profiles");
+    plugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
+    profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
 
     iter = g_variant_iter_new (plugins);
     while (g_variant_iter_loop (iter, "s", &plugin))
@@ -1198,7 +1199,7 @@ deleteProfile (CCSContext *context,
 		      "%s/%s/plugins/%s/%s/options/", COMPIZ, profile, plugin,
 		      "screen0");
 
-	settings = gsettings_object_for_plugin_path (plugin, pathName, context);
+	settings = getSettingsObjectForPluginWithPath (plugin, pathName, context);
 
 	/* The GSettings documentation says not to use this API
 	 * because we should know our own schema ... though really
@@ -1223,19 +1224,19 @@ deleteProfile (CCSContext *context,
     g_settings_reset (profile_settings, "plugins-with-set-values");
 
     iter = g_variant_iter_new (profiles);
-    new_profiles_builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
+    newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 
     while (g_variant_iter_loop (iter, "s", &prof))
     {
 	if (g_strcmp0 (prof, profile))
-	    g_variant_builder_add (new_profiles_builder, "s", prof);
+	    g_variant_builder_add (newProfilesBuilder, "s", prof);
     }
 
-    new_profiles = g_variant_new ("as", new_profiles_builder);
-    g_settings_set_value (compizconfig_settings, "existing-profiles", new_profiles);
+    newProfiles = g_variant_new ("as", newProfilesBuilder);
+    g_settings_set_value (compizconfigSettings, "existing-profiles", newProfiles);
 
-    g_variant_unref (new_profiles);
-    g_variant_builder_unref (new_profiles_builder);
+    g_variant_unref (newProfiles);
+    g_variant_builder_unref (newProfilesBuilder);
 
     g_object_unref (profile_settings);
 

@@ -69,7 +69,7 @@
 
 #define NUM_WATCHED_DIRS 3
 
-#define CLEAN_SETTING_NAME 	char *cleanSettingName = gsettings_backend_clean (setting->name)
+#define CLEAN_SETTING_NAME 	char *cleanSettingName = translateKeyForGSettings (setting->name)
 
 #define KEYNAME(sn)     char keyName[BUFSIZE]; \
                     snprintf (keyName, BUFSIZE, "screen%i", sn);
