@@ -1,8 +1,12 @@
 /**
  *
- * GConf libccs backend
+ * GSettings libccs backend
  *
- * gconf.c
+ * gsettings.c
+ *
+ * Copyright (c) 2011 Canonical Ltd
+ *
+ * Based on the original compizconfig-backend-gconf
  *
  * Copyright (c) 2007 Danny Baumann <maniac@opencompositing.org>
  *
@@ -21,6 +25,9 @@
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
+ *
+ * Authored By:
+ *	Sam Spilsbury <sam.spilsbury@canonical.com>
  *
  **/
 
