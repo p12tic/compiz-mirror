@@ -74,7 +74,9 @@ static char *currentProfile = NULL;
 static gchar *
 gsettings_get_schema_name (char *plugin)
 {
-    gchar       *schema_name = g_strconcat (SCHEMA_ID, ".", plugin, NULL);
+    gchar       *schema_name =  NULL;
+
+    schema_name = g_strconcat (SCHEMA_ID, ".", plugin, NULL);
 
     return schema_name;
 }
@@ -96,11 +98,8 @@ gsettings_object_for_plugin (char *plugin)
 		      "schema",
 		      &name, NULL);
 
-	g_debug ("Existing schema name %s requested schema_name %s strcmp? %i", name, schema_name);
-	
 	if (g_strcmp0 (name, schema_name) == 0)
 	{
-	    g_debug ("Returning existing schema %s", schema_name);
 	    g_free (name);
 	    g_free (schema_name);
 
@@ -113,12 +112,8 @@ gsettings_object_for_plugin (char *plugin)
 
     /* No existing settings object found for this schema, create one */
     settings_obj = g_settings_new (schema_name);
-    
+    g_object_ref (settings_obj);
     settings_list = g_list_append (settings_list, (void *) settings_obj);
-
-    g_debug ("Returning new schema %s", schema_name);
-    
-    g_free (schema_name);
 
     return settings_obj;
 }
@@ -128,26 +123,25 @@ gsettings_backend_clean (char *gsettingName)
 {
     gchar *clean        = NULL;
     gchar **delimited   = NULL;
-
-    g_debug ("cleaning %s", gsettingName);
+    guint i		= 0;
 
     /* Replace underscores with dashes */
     delimited = g_strsplit (gsettingName, "_", 0);
-
-    g_debug ("string ok");
 
     clean = g_strjoinv ("-", delimited);
 
     /* It can't be more than 32 chars, warn if that's the case */
     gchar *ret = g_strndup (clean, 31);
 
-    if (strlen (ret) != strlen (clean))
-	g_debug ("uh-oh, this setting %s has too many characters in its name and has been truncated to %s", clean, ret);
+    if (strlen (clean) > 31)
+	printf ("GSettings Backend: Warning: key name %s is not valid in GSettings, it was changed to %s, this may cause problems!\n", clean, ret);
+
+    /* Everything must be lowercase */
+    for (; i < strlen (ret); i++)
+	ret[i] = g_ascii_tolower (ret[i]);
 
     g_free (clean);
     g_strfreev (delimited);
-
-    g_debug ("returning cleaned string %s", ret);
 
     return ret;
 }
@@ -883,58 +877,65 @@ static Bool
 readListValue (CCSSetting *setting,
 	       GConfValue *gconfValue)
 {
-    GConfValueType      valueType;
+    GSettings		*settings = gsettings_object_for_plugin (setting->parent->name);
+    gchar		*variantType;
     unsigned int        nItems, i = 0;
     CCSSettingValueList list = NULL;
     GSList              *valueList = NULL;
+    GVariant		*value;
+    GVariantIter	*iter;
 
+    CLEAN_SETTING_NAME;
+    
     switch (setting->info.forList.listType)
     {
     case TypeString:
     case TypeMatch:
     case TypeColor:
-	valueType = GCONF_VALUE_STRING;
+	variantType = g_strdup ("s");
 	break;
     case TypeBool:
-	valueType = GCONF_VALUE_BOOL;
+	variantType = g_strdup ("b");
 	break;
     case TypeInt:
-	valueType = GCONF_VALUE_INT;
+	variantType = g_strdup ("i");
 	break;
     case TypeFloat:
-	valueType = GCONF_VALUE_FLOAT;
+	variantType = g_strdup ("d");
 	break;
     default:
-	valueType = GCONF_VALUE_INVALID;
+	variantType = NULL;
 	break;
     }
 
-    if (valueType == GCONF_VALUE_INVALID)
+    if (!variantType)
 	return FALSE;
 
-    if (valueType != gconf_value_get_list_type (gconfValue))
-	return FALSE;
-
-    valueList = gconf_value_get_list (gconfValue);
-    if (!valueList)
+    value = g_settings_get_value (settings, cleanSettingName);
+    if (!value)
     {
 	ccsSetList (setting, NULL);
 	return TRUE;
     }
 
-    nItems = g_slist_length (valueList);
+    iter = g_variant_iter_new (value);
+    nItems = g_variant_iter_n_children (iter);
 
     switch (setting->info.forList.listType)
     {
     case TypeBool:
 	{
 	    Bool *array = malloc (nItems * sizeof (Bool));
+	    Bool *array_counter = array;
+
 	    if (!array)
 		break;
+	    
+	    /* Reads each item from the variant into the position pointed
+	     * at by array_counter */
+	    while (g_variant_iter_loop (iter, variantType, array_counter))
+		array_counter++;
 
-	    for (; valueList; valueList = valueList->next, i++)
-		array[i] =
-		    gconf_value_get_bool (valueList->data) ? TRUE : FALSE;
 	    list = ccsGetValueListFromBoolArray (array, nItems, setting);
 	    free (array);
 	}
@@ -942,36 +943,53 @@ readListValue (CCSSetting *setting,
     case TypeInt:
 	{
 	    int *array = malloc (nItems * sizeof (int));
+	    int *array_counter = array;
+
 	    if (!array)
 		break;
+	    
+	    /* Reads each item from the variant into the position pointed
+	     * at by array_counter */
+	    while (g_variant_iter_loop (iter, variantType, array_counter))
+		array_counter++;
 
-	    for (; valueList; valueList = valueList->next, i++)
-		array[i] = gconf_value_get_int (valueList->data);
 	    list = ccsGetValueListFromIntArray (array, nItems, setting);
 	    free (array);
 	}
 	break;
     case TypeFloat:
 	{
-	    float *array = malloc (nItems * sizeof (float));
+	    double *array = malloc (nItems * sizeof (double));
+	    double *array_counter = array;
+
 	    if (!array)
 		break;
+	    
+	    /* Reads each item from the variant into the position pointed
+	     * at by array_counter */
+	    while (g_variant_iter_loop (iter, variantType, array_counter))
+		array_counter++;
 
-	    for (; valueList; valueList = valueList->next, i++)
-		array[i] = gconf_value_get_float (valueList->data);
-	    list = ccsGetValueListFromFloatArray (array, nItems, setting);
+	    list = ccsGetValueListFromFloatArray ((float *) array, nItems, setting);
 	    free (array);
 	}
 	break;
     case TypeString:
     case TypeMatch:
 	{
-	    char **array = malloc (nItems * sizeof (char*));
-	    if (!array)
-		break;
+	    char **array = calloc (1, (nItems + 1) * sizeof (char *));
+	    char **array_counter = array;
 
-	    for (; valueList; valueList = valueList->next, i++)
-		array[i] = strdup (gconf_value_get_string (valueList->data));
+	    if (!array)
+	    {
+		break;
+	    }
+	    
+	    /* Reads each item from the variant into the position pointed
+	     * at by array_counter */
+	    while (g_variant_iter_loop (iter, variantType, array_counter))
+		array_counter++;
+
 	    list = ccsGetValueListFromStringArray (array, nItems, setting);
 	    for (i = 0; i < nItems; i++)
 		if (array[i])
@@ -982,14 +1000,15 @@ readListValue (CCSSetting *setting,
     case TypeColor:
 	{
 	    CCSSettingColorValue *array;
+	    char		 *colorValue;
 	    array = malloc (nItems * sizeof (CCSSettingColorValue));
 	    if (!array)
 		break;
 
-	    for (; valueList; valueList = valueList->next, i++)
+	    while (g_variant_iter_loop (iter, variantType, &colorValue))
     	    {
 		memset (&array[i], 0, sizeof (CCSSettingColorValue));
-		ccsStringToColor (gconf_value_get_string (valueList->data),
+		ccsStringToColor (colorValue,
 				  &array[i]);
 	    }
 	    list = ccsGetValueListFromColorArray (array, nItems, setting);
@@ -999,6 +1018,10 @@ readListValue (CCSSetting *setting,
     default:
 	break;
     }
+
+    CLEANUP_CLEAN_SETTING_NAME;
+    g_object_unref (settings);
+    free (variantType);
 
     if (list)
     {
@@ -1233,54 +1256,31 @@ readOption (CCSSetting * setting)
     Bool       ret = FALSE;
     Bool       valid = TRUE;
 
+    /* It is impossible for certain settings to have a schema,
+     * such as actions and read only settings, so in that case
+     * just return FALSE since compizconfig doesn't expect us
+     * to read them anyways */
+
+    if (setting->type == TypeAction ||
+	ccsSettingIsReadOnly (setting))
+    {
+	g_object_unref (settings);
+	return FALSE;
+    }
+
     CLEAN_SETTING_NAME;
     KEYNAME(setting->parent->context->screenNum);
     PATHNAME;
 
     /* first check if the key is set */
-    gconfValue = gconf_client_get_without_default (client, pathName, &err);
     gsettingsValue = g_settings_get_value (settings, cleanSettingName);
     if (err)
     {
 	g_error_free (err);
 	CLEANUP_CLEAN_SETTING_NAME;
 	g_object_unref (settings);
+	printf ("GSettings Backend: Warning: key name %s for path %s is not set!\n", cleanSettingName, pathName);
 	return FALSE;
-    }
-    if (!gconfValue)
-    {
-	/* value is not set */
-	CLEANUP_CLEAN_SETTING_NAME;
-	g_object_unref (settings);
-	return FALSE;
-    }
-
-    /* setting type sanity check */
-    switch (setting->type)
-    {
-    case TypeString:
-    case TypeMatch:
-    case TypeColor:
-    case TypeKey:
-    case TypeButton:
-    case TypeEdge:
-	valid = (gconfValue->type == GCONF_VALUE_STRING);
-	break;
-    case TypeInt:
-	valid = (gconfValue->type == GCONF_VALUE_INT);
-	break;
-    case TypeBool:
-    case TypeBell:
-	valid = (gconfValue->type == GCONF_VALUE_BOOL);
-	break;
-    case TypeFloat:
-	valid = (gconfValue->type == GCONF_VALUE_FLOAT);
-	break;
-    case TypeList:
-	valid = (gconfValue->type == GCONF_VALUE_LIST);
-	break;
-    default:
-	break;
     }
 
     switch (setting->type)
@@ -1304,7 +1304,7 @@ readOption (CCSSetting * setting)
 	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_DOUBLE, g_variant_get_type (gsettingsValue)));
 	break;
     case TypeList:
-	valid = (g_variant_type_is_subtype_of (G_VARIANT_TYPE_ARRAY, g_variant_get_type (gsettingsValue)));
+	valid = (g_variant_type_is_array (g_variant_get_type (gsettingsValue)));
 	break;
     default:
 	break;
@@ -1316,8 +1316,8 @@ readOption (CCSSetting * setting)
 		"Settings from this path won't be read. Try to remove "
 		"that value so that operation can continue properly.\n",
 		pathName);
-	g_variant_unref (gsettingsValue);
-	return FALSE;
+	//g_variant_unref (gsettingsValue);
+	//return FALSE;
     }
 
     switch (setting->type)
@@ -1434,21 +1434,18 @@ readOption (CCSSetting * setting)
 	}
 	break;
     case TypeList:
-	ret = readListValue (setting, gconfValue);
+	ret = readListValue (setting, NULL);
 	break;
     default:
-	printf("GConf backend: attempt to read unsupported setting type %d!\n",
+	printf("GSettings backend: attempt to read unsupported setting type %d!\n",
 	       setting->type);
 	break;
     }
 
-    if (gconfValue)
-	gconf_value_free (gconfValue);
-
     CLEANUP_CLEAN_SETTING_NAME;
     g_object_unref (settings);
     g_variant_unref (gsettingsValue);
-    
+
     return ret;
 }
 
@@ -1457,112 +1454,134 @@ writeListValue (CCSSetting *setting,
 		char       *pathName)
 {
     GSettings  		*settings = gsettings_object_for_plugin (setting->parent->name);
+    GVariant 		*value;
     GSList              *valueList = NULL;
     GConfValueType      valueType;
     Bool                freeItems = FALSE;
+    gchar		*variantType = NULL;
     CCSSettingValueList list;
     gpointer            data;
 
+    CLEAN_SETTING_NAME;
+    
     if (!ccsGetList (setting, &list))
 	return;
-
+    
     switch (setting->info.forList.listType)
     {
     case TypeBool:
 	{
+	    variantType = "ab";
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ab"));
 	    while (list)
 	    {
-		data = GINT_TO_POINTER (list->data->value.asBool);
-		valueList = g_slist_append (valueList, data);
+		g_variant_builder_add (builder, "b", list->data->value.asBool);
+		//data = GINT_TO_POINTER (list->data->value.asBool);
+		//valueList = g_slist_append (valueList, data);
 		list = list->next;
 	    }
+	    value = g_variant_new ("ab", builder);
+	    g_variant_builder_unref (builder);
 	    valueType = GCONF_VALUE_BOOL;
 	}
 	break;
     case TypeInt:
 	{
+	    variantType = "ai";
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ai"));
 	    while (list)
 	    {
-		data = GINT_TO_POINTER (list->data->value.asInt);
-		valueList = g_slist_append(valueList, data);
+		g_variant_builder_add (builder, "i", list->data->value.asInt);
+		//data = GINT_TO_POINTER (list->data->value.asInt);
+		//valueList = g_slist_append(valueList, data);
 		list = list->next;
     	    }
+    	    value = g_variant_new ("ai", builder);
+	    g_variant_builder_unref (builder);
 	    valueType = GCONF_VALUE_INT;
 	}
 	break;
     case TypeFloat:
 	{
+	    variantType = "ad";
 	    gdouble *item;
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("ad"));
 	    while (list)
 	    {
-		item = malloc (sizeof (gdouble));
-		if (item)
-		{
-		    *item = list->data->value.asFloat;
-		    valueList = g_slist_append (valueList, item);
-		}
+		g_variant_builder_add (builder, "d", (gdouble) list->data->value.asFloat);
 		list = list->next;
 	    }
-	    freeItems = TRUE;
+	    value = g_variant_new ("ad", builder);
+	    g_variant_builder_unref (builder);
 	    valueType = GCONF_VALUE_FLOAT;
 	}
 	break;
     case TypeString:
 	{
+	    variantType = "as";
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    while (list)
 	    {
-		valueList = g_slist_append(valueList,
-		   			   list->data->value.asString);
+		g_variant_builder_add (builder, "s", list->data->value.asString);
 		list = list->next;
 	    }
+	    value = g_variant_new ("as", builder);
+	    g_variant_builder_unref (builder);
 	    valueType = GCONF_VALUE_STRING;
 	}
 	break;
     case TypeMatch:
 	{
+	    variantType = "as";
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    while (list)
 	    {
-		valueList = g_slist_append(valueList,
-		   			   list->data->value.asMatch);
+		g_variant_builder_add (builder, "s", list->data->value.asMatch);
+		//valueList = g_slist_append(valueList,
+		//   			   list->data->value.asMatch);
 		list = list->next;
 	    }
+	    value = g_variant_new ("as", builder);
+	    g_variant_builder_unref (builder);
 	    valueType = GCONF_VALUE_STRING;
 	}
 	break;
     case TypeColor:
 	{
+	    variantType = "as";
+	    GVariantBuilder *builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
 	    char *item;
 	    while (list)
 	    {
 		item = ccsColorToString (&list->data->value.asColor);
-		valueList = g_slist_append (valueList, item);
+		g_variant_builder_add (builder, "s", list->data->value.asColor);
+		//valueList = g_slist_append (valueList, item);
 		list = list->next;
 	    }
+	    value = g_variant_new ("as", builder);
+	    g_variant_builder_unref (builder);
 	    freeItems = TRUE;
 	    valueType = GCONF_VALUE_STRING;
 	}
 	break;
     default:
-	printf("GConf backend: attempt to write unsupported list type %d!\n",
+	printf("GSettings backend: attempt to write unsupported list type %d!\n",
 	       setting->info.forList.listType);
 	valueType = GCONF_VALUE_INVALID;
+	variantType = NULL;
 	break;
     }
 
-    if (valueType != GCONF_VALUE_INVALID)
+    if (valueType != GCONF_VALUE_INVALID &&
+	variantType != NULL)
     {
-	gconf_client_set_list (client, pathName, valueType, valueList, NULL);
-
-	if (freeItems)
-	{
-	    GSList *tmpList = valueList;
-	    for (; tmpList; tmpList = tmpList->next)
-		if (tmpList->data)
-		    free (tmpList->data);
-	}
+	g_settings_set_value (settings, cleanSettingName, value);
+	g_variant_unref (value);
     }
     if (valueList)
 	g_slist_free (valueList);
+    
+    CLEANUP_CLEAN_SETTING_NAME;
     
     g_object_unref (settings);
 }
@@ -2112,8 +2131,6 @@ static Bool
 initBackend (CCSContext * context)
 {
     g_type_init ();
-
-    g_setenv ("GSETTINGS_BACKEND", "gconf", FALSE);
 
     conf = gconf_engine_get_default ();
     initClient (context);
