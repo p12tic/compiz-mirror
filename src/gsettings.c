@@ -2140,8 +2140,10 @@ deleteProfile (CCSContext *context,
     GVariantBuilder *new_profiles_builder;
     char            *plugin, *prof;
     GVariantIter    *iter;
+    char            *profileSettingsPath = g_strconcat ("/org/freedesktop/compizconfig/profile/", profile, "/", NULL);
+    GSettings       *profile_settings = g_settings_new_with_path ("org.freedesktop.compizconfig.profile", profileSettingsPath);;
 
-    plugins = g_settings_get_value (current_profile_settings, "plugins-with-set-values");
+    plugins = g_settings_get_value (current_profile_settings, "plugins-with-set-keys");
     profiles = g_settings_get_value (compizconfig_settings, "existing-profiles");
 
     iter = g_variant_iter_new (plugins);
@@ -2173,7 +2175,7 @@ deleteProfile (CCSContext *context,
 	    char **key_ptr;
 
 	    /* Unset all the keys */
-	    for (key_ptr = keys; key_ptr; key_ptr++)
+	    for (key_ptr = keys; *key_ptr; key_ptr++)
 		g_settings_reset (settings, *key_ptr);
 
 	    g_strfreev (keys);
@@ -2184,7 +2186,7 @@ deleteProfile (CCSContext *context,
 
     /* Remove the profile from existing-profiles */
     g_variant_iter_free (iter);
-    g_settings_reset (current_profile_settings, "plugins-with-set-values");
+    g_settings_reset (profile_settings, "plugins-with-set-values");
 
     iter = g_variant_iter_new (profiles);
     new_profiles_builder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
@@ -2200,6 +2202,8 @@ deleteProfile (CCSContext *context,
 
     g_variant_unref (new_profiles);
     g_variant_builder_unref (new_profiles_builder);
+
+    g_object_unref (profile_settings);
 
     updateProfile (context);
 
