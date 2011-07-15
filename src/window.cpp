@@ -2801,7 +2801,6 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     else
     {
 	mask |= restoreGeometry (xwc, CWBorderWidth);
-
 	if (state & CompWindowStateMaximizedVertMask)
 	{
 	    saveGeometry (CWY | CWHeight);
@@ -2888,55 +2887,83 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 	    if (state & CompWindowStateMaximizedVertMask)
 	    {
-		if (old.y () < y + workArea.y () + input.top)
-		{
-		    xwc->y = y + workArea.y () + input.top;
-		    mask |= CWY;
-		}
-		else
-		{
-		    height = xwc->height + old.border () * 2;
+		/* If the window is still offscreen, then we need to constrain it
+		 * by the gravity value (so that the corner that the gravity specifies
+		 * is 'anchored' to that edge of the workarea) */
 
-		    max = y + workArea.bottom ();
-		    if (old.y () + (int) old.height () + input.bottom > max)
-		    {
-			xwc->y = max - height - input.bottom;
-			mask |= CWY;
-		    }
-		    else if (old.y () + height + input.bottom > max)
-		    {
-			xwc->y = y + workArea.y () +
-			         (workArea.height () - input.top - height -
-				  input.bottom) / 2 + input.top;
-			mask |= CWY;
-		    }
+		xwc->y = y + workArea.y () + input.top;
+		mask |= CWY;
+
+		switch (priv->sizeHints.win_gravity)
+		{
+		    case SouthWestGravity:
+		    case SouthEastGravity:
+		    case SouthGravity:
+			/* Shift the window so that the bottom meets the top of the bottom */
+			height = xwc->height + old.border () * 2;
+
+			max = y + workArea.bottom ();
+			if (xwc->y + xwc->height + input.bottom > max)
+			{
+			    xwc->y = max - height - input.bottom;
+			    mask |= CWY;
+			}
+			break;
+		    /* For EastGravity, WestGravity and CenterGravity we default to the top
+		     * of the window since the user should at least be able to close it
+		     * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
+		     * that indicates that the application has requested positioning in that area
+		     */
+		    case EastGravity:
+		    case WestGravity:
+		    case CenterGravity:
+		    case NorthWestGravity:
+		    case NorthEastGravity:
+		    case NorthGravity:
+		    default:
+			/* Shift the window so that the top meets the top of the screen */
+			break;
 		}
 	    }
 
 	    if (state & CompWindowStateMaximizedHorzMask)
 	    {
-		if (old.x () < x + workArea.x () + input.left)
-		{
-		    xwc->x = x + workArea.x () + input.left;
-		    mask |= CWX;
-		}
-		else
-		{
-		    width = xwc->width + old.border () * 2;
+		xwc->x = x + workArea.x () + input.left;
+		mask |= CWX;
 
-		    max = x + workArea.right ();
-		    if (old.x () + (int) old.width () + input.right > max)
-		    {
-			xwc->x = max - width - input.right;
-			mask |= CWX;
-		    }
-		    else if (old.x () + width + input.right > max)
-		    {
-			xwc->x = x + workArea.x () +
-			         (workArea.width () - input.left - width -
-				  input.right) / 2 + input.left;
-			mask |= CWX;
-		    }
+		switch (priv->sizeHints.win_gravity)
+		{
+		    case NorthEastGravity:
+		    case SouthEastGravity:
+		    case EastGravity:
+			width = xwc->width + old.border () * 2;
+
+			max = x + workArea.right ();
+			if (old.x () + (int) old.width () + input.right > max)
+			{
+			    xwc->x = max - width - input.right;
+			    mask |= CWX;
+			}
+			else if (old.x () + width + input.right > max)
+			{
+			    xwc->x = x + workArea.x () +
+				     (workArea.width () - input.left - width -
+				      input.right) / 2 + input.left;
+			    mask |= CWX;
+			}
+		    /* For NorthGravity, SouthGravity and CenterGravity we default to the top
+		     * of the window since the user should at least be able to close it
+		     * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
+		     * that indicates that the application has requested positioning in that area
+		     */
+		    case NorthGravity:
+		    case SouthGravity:
+		    case CenterGravity:
+		    case NorthWestGravity:
+		    case SouthWestGravity:
+		    case WestGravity:
+		    default:
+			break;
 		}
 	    }
 	}
