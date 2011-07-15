@@ -484,8 +484,13 @@ PrivateWindow::setFullscreenMonitors (CompFullscreenMonitorSet *monitors)
     }
 
     if (state & CompWindowStateFullscreenMask)
+    {
 	if (fullscreenMonitorsSet || hadFsMonitors)
+	{
+	    constrainedPlacement = false;
 	    window->updateAttributes (CompStackingUpdateModeNone);
+	}
+    }
 }
 
 void
@@ -2885,17 +2890,19 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	    else
 		mask &= ~CWHeight;
 
-	    if (state & CompWindowStateMaximizedVertMask)
+	    if (!constrainedPlacement)
 	    {
-		/* If the window is still offscreen, then we need to constrain it
-		 * by the gravity value (so that the corner that the gravity specifies
-		 * is 'anchored' to that edge of the workarea) */
-
-		xwc->y = y + workArea.y () + input.top;
-		mask |= CWY;
-
-		switch (priv->sizeHints.win_gravity)
+		if (state & CompWindowStateMaximizedVertMask)
 		{
+		    /* If the window is still offscreen, then we need to constrain it
+		     * by the gravity value (so that the corner that the gravity specifies
+		     * is 'anchored' to that edge of the workarea) */
+
+		    xwc->y = y + workArea.y () + input.top;
+		    mask |= CWY;
+
+		    switch (priv->sizeHints.win_gravity)
+		    {
 		    case SouthWestGravity:
 		    case SouthEastGravity:
 		    case SouthGravity:
@@ -2909,11 +2916,11 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 			    mask |= CWY;
 			}
 			break;
-		    /* For EastGravity, WestGravity and CenterGravity we default to the top
-		     * of the window since the user should at least be able to close it
-		     * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
-		     * that indicates that the application has requested positioning in that area
-		     */
+			/* For EastGravity, WestGravity and CenterGravity we default to the top
+			 * of the window since the user should at least be able to close it
+			 * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
+			 * that indicates that the application has requested positioning in that area
+			 */
 		    case EastGravity:
 		    case WestGravity:
 		    case CenterGravity:
@@ -2923,16 +2930,16 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 		    default:
 			/* Shift the window so that the top meets the top of the screen */
 			break;
+		    }
 		}
-	    }
 
-	    if (state & CompWindowStateMaximizedHorzMask)
-	    {
-		xwc->x = x + workArea.x () + input.left;
-		mask |= CWX;
-
-		switch (priv->sizeHints.win_gravity)
+		if (state & CompWindowStateMaximizedHorzMask)
 		{
+		    xwc->x = x + workArea.x () + input.left;
+		    mask |= CWX;
+
+		    switch (priv->sizeHints.win_gravity)
+		    {
 		    case NorthEastGravity:
 		    case SouthEastGravity:
 		    case EastGravity:
@@ -2947,15 +2954,15 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 			else if (old.x () + width + input.right > max)
 			{
 			    xwc->x = x + workArea.x () +
-				     (workArea.width () - input.left - width -
-				      input.right) / 2 + input.left;
+				    (workArea.width () - input.left - width -
+				     input.right) / 2 + input.left;
 			    mask |= CWX;
 			}
-		    /* For NorthGravity, SouthGravity and CenterGravity we default to the top
-		     * of the window since the user should at least be able to close it
-		     * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
-		     * that indicates that the application has requested positioning in that area
-		     */
+			/* For NorthGravity, SouthGravity and CenterGravity we default to the top
+			 * of the window since the user should at least be able to close it
+			 * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
+			 * that indicates that the application has requested positioning in that area
+			 */
 		    case NorthGravity:
 		    case SouthGravity:
 		    case CenterGravity:
@@ -2964,7 +2971,10 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 		    case WestGravity:
 		    default:
 			break;
+		    }
 		}
+
+		constrainedPlacement = true;
 	    }
 	}
     }
@@ -3978,6 +3988,8 @@ CompWindow::maximize (unsigned int state)
 
     state |= (priv->state & ~MAXIMIZE_STATE);
 
+    priv->constrainedPlacement = false;
+
     changeState (state);
     updateAttributes (CompStackingUpdateModeNone);
 }
@@ -4832,6 +4844,8 @@ PrivateWindow::processMap ()
     else
 	stackingMode = CompStackingUpdateModeInitialMap;
 
+    constrainedPlacement = false;
+
     window->updateAttributes (stackingMode);
 
     if (window->minimized ())
@@ -5441,6 +5455,8 @@ CompWindow::CompWindow (Window aboveId,
 
 	map ();
 
+	priv->constrainedPlacement = false;
+
 	updateAttributes (CompStackingUpdateModeNormal);
 
 	if (priv->minimized || priv->inShowDesktopMode ||
@@ -5584,6 +5600,7 @@ PrivateWindow::PrivateWindow () :
     fullscreenMonitorsSet (false),
 
     placed (false),
+    constrainedPlacement (false),
     minimized (false),
     inShowDesktopMode (false),
     shaded (false),
