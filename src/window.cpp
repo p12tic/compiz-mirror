@@ -628,6 +628,32 @@ CompWindow::recalcActions ()
 		     CompWindowActionMaximizeVertMask |
 		     CompWindowActionFullscreenMask);
 
+    /* Don't allow maximization or fullscreen
+     * of windows which are too big to fit
+     * the screen */
+    bool foundVert = false;
+    bool foundHorz = false;
+
+    foreach (CompOutput &o, screen->outputDevs ())
+    {
+	if (o.width () > (priv->sizeHints.min_width + priv->border.left + priv->border.right))
+	    foundHorz = true;
+	if (o.height () > (priv->sizeHints.min_height + priv->border.top + priv->border.bottom))
+	    foundVert = true;
+    }
+
+    if (!foundHorz)
+    {
+	actions &= ~(CompWindowActionMaximizeHorzMask |
+		     CompWindowActionFullscreenMask);
+    }
+
+    if (!foundVert)
+    {
+	actions &= ~(CompWindowActionMaximizeVertMask |
+		     CompWindowActionFullscreenMask);
+    }
+
     if (!(priv->mwmFunc & MwmFuncAll))
     {
 	if (!(priv->mwmFunc & MwmFuncResize))
@@ -2769,7 +2795,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     CompRect  workArea;
     int	      mask = 0;
     int	      x, y;
-    int	      output;
+    CompOutput *output;
     CompPoint viewport;
 
     screen->viewportForGeometry (old, viewport);
@@ -2777,8 +2803,80 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     x = (viewport.x () - screen->vp ().x ()) * screen->width ();
     y = (viewport.y () - screen->vp ().y ()) * screen->height ();
 
-    output   = screen->outputDeviceForGeometry (old);
-    workArea = screen->getWorkareaForOutput (output);
+    /* Try to select and output device that the window is on first
+     * and make sure if we are fullscreening or maximizing that the
+     * window is actually able to fit on this output ... otherwise
+     * we're going to have to use another output device which sucks
+     * but at least the user will be able to see all of the window */
+    output   = &screen->outputDevs ().at (screen->outputDeviceForGeometry (old));
+
+    if (state & CompWindowStateFullscreenMask ||
+	state & CompWindowStateMaximizedHorzMask)
+    {
+	int width = (mask & CWWidth) ? xwc->width : old.width ();
+	int height = (mask & CWHeight) ? xwc->height : old.height ();
+
+	window->constrainNewWindowSize (width, height, &width, &height);
+
+	if (width > output->width ())
+	{
+	    int        distance = 999999;
+	    CompOutput *selected = output;
+	    /* That's no good ... try and find the closest output device to this one
+	     * which has a large enough size */
+	    foreach (CompOutput &o, screen->outputDevs ())
+	    {
+		if (o.workArea ().width () > width)
+		{
+		    int tDistance = sqrt (pow (abs (o.x () - output->x ()), 2) +
+					  pow (abs (o.y () - output->y ()), 2));
+
+		    if (tDistance < distance)
+		    {
+			selected = &o;
+			tDistance = distance;
+		    }
+		}
+	    }
+
+	    output = selected;
+	}
+    }
+
+    if (state & CompWindowStateFullscreenMask ||
+	state & CompWindowStateMaximizedVertMask)
+    {
+	int width = (mask & CWWidth) ? xwc->width : old.width ();
+	int height = (mask & CWHeight) ? xwc->height : old.height ();
+
+	window->constrainNewWindowSize (width, height, &width, &height);
+
+	if (height > output->height ())
+	{
+	    int        distance = 999999;
+	    CompOutput *selected = output;
+	    /* That's no good ... try and find the closest output device to this one
+	     * which has a large enough size */
+	    foreach (CompOutput &o, screen->outputDevs ())
+	    {
+		if (o.workArea ().height () > height)
+		{
+		    int tDistance = sqrt (pow (abs (o.x () - output->x ()), 2) +
+					  pow (abs (o.y () - output->y ()), 2));
+
+		    if (tDistance < distance)
+		    {
+			selected = &o;
+			tDistance = distance;
+		    }
+		}
+	    }
+
+	    output = selected;
+	}
+    }
+
+    workArea = output->workArea ();
 
     if (type & CompWindowTypeFullscreenMask)
     {
@@ -2793,10 +2891,10 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	}
 	else
 	{
-	    xwc->x      = x + screen->outputDevs ()[output].x ();
-	    xwc->y      = y + screen->outputDevs ()[output].y ();
-	    xwc->width  = screen->outputDevs ()[output].width ();
-	    xwc->height = screen->outputDevs ()[output].height ();
+	    xwc->x      = x + output->x ();
+	    xwc->y      = y + output->y ();
+	    xwc->width  = output->width ();
+	    xwc->height = output->height ();
 	}
 
 	xwc->border_width = 0;
@@ -3988,9 +4086,9 @@ CompWindow::maximize (unsigned int state)
 
     state |= (priv->state & ~MAXIMIZE_STATE);
 
+    changeState (state);
     priv->constrainedPlacement = false;
 
-    changeState (state);
     updateAttributes (CompStackingUpdateModeNone);
 }
 
