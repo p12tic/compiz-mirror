@@ -263,7 +263,6 @@ class PrivateWindow {
 	CompRect fullscreenMonitorRect;
 
 	bool placed;
-	bool constrainedPlacement;
 	bool minimized;
 	bool inShowDesktopMode;
 	bool shaded;
