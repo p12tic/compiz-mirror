@@ -147,7 +147,6 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 	    g_free (name);
 	    g_free (schemaName);
 
-	    g_object_ref (settingsObj);
 	    return settingsObj;
 	}
 
@@ -160,7 +159,6 @@ getSettingsObjectForPluginWithPath (const char *plugin,
 
     g_signal_connect (G_OBJECT (settingsObj), "changed", (GCallback) valueChanged, (gpointer) context);
 
-    g_object_ref (settingsObj);
     settingsList = g_list_append (settingsList, (void *) settingsObj);
 
     /* Also write the plugin name to the list of modified plugins so
@@ -433,7 +431,6 @@ readListValue (CCSSetting *setting)
     }
 
     free (cleanSettingName);
-    g_object_unref (settings);
     free (variantType);
 
     if (list)
@@ -474,7 +471,6 @@ readOption (CCSSetting * setting)
     if (setting->type == TypeAction ||
 	ccsSettingIsReadOnly (setting))
     {
-	g_object_unref (settings);
 	return FALSE;
     }
 
@@ -519,7 +515,6 @@ readOption (CCSSetting * setting)
 		"that value so that operation can continue properly.\n",
 		pathName);
 	free (cleanSettingName);
-	g_object_unref (settings);
 	g_variant_unref (gsettingsValue);
 	return FALSE;
     }
@@ -647,7 +642,6 @@ readOption (CCSSetting * setting)
     }
 
     free (cleanSettingName);
-    g_object_unref (settings);
     g_variant_unref (gsettingsValue);
 
     return ret;
@@ -763,8 +757,6 @@ writeListValue (CCSSetting *setting,
     }
     
     free (cleanSettingName);
-    
-    g_object_unref (settings);
 }
 
 static void
@@ -790,7 +782,6 @@ resetOptionToDefault (CCSSetting * setting)
 
     g_settings_reset (settings, cleanSettingName);
 
-    g_object_unref (settings);
     free (cleanSettingName);
 }
 
@@ -930,7 +921,6 @@ writeOption (CCSSetting * setting)
 	break;
     }
 
-    g_object_unref (settings);
     free (cleanSettingName);
 }
 
@@ -971,7 +961,6 @@ updateCurrentProfileName (char *profile)
 
     /* Change the current profile and current profile settings */
     free (currentProfile);
-    g_object_unref (currentProfileSettings);
 
     currentProfile = strdup (profile);
     currentProfilePath = g_strconcat (profilePath, profile, "/", NULL);
@@ -1176,7 +1165,7 @@ deleteProfile (CCSContext *context,
     char            *plugin, *prof;
     GVariantIter    *iter;
     char            *profileSettingsPath = g_strconcat (PROFILEPATH, profile, "/", NULL);
-    GSettings       *profile_settings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
+    GSettings       *profileSettings = g_settings_new_with_path (PROFILE_SCHEMA_ID, profileSettingsPath);
 
     plugins = g_settings_get_value (currentProfileSettings, "plugins-with-set-keys");
     profiles = g_settings_get_value (compizconfigSettings, "existing-profiles");
@@ -1204,14 +1193,12 @@ deleteProfile (CCSContext *context,
 		g_settings_reset (settings, *key_ptr);
 
 	    g_strfreev (keys);
-
-	    g_object_unref (settings);
 	}
     }
 
     /* Remove the profile from existing-profiles */
     g_variant_iter_free (iter);
-    g_settings_reset (profile_settings, "plugins-with-set-values");
+    g_settings_reset (profileSettings, "plugins-with-set-values");
 
     iter = g_variant_iter_new (profiles);
     newProfilesBuilder = g_variant_builder_new (G_VARIANT_TYPE ("as"));
@@ -1227,8 +1214,6 @@ deleteProfile (CCSContext *context,
 
     g_variant_unref (newProfiles);
     g_variant_builder_unref (newProfilesBuilder);
-
-    g_object_unref (profile_settings);
 
     free (profileSettingsPath);
 
