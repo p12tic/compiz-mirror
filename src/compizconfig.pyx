@@ -94,11 +94,12 @@ ctypedef CCSList CCSStrRestrictionList
 ctypedef CCSList CCSStrExtensionList
 
 cdef struct CCSBackendInfo:
-    char *    name
-    char *    shortDesc
-    char *    longDesc
-    Bool      integrationSupport
-    Bool      profileSupport
+    char *       name
+    char *       shortDesc
+    char *       longDesc
+    Bool         integrationSupport
+    Bool         profileSupport
+    unsigned int refCount
 
 cdef struct CCSSettingKeyValue:
     int          keysym
@@ -133,12 +134,14 @@ cdef union CCSSettingValueUnion:
     Bool                  asBell
 
 cdef struct CCSIntDesc:
-    int    value
-    char * name
+    int          value
+    char *       name
+    unsigned int refCount
 
 cdef struct CCSStrRestriction:
-    char * value
-    char * name
+    char *       value
+    char *       name
+    unsigned int refCount
 
 cdef struct CCSSettingIntInfo:
     int              min
@@ -173,14 +176,17 @@ cdef struct CCSSettingValue:
     CCSSettingValueUnion value
     void *               parent
     Bool                 isListChild
+    unsigned int         refCount
 
 cdef struct CCSGroup:
     char *            name
     CCSSubGroupList * subGroups
+    unsigned int      refCount
 
 cdef struct CCSSubGroup:
     char *           name
     CCSSettingList * settings
+    unsigned int     refCount
 
 cdef struct CCSPluginCategory:
     char *          name
@@ -218,11 +224,13 @@ cdef struct CCSSetting:
 
     CCSPlugin * parent
     void *      priv
+    unsigned int refCount
 
 cdef struct CCSStrExtension:
     char *                  basePlugin
     CCSSettingList *        baseSettings
     CCSStrRestrictionList * restriction
+    unsigned int            refCount
 
 cdef struct CCSPlugin:
     char * name
@@ -242,11 +250,17 @@ cdef struct CCSPlugin:
     void *       priv
     CCSContext * context
     void *       ccsPrivate
+    unsigned int refCount
 
 cdef struct CCSPluginConflict:
     char *                value
     CCSPluginConflictType type
     CCSPluginList *       plugins
+    unsigned int          refCount
+
+cdef struct CCSString:
+    char *                value
+    unsigned int          refCount
 
 '''Context functions'''
 cdef extern void ccsSetBasicMetadata (Bool value)
@@ -288,7 +302,8 @@ cdef extern Bool ccsStringToButtonBinding (char *                  binding,
 
 '''General settings handling'''
 cdef extern Bool ccsSetValue (CCSSetting * setting,
-                  CCSSettingValue * value)
+                  CCSSettingValue * value,
+		  Bool		  processChanged)
 cdef extern void ccsFreeSettingValue (CCSSettingValue * value)
 cdef extern CCSSettingValueList * ccsSettingValueListAppend (
                                         CCSSettingValueList * l,
@@ -319,7 +334,7 @@ cdef extern Bool ccsGetIntegrationEnabled (CCSContext * context)
 cdef extern void ccsReadSettings (CCSContext * c)
 cdef extern void ccsWriteSettings (CCSContext * c)
 cdef extern void ccsWriteChangedSettings (CCSContext * c)
-cdef extern void ccsResetToDefault (CCSSetting * s)
+cdef extern void ccsResetToDefault (CCSSetting * s, Bool processChanged)
 
 '''Event loop'''
 ProcessEventsNoGlibMainLoopMask = (1 << 0)
@@ -364,14 +379,21 @@ cdef CCSStringList * ListToStringList (object list):
     cdef CCSStringList * listStart
     cdef CCSStringList * stringList
     cdef CCSStringList * prev
+    cdef CCSString     * stringStart = <CCSString *> malloc (sizeof (CCSString))
+    
+    stringStart.value = strdup (list[0])
     listStart = <CCSStringList *> malloc (sizeof (CCSStringList))
-    listStart.data = <char *> strdup (list[0])
+    listStart.data = <CCSString *> stringStart
     listStart.next = NULL
     prev = listStart
     
     for l in list[1:]:
+        stringStart = <CCSString *> malloc (sizeof (CCSString))
+
+        stringStart.value = <char *> strdup (l)
+
         stringList = <CCSStringList *> malloc (sizeof (CCSStringList))
-        stringList.data = <char *> strdup (l)
+        stringList.data = stringStart
         stringList.next = NULL
         prev.next = stringList
         prev = stringList
@@ -379,9 +401,12 @@ cdef CCSStringList * ListToStringList (object list):
     return listStart
     
 cdef object StringListToList (CCSList * stringList):
+    cdef CCSString * string
     list = []
     while stringList:
-        item = <char *> stringList.data
+        string = <CCSString *> stringList.data;
+
+        item = <char *> string.value
         list.append (item)
         stringList = stringList.next
     return list
@@ -603,7 +628,7 @@ cdef class Setting:
         self.info = info
     
     def Reset (self):
-        ccsResetToDefault (self.ccsSetting)
+        ccsResetToDefault (self.ccsSetting, 1)
 
     property Plugin:
         def __get__ (self):
@@ -660,7 +685,7 @@ cdef class Setting:
         def __set__ (self, value):
             cdef CCSSettingValue * sv
             sv = EncodeValue (value, self.ccsSetting, 0)
-            ccsSetValue (self.ccsSetting, sv)
+            ccsSetValue (self.ccsSetting, sv, 1)
             ccsFreeSettingValue (sv)
 
     property Integrated:
