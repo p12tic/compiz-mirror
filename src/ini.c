@@ -136,6 +136,13 @@ setIniString (IniDictionary *dictionary,
     free (sectionName);
 }
 
+Bool ccsIniParseString (char       *str,
+			char	    **value)
+{
+     *value = strdup (str);
+     return TRUE;
+}
+
 Bool
 ccsIniGetString (IniDictionary *dictionary,
 	    	 const char    *section,
@@ -147,11 +154,19 @@ ccsIniGetString (IniDictionary *dictionary,
     retValue = getIniString (dictionary, section, entry);
     if (retValue)
     {
-	*value = strdup (retValue);
+	ccsIniParseString (retValue, value);
 	return TRUE;
     }
     else
 	return FALSE;
+}
+
+Bool
+ccsIniParseInt (const char *str,
+		int	   *value)
+{
+    *value = strtoul (str, NULL, 10);
+    return TRUE;
 }
 
 Bool
@@ -165,7 +180,20 @@ ccsIniGetInt (IniDictionary *dictionary,
     retValue = getIniString (dictionary, section, entry);
     if (retValue)
     {
-	*value = strtoul (retValue, NULL, 10);
+	ccsIniParseInt (retValue, value);
+	return TRUE;
+    }
+    else
+	return FALSE;
+}
+
+Bool
+ccsIniParseFloat (const char  *str,
+		  float	      *value)
+{
+    if (str)
+    {
+	*value = (float) strtod (str, NULL);
 	return TRUE;
     }
     else
@@ -178,32 +206,20 @@ ccsIniGetFloat (IniDictionary *dictionary,
 		const char    *entry,
 		float         *value)
 {
-    char *retValue;
+    char *retValue = getIniString (dictionary, section, entry);
 
-    retValue = getIniString (dictionary, section, entry);
-    if (retValue)
-    {
-	*value = (float) strtod (retValue, NULL);
-	return TRUE;
-    }
-    else
-	return FALSE;
+    return ccsIniParseFloat (retValue, value);
 }
 
 Bool
-ccsIniGetBool (IniDictionary *dictionary,
-	       const char    *section,
-   	       const char    *entry,
-	       Bool          *value)
+ccsIniParseBool (const char  *str,
+		 Bool        *value)
 {
-    char *retValue;
-
-    retValue = getIniString (dictionary, section, entry);
-    if (retValue)
+    if (str)
     {
-	if ((retValue[0] == 't') || (retValue[0] == 'T') ||
-	    (retValue[0] == 'y') || (retValue[0] == 'Y') ||
-	    (retValue[0] == '1'))
+	if ((str[0] == 't') || (str[0] == 'T') ||
+	    (str[0] == 'y') || (str[0] == 'Y') ||
+	    (str[0] == '1'))
 	{
 	    *value = TRUE;
 	}
@@ -217,18 +233,45 @@ ccsIniGetBool (IniDictionary *dictionary,
 }
 
 Bool
+ccsIniGetBool (IniDictionary *dictionary,
+	       const char    *section,
+   	       const char    *entry,
+	       Bool          *value)
+{
+    char *retValue = getIniString (dictionary, section, entry);
+
+    return ccsIniParseBool (retValue, value);
+}
+
+Bool
+ccsIniParseColor (const char	       *str,
+		  CCSSettingColorValue *value)
+{
+    if (str && ccsStringToColor (str, value))
+	return TRUE;
+    else
+	return FALSE;
+}
+
+Bool
 ccsIniGetColor (IniDictionary        *dictionary,
 		const char           *section,
 		const char           *entry,
 		CCSSettingColorValue *value)
 {
-    char *retValue;
+    char *retValue = getIniString (dictionary, section, entry);
 
-    retValue = getIniString (dictionary, section, entry);
-    if (retValue && ccsStringToColor (retValue, value))
-	return TRUE;
-    else
-	return FALSE;
+    return ccsIniParseColor (retValue, value);
+}
+
+Bool
+ccsIniParseKey (const char	   *str,
+		CCSSettingKeyValue *value)
+{
+    if (str)
+	return ccsStringToKeyBinding (str, value);
+
+    return FALSE;
 }
 
 Bool
@@ -237,11 +280,17 @@ ccsIniGetKey (IniDictionary      *dictionary,
 	      const char         *entry,
               CCSSettingKeyValue *value)
 {
-    char *retValue;
+    char *retValue = getIniString (dictionary, section, entry);
 
-    retValue = getIniString (dictionary, section, entry);
-    if (retValue)
-	return ccsStringToKeyBinding (retValue, value);
+    return ccsIniParseKey (retValue, value);
+}
+
+Bool
+ccsIniParseButton (const char	         *str,
+		   CCSSettingButtonValue *value)
+{
+    if (str)
+	return ccsStringToButtonBinding (str, value);
     else
 	return FALSE;
 }
@@ -252,11 +301,20 @@ ccsIniGetButton (IniDictionary         *dictionary,
    		 const char            *entry,
 		 CCSSettingButtonValue *value)
 {
-    char *retValue;
+    char *retValue = getIniString (dictionary, section, entry);
 
-    retValue = getIniString (dictionary, section, entry);
-    if (retValue)
-	return ccsStringToButtonBinding (retValue, value);
+    return ccsIniParseButton (retValue, value);
+}
+
+Bool
+ccsIniParseEdge (const char   *str,
+		 unsigned int *value)
+{
+    if (str)
+    {
+	*value = ccsStringToEdges (str);
+	return TRUE;
+    }
     else
 	return FALSE;
 }
@@ -267,16 +325,9 @@ ccsIniGetEdge (IniDictionary  *dictionary,
    		 const char   *entry,
 		 unsigned int *value)
 {
-    char *retValue;
+    char *retValue = getIniString (dictionary, section, entry);
 
-    retValue = getIniString (dictionary, section, entry);
-    if (retValue)
-    {
-	*value = ccsStringToEdges (retValue);
-	return TRUE;
-    }
-    else
-	return FALSE;
+    return ccsIniParseEdge (retValue, value);
 }
 
 Bool
@@ -303,28 +354,16 @@ isEmptyString (char *value)
 }
 
 Bool
-ccsIniGetList (IniDictionary       *dictionary,
-   	       const char          *section,
-	       const char          *entry,
-	       CCSSettingValueList *value,
-	       CCSSetting          *parent)
+ccsIniParseList (const char	     *str,
+		 CCSSettingValueList *value,
+		 CCSSetting	     *parent)
 {
     CCSSettingValueList list = NULL;
-    char                *valueString, *valueStart, *valString;
+    char                *valueString, *valueStart;
     char                *token;
     int                 nItems = 1, i = 0, len;
 
-    valString = getIniString (dictionary, section, entry);
-    if (!valString)
-	return FALSE;
-
-    if (isEmptyString (valString))
-    {
-	*value = NULL;
-	return TRUE;
-    }
-
-    valueString = strdup (valString);
+    valueString = strdup (str);
     valueStart = valueString;
 
     /* remove trailing semicolon that we added to be able to differentiate
@@ -445,6 +484,9 @@ ccsIniGetList (IniDictionary       *dictionary,
 		val = malloc (sizeof (CCSSettingValue));
 		if (!val)
 		    break;
+
+		val->refCount = 1;
+
 		if (ccsStringToKeyBinding (token, &val->value.asKey))
 		    list = ccsSettingValueListAppend (list, val);
 		else
@@ -463,6 +505,9 @@ ccsIniGetList (IniDictionary       *dictionary,
 		val = malloc (sizeof (CCSSettingValue));
 		if (!val)
 		    break;
+
+		val->refCount = 1;
+
 		if (ccsStringToButtonBinding (token, &val->value.asButton))
 		    list = ccsSettingValueListAppend (list, val);
 		else
@@ -481,6 +526,9 @@ ccsIniGetList (IniDictionary       *dictionary,
 		val = malloc (sizeof (CCSSettingValue));
 		if (!val)
 		    break;
+
+		val->refCount = 1;
+
 		val->value.asEdge = ccsStringToEdges (token);
 		list = ccsSettingValueListAppend (list, val);
 		token = strsep (&valueString, ";");
@@ -504,6 +552,7 @@ ccsIniGetList (IniDictionary       *dictionary,
 			  token[0] == 't' || token[0] == 'T');
 		
 		val->value.asBell = isTrue;
+		val->refCount = 1;
 		list = ccsSettingValueListAppend (list, val);
 		token = strsep (&valueString, ";");
 	    }
@@ -517,6 +566,26 @@ ccsIniGetList (IniDictionary       *dictionary,
     free (valueStart);
 
     return TRUE;
+}
+
+Bool
+ccsIniGetList (IniDictionary       *dictionary,
+   	       const char          *section,
+	       const char          *entry,
+	       CCSSettingValueList *value,
+	       CCSSetting          *parent)
+{
+    char *valString = getIniString (dictionary, section, entry);
+    if (!valString)
+	return FALSE;
+
+    if (isEmptyString (valString))
+    {
+	*value = NULL;
+	return TRUE;
+    }
+
+    return ccsIniParseList (valString, value, parent);
 }
 
 void

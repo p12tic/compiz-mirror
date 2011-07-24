@@ -150,25 +150,32 @@ ccpConvertPluginList (CCSSetting          *s,
 		      CompOption::Value   *v)
 {
     CCSStringList       sl, l;
+    CCSString		*strCcp = (CCSString *) calloc (1, sizeof (CCSString));
+    CCSString		*strCore = (CCSString *) calloc (1, sizeof (CCSString));
     int                 i;
+
+    strCcp->value = strdup ("ccp");
+    strCcp->refCount = 1;
+    strCore->value = strdup ("core");
+    strCore->refCount = 1;
 
     sl = ccsGetStringListFromValueList (list);
 
-    while (ccsStringListFind(sl, (char *) "ccp"))
-	sl = ccsStringListRemove (sl, (char *) "ccp", TRUE);
+    while (ccsStringListFind(sl, strCcp))
+	sl = ccsStringListRemove (sl, strCcp, TRUE);
 
-    while (ccsStringListFind(sl, (char *)"core"))
-	sl = ccsStringListRemove (sl, (char *) "core", TRUE);
+    while (ccsStringListFind(sl, strCore))
+	sl = ccsStringListRemove (sl, strCore, TRUE);
 
-    sl = ccsStringListPrepend (sl, strdup ("ccp"));
-    sl = ccsStringListPrepend (sl, strdup ("core"));
+    sl = ccsStringListPrepend (sl, strCcp);
+    sl = ccsStringListPrepend (sl, strCore);
 
     CompOption::Value::Vector val (ccsStringListLength (sl));
 
     for (l = sl, i = 0; l; l = l->next)
     {
 	if (l->data)
-	    val[i].set (CompString (l->data));
+	    val[i].set (CompString (((CCSString *)l->data)->value));
 	i++;
     }
 
@@ -304,6 +311,7 @@ ccpValueToSetting (CCSSetting        *s,
     if (!value)
 	return;
 
+    value->refCount = 1;
     value->parent = s;
 
     if (s->type == TypeList)
@@ -315,6 +323,7 @@ ccpValueToSetting (CCSSetting        *s,
 	    val = (CCSSettingValue *) calloc (1, sizeof (CCSSettingValue));
 	    if (val)
 	    {
+		val->refCount = 1;
 		val->parent = s;
 		val->isListChild = TRUE;
 		ccpInitValue (val, &lv,
@@ -327,7 +336,7 @@ ccpValueToSetting (CCSSetting        *s,
     else
 	ccpInitValue (value, v, s->type);
 
-    ccsSetValue (s, value);
+    ccsSetValue (s, value, TRUE);
     ccsFreeSettingValue (value);
 }
 

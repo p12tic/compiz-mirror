@@ -150,7 +150,7 @@ typedef void (*freeFunc) (void *ptr);
 	    if (prev) prev->next = l->next; \
 	    else list = l->next; \
 	    if (freeObj) \
-		ccsFree##type (l->data); \
+		ccs##type##Unref (l->data); \
 	    free (l); \
 	} \
 	return list; \
@@ -165,7 +165,7 @@ typedef void (*freeFunc) (void *ptr);
 	    le = l; \
 	    l = l->next; \
 	    if (freeObj) \
-		ccsFree##type (le->data); \
+		ccs##type##Unref (le->data); \
 	    free(le); \
 	} \
 	return NULL; \
@@ -173,7 +173,7 @@ typedef void (*freeFunc) (void *ptr);
 
 CCSLIST (Plugin, CCSPlugin, FALSE, 0)
 CCSLIST (Setting, CCSSetting, FALSE, 0)
-CCSLIST (String, char, TRUE, strcmp (data, l->data) == 0)
+CCSLIST (String, CCSString, TRUE, strcmp (((CCSString *)data)->value, ((CCSString *)l->data)->value) == 0)
 CCSLIST (Group, CCSGroup, FALSE, 0)
 CCSLIST (SubGroup, CCSSubGroup, FALSE, 0)
 CCSLIST (SettingValue, CCSSettingValue, FALSE, 0)
@@ -194,9 +194,10 @@ CCSSettingValueList ccsGetValueListFromStringList (CCSStringList list,
 	if (!value)
 	    return rv;
 
+	value->refCount = 1;
 	value->isListChild = TRUE;
 	value->parent = parent;
-	value->value.asString = strdup (list->data);
+	value->value.asString = strdup (((CCSString *)list->data)->value);
 	rv = ccsSettingValueListAppend (rv, value);
 	list = list->next;
     }
@@ -210,7 +211,12 @@ CCSStringList ccsGetStringListFromValueList (CCSSettingValueList list)
 
     while (list)
     {
-	rv = ccsStringListAppend (rv, strdup (list->data->value.asString) );
+	CCSString *str = calloc (1, sizeof (CCSString));
+	
+	str->value = strdup (list->data->value.asString);
+	str->refCount = 1;
+
+	rv = ccsStringListAppend (rv, str);
 	list = list->next;
     }
 
@@ -231,7 +237,9 @@ char ** ccsGetStringArrayFromList (CCSStringList list, int *num)
     }
 
     for (i = 0; i < length; i++, list = list->next)
-	rv[i] = strdup (list->data);
+    {
+	rv[i] = strdup (((CCSString *)list->data)->value);
+    }
 
     *num = length;
 
@@ -244,7 +252,14 @@ CCSStringList ccsGetListFromStringArray (char ** array, int num)
     int i;
 
     for (i = 0; i < num; i++)
-	rv = ccsStringListAppend (rv, strdup (array[i]) );
+    {
+	CCSString *str = calloc (1, sizeof (CCSString));
+	
+	str->value = strdup (array[i]);
+	str->refCount = 1;
+
+	rv = ccsStringListAppend (rv, str);
+    }
 
     return rv;
 }
@@ -389,6 +404,7 @@ CCSSettingValueList ccsGetValueListFromStringArray (char ** array, int num,
 	if (!value)
 	    return l;
 
+	value->refCount = 1;
 	value->isListChild = TRUE;
 	value->parent = parent;
 	value->value.asString = strdup (array[i]);
@@ -410,6 +426,7 @@ CCSSettingValueList ccsGetValueListFromMatchArray (char ** array, int num,
 	if (!value)
 	    return l;
 
+	value->refCount = 1;
 	value->isListChild = TRUE;
 	value->parent = parent;
 	value->value.asMatch = strdup (array[i]);
@@ -431,6 +448,7 @@ CCSSettingValueList ccsGetValueListFromIntArray (int * array, int num,
 	if (!value)
 	    return l;
 
+	value->refCount = 1;
 	value->isListChild = TRUE;
 	value->parent = parent;
 	value->value.asInt = array[i];
@@ -452,6 +470,7 @@ CCSSettingValueList ccsGetValueListFromFloatArray (float * array, int num,
 	if (!value)
 	    return l;
 
+	value->refCount = 1;
 	value->isListChild = TRUE;
 	value->parent = parent;
 	value->value.asFloat = array[i];
@@ -473,6 +492,7 @@ CCSSettingValueList ccsGetValueListFromBoolArray (Bool * array, int num,
 	if (!value)
 	    return l;
 
+	value->refCount = 1;
 	value->isListChild = TRUE;
 	value->parent = parent;
 	value->value.asBool = array[i];
@@ -494,6 +514,7 @@ CCSSettingValueList ccsGetValueListFromColorArray (CCSSettingColorValue * array,
 	if (!value)
 	    return l;
 
+	value->refCount = 1;
 	value->isListChild = TRUE;
 	value->parent = parent;
 	value->value.asColor = array[i];

@@ -104,6 +104,7 @@ ccsAddRestrictionToStringInfo (CCSSettingStringInfo *forString,
     restriction = (CCSStrRestriction *) calloc (1, sizeof (CCSStrRestriction));
     if (restriction)
     {
+	restriction->refCount = 1;
 	restriction->name = strdup (name);
 	restriction->value = strdup (value);
 	forString->restriction =
@@ -122,6 +123,7 @@ ccsAddRestrictionToStringExtension (CCSStrExtension *extension,
     restriction = (CCSStrRestriction *) calloc (1, sizeof (CCSStrRestriction));
     if (restriction)
     {
+	restriction->refCount = 1;
 	restriction->name = strdup (name);
 	restriction->value = strdup (value);
 	extension->restriction =
@@ -316,6 +318,7 @@ initListValuePB (CCSSettingValue * v,
 	    if (!val)
 		continue;
 
+	    val->refCount = 1;
 	    val->parent = v->parent;
 	    val->isListChild = TRUE;
 
@@ -396,6 +399,7 @@ initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 		intDesc = (CCSIntDesc *) calloc (1, sizeof (CCSIntDesc));
 		if (intDesc)
 		{
+		    intDesc->refCount = 1;
 		    intDesc->name = strdup (intDescMetadata.name ().c_str ());
 		    intDesc->value = val;
 		    i->forInt.desc =
@@ -527,6 +531,7 @@ addOptionForPluginPB (CCSPlugin * plugin,
     setting->parent = plugin;
     setting->isDefault = TRUE;
     setting->name = strdup (name);
+    setting->refCount = 1;
 
     if (!basicMetadata)
     {
@@ -712,7 +717,14 @@ addStringsFromPB (CCSStringList * list,
 	const char *value = (*it).c_str ();
 
 	if (strlen (value))
-	    *list = ccsStringListAppend (*list, strdup (value));
+	{
+	    CCSString *str = (CCSString *) calloc (1, sizeof (CCSString));
+	    
+	    str->value = strdup (value);
+	    str->refCount = 1;
+
+	    *list = ccsStringListAppend (*list, str);
+	}
     }
 }
 
@@ -727,6 +739,7 @@ addStringExtensionFromPB (CCSPlugin * plugin,
     if (!extension)
 	return;
 
+    extension->refCount = 1;
     extension->restriction = NULL;
 
     extension->basePlugin = strdup (extensionPB.base_plugin ().c_str ());
@@ -813,6 +826,8 @@ addPluginFromPB (CCSContext * context,
     if (!plugin)
 	return;
 
+    plugin->refCount = 1;
+
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)
     {
@@ -876,6 +891,8 @@ addCoreSettingsFromPB (CCSContext * context,
     plugin = (CCSPlugin*) calloc (1, sizeof (CCSPlugin));
     if (!plugin)
 	return;
+
+    plugin->refCount = 1;
 
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)
@@ -1486,6 +1503,7 @@ initListValue (CCSSettingValue * v,
 	    if (!val)
 		continue;
 
+	    val->refCount = 1;
 	    val->parent = v->parent;
 	    val->isListChild = TRUE;
 
@@ -1590,6 +1608,7 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 			    intDesc = (CCSIntDesc *) calloc (1, sizeof (CCSIntDesc));
 			    if (intDesc)
 			    {
+				intDesc->refCount = 1;
 				intDesc->name = strdup (name);
 				intDesc->value = val;
 				i->forInt.desc =
@@ -1946,6 +1965,7 @@ addOptionForPlugin (CCSPlugin * plugin,
     setting->parent = plugin;
     setting->isDefault = TRUE;
     setting->name = strdup (name);
+    setting->refCount = 1;
 
     if (!basicMetadata)
     {
@@ -2236,7 +2256,12 @@ addStringsFromPath (CCSStringList * list,
 
 	    if (value && strlen (value))
 	    {
-		*list = ccsStringListAppend (*list, value);
+		CCSString *str = (CCSString *) calloc (1, sizeof (CCSString));
+		
+		str->value = value;
+		str->refCount = 1;
+
+		*list = ccsStringListAppend (*list, str);
 #ifdef USE_PROTOBUF
 		if (stringListPBv)
 		    ((StringList *) stringListPBv)->Add ()->assign (value);
@@ -2266,6 +2291,7 @@ addStringExtensionFromXMLNode (CCSPlugin * plugin,
     if (!extension)
 	return;
 
+    extension->refCount = 1;
     extension->restriction = NULL;
 
     extension->basePlugin = getStringFromXPath (node->doc, node, "@base_plugin");
@@ -2447,6 +2473,8 @@ addPluginFromXMLNode (CCSContext * context,
     if (!plugin)
 	return FALSE;
 
+    plugin->refCount = 1;
+
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)
     {
@@ -2509,6 +2537,8 @@ addCoreSettingsFromXMLNode (CCSContext * context,
     plugin = (CCSPlugin *) calloc (1, sizeof (CCSPlugin));
     if (!plugin)
 	return FALSE;
+
+    plugin->refCount = 1;
 
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)
@@ -2852,6 +2882,8 @@ addPluginNamed (CCSContext * context, char *name)
     plugin = (CCSPlugin *) calloc (1, sizeof (CCSPlugin));
     if (!plugin)
 	return;
+
+    plugin->refCount = 1;
 
     pPrivate = (CCSPluginPrivate *) calloc (1, sizeof (CCSPluginPrivate));
     if (!pPrivate)

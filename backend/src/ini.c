@@ -275,7 +275,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetString (data->iniFile, setting->parent->name,
 				 keyName, &value))
 	    {
-		ccsSetString (setting, value);
+		ccsSetString (setting, value, TRUE);
 		free (value);
 		status = TRUE;
 	    }
@@ -287,7 +287,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetString (data->iniFile, setting->parent->name,
 				 keyName, &value))
 	    {
-		ccsSetMatch (setting, value);
+		ccsSetMatch (setting, value, TRUE);
 		free (value);
 		status = TRUE;
 	    }
@@ -299,7 +299,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetInt (data->iniFile, setting->parent->name,
 			      keyName, &value))
 	    {
-		ccsSetInt (setting, value);
+		ccsSetInt (setting, value, TRUE);
 		status = TRUE;
 	    }
 	}
@@ -310,7 +310,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetBool (data->iniFile, setting->parent->name,
 			       keyName, &value))
 	    {
-		ccsSetBool (setting, (value != 0));
+		ccsSetBool (setting, (value != 0), TRUE);
 		status = TRUE;
 	    }
 	}
@@ -321,7 +321,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetFloat (data->iniFile, setting->parent->name,
 				keyName, &value))
 	    {
-		ccsSetFloat (setting, value);
+		ccsSetFloat (setting, value, TRUE);
 		status = TRUE;
 	    }
 	}
@@ -333,7 +333,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetColor (data->iniFile, setting->parent->name,
 				keyName, &color))
 	    {
-		ccsSetColor (setting, color);
+		ccsSetColor (setting, color, TRUE);
 		status = TRUE;
 	    }
 	}
@@ -344,7 +344,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetKey (data->iniFile, setting->parent->name,
 			      keyName, &key))
 	    {
-		ccsSetKey (setting, key);
+		ccsSetKey (setting, key, TRUE);
 		status = TRUE;
 	    }
 	}
@@ -355,7 +355,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetButton (data->iniFile, setting->parent->name,
 				 keyName, &button))
 	    {
-		ccsSetButton (setting, button);
+		ccsSetButton (setting, button, TRUE);
 		status = TRUE;
 	    }
 	}
@@ -366,7 +366,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetEdge (data->iniFile, setting->parent->name,
 				 keyName, &edges))
 	    {
-		ccsSetEdge (setting, edges);
+		ccsSetEdge (setting, edges, TRUE);
 		status = TRUE;
 	    }
 	}
@@ -377,7 +377,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetBell (data->iniFile, setting->parent->name,
 			       keyName, &bell))
 	    {
-		ccsSetBell (setting, bell);
+		ccsSetBell (setting, bell, TRUE);
 		status = TRUE;
 	    }
 	}
@@ -388,7 +388,7 @@ readSetting (CCSContext *context,
 	    if (ccsIniGetList (data->iniFile, setting->parent->name,
 			       keyName, &value, setting))
 	    {
-		ccsSetList (setting, value);
+		ccsSetList (setting, value, TRUE);
 		ccsSettingValueListFree (value, TRUE);
 		status = TRUE;
 	    }
@@ -401,7 +401,7 @@ readSetting (CCSContext *context,
     if (!status)
     {
 	/* reset setting to default if it could not be read */
-	ccsResetToDefault (setting);
+	ccsResetToDefault (setting, TRUE);
     }
 
     if (keyName)
@@ -627,10 +627,14 @@ scanConfigDir (char * filePath)
 	pos = strrchr (nameList[i]->d_name, '.');
 	if (pos)
 	{
+	    CCSString *pString = malloc (sizeof (CCSString));
 	    *pos = 0;
 
+	    pString->value = strdup (nameList[i]->d_name);
+	    pString->refCount = 1;
+
 	    if (strcmp (nameList[i]->d_name, DEFAULTPROF) != 0)
-		ret = ccsStringListAppend (ret, strdup (nameList[i]->d_name));
+		ret = ccsStringListAppend (ret, pString);
 	}
 
 	free (nameList[i]);

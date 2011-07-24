@@ -32,6 +32,7 @@
 #include <dlfcn.h>
 #include <dirent.h>
 #include <math.h>
+#include <errno.h>
 
 #include <ccs.h>
 
@@ -140,7 +141,7 @@ ccsSetActivePluginList (CCSContext * context, CCSStringList list)
 
     for (; list; list = list->next)
     {
-	plugin = ccsFindPlugin (context, list->data);
+	plugin = ccsFindPlugin (context, ((CCSString *)list->data)->value);
 
 	if (plugin)
 	{
@@ -167,6 +168,9 @@ ccsContextNew (unsigned int screenNum)
 	return NULL;
 
     ccsLoadPlugins (context);
+
+    /* Do settings upgrades */
+    ccsCheckForSettingsUpgrade (context);
 
     p = ccsFindPlugin (context, "core");
     if (p)
@@ -271,6 +275,7 @@ subGroupAdd (CCSSetting * setting, CCSGroup * group)
     }
 
     subGroup = calloc (1, sizeof (CCSSubGroup));
+    subGroup->refCount = 1;
     if (subGroup)
     {
 	group->subGroups = ccsSubGroupListAppend (group->subGroups, subGroup);
@@ -299,6 +304,7 @@ groupAdd (CCSSetting * setting, CCSPluginPrivate * p)
     group = calloc (1, sizeof (CCSGroup));
     if (group)
     {
+	group->refCount = 1;
     	p->groups = ccsGroupListAppend (p->groups, group);
 	group->name = strdup (setting->group);
 	subGroupAdd (setting, group);
@@ -409,13 +415,16 @@ ccsFreeSetting (CCSSetting * s)
 	    ccsIntDescListFree (s->info.forList.listInfo->
 				forInt.desc, TRUE);
 	free (s->info.forList.listInfo);
+	//ccsSettingValueListFree (s->value->value.asList, TRUE);
 	break;
     default:
 	break;
     }
 
     if (&s->defaultValue != s->value)
+    {
 	ccsFreeSettingValue (s->value);
+    }
 
     ccsFreeSettingValue (&s->defaultValue);
     free (s);
@@ -550,6 +559,39 @@ ccsFreeStrExtension (CCSStrExtension *e)
     free (e);
 }
 
+void
+ccsFreeString (CCSString *str)
+{
+    if (str->value)
+	free (str->value);
+    
+    free (str);
+}
+
+#define CCSREF(type,dtype) \
+	void ccs##type##Ref (dtype *d)  \
+	{ \
+	    d->refCount++; \
+	} \
+	void ccs##type##Unref (dtype *d) \
+	{ \
+	    d->refCount--; \
+	    if (d->refCount == 0) \
+		ccsFree##type (d); \
+	} \
+
+CCSREF (Plugin, CCSPlugin)
+CCSREF (Setting, CCSSetting)
+CCSREF (String, CCSString)
+CCSREF (Group, CCSGroup)
+CCSREF (SubGroup, CCSSubGroup)
+CCSREF (SettingValue, CCSSettingValue)
+CCSREF (PluginConflict, CCSPluginConflict)
+CCSREF (BackendInfo, CCSBackendInfo)
+CCSREF (IntDesc, CCSIntDesc)
+CCSREF (StrRestriction, CCSStrRestriction)
+CCSREF (StrExtension, CCSStrExtension)
+
 static void *
 openBackend (char *backend)
 {
@@ -654,427 +696,6 @@ ccsSetBackend (CCSContext * context, char *name)
     return TRUE;
 }
 
-static void
-copyValue (CCSSettingValue * from, CCSSettingValue * to)
-{
-    memcpy (to, from, sizeof (CCSSettingValue));
-    CCSSettingType type = from->parent->type;
-
-    if (from->isListChild)
-	type = from->parent->info.forList.listType;
-
-    switch (type)
-    {
-    case TypeString:
-	to->value.asString = strdup (from->value.asString);
-	break;
-    case TypeMatch:
-	to->value.asMatch = strdup (from->value.asMatch);
-	break;
-    case TypeList:
-	to->value.asList = NULL;
-	CCSSettingValueList l = from->value.asList;
-	while (l)
-	{
-	    CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
-	    if (!value)
-		break;
-
-	    copyValue (l->data, value);
-	    to->value.asList = ccsSettingValueListAppend (to->value.asList,
-							  value);
-	    l = l->next;
-	}
-	break;
-    default:
-	break;
-    }
-}
-
-static void
-copyFromDefault (CCSSetting * setting)
-{
-    CCSSettingValue *value;
-
-    if (setting->value != &setting->defaultValue)
-	ccsFreeSettingValue (setting->value);
-
-    value = calloc (1, sizeof (CCSSettingValue));
-    if (!value)
-    {
-	setting->value = &setting->defaultValue;
-	setting->isDefault = TRUE;
-	return;
-    }
-
-    copyValue (&setting->defaultValue, value);
-    setting->value = value;
-    setting->isDefault = FALSE;
-}
-
-void
-ccsResetToDefault (CCSSetting * setting)
-{
-    if (setting->value != &setting->defaultValue)
-    {
-	ccsFreeSettingValue (setting->value);
-
-    	setting->parent->context->changedSettings =
-	    ccsSettingListAppend (setting->parent->context->changedSettings,
-				  setting);
-    }
-
-    setting->value = &setting->defaultValue;
-    setting->isDefault = TRUE;
-}
-
-Bool
-ccsSetInt (CCSSetting * setting, int data)
-{
-    if (setting->type != TypeInt)
-	return FALSE;
-
-    if (setting->isDefault && (setting->defaultValue.value.asInt == data))
-	return TRUE;
-
-    if (!setting->isDefault && (setting->defaultValue.value.asInt == data))
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    if (setting->value->value.asInt == data)
-	return TRUE;
-
-    if ((data < setting->info.forInt.min) ||
-	 (data > setting->info.forInt.max))
-	return FALSE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    setting->value->value.asInt = data;
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
-
-Bool
-ccsSetFloat (CCSSetting * setting, float data)
-{
-    if (setting->type != TypeFloat)
-	return FALSE;
-
-    if (setting->isDefault && (setting->defaultValue.value.asFloat == data))
-	return TRUE;
-
-    if (!setting->isDefault && (setting->defaultValue.value.asFloat == data))
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    /* allow the values to differ a tiny bit because of
-       possible rounding / precision issues */
-    if (fabs (setting->value->value.asFloat - data) < 1e-5)
-	return TRUE;
-
-    if ((data < setting->info.forFloat.min) ||
-	 (data > setting->info.forFloat.max))
-	return FALSE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    setting->value->value.asFloat = data;
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
-
-Bool
-ccsSetBool (CCSSetting * setting, Bool data)
-{
-    if (setting->type != TypeBool)
-	return FALSE;
-
-    if (setting->isDefault
-	&& ((setting->defaultValue.value.asBool && data)
-	     || (!setting->defaultValue.value.asBool && !data)))
-	return TRUE;
-
-    if (!setting->isDefault
-	&& ((setting->defaultValue.value.asBool && data)
-	     || (!setting->defaultValue.value.asBool && !data)))
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    if ((setting->value->value.asBool && data)
-	 || (!setting->value->value.asBool && !data))
-	return TRUE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    setting->value->value.asBool = data;
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
-
-Bool
-ccsSetString (CCSSetting * setting, const char *data)
-{
-    if (setting->type != TypeString)
-	return FALSE;
-
-    if (!data)
-	return FALSE;
-
-    Bool isDefault = strcmp (setting->defaultValue.value.asString, data) == 0;
-
-    if (setting->isDefault && isDefault)
-	return TRUE;
-
-    if (!setting->isDefault && isDefault)
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    if (!strcmp (setting->value->value.asString, data))
-	return TRUE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    free (setting->value->value.asString);
-
-    setting->value->value.asString = strdup (data);
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
-
-Bool
-ccsSetColor (CCSSetting * setting, CCSSettingColorValue data)
-{
-    if (setting->type != TypeColor)
-	return FALSE;
-
-    CCSSettingColorValue defValue = setting->defaultValue.value.asColor;
-
-    Bool isDefault = ccsIsEqualColor (defValue, data);
-
-    if (setting->isDefault && isDefault)
-	return TRUE;
-
-    if (!setting->isDefault && isDefault)
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    if (ccsIsEqualColor (setting->value->value.asColor, data))
-	return TRUE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    setting->value->value.asColor = data;
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
-
-Bool
-ccsSetMatch (CCSSetting * setting, const char *data)
-{
-    if (setting->type != TypeMatch)
-	return FALSE;
-
-    if (!data)
-	return FALSE;
-
-    Bool isDefault = strcmp (setting->defaultValue.value.asMatch, data) == 0;
-
-    if (setting->isDefault && isDefault)
-	return TRUE;
-
-    if (!setting->isDefault && isDefault)
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    if (!strcmp (setting->value->value.asMatch, data))
-	return TRUE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    free (setting->value->value.asMatch);
-
-    setting->value->value.asMatch = strdup (data);
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
-
-Bool
-ccsSetKey (CCSSetting * setting, CCSSettingKeyValue data)
-{
-    if (setting->type != TypeKey)
-	return FALSE;
-
-    CCSSettingKeyValue defValue = setting->defaultValue.value.asKey;
-
-    Bool isDefault = ccsIsEqualKey (data, defValue);
-
-    if (setting->isDefault && isDefault)
-	return TRUE;
-
-    if (!setting->isDefault && isDefault)
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    if (ccsIsEqualKey (setting->value->value.asKey, data))
-	return TRUE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    setting->value->value.asKey.keysym = data.keysym;
-    setting->value->value.asKey.keyModMask = data.keyModMask;
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
-
-Bool
-ccsSetButton (CCSSetting * setting, CCSSettingButtonValue data)
-{
-    if (setting->type != TypeButton)
-	return FALSE;
-
-    CCSSettingButtonValue defValue = setting->defaultValue.value.asButton;
-
-    Bool isDefault = ccsIsEqualButton (data, defValue);
-
-    if (setting->isDefault && isDefault)
-	return TRUE;
-
-    if (!setting->isDefault && isDefault)
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    if (ccsIsEqualButton (setting->value->value.asButton, data))
-	return TRUE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    setting->value->value.asButton.button = data.button;
-    setting->value->value.asButton.buttonModMask = data.buttonModMask;
-    setting->value->value.asButton.edgeMask = data.edgeMask;
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
-
-Bool
-ccsSetEdge (CCSSetting * setting, unsigned int data)
-{
-    if (setting->type != TypeEdge)
-	return FALSE;
-
-    Bool isDefault = (data == setting->defaultValue.value.asEdge);
-
-    if (setting->isDefault && isDefault)
-	return TRUE;
-
-    if (!setting->isDefault && isDefault)
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    if (setting->value->value.asEdge == data)
-	return TRUE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    setting->value->value.asEdge = data;
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
-
-Bool
-ccsSetBell (CCSSetting * setting, Bool data)
-{
-    if (setting->type != TypeBell)
-	return FALSE;
-
-    Bool isDefault = (data == setting->defaultValue.value.asBool);
-
-    if (setting->isDefault && isDefault)
-	return TRUE;
-
-    if (!setting->isDefault && isDefault)
-    {
-	ccsResetToDefault (setting);
-	return TRUE;
-    }
-
-    if (setting->value->value.asBell == data)
-	return TRUE;
-
-    if (setting->isDefault)
-	copyFromDefault (setting);
-
-    setting->value->value.asBell = data;
-
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
-
-    return TRUE;
-}
 
 static Bool
 ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
@@ -1142,6 +763,623 @@ ccsCompareLists (CCSSettingValueList l1, CCSSettingValueList l2,
     return TRUE;
 }
 
+static void
+copyInfo (CCSSettingInfo *from, CCSSettingInfo *to, CCSSettingType type)
+{	
+    memcpy (from, to, sizeof (CCSSettingInfo));
+
+    switch (type)
+    {
+	case TypeInt:
+	{
+	    CCSIntDescList idl = from->forInt.desc;
+
+	    to->forInt = from->forInt;
+	    to->forInt.desc = NULL;
+	    
+	    while (idl)
+	    {
+		CCSIntDesc *id = malloc (sizeof (CCSIntDesc));
+
+		if (!idl->data)
+		{
+		    free (id);
+		    idl = idl->next;
+		    continue;
+		}
+
+		memcpy (id, idl->data, sizeof (CCSIntDesc));
+		
+		id->name = strdup (idl->data->name);
+		id->refCount = 1;
+
+	        to->forInt.desc = ccsIntDescListAppend (to->forInt.desc, id);
+		
+		idl = idl->next;
+	    }
+	    
+	    break;
+	}
+	case TypeFloat:
+	    to->forFloat = from->forFloat;
+	    break;
+	case TypeString:
+	{
+	    CCSStrRestrictionList srl = from->forString.restriction;
+
+	    to->forString = from->forString;
+	    to->forString.restriction = NULL;
+	    
+	    while (srl)
+	    {
+		CCSStrRestriction *sr = malloc (sizeof (CCSStrRestriction));
+
+		if (!srl->data)
+		{
+		    srl = srl->next;
+		    free (sr);
+		    continue;
+		}
+
+		memcpy (sr, srl->data, sizeof (CCSStrRestriction));
+		
+		sr->name = strdup (srl->data->name);
+		sr->value = strdup (srl->data->value);
+		sr->refCount = 1;
+
+	        to->forString.restriction = ccsStrRestrictionListAppend (to->forString.restriction, sr);
+		
+		srl = srl->next;
+	    }
+	    
+	    break;
+	}
+	case TypeList:
+	{
+	    to->forList.listInfo = calloc (1, sizeof (CCSSettingInfo));
+	    
+	    copyInfo (from->forList.listInfo, to->forList.listInfo, from->forList.listType);
+
+	    break;
+	}
+	case TypeAction:
+	    to->forAction.internal = from->forAction.internal;
+	    break;
+	default:
+	    break;
+    }
+}
+
+static void
+copyValue (CCSSettingValue * from, CCSSettingValue * to)
+{
+    memcpy (to, from, sizeof (CCSSettingValue));
+    CCSSettingType type = from->parent->type;
+
+    if (from->isListChild)
+	type = from->parent->info.forList.listType;
+
+    switch (type)
+    {
+    case TypeString:
+	to->value.asString = strdup (from->value.asString);
+	break;
+    case TypeMatch:
+	to->value.asMatch = strdup (from->value.asMatch);
+	break;
+    case TypeList:
+	to->value.asList = NULL;
+	CCSSettingValueList l = from->value.asList;
+	while (l)
+	{
+	    CCSSettingValue *value = calloc (1, sizeof (CCSSettingValue));
+	    if (!value)
+		break;
+
+	    copyValue (l->data, value);
+	    value->refCount = 1;
+	    to->value.asList = ccsSettingValueListAppend (to->value.asList,
+							  value);
+	    l = l->next;
+	}
+	break;
+    default:
+	break;
+    }
+}
+
+static void
+copySetting (CCSSetting *from, CCSSetting *to)
+{    
+    memcpy (to, from, sizeof (CCSSetting));
+
+    if (from->name)
+	to->name = strdup (from->name);
+    if (from->shortDesc)
+	to->shortDesc = strdup (from->shortDesc);
+    if (from->longDesc)
+	to->longDesc = strdup (from->longDesc);
+    if (from->group)
+	to->group = strdup (from->group);
+    if (from->subGroup)
+	to->subGroup = strdup (from->subGroup);
+    if (from->hints)
+	to->hints = strdup (from->hints);
+    if (from->value)
+    {
+	to->value = malloc (sizeof (CCSSettingValue));
+	
+	if (!from->value)
+	    return;
+
+	copyValue (from->value, to->value);
+
+	to->value->refCount = 1;	
+	to->value->parent = to;
+    }
+
+    copyValue (&from->defaultValue, &to->defaultValue);
+    copyInfo (&from->info, &to->info, from->type);
+
+    to->defaultValue.parent = to;
+    to->privatePtr = NULL;
+    
+    to->refCount = 1;
+}
+
+static void
+copyFromDefault (CCSSetting * setting)
+{
+    CCSSettingValue *value;
+
+    if (setting->value != &setting->defaultValue)
+	ccsFreeSettingValue (setting->value);
+
+    value = calloc (1, sizeof (CCSSettingValue));
+    if (!value)
+    {
+	setting->value = &setting->defaultValue;
+	setting->isDefault = TRUE;
+	return;
+    }
+    
+    value->refCount = 1;
+
+    copyValue (&setting->defaultValue, value);
+    setting->value = value;
+    setting->isDefault = FALSE;
+}
+
+void
+ccsResetToDefault (CCSSetting * setting, Bool processChanged)
+{
+    if (setting->value != &setting->defaultValue)
+    {
+	ccsFreeSettingValue (setting->value);
+
+	if (processChanged)
+	    setting->parent->context->changedSettings =
+		ccsSettingListAppend (setting->parent->context->changedSettings,
+				       setting);
+    }
+
+    setting->value = &setting->defaultValue;
+    setting->isDefault = TRUE;
+}
+
+Bool
+ccsCheckValueEq (CCSSettingValue *rhs, CCSSettingValue *lhs)
+{
+    CCSSettingType type;
+
+    if (rhs->parent->type != lhs->parent->type)
+    {
+	D (D_FULL, "[WARNING] Attempted to check equality between mismatched types!\n");
+	return FALSE;
+    }
+
+    if (rhs->isListChild)
+	type = rhs->parent->info.forList.listType;
+    else
+	type = rhs->parent->type;
+    
+    switch (type)
+    {
+	case TypeInt:
+	    return lhs->value.asInt == rhs->value.asInt;
+	case TypeBool:
+	    return lhs->value.asBool == rhs->value.asBool;
+	case TypeFloat:
+	    return lhs->value.asFloat == rhs->value.asFloat;
+	case TypeMatch:
+	    return strcmp (lhs->value.asMatch, rhs->value.asMatch) == 0;
+	case TypeString:
+	    return strcmp (lhs->value.asString, rhs->value.asString) == 0;
+	case TypeColor:
+	    return ccsIsEqualColor (lhs->value.asColor, rhs->value.asColor);
+	case TypeKey:
+	    return ccsIsEqualKey (lhs->value.asKey, rhs->value.asKey);
+	case TypeButton:
+	    return ccsIsEqualButton (lhs->value.asButton, rhs->value.asButton);
+	case TypeEdge:
+	    return lhs->value.asEdge == rhs->value.asEdge;
+	case TypeBell:
+	    return lhs->value.asBell == rhs->value.asBell;
+	case TypeAction:
+	    D (D_FULL, "[WARNING] Actions are not comparable!\n");
+	    return FALSE;
+	case TypeList:
+	{
+	    return ccsCompareLists (lhs->value.asList, rhs->value.asList,
+				    lhs->parent->info.forList);
+	
+	}
+	default:
+	    break;
+    }
+    
+    D (D_FULL, "[WARNING] Failed to process type %i\n", lhs->parent->type);
+    return FALSE;
+}
+
+Bool
+ccsSetInt (CCSSetting * setting, int data, Bool processChanged)
+{
+    if (setting->type != TypeInt)
+	return FALSE;
+
+    if (setting->isDefault && (setting->defaultValue.value.asInt == data))
+	return TRUE;
+
+    if (!setting->isDefault && (setting->defaultValue.value.asInt == data))
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    if (setting->value->value.asInt == data)
+	return TRUE;
+
+    if ((data < setting->info.forInt.min) ||
+	 (data > setting->info.forInt.max))
+	return FALSE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    setting->value->value.asInt = data;
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	    ccsSettingListAppend (setting->parent->context->changedSettings,
+				  setting);
+
+    return TRUE;
+}
+
+Bool
+ccsSetFloat (CCSSetting * setting, float data, Bool processChanged)
+{
+    if (setting->type != TypeFloat)
+	return FALSE;
+
+    if (setting->isDefault && (setting->defaultValue.value.asFloat == data))
+	return TRUE;
+
+    if (!setting->isDefault && (setting->defaultValue.value.asFloat == data))
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    /* allow the values to differ a tiny bit because of
+       possible rounding / precision issues */
+    if (fabs (setting->value->value.asFloat - data) < 1e-5)
+	return TRUE;
+
+    if ((data < setting->info.forFloat.min) ||
+	 (data > setting->info.forFloat.max))
+	return FALSE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    setting->value->value.asFloat = data;
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	    ccsSettingListAppend (setting->parent->context->changedSettings,
+				  setting);
+
+    return TRUE;
+}
+
+Bool
+ccsSetBool (CCSSetting * setting, Bool data, Bool processChanged)
+{
+    if (setting->type != TypeBool)
+	return FALSE;
+
+    if (setting->isDefault
+	&& ((setting->defaultValue.value.asBool && data)
+	     || (!setting->defaultValue.value.asBool && !data)))
+	return TRUE;
+
+    if (!setting->isDefault
+	&& ((setting->defaultValue.value.asBool && data)
+	     || (!setting->defaultValue.value.asBool && !data)))
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    if ((setting->value->value.asBool && data)
+	 || (!setting->value->value.asBool && !data))
+	return TRUE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    setting->value->value.asBool = data;
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	    ccsSettingListAppend (setting->parent->context->changedSettings,
+				  setting);
+
+    return TRUE;
+}
+
+Bool
+ccsSetString (CCSSetting * setting, const char *data, Bool processChanged)
+{
+    if (setting->type != TypeString)
+	return FALSE;
+
+    if (!data)
+	return FALSE;
+
+    Bool isDefault = strcmp (setting->defaultValue.value.asString, data) == 0;
+
+    if (setting->isDefault && isDefault)
+	return TRUE;
+
+    if (!setting->isDefault && isDefault)
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    if (!strcmp (setting->value->value.asString, data))
+	return TRUE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    free (setting->value->value.asString);
+
+    setting->value->value.asString = strdup (data);
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+		ccsSettingListAppend (setting->parent->context->changedSettings,
+				      setting);
+
+    return TRUE;
+}
+
+Bool
+ccsSetColor (CCSSetting * setting, CCSSettingColorValue data, Bool processChanged)
+{
+    if (setting->type != TypeColor)
+	return FALSE;
+
+    CCSSettingColorValue defValue = setting->defaultValue.value.asColor;
+
+    Bool isDefault = ccsIsEqualColor (defValue, data);
+
+    if (setting->isDefault && isDefault)
+	return TRUE;
+
+    if (!setting->isDefault && isDefault)
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    if (ccsIsEqualColor (setting->value->value.asColor, data))
+	return TRUE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    setting->value->value.asColor = data;
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	    ccsSettingListAppend (setting->parent->context->changedSettings,
+				  setting);
+
+    return TRUE;
+}
+
+Bool
+ccsSetMatch (CCSSetting * setting, const char *data, Bool processChanged)
+{
+    if (setting->type != TypeMatch)
+	return FALSE;
+
+    if (!data)
+	return FALSE;
+
+    Bool isDefault = strcmp (setting->defaultValue.value.asMatch, data) == 0;
+
+    if (setting->isDefault && isDefault)
+	return TRUE;
+
+    if (!setting->isDefault && isDefault)
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    if (!strcmp (setting->value->value.asMatch, data))
+	return TRUE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    free (setting->value->value.asMatch);
+
+    setting->value->value.asMatch = strdup (data);
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	    ccsSettingListAppend (setting->parent->context->changedSettings,
+				  setting);
+
+    return TRUE;
+}
+
+Bool
+ccsSetKey (CCSSetting * setting, CCSSettingKeyValue data, Bool processChanged)
+{
+    if (setting->type != TypeKey)
+	return FALSE;
+
+    CCSSettingKeyValue defValue = setting->defaultValue.value.asKey;
+
+    Bool isDefault = ccsIsEqualKey (data, defValue);
+
+    if (setting->isDefault && isDefault)
+	return TRUE;
+
+    if (!setting->isDefault && isDefault)
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    if (ccsIsEqualKey (setting->value->value.asKey, data))
+	return TRUE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    setting->value->value.asKey.keysym = data.keysym;
+    setting->value->value.asKey.keyModMask = data.keyModMask;
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	    ccsSettingListAppend (setting->parent->context->changedSettings,
+				  setting);
+
+    return TRUE;
+}
+
+Bool
+ccsSetButton (CCSSetting * setting, CCSSettingButtonValue data, Bool processChanged)
+{
+    if (setting->type != TypeButton)
+	return FALSE;
+
+    CCSSettingButtonValue defValue = setting->defaultValue.value.asButton;
+
+    Bool isDefault = ccsIsEqualButton (data, defValue);
+
+    if (setting->isDefault && isDefault)
+	return TRUE;
+
+    if (!setting->isDefault && isDefault)
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    if (ccsIsEqualButton (setting->value->value.asButton, data))
+	return TRUE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    setting->value->value.asButton.button = data.button;
+    setting->value->value.asButton.buttonModMask = data.buttonModMask;
+    setting->value->value.asButton.edgeMask = data.edgeMask;
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	    ccsSettingListAppend (setting->parent->context->changedSettings,
+				  setting);
+
+    return TRUE;
+}
+
+Bool
+ccsSetEdge (CCSSetting * setting, unsigned int data, Bool processChanged)
+{
+    if (setting->type != TypeEdge)
+	return FALSE;
+
+    Bool isDefault = (data == setting->defaultValue.value.asEdge);
+
+    if (setting->isDefault && isDefault)
+	return TRUE;
+
+    if (!setting->isDefault && isDefault)
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    if (setting->value->value.asEdge == data)
+	return TRUE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    setting->value->value.asEdge = data;
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	     ccsSettingListAppend (setting->parent->context->changedSettings,
+				   setting);
+
+    return TRUE;
+}
+
+Bool
+ccsSetBell (CCSSetting * setting, Bool data, Bool processChanged)
+{
+    if (setting->type != TypeBell)
+	return FALSE;
+
+    Bool isDefault = (data == setting->defaultValue.value.asBool);
+
+    if (setting->isDefault && isDefault)
+	return TRUE;
+
+    if (!setting->isDefault && isDefault)
+    {
+	ccsResetToDefault (setting, processChanged);
+	return TRUE;
+    }
+
+    if (setting->value->value.asBell == data)
+	return TRUE;
+
+    if (setting->isDefault)
+	copyFromDefault (setting);
+
+    setting->value->value.asBell = data;
+
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	    ccsSettingListAppend (setting->parent->context->changedSettings,
+				  setting);
+
+    return TRUE;
+}
+
 static CCSSettingValueList
 ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 {
@@ -1153,6 +1391,7 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 	if (!value)
 	    return l2;
 
+	value->refCount = 1;
 	value->parent = setting;
 	value->isListChild = TRUE;
 
@@ -1206,7 +1445,7 @@ ccsCopyList (CCSSettingValueList l1, CCSSetting * setting)
 }
 
 Bool
-ccsSetList (CCSSetting * setting, CCSSettingValueList data)
+ccsSetList (CCSSetting * setting, CCSSettingValueList data, Bool processChanged)
 {
     if (setting->type != TypeList)
 	return FALSE;
@@ -1214,18 +1453,29 @@ ccsSetList (CCSSetting * setting, CCSSettingValueList data)
     Bool isDefault = ccsCompareLists (setting->defaultValue.value.asList, data,
 				      setting->info.forList);
 
-    if (setting->isDefault && isDefault)
-	return TRUE;
-
-    if (!setting->isDefault && isDefault)
+    /* Don't need to worry about default values
+     * when processChanged is off since use of that
+     * API wants direct access to ths list for
+     * temporary storage */
+    if (!processChanged)
     {
-	ccsResetToDefault (setting);
-	return TRUE;
+	if (setting->isDefault && isDefault)
+	{
+	    return TRUE;
+	}
+
+	if (!setting->isDefault && isDefault)
+	{
+	    ccsResetToDefault (setting, processChanged);
+	    return TRUE;
+	}
     }
 
     if (ccsCompareLists (setting->value->value.asList, data,
 			 setting->info.forList))
+    {
 	return TRUE;
+    }
 
     if (setting->isDefault)
 	copyFromDefault (setting);
@@ -1244,50 +1494,51 @@ ccsSetList (CCSSetting * setting, CCSSettingValueList data)
 	ccsStringListFree (list, TRUE);
     }
 
-    setting->parent->context->changedSettings =
-	ccsSettingListAppend (setting->parent->context->changedSettings,
-			      setting);
+    if (processChanged)
+	setting->parent->context->changedSettings =
+	    ccsSettingListAppend (setting->parent->context->changedSettings,
+				  setting);
 
     return TRUE;
 }
 
 Bool
-ccsSetValue (CCSSetting * setting, CCSSettingValue * data)
+ccsSetValue (CCSSetting * setting, CCSSettingValue * data, Bool processChanged)
 {
     switch (setting->type)
     {
     case TypeInt:
-	return ccsSetInt (setting, data->value.asInt);
+	return ccsSetInt (setting, data->value.asInt, processChanged);
 	break;
     case TypeFloat:
-	return ccsSetFloat (setting, data->value.asFloat);
+	return ccsSetFloat (setting, data->value.asFloat, processChanged);
 	break;
     case TypeBool:
-	return ccsSetBool (setting, data->value.asBool);
+	return ccsSetBool (setting, data->value.asBool, processChanged);
 	break;
     case TypeColor:
-	return ccsSetColor (setting, data->value.asColor);
+	return ccsSetColor (setting, data->value.asColor, processChanged);
 	break;
     case TypeString:
-	return ccsSetString (setting, data->value.asString);
+	return ccsSetString (setting, data->value.asString, processChanged);
 	break;
     case TypeMatch:
-	return ccsSetMatch (setting, data->value.asMatch);
+	return ccsSetMatch (setting, data->value.asMatch, processChanged);
 	break;
     case TypeKey:
-	return ccsSetKey (setting, data->value.asKey);
+	return ccsSetKey (setting, data->value.asKey, processChanged);
 	break;
     case TypeButton:
-	return ccsSetButton (setting, data->value.asButton);
+	return ccsSetButton (setting, data->value.asButton, processChanged);
 	break;
     case TypeEdge:
-	return ccsSetEdge (setting, data->value.asEdge);
+	return ccsSetEdge (setting, data->value.asEdge, processChanged);
 	break;
     case TypeBell:
-	return ccsSetBell (setting, data->value.asBell);
+	return ccsSetBell (setting, data->value.asBell, processChanged);
 	break;
     case TypeList:
-	return ccsSetList (setting, data->value.asList);
+	return ccsSetList (setting, data->value.asList, processChanged);
     default:
 	break;
     }
@@ -1475,7 +1726,12 @@ ccsGetSortedPluginStringList (CCSContext * context)
     CCSPluginList ap = ccsGetActivePluginList (context);
     CCSPluginList list;
     CCSPlugin *p = NULL;
-    CCSStringList rv = ccsStringListAppend (NULL, strdup ("core"));
+    CCSString *strCore = calloc (1, sizeof (CCSString));
+
+    strCore->value = strdup ("core");
+    strCore->refCount = 1;
+
+    CCSStringList rv = ccsStringListAppend (NULL, strCore);
     PluginSortHelper *ph = NULL;
 
     p = findPluginInList (ap, "core");
@@ -1509,7 +1765,7 @@ ccsGetSortedPluginStringList (CCSContext * context)
 	CCSStringList l = plugins[i].plugin->loadAfter;
 	while (l)
 	{
-	    p = findPluginInList (ap, l->data);
+	    p = findPluginInList (ap, ((CCSString *)l->data)->value);
 
 	    if (p && !ccsPluginListFind (plugins[i].after, p))
 		plugins[i].after = ccsPluginListAppend (plugins[i].after, p);
@@ -1521,12 +1777,13 @@ ccsGetSortedPluginStringList (CCSContext * context)
 	while (l)
 	{
 	    Bool found = FALSE;
-	    p = findPluginInList (ap, l->data);
+	    p = findPluginInList (ap, ((CCSString *)l->data)->value);
 
 	    CCSStringList l2 = plugins[i].plugin->loadBefore;
 	    while (l2)
 	    {
-		if (strcmp (l2->data, l->data) == 0)
+		if (strcmp (((CCSString *)l2->data)->value,
+			    ((CCSString *)l->data)->value) == 0)
 		    found = TRUE;
 		l2 = l2->next;
 	    }
@@ -1540,7 +1797,7 @@ ccsGetSortedPluginStringList (CCSContext * context)
 	l = plugins[i].plugin->loadBefore;
 	while (l)
 	{
-	    p = findPluginInList (ap, l->data);
+	    p = findPluginInList (ap, ((CCSString *)l->data)->value);
 
 	    if (p)
 	    {
@@ -1571,6 +1828,8 @@ ccsGetSortedPluginStringList (CCSContext * context)
 
 	for (i = 0; i < len; i++)
 	{
+	    CCSString *strPluginName;		
+		
 	    if (!plugins[i].plugin)
 		continue;
 	    if (plugins[i].after)
@@ -1590,7 +1849,12 @@ ccsGetSortedPluginStringList (CCSContext * context)
 		plugins[j].after =
 		    ccsPluginListRemove (plugins[j].after, p, FALSE);
 
-	    rv = ccsStringListAppend (rv, strdup (p->name));
+	    strPluginName = calloc (1, sizeof (CCSString));
+	    
+	    strPluginName->value = strdup (p->name);
+	    strPluginName->refCount = 1;
+
+	    rv = ccsStringListAppend (rv, strPluginName);
 	}
 
 	if (!found)
@@ -1699,7 +1963,7 @@ ccsWriteAutoSortedPluginList (CCSContext *context)
 	    CCSSettingValueList vl;
 
 	    vl = ccsGetValueListFromStringList (list, s);
-	    ccsSetList (s, vl);
+	    ccsSetList (s, vl, TRUE);
 	    ccsSettingValueListFree (vl, TRUE);
 	    ccsWriteChangedSettings (context);
 	}
@@ -1836,7 +2100,7 @@ ccsWriteSettings (CCSContext * context)
 {
     if (!context)
 	return;
-    
+
     CONTEXT_PRIV (context);
 
     if (!cPrivate->backend)
@@ -1876,7 +2140,7 @@ ccsWriteChangedSettings (CCSContext * context)
 {
     if (!context)
 	return;
-    
+
     CONTEXT_PRIV (context);
     
     if (!cPrivate->backend)
@@ -1970,30 +2234,32 @@ ccsCanEnablePlugin (CCSContext * context, CCSPlugin * plugin)
 
     while (sl)
     {
-	if (!ccsFindPlugin (context, sl->data))
+	if (!ccsFindPlugin (context, ((CCSString *)sl->data)->value))
 	{
 	    CCSPluginConflict *conflict = calloc (1,
 						  sizeof (CCSPluginConflict));
 	    if (conflict)
 	    {
-		conflict->value = strdup (sl->data);
+		conflict->refCount = 1;
+		conflict->value = strdup (((CCSString *)sl->data)->value);
 		conflict->type = ConflictPluginError;
 		conflict->plugins = NULL;
 		list = ccsPluginConflictListAppend (list, conflict);
 	    }
 	}
-	else if (!ccsPluginIsActive (context, sl->data))
+	else if (!ccsPluginIsActive (context, ((CCSString *)sl->data)->value))
 	{
 	    /* we've not seen a matching plugin */
 	    CCSPluginConflict *conflict = calloc (1,
 						  sizeof (CCSPluginConflict));
 	    if (conflict)
 	    {
-		conflict->value = strdup (sl->data);
+		conflict->refCount = 1;
+		conflict->value = strdup (((CCSString *)sl->data)->value);
 		conflict->type = ConflictRequiresPlugin;
 		conflict->plugins =
 		    ccsPluginListAppend (conflict->plugins,
-			    		 ccsFindPlugin (context, sl->data));
+			    		 ccsFindPlugin (context, ((CCSString *)sl->data)->value));
 		list = ccsPluginConflictListAppend (list, conflict);
 	    }
 	}
@@ -2015,7 +2281,7 @@ ccsCanEnablePlugin (CCSContext * context, CCSPlugin * plugin)
 
 	    while (featureList)
 	    {
-		if (strcmp (sl->data, featureList->data) == 0)
+		if (strcmp (((CCSString *) sl->data)->value, ((CCSString *)featureList->data)->value) == 0)
 		{
 		    pl2 = ccsPluginListAppend (pl2, pl->data);
 		    break;
@@ -2046,7 +2312,8 @@ ccsCanEnablePlugin (CCSContext * context, CCSPlugin * plugin)
 
 	    if (conflict)
 	    {
-		conflict->value = strdup (sl->data);
+		conflict->refCount = 1;
+		conflict->value = strdup (((CCSString *)sl->data)->value);
 		conflict->type = ConflictRequiresFeature;
 		conflict->plugins = pl2;
 
@@ -2072,14 +2339,15 @@ ccsCanEnablePlugin (CCSContext * context, CCSPlugin * plugin)
 
 		while (featureList)
 		{
-		    if (strcmp (sl->data, featureList->data) == 0)
+		    if (strcmp (((CCSString *)sl->data)->value, ((CCSString *)featureList->data)->value) == 0)
 		    {
 			if (!conflict)
 			{
 			    conflict = calloc (1, sizeof (CCSPluginConflict));
 			    if (conflict)
 			    {
-				conflict->value = strdup (sl->data);
+				conflict->refCount = 1;
+				conflict->value = strdup (((CCSString *)sl->data)->value);
 				conflict->type = ConflictFeature;
 			    }
 			}
@@ -2114,14 +2382,15 @@ ccsCanEnablePlugin (CCSContext * context, CCSPlugin * plugin)
 		CCSStringList featureList = pl->data->providesFeature;
 		while (featureList)
 		{
-		    if (strcmp (sl->data, featureList->data) == 0)
+		    if (strcmp (((CCSString *)sl->data)->value, ((CCSString *)featureList->data)->value) == 0)
 		    {
 			if (!conflict)
 			{
 			    conflict = calloc (1, sizeof (CCSPluginConflict));
 			    if (conflict)
 			    {
-				conflict->value = strdup (sl->data);
+				conflict->refCount = 1;
+				conflict->value = strdup (((CCSString *)sl->data)->value);
 				conflict->type = ConflictFeature;
 			    }
 			}
@@ -2147,17 +2416,18 @@ ccsCanEnablePlugin (CCSContext * context, CCSPlugin * plugin)
 
     while (sl)
     {
-	if (ccsPluginIsActive (context, sl->data))
+	if (ccsPluginIsActive (context, ((CCSString *)sl->data)->value))
 	{
 	    CCSPluginConflict *conflict = calloc (1,
 						  sizeof (CCSPluginConflict));
 	    if (conflict)
 	    {
-		conflict->value = strdup (sl->data);
+		conflict->refCount = 1;
+		conflict->value = strdup (((CCSString *)sl->data)->value);
 		conflict->type = ConflictPlugin;
 		conflict->plugins =
 		    ccsPluginListAppend (conflict->plugins,
-			    		 ccsFindPlugin (context, sl->data));
+			    		 ccsFindPlugin (context, ((CCSString *)sl->data)->value));
 		list = ccsPluginConflictListAppend (list, conflict);
 	    }
 	}
@@ -2193,10 +2463,11 @@ ccsCanDisablePlugin (CCSContext * context, CCSPlugin * plugin)
 
 	while (pluginList)
 	{
-	    if (strcmp (plugin->name, pluginList->data) == 0)
+	    if (strcmp (plugin->name, ((CCSString *)pluginList->data)->value) == 0)
 	    {
 		if (!conflict)
 		{
+		    conflict->refCount = 1;
 		    conflict = calloc (1, sizeof (CCSPluginConflict));
 		    if (conflict)
 		    {
@@ -2239,7 +2510,7 @@ ccsCanDisablePlugin (CCSContext * context, CCSPlugin * plugin)
 
 	    while (pluginList)
 	    {
-		if (strcmp (sl->data, pluginList->data) == 0)
+		if (strcmp (((CCSString *)sl->data)->value, ((CCSString *)pluginList->data)->value) == 0)
 		{
 		    if (!conflict)
 		    {
@@ -2247,7 +2518,8 @@ ccsCanDisablePlugin (CCSContext * context, CCSPlugin * plugin)
 
 			if (conflict)
 			{
-			    conflict->value = strdup (sl->data);
+			    conflict->refCount = 1;
+			    conflict->value = strdup (((CCSString *)sl->data)->value);
 			    conflict->type = ConflictFeatureNeeded;
 			}
 		    }
@@ -2363,6 +2635,7 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 	return;
     }
 
+    info->refCount = 1;
     info->name = strdup (vt->name);
     info->shortDesc = (vt->shortDesc) ? strdup (vt->shortDesc) : strdup ("");
     info->longDesc = (vt->longDesc) ? strdup (vt->longDesc) : strdup ("");
@@ -2374,7 +2647,6 @@ addBackendInfo (CCSBackendInfoList * bl, char *file)
 }
 
 static int
-
 backendNameFilter (const struct dirent *name)
 {
     int length = strlen (name->d_name);
@@ -2530,6 +2802,709 @@ ccsExportToFile (CCSContext *context,
     return TRUE;
 }
 
+/* + with a value will attempt to append or overwrite that value if there is no -
+ * - with a value will attempt to clear any value set to that to the default
+ * if there is no +
+ * - with a value and + with a value will replace one with the other
+ * - without a value and + with a value will ensure that + overwrites the setting
+ */
+
+static Bool
+ccsProcessSettingPlus (IniDictionary	   *dict,
+		       CCSContext 	   *context,
+		       CCSSettingsUpgrade  *upgrade,
+		       CCSSetting	   *setting)
+{
+    char         *keyName = NULL;
+    char         *sectionName = strdup (setting->parent->name);
+    char         *iniValue = NULL;
+
+    asprintf (&keyName, "+s%d_%s", context->screenNum, setting->name);
+    if (ccsIniGetString (dict, sectionName, keyName, &iniValue))
+    {
+	CCSSetting *newSetting = malloc (sizeof (CCSSetting));
+
+	if (!newSetting)
+	    return FALSE;
+
+	copySetting (setting, newSetting);
+
+	switch (newSetting->type)
+	{
+	    case TypeInt:
+	    {
+		int value;
+		ccsIniParseInt (iniValue, &value);
+
+		ccsSetInt (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeBool:
+	    {
+		Bool value;
+		ccsIniParseBool (iniValue, &value);
+
+		ccsSetBool (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeFloat:
+	    {
+		float value;
+		ccsIniParseFloat (iniValue, &value);
+
+		ccsSetFloat (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeString:
+	    {
+		char *value;
+		ccsIniParseString (iniValue, &value);
+
+		ccsSetString (newSetting, value, FALSE);
+		free (value);
+		break;
+	    }
+	    case TypeColor:
+	    {
+		CCSSettingColorValue value;
+		ccsIniParseColor (iniValue, &value);
+
+		ccsSetColor (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeKey:
+	    {
+		CCSSettingKeyValue value;
+		ccsIniParseKey (iniValue, &value);
+
+		ccsSetKey (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeButton:
+	    {
+		CCSSettingButtonValue value;
+		ccsIniParseButton (iniValue, &value);
+
+		ccsSetButton (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeEdge:
+	    {
+		unsigned int	value;
+		ccsIniParseEdge (iniValue, &value);
+
+		ccsSetEdge (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeBell:
+	    {
+		Bool value;
+		ccsIniParseBool (iniValue, &value);
+
+		ccsSetBell (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeMatch:
+	    {
+		char  *value;
+		ccsIniParseString (iniValue, &value);
+
+		ccsSetMatch (newSetting, value, FALSE);
+		free (value);
+		break;
+	    }
+	    case TypeList:
+	    {
+		CCSSettingValueList value;
+		ccsIniParseList (iniValue, &value, newSetting);
+
+		ccsSetList (newSetting, value, FALSE);
+		ccsSettingValueListFree (value, TRUE);
+		break;
+	    }
+	    case TypeAction:
+	    default:
+		/* FIXME: cleanup */
+		return FALSE;
+	}
+
+        CCSSettingList listIter = upgrade->clearValueSettings;
+
+        while (listIter)
+	{
+	    CCSSetting *s = (CCSSetting *) listIter->data;
+
+	    if (strcmp (s->name, newSetting->name) == 0)
+	    {
+		upgrade->replaceToValueSettings = ccsSettingListAppend (upgrade->replaceToValueSettings, (void *) newSetting);
+		upgrade->replaceFromValueSettings = ccsSettingListAppend (upgrade->replaceFromValueSettings, (void *) s);
+		upgrade->clearValueSettings = ccsSettingListRemove (upgrade->clearValueSettings, (void *) s, FALSE);
+		break;
+	    }
+
+	    listIter = listIter->next;
+	}
+
+	if (!listIter)
+	    upgrade->addValueSettings = ccsSettingListAppend (upgrade->addValueSettings, (void *) newSetting);
+	
+	free (keyName);
+	free (sectionName);
+	free (iniValue);
+	
+	return TRUE;
+    }
+    
+    free (keyName);
+    free (sectionName);
+    
+    return FALSE;
+}
+
+static Bool
+ccsProcessSettingMinus (IniDictionary      *dict,
+			CCSContext 	   *context,
+			CCSSettingsUpgrade *upgrade,
+			CCSSetting	   *setting)
+{
+    char         *keyName = NULL;
+    char         *sectionName = strdup (setting->parent->name);
+    char         *iniValue = NULL;
+
+    asprintf (&keyName, "-s%d_%s", context->screenNum, setting->name);
+    if (ccsIniGetString (dict, sectionName, keyName, &iniValue))
+    {
+	CCSSetting *newSetting = malloc (sizeof (CCSSetting));
+
+	if (!newSetting)
+	    return FALSE;
+
+	copySetting (setting, newSetting);
+
+	switch (newSetting->type)
+	{
+	    case TypeInt:
+	    {
+		int value;
+		ccsIniParseInt (iniValue, &value);
+
+		ccsSetInt (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeBool:
+	    {
+		Bool value;
+		ccsIniParseBool (iniValue, &value);
+
+		ccsSetBool (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeFloat:
+	    {
+		float value;
+		ccsIniParseFloat (iniValue, &value);
+
+		ccsSetFloat (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeString:
+	    {
+		char *value;
+		ccsIniParseString (iniValue, &value);
+
+		ccsSetString (newSetting, value, FALSE);
+		free (value);
+		break;
+	    }
+	    case TypeColor:
+	    {
+		CCSSettingColorValue value;
+		ccsIniParseColor (iniValue, &value);
+
+		ccsSetColor (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeKey:
+	    {
+		CCSSettingKeyValue value;
+		ccsIniParseKey (iniValue, &value);
+
+		ccsSetKey (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeButton:
+	    {
+		CCSSettingButtonValue value;
+		ccsIniParseButton (iniValue, &value);
+
+		ccsSetButton (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeEdge:
+	    {
+		unsigned int	value;
+		ccsIniParseEdge (iniValue, &value);
+
+		ccsSetEdge (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeBell:
+	    {
+		Bool value;
+		ccsIniParseBool (iniValue, &value);
+
+		ccsSetBell (newSetting, value, FALSE);
+		break;
+	    }
+	    case TypeMatch:
+	    {
+		char  *value;
+		ccsIniParseString (iniValue, &value);
+
+		ccsSetMatch (newSetting, value, FALSE);
+		free (value);
+		break;
+	    }
+	    case TypeList:
+	    {
+		CCSSettingValueList value;
+		ccsIniParseList (iniValue, &value, newSetting);
+
+		ccsSetList (newSetting, value, FALSE);
+		ccsSettingValueListFree (value, TRUE);
+		break;
+	    }
+	    case TypeAction:
+	    default:
+		/* FIXME: cleanup */
+		return FALSE;
+	}
+
+        CCSSettingList listIter = upgrade->addValueSettings;
+
+        while (listIter)
+	{
+	    CCSSetting *s = (CCSSetting *) listIter->data;
+
+	    if (strcmp (s->name, newSetting->name) == 0)
+	    {
+		upgrade->replaceFromValueSettings = ccsSettingListAppend (upgrade->replaceFromValueSettings, (void *) newSetting);
+		upgrade->replaceToValueSettings = ccsSettingListAppend (upgrade->replaceToValueSettings, (void *) s);
+		upgrade->addValueSettings = ccsSettingListRemove (upgrade->addValueSettings, (void *) s, FALSE);
+		break;
+	    }
+
+	    listIter = listIter->next;
+	}
+
+	if (!listIter)
+	    upgrade->clearValueSettings = ccsSettingListAppend (upgrade->clearValueSettings, (void *) newSetting);
+	
+	free (keyName);
+	free (sectionName);
+	free (iniValue);
+	
+	return TRUE;
+    }
+    
+    free (keyName);
+    free (sectionName);
+
+    return FALSE;
+}
+
+Bool
+ccsProcessUpgrade (CCSContext *context,
+		   CCSSettingsUpgrade *upgrade)
+{
+    IniDictionary      *dict = ccsIniOpen (upgrade->file);
+    CCSPluginList      pl = context->plugins;
+    CCSSettingList     sl;
+
+    ccsSetProfile (context, upgrade->profile);
+
+    while (pl)
+    {
+	sl = ccsGetPluginSettings ((CCSPlugin *) pl->data);
+
+	while (sl)
+	{
+	    CCSSetting   *setting = sl->data;
+
+	    ccsProcessSettingMinus (dict, context, upgrade, setting);
+	    ccsProcessSettingPlus (dict, context, upgrade, setting);
+
+	    sl = sl->next;
+	}
+
+	pl = pl->next;
+    }
+    
+    sl = upgrade->clearValueSettings;
+    
+    while (sl)
+    {
+	CCSSetting *tempSetting = (CCSSetting *) sl->data;
+	CCSSetting *setting;
+	
+	setting = ccsFindSetting (tempSetting->parent, tempSetting->name);
+	
+	if (setting)
+	{
+	    if (setting->type != TypeList)
+	    {
+		if (setting->value == tempSetting->value)
+		{
+		    D (D_FULL, "Resetting %s to default\n", ((CCSSetting *) sl->data)->name);
+		    ccsResetToDefault (setting, TRUE);
+		}
+		else
+		{
+		    D (D_FULL, "Skipping processing of %s\n", ((CCSSetting *) sl->data)->name);
+		}
+	    }
+	    else
+	    {
+		unsigned int count = 0;
+		/* Try and remove any specified items from the list */
+		CCSSettingValueList l = tempSetting->value->value.asList;
+		CCSSettingValueList nl = ccsCopyList (setting->value->value.asList, setting);
+		
+		while (l)
+		{
+		    CCSSettingValueList olv = nl;
+
+		    while (olv)
+		    {
+			CCSSettingValue *lv = (CCSSettingValue *) l->data;
+			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
+
+			if (ccsCheckValueEq (lv, olvv))
+			    break;
+
+			olv = olv->next;
+		    }
+		    
+		    if (olv)
+		    {
+			count++;
+			nl = ccsSettingValueListRemove (nl, olv->data, TRUE);
+		    }
+
+		    l = l->next;
+		}
+		
+		if (count)
+		{
+		    D (D_FULL, "Removed %i items from %s\n", count, setting->name);
+		    ccsSetList (setting, nl, TRUE);
+		}
+	    }
+	}
+
+	sl = sl->next;
+    }
+
+    sl = upgrade->addValueSettings;
+    
+    while (sl)
+    {
+	CCSSetting *tempSetting = (CCSSetting *) sl->data;
+	CCSSetting *setting;
+	
+	setting = ccsFindSetting (tempSetting->parent, tempSetting->name);
+	
+	if (setting)
+	{
+	    D (D_FULL, "Overriding value %s\n", ((CCSSetting *) sl->data)->name);
+	    if (setting->type != TypeList)
+		ccsSetValue (setting, tempSetting->value, TRUE);
+	    else
+	    {
+		unsigned int count = 0;
+		/* Try and apppend any new items to the list */
+		CCSSettingValueList l = tempSetting->value->value.asList;
+		CCSSettingValueList nl = ccsCopyList (setting->value->value.asList, setting);
+		
+		while (l)
+		{
+		    CCSSettingValueList olv = nl;
+
+		    while (olv)
+		    {
+			CCSSettingValue *lv = (CCSSettingValue *) l->data;
+			CCSSettingValue *olvv = (CCSSettingValue *) olv->data;
+
+			if (ccsCheckValueEq (lv, olvv))
+			    break;
+
+			olv = olv->next;
+		    }
+		    
+		    if (!olv)
+		    {
+			count++;
+			nl = ccsSettingValueListAppend (nl, l->data);
+		    }
+
+		    l = l->next;
+		}
+		
+		if (count)
+		{
+		    D (D_FULL, "Appending %i items to %s\n", count, setting->name);
+		    ccsSetList (setting, nl, TRUE);
+		}
+	    }
+	}
+	else
+	{
+	    D (D_FULL, "Value %s not found!\n", ((CCSSetting *) sl->data)->name);
+	}
+
+	sl = sl->next;
+    }
+
+    sl = upgrade->replaceFromValueSettings;
+    
+    while (sl)
+    {
+	CCSSetting *tempSetting = (CCSSetting *) sl->data;
+	CCSSetting *setting;
+	
+	setting = ccsFindSetting (tempSetting->parent, tempSetting->name);
+	
+	if (setting)
+	{
+	    if (setting->value == tempSetting->value)
+	    {
+		CCSSettingList rl = upgrade->replaceToValueSettings;
+		
+		while (rl)
+		{
+		    CCSSetting *rsetting = (CCSSetting *) rl->data;
+		    
+		    if (strcmp (rsetting->name, setting->name) == 0)
+		    {
+			D (D_FULL, "Matched and replaced %s\n", setting->name);
+			ccsSetValue (setting, rsetting->value, TRUE);
+			break;
+		    }
+		    
+		    rl = rl->next;
+		}
+	    }
+	    else
+	    {
+		D (D_FULL, "Skipping processing of %s\n", ((CCSSetting *) sl->data)->name);
+	    }
+	}
+
+	sl = sl->next;
+    }
+    
+    upgrade->clearValueSettings = ccsSettingListFree (upgrade->clearValueSettings, TRUE);
+    upgrade->addValueSettings = ccsSettingListFree (upgrade->addValueSettings, TRUE);
+    upgrade->replaceFromValueSettings = ccsSettingListFree (upgrade->replaceFromValueSettings, TRUE);
+    upgrade->replaceToValueSettings = ccsSettingListFree (upgrade->replaceToValueSettings, TRUE);
+
+    ccsIniClose (dict);
+
+    return TRUE;
+}
+
+static int
+upgradeNameFilter (const struct dirent *name)
+{
+    int length = strlen (name->d_name);
+    char *uname, *tok;
+
+    if (length < 7)
+	return 0;
+
+    uname = tok = strdup (name->d_name);
+
+    /* Keep removing domains and other bits
+     * until we hit a number that we can parse */
+    while (tok)
+    {
+	long int num = 0;
+	char *nexttok = strchr (tok, '.') + 1;
+	char *nextnexttok = strchr (nexttok, '.') + 1;
+	char *end;
+	char *bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
+
+	/* FIXME: That means that the number can't be a zero */
+	errno = 0;
+	num = strtol (bit, &end, 10);
+
+	if (!(errno != 0 && num == 0) &&
+	    end != bit)
+	{
+	    free (bit);
+	    
+	    /* Check if the next token after the number
+	     * is .upgrade */
+
+	    if (strncmp (nextnexttok, "upgrade", 7))
+		return 0;
+	    break;
+	}
+	else if (errno)
+	    perror ("strtol");
+	
+	tok = nexttok;
+	
+	free (bit);
+    }
+
+    free (uname);
+
+    return 1;
+}    
+
+/*
+ * Process a filename into the properties
+ * for a settings upgrade
+ * eg
+ * 
+ * org.freedesktop.compiz.Default.01.upgrade
+ * 
+ * gives us:
+ * domain: org.freedesktop.compiz
+ * number: 1
+ * profile: Default
+ * 
+ */
+CCSSettingsUpgrade *
+ccsSettingsUpgradeNew (char *path, char *name)
+{
+    CCSSettingsUpgrade *upgrade = calloc (1, sizeof (CCSSettingsUpgrade));
+    int length = strlen (name);
+    char *uname, *tok;
+    unsigned int fnlen = strlen (path) + strlen (name) + 1;
+
+    upgrade->file = calloc (fnlen, sizeof (char));
+    sprintf (upgrade->file, "%s/%s", path, name);
+
+    uname = tok = strdup (name);
+
+    /* Keep removing domains and other bits
+     * until we hit a number that we can parse */
+    while (tok)
+    {
+	long int num = 0;
+	char *nexttok = strchr (tok, '.') + 1;
+	char *nextnexttok = strchr (nexttok, '.') + 1;
+	char *end;
+	char *bit = strndup (nexttok, strlen (nexttok) - (strlen (nextnexttok) + 1));
+
+	/* FIXME: That means that the number can't be a zero */
+	errno = 0;
+	num = strtol (bit, &end, 10);
+
+	if (!(errno != 0 && num == 0) &&
+	    end != bit)
+	{
+	    upgrade->domain = strndup (uname, length - (strlen (tok) + 1));
+	    upgrade->num = num;
+
+	    /* profile.n.upgrade */
+	    upgrade->profile = strndup (tok, strlen (tok) - (strlen (nexttok) + 1));
+	    free (bit);
+	    break;
+	}
+	else if (errno)
+	    perror ("strtol");
+	
+	tok = nexttok;
+	
+	free (bit);
+    }
+    
+    free (uname);
+    
+    return upgrade;
+}
+
+Bool
+ccsCheckForSettingsUpgrade (CCSContext *context)
+{
+    struct dirent 	   **nameList;
+    int 	  	   nFile, i;
+    char	  	   *path = SYSCONFDIR "/compizconfig/upgrades/";
+    char		   *dupath = NULL;
+    FILE		   *completedUpgrades;
+    char		   *cuBuffer;
+    unsigned int	   cuSize;
+    size_t		   cuReadSize;
+    char		   *home = getenv ("HOME");
+
+    if (!home)
+	return FALSE;
+
+    asprintf (&dupath, "%s/.config/compiz-1/compizconfig/done_upgrades", home);
+
+    completedUpgrades = fopen (dupath, "a+");
+
+    if (!path)
+	return FALSE;
+
+    nFile = scandir (path, &nameList, upgradeNameFilter, alphasort);
+    if (nFile <= 0)
+	return FALSE;
+
+    if (!completedUpgrades)
+    {
+	fprintf (stderr, "[WARNING] Error opening done_upgrades\n");
+	return FALSE;
+    }
+
+    fseek (completedUpgrades, 0, SEEK_END);
+    cuSize = ftell (completedUpgrades);
+    rewind (completedUpgrades);
+
+    cuBuffer = calloc (cuSize, sizeof (char));
+    cuReadSize = fread (cuBuffer, 1, cuSize, completedUpgrades);
+
+    if (cuReadSize != cuSize)
+	D (D_FULL, "[WARNING] Couldn't read completed upgrades file!\n");
+
+    for (i = 0; i < nFile; i++)
+    {
+	char		   *matched = strstr (cuBuffer, nameList[i]->d_name);
+	CCSSettingsUpgrade *upgrade;
+	
+	if (matched)
+	{
+	    D (D_FULL, "Skipping upgrade %s\n", nameList[i]->d_name);
+	    continue;
+	}
+
+	upgrade = ccsSettingsUpgradeNew (path, nameList[i]->d_name);
+	
+	D (D_FULL, "Processing upgrade %s\nprofile: %s\nnumber: %i\ndomain: %s\n", nameList[i]->d_name, upgrade->profile, upgrade->num, upgrade->domain);
+
+	ccsProcessUpgrade (context, upgrade);
+	ccsWriteChangedSettings (context);
+	ccsWriteAutoSortedPluginList (context);
+	D (D_FULL, "Completed upgrade %s\n", nameList[i]->d_name);
+	fprintf (completedUpgrades, "%s\n", nameList[i]->d_name);
+	free (upgrade->profile);
+	free (upgrade->domain);
+	free (upgrade->file);
+	free (upgrade);
+	free (nameList[i]);
+    }
+
+    free (dupath);
+    fclose (completedUpgrades);
+    free (cuBuffer);
+    free (nameList);
+    
+    return TRUE;
+}
+
 Bool
 ccsImportFromFile (CCSContext *context,
 		   const char *fileName,
@@ -2578,7 +3553,9 @@ ccsImportFromFile (CCSContext *context,
 
 		    if (ccsIniGetBool (importFile, plugin->name,
 				       keyName, &value))
-			ccsSetBool (setting, value);
+		    {
+			ccsSetBool (setting, value, TRUE);
+		    }
 		}
 		break;
 	    case TypeInt:
@@ -2587,7 +3564,7 @@ ccsImportFromFile (CCSContext *context,
 
 		    if (ccsIniGetInt (importFile, plugin->name,
 				      keyName, &value))
-			ccsSetInt (setting, value);
+			ccsSetInt (setting, value, TRUE);
 		}
 		break;
 	    case TypeFloat:
@@ -2596,7 +3573,7 @@ ccsImportFromFile (CCSContext *context,
 
 		    if (ccsIniGetFloat (importFile, plugin->name,
 					keyName, &value))
-			ccsSetFloat (setting, value);
+			ccsSetFloat (setting, value, TRUE);
 		}
 		break;
 	    case TypeString:
@@ -2606,7 +3583,7 @@ ccsImportFromFile (CCSContext *context,
 		    if (ccsIniGetString (importFile, plugin->name,
 					 keyName, &value))
 		    {
-		    	ccsSetString (setting, value);
+		    	ccsSetString (setting, value, TRUE);
 		    	free (value);
 		    }
 		}
@@ -2617,7 +3594,7 @@ ccsImportFromFile (CCSContext *context,
 
 		    if (ccsIniGetKey (importFile, plugin->name,
 				      keyName, &value))
-			ccsSetKey (setting, value);
+			ccsSetKey (setting, value, TRUE);
 		}
 		break;
 	    case TypeButton:
@@ -2626,7 +3603,7 @@ ccsImportFromFile (CCSContext *context,
 
 		    if (ccsIniGetButton (importFile, plugin->name,
 					 keyName, &value))
-			ccsSetButton (setting, value);
+			ccsSetButton (setting, value, TRUE);
 		}
 		break;
 	    case TypeEdge:
@@ -2635,7 +3612,7 @@ ccsImportFromFile (CCSContext *context,
 
 		    if (ccsIniGetEdge (importFile, plugin->name,
 				       keyName, &value))
-			ccsSetEdge (setting, value);
+			ccsSetEdge (setting, value, TRUE);
 		}
 		break;
 	    case TypeBell:
@@ -2644,7 +3621,7 @@ ccsImportFromFile (CCSContext *context,
 
 		    if (ccsIniGetBell (importFile, plugin->name,
 				       keyName, &value))
-			ccsSetBell (setting, value);
+			ccsSetBell (setting, value, TRUE);
 		}
 		break;
 	    case TypeColor:
@@ -2653,7 +3630,7 @@ ccsImportFromFile (CCSContext *context,
 
 		    if (ccsIniGetColor (importFile, plugin->name,
 					keyName, &value))
-			ccsSetColor (setting, value);
+			ccsSetColor (setting, value, TRUE);
 		}
 		break;
 	    case TypeMatch:
@@ -2662,7 +3639,7 @@ ccsImportFromFile (CCSContext *context,
 		    if (ccsIniGetString (importFile, plugin->name,
 					 keyName, &value))
 		    {
-		    	ccsSetMatch (setting, value);
+		    	ccsSetMatch (setting, value, TRUE);
 		    	free (value);
 		    }
 		}
@@ -2673,7 +3650,7 @@ ccsImportFromFile (CCSContext *context,
 		    if (ccsIniGetList (importFile, plugin->name,
 				       keyName, &value, setting))
 		    {
-			ccsSetList (setting, value);
+			ccsSetList (setting, value, TRUE);
 			ccsSettingValueListFree (value, TRUE);
 		    }
 		}
