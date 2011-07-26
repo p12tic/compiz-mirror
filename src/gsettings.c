@@ -851,7 +851,7 @@ writeOption (CCSSetting * setting)
 	    if (!colString)
 		break;
 
-	    g_settings_set (settings, cleanSettingName, "s", value, NULL);
+	    g_settings_set (settings, cleanSettingName, "s", colString, NULL);
 	    free (colString);
 	}
 	break;
