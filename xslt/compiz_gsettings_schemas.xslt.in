@@ -39,9 +39,9 @@
   </xsl:template>
 
   <xsl:template name="genGSettingsSchema">
-    <xsl:param name="schemaPath">
+    <!--xsl:param name="schemaPath">
       <xsl:call-template name="printPath"/>
-    </xsl:param>
+    </xsl:param-->
     <xsl:param name="schemaId">
       <xsl:call-template name="printId"/>
     </xsl:param>
@@ -50,9 +50,9 @@
       <xsl:attribute name="id">
 	  <xsl:value-of select="$schemaId"/>
       </xsl:attribute>
-      <xsl:attribute name="path">
+      <!--xsl:attribute name="path">
 	<xsl:value-of select="$schemaPath"/>
-      </xsl:attribute>
+      </xsl:attribute-->
       <xsl:attribute name="gettext-domain">
 	<xsl:text>@GETTEXT_PACKAGE@</xsl:text>
       </xsl:attribute>
@@ -419,11 +419,10 @@
 
   <!-- prints the key name -->
   <xsl:template name="printKeyName">
-    <!-- *sigh* it seems like GSettings doesn't let you have underscores
-	 in key names. Never mind the fact that this limitation is
-	 complete bogus. Also we need to trim down key names to
-	 32 characters. Thanks GSettings! -->
-    <xsl:value-of select="substring(translate(@name, '_', '-'), 0, 32)"/>
+    <!-- not allowed to have underscores, key names > 32 chars and upper case characters -->
+    <xsl:param name="ASCIIUpper" >ABCDEFGHIJKLMNOPQRSTUVWXYZ</xsl:param>
+    <xsl:param name="ASCIILower" >abcdefghijklmnopqrstuvwxyz</xsl:param>
+    <xsl:value-of select="translate(substring(translate(@name, '_', '-'), 0, 32), $ASCIIUpper, $ASCIILower)"/>
   </xsl:template>
 
   <!-- converts a decimal number to a hex number -->
