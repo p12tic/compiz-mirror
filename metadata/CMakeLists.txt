@@ -49,4 +49,12 @@ if (USE_GCONF)
     add_custom_target (core-gconf-schema ALL
 	DEPENDS ${CMAKE_BINARY_DIR}/generated/compiz-core.schemas
     )
+    compiz_gsettings_schema (
+	${CMAKE_BINARY_DIR}/generated/core.xml
+	${CMAKE_BINARY_DIR}/generated/org.freedesktop.compiz.gschema.xml
+	${datadir}/glib-2.0/schemas
+    )
+    add_custom_target (core-settings-schema ALL
+	DEPENDS ${CMAKE_BINARY_DIR}/generated/org.freedesktop.compiz.gschema.xml
+    )
 endif ()
