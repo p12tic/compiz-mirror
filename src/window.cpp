@@ -5210,12 +5210,10 @@ PrivateWindow::updateStartupId ()
 
     startupId = getStartupId ();
 
-    if (oldId)
+    if (oldId && startupId)
     {
 	if (strcmp (startupId, oldId) == 0)
 	    newId = false;
-
-	free (oldId);
     }
 
     if (managed && startupId && newId)
@@ -5246,6 +5244,9 @@ PrivateWindow::updateStartupId ()
 	if (allowWindowFocus (0, timestamp))
 	    window->activate ();
     }
+    
+    if (oldId)
+	free (oldId);
 }
 
 bool
