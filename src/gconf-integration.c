@@ -567,7 +567,7 @@ readGConfIntegratedOption (CCSContext *context,
 	    guint value;
 
 	    value = gconf_value_get_int (gconfValue);
-	    ccsSetInt (setting, value);
+	    ccsSetInt (setting, value, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -577,7 +577,7 @@ readGConfIntegratedOption (CCSContext *context,
 	    gboolean value;
 
 	    value = gconf_value_get_bool (gconfValue);
-	    ccsSetBool (setting, value ? TRUE : FALSE);
+	    ccsSetBool (setting, value ? TRUE : FALSE, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -589,7 +589,7 @@ readGConfIntegratedOption (CCSContext *context,
 	    value = gconf_value_get_string (gconfValue);
 	    if (value)
 	    {
-		ccsSetString (setting, value);
+		ccsSetString (setting, value, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -608,7 +608,7 @@ readGConfIntegratedOption (CCSContext *context,
 		ccsGetKey (setting, &key);
 		if (ccsStringToKeyBinding (value, &key))
 		{
-		    ccsSetKey (setting, key);
+		    ccsSetKey (setting, key, TRUE);
 		    ret = TRUE;
 		}
 	    }
@@ -626,7 +626,7 @@ readGConfIntegratedOption (CCSContext *context,
 		    gboolean showAll;
 
 		    showAll = gconf_value_get_bool (gconfValue);
-		    ccsSetBool (setting, !showAll);
+		    ccsSetBool (setting, !showAll, TRUE);
 		    ret = TRUE;
 		}
 	    }
@@ -642,7 +642,7 @@ readGConfIntegratedOption (CCSContext *context,
 			Bool fullscreen;
 
 			fullscreen = strcmp (value, "fullscreen") == 0;
-			ccsSetBool (setting, fullscreen);
+			ccsSetBool (setting, fullscreen, TRUE);
 			ret = TRUE;
 		    }
 		}
@@ -658,7 +658,7 @@ readGConfIntegratedOption (CCSContext *context,
 		    if (focusMode)
 		    {
 			Bool clickToFocus = (strcmp (focusMode, "click") == 0);
-			ccsSetBool (setting, clickToFocus);
+			ccsSetBool (setting, clickToFocus, TRUE);
 			ret = TRUE;
 		    }
 		}
@@ -689,7 +689,7 @@ readGConfIntegratedOption (CCSContext *context,
 		else
 		    button.button = 1;
 
-		ccsSetButton (setting, button);
+		ccsSetButton (setting, button, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -760,7 +760,7 @@ setButtonBindingForSetting (CCSContext   *context,
 	value.button = button;
 	value.buttonModMask = buttonModMask;
 
-	ccsSetButton (s, value);
+	ccsSetButton (s, value, TRUE);
     }
 }
 

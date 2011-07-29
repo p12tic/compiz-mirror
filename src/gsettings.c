@@ -273,7 +273,7 @@ valueChanged (GSettings   *settings,
     readInit (context);
     if (!readOption (setting))
     {
-	ccsResetToDefault (setting);
+	ccsResetToDefault (setting, TRUE);
     }
 
     if (ccsGetIntegrationEnabled (context) &&
@@ -325,7 +325,7 @@ readListValue (CCSSetting *setting)
     value = g_settings_get_value (settings, cleanSettingName);
     if (!value)
     {
-	ccsSetList (setting, NULL);
+	ccsSetList (setting, NULL, TRUE);
 	return TRUE;
     }
 
@@ -435,7 +435,7 @@ readListValue (CCSSetting *setting)
 
     if (list)
     {
-	ccsSetList (setting, list);
+	ccsSetList (setting, list, TRUE);
 	ccsSettingValueListFree (list, TRUE);
 	return TRUE;
     }
@@ -527,7 +527,7 @@ readOption (CCSSetting * setting)
 	    value = g_variant_get_string (gsettingsValue, NULL);
 	    if (value)
 	    {
-		ccsSetString (setting, value);
+		ccsSetString (setting, value, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -538,7 +538,7 @@ readOption (CCSSetting * setting)
 	    value = g_variant_get_string (gsettingsValue, NULL);
 	    if (value)
 	    {
-		ccsSetMatch (setting, value);
+		ccsSetMatch (setting, value, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -548,7 +548,7 @@ readOption (CCSSetting * setting)
 	    int value;
 	    value = g_variant_get_int32 (gsettingsValue);
 
-	    ccsSetInt (setting, value);
+	    ccsSetInt (setting, value, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -557,7 +557,7 @@ readOption (CCSSetting * setting)
 	    gboolean value;
 	    value = g_variant_get_boolean (gsettingsValue);
 
-	    ccsSetBool (setting, value ? TRUE : FALSE);
+	    ccsSetBool (setting, value ? TRUE : FALSE, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -566,7 +566,7 @@ readOption (CCSSetting * setting)
 	    double value;
 	    value = g_variant_get_double (gsettingsValue);
 
-	    ccsSetFloat (setting, (float)value);
+	    ccsSetFloat (setting, (float)value, TRUE);
     	    ret = TRUE;
 	}
 	break;
@@ -578,7 +578,7 @@ readOption (CCSSetting * setting)
 
 	    if (value && ccsStringToColor (value, &color))
 	    {
-		ccsSetColor (setting, color);
+		ccsSetColor (setting, color, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -591,7 +591,7 @@ readOption (CCSSetting * setting)
 
 	    if (value && ccsStringToKeyBinding (value, &key))
 	    {
-		ccsSetKey (setting, key);
+		ccsSetKey (setting, key, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -604,7 +604,7 @@ readOption (CCSSetting * setting)
 
 	    if (value && ccsStringToButtonBinding (value, &button))
 	    {
-		ccsSetButton (setting, button);
+		ccsSetButton (setting, button, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -618,7 +618,7 @@ readOption (CCSSetting * setting)
 	    {
 		unsigned int edges;
 		edges = ccsStringToEdges (value);
-		ccsSetEdge (setting, edges);
+		ccsSetEdge (setting, edges, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -628,7 +628,7 @@ readOption (CCSSetting * setting)
 	    gboolean value;
 	    value = g_variant_get_boolean (gsettingsValue);
 
-	    ccsSetBell (setting, value ? TRUE : FALSE);
+	    ccsSetBell (setting, value ? TRUE : FALSE, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -1088,7 +1088,7 @@ readSetting (CCSContext *context,
 	status = readOption (setting);
 
     if (!status)
-	ccsResetToDefault (setting);
+	ccsResetToDefault (setting, TRUE);
 }
 
 Bool
@@ -1147,7 +1147,13 @@ getExistingProfiles (CCSContext *context)
     value = g_settings_get_value (compizconfigSettings,  "existing-profiles");
     g_variant_iter_init (&iter, value);
     while (g_variant_iter_loop (&iter, "s", &profile))
-	ret = ccsStringListAppend (ret, strdup (profile));
+    {
+	CCSString *str = malloc (sizeof (CCSString));
+	
+	str->value = strdup (profile);
+
+	ret = ccsStringListAppend (ret, str);
+    }
 
     g_variant_unref (value);
 
