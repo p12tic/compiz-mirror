@@ -44,7 +44,15 @@ COMPIZ_PLUGIN_20090315 (decor, DecorPluginVTable)
 
 /* From core */
 
-bool
+/*
+ * isAncestorTo
+ *
+ * Checks if a window is a transient for a candidate
+ * or if one of its transient parents is a transient
+ * for the candidate
+ */
+
+static bool
 isAncestorTo (CompWindow *window,
               CompWindow *candidate)
 {
@@ -61,7 +69,13 @@ isAncestorTo (CompWindow *window,
     return false;
 }
 
-/* Make shadows look nice, don't paint shadows on top of
+/* 
+ * DecorWindow::computeShadowRegion
+ *
+ * This function computes the current clip region for the
+ * shadow that should be draw on glDraw. 
+ *
+ * Make shadows look nice, don't paint shadows on top of
  * things they don't make sense on top of, eg, menus
  * need shadows but they don't need to be painted when
  * another menu is adjacent and covering the shadow
@@ -165,6 +179,62 @@ DecorWindow::computeShadowRegion ()
     }
 }
 
+/*
+ * DecorWindow::glDraw
+ *
+ * Handles the drawing of the actual decoration texture
+ * (whether that be the bound pixmap for a window type
+ *  decoration or a redirected scaled-quad pixmap for
+ *  pixmap type decorations).
+ *
+ * For pixmap type decorations, we need to use the precomputed
+ * shadow region for the clipping region of when we draw the
+ * window decoration with glDrawTexture. We also need to add
+ * geometry for each quad on the pixmap decoration so that it
+ * stretches from its original size to the size of the actual
+ * window.
+ *
+ * Usually, this works something like this
+ *
+ * -----------------------------------
+ * | Q1 | Buttons ... Text (Q2) | Q3 |
+ * -----------------------------------
+ * | Q4 |                       | Q5 |
+ * -----------------------------------
+ * | Q6 |         Q7            | Q8 |
+ * -----------------------------------
+ *
+ *
+ * ---------------------------------------------------
+ * | Q1 | Buttons ... Text (Q2)                 | Q3 |
+ * ---------------------------------------------------
+ * | Q4 |                                       | Q5 |
+ * |    |                                       |    |
+ * |    |                                       |    |
+ * |    |                                       |    |
+ * |    |                                       |    |
+ * |    |                                       |    |
+ * |    |                                       |    |
+ * |    |                                       |    |
+ * |    |                                       |    |
+ * |    |                                       |    |
+ * ---------------------------------------------------
+ * | Q6 |         Q7                            | Q8 |
+ * ---------------------------------------------------
+ *
+ * Note here that quads 2, 4, 5 and 7 are scaled according
+ * to the matrix supplied on each quad structure.
+ *
+ * FIXME: This doesn't work with multiple textures, that
+ * needs work to determine the quads for each separate texture
+ *
+ * For window type decorations we add geometry for the frame
+ * region of the window.
+ *
+ * Next, we draw the actual texture with the saved window geometry
+ *
+ */
+
 bool
 DecorWindow::glDraw (const GLMatrix     &transform,
 		     GLFragment::Attrib &attrib,
@@ -246,6 +316,16 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 
 static bool bindFailed;
 
+/*
+ * DecorTexture::DecorTexture
+ *
+ * Creates a texture for a given pixmap in the property.
+ * bindFailed is a global variable used to determine if
+ * binding to a pixmap gave us more than one texture since
+ * FIXME that isn't supported yet. Also sets damage handlers
+ * for this pixmap
+ */
+
 DecorTexture::DecorTexture (Pixmap pixmap) :
     status (true),
     refCount (1),
@@ -279,11 +359,29 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
 			     XDamageReportRawRectangles);
 }
 
+/*
+ * DecorTexture::~DecorTexture
+ *
+ * Remove damage handle on texture
+ *
+ */
+
 DecorTexture::~DecorTexture ()
 {
     if (damage)
 	XDamageDestroy (screen->dpy (), damage);
 }
+
+/*
+ * DecorScreen::getTexture
+ *
+ * Returns the texture for a given pixmap. Note
+ * that if this particular pixmap was already found
+ * in the list of decor textures, then the refcount
+ * is increased and that one is returned instead of
+ * binding a new texture.
+ *
+ */
 
 DecorTexture *
 DecorScreen::getTexture (Pixmap pixmap)
@@ -311,6 +409,12 @@ DecorScreen::getTexture (Pixmap pixmap)
     return texture;
 }
 
+/*
+ * DecorScreen::releaseTexture
+ *
+ * Unreferences the texture, deletes the texture from
+ * the list of textures if its no longer in use
+ */
 
 void
 DecorScreen::releaseTexture (DecorTexture *texture)
@@ -328,6 +432,16 @@ DecorScreen::releaseTexture (DecorTexture *texture)
     textures.erase (it);
     delete texture;
 }
+
+/*
+ * computeQuadBox
+ *
+ * Determines a scaled quad box for the decor plugin
+ * by determining the x2 and y2 points by either clamping
+ * or stretching the box. Also applies gravity to determine
+ * relative x1 and y1 points to the window
+ *
+ */
 
 static void
 computeQuadBox (decor_quad_t *q,
@@ -399,6 +513,19 @@ computeQuadBox (decor_quad_t *q,
     if (return_sy)
 	*return_sy = sy;
 }
+
+/*
+ * Decoration::create
+ *
+ * Factory function to create a Decoration *, takes a decoration
+ * property data, size, type and offset inside that property data
+ * to start reading from.
+ *
+ * This function determines the decoration type and reads the property
+ * data appropriately and then uses the property data to determine the
+ * quads and extents of the input windows and the hinted extents.
+ *
+ */
 
 Decoration *
 Decoration::create (Window        id,
@@ -570,6 +697,14 @@ Decoration::create (Window        id,
     return decoration;
 }
 
+/*
+ * Decoration::release
+ *
+ * Unreferences the decoration, also unreferences the texture
+ * if this decoration is about to be destroyed
+ *
+ */
+
 void
 Decoration::release (Decoration *decoration)
 {
@@ -584,10 +719,38 @@ Decoration::release (Decoration *decoration)
     delete decoration;
 }
 
+/*
+ * DecorationList is a class which allows multiple decorations
+ * to be stored in a list and read from a window property, which
+ * allows caching to be done for decorations so that we aren't
+ * always querying another process for decorations
+ *
+ */
+
 DecorationList::DecorationList () :
     mList (0)
 {
 }
+
+/*
+ * DecorationList::updateDecoration
+ *
+ * Fetches the window property for a particular
+ * window for this decoration list on a particular
+ * decoration atom (whether that be the default
+ * atom on the root window or the _COMPIZ_WINDOW_DECOR
+ * atom on the client)
+ *
+ * Note that due to the way XGetWindowProperty works,
+ * we only cache what is appropriate and then get the
+ * rest from the property in case we didn't read enough
+ * data. It would be awesome if XGetWindowProperty allowed
+ * you to read as much as you wanted.
+ *
+ * FIXME: Currently this function refreshes all decorations.
+ * That's slow and should be fixed
+ *
+ */
 
 bool
 DecorationList::updateDecoration (Window   id,
@@ -646,13 +809,13 @@ DecorationList::updateDecoration (Window   id,
 
     type = decor_property_get_type (prop);
 
+    /* Create a new decoration for each individual item on the property */
     for (int i = 0; i < decor_property_get_num (prop); i++)
     {
         Decoration *d = Decoration::create (id, prop, n, type, i);
 
 	if (!d)
         {
-
             XFree (data);
             mList.clear ();
             return false;
@@ -666,6 +829,12 @@ DecorationList::updateDecoration (Window   id,
     return true;
 }
 
+/*
+ * DecorWindow::updateDecoration
+ *
+ * Updates the decoration list on this window
+ */
+
 void
 DecorWindow::updateDecoration ()
 {
@@ -678,6 +847,18 @@ DecorWindow::updateDecoration ()
 	pixmapFailed = false;
 }
 
+/*
+ * WindowDecoration::create
+ *
+ * Factory function for WindowDecoration, creates
+ * a window specific decoration for this window,
+ * not to be confused with window /type/ decorations
+ * which are a different matter.
+ *
+ * Decorations can indeed be re-used, and that is what
+ * WindowDecoration is for.
+ *
+ */
 WindowDecoration *
 WindowDecoration::create (Decoration *d)
 {
@@ -708,6 +889,12 @@ WindowDecoration::create (Decoration *d)
     return wd;
 }
 
+/*
+ * WindowDecoration::destroy
+ *
+ * Unreferences the bound decoration
+ * and frees quads
+ */
 void
 WindowDecoration::destroy (WindowDecoration *wd)
 {
@@ -716,6 +903,21 @@ WindowDecoration::destroy (WindowDecoration *wd)
     delete wd;
 }
 
+/*
+ * DecorWindow::setDecorationMatrices
+ *
+ * Statically update the quad display matrices
+ * (2x3 matrix) each time the window is moved
+ * or resized
+ *
+ * For this to work, we need to multiply the
+ * scaled quad and decor quad matrices together
+ * to get the final scaled transformation
+ *
+ * Translation (x0, y0) is based on the actual box
+ * position in decoration co-ordinate space multiplied
+ * by the scaled transformation matrix
+ */
 void
 DecorWindow::setDecorationMatrices ()
 {
@@ -729,14 +931,18 @@ DecorWindow::setDecorationMatrices ()
 
     for (i = 0; i < wd->nQuad; i++)
     {
+	/* Set the quad matrix to the texture matrix */
 	wd->quad[i].matrix = wd->decor->texture->textures[0]->matrix ();
 
+	/* Initial translation point is based on existing translation point */
 	x0 = wd->decor->quad[i].m.x0;
 	y0 = wd->decor->quad[i].m.y0;
 
 	a = wd->decor->quad[i].m;
 	b = wd->quad[i].matrix;
 
+	/* Multiply wd->quad[i].matrix (decoration matrix)
+	 * and the scaled quad matrix */
 	wd->quad[i].matrix.xx = a.xx * b.xx + a.yx * b.xy;
 	wd->quad[i].matrix.yx = a.xx * b.yx + a.yx * b.yy;
 	wd->quad[i].matrix.xy = a.xy * b.xx + a.yy * b.xy;
@@ -749,11 +955,15 @@ DecorWindow::setDecorationMatrices ()
 	wd->quad[i].matrix.xy *= wd->quad[i].sy;
 	wd->quad[i].matrix.yy *= wd->quad[i].sy;
 
+	/* Align translation points to the right
+	 * in the scaled quad (window) space */
 	if (wd->decor->quad[i].align & ALIGN_RIGHT)
 	    x0 = wd->quad[i].box.x2 - wd->quad[i].box.x1;
 	else
 	    x0 = 0.0f;
 
+	/* Align translation points to the bottom
+	 * in the scaled quad (window) space */
 	if (wd->decor->quad[i].align & ALIGN_BOTTOM)
 	    y0 = wd->quad[i].box.y2 - wd->quad[i].box.y1;
 	else
@@ -777,6 +987,17 @@ DecorWindow::setDecorationMatrices ()
     }
 }
 
+/*
+ * DecorWindow::updateDecorationScale
+ *
+ * Update the scaled quads box for this
+ * window. Do that by determining
+ * the scaled quad box for the window size
+ * and then translating each quad box by
+ * the window position
+ *
+ */
+
 void
 DecorWindow::updateDecorationScale ()
 {
@@ -791,10 +1012,12 @@ DecorWindow::updateDecorationScale ()
     {
 	int x, y;
 
+	/* Recompute scaled quad box */
 	computeQuadBox (&wd->decor->quad[i], window->size ().width (),
 			window->size ().height (),
 			&x1, &y1, &x2, &y2, &sx, &sy);
 
+	/* Translate by x and y points of this window */
 	x = window->geometry ().x ();
 	y = window->geometry ().y ();
 
@@ -809,6 +1032,18 @@ DecorWindow::updateDecorationScale ()
     setDecorationMatrices ();
 }
 
+/*
+ * DecorWindow::checkSize
+ *
+ * Convenience function to check if this decoration
+ * is going to display laerger than the window size
+ * itself, in that case we can't use it since it
+ * would like the decoration was larger than the window
+ * (or trying to compress it anymore would result in
+ * eg, distorted text or buttons). In that case
+ * we'd use default decorations
+ *
+ */
 bool
 DecorWindow::checkSize (Decoration *decoration)
 {
@@ -816,6 +1051,18 @@ DecorWindow::checkSize (Decoration *decoration)
             decoration->minHeight <= (int) window->size ().height ());
 }
 
+/*
+ * DecorWindow::shiftX
+ *
+ * Determines the amount that the window needs to
+ * move based on the gravity hint once it is decorated,
+ * at least in the X direction
+ *
+ * FIXME: This should be merged into a function
+ * that returns CompPoint, there is no reason for
+ * there to be two separate functions
+ *
+ */
 int
 DecorWindow::shiftX ()
 {
@@ -833,6 +1080,18 @@ DecorWindow::shiftX ()
     return 0;
 }
 
+/*
+ * DecorWindow::shiftY
+ *
+ * Determines the amount that the window needs to
+ * move based on the gravity hint once it is decorated,
+ * at least in the Y direction
+ *
+ * FIXME: This should be merged into a function
+ * that returns CompPoint, there is no reason for
+ * there to be two separate functions
+ *
+ */
 int
 DecorWindow::shiftY ()
 {
@@ -850,6 +1109,15 @@ DecorWindow::shiftY ()
     return 0;
 }
 
+/*
+ * decorOffsetMove
+ *
+ * Function called on a timer (to avoid calling configureXWindow from
+ * within a ::moveNotify) which actually moves the window by the offset
+ * specified in the xwc. Also sends a notification that the window
+ * was decorated
+ *
+ */
 static bool
 decorOffsetMove (CompWindow *w, XWindowChanges xwc, unsigned int mask)
 {
@@ -863,6 +1131,13 @@ decorOffsetMove (CompWindow *w, XWindowChanges xwc, unsigned int mask)
     return false;
 }
 
+/*
+ * DecorWindow::matchType
+ *
+ * Converts libdecoration window types packed
+ * into the property into Compiz window types
+ *
+ */
 bool
 DecorWindow::matchType (CompWindow *w,
                         unsigned int decorType)
@@ -890,6 +1165,17 @@ DecorWindow::matchType (CompWindow *w,
     return false;
 }
 
+/*
+ * DecorWindow::matchType
+ *
+ * Converts libdecoration window states packed
+ * into the property into Compiz window states
+ *
+ * Since there is no _NET_WM_STATE_ACTIVE
+ * we need to determine that ourselves from
+ * _NET_ACTIVE_WINDOW on the root window
+ *
+ */
 bool
 DecorWindow::matchState (CompWindow   *w,
                          unsigned int decorState)
@@ -907,7 +1193,6 @@ DecorWindow::matchState (CompWindow   *w,
     };
 
     /* Active is a separate check */
-
     if (screen->activeWindow () == w->id ())
         decorState &= ~(DECOR_WINDOW_STATE_FOCUS);
 
@@ -920,6 +1205,13 @@ DecorWindow::matchState (CompWindow   *w,
     return (decorState == 0);
 }
 
+/*
+ * DecorWindow::matchActions
+ *
+ * Converts libdecoration window actions packed
+ * into the property into Compiz window types
+ *
+ */
 bool
 DecorWindow::matchActions (CompWindow   *w,
                            unsigned int decorActions)
@@ -949,7 +1241,6 @@ DecorWindow::matchActions (CompWindow   *w,
         { DECOR_WINDOW_ACTION_BELOW, CompWindowActionBelowMask },
     };
 
-    /* Active is a separate check */
     for (i = 0; i < nActionStates; i++)
     {
         if ((decorActions & actionStates[i].decorFlag) && (w->type () & actionStates[i].compFlag))
@@ -959,6 +1250,24 @@ DecorWindow::matchActions (CompWindow   *w,
     return (decorActions == 0);
 }
 
+/*
+ * DecorationList::findMatchingDecoration
+ *
+ * Searches a decoration list for a decoration
+ * that actually matches this window, or at least
+ * comes close to it.
+ * 
+ * There is an order of preference when matching
+ * decorations here.
+ *
+ * Type:State:Actions
+ *
+ * If a property before another one is matched, that
+ * decoration is "locked" so if a decoration is found
+ * that has the correct matching property but does not
+ * match the locked property, then it is not matched
+ *
+ */
 Decoration *
 DecorationList::findMatchingDecoration (CompWindow *w,
                                         bool       sizeCheck)
@@ -978,24 +1287,30 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 
 	foreach (Decoration *d, mList)
 	{
+	    /* Must always match type */
 	    if (DecorWindow::matchType (w, d->frameType))
 	    {
+		/* Use this decoration if the type matched */
 		if (!(typeMatch & currentDecorState) && (!sizeCheck || dw->checkSize (d)))
 		{
 		    decoration = d;
 		    currentDecorState |= typeMatch;
 		}
 
+		/* Must always match state if type is already matched */
 		if (DecorWindow::matchState (w, d->frameState) && (!sizeCheck || dw->checkSize (d)))
 		{
+		    /* Use this decoration if the type and state match */
 		    if (!(stateMatch & currentDecorState))
 		    {
 			decoration = d;
 			currentDecorState |= stateMatch;
 		    }
 
+		    /* Must always match actions if state and type are already matched */
 		    if (DecorWindow::matchActions (w, d->frameActions) && (!sizeCheck || dw->checkSize (d)))
 		    {
+			/* Use this decoration if the requested actions match */
 			if (!(actionsMatch & currentDecorState))
 			{
 			    decoration = d;
@@ -1013,6 +1328,42 @@ DecorationList::findMatchingDecoration (CompWindow *w,
     return decoration;
 }
 
+/*
+ * DecorWindow::update
+ * This is the master function for managing decorations on windows
+ *
+ * The first part of this function determines if we want to actually
+ * decorate a particular window. This only passes if the window
+ * matches the decorated type match and it is also capable of being
+ * decorated (eg, has a frame window and not override redirect) and
+ * also has appropriate _MOTIF_WM_HINTS set on it (specifically 0x3
+ * and 0x6)
+ *
+ * The next part of the function attempts to find a matching decoration
+ * has has been created by the decorators. If it can't find one, the
+ * window gets a default decoration (until the decorators have "caught
+ * up" with us and given this window an actual decoration.
+ *
+ * Windows that we've marked not to decorate get shadows around them
+ * at least. This is the "bare" type decoration
+ *
+ * If an appropriate decoration is found for this window, a WindowDecoration
+ * (which is a window specific class determining how that decoration
+ *  should operate on /this particular window/) is created.
+ *
+ * At this point we also update the "frame extents" in core (for
+ * _NET_REQUEST_FRAME_EXTENTS) and also the actual frame geometry
+ * since we might need a larger space on the frame window (which is
+ * shaped to accomadate decorations) for things like, eg grab areas
+ * which shouldn't be represented to clients as actual visible
+ * decoration space
+ *
+ * FIXME: There are a bunch of hacks in here to allow override redirect
+ * windows which have "special" switcher type decorations to be decorated
+ * without being reparented. Ideally, these shouldn't be handled by 
+ * the decor plugin
+ *
+ */
 bool
 DecorWindow::update (bool allowDecoration)
 {
@@ -1033,6 +1384,7 @@ DecorWindow::update (bool allowDecoration)
      * since the window gets reparented right away before plugins are done
      * with it */
 
+    /* Unconditionally decorate switchers */
     if (!isSwitcher)
     {
         switch (window->type ()) {
@@ -1065,7 +1417,7 @@ DecorWindow::update (bool allowDecoration)
 
     if (decorate)
     {
-        /* Attempt to find a matching */
+        /* Attempt to find a matching decoration */
         decoration = decor.findMatchingDecoration (window, true);
 
 	if (!decoration)
@@ -1087,6 +1439,8 @@ DecorWindow::update (bool allowDecoration)
     }
     else
     {
+	/* This window isn't "decorated" but it still gets a shadow as long
+	 * as it isn't shaped weirdly, since the shadow is just a quad rect */
 	if (dScreen->optionGetShadowMatch ().evaluate (window))
 	{
 	    if (window->region ().numRects () == 1 && !window->alpha () && dScreen->decor[DECOR_BARE].mList.size ())
@@ -1100,18 +1454,32 @@ DecorWindow::update (bool allowDecoration)
 	}
     }
 
+    /* Don't allow the windows to be decorated if
+     * we're tearing down or if a decorator isn't running
+     * (nobody owns the selection window) 
+     */
     if (!dScreen->dmWin || !allowDecoration)
 	decoration = NULL;
 
+    /* Don't bother going any further if
+     * this window is going to get the same
+     * decoration, just use the old one */
     if (decoration == old)
 	return false;
 
+    /* We need to damage the current output extents
+     * and recompute the shadow region if a compositor
+     * is running
+     */
     if (dScreen->cmActive)
     {
 	cWindow->damageOutputExtents ();
 	computeShadowRegion ();
     }
 
+    /* Determine how much we moved the window for the old
+     * decoration and save that, also destroy the old
+     * WindowDecoration */
     if (old)
     {
 	oldShiftX = shiftX ();
@@ -1122,12 +1490,21 @@ DecorWindow::update (bool allowDecoration)
 	wd = NULL;
     }
 
+    /* If a decoration was found for this window, create
+     * a new WindowDecoration for it and set the frame
+     * extents accordingly. We should also move the
+     * window by the distance the new decoration provides
+     * in case that actually changed
+     */
     if (decoration)
     {
 	wd = WindowDecoration::create (decoration);
 	if (!wd)
 	    return false;
 
+	/* Set extents based on maximize/unmaximize state
+	 * FIXME: With the new type system, this should be
+	 * removed */
 	if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
 	    window->setWindowFrameExtents (&wd->decor->maxBorder,
 					   &wd->decor->maxInput);
@@ -1138,6 +1515,7 @@ DecorWindow::update (bool allowDecoration)
 	moveDx = shiftX () - oldShiftX;
 	moveDy = shiftY () - oldShiftY;
 
+	/* Update the input and output frame */
 	updateFrame ();
 	window->updateWindowOutputExtents ();
 	if (dScreen->cmActive)
@@ -1149,6 +1527,9 @@ DecorWindow::update (bool allowDecoration)
 	CompWindowExtents emptyExtents;
 	wd = NULL;
 
+	/* Undecorated windows need to have the
+	 * input and output frame removed and the
+	 * frame window geometry reset */
 	updateFrame ();
 
 	memset (&emptyExtents, 0, sizeof (CompWindowExtents));
@@ -1159,6 +1540,7 @@ DecorWindow::update (bool allowDecoration)
 	moveDy = -oldShiftY;
     }
 
+    /* Need to actually move the window */
     if (window->placed () && !window->overrideRedirect () &&
 	(moveDx || moveDy))
     {
@@ -1170,6 +1552,7 @@ DecorWindow::update (bool allowDecoration)
 	xwc.x = window->serverGeometry ().x () + moveDx;
 	xwc.y = window->serverGeometry ().y () + moveDy;
 
+	/* Except if it's fullscreen, maximized or such */
 	if (window->state () & CompWindowStateFullscreenMask)
 	    mask &= ~(CWX | CWY);
 
@@ -1206,9 +1589,19 @@ DecorWindow::update (bool allowDecoration)
     return true;
 }
 
+/*
+ * DecorWindow::updateFrame
+ *
+ * Updates the actual frame window which is
+ * used for either displaying the decoration in the case of window
+ * type reparented decorations, or handling input events in the case
+ * of pixmap decorations
+ */
 void
 DecorWindow::updateFrame ()
 {
+    /* Destroy the input and output frames in case the window can't
+     * actually be decorated */
     if (!wd || !(window->border ().left || window->border ().right ||
 		 window->border ().top || window->border ().bottom) ||
         (wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP && outputFrame) ||
@@ -1249,6 +1642,7 @@ DecorWindow::updateFrame ()
 	    oldHeight = 0;
 	}
     }
+    /* If the window can be decorated, update the frames */
     if (wd && (window->border ().left || window->border ().right ||
 	       window->border ().top || window->border ().bottom))
     {
@@ -1259,6 +1653,24 @@ DecorWindow::updateFrame ()
     }
 }
 
+/*
+ * DecorWindow::updateInputFrame
+ *
+ * Actually creates an input frame if there isn't
+ * one, otherwise sets the shape regions on it so that
+ * if the decoration inside the parent window ever
+ * gets stacked on top of the client, it won't obstruct
+ * it
+ *
+ * This also sets the _COMPIZ_WINDOW_DECOR_INPUT_FRAME
+ * atom on the window. Decorators should listen for this
+ * to determine if a window is to be decorated, and when
+ * they get a PropertyNotify indicating that this the case
+ * should draw a decoration and set the _COMPIZ_WINDOW_DECOR
+ * atom in response, otherwise this window is going to
+ * be stuck with default decorations
+ *
+ */
 void
 DecorWindow::updateInputFrame ()
 {
@@ -1270,11 +1682,15 @@ DecorWindow::updateInputFrame ()
     CompWindowExtents    border;
     Window		 parent;
 
+    /* Switchers are special, we need to put input frames
+     * there in the root window rather than in the frame
+     * window that this window is reparented into */
     if (isSwitcher)
 	parent = screen->root ();
     else
 	parent = window->frame ();
 
+    /* Determine frame extents */
     if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
     {
 	border = wd->decor->maxBorder;
@@ -1291,15 +1707,20 @@ DecorWindow::updateInputFrame ()
     width  = server.width () + input.left + input.right + bw;
     height = server.height ()+ input.top  + input.bottom + bw;
 
+    /* Non switcher windows are rooted relative to the frame window of the client
+     * and switchers need to be offset by the window geometry of the client */
     if (isSwitcher)
     {
 	x += window->x ();
 	y += window->y ();
     }
 
+    /* Shaded windows automatically have no height */
     if (window->shaded ())
 	height = input.top + input.bottom;
 
+    /* Since we're reparenting windows here, we need to grab the server
+     * which sucks, but its necessary */
     XGrabServer (screen->dpy ());
 
     if (!inputFrame)
@@ -1322,6 +1743,9 @@ DecorWindow::updateInputFrame ()
 
 	XMapWindow (screen->dpy (), inputFrame);
 
+	/* Notify the decorators that an input frame has been created on
+	 * this window so that they can react by actually create a decoration
+	 * for it (while we use the default decorations) */
 	XChangeProperty (screen->dpy (), window->id (),
 			 dScreen->inputFrameAtom, XA_WINDOW, 32,
 			 PropModeReplace, (unsigned char *) &inputFrame, 1);
@@ -1329,6 +1753,7 @@ DecorWindow::updateInputFrame ()
 	if (screen->XShape ())
 	    XShapeSelectInput (screen->dpy (), inputFrame, ShapeNotifyMask);
 
+	/* invalidate the decoration so that it gets shaped */
 	oldX = 0;
 	oldY = 0;
 	oldWidth  = 0;
@@ -1395,6 +1820,24 @@ DecorWindow::updateInputFrame ()
     XUngrabServer (screen->dpy ());
 }
 
+/*
+ * DecorWindow::updateOutputFrame
+ *
+ * Actually creates an output frame if there isn't
+ * one, otherwise sets the shape regions on it so that
+ * if the decoration inside the parent window ever
+ * gets stacked on top of the client, it won't obstruct
+ * it
+ *
+ * This also sets the _COMPIZ_WINDOW_DECOR_OUTPUT_FRAME
+ * atom on the window. Decorators should listen for this
+ * to determine if a window is to be decorated, and when
+ * they get a PropertyNotify indicating that this the case
+ * should draw a decoration inside the window and set the
+ * _COMPIZ_WINDOW_DECOR atom in response, otherwise this
+ * window is going to be stuck with default decorations
+ *
+ */
 void
 DecorWindow::updateOutputFrame ()
 {
@@ -1404,6 +1847,7 @@ DecorWindow::updateOutputFrame ()
     int                  bw = server.border () * 2;
     CompWindowExtents	 input;
 
+    /* Determine frame extents */
     if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
 	input = wd->decor->maxInput;
     else
@@ -1417,6 +1861,8 @@ DecorWindow::updateOutputFrame ()
     if (window->shaded ())
 	height = input.top + input.bottom;
 
+    /* Since we're reparenting windows here, we need to grab the server
+     * which sucks, but its necessary */
     XGrabServer (screen->dpy ());
 
     if (!outputFrame)
@@ -1440,6 +1886,9 @@ DecorWindow::updateOutputFrame ()
 
 	XMapWindow (screen->dpy (), outputFrame);
 
+	/* Notify the decorators that an input frame has been created on
+	 * this window so that they can react by actually create a decoration
+	 * for it (while we use the default decorations) */
 	XChangeProperty (screen->dpy (), window->id (),
 			 dScreen->outputFrameAtom, XA_WINDOW, 32,
 			 PropModeReplace, (unsigned char *) &outputFrame, 1);
@@ -1448,6 +1897,7 @@ DecorWindow::updateOutputFrame ()
 	    XShapeSelectInput (screen->dpy (), outputFrame,
 			       ShapeNotifyMask);
 
+	/* invalidate the decoration so that it gets shaped */
 	oldX = 0;
 	oldY = 0;
 	oldWidth  = 0;
@@ -1512,6 +1962,18 @@ DecorWindow::updateOutputFrame ()
 
     XUngrabServer (screen->dpy ());
 }
+
+/*
+ * DecorScreen::checkForDm
+ *
+ * Checks for a running decoration manager on the root window
+ * and also checks to see what decoration modes it supports
+ *
+ * dmWin is set based on the window on supportingDmCheckAtom
+ * on the root window. That's a window which is owned by
+ * the decorator, so if it changes we need to invalidate
+ * all the decorations
+ */
 
 void
 DecorScreen::checkForDm (bool updateWindows)
@@ -1606,6 +2068,13 @@ DecorScreen::checkForDm (bool updateWindows)
     }
 }
 
+/*
+ * DecorWindow::updateFrameRegion
+ *
+ * Shapes the toplevel frame region according to the rects
+ * in the decoration that we have. This is a wrapped function
+ *
+ */
 void
 DecorWindow::updateFrameRegion (CompRegion &region)
 {
@@ -1630,6 +2099,11 @@ DecorWindow::updateFrameRegion (CompRegion &region)
     updateReg = true;
 }
 
+/*
+ * DecorWindow::updateWindowRegions
+ *
+ * Used to update the region that the window type
+ * decorations occupty when the window is moved */
 void
 DecorWindow::updateWindowRegions ()
 {
@@ -1647,6 +2121,13 @@ DecorWindow::updateWindowRegions ()
     updateReg = false;
 }
 
+/*
+ * DecorWindow::windowNotify
+ *
+ * Window event notification handler. On various
+ * events on windows we need to update the decorations
+ *
+ */
 void
 DecorWindow::windowNotify (CompWindowNotify n)
 {
@@ -1654,6 +2135,8 @@ DecorWindow::windowNotify (CompWindowNotify n)
     {
 	case CompWindowNotifyMap:
 
+	    /* When the switcher is mapped, it has no frame window
+	     * so the frame window for it needs to mapped manually */
 	    if (isSwitcher)
 	    {
 		update (true);
@@ -1663,6 +2146,8 @@ DecorWindow::windowNotify (CompWindowNotify n)
 
 	case CompWindowNotifyUnmap:
 
+	    /* When the switcher is unmapped, it has no frame window
+	     * so the frame window for it needs to unmapped manually */
 	    if (isSwitcher)
 	    {
 		update (true);
@@ -1670,6 +2155,9 @@ DecorWindow::windowNotify (CompWindowNotify n)
 		break;
 	    }
 
+	    /* For non-switcher windows we need to update the decoration
+	     * anyways, since the window is unmapped. Also need to
+	     * update the shadow clip regions for panels and other windows */
 	    update (true);
 	    if (dScreen->cmActive)
 	    {
@@ -1700,6 +2188,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	    break;
 	}
 	case CompWindowNotifyReparent:
+	    /* Always update decorations when a window gets reparented */
 	    update (true);
 	    break;
 	case CompWindowNotifyShade:
@@ -1725,6 +2214,12 @@ DecorWindow::windowNotify (CompWindowNotify n)
     window->windowNotify (n);
 }
 
+/*
+ * DecorWindow::updateSwitcher
+ *
+ * Check this window to see if it is a switcher,
+ * if so, update the switcher flag 
+ */
 void
 DecorWindow::updateSwitcher ()
 {
@@ -1750,6 +2245,11 @@ DecorWindow::updateSwitcher ()
     isSwitcher = false;
 }
 
+/*
+ * DecorScreen::handleEvent
+ *
+ * Handles X11 events
+ */
 void
 DecorScreen::handleEvent (XEvent *event)
 {
@@ -1758,6 +2258,9 @@ DecorScreen::handleEvent (XEvent *event)
 
     switch (event->type) {
 	case DestroyNotify:
+	    /* When a decorator selection owner window is destroyed
+	     * it means that this decorator went away, so we need
+	     * to account for this */
 	    w = screen->findWindow (event->xdestroywindow.window);
 	    if (w)
 	    {
@@ -1766,6 +2269,10 @@ DecorScreen::handleEvent (XEvent *event)
 	    }
 	    break;
 	case ClientMessage:
+	    /* Update decorations whenever someone requests frame extents
+	     * so that core doesn't reply with the wrong extents when
+	     * when handleEvent is passed to core
+	     */
 	    if (event->xclient.message_type == requestFrameExtentsAtom)
 	    {
 		w = screen->findWindow (event->xclient.window);
@@ -1773,6 +2280,9 @@ DecorScreen::handleEvent (XEvent *event)
 		    DecorWindow::get (w)->update (true);
 	    }
 	default:
+	    /* Check for damage events. If the output or input window
+	     * or a texture is updated then damage output extents.
+	     */
 	    if (cmActive &&
 		event->type == cScreen->damageEvent () + XDamageNotify)
 	    {
@@ -1804,6 +2314,8 @@ DecorScreen::handleEvent (XEvent *event)
 
     screen->handleEvent (event);
 
+    /* If the active window changed, update the decoration,
+     * as long as the decoration isn't animating out */
     if (screen->activeWindow () != activeWindow)
     {
 	w = screen->findWindow (activeWindow);
@@ -1817,6 +2329,8 @@ DecorScreen::handleEvent (XEvent *event)
 
     switch (event->type) {
 	case PropertyNotify:
+	    /* When the switcher atom changes we should probably
+	     * update the switcher property on this window */
 	    if (event->xproperty.atom == decorSwitchWindowAtom)
 	    {
 		CompWindow    *w = screen->findWindow (event->xproperty.window);
@@ -1829,6 +2343,8 @@ DecorScreen::handleEvent (XEvent *event)
 			dw->updateSwitcher ();
 		}
 	    }
+	    /* Decorator has created or updated a decoration for this window,
+	     * update the decoration */
 	    else if (event->xproperty.atom == winDecorAtom)
 	    {
 		w = screen->findWindow (event->xproperty.window);
@@ -1840,12 +2356,16 @@ DecorScreen::handleEvent (XEvent *event)
 		    dw->update (true);
 		}
 	    }
+	    /* _MOTIF_WM_HINTS has been set on this window, it may not
+	     * may need to be decorated */
 	    else if (event->xproperty.atom == Atoms::mwmHints)
 	    {
 		w = screen->findWindow (event->xproperty.window);
 		if (w)
 		    DecorWindow::get (w)->update (true);
 	    }
+	    /* On a transient change, we need to recompute shadow regions
+	     * for eg, menus */
 	    else if (event->xproperty.atom == XA_WM_TRANSIENT_FOR)
 	    {
 		if (cmActive)
@@ -1860,6 +2380,9 @@ DecorScreen::handleEvent (XEvent *event)
 	    {
 		if (event->xproperty.window == screen->root ())
 		{
+		    /* If the supportingDmCheckAtom changed on the root window
+		     * it could mean that the decorator changed, so we need
+		     * to update decorations */
 		    if (event->xproperty.atom == supportingDmCheckAtom)
 		    {
 			checkForDm (true);
@@ -1868,6 +2391,7 @@ DecorScreen::handleEvent (XEvent *event)
 		    {
 			int i;
 
+			/* A default decoration changed */
 			for (i = 0; i < DECOR_NUM; i++)
 			{
 			    if (event->xproperty.atom == decorAtom[i])
@@ -1883,6 +2407,7 @@ DecorScreen::handleEvent (XEvent *event)
 		}
 	    }
 	    break;
+	/* Whenever a window is configured, we need to update the frame window */
 	case ConfigureNotify:
 	    w = screen->findTopLevelWindow (event->xconfigure.window);
 	    if (w)
@@ -1914,6 +2439,8 @@ DecorScreen::handleEvent (XEvent *event)
 		}
 	    }
 	    break;
+	/* Add new shape rects to frame region in case of a
+	 * shape notification */
 	default:
 	    if (screen->XShape () && event->type ==
 		screen->shapeEvent () + ShapeNotify)
@@ -1985,6 +2512,14 @@ DecorScreen::handleEvent (XEvent *event)
     }
 }
 
+/*
+ * DecorWindow::damageRect
+ *
+ * When this window is first presented to the user, we need to update
+ * the decoration since it is now visible
+ *
+ */
+
 bool
 DecorWindow::damageRect (bool initial, const CompRect &rect)
 {
@@ -1993,6 +2528,13 @@ DecorWindow::damageRect (bool initial, const CompRect &rect)
 
     return cWindow->damageRect (initial, rect);
 }
+
+/*
+ * DecorWindow::getOutputExtents
+ *
+ * Extend "output extents" (eg decoration + shadows) for this
+ * window if necessary
+ */
 
 void
 DecorWindow::getOutputExtents (CompWindowExtents& output)
@@ -2013,6 +2555,14 @@ DecorWindow::getOutputExtents (CompWindowExtents& output)
 	    output.bottom = e->bottom;
     }
 }
+
+/*
+ * DecorScreen::updateDefaultShadowProperty
+ *
+ * Set some default shadow options on the root
+ * window in case the default decorator doesn't
+ * use custom shadows
+ */
 
 void
 DecorScreen::updateDefaultShadowProperty ()
@@ -2112,6 +2662,13 @@ DecorScreen::setOption (const CompString  &name,
     return rv;
 }
 
+/*
+ * DecorWindow::moveNotify
+ *
+ * Translate window scaled quad boxes for movement
+ * and also recompute shadow clip regions
+ * for panels and menus
+ */
 void
 DecorWindow::moveNotify (int dx, int dy, bool immediate)
 {
@@ -2143,6 +2700,16 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
     window->moveNotify (dx, dy, immediate);
 }
 
+/*
+ * DecorWindow::resizeTimeout
+ *
+ * Called from the timeout on ::resizeNotify,
+ * set the shading and unshading bits and also
+ * updates the decoration. See the comment
+ * in ::resizeNotify as to why the timeout
+ * is necessary here
+ *
+ */
 bool
 DecorWindow::resizeTimeout ()
 {
@@ -2158,6 +2725,14 @@ DecorWindow::resizeTimeout ()
 	update (true);
     return false;
 }
+
+/*
+ * DecorWindow::resizeNotify
+ *
+ * Called whenever a window is resized. Update scaled quads and 
+ * recompute shadow region
+ *
+ */
 
 void
 DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
@@ -2185,6 +2760,14 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     window->resizeNotify (dx, dy, dwidth, dheight);
 }
 
+
+/*
+ * DecorWindow::stateChangeNotify
+ *
+ * Called whenever a window state changes, we might need to use
+ * different extents in case the decoration didn't change
+ *
+ */
 void
 DecorWindow::stateChangeNotify (unsigned int lastState)
 {
@@ -2214,6 +2797,14 @@ DecorScreen::matchPropertyChanged (CompWindow *w)
     screen->matchPropertyChanged (w);
 }
 
+/*
+ * DecorScreen::addSupportedAtoms
+ *
+ * _NET_REQUEST_FRAME_EXTENTS is only supported where
+ * a decorator is running, so add that to _NET_WM_SUPPORTED
+ * where that is the case
+ *
+ */
 void
 DecorScreen::addSupportedAtoms (std::vector<Atom> &atoms)
 {
@@ -2222,6 +2813,12 @@ DecorScreen::addSupportedAtoms (std::vector<Atom> &atoms)
     atoms.push_back (requestFrameExtentsAtom);
 }
 
+/*
+ * DecorScreen::decoratorStartTimeout
+ *
+ * Start a decorator in case there isn't one running
+ *
+ */
 bool
 DecorScreen::decoratorStartTimeout ()
 {
@@ -2231,6 +2828,15 @@ DecorScreen::decoratorStartTimeout ()
     return false;
 }
 
+/*
+ * DecorScreen::DecorScreen
+ *
+ * Initialize atoms, and create a
+ * default "window type" decoration
+ * and ensure that _NET_REQUEST_FRAME_EXTENTS
+ * gets added to _NET_WM_SUPPORTED
+ *
+ */
 DecorScreen::DecorScreen (CompScreen *s) :
     PluginClassHandler<DecorScreen,CompScreen> (s),
     cScreen (CompositeScreen::get (s)),
@@ -2297,6 +2903,13 @@ DecorScreen::DecorScreen (CompScreen *s) :
     screen->updateSupportedWmHints ();
 }
 
+/*
+ * DecorScreen::~DecorScreen
+ *
+ * Ensure that _NET_REQUEST_FRAME_EXTENTS
+ * is cleared from _NET_WM_SUPPORTED
+ *
+ */
 DecorScreen::~DecorScreen ()
 {
     for (unsigned int i = 0; i < DECOR_NUM; i++)
@@ -2354,7 +2967,12 @@ DecorWindow::DecorWindow (CompWindow *w) :
     window->resizeNotifySetEnabled (this, true);
 }
 
-
+/* 
+ * DecorWindow::~DecorWindow
+ * 
+ * On tear-down, we need to shift all windows
+ * back to their original positions
+ */
 DecorWindow::~DecorWindow ()
 {
     if (!window->destroyed ())
