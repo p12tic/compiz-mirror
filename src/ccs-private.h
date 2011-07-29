@@ -58,6 +58,22 @@ typedef struct _CCSPluginPrivate
     CCSStrExtensionList stringExtensions;
 } CCSPluginPrivate;
 
+typedef struct _CCSSettingsUpgrade
+{
+    char	   *profile;
+    char           *file;
+    char           *domain;
+    unsigned int   num;
+    
+    CCSSettingList changedSettings;
+    CCSSettingList addValueSettings;
+    CCSSettingList clearValueSettings;
+    CCSSettingList replaceFromValueSettings;
+    CCSSettingList replaceToValueSettings;
+} CCSSettingsUpgrade;
+
+Bool ccsCheckForSettingsUpgrade (CCSContext *context);
+
 void ccsLoadPlugins (CCSContext * context);
 void ccsLoadPluginSettings (CCSPlugin * plugin);
 void collateGroups (CCSPluginPrivate * p);

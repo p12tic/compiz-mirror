@@ -110,10 +110,11 @@ typedef struct _CCSBackendInfo	  CCSBackendInfo;
 typedef struct _CCSIntDesc	  CCSIntDesc;
 typedef struct _CCSStrRestriction CCSStrRestriction;
 typedef struct _CCSStrExtension   CCSStrExtension;
+typedef struct _CCSString	  CCSString;
 
 CCSLIST_HDR (Plugin, CCSPlugin)
 CCSLIST_HDR (Setting, CCSSetting)
-CCSLIST_HDR (String, char)
+CCSLIST_HDR (String, CCSString)
 CCSLIST_HDR (Group, CCSGroup)
 CCSLIST_HDR (SubGroup, CCSSubGroup)
 CCSLIST_HDR (SettingValue, CCSSettingValue)
@@ -122,6 +123,36 @@ CCSLIST_HDR (BackendInfo, CCSBackendInfo)
 CCSLIST_HDR (IntDesc, CCSIntDesc)
 CCSLIST_HDR (StrRestriction, CCSStrRestriction)
 CCSLIST_HDR (StrExtension, CCSStrExtension)
+
+/**
+ * reference counting
+ * 
+ * ccsSettingRef
+ * References the settings object so it can be kept in a list and
+ * unreferenced later with freeObj (mixed with objects that need
+ * to be freed and need not be freed)
+ * 
+ * ccsSettingUnref
+ * Unreferences the settings object, when the reference count reaches
+ * zero, the object is freed
+ * 
+ */
+
+#define CCSREF_HDR(type,dtype) \
+	void ccs##type##Ref (dtype *);  \
+	void ccs##type##Unref (dtype *);
+
+CCSREF_HDR (Plugin, CCSPlugin)
+CCSREF_HDR (Setting, CCSSetting)
+CCSREF_HDR (String, CCSString)
+CCSREF_HDR (Group, CCSGroup)
+CCSREF_HDR (SubGroup, CCSSubGroup)
+CCSREF_HDR (SettingValue, CCSSettingValue)
+CCSREF_HDR (PluginConflict, CCSPluginConflict)
+CCSREF_HDR (BackendInfo, CCSBackendInfo)
+CCSREF_HDR (IntDesc, CCSIntDesc)
+CCSREF_HDR (StrRestriction, CCSStrRestriction)
+CCSREF_HDR (StrExtension, CCSStrExtension)
 
 struct _CCSContext
 {
@@ -146,6 +177,7 @@ struct _CCSBackendInfo
     char *longDesc;          /* backend's long description */
     Bool integrationSupport; /* does the backend support DE integration? */
     Bool profileSupport;     /* does the backend support profiles? */
+    unsigned int refCount;   /* reference count */
 };
 
 struct _CCSPlugin
@@ -177,6 +209,7 @@ struct _CCSPlugin
 
     void *ccsPrivate;              /* private pointer for compizconfig
 				      internal usage */
+    unsigned int refCount;	   /* reference count */
 };
 
 typedef enum _CCSSettingType
@@ -201,12 +234,14 @@ struct _CCSSubGroup
 {
     char           *name;    /* sub group name in current locale */
     CCSSettingList settings; /* list of settings in this sub group */
+    unsigned int   refCount;	   /* reference count */
 };
 
 struct _CCSGroup
 {
     char            *name;     /* group name in current locale */
     CCSSubGroupList subGroups; /* list of sub groups in this group */
+    unsigned int    refCount;	   /* reference count */
 };
 
 typedef enum _CCSPluginConflictType
@@ -228,20 +263,29 @@ struct _CCSPluginConflict
 				      caused the conflict */
     CCSPluginConflictType type;    /* type of the conflict */
     CCSPluginList         plugins; /* list of conflicting plugins */
+    unsigned int 	  refCount;	   /* reference count */	
 };
 
 union _CCSSettingInfo;
+
+struct _CCSString
+{
+    char 	 *value;
+    unsigned int refCount;
+};
 
 struct _CCSIntDesc
 {
     int  value; /* value the description is assigned to */
     char *name; /* description */
+    unsigned int refCount;	   /* reference count */
 };
 
 struct _CCSStrRestriction
 {
     char *value; /* value the restriction is assigned to */
     char *name;  /* description */
+    unsigned int refCount;	   /* reference count */
 };
 
 struct _CCSStrExtension
@@ -249,6 +293,7 @@ struct _CCSStrExtension
     char *basePlugin;           /* plugin this extension extends */
     CCSStringList baseSettings; /* list of settings this extension extends */
     CCSStrRestrictionList restriction; /* list of added restriction items */
+    unsigned int refCount;	   /* reference count */
 };
 
 typedef struct _CCSSettingIntInfo
@@ -271,7 +316,7 @@ typedef struct _CCSSettingStringInfo
     int                sortStartsAt; /* the restriction index to start sorting
 					at (defaults to -1 for no sorting) */
     Bool               extensible;   /* whether extension is allowed for
-					this setting */
+					this setting */	
 } CCSSettingStringInfo;
 
 typedef struct _CCSSettingListInfo
@@ -351,6 +396,7 @@ struct _CCSSettingValue
     CCSSettingValueUnion value;
     CCSSetting *	 parent;
     Bool		 isListChild;
+    unsigned int	 refCount;	   /* reference count */
 };
 
 struct _CCSSetting
@@ -376,6 +422,7 @@ struct _CCSSetting
 
     CCSPlugin *parent;            /* plugin this setting belongs to */
     void      *privatePtr;        /* private pointer for usage by the caller */
+    unsigned int refCount;	   /* reference count */
 };
 
 struct _CCSPluginCategory
@@ -385,6 +432,7 @@ struct _CCSPluginCategory
     const char *longDesc;  /* plugin category long description */
 
     CCSStringList plugins; /* list of plugins in this category */
+    unsigned int refCount;	   /* reference count */
 };
 
 /* set basic metadata to TRUE and no additional
@@ -434,36 +482,47 @@ void ccsFreeBackendInfo (CCSBackendInfo *value);
 void ccsFreeIntDesc (CCSIntDesc *value);
 void ccsFreeStrRestriction (CCSStrRestriction *restriction);
 void ccsFreeStrExtension (CCSStrExtension *extension);
-
-#define ccsFreeString(val) free(val)
+void ccsFreeString (CCSString *str);
 
 /* Setting setters. Set <setting> to value <data>. Return TRUE if new value
    matches data. If the new value doesn't match the old value, the setting
    is added to the context's changedSettings list. */
 Bool ccsSetInt (CCSSetting *setting,
-		int        data);
+		int        data,
+		Bool	   processChanged);
 Bool ccsSetFloat (CCSSetting *setting,
-		  float      data);
+		  float      data,
+		  Bool	     processChanged);
 Bool ccsSetBool (CCSSetting *setting,
-		 Bool       data);
+		 Bool       data,
+		 Bool	    processChanged);
 Bool ccsSetString (CCSSetting *setting,
-		   const char *data);
+		   const char *data,
+		   Bool	      processChanged);
 Bool ccsSetColor (CCSSetting           *setting,
-		  CCSSettingColorValue data);
+		  CCSSettingColorValue data,
+		  Bool		       processChanged);
 Bool ccsSetMatch (CCSSetting *setting,
-		  const char *data);
+		  const char *data,
+		  Bool	     processChanged);
 Bool ccsSetKey (CCSSetting         *setting,
-		CCSSettingKeyValue data);
+		CCSSettingKeyValue data,
+		Bool		   processChanged);
 Bool ccsSetButton (CCSSetting            *setting,
-		   CCSSettingButtonValue data);
+		   CCSSettingButtonValue data,
+		   Bool			 processChanged);
 Bool ccsSetEdge (CCSSetting   *setting,
-		 unsigned int data);
+		 unsigned int data,
+		 Bool	      processChanged);
 Bool ccsSetBell (CCSSetting *setting,
-		 Bool       data);
+		 Bool       data,
+		 Bool	    processChanged);
 Bool ccsSetList (CCSSetting          *setting,
-		 CCSSettingValueList data);
+		 CCSSettingValueList data,
+		 Bool	 processChanged);
 Bool ccsSetValue (CCSSetting      *setting,
-		  CCSSettingValue *data);
+		  CCSSettingValue *data,
+		  Bool		  processChanged);
 
 /* Compares two setting values. Returns TRUE if values match,
    FALSE otherwise. */
@@ -652,7 +711,7 @@ void ccsWriteChangedSettings (CCSContext *context);
 
 /* Reset all settings to defaults. Settings that were non-default
    previously are added to the changedSettings list of the context. */
-void ccsResetToDefault (CCSSetting * setting);
+void ccsResetToDefault (CCSSetting * setting, Bool processChanged);
 
 /* Exports a profile to a file. If skipDefaults is TRUE, only exports
    non-default settings. Returns TRUE on successful export, FALSE otherwise. */
@@ -680,7 +739,9 @@ void ccsRemoveFileWatch (unsigned int watchId);
 void ccsDisableFileWatch (unsigned int watchId);
 void ccsEnableFileWatch (unsigned int watchId);
 
-/* INI file stuff */
+/* INI file stuff
+ * FIXME: This should not be part of the
+ * public API */
 
 typedef struct _dictionary_
 {
@@ -704,42 +765,70 @@ void ccsIniSave (IniDictionary *dictionary,
 
 Bool ccsCreateDirFor (const char *fileName);
 
+Bool ccsIniParseString (char        *str,
+			char	    **value);
 Bool ccsIniGetString (IniDictionary *dictionary,
 		      const char    *section,
 		      const char    *entry,
 		      char          **value);
+
+Bool ccsIniParseInt (const char  *str,
+		     int	 *value);
 Bool ccsIniGetInt (IniDictionary *dictionary,
 		   const char    *section,
 		   const char    *entry,
 		   int           *value);
+
+Bool ccsIniParseFloat (const char  *str,
+		       float	   *value);
 Bool ccsIniGetFloat (IniDictionary *dictionary,
 		     const char    *section,
 		     const char    *entry,
 		     float         *value);
+
+Bool ccsIniParseBool (const char  *str,
+		      Bool	  *value);
 Bool ccsIniGetBool (IniDictionary *dictionary,
 		    const char    *section,
 		    const char    *entry,
 		    Bool          *value);
+
+Bool ccsIniParseColor (const char 	    *str,
+		       CCSSettingColorValue *value);
 Bool ccsIniGetColor (IniDictionary        *dictionary,
 		     const char           *section,
 		     const char           *entry,
 		     CCSSettingColorValue *value);
+
+Bool ccsIniParseKey (const char		*str,
+		     CCSSettingKeyValue *value);
 Bool ccsIniGetKey (IniDictionary        *dictionary,
 		   const char           *section,
 		   const char           *entry,
 		   CCSSettingKeyValue   *value);
+
+Bool ccsIniParseButton (const char	      *str,
+			CCSSettingButtonValue *value);
 Bool ccsIniGetButton (IniDictionary         *dictionary,
 		      const char            *section,
 		      const char            *entry,
 		      CCSSettingButtonValue *value);
+
+Bool ccsIniParseEdge (const char  *str,
+		      unsigned int *value);
 Bool ccsIniGetEdge (IniDictionary *dictionary,
 		    const char    *section,
 		    const char    *entry,
 		    unsigned int  *value);
+	
 Bool ccsIniGetBell (IniDictionary *dictionary,
 		    const char    *section,
 		    const char    *entry,
 		    Bool          *value);
+
+Bool ccsIniParseList (const char	  *str,
+		      CCSSettingValueList *value,
+		      CCSSetting	  *parent);
 Bool ccsIniGetList (IniDictionary       *dictionary,
 		    const char          *section,
 		    const char          *entry,
@@ -820,5 +909,8 @@ Bool ccsSettingIsIntegrated (CCSSetting *setting);
 Bool ccsSettingIsReadOnly (CCSSetting *setting);
 
 CCSStrExtensionList ccsGetPluginStrExtensions (CCSPlugin *plugin);
+
+/* Checks if settings need to be constrained */
+Bool ccsContextNeedsConstraining (CCSContext *context);
 
 #endif
