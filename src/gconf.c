@@ -443,7 +443,6 @@ valueChanged (GConfClient *client,
     char         *pluginName;
     char         *token;
     int          index;
-    Bool         isScreen;
     unsigned int screenNum;
     CCSPlugin    *plugin;
     CCSSetting   *setting;
@@ -474,7 +473,6 @@ valueChanged (GConfClient *client,
     if (!token)
 	return;
 
-    isScreen = TRUE;
     sscanf (token, "screen%d", &screenNum);
 
     token = strsep (&keyName, "/"); /* 'options' */
@@ -491,7 +489,7 @@ valueChanged (GConfClient *client,
 
     readInit (context);
     if (!readOption (setting))
-	ccsResetToDefault (setting);
+	ccsResetToDefault (setting, TRUE);
 
     if (ccsGetIntegrationEnabled (context) &&
 	isIntegratedOption (setting, &index))
@@ -572,10 +570,6 @@ gnomeValueChanged (GConfClient *client,
 	    {
 		for (i = 0; i < 1; i++)
 		{
-		    unsigned int screen;
-
-		    screen = 0;
-
 		    setting = ccsFindSetting (plugin, (char*) opt->settingName);
 
 		    if (setting)
@@ -822,7 +816,7 @@ readListValue (CCSSetting *setting,
     valueList = gconf_value_get_list (gconfValue);
     if (!valueList)
     {
-	ccsSetList (setting, NULL);
+	ccsSetList (setting, NULL, TRUE);
 	return TRUE;
     }
 
@@ -906,7 +900,7 @@ readListValue (CCSSetting *setting,
 
     if (list)
     {
-	ccsSetList (setting, list);
+	ccsSetList (setting, list, TRUE);
 	ccsSettingValueListFree (list, TRUE);
 	return TRUE;
     }
@@ -987,7 +981,7 @@ readIntegratedOption (CCSContext *context,
 	    guint value;
 
 	    value = gconf_value_get_int (gconfValue);
-	    ccsSetInt (setting, value);
+	    ccsSetInt (setting, value, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -997,7 +991,7 @@ readIntegratedOption (CCSContext *context,
 	    gboolean value;
 
 	    value = gconf_value_get_bool (gconfValue);
-	    ccsSetBool (setting, value ? TRUE : FALSE);
+	    ccsSetBool (setting, value ? TRUE : FALSE, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -1009,7 +1003,7 @@ readIntegratedOption (CCSContext *context,
 	    value = gconf_value_get_string (gconfValue);
 	    if (value)
 	    {
-		ccsSetString (setting, value);
+		ccsSetString (setting, value, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -1028,7 +1022,7 @@ readIntegratedOption (CCSContext *context,
 		ccsGetKey (setting, &key);
 		if (ccsStringToKeyBinding (value, &key))
 		{
-		    ccsSetKey (setting, key);
+		    ccsSetKey (setting, key, TRUE);
 		    ret = TRUE;
 		}
 	    }
@@ -1046,7 +1040,7 @@ readIntegratedOption (CCSContext *context,
 		    gboolean showAll;
 
 		    showAll = gconf_value_get_bool (gconfValue);
-		    ccsSetBool (setting, !showAll);
+		    ccsSetBool (setting, !showAll, TRUE);
 		    ret = TRUE;
 		}
 	    }
@@ -1062,7 +1056,7 @@ readIntegratedOption (CCSContext *context,
 			Bool fullscreen;
 
 			fullscreen = strcmp (value, "fullscreen") == 0;
-			ccsSetBool (setting, fullscreen);
+			ccsSetBool (setting, fullscreen, TRUE);
 			ret = TRUE;
 		    }
 		}
@@ -1078,7 +1072,7 @@ readIntegratedOption (CCSContext *context,
 		    if (focusMode)
 		    {
 			Bool clickToFocus = (strcmp (focusMode, "click") == 0);
-			ccsSetBool (setting, clickToFocus);
+			ccsSetBool (setting, clickToFocus, TRUE);
 			ret = TRUE;
 		    }
 		}
@@ -1109,7 +1103,7 @@ readIntegratedOption (CCSContext *context,
 		else
 		    button.button = 1;
 
-		ccsSetButton (setting, button);
+		ccsSetButton (setting, button, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -1189,7 +1183,7 @@ readOption (CCSSetting * setting)
 	    value = gconf_value_get_string (gconfValue);
 	    if (value)
 	    {
-		ccsSetString (setting, value);
+		ccsSetString (setting, value, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -1200,7 +1194,7 @@ readOption (CCSSetting * setting)
 	    value = gconf_value_get_string (gconfValue);
 	    if (value)
 	    {
-		ccsSetMatch (setting, value);
+		ccsSetMatch (setting, value, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -1210,7 +1204,7 @@ readOption (CCSSetting * setting)
 	    int value;
 	    value = gconf_value_get_int (gconfValue);
 
-	    ccsSetInt (setting, value);
+	    ccsSetInt (setting, value, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -1219,7 +1213,7 @@ readOption (CCSSetting * setting)
 	    gboolean value;
 	    value = gconf_value_get_bool (gconfValue);
 
-	    ccsSetBool (setting, value ? TRUE : FALSE);
+	    ccsSetBool (setting, value ? TRUE : FALSE, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -1228,7 +1222,7 @@ readOption (CCSSetting * setting)
 	    double value;
 	    value = gconf_value_get_float (gconfValue);
 
-	    ccsSetFloat (setting, (float)value);
+	    ccsSetFloat (setting, (float)value, TRUE);
     	    ret = TRUE;
 	}
 	break;
@@ -1240,7 +1234,7 @@ readOption (CCSSetting * setting)
 
 	    if (value && ccsStringToColor (value, &color))
 	    {
-		ccsSetColor (setting, color);
+		ccsSetColor (setting, color, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -1253,7 +1247,7 @@ readOption (CCSSetting * setting)
 
 	    if (value && ccsStringToKeyBinding (value, &key))
 	    {
-		ccsSetKey (setting, key);
+		ccsSetKey (setting, key, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -1266,7 +1260,7 @@ readOption (CCSSetting * setting)
 
 	    if (value && ccsStringToButtonBinding (value, &button))
 	    {
-		ccsSetButton (setting, button);
+		ccsSetButton (setting, button, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -1280,7 +1274,7 @@ readOption (CCSSetting * setting)
 	    {
 		unsigned int edges;
 		edges = ccsStringToEdges (value);
-		ccsSetEdge (setting, edges);
+		ccsSetEdge (setting, edges, TRUE);
 		ret = TRUE;
 	    }
 	}
@@ -1290,7 +1284,7 @@ readOption (CCSSetting * setting)
 	    gboolean value;
 	    value = gconf_value_get_bool (gconfValue);
 
-	    ccsSetBell (setting, value ? TRUE : FALSE);
+	    ccsSetBell (setting, value ? TRUE : FALSE, TRUE);
 	    ret = TRUE;
 	}
 	break;
@@ -1478,7 +1472,7 @@ setButtonBindingForSetting (CCSContext   *context,
 	value.button = button;
 	value.buttonModMask = buttonModMask;
 
-	ccsSetButton (s, value);
+	ccsSetButton (s, value, TRUE);
     }
 }
 
@@ -1978,7 +1972,7 @@ readSetting (CCSContext *context,
 	status = readOption (setting);
 
     if (!status)
-	ccsResetToDefault (setting);
+	ccsResetToDefault (setting, TRUE);
 }
 
 static Bool
@@ -2040,7 +2034,11 @@ getExistingProfiles (CCSContext *context)
     {
 	name = strrchr (tmp->data, '/');
 	if (name && (strcmp (name + 1, DEFAULTPROF) != 0))
-	    ret = ccsStringListAppend (ret, strdup (name + 1));
+	{
+	    CCSString *str = calloc (1, sizeof (CCSString));
+	    str->value = strdup (name + 1);
+	    ret = ccsStringListAppend (ret, str);
+	}
 
 	g_free (tmp->data);
     }
@@ -2049,7 +2047,11 @@ getExistingProfiles (CCSContext *context)
 
     name = getCurrentProfileName ();
     if (strcmp (name, DEFAULTPROF) != 0)
-	ret = ccsStringListAppend (ret, name);
+    {
+	CCSString *str = calloc (1, sizeof (CCSString));
+	str->value = name;
+	ret = ccsStringListAppend (ret, str);
+    }
     else
 	free (name);
 
