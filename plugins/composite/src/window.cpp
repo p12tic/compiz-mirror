@@ -201,16 +201,18 @@ CompositeWindow::unredirect ()
 
     release ();
 
-    XCompositeUnredirectWindow (screen->dpy (),
-				ROOTPARENT (priv->window),
-				CompositeRedirectManual);
-
     priv->redirected   = false;
     priv->overlayWindow = true;
     priv->cScreen->overlayWindowCount ()++;
 
     if (priv->cScreen->overlayWindowCount () > 0)
 	priv->cScreen->updateOutputWindow ();
+
+    XCompositeUnredirectWindow (screen->dpy (),
+                               ROOTPARENT (priv->window),
+                               CompositeRedirectManual);
+
+
 }
 
 bool
