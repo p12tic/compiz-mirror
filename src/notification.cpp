@@ -26,6 +26,13 @@
 
 COMPIZ_PLUGIN_20090315 (notification, NotificationPluginVTable);
 
+/* libnotify 0.7 introduced proper NOTIFY_CHECK_VERSION macro */
+#ifdef NOTIFY_CHECK_VERSION
+#if NOTIFY_CHECK_VERSION(0,6,1)
+#define HAVE_LIBNOTIFY_0_6_1
+#endif
+#endif
+
 void
 NotificationScreen::logMessage (const char   *component,
 			  	CompLogLevel level,
