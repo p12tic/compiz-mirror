@@ -842,7 +842,8 @@ cdef class Plugin:
     def ApplyStringExtensions (self, sortBaseSetting, extendOthersToo):
         cdef CCSStrExtensionList * extList
         cdef CCSStrExtension * ext
-        cdef char * baseSettingName
+        cdef CCSString * baseSettingName
+        cdef char      * baseSettingNameValue
         cdef CCSStringList * baseSettingList
         cdef CCSSettingType t
         cdef CCSSettingInfo * i
@@ -865,9 +866,10 @@ cdef class Plugin:
 
             baseSettingList = ext.baseSettings
             while baseSettingList:
-                baseSettingName = <char *> baseSettingList.data
+                baseSettingName = <CCSString *> baseSettingList.data
+                baseSettingNameValue = baseSettingName.value
 
-                settings = [basePlugin.Screen[baseSettingName]]
+                settings = [basePlugin.Screen[baseSettingNameValue]]
 
                 for settingItem in settings:
                     setting = settingItem
