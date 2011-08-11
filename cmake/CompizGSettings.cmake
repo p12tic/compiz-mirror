@@ -1,6 +1,12 @@
 option (
+    USE_GSETTINGS
+    "Generate GSettings schemas"
+    ON
+)
+
+option (
     COMPIZ_DISABLE_GS_SCHEMAS_INSTALL
-    "Disables gsettings schema installation with gconftool"
+    "Disables gsettings schema installation"
     OFF
 )
 
@@ -18,7 +24,10 @@ function (compiz_install_gsettings_schema _src _dst)
     execute_process (COMMAND ${PKG_CONFIG_TOOL} glib-2.0 --variable prefix  OUTPUT_VARIABLE GSETTINGS_GLIB_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     SET (GSETTINGS_GLOBAL_INSTALL_DIR "${GSETTINGS_GLIB_PREFIX}/share/glib-2.0/schemas/")
 
-    if (PKG_CONFIG_TOOL AND GLIB_COMPILE_SCHEMAS AND NOT COMPIZ_DISABLE_SCHEMAS_INSTALL)
+    if (PKG_CONFIG_TOOL AND
+	GLIB_COMPILE_SCHEMAS AND NOT
+	COMPIZ_DISABLE_SCHEMAS_INSTALL AND
+	USE_GSETTINGS)
 	install (CODE "
 		message (\"$ENV{USER} is the username in use right now\")
 		if (\"$ENV{USER}\"\ STREQUAL \"root\")
@@ -52,7 +61,7 @@ function (compiz_gsettings_schema _src _dst _inst)
     find_program (XSLTPROC_EXECUTABLE xsltproc)
     mark_as_advanced (FORCE XSLTPROC_EXECUTABLE)
 
-    if (XSLTPROC_EXECUTABLE)
+    if (XSLTPROC_EXECUTABLE AND USE_GSETTINGS)
 	message ("generating gsettings schema for core")
 	add_custom_command (
 	    OUTPUT ${_dst}

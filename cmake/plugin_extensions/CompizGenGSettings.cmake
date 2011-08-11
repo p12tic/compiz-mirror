@@ -4,6 +4,12 @@ option (
     OFF
 )
 
+option (
+    USE_GSETTINGS
+    "Generate GSettings schemas"
+    ON
+)
+
 set (
     COMPIZ_INSTALL_GSETTINGS_SCHEMA_DIR ${COMPIZ_INSTALL_GSETTINGS_SCHEMA_DIR} CACHE PATH
     "Installation path of the gsettings schema file"
@@ -47,7 +53,10 @@ function (compiz_install_gsettings_schema _src _dst)
     execute_process (COMMAND ${PKG_CONFIG_TOOL} glib-2.0 --variable prefix  OUTPUT_VARIABLE GSETTINGS_GLIB_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
     SET (GSETTINGS_GLOBAL_INSTALL_DIR "${GSETTINGS_GLIB_PREFIX}/share/glib-2.0/schemas/")
 
-    if (PKG_CONFIG_TOOL AND GLIB_COMPILE_SCHEMAS AND NOT COMPIZ_DISABLE_SCHEMAS_INSTALL)
+    if (USE_GSETTINGS AND
+	PKG_CONFIG_TOOL AND
+	GLIB_COMPILE_SCHEMAS AND NOT
+	COMPIZ_DISABLE_SCHEMAS_INSTALL)
 	install (CODE "
 		if (\"$ENV{USER}\"\ STREQUAL \"root\")
 		    message (\"-- Installing GSettings schemas ${GSETTINGS_GLOBAL_INSTALL_DIR}\"\)
@@ -79,7 +88,7 @@ endfunction ()
 find_program (XSLTPROC_EXECUTABLE xsltproc)
 mark_as_advanced (FORCE XSLTPROC_EXECUTABLE)
 
-if (XSLTPROC_EXECUTABLE)
+if (XSLTPROC_EXECUTABLE AND USE_GSETTINGS)
     compiz_gsettings_prepare_install_dirs ()
 
     add_custom_command (
