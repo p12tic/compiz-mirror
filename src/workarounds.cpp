@@ -711,7 +711,7 @@ WorkaroundsWindow::getFixedWindowType ()
 
     newWmType = window->wmType ();
 
-    if (XGetClassHint (screen->dpy (), window->id (), &classHint) != Success)
+    if (!XGetClassHint (screen->dpy (), window->id (), &classHint))
 	return newWmType;
 
     if (classHint.res_name)
