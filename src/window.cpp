@@ -1475,10 +1475,10 @@ CompWindow::resize (CompWindow::Geometry gm)
 	if (priv->shaded)
 	    ph = 0;
 
-	dx      = gm.x () - priv->attrib.x;
-	dy      = gm.y () - priv->attrib.y;
-	dwidth  = gm.width () - priv->attrib.width;
-	dheight = gm.height () - priv->attrib.height;
+	dx      = gm.x () - priv->geometry.x ();
+	dy      = gm.y () - priv->geometry.y ();
+	dwidth  = gm.width () - priv->geometry.width ();
+	dheight = gm.height () - priv->geometry.height ();
 
 	priv->attrib.x	          = gm.x ();
 	priv->attrib.y	          = gm.y ();
@@ -1486,9 +1486,9 @@ CompWindow::resize (CompWindow::Geometry gm)
 	priv->attrib.height       = gm.height ();
 	priv->attrib.border_width = gm.border ();
 
-	priv->geometry.set (priv->attrib.x, priv->attrib.y,
-			    priv->attrib.width, priv->attrib.height,
-			    priv->attrib.border_width);
+	priv->geometry.set (gm.x (), gm.y (),
+			    gm.width (), gm.height (),
+			    gm.border ());
 
 	priv->width = pw;
 	priv->height = ph;
@@ -1505,8 +1505,8 @@ CompWindow::resize (CompWindow::Geometry gm)
     {
 	int dx, dy;
 
-	dx = gm.x () - priv->attrib.x;
-	dy = gm.y () - priv->attrib.y;
+	dx = gm.x () - priv->geometry.x ();
+	dy = gm.y () - priv->geometry.y ();
 
 	move (dx, dy);
     }
