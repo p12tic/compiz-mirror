@@ -894,7 +894,8 @@ ResizeScreen::handleMotionEvent (int xRoot, int yRoot)
 	cwi = wi;
 	che = he;
 
-	if (w->constrainNewWindowSize (wi, he, &cwi, &che))
+	if (w->constrainNewWindowSize (wi, he, &cwi, &che) &&
+	    mode != ResizeOptions::ModeNormal)
 	{
 	    Box box;
 
