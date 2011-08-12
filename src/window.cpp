@@ -901,8 +901,8 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 
     for (unsigned int i = 0; i < n; i++)
     {
-	x1 = rects[i].x + priv->attrib.border_width;
-	y1 = rects[i].y + priv->attrib.border_width;
+	x1 = rects[i].x + priv->geometry.border ();
+	y1 = rects[i].y + priv->geometry.border ();
 	x2 = x1 + rects[i].width;
 	y2 = y1 + rects[i].height;
 
@@ -917,10 +917,10 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 
 	if (y1 < y2 && x1 < x2)
 	{
-	    x1 += priv->attrib.x;
-	    y1 += priv->attrib.y;
-	    x2 += priv->attrib.x;
-	    y2 += priv->attrib.y;
+	    x1 += priv->geometry.x ();
+	    y1 += priv->geometry.y ();
+	    x2 += priv->geometry.x ();
+	    y2 += priv->geometry.y ();
 
 	    ret += CompRect (x1, y1, x2 - x1, y2 - y1);
 	}
@@ -1320,8 +1320,11 @@ CompWindow::map ()
 	{
 	    /* been shaded */
 	    if (!priv->height)
-		resize (priv->attrib.x, priv->attrib.y, priv->attrib.width,
-			++priv->attrib.height - 1, priv->attrib.border_width);
+	    {
+		priv->geometry.setHeight (priv->geometry.height () + 1);
+		resize (priv->geometry.x (), priv->geometry.y (), priv->geometry.width (),
+			priv->geometry.height () - 1, priv->geometry.border ());
+	    }
 	}
     }
 
@@ -1479,12 +1482,6 @@ CompWindow::resize (CompWindow::Geometry gm)
 	dy      = gm.y () - priv->geometry.y ();
 	dwidth  = gm.width () - priv->geometry.width ();
 	dheight = gm.height () - priv->geometry.height ();
-
-	priv->attrib.x	          = gm.x ();
-	priv->attrib.y	          = gm.y ();
-	priv->attrib.width	  = gm.width ();
-	priv->attrib.height       = gm.height ();
-	priv->attrib.border_width = gm.border ();
 
 	priv->geometry.set (gm.x (), gm.y (),
 			    gm.width (), gm.height (),
@@ -1715,11 +1712,12 @@ CompWindow::move (int  dx,
 {
     if (dx || dy)
     {
+	/*
 	priv->attrib.x += dx;
 	priv->attrib.y += dy;
-
-	priv->geometry.setX (priv->attrib.x);
-	priv->geometry.setY (priv->attrib.y);
+	*/
+	priv->geometry.setX (priv->geometry.x () + dx);
+	priv->geometry.setY (priv->geometry.y () + dy);
 
 	priv->region.translate (dx, dy);
 	priv->inputRegion.translate (dx, dy);
@@ -1735,12 +1733,12 @@ CompWindow::move (int  dx,
 void
 CompWindow::syncPosition ()
 {
-    priv->serverGeometry.setX (priv->attrib.x);
-    priv->serverGeometry.setY (priv->attrib.y);
+    priv->serverGeometry.setX (priv->geometry.x ());
+    priv->serverGeometry.setY (priv->geometry.y ());
 
     XMoveWindow (screen->dpy (), ROOTPARENT (this),
-		 priv->attrib.x - priv->input.left,
-		 priv->attrib.y - priv->input.top);
+		 priv->geometry.x () - priv->input.left,
+		 priv->geometry.y () - priv->input.top);
 
     if (priv->frame)
     {
@@ -1770,10 +1768,10 @@ CompWindow::focus ()
     if (!priv->shaded && (priv->state & CompWindowStateHiddenMask))
 	return false;
 
-    if (priv->attrib.x + priv->width  <= 0	||
-	priv->attrib.y + priv->height <= 0	||
-	priv->attrib.x >= (int) screen->width ()||
-	priv->attrib.y >= (int) screen->height ())
+    if (priv->geometry.x () + priv->width  <= 0	||
+	priv->geometry.y () + priv->height <= 0	||
+	priv->geometry.x () >= (int) screen->width ()||
+	priv->geometry.y () >= (int) screen->height ())
 	return false;
 
     return true;
@@ -3851,9 +3849,12 @@ PrivateWindow::show ()
 	    XMapWindow (screen->dpy (), frame);
 
 	if (height)
-	    window->resize (attrib.x, attrib.y,
-			    attrib.width, ++attrib.height - 1,
-			    attrib.border_width);
+	{
+	    priv->geometry.setHeight (priv->geometry.height () + 1);
+	    window->resize (geometry.x (), geometry.y (),
+			    geometry.width (), geometry.height () - 1,
+			    geometry.border ());
+	}
 
 	return;
     }
@@ -4509,7 +4510,7 @@ CompWindow::getMovementForOffset (CompPoint offset)
     }
     else
     {
-	m = priv->attrib.x + offX;
+	m = priv->geometry.x () + offX;
 	if (m - priv->input.left < (int) s->width () - vWidth)
 	    rv.setX (offX + vWidth);
 	else if (m + priv->width + priv->input.right > vWidth)
@@ -5047,8 +5048,8 @@ CompWindow::moveToViewportPosition (int  x,
 	y -= screen->vp ().y () * screen->height ();
     }
 
-    tx = x - priv->attrib.x;
-    ty = y - priv->attrib.y;
+    tx = x - priv->geometry.x ();
+    ty = y - priv->geometry.y ();
 
     if (tx || ty)
     {
@@ -5068,7 +5069,7 @@ CompWindow::moveToViewportPosition (int  x,
 
 	if (screen->vpSize ().width ()!= 1)
 	{
-	    m = priv->attrib.x + tx;
+	    m = priv->geometry.x () + tx;
 
 	    if (m - priv->output.left < (int) screen->width () - vWidth)
 		wx = tx + vWidth;
@@ -5078,7 +5079,7 @@ CompWindow::moveToViewportPosition (int  x,
 
 	if (screen->vpSize ().height () != 1)
 	{
-	    m = priv->attrib.y + ty;
+	    m = priv->geometry.y () + ty;
 
 	    if (m - priv->output.top < (int) screen->height () - vHeight)
 		wy = ty + vHeight;
@@ -5459,9 +5460,12 @@ CompWindow::CompWindow (Window aboveId,
     priv->updateIconGeometry ();
 
     if (priv->shaded)
-	resize (priv->attrib.x, priv->attrib.y,
-		priv->attrib.width, ++priv->attrib.height - 1,
-		priv->attrib.border_width);
+    {
+	priv->geometry.setHeight (priv->geometry.height () + 1);
+	resize (priv->geometry.x (), priv->geometry.y (),
+		priv->geometry.width (), priv->geometry.height () - 1,
+		priv->geometry.border ());
+    }
 
     if (priv->attrib.map_state == IsViewable)
     {
@@ -5856,14 +5860,6 @@ PrivateWindow::reparent ()
 	XSync (dpy, false);
 	return false;
     }
-
-    /* Since we have read directly to our XWindowAttributes
-     * we need to update the size of a window since it might
-     * have changed during the reparent
-     */
-
-    window->resize (attrib.x, attrib.y, attrib.width, attrib.height,
-		    attrib.border_width);
 
     if (attrib.override_redirect)
 	return false;
