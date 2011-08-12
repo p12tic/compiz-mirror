@@ -4701,4 +4701,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 
 PrivateScreen::~PrivateScreen ()
 {
+  // reset the even source before hitting the other glib cleanup.
+  source.reset();
 }
