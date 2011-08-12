@@ -4663,6 +4663,8 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 	boost::bind (&PrivateScreen::handleStartupSequenceTimeout, this));
     startupSequenceTimer.setTimes (1000, 1500);
 
+    memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
+
     optionSetCloseWindowKeyInitiate (CompScreen::closeWin);
     optionSetCloseWindowButtonInitiate (CompScreen::closeWin);
     optionSetRaiseWindowKeyInitiate (CompScreen::raiseWin);
