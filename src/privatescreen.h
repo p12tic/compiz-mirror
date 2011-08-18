@@ -302,7 +302,9 @@ class PrivateScreen :
 	PrivateScreen *priv;
 
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
-	Glib::RefPtr <CompEventSource> source;
+	// See https://bugzilla.gnome.org/show_bug.cgi?id=561885
+	// Glib::RefPtr <CompEventSource> source;
+	CompEventSource* source;
 	Glib::RefPtr <CompTimeoutSource> timeout;
 	Glib::RefPtr <Glib::MainContext> ctx;
 
