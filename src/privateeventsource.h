@@ -32,7 +32,8 @@ class CompEventSource:
     public:
 
 	static
-	Glib::RefPtr <CompEventSource> create ();
+        // Glib::RefPtr <CompEventSource> create ();
+	CompEventSource* create ();
 
 	sigc::connection connect (const sigc::slot <bool> &slot);
 
