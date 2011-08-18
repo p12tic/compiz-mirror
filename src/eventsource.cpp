@@ -26,10 +26,12 @@
 
 #include "privatescreen.h"
 
-Glib::RefPtr <CompEventSource>
+//Glib::RefPtr <CompEventSource>
+CompEventSource*
 CompEventSource::create ()
 {
-    return Glib::RefPtr <CompEventSource> (new CompEventSource ());
+  // return Glib::RefPtr <CompEventSource> (new CompEventSource ());
+    return new CompEventSource ();
 }
 
 sigc::connection
