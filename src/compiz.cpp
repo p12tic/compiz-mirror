@@ -36,6 +36,8 @@ extern "C"
 #include <sys/stat.h>
 #include <errno.h>
 
+#include <string>
+
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
 
@@ -46,6 +48,40 @@ extern "C"
 }
 
 #include <core/core.h>
+
+namespace {
+
+class SetNumericLocale
+{
+public:
+    SetNumericLocale()
+	: locale_set(false) {
+	char* current_locale = ::setlocale (LC_NUMERIC, NULL);
+	// If current_locale is NULL, the method failed to get the current locale.
+	// We can't store a null locale inside the std::string, so we have a bool
+	// to let us know that we have a valid old locale.
+	if (current_locale) {
+	    locale_set = true;
+	    old_locale = current_locale;
+	}
+	// The reason we store the old_locale in a std::string is to make a real
+	// copy of it.  The char* that is returned from setlocale is being freed
+	// when we call the next setlocale (to "C").
+	::setlocale (LC_NUMERIC, "C");
+    }
+
+    ~SetNumericLocale() {
+	if (locale_set) {
+	    ::setlocale (LC_NUMERIC, old_locale.c_str ());
+	}
+    }
+
+private:
+    bool locale_set;
+    std::string old_locale;
+};
+
+}
 
 extern int xmlLoadExtDtdDefaultValue;
 
@@ -251,12 +287,11 @@ initKeyValuePB (CCSSettingValue * v,
 
     if (value.has_string_value ())
     {
-	const char * val = value.string_value ().c_str ();
-
-	if (strcasecmp (val, "disabled"))
-	{
-	    ccsStringToKeyBinding (val, &v->value.asKey);
-	}
+      std::string const& value_string = value.string_value();
+      if (value_string != "disabled")
+      {
+	    ccsStringToKeyBinding(value_string.c_str(), &v->value.asKey);
+      }
     }
 }
 
@@ -1217,12 +1252,10 @@ initFloatValue (CCSSettingValue * v,
 		void * valuePBv)
 {
     char *value;
-    char *loc;
+    SetNumericLocale numeric_locale;
 
     v->value.asFloat = (i->forFloat.min + i->forFloat.max) / 2;
 
-    loc = setlocale (LC_NUMERIC, NULL);
-    setlocale (LC_NUMERIC, "C");
     value = getStringFromXPath (node->doc, node, "child::text()");
 
     if (value)
@@ -1240,8 +1273,6 @@ initFloatValue (CCSSettingValue * v,
 
 	free (value);
     }
-
-    setlocale (LC_NUMERIC, loc);
 }
 
 static void
@@ -1639,14 +1670,12 @@ static void
 initFloatInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 {
     char *value;
-    char *loc;
+    SetNumericLocale numeric_locale;
 
     i->forFloat.min = MINSHORT;
     i->forFloat.max = MAXSHORT;
     i->forFloat.precision = 0.1f;
 
-    loc = setlocale (LC_NUMERIC, NULL);
-    setlocale (LC_NUMERIC, "C");
     value = getStringFromXPath (node->doc, node, "min/child::text()");
     if (value)
     {
@@ -1682,8 +1711,6 @@ initFloatInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
 	    ((OptionMetadata *) optionPBv)->set_precision (val);
 #endif
     }
-
-    setlocale (LC_NUMERIC, loc);
 }
 
 static void
