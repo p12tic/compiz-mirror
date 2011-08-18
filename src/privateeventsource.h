@@ -44,7 +44,7 @@ class CompEventSource:
 	bool dispatch (sigc::slot_base *slot);
 	bool callback ();
 
-	explicit CompEventSource ();
+	CompEventSource ();
 	virtual ~CompEventSource ();
 
     private:
