@@ -1,3 +1,33 @@
+Merge: 8a17506 8a17506
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-12
+
+    Merge trunk
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-12
+
+    Fix crash
+
+Merge: 46e7890 0590eb0
+Andrea Azzarone <azzaronea@gmail.com>	2011-07-31
+
+    Merge lp:~andyrock/compiz-workarounds-plugin/fix-memory-leak
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-30
+
+    Fix typo
+
+Andrea Azzarone <azzaronea@gmail.com>	2011-07-30
+
+    Fixes one memory leak.
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Bump VERSION
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Update NEWS for 0.9.5.0
+
 Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-07
 
     Add VERSION file (0.9.5.0)
