@@ -1002,7 +1002,7 @@ readIntegratedOption (CCSContext *context,
 	    gboolean value;
 
 	    value = gconf_value_get_bool (gconfValue);
-	    ccsSetBell (setting, value ? TRUE : FALSE);
+	    ccsSetBell (setting, value ? TRUE : FALSE, TRUE);
 	    ret = TRUE;
 	}
 	break;
