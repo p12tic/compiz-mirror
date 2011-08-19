@@ -2036,9 +2036,9 @@ PrivateScreen::configure (XConfigureEvent *ce)
 	priv->attrib.height = ce->height;
     }
 
-	priv->reshape (ce->width, ce->height);
+    priv->reshape (ce->width, ce->height);
 
-	priv->detectOutputDevices ();
+    priv->detectOutputDevices ();
 }
 
 void
@@ -4663,6 +4663,8 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 	boost::bind (&PrivateScreen::handleStartupSequenceTimeout, this));
     startupSequenceTimer.setTimes (1000, 1500);
 
+    memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
+
     optionSetCloseWindowKeyInitiate (CompScreen::closeWin);
     optionSetCloseWindowButtonInitiate (CompScreen::closeWin);
     optionSetRaiseWindowKeyInitiate (CompScreen::raiseWin);
@@ -4701,4 +4703,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 
 PrivateScreen::~PrivateScreen ()
 {
+  // reset the even source before hitting the other glib cleanup.
+  source.reset();
 }

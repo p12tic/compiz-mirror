@@ -154,7 +154,14 @@ dlloaderLoadPlugin (CompPlugin *p,
 	return false;
     }
 
-    dlhand = dlopen (file.c_str (), RTLD_LAZY);
+    int open_flags = RTLD_LAZY;
+#ifdef DEBUG
+    // Do not unload the library during dlclose.
+    open_flags |= RTLD_NODELETE;
+    // Make the symbols available globally
+    open_flags |= RTLD_GLOBAL;
+#endif
+    dlhand = dlopen (file.c_str (), open_flags);
     if (dlhand)
     {
 	PluginGetInfoProc getInfo;

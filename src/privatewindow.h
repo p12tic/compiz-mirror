@@ -36,10 +36,14 @@
 
 #define WINDOW_INVISIBLE(w)				          \
     ((w)->attrib.map_state != IsViewable		       || \
-     (w)->attrib.x + (w)->width  + (w)->output.right  <= 0     || \
-     (w)->attrib.y + (w)->height + (w)->output.bottom <= 0     || \
-     (w)->attrib.x - (w)->output.left >= (int) screen->width () || \
-     (w)->attrib.y - (w)->output.top >= (int) screen->height () )
+     (w)->geometry.x () + (w)->geometry.width () +		  \
+	(w)->geometry.border () * 2  + (w)->output.right  <= 0 || \
+     (w)->geometry.y () + (w)->geometry.height () +	          \
+	(w)->geometry.border () * 2 + (w)->output.bottom <= 0  || \
+     (w)->geometry.x () -					  \
+	(w)->output.left >= (int) screen->width ()	       || \
+     (w)->geometry.y () -					  \
+	(w)->output.top >= (int) screen->height () )
 
 typedef CompWindowExtents CompFullscreenMonitorSet;
 
@@ -223,6 +227,13 @@ class PrivateWindow {
 	Window               wrapper;
 	unsigned int         mapNum;
 	unsigned int         activeNum;
+
+	/* Don't use this for determining
+	 * the window geometry because we
+	 * read into this out of sync with
+	 * ConfigureNotify events to determine
+	 * the class and override redirect state
+	 */
 	XWindowAttributes    attrib;
 	CompWindow::Geometry geometry;
 	CompWindow::Geometry serverGeometry;
