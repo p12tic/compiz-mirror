@@ -1,3 +1,68 @@
+Merge: 21d23fe 89783cd
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
+
+    Merge lp:~thumper/compiz-libcompizconfig/fix-invalid-reads-trunk
+
+Tim Penhey <tim.penhey@canonical.com>	2011-08-18
+
+    Fix some invalid reads in setlocale.
+    
+    Also made the string comparison a little more readable.
+
+Merge: 9d32d80 8524cb2
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-29
+
+    Merge
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-24
+
+    Added settings upgrade framework.
+    
+    Store settings upgrades in SYSCONFDIR/compizconfig/upgrades with the name
+    format
+    
+    org.freedesktop.domain.num.profile.upgrade
+    
+    Where org.freedesktop.domain is a freedesktop.org reverse domain name:
+    eg org.freedesktop.compiz, num is a base 10 number indicating the upgrade
+    series (listed in incremental order) and profile is the name of the profile
+    which should be active when changing settings.
+    
+    Upgrades will be processed in alphabetical order and then written to a file
+    in XDG_CONFIG_DIR/compiz-1/compizconfig/done_upgrades so that they will be
+    skipped in the future.
+    
+    The upgrade file format follows something along the lines of a diff file
+    inlined into the ini file, for example
+    
+    [plugin]
+    +s0_option_name = foo;
+    -s0_other_option_name = bar;
+    
+    The following is the syntax of the upgrade file:
+    + with a value will replace the existing value with the specified one
+    - with a value will clear the existing value to the default value if
+      the value specified in the value section of the key matches the actual
+      value that the user has set
+    both + and - for a particular option key name will replace the value
+    if the value that the user has set matches the value section specified
+    in the - value field
+    
+    For lists, + and - will not overwrite or clear to default, but rather append
+    and subtract from list themselves.
+    + with a value will append all non-duplicate entries to the existing list
+    - with a value will subtract all matched entries from the existing list
+    both + and - for a particular list will replace the list only if the entire
+    list matches what was specified in the - field
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Bump VERSION
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Update NEWS for 0.9.5.0
+
 Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-13
 
     There is no sane reason to have backends always go in the same path as the
