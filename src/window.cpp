@@ -4757,6 +4757,7 @@ void
 PrivateWindow::processMap ()
 {
     bool                   allowFocus;
+    bool                   initiallyMinimized;
     CompStackingUpdateMode stackingMode;
 
     priv->initialViewport = screen->vp ();
@@ -4799,6 +4800,9 @@ PrivateWindow::processMap ()
 	priv->placed = true;
     }
 
+    initiallyMinimized = (priv->hints &&
+			  priv->hints->initial_state == IconicState &&
+			  !window->minimized ());
     allowFocus = allowWindowFocus (NO_FOCUS_MASK, 0);
 
     if (!allowFocus && (priv->type & ~NO_FOCUS_MASK))
@@ -4808,8 +4812,26 @@ PrivateWindow::processMap ()
 
     window->updateAttributes (stackingMode);
 
-    if (window->minimized ())
+    if (window->minimized () && !initiallyMinimized)
 	window->unminimize ();
+
+    if (!initiallyMinimized)
+    {
+	if (allowFocus && !window->onCurrentDesktop ());
+	    screen->priv->setCurrentDesktop (priv->desktop);
+
+	if (!(priv->state & CompWindowStateHiddenMask))
+	    show ();
+
+	if (allowFocus)
+	    window->moveInputFocusTo ();
+    }
+    else
+    {
+	window->minimize ();
+	window->changeState (window->state () | CompWindowStateHiddenMask);
+	screen->priv->updateClientList ();
+    }
 
     screen->leaveShowDesktopMode (window);
 
