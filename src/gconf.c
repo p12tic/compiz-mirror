@@ -98,6 +98,7 @@ typedef enum {
     OptionInt,
     OptionBool,
     OptionKey,
+    OptionBell,
     OptionString,
     OptionSpecial,
 } SpecialOptionType;
@@ -167,7 +168,7 @@ const SpecialOption specialOptions[] = {
      METACITY "/general/resize_with_right_button", OptionSpecial},
 
     {"visual_bell", "fade", TRUE,
-     METACITY "/general/visual_bell", OptionBool},
+     METACITY "/general/visual_bell", OptionBell},
     {"fullscreen_visual_bell", "fade", TRUE,
      METACITY "/general/visual_bell_type", OptionSpecial},
 
@@ -995,6 +996,16 @@ readIntegratedOption (CCSContext *context,
 	    ret = TRUE;
 	}
 	break;
+    case OptionBell:
+	if (gconfValue->type == GCONF_VALUE_BOOL)
+	{
+	    gboolean value;
+
+	    value = gconf_value_get_bool (gconfValue);
+	    ccsSetBell (setting, value ? TRUE : FALSE);
+	    ret = TRUE;
+	}
+	break;
     case OptionString:
 	if (gconfValue->type == GCONF_VALUE_STRING)
 	{
@@ -1503,6 +1514,20 @@ writeIntegratedOption (CCSContext *context,
 	    Bool     newValue;
 	    gboolean currentValue;
 	    if (!ccsGetBool (setting, &newValue))
+		break;
+    	    currentValue = gconf_client_get_bool (client, optionName, &err);
+
+	    if (!err && ((currentValue && !newValue) ||
+			 (!currentValue && newValue)))
+		gconf_client_set_bool (client, specialOptions[index].gnomeName,
+				       newValue, NULL);
+	}
+	break;
+    case OptionBell:
+	{
+	    Bool     newValue;
+	    gboolean currentValue;
+	    if (!ccsGetBell (setting, &newValue))
 		break;
     	    currentValue = gconf_client_get_bool (client, optionName, &err);
 
