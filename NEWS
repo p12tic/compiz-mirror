@@ -1,13 +1,9 @@
-Release 0.9.5.0 ( 2011-07-14 Sam Spilsbury <sam.spilsbury@canonical.com> ) 
-===========================================================================
-Development Release (0.9.5.0)
+Release 0.9.5.92 ( 2011-08-20 Sam Spilsbury <sam.spilsbury@canonical.com> ) 
+============================================================================
+Development Release (0.9.5.92)
 
-Added new CMake commands to simplify releases
-
-Added unit tests
-
-Fixed a number of reparenting and stacking bugs
-
-Changed decoration interface. Now decorators can specify multiple decorations
-for a single window allowing compiz to cache decorations as needed
+Added GSettings schema generation
+Revised libdecoration interface
+Fixed crashes on shutdown
+Don't unredirect overlay windows until they have been shaped
 

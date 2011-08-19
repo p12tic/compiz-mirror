@@ -1,3 +1,219 @@
+Merge: 8495379 825d16b
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
+
+    Merge upstream
+
+Merge: 825d16b c9b0a19
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
+
+    Merge in lp:~compiz-team/compiz-core/compiz-core.add_doc_for_decor
+
+Merge: 41f088c c12c848
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
+
+    Merge lp:~compiz-team/compiz-core/compiz-core.distortion_fixes
+
+Merge: b0a1b5e 3504586
+Tim Penhey <tim.penhey@canonical.com>	2011-08-19
+
+    Merge lp:~thumper/compiz-core/fix-crash-on-event-source-cleanup
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
+
+    Fix some other places we were using priv->attrib incorrectly
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
+
+    Added comment explaining why we can't do that
+
+Merge: 01d92ab b0a1b5e
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
+
+    Merge trunk
+
+Tim Penhey <tim.penhey@canonical.com>	2011-08-19
+
+    Don't have a wrapped CompEventSource as there is a bug in the destruction code.
+
+Tim Penhey <tim.penhey@canonical.com>	2011-08-19
+
+    Explicit constructors only make a difference when there is the ability to pass in a single argument.
+
+Tim Penhey <tim.penhey@canonical.com>	2011-08-19
+
+    Header now says to create an unwrapped event source.
+
+Tim Penhey <tim.penhey@canonical.com>	2011-08-19
+
+    Create an unwrapped CompEventSource.
+
+Merge: ab71bc8 9f4cdd6
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
+
+    Merge
+
+Merge: 9f4cdd6 a8d1bcd
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
+
+    Merge in ICCCM 4.1.4 support
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-18
+
+    Correctly support ICCCM Section 4.1.4
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-13
+
+    Don't damage the paint rectangle in normal resize mode (fixed valgrind warning)
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-13
+
+    Use priv->geometry rather than priv->attrib, since priv->attrib could be updated by XGetWindowAttributes
+    which is a synchronous operation
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-13
+
+    Don't check against the XWindowAttributes that are stored when sending resize
+    notfications, since they could have been updated synchronously with XGetWindowAttributes
+    and could be out of sync with the geometry last received from the server which is what
+    we need to process requests based on.
+    
+    Fixes cases where plugins didn't get that geometry update because of this condition,
+    which caused bugs like distorted windows in opengl since the window matrices were
+    wrong
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-12
+
+    memset the active window history so that we aren't jumping on unitialized garbage
+    in the array of windows
+
+Time Penhey <tim.penhey@canonical.com>	2011-08-12
+
+    Merge in flags change for dlopen () on debug builds (dlclosing () with valgrind
+    is a bit useless)
+
+Time Penhey <tim.penhey@canonical.com>	2011-08-12
+
+    Merge in source reset change
+
+Merge: 28cab1d e6cb461
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-12
+
+    Merge in GSettings CMake file change
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-10
+
+    Disable core-settings-schema too
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-10
+
+    Add option to disable GSettings schema generation
+
+Ville Syrjala <syrjala@sci.fi>	2011-08-02
+
+    [PATCH] Don't unredirect overlay windows until we have set the new
+    bounding shape for the output window.
+    
+    Unredirecting them before this time meant that they were stacked
+    underneath the overlay window and changing the bounding shape of
+    the output window would cause an expose event to be sent to
+    the overlay window causing a breif flicker as it redraws.
+    
+    Unredirecting after this means that no expose event is sent because
+    the backing store is only set again after the bounding shape of the
+    output window has been changed
+
+Merge: ceab806 f2b2dc4
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-29
+
+    Merge trunk
+
+Merge: f2b2dc4 c9b0a19
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-29
+
+    Merge in doc for decor
+
+Merge: 7347a7c 3bdb2ef
+Andrea Azzarone <azzaronea@gmail.com>	2011-07-28
+
+    Merge in lp:~andyrock/compiz-core/fix-1309
+
+Andrea Azzarone <azzaronea@gmail.com>	2011-07-27
+
+    If an argument to a strcmp function has an invalid value (null pointer, etc.) the behavior is undefined.
+
+Merge: 3264985 4217940
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-27
+
+    Merge
+
+Merge: a44844f 4bb1f70
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-27
+
+    Merge in gsettings schema generation
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-26
+
+    Use relocatable keys
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-26
+
+    Merge in gsettings schema generation
+
+Scott Moreau <oreaus@gmail.com>	2011-07-14
+
+    Merge in default value change for obs
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Fix typo, also add files that are being copied into staging
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Bump VERSION
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Update NEWS for 0.9.5.0
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Revert "Update NEWS for 0.9.5.0"
+    
+    This reverts commit a6e2ea3adf61e57bdcd4c5c957ce8e7223a9fb0b.
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Revert "Bump VERSION"
+    
+    This reverts commit bedeff5d74a2786dd2751fab9e48bf3f96b7790e.
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Revert "Update NEWS for 0.9.5.0"
+    
+    This reverts commit f37eda58232743ce28eb780075c1a4b73545a209.
+
+Merge: 2804807 bedeff5
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Merge branch 'master' of git+ssh://git.compiz.org/git/compiz/core
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Bump VERSION
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Update NEWS for 0.9.5.0
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Bump VERSION
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
+
+    Update NEWS for 0.9.5.0
+
 Sam Spilsbury <sam.spilsbury@canonical.com>	2011-07-14
 
     Merge in build fix and debug message removal
@@ -203,6 +419,10 @@ Sam Spilsbury <sam.spilsbury@canonical.com>	2011-06-23
     Fix typo which caused docks to be stacked relative to override redirect windows
     and unmapped windows or other docks when shuffling stacking to be below
     fullscreen windows that are active
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-06-18
+
+    Add documentation for the decor plugin
 
 Merge: 291627c 40849c0
 Sam Spilsbury <sam.spilsbury@canonical.com>	2011-06-18
