@@ -223,6 +223,13 @@ class PrivateWindow {
 	Window               wrapper;
 	unsigned int         mapNum;
 	unsigned int         activeNum;
+
+	/* Don't use this for determining
+	 * the window geometry because we
+	 * read into this out of sync with
+	 * ConfigureNotify events to determine
+	 * the class and override redirect state
+	 */
 	XWindowAttributes    attrib;
 	CompWindow::Geometry geometry;
 	CompWindow::Geometry serverGeometry;
