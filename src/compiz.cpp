@@ -36,6 +36,8 @@ extern "C"
 #include <sys/stat.h>
 #include <errno.h>
 
+#include <string>
+
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
 
