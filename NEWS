@@ -1,9 +1,6 @@
-Release 0.9.5.92 ( 2011-08-20 Sam Spilsbury <sam.spilsbury@canonical.com> ) 
-============================================================================
-Development Release (0.9.5.92)
+Release 0.9.5.92.1 ( 2011-08-20 Sam Spilsbury <sam.spilsbury@canonical.com> ) 
+==============================================================================
+Release (0.9.5.92.1)
 
-Added GSettings schema generation
-Revised libdecoration interface
-Fixed crashes on shutdown
-Don't unredirect overlay windows until they have been shaped
+Fix failure to build from source due to merge failure on the last release
 
