@@ -796,11 +796,11 @@ PrivateWindow::updateFrameWindow ()
 	    xev.event  = screen->root ();
 	    xev.window = priv->frame;
 
-	    xev.x		  = serverGeometry.x ();
-	    xev.y		  = serverGeometry.y ();
-	    xev.width	 	  = serverGeometry.width ();
-	    xev.height	 	  = serverGeometry.height ();
-	    xev.border_width 	  = serverGeometry.border ();
+	    xev.x		  = x;
+	    xev.y		  = y;
+	    xev.width	 	  = width;
+	    xev.height	 	  = height;
+	    xev.border_width 	  = window->priv->attrib.border_width;
 
 	    xev.above	      	  = (window->prev) ? ROOTPARENT (window->prev) : None;
 	    xev.override_redirect = window->priv->attrib.override_redirect;
@@ -955,7 +955,6 @@ PrivateWindow::updateRegion ()
 
     }
 
-    /* FIXME: That doesn't look right */
     r.x      = -priv->attrib.border_width;
     r.y      = -priv->attrib.border_width;
     r.width  = priv->width + priv->attrib.border_width;
@@ -1230,10 +1229,10 @@ CompWindow::sendConfigureNotify ()
     xev.window = priv->id;
 
     /* normally we should never send configure notify events to override
-     * redirect windows but if they support the _NET_WM_SYNC_REQUEST
-     * protocol we need to do this when the window is mapped. however the
-     * only way we can make sure that the attributes we send are correct
-     * and is to grab the server. */
+       redirect windows but if they support the _NET_WM_SYNC_REQUEST
+       protocol we need to do this when the window is mapped. however the
+       only way we can make sure that the attributes we send are correct
+       and is to grab the server. */
     if (priv->attrib.override_redirect)
     {
 	XWindowAttributes attrib;
@@ -1398,9 +1397,9 @@ CompWindow::unmap ()
     priv->invisible = true;
 
     if (priv->shaded && priv->height)
-	resize (priv->geometry.x (), priv->geometry.y (),
-		priv->geometry.width (), priv->geometry.height () - 1,
-		priv->geometry.border ());
+	resize (priv->attrib.x, priv->attrib.y,
+		priv->attrib.width, ++priv->attrib.height - 1,
+		priv->attrib.border_width);
 
     screen->priv->updateClientList ();
 
@@ -1713,6 +1712,10 @@ CompWindow::move (int  dx,
 {
     if (dx || dy)
     {
+	/*
+	priv->attrib.x += dx;
+	priv->attrib.y += dy;
+	*/
 	priv->geometry.setX (priv->geometry.x () + dx);
 	priv->geometry.setY (priv->geometry.y () + dy);
 
@@ -4522,7 +4525,7 @@ CompWindow::getMovementForOffset (CompPoint offset)
     }
     else
     {
-	m = priv->geometry.y () + offY;
+	m = priv->attrib.y + offY;
 	if (m - priv->input.top < (int) s->height () - vHeight)
 	    rv.setY (offY + vHeight);
 	else if (m + priv->height + priv->input.bottom > vHeight)
@@ -5347,7 +5350,7 @@ CompWindow::CompWindow (Window aboveId,
 
     if (priv->attrib.c_class != InputOnly)
     {
-	priv->region = CompRegion (priv->geometry.x (), priv->geometry.y (),
+	priv->region = CompRegion (priv->attrib.x, priv->attrib.y,
 				   priv->width, priv->height);
 	priv->inputRegion = priv->region;
 
