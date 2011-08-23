@@ -1,3 +1,34 @@
+Merge: 86bbd39 a7f5dbb
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-20
+
+    Merge upstream
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-20
+
+    Bump VERSION to reflect temporary release
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-20
+
+    Fix stray .reset ()
+
+Merge: 1be316e 126f2a2
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-20
+
+    Merge upstream
+
+Merge: 1852f86 1852f86
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-20
+
+    Merge upstream
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-20
+
+    Bump VERSION
+
+Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-20
+
+    Update NEWS for 0.9.5.92
+
 Merge: 8495379 825d16b
 Sam Spilsbury <sam.spilsbury@canonical.com>	2011-08-19
 
