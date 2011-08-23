@@ -4525,7 +4525,7 @@ CompWindow::getMovementForOffset (CompPoint offset)
     }
     else
     {
-	m = priv->attrib.y + offY;
+	m = priv->geometry.y () + offY;
 	if (m - priv->input.top < (int) s->height () - vHeight)
 	    rv.setY (offY + vHeight);
 	else if (m + priv->height + priv->input.bottom > vHeight)
