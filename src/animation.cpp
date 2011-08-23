@@ -1918,9 +1918,6 @@ PrivateAnimScreen::initiateMinimizeAnim (PrivateAnimWindow *aw)
 	activateEvent (true);
 	aw->notifyAnimation (true);
 
-	aw->mUnmapCnt++;
-	w->incrementUnmapReference ();
-
 	cScreen->damagePending ();
     }
     else
