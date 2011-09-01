@@ -1530,18 +1530,22 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 			ScaleWindow *sw = checkForWindowAt (x, y);
 			if (sw && sw->priv->isScaleWin ())
 			{
+			    static CompRect rect(0, 0, 0, 0);
 			    int time;
 
 			    time = optionGetHoverTime ();
 
 			    if (hover.active ())
 			    {
-				if (w->id () != selectedWindow)
+				if (sw->window->id () != selectedWindow || !rect.contains(CompPoint(x, y)))
 				    hover.stop ();
 			    }
 
 			    if (!hover.active ())
+			    {
+				rect.setGeometry (x-4, y-4, 8, 8);
 				hover.start (time, (float) time * 1.2);
+			    }
 
 			    selectWindowAt (x, y, focus);
 			}
