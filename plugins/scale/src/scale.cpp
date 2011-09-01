@@ -1524,30 +1524,27 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 			state != ScaleScreen::In &&
 			w->id () == dndTarget)
 		    {
-			int x = event->xclient.data.l[2] >> 16;
-			int y = event->xclient.data.l[2] & 0xffff;
-
-			ScaleWindow *sw = checkForWindowAt (x, y);
+			ScaleWindow *sw = checkForWindowAt (pointerX, pointerY);
 			if (sw && sw->priv->isScaleWin ())
 			{
-			    static CompRect rect(0, 0, 0, 0);
 			    int time;
 
 			    time = optionGetHoverTime ();
 
 			    if (hover.active ())
 			    {
-				if (sw->window->id () != selectedWindow || !rect.contains(CompPoint(x, y)))
+				int lastMotion = sqrt (pow (pointerX - lastPointerX, 2) + pow (pointerY - lastPointerY, 2));
+				
+				if (sw->window->id () != selectedWindow || lastMotion > optionGetDndDistance ())
 				    hover.stop ();
 			    }
 
 			    if (!hover.active ())
 			    {
-				rect.setGeometry (x-4, y-4, 8, 8);
 				hover.start (time, (float) time * 1.2);
 			    }
 
-			    selectWindowAt (x, y, focus);
+			    selectWindowAt (pointerX, pointerY, focus);
 			}
 			else
 			{
