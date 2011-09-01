@@ -93,34 +93,8 @@ DecorWindow::computeShadowRegion ()
 {
     shadowRegion = CompRegion (window->outputRect ());
 
-    if (window->type () == CompWindowTypeDockMask)
-    {
-        /* windows above this one in the stack should
-         * clip the shadow */
-
-        CompWindowList::iterator it = std::find (screen->windows ().begin (),
-                                                 screen->windows ().end (),
-                                                 window);
-
-        for (it--; it != screen->windows ().end (); it--)
-        {
-            CompRegion inter;
-
-            if (!(*it)->isViewable ())
-                continue;
-
-            if ((*it)->type () & CompWindowTypeDesktopMask)
-                continue;
-
-	    inter = shadowRegion.intersected ((*it)->borderRect ());
-
-            if (!inter.isEmpty ())
-		shadowRegion = shadowRegion.subtracted (inter);
-
-        }
-    }
-    else if (window->type () == CompWindowTypeDropdownMenuMask ||
-             window->type () == CompWindowTypePopupMenuMask)
+    if (window->type () == CompWindowTypeDropdownMenuMask ||
+        window->type () == CompWindowTypePopupMenuMask)
     {
         /* Other transient menus should clip
          * this menu's shadows, also the panel
@@ -245,6 +219,34 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 
     status = gWindow->glDraw (transform, attrib, region, mask);
 
+    /* Don't render dock decorations (shadows) on just any old window */
+    if (!(window->type () & CompWindowTypeDockMask))
+    {
+	glDecorate (transform, attrib, region, mask);
+	/* Render dock decorations (shadows) on desktop windows only */
+	if (window->type () & CompWindowTypeDesktopMask)
+	{
+	    foreach (CompWindow *w, dScreen->cScreen->getWindowPaintList ())
+	    {
+		if ((w->type () & CompWindowTypeDockMask) &&
+		    !(w->destroyed () || w->invisible ()))
+		{
+		    DecorWindow *d = DecorWindow::get (w);
+		    d->glDecorate (transform, attrib, region, mask);
+		}
+	    }
+	}
+    }
+
+    return status;
+}
+
+void
+DecorWindow::glDecorate (const GLMatrix     &transform,
+		         GLFragment::Attrib &attrib,
+		         const CompRegion   &region,
+		         unsigned int       mask)
+{
     const CompRegion reg = (mask & PAINT_WINDOW_TRANSFORMED_MASK) ?
 			   infiniteRegion : shadowRegion.intersected (region);
 
@@ -283,7 +285,7 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 	if (gWindow->textures ().empty ())
 	    gWindow->bind ();
 	if (gWindow->textures ().empty ())
-	    return status;
+	    return;
 
 	if (gWindow->textures ().size () == 1)
 	{
@@ -310,8 +312,6 @@ DecorWindow::glDraw (const GLMatrix     &transform,
 	    }
 	}
     }
-
-    return status;
 }
 
 static bool bindFailed;
