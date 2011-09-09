@@ -205,6 +205,8 @@ class DecorWindow :
 
 	bool glDraw (const GLMatrix &, GLFragment::Attrib &,
 		     const CompRegion &, unsigned int);
+	void glDecorate (const GLMatrix &, GLFragment::Attrib &,
+		         const CompRegion &, unsigned int);
 
 	void windowNotify (CompWindowNotify n);
 
