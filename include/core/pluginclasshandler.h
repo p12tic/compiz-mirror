@@ -32,8 +32,17 @@
 #include <compiz.h>
 #include <core/valueholder.h>
 #include <core/pluginclasses.h>
-#include <cstdio>
 
+/* Continuously increments every time a new
+ * plugin class is added, guarunteed to be
+ * the same as the pcIndex of the most up-to-date
+ * PluginClassHandler index. Any index that
+ * hold the same value this value is safe to
+ * use to retreive the plugin class for a base
+ * class (and as such we don't need to constantly
+ * re-query ValueHolder for the index of this plugin
+ * on the base class)
+ */
 extern unsigned int pluginClassHandlerIndex;
 
 template<class Tp, class Tb, int ABI = 0>
@@ -42,18 +51,41 @@ class PluginClassHandler {
 	PluginClassHandler (Tb *);
 	~PluginClassHandler ();
 
+	/**
+	 * Changes this PluginClassHandler's state to "failed"
+	 */ 
 	void setFailed () { mFailed = true; };
+
+	/**
+	 * Checks to see if this plugin class failed to load for
+	 * whatever reason, so that instantiation of the class
+	 * can be aborted
+	 */
 	bool loadFailed () { return mFailed; };
 
+	/**
+	 * Returns the unique instance of the plugin class
+	 * for this base class
+	 */
 	Tb * get () { return mBase; };
 	static Tp * get (Tb *);
 
     private:
+	/**
+	 * Returns the unique string identifying this plugin type with it's
+	 * ABI
+	 */
 	static CompString keyName ()
 	{
 	    return compPrintf ("%s_index_%lu", typeid (Tp).name (), ABI);
 	}
 
+	/**
+	 * Actually initializes the index of this plugin class
+	 * by allocating a new index for plugin class storage
+	 * on this base class if there wasn't one already and then
+	 * storing that index inside of ValueHolder
+	 */
 	static bool initializeIndex ();
 	static inline Tp * getInstance (Tb *base);
 
@@ -67,20 +99,32 @@ class PluginClassHandler {
 template<class Tp, class Tb, int ABI>
 PluginClassIndex PluginClassHandler<Tp,Tb,ABI>::mIndex;
 
+/**
+ * Attaches a unique instance of the specified plugin class to a
+ * unique instance of a specified base class
+ */
 template<class Tp, class Tb, int ABI>
 PluginClassHandler<Tp,Tb,ABI>::PluginClassHandler (Tb *base) :
     mFailed (false),
     mBase (base)
 {
+    /* If allocating plugin class indices for this base has
+     * already failed once don't bother to allocate more for
+     * this plugin class, just instantly fail */
     if (mIndex.pcFailed)
     {
 	mFailed = true;
     }
     else
     {
+	/* The index for this plugin class hasn't been initiated
+	 * so do that (done once per plugin) */
 	if (!mIndex.initiated)
 	    mFailed = !initializeIndex ();
 
+	/* Increase the reference count of this plugin class index
+	 * for this plugin on this base object for each attached
+	 * plugin class and set the index pointer */
 	if (!mIndex.failed)
 	{
 	    mIndex.refCount++;
@@ -93,9 +137,13 @@ template<class Tp, class Tb, int ABI>
 bool
 PluginClassHandler<Tp,Tb,ABI>::initializeIndex ()
 {
+    /* Allocate a new storage space index in the array of CompPrivate's
+     * specified in the base class */
     mIndex.index = Tb::allocPluginClassIndex ();
     if (mIndex.index != (unsigned)~0)
     {
+	/* Allocation was successful, this is the most recently allocated
+	 * plugin class index so it is fresh to use */
 	mIndex.initiated = true;
 	mIndex.failed    = false;
 	mIndex.pcIndex = pluginClassHandlerIndex;
@@ -103,6 +151,9 @@ PluginClassHandler<Tp,Tb,ABI>::initializeIndex ()
 	CompPrivate p;
 	p.uval = mIndex.index;
 
+	/* Also store the index value inside of ValueHolder for this plugin-base
+	 * combination so that we can fetch it later should the index location
+	 * change */
 	if (!ValueHolder::Default ()->hasValue (keyName ()))
 	{
 	    ValueHolder::Default ()->storeValue (keyName (), p);
@@ -130,10 +181,19 @@ PluginClassHandler<Tp,Tb,ABI>::initializeIndex ()
 template<class Tp, class Tb, int ABI>
 PluginClassHandler<Tp,Tb,ABI>::~PluginClassHandler ()
 {
+    /* Only bother to destroy the static mIndex if plugin
+     * class allocation was actually successful */
     if (!mIndex.pcFailed)
     {
 	mIndex.refCount--;
 
+	/* Once this index's reference count hits zero it
+	 * means that there are no more plugin classes attached
+	 * to the base class, so other plugins are free to use our
+	 * index and we can erase our data from ValueHolder
+	 * (also increment pluginClassHandlerIndex since after doing
+	 *  this operation, all the other indexes with the same pcIndex
+	 *  won't be fresh) */
 	if (mIndex.refCount == 0)
 	{
 	    Tb::freePluginClassIndex (mIndex.index);
@@ -150,6 +210,12 @@ template<class Tp, class Tb, int ABI>
 Tp *
 PluginClassHandler<Tp,Tb,ABI>::getInstance (Tb *base)
 {
+    /* Return the plugin class found at index if it exists
+     * otherwise spawn a new one implicitly (objects should
+     * never expect ::get () to fail, unless the plugin class
+     * fails to instantiate or the underlying base object
+     * does not take plugin classes of this type)
+     */
     if (base->pluginClasses[mIndex.index])
 	return static_cast<Tp *> (base->pluginClasses[mIndex.index]);
     else
@@ -179,10 +245,17 @@ template<class Tp, class Tb, int ABI>
 Tp *
 PluginClassHandler<Tp,Tb,ABI>::get (Tb *base)
 {
+    /* Always ensure that the index is initialized before
+     * calls to ::get */
     if (!mIndex.initiated)
 	initializeIndex ();
+    /* If pluginClassHandlerIndex == mIndex.pcIndex it means that our
+     * mIndex.index is fresh and can be used directly without needing
+     * to fetch it from ValueHolder */
     if (mIndex.initiated && pluginClassHandlerIndex == mIndex.pcIndex)
 	return getInstance (base);
+    /* If allocating or getting the updated index failed at any point
+     * then just return NULL we don't know where our private data is stored */
     if (mIndex.failed && pluginClassHandlerIndex == mIndex.pcIndex)
 	return NULL;
 
