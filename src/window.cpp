@@ -3360,10 +3360,7 @@ CompWindow::lower ()
        the click-to-focus option is on */
     if ((screen->priv->optionGetClickToFocus ()))
     {
-	Window aboveWindowId = prev ? prev->id () : None;
-	screen->unhookWindow (this);
 	CompWindow *focusedWindow = screen->priv->focusTopMostWindow ();
-	screen->insertWindow (this , aboveWindowId);
 
 	/* if the newly focused window is a desktop window,
 	   give the focus back to w */
@@ -5341,6 +5338,7 @@ CompWindow::CompWindow (Window aboveId,
     priv->window = this;
 
     screen->insertWindow (this, aboveId);
+    screen->insertServerWindow (this, aboveId);
 
     priv->attrib = wa;
     priv->serverGeometry.set (priv->attrib.x, priv->attrib.y,
@@ -5525,6 +5523,7 @@ CompWindow::CompWindow (Window aboveId,
 CompWindow::~CompWindow ()
 {
     screen->unhookWindow (this);
+    screen->unhookServerWindow (this);
 
     if (priv->serverFrame)
 	priv->unreparent ();

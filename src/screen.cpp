@@ -4563,6 +4563,9 @@ CompScreen::init (const char *name)
     XSelectInput (dpy, root, priv->attrib.your_event_mask |
 		  SubstructureRedirectMask | SubstructureNotifyMask);
 
+    XUngrabServer (dpy);
+    XSync (dpy, FALSE);
+
     /* Start initializing windows here */
 
     for (unsigned int i = 0; i < nchildren; i++)
@@ -4621,9 +4624,6 @@ CompScreen::init (const char *name)
 	else
 	    focusDefaultWindow ();
     }
-
-    XUngrabServer (dpy);
-    XSync (dpy, FALSE);
 
     /* Need to set a default here so that the value isn't uninitialized
      * when loading plugins FIXME: Should find a way to initialize options
