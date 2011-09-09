@@ -1340,7 +1340,7 @@ CompWindow::sendConfigureNotify ()
 
 	XSendEvent (screen->dpy (), priv->id, false,
 		    StructureNotifyMask, (XEvent *) &xev);
-     }
+    }
 
     XUngrabServer (screen->dpy ());
     XSync (screen->dpy (), false);
@@ -3269,26 +3269,9 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 	    {
 		XLowerWindow (screen->dpy (), ROOTPARENT (window));
 
-		/* Restacking of compiz's window list happens
-		 * immediately and since this path doesn't call
-		 * reconfigureXWindow, restack must be called here.
-		 *
-		 * FIXME: We shouldn't need to sync here, however
-		 * considering the fact that we are immediately
-		 * restacking the windows, we need to ensure
-		 * that when a client tries to restack a window
-		 * relative to this window that the window
-		 * actually goes where the client expects it to go
-		 * and not anywhere else
-		 *
-		 * The real solution here is to have a list of windows
-		 * last sent to server and a list of windows last
-		 * received from server or to have a sync () function
-		 * on the stack which looks through the last recieved
-		 * window stack and the current window stack then
-		 * sends the changes */
-		XSync (screen->dpy (), false);
-		restack (0);
+		/* Update the list of windows last sent to the server */
+		screen->unhookServerWindow (window);
+		screen->insertServerWindow (window, 0);
 	    }
 	    else if (sibling->priv->id != window->serverPrev->priv->id)
 	    {
