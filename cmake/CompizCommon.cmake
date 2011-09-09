@@ -154,8 +154,7 @@ macro (compiz_add_release_signoff)
 
 	add_custom_target (release-update-working-tree
 			   COMMAND cp NEWS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/NEWS &&
-				   cp AUTHORS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/AUTHORS && 
-				   cp ChangeLog ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/ChangeLog
+				   cp AUTHORS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/AUTHORS
 			   COMMENT "Updating working tree"
 			   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}) 
 
@@ -301,18 +300,6 @@ macro (compiz_add_release)
 				   COMMAND git shortlog -se | cut -c8- > AUTHORS
 				   COMMENT "Generating AUTHORS"
 				   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-		if (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
-			add_custom_target (changelog
-					   COMMAND ${GEN_GIT_LOG} > ChangeLog
-					   COMMENT "Generating ChangeLog"
-					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-		else (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
-			add_custom_target (changelog
-					   COMMAND echo "[WARNING]: gen-git-log.sh is required to make releases, ensure that it is installed into your PATH"
-					   COMMENT "Generating ChangeLog"
-					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-			message ("[WARNING]: gen-git-log.sh is required to make releases, ensure that it is installed into your PATH")
-		endif (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
 
 		if (AUTO_NEWS_UPDATE)
 			add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
@@ -331,9 +318,6 @@ macro (compiz_add_release)
 			add_custom_target (authors
 					   COMMAND bzr log --long --levels=0 | grep -e "^\\s*author:" -e "^\\s*committer:" | cut -d ":" -f 2 | sort -u > AUTHORS
 					   COMMENT "Generating AUTHORS")
-			add_custom_target (changelog
-					   COMMAND bzr log --gnu-changelog > ChangeLog
-					   COMMENT "Generating ChangeLog")
 
 			if (AUTO_NEWS_UPDATE)
 
@@ -350,7 +334,6 @@ macro (compiz_add_release)
 
 		else (${IS_BZR_REPO})
 			add_custom_target (authors)
-			add_custom_target (changelog)
 			add_custom_target (news-header)
 		endif (${IS_BZR_REPO})
 	endif (${IS_GIT_REPO})
@@ -362,8 +345,7 @@ macro (compiz_add_release)
 				   cat NEWS.update > NEWS
 			   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
-	add_dependencies (changelog authors)
-	add_dependencies (news-header changelog)
+	add_dependencies (news-header authors)
 	add_dependencies (news news-header)
 
 	add_custom_target (release-prep)
