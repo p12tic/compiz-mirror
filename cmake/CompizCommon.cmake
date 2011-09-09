@@ -294,10 +294,14 @@ macro (compiz_add_release)
 		message ("-- Using auto news update: " ${AUTO_NEWS_UPDATE})
 	endif (AUTO_NEWS_UPDATE)
 
+	if (NOT EXISTS ${CMAKE_SOURCE_DIR}/.AUTHORS.sed)
+		file (WRITE ${CMAKE_SOURCE_DIR}/.AUTHORS.sed "")
+	endif (NOT EXISTS ${CMAKE_SOURCE_DIR}/.AUTHORS.sed)
+
 	if (${IS_GIT_REPO})
 		find_program (GEN_GIT_LOG gen-git-log.sh)
 		add_custom_target (authors
-				   COMMAND git shortlog -se | cut -c8- > AUTHORS
+				   COMMAND git shortlog -se | cut -c8- | sed -r -f ${CMAKE_SOURCE_DIR}/.AUTHORS.sed  | sort -u  > AUTHORS
 				   COMMENT "Generating AUTHORS"
 				   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
@@ -316,7 +320,7 @@ macro (compiz_add_release)
 	else (${IS_GIT_REPO})
 		if (${IS_BZR_REPO})
 			add_custom_target (authors
-					   COMMAND bzr log --long --levels=0 | grep -e "^\\s*author:" -e "^\\s*committer:" | cut -d ":" -f 2 | sort -u > AUTHORS
+					   COMMAND bzr log --long --levels=0 | grep -e "^\\s*author:" -e "^\\s*committer:" | cut -d ":" -f 2 | sed -r -f ${CMAKE_SOURCE_DIR}/.AUTHORS.sed  | sort -u > AUTHORS
 					   COMMENT "Generating AUTHORS")
 
 			if (AUTO_NEWS_UPDATE)
