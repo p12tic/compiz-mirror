@@ -794,6 +794,8 @@ PrivateWindow::updateFrameWindow ()
     if (!frame)
 	return;
 
+    gettimeofday (&lastConfigureRequest, NULL);
+
     if (input.left || input.right || input.top || input.bottom)
     {
         int	   x, y, width, height;
@@ -1509,6 +1511,8 @@ CompWindow::resize (CompWindow::Geometry gm)
 	dwidth  = gm.width () - priv->geometry.width ();
 	dheight = gm.height () - priv->geometry.height ();
 
+	gettimeofday (&priv->lastGeometryUpdate, NULL);
+
 	priv->geometry.set (gm.x (), gm.y (),
 			    gm.width (), gm.height (),
 			    gm.border ());
@@ -1531,7 +1535,13 @@ CompWindow::resize (CompWindow::Geometry gm)
 	dx = gm.x () - priv->geometry.x ();
 	dy = gm.y () - priv->geometry.y ();
 
-	move (dx, dy);
+	/* Don't move the window here if a plugin has already updated
+	 * the geometry of that window after the last time the server
+	 * was sent a configure request since the configureNotify we
+	 * receieve here will be out of date. Instead wait for the plugin
+	 * to call syncPosition again */
+	if (TIMEVALDIFF (&priv->lastConfigureRequest, &priv->lastGeometryUpdate))
+	    move (dx, dy);
     }
 
     return true;
@@ -1745,6 +1755,8 @@ CompWindow::move (int  dx,
 	priv->geometry.setX (priv->geometry.x () + dx);
 	priv->geometry.setY (priv->geometry.y () + dy);
 
+	gettimeofday (&priv->lastGeometryUpdate, NULL);
+
 	priv->region.translate (dx, dy);
 	priv->inputRegion.translate (dx, dy);
 	if (!priv->frameRegion.isEmpty ())
@@ -1761,6 +1773,8 @@ CompWindow::syncPosition ()
 {
     priv->serverGeometry.setX (priv->geometry.x ());
     priv->serverGeometry.setY (priv->geometry.y ());
+
+    gettimeofday (&priv->lastConfigureRequest, NULL);
 
     XMoveWindow (screen->dpy (), ROOTPARENT (this),
 		 priv->geometry.x () - priv->input.left,
@@ -2502,6 +2516,8 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (frame)
     {
 	XWindowChanges wc = *xwc;
+
+	gettimeofday (&lastConfigureRequest, NULL);
 
 	wc.x      -= input.left - serverGeometry.border ();
 	wc.y      -= input.top - serverGeometry.border ();
@@ -5440,6 +5456,8 @@ CompWindow::CompWindow (Window aboveId,
 
     screen->insertWindow (this, aboveId);
 
+    gettimeofday (&priv->lastGeometryUpdate, NULL);
+
     priv->attrib = wa;
     priv->serverGeometry.set (priv->attrib.x, priv->attrib.y,
 			      priv->attrib.width, priv->attrib.height,
@@ -6007,6 +6025,8 @@ PrivateWindow::reparent ()
 	XSync (dpy, false);
 	return false;
     }
+
+    gettimeofday (&lastConfigureRequest, NULL);
 
     if (attrib.override_redirect)
 	return false;

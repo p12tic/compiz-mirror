@@ -238,6 +238,9 @@ class PrivateWindow {
 	XSizeHints	     sizeHints;
 	XWMHints             *hints;
 
+	struct timeval       lastGeometryUpdate;
+	struct timeval       lastConfigureRequest;
+
 	bool       inputHint;
 	bool       alpha;
 	int        width;
