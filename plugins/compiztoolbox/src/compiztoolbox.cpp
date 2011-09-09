@@ -129,10 +129,16 @@ BaseSwitchScreen::setSelectedWindowHint (bool focus)
     CompOption::Vector opts;
     CompOption::Value  v;
 
-    if (focus && selectedWindow && !selectedWindow->destroyed ())
+    if (selectedWindow && !selectedWindow->destroyed ())
     {
 	selectedWindowId = selectedWindow->id ();
-	selectedWindow->moveInputFocusTo ();
+
+	/* FIXME: Changing the input focus here will
+	 * screw up the ordering of windows in
+	 * the switcher, so we probably want to avoid that
+	 */
+	if (focus)
+	    selectedWindow->moveInputFocusTo ();
     }
 
     v = CompOption::Value ((int) selectedWindowId);
