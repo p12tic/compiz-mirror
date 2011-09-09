@@ -70,6 +70,7 @@ class PrivateGLScreen :
 
 	void prepareDrawing ();
 
+	void controlSwapVideoSync ();
 	void waitForVideoSync ();
 
 	void paintBackground (const CompRegion &region,
