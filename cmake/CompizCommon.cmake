@@ -339,9 +339,8 @@ macro (compiz_add_release)
 	endif (${IS_GIT_REPO})
 
 	add_custom_target (news
-			   COMMAND touch ${CMAKE_SOURCE_DIR}/NEWS
-				   cat ${CMAKE_SOURCE_DIR}/NEWS > NEWS.old &&
-				   cat NEWS.old >> ${CMAKE_BINARY_DIR}/NEWS.update &&
+			   COMMAND cat ${CMAKE_SOURCE_DIR}/NEWS > NEWS.old &&
+				   cat NEWS.old >> NEWS.update &&
 				   cat NEWS.update > NEWS
 			   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
