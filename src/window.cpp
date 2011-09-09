@@ -1438,6 +1438,17 @@ PrivateWindow::restack (Window aboveId)
     screen->unhookWindow (window);
     screen->insertWindow (window, aboveId);
 
+    /* Update the server side window list for
+     * override redirect windows immediately
+     * since there is no opportunity to update
+     * the server side list when we configure them
+     * since we never get a ConfigureRequest for those */
+    if (attrib.override_redirect != 0)
+    {
+	screen->unhookServerWindow (window);
+	screen->insertServerWindow (window, aboveId);
+    }
+
     screen->priv->updateClientList ();
 
     window->windowNotify (CompWindowNotifyRestack);
@@ -2182,6 +2193,9 @@ PrivateWindow::avoidStackingRelativeTo (CompWindow *w)
     if (w->overrideRedirect ())
 	return true;
 
+    if (w->destroyed ())
+	return true;
+
     if (!w->priv->shaded && !w->priv->pendingMaps)
     {
 	if (!w->isViewable () || !w->isMapped ())
@@ -2216,8 +2230,8 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
-    for (below = screen->windows ().back (); below;
-	 below = below->prev)
+    for (below = screen->serverWindows ().back (); below;
+	 below = below->serverPrev)
     {
 	if (below == w || avoidStackingRelativeTo (below))
 	    continue;
@@ -2266,7 +2280,7 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
 CompWindow *
 PrivateWindow::findLowestSiblingBelow (CompWindow *w)
 {
-    CompWindow   *below, *lowest = screen->windows ().back ();
+    CompWindow   *below, *lowest = screen->serverWindows ().back ();
     Window	 clientLeader = w->priv->clientLeader;
     unsigned int type = w->priv->type;
 
@@ -2278,8 +2292,8 @@ PrivateWindow::findLowestSiblingBelow (CompWindow *w)
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
-    for (below = screen->windows ().back (); below;
-	 below = below->prev)
+    for (below = screen->serverWindows ().back (); below;
+	 below = below->serverPrev)
     {
 	if (below == w || avoidStackingRelativeTo (below))
 	    continue;
@@ -2473,6 +2487,26 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (valueMask & CWBorderWidth)
 	serverGeometry.setBorder (xwc->border_width);
 
+    /* Update the server side window list on raise, lower and restack functions.
+     * This function should only recieve stack_mode == Above
+     * but warn incase something else does get through, to make the cause
+     * of any potential misbehaviour obvious. */
+    if (valueMask & (CWSibling | CWStackMode))
+    {
+	if (xwc->stack_mode == Above)
+	{
+	    if (xwc->sibling)
+	    {
+		CompWindow *w = screen->findWindow (id);
+
+		screen->unhookServerWindow (w);
+		screen->insertServerWindow (w, xwc->sibling);
+	    }
+	}
+	else
+	    compLogMessage ("core", CompLogLevelWarn, "restack_mode not Above");
+    }
+
     if (frame)
     {
 	XWindowChanges wc = *xwc;
@@ -2494,36 +2528,6 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     }
 
     XConfigureWindow (screen->dpy (), id, valueMask, xwc);
-
-    /* Compiz's window list is immediately restacked on reconfigureXWindow
-       in order to ensure correct operation of the raise, lower and restacking
-       functions. This function should only recieve stack_mode == Above
-       but warn incase something else does get through, to make the cause
-       of any potential misbehaviour obvious. */
-    if (valueMask & (CWSibling | CWStackMode))
-    {
-	if (xwc->stack_mode == Above)
-	{
-	    /* FIXME: We shouldn't need to sync here, however
-	     * considering the fact that we are immediately
-	     * restacking the windows, we need to ensure
-	     * that when a client tries to restack a window
-	     * relative to this window that the window
-	     * actually goes where the client expects it to go
-	     * and not anywhere else
-	     *
-	     * The real solution here is to have a list of windows
-	     * last sent to server and a list of windows last
-	     * received from server or to have a sync () function
-	     * on the stack which looks through the last recieved
-	     * window stack and the current window stack then
-	     * sends the changes */
-	    XSync (screen->dpy (), false);
-	    restack (xwc->sibling);
-	}
-	else
-	    compLogMessage ("core", CompLogLevelWarn, "restack_mode not Above");
-    }
 }
 
 bool
@@ -2535,7 +2539,7 @@ PrivateWindow::stackDocks (CompWindow     *w,
     CompWindow *firstFullscreenWindow = NULL;
     CompWindow *belowDocks = NULL;
 
-    foreach (CompWindow *dw, screen->windows ())
+    foreach (CompWindow *dw, screen->serverWindows ())
     {
         /* fullscreen window found */
         if (firstFullscreenWindow)
@@ -2559,7 +2563,7 @@ PrivateWindow::stackDocks (CompWindow     *w,
 	     * now go back down to find a suitable candidate client
 	     * window to put the docks above */
             firstFullscreenWindow = dw;
-            for (CompWindow *dww = dw->prev; dww; dww = dww->prev)
+	    for (CompWindow *dww = dw->serverPrev; dww; dww = dww->serverPrev)
             {
                 if (!(dww->type () & (CompWindowTypeFullscreenMask |
                                       CompWindowTypeDockMask)) &&
@@ -2580,7 +2584,7 @@ PrivateWindow::stackDocks (CompWindow     *w,
         xwc->sibling = ROOTPARENT (belowDocks);
 
         /* Collect all dock windows first */
-        foreach (CompWindow *dw, screen->windows ())
+	foreach (CompWindow *dw, screen->serverWindows ())
             if (dw->priv->type & CompWindowTypeDockMask)
                 updateList.push_front (dw);
 
@@ -2602,7 +2606,7 @@ PrivateWindow::stackTransients (CompWindow	*w,
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
-    for (t = screen->windows ().back (); t; t = t->prev)
+    for (t = screen->serverWindows ().back (); t; t = t->serverPrev)
     {
 	if (t == w || t == avoid)
 	    continue;
@@ -2668,7 +2672,7 @@ PrivateWindow::stackAncestors (CompWindow     *w,
     {
 	CompWindow *a;
 
-	for (a = screen->windows ().back (); a; a = a->prev)
+	for (a = screen->serverWindows ().back (); a; a = a->serverPrev)
 	{
 	    if (a->priv->clientLeader == w->priv->clientLeader &&
 		a->priv->transientFor == None		       &&
@@ -3185,7 +3189,7 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 
     if (!sibling || sibling->priv->id != id)
     {
-	if (window->prev)
+	if (window->serverPrev)
 	{
 	    if (!sibling)
 	    {
@@ -3214,7 +3218,7 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 		XSync (screen->dpy (), false);
 		restack (0);
 	    }
-	    else if (sibling->priv->id != window->prev->priv->id)
+	    else if (sibling->priv->id != window->serverPrev->priv->id)
 	    {
 		mask |= CWSibling | CWStackMode;
 
@@ -3319,7 +3323,7 @@ CompWindow::lower ()
 void
 CompWindow::restackAbove (CompWindow *sibling)
 {
-    for (; sibling; sibling = sibling->next)
+    for (; sibling; sibling = sibling->serverNext)
 	if (PrivateWindow::validSiblingBelow (this, sibling))
 	    break;
 
@@ -3346,7 +3350,7 @@ PrivateWindow::findValidStackSiblingBelow (CompWindow *w,
      * to stack under that - if not, then there is no valid sibling
      * underneath it */
 
-    for (p = sibling; p; p = p->next)
+    for (p = sibling; p; p = p->serverNext)
     {
 	if (!avoidStackingRelativeTo (p))
 	{
@@ -3360,7 +3364,7 @@ PrivateWindow::findValidStackSiblingBelow (CompWindow *w,
     lowest = last = findLowestSiblingBelow (w);
 
     /* walk from bottom up */
-    for (p = screen->windows ().front (); p; p = p->next)
+    for (p = screen->serverWindows ().front (); p; p = p->serverNext)
     {
 	/* stop walking when we reach the sibling we should try to stack
 	   below */
@@ -3451,7 +3455,7 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	{
 	    CompWindow *p;
 
-	    for (p = sibling; p; p = p->prev)
+	    for (p = sibling; p; p = p->serverPrev)
 		if (p->priv->id == screen->activeWindow ())
 		    break;
 
@@ -3470,7 +3474,8 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	    }
 	}
 
-	mask |= priv->addWindowStackChanges (&xwc, sibling);
+	if (sibling)
+	    mask |= priv->addWindowStackChanges (&xwc, sibling);
     }
 
     mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
@@ -3480,37 +3485,6 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 
     if (mask)
 	configureXWindow (mask, &xwc);
-
-    if ((stackingMode == CompStackingUpdateModeInitialMap) ||
-	(stackingMode == CompStackingUpdateModeInitialMapDeniedFocus))
-    {
-	/* If we are called from the MapRequest handler, we have to
-	   immediately update the internal stack. If we don't do that,
-	   the internal stacking order is invalid until the ConfigureNotify
-	   arrives because we put the window at the top of the stack when
-	   it was created */
-	if (mask & CWStackMode)
-	{
-	    /* FIXME: We shouldn't need to sync here, however
-	     * considering the fact that we are immediately
-	     * restacking the windows, we need to ensure
-	     * that when a client tries to restack a window
-	     * relative to this window that the window
-	     * actually goes where the client expects it to go
-	     * and not anywhere else
-	     *
-	     * The real solution here is to have a list of windows
-	     * last sent to server and a list of windows last
-	     * received from server or to have a sync () function
-	     * on the stack which looks through the last recieved
-	     * window stack and the current window stack then
-	     * sends the changes */
-	    XSync (screen->dpy (), false);
-
-	    Window above = (mask & CWSibling) ? xwc.sibling : 0;
-	    priv->restack (above);
-	}
-    }
 }
 
 void

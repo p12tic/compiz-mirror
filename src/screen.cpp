@@ -2560,6 +2560,56 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
 }
 
 void
+CompScreen::insertServerWindow (CompWindow *w, Window	aboveId)
+{
+    w->serverPrev = NULL;
+    w->serverNext = NULL;
+
+    if (!aboveId || priv->serverWindows.empty ())
+    {
+	if (!priv->serverWindows.empty ())
+	{
+	    priv->serverWindows.front ()->serverPrev = w;
+	    w->serverNext = priv->serverWindows.front ();
+	}
+	priv->serverWindows.push_front (w);
+
+	return;
+    }
+
+    CompWindowList::iterator it = priv->serverWindows.begin ();
+
+    while (it != priv->serverWindows.end ())
+    {
+	if ((*it)->id () == aboveId ||
+	    ((*it)->frame () && (*it)->frame () == aboveId))
+	{
+	    break;
+	}
+	it++;
+    }
+
+    if (it == priv->serverWindows.end ())
+    {
+#ifdef DEBUG
+	abort ();
+#endif
+	return;
+    }
+
+    w->serverNext = (*it)->serverNext;
+    w->serverPrev = (*it);
+    (*it)->serverNext = w;
+
+    if (w->serverNext)
+    {
+	w->serverNext->serverPrev = w;
+    }
+
+    priv->serverWindows.insert (++it, w);
+}
+
+void
 PrivateScreen::eraseWindowFromMap (Window id)
 {
     if (id != 1)
@@ -2586,6 +2636,24 @@ CompScreen::unhookWindow (CompWindow *w)
 
     if (w == lastFoundWindow)
 	lastFoundWindow = NULL;
+}
+
+void
+CompScreen::unhookServerWindow (CompWindow *w)
+{
+    CompWindowList::iterator it =
+	std::find (priv->serverWindows.begin (), priv->serverWindows.end (), w);
+
+    priv->serverWindows.erase (it);
+
+    if (w->serverNext)
+	w->serverNext->serverPrev = w->serverPrev;
+
+    if (w->serverPrev)
+	w->serverPrev->serverNext = w->serverNext;
+
+    w->serverNext = NULL;
+    w->serverPrev = NULL;
 }
 
 Cursor
@@ -3503,8 +3571,8 @@ Window
 PrivateScreen::getTopWindow ()
 {
     /* return first window that has not been destroyed */
-    for (CompWindowList::reverse_iterator rit = priv->windows.rbegin ();
-	     rit != priv->windows.rend (); rit++)
+    for (CompWindowList::reverse_iterator rit = priv->serverWindows.rbegin ();
+	     rit != priv->serverWindows.rend (); rit++)
     {
 	if ((*rit)->id () > 1)
 	    return (*rit)->id ();
@@ -3927,6 +3995,12 @@ CompWindowList &
 CompScreen::windows ()
 {
     return priv->windows;
+}
+
+CompWindowList &
+CompScreen::serverWindows ()
+{
+    return priv->serverWindows;
 }
 
 Time
@@ -4520,8 +4594,6 @@ CompScreen::init (const char *name)
 	priv->createdWindows.remove (cw);
 	delete cw;
     }
-
-    i = 0;
 
     /* enforce restack on all windows */
     i = 0;

@@ -293,6 +293,9 @@ class CompWindow :
 	CompWindow *next;
 	CompWindow *prev;
 
+	CompWindow *serverNext;
+	CompWindow *serverPrev;
+
     public:
 	~CompWindow ();
 

@@ -1235,7 +1235,9 @@ CompScreen::handleEvent (XEvent *event)
 	    if (w)
 	    {
 		if (priv->optionGetRaiseOnClick ())
+		{
 		    w->updateAttributes (CompStackingUpdateModeAboveFullscreen);
+		}
 
 	        if (w->id () != priv->activeWindow)
 		    if (!(w->type () & CompWindowTypeDockMask))

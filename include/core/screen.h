@@ -249,6 +249,7 @@ class CompScreen :
 	int screenNum ();
 
 	CompWindowList & windows ();
+	CompWindowList & serverWindows ();
 
 	void warpPointer (int dx, int dy);
 
@@ -261,8 +262,10 @@ class CompScreen :
 	void focusDefaultWindow ();
 
 	void insertWindow (CompWindow *w, Window aboveId);
-
 	void unhookWindow (CompWindow *w);
+
+	void insertServerWindow (CompWindow *w, Window aboveId);
+	void unhookServerWindow (CompWindow *w);
 
 	Cursor normalCursor ();
 
