@@ -623,6 +623,32 @@ CompWindow::recalcActions ()
 		     CompWindowActionMaximizeVertMask |
 		     CompWindowActionFullscreenMask);
 
+    /* Don't allow maximization or fullscreen
+     * of windows which are too big to fit
+     * the screen */
+    bool foundVert = false;
+    bool foundHorz = false;
+
+    foreach (CompOutput &o, screen->outputDevs ())
+    {
+	if (o.width () > (priv->sizeHints.min_width + priv->border.left + priv->border.right))
+	    foundHorz = true;
+	if (o.height () > (priv->sizeHints.min_height + priv->border.top + priv->border.bottom))
+	    foundVert = true;
+    }
+
+    if (!foundHorz)
+    {
+	actions &= ~(CompWindowActionMaximizeHorzMask |
+		     CompWindowActionFullscreenMask);
+    }
+
+    if (!foundVert)
+    {
+	actions &= ~(CompWindowActionMaximizeVertMask |
+		     CompWindowActionFullscreenMask);
+    }
+
     if (!(priv->mwmFunc & MwmFuncAll))
     {
 	if (!(priv->mwmFunc & MwmFuncResize))
@@ -2762,7 +2788,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     CompRect  workArea;
     int	      mask = 0;
     int	      x, y;
-    int	      output;
+    CompOutput *output;
     CompPoint viewport;
 
     screen->viewportForGeometry (old, viewport);
@@ -2770,8 +2796,80 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     x = (viewport.x () - screen->vp ().x ()) * screen->width ();
     y = (viewport.y () - screen->vp ().y ()) * screen->height ();
 
-    output   = screen->outputDeviceForGeometry (old);
-    workArea = screen->getWorkareaForOutput (output);
+    /* Try to select and output device that the window is on first
+     * and make sure if we are fullscreening or maximizing that the
+     * window is actually able to fit on this output ... otherwise
+     * we're going to have to use another output device which sucks
+     * but at least the user will be able to see all of the window */
+    output   = &screen->outputDevs ().at (screen->outputDeviceForGeometry (old));
+
+    if (state & CompWindowStateFullscreenMask ||
+	state & CompWindowStateMaximizedHorzMask)
+    {
+	int width = (mask & CWWidth) ? xwc->width : old.width ();
+	int height = (mask & CWHeight) ? xwc->height : old.height ();
+
+	window->constrainNewWindowSize (width, height, &width, &height);
+
+	if (width > output->width ())
+	{
+	    int        distance = std::numeric_limits <int>::max ();
+	    CompOutput *selected = output;
+	    /* That's no good ... try and find the closest output device to this one
+	     * which has a large enough size */
+	    foreach (CompOutput &o, screen->outputDevs ())
+	    {
+		if (o.workArea ().width () > width)
+		{
+		    int tDistance = sqrt (pow (abs (o.x () - output->x ()), 2) +
+					  pow (abs (o.y () - output->y ()), 2));
+
+		    if (tDistance < distance)
+		    {
+			selected = &o;
+			tDistance = distance;
+		    }
+		}
+	    }
+
+	    output = selected;
+	}
+    }
+
+    if (state & CompWindowStateFullscreenMask ||
+	state & CompWindowStateMaximizedVertMask)
+    {
+	int width = (mask & CWWidth) ? xwc->width : old.width ();
+	int height = (mask & CWHeight) ? xwc->height : old.height ();
+
+	window->constrainNewWindowSize (width, height, &width, &height);
+
+	if (height > output->height ())
+	{
+	    int        distance = 999999;
+	    CompOutput *selected = output;
+	    /* That's no good ... try and find the closest output device to this one
+	     * which has a large enough size */
+	    foreach (CompOutput &o, screen->outputDevs ())
+	    {
+		if (o.workArea ().height () > height)
+		{
+		    int tDistance = sqrt (pow (abs (o.x () - output->x ()), 2) +
+					  pow (abs (o.y () - output->y ()), 2));
+
+		    if (tDistance < distance)
+		    {
+			selected = &o;
+			tDistance = distance;
+		    }
+		}
+	    }
+
+	    output = selected;
+	}
+    }
+
+    workArea = output->workArea ();
 
     if (type & CompWindowTypeFullscreenMask)
     {
@@ -2786,10 +2884,10 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	}
 	else
 	{
-	    xwc->x      = x + screen->outputDevs ()[output].x ();
-	    xwc->y      = y + screen->outputDevs ()[output].y ();
-	    xwc->width  = screen->outputDevs ()[output].width ();
-	    xwc->height = screen->outputDevs ()[output].height ();
+	    xwc->x      = x + output->x ();
+	    xwc->y      = y + output->y ();
+	    xwc->width  = output->width ();
+	    xwc->height = output->height ();
 	}
 
 	xwc->border_width = 0;
@@ -2799,7 +2897,6 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
     else
     {
 	mask |= restoreGeometry (xwc, CWBorderWidth);
-
 	if (state & CompWindowStateMaximizedVertMask)
 	{
 	    saveGeometry (CWY | CWHeight);
@@ -2886,55 +2983,83 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 	    if (state & CompWindowStateMaximizedVertMask)
 	    {
-		if (old.y () < y + workArea.y () + input.top)
-		{
-		    xwc->y = y + workArea.y () + input.top;
-		    mask |= CWY;
-		}
-		else
-		{
-		    height = xwc->height + old.border () * 2;
+		/* If the window is still offscreen, then we need to constrain it
+		 * by the gravity value (so that the corner that the gravity specifies
+		 * is 'anchored' to that edge of the workarea) */
 
-		    max = y + workArea.bottom ();
-		    if (old.y () + (int) old.height () + input.bottom > max)
-		    {
-			xwc->y = max - height - input.bottom;
-			mask |= CWY;
-		    }
-		    else if (old.y () + height + input.bottom > max)
-		    {
-			xwc->y = y + workArea.y () +
-			         (workArea.height () - input.top - height -
-				  input.bottom) / 2 + input.top;
-			mask |= CWY;
-		    }
+		xwc->y = y + workArea.y () + input.top;
+		mask |= CWY;
+
+		switch (priv->sizeHints.win_gravity)
+		{
+		    case SouthWestGravity:
+		    case SouthEastGravity:
+		    case SouthGravity:
+			/* Shift the window so that the bottom meets the top of the bottom */
+			height = xwc->height + old.border () * 2;
+
+			max = y + workArea.bottom ();
+			if (xwc->y + xwc->height + input.bottom > max)
+			{
+			    xwc->y = max - height - input.bottom;
+			    mask |= CWY;
+			}
+			break;
+		    /* For EastGravity, WestGravity and CenterGravity we default to the top
+		     * of the window since the user should at least be able to close it
+		     * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
+		     * that indicates that the application has requested positioning in that area
+		     */
+		    case EastGravity:
+		    case WestGravity:
+		    case CenterGravity:
+		    case NorthWestGravity:
+		    case NorthEastGravity:
+		    case NorthGravity:
+		    default:
+			/* Shift the window so that the top meets the top of the screen */
+			break;
 		}
 	    }
 
 	    if (state & CompWindowStateMaximizedHorzMask)
 	    {
-		if (old.x () < x + workArea.x () + input.left)
-		{
-		    xwc->x = x + workArea.x () + input.left;
-		    mask |= CWX;
-		}
-		else
-		{
-		    width = xwc->width + old.border () * 2;
+		xwc->x = x + workArea.x () + input.left;
+		mask |= CWX;
 
-		    max = x + workArea.right ();
-		    if (old.x () + (int) old.width () + input.right > max)
-		    {
-			xwc->x = max - width - input.right;
-			mask |= CWX;
-		    }
-		    else if (old.x () + width + input.right > max)
-		    {
-			xwc->x = x + workArea.x () +
-			         (workArea.width () - input.left - width -
-				  input.right) / 2 + input.left;
-			mask |= CWX;
-		    }
+		switch (priv->sizeHints.win_gravity)
+		{
+		    case NorthEastGravity:
+		    case SouthEastGravity:
+		    case EastGravity:
+			width = xwc->width + old.border () * 2;
+
+			max = x + workArea.right ();
+			if (old.x () + (int) old.width () + input.right > max)
+			{
+			    xwc->x = max - width - input.right;
+			    mask |= CWX;
+			}
+			else if (old.x () + width + input.right > max)
+			{
+			    xwc->x = x + workArea.x () +
+				     (workArea.width () - input.left - width -
+				      input.right) / 2 + input.left;
+			    mask |= CWX;
+			}
+		    /* For NorthGravity, SouthGravity and CenterGravity we default to the top
+		     * of the window since the user should at least be able to close it
+		     * (but not for SouthGravity, SouthWestGravity and SouthEastGravity since
+		     * that indicates that the application has requested positioning in that area
+		     */
+		    case NorthGravity:
+		    case SouthGravity:
+		    case CenterGravity:
+		    case NorthWestGravity:
+		    case SouthWestGravity:
+		    case WestGravity:
+		    default:
+			break;
 		}
 	    }
 	}
