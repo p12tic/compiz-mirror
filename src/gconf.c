@@ -1006,6 +1006,16 @@ readIntegratedOption (CCSContext *context,
 	    ret = TRUE;
 	}
 	break;
+    case OptionBell:
+	if (gconfValue->type == GCONF_VALUE_BOOL)
+	{
+	    gboolean value;
+
+	    value = gconf_value_get_bool (gconfValue);
+	    ccsSetBell (setting, value ? TRUE : FALSE);
+	    ret = TRUE;
+	}
+	break;
     case OptionString:
 	if (gconfValue->type == GCONF_VALUE_STRING)
 	{
