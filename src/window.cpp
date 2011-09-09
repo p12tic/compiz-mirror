@@ -2846,7 +2846,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 	if (height > output->height ())
 	{
-	    int        distance = 999999;
+	    int        distance = std::numeric_limits <int>::max ();
 	    CompOutput *selected = output;
 	    /* That's no good ... try and find the closest output device to this one
 	     * which has a large enough size */
