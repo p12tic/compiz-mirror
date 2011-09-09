@@ -219,6 +219,7 @@ class PrivateWindow {
 
 	int                  refcnt;
 	Window	             id;
+	Window               serverFrame;
 	Window	             frame;
 	Window               wrapper;
 	unsigned int         mapNum;

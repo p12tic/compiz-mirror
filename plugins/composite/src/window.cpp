@@ -133,6 +133,7 @@ CompositeWindow::bind ()
 	if (attr.map_state != IsViewable)
 	{
 	    XUngrabServer (screen->dpy ());
+	    XSync (screen->dpy (), false);
 	    priv->bindFailed = true;
 	    return false;
 	}
@@ -142,6 +143,7 @@ CompositeWindow::bind ()
 	priv->size = CompSize (attr.border_width * 2 + attr.width,
 			       attr.border_width * 2 + attr.height);
 	XUngrabServer (screen->dpy ());
+	XSync (screen->dpy (), false);
     }
     return true;
 }

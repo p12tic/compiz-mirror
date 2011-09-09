@@ -558,6 +558,7 @@ class CompWindow :
 	friend class PrivateScreen;
 	friend class ModifierHandler;
 	friend class CoreWindow;
+	friend class StackDebugger;
 
     private:
 
