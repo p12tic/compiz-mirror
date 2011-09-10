@@ -631,7 +631,11 @@ PrivateScreen::processEvents ()
 	updatePlugins ();
 
     if (dbg)
+    {
+	dbg->windowsChanged (false);
+	dbg->serverWindowsChanged (false);
 	dbg->loadStack ();
+    }
 
     while (XPending (dpy))
     {
@@ -658,9 +662,6 @@ PrivateScreen::processEvents ()
 
     foreach (XEvent &event, events)
     {
-	if (dbg)
-	    dbg->handleEvent (&event);
-
 	switch (event.type) {
 	case ButtonPress:
 	case ButtonRelease:
@@ -728,9 +729,14 @@ PrivateScreen::processEvents ()
     /* remove destroyed windows */
     removeDestroyed ();
 
-    if (dbg && dbg->stackChange ())
-	if (dbg->cmpStack (priv->windows, priv->serverWindows))
+    if (dbg)
+    {
+	if (dbg->windowsChanged () && dbg->cmpStack (priv->windows, priv->serverWindows))
 	    compLogMessage ("core", CompLogLevelDebug, "stacks are out of sync");
+
+	if (dbg->serverWindowsChanged () && dbg->checkSanity (priv->serverWindows))
+	    compLogMessage ("core", CompLogLevelDebug, "windows are stacked incorrectly");
+    }
 }
 
 void
@@ -2532,6 +2538,11 @@ CompScreen::findTopLevelWindow (Window id, bool override_redirect)
 void
 CompScreen::insertWindow (CompWindow *w, Window	aboveId)
 {
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (dbg)
+	dbg->windowsChanged (true);
+
     w->prev = NULL;
     w->next = NULL;
 
@@ -2586,6 +2597,11 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
 void
 CompScreen::insertServerWindow (CompWindow *w, Window	aboveId)
 {
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (dbg)
+	dbg->serverWindowsChanged (true);
+
     w->serverPrev = NULL;
     w->serverNext = NULL;
 
@@ -2643,6 +2659,11 @@ PrivateScreen::eraseWindowFromMap (Window id)
 void
 CompScreen::unhookWindow (CompWindow *w)
 {
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (dbg)
+	dbg->windowsChanged (true);
+
     CompWindowList::iterator it =
 	std::find (priv->windows.begin (), priv->windows.end (), w);
 
@@ -2665,6 +2686,11 @@ CompScreen::unhookWindow (CompWindow *w)
 void
 CompScreen::unhookServerWindow (CompWindow *w)
 {
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (dbg)
+	dbg->serverWindowsChanged (true);
+
     CompWindowList::iterator it =
 	std::find (priv->serverWindows.begin (), priv->serverWindows.end (), w);
 

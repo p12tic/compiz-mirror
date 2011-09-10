@@ -39,13 +39,18 @@ class StackDebugger
 	~StackDebugger ();
 
 	void loadStack ();
-	void handleEvent (XEvent *);
+	void windowsChanged (bool change) { mWindowsChanged = change; };
+	void serverWindowsChanged (bool change) { mServerWindowsChanged = change; };
+	bool windowsChanged () { return mWindowsChanged; }
+	bool serverWindowsChanged () { return mServerWindowsChanged; }
 	void addDestroyedFrame (Window);
 	void removeDestroyedFrame (Window);
 	bool stackChange ();
 	bool cmpStack (CompWindowList &windows,
 		       CompWindowList &serverWindows,
 		       bool verbose = false);
+
+	bool checkSanity (CompWindowList &serverWindows, bool verbose = false);
 
 	static StackDebugger * Default ();
 	static void SetDefault (StackDebugger *);
@@ -56,7 +61,8 @@ class StackDebugger
 
 	unsigned int mServerNChildren;
 	Window       *mServerChildren;
-	bool         mHandledConfigureEvent;
+	bool         mWindowsChanged;
+	bool         mServerWindowsChanged;
 	Window       mRoot;
 	Display      *mDpy;
 };
