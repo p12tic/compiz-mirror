@@ -154,8 +154,7 @@ macro (compiz_add_release_signoff)
 
 	add_custom_target (release-update-working-tree
 			   COMMAND cp NEWS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/NEWS &&
-				   cp AUTHORS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/AUTHORS && 
-				   cp ChangeLog ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/ChangeLog
+				   cp AUTHORS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/AUTHORS
 			   COMMENT "Updating working tree"
 			   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}) 
 
@@ -295,24 +294,16 @@ macro (compiz_add_release)
 		message ("-- Using auto news update: " ${AUTO_NEWS_UPDATE})
 	endif (AUTO_NEWS_UPDATE)
 
+	if (NOT EXISTS ${CMAKE_SOURCE_DIR}/.AUTHORS.sed)
+		file (WRITE ${CMAKE_SOURCE_DIR}/.AUTHORS.sed "")
+	endif (NOT EXISTS ${CMAKE_SOURCE_DIR}/.AUTHORS.sed)
+
 	if (${IS_GIT_REPO})
 		find_program (GEN_GIT_LOG gen-git-log.sh)
 		add_custom_target (authors
-				   COMMAND git shortlog -se | cut -c8- > AUTHORS
+				   COMMAND git shortlog -se | cut -c8- | sed -r -f ${CMAKE_SOURCE_DIR}/.AUTHORS.sed  | sort -u  > AUTHORS
 				   COMMENT "Generating AUTHORS"
 				   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-		if (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
-			add_custom_target (changelog
-					   COMMAND ${GEN_GIT_LOG} > ChangeLog
-					   COMMENT "Generating ChangeLog"
-					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-		else (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
-			add_custom_target (changelog
-					   COMMAND echo "[WARNING]: gen-git-log.sh is required to make releases, ensure that it is installed into your PATH"
-					   COMMENT "Generating ChangeLog"
-					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-			message ("[WARNING]: gen-git-log.sh is required to make releases, ensure that it is installed into your PATH")
-		endif (NOT (${GEN_GIT_LOG} STREQUAL "GEN_GIT_LOG-NOTFOUND"))
 
 		if (AUTO_NEWS_UPDATE)
 			add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
@@ -329,11 +320,8 @@ macro (compiz_add_release)
 	else (${IS_GIT_REPO})
 		if (${IS_BZR_REPO})
 			add_custom_target (authors
-					   COMMAND bzr log --long --levels=0 | grep -e "^\\s*author:" -e "^\\s*committer:" | cut -d ":" -f 2 | sort -u > AUTHORS
+					   COMMAND bzr log --long --levels=0 | grep -e "^\\s*author:" -e "^\\s*committer:" | cut -d ":" -f 2 | sed -r -f ${CMAKE_SOURCE_DIR}/.AUTHORS.sed  | sort -u > AUTHORS
 					   COMMENT "Generating AUTHORS")
-			add_custom_target (changelog
-					   COMMAND bzr log --gnu-changelog > ChangeLog
-					   COMMENT "Generating ChangeLog")
 
 			if (AUTO_NEWS_UPDATE)
 
@@ -350,20 +338,17 @@ macro (compiz_add_release)
 
 		else (${IS_BZR_REPO})
 			add_custom_target (authors)
-			add_custom_target (changelog)
 			add_custom_target (news-header)
 		endif (${IS_BZR_REPO})
 	endif (${IS_GIT_REPO})
 
 	add_custom_target (news
-			   COMMAND touch ${CMAKE_SOURCE_DIR}/NEWS
-				   cat ${CMAKE_SOURCE_DIR}/NEWS > NEWS.old &&
-				   cat NEWS.old >> ${CMAKE_BINARY_DIR}/NEWS.update &&
+			   COMMAND cat ${CMAKE_SOURCE_DIR}/NEWS > NEWS.old &&
+				   cat NEWS.old >> NEWS.update &&
 				   cat NEWS.update > NEWS
 			   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
-	add_dependencies (changelog authors)
-	add_dependencies (news-header changelog)
+	add_dependencies (news-header authors)
 	add_dependencies (news news-header)
 
 	add_custom_target (release-prep)
