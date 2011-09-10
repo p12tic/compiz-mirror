@@ -3598,7 +3598,7 @@ PrivateScreen::getTopWindow ()
     for (CompWindowList::reverse_iterator rit = priv->windows.rbegin ();
 	     rit != priv->windows.rend (); rit++)
     {
-	if (!(*rit)->priv->destroyRefCnt ||
+	if ((*rit)->priv->destroyRefCnt == 1 &&
 	    !(*rit)->priv->destroyed)
 	    return (*rit)->id ();
     }
