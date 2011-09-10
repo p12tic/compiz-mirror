@@ -5586,12 +5586,12 @@ CompWindow::~CompWindow ()
 	if (dw->next == this)
 	    dw->next = this->next;
 	if (dw->prev == this)
-	    dw->prev == this->prev;
+	    dw->prev = this->prev;
 
 	if (dw->serverNext == this)
 	    dw->serverNext = this->serverNext;
 	if (dw->serverPrev == this)
-	    dw->serverPrev == this->serverPrev;
+	    dw->serverPrev = this->serverPrev;
     }
 
     if (!priv->destroyed)
