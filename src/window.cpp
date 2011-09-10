@@ -839,9 +839,10 @@ PrivateWindow::updateFrameWindow ()
 
 		xev.override_redirect = priv->attrib.override_redirect;
 
-		XSendEvent (screen->dpy (), screen->root (), false,
-			    SubstructureNotifyMask, (XEvent *) &xev);
 	    }
+
+	    XSendEvent (screen->dpy (), screen->root (), false,
+			SubstructureNotifyMask, (XEvent *) &xev);
 
 	    XUngrabServer (screen->dpy ());
 	    XSync (screen->dpy (), false);
@@ -1307,6 +1308,14 @@ CompWindow::destroy ()
 
     if (!priv->destroyed)
     {
+	if (!priv->serverFrame)
+	{
+	    StackDebugger *dbg = StackDebugger::Default ();
+
+	    if (dbg)
+		dbg->addDestroyedFrame (priv->id);
+	}
+
 	priv->destroyed = true;
 	priv->id = 0;
 	screen->priv->pendingDestroys++;
@@ -3366,9 +3375,9 @@ CompWindow *
 PrivateScreen::focusTopMostWindow ()
 {
     CompWindow  *focus = NULL;
-    CompWindowList::reverse_iterator it = windows.rbegin ();
+    CompWindowList::reverse_iterator it = serverWindows.rbegin ();
 
-    for (; it != windows.rend (); it++)
+    for (; it != serverWindows.rend (); it++)
     {
 	CompWindow *w = *it;
 
@@ -5621,8 +5630,6 @@ CompWindow::~CompWindow ()
 
 	XUngrabButton (screen->dpy (), AnyButton, AnyModifier, priv->id);
     }
-    else
-	screen->priv->destroyedWindows.remove (this);
 
 
     if (priv->attrib.map_state == IsViewable)

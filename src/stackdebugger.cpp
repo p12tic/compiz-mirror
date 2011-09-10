@@ -143,25 +143,23 @@ StackDebugger::cmpStack (CompWindowList &windows,
 	Window sXid = 0;
 
 	if (lrrit != windows.rend ())
-	    lrXid = (*lrrit)->frame () ? (*lrrit)->priv->frame : (*lrrit)->id ();
+	    lrXid = (*lrrit)->priv->frame ? (*lrrit)->priv->frame : (*lrrit)->id ();
 
 	if (lsrit != serverWindows.rend ())
-	    lsXid = (*lsrit)->frame () ? (*lsrit)->priv->frame : (*lsrit)->id ();
+	    lsXid = (*lsrit)->priv->frame ? (*lsrit)->priv->frame : (*lsrit)->id ();
 
 	if (i != serverSideWindows.size ())
 	    sXid = serverSideWindows[serverSideWindows.size () - (i + 1)];
 
 	if (verbose)
-	    fprintf (stderr, "id 0x%x id 0x%x id 0x%x\n",
+	    fprintf (stderr, "id 0x%x id 0x%x id 0x%x",
 		     (unsigned int) lsXid, (unsigned int) lrXid,
 		     (unsigned int) sXid);
 
 	if (lrXid != sXid)
 	{
 	    if (verbose)
-		compLogMessage ("core", CompLogLevelDebug, "stacking error - "\
-				"0x%x does not equal 0x%x!\n", (unsigned int) lrXid,
-				(unsigned int) sXid);
+		fprintf (stderr, "  /!\ \n");
 	    err = true;
 	}
 

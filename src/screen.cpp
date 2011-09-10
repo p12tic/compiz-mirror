@@ -4600,7 +4600,7 @@ CompScreen::init (const char *name)
     i = 0;
     for (CompWindowList::reverse_iterator rit = priv->serverWindows.rbegin ();
 	 rit != priv->serverWindows.rend (); rit++)
-	children[i++] = ROOTPARENT (*rit));
+	children[i++] = ROOTPARENT ((*rit));
 
     XRestackWindows (dpy, children, i);
     */

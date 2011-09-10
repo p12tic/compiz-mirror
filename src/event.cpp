@@ -1109,7 +1109,7 @@ CompScreen::handleEvent (XEvent *event)
 	     * for FocusChangeMask. Also, we don't want to
 	     * manage it straight away - in reality we want
 	     * that to wait until the map request */
-	    if (wa.root == event->xcreatewindow.parent ||
+	    if (wa.root == event->xcreatewindow.parent &&
 		(wa.root == priv->root))
             {
 		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
