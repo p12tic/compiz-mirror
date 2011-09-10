@@ -100,6 +100,12 @@ StackDebugger::addDestroyedFrame (Window f)
     mDestroyedFrames.push_back (f);
 }
 
+void
+StackDebugger::removeDestroyedFrame (Window f)
+{
+    mDestroyedFrames.remove (f);
+}
+
 bool
 StackDebugger::stackChange ()
 {

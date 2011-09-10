@@ -41,6 +41,7 @@ class StackDebugger
 	void loadStack ();
 	void handleEvent (XEvent *);
 	void addDestroyedFrame (Window);
+	void removeDestroyedFrame (Window);
 	bool stackChange ();
 	bool cmpStack (CompWindowList &windows,
 		       CompWindowList &serverWindows,

@@ -364,6 +364,7 @@ class PrivateScreen :
 	std::list <CoreWindow *> createdWindows;
 	CompWindowList windows;
 	CompWindowList serverWindows;
+	CompWindowList destroyedWindows;
 	CompWindow::Map windowsMap;
 
 	Colormap colormap;

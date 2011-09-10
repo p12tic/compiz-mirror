@@ -1234,23 +1234,72 @@ CompWindow::incrementDestroyReference ()
 void
 CompWindow::destroy ()
 {
+    CompWindow *oldServerNext, *oldServerPrev, *oldNext, *oldPrev;
+
     windowNotify (CompWindowNotifyBeforeDestroy);
 
-    screen->priv->eraseWindowFromMap (id ());
-
-    priv->mapNum = 0;
-
-    /* Unmap the frame window and wrapper window but
-     * don't destroy them yet since we might receive
-     * ConfigureNotify events that we generated ourselves
-     * to stack relative to those in between when we
-     * got a ConfigureRequest and a DestroyNotify for
-     * that window so the stacking order will be invalid
-     * if we try and stack relative to a destroye frame
-     * window */
+    /* Don't allow frame windows to block input */
 
     XUnmapWindow (screen->dpy (), priv->serverFrame);
     XUnmapWindow (screen->dpy (), priv->wrapper);
+
+    oldServerNext = serverNext;
+    oldServerPrev = serverPrev;
+    oldNext = next;
+    oldPrev = prev;
+
+    /* This is where things get tricky ... it is possible
+     * to receive a ConfigureNotify relative to a frame window
+     * for a destroyed window in case we process a ConfigureRequest
+     * for the destroyed window and then a DestroyNotify for it directly
+     * afterwards. In that case, we will receive the ConfigureNotify
+     * for the XConfigureWindow request we made relative to that frame
+     * window. Because of this, we must keep the frame window in the stack
+     * as a new toplevel window so that the ConfigureNotify will be processed
+     * properly until it too receives a DestroyNotify */
+
+    if (priv->serverFrame)
+    {
+	XWindowAttributes attrib;
+
+	XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib);
+	/* Put the frame window "above" the client window
+	 * in the stack */
+	CoreWindow *cw = new CoreWindow (priv->serverFrame);
+	cw->manage (priv->id, attrib);
+	screen->priv->createdWindows.remove (cw);
+	delete cw;
+    }
+
+    /* Immediately unhook the window once destroyed
+     * as the stacking order will be invalid if we don't
+     * and will continue to be invalid for the period
+     * that we keep it around in the stack. Instead, push
+     * it to another stack and keep the next and prev members
+     * in tact, letting plugins sort out where those windows
+     * might be in case they need to use them relative to
+     * other windows */
+
+    if (screen->priv->windowsMap.find (priv->id) !=
+	screen->priv->windowsMap.end ())
+    {
+	screen->unhookWindow (this);
+	screen->unhookServerWindow (this);
+
+	/* Unhooking the window will also NULL the next/prev
+	 * linked list links but we don't want that so don't
+	 * do that */
+
+	next = oldNext;
+	prev = oldPrev;
+	serverNext = oldServerNext;
+	serverPrev = oldServerPrev;
+
+	screen->priv->eraseWindowFromMap (id ());
+	priv->mapNum = 0;
+
+	screen->priv->destroyedWindows.push_back (this);
+    }
 
     priv->destroyRefCnt--;
     if (priv->destroyRefCnt)
@@ -5522,14 +5571,34 @@ CompWindow::CompWindow (Window aboveId,
 
 CompWindow::~CompWindow ()
 {
-    screen->unhookWindow (this);
-    screen->unhookServerWindow (this);
-
     if (priv->serverFrame)
 	priv->unreparent ();
 
+    /* Update the references of other windows
+     * pending destroy if this was a sibling
+     * of one of those */
+
+    if (priv->destroyed)
+	screen->priv->destroyedWindows.remove (this);
+
+    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+    {
+	if (dw->next == this)
+	    dw->next = this->next;
+	if (dw->prev == this)
+	    dw->prev == this->prev;
+
+	if (dw->serverNext == this)
+	    dw->serverNext = this->serverNext;
+	if (dw->serverPrev == this)
+	    dw->serverPrev == this->serverPrev;
+    }
+
     if (!priv->destroyed)
     {
+	screen->unhookWindow (this);
+	screen->unhookServerWindow (this);
+
 	/* restore saved geometry and map if hidden */
 	if (!priv->attrib.override_redirect)
 	{
@@ -5552,6 +5621,9 @@ CompWindow::~CompWindow ()
 
 	XUngrabButton (screen->dpy (), AnyButton, AnyModifier, priv->id);
     }
+    else
+	screen->priv->destroyedWindows.remove (this);
+
 
     if (priv->attrib.map_state == IsViewable)
     {
@@ -5949,6 +6021,7 @@ PrivateWindow::reparent ()
     attr.background_pixmap = None;
     attr.border_pixel      = 0;
     attr.colormap          = cmap;
+    attr.override_redirect = true;
 
     serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
 				 sg.width (), sg.height (), 0, attrib.depth,

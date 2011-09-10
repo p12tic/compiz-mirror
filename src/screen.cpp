@@ -4028,6 +4028,13 @@ CompScreen::serverWindows ()
     return priv->serverWindows;
 }
 
+CompWindowList &
+CompScreen::destroyedWindows ()
+{
+    return priv->destroyedWindows;
+}
+
+
 Time
 CompScreen::getCurrentTime ()
 {
@@ -4126,7 +4133,7 @@ PrivateScreen::removeDestroyed ()
 {
     while (pendingDestroys)
     {
-	foreach (CompWindow *w, windows)
+	foreach (CompWindow *w, destroyedWindows)
 	{
 	    if (w->destroyed ())
 	    {

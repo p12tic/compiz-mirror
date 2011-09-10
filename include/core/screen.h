@@ -250,6 +250,7 @@ class CompScreen :
 
 	CompWindowList & windows ();
 	CompWindowList & serverWindows ();
+	CompWindowList & destroyedWindows ();
 
 	void warpPointer (int dx, int dy);
 

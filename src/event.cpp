@@ -40,6 +40,7 @@
 #include <core/atoms.h>
 #include "privatescreen.h"
 #include "privatewindow.h"
+#include "privatestackdebugger.h"
 
 bool
 PrivateWindow::handleSyncAlarm ()
@@ -1084,8 +1085,12 @@ CompScreen::handleEvent (XEvent *event)
 		 * the new window */
 		if (w->priv->destroyRefCnt)
 		{
+		    StackDebugger *dbg = StackDebugger::Default ();
+
 		    while (w->priv->destroyRefCnt)
 			w->destroy ();
+
+		    dbg->removeDestroyedFrame (event->xcreatewindow.window);
 		}
 		else
 		    create = false;

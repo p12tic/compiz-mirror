@@ -923,7 +923,26 @@ CompositeScreen::getWindowPaintList ()
 {
     WRAPABLE_HND_FUNC_RETURN (3, const CompWindowList &, getWindowPaintList)
 
-    return screen->windows ();
+    /* Include destroyed windows */
+    if (screen->destroyedWindows ().empty ())
+	return screen->windows ();
+    else
+    {
+	priv->withDestroyedWindows.clear ();
+
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    foreach (CompWindow *dw, screen->destroyedWindows ())
+	    {
+		if (dw->next == w)
+		    priv->withDestroyedWindows.push_back (dw);
+	    }
+
+	    priv->withDestroyedWindows.push_back (w);
+	}
+
+	return priv->withDestroyedWindows;
+    }
 }
 
 void
