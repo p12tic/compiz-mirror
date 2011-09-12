@@ -1235,71 +1235,77 @@ CompWindow::incrementDestroyReference ()
 void
 CompWindow::destroy ()
 {
-    CompWindow *oldServerNext, *oldServerPrev, *oldNext, *oldPrev;
-
     windowNotify (CompWindowNotifyBeforeDestroy);
-
-    /* Don't allow frame windows to block input */
-
-    XUnmapWindow (screen->dpy (), priv->serverFrame);
-    XUnmapWindow (screen->dpy (), priv->wrapper);
-
-    oldServerNext = serverNext;
-    oldServerPrev = serverPrev;
-    oldNext = next;
-    oldPrev = prev;
-
-    /* This is where things get tricky ... it is possible
-     * to receive a ConfigureNotify relative to a frame window
-     * for a destroyed window in case we process a ConfigureRequest
-     * for the destroyed window and then a DestroyNotify for it directly
-     * afterwards. In that case, we will receive the ConfigureNotify
-     * for the XConfigureWindow request we made relative to that frame
-     * window. Because of this, we must keep the frame window in the stack
-     * as a new toplevel window so that the ConfigureNotify will be processed
-     * properly until it too receives a DestroyNotify */
-
-    if (priv->serverFrame)
+    if (priv->id)
     {
-	XWindowAttributes attrib;
+	CompWindow *oldServerNext, *oldServerPrev, *oldNext, *oldPrev;
 
-	XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib);
-	/* Put the frame window "above" the client window
-	 * in the stack */
-	CoreWindow *cw = new CoreWindow (priv->serverFrame);
-	cw->manage (priv->id, attrib);
-	screen->priv->createdWindows.remove (cw);
-	delete cw;
-    }
+	/* Don't allow frame windows to block input */
+	XUnmapWindow (screen->dpy (), priv->serverFrame);
+	XUnmapWindow (screen->dpy (), priv->wrapper);
 
-    /* Immediately unhook the window once destroyed
-     * as the stacking order will be invalid if we don't
-     * and will continue to be invalid for the period
-     * that we keep it around in the stack. Instead, push
-     * it to another stack and keep the next and prev members
-     * in tact, letting plugins sort out where those windows
-     * might be in case they need to use them relative to
-     * other windows */
+	oldServerNext = serverNext;
+	oldServerPrev = serverPrev;
+	oldNext = next;
+	oldPrev = prev;
 
-    if (screen->priv->windowsMap.find (priv->id) !=
-	screen->priv->windowsMap.end ())
-    {
-	screen->unhookWindow (this);
-	screen->unhookServerWindow (this);
+	/* This is where things get tricky ... it is possible
+	 * to receive a ConfigureNotify relative to a frame window
+	 * for a destroyed window in case we process a ConfigureRequest
+	 * for the destroyed window and then a DestroyNotify for it directly
+	 * afterwards. In that case, we will receive the ConfigureNotify
+	 * for the XConfigureWindow request we made relative to that frame
+	 * window. Because of this, we must keep the frame window in the stack
+	 * as a new toplevel window so that the ConfigureNotify will be processed
+	 * properly until it too receives a DestroyNotify */
 
-	/* Unhooking the window will also NULL the next/prev
-	 * linked list links but we don't want that so don't
-	 * do that */
+	if (priv->serverFrame)
+	{
+	    XWindowAttributes attrib;
 
-	next = oldNext;
-	prev = oldPrev;
-	serverNext = oldServerNext;
-	serverPrev = oldServerPrev;
+	    XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib);
+	    /* Put the frame window "above" the client window
+	     * in the stack */
+	    CoreWindow *cw = new CoreWindow (priv->serverFrame);
+	    cw->manage (priv->id, attrib);
+	    screen->priv->createdWindows.remove (cw);
+	    delete cw;
+	}
 
-	screen->priv->eraseWindowFromMap (id ());
+	/* Immediately unhook the window once destroyed
+	 * as the stacking order will be invalid if we don't
+	 * and will continue to be invalid for the period
+	 * that we keep it around in the stack. Instead, push
+	 * it to another stack and keep the next and prev members
+	 * in tact, letting plugins sort out where those windows
+	 * might be in case they need to use them relative to
+	 * other windows */
+
+	if (screen->priv->windowsMap.find (priv->id) !=
+	    screen->priv->windowsMap.end ())
+	{
+	    screen->unhookWindow (this);
+	    screen->unhookServerWindow (this);
+
+	    /* Unhooking the window will also NULL the next/prev
+	     * linked list links but we don't want that so don't
+	     * do that */
+
+	    next = oldNext;
+	    prev = oldPrev;
+	    serverNext = oldServerNext;
+	    serverPrev = oldServerPrev;
+
+	    screen->priv->eraseWindowFromMap (id ());
+
+	    screen->priv->destroyedWindows.push_back (this);
+	}
+
+	/* We must set the xid of this window
+	 * to zero as it no longer references
+	 * a valid window */
 	priv->mapNum = 0;
-
-	screen->priv->destroyedWindows.push_back (this);
+	priv->id = 0;
     }
 
     priv->destroyRefCnt--;
@@ -1317,7 +1323,6 @@ CompWindow::destroy ()
 	}
 
 	priv->destroyed = true;
-	priv->id = 0;
 	screen->priv->pendingDestroys++;
     }
 

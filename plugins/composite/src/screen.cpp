@@ -928,6 +928,8 @@ CompositeScreen::getWindowPaintList ()
 	return screen->windows ();
     else
     {
+	CompWindowList destroyedWindows = screen->destroyedWindows ();
+
 	priv->withDestroyedWindows.clear ();
 
 	foreach (CompWindow *w, screen->windows ())
@@ -935,11 +937,21 @@ CompositeScreen::getWindowPaintList ()
 	    foreach (CompWindow *dw, screen->destroyedWindows ())
 	    {
 		if (dw->next == w)
+		{
 		    priv->withDestroyedWindows.push_back (dw);
+		    destroyedWindows.remove (dw);
+		}
 	    }
 
 	    priv->withDestroyedWindows.push_back (w);
 	}
+
+	/* We need to put all the destroyed windows which didn't get
+	 * inserted in the paint list at the top of the stack since
+	 * w->next was probably either invalid or NULL */
+
+	foreach (CompWindow *dw, destroyedWindows)
+	    priv->withDestroyedWindows.push_back (dw);
 
 	return priv->withDestroyedWindows;
     }
