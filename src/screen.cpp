@@ -4611,11 +4611,11 @@ CompScreen::init (const char *name)
 	 * for it
 	 */
 
-	if (!XGetWindowAttributes (screen->dpy (), children[nchildren - (i + 1)], &attrib))
+	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
 	    continue;
 
-	CoreWindow *cw = new CoreWindow (children[nchildren - (i + 1)]);
-	cw->manage (0, attrib);
+	CoreWindow *cw = new CoreWindow (children[i]);
+	cw->manage (i ? children[i - 1] : 0, attrib);
 
 	priv->createdWindows.remove (cw);
 	delete cw;
