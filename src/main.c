@@ -1485,7 +1485,7 @@ ccsSetList (CCSSetting * setting, CCSSettingValueList data, Bool processChanged)
     setting->value->value.asList = ccsCopyList (data, setting);
 
     if ((strcmp (setting->name, "active_plugins") == 0) &&
-	(strcmp (setting->parent->name, "core") == 0))
+	(strcmp (setting->parent->name, "core") == 0) && processChanged)
     {
 	CCSStringList list;
 
@@ -3141,7 +3141,7 @@ ccsProcessUpgrade (CCSContext *context,
     }
     
     sl = upgrade->clearValueSettings;
-    
+	
     while (sl)
     {
 	CCSSetting *tempSetting = (CCSSetting *) sl->data;
@@ -3169,7 +3169,7 @@ ccsProcessUpgrade (CCSContext *context,
 		/* Try and remove any specified items from the list */
 		CCSSettingValueList l = tempSetting->value->value.asList;
 		CCSSettingValueList nl = ccsCopyList (setting->value->value.asList, setting);
-		
+
 		while (l)
 		{
 		    CCSSettingValueList olv = nl;
@@ -3193,12 +3193,10 @@ ccsProcessUpgrade (CCSContext *context,
 
 		    l = l->next;
 		}
-		
-		if (count)
-		{
-		    D (D_FULL, "Removed %i items from %s\n", count, setting->name);
-		    ccsSetList (setting, nl, TRUE);
-		}
+
+		D (D_FULL, "Removed %i items from %s\n", count, setting->name);
+		ccsSetList (setting, nl, TRUE);
+
 	    }
 	}
 
@@ -3249,12 +3247,9 @@ ccsProcessUpgrade (CCSContext *context,
 
 		    l = l->next;
 		}
-		
-		if (count)
-		{
-		    D (D_FULL, "Appending %i items to %s\n", count, setting->name);
-		    ccsSetList (setting, nl, TRUE);
-		}
+
+		D (D_FULL, "Appending %i items to %s\n", count, setting->name);
+		ccsSetList (setting, nl, TRUE);
 	    }
 	}
 	else
@@ -3384,7 +3379,7 @@ ccsSettingsUpgradeNew (char *path, char *name)
     char *uname, *tok;
     unsigned int fnlen = strlen (path) + strlen (name) + 1;
 
-    upgrade->file = calloc (fnlen, sizeof (char));
+    upgrade->file = calloc (fnlen + 1, sizeof (char));
     sprintf (upgrade->file, "%s/%s", path, name);
 
     uname = tok = strdup (name);
@@ -3464,11 +3459,13 @@ ccsCheckForSettingsUpgrade (CCSContext *context)
     cuSize = ftell (completedUpgrades);
     rewind (completedUpgrades);
 
-    cuBuffer = calloc (cuSize, sizeof (char));
+    cuBuffer = calloc (cuSize + 1, sizeof (char));
     cuReadSize = fread (cuBuffer, 1, cuSize, completedUpgrades);
 
     if (cuReadSize != cuSize)
 	D (D_FULL, "[WARNING] Couldn't read completed upgrades file!\n");
+
+    cuBuffer[cuSize] = '\0';
 
     for (i = 0; i < nFile; i++)
     {
