@@ -35,20 +35,25 @@ class StackDebugger
 {
     public:
 
-	StackDebugger (Display *, Window);
+	typedef std::list<XEvent> eventList;
+
+	StackDebugger (Display *, Window, boost::function<eventList ()> evProc);
 	~StackDebugger ();
 
-	void loadStack ();
+	eventList loadStack (CompWindowList &serverWindows);
 	void windowsChanged (bool change) { mWindowsChanged = change; };
 	void serverWindowsChanged (bool change) { mServerWindowsChanged = change; };
 	bool windowsChanged () { return mWindowsChanged; }
 	bool serverWindowsChanged () { return mServerWindowsChanged; }
+	void overrideRedirectRestack (Window toplevel, Window sibling);
+	void removeServerWindow (Window);
 	void addDestroyedFrame (Window);
 	void removeDestroyedFrame (Window);
 	bool stackChange ();
 	bool cmpStack (CompWindowList &windows,
 		       CompWindowList &serverWindows,
 		       bool verbose = false);
+	bool timedOut ();
 
 	bool checkSanity (CompWindowList &serverWindows, bool verbose = false);
 
@@ -65,6 +70,9 @@ class StackDebugger
 	bool         mServerWindowsChanged;
 	Window       mRoot;
 	Display      *mDpy;
+	boost::function<eventList ()> getEventsProc;
+	bool         mTimeoutRequired;
+	CompWindowList mLastServerWindows;
 };
 
 #endif

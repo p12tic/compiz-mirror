@@ -229,7 +229,9 @@ CompManager::init ()
     if (debugOutput)
     {
 	StackDebugger::SetDefault (new StackDebugger (screen->dpy (),
-						      screen->root ()));
+						      screen->root (),
+						      boost::bind (&PrivateScreen::queueEvents,
+								   screen->priv)));
     }
 
     if (!disableSm)

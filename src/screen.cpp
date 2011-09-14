@@ -621,21 +621,10 @@ PrivateScreen::setOption (const CompString  &name,
     return rv;
 }
 
-void
-PrivateScreen::processEvents ()
+std::list <XEvent>
+PrivateScreen::queueEvents ()
 {
     std::list <XEvent> events;
-    StackDebugger *dbg = StackDebugger::Default ();
-
-    if (dirtyPluginList)
-	updatePlugins ();
-
-    if (dbg)
-    {
-	dbg->windowsChanged (false);
-	dbg->serverWindowsChanged (false);
-	dbg->loadStack ();
-    }
 
     while (XPending (dpy))
     {
@@ -659,6 +648,29 @@ PrivateScreen::processEvents ()
 
 	events.push_back (event);
     }
+
+    return events;
+}
+
+void
+PrivateScreen::processEvents ()
+{
+    std::list <XEvent> events;
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (dirtyPluginList)
+	updatePlugins ();
+
+    if (dbg)
+    {
+	dbg->windowsChanged (false);
+	dbg->serverWindowsChanged (false);
+	events = dbg->loadStack (priv->serverWindows);
+    }
+    else
+	events = queueEvents ();
+
+    stackIsFresh = false;
 
     foreach (XEvent &event, events)
     {
@@ -729,10 +741,20 @@ PrivateScreen::processEvents ()
     /* remove destroyed windows */
     removeDestroyed ();
 
+    /* Restacks recently processed, ensure that
+     * plugins use the stack last received from
+     * the server */
+    if (stackIsFresh)
+	priv->serverWindows = priv->windows;
+
     if (dbg)
     {
 	if (dbg->windowsChanged () && dbg->cmpStack (priv->windows, priv->serverWindows))
+	{
 	    compLogMessage ("core", CompLogLevelDebug, "stacks are out of sync");
+	    if (dbg->timedOut ())
+		compLogMessage ("core", CompLogLevelDebug, "however, this may be a false positive");
+	}
 
 	if (dbg->serverWindowsChanged () && dbg->checkSanity (priv->serverWindows))
 	    compLogMessage ("core", CompLogLevelDebug, "windows are stacked incorrectly");
@@ -2524,7 +2546,7 @@ CompScreen::findTopLevelWindow (Window id, bool override_redirect)
     }
 
     foreach (CompWindow *w, priv->windows)
-	if (w->frame () == id)
+	if (w->priv->frame == id)
 	{
 	    if (w->overrideRedirect () && !override_redirect)
 		return NULL;
@@ -2542,6 +2564,8 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
 
     if (dbg)
 	dbg->windowsChanged (true);
+
+    priv->stackIsFresh = true;
 
     w->prev = NULL;
     w->next = NULL;
@@ -2565,7 +2589,7 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
     while (it != priv->windows.end ())
     {
 	if ((*it)->id () == aboveId ||
-	    ((*it)->frame () && (*it)->frame () == aboveId))
+	    ((*it)->priv->frame && (*it)->priv->frame == aboveId))
 	{
 	    break;
 	}
@@ -2574,6 +2598,8 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
 
     if (it == priv->windows.end ())
     {
+	compLogMessage ("core", CompLogLevelDebug, "could not insert 0x%x above 0x%x",
+			(unsigned int) (*it)->priv->serverId, aboveId);
 #ifdef DEBUG
 	abort ();
 #endif
@@ -2621,8 +2647,8 @@ CompScreen::insertServerWindow (CompWindow *w, Window	aboveId)
 
     while (it != priv->serverWindows.end ())
     {
-	if ((*it)->id () == aboveId ||
-	    ((*it)->frame () && (*it)->frame () == aboveId))
+	if ((*it)->priv->serverId == aboveId ||
+	    ((*it)->priv->serverFrame && (*it)->priv->serverFrame == aboveId))
 	{
 	    break;
 	}
@@ -2631,6 +2657,8 @@ CompScreen::insertServerWindow (CompWindow *w, Window	aboveId)
 
     if (it == priv->serverWindows.end ())
     {
+	compLogMessage ("core", CompLogLevelDebug, "could not insert 0x%x above 0x%x",
+			(unsigned int) (*it)->priv->serverId, aboveId);
 #ifdef DEBUG
 	abort ();
 #endif
@@ -4590,12 +4618,14 @@ CompScreen::init (const char *name)
 
     XDefineCursor (dpy, priv->root, priv->normalCursor);
 
+    /* We should get DestroyNotify events for any windows that were
+     * destroyed while initializing windows here now */
+    XSelectInput (dpy, root, priv->attrib.your_event_mask |
+		  SubstructureRedirectMask | SubstructureNotifyMask);
+
     XQueryTree (dpy, root,
 		&rootReturn, &parentReturn,
 		&children, &nchildren);
-
-    XSelectInput (dpy, root, priv->attrib.your_event_mask |
-		  SubstructureRedirectMask | SubstructureNotifyMask);
 
     XUngrabServer (dpy);
     XSync (dpy, FALSE);
@@ -4612,13 +4642,12 @@ CompScreen::init (const char *name)
 	 */
 
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
-	    continue;
+	    priv->setDefaultWindowAttributes(&attrib);
 
 	CoreWindow *cw = new CoreWindow (children[i]);
 	cw->manage (i ? children[i - 1] : 0, attrib);
-
-	priv->createdWindows.remove (cw);
 	delete cw;
+	priv->createdWindows.remove (cw);
     }
 
     /* enforce restack on all windows *
@@ -4756,7 +4785,10 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     plugin (),
     dirtyPluginList (true),
     screen (screen),
+    serverWindows (),
     windows (),
+    destroyedWindows (),
+    stackIsFresh (false),
     vp (0, 0),
     vpSize (1, 1),
     nDesktop (1),

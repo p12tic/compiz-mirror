@@ -135,6 +135,7 @@ class PrivateScreen :
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
+	std::list <XEvent> queueEvents ();
 	void processEvents ();
 
 	void removeDestroyed ();
@@ -362,10 +363,14 @@ class PrivateScreen :
 	CompScreen  *screen;
 
 	std::list <CoreWindow *> createdWindows;
-	CompWindowList windows;
 	CompWindowList serverWindows;
+	CompWindowList windows;
 	CompWindowList destroyedWindows;
+	bool           stackIsFresh;
+
 	CompWindow::Map windowsMap;
+
+	std::map <CompWindow *, CompWindow *> detachedFrameWindows;
 
 	Colormap colormap;
 	int      screenNum;

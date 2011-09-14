@@ -218,6 +218,7 @@ class PrivateWindow {
 	CompWindow *window;
 
 	int                  refcnt;
+	Window               serverId;
 	Window	             id;
 	Window               serverFrame;
 	Window	             frame;

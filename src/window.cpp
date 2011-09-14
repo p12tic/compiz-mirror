@@ -1239,6 +1239,7 @@ CompWindow::destroy ()
     if (priv->id)
     {
 	CompWindow *oldServerNext, *oldServerPrev, *oldNext, *oldPrev;
+	StackDebugger *dbg = StackDebugger::Default ();
 
 	/* Don't allow frame windows to block input */
 	XUnmapWindow (screen->dpy (), priv->serverFrame);
@@ -1263,7 +1264,15 @@ CompWindow::destroy ()
 	{
 	    XWindowAttributes attrib;
 
+	    /* It's possible that the frame window was already destroyed because
+	     * the client was unreparented before it was destroyed (eg
+	     * UnmapNotify before DestroyNotify). In that case the frame window
+	     * is going to be an invalid window but since we haven't received
+	     * a DestroyNotify for it yet, it is possible that restacking
+	     * operations could occurr relative to it so we need to hold it
+	     * in the stack for now. Ensure that it is marked override redirect */
 	    XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib);
+
 	    /* Put the frame window "above" the client window
 	     * in the stack */
 	    CoreWindow *cw = new CoreWindow (priv->serverFrame);
@@ -1281,31 +1290,32 @@ CompWindow::destroy ()
 	 * might be in case they need to use them relative to
 	 * other windows */
 
-	if (screen->priv->windowsMap.find (priv->id) !=
-	    screen->priv->windowsMap.end ())
-	{
-	    screen->unhookWindow (this);
-	    screen->unhookServerWindow (this);
+	screen->unhookWindow (this);
+	screen->unhookServerWindow (this);
 
-	    /* Unhooking the window will also NULL the next/prev
-	     * linked list links but we don't want that so don't
-	     * do that */
+	/* We must immediately insert the window into the debugging
+	 * stack */
+	if (dbg)
+	    dbg->removeServerWindow (id ());
 
-	    next = oldNext;
-	    prev = oldPrev;
-	    serverNext = oldServerNext;
-	    serverPrev = oldServerPrev;
+	/* Unhooking the window will also NULL the next/prev
+	 * linked list links but we don't want that so don't
+	 * do that */
 
-	    screen->priv->eraseWindowFromMap (id ());
+	next = oldNext;
+	prev = oldPrev;
+	serverNext = oldServerNext;
+	serverPrev = oldServerPrev;
 
-	    screen->priv->destroyedWindows.push_back (this);
-	}
+	screen->priv->destroyedWindows.push_back (this);
 
 	/* We must set the xid of this window
 	 * to zero as it no longer references
 	 * a valid window */
 	priv->mapNum = 0;
 	priv->id = 0;
+	priv->frame = 0;
+	priv->serverFrame = 0;
     }
 
     priv->destroyRefCnt--;
@@ -1563,14 +1573,16 @@ PrivateWindow::restack (Window aboveId)
     else if (window->prev)
     {
 	if (aboveId && (aboveId == window->prev->id () ||
-		        aboveId == window->prev->frame ()))
+			aboveId == window->prev->priv->frame))
 	    return false;
     }
     else if (aboveId == None && !window->next)
 	return false;
 
     if (aboveId && !screen->findTopLevelWindow (aboveId, true))
+    {
         return false;
+    }
 
     screen->unhookWindow (window);
     screen->insertWindow (window, aboveId);
@@ -1582,8 +1594,13 @@ PrivateWindow::restack (Window aboveId)
      * since we never get a ConfigureRequest for those */
     if (attrib.override_redirect != 0)
     {
+	StackDebugger *dbg = StackDebugger::Default ();
+
 	screen->unhookServerWindow (window);
 	screen->insertServerWindow (window, aboveId);
+
+	if (dbg)
+	    dbg->overrideRedirectRestack (window->id (), aboveId);
     }
 
     screen->priv->updateClientList ();
@@ -1780,7 +1797,7 @@ CompWindow::sendSyncRequest ()
 void
 PrivateWindow::configure (XConfigureEvent *ce)
 {
-    if (priv->serverFrame)
+    if (priv->frame)
 	return;
 
     priv->attrib.override_redirect = ce->override_redirect;
@@ -1809,7 +1826,7 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     int x, y, width, height;
     CompWindow	     *above;
 
-    if (!priv->serverFrame)
+    if (!priv->frame)
 	return;
 
     x      = ce->x + priv->input.left;
@@ -4960,11 +4977,11 @@ PrivateWindow::updatePassiveButtonGrabs ()
     bool onlyActions = (priv->id == screen->priv->activeWindow ||
 			!screen->priv->optionGetClickToFocus ());
 
-    if (!priv->serverFrame)
+    if (!priv->frame)
 	return;
 
     /* Ungrab everything */
-    XUngrabButton (screen->priv->dpy, AnyButton, AnyModifier, serverFrame);
+    XUngrabButton (screen->priv->dpy, AnyButton, AnyModifier, frame);
 
     /* We don't need the full grab in the following cases:
      * - This window has the focus and either
@@ -5013,7 +5030,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 		XGrabButton (screen->priv->dpy,
 			     bind.button,
 			     mods | ignore,
-			     serverFrame,
+			     frame,
 			     false,
 			     ButtonPressMask | ButtonReleaseMask |
 				ButtonMotionMask,
@@ -5030,7 +5047,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 	XGrabButton (screen->priv->dpy,
 		     AnyButton,
 		     AnyModifier,
-		     serverFrame, false,
+		     frame, false,
 		     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
 		     GrabModeSync,
 		     GrabModeAsync,
@@ -5388,6 +5405,7 @@ CoreWindow::CoreWindow (Window id)
     priv = new PrivateWindow ();
     assert (priv);
     priv->id = id;
+    priv->serverId = id;
 }
 
 CompWindow::CompWindow (Window aboveId,
@@ -5396,12 +5414,19 @@ CompWindow::CompWindow (Window aboveId,
     PluginClassStorage (windowPluginClassIndices),
     priv (priv)
 {
+    StackDebugger *dbg = StackDebugger::Default ();
+
     // TODO: Reparent first!
 
     priv->window = this;
 
     screen->insertWindow (this, aboveId);
     screen->insertServerWindow (this, aboveId);
+
+    /* We must immediately insert the window into the debugging
+     * stack */
+    if (dbg)
+	dbg->overrideRedirectRestack (priv->id, aboveId);
 
     priv->attrib = wa;
     priv->serverGeometry.set (priv->attrib.x, priv->attrib.y,
@@ -5608,10 +5633,32 @@ CompWindow::~CompWindow ()
 	    dw->serverPrev = this->serverPrev;
     }
 
+    /* If this window has a detached frame, destroy it, but only
+     * using XDestroyWindow since there may be pending restack
+     * requests relative to it */
+
+    std::map <CompWindow *, CompWindow *>::iterator it =
+	    screen->priv->detachedFrameWindows.find (this);
+
+    if (it != screen->priv->detachedFrameWindows.end ())
+    {
+	CompWindow *fw = (it->second);
+
+	XDestroyWindow (screen->dpy (), fw->id ());
+	screen->priv->detachedFrameWindows.erase (it);
+    }
+
     if (!priv->destroyed)
     {
+	StackDebugger *dbg = StackDebugger::Default ();
+
 	screen->unhookWindow (this);
 	screen->unhookServerWindow (this);
+
+	/* We must immediately insert the window into the debugging
+	 * stack */
+	if (dbg)
+	    dbg->removeServerWindow (id ());
 
 	/* restore saved geometry and map if hidden */
 	if (!priv->attrib.override_redirect)
@@ -5756,6 +5803,8 @@ PrivateWindow::~PrivateWindow ()
 
     if (serverFrame)
 	XDestroyWindow (screen->dpy (), serverFrame);
+    else if (frame)
+	XDestroyWindow (screen->dpy (), frame);
 
     if (struts)
 	free (struts);
@@ -5978,6 +6027,7 @@ PrivateWindow::reparent ()
 						  screen->screenNum ());
     Colormap		 cmap = DefaultColormap (screen->dpy (),
 						 screen->screenNum ());
+    bool		 created = false;
 
     if (serverFrame)
 	return false;
@@ -6011,12 +6061,10 @@ PrivateWindow::reparent ()
 
     XFree (children);
 
+    XQueryTree (dpy, root_return, &root_return, &parent_return, &children, &nchildren);
+
     XChangeSaveSet (dpy, id, SetModeInsert);
     XSelectInput (dpy, id, NoEventMask);
-
-    /* We need to know when the frame window is created
-     * but that's all */
-    XSelectInput (dpy, screen->root (), SubstructureNotifyMask);
 
     /* Force border width to 0 */
     xwc.border_width = 0;
@@ -6035,19 +6083,72 @@ PrivateWindow::reparent ()
     attr.colormap          = cmap;
     attr.override_redirect = true;
 
-    serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
-				 sg.width (), sg.height (), 0, attrib.depth,
-				 InputOutput, visual, mask, &attr);
+    /* Look for existing detached frame windows and reattach them
+     * in case this window as reparented again after being withdrawn */
+    std::map <CompWindow *, CompWindow *>::iterator it =
+	    screen->priv->detachedFrameWindows.find (window);
 
-    /* Do not get any events from here on */
-    XSelectInput (dpy, screen->root (), NoEventMask);
+    if (it != screen->priv->detachedFrameWindows.end ())
+    {
+	frame = serverFrame = (it->second)->id ();
+
+	/* Now remove the server frame from the stack
+	 * and ensure it is mapped */
+	while ((it->second)->priv->destroyRefCnt--)
+	    (it->second)->destroy ();
+
+	XMapWindow (screen->dpy (), serverFrame);
+    }
+    else
+    {
+	/* We need to know when the frame window is created
+	 * but that's all */
+	XSelectInput (dpy, screen->root (), SubstructureNotifyMask);
+
+	serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
+				     sg.width (), sg.height (), 0, attrib.depth,
+				     InputOutput, visual, mask, &attr);
+
+	created = true;
+
+	/* Do not get any events from here on */
+	XSelectInput (dpy, screen->root (), NoEventMask);
+    }
 
     wrapper = XCreateWindow (dpy, serverFrame, 0, 0,
 			    sg.width (), sg.height (), 0, attrib.depth,
 			    InputOutput, visual, mask, &attr);
 
-    xwc.stack_mode = Below;
-    xwc.sibling = id;
+    xwc.stack_mode = Above;
+
+    /* Look for the client in the current server side stacking
+     * order and put the frame above what the client is above
+     */
+    if (nchildren &&
+	children[0] == id)
+    {
+	/* client at the bottom */
+	xwc.stack_mode = Below;
+	xwc.sibling = id;
+    }
+    else
+    {
+	for (unsigned int i = 0; i < nchildren; i++)
+	{
+	    if (i < nchildren - 1)
+	    {
+		if (children[i + 1] == id)
+		{
+		    xwc.sibling = children[i];
+		    break;
+		}
+	    }
+	    else /* client on top */
+		xwc.sibling = children[i];
+	}
+    }
+
+    XFree (children);
 
     /* Make sure the frame is underneath the client */
     XConfigureWindow (dpy, serverFrame, CWSibling | CWStackMode, &xwc);
@@ -6112,7 +6213,8 @@ PrivateWindow::reparent ()
 
     XMoveResizeWindow (dpy, serverFrame, sg.x (), sg.y (), sg.width (), sg.height ());
 
-    updatePassiveButtonGrabs ();
+    if (!created)
+	updatePassiveButtonGrabs ();
 
     window->windowNotify (CompWindowNotifyReparent);
 
@@ -6209,10 +6311,49 @@ PrivateWindow::unreparent ()
     if (dbg)
 	dbg->addDestroyedFrame (serverFrame);
 
-    XDestroyWindow (dpy, wrapper);
-    XDestroyWindow (dpy, serverFrame);
-    wrapper = None;
+    /* This is where things get tricky ... it is possible
+     * to receive a ConfigureNotify relative to a frame window
+     * for a destroyed window in case we process a ConfigureRequest
+     * for the destroyed window and then a DestroyNotify for it directly
+     * afterwards. In that case, we will receive the ConfigureNotify
+     * for the XConfigureWindow request we made relative to that frame
+     * window. Because of this, we must keep the frame window in the stack
+     * as a new toplevel window so that the ConfigureNotify will be processed
+     * properly until it too receives a DestroyNotify */
+
+    if (serverFrame)
+    {
+	XWindowAttributes attrib;
+
+	/* It's possible that the frame window was already destroyed because
+	 * the client was unreparented before it was destroyed (eg
+	 * UnmapNotify before DestroyNotify). In that case the frame window
+	 * is going to be an invalid window but since we haven't received
+	 * a DestroyNotify for it yet, it is possible that restacking
+	 * operations could occurr relative to it so we need to hold it
+	 * in the stack for now. Ensure that it is marked override redirect */
+	XGetWindowAttributes (screen->dpy (), serverFrame, &attrib);
+
+	/* Put the frame window "above" the client window
+	 * in the stack */
+	CoreWindow *cw = new CoreWindow (serverFrame);
+	CompWindow *fw = cw->manage (id, attrib);
+	screen->priv->createdWindows.remove (cw);
+	delete cw;
+
+	/* Put this window in the list of "detached frame windows"
+	 * so that we can reattach it or destroy it when we are
+	 * done with it */
+
+	screen->priv->detachedFrameWindows[window] = fw;
+    }
+
+    /* Safe to destroy the wrapper but not the frame */
+    XUnmapWindow (screen->dpy (), serverFrame);
+    XDestroyWindow (screen->dpy (), wrapper);
+
     frame = None;
+    wrapper = None;
     serverFrame = None;
 
     window->windowNotify (CompWindowNotifyUnreparent);

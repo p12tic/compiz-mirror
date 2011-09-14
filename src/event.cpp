@@ -637,7 +637,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 
 	foreach (CompWindow *w, screen->windows ())
 	{
-	    if (w->frame () == xid)
+	    if (w->priv->frame == xid)
 		xid = w->id ();
 	}
 
@@ -1044,7 +1044,7 @@ CompScreen::handleEvent (XEvent *event)
 	break;
     case ConfigureNotify:
 	w = findWindow (event->xconfigure.window);
-	if (w && !w->frame ())
+	if (w && !w->priv->frame)
 	{
 	    w->priv->configure (&event->xconfigure);
 	}
@@ -1052,10 +1052,8 @@ CompScreen::handleEvent (XEvent *event)
 	{
 	    w = findTopLevelWindow (event->xconfigure.window);
 
-	    if (w && w->frame () == event->xconfigure.window)
-	    {
+	    if (w && w->priv->frame == event->xconfigure.window)
 		w->priv->configureFrame (&event->xconfigure);
-	    }
 	    else
 	    {
 		if (event->xconfigure.window == priv->root)
@@ -1076,31 +1074,37 @@ CompScreen::handleEvent (XEvent *event)
 
 	foreach (CompWindow *w, screen->windows ())
 	{
-	    if (w->id () == event->xcreatewindow.window)
+	    if (w->priv->serverFrame == event->xcreatewindow.window)
+	    {
+		w->priv->frame = event->xcreatewindow.window;
+		w->priv->updatePassiveButtonGrabs ();
+		create = false;
+	    }
+	}
+
+	foreach (CompWindow *w, screen->priv->destroyedWindows)
+	{
+	    if (w->priv->serverId == event->xcreatewindow.window)
 	    {
 		/* Previously destroyed window
 		 * plugins were keeping around
 		 * in order to avoid an xid conflict,
 		 * destroy it right away and manage
 		 * the new window */
-		if (w->priv->destroyRefCnt)
-		{
-		    StackDebugger *dbg = StackDebugger::Default ();
 
-		    while (w->priv->destroyRefCnt)
-			w->destroy ();
+		StackDebugger *dbg = StackDebugger::Default ();
 
+		while (w->priv->destroyRefCnt)
+		    w->destroy ();
+
+		if (dbg)
 		    dbg->removeDestroyedFrame (event->xcreatewindow.window);
-		}
-		else
-		    create = false;
 	    }
-	    else if (w->frame () == event->xcreatewindow.window)
-	    {
-		w->priv->frame = event->xcreatewindow.window;
-		create = false;
-	    }
+
 	}
+
+	if (wa.root != event->xcreatewindow.parent)
+	    create = false;
 
 	if (create)
 	{
@@ -1109,8 +1113,7 @@ CompScreen::handleEvent (XEvent *event)
 	     * for FocusChangeMask. Also, we don't want to
 	     * manage it straight away - in reality we want
 	     * that to wait until the map request */
-	    if (wa.root == event->xcreatewindow.parent &&
-		(wa.root == priv->root))
+	    if ((wa.root == priv->root))
             {
 		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
 		cw->manage (priv->getTopWindow (), wa);
@@ -1122,10 +1125,31 @@ CompScreen::handleEvent (XEvent *event)
 		XSelectInput (priv->dpy, event->xcreatewindow.window,
 			      FocusChangeMask);
 	}
+	else
+	    compLogMessage ("core", CompLogLevelDebug, "refusing to manage window 0x%x", (unsigned int) event->xcreatewindow.window);
+
 	break;
     }
     case DestroyNotify:
 	w = findWindow (event->xdestroywindow.window);
+
+	/* It is possible that some plugin might call
+	 * w->destroy () before the window actually receives
+	 * its first DestroyNotify event which would mean
+	 * that it is already in the list of destroyed
+	 * windows, so check that list too */
+	if (!w)
+	{
+	    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+	    {
+		if (dw->priv->serverId == event->xdestroywindow.window)
+		{
+		    w = dw;
+		    break;
+		}
+	    }
+	}
+
 	if (w)
 	{
 	    w->moveInputFocusToOtherWindow ();
@@ -1213,6 +1237,24 @@ CompScreen::handleEvent (XEvent *event)
 	break;
     case ReparentNotify:
 	w = findWindow (event->xreparent.window);
+
+	/* It is possible that some plugin might call
+	 * w->destroy () before the window actually receives
+	 * its first ReparentNotify event which would mean
+	 * that it is already in the list of destroyed
+	 * windows, so check that list too */
+	if (!w)
+	{
+	    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+	    {
+		if (dw->priv->serverId == event->xdestroywindow.window)
+		{
+		    w = dw;
+		    break;
+		}
+	    }
+	}
+
 	if (!w && event->xreparent.parent == priv->root)
 	{
 	    /* Failure means that window has been destroyed. We still have to add 
@@ -1760,7 +1802,13 @@ CompScreen::handleEvent (XEvent *event)
 	    xwc.border_width = event->xconfigurerequest.border_width;
 
 	    if (w)
+	    {
+		/* Any window that receives a ConfigureRequest
+		 * is not override redirect, and may have changed
+		 * to being not override redirect */
+		w->priv->setOverrideRedirect (false);
 		w->configureXWindow (xwcm, &xwc);
+	    }
 	    else
 		XConfigureWindow (priv->dpy, event->xconfigurerequest.window,
 				  xwcm, &xwc);

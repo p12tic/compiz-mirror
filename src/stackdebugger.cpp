@@ -25,6 +25,7 @@
 
 #include "privatestackdebugger.h"
 #include "privatewindow.h"
+#include <poll.h>
 
 namespace
 {
@@ -46,13 +47,14 @@ StackDebugger::SetDefault (StackDebugger *dbg)
     gStackDebugger = dbg;
 }
 
-StackDebugger::StackDebugger (Display *dpy, Window root) :
+StackDebugger::StackDebugger (Display *dpy, Window root, boost::function <eventList ()> evProc) :
     mServerNChildren (0),
     mServerChildren (NULL),
     mWindowsChanged (false),
     mServerWindowsChanged (false),
     mRoot (root),
-    mDpy (dpy)
+    mDpy (dpy),
+    getEventsProc (evProc)
 {
 }
 
@@ -66,18 +68,106 @@ StackDebugger::~StackDebugger ()
     }
 }
 
+bool
+StackDebugger::timedOut ()
+{
+    return mTimeoutRequired;
+}
+
 void
-StackDebugger::loadStack ()
+StackDebugger::removeServerWindow (Window id)
+{
+    /* Find the toplevel window in the list and remove it */
+    for (CompWindowList::iterator it = mLastServerWindows.begin ();
+	 it != mLastServerWindows.end ();
+	 it++)
+    {
+	if ((*it)->id () == id)
+	{
+	    mLastServerWindows.erase (it);
+	    break;
+	}
+    }
+}
+
+void
+StackDebugger::overrideRedirectRestack (Window toplevel, Window sibling)
+{
+    CompWindow *tl = screen->findWindow (toplevel);
+
+    removeServerWindow (toplevel);
+
+    /* Find the sibling of this window and insert above it or at
+     * the bottom if the sibling is 0 */
+
+    if (sibling)
+    {
+	for (CompWindowList::iterator it = mLastServerWindows.begin ();
+	     it != mLastServerWindows.end ();
+	     it++)
+	{
+	    if (sibling == (*it)->id () ||
+		sibling == (*it)->frame ())
+	    {
+		mLastServerWindows.insert (++it, tl);
+		break;
+	    }
+	}
+    }
+    else
+	mLastServerWindows.push_front (tl);
+}
+
+StackDebugger::eventList
+StackDebugger::loadStack (CompWindowList &serverWindows)
 {
     Window rootRet, parentRet;
+    eventList events;
 
     if (mServerChildren)
 	XFree (mServerChildren);
 
+    XSync (mDpy, FALSE);
+    XGrabServer (mDpy);
     XQueryTree (mDpy, mRoot, &rootRet, &parentRet,
 		&mServerChildren, &mServerNChildren);
 
+    events = getEventsProc ();
+
+    XSync (mDpy, FALSE);
+
+    /* It is possible that X might not be keeping up with us, so
+     * we should give it about 300 ms in case the stacks are out of sync
+     * in order to deliver any more events that might be pending */
+
+    mTimeoutRequired = false;
+    mLastServerWindows = serverWindows;
+
+    if (mServerNChildren != serverWindows.size ())
+    {
+	eventList moreEvents;
+	struct pollfd pfd;
+
+	pfd.events = POLLIN;
+	pfd.revents = 0;
+	pfd.fd = ConnectionNumber (mDpy);
+
+	poll (&pfd, 1, 300);
+
+	moreEvents = getEventsProc ();
+
+	foreach (XEvent e, moreEvents)
+	    events.push_back (e);
+
+	mTimeoutRequired = true;
+    }
+
     mDestroyedFrames.clear ();
+
+    XUngrabServer (mDpy);
+    XSync (mDpy, FALSE);
+
+    return events;
 }
 
 void
@@ -99,7 +189,7 @@ StackDebugger::cmpStack (CompWindowList &windows,
 {
     std::vector <Window>             serverSideWindows;
     CompWindowList::reverse_iterator lrrit = windows.rbegin ();
-    CompWindowList::reverse_iterator lsrit = serverWindows.rbegin ();
+    CompWindowList::reverse_iterator lsrit = mLastServerWindows.rbegin ();
     unsigned int                     i = 0;
     bool                             err = false;
 
@@ -112,10 +202,10 @@ StackDebugger::cmpStack (CompWindowList &windows,
     }
 
     if (verbose)
-	compLogMessage ("stackdebugger", CompLogLevelDebug, "sent       | recv       | server     |");
+	compLogMessage ("core", CompLogLevelDebug, "sent       | recv       | server     |");
 
     for (;(lrrit != windows.rend () ||
-	   lsrit != serverWindows.rend () ||
+	   lsrit != mLastServerWindows.rend () ||
 	   i != serverSideWindows.size ());)
     {
 	Window lrXid = 0;
@@ -125,24 +215,24 @@ StackDebugger::cmpStack (CompWindowList &windows,
 	if (lrrit != windows.rend ())
 	    lrXid = (*lrrit)->priv->frame ? (*lrrit)->priv->frame : (*lrrit)->id ();
 
-	if (lsrit != serverWindows.rend ())
+	if (lsrit != mLastServerWindows.rend ())
 	    lsXid = (*lsrit)->priv->frame ? (*lsrit)->priv->frame : (*lsrit)->id ();
 
 	if (i != serverSideWindows.size ())
 	    sXid = serverSideWindows[serverSideWindows.size () - (i + 1)];
 
 	if (verbose)
-	    compLogMessage ("stackdebugger", CompLogLevelDebug, "id 0x%x id 0x%x id 0x%x %s",
+	    compLogMessage ("core", CompLogLevelDebug, "id 0x%x id 0x%x id 0x%x %s",
 		     (unsigned int) lsXid, (unsigned int) lrXid,
-		     (unsigned int) sXid, lrXid != sXid ? "  /!\\ " : "");
+		     (unsigned int) sXid, (lrXid != sXid) || (lsXid != sXid) ? "  /!\\ " : "");
 
-	if (lrXid != sXid)
+	if (lrXid != sXid || lsXid != sXid)
 	    err = true;
 
 	if (lrrit != windows.rend ())
 	    lrrit++;
 
-	if (lsrit != serverWindows.rend())
+	if (lsrit != mLastServerWindows.rend())
 	    lsrit++;
 
 	if (i != serverSideWindows.size ())
