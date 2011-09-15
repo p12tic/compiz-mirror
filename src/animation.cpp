@@ -1229,7 +1229,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
     if (mAnimInProgress)
     {	
 	int msSinceLastPaintActual;
-	const CompWindowList &pl = cScreen->getWindowPaintList ();
+	CompWindowList pl = cScreen->getWindowPaintList ();
 
 	struct timeval curTime;
 	gettimeofday (&curTime, 0);
@@ -1250,7 +1250,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	bool animStillInProgress = false;
 
 	/* Paint list includes destroyed windows */
-	for (CompWindowList::const_reverse_iterator rit = pl.rbegin ();
+	for (CompWindowList::reverse_iterator rit = pl.rbegin ();
 	     rit != pl.rend (); rit++)
 	{
 	    CompWindow *w = (*rit);
