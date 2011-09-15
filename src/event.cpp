@@ -1024,8 +1024,9 @@ CompScreen::handleEvent (XEvent *event)
 	switch (event->type)
 	{
 	    case KeyPress:
+	      if (event->xkey.state)
 		XUngrabKeyboard (priv->dpy, event->xkey.time);
-		break;
+	      break;
 	    default:
 		break;
 	}
