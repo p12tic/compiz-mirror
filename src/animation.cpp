@@ -318,7 +318,7 @@ PrivateAnimScreen::addExtension (ExtensionPluginInfo *extensionPluginInfo,
     if (shouldInitPersistentData)
     {
 	// Initialize persistent window data for the extension plugin
-	foreach (CompWindow *w, ::screen->windows ())
+	foreach (CompWindow *w, cScreen->getWindowPaintList ())
 	{
 	    AnimWindow *aw = AnimWindow::get (w);
 	    extensionPluginInfo->initPersistentData (aw);
@@ -336,7 +336,7 @@ void
 PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 {
     // Stop all ongoing animations
-    foreach (CompWindow *w, ::screen->windows ())
+    foreach (CompWindow *w, cScreen->getWindowPaintList ())
     {
 	PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
 	if (aw->curAnimation ())
@@ -391,7 +391,7 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
     }
 
     // Destroy persistent window data for the extension plugin
-    foreach (CompWindow *w, ::screen->windows ())
+    foreach (CompWindow *w, cScreen->getWindowPaintList ())
     {
 	AnimWindow *aw = AnimWindow::get (w);
 	extensionPluginInfo->destroyPersistentData (aw);
@@ -1229,6 +1229,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
     if (mAnimInProgress)
     {	
 	int msSinceLastPaintActual;
+	const CompWindowList &pl = cScreen->getWindowPaintList ();
 
 	struct timeval curTime;
 	gettimeofday (&curTime, 0);
@@ -1248,8 +1249,11 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 
 	bool animStillInProgress = false;
 
-	foreach (CompWindow *w, ::screen->windows ())
+	/* Paint list includes destroyed windows */
+	for (CompWindowList::const_reverse_iterator rit = pl.rbegin ();
+	     rit != pl.rend (); rit++)
 	{
+	    CompWindow *w = (*rit);
 	    AnimWindow *animWin = AnimWindow::get (w);
 	    PrivateAnimWindow *aw = animWin->priv;
 	    Animation *curAnim = aw->curAnimation ();
@@ -1331,7 +1335,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	    }
 	}
 
-	foreach (CompWindow *w, ::screen->windows ())
+	foreach (CompWindow *w, cScreen->getWindowPaintList ())
 	{
 	    PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
 	    if (aw->curAnimation ())
@@ -2258,7 +2262,7 @@ void
 PrivateAnimScreen::updateAnimStillInProgress ()
 {
     bool animStillInProgress = false;
-    foreach (CompWindow *w, ::screen->windows ())
+    foreach (CompWindow *w, cScreen->getWindowPaintList ())
     {
 	PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
 	if (aw->curAnimation () &&

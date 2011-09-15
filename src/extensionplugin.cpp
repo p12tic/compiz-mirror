@@ -412,7 +412,7 @@ ExtensionPluginAnimation::handleRestackNotify (AnimWindow *aw)
 		onlyTwo = true;
 	    }
 	    // Clear all mConfigureNotified's
-	    foreach (CompWindow *w2, ::screen->windows ())
+	    foreach (CompWindow *w2, CompositeScreen::get (::screen)->getWindowPaintList ())
 	    {
 		RestackPersistentData *data =
 		    static_cast<RestackPersistentData *>
@@ -514,7 +514,7 @@ ExtensionPluginAnimation::postUpdateEventEffects (AnimEvent e,
 	    // was not possible.
 	    updateLastClientList ();
 
-	    foreach (CompWindow *w, ::screen->windows ())
+	    foreach (CompWindow *w, CompositeScreen::get (::screen)->getWindowPaintList ())
 	    {
 		AnimWindow *aw = AnimWindow::get (w);
 		// Allocate persistent restack data if it doesn't already exist
@@ -526,7 +526,7 @@ ExtensionPluginAnimation::postUpdateEventEffects (AnimEvent e,
 	}
 	if (as->isAnimEffectPossible (AnimEffectDodge))
 	{
-	    foreach (CompWindow *w, ::screen->windows ())
+	    foreach (CompWindow *w, CompositeScreen::get (::screen)->getWindowPaintList ())
 	    {
 		AnimWindow *aw = AnimWindow::get (w);
 		// Allocate persistent dodge data if it doesn't already exist
@@ -600,7 +600,7 @@ ExtensionPluginAnimation::restackInfoStillGood (RestackInfo *restackInfo)
     bool wOldAboveGood = false;
     bool wRestackedGood = false;
 
-    foreach (CompWindow *w, ::screen->windows ())
+    foreach (CompWindow *w, CompositeScreen::get (::screen)->getWindowPaintList ())
     {
 	AnimWindow *aw = AnimWindow::get (w);
 
@@ -623,7 +623,7 @@ ExtensionPluginAnimation::restackInfoStillGood (RestackInfo *restackInfo)
 void
 ExtensionPluginAnimation::resetStackingInfo ()
 {
-    foreach (CompWindow *w, ::screen->windows ())
+    foreach (CompWindow *w, CompositeScreen::get (::screen)->getWindowPaintList ())
     {
 	AnimWindow *aw = AnimWindow::get (w);
 	PersistentDataMap::iterator itData =
@@ -737,7 +737,7 @@ ExtensionPluginAnimation::getBottommostInRestackChain (CompWindow *wStartPoint)
 void
 ExtensionPluginAnimation::resetMarks ()
 {
-    foreach (CompWindow *w, ::screen->windows ())
+    foreach (CompWindow *w, CompositeScreen::get (::screen)->getWindowPaintList ())
     {
 	RestackPersistentData *data = static_cast<RestackPersistentData *>
 	    (AnimWindow::get (w)->persistentData["restack"]);
@@ -758,7 +758,7 @@ ExtensionPluginAnimation::walkFirst ()
     resetMarks ();
 
     CompWindow *w =
-    	getBottommostInExtendedFocusChain (*::screen->windows ().begin ());
+    	getBottommostInExtendedFocusChain (*CompositeScreen::get (::screen)->getWindowPaintList ().begin ());
     if (w)
     {
 	RestackPersistentData *data = static_cast<RestackPersistentData *>
