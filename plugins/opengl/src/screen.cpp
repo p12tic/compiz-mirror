@@ -31,12 +31,15 @@
 #include <math.h>
 
 namespace GL {
+    typedef int (*GLXSwapIntervalProc) (int interval);
+
+    GLXSwapIntervalProc      swapInterval = NULL;
     GLXBindTexImageProc      bindTexImage = NULL;
     GLXReleaseTexImageProc   releaseTexImage = NULL;
     GLXQueryDrawableProc     queryDrawable = NULL;
     GLXCopySubBufferProc     copySubBuffer = NULL;
+    GLXGetVideoSyncProc      getVideoSync = NULL;
     GLXWaitVideoSyncProc     waitVideoSync = NULL;
-    GLXSwapIntervalProc      swapInterval = NULL;
     GLXGetFBConfigsProc      getFBConfigs = NULL;
     GLXGetFBConfigAttribProc getFBConfigAttrib = NULL;
     GLXCreatePixmapProc      createPixmap = NULL;
@@ -217,6 +220,9 @@ GLScreen::GLScreen (CompScreen *s) :
 
     if (strstr (glxExtensions, "GLX_SGI_video_sync"))
     {
+	GL::getVideoSync = (GL::GLXGetVideoSyncProc)
+	    getProcAddress ("glXGetVideoSyncSGI");
+
 	GL::waitVideoSync = (GL::GLXWaitVideoSyncProc)
 	    getProcAddress ("glXWaitVideoSyncSGI");
     }
@@ -988,21 +994,13 @@ GLScreen::setDefaultViewport ()
 		priv->lastViewport.height);
 }
 
-void
-PrivateGLScreen::controlSwapVideoSync ()
+namespace GL
 {
-    bool sync = optionGetSyncToVblank ();
-    // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
-    if (GL::swapInterval)
-	(*GL::swapInterval) (sync ? 1 : 0);
-    else if (sync)
-	waitForVideoSync ();
-}
 
 void
-PrivateGLScreen::waitForVideoSync ()
+waitForVideoSync ()
 {
-    if (optionGetSyncToVblank () && GL::waitVideoSync)
+    if (GL::waitVideoSync)
     {
 	// Don't wait twice. Just in case.
 	if (GL::swapInterval)
@@ -1012,6 +1010,25 @@ PrivateGLScreen::waitForVideoSync ()
 	unsigned int frameno;
 	(*GL::waitVideoSync) (1, 0, &frameno);
     }
+}
+
+void
+controlSwapVideoSync (bool sync)
+{
+    // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
+    if (GL::swapInterval)
+	(*GL::swapInterval) (sync ? 1 : 0);
+    else if (sync)
+	waitForVideoSync ();
+}
+
+} // namespace GL
+
+void
+PrivateGLScreen::waitForVideoSync ()
+{
+    if (optionGetSyncToVblank ())
+        GL::waitForVideoSync ();
 }
 
 void
@@ -1099,7 +1116,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	// it won't block the CPU. The waiting is offloaded to the GPU.
 	// Unfortunately it only works with glXSwapBuffers in most drivers.
 	//
-	controlSwapVideoSync ();
+	GL::controlSwapVideoSync (optionGetSyncToVblank ());
 	glXSwapBuffers (screen->dpy (), cScreen->output ());
     }
     else
