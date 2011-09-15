@@ -40,7 +40,7 @@ class StackDebugger
 	StackDebugger (Display *, Window, boost::function<eventList ()> evProc);
 	~StackDebugger ();
 
-	eventList loadStack (CompWindowList &serverWindows);
+	eventList loadStack (CompWindowList &serverWindows, bool wait = false);
 	void windowsChanged (bool change) { mWindowsChanged = change; };
 	void serverWindowsChanged (bool change) { mServerWindowsChanged = change; };
 	bool windowsChanged () { return mWindowsChanged; }

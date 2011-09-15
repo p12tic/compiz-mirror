@@ -1044,6 +1044,7 @@ CompScreen::handleEvent (XEvent *event)
 	break;
     case ConfigureNotify:
 	w = findWindow (event->xconfigure.window);
+
 	if (w && !w->priv->frame)
 	{
 	    w->priv->configure (&event->xconfigure);
@@ -1114,7 +1115,7 @@ CompScreen::handleEvent (XEvent *event)
 	     * manage it straight away - in reality we want
 	     * that to wait until the map request */
 	    if ((wa.root == priv->root))
-            {
+	    {
 		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
 		cw->manage (priv->getTopWindow (), wa);
 
@@ -1138,6 +1139,7 @@ CompScreen::handleEvent (XEvent *event)
 	 * its first DestroyNotify event which would mean
 	 * that it is already in the list of destroyed
 	 * windows, so check that list too */
+
 	if (!w)
 	{
 	    foreach (CompWindow *dw, screen->priv->destroyedWindows)
@@ -1173,6 +1175,7 @@ CompScreen::handleEvent (XEvent *event)
 
 		if (!w->priv->serverFrame)
 		    w->priv->reparent ();
+
 		w->priv->managed = true;
 	    }
 

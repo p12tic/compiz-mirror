@@ -119,7 +119,7 @@ StackDebugger::overrideRedirectRestack (Window toplevel, Window sibling)
 }
 
 StackDebugger::eventList
-StackDebugger::loadStack (CompWindowList &serverWindows)
+StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
 {
     Window rootRet, parentRet;
     eventList events;
@@ -143,7 +143,7 @@ StackDebugger::loadStack (CompWindowList &serverWindows)
     mTimeoutRequired = false;
     mLastServerWindows = serverWindows;
 
-    if (mServerNChildren != serverWindows.size ())
+    if (mServerNChildren != serverWindows.size () && wait)
     {
 	eventList moreEvents;
 	struct pollfd pfd;
@@ -224,9 +224,9 @@ StackDebugger::cmpStack (CompWindowList &windows,
 	if (verbose)
 	    compLogMessage ("core", CompLogLevelDebug, "id 0x%x id 0x%x id 0x%x %s",
 		     (unsigned int) lsXid, (unsigned int) lrXid,
-		     (unsigned int) sXid, (lrXid != sXid) || (lsXid != sXid) ? "  /!\\ " : "");
+		     (unsigned int) sXid, (lrXid != sXid) ? "  /!\\ " : "");
 
-	if (lrXid != sXid || lsXid != sXid)
+	if (lrXid != sXid)
 	    err = true;
 
 	if (lrrit != windows.rend ())

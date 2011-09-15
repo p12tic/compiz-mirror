@@ -288,7 +288,8 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     active (false),
     pHnd (NULL),
     FPSLimiterMode (CompositeFPSLimiterModeDefault),
-    frameTimeAccumulator (0)
+    frameTimeAccumulator (0),
+    withDestroyedWindows ()
 {
     gettimeofday (&lastRedraw, 0);
     // wrap outputChangeNotify
@@ -930,7 +931,7 @@ CompositeScreen::getWindowPaintList ()
     {
 	CompWindowList destroyedWindows = screen->destroyedWindows ();
 
-	priv->withDestroyedWindows.clear ();
+	priv->withDestroyedWindows.resize (0);
 
 	foreach (CompWindow *w, screen->windows ())
 	{
@@ -940,6 +941,7 @@ CompositeScreen::getWindowPaintList ()
 		{
 		    priv->withDestroyedWindows.push_back (dw);
 		    destroyedWindows.remove (dw);
+		    break;
 		}
 	    }
 

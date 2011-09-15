@@ -2169,21 +2169,12 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	    break;
 	case CompWindowNotifyUnreparent:
 	{
-	    CompWindowExtents emptyExtents;
+	    /* Compiz detaches the frame window from
+	     * the client on unreparent, so we must
+	     * destroy our frame windows by forcing
+	     * this window to have no decorations */
 
-	    /* The frame window was destroyed, so ensure that there aren't
-	     * any traces of our internal windows left either, however
-	     * keep the properties around for the decorators so that they
-	     * don't revert to using the default decorations for windows
-	     * where the decorations changes after unreparent
-	     * (those properties will be cleared on the CompWindowNotify
-	     *  for unmap) */
-
-	    memset (&emptyExtents, 0, sizeof (CompWindowExtents));
-
-	    window->setWindowFrameExtents (&emptyExtents, &emptyExtents);
-	    inputFrame = None;
-	    outputFrame = None;
+	    update (false);
 	    
 	    break;
 	}

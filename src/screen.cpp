@@ -14,7 +14,7 @@
  *
  * NOVELL, INC. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN
- * NO EVENT SHALL NOVELL, INC. BE LIABLE FOR ANY SPECI<<<<<fAL, INDIRECT OR
+ * NO EVENT SHALL NOVELL, INC. BE LIABLE FOR ANY SPECIAL, INDIRECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
  * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
@@ -661,6 +661,21 @@ PrivateScreen::processEvents ()
     if (dirtyPluginList)
 	updatePlugins ();
 
+    /* Restacks recently processed, ensure that
+     * plugins use the stack last received from
+     * the server */
+    if (stackIsFresh)
+    {
+	priv->serverWindows.clear ();
+
+	foreach (CompWindow *sw, priv->windows)
+	{
+	    sw->serverPrev = sw->prev;
+	    sw->serverNext = sw->next;
+	    priv->serverWindows.push_back (sw);
+	}
+    }
+
     if (dbg)
     {
 	dbg->windowsChanged (false);
@@ -740,12 +755,6 @@ PrivateScreen::processEvents ()
 
     /* remove destroyed windows */
     removeDestroyed ();
-
-    /* Restacks recently processed, ensure that
-     * plugins use the stack last received from
-     * the server */
-    if (stackIsFresh)
-	priv->serverWindows = priv->windows;
 
     if (dbg)
     {
@@ -3649,13 +3658,8 @@ Window
 PrivateScreen::getTopWindow ()
 {
     /* return first window that has not been destroyed */
-    for (CompWindowList::reverse_iterator rit = priv->windows.rbegin ();
-	     rit != priv->windows.rend (); rit++)
-    {
-	if ((*rit)->priv->destroyRefCnt == 1 &&
-	    !(*rit)->priv->destroyed)
-	    return (*rit)->id ();
-    }
+    if (priv->windows.size ())
+	return priv->windows.back ()->id ();
 
     return None;
 }
@@ -4650,8 +4654,8 @@ CompScreen::init (const char *name)
 	priv->createdWindows.remove (cw);
     }
 
-    /* enforce restack on all windows *
-     * using list last sent to server *
+    /* enforce restack on all windows
+     * using list last sent to server
     i = 0;
     for (CompWindowList::reverse_iterator rit = priv->serverWindows.rbegin ();
 	 rit != priv->serverWindows.rend (); rit++)

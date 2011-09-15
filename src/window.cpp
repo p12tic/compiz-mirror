@@ -1235,11 +1235,12 @@ CompWindow::incrementDestroyReference ()
 void
 CompWindow::destroy ()
 {
-    windowNotify (CompWindowNotifyBeforeDestroy);
     if (priv->id)
     {
 	CompWindow *oldServerNext, *oldServerPrev, *oldNext, *oldPrev;
 	StackDebugger *dbg = StackDebugger::Default ();
+
+	windowNotify (CompWindowNotifyBeforeDestroy);
 
 	/* Don't allow frame windows to block input */
 	XUnmapWindow (screen->dpy (), priv->serverFrame);
@@ -1329,7 +1330,7 @@ CompWindow::destroy ()
 	    StackDebugger *dbg = StackDebugger::Default ();
 
 	    if (dbg)
-		dbg->addDestroyedFrame (priv->id);
+		dbg->addDestroyedFrame (priv->serverId);
 	}
 
 	priv->destroyed = true;
@@ -1511,9 +1512,6 @@ CompWindow::unmap ()
 	unsigned int   xwcm;
 	int		   gravity = priv->sizeHints.win_gravity;
 
-	if (priv->serverFrame)
-	    priv->unreparent ();
-
 	/* revert gravity adjustment made at MapNotify time */
 	xwc.x	= priv->serverGeometry.x ();
 	xwc.y	= priv->serverGeometry.y ();
@@ -1529,6 +1527,9 @@ CompWindow::unmap ()
 
 	priv->unmanaging = false;
     }
+
+    if (priv->serverFrame)
+	priv->unreparent ();
 
     if (priv->struts)
 	screen->updateWorkarea ();
@@ -3343,6 +3344,8 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 
     if (!sibling || sibling->priv->id != id)
     {
+	/* Alow requests to go on top of serverPrev
+	 * if serverPrev was recently restacked */
 	if (window->serverPrev)
 	{
 	    if (!sibling)
@@ -3353,7 +3356,9 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 		screen->unhookServerWindow (window);
 		screen->insertServerWindow (window, 0);
 	    }
-	    else if (sibling->priv->id != window->serverPrev->priv->id)
+	    else if (sibling->priv->id != window->serverPrev->priv->id ||
+		     (window->serverPrev->serverPrev != window->serverPrev->prev ||
+		      window->serverPrev->serverNext != window->serverPrev->next))
 	    {
 		mask |= CWSibling | CWStackMode;
 
@@ -3607,7 +3612,9 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	}
 
 	if (sibling)
+	{
 	    mask |= priv->addWindowStackChanges (&xwc, sibling);
+	}
     }
 
     mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
@@ -4874,6 +4881,7 @@ PrivateWindow::processMap ()
 
     if (!serverFrame)
 	reparent ();
+
     priv->managed = true;
 
     if (!priv->placed)
@@ -5617,8 +5625,7 @@ CompWindow::~CompWindow ()
      * pending destroy if this was a sibling
      * of one of those */
 
-    if (priv->destroyed)
-	screen->priv->destroyedWindows.remove (this);
+    screen->priv->destroyedWindows.remove (this);
 
     foreach (CompWindow *dw, screen->priv->destroyedWindows)
     {
@@ -5922,8 +5929,9 @@ CompWindow::mwmFunc ()
 void
 CompWindow::updateFrameRegion ()
 {
-    if (priv->serverFrame && priv->serverGeometry.width () == priv->geometry.width () &&
-	 priv->serverGeometry.height () == priv->geometry.height ())
+    if (priv->serverFrame &&
+	priv->serverGeometry.width () == priv->geometry.width () &&
+	priv->serverGeometry.height () == priv->geometry.height ())
     {
 	CompRect   r;
 	int        x, y;
@@ -6017,17 +6025,16 @@ bool
 PrivateWindow::reparent ()
 {
     XSetWindowAttributes attr;
+    XWindowAttributes    wa;
     XWindowChanges       xwc;
     int                  mask;
     unsigned int         nchildren;
     Window		 *children, root_return, parent_return;
-    CompWindow::Geometry &sg = serverGeometry;
     Display              *dpy = screen->dpy ();
     Visual		 *visual = DefaultVisual (screen->dpy (),
 						  screen->screenNum ());
     Colormap		 cmap = DefaultColormap (screen->dpy (),
 						 screen->screenNum ());
-    bool		 created = false;
 
     if (serverFrame)
 	return false;
@@ -6035,14 +6042,14 @@ PrivateWindow::reparent ()
     XSync (dpy, false);
     XGrabServer (dpy);
 
-    if (!XGetWindowAttributes (dpy, id, &attrib))
+    if (!XGetWindowAttributes (dpy, id, &wa))
     {
 	XUngrabServer (dpy);
 	XSync (dpy, false);
 	return false;
     }
 
-    if (attrib.override_redirect)
+    if (wa.override_redirect)
 	return false;
 
     /* Don't ever reparent windows which have ended up
@@ -6064,7 +6071,6 @@ PrivateWindow::reparent ()
     XQueryTree (dpy, root_return, &root_return, &parent_return, &children, &nchildren);
 
     XChangeSaveSet (dpy, id, SetModeInsert);
-    XSelectInput (dpy, id, NoEventMask);
 
     /* Force border width to 0 */
     xwc.border_width = 0;
@@ -6072,10 +6078,10 @@ PrivateWindow::reparent ()
 
     mask = CWBorderPixel | CWColormap | CWBackPixmap;
 
-    if (attrib.depth == 32)
+    if (wa.depth == 32)
     {
-	cmap = attrib.colormap;
-	visual = attrib.visual;
+	cmap = wa.colormap;
+	visual = wa.visual;
     }
 
     attr.background_pixmap = None;
@@ -6090,33 +6096,30 @@ PrivateWindow::reparent ()
 
     if (it != screen->priv->detachedFrameWindows.end ())
     {
-	frame = serverFrame = (it->second)->id ();
+	/* Trash the old frame window
+	 * TODO: It would be nicer if we could just
+	 * reparent back into it, but there are some
+	 * problems with that */
 
-	/* Now remove the server frame from the stack
-	 * and ensure it is mapped */
-	while ((it->second)->priv->destroyRefCnt--)
-	    (it->second)->destroy ();
+	XDestroyWindow (dpy, (it->second)->id ());
 
-	XMapWindow (screen->dpy (), serverFrame);
     }
-    else
-    {
-	/* We need to know when the frame window is created
-	 * but that's all */
-	XSelectInput (dpy, screen->root (), SubstructureNotifyMask);
 
-	serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
-				     sg.width (), sg.height (), 0, attrib.depth,
-				     InputOutput, visual, mask, &attr);
+    /* We need to know when the frame window is created
+     * but that's all */
+    XSelectInput (dpy, screen->root (), SubstructureNotifyMask);
 
-	created = true;
+    /* Awaiting a new frame to be given to us */
+    frame = None;
+    serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
+				 wa.width, wa.height, 0, wa.depth,
+				 InputOutput, visual, mask, &attr);
 
-	/* Do not get any events from here on */
-	XSelectInput (dpy, screen->root (), NoEventMask);
-    }
+    /* Do not get any events from here on */
+    XSelectInput (dpy, screen->root (), NoEventMask);
 
     wrapper = XCreateWindow (dpy, serverFrame, 0, 0,
-			    sg.width (), sg.height (), 0, attrib.depth,
+			    wa.width, wa.height, 0, wa.depth,
 			    InputOutput, visual, mask, &attr);
 
     xwc.stack_mode = Above;
@@ -6163,7 +6166,7 @@ PrivateWindow::reparent ()
     XReparentWindow (dpy, id, wrapper, 0, 0);
 
     /* Restore events */
-    attr.event_mask = attrib.your_event_mask;
+    attr.event_mask = wa.your_event_mask;
 
     /* We don't care about client events on the frame, and listening for them
      * will probably end up fighting the client anyways, so disable them */
@@ -6184,7 +6187,7 @@ PrivateWindow::reparent ()
 
     XChangeWindowAttributes (dpy, id, CWEventMask | CWDontPropagate, &attr);
 
-    if (attrib.map_state == IsViewable || shaded)
+    if (wa.map_state == IsViewable || shaded)
 	XMapWindow (dpy, serverFrame);
 
     attr.event_mask = SubstructureRedirectMask |
@@ -6211,10 +6214,8 @@ PrivateWindow::reparent ()
     XUngrabServer (dpy);
     XSync (dpy, false);
 
-    XMoveResizeWindow (dpy, serverFrame, sg.x (), sg.y (), sg.width (), sg.height ());
-
-    if (!created)
-	updatePassiveButtonGrabs ();
+    XMoveResizeWindow (dpy, serverFrame, wa.x, wa.y,
+		       wa.width, wa.height);
 
     window->windowNotify (CompWindowNotifyReparent);
 
@@ -6352,9 +6353,9 @@ PrivateWindow::unreparent ()
     XUnmapWindow (screen->dpy (), serverFrame);
     XDestroyWindow (screen->dpy (), wrapper);
 
+    window->windowNotify (CompWindowNotifyUnreparent);
+
     frame = None;
     wrapper = None;
     serverFrame = None;
-
-    window->windowNotify (CompWindowNotifyUnreparent);
 }
