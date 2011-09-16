@@ -98,12 +98,10 @@ namespace GL {
 					  int	  width,
 					  int	  height);
 
+    typedef int (*GLXGetVideoSyncProc)  (unsigned int *count);
     typedef int (*GLXWaitVideoSyncProc) (int	  divisor,
 					 int	  remainder,
 					 unsigned int *count);
-
-    // http://www.opengl.org/registry/specs/SGI/swap_control.txt
-    typedef int (*GLXSwapIntervalProc) (int interval);
 
     #ifndef GLX_VERSION_1_3
     typedef struct __GLXFBConfigRec *GLXFBConfig;
@@ -165,6 +163,7 @@ namespace GL {
     extern GLXReleaseTexImageProc   releaseTexImage;
     extern GLXQueryDrawableProc     queryDrawable;
     extern GLXCopySubBufferProc     copySubBuffer;
+    extern GLXGetVideoSyncProc      getVideoSync;
     extern GLXWaitVideoSyncProc     waitVideoSync;
     extern GLXSwapIntervalProc      swapInterval;
     extern GLXGetFBConfigsProc      getFBConfigs;
