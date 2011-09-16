@@ -165,7 +165,6 @@ namespace GL {
     extern GLXCopySubBufferProc     copySubBuffer;
     extern GLXGetVideoSyncProc      getVideoSync;
     extern GLXWaitVideoSyncProc     waitVideoSync;
-    extern GLXSwapIntervalProc      swapInterval;
     extern GLXGetFBConfigsProc      getFBConfigs;
     extern GLXGetFBConfigAttribProc getFBConfigAttrib;
     extern GLXCreatePixmapProc      createPixmap;
