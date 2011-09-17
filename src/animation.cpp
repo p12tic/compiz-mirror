@@ -1576,7 +1576,42 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
     return status;
 }
 
+const CompWindowList &
+PrivateAnimScreen::pushLockedPaintList ()
+{
+    if (!mLockedPaintListCnt)
+    {
+	mLockedPaintListCnt++;
+	mLockedPaintList = &cScreen->getWindowPaintList ();
+
+	if (!mGetWindowPaintListEnableCnt)
+	{
+	    mGetWindowPaintListEnableCnt++;
+	    cScreen->getWindowPaintListSetEnabled (this, true);
+	}
+    }
+
+    return *mLockedPaintList;
+}
+
+void
+PrivateAnimScreen::popLockedPaintList ()
+{
+    mLockedPaintListCnt--;
+
+    if (!mLockedPaintListCnt)
+    {
+	mLockedPaintList = NULL;
+
+	mGetWindowPaintListEnableCnt--;
+
+	if (!mGetWindowPaintListEnableCnt)
+	    cScreen->getWindowPaintListSetEnabled (this, false);
+    }
+}
+
 /// This is enabled only during restack animations.
+/// or when we need to lock it
 const CompWindowList &
 PrivateAnimScreen::getWindowPaintList ()
 {
@@ -2404,7 +2439,10 @@ PrivateAnimScreen::PrivateAnimScreen (CompScreen *s, AnimScreen *as) :
     mAnimInProgress (false),
     mStartingNewPaintRound (false),
     mPrePaintWindowsBackToFrontEnabled (false),
-    mOutput (0)
+    mOutput (0),
+    mLockedPaintList (NULL),
+    mLockedPaintListCnt (0),
+    mGetWindowPaintListEnableCnt (0)
 {
     for (int i = 0; i < WatchedScreenPluginNum; i++)
 	mPluginActive[i] = false;

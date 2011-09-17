@@ -235,6 +235,10 @@ private:
     Window mActiveWindow;
     CompMatch mNeverAnimateMatch;
 
+    const CompWindowList *mLockedPaintList;
+    unsigned int         mLockedPaintListCnt;
+    unsigned int         mGetWindowPaintListEnableCnt;
+
     void updateEventEffects (AnimEvent e,
 			     bool forRandom,
 			     bool callPost = true);
@@ -262,6 +266,13 @@ private:
 public:
     PrivateAnimScreen (CompScreen *s, AnimScreen *);
     ~PrivateAnimScreen ();
+
+    // In order to prevent other plugins from modifying
+    // the paint lists as we use it we need to lock the
+    // list
+
+    const CompWindowList & pushLockedPaintList ();
+    void  popLockedPaintList ();
 
     // Utility methods
     void initiateOpenAnim (PrivateAnimWindow *aw);
