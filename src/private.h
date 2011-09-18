@@ -274,6 +274,9 @@ public:
     const CompWindowList & pushLockedPaintList ();
     void  popLockedPaintList ();
 
+    void pushPaintList ();
+    void popPaintList ();
+
     // Utility methods
     void initiateOpenAnim (PrivateAnimWindow *aw);
     void initiateCloseAnim (PrivateAnimWindow *aw);

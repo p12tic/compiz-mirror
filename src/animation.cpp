@@ -317,12 +317,15 @@ PrivateAnimScreen::addExtension (ExtensionPluginInfo *extensionPluginInfo,
 
     if (shouldInitPersistentData)
     {
+	const CompWindowList &pl = pushLockedPaintList ();
 	// Initialize persistent window data for the extension plugin
-	foreach (CompWindow *w, cScreen->getWindowPaintList ())
+	foreach (CompWindow *w, pl)
 	{
 	    AnimWindow *aw = AnimWindow::get (w);
 	    extensionPluginInfo->initPersistentData (aw);
 	}
+
+	popLockedPaintList ();
     }
 }
 
@@ -336,12 +339,16 @@ void
 PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 {
     // Stop all ongoing animations
-    foreach (CompWindow *w, cScreen->getWindowPaintList ())
+    const CompWindowList &pl = pushLockedPaintList ();
+
+    foreach (CompWindow *w, pl)
     {
 	PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
 	if (aw->curAnimation ())
 	    aw->postAnimationCleanUp ();
     }
+
+    popLockedPaintList ();
 
     // Find the matching plugin and delete it
 
@@ -390,12 +397,16 @@ PrivateAnimScreen::removeExtension (ExtensionPluginInfo *extensionPluginInfo)
 	    updateEventEffects ((AnimEvent)e, true);
     }
 
+    const CompWindowList &cpl = pushLockedPaintList ();
+
     // Destroy persistent window data for the extension plugin
-    foreach (CompWindow *w, cScreen->getWindowPaintList ())
+    foreach (CompWindow *w, cpl)
     {
 	AnimWindow *aw = AnimWindow::get (w);
 	extensionPluginInfo->destroyPersistentData (aw);
     }
+
+    popLockedPaintList ();
 }
 
 ExtensionPluginInfo::ExtensionPluginInfo (const CompString &name,
@@ -1102,8 +1113,7 @@ PrivateAnimScreen::activateEvent (bool activating)
 	// Animations have finished for all windows
 	// (Keep preparePaint enabled)
 
-	cScreen->getWindowPaintListSetEnabled (this, false);
-	enablePrePaintWindowsBackToFront (false);
+	aScreen->enableCustomPaintList (false);
     }
     cScreen->donePaintSetEnabled (this, activating);
     gScreen->glPaintOutputSetEnabled (this, activating);
@@ -1229,7 +1239,8 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
     if (mAnimInProgress)
     {	
 	int msSinceLastPaintActual;
-	CompWindowList pl = cScreen->getWindowPaintList ();
+	const CompWindowList &pl = pushLockedPaintList ();
+	CompWindowList       windowsFinishedAnimations;
 
 	struct timeval curTime;
 	gettimeofday (&curTime, 0);
@@ -1250,7 +1261,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	bool animStillInProgress = false;
 
 	/* Paint list includes destroyed windows */
-	for (CompWindowList::reverse_iterator rit = pl.rbegin ();
+	for (CompWindowList::const_reverse_iterator rit = pl.rbegin ();
 	     rit != pl.rend (); rit++)
 	{
 	    CompWindow *w = (*rit);
@@ -1326,16 +1337,24 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 
 		bool finished = (curAnim->remainingTime () <= 0);
 		if (finished) // Animation is done
-		{
-		    aw->notifyAnimation (false);
-		    aw->postAnimationCleanUp ();
-		}
+		    windowsFinishedAnimations.push_back (w);
 		else
 		    animStillInProgress = true;
 	    }
 	}
 
-	foreach (CompWindow *w, cScreen->getWindowPaintList ())
+	popLockedPaintList ();
+
+	foreach (CompWindow *w, windowsFinishedAnimations)
+	{
+	    AnimWindow *aw = AnimWindow::get (w);
+	    aw->priv->notifyAnimation (false);
+	    aw->priv->postAnimationCleanUp ();
+	}
+
+	const CompWindowList &ppl = pushLockedPaintList ();
+
+	foreach (CompWindow *w, ppl)
 	{
 	    PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
 	    if (aw->curAnimation ())
@@ -1352,6 +1371,8 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 		static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
 	    extPlugin->resetStackingInfo ();
 	}
+
+	popLockedPaintList ();
     }
 
     foreach (ExtensionPluginInfo *extPlugin, mExtensionPlugins)
@@ -1581,7 +1602,6 @@ PrivateAnimScreen::pushLockedPaintList ()
 {
     if (!mLockedPaintListCnt)
     {
-	mLockedPaintListCnt++;
 	mLockedPaintList = &cScreen->getWindowPaintList ();
 
 	if (!mGetWindowPaintListEnableCnt)
@@ -1591,6 +1611,7 @@ PrivateAnimScreen::pushLockedPaintList ()
 	}
     }
 
+    mLockedPaintListCnt++;
     return *mLockedPaintList;
 }
 
@@ -1615,6 +1636,9 @@ PrivateAnimScreen::popLockedPaintList ()
 const CompWindowList &
 PrivateAnimScreen::getWindowPaintList ()
 {
+    if (mLockedPaintList)
+	return *mLockedPaintList;
+
     ExtensionPluginAnimation *extPlugin =
 	static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
     return extPlugin->getWindowPaintList ();
@@ -1638,9 +1662,28 @@ PrivateAnimScreen::enablePrePaintWindowsBackToFront (bool enabled)
 }
 
 void
+PrivateAnimScreen::pushPaintList ()
+{
+    if (!mGetWindowPaintListEnableCnt)
+	cScreen->getWindowPaintListSetEnabled (this, true);
+
+    mGetWindowPaintListEnableCnt++;
+}
+
+void
+PrivateAnimScreen::popPaintList ()
+{
+    mGetWindowPaintListEnableCnt--;
+
+    if (!mGetWindowPaintListEnableCnt)
+	cScreen->getWindowPaintListSetEnabled (this, false);
+}
+
+void
 AnimScreen::enableCustomPaintList (bool enabled)
 {
-    priv->cScreen->getWindowPaintListSetEnabled (priv, enabled);
+    enabled ? priv->pushPaintList () : priv->popPaintList ();
+
     priv->enablePrePaintWindowsBackToFront (enabled);
 }
 
@@ -2297,7 +2340,9 @@ void
 PrivateAnimScreen::updateAnimStillInProgress ()
 {
     bool animStillInProgress = false;
-    foreach (CompWindow *w, cScreen->getWindowPaintList ())
+    const CompWindowList &pl = pushLockedPaintList ();
+
+    foreach (CompWindow *w, pl)
     {
 	PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
 	if (aw->curAnimation () &&
@@ -2311,6 +2356,8 @@ PrivateAnimScreen::updateAnimStillInProgress ()
 	    aw->notifyAnimation (false);
 	}
     }
+
+    popLockedPaintList ();
 
     if (!animStillInProgress)
 	activateEvent (false);
