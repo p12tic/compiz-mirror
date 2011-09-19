@@ -296,6 +296,7 @@ class PrivateWindow {
 	bool         alive;
 
 	CompWindowExtents input;
+	CompWindowExtents serverInput;
 	CompWindowExtents border;
 	CompWindowExtents output;
 

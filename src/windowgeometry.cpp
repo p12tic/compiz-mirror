@@ -189,23 +189,23 @@ CompWindow::serverBorderRect () const
 CompRect
 CompWindow::inputRect () const
 {
-    return CompRect (priv->geometry.x () - priv->geometry.border () - priv->input.left,
-		     priv->geometry.y () - priv->geometry.border () - priv->input.top,
+    return CompRect (priv->geometry.x () - priv->geometry.border () - priv->serverInput.left,
+		     priv->geometry.y () - priv->geometry.border () - priv->serverInput.top,
 		     priv->geometry.width () + priv->geometry.border () * 2 +
-		     priv->input.left + priv->input.right,
+		     priv->serverInput.left + priv->serverInput.right,
 		     priv->geometry.height () +priv->geometry.border () * 2 +
-		     priv->input.top + priv->input.bottom);
+		     priv->serverInput.top + priv->serverInput.bottom);
 }
 
 CompRect
 CompWindow::serverInputRect () const
 {
-    return CompRect (priv->serverGeometry.x () - priv->serverGeometry.border () - priv->input.left,
-		     priv->serverGeometry.y () - priv->serverGeometry.border () - priv->input.top,
+    return CompRect (priv->serverGeometry.x () - priv->serverGeometry.border () - priv->serverInput.left,
+		     priv->serverGeometry.y () - priv->serverGeometry.border () - priv->serverInput.top,
 		     priv->serverGeometry.width () + priv->serverGeometry.border () * 2 +
-		     priv->input.left + priv->input.right,
+		     priv->serverInput.left + priv->serverInput.right,
 		     priv->serverGeometry.height () + priv->serverGeometry.border () * 2 +
-		     priv->input.top + priv->input.bottom);
+		     priv->serverInput.top + priv->serverInput.bottom);
 }
 
 CompRect

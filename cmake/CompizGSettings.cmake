@@ -62,6 +62,7 @@ function (compiz_gsettings_schema _src _dst _inst)
     mark_as_advanced (FORCE XSLTPROC_EXECUTABLE)
 
     if (XSLTPROC_EXECUTABLE AND USE_GSETTINGS)
+	message ("generating gsettings schema for core")
 	add_custom_command (
 	    OUTPUT ${_dst}
 	    COMMAND ${XSLTPROC_EXECUTABLE}
