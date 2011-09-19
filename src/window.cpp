@@ -5105,7 +5105,11 @@ PrivateWindow::processMap ()
 
     screen->priv->applyStartupProperties (window);
 
-    if (!serverFrame)
+    initiallyMinimized = (priv->hints &&
+			  priv->hints->initial_state == IconicState &&
+			  !window->minimized ());
+
+    if (!serverFrame && !initiallyMinimized)
 	reparent ();
 
     priv->managed = true;
@@ -5140,9 +5144,6 @@ PrivateWindow::processMap ()
 	priv->placed = true;
     }
 
-    initiallyMinimized = (priv->hints &&
-			  priv->hints->initial_state == IconicState &&
-			  !window->minimized ());
     allowFocus = allowWindowFocus (NO_FOCUS_MASK, 0);
 
     if (!allowFocus && (priv->type & ~NO_FOCUS_MASK))
@@ -5154,6 +5155,8 @@ PrivateWindow::processMap ()
 
     if (window->minimized () && !initiallyMinimized)
 	window->unminimize ();
+
+    screen->leaveShowDesktopMode (window);
 
     if (!initiallyMinimized)
     {
@@ -5174,13 +5177,9 @@ PrivateWindow::processMap ()
     {
 	window->minimize ();
 	window->changeState (window->state () | CompWindowStateHiddenMask);
-	screen->priv->updateClientList ();
     }
 
-    screen->leaveShowDesktopMode (window);
-
-    if (!(priv->state & CompWindowStateHiddenMask))
-	show ();
+    screen->priv->updateClientList ();
 }
 
 /*
