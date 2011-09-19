@@ -3294,6 +3294,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 			width = xwc->width + old.border () * 2;
 
 			max = x + workArea.right ();
+
 			if (old.x () + (int) old.width () + serverInput.right > max)
 			{
 			    xwc->x = max - width - serverInput.right;
