@@ -769,18 +769,18 @@ PrivateWindow::updateFrameWindow ()
     if (!serverFrame)
 	return;
 
-    if (input.left || input.right || input.top || input.bottom)
+    if (serverInput.left || serverInput.right || serverInput.top || serverInput.bottom)
     {
         int	   x, y, width, height;
 	int	   bw = serverGeometry.border () * 2;
 
-	x      = serverGeometry.x () - input.left;
-	y      = serverGeometry.y () - input.top;
-	width  = serverGeometry.width () + input.left + input.right + bw;
-	height = serverGeometry.height () + input.top  + input.bottom + bw;
+	x      = serverGeometry.x () - serverInput.left;
+	y      = serverGeometry.y () - serverInput.top;
+	width  = serverGeometry.width () + serverInput.left + serverInput.right + bw;
+	height = serverGeometry.height () + serverInput.top  + serverInput.bottom + bw;
 
 	if (shaded)
-	    height = input.top + input.bottom;
+	    height = serverInput.top + serverInput.bottom;
 
 	/* Geometry is the same, so we're not going to get a ConfigureNotify
 	 * event when the window is configured, which means that other plugins
@@ -857,14 +857,12 @@ PrivateWindow::updateFrameWindow ()
 	else
 	{
 	    XMapWindow (screen->dpy (), wrapper);
-	    XMoveResizeWindow (screen->dpy (), wrapper, input.left, input.top,
+	    XMoveResizeWindow (screen->dpy (), wrapper, serverInput.left, serverInput.top,
 			       serverGeometry.width (), serverGeometry.height ());
 	}
-        XMoveResizeWindow (screen->dpy (), id, 0, 0,
+	XMoveResizeWindow (screen->dpy (), id, 0, 0,
 			   serverGeometry.width (), serverGeometry.height ());
-        window->sendConfigureNotify ();
-
-	window->updateFrameRegion ();
+	window->sendConfigureNotify ();
 	window->windowNotify (CompWindowNotifyFrameUpdate);
     }
     else
@@ -880,7 +878,74 @@ PrivateWindow::updateFrameWindow ()
 	if (shaded)
 	    height = 0;
 
-	XMoveResizeWindow (screen->dpy (), serverFrame, x, y, width, height);
+	/* Geometry is the same, so we're not going to get a ConfigureNotify
+	 * event when the window is configured, which means that other plugins
+	 * won't know that the client, frame and wrapper windows got shifted
+	 * around (and might result in display corruption, eg in OpenGL */
+	if (geometry.x () - input.left == x &&
+	    geometry.y () - input.top  == y &&
+	    geometry.width () + input.left + input.right + bw == width &&
+	    geometry.height () + input.top + input.bottom + bw == height)
+	{
+	    XConfigureEvent xev;
+	    XWindowAttributes attrib;
+	    unsigned int      nchildren;
+	    Window            rootRet, parentRet;
+	    Window            *children;
+
+	    xev.type   = ConfigureNotify;
+	    xev.event  = screen->root ();
+	    xev.window = priv->serverFrame;
+
+	    XGrabServer (screen->dpy ());
+
+	    if (XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib))
+	    {
+		xev.x	     = attrib.x;
+		xev.y	     = attrib.y;
+		xev.width	     = attrib.width;
+		xev.height	     = attrib.height;
+		xev.border_width = attrib.border_width;
+		xev.above = None;
+
+		/* We need to ensure that the stacking order is
+		 * based on the current server stacking order so
+		 * find the sibling to this window's frame in the
+		 * server side stack and stack above that */
+		XQueryTree (screen->dpy (), screen->root (), &rootRet, &parentRet, &children, &nchildren);
+
+		if (nchildren)
+		{
+		    for (unsigned int i = 0; i < nchildren; i++)
+		    {
+			if (i + 1 == nchildren ||
+				children[i + 1] == ROOTPARENT (window))
+			{
+			    xev.above = children[i];
+			    break;
+			}
+		    }
+		}
+
+		if (children)
+		    XFree (children);
+
+		if (!xev.above)
+		    xev.above = (window->serverPrev) ? ROOTPARENT (window->serverPrev) : None;
+
+		xev.override_redirect = priv->attrib.override_redirect;
+
+	    }
+
+	    XSendEvent (screen->dpy (), screen->root (), false,
+			SubstructureNotifyMask, (XEvent *) &xev);
+
+	    XUngrabServer (screen->dpy ());
+	    XSync (screen->dpy (), false);
+	}
+	else
+	    XMoveResizeWindow (screen->dpy (), serverFrame, x, y, width, height);
+
 	if (shaded)
 	{
 	    XUnmapWindow (screen->dpy (), wrapper);
@@ -892,10 +957,9 @@ PrivateWindow::updateFrameWindow ()
 			       serverGeometry.width (), serverGeometry.height ());
 	}
 
-        XMoveResizeWindow (screen->dpy (), id, 0, 0,
+	XMoveResizeWindow (screen->dpy (), id, 0, 0,
 			   serverGeometry.width (), serverGeometry.height ());
-        window->sendConfigureNotify ();
-	frameRegion = CompRegion ();
+	window->sendConfigureNotify ();
 	window->windowNotify (CompWindowNotifyFrameUpdate);
     }
     window->recalcActions ();
@@ -1356,6 +1420,7 @@ CompWindow::sendConfigureNotify ()
      * server configuration */
 
     XGrabServer (screen->dpy ());
+    XSync (screen->dpy (), false);
 
     if (XGetWindowAttributes (screen->dpy (), priv->id, &attrib))
     {
@@ -1631,6 +1696,17 @@ CompWindow::resize (int          x,
 bool
 CompWindow::resize (CompWindow::Geometry gm)
 {
+    /* Input extents are now the last thing sent
+     * from the server. This might not work in some
+     * cases though because setWindowFrameExtents may
+     * be called more than once in an event processing
+     * cycle so every set of input extents up until the
+     * last one will be invalid. The real solution
+     * here is to handle ConfigureNotify events on
+     * frame windows and client windows separately */
+
+    priv->input = priv->serverInput;
+
     if (priv->geometry.width ()   != gm.width ()  ||
 	priv->geometry.height ()  != gm.height () ||
 	priv->geometry.border ()  != gm.border ())
@@ -1662,7 +1738,6 @@ CompWindow::resize (CompWindow::Geometry gm)
 	resizeNotify (dx, dy, dwidth, dheight);
 
 	priv->invisible = WINDOW_INVISIBLE (priv);
-	priv->updateFrameWindow ();
     }
     else if (priv->geometry.x () != gm.x () || priv->geometry.y () != gm.y ())
     {
@@ -1673,6 +1748,8 @@ CompWindow::resize (CompWindow::Geometry gm)
 
 	move (dx, dy);
     }
+
+    updateFrameRegion ();
 
     return true;
 }
@@ -1830,10 +1907,15 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     if (!priv->frame)
 	return;
 
-    x      = ce->x + priv->input.left;
-    y      = ce->y + priv->input.top;
-    width  = ce->width - priv->serverGeometry.border () * 2 - priv->input.left - priv->input.right;
-    height = ce->height - priv->serverGeometry.border () * 2 - priv->input.top - priv->input.bottom;
+    /* subtract the input extents last sent to the
+     * server to calculate the client size and then
+     * re-sync the input extents and extents last
+     * sent to server on resize () */
+
+    x      = ce->x + priv->serverInput.left;
+    y      = ce->y + priv->serverInput.top;
+    width  = ce->width - priv->serverGeometry.border () * 2 - priv->serverInput.left - priv->serverInput.right;
+    height = ce->height - priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
 
     if (priv->syncWait)
     {
@@ -1903,13 +1985,13 @@ CompWindow::syncPosition ()
     priv->serverGeometry.setY (priv->geometry.y ());
 
     XMoveWindow (screen->dpy (), ROOTPARENT (this),
-		 priv->geometry.x () - priv->input.left,
-		 priv->geometry.y () - priv->input.top);
+		 priv->serverGeometry.x () - priv->serverInput.left,
+		 priv->serverGeometry.y () - priv->serverInput.top);
 
     if (priv->serverFrame)
     {
 	XMoveWindow (screen->dpy (), priv->wrapper,
-		     priv->input.left, priv->input.top);
+		     priv->serverInput.left, priv->serverInput.top);
 	sendConfigureNotify ();
     }
 }
@@ -2666,20 +2748,22 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     {
 	XWindowChanges wc = *xwc;
 
-	wc.x      -= input.left - serverGeometry.border ();
-	wc.y      -= input.top - serverGeometry.border ();
-	wc.width  += input.left + input.right + serverGeometry.border ();
-	wc.height += input.top + input.bottom + serverGeometry.border ();
+	wc.x      -= serverInput.left - serverGeometry.border ();
+	wc.y      -= serverInput.top - serverGeometry.border ();
+	wc.width  += serverInput.left + serverInput.right + serverGeometry.border ();
+	wc.height += serverInput.top + serverInput.bottom + serverGeometry.border ();
 
 	XConfigureWindow (screen->dpy (), serverFrame, valueMask, &wc);
 	valueMask &= ~(CWSibling | CWStackMode);
 
-	xwc->x = input.left;
-	xwc->y = input.top;
+	xwc->x = serverInput.left;
+	xwc->y = serverInput.top;
 	XConfigureWindow (screen->dpy (), wrapper, valueMask, xwc);
 
 	xwc->x = 0;
 	xwc->y = 0;
+
+	window->sendConfigureNotify ();
     }
 
     XConfigureWindow (screen->dpy (), id, valueMask, xwc);
@@ -2963,8 +3047,8 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	{
 	    saveGeometry (CWY | CWHeight);
 
-	    xwc->height = workArea.height () - input.top -
-		          input.bottom - old.border () * 2;
+	    xwc->height = workArea.height () - serverInput.top -
+			  serverInput.bottom - old.border () * 2;
 
 	    mask |= CWHeight;
 	}
@@ -2977,8 +3061,8 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	{
 	    saveGeometry (CWX | CWWidth);
 
-	    xwc->width = workArea.width () - input.left -
-		         input.right - old.border () * 2;
+	    xwc->width = workArea.width () - serverInput.left -
+			 serverInput.right - old.border () * 2;
 
 	    mask |= CWWidth;
 	}
@@ -3045,9 +3129,9 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 	    if (state & CompWindowStateMaximizedVertMask)
 	    {
-		if (old.y () < y + workArea.y () + input.top)
+		if (old.y () < y + workArea.y () + serverInput.top)
 		{
-		    xwc->y = y + workArea.y () + input.top;
+		    xwc->y = y + workArea.y () + serverInput.top;
 		    mask |= CWY;
 		}
 		else
@@ -3055,16 +3139,16 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 		    height = xwc->height + old.border () * 2;
 
 		    max = y + workArea.bottom ();
-		    if (old.y () + (int) old.height () + input.bottom > max)
+		    if (old.y () + (int) old.height () + serverInput.bottom > max)
 		    {
-			xwc->y = max - height - input.bottom;
+			xwc->y = max - height - serverInput.bottom;
 			mask |= CWY;
 		    }
-		    else if (old.y () + height + input.bottom > max)
+		    else if (old.y () + height + serverInput.bottom > max)
 		    {
 			xwc->y = y + workArea.y () +
-			         (workArea.height () - input.top - height -
-				  input.bottom) / 2 + input.top;
+				 (workArea.height () - serverInput.top - height -
+				  serverInput.bottom) / 2 + serverInput.top;
 			mask |= CWY;
 		    }
 		}
@@ -3072,9 +3156,9 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 	    if (state & CompWindowStateMaximizedHorzMask)
 	    {
-		if (old.x () < x + workArea.x () + input.left)
+		if (old.x () < x + workArea.x () + serverInput.left)
 		{
-		    xwc->x = x + workArea.x () + input.left;
+		    xwc->x = x + workArea.x () + serverInput.left;
 		    mask |= CWX;
 		}
 		else
@@ -3082,16 +3166,16 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 		    width = xwc->width + old.border () * 2;
 
 		    max = x + workArea.right ();
-		    if (old.x () + (int) old.width () + input.right > max)
+		    if (old.x () + (int) old.width () + serverInput.right > max)
 		    {
-			xwc->x = max - width - input.right;
+			xwc->x = max - width - serverInput.right;
 			mask |= CWX;
 		    }
-		    else if (old.x () + width + input.right > max)
+		    else if (old.x () + width + serverInput.right > max)
 		    {
 			xwc->x = x + workArea.x () +
-			         (workArea.width () - input.left - width -
-				  input.right) / 2 + input.left;
+				 (workArea.width () - serverInput.left - width -
+				  serverInput.right) / 2 + serverInput.left;
 			mask |= CWX;
 		    }
 		}
@@ -3168,15 +3252,15 @@ PrivateWindow::adjustConfigureRequestForGravity (XWindowChanges *xwc,
 	case NorthGravity:
 	case NorthEastGravity:
 	    if (xwcm & CWY)
-		newY = xwc->y + priv->input.top * direction;
+		newY = xwc->y + priv->serverInput.top * direction;
 	    break;
 
 	case WestGravity:
 	case CenterGravity:
 	case EastGravity:
 	    if (xwcm & CWY)
-		newY -= (xwc->height / 2 - priv->input.top +
-			(priv->input.top + priv->input.bottom) / 2) * direction;
+		newY -= (xwc->height / 2 - priv->serverInput.top +
+			(priv->serverInput.top + priv->serverInput.bottom) / 2) * direction;
 	    else
 		newY -= ((xwc->height - priv->serverGeometry.height ()) / 2) * direction;
 	    break;
@@ -3185,7 +3269,7 @@ PrivateWindow::adjustConfigureRequestForGravity (XWindowChanges *xwc,
 	case SouthGravity:
 	case SouthEastGravity:
 	    if (xwcm & CWY)
-		newY -= xwc->height + priv->input.bottom * direction;
+		newY -= xwc->height + priv->serverInput.bottom * direction;
 	    else
 		newY -= (xwc->height - priv->serverGeometry.height ()) * direction;
 	    break;
@@ -3650,14 +3734,14 @@ PrivateWindow::ensureWindowVisibility ()
     y2 = y1 + screen->workArea ().height () + screen->vpSize ().height () *
 	 screen->height ();
 
-    if (serverGeometry.x () - input.left >= x2)
+    if (serverGeometry.x () - serverInput.left >= x2)
 	dx = (x2 - 25) - serverGeometry.x ();
-    else if (serverGeometry.x () + width + input.right <= x1)
+    else if (serverGeometry.x () + width + serverInput.right <= x1)
 	dx = (x1 + 25) - (serverGeometry.x () + width);
 
-    if (serverGeometry.y () - input.top >= y2)
+    if (serverGeometry.y () - serverInput.top >= y2)
 	dy = (y2 - 25) - serverGeometry.y ();
-    else if (serverGeometry.y () + height + input.bottom <= y1)
+    else if (serverGeometry.y () + height + serverInput.bottom <= y1)
 	dy = (y1 + 25) - (serverGeometry.y () + height);
 
     if (dx || dy)
@@ -5315,7 +5399,7 @@ CompWindow::border () const
 CompWindowExtents &
 CompWindow::input () const
 {
-    return priv->input;
+    return priv->serverInput;
 }
 
 CompWindowExtents &
@@ -5786,6 +5870,11 @@ PrivateWindow::PrivateWindow () :
     input.top    = 0;
     input.bottom = 0;
 
+    serverInput.left   = 0;
+    serverInput.right  = 0;
+    serverInput.top    = 0;
+    serverInput.bottom = 0;
+
     border.top    = 0;
     border.bottom = 0;
     border.left   = 0;
@@ -5979,14 +6068,14 @@ CompWindow::setWindowFrameExtents (CompWindowExtents *b,
     if (!i)
 	i = b;
 
-    if (priv->input.left   != i->left ||
-	priv->input.right  != i->right ||
-	priv->input.top    != i->top ||
-	priv->input.bottom != i->bottom)
+    if (priv->serverInput.left   != i->left ||
+	priv->serverInput.right  != i->right ||
+	priv->serverInput.top    != i->top ||
+	priv->serverInput.bottom != i->bottom)
     {
 	unsigned long data[4];
 
-	priv->input = *i;
+	priv->serverInput = *i;
 	priv->border = *b;
 
 	recalcActions ();
