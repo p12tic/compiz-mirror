@@ -793,9 +793,9 @@ PrivateWindow::updateFrameWindow ()
 	{
 	    XConfigureEvent xev;
 	    XWindowAttributes attrib;
-	    unsigned int      nchildren;
-	    Window            rootRet, parentRet;
-	    Window            *children;
+	    unsigned int      nchildren = 0;
+	    Window            rootRet = 0, parentRet = 0;
+	    Window            *children = NULL;
 
 	    xev.type   = ConfigureNotify;
 	    xev.event  = screen->root ();
@@ -889,9 +889,9 @@ PrivateWindow::updateFrameWindow ()
 	{
 	    XConfigureEvent xev;
 	    XWindowAttributes attrib;
-	    unsigned int      nchildren;
-	    Window            rootRet, parentRet;
-	    Window            *children;
+	    unsigned int      nchildren = 0;
+	    Window            rootRet = 0, parentRet = 0;
+	    Window            *children = NULL;
 
 	    xev.type   = ConfigureNotify;
 	    xev.event  = screen->root ();
