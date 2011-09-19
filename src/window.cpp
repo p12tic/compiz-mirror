@@ -45,6 +45,7 @@
 #include <core/atoms.h>
 #include "privatewindow.h"
 #include "privatescreen.h"
+#include "privatestackdebugger.h"
 
 PluginClassStorage::Indices windowPluginClassIndices (0);
 
@@ -791,7 +792,7 @@ CompWindow::recalcType ()
 void
 PrivateWindow::updateFrameWindow ()
 {
-    if (!frame)
+    if (!serverFrame)
 	return;
 
     gettimeofday (&lastConfigureRequest, NULL);
@@ -819,25 +820,63 @@ PrivateWindow::updateFrameWindow ()
 	    geometry.height () + input.top + input.bottom + bw == height)
 	{
 	    XConfigureEvent xev;
+	    XWindowAttributes attrib;
+	    unsigned int      nchildren;
+	    Window            rootRet, parentRet;
+	    Window            *children;
 
 	    xev.type   = ConfigureNotify;
 	    xev.event  = screen->root ();
-	    xev.window = priv->frame;
+	    xev.window = priv->serverFrame;
 
-	    xev.x		  = x;
-	    xev.y		  = y;
-	    xev.width	 	  = width;
-	    xev.height	 	  = height;
-	    xev.border_width 	  = window->priv->attrib.border_width;
+	    XGrabServer (screen->dpy ());
 
-	    xev.above	      	  = (window->prev) ? ROOTPARENT (window->prev) : None;
-	    xev.override_redirect = window->priv->attrib.override_redirect;
+	    if (XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib))
+	    {
+		xev.x	     = attrib.x;
+		xev.y	     = attrib.y;
+		xev.width	     = attrib.width;
+		xev.height	     = attrib.height;
+		xev.border_width = attrib.border_width;
+		xev.above = None;
+
+		/* We need to ensure that the stacking order is
+		 * based on the current server stacking order so
+		 * find the sibling to this window's frame in the
+		 * server side stack and stack above that */
+		XQueryTree (screen->dpy (), screen->root (), &rootRet, &parentRet, &children, &nchildren);
+
+		if (nchildren)
+		{
+		    for (unsigned int i = 0; i < nchildren; i++)
+		    {
+			if (i + 1 == nchildren ||
+				children[i + 1] == ROOTPARENT (window))
+			{
+			    xev.above = children[i];
+			    break;
+			}
+		    }
+		}
+
+		if (children)
+		    XFree (children);
+
+		if (!xev.above)
+		    xev.above = (window->serverPrev) ? ROOTPARENT (window->serverPrev) : None;
+
+		xev.override_redirect = priv->attrib.override_redirect;
+
+	    }
 
 	    XSendEvent (screen->dpy (), screen->root (), false,
 			SubstructureNotifyMask, (XEvent *) &xev);
+
+	    XUngrabServer (screen->dpy ());
+	    XSync (screen->dpy (), false);
 	}
 	else
-	    XMoveResizeWindow (screen->dpy (), frame, x, y, width, height);
+	    XMoveResizeWindow (screen->dpy (), serverFrame, x, y, width, height);
 
 	if (shaded)
 	{
@@ -869,7 +908,7 @@ PrivateWindow::updateFrameWindow ()
 	if (shaded)
 	    height = 0;
 
-	XMoveResizeWindow (screen->dpy (), frame, x, y, width, height);
+	XMoveResizeWindow (screen->dpy (), serverFrame, x, y, width, height);
 	if (shaded)
 	{
 	    XUnmapWindow (screen->dpy (), wrapper);
@@ -1224,26 +1263,107 @@ CompWindow::incrementDestroyReference ()
 void
 CompWindow::destroy ()
 {
-    windowNotify (CompWindowNotifyBeforeDestroy);
+    if (priv->id)
+    {
+	CompWindow *oldServerNext, *oldServerPrev, *oldNext, *oldPrev;
+	StackDebugger *dbg = StackDebugger::Default ();
 
-    screen->priv->eraseWindowFromMap (id ());
+	windowNotify (CompWindowNotifyBeforeDestroy);
 
-    priv->id = 1;
-    priv->mapNum = 0;
+	/* Don't allow frame windows to block input */
+	XUnmapWindow (screen->dpy (), priv->serverFrame);
+	XUnmapWindow (screen->dpy (), priv->wrapper);
+
+	oldServerNext = serverNext;
+	oldServerPrev = serverPrev;
+	oldNext = next;
+	oldPrev = prev;
+
+	/* This is where things get tricky ... it is possible
+	 * to receive a ConfigureNotify relative to a frame window
+	 * for a destroyed window in case we process a ConfigureRequest
+	 * for the destroyed window and then a DestroyNotify for it directly
+	 * afterwards. In that case, we will receive the ConfigureNotify
+	 * for the XConfigureWindow request we made relative to that frame
+	 * window. Because of this, we must keep the frame window in the stack
+	 * as a new toplevel window so that the ConfigureNotify will be processed
+	 * properly until it too receives a DestroyNotify */
+
+	if (priv->serverFrame)
+	{
+	    XWindowAttributes attrib;
+
+	    /* It's possible that the frame window was already destroyed because
+	     * the client was unreparented before it was destroyed (eg
+	     * UnmapNotify before DestroyNotify). In that case the frame window
+	     * is going to be an invalid window but since we haven't received
+	     * a DestroyNotify for it yet, it is possible that restacking
+	     * operations could occurr relative to it so we need to hold it
+	     * in the stack for now. Ensure that it is marked override redirect */
+	    XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib);
+
+	    /* Put the frame window "above" the client window
+	     * in the stack */
+	    CoreWindow *cw = new CoreWindow (priv->serverFrame);
+	    cw->manage (priv->id, attrib);
+	    screen->priv->createdWindows.remove (cw);
+	    delete cw;
+	}
+
+	/* Immediately unhook the window once destroyed
+	 * as the stacking order will be invalid if we don't
+	 * and will continue to be invalid for the period
+	 * that we keep it around in the stack. Instead, push
+	 * it to another stack and keep the next and prev members
+	 * in tact, letting plugins sort out where those windows
+	 * might be in case they need to use them relative to
+	 * other windows */
+
+	screen->unhookWindow (this);
+	screen->unhookServerWindow (this);
+
+	/* We must immediately insert the window into the debugging
+	 * stack */
+	if (dbg)
+	    dbg->removeServerWindow (id ());
+
+	/* Unhooking the window will also NULL the next/prev
+	 * linked list links but we don't want that so don't
+	 * do that */
+
+	next = oldNext;
+	prev = oldPrev;
+	serverNext = oldServerNext;
+	serverPrev = oldServerPrev;
+
+	screen->priv->destroyedWindows.push_back (this);
+
+	/* We must set the xid of this window
+	 * to zero as it no longer references
+	 * a valid window */
+	priv->mapNum = 0;
+	priv->id = 0;
+	priv->frame = 0;
+	priv->serverFrame = 0;
+    }
 
     priv->destroyRefCnt--;
     if (priv->destroyRefCnt)
 	return;
 
-
     if (!priv->destroyed)
     {
+	if (!priv->serverFrame)
+	{
+	    StackDebugger *dbg = StackDebugger::Default ();
+
+	    if (dbg)
+		dbg->addDestroyedFrame (priv->serverId);
+	}
+
 	priv->destroyed = true;
 	screen->priv->pendingDestroys++;
     }
-
-    if (priv->frame)
-	priv->unreparent ();
 
 }
 
@@ -1251,53 +1371,81 @@ void
 CompWindow::sendConfigureNotify ()
 {
     XConfigureEvent xev;
+    XWindowAttributes attrib;
+    unsigned int      nchildren;
+    Window            rootRet, parentRet;
+    Window            *children;
 
     xev.type   = ConfigureNotify;
     xev.event  = priv->id;
     xev.window = priv->id;
 
-    /* normally we should never send configure notify events to override
-       redirect windows but if they support the _NET_WM_SYNC_REQUEST
-       protocol we need to do this when the window is mapped. however the
-       only way we can make sure that the attributes we send are correct
-       and is to grab the server. */
-    if (priv->attrib.override_redirect)
+    /* in order to avoid race conditions we must use the current
+     * server configuration */
+
+    XGrabServer (screen->dpy ());
+
+    if (XGetWindowAttributes (screen->dpy (), priv->id, &attrib))
     {
-	XWindowAttributes attrib;
+	xev.x	     = attrib.x;
+	xev.y	     = attrib.y;
+	xev.width	     = attrib.width;
+	xev.height	     = attrib.height;
+	xev.border_width = attrib.border_width;
+	xev.above = None;
 
-	XGrabServer (screen->dpy ());
-
-	if (XGetWindowAttributes (screen->dpy (), priv->id, &attrib))
+	if (priv->frame)
 	{
-	    xev.x	     = attrib.x;
-	    xev.y	     = attrib.y;
-	    xev.width	     = attrib.width;
-	    xev.height	     = attrib.height;
-	    xev.border_width = attrib.border_width;
+	    XWindowAttributes fAttrib;
+	    XWindowAttributes wAttrib;
 
-	    xev.above		  = (prev) ? prev->priv->id : None;
-	    xev.override_redirect = true;
+	    /* Add offset between wrapper and client */
+	    if (XGetWindowAttributes (screen->dpy (), priv->wrapper, &wAttrib))
+	    {
+		xev.x += wAttrib.x;
+		xev.y += wAttrib.y;
+	    }
 
-	    XSendEvent (screen->dpy (), priv->id, false,
-			StructureNotifyMask, (XEvent *) &xev);
+	    /* Add offset between frame and client */
+	    if (XGetWindowAttributes (screen->dpy (), priv->frame, &fAttrib))
+	    {
+		xev.x += fAttrib.x;
+		xev.y += fAttrib.y;
+	    }
 	}
 
-	XUngrabServer (screen->dpy ());
-    }
-    else
-    {
-	xev.x		 = priv->serverGeometry.x ();
-	xev.y		 = priv->serverGeometry.y ();
-	xev.width	 = priv->serverGeometry.width ();
-	xev.height	 = priv->serverGeometry.height ();
-	xev.border_width = priv->serverGeometry.border ();
+	/* We need to ensure that the stacking order is
+	 * based on the current server stacking order so
+	 * find the sibling to this window's frame in the
+	 * server side stack and stack above that */
+	XQueryTree (screen->dpy (), screen->root (), &rootRet, &parentRet, &children, &nchildren);
 
-	xev.above	      = (prev) ? prev->priv->id : None;
+	if (nchildren)
+	{
+	    for (unsigned int i = 0; i < nchildren; i++)
+	    {
+		if (i + 1 == nchildren ||
+		    children[i + 1] == ROOTPARENT (this))
+		{
+		    xev.above = children[i];
+		    break;
+		}
+	    }
+	}
+
+	if (children)
+	    XFree (children);
+
+	if (!xev.above)
+	    xev.above		  = (serverPrev) ? ROOTPARENT (serverPrev) : None;
 	xev.override_redirect = priv->attrib.override_redirect;
 
 	XSendEvent (screen->dpy (), priv->id, false,
 		    StructureNotifyMask, (XEvent *) &xev);
     }
+
+    XUngrabServer (screen->dpy ());
+    XSync (screen->dpy (), false);
 }
 
 void
@@ -1380,7 +1528,7 @@ CompWindow::unmap ()
      * input */
 
     XUnmapWindow (screen->dpy (), priv->wrapper);
-    XUnmapWindow (screen->dpy (), priv->frame);
+    XUnmapWindow (screen->dpy (), priv->serverFrame);
 
     priv->unmapRefCnt--;
     if (priv->unmapRefCnt > 0)
@@ -1391,9 +1539,6 @@ CompWindow::unmap ()
 	XWindowChanges xwc;
 	unsigned int   xwcm;
 	int		   gravity = priv->sizeHints.win_gravity;
-
-	if (priv->frame)
-	    priv->unreparent ();
 
 	/* revert gravity adjustment made at MapNotify time */
 	xwc.x	= priv->serverGeometry.x ();
@@ -1410,6 +1555,9 @@ CompWindow::unmap ()
 
 	priv->unmanaging = false;
     }
+
+    if (priv->serverFrame)
+	priv->unreparent ();
 
     if (priv->struts)
 	screen->updateWorkarea ();
@@ -1448,23 +1596,41 @@ PrivateWindow::withdraw ()
 bool
 PrivateWindow::restack (Window aboveId)
 {
-    if (aboveId && (aboveId == id || aboveId == frame))
+    if (aboveId && (aboveId == id || aboveId == serverFrame))
 	// Don't try to raise a window above itself
 	return false;
     else if (window->prev)
     {
 	if (aboveId && (aboveId == window->prev->id () ||
-		        aboveId == window->prev->frame ()))
+			aboveId == window->prev->priv->frame))
 	    return false;
     }
     else if (aboveId == None && !window->next)
 	return false;
 
     if (aboveId && !screen->findTopLevelWindow (aboveId, true))
+    {
         return false;
+    }
 
     screen->unhookWindow (window);
     screen->insertWindow (window, aboveId);
+
+    /* Update the server side window list for
+     * override redirect windows immediately
+     * since there is no opportunity to update
+     * the server side list when we configure them
+     * since we never get a ConfigureRequest for those */
+    if (attrib.override_redirect != 0)
+    {
+	StackDebugger *dbg = StackDebugger::Default ();
+
+	screen->unhookServerWindow (window);
+	screen->insertServerWindow (window, aboveId);
+
+	if (dbg)
+	    dbg->overrideRedirectRestack (window->id (), aboveId);
+    }
 
     screen->priv->updateClientList ();
 
@@ -1780,7 +1946,7 @@ CompWindow::syncPosition ()
 		 priv->geometry.x () - priv->input.left,
 		 priv->geometry.y () - priv->input.top);
 
-    if (priv->frame)
+    if (priv->serverFrame)
     {
 	XMoveWindow (screen->dpy (), priv->wrapper,
 		     priv->input.left, priv->input.top);
@@ -2039,7 +2205,7 @@ CompWindow::moveInputFocusTo ()
 
     if (priv->state & CompWindowStateHiddenMask)
     {
-	XSetInputFocus (s->dpy (), priv->frame,
+	XSetInputFocus (s->dpy (), priv->serverFrame,
 			RevertToPointerRoot, CurrentTime);
 	XChangeProperty (s->dpy (), s->root (), Atoms::winActive,
 			 XA_WINDOW, 32, PropModeReplace,
@@ -2222,6 +2388,9 @@ PrivateWindow::avoidStackingRelativeTo (CompWindow *w)
     if (w->overrideRedirect ())
 	return true;
 
+    if (w->destroyed ())
+	return true;
+
     if (!w->priv->shaded && !w->priv->pendingMaps)
     {
 	if (!w->isViewable () || !w->isMapped ())
@@ -2256,8 +2425,8 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
-    for (below = screen->windows ().back (); below;
-	 below = below->prev)
+    for (below = screen->serverWindows ().back (); below;
+	 below = below->serverPrev)
     {
 	if (below == w || avoidStackingRelativeTo (below))
 	    continue;
@@ -2306,7 +2475,7 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
 CompWindow *
 PrivateWindow::findLowestSiblingBelow (CompWindow *w)
 {
-    CompWindow   *below, *lowest = screen->windows ().back ();
+    CompWindow   *below, *lowest = screen->serverWindows ().back ();
     Window	 clientLeader = w->priv->clientLeader;
     unsigned int type = w->priv->type;
 
@@ -2318,8 +2487,8 @@ PrivateWindow::findLowestSiblingBelow (CompWindow *w)
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
-    for (below = screen->windows ().back (); below;
-	 below = below->prev)
+    for (below = screen->serverWindows ().back (); below;
+	 below = below->serverPrev)
     {
 	if (below == w || avoidStackingRelativeTo (below))
 	    continue;
@@ -2513,7 +2682,27 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (valueMask & CWBorderWidth)
 	serverGeometry.setBorder (xwc->border_width);
 
-    if (frame)
+    /* Update the server side window list on raise, lower and restack functions.
+     * This function should only recieve stack_mode == Above
+     * but warn incase something else does get through, to make the cause
+     * of any potential misbehaviour obvious. */
+    if (valueMask & (CWSibling | CWStackMode))
+    {
+	if (xwc->stack_mode == Above)
+	{
+	    if (xwc->sibling)
+	    {
+		CompWindow *w = screen->findWindow (id);
+
+		screen->unhookServerWindow (w);
+		screen->insertServerWindow (w, xwc->sibling);
+	    }
+	}
+	else
+	    compLogMessage ("core", CompLogLevelWarn, "restack_mode not Above");
+    }
+
+    if (serverFrame)
     {
 	XWindowChanges wc = *xwc;
 
@@ -2524,7 +2713,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	wc.width  += input.left + input.right + serverGeometry.border ();
 	wc.height += input.top + input.bottom + serverGeometry.border ();
 
-	XConfigureWindow (screen->dpy (), frame, valueMask, &wc);
+	XConfigureWindow (screen->dpy (), serverFrame, valueMask, &wc);
 	valueMask &= ~(CWSibling | CWStackMode);
 
 	xwc->x = input.left;
@@ -2536,36 +2725,6 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     }
 
     XConfigureWindow (screen->dpy (), id, valueMask, xwc);
-
-    /* Compiz's window list is immediately restacked on reconfigureXWindow
-       in order to ensure correct operation of the raise, lower and restacking
-       functions. This function should only recieve stack_mode == Above
-       but warn incase something else does get through, to make the cause
-       of any potential misbehaviour obvious. */
-    if (valueMask & (CWSibling | CWStackMode))
-    {
-	if (xwc->stack_mode == Above)
-	{
-	    /* FIXME: We shouldn't need to sync here, however
-	     * considering the fact that we are immediately
-	     * restacking the windows, we need to ensure
-	     * that when a client tries to restack a window
-	     * relative to this window that the window
-	     * actually goes where the client expects it to go
-	     * and not anywhere else
-	     *
-	     * The real solution here is to have a list of windows
-	     * last sent to server and a list of windows last
-	     * received from server or to have a sync () function
-	     * on the stack which looks through the last recieved
-	     * window stack and the current window stack then
-	     * sends the changes */
-	    XSync (screen->dpy (), false);
-	    restack (xwc->sibling);
-	}
-	else
-	    compLogMessage ("core", CompLogLevelWarn, "restack_mode not Above");
-    }
 }
 
 bool
@@ -2577,7 +2736,7 @@ PrivateWindow::stackDocks (CompWindow     *w,
     CompWindow *firstFullscreenWindow = NULL;
     CompWindow *belowDocks = NULL;
 
-    foreach (CompWindow *dw, screen->windows ())
+    foreach (CompWindow *dw, screen->serverWindows ())
     {
         /* fullscreen window found */
         if (firstFullscreenWindow)
@@ -2601,7 +2760,7 @@ PrivateWindow::stackDocks (CompWindow     *w,
 	     * now go back down to find a suitable candidate client
 	     * window to put the docks above */
             firstFullscreenWindow = dw;
-            for (CompWindow *dww = dw->prev; dww; dww = dww->prev)
+	    for (CompWindow *dww = dw->serverPrev; dww; dww = dww->serverPrev)
             {
                 if (!(dww->type () & (CompWindowTypeFullscreenMask |
                                       CompWindowTypeDockMask)) &&
@@ -2622,7 +2781,7 @@ PrivateWindow::stackDocks (CompWindow     *w,
         xwc->sibling = ROOTPARENT (belowDocks);
 
         /* Collect all dock windows first */
-        foreach (CompWindow *dw, screen->windows ())
+	foreach (CompWindow *dw, screen->serverWindows ())
             if (dw->priv->type & CompWindowTypeDockMask)
                 updateList.push_front (dw);
 
@@ -2644,7 +2803,7 @@ PrivateWindow::stackTransients (CompWindow	*w,
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
 
-    for (t = screen->windows ().back (); t; t = t->prev)
+    for (t = screen->serverWindows ().back (); t; t = t->serverPrev)
     {
 	if (t == w || t == avoid)
 	    continue;
@@ -2660,7 +2819,7 @@ PrivateWindow::stackTransients (CompWindow	*w,
 		return false;
 
 	    if (xwc->sibling == t->priv->id ||
-		(t->priv->frame && xwc->sibling == t->priv->frame))
+		(t->priv->serverFrame && xwc->sibling == t->priv->serverFrame))
 		return false;
 
 	    if (t->priv->mapNum || t->priv->pendingMaps)
@@ -2683,7 +2842,7 @@ PrivateWindow::stackAncestors (CompWindow     *w,
 
     if (transient                           &&
 	xwc->sibling != transient->priv->id &&
-	(!transient->priv->frame || xwc->sibling != transient->priv->frame))
+	(!transient->priv->serverFrame || xwc->sibling != transient->priv->serverFrame))
     {
 	CompWindow *ancestor;
 
@@ -2710,14 +2869,14 @@ PrivateWindow::stackAncestors (CompWindow     *w,
     {
 	CompWindow *a;
 
-	for (a = screen->windows ().back (); a; a = a->prev)
+	for (a = screen->serverWindows ().back (); a; a = a->serverPrev)
 	{
 	    if (a->priv->clientLeader == w->priv->clientLeader &&
 		a->priv->transientFor == None		       &&
 		!a->priv->isGroupTransient (w->priv->clientLeader))
 	    {
 		if (xwc->sibling == a->priv->id ||
-		    (a->priv->frame && xwc->sibling == a->priv->frame))
+		    (a->priv->serverFrame && xwc->sibling == a->priv->serverFrame))
 		    break;
 
 		if (!stackTransients (a, w, xwc, updateList))
@@ -3326,36 +3485,21 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 
     if (!sibling || sibling->priv->id != id)
     {
-	if (window->prev)
+	/* Alow requests to go on top of serverPrev
+	 * if serverPrev was recently restacked */
+	if (window->serverPrev)
 	{
 	    if (!sibling)
 	    {
-		if (frame)
-		    XLowerWindow (screen->dpy (), frame);
-		XLowerWindow (screen->dpy (), id);
+		XLowerWindow (screen->dpy (), ROOTPARENT (window));
 
-		/* Restacking of compiz's window list happens
-		 * immediately and since this path doesn't call
-		 * reconfigureXWindow, restack must be called here.
-		 *
-		 * FIXME: We shouldn't need to sync here, however
-		 * considering the fact that we are immediately
-		 * restacking the windows, we need to ensure
-		 * that when a client tries to restack a window
-		 * relative to this window that the window
-		 * actually goes where the client expects it to go
-		 * and not anywhere else
-		 *
-		 * The real solution here is to have a list of windows
-		 * last sent to server and a list of windows last
-		 * received from server or to have a sync () function
-		 * on the stack which looks through the last recieved
-		 * window stack and the current window stack then
-		 * sends the changes */
-		XSync (screen->dpy (), false);
-		restack (0);
+		/* Update the list of windows last sent to the server */
+		screen->unhookServerWindow (window);
+		screen->insertServerWindow (window, 0);
 	    }
-	    else if (sibling->priv->id != window->prev->priv->id)
+	    else if (sibling->priv->id != window->serverPrev->priv->id ||
+		     (window->serverPrev->serverPrev != window->serverPrev->prev ||
+		      window->serverPrev->serverNext != window->serverPrev->next))
 	    {
 		mask |= CWSibling | CWStackMode;
 
@@ -3399,9 +3543,9 @@ CompWindow *
 PrivateScreen::focusTopMostWindow ()
 {
     CompWindow  *focus = NULL;
-    CompWindowList::reverse_iterator it = windows.rbegin ();
+    CompWindowList::reverse_iterator it = serverWindows.rbegin ();
 
-    for (; it != windows.rend (); it++)
+    for (; it != serverWindows.rend (); it++)
     {
 	CompWindow *w = *it;
 
@@ -3442,10 +3586,7 @@ CompWindow::lower ()
        the click-to-focus option is on */
     if ((screen->priv->optionGetClickToFocus ()))
     {
-	Window aboveWindowId = prev ? prev->id () : None;
-	screen->unhookWindow (this);
 	CompWindow *focusedWindow = screen->priv->focusTopMostWindow ();
-	screen->insertWindow (this , aboveWindowId);
 
 	/* if the newly focused window is a desktop window,
 	   give the focus back to w */
@@ -3460,7 +3601,7 @@ CompWindow::lower ()
 void
 CompWindow::restackAbove (CompWindow *sibling)
 {
-    for (; sibling; sibling = sibling->next)
+    for (; sibling; sibling = sibling->serverNext)
 	if (PrivateWindow::validSiblingBelow (this, sibling))
 	    break;
 
@@ -3487,7 +3628,7 @@ PrivateWindow::findValidStackSiblingBelow (CompWindow *w,
      * to stack under that - if not, then there is no valid sibling
      * underneath it */
 
-    for (p = sibling; p; p = p->next)
+    for (p = sibling; p; p = p->serverNext)
     {
 	if (!avoidStackingRelativeTo (p))
 	{
@@ -3501,7 +3642,7 @@ PrivateWindow::findValidStackSiblingBelow (CompWindow *w,
     lowest = last = findLowestSiblingBelow (w);
 
     /* walk from bottom up */
-    for (p = screen->windows ().front (); p; p = p->next)
+    for (p = screen->serverWindows ().front (); p; p = p->serverNext)
     {
 	/* stop walking when we reach the sibling we should try to stack
 	   below */
@@ -3592,7 +3733,7 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	{
 	    CompWindow *p;
 
-	    for (p = sibling; p; p = p->prev)
+	    for (p = sibling; p; p = p->serverPrev)
 		if (p->priv->id == screen->activeWindow ())
 		    break;
 
@@ -3611,7 +3752,10 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	    }
 	}
 
-	mask |= priv->addWindowStackChanges (&xwc, sibling);
+	if (sibling)
+	{
+	    mask |= priv->addWindowStackChanges (&xwc, sibling);
+	}
     }
 
     mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
@@ -3621,37 +3765,6 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 
     if (mask)
 	configureXWindow (mask, &xwc);
-
-    if ((stackingMode == CompStackingUpdateModeInitialMap) ||
-	(stackingMode == CompStackingUpdateModeInitialMapDeniedFocus))
-    {
-	/* If we are called from the MapRequest handler, we have to
-	   immediately update the internal stack. If we don't do that,
-	   the internal stacking order is invalid until the ConfigureNotify
-	   arrives because we put the window at the top of the stack when
-	   it was created */
-	if (mask & CWStackMode)
-	{
-	    /* FIXME: We shouldn't need to sync here, however
-	     * considering the fact that we are immediately
-	     * restacking the windows, we need to ensure
-	     * that when a client tries to restack a window
-	     * relative to this window that the window
-	     * actually goes where the client expects it to go
-	     * and not anywhere else
-	     *
-	     * The real solution here is to have a list of windows
-	     * last sent to server and a list of windows last
-	     * received from server or to have a sync () function
-	     * on the stack which looks through the last recieved
-	     * window stack and the current window stack then
-	     * sends the changes */
-	    XSync (screen->dpy (), false);
-
-	    Window above = (mask & CWSibling) ? xwc.sibling : 0;
-	    priv->restack (above);
-	}
-    }
 }
 
 void
@@ -3940,8 +4053,8 @@ PrivateWindow::hide ()
     {
 	shaded = false;
 
-	if ((state & CompWindowStateShadedMask) && frame)
-	    XUnmapWindow (screen->dpy (), frame);
+	if ((state & CompWindowStateShadedMask) && serverFrame)
+	    XUnmapWindow (screen->dpy (), serverFrame);
     }
 
     if (!pendingMaps && !window->isViewable ())
@@ -3951,8 +4064,8 @@ PrivateWindow::hide ()
 
     pendingUnmaps++;
 
-    if (frame && !shaded)
-        XUnmapWindow (screen->dpy (), frame);
+    if (serverFrame && !shaded)
+	XUnmapWindow (screen->dpy (), serverFrame);
 
     XUnmapWindow (screen->dpy (), id);
 
@@ -3986,8 +4099,8 @@ PrivateWindow::show ()
     {
 	shaded = true;
 
-	if (frame)
-	    XMapWindow (screen->dpy (), frame);
+	if (serverFrame)
+	    XMapWindow (screen->dpy (), serverFrame);
 
 	if (height)
 	{
@@ -4008,9 +4121,9 @@ PrivateWindow::show ()
 
     pendingMaps++;
 
-    if (frame)
+    if (serverFrame)
     {
-	XMapWindow (screen->dpy (), frame);
+	XMapWindow (screen->dpy (), serverFrame);
 	XMapWindow (screen->dpy (), wrapper);
     }
 
@@ -4907,8 +5020,9 @@ PrivateWindow::processMap ()
 
     screen->priv->applyStartupProperties (window);
 
-    if (!frame)
+    if (!serverFrame)
 	reparent ();
+
     priv->managed = true;
 
     if (!priv->placed)
@@ -4965,7 +5079,11 @@ PrivateWindow::processMap ()
 	    show ();
 
 	if (allowFocus)
+	{
 	    window->moveInputFocusTo ();
+	    if (!window->onCurrentDesktop ())
+		screen->priv->setCurrentDesktop (priv->desktop);
+	}
     }
     else
     {
@@ -4976,14 +5094,8 @@ PrivateWindow::processMap ()
 
     screen->leaveShowDesktopMode (window);
 
-    if (allowFocus && !window->onCurrentDesktop ())
-	screen->priv->setCurrentDesktop (priv->desktop);
-
     if (!(priv->state & CompWindowStateHiddenMask))
 	show ();
-
-    if (allowFocus)
-	window->moveInputFocusTo ();
 }
 
 /*
@@ -5152,7 +5264,7 @@ CompWindow::activeNum ()
 Window
 CompWindow::frame ()
 {
-    return priv->frame;
+    return priv->serverFrame;
 }
 
 CompString
@@ -5442,6 +5554,7 @@ CoreWindow::CoreWindow (Window id)
     priv = new PrivateWindow ();
     assert (priv);
     priv->id = id;
+    priv->serverId = id;
 }
 
 CompWindow::CompWindow (Window aboveId,
@@ -5450,11 +5563,19 @@ CompWindow::CompWindow (Window aboveId,
     PluginClassStorage (windowPluginClassIndices),
     priv (priv)
 {
+    StackDebugger *dbg = StackDebugger::Default ();
+
     // TODO: Reparent first!
 
     priv->window = this;
 
     screen->insertWindow (this, aboveId);
+    screen->insertServerWindow (this, aboveId);
+
+    /* We must immediately insert the window into the debugging
+     * stack */
+    if (dbg)
+	dbg->overrideRedirectRestack (priv->id, aboveId);
 
     gettimeofday (&priv->lastGeometryUpdate, NULL);
 
@@ -5547,7 +5668,7 @@ CompWindow::CompWindow (Window aboveId,
 	if (!overrideRedirect ())
 	{
 	    // needs to happen right after maprequest
-	    if (!priv->frame)
+	    if (!priv->serverFrame)
 		priv->reparent ();
 	    priv->managed = true;
 
@@ -5590,8 +5711,8 @@ CompWindow::CompWindow (Window aboveId,
 
 	    priv->pendingUnmaps++;
 
-	    if (priv->frame && !priv->shaded)
-		XUnmapWindow (screen->dpy (), priv->frame);
+	    if (priv->serverFrame && !priv->shaded)
+		XUnmapWindow (screen->dpy (), priv->serverFrame);
 
 	    XUnmapWindow (screen->dpy (), priv->id);
 
@@ -5603,7 +5724,7 @@ CompWindow::CompWindow (Window aboveId,
 	if (screen->priv->getWmState (priv->id) == IconicState)
 	{
 	    // before everything else in maprequest
-	    if (!priv->frame)
+	    if (!priv->serverFrame)
 		priv->reparent ();
 	    priv->managed = true;
 	    priv->placed  = true;
@@ -5640,14 +5761,54 @@ CompWindow::CompWindow (Window aboveId,
 
 CompWindow::~CompWindow ()
 {
-    screen->unhookWindow (this);
+    if (priv->serverFrame)
+	priv->unreparent ();
+
+    /* Update the references of other windows
+     * pending destroy if this was a sibling
+     * of one of those */
+
+    screen->priv->destroyedWindows.remove (this);
+
+    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+    {
+	if (dw->next == this)
+	    dw->next = this->next;
+	if (dw->prev == this)
+	    dw->prev = this->prev;
+
+	if (dw->serverNext == this)
+	    dw->serverNext = this->serverNext;
+	if (dw->serverPrev == this)
+	    dw->serverPrev = this->serverPrev;
+    }
+
+    /* If this window has a detached frame, destroy it, but only
+     * using XDestroyWindow since there may be pending restack
+     * requests relative to it */
+
+    std::map <CompWindow *, CompWindow *>::iterator it =
+	    screen->priv->detachedFrameWindows.find (this);
+
+    if (it != screen->priv->detachedFrameWindows.end ())
+    {
+	CompWindow *fw = (it->second);
+
+	XDestroyWindow (screen->dpy (), fw->id ());
+	screen->priv->detachedFrameWindows.erase (it);
+    }
 
     if (!priv->destroyed)
     {
-	if (priv->frame)
-	{
-	    priv->unreparent ();
-	}
+	StackDebugger *dbg = StackDebugger::Default ();
+
+	screen->unhookWindow (this);
+	screen->unhookServerWindow (this);
+
+	/* We must immediately insert the window into the debugging
+	 * stack */
+	if (dbg)
+	    dbg->removeServerWindow (id ());
 
 	/* restore saved geometry and map if hidden */
 	if (!priv->attrib.override_redirect)
@@ -5672,6 +5833,7 @@ CompWindow::~CompWindow ()
 	XUngrabButton (screen->dpy (), AnyButton, AnyModifier, priv->id);
     }
 
+
     if (priv->attrib.map_state == IsViewable)
     {
 	if (priv->type == CompWindowTypeDesktopMask)
@@ -5693,6 +5855,7 @@ PrivateWindow::PrivateWindow () :
     priv (this),
     refcnt (1),
     id (None),
+    serverFrame (None),
     frame (None),
     wrapper (None),
     mapNum (0),
@@ -5788,7 +5951,9 @@ PrivateWindow::~PrivateWindow ()
 
     syncWaitTimer.stop ();
 
-    if (frame)
+    if (serverFrame)
+	XDestroyWindow (screen->dpy (), serverFrame);
+    else if (frame)
 	XDestroyWindow (screen->dpy (), frame);
 
     if (struts)
@@ -5907,8 +6072,9 @@ CompWindow::mwmFunc ()
 void
 CompWindow::updateFrameRegion ()
 {
-    if (priv->frame && priv->serverGeometry.width () == priv->geometry.width () &&
-	 priv->serverGeometry.height () == priv->geometry.height ())
+    if (priv->serverFrame &&
+	priv->serverGeometry.width () == priv->geometry.width () &&
+	priv->serverGeometry.height () == priv->geometry.height ())
     {
 	CompRect   r;
 	int        x, y;
@@ -5933,12 +6099,12 @@ CompWindow::updateFrameRegion ()
 	x = priv->geometry.x () - priv->input.left;
 	y = priv->geometry.y () - priv->input.top;
 
-	XShapeCombineRegion (screen->dpy (), priv->frame,
+	XShapeCombineRegion (screen->dpy (), priv->serverFrame,
 			     ShapeBounding, -x, -y,
 			     priv->frameRegion.united (priv->region).handle (),
 			     ShapeSet);
 
-	XShapeCombineRegion (screen->dpy (), priv->frame,
+	XShapeCombineRegion (screen->dpy (), priv->serverFrame,
 			     ShapeInput, -x, -y,
 			     priv->frameRegion.united (priv->inputRegion).handle (),
 			     ShapeSet);
@@ -6002,33 +6168,32 @@ bool
 PrivateWindow::reparent ()
 {
     XSetWindowAttributes attr;
+    XWindowAttributes    wa;
     XWindowChanges       xwc;
     int                  mask;
     unsigned int         nchildren;
     Window		 *children, root_return, parent_return;
-    CompWindow::Geometry &sg = serverGeometry;
     Display              *dpy = screen->dpy ();
     Visual		 *visual = DefaultVisual (screen->dpy (),
 						  screen->screenNum ());
     Colormap		 cmap = DefaultColormap (screen->dpy (),
 						 screen->screenNum ());
 
-    if (frame)
+    if (serverFrame)
 	return false;
 
     XSync (dpy, false);
     XGrabServer (dpy);
 
-    if (!XGetWindowAttributes (dpy, id, &attrib))
+    if (!XGetWindowAttributes (dpy, id, &wa))
     {
 	XUngrabServer (dpy);
 	XSync (dpy, false);
 	return false;
     }
-
     gettimeofday (&lastConfigureRequest, NULL);
 
-    if (attrib.override_redirect)
+    if (wa.override_redirect)
 	return false;
 
     /* Don't ever reparent windows which have ended up
@@ -6047,38 +6212,93 @@ PrivateWindow::reparent ()
 
     XFree (children);
 
-    XChangeSaveSet (dpy, id, SetModeInsert);
-    XSelectInput (dpy, id, NoEventMask);
-    XSelectInput (dpy, screen->root (), NoEventMask);
+    XQueryTree (dpy, root_return, &root_return, &parent_return, &children, &nchildren);
 
+    XChangeSaveSet (dpy, id, SetModeInsert);
+
+    /* Force border width to 0 */
     xwc.border_width = 0;
     XConfigureWindow (dpy, id, CWBorderWidth, &xwc);
 
     mask = CWBorderPixel | CWColormap | CWBackPixmap;
 
-    if (attrib.depth == 32)
+    if (wa.depth == 32)
     {
-	cmap = attrib.colormap;
-	visual = attrib.visual;
+	cmap = wa.colormap;
+	visual = wa.visual;
     }
 
     attr.background_pixmap = None;
     attr.border_pixel      = 0;
     attr.colormap          = cmap;
+    attr.override_redirect = true;
 
-    frame = XCreateWindow (dpy, screen->root (), 0, 0,
-			   sg.width (), sg.height (), 0, attrib.depth,
-			   InputOutput, visual, mask, &attr);
+    /* Look for existing detached frame windows and reattach them
+     * in case this window as reparented again after being withdrawn */
+    std::map <CompWindow *, CompWindow *>::iterator it =
+	    screen->priv->detachedFrameWindows.find (window);
 
-    wrapper = XCreateWindow (dpy, frame, 0, 0,
-			    sg.width (), sg.height (), 0, attrib.depth,
+    if (it != screen->priv->detachedFrameWindows.end ())
+    {
+	/* Trash the old frame window
+	 * TODO: It would be nicer if we could just
+	 * reparent back into it, but there are some
+	 * problems with that */
+
+	XDestroyWindow (dpy, (it->second)->id ());
+
+    }
+
+    /* We need to know when the frame window is created
+     * but that's all */
+    XSelectInput (dpy, screen->root (), SubstructureNotifyMask);
+
+    /* Awaiting a new frame to be given to us */
+    frame = None;
+    serverFrame = XCreateWindow (dpy, screen->root (), 0, 0,
+				 wa.width, wa.height, 0, wa.depth,
+				 InputOutput, visual, mask, &attr);
+
+    /* Do not get any events from here on */
+    XSelectInput (dpy, screen->root (), NoEventMask);
+
+    wrapper = XCreateWindow (dpy, serverFrame, 0, 0,
+			    wa.width, wa.height, 0, wa.depth,
 			    InputOutput, visual, mask, &attr);
 
-    xwc.stack_mode = Below;
-    xwc.sibling = id;
+    xwc.stack_mode = Above;
+
+    /* Look for the client in the current server side stacking
+     * order and put the frame above what the client is above
+     */
+    if (nchildren &&
+	children[0] == id)
+    {
+	/* client at the bottom */
+	xwc.stack_mode = Below;
+	xwc.sibling = id;
+    }
+    else
+    {
+	for (unsigned int i = 0; i < nchildren; i++)
+	{
+	    if (i < nchildren - 1)
+	    {
+		if (children[i + 1] == id)
+		{
+		    xwc.sibling = children[i];
+		    break;
+		}
+	    }
+	    else /* client on top */
+		xwc.sibling = children[i];
+	}
+    }
+
+    XFree (children);
 
     /* Make sure the frame is underneath the client */
-    XConfigureWindow (dpy, frame, CWSibling | CWStackMode, &xwc);
+    XConfigureWindow (dpy, serverFrame, CWSibling | CWStackMode, &xwc);
 
     /* Wait for the restacking to finish */
     XSync (dpy, false);
@@ -6090,7 +6310,7 @@ PrivateWindow::reparent ()
     XReparentWindow (dpy, id, wrapper, 0, 0);
 
     /* Restore events */
-    attr.event_mask = attrib.your_event_mask;
+    attr.event_mask = wa.your_event_mask;
 
     /* We don't care about client events on the frame, and listening for them
      * will probably end up fighting the client anyways, so disable them */
@@ -6111,14 +6331,14 @@ PrivateWindow::reparent ()
 
     XChangeWindowAttributes (dpy, id, CWEventMask | CWDontPropagate, &attr);
 
-    if (attrib.map_state == IsViewable || shaded)
-	XMapWindow (dpy, frame);
+    if (wa.map_state == IsViewable || shaded)
+	XMapWindow (dpy, serverFrame);
 
     attr.event_mask = SubstructureRedirectMask |
 		      SubstructureNotifyMask | EnterWindowMask |
 		      LeaveWindowMask;
 
-    XChangeWindowAttributes (dpy, frame, CWEventMask, &attr);
+    XChangeWindowAttributes (dpy, serverFrame, CWEventMask, &attr);
     XChangeWindowAttributes (dpy, wrapper, CWEventMask, &attr);
 
     XSelectInput (dpy, screen->root (),
@@ -6136,10 +6356,10 @@ PrivateWindow::reparent ()
 		  ExposureMask);
 
     XUngrabServer (dpy);
+    XSync (dpy, false);
 
-    XMoveResizeWindow (dpy, frame, sg.x (), sg.y (), sg.width (), sg.height ());
-
-    updatePassiveButtonGrabs ();
+    XMoveResizeWindow (dpy, serverFrame, wa.x, wa.y,
+		       wa.width, wa.height);
 
     window->windowNotify (CompWindowNotifyReparent);
 
@@ -6156,8 +6376,9 @@ PrivateWindow::unreparent ()
     unsigned int         nchildren;
     Window		 *children = NULL, root_return, parent_return;
     XWindowAttributes	 wa;
+    StackDebugger        *dbg = StackDebugger::Default ();
 
-    if (!frame)
+    if (!serverFrame)
 	return;
 
     XSync (dpy, false);
@@ -6189,7 +6410,7 @@ PrivateWindow::unreparent ()
 	XGrabServer (dpy);
 
         XChangeSaveSet (dpy, id, SetModeDelete);
-	XSelectInput (dpy, frame, NoEventMask);
+	XSelectInput (dpy, serverFrame, NoEventMask);
 	XSelectInput (dpy, wrapper, NoEventMask);
 	XSelectInput (dpy, id, NoEventMask);
 	XSelectInput (dpy, screen->root (), NoEventMask);
@@ -6199,13 +6420,13 @@ PrivateWindow::unreparent ()
 	XSync (dpy, false);
 
 	xwc.stack_mode = Below;
-	xwc.sibling    = frame;
+	xwc.sibling    = serverFrame;
 	XConfigureWindow (dpy, id, CWSibling | CWStackMode, &xwc);
 
 	/* Wait for the window to be restacked */
 	XSync (dpy, false);
 
-	XUnmapWindow (dpy, frame);
+	XUnmapWindow (dpy, serverFrame);
 
 	XSelectInput (dpy, id, wa.your_event_mask);
 
@@ -6224,6 +6445,7 @@ PrivateWindow::unreparent ()
 		  ExposureMask);
 
 	XUngrabServer (dpy);
+	XSync (dpy, false);
 
 	XMoveWindow (dpy, id, serverGeometry.x (), serverGeometry.y ());
     }
@@ -6231,10 +6453,53 @@ PrivateWindow::unreparent ()
     if (children)
 	XFree (children);
 
-    XDestroyWindow (dpy, wrapper);
-    XDestroyWindow (dpy, frame);
-    wrapper = None;
-    frame = None;
+    if (dbg)
+	dbg->addDestroyedFrame (serverFrame);
+
+    /* This is where things get tricky ... it is possible
+     * to receive a ConfigureNotify relative to a frame window
+     * for a destroyed window in case we process a ConfigureRequest
+     * for the destroyed window and then a DestroyNotify for it directly
+     * afterwards. In that case, we will receive the ConfigureNotify
+     * for the XConfigureWindow request we made relative to that frame
+     * window. Because of this, we must keep the frame window in the stack
+     * as a new toplevel window so that the ConfigureNotify will be processed
+     * properly until it too receives a DestroyNotify */
+
+    if (serverFrame)
+    {
+	XWindowAttributes attrib;
+
+	/* It's possible that the frame window was already destroyed because
+	 * the client was unreparented before it was destroyed (eg
+	 * UnmapNotify before DestroyNotify). In that case the frame window
+	 * is going to be an invalid window but since we haven't received
+	 * a DestroyNotify for it yet, it is possible that restacking
+	 * operations could occurr relative to it so we need to hold it
+	 * in the stack for now. Ensure that it is marked override redirect */
+	XGetWindowAttributes (screen->dpy (), serverFrame, &attrib);
+
+	/* Put the frame window "above" the client window
+	 * in the stack */
+	CoreWindow *cw = new CoreWindow (serverFrame);
+	CompWindow *fw = cw->manage (id, attrib);
+	screen->priv->createdWindows.remove (cw);
+	delete cw;
+
+	/* Put this window in the list of "detached frame windows"
+	 * so that we can reattach it or destroy it when we are
+	 * done with it */
+
+	screen->priv->detachedFrameWindows[window] = fw;
+    }
+
+    /* Safe to destroy the wrapper but not the frame */
+    XUnmapWindow (screen->dpy (), serverFrame);
+    XDestroyWindow (screen->dpy (), wrapper);
 
     window->windowNotify (CompWindowNotifyUnreparent);
+
+    frame = None;
+    wrapper = None;
+    serverFrame = None;
 }

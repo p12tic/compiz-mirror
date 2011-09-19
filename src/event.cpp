@@ -40,6 +40,7 @@
 #include <core/atoms.h>
 #include "privatescreen.h"
 #include "privatewindow.h"
+#include "privatestackdebugger.h"
 
 bool
 PrivateWindow::handleSyncAlarm ()
@@ -636,7 +637,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 
 	foreach (CompWindow *w, screen->windows ())
 	{
-	    if (w->frame () == xid)
+	    if (w->priv->frame == xid)
 		xid = w->id ();
 	}
 
@@ -956,7 +957,7 @@ PrivateScreen::setDefaultWindowAttributes (XWindowAttributes *wa)
     wa->border_width	      = 0;
     wa->depth		      = 0;
     wa->visual		      = NULL;
-    wa->root		      = None;
+    wa->root		      = priv->root;
     wa->c_class		      = InputOnly;
     wa->bit_gravity	      = NorthWestGravity;
     wa->win_gravity	      = NorthWestGravity;
@@ -971,7 +972,7 @@ PrivateScreen::setDefaultWindowAttributes (XWindowAttributes *wa)
     wa->your_event_mask	      = 0;
     wa->do_not_propagate_mask = 0;
     wa->override_redirect     = true;
-    wa->screen		      = NULL;
+    wa->screen		      = ScreenOfDisplay (priv->dpy, priv->screenNum);
 }
 
 void
@@ -1044,7 +1045,8 @@ CompScreen::handleEvent (XEvent *event)
 	break;
     case ConfigureNotify:
 	w = findWindow (event->xconfigure.window);
-	if (w && !w->frame ())
+
+	if (w && !w->priv->frame)
 	{
 	    w->priv->configure (&event->xconfigure);
 	}
@@ -1052,10 +1054,8 @@ CompScreen::handleEvent (XEvent *event)
 	{
 	    w = findTopLevelWindow (event->xconfigure.window);
 
-	    if (w && w->frame () == event->xconfigure.window)
-	    {
+	    if (w && w->priv->frame == event->xconfigure.window)
 		w->priv->configureFrame (&event->xconfigure);
-	    }
 	    else
 	    {
 		if (event->xconfigure.window == priv->root)
@@ -1065,27 +1065,58 @@ CompScreen::handleEvent (XEvent *event)
 	break;
     case CreateNotify:
     {
-	bool failure = false;
+	bool create = true;
 
 	/* Failure means that window has been destroyed. We still have to add 
 	 * the window to the window list as we might get configure requests
 	 * which require us to stack other windows relative to it. Setting
 	 * some default values if this is the case. */
-	if ((failure = !XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa)))
+	if (!XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa))
 	    priv->setDefaultWindowAttributes (&wa);
 
-	w = findTopLevelWindow (event->xcreatewindow.window, true);
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    if (w->priv->serverFrame == event->xcreatewindow.window)
+	    {
+		w->priv->frame = event->xcreatewindow.window;
+		w->priv->updatePassiveButtonGrabs ();
+		create = false;
+	    }
+	}
 
-	if ((event->xcreatewindow.parent == wa.root || failure) &&
-	    (!w || w->frame () != event->xcreatewindow.window))
+	foreach (CompWindow *w, screen->priv->destroyedWindows)
+	{
+	    if (w->priv->serverId == event->xcreatewindow.window)
+	    {
+		/* Previously destroyed window
+		 * plugins were keeping around
+		 * in order to avoid an xid conflict,
+		 * destroy it right away and manage
+		 * the new window */
+
+		StackDebugger *dbg = StackDebugger::Default ();
+
+		while (w->priv->destroyRefCnt)
+		    w->destroy ();
+
+		if (dbg)
+		    dbg->removeDestroyedFrame (event->xcreatewindow.window);
+	    }
+
+	}
+
+	if (wa.root != event->xcreatewindow.parent)
+	    create = false;
+
+	if (create)
 	{
 	    /* Track the window if it was created on this
 	     * screen, otherwise we still need to register
 	     * for FocusChangeMask. Also, we don't want to
 	     * manage it straight away - in reality we want
 	     * that to wait until the map request */
- 	    if (failure || (wa.root == priv->root))
-            {
+	    if ((wa.root == priv->root))
+	    {
 		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
 		cw->manage (priv->getTopWindow (), wa);
 
@@ -1096,10 +1127,32 @@ CompScreen::handleEvent (XEvent *event)
 		XSelectInput (priv->dpy, event->xcreatewindow.window,
 			      FocusChangeMask);
 	}
+	else
+	    compLogMessage ("core", CompLogLevelDebug, "refusing to manage window 0x%x", (unsigned int) event->xcreatewindow.window);
+
 	break;
     }
     case DestroyNotify:
 	w = findWindow (event->xdestroywindow.window);
+
+	/* It is possible that some plugin might call
+	 * w->destroy () before the window actually receives
+	 * its first DestroyNotify event which would mean
+	 * that it is already in the list of destroyed
+	 * windows, so check that list too */
+
+	if (!w)
+	{
+	    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+	    {
+		if (dw->priv->serverId == event->xdestroywindow.window)
+		{
+		    w = dw;
+		    break;
+		}
+	    }
+	}
+
 	if (w)
 	{
 	    w->moveInputFocusToOtherWindow ();
@@ -1121,8 +1174,9 @@ CompScreen::handleEvent (XEvent *event)
 		 * but doesn't get destroyed so when
 		 * it re-maps we need to reparent it */
 
-		if (!w->priv->frame)
+		if (!w->priv->serverFrame)
 		    w->priv->reparent ();
+
 		w->priv->managed = true;
 	    }
 
@@ -1187,6 +1241,24 @@ CompScreen::handleEvent (XEvent *event)
 	break;
     case ReparentNotify:
 	w = findWindow (event->xreparent.window);
+
+	/* It is possible that some plugin might call
+	 * w->destroy () before the window actually receives
+	 * its first ReparentNotify event which would mean
+	 * that it is already in the list of destroyed
+	 * windows, so check that list too */
+	if (!w)
+	{
+	    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+	    {
+		if (dw->priv->serverId == event->xdestroywindow.window)
+		{
+		    w = dw;
+		    break;
+		}
+	    }
+	}
+
 	if (!w && event->xreparent.parent == priv->root)
 	{
 	    /* Failure means that window has been destroyed. We still have to add 
@@ -1236,7 +1308,9 @@ CompScreen::handleEvent (XEvent *event)
 	    if (w)
 	    {
 		if (priv->optionGetRaiseOnClick ())
+		{
 		    w->updateAttributes (CompStackingUpdateModeAboveFullscreen);
+		}
 
 	        if (w->id () != priv->activeWindow)
 		    if (!(w->type () & CompWindowTypeDockMask))
@@ -1632,52 +1706,7 @@ CompScreen::handleEvent (XEvent *event)
 	modHandler->updateModifierMappings ();
 	break;
     case MapRequest:
-	/* Create the CompWindow structure here */
-	w = NULL;
-
-	foreach (CoreWindow *cw, priv->createdWindows)
-	{
-	    if (cw->priv->id == event->xmaprequest.window)
-	    {
-		/* Failure means the window has been destroyed, but
-		 * still add it to the window list anyways since we
-		 * will soon handle the DestroyNotify event for it
-		 * and in between CreateNotify time and DestroyNotify
-		 * time there might be ConfigureRequests asking us
-		 * to stack windows relative to it
-		 */
-		if (!XGetWindowAttributes (screen->dpy (), cw->priv->id, &wa))
-		    priv->setDefaultWindowAttributes (&wa);
-
-		w = cw->manage (priv->getTopWindow (), wa);
-		delete cw;
-		break;
-	    }
-	}
-
-	foreach (CoreWindow *cw, priv->createdWindows)
-	{
-	    if (cw->priv->id == event->xmaprequest.window)
-	    {
-		/* Failure means the window has been destroyed, but
-		 * still add it to the window list anyways since we
-		 * will soon handle the DestroyNotify event for it
-		 * and in between CreateNotify time and DestroyNotify
-		 * time there might be ConfigureRequests asking us
-		 * to stack windows relative to it
-		 */
-		if (!XGetWindowAttributes (screen->dpy (), cw->priv->id, &wa))
-		    priv->setDefaultWindowAttributes (&wa);
-
-		w = cw->manage (priv->getTopWindow (), wa);
-		priv->createdWindows.remove (cw);
-		delete cw;
-		break;
-	    }
-	}
-
-	if (!w)
-	    w = screen->findWindow (event->xmaprequest.window);
+	w = screen->findWindow (event->xmaprequest.window);
 
 	if (w)
 	{
@@ -1777,7 +1806,13 @@ CompScreen::handleEvent (XEvent *event)
 	    xwc.border_width = event->xconfigurerequest.border_width;
 
 	    if (w)
+	    {
+		/* Any window that receives a ConfigureRequest
+		 * is not override redirect, and may have changed
+		 * to being not override redirect */
+		w->priv->setOverrideRedirect (false);
 		w->configureXWindow (xwcm, &xwc);
+	    }
 	    else
 		XConfigureWindow (priv->dpy, event->xconfigurerequest.window,
 				  xwcm, &xwc);
@@ -1787,7 +1822,8 @@ CompScreen::handleEvent (XEvent *event)
 	break;
     case FocusIn:
     {
-        bool success = XGetWindowAttributes (priv->dpy, event->xfocus.window, &wa);
+	if (!XGetWindowAttributes (priv->dpy, event->xfocus.window, &wa))
+	    priv->setDefaultWindowAttributes (&wa);
 
         /* If the call to XGetWindowAttributes failed it means
          * the window was destroyed, so track the focus change
@@ -1797,7 +1833,7 @@ CompScreen::handleEvent (XEvent *event)
          * there
          */
 
-        if (!success || wa.root == priv->root)
+	if (wa.root == priv->root)
 	{
 	    if (event->xfocus.mode != NotifyGrab)
 	    {

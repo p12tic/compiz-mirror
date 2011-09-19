@@ -55,6 +55,7 @@ add_executable (compiz
     timeouthandler.cpp
     valueholder.cpp
     logmessage.cpp
+    stackdebugger.cpp
     ${_bcop_sources}
 )
 

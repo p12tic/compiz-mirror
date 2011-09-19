@@ -14,7 +14,7 @@
  *
  * NOVELL, INC. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN
- * NO EVENT SHALL NOVELL, INC. BE LIABLE FOR ANY SPECI<<<<<fAL, INDIRECT OR
+ * NO EVENT SHALL NOVELL, INC. BE LIABLE FOR ANY SPECIAL, INDIRECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
  * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
@@ -60,6 +60,7 @@
 #include "privatescreen.h"
 #include "privatewindow.h"
 #include "privateaction.h"
+#include "privatestackdebugger.h"
 
 bool inHandleEvent = false;
 
@@ -620,21 +621,74 @@ PrivateScreen::setOption (const CompString  &name,
     return rv;
 }
 
+std::list <XEvent>
+PrivateScreen::queueEvents ()
+{
+    std::list <XEvent> events;
+
+    while (XPending (dpy))
+    {
+	XEvent event, peekEvent;
+	XNextEvent (dpy, &event);
+
+	/* Skip to the last MotionNotify
+	 * event in this sequence */
+	if (event.type == MotionNotify)
+	{
+	    while (XPending (dpy))
+	    {
+		XPeekEvent (dpy, &peekEvent);
+
+		if (peekEvent.type != MotionNotify)
+		    break;
+
+		XNextEvent (dpy, &event);
+	    }
+	}
+
+	events.push_back (event);
+    }
+
+    return events;
+}
+
 void
 PrivateScreen::processEvents ()
 {
-    XEvent event, peekEvent;
-
-    /* remove destroyed windows */
-    removeDestroyed ();
+    std::list <XEvent> events;
+    StackDebugger *dbg = StackDebugger::Default ();
 
     if (dirtyPluginList)
 	updatePlugins ();
 
-    while (XPending (dpy))
+    /* Restacks recently processed, ensure that
+     * plugins use the stack last received from
+     * the server */
+    if (stackIsFresh)
     {
-	XNextEvent (dpy, &event);
+	priv->serverWindows.clear ();
 
+	foreach (CompWindow *sw, priv->windows)
+	{
+	    sw->serverPrev = sw->prev;
+	    sw->serverNext = sw->next;
+	    priv->serverWindows.push_back (sw);
+	}
+    }
+
+    if (dbg)
+    {
+	dbg->windowsChanged (false);
+	dbg->serverWindowsChanged (false);
+	events = dbg->loadStack (priv->serverWindows);
+    }
+    else
+	events = queueEvents ();
+
+    stackIsFresh = false;
+
+    foreach (XEvent &event, events)
+    {
 	switch (event.type) {
 	case ButtonPress:
 	case ButtonRelease:
@@ -646,28 +700,19 @@ PrivateScreen::processEvents ()
 	case KeyRelease:
 	    pointerX = event.xkey.x_root;
 	    pointerY = event.xkey.y_root;
-	    pointerMods = event.xbutton.state;
+	    pointerMods = event.xkey.state;
 	    break;
 	case MotionNotify:
-	    while (XPending (dpy))
-	    {
-		XPeekEvent (dpy, &peekEvent);
-
-		if (peekEvent.type != MotionNotify)
-		    break;
-
-		XNextEvent (dpy, &event);
-	    }
 
 	    pointerX = event.xmotion.x_root;
 	    pointerY = event.xmotion.y_root;
-	    pointerMods = event.xbutton.state;
+	    pointerMods = event.xmotion.state;
 	    break;
 	case EnterNotify:
 	case LeaveNotify:
 	    pointerX = event.xcrossing.x_root;
 	    pointerY = event.xcrossing.y_root;
-	    pointerMods = event.xbutton.state;
+	    pointerMods = event.xcrossing.state;
 	    break;
 	case ClientMessage:
 	    if (event.xclient.message_type == Atoms::xdndPosition)
@@ -706,6 +751,22 @@ PrivateScreen::processEvents ()
 	lastPointerX = pointerX;
 	lastPointerY = pointerY;
 	lastPointerMods = pointerMods;
+    }
+
+    /* remove destroyed windows */
+    removeDestroyed ();
+
+    if (dbg)
+    {
+	if (dbg->windowsChanged () && dbg->cmpStack (priv->windows, priv->serverWindows))
+	{
+	    compLogMessage ("core", CompLogLevelDebug, "stacks are out of sync");
+	    if (dbg->timedOut ())
+		compLogMessage ("core", CompLogLevelDebug, "however, this may be a false positive");
+	}
+
+	if (dbg->serverWindowsChanged () && dbg->checkSanity (priv->serverWindows))
+	    compLogMessage ("core", CompLogLevelDebug, "windows are stacked incorrectly");
     }
 }
 
@@ -2496,7 +2557,7 @@ CompScreen::findTopLevelWindow (Window id, bool override_redirect)
     }
 
     foreach (CompWindow *w, priv->windows)
-	if (w->frame () == id)
+	if (w->priv->frame == id)
 	{
 	    if (w->overrideRedirect () && !override_redirect)
 		return NULL;
@@ -2510,6 +2571,13 @@ CompScreen::findTopLevelWindow (Window id, bool override_redirect)
 void
 CompScreen::insertWindow (CompWindow *w, Window	aboveId)
 {
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (dbg)
+	dbg->windowsChanged (true);
+
+    priv->stackIsFresh = true;
+
     w->prev = NULL;
     w->next = NULL;
 
@@ -2532,7 +2600,7 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
     while (it != priv->windows.end ())
     {
 	if ((*it)->id () == aboveId ||
-	    ((*it)->frame () && (*it)->frame () == aboveId))
+	    ((*it)->priv->frame && (*it)->priv->frame == aboveId))
 	{
 	    break;
 	}
@@ -2541,6 +2609,8 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
 
     if (it == priv->windows.end ())
     {
+	compLogMessage ("core", CompLogLevelDebug, "could not insert 0x%x above 0x%x",
+			(unsigned int) (*it)->priv->serverId, aboveId);
 #ifdef DEBUG
 	abort ();
 #endif
@@ -2562,6 +2632,63 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
 }
 
 void
+CompScreen::insertServerWindow (CompWindow *w, Window	aboveId)
+{
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (dbg)
+	dbg->serverWindowsChanged (true);
+
+    w->serverPrev = NULL;
+    w->serverNext = NULL;
+
+    if (!aboveId || priv->serverWindows.empty ())
+    {
+	if (!priv->serverWindows.empty ())
+	{
+	    priv->serverWindows.front ()->serverPrev = w;
+	    w->serverNext = priv->serverWindows.front ();
+	}
+	priv->serverWindows.push_front (w);
+
+	return;
+    }
+
+    CompWindowList::iterator it = priv->serverWindows.begin ();
+
+    while (it != priv->serverWindows.end ())
+    {
+	if ((*it)->priv->serverId == aboveId ||
+	    ((*it)->priv->serverFrame && (*it)->priv->serverFrame == aboveId))
+	{
+	    break;
+	}
+	it++;
+    }
+
+    if (it == priv->serverWindows.end ())
+    {
+	compLogMessage ("core", CompLogLevelDebug, "could not insert 0x%x above 0x%x",
+			(unsigned int) (*it)->priv->serverId, aboveId);
+#ifdef DEBUG
+	abort ();
+#endif
+	return;
+    }
+
+    w->serverNext = (*it)->serverNext;
+    w->serverPrev = (*it);
+    (*it)->serverNext = w;
+
+    if (w->serverNext)
+    {
+	w->serverNext->serverPrev = w;
+    }
+
+    priv->serverWindows.insert (++it, w);
+}
+
+void
 PrivateScreen::eraseWindowFromMap (Window id)
 {
     if (id != 1)
@@ -2571,6 +2698,11 @@ PrivateScreen::eraseWindowFromMap (Window id)
 void
 CompScreen::unhookWindow (CompWindow *w)
 {
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (dbg)
+	dbg->windowsChanged (true);
+
     CompWindowList::iterator it =
 	std::find (priv->windows.begin (), priv->windows.end (), w);
 
@@ -2588,6 +2720,29 @@ CompScreen::unhookWindow (CompWindow *w)
 
     if (w == lastFoundWindow)
 	lastFoundWindow = NULL;
+}
+
+void
+CompScreen::unhookServerWindow (CompWindow *w)
+{
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (dbg)
+	dbg->serverWindowsChanged (true);
+
+    CompWindowList::iterator it =
+	std::find (priv->serverWindows.begin (), priv->serverWindows.end (), w);
+
+    priv->serverWindows.erase (it);
+
+    if (w->serverNext)
+	w->serverNext->serverPrev = w->serverPrev;
+
+    if (w->serverPrev)
+	w->serverPrev->serverNext = w->serverNext;
+
+    w->serverNext = NULL;
+    w->serverPrev = NULL;
 }
 
 Cursor
@@ -3505,12 +3660,8 @@ Window
 PrivateScreen::getTopWindow ()
 {
     /* return first window that has not been destroyed */
-    for (CompWindowList::reverse_iterator rit = priv->windows.rbegin ();
-	     rit != priv->windows.rend (); rit++)
-    {
-	if ((*rit)->id () > 1)
-	    return (*rit)->id ();
-    }
+    if (priv->windows.size ())
+	return priv->windows.back ()->id ();
 
     return None;
 }
@@ -3931,6 +4082,19 @@ CompScreen::windows ()
     return priv->windows;
 }
 
+CompWindowList &
+CompScreen::serverWindows ()
+{
+    return priv->serverWindows;
+}
+
+CompWindowList &
+CompScreen::destroyedWindows ()
+{
+    return priv->destroyedWindows;
+}
+
+
 Time
 CompScreen::getCurrentTime ()
 {
@@ -4029,7 +4193,7 @@ PrivateScreen::removeDestroyed ()
 {
     while (pendingDestroys)
     {
-	foreach (CompWindow *w, windows)
+	foreach (CompWindow *w, destroyedWindows)
 	{
 	    if (w->destroyed ())
 	    {
@@ -4145,7 +4309,7 @@ CompScreen::init (const char *name)
     if (!priv->dpy)
     {
 	compLogMessage ("core", CompLogLevelFatal,
-		        "Couldn't open display %s", XDisplayName (name));
+			"Couldn't open display %s", XDisplayName (name));
 	return false;
     }
 
@@ -4171,7 +4335,7 @@ CompScreen::init (const char *name)
     if (!XSyncQueryExtension (dpy, &priv->syncEvent, &priv->syncError))
     {
 	compLogMessage ("core", CompLogLevelFatal,
-		        "No sync extension");
+			"No sync extension");
 	return false;
     }
 
@@ -4193,7 +4357,7 @@ CompScreen::init (const char *name)
     else
     {
 	compLogMessage ("core", CompLogLevelFatal,
-		        "No XKB extension");
+			"No XKB extension");
 
 	priv->xkbEvent = priv->xkbError = -1;
     }
@@ -4290,9 +4454,14 @@ CompScreen::init (const char *name)
 
     XGrabServer (dpy);
 
+    /* Don't select for SubstructureRedirectMask or
+     * SubstructureNotifyMask yet since we need to
+     * act in complete synchronization here when
+     * doing the initial window init in order to ensure
+     * that windows don't receive invalid stack positions
+     * but we don't want to receive an invalid CreateNotify
+     * when we create windows like edge windows here either */
     XSelectInput (dpy, root,
-		  SubstructureRedirectMask |
-		  SubstructureNotifyMask   |
 		  StructureNotifyMask      |
 		  PropertyChangeMask       |
 		  LeaveWindowMask          |
@@ -4325,20 +4494,13 @@ CompScreen::init (const char *name)
     if (CompScreen::checkForError (dpy))
     {
 	compLogMessage ("core", CompLogLevelError,
-		        "Another window manager is "
-		        "already running on screen: %d", DefaultScreen (dpy));
+			"Another window manager is "
+			"already running on screen: %d", DefaultScreen (dpy));
 
 	XUngrabServer (dpy);
+	XSync (dpy, false);
 	return false;
     }
-
-    /* We only care about windows we're not going to
-     * get a CreateNotify for later, so query the tree
-     * here, init plugin screens, and then init windows */
-
-    XQueryTree (dpy, root,
-		&rootReturn, &parentReturn,
-		&children, &nchildren);
 
     for (i = 0; i < SCREEN_EDGE_NUM; i++)
     {
@@ -4431,10 +4593,10 @@ CompScreen::init (const char *name)
 
 	priv->screenEdge[i].id = XCreateWindow (dpy, priv->root,
 						-100, -100, 1, 1, 0,
-					        CopyFromParent, InputOnly,
-					        CopyFromParent,
+						CopyFromParent, InputOnly,
+						CopyFromParent,
 						CWOverrideRedirect,
-					        &attrib);
+						&attrib);
 
 	XChangeProperty (dpy, priv->screenEdge[i].id, Atoms::xdndAware,
 			 XA_ATOM, 32, PropModeReplace,
@@ -4445,6 +4607,7 @@ CompScreen::init (const char *name)
 	 * CreateNotify of this window, so no need
 	 * to select for them here */
 	XSelectInput (dpy, priv->screenEdge[i].id,
+		      StructureNotifyMask |
 		      ButtonPressMask   |
 		      ButtonReleaseMask |
 		      PointerMotionMask);
@@ -4461,43 +4624,17 @@ CompScreen::init (const char *name)
 
     XDefineCursor (dpy, priv->root, priv->normalCursor);
 
+    /* We should get DestroyNotify events for any windows that were
+     * destroyed while initializing windows here now */
+    XSelectInput (dpy, root, priv->attrib.your_event_mask |
+		  SubstructureRedirectMask | SubstructureNotifyMask);
+
+    XQueryTree (dpy, root,
+		&rootReturn, &parentReturn,
+		&children, &nchildren);
+
     XUngrabServer (dpy);
     XSync (dpy, FALSE);
-
-    priv->setAudibleBell (priv->optionGetAudibleBell ());
-
-    priv->pingTimer.setTimes (priv->optionGetPingDelay (),
-			      priv->optionGetPingDelay () + 500);
-
-    priv->pingTimer.start ();
-
-    priv->addScreenActions ();
-
-    /* Need to set a default here so that the value isn't uninitialized
-     * when loading plugins FIXME: Should find a way to initialize options
-     * first and then set this value, or better yet, tie this value directly
-     * to the option */
-    priv->vpSize.setWidth (priv->optionGetHsize ());
-    priv->vpSize.setHeight (priv->optionGetVsize ());
-
-    priv->initialized = true;
-
-    /* TODO: Bailout properly when screenInitPlugins fails
-     * TODO: It would be nicer if this line could mean
-     * "init all the screens", but unfortunately it only inits
-     * plugins loaded on the command line screen's and then
-     * we need to call updatePlugins () to init the remaining
-     * screens from option changes */
-    assert (CompPlugin::screenInitPlugins (this));
-
-    /* The active plugins list might have been changed - load any
-     * new plugins */
-
-    priv->vpSize.setWidth (priv->optionGetHsize ());
-    priv->vpSize.setHeight (priv->optionGetVsize ());
-
-    if (priv->dirtyPluginList)
-	priv->updatePlugins ();
 
     /* Start initializing windows here */
 
@@ -4505,34 +4642,29 @@ CompScreen::init (const char *name)
     {
 	XWindowAttributes attrib;
 
-	/* Failure means the window has been destroyed, but
-	 * still add it to the window list anyways since we
-	 * will soon handle the DestroyNotify event for it
-	 * and in between CreateNotify time and DestroyNotify
-	 * time there might be ConfigureRequests asking us
-	 * to stack windows relative to it
+	/* Failure means the window has been destroyed, do not
+	 * manage this window since we will not receive a DestroyNotify
+	 * for it
 	 */
 
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
-	    priv->setDefaultWindowAttributes (&attrib);
+	    priv->setDefaultWindowAttributes(&attrib);
 
- 	CoreWindow *cw = new CoreWindow (children[i]);
+	CoreWindow *cw = new CoreWindow (children[i]);
 	cw->manage (i ? children[i - 1] : 0, attrib);
-
-	priv->createdWindows.remove (cw);
 	delete cw;
+	priv->createdWindows.remove (cw);
     }
 
+    /* enforce restack on all windows
+     * using list last sent to server
     i = 0;
-
-    /* enforce restack on all windows */
-    i = 0;
-    for (CompWindowList::reverse_iterator rit = priv->windows.rbegin ();
-	 rit != priv->windows.rend (); rit++)
-	children[i++] = (*rit)->id ();
+    for (CompWindowList::reverse_iterator rit = priv->serverWindows.rbegin ();
+	 rit != priv->serverWindows.rend (); rit++)
+	children[i++] = ROOTPARENT ((*rit));
 
     XRestackWindows (dpy, children, i);
-
+    */
     XFree (children);
 
     foreach (CompWindow *w, priv->windows)
@@ -4561,6 +4693,41 @@ CompScreen::init (const char *name)
 	else
 	    focusDefaultWindow ();
     }
+
+    /* Need to set a default here so that the value isn't uninitialized
+     * when loading plugins FIXME: Should find a way to initialize options
+     * first and then set this value, or better yet, tie this value directly
+     * to the option */
+    priv->vpSize.setWidth (priv->optionGetHsize ());
+    priv->vpSize.setHeight (priv->optionGetVsize ());
+
+    priv->initialized = true;
+
+    /* TODO: Bailout properly when screenInitPlugins fails
+     * TODO: It would be nicer if this line could mean
+     * "init all the screens", but unfortunately it only inits
+     * plugins loaded on the command line screen's and then
+     * we need to call updatePlugins () to init the remaining
+     * screens from option changes */
+    assert (CompPlugin::screenInitPlugins (this));
+
+    /* The active plugins list might have been changed - load any
+     * new plugins */
+
+    priv->vpSize.setWidth (priv->optionGetHsize ());
+    priv->vpSize.setHeight (priv->optionGetVsize ());
+
+    priv->setAudibleBell (priv->optionGetAudibleBell ());
+
+    priv->pingTimer.setTimes (priv->optionGetPingDelay (),
+			      priv->optionGetPingDelay () + 500);
+
+    priv->pingTimer.start ();
+
+    priv->addScreenActions ();
+
+    if (priv->dirtyPluginList)
+	priv->updatePlugins ();
 
     return true;
 }
@@ -4624,7 +4791,10 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     plugin (),
     dirtyPluginList (true),
     screen (screen),
+    serverWindows (),
     windows (),
+    destroyedWindows (),
+    stackIsFresh (false),
     vp (0, 0),
     vpSize (1, 1),
     nDesktop (1),

@@ -38,6 +38,7 @@
 
 #include <core/core.h>
 #include "privatescreen.h"
+#include "privatestackdebugger.h"
 
 char *programName;
 char **programArgv;
@@ -225,6 +226,14 @@ CompManager::init ()
     if (!screen->init (displayName))
 	return false;
 
+    if (debugOutput)
+    {
+	StackDebugger::SetDefault (new StackDebugger (screen->dpy (),
+						      screen->root (),
+						      boost::bind (&PrivateScreen::queueEvents,
+								   screen->priv)));
+    }
+
     if (!disableSm)
 	CompSession::init (clientId);
 
@@ -242,6 +251,8 @@ CompManager::fini ()
 {
     if (!disableSm)
 	CompSession::close ();
+
+    StackDebugger::SetDefault (NULL);
 
     delete screen;
     delete modHandler;

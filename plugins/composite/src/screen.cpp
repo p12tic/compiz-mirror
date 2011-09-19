@@ -288,7 +288,8 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     active (false),
     pHnd (NULL),
     FPSLimiterMode (CompositeFPSLimiterModeDefault),
-    frameTimeAccumulator (0)
+    frameTimeAccumulator (0),
+    withDestroyedWindows ()
 {
     gettimeofday (&lastRedraw, 0);
     // wrap outputChangeNotify
@@ -923,7 +924,39 @@ CompositeScreen::getWindowPaintList ()
 {
     WRAPABLE_HND_FUNC_RETURN (3, const CompWindowList &, getWindowPaintList)
 
-    return screen->windows ();
+    /* Include destroyed windows */
+    if (screen->destroyedWindows ().empty ())
+	return screen->windows ();
+    else
+    {
+	CompWindowList destroyedWindows = screen->destroyedWindows ();
+
+	priv->withDestroyedWindows.resize (0);
+
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    foreach (CompWindow *dw, screen->destroyedWindows ())
+	    {
+		if (dw->next == w)
+		{
+		    priv->withDestroyedWindows.push_back (dw);
+		    destroyedWindows.remove (dw);
+		    break;
+		}
+	    }
+
+	    priv->withDestroyedWindows.push_back (w);
+	}
+
+	/* We need to put all the destroyed windows which didn't get
+	 * inserted in the paint list at the top of the stack since
+	 * w->next was probably either invalid or NULL */
+
+	foreach (CompWindow *dw, destroyedWindows)
+	    priv->withDestroyedWindows.push_back (dw);
+
+	return priv->withDestroyedWindows;
+    }
 }
 
 void

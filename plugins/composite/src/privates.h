@@ -112,6 +112,8 @@ class PrivateCompositeScreen :
 
 	CompositeFPSLimiterMode FPSLimiterMode;
 	int frameTimeAccumulator;
+
+	CompWindowList withDestroyedWindows;
 };
 
 class PrivateCompositeWindow : WindowInterface
