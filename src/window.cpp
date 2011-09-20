@@ -5261,7 +5261,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 		XGrabButton (screen->priv->dpy,
 			     bind.button,
 			     mods | ignore,
-			     frame,
+			     serverFrame,
 			     false,
 			     ButtonPressMask | ButtonReleaseMask |
 				ButtonMotionMask,
@@ -5278,7 +5278,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 	XGrabButton (screen->priv->dpy,
 		     AnyButton,
 		     AnyModifier,
-		     frame, false,
+		     serverFrame, false,
 		     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
 		     GrabModeSync,
 		     GrabModeAsync,
