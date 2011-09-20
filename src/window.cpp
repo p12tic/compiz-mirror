@@ -6309,6 +6309,8 @@ PrivateWindow::reparent ()
     xwc.border_width = 0;
     XConfigureWindow (dpy, id, CWBorderWidth, &xwc);
 
+    priv->serverGeometry.setBorder (0);
+
     mask = CWBorderPixel | CWColormap | CWBackPixmap;
 
     if (wa.depth == 32)
