@@ -5226,16 +5226,14 @@ PrivateWindow::updatePassiveButtonGrabs ()
     {
 	if (screen->priv->optionGetRaiseOnClick ())
 	{
-	    for (CompWindow *above = window->next;
-		above != NULL; above = above->next)
+	    CompWindow *highestSibling =
+		    PrivateWindow::findSiblingBelow (window, true);
+
+	    /* Check if this window is permitted to be raised */
+	    for (CompWindow *above = window->serverNext;
+		above != NULL; above = above->serverNext)
 	    {
-		if (above->priv->attrib.map_state != IsViewable)
-		    continue;
-
-		if (above->type () & CompWindowTypeDockMask)
-		    continue;
-
-		if (above->region ().intersects (region))
+		if (highestSibling == above)
 		{
 		    onlyActions = false;
 		    break;
@@ -5263,7 +5261,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 		XGrabButton (screen->priv->dpy,
 			     bind.button,
 			     mods | ignore,
-			     frame,
+			     serverFrame,
 			     false,
 			     ButtonPressMask | ButtonReleaseMask |
 				ButtonMotionMask,
@@ -5280,7 +5278,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 	XGrabButton (screen->priv->dpy,
 		     AnyButton,
 		     AnyModifier,
-		     frame, false,
+		     serverFrame, false,
 		     ButtonPressMask | ButtonReleaseMask | ButtonMotionMask,
 		     GrabModeSync,
 		     GrabModeAsync,
