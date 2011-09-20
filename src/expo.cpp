@@ -110,6 +110,7 @@ ExpoScreen::doExpo (CompAction          *action,
 	dndWindow = NULL;
 
 	selectedVp = screen->vp ();
+	lastSelectedVp = screen->vp ();
 	origVp     = screen->vp ();
 
 	screen->addAction (&optionGetDndButton ());
@@ -250,6 +251,8 @@ ExpoScreen::moveFocusViewport (int dx,
 {
     int newX, newY;
 
+    lastSelectedVp = selectedVp;
+
     newX = selectedVp.x () + dx;
     newY = selectedVp.y () + dy;
 
@@ -340,7 +343,7 @@ ExpoScreen::handleEvent (XEvent *event)
 		clickTime = event->xbutton.time;
 	    }
 	    else if (event->xbutton.time - clickTime <=
-		     (unsigned int) optionGetDoubleClickTime ())
+		     (unsigned int) optionGetDoubleClickTime () && lastSelectedVp == selectedVp)
 	    {
 		doubleClick = true;
 	    }
@@ -500,6 +503,7 @@ ExpoScreen::donePaint ()
     case VPUpdatePrevious:
 	screen->moveViewport (screen->vp ().x () - origVp.x (),
 			      screen->vp ().y () - origVp.y (), true);
+	lastSelectedVp = selectedVp;
 	selectedVp = origVp;
 	screen->focusDefaultWindow ();
 	vpUpdateMode = VPUpdateNone;
@@ -927,6 +931,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 		    if (anyClick || dndState != DnDNone)
 		    {
 			/* Used to save last viewport interaction was in */
+			lastSelectedVp = selectedVp;
 			selectedVp.set (i, j);
 			anyClick = false;
 		    }
@@ -1322,6 +1327,7 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
     dndWindow (NULL),
     origVp (s->vp ()),
     selectedVp (s->vp ()),
+    lastSelectedVp (s->vp ()),
     vpUpdateMode (VPUpdateNone),
     clickTime (0),
     doubleClick (false),

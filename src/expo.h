@@ -88,6 +88,7 @@ class ExpoScreen :
 
 	CompPoint origVp;
 	CompPoint selectedVp;
+	CompPoint lastSelectedVp;
 	CompPoint paintingVp;
 
 	std::vector<float> vpActivity;
