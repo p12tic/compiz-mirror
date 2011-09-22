@@ -6335,7 +6335,7 @@ PrivateWindow::reparent ()
 	 * problems with that */
 
 	XDestroyWindow (dpy, (it->second)->id ());
-
+	screen->priv->detachedFrameWindows.erase (it);
     }
 
     /* We need to know when the frame window is created
