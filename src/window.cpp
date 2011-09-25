@@ -3087,7 +3087,7 @@ PrivateWindow::stackDocks (CompWindow     *w,
                 belowDocks = dw;
             }
         }
-        else if (dw->type () & CompWindowTypeFullscreenMask)
+	else if (dw->type () & CompWindowTypeFullscreenMask)
         {
 	    /* First fullscreen window found when checking up the stack
 	     * now go back down to find a suitable candidate client
@@ -6846,9 +6846,9 @@ PrivateWindow::unreparent ()
     XUnmapWindow (screen->dpy (), serverFrame);
     XDestroyWindow (screen->dpy (), wrapper);
 
-    window->windowNotify (CompWindowNotifyUnreparent);
-
     frame = None;
     wrapper = None;
     serverFrame = None;
+
+    window->windowNotify (CompWindowNotifyUnreparent);
 }
