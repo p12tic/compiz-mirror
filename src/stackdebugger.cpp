@@ -330,6 +330,10 @@ StackDebugger::checkSanity (CompWindowList &serverWindows, bool verbose)
 	if (!w->managed ())
 	    continue;
 
+	/* ignore any windows that just got created */
+	if (!w->mapNum ())
+	    continue;
+
 	/* determine the current layer */
 	if (w->type () == CompWindowTypeDockMask)
 	{

@@ -235,6 +235,8 @@ class PrivateWindow {
 	XWindowAttributes    attrib;
 	CompWindow::Geometry geometry;
 	CompWindow::Geometry serverGeometry;
+	CompWindow::Geometry frameGeometry;
+	CompWindow::Geometry serverFrameGeometry;
 	Window               transientFor;
 	Window               clientLeader;
 	XSizeHints	     sizeHints;
@@ -285,6 +287,11 @@ class PrivateWindow {
 
 	int pendingUnmaps;
 	int pendingMaps;
+
+	typedef std::pair <XWindowChanges, unsigned int> XWCValueMask;
+
+	std::list <XWCValueMask> pendingConfigures;
+	bool pendingPositionUpdates;
 
 	char *startupId;
 	char *resName;
