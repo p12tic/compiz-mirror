@@ -1997,6 +1997,8 @@ PrivateWindow::configure (XConfigureEvent *ce)
 
     priv->attrib.override_redirect = ce->override_redirect;
 
+    priv->frameGeometry.set (ce->x, ce->y, ce->width, ce->height, ce->border_width);
+
     if (priv->syncWait)
 	priv->syncGeometry.set (ce->x, ce->y, ce->width, ce->height,
 				ce->border_width);
@@ -2081,7 +2083,11 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     if (!handled)
     {
 	compLogMessage ("core", CompLogLevelDebug, "unhandled ConfigureNotify on 0x%x!\n", serverFrame);
+#ifdef DEBUG
+	abort ();
+#else
 	pendingConfigures.clear ();
+#endif
     }
 
     /* subtract the input extents last sent to the
