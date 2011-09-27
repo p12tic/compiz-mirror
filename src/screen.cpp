@@ -765,7 +765,7 @@ PrivateScreen::processEvents ()
 		compLogMessage ("core", CompLogLevelDebug, "however, this may be a false positive");
 	}
 
-	if (dbg->serverWindowsChanged () && dbg->checkSanity (priv->serverWindows))
+	if (dbg->serverWindowsChanged () && dbg->checkSanity (priv->windows))
 	    compLogMessage ("core", CompLogLevelDebug, "windows are stacked incorrectly");
     }
 }
@@ -1756,8 +1756,13 @@ PrivateScreen::setVirtualScreenSize (int newh, int newv)
 
 	    if (moveX != 0 || moveY != 0)
 	    {
-		w->move (moveX, moveY, true);
-		w->syncPosition ();
+		unsigned int valueMask = CWX | CWY;
+		XWindowChanges xwc;
+
+		xwc.x = w->serverGeometry ().x () + moveX;
+		xwc.y = w->serverGeometry ().y () + moveY;
+
+		w->configureXWindow (valueMask, &xwc);
 	    }
 	}
     }
@@ -3502,6 +3507,9 @@ CompScreen::moveViewport (int tx, int ty, bool sync)
 
     foreach (CompWindow *w, priv->windows)
     {
+	unsigned int valueMask = CWX | CWY;
+	XWindowChanges xwc;
+
 	if (w->onAllViewports ())
 	    continue;
 
@@ -3513,11 +3521,10 @@ CompScreen::moveViewport (int tx, int ty, bool sync)
 	if (w->saveMask () & CWY)
 	    w->saveWc ().y += pnt.y ();
 
-	/* move */
-	w->move (pnt.x (), pnt.y ());
+	xwc.x = w->serverGeometry ().x () + pnt.x ();
+	xwc.y = w->serverGeometry ().y () + pnt.y ();
 
-	if (sync)
-	    w->syncPosition ();
+	w->configureXWindow (valueMask, &xwc);
     }
 
     if (sync)
