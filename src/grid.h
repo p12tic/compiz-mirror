@@ -161,6 +161,7 @@ class GridWindow :
 	int pointerBufDx;
 	int pointerBufDy;
 	int resizeCount;
+	CompRect currentSize;
 	CompRect originalSize;
 	GridType lastTarget;
 
