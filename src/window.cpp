@@ -2490,6 +2490,7 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
 				 bool       aboveFs)
 {
     CompWindow   *below;
+    CompWindow   *t = screen->findWindow (w->transientFor ());
     Window	 clientLeader = w->priv->clientLeader;
     unsigned int type = w->priv->type;
     unsigned int belowMask;
@@ -2503,6 +2504,15 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
     if ((type & CompWindowTypeFullscreenMask) &&
 	(w->priv->state & CompWindowStateBelowMask))
 	type = CompWindowTypeNormalMask;
+
+    while (t && type != CompWindowTypeDockMask)
+    {
+	/* dock stacking of transients for docks */
+	if (t->type () & CompWindowTypeDockMask)
+	    type = CompWindowTypeDockMask;
+
+	t = screen->findWindow (t->transientFor ());
+    }
 
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
@@ -2539,13 +2549,27 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
 	    }
 	    break;
 	default:
+	{
+	    bool allowedRelativeToLayer = !(below->priv->type & belowMask);
+
+	    t = screen->findWindow (below->transientFor ());
+
+	    while (t && allowedRelativeToLayer)
+	    {
+		/* dock stacking of transients for docks */
+		allowedRelativeToLayer = !(t->priv->type & belowMask);
+
+		t = screen->findWindow (t->transientFor ());
+	    }
+
 	    /* fullscreen and normal layer */
-	    if (!(below->priv->type & belowMask))
+	    if (allowedRelativeToLayer)
 	    {
 		if (stackLayerCheck (w, clientLeader, below))
 		    return below;
 	    }
 	    break;
+	}
 	}
     }
 
@@ -2558,6 +2582,7 @@ CompWindow *
 PrivateWindow::findLowestSiblingBelow (CompWindow *w)
 {
     CompWindow   *below, *lowest = screen->serverWindows ().back ();
+    CompWindow   *t = screen->findWindow (w->transientFor ());
     Window	 clientLeader = w->priv->clientLeader;
     unsigned int type = w->priv->type;
 
@@ -2565,6 +2590,16 @@ PrivateWindow::findLowestSiblingBelow (CompWindow *w)
     if ((type & CompWindowTypeFullscreenMask) &&
 	(w->priv->state & CompWindowStateBelowMask))
 	type = CompWindowTypeNormalMask;
+
+    while (t && type != CompWindowTypeDockMask)
+    {
+	/* dock stacking of transients for docks */
+	if (t->type () & CompWindowTypeDockMask)
+	    type = CompWindowTypeDockMask;
+
+	t = screen->findWindow (t->transientFor ());
+    }
+
 
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
@@ -2600,13 +2635,27 @@ PrivateWindow::findLowestSiblingBelow (CompWindow *w)
 	    }
 	    break;
 	default:
+	{
+	    bool allowedRelativeToLayer = !(below->priv->type & CompWindowTypeDockMask);
+
+	    t = screen->findWindow (below->transientFor ());
+
+	    while (t && allowedRelativeToLayer)
+	    {
+		/* dock stacking of transients for docks */
+		allowedRelativeToLayer = !(t->priv->type & CompWindowTypeDockMask);
+
+		t = screen->findWindow (t->transientFor ());
+	    }
+
 	    /* fullscreen and normal layer */
-	    if (!(below->priv->type & CompWindowTypeDockMask))
+	    if (allowedRelativeToLayer)
 	    {
 		if (!stackLayerCheck (below, clientLeader, w))
 		    return lowest;
 	    }
 	    break;
+	}
 	}
 
 	lowest = below;
@@ -2619,6 +2668,7 @@ bool
 PrivateWindow::validSiblingBelow (CompWindow *w,
 				  CompWindow *sibling)
 {
+    CompWindow   *t = screen->findWindow (w->transientFor ());
     Window	 clientLeader = w->priv->clientLeader;
     unsigned int type = w->priv->type;
 
@@ -2626,6 +2676,16 @@ PrivateWindow::validSiblingBelow (CompWindow *w,
     if ((type & CompWindowTypeFullscreenMask) &&
 	(w->priv->state & CompWindowStateBelowMask))
 	type = CompWindowTypeNormalMask;
+
+    while (t && type != CompWindowTypeDockMask)
+    {
+	/* dock stacking of transients for docks */
+	if (t->type () & CompWindowTypeDockMask)
+	    type = CompWindowTypeDockMask;
+
+	t = screen->findWindow (t->transientFor ());
+    }
+
 
     if (w->priv->transientFor || w->priv->isGroupTransient (clientLeader))
 	clientLeader = None;
@@ -2656,13 +2716,27 @@ PrivateWindow::validSiblingBelow (CompWindow *w,
 	}
 	break;
     default:
+    {
+	bool allowedRelativeToLayer = !(sibling->priv->type & CompWindowTypeDockMask);
+
+	t = screen->findWindow (sibling->transientFor ());
+
+	while (t && allowedRelativeToLayer)
+	{
+	    /* dock stacking of transients for docks */
+	    allowedRelativeToLayer = !(t->priv->type & CompWindowTypeDockMask);
+
+	    t = screen->findWindow (t->transientFor ());
+	}
+
 	/* fullscreen and normal layer */
-	if (!(sibling->priv->type & CompWindowTypeDockMask))
+	if (allowedRelativeToLayer)
 	{
 	    if (stackLayerCheck (w, clientLeader, sibling))
 		return true;
 	}
 	break;
+    }
     }
 
     return false;
@@ -2895,10 +2969,6 @@ PrivateWindow::stackTransients (CompWindow	*w,
 	if (t->priv->transientFor == w->priv->id ||
 	    t->priv->isGroupTransient (clientLeader))
 	{
-	    if (w->priv->type & CompWindowTypeDockMask)
-		if (!(t->priv->type & CompWindowTypeDockMask))
-		    return false;
-
 	    if (!stackTransients (t, avoid, xwc, updateList))
 		return false;
 
