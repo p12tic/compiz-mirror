@@ -695,7 +695,7 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 {
     window->moveNotify (dx, dy, immediate);
 
-    if (isGridResized)
+    if (isGridResized && !isGridMaximized)
     {
 	pointerBufDx += dx;
 	pointerBufDy += dy;
