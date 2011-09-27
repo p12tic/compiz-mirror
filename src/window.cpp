@@ -5806,12 +5806,8 @@ CompWindow::moveToViewportPosition (int  x,
 	if (priv->saveMask & CWY)
 	    priv->saveWc.y += wy;
 
-	move (wx, wy);
 	xwc.x = serverGeometry ().x () + wx;
 	xwc.y = serverGeometry ().y () + wy;
-
-	if (sync)
-	    syncPosition ();
 
 	configureXWindow (valueMask, &xwc);
     }
@@ -6025,12 +6021,6 @@ CompWindow::CompWindow (Window aboveId,
     priv->serverGeometry.set (priv->attrib.x, priv->attrib.y,
 			      priv->attrib.width, priv->attrib.height,
 			      priv->attrib.border_width);
-    priv->syncGeometry.set (priv->attrib.x, priv->attrib.y,
-			    priv->attrib.width, priv->attrib.height,
-			    priv->attrib.border_width);
-    priv->geometry.set (priv->attrib.x, priv->attrib.y,
-			priv->attrib.width, priv->attrib.height,
-			priv->attrib.border_width);
     priv->serverFrameGeometry = priv->frameGeometry = priv->syncGeometry
 	    = priv->geometry = priv->serverGeometry;
 

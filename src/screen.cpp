@@ -3524,9 +3524,6 @@ CompScreen::moveViewport (int tx, int ty, bool sync)
 	xwc.x = w->serverGeometry ().x () + pnt.x ();
 	xwc.y = w->serverGeometry ().y () + pnt.y ();
 
-	/* move */
-	w->move (pnt.x (), pnt.y ());
-
 	w->configureXWindow (valueMask, &xwc);
     }
 
