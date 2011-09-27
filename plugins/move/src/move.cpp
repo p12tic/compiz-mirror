@@ -488,7 +488,8 @@ moveHandleMotionEvent (CompScreen *s,
 		     wY + dy - w->geometry ().y (), false);
 
 	    if (ms->optionGetLazyPositioning () &&
-	        MoveScreen::get (screen)->hasCompositing)
+		ms->hasCompositing &&
+		!MoveWindow::get (ms->w)->mLocked)
 	    {
 		/* FIXME: This form of lazy positioning is broken and should
 		   be replaced asap. Current code exists just to avoid a
@@ -505,6 +506,32 @@ moveHandleMotionEvent (CompScreen *s,
 	    ms->y -= dy;
 	}
     }
+}
+
+/* FIXME: This is a hack to prevent a race condition
+ * when core is processing ConfigureNotify events. It
+ * MUST be removed after 0.9.6 when we can break ABI
+ * and do lazy positioning correctly ! */
+
+void
+MoveScreen::handleCompizEvent (const char *plugin, const char *event, CompOption::Vector &options)
+{
+    if (w)
+    {
+	if (std::string ("core") == std::string (plugin))
+	{
+	    if (std::string ("lock_position") == std::string (event))
+	    {
+		Window xid = CompOption::getIntOptionNamed (options, "window", 0);
+		int    lock = CompOption::getIntOptionNamed (options, "active", 0);
+
+		if (xid == w->id ())
+		    MoveWindow::get (w)->mLocked = lock ? true : false;
+	    }
+	}
+    }
+
+    screen->handleCompizEvent (plugin, event, options);
 }
 
 void
