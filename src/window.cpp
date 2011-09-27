@@ -1799,8 +1799,6 @@ CompWindow::resize (CompWindow::Geometry gm)
 	dwidth  = gm.width () - priv->geometry.width ();
 	dheight = gm.height () - priv->geometry.height ();
 
-	gettimeofday (&priv->lastGeometryUpdate, NULL);
-
 	priv->geometry.set (gm.x (), gm.y (),
 			    gm.width (), gm.height (),
 			    gm.border ());
@@ -1822,25 +1820,17 @@ CompWindow::resize (CompWindow::Geometry gm)
 	dx = gm.x () - priv->geometry.x ();
 	dy = gm.y () - priv->geometry.y ();
 
-	/* Don't move the window here if a plugin has already updated
-	 * the geometry of that window after the last time the server
-	 * was sent a configure request since the configureNotify we
-	 * receieve here will be out of date. Instead wait for the plugin
-	 * to call syncPosition again */
-	if (TIMEVALDIFF (&priv->lastConfigureRequest, &priv->lastGeometryUpdate))
-	{
-	    priv->geometry.setX (gm.x ());
-	    priv->geometry.setY (gm.y ());
+	priv->geometry.setX (gm.x ());
+	priv->geometry.setY (gm.y ());
 
-	    priv->region.translate (dx, dy);
-	    priv->inputRegion.translate (dx, dy);
-	    if (!priv->frameRegion.isEmpty ())
-		priv->frameRegion.translate (dx, dy);
+	priv->region.translate (dx, dy);
+	priv->inputRegion.translate (dx, dy);
+	if (!priv->frameRegion.isEmpty ())
+	    priv->frameRegion.translate (dx, dy);
 
-	    priv->invisible = WINDOW_INVISIBLE (priv);
+	priv->invisible = WINDOW_INVISIBLE (priv);
 
-	    moveNotify (dx, dy, true);
-	}
+	moveNotify (dx, dy, true);
     }
 
     updateFrameRegion ();
@@ -2022,6 +2012,7 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     int x, y, width, height;
     CompWindow	     *above;
     unsigned int     valueMask = 0;
+    bool             handled = false;
 
     if (!priv->frame)
 	return;
@@ -2044,8 +2035,6 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
 
     if (ROOTPARENT (window->prev) != ce->above)
 	valueMask |= CWSibling | CWStackMode;
-
-    bool handled = false;
 
     for (std::list <XWCValueMask>::iterator it = pendingConfigures.begin ();
 	 it != pendingConfigures.end (); it++)
@@ -2204,13 +2193,28 @@ CompWindow::move (int  dx,
 	{
 	    XWindowChanges xwc;
 	    unsigned int   valueMask = CWX | CWY;
+	    struct timeval tv, old;
 	    compLogMessage ("core", CompLogLevelDebug, "pending configure notifies on 0x%x,"\
 			    "moving window asyncrhonously!", (unsigned int) priv->serverId);
+
+	    old = priv->lastConfigureRequest;
+	    gettimeofday (&tv, NULL);
 
 	    xwc.x = priv->serverGeometry.x () + dx;
 	    xwc.y = priv->serverGeometry.y () + dy;
 
 	    configureXWindow (valueMask, &xwc);
+
+	    priv->lastConfigureRequest = old;
+
+	    /* FIXME: This is a hack to avoid performance regressions
+	     * and must be removed in 0.9.6 */
+	    if (tv.tv_usec - priv->lastConfigureRequest.tv_usec > 30000)
+	    {
+		compLogMessage ("core", CompLogLevelWarn, "failed to receive ConfigureNotify event from request at %i (now: %i)\n",
+				priv->lastConfigureRequest.tv_usec, tv.tv_usec);
+		priv->pendingConfigures.clear ();
+	    }
 	}
     }
 }
@@ -2227,6 +2231,8 @@ PrivateWindow::addPendingConfigure (XWindowChanges &xwc, unsigned int valueMask)
     options.push_back (CompOption ("active", CompOption::TypeInt));
     v.set ((int) 1);
     options.back ().set (v);
+
+    gettimeofday (&lastConfigureRequest, NULL);
 
     /* Notify other plugins that it is unsafe to change geometry or serverGeometry
      * FIXME: That API should not be accessible to plugins, this is a hack to avoid
@@ -6015,7 +6021,7 @@ CompWindow::CompWindow (Window aboveId,
     if (dbg)
 	dbg->overrideRedirectRestack (priv->id, aboveId);
 
-    gettimeofday (&priv->lastGeometryUpdate, NULL);
+    gettimeofday (&priv->lastConfigureRequest, NULL);
 
     priv->attrib = wa;
     priv->serverGeometry.set (priv->attrib.x, priv->attrib.y,
@@ -6631,7 +6637,6 @@ PrivateWindow::reparent ()
 	XSync (dpy, false);
 	return false;
     }
-    gettimeofday (&lastConfigureRequest, NULL);
 
     if (wa.override_redirect)
 	return false;
