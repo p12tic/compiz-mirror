@@ -396,7 +396,7 @@ SnapWindow::moveCheckNearestEdge (int position,
 	// Update snapping data
 	if (ss->optionGetSnapTypeMask () & SnapTypeEdgeResistanceMask)
 	{
-	    snapped = true;
+	    snapGeometry = window->serverGeometry ();
 	    this->snapDirection |= snapDirection;
 	}
 	// Attract the window if needed, moving it of the correct dist
@@ -487,7 +487,7 @@ SnapWindow::resizeCheckNearestEdge (int position,
 	// Update snapping data
 	if (ss->optionGetSnapTypeMask () & SnapTypeEdgeResistanceMask)
 	{
-	    snapped = true;
+	    snapGeometry = window->serverGeometry ();
 	    this->snapDirection |= snapDirection;
 	}
 	// FIXME : this needs resize-specific code.
@@ -591,7 +591,7 @@ SnapWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	// If there's horizontal snapping, add dx to current buffered
 	// dx and resist (move by -dx) or release the window and move
 	// by buffered dx - dx, same for dh
-	if (snapped && snapDirection & HorizontalSnap)
+	if (!snapGeometry.isEmpty () && snapDirection & HorizontalSnap)
 	{
 	    m_dx += dx;
 	    if (m_dx < ss->optionGetResistanceDistance ()
@@ -622,7 +622,7 @@ SnapWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	}
 
 	// Same for vertical snapping and dy/dh
-	if (snapped && snapDirection & VerticalSnap)
+	if (snapGeometry.isEmpty () && snapDirection & VerticalSnap)
 	{
 	    m_dy += dy;
 	    if (m_dy < ss->optionGetResistanceDistance ()
@@ -652,8 +652,8 @@ SnapWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	    }
 	}
 	// If we are no longer snapping in any direction, reset snapped
-	if (snapped && !snapDirection)
-	    snapped = false;
+	if (!snapGeometry.isEmpty () && !snapDirection)
+	    snapGeometry = CompWindow::Geometry ();
     }
 
     // If we don't already snap vertically and horizontally,
@@ -691,13 +691,14 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	// If there's horizontal snapping, add dx to current buffered
 	// dx and resist (move by -dx) or release the window and move
 	// by buffered dx - dx
-	if (snapped && snapDirection & HorizontalSnap)
+	if (!snapGeometry.isEmpty () && snapDirection & HorizontalSnap)
 	{
 	    m_dx += dx;
 	    if (m_dx < ss->optionGetResistanceDistance ()
 		&& m_dx > -ss->optionGetResistanceDistance ())
 	    {
-		move (-dx, 0);
+		dx = snapGeometry.x () - window->geometry ().x ();
+		move (dx, 0);
 	    }
 	    else
 	    {
@@ -707,12 +708,13 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	    }
 	}
 	// Same for vertical snapping and dy
-	if (snapped && snapDirection & VerticalSnap)
+	if (!snapGeometry.isEmpty () && snapDirection & VerticalSnap)
 	{
 	    m_dy += dy;
 	    if (m_dy < ss->optionGetResistanceDistance ()
 		&& m_dy > -ss->optionGetResistanceDistance ())
 	    {
+		dy = snapGeometry.y () - window->geometry ().y ();
 		move (0, -dy);
 	    }
 	    else
@@ -723,8 +725,8 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	    }
 	}
 	// If we are no longer snapping in any direction, reset snapped
-	if (snapped && !snapDirection)
-	    snapped = false;
+	if (!snapGeometry.isEmpty () && !snapDirection)
+	    snapGeometry = CompWindow::Geometry ();
     }
     // If we don't already snap vertically and horizontally,
     // check edges status
@@ -753,7 +755,7 @@ SnapWindow::ungrabNotify ()
 {
     edges.clear ();
 
-    snapped = false;
+    snapGeometry = CompWindow::Geometry ();
     snapDirection = 0;
     grabbed = 0;
     m_dx = m_dy = m_dwidth = m_dheight = 0;
@@ -809,7 +811,7 @@ SnapWindow::SnapWindow (CompWindow *window) :
     m_dy (0),
     m_dwidth (0),
     m_dheight (0),
-    snapped (false),
+    snapGeometry (0, 0, 0, 0, 0),
     grabbed (0),
     skipNotify (false)
 {

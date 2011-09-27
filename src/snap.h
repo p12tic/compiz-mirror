@@ -127,7 +127,7 @@ class SnapWindow :
 	int m_dheight;
 
 	// internals
-	bool snapped;
+	CompWindow::Geometry snapGeometry;
 	int grabbed;
 
 	// internal, avoids infinite notify loops
