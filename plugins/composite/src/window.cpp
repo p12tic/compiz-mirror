@@ -268,7 +268,7 @@ CompositeWindow::damageOutputExtents ()
 	return;
 
     if (priv->window->shaded () ||
-	(priv->window->isViewable () && priv->damaged))
+	(priv->window->isViewable ()))
     {
 	int x1, x2, y1, y2;
 
@@ -339,7 +339,7 @@ CompositeWindow::addDamage (bool force)
 	return;
 
     if (priv->window->shaded () || force ||
-	(priv->window->isViewable () && priv->damaged))
+	(priv->window->isViewable ()))
     {
 	int    border = priv->window->geometry ().border ();
 
@@ -561,7 +561,7 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     CompSize size = CompSize ();
 
 
-    if (window->shaded () || (window->isViewable () && damaged))
+    if (window->shaded () || (window->isViewable ()))
     {
 	int x, y, x1, x2, y1, y2;
 
@@ -618,7 +618,7 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 void
 PrivateCompositeWindow::moveNotify (int dx, int dy, bool now)
 {
-    if (window->shaded () || (window->isViewable () && damaged))
+    if (window->shaded () || (window->isViewable ()))
     {
 	int x, y, x1, x2, y1, y2;
 

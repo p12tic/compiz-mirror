@@ -241,8 +241,15 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
 	    if (!w->shaded ())
 	    {
-		if (!w->isViewable () ||
-		    !CompositeWindow::get (w)->damaged ())
+		/* Non-damaged windows don't have valid pixmap
+		 * contents and we aren't displaying them yet
+		 * so don't factor them into occlusion detection */
+		if (!gw->priv->cWindow->damaged ())
+		{
+		    gw->priv->clip = region;
+		    continue;
+		}
+		if (!w->isViewable ())
 		    continue;
 	    }
 
@@ -322,8 +329,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 
 	if (!w->shaded ())
 	{
-	    if (!w->isViewable () ||
-		!CompositeWindow::get (w)->damaged ())
+	    if (!w->isViewable ())
 		continue;
 	}
 
@@ -1171,7 +1177,8 @@ GLWindow::glDraw (const GLMatrix     &transform,
     if (reg.isEmpty ())
 	return true;
 
-    if (!priv->window->isViewable ())
+    if (!priv->window->isViewable () ||
+	!priv->cWindow->damaged ())
 	return true;
 
     if (priv->textures.empty () && !bind ())
