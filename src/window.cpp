@@ -6640,7 +6640,11 @@ CompWindow::setWindowFrameExtents (CompWindowExtents *b,
     if (priv->serverInput.left   != i->left ||
 	priv->serverInput.right  != i->right ||
 	priv->serverInput.top    != i->top ||
-	priv->serverInput.bottom != i->bottom)
+	priv->serverInput.bottom != i->bottom ||
+	priv->border.left   != b->left ||
+	priv->border.right  != b->right ||
+	priv->border.top    != b->top ||
+	priv->border.bottom != b->bottom)
     {
 	unsigned long data[4];
 
