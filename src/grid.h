@@ -101,17 +101,18 @@ class GridScreen :
 	CompRect workarea, currentRect, desiredSlot, lastSlot,
 		 desiredRect, lastWorkarea, currentWorkarea;
 	GridProps props;
-	Edges edge, lastEdge;
+	Edges edge, lastEdge, lastResizeEdge;
 	CompOption::Vector o;
 	bool centerCheck;
 	CompWindow *mGrabWindow;
 	bool animating;
+	bool mSwitchingVp;
 
 	void getPaintRectangle (CompRect&);
 	void setCurrentRect (Animation&);
 
 	bool initiateCommon (CompAction*, CompAction::State,
-			     CompOption::Vector&, GridType, bool);
+			     CompOption::Vector&, GridType, bool, bool);
 
 	void glPaintRectangle (const GLScreenPaintAttrib&,
 			       const GLMatrix&, CompOutput *);
@@ -128,6 +129,7 @@ class GridScreen :
 	GridType edgeToGridType ();
 
 	void handleEvent (XEvent *event);
+	void handleCompizEvent (const char *plugin, const char *event, CompOption::Vector &options);
 
 	bool restoreWindow (CompAction*,
 			    CompAction::State,
@@ -152,6 +154,7 @@ class GridWindow :
     public:
 
 	GridWindow (CompWindow *);
+	~GridWindow ();
 	CompWindow *window;
 	GridScreen *gScreen;
 
@@ -160,6 +163,7 @@ class GridWindow :
 	int pointerBufDx;
 	int pointerBufDy;
 	int resizeCount;
+	CompRect currentSize;
 	CompRect originalSize;
 	GridType lastTarget;
 
@@ -168,6 +172,8 @@ class GridWindow :
 	void ungrabNotify ();
 
 	void moveNotify (int, int, bool);
+
+	void stateChangeNotify (unsigned int);
 };
 
 #define GRID_WINDOW(w) \

@@ -43,6 +43,23 @@ static const GridProps gridProps[] =
     {0,0, 1,1},
 };
 
+void
+GridScreen::handleCompizEvent(const char*    plugin,
+			      const char*    event,
+			      CompOption::Vector&  o)
+{
+    if (strcmp(event, "start_viewport_switch") == 0)
+    {
+	mSwitchingVp = true;
+    }
+    else if (strcmp(event, "end_viewport_switch") == 0)
+    {
+	mSwitchingVp = false;
+    }
+
+  screen->handleCompizEvent(plugin, event, o);
+}
+
 CompRect
 GridScreen::slotToRect (CompWindow      *w,
 			const CompRect& slot)
@@ -119,7 +136,8 @@ GridScreen::initiateCommon (CompAction         *action,
 			    CompAction::State  state,
 			    CompOption::Vector &option,
 			    GridType           where,
-			    bool               resize)
+			    bool               resize,
+			    bool	       key)
 {
     Window     xid;
     CompWindow *cw = 0;
@@ -138,6 +156,8 @@ GridScreen::initiateCommon (CompAction         *action,
 
 	if (gw->lastTarget != where)
 	    gw->resizeCount = 0;
+	else if (!key)
+	    return false;
 
 	props = gridProps[where];
 
@@ -324,6 +344,8 @@ GridScreen::initiateCommon (CompAction         *action,
 	    gw->isGridMaximized = false;
 		for (unsigned int i = 0; i < animations.size (); i++)
 			animations.at (i).fadingOut = true;
+	    gw->lastTarget = where;
+	    gw->currentSize = CompRect (wc.x, wc.y, wc.width, wc.height);
 	}
 
 	/* This centers a window if it could not be resized to the desired
@@ -345,8 +367,6 @@ GridScreen::initiateCommon (CompAction         *action,
 
 	    centerCheck = false;
 	}
-
-	gw->lastTarget = where;
     }
 
     return true;
@@ -514,6 +534,8 @@ void
 GridScreen::handleEvent (XEvent *event)
 {
     CompOutput out;
+    CompWindow *w;
+    bool       check = false;
 
     screen->handleEvent (event);
 
@@ -567,7 +589,7 @@ GridScreen::handleEvent (XEvent *event)
 	if (cScreen)
 	    cScreen->damageRegion (desiredSlot);
 
-	initiateCommon (0, 0, o, edgeToGridType (), false);
+	initiateCommon (0, 0, o, edgeToGridType (), false, false);
 
 	if (cScreen)
 	    cScreen->damageRegion (desiredSlot);
@@ -585,7 +607,7 @@ GridScreen::handleEvent (XEvent *event)
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
 
-		initiateCommon (0, 0, o, edgeToGridType (), false);
+		check = initiateCommon (0, 0, o, edgeToGridType (), false, false);
 
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
@@ -596,7 +618,7 @@ GridScreen::handleEvent (XEvent *event)
 				/* Begin fading previous animation instance */
 				animations.at (animations.size () - 1).fadingOut = true;
 
-			if (edge != NoEdge)
+			if (edge != NoEdge && check)
 			{
 				CompWindow *cw = screen->findWindow (screen->activeWindow ());
 				animations.push_back (Animation ());
@@ -620,16 +642,20 @@ GridScreen::handleEvent (XEvent *event)
 		lastEdge = edge;
     }
 
-    GRID_WINDOW (screen->findWindow
-				(CompOption::getIntOptionNamed (o, "window")));
+    w = screen->findWindow (CompOption::getIntOptionNamed (o, "window"));
 
-    if ((gw->pointerBufDx > SNAPOFF_THRESHOLD ||
-	 gw->pointerBufDy > SNAPOFF_THRESHOLD ||
-	 gw->pointerBufDx < -SNAPOFF_THRESHOLD ||
-	 gw->pointerBufDy < -SNAPOFF_THRESHOLD) &&
-	 gw->isGridResized &&
-	 optionGetSnapbackWindows ())
-	    restoreWindow (0, 0, o);
+    if (w)
+    {
+	GRID_WINDOW (w);
+
+	if ((gw->pointerBufDx > SNAPOFF_THRESHOLD ||
+	     gw->pointerBufDy > SNAPOFF_THRESHOLD ||
+	     gw->pointerBufDx < -SNAPOFF_THRESHOLD ||
+	     gw->pointerBufDy < -SNAPOFF_THRESHOLD) &&
+	     gw->isGridResized &&
+	     optionGetSnapbackWindows ())
+		restoreWindow (0, 0, o);
+    }
 }
 
 void
@@ -640,7 +666,6 @@ GridWindow::grabNotify (int          x,
 {
     if (screen->grabExist ("move"))
     {
-	gScreen->o.push_back (CompOption ("window", CompOption::TypeInt));
 	gScreen->o[0].value ().set ((int) window->id ());
 
 	screen->handleEventSetEnabled (gScreen, true);
@@ -668,13 +693,16 @@ GridWindow::ungrabNotify ()
     if (window == gScreen->mGrabWindow)
     {
 	gScreen->initiateCommon
-			(0, 0, gScreen->o, gScreen->edgeToGridType (), true);
+			(0, 0, gScreen->o, gScreen->edgeToGridType (), true,
+			 gScreen->edge != gScreen->lastResizeEdge);
 
 	screen->handleEventSetEnabled (gScreen, false);
 	gScreen->mGrabWindow = NULL;
+	gScreen->o[0].value ().set (0);
 	gScreen->cScreen->damageRegion (gScreen->desiredSlot);
     }
 
+    gScreen->lastResizeEdge = gScreen->edge;
     gScreen->edge = NoEdge;
 
     window->ungrabNotify ();
@@ -685,9 +713,35 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 {
     window->moveNotify (dx, dy, immediate);
 
-    pointerBufDx += dx;
-    pointerBufDy += dy;
+    if (isGridResized && !isGridMaximized && !GridScreen::get (screen)->mSwitchingVp)
+    {
+	if (window->grabbed ())
+	{
+	    pointerBufDx += dx;
+	    pointerBufDy += dy;
+	}
+
+	/* Do not allow the window to be moved while it
+	 * is resized */
+	dx = currentSize.x () - window->geometry ().x ();
+	dy = currentSize.y () - window->geometry ().y ();
+
+	window->move (dx, dy);
+    }
 }
+
+void
+GridWindow::stateChangeNotify (unsigned int lastState)
+{
+    if (lastState & MAXIMIZE_STATE &&
+	!(window->state () & MAXIMIZE_STATE))
+	lastTarget = GridUnknown;
+    else if (!(lastState & MAXIMIZE_STATE) &&
+	     window->state () & MAXIMIZE_STATE)
+	lastTarget = GridMaximize;
+
+    window->stateChangeNotify (lastState);
+} 
 
 bool
 GridScreen::restoreWindow (CompAction         *action,
@@ -722,12 +776,14 @@ GridScreen::restoreWindow (CompAction         *action,
 	xwc.width  = gw->originalSize.width ();
 	xwc.height = gw->originalSize.height ();
 	cw->maximize (0);
+	gw->currentSize = CompRect ();
 	cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
 	gw->pointerBufDx = 0;
 	gw->pointerBufDy = 0;
     }
     gw->isGridResized = false;
     gw->resizeCount = 0;
+    gw->lastTarget = GridUnknown;
 
     return true;
 }
@@ -826,33 +882,36 @@ GridScreen::GridScreen (CompScreen *screen) :
     glScreen (GLScreen::get (screen)),
     centerCheck (false),
     mGrabWindow (NULL),
-    animating (false)
+    animating (false),
+    mSwitchingVp (false)
 {
+    o.push_back (CompOption ("window", CompOption::TypeInt));
 
     ScreenInterface::setHandler (screen, false);
+    screen->handleCompizEventSetEnabled (this, true);
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (glScreen, false);
 
-    edge = lastEdge = NoEdge;
+    edge = lastEdge = lastResizeEdge = NoEdge;
     currentWorkarea = lastWorkarea = screen->getWorkareaForOutput
 			    (screen->outputDeviceForPoint (pointerX, pointerY));
 
 	animations.clear ();
 
-#define GRIDSET(opt,where,resize)					       \
+#define GRIDSET(opt,where,resize,key)					       \
     optionSet##opt##Initiate (boost::bind (&GridScreen::initiateCommon, this,  \
-					   _1, _2, _3, where, resize))
+					   _1, _2, _3, where, resize, key))
 
-    GRIDSET (PutCenterKey, GridCenter, true);
-    GRIDSET (PutLeftKey, GridLeft, true);
-    GRIDSET (PutRightKey, GridRight, true);
-    GRIDSET (PutTopKey, GridTop, true);
-    GRIDSET (PutBottomKey, GridBottom, true);
-    GRIDSET (PutTopleftKey, GridTopLeft, true);
-    GRIDSET (PutToprightKey, GridTopRight, true);
-    GRIDSET (PutBottomleftKey, GridBottomLeft, true);
-    GRIDSET (PutBottomrightKey, GridBottomRight, true);
-    GRIDSET (PutMaximizeKey, GridMaximize, true);
+    GRIDSET (PutCenterKey, GridCenter, true, true);
+    GRIDSET (PutLeftKey, GridLeft, true, true);
+    GRIDSET (PutRightKey, GridRight, true, true);
+    GRIDSET (PutTopKey, GridTop, true, true);
+    GRIDSET (PutBottomKey, GridBottom, true, true);
+    GRIDSET (PutTopleftKey, GridTopLeft, true, true);
+    GRIDSET (PutToprightKey, GridTopRight, true, true);
+    GRIDSET (PutBottomleftKey, GridBottomLeft, true, true);
+    GRIDSET (PutBottomrightKey, GridBottomRight, true, true);
+    GRIDSET (PutMaximizeKey, GridMaximize, true, true);
 
 #undef GRIDSET
 
@@ -876,6 +935,14 @@ GridWindow::GridWindow (CompWindow *window) :
     lastTarget (GridUnknown)
 {
     WindowInterface::setHandler (window);
+}
+
+GridWindow::~GridWindow ()
+{
+    if (gScreen->mGrabWindow == window)
+	gScreen->mGrabWindow = NULL;
+
+    gScreen->o[0].value ().set (0);
 }
 
 /* Initial plugin init function called. Checks to see if we are ABI
