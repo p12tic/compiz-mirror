@@ -43,6 +43,23 @@ static const GridProps gridProps[] =
     {0,0, 1,1},
 };
 
+void
+GridScreen::handleCompizEvent(const char*    plugin,
+			      const char*    event,
+			      CompOption::Vector&  o)
+{
+    if (strcmp(event, "start_viewport_switch") == 0)
+    {
+	mSwitchingVp = true;
+    }
+    else if (strcmp(event, "end_viewport_switch") == 0)
+    {
+	mSwitchingVp = false;
+    }
+
+  screen->handleCompizEvent(plugin, event, o);
+}
+
 CompRect
 GridScreen::slotToRect (CompWindow      *w,
 			const CompRect& slot)
@@ -696,10 +713,13 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 {
     window->moveNotify (dx, dy, immediate);
 
-    if (isGridResized && !isGridMaximized)
+    if (isGridResized && !isGridMaximized && !GridScreen::get (screen)->mSwitchingVp)
     {
-	pointerBufDx += dx;
-	pointerBufDy += dy;
+	if (window->grabbed ())
+	{
+	    pointerBufDx += dx;
+	    pointerBufDy += dy;
+	}
 
 	/* Do not allow the window to be moved while it
 	 * is resized */
@@ -862,11 +882,13 @@ GridScreen::GridScreen (CompScreen *screen) :
     glScreen (GLScreen::get (screen)),
     centerCheck (false),
     mGrabWindow (NULL),
-    animating (false)
+    animating (false),
+    mSwitchingVp (false)
 {
     o.push_back (CompOption ("window", CompOption::TypeInt));
 
     ScreenInterface::setHandler (screen, false);
+    screen->handleCompizEventSetEnabled (this, true);
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (glScreen, false);
 

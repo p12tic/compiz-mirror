@@ -106,6 +106,7 @@ class GridScreen :
 	bool centerCheck;
 	CompWindow *mGrabWindow;
 	bool animating;
+	bool mSwitchingVp;
 
 	void getPaintRectangle (CompRect&);
 	void setCurrentRect (Animation&);
@@ -128,6 +129,7 @@ class GridScreen :
 	GridType edgeToGridType ();
 
 	void handleEvent (XEvent *event);
+	void handleCompizEvent (const char *plugin, const char *event, CompOption::Vector &options);
 
 	bool restoreWindow (CompAction*,
 			    CompAction::State,
