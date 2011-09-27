@@ -3943,8 +3943,7 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 		screen->insertServerWindow (window, 0);
 	    }
 	    else if (sibling->priv->id != window->serverPrev->priv->id ||
-		     (window->serverPrev->serverPrev != window->serverPrev->prev ||
-		      window->serverPrev->serverNext != window->serverPrev->next))
+		     pendingRestacks)
 	    {
 		mask |= CWSibling | CWStackMode;
 
