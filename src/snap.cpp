@@ -715,7 +715,7 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 		&& m_dy > -ss->optionGetResistanceDistance ())
 	    {
 		dy = snapGeometry.y () - window->geometry ().y ();
-		move (0, -dy);
+		move (0, dy);
 	    }
 	    else
 	    {
