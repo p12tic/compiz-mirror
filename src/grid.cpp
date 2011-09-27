@@ -339,13 +339,41 @@ GridScreen::initiateCommon (CompAction         *action,
 	/* TODO: animate move+resize */
 	if (resize)
 	{
-	    cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
-	    gw->isGridResized = true;
-	    gw->isGridMaximized = false;
-		for (unsigned int i = 0; i < animations.size (); i++)
-			animations.at (i).fadingOut = true;
+	    unsigned int valueMask = CWX | CWY | CWWidth | CWHeight;
 	    gw->lastTarget = where;
 	    gw->currentSize = CompRect (wc.x, wc.y, wc.width, wc.height);
+
+	    /* Special case for left and right, actually vertically maximize
+	     * the window */
+	    if (where == GridLeft || where == GridRight)
+	    {
+		/* First restore the window to its original size */
+		XWindowChanges rwc;
+
+		rwc.x = gw->originalSize.x ();
+		rwc.y = gw->originalSize.y ();
+		rwc.width = gw->originalSize.width ();
+		rwc.height = gw->originalSize.height ();
+
+		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
+
+		gw->isGridMaximized = true;
+		gw->isGridResized = false;
+
+		/* Maximize the window */
+		cw->maximize (CompWindowStateMaximizedVertMask);
+	    }
+	    else
+	    {
+	        gw->isGridResized = true;
+	        gw->isGridMaximized = false;
+	    }
+
+	    /* Make window the size that we want */
+	    cw->configureXWindow (valueMask, &xwc);
+
+	    for (unsigned int i = 0; i < animations.size (); i++)
+		animations.at (i).fadingOut = true;
 	}
 
 	/* This centers a window if it could not be resized to the desired
@@ -672,7 +700,7 @@ GridWindow::grabNotify (int          x,
 	gScreen->mGrabWindow = window;
 	pointerBufDx = pointerBufDy = 0;
 
-	if (!isGridResized && gScreen->optionGetSnapbackWindows ())
+	if (!isGridResized && !isGridMaximized && gScreen->optionGetSnapbackWindows ())
 	    /* Store size not including borders when grabbing with cursor */
 	    originalSize = gScreen->slotToRect(window,
 						    window->serverBorderRect ());
@@ -738,7 +766,14 @@ GridWindow::stateChangeNotify (unsigned int lastState)
 	lastTarget = GridUnknown;
     else if (!(lastState & MAXIMIZE_STATE) &&
 	     window->state () & MAXIMIZE_STATE)
+    {
 	lastTarget = GridMaximize;
+	if (window->grabbed ())
+	{
+	    originalSize = gScreen->slotToRect (window,
+					        window->serverBorderRect ());
+	}
+    }
 
     window->stateChangeNotify (lastState);
 } 
