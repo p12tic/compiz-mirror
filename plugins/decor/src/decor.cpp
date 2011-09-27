@@ -1126,6 +1126,9 @@ decorOffsetMove (CompWindow *w, XWindowChanges xwc, unsigned int mask)
     o.at (0).setName ("window", CompOption::TypeInt);
     o.at (0).value ().set ((int) w->id ());
 
+    xwc.x += w->serverGeometry ().x ();
+    xwc.y += w->serverGeometry ().y ();
+
     w->configureXWindow (mask, &xwc);
     screen->handleCompizEvent ("decor", "window_decorated", o);
     return false;
@@ -1549,8 +1552,11 @@ DecorWindow::update (bool allowDecoration)
 
 	memset (&xwc, 0, sizeof (XWindowChanges));
 
-	xwc.x = window->serverGeometry ().x () + moveDx;
-	xwc.y = window->serverGeometry ().y () + moveDy;
+	/* Grab the geometry last sent to server at configureXWindow
+	 * time and not here since serverGeometry may be updated by
+	 * the time that we do call configureXWindow */
+	xwc.x = moveDx;
+	xwc.y = moveDy;
 
 	/* Except if it's fullscreen, maximized or such */
 	if (window->state () & CompWindowStateFullscreenMask)
