@@ -24,6 +24,8 @@
 
 #include "grid.h"
 
+using namespace GridWindowType;
+
 static const GridProps gridProps[] =
 {
     {0,1, 1,1},
@@ -148,6 +150,17 @@ GridScreen::initiateCommon (CompAction         *action,
     if (cw)
     {
 	XWindowChanges xwc;
+	bool maximizeH = where & (GridBottom | GridTop | GridMaximize);
+	bool maximizeV = where & (GridLeft | GridRight | GridMaximize);
+
+	if (!(cw->actions () & CompWindowActionResizeMask))
+	    return false;
+
+	if (maximizeH && !(cw->actions () & CompWindowActionMaximizeHorzMask))
+	    return false;
+
+	if (maximizeV && !(cw->actions () & CompWindowActionMaximizeVertMask))
+	    return false;
 
 	if (where == GridUnknown)
 	    return false;
@@ -996,9 +1009,9 @@ GridWindow::GridWindow (CompWindow *window) :
     PluginClassHandler <GridWindow, CompWindow> (window),
     window (window),
     gScreen (GridScreen::get (screen)),
-    grabMask (0),
     isGridResized (false),
     isGridMaximized (false),
+    grabMask (0),
     pointerBufDx (0),
     pointerBufDy (0),
     resizeCount (0),

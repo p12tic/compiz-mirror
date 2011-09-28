@@ -32,20 +32,22 @@
 
 #define SNAPOFF_THRESHOLD 50
 
-typedef enum
+namespace GridWindowType
 {
-    GridUnknown = 0,
-    GridBottomLeft = 1,
-    GridBottom = 2,
-    GridBottomRight = 3,
-    GridLeft = 4,
-    GridCenter = 5,
-    GridRight = 6,
-    GridTopLeft = 7,
-    GridTop = 8,
-    GridTopRight = 9,
-    GridMaximize = 10
-} GridType;
+    static const unsigned int GridUnknown = (1 << 0);
+    static const unsigned int GridBottomLeft  = (1 << 1);
+    static const unsigned int GridBottom  = (1 << 2);
+    static const unsigned int GridBottomRight = (1 << 3);
+    static const unsigned int GridLeft  = (1 << 4);
+    static const unsigned int GridCenter  = (1 << 5);
+    static const unsigned int GridRight  = (1 << 6);
+    static const unsigned int GridTopLeft  = (1 << 7);
+    static const unsigned int GridTop  = (1 << 8);
+    static const unsigned int GridTopRight  = (1 << 9);
+    static const unsigned int GridMaximize  = (1 << 10);
+};
+
+typedef unsigned int GridType;
 
 typedef struct _GridProps
 {
