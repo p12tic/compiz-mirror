@@ -2772,12 +2772,30 @@ DecorWindow::stateChangeNotify (unsigned int lastState)
     {
 	if (wd && wd->decor)
 	{
+	    int oldShiftX = shiftX ();
+	    int oldShiftY = shiftY ();
+	    int moveDx, moveDy;
+
 	    if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
 		window->setWindowFrameExtents (&wd->decor->maxBorder,
 					       &wd->decor->maxInput);
 	    else
 		window->setWindowFrameExtents (&wd->decor->border,
 					       &wd->decor->input);
+
+	    /* Since we immediately update the frame extents, we must
+	     * also update the stored saved window geometry in order
+	     * to prevent the window from shifting back too far once
+	     * unmaximized */
+
+	    moveDx = shiftX () - oldShiftX;
+	    moveDy = shiftY () - oldShiftY;
+
+	    if (window->saveMask () & CWX)
+		window->saveWc ().x += moveDx;
+
+	    if (window->saveMask () & CWY)
+		window->saveWc ().y += moveDy;
 
 	    updateFrame ();
 	}
