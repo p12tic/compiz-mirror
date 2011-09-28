@@ -145,12 +145,12 @@ GridScreen::initiateCommon (CompAction         *action,
     xid = CompOption::getIntOptionNamed (option, "window");
     cw  = screen->findWindow (xid);
 
-    if (where == GridUnknown || screen->otherGrabExist ("move", NULL))
-	return false;
-
     if (cw)
     {
 	XWindowChanges xwc;
+
+	if (where == GridUnknown)
+	    return false;
 
 	GRID_WINDOW (cw);
 
@@ -360,6 +360,7 @@ GridScreen::initiateCommon (CompAction         *action,
 		gw->isGridMaximized = true;
 		gw->isGridResized = false;
 
+		gw->lastBorder = cw->border ();
 		/* Maximize the window */
 		cw->maximize (CompWindowStateMaximizedVertMask);
 	    }
@@ -692,13 +693,14 @@ GridWindow::grabNotify (int          x,
 			unsigned int state,
 			unsigned int mask)
 {
-    if (screen->grabExist ("move"))
+    if (mask & (CompWindowGrabMoveMask | CompWindowGrabButtonMask))
     {
 	gScreen->o[0].value ().set ((int) window->id ());
 
 	screen->handleEventSetEnabled (gScreen, true);
 	gScreen->mGrabWindow = window;
 	pointerBufDx = pointerBufDy = 0;
+	grabMask = mask;
 
 	if (!isGridResized && !isGridMaximized && gScreen->optionGetSnapbackWindows ())
 	    /* Store size not including borders when grabbing with cursor */
@@ -706,7 +708,7 @@ GridWindow::grabNotify (int          x,
 						    window->serverBorderRect ());
     }
 
-    if (screen->grabExist ("resize"))
+    if (mask & CompWindowGrabResizeMask)
     {
 	isGridResized = false;
 	resizeCount = 0;
@@ -725,6 +727,7 @@ GridWindow::ungrabNotify ()
 			 gScreen->edge != gScreen->lastResizeEdge);
 
 	screen->handleEventSetEnabled (gScreen, false);
+	grabMask = 0;
 	gScreen->mGrabWindow = NULL;
 	gScreen->o[0].value ().set (0);
 	gScreen->cScreen->damageRegion (gScreen->desiredSlot);
@@ -743,7 +746,7 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 
     if (isGridResized && !isGridMaximized && !GridScreen::get (screen)->mSwitchingVp)
     {
-	if (window->grabbed ())
+	if (window->grabbed () && (grabMask & CompWindowGrabMoveMask))
 	{
 	    pointerBufDx += dx;
 	    pointerBufDy += dy;
@@ -776,8 +779,39 @@ GridWindow::stateChangeNotify (unsigned int lastState)
     }
 
     window->stateChangeNotify (lastState);
-} 
+}
 
+void
+GridWindow::windowNotify (CompWindowNotify n)
+{
+    if (n == CompWindowNotifyFrameUpdate)
+    {
+	if (isGridMaximized && !((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE))
+	{
+	    unsigned int valueMask = 0;
+	    XWindowChanges xwc;
+
+	    int dw = (lastBorder.left + lastBorder.right) - 
+		      (window->border ().left + window->border ().right);
+			
+	    int dh = (lastBorder.top + lastBorder.bottom) - 
+			(window->border ().top + window->border ().bottom);
+
+	    if (dw != 0)
+		valueMask |= CWWidth;
+	    if (dh != 0)
+		valueMask |= CWHeight;
+	    xwc.width = window->serverGeometry ().width () + dw;
+	    xwc.height = window->serverGeometry ().height () + dh;
+
+	    window->configureXWindow (valueMask, &xwc);
+	}
+
+	lastBorder = window->border ();
+    }
+
+    window->windowNotify (n);
+}
 bool
 GridScreen::restoreWindow (CompAction         *action,
 			   CompAction::State  state,
@@ -962,6 +996,7 @@ GridWindow::GridWindow (CompWindow *window) :
     PluginClassHandler <GridWindow, CompWindow> (window),
     window (window),
     gScreen (GridScreen::get (screen)),
+    grabMask (0),
     isGridResized (false),
     isGridMaximized (false),
     pointerBufDx (0),
