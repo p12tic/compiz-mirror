@@ -3983,42 +3983,44 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 	 * if serverPrev was recently restacked */
 	if (window->serverPrev)
 	{
-	    bool pendingRestacks = false;
-
-	    foreach (XWCValueMask &xwcvm, sibling->priv->pendingConfigures)
+	    if (!sibling)
 	    {
-		if (xwcvm.second & (CWSibling | CWStackMode))
-		{
-		    pendingRestacks = true;
-		    break;
-		}
-	    }
-
-	    if (!sibling && window->serverPrev)
-	    {
-		XWindowChanges xwc;
+		XWindowChanges lxwc;
 		unsigned int   valueMask = CWStackMode;
 
-		xwc.stack_mode = Below;
+		lxwc.stack_mode = Below;
 
 		/* Below with no sibling puts the window at the bottom
 		 * of the stack */
-		XConfigureWindow (screen->dpy (), ROOTPARENT (window), valueMask, &xwc);
+		XConfigureWindow (screen->dpy (), ROOTPARENT (window), valueMask, &lxwc);
 
 		if (serverFrame)
-		    priv->addPendingConfigure (xwc, CWStackMode);
+		    priv->addPendingConfigure (lxwc, CWStackMode);
 
 		/* Update the list of windows last sent to the server */
 		screen->unhookServerWindow (window);
 		screen->insertServerWindow (window, 0);
 	    }
-	    else if (sibling->priv->id != window->serverPrev->priv->id ||
-		     pendingRestacks)
+	    else if (sibling)
 	    {
-		mask |= CWSibling | CWStackMode;
+		bool pendingRestacks = false;
 
-		xwc->stack_mode = Above;
-		xwc->sibling    = ROOTPARENT (sibling);
+		foreach (XWCValueMask &xwcvm, sibling->priv->pendingConfigures)
+		{
+		    if (xwcvm.second & (CWSibling | CWStackMode))
+		    {
+			pendingRestacks = true;
+			break;
+		    }
+		}
+
+		if (sibling->priv->id != window->serverPrev->priv->id || pendingRestacks)
+		{
+		    mask |= CWSibling | CWStackMode;
+
+		    xwc->stack_mode = Above;
+		    xwc->sibling    = ROOTPARENT (sibling);
+		}
 	    }
 	}
 	else if (sibling)
