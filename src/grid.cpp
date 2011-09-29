@@ -26,24 +26,7 @@
 
 using namespace GridWindowType;
 
-static const GridProps gridProps[] =
-{
-    {0,1, 1,1},
-
-    {0,1, 2,2},
-    {0,1, 1,2},
-    {1,1, 2,2},
-
-    {0,0, 2,1},
-    {0,0, 1,1},
-    {1,0, 2,1},
-
-    {0,0, 2,2},
-    {0,0, 1,2},
-    {1,0, 2,2},
-
-    {0,0, 1,1},
-};
+static std::map <unsigned int, GridProps> gridProps;
 
 void
 GridScreen::handleCompizEvent(const char*    plugin,
@@ -102,7 +85,7 @@ GridScreen::constrainSize (CompWindow      *w,
 void
 GridScreen::getPaintRectangle (CompRect &cRect)
 {
-    if (edgeToGridType () != GridUnknown && optionGetDrawIndicator ())
+    if (typeToMask (edgeToGridType ()) != GridUnknown && optionGetDrawIndicator ())
 	cRect = desiredSlot;
     else
 	cRect.setGeometry (0, 0, 0, 0);
@@ -137,7 +120,7 @@ bool
 GridScreen::initiateCommon (CompAction         *action,
 			    CompAction::State  state,
 			    CompOption::Vector &option,
-			    GridType           where,
+			    unsigned int                where,
 			    bool               resize,
 			    bool	       key)
 {
@@ -162,12 +145,12 @@ GridScreen::initiateCommon (CompAction         *action,
 	if (maximizeV && !(cw->actions () & CompWindowActionMaximizeVertMask))
 	    return false;
 
-	if (where == GridUnknown)
+	if (where & GridUnknown)
 	    return false;
 
 	GRID_WINDOW (cw);
 
-	if (gw->lastTarget != where)
+	if (gw->lastTarget & ~(where))
 	    gw->resizeCount = 0;
 	else if (!key)
 	    return false;
@@ -197,7 +180,7 @@ GridScreen::initiateCommon (CompAction         *action,
 	    cw->maximize (0);
 	}
 
-	if (where == GridMaximize && resize)
+	if ((where & GridMaximize) && resize)
 	{
 	    /* move the window to the correct output */
 	    if (cw == mGrabWindow)
@@ -239,7 +222,7 @@ GridScreen::initiateCommon (CompAction         *action,
 
 	if (desiredRect.y () == currentRect.y () &&
 	    desiredRect.height () == currentRect.height () &&
-	    where != GridMaximize && gw->lastTarget == where)
+	    where & ~(GridMaximize) && gw->lastTarget & where)
 	{
 	    int slotWidth25  = workarea.width () / 4;
 	    int slotWidth33  = (workarea.width () / 3) + cw->border ().left;
@@ -358,7 +341,7 @@ GridScreen::initiateCommon (CompAction         *action,
 
 	    /* Special case for left and right, actually vertically maximize
 	     * the window */
-	    if (where == GridLeft || where == GridRight)
+	    if (where & GridLeft || where & GridRight)
 	    {
 		/* First restore the window to its original size */
 		XWindowChanges rwc;
@@ -375,6 +358,7 @@ GridScreen::initiateCommon (CompAction         *action,
 
 		gw->lastBorder = cw->border ();
 		/* Maximize the window */
+		printf ("maximizing window\n");
 		cw->maximize (CompWindowStateMaximizedVertMask);
 	    }
 	    else
@@ -533,39 +517,72 @@ GridScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     return status;
 }
 
-GridType
+unsigned int
+GridScreen::typeToMask (int t)
+{
+    typedef struct {
+	unsigned int mask;
+	int type;
+    } GridTypeMask;
+
+    std::vector <GridTypeMask> type =
+    {
+	{ GridWindowType::GridUnknown, 0 },
+	{ GridWindowType::GridBottomLeft, 1 },
+	{ GridWindowType::GridBottom, 2 },
+	{ GridWindowType::GridBottomRight, 3 },
+	{ GridWindowType::GridLeft, 4 },
+	{ GridWindowType::GridCenter, 5 },
+	{ GridWindowType::GridRight, 6 },
+	{ GridWindowType::GridTopLeft, 7 },
+	{ GridWindowType::GridTop, 8 },
+	{ GridWindowType::GridTopRight, 9 },
+	{ GridWindowType::GridMaximize, 10 }
+    };
+
+    for (unsigned int i = 0; i < type.size (); i++)
+    {
+	GridTypeMask &tm = type[i];
+	if (tm.type == t)
+	    return tm.mask;
+    }
+
+    return GridWindowType::GridUnknown;
+}
+
+int
 GridScreen::edgeToGridType ()
 {
-    GridType ret;
+    int ret;
 
     switch (edge) {
     case Left:
-	ret = (GridType) optionGetLeftEdgeAction ();
+	ret = (int) optionGetLeftEdgeAction ();
 	break;
     case Right:
-	ret = (GridType) optionGetRightEdgeAction ();
+	ret = (int) optionGetRightEdgeAction ();
 	break;
     case Top:
-	ret = (GridType) optionGetTopEdgeAction ();
+	ret = (int) optionGetTopEdgeAction ();
 	break;
     case Bottom:
-	ret = (GridType) optionGetBottomEdgeAction ();
+	ret = (int) optionGetBottomEdgeAction ();
 	break;
     case TopLeft:
-	ret = (GridType) optionGetTopLeftCornerAction ();
+	ret = (int) optionGetTopLeftCornerAction ();
 	break;
     case TopRight:
-	ret = (GridType) optionGetTopRightCornerAction ();
+	ret = (int) optionGetTopRightCornerAction ();
 	break;
     case BottomLeft:
-	ret = (GridType) optionGetBottomLeftCornerAction ();
+	ret = (int) optionGetBottomLeftCornerAction ();
 	break;
     case BottomRight:
-	ret = (GridType) optionGetBottomRightCornerAction ();
+	ret = (int) optionGetBottomRightCornerAction ();
 	break;
     case NoEdge:
     default:
-	ret = GridUnknown;
+	ret = -1;
 	break;
     }
 
@@ -631,7 +648,7 @@ GridScreen::handleEvent (XEvent *event)
 	if (cScreen)
 	    cScreen->damageRegion (desiredSlot);
 
-	initiateCommon (0, 0, o, edgeToGridType (), false, false);
+	initiateCommon (0, 0, o, typeToMask (edgeToGridType ()), false, false);
 
 	if (cScreen)
 	    cScreen->damageRegion (desiredSlot);
@@ -649,7 +666,7 @@ GridScreen::handleEvent (XEvent *event)
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
 
-		check = initiateCommon (0, 0, o, edgeToGridType (), false, false);
+		check = initiateCommon (NULL, 0, o, typeToMask (edgeToGridType ()), false, false);
 
 		if (cScreen)
 			cScreen->damageRegion (desiredSlot);
@@ -736,7 +753,7 @@ GridWindow::ungrabNotify ()
     if (window == gScreen->mGrabWindow)
     {
 	gScreen->initiateCommon
-			(0, 0, gScreen->o, gScreen->edgeToGridType (), true,
+			(NULL, 0, gScreen->o, gScreen->typeToMask (gScreen->edgeToGridType ()), true,
 			 gScreen->edge != gScreen->lastResizeEdge);
 
 	screen->handleEventSetEnabled (gScreen, false);
@@ -769,6 +786,8 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 	 * is resized */
 	dx = currentSize.x () - window->geometry ().x ();
 	dy = currentSize.y () - window->geometry ().y ();
+
+	printf ("offset move\n");
 
 	window->move (dx, dy);
     }
@@ -859,6 +878,7 @@ GridScreen::restoreWindow (CompAction         *action,
 	xwc.height = gw->originalSize.height ();
 	cw->maximize (0);
 	gw->currentSize = CompRect ();
+	printf ("attempting snapBack\n");
 	cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
 	gw->pointerBufDx = 0;
 	gw->pointerBufDy = 0;
@@ -977,6 +997,17 @@ GridScreen::GridScreen (CompScreen *screen) :
     edge = lastEdge = lastResizeEdge = NoEdge;
     currentWorkarea = lastWorkarea = screen->getWorkareaForOutput
 			    (screen->outputDeviceForPoint (pointerX, pointerY));
+    gridProps[GridUnknown] = GridProps {0,1, 1,1};
+    gridProps[GridBottomLeft]  = GridProps {0,1, 2,2};
+    gridProps[GridBottom]  = GridProps {0,1, 1,2};
+    gridProps[GridBottomRight] = GridProps {1,1, 2,2};
+    gridProps[GridLeft]  = GridProps {0,0, 2,1};
+    gridProps[GridCenter]  = GridProps{0,0, 1,1};
+    gridProps[GridRight]  = GridProps {1,0, 2,1};
+    gridProps[GridTopLeft]  = GridProps{0,0, 2,2};
+    gridProps[GridTop]  = GridProps {0,0, 1,2};
+    gridProps[GridTopRight]  = GridProps {0,0, 1,2};
+    gridProps[GridMaximize]  = GridProps {0,0, 1,1};
 
 	animations.clear ();
 
@@ -984,16 +1015,16 @@ GridScreen::GridScreen (CompScreen *screen) :
     optionSet##opt##Initiate (boost::bind (&GridScreen::initiateCommon, this,  \
 					   _1, _2, _3, where, resize, key))
 
-    GRIDSET (PutCenterKey, GridCenter, true, true);
-    GRIDSET (PutLeftKey, GridLeft, true, true);
-    GRIDSET (PutRightKey, GridRight, true, true);
-    GRIDSET (PutTopKey, GridTop, true, true);
-    GRIDSET (PutBottomKey, GridBottom, true, true);
-    GRIDSET (PutTopleftKey, GridTopLeft, true, true);
-    GRIDSET (PutToprightKey, GridTopRight, true, true);
-    GRIDSET (PutBottomleftKey, GridBottomLeft, true, true);
-    GRIDSET (PutBottomrightKey, GridBottomRight, true, true);
-    GRIDSET (PutMaximizeKey, GridMaximize, true, true);
+    GRIDSET (PutCenterKey, GridWindowType::GridCenter, true, true);
+    GRIDSET (PutLeftKey, GridWindowType::GridLeft, true, true);
+    GRIDSET (PutRightKey, GridWindowType::GridRight, true, true);
+    GRIDSET (PutTopKey, GridWindowType::GridTop, true, true);
+    GRIDSET (PutBottomKey, GridWindowType::GridBottom, true, true);
+    GRIDSET (PutTopleftKey, GridWindowType::GridTopLeft, true, true);
+    GRIDSET (PutToprightKey, GridWindowType::GridTopRight, true, true);
+    GRIDSET (PutBottomleftKey, GridWindowType::GridBottomLeft, true, true);
+    GRIDSET (PutBottomrightKey, GridWindowType::GridBottomRight, true, true);
+    GRIDSET (PutMaximizeKey, GridWindowType::GridMaximize, true, true);
 
 #undef GRIDSET
 

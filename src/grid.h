@@ -114,7 +114,7 @@ class GridScreen :
 	void setCurrentRect (Animation&);
 
 	bool initiateCommon (CompAction*, CompAction::State,
-			     CompOption::Vector&, GridType, bool, bool);
+			     CompOption::Vector&, unsigned int, bool, bool);
 
 	void glPaintRectangle (const GLScreenPaintAttrib&,
 			       const GLMatrix&, CompOutput *);
@@ -128,7 +128,8 @@ class GridScreen :
 
 	std::vector <Animation> animations;
 
-	GridType edgeToGridType ();
+	int edgeToGridType ();
+	unsigned int typeToMask (int);
 
 	void handleEvent (XEvent *event);
 	void handleCompizEvent (const char *plugin, const char *event, CompOption::Vector &options);
