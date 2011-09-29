@@ -247,12 +247,20 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
-    const CompRegion reg = (mask & PAINT_WINDOW_TRANSFORMED_MASK) ?
-			   infiniteRegion : shadowRegion.intersected (region);
+    CompRegion reg = (mask & (PAINT_WINDOW_TRANSFORMED_MASK |
+			      PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
+			      PAINT_WINDOW_WITH_OFFSET_MASK)) ?
+			   region : shadowRegion.intersected (region);
 
-    if (wd && !reg.isEmpty () &&
+    /* In case some plugin needs to paint us with an offset region */
+    if (reg.isEmpty ())
+	reg = region;
+
+    if (wd &&
 	wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
+
+
 	CompRect box;
 	GLTexture::MatrixList ml (1);
 	mask |= PAINT_WINDOW_BLEND_MASK;
