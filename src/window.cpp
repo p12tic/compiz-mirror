@@ -2033,8 +2033,16 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     if (priv->frameGeometry.border () != ce->border_width)
 	valueMask |= CWBorderWidth;
 
-    if (ROOTPARENT (window->prev) != ce->above)
-	valueMask |= CWSibling | CWStackMode;
+    if (window->prev)
+    {
+	if (ROOTPARENT (window->prev) != ce->above)
+	    valueMask |= CWSibling | CWStackMode;
+    }
+    else
+    {
+	if (ce->above != 0)
+	    valueMask |= CWSibling | CWStackMode;
+    }
 
     for (std::list <XWCValueMask>::iterator it = pendingConfigures.begin ();
 	 it != pendingConfigures.end (); it++)
