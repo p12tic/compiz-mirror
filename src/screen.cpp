@@ -3250,6 +3250,7 @@ void
 CompScreen::updateWorkarea ()
 {
     CompRect workArea;
+    CompRegion allWorkArea = CompRegion ();
     bool     workAreaChanged = false;
 
     for (unsigned int i = 0; i < priv->outputDevs.size (); i++)
@@ -3263,11 +3264,11 @@ CompScreen::updateWorkarea ()
 	    workAreaChanged = true;
 	    priv->outputDevs[i].setWorkArea (workArea);
 	}
+
+	allWorkArea += workArea;
     }
 
-    workArea = priv->computeWorkareaForBox (CompRect (0, 0,
-						      screen->width (),
-						      screen->height ()));
+    workArea = allWorkArea.boundingRect ();
 
     if (priv->workArea != workArea)
     {
