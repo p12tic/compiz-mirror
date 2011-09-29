@@ -681,6 +681,13 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	return;
     }
 
+    // don't snap maximized windows
+    if (window->state () & CompWindowStateMaximizedHorzMask)
+	dx = 0;
+
+    if (window->state () & CompWindowStateMaximizedVertMask)
+	dy = 0;
+
     // avoiding snap, nothing buffered
     if (!ss->snapping)
 	return;
