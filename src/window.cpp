@@ -1455,6 +1455,7 @@ CompWindow::destroy ()
 	priv->id = 0;
 	priv->frame = 0;
 	priv->serverFrame = 0;
+	priv->managed    = false;
     }
 
     priv->destroyRefCnt--;
@@ -3451,7 +3452,7 @@ CompWindow::configureXWindow (unsigned int valueMask,
             }
 	}
     }
-    else
+    else if (priv->id)
     {
 	priv->reconfigureXWindow (valueMask, xwc);
     }
@@ -3991,7 +3992,7 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 	 * if serverPrev was recently restacked */
 	if (window->serverPrev)
 	{
-	    if (!sibling)
+	    if (!sibling && id)
 	    {
 		XWindowChanges lxwc;
 		unsigned int   valueMask = CWStackMode;
