@@ -2711,6 +2711,12 @@ CompScreen::unhookWindow (CompWindow *w)
     CompWindowList::iterator it =
 	std::find (priv->windows.begin (), priv->windows.end (), w);
 
+    if (it == priv->windows.end ())
+    {
+	compLogMessage ("core", CompLogLevelWarn, "a broken plugin tried to remove a window twice, we won't allow that!");
+	return;
+    }
+
     priv->windows.erase (it);
     priv->eraseWindowFromMap (w->id ());
 
@@ -2737,6 +2743,12 @@ CompScreen::unhookServerWindow (CompWindow *w)
 
     CompWindowList::iterator it =
 	std::find (priv->serverWindows.begin (), priv->serverWindows.end (), w);
+
+    if (it == priv->serverWindows.end ())
+    {
+	compLogMessage ("core", CompLogLevelWarn, "a broken plugin tried to remove a window twice, we won't allow that!");
+	return;
+    }
 
     priv->serverWindows.erase (it);
 
