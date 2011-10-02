@@ -214,7 +214,13 @@ GridScreen::initiateCommon (CompAction         *action,
 	desiredSlot.setWidth (workarea.width () / props.numCellsX);
 
 	/* Adjust for constraints and decorations */
-	desiredRect = constrainSize (cw, desiredSlot);
+	if (where & ~(GridMaximize | GridLeft | GridRight))
+	{
+	    desiredRect = constrainSize (cw, desiredSlot);
+	}
+	else
+	    desiredRect = slotToRect (cw, desiredSlot);
+
 	/* Get current rect not including decorations */
 	currentRect.setGeometry (cw->serverX (), cw->serverY (),
 				 cw->serverWidth (),
@@ -222,7 +228,7 @@ GridScreen::initiateCommon (CompAction         *action,
 
 	if (desiredRect.y () == currentRect.y () &&
 	    desiredRect.height () == currentRect.height () &&
-	    where & ~(GridMaximize) && gw->lastTarget & where)
+	    where & ~(GridMaximize | GridLeft | GridRight) && gw->lastTarget & where)
 	{
 	    int slotWidth25  = workarea.width () / 4;
 	    int slotWidth33  = (workarea.width () / 3) + cw->border ().left;
@@ -340,6 +346,8 @@ GridScreen::initiateCommon (CompAction         *action,
 	    gw->currentSize = CompRect (wc.x, wc.y, wc.width, wc.height);
 	    CompWindowExtents lastBorder = gw->window->border ();
 
+	    gw->sizeHintsFlags = 0;
+
 	    /* Special case for left and right, actually vertically maximize
 	     * the window */
 	    if (where & GridLeft || where & GridRight)
@@ -359,6 +367,13 @@ GridScreen::initiateCommon (CompAction         *action,
 
 		/* Maximize the window */
 		cw->maximize (CompWindowStateMaximizedVertMask);
+
+		/* Be evil */
+		if (cw->sizeHints ().flags & PResizeInc)
+		{
+		    gw->sizeHintsFlags |= PResizeInc;
+		    gw->window->sizeHints ().flags &= ~(PResizeInc);
+		}
 	    }
 	    else
 	    {
@@ -728,6 +743,21 @@ GridScreen::handleEvent (XEvent *event)
 }
 
 void
+GridWindow::validateResizeRequest (unsigned int &xwcm,
+				   XWindowChanges *xwc,
+				   unsigned int source)
+{
+    window->validateResizeRequest (xwcm, xwc, source);
+
+    /* Don't allow non-pagers to change
+     * the size of the window, the user
+     * specified this size, thank-you */
+    if (isGridMaximized)
+	if (source != ClientTypePager)
+	    xwcm = 0;
+}
+
+void
 GridWindow::grabNotify (int          x,
 			int          y,
 			unsigned int state,
@@ -797,8 +827,6 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 	dx = currentSize.x () - window->geometry ().x ();
 	dy = currentSize.y () - window->geometry ().y ();
 
-	printf ("offset move\n");
-
 	window->move (dx, dy);
     }
 }
@@ -840,7 +868,10 @@ GridScreen::restoreWindow (CompAction         *action,
 	return false;
 
     if (gw->isGridMaximized & !(cw->state () & MAXIMIZE_STATE))
-	    gw->isGridMaximized = false;
+    {
+	gw->window->sizeHints ().flags |= gw->sizeHintsFlags;
+	gw->isGridMaximized = false;
+    }
     else
     {
         if (cw == mGrabWindow)
@@ -857,7 +888,6 @@ GridScreen::restoreWindow (CompAction         *action,
 	xwc.height = gw->originalSize.height ();
 	cw->maximize (0);
 	gw->currentSize = CompRect ();
-	printf ("attempting snapBack\n");
 	cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
 	gw->pointerBufDx = 0;
 	gw->pointerBufDy = 0;
