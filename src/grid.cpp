@@ -338,6 +338,7 @@ GridScreen::initiateCommon (CompAction         *action,
 	    unsigned int valueMask = CWX | CWY | CWWidth | CWHeight;
 	    gw->lastTarget = where;
 	    gw->currentSize = CompRect (wc.x, wc.y, wc.width, wc.height);
+	    CompWindowExtents lastBorder = gw->window->border ();
 
 	    /* Special case for left and right, actually vertically maximize
 	     * the window */
@@ -356,9 +357,7 @@ GridScreen::initiateCommon (CompAction         *action,
 		gw->isGridMaximized = true;
 		gw->isGridResized = false;
 
-		gw->lastBorder = cw->border ();
 		/* Maximize the window */
-		printf ("maximizing window\n");
 		cw->maximize (CompWindowStateMaximizedVertMask);
 	    }
 	    else
@@ -366,6 +365,17 @@ GridScreen::initiateCommon (CompAction         *action,
 	        gw->isGridResized = true;
 	        gw->isGridMaximized = false;
 	    }
+
+	    int dw = (lastBorder.left + lastBorder.right) - 
+		      (gw->window->border ().left +
+		       gw->window->border ().right);
+			
+	    int dh = (lastBorder.top + lastBorder.bottom) - 
+			(gw->window->border ().top +
+			 gw->window->border ().bottom);
+
+	    xwc.width += dw;
+	    xwc.height += dh;
 
 	    /* Make window the size that we want */
 	    cw->configureXWindow (valueMask, &xwc);
@@ -813,37 +823,6 @@ GridWindow::stateChangeNotify (unsigned int lastState)
     window->stateChangeNotify (lastState);
 }
 
-void
-GridWindow::windowNotify (CompWindowNotify n)
-{
-    if (n == CompWindowNotifyFrameUpdate)
-    {
-	if (isGridMaximized && !((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE))
-	{
-	    unsigned int valueMask = 0;
-	    XWindowChanges xwc;
-
-	    int dw = (lastBorder.left + lastBorder.right) - 
-		      (window->border ().left + window->border ().right);
-			
-	    int dh = (lastBorder.top + lastBorder.bottom) - 
-			(window->border ().top + window->border ().bottom);
-
-	    if (dw != 0)
-		valueMask |= CWWidth;
-	    if (dh != 0)
-		valueMask |= CWHeight;
-	    xwc.width = window->serverGeometry ().width () + dw;
-	    xwc.height = window->serverGeometry ().height () + dh;
-
-	    window->configureXWindow (valueMask, &xwc);
-	}
-
-	lastBorder = window->border ();
-    }
-
-    window->windowNotify (n);
-}
 bool
 GridScreen::restoreWindow (CompAction         *action,
 			   CompAction::State  state,
@@ -1045,7 +1024,7 @@ GridWindow::GridWindow (CompWindow *window) :
     grabMask (0),
     pointerBufDx (0),
     pointerBufDy (0),
-    resizeCount (0),
+    resizeCount (0),	
     lastTarget (GridUnknown)
 {
     WindowInterface::setHandler (window);

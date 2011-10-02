@@ -169,7 +169,6 @@ class GridWindow :
 	int resizeCount;
 	CompRect currentSize;
 	CompRect originalSize;
-	CompWindowExtents lastBorder;
 	GridType lastTarget;
 
 	void grabNotify (int, int, unsigned int, unsigned int);
@@ -179,8 +178,6 @@ class GridWindow :
 	void moveNotify (int, int, bool);
 
 	void stateChangeNotify (unsigned int);
-
-	void windowNotify (CompWindowNotify n);
 };
 
 #define GRID_WINDOW(w) \
