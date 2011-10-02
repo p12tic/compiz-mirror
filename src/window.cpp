@@ -2549,7 +2549,12 @@ CompWindow::moveInputFocusTo ()
     if (modalTransient)
 	return modalTransient->moveInputFocusTo ();
 
-    if (priv->state & CompWindowStateHiddenMask)
+    /* If the window is still hidden but not shaded
+     * it probably meant that a plugin overloaded
+     * CompWindow::focus to allow the focus to go
+     * to this window, so only move the input focus
+     * to the frame if the window is shaded */
+    if (shaded ())
     {
 	XSetInputFocus (s->dpy (), priv->serverFrame,
 			RevertToPointerRoot, CurrentTime);
