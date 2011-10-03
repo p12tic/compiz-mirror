@@ -1343,33 +1343,11 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	    }
 	}
 
-	popLockedPaintList ();
-
-	foreach (CompWindow *w, windowsFinishedAnimations)
-	{
-	    AnimWindow *aw = AnimWindow::get (w);
-	    aw->priv->notifyAnimation (false);
-	    aw->priv->postAnimationCleanUp ();
-	}
-
-	const CompWindowList &ppl = pushLockedPaintList ();
-
-	foreach (CompWindow *w, ppl)
+	foreach (CompWindow *w, pl)
 	{
 	    PrivateAnimWindow *aw = AnimWindow::get (w)->priv;
 	    if (aw->curAnimation ())
 		aw->curAnimation ()->postPreparePaint ();
-	}
-
-	if (!animStillInProgress)
-	{
-	    activateEvent (false);
-	    mLastRedrawTimeFresh = false;
-
-	    // Reset stacking related info after all animations are done.
-	    ExtensionPluginAnimation *extPlugin =
-		static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
-	    extPlugin->resetStackingInfo ();
 	}
 
 	popLockedPaintList ();
@@ -1395,6 +1373,50 @@ void
 PrivateAnimScreen::donePaint ()
 {
     assert (mAnimInProgress);
+
+    const CompWindowList &pl = pushLockedPaintList ();
+    CompWindowList       windowsFinishedAnimations;
+
+    bool animStillInProgress = false;
+
+    /* Paint list includes destroyed windows */
+    for (CompWindowList::const_reverse_iterator rit = pl.rbegin ();
+	 rit != pl.rend (); rit++)
+    {
+	CompWindow *w = (*rit);
+	AnimWindow *animWin = AnimWindow::get (w);
+	PrivateAnimWindow *aw = animWin->priv;
+	Animation *curAnim = aw->curAnimation ();
+
+	if (curAnim)
+	{
+	    bool finished = (curAnim->remainingTime () <= 0);
+	    if (finished) // Animation is done
+		windowsFinishedAnimations.push_back (w);
+	    else
+		animStillInProgress = true;
+	}
+    }
+
+    popLockedPaintList ();
+
+    foreach (CompWindow *w, windowsFinishedAnimations)
+    {
+	AnimWindow *aw = AnimWindow::get (w);
+	aw->priv->notifyAnimation (false);
+	aw->priv->postAnimationCleanUp ();
+    }
+
+    if (!animStillInProgress)
+    {
+	activateEvent (false);
+	mLastRedrawTimeFresh = false;
+
+	// Reset stacking related info after all animations are done.
+	ExtensionPluginAnimation *extPlugin =
+		static_cast<ExtensionPluginAnimation *> (mExtensionPlugins[0]);
+	extPlugin->resetStackingInfo ();
+    }
 
     cScreen->damagePending ();
 
