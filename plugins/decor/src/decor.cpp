@@ -259,8 +259,6 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
     if (wd &&
 	wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
-
-
 	CompRect box;
 	GLTexture::MatrixList ml (1);
 	mask |= PAINT_WINDOW_BLEND_MASK;
@@ -1019,10 +1017,13 @@ DecorWindow::updateDecorationScale ()
     for (i = 0; i < wd->nQuad; i++)
     {
 	int x, y;
+	unsigned int width = window->size ().width ();
+	unsigned int height = window->size ().height ();
 
-	/* Recompute scaled quad box */
-	computeQuadBox (&wd->decor->quad[i], window->size ().width (),
-			window->size ().height (),
+	if (window->shaded ())
+	    height = 0;
+
+	computeQuadBox (&wd->decor->quad[i], width, height,
 			&x1, &y1, &x2, &y2, &sx, &sy);
 
 	/* Translate by x and y points of this window */

@@ -1831,7 +1831,7 @@ CompScreen::handleEvent (XEvent *event)
          * and the passive button grabs and then we will
          * get the DestroyNotify later and change the focus
          * there
-         */
+	 */
 
 	if (wa.root == priv->root)
 	{
@@ -1845,7 +1845,6 @@ CompScreen::handleEvent (XEvent *event)
 		    if (w->id () != priv->activeWindow)
 		    {
 			CompWindow     *active = screen->findWindow (priv->activeWindow);
-			w->windowNotify (CompWindowNotifyFocusChange);
 
 			priv->activeWindow = w->id ();
 			w->priv->activeNum = priv->activeNum++;
@@ -1861,6 +1860,8 @@ CompScreen::handleEvent (XEvent *event)
 					 Atoms::winActive,
 					 XA_WINDOW, 32, PropModeReplace,
 					 (unsigned char *) &priv->activeWindow, 1);
+
+			w->windowNotify (CompWindowNotifyFocusChange);
 		    }
 
 		    state &= ~CompWindowStateDemandsAttentionMask;

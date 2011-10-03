@@ -604,7 +604,7 @@ CompWindow::recalcActions ()
 	break;
     }
 
-    if (priv->input.top)
+    if (priv->serverInput.top)
 	actions |= CompWindowActionShadeMask;
 
     actions |= (CompWindowActionAboveMask | CompWindowActionBelowMask);
@@ -813,7 +813,10 @@ PrivateWindow::updateFrameWindow ()
 	xwc.x      = serverGeometry.x () - serverInput.left;
 	xwc.y      = serverGeometry.y () - serverInput.top;
 	xwc.width  = serverGeometry.width () + serverInput.left + serverInput.right + bw;
-	xwc.height = serverGeometry.height () + serverInput.top  + serverInput.bottom + bw;
+	if (shaded)
+	    xwc.height = serverInput.top  + serverInput.bottom + bw;
+	else
+	    xwc.height = serverGeometry.height () + serverInput.top  + serverInput.bottom + bw;
 
 	if (shaded)
 	    height = serverInput.top + serverInput.bottom;
@@ -905,6 +908,7 @@ PrivateWindow::updateFrameWindow ()
 	}
 	else
 	    XConfigureWindow (screen->dpy (), serverFrame, valueMask, &xwc);
+
 	if (shaded)
 	{
 	    XUnmapWindow (screen->dpy (), wrapper);
@@ -927,7 +931,13 @@ PrivateWindow::updateFrameWindow ()
 	xwc.x      = serverGeometry.x ();
 	xwc.y      = serverGeometry.y ();
 	xwc.width  = serverGeometry.width () + bw;
-	xwc.height = serverGeometry.height () + bw;
+
+	/* FIXME: It doesn't make much sense to allow undecorated windows to be
+	 * shaded */
+	if (shaded)
+	    xwc.height = bw;
+	else
+	    xwc.height = bw;
 
 	if (shaded)
 	    height = 0;
@@ -1132,10 +1142,10 @@ PrivateWindow::updateRegion ()
 
     }
 
-    r.x      = -priv->attrib.border_width;
-    r.y      = -priv->attrib.border_width;
-    r.width  = priv->width + priv->attrib.border_width;
-    r.height = priv->height + priv->attrib.border_width;
+    r.x      = -priv->geometry.border ();
+    r.y      = -priv->geometry.border ();
+    r.width  = priv->width + priv->geometry.border ();
+    r.height = priv->height + priv->geometry.border ();
 
     if (nBounding < 1)
     {
@@ -1607,11 +1617,10 @@ CompWindow::map ()
 	if (!overrideRedirect ())
 	{
 	    /* been shaded */
-	    if (!priv->height)
+	    if (priv->shaded)
 	    {
-		priv->geometry.setHeight (priv->geometry.height () + 1);
-		resize (priv->geometry.x (), priv->geometry.y (), priv->geometry.width (),
-			priv->geometry.height () - 1, priv->geometry.border ());
+		priv->shaded = false;
+		priv->updateFrameWindow ();
 	    }
 	}
     }
@@ -1637,10 +1646,12 @@ CompWindow::unmap ()
      * pixmap of the window around, it's safe to
      * unmap the frame window since there's no use
      * for it at this point anyways and it just blocks
-     * input */
+     * input, but keep it around if shaded */
 
     XUnmapWindow (screen->dpy (), priv->wrapper);
-    XUnmapWindow (screen->dpy (), priv->serverFrame);
+
+    if (!priv->shaded)
+	XUnmapWindow (screen->dpy (), priv->serverFrame);
 
     priv->unmapRefCnt--;
     if (priv->unmapRefCnt > 0)
@@ -1668,7 +1679,7 @@ CompWindow::unmap ()
 	priv->unmanaging = false;
     }
 
-    if (priv->serverFrame)
+    if (priv->serverFrame && !priv->shaded)
 	priv->unreparent ();
 
     if (priv->struts)
@@ -1681,13 +1692,12 @@ CompWindow::unmap ()
 	screen->priv->desktopWindowCount--;
 
     priv->attrib.map_state = IsUnmapped;
-
     priv->invisible = true;
 
     if (priv->shaded && priv->height)
-	resize (priv->attrib.x, priv->attrib.y,
-		priv->attrib.width, ++priv->attrib.height - 1,
-		priv->attrib.border_width);
+    {
+	priv->updateFrameWindow ();
+    }
 
     screen->priv->updateClientList ();
 
@@ -1791,9 +1801,6 @@ CompWindow::resize (CompWindow::Geometry gm)
 
 	pw = gm.width () + gm.border () * 2;
 	ph = gm.height () + gm.border () * 2;
-
-	if (priv->shaded)
-	    ph = 0;
 
 	dx      = gm.x () - priv->geometry.x ();
 	dy      = gm.y () - priv->geometry.y ();
@@ -2111,7 +2118,15 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     x      = ce->x + priv->serverInput.left;
     y      = ce->y + priv->serverInput.top;
     width  = ce->width - priv->serverGeometry.border () * 2 - priv->serverInput.left - priv->serverInput.right;
-    height = ce->height - priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
+
+    /* Don't use the server side frame geometry
+     * to determine the geometry of shaded
+     * windows since we didn't resize them
+     * on configureXWindow */
+    if (priv->shaded)
+	height = priv->serverGeometry.height () - priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
+    else
+	height = ce->height - priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
 
     /* set the frame geometry */
     priv->frameGeometry.set (ce->x, ce->y, ce->width, ce->height, ce->border_width);
@@ -3180,9 +3195,22 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				      + serverInput.left + serverInput.right)
 	frameValueMask &= ~(CWWidth);
 
-    if (serverFrameGeometry.height () == xwc->height + serverGeometry.border () * 2
-				      + serverInput.top + serverInput.bottom)
-	frameValueMask &= ~(CWHeight);
+    /* shaded windows are not allowed to have their frame window
+     * height changed (but are allowed to have their client height
+     * changed */
+
+    if (shaded)
+    {
+	if (serverFrameGeometry.height () == serverGeometry.border () * 2
+	    + serverInput.top + serverInput.bottom)
+	    frameValueMask &= ~(CWHeight);
+    }
+    else
+    {
+	if (serverFrameGeometry.height () == xwc->height + serverGeometry.border () * 2
+	    + serverInput.top + serverInput.bottom)
+	    frameValueMask &= ~(CWHeight);
+    }
 
     /* Can't set the border width of frame windows */
     frameValueMask &= ~(CWBorderWidth);
@@ -3197,9 +3225,18 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	serverFrameGeometry.setWidth (xwc->width + serverGeometry.border () * 2
 				      + serverInput.left + serverInput.right);
 
-    if (frameValueMask & CWHeight)
-	serverFrameGeometry.setHeight (xwc->height + serverGeometry.border () * 2
-				      + serverInput.top + serverInput.bottom);
+    if (shaded)
+    {
+	if (frameValueMask & CWHeight)
+	    serverFrameGeometry.setHeight (serverGeometry.border () * 2
+					   + serverInput.top + serverInput.bottom);
+    }
+    else
+    {
+	if (frameValueMask & CWHeight)
+	    serverFrameGeometry.setHeight (xwc->height + serverGeometry.border () * 2
+					   + serverInput.top + serverInput.bottom);
+    }
 
 
     if (serverFrame)
@@ -4222,7 +4259,7 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
     if (overrideRedirect () || !priv->managed)
 	return;
 
-    if (priv->state & CompWindowStateShadedMask)
+    if (priv->state & CompWindowStateShadedMask && !priv->shaded)
     {
 	windowNotify (CompWindowNotifyShade);
 
@@ -4632,19 +4669,9 @@ PrivateWindow::show ()
 	if (serverFrame)
 	    XMapWindow (screen->dpy (), serverFrame);
 
-	if (height)
-	{
-	    priv->geometry.setHeight (priv->geometry.height () + 1);
-	    window->resize (geometry.x (), geometry.y (),
-			    geometry.width (), geometry.height () - 1,
-			    geometry.border ());
-	}
+	updateFrameWindow ();
 
 	return;
-    }
-    else
-    {
-	shaded = false;
     }
 
     window->windowNotify (CompWindowNotifyShow);
@@ -6271,12 +6298,7 @@ CompWindow::CompWindow (Window aboveId,
     priv->updateIconGeometry ();
 
     if (priv->shaded)
-    {
-	priv->geometry.setHeight (priv->geometry.height () + 1);
-	resize (priv->geometry.x (), priv->geometry.y (),
-		priv->geometry.width (), priv->geometry.height () - 1,
-		priv->geometry.border ());
-    }
+	priv->updateFrameWindow ();
 
     if (priv->attrib.map_state == IsViewable)
     {
