@@ -1240,59 +1240,66 @@ CompScreen::handleEvent (XEvent *event)
 	}
 	break;
     case ReparentNotify:
+
 	w = findWindow (event->xreparent.window);
 
-	/* It is possible that some plugin might call
-	 * w->destroy () before the window actually receives
-	 * its first ReparentNotify event which would mean
-	 * that it is already in the list of destroyed
-	 * windows, so check that list too */
+	/* If this window isn't part of our tracked window
+	 * list and was reparented into the root window then
+	 * we need to track it */
 	if (!w)
 	{
-	    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+	    if (event->xreparent.parent == priv->root)
 	    {
-		if (dw->priv->serverId == event->xdestroywindow.window)
+		/* Failure means that window has been destroyed. We still have to add 
+		 * the window to the window list as we might get configure requests
+		 * which require us to stack other windows relative to it. Setting
+		 * some default values if this is the case. */
+		if (!XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa))
+		    priv->setDefaultWindowAttributes (&wa);
+
+		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
+		cw->manage (priv->getTopWindow (), wa);
+
+		priv->createdWindows.remove (cw);
+		delete cw;
+		break;
+	    }
+	    else
+	    {
+		/* It is possible that some plugin might call
+		 * w->destroy () before the window actually receives
+		 * its first ReparentNotify event which would mean
+		 * that it is already in the list of destroyed
+		 * windows, so check that list too */
+
+		foreach (CompWindow *dw, screen->priv->destroyedWindows)
 		{
-		    w = dw;
-		    break;
+		    if (dw->priv->serverId == event->xreparent.window)
+		    {
+			w = dw;
+			break;
+		    }
 		}
 	    }
 	}
 
-	if (!w && event->xreparent.parent == priv->root)
+	/* This is the only case where a window is removed but not
+	   destroyed. We must remove our event mask and all passive
+	   grabs. */
+
+        if (w)
 	{
-	    /* Failure means that window has been destroyed. We still have to add 
-	     * the window to the window list as we might get configure requests
-	     * which require us to stack other windows relative to it. Setting
-	     * some default values if this is the case. */
-	    if (!XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa))
-		priv->setDefaultWindowAttributes (&wa);
-
-	    CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
-	    cw->manage (priv->getTopWindow (), wa);
-
-	    priv->createdWindows.remove (cw);
-	    delete cw;
-	}
-	else if (!(event->xreparent.parent == priv->root))
-	{
-	    /* This is the only case where a window is removed but not
-	       destroyed. We must remove our event mask and all passive
-	       grabs. */
-
-	    if (w)
+	    if (event->xreparent.parent != w->priv->wrapper)
 	    {
-		if (event->xreparent.parent != w->priv->wrapper)
-		{
-		    w->moveInputFocusToOtherWindow ();
-		    w->destroy ();
+		w->moveInputFocusToOtherWindow ();
+		w->destroy ();
 
-		    XSelectInput (priv->dpy, w->id (), NoEventMask);
-		    XShapeSelectInput (priv->dpy, w->id (), NoEventMask);
-		    XUngrabButton (priv->dpy, AnyButton, AnyModifier, w->id ());
-		}
+		XSelectInput (priv->dpy, w->id (), NoEventMask);
+		XShapeSelectInput (priv->dpy, w->id (), NoEventMask);
+		XUngrabButton (priv->dpy, AnyButton, AnyModifier, w->id ());
 	    }
-	}
+        }
+
 	break;
     case CirculateNotify:
 	w = findWindow (event->xcirculate.window);
