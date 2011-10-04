@@ -841,9 +841,6 @@ PrivateWindow::updateFrameWindow ()
 	else
 	    serverFrameGeometry.setHeight (xwc.height);
 
-	addPendingConfigure (xwc, valueMask);
-
-
 	/* Geometry is the same, so we're not going to get a ConfigureNotify
 	 * event when the window is configured, which means that other plugins
 	 * won't know that the client, frame and wrapper windows got shifted
@@ -900,6 +897,14 @@ PrivateWindow::updateFrameWindow ()
 
 	    }
 
+	    gettimeofday (&lastConfigureRequest, NULL);
+	    compiz::X11::PendingEvent::Ptr pc =
+		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
+									      new compiz::X11::PendingConfigureEvent (
+										  screen->dpy (), serverFrame, valueMask, &xwc)));
+
+	    pendingConfigures.add (pc);
+
 	    XSendEvent (screen->dpy (), screen->root (), false,
 			SubstructureNotifyMask, (XEvent *) &xev);
 
@@ -907,7 +912,16 @@ PrivateWindow::updateFrameWindow ()
 	    XSync (screen->dpy (), false);
 	}
 	else
+	{
+	    gettimeofday (&lastConfigureRequest, NULL);
+	    compiz::X11::PendingEvent::Ptr pc =
+		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
+									      new compiz::X11::PendingConfigureEvent (
+										  screen->dpy (), serverFrame, valueMask, &xwc)));
+
+	    pendingConfigures.add (pc);
 	    XConfigureWindow (screen->dpy (), serverFrame, valueMask, &xwc);
+	}
 
 	if (shaded)
 	{
@@ -962,9 +976,6 @@ PrivateWindow::updateFrameWindow ()
 	else
 	    serverFrameGeometry.setHeight (xwc.height);
 
-	addPendingConfigure (xwc, valueMask);
-
-
 	/* Geometry is the same, so we're not going to get a ConfigureNotify
 	 * event when the window is configured, which means that other plugins
 	 * won't know that the client, frame and wrapper windows got shifted
@@ -1021,6 +1032,14 @@ PrivateWindow::updateFrameWindow ()
 
 	    }
 
+	    gettimeofday (&lastConfigureRequest, NULL);
+	    compiz::X11::PendingEvent::Ptr pc =
+		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
+									      new compiz::X11::PendingConfigureEvent (
+										  screen->dpy (), serverFrame, valueMask, &xwc)));
+
+	    pendingConfigures.add (pc);
+
 	    XSendEvent (screen->dpy (), screen->root (), false,
 			SubstructureNotifyMask, (XEvent *) &xev);
 
@@ -1028,7 +1047,17 @@ PrivateWindow::updateFrameWindow ()
 	    XSync (screen->dpy (), false);
 	}
 	else
+	{
+	    gettimeofday (&lastConfigureRequest, NULL);
+	    compiz::X11::PendingEvent::Ptr pc =
+		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
+									      new compiz::X11::PendingConfigureEvent (
+										  screen->dpy (), serverFrame, valueMask, &xwc)));
+
+	    pendingConfigures.add (pc);
+
 	    XConfigureWindow (screen->dpy (), serverFrame, valueMask, &xwc);
+	}
 
 	if (shaded)
 	{
@@ -2020,7 +2049,6 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     int x, y, width, height;
     CompWindow	     *above;
     unsigned int     valueMask = 0;
-    bool             handled = false;
 
     if (!priv->frame)
 	return;
@@ -2052,61 +2080,15 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
 	    valueMask |= CWSibling | CWStackMode;
     }
 
-    for (std::list <XWCValueMask>::iterator it = pendingConfigures.begin ();
-	 it != pendingConfigures.end (); it++)
-    {
-	XWCValueMask &xwcvm = (*it);
-
-
-	if (xwcvm.second != valueMask)
-	{
-	    /* For stacking cases, if a client wants to raise or lower a window
-	     * then they don't need to specify CWSibling, so allow that to be
-	     * excluded in those cases */
-
-	    if (ce->above == ROOTPARENT (screen->windows ().back ()) ||
-		ce->above == 0)
-	    {
-		if ((xwcvm.second & ~(CWSibling) != valueMask))
-		    continue;
-	    }
-	    else
-		continue;
-	}
-
-	if (xwcvm.second & CWX && xwcvm.first.x != ce->x)
-	    continue;
-
-	if (xwcvm.second & CWY && xwcvm.first.y != ce->y)
-	    continue;
-
-	if (xwcvm.second & CWWidth && xwcvm.first.width != ce->width)
-	    continue;
-
-	if (xwcvm.second & CWHeight && xwcvm.first.height != ce->height)
-	    continue;
-
-	if (xwcvm.second & (CWStackMode | CWSibling) && xwcvm.first.sibling != ce->above)
-	    continue;
-
-	/* Matched ConfigureWindow request to ConfigureNotify event
-	 * remove it from the list */
-
-	handled = true;
-
-	pendingConfigures.erase (it);
-	break;
-    }
-
-    if (!handled)
+    if (!pendingConfigures.match ((XEvent *) ce))
     {
 	compLogMessage ("core", CompLogLevelWarn, "unhandled ConfigureNotify on 0x%x!", serverFrame);
-	compLogMessage ("core", CompLogLevelWarn, "this should never happen. you should"\
+	compLogMessage ("core", CompLogLevelWarn, "this should never happen. you should "\
 						  "probably file a bug about this.");
 #ifdef DEBUG
 	abort ();
 #else
-	pendingConfigures.clear ();
+	pendingConfigures = compiz::X11::PendingEventQueue (screen->dpy ());
 #endif
     }
 
@@ -2145,7 +2127,7 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     if (above)
 	above->priv->updatePassiveButtonGrabs ();
 
-    if (pendingConfigures.empty ())
+    if (!pendingConfigures.pending ())
     {
 	/* Tell plugins its ok to start doing stupid things again but
 	 * obviously FIXME */
@@ -2195,7 +2177,7 @@ CompWindow::move (int  dx,
 	 * and a FIXME in any case, however, until we can break the API
 	 * and remove CompWindow::move, this will need to be the case */
 
-	if (!priv->pendingConfigures.size ())
+	if (!priv->pendingConfigures.pending ())
 	{
 	    priv->geometry.setX (priv->geometry.x () + dx);
 	    priv->geometry.setY (priv->geometry.y () + dy);
@@ -2237,34 +2219,194 @@ CompWindow::move (int  dx,
 	    {
 		compLogMessage ("core", CompLogLevelWarn, "failed to receive ConfigureNotify event from request at %i (now: %i)\n",
 				priv->lastConfigureRequest.tv_usec, tv.tv_usec);
-		priv->pendingConfigures.clear ();
+		priv->pendingConfigures = compiz::X11::PendingEventQueue (screen->dpy ());
 	    }
 	}
     }
 }
 
+bool
+compiz::X11::PendingEventQueue::pending ()
+{
+    return !mEvents.empty ();
+}
+
 void
-PrivateWindow::addPendingConfigure (XWindowChanges &xwc, unsigned int valueMask)
+compiz::X11::PendingEventQueue::add (PendingEvent::Ptr p)
+{
+    mEvents.push_back (p);
+}
+
+bool
+compiz::X11::PendingEventQueue::removeIfMatching (const PendingEvent::Ptr &p, XEvent *event)
+{
+    return p->match (event);
+}
+
+bool
+compiz::X11::PendingEventQueue::match (XEvent *event)
+{
+    unsigned int lastSize = mEvents.size ();
+
+    mEvents.erase (std::remove_if (mEvents.begin (), mEvents.end (),
+				   boost::bind (&compiz::X11::PendingEventQueue::removeIfMatching, this, _1, event)), mEvents.end ());
+
+    return lastSize != mEvents.size ();
+}
+
+bool
+compiz::X11::PendingEventQueue::forEachIf (boost::function<bool (compiz::X11::PendingEvent::Ptr)> f)
+{
+    foreach (compiz::X11::PendingEvent::Ptr p, mEvents)
+    {
+	if (f (p))
+	    return true;
+    }
+
+    return false;
+}
+
+compiz::X11::PendingEventQueue::PendingEventQueue (Display *d)
+{
+}
+
+compiz::X11::PendingEventQueue::~PendingEventQueue ()
+{
+}
+
+Window
+compiz::X11::PendingEvent::getEventWindow (XEvent *event)
+{
+    return event->xany.window;
+}
+
+bool
+compiz::X11::PendingEvent::match (XEvent *event)
+{
+    if (event->xany.serial != mSerial)
+	return false;
+    if (getEventWindow (event)!= mWindow)
+	return false;
+
+    return true;
+}
+
+compiz::X11::PendingEvent::PendingEvent (Display *d, Window w) :
+    mSerial (XNextRequest (d)),
+    mWindow (w)
+{
+}
+
+compiz::X11::PendingEvent::~PendingEvent ()
+{
+}
+
+Window
+compiz::X11::PendingConfigureEvent::getEventWindow (XEvent *event)
+{
+    return event->xconfigure.window;
+}
+
+bool
+compiz::X11::PendingConfigureEvent::matchVM (unsigned int valueMask)
+{
+    return valueMask & mValueMask;
+}
+
+bool
+compiz::X11::PendingConfigureEvent::match (XEvent *event)
+{
+    XConfigureEvent *ce = (XConfigureEvent *) event;
+    bool matched = true;
+
+    if (!compiz::X11::PendingEvent::match (event))
+	return false;
+
+    if (mValueMask & CWX)
+	if (ce->x != mXwc.x)
+	    matched = false;
+
+    if (mValueMask & CWY)
+	if (ce->y != mXwc.y)
+	    matched = false;
+
+    if (mValueMask & CWWidth)
+	if (ce->width != mXwc.width)
+	    matched = false;
+
+    if (mValueMask & CWHeight)
+	if (ce->height != mXwc.height)
+	    matched = false;
+
+    if (mValueMask & CWBorderWidth)
+	if (ce->border_width != mXwc.border_width)
+	    matched = false;
+
+    if (mValueMask & (CWStackMode | CWSibling))
+	if (ce->above != mXwc.sibling)
+	    matched = false;
+
+    /* Remove events from the queue
+     * even if they didn't match what
+     * we expected them to be, but still
+     * complain about it */
+    if (!matched)
+    {
+	compLogMessage ("core", CompLogLevelWarn, "no exact match for ConfigureNotify on 0x%x!", mWindow);
+	compLogMessage ("core", CompLogLevelWarn, "expected the following changes:");
+	if (mValueMask & CWX)
+	    compLogMessage ("core", CompLogLevelWarn, "x: %i", mXwc.x);
+	if (mValueMask & CWY)
+	    compLogMessage ("core", CompLogLevelWarn, "y: %i", mXwc.y);
+	if (mValueMask & CWWidth)
+	    compLogMessage ("core", CompLogLevelWarn, "width: %i", mXwc.width);
+	if (mValueMask & CWHeight)
+	    compLogMessage ("core", CompLogLevelWarn, "height: %i", mXwc.height);
+	if (mValueMask & CWBorderWidth)
+	    compLogMessage ("core", CompLogLevelWarn, "border: %i", mXwc.border_width);
+	if (mValueMask & (CWStackMode | CWSibling))
+	    compLogMessage ("core", CompLogLevelWarn, "sibling: 0x%x", mXwc.sibling);
+
+	compLogMessage ("core", CompLogLevelWarn, "instead got:");
+	compLogMessage ("core", CompLogLevelWarn, "x: %i", ce->x);
+	compLogMessage ("core", CompLogLevelWarn, "y: %i", ce->y);
+	compLogMessage ("core", CompLogLevelWarn, "width: %i", ce->width);
+	compLogMessage ("core", CompLogLevelWarn, "height: %i", ce->height);
+	compLogMessage ("core", CompLogLevelWarn, "above: %i", ce->above);
+	compLogMessage ("core", CompLogLevelWarn, "this should never happen. you should "\
+						  "probably file a bug about this.");
+    }
+
+    return true;
+}
+
+compiz::X11::PendingConfigureEvent::PendingConfigureEvent (Display *d,
+							   Window   w,
+							   unsigned int valueMask,
+							   XWindowChanges *xwc) :
+    compiz::X11::PendingEvent::PendingEvent (d, w),
+    mValueMask (valueMask),
+    mXwc (*xwc)
 {
     CompOption::Vector options;
     CompOption::Value  v;
 
     options.push_back (CompOption ("window", CompOption::TypeInt));
-    v.set ((int) id);
+    v.set ((int) w);
     options.back ().set (v);
     options.push_back (CompOption ("active", CompOption::TypeInt));
     v.set ((int) 1);
     options.back ().set (v);
-
-    gettimeofday (&lastConfigureRequest, NULL);
 
     /* Notify other plugins that it is unsafe to change geometry or serverGeometry
      * FIXME: That API should not be accessible to plugins, this is a hack to avoid
      * breaking ABI */
 
     screen->handleCompizEvent ("core", "lock_position", options);
+}
 
-    priv->pendingConfigures.push_back (XWCValueMask (xwc, valueMask));
+compiz::X11::PendingConfigureEvent::~PendingConfigureEvent ()
+{
 }
 
 void
@@ -2275,7 +2417,7 @@ CompWindow::syncPosition ()
     unsigned int   valueMask = CWX | CWY;
     XWindowChanges xwc;
 
-    if (priv->pendingPositionUpdates && priv->pendingConfigures.empty ())
+    if (priv->pendingPositionUpdates && !priv->pendingConfigures.pending ())
     {
 	if (priv->serverFrameGeometry.x () == priv->frameGeometry.x ())
 	    valueMask &= ~(CWX);
@@ -2290,8 +2432,6 @@ CompWindow::syncPosition ()
 	 * larger changes to the window movement system. */
 	if (valueMask)
 	{
-	    priv->addPendingConfigure (xwc, 0);
-
 	    priv->serverGeometry.setX (priv->geometry.x ());
 	    priv->serverGeometry.setY (priv->geometry.y ());
 	    priv->serverFrameGeometry.setX (priv->frameGeometry.x ());
@@ -2299,6 +2439,14 @@ CompWindow::syncPosition ()
 
 	    xwc.x = priv->serverFrameGeometry.x ();
 	    xwc.y = priv->serverFrameGeometry.y ();
+
+	    gettimeofday (&priv->lastConfigureRequest, NULL);
+	    compiz::X11::PendingEvent::Ptr pc =
+		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
+									      new compiz::X11::PendingConfigureEvent (
+										  screen->dpy (), priv->serverFrame, 0, &xwc)));
+
+	    priv->pendingConfigures.add (pc);
 
 	    XConfigureWindow (screen->dpy (), ROOTPARENT (this), valueMask, &xwc);
 
@@ -3103,6 +3251,13 @@ PrivateWindow::restoreGeometry (XWindowChanges *xwc,
     return m;
 }
 
+static bool isPendingRestack (compiz::X11::PendingEvent::Ptr p)
+{
+    compiz::X11::PendingConfigureEvent::Ptr pc = boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+
+    return pc->matchVM (CWStackMode | CWSibling);
+}
+
 void
 PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				   XWindowChanges *xwc)
@@ -3137,18 +3292,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	/* check if the sibling is also pending a restack,
 	 * if not, then setting this bit is useless */
 
-	bool pendingRestack = false;
-
-	foreach (XWCValueMask &xwcvm, window->serverPrev->priv->pendingConfigures)
-	{
-	    if (xwcvm.second & (CWSibling | CWStackMode))
-	    {
-		pendingRestack = true;
-		break;
-	    }
-	}
-
-	if (!pendingRestack)
+	if (window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1)))
 	    valueMask &= ~(CWSibling | CWStackMode);
     }
 
@@ -3252,7 +3396,14 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    wc.width  = serverFrameGeometry.width ();
 	    wc.height = serverFrameGeometry.height ();
 
-	    addPendingConfigure (wc, frameValueMask);
+	    gettimeofday (&lastConfigureRequest, NULL);
+
+	    compiz::X11::PendingEvent::Ptr pc =
+		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
+									      new compiz::X11::PendingConfigureEvent (
+										  screen->dpy (), priv->serverFrame, frameValueMask, &wc)));
+
+	    pendingConfigures.add (pc);
 
 	    XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
 	}
@@ -4041,12 +4192,20 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 
 		lxwc.stack_mode = Below;
 
+		if (serverFrame)
+		{
+		    gettimeofday (&lastConfigureRequest, NULL);
+		    compiz::X11::PendingEvent::Ptr pc =
+			    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
+										      new compiz::X11::PendingConfigureEvent (
+											  screen->dpy (), serverFrame, valueMask, &lxwc)));
+
+		    pendingConfigures.add (pc);
+		}
+
 		/* Below with no sibling puts the window at the bottom
 		 * of the stack */
 		XConfigureWindow (screen->dpy (), ROOTPARENT (window), valueMask, &lxwc);
-
-		if (serverFrame)
-		    priv->addPendingConfigure (lxwc, CWStackMode);
 
 		/* Update the list of windows last sent to the server */
 		screen->unhookServerWindow (window);
@@ -4054,18 +4213,8 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 	    }
 	    else if (sibling)
 	    {
-		bool pendingRestacks = false;
-
-		foreach (XWCValueMask &xwcvm, sibling->priv->pendingConfigures)
-		{
-		    if (xwcvm.second & (CWSibling | CWStackMode))
-		    {
-			pendingRestacks = true;
-			break;
-		    }
-		}
-
-		if (sibling->priv->id != window->serverPrev->priv->id || pendingRestacks)
+		if (sibling->priv->id != window->serverPrev->priv->id ||
+		    window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1)))
 		{
 		    mask |= CWSibling | CWStackMode;
 
@@ -6447,6 +6596,7 @@ PrivateWindow::PrivateWindow () :
 
     pendingUnmaps (0),
     pendingMaps (0),
+    pendingConfigures (screen->dpy ()),
     pendingPositionUpdates (false),
 
     startupId (0),

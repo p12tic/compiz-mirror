@@ -292,7 +292,7 @@ class PrivateWindow {
 
 	typedef std::pair <XWindowChanges, unsigned int> XWCValueMask;
 
-	std::list <XWCValueMask> pendingConfigures;
+	compiz::X11::PendingEventQueue pendingConfigures;
 	bool pendingPositionUpdates;
 
 	char *startupId;

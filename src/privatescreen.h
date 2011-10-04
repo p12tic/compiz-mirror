@@ -35,6 +35,7 @@
 #include <core/timer.h>
 #include <core/plugin.h>
 #include <time.h>
+#include <boost/shared_ptr.hpp>
 
 #include <glibmm/main.h>
 
@@ -99,6 +100,70 @@ struct CompStartupSequence {
     unsigned int		viewportX;
     unsigned int		viewportY;
 };
+
+namespace compiz
+{
+namespace X11
+{
+class PendingEvent {
+public:
+    PendingEvent (Display *, Window);
+    virtual ~PendingEvent ();
+
+    virtual bool match (XEvent *);
+
+    typedef boost::shared_ptr<PendingEvent> Ptr;
+
+protected:
+
+    virtual Window getEventWindow (XEvent *);
+
+    unsigned int mSerial;
+    Window       mWindow;
+};
+
+class PendingConfigureEvent :
+    public PendingEvent
+{
+public:
+    PendingConfigureEvent (Display *, Window, unsigned int, XWindowChanges *);
+    virtual ~PendingConfigureEvent ();
+
+    virtual bool match (XEvent *);
+    bool matchVM (unsigned int valueMask);
+
+    typedef boost::shared_ptr<PendingConfigureEvent> Ptr;
+
+protected:
+
+    virtual Window getEventWindow (XEvent *);
+
+private:
+    unsigned int mValueMask;
+    XWindowChanges mXwc;
+};
+
+class PendingEventQueue
+{
+public:
+
+    PendingEventQueue (Display *);
+    virtual ~PendingEventQueue ();
+
+    void add (PendingEvent::Ptr p);
+    bool match (XEvent *);
+    bool pending ();
+    bool forEachIf (boost::function <bool (compiz::X11::PendingEvent::Ptr)>);
+
+protected:
+    bool removeIfMatching (const PendingEvent::Ptr &p, XEvent *);
+
+private:
+    std::list <PendingEvent::Ptr> mEvents;
+};
+
+}
+}
 
 class PrivateScreen :
     public ValueHolder,
