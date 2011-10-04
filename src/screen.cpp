@@ -2615,7 +2615,7 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
     if (it == priv->windows.end ())
     {
 	compLogMessage ("core", CompLogLevelDebug, "could not insert 0x%x above 0x%x",
-			(unsigned int) (*it)->priv->serverId, aboveId);
+			(unsigned int) w->priv->serverId, aboveId);
 #ifdef DEBUG
 	abort ();
 #endif
@@ -2673,8 +2673,8 @@ CompScreen::insertServerWindow (CompWindow *w, Window	aboveId)
 
     if (it == priv->serverWindows.end ())
     {
-	compLogMessage ("core", CompLogLevelDebug, "could not insert 0x%x above 0x%x",
-			(unsigned int) (*it)->priv->serverId, aboveId);
+	compLogMessage ("core", CompLogLevelWarn, "could not insert 0x%x above 0x%x",
+			(unsigned int) w->priv->serverId, aboveId);
 #ifdef DEBUG
 	abort ();
 #endif
