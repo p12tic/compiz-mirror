@@ -396,7 +396,7 @@ SnapWindow::moveCheckNearestEdge (int position,
 	// Update snapping data
 	if (ss->optionGetSnapTypeMask () & SnapTypeEdgeResistanceMask)
 	{
-	    snapGeometry = window->serverGeometry ();
+	    snapGeometry = window->geometry ();
 	    this->snapDirection |= snapDirection;
 	}
 	// Attract the window if needed, moving it of the correct dist
