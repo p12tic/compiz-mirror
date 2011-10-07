@@ -2724,6 +2724,8 @@ CompWindow::moveInputFocusTo ()
 	XChangeProperty (s->dpy (), s->root (), Atoms::winActive,
 			 XA_WINDOW, 32, PropModeReplace,
 			 (unsigned char *) &priv->id, 1);
+
+	screen->priv->nextActiveWindow = priv->serverFrame;
     }
     else
     {
@@ -2783,6 +2785,7 @@ CompWindow::moveInputFocusToOtherWindow ()
 	priv->id == screen->priv->nextActiveWindow)
     {
 	CompWindow *ancestor;
+	Window     lastNextActiveWindow = screen->priv->nextActiveWindow;
 
 	if (priv->transientFor && priv->transientFor != screen->root ())
 	{
@@ -2834,6 +2837,26 @@ CompWindow::moveInputFocusToOtherWindow ()
 	}
 	else
 	    screen->focusDefaultWindow ();
+
+	/* FIXME:
+	 * moveInputFocusTo and focusDefaultWindow should really
+	 * return booleans */
+	if (lastNextActiveWindow != screen->priv->nextActiveWindow &&
+	    screen->priv->optionGetRaiseOnClick ())
+	{
+	    /* If this window just got the focus because another window
+	     * was unmanaged then we should also raise it if click raise
+	     * is on, since another plugin might have raised another window
+	     * without wanting to focus it and this window will be beneath
+	     * it in the stack but above it in the active window history
+	     * so when the focus moves here this window should be raised
+	     * That's the tradeoff for maintaining a predictable focus order
+	     * as compared to eg a predictable stacking order */
+
+	    CompWindow *nextActive = screen->findWindow (screen->priv->nextActiveWindow);
+	    if (nextActive)
+		nextActive->raise ();
+	}
     }
 }
 
