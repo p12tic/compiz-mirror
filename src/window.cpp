@@ -4310,7 +4310,7 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	     * window may not be allowed). */
 	    if (p && PrivateWindow::validSiblingBelow (p, this))
 	    {
-		p = PrivateWindow::findValidStackSiblingBelow (sibling, p);
+		p = PrivateWindow::findValidStackSiblingBelow (this, p);
 
 		/* if we found a valid sibling under the active window, it's
 		   our new sibling we want to stack above */
