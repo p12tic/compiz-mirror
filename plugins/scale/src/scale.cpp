@@ -261,6 +261,17 @@ ScaleWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
 
     bool drawScaled = false;
 
+    /* Windows that wouldn't be visible before and after entering
+     * scale mode (because some plugin modified CompWindow::focus)
+     * should be faded in and out */
+    if (window->state () & CompWindowStateHiddenMask)
+    {
+	if (priv->slot)
+	    attrib.opacity *= (1.0f - priv->scale)  / (1.0f - priv->slot->scale);
+	else
+	    attrib.opacity *= (1.0f - priv->scale) / (1.0f - priv->lastTargetScale);
+    }
+
     if (priv->adjust || priv->slot)
     {
 	if (priv->window->id ()     != priv->spScreen->selectedWindow &&
@@ -940,9 +951,12 @@ PrivateScaleScreen::scaleTerminate (CompAction         *action,
 
 	    if (sw->priv->slot)
 	    {
+		sw->priv->lastTargetScale = sw->priv->slot->scale;
 		sw->priv->slot   = NULL;
 		sw->priv->adjust = true;
 	    }
+	    else
+		sw->priv->lastTargetScale = 1.0f;
 	}
 
 	if (state & CompAction::StateCancel)
@@ -1759,6 +1773,7 @@ PrivateScaleWindow::PrivateScaleWindow (CompWindow *w) :
     yVelocity (0.0),
     scaleVelocity (0.0),
     scale (1.0),
+    lastTargetScale (1.0f),
     tx (0.0),
     ty (0.0),
     delta (1.0),
