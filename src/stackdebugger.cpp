@@ -344,7 +344,7 @@ StackDebugger::checkSanity (CompWindowList &serverWindows, bool verbose)
 
 		/* search down the stack to check if there is a fullscreen
 		 * window, otherwise we are not on the fullscreen layer */
-		for (CompWindow *rw = w->serverPrev; rw; rw = rw->serverPrev)
+		for (CompWindow *rw = w->prev; rw; rw = rw->prev)
 		{
 		    if (rw->type () & CompWindowTypeFullscreenMask)
 		    {
@@ -384,9 +384,9 @@ StackDebugger::checkSanity (CompWindowList &serverWindows, bool verbose)
 
 		    /* search down the stack to check if there is a fullscreen
 		     * window, otherwise we are not on the fullscreen layer */
-		    for (CompWindow *rw = w->serverPrev; rw; rw = rw->serverPrev)
+		    for (CompWindow *rw = w->prev; rw; rw = rw->prev)
 		    {
-			if (rw->type () == CompWindowTypeFullscreenMask)
+			if (rw->type () & CompWindowTypeFullscreenMask)
 			{
 			    fullscreenWindow = true;
 			    break;
@@ -412,9 +412,9 @@ StackDebugger::checkSanity (CompWindowList &serverWindows, bool verbose)
 
 		    /* search down the stack to check if there is a fullscreen
 		     * window, otherwise we are not on the fullscreen layer */
-		    for (CompWindow *rw = w->serverPrev; rw; rw = rw->serverPrev)
+		    for (CompWindow *rw = w->prev; rw; rw = rw->prev)
 		    {
-			if (rw->type () == CompWindowTypeFullscreenMask)
+			if (rw->type () & CompWindowTypeFullscreenMask)
 			{
 			    fullscreenWindow = true;
 			    break;
