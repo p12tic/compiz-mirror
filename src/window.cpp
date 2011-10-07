@@ -2719,7 +2719,8 @@ CompWindow::moveInputFocusToOtherWindow ()
 	/* FIXME:
 	 * moveInputFocusTo and focusDefaultWindow should really
 	 * return booleans */
-	if (lastNextActiveWindow != screen->priv->nextActiveWindow)
+	if (lastNextActiveWindow != screen->priv->nextActiveWindow &&
+	    screen->priv->optionGetRaiseOnClick ())
 	{
 	    /* If this window just got the focus because another window
 	     * was unmanaged then we should also raise it if click raise
