@@ -4078,6 +4078,17 @@ CompWindow::raise ()
 	if (priv->id == screen->activeWindow ())
 	    aboveFs = true;
 
+    for (CompWindow *pw = serverPrev; pw; pw = pw->serverPrev)
+    {
+	if (pw->priv->type & CompWindowTypeFullscreenMask)
+	{
+	    if (priv->id == screen->activeWindow ())
+		aboveFs = true;
+
+	    break;
+	}
+    }
+
     mask = priv->addWindowStackChanges (&xwc,
 	PrivateWindow::findSiblingBelow (this, aboveFs));
 
