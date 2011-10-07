@@ -705,20 +705,23 @@ GridScreen::handleEvent (XEvent *event)
 			if (edge != NoEdge && check)
 			{
 				CompWindow *cw = screen->findWindow (screen->activeWindow ());
-				animations.push_back (Animation ());
-				int current = animations.size () - 1;
-				animations.at (current).fromRect	= cw->serverBorderRect ();
-				animations.at (current).currentRect	= cw->serverBorderRect ();
-				animations.at (current).timer = animations.at (current).duration;
-				animations.at (current).targetRect = desiredSlot;
-
-				if (lastEdge == NoEdge || !animating)
+				if (cw)
 				{
+				    animations.push_back (Animation ());
+				    int current = animations.size () - 1;
+				    animations.at (current).fromRect	= cw->serverBorderRect ();
+				    animations.at (current).currentRect	= cw->serverBorderRect ();
+				    animations.at (current).timer = animations.at (current).duration;
+				    animations.at (current).targetRect = desiredSlot;
+
+				    if (lastEdge == NoEdge || !animating)
+				    {
 					/* Cursor has entered edge region from non-edge region */
 					animating = true;
 					glScreen->glPaintOutputSetEnabled (this, true);
 					cScreen->preparePaintSetEnabled (this, true);
 					cScreen->donePaintSetEnabled (this, true);
+				    }
 				}
 			}
 		}
