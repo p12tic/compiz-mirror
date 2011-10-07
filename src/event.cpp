@@ -1842,12 +1842,23 @@ CompScreen::handleEvent (XEvent *event)
 
 	if (wa.root == priv->root)
 	{
-	    if (event->xfocus.mode != NotifyGrab)
+	    if (event->xfocus.mode == NotifyGrab)
+		priv->grabbed = true;
+	    else if (event->xfocus.mode == NotifyUngrab)
+		priv->grabbed = false;
+	    else
 	    {
+		CompWindowList dockWindows;
+		XWindowChanges xwc;
+		unsigned int   mask;
+
 		w = findTopLevelWindow (event->xfocus.window);
 		if (w && w->managed ())
 		{
 		    unsigned int state = w->state ();
+
+		    if (priv->nextActiveWindow == event->xfocus.window)
+			priv->nextActiveWindow = None;
 
 		    if (w->id () != priv->activeWindow)
 		    {
@@ -1857,7 +1868,47 @@ CompScreen::handleEvent (XEvent *event)
 			w->priv->activeNum = priv->activeNum++;
 
 			if (active)
+			{
+			    CompWindowList windowsLostFocus;
+			    /* If this window lost focus and was above a fullscreen window
+			     * and is no longer capable of being focused (eg, it is
+			     * not visible on this viewport) then we need to check if
+			     * any other windows below it are also now no longer capable
+			     * of being focused and restack them in the highest position
+			     * below docks that they are allowed to take */
+			    if (!active->focus ())
+			    {
+				windowsLostFocus.push_back (active);
+				for (CompWindow *fsw = active->prev; fsw; fsw = fsw->prev)
+				{
+				    if (!fsw->focus () &&
+					fsw->managed () &&
+					!(fsw->type () & (CompWindowTypeDockMask |
+							  CompWindowTypeFullscreenMask)) &&
+					!fsw->overrideRedirect ())
+					windowsLostFocus.push_back (fsw);
+
+				    if (fsw->type () & CompWindowTypeFullscreenMask)
+				    {
+					/* This will be the window that we must lower relative to */
+					CompWindow *sibling = PrivateWindow::findValidStackSiblingBelow (active, fsw);
+
+					if (sibling)
+					{
+					    for (CompWindowList::reverse_iterator rit = windowsLostFocus.rbegin ();
+						 rit != windowsLostFocus.rend (); rit++)
+					    {
+						(*rit)->restackAbove (sibling);
+					    }
+					}
+
+					break;
+				    }
+				}
+			    }
+
 			    active->priv->updatePassiveButtonGrabs ();
+			}
 
 			w->priv->updatePassiveButtonGrabs ();
 
@@ -1873,9 +1924,6 @@ CompScreen::handleEvent (XEvent *event)
 
 		    state &= ~CompWindowStateDemandsAttentionMask;
 		    w->changeState (state);
-
-		    if (priv->nextActiveWindow == event->xfocus.window)
-			priv->nextActiveWindow = None;
 	        }
 		else if (event->xfocus.window == priv->root)
 		{
@@ -1901,9 +1949,31 @@ CompScreen::handleEvent (XEvent *event)
 			}
 		    }
 		}
+
+		/* Ensure that docks are stacked in the right place
+		 *
+		 * When a normal window gets the focus and is above a
+		 * fullscreen window, restack the docks to be above
+		 * the highest level mapped and visible normal window,
+		 * otherwise put them above the highest fullscreen window
+		 */
+		if (w)
+		{
+		    if (PrivateWindow::stackDocks (w, dockWindows, &xwc, &mask))
+		    {
+			Window sibling = xwc.sibling;
+			xwc.stack_mode = Above;
+
+			/* Then update the dock windows */
+			foreach (CompWindow *dw, dockWindows)
+			{
+			    xwc.sibling = sibling;
+			    dw->configureXWindow (mask, &xwc);
+			}
+		    }
+		}
+
 	    }
-	    else
-		priv->grabbed = true;
 	}
 	else
 	{

@@ -2608,33 +2608,7 @@ CompWindow::moveInputFocusTo ()
 	}
 
 	if (setFocus)
-	{
-	    CompWindowList dockWindows;
-	    XWindowChanges xwc;
-	    unsigned int   mask;
-
 	    screen->priv->nextActiveWindow = priv->id;
-
-	    /* Ensure that docks are stacked in the right place
-	     *
-	     * When a normal window gets the focus and is above a
-	     * fullscreen window, restack the docks to be above
-	     * the highest level mapped and visible normal window,
-	     * otherwise put them above the highest fullscreen window
-	     */
-	    if (PrivateWindow::stackDocks (this, dockWindows, &xwc, &mask))
-	    {
-		Window sibling = xwc.sibling;
-		xwc.stack_mode = Above;
-
-                /* Then update the dock windows */
-                foreach (CompWindow *dw, dockWindows)
-                {
-                    xwc.sibling = sibling;
-                    dw->configureXWindow (mask, &xwc);
-                }
-            }
-        }
 
 	if (!setFocus && !modalTransient)
 	{
@@ -2835,6 +2809,10 @@ PrivateWindow::findSiblingBelow (CompWindow *w,
 	default:
 	{
 	    bool allowedRelativeToLayer = !(below->priv->type & belowMask);
+
+	    if (aboveFs && below->priv->type & CompWindowTypeFullscreenMask)
+		if (!below->focus ())
+		    break;
 
 	    t = screen->findWindow (below->transientFor ());
 
@@ -3291,12 +3269,12 @@ PrivateWindow::stackDocks (CompWindow     *w,
         {
 	    /* If there is another toplevel window above the fullscreen one
 	     * then we need to stack above that */
-            if (dw->focus () &&
+	    if ((dw->priv->managed && !dw->priv->unmanaging) &&
+		!(dw->priv->state & CompWindowStateHiddenMask) &&
                 !PrivateWindow::isAncestorTo (w, dw) &&
                 !(dw->type () & (CompWindowTypeFullscreenMask |
                                  CompWindowTypeDockMask)) &&
-                !dw->overrideRedirect () &&
-                dw->defaultViewport () == screen->vp () &&
+		!dw->overrideRedirect () &&
 		dw->isViewable ())
             {
                 belowDocks = dw;
@@ -3310,10 +3288,11 @@ PrivateWindow::stackDocks (CompWindow     *w,
             firstFullscreenWindow = dw;
 	    for (CompWindow *dww = dw->serverPrev; dww; dww = dww->serverPrev)
             {
-                if (!(dww->type () & (CompWindowTypeFullscreenMask |
+		if ((dw->priv->managed && !dw->priv->unmanaging) &&
+		    !(dw->priv->state & CompWindowStateHiddenMask) &&
+		    !(dww->type () & (CompWindowTypeFullscreenMask |
                                       CompWindowTypeDockMask)) &&
-                    !dww->overrideRedirect () &&
-                    dww->defaultViewport () == screen->vp () &&
+		    !dww->overrideRedirect () &&
 		    dww->isViewable ())
                 {
                     belowDocks = dww;
