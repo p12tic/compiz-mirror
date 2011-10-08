@@ -6406,7 +6406,7 @@ CompWindow::CompWindow (Window aboveId,
 			priv->desktop = screen->currentDesktop ();
 
 		    screen->setWindowProp (priv->id, Atoms::winDesktop,
-				           priv->desktop);
+					   priv->desktop);
 		}
 	    }
 	}

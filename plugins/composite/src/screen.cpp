@@ -199,6 +199,7 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
     priv (new PrivateCompositeScreen (this))
 {
     int	compositeMajor, compositeMinor;
+    XSetWindowAttributes attr;
 
     if (!XQueryExtension (s->dpy (), COMPOSITE_NAME,
 			  &priv->compositeOpcode,
@@ -248,23 +249,27 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
 
     priv->slowAnimations = false;
 
-    if (!priv->init ())
-    {
-        setFailed ();
-    }
+    attr.override_redirect = true;
+    attr.event_mask        = PropertyChangeMask;
+
+    priv->cmSnOwner =
+	XCreateWindow (screen->dpy (), screen->root (),
+		       -100, -100, 1, 1, 0,
+		       CopyFromParent, CopyFromParent,
+		       CopyFromParent,
+		       CWOverrideRedirect | CWEventMask,
+		       &attr);
 
 }
 
 CompositeScreen::~CompositeScreen ()
 {
     priv->paintTimer.stop ();
-
 #ifdef USE_COW
     if (useCow)
 	XCompositeReleaseOverlayWindow (screen->dpy (),
 					screen->root ());
 #endif
-
     delete priv;
 }
 
@@ -289,11 +294,20 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     pHnd (NULL),
     FPSLimiterMode (CompositeFPSLimiterModeDefault),
     frameTimeAccumulator (0),
-    withDestroyedWindows ()
+    withDestroyedWindows (),
+    cmSnOwner (0),
+    netCmHandoffAtom (XInternAtom (screen->dpy (), "_COMPIZ_NET_CM_HANDOFF", 0)),
+    netCmHandoffSupported (false),
+    mInit (false)
 {
+    std::ostringstream oss;
     gettimeofday (&lastRedraw, 0);
     // wrap outputChangeNotify
     ScreenInterface::setHandler (screen);
+
+    oss << "_NET_WM_CM_S%d" << std::dec << screen->screenNum ();
+
+    cmSnAtom = XInternAtom (screen->dpy (), oss.str ().c_str (), 0);
 
     optionSetSlowAnimationsKeyInitiate (CompositeScreen::toggleSlowAnimations);
 }
@@ -306,21 +320,16 @@ bool
 PrivateCompositeScreen::init ()
 {
     Display              *dpy = screen->dpy ();
-    Window               newCmSnOwner = None;
-    Atom                 cmSnAtom = 0;
     Time                 cmSnTimestamp = 0;
     XEvent               event;
-    XSetWindowAttributes attr;
     Window               currentCmSnOwner;
-    char                 buf[128];
-
-    sprintf (buf, "_NET_WM_CM_S%d", screen->screenNum ());
-    cmSnAtom = XInternAtom (dpy, buf, 0);
+    int                  value = 0;
 
     currentCmSnOwner = XGetSelectionOwner (dpy, cmSnAtom);
 
     if (currentCmSnOwner != None)
     {
+	XSelectInput (screen->dpy (), currentCmSnOwner, StructureNotifyMask);
 	if (!replaceCurrentWm)
 	{
 	    compLogMessage ("composite", CompLogLevelError,
@@ -334,28 +343,19 @@ PrivateCompositeScreen::init ()
 	}
     }
 
-    attr.override_redirect = true;
-    attr.event_mask        = PropertyChangeMask;
-
-    newCmSnOwner =
-	XCreateWindow (dpy, screen->root (),
-		       -100, -100, 1, 1, 0,
-		       CopyFromParent, CopyFromParent,
-		       CopyFromParent,
-		       CWOverrideRedirect | CWEventMask,
-		       &attr);
-
-    XChangeProperty (dpy, newCmSnOwner, Atoms::wmName, Atoms::utf8String, 8,
+    XChangeProperty (dpy, cmSnOwner, netCmHandoffAtom, XA_INTEGER, 8,
+		     PropModeReplace, (unsigned char *) &value, 1);
+    XChangeProperty (dpy, cmSnOwner, Atoms::wmName, Atoms::utf8String, 8,
 		     PropModeReplace, (unsigned char *) PACKAGE,
 		     strlen (PACKAGE));
 
-    XWindowEvent (dpy, newCmSnOwner, PropertyChangeMask, &event);
+    XWindowEvent (dpy, cmSnOwner, PropertyChangeMask, &event);
 
     cmSnTimestamp = event.xproperty.time;
 
-    XSetSelectionOwner (dpy, cmSnAtom, newCmSnOwner, cmSnTimestamp);
+    XSetSelectionOwner (dpy, cmSnAtom, cmSnOwner, cmSnTimestamp);
 
-    if (XGetSelectionOwner (dpy, cmSnAtom) != newCmSnOwner)
+    if (XGetSelectionOwner (dpy, cmSnAtom) != cmSnOwner)
     {
 	compLogMessage ("core", CompLogLevelError,
 			"Could not acquire compositing manager "
@@ -378,6 +378,20 @@ PrivateCompositeScreen::init ()
 
     XSendEvent (dpy, screen->root (), FALSE, StructureNotifyMask, &event);
 
+    if (netCmHandoffSupported)
+    {
+	/* Wait for old compositing manager to go away */
+	if (currentCmSnOwner != None)
+	{
+	    do {
+		XWindowEvent (dpy, currentCmSnOwner, StructureNotifyMask, &event);
+	    } while (event.type != DestroyNotify);
+	}
+
+	XCompositeRedirectSubwindows (dpy, screen->root (),
+				      CompositeRedirectManual);
+    }
+
     return true;
 }
 
@@ -386,25 +400,46 @@ bool
 CompositeScreen::registerPaintHandler (PaintHandler *pHnd)
 {
     Display *dpy = screen->dpy ();
+    Window  currentCmSnOwner = 0;
+    int updateMode = 0;
 
     if (priv->active)
 	return false;
 
     CompScreen::checkForError (dpy);
 
-    XCompositeRedirectSubwindows (dpy, screen->root (),
-				  CompositeRedirectManual);
+    /* Check if the previous compositor (if one is around)
+     * supports the _NET_CM_HANDOFF protocol, if so then
+     * we need to do an automatic redirect and paint the
+     * scene once and then tell it to go away */
+    priv->netCmHandoffSupported = false;
+    currentCmSnOwner = XGetSelectionOwner (screen->dpy (), priv->cmSnAtom);
 
-    priv->overlayWindowCount = 0;
-
-    if (CompScreen::checkForError (dpy))
+    if (currentCmSnOwner != priv->cmSnOwner)
     {
-	compLogMessage ("composite", CompLogLevelError,
-			"Another composite manager is already "
-			"running on screen: %d", screen->screenNum ());
+	Atom type;
+	int  fmt;
+	unsigned long nitems, nleft;
+	unsigned char *prop;
 
-	return false;
+	if (XGetWindowProperty (screen->dpy (), currentCmSnOwner, priv->netCmHandoffAtom,
+				0L, 8L, false, XA_INTEGER, &type, &fmt,
+				&nitems, &nleft, &prop) == Success)
+	{
+	    if (type == XA_INTEGER && fmt == 8 && nitems != 0 && nleft == 0)
+	    {
+		priv->netCmHandoffSupported = true;
+	    }
+
+	    XFree (prop);
+	}
     }
+
+    priv->netCmHandoffSupported ? updateMode = CompositeRedirectAutomatic :
+				  updateMode = CompositeRedirectManual;
+
+    XCompositeRedirectSubwindows (dpy, screen->root (),
+				  updateMode);
 
     foreach (CompWindow *w, screen->windows ())
     {
@@ -422,13 +457,19 @@ CompositeScreen::registerPaintHandler (PaintHandler *pHnd)
 	(boost::bind (&CompositeScreen::handlePaintTimeout, this),
 	 priv->optimalRedrawTime);
 
+    if (priv->netCmHandoffSupported)
+	priv->paintTimer.setTimes (0, 0);
+
     return true;
 }
 
 void
 CompositeScreen::unregisterPaintHandler ()
 {
+    XEvent ev;
     Display *dpy = screen->dpy ();
+    bool   oldCmSupportsHandoff = false;
+    Window currentCmSnOwner = None;
 
     foreach (CompWindow *w, screen->windows ())
     {
@@ -440,14 +481,38 @@ CompositeScreen::unregisterPaintHandler ()
 
     priv->overlayWindowCount = 0;
 
-    XCompositeUnredirectSubwindows (dpy, screen->root (),
-				    CompositeRedirectManual);
-
     priv->pHnd = NULL;
     priv->active = false;
     priv->paintTimer.stop ();
 
-    hideOutputWindow ();
+    Atom type;
+    int  fmt;
+    unsigned long nitems, nleft;
+    unsigned char *prop;
+
+    /* Polling like this is very ugly */
+    while (currentCmSnOwner != priv->cmSnOwner)
+	currentCmSnOwner = XGetSelectionOwner (screen->dpy (), priv->cmSnAtom);
+
+    if (XGetWindowProperty (screen->dpy (), currentCmSnOwner, priv->netCmHandoffAtom,
+			    0L, 8L, false, XA_INTEGER, &type, &fmt,
+			    &nitems, &nleft, &prop) == Success)
+    {
+	if (type == XA_INTEGER && fmt == 8 && nitems != 0 && nleft == 0)
+	{
+	    oldCmSupportsHandoff = true;
+	}
+
+	XFree (prop);
+    }
+
+    if (oldCmSupportsHandoff)
+    {
+	XCompositeUnredirectSubwindows (dpy, screen->root (),
+					CompositeRedirectManual);
+    }
+    else
+	hideOutputWindow ();
 }
 
 bool
@@ -601,8 +666,6 @@ PrivateCompositeScreen::makeOutputWindow ()
     else
 #endif
 	output = overlay = screen->root ();
-
-    cScreen->hideOutputWindow ();
 }
 
 Window
@@ -892,6 +955,9 @@ CompositeScreen::handlePaintTimeout ()
     }
     else
 	timeToNextRedraw = priv->getTimeToNextRedraw (&tv);
+
+    if (!priv->mInit)
+	priv->mInit = priv->init ();
 
     if (priv->idle)
 	priv->paintTimer.setTimes (timeToNextRedraw, MAXSHORT);
