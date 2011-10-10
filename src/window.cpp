@@ -897,13 +897,16 @@ PrivateWindow::updateFrameWindow ()
 
 	    }
 
-	    gettimeofday (&lastConfigureRequest, NULL);
 	    compiz::X11::PendingEvent::Ptr pc =
 		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
 									      new compiz::X11::PendingConfigureEvent (
 										  screen->dpy (), serverFrame, valueMask, &xwc)));
 
 	    pendingConfigures.add (pc);
+	    if (priv->mClearCheckTimeout.active ())
+		priv->mClearCheckTimeout.stop ();
+	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
+					    2000, 2500);
 
 	    XSendEvent (screen->dpy (), screen->root (), false,
 			SubstructureNotifyMask, (XEvent *) &xev);
@@ -913,13 +916,16 @@ PrivateWindow::updateFrameWindow ()
 	}
 	else
 	{
-	    gettimeofday (&lastConfigureRequest, NULL);
 	    compiz::X11::PendingEvent::Ptr pc =
 		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
 									      new compiz::X11::PendingConfigureEvent (
 										  screen->dpy (), serverFrame, valueMask, &xwc)));
 
 	    pendingConfigures.add (pc);
+	    if (priv->mClearCheckTimeout.active ())
+		priv->mClearCheckTimeout.stop ();
+	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
+					    2000, 2500);
 	    XConfigureWindow (screen->dpy (), serverFrame, valueMask, &xwc);
 	}
 
@@ -1032,13 +1038,16 @@ PrivateWindow::updateFrameWindow ()
 
 	    }
 
-	    gettimeofday (&lastConfigureRequest, NULL);
 	    compiz::X11::PendingEvent::Ptr pc =
 		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
 									      new compiz::X11::PendingConfigureEvent (
 										  screen->dpy (), serverFrame, valueMask, &xwc)));
 
 	    pendingConfigures.add (pc);
+	    if (priv->mClearCheckTimeout.active ())
+		priv->mClearCheckTimeout.stop ();
+	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
+					    2000, 2500);
 
 	    XSendEvent (screen->dpy (), screen->root (), false,
 			SubstructureNotifyMask, (XEvent *) &xev);
@@ -1048,13 +1057,16 @@ PrivateWindow::updateFrameWindow ()
 	}
 	else
 	{
-	    gettimeofday (&lastConfigureRequest, NULL);
 	    compiz::X11::PendingEvent::Ptr pc =
 		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
 									      new compiz::X11::PendingConfigureEvent (
 										  screen->dpy (), serverFrame, valueMask, &xwc)));
 
 	    pendingConfigures.add (pc);
+	    if (priv->mClearCheckTimeout.active ())
+		priv->mClearCheckTimeout.stop ();
+	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
+					    2000, 2500);
 
 	    XConfigureWindow (screen->dpy (), serverFrame, valueMask, &xwc);
 	}
@@ -2088,7 +2100,7 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
 #ifdef DEBUG
 	abort ();
 #else
-	pendingConfigures = compiz::X11::PendingEventQueue (screen->dpy ());
+	pendingConfigures.clear ();
 #endif
     }
 
@@ -2199,28 +2211,13 @@ CompWindow::move (int  dx,
 	{
 	    XWindowChanges xwc;
 	    unsigned int   valueMask = CWX | CWY;
-	    struct timeval tv, old;
-	    compLogMessage ("core", CompLogLevelDebug, "pending configure notifies on 0x%x,"\
+	    compLogMessage ("core", CompLogLevelDebug, "pending configure notifies on 0x%x, "\
 			    "moving window asyncrhonously!", (unsigned int) priv->serverId);
-
-	    old = priv->lastConfigureRequest;
-	    gettimeofday (&tv, NULL);
 
 	    xwc.x = priv->serverGeometry.x () + dx;
 	    xwc.y = priv->serverGeometry.y () + dy;
 
 	    configureXWindow (valueMask, &xwc);
-
-	    priv->lastConfigureRequest = old;
-
-	    /* FIXME: This is a hack to avoid performance regressions
-	     * and must be removed in 0.9.6 */
-	    if (tv.tv_usec - priv->lastConfigureRequest.tv_usec > 30000)
-	    {
-		compLogMessage ("core", CompLogLevelWarn, "failed to receive ConfigureNotify event from request at %i (now: %i)\n",
-				priv->lastConfigureRequest.tv_usec, tv.tv_usec);
-		priv->pendingConfigures = compiz::X11::PendingEventQueue (screen->dpy ());
-	    }
 	}
     }
 }
@@ -2231,16 +2228,57 @@ compiz::X11::PendingEventQueue::pending ()
     return !mEvents.empty ();
 }
 
+bool
+PrivateWindow::checkClear ()
+{
+    if (pendingConfigures.pending ())
+    {
+	/* FIXME: This is a hack to avoid performance regressions
+	 * and must be removed in 0.9.6 */
+	compLogMessage ("core", CompLogLevelWarn, "failed to receive ConfigureNotify event on 0x%x\n",
+			id);
+	pendingConfigures.dump ();
+	pendingConfigures.clear ();
+    }
+
+    return false;
+}
+
 void
 compiz::X11::PendingEventQueue::add (PendingEvent::Ptr p)
 {
+    p->dump ();
+
     mEvents.push_back (p);
 }
 
 bool
 compiz::X11::PendingEventQueue::removeIfMatching (const PendingEvent::Ptr &p, XEvent *event)
 {
-    return p->match (event);
+    if (p->match (event))
+    {
+	p->dump ();
+	return true;
+    }
+
+    return false;
+}
+
+void
+compiz::X11::PendingEvent::dump ()
+{
+    compLogMessage ("core", CompLogLevelDebug, "- event serial: %i\n", mSerial);
+    compLogMessage ("core", CompLogLevelDebug,  "- event window 0x%x\n", mWindow);
+}
+
+void
+compiz::X11::PendingConfigureEvent::dump ()
+{
+    compiz::X11::PendingEvent::dump ();
+
+    compLogMessage ("core", CompLogLevelDebug,  "- x: %i y: %i width: %i height: %i "\
+						 "border: %i, sibling: 0x%x\n",
+						 mXwc.x, mXwc.y, mXwc.width, mXwc.height, mXwc.border_width, mXwc.sibling);
 }
 
 bool
@@ -2266,8 +2304,21 @@ compiz::X11::PendingEventQueue::forEachIf (boost::function<bool (compiz::X11::Pe
     return false;
 }
 
+void
+compiz::X11::PendingEventQueue::dump ()
+{
+    foreach (compiz::X11::PendingEvent::Ptr p, mEvents)
+	p->dump ();
+}
+
 compiz::X11::PendingEventQueue::PendingEventQueue (Display *d)
 {
+    /* mClearCheckTimeout.setTimes (0, 0)
+     *
+     * XXX: For whatever reason, calling setTimes (0, 0) here causes
+     * the destructor of the timer object to be called twice later on
+     * in execution and the stack gets smashed. This could be a
+     * compiler bug, but requires further investigation */
 }
 
 compiz::X11::PendingEventQueue::~PendingEventQueue ()
@@ -2310,7 +2361,44 @@ compiz::X11::PendingConfigureEvent::getEventWindow (XEvent *event)
 bool
 compiz::X11::PendingConfigureEvent::matchVM (unsigned int valueMask)
 {
-    return valueMask & mValueMask;
+    unsigned int result = mValueMask != 0 ? valueMask & mValueMask : 1;
+
+    return result != 0;
+}
+
+bool
+compiz::X11::PendingConfigureEvent::matchRequest (XWindowChanges &xwc, unsigned int valueMask)
+{
+    if (matchVM (valueMask))
+    {
+	if (valueMask & CWX)
+	    if (xwc.x != mXwc.x)
+		return false;
+
+	if (valueMask & CWY)
+	    if (xwc.y != mXwc.y)
+		return false;
+
+	if (valueMask & CWWidth)
+	    if (xwc.width != mXwc.width)
+		return false;
+
+	if (valueMask & CWHeight)
+	    if (xwc.height != mXwc.height)
+		return false;
+
+	if (valueMask & CWBorderWidth)
+	    if (xwc.border_width != mXwc.border_width)
+		return false;
+
+	if (valueMask & (CWStackMode | CWSibling))
+	    if (xwc.sibling != mXwc.sibling)
+		return false;
+
+	return true;
+    }
+
+    return false;
 }
 
 bool
@@ -2322,29 +2410,16 @@ compiz::X11::PendingConfigureEvent::match (XEvent *event)
     if (!compiz::X11::PendingEvent::match (event))
 	return false;
 
-    if (mValueMask & CWX)
-	if (ce->x != mXwc.x)
-	    matched = false;
+    XWindowChanges xwc;
 
-    if (mValueMask & CWY)
-	if (ce->y != mXwc.y)
-	    matched = false;
+    xwc.x = ce->x;
+    xwc.y = ce->y;
+    xwc.width = ce->width;
+    xwc.height = ce->height;
+    xwc.border_width = ce->border_width;
+    xwc.sibling = ce->above;
 
-    if (mValueMask & CWWidth)
-	if (ce->width != mXwc.width)
-	    matched = false;
-
-    if (mValueMask & CWHeight)
-	if (ce->height != mXwc.height)
-	    matched = false;
-
-    if (mValueMask & CWBorderWidth)
-	if (ce->border_width != mXwc.border_width)
-	    matched = false;
-
-    if (mValueMask & (CWStackMode | CWSibling))
-	if (ce->above != mXwc.sibling)
-	    matched = false;
+    matched = matchRequest (xwc, mValueMask);
 
     /* Remove events from the queue
      * even if they didn't match what
@@ -2440,7 +2515,6 @@ CompWindow::syncPosition ()
 	    xwc.x = priv->serverFrameGeometry.x ();
 	    xwc.y = priv->serverFrameGeometry.y ();
 
-	    gettimeofday (&priv->lastConfigureRequest, NULL);
 	    compiz::X11::PendingEvent::Ptr pc =
 		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
 									      new compiz::X11::PendingConfigureEvent (
@@ -2448,6 +2522,11 @@ CompWindow::syncPosition ()
 
 	    priv->pendingConfigures.add (pc);
 
+	    /* Got 3 seconds to get its stuff together */
+	    if (priv->mClearCheckTimeout.active ())
+		priv->mClearCheckTimeout.stop ();
+	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
+					    2000, 2500);
 	    XConfigureWindow (screen->dpy (), ROOTPARENT (this), valueMask, &xwc);
 
 	    if (priv->serverFrame)
@@ -3259,11 +3338,18 @@ static bool isPendingRestack (compiz::X11::PendingEvent::Ptr p)
     return pc->matchVM (CWStackMode | CWSibling);
 }
 
+static bool isExistingRequest (compiz::X11::PendingEvent::Ptr p, XWindowChanges &xwc, unsigned int valueMask)
+{
+    compiz::X11::PendingConfigureEvent::Ptr pc = boost::shared_static_cast <compiz::X11::PendingConfigureEvent> (p);
+
+    return pc->matchRequest (xwc, valueMask);
+}
+
 void
 PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				   XWindowChanges *xwc)
 {
-    unsigned int frameValueMask = valueMask;
+    unsigned int frameValueMask = 0;
 
     /* Immediately sync window position
      * if plugins were updating w->geometry () directly
@@ -3273,28 +3359,37 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 
     /* Remove redundant bits */
 
-    if (serverGeometry.x () == xwc->x)
+    if (valueMask & CWX && serverGeometry.x () == xwc->x)
 	valueMask &= ~(CWX);
 
-    if (serverGeometry.y () == xwc->y)
+    if (valueMask & CWY && serverGeometry.y () == xwc->y)
 	valueMask &= ~(CWY);
 
-    if (serverGeometry.width () == xwc->width)
+    if (valueMask & CWWidth && serverGeometry.width () == xwc->width)
 	valueMask &= ~(CWWidth);
 
-    if (serverGeometry.height () == xwc->height)
+    if (valueMask & CWHeight && serverGeometry.height () == xwc->height)
 	valueMask &= ~(CWHeight);
 
-    if (serverGeometry.border () == xwc->border_width)
+    if (valueMask & CWBorderWidth && serverGeometry.border () == xwc->border_width)
 	valueMask &= ~(CWBorderWidth);
 
-    if (window->serverPrev && ROOTPARENT (window->serverPrev) == xwc->sibling)
+    if (valueMask & CWSibling && window->serverPrev)
     {
 	/* check if the sibling is also pending a restack,
 	 * if not, then setting this bit is useless */
+	if (ROOTPARENT (window->serverPrev) == xwc->sibling)
+	{
+	    bool matchingRequest = priv->pendingConfigures.forEachIf (boost::bind (isExistingRequest, _1, *xwc, valueMask));
+	    bool restackPending = window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1));
+	    bool remove = matchingRequest;
 
-	if (window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1)))
-	    valueMask &= ~(CWSibling | CWStackMode);
+	    if (!remove)
+		remove = !restackPending;
+
+	    if (remove)
+		valueMask &= ~(CWSibling | CWStackMode);
+	}
     }
 
     if (valueMask & CWBorderWidth)
@@ -3330,13 +3425,18 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    compLogMessage ("core", CompLogLevelWarn, "restack_mode not Above");
     }
 
-    if (serverFrameGeometry.x () == xwc->x - serverGeometry.border () - serverInput.left)
+    frameValueMask = valueMask;
+
+    if (frameValueMask & CWX &&
+	serverFrameGeometry.x () == xwc->x - serverGeometry.border () - serverInput.left)
 	frameValueMask &= ~(CWX);
 
-    if (serverFrameGeometry.y () == xwc->y - serverGeometry.border () - serverInput.top)
+    if (frameValueMask & CWY &&
+	serverFrameGeometry.y () == xwc->y - serverGeometry.border () - serverInput.top)
 	frameValueMask &= ~(CWY);
 
-   if (serverFrameGeometry.width () == xwc->width + serverGeometry.border () * 2
+   if (frameValueMask & CWWidth &&
+	serverFrameGeometry.width () == xwc->width + serverGeometry.border () * 2
 				      + serverInput.left + serverInput.right)
 	frameValueMask &= ~(CWWidth);
 
@@ -3346,13 +3446,15 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 
     if (shaded)
     {
-	if (serverFrameGeometry.height () == serverGeometry.border () * 2
+	if (frameValueMask & CWHeight &&
+	    serverFrameGeometry.height () == serverGeometry.border () * 2
 	    + serverInput.top + serverInput.bottom)
 	    frameValueMask &= ~(CWHeight);
     }
     else
     {
-	if (serverFrameGeometry.height () == xwc->height + serverGeometry.border () * 2
+	if (frameValueMask & CWHeight &&
+	    serverFrameGeometry.height () == xwc->height + serverGeometry.border () * 2
 	    + serverInput.top + serverInput.bottom)
 	    frameValueMask &= ~(CWHeight);
     }
@@ -3397,14 +3499,16 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    wc.width  = serverFrameGeometry.width ();
 	    wc.height = serverFrameGeometry.height ();
 
-	    gettimeofday (&lastConfigureRequest, NULL);
-
 	    compiz::X11::PendingEvent::Ptr pc =
 		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
 									      new compiz::X11::PendingConfigureEvent (
 										  screen->dpy (), priv->serverFrame, frameValueMask, &wc)));
 
 	    pendingConfigures.add (pc);
+	    if (priv->mClearCheckTimeout.active ())
+		priv->mClearCheckTimeout.stop ();
+	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
+					    2000, 2500);
 
 	    XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
 	}
@@ -4196,13 +4300,16 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 
 		if (serverFrame)
 		{
-		    gettimeofday (&lastConfigureRequest, NULL);
 		    compiz::X11::PendingEvent::Ptr pc =
 			    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
 										      new compiz::X11::PendingConfigureEvent (
 											  screen->dpy (), serverFrame, valueMask, &lxwc)));
 
 		    pendingConfigures.add (pc);
+		    if (priv->mClearCheckTimeout.active ())
+			priv->mClearCheckTimeout.stop ();
+		    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
+						    2000, 2500);
 		}
 
 		/* Below with no sibling puts the window at the bottom
@@ -4215,8 +4322,15 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 	    }
 	    else if (sibling)
 	    {
+		bool matchingRequest = priv->pendingConfigures.forEachIf (boost::bind (isExistingRequest, _1, *xwc, (CWStackMode | CWSibling)));
+		bool restackPending = window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1));
+		bool processAnyways = restackPending;
+
+		if (matchingRequest)
+		    processAnyways = false;
+
 		if (sibling->priv->id != window->serverPrev->priv->id ||
-		    window->serverPrev->priv->pendingConfigures.forEachIf (boost::bind (isPendingRestack, _1)))
+		    processAnyways)
 		{
 		    mask |= CWSibling | CWStackMode;
 
@@ -6295,8 +6409,6 @@ CompWindow::CompWindow (Window aboveId,
     if (dbg)
 	dbg->overrideRedirectRestack (priv->id, aboveId);
 
-    gettimeofday (&priv->lastConfigureRequest, NULL);
-
     priv->attrib = wa;
     priv->serverGeometry.set (priv->attrib.x, priv->attrib.y,
 			      priv->attrib.width, priv->attrib.height,
@@ -7229,6 +7341,12 @@ PrivateWindow::unreparent ()
     XDestroyWindow (screen->dpy (), wrapper);
 
     window->windowNotify (CompWindowNotifyUnreparent);
+    /* This window is no longer "managed" in the
+     * reparenting sense so clear its pending event
+     * queue ... though maybe in future it would
+     * be better to bookeep these events too and
+     * handle the ReparentNotify */
+    pendingConfigures.clear ();
 
     frame = None;
     wrapper = None;

@@ -111,6 +111,8 @@ public:
     virtual ~PendingEvent ();
 
     virtual bool match (XEvent *);
+    unsigned int serial () { return mSerial; } // HACK: will be removed
+    virtual void dump ();
 
     typedef boost::shared_ptr<PendingEvent> Ptr;
 
@@ -131,6 +133,8 @@ public:
 
     virtual bool match (XEvent *);
     bool matchVM (unsigned int valueMask);
+    bool matchRequest (XWindowChanges &xwc, unsigned int);
+    virtual void dump ();
 
     typedef boost::shared_ptr<PendingConfigureEvent> Ptr;
 
@@ -154,6 +158,8 @@ public:
     bool match (XEvent *);
     bool pending ();
     bool forEachIf (boost::function <bool (compiz::X11::PendingEvent::Ptr)>);
+    void clear () { mEvents.clear (); } // HACK will be removed
+    void dump ();
 
 protected:
     bool removeIfMatching (const PendingEvent::Ptr &p, XEvent *);

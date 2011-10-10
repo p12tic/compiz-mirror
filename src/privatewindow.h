@@ -211,7 +211,7 @@ class PrivateWindow {
 
 	void readIconHint ();
 
-	void addPendingConfigure (XWindowChanges &, unsigned int);
+	bool checkClear ();
 
     public:
 
@@ -293,6 +293,7 @@ class PrivateWindow {
 	typedef std::pair <XWindowChanges, unsigned int> XWCValueMask;
 
 	compiz::X11::PendingEventQueue pendingConfigures;
+	CompTimer                     mClearCheckTimeout;
 	bool pendingPositionUpdates;
 
 	char *startupId;
