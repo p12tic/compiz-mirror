@@ -957,10 +957,7 @@ PrivateWindow::updateFrameWindow ()
 	if (shaded)
 	    xwc.height = bw;
 	else
-	    xwc.height = bw;
-
-	if (shaded)
-	    height = 0;
+	    xwc.height = serverGeometry.height () + bw;
 
 	if (serverFrameGeometry.x () == xwc.x)
 	    valueMask &= ~(CWX);
@@ -2247,6 +2244,7 @@ PrivateWindow::checkClear ()
 void
 compiz::X11::PendingEventQueue::add (PendingEvent::Ptr p)
 {
+    compLogMessage ("core", CompLogLevelDebug, "pending request:");
     p->dump ();
 
     mEvents.push_back (p);
@@ -2257,6 +2255,7 @@ compiz::X11::PendingEventQueue::removeIfMatching (const PendingEvent::Ptr &p, XE
 {
     if (p->match (event))
     {
+	compLogMessage ("core", CompLogLevelDebug, "received event:");
 	p->dump ();
 	return true;
     }
@@ -2267,8 +2266,8 @@ compiz::X11::PendingEventQueue::removeIfMatching (const PendingEvent::Ptr &p, XE
 void
 compiz::X11::PendingEvent::dump ()
 {
-    compLogMessage ("core", CompLogLevelDebug, "- event serial: %i\n", mSerial);
-    compLogMessage ("core", CompLogLevelDebug,  "- event window 0x%x\n", mWindow);
+    compLogMessage ("core", CompLogLevelDebug, "- event serial: %i", mSerial);
+    compLogMessage ("core", CompLogLevelDebug,  "- event window 0x%x", mWindow);
 }
 
 void
@@ -2277,7 +2276,7 @@ compiz::X11::PendingConfigureEvent::dump ()
     compiz::X11::PendingEvent::dump ();
 
     compLogMessage ("core", CompLogLevelDebug,  "- x: %i y: %i width: %i height: %i "\
-						 "border: %i, sibling: 0x%x\n",
+						 "border: %i, sibling: 0x%x",
 						 mXwc.x, mXwc.y, mXwc.width, mXwc.height, mXwc.border_width, mXwc.sibling);
 }
 
