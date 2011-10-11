@@ -525,7 +525,7 @@ MoveScreen::handleCompizEvent (const char *plugin, const char *event, CompOption
 		Window xid = CompOption::getIntOptionNamed (options, "window", 0);
 		int    lock = CompOption::getIntOptionNamed (options, "active", 0);
 
-		if (xid == w->id ())
+		if (xid == ROOTPARENT (w))
 		    MoveWindow::get (w)->mLocked = lock ? true : false;
 	    }
 	}
