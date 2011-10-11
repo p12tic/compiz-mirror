@@ -46,11 +46,14 @@ COMPIZ_PLUGIN_20090315 (snap, SnapPluginVTable);
  * Wrapper functions to avoid infinite notify loops
  */
 void
-SnapWindow::move (int dx, int dy)
+SnapWindow::move (int dx, int dy, bool sync)
 {
     skipNotify = true;
     window->move (dx, dy, true);
-    screen->warpPointer (dx, dy);
+    /* warp the pointer in the case of
+     * snap release */
+    if (sync)
+	window->syncPosition ();
     skipNotify = false;
 }
 
@@ -429,16 +432,16 @@ SnapWindow::moveCheckNearestEdge (int position,
 	    switch (type)
 	    {
 	    case LeftEdge:
-		move (min, 0);
+		move (min, 0, false);
 		break;
 	    case RightEdge:
-		move (-min, 0);
+		move (-min, 0, false);
 		break;
 	    case TopEdge:
-		move (0, min);
+		move (0, min, false);
 		break;
 	    case BottomEdge:
-		move (0, -min);
+		move (0, -min, false);
 		break;
 	    default:
 		break;
@@ -451,17 +454,17 @@ SnapWindow::moveCheckNearestEdge (int position,
  * Call the previous function for each of the 4 sides of the window
  */
 void
-SnapWindow::moveCheckEdges ()
+SnapWindow::moveCheckEdges (int snapDirection)
 {
     CompRect input (window->borderRect ());
     moveCheckNearestEdge (input.left (), input.top (), input.bottom (),
-			  true, RightEdge, HorizontalSnap);
+			  true, RightEdge, HorizontalSnap & snapDirection);
     moveCheckNearestEdge (input.right (), input.top (), input.bottom (),
-			  false, LeftEdge, HorizontalSnap);
+			  false, LeftEdge, HorizontalSnap & snapDirection);
     moveCheckNearestEdge (input.top (), input.left (), input.right (),
-			  true, BottomEdge, VerticalSnap);
+			  true, BottomEdge, VerticalSnap & snapDirection);
     moveCheckNearestEdge (input.bottom (), input.left (), input.right (),
-			  false, TopEdge, VerticalSnap);
+			  false, TopEdge, VerticalSnap & snapDirection);
 }
 
 // Edges checking functions (resize) -------------------------------------------
@@ -686,8 +689,29 @@ SnapWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 }
 
 void
+SnapWindow::stateChangeNotify (unsigned int lastState)
+{
+    if (window->state () & CompWindowStateMaximizedHorzMask)
+    {
+	snapGeometry.setWidth (0);
+	snapGeometry.setX (0);
+	snapDirection &= VerticalSnap;
+    }
+
+    if (window->state () & CompWindowStateMaximizedVertMask)
+    {
+	snapGeometry.setHeight (0);
+	snapGeometry.setY (0);
+	snapDirection &= HorizontalSnap;
+    }
+
+    window->stateChangeNotify (lastState);
+}
+
+void
 SnapWindow::moveNotify (int dx, int dy, bool immediate)
 {
+    unsigned int allowedSnapDirection = VerticalSnap | HorizontalSnap;
     SNAP_SCREEN (screen);
 
     window->moveNotify (dx, dy, immediate);
@@ -699,21 +723,30 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
     // we have to avoid snapping but there's still some buffered moving
     if (!ss->snapping && (m_dx || m_dy))
     {
-	move (m_dx, m_dy);
+	move (m_dx, m_dy, false);
 	m_dx = m_dy = 0;
 	return;
     }
 
     // don't snap maximized windows
     if (window->state () & CompWindowStateMaximizedHorzMask)
+    {
+	allowedSnapDirection &= ~(VerticalSnap);
 	dx = 0;
+    }
 
     if (window->state () & CompWindowStateMaximizedVertMask)
+    {
+	allowedSnapDirection &= ~(HorizontalSnap);
 	dy = 0;
+    }
 
     // avoiding snap, nothing buffered
     if (!ss->snapping)
 	return;
+
+    dx = snapGeometry.x () - window->geometry ().x ();
+    dy = snapGeometry.y () - window->geometry ().y ();
 
     // apply edge resistance
     if (ss->optionGetSnapTypeMask () & SnapTypeEdgeResistanceMask)
@@ -723,16 +756,15 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	// by buffered dx - dx
 	if (!snapGeometry.isEmpty () && snapDirection & HorizontalSnap)
 	{
-	    m_dx += dx;
+	    m_dx += -dx;
 	    if (m_dx < ss->optionGetResistanceDistance ()
 		&& m_dx > -ss->optionGetResistanceDistance ())
 	    {
-		dx = snapGeometry.x () - window->geometry ().x ();
-		move (dx, 0);
+		move (dx, 0, false);
 	    }
 	    else
 	    {
-		move (m_dx - dx, 0);
+		move (m_dx - dx, 0, true);
 		m_dx = 0;
 		snapDirection &= VerticalSnap;
 	    }
@@ -740,16 +772,15 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	// Same for vertical snapping and dy
 	if (!snapGeometry.isEmpty () && snapDirection & VerticalSnap)
 	{
-	    m_dy += dy;
+	    m_dy += -dy;
 	    if (m_dy < ss->optionGetResistanceDistance ()
 		&& m_dy > -ss->optionGetResistanceDistance ())
 	    {
-		dy = snapGeometry.y () - window->geometry ().y ();
-		move (0, dy);
+		move (0, dy, false);
 	    }
 	    else
 	    {
-		move (0, m_dy - dy);
+		move (0, m_dy - dy, true);
 		m_dy = 0;
 		snapDirection &= HorizontalSnap;
 	    }
@@ -761,7 +792,7 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
     // If we don't already snap vertically and horizontally,
     // check edges status
     if (snapDirection != (VerticalSnap | HorizontalSnap))
-	moveCheckEdges ();
+	moveCheckEdges (allowedSnapDirection);
 }
 
 /*

@@ -109,6 +109,7 @@ class SnapWindow :
 	void resizeNotify (int dx, int dy, int dwidth, int dheight);
 	void moveNotify (int dx, int dy, bool immediate);
 	void grabNotify (int x, int y, unsigned int state, unsigned int mask);
+	void stateChangeNotify (unsigned int lastState);
 	void ungrabNotify ();
 
     private:
@@ -134,7 +135,7 @@ class SnapWindow :
 	bool skipNotify;
 
 	bool bottomScreenEdgesAllowed ();
-	void move (int dx, int dy);
+	void move (int dx, int dy, bool sync);
 	void resize (int dx, int dy, int dwidth, int dheight);
 
 	void addEdge (Window id, int position, int start, int end,
@@ -146,7 +147,7 @@ class SnapWindow :
 	void moveCheckNearestEdge (int position, int start, int end,
 				   bool before, EdgeType type,
 				   int snapDirection);
-	void moveCheckEdges ();
+	void moveCheckEdges (int snapDirection);
 	void resizeCheckNearestEdge (int position, int start, int end,
 				     bool before, EdgeType type,
 				     int snapDirection);
