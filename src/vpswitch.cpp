@@ -50,7 +50,8 @@ VPSwitchScreen::initPluginAction (CompAction         *action,
 	    opt.type () == CompOption::TypeButton ||
 	    opt.type () == CompOption::TypeEdge ||
 	    opt.type () == CompOption::TypeBell)
-	    if (opt.name () == optionGetInitAction ())
+	    if (opt.name () == optionGetInitAction () &&
+		opt.value ().action ().initiate ())
 	    {
 		rv = opt.value ().action ().initiate ()
 		     (action, state, options);
@@ -82,7 +83,8 @@ VPSwitchScreen::termPluginAction (CompAction         *action,
 	    opt.type () == CompOption::TypeButton ||
 	    opt.type () == CompOption::TypeEdge ||
 	    opt.type () == CompOption::TypeBell)
-	    if (opt.name () == optionGetInitAction ())
+	    if (opt.name () == optionGetInitAction () &&
+		opt.value ().action ().terminate ())
 	    {
 		rv = opt.value ().action ().terminate ()
 		     (action, state, options);
