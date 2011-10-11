@@ -247,10 +247,13 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
-    CompRegion reg = (mask & (PAINT_WINDOW_TRANSFORMED_MASK |
-			      PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
-			      PAINT_WINDOW_WITH_OFFSET_MASK)) ?
-			   region : shadowRegion.intersected (region);
+    CompRegion reg = shadowRegion.intersected (region);
+
+    if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
+		 PAINT_WINDOW_WITH_OFFSET_MASK)))
+	reg = region;
+    else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
+	reg = infiniteRegion;
 
     /* In case some plugin needs to paint us with an offset region */
     if (reg.isEmpty ())
