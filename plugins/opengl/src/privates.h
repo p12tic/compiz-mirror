@@ -122,6 +122,9 @@ class PrivateGLScreen :
 	bool hasCompositing;
 
 	GLIcon defaultIcon;
+
+	Pixmap rootPixmapCopy;
+	CompSize rootPixmapSize;
 };
 
 class PrivateGLWindow :
