@@ -2467,8 +2467,8 @@ ccsCanDisablePlugin (CCSContext * context, CCSPlugin * plugin)
 	    {
 		if (!conflict)
 		{
-		    conflict->refCount = 1;
 		    conflict = calloc (1, sizeof (CCSPluginConflict));
+		    conflict->refCount = 1;
 		    if (conflict)
 		    {
 			conflict->value = strdup (plugin->name);
