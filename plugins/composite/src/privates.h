@@ -114,12 +114,6 @@ class PrivateCompositeScreen :
 	int frameTimeAccumulator;
 
 	CompWindowList withDestroyedWindows;
-
-	Window         cmSnOwner;
-	Atom           cmSnAtom;
-	Atom           netCmHandoffAtom;
-	bool           netCmHandoffSupported;
-	bool           mInit;
 };
 
 class PrivateCompositeWindow : WindowInterface

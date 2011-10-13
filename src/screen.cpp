@@ -4460,12 +4460,67 @@ CompScreen::init (const char *name)
 
     XSendEvent (dpy, root, FALSE, StructureNotifyMask, &event);
 
-    /* Need to set a default here so that the value isn't uninitialized
-     * when loading plugins FIXME: Should find a way to initialize options
-     * first and then set this value, or better yet, tie this value directly
-     * to the option */
-    priv->vpSize.setWidth (priv->optionGetHsize ());
-    priv->vpSize.setHeight (priv->optionGetVsize ());
+    /* Wait for old window manager to go away */
+    if (currentWmSnOwner != None)
+    {
+	do {
+	    XWindowEvent (dpy, currentWmSnOwner, StructureNotifyMask, &event);
+	} while (event.type != DestroyNotify);
+    }
+
+    modHandler->updateModifierMappings ();
+
+    CompScreen::checkForError (dpy);
+
+    XGrabServer (dpy);
+
+    /* Don't select for SubstructureRedirectMask or
+     * SubstructureNotifyMask yet since we need to
+     * act in complete synchronization here when
+     * doing the initial window init in order to ensure
+     * that windows don't receive invalid stack positions
+     * but we don't want to receive an invalid CreateNotify
+     * when we create windows like edge windows here either */
+    XSelectInput (dpy, root,
+		  StructureNotifyMask      |
+		  PropertyChangeMask       |
+		  LeaveWindowMask          |
+		  EnterWindowMask          |
+		  KeyPressMask             |
+		  KeyReleaseMask           |
+		  ButtonPressMask          |
+		  ButtonReleaseMask        |
+		  FocusChangeMask          |
+		  ExposureMask);
+
+    /* We need to register for EnterWindowMask |
+     * ButtonPressMask | FocusChangeMask on other
+     * root windows as well because focus happens
+     * on a display level and we need to check
+     * if the screen we are running on lost focus */
+
+    for (int i = 0; i <= ScreenCount (dpy) - 1; i++)
+    {
+	Window rt = XRootWindow (dpy, i);
+
+	if (rt == root)
+	    continue;
+
+	XSelectInput (dpy, rt,
+		      FocusChangeMask |
+		      SubstructureNotifyMask);
+    }
+
+    if (CompScreen::checkForError (dpy))
+    {
+	compLogMessage ("core", CompLogLevelError,
+			"Another window manager is "
+			"already running on screen: %d", DefaultScreen (dpy));
+
+	XUngrabServer (dpy);
+	XSync (dpy, false);
+	return false;
+    }
 
     for (i = 0; i < SCREEN_EDGE_NUM; i++)
     {
@@ -4542,78 +4597,6 @@ CompScreen::init (const char *name)
     priv->updateOutputDevices ();
 
     priv->getDesktopHints ();
-
-    priv->initialized = true;
-
-    /* TODO: Bailout properly when screenInitPlugins fails
-     * TODO: It would be nicer if this line could mean
-     * "init all the screens", but unfortunately it only inits
-     * plugins loaded on the command line screen's and then
-     * we need to call updatePlugins () to init the remaining
-     * screens from option changes */
-    assert (CompPlugin::screenInitPlugins (this));
-
-    /* Wait for old window manager to go away */
-    if (currentWmSnOwner != None)
-    {
-	do {
-	    XWindowEvent (dpy, currentWmSnOwner, StructureNotifyMask, &event);
-	} while (event.type != DestroyNotify);
-    }
-
-    modHandler->updateModifierMappings ();
-
-    CompScreen::checkForError (dpy);
-
-    XGrabServer (dpy);
-
-    /* Don't select for SubstructureRedirectMask or
-     * SubstructureNotifyMask yet since we need to
-     * act in complete synchronization here when
-     * doing the initial window init in order to ensure
-     * that windows don't receive invalid stack positions
-     * but we don't want to receive an invalid CreateNotify
-     * when we create windows like edge windows here either */
-    XSelectInput (dpy, root,
-		  StructureNotifyMask      |
-		  PropertyChangeMask       |
-		  LeaveWindowMask          |
-		  EnterWindowMask          |
-		  KeyPressMask             |
-		  KeyReleaseMask           |
-		  ButtonPressMask          |
-		  ButtonReleaseMask        |
-		  FocusChangeMask          |
-		  ExposureMask);
-
-    /* We need to register for EnterWindowMask |
-     * ButtonPressMask | FocusChangeMask on other
-     * root windows as well because focus happens
-     * on a display level and we need to check
-     * if the screen we are running on lost focus */
-
-    for (int i = 0; i <= ScreenCount (dpy) - 1; i++)
-    {
-	Window rt = XRootWindow (dpy, i);
-
-	if (rt == root)
-	    continue;
-
-	XSelectInput (dpy, rt,
-		      FocusChangeMask |
-		      SubstructureNotifyMask);
-    }
-
-    if (CompScreen::checkForError (dpy))
-    {
-	compLogMessage ("core", CompLogLevelError,
-			"Another window manager is "
-			"already running on screen: %d", DefaultScreen (dpy));
-
-	XUngrabServer (dpy);
-	XSync (dpy, false);
-	return false;
-    }
 
     attrib.override_redirect = 1;
     attrib.event_mask	     = PropertyChangeMask;
@@ -4731,46 +4714,25 @@ CompScreen::init (const char *name)
 	    focusDefaultWindow ();
     }
 
-    /* Dispatch any queued timers */
-    while (TimeoutHandler::Default ()->timers ().begin () != TimeoutHandler::Default ()->timers ().end ())
-    {
-	if (TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0)
-	{
-	    CompTimer *t = TimeoutHandler::Default ()->timers ().front ();
-	    TimeoutHandler::Default ()->timers ().pop_front ();
+    /* Need to set a default here so that the value isn't uninitialized
+     * when loading plugins FIXME: Should find a way to initialize options
+     * first and then set this value, or better yet, tie this value directly
+     * to the option */
+    priv->vpSize.setWidth (priv->optionGetHsize ());
+    priv->vpSize.setHeight (priv->optionGetVsize ());
 
-	    t->setActive (false);
-	    if (t->triggerCallback ())
-	    {
-		TimeoutHandler::Default ()->addTimer (t);
-		t->setActive (true);
-	    }
-	}
-	else
-	    break;
-    }
+    priv->initialized = true;
 
-    if (priv->dirtyPluginList)
-	priv->updatePlugins ();
+    /* TODO: Bailout properly when screenInitPlugins fails
+     * TODO: It would be nicer if this line could mean
+     * "init all the screens", but unfortunately it only inits
+     * plugins loaded on the command line screen's and then
+     * we need to call updatePlugins () to init the remaining
+     * screens from option changes */
+    assert (CompPlugin::screenInitPlugins (this));
 
-    /* Dispatch any queued timers */
-    while (TimeoutHandler::Default ()->timers ().begin () != TimeoutHandler::Default ()->timers ().end ())
-    {
-	if (TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0)
-	{
-	    CompTimer *t = TimeoutHandler::Default ()->timers ().front ();
-	    TimeoutHandler::Default ()->timers ().pop_front ();
-
-	    t->setActive (false);
-	    if (t->triggerCallback ())
-	    {
-		TimeoutHandler::Default ()->addTimer (t);
-		t->setActive (true);
-	    }
-	}
-	else
-	    break;
-    }
+    /* The active plugins list might have been changed - load any
+     * new plugins */
 
     priv->vpSize.setWidth (priv->optionGetHsize ());
     priv->vpSize.setHeight (priv->optionGetVsize ());
@@ -4799,6 +4761,9 @@ CompScreen::~CompScreen ()
     while (!priv->windows.empty ())
 	delete priv->windows.front ();
 
+    while ((p = CompPlugin::pop ()))
+	CompPlugin::unload (p);
+
     XUngrabKey (priv->dpy, AnyKey, AnyModifier, priv->root);
 
     priv->initialized = false;
@@ -4821,14 +4786,6 @@ CompScreen::~CompScreen ()
 
     if (priv->snDisplay)
 	sn_display_unref (priv->snDisplay);
-
-    /* Remove our selection */
-    XSelectInput (priv->dpy, priv->root, NoEventMask);
-    XDestroyWindow (screen->dpy (), priv->wmSnSelectionWindow);
-    XSync (screen->dpy (), FALSE);
-
-    while ((p = CompPlugin::pop ()))
-	CompPlugin::unload (p);
 
     XSync (priv->dpy, False);
     XCloseDisplay (priv->dpy);
