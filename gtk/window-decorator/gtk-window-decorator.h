@@ -266,11 +266,16 @@ typedef struct _decor_settings {
     int middle_click_action;
     int right_click_action;
     int wheel_action;
-    gdouble shadow_radius;
-    gdouble shadow_opacity;
-    gushort shadow_color[3];
-    gint    shadow_offset_x;
-    gint    shadow_offset_y;
+    gdouble active_shadow_radius;
+    gdouble active_shadow_opacity;
+    gushort active_shadow_color[3];
+    gint    active_shadow_offset_x;
+    gint    active_shadow_offset_y;
+    gdouble inactive_shadow_radius;
+    gdouble inactive_shadow_opacity;
+    gushort inactive_shadow_color[3];
+    gint    inactive_shadow_offset_x;
+    gint    inactive_shadow_offset_y;
 #ifdef USE_METACITY
     double   meta_opacity;
     gboolean meta_shade_opacity;

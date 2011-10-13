@@ -998,44 +998,44 @@ update_frames_shadows (gpointer key,
 void
 cairo_get_shadow (decor_frame_t *d, decor_shadow_options_t *opts, gboolean active)
 {
-    memcpy (opts->shadow_color, settings->shadow_color, sizeof (settings->shadow_color));
-
     if (active)
     {
-	opts->shadow_radius = settings->shadow_radius;
-	opts->shadow_offset_x = settings->shadow_offset_x;
-	opts->shadow_offset_y = settings->shadow_offset_y;
-	opts->shadow_opacity = settings->shadow_opacity;
+	memcpy (opts->shadow_color, settings->active_shadow_color, sizeof (settings->active_shadow_color));
+	opts->shadow_radius = settings->active_shadow_radius;
+	opts->shadow_offset_x = settings->active_shadow_offset_x;
+	opts->shadow_offset_y = settings->active_shadow_offset_y;
+	opts->shadow_opacity = settings->active_shadow_opacity;
     }
     /* TODO: Inactive shadows */
     else
     {
-	opts->shadow_radius = settings->shadow_radius;
-	opts->shadow_offset_x = settings->shadow_offset_x;
-	opts->shadow_offset_y = settings->shadow_offset_y;
-	opts->shadow_opacity = settings->shadow_opacity;
+	memcpy (opts->shadow_color, settings->inactive_shadow_color, sizeof (settings->inactive_shadow_color));
+	opts->shadow_radius = settings->inactive_shadow_radius;
+	opts->shadow_offset_x = settings->inactive_shadow_offset_x;
+	opts->shadow_offset_y = settings->inactive_shadow_offset_y;
+	opts->shadow_opacity = settings->inactive_shadow_opacity;
     }
 }
 
 void
 meta_get_shadow (decor_frame_t *frame, decor_shadow_options_t *opts, gboolean active)
 {
-    memcpy (opts->shadow_color, settings->shadow_color, sizeof (settings->shadow_color));
-
     if (active)
     {
-	opts->shadow_radius = settings->shadow_radius;
-	opts->shadow_offset_x = settings->shadow_offset_x;
-	opts->shadow_offset_y = settings->shadow_offset_y;
-	opts->shadow_opacity = settings->shadow_opacity;
+	memcpy (opts->shadow_color, settings->active_shadow_color, sizeof (settings->active_shadow_color));
+	opts->shadow_radius = settings->active_shadow_radius;
+	opts->shadow_offset_x = settings->active_shadow_offset_x;
+	opts->shadow_offset_y = settings->active_shadow_offset_y;
+	opts->shadow_opacity = settings->active_shadow_opacity;
     }
     /* TODO: Inactive shadows */
     else
     {
-	opts->shadow_radius = settings->shadow_radius - 5.0;
-	opts->shadow_offset_x = settings->shadow_offset_x;
-	opts->shadow_offset_y = settings->shadow_offset_y;
-	opts->shadow_opacity = settings->shadow_opacity;
+	memcpy (opts->shadow_color, settings->inactive_shadow_color, sizeof (settings->inactive_shadow_color));
+	opts->shadow_radius = settings->inactive_shadow_radius;
+	opts->shadow_offset_x = settings->inactive_shadow_offset_x;
+	opts->shadow_offset_y = settings->inactive_shadow_offset_y;
+	opts->shadow_opacity = settings->inactive_shadow_opacity;
     }
 
 }

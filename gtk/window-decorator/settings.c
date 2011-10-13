@@ -46,29 +46,43 @@ shadow_property_changed (WnckScreen *s)
     if (result != Success)
 	return FALSE;
 
-    if (n == 4)
+    if (n == 8)
     {
 	long *data      = (long *) prop_data;
-	gdouble radius  = data[0];
-	gdouble opacity = data[1];
-	gint x_off      = data[2];
-	gint y_off      = data[3];
+	gdouble aradius  = data[0];
+	gdouble aopacity = data[1];
+	gint ax_off      = data[2];
+	gint ay_off      = data[3];
 
+	gdouble iradius  = data[4];
+	gdouble iopacity = data[5];
+	gint ix_off      = data[6];
+	gint iy_off      = data[7];
 	/* Radius and Opacity are multiplied by 1000 to keep precision,
 	 * divide by that much to get our real radius and opacity
 	 */
-	radius /= 1000;
-	opacity /= 1000;
+	aradius /= 1000;
+	aopacity /= 1000;
+	iradius /= 1000;
+	iopacity /= 1000;
 
-	changed = radius != settings->shadow_radius   ||
-		  opacity != settings->shadow_opacity ||
-		  x_off != settings->shadow_offset_x  ||
-		  y_off != settings->shadow_offset_y;
+	changed = aradius != settings->active_shadow_radius   ||
+		  aopacity != settings->active_shadow_opacity ||
+		  ax_off != settings->active_shadow_offset_x  ||
+		  ay_off != settings->active_shadow_offset_y;
+		  iradius != settings->inactive_shadow_radius   ||
+		  iopacity != settings->inactive_shadow_opacity ||
+		  ix_off != settings->inactive_shadow_offset_x  ||
+		  iy_off != settings->inactive_shadow_offset_y;
 
-	settings->shadow_radius = (gdouble) MAX (0.0, MIN (radius, 48.0));
-	settings->shadow_opacity = (gdouble) MAX (0.0, MIN (opacity, 6.0));
-	settings->shadow_offset_x = (gint) MAX (-16, MIN (x_off, 16));
-	settings->shadow_offset_y = (gint) MAX (-16, MIN (y_off, 16));
+	settings->active_shadow_radius = (gdouble) MAX (0.0, MIN (aradius, 48.0));
+	settings->active_shadow_opacity = (gdouble) MAX (0.0, MIN (aopacity, 6.0));
+	settings->active_shadow_offset_x = (gint) MAX (-16, MIN (ax_off, 16));
+	settings->active_shadow_offset_y = (gint) MAX (-16, MIN (ay_off, 16));
+	settings->inactive_shadow_radius = (gdouble) MAX (0.0, MIN (iradius, 48.0));
+	settings->inactive_shadow_opacity = (gdouble) MAX (0.0, MIN (iopacity, 6.0));
+	settings->inactive_shadow_offset_x = (gint) MAX (-16, MIN (ix_off, 16));
+	settings->inactive_shadow_offset_y = (gint) MAX (-16, MIN (iy_off, 16));
     }
 
     XFree (prop_data);
@@ -83,16 +97,25 @@ shadow_property_changed (WnckScreen *s)
 	
 	XTextPropertyToStringList (&shadow_color_xtp, &t_data, &ret_count);
 	
-	if (ret_count == 1)
+	if (ret_count == 2)
 	{
 	    int c[4];
 
 	    if (sscanf (t_data[0], "#%2x%2x%2x%2x",
 			&c[0], &c[1], &c[2], &c[3]) == 4)
 	    {
-		settings->shadow_color[0] = c[0] << 8 | c[0];
-		settings->shadow_color[1] = c[1] << 8 | c[1];
-		settings->shadow_color[2] = c[2] << 8 | c[2];
+		settings->active_shadow_color[0] = c[0] << 8 | c[0];
+		settings->active_shadow_color[1] = c[1] << 8 | c[1];
+		settings->active_shadow_color[2] = c[2] << 8 | c[2];
+		changed = TRUE;
+	    }
+
+	    if (sscanf (t_data[1], "#%2x%2x%2x%2x",
+			&c[0], &c[1], &c[2], &c[3]) == 4)
+	    {
+		settings->inactive_shadow_color[0] = c[0] << 8 | c[0];
+		settings->inactive_shadow_color[1] = c[1] << 8 | c[1];
+		settings->inactive_shadow_color[2] = c[2] << 8 | c[2];
 		changed = TRUE;
 	    }
 	}

@@ -164,13 +164,20 @@ main (int argc, char *argv[])
     settings->blur_type = BLUR_TYPE_NONE;
     settings->use_system_font = FALSE;
 
-    settings->shadow_radius   = SHADOW_RADIUS;
-    settings->shadow_opacity  = SHADOW_OPACITY;
-    settings->shadow_color[0] = SHADOW_COLOR_RED;
-    settings->shadow_color[1] = SHADOW_COLOR_GREEN;
-    settings->shadow_color[2] = SHADOW_COLOR_BLUE;
-    settings->shadow_offset_x = SHADOW_OFFSET_X;
-    settings->shadow_offset_y = SHADOW_OFFSET_Y;
+    settings->active_shadow_radius   = SHADOW_RADIUS;
+    settings->active_shadow_opacity  = SHADOW_OPACITY;
+    settings->active_shadow_color[0] = SHADOW_COLOR_RED;
+    settings->active_shadow_color[1] = SHADOW_COLOR_GREEN;
+    settings->active_shadow_color[2] = SHADOW_COLOR_BLUE;
+    settings->active_shadow_offset_x = SHADOW_OFFSET_X;
+    settings->active_shadow_offset_y = SHADOW_OFFSET_Y;
+    settings->inactive_shadow_radius   = SHADOW_RADIUS;
+    settings->inactive_shadow_opacity  = SHADOW_OPACITY;
+    settings->inactive_shadow_color[0] = SHADOW_COLOR_RED;
+    settings->inactive_shadow_color[1] = SHADOW_COLOR_GREEN;
+    settings->inactive_shadow_color[2] = SHADOW_COLOR_BLUE;
+    settings->inactive_shadow_offset_x = SHADOW_OFFSET_X;
+    settings->inactive_shadow_offset_y = SHADOW_OFFSET_Y;
     settings->decoration_alpha = 0.5;
 
 #ifdef USE_METACITY
