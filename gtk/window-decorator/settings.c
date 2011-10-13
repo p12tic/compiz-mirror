@@ -69,7 +69,7 @@ shadow_property_changed (WnckScreen *s)
 	changed = aradius != settings->active_shadow_radius   ||
 		  aopacity != settings->active_shadow_opacity ||
 		  ax_off != settings->active_shadow_offset_x  ||
-		  ay_off != settings->active_shadow_offset_y;
+		  ay_off != settings->active_shadow_offset_y ||
 		  iradius != settings->inactive_shadow_radius   ||
 		  iopacity != settings->inactive_shadow_opacity ||
 		  ix_off != settings->inactive_shadow_offset_x  ||
@@ -129,6 +129,25 @@ shadow_property_changed (WnckScreen *s)
 }
 
 #ifdef USE_GCONF
+static gboolean
+use_tooltips_changed (GConfClient *client)
+{
+    gboolean      new_use_tooltips;
+    gboolean      use_tooltips = settings->use_tooltips;
+
+    new_use_tooltips = gconf_client_get_bool (client,
+					      USE_TOOLTIPS_KEY,
+					      NULL);
+
+    if (new_use_tooltips != use_tooltips)
+    {
+	settings->use_tooltips = new_use_tooltips;
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
 static gboolean
 mutter_draggable_border_width_changed (GConfClient *client)
 {
@@ -560,6 +579,11 @@ value_changed (GConfClient *client,
 	if (mutter_attach_modal_dialogs_changed (client))
 	    changed = TRUE;
     }
+    else if (strcmp (key, USE_TOOLTIPS_KEY) == 0)
+    {
+	if (use_tooltips_changed (client))
+	    changed = TRUE;
+    }
 
     if (changed)
 	decorations_changed (data);
@@ -618,6 +642,7 @@ init_settings (WnckScreen *screen)
 
     mutter_draggable_border_width_changed (gconf);
     mutter_attach_modal_dialogs_changed (gconf);
+    use_tooltips_changed (gconf);
 
     g_object_unref (gconf);
 #endif

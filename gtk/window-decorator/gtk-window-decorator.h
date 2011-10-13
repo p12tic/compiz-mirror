@@ -127,23 +127,6 @@ METACITY_GCONF_DIR "/action_middle_click_titlebar"
 #define COMPIZ_RIGHT_CLICK_TITLEBAR_KEY	       \
 METACITY_GCONF_DIR "/action_right_click_titlebar"
 
-#define COMPIZ_GCONF_DIR1 "/apps/compiz/plugins/decoration/allscreens/options"
-
-#define COMPIZ_SHADOW_RADIUS_KEY \
-COMPIZ_GCONF_DIR1 "/shadow_radius"
-
-#define COMPIZ_SHADOW_OPACITY_KEY \
-COMPIZ_GCONF_DIR1 "/shadow_opacity"
-
-#define COMPIZ_SHADOW_COLOR_KEY \
-COMPIZ_GCONF_DIR1 "/shadow_color"
-
-#define COMPIZ_SHADOW_OFFSET_X_KEY \
-COMPIZ_GCONF_DIR1 "/shadow_x_offset"
-
-#define COMPIZ_SHADOW_OFFSET_Y_KEY \
-COMPIZ_GCONF_DIR1 "/shadow_y_offset"
-
 #define MUTTER_DRAGGABLE_BORDER_WIDTH_KEY \
 MUTTER_GCONF_DIR "/draggable_border_width"
 
@@ -179,8 +162,8 @@ GCONF_DIR "/blur_type"
 #define WHEEL_ACTION_KEY   \
 GCONF_DIR "/mouse_wheel_action"
 
-#define RIGHT_CLICK_ACTION_KEY \
-GCONF_DIR "/right_click_action"
+#define USE_TOOLTIPS_KEY \
+GCONF_DIR "/use_tooltips"
 
 #define DBUS_DEST       "org.freedesktop.compiz"
 #define DBUS_PATH       "/org/freedesktop/compiz/decor/screen0"
@@ -291,6 +274,7 @@ typedef struct _decor_settings {
     gchar		    *font;
     guint    mutter_draggable_border_width;
     gboolean mutter_attach_modal_dialogs;
+    gboolean use_tooltips;
 } decor_settings_t;
 
 #define DOUBLE_CLICK_ACTION_DEFAULT CLICK_ACTION_MAXIMIZE

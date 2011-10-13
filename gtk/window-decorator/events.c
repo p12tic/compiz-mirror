@@ -86,7 +86,8 @@ common_button_event (WnckWindow *win,
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     guint   state = d->button_states[button];
 
-    handle_tooltip_event (win, gtkwd_event, gtkwd_type, state, tooltip);
+    if (settings->use_tooltips)
+	handle_tooltip_event (win, gtkwd_event, gtkwd_type, state, tooltip);
 
     if (d->frame_window && gtkwd_type == GEnterNotify)
     {

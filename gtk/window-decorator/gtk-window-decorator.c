@@ -179,6 +179,7 @@ main (int argc, char *argv[])
     settings->inactive_shadow_offset_x = SHADOW_OFFSET_X;
     settings->inactive_shadow_offset_y = SHADOW_OFFSET_Y;
     settings->decoration_alpha = 0.5;
+    settings->use_tooltips = TRUE;
 
 #ifdef USE_METACITY
 
