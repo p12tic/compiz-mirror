@@ -1709,7 +1709,7 @@ DecorWindow::updateInputFrame ()
 	parent = window->frame ();
 
     /* Determine frame extents */
-    if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
+    if ((window->state () & MAXIMIZE_STATE))
     {
 	border = wd->decor->maxBorder;
 	input = wd->decor->maxInput;
@@ -1866,7 +1866,7 @@ DecorWindow::updateOutputFrame ()
     CompWindowExtents	 input;
 
     /* Determine frame extents */
-    if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
+    if ((window->state () & MAXIMIZE_STATE))
 	input = wd->decor->maxInput;
     else
 	input = wd->decor->input;
@@ -2795,37 +2795,34 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 void
 DecorWindow::stateChangeNotify (unsigned int lastState)
 {
-    if (!update (true))
+    if (wd && wd->decor)
     {
-	if (wd && wd->decor)
-	{
-	    int oldShiftX = shiftX ();
-	    int oldShiftY = shiftY ();
-	    int moveDx, moveDy;
+	int oldShiftX = shiftX ();
+	int oldShiftY = shiftY ();
+	int moveDx, moveDy;
 
-	    if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
-		window->setWindowFrameExtents (&wd->decor->maxBorder,
-					       &wd->decor->maxInput);
-	    else
-		window->setWindowFrameExtents (&wd->decor->border,
-					       &wd->decor->input);
+	if ((window->state () & MAXIMIZE_STATE))
+	    window->setWindowFrameExtents (&wd->decor->maxBorder,
+					   &wd->decor->maxInput);
+	else
+	    window->setWindowFrameExtents (&wd->decor->border,
+					   &wd->decor->input);
 
-	    /* Since we immediately update the frame extents, we must
-	     * also update the stored saved window geometry in order
-	     * to prevent the window from shifting back too far once
-	     * unmaximized */
+	/* Since we immediately update the frame extents, we must
+	 * also update the stored saved window geometry in order
+	 * to prevent the window from shifting back too far once
+	 * unmaximized */
 
-	    moveDx = shiftX () - oldShiftX;
-	    moveDy = shiftY () - oldShiftY;
+	moveDx = shiftX () - oldShiftX;
+	moveDy = shiftY () - oldShiftY;
 
-	    if (window->saveMask () & CWX)
-		window->saveWc ().x += moveDx;
+	if (window->saveMask () & CWX)
+	    window->saveWc ().x += moveDx;
 
-	    if (window->saveMask () & CWY)
-		window->saveWc ().y += moveDy;
+	if (window->saveMask () & CWY)
+	    window->saveWc ().y += moveDy;
 
-	    updateFrame ();
-	}
+	updateFrame ();
     }
 
     window->stateChangeNotify (lastState);
