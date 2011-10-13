@@ -83,7 +83,7 @@ struct _pos pos[3][3] = {
 };
 
 #define WINDOW_TYPE_FRAMES_NUM 5
-struct _default_frame_references default_frames[WINDOW_TYPE_FRAMES_NUM  * 2] = {
+default_frame_references_t default_frames[WINDOW_TYPE_FRAMES_NUM  * 2] = {
     /* active */
     {"normal", NULL },
     {"dialog", NULL },
@@ -341,6 +341,7 @@ main (int argc, char *argv[])
     theme_get_event_window_position = get_event_window_position;
     theme_get_button_position       = get_button_position;
     theme_get_title_scale	    = get_title_scale;
+    theme_get_shadow                = cairo_get_shadow;
 
 #ifdef USE_METACITY
     if (meta_theme)
@@ -363,6 +364,7 @@ main (int argc, char *argv[])
 	theme_get_event_window_position = meta_get_event_window_position;
 	theme_get_button_position	    = meta_get_button_position;
 	theme_get_title_scale	    = meta_get_title_scale;
+	theme_get_shadow            = meta_get_shadow;
     }
 #endif
 

@@ -40,18 +40,30 @@ decor_update_meta_window_property (decor_t	  *d,
     Display	    *xdisplay =
 	GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
     gint	    nQuad;
-    decor_extents_t win_extents = d->frame->win_extents;
-    decor_extents_t max_win_extents = d->frame->max_win_extents;
+    decor_extents_t win_extents, frame_win_extents;
+    decor_extents_t max_win_extents, frame_max_win_extents;
     decor_quad_t    quads[N_QUADS_MAX];
     unsigned int    nOffset = 1;
-    unsigned int   frame_type = populate_frame_type (d);
-    unsigned int   frame_state = populate_frame_state (d);
-    unsigned int   frame_actions = populate_frame_actions (d);
+    unsigned int    frame_type = populate_frame_type (d);
+    unsigned int    frame_state = populate_frame_state (d);
+    unsigned int    frame_actions = populate_frame_actions (d);
     gint            w, lh, rh;
     gint	    top_stretch_offset;
     gint	    bottom_stretch_offset;
     gint	    left_stretch_offset;
     gint	    right_stretch_offset;
+
+    win_extents = frame_win_extents = d->frame->win_extents;
+    max_win_extents = frame_max_win_extents = d->frame->max_win_extents;
+
+    /* Add the invisible grab area padding, but only for
+     * pixmap type decorations */
+    if (!d->frame_window)
+    {
+       frame_win_extents.left += settings->mutter_draggable_border_width;
+       frame_win_extents.right += settings->mutter_draggable_border_width;
+       frame_win_extents.bottom += settings->mutter_draggable_border_width;
+    }
 
     w = d->border_layout.top.x2 - d->border_layout.top.x1 -
 	d->context->left_space - d->context->right_space;
@@ -82,25 +94,29 @@ decor_update_meta_window_property (decor_t	  *d,
 					     bottom_stretch_offset);
 
     win_extents.top += d->frame->titlebar_height;
+    frame_win_extents.top += d->frame->titlebar_height;
     max_win_extents.top += d->frame->max_titlebar_height;
+    frame_max_win_extents.top += d->frame->max_titlebar_height;
 
     if (d->frame_window)
     {
-        data = decor_alloc_property (nOffset, WINDOW_DECORATION_TYPE_WINDOW);
-        decor_gen_window_property (data, nOffset - 1, &win_extents, &max_win_extents, 20, 20, frame_type, frame_state, frame_actions);
+	data = decor_alloc_property (nOffset, WINDOW_DECORATION_TYPE_WINDOW);
+	decor_gen_window_property (data, nOffset - 1, &win_extents, &max_win_extents, 20, 20,
+				   frame_type, frame_state, frame_actions);
     }
     else
     {
-        data = decor_alloc_property (nOffset, WINDOW_DECORATION_TYPE_PIXMAP);
-        decor_quads_to_property (data, nOffset - 1, GDK_PIXMAP_XID (d->pixmap),
-                                 &win_extents, &win_extents,
-				 &max_win_extents, &max_win_extents,
+	data = decor_alloc_property (nOffset, WINDOW_DECORATION_TYPE_PIXMAP);
+	decor_quads_to_property (data, nOffset - 1, GDK_PIXMAP_XID (d->pixmap),
+				 &frame_win_extents, &win_extents,
+				 &frame_max_win_extents, &max_win_extents,
 				 ICON_SPACE + d->button_width,
 				 0,
-				 quads, nQuad, 0, 0, 0);
+				 quads, nQuad, frame_type, frame_state, frame_actions);
     }
 
     gdk_error_trap_push ();
+
     XChangeProperty (xdisplay, d->prop_xid,
 		     win_decor_atom,
 		     XA_INTEGER,
@@ -109,14 +125,14 @@ decor_update_meta_window_property (decor_t	  *d,
     gdk_display_sync (gdk_display_get_default ());
     gdk_error_trap_pop ();
 
+    free (data);
+
     decor_update_blur_property (d,
 				w, lh,
 				top, top_stretch_offset,
 				bottom, bottom_stretch_offset,
 				left, left_stretch_offset,
 				right, right_stretch_offset);
-
-    free (data);
 }
 
 static void
@@ -618,10 +634,7 @@ meta_draw_window_decoration (decor_t *d)
     meta_get_decoration_geometry (d, theme, &flags, &fgeom, &button_layout,
 				  frame_type, &clip);
 
-    /* we only have to redraw the shadow background when decoration
-       changed size */
-    if ((d->prop_xid || !d->buffer_pixmap) && !d->frame_window)
-	draw_shadow_background (d, cr, d->shadow, d->context);
+    draw_shadow_background (d, cr, d->shadow, d->context);
 
     for (i = 0; i < META_BUTTON_TYPE_LAST; i++)
 	button_states[i] = meta_button_state_for_button_type (d, i);
@@ -967,6 +980,7 @@ meta_get_button_position (decor_t	 *d,
     MetaFrameGeometry fgeom;
     MetaFrameFlags    flags;
     MetaTheme	      *theme;
+
     GdkRectangle      clip;
 
 #ifdef HAVE_METACITY_2_15_21
@@ -1081,6 +1095,10 @@ meta_get_button_position (decor_t	 *d,
 	*x += d->frame->win_extents.left + 4;
 	*y += d->frame->win_extents.top + 2;
     }
+    else
+    {
+	*x += settings->mutter_draggable_border_width;
+    }
 
     return TRUE;
 }
@@ -1118,8 +1136,16 @@ meta_calc_decoration_size (decor_t *d,
     {
 	if (!d->frame_window)
 	{
-	    context = &d->frame->max_window_context;
-	    shadow  = d->frame->max_border_shadow;
+	    if (d->active)
+	    {
+		context = &d->frame->max_window_context_active;
+		shadow  = d->frame->max_border_shadow_active;
+	    }
+	    else
+	    {
+		context = &d->frame->max_window_context_inactive;
+		shadow  = d->frame->max_border_shadow_inactive;
+	    }
 	}
 	else
 	{
@@ -1131,8 +1157,16 @@ meta_calc_decoration_size (decor_t *d,
     {
 	if (!d->frame_window)
 	{
-	    context = &d->frame->window_context;
-	    shadow  = d->frame->border_shadow;
+	    if (d->active)
+	    {
+		context = &d->frame->window_context_active;
+		shadow  = d->frame->border_shadow_active;
+	    }
+	    else
+	    {
+		context = &d->frame->window_context_inactive;
+		shadow  = d->frame->border_shadow_inactive;
+	    }
 	}
 	else
 	{
@@ -1249,6 +1283,14 @@ meta_get_event_window_position (decor_t *d,
 	    }
 	    *w = fgeom.right_width + RESIZE_EXTENDS;
 	    *h = fgeom.bottom_height + RESIZE_EXTENDS;
+
+	    if (!d->frame_window)
+	    {
+		*x += settings->mutter_draggable_border_width;
+		*w += settings->mutter_draggable_border_width;
+		*h += settings->mutter_draggable_border_width;
+	    }
+
 	    break;
 	case 1: /* bottom */
 	    *x = fgeom.left_width + RESIZE_EXTENDS;
@@ -1258,6 +1300,14 @@ meta_get_event_window_position (decor_t *d,
 	    *w = width - fgeom.left_width - fgeom.right_width -
 		 (2 * RESIZE_EXTENDS);
 	    *h = fgeom.bottom_height;
+
+	    if (!d->frame_window)
+	    {
+		*x -= settings->mutter_draggable_border_width;
+		*h += settings->mutter_draggable_border_width;
+		*w += settings->mutter_draggable_border_width * 2;
+	    }
+
 	    break;
 	case 0: /* bottom left */
 	default:
@@ -1270,6 +1320,13 @@ meta_get_event_window_position (decor_t *d,
 	    }
 	    *w = fgeom.left_width + RESIZE_EXTENDS;
 	    *h = fgeom.bottom_height + RESIZE_EXTENDS;
+
+	    if (!d->frame_window)
+	    {
+		*w += settings->mutter_draggable_border_width;
+		*h += settings->mutter_draggable_border_width;
+	    }
+
 	    break;
 	}
 	break;
@@ -1277,17 +1334,33 @@ meta_get_event_window_position (decor_t *d,
 	switch (j) {
 	case 2: /* right */
 	    *x = width - fgeom.right_width;
+	    *y = fgeom.top_height + RESIZE_EXTENDS;
 	    if (d->frame_window)
 		*x += d->frame->win_extents.left + 2;
 	    *w = fgeom.right_width;
 	    *h = height - fgeom.top_height - fgeom.bottom_height -
 		 (2 * RESIZE_EXTENDS);
+
+	   if (!d->frame_window)
+	   {
+	       *x += settings->mutter_draggable_border_width;
+	       *w += settings->mutter_draggable_border_width;
+	       *h += settings->mutter_draggable_border_width;
+	   }
+
+
 	    break;
 	case 1: /* middle */
 	    *x = fgeom.left_width;
 	    *y = fgeom.title_rect.y + TOP_RESIZE_HEIGHT;
 	    *w = width - fgeom.left_width - fgeom.right_width;
 	    *h = height - fgeom.top_titlebar_edge - fgeom.bottom_height;
+
+	    if (!d->frame_window)
+	    {
+		*x += settings->mutter_draggable_border_width;
+	    }
+
 	    break;
 	case 0: /* left */
 	default:
@@ -1298,6 +1371,14 @@ meta_get_event_window_position (decor_t *d,
 	    *w = fgeom.left_width;
 	    *h = height - fgeom.top_height - fgeom.bottom_height -
 		 (2 * RESIZE_EXTENDS);
+
+	    if (!d->frame_window)
+	    {
+		*h += settings->mutter_draggable_border_width;
+		*w += settings->mutter_draggable_border_width;
+	    }
+
+
 	    break;
 	}
 	break;
@@ -1314,6 +1395,12 @@ meta_get_event_window_position (decor_t *d,
 	    }
 	    *w = fgeom.right_width + RESIZE_EXTENDS;
 	    *h = fgeom.top_height + RESIZE_EXTENDS;
+
+	    if (!d->frame_window)
+	    {
+		*x += settings->mutter_draggable_border_width;
+		*w += settings->mutter_draggable_border_width;
+	    }
 	    break;
 	case 1: /* top */
 	    *x = fgeom.left_width + RESIZE_EXTENDS;
@@ -1323,6 +1410,13 @@ meta_get_event_window_position (decor_t *d,
 	    *w = width - fgeom.left_width - fgeom.right_width -
 		 (2 * RESIZE_EXTENDS);
 	    *h = fgeom.title_rect.y + TOP_RESIZE_HEIGHT;
+
+	    if (!d->frame_window)
+	    {
+		*x -= settings->mutter_draggable_border_width;
+		*w += settings->mutter_draggable_border_width * 2;
+	    }
+
 	    break;
 	case 0: /* top left */
 	default:
@@ -1335,6 +1429,10 @@ meta_get_event_window_position (decor_t *d,
 	    }
 	    *w = fgeom.left_width + RESIZE_EXTENDS;
 	    *h = fgeom.top_height + RESIZE_EXTENDS;
+
+	    if (!d->frame_window)
+		*w += settings->mutter_draggable_border_width;
+
 	    break;
 	}
     }
@@ -1353,6 +1451,7 @@ meta_get_event_window_position (decor_t *d,
 	    *w = *h = 0;
     }
 }
+
 
 static MetaButtonFunction
 meta_button_function_from_string (const char *str)

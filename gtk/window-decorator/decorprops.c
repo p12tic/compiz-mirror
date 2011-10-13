@@ -139,12 +139,12 @@ decor_update_switcher_property (decor_t *d)
     GtkStyle     *style;
     long         fgColor[4];
     
-    nQuad = decor_set_lSrStSbX_window_quads (quads, &d->frame->window_context,
+    nQuad = decor_set_lSrStSbX_window_quads (quads, &d->frame->window_context_active,
 					     &d->border_layout,
 					     d->border_layout.top.x2 -
 					     d->border_layout.top.x1 -
-					     d->frame->window_context.extents.left -
-						 d->frame->window_context.extents.right -
+					     d->frame->window_context_active.extents.left -
+						 d->frame->window_context_active.extents.right -
 						     32);
     
     data = decor_alloc_property (nOffset, WINDOW_DECORATION_TYPE_PIXMAP);

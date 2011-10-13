@@ -222,6 +222,7 @@ theme_changed (GConfClient *client)
 	theme_get_event_window_position = meta_get_event_window_position;
 	theme_get_button_position	= meta_get_button_position;
 	theme_get_title_scale	    	= meta_get_title_scale;
+	theme_get_shadow		= meta_get_shadow;
     }
     else
     {
@@ -231,6 +232,7 @@ theme_changed (GConfClient *client)
 	theme_get_event_window_position = get_event_window_position;
 	theme_get_button_position	= get_button_position;
 	theme_get_title_scale	    	= get_title_scale;
+	theme_get_shadow		= cairo_get_shadow;
     }
 
     return TRUE;
@@ -241,6 +243,7 @@ theme_changed (GConfClient *client)
     theme_get_event_window_position = get_event_window_position;
     theme_get_button_position	    = get_button_position;
     theme_get_title_scale	    = get_title_scale;
+    theme_get_shadow		    = cairo_get_shadow;
 
     return FALSE;
 #endif

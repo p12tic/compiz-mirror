@@ -393,11 +393,16 @@ struct _decor_shadow_info
 {
     decor_frame_t *frame;
     unsigned int  state;
+    gboolean      active;
 };
 
 typedef void (*frame_update_shadow_proc) (Display		 *display,
 					  Screen		 *screen,
 					  decor_frame_t		 *frame,
+					  decor_shadow_t	  **shadow_normal,
+					  decor_context_t	  *context_normal,
+					  decor_shadow_t	  **shadow_max,
+					  decor_context_t	  *context_max,
 					  decor_shadow_info_t    *info,
 					  decor_shadow_options_t *opt_shadow,
 					  decor_shadow_options_t *opt_no_shadow);
@@ -410,13 +415,17 @@ struct _decor_frame {
     decor_extents_t max_win_extents;
     int		    titlebar_height;
     int		    max_titlebar_height;
-    decor_shadow_t *border_shadow;
+    decor_shadow_t *border_shadow_active;
+    decor_shadow_t *border_shadow_inactive;
     decor_shadow_t *border_no_shadow;
-    decor_shadow_t *max_border_shadow;
+    decor_shadow_t *max_border_shadow_active;
+    decor_shadow_t *max_border_shadow_inactive;
     decor_shadow_t *max_border_no_shadow;
-    decor_context_t window_context;
+    decor_context_t window_context_active;
+    decor_context_t window_context_inactive;
     decor_context_t window_context_no_shadow;
-    decor_context_t max_window_context;
+    decor_context_t max_window_context_active;
+    decor_context_t max_window_context_inactive;
     decor_context_t max_window_context_no_shadow;
     PangoFontDescription *titlebar_font;
     PangoContext	 *pango_context;
@@ -468,12 +477,18 @@ typedef struct _decor {
 } decor_t;
 
 #define WINDOW_TYPE_FRAMES_NUM 5
-struct _default_frame_references
+typedef struct _default_frame_references
 {
     char     *name;
     decor_t  *d;
-} extern default_frames[WINDOW_TYPE_FRAMES_NUM * 2];
+} default_frame_references_t;
+
+extern default_frame_references_t default_frames[WINDOW_TYPE_FRAMES_NUM * 2];
 const gchar * window_type_frames[WINDOW_TYPE_FRAMES_NUM];
+
+void     (*theme_get_shadow)		    (decor_frame_t *d,
+					     decor_shadow_options_t *,
+					     gboolean);
 
 void     (*theme_draw_window_decoration)    (decor_t *d);
 gboolean (*theme_calc_decoration_size)      (decor_t *d,
@@ -592,6 +607,10 @@ void
 bare_frame_update_shadow (Display		  *xdisplay,
 			   Screen		  *screen,
 			   decor_frame_t	  *frame,
+			   decor_shadow_t	  **shadow_normal,
+			   decor_context_t	  *context_normal,
+			   decor_shadow_t	  **shadow_max,
+			   decor_context_t	  *context_max,
 			   decor_shadow_info_t    *info,
 			   decor_shadow_options_t *opt_shadow,
 			   decor_shadow_options_t *opt_no_shadow);
@@ -600,6 +619,10 @@ void
 decor_frame_update_shadow (Display		  *xdisplay,
 			   Screen		  *screen,
 			   decor_frame_t	  *frame,
+			   decor_shadow_t	  **shadow_normal,
+			   decor_context_t	  *context_normal,
+			   decor_shadow_t	  **shadow_max,
+			   decor_context_t	  *context_max,
 			   decor_shadow_info_t    *info,
 			   decor_shadow_options_t *opt_shadow,
 			   decor_shadow_options_t *opt_no_shadow);
@@ -807,6 +830,9 @@ get_event_window_position (decor_t *d,
 gfloat
 get_title_scale (decor_frame_t *frame);
 
+void
+cairo_get_shadow (decor_frame_t *, decor_shadow_options_t *opts, gboolean active);
+
 /* gdk.c */
 
 void
@@ -893,6 +919,10 @@ meta_update_border_extents ();
 
 void
 meta_update_button_layout (const char *value);
+
+void
+meta_get_shadow (decor_frame_t *, decor_shadow_options_t *opts, gboolean active);
+
 #endif
 /* switcher.c */
 
@@ -902,6 +932,10 @@ void
 switcher_frame_update_shadow (Display		  *xdisplay,
 			      Screen		  *screen,
 			      decor_frame_t	  *frame,
+			      decor_shadow_t	  **shadow_normal,
+			      decor_context_t	  *context_normal,
+			      decor_shadow_t	  **shadow_max,
+			      decor_context_t	  *context_max,
 			      decor_shadow_info_t    *info,
 			      decor_shadow_options_t *opt_shadow,
 			      decor_shadow_options_t *opt_no_shadow);
