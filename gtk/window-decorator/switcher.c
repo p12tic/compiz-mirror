@@ -495,9 +495,6 @@ update_switcher_window (Window     popup,
     if (d->picture)
 	XRenderFreePicture (xdisplay, d->picture);
 
-    g_object_ref (G_OBJECT (pixmap));
-    g_object_ref (G_OBJECT (buffer_pixmap));
-
     d->pixmap	     = pixmap;
     d->buffer_pixmap = buffer_pixmap;
     d->cr	     = gdk_cairo_create (pixmap);
