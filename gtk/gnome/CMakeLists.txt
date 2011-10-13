@@ -1,20 +1,4 @@
-if (USE_GNOME)
-
-    include_directories (
-	${CMAKE_BINARY_DIR}/gtk
-	${GNOME_WINDOW_SETTINGS_INCLUDE_DIRS}
-	${GCONF_INCLUDE_DIRS}
-    )
-
-    add_definitions (
-	-DHAVE_CONFIG_H
-	-DMETACITY_THEME_DIR=\\\"${windowsettingsdatadir}/themes\\\"
-    )
-
-    link_directories (
-	${COMPIZ_LINK_DIRS}
-    )
-
+if (BUILD_GNOME)
     set (desktop_file ${CMAKE_CURRENT_BINARY_DIR}/compiz.desktop)
     compiz_translate_desktop_file (
         ${CMAKE_CURRENT_SOURCE_DIR}/compiz.desktop.in
@@ -33,6 +17,26 @@ if (USE_GNOME)
     compiz_opt_install_file (
 	${wmproperties_file}
 	${windowsettingsdatadir}/gnome/wm-properties/compiz-wm.desktop
+    )
+
+    add_custom_target (compiz.desktop ALL SOURCES ${desktop_file} ${wmproperties_file})
+endif (BUILD_GNOME)
+
+if (USE_GNOME)
+
+    include_directories (
+	${CMAKE_BINARY_DIR}/gtk
+	${GNOME_WINDOW_SETTINGS_INCLUDE_DIRS}
+	${GCONF_INCLUDE_DIRS}
+    )
+
+    add_definitions (
+	-DHAVE_CONFIG_H
+	-DMETACITY_THEME_DIR=\\\"${windowsettingsdatadir}/themes\\\"
+    )
+
+    link_directories (
+	${COMPIZ_LINK_DIRS}
     )
 
 
@@ -63,8 +67,6 @@ if (USE_GNOME)
 	compiz-window-manager.c
 	compiz-window-manager.h
 	${key_xml}
-	${desktop_file}
-	${wmproperties_file}
     )
 
 
