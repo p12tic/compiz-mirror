@@ -185,6 +185,9 @@ main (int argc, char *argv[])
 
     settings->font = strdup ("Sans Bold 12");
 
+    settings->mutter_draggable_border_width = 10;
+    settings->mutter_attach_modal_dialogs = FALSE;
+
     for (i = 0; i < argc; i++)
     {
 	if (strcmp (argv[i], "--minimal") == 0)

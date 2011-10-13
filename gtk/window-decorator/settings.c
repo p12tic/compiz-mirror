@@ -107,6 +107,44 @@ shadow_property_changed (WnckScreen *s)
 
 #ifdef USE_GCONF
 static gboolean
+mutter_draggable_border_width_changed (GConfClient *client)
+{
+    int      new_width;
+    int      width = settings->mutter_draggable_border_width;
+
+    new_width = gconf_client_get_int (client,
+				      MUTTER_DRAGGABLE_BORDER_WIDTH_KEY,
+				      NULL);
+
+    if (new_width != width)
+    {
+	settings->mutter_draggable_border_width = new_width;
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
+mutter_attach_modal_dialogs_changed (GConfClient *client)
+{
+    gboolean      new_attach;
+    gboolean      attach = settings->mutter_attach_modal_dialogs;
+
+    new_attach = gconf_client_get_bool (client,
+					    MUTTER_ATTACH_MODAL_DIALOGS_KEY,
+					    	NULL);
+
+    if (new_attach != attach)
+    {
+	settings->mutter_attach_modal_dialogs = new_attach;
+	return TRUE;
+    }
+
+    return FALSE;
+}
+
+static gboolean
 blur_settings_changed (GConfClient *client)
 {
     gchar *type;
@@ -486,6 +524,16 @@ value_changed (GConfClient *client,
 	if (theme_opacity_changed (client))
 	    changed = TRUE;
     }
+    else if (strcmp (key, MUTTER_DRAGGABLE_BORDER_WIDTH_KEY) == 0)
+    {
+        if (mutter_draggable_border_width_changed (client))
+	    changed = TRUE;
+    }
+    else if (strcmp (key, MUTTER_ATTACH_MODAL_DIALOGS_KEY) == 0)
+    {
+	if (mutter_attach_modal_dialogs_changed (client))
+	    changed = TRUE;
+    }
 
     if (changed)
 	decorations_changed (data);
@@ -507,6 +555,11 @@ init_settings (WnckScreen *screen)
 
     gconf_client_add_dir (gconf,
 			  METACITY_GCONF_DIR,
+			  GCONF_CLIENT_PRELOAD_ONELEVEL,
+			  NULL);
+
+    gconf_client_add_dir (gconf,
+			  MUTTER_GCONF_DIR,
 			  GCONF_CLIENT_PRELOAD_ONELEVEL,
 			  NULL);
 
@@ -537,9 +590,12 @@ init_settings (WnckScreen *screen)
     wheel_action_changed (gconf);
     blur_settings_changed (gconf);
 
+    mutter_draggable_border_width_changed (gconf);
+    mutter_attach_modal_dialogs_changed (gconf);
+
     g_object_unref (gconf);
 #endif
-    
+
     shadow_property_changed (screen);
 
     return TRUE;

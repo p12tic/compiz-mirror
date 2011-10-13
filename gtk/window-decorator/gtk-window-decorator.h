@@ -110,6 +110,7 @@
 #endif
 
 #define METACITY_GCONF_DIR "/apps/metacity/general"
+#define MUTTER_GCONF_DIR "/apps/mutter/general"
 
 #define COMPIZ_USE_SYSTEM_FONT_KEY		    \
 METACITY_GCONF_DIR "/titlebar_uses_system_font"
@@ -143,6 +144,12 @@ COMPIZ_GCONF_DIR1 "/shadow_x_offset"
 #define COMPIZ_SHADOW_OFFSET_Y_KEY \
 COMPIZ_GCONF_DIR1 "/shadow_y_offset"
 
+#define MUTTER_DRAGGABLE_BORDER_WIDTH_KEY \
+MUTTER_GCONF_DIR "/draggable_border_width"
+
+#define MUTTER_ATTACH_MODAL_DIALOGS_KEY \
+MUTTER_GCONF_DIR "/attach_modal_dialogs"
+
 #define META_THEME_KEY		\
 METACITY_GCONF_DIR "/theme"
 
@@ -171,6 +178,9 @@ GCONF_DIR "/blur_type"
 
 #define WHEEL_ACTION_KEY   \
 GCONF_DIR "/mouse_wheel_action"
+
+#define RIGHT_CLICK_ACTION_KEY \
+GCONF_DIR "/right_click_action"
 
 #define DBUS_DEST       "org.freedesktop.compiz"
 #define DBUS_PATH       "/org/freedesktop/compiz/decor/screen0"
@@ -274,6 +284,8 @@ typedef struct _decor_settings {
     gboolean		    use_system_font;
     gint		    blur_type;
     gchar		    *font;
+    guint    mutter_draggable_border_width;
+    gboolean mutter_attach_modal_dialogs;
 } decor_settings_t;
 
 #define DOUBLE_CLICK_ACTION_DEFAULT CLICK_ACTION_MAXIMIZE
