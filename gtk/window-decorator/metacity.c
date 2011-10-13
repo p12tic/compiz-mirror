@@ -634,7 +634,8 @@ meta_draw_window_decoration (decor_t *d)
     meta_get_decoration_geometry (d, theme, &flags, &fgeom, &button_layout,
 				  frame_type, &clip);
 
-    draw_shadow_background (d, cr, d->shadow, d->context);
+    if ((d->prop_xid || !d->buffer_pixmap) && !d->frame_window)
+	draw_shadow_background (d, cr, d->shadow, d->context);
 
     for (i = 0; i < META_BUTTON_TYPE_LAST; i++)
 	button_states[i] = meta_button_state_for_button_type (d, i);
