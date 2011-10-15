@@ -107,8 +107,7 @@ class PrivateCompositeScreen :
 
 	CompTimer paintTimer;
 
-	bool active;
-	CompositeScreen::PaintHandler *pHnd;
+	compiz::composite::PaintHandler *pHnd;
 
 	CompositeFPSLimiterMode FPSLimiterMode;
 	int frameTimeAccumulator;

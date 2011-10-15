@@ -285,7 +285,6 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     idle (true),
     timeLeft (0),
     slowAnimations (false),
-    active (false),
     pHnd (NULL),
     FPSLimiterMode (CompositeFPSLimiterModeDefault),
     frameTimeAccumulator (0),
@@ -383,11 +382,15 @@ PrivateCompositeScreen::init ()
 
 
 bool
-CompositeScreen::registerPaintHandler (PaintHandler *pHnd)
+CompositeScreen::registerPaintHandler (compiz::composite::PaintHandler *pHnd)
 {
-    Display *dpy = screen->dpy ();
+    Display *dpy;
 
-    if (priv->active)
+    WRAPABLE_HND_FUNC_RETURN (4, bool, registerPaintHandler, pHnd);
+
+    dpy =  screen->dpy ();
+
+    if (priv->pHnd)
 	return false;
 
     CompScreen::checkForError (dpy);
@@ -414,7 +417,6 @@ CompositeScreen::registerPaintHandler (PaintHandler *pHnd)
     }
 
     priv->pHnd = pHnd;
-    priv->active = true;
 
     showOutputWindow ();
 
@@ -428,7 +430,11 @@ CompositeScreen::registerPaintHandler (PaintHandler *pHnd)
 void
 CompositeScreen::unregisterPaintHandler ()
 {
-    Display *dpy = screen->dpy ();
+    Display *dpy;
+
+    WRAPABLE_HND_FUNC (5, unregisterPaintHandler)
+
+    dpy = screen->dpy ();
 
     foreach (CompWindow *w, screen->windows ())
     {
@@ -444,7 +450,6 @@ CompositeScreen::unregisterPaintHandler ()
 				    CompositeRedirectManual);
 
     priv->pHnd = NULL;
-    priv->active = false;
     priv->paintTimer.stop ();
 
     hideOutputWindow ();
@@ -453,7 +458,10 @@ CompositeScreen::unregisterPaintHandler ()
 bool
 CompositeScreen::compositingActive ()
 {
-    return priv->active;
+    if (priv->pHnd)
+	return priv->pHnd->compositingActive ();
+
+    return false;
 }
 
 void
@@ -506,7 +514,7 @@ void
 CompositeScreen::showOutputWindow ()
 {
 #ifdef USE_COW
-    if (useCow && priv->active)
+    if (useCow && priv->pHnd)
     {
 	Display       *dpy = screen->dpy ();
 	XserverRegion region;
@@ -556,7 +564,7 @@ void
 CompositeScreen::updateOutputWindow ()
 {
 #ifdef USE_COW
-    if (useCow && priv->active)
+    if (useCow && priv->pHnd)
     {
 	Display       *dpy = screen->dpy ();
 	XserverRegion region;
@@ -1022,6 +1030,14 @@ CompositeScreenInterface::paint (CompOutput::ptrList &outputs,
 const CompWindowList &
 CompositeScreenInterface::getWindowPaintList ()
     WRAPABLE_DEF (getWindowPaintList)
+
+bool
+CompositeScreenInterface::registerPaintHandler (compiz::composite::PaintHandler *pHnd)
+    WRAPABLE_DEF (registerPaintHandler, pHnd);
+
+void
+CompositeScreenInterface::unregisterPaintHandler ()
+    WRAPABLE_DEF (unregisterPaintHandler);
 
 const CompRegion &
 CompositeScreen::currentDamage () const

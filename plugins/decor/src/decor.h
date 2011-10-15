@@ -130,6 +130,7 @@ class DecorWindow;
 
 class DecorScreen :
     public ScreenInterface,
+    public CompositeScreenInterface,
     public PluginClassHandler<DecorScreen,CompScreen>,
     public DecorOptions
 {
@@ -150,6 +151,9 @@ class DecorScreen :
 	bool decoratorStartTimeout ();
 
 	void updateDefaultShadowProperty ();
+
+	bool registerPaintHandler (compiz::composite::PaintHandler *pHnd);
+	void unregisterPaintHandler ();
 
     public:
 
@@ -231,6 +235,7 @@ class DecorWindow :
 	bool resizeTimeout ();
 
 	void updateSwitcher ();
+	void updateHandlers ();
 
 	static bool matchType (CompWindow *w, unsigned int decorType);
 	static bool matchState (CompWindow *w, unsigned int decorState);

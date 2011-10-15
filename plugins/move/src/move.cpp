@@ -703,8 +703,23 @@ MoveScreen::updateOpacity ()
     moveOpacity = (optionGetOpacity () * OPAQUE) / 100;
 }
 
+bool
+MoveScreen::registerPaintHandler(compiz::composite::PaintHandler *pHnd)
+{
+    hasCompositing = true;
+    cScreen->registerPaintHandler (pHnd);
+}
+
+void
+MoveScreen::unregisterPaintHandler()
+{
+    hasCompositing = false;
+    cScreen->unregisterPaintHandler ();
+}
+
 MoveScreen::MoveScreen (CompScreen *screen) :
     PluginClassHandler<MoveScreen,CompScreen> (screen),
+    cScreen (CompositeScreen::get (screen)),
     w (0),
     region (NULL),
     status (RectangleOut),
@@ -713,7 +728,6 @@ MoveScreen::MoveScreen (CompScreen *screen) :
     hasCompositing (false),
     yConstrained (false)
 {
-
     updateOpacity ();
 
     for (unsigned int i = 0; i < NUM_KEYS; i++)
@@ -721,9 +735,12 @@ MoveScreen::MoveScreen (CompScreen *screen) :
 				   XStringToKeysym (mKeys[i].name));
 
     moveCursor = XCreateFontCursor (screen->dpy (), XC_fleur);
-    if (CompositeScreen::get (screen))
+    if (cScreen)
+    {
+	CompositeScreenInterface::setHandler (cScreen);
 	hasCompositing =
-	    CompositeScreen::get (screen)->compositingActive ();
+	    cScreen->compositingActive ();
+    }
 
     optionSetOpacityNotify (boost::bind (&MoveScreen::updateOpacity, this));
 

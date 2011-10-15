@@ -51,6 +51,7 @@ struct _MoveKeys {
 
 class MoveScreen :
     public ScreenInterface,
+    public CompositeScreenInterface,
     public PluginClassHandler<MoveScreen,CompScreen>,
     public MoveOptions
 {
@@ -58,12 +59,17 @@ class MoveScreen :
 	MoveScreen (CompScreen *screen);
 	~MoveScreen ();
 
+	CompositeScreen *cScreen;
+
 	void updateOpacity ();
 
 	void handleEvent (XEvent *);
 	void handleCompizEvent (const char *plugin,
 				const char *event,
 				CompOption::Vector &options);
+
+	bool registerPaintHandler (compiz::composite::PaintHandler *pHnd);
+	void unregisterPaintHandler ();
 
 	CompWindow *w;
 	int        savedX;

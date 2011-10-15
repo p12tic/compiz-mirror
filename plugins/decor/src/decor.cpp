@@ -2840,6 +2840,27 @@ DecorScreen::addSupportedAtoms (std::vector<Atom> &atoms)
     atoms.push_back (requestFrameExtentsAtom);
 }
 
+void
+DecorWindow::updateHandlers ()
+{
+    if (dScreen->cmActive)
+    {
+	gWindow = GLWindow::get (window);
+	cWindow = CompositeWindow::get (window);
+
+	CompositeWindowInterface::setHandler (cWindow);
+	GLWindowInterface::setHandler (gWindow);
+    }
+    else
+    {
+	CompositeWindowInterface::setHandler (cWindow, false);
+	GLWindowInterface::setHandler (gWindow, false);
+
+	gWindow = NULL;
+	cWindow = NULL;
+    }
+}
+
 /*
  * DecorScreen::decoratorStartTimeout
  *
@@ -2852,7 +2873,37 @@ DecorScreen::decoratorStartTimeout ()
     if (!dmWin)
 	screen->runCommand (optionGetCommand ());
 
+    /* Update all the windows */
+    foreach (CompWindow *w, screen->windows ())
+    {
+	DECOR_WINDOW (w);
+
+	dw->updateHandlers ();
+
+	dw->updateSwitcher ();
+
+	if (!w->overrideRedirect () || dw->isSwitcher)
+	    dw->updateDecoration ();
+
+	if (w->shaded () || w->isViewable ())
+	    dw->update (true);
+    }
+
     return false;
+}
+
+bool
+DecorScreen::registerPaintHandler (compiz::composite::PaintHandler *p)
+{
+    cmActive = true;
+    return cScreen->registerPaintHandler (p);
+}
+
+void
+DecorScreen::unregisterPaintHandler ()
+{
+    cmActive = false;
+    return cScreen->unregisterPaintHandler ();
 }
 
 /*
@@ -2927,6 +2978,7 @@ DecorScreen::DecorScreen (CompScreen *s) :
 			  0);
 
     ScreenInterface::setHandler (s);
+    CompositeScreenInterface::setHandler (cScreen);
     screen->updateSupportedWmHints ();
 }
 
@@ -2975,21 +3027,18 @@ DecorWindow::DecorWindow (CompWindow *w) :
 
     window->resizeNotifySetEnabled (this, false);
 
-    if (dScreen->cmActive)
+    if (!dScreen->decoratorStart.active ())
     {
-	gWindow = GLWindow::get (w);
-        cWindow = CompositeWindow::get (w);
-	CompositeWindowInterface::setHandler (cWindow);
-	GLWindowInterface::setHandler (gWindow);
+	updateHandlers ();
+
+	updateSwitcher ();
+
+	if (!w->overrideRedirect () || isSwitcher)
+	    updateDecoration ();
+
+	if (w->shaded () || w->isViewable ())
+	    update (true);
     }
-
-    updateSwitcher ();
-
-    if (!w->overrideRedirect () || isSwitcher)
-	updateDecoration ();
-
-    if (w->shaded () || w->isViewable ())
-	update (true);
 
     window->resizeNotifySetEnabled (this, true);
 }

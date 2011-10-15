@@ -91,6 +91,26 @@ class PrivateCompositeWindow;
 class CompositeScreen;
 class CompositeWindow;
 
+namespace compiz
+{
+namespace composite
+{
+class PaintHandler {
+public:
+    virtual ~PaintHandler () {};
+
+    virtual void paintOutputs (CompOutput::ptrList &outputs,
+			       unsigned int        mask,
+			       const CompRegion    &region) = 0;
+
+    virtual bool hasVSync () { return false; };
+
+    virtual void prepareDrawing () {};
+    virtual bool compositingActive () { return false; };
+};
+}
+}
+
 /**
  * Wrapable function interface for CompositeScreen
  */
@@ -129,28 +149,30 @@ class CompositeScreenInterface :
 	 * evaluated for repainting
 	 */
 	virtual const CompWindowList & getWindowPaintList ();
+
+	/**
+	 * Hookable function to register a new paint handler, overload
+	 * and insert your own paint handler if you want to prevent
+	 * another one from being loaded
+	 */
+	virtual bool registerPaintHandler (compiz::composite::PaintHandler *pHnd);
+
+	/**
+	 * Hookable function to notify unregistration of a paint handler
+	 *
+	 */
+	virtual void unregisterPaintHandler ();
 };
 
 
 class CompositeScreen :
-    public WrapableHandler<CompositeScreenInterface, 4>,
+    public WrapableHandler<CompositeScreenInterface, 6>,
     public PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>,
     public CompOption::Class
 {
     public:
 
-	class PaintHandler {
-	    public:
-		virtual ~PaintHandler () {};
 
-		virtual void paintOutputs (CompOutput::ptrList &outputs,
-					   unsigned int        mask,
-					   const CompRegion    &region) = 0;
-
-		virtual bool hasVSync () { return false; };
-
-		virtual void prepareDrawing () {};
-	};
 
     public:
 	CompositeScreen (CompScreen *s);
@@ -158,12 +180,6 @@ class CompositeScreen :
 
 	CompOption::Vector & getOptions ();
         bool setOption (const CompString &name, CompOption::Value &value);
-
-	/** 
-	 * Register a dispatch PaintHandler for a rendering plugin
-	 */	
-	bool registerPaintHandler (PaintHandler *pHnd);
-        void unregisterPaintHandler ();
 
 	bool compositingActive ();
 
@@ -219,6 +235,9 @@ class CompositeScreen :
 
 	WRAPABLE_HND (3, CompositeScreenInterface, const CompWindowList &,
 		      getWindowPaintList);
+
+	WRAPABLE_HND (4, CompositeScreenInterface, bool, registerPaintHandler, compiz::composite::PaintHandler *);
+	WRAPABLE_HND (5, CompositeScreenInterface, void, unregisterPaintHandler);
 
 	friend class PrivateCompositeDisplay;
 

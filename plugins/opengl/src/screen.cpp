@@ -82,10 +82,207 @@ namespace GL {
 
 CompOutput *targetOutput = NULL;
 
-void
-GLScreen::glInitContext ()
+bool
+GLScreen::glInitContext (XVisualInfo *visinfo)
 {
-    WRAPABLE_HND_FUNC (1, glInitContext);
+    Display		 *dpy = screen->dpy ();
+    const char		 *glExtensions;
+    GLfloat		 globalAmbient[]  = { 0.1f, 0.1f,  0.1f, 0.1f };
+    GLfloat		 ambientLight[]   = { 0.0f, 0.0f,  0.0f, 0.0f };
+    GLfloat		 diffuseLight[]   = { 0.9f, 0.9f,  0.9f, 0.9f };
+    GLfloat		 light0Position[] = { -0.5f, 0.5f, -9.0f, 1.0f };
+    const char           *glRenderer;
+    CompOption::Vector o (0);
+    WRAPABLE_HND_FUNC_RETURN (0, bool, glInitContext, visinfo);
+
+    priv->ctx = glXCreateContext (dpy, visinfo, NULL, !indirectRendering);
+    if (!priv->ctx)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"glXCreateContext failed");
+	XFree (visinfo);
+
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    XFree (visinfo);
+
+    glXMakeCurrent (dpy, CompositeScreen::get (screen)->output (), priv->ctx);
+
+    glExtensions = (const char *) glGetString (GL_EXTENSIONS);
+    if (!glExtensions)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"No valid GL extensions string found.");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    glRenderer = (const char *) glGetString (GL_RENDERER);
+    if (glRenderer != NULL &&
+	(strcmp (glRenderer, "Software Rasterizer") == 0 ||
+	 strcmp (glRenderer, "Mesa X11") == 0))
+    {
+	compLogMessage ("opengl",
+			CompLogLevelFatal,
+			"Software rendering detected");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_texture_non_power_of_two"))
+	GL::textureNonPowerOfTwo = true;
+
+    glGetIntegerv (GL_MAX_TEXTURE_SIZE, &GL::maxTextureSize);
+
+    if (strstr (glExtensions, "GL_NV_texture_rectangle")  ||
+	strstr (glExtensions, "GL_EXT_texture_rectangle") ||
+	strstr (glExtensions, "GL_ARB_texture_rectangle"))
+    {
+	GL::textureRectangle = true;
+
+	if (!GL::textureNonPowerOfTwo)
+	{
+	    GLint maxTextureSize;
+
+	    glGetIntegerv (GL_MAX_RECTANGLE_TEXTURE_SIZE_NV, &maxTextureSize);
+	    if (maxTextureSize > GL::maxTextureSize)
+		GL::maxTextureSize = maxTextureSize;
+	}
+    }
+
+    if (!(GL::textureRectangle || GL::textureNonPowerOfTwo))
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"Support for non power of two textures missing");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_texture_env_combine"))
+    {
+	GL::textureEnvCombine = true;
+
+	/* XXX: GL_NV_texture_env_combine4 need special code but it seams to
+	   be working anyway for now... */
+	if (strstr (glExtensions, "GL_ARB_texture_env_crossbar") ||
+	    strstr (glExtensions, "GL_NV_texture_env_combine4"))
+	    GL::textureEnvCrossbar = true;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_texture_border_clamp") ||
+	strstr (glExtensions, "GL_SGIS_texture_border_clamp"))
+	GL::textureBorderClamp = true;
+
+    GL::maxTextureUnits = 1;
+    if (strstr (glExtensions, "GL_ARB_multitexture"))
+    {
+	GL::activeTexture = (GL::GLActiveTextureProc)
+	    getProcAddress ("glActiveTexture");
+	GL::clientActiveTexture = (GL::GLClientActiveTextureProc)
+	    getProcAddress ("glClientActiveTexture");
+	GL::multiTexCoord2f = (GL::GLMultiTexCoord2fProc)
+	    getProcAddress ("glMultiTexCoord2f");
+
+	if (GL::activeTexture && GL::clientActiveTexture && GL::multiTexCoord2f)
+	    glGetIntegerv (GL_MAX_TEXTURE_UNITS_ARB, &GL::maxTextureUnits);
+    }
+
+    if (strstr (glExtensions, "GL_ARB_fragment_program"))
+    {
+	GL::genPrograms = (GL::GLGenProgramsProc)
+	    getProcAddress ("glGenProgramsARB");
+	GL::deletePrograms = (GL::GLDeleteProgramsProc)
+	    getProcAddress ("glDeleteProgramsARB");
+	GL::bindProgram = (GL::GLBindProgramProc)
+	    getProcAddress ("glBindProgramARB");
+	GL::programString = (GL::GLProgramStringProc)
+	    getProcAddress ("glProgramStringARB");
+	GL::programEnvParameter4f = (GL::GLProgramParameter4fProc)
+	    getProcAddress ("glProgramEnvParameter4fARB");
+	GL::programLocalParameter4f = (GL::GLProgramParameter4fProc)
+	    getProcAddress ("glProgramLocalParameter4fARB");
+	GL::getProgramiv = (GL::GLGetProgramivProc)
+	    getProcAddress ("glGetProgramivARB");
+
+	if (GL::genPrograms             &&
+	    GL::deletePrograms          &&
+	    GL::bindProgram             &&
+	    GL::programString           &&
+	    GL::programEnvParameter4f   &&
+	    GL::programLocalParameter4f &&
+	    GL::getProgramiv)
+	    GL::fragmentProgram = true;
+    }
+
+    if (strstr (glExtensions, "GL_EXT_framebuffer_object"))
+    {
+	GL::genFramebuffers = (GL::GLGenFramebuffersProc)
+	    getProcAddress ("glGenFramebuffersEXT");
+	GL::deleteFramebuffers = (GL::GLDeleteFramebuffersProc)
+	    getProcAddress ("glDeleteFramebuffersEXT");
+	GL::bindFramebuffer = (GL::GLBindFramebufferProc)
+	    getProcAddress ("glBindFramebufferEXT");
+	GL::checkFramebufferStatus = (GL::GLCheckFramebufferStatusProc)
+	    getProcAddress ("glCheckFramebufferStatusEXT");
+	GL::framebufferTexture2D = (GL::GLFramebufferTexture2DProc)
+	    getProcAddress ("glFramebufferTexture2DEXT");
+	GL::generateMipmap = (GL::GLGenerateMipmapProc)
+	    getProcAddress ("glGenerateMipmapEXT");
+
+	if (GL::genFramebuffers        &&
+	    GL::deleteFramebuffers     &&
+	    GL::bindFramebuffer        &&
+	    GL::checkFramebufferStatus &&
+	    GL::framebufferTexture2D   &&
+	    GL::generateMipmap)
+	    GL::fbo = true;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_texture_compression"))
+	GL::textureCompression = true;
+
+    glClearColor (0.0, 0.0, 0.0, 1.0);
+    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable (GL_CULL_FACE);
+    glDisable (GL_BLEND);
+    glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+    glColor4usv (defaultColor);
+    glEnableClientState (GL_VERTEX_ARRAY);
+    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+
+    if (GL::textureEnvCombine && GL::maxTextureUnits >= 2)
+    {
+	GL::canDoSaturated = true;
+	if (GL::textureEnvCrossbar && GL::maxTextureUnits >= 4)
+	    GL::canDoSlightlySaturated = true;
+    }
+
+    priv->updateView ();
+
+    glLightModelfv (GL_LIGHT_MODEL_AMBIENT, globalAmbient);
+
+    glEnable (GL_LIGHT0);
+    glLightfv (GL_LIGHT0, GL_AMBIENT, ambientLight);
+    glLightfv (GL_LIGHT0, GL_DIFFUSE, diffuseLight);
+    glLightfv (GL_LIGHT0, GL_POSITION, light0Position);
+
+    glColorMaterial (GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
+
+    glNormal3f (0.0f, 0.0f, -1.0f);
+
+    priv->lighting = false;
+
+
+    priv->filter[NOTHING_TRANS_FILTER] = GLTexture::Fast;
+    priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
+    priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
+
+    if (GL::textureFromPixmap)
+	registerBindPixmap (TfpTexture::bindPixmapToTexture);
+
+    return false;
 }
 
 
@@ -98,13 +295,8 @@ GLScreen::GLScreen (CompScreen *s) :
     XVisualInfo		 *visinfo;
     GLXFBConfig		 *fbConfigs;
     int			 defaultDepth, nvisinfo, nElements, value, i;
-    const char		 *glxExtensions, *glExtensions;
-    GLfloat		 globalAmbient[]  = { 0.1f, 0.1f,  0.1f, 0.1f };
-    GLfloat		 ambientLight[]   = { 0.0f, 0.0f,  0.0f, 0.0f };
-    GLfloat		 diffuseLight[]   = { 0.9f, 0.9f,  0.9f, 0.9f };
-    GLfloat		 light0Position[] = { -0.5f, 0.5f, -9.0f, 1.0f };
+    const char		 *glxExtensions;
     XWindowAttributes    attr;
-    const char           *glRenderer;
     CompOption::Vector o (0);
 
     if (indirectRendering)
@@ -357,197 +549,7 @@ GLScreen::GLScreen (CompScreen *s) :
 	return;
     }
 
-    priv->ctx = glXCreateContext (dpy, visinfo, NULL, !indirectRendering);
-    if (!priv->ctx)
-    {
-	compLogMessage ("opengl", CompLogLevelFatal,
-			"glXCreateContext failed");
-	XFree (visinfo);
-
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	setFailed ();
-	return;
-    }
-
-    XFree (visinfo);
-
-    glXMakeCurrent (dpy, CompositeScreen::get (s)->output (), priv->ctx);
-
-    glExtensions = (const char *) glGetString (GL_EXTENSIONS);
-    if (!glExtensions)
-    {
-	compLogMessage ("opengl", CompLogLevelFatal,
-			"No valid GL extensions string found.");
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	setFailed ();
-	return;
-    }
-
-    glRenderer = (const char *) glGetString (GL_RENDERER);
-    if (glRenderer != NULL &&
-	(strcmp (glRenderer, "Software Rasterizer") == 0 ||
-	 strcmp (glRenderer, "Mesa X11") == 0))
-    {
-	compLogMessage ("opengl",
-			CompLogLevelFatal,
-			"Software rendering detected");
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	setFailed ();
-	return;
-    }
-
-    if (strstr (glExtensions, "GL_ARB_texture_non_power_of_two"))
-	GL::textureNonPowerOfTwo = true;
-
-    glGetIntegerv (GL_MAX_TEXTURE_SIZE, &GL::maxTextureSize);
-
-    if (strstr (glExtensions, "GL_NV_texture_rectangle")  ||
-	strstr (glExtensions, "GL_EXT_texture_rectangle") ||
-	strstr (glExtensions, "GL_ARB_texture_rectangle"))
-    {
-	GL::textureRectangle = true;
-
-	if (!GL::textureNonPowerOfTwo)
-	{
-	    GLint maxTextureSize;
-
-	    glGetIntegerv (GL_MAX_RECTANGLE_TEXTURE_SIZE_NV, &maxTextureSize);
-	    if (maxTextureSize > GL::maxTextureSize)
-		GL::maxTextureSize = maxTextureSize;
-	}
-    }
-
-    if (!(GL::textureRectangle || GL::textureNonPowerOfTwo))
-    {
-	compLogMessage ("opengl", CompLogLevelFatal,
-			"Support for non power of two textures missing");
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	setFailed ();
-	return;
-    }
-
-    if (strstr (glExtensions, "GL_ARB_texture_env_combine"))
-    {
-	GL::textureEnvCombine = true;
-
-	/* XXX: GL_NV_texture_env_combine4 need special code but it seams to
-	   be working anyway for now... */
-	if (strstr (glExtensions, "GL_ARB_texture_env_crossbar") ||
-	    strstr (glExtensions, "GL_NV_texture_env_combine4"))
-	    GL::textureEnvCrossbar = true;
-    }
-
-    if (strstr (glExtensions, "GL_ARB_texture_border_clamp") ||
-	strstr (glExtensions, "GL_SGIS_texture_border_clamp"))
-	GL::textureBorderClamp = true;
-
-    GL::maxTextureUnits = 1;
-    if (strstr (glExtensions, "GL_ARB_multitexture"))
-    {
-	GL::activeTexture = (GL::GLActiveTextureProc)
-	    getProcAddress ("glActiveTexture");
-	GL::clientActiveTexture = (GL::GLClientActiveTextureProc)
-	    getProcAddress ("glClientActiveTexture");
-	GL::multiTexCoord2f = (GL::GLMultiTexCoord2fProc)
-	    getProcAddress ("glMultiTexCoord2f");
-
-	if (GL::activeTexture && GL::clientActiveTexture && GL::multiTexCoord2f)
-	    glGetIntegerv (GL_MAX_TEXTURE_UNITS_ARB, &GL::maxTextureUnits);
-    }
-
-    if (strstr (glExtensions, "GL_ARB_fragment_program"))
-    {
-	GL::genPrograms = (GL::GLGenProgramsProc)
-	    getProcAddress ("glGenProgramsARB");
-	GL::deletePrograms = (GL::GLDeleteProgramsProc)
-	    getProcAddress ("glDeleteProgramsARB");
-	GL::bindProgram = (GL::GLBindProgramProc)
-	    getProcAddress ("glBindProgramARB");
-	GL::programString = (GL::GLProgramStringProc)
-	    getProcAddress ("glProgramStringARB");
-	GL::programEnvParameter4f = (GL::GLProgramParameter4fProc)
-	    getProcAddress ("glProgramEnvParameter4fARB");
-	GL::programLocalParameter4f = (GL::GLProgramParameter4fProc)
-	    getProcAddress ("glProgramLocalParameter4fARB");
-	GL::getProgramiv = (GL::GLGetProgramivProc)
-	    getProcAddress ("glGetProgramivARB");
-
-	if (GL::genPrograms             &&
-	    GL::deletePrograms          &&
-	    GL::bindProgram             &&
-	    GL::programString           &&
-	    GL::programEnvParameter4f   &&
-	    GL::programLocalParameter4f &&
-	    GL::getProgramiv)
-	    GL::fragmentProgram = true;
-    }
-
-    if (strstr (glExtensions, "GL_EXT_framebuffer_object"))
-    {
-	GL::genFramebuffers = (GL::GLGenFramebuffersProc)
-	    getProcAddress ("glGenFramebuffersEXT");
-	GL::deleteFramebuffers = (GL::GLDeleteFramebuffersProc)
-	    getProcAddress ("glDeleteFramebuffersEXT");
-	GL::bindFramebuffer = (GL::GLBindFramebufferProc)
-	    getProcAddress ("glBindFramebufferEXT");
-	GL::checkFramebufferStatus = (GL::GLCheckFramebufferStatusProc)
-	    getProcAddress ("glCheckFramebufferStatusEXT");
-	GL::framebufferTexture2D = (GL::GLFramebufferTexture2DProc)
-	    getProcAddress ("glFramebufferTexture2DEXT");
-	GL::generateMipmap = (GL::GLGenerateMipmapProc)
-	    getProcAddress ("glGenerateMipmapEXT");
-
-	if (GL::genFramebuffers        &&
-	    GL::deleteFramebuffers     &&
-	    GL::bindFramebuffer        &&
-	    GL::checkFramebufferStatus &&
-	    GL::framebufferTexture2D   &&
-	    GL::generateMipmap)
-	    GL::fbo = true;
-    }
-
-    if (strstr (glExtensions, "GL_ARB_texture_compression"))
-	GL::textureCompression = true;
-
-    glClearColor (0.0, 0.0, 0.0, 1.0);
-    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-    glEnable (GL_CULL_FACE);
-    glDisable (GL_BLEND);
-    glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
-    glColor4usv (defaultColor);
-    glEnableClientState (GL_VERTEX_ARRAY);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-
-    if (GL::textureEnvCombine && GL::maxTextureUnits >= 2)
-    {
-	GL::canDoSaturated = true;
-	if (GL::textureEnvCrossbar && GL::maxTextureUnits >= 4)
-	    GL::canDoSlightlySaturated = true;
-    }
-
-    priv->updateView ();
-
-    glLightModelfv (GL_LIGHT_MODEL_AMBIENT, globalAmbient);
-
-    glEnable (GL_LIGHT0);
-    glLightfv (GL_LIGHT0, GL_AMBIENT, ambientLight);
-    glLightfv (GL_LIGHT0, GL_DIFFUSE, diffuseLight);
-    glLightfv (GL_LIGHT0, GL_POSITION, light0Position);
-
-    glColorMaterial (GL_FRONT, GL_AMBIENT_AND_DIFFUSE);
-
-    glNormal3f (0.0f, 0.0f, -1.0f);
-
-    priv->lighting = false;
-
-
-    priv->filter[NOTHING_TRANS_FILTER] = GLTexture::Fast;
-    priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
-    priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
-
-    if (GL::textureFromPixmap)
-	registerBindPixmap (TfpTexture::bindPixmapToTexture);
-
+    priv->initContext.start (boost::bind (&GLScreen::glInitContext, this, visinfo), 0, 0);
 }
 
 GLScreen::~GLScreen ()
@@ -884,9 +886,9 @@ GLScreen::setLighting (bool lighting)
     }
 }
 
-void
-GLScreenInterface::glInitContext ()
-    WRAPABLE_DEF (glInitContext);
+bool
+GLScreenInterface::glInitContext (XVisualInfo *visinfo)
+    WRAPABLE_DEF (glInitContext, visinfo);
 
 bool
 GLScreenInterface::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
@@ -1193,6 +1195,12 @@ bool
 PrivateGLScreen::hasVSync ()
 {
    return (GL::waitVideoSync && optionGetSyncToVblank ());
+}
+
+bool
+PrivateGLScreen::compositingActive ()
+{
+    return true;
 }
 
 void

@@ -49,7 +49,7 @@ class GLIcon
 
 class PrivateGLScreen :
     public ScreenInterface,
-    public CompositeScreen::PaintHandler,
+    public compiz::composite::PaintHandler,
     public OpenglOptions
 {
     public:
@@ -69,6 +69,8 @@ class PrivateGLScreen :
 	bool hasVSync ();
 
 	void prepareDrawing ();
+
+	bool compositingActive ();
 
 	void controlSwapVideoSync ();
 	void waitForVideoSync ();

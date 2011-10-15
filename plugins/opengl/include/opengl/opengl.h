@@ -239,7 +239,7 @@ class GLScreenInterface :
 {
     public:
 
-	virtual void glInitContext ();
+	virtual bool glInitContext (XVisualInfo *);
 
 	/**
 	 * Hookable function used for plugins to use openGL to draw on an output
@@ -385,7 +385,7 @@ class GLScreen :
 	 */
 	const float * projectionMatrix ();
 
-	WRAPABLE_HND (0, GLScreenInterface, void, glInitContext);
+	WRAPABLE_HND (0, GLScreenInterface, bool, glInitContext, XVisualInfo *);
 	WRAPABLE_HND (1, GLScreenInterface, bool, glPaintOutput,
 		      const GLScreenPaintAttrib &, const GLMatrix &,
 		      const CompRegion &, CompOutput *, unsigned int);

@@ -362,7 +362,7 @@ GLScreen::glEnableOutputClipping (const GLMatrix   &transform,
 				  const CompRegion &region,
 				  CompOutput       *output)
 {
-    WRAPABLE_HND_FUNC (3, glEnableOutputClipping, transform, region, output)
+    WRAPABLE_HND_FUNC (4, glEnableOutputClipping, transform, region, output)
 
     GLdouble h = screen->height ();
 
@@ -419,7 +419,7 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 				    CompOutput                *output,
 				    unsigned int              mask)
 {
-    WRAPABLE_HND_FUNC (1, glPaintTransformedOutput, sAttrib, transform,
+    WRAPABLE_HND_FUNC (2, glPaintTransformedOutput, sAttrib, transform,
 		       region, output, mask)
 
     GLMatrix sTransform = transform;
@@ -466,7 +466,7 @@ GLScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 			 CompOutput                *output,
 			 unsigned int              mask)
 {
-    WRAPABLE_HND_FUNC_RETURN (0, bool, glPaintOutput, sAttrib, transform,
+    WRAPABLE_HND_FUNC_RETURN (1, bool, glPaintOutput, sAttrib, transform,
 			      region, output, mask)
 
     GLMatrix sTransform = transform;
@@ -591,7 +591,7 @@ GLScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 void
 GLWindow::glDrawGeometry ()
 {
-    WRAPABLE_HND_FUNC (4, glDrawGeometry)
+    WRAPABLE_HND_FUNC (5, glDrawGeometry)
 
     int     texUnit = priv->geometry.texUnits;
     int     currentTexUnit = 0;
@@ -716,7 +716,7 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 			 unsigned int                maxGridWidth,
 			 unsigned int                maxGridHeight)
 {
-    WRAPABLE_HND_FUNC (2, glAddGeometry, matrix, region, clip)
+    WRAPABLE_HND_FUNC (3, glAddGeometry, matrix, region, clip)
 
     BoxRec full;
     int    nMatrix = matrix.size ();
