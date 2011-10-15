@@ -122,6 +122,7 @@ class PrivateGLScreen :
 	bool hasCompositing;
 
 	GLIcon defaultIcon;
+	CompTimer initContext;
 };
 
 class PrivateGLWindow :

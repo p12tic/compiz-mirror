@@ -82,6 +82,13 @@ namespace GL {
 
 CompOutput *targetOutput = NULL;
 
+void
+GLScreen::glInitContext ()
+{
+    WRAPABLE_HND_FUNC (1, glInitContext);
+}
+
+
 GLScreen::GLScreen (CompScreen *s) :
     PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI> (s),
     priv (new PrivateGLScreen (this))
@@ -150,19 +157,6 @@ GLScreen::GLScreen (CompScreen *s) :
 	return;
     }
 
-    priv->ctx = glXCreateContext (dpy, visinfo, NULL, !indirectRendering);
-    if (!priv->ctx)
-    {
-	compLogMessage ("opengl", CompLogLevelFatal,
-			"glXCreateContext failed");
-	XFree (visinfo);
-
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	setFailed ();
-	return;
-    }
-
-    XFree (visinfo);
     glxExtensions = glXQueryExtensionsString (dpy, s->screenNum ());
 
     if (!strstr (glxExtensions, "GLX_SGIX_fbconfig"))
@@ -232,144 +226,6 @@ GLScreen::GLScreen (CompScreen *s) :
 	GL::swapInterval = (GL::GLXSwapIntervalProc)
 	    getProcAddress ("glXSwapIntervalSGI");
     }
-
-    glXMakeCurrent (dpy, CompositeScreen::get (s)->output (), priv->ctx);
-
-    glExtensions = (const char *) glGetString (GL_EXTENSIONS);
-    if (!glExtensions)
-    {
-	compLogMessage ("opengl", CompLogLevelFatal,
-			"No valid GL extensions string found.");
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	setFailed ();
-	return;
-    }
-
-    glRenderer = (const char *) glGetString (GL_RENDERER);
-    if (glRenderer != NULL &&
-	(strcmp (glRenderer, "Software Rasterizer") == 0 ||
-	 strcmp (glRenderer, "Mesa X11") == 0))
-    {
-	compLogMessage ("opengl",
-			CompLogLevelFatal,
-			"Software rendering detected");
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	setFailed ();
-	return;
-    }
-
-    if (strstr (glExtensions, "GL_ARB_texture_non_power_of_two"))    
-	GL::textureNonPowerOfTwo = true;
-
-    glGetIntegerv (GL_MAX_TEXTURE_SIZE, &GL::maxTextureSize);
-
-    if (strstr (glExtensions, "GL_NV_texture_rectangle")  ||
-	strstr (glExtensions, "GL_EXT_texture_rectangle") ||
-	strstr (glExtensions, "GL_ARB_texture_rectangle"))
-    {
-	GL::textureRectangle = true;
-
-	if (!GL::textureNonPowerOfTwo)
-	{
-	    GLint maxTextureSize;
-
-	    glGetIntegerv (GL_MAX_RECTANGLE_TEXTURE_SIZE_NV, &maxTextureSize);
-	    if (maxTextureSize > GL::maxTextureSize)
-		GL::maxTextureSize = maxTextureSize;
-	}
-    }
-
-    if (!(GL::textureRectangle || GL::textureNonPowerOfTwo))
-    {
-	compLogMessage ("opengl", CompLogLevelFatal,
-			"Support for non power of two textures missing");
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	setFailed ();
-	return;
-    }
-
-    if (strstr (glExtensions, "GL_ARB_texture_env_combine"))
-    {
-	GL::textureEnvCombine = true;
-
-	/* XXX: GL_NV_texture_env_combine4 need special code but it seams to
-	   be working anyway for now... */
-	if (strstr (glExtensions, "GL_ARB_texture_env_crossbar") ||
-	    strstr (glExtensions, "GL_NV_texture_env_combine4"))
-	    GL::textureEnvCrossbar = true;
-    }
-
-    if (strstr (glExtensions, "GL_ARB_texture_border_clamp") ||
-	strstr (glExtensions, "GL_SGIS_texture_border_clamp"))
-	GL::textureBorderClamp = true;
-
-    GL::maxTextureUnits = 1;
-    if (strstr (glExtensions, "GL_ARB_multitexture"))
-    {
-	GL::activeTexture = (GL::GLActiveTextureProc)
-	    getProcAddress ("glActiveTexture");
-	GL::clientActiveTexture = (GL::GLClientActiveTextureProc)
-	    getProcAddress ("glClientActiveTexture");
-	GL::multiTexCoord2f = (GL::GLMultiTexCoord2fProc)
-	    getProcAddress ("glMultiTexCoord2f");
-
-	if (GL::activeTexture && GL::clientActiveTexture && GL::multiTexCoord2f)
-	    glGetIntegerv (GL_MAX_TEXTURE_UNITS_ARB, &GL::maxTextureUnits);
-    }
-
-    if (strstr (glExtensions, "GL_ARB_fragment_program"))
-    {
-	GL::genPrograms = (GL::GLGenProgramsProc)
-	    getProcAddress ("glGenProgramsARB");
-	GL::deletePrograms = (GL::GLDeleteProgramsProc)
-	    getProcAddress ("glDeleteProgramsARB");
-	GL::bindProgram = (GL::GLBindProgramProc)
-	    getProcAddress ("glBindProgramARB");
-	GL::programString = (GL::GLProgramStringProc)
-	    getProcAddress ("glProgramStringARB");
-	GL::programEnvParameter4f = (GL::GLProgramParameter4fProc)
-	    getProcAddress ("glProgramEnvParameter4fARB");
-	GL::programLocalParameter4f = (GL::GLProgramParameter4fProc)
-	    getProcAddress ("glProgramLocalParameter4fARB");
-	GL::getProgramiv = (GL::GLGetProgramivProc)
-	    getProcAddress ("glGetProgramivARB");
-
-	if (GL::genPrograms             &&
-	    GL::deletePrograms          &&
-	    GL::bindProgram             &&
-	    GL::programString           &&
-	    GL::programEnvParameter4f   &&
-	    GL::programLocalParameter4f &&
-	    GL::getProgramiv)
-	    GL::fragmentProgram = true;
-    }
-
-    if (strstr (glExtensions, "GL_EXT_framebuffer_object"))
-    {
-	GL::genFramebuffers = (GL::GLGenFramebuffersProc)
-	    getProcAddress ("glGenFramebuffersEXT");
-	GL::deleteFramebuffers = (GL::GLDeleteFramebuffersProc)
-	    getProcAddress ("glDeleteFramebuffersEXT");
-	GL::bindFramebuffer = (GL::GLBindFramebufferProc)
-	    getProcAddress ("glBindFramebufferEXT");
-	GL::checkFramebufferStatus = (GL::GLCheckFramebufferStatusProc)
-	    getProcAddress ("glCheckFramebufferStatusEXT");
-	GL::framebufferTexture2D = (GL::GLFramebufferTexture2DProc)
-	    getProcAddress ("glFramebufferTexture2DEXT");
-	GL::generateMipmap = (GL::GLGenerateMipmapProc)
-	    getProcAddress ("glGenerateMipmapEXT");
-
-	if (GL::genFramebuffers        &&
-	    GL::deleteFramebuffers     &&
-	    GL::bindFramebuffer        &&
-	    GL::checkFramebufferStatus &&
-	    GL::framebufferTexture2D   &&
-	    GL::generateMipmap)
-	    GL::fbo = true;
-    }
-
-    if (strstr (glExtensions, "GL_ARB_texture_compression"))
-	GL::textureCompression = true;
 
     fbConfigs = (*GL::getFBConfigs) (dpy, s->screenNum (), &nElements);
 
@@ -500,6 +356,158 @@ GLScreen::GLScreen (CompScreen *s) :
 	setFailed ();
 	return;
     }
+
+    priv->ctx = glXCreateContext (dpy, visinfo, NULL, !indirectRendering);
+    if (!priv->ctx)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"glXCreateContext failed");
+	XFree (visinfo);
+
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	setFailed ();
+	return;
+    }
+
+    XFree (visinfo);
+
+    glXMakeCurrent (dpy, CompositeScreen::get (s)->output (), priv->ctx);
+
+    glExtensions = (const char *) glGetString (GL_EXTENSIONS);
+    if (!glExtensions)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"No valid GL extensions string found.");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	setFailed ();
+	return;
+    }
+
+    glRenderer = (const char *) glGetString (GL_RENDERER);
+    if (glRenderer != NULL &&
+	(strcmp (glRenderer, "Software Rasterizer") == 0 ||
+	 strcmp (glRenderer, "Mesa X11") == 0))
+    {
+	compLogMessage ("opengl",
+			CompLogLevelFatal,
+			"Software rendering detected");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	setFailed ();
+	return;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_texture_non_power_of_two"))
+	GL::textureNonPowerOfTwo = true;
+
+    glGetIntegerv (GL_MAX_TEXTURE_SIZE, &GL::maxTextureSize);
+
+    if (strstr (glExtensions, "GL_NV_texture_rectangle")  ||
+	strstr (glExtensions, "GL_EXT_texture_rectangle") ||
+	strstr (glExtensions, "GL_ARB_texture_rectangle"))
+    {
+	GL::textureRectangle = true;
+
+	if (!GL::textureNonPowerOfTwo)
+	{
+	    GLint maxTextureSize;
+
+	    glGetIntegerv (GL_MAX_RECTANGLE_TEXTURE_SIZE_NV, &maxTextureSize);
+	    if (maxTextureSize > GL::maxTextureSize)
+		GL::maxTextureSize = maxTextureSize;
+	}
+    }
+
+    if (!(GL::textureRectangle || GL::textureNonPowerOfTwo))
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"Support for non power of two textures missing");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	setFailed ();
+	return;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_texture_env_combine"))
+    {
+	GL::textureEnvCombine = true;
+
+	/* XXX: GL_NV_texture_env_combine4 need special code but it seams to
+	   be working anyway for now... */
+	if (strstr (glExtensions, "GL_ARB_texture_env_crossbar") ||
+	    strstr (glExtensions, "GL_NV_texture_env_combine4"))
+	    GL::textureEnvCrossbar = true;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_texture_border_clamp") ||
+	strstr (glExtensions, "GL_SGIS_texture_border_clamp"))
+	GL::textureBorderClamp = true;
+
+    GL::maxTextureUnits = 1;
+    if (strstr (glExtensions, "GL_ARB_multitexture"))
+    {
+	GL::activeTexture = (GL::GLActiveTextureProc)
+	    getProcAddress ("glActiveTexture");
+	GL::clientActiveTexture = (GL::GLClientActiveTextureProc)
+	    getProcAddress ("glClientActiveTexture");
+	GL::multiTexCoord2f = (GL::GLMultiTexCoord2fProc)
+	    getProcAddress ("glMultiTexCoord2f");
+
+	if (GL::activeTexture && GL::clientActiveTexture && GL::multiTexCoord2f)
+	    glGetIntegerv (GL_MAX_TEXTURE_UNITS_ARB, &GL::maxTextureUnits);
+    }
+
+    if (strstr (glExtensions, "GL_ARB_fragment_program"))
+    {
+	GL::genPrograms = (GL::GLGenProgramsProc)
+	    getProcAddress ("glGenProgramsARB");
+	GL::deletePrograms = (GL::GLDeleteProgramsProc)
+	    getProcAddress ("glDeleteProgramsARB");
+	GL::bindProgram = (GL::GLBindProgramProc)
+	    getProcAddress ("glBindProgramARB");
+	GL::programString = (GL::GLProgramStringProc)
+	    getProcAddress ("glProgramStringARB");
+	GL::programEnvParameter4f = (GL::GLProgramParameter4fProc)
+	    getProcAddress ("glProgramEnvParameter4fARB");
+	GL::programLocalParameter4f = (GL::GLProgramParameter4fProc)
+	    getProcAddress ("glProgramLocalParameter4fARB");
+	GL::getProgramiv = (GL::GLGetProgramivProc)
+	    getProcAddress ("glGetProgramivARB");
+
+	if (GL::genPrograms             &&
+	    GL::deletePrograms          &&
+	    GL::bindProgram             &&
+	    GL::programString           &&
+	    GL::programEnvParameter4f   &&
+	    GL::programLocalParameter4f &&
+	    GL::getProgramiv)
+	    GL::fragmentProgram = true;
+    }
+
+    if (strstr (glExtensions, "GL_EXT_framebuffer_object"))
+    {
+	GL::genFramebuffers = (GL::GLGenFramebuffersProc)
+	    getProcAddress ("glGenFramebuffersEXT");
+	GL::deleteFramebuffers = (GL::GLDeleteFramebuffersProc)
+	    getProcAddress ("glDeleteFramebuffersEXT");
+	GL::bindFramebuffer = (GL::GLBindFramebufferProc)
+	    getProcAddress ("glBindFramebufferEXT");
+	GL::checkFramebufferStatus = (GL::GLCheckFramebufferStatusProc)
+	    getProcAddress ("glCheckFramebufferStatusEXT");
+	GL::framebufferTexture2D = (GL::GLFramebufferTexture2DProc)
+	    getProcAddress ("glFramebufferTexture2DEXT");
+	GL::generateMipmap = (GL::GLGenerateMipmapProc)
+	    getProcAddress ("glGenerateMipmapEXT");
+
+	if (GL::genFramebuffers        &&
+	    GL::deleteFramebuffers     &&
+	    GL::bindFramebuffer        &&
+	    GL::checkFramebufferStatus &&
+	    GL::framebufferTexture2D   &&
+	    GL::generateMipmap)
+	    GL::fbo = true;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_texture_compression"))
+	GL::textureCompression = true;
 
     glClearColor (0.0, 0.0, 0.0, 1.0);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -876,6 +884,10 @@ GLScreen::setLighting (bool lighting)
     }
 }
 
+void
+GLScreenInterface::glInitContext ()
+    WRAPABLE_DEF (glInitContext);
+
 bool
 GLScreenInterface::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 			          const GLMatrix            &transform,
@@ -1102,20 +1114,20 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
     glFlush ();
 
-    //
-    // FIXME: Actually fix the composite plugin to be more efficient;
-    // If GL::swapInterval == NULL && GL::waitVideoSync != NULL then the
-    // composite plugin should not be imposing any framerate restriction
-    // (ie. blocking the CPU) at all. Because the framerate will be controlled
-    // and optimized here:
-    //
+    /*
+     * FIXME: Actually fix the composite plugin to be more efficient;
+     * If GL::swapInterval == NULL && GL::waitVideoSync != NULL then the
+     * composite plugin should not be imposing any framerate restriction
+     * (ie. blocking the CPU) at all. Because the framerate will be controlled
+     * and optimized here:
+     */
     if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
     {
-	//
-	// controlSwapVideoSync is much faster than waitForVideoSync because
-	// it won't block the CPU. The waiting is offloaded to the GPU.
-	// Unfortunately it only works with glXSwapBuffers in most drivers.
-	//
+	/*
+	 * controlSwapVideoSync is much faster than waitForVideoSync because
+	 * it won't block the CPU. The waiting is offloaded to the GPU.
+	 * Unfortunately it only works with glXSwapBuffers in most drivers.
+	 */
 	GL::controlSwapVideoSync (optionGetSyncToVblank ());
 	glXSwapBuffers (screen->dpy (), cScreen->output ());
     }
@@ -1188,7 +1200,7 @@ PrivateGLScreen::prepareDrawing ()
 {
     if (pendingCommands)
     {
-	// glFlush! glFinish would block the CPU, which is bad.
+	/* glFlush! glFinish would block the CPU, which is bad. */
 	glFlush ();
 	pendingCommands = false;
     }
