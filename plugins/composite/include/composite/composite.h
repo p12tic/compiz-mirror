@@ -30,7 +30,7 @@
 
 #include <X11/extensions/Xcomposite.h>
 
-#define COMPIZ_COMPOSITE_ABI 2
+#define COMPIZ_COMPOSITE_ABI 3
 
 #include <core/pluginclasshandler.h>
 #include <core/timer.h>
