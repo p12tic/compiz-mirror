@@ -303,7 +303,7 @@ cdef extern Bool ccsStringToButtonBinding (char *                  binding,
 '''General settings handling'''
 cdef extern Bool ccsSetValue (CCSSetting * setting,
                   CCSSettingValue * value,
-		  Bool		  processChanged)
+                  Bool              processChanged)
 cdef extern void ccsFreeSettingValue (CCSSettingValue * value)
 cdef extern CCSSettingValueList * ccsSettingValueListAppend (
                                         CCSSettingValueList * l,
@@ -1180,10 +1180,12 @@ cdef class Context:
         self.profiles = {}
         self.currentProfile = Profile (self, ccsGetProfile (self.ccsContext))
         cdef CCSStringList * profileList
+        cdef CCSString     * profileNameString
         cdef char * profileName
         profileList = ccsGetExistingProfiles (self.ccsContext)
         while profileList != NULL:
-            profileName = <char *> profileList.data
+            profileNameString = <CCSString *> profileList.data
+            profileName = <char *> profileNameString.value
             self.profiles[profileName] = Profile (self, profileName)
             profileList = profileList.next
 
