@@ -266,10 +266,54 @@ ScaleWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
      * should be faded in and out */
     if (window->state () & CompWindowStateHiddenMask)
     {
+	GLfloat factor = 0;
+
 	if (priv->slot)
-	    attrib.opacity *= (1.0f - priv->scale)  / (1.0f - priv->slot->scale);
+	{
+	    GLfloat scaleFactor, xFactor, yFactor;
+
+	    /* Don't FDIV0 */
+	    if (priv->scale - priv->slot->scale == 0.0f)
+		scaleFactor = 1.0f;
+	    else
+		scaleFactor = (1.0f - priv->scale) / (1.0f - priv->slot->scale);
+
+	    if (priv->slot->x () - ((float) window->x () + priv->tx) == 0.0f)
+		xFactor = 1.0f;
+	    else
+		xFactor = priv->slot->x () / ((float) window->x () + priv->tx);
+
+	    if (priv->slot->y () - ((float) window->y () + priv->ty) == 0.0f)
+		yFactor = 1.0f;
+	    else
+		yFactor = priv->slot->y () / ((float) window->y () + priv->ty);
+
+	    factor = (scaleFactor + xFactor + yFactor) / 3.0f;
+	    attrib.opacity *= factor;
+	}
 	else
-	    attrib.opacity *= (1.0f - priv->scale) / (1.0f - priv->lastTargetScale);
+	{
+	    GLfloat scaleFactor, xFactor, yFactor;
+
+	    /* Don't FDIV0 */
+	    if (priv->scale - priv->slot->scale == 0.0f)
+		scaleFactor = 1.0f;
+	    else
+		scaleFactor = (1.0f - priv->scale) / (1.0f - priv->slot->scale);
+
+	    if (priv->lastTargetX - ((float) window->x () + priv->tx) == 0.0f)
+		xFactor = 1.0f;
+	    else
+		xFactor = priv->lastTargetX / ((float) window->x () + priv->tx);
+
+	    if (priv->lastTargetY - ((float) window->y () + priv->ty) == 0.0f)
+		yFactor = 1.0f;
+	    else
+		yFactor = priv->lastTargetY / ((float) window->y () + priv->ty);
+
+	    factor = (scaleFactor + xFactor + yFactor) / 3.0f;
+	    attrib.opacity *= factor;
+	}
     }
 
     if (priv->adjust || priv->slot)
@@ -952,11 +996,17 @@ PrivateScaleScreen::scaleTerminate (CompAction         *action,
 	    if (sw->priv->slot)
 	    {
 		sw->priv->lastTargetScale = sw->priv->slot->scale;
+		sw->priv->lastTargetX     = sw->priv->slot->x ();
+		sw->priv->lastTargetY     = sw->priv->slot->y ();
 		sw->priv->slot   = NULL;
 		sw->priv->adjust = true;
 	    }
 	    else
+	    {
 		sw->priv->lastTargetScale = 1.0f;
+		sw->priv->lastTargetX = w->x ();
+		sw->priv->lastTargetY = w->y ();
+	    }
 	}
 
 	if (state & CompAction::StateCancel)
@@ -1497,7 +1547,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		bool       focus = false;
 		CompOption *o = screen->getOption ("click_to_focus");
 
-		if (o && o->value ().b ())
+		if (o && !o->value ().b ())
 		    focus = true;
 
 		selectWindowAt (event->xmotion.x_root,
@@ -1528,7 +1578,7 @@ PrivateScaleScreen::handleEvent (XEvent *event)
 		    bool       focus = false;
 		    CompOption *o = screen->getOption ("click_to_focus");
 
-		    if (o && o->value ().b ())
+		    if (o && !o->value ().b ())
 			focus = true;
 
 		    if (w->id () == dndTarget)
@@ -1774,6 +1824,8 @@ PrivateScaleWindow::PrivateScaleWindow (CompWindow *w) :
     scaleVelocity (0.0),
     scale (1.0),
     lastTargetScale (1.0f),
+    lastTargetX (w->x ()),
+    lastTargetY (w->y ()),
     tx (0.0),
     ty (0.0),
     delta (1.0),
