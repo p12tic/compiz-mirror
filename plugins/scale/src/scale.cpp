@@ -272,13 +272,21 @@ ScaleWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
 	{
 	    GLfloat scaleFactor, xFactor, yFactor;
 
-	    if (priv->scale == priv->slot->scale)
+	    /* Don't FDIV0 */
+	    if (priv->scale - priv->slot->scale == 0.0f)
 		scaleFactor = 1.0f;
 	    else
 		scaleFactor = (1.0f - priv->scale) / (1.0f - priv->slot->scale);
 
-	    xFactor = priv->slot->x () / ((float) window->x () + priv->tx);
-	    yFactor = priv->slot->y () / ((float) window->y () + priv->ty);
+	    if (priv->slot->x () - ((float) window->x () + priv->tx) == 0.0f)
+		xFactor = 1.0f;
+	    else
+		xFactor = priv->slot->x () / ((float) window->x () + priv->tx);
+
+	    if (priv->slot->y () - ((float) window->y () + priv->ty) == 0.0f)
+		yFactor = 1.0f;
+	    else
+		yFactor = priv->slot->y () / ((float) window->y () + priv->ty);
 
 	    factor = (scaleFactor + xFactor + yFactor) / 3.0f;
 	    attrib.opacity *= factor;
@@ -287,13 +295,21 @@ ScaleWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
 	{
 	    GLfloat scaleFactor, xFactor, yFactor;
 
-	    if (priv->scale == priv->lastTargetScale)
+	    /* Don't FDIV0 */
+	    if (priv->scale - priv->slot->scale == 0.0f)
 		scaleFactor = 1.0f;
 	    else
-		scaleFactor = (1.0f - priv->scale) / (1.0f - priv->lastTargetScale);
+		scaleFactor = (1.0f - priv->scale) / (1.0f - priv->slot->scale);
 
-	    xFactor = priv->lastTargetX / ((float) window->x () + priv->tx);
-	    yFactor = priv->lastTargetY / ((float) window->y () + priv->ty);
+	    if (priv->lastTargetX - ((float) window->x () + priv->tx) == 0.0f)
+		xFactor = 1.0f;
+	    else
+		xFactor = priv->lastTargetX / ((float) window->x () + priv->tx);
+
+	    if (priv->lastTargetY - ((float) window->y () + priv->ty) == 0.0f)
+		yFactor = 1.0f;
+	    else
+		yFactor = priv->lastTargetY / ((float) window->y () + priv->ty);
 
 	    factor = (scaleFactor + xFactor + yFactor) / 3.0f;
 	    attrib.opacity *= factor;
