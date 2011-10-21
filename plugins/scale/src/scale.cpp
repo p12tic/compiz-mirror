@@ -267,53 +267,63 @@ ScaleWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
     if (window->state () & CompWindowStateHiddenMask)
     {
 	GLfloat factor = 0;
+	GLfloat targetX, targetY, targetScale;
+	GLfloat scaleFactor, xFactor, yFactor, divFactor = 3.0f;
 
 	if (priv->slot)
 	{
-	    GLfloat scaleFactor, xFactor, yFactor;
-
-	    /* Don't FDIV0 */
-	    if (priv->scale - priv->slot->scale == 0.0f)
-		scaleFactor = 1.0f;
-	    else
-		scaleFactor = (1.0f - priv->scale) / (1.0f - priv->slot->scale);
-
-	    if (priv->slot->x () - ((float) window->x () + priv->tx) == 0.0f)
-		xFactor = 1.0f;
-	    else
-		xFactor = priv->slot->x () / ((float) window->x () + priv->tx);
-
-	    if (priv->slot->y () - ((float) window->y () + priv->ty) == 0.0f)
-		yFactor = 1.0f;
-	    else
-		yFactor = priv->slot->y () / ((float) window->y () + priv->ty);
-
-	    factor = (scaleFactor + xFactor + yFactor) / 3.0f;
-	    attrib.opacity *= factor;
+	    targetX = priv->slot->x ();
+	    targetY = priv->slot->y ();
+	    targetScale = priv->slot->scale;
 	}
 	else
 	{
-	    GLfloat scaleFactor, xFactor, yFactor;
-
-	    /* Don't FDIV0 */
-	    if (priv->scale - priv->slot->scale == 0.0f)
-		scaleFactor = 1.0f;
-	    else
-		scaleFactor = (1.0f - priv->scale) / (1.0f - priv->slot->scale);
-
-	    if (priv->lastTargetX - ((float) window->x () + priv->tx) == 0.0f)
-		xFactor = 1.0f;
-	    else
-		xFactor = priv->lastTargetX / ((float) window->x () + priv->tx);
-
-	    if (priv->lastTargetY - ((float) window->y () + priv->ty) == 0.0f)
-		yFactor = 1.0f;
-	    else
-		yFactor = priv->lastTargetY / ((float) window->y () + priv->ty);
-
-	    factor = (scaleFactor + xFactor + yFactor) / 3.0f;
-	    attrib.opacity *= factor;
+	    targetX = priv->lastTargetX;
+	    targetY = priv->lastTargetY;
+	    targetScale = priv->lastTargetScale;
 	}
+
+	/* Don't FDIV0 */
+	if (targetScale - priv->scale == 0.0f)
+	{
+	    divFactor -= 1.0f;
+	    scaleFactor = 1.0f;
+	}
+	else
+	    scaleFactor = (1.0f - priv->scale) / (1.0f - targetScale);
+
+	if (targetX - ((float) window->x () + priv->tx) == 0.0f)
+	{
+	    divFactor -= 1.0f;
+	    xFactor = 1.0f;
+	}
+	else
+	{
+	    float distActual = fabsf (window->x () - ((float) window->x () + priv->tx));
+	    float distTarget = fabsf (window->x () - targetX);
+
+	    xFactor = distActual / distTarget;
+	}
+
+	if (targetY - ((float) window->y () + priv->ty) == 0.0f)
+	{
+	    divFactor -= 1.0f;
+	    yFactor = 1.0f;
+	}
+	else
+	{
+	    float distActual = fabsf (window->y () - ((float) window->y () + priv->ty));
+	    float distTarget = fabsf (window->y () - targetY);
+
+	    yFactor = distActual / distTarget;
+	}
+
+	if (divFactor)
+	    factor = (scaleFactor + xFactor + yFactor) / divFactor;
+	else
+	    factor = 1.0f;
+
+	attrib.opacity *= factor;
     }
 
     if (priv->adjust || priv->slot)
