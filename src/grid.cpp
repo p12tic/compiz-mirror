@@ -1018,7 +1018,7 @@ GridScreen::GridScreen (CompScreen *screen) :
     gridProps[GridRight]  = GridProps {1,0, 2,1};
     gridProps[GridTopLeft]  = GridProps{0,0, 2,2};
     gridProps[GridTop]  = GridProps {0,0, 1,2};
-    gridProps[GridTopRight]  = GridProps {0,0, 1,2};
+    gridProps[GridTopRight]  = GridProps {1,0, 2,2};
     gridProps[GridMaximize]  = GridProps {0,0, 1,1};
 
 	animations.clear ();
