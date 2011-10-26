@@ -3427,7 +3427,7 @@ ccsCheckForSettingsUpgrade (CCSContext *context)
 {
     struct dirent 	   **nameList;
     int 	  	   nFile, i;
-    char	  	   *path = SYSCONFDIR "/compizconfig/upgrades/";
+    char	  	   *path = DATADIR "/compizconfig/upgrades/";
     char		   *dupath = NULL;
     FILE		   *completedUpgrades;
     char		   *cuBuffer;

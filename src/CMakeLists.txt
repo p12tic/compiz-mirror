@@ -24,6 +24,7 @@ add_definitions (
     -DIMAGEDIR=\\\"${COMPIZ_IMAGEDIR}\\\"
     -DMETADATADIR=\\\"${COMPIZ_METADATADIR}\\\"
     -DSYSCONFDIR=\\\"${COMPIZ_SYSCONFDIR}\\\"
+    -DDATADIR=\\\"${COMPIZ_DATADIR}\\\"
     -DLIBDIR=\\\"${COMPIZ_LIBDIR}\\\"
 )
 
