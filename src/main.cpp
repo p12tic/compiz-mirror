@@ -234,8 +234,17 @@ CompManager::init ()
 								   screen->priv)));
     }
 
-    if (!disableSm)
-	CompSession::init (clientId);
+     if (!disableSm)
+     {
+	if (clientId == NULL)
+	{
+	    char *desktop_autostart_id = getenv ("DESKTOP_AUTOSTART_ID");
+	    if (desktop_autostart_id != NULL)
+		clientId = strdup (desktop_autostart_id);
+	    unsetenv ("DESKTOP_AUTOSTART_ID");
+ 	}
+ 	CompSession::init (clientId);
+     }
 
     return true;
 }
