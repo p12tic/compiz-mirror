@@ -83,7 +83,7 @@ struct _pos pos[3][3] = {
 };
 
 #define WINDOW_TYPE_FRAMES_NUM 5
-struct _default_frame_references default_frames[WINDOW_TYPE_FRAMES_NUM  * 2] = {
+default_frame_references_t default_frames[WINDOW_TYPE_FRAMES_NUM  * 2] = {
     /* active */
     {"normal", NULL },
     {"dialog", NULL },
@@ -164,14 +164,22 @@ main (int argc, char *argv[])
     settings->blur_type = BLUR_TYPE_NONE;
     settings->use_system_font = FALSE;
 
-    settings->shadow_radius   = SHADOW_RADIUS;
-    settings->shadow_opacity  = SHADOW_OPACITY;
-    settings->shadow_color[0] = SHADOW_COLOR_RED;
-    settings->shadow_color[1] = SHADOW_COLOR_GREEN;
-    settings->shadow_color[2] = SHADOW_COLOR_BLUE;
-    settings->shadow_offset_x = SHADOW_OFFSET_X;
-    settings->shadow_offset_y = SHADOW_OFFSET_Y;
+    settings->active_shadow_radius   = SHADOW_RADIUS;
+    settings->active_shadow_opacity  = SHADOW_OPACITY;
+    settings->active_shadow_color[0] = SHADOW_COLOR_RED;
+    settings->active_shadow_color[1] = SHADOW_COLOR_GREEN;
+    settings->active_shadow_color[2] = SHADOW_COLOR_BLUE;
+    settings->active_shadow_offset_x = SHADOW_OFFSET_X;
+    settings->active_shadow_offset_y = SHADOW_OFFSET_Y;
+    settings->inactive_shadow_radius   = SHADOW_RADIUS;
+    settings->inactive_shadow_opacity  = SHADOW_OPACITY;
+    settings->inactive_shadow_color[0] = SHADOW_COLOR_RED;
+    settings->inactive_shadow_color[1] = SHADOW_COLOR_GREEN;
+    settings->inactive_shadow_color[2] = SHADOW_COLOR_BLUE;
+    settings->inactive_shadow_offset_x = SHADOW_OFFSET_X;
+    settings->inactive_shadow_offset_y = SHADOW_OFFSET_Y;
     settings->decoration_alpha = 0.5;
+    settings->use_tooltips = TRUE;
 
 #ifdef USE_METACITY
 
@@ -184,6 +192,9 @@ main (int argc, char *argv[])
 #endif
 
     settings->font = strdup ("Sans Bold 12");
+
+    settings->mutter_draggable_border_width = 10;
+    settings->mutter_attach_modal_dialogs = FALSE;
 
     for (i = 0; i < argc; i++)
     {
@@ -338,6 +349,7 @@ main (int argc, char *argv[])
     theme_get_event_window_position = get_event_window_position;
     theme_get_button_position       = get_button_position;
     theme_get_title_scale	    = get_title_scale;
+    theme_get_shadow                = cairo_get_shadow;
 
 #ifdef USE_METACITY
     if (meta_theme)
@@ -360,6 +372,7 @@ main (int argc, char *argv[])
 	theme_get_event_window_position = meta_get_event_window_position;
 	theme_get_button_position	    = meta_get_button_position;
 	theme_get_title_scale	    = meta_get_title_scale;
+	theme_get_shadow            = meta_get_shadow;
     }
 #endif
 

@@ -3876,8 +3876,8 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	{
 	    saveGeometry (CWY | CWHeight);
 
-	    xwc->height = workArea.height () - serverInput.top -
-			  serverInput.bottom - old.border () * 2;
+	    xwc->height = workArea.height () - border.top -
+			  border.bottom - old.border () * 2;
 
 	    mask |= CWHeight;
 	}
@@ -3890,8 +3890,8 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 	{
 	    saveGeometry (CWX | CWWidth);
 
-	    xwc->width = workArea.width () - serverInput.left -
-			 serverInput.right - old.border () * 2;
+	    xwc->width = workArea.width () - border.left -
+			 border.right - old.border () * 2;
 
 	    mask |= CWWidth;
 	}
@@ -3962,7 +3962,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 		 * by the gravity value (so that the corner that the gravity specifies
 		 * is 'anchored' to that edge of the workarea) */
 
-		xwc->y = y + workArea.y () + serverInput.top;
+		xwc->y = y + workArea.y () + border.top;
 		mask |= CWY;
 
 		switch (priv->sizeHints.win_gravity)
@@ -3974,9 +3974,9 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 			height = xwc->height + old.border () * 2;
 
 			max = y + workArea.bottom ();
-			if (xwc->y + xwc->height + serverInput.bottom > max)
+			if (xwc->y + xwc->height + border.bottom > max)
 			{
-			    xwc->y = max - height - serverInput.bottom;
+			    xwc->y = max - height - border.bottom;
 			    mask |= CWY;
 			}
 			break;
@@ -3999,7 +3999,7 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 	    if (state & CompWindowStateMaximizedHorzMask)
 	    {
-		xwc->x = x + workArea.x () + serverInput.left;
+		xwc->x = x + workArea.x () + border.left;
 		mask |= CWX;
 
 		switch (priv->sizeHints.win_gravity)
@@ -4011,16 +4011,16 @@ PrivateWindow::addWindowSizeChanges (XWindowChanges       *xwc,
 
 			max = x + workArea.right ();
 
-			if (old.x () + (int) old.width () + serverInput.right > max)
+			if (old.x () + (int) old.width () + border.right > max)
 			{
-			    xwc->x = max - width - serverInput.right;
+			    xwc->x = max - width - border.right;
 			    mask |= CWX;
 			}
-			else if (old.x () + width + serverInput.right > max)
+			else if (old.x () + width + border.right > max)
 			{
 			    xwc->x = x + workArea.x () +
-				     (workArea.width () - serverInput.left - width -
-				      serverInput.right) / 2 + serverInput.left;
+				     (workArea.width () - border.left - width -
+				      border.right) / 2 + border.left;
 			    mask |= CWX;
 			}
 		    /* For NorthGravity, SouthGravity and CenterGravity we default to the top
@@ -4110,15 +4110,15 @@ PrivateWindow::adjustConfigureRequestForGravity (XWindowChanges *xwc,
 	case NorthGravity:
 	case NorthEastGravity:
 	    if (xwcm & CWY)
-		newY = xwc->y + priv->serverInput.top * direction;
+		newY = xwc->y + priv->border.top * direction;
 	    break;
 
 	case WestGravity:
 	case CenterGravity:
 	case EastGravity:
 	    if (xwcm & CWY)
-		newY -= (xwc->height / 2 - priv->serverInput.top +
-			(priv->serverInput.top + priv->serverInput.bottom) / 2) * direction;
+		newY -= (xwc->height / 2 - priv->border.top +
+			(priv->border.top + priv->border.bottom) / 2) * direction;
 	    else
 		newY -= ((xwc->height - priv->serverGeometry.height ()) / 2) * direction;
 	    break;
@@ -4127,7 +4127,7 @@ PrivateWindow::adjustConfigureRequestForGravity (XWindowChanges *xwc,
 	case SouthGravity:
 	case SouthEastGravity:
 	    if (xwcm & CWY)
-		newY -= xwc->height + priv->serverInput.bottom * direction;
+		newY -= xwc->height + priv->border.bottom * direction;
 	    else
 		newY -= (xwc->height - priv->serverGeometry.height ()) * direction;
 	    break;

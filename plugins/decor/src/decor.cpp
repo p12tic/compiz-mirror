@@ -1709,7 +1709,7 @@ DecorWindow::updateInputFrame ()
 	parent = window->frame ();
 
     /* Determine frame extents */
-    if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
+    if ((window->state () & MAXIMIZE_STATE))
     {
 	border = wd->decor->maxBorder;
 	input = wd->decor->maxInput;
@@ -1866,7 +1866,7 @@ DecorWindow::updateOutputFrame ()
     CompWindowExtents	 input;
 
     /* Determine frame extents */
-    if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
+    if ((window->state () & MAXIMIZE_STATE))
 	input = wd->decor->maxInput;
     else
 	input = wd->decor->input;
@@ -2576,41 +2576,51 @@ DecorWindow::getOutputExtents (CompWindowExtents& output)
 void
 DecorScreen::updateDefaultShadowProperty ()
 {
-    long data[4];
-    CompOption *colorOption = CompOption::findOption (getOptions (), "shadow_color");
-    char *colorString;
+    long data[8];
+    CompOption *activeColorOption = CompOption::findOption (getOptions (), "active_shadow_color");
+    CompOption *inactiveColorOption = CompOption::findOption (getOptions (), "inactive_shadow_color");
+    char *colorString[2];
     XTextProperty xtp;
 
-    if (!colorOption)
+    if (!activeColorOption || !inactiveColorOption)
 	return;
 
-    colorString = strdup (CompOption::colorToString (colorOption->value ().c ()).c_str ());
+    colorString[0] = strdup (CompOption::colorToString (activeColorOption->value ().c ()).c_str ());
+    colorString[1] = strdup (CompOption::colorToString (inactiveColorOption->value ().c ()).c_str ());
 
-    /* 1) Shadow Radius
-     * 2) Shadow Opacity
-     * 3) Shadow Offset X
-     * 4) Shadow Offset Y
+    /* 1) Active Shadow Radius
+     * 2) Active Shadow Opacity
+     * 3) Active Shadow Offset X
+     * 4) Active Shadow Offset Y
+     * 5) Inactive Shadow Radius
+     * 6) Inactive Shadow Opacity
+     * 7) Inactive Shadow Offset X
+     * 8) Inactive Shadow Offset Y
      */
 
     /* the precision is 0.0001, so multiply by 1000 */
-    data[0] = optionGetShadowRadius () * 1000;
-    data[1] = optionGetShadowOpacity () * 1000;
-    data[2] = optionGetShadowXOffset ();
-    data[3] = optionGetShadowYOffset ();
+    data[0] = optionGetActiveShadowRadius () * 1000;
+    data[1] = optionGetActiveShadowOpacity () * 1000;
+    data[2] = optionGetActiveShadowXOffset ();
+    data[3] = optionGetActiveShadowYOffset ();
+    data[4] = optionGetInactiveShadowRadius () * 1000;
+    data[5] = optionGetInactiveShadowOpacity () * 1000;
+    data[6] = optionGetInactiveShadowXOffset ();
+    data[7] = optionGetInactiveShadowYOffset ();
+
 
     XChangeProperty (screen->dpy (), screen->root (),
 		      shadowInfoAtom, XA_INTEGER, 32,
-		      PropModeReplace, (unsigned char *) data, 4);
+		      PropModeReplace, (unsigned char *) data, 8);
 
-    if (XStringListToTextProperty (&colorString, 1, &xtp))
+    if (XStringListToTextProperty (colorString, 2, &xtp))
     {
 	XSetTextProperty (screen->dpy (), screen->root (), &xtp, shadowColorAtom);
 	XFree (xtp.value);
     }
 
-    free (colorString);
-
-
+    free (colorString[0]);
+    free (colorString[1]);
 }
 
 bool
@@ -2657,11 +2667,16 @@ DecorScreen::setOption (const CompString  &name,
 	    foreach (CompWindow *w, screen->windows ())
 		DecorWindow::get (w)->update (true);
 	    break;
-	case DecorOptions::ShadowRadius:
-	case DecorOptions::ShadowOpacity:
-	case DecorOptions::ShadowColor:
-	case DecorOptions::ShadowXOffset:
-	case DecorOptions::ShadowYOffset:
+	case DecorOptions::ActiveShadowRadius:
+	case DecorOptions::ActiveShadowOpacity:
+	case DecorOptions::ActiveShadowColor:
+	case DecorOptions::ActiveShadowXOffset:
+	case DecorOptions::ActiveShadowYOffset:
+	case DecorOptions::InactiveShadowRadius:
+	case DecorOptions::InactiveShadowOpacity:
+	case DecorOptions::InactiveShadowColor:
+	case DecorOptions::InactiveShadowXOffset:
+	case DecorOptions::InactiveShadowYOffset:
 	    updateDefaultShadowProperty ();
 	    break;
 	default:
@@ -2780,37 +2795,34 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 void
 DecorWindow::stateChangeNotify (unsigned int lastState)
 {
-    if (!update (true))
+    if (wd && wd->decor)
     {
-	if (wd && wd->decor)
-	{
-	    int oldShiftX = shiftX ();
-	    int oldShiftY = shiftY ();
-	    int moveDx, moveDy;
+	int oldShiftX = shiftX ();
+	int oldShiftY = shiftY ();
+	int moveDx, moveDy;
 
-	    if ((window->state () & MAXIMIZE_STATE) == MAXIMIZE_STATE)
-		window->setWindowFrameExtents (&wd->decor->maxBorder,
-					       &wd->decor->maxInput);
-	    else
-		window->setWindowFrameExtents (&wd->decor->border,
-					       &wd->decor->input);
+	if ((window->state () & MAXIMIZE_STATE))
+	    window->setWindowFrameExtents (&wd->decor->maxBorder,
+					   &wd->decor->maxInput);
+	else
+	    window->setWindowFrameExtents (&wd->decor->border,
+					   &wd->decor->input);
 
-	    /* Since we immediately update the frame extents, we must
-	     * also update the stored saved window geometry in order
-	     * to prevent the window from shifting back too far once
-	     * unmaximized */
+	/* Since we immediately update the frame extents, we must
+	 * also update the stored saved window geometry in order
+	 * to prevent the window from shifting back too far once
+	 * unmaximized */
 
-	    moveDx = shiftX () - oldShiftX;
-	    moveDy = shiftY () - oldShiftY;
+	moveDx = shiftX () - oldShiftX;
+	moveDy = shiftY () - oldShiftY;
 
-	    if (window->saveMask () & CWX)
-		window->saveWc ().x += moveDx;
+	if (window->saveMask () & CWX)
+	    window->saveWc ().x += moveDx;
 
-	    if (window->saveMask () & CWY)
-		window->saveWc ().y += moveDy;
+	if (window->saveMask () & CWY)
+	    window->saveWc ().y += moveDy;
 
-	    updateFrame ();
-	}
+	updateFrame ();
     }
 
     window->stateChangeNotify (lastState);

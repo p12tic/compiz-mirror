@@ -61,7 +61,8 @@ KWD::PluginManager *KWD::Decorator::mPlugins = 0;
 KWD::Options *KWD::Decorator::mOptions = 0;
 NETRootInfo *KWD::Decorator::mRootInfo;
 WId KWD::Decorator::mActiveId;
-decor_shadow_options_t KWD::Decorator::mShadowOptions;
+decor_shadow_options_t KWD::Decorator::mActiveShadowOptions;
+decor_shadow_options_t KWD::Decorator::mInactiveShadowOptions;
 
 KWD::Window *KWD::Decorator::mDecorNormal = NULL;
 KWD::Window *KWD::Decorator::mDecorActive = NULL;
@@ -111,13 +112,21 @@ KWD::Decorator::Decorator () :
     mOptions = new KWD::Options (mConfig);
     mPlugins = new PluginManager (KSharedConfig::openConfig ("kwinrc"));
 
-    mShadowOptions.shadow_radius   = SHADOW_RADIUS;
-    mShadowOptions.shadow_opacity  = SHADOW_OPACITY;
-    mShadowOptions.shadow_offset_x = SHADOW_OFFSET_X;
-    mShadowOptions.shadow_offset_y = SHADOW_OFFSET_Y;
-    mShadowOptions.shadow_color[0] = SHADOW_COLOR_RED;
-    mShadowOptions.shadow_color[1] = SHADOW_COLOR_GREEN;
-    mShadowOptions.shadow_color[2] = SHADOW_COLOR_BLUE;
+    mActiveShadowOptions.shadow_radius   = SHADOW_RADIUS;
+    mActiveShadowOptions.shadow_opacity  = SHADOW_OPACITY;
+    mActiveShadowOptions.shadow_offset_x = SHADOW_OFFSET_X;
+    mActiveShadowOptions.shadow_offset_y = SHADOW_OFFSET_Y;
+    mActiveShadowOptions.shadow_color[0] = SHADOW_COLOR_RED;
+    mActiveShadowOptions.shadow_color[1] = SHADOW_COLOR_GREEN;
+    mActiveShadowOptions.shadow_color[2] = SHADOW_COLOR_BLUE;
+
+    mInactiveShadowOptions.shadow_radius   = SHADOW_RADIUS;
+    mInactiveShadowOptions.shadow_opacity  = SHADOW_OPACITY;
+    mInactiveShadowOptions.shadow_offset_x = SHADOW_OFFSET_X;
+    mInactiveShadowOptions.shadow_offset_y = SHADOW_OFFSET_Y;
+    mInactiveShadowOptions.shadow_color[0] = SHADOW_COLOR_RED;
+    mInactiveShadowOptions.shadow_color[1] = SHADOW_COLOR_GREEN;
+    mInactiveShadowOptions.shadow_color[2] = SHADOW_COLOR_BLUE;
 
     updateShadowProperties (QX11Info::appRootWindow ());
 
@@ -259,16 +268,24 @@ KWD::Decorator::updateAllShadowOptions (void)
 }
 
 void
-KWD::Decorator::changeShadowOptions (decor_shadow_options_t *opt)
+KWD::Decorator::changeShadowOptions (decor_shadow_options_t *aopt, decor_shadow_options_t *iopt)
 {
-    QMap <WId, KWD::Window *>::ConstIterator it;
+    bool changed = false;
 
-    if (!memcmp (opt, &mShadowOptions, sizeof (decor_shadow_options_t)))
-	return;
+    if (memcmp (aopt, &mActiveShadowOptions, sizeof (decor_shadow_options_t)))
+    {
+	mActiveShadowOptions = *aopt;
+	changed = true;
+    }
 
-    mShadowOptions = *opt;
+    if (memcmp (aopt, &mInactiveShadowOptions, sizeof (decor_shadow_options_t)))
+    {
+	mInactiveShadowOptions = *iopt;
+	changed = true;
+    }
 
-    updateShadow ();
+    if (changed)
+	updateShadow ();
 }
 
 void
@@ -291,7 +308,7 @@ KWD::Decorator::updateShadow (void)
 					   0,
 					   0,
 					   0, 0, 0, 0,
-					   &mShadowOptions,
+					   &mActiveShadowOptions,
 					   &context,
 					   decor_draw_simple,
 					   0);
@@ -331,8 +348,10 @@ KWD::Decorator::updateShadowProperties (WId id)
 {
     int nItems;
     long *data;
-    double radius, opacity;
-    int    xOffset, yOffset;
+    double aradius, aopacity;
+    int    axOffset, ayOffset;
+    double iradius, iopacity;
+    int    ixOffset, iyOffset;
     QVector<QString> shadowColor;
 
     if (id != QX11Info::appRootWindow ())
@@ -348,27 +367,40 @@ KWD::Decorator::updateShadowProperties (WId id)
 
     data = reinterpret_cast <long *> (propData);
 
-    radius = data[0];
-    opacity = data[1];
+    aradius = data[0];
+    aopacity = data[1];
 
     /* We multiplied by 1000 in compiz to keep
       * precision, now divide by that much */
 
-    radius /= 1000;
-    opacity /= 1000;
+    aradius /= 1000;
+    aopacity /= 1000;
 
-    xOffset = data[2];
-    yOffset = data[3];
+    axOffset = data[2];
+    ayOffset = data[3];
 
-    shadowRadiusChanged (radius);
-    shadowOpacityChanged (opacity);
-    shadowXOffsetChanged (xOffset);
-    shadowYOffsetChanged (yOffset);
+    iradius = data[4];
+    iopacity = data[5];
+
+    /* We multiplied by 1000 in compiz to keep
+     * precision, now divide by that much */
+
+    iradius /= 1000;
+    iopacity /= 1000;
+
+    ixOffset = data[6];
+    iyOffset = data[7];
+
+
+    shadowRadiusChanged (aradius, iradius);
+    shadowOpacityChanged (aopacity, iopacity);
+    shadowXOffsetChanged (axOffset, ixOffset);
+    shadowYOffsetChanged (ayOffset, iyOffset);
 
     shadowColor = KWD::readPropertyString (id, Atoms::compizShadowColor);
 
-    if (shadowColor.size () == 1)
-	shadowColorChanged (shadowColor.at (0));
+    if (shadowColor.size () == 2)
+	shadowColorChanged (shadowColor.at (0), shadowColor.at (1));
 
     XFree (propData);
 }
@@ -879,61 +911,78 @@ KWD::Decorator::sendClientMessage (WId  eventWid,
 }
 
 void
-KWD::Decorator::shadowRadiusChanged (double value)
+KWD::Decorator::shadowRadiusChanged (double value_active, double value_inactive)
 {
-    decor_shadow_options_t opt = *shadowOptions ();
+    decor_shadow_options_t aopt = *activeShadowOptions ();
+    decor_shadow_options_t iopt = *inactiveShadowOptions ();
 
-    opt.shadow_radius = value;
+    aopt.shadow_radius = value_active;
+    iopt.shadow_radius = value_inactive;
 
-    changeShadowOptions (&opt);
+    changeShadowOptions (&aopt, &iopt);
 }
 
 void
-KWD::Decorator::shadowOpacityChanged (double value)
+KWD::Decorator::shadowOpacityChanged (double value_active, double value_inactive)
 {
-    decor_shadow_options_t opt = *shadowOptions ();
+    decor_shadow_options_t aopt = *activeShadowOptions ();
+    decor_shadow_options_t iopt = *inactiveShadowOptions ();
 
-    opt.shadow_opacity = value;
+    aopt.shadow_opacity = value_active;
+    iopt.shadow_opacity = value_inactive;
 
-    changeShadowOptions (&opt);
+    changeShadowOptions (&aopt, &iopt);
 }
 
 void
-KWD::Decorator::shadowXOffsetChanged (int value)
+KWD::Decorator::shadowXOffsetChanged (int value_active, int value_inactive)
 {
-    decor_shadow_options_t opt = *shadowOptions ();
+    decor_shadow_options_t aopt = *activeShadowOptions ();
+    decor_shadow_options_t iopt = *inactiveShadowOptions ();
 
-    opt.shadow_offset_x = value;
+    aopt.shadow_offset_x = value_active;
+    iopt.shadow_offset_x = value_inactive;
 
-    changeShadowOptions (&opt);
+    changeShadowOptions (&aopt, &iopt);
 }
 
 void
-KWD::Decorator::shadowYOffsetChanged (int value)
+KWD::Decorator::shadowYOffsetChanged (int value_active, double value_inactive)
 {
-    decor_shadow_options_t opt = *shadowOptions ();
+    decor_shadow_options_t aopt = *activeShadowOptions ();
+    decor_shadow_options_t iopt = *inactiveShadowOptions ();
 
-    opt.shadow_offset_y = value;
+    aopt.shadow_offset_y = value_active;
+    iopt.shadow_offset_y = value_inactive;
 
-    changeShadowOptions (&opt);
+    changeShadowOptions (&aopt, &iopt);
 }
 
 void
-KWD::Decorator::shadowColorChanged (QString value)
+KWD::Decorator::shadowColorChanged (QString value_active, QString value_inactive)
 {
-    decor_shadow_options_t opt = *shadowOptions ();
+    decor_shadow_options_t aopt = *activeShadowOptions ();
+    decor_shadow_options_t iopt = *inactiveShadowOptions ();
 
     int c[4];
 
-    if (sscanf (value.toAscii ().data (), "#%2x%2x%2x%2x",
+    if (sscanf (value_active.toAscii ().data (), "#%2x%2x%2x%2x",
 	        &c[0], &c[1], &c[2], &c[3]) == 4)
     {
-	opt.shadow_color[0] = c[0] << 8 | c[0];
-	opt.shadow_color[1] = c[1] << 8 | c[1];
-	opt.shadow_color[2] = c[2] << 8 | c[2];
+	aopt.shadow_color[0] = c[0] << 8 | c[0];
+	aopt.shadow_color[1] = c[1] << 8 | c[1];
+	aopt.shadow_color[2] = c[2] << 8 | c[2];
     }
 
-    changeShadowOptions (&opt);
+    if (sscanf (value_inactive.toAscii ().data (), "#%2x%2x%2x%2x",
+		&c[0], &c[1], &c[2], &c[3]) == 4)
+    {
+	iopt.shadow_color[0] = c[0] << 8 | c[0];
+	iopt.shadow_color[1] = c[1] << 8 | c[1];
+	iopt.shadow_color[2] = c[2] << 8 | c[2];
+    }
+
+    changeShadowOptions (&aopt, &iopt);
 }
 
 void

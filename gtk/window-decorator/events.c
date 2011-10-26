@@ -86,7 +86,8 @@ common_button_event (WnckWindow *win,
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     guint   state = d->button_states[button];
 
-    handle_tooltip_event (win, gtkwd_event, gtkwd_type, state, tooltip);
+    if (settings->use_tooltips)
+	handle_tooltip_event (win, gtkwd_event, gtkwd_type, state, tooltip);
 
     if (d->frame_window && gtkwd_type == GEnterNotify)
     {
@@ -164,7 +165,18 @@ max_button_event (WnckWindow *win,
 	{
 	    if (state == BUTTON_EVENT_ACTION_STATE)
 	    {
-		if (gtkwd_event->button == 2)
+		if (gtkwd_event->button == 1)
+		{
+		    if (wnck_window_is_maximized (win))
+			wnck_window_unmaximize (win);
+		    else if (wnck_window_is_maximized_vertically (win))
+			wnck_window_unmaximize_vertically (win);
+		    else if (wnck_window_is_maximized_horizontally (win))
+			wnck_window_unmaximize_horizontally (win);
+		    else
+			wnck_window_maximize (win);
+		}
+		else if (gtkwd_event->button == 2)
 		{
 		    if (wnck_window_is_maximized_vertically (win))
 			wnck_window_unmaximize_vertically (win);
@@ -177,13 +189,6 @@ max_button_event (WnckWindow *win,
 			wnck_window_unmaximize_horizontally (win);
 		    else
 			wnck_window_maximize_horizontally (win);
-		}
-		else
-		{
-		    if (wnck_window_is_maximized (win))
-			wnck_window_unmaximize (win);
-		    else
-			wnck_window_maximize (win);
 		}
 	    }
 	}

@@ -60,9 +60,11 @@ create_normal_frame (const gchar *type)
     frame->win_extents = _win_extents;
     frame->max_win_extents = _max_win_extents;
     frame->update_shadow = decor_frame_update_shadow;
-    frame->window_context = _window_context;
+    frame->window_context_active = _window_context;
+    frame->window_context_inactive = _window_context;
     frame->window_context_no_shadow = _window_context_no_shadow;
-    frame->max_window_context = _max_window_context;
+    frame->max_window_context_active = _max_window_context;
+    frame->max_window_context_inactive = _max_window_context;
     frame->max_window_context_no_shadow = _max_window_context_no_shadow;
 
     return frame;
@@ -89,9 +91,11 @@ create_bare_frame (const gchar *type)
     frame->win_extents = _shadow_extents;
     frame->max_win_extents = _shadow_extents;
     frame->win_extents = _shadow_extents;
-    frame->window_context = _shadow_context;
+    frame->window_context_active = _shadow_context;
+    frame->window_context_inactive = _shadow_context;
     frame->window_context_no_shadow = _shadow_context;
-    frame->max_window_context = _shadow_context;
+    frame->max_window_context_active = _shadow_context;
+    frame->max_window_context_inactive = _shadow_context;
     frame->max_window_context_no_shadow = _shadow_context;
     frame->update_shadow = bare_frame_update_shadow;
 
@@ -696,7 +700,20 @@ draw_border_shape (Display	   *xdisplay,
 
     memset (&d, 0, sizeof (d));
 
-    d.frame = info->frame;
+    if (info)
+    {
+	gwd_decor_frame_ref (info->frame);
+
+	d.frame = info->frame;
+	d.state = info->state;
+	d.actions = info->active;
+    }
+    else
+    {
+	d.frame = gwd_get_decor_frame ("normal");
+	d.state = 0;
+	d.active = TRUE;
+    }
 
     d.pixmap  = gdk_pixmap_foreign_new_for_display (gdk_display_get_default (),
 						    pixmap);
@@ -759,19 +776,23 @@ draw_border_shape (Display	   *xdisplay,
  */
 void
 bare_frame_update_shadow (Display		  *xdisplay,
-			  Screen		  *screen,
-			  decor_frame_t		 *frame,
-			  decor_shadow_info_t    *info,
-			  decor_shadow_options_t *opt_shadow,
-			  decor_shadow_options_t *opt_no_shadow)
+			   Screen		  *screen,
+			   decor_frame_t	  *frame,
+			   decor_shadow_t	  **shadow_normal,
+			   decor_context_t	  *context_normal,
+			   decor_shadow_t	  **shadow_max,
+			   decor_context_t	  *context_max,
+			   decor_shadow_info_t    *info,
+			   decor_shadow_options_t *opt_shadow,
+			   decor_shadow_options_t *opt_no_shadow)
 {
-    if (frame->border_shadow)
+    if (frame->border_shadow_active)
     {
-	decor_shadow_destroy (xdisplay, frame->border_shadow);
-	frame->border_shadow = NULL;
+	decor_shadow_destroy (xdisplay, frame->border_shadow_active);
+	frame->border_shadow_active = NULL;
     }
 
-    frame->border_shadow = decor_shadow_create (xdisplay,
+    frame->border_shadow_active = decor_shadow_create (xdisplay,
 					    screen,
 					    1, 1,
 					    0,
@@ -780,7 +801,7 @@ bare_frame_update_shadow (Display		  *xdisplay,
 					    0,
 					    0, 0, 0, 0,
 					    opt_shadow,
-					    &frame->window_context,
+					    &frame->window_context_active,
 					    decor_draw_simple,
 					    NULL);
 }
@@ -789,17 +810,21 @@ void
 switcher_frame_update_shadow (Display		  *xdisplay,
 			      Screen		  *screen,
 			      decor_frame_t	  *frame,
+			      decor_shadow_t	  **shadow_normal,
+			      decor_context_t	  *context_normal,
+			      decor_shadow_t	  **shadow_max,
+			      decor_context_t	  *context_max,
 			      decor_shadow_info_t    *info,
 			      decor_shadow_options_t *opt_shadow,
 			      decor_shadow_options_t *opt_no_shadow)
 {
-    if (frame->border_shadow)
+    if (frame->border_shadow_active)
     {
-	decor_shadow_destroy (xdisplay, frame->border_shadow);
-	frame->border_shadow = NULL;
+	decor_shadow_destroy (xdisplay, frame->border_shadow_active);
+	frame->border_shadow_active = NULL;
     }
 
-    frame->border_shadow = decor_shadow_create (xdisplay,
+    frame->border_shadow_active = decor_shadow_create (xdisplay,
 						screen,
 						1, 1,
 						frame->win_extents.left,
@@ -815,7 +840,7 @@ switcher_frame_update_shadow (Display		  *xdisplay,
 						frame->win_extents.bottom -
 						TRANSLUCENT_CORNER_SIZE,
 						opt_shadow,
-						&frame->window_context,
+						&frame->window_context_active,
 						decor_draw_simple,
 						NULL);
 }
@@ -824,17 +849,21 @@ void
 decor_frame_update_shadow (Display		  *xdisplay,
 			   Screen		  *screen,
 			   decor_frame_t	  *frame,
+			   decor_shadow_t	  **shadow_normal,
+			   decor_context_t	  *context_normal,
+			   decor_shadow_t	  **shadow_max,
+			   decor_context_t	  *context_max,
 			   decor_shadow_info_t    *info,
 			   decor_shadow_options_t *opt_shadow,
 			   decor_shadow_options_t *opt_no_shadow)
 {
-    if (frame->border_shadow)
+    if (*shadow_normal)
     {
-	decor_shadow_destroy (xdisplay, frame->border_shadow);
-	frame->border_shadow = NULL;
+	decor_shadow_destroy (xdisplay, *shadow_normal);
+	*shadow_normal = NULL;
     }
 
-    frame->border_shadow = decor_shadow_create (xdisplay,
+    *shadow_normal = decor_shadow_create (xdisplay,
 						 screen,
 						 1, 1,
 						 frame->win_extents.left,
@@ -850,46 +879,21 @@ decor_frame_update_shadow (Display		  *xdisplay,
 						 frame->win_extents.bottom -
 						 TRANSLUCENT_CORNER_SIZE,
 						 opt_shadow,
-						 &frame->window_context,
+						 context_normal,
 						 draw_border_shape,
 						 (void *) info);
-    if (frame->border_no_shadow)
-    {
-	decor_shadow_destroy (xdisplay, frame->border_no_shadow);
-	frame->border_no_shadow = NULL;
-    }
-
-    frame->border_no_shadow = decor_shadow_create (xdisplay,
-					 screen,
-					 1, 1,
-					 frame->win_extents.left,
-					 frame->win_extents.right,
-					 frame->win_extents.top + frame->titlebar_height,
-					 frame->win_extents.bottom,
-					 frame->win_extents.left -
-					 TRANSLUCENT_CORNER_SIZE,
-					 frame->win_extents.right -
-					 TRANSLUCENT_CORNER_SIZE,
-					 frame->win_extents.top + frame->titlebar_height -
-					 TRANSLUCENT_CORNER_SIZE,
-					 frame->win_extents.bottom -
-					 TRANSLUCENT_CORNER_SIZE,
-					 opt_no_shadow,
-					 &frame->window_context_no_shadow,
-					 draw_border_shape,
-					 0);
 
     /* Maximized border shadow pixmap mode */
-    if (frame->max_border_shadow)
+    if (*shadow_max)
     {
-	decor_shadow_destroy (xdisplay, frame->max_border_shadow);
-	frame->max_border_shadow = NULL;
+	decor_shadow_destroy (xdisplay, *shadow_max);
+	*shadow_max = NULL;
     }
 
     info->state = (WNCK_WINDOW_STATE_MAXIMIZED_HORIZONTALLY |
 		   WNCK_WINDOW_STATE_MAXIMIZED_VERTICALLY);
 
-    frame->max_border_shadow =
+    *shadow_max =
 	decor_shadow_create (xdisplay,
 			     screen,
 			     1, 1,
@@ -903,54 +907,48 @@ decor_frame_update_shadow (Display		  *xdisplay,
 			     TRANSLUCENT_CORNER_SIZE,
 			     frame->max_win_extents.bottom - TRANSLUCENT_CORNER_SIZE,
 			     opt_shadow,
-			     &frame->max_window_context,
+			     context_max,
 			     draw_border_shape,
 			     (void *) info);
 
-    /* Enforced maximize zero shadow reparenting mode */
-    if (frame->max_border_no_shadow)
-    {
-	decor_shadow_destroy (xdisplay, frame->max_border_shadow);
-	frame->max_border_shadow = NULL;
-    }
-
-    frame->max_border_no_shadow =
-	decor_shadow_create (xdisplay,
-			     screen,
-			     1, 1,
-			     frame->max_win_extents.left,
-			     frame->max_win_extents.right,
-			     frame->max_win_extents.top + frame->max_titlebar_height,
-			     frame->max_win_extents.bottom,
-			     frame->max_win_extents.left - TRANSLUCENT_CORNER_SIZE,
-			     frame->max_win_extents.right - TRANSLUCENT_CORNER_SIZE,
-			     frame->max_win_extents.top + frame->max_titlebar_height -
-			     TRANSLUCENT_CORNER_SIZE,
-			     frame->max_win_extents.bottom - TRANSLUCENT_CORNER_SIZE,
-			     opt_no_shadow,
-			     &frame->max_window_context_no_shadow,
-			     draw_border_shape,
-			     (void *) info);
+    /* Reset info->state */
+    info->state = 0;
 }
 
 
 typedef struct _tdtd_shadow_options
 {
-    decor_shadow_options_t *shadow;
-    decor_shadow_options_t *no_shadow;
+    decor_shadow_options_t *active_shadow;
+    decor_shadow_options_t *inactive_shadow;
 } tdtd_shadow_options_t;
 
 void
 frame_update_shadow (decor_frame_t	    *frame,
 		     decor_shadow_info_t    *info,
-		     decor_shadow_options_t *opt_shadow,
-		     decor_shadow_options_t *opt_no_shadow)
+		     decor_shadow_options_t *opt_active_shadow,
+		     decor_shadow_options_t *opt_inactive_shadow)
 {
     gwd_decor_frame_ref (frame);
 
+    info->active = TRUE;
+
     (*frame->update_shadow) (gdk_x11_get_default_xdisplay (),
 			     gdk_x11_screen_get_xscreen (gdk_screen_get_default ()),
-			     frame, info, opt_shadow, opt_no_shadow);
+			     frame, &frame->border_shadow_active,
+			     &frame->window_context_active,
+			     &frame->max_border_shadow_inactive,
+			     &frame->max_window_context_active,
+			     info, opt_active_shadow, opt_inactive_shadow);
+
+    info->active = FALSE;
+
+    (*frame->update_shadow) (gdk_x11_get_default_xdisplay (),
+                             gdk_x11_screen_get_xscreen (gdk_screen_get_default ()),
+                             frame, &frame->border_shadow_inactive,
+                             &frame->window_context_inactive,
+                             &frame->max_border_shadow_inactive,
+                             &frame->max_window_context_inactive,
+                             info, opt_inactive_shadow, opt_active_shadow);
 
     gwd_decor_frame_unref (frame);
 }
@@ -961,7 +959,19 @@ update_frames_shadows (gpointer key,
 		       gpointer user_data)
 {
     decor_frame_t	  *frame = (decor_frame_t *) value;
-    tdtd_shadow_options_t *opts =  (tdtd_shadow_options_t *) user_data;
+    tdtd_shadow_options_t  *opts;
+    decor_shadow_options_t active_o, inactive_o;
+
+    opts = malloc (sizeof (tdtd_shadow_options_t));
+
+    if (!opts)
+	return;
+
+    opts->active_shadow = &active_o;
+    opts->inactive_shadow = &inactive_o;
+
+    (*theme_get_shadow) (frame, opts->active_shadow, TRUE);
+    (*theme_get_shadow) (frame, opts->inactive_shadow, FALSE);
 
     gwd_decor_frame_ref (frame);
 
@@ -973,48 +983,67 @@ update_frames_shadows (gpointer key,
     info->frame = frame;
     info->state = 0;
 
-    frame_update_shadow (frame, info, opts->shadow, opts->no_shadow);
+    frame_update_shadow (frame, info, opts->active_shadow, opts->inactive_shadow);
 
     gwd_decor_frame_unref (frame);
 
     free (info);
     info = NULL;
 
+    free (opts);
+    opts = NULL;
+
+}
+
+void
+cairo_get_shadow (decor_frame_t *d, decor_shadow_options_t *opts, gboolean active)
+{
+    if (active)
+    {
+	memcpy (opts->shadow_color, settings->active_shadow_color, sizeof (settings->active_shadow_color));
+	opts->shadow_radius = settings->active_shadow_radius;
+	opts->shadow_offset_x = settings->active_shadow_offset_x;
+	opts->shadow_offset_y = settings->active_shadow_offset_y;
+	opts->shadow_opacity = settings->active_shadow_opacity;
+    }
+    /* TODO: Inactive shadows */
+    else
+    {
+	memcpy (opts->shadow_color, settings->inactive_shadow_color, sizeof (settings->inactive_shadow_color));
+	opts->shadow_radius = settings->inactive_shadow_radius;
+	opts->shadow_offset_x = settings->inactive_shadow_offset_x;
+	opts->shadow_offset_y = settings->inactive_shadow_offset_y;
+	opts->shadow_opacity = settings->inactive_shadow_opacity;
+    }
+}
+
+void
+meta_get_shadow (decor_frame_t *frame, decor_shadow_options_t *opts, gboolean active)
+{
+    if (active)
+    {
+	memcpy (opts->shadow_color, settings->active_shadow_color, sizeof (settings->active_shadow_color));
+	opts->shadow_radius = settings->active_shadow_radius;
+	opts->shadow_offset_x = settings->active_shadow_offset_x;
+	opts->shadow_offset_y = settings->active_shadow_offset_y;
+	opts->shadow_opacity = settings->active_shadow_opacity;
+    }
+    /* TODO: Inactive shadows */
+    else
+    {
+	memcpy (opts->shadow_color, settings->inactive_shadow_color, sizeof (settings->inactive_shadow_color));
+	opts->shadow_radius = settings->inactive_shadow_radius;
+	opts->shadow_offset_x = settings->inactive_shadow_offset_x;
+	opts->shadow_offset_y = settings->inactive_shadow_offset_y;
+	opts->shadow_opacity = settings->inactive_shadow_opacity;
+    }
+
 }
 
 int
 update_shadow (void)
 {
-    decor_shadow_options_t opt_shadow;
-    decor_shadow_options_t opt_no_shadow;
-    tdtd_shadow_options_t  *opts;
-
-    opts = malloc (sizeof (tdtd_shadow_options_t));
-
-    if (!opts)
-	return 0;
-
-    opt_shadow.shadow_radius  = settings->shadow_radius;
-    opt_shadow.shadow_opacity = settings->shadow_opacity;
-
-    memcpy (opt_shadow.shadow_color, settings->shadow_color, sizeof (settings->shadow_color));
-
-    opt_shadow.shadow_offset_x = settings->shadow_offset_x;
-    opt_shadow.shadow_offset_y = settings->shadow_offset_y;
-
-    opt_no_shadow.shadow_radius  = 0;
-    opt_no_shadow.shadow_opacity = 0;
-
-    opt_no_shadow.shadow_offset_x = 0;
-    opt_no_shadow.shadow_offset_y = 0;
-
-    opts->shadow = &opt_shadow;
-    opts->no_shadow = &opt_no_shadow;
-
-    gwd_frames_foreach (update_frames_shadows, (gpointer ) opts);
-
-    if (opts)
-	free (opts);
+    gwd_frames_foreach (update_frames_shadows, NULL);
 
     return 1;
 }
@@ -1275,7 +1304,7 @@ update_default_decorations (GdkScreen *screen)
     bareAtom   = XInternAtom (xdisplay, DECOR_BARE_ATOM_NAME, FALSE);
     activeAtom = XInternAtom (xdisplay, DECOR_ACTIVE_ATOM_NAME, FALSE);
 
-    if (bare_frame->border_shadow)
+    if (bare_frame->border_shadow_active)
     {
 	decor_layout_t layout;
 	unsigned int   frame_type = 0;
@@ -1286,12 +1315,12 @@ update_default_decorations (GdkScreen *screen)
 
 	long *data = decor_alloc_property (1, WINDOW_DECORATION_TYPE_PIXMAP);
 
-	decor_get_default_layout (&bare_frame->window_context, 1, 1, &layout);
+	decor_get_default_layout (&bare_frame->window_context_active, 1, 1, &layout);
 
-	nQuad = decor_set_lSrStSbS_window_quads (quads, &bare_frame->window_context,
+	nQuad = decor_set_lSrStSbS_window_quads (quads, &bare_frame->window_context_active,
 						 &layout);
 
-	decor_quads_to_property (data, 0, bare_frame->border_shadow->pixmap,
+	decor_quads_to_property (data, 0, bare_frame->border_shadow_active->pixmap,
 				 &bare_frame->win_extents, &bare_frame->win_extents,
 				 &bare_frame->win_extents, &bare_frame->win_extents,
 				 0, 0, quads, nQuad, frame_type, frame_state, frame_actions);
@@ -1350,8 +1379,8 @@ update_default_decorations (GdkScreen *screen)
 
         default_frames[i].d = calloc (1, sizeof (decor_t));
 
-        default_frames[i].d->context = &frame->window_context;
-        default_frames[i].d->shadow  = frame->border_shadow;
+        default_frames[i].d->context = i < WINDOW_TYPE_FRAMES_NUM ? &frame->window_context_active : &frame->window_context_inactive;
+        default_frames[i].d->shadow  =  i < WINDOW_TYPE_FRAMES_NUM ? frame->border_shadow_active : frame->border_shadow_inactive;
         default_frames[i].d->layout  = pango_layout_new (frame->pango_context);
 
         decor_get_default_layout (default_frames[i].d->context, 1, 1, &default_frames[i].d->border_layout);
