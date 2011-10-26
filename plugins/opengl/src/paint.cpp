@@ -118,7 +118,7 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 	    pBox++;
 	}
 
-	glVertexPointer (2, GL_FLOAT, sizeof (GLfloat) * 2, data + 2);
+	glVertexPointer (2, GL_FLOAT, sizeof (GLfloat) * 2, data);
 
 	glColor4us (0, 0, 0, std::numeric_limits<unsigned short>::max ());
 	glDrawArrays (GL_QUADS, 0, nBox * 4);

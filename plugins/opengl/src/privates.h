@@ -125,6 +125,9 @@ class PrivateGLScreen :
 
 	GLIcon defaultIcon;
 	CompTimer initContext;
+
+	Pixmap rootPixmapCopy;
+	CompSize rootPixmapSize;
 };
 
 class PrivateGLWindow :

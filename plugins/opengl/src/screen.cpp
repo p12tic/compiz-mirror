@@ -574,13 +574,18 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     outputRegion (),
     pendingCommands (false),
     bindPixmap (),
-    hasCompositing (false)
+    hasCompositing (false),
+    rootPixmapCopy (None),
+    rootPixmapSize ()
 {
     ScreenInterface::setHandler (screen);
 }
 
 PrivateGLScreen::~PrivateGLScreen ()
 {
+    if (rootPixmapCopy)
+	XFreePixmap (screen->dpy (), rootPixmapCopy);
+
 }
 
 GLushort defaultColor[4] = { 0xffff, 0xffff, 0xffff, 0xffff };
@@ -607,6 +612,10 @@ PrivateGLScreen::handleEvent (XEvent *event)
     screen->handleEvent (event);
 
     switch (event->type) {
+	case ConfigureNotify:
+	    if (event->xconfigure.window == screen->root ())
+		updateScreenBackground ();
+	    break;
 	case PropertyNotify:
 	    if (event->xproperty.atom == Atoms::xBackground[0] ||
 		event->xproperty.atom == Atoms::xBackground[1])
@@ -641,6 +650,14 @@ PrivateGLScreen::handleEvent (XEvent *event)
 		{
 		    it->second->damaged = true;
 		}
+
+		/* XXX: It would be nice if we could also update
+		 * the background of the root window when the root
+		 * window pixmap changes, but unfortunately XDamage
+		 * reports damage events any time a child of the root
+		 * window gets a damage event, which means that we'd
+		 * be recopying the root window pixmap all the time
+		 * which is no good, so don't do that */
 	    }
 	    break;
     }
@@ -830,13 +847,64 @@ PrivateGLScreen::updateScreenBackground ()
 	backgroundTextures.clear ();
     }
 
-    if (backgroundTextures.empty () && backgroundImage)
+    if (backgroundTextures.empty ())
     {
 	CompSize   size;
-	CompString fileName (backgroundImage);
-	CompString pname ("");
+	if (backgroundImage)
+	{
+	    CompString fileName (backgroundImage);
+	    CompString pname ("");
 
-	backgroundTextures = GLTexture::readImageToTexture (fileName, pname, size);
+	    backgroundTextures = GLTexture::readImageToTexture (fileName, pname, size);
+	}
+	else
+	{
+	    /* Try to get the root window background */
+	    XGCValues gcv;
+	    GC        gc;
+
+	    gcv.graphics_exposures = false;
+	    gcv.subwindow_mode = IncludeInferiors;
+	    gc = XCreateGC (screen->dpy (), screen->root (),
+			    GCGraphicsExposures | GCSubwindowMode, &gcv);
+
+	    if (rootPixmapSize.width () != screen->width () ||
+		rootPixmapSize.height () != screen->height ())
+	    {
+		if (rootPixmapCopy)
+		    XFreePixmap (screen->dpy (), rootPixmapCopy);
+
+		rootPixmapSize = CompSize (screen->width (), screen->height ());
+
+		rootPixmapCopy = XCreatePixmap (screen->dpy (), screen->root (),
+						rootPixmapSize.width (), rootPixmapSize.height (),
+						DefaultDepth (screen->dpy (), DefaultScreen (screen->dpy ())));
+
+		backgroundTextures =
+		GLTexture::bindPixmapToTexture (rootPixmapCopy, rootPixmapSize.width (), rootPixmapSize.height (),
+						DefaultDepth (screen->dpy (), DefaultScreen (screen->dpy ())));
+
+		if (backgroundTextures.empty ())
+		{
+		    compLogMessage ("core", CompLogLevelWarn,
+				    "Couldn't bind background pixmap 0x%x to "
+				    "texture", (int) screen->width ());
+		}
+	    }
+
+	    if (rootPixmapCopy)
+	    {
+		XCopyArea (screen->dpy (), screen->root (), rootPixmapCopy, gc,
+			   0, 0, screen->width (), screen->height (), 0, 0);
+		XSync (screen->dpy (), false);
+	    }
+	    else
+	    {
+		backgroundTextures.clear ();
+	    }
+
+	    XFreeGC(dpy, gc);  
+	}
     }
 
     if (!backgroundTextures.empty ())
