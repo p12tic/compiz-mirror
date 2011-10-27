@@ -26,6 +26,12 @@
 
 #include "workarounds.h"
 
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+
+#include <errno.h>
+
 bool haveOpenGL;
 
 COMPIZ_PLUGIN_20090315 (workarounds, WorkaroundsPluginVTable);
@@ -318,6 +324,15 @@ WorkaroundsScreen::checkFunctions (bool checkWindow, bool checkScreen)
     else if (haveOpenGL && checkScreen)
     {
 	cScreen->preparePaintSetEnabled (this, false);
+    }
+
+    if (haveOpenGL && optionGetWorkaroundGlxCreateContextDetection () && checkScreen)
+    {
+    	gScreen->glInitContextSetEnabled (this, true);
+    }
+    else if (haveOpenGL && checkScreen)
+    {
+	gScreen->glInitContextSetEnabled (this, false);
     }
 
     if ((optionGetLegacyFullscreen () ||
@@ -1007,6 +1022,25 @@ WorkaroundsWindow::resizeNotify (int dx, int dy,
 	fixupFullscreen ();
 
     window->resizeNotify (dx, dy, dwidth, dheight);
+}
+
+bool
+WorkaroundsScreen::glInitContext (XVisualInfo *xvinfo)
+{
+    bool status = false;
+#if defined (__GLIBC__) && (__GLIBC__ >= 2)
+    /* LP #685682 */
+    program_invocation_short_name[0] = 'C';
+#endif
+
+    status = gScreen->glInitContext (xvinfo);
+
+#if defined (__GLIBC__) && (__GLIBC__ >= 2)
+    /* LP #685682 */
+    program_invocation_short_name[0] = 'c';
+#endif
+
+    return status;
 }
 
 WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
