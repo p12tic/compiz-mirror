@@ -30,7 +30,7 @@
 
 #include <X11/extensions/Xcomposite.h>
 
-#define COMPIZ_COMPOSITE_ABI 3
+#define COMPIZ_COMPOSITE_ABI 4
 
 #include <core/pluginclasshandler.h>
 #include <core/timer.h>
@@ -162,11 +162,16 @@ class CompositeScreenInterface :
 	 *
 	 */
 	virtual void unregisterPaintHandler ();
+
+	/**
+	 * Hookable function to damage regions directly
+	 */
+	virtual void damageRegion (const CompRegion &r);
 };
 
 
 class CompositeScreen :
-    public WrapableHandler<CompositeScreenInterface, 6>,
+    public WrapableHandler<CompositeScreenInterface, 7>,
     public PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>,
     public CompOption::Class
 {
@@ -194,11 +199,6 @@ class CompositeScreen :
 	 */
 	void damageScreen ();
 
-	/**
-	 * Adds a specific region to be redrawn on the next
-	 * event loop
-	 */
-	void damageRegion (const CompRegion &);
 	void damagePending ();
 	
 
@@ -238,6 +238,12 @@ class CompositeScreen :
 
 	WRAPABLE_HND (4, CompositeScreenInterface, bool, registerPaintHandler, compiz::composite::PaintHandler *);
 	WRAPABLE_HND (5, CompositeScreenInterface, void, unregisterPaintHandler);
+
+	/**
+	 * Adds a specific region to be redrawn on the next
+	 * event loop
+	 */
+	WRAPABLE_HND (6, CompositeScreenInterface, void, damageRegion, const CompRegion &);
 
 	friend class PrivateCompositeDisplay;
 
