@@ -82,16 +82,6 @@ set (_compiz_package "Compiz")
 compiz_configure_file (${compiz_SOURCE_DIR}/config.h.core.in ${compiz_BINARY_DIR}/generated/config.h)
 
 compiz_configure_file (
-    ${CMAKE_SOURCE_DIR}/include/compiz-common.h.in
-    ${CMAKE_BINARY_DIR}/generated/compiz-common.h
-)
-
-install (
-    FILES ${CMAKE_BINARY_DIR}/generated/compiz-common.h
-    DESTINATION ${COMPIZ_DESTDIR}${includedir}/compiz
-)
-
-compiz_configure_file (
     ${CMAKE_SOURCE_DIR}/compiz.pc.in
     ${CMAKE_BINARY_DIR}/compiz.pc
     COMPIZ_REQUIRES
@@ -114,10 +104,6 @@ add_subdirectory (metadata)
 add_subdirectory (src)
 add_subdirectory (xslt)
 add_subdirectory (plugins)
-
-if (BUILD_TESTING)
-	add_subdirectory (tests)
-endif (BUILD_TESTING)
 
 compiz_ensure_linkage ()
 compiz_package_generation ("Compiz")

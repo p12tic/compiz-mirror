@@ -26,7 +26,7 @@
 #ifndef _COMPIZ_PLUGIN_H
 #define _COMPIZ_PLUGIN_H
 
-#include <compiz.h>
+#include <core/string.h>
 #include <core/option.h>
 #include <core/privateunion.h>
 

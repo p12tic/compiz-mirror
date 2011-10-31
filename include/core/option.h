@@ -28,8 +28,7 @@
 #ifndef _COMPOPTION_H
 #define _COMPOPTION_H
 
-#include <compiz.h>
-
+#include <core/string.h>
 #include <vector>
 
 class PrivateOption;

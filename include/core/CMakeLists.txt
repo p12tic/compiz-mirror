@@ -10,8 +10,6 @@ set (_headers
     output.h
     plugin.h
     point.h
-    pluginclasshandler.h
-    pluginclasses.h
     propertywriter.h
     privateunion.h
     rect.h
@@ -20,9 +18,6 @@ set (_headers
     serialization.h
     session.h
     size.h
-    timeouthandler.h
-    timer.h
-    valueholder.h
     window.h
     wrapsystem.h
 )
