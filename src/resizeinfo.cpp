@@ -433,6 +433,7 @@ InfoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	backgroundLayer.draw (x, y);
 	textLayer.draw (x, y);
   
+	gScreen->setTexEnvMode (GL_REPLACE);
 	glDisable (GL_BLEND);
 	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
