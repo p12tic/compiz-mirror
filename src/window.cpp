@@ -2026,8 +2026,16 @@ PrivateWindow::configure (XConfigureEvent *ce)
     if (priv->geometry.border () != ce->border_width)
 	valueMask |= CWBorderWidth;
 
-    if (ROOTPARENT (window->prev) != ce->above)
-	valueMask |= CWSibling | CWStackMode;
+    if (window->prev)
+    {
+	if (ROOTPARENT (window->prev) != ce->above)
+	    valueMask |= CWSibling | CWStackMode;
+    }
+    else
+    {
+	if (ce->above != 0)
+	    valueMask |= CWSibling | CWStackMode;
+    }
 
     priv->attrib.override_redirect = ce->override_redirect;
 
