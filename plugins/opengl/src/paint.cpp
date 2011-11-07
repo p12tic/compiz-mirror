@@ -1189,6 +1189,14 @@ GLWindow::glDraw (const GLMatrix     &transform,
 
     GLTexture::MatrixList ml (1);
 
+    //
+    // Don't assume all plugins leave TexEnvMode in a clean state (GL_REPLACE).
+    // Sometimes plugins forget to clean up correctly, so make sure we're
+    // in the correct mode or else windows could be rendered incorrectly
+    // like in LP: #877920.
+    //
+    priv->gScreen->setTexEnvMode (GL_REPLACE);
+
     if (priv->textures.size () == 1)
     {
 	ml[0] = priv->matrices[0];
