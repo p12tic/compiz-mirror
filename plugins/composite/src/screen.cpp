@@ -706,7 +706,7 @@ PrivateCompositeScreen::getTimeToNextRedraw (struct timeval *tv)
 	(FPSLimiterMode == CompositeFPSLimiterModeVSyncLike ||
 	 (pHnd && pHnd->hasVSync ()));
 
-    if (idle || hasVSyncBehavior)
+    if (idle)
     {
 	if (timeMult > 1)
 	{
@@ -714,6 +714,11 @@ PrivateCompositeScreen::getTimeToNextRedraw (struct timeval *tv)
 	    redrawTime = optimalRedrawTime;
 	    timeMult--;
 	}
+    }
+    else if (hasVSyncBehavior)
+    {
+	frameStatus = 0;
+	redrawTime = diff;
     }
     else
     {
@@ -755,13 +760,7 @@ PrivateCompositeScreen::getTimeToNextRedraw (struct timeval *tv)
 	}
     }
     
-    if (diff >= redrawTime)
-	return 1;
-
-    if (hasVSyncBehavior)
-	return (redrawTime - diff) * 0.7;
-
-    return redrawTime - diff;
+    return (diff >= redrawTime) ? 1 : redrawTime - diff;
 }
 
 int

@@ -31,9 +31,6 @@
 #include <math.h>
 
 namespace GL {
-    typedef int (*GLXSwapIntervalProc) (int interval);
-
-    GLXSwapIntervalProc      swapInterval = NULL;
     GLXBindTexImageProc      bindTexImage = NULL;
     GLXReleaseTexImageProc   releaseTexImage = NULL;
     GLXQueryDrawableProc     queryDrawable = NULL;
@@ -411,12 +408,6 @@ GLScreen::GLScreen (CompScreen *s) :
 
 	GL::waitVideoSync = (GL::GLXWaitVideoSyncProc)
 	    getProcAddress ("glXWaitVideoSyncSGI");
-    }
-
-    if (strstr (glxExtensions, "GLX_SGI_swap_control"))
-    {
-	GL::swapInterval = (GL::GLXSwapIntervalProc)
-	    getProcAddress ("glXSwapIntervalSGI");
     }
 
     fbConfigs = (*GL::getFBConfigs) (dpy, s->screenNum (), &nElements);
@@ -1076,41 +1067,15 @@ GLScreen::setDefaultViewport ()
 		priv->lastViewport.height);
 }
 
-namespace GL
-{
-
-void
-waitForVideoSync ()
-{
-    if (GL::waitVideoSync)
-    {
-	// Don't wait twice. Just in case.
-	if (GL::swapInterval)
-	    (*GL::swapInterval) (0);
-
-	// Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
-	unsigned int frameno;
-	(*GL::waitVideoSync) (1, 0, &frameno);
-    }
-}
-
-void
-controlSwapVideoSync (bool sync)
-{
-    // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
-    if (GL::swapInterval)
-	(*GL::swapInterval) (sync ? 1 : 0);
-    else if (sync)
-	waitForVideoSync ();
-}
-
-} // namespace GL
-
 void
 PrivateGLScreen::waitForVideoSync ()
 {
-    if (optionGetSyncToVblank ())
-        GL::waitForVideoSync ();
+    // Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
+    if (GL::waitVideoSync)
+    {
+	unsigned int frameno;
+	(*GL::waitVideoSync) (1, 0, &frameno);
+    }
 }
 
 void
@@ -1183,22 +1148,11 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     targetOutput = &screen->outputDevs ()[0];
 
     glFlush ();
+    if (optionGetSyncToVblank ())
+	waitForVideoSync ();
 
-    /*
-     * FIXME: Actually fix the composite plugin to be more efficient;
-     * If GL::swapInterval == NULL && GL::waitVideoSync != NULL then the
-     * composite plugin should not be imposing any framerate restriction
-     * (ie. blocking the CPU) at all. Because the framerate will be controlled
-     * and optimized here:
-     */
     if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
     {
-	/*
-	 * controlSwapVideoSync is much faster than waitForVideoSync because
-	 * it won't block the CPU. The waiting is offloaded to the GPU.
-	 * Unfortunately it only works with glXSwapBuffers in most drivers.
-	 */
-	GL::controlSwapVideoSync (optionGetSyncToVblank ());
 	glXSwapBuffers (screen->dpy (), cScreen->output ());
     }
     else
@@ -1206,7 +1160,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	BoxPtr pBox;
 	int    nBox, y;
 
-	waitForVideoSync ();
 	pBox = const_cast <Region> (tmpRegion.handle ())->rects;
 	nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
 
