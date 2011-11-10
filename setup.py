@@ -159,7 +159,6 @@ setup (
   license          = "GPL",
   maintainer	   = "Guillaume Seguin",
   maintainer_email = "guillaume@segu.in",
-  packages         = ['compizconfig-python', 'tests'],
   cmdclass         = {"uninstall" : uninstall,
                       "install" : install,
                       "install_data" : install_data,
