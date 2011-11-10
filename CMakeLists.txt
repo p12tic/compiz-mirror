@@ -29,6 +29,19 @@ add_custom_target (uninstall
 		   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 		   COMMENT "Uninstalling Python Files")
 
+find_program (PYTHON_EXECUTABLE python)
+mark_as_advanced (FORCE PYTHON_EXECUTABLE)
+
+file (GLOB PYTHON_TESTS "tests/test_*.py")
+
+if (PYTHON_EXECUTABLE)
+	foreach (PYTHON_TEST_FILE ${PYTHON_TESTS})
+		get_filename_component (PYTHON_TEST ${PYTHON_TEST_FILE} NAME_WE)
+		message (STATUS "Adding test " ${PYTHON_TEST})
+		add_test (NAME ${PYTHON_TEST} WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}/tests" COMMAND ${PYTHON_EXECUTABLE} -m unittest ${PYTHON_TEST})
+	endforeach (PYTHON_TEST_FILE)
+endif (PYTHON_EXECUTABLE)
+
 compiz_print_configure_header ("CompizConfig Python")
 compiz_print_configure_footer ()
 
