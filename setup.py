@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-from distutils.core import setup
+from distutils.core import setup, Command
 from distutils.command.build import build as _build
 from distutils.command.install import install as _install
 from distutils.command.install_data import install_data as _install_data
@@ -7,6 +7,9 @@ from distutils.command.sdist import sdist as _sdist
 from distutils.extension import Extension
 import os
 import subprocess
+
+import unittest
+import os
 
 # If src/compizconfig.pyx exists, build using Cython
 if os.path.exists ("src/compizconfig.pyx"):
@@ -128,6 +131,26 @@ class sdist (_sdist):
             self.filelist.exclude_pattern ("src/compizconfig.pyx")
             self.filelist.append ("src/compizconfig.c")
 
+class test (Command):
+    description = "run tests"
+    user_options = []
+
+    def initialize_options (self):
+	self.cwd = None
+
+    def finalize_options (self):
+	self.cwd = os.getcwd ()
+
+    def run (self):
+	assert os.getcwd () == self.cwd, 'Must be in package root: %s' % self.cwd
+	loader = unittest.TestLoader ()
+
+	tests = loader.discover (os.getcwd (), pattern='test*')
+	result = unittest.TestResult ()
+
+	unittest.TextTestRunner (verbosity=2).run (tests)
+
+
 setup (
   name = "compizconfig-python",
   version = version,
@@ -136,11 +159,13 @@ setup (
   license          = "GPL",
   maintainer	   = "Guillaume Seguin",
   maintainer_email = "guillaume@segu.in",
+  packages         = ['compizconfig-python', 'tests'],
   cmdclass         = {"uninstall" : uninstall,
                       "install" : install,
                       "install_data" : install_data,
                       "build_ext" : build_ext,
-                      "sdist" : sdist},
+                      "sdist" : sdist,
+		      "test"  : test},
   ext_modules=[ 
     Extension ("compizconfig", [ext_module_src],
 	       **pkgconfig("libcompizconfig"))
