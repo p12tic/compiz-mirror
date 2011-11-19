@@ -766,7 +766,8 @@ GridWindow::grabNotify (int          x,
 			unsigned int state,
 			unsigned int mask)
 {
-    if (mask & (CompWindowGrabMoveMask | CompWindowGrabButtonMask))
+    if ((mask & (CompWindowGrabMoveMask | CompWindowGrabButtonMask)) &&
+        !(mask & CompWindowGrabResizeMask))
     {
 	gScreen->o[0].value ().set ((int) window->id ());
 
