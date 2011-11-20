@@ -24,42 +24,85 @@
  */
 
 #include "test-timer.h"
+#include <ctime>
+
+static time_t starttime = 0;
 
 bool
 CompTimerTestCallbacks::cb (int timernum)
 {
-    if (lastTimerTriggered == 0 && timernum == 1)
+    static bool complete = false;
+    static int count[4] = {0, 0, 0, 0};
+
+    if (timernum < 4)
+	count[timernum]++;
+
+    if (complete)
+	return false;
+
+    if (time (NULL) - starttime > 5)  /* Wait no more than 5 seconds */
     {
-	std::cout << "FAIL: timer with a higher timeout value triggered before the timer with the lower timeout" << std::endl;
+	std::cout << "FAIL: some timers are never being triggered" << std::endl;
 	exit (1);
 	return false;
     }
-    else if (lastTimerTriggered == 2 && timernum != 1)
+    else if (lastTimerTriggered == 0 && timernum != 3)
     {
-	std::cout << "FAIL: the second timer should have triggered" << std::endl;
+	std::cout << "FAIL: timer 3 was not triggered first" << std::endl;
+	exit (1);
+	return false;
+    }
+    else if (lastTimerTriggered == 2 && timernum != 3)
+    {
+	std::cout << "FAIL: timer 3 was not after 2" << std::endl;
+	exit (1);
+	return false;
+    }
+    else if (timernum == 1 && count[2] < 1)
+    {
+	std::cout << "FAIL: timer 1 was not preceded by 2" << std::endl;
 	exit (1);
 	return false;
     }
 
-    std::cout << "INFO: triggering timer " << timernum << std::endl;
+    if (timernum < 3 || lastTimerTriggered != 3)
+    {
+	std::cout
+	    << "INFO: triggering timer "
+	    << timernum
+	    << ((timernum == 3) ? " (many times)" : "")
+	    << std::endl;
+    }
 
     lastTimerTriggered = timernum;
 
     if (timernum == 1)
     {
-	std::cout << "PASS: basic timers" << std::endl;
+	complete = true;
+	std::cout
+	    << "PASS: basic timers. Total calls: "
+	    << count[1]
+	    << ", "
+	    << count[2]
+	    << ", "
+	    << count[3]
+	    << std::endl;
 	ml->quit ();
     }
 
-    return false;
+    return !complete;
 }
 
 void
 CompTimerTestCallbacks::precallback ()
 {
+    starttime = time (NULL);
+
     /* Test 2: Adding timers */
     std::cout << "-= TEST: adding timers and callbacks" << std::endl;
-    timers.push_back (new CompTimer ());
+
+    CompTimer *t1 = new CompTimer ();
+    timers.push_back (t1);
     timers.front ()->setTimes (100, 110);
     timers.front ()->setCallback (boost::bind (&CompTimerTestCallbacks::cb, this, 1));
 
@@ -70,13 +113,20 @@ CompTimerTestCallbacks::precallback ()
 	exit (1);
     }
 
-    timers.push_back (new CompTimer ());
+    CompTimer *t2 = new CompTimer ();
+    timers.push_back (t2);
     timers.back ()->setTimes (50, 90);
     timers.back ()->setCallback (boost::bind (&CompTimerTestCallbacks::cb, this, 2));
 
-    /* Start both timers */
-    timers.front ()->start ();
-    timers.back ()->start ();
+    CompTimer *t3 = new CompTimer ();
+    timers.push_back (t3);
+    timers.back ()->setTimes (0, 0);
+    timers.back ()->setCallback (boost::bind (&CompTimerTestCallbacks::cb, this, 3));
+
+    /* Start all timers */
+    t1->start ();
+    t2->start ();
+    t3->start ();
 
     /* TimeoutHandler::timers should have the timer that
      * is going to trigger first at the front of the
