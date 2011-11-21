@@ -1184,13 +1184,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
     glFlush ();
 
-    /*
-     * FIXME: Actually fix the composite plugin to be more efficient;
-     * If GL::swapInterval == NULL && GL::waitVideoSync != NULL then the
-     * composite plugin should not be imposing any framerate restriction
-     * (ie. blocking the CPU) at all. Because the framerate will be controlled
-     * and optimized here:
-     */
     if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
     {
 	/*
