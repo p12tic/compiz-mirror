@@ -23,6 +23,7 @@
  */
 
 #include "grid.h"
+#include "grabhandler.h"
 
 using namespace GridWindowType;
 
@@ -766,8 +767,9 @@ GridWindow::grabNotify (int          x,
 			unsigned int state,
 			unsigned int mask)
 {
-    if ((mask & (CompWindowGrabMoveMask | CompWindowGrabButtonMask)) &&
-        !(mask & CompWindowGrabResizeMask))
+    compiz::grid::window::GrabWindowHandler gwHandler (mask);
+
+    if (gwHandler.track ())
     {
 	gScreen->o[0].value ().set ((int) window->id ());
 
@@ -781,8 +783,7 @@ GridWindow::grabNotify (int          x,
 	    originalSize = gScreen->slotToRect(window,
 						    window->serverBorderRect ());
     }
-
-    if (mask & CompWindowGrabResizeMask)
+    else if (gwHandler.resetResize ())
     {
 	isGridResized = false;
 	resizeCount = 0;
@@ -1019,7 +1020,7 @@ GridScreen::GridScreen (CompScreen *screen) :
     gridProps[GridRight]  = GridProps {1,0, 2,1};
     gridProps[GridTopLeft]  = GridProps{0,0, 2,2};
     gridProps[GridTop]  = GridProps {0,0, 1,2};
-    gridProps[GridTopRight]  = GridProps {0,0, 1,2};
+    gridProps[GridTopRight]  = GridProps {1,0, 2,2};
     gridProps[GridMaximize]  = GridProps {0,0, 1,1};
 
 	animations.clear ();
