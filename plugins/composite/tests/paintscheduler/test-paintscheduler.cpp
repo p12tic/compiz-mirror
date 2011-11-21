@@ -20,6 +20,12 @@
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
+ * drm_vblank handling code adapted from libdrm
+ * Copyright 2008 Tungsten Graphics
+ *   Jakob Bornecrantz <jakob@tungstengraphics.com>
+ * Copyright 2008 Intel Corporation
+ *   Jesse Barnes <jesse.barnes@intel.com>
+ *
  * Authors: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
@@ -31,12 +37,94 @@
 #include <privatetimer.h>
 #include <privatetimeoutsource.h>
 
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdint.h>
+#include <unistd.h>
+#include <string.h>
+#include <errno.h>
+#include <sys/poll.h>
+#include <sys/time.h>
+
+extern "C"
+{
+
+#include <xf86drm.h>
+#include <xf86drmMode.h>
+
+}
+
 using namespace compiz::composite::scheduler;
+
+class VBlankWaiter
+{
+    public:
+
+	virtual bool waitVBlank () = 0;
+};
+
+class DRMVBlankWaiter :
+    public VBlankWaiter
+{
+    public:
+
+	DRMVBlankWaiter ();
+	~DRMVBlankWaiter ();
+
+	bool waitVBlank ();
+
+    private:
+
+	drmVBlank       mVbl;
+	unsigned int    drmFD;
+};
+
+DRMVBlankWaiter::DRMVBlankWaiter ()
+{
+    const char  *modules[] = { "i915", "radeon", "nouveau", "vmwgfx" };
+
+    for (unsigned int i = 0; i < sizeof (modules) / sizeof (modules[0]); i++)
+    {
+	std::cout << "DEBUG: attempting to load platform " << modules[i];
+	drmFD = drmOpen (modules[i], NULL);
+
+	if (drmFD < 0)
+	    std::cout << " ... failed";
+	else
+	{
+	    std::cout << " ... success";
+	    break;
+	}
+    }
+
+    if (drmFD < 0)
+	throw std::exception ();
+
+    mVbl.request.type = DRM_VBLANK_RELATIVE;
+    mVbl.request.sequence = 0;
+}
+
+bool
+DRMVBlankWaiter::waitVBlank ()
+{
+    unsigned int ret = drmWaitVBlank (drmFD, &mVbl);
+
+    if (ret != 0)
+    {
+	std::cout << "DEBUG: drmWaitVBlank failed! Error code: " << ret << std::endl;
+	return false;
+    }
+
+    return true;
+}
 
 class DummyPaintDispatch :
     public PaintSchedulerDispatchBase
 {
     public:
+
+	DummyPaintDispatch ();
 
 	void prepareScheduledPaint (unsigned int timeDiff)
 	{
@@ -46,11 +134,22 @@ class DummyPaintDispatch :
 	void paintScheduledPaint ()
 	{
 	    std::cout << "DEBUG: paint scheduled paint" << std::endl;
+
+	    if (waiter)
+	    {
+		if (!waiter->waitVBlank ())
+		{
+		    delete waiter;
+		    waiter = NULL;
+		}
+	    }
 	}
 
 	void doneScheduledPaint ()
 	{
 	    std::cout << "DEBUG: done scheduled paint" << std::endl;
+
+	    sched.schedule ();
 	}
 
 	bool schedulerCompositingActive ()
@@ -62,7 +161,27 @@ class DummyPaintDispatch :
 	{
 	    return true;
 	}
+
+    private:
+
+	PaintScheduler sched;
+	VBlankWaiter   *waiter;
 };
+
+DummyPaintDispatch::DummyPaintDispatch () :
+    sched (this)
+{
+    sched.schedule ();
+
+    try
+    {
+	waiter = new DRMVBlankWaiter ();
+    }
+    catch (std::exception &e)
+    {
+	throw e;
+    }
+}
 
 void pass (const std::string &message)
 {
@@ -78,8 +197,6 @@ void fail (const std::string &message)
 
 int main (void)
 {
-    DummyPaintDispatch *dbp = new DummyPaintDispatch ();
-    PaintScheduler     *sched = new PaintScheduler (dbp);
     TimeoutHandler     *th = new TimeoutHandler ();
     TimeoutHandler::SetDefault (th);
 
@@ -87,12 +204,13 @@ int main (void)
     Glib::RefPtr <Glib::MainLoop> mainloop = Glib::MainLoop::create (ctx, false);
     Glib::RefPtr <CompTimeoutSource> timeout = CompTimeoutSource::create (ctx);
 
+    DummyPaintDispatch *dbp = new DummyPaintDispatch ();
+
     ctx->iteration (false);
 
     mainloop->run ();
 
     delete dbp;
-    delete sched;
 
     return 0;
 }

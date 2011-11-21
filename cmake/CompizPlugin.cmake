@@ -365,9 +365,15 @@ function (_build_compiz_plugin plugin)
             ${${_PLUGIN}_PKG_INCDIRS}
             ${${_PLUGIN}_INCDIRS}
             ${COMPIZ_INCLUDE_DIRS}
-            ${CMAKE_PREFIX_PATH}/include
+            ${PLUGIN_PREFIX}/include
             ${CMAKE_INCLUDE_PATH}
 	)
+
+	set (SYSTEM_LINK_DIRS
+	     "/usr/lib"
+	     "/usr/lib32"
+	     "/usr/lib64"
+	     "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}")
 
 	link_directories (
             ${COMPIZ_LINK_DIRS}
@@ -375,9 +381,7 @@ function (_build_compiz_plugin plugin)
             ${${_PLUGIN}_LIBDIRS}
             ${PLUGIN_LIBDIR}
             ${COMPIZ_LIBDIR}/compiz
-            ${CMAKE_PREFIX_PATH}/lib
-            ${CMAKE_PREFIX_PATH}/lib32
-            ${CMAKE_PREFIX_PATH}/lib64
+            ${SYSTEM_LINK_DIRS}
 	)
 
 	add_library (
