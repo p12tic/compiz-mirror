@@ -73,8 +73,7 @@ PrivateCompositeScreen::setOption (const CompString  &name,
 	case CompositeOptions::RefreshRate:
 	    if (optionGetDetectRefreshRate ())
 		return false;
-	    redrawTime = 1000 / optionGetRefreshRate ();
-	    optimalRedrawTime = redrawTime;
+	    scheduler.setRefreshRate (optionGetRefreshRate ());
 	    break;
 	default:
 	    break;

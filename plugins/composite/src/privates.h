@@ -42,8 +42,70 @@ extern CompPlugin::VTable *compositeVTable;
 
 extern CompWindow *lastDamagedWindow;
 
+namespace compiz
+{
+namespace composite
+{
+namespace scheduler
+{
+
+const unsigned int paintSchedulerScheduled = 1 << 0;
+const unsigned int paintSchedulerPainting = 1 << 1;
+const unsigned int paintSchedulerReschedule = 1 << 2;
+
+class PaintSchedulerDispatchBase
+{
+    public:
+
+	virtual void prepareScheduledPaint (unsigned int timeDiff) = 0;
+	virtual void paintScheduledPaint () = 0;
+	virtual void doneScheduledPaint () = 0;
+	virtual PaintHandler * getPaintHandler () = 0;
+};
+
+class PaintScheduler
+{
+    public:
+
+	PaintScheduler (PaintSchedulerDispatchBase *);
+	~PaintScheduler ();
+
+	bool schedule ();
+	void setFPSLimiterMode (CompositeFPSLimiterMode mode);
+	CompositeFPSLimiterMode getFPSLimiterMode ();
+
+	int getRedrawTime ();
+	int getOptimalRedrawTime ();
+
+	void setRefreshRate (unsigned int);
+
+    protected:
+
+	bool dispatch ();
+
+    private:
+
+	unsigned int   mSchedulerState;
+
+	struct timeval mLastRedraw;
+	int            mRedrawTime;
+	int            mOptimalRedrawTime;
+
+	CompositeFPSLimiterMode mFPSLimiterMode;
+
+	CompTimer mPaintTimer;
+
+	PaintSchedulerDispatchBase *mDispatchBase;
+};
+
+}
+}
+}
+	
+
 class PrivateCompositeScreen :
     ScreenInterface,
+    public compiz::composite::scheduler::PaintSchedulerDispatchBase,
     public CompositeOptions
 {
     public:
@@ -64,7 +126,15 @@ class PrivateCompositeScreen :
 
 	void detectRefreshRate ();
 
-	void scheduleRepaint ();
+    protected:
+
+	compiz::composite::PaintHandler * getPaintHandler ();
+
+	void prepareScheduledPaint (unsigned int timeDiff);
+
+	void paintScheduledPaint ();
+
+	void doneScheduledPaint ();
 
     public:
 
@@ -94,18 +164,10 @@ class PrivateCompositeScreen :
 
 	int overlayWindowCount;
 
-	struct timeval lastRedraw;
-	int            redrawTime;
-	int            optimalRedrawTime;
-	bool           scheduled, painting, reschedule;
-
 	bool slowAnimations;
 
-	CompTimer paintTimer;
-
-	compiz::composite::PaintHandler *pHnd;
-
-	CompositeFPSLimiterMode FPSLimiterMode;
+	compiz::composite::PaintHandler 	     *pHnd;
+	compiz::composite::scheduler::PaintScheduler scheduler;
 
 	CompWindowList withDestroyedWindows;
 };

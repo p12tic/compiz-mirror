@@ -171,10 +171,6 @@ class CompositeScreen :
     public CompOption::Class
 {
     public:
-
-
-
-    public:
 	CompositeScreen (CompScreen *s);
 	~CompositeScreen ();
 
