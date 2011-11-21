@@ -35,6 +35,7 @@
 #include <core/pluginclasshandler.h>
 #include <core/timer.h>
 #include <core/core.h>
+#include <composite/fpslimiter.h>
 
 #define COMPOSITE_SCREEN_DAMAGE_PENDING_MASK (1 << 0)
 #define COMPOSITE_SCREEN_DAMAGE_REGION_MASK  (1 << 1)
@@ -77,14 +78,6 @@
  * pass
  */
 #define PAINT_SCREEN_NO_BACKGROUND_MASK            (1 << 6)
-
-
-typedef enum
-{
-    CompositeFPSLimiterModeDisabled = 0,
-    CompositeFPSLimiterModeDefault,
-    CompositeFPSLimiterModeVSyncLike
-} CompositeFPSLimiterMode;
 
 class PrivateCompositeScreen;
 class PrivateCompositeWindow;

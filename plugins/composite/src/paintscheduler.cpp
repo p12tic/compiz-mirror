@@ -23,7 +23,12 @@
  *
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  *          David Reveman <davidr@novell.com>
+ *          Daniel van Vugt <vanvugt@gmail.com>
+ *          Sam Spilsbury <sam.spilsbury@canonical.com>
  */
+
+#include "paintscheduler.h"
+#include <boost/bind.hpp>
 
 compiz::composite::scheduler::PaintScheduler::PaintScheduler (PaintSchedulerDispatchBase *b) :
     mSchedulerState (0),
@@ -45,7 +50,7 @@ compiz::composite::scheduler::PaintScheduler::schedule ()
 {
     int 			    delay = 1;
 
-    if (!mBaseDispatch->compositingActive ())
+    if (!mDispatchBase->schedulerCompositingActive ())
 	return false;
 
     if (mSchedulerState & paintSchedulerPainting)
@@ -60,7 +65,7 @@ compiz::composite::scheduler::PaintScheduler::schedule ()
     mSchedulerState |= paintSchedulerScheduled;
 
     if (mFPSLimiterMode == CompositeFPSLimiterModeVSyncLike ||
-	(mDispatchBase->hasVSync ()))
+	(mDispatchBase->schedulerHasVsync ()))
     {
 	delay = 1;
     }

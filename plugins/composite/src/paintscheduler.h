@@ -25,6 +25,10 @@
  *          David Reveman <davidr@novell.com>
  */
 
+#include <compiz.h>
+#include <core/timer.h>
+#include <composite/fpslimiter.h>
+
 #ifndef _COMPIZ_COMPOSITE_PAINTSCHEDULER_H
 #define _COMPIZ_COMPOSITE_PAINTSCHEDULER_H
 
