@@ -670,148 +670,27 @@ CompositeScreen::setFPSLimiterMode (CompositeFPSLimiterMode newMode)
     priv->scheduler.setFPSLimiterMode (newMode);
 }
 
-compiz::composite::scheduler::PaintScheduler::PaintScheduler (PaintSchedulerDispatchBase *b) :
-    mSchedulerState (0),
-    mRedrawTime (1000 / 50),
-    mOptimalRedrawTime (1000 / 50),
-    mFPSLimiterMode (CompositeFPSLimiterModeDefault),
-    mDispatchBase (b)
-{
-    gettimeofday (&mLastRedraw, 0);
-}
 
-compiz::composite::scheduler::PaintScheduler::~PaintScheduler ()
-{
-    mPaintTimer.stop ();
-}
-
-bool
-compiz::composite::scheduler::PaintScheduler::schedule ()
-{
-    int 			    delay = 1;
-    compiz::composite::PaintHandler *paintHandler = mDispatchBase->getPaintHandler ();
-
-    if (!paintHandler)
-	return false;
-
-    if (mSchedulerState & paintSchedulerPainting)
-    {
-	mSchedulerState |= paintSchedulerReschedule;
-	return false;
-    }
-
-    if (mSchedulerState & paintSchedulerScheduled)
-	return false;
-
-    mSchedulerState |= paintSchedulerScheduled;
-
-    if (mFPSLimiterMode == CompositeFPSLimiterModeVSyncLike ||
-	(paintHandler->hasVSync ()))
-    {
-	delay = 1;
-    }
-    else
-    {
-	struct timeval now;
-	gettimeofday (&now, 0);
-	int elapsed = TIMEVALDIFF (&now, &mLastRedraw);
-	if (elapsed < 0)
-	    elapsed = 0;
- 	delay = elapsed < mOptimalRedrawTime ? mOptimalRedrawTime - elapsed : 1;
-    }
-    /*
-     * Note the use of delay = 1 instead of 0, even though 0 would be better.
-     * A delay of zero is presently broken due to CompTimer bugs;
-     *    1. Infinite loop in CompTimeoutSource::callback when a zero
-     *       timer is set.
-     *    2. Priority set too high in CompTimeoutSource::CompTimeoutSource
-     *       causing the glib main event loop to be starved of X events.
-     * Fixes for both of these issues are being worked on separately.
-     */
-    mPaintTimer.start
-	(boost::bind (&compiz::composite::scheduler::PaintScheduler::dispatch, this),
-	delay);
-
-    return false;
-}
-
-int
-compiz::composite::scheduler::PaintScheduler::getRedrawTime ()
-{
-    return mRedrawTime;
-}
-
-int
-compiz::composite::scheduler::PaintScheduler::getOptimalRedrawTime ()
-{
-    return mOptimalRedrawTime;
-}
-
-bool
-compiz::composite::scheduler::PaintScheduler::dispatch ()
-{
-    struct timeval                  tv;
-    compiz::composite::PaintHandler *paintHandler = mDispatchBase->getPaintHandler ();
-    int                             timeDiff;
-
-    mSchedulerState |= paintSchedulerPainting;
-    mSchedulerState &= ~paintSchedulerReschedule;
-
-    gettimeofday (&tv, 0);
-
-    if (paintHandler)
-	paintHandler->prepareDrawing ();
-
-    timeDiff = TIMEVALDIFF (&tv, &mLastRedraw);
-
-    /* handle clock rollback */
-
-    if (timeDiff < 0)
-	timeDiff = 0;
-    /*
-     * Now that we use a "tickless" timing algorithm, timeDiff could be
-     * very large if the screen is truely idle.
-     * However plugins expect the old behaviour where timeDiff is never
-     * larger than the frame rate (optimalRedrawTime).
-     * So enforce this to keep animations timed correctly and smooth...
-     */
-
-    if (timeDiff > mOptimalRedrawTime)
-	timeDiff = mOptimalRedrawTime;
-
-    mRedrawTime = timeDiff;
-
-    mDispatchBase->prepareScheduledPaint (timeDiff);
-    mDispatchBase->paintScheduledPaint ();
-    mDispatchBase->doneScheduledPaint ();
-
-
-    mLastRedraw = tv;
-    mSchedulerState &= ~(paintSchedulerPainting | paintSchedulerScheduled);
-
-    if (mSchedulerState & paintSchedulerReschedule)
-	schedule ();
-
-    return false;
-}
-
-void
-compiz::composite::scheduler::PaintScheduler::setRefreshRate (unsigned int rate)
-{
-    mOptimalRedrawTime = mRedrawTime =
-	static_cast <int> (1000 / static_cast <float> (rate));
-}
 
 void
 PrivateCompositeScreen::prepareScheduledPaint (unsigned int timeDiff)
 {
+    if (pHnd)
+	pHnd->prepareDrawing ();
+
     cScreen->preparePaint (slowAnimations ? 1 : timeDiff);
 }
 
-compiz::composite::PaintHandler *
-PrivateCompositeScreen::getPaintHandler ()
+bool
+PrivateCompositeScreen::schedulerCompositingActive ()
 {
-    return pHnd;
+    return pHnd ? pHnd->compositingActive () : false;
+}
+
+bool
+PrivateCompositeScreen::schedulerHasVsync ()
+{
+    return pHnd ? pHnd->hasVSync () : false;
 }
 
 void
