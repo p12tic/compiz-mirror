@@ -426,8 +426,7 @@ DRMVBlankWaiter::DRMVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
 
 DRMVBlankWaiter::~DRMVBlankWaiter ()
 {
-    if (pthread_join (eventThread, NULL))
-	throw std::exception ();
+    pthread_join (eventThread, NULL);
 
     delete info;
 
