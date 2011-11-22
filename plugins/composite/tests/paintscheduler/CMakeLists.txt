@@ -21,7 +21,8 @@ add_executable (compiz_paintscheduler_test
 		../../src/paintscheduler.cpp
 		${compiz_SOURCE_DIR}/src/timer.cpp
 		${compiz_SOURCE_DIR}/src/timeouthandler.cpp
-		test-paintscheduler.cpp)
+		test-paintscheduler.cpp
+		test-paintscheduler-set-drmvblanktype.c)
 
 target_link_libraries (compiz_paintscheduler_test
 		       ${COMPIZ_LIBRARIES} m pthread dl ${DRM_LIBRARY})

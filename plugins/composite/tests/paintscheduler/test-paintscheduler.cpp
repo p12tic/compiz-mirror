@@ -47,13 +47,16 @@
 #include <sys/poll.h>
 #include <sys/time.h>
 
+#include <pthread.h>
+
 extern "C"
 {
 
-#include <xf86drm.h>
-#include <xf86drmMode.h>
+#include "test-paintscheduler-set-drmvblanktype.h"
 
 }
+
+#define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 using namespace compiz::composite::scheduler;
 
@@ -74,26 +77,113 @@ class DRMVBlankWaiter :
 
 	bool waitVBlank ();
 
+	class DRMInfo
+	{
+	    public:
+
+		DRMInfo (DRMVBlankWaiter *w) :
+		    self (w)
+		{
+		}
+
+		DRMVBlankWaiter *self;
+	};
+
+    protected:
+
+	static void *
+	drmEventHandlerThread (void *);
+
+	static void
+	vblankHandler (int          fd,
+		       unsigned int frame,
+		       unsigned int sec,
+		       unsigned int usec,
+		       void         *data);
     private:
 
 	drmVBlank       mVbl;
-	unsigned int    drmFD;
+	drmEventContext evctx;
+	int             drmFD;
+	DRMInfo         *info;
+	pthread_t       eventThread;
+	pthread_mutex_t eventMutex;
+	pthread_cond_t  eventCondition;
+	bool            pendingVBlank;
 };
 
-DRMVBlankWaiter::DRMVBlankWaiter ()
+void
+DRMVBlankWaiter::vblankHandler (int fd, unsigned int frame, unsigned int sec, unsigned int usc, void *data)
+{
+    drmVBlank vbl;
+    DRMInfo   *info = static_cast <DRMInfo *> (data);
+
+    setDRMVBlankType (&vbl.request.type, DRM_VBLANK_RELATIVE | DRM_VBLANK_EVENT);
+    vbl.request.sequence = 1;
+    vbl.request.signal = (unsigned long) data;
+
+    drmWaitVBlank (fd, &vbl);
+
+    pthread_mutex_lock (&info->self->eventMutex);
+    info->self->pendingVBlank = true;
+    pthread_cond_signal (&info->self->eventCondition);
+    pthread_mutex_unlock (&info->self->eventMutex);
+}
+
+void *
+DRMVBlankWaiter::drmEventHandlerThread (void *data)
+{
+    DRMVBlankWaiter *self = static_cast <DRMVBlankWaiter *> (data);
+    std::cout << "DEBUG: libdrm event handler thread" << std::endl;
+
+    while (true)
+    {
+	int    ret;
+	struct pollfd pfd;
+
+	pfd.fd = self->drmFD;
+	pfd.events = POLLIN | POLLHUP;
+	pfd.revents = 0;
+
+	ret = poll (&pfd, 1, -1);
+
+	if (ret <= 0)
+	{
+	    std::cout << "DEBUG: poll () failed" << std::endl;
+	    perror ("poll");
+	    return NULL;
+	}
+
+	ret = drmHandleEvent (self->drmFD, &self->evctx);
+	if (ret != 0)
+	{
+	    drmError (ret, "DRMVBlankWaiter::setupEventContextThread");
+	    return NULL;
+	}
+    }
+
+    return NULL;
+}
+
+DRMVBlankWaiter::DRMVBlankWaiter () :
+    info (new DRMInfo (this)),
+    pendingVBlank (false)
 {
     const char  *modules[] = { "i915", "radeon", "nouveau", "vmwgfx" };
 
-    for (unsigned int i = 0; i < sizeof (modules) / sizeof (modules[0]); i++)
+    pthread_mutex_init (&eventMutex, NULL);
+    pthread_cond_init  (&eventCondition, NULL);
+
+    for (unsigned int i = 0; i < ARRAY_SIZE (modules); i++)
     {
 	std::cout << "DEBUG: attempting to load platform " << modules[i];
 	drmFD = drmOpen (modules[i], NULL);
 
 	if (drmFD < 0)
-	    std::cout << " ... failed";
+	    std::cout << " ... failed" << std::endl;
 	else
 	{
-	    std::cout << " ... success";
+	    std::cout << " ... success" << std::endl;;
 	    break;
 	}
     }
@@ -101,20 +191,51 @@ DRMVBlankWaiter::DRMVBlankWaiter ()
     if (drmFD < 0)
 	throw std::exception ();
 
+    memset (&mVbl, 0, sizeof (drmVBlank));
     mVbl.request.type = DRM_VBLANK_RELATIVE;
     mVbl.request.sequence = 0;
+
+    int ret = drmWaitVBlank (drmFD, &mVbl);
+
+    if (ret != 0)
+    {
+	drmError (ret, "DRMVBlankWaiter::DRMVBlankWaiter (RELATIVE)");
+	throw std::exception ();
+    }
+
+    setDRMVBlankType (&mVbl.request.type, DRM_VBLANK_RELATIVE | DRM_VBLANK_EVENT);
+    mVbl.request.sequence = 1;
+    mVbl.request.signal = (unsigned long) info;
+
+    ret = drmWaitVBlank (drmFD, &mVbl);
+
+    if (ret != 0)
+    {
+	drmError (ret, "DRMVBlankWaiter::DRMVBlankWaiter (RELATIVE EVENT)");
+	throw std::exception ();
+    }
+
+    memset (&evctx, 0, sizeof (drmEventContext));
+    evctx.version = DRM_EVENT_CONTEXT_VERSION;
+    evctx.vblank_handler = DRMVBlankWaiter::vblankHandler;
+    evctx.page_flip_handler = NULL;
+
+    if (pthread_create (&eventThread, NULL, &DRMVBlankWaiter::drmEventHandlerThread, (void *) this))
+    {
+	std::cout << "DEBUG: could not create thread" << std::endl;
+	throw std::exception ();
+    }
 }
 
 bool
 DRMVBlankWaiter::waitVBlank ()
 {
-    unsigned int ret = drmWaitVBlank (drmFD, &mVbl);
+    pthread_mutex_lock (&eventMutex);
+    if (!pendingVBlank)
+	pthread_cond_wait (&eventCondition, &eventMutex);
 
-    if (ret != 0)
-    {
-	std::cout << "DEBUG: drmWaitVBlank failed! Error code: " << ret << std::endl;
-	return false;
-    }
+    pendingVBlank = false;
+    pthread_mutex_unlock (&eventMutex);
 
     return true;
 }
