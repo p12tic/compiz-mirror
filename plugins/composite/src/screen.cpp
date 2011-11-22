@@ -279,14 +279,14 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     overlayWindowCount (0),
     redrawTime (1000 / 50),
     optimalRedrawTime (1000 / 50),
+    scheduled (false),
+    painting (false),
+    reschedule (false),
     slowAnimations (false),
     pHnd (NULL),
     FPSLimiterMode (CompositeFPSLimiterModeDefault),
     withDestroyedWindows ()
 {
-    scheduled = false;
-    painting = false;
-    reschedule = false;
     gettimeofday (&lastRedraw, 0);
     // wrap outputChangeNotify
     ScreenInterface::setHandler (screen);
