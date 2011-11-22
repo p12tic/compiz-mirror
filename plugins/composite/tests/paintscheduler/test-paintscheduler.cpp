@@ -60,11 +60,39 @@ extern "C"
 
 using namespace compiz::composite::scheduler;
 
+class DummyPaintDispatch;
+
+void pass (const std::string &message)
+{
+    std::cout << "PASS: " << message << std::endl;
+}
+
+void fail (const std::string &message)
+{
+    std::cout << "FAIL: " << message << std::endl;
+    exit (1);
+}
+
 class VBlankWaiter
 {
     public:
 
+	VBlankWaiter (DummyPaintDispatch *owner, unsigned int n);
+	virtual ~VBlankWaiter ();
+
 	virtual bool waitVBlank () = 0;
+	virtual bool hasVSync () = 0;
+
+	bool checkTimings (float req, float threshold);
+	float averageTiming ();
+
+	void addTiming (unsigned int time);
+
+    protected:
+
+	std::vector <float> timings;
+	unsigned int        timingCount;
+	DummyPaintDispatch  *owner;
 };
 
 class DRMVBlankWaiter :
@@ -72,10 +100,11 @@ class DRMVBlankWaiter :
 {
     public:
 
-	DRMVBlankWaiter ();
+	DRMVBlankWaiter (DummyPaintDispatch *owner, unsigned int n);
 	~DRMVBlankWaiter ();
 
 	bool waitVBlank ();
+	bool hasVSync ();
 
 	class DRMInfo
 	{
@@ -88,6 +117,8 @@ class DRMVBlankWaiter :
 
 		DRMVBlankWaiter *self;
 	};
+
+	static float threshold;
 
     protected:
 
@@ -110,7 +141,164 @@ class DRMVBlankWaiter :
 	pthread_mutex_t eventMutex;
 	pthread_cond_t  eventCondition;
 	bool            pendingVBlank;
+	bool		done;
 };
+
+class NilVBlankWaiter :
+    public VBlankWaiter
+{
+    public:
+
+	NilVBlankWaiter (DummyPaintDispatch *, unsigned int);
+	~NilVBlankWaiter ();
+
+	bool waitVBlank ()
+	{
+	    timingCount++;
+	    return timingCount < timings.size ();
+	}
+
+	bool hasVSync () { return false; }
+};
+
+class DummyPaintDispatch :
+    public PaintSchedulerDispatchBase
+{
+    public:
+
+	DummyPaintDispatch (Glib::RefPtr <Glib::MainLoop> loop);
+
+	void prepareScheduledPaint (unsigned int timeDiff)
+	{
+	    waiter->addTiming (timeDiff);
+	}
+
+	void paintScheduledPaint ()
+	{
+	    if (waiter)
+	    {
+		success = waiter->waitVBlank ();
+	    }
+	    else
+		success = false;
+	}
+
+	void doneScheduledPaint ()
+	{
+	    if (waiter && success)
+		sched.schedule ();
+	    else
+		ml->quit ();
+	}
+
+	bool schedulerCompositingActive ()
+	{
+	    return true;
+	}
+
+	bool schedulerHasVsync ()
+	{
+	    if (waiter)
+		return waiter->hasVSync ();
+
+	    return true;
+	}
+
+	void setWaiter (VBlankWaiter *w)
+	{
+	    if (waiter)
+		delete waiter;
+
+	    waiter = w;
+	}
+
+	void setRefreshRate (unsigned int r)
+	{
+	    sched.setRefreshRate (r);
+	}
+
+	bool isDone () { return !(waiter && success); }
+
+    private:
+
+	PaintScheduler sched;
+	VBlankWaiter   *waiter;
+	bool           success;
+	Glib::RefPtr <Glib::MainLoop> ml;
+};
+
+
+float DRMVBlankWaiter::threshold = 7.0f;
+
+float
+VBlankWaiter::averageTiming ()
+{
+    float buf = 0.0f;
+
+    for (std::vector <float>::iterator it = timings.begin ();
+	 it != timings.end (); it++)
+	buf += (*it);
+
+    buf = buf / (timings.size ());
+
+    return buf;
+}
+
+/* Returns false if a value exists outside
+ * the threshold */
+bool
+VBlankWaiter::checkTimings (float req, float threshold)
+{
+    /* Ignore the first ten as they are synchronization bits */
+    std::vector <float>::iterator it = timings.begin ();
+
+    assert (timings.size () > 10);
+
+    it++;
+    it++;
+
+    it++;
+    it++;
+
+    it++;
+    it++;
+
+    it++;
+    it++;
+
+    it++;
+    it++;
+
+    for (; it != timings.end (); it++)
+    {
+	if ((((*it) <= req - threshold) ||
+	     ((*it) >= req + threshold)))
+	{
+	    std::cout << "DEBUG: failing value " << (*it) << std::endl;
+	    return false;
+	}
+    }
+
+    return true;
+}
+
+void
+VBlankWaiter::addTiming (unsigned int time)
+{
+    if (timingCount < timings.size ())
+	timings[timingCount]= time;
+}
+
+VBlankWaiter::VBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
+    timings (n),
+    owner (o),
+    timingCount (0)
+{
+}
+
+VBlankWaiter::~VBlankWaiter  ()
+{
+}
 
 void
 DRMVBlankWaiter::vblankHandler (int fd, unsigned int frame, unsigned int sec, unsigned int usc, void *data)
@@ -125,7 +313,15 @@ DRMVBlankWaiter::vblankHandler (int fd, unsigned int frame, unsigned int sec, un
     drmWaitVBlank (fd, &vbl);
 
     pthread_mutex_lock (&info->self->eventMutex);
-    info->self->pendingVBlank = true;
+
+    if (info->self->timingCount == info->self->timings.size ())
+	info->self->done = true;
+    else
+    {
+	info->self->pendingVBlank = true;
+	info->self->timingCount++;
+    }
+	
     pthread_cond_signal (&info->self->eventCondition);
     pthread_mutex_unlock (&info->self->eventMutex);
 }
@@ -134,9 +330,8 @@ void *
 DRMVBlankWaiter::drmEventHandlerThread (void *data)
 {
     DRMVBlankWaiter *self = static_cast <DRMVBlankWaiter *> (data);
-    std::cout << "DEBUG: libdrm event handler thread" << std::endl;
 
-    while (true)
+    while (!self->owner->isDone ())
     {
 	int    ret;
 	struct pollfd pfd;
@@ -165,9 +360,11 @@ DRMVBlankWaiter::drmEventHandlerThread (void *data)
     return NULL;
 }
 
-DRMVBlankWaiter::DRMVBlankWaiter () :
+DRMVBlankWaiter::DRMVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
+    VBlankWaiter (o, n),
     info (new DRMInfo (this)),
-    pendingVBlank (false)
+    pendingVBlank (false),
+    done (false)
 {
     const char  *modules[] = { "i915", "radeon", "nouveau", "vmwgfx" };
 
@@ -227,6 +424,31 @@ DRMVBlankWaiter::DRMVBlankWaiter () :
     }
 }
 
+DRMVBlankWaiter::~DRMVBlankWaiter ()
+{
+    if (pthread_join (eventThread, NULL))
+	throw std::exception ();
+
+    delete info;
+
+    drmClose (drmFD);
+}
+
+NilVBlankWaiter::NilVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
+    VBlankWaiter (o, n)
+{
+}
+
+NilVBlankWaiter::~NilVBlankWaiter ()
+{
+}
+
+bool
+DRMVBlankWaiter::hasVSync ()
+{
+    return true;
+}
+
 bool
 DRMVBlankWaiter::waitVBlank ()
 {
@@ -237,84 +459,17 @@ DRMVBlankWaiter::waitVBlank ()
     pendingVBlank = false;
     pthread_mutex_unlock (&eventMutex);
 
-    return true;
+    return !done;
 }
 
-class DummyPaintDispatch :
-    public PaintSchedulerDispatchBase
-{
-    public:
-
-	DummyPaintDispatch ();
-
-	void prepareScheduledPaint (unsigned int timeDiff)
-	{
-	    std::cout << "DEBUG: scheduled paint time diff: " << timeDiff << std::endl;
-	}
-
-	void paintScheduledPaint ()
-	{
-	    std::cout << "DEBUG: paint scheduled paint" << std::endl;
-
-	    if (waiter)
-	    {
-		if (!waiter->waitVBlank ())
-		{
-		    delete waiter;
-		    waiter = NULL;
-		}
-	    }
-	}
-
-	void doneScheduledPaint ()
-	{
-	    std::cout << "DEBUG: done scheduled paint" << std::endl;
-
-	    sched.schedule ();
-	}
-
-	bool schedulerCompositingActive ()
-	{
-	    return true;
-	}
-
-	bool schedulerHasVsync ()
-	{
-	    return true;
-	}
-
-    private:
-
-	PaintScheduler sched;
-	VBlankWaiter   *waiter;
-};
-
-DummyPaintDispatch::DummyPaintDispatch () :
-    sched (this)
+DummyPaintDispatch::DummyPaintDispatch (Glib::RefPtr <Glib::MainLoop> mainloop) :
+    sched (this),
+    waiter (NULL),
+    success (true),
+    ml (mainloop)
 {
     sched.schedule ();
-
-    try
-    {
-	waiter = new DRMVBlankWaiter ();
-    }
-    catch (std::exception &e)
-    {
-	throw e;
-    }
 }
-
-void pass (const std::string &message)
-{
-    std::cout << "PASS: " << message << std::endl;
-}
-
-void fail (const std::string &message)
-{
-    std::cout << "FAIL: " << message << std::endl;
-    exit (1);
-}
-
 
 int main (void)
 {
@@ -325,13 +480,118 @@ int main (void)
     Glib::RefPtr <Glib::MainLoop> mainloop = Glib::MainLoop::create (ctx, false);
     Glib::RefPtr <CompTimeoutSource> timeout = CompTimeoutSource::create (ctx);
 
-    DummyPaintDispatch *dbp = new DummyPaintDispatch ();
+    DummyPaintDispatch *dpb = new DummyPaintDispatch (mainloop);
 
-    ctx->iteration (false);
+    try
+    {
+
+	DRMVBlankWaiter    *dvbwaiter = new DRMVBlankWaiter (dpb, 300);
+
+	dpb->setWaiter (dvbwaiter);
+
+	mainloop->run ();
+
+	float averageTime = dvbwaiter->averageTiming ();
+
+	std::cout << "DEBUG: average vblank wait time was " << averageTime << std::endl;
+	std::cout << "DEBUG: average frame rate " << 1000 / averageTime << " Hz" << std::endl;
+	std::cout << "TEST: time " << averageTime << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
+
+	if (dvbwaiter->checkTimings (averageTime, DRMVBlankWaiter::threshold))
+	    pass ("hardware vblank timings");
+	else
+	    fail ("hardware vblank timings");
+    }
+    catch (std::exception &e)
+    {
+	std::cout << "WARN: can't test DRM vblanking!" << std::endl;
+    }
+
+    dpb->setWaiter (NULL);
+
+    delete dpb;
+    delete th;
+
+    th = new TimeoutHandler ();
+    TimeoutHandler::SetDefault (th);
+
+    mainloop = Glib::MainLoop::create (ctx, false);
+    timeout = CompTimeoutSource::create (ctx);
+
+    dpb = new DummyPaintDispatch (mainloop);
+
+    NilVBlankWaiter *nwaiter = new NilVBlankWaiter (dpb, 100);
+
+    dpb->setRefreshRate (50);
+    dpb->setWaiter (nwaiter);
 
     mainloop->run ();
 
-    delete dbp;
+    std::cout << "TEST: refreshRate " << 50 << " within threshold of " << 10 << std::endl;
+
+    if (nwaiter->checkTimings (1000 / 50, 10))
+	pass ("50 Hz refresh rate");
+    else
+	fail ("50 Hz refresh rate");
+
+    dpb->setWaiter (NULL);
+
+    delete dpb;
+    delete th;
+
+    th = new TimeoutHandler ();
+    TimeoutHandler::SetDefault (th);
+
+    mainloop = Glib::MainLoop::create (ctx, false);
+    timeout = CompTimeoutSource::create (ctx);
+
+    dpb = new DummyPaintDispatch (mainloop);
+
+    NilVBlankWaiter *nwaiter2 = new NilVBlankWaiter (dpb, 100);
+
+    dpb->setRefreshRate (30);
+    dpb->setWaiter (nwaiter2);
+
+    mainloop->run ();
+
+    std::cout << "TEST: refreshRate " << 30 << " within threshold of " << 10 << std::endl;
+
+    if (nwaiter2->checkTimings (1000 / 30, 10))
+	pass ("30 Hz refresh rate");
+    else
+	fail ("30 Hz refresh rate");
+
+    dpb->setWaiter (NULL);
+
+    delete dpb;
+    delete th;
+
+    th = new TimeoutHandler ();
+    TimeoutHandler::SetDefault (th);
+
+    mainloop = Glib::MainLoop::create (ctx, false);
+    timeout = CompTimeoutSource::create (ctx);
+
+    dpb = new DummyPaintDispatch (mainloop);
+
+    NilVBlankWaiter *nwaiter3 = new NilVBlankWaiter (dpb, 100);
+
+    dpb->setRefreshRate (100);
+    dpb->setWaiter (nwaiter3);
+
+    mainloop->run ();
+
+    std::cout << "TEST: refreshRate " << 100 << " within threshold of " << 10 << std::endl;
+
+    if (nwaiter3->checkTimings (1000 / 100, 10))
+	pass ("100 Hz refresh rate");
+    else
+	fail ("100 Hz refresh rate");
+
+    dpb->setWaiter (NULL);
+
+    delete dpb;
+    delete th;
 
     return 0;
 }
