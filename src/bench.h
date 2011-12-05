@@ -7,6 +7,9 @@
  * Copyright : (C) 2006 by Dennis Kasprzyk
  * E-mail    : onestone@beryl-project.org
  *
+ * New frame rate measurement algorithm:
+ * Copyright (c) 2011 Daniel van Vugt <vanvugt@gmail.com>
+ *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -21,6 +24,7 @@
  **/
 
 #include <core/core.h>
+#include <core/timer.h>
 #include <core/serialization.h>
 #include <core/pluginclasshandler.h>
 
@@ -71,14 +75,26 @@ class BenchScreen :
 	GLScreen        *gScreen;
 
 	GLuint mDList;
-	float  mRrVal;
-	float  mFps;
 	float  mAlpha;
 
-	struct timeval mLastRedraw;
+	enum {
+	    MAX_FPS = 500,
+	    FADE_FPS = 50,
+	    SECONDS_PER_AVERAGE = 2,
+	    MAX_SAMPLES = MAX_FPS * SECONDS_PER_AVERAGE,
+	    MIN_MS_PER_UPDATE = 1000
+	};
 
-	float mCtime;
-	float mFrames;
+	bool      mFakedDamage;
+	CompRect  mRect;
+	CompTimer mTimer;
+
+	int mSample[MAX_SAMPLES];
+	int mFrames;
+	int mLastPrintFrames;
+
+	struct timeval mLastPrint;
+	struct timeval mLastRedraw;
 
 	GLuint mNumTex[10];
 	GLuint mBackTex;
@@ -87,6 +103,9 @@ class BenchScreen :
 
 	CompositeFPSLimiterMode mOldLimiterMode;
 
+	void damageSelf ();
+	bool timedOut ();
+	float averageFramerate () const;
 	void postLoad ();
 
 	template <class Archive>
@@ -100,7 +119,6 @@ class BenchScreen :
 	void limiterModeChanged (CompOption *opt);
 
 	void preparePaint (int msSinceLastPaint);
-	void donePaint ();
 
 	bool glPaintOutput (const GLScreenPaintAttrib &,
 			    const GLMatrix &, const CompRegion &,
