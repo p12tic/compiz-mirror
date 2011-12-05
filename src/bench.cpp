@@ -7,6 +7,9 @@
  * Copyright : (C) 2006 by Dennis Kasprzyk
  * E-mail    : onestone@beryl-project.org
  *
+ * New frame rate measurement algorithm:
+ * Copyright (c) 2011 Daniel van Vugt <vanvugt@gmail.com>
+ *
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -24,73 +27,117 @@
 
 COMPIZ_PLUGIN_20090315 (bench, BenchPluginVTable)
 
+#define TEX_WIDTH  512
+#define TEX_HEIGHT 256
+
 void
 BenchScreen::preparePaint (int msSinceLastPaint)
 {
-    float nRrVal;
-    float ratio = 0.05;
-    int   timediff;
-
     struct timeval now;
-
     gettimeofday (&now, 0);
 
-    timediff = TIMEVALDIFF (&now, &mLastRedraw);
-
-    nRrVal = MIN (1.1,
-		  (float) cScreen->optimalRedrawTime () / (float) timediff);
-
-    mRrVal = (mRrVal * (1.0 - ratio) ) + (nRrVal * ratio);
-
-    mFps = (mFps * (1.0 - ratio) ) +
-	      (1000000.0 / TIMEVALDIFFU (&now, &mLastRedraw) * ratio);
-
+    int timediff = TIMEVALDIFFU (&now, &mLastRedraw);
+    mSample[mFrames % MAX_SAMPLES] = timediff;
+    timediff /= 1000;
+    mFrames++;
     mLastRedraw = now;
 
     if (optionGetOutputConsole () && mActive)
     {
-	mFrames++;
-	mCtime += timediff;
-
-	if (mCtime > optionGetConsoleUpdateTime () * 1000)
+	int dTime = TIMEVALDIFF (&now, &mLastPrint);
+	if (dTime > optionGetConsoleUpdateTime () * 1000)
 	{
-	    printf ("[BENCH] : %.0f frames in %.1f seconds = %.3f FPS\n",
-		    mFrames, mCtime / 1000.0,
-		    mFrames / (mCtime / 1000.0) );
-	    mFrames = 0;
-	    mCtime = 0;
+	    int dFrames = mFrames - mLastPrintFrames;
+	    mLastPrintFrames = mFrames;
+	    g_print ("[BENCH] : %d frames in %d.%01d seconds = %d.%03d FPS\n",
+		    dFrames, dTime / 1000, (dTime % 1000) / 100,
+		    dFrames * 1000 / dTime, ((dFrames * 1000) % dTime) / 10);
+	    mLastPrint = now;
 	}
     }
 
-    cScreen->preparePaint ((mAlpha > 0.0) ? timediff : msSinceLastPaint);
-
     if (mActive)
+    {
 	mAlpha += timediff / 1000.0;
+	if (mAlpha >= 1.0f)
+	{
+	    mAlpha = 1.0f;
+	    /*
+	     * If we're only creating "fake" damage to update the benchmark
+	     * and no other damage is pending, then do it progressively
+	     * less often so the framerate can steadily decrease toward zero.
+	     */
+	    if (mFakedDamage)
+		mTimer.setTimes (mTimer.minTime () * 2);
+	    else
+	    {
+	        /*
+		 * Piggyback on damage events other than our own, so the
+		 * benchmark updates at least as often as the rest
+		 * of the screen.
+		 */
+		damageSelf ();
+		if (mTimer.minTime () != MIN_MS_PER_UPDATE)
+		    mTimer.setTimes (MIN_MS_PER_UPDATE);
+	    }
+	}
+    }
     else
     {
 	if (mAlpha <= 0.0)
 	{
 	    cScreen->preparePaintSetEnabled (this, false);
-	    cScreen->donePaintSetEnabled (this, false);
 	    gScreen->glPaintOutputSetEnabled (this, false);
+	    mTimer.stop ();
 	}
 	mAlpha -= timediff / 1000.0;
+	if (mAlpha < 0.0f)
+	    mAlpha = 0.0f;
     }
 
-    mAlpha = MIN (1.0, MAX (0.0, mAlpha) );
+    mFakedDamage = false;
+
+    cScreen->preparePaint (msSinceLastPaint);
 }
 
-void
-BenchScreen::donePaint ()
+float
+BenchScreen::averageFramerate () const
+/*
+ * Returns the average frame rate of the last SECONDS_PER_AVERAGE seconds.
+ * This calculation is accurate no matter how often/seldom the screen
+ * gets painted. No timers required. Calculus rocks :)
+ */
 {
-    if (mAlpha > 0.0)
+    const int usPerAverage = SECONDS_PER_AVERAGE * 1000000;
+    int i = (mFrames + MAX_SAMPLES - 1) % MAX_SAMPLES;
+    int lastSample = 0;
+    int timeSum = 0;
+    int count = 0;
+    int maxCount = MIN (MAX_SAMPLES, mFrames);
+
+    while (timeSum < usPerAverage && count < maxCount)
     {
-	cScreen->damageScreen ();
-	glFlush();
-	XSync (::screen->dpy (), false);
+	lastSample = mSample[i];
+	timeSum += lastSample;
+	i = (i + MAX_SAMPLES - 1) % MAX_SAMPLES;
+	count++;
     }
 
-    cScreen->donePaint ();
+    float fps = 0.0f;
+    if (timeSum < usPerAverage)
+    {
+	if (timeSum > 0)
+	    fps = (float)(count * 1000000) / timeSum;
+    }
+    else
+    {
+	fps = (float)(count - 1);
+	if (lastSample > 0)
+	    fps += (float)(usPerAverage - (timeSum - lastSample)) / lastSample;
+	fps /= SECONDS_PER_AVERAGE;
+    }
+
+    return fps;
 }
 
 bool
@@ -124,7 +171,9 @@ BenchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
     glColor4f (1.0, 1.0, 1.0, mAlpha);
     glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
-    glTranslatef (optionGetPositionX (), optionGetPositionY (), 0);
+    mRect.setX (optionGetPositionX ());
+    mRect.setY (optionGetPositionY ());
+    glTranslatef (mRect.x (), mRect.y (), 0);
 
     glEnable (GL_TEXTURE_2D);
     glBindTexture (GL_TEXTURE_2D, mBackTex);
@@ -133,11 +182,11 @@ BenchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
     glTexCoord2f (0, 0);
     glVertex2f (0, 0);
     glTexCoord2f (0, 1);
-    glVertex2f (0, 256);
+    glVertex2f (0, TEX_HEIGHT);
     glTexCoord2f (1, 1);
-    glVertex2f (512, 256);
+    glVertex2f (TEX_WIDTH, TEX_HEIGHT);
     glTexCoord2f (1, 0);
-    glVertex2f (512, 0);
+    glVertex2f (TEX_WIDTH, 0);
     glEnd();
 
     glBindTexture (GL_TEXTURE_2D, 0);
@@ -145,15 +194,24 @@ BenchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 
     glTranslatef (53, 83, 0);
 
-    float rrVal = MIN (1.0, MAX (0.0, mRrVal) );
+    float avgFps = averageFramerate ();
+    float rrVal = avgFps * cScreen->optimalRedrawTime () / 1000.0;
+    /*
+     * rrVal is slightly inaccurate and can be off by a couple of FPS.
+     * This means the graph for a 60 FPS config goes up to 62.5 FPS.
+     * This is because cScreen->optimalRedrawTime only has millisec precision
+     * and can't be avoided without improving the precision of the composite
+     * plugin.
+     */
+    rrVal = MIN (1.0, MAX (0.0, rrVal) );
 
     if (rrVal < 0.5)
     {
 	glBegin (GL_QUADS);
-	glColor4f (1.0, 0.0, 0.0, mAlpha);
+	glColor4f (0.0, 1.0, 0.0, mAlpha);
 	glVertex2f (0.0, 0.0);
 	glVertex2f (0.0, 25.0);
-	glColor4f (1.0, rrVal * 2.0, 0.0, mAlpha);
+	glColor4f (rrVal * 2.0, 1.0, 0.0, mAlpha);
 	glVertex2f (330.0 * rrVal, 25.0);
 	glVertex2f (330.0 * rrVal, 0.0);
 	glEnd();
@@ -161,7 +219,7 @@ BenchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
     else
     {
 	glBegin (GL_QUADS);
-	glColor4f (1.0, 0.0, 0.0, mAlpha);
+	glColor4f (0.0, 1.0, 0.0, mAlpha);
 	glVertex2f (0.0, 0.0);
 	glVertex2f (0.0, 25.0);
 	glColor4f (1.0, 1.0, 0.0, mAlpha);
@@ -173,7 +231,7 @@ BenchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	glColor4f (1.0, 1.0, 0.0, mAlpha);
 	glVertex2f (165.0, 0.0);
 	glVertex2f (165.0, 25.0);
-	glColor4f (1.0 - ( (rrVal - 0.5) * 2.0), 1.0, 0.0, mAlpha);
+	glColor4f (1.0, 1.0 - ( (rrVal - 0.5) * 2.0), 0.0, mAlpha);
 	glVertex2f (165.0 + 330.0 * (rrVal - 0.5), 25.0);
 	glVertex2f (165.0 + 330.0 * (rrVal - 0.5), 0.0);
 	glEnd();
@@ -182,71 +240,25 @@ BenchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
     glColor4f (0.0, 0.0, 0.0, mAlpha);
     glCallList (mDList);
     glTranslatef (72, 45, 0);
-
-    float red;
-
-    if (mFps > 30.0)
-	red = 0.0;
-    else
-	red = 1.0;
-
-    if (mFps <= 30.0 && mFps > 20.0)
-	red = 1.0 - ( (mFps - 20.0) / 10.0);
-
-    glColor4f (red, 0.0, 0.0, mAlpha);
     glEnable (GL_TEXTURE_2D);
 
     isSet = false;
 
-    fps = (mFps * 100.0);
+    fps = (avgFps * 100.0);
     fps = MIN (999999, fps);
 
-    if (fps >= 100000)
+    for (unsigned int pos = 100000; pos >= 1; pos /= 10)
     {
-	glBindTexture (GL_TEXTURE_2D, mNumTex[fps / 100000]);
-	glCallList (mDList + 1);
-	isSet = true;
+	if (fps >= pos || isSet || pos <= 100)
+	{
+	    unsigned int digit = fps / pos;
+	    glBindTexture (GL_TEXTURE_2D, mNumTex[digit]);
+	    glCallList (mDList + 1);
+	    isSet = true;
+	    fps %= pos;
+	}
+	glTranslatef ((pos == 100) ? 19 : 12, 0, 0);
     }
-
-    fps %= 100000;
-
-    glTranslatef (12, 0, 0);
-
-    if (fps >= 10000 || isSet)
-    {
-	glBindTexture (GL_TEXTURE_2D, mNumTex[fps / 10000]);
-	glCallList (mDList + 1);
-	isSet = true;
-    }
-
-    fps %= 10000;
-
-    glTranslatef (12, 0, 0);
-
-    if (fps >= 1000 || isSet)
-    {
-	glBindTexture (GL_TEXTURE_2D, mNumTex[fps / 1000]);
-	glCallList (mDList + 1);
-    }
-
-    fps %= 1000;
-
-    glTranslatef (12, 0, 0);
-
-    glBindTexture (GL_TEXTURE_2D, mNumTex[fps / 100]);
-    glCallList (mDList + 1);
-    fps %= 100;
-
-    glTranslatef (19, 0, 0);
-
-    glBindTexture (GL_TEXTURE_2D, mNumTex[fps / 10]);
-    glCallList (mDList + 1);
-    fps %= 10;
-
-    glTranslatef (12, 0, 0);
-
-    glBindTexture (GL_TEXTURE_2D, mNumTex[fps]);
-    glCallList (mDList + 1);
 
     glBindTexture (GL_TEXTURE_2D, 0);
     glDisable (GL_TEXTURE_2D);
@@ -275,7 +287,6 @@ void
 BenchScreen::postLoad ()
 {
     cScreen->preparePaintSetEnabled (this, mActive);
-    cScreen->donePaintSetEnabled (this, mActive);
     gScreen->glPaintOutputSetEnabled (this, mActive);
 }
 
@@ -284,11 +295,10 @@ BenchScreen::BenchScreen (CompScreen *screen) :
     PluginStateWriter <BenchScreen> (this, screen->root ()),
     cScreen (CompositeScreen::get (screen)),
     gScreen (GLScreen::get (screen)),
-    mRrVal (0),
-    mFps (0),
     mAlpha (0),
-    mCtime (0),
+    mFakedDamage (false),
     mFrames (0),
+    mLastPrintFrames (0),
     mActive (false),
     mOldLimiterMode ((CompositeFPSLimiterMode)
     		     BenchOptions::FpsLimiterModeDefaultLimiter)
@@ -301,6 +311,10 @@ BenchScreen::BenchScreen (CompScreen *screen) :
 
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen, false);
+
+    mRect.setGeometry (optionGetPositionX (), optionGetPositionY (),
+                       TEX_WIDTH, TEX_HEIGHT);
+    mTimer.setCallback (boost::bind (&BenchScreen::timedOut, this));
 
     glGenTextures (10, mNumTex);
     glGenTextures (1, &mBackTex);
@@ -333,7 +347,7 @@ BenchScreen::BenchScreen (CompScreen *screen) :
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
     glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 
-    glTexImage2D (GL_TEXTURE_2D, 0, 4, 512, 256, 0, GL_RGBA,
+    glTexImage2D (GL_TEXTURE_2D, 0, 4, TEX_WIDTH, TEX_HEIGHT, 0, GL_RGBA,
 		  GL_UNSIGNED_BYTE, image_data);
     GLERR;
 
@@ -402,6 +416,21 @@ BenchScreen::~BenchScreen ()
     glDeleteTextures (1, &mBackTex);
 }
 
+void
+BenchScreen::damageSelf ()
+{
+    CompRegion self (mRect);
+    cScreen->damageRegion (self);
+}
+
+bool
+BenchScreen::timedOut ()
+{
+    mFakedDamage = (cScreen->damageMask () == 0);
+    damageSelf ();
+    return true;
+}
+
 bool
 BenchScreen::initiate (CompOption::Vector &options)
 {
@@ -424,20 +453,24 @@ BenchScreen::initiate (CompOption::Vector &options)
 				    optionGetFpsLimiterMode ());
 
 	cScreen->preparePaintSetEnabled (this, true);
-	cScreen->donePaintSetEnabled (this, true);
 	gScreen->glPaintOutputSetEnabled (this, true);
+
+	for (int t = 0; t < MAX_SAMPLES; t++)
+	    mSample[t] = 0;
     }
     else
     {
     	// Restore FPS limiter mode
     	cScreen->setFPSLimiterMode (mOldLimiterMode);
+	mTimer.stop ();
     }
+    mTimer.start (1000 / FADE_FPS);
 
-    cScreen->damageScreen ();
-    mCtime = 0;
     mFrames = 0;
+    mLastPrintFrames = 0;
 
     gettimeofday (&mLastRedraw, 0);
+    mLastPrint = mLastRedraw;
 
     return false;
 }
