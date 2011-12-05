@@ -80,7 +80,7 @@ namespace GL {
     bool canDoSlightlySaturated = false;
 
     unsigned int vsyncCount = 0;
-    bool         vsyncFailed = false;
+    unsigned int unthrottledFrames = 0;
 }
 
 CompOutput *targetOutput = NULL;
@@ -1085,6 +1085,7 @@ namespace GL
 void
 waitForVideoSync ()
 {
+    GL::unthrottledFrames++;
     if (GL::waitVideoSync)
     {
 	// Don't wait twice. Just in case.
@@ -1095,14 +1096,8 @@ waitForVideoSync ()
 	unsigned int oldCount = GL::vsyncCount;
 	(*GL::waitVideoSync) (1, 0, &GL::vsyncCount);
 
-	/*
-	 * GL::vsyncFailed is used to test if waitVideoSync is broken or
-	 * disabled in the driver. If true, then we need to report this to
-	 * composite by making hasVSync return false so that composite can do
-	 * its own throttling. At least until the driver settings are changed
-	 * and waitVideoSync starts working again...
-	 */
-	GL::vsyncFailed = (GL::vsyncCount == oldCount);
+	if (GL::vsyncCount != oldCount)
+	    GL::unthrottledFrames = 0;
     }
 }
 
@@ -1111,7 +1106,10 @@ controlSwapVideoSync (bool sync)
 {
     // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
     if (GL::swapInterval)
+    {
 	(*GL::swapInterval) (sync ? 1 : 0);
+	GL::unthrottledFrames++;
+    }
     else if (sync)
 	waitForVideoSync ();
 }
@@ -1267,7 +1265,8 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 bool
 PrivateGLScreen::hasVSync ()
 {
-   return (GL::waitVideoSync && optionGetSyncToVblank () && !GL::vsyncFailed);
+    return GL::waitVideoSync && optionGetSyncToVblank () && 
+           GL::unthrottledFrames < 5;
 }
 
 bool
