@@ -302,7 +302,8 @@ InfoWindow::grabNotify (int          x,
 {
     INFO_SCREEN (screen);
 
-    if ((!is->pWindow || !is->drawing) && !(window->state () & MAXIMIZE_STATE))
+    if ((!is->pWindow || !is->drawing) &&
+        ((window->state () & MAXIMIZE_STATE) != MAXIMIZE_STATE))
     {
 	bool showInfo;
 	showInfo = (((window->sizeHints ().width_inc != 1) && 
