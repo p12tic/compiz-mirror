@@ -38,8 +38,8 @@ class PrivateTimer
 	bool         		 mActive;
 	unsigned int 		 mMinTime;
 	unsigned int 		 mMaxTime;
-	int          		 mMinLeft;
-	int          		 mMaxLeft;
+	gint64                   mMinDeadline;
+	gint64                   mMaxDeadline;
 	CompTimer::CallBack      mCallBack;
 };
 
