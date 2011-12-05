@@ -35,7 +35,25 @@
 CompTimeoutSource::CompTimeoutSource (Glib::RefPtr <Glib::MainContext> &ctx) :
     Glib::Source ()
 {
-    set_priority (G_PRIORITY_HIGH);
+    /*
+     * Compiz MUST use priority G_PRIORITY_DEFAULT because that's the same
+     * as GDK_PRIORITY_EVENTS.
+     *
+     * Any higher priority than that and you will starve the glib event loop
+     * of X events. That causes stuttering and even complete starvation
+     * can cause compiz to hang inside X11/GLX functions indefinitely.
+     * In the best case, GLX functions would be slowed down by their messages
+     * being prioritized lower than us.
+     *
+     * Any lower priority than that and screen redraws can lag behind
+     * important things like dragging windows around.
+     *
+     * We have an "unfair" scheduling algorithm in the glib main event loop
+     * to thank for all this. Ideally, compiz should be threaded so it never
+     * slows down the handling of X11/GLX messages in the glib main loop, or
+     * vice-versa.
+     */
+    set_priority (G_PRIORITY_DEFAULT);
     attach (ctx);
 
     connect (sigc::mem_fun <bool, CompTimeoutSource> (this, &CompTimeoutSource::callback));
