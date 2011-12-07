@@ -1192,8 +1192,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
     targetOutput = &screen->outputDevs ()[0];
 
-    glFlush ();
-
     if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
     {
 	/*
@@ -1209,6 +1207,18 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	BoxPtr pBox;
 	int    nBox, y;
 
+	/*
+	 * In the original (June 2000) version of the GLX_MESA_copy_sub_buffer
+	 * spec, it was not guaranteed that glXCopySubBufferMESA would
+	 * do a flush or finish like glXSwapBuffers does.
+	 * This is clarified in the 2009 version of the spec, however even
+	 * then, doing the flush or finish after waitForVideoSync would cause
+	 * significant delay and ruin your vsync resulting in tearing.
+	 * So no matter what version of GLX_MESA_copy_sub_buffer you have,
+	 * you always need to do a full glFinish before you call
+	 * waitForVideoSync, in order to avoid tearing.
+	 */
+	glFinish ();
 	waitForVideoSync ();
 	pBox = const_cast <Region> (tmpRegion.handle ())->rects;
 	nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
