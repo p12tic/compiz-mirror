@@ -1092,6 +1092,16 @@ waitForVideoSync ()
 	if (GL::swapInterval)
 	    (*GL::swapInterval) (0);
 
+	/*
+	 * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
+	 * flush before they blit, it is best to not let that happen.
+	 * Because that flush would occur after GL::waitVideoSync, causing
+	 * a delay and the final blit to be slightly out of sync resulting
+	 * in tearing. So we need to do a glFinish before we wait for
+	 * vsync, to absolutely minimize tearing.
+	 */
+	glFinish ();
+
 	// Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
 	unsigned int oldCount = GL::vsyncCount;
 	(*GL::waitVideoSync) (1, 0, &GL::vsyncCount);
@@ -1207,18 +1217,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	BoxPtr pBox;
 	int    nBox, y;
 
-	/*
-	 * In the original (June 2000) version of the GLX_MESA_copy_sub_buffer
-	 * spec, it was not guaranteed that glXCopySubBufferMESA would
-	 * do a flush or finish like glXSwapBuffers does.
-	 * This is clarified in the 2009 version of the spec, however even
-	 * then, doing the flush or finish after waitForVideoSync would cause
-	 * significant delay and ruin your vsync resulting in tearing.
-	 * So no matter what version of GLX_MESA_copy_sub_buffer you have,
-	 * you always need to do a full glFinish before you call
-	 * waitForVideoSync, in order to avoid tearing.
-	 */
-	glFinish ();
 	waitForVideoSync ();
 	pBox = const_cast <Region> (tmpRegion.handle ())->rects;
 	nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
