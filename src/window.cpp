@@ -1532,7 +1532,7 @@ CompWindow::sendConfigureNotify ()
     XConfigureEvent xev;
     XWindowAttributes attrib;
     unsigned int      nchildren;
-    Window            rootRet, parentRet;
+    Window            rootRet, parentRet = 0;
     Window            *children;
 
     xev.type   = ConfigureNotify;
@@ -1554,25 +1554,9 @@ CompWindow::sendConfigureNotify ()
 	xev.border_width = attrib.border_width;
 	xev.above = None;
 
-	if (priv->frame)
-	{
-	    XWindowAttributes fAttrib;
-	    XWindowAttributes wAttrib;
-
-	    /* Add offset between wrapper and client */
-	    if (XGetWindowAttributes (screen->dpy (), priv->wrapper, &wAttrib))
-	    {
-		xev.x += wAttrib.x;
-		xev.y += wAttrib.y;
-	    }
-
-	    /* Add offset between frame and client */
-	    if (XGetWindowAttributes (screen->dpy (), priv->frame, &fAttrib))
-	    {
-		xev.x += fAttrib.x;
-		xev.y += fAttrib.y;
-	    }
-	}
+	/* Translate co-ordinates to root space */
+	XTranslateCoordinates (screen->dpy (), priv->id, screen->root (), 0, 0,
+			       &xev.x, &xev.y, &parentRet);
 
 	/* We need to ensure that the stacking order is
 	 * based on the current server stacking order so
