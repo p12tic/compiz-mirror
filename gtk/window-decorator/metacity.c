@@ -1096,8 +1096,8 @@ meta_get_button_position (decor_t	 *d,
 	*x += d->frame->win_extents.left + 4;
 	*y += d->frame->win_extents.top + 2;
     }
-    else if (d->state & ~(WNCK_WINDOW_STATE_MAXIMIZED_HORIZONTALLY |
-		          WNCK_WINDOW_STATE_MAXIMIZED_VERTICALLY))
+    else if (!(d->state & (WNCK_WINDOW_STATE_MAXIMIZED_HORIZONTALLY |
+			   WNCK_WINDOW_STATE_MAXIMIZED_VERTICALLY)))
     {
 	*x += settings->mutter_draggable_border_width;
     }
