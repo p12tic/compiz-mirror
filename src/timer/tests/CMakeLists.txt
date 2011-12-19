@@ -1,17 +1,76 @@
-#include (CompizCommon)
-#include (FindPkgConfig)
+include_directories( ${CMAKE_CURRENT_SOURCE_DIR} )
 
-#set (COMPIZ_TEST_TIMER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR})
-#set (COMPIZ_TEST_TIMER_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR})
+add_library( 
+  compiz_timer_test
+  
+  ${CMAKE_CURRENT_SOURCE_DIR}/test-timer.cpp
+)
 
-#include_directories (${COMPIZ_TIMER_SOURCE_DIR}
-#		     ${COMPIZ_TIMER_INCLUDE_DIR})
+add_executable( 
+  compiz_timer_callbacks
+  
+  ${CMAKE_CURRENT_SOURCE_DIR}/callbacks/src/test-timer-callbacks.cpp
+)
 
-#add_library (timer_test_internal STATIC
-#	     test-timer.cpp)
+add_executable( 
+  compiz_timer_diffs
+  
+  ${CMAKE_CURRENT_SOURCE_DIR}/diffs/src/test-timer-diffs.cpp
+)
 
-compiz_test_base (core timer)
-add_subdirectory (callbacks)
-add_subdirectory (diffs)
-add_subdirectory (set-values)
-add_subdirectory (while-calling)
+add_executable( 
+  compiz_timer_set-values
+  
+  ${CMAKE_CURRENT_SOURCE_DIR}/set-values/src/test-timer-set-values.cpp
+)
+
+add_executable( 
+  compiz_timer_while-calling
+  
+  ${CMAKE_CURRENT_SOURCE_DIR}/while-calling/src/test-timer-set-times-while-calling.cpp
+)
+
+target_link_libraries( 
+  compiz_timer_callbacks 
+  compiz_timer_test
+  
+  compiz_timer 
+  
+  ${GTEST_BOTH_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
+)
+
+target_link_libraries( 
+  compiz_timer_diffs 
+  compiz_timer_test
+  
+  compiz_timer 
+  
+  ${GTEST_BOTH_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.  
+)
+
+target_link_libraries( 
+  compiz_timer_set-values 
+  compiz_timer_test
+  
+  compiz_timer 
+  
+  ${GTEST_BOTH_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.  
+)
+
+target_link_libraries( 
+  compiz_timer_while-calling
+  compiz_timer_test
+  
+  compiz_timer 
+  
+  ${GTEST_BOTH_LIBRARIES}
+  ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
+)
+
+add_test( compiz_timer_callbacks compiz_timer_callbacks )
+add_test( compiz_timer_diffs compiz_timer_diffs )
+add_test( compiz_timer_set-values compiz_timer_set-values )
+add_test( compiz_timer_while-calling compiz_timer_while-calling )

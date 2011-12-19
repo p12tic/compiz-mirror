@@ -173,7 +173,7 @@ macro (_check_plugin_plugin_deps _prefix)
 endmacro ()
 
 # main function
-function (_build_compiz_plugin plugin)
+macro (_build_compiz_plugin plugin)
     string (TOUPPER ${plugin} _PLUGIN)
 
     if (COMPIZ_PLUGIN_INSTALL_TYPE)
@@ -439,7 +439,7 @@ function (_build_compiz_plugin plugin)
 	message (STATUS "Missing dependencies :${COMPIZ_${_PLUGIN}_MISSING_DEPS}")
 	compiz_set (COMPIZ_${_PLUGIN}_BUILD FALSE)
     endif ()
-endfunction ()
+endmacro ()
 
 macro (compiz_plugin plugin)
     string (TOUPPER ${plugin} _PLUGIN)

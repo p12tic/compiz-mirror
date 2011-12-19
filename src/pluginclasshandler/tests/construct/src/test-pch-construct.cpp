@@ -1,70 +1,49 @@
 #include <test-pluginclasshandler.h>
 
-class ConstructPlugin :
-    public Plugin,
-    public PluginClassHandler <ConstructPlugin, Base>
+class ConstructPlugin: public Plugin, public PluginClassHandler<ConstructPlugin,
+	Base>
 {
-    public:
-	ConstructPlugin (Base *);
+public:
+    ConstructPlugin (Base * base) :
+	    Plugin(base), PluginClassHandler<ConstructPlugin, Base>(base)
+    {
+    }
 };
 
-ConstructPlugin::ConstructPlugin (Base *base):
-    Plugin (base),
-    PluginClassHandler <ConstructPlugin, Base> (base)
-{
-}
-
-CompizPCHTestConstruct::CompizPCHTestConstruct (Global *g) :
-    CompizPCHTest (g)
-{
-}
-
-void
-CompizPCHTestConstruct::run ()
+TEST_F( CompizPCHTest, TestConstruct )
 {
     Plugin *p;
 
-    std::cout << "-= TEST: Basic construction" << std::endl;
+    bases.push_back(new Base());
+    plugins.push_back(static_cast<Plugin *>(new ConstructPlugin(bases.back())));
+    bases.push_back(new Base());
+    plugins.push_back(static_cast<Plugin *>(new ConstructPlugin(bases.back())));
 
-    bases.push_back (new Base ());
-    plugins.push_back (static_cast <Plugin *> (new ConstructPlugin (bases.back ())));
-    bases.push_back (new Base ());
-    plugins.push_back (static_cast <Plugin *> (new ConstructPlugin (bases.back ())));
-
-    if (bases.front ()->pluginClasses.size () != globalPluginClassIndices.size ())
+    if (bases.front()->pluginClasses.size() != globalPluginClassIndices.size())
     {
-	std::cout << "FAIL: allocated number of plugin classes is not the same as the"\
-		     " global number of allocated plugin classes" << std::endl;
-	exit (1);
+	FAIL() << "allocated number of plugin classes is not the same as the"
+		" global number of allocated plugin classes";
     }
 
-    if (!ValueHolder::Default ()->hasValue (compPrintf ("%s_index_%lu", typeid (ConstructPlugin).name (), 0)))
+    if (!ValueHolder::Default()->hasValue(
+	    compPrintf("%s_index_%lu", typeid(ConstructPlugin).name(), 0)))
     {
-	std::cout << "FAIL: ValueHolder does not have value " << compPrintf ("%s_index_%lu", typeid (ConstructPlugin).name (), 0) << std::endl;
-	exit (1);
+	FAIL() << "ValueHolder does not have value "
+		<< compPrintf("%s_index_%lu", typeid(ConstructPlugin).name(), 0);
     }
 
-    p = ConstructPlugin::get (bases.front ());
+    p = ConstructPlugin::get(bases.front());
 
-    if (p != plugins.front ())
+    if (p != plugins.front())
     {
-	std::cout << "FAIL: Returned Plugin * is not plugins.front ()" << std::endl;
-	exit (1);
+	FAIL() << "Returned Plugin * is not plugins.front ()";
     }
 
-    p = ConstructPlugin::get (bases.back ());
+    p = ConstructPlugin::get(bases.back());
 
-    if (p != plugins.back ())
+    if (p != plugins.back())
     {
-	std::cout << "FAIL: Returned Plugin * is not plugins.back ()" << std::endl;
-	exit (1);
+	FAIL() << "Returned Plugin * is not plugins.back ()";
     }
-
-    std::cout << "PASS: Basic construction" << std::endl;
 }
 
-CompizPCHTest *
-get_object (Global *g)
-{
-    return new CompizPCHTestConstruct (g);
-}

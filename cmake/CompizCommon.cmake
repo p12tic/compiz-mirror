@@ -1,12 +1,12 @@
 cmake_minimum_required (VERSION 2.6)
 
-if ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+if ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
     message (SEND_ERROR "Building in the source directory is not supported.")
     message (FATAL_ERROR "Please remove the created \"CMakeCache.txt\" file, the \"CMakeFiles\" directory and create a build directory and call \"${CMAKE_COMMAND} <path to the sources>\".")
-endif ("${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+endif ("${CMAKE_CURRENT_SOURCE_DIR}" STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
 
 #### CTest
-include (CTest)
+enable_testing()
 
 #### policies
 
@@ -404,7 +404,7 @@ function (compiz_configure_file _src _dst)
     endforeach (_val ${ARGN})
 endfunction ()
 
-function (compiz_add_plugins_in_folder folder)
+macro (compiz_add_plugins_in_folder folder)
     set (COMPIZ_PLUGIN_PACK_BUILD 1)
     file (
         GLOB _plugins_in
@@ -416,7 +416,7 @@ function (compiz_add_plugins_in_folder folder)
         get_filename_component (_plugin_dir ${_plugin} PATH)
         add_subdirectory (${folder}/${_plugin_dir})
     endforeach ()
-endfunction ()
+endmacro ()
 
 #### pkg-config handling
 

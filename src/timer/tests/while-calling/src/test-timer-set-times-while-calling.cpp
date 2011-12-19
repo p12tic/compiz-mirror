@@ -25,106 +25,118 @@
 
 #include "test-timer.h"
 
-bool
-CompTimerTestSetCalling::cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t3)
+#include <pthread.h>
+
+class CompTimerTestSetTimes: public CompTimerTest
 {
-    std::cout << "INFO: triggering timer " << timernum << std::endl;
+protected:
 
-    if (lastTimerTriggered == 0 && timernum == 1)
+    int mlastTimerTriggered;
+
+    static void* run (void* cb)
     {
-	/* Change the timeout time of the second timer to be after the third */
-	t2->setTimes (4000, 4100);
-
-	/* Check if it is now at the back of the timeout list */
-	if (TimeoutHandler::Default ()->timers ().back () != t2)
+	if (cb == NULL)
 	{
-	    std::cout << "FAIL: timer with higher timeout time is not at the back of the list" << std::endl;
-
-	    for (std::list <CompTimer *>::iterator it = TimeoutHandler::Default ()->timers ().begin ();
-		 it != TimeoutHandler::Default ()->timers ().end (); it++)
-	    {
-		CompTimer *t = (*it);
-		std::cout << "INFO: t->minLeft " << t->minLeft () << std::endl << \
-			     "INFO: t->maxLeft " << t->maxLeft () << std::endl << \
-			     "INFO: t->minTime " << t->minTime () << std::endl << \
-			     "INFO: t->maxTime " << t->maxTime () << std::endl;
-	    }
-
-	    exit (1);
+	    return NULL;
 	}
+	static_cast<CompTimerTestSetTimes*>(cb)->ml->run();
+	return NULL;
     }
-    else if (lastTimerTriggered == 1 && timernum == 2)
-    {
-	std::cout << "FAIL: timer with a higher timeout time got triggered before a timer with a lower timeout time" << std::endl;
 
-	for (std::list <CompTimer *>::iterator it = TimeoutHandler::Default ()->timers ().begin ();
-	     it != TimeoutHandler::Default ()->timers ().end (); it++)
+    pthread_t mmainLoopThread;
+    std::list<int> mtriggeredTimers;
+
+    void recordTimers ()
+    {
+	for (std::list<CompTimer *>::iterator it =
+		TimeoutHandler::Default()->timers().begin();
+		it != TimeoutHandler::Default()->timers().end(); it++)
 	{
 	    CompTimer *t = (*it);
-	    std::cout << "INFO: t->minLeft " << t->minLeft () << std::endl << \
-			 "INFO: t->maxLeft " << t->maxLeft () << std::endl << \
-			 "INFO: t->minTime " << t->minTime () << std::endl << \
-			 "INFO: t->maxTime " << t->maxTime () << std::endl;
+	    RecordProperty("t->minLeft", t->minLeft());
+	    RecordProperty("t->maxLeft", t->maxLeft());
+	    RecordProperty("t->minTime", t->minTime());
+	    RecordProperty("t->maxTime", t->maxTime());
 	}
-
-	exit (1);
     }
-    else if (lastTimerTriggered == 2 && timernum != 1)
-    {
-	std::cout << "FAIL: timer with higher timeout time didn't get triggered after a lower timeout time" << std::endl;
 
-	for (std::list <CompTimer *>::iterator it = TimeoutHandler::Default ()->timers ().begin ();
-	     it != TimeoutHandler::Default ()->timers ().end (); it++)
+    bool cb (int timernum, CompTimer* t1, CompTimer* t2, CompTimer* t3) {
+	cb_(timernum,t1,t2,t3);
+	return(true);
+    }
+    void cb_ (int timernum, CompTimer* t1, CompTimer* t2, CompTimer* t3)
+    {
+	recordTimers();
+	if (mlastTimerTriggered == 0 && timernum == 1)
 	{
-	    CompTimer *t = (*it);
-	    std::cout << "INFO: t->minLeft " << t->minLeft () << std::endl << \
-			 "INFO: t->maxLeft " << t->maxLeft () << std::endl << \
-			 "INFO: t->minTime " << t->minTime () << std::endl << \
-			 "INFO: t->maxTime " << t->maxTime () << std::endl;
+	    /* Change the timeout time of the second timer to be after the third */
+	    t2->setTimes(4000, 4100);
+
+	    recordTimers();
+
+	    /* Check if it is now at the back of the timeout list */
+	    ASSERT_EQ( TimeoutHandler::Default()->timers().back(), t2 );
+	}
+	else if (mlastTimerTriggered == 1 && timernum == 2)
+	{
+	    recordTimers();
+	    FAIL() << "timer with a higher timeout time got triggered "
+		    "before a timer with a lower timeout time";
+	}
+	else if (mlastTimerTriggered == 2 && timernum != 1)
+	{
+
+	    recordTimers();
+	    FAIL() << "timer with higher timeout time didn't get "
+	       	    "triggered after a lower timeout time";
 	}
 
-	exit (1);
+	mlastTimerTriggered = timernum;
     }
 
-    lastTimerTriggered = timernum;
-
-    if (timernum == 2)
+    void SetUp ()
     {
-	std::cout << "PASS: retiming" << std::endl;
-	ml->quit ();
+	CompTimerTest::SetUp();
+	mlastTimerTriggered = 0;
+	CompTimer *t1, *t2, *t3;
+
+	t1 = new CompTimer();
+	t2 = new CompTimer();
+	t3 = new CompTimer();
+
+	timers.push_back(t1);
+	timers.push_back(t2);
+	timers.push_back(t3);
+
+	t1->setCallback(
+		boost::bind(&CompTimerTestSetTimes::cb, this, 1, t1, t2, t3));
+	t1->setTimes(1000, 1100);
+	t1->start();
+	t2->setCallback(
+		boost::bind(&CompTimerTestSetTimes::cb, this, 2, t1, t2, t3));
+	t2->setTimes(2000, 2100);
+	t2->start();
+	t3->setCallback(
+		boost::bind(&CompTimerTestSetTimes::cb, this, 3, t1, t2, t3));
+	t3->setTimes(3000, 3100);
+	t3->start();
+
+	ASSERT_EQ(
+		0,
+		pthread_create(&mmainLoopThread, NULL, CompTimerTestSetTimes::run, this));
     }
 
-    return false;
-}
+    void TearDown ()
+    {
+	ml->quit();
+	pthread_join(mmainLoopThread, NULL);
 
-void
-CompTimerTestSetCalling::precallback ()
+	CompTimerTest::TearDown();
+    }
+};
+
+TEST_F(CompTimerTestSetTimes, SetTimesWhileCalling)
 {
-    CompTimer      *t1, *t2, *t3;
-
-    std::cout << "-= TEST: changing timeout time" << std::endl;
-
-    t1 = new CompTimer ();
-    t2 = new CompTimer ();
-    t3 = new CompTimer ();
-
-    timers.push_back (t1);
-    timers.push_back (t2);
-    timers.push_back (t3);
-
-    t1->setCallback (boost::bind (&CompTimerTestSetCalling::cb, this, 1, t1, t2, t3));
-    t1->setTimes (1000, 1100);
-    t1->start ();
-    t2->setCallback (boost::bind (&CompTimerTestSetCalling::cb, this, 2, t1, t2, t3));
-    t2->setTimes (2000, 2100);
-    t2->start ();
-    t3->setCallback (boost::bind (&CompTimerTestSetCalling::cb, this, 3, t1, t2, t3));
-    t3->setTimes (3000, 3100);
-    t3->start ();
-}
-
-CompTimerTest *
-getTestObject ()
-{
-    return new CompTimerTestSetCalling ();
+    ::sleep(4);
+    // Just a dummy forcing instantiation of fixture.
 }

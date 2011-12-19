@@ -1,5 +1,5 @@
 /*
- * Copyright © 2005 Novell, Inc.
+ * Copyright © 2007 Novell, Inc.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without
@@ -14,7 +14,7 @@
  *
  * NOVELL, INC. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
  * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN
- * NO EVENT SHALL NOVELL, INC. BE LIABLE FOR ANY SPECI<<<<<fAL, INDIRECT OR
+ * NO EVENT SHALL NOVELL, INC. BE LIABLE FOR ANY SPECIAL, INDIRECT OR
  * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
  * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
@@ -23,67 +23,29 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-#include <core/global.h>
-#include <core/logmessage.h>
+#ifndef _COMPIZ_LOGMESSAGE_H
+#define _COMPIZ_LOGMESSAGE_H
 
-#include <cstdio>
-
-#include <stdarg.h>
-
-const char *
-logLevelToString (CompLogLevel level)
-{
-    switch (level) {
-    case CompLogLevelFatal:
-	return "Fatal";
-    case CompLogLevelError:
-	return "Error";
-    case CompLogLevelWarn:
-	return "Warn";
-    case CompLogLevelInfo:
-	return "Info";
-    case CompLogLevelDebug:
-	return "Debug";
-    default:
-	break;
-    }
-
-    return "Unknown";
-}
+typedef enum {
+    CompLogLevelFatal = 0,
+    CompLogLevelError,
+    CompLogLevelWarn,
+    CompLogLevelInfo,
+    CompLogLevelDebug
+} CompLogLevel;
 
 void
 logMessage (const char   *componentName,
 	    CompLogLevel level,
-	    const char   *message)
-{
-    if (!debugOutput && level >= CompLogLevelDebug)
-	return;
-
-    fprintf (stderr, "%s (%s) - %s: %s\n",
-	     programName, componentName,
-	     logLevelToString (level), message);
-}
+	    const char   *message);
 
 void
 compLogMessage (const char   *componentName,
-	        CompLogLevel level,
-	        const char   *format,
-	        ...)
-{
-    va_list args;
-    char    message[2048];
+		CompLogLevel level,
+		const char   *format,
+		...);
 
-    va_start (args, format);
+const char *
+logLevelToString (CompLogLevel level);
 
-    vsnprintf (message, 2048, format, args);
-
-    /* FIXME: That's wrong */
-#if 0
-    if (screen)
-	screen->logMessage (componentName, level, message);
-    else
 #endif
-	logMessage (componentName, level, message);
-
-    va_end (args);
-}

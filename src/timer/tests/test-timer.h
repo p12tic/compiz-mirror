@@ -26,67 +26,31 @@
 #ifndef _COMPIZ_TEST_TIMER_H
 #define _COMPIZ_TEST_TIMER_H
 
+#include <gtest/gtest.h>
+
 #include <glibmm/main.h>
 #include <core/timer.h>
 #include <privatetimeouthandler.h>
 #include <privatetimeoutsource.h>
 #include <iostream>
 #include <boost/bind.hpp>
+#include <boost/shared_ptr.hpp>
 
-class CompTimerTest
+class CompTimerTest : public ::testing::Test
 {
 public:
 
     CompTimerTest ();
     virtual ~CompTimerTest ();
 
+    virtual void SetUp();
+
     Glib::RefPtr <Glib::MainContext> mc;
     Glib::RefPtr <Glib::MainLoop> ml;
     Glib::RefPtr <CompTimeoutSource> ts;
     std::list <CompTimer *> timers;
 
-    virtual void precallback () = 0;
-
     int lastTimerTriggered;
 };
-
-class CompTimerTestCallbacks :
-    public CompTimerTest
-{
-public:
-
-    void precallback ();
-    bool cb (int timernum);
-};
-
-class CompTimerTestDiffs :
-    public CompTimerTest
-{
-public:
-
-    void precallback ();
-    bool cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t3);
-};
-
-class CompTimerTestSetValues :
-    public CompTimerTest
-{
-public:
-
-    void precallback ();
-    bool cb (int timernum);
-};
-
-class CompTimerTestSetCalling :
-    public CompTimerTest
-{
-public:
-
-    void precallback ();
-    bool cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t3);
-};
-
-CompTimerTest *
-getTestObject ();
 
 #endif

@@ -14,17 +14,9 @@ GetPlugin::GetPlugin (Base *base):
 {
 }
 
-CompizPCHTestGet::CompizPCHTestGet (Global *g) :
-    CompizPCHTest (g)
-{
-}
-
-void
-CompizPCHTestGet::run ()
+TEST_F( CompizPCHTest, TestGet)
 {
     Plugin *p;
-
-    std::cout << "-= TEST: Object Retreival" << std::endl;
 
     bases.push_back (new Base ());
     plugins.push_back (new GetPlugin (bases.back ()));
@@ -35,16 +27,14 @@ CompizPCHTestGet::run ()
 
     if (p != plugins.front ())
     {
-	std::cout << "FAIL: Returned Plugin * is not plugins.front ()" << std::endl;
-	exit (1);
+	FAIL() << "Returned Plugin * is not plugins.front ()";
     }
 
     p = GetPlugin::get (bases.back ());
 
     if (p != plugins.back ())
     {
-	std::cout << "FAIL: Returned Plugin * is not plugins.back ()" << std::endl;
-	exit (1);
+	FAIL() << "Returned Plugin * is not plugins.back ()";
     }
 
     /* Now create a third base and check if plugin is implicitly created */
@@ -56,15 +46,6 @@ CompizPCHTestGet::run ()
 
     if (p->b != bases.back ())
     {
-	std::cout << "FAIL: Returned Plugin * is not the plugin for bases.back ()" << std::endl;
-	exit (1);
+	FAIL() << "Returned Plugin * is not the plugin for bases.back ()";
     }
-
-    std::cout << "PASS: Object Retreival" << std::endl;
-}
-
-CompizPCHTest *
-get_object (Global *g)
-{
-    return new CompizPCHTestGet (g);
 }

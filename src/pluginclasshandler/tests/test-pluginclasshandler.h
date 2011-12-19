@@ -1,5 +1,8 @@
 #include <core/pluginclasshandler.h>
 #include <core/pluginclasses.h>
+
+#include <gtest/gtest.h>
+
 #include <list>
 #include <boost/foreach.hpp>
 
@@ -46,72 +49,14 @@ class Plugin
 	Base *b;
 };
 
-class CompizPCHTest
+class CompizPCHTest : public ::testing::Test
 {
 public:
 
-     CompizPCHTest (Global *g);
+     CompizPCHTest ();
      virtual ~CompizPCHTest ();
 
      Global *global;
      std::list <Base *> bases;
      std::list <Plugin *> plugins;
-
-     virtual void run () = 0;
 };
-
-class CompizPCHTestConstruct :
-    public CompizPCHTest
-{
-    public:
-
-	CompizPCHTestConstruct (Global *g);
-
-	void run ();
-};
-
-class CompizPCHTestGet :
-    public CompizPCHTest
-{
-    public:
-
-	CompizPCHTestGet (Global *g);
-
-	void run ();
-};
-
-class CompizPCHTestTypenames :
-    public CompizPCHTest
-{
-    public:
-
-	CompizPCHTestTypenames (Global *g);
-
-	void run ();
-};
-
-class CompizPCHTestIndexes :
-    public CompizPCHTest
-{
-    public:
-
-	CompizPCHTestIndexes (Global *g);
-
-	void run ();
-
-	template <typename I>
-	void printFailure (I *);
-
-    public:
-	unsigned int ePluginClassHandlerIndex;
-	unsigned int eIndex;
-	int 	 eRefCount;
-	bool	 eInitiated;
-	bool	 eFailed;
-	bool	 ePcFailed;
-	unsigned int ePcIndex;
-	bool	 eLoadFailed;
-};
-
-CompizPCHTest *
-get_object (Global *);

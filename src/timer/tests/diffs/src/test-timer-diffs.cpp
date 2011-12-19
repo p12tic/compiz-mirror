@@ -25,64 +25,93 @@
 
 #include "test-timer.h"
 
-bool
-CompTimerTestDiffs::cb (int timernum, CompTimer *t1, CompTimer *t2, CompTimer *t3)
+#include <pthread.h>
+
+class CompTimerTestDiffs: public CompTimerTest
 {
-    if (timernum == 1 || timernum == 2 || timernum == 3)
+protected:
+
+    static void* run (void* cb)
     {
-	std::cout << "INFO: executing timer " << timernum << std::endl;
-
-	std::cout << "INFO: t1->minLeft " << t1->minLeft () << std::endl << \
-		     "INFO: t1->maxLeft " << t1->maxLeft () << std::endl << \
-		     "INFO: t1->minTime " << t1->minTime () << std::endl << \
-		     "INFO: t1->maxTime " << t1->maxTime () << std::endl;
-
-	std::cout << "INFO: t2->minLeft " << t2->minLeft () << std::endl << \
-		     "INFO: t2->maxLeft " << t2->maxLeft () << std::endl << \
-		     "INFO: t2->minTime " << t2->minTime () << std::endl << \
-		     "INFO: t2->maxTime " << t2->maxTime () << std::endl;
-
-	std::cout << "INFO: t3->minLeft " << t3->minLeft () << std::endl << \
-		     "INFO: t3->maxLeft " << t3->maxLeft () << std::endl << \
-		     "INFO: t3->minTime " << t3->minTime () << std::endl << \
-		     "INFO: t3->maxTime " << t3->maxTime () << std::endl;
+	if (cb == NULL)
+	{
+	    return NULL;
+	}
+	static_cast<CompTimerTestDiffs*>(cb)->ml->run();
+	return NULL;
     }
 
-    if (timernum == 3)
-	ml->quit ();
+    pthread_t mmainLoopThread;
+    std::list<int> mtriggeredTimers;
 
-    std::cout << "return false" << std::endl;
-    return false;
-}
+    bool cb (int timernum, CompTimer* t1, CompTimer* t2, CompTimer* t3)
+    {
+	if (timernum == 1 || timernum == 2 || timernum == 3)
+	{
+	    RecordProperty("executing timer", timernum);
+	    RecordProperty("t1->minLeft", t1->minLeft());
+	    RecordProperty("t1->maxLeft", t1->maxLeft());
+	    RecordProperty("t1->minTime", t1->minTime());
+	    RecordProperty("t1->maxTime", t1->maxTime());
 
-void
-CompTimerTestDiffs::precallback ()
-{
-    CompTimer      *t1, *t2, *t3;
+	    RecordProperty("t3->minLeft", t3->minLeft());
+	    RecordProperty("t3->maxLeft", t3->maxLeft());
+	    RecordProperty("t3->minTime", t3->minTime());
+	    RecordProperty("t3->maxTime", t3->maxTime());
 
-    std::cout << "-= TEST: checking timeout diff" << std::endl;
+	    RecordProperty("t3->minLeft", t3->minLeft());
+	    RecordProperty("t3->maxLeft", t3->maxLeft());
+	    RecordProperty("t3->minTime", t3->minTime());
+	    RecordProperty("t3->maxTime", t3->maxTime());
 
-    t1 = new CompTimer ();
-    t2 = new CompTimer ();
-    t3 = new CompTimer ();
+	}
 
-    timers.push_back (t1);
-    timers.push_back (t2);
-    timers.push_back (t3);
+	return false;
+    }
 
-    t1->setCallback (boost::bind (&CompTimerTestDiffs::cb, this, 1, t1, t2, t3));
-    t1->setTimes (1000, 1100);
-    t1->start ();
-    t2->setCallback (boost::bind (&CompTimerTestDiffs::cb, this, 2, t1, t2, t3));
-    t2->setTimes (2000, 2100);
-    t2->start ();
-    t3->setCallback (boost::bind (&CompTimerTestDiffs::cb, this, 3, t1, t2, t3));
-    t3->setTimes (3000, 3100);
-    t3->start ();
-}
+    void SetUp ()
+    {
+	CompTimerTest::SetUp();
+	mtriggeredTimers.clear();
 
-CompTimerTest *
-getTestObject ()
-{
-    return new CompTimerTestDiffs ();
-}
+	CompTimer *t1, *t2, *t3;
+
+	t1 = new CompTimer();
+	t2 = new CompTimer();
+	t3 = new CompTimer();
+
+	timers.push_back(t1);
+	timers.push_back(t2);
+	timers.push_back(t3);
+
+	t1->setCallback(
+		boost::bind(&CompTimerTestDiffs::cb, this, 1, t1, t2, t3));
+	t1->setTimes(1000, 1100);
+	t1->start();
+	t2->setCallback(
+		boost::bind(&CompTimerTestDiffs::cb, this, 2, t1, t2, t3));
+	t2->setTimes(2000, 2100);
+	t2->start();
+	t3->setCallback(
+		boost::bind(&CompTimerTestDiffs::cb, this, 3, t1, t2, t3));
+	t3->setTimes(3000, 3100);
+	t3->start();
+
+	ASSERT_EQ(
+		0,
+		pthread_create(&mmainLoopThread, NULL, CompTimerTestDiffs::run, this));
+
+	::sleep(4);
+    }
+
+    void TearDown ()
+    {
+	ml->quit();
+	pthread_join(mmainLoopThread, NULL);
+
+	CompTimerTest::TearDown();
+    }
+};
+
+TEST_F(CompTimerTestDiffs,TimerDiffs) {}
+

@@ -26,36 +26,26 @@
 #include "test-timer.h"
 
 CompTimerTest::CompTimerTest () :
-    mc (Glib::MainContext::get_default ()),
-    ml (Glib::MainLoop::create (mc, false)),
-    ts (CompTimeoutSource::create (mc)),
-    lastTimerTriggered (0)
+	mc(Glib::MainContext::get_default()),
+		ml(Glib::MainLoop::create(mc, false)),
+		ts(CompTimeoutSource::create(mc)),
+		lastTimerTriggered(0)
 {
 }
 
 CompTimerTest::~CompTimerTest ()
 {
-    while (timers.size ())
+    while (timers.size())
     {
-	CompTimer *t = timers.front ();
+	CompTimer *t = timers.front();
 
-	timers.pop_front ();
+	timers.pop_front();
 	delete t;
     }
 }
 
-int
-main (int argc, char **argv)
+void CompTimerTest::SetUp ()
 {
-    CompTimerTest  *ctt = static_cast <CompTimerTest *> (getTestObject ());
-    TimeoutHandler *th = new TimeoutHandler ();
-    TimeoutHandler::SetDefault (th);
-
-    ctt->precallback ();
-    ctt->ml->run ();
-
-    delete ctt;
-    delete th;
-
-    return 0;
+    TimeoutHandler *th = new TimeoutHandler();
+    TimeoutHandler::SetDefault(th);
 }

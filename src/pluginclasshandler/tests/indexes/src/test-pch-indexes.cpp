@@ -103,10 +103,26 @@ FailingIndexesPlugin::FailingIndexesPlugin (FailingBase *base):
 {
 }
 
-CompizPCHTestIndexes::CompizPCHTestIndexes (Global *g) :
-    CompizPCHTest (g)
+class CompizPCHTestIndexes :
+    public CompizPCHTest
 {
-}
+    public:
+
+	void run ();
+
+	template <typename I>
+	void printFailure (I *);
+
+    public:
+	unsigned int ePluginClassHandlerIndex;
+	unsigned int eIndex;
+	int 	 eRefCount;
+	bool	 eInitiated;
+	bool	 eFailed;
+	bool	 ePcFailed;
+	unsigned int ePcIndex;
+	bool	 eLoadFailed;
+};
 
 template <typename I>
 void
@@ -115,7 +131,6 @@ CompizPCHTestIndexes::printFailure (I *i)
     std::cout << "FAIL: index value does not match!" << std::endl;
     std::cout << "INFO: Values of " << std::hex << (void *) i << " are " << std::endl;
     std::cout << "INFO: pluginClassHandlerIndex is " << pluginClassHandlerIndex << std::endl;
-    std::cout << "INFO: mIndex.index " << i->mIndex.index << std::endl;
     std::cout << "INFO: mIndex.refCount " << i->mIndex.refCount << std::endl;
     std::cout << "INFO: mIndex.initiated " << i->mIndex.initiated << std::endl;
     std::cout << "INFO: mIndex.failed " << i->mIndex.failed << std::endl;
@@ -142,8 +157,7 @@ i->mIndex.failed != eFailed || \
 i->mIndex.pcFailed != ePcFailed || \
 i->mIndex.pcIndex != ePcIndex
 
-void
-CompizPCHTestIndexes::run ()
+TEST_F( CompizPCHTestIndexes, TestIndexes )
 {
     Plugin      *p;
     Base 	*b;
@@ -154,15 +168,11 @@ CompizPCHTestIndexes::run ()
     IPB3Handler *ipbhandler_p3;
     FIPBHandler *fipbhandler_p;
 
-    std::cout << "-= TEST: Index Sanity" << std::endl;
-
     bases.push_back (new Base ());
     plugins.push_back (new IndexesPlugin (bases.back ()));
 
     p = plugins.back ();
     ipbhandler_p = (IPBHandler *) p;
-
-    std::cout << "STEP: to base #1 plugin #1(1) " << plugins.size () << std::endl;
 
     ePluginClassHandlerIndex = 1;
     eIndex = 0;
@@ -176,7 +186,7 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (ipbhandler_p))
     {
 	printFailure<IPBHandler> (ipbhandler_p);
-	exit (1);
+	FAIL();
     }
 
     bases.push_back (new Base ());
@@ -185,7 +195,6 @@ CompizPCHTestIndexes::run ()
     p = plugins.back ();
     ipbhandler_p = (IPBHandler *) p;
 
-    std::cout << "STEP: to base #3 plugin #1(2) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 1;
     eIndex = 0;
     eRefCount = 2;
@@ -198,7 +207,7 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (ipbhandler_p))
     {
 	printFailure<IPBHandler> (ipbhandler_p);
-	exit (1);
+	FAIL();
     }
 
     bases.push_back (new Base ());
@@ -207,7 +216,6 @@ CompizPCHTestIndexes::run ()
     p = plugins.back ();
     ipbhandler_p2 = (IPB2Handler *) p;
 
-    std::cout << "STEP: to base #3 plugin #2(1) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 2;
     eIndex = 1;
     eRefCount = 1;
@@ -233,7 +241,6 @@ CompizPCHTestIndexes::run ()
     p = plugins.back ();
     ipbhandler_p = (IPBHandler *) p;
 
-    std::cout << "STEP: back to base #2 plugin #1(2) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 3;
     eIndex = 0;
     eRefCount = 2;
@@ -246,7 +253,7 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (ipbhandler_p))
     {
 	printFailure<IPBHandler> (ipbhandler_p);
-	exit (1);
+	FAIL();
     }
 
     plugins.pop_back ();
@@ -259,7 +266,6 @@ CompizPCHTestIndexes::run ()
     p = plugins.back ();
     ipbhandler_p = (IPBHandler *) p;
 
-    std::cout << "STEP: back to base #1 plugin #1(1) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 3;
     eIndex = 0;
     eRefCount = 1;
@@ -272,13 +278,12 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (ipbhandler_p))
     {
 	printFailure<IPBHandler> (ipbhandler_p);
-	exit (1);
+	FAIL();
     }
 
     p = IndexesPlugin::get (bases.back ());
     ipbhandler_p = (IPBHandler *) p;
 
-    std::cout << "STEP: back to base #1 plugin #1(1) ::get " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 3;
     eIndex = 0;
     eRefCount = 1;
@@ -291,7 +296,7 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (ipbhandler_p))
     {
 	printFailure<IPBHandler> (ipbhandler_p);
-	exit (1);
+	FAIL();
     }
 
     bases.push_back (new Base ());
@@ -300,7 +305,6 @@ CompizPCHTestIndexes::run ()
     p = plugins.back ();
     ipbhandler_p3 = (IPB3Handler *) p;
 
-    std::cout << "STEP: to base #2 plugin #3(1) (load failing plugin) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 4;
     eIndex = 1;
     eRefCount = 1;
@@ -326,7 +330,6 @@ CompizPCHTestIndexes::run ()
     p = plugins.back ();
     ipbhandler_p = (IPBHandler *) p;
 
-    std::cout << "STEP: to base #2 plugin #1(2) (failing key) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 4;
     eIndex = 0;
     eRefCount = 2;
@@ -339,7 +342,7 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (ipbhandler_p))
     {
 	printFailure<IPBHandler> (ipbhandler_p);
-	exit (1);
+	FAIL();
     }
 
     plugins.push_back (new IndexesPlugin2 (bases.back ()));
@@ -347,7 +350,6 @@ CompizPCHTestIndexes::run ()
     p = plugins.back ();
     ipbhandler_p2 = (IPB2Handler *) p;
 
-    std::cout << "STEP: to base #1 plugin #2(1) (failing key) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 5;
     eIndex = 2;
     eRefCount = 1;
@@ -360,14 +362,13 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (ipbhandler_p2))
     {
 	printFailure<IPB2Handler> (ipbhandler_p2);
-	exit (1);
+	FAIL();
     }
 
     /* Now call ::get on the first one to reset the pluginClassHandlerIndex */
     p = IndexesPlugin::get (bases.back ());
     ipbhandler_p = (IPBHandler *) p;
 
-    std::cout << "STEP: to base #1 plugin #1(2) (failing key - after get) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 5;
     eIndex = 0;
     eRefCount = 2;
@@ -380,7 +381,7 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (ipbhandler_p))
     {
 	printFailure<IPBHandler> (ipbhandler_p);
-	exit (1);
+	FAIL();
     }
 
     /* Now erase the key that was used by the second plugin so subsequent attempts to ::get
@@ -391,7 +392,6 @@ CompizPCHTestIndexes::run ()
     ValueHolder::Default ()->eraseValue (ipbhandler_p2->keyName ());
     p = IndexesPlugin2::get (bases.back ());
 
-    std::cout << "STEP: to base #1 plugin #2(1) (failing key - after erasure) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 5;
     eIndex = 2;
     eRefCount = 1;
@@ -404,14 +404,13 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (ipbhandler_p2))
     {
 	printFailure<IPB2Handler> (ipbhandler_p2);
-	exit (1);
+	FAIL();
     }
 
     fb = new FailingBase ();
     fp = new FailingIndexesPlugin (fb);
     fipbhandler_p = (FIPBHandler *) fp;
 
-    std::cout << "STEP: to base #3 (failing base) plugin #1(2) " << plugins.size () << std::endl;
     ePluginClassHandlerIndex = 5;
     eIndex = 0;
     eRefCount = 0;
@@ -424,17 +423,9 @@ CompizPCHTestIndexes::run ()
     if (INDEX_INCORRECT (fipbhandler_p))
     {
 	printFailure<FIPBHandler> (fipbhandler_p);
-	exit (1);
+	FAIL();
     }
 
     delete fp;
     delete fb;
-
-    std::cout << "PASS: Index Sanity" << std::endl;
-}
-
-CompizPCHTest *
-get_object (Global *g)
-{
-    return new CompizPCHTestIndexes (g);
 }

@@ -23,7 +23,10 @@
  * Authored by: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
-#include "test-string.h"
+#include <core/string.h>
+
+#include <gtest/gtest.h>
+
 #include <string>
 #include <iostream>
 #include <map>
@@ -40,46 +43,48 @@ namespace printf_test
 
 class Value
 {
-    public:
-	virtual ~Value ();
+public:
+    virtual ~Value ();
 
-	typedef boost::shared_ptr <Value> Ptr;
+    typedef boost::shared_ptr<Value> Ptr;
 
-    protected:
+protected:
 
-	Value () {};
+    Value ()
+    {
+    }
+    ;
 
-	void           *v;
+    void *v;
 };
 
-template <typename T>
-class TValue :
-    public Value
+template<typename T>
+class TValue: public Value
 {
-    public:
-	TValue (const T &);
-	~TValue ();
+public:
+    TValue (const T &);
+    ~TValue ();
 
-	const T & value ();
+    const T & value ();
 };
 
-template <typename T>
+template<typename T>
 TValue<T>::TValue (const T &av)
 {
-    v = new T (av);
+    v = new T(av);
 }
 
-template <typename T>
+template<typename T>
 TValue<T>::~TValue ()
 {
-    delete (reinterpret_cast <T *> (v));
+    delete (reinterpret_cast<T *>(v));
 }
 
-template <typename T>
+template<typename T>
 const T &
 TValue<T>::value ()
 {
-    return *(reinterpret_cast <T *> (v));
+    return *(reinterpret_cast<T *>(v));
 }
 
 Value::~Value ()
@@ -89,13 +94,18 @@ Value::~Value ()
 CompString get_format (const CompString &fmt, Value::Ptr v)
 {
     if (fmt == "%i" || fmt == "%d")
-	return compPrintf (fmt.c_str (), (boost::shared_static_cast <TValue<int> > (v))->value ());
+	return compPrintf(fmt.c_str(),
+		(boost::shared_static_cast<TValue<int> >(v))->value());
     if (fmt == "%f")
-	return compPrintf (fmt.c_str (), (boost::shared_static_cast <TValue<float> > (v))->value ());
+	return compPrintf(fmt.c_str(),
+		(boost::shared_static_cast<TValue<float> >(v))->value());
     if (fmt == "%s")
-	return compPrintf (fmt.c_str (), (boost::shared_static_cast <TValue<std::string> > (v))->value ().c_str ());
+	return compPrintf(
+		fmt.c_str(),
+		(boost::shared_static_cast<TValue<std::string> >(v))->value().c_str());
     if (fmt == "%x")
-	return compPrintf (fmt.c_str (), (boost::shared_static_cast <TValue<int> > (v))->value ());
+	return compPrintf(fmt.c_str(),
+		(boost::shared_static_cast<TValue<int> >(v))->value());
 
     return "not_reached";
 }
@@ -104,61 +114,34 @@ CompString get_format (const CompString &fmt, Value::Ptr v)
 }
 }
 
-bool
-CompStringTestPrintf::test ()
+TEST(CompizString,PrintfTest)
 {
     CompString s1;
     CompString s2;
-    std::map <CompString, compiz::string::printf_test::Value::Ptr> formatValues;
-    std::map <CompString, CompString> formatStrings;
-
-    std::cout << "-= TEST: compPrintf" << std::endl;
+    std::map<CompString, compiz::string::printf_test::Value::Ptr> formatValues;
+    std::map<CompString, CompString> formatStrings;
 
     s1 = "foo";
 
     const char *other_foo = "foo";
     s2 = compPrintf ("%s", other_foo);
 
-    if (s1 == s2)
-	std::cout << "PASS: %s" << std::endl;
-    else
-    {
-	std::cout << "FAIL: %s" << std::endl;
-	return false;
-    }
+    ASSERT_EQ(s1, s2);
 
     s1 = "3";
     s2 = compPrintf ("%i", 3, NULL);
 
-    if (s1 == s2)
-	std::cout << "PASS: %i" << std::endl;
-    else
-    {
-	std::cout << "FAIL: %%i" << std::endl;
-	return false;
-    }
+    ASSERT_EQ(s1, s2);
 
     s1 = "3.012600";
     s2 = compPrintf ("%f", 3.0126, NULL);
 
-    if (s1 == s2)
-	std::cout << "PASS: %f" << std::endl;
-    else
-    {
-	std::cout << "FAIL: %f " << s2 << std::endl;
-	return false;
-    }
+    ASSERT_EQ(s1, s2);
 
     s1 = "0x4f567";
     s2 = compPrintf ("0x%x", 0x4f567, NULL);
 
-    if (s1 == s2)
-	std::cout << "PASS: %x" << std::endl;
-    else
-    {
-	std::cout << "FAIL: %x" << std::endl;
-	return false;
-    }
+    ASSERT_EQ(s1, s2);
 
     formatValues["%i"] = boost::shared_static_cast <compiz::string::printf_test::Value> (compiz::string::printf_test::Value::Ptr (new compiz::string::printf_test::TValue<int> (6)));
     formatStrings["%i"] = CompString ("6");
@@ -170,24 +153,9 @@ CompStringTestPrintf::test ()
     formatStrings["%d"] = CompString ("2");
 
     for (std::map <CompString, CompString>::iterator it = formatStrings.begin ();
-	 it != formatStrings.end (); it++)
+	    it != formatStrings.end (); it++)
     {
 	CompString str = compiz::string::printf_test::get_format (it->first, formatValues[it->first]);
-	if (str != it->second)
-	{
-	    std::cout << "FAIL: format " << it->first << " result " << str << " expected " << it->second << std::endl;
-	    return false;
-	}
-	else
-	    std::cout << "PASS: format " << it->first << std::endl;
+	ASSERT_EQ(str, it->second);
     }
-
-    return true;
-
-}
-
-CompStringTest *
-getTestObject ()
-{
-    return new CompStringTestPrintf ();
 }

@@ -84,11 +84,7 @@ typedef XBool Bool;
   #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const void*,const void*))(d));
 #endif
 
-extern bool debugOutput;
-
-extern char       *programName;
-extern char       **programArgv;
-extern int        programArgc;
+#include <core/global.h>
 
 #include <core/pluginclasses.h>
 #include <core/screen.h>
