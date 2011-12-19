@@ -51,11 +51,8 @@
 
 extern "C"
 {
-
 #include "test-paintscheduler-set-drmvblanktype.h"
-
 }
-
 #define ARRAY_SIZE(arr) (sizeof(arr) / sizeof((arr)[0]))
 
 using namespace compiz::composite::scheduler;
@@ -77,6 +74,8 @@ class VBlankWaiter
 {
     public:
 
+	typedef timeval time_value;
+
 	VBlankWaiter (DummyPaintDispatch *owner, unsigned int n);
 	virtual ~VBlankWaiter ();
 
@@ -84,13 +83,16 @@ class VBlankWaiter
 	virtual bool hasVSync () = 0;
 
 	bool checkTimings (float req, float threshold);
-	float averageTiming ();
+	float averagePeriod ();
+	float averagePhase ();
 
-	void addTiming (unsigned int time);
+	void addPaintStart (unsigned int time);
 
     protected:
 
-	std::vector <float> timings;
+	std::vector <float> periods;
+	std::vector <VBlankWaiter::time_value> paintPeriods;
+	std::vector <VBlankWaiter::time_value> blankPeriods;
 	unsigned int        timingCount;
 	DummyPaintDispatch  *owner;
 };
@@ -155,7 +157,7 @@ class NilVBlankWaiter :
 	bool waitVBlank ()
 	{
 	    timingCount++;
-	    return timingCount < timings.size ();
+	    return timingCount < periods.size ();
 	}
 
 	bool hasVSync () { return false; }
@@ -170,7 +172,7 @@ class DummyPaintDispatch :
 
 	void prepareScheduledPaint (unsigned int timeDiff)
 	{
-	    waiter->addTiming (timeDiff);
+	    waiter->addPaintStart (timeDiff);
 	}
 
 	void paintScheduledPaint ()
@@ -231,15 +233,15 @@ class DummyPaintDispatch :
 float DRMVBlankWaiter::threshold = 7.0f;
 
 float
-VBlankWaiter::averageTiming ()
+VBlankWaiter::averagePeriod ()
 {
     float buf = 0.0f;
 
-    for (std::vector <float>::iterator it = timings.begin ();
-	 it != timings.end (); it++)
+    for (std::vector <float>::iterator it = periods.begin ();
+	 it != periods.end (); it++)
 	buf += (*it);
 
-    buf = buf / (timings.size ());
+    buf = buf / (periods.size ());
 
     return buf;
 }
@@ -250,26 +252,12 @@ bool
 VBlankWaiter::checkTimings (float req, float threshold)
 {
     /* Ignore the first ten as they are synchronization bits */
-    std::vector <float>::iterator it = timings.begin ();
+    std::vector <float>::iterator it = periods.begin ();
 
-    assert (timings.size () > 10);
+    assert (periods.size () > 10);
+    std::advance (it, 10);
 
-    it++;
-    it++;
-
-    it++;
-    it++;
-
-    it++;
-    it++;
-
-    it++;
-    it++;
-
-    it++;
-    it++;
-
-    for (; it != timings.end (); it++)
+    for (; it != periods.end (); it++)
     {
 	if ((((*it) <= req - threshold) ||
 	     ((*it) >= req + threshold)))
@@ -279,20 +267,43 @@ VBlankWaiter::checkTimings (float req, float threshold)
 	}
     }
 
+    std::vector <VBlankWaiter::time_value>::iterator pit = paintPeriods.begin ();
+    std::vector <VBlankWaiter::time_value>::iterator vit = blankPeriods.begin ();
+
+    assert (paintPeriods.size () > 10);
+    assert (blankPeriods.size () > 10);
+
+    std::advance (pit, 10);
+    std::advance (vit, 10);
+
+    /* Check if any blank periods fall outside of -4ms
+     * of the paint period, that means we're out of phase. */
+
+    for (; vit != blankPeriods.end (); vit++, pit++)
+    {
+	if (pit->tv_usec - vit->tv_usec > 4000)
+	{
+	   std::cout << "DEBUG: failing values blank: " << vit->tv_usec << " paint: " << pit->tv_usec << " out of phase!" << std::endl;
+	   return false;
+	}
+    }
+
     return true;
 }
 
 void
-VBlankWaiter::addTiming (unsigned int time)
+VBlankWaiter::addPaintStart (unsigned int time)
 {
-    if (timingCount < timings.size ())
-	timings[timingCount]= time;
+    if (timingCount < periods.size ())
+	periods[timingCount]= time;
 }
 
 VBlankWaiter::VBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
-    timings (n),
-    owner (o),
-    timingCount (0)
+    periods (n),
+    paintPeriods (n),
+    blankPeriods (n),
+    timingCount (0),
+    owner (o)
 {
 }
 
@@ -314,13 +325,19 @@ DRMVBlankWaiter::vblankHandler (int fd, unsigned int frame, unsigned int sec, un
 
     pthread_mutex_lock (&info->self->eventMutex);
 
-    if (info->self->timingCount == info->self->timings.size ())
+    if (info->self->timingCount == info->self->periods.size ())
 	info->self->done = true;
     else
     {
 	info->self->pendingVBlank = true;
 	info->self->timingCount++;
     }
+
+    VBlankWaiter::time_value tv;
+
+    gettimeofday (&tv, NULL);
+
+    info->self->blankPeriods.push_back (tv);
 	
     pthread_cond_signal (&info->self->eventCondition);
     pthread_mutex_unlock (&info->self->eventMutex);
@@ -451,12 +468,18 @@ DRMVBlankWaiter::hasVSync ()
 bool
 DRMVBlankWaiter::waitVBlank ()
 {
+    VBlankWaiter::time_value tv;
+
     pthread_mutex_lock (&eventMutex);
     if (!pendingVBlank)
 	pthread_cond_wait (&eventCondition, &eventMutex);
 
     pendingVBlank = false;
     pthread_mutex_unlock (&eventMutex);
+
+    gettimeofday (&tv, NULL);
+
+    info->self->paintPeriods.push_back (tv);
 
     return !done;
 }
@@ -490,13 +513,13 @@ int main (void)
 
 	mainloop->run ();
 
-	float averageTime = dvbwaiter->averageTiming ();
+	float averagePeriod = dvbwaiter->averagePeriod ();
 
-	std::cout << "DEBUG: average vblank wait time was " << averageTime << std::endl;
-	std::cout << "DEBUG: average frame rate " << 1000 / averageTime << " Hz" << std::endl;
-	std::cout << "TEST: time " << averageTime << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
+	std::cout << "DEBUG: average vblank wait time was " << averagePeriod << std::endl;
+	std::cout << "DEBUG: average frame rate " << 1000 / averagePeriod << " Hz" << std::endl;
+	std::cout << "TEST: time " << averagePeriod << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
 
-	if (dvbwaiter->checkTimings (averageTime, DRMVBlankWaiter::threshold))
+	if (dvbwaiter->checkTimings (averagePeriod, DRMVBlankWaiter::threshold))
 	    pass ("hardware vblank timings");
 	else
 	    fail ("hardware vblank timings");

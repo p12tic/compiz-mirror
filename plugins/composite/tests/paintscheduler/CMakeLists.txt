@@ -13,7 +13,7 @@ include_directories (${COMPIZ_INCLUDE_DIRS}
 		     ../../include
 		     ../../src)
 
-message (${DRM_LIBRARY})
+#message (${DRM_LIBRARY})
 
 # FIXME: Hardcoding drm like this is stupid
 # but due to a bug in CMake we have to do it

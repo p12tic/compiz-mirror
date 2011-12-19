@@ -280,7 +280,6 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     scheduler (this),
     withDestroyedWindows ()
 {
-    
     // wrap outputChangeNotify
     ScreenInterface::setHandler (screen);
 
