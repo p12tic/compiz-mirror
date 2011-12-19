@@ -76,7 +76,7 @@ compiz::composite::scheduler::PaintScheduler::schedule ()
 	int elapsed = TIMEVALDIFF (&now, &mLastRedraw);
 	if (elapsed < 0)
 	    elapsed = 0;
- 	delay = elapsed < mOptimalRedrawTime ? mOptimalRedrawTime - elapsed : 1;
+ 	delay = elapsed < mOptimalRedrawTime ? mOptimalRedrawTime - elapsed + 1 : 1;
     }
     /*
      * Note the use of delay = 1 instead of 0, even though 0 would be better.
@@ -87,6 +87,7 @@ compiz::composite::scheduler::PaintScheduler::schedule ()
      *       causing the glib main event loop to be starved of X events.
      * Fixes for both of these issues are being worked on separately.
      */
+
     mPaintTimer.start
 	(boost::bind (&compiz::composite::scheduler::PaintScheduler::dispatch, this),
 	delay);
@@ -129,19 +130,48 @@ compiz::composite::scheduler::PaintScheduler::dispatch ()
      * However plugins expect the old behaviour where timeDiff is never
      * larger than the frame rate (optimalRedrawTime).
      * So enforce this to keep animations timed correctly and smooth...
-     */
 
     if (timeDiff > mOptimalRedrawTime)
 	timeDiff = mOptimalRedrawTime;
+
+     */
 
     mRedrawTime = timeDiff;
 
     mDispatchBase->prepareScheduledPaint (timeDiff);
     mDispatchBase->paintScheduledPaint ();
-    mDispatchBase->doneScheduledPaint ();
-
 
     mLastRedraw = tv;
+    
+    /* Throttle to the allowed refresh rate */
+    if (mFPSLimiterMode == CompositeFPSLimiterModeDefault)
+    {
+	if (mDispatchBase->schedulerHasVsync ())
+	{
+	    do
+	    {
+		/* If throttling is allowed, ensure that
+		 * timeDiff is always >= mOptimalRedrawTime
+		 * by waiting for another video-sync */
+		if (mDispatchBase->syncScheduledPaint ())
+		{
+		    struct timeval stv;
+		    gettimeofday (&stv, 0);
+		    timeDiff = TIMEVALDIFF (&stv, &mLastRedraw);
+		}
+		else
+		    timeDiff = mOptimalRedrawTime;
+	    }
+	    while (timeDiff < mOptimalRedrawTime);
+	}
+    }
+    else if (mFPSLimiterMode == CompositeFPSLimiterModeVSyncLike)
+    {
+	if (mDispatchBase->schedulerHasVsync ())
+	    mDispatchBase->syncScheduledPaint ();
+    }
+
+    mDispatchBase->doneScheduledPaint ();
     mSchedulerState &= ~(paintSchedulerPainting | paintSchedulerScheduled);
 
     if (mSchedulerState & paintSchedulerReschedule)

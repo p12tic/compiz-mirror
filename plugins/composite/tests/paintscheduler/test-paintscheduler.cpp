@@ -31,6 +31,7 @@
 
 #include <iostream>
 #include <string>
+#include <glib.h>
 #include <core/timeouthandler.h>
 #include <paintscheduler.h>
 #include <privatetimeouthandler.h>
@@ -86,7 +87,7 @@ class VBlankWaiter
 	float averagePeriod ();
 	float averagePhase ();
 
-	void addPaintStart (unsigned int time);
+	bool addPaintStart (unsigned int time);
 
     protected:
 
@@ -94,6 +95,7 @@ class VBlankWaiter
 	std::vector <VBlankWaiter::time_value> paintPeriods;
 	std::vector <VBlankWaiter::time_value> blankPeriods;
 	unsigned int        timingCount;
+	unsigned int	    paintCount;
 	DummyPaintDispatch  *owner;
 };
 
@@ -124,8 +126,8 @@ class DRMVBlankWaiter :
 
     protected:
 
-	static void *
-	drmEventHandlerThread (void *);
+	static gpointer
+	drmEventHandlerThread (gpointer);
 
 	static void
 	vblankHandler (int          fd,
@@ -139,11 +141,10 @@ class DRMVBlankWaiter :
 	drmEventContext evctx;
 	int             drmFD;
 	DRMInfo         *info;
-	pthread_t       eventThread;
-	pthread_mutex_t eventMutex;
-	pthread_cond_t  eventCondition;
+	GThread    	*eventThread;
+	GMutex		eventMutex;
+	GCond		eventCondition;
 	bool            pendingVBlank;
-	bool		done;
 };
 
 class SleepVBlankWaiter :
@@ -176,7 +177,6 @@ class NilVBlankWaiter :
 
 	bool waitVBlank ()
 	{
-	    timingCount++;
 	    return timingCount < periods.size ();
 	}
 
@@ -192,17 +192,19 @@ class DummyPaintDispatch :
 
 	void prepareScheduledPaint (unsigned int timeDiff)
 	{
-	    waiter->addPaintStart (timeDiff);
+	    success = waiter->addPaintStart (timeDiff);
 	}
 
 	void paintScheduledPaint ()
 	{
-	    if (waiter)
-	    {
-		success = waiter->waitVBlank ();
-	    }
+	}
+
+	bool syncScheduledPaint ()
+	{
+	    if (waiter && !isDone ())
+		return waiter->waitVBlank ();
 	    else
-		success = false;
+		return false;
 	}
 
 	void doneScheduledPaint ()
@@ -220,6 +222,9 @@ class DummyPaintDispatch :
 
 	bool schedulerHasVsync ()
 	{
+	    if (isDone ())
+		return false;
+
 	    if (waiter)
 		return waiter->hasVSync ();
 
@@ -259,7 +264,9 @@ VBlankWaiter::averagePeriod ()
 
     for (std::vector <float>::iterator it = periods.begin ();
 	 it != periods.end (); it++)
+    {
 	buf += (*it);
+    }
 
     buf = buf / (periods.size ());
 
@@ -274,8 +281,8 @@ VBlankWaiter::checkTimings (float req, float threshold)
     /* Ignore the first ten as they are synchronization bits */
     std::vector <float>::iterator it = periods.begin ();
 
-    assert (periods.size () > 10);
-    std::advance (it, 10);
+    assert (periods.size () > 20);
+    std::advance (it, 20);
 
     for (; it != periods.end (); it++)
     {
@@ -311,11 +318,17 @@ VBlankWaiter::checkTimings (float req, float threshold)
     return true;
 }
 
-void
+bool
 VBlankWaiter::addPaintStart (unsigned int time)
 {
     if (timingCount < periods.size ())
 	periods[timingCount]= time;
+    else
+	return false;
+
+    ++timingCount;
+
+    return true;
 }
 
 VBlankWaiter::VBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
@@ -323,6 +336,7 @@ VBlankWaiter::VBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
     paintPeriods (n),
     blankPeriods (n),
     timingCount (0),
+    paintCount (0),
     owner (o)
 {
 }
@@ -343,8 +357,6 @@ SleepVBlankWaiter::~SleepVBlankWaiter ()
 bool
 SleepVBlankWaiter::waitVBlank ()
 {
-    timingCount++;
-
     /* Wait until the next interval of 16ms */
     VBlankWaiter::time_value tv;
     gettimeofday (&tv, NULL);
@@ -373,28 +385,27 @@ DRMVBlankWaiter::vblankHandler (int fd, unsigned int frame, unsigned int sec, un
 
     drmWaitVBlank (fd, &vbl);
 
-    pthread_mutex_lock (&info->self->eventMutex);
+    g_mutex_lock (&info->self->eventMutex);
 
-    if (info->self->timingCount == info->self->periods.size ())
-	info->self->done = true;
-    else
-    {
+    if (info->self->timingCount != info->self->periods.size ())
 	info->self->pendingVBlank = true;
-	info->self->timingCount++;
-    }
 
     VBlankWaiter::time_value tv;
 
     gettimeofday (&tv, NULL);
 
-    info->self->blankPeriods.push_back (tv);
+    /* There may be multiple vblanks per paint
+     * because of throttling, so use the last slot
+     * available for the paint period */
+    if (info->self->paintCount < info->self->blankPeriods.size ())
+	info->self->blankPeriods[info->self->paintCount] = tv;
 	
-    pthread_cond_signal (&info->self->eventCondition);
-    pthread_mutex_unlock (&info->self->eventMutex);
+    g_cond_signal (&info->self->eventCondition);
+    g_mutex_unlock (&info->self->eventMutex);
 }
 
-void *
-DRMVBlankWaiter::drmEventHandlerThread (void *data)
+gpointer
+DRMVBlankWaiter::drmEventHandlerThread (gpointer data)
 {
     DRMVBlankWaiter *self = static_cast <DRMVBlankWaiter *> (data);
 
@@ -430,13 +441,12 @@ DRMVBlankWaiter::drmEventHandlerThread (void *data)
 DRMVBlankWaiter::DRMVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
     VBlankWaiter (o, n),
     info (new DRMInfo (this)),
-    pendingVBlank (false),
-    done (false)
+    pendingVBlank (false)
 {
     const char  *modules[] = { "i915", "radeon", "nouveau", "vmwgfx" };
 
-    pthread_mutex_init (&eventMutex, NULL);
-    pthread_cond_init  (&eventCondition, NULL);
+    g_mutex_init (&eventMutex);
+    g_cond_init  (&eventCondition);
 
     for (unsigned int i = 0; i < ARRAY_SIZE (modules); i++)
     {
@@ -484,7 +494,9 @@ DRMVBlankWaiter::DRMVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
     evctx.vblank_handler = DRMVBlankWaiter::vblankHandler;
     evctx.page_flip_handler = NULL;
 
-    if (pthread_create (&eventThread, NULL, &DRMVBlankWaiter::drmEventHandlerThread, (void *) this))
+    eventThread = g_thread_try_new ("drm_wait_t", &DRMVBlankWaiter::drmEventHandlerThread, (void *) this, NULL);
+
+    if (!eventThread)
     {
 	std::cout << "DEBUG: could not create thread" << std::endl;
 	throw std::exception ();
@@ -493,7 +505,7 @@ DRMVBlankWaiter::DRMVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
 
 DRMVBlankWaiter::~DRMVBlankWaiter ()
 {
-    pthread_join (eventThread, NULL);
+    g_thread_join (eventThread);
 
     delete info;
 
@@ -520,18 +532,20 @@ DRMVBlankWaiter::waitVBlank ()
 {
     VBlankWaiter::time_value tv;
 
-    pthread_mutex_lock (&eventMutex);
-    if (!pendingVBlank)
-	pthread_cond_wait (&eventCondition, &eventMutex);
+    g_mutex_lock (&eventMutex);
+    if (!pendingVBlank && !owner->isDone ())
+	g_cond_wait (&eventCondition, &eventMutex);
 
     pendingVBlank = false;
-    pthread_mutex_unlock (&eventMutex);
+    g_mutex_unlock (&eventMutex);
 
     gettimeofday (&tv, NULL);
 
-    info->self->paintPeriods.push_back (tv);
+    if (paintCount < paintPeriods.size ())
+        paintPeriods[paintCount] = tv;
+    ++paintCount;
 
-    return !done;
+    return true;
 }
 
 DummyPaintDispatch::DummyPaintDispatch (Glib::RefPtr <Glib::MainLoop> mainloop) :

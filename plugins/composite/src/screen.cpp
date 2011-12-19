@@ -747,11 +747,27 @@ PrivateCompositeScreen::paintScheduledPaint ()
 	outputs.push_back (&screen->fullscreenOutput ());
 
     cScreen->paint (outputs, mask);
+
+    damageMask = mask;
+}
+
+bool
+PrivateCompositeScreen::syncScheduledPaint ()
+{
+    if (pHnd)
+	return pHnd->waitVSync (damageMask);
+
+    return false;
 }
 
 void
 PrivateCompositeScreen::doneScheduledPaint ()
 {
+    if (pHnd)
+	pHnd->syncBuffers (damageMask);
+
+    damageMask = 0;
+
     cScreen->donePaint ();
 
     foreach (CompWindow *w, screen->windows ())

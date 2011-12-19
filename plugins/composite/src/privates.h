@@ -74,6 +74,8 @@ class PrivateCompositeScreen :
 
 	void paintScheduledPaint ();
 
+	bool syncScheduledPaint ();
+
 	void doneScheduledPaint ();
 
 	bool schedulerCompositingActive ();

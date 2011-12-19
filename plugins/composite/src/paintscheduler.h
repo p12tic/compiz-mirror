@@ -49,6 +49,7 @@ class PaintSchedulerDispatchBase
 
 	virtual void prepareScheduledPaint (unsigned int timeDiff) = 0;
 	virtual void paintScheduledPaint () = 0;
+	virtual bool syncScheduledPaint () = 0;
 	virtual void doneScheduledPaint () = 0;
 	virtual bool schedulerCompositingActive () = 0;
 	virtual bool schedulerHasVsync () = 0;

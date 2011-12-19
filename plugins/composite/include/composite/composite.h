@@ -97,6 +97,10 @@ public:
 			       const CompRegion    &region) = 0;
 
     virtual bool hasVSync () { return false; };
+    /* Return true if we are allowed to wait some more
+     * for framerate throttling */
+    virtual bool waitVSync (unsigned int mask) { return false; }
+    virtual void syncBuffers (unsigned int        mask) = 0;
 
     virtual void prepareDrawing () {};
     virtual bool compositingActive () { return false; };
