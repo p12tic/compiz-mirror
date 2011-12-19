@@ -581,7 +581,8 @@ bool doTest (const std::string &testName, int refreshRate, bool vsync)
     std::cout << "DEBUG: average frame rate " << 1000 / averagePeriod << " Hz" << std::endl;
     std::cout << "TEST: " << testName << " time " << averagePeriod << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
 
-    if (vbwaiter->checkTimings (vsync ? averagePeriod : 1000 / refreshRate, DRMVBlankWaiter::threshold))
+    if (vbwaiter->checkTimings (vsync ? averagePeriod : 1000 / refreshRate, DRMVBlankWaiter::threshold) &&
+	1000 / averagePeriod < refreshRate)
 	pass (testName);
     else
 	fail (testName);
