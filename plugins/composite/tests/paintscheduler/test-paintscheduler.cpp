@@ -543,10 +543,8 @@ DummyPaintDispatch::DummyPaintDispatch (Glib::RefPtr <Glib::MainLoop> mainloop) 
     sched.schedule ();
 }
 
-int main (void)
+bool doTest (const std::string &testName, int refreshRate, bool vsync)
 {
-    gettimeofday (&SleepVBlankWaiter::start_time, NULL);
-
     TimeoutHandler     *th = new TimeoutHandler ();
     TimeoutHandler::SetDefault (th);
 
@@ -555,19 +553,25 @@ int main (void)
     Glib::RefPtr <CompTimeoutSource> timeout = CompTimeoutSource::create (ctx);
 
     DummyPaintDispatch *dpb = new DummyPaintDispatch (mainloop);
-    VBlankWaiter *vbwaiter = NULL;
+    VBlankWaiter       *vbwaiter = NULL;
 
-    try
+    if (vsync)
     {
-	vbwaiter = new DRMVBlankWaiter (dpb, 300);
+	try
+	{
+	    vbwaiter = new DRMVBlankWaiter (dpb, 300);
+	}
+	catch (std::exception &e)
+	{
+	    std::cout << "WARN: can't test DRM vblanking! Using hardcoded nanosleep () based waiter" << std::endl;
+	    vbwaiter = new SleepVBlankWaiter (dpb, 300);
+	}
     }
-    catch (std::exception &e)
-    {
-	std::cout << "WARN: can't test DRM vblanking! Using hardcoded nanosleep () based waiter" << std::endl;
-	vbwaiter = new SleepVBlankWaiter (dpb, 300);
-    }
+    else
+	vbwaiter = new NilVBlankWaiter (dpb, 300);
 
     dpb->setWaiter (vbwaiter);
+    dpb->setRefreshRate (refreshRate);
 
     mainloop->run ();
 
@@ -575,98 +579,32 @@ int main (void)
 
     std::cout << "DEBUG: average vblank wait time was " << averagePeriod << std::endl;
     std::cout << "DEBUG: average frame rate " << 1000 / averagePeriod << " Hz" << std::endl;
-    std::cout << "TEST: time " << averagePeriod << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
+    std::cout << "TEST: " << testName << " time " << averagePeriod << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
 
-    if (vbwaiter->checkTimings (averagePeriod, DRMVBlankWaiter::threshold))
-	pass ("unthrottled vblank timings");
+    if (vbwaiter->checkTimings (vsync ? averagePeriod : 1000 / refreshRate, DRMVBlankWaiter::threshold))
+	pass (testName);
     else
-	fail ("unthrottled vblank timings");
+	fail (testName);
 
     dpb->setWaiter (NULL);
 
     delete dpb;
     delete th;
 
-    th = new TimeoutHandler ();
-    TimeoutHandler::SetDefault (th);
+    return true;
+}
+   
+int main (void)
+{
+    gettimeofday (&SleepVBlankWaiter::start_time, NULL);
 
-    mainloop = Glib::MainLoop::create (ctx, false);
-    timeout = CompTimeoutSource::create (ctx);
-
-    dpb = new DummyPaintDispatch (mainloop);
-
-    vbwaiter = new NilVBlankWaiter (dpb, 100);
-
-    dpb->setRefreshRate (50);
-    dpb->setWaiter (vbwaiter);
-
-    mainloop->run ();
-
-    std::cout << "TEST: refreshRate " << 50 << " within threshold of " << 10 << std::endl;
-
-    if (vbwaiter->checkTimings (1000 / 50, 10))
-	pass ("50 Hz refresh rate");
-    else
-	fail ("50 Hz refresh rate");
-
-    dpb->setWaiter (NULL);
-
-    delete dpb;
-    delete th;
-
-    th = new TimeoutHandler ();
-    TimeoutHandler::SetDefault (th);
-
-    mainloop = Glib::MainLoop::create (ctx, false);
-    timeout = CompTimeoutSource::create (ctx);
-
-    dpb = new DummyPaintDispatch (mainloop);
-
-    vbwaiter = new NilVBlankWaiter (dpb, 100);
-
-    dpb->setRefreshRate (30);
-    dpb->setWaiter (vbwaiter);
-
-    mainloop->run ();
-
-    std::cout << "TEST: refreshRate " << 30 << " within threshold of " << 10 << std::endl;
-
-    if (vbwaiter->checkTimings (1000 / 30, 10))
-	pass ("30 Hz refresh rate");
-    else
-	fail ("30 Hz refresh rate");
-
-    dpb->setWaiter (NULL);
-
-    delete dpb;
-    delete th;
-
-    th = new TimeoutHandler ();
-    TimeoutHandler::SetDefault (th);
-
-    mainloop = Glib::MainLoop::create (ctx, false);
-    timeout = CompTimeoutSource::create (ctx);
-
-    dpb = new DummyPaintDispatch (mainloop);
-
-    vbwaiter = new NilVBlankWaiter (dpb, 100);
-
-    dpb->setRefreshRate (100);
-    dpb->setWaiter (vbwaiter);
-
-    mainloop->run ();
-
-    std::cout << "TEST: refreshRate " << 100 << " within threshold of " << 10 << std::endl;
-
-    if (vbwaiter->checkTimings (1000 / 100, 10))
-	pass ("100 Hz refresh rate");
-    else
-	fail ("100 Hz refresh rate");
-
-    dpb->setWaiter (NULL);
-
-    delete dpb;
-    delete th;
+    doTest ("unthrottled vblank timings", 60, true);
+    doTest ("no vsync 50 Hz refresh rate", 50, false);
+    doTest ("vsync 50 Hz refresh rate", 50, true);
+    doTest ("no vsync 20 Hz refresh rate", 30, false);
+    doTest ("vsync 30 Hz refresh rate", 30, true);
+    doTest ("no vsync 100 Hz refresh rate", 100, false);
+    doTest ("vsync 100 Hz refresh rate", 100, true);
 
     return 0;
 }
