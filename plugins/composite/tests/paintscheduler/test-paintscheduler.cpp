@@ -146,6 +146,26 @@ class DRMVBlankWaiter :
 	bool		done;
 };
 
+class SleepVBlankWaiter :
+    public VBlankWaiter
+{
+    public:
+
+	SleepVBlankWaiter (DummyPaintDispatch *, unsigned int);
+	~SleepVBlankWaiter ();
+
+	bool waitVBlank ();
+	bool hasVSync () { return true; }
+
+	static VBlankWaiter::time_value start_time;
+
+    private:
+
+	const static int vblank_ms_period = 60;
+};
+
+VBlankWaiter::time_value SleepVBlankWaiter::start_time;
+
 class NilVBlankWaiter :
     public VBlankWaiter
 {
@@ -230,7 +250,7 @@ class DummyPaintDispatch :
 };
 
 
-float DRMVBlankWaiter::threshold = 7.0f;
+float DRMVBlankWaiter::threshold = 10.0f;
 
 float
 VBlankWaiter::averagePeriod ()
@@ -309,6 +329,36 @@ VBlankWaiter::VBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
 
 VBlankWaiter::~VBlankWaiter  ()
 {
+}
+
+SleepVBlankWaiter::SleepVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
+    VBlankWaiter (o, n)
+{
+}
+
+SleepVBlankWaiter::~SleepVBlankWaiter ()
+{
+}
+
+bool
+SleepVBlankWaiter::waitVBlank ()
+{
+    timingCount++;
+
+    /* Wait until the next interval of 16ms */
+    VBlankWaiter::time_value tv;
+    gettimeofday (&tv, NULL);
+
+    unsigned long usecIntervalWait = 16000 - (tv.tv_usec % 16000);
+
+    struct timespec slp;
+
+    slp.tv_sec = 0;
+    slp.tv_nsec = usecIntervalWait * 1000;
+
+    nanosleep (&slp, NULL);
+
+    return timingCount < periods.size ();
 }
 
 void
@@ -495,6 +545,8 @@ DummyPaintDispatch::DummyPaintDispatch (Glib::RefPtr <Glib::MainLoop> mainloop) 
 
 int main (void)
 {
+    gettimeofday (&SleepVBlankWaiter::start_time, NULL);
+
     TimeoutHandler     *th = new TimeoutHandler ();
     TimeoutHandler::SetDefault (th);
 
@@ -506,7 +558,7 @@ int main (void)
 
     try
     {
-
+	throw std::exception ();
 	DRMVBlankWaiter    *dvbwaiter = new DRMVBlankWaiter (dpb, 300);
 
 	dpb->setWaiter (dvbwaiter);
@@ -526,7 +578,24 @@ int main (void)
     }
     catch (std::exception &e)
     {
-	std::cout << "WARN: can't test DRM vblanking!" << std::endl;
+	std::cout << "WARN: can't test DRM vblanking! Using hardcoded nanosleep () based waiter" << std::endl;
+
+	SleepVBlankWaiter *svbwaiter = new SleepVBlankWaiter (dpb, 300);
+
+	dpb->setWaiter (svbwaiter);
+
+	mainloop->run ();
+
+	float averagePeriod = svbwaiter->averagePeriod ();
+
+	std::cout << "DEBUG: average vblank wait time was " << averagePeriod << std::endl;
+	std::cout << "DEBUG: average frame rate " << 1000 / averagePeriod << " Hz" << std::endl;
+	std::cout << "TEST: time " << averagePeriod << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
+
+	if (svbwaiter->checkTimings (averagePeriod, DRMVBlankWaiter::threshold))
+	    pass ("software vblank timings");
+	else
+	    fail ("software vblank timings");
     }
 
     dpb->setWaiter (NULL);
