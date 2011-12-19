@@ -555,48 +555,32 @@ int main (void)
     Glib::RefPtr <CompTimeoutSource> timeout = CompTimeoutSource::create (ctx);
 
     DummyPaintDispatch *dpb = new DummyPaintDispatch (mainloop);
+    VBlankWaiter *vbwaiter = NULL;
 
     try
     {
-	throw std::exception ();
-	DRMVBlankWaiter    *dvbwaiter = new DRMVBlankWaiter (dpb, 300);
-
-	dpb->setWaiter (dvbwaiter);
-
-	mainloop->run ();
-
-	float averagePeriod = dvbwaiter->averagePeriod ();
-
-	std::cout << "DEBUG: average vblank wait time was " << averagePeriod << std::endl;
-	std::cout << "DEBUG: average frame rate " << 1000 / averagePeriod << " Hz" << std::endl;
-	std::cout << "TEST: time " << averagePeriod << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
-
-	if (dvbwaiter->checkTimings (averagePeriod, DRMVBlankWaiter::threshold))
-	    pass ("hardware vblank timings");
-	else
-	    fail ("hardware vblank timings");
+	vbwaiter = new DRMVBlankWaiter (dpb, 300);
     }
     catch (std::exception &e)
     {
 	std::cout << "WARN: can't test DRM vblanking! Using hardcoded nanosleep () based waiter" << std::endl;
-
-	SleepVBlankWaiter *svbwaiter = new SleepVBlankWaiter (dpb, 300);
-
-	dpb->setWaiter (svbwaiter);
-
-	mainloop->run ();
-
-	float averagePeriod = svbwaiter->averagePeriod ();
-
-	std::cout << "DEBUG: average vblank wait time was " << averagePeriod << std::endl;
-	std::cout << "DEBUG: average frame rate " << 1000 / averagePeriod << " Hz" << std::endl;
-	std::cout << "TEST: time " << averagePeriod << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
-
-	if (svbwaiter->checkTimings (averagePeriod, DRMVBlankWaiter::threshold))
-	    pass ("software vblank timings");
-	else
-	    fail ("software vblank timings");
+	vbwaiter = new SleepVBlankWaiter (dpb, 300);
     }
+
+    dpb->setWaiter (vbwaiter);
+
+    mainloop->run ();
+
+    float averagePeriod = vbwaiter->averagePeriod ();
+
+    std::cout << "DEBUG: average vblank wait time was " << averagePeriod << std::endl;
+    std::cout << "DEBUG: average frame rate " << 1000 / averagePeriod << " Hz" << std::endl;
+    std::cout << "TEST: time " << averagePeriod << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
+
+    if (vbwaiter->checkTimings (averagePeriod, DRMVBlankWaiter::threshold))
+	pass ("unthrottled vblank timings");
+    else
+	fail ("unthrottled vblank timings");
 
     dpb->setWaiter (NULL);
 
@@ -611,16 +595,16 @@ int main (void)
 
     dpb = new DummyPaintDispatch (mainloop);
 
-    NilVBlankWaiter *nwaiter = new NilVBlankWaiter (dpb, 100);
+    vbwaiter = new NilVBlankWaiter (dpb, 100);
 
     dpb->setRefreshRate (50);
-    dpb->setWaiter (nwaiter);
+    dpb->setWaiter (vbwaiter);
 
     mainloop->run ();
 
     std::cout << "TEST: refreshRate " << 50 << " within threshold of " << 10 << std::endl;
 
-    if (nwaiter->checkTimings (1000 / 50, 10))
+    if (vbwaiter->checkTimings (1000 / 50, 10))
 	pass ("50 Hz refresh rate");
     else
 	fail ("50 Hz refresh rate");
@@ -638,16 +622,16 @@ int main (void)
 
     dpb = new DummyPaintDispatch (mainloop);
 
-    NilVBlankWaiter *nwaiter2 = new NilVBlankWaiter (dpb, 100);
+    vbwaiter = new NilVBlankWaiter (dpb, 100);
 
     dpb->setRefreshRate (30);
-    dpb->setWaiter (nwaiter2);
+    dpb->setWaiter (vbwaiter);
 
     mainloop->run ();
 
     std::cout << "TEST: refreshRate " << 30 << " within threshold of " << 10 << std::endl;
 
-    if (nwaiter2->checkTimings (1000 / 30, 10))
+    if (vbwaiter->checkTimings (1000 / 30, 10))
 	pass ("30 Hz refresh rate");
     else
 	fail ("30 Hz refresh rate");
@@ -665,16 +649,16 @@ int main (void)
 
     dpb = new DummyPaintDispatch (mainloop);
 
-    NilVBlankWaiter *nwaiter3 = new NilVBlankWaiter (dpb, 100);
+    vbwaiter = new NilVBlankWaiter (dpb, 100);
 
     dpb->setRefreshRate (100);
-    dpb->setWaiter (nwaiter3);
+    dpb->setWaiter (vbwaiter);
 
     mainloop->run ();
 
     std::cout << "TEST: refreshRate " << 100 << " within threshold of " << 10 << std::endl;
 
-    if (nwaiter3->checkTimings (1000 / 100, 10))
+    if (vbwaiter->checkTimings (1000 / 100, 10))
 	pass ("100 Hz refresh rate");
     else
 	fail ("100 Hz refresh rate");
