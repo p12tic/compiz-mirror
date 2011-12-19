@@ -758,11 +758,11 @@ CompositeScreen::handlePaintTimeout ()
 	/*
 	 * Now that we use a "tickless" timing algorithm, timeDiff could be
 	 * very large if the screen is truely idle.
-	 * However plugins expect the old behaviour where timeDiff is never
+	 * However plugins expect the old behaviour where timeDiff is rarely
 	 * larger than the frame rate (optimalRedrawTime).
 	 * So enforce this to keep animations timed correctly and smooth...
 	 */
-	if (timeDiff > priv->optimalRedrawTime)
+	if (timeDiff > 100)
 	    timeDiff = priv->optimalRedrawTime;
 
 	priv->redrawTime = timeDiff;
