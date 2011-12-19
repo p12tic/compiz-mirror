@@ -173,16 +173,6 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		    }
 		}
 	    }
-	    else if (randrExtension &&
-		     event->type == randrEvent + RRScreenChangeNotify)
-	    {
-		XRRScreenChangeNotifyEvent *rre;
-
-		rre = (XRRScreenChangeNotifyEvent *) event;
-
-		if (screen->root () == rre->root)
-		    detectRefreshRate ();
-	    }
 	    break;
     }
 }
@@ -284,6 +274,8 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     ScreenInterface::setHandler (screen);
 
     optionSetSlowAnimationsKeyInitiate (CompositeScreen::toggleSlowAnimations);
+    optionSetRefreshRateCapNotify (boost::bind (&PrivateCompositeScreen::detectRefreshRate,
+						this));
 }
 
 PrivateCompositeScreen::~PrivateCompositeScreen ()
@@ -624,37 +616,12 @@ CompositeScreen::windowPaintOffset ()
 void
 PrivateCompositeScreen::detectRefreshRate ()
 {
-    if (!noDetection &&
-	optionGetDetectRefreshRate ())
-    {
-	CompString        name;
-	CompOption::Value value;
+    unsigned int rate = optionGetRefreshRateCap ();
 
-	value.set ((int) 0);
-
-	if (screen->XRandr ())
-	{
-	    XRRScreenConfiguration *config;
-
-	    config  = XRRGetScreenInfo (screen->dpy (),
-					screen->root ());
-	    value.set ((int) XRRConfigCurrentRate (config));
-
-	    XRRFreeScreenConfigInfo (config);
-	}
-
-	if (value.i () == 0)
-	    value.set ((int) 50);
-
-	mOptions[CompositeOptions::DetectRefreshRate].value ().set (false);
-	screen->setOptionForPlugin ("composite", "refresh_rate", value);
-	mOptions[CompositeOptions::DetectRefreshRate].value ().set (true);
-	scheduler.setRefreshRate (value.i ());
-    }
+    if (rate)
+        scheduler.setRefreshRate (rate);
     else
-    {
-	scheduler.setRefreshRate (optionGetRefreshRate ());
-    }
+	scheduler.setFPSLimiterMode (CompositeFPSLimiterModeVSyncLike);
 }
 
 CompositeFPSLimiterMode
@@ -668,8 +635,6 @@ CompositeScreen::setFPSLimiterMode (CompositeFPSLimiterMode newMode)
 {
     priv->scheduler.setFPSLimiterMode (newMode);
 }
-
-
 
 void
 PrivateCompositeScreen::prepareScheduledPaint (unsigned int timeDiff)

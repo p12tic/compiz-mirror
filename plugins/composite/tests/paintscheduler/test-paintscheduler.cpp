@@ -48,7 +48,7 @@
 #include <sys/poll.h>
 #include <sys/time.h>
 
-#include <pthread.h>
+#include <cmath>
 
 extern "C"
 {
@@ -121,8 +121,6 @@ class DRMVBlankWaiter :
 
 		DRMVBlankWaiter *self;
 	};
-
-	static float threshold;
 
     protected:
 
@@ -254,9 +252,6 @@ class DummyPaintDispatch :
 	Glib::RefPtr <Glib::MainLoop> ml;
 };
 
-
-float DRMVBlankWaiter::threshold = 10.0f;
-
 float
 VBlankWaiter::averagePeriod ()
 {
@@ -278,42 +273,57 @@ VBlankWaiter::averagePeriod ()
 bool
 VBlankWaiter::checkTimings (float req, float threshold)
 {
-    /* Ignore the first ten as they are synchronization bits */
-    std::vector <float>::iterator it = periods.begin ();
+    std::sort (periods.begin (), periods.end ());
 
-    assert (periods.size () > 20);
-    std::advance (it, 20);
+    float median = periods[periods.size () / 2];
+    std::vector <float> deviationPeriods (periods.size ());
 
-    for (; it != periods.end (); it++)
-    {
-	if ((((*it) <= req - threshold) ||
-	     ((*it) >= req + threshold)))
-	{
-	    std::cout << "DEBUG: failing value " << (*it) << std::endl;
-	    return false;
-	}
-    }
+    unsigned int i = 0;
 
+    for (std::vector <float>::iterator it = periods.begin ();
+	it != periods.end (); it++, i++)
+	deviationPeriods[i] = fabsf ((*it) - median);
+
+    std::sort (deviationPeriods.begin (), deviationPeriods.end ());
+
+    float medianDeviation = deviationPeriods[deviationPeriods.size () / 2];
+
+    std::cout << "DEBUG: median absolute deviation of the periods was " << medianDeviation << std::endl;
+
+    if (medianDeviation > threshold)
+	return false;
+
+    /* The phase needs to be sensitive to outliers
+     * so use the standard deviation with an acceptable
+     * deviation of 1 */
+    
     std::vector <VBlankWaiter::time_value>::iterator pit = paintPeriods.begin ();
     std::vector <VBlankWaiter::time_value>::iterator vit = blankPeriods.begin ();
-
-    assert (paintPeriods.size () > 10);
-    assert (blankPeriods.size () > 10);
-
-    std::advance (pit, 10);
-    std::advance (vit, 10);
+    float sum = 0.0f;
+    float mean = 0.0f;
 
     /* Check if any blank periods fall outside of -4ms
      * of the paint period, that means we're out of phase. */
 
     for (; vit != blankPeriods.end (); vit++, pit++)
-    {
-	if (pit->tv_usec - vit->tv_usec > 4000)
-	{
-	   std::cout << "DEBUG: failing values blank: " << vit->tv_usec << " paint: " << pit->tv_usec << " out of phase!" << std::endl;
-	   return false;
-	}
-    }
+	sum += ((pit->tv_usec - vit->tv_usec) / 1000.0f);
+
+    mean = sum / blankPeriods.size ();
+
+    pit = paintPeriods.begin ();
+    vit = blankPeriods.begin ();
+
+    sum = 0.0f;
+
+    for (; vit != blankPeriods.end (); vit++, pit++)
+	sum += pow (((pit->tv_usec - vit->tv_usec) / 1000.0f) - mean, 2);
+
+    sum /= blankPeriods.size ();
+
+    std::cout << "DEBUG: st. dev of the phases was " << sqrt (sum) << std::endl;
+
+    if (sqrt (sum) > 1.0f)
+	return false;
 
     return true;
 }
@@ -593,9 +603,9 @@ bool doTest (const std::string &testName, int refreshRate, bool vsync)
 
     std::cout << "DEBUG: average vblank wait time was " << averagePeriod << std::endl;
     std::cout << "DEBUG: average frame rate " << 1000 / averagePeriod << " Hz" << std::endl;
-    std::cout << "TEST: " << testName << " time " << averagePeriod << " within threshold of " << DRMVBlankWaiter::threshold << std::endl;
+    std::cout << "TEST: " << testName << " time " << averagePeriod << " within threshold of " << 10.0f << std::endl;
 
-    if (vbwaiter->checkTimings (vsync ? averagePeriod : 1000 / refreshRate, DRMVBlankWaiter::threshold) &&
+    if (vbwaiter->checkTimings (vsync ? averagePeriod : 1000 / refreshRate, 10.0f) &&
 	1000 / averagePeriod < refreshRate)
 	pass (testName);
     else

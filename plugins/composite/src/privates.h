@@ -54,8 +54,6 @@ class PrivateCompositeScreen :
 	PrivateCompositeScreen (CompositeScreen *cs);
 	~PrivateCompositeScreen ();
 
-	bool setOption (const CompString &name, CompOption::Value &value);
-
 	void outputChangeNotify ();
 
 	void handleEvent (XEvent *event);
