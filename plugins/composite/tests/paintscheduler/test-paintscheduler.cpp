@@ -355,7 +355,7 @@ VBlankWaiter::checkTimings (float req, float threshold)
 
 	std::cout << "DEBUG: st. dev of the phases was " << sqrt (sum) << std::endl;
 
-	if (sqrt (sum) > 2.0f)
+	if (sqrt (sum) > 0.025f)
 	    return false;
     }
 
@@ -640,7 +640,6 @@ bool doTest (const std::string &testName, int refreshRate, float workFactor, boo
     {
 	try
 	{
-	    throw std::exception ();
 	    vbwaiter = new DRMVBlankWaiter (dpb, 200);
 	}
 	catch (std::exception &e)
