@@ -1,3 +1,4 @@
+gtk/gnome/compiz.desktop.in
 gtk/window-decorator/gwd.schemas.in
 gtk/window-decorator/gtk-window-decorator.c
 metadata/core.xml.in

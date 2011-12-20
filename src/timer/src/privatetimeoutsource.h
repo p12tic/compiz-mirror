@@ -47,10 +47,6 @@ class CompTimeoutSource :
 	explicit CompTimeoutSource (Glib::RefPtr <Glib::MainContext> &ctx);
 	virtual ~CompTimeoutSource ();
 
-    private:
-
-	gint64 mLastTime;
-
     friend class CompTimer;
 };
 

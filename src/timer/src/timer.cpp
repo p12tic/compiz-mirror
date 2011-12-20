@@ -35,11 +35,27 @@
 CompTimeoutSource::CompTimeoutSource (Glib::RefPtr <Glib::MainContext> &ctx) :
     Glib::Source ()
 {
-    set_priority (G_PRIORITY_HIGH);
+    /*
+     * Compiz MUST use priority G_PRIORITY_DEFAULT because that's the same
+     * as GDK_PRIORITY_EVENTS.
+     *
+     * Any higher priority than that and you will starve the glib event loop
+     * of X events. That causes stuttering and even complete starvation
+     * can cause compiz to hang inside X11/GLX functions indefinitely.
+     * In the best case, GLX functions would be slowed down by their messages
+     * being prioritized lower than us.
+     *
+     * Any lower priority than that and screen redraws can lag behind
+     * important things like dragging windows around.
+     *
+     * We have an "unfair" scheduling algorithm in the glib main event loop
+     * to thank for all this. Ideally, compiz should be threaded so it never
+     * slows down the handling of X11/GLX messages in the glib main loop, or
+     * vice-versa.
+     */
+    set_priority (G_PRIORITY_DEFAULT);
     attach (ctx);
 
-    mLastTime = get_time ();
-    
     connect (sigc::mem_fun <bool, CompTimeoutSource> (this, &CompTimeoutSource::callback));
 }
 
@@ -95,51 +111,20 @@ CompTimeoutSource::prepare (int &timeout)
 		timeout = t->maxLeft ();
 	    it++;
 	}
-
-	mLastTime = get_time ();
-
-	return false;
     }
     else
     {
 	timeout = 0;
-
-	mLastTime = get_time ();
-
-	return true;
     }
+
+    return timeout <= 0;
 }
 
 bool
 CompTimeoutSource::check ()
 {
-    gint64		    fixedTimeDiff;
-    gdouble		    timeDiff;
-    gint64		    currentTime = get_time ();
-    bool		    ready = false;
-
-    timeDiff = (currentTime - mLastTime) / 1000.0;
-
-    mLastTime = currentTime;
-
-    /* prefer over-estimating rather than waking up */
-    fixedTimeDiff = ceil (timeDiff);
-
-    /* Handle clock rollback */
-    if (fixedTimeDiff < 0)
-    {
-	fixedTimeDiff = 0;
-    }
-
-    foreach (CompTimer *t, TimeoutHandler::Default ()->timers ())
-    {
-	t->decrement (fixedTimeDiff);
-    }
-
-    ready = (!TimeoutHandler::Default ()->timers ().empty () &&
+    return (!TimeoutHandler::Default ()->timers ().empty () &&
 	     TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0);
-
-    return ready;
 }
 
 bool
@@ -152,29 +137,37 @@ CompTimeoutSource::dispatch (sigc::slot_base *slot)
 bool
 CompTimeoutSource::callback ()
 {
-    while (TimeoutHandler::Default ()->timers ().begin () != TimeoutHandler::Default ()->timers ().end () &&
-	   TimeoutHandler::Default ()->timers ().front ()->minLeft () <= 0)
-    {
-	CompTimer *t = TimeoutHandler::Default ()->timers ().front ();
-	TimeoutHandler::Default ()->timers ().pop_front ();
+    TimeoutHandler *handler = TimeoutHandler::Default ();
+    std::list<CompTimer*> requeue, &timers = handler->timers ();
 
+    while (!timers.empty ())
+    {
+	CompTimer *t = timers.front ();
+	if (t->minLeft () > 0)
+	    break;
+	timers.pop_front ();
 	t->setActive (false);
 	if (t->triggerCallback ())
-	{
-	    TimeoutHandler::Default ()->addTimer (t);
-	    t->setActive (true);
-	}
+	    requeue.push_back (t);
     }
 
-    return !TimeoutHandler::Default ()->timers ().empty ();
+    std::list<CompTimer*>::const_iterator i = requeue.begin ();
+    for (; i != requeue.end (); i++)
+    {
+	CompTimer *t = *i;
+	handler->addTimer (t);
+	t->setActive (true);
+    }
+
+    return !timers.empty ();
 }
 
 PrivateTimer::PrivateTimer () :
     mActive (false),
     mMinTime (0),
     mMaxTime (0),
-    mMinLeft (0),
-    mMaxLeft (0),
+    mMinDeadline (0),
+    mMaxDeadline (0),
     mCallBack (NULL)
 {
 }
@@ -211,15 +204,15 @@ CompTimer::setTimes (unsigned int min, unsigned int max)
 void
 CompTimer::setExpiryTimes (unsigned int min, unsigned int max)
 {
-    priv->mMinLeft = min;
-    priv->mMaxLeft = (min <= max) ? max : min;
+    gint64 now = g_get_monotonic_time ();
+    priv->mMinDeadline = now + ((gint64)min * 1000);
+    priv->mMaxDeadline = now + ((gint64)(max >= min ? max : min) * 1000);
 }
 
 void
 CompTimer::decrement (unsigned int diff)
 {
-    priv->mMinLeft -= diff;
-    priv->mMaxLeft -= diff;
+    /* deprecated */
 }
 
 void
@@ -305,13 +298,17 @@ CompTimer::maxTime ()
 unsigned int
 CompTimer::minLeft ()
 {
-    return (priv->mMinLeft < 0)? 0 : priv->mMinLeft;
+    gint64 now = g_get_monotonic_time ();
+    return (priv->mMinDeadline > now) ?
+	(unsigned int)(priv->mMinDeadline - now + 500) / 1000 : 0;
 }
 
 unsigned int
 CompTimer::maxLeft ()
 {
-    return (priv->mMaxLeft < 0)? 0 : priv->mMaxLeft;
+    gint64 now = g_get_monotonic_time ();
+    return (priv->mMaxDeadline > now) ?
+	(unsigned int)(priv->mMaxDeadline - now + 500) / 1000 : 0;
 }
 
 bool

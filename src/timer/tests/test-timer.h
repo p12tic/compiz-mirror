@@ -35,6 +35,7 @@
 #include <iostream>
 #include <boost/bind.hpp>
 #include <boost/shared_ptr.hpp>
+#include <deque>
 
 class CompTimerTest : public ::testing::Test
 {
@@ -48,7 +49,7 @@ public:
     Glib::RefPtr <Glib::MainContext> mc;
     Glib::RefPtr <Glib::MainLoop> ml;
     Glib::RefPtr <CompTimeoutSource> ts;
-    std::list <CompTimer *> timers;
+    std::deque <CompTimer *> timers;
 
     int lastTimerTriggered;
 };

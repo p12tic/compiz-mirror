@@ -24,16 +24,16 @@
  */
 
 #include "test-timer.h"
+#include <ctime>
 
 #include <pthread.h>
 
 class CompTimerTestCallback: public CompTimerTest
 {
 public:
-    CompTimerTestCallback () :
-	    mlistGuard(PTHREAD_MUTEX_INITIALIZER)
+    CompTimerTestCallback ()
     {
-
+	pthread_mutex_init (&mlistGuard, NULL);
     }
 protected:
 
@@ -50,7 +50,7 @@ protected:
     }
 
     pthread_t mmainLoopThread;
-    std::list<int> mtriggeredTimers;
+    std::vector<int> mtriggeredTimers;
 
     bool cb (int num)
     {
@@ -63,34 +63,40 @@ protected:
 
     void SetUp ()
     {
-	CompTimerTest::SetUp();
-	mtriggeredTimers.clear();
+	CompTimerTest::SetUp ();
+	mtriggeredTimers.clear ();
 
 	/* Test 2: Adding timers */
-	timers.push_back(new CompTimer());
-	timers.front()->setTimes(100, 110);
-	timers.front()->setCallback(
+	timers.push_back (new CompTimer ());
+	timers.front ()->setTimes (100, 110);
+	timers.front ()->setCallback (
 		boost::bind(&CompTimerTestCallback::cb, this, 1));
 
 	/* TimeoutHandler::timers should be empty */
-	if (!TimeoutHandler::Default()->timers().empty())
+	if (!TimeoutHandler::Default ()->timers().empty())
 	{
-	    FAIL() << "timers list is not empty";
+	    FAIL () << "timers list is not empty";
 	}
 
-	timers.push_back(new CompTimer());
-	timers.back()->setTimes(50, 90);
-	timers.back()->setCallback(
+	timers.push_back (new CompTimer());
+	timers.back ()->setTimes (50, 90);
+	timers.back ()->setCallback (
 		boost::bind(&CompTimerTestCallback::cb, this, 2));
 
+	timers.push_back (new CompTimer());
+	timers.back ()->setTimes (0, 0);
+	timers.back ()->setCallback (
+		boost::bind(&CompTimerTestCallback::cb, this, 3));
+
 	/* Start both timers */
-	timers.front()->start();
-	timers.back()->start();
+	timers[0]->start ();
+	timers[1]->start ();
+	timers[2]->start ();
 
 	/* TimeoutHandler::timers should have the timer that
 	 * is going to trigger first at the front of the
 	 * list and the last timer at the back */
-	if (TimeoutHandler::Default()->timers().front() != timers.back())
+	if (TimeoutHandler::Default ()->timers ().front () != timers.back ())
 	{
 	    RecordProperty("TimeoutHandler::Default ().size",
 		    TimeoutHandler::Default()->timers().size());
@@ -113,7 +119,7 @@ protected:
 	    FAIL() << "timer with the least time is not at the front";
 	}
 
-	if (TimeoutHandler::Default()->timers().back() != timers.front())
+	if (TimeoutHandler::Default ()->timers ().back () != timers.front ())
 	{
 	    FAIL() << "timer with the most time is not at the back";
 	}
@@ -139,7 +145,7 @@ TEST_F( CompTimerTestCallback, TimerOrder )
     RecordProperty("mtriggeredTimers.front()", mtriggeredTimers.front());
     RecordProperty("mtriggeredTimers.back()", mtriggeredTimers.back());
 
-    std::list<int>::iterator it = mtriggeredTimers.begin();
+    std::vector<int>::iterator it = mtriggeredTimers.begin();
     ++it;
 
     int lastTimer = mtriggeredTimers.front();
@@ -149,15 +155,18 @@ TEST_F( CompTimerTestCallback, TimerOrder )
 	std::cout << *it;
 	switch (lastTimer)
 	{
-	case 1:
-	    ASSERT_EQ(2, *it);
+	case 0:
+	    ASSERT_EQ (3, *it);
 	    break;
 	case 2:
-	    ASSERT_EQ(1, *it);
+	    ASSERT_EQ (3, *it);
+	    break;
+	case 1:
+	    ASSERT_EQ (2, *it);
 	    break;
 	}
 	lastTimer = *it;
 	++it;
     }
-    ASSERT_EQ(mtriggeredTimers.front(), 2);
+    ASSERT_EQ(mtriggeredTimers.front(), 1);
 }

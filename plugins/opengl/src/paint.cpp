@@ -591,7 +591,7 @@ GLScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 void
 GLWindow::glDrawGeometry ()
 {
-    WRAPABLE_HND_FUNC (5, glDrawGeometry)
+    WRAPABLE_HND_FUNC (4, glDrawGeometry)
 
     int     texUnit = priv->geometry.texUnits;
     int     currentTexUnit = 0;
@@ -716,7 +716,7 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 			 unsigned int                maxGridWidth,
 			 unsigned int                maxGridHeight)
 {
-    WRAPABLE_HND_FUNC (3, glAddGeometry, matrix, region, clip)
+    WRAPABLE_HND_FUNC (2, glAddGeometry, matrix, region, clip)
 
     BoxRec full;
     int    nMatrix = matrix.size ();
@@ -1188,6 +1188,14 @@ GLWindow::glDraw (const GLMatrix     &transform,
 	mask |= PAINT_WINDOW_BLEND_MASK;
 
     GLTexture::MatrixList ml (1);
+
+    //
+    // Don't assume all plugins leave TexEnvMode in a clean state (GL_REPLACE).
+    // Sometimes plugins forget to clean up correctly, so make sure we're
+    // in the correct mode or else windows could be rendered incorrectly
+    // like in LP: #877920.
+    //
+    priv->gScreen->setTexEnvMode (GL_REPLACE);
 
     if (priv->textures.size () == 1)
     {
