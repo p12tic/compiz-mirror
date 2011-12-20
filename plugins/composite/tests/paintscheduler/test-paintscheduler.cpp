@@ -71,6 +71,29 @@ void fail (const std::string &message)
     exit (1);
 }
 
+class Worker
+{
+    public:
+
+	/* Amount of time it takes to complete some work in ms */
+	static void setWorkFactor (unsigned int workFactor) { mWorkFactor = workFactor; }
+	static void work ()
+	{
+	    struct timespec ts;
+
+	    ts.tv_sec = 0;
+	    ts.tv_nsec = 1000000 * mWorkFactor;
+
+	    nanosleep (&ts, NULL);
+	}
+
+    private:
+
+	static unsigned int mWorkFactor;
+};
+
+unsigned int Worker::mWorkFactor = 0;
+
 class VBlankWaiter
 {
     public:
@@ -88,8 +111,11 @@ class VBlankWaiter
 	float averagePhase ();
 
 	bool addPaintStart (unsigned int time);
+	void addPaintDone (const VBlankWaiter::time_value &);
 
     protected:
+
+	void addVBlank (const VBlankWaiter::time_value &);
 
 	std::vector <float> periods;
 	std::vector <VBlankWaiter::time_value> paintPeriods;
@@ -173,10 +199,7 @@ class NilVBlankWaiter :
 	NilVBlankWaiter (DummyPaintDispatch *, unsigned int);
 	~NilVBlankWaiter ();
 
-	bool waitVBlank ()
-	{
-	    return timingCount < periods.size ();
-	}
+	bool waitVBlank ();
 
 	bool hasVSync () { return false; }
 };
@@ -195,6 +218,7 @@ class DummyPaintDispatch :
 
 	void paintScheduledPaint ()
 	{
+	    Worker::work ();
 	}
 
 	bool syncScheduledPaint ()
@@ -207,6 +231,11 @@ class DummyPaintDispatch :
 
 	void doneScheduledPaint ()
 	{
+	    VBlankWaiter::time_value tv;
+	    gettimeofday (&tv, NULL);
+
+	    waiter->addPaintDone (tv);
+
 	    if (waiter && success)
 		sched.schedule ();
 	    else
@@ -293,37 +322,42 @@ VBlankWaiter::checkTimings (float req, float threshold)
     if (medianDeviation > threshold)
 	return false;
 
-    /* The phase needs to be sensitive to outliers
-     * so use the standard deviation with an acceptable
-     * deviation of 1 */
-    
-    std::vector <VBlankWaiter::time_value>::iterator pit = paintPeriods.begin ();
-    std::vector <VBlankWaiter::time_value>::iterator vit = blankPeriods.begin ();
-    float sum = 0.0f;
-    float mean = 0.0f;
+    /* No phase checks if there is no vblanking */
+    if (hasVSync ())
+    {
 
-    /* Check if any blank periods fall outside of -4ms
-     * of the paint period, that means we're out of phase. */
+	/* The phase needs to be sensitive to outliers
+	* so use the standard deviation with an acceptable
+	* deviation of 1 */
 
-    for (; vit != blankPeriods.end (); vit++, pit++)
-	sum += ((pit->tv_usec - vit->tv_usec) / 1000.0f);
+	std::vector <VBlankWaiter::time_value>::iterator pit = paintPeriods.begin ();
+	std::vector <VBlankWaiter::time_value>::iterator vit = blankPeriods.begin ();
+	float sum = 0.0f;
+	float mean = 0.0f;
 
-    mean = sum / blankPeriods.size ();
+	/* Check if any blank periods fall outside of -4ms
+	* of the paint period, that means we're out of phase. */
 
-    pit = paintPeriods.begin ();
-    vit = blankPeriods.begin ();
+	for (; vit != blankPeriods.end (); vit++, pit++)
+	    sum += ((pit->tv_usec - vit->tv_usec) / 1000.0f);
 
-    sum = 0.0f;
+	mean = sum / blankPeriods.size ();
 
-    for (; vit != blankPeriods.end (); vit++, pit++)
-	sum += pow (((pit->tv_usec - vit->tv_usec) / 1000.0f) - mean, 2);
+	pit = paintPeriods.begin ();
+	vit = blankPeriods.begin ();
 
-    sum /= blankPeriods.size ();
+	sum = 0.0f;
 
-    std::cout << "DEBUG: st. dev of the phases was " << sqrt (sum) << std::endl;
+	for (; vit != blankPeriods.end (); vit++, pit++)
+	    sum += pow (((pit->tv_usec - vit->tv_usec) / 1000.0f) - mean, 2);
 
-    if (sqrt (sum) > 1.0f)
-	return false;
+	sum /= blankPeriods.size ();
+
+	std::cout << "DEBUG: st. dev of the phases was " << sqrt (sum) << std::endl;
+
+	if (sqrt (sum) > 2.0f)
+	    return false;
+    }
 
     return true;
 }
@@ -339,6 +373,24 @@ VBlankWaiter::addPaintStart (unsigned int time)
     ++timingCount;
 
     return true;
+}
+
+void
+VBlankWaiter::addPaintDone (const VBlankWaiter::time_value &tv)
+{
+    if (paintCount < paintPeriods.size ())
+        paintPeriods[paintCount] = tv;
+    ++paintCount;
+}
+
+void
+VBlankWaiter::addVBlank (const VBlankWaiter::time_value &tv)
+{
+    /* There may be multiple vblanks per paint
+     * because of throttling, so use the last slot
+     * available for the paint period */
+    if (paintCount < blankPeriods.size ())
+	blankPeriods[paintCount] = tv;
 }
 
 VBlankWaiter::VBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
@@ -380,6 +432,10 @@ SleepVBlankWaiter::waitVBlank ()
 
     nanosleep (&slp, NULL);
 
+    gettimeofday (&tv, NULL);
+
+    addVBlank (tv);
+
     return timingCount < periods.size ();
 }
 
@@ -400,16 +456,6 @@ DRMVBlankWaiter::vblankHandler (int fd, unsigned int frame, unsigned int sec, un
     if (info->self->timingCount != info->self->periods.size ())
 	info->self->pendingVBlank = true;
 
-    VBlankWaiter::time_value tv;
-
-    gettimeofday (&tv, NULL);
-
-    /* There may be multiple vblanks per paint
-     * because of throttling, so use the last slot
-     * available for the paint period */
-    if (info->self->paintCount < info->self->blankPeriods.size ())
-	info->self->blankPeriods[info->self->paintCount] = tv;
-	
     g_cond_signal (&info->self->eventCondition);
     g_mutex_unlock (&info->self->eventMutex);
 }
@@ -527,6 +573,19 @@ NilVBlankWaiter::NilVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
 {
 }
 
+bool
+NilVBlankWaiter::waitVBlank ()
+{
+    /* Just add a new "vblank" */
+    VBlankWaiter::time_value tv;
+    gettimeofday (&tv, NULL);
+
+    addVBlank (tv);
+
+    return timingCount < periods.size ();
+}
+
+
 NilVBlankWaiter::~NilVBlankWaiter ()
 {
 }
@@ -551,9 +610,7 @@ DRMVBlankWaiter::waitVBlank ()
 
     gettimeofday (&tv, NULL);
 
-    if (paintCount < paintPeriods.size ())
-        paintPeriods[paintCount] = tv;
-    ++paintCount;
+    addVBlank (tv);
 
     return true;
 }
@@ -567,7 +624,7 @@ DummyPaintDispatch::DummyPaintDispatch (Glib::RefPtr <Glib::MainLoop> mainloop) 
     sched.schedule ();
 }
 
-bool doTest (const std::string &testName, int refreshRate, bool vsync)
+bool doTest (const std::string &testName, int refreshRate, float workFactor, bool vsync)
 {
     TimeoutHandler     *th = new TimeoutHandler ();
     TimeoutHandler::SetDefault (th);
@@ -583,19 +640,24 @@ bool doTest (const std::string &testName, int refreshRate, bool vsync)
     {
 	try
 	{
-	    vbwaiter = new DRMVBlankWaiter (dpb, 300);
+	    throw std::exception ();
+	    vbwaiter = new DRMVBlankWaiter (dpb, 200);
 	}
 	catch (std::exception &e)
 	{
 	    std::cout << "WARN: can't test DRM vblanking! Using hardcoded nanosleep () based waiter" << std::endl;
-	    vbwaiter = new SleepVBlankWaiter (dpb, 300);
+	    vbwaiter = new SleepVBlankWaiter (dpb, 200);
 	}
     }
     else
-	vbwaiter = new NilVBlankWaiter (dpb, 300);
+	vbwaiter = new NilVBlankWaiter (dpb, 200);
 
     dpb->setWaiter (vbwaiter);
     dpb->setRefreshRate (refreshRate);
+
+    Worker::setWorkFactor ((1000 / refreshRate) * workFactor);
+
+    std::cout << "INFO: " << testName << " with refresh rate of " << refreshRate << "Hz and work factor of " << workFactor << (vsync ? " with vertical sync" : " without vertical sync") << std::endl;
 
     mainloop->run ();
 
@@ -605,7 +667,7 @@ bool doTest (const std::string &testName, int refreshRate, bool vsync)
     std::cout << "DEBUG: average frame rate " << 1000 / averagePeriod << " Hz" << std::endl;
     std::cout << "TEST: " << testName << " time " << averagePeriod << " within threshold of " << 10.0f << std::endl;
 
-    if (vbwaiter->checkTimings (vsync ? averagePeriod : 1000 / refreshRate, 10.0f) &&
+    if (vbwaiter->checkTimings (averagePeriod, 10.0f) &&
 	1000 / averagePeriod < refreshRate)
 	pass (testName);
     else
@@ -623,13 +685,19 @@ int main (void)
 {
     gettimeofday (&SleepVBlankWaiter::start_time, NULL);
 
-    doTest ("unthrottled vblank timings", 60, true);
-    doTest ("no vsync 50 Hz refresh rate", 50, false);
-    doTest ("vsync 50 Hz refresh rate", 50, true);
-    doTest ("no vsync 20 Hz refresh rate", 30, false);
-    doTest ("vsync 30 Hz refresh rate", 30, true);
-    doTest ("no vsync 100 Hz refresh rate", 100, false);
-    doTest ("vsync 100 Hz refresh rate", 100, true);
+    doTest ("unthrottled vblank timings", 60, 0.0f, true);
+    doTest ("no vsync 60 Hz refresh rate", 60, 0.0f, false);
+    doTest ("unthrottled vblank timings", 60, 0.8f, true);
+    doTest ("no vsync 60 Hz refresh rate", 60, 0.8f, false);
+    doTest ("vsync 50 Hz refresh rate", 50, 0.0f, true);
+    doTest ("no vsync 20 Hz refresh rate", 30, 0.0f,false);
+    doTest ("vsync 50 Hz refresh rate", 50, 1.6f, true);
+    doTest ("no vsync 20 Hz refresh rate", 30, 1.6f,false);
+    doTest ("vsync 30 Hz refresh rate", 30, 0.0f, true);
+    doTest ("no vsync 100 Hz refresh rate", 100, 0.0f, false);
+    doTest ("vsync 100 Hz refresh rate", 100, 0.0f, true);
+    doTest ("no vsync 100 Hz refresh rate", 100, 2.8f, false);
+    doTest ("vsync 100 Hz refresh rate", 100, 2.8f, true);
 
     return 0;
 }
