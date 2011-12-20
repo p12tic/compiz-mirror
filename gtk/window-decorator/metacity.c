@@ -52,7 +52,6 @@ decor_update_meta_window_property (decor_t	  *d,
     gint	    bottom_stretch_offset;
     gint	    left_stretch_offset;
     gint	    right_stretch_offset;
-
     win_extents = frame_win_extents = d->frame->win_extents;
     max_win_extents = frame_max_win_extents = d->frame->max_win_extents;
 
@@ -60,9 +59,19 @@ decor_update_meta_window_property (decor_t	  *d,
      * pixmap type decorations */
     if (!d->frame_window)
     {
-       frame_win_extents.left += settings->mutter_draggable_border_width;
-       frame_win_extents.right += settings->mutter_draggable_border_width;
-       frame_win_extents.bottom += settings->mutter_draggable_border_width;
+	if (flags & META_FRAME_ALLOWS_HORIZONTAL_RESIZE)
+	{
+	    frame_win_extents.left += settings->mutter_draggable_border_width;
+	    frame_win_extents.right += settings->mutter_draggable_border_width;
+	    frame_max_win_extents.left += settings->mutter_draggable_border_width;
+	    frame_max_win_extents.right += settings->mutter_draggable_border_width;
+	}
+
+	if (flags & META_FRAME_ALLOWS_VERTICAL_RESIZE)
+	{
+	    frame_win_extents.bottom += settings->mutter_draggable_border_width;
+	    frame_max_win_extents.bottom += settings->mutter_draggable_border_width;
+	}
     }
 
     w = d->border_layout.top.x2 - d->border_layout.top.x1 -
@@ -1096,7 +1105,7 @@ meta_get_button_position (decor_t	 *d,
 	*x += d->frame->win_extents.left + 4;
 	*y += d->frame->win_extents.top + 2;
     }
-    else
+    else if (flags & META_FRAME_ALLOWS_HORIZONTAL_RESIZE)
     {
 	*x += settings->mutter_draggable_border_width;
     }
