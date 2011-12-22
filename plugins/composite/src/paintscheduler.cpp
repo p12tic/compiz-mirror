@@ -113,9 +113,6 @@ compiz::composite::scheduler::PaintScheduler::dispatch ()
     struct timeval                  tv;
     int                             timeDiff;
 
-    mSchedulerState |= paintSchedulerPainting;
-    mSchedulerState &= ~paintSchedulerReschedule;
-
     gettimeofday (&tv, 0);
 
     timeDiff = TIMEVALDIFF (&tv, &mLastRedraw);
@@ -123,18 +120,22 @@ compiz::composite::scheduler::PaintScheduler::dispatch ()
     /* handle clock rollback */
 
     if (timeDiff < 0)
-	timeDiff = 0;
+	timeDiff = 0;  
+
     /*
      * Now that we use a "tickless" timing algorithm, timeDiff could be
      * very large if the screen is truely idle.
      * However plugins expect the old behaviour where timeDiff is never
      * larger than the frame rate (optimalRedrawTime).
      * So enforce this to keep animations timed correctly and smooth...
+     */
 
-    if (timeDiff > mOptimalRedrawTime)
+    if (timeDiff > mOptimalRedrawTime &&
+	!(mSchedulerState & paintSchedulerReschedule))
 	timeDiff = mOptimalRedrawTime;
 
-     */
+    mSchedulerState |= paintSchedulerPainting;
+    mSchedulerState &= ~paintSchedulerReschedule;   
 
     mRedrawTime = timeDiff;
 
