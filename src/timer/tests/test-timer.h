@@ -27,6 +27,7 @@
 #define _COMPIZ_TEST_TIMER_H
 
 #include <gtest/gtest.h>
+#include <gmock/gmock.h>
 
 #include <glibmm/main.h>
 #include <core/timer.h>

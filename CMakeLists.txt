@@ -120,14 +120,17 @@ install (
 )
 
 # Build Google Test and make its headers known
-find_package( GTest REQUIRED )
+find_package (GTest REQUIRED)
+find_library (GMOCK_LIBRARY gmock)
+find_library (GMOCK_MAIN_LIBRARY gmock_main)
 
+if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY)
+  message (FATAL_ERROR "Google Mock not found!")
+endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY)
 
-include_directories(
-  ${GTEST_INCLUDE_DIRS}
-)
+include_directories (${GTEST_INCLUDE_DIRS})
 
-find_package( Threads REQUIRED )
+find_package (Threads REQUIRED)
 
 # Add the rest of compiz
 add_subdirectory (cmake)

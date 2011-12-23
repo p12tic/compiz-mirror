@@ -25,8 +25,12 @@
 
 #include "test-timer.h"
 #include <ctime>
-
 #include <pthread.h>
+
+using ::testing::AtLeast;
+using ::testing::_;
+using ::testing::InSequence;
+using ::testing::Invoke;
 
 class CompTimerTestCallback: public CompTimerTest
 {
