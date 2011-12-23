@@ -45,7 +45,7 @@ protected:
 	{
 	    return NULL;
 	}
-	static_cast<CompTimerTestCallback*>(cb)->ml->run();
+	static_cast <CompTimerTestCallback *> (cb)->ml->run ();
 	return NULL;
     }
 
@@ -55,9 +55,9 @@ protected:
     bool cb (int num)
     {
 	std::cout << "cb: " << num << std::endl;
-	pthread_mutex_lock( &mlistGuard );
-	mtriggeredTimers.push_back(num);
-	pthread_mutex_unlock( &mlistGuard );
+	pthread_mutex_lock (&mlistGuard);
+	mtriggeredTimers.push_back (num);
+	pthread_mutex_unlock (&mlistGuard);
 	return (true);
     }
 
@@ -98,24 +98,24 @@ protected:
 	 * list and the last timer at the back */
 	if (TimeoutHandler::Default ()->timers ().front () != timers.back ())
 	{
-	    RecordProperty("TimeoutHandler::Default ().size",
-		    TimeoutHandler::Default()->timers().size());
-	    RecordProperty("TimeoutHandler::Default ().front->minLeft",
-		    TimeoutHandler::Default()->timers().front()->minLeft());
-	    RecordProperty("TimeoutHandler::Default ().front->maxLeft",
-		    TimeoutHandler::Default()->timers().front()->maxLeft());
-	    RecordProperty("TimeoutHandler::Default ().front->minTime",
-		    TimeoutHandler::Default()->timers().front()->minTime());
-	    RecordProperty("TimeoutHandler::Default ().front->maxTime",
-		    TimeoutHandler::Default()->timers().front()->maxTime());
-	    RecordProperty("TimeoutHandler::Default ().back->minLeft",
-		    TimeoutHandler::Default()->timers().back()->minLeft());
-	    RecordProperty("TimeoutHandler::Default ().back->maxLeft",
-		    TimeoutHandler::Default()->timers().back()->maxLeft());
-	    RecordProperty("TimeoutHandler::Default ().back->minTime",
-		    TimeoutHandler::Default()->timers().back()->minTime());
-	    RecordProperty("TimeoutHandler::Default ().back->maxTime",
-		    TimeoutHandler::Default()->timers().back()->maxTime());
+	    RecordProperty ("TimeoutHandler::Default ().size",
+		    TimeoutHandler::Default ()->timers ().size ());
+	    RecordProperty ("TimeoutHandler::Default ().front->minLeft",
+		    TimeoutHandler::Default ()->timers ().front ()->minLeft());
+	    RecordProperty ("TimeoutHandler::Default ().front->maxLeft",
+		    TimeoutHandler::Default ()->timers ().front ()->maxLeft());
+	    RecordProperty ("TimeoutHandler::Default ().front->minTime",
+		    TimeoutHandler::Default ()->timers ().front ()->minTime());
+	    RecordProperty ("TimeoutHandler::Default ().front->maxTime",
+		    TimeoutHandler::Default ()->timers ().front ()->maxTime());
+	    RecordProperty ("TimeoutHandler::Default ().back->minLeft",
+		    TimeoutHandler::Default ()->timers ().back ()->minLeft());
+	    RecordProperty ("TimeoutHandler::Default ().back->maxLeft",
+		    TimeoutHandler::Default ()->timers ().back ()->maxLeft());
+	    RecordProperty ("TimeoutHandler::Default ().back->minTime",
+		    TimeoutHandler::Default ()->timers ().back ()->minTime());
+	    RecordProperty ("TimeoutHandler::Default ().back->maxTime",
+		    TimeoutHandler::Default ()->timers ().back ()->maxTime());
 	    FAIL() << "timer with the least time is not at the front";
 	}
 
@@ -140,17 +140,17 @@ protected:
     }
 };
 
-TEST_F( CompTimerTestCallback, TimerOrder )
+TEST_F (CompTimerTestCallback, TimerOrder)
 {
-    RecordProperty("mtriggeredTimers.front()", mtriggeredTimers.front());
+    RecordProperty ("mtriggeredTimers.front()", mtriggeredTimers.front());
     RecordProperty("mtriggeredTimers.back()", mtriggeredTimers.back());
 
     std::vector<int>::iterator it = mtriggeredTimers.begin();
     ++it;
 
-    int lastTimer = mtriggeredTimers.front();
+    int lastTimer = mtriggeredTimers.front ();
 
-    while (it != mtriggeredTimers.end())
+    while (it != mtriggeredTimers.end ())
     {
 	std::cout << *it;
 	switch (lastTimer)
@@ -168,5 +168,5 @@ TEST_F( CompTimerTestCallback, TimerOrder )
 	lastTimer = *it;
 	++it;
     }
-    ASSERT_EQ(mtriggeredTimers.front(), 1);
+    ASSERT_EQ (mtriggeredTimers.front(), 1);
 }
