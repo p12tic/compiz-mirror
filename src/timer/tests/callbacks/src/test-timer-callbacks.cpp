@@ -26,24 +26,91 @@
 #include "test-timer.h"
 #include <ctime>
 #include <pthread.h>
+#include <boost/noncopyable.hpp>
 
-using ::testing::AtLeast;
-using ::testing::_;
 using ::testing::InSequence;
 using ::testing::Invoke;
+using ::testing::_;
+
+namespace
+{
+
+class CompTimerTestCallbackDispatchTable
+{
+public:
+
+    CompTimerTestCallbackDispatchTable () {};
+    virtual ~CompTimerTestCallbackDispatchTable () {};
+
+    virtual bool callback1 (unsigned int num) = 0;
+    virtual bool callback2 (unsigned int num) = 0;
+    virtual bool callback3 (unsigned int num) = 0;
+protected:
+
+    
+};
+
+class MockCompTimerTestCallbackDispatchTable :
+    public CompTimerTestCallbackDispatchTable,
+    boost::noncopyable
+{
+public:
+
+    static const unsigned int MaxAllowedCalls = 10;
+
+    MOCK_METHOD1 (callback1, bool (unsigned int));
+    MOCK_METHOD1 (callback2, bool (unsigned int));
+    MOCK_METHOD1 (callback3, bool (unsigned int));
+
+    MockCompTimerTestCallbackDispatchTable (const Glib::RefPtr <Glib::MainLoop> &ml) :
+	CompTimerTestCallbackDispatchTable (),
+	mMainLoop (ml)
+    {
+	ON_CALL (*this, callback1 (_)).WillByDefault (Invoke (this, &MockCompTimerTestCallbackDispatchTable::QuitIfLast));
+	ON_CALL (*this, callback2 (_)).WillByDefault (Invoke (this, &MockCompTimerTestCallbackDispatchTable::QuitIfLast));
+	ON_CALL (*this, callback3 (_)).WillByDefault (Invoke (this, &MockCompTimerTestCallbackDispatchTable::QuitIfLast));
+    };
+
+private:
+    Glib::RefPtr <Glib::MainLoop> mMainLoop;
+    unsigned int 		  mCallsCounter[3];
+
+    bool QuitIfLast (unsigned int num)
+    {
+	mCallsCounter[num]++;
+
+	if (mCallsCounter[num] == MaxAllowedCalls)
+	{
+	    /* We are the last timer, quit the main loop */
+	    if (TimeoutHandler::Default ()->timers ().size () == 0)
+		mMainLoop->quit ();
+
+	    return false;
+	}
+
+	return true;
+    };
+};
 
 class CompTimerTestCallback: public CompTimerTest
 {
 public:
-    CompTimerTestCallback ()
+    CompTimerTestCallback () :
+	mDispatchTable (new MockCompTimerTestCallbackDispatchTable (ml))
     {
 	pthread_mutex_init (&mListGuard, NULL);
+    }
+
+    ~CompTimerTestCallback ()
+    {
+	delete mDispatchTable;
     }
 protected:
 
     pthread_mutex_t mListGuard;
+    MockCompTimerTestCallbackDispatchTable *mDispatchTable;
 
-    static void * run (void * cb)
+    static void * runThread (void * cb)
     {
 	if (cb == NULL)
 	{
@@ -54,48 +121,26 @@ protected:
     }
 
     pthread_t mMainLoopThread;
-    std::vector<int> mTriggeredTimers;
 
-    bool cb (int num)
+    void AddTimer (unsigned int min,
+		   unsigned int max,
+		   const boost::function <bool ()> &callback)
     {
-	std::cout << "cb: " << num << std::endl;
-	pthread_mutex_lock (&mListGuard);
-	mTriggeredTimers.push_back (num);
-	pthread_mutex_unlock (&mListGuard);
-	return (true);
-    }
-
-    void SetUp ()
-    {
-	CompTimerTest::SetUp ();
-	mTriggeredTimers.clear ();
-
-	/* Test 2: Adding timers */
 	timers.push_back (new CompTimer ());
-	timers.front ()->setTimes (100, 110);
-	timers.front ()->setCallback (
-		boost::bind(&CompTimerTestCallback::cb, this, 1));
+	timers.back ()->setTimes (min, max);
+	timers.back ()->setCallback (callback);
+
+	ASSERT_FALSE (callback.empty ());
 
 	/* TimeoutHandler::timers should be empty */
-	if (!TimeoutHandler::Default ()->timers().empty())
-	{
-	    FAIL () << "timers list is not empty";
-	}
+	EXPECT_TRUE (TimeoutHandler::Default ()->timers ().empty ()) << "timers list is not empty";
+    }
 
-	timers.push_back (new CompTimer());
-	timers.back ()->setTimes (50, 90);
-	timers.back ()->setCallback (
-		boost::bind(&CompTimerTestCallback::cb, this, 2));
-
-	timers.push_back (new CompTimer());
-	timers.back ()->setTimes (0, 0);
-	timers.back ()->setCallback (
-		boost::bind(&CompTimerTestCallback::cb, this, 3));
-
-	/* Start both timers */
-	timers[0]->start ();
-	timers[1]->start ();
-	timers[2]->start ();
+    void Run ()
+    {
+	for (std::deque <CompTimer *>::iterator it = timers.begin ();
+	     it != timers.end (); it++)
+	    (*it)->start ();
 
 	/* TimeoutHandler::timers should have the timer that
 	 * is going to trigger first at the front of the
@@ -120,57 +165,68 @@ protected:
 		    TimeoutHandler::Default ()->timers ().back ()->minTime());
 	    RecordProperty ("TimeoutHandler::Default ().back->maxTime",
 		    TimeoutHandler::Default ()->timers ().back ()->maxTime());
-	    FAIL() << "timer with the least time is not at the front";
+	    FAIL () << "timer with the least time is not at the front";
 	}
 
 	if (TimeoutHandler::Default ()->timers ().back () != timers.front ())
 	{
-	    FAIL() << "timer with the most time is not at the back";
+	    FAIL () << "timer with the most time is not at the back";
 	}
 
-	ASSERT_EQ(
-		0,
-		pthread_create(&mMainLoopThread, NULL, CompTimerTestCallback::run, this));
+	ASSERT_EQ (0,
+		   pthread_create (&mMainLoopThread, NULL,
+				   CompTimerTestCallback::runThread, this));
 
-	::sleep(1);
+	pthread_join (mMainLoopThread, NULL);
+    }
+
+    void SetUp ()
+    {
+	CompTimerTest::SetUp ();
+
+	::sleep (1);
     }
 
     void TearDown ()
     {
-	ml->quit ();
-	pthread_join (mMainLoopThread, NULL);
-
-	CompTimerTest::TearDown();
+	CompTimerTest::TearDown ();
     }
 };
 
 TEST_F (CompTimerTestCallback, TimerOrder)
 {
-    RecordProperty ("mTriggeredTimers.front()", mTriggeredTimers.front ());
-    RecordProperty ("mTriggeredTimers.back()", mTriggeredTimers.back ());
+    AddTimer (100, 110, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback1, mDispatchTable, 0));
+    AddTimer (50, 90, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback2, mDispatchTable, 1));
+    AddTimer (0, 0, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback3, mDispatchTable, 2));
 
-    std::vector<int>::iterator it = mTriggeredTimers.begin();
-    ++it;
+    /* TimeoutHandler::timers should be empty since no timers have started */
+    ASSERT_TRUE (TimeoutHandler::Default ()->timers ().empty ()) << "timers list is not empty";
 
-    int lastTimer = mTriggeredTimers.front ();
+    InSequence s;
 
-    while (it != mTriggeredTimers.end ())
-    {
-	std::cout << *it;
-	switch (lastTimer)
-	{
-	case 0:
-	    ASSERT_EQ (3, *it);
-	    break;
-	case 2:
-	    ASSERT_EQ (3, *it);
-	    break;
-	case 1:
-	    ASSERT_EQ (2, *it);
-	    break;
-	}
-	lastTimer = *it;
-	++it;
-    }
-    ASSERT_EQ (mTriggeredTimers.front(), 1);
+    EXPECT_CALL (*mDispatchTable, callback3 (2)).Times (10);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+
+    Run ();
+}
+
 }
