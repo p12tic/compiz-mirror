@@ -115,7 +115,6 @@ public:
 	mLastAdded (0),
 	mDispatchTable (new MockCompTimerTestCallbackDispatchTable (ml))
     {
-	pthread_mutex_init (&mListGuard, NULL);
     }
 
     ~CompTimerTestCallback ()
@@ -125,7 +124,6 @@ public:
 protected:
 
     unsigned int    mLastAdded;
-    pthread_mutex_t mListGuard;
     MockCompTimerTestCallbackDispatchTable *mDispatchTable;
 
     static void * runThread (void * cb)
