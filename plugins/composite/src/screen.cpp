@@ -43,6 +43,8 @@
 #include <X11/extensions/shape.h>
 #include <X11/extensions/Xrandr.h>
 
+#include <core/timer.h>
+
 CompWindow *lastDamagedWindow = 0;
 
 void
@@ -696,7 +698,7 @@ PrivateCompositeScreen::getTimeToNextRedraw (struct timeval *tv)
 {
     int diff;
 
-    diff = TIMEVALDIFF (tv, &lastRedraw);
+    diff = compiz::core::timer::timeval_diff (tv, &lastRedraw);
 
     /* handle clock rollback */
     if (diff < 0)
@@ -791,7 +793,7 @@ CompositeScreen::handlePaintTimeout ()
 	if (priv->pHnd)
 	    priv->pHnd->prepareDrawing ();
 
-	timeDiff = TIMEVALDIFF (&tv, &priv->lastRedraw);
+	timeDiff = compiz::core::timer::timeval_diff (&tv, &priv->lastRedraw);
 
 	/* handle clock rollback */
 	if (timeDiff < 0)

@@ -3502,11 +3502,11 @@ CompScreen::moveViewport (int tx, int ty, bool sync)
     CompPoint pnt;
 
     tx = priv->vp.x () - tx;
-    tx = MOD (tx, priv->vpSize.width ());
+    tx = compiz::core::screen::wraparound_mod (tx, priv->vpSize.width ());
     tx -= priv->vp.x ();
 
     ty = priv->vp.y () - ty;
-    ty = MOD (ty, priv->vpSize.height ());
+    ty = compiz::core::screen::wraparound_mod (ty, priv->vpSize.height ());
     ty -= priv->vp.y ();
 
     if (!tx && !ty)

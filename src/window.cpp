@@ -23,8 +23,6 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-#include <compiz.h>
-
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
@@ -6133,14 +6131,14 @@ CompWindow::moveToViewportPosition (int  x,
     if (screen->vpSize ().width () != 1)
     {
 	x += screen->vp ().x () * screen->width ();
-	x = MOD (x, vWidth);
+	x = compiz::core::screen::wraparound_mod (x, vWidth);
 	x -= screen->vp ().x () * screen->width ();
     }
 
     if (screen->vpSize ().height () != 1)
     {
 	y += screen->vp ().y () * screen->height ();
-	y = MOD (y, vHeight);
+	y = compiz::core::screen::wraparound_mod (y, vHeight);
 	y -= screen->vp ().y () * screen->height ();
     }
 

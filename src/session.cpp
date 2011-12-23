@@ -27,8 +27,6 @@
 #  include <config.h>
 #endif
 
-#include <compiz.h>
-
 #include <stdlib.h>
 #include <stdio.h>
 #include <poll.h>

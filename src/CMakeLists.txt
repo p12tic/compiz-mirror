@@ -1,19 +1,45 @@
 include (CompizBcop)
 
+
+add_subdirectory( string )
+add_subdirectory( logmessage )
+add_subdirectory( timer )
+add_subdirectory( pluginclasshandler )
+
 compiz_add_bcop_targets (
     core
     ${compiz_BINARY_DIR}/generated/core.xml.in
     _bcop_sources
 )
 
+get_property (CORE_MOD_INCLUDE_DIRS
+	      GLOBAL
+	      PROPERTY CORE_MOD_INCLUDE_DIRS)
+
 include_directories (
     ${compiz_SOURCE_DIR}/include
     ${compiz_BINARY_DIR}
     ${compiz_BINARY_DIR}/generated
-    ${CMAKE_CURRENT_SOURCE_DIR}
     ${COMPIZ_INCLUDE_DIRS}
     ${CMAKE_PREFIX_PATH}/include
     ${CMAKE_INCLUDE_PATH}
+    ${CORE_MOD_INCLUDE_DIRS}
+    
+    ${CMAKE_CURRENT_SOURCE_DIR}
+    
+    # Module specific include dirs
+    ${CMAKE_CURRENT_SOURCE_DIR}/string/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/string/src
+    
+    ${CMAKE_CURRENT_SOURCE_DIR}/logmessage/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/logmessage/src
+    
+    ${CMAKE_CURRENT_SOURCE_DIR}/timer/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/timer/src
+    
+    ${CMAKE_CURRENT_SOURCE_DIR}/pluginclasshandler/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/pluginclasshandler/src
+    
 )
 
 add_definitions (
@@ -23,47 +49,66 @@ add_definitions (
     -DMETADATADIR=\\\"${compiz_metadatadir}\\\"
 )
 
+get_property (CORE_MOD_LIBRARY_DIRS
+	      GLOBAL
+	      PROPERTY CORE_MOD_LIBRARY_DIRS)
+
 link_directories (
     ${COMPIZ_LINK_DIRS}
+    ${CORE_MOD_LIBRARY_DIRS}
 )
 
 add_executable (compiz
-    region.cpp
-    atoms.cpp
-    timer.cpp
-    main.cpp
-    actions.cpp
-    screen.cpp
-    window.cpp
-    action.cpp
-    option.cpp
-    string.cpp
-    match.cpp
-    pluginclasses.cpp
-    event.cpp
-    plugin.cpp
-    session.cpp
-    output.cpp
-    rect.cpp
-    size.cpp
-    point.cpp
-    windowgeometry.cpp
-    icon.cpp
-    modifierhandler.cpp
-    propertywriter.cpp
-    eventsource.cpp
-    timeouthandler.cpp
-    valueholder.cpp
-    logmessage.cpp
-    stackdebugger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/region.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/atoms.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/actions.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/screen.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/window.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/action.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/option.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/match.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/event.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/plugin.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/session.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/output.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/rect.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/size.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/point.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/windowgeometry.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/icon.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/modifierhandler.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/propertywriter.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/eventsource.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/stackdebugger.cpp
+    
     ${_bcop_sources}
 )
 
+# workaround for build race
+add_dependencies (compiz core-xml-file)
+
+get_property (CORE_MOD_LIBRARIES
+	      GLOBAL
+	      PROPERTY CORE_MOD_LIBRARIES)
+
 target_link_libraries (
-    compiz ${COMPIZ_LIBRARIES} m pthread dl
+    compiz ${COMPIZ_LIBRARIES} 
+    
+    m 
+    pthread 
+    dl
+    
+    compiz_string
+    compiz_timer
+    compiz_logmessage
+    compiz_pluginclasshandler
+#    ${CORE_MOD_LIBRARIES}
 )
 
 install (
     TARGETS compiz
     DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
 )
+
+enable_coverage_report( TARGETS compiz )

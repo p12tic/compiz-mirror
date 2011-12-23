@@ -9,9 +9,9 @@ mark_as_advanced (FORCE XSLTPROC_EXECUTABLE)
 if (XSLTPROC_EXECUTABLE)
 
     add_custom_command (
-	OUTPUT ${CMAKE_BINARY_DIR}/generated/core.xml.in
+	OUTPUT ${compiz_BINARY_DIR}/generated/core.xml.in
 	COMMAND ${XSLTPROC_EXECUTABLE}
-		-o ${CMAKE_BINARY_DIR}/generated/core.xml.in
+		-o ${compiz_BINARY_DIR}/generated/core.xml.in
 		--param default_plugins "\"'${COMPIZ_DEFAULT_PLUGINS}'\""
 		${CMAKE_SOURCE_DIR}/xslt/default_plugins.xslt
 		${CMAKE_CURRENT_SOURCE_DIR}/core.xml.in
