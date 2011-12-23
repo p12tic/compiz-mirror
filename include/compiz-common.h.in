@@ -1,5 +1,0 @@
-#ifndef COMPIZ_COMMON_H
-#define COMPIZ_COMMON_H
-
-#define COMPIZ_VERSION_STRING "@VERSION@"
-#endif

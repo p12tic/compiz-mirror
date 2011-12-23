@@ -27,8 +27,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <compiz.h>
-
 #include <core/option.h>
 #include <core/action.h>
 #include <core/screen.h>

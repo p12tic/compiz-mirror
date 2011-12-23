@@ -23,8 +23,6 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-#include <compiz.h>
-
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xproto.h>
@@ -6133,14 +6131,14 @@ CompWindow::moveToViewportPosition (int  x,
     if (screen->vpSize ().width () != 1)
     {
 	x += screen->vp ().x () * screen->width ();
-	x = MOD (x, vWidth);
+	x = compiz::core::screen::wraparound_mod (x, vWidth);
 	x -= screen->vp ().x () * screen->width ();
     }
 
     if (screen->vpSize ().height () != 1)
     {
 	y += screen->vp ().y () * screen->height ();
-	y = MOD (y, vHeight);
+	y = compiz::core::screen::wraparound_mod (y, vHeight);
 	y -= screen->vp ().y () * screen->height ();
     }
 
@@ -6950,31 +6948,42 @@ CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 	priv->border.top    != b->top ||
 	priv->border.bottom != b->bottom)
     {
-	unsigned long data[4];
-
 	priv->serverInput = *i;
 	priv->border = *b;
 
 	recalcActions ();
 
-	/* Use b for _NET_WM_FRAME_EXTENTS here because
-	 * that is the representation of the actual decoration
-	 * around the window that the user sees and should
-	 * be used for placement and such */
-
-	data[0] = b->left;
-	data[1] = b->right;
-	data[2] = b->top;
-	data[3] = b->bottom;
-
-	XChangeProperty (screen->dpy (), priv->id,
-			 Atoms::frameExtents,
-			 XA_CARDINAL, 32, PropModeReplace,
-			 (unsigned char *) data, 4);
-
 	priv->updateSize ();
 	priv->updateFrameWindow ();
     }
+
+    /* Use b for _NET_WM_FRAME_EXTENTS here because
+     * that is the representation of the actual decoration
+     * around the window that the user sees and should
+     * be used for placement and such */
+
+    /* Also update frame extents regardless of whether or not
+     * the frame extents actually changed, eg, a plugin could
+     * suggest that a window has no frame extents and that it
+     * might later get frame extents - this is mandatory if we
+     * say that we support it, so set them
+     * additionaly some applications might request frame extents
+     * and we must respond by setting the property - ideally
+     * this should only ever be done when some plugin actually
+     * need to change the frame extents or the applications
+     * requested it */
+
+    unsigned long data[4];
+
+    data[0] = b->left;
+    data[1] = b->right;
+    data[2] = b->top;
+    data[3] = b->bottom;
+
+    XChangeProperty (screen->dpy (), priv->id,
+		     Atoms::frameExtents,
+		     XA_CARDINAL, 32, PropModeReplace,
+		     (unsigned char *) data, 4);
 }
 
 bool

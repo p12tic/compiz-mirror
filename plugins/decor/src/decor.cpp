@@ -1384,6 +1384,7 @@ DecorWindow::update (bool allowDecoration)
 {
     Decoration	     *old, *decoration = NULL;
     bool	     decorate = false;
+    bool	     shadowOnly = true;
     int		     moveDx, moveDy;
     int		     oldShiftX = 0;
     int		     oldShiftY  = 0;
@@ -1409,28 +1410,31 @@ DecorWindow::update (bool allowDecoration)
 	    case CompWindowTypeMenuMask:
 	    case CompWindowTypeNormalMask:
 		if (window->mwmDecor () & (MwmDecorAll | MwmDecorTitle))
-		    decorate = (window->frame () ||
-				window->hasUnmapReference ()) ? true : false;
+		    shadowOnly = false;
 	    default:
 		break;
 	}
 
 	if (window->overrideRedirect ())
-	    decorate = false;
+	    shadowOnly = true;
 
 	if (window->wmType () & (CompWindowTypeDockMask | CompWindowTypeDesktopMask))
-	    decorate = false;
+	    shadowOnly = true;
 
-	if (decorate)
+	if (!shadowOnly)
 	{
 	    if (!dScreen->optionGetDecorationMatch ().evaluate (window))
-		decorate = false;
+		shadowOnly = true;
 	}
     }
     else
-	decorate = true;
+	shadowOnly = false;
 
-    if (decorate)
+    decorate = ((window->frame () ||
+		 window->hasUnmapReference ()) && !shadowOnly) ||
+		 isSwitcher;
+
+    if (decorate || frameExtentsRequested)
     {
         /* Attempt to find a matching decoration */
         decoration = decor.findMatchingDecoration (window, true);
@@ -1451,6 +1455,11 @@ DecorWindow::update (bool allowDecoration)
 	    else if (dScreen->dmSupports & WINDOW_DECORATION_TYPE_WINDOW)
 		decoration = &dScreen->windowDefault;
 	}
+
+	/* Do not allow windows which are later undecorated
+	 * to have a set _NET_FRAME_EXTENTS */
+	if (decorate)
+	    frameExtentsRequested = false;
     }
     else
     {
@@ -1531,7 +1540,8 @@ DecorWindow::update (bool allowDecoration)
 	moveDy = shiftY () - oldShiftY;
 
 	/* Update the input and output frame */
-	updateFrame ();
+	if (decorate)
+	    updateFrame ();
 	window->updateWindowOutputExtents ();
 	if (dScreen->cmActive)
 	    cWindow->damageOutputExtents ();
@@ -1545,7 +1555,8 @@ DecorWindow::update (bool allowDecoration)
 	/* Undecorated windows need to have the
 	 * input and output frame removed and the
 	 * frame window geometry reset */
-	updateFrame ();
+	if (decorate)
+	    updateFrame ();
 
 	memset (&emptyExtents, 0, sizeof (CompWindowExtents));
 
@@ -2056,6 +2067,8 @@ DecorScreen::checkForDm (bool updateWindows)
 	this->dmSupports = dmSupports;
 
 	/* Create new default decorations */
+	screen->updateSupportedWmHints ();
+
 	if (dmWin)
 	{
 	    for (i = 0; i < DECOR_NUM; i++)
@@ -2849,7 +2862,10 @@ DecorScreen::addSupportedAtoms (std::vector<Atom> &atoms)
 {
     screen->addSupportedAtoms (atoms);
 
-    atoms.push_back (requestFrameExtentsAtom);
+    /* Don't support _NET_REQUEST_FRAME_EXTENTS
+     * where there is no decorator running yet */
+    if (dmWin)
+	atoms.push_back (requestFrameExtentsAtom);
 }
 
 void
@@ -3024,7 +3040,8 @@ DecorWindow::DecorWindow (CompWindow *w) :
     updateReg (true),
     unshading (false),
     shading (false),
-    isSwitcher (false)
+    isSwitcher (false),
+    frameExtentsRequested (false)
 {
     WindowInterface::setHandler (window);
 

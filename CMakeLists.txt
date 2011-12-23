@@ -1,19 +1,44 @@
+#
+# Main CMakeLists.txt for compiz
+#
 project (compiz)
 
 set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
 set (COMPIZ_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COMPIZ_CMAKE_MODULE_PATH})
+
+# Common compiz CMake macros & functions.
 include (CompizCommon)
+# Packaging-specific CMake macros & functions.
 include (CompizPackage)
 include (cmake/base.cmake)
+# Check if specific function is present in library.
 include (CheckFunctionExists)
-include (CTest)
 
+enable_testing()
 
-set (CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRe" CACHE INTERNAL "" FORCE)
-if (NOT CMAKE_BUILD_TYPE)
-    set (CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type (Debug/Release/RelWithDebInfo/MinSizeRe)" FORCE)
-endif (NOT CMAKE_BUILD_TYPE)
+# Import macro for doing coverage reporting
+include(EnableCoverageReport)
+
+#####################################################################
+# Enable code coverage calculation with gcov/gcovr/lcov
+# Usage:
+#  * Switch build type to coverage (use ccmake or cmake-gui)
+#  * Invoke make, make test, make coverage
+#  * Find html report in subdir coveragereport
+#  * Find xml report feasible for jenkins in coverage.xml
+#####################################################################
+IF(CMAKE_BUILD_TYPE MATCHES [cC][oO][vV][eE][rR][aA][gG][eE])
+  SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftest-coverage -fprofile-arcs" )
+  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -ftest-coverage -fprofile-arcs" )
+  SET(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} -ftest-coverage -fprofile-arcs" )
+  SET(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -ftest-coverage -fprofile-arcs" )
+ENDIF(CMAKE_BUILD_TYPE MATCHES [cC][oO][vV][eE][rR][aA][gG][eE])
+
+#set (CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRe" CACHE INTERNAL "" FORCE)
+#if (NOT CMAKE_BUILD_TYPE)
+#    set (CMAKE_BUILD_TYPE "Debug" CACHE STRING "Build type (Debug/Release/RelWithDebInfo/MinSizeRe)" FORCE)
+#endif (NOT CMAKE_BUILD_TYPE)
 
 file (READ ${CMAKE_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
 string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
@@ -41,6 +66,7 @@ set (compiz_sharedir ${datadir}/compiz/)
 set (compiz_metadatadir ${datadir}/compiz)
 set (COMPIZ_I18N_DIR ${CMAKE_SOURCE_DIR}/po)
 
+# Translation
 set (ALL_LINGUAS af ar bg bn bn_IN bs ca cs cy da de el en_GB en_US es eu et fi fr gl gu he hi hr hu id it ja ka km ko lo lt mk mr nb nl or pa pl pt pt_BR ro ru sk sl sr sv ta tr uk vi xh zh_CN zh_TW zu)
 set (GETTEXT_PACKAGE compiz)
 
@@ -82,16 +108,6 @@ set (_compiz_package "Compiz")
 compiz_configure_file (${compiz_SOURCE_DIR}/config.h.core.in ${compiz_BINARY_DIR}/generated/config.h)
 
 compiz_configure_file (
-    ${CMAKE_SOURCE_DIR}/include/compiz-common.h.in
-    ${CMAKE_BINARY_DIR}/generated/compiz-common.h
-)
-
-install (
-    FILES ${CMAKE_BINARY_DIR}/generated/compiz-common.h
-    DESTINATION ${COMPIZ_DESTDIR}${includedir}/compiz
-)
-
-compiz_configure_file (
     ${CMAKE_SOURCE_DIR}/compiz.pc.in
     ${CMAKE_BINARY_DIR}/compiz.pc
     COMPIZ_REQUIRES
@@ -103,6 +119,20 @@ install (
     DESTINATION ${COMPIZ_DESTDIR}${libdir}/pkgconfig
 )
 
+# Build Google Test and make its headers known
+find_package (GTest REQUIRED)
+find_library (GMOCK_LIBRARY gmock)
+find_library (GMOCK_MAIN_LIBRARY gmock_main)
+
+if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY)
+  message (FATAL_ERROR "Google Mock not found!")
+endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY)
+
+include_directories (${GTEST_INCLUDE_DIRS})
+
+find_package (Threads REQUIRED)
+
+# Add the rest of compiz
 add_subdirectory (cmake)
 add_subdirectory (include)
 add_subdirectory (images)
@@ -115,10 +145,6 @@ add_subdirectory (src)
 add_subdirectory (xslt)
 add_subdirectory (plugins)
 
-if (BUILD_TESTING)
-	add_subdirectory (tests)
-endif (BUILD_TESTING)
-
 compiz_ensure_linkage ()
 compiz_package_generation ("Compiz")
 compiz_add_uninstall ()
@@ -130,5 +156,8 @@ compiz_add_release_signoff ()
 _print_configure_results ()
 
 _check_compiz_cmake_macro (${CMAKE_MODULE_PATH_ORIG})
+
+# Enable coverage reporting for compiz
+enable_coverage_report()
 
 

@@ -103,6 +103,20 @@ struct CompStartupSequence {
 
 namespace compiz
 {
+namespace core
+{
+namespace screen
+{
+    inline int wraparound_mod (int a, int b)
+    {
+	if (a < 0)
+	    return (b - ((-a - 1) % (b))) - 1;
+	else
+	    return a % b;
+    };
+}
+}
+
 namespace X11
 {
 class PendingEvent {

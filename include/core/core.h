@@ -32,6 +32,10 @@
 #include <stdio.h>
 #include <assert.h>
 
+#include <string>
+#include <list>
+#include <cstdarg>
+
 #include <X11/Xlib-xcb.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/Xdamage.h>
@@ -69,6 +73,19 @@ typedef XBool Bool;
 #  define BITMAP_BIT_ORDER LSBFirst
 #endif
 
+#define STRINGIFY(x) #x
+#define TOSTRING(x) STRINGIFY (x)
+#define DEG2RAD (M_PI / 180.0f)
+
+#if defined(HAVE_SCANDIR_POSIX)
+  // POSIX (2008) defines the comparison function like this:
+  #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const dirent **, const dirent **))(d));
+#else
+  #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const void*,const void*))(d));
+#endif
+
+#include <core/global.h>
+
 #include <core/pluginclasses.h>
 #include <core/screen.h>
 #include <core/window.h>
@@ -85,5 +102,7 @@ typedef XBool Bool;
 #include <core/region.h>
 #include <core/countedlist.h>
 #include <core/timeouthandler.h>
+#include <core/logmessage.h>
+#include <core/string.h>
 
 #endif
