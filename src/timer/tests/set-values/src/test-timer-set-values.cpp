@@ -24,18 +24,26 @@
  */
 
 #include "test-timer.h"
+#include <unistd.h>
 
 TEST_F(CompTimerTest, TimerSetValues)
 {
-    CompTimer* t1 = new CompTimer();
+    CompTimer* t1 = new CompTimer ();
 
-    t1->setTimes(100, 90);
-    t1->start();
+    t1->setTimes (100, 90);
+    t1->start ();
 
-    ASSERT_EQ( t1->minTime(), 100 );
-    ASSERT_EQ( t1->maxTime(), 100 );
-    ASSERT_EQ( t1->minLeft(), 100 );
-    ASSERT_EQ( t1->maxLeft(), 100 );
+    usleep (100000);
+
+    /* minLeft and maxLeft are now
+     * real-time, so wait the guarunteed
+     * expiry time in order to check them
+     * for an accurate value of zero */
+
+    ASSERT_EQ (t1->minTime(), 100);
+    ASSERT_EQ (t1->maxTime(), 100);
+    ASSERT_EQ (t1->minLeft(), 0);
+    ASSERT_EQ (t1->maxLeft(), 0);
 
     delete t1;
 }

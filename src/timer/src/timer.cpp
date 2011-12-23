@@ -205,8 +205,8 @@ void
 CompTimer::setExpiryTimes (unsigned int min, unsigned int max)
 {
     gint64 now = g_get_monotonic_time ();
-    priv->mMinDeadline = now + ((gint64)min * 1000);
-    priv->mMaxDeadline = now + ((gint64)(max >= min ? max : min) * 1000);
+    priv->mMinDeadline = now + (static_cast <gint64> (min) * 1000);
+    priv->mMaxDeadline = now + (static_cast <gint64> (max >= min ? max : min) * 1000);
 }
 
 void
