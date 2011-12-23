@@ -31,6 +31,7 @@
 using ::testing::InSequence;
 using ::testing::Invoke;
 using ::testing::_;
+using ::testing::AtLeast;
 
 namespace
 {
@@ -71,21 +72,36 @@ public:
 	ON_CALL (*this, callback3 (_)).WillByDefault (Invoke (this, &MockCompTimerTestCallbackDispatchTable::QuitIfLast));
     };
 
+    void setMax (unsigned int timerId, unsigned int maxCalls)
+    {
+	mCallsCounter[timerId].maxCalls = maxCalls;
+    }
+
 private:
     Glib::RefPtr <Glib::MainLoop> mMainLoop;
-    unsigned int 		  mCallsCounter[3];
+
+    class _counter
+    {
+	public:
+	    unsigned int calls;
+	    unsigned int maxCalls;
+    } mCallsCounter[3];
 
     bool QuitIfLast (unsigned int num)
     {
-	mCallsCounter[num]++;
+	mCallsCounter[num].calls++;
 
-	if (mCallsCounter[num] == MaxAllowedCalls)
+	if (!mCallsCounter[num].maxCalls ||
+	    mCallsCounter[num].maxCalls == mCallsCounter[num].calls)
 	{
 	    /* We are the last timer, quit the main loop */
 	    if (TimeoutHandler::Default ()->timers ().size () == 0)
+	    {
 		mMainLoop->quit ();
-
-	    return false;
+		return false;
+	    }
+	    else if (mCallsCounter[num].maxCalls)
+		return false;
 	}
 
 	return true;
@@ -96,9 +112,9 @@ class CompTimerTestCallback: public CompTimerTest
 {
 public:
     CompTimerTestCallback () :
+	mLastAdded (0),
 	mDispatchTable (new MockCompTimerTestCallbackDispatchTable (ml))
     {
-	pthread_mutex_init (&mListGuard, NULL);
     }
 
     ~CompTimerTestCallback ()
@@ -107,7 +123,7 @@ public:
     }
 protected:
 
-    pthread_mutex_t mListGuard;
+    unsigned int    mLastAdded;
     MockCompTimerTestCallbackDispatchTable *mDispatchTable;
 
     static void * runThread (void * cb)
@@ -124,7 +140,8 @@ protected:
 
     void AddTimer (unsigned int min,
 		   unsigned int max,
-		   const boost::function <bool ()> &callback)
+		   const boost::function <bool ()> &callback,
+		   unsigned int maxAllowedCalls)
     {
 	timers.push_back (new CompTimer ());
 	timers.back ()->setTimes (min, max);
@@ -134,6 +151,10 @@ protected:
 
 	/* TimeoutHandler::timers should be empty */
 	EXPECT_TRUE (TimeoutHandler::Default ()->timers ().empty ()) << "timers list is not empty";
+
+	mDispatchTable->setMax (mLastAdded, maxAllowedCalls);
+
+	mLastAdded++;
     }
 
     void Run ()
@@ -195,9 +216,9 @@ protected:
 
 TEST_F (CompTimerTestCallback, TimerOrder)
 {
-    AddTimer (100, 110, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback1, mDispatchTable, 0));
-    AddTimer (50, 90, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback2, mDispatchTable, 1));
-    AddTimer (0, 0, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback3, mDispatchTable, 2));
+    AddTimer (100, 110, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback1, mDispatchTable, 0), 10);
+    AddTimer (50, 90, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback2, mDispatchTable, 1), 10);
+    AddTimer (0, 0, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback3, mDispatchTable, 2), 10);
 
     /* TimeoutHandler::timers should be empty since no timers have started */
     ASSERT_TRUE (TimeoutHandler::Default ()->timers ().empty ()) << "timers list is not empty";
@@ -224,6 +245,19 @@ TEST_F (CompTimerTestCallback, TimerOrder)
     EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
     EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
     EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+    EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
+
+    Run ();
+}
+
+TEST_F (CompTimerTestCallback, NoZeroStarvation)
+{
+    AddTimer (100, 110, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback1, mDispatchTable, 0), 1);
+    AddTimer (50, 90, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback2, mDispatchTable, 1), 1);
+    AddTimer (0, 0, boost::bind (&MockCompTimerTestCallbackDispatchTable::callback3, mDispatchTable, 2), -1);
+
+    EXPECT_CALL (*mDispatchTable, callback3 (2)).Times (AtLeast (1));
+    EXPECT_CALL (*mDispatchTable, callback2 (1)).Times (1);
     EXPECT_CALL (*mDispatchTable, callback1 (0)).Times (1);
 
     Run ();
