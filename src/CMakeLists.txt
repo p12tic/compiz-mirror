@@ -111,6 +111,4 @@ install (
     DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
 )
 
-add_test( compiz compiz )
-
 enable_coverage_report( TARGETS compiz )
