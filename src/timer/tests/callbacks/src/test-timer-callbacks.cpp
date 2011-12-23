@@ -37,13 +37,13 @@ class CompTimerTestCallback: public CompTimerTest
 public:
     CompTimerTestCallback ()
     {
-	pthread_mutex_init (&mlistGuard, NULL);
+	pthread_mutex_init (&mListGuard, NULL);
     }
 protected:
 
-    pthread_mutex_t mlistGuard;
+    pthread_mutex_t mListGuard;
 
-    static void* run (void* cb)
+    static void * run (void * cb)
     {
 	if (cb == NULL)
 	{
@@ -53,22 +53,22 @@ protected:
 	return NULL;
     }
 
-    pthread_t mmainLoopThread;
-    std::vector<int> mtriggeredTimers;
+    pthread_t mMainLoopThread;
+    std::vector<int> mTriggeredTimers;
 
     bool cb (int num)
     {
 	std::cout << "cb: " << num << std::endl;
-	pthread_mutex_lock (&mlistGuard);
-	mtriggeredTimers.push_back (num);
-	pthread_mutex_unlock (&mlistGuard);
+	pthread_mutex_lock (&mListGuard);
+	mTriggeredTimers.push_back (num);
+	pthread_mutex_unlock (&mListGuard);
 	return (true);
     }
 
     void SetUp ()
     {
 	CompTimerTest::SetUp ();
-	mtriggeredTimers.clear ();
+	mTriggeredTimers.clear ();
 
 	/* Test 2: Adding timers */
 	timers.push_back (new CompTimer ());
@@ -130,15 +130,15 @@ protected:
 
 	ASSERT_EQ(
 		0,
-		pthread_create(&mmainLoopThread, NULL, CompTimerTestCallback::run, this));
+		pthread_create(&mMainLoopThread, NULL, CompTimerTestCallback::run, this));
 
 	::sleep(1);
     }
 
     void TearDown ()
     {
-	ml->quit();
-	pthread_join(mmainLoopThread, NULL);
+	ml->quit ();
+	pthread_join (mMainLoopThread, NULL);
 
 	CompTimerTest::TearDown();
     }
@@ -146,15 +146,15 @@ protected:
 
 TEST_F (CompTimerTestCallback, TimerOrder)
 {
-    RecordProperty ("mtriggeredTimers.front()", mtriggeredTimers.front());
-    RecordProperty("mtriggeredTimers.back()", mtriggeredTimers.back());
+    RecordProperty ("mTriggeredTimers.front()", mTriggeredTimers.front ());
+    RecordProperty ("mTriggeredTimers.back()", mTriggeredTimers.back ());
 
-    std::vector<int>::iterator it = mtriggeredTimers.begin();
+    std::vector<int>::iterator it = mTriggeredTimers.begin();
     ++it;
 
-    int lastTimer = mtriggeredTimers.front ();
+    int lastTimer = mTriggeredTimers.front ();
 
-    while (it != mtriggeredTimers.end ())
+    while (it != mTriggeredTimers.end ())
     {
 	std::cout << *it;
 	switch (lastTimer)
@@ -172,5 +172,5 @@ TEST_F (CompTimerTestCallback, TimerOrder)
 	lastTimer = *it;
 	++it;
     }
-    ASSERT_EQ (mtriggeredTimers.front(), 1);
+    ASSERT_EQ (mTriggeredTimers.front(), 1);
 }
