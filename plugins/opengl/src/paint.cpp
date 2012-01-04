@@ -92,15 +92,15 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 	backgroundLoaded = true;
     }
 
-    data = new GLfloat [nBox * 16];
-    if (!data)
-	return;
-
-    d = data;
-    n = nBox;
-
     if (backgroundTextures.empty ())
     {
+	data = new GLfloat [nBox * 8];
+	if (!data)
+	    return;
+
+	d = data;
+	n = nBox;
+
 	while (n--)
 	{
 	    *d++ = pBox->x1;
@@ -118,14 +118,27 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 	    pBox++;
 	}
 
+	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+
 	glVertexPointer (2, GL_FLOAT, sizeof (GLfloat) * 2, data);
 
 	glColor4us (0, 0, 0, std::numeric_limits<unsigned short>::max ());
 	glDrawArrays (GL_QUADS, 0, nBox * 4);
 	glColor4usv (defaultColor);
+
+	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+
+	delete [] data;
     }
     else
     {
+	data = new GLfloat [nBox * 16];
+	if (!data)
+	    return;
+
+	d = data;
+	n = nBox;
+
 	for (unsigned int i = 0; i < backgroundTextures.size (); i++)
 	{
 	    GLTexture *bg = backgroundTextures[i];
@@ -180,9 +193,9 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 		bg->disable ();
 	    }
 	}
+    
+	delete [] data;
     }
-
-    delete [] data;
 }
 
 
