@@ -67,12 +67,13 @@ public:
 	CompTimerTestCallbackDispatchTable (),
 	mMainLoop (ml)
     {
+	memset (&mCallsCounter, 0, sizeof (mCallsCounter));
 	ON_CALL (*this, callback1 (_)).WillByDefault (Invoke (this, &MockCompTimerTestCallbackDispatchTable::QuitIfLast));
 	ON_CALL (*this, callback2 (_)).WillByDefault (Invoke (this, &MockCompTimerTestCallbackDispatchTable::QuitIfLast));
 	ON_CALL (*this, callback3 (_)).WillByDefault (Invoke (this, &MockCompTimerTestCallbackDispatchTable::QuitIfLast));
     };
 
-    void setMax (unsigned int timerId, unsigned int maxCalls)
+    void setMax (unsigned int timerId, int maxCalls)
     {
 	mCallsCounter[timerId].maxCalls = maxCalls;
     }
@@ -84,15 +85,15 @@ private:
     {
 	public:
 	    unsigned int calls;
-	    unsigned int maxCalls;
+	    int maxCalls;
     } mCallsCounter[3];
 
     bool QuitIfLast (unsigned int num)
     {
 	mCallsCounter[num].calls++;
 
-	if (!mCallsCounter[num].maxCalls ||
-	    mCallsCounter[num].maxCalls == mCallsCounter[num].calls)
+	if (mCallsCounter[num].maxCalls < 0 ||
+	    static_cast <unsigned int> (mCallsCounter[num].maxCalls) == mCallsCounter[num].calls)
 	{
 	    /* We are the last timer, quit the main loop */
 	    if (TimeoutHandler::Default ()->timers ().size () == 0)
@@ -141,7 +142,7 @@ protected:
     void AddTimer (unsigned int min,
 		   unsigned int max,
 		   const boost::function <bool ()> &callback,
-		   unsigned int maxAllowedCalls)
+		   int maxAllowedCalls)
     {
 	timers.push_back (new CompTimer ());
 	timers.back ()->setTimes (min, max);
