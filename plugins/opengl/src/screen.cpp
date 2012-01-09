@@ -93,7 +93,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GLfloat		 light0Position[] = { -0.5f, 0.5f, -9.0f, 1.0f };
     const char           *glRenderer;
     CompOption::Vector o (0);
-    WRAPABLE_HND_FUNC_RETURN (0, bool, glInitContext, visinfo);
 
     priv->ctx = glXCreateContext (dpy, visinfo, NULL, !indirectRendering);
     if (!priv->ctx)
@@ -282,7 +281,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     if (GL::textureFromPixmap)
 	registerBindPixmap (TfpTexture::bindPixmapToTexture);
 
-    return false;
+    return true;
 }
 
 
@@ -546,10 +545,10 @@ GLScreen::GLScreen (CompScreen *s) :
 			"this isn't going to work.");
 	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
 	setFailed ();
-	return;
     }
 
-    priv->initContext.start (boost::bind (&GLScreen::glInitContext, this, visinfo), 0, 0);
+    if (!glInitContext (visinfo))
+	setFailed ();
 }
 
 GLScreen::~GLScreen ()
@@ -953,10 +952,6 @@ GLScreen::setLighting (bool lighting)
 	setTexEnvMode (GL_REPLACE);
     }
 }
-
-bool
-GLScreenInterface::glInitContext (XVisualInfo *visinfo)
-    WRAPABLE_DEF (glInitContext, visinfo);
 
 bool
 GLScreenInterface::glPaintOutput (const GLScreenPaintAttrib &sAttrib,

@@ -385,20 +385,21 @@ class GLScreen :
 	 */
 	const float * projectionMatrix ();
 
-	WRAPABLE_HND (0, GLScreenInterface, bool, glInitContext, XVisualInfo *);
-	WRAPABLE_HND (1, GLScreenInterface, bool, glPaintOutput,
+	bool glInitContext (XVisualInfo *);
+
+	WRAPABLE_HND (0, GLScreenInterface, bool, glPaintOutput,
 		      const GLScreenPaintAttrib &, const GLMatrix &,
 		      const CompRegion &, CompOutput *, unsigned int);
-	WRAPABLE_HND (2, GLScreenInterface, void, glPaintTransformedOutput,
+	WRAPABLE_HND (1, GLScreenInterface, void, glPaintTransformedOutput,
 		      const GLScreenPaintAttrib &,
 		      const GLMatrix &, const CompRegion &, CompOutput *,
 		      unsigned int);
-	WRAPABLE_HND (3, GLScreenInterface, void, glApplyTransform,
+	WRAPABLE_HND (2, GLScreenInterface, void, glApplyTransform,
 		      const GLScreenPaintAttrib &, CompOutput *, GLMatrix *);
 
-	WRAPABLE_HND (4, GLScreenInterface, void, glEnableOutputClipping,
+	WRAPABLE_HND (3, GLScreenInterface, void, glEnableOutputClipping,
 		      const GLMatrix &, const CompRegion &, CompOutput *);
-	WRAPABLE_HND (5, GLScreenInterface, void, glDisableOutputClipping);
+	WRAPABLE_HND (4, GLScreenInterface, void, glDisableOutputClipping);
 
 	friend class GLTexture;
 
