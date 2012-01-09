@@ -708,6 +708,7 @@ MoveScreen::registerPaintHandler(compiz::composite::PaintHandler *pHnd)
 {
     hasCompositing = true;
     cScreen->registerPaintHandler (pHnd);
+    return true;
 }
 
 void
