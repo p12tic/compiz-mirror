@@ -1043,10 +1043,10 @@ KWD::Window::updateBlurProperty (int topOffset,
 {
     Atom    atom = Atoms::compizWindowBlurDecor;
     QRegion topQRegion, bottomQRegion, leftQRegion, rightQRegion;
-    Region  topRegion = NULL;
-    Region  bottomRegion = NULL;
-    Region  leftRegion = NULL;
-    Region  rightRegion = NULL;
+    ::Region  topRegion = NULL;
+    ::Region  bottomRegion = NULL;
+    ::Region  leftRegion = NULL;
+    ::Region  rightRegion = NULL;
     int     size = 0;
     int     w, h;
 
