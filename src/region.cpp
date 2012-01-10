@@ -104,7 +104,7 @@ CompRegion::~CompRegion ()
     delete priv;
 }
 
-const Region
+Region
 CompRegion::handle () const
 {
     return priv->region;
