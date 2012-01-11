@@ -239,8 +239,6 @@ class GLScreenInterface :
 {
     public:
 
-	virtual bool glInitContext (XVisualInfo *);
-
 	/**
 	 * Hookable function used for plugins to use openGL to draw on an output
 	 *
