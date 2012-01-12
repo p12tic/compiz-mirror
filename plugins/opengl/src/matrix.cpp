@@ -46,7 +46,6 @@
  * From Mesa 3-D graphics library.
  */
 
-#include <compiz.h>
 #include <string.h>
 #include <math.h>
 #include <core/core.h>

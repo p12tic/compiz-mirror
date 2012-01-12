@@ -124,7 +124,6 @@ class PrivateGLScreen :
 	bool hasCompositing;
 
 	GLIcon defaultIcon;
-	CompTimer initContext;
 
 	Pixmap rootPixmapCopy;
 	CompSize rootPixmapSize;

@@ -274,6 +274,8 @@ class DecorWindow :
 	bool	  unshading;
 	bool	  shading;
 	bool	  isSwitcher;
+
+	bool      frameExtentsRequested;
 };
 
 class DecorPluginVTable :

@@ -74,7 +74,7 @@ class CompRegion {
 	/**
 	 * Returns the internal XRegion handle
 	 */
-	const Region handle () const;
+	Region handle () const;
 
 	/**
 	 * Returns true if the specified CompPoint falls within the
