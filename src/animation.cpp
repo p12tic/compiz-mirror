@@ -86,6 +86,8 @@
 #include <assert.h>
 #include "private.h"
 
+using namespace compiz::core;
+
 class AnimPluginVTable :
     public CompPlugin::VTableForScreenAndWindow<AnimScreen, AnimWindow>
 {
@@ -1247,7 +1249,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 
 	if (mLastRedrawTimeFresh)
 	{
-	    msSinceLastPaintActual = TIMEVALDIFF (&curTime, &mLastRedrawTime);
+	    msSinceLastPaintActual = timer::timeval_diff (&curTime, &mLastRedrawTime);
 	    // handle clock rollback
 	    if (msSinceLastPaintActual < 0)
 		msSinceLastPaintActual = 0;
