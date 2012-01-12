@@ -317,7 +317,7 @@ CompManager::finiPlugin (CompPlugin *p)
 bool
 CompScreen::initPluginForScreen (CompPlugin *p)
 {
-    WRAPABLE_HND_FUNC_RETURN (2, bool, initPluginForScreen, p)
+    WRAPABLE_HND_FUNCTN_RETURN (bool, initPluginForScreen, p)
 
     bool status               = true;
     CompWindowList::iterator it, fail;
@@ -349,7 +349,7 @@ CompScreen::initPluginForScreen (CompPlugin *p)
 void
 CompScreen::finiPluginForScreen (CompPlugin *p)
 {
-    WRAPABLE_HND_FUNC (3, finiPluginForScreen, p)
+    WRAPABLE_HND_FUNCTN (finiPluginForScreen, p)
 
     foreach (CompWindow *w, priv->windows)
 	p->vTable->finiWindow (w);

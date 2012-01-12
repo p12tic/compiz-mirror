@@ -684,7 +684,7 @@ void
 CompWindow::getAllowedActions (unsigned int &setActions,
 			       unsigned int &clearActions)
 {
-    WRAPABLE_HND_FUNC (1, getAllowedActions, setActions, clearActions)
+    WRAPABLE_HND_FUNCTN (getAllowedActions, setActions, clearActions)
 
     setActions   = 0;
     clearActions = 0;
@@ -1108,7 +1108,7 @@ CompWindow::updateWindowOutputExtents ()
 void
 CompWindow::getOutputExtents (CompWindowExtents& output)
 {
-    WRAPABLE_HND_FUNC (0, getOutputExtents, output)
+    WRAPABLE_HND_FUNCTN (getOutputExtents, output)
 
     output.left   = 0;
     output.right  = 0;
@@ -2532,7 +2532,7 @@ CompWindow::syncPosition ()
 bool
 CompWindow::focus ()
 {
-    WRAPABLE_HND_FUNC_RETURN (2, bool, focus)
+    WRAPABLE_HND_FUNCTN_RETURN (bool, focus)
 
     if (overrideRedirect ())
 	return false;
@@ -2561,7 +2561,7 @@ CompWindow::focus ()
 bool
 CompWindow::place (CompPoint &pos)
 {
-    WRAPABLE_HND_FUNC_RETURN (4, bool, place, pos)
+    WRAPABLE_HND_FUNCTN_RETURN (bool, place, pos)
     return false;
 }
 
@@ -2570,7 +2570,7 @@ CompWindow::validateResizeRequest (unsigned int   &mask,
 				   XWindowChanges *xwc,
 				   unsigned int   source)
 {
-    WRAPABLE_HND_FUNC (5, validateResizeRequest, mask, xwc, source)
+    WRAPABLE_HND_FUNCTN (validateResizeRequest, mask, xwc, source)
 
     if (!(priv->type & (CompWindowTypeDockMask    |
 		     CompWindowTypeFullscreenMask |
@@ -2633,17 +2633,17 @@ CompWindow::resizeNotify (int dx,
 			  int dy,
 			  int dwidth,
 			  int dheight)
-    WRAPABLE_HND_FUNC (6, resizeNotify, dx, dy, dwidth, dheight)
+    WRAPABLE_HND_FUNCTN (resizeNotify, dx, dy, dwidth, dheight)
 
 void
 CompWindow::moveNotify (int  dx,
 			int  dy,
 			bool immediate)
-    WRAPABLE_HND_FUNC (7, moveNotify, dx, dy, immediate)
+    WRAPABLE_HND_FUNCTN (moveNotify, dx, dy, immediate)
 
 void
 CompWindow::windowNotify (CompWindowNotify n)
-    WRAPABLE_HND_FUNC (8, windowNotify, n)
+    WRAPABLE_HND_FUNCTN (windowNotify, n)
 
 void
 CompWindow::grabNotify (int	     x,
@@ -2651,21 +2651,21 @@ CompWindow::grabNotify (int	     x,
 			unsigned int state,
 			unsigned int mask)
 {
-    WRAPABLE_HND_FUNC (9, grabNotify, x, y, state, mask)
+    WRAPABLE_HND_FUNCTN (grabNotify, x, y, state, mask)
     priv->grabbed = true;
 }
 
 void
 CompWindow::ungrabNotify ()
 {
-    WRAPABLE_HND_FUNC (10, ungrabNotify)
+    WRAPABLE_HND_FUNCTN (ungrabNotify)
     priv->grabbed = false;
 }
 
 void
 CompWindow::stateChangeNotify (unsigned int lastState)
 {
-    WRAPABLE_HND_FUNC (11, stateChangeNotify, lastState);
+    WRAPABLE_HND_FUNCTN (stateChangeNotify, lastState);
 
     /* if being made sticky */
     if (!(lastState & CompWindowStateStickyMask) &&
@@ -4667,7 +4667,7 @@ PrivateWindow::revealAncestors (CompWindow *w,
 void
 CompWindow::activate ()
 {
-    WRAPABLE_HND_FUNC (3, activate)
+    WRAPABLE_HND_FUNCTN (activate)
 
     screen->priv->setCurrentDesktop (priv->desktop);
 
@@ -4969,7 +4969,7 @@ PrivateWindow::minimizeTransients (CompWindow *w,
 void
 CompWindow::minimize ()
 {
-    WRAPABLE_HND_FUNC (13, minimize);
+    WRAPABLE_HND_FUNCTN (minimize);
 
     if (!priv->managed)
 	return;
@@ -4999,7 +4999,7 @@ PrivateWindow::unminimizeTransients (CompWindow *w,
 void
 CompWindow::unminimize ()
 {
-    WRAPABLE_HND_FUNC (14, unminimize);
+    WRAPABLE_HND_FUNCTN (unminimize);
     if (priv->minimized)
     {
 	windowNotify (CompWindowNotifyUnminimize);
@@ -6052,7 +6052,7 @@ CompWindow::setShowDesktopMode (bool value)
 bool
 CompWindow::managed ()
 {
-    WRAPABLE_HND_FUNC_RETURN (18, bool, managed);
+    WRAPABLE_HND_FUNCTN_RETURN (bool, managed);
     return priv->managed;
 }
 
@@ -6252,7 +6252,7 @@ CompWindow::pendingUnmaps ()
 bool
 CompWindow::minimized ()
 {
-    WRAPABLE_HND_FUNC_RETURN (15, bool, minimized);
+    WRAPABLE_HND_FUNCTN_RETURN (bool, minimized);
     return priv->minimized;
 }
 
@@ -6801,7 +6801,7 @@ CompWindow::syncWait ()
 bool
 CompWindow::alpha ()
 {
-    WRAPABLE_HND_FUNC_RETURN (16, bool, alpha);
+    WRAPABLE_HND_FUNCTN_RETURN (bool, alpha);
 
     return priv->alpha;
 }
@@ -6840,7 +6840,7 @@ CompWindow::isViewable () const
 bool
 CompWindow::isFocussable ()
 {
-    WRAPABLE_HND_FUNC_RETURN (17, bool, isFocussable);
+    WRAPABLE_HND_FUNCTN_RETURN (bool, isFocussable);
 
     if (priv->inputHint)
 	return true;
@@ -6994,7 +6994,7 @@ CompWindow::hasUnmapReference ()
 
 void
 CompWindow::updateFrameRegion (CompRegion& region)
-    WRAPABLE_HND_FUNC (12, updateFrameRegion, region)
+    WRAPABLE_HND_FUNCTN (updateFrameRegion, region)
 
 bool
 PrivateWindow::reparent ()
