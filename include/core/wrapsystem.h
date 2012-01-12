@@ -83,7 +83,7 @@
 template <typename T, typename T2>
 class WrapableInterface {
     protected:
-	WrapableInterface () : mHandler (0) {};
+        WrapableInterface () : mHandler (0) {}
 	virtual ~WrapableInterface ()
 	{
 	    if (mHandler)
@@ -108,7 +108,7 @@ class WrapableHandler : public T
 	void registerWrap (T *, bool);
 	void unregisterWrap (T *);
 
-	unsigned int numWrapClients () { return mInterface.size (); };
+        unsigned int numWrapClients () { return mInterface.size (); }
 
     protected:
 
@@ -121,12 +121,8 @@ class WrapableHandler : public T
 
 	WrapableHandler () : mInterface ()
 	{
-	    mCurrFunction = new unsigned int [N];
-	    if (!mCurrFunction)
-		abort ();
-	    for (unsigned int i = 0; i < N; i++)
-		mCurrFunction[i] = 0;
-	};
+            std::fill_n(mCurrFunction, N, 0);
+        }
 
 	~WrapableHandler ()
 	{
@@ -134,12 +130,11 @@ class WrapableHandler : public T
 		for (it = mInterface.begin (); it != mInterface.end (); it++)
 		    delete [] (*it).enabled;
 	    mInterface.clear ();
-	    delete [] mCurrFunction;
-	};
+        }
 
 	void functionSetEnabled (T *, unsigned int, bool);
 
-	unsigned int *mCurrFunction;
+        unsigned int mCurrFunction[N];
         std::vector<Interface> mInterface;
 };
 
