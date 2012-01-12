@@ -25,6 +25,8 @@
 
 #include "bench.h"
 
+using namespace compiz::core;
+
 COMPIZ_PLUGIN_20090315 (bench, BenchPluginVTable)
 
 #define TEX_WIDTH  512
@@ -44,7 +46,7 @@ BenchScreen::preparePaint (int msSinceLastPaint)
 
     if (optionGetOutputConsole () && mActive)
     {
-	int dTime = TIMEVALDIFF (&now, &mLastPrint);
+	int dTime = timer::timeval_diff (&now, &mLastPrint);
 	if (dTime > optionGetConsoleUpdateTime () * 1000)
 	{
 	    int dFrames = mFrames - mLastPrintFrames;
