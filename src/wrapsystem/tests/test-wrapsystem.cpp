@@ -24,7 +24,7 @@ class TestImplementation : public WrapableHandler<TestInterface, 1> {
 public:
     static int testMethodCalls;
 
-    // 1. needs for magic numbers
+    // 1. need for magic numbers
     // 2. why can't we just pass &TestInterface::testMethod (and deduce return etc.
     // 3. relies on __VA_ARGS__ when an extra set of parentheses would be enough
     WRAPABLE_HND (0, TestInterface, void, testMethod)
@@ -65,7 +65,7 @@ void TestInterface::testMethod() /* const */ {
 }
 
 void TestImplementation::testMethod() /* const */ {
-    WRAPABLE_HND_FUNC(0, testMethod)
+    WRAPABLE_HND_FUNC(0, testMethod) // Magic number needs to match class definition
     testMethodCalls++;
 }
 
@@ -75,10 +75,28 @@ void TestWrapper::testMethod() /* const */ {
 }
 
 
-TEST(WrapSystem, a_wrapper_gets_functions_called)
+TEST(WrapSystem, an_interface_never_gets_functions_called)
 {
-    TestWrapper::testMethodCalls = 0;
     TestInterface::testMethodCalls = 0;
+
+    TestImplementation imp;
+
+    imp.testMethod();
+    ASSERT_EQ(0, TestInterface::testMethodCalls);
+
+    {
+        TestWrapper wrap(imp);
+
+        imp.testMethod();
+        ASSERT_EQ(0, TestInterface::testMethodCalls);
+    }
+
+    imp.testMethod();
+    ASSERT_EQ(0, TestInterface::testMethodCalls);
+}
+
+TEST(WrapSystem, an_implementation_gets_functions_called)
+{
     TestImplementation::testMethodCalls = 0;
 
     TestImplementation imp;
@@ -88,14 +106,28 @@ TEST(WrapSystem, a_wrapper_gets_functions_called)
         imp.testMethod();
 
         ASSERT_EQ(1, TestImplementation::testMethodCalls);
-        ASSERT_EQ(0, TestInterface::testMethodCalls);
-        ASSERT_EQ(1, TestWrapper::testMethodCalls);
     }
 
     imp.testMethod();
 
     ASSERT_EQ(2, TestImplementation::testMethodCalls);
-    ASSERT_EQ(0, TestInterface::testMethodCalls);
+}
+
+TEST(WrapSystem, a_wrapper_gets_its_functions_called)
+{
+    TestWrapper::testMethodCalls = 0;
+
+    TestImplementation imp;
+    {
+        TestWrapper wrap(imp);
+
+        imp.testMethod();
+
+        ASSERT_EQ(1, TestWrapper::testMethodCalls);
+    }
+
+    imp.testMethod();
+
     ASSERT_EQ(1, TestWrapper::testMethodCalls);
 }
 
@@ -114,3 +146,23 @@ TEST(WrapSystem, a_wrapper_doesnt_get_disabled_functions_called)
         ASSERT_EQ(0, TestWrapper::testMethodCalls);
     }
 }
+
+TEST(WrapSystem, two_wrappers_get_their_functions_called)
+{
+    TestWrapper::testMethodCalls = 0;
+
+    TestImplementation imp;
+    {
+        TestWrapper wrap1(imp);
+        TestWrapper wrap2(imp);
+
+        imp.testMethod();
+
+        ASSERT_EQ(2, TestWrapper::testMethodCalls);
+    }
+
+    imp.testMethod();
+
+    ASSERT_EQ(2, TestWrapper::testMethodCalls);
+}
+

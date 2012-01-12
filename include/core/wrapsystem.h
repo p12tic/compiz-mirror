@@ -28,6 +28,7 @@
 
 #include <stdlib.h>
 #include <vector>
+#include <algorithm>
 
 #define WRAPABLE_DEF(func, ...)			 \
 {						 \
@@ -48,10 +49,17 @@
    void func ## SetCurrentIndex (unsigned int index)	\
    {							\
        mCurrFunction[num] = index;			\
-   }
+   }                                                    \
+   enum { func ## Index = num };
 
+// For compatability ignore num and forward
 #define WRAPABLE_HND_FUNC(num, func, ...)				\
+    WRAPABLE_HND_FUNCTN(func, __VA_ARGS__)
+
+// New macro that doesn't need magic number
+#define WRAPABLE_HND_FUNCTN(func, ...)				        \
 {									\
+    enum { num = func ## Index };                                       \
     unsigned int curr = mCurrFunction[num];				\
     while (mCurrFunction[num] < mInterface.size () &&			\
            !mInterface[mCurrFunction[num]].enabled[num])		\
@@ -65,8 +73,14 @@
     mCurrFunction[num] = curr;						\
 }
 
+// For compatability ignore num and forward
 #define WRAPABLE_HND_FUNC_RETURN(num, rtype, func, ...)			\
+    WRAPABLE_HND_FUNCTN_RETURN(rtype, func, __VA_ARGS__)
+
+// New macro that doesn't need magic number
+#define WRAPABLE_HND_FUNCTN_RETURN(rtype, func, ...)			\
 {									\
+    enum { num = func ## Index };                                       \
     unsigned int curr = mCurrFunction[num];				\
     while (mCurrFunction[num] < mInterface.size () &&			\
            !mInterface[mCurrFunction[num]].enabled[num])		\
@@ -83,12 +97,12 @@
 template <typename T, typename T2>
 class WrapableInterface {
     protected:
-        WrapableInterface () : mHandler (0) {}
+	WrapableInterface () : mHandler (0) {}
 	virtual ~WrapableInterface ()
 	{
 	    if (mHandler)
 		mHandler->unregisterWrap (static_cast<T2*> (this));
-	};
+	}
 
 	void setHandler (T *handler, bool enabled = true)
 	{
@@ -108,7 +122,7 @@ class WrapableHandler : public T
 	void registerWrap (T *, bool);
 	void unregisterWrap (T *);
 
-        unsigned int numWrapClients () { return mInterface.size (); }
+	unsigned int numWrapClients () { return mInterface.size (); }
 
     protected:
 
@@ -149,7 +163,7 @@ void WrapableHandler<T,N>::registerWrap (T *obj, bool enabled)
     for (unsigned int i = 0; i < N; i++)
 	in.enabled[i] = enabled;
     mInterface.insert (mInterface.begin (), in);
-};
+}
 
 template <typename T, unsigned int N>
 void WrapableHandler<T,N>::unregisterWrap (T *obj)
