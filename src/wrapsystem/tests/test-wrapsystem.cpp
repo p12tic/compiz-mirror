@@ -1,6 +1,8 @@
-#include <core/wrapsystem.h>
+#include "core/wrapsystem.h"
 
 #include <gtest/gtest.h>
+
+//#define TEST_OLD_MACROS
 
 namespace {
 
@@ -11,29 +13,35 @@ public:
     TestInterface();
     ~TestInterface();
 
-    virtual void testMethod() /* const */ = 0;
+    virtual void testMethodReturningVoid() /* const */ = 0;
+    virtual int testMethodReturningInt(int i) /* const */ = 0;
 
-    static int testMethodCalls;
+    static int testMethodReturningVoidCalls;
+    static int testMethodReturningIntCalls;
 
 private:
     TestInterface(TestInterface const&);
     TestInterface& operator=(TestInterface const&);
 };
 
-class TestImplementation : public WrapableHandler<TestInterface, 1> {
+// Needs a magic number for the count of "wrappable" functions
+class TestImplementation : public WrapableHandler<TestInterface, 2> {
 public:
-    static int testMethodCalls;
 
     // 1. need for magic numbers
     // 2. why can't we just pass &TestInterface::testMethod (and deduce return etc.
     // 3. relies on __VA_ARGS__ when an extra set of parentheses would be enough
-    WRAPABLE_HND (0, TestInterface, void, testMethod)
+    WRAPABLE_HND (0, TestInterface, void, testMethodReturningVoid)
+
+    WRAPABLE_HND (1, TestInterface, int, testMethodReturningInt, int)
+
+    static int testMethodReturningVoidCalls;
+    static int testMethodReturningIntCalls;
 };
 
 class TestWrapper : public TestInterface {
     TestImplementation& impl;
 public:
-    static int testMethodCalls;
 
     TestWrapper(TestImplementation& impl)
         : impl(impl)
@@ -42,127 +50,180 @@ public:
     ~TestWrapper()
     { setHandler(&impl, false); }  // The need to remember this is a PITA
 
-    virtual void testMethod();
+    virtual void testMethodReturningVoid();
+    virtual int testMethodReturningInt(int i);
 
-    void disableTestMethod() {
-        impl.testMethodSetEnabled (this, false);
+    static int testMethodReturningVoidCalls;
+    static int testMethodReturningIntCalls;
+
+    void disableTestMethodReturningVoid() {
+        impl.testMethodReturningVoidSetEnabled (this, false);
     }
 };
 } // (abstract) namespace
 
 
-int TestWrapper::testMethodCalls = 0;
-int TestInterface::testMethodCalls = 0;
-int TestImplementation::testMethodCalls = 0;
+int TestWrapper::testMethodReturningVoidCalls = 0;
+int TestInterface::testMethodReturningVoidCalls = 0;
+int TestImplementation::testMethodReturningVoidCalls = 0;
+
+int TestWrapper::testMethodReturningIntCalls = 0;
+int TestInterface::testMethodReturningIntCalls = 0;
+int TestImplementation::testMethodReturningIntCalls = 0;
 
 // A pain these need definition after TestImplementation definition
 TestInterface::TestInterface() {}
 TestInterface::~TestInterface() {}
 
-void TestInterface::testMethod() /* const */ {
-    WRAPABLE_DEF (testMethod);
-    testMethodCalls++;
+void TestInterface::testMethodReturningVoid() /* const */ {
+    WRAPABLE_DEF (testMethodReturningVoid);
+    testMethodReturningVoidCalls++;
 }
 
-void TestImplementation::testMethod() /* const */ {
-    WRAPABLE_HND_FUNC(0, testMethod) // Magic number needs to match class definition
-    testMethodCalls++;
+int TestInterface::testMethodReturningInt(int i) {
+    WRAPABLE_DEF (testMethodReturningInt, i);
+    testMethodReturningIntCalls++;
+    return i;
 }
 
-void TestWrapper::testMethod() /* const */ {
-    impl.testMethod();
-    testMethodCalls++;
+void TestImplementation::testMethodReturningVoid() {
+#ifdef TEST_OLD_MACROS
+    WRAPABLE_HND_FUNC(0, testMethodReturningVoid) // Magic number needs to match class definition
+#else
+    WRAPABLE_HND_FUNCTN(testMethodReturningVoid)
+#endif
+    testMethodReturningVoidCalls++;
+}
+
+int TestImplementation::testMethodReturningInt(int i) {
+#ifdef TEST_OLD_MACROS
+    WRAPABLE_HND_FUNC_RETURN(1, int, testMethodReturningInt, i) // Magic number needs to match class definition
+#else
+    WRAPABLE_HND_FUNCTN_RETURN(int, testMethodReturningInt, i)
+#endif
+    testMethodReturningIntCalls++;
+    return i;
+}
+
+void TestWrapper::testMethodReturningVoid() {
+    impl.testMethodReturningVoid();
+    testMethodReturningVoidCalls++;
+}
+
+int TestWrapper::testMethodReturningInt(int i) {
+    testMethodReturningIntCalls++;
+    return impl.testMethodReturningInt(i);
 }
 
 
 TEST(WrapSystem, an_interface_never_gets_functions_called)
 {
-    TestInterface::testMethodCalls = 0;
+    TestInterface::testMethodReturningIntCalls = 0;
 
     TestImplementation imp;
 
-    imp.testMethod();
-    ASSERT_EQ(0, TestInterface::testMethodCalls);
+    imp.testMethodReturningInt(1);
+    ASSERT_EQ(0, TestInterface::testMethodReturningIntCalls);
 
     {
         TestWrapper wrap(imp);
 
-        imp.testMethod();
-        ASSERT_EQ(0, TestInterface::testMethodCalls);
+        imp.testMethodReturningInt(1);
+        ASSERT_EQ(0, TestInterface::testMethodReturningIntCalls);
     }
 
-    imp.testMethod();
-    ASSERT_EQ(0, TestInterface::testMethodCalls);
+    imp.testMethodReturningInt(1);
+    ASSERT_EQ(0, TestInterface::testMethodReturningIntCalls);
+}
+
+TEST(WrapSystem, an_interface_never_gets_void_functions_called)
+{
+    TestInterface::testMethodReturningVoidCalls = 0;
+
+    TestImplementation imp;
+
+    imp.testMethodReturningVoid();
+    ASSERT_EQ(0, TestInterface::testMethodReturningVoidCalls);
+
+    {
+        TestWrapper wrap(imp);
+
+        imp.testMethodReturningVoid();
+        ASSERT_EQ(0, TestInterface::testMethodReturningVoidCalls);
+    }
+
+    imp.testMethodReturningVoid();
+    ASSERT_EQ(0, TestInterface::testMethodReturningVoidCalls);
 }
 
 TEST(WrapSystem, an_implementation_gets_functions_called)
 {
-    TestImplementation::testMethodCalls = 0;
+    TestImplementation::testMethodReturningVoidCalls = 0;
 
     TestImplementation imp;
     {
         TestWrapper wrap(imp);
 
-        imp.testMethod();
+        imp.testMethodReturningVoid();
 
-        ASSERT_EQ(1, TestImplementation::testMethodCalls);
+        ASSERT_EQ(1, TestImplementation::testMethodReturningVoidCalls);
     }
 
-    imp.testMethod();
+    imp.testMethodReturningVoid();
 
-    ASSERT_EQ(2, TestImplementation::testMethodCalls);
+    ASSERT_EQ(2, TestImplementation::testMethodReturningVoidCalls);
 }
 
 TEST(WrapSystem, a_wrapper_gets_its_functions_called)
 {
-    TestWrapper::testMethodCalls = 0;
+    TestWrapper::testMethodReturningVoidCalls = 0;
 
     TestImplementation imp;
     {
         TestWrapper wrap(imp);
 
-        imp.testMethod();
+        imp.testMethodReturningVoid();
 
-        ASSERT_EQ(1, TestWrapper::testMethodCalls);
+        ASSERT_EQ(1, TestWrapper::testMethodReturningVoidCalls);
     }
 
-    imp.testMethod();
+    imp.testMethodReturningVoid();
 
-    ASSERT_EQ(1, TestWrapper::testMethodCalls);
+    ASSERT_EQ(1, TestWrapper::testMethodReturningVoidCalls);
 }
 
 TEST(WrapSystem, a_wrapper_doesnt_get_disabled_functions_called)
 {
-    TestWrapper::testMethodCalls = 0;
+    TestWrapper::testMethodReturningVoidCalls = 0;
 
     TestImplementation imp;
     {
         TestWrapper wrap(imp);
 
-        wrap.disableTestMethod();
+        wrap.disableTestMethodReturningVoid();
 
-        imp.testMethod();
+        imp.testMethodReturningVoid();
 
-        ASSERT_EQ(0, TestWrapper::testMethodCalls);
+        ASSERT_EQ(0, TestWrapper::testMethodReturningVoidCalls);
     }
 }
 
 TEST(WrapSystem, two_wrappers_get_their_functions_called)
 {
-    TestWrapper::testMethodCalls = 0;
+    TestWrapper::testMethodReturningVoidCalls = 0;
 
     TestImplementation imp;
     {
         TestWrapper wrap1(imp);
         TestWrapper wrap2(imp);
 
-        imp.testMethod();
+        imp.testMethodReturningVoid();
 
-        ASSERT_EQ(2, TestWrapper::testMethodCalls);
+        ASSERT_EQ(2, TestWrapper::testMethodReturningVoidCalls);
     }
 
-    imp.testMethod();
+    imp.testMethodReturningVoid();
 
-    ASSERT_EQ(2, TestWrapper::testMethodCalls);
+    ASSERT_EQ(2, TestWrapper::testMethodReturningVoidCalls);
 }
 

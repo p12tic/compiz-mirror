@@ -126,11 +126,15 @@ class WrapableHandler : public T
 
     protected:
 
-	class Interface
+	struct Interface
 	{
-	    public:
-		T    *obj;
-		bool *enabled;
+            Interface(T *obj, bool enable) : obj(obj)
+            {
+                std::fill_n(this->enabled, N, enable);
+            }
+
+            T    *obj;
+            bool enabled[N];
 	};
 
 	WrapableHandler () : mInterface ()
@@ -140,9 +144,6 @@ class WrapableHandler : public T
 
 	~WrapableHandler ()
 	{
-	    typename std::vector<Interface>::iterator it;
-		for (it = mInterface.begin (); it != mInterface.end (); it++)
-		    delete [] (*it).enabled;
 	    mInterface.clear ();
         }
 
@@ -155,39 +156,36 @@ class WrapableHandler : public T
 template <typename T, unsigned int N>
 void WrapableHandler<T,N>::registerWrap (T *obj, bool enabled)
 {
-    typename WrapableHandler<T,N>::Interface in;
-    in.obj = obj;
-    in.enabled = new bool [N];
-    if (!in.enabled)
-	return;
-    for (unsigned int i = 0; i < N; i++)
-	in.enabled[i] = enabled;
-    mInterface.insert (mInterface.begin (), in);
+    mInterface.insert (mInterface.begin (), Interface(obj, enabled));
 }
 
 template <typename T, unsigned int N>
 void WrapableHandler<T,N>::unregisterWrap (T *obj)
 {
-    typename std::vector<Interface>::iterator it;
-    for (it = mInterface.begin (); it != mInterface.end (); it++)
-	if ((*it).obj == obj)
+    typedef typename std::vector<Interface>::iterator iterator;
+    for (iterator it = mInterface.begin (); it != mInterface.end (); ++it)
+    {
+	if (it->obj == obj)
 	{
-	    delete [] (*it).enabled;
 	    mInterface.erase (it);
 	    break;
 	}
+    }
 }
 
 template <typename T, unsigned int N>
 void WrapableHandler<T,N>::functionSetEnabled (T *obj, unsigned int num,
 					       bool enabled)
 {
-    for (unsigned int i = 0; i < mInterface.size (); i++)
-	if (mInterface[i].obj == obj)
+    typedef typename std::vector<Interface>::iterator iterator;
+    for (iterator it = mInterface.begin (); it != mInterface.end (); ++it)
+    {
+	if (it->obj == obj)
 	{
-	    mInterface[i].enabled[num] = enabled;
+	    it->enabled[num] = enabled;
 	    break;
 	}
+    }
 }
 
 #endif
