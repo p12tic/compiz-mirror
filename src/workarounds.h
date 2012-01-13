@@ -73,9 +73,6 @@ class WorkaroundsScreen :
 
 	GL::GLXCopySubBufferProc     origCopySubBuffer;
 
-	bool
-	glInitContext (XVisualInfo *xvinfo);
-
 	void
 	handleEvent (XEvent *);
 
