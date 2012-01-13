@@ -144,7 +144,6 @@ add_subdirectory (metadata)
 add_subdirectory (src)
 add_subdirectory (xslt)
 add_subdirectory (plugins)
-#add_subdirectory (core-test)
 
 compiz_ensure_linkage ()
 compiz_package_generation ("Compiz")
