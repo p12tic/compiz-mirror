@@ -33,5 +33,5 @@ INSTALL(
   RUNTIME             DESTINATION         bin
   LIBRARY             DESTINATION         lib
   ARCHIVE             DESTINATION         lib
-  PUBLIC_HEADER       DESTINATION         include/compiz
+  PUBLIC_HEADER       DESTINATION         include/compiz/core
 )
