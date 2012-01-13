@@ -492,7 +492,7 @@ bool
 CompositeWindow::damageRect (bool           initial,
 			     const CompRect &rect)
 {
-    WRAPABLE_HND_FUNC_RETURN (0, bool, damageRect, initial, rect)
+    WRAPABLE_HND_FUNCTN_RETURN (bool, damageRect, initial, rect)
     return false;
 }
 

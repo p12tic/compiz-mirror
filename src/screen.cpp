@@ -324,18 +324,18 @@ CompScreen::eraseValue (CompString key)
 
 void
 CompScreen::fileWatchAdded (CompFileWatch *watch)
-    WRAPABLE_HND_FUNC (0, fileWatchAdded, watch)
+    WRAPABLE_HND_FUNCTN (fileWatchAdded, watch)
 
 void
 CompScreen::fileWatchRemoved (CompFileWatch *watch)
-    WRAPABLE_HND_FUNC (1, fileWatchRemoved, watch)
+    WRAPABLE_HND_FUNCTN (fileWatchRemoved, watch)
 
 bool
 CompScreen::setOptionForPlugin (const char        *plugin,
 				const char        *name,
 				CompOption::Value &value)
 {
-    WRAPABLE_HND_FUNC_RETURN (4, bool, setOptionForPlugin,
+    WRAPABLE_HND_FUNCTN_RETURN (bool, setOptionForPlugin,
 			      plugin, name, value)
 
     CompPlugin *p = CompPlugin::find (plugin);
@@ -348,7 +348,7 @@ CompScreen::setOptionForPlugin (const char        *plugin,
 void
 CompScreen::sessionEvent (CompSession::Event event,
 			  CompOption::Vector &arguments)
-    WRAPABLE_HND_FUNC (5, sessionEvent, event, arguments)
+    WRAPABLE_HND_FUNCTN (sessionEvent, event, arguments)
 
 void
 ScreenInterface::fileWatchAdded (CompFileWatch *watch)
@@ -1145,7 +1145,7 @@ CompScreen::fileToImage (CompString &name,
 			 int        &stride,
 			 void       *&data)
 {
-    WRAPABLE_HND_FUNC_RETURN (8, bool, fileToImage, name, size, stride, data);
+    WRAPABLE_HND_FUNCTN_RETURN (bool, fileToImage, name, size, stride, data);
     return false;
 }
 
@@ -1156,7 +1156,7 @@ CompScreen::imageToFile (CompString &path,
 			 int        stride,
 			 void       *data)
 {
-    WRAPABLE_HND_FUNC_RETURN (9, bool, imageToFile, path, format, size,
+    WRAPABLE_HND_FUNCTN_RETURN (bool, imageToFile, path, format, size,
 			      stride, data)
     return false;
 }
@@ -1166,7 +1166,7 @@ CompScreen::logMessage (const char   *componentName,
 			CompLogLevel level,
 			const char   *message)
 {
-    WRAPABLE_HND_FUNC (13, logMessage, componentName, level, message)
+    WRAPABLE_HND_FUNCTN (logMessage, componentName, level, message)
     ::logMessage (componentName, level, message);
 }
 
@@ -2151,7 +2151,7 @@ CompScreen::updateSupportedWmHints ()
 void
 CompScreen::addSupportedAtoms (std::vector<Atom> &atoms)
 {
-    WRAPABLE_HND_FUNC (17, addSupportedAtoms, atoms);
+    WRAPABLE_HND_FUNCTN (addSupportedAtoms, atoms);
 
     atoms.push_back (Atoms::supported);
     atoms.push_back (Atoms::supportingWmCheck);
@@ -2350,7 +2350,7 @@ PrivateScreen::getDesktopHints ()
 void
 CompScreen::enterShowDesktopMode ()
 {
-    WRAPABLE_HND_FUNC (14, enterShowDesktopMode)
+    WRAPABLE_HND_FUNCTN (enterShowDesktopMode)
 
     unsigned long data = 1;
     int		  count = 0;
@@ -2392,7 +2392,7 @@ CompScreen::enterShowDesktopMode ()
 void
 CompScreen::leaveShowDesktopMode (CompWindow *window)
 {
-    WRAPABLE_HND_FUNC (15, leaveShowDesktopMode, window)
+    WRAPABLE_HND_FUNCTN (leaveShowDesktopMode, window)
 
     unsigned long data = 0;
 
@@ -3771,7 +3771,7 @@ CompScreen::getWorkareaForOutput (unsigned int outputNum) const
 
 void
 CompScreen::outputChangeNotify ()
-    WRAPABLE_HND_FUNC (16, outputChangeNotify)
+    WRAPABLE_HND_FUNCTN (outputChangeNotify)
 
 
 
