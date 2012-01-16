@@ -35,6 +35,8 @@ TEST(CompOption,Value)
     check_type_value<CompAction> (CompOption::TypeAction, CompAction());
     check_type_value<CompMatch> (CompOption::TypeMatch, CompMatch());
 
+    check_type_value<CompOption::Value::Vector> (CompOption::TypeList, CompOption::Value::Vector(5));
+
     CompOption::Value v1, v2;
     ASSERT_EQ (v1,v2);
     v1.set (CompString("SomeString"));
