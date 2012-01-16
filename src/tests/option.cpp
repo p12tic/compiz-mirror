@@ -30,13 +30,7 @@ TEST(CompOption,Value)
     CHECK_TYPE_AND_VALUE(CompString, CompOption::TypeString, CompString("Check"));
     CHECK_TYPE_AND_VALUE(unsigned short*, CompOption::TypeColor, defaultColor);
     CHECK_TYPE_AND_VALUE(CompAction, CompOption::TypeAction, CompAction());
-    CHECK_TYPE_AND_VALUE(CompOption::TypeKey, false);
-    //CHECK_TYPE_AND_VALUE(CompOption::TypeButton, false);
-    //CHECK_TYPE_AND_VALUE(CompOption::TypeEdge, false);
-    //CHECK_TYPE_AND_VALUE(CompOption::TypeBell, false);
-    //CHECK_TYPE_AND_VALUE(CompOption::TypeMatch, false);
-    //CHECK_TYPE_AND_VALUE(CompOption::TypeEdge, false);
-    //CHECK_TYPE_AND_VALUE(CompOption::TypeList, false);
+    CHECK_TYPE_AND_VALUE(CompMatch, CompOption::TypeMatch, CompMatch());
 
 }
 
