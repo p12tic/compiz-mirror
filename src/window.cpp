@@ -2549,10 +2549,10 @@ CompWindow::focus ()
     if (!priv->shaded && (priv->state & CompWindowStateHiddenMask))
 	return false;
 
-    if (priv->geometry.x () + priv->width  <= 0	||
-	priv->geometry.y () + priv->height <= 0	||
-	priv->geometry.x () >= (int) screen->width ()||
-	priv->geometry.y () >= (int) screen->height ())
+    if (priv->serverGeometry.x () + priv->serverGeometry.width ()  <= 0	||
+	priv->serverGeometry.y () + priv->serverGeometry.height () <= 0	||
+	priv->serverGeometry.x () >= (int) screen->width ()||
+	priv->serverGeometry.y () >= (int) screen->height ())
 	return false;
 
     return true;
