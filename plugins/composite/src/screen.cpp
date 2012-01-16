@@ -385,7 +385,7 @@ CompositeScreen::registerPaintHandler (compiz::composite::PaintHandler *pHnd)
 {
     Display *dpy;
 
-    WRAPABLE_HND_FUNC_RETURN (4, bool, registerPaintHandler, pHnd);
+    WRAPABLE_HND_FUNCTN_RETURN (bool, registerPaintHandler, pHnd);
 
     dpy =  screen->dpy ();
 
@@ -427,7 +427,7 @@ CompositeScreen::unregisterPaintHandler ()
 {
     Display *dpy;
 
-    WRAPABLE_HND_FUNC (5, unregisterPaintHandler)
+    WRAPABLE_HND_FUNCTN (unregisterPaintHandler)
 
     dpy = screen->dpy ();
 
@@ -845,17 +845,17 @@ CompositeScreen::handlePaintTimeout ()
 
 void
 CompositeScreen::preparePaint (int msSinceLastPaint)
-    WRAPABLE_HND_FUNC (0, preparePaint, msSinceLastPaint)
+    WRAPABLE_HND_FUNCTN (preparePaint, msSinceLastPaint)
 
 void
 CompositeScreen::donePaint ()
-    WRAPABLE_HND_FUNC (1, donePaint)
+    WRAPABLE_HND_FUNCTN (donePaint)
 
 void
 CompositeScreen::paint (CompOutput::ptrList &outputs,
 		        unsigned int        mask)
 {
-    WRAPABLE_HND_FUNC (2, paint, outputs, mask)
+    WRAPABLE_HND_FUNCTN (paint, outputs, mask)
 
     if (priv->pHnd)
 	priv->pHnd->paintOutputs (outputs, mask, priv->tmpRegion);
@@ -864,7 +864,7 @@ CompositeScreen::paint (CompOutput::ptrList &outputs,
 const CompWindowList &
 CompositeScreen::getWindowPaintList ()
 {
-    WRAPABLE_HND_FUNC_RETURN (3, const CompWindowList &, getWindowPaintList)
+    WRAPABLE_HND_FUNCTN_RETURN (const CompWindowList &, getWindowPaintList)
 
     /* Include destroyed windows */
     if (screen->destroyedWindows ().empty ())

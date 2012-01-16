@@ -5,6 +5,7 @@ add_subdirectory( string )
 add_subdirectory( logmessage )
 add_subdirectory( timer )
 add_subdirectory( pluginclasshandler )
+add_subdirectory( wrapsystem/tests )
 
 compiz_add_bcop_targets (
     core
