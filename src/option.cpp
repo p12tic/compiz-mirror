@@ -180,7 +180,7 @@ CompOption::Value::operator== (const Value & rhs) const
 bool
 CompOption::Value::operator!= (const Value & rhs) const
 {
-    return mValue == rhs.mValue;
+    return !(mValue == rhs.mValue);
 }
 
 CompOption::Restriction::Restriction () :

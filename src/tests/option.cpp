@@ -7,29 +7,36 @@
 
 #include "globals.h"
 
-#define CHECK_TYPE_AND_VALUE(type, compiz_type, value) \
-    v.set (value); \
-    try { \
-      ASSERT_EQ (v.get<type>(),value); \
-    } catch(...) {\
-      FAIL() << #type;\
-    }\
+namespace {
+    template<typename T>
+    void
+    check_type_value(CompOption::Type type, const T & value) {
+	CompOption::Value v;
+	v.set(value);
+	ASSERT_EQ(v.type(),type);
+	ASSERT_EQ (v.get<T>(),value);
+    }
+}
+
 
 
 static unsigned short defaultColor[4] = { 0x0, 0x0, 0x0, 0xffff};
 
 TEST(CompOption,Value)
 {
-    CompOption::Value v;
 
-    CHECK_TYPE_AND_VALUE(bool,CompOption::TypeBool, true);
-    CHECK_TYPE_AND_VALUE(bool,CompOption::TypeBool, false);
+    check_type_value<bool> (CompOption::TypeBool, true);
+    check_type_value<bool> (CompOption::TypeBool, false);
 
-    CHECK_TYPE_AND_VALUE(int, CompOption::TypeInt, 1);
-    CHECK_TYPE_AND_VALUE(float, CompOption::TypeFloat, 1.f);
-    CHECK_TYPE_AND_VALUE(CompString, CompOption::TypeString, CompString("Check"));
-    CHECK_TYPE_AND_VALUE(unsigned short*, CompOption::TypeColor, defaultColor);
-    CHECK_TYPE_AND_VALUE(CompAction, CompOption::TypeAction, CompAction());
-    CHECK_TYPE_AND_VALUE(CompMatch, CompOption::TypeMatch, CompMatch());
+    check_type_value<int> (CompOption::TypeInt, 1);
+    check_type_value<float> (CompOption::TypeFloat, 1.f);
+    check_type_value<CompString> (CompOption::TypeString, CompString("Check"));
 
+    check_type_value<CompAction> (CompOption::TypeAction, CompAction());
+    check_type_value<CompMatch> (CompOption::TypeMatch, CompMatch());
+
+    CompOption::Value v1, v2;
+    ASSERT_EQ (v1,v2);
+    v1.set (CompString("SomeString"));
+    ASSERT_TRUE(v1 != v2);
 }

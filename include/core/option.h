@@ -58,12 +58,12 @@ class CompOption {
 	    TypeString,
 	    TypeColor,
 	    TypeAction,
+	    TypeMatch,
+	    TypeList,
 	    TypeKey,
 	    TypeButton,
 	    TypeEdge,
 	    TypeBell,
-	    TypeMatch,
-	    TypeList,
 	    /* internal use only */
 	    TypeUnset
 	} Type;
@@ -80,10 +80,8 @@ class CompOption {
 	      float,
 	      CompString,
 	      unsigned short*,
-	      char*,
-	      boost::recursive_wrapper<CompMatch>,
 	      boost::recursive_wrapper<CompAction>,
-	      boost::recursive_wrapper<Value>,
+	      boost::recursive_wrapper<CompMatch>,
 	      boost::recursive_wrapper<std::vector<Value> >
 	    > variant_type;
 
