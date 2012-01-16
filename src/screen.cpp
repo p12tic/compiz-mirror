@@ -4657,6 +4657,7 @@ CompScreen::init (const char *name)
     XSync (dpy, FALSE);
 
     /* Start initializing windows here */
+    priv->initialized = true;
 
     for (unsigned int i = 0; i < nchildren; i++)
     {
@@ -4720,8 +4721,6 @@ CompScreen::init (const char *name)
      * to the option */
     priv->vpSize.setWidth (priv->optionGetHsize ());
     priv->vpSize.setHeight (priv->optionGetVsize ());
-
-    priv->initialized = true;
 
     /* TODO: Bailout properly when screenInitPlugins fails
      * TODO: It would be nicer if this line could mean

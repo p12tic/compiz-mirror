@@ -3,6 +3,7 @@ set (_headers
     atoms.h
     core.h
     countedlist.h
+    global.h
     icon.h
     match.h
     modifierhandler.h
@@ -18,6 +19,7 @@ set (_headers
     serialization.h
     session.h
     size.h
+    string.h
     window.h
     wrapsystem.h
 )

@@ -12,6 +12,7 @@ SET(
   PUBLIC_HEADERS 
   ${CMAKE_CURRENT_SOURCE_DIR}/include/core/pluginclasses.h 
   ${CMAKE_CURRENT_SOURCE_DIR}/include/core/pluginclasshandler.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/core/valueholder.h
 )
 
 SET( 
@@ -46,5 +47,5 @@ INSTALL(
   RUNTIME             DESTINATION         bin
   LIBRARY             DESTINATION         lib
   ARCHIVE             DESTINATION         lib
-  PUBLIC_HEADER       DESTINATION         include/compiz
+  PUBLIC_HEADER       DESTINATION         include/compiz/core
 )
