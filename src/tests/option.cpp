@@ -33,8 +33,3 @@ TEST(CompOption,Value)
     CHECK_TYPE_AND_VALUE(CompMatch, CompOption::TypeMatch, CompMatch());
 
 }
-
-TEST(CompOption,Option)
-{
-
-}
