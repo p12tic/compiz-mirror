@@ -32,163 +32,13 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
+#include <core/action.h>
 #include <core/core.h>
+#include <core/match.h>
 #include <core/option.h>
 #include "privateoption.h"
 
 CompOption::Vector noOptions (0);
-
-CompOption::Value::Value () :
-    priv (new PrivateValue ())
-{
-}
-
-CompOption::Value::Value (const Value &v) :
-    priv (new PrivateValue (*v.priv))
-{
-}
-
-CompOption::Value::~Value ()
-{
-    delete priv;
-}
-
-CompOption::Value::Value (const bool b) :
-    priv (new PrivateValue ())
-{
-    set (b);
-}
-
-CompOption::Value::Value (const int i) :
-    priv (new PrivateValue ())
-{
-    set (i);
-}
-
-CompOption::Value::Value (const float f) :
-    priv (new PrivateValue ())
-{
-    set (f);
-}
-
-CompOption::Value::Value (const unsigned short *color) :
-    priv (new PrivateValue ())
-{
-    set (color);
-}
-
-CompOption::Value::Value (const CompString& s) :
-    priv (new PrivateValue ())
-{
-    set (s);
-}
-
-CompOption::Value::Value (const char *s) :
-    priv (new PrivateValue ())
-{
-    set (s);
-}
-
-
-CompOption::Value::Value (const CompMatch& m) :
-    priv (new PrivateValue ())
-{
-    set (m);
-}
-
-CompOption::Value::Value (const CompAction& a) :
-    priv (new PrivateValue ())
-{
-    set (a);
-}
-
-CompOption::Value::Value (CompOption::Type type, const Vector& l) :
-    priv (new PrivateValue ())
-{
-    set (type, l);
-}
-
-CompOption::Type
-CompOption::Value::type () const
-{
-    return priv->type;
-}
-
-void
-CompOption::Value::set (const bool b)
-{
-    priv->reset ();
-    priv->type = CompOption::TypeBool;
-    priv->value.b = b;
-}
-
-void
-CompOption::Value::set (const int i)
-{
-    priv->reset ();
-    priv->type = CompOption::TypeInt;
-    priv->value.i = i;
-}
-
-void
-CompOption::Value::set (const float f)
-{
-    priv->reset ();
-    priv->type = CompOption::TypeFloat;
-    priv->value.f = f;
-}
-
-void
-CompOption::Value::set (const unsigned short *color)
-{
-    priv->reset ();
-    priv->type = CompOption::TypeColor;
-    priv->value.c[0] = color[0];
-    priv->value.c[1] = color[1];
-    priv->value.c[2] = color[2];
-    priv->value.c[3] = color[3];
-}
-
-void
-CompOption::Value::set (const CompString& s)
-{
-    priv->reset ();
-    priv->type = CompOption::TypeString;
-    priv->string = s;
-}
-
-void
-CompOption::Value::set (const char *s)
-{
-    priv->reset ();
-    priv->type = CompOption::TypeString;
-    priv->string = CompString (s);
-}
-
-void
-CompOption::Value::set (const CompMatch& m)
-{
-    priv->reset ();
-    priv->type = CompOption::TypeMatch;
-    priv->match = m;
-}
-
-void
-CompOption::Value::set (const CompAction& a)
-{
-    priv->reset ();
-    priv->type = CompOption::TypeAction;
-    priv->action = a;
-}
-
-void
-CompOption::Value::set (CompOption::Type type, const Vector& l)
-{
-    priv->reset ();
-    priv->type = CompOption::TypeList;
-    priv->list = l;
-    priv->listType = type;
-}
 
 static bool
 checkIsAction (CompOption::Type type)
@@ -207,210 +57,15 @@ checkIsAction (CompOption::Type type)
     return false;
 }
 
-bool
-CompOption::Value::b ()
-{
-    if (!priv->checkType (CompOption::TypeBool))
-	return false;
 
-    return priv->value.b;
-}
-
-int
-CompOption::Value::i ()
-{
-    if (!priv->checkType (CompOption::TypeInt))
-	return 0;
-
-    return priv->value.i;
-}
-
-float
-CompOption::Value::f ()
-{
-    if (!priv->checkType (CompOption::TypeFloat))
-	return 0.0;
-
-    return priv->value.f;
-}
 
 static unsigned short defaultColor[4] = { 0x0, 0x0, 0x0, 0xffff};
 
-unsigned short *
-CompOption::Value::c ()
-{
-    if (!priv->checkType (CompOption::TypeColor))
-	return reinterpret_cast<unsigned short *> (defaultColor);
-
-    return priv->value.c;
-}
-
-CompString
-CompOption::Value::s ()
-{
-    if (!priv->checkType (CompOption::TypeString))
-	return "";
-
-    return priv->string;
-}
-
-CompMatch &
-CompOption::Value::match ()
-{
-    priv->checkType (CompOption::TypeMatch);
-
-    return priv->match;
-}
-
-CompAction &
-CompOption::Value::action ()
-{
-    priv->checkType (priv->type);
-
-    if (!checkIsAction (priv->type))
-	compLogMessage ("core", CompLogLevelWarn,
-			"CompOption::Value not an action");
-
-    return priv->action;
-}
-
-CompOption::Type
-CompOption::Value::listType ()
-{
-    priv->checkType (CompOption::TypeList);
-
-    return priv->listType;
-}
-
-CompOption::Value::Vector &
-CompOption::Value::list ()
-{
-    priv->checkType (CompOption::TypeList);
-
-    return priv->list;
-}
-
-CompOption::Value::operator bool ()
-{
-    return b ();
-}
-
-CompOption::Value::operator int ()
-{
-    return i ();
-}
-
-CompOption::Value::operator float ()
-{
-    return f ();
-}
-
-CompOption::Value::operator unsigned short * ()
-{
-    return c ();
-}
-
-CompOption::Value::operator CompString ()
-{
-    return s ();
-}
-
-CompOption::Value::operator CompMatch & ()
-{
-    return match ();
-}
-
-CompOption::Value::operator CompAction & ()
-{
-    return action ();
-}
-
-CompOption::Value::operator CompAction * ()
-{
-    return &action ();
-}
-
-CompOption::Value::operator Type ()
-{
-    return listType ();
-}
-
-CompOption::Value::operator Vector & ()
-{
-    return list ();
-}
-
-bool
-CompOption::Value::operator== (const CompOption::Value &val)
-{
-    if (priv->type != val.priv->type)
-	return false;
-
-    switch (priv->type)
-    {
-	case CompOption::TypeBool:
-	    return priv->value.b == val.priv->value.b;
-	    break;
-
-	case CompOption::TypeInt:
-	    return priv->value.i == val.priv->value.i;
-	    break;
-
-	case CompOption::TypeFloat:
-	    return priv->value.f == val.priv->value.f;
-	    break;
-
-	case CompOption::TypeColor:
-	    return (priv->value.c[0] == val.priv->value.c[0]) &&
-		   (priv->value.c[1] == val.priv->value.c[1]) &&
-		   (priv->value.c[2] == val.priv->value.c[2]) &&
-		   (priv->value.c[3] == val.priv->value.c[3]);
-	    break;
-
-	case CompOption::TypeString:
-	    return priv->string.compare (val.priv->string) == 0;
-	    break;
-
-	case CompOption::TypeMatch:
-	    return priv->match == val.priv->match;
-	    break;
-
-	case CompOption::TypeAction:
-	    return priv->action == val.priv->action;
-	    break;
-
-	case CompOption::TypeList:
-	    if (priv->listType != val.priv->listType)
-		return false;
-
-	    if (priv->list.size () != val.priv->list.size ())
-		return false;
-
-	    for (unsigned int i = 0; i < priv->list.size (); i++)
-		if (priv->list[i] != val.priv->list[i])
-		    return false;
-
-	    return true;
-	    break;
-
-	default:
-	    break;
-    }
-
-    return true;
-}
-
-bool
-CompOption::Value::operator!= (const CompOption::Value &val)
-{
-    return !(*this == val);
-}
 
 static void
-finiOptionValue (CompOption::Value &v,
-		 CompOption::Type  type)
+finiOptionValue (CompOption::Value &v)
 {
-    switch (type) {
+    switch (v.type()) {
 	case CompOption::TypeAction:
 	case CompOption::TypeKey:
 	case CompOption::TypeButton:
@@ -422,7 +77,7 @@ finiOptionValue (CompOption::Value &v,
 
 	case CompOption::TypeList:
 	    foreach (CompOption::Value &val, v.list ())
-		finiOptionValue (val, v.listType ());
+		finiOptionValue (val);
 	    break;
 
 	default:
@@ -430,84 +85,102 @@ finiOptionValue (CompOption::Value &v,
     }
 }
 
-CompOption::Value &
-CompOption::Value::operator= (const CompOption::Value &val)
+CompOption::Value::~Value()
 {
-    if (this == &val)
-	return *this;
-
-    finiOptionValue (*this, priv->type);
-
-    delete priv;
-    priv = new PrivateValue (*val.priv);
-
-    return *this;
-}
-
-PrivateValue::PrivateValue () :
-    type (CompOption::TypeUnset),
-    string (""),
-    action (),
-    match (),
-    listType (CompOption::TypeUnset),
-    list ()
-{
-    memset (&value, 0, sizeof (ValueUnion));
-}
-
-PrivateValue::PrivateValue (const PrivateValue& p) :
-    type (p.type),
-    string (p.string),
-    action (p.action),
-    match (p.match),
-    listType (p.listType),
-    list (p.list)
-{
-    memcpy (&value, &p.value, sizeof (ValueUnion));
-}
-
-bool
-PrivateValue::checkType (CompOption::Type refType)
-{
-    if (type == CompOption::TypeUnset)
-    {
-	compLogMessage ("core", CompLogLevelWarn,
-			"Value type is not yet set");
-	return false;
-    }
-
-    if (type != refType)
-    {
-	compLogMessage ("core", CompLogLevelWarn,
-			"Value type does not match (is %d, expected %d)",
-			type, refType);
-	return false;
-    }
-
-    return true;
+    finiOptionValue(*this);
 }
 
 void
-PrivateValue::reset ()
+CompOption::Value::set (Type t, const CompOption::Value::Vector & v)
 {
-    switch (type) {
-	case CompOption::TypeString:
-	    string = "";
-	    break;
-	case CompOption::TypeMatch:
-	    match = CompMatch ();
-	    break;
-	case CompOption::TypeAction:
-	    action = CompAction ();
-	    break;
-	case CompOption::TypeList:
-	    list.clear ();
-	    listType = CompOption::TypeBool;
-	    break;
-	default:
-	    break;
-    }
-    type = CompOption::TypeBool;
+    mListType = t;
+    mValue = v;
+}
+
+bool
+CompOption::Value::b () const
+{
+    return boost::get<bool>(mValue);
+}
+
+int
+CompOption::Value::i () const
+{
+    return boost::get<int>(mValue);
+}
+
+float
+CompOption::Value::f () const
+{
+    return boost::get<float>(mValue);
+}
+
+unsigned short*
+CompOption::Value::c () const
+{
+    return boost::get<unsigned short*>(mValue);
+}
+
+const CompString &
+CompOption::Value::s () const
+{
+    return boost::get<CompString>(mValue);
+}
+
+CompString &
+CompOption::Value::s ()
+{
+    return boost::get < CompString > (mValue);
+}
+
+const CompMatch &
+CompOption::Value::match () const
+{
+    return boost::get<CompMatch>(mValue);
+}
+
+CompMatch &
+CompOption::Value::match ()
+{
+    return boost::get<CompMatch>(mValue);
+}
+
+const CompAction &
+CompOption::Value::action () const
+{
+    return boost::get<CompAction>(mValue);
+}
+
+CompAction &
+CompOption::Value::action ()
+{
+    return boost::get<CompAction>(mValue);
+}
+
+// Type listType () const;
+
+const CompOption::Value::Vector &
+CompOption::Value::list () const
+{
+    return boost::get< std::vector<Value> >(mValue);
+}
+
+CompOption::Value::Vector &
+CompOption::Value::list ()
+{
+    return boost::get< std::vector<Value> >(mValue);
+}
+
+bool
+CompOption::Value::operator== (const Value & rhs) const
+{
+    return mValue == rhs.mValue;
+}
+
+bool
+CompOption::Value::operator!= (const Value & rhs) const
+{
+    return mValue == rhs.mValue;
 }
 
 CompOption::Restriction::Restriction () :
@@ -664,10 +337,9 @@ CompOption::CompOption (CompString name, CompOption::Type type) :
 
 static void
 finiScreenOptionValue (CompScreen        *s,
-		       CompOption::Value &v,
-		       CompOption::Type  type)
+		       CompOption::Value &v)
 {
-    switch (type) {
+    switch (v.type()) {
 	case CompOption::TypeAction:
 	case CompOption::TypeKey:
 	case CompOption::TypeButton:
@@ -679,7 +351,7 @@ finiScreenOptionValue (CompScreen        *s,
 
 	case CompOption::TypeList:
 	    foreach (CompOption::Value &val, v.list ())
-		finiScreenOptionValue (s, val, v.listType ());
+		finiScreenOptionValue (s, val);
 	    break;
 
 	default:
@@ -689,7 +361,7 @@ finiScreenOptionValue (CompScreen        *s,
 
 CompOption::~CompOption ()
 {
-    finiOptionValue (priv->value, priv->type);
+    finiOptionValue (priv->value);
     delete priv;
 }
 
