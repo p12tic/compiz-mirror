@@ -10,7 +10,8 @@
 namespace {
     template<typename T>
     void
-    check_type_value(CompOption::Type type, const T & value) {
+    check_type_value(CompOption::Type type, const T & value)
+    {
 	CompOption::Value v;
 	v.set(value);
 	ASSERT_EQ(v.type(),type);
