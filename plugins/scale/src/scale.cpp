@@ -130,7 +130,7 @@ ScaleWindow::scalePaintDecoration (const GLWindowPaintAttrib& attrib,
 				   const CompRegion&          region,
 				   unsigned int               mask)
 {
-    WRAPABLE_HND_FUNC (0, scalePaintDecoration, attrib, transform, region, mask)
+    WRAPABLE_HND_FUNCTN (scalePaintDecoration, attrib, transform, region, mask)
 
     if (priv->spScreen->optionGetOverlayIcon () != ScaleOptions::OverlayIconNone)
     {
@@ -257,7 +257,7 @@ ScaleWindowInterface::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
 bool
 ScaleWindow::setScaledPaintAttributes (GLWindowPaintAttrib& attrib)
 {
-    WRAPABLE_HND_FUNC_RETURN (1, bool, setScaledPaintAttributes, attrib)
+    WRAPABLE_HND_FUNCTN_RETURN (bool, setScaledPaintAttributes, attrib)
 
     bool drawScaled = false;
 
@@ -676,7 +676,7 @@ ScaleScreenInterface::layoutSlotsAndAssignWindows ()
 bool
 ScaleScreen::layoutSlotsAndAssignWindows ()
 {
-    WRAPABLE_HND_FUNC_RETURN (0, bool, layoutSlotsAndAssignWindows)
+    WRAPABLE_HND_FUNCTN_RETURN (bool, layoutSlotsAndAssignWindows)
 
     /* create a grid of slots */
     priv->layoutSlots ();
@@ -1209,7 +1209,7 @@ ScaleWindowInterface::scaleSelectWindow ()
 void
 ScaleWindow::scaleSelectWindow ()
 {
-    WRAPABLE_HND_FUNC (2, scaleSelectWindow)
+    WRAPABLE_HND_FUNCTN (scaleSelectWindow)
 
     if (priv->spScreen->selectedWindow != priv->window->id ())
     {

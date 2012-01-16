@@ -979,12 +979,12 @@ void
 CompScreen::handleCompizEvent (const char         *plugin,
 			       const char         *event,
 			       CompOption::Vector &options)
-    WRAPABLE_HND_FUNC (7, handleCompizEvent, plugin, event, options)
+    WRAPABLE_HND_FUNCTN (handleCompizEvent, plugin, event, options)
 
 void
 CompScreen::handleEvent (XEvent *event)
 {
-    WRAPABLE_HND_FUNC (6, handleEvent, event)
+    WRAPABLE_HND_FUNCTN (handleEvent, event)
 
     CompWindow *w = NULL;
     XWindowAttributes wa;
