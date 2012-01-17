@@ -42,15 +42,30 @@ set (
     COMPIZ_I18N_DIR ${COMPIZ_I18N_DIR} CACHE PATH "Translation file directory"
 )
 
-option (COMPIZ_SIGN_WARNINGS "Should compiz use -Wsign-conversion during compilation." OFF)
+set (COMMON_FLAGS "-Wall")
 
-if (COMPIZ_SIGN_WARNINGS)
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wsign-conversion")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall -Wsign-conversion")
-else ()
-    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall")
-    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
+option (COMPIZ_DEPRECATED_WARNINGS "Warn about declarations marked deprecated" OFF)
+if (NOT COMPIZ_DEPRECATED_WARNINGS)
+    set (COMMON_FLAGS "${COMMON_FLAGS} -Wno-deprecated-declarations")
 endif ()
+
+option (COMPIZ_SIGN_WARNINGS "Should compiz use -Wsign-conversion during compilation." ON)
+if (NOT COMPIZ_SIGN_WARNINGS)
+    set (COMMON_FLAGS "${COMMON_FLAGS} -Wno-sign-conversion")
+endif ()
+
+if (${CMAKE_PROJECT_NAME} STREQUAL "compiz")
+    set (COMPIZ_WERROR_DEFAULT ON)
+else ()
+    set (COMPIZ_WERROR_DEFAULT OFF)
+endif ()
+option (COMPIZ_WERROR "Treat warnings as errors" ${COMPIZ_WERROR_DEFAULT})
+if (COMPIZ_WERROR)
+    set (COMMON_FLAGS "${COMMON_FLAGS} -Werror")
+endif ()
+
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS}")
 
 if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
     set(IS_GIT_REPO 1)

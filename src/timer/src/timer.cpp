@@ -248,7 +248,7 @@ CompTimer::start ()
 
     if (priv->mCallBack.empty ())
     {
-#warning compLogMessage needs to be testable
+/* FIXME: compLogMessage needs to be testable */
 #if 0
 	compLogMessage ("core", CompLogLevelWarn,
 			"Attempted to start timer without callback.");
