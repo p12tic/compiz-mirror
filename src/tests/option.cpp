@@ -5,8 +5,6 @@
 #include "core/match.h"
 #include "core/option.h"
 
-#include "globals.h"
-
 namespace {
     template<typename T>
     void
