@@ -60,6 +60,7 @@ link_directories (
 )
 
 add_library (compiz_core
+	${CMAKE_CURRENT_SOURCE_DIR}/global.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/region.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/atoms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/actions.cpp
