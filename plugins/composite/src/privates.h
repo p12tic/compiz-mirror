@@ -64,7 +64,7 @@ class PrivateCompositeScreen :
 
 	void detectRefreshRate ();
 
-	int getTimeToNextRedraw (struct timeval *tv);
+	void scheduleRepaint ();
 
     public:
 
@@ -95,13 +95,9 @@ class PrivateCompositeScreen :
 	int overlayWindowCount;
 
 	struct timeval lastRedraw;
-	int            nextRedraw;
 	int            redrawTime;
 	int            optimalRedrawTime;
-	int            frameStatus;
-	int            timeMult;
-	bool           idle;
-	int            timeLeft;
+	bool           scheduled, painting, reschedule;
 
 	bool slowAnimations;
 
@@ -110,7 +106,6 @@ class PrivateCompositeScreen :
 	compiz::composite::PaintHandler *pHnd;
 
 	CompositeFPSLimiterMode FPSLimiterMode;
-	int frameTimeAccumulator;
 
 	CompWindowList withDestroyedWindows;
 };
