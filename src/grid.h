@@ -32,20 +32,22 @@
 
 #define SNAPOFF_THRESHOLD 50
 
-typedef enum
+namespace GridWindowType
 {
-    GridUnknown = 0,
-    GridBottomLeft = 1,
-    GridBottom = 2,
-    GridBottomRight = 3,
-    GridLeft = 4,
-    GridCenter = 5,
-    GridRight = 6,
-    GridTopLeft = 7,
-    GridTop = 8,
-    GridTopRight = 9,
-    GridMaximize = 10
-} GridType;
+    static const unsigned int GridUnknown = (1 << 0);
+    static const unsigned int GridBottomLeft  = (1 << 1);
+    static const unsigned int GridBottom  = (1 << 2);
+    static const unsigned int GridBottomRight = (1 << 3);
+    static const unsigned int GridLeft  = (1 << 4);
+    static const unsigned int GridCenter  = (1 << 5);
+    static const unsigned int GridRight  = (1 << 6);
+    static const unsigned int GridTopLeft  = (1 << 7);
+    static const unsigned int GridTop  = (1 << 8);
+    static const unsigned int GridTopRight  = (1 << 9);
+    static const unsigned int GridMaximize  = (1 << 10);
+};
+
+typedef unsigned int GridType;
 
 typedef struct _GridProps
 {
@@ -101,17 +103,18 @@ class GridScreen :
 	CompRect workarea, currentRect, desiredSlot, lastSlot,
 		 desiredRect, lastWorkarea, currentWorkarea;
 	GridProps props;
-	Edges edge, lastEdge;
+	Edges edge, lastEdge, lastResizeEdge;
 	CompOption::Vector o;
 	bool centerCheck;
 	CompWindow *mGrabWindow;
 	bool animating;
+	bool mSwitchingVp;
 
 	void getPaintRectangle (CompRect&);
 	void setCurrentRect (Animation&);
 
 	bool initiateCommon (CompAction*, CompAction::State,
-			     CompOption::Vector&, GridType, bool);
+			     CompOption::Vector&, unsigned int, bool, bool);
 
 	void glPaintRectangle (const GLScreenPaintAttrib&,
 			       const GLMatrix&, CompOutput *);
@@ -125,9 +128,11 @@ class GridScreen :
 
 	std::vector <Animation> animations;
 
-	GridType edgeToGridType ();
+	int edgeToGridType ();
+	unsigned int typeToMask (int);
 
 	void handleEvent (XEvent *event);
+	void handleCompizEvent (const char *plugin, const char *event, CompOption::Vector &options);
 
 	bool restoreWindow (CompAction*,
 			    CompAction::State,
@@ -152,22 +157,31 @@ class GridWindow :
     public:
 
 	GridWindow (CompWindow *);
+	~GridWindow ();
 	CompWindow *window;
 	GridScreen *gScreen;
 
 	bool isGridResized;
 	bool isGridMaximized;
+	unsigned int grabMask;
 	int pointerBufDx;
 	int pointerBufDy;
 	int resizeCount;
+	CompRect currentSize;
 	CompRect originalSize;
 	GridType lastTarget;
+	unsigned int sizeHintsFlags;
 
 	void grabNotify (int, int, unsigned int, unsigned int);
 
 	void ungrabNotify ();
 
 	void moveNotify (int, int, bool);
+
+	void stateChangeNotify (unsigned int);
+	void validateResizeRequest (unsigned int &valueMask,
+				    XWindowChanges *xwc,
+				    unsigned int source);
 };
 
 #define GRID_WINDOW(w) \
