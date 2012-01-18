@@ -4,11 +4,6 @@
 #include <gtest/gtest.h>
 
 #include <list>
-#include <boost/foreach.hpp>
-
-#include <iostream>
-
-#define foreach BOOST_FOREACH
 
 extern PluginClassStorage::Indices globalPluginClassIndices;
 extern unsigned int		    pluginClassHandlerIndex;

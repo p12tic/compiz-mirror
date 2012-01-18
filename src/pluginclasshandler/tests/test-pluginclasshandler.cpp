@@ -1,5 +1,8 @@
 #include "test-pluginclasshandler.h"
 
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
+
 PluginClassStorage::Indices globalPluginClassIndices (0);
 unsigned int		    pluginClassHandlerIndex = 0;
 bool			    debugOutput;

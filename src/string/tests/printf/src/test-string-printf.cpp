@@ -28,7 +28,6 @@
 #include <gtest/gtest.h>
 
 #include <string>
-#include <iostream>
 #include <map>
 #include <boost/shared_ptr.hpp>
 #include <boost/pointer_cast.hpp>
