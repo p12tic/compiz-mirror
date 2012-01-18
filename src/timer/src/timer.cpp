@@ -105,10 +105,10 @@ CompTimeoutSource::prepare (int &timeout)
 	while (it != TimeoutHandler::Default ()->timers ().end ())
 	{
 	    t = (*it);
-	    if (t->minLeft () >= timeout)
+	    if (t->minLeft () >= (unsigned int) timeout)
 		break;
-	    if (t->maxLeft () < timeout)
-		timeout = t->maxLeft ();
+	    if (t->maxLeft () < (unsigned int) timeout)
+		timeout = (int) t->maxLeft ();
 	    it++;
 	}
     }

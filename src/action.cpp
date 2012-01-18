@@ -455,7 +455,7 @@ CompAction::copyState (const CompAction &action)
 }
 
 bool
-CompAction::operator== (const CompAction& val)
+CompAction::operator== (const CompAction& val) const
 {
     if (priv->state != val.priv->state)
 	return false;
