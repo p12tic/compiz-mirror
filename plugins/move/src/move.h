@@ -23,13 +23,14 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-#include <core/core.h>
+#include "move_options.h"
+
+#include <core/screen.h>
 #include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 
-#include "move_options.h"
 
 #define NUM_KEYS (sizeof (mKeys) / sizeof (mKeys[0]))
 

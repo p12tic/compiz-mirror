@@ -24,8 +24,9 @@
  */
 
 #include "annotate.h"
+#include "core/deg2rad.h"
 
-COMPIZ_PLUGIN_20090315 (annotate, AnnoPluginVTable);
+COMPIZ_PLUGIN_20090315 (annotate, AnnoPluginVTable)
 
 void
 AnnoScreen::cairoClear (cairo_t    *cr)

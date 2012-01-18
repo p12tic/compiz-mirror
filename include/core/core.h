@@ -27,7 +27,7 @@
 #define _COMPIZ_CORE_H
 
 
-#define CORE_ABIVERSION 20110828
+#include "abiversion.h"
 
 #include <stdio.h>
 #include <assert.h>
@@ -56,7 +56,6 @@ typedef XBool Bool;
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-#include <glib.h>
 
 /*
  * WORDS_BIGENDIAN should be defined before including this file for
@@ -75,14 +74,6 @@ typedef XBool Bool;
 
 #define STRINGIFY(x) #x
 #define TOSTRING(x) STRINGIFY (x)
-#define DEG2RAD (M_PI / 180.0f)
-
-#if defined(HAVE_SCANDIR_POSIX)
-  // POSIX (2008) defines the comparison function like this:
-  #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const dirent **, const dirent **))(d));
-#else
-  #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const void*,const void*))(d));
-#endif
 
 #include <core/global.h>
 

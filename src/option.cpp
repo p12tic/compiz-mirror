@@ -32,9 +32,6 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-#include <core/action.h>
-#include <core/core.h>
-#include <core/match.h>
 #include <core/option.h>
 #include "privateoption.h"
 

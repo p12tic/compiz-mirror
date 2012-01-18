@@ -23,6 +23,10 @@
  * Author: Radek Doulik <rodo@novell.com>
  */
 
+
+#include "core/session.h"
+#include "core/screen.h"
+
 #ifdef HAVE_CONFIG_H
 #  include <config.h>
 #endif
@@ -38,9 +42,6 @@
 #include <X11/ICE/ICElib.h>
 
 #include <boost/bind.hpp>
-
-#include <core/session.h>
-#include <core/core.h>
 
 #define SM_DEBUG(x)
 

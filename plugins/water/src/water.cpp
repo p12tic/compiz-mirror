@@ -25,6 +25,9 @@
 
 #include "water.h"
 
+#include <math.h>
+
+
 COMPIZ_PLUGIN_20090315 (water, WaterPluginVTable)
 
 static int waterLastPointerX = 0;

@@ -27,6 +27,9 @@
  */
 
 #include "ini.h"
+
+#include <sys/stat.h>
+
 #include <errno.h>
 #include <boost/lexical_cast.hpp>
 

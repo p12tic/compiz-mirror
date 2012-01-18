@@ -23,6 +23,11 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
+
+#include <core/deg2rad.h>
+
+#include "privates.h"
+
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -30,10 +35,7 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-#include <core/core.h>
 #include <opengl/opengl.h>
-
-#include "privates.h"
 
 
 GLScreenPaintAttrib defaultScreenPaintAttrib = {

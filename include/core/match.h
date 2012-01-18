@@ -29,7 +29,6 @@
 #define _COMPMATCH_H
 
 #include <core/string.h>
-#include <core/core.h>
 
 class PrivateMatch;
 class CompWindow;

@@ -24,7 +24,7 @@
  */
 
 #include <boost/shared_ptr.hpp>
-#include <core/core.h>
+#include <core/window.h>
 #include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>

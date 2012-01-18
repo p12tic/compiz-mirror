@@ -26,6 +26,12 @@
 #ifndef _COMPRECT_H
 #define _COMPRECT_H
 
+#include "core/point.h"
+#include "core/size.h"
+
+#include <X11/Xutil.h>
+#include <X11/Xregion.h>
+
 /**
  * A 2D rectangle, which is likely in screen space. It's data is
  * isolated and can only be mutated with set() methods.

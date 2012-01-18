@@ -23,11 +23,11 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-#include <core/core.h>
-#include <core/propertywriter.h>
 #include <compiztoolbox/compiztoolbox.h>
 #include "compiztoolbox_options.h"
 
+#include <core/abiversion.h>
+#include <core/propertywriter.h>
 
 bool openGLAvailable;
 
@@ -47,7 +47,7 @@ class CompizToolboxPluginVTable :
 	void fini ();
 };
 
-COMPIZ_PLUGIN_20090315 (compiztoolbox, CompizToolboxPluginVTable);
+COMPIZ_PLUGIN_20090315 (compiztoolbox, CompizToolboxPluginVTable)
 
 CompString
 getXDGUserDir (XDGUserDir userDir)

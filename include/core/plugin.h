@@ -30,6 +30,8 @@
 #include <core/option.h>
 #include <core/privateunion.h>
 
+#include <string.h>
+
 class CompScreen;
 extern CompScreen *screen;
 
@@ -54,6 +56,7 @@ extern CompScreen *screen;
     }
 
 class CompPlugin;
+class CompWindow;
 
 typedef bool (*LoadPluginProc) (CompPlugin *p,
 				const char *path,

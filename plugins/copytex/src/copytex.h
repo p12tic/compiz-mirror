@@ -22,7 +22,6 @@
  * http://live.gnome.org/Luminocity
  */
 
-#include <core/core.h>
 #include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>

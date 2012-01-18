@@ -23,15 +23,16 @@
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  */
 
-#include <stdio.h>
+#include "privateregion.h"
 
 #include <X11/Xlib-xcb.h>
 #include <X11/Xutil.h>
 #include <X11/Xregion.h>
 
-#include <core/core.h>
+#include <stdio.h>
 
-#include "privateregion.h"
+#include <boost/foreach.hpp>
+#define foreach BOOST_FOREACH
 
 const CompRegion infiniteRegion (CompRect (MINSHORT, MINSHORT,
 				           MAXSHORT * 2, MAXSHORT * 2));
