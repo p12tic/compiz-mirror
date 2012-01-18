@@ -17,10 +17,6 @@ namespace {
     }
 }
 
-
-
-static unsigned short defaultColor[4] = { 0x0, 0x0, 0x0, 0xffff};
-
 TEST(CompOption,Value)
 {
 

@@ -57,11 +57,6 @@ checkIsAction (CompOption::Type type)
     return false;
 }
 
-
-
-static unsigned short defaultColor[4] = { 0x0, 0x0, 0x0, 0xffff};
-
-
 static void
 finiOptionValue (CompOption::Value &v)
 {
