@@ -32,9 +32,11 @@
 
 #define COMPIZ_COMPOSITE_ABI 3
 
-#include <core/pluginclasshandler.h>
-#include <core/timer.h>
-#include <core/core.h>
+#include "core/pluginclasshandler.h"
+#include "core/timer.h"
+#include "core/output.h"
+#include "core/screen.h"
+#include "core/wrapsystem.h"
 
 #define COMPOSITE_SCREEN_DAMAGE_PENDING_MASK (1 << 0)
 #define COMPOSITE_SCREEN_DAMAGE_REGION_MASK  (1 << 1)

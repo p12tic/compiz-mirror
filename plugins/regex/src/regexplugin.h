@@ -23,13 +23,13 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-#include <regex.h>
-#include <X11/Xatom.h>
+#ifndef COMPIZ_REGEXPLUGIN_H
+#define COMPIZ_REGEXPLUGIN_H
 
-#include <core/core.h>
-#include <core/atoms.h>
+#include <core/screen.h>
 #include <core/pluginclasshandler.h>
-#include <core/timer.h>
+
+#include <X11/Xatom.h>
 
 class RegexScreen :
     public PluginClassHandler<RegexScreen, CompScreen>,
@@ -77,3 +77,5 @@ class RegexPluginVTable :
     public:
 	bool init ();
 };
+
+#endif

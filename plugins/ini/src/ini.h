@@ -23,15 +23,13 @@
  * Author: Danny Baumann <dannybaumann@web.de>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <sys/stat.h>
+#ifndef COMPIZ_INI_H
+#define COMPIZ_INI_H
 
-#include <iostream>
-#include <fstream>
-
-#include <core/core.h>
+#include <core/screen.h>
 #include <core/pluginclasshandler.h>
+
+#include <fstream>
 
 #define HOME_OPTIONDIR     ".compiz/options"
 #define CORE_NAME           "general"
@@ -104,3 +102,4 @@ class IniFile
 };
 
 
+#endif

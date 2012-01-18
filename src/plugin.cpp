@@ -23,6 +23,9 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
+#include "core/plugin.h"
+#include "privatescreen.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,8 +39,16 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-#include <core/core.h>
 #include "privatescreen.h"
+
+#if defined(HAVE_SCANDIR_POSIX)
+  // POSIX (2008) defines the comparison function like this:
+  #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const dirent **, const dirent **))(d));
+#else
+  #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const void*,const void*))(d));
+#endif
+
+
 
 CompPlugin::Map pluginsMap;
 CompPlugin::List plugins;

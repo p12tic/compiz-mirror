@@ -23,12 +23,13 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-#include <core/core.h>
+#include <core/window.h>
 #include <core/pluginclasshandler.h>
 #include <composite/composite.h>
-#include <opengl/opengl.h>
 
 #include "fade_options.h"
+
+#include <opengl/opengl.h>
 
 class FadeScreen :
     public ScreenInterface,

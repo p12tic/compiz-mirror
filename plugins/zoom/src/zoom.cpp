@@ -25,6 +25,11 @@
 
 #include "zoom.h"
 
+#include <X11/cursorfont.h>
+
+#include <math.h>
+
+
 COMPIZ_PLUGIN_20090315 (zoom, ZoomPluginVTable)
 
 static int

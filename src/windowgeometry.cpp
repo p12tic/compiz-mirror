@@ -23,9 +23,8 @@
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  */
 
-#include <core/core.h>
-#include <core/window.h>
-#include <privatewindow.h>
+#include "privatewindow.h"
+#include "core/window.h"
 
 
 CompWindow::Geometry::Geometry () :

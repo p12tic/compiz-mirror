@@ -27,7 +27,6 @@
 #define _COMPIZ_COMPIZTOOLBOX_H
 
 #include <decoration.h>
-#include <core/core.h>
 #include <core/atoms.h>
 #include <core/countedlist.h>
 #include <core/propertywriter.h>

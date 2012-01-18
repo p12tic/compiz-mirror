@@ -23,15 +23,7 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <math.h>
-#include <sys/time.h>
-
-#include <X11/cursorfont.h>
-
-#include <core/core.h>
+#include <core/screen.h>
 #include <core/pluginclasshandler.h>
 
 #include <composite/composite.h>

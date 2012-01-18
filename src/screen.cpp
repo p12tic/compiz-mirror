@@ -52,8 +52,6 @@
 #include <X11/extensions/shape.h>
 #include <X11/cursorfont.h>
 
-#include <core/core.h>
-
 #include <core/screen.h>
 #include <core/icon.h>
 #include <core/atoms.h>

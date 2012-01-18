@@ -24,7 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <core/core.h>
+#include <core/screen.h>
 #include <core/atoms.h>
 #include <core/timer.h>
 #include <core/pluginclasshandler.h>

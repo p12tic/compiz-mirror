@@ -26,7 +26,7 @@
 #ifndef _RESIZE_H
 #define _RESIZE_H
 
-#include <core/core.h>
+#include <core/screen.h>
 #include <core/pluginclasshandler.h>
 #include <core/propertywriter.h>
 
