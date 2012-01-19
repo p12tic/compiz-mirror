@@ -38,6 +38,14 @@
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
 
+/*
+ * The extern declaration of useCow
+ * is in plugins/composite/src/privates.h.
+ * It needs to be defined here to
+ * make it visible to the command line parser.
+ */
+bool useCow = true;
+
 void
 CompManager::usage ()
 {
@@ -50,6 +58,7 @@ CompManager::usage ()
 	    "[--bg-image PNG] "
 	    "[--no-detection] "
 	    "[--keep-desktop-hints]\n       "
+	    "[--use-root-window] "
 	    "[--debug] "
 	    "[--version] "
 	    "[--help] "
@@ -108,6 +117,10 @@ CompManager::parseArguments (int argc, char **argv)
 	else if (!strcmp (argv[i], "--keep-desktop-hints"))
 	{
 	    useDesktopHints = true;
+	}
+	else if (!strcmp (argv[i], "--use-root-window"))
+	{
+	    useCow = false;
 	}
 	else if (!strcmp (argv[i], "--replace"))
 	{
