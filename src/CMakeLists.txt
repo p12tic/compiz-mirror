@@ -58,6 +58,9 @@ include_directories (
 
     ${CMAKE_CURRENT_SOURCE_DIR}/window/extents/include
     ${CMAKE_CURRENT_SOURCE_DIR}/window/extents/src
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/window/constrainment/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/window/constrainment/src
 )
 
 add_definitions (
@@ -124,6 +127,7 @@ target_link_libraries (
     compiz_window_geometry
     compiz_window_geometry_saver
     compiz_window_extents
+    compiz_window_constrainment
 #    ${CORE_MOD_LIBRARIES}
 )
 
