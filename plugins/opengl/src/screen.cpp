@@ -78,6 +78,9 @@ namespace GL {
 
     bool canDoSaturated = false;
     bool canDoSlightlySaturated = false;
+
+    unsigned int vsyncCount = 0;
+    unsigned int unthrottledFrames = 0;
 }
 
 CompOutput *targetOutput = NULL;
@@ -1077,15 +1080,29 @@ namespace GL
 void
 waitForVideoSync ()
 {
+    GL::unthrottledFrames++;
     if (GL::waitVideoSync)
     {
 	// Don't wait twice. Just in case.
 	if (GL::swapInterval)
 	    (*GL::swapInterval) (0);
 
+	/*
+	 * While glXSwapBuffers/glXCopySubBufferMESA are meant to do a
+	 * flush before they blit, it is best to not let that happen.
+	 * Because that flush would occur after GL::waitVideoSync, causing
+	 * a delay and the final blit to be slightly out of sync resulting
+	 * in tearing. So we need to do a glFinish before we wait for
+	 * vsync, to absolutely minimize tearing.
+	 */
+	glFinish ();
+
 	// Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
-	unsigned int frameno;
-	(*GL::waitVideoSync) (1, 0, &frameno);
+	unsigned int oldCount = GL::vsyncCount;
+	(*GL::waitVideoSync) (1, 0, &GL::vsyncCount);
+
+	if (GL::vsyncCount != oldCount)
+	    GL::unthrottledFrames = 0;
     }
 }
 
@@ -1094,7 +1111,10 @@ controlSwapVideoSync (bool sync)
 {
     // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
     if (GL::swapInterval)
+    {
 	(*GL::swapInterval) (sync ? 1 : 0);
+	GL::unthrottledFrames++;
+    }
     else if (sync)
 	waitForVideoSync ();
 }
@@ -1177,15 +1197,6 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
     targetOutput = &screen->outputDevs ()[0];
 
-    glFlush ();
-
-    /*
-     * FIXME: Actually fix the composite plugin to be more efficient;
-     * If GL::swapInterval == NULL && GL::waitVideoSync != NULL then the
-     * composite plugin should not be imposing any framerate restriction
-     * (ie. blocking the CPU) at all. Because the framerate will be controlled
-     * and optimized here:
-     */
     if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
     {
 	/*
@@ -1257,7 +1268,8 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 bool
 PrivateGLScreen::hasVSync ()
 {
-   return (GL::waitVideoSync && optionGetSyncToVblank ());
+    return GL::waitVideoSync && optionGetSyncToVblank () && 
+           GL::unthrottledFrames < 5;
 }
 
 bool
