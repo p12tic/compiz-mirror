@@ -14,6 +14,8 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../src/timer/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../src/string/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../src/pluginclasshandler/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/point/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/rect/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../logmessage/include
 )
 

@@ -6,6 +6,7 @@ add_subdirectory( logmessage )
 add_subdirectory( timer )
 add_subdirectory( pluginclasshandler )
 add_subdirectory( point )
+add_subdirectory( rect )
 add_subdirectory( wrapsystem/tests )
 
 compiz_add_bcop_targets (
@@ -43,7 +44,10 @@ include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/pluginclasshandler/src
 
     ${CMAKE_CURRENT_SOURCE_DIR}/point/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/point/src    
+    ${CMAKE_CURRENT_SOURCE_DIR}/point/src
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/rect/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/rect/src
 )
 
 add_definitions (
@@ -76,7 +80,6 @@ add_executable (compiz
     ${CMAKE_CURRENT_SOURCE_DIR}/plugin.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/session.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/output.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/rect.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/size.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windowgeometry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/icon.cpp
@@ -107,6 +110,7 @@ target_link_libraries (
     compiz_logmessage
     compiz_pluginclasshandler
     compiz_point
+    compiz_rect
 #    ${CORE_MOD_LIBRARIES}
 )
 
