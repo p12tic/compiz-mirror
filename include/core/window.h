@@ -42,6 +42,7 @@
 #include <core/point.h>
 #include <core/region.h>
 #include <core/windowgeometry.h>
+#include <core/windowextents.h>
 
 #include <core/wrapsystem.h>
 
@@ -200,12 +201,7 @@ enum CompWindowNotify {
  * Specifies the left, right, top and bottom positions of a window's
  * geometry
  */
-struct CompWindowExtents {
-    int left;
-    int right;
-    int top;
-    int bottom;
-};
+typedef compiz::window::extents::Extents CompWindowExtents;
 
 /**
  * Specifies the area of the screen taken up by strut windows
