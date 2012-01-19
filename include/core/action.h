@@ -28,11 +28,12 @@
 #ifndef _COMPACTION_H
 #define _COMPACTION_H
 
+#include <core/option.h>
+
 #include <boost/function.hpp>
 
 #include <X11/Xlib-xcb.h>
 
-#include <core/option.h>
 
 class PrivateAction;
 

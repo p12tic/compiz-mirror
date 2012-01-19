@@ -41,7 +41,7 @@ extern CompOutput *targetOutput;
 class GLIcon
 {
     public:
-	GLIcon () : icon (NULL) {};
+	GLIcon () : icon (NULL) {}
 
 	CompIcon        *icon;
 	GLTexture::List textures;

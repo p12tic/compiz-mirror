@@ -29,8 +29,6 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-#include <core/core.h>
-
 #include <core/screen.h>
 #include <core/match.h>
 #include <core/window.h>

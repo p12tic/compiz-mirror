@@ -31,7 +31,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <core/core.h>
 #include <opengl/texture.h>
 #include <privatetexture.h>
 #include "privates.h"

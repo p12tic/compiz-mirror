@@ -38,7 +38,6 @@
 
 #include <boost/bind.hpp>
 
-#include <core/core.h>
 #include <core/icon.h>
 #include <core/atoms.h>
 #include "privatewindow.h"

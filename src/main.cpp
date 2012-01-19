@@ -34,7 +34,6 @@
 #include <string.h>
 #include <sys/wait.h>
 
-#include <core/core.h>
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
 

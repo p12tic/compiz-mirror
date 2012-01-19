@@ -22,6 +22,8 @@ set (_headers
     string.h
     window.h
     wrapsystem.h
+    abiversion.h
+    deg2rad.h
 )
 
 install (

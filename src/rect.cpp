@@ -23,7 +23,6 @@
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  */
 
-#include <core/core.h>
 #include <core/rect.h>
 
 CompRect::CompRect ()

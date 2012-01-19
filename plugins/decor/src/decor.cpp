@@ -33,7 +33,7 @@
 #include <math.h>
 #include <unistd.h>
 
-#include <core/core.h>
+#include <core/abiversion.h>
 #include <decoration.h>
 #include "decor.h"
 
