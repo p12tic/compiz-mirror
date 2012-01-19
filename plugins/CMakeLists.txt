@@ -19,7 +19,6 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../src/window/geometry/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../src/window/geometry-saver/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../logmessage/include
-  ${CMAKE_CURRENT_SOURCE_DIR}/../src/window/geometry/include
 )
 
 compiz_add_plugins_in_folder (${CMAKE_CURRENT_SOURCE_DIR})
