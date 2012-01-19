@@ -710,15 +710,7 @@ PrivateCompositeScreen::scheduleRepaint ()
 	    elapsed = 0;
  	delay = elapsed < optimalRedrawTime ? optimalRedrawTime - elapsed : 1;
     }
-    /*
-     * Note the use of delay = 1 instead of 0, even though 0 would be better.
-     * A delay of zero is presently broken due to CompTimer bugs;
-     *    1. Infinite loop in CompTimeoutSource::callback when a zero
-     *       timer is set.
-     *    2. Priority set too high in CompTimeoutSource::CompTimeoutSource
-     *       causing the glib main event loop to be starved of X events.
-     * Fixes for both of these issues are being worked on separately.
-     */
+
     paintTimer.start
 	(boost::bind (&CompositeScreen::handlePaintTimeout, cScreen),
 	delay);
