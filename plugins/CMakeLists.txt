@@ -16,6 +16,8 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../src/pluginclasshandler/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../src/point/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../src/rect/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/window/geometry/include
+  ${CMAKE_CURRENT_SOURCE_DIR}/../src/window/geometry-saver/include
   ${CMAKE_CURRENT_SOURCE_DIR}/../logmessage/include
 )
 

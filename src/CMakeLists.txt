@@ -7,6 +7,7 @@ add_subdirectory( timer )
 add_subdirectory( pluginclasshandler )
 add_subdirectory( point )
 add_subdirectory( rect )
+add_subdirectory( window )
 add_subdirectory( wrapsystem/tests )
 
 compiz_add_bcop_targets (
@@ -48,6 +49,12 @@ include_directories (
 
     ${CMAKE_CURRENT_SOURCE_DIR}/rect/include
     ${CMAKE_CURRENT_SOURCE_DIR}/rect/src
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry/src
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry-saver/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry-saver/src
 )
 
 add_definitions (
@@ -111,6 +118,8 @@ target_link_libraries (
     compiz_pluginclasshandler
     compiz_point
     compiz_rect
+    compiz_window_geometry
+    compiz_window_geometry_saver
 #    ${CORE_MOD_LIBRARIES}
 )
 

@@ -41,6 +41,7 @@
 #include <core/size.h>
 #include <core/point.h>
 #include <core/region.h>
+#include <core/windowgeometry.h>
 
 #include <core/wrapsystem.h>
 
@@ -268,24 +269,7 @@ class CompWindow :
 {
     public:
 
-    /**
-     * A mutable object about the dimensions and location of a CompWindow.
-     */
-	class Geometry : public CompRect
-    {
-	    public:
-		Geometry ();
-		Geometry (int, int, int, int, int);
-
-		int border () const;
-
-		void set (int, int, int, int, int);
-		void setBorder (int);
-
-	    private:
-		int mBorder;
-	};
-
+	typedef compiz::window::Geometry Geometry;
 	typedef boost::function<void (CompWindow *)> ForEach;
 	typedef std::map<Window, CompWindow *> Map;
 
