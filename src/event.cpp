@@ -1907,8 +1907,17 @@ CompScreen::handleEvent (XEvent *event)
 				}
 			    }
 
+			    active->changeState (active->focused () ?
+						 active->state () | CompWindowStateFocusedMask :
+						 active->state () & ~CompWindowStateFocusedMask);
+
 			    active->priv->updatePassiveButtonGrabs ();
 			}
+
+			if (w->focused ())
+			    state |= w->state () | CompWindowStateFocusedMask;
+			else
+			    state &= w->state () & ~CompWindowStateFocusedMask;
 
 			w->priv->updatePassiveButtonGrabs ();
 

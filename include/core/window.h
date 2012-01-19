@@ -93,6 +93,7 @@ struct CompStartupSequence;
 #define CompWindowStateBelowMask	    (1 << 10)
 #define CompWindowStateDemandsAttentionMask (1 << 11)
 #define CompWindowStateDisplayModalMask	    (1 << 12)
+#define CompWindowStateFocusedMask	    (1 << 13)
 
 #define MAXIMIZE_STATE (CompWindowStateMaximizedHorzMask | \
 			CompWindowStateMaximizedVertMask)
@@ -256,6 +257,8 @@ class WindowInterface : public WrapableInterface<CompWindow, WindowInterface>
 	virtual bool alpha ();
 	virtual bool isFocussable ();
 	virtual bool managed ();
+
+	virtual bool focused ();
 };
 
 /**
@@ -263,7 +266,7 @@ class WindowInterface : public WrapableInterface<CompWindow, WindowInterface>
  * window state, geometry, etc. between Compiz and the X server.
  */
 class CompWindow :
-    public WrapableHandler<WindowInterface, 19>,
+    public WrapableHandler<WindowInterface, 20>,
     public PluginClassStorage
 {
     public:
@@ -552,6 +555,8 @@ class CompWindow :
 	WRAPABLE_HND (16, WindowInterface, bool, alpha);
 	WRAPABLE_HND (17, WindowInterface, bool, isFocussable);
 	WRAPABLE_HND (18, WindowInterface, bool, managed);
+
+	WRAPABLE_HND (19, WindowInterface, bool, focused);
 
 	friend class PrivateWindow;
 	friend class CompScreen;

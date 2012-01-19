@@ -5718,6 +5718,10 @@ bool
 WindowInterface::managed ()
     WRAPABLE_DEF (managed);
 
+bool
+WindowInterface::focused ()
+    WRAPABLE_DEF (focused);
+
 Window
 CompWindow::id ()
 {
@@ -6072,6 +6076,13 @@ CompWindow::managed ()
 {
     WRAPABLE_HND_FUNC_RETURN (18, bool, managed);
     return priv->managed;
+}
+
+bool
+CompWindow::focused ()
+{
+    WRAPABLE_HND_FUNC_RETURN (19, bool, focused);
+    return screen->activeWindow () == id ();
 }
 
 bool
