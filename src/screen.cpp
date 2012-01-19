@@ -1328,6 +1328,8 @@ PrivateScreen::setWindowState (unsigned int state, Window id)
 	data[i++] = Atoms::winStateDemandsAttention;
     if (state & CompWindowStateDisplayModalMask)
 	data[i++] = Atoms::winStateDisplayModal;
+    if (state & CompWindowStateFocusedMask)
+        data[i++] = Atoms::winStateFocused;
 
     XChangeProperty (priv->dpy, id, Atoms::winState,
 		     XA_ATOM, 32, PropModeReplace,
@@ -2198,6 +2200,7 @@ CompScreen::addSupportedAtoms (std::vector<Atom> &atoms)
     atoms.push_back (Atoms::winStateAbove);
     atoms.push_back (Atoms::winStateBelow);
     atoms.push_back (Atoms::winStateDemandsAttention);
+    atoms.push_back (Atoms::winStateFocused);
 
     atoms.push_back (Atoms::winOpacity);
     atoms.push_back (Atoms::winBrightness);
