@@ -1144,15 +1144,15 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 
 	    pTransform.reset ();
 	    pTransform.rotate (xRotate, 0.0f, 1.0f, 0.0f);
-	    pTransform.rotate (vRotate, cosf (xRotate * DEG2RAD),
-			       0.0f, sinf (xRotate * DEG2RAD));
+	    pTransform.rotate (vRotate, cosf (xRotate * (M_PI / 180.0f)),
+			       0.0f, sinf (xRotate * (M_PI / 180.0f)));
 
 	    point = pTransform * point;
 
 	    pTransform.reset ();
 	    pTransform.rotate (xRotate2, 0.0f, 1.0f, 0.0f);
-	    pTransform.rotate (vRotate, cosf (xRotate2 * DEG2RAD),
-			       0.0f, sinf (xRotate2 * DEG2RAD));
+	    pTransform.rotate (vRotate, cosf (xRotate2 * (M_PI / 180.0f)),
+			       0.0f, sinf (xRotate2 * (M_PI / 180.0f)));
 
 	    point2 = pTransform * point2;
 
@@ -1182,7 +1182,7 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 			rYTrans = -mCapFill[1] - 0.5;
 		    }
 		    else if (optionGetDeformation () == DeformationSphere &&
-			     vRotate > atan (cDist * 2) / DEG2RAD)
+			     vRotate > atan (cDist * 2) / (M_PI / 180.0f))
 		    {
 			mYTrans = sqrt (0.5 + cDist2) - 0.5;
 			rYTrans = -sqrt (0.5 + cDist2) - 0.5;
