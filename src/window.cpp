@@ -91,7 +91,7 @@ PrivateWindow::recalcNormalHints ()
 {
     int maxSize;
 
-#warning fixme to max Texture size
+/* FIXME to max Texture size */
     maxSize  = MAXSHORT;
     maxSize -= serverGeometry.border () * 2;
 

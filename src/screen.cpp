@@ -2204,7 +2204,7 @@ CompScreen::addSupportedAtoms (std::vector<Atom> &atoms)
     atoms.push_back (Atoms::winOpacity);
     atoms.push_back (Atoms::winBrightness);
 
-#warning fixme
+/* FIXME */
 #if 0
     if (canDoSaturated)
     {
