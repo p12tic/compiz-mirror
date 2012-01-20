@@ -342,7 +342,7 @@ macro (_build_compiz_plugin plugin)
             ${${_PLUGIN}_PKG_INCDIRS}
             ${${_PLUGIN}_INCDIRS}
             ${COMPIZ_INCLUDE_DIRS}
-            ${CMAKE_PREFIX_PATH}/include
+            ${PLUGIN_PREFIX}/include
             ${CMAKE_INCLUDE_PATH}
 	    ${${_PLUGIN}_MOD_INCLUDE_DIRS}
 	    ${CORE_MOD_INCLUDE_DIRS}
@@ -353,16 +353,20 @@ macro (_build_compiz_plugin plugin)
 		      GLOBAL
 		      PROPERTY ${_PLUGIN}_MOD_LIBRARY_DIRS)
 
+	set (SYSTEM_LINK_DIRS
+	     "/usr/lib"
+	     "/usr/lib32"
+	     "/usr/lib64"
+	     "/usr/lib/${CMAKE_LIBRARY_ARCHITECTURE}")
+
 	link_directories (
             ${COMPIZ_LINK_DIRS}
             ${${_PLUGIN}_PKG_LIBDIRS}
             ${${_PLUGIN}_LIBDIRS}
             ${PLUGIN_LIBDIR}
             ${COMPIZ_LIBDIR}/compiz
-            ${CMAKE_PREFIX_PATH}/lib
-            ${CMAKE_PREFIX_PATH}/lib32
-            ${CMAKE_PREFIX_PATH}/lib64
 	    ${${_PLUGIN}_MOD_LIBRARY_DIRS}
+            ${SYSTEM_LINK_DIRS}
 	)
 
 	add_library (

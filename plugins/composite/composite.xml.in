@@ -8,16 +8,11 @@
 		<_short>Slow Animations</_short>
 		<_long>Toggle use of slow animations</_long>
 	    </option>
-	    <option name="detect_refresh_rate" type="bool">
-		<_short>Detect Refresh Rate</_short>
-		<_long>Automatic detection of refresh rate</_long>
-		<default>true</default>
-	    </option>
-	    <option name="refresh_rate" type="int">
-		<_short>Refresh Rate</_short>
-		<_long>The rate at which the screen is redrawn (times/second)</_long>
-		<default>50</default>
-		<min>1</min>
+	    <option name="refresh_rate_cap" type="int">
+		<_short>Refresh Rate Cap</_short>
+		<_long>Maximum allowed refresh rate (set -1 to force VSync usage)</_long>
+		<default>200</default>
+		<min>-1</min>
 		<max>200</max>
 	    </option>
 	    <option name="unredirect_fullscreen_windows" type="bool">

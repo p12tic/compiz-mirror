@@ -67,6 +67,9 @@ class PrivateGLScreen :
 			   const CompRegion    &region);
 
 	bool hasVSync ();
+	bool waitVSync (unsigned int mask);
+
+	void syncBuffers (unsigned int        mask);
 
 	void prepareDrawing ();
 
@@ -115,6 +118,7 @@ class PrivateGLScreen :
 	GLXContext ctx;
 
 	CompRegion outputRegion;
+	CompRegion tmpRegion;
 
 	bool pendingCommands;
 
