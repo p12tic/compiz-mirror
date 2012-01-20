@@ -33,8 +33,7 @@ class CompRectTest : public ::testing::Test
 {
 public:
 
-    CompRectTest ();
-    virtual ~CompRectTest ();
+    virtual ~CompRectTest () = 0;
 
 protected:
 

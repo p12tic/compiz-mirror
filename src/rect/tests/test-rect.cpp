@@ -25,10 +25,6 @@
 
 #include "test-rect.h"
 
-CompRectTest::CompRectTest ()
-{
-}
-
 CompRectTest::~CompRectTest ()
 {
 }
