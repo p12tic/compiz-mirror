@@ -800,7 +800,7 @@ PrivateScreen::updatePlugins ()
 	try 
 	{
 		lpName = lp.s();
-	} catch(...)
+	} catch(const boost::bad_get&)
 	{
 		lpName.clear();		
 	}
@@ -856,7 +856,7 @@ PrivateScreen::updatePlugins ()
 	{
 		if (opt.s () == "core")
 	 	   continue;
-	} catch(...)
+	} catch(const boost::bad_get&)
 	{
 	}
 
@@ -879,7 +879,7 @@ PrivateScreen::updatePlugins ()
 		try
 		{
 		    pList.at (j++).set (opt.s ());
-		} catch(...)
+		} catch(const boost::bad_get&)
 		{
 		    j++;
 		}
