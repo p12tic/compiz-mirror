@@ -27,25 +27,7 @@
 #include <iostream>
 #include <stdlib.h>
 
-class CompRectTestRect :
-    public CompRectTest
-{
-public:
-
-    CompRectTestRect ();
-    ~CompRectTestRect ();
-};
-
-
-CompRectTestRect::CompRectTestRect ()
-{
-}
-
-CompRectTestRect::~CompRectTestRect ()
-{
-}
-
-TEST_F (CompRectTestRect, TestRect)
+TEST_F (CompRectTest, TestRect)
 {
     ASSERT_EQ (mRect, CompRect (0, 0, 0, 0));
 
