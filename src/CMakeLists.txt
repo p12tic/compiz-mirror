@@ -5,6 +5,7 @@ add_subdirectory( string )
 add_subdirectory( logmessage )
 add_subdirectory( timer )
 add_subdirectory( pluginclasshandler )
+add_subdirectory( point )
 add_subdirectory( wrapsystem/tests )
 
 compiz_add_bcop_targets (
@@ -40,7 +41,9 @@ include_directories (
     
     ${CMAKE_CURRENT_SOURCE_DIR}/pluginclasshandler/include
     ${CMAKE_CURRENT_SOURCE_DIR}/pluginclasshandler/src
-    
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/point/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/point/src    
 )
 
 add_definitions (
@@ -60,8 +63,8 @@ link_directories (
 )
 
 add_library (compiz_core SHARED
-	${CMAKE_CURRENT_SOURCE_DIR}/global.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/region.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/global.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/region.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/atoms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/actions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/screen.cpp
@@ -75,7 +78,6 @@ add_library (compiz_core SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/output.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/rect.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/size.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/point.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/windowgeometry.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/icon.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/modifierhandler.cpp
@@ -110,22 +112,7 @@ target_link_libraries (
     compiz_timer
     compiz_logmessage
     compiz_pluginclasshandler
-)
-
-target_link_libraries (
-    compiz 
-    compiz_core
-    
-    ${COMPIZ_LIBRARIES} 
-    
-    m 
-    pthread 
-    dl
-    
-    compiz_string
-    compiz_timer
-    compiz_logmessage
-    compiz_pluginclasshandler
+    compiz_point
 )
 
 install (
@@ -134,12 +121,6 @@ install (
   	LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
   	ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
 )
-
-install (
-    TARGETS compiz
-    DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
-)
-
 add_subdirectory(tests)
 
 enable_coverage_report( TARGETS compiz )

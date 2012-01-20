@@ -10,7 +10,6 @@ set (_headers
     option.h
     output.h
     plugin.h
-    point.h
     propertywriter.h
     privateunion.h
     rect.h
