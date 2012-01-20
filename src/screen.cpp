@@ -862,26 +862,28 @@ PrivateScreen::updatePlugins ()
 
 	for (; it != initialPlugins.end (); it++)
 	{
-		try 
+	        try
 		{
-	    	if ((*it) == opt.s ())
-	    	{
-				skip = true;
-				break;
-	    	} 
-	    }catch(...)
-	    {
-	    }
+			if ((*it) == opt.s())
+			{
+			    skip = true;
+			    break;
+			}
+		 } catch (...)
+		 {
+		 }
 	}
 
 	if (!skip)
+	{
 		try
 		{
-	    	pList.at (j++).set (opt.s ());
-	    } catch(...)
-	    {
-	    	j++;
-	    }
+		    pList.at (j++).set (opt.s ());
+		} catch(...)
+		{
+		    j++;
+		}
+	}
     }
 
     assert (j == pList.size ());
@@ -931,9 +933,9 @@ PrivateScreen::updatePlugins ()
 
 	if (p == 0 && !failedPush)
 	{
-		try 
-		{
-	    	p = CompPlugin::load (pList[i].s ().c_str ());
+	    try
+	    {
+		p = CompPlugin::load (pList[i].s ().c_str ());
 	    } catch (...)
 	    {
 	    }
