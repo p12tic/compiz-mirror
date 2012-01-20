@@ -463,15 +463,6 @@ client_stdout_cb (GIOChannel   *source,
         {
             if (getenv ("DEBUG"))
                 g_print ("%s", str_return);
-
-            /* This is a really bad heuristic, but its the only
-             * sane IPC I can think of right now */
-            if (strncmp ("execvp: ", str_return, 8) == 0)
-            {
-                /* Update the pid to the new compiz process */
-                sscanf (&str_return[8], "%d", &compiz_pid);
-            }
-            g_free (str_return);
         }
     }
 
