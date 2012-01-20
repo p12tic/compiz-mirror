@@ -88,31 +88,6 @@ add_library (compiz_core SHARED
 
 add_executable (compiz
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
-    
-    ${CMAKE_CURRENT_SOURCE_DIR}/global.cpp
-	${CMAKE_CURRENT_SOURCE_DIR}/region.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/atoms.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/actions.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/screen.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/window.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/action.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/option.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/match.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/event.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/plugin.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/session.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/output.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/rect.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/size.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/point.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/windowgeometry.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/icon.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/modifierhandler.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/propertywriter.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/eventsource.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/stackdebugger.cpp
-    
-    ${_bcop_sources}
 )
 
 # workaround for build race
@@ -139,6 +114,7 @@ target_link_libraries (
 
 target_link_libraries (
     compiz 
+    compiz_core
     
     ${COMPIZ_LIBRARIES} 
     
@@ -150,6 +126,13 @@ target_link_libraries (
     compiz_timer
     compiz_logmessage
     compiz_pluginclasshandler
+)
+
+install (
+    TARGETS compiz_core
+    RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
+  	LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
+  	ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
 )
 
 install (
