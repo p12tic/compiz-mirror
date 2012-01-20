@@ -59,7 +59,7 @@ link_directories (
     ${CORE_MOD_LIBRARY_DIRS}
 )
 
-add_library (compiz_core
+add_library (compiz_core SHARED
 	${CMAKE_CURRENT_SOURCE_DIR}/global.cpp
 	${CMAKE_CURRENT_SOURCE_DIR}/region.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/atoms.cpp
@@ -98,7 +98,7 @@ get_property (CORE_MOD_LIBRARIES
 	      PROPERTY CORE_MOD_LIBRARIES)
 
 target_link_libraries (
-    compiz_core 
+    compiz_core
     
     ${COMPIZ_LIBRARIES} 
     
@@ -115,6 +115,7 @@ target_link_libraries (
 target_link_libraries (
     compiz 
     compiz_core
+    
     ${COMPIZ_LIBRARIES} 
     
     m 
@@ -125,6 +126,13 @@ target_link_libraries (
     compiz_timer
     compiz_logmessage
     compiz_pluginclasshandler
+)
+
+install (
+    TARGETS compiz_core
+    RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
+  	LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
+  	ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
 )
 
 install (
