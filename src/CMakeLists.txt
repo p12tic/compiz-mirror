@@ -52,6 +52,9 @@ include_directories (
 
     ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry/include
     ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry/src
+
+    ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry-saver/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry-saver/src
 )
 
 add_definitions (
@@ -122,6 +125,7 @@ target_link_libraries (
     compiz_point
     compiz_rect
     compiz_window_geometry
+    compiz_window_geometry_saver
 #    ${CORE_MOD_LIBRARIES}
 )
 
