@@ -121,8 +121,7 @@ CompScreen::eventLoop ()
 
     priv->source->attach (priv->ctx);
 
-    /* Kick the event loop */
-    priv->ctx->iteration (false);
+    XFlush (priv->dpy);
 
     priv->mainloop->run ();
 }
