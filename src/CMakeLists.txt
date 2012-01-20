@@ -59,10 +59,10 @@ link_directories (
     ${CORE_MOD_LIBRARY_DIRS}
 )
 
-add_executable (compiz
-    ${CMAKE_CURRENT_SOURCE_DIR}/region.cpp
+add_library (compiz_core SHARED
+	${CMAKE_CURRENT_SOURCE_DIR}/global.cpp
+	${CMAKE_CURRENT_SOURCE_DIR}/region.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/atoms.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/actions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/screen.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/window.cpp
@@ -86,6 +86,10 @@ add_executable (compiz
     ${_bcop_sources}
 )
 
+add_executable (compiz
+    ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
+)
+
 # workaround for build race
 add_dependencies (compiz core-xml-file)
 
@@ -94,7 +98,9 @@ get_property (CORE_MOD_LIBRARIES
 	      PROPERTY CORE_MOD_LIBRARIES)
 
 target_link_libraries (
-    compiz ${COMPIZ_LIBRARIES} 
+    compiz_core
+    
+    ${COMPIZ_LIBRARIES} 
     
     m 
     pthread 
@@ -104,12 +110,36 @@ target_link_libraries (
     compiz_timer
     compiz_logmessage
     compiz_pluginclasshandler
-#    ${CORE_MOD_LIBRARIES}
+)
+
+target_link_libraries (
+    compiz 
+    compiz_core
+    
+    ${COMPIZ_LIBRARIES} 
+    
+    m 
+    pthread 
+    dl
+    
+    compiz_string
+    compiz_timer
+    compiz_logmessage
+    compiz_pluginclasshandler
+)
+
+install (
+    TARGETS compiz_core
+    RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
+  	LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
+  	ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
 )
 
 install (
     TARGETS compiz
     DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
 )
+
+add_subdirectory(tests)
 
 enable_coverage_report( TARGETS compiz )

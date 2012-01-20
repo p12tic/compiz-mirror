@@ -155,7 +155,7 @@ class CompAction {
 
 	void copyState (const CompAction &action);
 
-	bool operator== (const CompAction& val);
+	bool operator== (const CompAction& val) const;
 	CompAction & operator= (const CompAction &action);
 
 	bool keyFromString (const CompString &str);

@@ -65,9 +65,6 @@ class MoveScreen :
 	void updateOpacity ();
 
 	void handleEvent (XEvent *);
-	void handleCompizEvent (const char *plugin,
-				const char *event,
-				CompOption::Vector &options);
 
 	bool registerPaintHandler (compiz::composite::PaintHandler *pHnd);
 	void unregisterPaintHandler ();
@@ -108,8 +105,7 @@ class MoveWindow :
 	    PluginClassHandler<MoveWindow,CompWindow> (window),
 	    window (window),
 	    gWindow (GLWindow::get (window)),
-	    cWindow (CompositeWindow::get (window)),
-	    mLocked (false)
+	    cWindow (CompositeWindow::get (window))
 	{
 	    if (gWindow)
 		GLWindowInterface::setHandler (gWindow, false);
@@ -121,8 +117,6 @@ class MoveWindow :
 	CompWindow      *window;
 	GLWindow        *gWindow;
 	CompositeWindow *cWindow;
-
-	bool            mLocked;
 };
 
 #define MOVE_SCREEN(s) \

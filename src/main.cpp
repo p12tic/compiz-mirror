@@ -37,28 +37,6 @@
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
 
-char *programName;
-char **programArgv;
-int  programArgc;
-
-char *backgroundImage = NULL;
-
-bool shutDown = false;
-bool restartSignal = false;
-
-CompWindow *lastFoundWindow = 0;
-
-bool replaceCurrentWm = false;
-bool indirectRendering = false;
-bool noDetection = false;
-bool useDesktopHints = false;
-bool debugOutput = false;
-bool useCow = true;
-
-std::list <CompString> initialPlugins;
-
-unsigned int pluginClassHandlerIndex = 0;
-
 void
 CompManager::usage ()
 {
@@ -71,7 +49,6 @@ CompManager::usage ()
 	    "[--bg-image PNG] "
 	    "[--no-detection] "
 	    "[--keep-desktop-hints]\n       "
-	    "[--use-root-window] "
 	    "[--debug] "
 	    "[--version] "
 	    "[--help] "
@@ -130,10 +107,6 @@ CompManager::parseArguments (int argc, char **argv)
 	else if (!strcmp (argv[i], "--keep-desktop-hints"))
 	{
 	    useDesktopHints = true;
-	}
-	else if (!strcmp (argv[i], "--use-root-window"))
-	{
-	    useCow = false;
 	}
 	else if (!strcmp (argv[i], "--replace"))
 	{

@@ -600,8 +600,8 @@ PrivateScaleScreen::findBestSlots ()
 		sx = (slots[i].x2 () + slots[i].x1 ()) / 2;
 		sy = (slots[i].y2 () + slots[i].y1 ()) / 2;
 
-		cx = w->serverX () + w->width () / 2;
-		cy = w->serverY () + w->height () / 2;
+		cx = (w->serverX () - (w->defaultViewport ().x () - screen->vp ().x ()) * screen->width ()) + w->width () / 2;
+		cy = (w->serverY () - (w->defaultViewport ().y () - screen->vp ().y ()) * screen->height ()) + w->height () / 2;
 
 		cx -= sx;
 		cy -= sy;
@@ -726,30 +726,61 @@ ScaleScreen::getWindows () const
 bool
 PrivateScaleScreen::layoutThumbs ()
 {
-    windows.clear ();
+    bool ret = false;
+    std::map <ScaleWindow *, ScaleSlot> slotWindows;
+    CompWindowList          allWindows;
 
-    /* add windows scale list, top most window first */
-    foreach (CompWindow *w, screen->windows ())
+    for (int i = 0; i < screen->vpSize ().height (); i++)
     {
-	SCALE_WINDOW (w);
+	for (int j = 0; j < screen->vpSize ().width (); j++)
+	{
+	    windows.clear ();
+	    slots.clear ();
 
-	if (sw->priv->slot)
-	    sw->priv->adjust = true;
+	    /* add windows scale list, top most window first */
+	    foreach (CompWindow *w, screen->windows ())
+	    {
+		SCALE_WINDOW (w);
 
-	sw->priv->slot = NULL;
+		if (w->defaultViewport () != CompPoint (j, i))
+		    continue;
 
-	if (!sw->priv->isScaleWin ())
-	    continue;
+		if (sw->priv->slot)
+		    sw->priv->adjust = true;
 
-	windows.push_back (sw);
+		sw->priv->slot = NULL;
+
+		if (!sw->priv->isScaleWin ())
+		    continue;
+
+		windows.push_back (sw);
+	    }
+
+	    if (!windows.empty ())
+	    {
+		slots.resize (windows.size ());
+		ret |= ScaleScreen::get (screen)->layoutSlotsAndAssignWindows ();
+
+		foreach (ScaleWindow *sw, windows)
+		    slotWindows[sw] = *sw->priv->slot;
+	    }
+	}
     }
 
-    if (windows.empty ())
-	return false;
+    slots.clear ();
+    windows.clear ();
 
-    slots.resize (windows.size ());
+    for (std::map<ScaleWindow *, ScaleSlot>::iterator it = slotWindows.begin ();
+	 it != slotWindows.end (); it++)
+    {
+	slots.push_back (it->second);
+	windows.push_back (it->first);
+	it->first->priv->slot = &slots.back ();
+	it->first->priv->slot->setX (it->first->priv->slot->x () + (it->first->priv->window->defaultViewport ().x () - screen->vp ().x ()) * screen->width ());
+	it->first->priv->slot->setY (it->first->priv->slot->y () + (it->first->priv->window->defaultViewport ().y () - screen->vp ().y ()) * screen->height ());
+    }
 
-    return ScaleScreen::get (screen)->layoutSlotsAndAssignWindows ();
+    return ret;
 }
 
 bool
@@ -975,6 +1006,8 @@ PrivateScaleScreen::scaleTerminate (CompAction         *action,
     SCALE_SCREEN (screen);
 
     Window xid;
+    int    selectX = CompOption::getIntOptionNamed (options, "select_x", -1);
+    int    selectY = CompOption::getIntOptionNamed (options, "select_y", -1);
 
     if (ss->priv->actionShouldToggle (action, state))
 	return false;
@@ -985,6 +1018,13 @@ PrivateScaleScreen::scaleTerminate (CompAction         *action,
 
     if (!ss->priv->grab)
 	return false;
+
+    if (selectX != -1 &&
+	selectY != -1)
+    {
+	if (!ss->priv->selectWindowAt (selectX, selectY, true))
+	    return false;
+    }
 
     if (ss->priv->grabIndex)
     {
@@ -1045,6 +1085,10 @@ PrivateScaleScreen::scaleTerminate (CompAction         *action,
 	action->setState (action->state () | CompAction::StateTermKey);
 
     ss->priv->lastActiveNum = 0;
+
+    if (selectX != -1 &&
+	selectY != -1)
+	return true;
 
     return false;
 }
@@ -1137,7 +1181,9 @@ PrivateScaleScreen::scaleInitiateCommon (CompAction         *action,
 					 CompAction::State  state,
 					 CompOption::Vector &options)
 {
-    if (screen->otherGrabExist ("scale", NULL))
+    int noAutoGrab = CompOption::getIntOptionNamed (options, "no_auto_grab", 0);
+
+    if (screen->otherGrabExist ("scale", NULL) && !noAutoGrab)
 	return false;
 
     match = CompOption::getMatchOptionNamed (options, "match",
@@ -1150,16 +1196,22 @@ PrivateScaleScreen::scaleInitiateCommon (CompAction         *action,
     if (!layoutThumbs ())
 	return false;
 
-    if (state & CompAction::StateInitEdgeDnd)
+    /* Another plugin may be using us externally */
+    grab = noAutoGrab;
+
+    if (!grab)
     {
-	if (ensureDndRedirectWindow ())
-	    grab = true;
-    }
-    else if (!grabIndex)
-    {
-	grabIndex = screen->pushGrab (cursor, "scale");
-	if (grabIndex)
-	    grab = true;
+	if (state & CompAction::StateInitEdgeDnd)
+	{
+	    if (ensureDndRedirectWindow ())
+		grab = true;
+	}
+	else if (!grabIndex)
+	{
+	    grabIndex = screen->pushGrab (cursor, "scale");
+	    if (grabIndex)
+		grab = true;
+	}
     }
 
     if (grab)
