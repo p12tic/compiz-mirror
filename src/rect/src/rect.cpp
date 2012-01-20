@@ -23,7 +23,12 @@
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  */
 
+#include <X11/Xlib.h>
+#include <X11/Xregion.h>
 #include <core/rect.h>
+#include <math.h>
+#include <stdlib.h>
+
 
 CompRect::CompRect ()
 {
@@ -59,6 +64,24 @@ CompRect::CompRect (const XRectangle xr)
     mRegion.extents.y1 = xr.y;
     mRegion.extents.x2 = xr.x + xr.width;
     mRegion.extents.y2 = xr.y + xr.height;
+}
+
+CompPoint
+compiz::rect::wraparoundPoint (const CompRect &bounds, const CompPoint &p)
+{
+    CompPoint r (p);
+
+    if (p.x () > bounds.x2 ())
+	r.setX ((p.x () % bounds.width ()) + bounds.x1 ());
+    else if (p.x () < bounds.x1 ())
+	r.setX (bounds.width () - (abs (p.x ()) % bounds.width ()));
+
+    if (p.y () > bounds.y2 ())
+	r.setY ((p.y () % bounds.height ()) + bounds.y1 ());
+    else if (p.y () < bounds.y1 ())
+	r.setY (bounds.height () - (abs (p.y ()) % bounds.height ()));
+
+    return r;
 }
 
 Region
@@ -202,12 +225,8 @@ CompRect::intersects (const CompRect& rect) const
 bool
 CompRect::isEmpty () const
 {
-    if (mRegion.extents.x1 != mRegion.extents.x2)
-	return false;
-    if (mRegion.extents.y1 != mRegion.extents.y2)
-	return false;
-
-    return true;
+    return mRegion.extents.x1 == mRegion.extents.x2 ||
+	   mRegion.extents.y1 == mRegion.extents.y2;
 }
 
 int
@@ -267,6 +286,9 @@ CompRect::operator&= (const CompRect &rect)
     mRegion.extents.x2 = r;
     mRegion.extents.y1 = t;
     mRegion.extents.y2 = b;
+
+    /* FIXME: This can result in negative widths
+     * and heights, which makes no sense */
 
     return *this;
 }

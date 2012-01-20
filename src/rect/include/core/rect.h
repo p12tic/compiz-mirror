@@ -26,11 +26,15 @@
 #ifndef _COMPRECT_H
 #define _COMPRECT_H
 
-#include "core/point.h"
-#include "core/size.h"
-
+#include <core/point.h>
+#include <core/size.h>
+#include <vector>
+#include <list>
+#include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xregion.h>
+#include "core/point.h"
+
 
 /**
  * A 2D rectangle, which is likely in screen space. It's data is
@@ -120,6 +124,8 @@ class CompRect {
 	bool operator== (const CompRect &) const;
 	bool operator!= (const CompRect &) const;
 
+	/* FIXME: Implement operator|= */
+
 	CompRect operator& (const CompRect &) const;
 	CompRect& operator&= (const CompRect &);
 	CompRect& operator= (const CompRect &);
@@ -131,6 +137,15 @@ class CompRect {
     private:
 	REGION       mRegion;
 };
+
+namespace compiz
+{
+    namespace rect
+    {
+	CompPoint wraparoundPoint (const CompRect &bounds,
+				   const CompPoint &p);
+    }
+}
 
 
 inline int
