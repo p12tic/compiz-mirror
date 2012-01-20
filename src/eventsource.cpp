@@ -26,11 +26,9 @@
 
 #include "privatescreen.h"
 
-//Glib::RefPtr <CompEventSource>
-CompEventSource*
+CompEventSource *
 CompEventSource::create ()
 {
-  // return Glib::RefPtr <CompEventSource> (new CompEventSource ());
     return new CompEventSource ();
 }
 

@@ -31,10 +31,12 @@ class CompWatchFd :
 {
     public:
 
+	virtual ~CompWatchFd ();
+
 	static
-	Glib::RefPtr <CompWatchFd> create (int,
-					   Glib::IOCondition,
-					   FdWatchCallBack);
+	CompWatchFd * create (int,
+			      Glib::IOCondition,
+			      FdWatchCallBack);
 
     protected:
 

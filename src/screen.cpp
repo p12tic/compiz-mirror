@@ -191,12 +191,16 @@ CompWatchFd::CompWatchFd (int		    fd,
 	     (this, &CompWatchFd::internalCallback));
 }
 
-Glib::RefPtr <CompWatchFd>
+CompWatchFd::~CompWatchFd ()
+{
+}
+
+CompWatchFd *
 CompWatchFd::create (int               fd,
 		     Glib::IOCondition events,
 		     FdWatchCallBack   callback)
 {
-    return Glib::RefPtr <CompWatchFd> (new CompWatchFd (fd, events, callback));
+    return new CompWatchFd (fd, events, callback);
 }
 
 CompWatchFdHandle
@@ -219,7 +223,7 @@ CompScreen::addWatchFd (int             fd,
     if (events & POLLHUP)
 	gEvents |= Glib::IO_HUP;
 
-    Glib::RefPtr <CompWatchFd> watchFd = CompWatchFd::create (fd, gEvents, callBack);
+    CompWatchFd *watchFd = CompWatchFd::create (fd, gEvents, callBack);
 
     watchFd->attach (priv->ctx);
 
@@ -238,8 +242,8 @@ CompScreen::addWatchFd (int             fd,
 void
 CompScreen::removeWatchFd (CompWatchFdHandle handle)
 {
-    std::list<Glib::RefPtr <CompWatchFd> >::iterator it;
-    Glib::RefPtr <CompWatchFd>	       w;
+    std::list<CompWatchFd * >::iterator it;
+    CompWatchFd *			w;
 
     for (it = priv->watchFds.begin();
 	 it != priv->watchFds.end (); it++)
@@ -259,7 +263,7 @@ CompScreen::removeWatchFd (CompWatchFdHandle handle)
 	return;
     }
 
-    w.reset ();
+    delete w;
     priv->watchFds.erase (it);
 }
 
@@ -4932,4 +4936,11 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 
 PrivateScreen::~PrivateScreen ()
 {
+    delete timeout;
+    delete source;
+
+    foreach (CompWatchFd *fd, watchFds)
+	delete fd;
+
+    watchFds.clear ();
 }

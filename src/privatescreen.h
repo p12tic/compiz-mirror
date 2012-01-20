@@ -387,16 +387,18 @@ class PrivateScreen :
 	PrivateScreen *priv;
 
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
-	// See https://bugzilla.gnome.org/show_bug.cgi?id=561885
-	// Glib::RefPtr <CompEventSource> source;
-	CompEventSource* source;
-	Glib::RefPtr <CompTimeoutSource> timeout;
+
+	/* We cannot use RefPtrs. See
+	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
+	 */
+	CompEventSource * source;
+	CompTimeoutSource * timeout;
 	Glib::RefPtr <Glib::MainContext> ctx;
 
 	CompFileWatchList   fileWatch;
 	CompFileWatchHandle lastFileWatchHandle;
 
-	std::list<Glib::RefPtr <CompWatchFd> > watchFds;
+	std::list< CompWatchFd * > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
 	std::map<CompString, CompPrivate> valueMap;
