@@ -102,6 +102,8 @@ namespace GL {
     typedef int (*GLXWaitVideoSyncProc) (int	  divisor,
 					 int	  remainder,
 					 unsigned int *count);
+    typedef int (*GLXSwapIntervalProc) (int interval);
+
 
     #ifndef GLX_VERSION_1_3
     typedef struct __GLXFBConfigRec *GLXFBConfig;
@@ -165,6 +167,7 @@ namespace GL {
     extern GLXCopySubBufferProc     copySubBuffer;
     extern GLXGetVideoSyncProc      getVideoSync;
     extern GLXWaitVideoSyncProc     waitVideoSync;
+    extern GLXSwapIntervalProc      swapInterval;
     extern GLXGetFBConfigsProc      getFBConfigs;
     extern GLXGetFBConfigAttribProc getFBConfigAttrib;
     extern GLXCreatePixmapProc      createPixmap;

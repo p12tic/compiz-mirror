@@ -31,15 +31,13 @@
 #include <math.h>
 
 namespace GL {
-    typedef int (*GLXSwapIntervalProc) (int interval);
-
-    GLXSwapIntervalProc      swapInterval = NULL;
     GLXBindTexImageProc      bindTexImage = NULL;
     GLXReleaseTexImageProc   releaseTexImage = NULL;
     GLXQueryDrawableProc     queryDrawable = NULL;
     GLXCopySubBufferProc     copySubBuffer = NULL;
     GLXGetVideoSyncProc      getVideoSync = NULL;
     GLXWaitVideoSyncProc     waitVideoSync = NULL;
+    GLXSwapIntervalProc      swapInterval = NULL;
     GLXGetFBConfigsProc      getFBConfigs = NULL;
     GLXGetFBConfigAttribProc getFBConfigAttrib = NULL;
     GLXCreatePixmapProc      createPixmap = NULL;
@@ -1086,6 +1084,7 @@ void
 waitForVideoSync ()
 {
     GL::unthrottledFrames++;
+    // Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
     if (GL::waitVideoSync)
     {
 	// Don't wait twice. Just in case.
@@ -1125,13 +1124,6 @@ controlSwapVideoSync (bool sync)
 }
 
 } // namespace GL
-
-void
-PrivateGLScreen::waitForVideoSync ()
-{
-    if (optionGetSyncToVblank ())
-        GL::waitForVideoSync ();
-}
 
 void
 PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
@@ -1218,7 +1210,7 @@ PrivateGLScreen::waitVSync (unsigned int mask)
     }
     else
     {
-	waitForVideoSync ();
+	GL::waitForVideoSync ();
 	return true;
     }
 }
