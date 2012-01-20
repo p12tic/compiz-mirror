@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008 Dennis Kasprzyk
+ * Copyright © 2007 Novell, Inc.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without
@@ -21,60 +22,36 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
+ *          David Reveman <davidr@novell.com>
  */
 
-#ifndef _COMPSIZE_H
-#define _COMPSIZE_H
+#ifndef _COMPWINDOWCONSTRAINMENT_H
+#define _COMPWINDOWCONSTRAINMENT_H
 
-#include <vector>
-#include <list>
+#include <inttypes.h>
+#include <core/size.h>
+#include <core/rect.h>
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <limits>
 
-/**
- * A 2D size (likely in screen space) that can only be mutated with set() methods,
- * since it'd data members are private.
- */
-class CompSize {
-
-    public:
-	CompSize ();
-	CompSize (int, int);
-
-	int width () const;
-	int height () const;
-
-	void setWidth (int);
-	void setHeight (int);
-
-	typedef std::vector<CompSize> vector;
-	typedef std::vector<CompSize *> ptrVector;
-	typedef std::list<CompSize> list;
-	typedef std::list<CompSize *> ptrList;
-
-	bool operator== (const CompSize &other) const
-	{
-	    return (this->mWidth == other.mWidth &&
-		    this->mHeight == other.mHeight);
-	}
-
-	bool operator!= (const CompSize &other) const
-	{
-	    return !(*this == other);
-	}
-
-    private:
-	int mWidth, mHeight;
-};
-
-inline int
-CompSize::width () const
+namespace compiz
 {
-    return mWidth;
+namespace window
+{
+
+namespace constrainment
+{
+const unsigned int PVertResizeInc = (1 << 0);
+const unsigned int PHorzResizeInc = (1 << 1);
+
+CompSize constrainToHints (const XSizeHints &hints,
+			   const CompSize   &size,
+			   unsigned int     ignoreHints,
+			   unsigned int     resizeIgnoreHints);
 }
 
-inline int
-CompSize::height () const
-{
-    return mHeight;
+}
 }
 
 #endif
