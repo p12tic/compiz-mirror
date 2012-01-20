@@ -3,6 +3,8 @@ find_package (Compiz REQUIRED)
 include (CompizPlugin)
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/src/constrain-to-workarea/include/)
-add_subdirectory (src/constrain-to-workarea)
+include_directories (${CMAKE_CURRENT_SOURCE_DIR}/src/screen-size-change/include/)
 
-compiz_plugin (place LIBRARIES compiz_place_constrain_to_workarea)
+add_subdirectory (src/constrain-to-workarea)
+add_subdirectory (src/screen-size-change)
+compiz_plugin (place LIBRARIES compiz_place_constrain_to_workarea compiz_place_screen_size_change)
