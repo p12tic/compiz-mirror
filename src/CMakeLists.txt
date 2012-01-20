@@ -137,6 +137,11 @@ target_link_libraries (
 #    ${CORE_MOD_LIBRARIES}
 )
 
+target_link_libraries (
+    compiz
+    compiz_core
+)
+
 install (
     TARGETS compiz_core
     RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
