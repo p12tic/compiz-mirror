@@ -99,6 +99,7 @@ add_library (compiz_core SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/modifierhandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/propertywriter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/eventsource.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/signalsource.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stackdebugger.cpp
     
     ${_bcop_sources}

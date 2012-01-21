@@ -112,10 +112,28 @@ CompScreen::freePluginClassIndex (unsigned int index)
 }
 
 void
+PrivateScreen::handleSignal (int signum)
+{
+    switch (signum)
+    {
+	case SIGINT:
+	case SIGTERM:
+	    shutDown = true;
+	    break;
+	case SIGHUP:
+	    restartSignal = true;
+	    break;
+	default:
+	    break;
+    }
+
+    if (shutDown || restartSignal)
+	mainloop->quit ();
+}
+
+void
 CompScreen::eventLoop ()
 {
-    priv->ctx = Glib::MainContext::get_default ();
-    priv->mainloop = Glib::MainLoop::create (priv->ctx, false);
     priv->source = CompEventSource::create ();
     priv->timeout = CompTimeoutSource::create (priv->ctx);
 
@@ -4366,6 +4384,12 @@ CompScreen::init (const char *name)
     int                  nvisinfo;
     XSetWindowAttributes attrib;
 
+    priv->ctx = Glib::MainContext::get_default ();
+    priv->mainloop = Glib::MainLoop::create (priv->ctx, false);
+    priv->sighupSource = CompSignalSource::create (SIGHUP, boost::bind (&PrivateScreen::handleSignal, priv, _1));
+    priv->sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, priv, _1));
+    priv->sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, priv, _1));
+
     dpy = priv->dpy = XOpenDisplay (name);
     if (!priv->dpy)
     {
@@ -4373,6 +4397,8 @@ CompScreen::init (const char *name)
 			"Couldn't open display %s", XDisplayName (name));
 	return false;
     }
+
+    XSynchronize (dpy, TRUE);
 
 //    priv->connection = XGetXCBConnection (priv->dpy);
 

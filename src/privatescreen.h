@@ -41,6 +41,7 @@
 #include "privatetimeoutsource.h"
 #include "privateiosource.h"
 #include "privateeventsource.h"
+#include "privatesignalsource.h"
 
 #include "core_options.h"
 
@@ -382,6 +383,8 @@ class PrivateScreen :
 	
 	void setDefaultWindowAttributes (XWindowAttributes *);
 
+	void handleSignal (int signum);
+
     public:
 
 	PrivateScreen *priv;
@@ -393,6 +396,9 @@ class PrivateScreen :
 	 */
 	CompEventSource * source;
 	CompTimeoutSource * timeout;
+	CompSignalSource * sighupSource;
+	CompSignalSource * sigtermSource;
+	CompSignalSource * sigintSource;
 	Glib::RefPtr <Glib::MainContext> ctx;
 
 	CompFileWatchList   fileWatch;

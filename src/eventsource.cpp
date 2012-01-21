@@ -60,13 +60,7 @@ CompEventSource::~CompEventSource ()
 bool
 CompEventSource::callback ()
 {
-    if (restartSignal || shutDown)
-    {
-	screen->priv->mainloop->quit ();
-	return false;
-    }
-    else
-	screen->priv->processEvents ();
+    screen->priv->processEvents ();
     return true;
 }
 
