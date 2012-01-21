@@ -36,14 +36,6 @@
 #include "bench_tex.h"
 #include "bench_options.h"
 
-/*
-#define TIMEVALDIFF(tv1, tv2)                                              \
-    (((tv1)->tv_sec == (tv2)->tv_sec || (tv1)->tv_usec >= (tv2)->tv_usec) ? \
-     ((((tv1)->tv_sec - (tv2)->tv_sec) * 1000000) +                         \
-      ((tv1)->tv_usec - (tv2)->tv_usec)) / 1000 :                           \
-     ((((tv1)->tv_sec - 1 - (tv2)->tv_sec) * 1000000) +                     \
-      (1000000 + (tv1)->tv_usec - (tv2)->tv_usec)) / 1000)
-*/
 #define TIMEVALDIFFU(tv1, tv2)                                              \
     (((tv1)->tv_sec == (tv2)->tv_sec || (tv1)->tv_usec >= (tv2)->tv_usec) ? \
      ((((tv1)->tv_sec - (tv2)->tv_sec) * 1000000) +                      \
