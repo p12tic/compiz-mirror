@@ -10,12 +10,11 @@ if (COMPIZ_XIG_TEST_FOUND)
 
 	add_subdirectory (src)
 
-	#add_test (compiz-xig-test-startup
-	#	  ${CMAKE_CURRENT_BINARY_DIR}/src/compiz-xig-test-runner startup)
+	add_test (compiz-xig-test-startup
+		  ${CMAKE_CURRENT_BINARY_DIR}/src/compiz-xig-test-runner startup)
 
-	# Disabled as compiz is crashing on SIGHUP
-	#add_test (compiz-xig-test-restart
-	#	  ${CMAKE_CURRENT_BINARY_DIR}/src/compiz-xig-test-runner restart)
+	add_test (compiz-xig-test-restart
+		  ${CMAKE_CURRENT_BINARY_DIR}/src/compiz-xig-test-runner restart)
 
 	#add_test (compiz-xig-test-xserver-quit
 	#	  ${CMAKE_CURRENT_BINARY_DIR}/src/compiz-xig-test-runner xserver-quit)
