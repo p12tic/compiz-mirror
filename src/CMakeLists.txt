@@ -77,6 +77,7 @@ get_property (CORE_MOD_LIBRARY_DIRS
 link_directories (
     ${COMPIZ_LINK_DIRS}
     ${CORE_MOD_LIBRARY_DIRS}
+    ${libdir}
 )
 
 add_library (compiz_core SHARED
@@ -144,10 +145,14 @@ target_link_libraries (
 
 install (
     TARGETS compiz_core
-    RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
   	LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
-  	ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
 )
+
+install (
+    TARGETS compiz
+    RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
+)
+
 add_subdirectory(tests)
 
 enable_coverage_report( TARGETS compiz )

@@ -404,6 +404,7 @@ macro (_build_compiz_plugin plugin)
 		      ${${_PLUGIN}_PKG_LIBRARIES}
 		      ${${_PLUGIN}_LIBRARIES}
 		      ${${_PLUGIN}_MOD_LIBRARIES}
+		      compiz_core
 	)
 
 	install (
