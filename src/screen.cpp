@@ -4180,14 +4180,14 @@ CompScreen::screenNum ()
     return priv->screenNum;
 }
 
-CompPoint
-CompScreen::vp ()
+const CompPoint &
+CompScreen::vp () const
 {
     return priv->vp;
 }
 
-CompSize
-CompScreen::vpSize ()
+const CompSize &
+CompScreen::vpSize () const
 {
     return priv->vpSize;
 }
