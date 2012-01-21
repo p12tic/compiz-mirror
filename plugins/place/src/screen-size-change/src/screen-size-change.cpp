@@ -21,6 +21,7 @@
  */
 
 #include "screen-size-change.h"
+#include <stdio.h>
 
 
 compiz::place::ScreenSizeChangeObject::ScreenSizeChangeObject (const compiz::window::Geometry &g) :
@@ -43,6 +44,7 @@ compiz::place::ScreenSizeChangeObject::adjustForSize (const CompSize &oldSize,
     int		   curVpOffsetY = getViewport ().y () * newSize.height ();
 
     g = getGeometry ();
+    compiz::window::Geometry og (g);
 
     pivotX = g.x ();
     pivotY = g.y ();
@@ -117,8 +119,6 @@ compiz::place::ScreenSizeChangeObject::adjustForSize (const CompSize &oldSize,
     g.setY (g.y () + curVpOffsetY - (getViewport ().y () + vpY) * newSize.height ());
 
     unsigned int flags = 0;
-
-    compiz::window::Geometry og (g);
     const CompRect &workArea = getWorkarea (g);
 
     compiz::place::clampGeometryToWorkArea (g, workArea, getExtents (), flags, newSize);

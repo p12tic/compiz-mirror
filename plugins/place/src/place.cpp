@@ -45,256 +45,92 @@ PlaceScreen::~PlaceScreen ()
     screen->updateSupportedWmHints ();
 }
 
+CompWindowList
+compiz::place::collectStrutWindows (const CompWindowList &all)
+{
+    CompWindowList l;
+
+    foreach (CompWindow *w, all)
+    {
+	if (!w->managed () ||
+	    w->overrideRedirect ())
+	    continue;
+
+	if (w->struts ())
+	    l.push_back (w);
+    }
+
+    return l;
+}
+
+
 void
-PlaceScreen::doHandleScreenSizeChange (bool firstPass,
-				       int  newWidth,
+PlaceScreen::doHandleScreenSizeChange (int  newWidth,
 				       int  newHeight)
 {
-    int            vpX, vpY, shiftX, shiftY;
-    CompRect       extents;
-    XWindowChanges xwc;
-    CompRect       vpRelRect, winRect, workArea;
-    int		   pivotX, pivotY;
-    unsigned int   mask;
-    int		   curVpOffsetX = screen->vp ().x () * screen->width ();
-    int		   curVpOffsetY = screen->vp ().y () * screen->height ();
-
-    if (firstPass)
-	mStrutWindowCount = 0;
-    else
-	if (mResChangeFallbackHandle.active ())
-	{
-	    mResChangeFallbackHandle.stop ();
-	}
-
     foreach (CompWindow *w, screen->windows ())
     {
 	if (!w->managed ())
 	    continue;
 
-	PLACE_WINDOW (w);
-
-	if (firstPass)
-	{
-	    /* count the windows that have struts */
-	    if (w->struts ())
-		mStrutWindowCount++;
-
-	    /* for maximized/fullscreen windows, keep window coords before
-	     * screen resize, as they are sometimes automaticall changed
-	     * before the 2nd pass */
-
-	    if (w->type () & CompWindowTypeFullscreenMask ||
-		(w->state () & (CompWindowStateMaximizedVertMask |
-			        CompWindowStateMaximizedHorzMask)))
-	    {
-		pw->mPrevServer.set (w->serverX (), w->serverY ());
-	    }
-	}
-
 	if (w->wmType () & (CompWindowTypeDockMask |
 			    CompWindowTypeDesktopMask))
-	{
-	    continue;
-	}
-
-	/* Also in the first pass, we save the rectangle of those windows that
-	 * don't already have a saved one. So, skip those tat do. */
-
-	if (firstPass && pw->mSavedOriginal)
 	    continue;
 
-	winRect = ((CompRect) w->serverGeometry ());
+	PlaceWindow::get (w)->adjustForSize (mPrevSize, CompSize (newWidth, newHeight));
+    }
+}
 
+const compiz::window::Geometry &
+PlaceWindow::getGeometry () const
+{
+    return window->serverGeometry ();
+}
 
-	pivotX = winRect.x ();
-	pivotY = winRect.y ();
+const CompPoint &
+PlaceWindow::getViewport () const
+{
+    return screen->vp ();
+}
 
-	if (w->type () & CompWindowTypeFullscreenMask ||
-	    (w->state () & (CompWindowStateMaximizedVertMask |
-	    		    CompWindowStateMaximizedHorzMask)))
+const CompRect &
+PlaceWindow::getWorkarea (const compiz::window::Geometry &g) const
+{
+    return screen->getWorkareaForOutput (screen->outputDeviceForGeometry (g));
+}
+
+const compiz::window::extents::Extents &
+PlaceWindow::getExtents () const
+{
+    return window->border ();
+}
+
+void
+PlaceWindow::applyGeometry (compiz::window::Geometry &ng,
+			    compiz::window::Geometry &og)
+{
+    CompRect workArea = screen->getWorkareaForOutput (
+			    screen->outputDeviceForGeometry (og));
+
+    XWindowChanges xwc;
+    unsigned int   mask = og.changeMask (ng);
+
+    xwc.x = ng.x ();
+    xwc.y = ng.y ();
+    xwc.width = ng.width ();
+    xwc.height = ng.height ();
+    xwc.border_width = ng.border ();
+
+    window->configureXWindow (mask, &xwc);
+
+    if ((window->actions () & MAXIMIZE_STATE) == MAXIMIZE_STATE &&
+	(window->mwmDecor () & (MwmDecorAll | MwmDecorTitle))   &&
+	!(window->state () & CompWindowStateFullscreenMask))
+    {
+	if (og.width () >= workArea.width () &&
+	    og.height () >= workArea.height ())
 	{
-	    if (w->saveMask () & CWX)
-		winRect.setX (w->saveWc ().x);
-
-	    if (w->saveMask () & CWY)
-		winRect.setY (w->saveWc ().y);
-
-	    if (w->saveMask () & CWWidth)
-		winRect.setWidth (w->saveWc ().width);
-
-	    if (w->saveMask () & CWHeight)
-		winRect.setHeight (w->saveWc ().height);
-
-	    pivotX = pw->mPrevServer.x ();
-	    pivotY = pw->mPrevServer.y ();
-	}
-
-	/* calculate target vp x, y index for window's pivot point */
-	vpX = pivotX / newWidth;
-	if (pivotX < 0)
-	    vpX -= 1;
-	vpY = pivotY / newHeight;
-	if (pivotY < 0)
-	    vpY -= 1;
-
-	/* if window's target vp is to the left of the leftmost viewport on that
-	   row, assign its target vp column as 0 (-s->x rel. to current vp) */
-	if (screen->vp ().x () + vpX < 0)
-	    vpX = -screen->vp ().x ();
-
-	/* if window's target vp is above the topmost viewport on that column,
-	   assign its target vp row as 0 (-s->y rel. to current vp) */
-	if (screen->vp ().y () + vpY < 0)
-	    vpY = -screen->vp ().y ();
-
-	if (pw->mSavedOriginal)
-	{
-	    /* set position/size to saved original rectangle */
-	    vpRelRect = pw->mOrigVpRelRect;
-
-	    xwc.x = pw->mOrigVpRelRect.x () + vpX * screen->width ();
-	    xwc.y = pw->mOrigVpRelRect.y () + vpY * screen->height ();
-	}
-	else
-	{
-	    /* set position/size to window's current rectangle
-	       (with position relative to target viewport) */
-	    vpRelRect.setX (winRect.x () - vpX * mPrevSize.width ());
-	    vpRelRect.setY (winRect.y () - vpY * mPrevSize.height ());
-	    vpRelRect.setWidth (winRect.width ());
-	    vpRelRect.setHeight (winRect.height ());
-
-	    xwc.x = winRect.x ();
-	    xwc.y = winRect.y ();
-
-	    shiftX = vpX * (newWidth - screen->width ());
-	    shiftY = vpY * (newWidth - screen->height ());
-
-	    /* if coords. relative to viewport are outside new viewport area,
-	       shift window left/up so that it falls inside */
-	    if (vpRelRect.x () >= screen->width ())
-		shiftX -= vpRelRect.x () - (screen->width () - 1);
-	    if (vpRelRect.y () >= screen->height ())
-		shiftY -= vpRelRect.y () - (screen->height () - 1);
-
-	    if (shiftX)
-		xwc.x += shiftX;
-
-	    if (shiftY)
-		xwc.y += shiftY;
-	}
-
-	mask       = CWX | CWY | CWWidth | CWHeight;
-	xwc.width  = vpRelRect.width ();
-	xwc.height = vpRelRect.height ();
-
-	/* Handle non-(0,0) current viewport by shifting by curVpOffsetX,Y,
-	   and bring window to (0,0) by shifting by minus its vp offset */
-
-	xwc.x += curVpOffsetX - (screen->vp ().x () + vpX) * screen->width ();
-	xwc.y += curVpOffsetY - (screen->vp ().y () + vpY) * screen->height ();
-
-	workArea =
-	    pw->doValidateResizeRequest (mask, &xwc, FALSE, FALSE);
-
-	xwc.x -= curVpOffsetX - (screen->vp ().x () + vpX) * screen->width ();
-	xwc.y -= curVpOffsetY - (screen->vp ().y () + vpY) * screen->height ();
-
-	/* Check if the new coordinates are different than current position and
-	   size. If not, we can clear the corresponding mask bits. */
-	if (xwc.x == winRect.x ())
-	    mask &= ~CWX;
-
-	if (xwc.y == winRect.y ())
-	    mask &= ~CWY;
-
-	if (xwc.width == winRect.width ())
-	    mask &= ~CWWidth;
-
-	if (xwc.height == winRect.height ())
-	    mask &= ~CWHeight;
-
-	if (!pw->mSavedOriginal)
-	{
-	    if (mask)
-	    {
-		/* save window geometry (relative to viewport) so that it
-		can be restored later */
-		pw->mSavedOriginal = TRUE;
-		pw->mOrigVpRelRect = vpRelRect;
-	    }
-	}
-	else if (pw->mOrigVpRelRect.x () + vpX * newWidth == xwc.x &&
-		 pw->mOrigVpRelRect.y () + vpY * newHeight == xwc.y &&
-		 pw->mOrigVpRelRect.width ()  == xwc.width &&
-		 pw->mOrigVpRelRect.height () == xwc.height)
-	{
-	    /* if size and position is back to original, clear saved rect */
-	    pw->mSavedOriginal = FALSE;
-	}
-
-	if (firstPass) /* if first pass, don't actually move the window */
-	    continue;
-
-	/* for maximized/fullscreen windows, update saved pos/size */
-	if (w->type () & CompWindowTypeFullscreenMask ||
-	    (w->state () & (CompWindowStateMaximizedVertMask |
-			 CompWindowStateMaximizedHorzMask)))
-	{
-	    if (mask & CWX)
-	    {
-		w->saveWc ().x = xwc.x;
-		w->saveMask () |= CWX;
-	    }
-	    if (mask & CWY)
-	    {
-		w->saveWc ().y = xwc.y;
-		w->saveMask () |= CWY;
-	    }
-	    if (mask & CWWidth)
-	    {
-		w->saveWc ().width = xwc.width;
-		w->saveMask () |= CWWidth;
-	    }
-	    if (mask & CWHeight)
-	    {
-		w->saveWc ().height = xwc.height;
-		w->saveMask () |= CWHeight;
-	    }
-
-	    if (w->type () & CompWindowTypeFullscreenMask)
-	    {
-		mask |= CWX | CWY | CWWidth | CWHeight;
-		xwc.x = vpX * screen->width ();
-		xwc.y = vpY * screen->height ();
-		xwc.width  = screen->width ();
-		xwc.height = screen->height ();
-	    }
-	    else
-	    {
-		if (w->state () & CompWindowStateMaximizedHorzMask)
-		{
-		    mask |= CWX | CWWidth;
-		    xwc.x = vpX * screen->width () + workArea.x () + w->border ().left;
-		    xwc.width = workArea.width () -
-			(2 * w->serverGeometry ().border () +
-			 w->border ().left + w->border ().right);
-		}
-		if (w->state () & CompWindowStateMaximizedVertMask)
-		{
-		    mask |= CWY | CWHeight;
-		    xwc.y = vpY * screen->height () + workArea.y () + w->border ().top;
-		    xwc.height = workArea.height () -
-			(2 * w->serverGeometry ().border () +
-			 w->border ().top + w->border ().bottom);
-		}
-	    }
-	}
-	if (mask)
-	{
-	    /* actually move/resize window in directions given by mask */
-	    w->configureXWindow (mask, &xwc);
+	    sendMaximizationRequest ();
 	}
     }
 }
@@ -304,12 +140,12 @@ PlaceScreen::handleScreenSizeChangeFallback (int width,
 					     int height)
 {
     /* If countdown is not finished yet (i.e. at least one struct window didn't
-     * update its struts), reset the count down and do the 2nd pass here */
+     * update its struts), reset the count down and move windows around here */
 
     if (mStrutWindowCount > 0) /* no windows with struts found */
     {
 	mStrutWindowCount = 0;
-	doHandleScreenSizeChange (false, width, height);
+	doHandleScreenSizeChange (width, height);
     }
 
     return false;
@@ -319,45 +155,44 @@ void
 PlaceScreen::handleScreenSizeChange (int width,
 				     int height)
 {
-    CompRect       extents;
-
-    if (screen->width () == width && screen->height () == height)
+    if (mPrevSize == CompSize (width, height))
 	return;
 
-    mPrevSize.setWidth (screen->width ());
-    mPrevSize.setHeight (screen->height ());
+    mResChangeFallbackHandle.stop ();
+    mStrutWindows = compiz::place::collectStrutWindows (screen->windows ());
 
-    if (mResChangeFallbackHandle.active ())
-	mResChangeFallbackHandle.stop ();
-
-    doHandleScreenSizeChange (true, width, height);
-
-    if (mStrutWindowCount == 0) /* no windows with struts found */
-    {
-	mResChangeFallbackHandle.stop ();
-	/* do the 2nd pass right here instead of handleEvent */
-
-	doHandleScreenSizeChange (false, width, height);
-    }
+    /* Don't wait for strut windows to update if there are none */
+    if (mStrutWindows.empty ())
+	doHandleScreenSizeChange (width, height);
     else
     {
-        mResChangeFallbackHandle.setCallback (
-        	      boost::bind (&PlaceScreen::handleScreenSizeChangeFallback,
-        		           this, width, height));
+	/* Wait for windows with set struts to update their struts, but
+	 * if one of them isn't updating them, have a fallback to ignore them */
+	mResChangeFallbackHandle.setCallback (
+		      boost::bind (&PlaceScreen::handleScreenSizeChangeFallback,
+				   this, width, height));
 	mResChangeFallbackHandle.start ();
     }
+
 }
 
 void
 PlaceScreen::handleEvent (XEvent *event)
 {
+    if (event->type == ConfigureNotify &&
+	event->xconfigure.window == screen->root ())
+    {
+	mPrevSize.setWidth (screen->width ());
+	mPrevSize.setHeight (screen->height ());
+    }
+
+    screen->handleEvent (event);
+
     switch (event->type)
     {
 	case ConfigureNotify:
 	    {
-
-		if (event->type == ConfigureNotify &&
-		event->xconfigure.window == screen->root ())
+		if (event->xconfigure.window == screen->root ())
 		{
 		    handleScreenSizeChange (event->xconfigure.width,
 					    event->xconfigure.height);
@@ -373,23 +208,15 @@ PlaceScreen::handleEvent (XEvent *event)
 	        w = screen->findWindow (event->xproperty.window);
 	        if (w)
 	        {
+		    mStrutWindows.remove (w);
 		    /* Only do when handling screen size change.
 		       ps->strutWindowCount is 0 at any other time */
-		    if (mStrutWindowCount > 0 &&
-		        w->updateStruts ())
-		    {
-		        mStrutWindowCount--;
-		        screen->updateWorkarea ();
-
-		        /* if this was the last window with struts */
-		        if (!mStrutWindowCount)
-			    doHandleScreenSizeChange (false, screen->width (),
-			    				     screen->height ()); /* 2nd pass */
-		    }
+		    if (mStrutWindows.empty ())
+			doHandleScreenSizeChange (screen->width (),
+						  screen->height ()); /* 2nd pass */
 	        }
 	    }
     }
-    screen->handleEvent (event);
 }
 
 /* sort functions */
@@ -441,7 +268,7 @@ compareNorthWestCorner (CompWindow *a,
 
 PlaceWindow::PlaceWindow (CompWindow *w) :
     PluginClassHandler<PlaceWindow, CompWindow> (w),
-    mSavedOriginal (false),
+    compiz::place::ScreenSizeChangeObject (w->serverGeometry ()),
     window (w),
     ps (PlaceScreen::get (screen))
 {
@@ -1689,12 +1516,10 @@ PlaceWindow::grabNotify (int x,
 			 unsigned int state,
 			 unsigned int mask)
 {
-    if (mSavedOriginal)
-    {
-	if (screen->grabExist ("move") ||
-	    screen->grabExist ("resize"))
-	    mSavedOriginal = false;
-    }
+    /* Don't restore geometry if the user moved the window */
+    if (screen->grabExist ("move") ||
+	screen->grabExist ("resize"))
+	unset ();
 
     window->grabNotify (x, y, state, mask);
 }
