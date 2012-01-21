@@ -40,6 +40,7 @@
 
 #include <core/icon.h>
 #include <core/atoms.h>
+#include "core/windowconstrainment.h"
 #include "privatewindow.h"
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
@@ -4702,148 +4703,29 @@ CompWindow::constrainNewWindowSize (int        width,
 				    int        *newWidth,
 				    int        *newHeight)
 {
-    const XSizeHints *hints = &priv->sizeHints;
-    int              oldWidth = width;
-    int              oldHeight = height;
-    int		     min_width = 0;
-    int		     min_height = 0;
-    int		     base_width = 0;
-    int		     base_height = 0;
-    int		     xinc = 1;
-    int		     yinc = 1;
-    int		     max_width = MAXSHORT;
-    int		     max_height = MAXSHORT;
-    long	     flags = hints->flags;
-    long	     resizeIncFlags = (flags & PResizeInc) ? ~0 : 0;
+    CompSize         size (width, height);
+    long	     ignoredHints = 0;
+    long	     ignoredResizeHints = 0;
 
     if (screen->priv->optionGetIgnoreHintsWhenMaximized ())
     {
-	if (priv->state & MAXIMIZE_STATE)
-	{
-	    flags &= ~PAspect;
+	ignoredHints |= PAspect;
 
-	    if (priv->state & CompWindowStateMaximizedHorzMask)
-		resizeIncFlags &= ~PHorzResizeInc;
+	if (priv->state & CompWindowStateMaximizedHorzMask)
+	    ignoredResizeHints |= PHorzResizeInc;
 
-	    if (priv->state & CompWindowStateMaximizedVertMask)
-		resizeIncFlags &= ~PVertResizeInc;
-	}
+	if (priv->state & CompWindowStateMaximizedVertMask)
+	    ignoredResizeHints |= PVertResizeInc;
     }
 
-    /* Ater gdk_window_constrain_size(), which is partially borrowed from fvwm.
-     *
-     * Copyright 1993, Robert Nation
-     *     You may use this code for any purpose, as long as the original
-     *     copyright remains in the source code and all documentation
-     *
-     * which in turn borrows parts of the algorithm from uwm
-     */
+    CompSize ret = compiz::window::constrainment::constrainToHints (priv->sizeHints,
+								    size,
+								    ignoredHints, ignoredResizeHints);
 
-#define FLOOR(value, base) (((int) ((value) / (base))) * (base))
-#define FLOOR64(value, base) (((uint64_t) ((value) / (base))) * (base))
+    *newWidth = ret.width ();
+    *newHeight = ret.height ();
 
-    if ((flags & PBaseSize) && (flags & PMinSize))
-    {
-	base_width = hints->base_width;
-	base_height = hints->base_height;
-	min_width = hints->min_width;
-	min_height = hints->min_height;
-    }
-    else if (flags & PBaseSize)
-    {
-	base_width = hints->base_width;
-	base_height = hints->base_height;
-	min_width = hints->base_width;
-	min_height = hints->base_height;
-    }
-    else if (flags & PMinSize)
-    {
-	base_width = hints->min_width;
-	base_height = hints->min_height;
-	min_width = hints->min_width;
-	min_height = hints->min_height;
-    }
-
-    if (flags & PMaxSize)
-    {
-	max_width = hints->max_width;
-	max_height = hints->max_height;
-    }
-
-    if (resizeIncFlags & PHorzResizeInc)
-	xinc = MAX (xinc, hints->width_inc);
-
-    if (resizeIncFlags & PVertResizeInc)
-	yinc = MAX (yinc, hints->height_inc);
-
-    /* clamp width and height to min and max values */
-    width  = CLAMP (width, min_width, max_width);
-    height = CLAMP (height, min_height, max_height);
-
-    /* shrink to base + N * inc */
-    width  = base_width + FLOOR (width - base_width, xinc);
-    height = base_height + FLOOR (height - base_height, yinc);
-
-    /* constrain aspect ratio, according to:
-     *
-     * min_aspect.x       width      max_aspect.x
-     * ------------  <= -------- <=  -----------
-     * min_aspect.y       height     max_aspect.y
-     */
-    if ((flags & PAspect) && hints->min_aspect.y > 0 && hints->max_aspect.x > 0)
-    {
-	/* Use 64 bit arithmetic to prevent overflow */
-
-	uint64_t min_aspect_x = hints->min_aspect.x;
-	uint64_t min_aspect_y = hints->min_aspect.y;
-	uint64_t max_aspect_x = hints->max_aspect.x;
-	uint64_t max_aspect_y = hints->max_aspect.y;
-	uint64_t delta;
-
-	if (min_aspect_x * height > width * min_aspect_y)
-	{
-	    delta = FLOOR64 (height - width * min_aspect_y / min_aspect_x,
-			     yinc);
-	    if (height - (int) delta >= min_height)
-		height -= delta;
-	    else
-	    {
-		delta = FLOOR64 (height * min_aspect_x / min_aspect_y - width,
-				 xinc);
-		if (width + (int) delta <= max_width)
-		    width += delta;
-	    }
-	}
-
-	if (width * max_aspect_y > max_aspect_x * height)
-	{
-	    delta = FLOOR64 (width - height * max_aspect_x / max_aspect_y,
-			     xinc);
-	    if (width - (int) delta >= min_width)
-		width -= delta;
-	    else
-	    {
-		delta = FLOOR64 (width * min_aspect_y / min_aspect_x - height,
-				 yinc);
-		if (height + (int) delta <= max_height)
-		    height += delta;
-	    }
-	}
-    }
-
-#undef CLAMP
-#undef FLOOR64
-#undef FLOOR
-
-    if (width != oldWidth || height != oldHeight)
-    {
-	*newWidth  = width;
-	*newHeight = height;
-
-	return true;
-    }
-
-    return false;
+    return ret != size;
 }
 
 void
