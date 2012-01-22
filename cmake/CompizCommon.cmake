@@ -42,7 +42,8 @@ set (
     COMPIZ_I18N_DIR ${COMPIZ_I18N_DIR} CACHE PATH "Translation file directory"
 )
 
-set (COMMON_FLAGS "-Wall")
+# Almost everything is a shared library now, so almost everything needs -fPIC
+set (COMMON_FLAGS "-fPIC -Wall")
 
 option (COMPIZ_DEPRECATED_WARNINGS "Warn about declarations marked deprecated" OFF)
 if (NOT COMPIZ_DEPRECATED_WARNINGS)
