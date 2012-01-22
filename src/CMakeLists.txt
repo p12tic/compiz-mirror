@@ -143,10 +143,10 @@ target_link_libraries (
 )
 
 install (
-    TARGETS compiz_core
+    TARGETS compiz_core compiz
     RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
-  	LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
-  	ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
+    LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
+    ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
 )
 add_subdirectory(tests)
 
