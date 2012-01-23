@@ -423,10 +423,10 @@ ExpoScreen::preparePaint (int msSinceLastPaint)
 	{
 	    float fi = (float) i;
 
-	    vpNormals[i * 3] = (-sin (fi * DEG2RAD) / screen->width ()) *
+	    vpNormals[i * 3] = (-sin (fi * (M_PI / 180.0f)) / screen->width ()) *
 			       expoCam;
 	    vpNormals[(i * 3) + 1] = 0.0;
-	    vpNormals[(i * 3) + 2] = (-cos (fi * DEG2RAD) * expoCam) -
+	    vpNormals[(i * 3) + 2] = (-cos (fi * (M_PI / 180.0f)) * expoCam) -
 		                     (1 - expoCam);
 	}
     }
@@ -857,9 +857,9 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 	curveAngle = interpolate (180 / vpSize.x (), 1, optionGetCurve ());
 
     curveDistance = ((0.5f * sx) + (gapX / 2.0)) /
-	            tanf (DEG2RAD * curveAngle / 2.0);
+	            tanf ((M_PI / 180.0f) * curveAngle / 2.0);
     curveRadius   = ((0.5f * sx) + (gapX / 2.0)) /
-		    sinf (DEG2RAD * curveAngle / 2.0);
+		    sinf ((M_PI / 180.0f) * curveAngle / 2.0);
 
     expoActive = true;
 
