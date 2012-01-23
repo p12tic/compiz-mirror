@@ -142,11 +142,37 @@ target_link_libraries (
     compiz_core
 )
 
+get_target_property (lm_headers     compiz_logmessage            PUBLIC_HEADER)
+get_target_property (pch_headers    compiz_pluginclasshandler    PUBLIC_HEADER)
+get_target_property (point_headers  compiz_point                 PUBLIC_HEADER)
+get_target_property (rect_headers   compiz_rect                  PUBLIC_HEADER)
+get_target_property (string_headers compiz_string                PUBLIC_HEADER)
+get_target_property (timer_headers  compiz_timer                 PUBLIC_HEADER)
+get_target_property (we_headers     compiz_window_extents        PUBLIC_HEADER)
+get_target_property (wgs_headers    compiz_window_geometry_saver PUBLIC_HEADER)
+get_target_property (wg_headers     compiz_window_geometry       PUBLIC_HEADER)
+get_target_property (wc_headers     compiz_window_constrainment  PUBLIC_HEADER)
+set (core_headers
+    ${lm_headers}
+    ${pch_headers}
+    ${point_headers}
+    ${rect_headers}
+    ${string_headers}
+    ${timer_headers}
+    ${we_headers}
+    ${wgs_headers}
+    ${wg_headers}
+    ${wc_headers}
+)
+set_target_properties (compiz_core PROPERTIES
+    PUBLIC_HEADER "${core_headers}"
+)
+
 install (
     TARGETS compiz_core compiz
     RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
     LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
-    ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
+    PUBLIC_HEADER DESTINATION include/compiz/core
 )
 add_subdirectory(tests)
 

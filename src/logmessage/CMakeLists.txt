@@ -28,10 +28,3 @@ SET_TARGET_PROPERTIES(
   PUBLIC_HEADER "${PUBLIC_HEADERS}"
 )
 
-INSTALL(
-  TARGETS                                 compiz_logmessage
-  RUNTIME             DESTINATION         bin
-  LIBRARY             DESTINATION         lib
-  ARCHIVE             DESTINATION         lib
-  PUBLIC_HEADER       DESTINATION         include/compiz/core
-)

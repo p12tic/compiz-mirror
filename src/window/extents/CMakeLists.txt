@@ -49,16 +49,6 @@ SET_TARGET_PROPERTIES(
   PUBLIC_HEADER "${PUBLIC_HEADERS}"
 )
 
-INSTALL(
-  TARGETS                                 compiz_window_extents
-  RUNTIME             DESTINATION         bin
-  LIBRARY             DESTINATION         lib
-  ARCHIVE             DESTINATION         lib
-  PUBLIC_HEADER       DESTINATION         include/compiz/core
-)
-
-
-
 TARGET_LINK_LIBRARIES( 
   compiz_window_extents
   compiz_point
