@@ -57,21 +57,13 @@ CompManager::usage ()
 }
 
 static void
-signalHandler (int sig)
+chldSignalHandler (int sig)
 {
     int status;
 
     switch (sig) {
     case SIGCHLD:
 	waitpid (-1, &status, WNOHANG | WUNTRACED);
-	break;
-    case SIGHUP:
-	restartSignal = true;
-	break;
-    case SIGINT:
-    case SIGTERM:
-	shutDown = true;
-    default:
 	break;
     }
 }
@@ -248,10 +240,7 @@ main (int argc, char **argv)
     programArgc = argc;
     programArgv = argv;
 
-    signal (SIGHUP, signalHandler);
-    signal (SIGCHLD, signalHandler);
-    signal (SIGINT, signalHandler);
-    signal (SIGTERM, signalHandler);
+    signal (SIGCHLD, chldSignalHandler);
 
     if (!manager.parseArguments (argc, argv))
 	return 0;
