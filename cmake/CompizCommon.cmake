@@ -69,18 +69,6 @@ endif ()
 set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${COMMON_FLAGS}")
 set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${COMMON_FLAGS}")
 
-if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
-    set(IS_GIT_REPO 1)
-else (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
-    set(IS_GIT_REPO 0)
-endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.git)
-
-if (EXISTS ${CMAKE_SOURCE_DIR}/.gitmodules)
-    set(IS_GIT_SUBMODULES_REPO 1)
-else (EXISTS ${CMAKE_SOURCE_DIR}/.gitmodules)
-    set(IS_GIT_SUBMODULES_REPO 0)
-endif (EXISTS ${CMAKE_SOURCE_DIR}/.gitmodules)
-
 if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 1)
 elseif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
@@ -103,43 +91,9 @@ endfunction ()
 
 macro (compiz_add_git_dist)
 
-	# Try to use the git and bzr inbuilt functions for generating
-	# archives first, otherwise do it manually
-	if (${IS_GIT_REPO})
-
-		if (${IS_GIT_SUBMODULES_REPO})
-			find_program (GIT_ARCHIVE_ALL git-archive-all.sh)
-
-			if (NOT (${GIT_ARCHIVE_ALL} STREQUAL "GIT_ARCHIVE_ALL-NOTFOUND"))
-				add_custom_target (dist ${GIT_ARCHIVE_ALL} --prefix ${CMAKE_PROJECT_NAME}-${VERSION}/ ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
-						   COMMAND bzip2 ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
-						   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-						   COMMENT "Creating bz2 archive")
-			else (NOT (${GIT_ARCHIVE_ALL} STREQUAL "GIT_ARCHIVE_ALL-NOTFOUND"))
-				add_custom_target (dist
-						   COMMAND echo "[WARNING]: git-archive-all.sh is needed to make releases of git submodules, get it from https://github.com/meitar/git-archive-all.sh.git and install it into your PATH"
-						   COMMENT "Creating bz2 archive"
-						   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-				message ("[WARNING]: git-archive-all.sh is needed to make releases of git submodules, get it from https://github.com/meitar/git-archive-all.sh.git and install it into your PATH")
-			endif (NOT (${GIT_ARCHIVE_ALL} STREQUAL "GIT_ARCHIVE_ALL-NOTFOUND"))
-		else (${IS_GIT_SUBMODULES_REPO})
-			add_custom_target (dist git archive --format=tar --prefix ${CMAKE_PROJECT_NAME}-${VERSION}/ -o ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar HEAD
-						   COMMAND bzip2 ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar
-						   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
-						   COMMENT "Creating bz2 archive")
-		endif (${IS_GIT_SUBMODULES_REPO})
-	else (${IS_GIT_REPO})
-		if (${IS_BZR_REPO})
-			add_custom_target (dist
-					   COMMAND bzr export --root=${CMAKE_PROJECT_NAME}-${VERSION} ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
-					   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-		else (${IS_BZR_REPO})
-			add_custom_target (dist)
-			#add_custom_target (dist 
-			#		   COMMAND tar -cvf ${CMAKE_SOURCE_DIR} | bzip2 > ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
-			#		   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/../)
-		endif (${IS_BZR_REPO})
-	endif (${IS_GIT_REPO})
+	add_custom_target (dist
+			   COMMAND bzr export --root=${CMAKE_PROJECT_NAME}-${VERSION} ${CMAKE_BINARY_DIR}/${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
+			   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 endmacro ()
 
@@ -170,61 +124,17 @@ macro (compiz_add_release_signoff)
 	add_custom_target (release-signoff)
 
 	add_custom_target (release-update-working-tree
-			   COMMAND cp NEWS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/NEWS &&
-				   cp AUTHORS ${CMAKE_SOURCE_DIR} && git add ${CMAKE_SOURCE_DIR}/AUTHORS
+			   COMMAND cp NEWS ${CMAKE_SOURCE_DIR} && bzr add ${CMAKE_SOURCE_DIR}/NEWS &&
+				   cp AUTHORS ${CMAKE_SOURCE_DIR} && bzr add ${CMAKE_SOURCE_DIR}/AUTHORS
 			   COMMENT "Updating working tree"
 			   WORKING_DIRECTORY ${CMAKE_BINARY_DIR}) 
 
-	if (${IS_GIT_REPO})
-		add_custom_target (release-commits
-				   COMMAND git commit -a -m "Update NEWS for ${VERSION}"
-				   COMMENT "Release Commit"
-				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-		add_custom_target (release-tags
-				   COMMAND git tag -u $ENV{RELEASE_KEY} compiz-${VERSION} HEAD -m "Compiz ${VERSION} Release"
-				   COMMENT "Release Tags"
-				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-		add_custom_target (release-branch
-				   COMMAND git checkout -b compiz-${VERSION}-series && 
-				   touch RELEASED && 
-				   git add RELEASED &&
-				   cat VERSION > RELEASED &&
-				   git commit -a -m "Add RELEASED file"
-				   COMMENT "Release Branch"
-				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-		add_custom_target (release-update-dist
-				   COMMAND git checkout master &&
-				   rm ${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2 &&
-				   make dist
-				   COMMENT "Updating bz2 archive"
-				   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-
-		if (AUTO_VERSION_UPDATE)
-			add_custom_target (release-version-bump
-					   COMMAND git checkout master &&
-					   echo "${AUTO_VERSION_UPDATE}" > VERSION &&
-					   git add VERSION &&
-					   git commit VERSION -m "Bump VERSION"
-					   COMMENT "Bumping VERSION"
-					   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-		else (AUTO_VERSION_UPDATE)
-			add_custom_target (release-version-bump
-					   COMMAND git checkout master &&
-					   $ENV{EDITOR} VERSION &&
-					   git add VERSION &&		
-					   git commit VERSION -m "Bump VERSION"
-					   COMMENT "Bumping VERSION"
-					   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-		endif (AUTO_VERSION_UPDATE)
-
-	else (${IS_GIT_REPO})
-	    add_custom_target (release-commits)
-	    add_custom_target (release-tags)
-	    add_custom_target (release-branch)
-	    add_custom_target (release-update-dist)
-	    add_custom_target (release-version-bump)
-
-	endif (${IS_GIT_REPO})
+	# TODO
+	add_custom_target (release-commits)
+	add_custom_target (release-tags)
+	add_custom_target (release-branch)
+	add_custom_target (release-update-dist)
+	add_custom_target (release-version-bump)
 
 	add_custom_target (release-sign-tarballs
 		   COMMAND gpg --armor --sign --detach-sig ${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2
@@ -248,29 +158,12 @@ macro (compiz_add_release_signoff)
 	add_dependencies (release-sha1-tarballs release-sign-tarballs)
 	add_dependencies (release-sign-sha1-tarballs release-sha1-tarballs)
 
-	# This means that releasing needs to be done from a git repo for now
-	# But that's fine
 	add_dependencies (release-signoff release-sign-sha1-tarballs)
 
 	# Actually pushes the release
-	if (${IS_GIT_REPO})
-		add_custom_target (push-master
-				   COMMAND git push origin master
-				   COMMENT "Pushing to master"
-				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-		add_custom_target (push-release-branch
-				   COMMAND git push origin compiz-${VERSION}-series
-				   COMMENT "Pushing to compiz-${VERSION}-series"
-				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-		add_custom_target (push-tag
-				   COMMAND git push origin compiz-${VERSION}
-				   COMMENT "Pushing tag compiz-${VERSION}"
-				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-	else (${IS_GIT_REPO})
-		add_custom_target (push-master)
-		add_custom_target (push-release-branch)
-		add_custom_target (push-tag)
-	endif (${IS_GIT_REPO})
+	add_custom_target (push-master)
+	add_custom_target (push-release-branch)
+	add_custom_target (push-tag)
 
 	add_custom_target (release-push)
 
@@ -279,23 +172,9 @@ macro (compiz_add_release_signoff)
 	add_dependencies (push-tag push-master)
 
 	# Push the tarball to releases.compiz.org
-	set (COMPIZ_RELEASE_UPLOAD_HOST 	releases.compiz.org)
-	set (COMPIZ_RELEASE_UPLOAD_BASE 	/home/releases)
-	set (COMPIZ_RELEASE_UPLOAD_DIR_VERSION	${COMPIZ_RELEASE_UPLOAD_BASE}/${VERSION}/)
-	set (COMPIZ_RELEASE_UPLOAD_DIR_COMPONENT ${COMPIZ_RELEASE_UPLOAD_BASE}/components/${CMAKE_PROJECT_NAME})
-
-	add_custom_target (release-upload-version
-			   COMMAND ssh $ENV{USER}@${COMPIZ_RELEASE_UPLOAD_HOST} "mkdir -p ${COMPIZ_RELEASE_UPLOAD_BASE}/${VERSION}" && scp ${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2 $ENV{USER}@${COMPIZ_RELEASE_UPLOAD_HOST}:${COMPIZ_RELEASE_UPLOAD_DIR_VERSION}
-			   COMMENT "Uploading ${CMAKE_PROJECT_NAME}-${VERSION} to ${VERSION}"
-			   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
 
 	# Does nothing for now
 	add_custom_target (release-upload-component)
-	#add_custom_target (release-upload-component
-	#		   COMMAND ssh $ENV{USER}@${COMPIZ_RELEASE_UPLOAD_HOST} "mkdir -p ${COMPIZ_RELEASE_UPLOAD_BASE}/${VERSION}" && scp ${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2 ${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2.asc ${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2.sha1 ${CMAKE_PROJECT_NAME}-${VERSION}.tar.bz2.sha1.asc $ENV{USER}@${COMPIZ_RELEASE_UPLOAD_HOST}:${COMPIZ_RELEASE_UPLOAD_BASE_DIR_COMPONENT}
-	#		   COMMENT "Uploading ${CMAKE_PROJECT_NAME}-${VERSION} to ${CMAKE_PROJECT_NAME}/${VERSION}"
-	#		   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-
 	add_custom_target (release-upload)
 
 	add_dependencies (release-upload-component release-upload-version)
@@ -315,49 +194,22 @@ macro (compiz_add_release)
 		file (WRITE ${CMAKE_SOURCE_DIR}/.AUTHORS.sed "")
 	endif (NOT EXISTS ${CMAKE_SOURCE_DIR}/.AUTHORS.sed)
 
-	if (${IS_GIT_REPO})
-		find_program (GEN_GIT_LOG gen-git-log.sh)
-		add_custom_target (authors
-				   COMMAND git shortlog -se | cut -c8- | sed -r -f ${CMAKE_SOURCE_DIR}/.AUTHORS.sed  | sort -u  > AUTHORS
-				   COMMENT "Generating AUTHORS"
-				   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
+	add_custom_target (authors
+			   COMMAND bzr log --long --levels=0 | grep -e "^\\s*author:" -e "^\\s*committer:" | cut -d ":" -f 2 | sed -r -f ${CMAKE_SOURCE_DIR}/.AUTHORS.sed  | sort -u > AUTHORS
+			   COMMENT "Generating AUTHORS")
 
-		if (AUTO_NEWS_UPDATE)
-			add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
-					   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`git config user.name`' <'`git config user.email`'>)' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo '${AUTO_NEWS_UPDATE}' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
-					   COMMENT "Generating NEWS Header"
-					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-		else (AUTO_NEWS_UPDATE)
-			add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
-					   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`git config user.name`' <'`git config user.email`'>)' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
-					   COMMENT "Generating NEWS Header"
-					   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})
-		endif (AUTO_NEWS_UPDATE)
+	if (AUTO_NEWS_UPDATE)
 
-	else (${IS_GIT_REPO})
-		if (${IS_BZR_REPO})
-			add_custom_target (authors
-					   COMMAND bzr log --long --levels=0 | grep -e "^\\s*author:" -e "^\\s*committer:" | cut -d ":" -f 2 | sed -r -f ${CMAKE_SOURCE_DIR}/.AUTHORS.sed  | sort -u > AUTHORS
-					   COMMENT "Generating AUTHORS")
-
-			if (AUTO_NEWS_UPDATE)
-
-				add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
-						   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo '${AUTO_NEWS_UPDATE}' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
-						   COMMENT "Generating NEWS Header"
-						   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-			else (AUTO_NEWS_UPDATE)
-				add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
-						   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
-						   COMMENT "Generating NEWS Header"
-						   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
-			endif (AUTO_NEWS_UPDATE)
-
-		else (${IS_BZR_REPO})
-			add_custom_target (authors)
-			add_custom_target (news-header)
-		endif (${IS_BZR_REPO})
-	endif (${IS_GIT_REPO})
+		add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
+				   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo '${AUTO_NEWS_UPDATE}' >> ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
+				   COMMENT "Generating NEWS Header"
+				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+	else (AUTO_NEWS_UPDATE)
+		add_custom_target (news-header echo > ${CMAKE_BINARY_DIR}/NEWS.update
+				   COMMAND echo 'Release ${VERSION} ('`date +%Y-%m-%d`' '`bzr config email`')' > ${CMAKE_BINARY_DIR}/NEWS.update && seq -s "=" `cat ${CMAKE_BINARY_DIR}/NEWS.update | wc -c` | sed 's/[0-9]//g' >> ${CMAKE_BINARY_DIR}/NEWS.update && $ENV{EDITOR} ${CMAKE_BINARY_DIR}/NEWS.update && echo >> ${CMAKE_BINARY_DIR}/NEWS.update
+				   COMMENT "Generating NEWS Header"
+				   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
+	endif (AUTO_NEWS_UPDATE)
 
 	add_custom_target (news
 			   COMMAND cat ${CMAKE_SOURCE_DIR}/NEWS > NEWS.old &&
