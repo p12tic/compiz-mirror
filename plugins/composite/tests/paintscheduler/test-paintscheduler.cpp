@@ -281,6 +281,11 @@ class DummyPaintDispatch :
 	Glib::RefPtr <Glib::MainLoop> ml;
 };
 
+namespace
+{
+CompTimeoutSource *timeout;
+}
+
 float
 VBlankWaiter::averagePeriod ()
 {
@@ -631,7 +636,7 @@ bool doTest (const std::string &testName, int refreshRate, float workFactor, boo
 
     Glib::RefPtr <Glib::MainContext> ctx = Glib::MainContext::get_default ();
     Glib::RefPtr <Glib::MainLoop> mainloop = Glib::MainLoop::create (ctx, false);
-    Glib::RefPtr <CompTimeoutSource> timeout = CompTimeoutSource::create (ctx);
+    timeout = CompTimeoutSource::create (ctx);
 
     DummyPaintDispatch *dpb = new DummyPaintDispatch (mainloop);
     VBlankWaiter       *vbwaiter = NULL;
@@ -675,6 +680,7 @@ bool doTest (const std::string &testName, int refreshRate, float workFactor, boo
     dpb->setWaiter (NULL);
 
     delete dpb;
+    delete timeout;
     delete th;
 
     return true;
