@@ -104,6 +104,18 @@ add_library (compiz_core SHARED
     ${_bcop_sources}
 )
 
+#
+# Normal libraries use the major version number of the library as their
+# ABI version. But compiz uses funky date numbers for ABI revisions instead.
+#
+set (abiversion_h "${compiz_SOURCE_DIR}/include/core/abiversion.h")
+file (STRINGS ${abiversion_h} abiline REGEX "^#define +CORE_ABIVERSION .+$")
+string (REGEX REPLACE "#define +CORE_ABIVERSION +" "" abiversion "${abiline}")
+set_target_properties (compiz_core PROPERTIES
+    VERSION ${VERSION}
+    SOVERSION "ABI-${abiversion}"
+)
+
 add_executable (compiz
     ${CMAKE_CURRENT_SOURCE_DIR}/main.cpp
 )
