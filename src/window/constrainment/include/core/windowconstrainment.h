@@ -47,8 +47,8 @@ const unsigned int PHorzResizeInc = (1 << 1);
 
 CompSize constrainToHints (const XSizeHints &hints,
 			   const CompSize   &size,
-			   unsigned int     ignoreHints,
-			   unsigned int     resizeIgnoreHints);
+			   long ignoreHints,
+			   long resizeIgnoreHints);
 }
 
 }
