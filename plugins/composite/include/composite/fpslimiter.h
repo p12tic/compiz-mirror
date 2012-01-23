@@ -25,52 +25,14 @@
  *          David Reveman <davidr@novell.com>
  */
 
-#include "composite/composite.h"
+#ifndef _COMPIZ_COMPOSITE_FPSLIMITER_H
+#define _COMPIZ_COMPOSITE_FPSLIMITER_H
 
-#include "privates.h"
-
-#include "core/abiversion.h"
-
-
-class CompositePluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<CompositeScreen, CompositeWindow>
+typedef enum
 {
-    public:
+    CompositeFPSLimiterModeDisabled = 0,
+    CompositeFPSLimiterModeDefault,
+    CompositeFPSLimiterModeVSyncLike
+} CompositeFPSLimiterMode;
 
-	bool init ();
-	void fini ();
-};
-
-COMPIZ_PLUGIN_20090315 (composite, CompositePluginVTable)
-
-CompOption::Vector &
-CompositeScreen::getOptions ()
-{
-    return priv->getOptions ();
-}
-
-bool
-CompositeScreen::setOption (const CompString  &name,
-			    CompOption::Value &value)
-{
-    return priv->setOption (name, value);
-}
-
-bool
-CompositePluginVTable::init ()
-{
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
-
-    CompPrivate p;
-    p.uval = COMPIZ_COMPOSITE_ABI;
-    screen->storeValue ("composite_ABI", p);
-
-    return true;
-}
-
-void
-CompositePluginVTable::fini ()
-{
-    screen->eraseValue ("composite_ABI");
-}
+#endif

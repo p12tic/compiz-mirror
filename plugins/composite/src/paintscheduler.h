@@ -25,52 +25,72 @@
  *          David Reveman <davidr@novell.com>
  */
 
-#include "composite/composite.h"
+#include <core/timer.h>
+#include <composite/fpslimiter.h>
 
-#include "privates.h"
+#ifndef _COMPIZ_COMPOSITE_PAINTSCHEDULER_H
+#define _COMPIZ_COMPOSITE_PAINTSCHEDULER_H
 
-#include "core/abiversion.h"
+namespace compiz
+{
+namespace composite
+{
+namespace scheduler
+{
 
+const unsigned int paintSchedulerScheduled = 1 << 0;
+const unsigned int paintSchedulerPainting = 1 << 1;
+const unsigned int paintSchedulerReschedule = 1 << 2;
 
-class CompositePluginVTable :
-    public CompPlugin::VTableForScreenAndWindow<CompositeScreen, CompositeWindow>
+class PaintSchedulerDispatchBase
 {
     public:
 
-	bool init ();
-	void fini ();
+	virtual void prepareScheduledPaint (unsigned int timeDiff) = 0;
+	virtual void paintScheduledPaint () = 0;
+	virtual bool syncScheduledPaint () = 0;
+	virtual void doneScheduledPaint () = 0;
+	virtual bool schedulerCompositingActive () = 0;
+	virtual bool schedulerHasVsync () = 0;
 };
 
-COMPIZ_PLUGIN_20090315 (composite, CompositePluginVTable)
-
-CompOption::Vector &
-CompositeScreen::getOptions ()
+class PaintScheduler
 {
-    return priv->getOptions ();
+    public:
+
+	PaintScheduler (PaintSchedulerDispatchBase *);
+	~PaintScheduler ();
+
+	bool schedule ();
+	void setFPSLimiterMode (CompositeFPSLimiterMode mode);
+	CompositeFPSLimiterMode getFPSLimiterMode ();
+
+	int getRedrawTime ();
+	int getOptimalRedrawTime ();
+
+	void setRefreshRate (unsigned int);
+
+    protected:
+
+	bool dispatch ();
+
+    private:
+
+	unsigned int   mSchedulerState;
+
+	struct timeval mLastRedraw;
+	int            mRedrawTime;
+	int            mOptimalRedrawTime;
+
+	CompositeFPSLimiterMode mFPSLimiterMode;
+
+	CompTimer mPaintTimer;
+
+	PaintSchedulerDispatchBase *mDispatchBase;
+};
+
+}
+}
 }
 
-bool
-CompositeScreen::setOption (const CompString  &name,
-			    CompOption::Value &value)
-{
-    return priv->setOption (name, value);
-}
-
-bool
-CompositePluginVTable::init ()
-{
-    if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))
-	return false;
-
-    CompPrivate p;
-    p.uval = COMPIZ_COMPOSITE_ABI;
-    screen->storeValue ("composite_ABI", p);
-
-    return true;
-}
-
-void
-CompositePluginVTable::fini ()
-{
-    screen->eraseValue ("composite_ABI");
-}
+#endif
