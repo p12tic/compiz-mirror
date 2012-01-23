@@ -28,7 +28,7 @@
 #ifndef _COMPACTION_H
 #define _COMPACTION_H
 
-#include <core/option.h>
+#include "core/option.h"
 
 #include <boost/function.hpp>
 

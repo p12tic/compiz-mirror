@@ -39,8 +39,6 @@
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
-#include "privatescreen.h"
-
 #if defined(HAVE_SCANDIR_POSIX)
   // POSIX (2008) defines the comparison function like this:
   #define scandir(a,b,c,d) scandir((a), (b), (c), (int(*)(const dirent **, const dirent **))(d));

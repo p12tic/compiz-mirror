@@ -9,6 +9,7 @@ add_subdirectory( point )
 add_subdirectory( rect )
 add_subdirectory( window )
 add_subdirectory( wrapsystem/tests )
+add_subdirectory( plugin )
 
 compiz_add_bcop_targets (
     core
