@@ -89,6 +89,8 @@ void
 MockScreenSizeChangeObject::applyGeometry (compiz::window::Geometry &n,
 					   compiz::window::Geometry &o)
 {
+    EXPECT_EQ (mCurrentGeometry, o);
+
     std::cout << "DEBUG: new geometry : " << n.x () << " "
 					  << n.y () << " "
 					  << n.width () << " "

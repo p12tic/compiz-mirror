@@ -330,9 +330,9 @@ class CompScreen :
 
 	int outputDeviceForGeometry (const CompWindow::Geometry& gm);
 
-	CompPoint vp ();
+	const CompPoint & vp () const;
 
-	CompSize vpSize ();
+	const CompSize  & vpSize () const;
 
 	int desktopWindowCount ();
 	unsigned int activeNum () const;
