@@ -27,47 +27,6 @@
 #include "core/window.h"
 
 
-CompWindow::Geometry::Geometry () :
-    mBorder (0)
-{
-}
-
-CompWindow::Geometry::Geometry (int x,
-				int y,
-				int width,
-				int height,
-				int border) :
-    CompRect (x, y, width, height),
-    mBorder (border)
-{
-}
-
-int
-CompWindow::Geometry::border () const
-{
-    return mBorder;
-}
-
-void
-CompWindow::Geometry::setBorder (int border)
-{
-    mBorder = border;
-}
-
-void
-CompWindow::Geometry::set (int x,
-			   int y,
-			   int width,
-			   int height,
-			   int border)
-{
-    setX (x);
-    setY (y);
-    setWidth (width);
-    setHeight (height);
-    mBorder = border;
-}
-
 CompWindow::Geometry &
 CompWindow::serverGeometry () const
 {
