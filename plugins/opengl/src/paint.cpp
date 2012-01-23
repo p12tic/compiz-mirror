@@ -33,6 +33,7 @@
 #include <math.h>
 
 #include <boost/foreach.hpp>
+#include <boost/scoped_array.hpp>
 #define foreach BOOST_FOREACH
 
 #include <opengl/opengl.h>
@@ -70,7 +71,9 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 {
     BoxPtr    pBox = const_cast <Region> (region.handle ())->rects;
     int	      n, nBox = const_cast <Region> (region.handle ())->numRects;
-    GLfloat   *d, *data;
+    GLfloat   *d;
+
+    boost::scoped_array <GLfloat> data;
 
     if (!nBox)
 	return;
@@ -94,15 +97,13 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 	backgroundLoaded = true;
     }
 
-    data = new GLfloat [nBox * 16];
-    if (!data)
-	return;
-
-    d = data;
-    n = nBox;
-
     if (backgroundTextures.empty ())
     {
+	data.reset (new GLfloat [nBox * 8]);
+
+	d = data.get ();
+	n = nBox;
+
 	while (n--)
 	{
 	    *d++ = pBox->x1;
@@ -120,14 +121,23 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 	    pBox++;
 	}
 
-	glVertexPointer (2, GL_FLOAT, sizeof (GLfloat) * 2, data);
+	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+
+	glVertexPointer (2, GL_FLOAT, sizeof (GLfloat) * 2, &data[0]);
 
 	glColor4us (0, 0, 0, std::numeric_limits<unsigned short>::max ());
 	glDrawArrays (GL_QUADS, 0, nBox * 4);
 	glColor4usv (defaultColor);
+
+	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
     }
     else
     {
+	data.reset (new GLfloat [nBox * 16]);
+
+	d = data.get ();
+	n = nBox;
+
 	for (unsigned int i = 0; i < backgroundTextures.size (); i++)
 	{
 	    GLTexture *bg = backgroundTextures[i];
@@ -135,7 +145,7 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 
 	    pBox = const_cast <Region> (r.handle ())->rects;
 	    nBox = const_cast <Region> (r.handle ())->numRects;
-	    d = data;
+	    d = data.get ();
 	    n = nBox;
 
 	    while (n--)
@@ -167,8 +177,8 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 		pBox++;
 	    }
 
-	    glTexCoordPointer (2, GL_FLOAT, sizeof (GLfloat) * 4, data);
-	    glVertexPointer (2, GL_FLOAT, sizeof (GLfloat) * 4, data + 2);
+	    glTexCoordPointer (2, GL_FLOAT, sizeof (GLfloat) * 4, &data[0]);
+	    glVertexPointer (2, GL_FLOAT, sizeof (GLfloat) * 4, &data[2]);
 
 	    if (bg->name ())
 	    {
@@ -183,8 +193,6 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 	    }
 	}
     }
-
-    delete [] data;
 }
 
 
