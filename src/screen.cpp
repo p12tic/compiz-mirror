@@ -60,11 +60,6 @@
 #include "privateaction.h"
 #include "privatestackdebugger.h"
 
-bool inHandleEvent = false;
-
-bool screenInitalized = false;
-
-CompScreen *targetScreen = NULL;
 CompOutput *targetOutput;
 
 int lastPointerX = 0;
@@ -73,6 +68,13 @@ unsigned int lastPointerMods = 0;
 int pointerX     = 0;
 int pointerY     = 0;
 unsigned int pointerMods = 0;
+
+namespace
+{
+bool inHandleEvent = false;
+
+bool screenInitalized = false;
+}
 
 #define MwmHintsFunctions   (1L << 0)
 #define MwmHintsDecorations (1L << 1)
@@ -118,17 +120,17 @@ PrivateScreen::handleSignal (int signum)
     {
 	case SIGINT:
 	case SIGTERM:
-	    shutDown = true;
+	    mainloop->quit ();
 	    break;
 	case SIGHUP:
 	    restartSignal = true;
+	    mainloop->quit ();
 	    break;
 	default:
 	    break;
     }
 
-    if (shutDown || restartSignal)
-	mainloop->quit ();
+    mainloop->quit ();
 }
 
 void
@@ -629,7 +631,7 @@ PrivateScreen::setOption (const CompString  &name,
 	    return screen->updateDefaultIcon ();
 	    break;
 	case CoreOptions::Outputs:
-	    if (!noDetection && optionGetDetectOutputs ())
+	    if (optionGetDetectOutputs ())
 		return false;
 	    updateOutputDevices ();
 	    break;
@@ -1110,7 +1112,7 @@ PrivateScreen::handleSelectionClear (XEvent *event)
 	wmSnAtom != event->xselectionclear.selection)
 	return;
 
-    shutDown = true;
+    mainloop->quit ();
 }
 
 #define IMAGEDIR "images"
@@ -1926,7 +1928,7 @@ PrivateScreen::updateOutputDevices ()
 void
 PrivateScreen::detectOutputDevices ()
 {
-    if (!noDetection && optionGetDetectOutputs ())
+    if (optionGetDetectOutputs ())
     {
 	CompString	  name;
 	CompOption::Value value;
