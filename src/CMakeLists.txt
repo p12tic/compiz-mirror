@@ -124,6 +124,7 @@ target_link_libraries (
     pthread 
     dl
     
+    -Wl,-whole-archive
     compiz_string
     compiz_timer
     compiz_logmessage
@@ -134,6 +135,7 @@ target_link_libraries (
     compiz_window_geometry_saver
     compiz_window_extents
     compiz_window_constrainment
+    -Wl,-no-whole-archive
 #    ${CORE_MOD_LIBRARIES}
 )
 
