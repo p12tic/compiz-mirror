@@ -21,6 +21,7 @@ set (CMAKE_SKIP_RPATH FALSE)
 option (COMPIZ_BUILD_WITH_RPATH "Leave as ON unless building packages" ON)
 option (COMPIZ_RUN_LDCONFIG "Leave OFF unless you need to run ldconfig after install")
 option (COMPIZ_PACKAGING_ENABLED "Enable to manually set prefix, exec_prefix, libdir, includedir, datadir" OFF)
+option (COMPIZ_BUILD_TESTING "Build Unit Tests" ON)
 set (COMPIZ_DESTDIR "${DESTDIR}" CACHE STRING "Leave blank unless building packages")
 
 if (NOT COMPIZ_DESTDIR)

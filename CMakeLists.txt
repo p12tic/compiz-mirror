@@ -120,13 +120,14 @@ install (
 )
 
 # Build Google Test and make its headers known
-find_package (GTest REQUIRED)
+find_package (GTest)
 find_library (GMOCK_LIBRARY gmock)
 find_library (GMOCK_MAIN_LIBRARY gmock_main)
 
-if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY)
-  message (FATAL_ERROR "Google Mock not found!")
-endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY)
+if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
+  message ("Google Mock and Google Test not found - cannot build tests!")
+  set (COMPIZ_BUILD_TESTING OFF CACHE FORCE)
+endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
 
 include_directories (${GTEST_INCLUDE_DIRS})
 

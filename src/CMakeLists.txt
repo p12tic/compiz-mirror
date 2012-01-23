@@ -8,7 +8,11 @@ add_subdirectory( pluginclasshandler )
 add_subdirectory( point )
 add_subdirectory( rect )
 add_subdirectory( window )
+
+IF (COMPIZ_BUILD_TESTING)
 add_subdirectory( wrapsystem/tests )
+add_subdirectory( option/tests )
+ENDIF (COMPIZ_BUILD_TESTING)
 
 compiz_add_bcop_targets (
     core
@@ -162,6 +166,5 @@ install (
     LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
     ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
 )
-add_subdirectory(tests)
 
 enable_coverage_report( TARGETS compiz )
