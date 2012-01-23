@@ -358,6 +358,7 @@ macro (_build_compiz_plugin plugin)
             ${${_PLUGIN}_PKG_LIBDIRS}
             ${${_PLUGIN}_LIBDIRS}
             ${PLUGIN_LIBDIR}
+	    ${libdir}
             ${COMPIZ_LIBDIR}/compiz
             ${CMAKE_PREFIX_PATH}/lib
             ${CMAKE_PREFIX_PATH}/lib32
