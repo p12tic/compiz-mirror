@@ -122,7 +122,7 @@ class CompOption {
 		 * return a copy. Prefer to use a specific
 		 * member instead */
 		template<typename T>
-		T get () const
+		const T & get (const T & defaultValue = T ()) const
 		{
 		    try
 		    {
@@ -130,7 +130,7 @@ class CompOption {
 		    }
 		    catch (...)
 		    {
-			T inst;
+			static T inst;
 			return inst;
 		    }
 		}
