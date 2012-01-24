@@ -3192,7 +3192,7 @@ PrivateScreen::addScreenActions ()
 }
 
 bool
-CompScreen::registerAction (CompAction *action)
+CompScreen::addAction (CompAction *action)
 {
     if (!screenInitalized || !priv->initialized)
 	return false;
@@ -3232,7 +3232,7 @@ CompScreen::registerAction (CompAction *action)
 }
 
 void
-CompScreen::unregisterAction (CompAction *action)
+CompScreen::removeAction (CompAction *action)
 {
     if (!priv->initialized)
 	return;
@@ -4323,15 +4323,12 @@ PrivateScreen::createFailed ()
 }
 
 CompScreen::CompScreen ():
-    ActionBindingsInterface (),
     PluginClassStorage (screenPluginClassIndices),
     priv (NULL)
 {
     CompPrivate p;
     CompOption::Value::Vector vList;
     CompPlugin  *corePlugin;
-
-    ActionBindingsInterface::SetDefault (this);
 
     priv = new PrivateScreen (this);
     assert (priv);

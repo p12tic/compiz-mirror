@@ -33,8 +33,6 @@
 #include "privateaction.h"
 #include "privatescreen.h"
 
-#include <X11/Xlib-xcb.h>
-
 struct _Modifier {
     const char *name;
     int        modifier;

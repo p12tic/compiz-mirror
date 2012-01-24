@@ -95,6 +95,5 @@ typedef XBool Bool;
 #include <core/timeouthandler.h>
 #include <core/logmessage.h>
 #include <core/string.h>
-#include <core/actionbindings.h>
 
 #endif

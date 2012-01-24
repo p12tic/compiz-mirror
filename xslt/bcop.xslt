@@ -65,9 +65,6 @@
         <xsl:call-template name="license"/>
             <xsl:text>
 #include &lt;core/core.h&gt;
-#include &lt;core/actionbindings.h&gt;
-
-using namespace compiz::actions;
 
 #include "</xsl:text>
         <xsl:value-of select="$plugin"/>
@@ -1275,7 +1272,7 @@ bool
 			</xsl:with-param>
                     </xsl:call-template>
                     <xsl:if test="not (./passive_grab/text() = 'false')">
-                        <xsl:text>    ActionBindingsInterface::Default ()->addAction (&amp;</xsl:text>
+                        <xsl:text>    screen->addAction (&amp;</xsl:text>
                         <xsl:text>mOptions[</xsl:text>
 	                <xsl:call-template name="printOptionsEnumName"/>
 	                <xsl:text>].value ().action ());
@@ -1291,7 +1288,7 @@ bool
 			</xsl:with-param>
                     </xsl:call-template>
                     <xsl:if test="not (./passive_grab/text() = 'false')">
-                        <xsl:text>    ActionBindingsInterface::Default ()->addAction (&amp;</xsl:text>
+                        <xsl:text>    screen->addAction (&amp;</xsl:text>
                         <xsl:text>mOptions[</xsl:text>
 	                <xsl:call-template name="printOptionsEnumName"/>
                         <xsl:text>].value ().action ());
@@ -1307,7 +1304,7 @@ bool
 			</xsl:with-param>
                     </xsl:call-template>
                     <xsl:if test="not (./passive_grab/text() = 'false')">
-                        <xsl:text>    ActionBindingsInterface::Default ()->addAction (&amp;</xsl:text>
+                        <xsl:text>    screen->addAction (&amp;</xsl:text>
                         <xsl:text>mOptions[</xsl:text>
 	                <xsl:call-template name="printOptionsEnumName"/>
                         <xsl:text>].value ().action ());
@@ -1323,7 +1320,7 @@ bool
 			</xsl:with-param>
                     </xsl:call-template>
                     <xsl:if test="not (./passive_grab/text() = 'false')">
-                        <xsl:text>    ActionBindingsInterface::Default ()->addAction (&amp;</xsl:text>
+                        <xsl:text>    screen->addAction (&amp;</xsl:text>
                         <xsl:text>mOptions[</xsl:text>
 	                <xsl:call-template name="printOptionsEnumName"/>
                         <xsl:text>].value ().action ());

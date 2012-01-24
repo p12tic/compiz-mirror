@@ -37,7 +37,6 @@
 #include <core/region.h>
 #include <core/modifierhandler.h>
 #include <core/valueholder.h>
-#include <core/actionbindings.h>
 
 class CompScreen;
 class PrivateScreen;
@@ -145,7 +144,6 @@ class ScreenInterface : public WrapableInterface<CompScreen, ScreenInterface> {
  * X server.
  */
 class CompScreen :
-    public compiz::actions::ActionBindingsInterface,
     public CompSize,
     public WrapableHandler<ScreenInterface, 18>,
     public PluginClassStorage,
@@ -301,6 +299,10 @@ class CompScreen :
 
 	const CompWindowVector & clientList (bool stackingOrder = true);
 
+	bool addAction (CompAction *action);
+
+	void removeAction (CompAction *action);
+
 	void updateWorkarea ();
 
 	void toolkitAction (Atom   toolkitAction,
@@ -412,12 +414,6 @@ class CompScreen :
 	friend class CompTimeoutSource;
 	friend class CompManager;
 	friend class CompWatchFd;
-
-    protected:
-
-	bool registerAction (CompAction *action);
-
-	void unregisterAction (CompAction *action);
 
     private:
 	PrivateScreen *priv;
