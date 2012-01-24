@@ -32,8 +32,6 @@
 
 #include <boost/function.hpp>
 
-#include <X11/Xlib-xcb.h>
-
 
 class PrivateAction;
 
