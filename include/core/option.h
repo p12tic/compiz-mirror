@@ -118,11 +118,8 @@ class CompOption {
 		    mValue = t;
 		}
 
-		/* In order to be exception safe, this MUST
-		 * return a copy. Prefer to use a specific
-		 * member instead */
 		template<typename T>
-		const T & get (const T & defaultValue = T ()) const
+		const T & get () const
 		{
 		    try
 		    {
@@ -218,7 +215,7 @@ class CompOption {
 	 */
 	class Class {
 	    public:
-		virtual ~Class() {};
+		virtual ~Class() {}
 		virtual Vector & getOptions () = 0;
 
 		virtual CompOption * getOption (const CompString &name);
