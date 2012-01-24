@@ -1,5 +1,6 @@
 set (COMPIZ_PREFIX ${CMAKE_INSTALL_PREFIX})
 set (COMPIZ_INCLUDEDIR ${includedir})
+set (COMPIZ_CORE_INCLUDE_DIR ${includedir}/compiz/core)
 set (COMPIZ_LIBDIR ${libdir})
 
 list (APPEND COMPIZ_INCLUDE_DIRS ${CMAKE_SOURCE_DIR}/include)

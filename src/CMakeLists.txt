@@ -8,8 +8,12 @@ add_subdirectory( pluginclasshandler )
 add_subdirectory( point )
 add_subdirectory( rect )
 add_subdirectory( window )
+
+IF (COMPIZ_BUILD_TESTING)
 add_subdirectory( wrapsystem/tests )
 add_subdirectory( plugin )
+add_subdirectory( option/tests )
+ENDIF (COMPIZ_BUILD_TESTING)
 
 compiz_add_bcop_targets (
     core
@@ -78,6 +82,7 @@ get_property (CORE_MOD_LIBRARY_DIRS
 link_directories (
     ${COMPIZ_LINK_DIRS}
     ${CORE_MOD_LIBRARY_DIRS}
+    ${libdir}
 )
 
 add_library (compiz_core SHARED
@@ -100,6 +105,7 @@ add_library (compiz_core SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/modifierhandler.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/propertywriter.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/eventsource.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/signalsource.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stackdebugger.cpp
     
     ${_bcop_sources}
@@ -158,11 +164,13 @@ target_link_libraries (
 )
 
 install (
-    TARGETS compiz_core compiz
-    RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
-    LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
-    ARCHIVE DESTINATION ${COMPIZ_DESTDIR}${libdir}
+    TARGETS compiz_core
+  	LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
 )
-add_subdirectory(tests)
+
+install (
+    TARGETS compiz
+    RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
+)
 
 enable_coverage_report( TARGETS compiz )

@@ -24,7 +24,4 @@ set (_headers
     deg2rad.h
 )
 
-install (
-    FILES ${_headers}
-    DESTINATION ${COMPIZ_DESTDIR}${includedir}/compiz/core
-)
+install (FILES ${_headers} DESTINATION ${COMPIZ_CORE_INCLUDE_DIR})

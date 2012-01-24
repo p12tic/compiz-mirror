@@ -21,17 +21,13 @@ ADD_LIBRARY(
   ${PRIVATE_HEADERS}
 )
 
+IF (COMPIZ_BUILD_TESTING)
 ADD_SUBDIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/tests )
+ENDIF (COMPIZ_BUILD_TESTING)
 
 SET_TARGET_PROPERTIES(
   compiz_logmessage PROPERTIES
   PUBLIC_HEADER "${PUBLIC_HEADERS}"
 )
 
-INSTALL(
-  TARGETS                                 compiz_logmessage
-  RUNTIME             DESTINATION         bin
-  LIBRARY             DESTINATION         lib
-  ARCHIVE             DESTINATION         lib
-  PUBLIC_HEADER       DESTINATION         include/compiz/core
-)
+install (FILES ${PUBLIC_HEADERS} DESTINATION ${COMPIZ_CORE_INCLUDE_DIR})

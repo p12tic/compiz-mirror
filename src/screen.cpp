@@ -112,17 +112,34 @@ CompScreen::freePluginClassIndex (unsigned int index)
 }
 
 void
+PrivateScreen::handleSignal (int signum)
+{
+    switch (signum)
+    {
+	case SIGINT:
+	case SIGTERM:
+	    shutDown = true;
+	    break;
+	case SIGHUP:
+	    restartSignal = true;
+	    break;
+	default:
+	    break;
+    }
+
+    if (shutDown || restartSignal)
+	mainloop->quit ();
+}
+
+void
 CompScreen::eventLoop ()
 {
-    priv->ctx = Glib::MainContext::get_default ();
-    priv->mainloop = Glib::MainLoop::create (priv->ctx, false);
     priv->source = CompEventSource::create ();
     priv->timeout = CompTimeoutSource::create (priv->ctx);
 
     priv->source->attach (priv->ctx);
 
-    /* Kick the event loop */
-    priv->ctx->iteration (false);
+    XFlush (priv->dpy);
 
     priv->mainloop->run ();
 }
@@ -191,12 +208,16 @@ CompWatchFd::CompWatchFd (int		    fd,
 	     (this, &CompWatchFd::internalCallback));
 }
 
-Glib::RefPtr <CompWatchFd>
+CompWatchFd::~CompWatchFd ()
+{
+}
+
+CompWatchFd *
 CompWatchFd::create (int               fd,
 		     Glib::IOCondition events,
 		     FdWatchCallBack   callback)
 {
-    return Glib::RefPtr <CompWatchFd> (new CompWatchFd (fd, events, callback));
+    return new CompWatchFd (fd, events, callback);
 }
 
 CompWatchFdHandle
@@ -219,7 +240,7 @@ CompScreen::addWatchFd (int             fd,
     if (events & POLLHUP)
 	gEvents |= Glib::IO_HUP;
 
-    Glib::RefPtr <CompWatchFd> watchFd = CompWatchFd::create (fd, gEvents, callBack);
+    CompWatchFd *watchFd = CompWatchFd::create (fd, gEvents, callBack);
 
     watchFd->attach (priv->ctx);
 
@@ -238,8 +259,8 @@ CompScreen::addWatchFd (int             fd,
 void
 CompScreen::removeWatchFd (CompWatchFdHandle handle)
 {
-    std::list<Glib::RefPtr <CompWatchFd> >::iterator it;
-    Glib::RefPtr <CompWatchFd>	       w;
+    std::list<CompWatchFd * >::iterator it;
+    CompWatchFd *			w;
 
     for (it = priv->watchFds.begin();
 	 it != priv->watchFds.end (); it++)
@@ -259,7 +280,7 @@ CompScreen::removeWatchFd (CompWatchFdHandle handle)
 	return;
     }
 
-    w.reset ();
+    delete w;
     priv->watchFds.erase (it);
 }
 
@@ -4180,14 +4201,14 @@ CompScreen::screenNum ()
     return priv->screenNum;
 }
 
-CompPoint
-CompScreen::vp ()
+const CompPoint &
+CompScreen::vp () const
 {
     return priv->vp;
 }
 
-CompSize
-CompScreen::vpSize ()
+const CompSize &
+CompScreen::vpSize () const
 {
     return priv->vpSize;
 }
@@ -4363,6 +4384,12 @@ CompScreen::init (const char *name)
     int                  nvisinfo;
     XSetWindowAttributes attrib;
 
+    priv->ctx = Glib::MainContext::get_default ();
+    priv->mainloop = Glib::MainLoop::create (priv->ctx, false);
+    priv->sighupSource = CompSignalSource::create (SIGHUP, boost::bind (&PrivateScreen::handleSignal, priv, _1));
+    priv->sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, priv, _1));
+    priv->sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, priv, _1));
+
     dpy = priv->dpy = XOpenDisplay (name);
     if (!priv->dpy)
     {
@@ -4370,6 +4397,8 @@ CompScreen::init (const char *name)
 			"Couldn't open display %s", XDisplayName (name));
 	return false;
     }
+
+    XSynchronize (dpy, TRUE);
 
 //    priv->connection = XGetXCBConnection (priv->dpy);
 
@@ -4932,4 +4961,11 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 
 PrivateScreen::~PrivateScreen ()
 {
+    delete timeout;
+    delete source;
+
+    foreach (CompWatchFd *fd, watchFds)
+	delete fd;
+
+    watchFds.clear ();
 }

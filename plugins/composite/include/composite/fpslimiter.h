@@ -1,5 +1,6 @@
 /*
  * Copyright © 2008 Dennis Kasprzyk
+ * Copyright © 2007 Novell, Inc.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without
@@ -21,20 +22,17 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
+ *          David Reveman <davidr@novell.com>
  */
 
-#ifndef _PRIVATEMETADATA_H
-#define _PRIVATEMETADATA_H
+#ifndef _COMPIZ_COMPOSITE_FPSLIMITER_H
+#define _COMPIZ_COMPOSITE_FPSLIMITER_H
 
-class PrivateMetadata {
-    public:
-	PrivateMetadata (CompString plugin, CompString path);
-	~PrivateMetadata ();
-
-    public:
-	CompString            mPlugin;
-	CompString            mPath;
-	std::vector<xmlDoc *> mDoc;
-};
+typedef enum
+{
+    CompositeFPSLimiterModeDisabled = 0,
+    CompositeFPSLimiterModeDefault,
+    CompositeFPSLimiterModeVSyncLike
+} CompositeFPSLimiterMode;
 
 #endif

@@ -21,6 +21,7 @@ set (CMAKE_SKIP_RPATH FALSE)
 option (COMPIZ_BUILD_WITH_RPATH "Leave as ON unless building packages" ON)
 option (COMPIZ_RUN_LDCONFIG "Leave OFF unless you need to run ldconfig after install")
 option (COMPIZ_PACKAGING_ENABLED "Enable to manually set prefix, exec_prefix, libdir, includedir, datadir" OFF)
+option (COMPIZ_BUILD_TESTING "Build Unit Tests" ON)
 set (COMPIZ_DESTDIR "${DESTDIR}" CACHE STRING "Leave blank unless building packages")
 
 if (NOT COMPIZ_DESTDIR)
@@ -151,9 +152,9 @@ macro (compiz_add_distcheck)
 			   && mkdir -p ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}/build
 			   && cd ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}/build
 			   && cmake -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/dist-build/buildroot -DCOMPIZ_PLUGIN_INSTALL_TYPE='package' .. -DCMAKE_MODULE_PATH=/usr/share/cmake -DCOMPIZ_DISABLE_PLUGIN_KDE=ON -DBUILD_KDE4=OFF
-			   && make -j4
+			   && make
 			   && make test
-			   && make -j4 install
+			   && make install
 			   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 	add_dependencies (distcheck dist)
 endmacro ()

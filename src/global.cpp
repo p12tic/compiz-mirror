@@ -45,7 +45,6 @@ bool indirectRendering = false;
 bool noDetection = false;
 bool useDesktopHints = false;
 bool debugOutput = false;
-bool useCow = true;
 
 std::list <CompString> initialPlugins;
 

@@ -24,6 +24,7 @@
  */
 
 #include <core/windowconstrainment.h>
+#include <stdio.h>
 
 static inline int constrainmentFloor (int value, int base)
 {
@@ -43,8 +44,8 @@ static inline float constrainmentClamp(float x, float a, float b)
 CompSize
 compiz::window::constrainment::constrainToHints (const XSizeHints &hints,
 						 const CompSize   &size,
-						 unsigned int     ignoreHints,
-					         unsigned int     resizeIgnoreHints)
+						 long     ignoreHints,
+						 long     resizeIgnoreHints)
 {
     int              width = size.width ();
     int              height = size.height ();
@@ -56,8 +57,8 @@ compiz::window::constrainment::constrainToHints (const XSizeHints &hints,
     int		     yinc = 1;
     int		     max_width = std::numeric_limits <short>::max ();
     int		     max_height = std::numeric_limits <short>::max ();
-    long	     flags = hints.flags & ~ignoreHints;
-    long	     resizeIncFlags = (flags & PResizeInc) ? (~resizeIgnoreHints) : 0;
+    long flags =     hints.flags & ~ignoreHints;
+    long resizeIncFlags = (flags & PResizeInc) ? ((PHorzResizeInc | PVertResizeInc) & ~resizeIgnoreHints) : 0;
 
     /* Ater gdk_window_constrain_size(), which is partially borrowed from fvwm.
      *

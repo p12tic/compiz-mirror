@@ -30,6 +30,7 @@
 #include <composite/composite.h>
 #include <opengl/opengl.h>
 #include <core/atoms.h>
+#include <core/windowextents.h>
 
 #include "decor_options.h"
 

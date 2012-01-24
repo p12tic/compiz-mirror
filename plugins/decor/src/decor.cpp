@@ -1064,64 +1064,6 @@ DecorWindow::checkSize (Decoration *decoration)
 }
 
 /*
- * DecorWindow::shiftX
- *
- * Determines the amount that the window needs to
- * move based on the gravity hint once it is decorated,
- * at least in the X direction
- *
- * FIXME: This should be merged into a function
- * that returns CompPoint, there is no reason for
- * there to be two separate functions
- *
- */
-int
-DecorWindow::shiftX ()
-{
-    switch (window->sizeHints ().win_gravity) {
-	case WestGravity:
-	case NorthWestGravity:
-	case SouthWestGravity:
-	    return window->border ().left;
-	case EastGravity:
-	case NorthEastGravity:
-	case SouthEastGravity:
-	    return -window->border ().right;
-    }
-
-    return 0;
-}
-
-/*
- * DecorWindow::shiftY
- *
- * Determines the amount that the window needs to
- * move based on the gravity hint once it is decorated,
- * at least in the Y direction
- *
- * FIXME: This should be merged into a function
- * that returns CompPoint, there is no reason for
- * there to be two separate functions
- *
- */
-int
-DecorWindow::shiftY ()
-{
-    switch (window->sizeHints ().win_gravity) {
-	case NorthGravity:
-	case NorthWestGravity:
-	case NorthEastGravity:
-	    return window->border ().top;
-	case SouthGravity:
-	case SouthWestGravity:
-	case SouthEastGravity:
-	    return -window->border ().bottom;
-    }
-
-    return 0;
-}
-
-/*
  * decorOffsetMove
  *
  * Function called on a timer (to avoid calling configureXWindow from
@@ -1385,9 +1327,7 @@ DecorWindow::update (bool allowDecoration)
     Decoration	     *old, *decoration = NULL;
     bool	     decorate = false;
     bool	     shadowOnly = true;
-    int		     moveDx, moveDy;
-    int		     oldShiftX = 0;
-    int		     oldShiftY  = 0;
+    CompPoint        oldShift, movement;
 
     old = (wd) ? wd->decor : NULL;
 
@@ -1506,8 +1446,7 @@ DecorWindow::update (bool allowDecoration)
      * WindowDecoration */
     if (old)
     {
-	oldShiftX = shiftX ();
-	oldShiftY = shiftY ();
+	oldShift = compiz::window::extents::shift (window->border (), window->sizeHints ().win_gravity);
 
 	WindowDecoration::destroy (wd);
 
@@ -1536,8 +1475,8 @@ DecorWindow::update (bool allowDecoration)
 	    window->setWindowFrameExtents (&wd->decor->border,
 					   &wd->decor->input);
 
-	moveDx = shiftX () - oldShiftX;
-	moveDy = shiftY () - oldShiftY;
+	movement = compiz::window::extents::shift (window->border (), window->sizeHints ().win_gravity);
+	movement -= oldShift;
 
 	/* Update the input and output frame */
 	if (decorate)
@@ -1562,13 +1501,12 @@ DecorWindow::update (bool allowDecoration)
 
 	window->setWindowFrameExtents (&emptyExtents, &emptyExtents);
 
-	moveDx = -oldShiftX;
-	moveDy = -oldShiftY;
+	movement -= oldShift;
     }
 
     /* Need to actually move the window */
     if (window->placed () && !window->overrideRedirect () &&
-	(moveDx || moveDy))
+	(movement.x () || movement.y ()))
     {
 	XWindowChanges xwc;
 	unsigned int   mask = CWX | CWY;
@@ -1578,8 +1516,8 @@ DecorWindow::update (bool allowDecoration)
 	/* Grab the geometry last sent to server at configureXWindow
 	 * time and not here since serverGeometry may be updated by
 	 * the time that we do call configureXWindow */
-	xwc.x = moveDx;
-	xwc.y = moveDy;
+	xwc.x = movement.x ();
+	xwc.y = movement.y ();
 
 	/* Except if it's fullscreen, maximized or such */
 	if (window->state () & CompWindowStateFullscreenMask)
@@ -1592,10 +1530,10 @@ DecorWindow::update (bool allowDecoration)
 	    mask &= ~CWY;
 
 	if (window->saveMask () & CWX)
-	    window->saveWc ().x += moveDx;
+	    window->saveWc ().x += movement.x ();
 
 	if (window->saveMask () & CWY)
-	    window->saveWc ().y += moveDy;
+	    window->saveWc ().y += movement.y ();
 
 	if (mask)
 	{
@@ -2810,9 +2748,8 @@ DecorWindow::stateChangeNotify (unsigned int lastState)
 {
     if (wd && wd->decor)
     {
-	int oldShiftX = shiftX ();
-	int oldShiftY = shiftY ();
-	int moveDx, moveDy;
+	CompPoint oldShift = compiz::window::extents::shift (window->border (), window->sizeHints ().win_gravity);
+	
 
 	if ((window->state () & MAXIMIZE_STATE))
 	    window->setWindowFrameExtents (&wd->decor->maxBorder,
@@ -2826,14 +2763,13 @@ DecorWindow::stateChangeNotify (unsigned int lastState)
 	 * to prevent the window from shifting back too far once
 	 * unmaximized */
 
-	moveDx = shiftX () - oldShiftX;
-	moveDy = shiftY () - oldShiftY;
+	CompPoint movement = compiz::window::extents::shift (window->border (), window->sizeHints ().win_gravity) - oldShift;
 
 	if (window->saveMask () & CWX)
-	    window->saveWc ().x += moveDx;
+	    window->saveWc ().x += movement.x ();
 
 	if (window->saveMask () & CWY)
-	    window->saveWc ().y += moveDy;
+	    window->saveWc ().y += movement.y ();
 
 	updateFrame ();
     }

@@ -69,10 +69,10 @@ CompTimeoutSource::connect (const sigc::slot <bool> &slot)
     return connect_generic (slot);
 }
 
-Glib::RefPtr <CompTimeoutSource>
+CompTimeoutSource *
 CompTimeoutSource::create (Glib::RefPtr <Glib::MainContext> &ctx)
 {
-    return Glib::RefPtr <CompTimeoutSource> (new CompTimeoutSource (ctx));
+    return new CompTimeoutSource (ctx);
 }
 
 #define COMPIZ_TIMEOUT_WAIT 15

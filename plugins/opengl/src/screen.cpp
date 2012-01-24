@@ -31,15 +31,13 @@
 #include <math.h>
 
 namespace GL {
-    typedef int (*GLXSwapIntervalProc) (int interval);
-
-    GLXSwapIntervalProc      swapInterval = NULL;
     GLXBindTexImageProc      bindTexImage = NULL;
     GLXReleaseTexImageProc   releaseTexImage = NULL;
     GLXQueryDrawableProc     queryDrawable = NULL;
     GLXCopySubBufferProc     copySubBuffer = NULL;
     GLXGetVideoSyncProc      getVideoSync = NULL;
     GLXWaitVideoSyncProc     waitVideoSync = NULL;
+    GLXSwapIntervalProc      swapInterval = NULL;
     GLXGetFBConfigsProc      getFBConfigs = NULL;
     GLXGetFBConfigAttribProc getFBConfigAttrib = NULL;
     GLXCreatePixmapProc      createPixmap = NULL;
@@ -1081,6 +1079,7 @@ void
 waitForVideoSync ()
 {
     GL::unthrottledFrames++;
+    // Docs: http://www.opengl.org/registry/specs/SGI/video_sync.txt
     if (GL::waitVideoSync)
     {
 	// Don't wait twice. Just in case.
@@ -1122,13 +1121,6 @@ controlSwapVideoSync (bool sync)
 } // namespace GL
 
 void
-PrivateGLScreen::waitForVideoSync ()
-{
-    if (optionGetSyncToVblank ())
-        GL::waitForVideoSync ();
-}
-
-void
 PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 			       unsigned int        mask,
 			       const CompRegion    &region)
@@ -1141,7 +1133,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    glClear (GL_COLOR_BUFFER_BIT);
     }
 
-    CompRegion tmpRegion (region);
+    tmpRegion = region;
 
     foreach (CompOutput *output, outputs)
     {
@@ -1196,7 +1188,11 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     }
 
     targetOutput = &screen->outputDevs ()[0];
+}
 
+bool
+PrivateGLScreen::waitVSync (unsigned int mask)
+{
     if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
     {
 	/*
@@ -1205,16 +1201,27 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	 * Unfortunately it only works with glXSwapBuffers in most drivers.
 	 */
 	GL::controlSwapVideoSync (optionGetSyncToVblank ());
+	return false;
+    }
+    else
+    {
+	GL::waitForVideoSync ();
+	return true;
+    }
+}
+
+void
+PrivateGLScreen::syncBuffers (unsigned int        mask)
+{
+    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+    {
 	glXSwapBuffers (screen->dpy (), cScreen->output ());
     }
     else
     {
-	BoxPtr pBox;
-	int    nBox, y;
-
-	waitForVideoSync ();
-	pBox = const_cast <Region> (tmpRegion.handle ())->rects;
-	nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
+	BoxPtr pBox = const_cast <Region> (tmpRegion.handle ())->rects;
+	int    nBox = const_cast <Region> (tmpRegion.handle ())->numRects;
+	int    y;
 
 	if (GL::copySubBuffer)
 	{

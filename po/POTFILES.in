@@ -11,7 +11,6 @@ plugins/fade/fade.xml.in
 plugins/gnomecompat/gnomecompat.xml.in
 plugins/imgpng/imgpng.xml.in
 plugins/imgsvg/imgsvg.xml.in
-plugins/ini/ini.xml.in
 plugins/inotify/inotify.xml.in
 plugins/move/move.xml.in
 plugins/opengl/opengl.xml.in
@@ -21,5 +20,4 @@ plugins/resize/resize.xml.in
 plugins/scale/scale.xml.in
 plugins/switcher/switcher.xml.in
 plugins/water/water.xml.in
-plugins/zoom/zoom.xml.in
 src/main.cpp
