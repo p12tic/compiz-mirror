@@ -1,3 +1,31 @@
+Release 0.9.7.0 ( 2012-01-24 smspillaz <sam.spilsbury@canonical.com> ) 
+=======================================================================
+Release version 0.9.7.0
+
+Bugs Fixed:
+ LP 874004 - When a window is minimized on another workspace it doesn't appear in the spread
+    720679 - Compiz clears the root window in the installer session
+    873389 - Compiz should read DESKTOP_AUTOSTART_ID when being started by the session manager
+    873384 - Use smart placement by default
+    873344 - compiz.desktop is not installed where GNOME2 libraries are not available
+    873364 - Drop GNOME2 Support
+    879253 - latest patch for -proposed crashes compiz
+    877920 - Some windows and all decorations become translucent when the "Resize Info" plugin activates.
+    886978 - compiz crashes with SIGSEGV in PrivateWindow::configure
+    886935 - Some windows and all decorations become translucent when the "Resize Info" plugin activates.
+    878934 - Menu selection is wrong in Java apps
+    890947 - Unity sends initial GDK_CONFIGURE event with position as (0,0) 
+    908042 - Test timer-callbacks suffers from a race condition
+    915186 - make install: Files missing from include/compiz/core
+    904806 - Support _NET_WM_STATE_FOCUSED
+    911530 - Fix uninitialized read in paintBackground
+
+
+    Added Unit Tests
+    Switched to Google Test for Unit Tests
+    Added Xig Integration Tests
+
+
 Release 0.9.5.92.1 ( 2011-08-20 Sam Spilsbury <sam.spilsbury@canonical.com> ) 
 ==============================================================================
 Release (0.9.5.92.1)
