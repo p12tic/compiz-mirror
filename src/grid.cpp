@@ -399,7 +399,6 @@ GridScreen::initiateCommon (CompAction         *action,
 	    ng.setWidth (ng.width () + dw);
 	    ng.setHeight (ng.height () + dw);
 
-	    printf ("positioned window at %i %i %i %i\n", ng.x (), ng.y (), ng.width (), ng.height ());
 
 	    /* Make window the size that we want */
 	    cw->positionSetEnabled (gw, false);
