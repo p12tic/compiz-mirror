@@ -23,6 +23,7 @@
  */
 
 #include "grid.h"
+#include "grabhandler.h"
 
 using namespace GridWindowType;
 
@@ -185,11 +186,12 @@ GridScreen::initiateCommon (CompAction         *action,
 	    /* move the window to the correct output */
 	    if (cw == mGrabWindow)
 	    {
-		xwc.x = workarea.x () + 50;
-		xwc.y = workarea.y () + 50;
-		xwc.width = workarea.width ();
-		xwc.height = workarea.height ();
-		cw->configureXWindow (CWX | CWY, &xwc);
+		compiz::window::Geometry ng = cw->serverGeometry ();
+
+		ng.setPos (CompPoint (workarea.pos () + CompPoint (50, 50)));
+		cw->positionSetEnabled (gw, false);
+		cw->position (ng);
+		cw->positionSetEnabled (gw, true);
 	    }
 	    cw->maximize (MAXIMIZE_STATE);
 	    gw->isGridResized = true;
@@ -327,13 +329,11 @@ GridScreen::initiateCommon (CompAction         *action,
 	    desiredRect = constrainSize (cw, desiredSlot);
 	}
 
-	xwc.x = desiredRect.x ();
-	xwc.y = desiredRect.y ();
-	xwc.width  = desiredRect.width ();
-	xwc.height = desiredRect.height ();
-
-	/* Store a copy of xwc since configureXWindow changes it's values */
-	XWindowChanges wc = xwc;
+	compiz::window::Geometry ng (desiredRect.x (),
+				     desiredRect.y (),
+				     desiredRect.width (),
+				     desiredRect.height (),
+				     cw->serverGeometry ().border ());
 
 	if (cw->mapNum ())
 	    cw->sendSyncRequest ();
@@ -341,9 +341,16 @@ GridScreen::initiateCommon (CompAction         *action,
 	/* TODO: animate move+resize */
 	if (resize)
 	{
+<<<<<<< TREE
 	    unsigned int valueMask = CWX | CWY | CWWidth | CWHeight;
+=======
+>>>>>>> MERGE-SOURCE
 	    gw->lastTarget = where;
+<<<<<<< TREE
 	    gw->currentSize = CompRect (wc.x, wc.y, wc.width, wc.height);
+=======
+	    gw->currentSize = static_cast <CompRect &> (ng);
+>>>>>>> MERGE-SOURCE
 	    CompWindowExtents lastBorder = gw->window->border ();
 
 	    gw->sizeHintsFlags = 0;
@@ -355,18 +362,44 @@ GridScreen::initiateCommon (CompAction         *action,
 		/* First restore the window to its original size */
 		XWindowChanges rwc;
 
+<<<<<<< TREE
 		rwc.x = gw->originalSize.x ();
 		rwc.y = gw->originalSize.y ();
 		rwc.width = gw->originalSize.width ();
 		rwc.height = gw->originalSize.height ();
+=======
+		compiz::window::Geometry ng (cw->serverGeometry ());
+		ng.applyChange (compiz::window::Geometry (gw->originalSize.x (),
+							  gw->originalSize.y (),
+							  gw->originalSize.width (),
+							  gw->originalSize.height (),
+							  0), CHANGE_X | CHANGE_Y | CHANGE_WIDTH | CHANGE_HEIGHT);
+>>>>>>> MERGE-SOURCE
 
+<<<<<<< TREE
 		cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &rwc);
+=======
+		cw->positionSetEnabled (gw, false);
+		cw->position (ng);
+		cw->positionSetEnabled (gw, true);
+>>>>>>> MERGE-SOURCE
 
 		gw->isGridMaximized = true;
 		gw->isGridResized = false;
 
+<<<<<<< TREE
+=======
+		cw->positionSetEnabled (gw, false);
+
+>>>>>>> MERGE-SOURCE
 		/* Maximize the window */
 		cw->maximize (CompWindowStateMaximizedVertMask);
+<<<<<<< TREE
+=======
+
+		cw->positionSetEnabled (gw, true);
+
+>>>>>>> MERGE-SOURCE
 		/* Be evil */
 		if (cw->sizeHints ().flags & PResizeInc)
 		{
@@ -388,11 +421,23 @@ GridScreen::initiateCommon (CompAction         *action,
 			(gw->window->border ().top +
 			 gw->window->border ().bottom);
 
+<<<<<<< TREE
 	    xwc.width += dw;
 	    xwc.height += dh;
+=======
+	    ng.setWidth (ng.width () + dw);
+	    ng.setHeight (ng.height () + dw);
+
+>>>>>>> MERGE-SOURCE
 
 	    /* Make window the size that we want */
+<<<<<<< TREE
 	    cw->configureXWindow (valueMask, &xwc);
+=======
+	    cw->positionSetEnabled (gw, false);
+	    cw->position (ng);
+	    cw->positionSetEnabled (gw, true);
+>>>>>>> MERGE-SOURCE
 
 	    for (unsigned int i = 0; i < animations.size (); i++)
 		animations.at (i).fadingOut = true;
@@ -409,10 +454,13 @@ GridScreen::initiateCommon (CompAction         *action,
 		 cw->serverBorderRect ().width () <
 		 desiredSlot.width ())
 	    {
-		wc.x = (workarea.width () >> 1) -
-		      ((cw->serverBorderRect ().width () >> 1) -
-			cw->border ().left);
-		cw->configureXWindow (CWX, &wc);
+		compiz::window::Geometry geom (cw->serverGeometry ());
+		geom.setX  (geom.x () + (workarea.width () >> 1) -
+			    ((cw->serverBorderRect ().width () >> 1) -
+			      cw->border ().left));
+		cw->positionSetEnabled (gw, false);
+		cw->position (geom);
+		cw->positionSetEnabled (gw, true);
 	    }
 
 	    centerCheck = false;
@@ -704,20 +752,23 @@ GridScreen::handleEvent (XEvent *event)
 			if (edge != NoEdge && check)
 			{
 				CompWindow *cw = screen->findWindow (screen->activeWindow ());
-				animations.push_back (Animation ());
-				int current = animations.size () - 1;
-				animations.at (current).fromRect	= cw->serverBorderRect ();
-				animations.at (current).currentRect	= cw->serverBorderRect ();
-				animations.at (current).timer = animations.at (current).duration;
-				animations.at (current).targetRect = desiredSlot;
-
-				if (lastEdge == NoEdge || !animating)
+				if (cw)
 				{
+				    animations.push_back (Animation ());
+				    int current = animations.size () - 1;
+				    animations.at (current).fromRect	= cw->serverBorderRect ();
+				    animations.at (current).currentRect	= cw->serverBorderRect ();
+				    animations.at (current).timer = animations.at (current).duration;
+				    animations.at (current).targetRect = desiredSlot;
+
+				    if (lastEdge == NoEdge || !animating)
+				    {
 					/* Cursor has entered edge region from non-edge region */
 					animating = true;
 					glScreen->glPaintOutputSetEnabled (this, true);
 					cScreen->preparePaintSetEnabled (this, true);
 					cScreen->donePaintSetEnabled (this, true);
+				    }
 				}
 			}
 		}
@@ -726,19 +777,20 @@ GridScreen::handleEvent (XEvent *event)
     }
 
     w = screen->findWindow (CompOption::getIntOptionNamed (o, "window"));
+}
 
-    if (w)
-    {
-	GRID_WINDOW (w);
+bool
+GridWindow::position (compiz::window::Geometry &g,
+		      unsigned int             source,
+		      unsigned int	       constrainment)
+{
+    /* Don't allow non-pagers to change the size of
+     * this window */
+    if (source != ClientTypePager && !window->grabbed () &&
+	(isGridMaximized || isGridResized))
+	g = window->serverGeometry ();
 
-	if ((gw->pointerBufDx > SNAPOFF_THRESHOLD ||
-	     gw->pointerBufDy > SNAPOFF_THRESHOLD ||
-	     gw->pointerBufDx < -SNAPOFF_THRESHOLD ||
-	     gw->pointerBufDy < -SNAPOFF_THRESHOLD) &&
-	     gw->isGridResized &&
-	     optionGetSnapbackWindows ())
-		restoreWindow (0, 0, o);
-    }
+    return window->position (g);
 }
 
 void
@@ -762,8 +814,14 @@ GridWindow::grabNotify (int          x,
 			unsigned int state,
 			unsigned int mask)
 {
+<<<<<<< TREE
     if ((mask & (CompWindowGrabMoveMask | CompWindowGrabButtonMask)) &&
         !(mask & CompWindowGrabResizeMask))
+=======
+    compiz::grid::window::GrabWindowHandler gwHandler (mask);
+
+    if (gwHandler.track ())
+>>>>>>> MERGE-SOURCE
     {
 	gScreen->o[0].value ().set ((int) window->id ());
 
@@ -777,8 +835,12 @@ GridWindow::grabNotify (int          x,
 	    originalSize = gScreen->slotToRect(window,
 						    window->serverBorderRect ());
     }
+<<<<<<< TREE
 
     if (mask & CompWindowGrabResizeMask)
+=======
+    else if (gwHandler.resetResize ())
+>>>>>>> MERGE-SOURCE
     {
 	isGridResized = false;
 	resizeCount = 0;
@@ -810,17 +872,43 @@ GridWindow::ungrabNotify ()
 }
 
 void
-GridWindow::moveNotify (int dx, int dy, bool immediate)
+GridWindow::applyOffset (const CompPoint &d)
 {
+<<<<<<< TREE
     window->moveNotify (dx, dy, immediate);
 
     if (isGridResized && !isGridMaximized && !GridScreen::get (screen)->mSwitchingVp)
+=======
+    if ((isGridResized || isGridMaximized) &&
+	!GridScreen::get (screen)->mSwitchingVp)
+>>>>>>> MERGE-SOURCE
     {
 	if (window->grabbed () && (grabMask & CompWindowGrabMoveMask))
 	{
+<<<<<<< TREE
 	    pointerBufDx += dx;
 	    pointerBufDy += dy;
+=======
+	    pointerBufDx += d.x ();
+	    pointerBufDy += d.y ();
+
+	    printf ("%i %i\n", pointerBufDx, pointerBufDy);
+
+	    if ((abs (pointerBufDx) > SNAPOFF_THRESHOLD ||
+		 abs (pointerBufDy) > SNAPOFF_THRESHOLD) &&
+		 (isGridResized || isGridMaximized) &&
+		 gScreen->optionGetSnapbackWindows ())
+	    {
+		printf ("restore window\n");
+		    gScreen->restoreWindow (0, 0, gScreen->o);
+	    }
+
+	    /* Do not allow the window to be moved while it
+	     * is resized */
+	    return;
+>>>>>>> MERGE-SOURCE
 	}
+<<<<<<< TREE
 
 	/* Do not allow the window to be moved while it
 	 * is resized */
@@ -828,7 +916,14 @@ GridWindow::moveNotify (int dx, int dy, bool immediate)
 	dy = currentSize.y () - window->geometry ().y ();
 
 	window->move (dx, dy);
+=======
+>>>>>>> MERGE-SOURCE
     }
+<<<<<<< TREE
+=======
+
+    CompositeWindow::get (window)->applyOffset (d);
+>>>>>>> MERGE-SOURCE
 }
 
 void
@@ -856,16 +951,12 @@ GridScreen::restoreWindow (CompAction         *action,
 			   CompAction::State  state,
 			   CompOption::Vector &option)
 {
-    XWindowChanges xwc;
     CompWindow *cw = screen->findWindow (screen->activeWindow ());
 
     if (!cw)
 	return false;
 
     GRID_WINDOW (cw);
-
-    if (!gw->isGridResized)
-	return false;
 
     if (gw->isGridMaximized & !(cw->state () & MAXIMIZE_STATE))
     {
@@ -874,21 +965,30 @@ GridScreen::restoreWindow (CompAction         *action,
     }
     else
     {
+	compiz::window::Geometry ng (cw->serverGeometry ());
+
         if (cw == mGrabWindow)
 	{
-	    xwc.x = pointerX - (gw->originalSize.width () >> 1);
-	    xwc.y = pointerY + (cw->border ().top >> 1);
+	    ng.setX (pointerX - (gw->originalSize.width () >> 1));
+	    ng.setY (pointerY - (cw->border ().top));
 	}
 	else
 	{
-	    xwc.x = gw->originalSize.x ();
-	    xwc.y = gw->originalSize.y ();
+	    ng.setX (gw->originalSize.x ());
+	    ng.setY (gw->originalSize.y ());
 	}
-	xwc.width  = gw->originalSize.width ();
-	xwc.height = gw->originalSize.height ();
+
+	ng.setWidth (gw->originalSize.width ());
+	ng.setHeight (gw->originalSize.height ());
 	cw->maximize (0);
 	gw->currentSize = CompRect ();
+<<<<<<< TREE
 	cw->configureXWindow (CWX | CWY | CWWidth | CWHeight, &xwc);
+=======
+	cw->positionSetEnabled (gw, false);
+	cw->position (ng);
+	cw->positionSetEnabled (gw, true);
+>>>>>>> MERGE-SOURCE
 	gw->pointerBufDx = 0;
 	gw->pointerBufDy = 0;
     }
@@ -963,7 +1063,9 @@ GridScreen::donePaint ()
 		cScreen->preparePaintSetEnabled (this, false);
 		cScreen->donePaintSetEnabled (this, false);
 		if (edge == NoEdge)
+		{
 			glScreen->glPaintOutputSetEnabled (this, false);
+		}
 		animations.clear ();
 		animating = false;
 	}
@@ -1058,6 +1160,7 @@ GridWindow::GridWindow (CompWindow *window) :
     lastTarget (GridUnknown)
 {
     WindowInterface::setHandler (window);
+    CompositeWindowInterface::setHandler (CompositeWindow::get (window));
 }
 
 GridWindow::~GridWindow ()
