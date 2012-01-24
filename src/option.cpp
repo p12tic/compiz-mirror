@@ -29,11 +29,18 @@
 #include <ctype.h>
 #include <math.h>
 
+#include <cstdio>
+
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
 
 #include <core/option.h>
+#include <core/action.h>
+#include <core/actionbindings.h>
+#include <core/logmessage.h>
 #include "privateoption.h"
+
+using namespace compiz::actions;
 
 CompOption::Vector noOptions (0);
 
@@ -63,8 +70,8 @@ finiOptionValue (CompOption::Value &v)
 	case CompOption::TypeButton:
 	case CompOption::TypeEdge:
 	case CompOption::TypeBell:
-	    if (v.action ().state () & CompAction::StateAutoGrab && screen)
-		screen->removeAction (&v.action ());
+	    if (v.action ().state () & CompAction::StateAutoGrab)
+		ActionBindingsInterface::Default ()->removeAction (&v.action ());
 	    break;
 
 	case CompOption::TypeList:
@@ -195,7 +202,7 @@ CompOption::Restriction::iMin ()
 {
     if (priv->type == CompOption::TypeInt)
 	return priv->rest.i.min;
-    return MINSHORT;
+    return std::numeric_limits<short>::min ();
 }
 
 int
@@ -203,7 +210,7 @@ CompOption::Restriction::iMax ()
 {
     if (priv->type == CompOption::TypeInt)
 	return priv->rest.i.max;
-    return MAXSHORT;
+    return std::numeric_limits<short>::max ();
 }
 
 float
@@ -211,7 +218,7 @@ CompOption::Restriction::fMin ()
 {
     if (priv->type == CompOption::TypeFloat)
 	return priv->rest.f.min;
-    return MINSHORT;
+    return std::numeric_limits<float>::min ();
 }
 
 float
@@ -219,7 +226,7 @@ CompOption::Restriction::fMax ()
 {
     if (priv->type == CompOption::TypeFloat)
 	return priv->rest.f.min;
-    return MINSHORT;
+    return std::numeric_limits<float>::max ();
 }
 
 float
@@ -328,8 +335,7 @@ CompOption::CompOption (CompString name, CompOption::Type type) :
 }
 
 static void
-finiScreenOptionValue (CompScreen        *s,
-		       CompOption::Value &v)
+finiScreenOptionValue (CompOption::Value &v)
 {
     switch (v.type()) {
 	case CompOption::TypeAction:
@@ -338,12 +344,12 @@ finiScreenOptionValue (CompScreen        *s,
 	case CompOption::TypeEdge:
 	case CompOption::TypeBell:
 	    if (v.action ().state () & CompAction::StateAutoGrab)
-		s->removeAction (&v.action ());
+		ActionBindingsInterface::Default ()->removeAction (&v.action ());
 	    break;
 
 	case CompOption::TypeList:
 	    foreach (CompOption::Value &val, v.list ())
-		finiScreenOptionValue (s, val);
+		finiScreenOptionValue (val);
 	    break;
 
 	default:
@@ -415,12 +421,12 @@ CompOption::set (CompOption::Value &val)
 	return false;
 
     if (isAction () &&
-        priv->value.action ().state () & CompAction::StateAutoGrab && screen)
+	priv->value.action ().state () & CompAction::StateAutoGrab)
     {
-	if (!screen->addAction (&val.action ()))
+	if (!ActionBindingsInterface::Default ()->addAction (&val.action ()))
 	    return false;
 	else
-	    screen->removeAction (&priv->value.action ());
+	    ActionBindingsInterface::Default ()->removeAction (&priv->value.action ());
     }
 
     switch (priv->type)

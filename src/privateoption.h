@@ -32,7 +32,6 @@
 
 #include <core/action.h>
 #include <core/match.h>
-#include <core/screen.h>
 
 typedef struct _CompOptionIntRestriction {
     int min;
