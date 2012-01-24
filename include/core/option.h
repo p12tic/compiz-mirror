@@ -118,10 +118,21 @@ class CompOption {
 		    mValue = t;
 		}
 
+		/* In order to be exception safe, this MUST
+		 * return a copy. Prefer to use a specific
+		 * member instead */
 		template<typename T>
-		const T & get () const
+		T get () const
 		{
-		    return boost::get<T> (mValue);
+		    try
+		    {
+			return boost::get<T> (mValue);
+		    }
+		    catch (...)
+		    {
+			T inst;
+			return inst;
+		    }
 		}
 
 		void
