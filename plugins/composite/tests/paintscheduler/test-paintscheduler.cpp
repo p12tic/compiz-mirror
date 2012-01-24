@@ -629,16 +629,9 @@ DummyPaintDispatch::DummyPaintDispatch (Glib::RefPtr <Glib::MainLoop> mainloop) 
     sched.schedule ();
 }
 
-bool doTest (const std::string &testName, int refreshRate, float workFactor, bool vsync)
+bool doTest (const std::string &testName, int refreshRate, float workFactor, bool vsync, const Glib::RefPtr <Glib::MainLoop> &ml)
 {
-    TimeoutHandler     *th = new TimeoutHandler ();
-    TimeoutHandler::SetDefault (th);
-
-    Glib::RefPtr <Glib::MainContext> ctx = Glib::MainContext::get_default ();
-    Glib::RefPtr <Glib::MainLoop> mainloop = Glib::MainLoop::create (ctx, false);
-    timeout = CompTimeoutSource::create (ctx);
-
-    DummyPaintDispatch *dpb = new DummyPaintDispatch (mainloop);
+    DummyPaintDispatch *dpb = new DummyPaintDispatch (ml);
     VBlankWaiter       *vbwaiter = NULL;
 
     if (vsync)
@@ -663,7 +656,7 @@ bool doTest (const std::string &testName, int refreshRate, float workFactor, boo
 
     std::cout << "INFO: " << testName << " with refresh rate of " << refreshRate << "Hz and work factor of " << workFactor << (vsync ? " with vertical sync" : " without vertical sync") << std::endl;
 
-    mainloop->run ();
+    ml->run ();
 
     float averagePeriod = vbwaiter->averagePeriod ();
 
@@ -680,8 +673,6 @@ bool doTest (const std::string &testName, int refreshRate, float workFactor, boo
     dpb->setWaiter (NULL);
 
     delete dpb;
-    delete timeout;
-    delete th;
 
     return true;
 }
@@ -690,19 +681,29 @@ int main (void)
 {
     gettimeofday (&SleepVBlankWaiter::start_time, NULL);
 
-    doTest ("unthrottled vblank timings", 60, 0.0f, true);
-    doTest ("no vsync 60 Hz refresh rate", 60, 0.0f, false);
-    doTest ("unthrottled vblank timings", 60, 0.8f, true);
-    doTest ("no vsync 60 Hz refresh rate", 60, 0.8f, false);
-    doTest ("vsync 50 Hz refresh rate", 50, 0.0f, true);
-    doTest ("no vsync 20 Hz refresh rate", 30, 0.0f,false);
-    doTest ("vsync 50 Hz refresh rate", 50, 1.6f, true);
-    doTest ("no vsync 20 Hz refresh rate", 30, 1.6f,false);
-    doTest ("vsync 30 Hz refresh rate", 30, 0.0f, true);
-    doTest ("no vsync 100 Hz refresh rate", 100, 0.0f, false);
-    doTest ("vsync 100 Hz refresh rate", 100, 0.0f, true);
-    doTest ("no vsync 100 Hz refresh rate", 100, 2.8f, false);
-    doTest ("vsync 100 Hz refresh rate", 100, 2.8f, true);
+    TimeoutHandler     *th = new TimeoutHandler ();
+    TimeoutHandler::SetDefault (th);
+
+    Glib::RefPtr <Glib::MainContext> ctx = Glib::MainContext::get_default ();
+    Glib::RefPtr <Glib::MainLoop> mainloop = Glib::MainLoop::create (ctx, false);
+    timeout = CompTimeoutSource::create (ctx);
+
+    doTest ("unthrottled vblank timings", 60, 0.0f, true, mainloop);
+    doTest ("no vsync 60 Hz refresh rate", 60, 0.0f, false, mainloop);
+    doTest ("unthrottled vblank timings", 60, 0.8f, true, mainloop);
+    doTest ("no vsync 60 Hz refresh rate", 60, 0.8f, false, mainloop);
+    doTest ("vsync 50 Hz refresh rate", 50, 0.0f, true, mainloop);
+    doTest ("no vsync 20 Hz refresh rate", 30, 0.0f,false, mainloop);
+    doTest ("vsync 50 Hz refresh rate", 50, 1.6f, true, mainloop);
+    doTest ("no vsync 20 Hz refresh rate", 30, 1.6f,false, mainloop);
+    doTest ("vsync 30 Hz refresh rate", 30, 0.0f, true, mainloop);
+    doTest ("no vsync 100 Hz refresh rate", 100, 0.0f, false, mainloop);
+    doTest ("vsync 100 Hz refresh rate", 100, 0.0f, true, mainloop);
+    doTest ("no vsync 100 Hz refresh rate", 100, 2.8f, false, mainloop);
+    doTest ("vsync 100 Hz refresh rate", 100, 2.8f, true, mainloop);
+
+    delete timeout;
+    delete th;
 
     return 0;
 }
