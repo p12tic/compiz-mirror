@@ -152,9 +152,9 @@ macro (compiz_add_distcheck)
 			   && mkdir -p ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}/build
 			   && cd ${CMAKE_BINARY_DIR}/dist-build/${CMAKE_PROJECT_NAME}-${VERSION}/build
 			   && cmake -DCMAKE_INSTALL_PREFIX=${CMAKE_BINARY_DIR}/dist-build/buildroot -DCOMPIZ_PLUGIN_INSTALL_TYPE='package' .. -DCMAKE_MODULE_PATH=/usr/share/cmake -DCOMPIZ_DISABLE_PLUGIN_KDE=ON -DBUILD_KDE4=OFF
-			   && make -j4
+			   && make
 			   && make test
-			   && make -j4 install
+			   && make install
 			   WORKING_DIRECTORY ${CMAKE_SOURCE_DIR})
 	add_dependencies (distcheck dist)
 endmacro ()
