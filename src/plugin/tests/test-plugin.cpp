@@ -43,6 +43,12 @@ public:
     MOCK_CONST_METHOD1(ListPlugins, CompStringList (const char *path));
 };
 
+class MockVTable : public CompPlugin::VTable
+{
+public:
+    MOCK_METHOD0(init, bool ());
+};
+
 
 bool
 ThunkLoadPluginProc(CompPlugin *p, const char *path_, const char *name)
@@ -112,7 +118,7 @@ TEST(PluginTest, load_plugin_from_HOME_PLUGINDIR_succeeds)
 	Times(AtMost(0));
 
     EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), Eq((void*)0), StrEq("dummy"))).
-	Times(AtMost(0));;
+	Times(AtMost(0));
 
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);
     EXPECT_CALL(mockfs, ListPlugins(_)).Times(AtMost(0));
@@ -222,4 +228,34 @@ TEST(PluginTest, list_plugins_some)
     ASSERT_THAT(cl, Contains(one));
     ASSERT_THAT(cl, Contains(two));
     ASSERT_THAT(cl, Contains(three));
+}
+
+TEST(PluginTest, when_we_push_plugin_init_is_called)
+{
+    MockPluginFilesystem mockfs;
+
+    using namespace testing;
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("dummy"))).
+	WillOnce(Return(true));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(PLUGINDIR), StrEq("dummy"))).
+	Times(AtMost(0));
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), Eq((void*)0), StrEq("dummy"))).
+	Times(AtMost(0));
+
+    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);
+    EXPECT_CALL(mockfs, ListPlugins(_)).Times(0);
+
+    MockVTable mockVtable;
+    EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));
+
+    CompPlugin* cp = CompPlugin::load("dummy");
+
+    cp->vTable = &mockVtable;
+
+    CompPlugin::push(cp);
+    ASSERT_EQ(cp, CompPlugin::pop());
+    CompPlugin::unload(cp);
 }
