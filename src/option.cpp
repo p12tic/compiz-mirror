@@ -36,6 +36,11 @@
 #include "privateoption.h"
 
 CompOption::Vector noOptions (0);
+CompOption::Value::Vector emptyList;
+CompString         emptyString;
+CompMatch          emptyMatch;
+CompAction         emptyAction;
+unsigned short     emptyColor[4];
 
 static bool
 checkIsAction (CompOption::Type type)
@@ -92,61 +97,131 @@ CompOption::Value::set (Type t, const CompOption::Value::Vector & v)
 bool
 CompOption::Value::b () const
 {
-    return boost::get<bool>(mValue);
+    try
+    {
+	return boost::get<bool>(mValue);
+    }
+    catch (...)
+    {
+	return false;
+    }
 }
 
 int
 CompOption::Value::i () const
 {
-    return boost::get<int>(mValue);
+    try
+    {
+	return boost::get<int>(mValue);
+    }
+    catch (...)
+    {
+	return 0;
+    }
 }
 
 float
 CompOption::Value::f () const
 {
-    return boost::get<float>(mValue);
+    try
+    {
+	return boost::get<float>(mValue);
+    }
+    catch (...)
+    {
+	return 0.0;
+    }
 }
 
 unsigned short*
 CompOption::Value::c () const
 {
-    return boost::get<unsigned short*>(mValue);
+    try
+    {
+	return boost::get<unsigned short*>(mValue);
+    }
+    catch (...)
+    {
+	return emptyColor;
+    }
 }
 
 const CompString &
 CompOption::Value::s () const
 {
-    return boost::get<CompString>(mValue);
+    try
+    {
+	return boost::get<CompString>(mValue);
+    }
+    catch (...)
+    {
+	return emptyString;
+    }
 }
 
 CompString &
 CompOption::Value::s ()
 {
-    return boost::get < CompString > (mValue);
+    try
+    {
+	return boost::get < CompString > (mValue);
+    }
+    catch (...)
+    {
+	return emptyString;
+    }
 }
 
 const CompMatch &
 CompOption::Value::match () const
 {
-    return boost::get<CompMatch>(mValue);
+    try
+    {
+	return boost::get<CompMatch>(mValue);
+    }
+    catch (...)
+    {
+	return emptyMatch;
+    }
 }
 
 CompMatch &
 CompOption::Value::match ()
 {
-    return boost::get<CompMatch>(mValue);
+    try
+    {
+	return boost::get<CompMatch>(mValue);
+    }
+    catch (...)
+    {
+	return emptyMatch;
+    }
 }
 
 const CompAction &
 CompOption::Value::action () const
 {
-    return boost::get<CompAction>(mValue);
+    try
+    {
+	return boost::get<CompAction>(mValue);
+    }
+    catch (...)
+    {
+	return emptyAction;
+    }
 }
 
 CompAction &
 CompOption::Value::action ()
 {
-    return boost::get<CompAction>(mValue);
+    try
+    {
+	return boost::get<CompAction>(mValue);
+    }
+    catch (...)
+    {
+	return emptyAction;
+    }
 }
 
 // Type listType () const;
@@ -154,13 +229,27 @@ CompOption::Value::action ()
 const CompOption::Value::Vector &
 CompOption::Value::list () const
 {
-    return boost::get< std::vector<Value> >(mValue);
+    try
+    {
+	return boost::get< std::vector<Value> >(mValue);
+    }
+    catch (...)
+    {
+	return emptyList;
+    }
 }
 
 CompOption::Value::Vector &
 CompOption::Value::list ()
 {
-    return boost::get< std::vector<Value> >(mValue);
+    try
+    {
+	return boost::get< std::vector<Value> >(mValue);
+    }
+    catch (...)
+    {
+	return emptyList;
+    }
 }
 
 bool
