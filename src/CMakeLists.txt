@@ -106,6 +106,7 @@ add_library (compiz_core SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/eventsource.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/signalsource.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/stackdebugger.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/actionbindings.cpp
     
     ${_bcop_sources}
 )
