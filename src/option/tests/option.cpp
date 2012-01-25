@@ -6,6 +6,7 @@
 #include "core/option.h"
 
 namespace {
+
     template<typename T>
     void
     check_type_value(CompOption::Type type, const T & value)
@@ -14,6 +15,18 @@ namespace {
 	v.set(value);
 	ASSERT_EQ(v.type(),type);
 	ASSERT_EQ (v.get<T>(),value);
+    }
+    
+    template<>
+    void
+    check_type_value(CompOption::Type type, const unsigned short (& value)[4])
+    {
+	CompOption::Value v;
+	v.set(value);
+	ASSERT_EQ(v.type(),type);
+	unsigned short * color = v.get<unsigned short*>();
+	ASSERT_NE((void*)0, color);
+	for (int i = 0; i != 4; ++i) ASSERT_EQ(value[i], color[i]);
     }
     
     unsigned short testColor[4] = {255, 0, 255, 0};
