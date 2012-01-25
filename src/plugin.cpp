@@ -39,7 +39,6 @@
 #include <sys/types.h>
 
 #include <algorithm>
-#include <list>
 #include <set>
 
 #define foreach BOOST_FOREACH
@@ -524,15 +523,6 @@ CompPlugin::getPlugins (void)
 {
     return plugins;
 }
-
-/*
-static bool
-stringExist (CompStringList const& list,
-	     CompString const& s)
-{
-    return std::find(list.begin(), list.end(), s) != list.end();
-}
-*/
 
 CompStringList
 CompPlugin::availablePlugins ()
