@@ -24,7 +24,12 @@
  */
 
 #include "privatesignalsource.h"
+
+/* Add missing decls: https://bugzilla.gnome.org/show_bug.cgi?id=663880 */
+#include <glib.h>
+G_BEGIN_DECLS
 #include <glib-unix.h>
+G_END_DECLS
 
 CompSignalSource *
 CompSignalSource::create (int signum, const callbackFunc &f)
