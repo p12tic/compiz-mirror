@@ -27,6 +27,8 @@
 
 COMPIZ_PLUGIN_20090315 (switcher, SwitchPluginVTable)
 
+#define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
+
 static float _boxVertices[] =
 {
     -(WIDTH >> 1), 0,
@@ -77,7 +79,7 @@ SwitchScreen::updateWindowList (int count)
     {
 	CompWindow *w = screen->findWindow (popupWindow);
 
-	XWindowChanges xwc;
+	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 	unsigned int valueMask = 0;
 
 	valueMask |= (CWX | CWY | CWWidth | CWHeight);
