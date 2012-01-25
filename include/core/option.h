@@ -305,8 +305,8 @@ class CompOption {
 
 namespace compiz { namespace detail {
 
-inline
 template<typename Type>
+inline
 Type const& CompOption_Value_get(CompOption::Value::variant_type const& mValue)
 {
     try
@@ -320,24 +320,26 @@ Type const& CompOption_Value_get(CompOption::Value::variant_type const& mValue)
     }
 }
 
-inline
 template<>
-short unsigned int * CompOption_Value_get<short unsigned int *>(CompOption::Value::variant_type const& mValue)
+inline
+short unsigned int * const& CompOption_Value_get<short unsigned int *>(CompOption::Value::variant_type const& mValue)
 {
     try
     {
-         ColorVector const& tmp(boost::get<ColorVector>(mValue));
-         return const_cast<short unsigned int *>(&*tmp.begin());
+         CompOption::Value::ColorVector const& tmp(boost::get<CompOption::Value::ColorVector>(mValue));
+         static short unsigned int * some = &const_cast<unsigned short&>(*tmp.begin());
+         return some;
     }
     catch (...)
     {
-         return 0;
+         static short unsigned int * none = 0;
+         return none;
     }
 }
 }}
 
-inline
 template<typename T>
+inline
 const T & CompOption::Value::get () const
 {
      return compiz::detail::CompOption_Value_get<T>(mValue);
