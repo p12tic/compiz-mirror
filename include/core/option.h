@@ -307,7 +307,7 @@ namespace compiz { namespace detail {
 
 inline
 template<typename Type>
-Type CompOption_Value_get(CompOption::Value::variant_type const& mValue)
+Type const& CompOption_Value_get(CompOption::Value::variant_type const& mValue)
 {
     try
     {
