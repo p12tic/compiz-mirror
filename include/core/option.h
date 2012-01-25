@@ -102,7 +102,7 @@ class CompOption {
 		{
 		}
 		
-		Value( unsigned short c[4] ) : mListType(TypeUnset),
+		Value( unsigned short *c ) : mListType(TypeUnset),
 		    mValue (ColorVector (c, c + sizeof (c) / sizeof (unsigned short)))
 		{
 		}
@@ -136,7 +136,7 @@ class CompOption {
 			mValue = CompString(c);
 		}
 		
-		void set( unsigned short s[4] ) {
+		void set( unsigned short *s ) {
 		    mValue = ColorVector (s, s + sizeof (s) / sizeof (unsigned short));
 		}
 
