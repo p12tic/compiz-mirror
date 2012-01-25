@@ -87,14 +87,22 @@ TEST(CompOption,Color)
 {
 
     CompOption::Value value(testColor);
+
     unsigned short * color = value.c();
-    std::cout << "color: " << color[0] << color[1] << color[2] << color[3] << std::endl;
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor[i], color[i]);
+
     color = value.get<unsigned short*>();
-    std::cout << "color: " << color[0] << color[1] << color[2] << color[3] << std::endl;
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor[i], color[i]);
+
     value.set(testColor2);
+
     color = value.c();
-    std::cout << "color: " << color[0] << color[1] << color[2] << color[3] << std::endl;
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor2[i], color[i]);
+
     color = value.get<unsigned short*>();
-    std::cout << "color: " << color[0] << color[1] << color[2] << color[3] << std::endl;
-    
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor2[i], color[i]);
 }
