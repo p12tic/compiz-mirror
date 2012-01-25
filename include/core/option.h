@@ -42,6 +42,7 @@ class CompAction;
 class CompMatch;
 class CompScreen;
 
+
 /**
  * A configuration option with boolean, int, float, String, Color, Key, Button,
  * Edge, Bell, or List.
@@ -76,16 +77,16 @@ class CompOption {
 
 		typedef std::vector <unsigned short> ColorVector;
 
-	  typedef boost::variant<
-	      bool,
-	      int,
-	      float,
-	      CompString,
-	      boost::recursive_wrapper<ColorVector>,
-	      boost::recursive_wrapper<CompAction>,
-	      boost::recursive_wrapper<CompMatch>,
-	      boost::recursive_wrapper<std::vector<Value> >
-	    > variant_type;
+		typedef boost::variant<
+		      bool,
+		      int,
+		      float,
+		      CompString,
+		      boost::recursive_wrapper<ColorVector>,
+		      boost::recursive_wrapper<CompAction>,
+		      boost::recursive_wrapper<CompMatch>,
+		      boost::recursive_wrapper<std::vector<Value> >
+		    > variant_type;
 
 		typedef std::vector<Value> Vector;
 
@@ -139,18 +140,7 @@ class CompOption {
 		}
 
 		template<typename T>
-		const T & get () const
-		{
-		    try
-		    {
-			return boost::get<T> (mValue);
-		    }
-		    catch (...)
-		    {
-			static T inst;
-			return inst;
-		    }
-		}
+		const T & get () const;
 
 		void
 		set (Type t, const Vector & v);
@@ -312,6 +302,48 @@ class CompOption {
     private:
 	PrivateOption *priv;
 };
+
+namespace compiz { namespace detail {
+
+inline
+template<typename Type>
+Type CompOption_Value_get(CompOption::Value::variant_type const& mValue)
+{
+    try
+    {
+	return boost::get<Type> (mValue);
+    }
+    catch (...)
+    {
+	static Type inst;
+	return inst;
+    }
+}
+
+inline
+template<>
+short unsigned int * CompOption_Value_get<short unsigned int *>(CompOption::Value::variant_type const& mValue)
+{
+    try
+    {
+         ColorVector const& tmp(boost::get<ColorVector>(mValue));
+         return const_cast<short unsigned int *>(&*tmp.begin());
+    }
+    catch (...)
+    {
+         return 0;
+    }
+}
+}}
+
+inline
+template<typename T>
+const T & CompOption::Value::get () const
+{
+     return compiz::detail::CompOption_Value_get<T>(mValue);
+}
+
+
 
 extern CompOption::Vector noOptions;
 
