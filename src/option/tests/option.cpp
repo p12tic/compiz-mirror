@@ -18,6 +18,29 @@ namespace {
     
     unsigned short testColor[4] = {255, 0, 255, 0};
     unsigned short testColor2[4] = {0, 255, 0, 255};
+
+    template<typename T>
+    void
+    check_list_type(CompOption::Type listType, CompOption::Value::Vector &list)
+    {
+	CompOption::Value vl;
+	vl.set (list);
+
+	ASSERT_EQ (vl.type (), CompOption::TypeList);
+	ASSERT_EQ (vl.get <CompOption::Value::Vector> (), list);
+
+	for (CompOption::Value::Vector::const_iterator it = vl.get <CompOption::Value::Vector> ().begin ();
+	     it != vl.get <CompOption::Value::Vector> ().end ();
+	     it++)
+	{
+	    T inst;
+	    CompOption::Value value (inst);
+
+	    const CompOption::Value &v (*it);
+
+	    ASSERT_EQ (v.type (), value.type ());
+	}
+    }
 }
 
 TEST(CompOption,Value)
@@ -28,13 +51,13 @@ TEST(CompOption,Value)
 
     check_type_value<int> (CompOption::TypeInt, 1);
     check_type_value<float> (CompOption::TypeFloat, 1.f);
-    check_type_value<CompString> (CompOption::TypeString, CompString("Check"));
-	check_type_value<CompString> (CompOption::TypeString,"core");
+    check_type_value<CompString> (CompOption::TypeString, CompString ("Check"));
+    check_type_value<CompString> (CompOption::TypeString, "core");
     
     check_type_value<CompAction> (CompOption::TypeAction, CompAction());
     check_type_value<CompMatch> (CompOption::TypeMatch, CompMatch());
 
-	check_type_value<unsigned short*> (CompOption::TypeColor, testColor);
+    check_type_value<unsigned short*> (CompOption::TypeColor, testColor);
 	
     check_type_value<CompOption::Value::Vector> (CompOption::TypeList, CompOption::Value::Vector(5));
 
@@ -42,6 +65,22 @@ TEST(CompOption,Value)
     ASSERT_EQ (v1,v2);
     v1.set (CompString("SomeString"));
     ASSERT_TRUE(v1 != v2);
+
+    CompOption::Value::Vector vec;
+    CompOption::Value v;
+
+    v.set (true);
+    vec.push_back (v);
+    vec.push_back (v);
+
+    check_list_type<bool> (CompOption::TypeBool, vec);
+
+    vec.clear ();
+    v.set (CompString ("foo"));
+    vec.push_back (v);
+    vec.push_back (v);
+
+    check_list_type<CompString> (CompOption::TypeString, vec);
 }
 
 TEST(CompOption,Color)

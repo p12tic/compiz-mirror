@@ -34,6 +34,8 @@
 
 #include <vector>
 
+#include <iostream>
+
 class PrivateOption;
 class PrivateValue;
 class PrivateRestriction;
@@ -74,12 +76,14 @@ class CompOption {
 	class Value {
 	    public:
 
+		typedef std::vector <unsigned short> ColorVector;
+
 	  typedef boost::variant<
 	      bool,
 	      int,
 	      float,
 	      CompString,
-	      unsigned short*,
+	      boost::recursive_wrapper<ColorVector>,
 	      boost::recursive_wrapper<CompAction>,
 	      boost::recursive_wrapper<CompMatch>,
 	      boost::recursive_wrapper<std::vector<Value> >
@@ -99,7 +103,12 @@ class CompOption {
 		}
 		
 		Value( unsigned short c[4] ) : mListType(TypeUnset),
-		mValue( static_cast<unsigned short*>(c) )
+		    mValue (ColorVector (c, c + sizeof (c) / sizeof (unsigned short)))
+		{
+		}
+
+		Value( const char *s ) : mListType(TypeUnset),
+		mValue( CompString (s) )
 		{
 		}
 
@@ -128,7 +137,7 @@ class CompOption {
 		}
 		
 		void set( unsigned short s[4] ) {
-			mValue = static_cast<unsigned short*>(s);
+		    mValue = ColorVector (s, s + sizeof (s) / sizeof (unsigned short));
 		}
 
 		/* In order to be exception safe, this MUST
