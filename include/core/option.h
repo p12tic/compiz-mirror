@@ -100,7 +100,7 @@ class CompOption {
 		{
 		}
 		
-		Value( unsigned short (& color)[4]  ) : mListType(TypeUnset),
+		Value( unsigned short const (& color)[4]  ) : mListType(TypeUnset),
 		    mValue (ColorVector (color, color + 4))
 		{
 		}
@@ -134,7 +134,7 @@ class CompOption {
 			mValue = CompString(c);
 		}
 		
-		void set( unsigned short (& color)[4] ) {
+		void set( unsigned short const (& color)[4]) {
 		    mValue = ColorVector (color, color + 4);
 		}
 
