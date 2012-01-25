@@ -97,6 +97,11 @@ class CompOption {
 		mValue(t)
 		{
 		}
+		
+		Value( unsigned short c[4] ) : mListType(TypeUnset),
+		mValue( static_cast<unsigned short*>(c) )
+		{
+		}
 
 		~Value();
 
@@ -116,6 +121,14 @@ class CompOption {
 		void set (const T & t)
 		{
 		    mValue = t;
+		}
+		
+		void set( const char* c ) {
+			mValue = CompString(c);
+		}
+		
+		void set( unsigned short s[4] ) {
+			mValue = static_cast<unsigned short*>(s);
 		}
 
 		/* In order to be exception safe, this MUST

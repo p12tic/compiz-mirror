@@ -15,6 +15,9 @@ namespace {
 	ASSERT_EQ(v.type(),type);
 	ASSERT_EQ (v.get<T>(),value);
     }
+    
+    unsigned short testColor[4] = {255, 0, 255, 0};
+    unsigned short testColor2[4] = {0, 255, 0, 255};
 }
 
 TEST(CompOption,Value)
@@ -26,14 +29,33 @@ TEST(CompOption,Value)
     check_type_value<int> (CompOption::TypeInt, 1);
     check_type_value<float> (CompOption::TypeFloat, 1.f);
     check_type_value<CompString> (CompOption::TypeString, CompString("Check"));
-
+	check_type_value<CompString> (CompOption::TypeString,"core");
+    
     check_type_value<CompAction> (CompOption::TypeAction, CompAction());
     check_type_value<CompMatch> (CompOption::TypeMatch, CompMatch());
 
+	check_type_value<unsigned short*> (CompOption::TypeColor, testColor);
+	
     check_type_value<CompOption::Value::Vector> (CompOption::TypeList, CompOption::Value::Vector(5));
 
     CompOption::Value v1, v2;
     ASSERT_EQ (v1,v2);
     v1.set (CompString("SomeString"));
     ASSERT_TRUE(v1 != v2);
+}
+
+TEST(CompOption,Color)
+{
+
+    CompOption::Value value(testColor);
+    unsigned short * color = value.c();
+    std::cout << "color: " << color[0] << color[1] << color[2] << color[3] << std::endl;
+    color = value.get<unsigned short*>();
+    std::cout << "color: " << color[0] << color[1] << color[2] << color[3] << std::endl;
+    value.set(testColor2);
+    color = value.c();
+    std::cout << "color: " << color[0] << color[1] << color[2] << color[3] << std::endl;
+    color = value.get<unsigned short*>();
+    std::cout << "color: " << color[0] << color[1] << color[2] << color[3] << std::endl;
+    
 }
