@@ -24,6 +24,8 @@
 
 COMPIZ_PLUGIN_20090315 (place, PlacePluginVTable)
 
+#define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
+
 PlaceScreen::PlaceScreen (CompScreen *screen) :
     PluginClassHandler<PlaceScreen, CompScreen> (screen),
     mPrevSize (screen->width (), screen->height ()),
@@ -112,7 +114,7 @@ PlaceWindow::applyGeometry (compiz::window::Geometry &ng,
     CompRect workArea = screen->getWorkareaForOutput (
 			    screen->outputDeviceForGeometry (og));
 
-    XWindowChanges xwc;
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
     unsigned int   mask = og.changeMask (ng);
 
     xwc.x = ng.x ();

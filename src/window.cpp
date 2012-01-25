@@ -45,6 +45,8 @@
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
 
+#define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
+
 PluginClassStorage::Indices windowPluginClassIndices (0);
 
 unsigned int
@@ -790,7 +792,7 @@ CompWindow::recalcType ()
 void
 PrivateWindow::updateFrameWindow ()
 {
-    XWindowChanges xwc;
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight;
 
     if (!serverFrame)
@@ -1679,7 +1681,7 @@ CompWindow::unmap ()
 
     if (priv->unmanaging)
     {
-	XWindowChanges xwc;
+	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 	unsigned int   xwcm;
 	int		   gravity = priv->sizeHints.win_gravity;
 
@@ -2196,7 +2198,7 @@ CompWindow::move (int  dx,
 	}
 	else
 	{
-	    XWindowChanges xwc;
+	    XWindowChanges xwc = XWINDOWCHANGES_INIT;
 	    unsigned int   valueMask = CWX | CWY;
 	    compLogMessage ("core", CompLogLevelDebug, "pending configure notifies on 0x%x, "\
 			    "moving window asyncrhonously!", (unsigned int) priv->serverId);
@@ -2399,7 +2401,7 @@ compiz::X11::PendingConfigureEvent::match (XEvent *event)
     if (!compiz::X11::PendingEvent::match (event))
 	return false;
 
-    XWindowChanges xwc;
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
     xwc.x = ce->x;
     xwc.y = ce->y;
@@ -2479,7 +2481,7 @@ CompWindow::syncPosition ()
     gettimeofday (&priv->lastConfigureRequest, NULL);
 
     unsigned int   valueMask = CWX | CWY;
-    XWindowChanges xwc;
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
     if (priv->pendingPositionUpdates && !priv->pendingConfigures.pending ())
     {
@@ -2679,7 +2681,7 @@ CompWindow::stateChangeNotify (unsigned int lastState)
 	if (screen->vp () != vp)
 	{
 	    unsigned int valueMask = CWX | CWY;
-	    XWindowChanges xwc;
+	    XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
 	    xwc.x = serverGeometry ().x () +  (screen->vp ().x () - vp.x ()) * screen->width ();
 	    xwc.y = serverGeometry ().y () +  (screen->vp ().y () - vp.y ()) * screen->height ();
@@ -4252,7 +4254,7 @@ CompWindow::moveResize (XWindowChanges *xwc,
 void
 PrivateWindow::updateSize ()
 {
-    XWindowChanges xwc;
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
     int		   mask;
 
     if (window->overrideRedirect () || !managed)
@@ -4282,7 +4284,7 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 	{
 	    if (!sibling && id)
 	    {
-		XWindowChanges lxwc;
+		XWindowChanges lxwc = XWINDOWCHANGES_INIT;
 		unsigned int   valueMask = CWStackMode;
 
 		lxwc.stack_mode = Below;
@@ -4343,7 +4345,7 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 void
 CompWindow::raise ()
 {
-    XWindowChanges xwc;
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
     int		   mask;
     bool	   aboveFs = false;
 
@@ -4406,7 +4408,7 @@ PrivateScreen::focusTopMostWindow ()
 void
 CompWindow::lower ()
 {
-    XWindowChanges xwc;
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
     int		   mask;
 
     mask = priv->addWindowStackChanges (&xwc,
@@ -4439,7 +4441,7 @@ CompWindow::restackAbove (CompWindow *sibling)
 
     if (sibling)
     {
-	XWindowChanges xwc;
+	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 	int	       mask;
 
 	mask = priv->addWindowStackChanges (&xwc, sibling);
@@ -4505,7 +4507,7 @@ PrivateWindow::findValidStackSiblingBelow (CompWindow *w,
 void
 CompWindow::restackBelow (CompWindow *sibling)
 {
-    XWindowChanges xwc;
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
     unsigned int   mask;
 
     mask = priv->addWindowStackChanges (&xwc,
@@ -4518,7 +4520,7 @@ CompWindow::restackBelow (CompWindow *sibling)
 void
 CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 {
-    XWindowChanges xwc;
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
     int		   mask = 0;
 
     if (overrideRedirect () || !priv->managed)
@@ -4635,7 +4637,7 @@ PrivateWindow::ensureWindowVisibility ()
 
     if (dx || dy)
     {
-	XWindowChanges xwc;
+	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
 	xwc.x = serverGeometry.x () + dx;
 	xwc.y = serverGeometry.y () + dy;
@@ -5739,7 +5741,7 @@ PrivateWindow::processMap ()
     if (!priv->placed)
     {
 	int            gravity = priv->sizeHints.win_gravity;
-	XWindowChanges xwc;
+	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 	unsigned int   xwcm;
 
 	/* adjust for gravity, but only for frame size */
@@ -6040,7 +6042,7 @@ CompWindow::moveToViewportPosition (int  x,
     if (tx || ty)
     {
 	unsigned int   valueMask = CWX | CWY;
-	XWindowChanges xwc;
+	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 	int m, wx, wy;
 
 	if (!priv->managed)
@@ -6893,7 +6895,7 @@ PrivateWindow::reparent ()
 {
     XSetWindowAttributes attr;
     XWindowAttributes    wa;
-    XWindowChanges       xwc;
+    XWindowChanges       xwc = XWINDOWCHANGES_INIT;
     int                  mask;
     unsigned int         nchildren;
     Window		 *children, root_return, parent_return;
@@ -7099,7 +7101,7 @@ PrivateWindow::unreparent ()
     Display        	 *dpy = screen->dpy ();
     XEvent         	 e;
     bool           	 alive = true;
-    XWindowChanges 	 xwc;
+    XWindowChanges 	 xwc = XWINDOWCHANGES_INIT;
     unsigned int         nchildren;
     Window		 *children = NULL, root_return, parent_return;
     XWindowAttributes	 wa;
