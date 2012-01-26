@@ -138,7 +138,7 @@ CompOption::Value::c () const
 {
     try
     {
-	return boost::get<unsigned short*>(mValue);
+	return const_cast <unsigned short *> (&((boost::get<ColorVector>(mValue))[0]));
     }
     catch (...)
     {
