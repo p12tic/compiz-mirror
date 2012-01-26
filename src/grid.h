@@ -152,7 +152,6 @@ class GridScreen :
 
 class GridWindow :
     public WindowInterface,
-    public CompositeWindowInterface,
     public PluginClassHandler <GridWindow, CompWindow>
 {
     public:
@@ -177,8 +176,7 @@ class GridWindow :
 
 	void ungrabNotify ();
 
-	void applyOffset (const CompPoint &d);
-	bool position (compiz::window::Geometry &g, unsigned int source, unsigned int constrainment);
+	void moveNotify (int, int, bool);
 
 	void stateChangeNotify (unsigned int);
 	void validateResizeRequest (unsigned int &valueMask,
