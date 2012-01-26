@@ -190,6 +190,7 @@ public:
     virtual const CompSize  & vpSize () const = 0;
 
 private:
+    // The "wrapable" functions delegate to these (for mocking)
     virtual bool _initPluginForScreen(CompPlugin *) = 0;
     virtual void _finiPluginForScreen(CompPlugin *) = 0;
     virtual bool _setOptionForPlugin(const char *, const char *, CompOption::Value &) = 0;
@@ -198,6 +199,17 @@ private:
     virtual void _enterShowDesktopMode() = 0;
     virtual void _leaveShowDesktopMode(CompWindow *) = 0;
     virtual void _addSupportedAtoms(std::vector<Atom>& atoms) = 0;
+
+    virtual void _fileWatchAdded(CompFileWatch *) = 0;
+    virtual void _fileWatchRemoved(CompFileWatch *) = 0;
+    virtual void _sessionEvent(CompSession::Event, CompOption::Vector &) = 0;
+    virtual void _handleCompizEvent(const char *, const char *, CompOption::Vector &) = 0;
+    virtual bool _fileToImage(CompString &, CompSize &, int &, void *&) = 0;
+    virtual bool _imageToFile(CompString &, CompString &, CompSize &, int, void *) = 0;
+    virtual CompMatch::Expression * _matchInitExp(const CompString&) = 0;
+    virtual void _matchExpHandlerChanged() = 0;
+    virtual void _matchPropertyChanged(CompWindow *) = 0;
+    virtual void _outputChangeNotify() = 0;
 };
 
 /**
@@ -513,6 +525,19 @@ class CompScreen :
         virtual void _enterShowDesktopMode();
         virtual void _leaveShowDesktopMode(CompWindow *);
         virtual void _addSupportedAtoms(std::vector<Atom>& atoms);
+
+        // These are stubs - but allow mocking of AbstractCompWindow
+        virtual void _fileWatchAdded(CompFileWatch *);
+        virtual void _fileWatchRemoved(CompFileWatch *);
+        virtual void _sessionEvent(CompSession::Event, CompOption::Vector &);
+        virtual void _handleCompizEvent(const char *, const char *, CompOption::Vector &);
+        virtual bool _fileToImage(CompString &, CompSize &, int &, void *&);
+        virtual bool _imageToFile(CompString &, CompString &, CompSize &, int, void *);
+        virtual CompMatch::Expression * _matchInitExp(const CompString&);
+        virtual void _matchExpHandlerChanged();
+        virtual void _matchPropertyChanged(CompWindow *);
+        virtual void _outputChangeNotify();
+
 };
 
 #endif

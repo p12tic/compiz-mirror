@@ -978,7 +978,17 @@ void
 AbstractCompScreen::handleCompizEvent (const char         *plugin,
 			       const char         *event,
 			       CompOption::Vector &options)
-    WRAPABLE_HND_FUNCTN (handleCompizEvent, plugin, event, options)
+{
+    WRAPABLE_HND_FUNCTN (handleCompizEvent, plugin, event, options);
+    _handleCompizEvent (plugin, event, options);
+}
+
+void
+CompScreen::_handleCompizEvent (const char         *plugin,
+			       const char         *event,
+			       CompOption::Vector &options)
+{
+}
 
 void
 AbstractCompScreen::handleEvent (XEvent *event)

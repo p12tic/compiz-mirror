@@ -343,11 +343,27 @@ CompScreen::eraseValue (CompString key)
 
 void
 AbstractCompScreen::fileWatchAdded (CompFileWatch *watch)
-    WRAPABLE_HND_FUNCTN (fileWatchAdded, watch)
+{
+    WRAPABLE_HND_FUNCTN (fileWatchAdded, watch);
+    _fileWatchAdded (watch);
+}
+
+void
+CompScreen::_fileWatchAdded (CompFileWatch *watch)
+{
+}
 
 void
 AbstractCompScreen::fileWatchRemoved (CompFileWatch *watch)
-    WRAPABLE_HND_FUNCTN (fileWatchRemoved, watch)
+{
+    WRAPABLE_HND_FUNCTN (fileWatchRemoved, watch);
+    _fileWatchRemoved (watch);
+}
+
+void
+CompScreen::_fileWatchRemoved (CompFileWatch *watch)
+{
+}
 
 bool
 AbstractCompScreen::setOptionForPlugin (const char        *plugin,
@@ -375,7 +391,16 @@ CompScreen::_setOptionForPlugin (const char        *plugin,
 void
 AbstractCompScreen::sessionEvent (CompSession::Event event,
 			  CompOption::Vector &arguments)
-    WRAPABLE_HND_FUNCTN (sessionEvent, event, arguments)
+{
+    WRAPABLE_HND_FUNCTN (sessionEvent, event, arguments);
+    _sessionEvent(event, arguments);
+}
+
+void
+CompScreen::_sessionEvent (CompSession::Event event,
+			  CompOption::Vector &arguments)
+{
+}
 
 void
 ScreenInterface::fileWatchAdded (CompFileWatch *watch)
@@ -1210,6 +1235,15 @@ AbstractCompScreen::fileToImage (CompString &name,
 			 void       *&data)
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, fileToImage, name, size, stride, data);
+    return _fileToImage(name, size, stride, data);
+}
+
+bool
+CompScreen::_fileToImage (CompString &name,
+			 CompSize   &size,
+			 int        &stride,
+			 void       *&data)
+{
     return false;
 }
 
@@ -1221,7 +1255,17 @@ AbstractCompScreen::imageToFile (CompString &path,
 			 void       *data)
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, imageToFile, path, format, size,
-			      stride, data)
+			      stride, data);
+    return _imageToFile (path, format, size, stride, data);
+}
+
+bool
+CompScreen::_imageToFile (CompString &path,
+			 CompString &format,
+			 CompSize   &size,
+			 int        stride,
+			 void       *data)
+{
     return false;
 }
 
@@ -3861,9 +3905,15 @@ CompScreen::getWorkareaForOutput (unsigned int outputNum) const
 
 void
 AbstractCompScreen::outputChangeNotify ()
-    WRAPABLE_HND_FUNCTN (outputChangeNotify)
+{
+    WRAPABLE_HND_FUNCTN (outputChangeNotify);
+    _outputChangeNotify ();
+}
 
-
+void
+CompScreen::_outputChangeNotify ()
+{
+}
 
 /* Returns default viewport for some window geometry. If the window spans
    more than one viewport the most appropriate viewport is returned. How the

@@ -114,8 +114,13 @@ class CoreExp : public CompMatch::Expression {
 CompMatch::Expression *
 AbstractCompScreen::matchInitExp (const CompString& str)
 {
-    WRAPABLE_HND_FUNCTN_RETURN (CompMatch::Expression *, matchInitExp, str)
+    WRAPABLE_HND_FUNCTN_RETURN (CompMatch::Expression *, matchInitExp, str);
+    return _matchInitExp (str);
+}
 
+CompMatch::Expression *
+CompScreen::_matchInitExp (const CompString& str)
+{
     return new CoreExp (str);
 }
 
@@ -143,8 +148,13 @@ matchUpdateMatchOptions (CompOption::Vector& options)
 void
 AbstractCompScreen::matchExpHandlerChanged ()
 {
-    WRAPABLE_HND_FUNCTN (matchExpHandlerChanged)
+    WRAPABLE_HND_FUNCTN (matchExpHandlerChanged);
+    _matchExpHandlerChanged ();
+}
 
+void
+CompScreen::_matchExpHandlerChanged ()
+{
     foreach (CompPlugin *p, CompPlugin::getPlugins ())
     {
 	CompOption::Vector &options = p->vTable->getOptions ();
@@ -155,7 +165,13 @@ AbstractCompScreen::matchExpHandlerChanged ()
 void
 AbstractCompScreen::matchPropertyChanged (CompWindow *w)
 {
-    WRAPABLE_HND_FUNCTN (matchPropertyChanged, w)
+    WRAPABLE_HND_FUNCTN (matchPropertyChanged, w);
+    _matchPropertyChanged (w);
+}
+
+void
+CompScreen::_matchPropertyChanged (CompWindow *w)
+{
 }
 
 static void
