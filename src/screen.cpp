@@ -342,21 +342,29 @@ CompScreen::eraseValue (CompString key)
 }
 
 void
-CompScreen::fileWatchAdded (CompFileWatch *watch)
+AbstractCompScreen::fileWatchAdded (CompFileWatch *watch)
     WRAPABLE_HND_FUNCTN (fileWatchAdded, watch)
 
 void
-CompScreen::fileWatchRemoved (CompFileWatch *watch)
+AbstractCompScreen::fileWatchRemoved (CompFileWatch *watch)
     WRAPABLE_HND_FUNCTN (fileWatchRemoved, watch)
 
 bool
-CompScreen::setOptionForPlugin (const char        *plugin,
+AbstractCompScreen::setOptionForPlugin (const char        *plugin,
 				const char        *name,
 				CompOption::Value &value)
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, setOptionForPlugin,
 			      plugin, name, value)
 
+    return _setOptionForPlugin(plugin, name, value);
+}
+
+bool
+CompScreen::_setOptionForPlugin (const char        *plugin,
+				const char        *name,
+				CompOption::Value &value)
+{
     CompPlugin *p = CompPlugin::find (plugin);
     if (p)
 	return p->vTable->setOption (name, value);
@@ -365,7 +373,7 @@ CompScreen::setOptionForPlugin (const char        *plugin,
 }
 
 void
-CompScreen::sessionEvent (CompSession::Event event,
+AbstractCompScreen::sessionEvent (CompSession::Event event,
 			  CompOption::Vector &arguments)
     WRAPABLE_HND_FUNCTN (sessionEvent, event, arguments)
 
@@ -1196,7 +1204,7 @@ PrivateScreen::getActiveWindow (Window root)
 }
 
 bool
-CompScreen::fileToImage (CompString &name,
+AbstractCompScreen::fileToImage (CompString &name,
 			 CompSize   &size,
 			 int        &stride,
 			 void       *&data)
@@ -1206,7 +1214,7 @@ CompScreen::fileToImage (CompString &name,
 }
 
 bool
-CompScreen::imageToFile (CompString &path,
+AbstractCompScreen::imageToFile (CompString &path,
 			 CompString &format,
 			 CompSize   &size,
 			 int        stride,
@@ -1218,11 +1226,19 @@ CompScreen::imageToFile (CompString &path,
 }
 
 void
-CompScreen::logMessage (const char   *componentName,
+AbstractCompScreen::logMessage (const char   *componentName,
 			CompLogLevel level,
 			const char   *message)
 {
     WRAPABLE_HND_FUNCTN (logMessage, componentName, level, message)
+    _logMessage (componentName, level, message);
+}
+
+void
+CompScreen::_logMessage (const char   *componentName,
+			CompLogLevel level,
+			const char   *message)
+{
     ::logMessage (componentName, level, message);
 }
 
@@ -2207,10 +2223,15 @@ CompScreen::updateSupportedWmHints ()
 }
 
 void
-CompScreen::addSupportedAtoms (std::vector<Atom> &atoms)
+AbstractCompScreen::addSupportedAtoms (std::vector<Atom> &atoms)
 {
     WRAPABLE_HND_FUNCTN (addSupportedAtoms, atoms);
+    _addSupportedAtoms (atoms);
+}
 
+void
+CompScreen::_addSupportedAtoms (std::vector<Atom> &atoms)
+{
     atoms.push_back (Atoms::supported);
     atoms.push_back (Atoms::supportingWmCheck);
 
@@ -2407,10 +2428,15 @@ PrivateScreen::getDesktopHints ()
 }
 
 void
-CompScreen::enterShowDesktopMode ()
+AbstractCompScreen::enterShowDesktopMode ()
 {
     WRAPABLE_HND_FUNCTN (enterShowDesktopMode)
+    _enterShowDesktopMode ();
+}
 
+void
+CompScreen::_enterShowDesktopMode ()
+{
     unsigned long data = 1;
     int		  count = 0;
     bool          st = priv->optionGetHideSkipTaskbarWindows ();
@@ -2449,10 +2475,15 @@ CompScreen::enterShowDesktopMode ()
 }
 
 void
-CompScreen::leaveShowDesktopMode (CompWindow *window)
+AbstractCompScreen::leaveShowDesktopMode (CompWindow *window)
 {
     WRAPABLE_HND_FUNCTN (leaveShowDesktopMode, window)
+    _leaveShowDesktopMode (window);
+}
 
+void
+CompScreen::_leaveShowDesktopMode (CompWindow *window)
+{
     unsigned long data = 0;
 
     if (window)
@@ -3829,7 +3860,7 @@ CompScreen::getWorkareaForOutput (unsigned int outputNum) const
 }
 
 void
-CompScreen::outputChangeNotify ()
+AbstractCompScreen::outputChangeNotify ()
     WRAPABLE_HND_FUNCTN (outputChangeNotify)
 
 

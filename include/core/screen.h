@@ -137,6 +137,67 @@ class ScreenInterface : public WrapableInterface<CompScreen, ScreenInterface> {
 
 	virtual void outputChangeNotify ();
 	virtual void addSupportedAtoms (std::vector<Atom>& atoms);
+
+};
+
+class AbstractCompScreen :
+    public WrapableHandler<ScreenInterface, 18>,
+    public CompSize
+{
+public:
+    WRAPABLE_HND (0, ScreenInterface, void, fileWatchAdded, CompFileWatch *)
+    WRAPABLE_HND (1, ScreenInterface, void, fileWatchRemoved, CompFileWatch *)
+
+    WRAPABLE_HND (2, ScreenInterface, bool, initPluginForScreen,
+		  CompPlugin *)
+    WRAPABLE_HND (3, ScreenInterface, void, finiPluginForScreen,
+		  CompPlugin *)
+
+    WRAPABLE_HND (4, ScreenInterface, bool, setOptionForPlugin,
+		  const char *, const char *, CompOption::Value &)
+
+    WRAPABLE_HND (5, ScreenInterface, void, sessionEvent, CompSession::Event,
+		  CompOption::Vector &)
+    WRAPABLE_HND (6, ScreenInterface, void, handleEvent, XEvent *event)
+    WRAPABLE_HND (7, ScreenInterface, void, handleCompizEvent,
+		  const char *, const char *, CompOption::Vector &)
+
+    WRAPABLE_HND (8, ScreenInterface, bool, fileToImage, CompString &,
+		  CompSize &, int &, void *&);
+    WRAPABLE_HND (9, ScreenInterface, bool, imageToFile, CompString &,
+		  CompString &, CompSize &, int, void *);
+
+    WRAPABLE_HND (10, ScreenInterface, CompMatch::Expression *,
+		  matchInitExp, const CompString&);
+    WRAPABLE_HND (11, ScreenInterface, void, matchExpHandlerChanged)
+    WRAPABLE_HND (12, ScreenInterface, void, matchPropertyChanged,
+		  CompWindow *)
+
+    WRAPABLE_HND (13, ScreenInterface, void, logMessage, const char *,
+		  CompLogLevel, const char*)
+    WRAPABLE_HND (14, ScreenInterface, void, enterShowDesktopMode);
+    WRAPABLE_HND (15, ScreenInterface, void, leaveShowDesktopMode,
+		  CompWindow *);
+
+    WRAPABLE_HND (16, ScreenInterface, void, outputChangeNotify);
+    WRAPABLE_HND (17, ScreenInterface, void, addSupportedAtoms,
+		  std::vector<Atom>& atoms);
+
+    // Interface hoisted from CompScreen
+    virtual bool updateDefaultIcon () = 0;
+    virtual Display * dpy () = 0;
+    virtual Window root () = 0;
+    virtual const CompSize  & vpSize () const = 0;
+
+private:
+    virtual bool _initPluginForScreen(CompPlugin *) = 0;
+    virtual void _finiPluginForScreen(CompPlugin *) = 0;
+    virtual bool _setOptionForPlugin(const char *, const char *, CompOption::Value &) = 0;
+    virtual void _handleEvent(XEvent *event) = 0;
+    virtual void _logMessage(const char *, CompLogLevel, const char*) = 0;
+    virtual void _enterShowDesktopMode() = 0;
+    virtual void _leaveShowDesktopMode(CompWindow *) = 0;
+    virtual void _addSupportedAtoms(std::vector<Atom>& atoms) = 0;
 };
 
 /**
@@ -144,8 +205,7 @@ class ScreenInterface : public WrapableInterface<CompScreen, ScreenInterface> {
  * X server.
  */
 class CompScreen :
-    public CompSize,
-    public WrapableHandler<ScreenInterface, 18>,
+    public AbstractCompScreen,
     public PluginClassStorage,
     public CompOption::Class
 {
@@ -367,44 +427,6 @@ class CompScreen :
 	static unsigned int allocPluginClassIndex ();
 	static void freePluginClassIndex (unsigned int index);
 
-	WRAPABLE_HND (0, ScreenInterface, void, fileWatchAdded, CompFileWatch *)
-	WRAPABLE_HND (1, ScreenInterface, void, fileWatchRemoved, CompFileWatch *)
-
-	WRAPABLE_HND (2, ScreenInterface, bool, initPluginForScreen,
-		      CompPlugin *)
-	WRAPABLE_HND (3, ScreenInterface, void, finiPluginForScreen,
-		      CompPlugin *)
-
-	WRAPABLE_HND (4, ScreenInterface, bool, setOptionForPlugin,
-		      const char *, const char *, CompOption::Value &)
-
-	WRAPABLE_HND (5, ScreenInterface, void, sessionEvent, CompSession::Event,
-		      CompOption::Vector &)
-	WRAPABLE_HND (6, ScreenInterface, void, handleEvent, XEvent *event)
-	WRAPABLE_HND (7, ScreenInterface, void, handleCompizEvent,
-		      const char *, const char *, CompOption::Vector &)
-
-	WRAPABLE_HND (8, ScreenInterface, bool, fileToImage, CompString &,
-		      CompSize &, int &, void *&);
-	WRAPABLE_HND (9, ScreenInterface, bool, imageToFile, CompString &,
-		      CompString &, CompSize &, int, void *);
-
-	WRAPABLE_HND (10, ScreenInterface, CompMatch::Expression *,
-		      matchInitExp, const CompString&);
-	WRAPABLE_HND (11, ScreenInterface, void, matchExpHandlerChanged)
-	WRAPABLE_HND (12, ScreenInterface, void, matchPropertyChanged,
-		      CompWindow *)
-
-	WRAPABLE_HND (13, ScreenInterface, void, logMessage, const char *,
-		      CompLogLevel, const char*)
-	WRAPABLE_HND (14, ScreenInterface, void, enterShowDesktopMode);
-	WRAPABLE_HND (15, ScreenInterface, void, leaveShowDesktopMode,
-		      CompWindow *);
-
-	WRAPABLE_HND (16, ScreenInterface, void, outputChangeNotify);
-	WRAPABLE_HND (17, ScreenInterface, void, addSupportedAtoms,
-		      std::vector<Atom>& atoms);
-
 	friend class CompTimer;
 	friend class CompWindow;
 	friend class PrivateWindow;
@@ -481,6 +503,16 @@ class CompScreen :
 			   void           *userData);
 
 	static int checkForError (Display *dpy);
+
+    private:
+        virtual bool _setOptionForPlugin(const char *, const char *, CompOption::Value &);
+        virtual bool _initPluginForScreen(CompPlugin *);
+        virtual void _finiPluginForScreen(CompPlugin *);
+        virtual void _handleEvent(XEvent *event);
+        virtual void _logMessage(const char *, CompLogLevel, const char*);
+        virtual void _enterShowDesktopMode();
+        virtual void _leaveShowDesktopMode(CompWindow *);
+        virtual void _addSupportedAtoms(std::vector<Atom>& atoms);
 };
 
 #endif

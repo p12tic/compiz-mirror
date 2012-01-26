@@ -975,16 +975,21 @@ PrivateScreen::setDefaultWindowAttributes (XWindowAttributes *wa)
 }
 
 void
-CompScreen::handleCompizEvent (const char         *plugin,
+AbstractCompScreen::handleCompizEvent (const char         *plugin,
 			       const char         *event,
 			       CompOption::Vector &options)
     WRAPABLE_HND_FUNCTN (handleCompizEvent, plugin, event, options)
 
 void
-CompScreen::handleEvent (XEvent *event)
+AbstractCompScreen::handleEvent (XEvent *event)
 {
     WRAPABLE_HND_FUNCTN (handleEvent, event)
+    _handleEvent (event);
+}
 
+void
+CompScreen::_handleEvent (XEvent *event)
+{
     CompWindow *w = NULL;
     XWindowAttributes wa;
     bool	      actionEventHandled = false;
