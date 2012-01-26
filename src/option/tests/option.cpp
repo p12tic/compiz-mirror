@@ -118,4 +118,46 @@ TEST(CompOption,Color)
     color = value.get<unsigned short*>();
     ASSERT_NE((void*)0, color);
     for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor2[i], color[i]);
+
+    CompOption::Value v;
+
+    v.set (testColor);
+
+    color = v.c();
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor[i], color[i]);
+
+    color = v.get<unsigned short*>();
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor[i], color[i]);
+
+    v.set(testColor2);
+
+    color = v.c();
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor2[i], color[i]);
+
+    color = v.get<unsigned short*>();
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor2[i], color[i]);
+
+    v.set (static_cast <short unsigned int *> (testColor));
+
+    color = v.c();
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor[i], color[i]);
+
+    color = v.get<unsigned short*>();
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor[i], color[i]);
+
+    v.set(testColor2);
+
+    color = v.c();
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor2[i], color[i]);
+
+    color = v.get<unsigned short*>();
+    ASSERT_NE((void*)0, color);
+    for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor2[i], color[i]);
 }

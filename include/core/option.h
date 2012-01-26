@@ -96,18 +96,15 @@ class CompOption {
 		}
 
 		template<typename T>
-		Value( const T & t ) : mListType(TypeUnset),
-		mValue(t)
-		{
-		}
-		
-		Value( unsigned short const (& color)[4]  ) : mListType(TypeUnset),
+		Value( const T & t );
+
+		Value( unsigned short const (&color)[4] ) : mListType(TypeUnset),
 		    mValue (ColorVector (color, color + 4))
 		{
 		}
 
-		Value( const char *s ) : mListType(TypeUnset),
-		mValue( CompString (s) )
+		Value( const char *c ) : mListType (TypeUnset),
+		    mValue (CompString (c))
 		{
 		}
 
@@ -125,18 +122,18 @@ class CompOption {
 		    return mListType;
 		}
 
+
 		template<typename T>
-		void set (const T & t)
+		void set (const T & t);
+
+		void set( unsigned short const (&color)[4] )
 		{
-		    mValue = t;
-		}
-		
-		void set( const char* c ) {
-			mValue = CompString(c);
-		}
-		
-		void set( unsigned short const (& color)[4]) {
 		    mValue = ColorVector (color, color + 4);
+		}
+
+		void set (const char *c)
+		{
+		    mValue = CompString (c);
 		}
 
 		template<typename T>
@@ -303,7 +300,8 @@ class CompOption {
 	PrivateOption *priv;
 };
 
-namespace compiz { namespace detail {
+namespace compiz {
+namespace detail {
 
 template<typename Type>
 inline
@@ -326,9 +324,11 @@ short unsigned int * const& CompOption_Value_get<short unsigned int *>(CompOptio
 {
     try
     {
+	 static short unsigned int * some = 0;
          CompOption::Value::ColorVector const& tmp(boost::get<CompOption::Value::ColorVector>(mValue));
-         static short unsigned int * some = &const_cast<unsigned short&>(*tmp.begin());
-         return some;
+
+	 some = const_cast<unsigned short *> (&(tmp[0]));
+	 return some;
     }
     catch (...)
     {
@@ -336,7 +336,23 @@ short unsigned int * const& CompOption_Value_get<short unsigned int *>(CompOptio
          return none;
     }
 }
-}}
+
+template<typename Type>
+inline
+void CompOption_Value_set (CompOption::Value::variant_type & mValue, Type &t)
+{
+    mValue = t;
+}
+
+template <>
+inline
+void CompOption_Value_set<unsigned short *> (CompOption::Value::variant_type & mValue, unsigned short * &t)
+{
+    mValue = CompOption::Value::ColorVector (t, t + 4);
+}
+
+}
+}
 
 template<typename T>
 inline
@@ -345,6 +361,20 @@ const T & CompOption::Value::get () const
      return compiz::detail::CompOption_Value_get<T>(mValue);
 }
 
+template<typename T>
+inline
+void CompOption::Value::set (const T & t)
+{
+    return compiz::detail::CompOption_Value_set<T>(mValue, const_cast <T &> (t));
+}
+
+template<typename T>
+inline
+CompOption::Value::Value (const T & t) :
+    mListType (CompOption::TypeUnset)
+{
+    set (t);
+}
 
 
 extern CompOption::Vector noOptions;
