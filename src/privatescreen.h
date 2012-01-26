@@ -215,7 +215,7 @@ class PrivateScreen :
 	};
 
     public:
-	PrivateScreen (CompScreen *screen);
+	PrivateScreen (AbstractCompScreen *screen);
 	~PrivateScreen ();
 
 	bool setOption (const CompString &name, CompOption::Value &value);
@@ -452,7 +452,7 @@ class PrivateScreen :
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
 
-	CompScreen  *screen;
+	AbstractCompScreen  *screen;
 
 	std::list <CoreWindow *> createdWindows;
 	CompWindowList serverWindows;

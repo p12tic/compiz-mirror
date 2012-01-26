@@ -4942,7 +4942,7 @@ CompScreen::~CompScreen ()
     screen = NULL;
 }
 
-PrivateScreen::PrivateScreen (CompScreen *screen) :
+PrivateScreen::PrivateScreen (AbstractCompScreen *screen) :
     priv (this),
     fileWatch (0),
     lastFileWatchHandle (1),

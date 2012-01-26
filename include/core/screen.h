@@ -188,6 +188,13 @@ public:
     virtual Display * dpy () = 0;
     virtual Window root () = 0;
     virtual const CompSize  & vpSize () const = 0;
+    virtual void forEachWindow (CompWindow::ForEach) =0;
+    virtual CompWindowList & windows () = 0;
+    virtual void moveViewport (int tx, int ty, bool sync) = 0;
+    virtual const CompPoint & vp () const = 0;
+    virtual void updateWorkarea () = 0;
+    virtual bool addAction (CompAction *action) = 0;
+    virtual CompWindow * findWindow (Window id) = 0;
 
 private:
     // The "wrapable" functions delegate to these (for mocking)
