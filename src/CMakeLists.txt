@@ -11,6 +11,7 @@ add_subdirectory( window )
 
 IF (COMPIZ_BUILD_TESTING)
 add_subdirectory( wrapsystem/tests )
+add_subdirectory( plugin )
 add_subdirectory( option/tests )
 ENDIF (COMPIZ_BUILD_TESTING)
 
