@@ -55,16 +55,6 @@ SET_TARGET_PROPERTIES(
   PUBLIC_HEADER "${PUBLIC_HEADERS}"
 )
 
-INSTALL(
-  TARGETS                                 compiz_place_screen_size_change
-  RUNTIME             DESTINATION         bin
-  LIBRARY             DESTINATION         lib
-  ARCHIVE             DESTINATION         lib
-  PUBLIC_HEADER       DESTINATION         include/compiz/core
-)
-
-
-
 TARGET_LINK_LIBRARIES(
   compiz_place_screen_size_change
   compiz_place_constrain_to_workarea
