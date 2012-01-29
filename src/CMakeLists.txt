@@ -158,6 +158,14 @@ target_link_libraries (
 #    ${CORE_MOD_LIBRARIES}
 )
 
+#
+# Tell CMake that targets using compiz_core should NOT re-import the
+# libraries that compiz_core depends on (contains).
+#
+set_target_properties (compiz_core PROPERTIES
+    LINK_INTERFACE_LIBRARIES ""
+)
+
 target_link_libraries (
     compiz
     compiz_core
