@@ -95,15 +95,27 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     const char           *glRenderer;
     CompOption::Vector o (0);
 
-    priv->ctx = glXCreateContext (dpy, visinfo, NULL, !indirectRendering);
+    priv->ctx = glXCreateContext (dpy, visinfo, NULL, false);
     if (!priv->ctx)
     {
-	compLogMessage ("opengl", CompLogLevelFatal,
-			"glXCreateContext failed");
-	XFree (visinfo);
+	compLogMessage ("opengl", CompLogLevelWarn,
+			"glXCreateContext with direct rendering failed - trying indirect");
 
-	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
-	return false;
+	/* force Mesa libGL into indirect rendering mode, because
+	   glXQueryExtensionsString is context-independant */
+	setenv ("LIBGL_ALWAYS_INDIRECT", "1", True);
+	priv->ctx = glXCreateContext(dpy, visinfo, NULL, true);
+
+	if (!priv->ctx)
+	{
+	    compLogMessage ("opengl", CompLogLevelWarn,
+			    "glXCreateContext failed");
+
+	    XFree (visinfo);
+
+	    screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	    return false;
+	}
     }
 
     XFree (visinfo);
@@ -298,13 +310,6 @@ GLScreen::GLScreen (CompScreen *s) :
     const char		 *glxExtensions;
     XWindowAttributes    attr;
     CompOption::Vector o (0);
-
-    if (indirectRendering)
-    {
-	/* force Mesa libGL into indirect rendering mode, because
-	   glXQueryExtensionsString is context-independant */
-	setenv ("LIBGL_ALWAYS_INDIRECT", "1", True);
-    }
 
     if (!XGetWindowAttributes (dpy, s->root (), &attr))
     {
@@ -850,61 +855,51 @@ PrivateGLScreen::updateScreenBackground ()
     if (backgroundTextures.empty ())
     {
 	CompSize   size;
-	if (backgroundImage)
-	{
-	    CompString fileName (backgroundImage);
-	    CompString pname ("");
+	/* Try to get the root window background */
+	XGCValues gcv;
+	GC        gc;
 
-	    backgroundTextures = GLTexture::readImageToTexture (fileName, pname, size);
+	gcv.graphics_exposures = false;
+	gcv.subwindow_mode = IncludeInferiors;
+	gc = XCreateGC (screen->dpy (), screen->root (),
+			GCGraphicsExposures | GCSubwindowMode, &gcv);
+
+	if (rootPixmapSize.width () != screen->width () ||
+	    rootPixmapSize.height () != screen->height ())
+	{
+	    if (rootPixmapCopy)
+		XFreePixmap (screen->dpy (), rootPixmapCopy);
+
+	    rootPixmapSize = CompSize (screen->width (), screen->height ());
+
+	    rootPixmapCopy = XCreatePixmap (screen->dpy (), screen->root (),
+					    rootPixmapSize.width (), rootPixmapSize.height (),
+					    DefaultDepth (screen->dpy (), DefaultScreen (screen->dpy ())));
+
+	    backgroundTextures =
+	    GLTexture::bindPixmapToTexture (rootPixmapCopy, rootPixmapSize.width (), rootPixmapSize.height (),
+					    DefaultDepth (screen->dpy (), DefaultScreen (screen->dpy ())));
+
+	    if (backgroundTextures.empty ())
+	    {
+		compLogMessage ("core", CompLogLevelWarn,
+				"Couldn't bind background pixmap 0x%x to "
+				"texture", (int) screen->width ());
+	    }
+	}
+
+	if (rootPixmapCopy)
+	{
+	    XCopyArea (screen->dpy (), screen->root (), rootPixmapCopy, gc,
+		       0, 0, screen->width (), screen->height (), 0, 0);
+	    XSync (screen->dpy (), false);
 	}
 	else
 	{
-	    /* Try to get the root window background */
-	    XGCValues gcv;
-	    GC        gc;
-
-	    gcv.graphics_exposures = false;
-	    gcv.subwindow_mode = IncludeInferiors;
-	    gc = XCreateGC (screen->dpy (), screen->root (),
-			    GCGraphicsExposures | GCSubwindowMode, &gcv);
-
-	    if (rootPixmapSize.width () != screen->width () ||
-		rootPixmapSize.height () != screen->height ())
-	    {
-		if (rootPixmapCopy)
-		    XFreePixmap (screen->dpy (), rootPixmapCopy);
-
-		rootPixmapSize = CompSize (screen->width (), screen->height ());
-
-		rootPixmapCopy = XCreatePixmap (screen->dpy (), screen->root (),
-						rootPixmapSize.width (), rootPixmapSize.height (),
-						DefaultDepth (screen->dpy (), DefaultScreen (screen->dpy ())));
-
-		backgroundTextures =
-		GLTexture::bindPixmapToTexture (rootPixmapCopy, rootPixmapSize.width (), rootPixmapSize.height (),
-						DefaultDepth (screen->dpy (), DefaultScreen (screen->dpy ())));
-
-		if (backgroundTextures.empty ())
-		{
-		    compLogMessage ("core", CompLogLevelWarn,
-				    "Couldn't bind background pixmap 0x%x to "
-				    "texture", (int) screen->width ());
-		}
-	    }
-
-	    if (rootPixmapCopy)
-	    {
-		XCopyArea (screen->dpy (), screen->root (), rootPixmapCopy, gc,
-			   0, 0, screen->width (), screen->height (), 0, 0);
-		XSync (screen->dpy (), false);
-	    }
-	    else
-	    {
-		backgroundTextures.clear ();
-	    }
-
-	    XFreeGC(dpy, gc);  
+	    backgroundTextures.clear ();
 	}
+
+	XFreeGC(dpy, gc);
     }
 
     if (!backgroundTextures.empty ())

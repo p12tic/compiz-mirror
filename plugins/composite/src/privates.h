@@ -35,11 +35,6 @@
 
 #include "composite_options.h"
 
-#if COMPOSITE_MAJOR > 0 || COMPOSITE_MINOR > 2
-#define USE_COW
-extern bool       useCow;
-#endif
-
 extern CompPlugin::VTable *compositeVTable;
 
 extern CompWindow *lastDamagedWindow;
