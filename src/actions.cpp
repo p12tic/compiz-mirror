@@ -140,7 +140,7 @@ CompScreen::showDesktop (CompAction         *action,
 			 CompAction::State  state,
 			 CompOption::Vector &options)
 {
-    if (screen->priv->showingDesktopMask == 0)
+    if (screen->showingDesktopMask() == 0)
 	screen->enterShowDesktopMode ();
     else
 	screen->leaveShowDesktopMode (NULL);
@@ -193,7 +193,7 @@ CompScreen::windowMenu (CompAction         *action,
     xid = CompOption::getIntOptionNamed (options, "window");
 
     w = screen->findTopLevelWindow (xid);
-    if (w && screen->priv->grabs.empty ())
+    if (w && screen->grabsEmpty ())
     {
 	int  x, y, button;
 	Time time;

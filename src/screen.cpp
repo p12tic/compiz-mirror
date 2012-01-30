@@ -88,18 +88,31 @@ typedef struct {
 
 
 
-CompScreen *screen;
+#if defined(ARG_ABSTRACT_COMP_SCREEN)
+class AbstractCompScreen;
+AbstractCompScreen   *screen;
+#else
+class CompScreen;
+CompScreen   *screen;
+#endif
+
 ModifierHandler *modHandler;
 
 PluginClassStorage::Indices screenPluginClassIndices (0);
+
+void CompScreen::sizePluginClasses(unsigned int size)
+{
+    if(size != pluginClasses.size ())
+ 	pluginClasses.resize (size);
+}
+
 
 unsigned int
 CompScreen::allocPluginClassIndex ()
 {
     unsigned int i = PluginClassStorage::allocatePluginClassIndex (screenPluginClassIndices);
 
-    if (screenPluginClassIndices.size () != screen->pluginClasses.size ())
-	screen->pluginClasses.resize (screenPluginClassIndices.size ());
+    screen->sizePluginClasses(screenPluginClassIndices.size());
 
     return i;
 }
@@ -109,8 +122,7 @@ CompScreen::freePluginClassIndex (unsigned int index)
 {
     PluginClassStorage::freePluginClassIndex (screenPluginClassIndices, index);
 
-    if (screenPluginClassIndices.size () != screen->pluginClasses.size ())
-	screen->pluginClasses.resize (screenPluginClassIndices.size ());
+    screen->sizePluginClasses(screenPluginClassIndices.size());
 }
 
 void
@@ -2480,6 +2492,16 @@ AbstractCompScreen::enterShowDesktopMode ()
     _enterShowDesktopMode ();
 }
 
+unsigned int CompScreen::showingDesktopMask() const
+{
+    return priv->showingDesktopMask;
+}
+
+bool CompScreen::grabsEmpty() const
+{
+    return priv->grabs.empty();
+}
+
 void
 CompScreen::_enterShowDesktopMode ()
 {
@@ -4078,7 +4100,7 @@ CompScreen::updateDefaultIcon ()
     if (!readImageFromFile (file, pname, size, data))
 	return false;
 
-    priv->defaultIcon = new CompIcon (screen, size.width (), size.height ());
+    priv->defaultIcon = new CompIcon (size.width (), size.height ());
 
     memcpy (priv->defaultIcon->data (), data,
 	    size.width () * size.height () * sizeof (CARD32));

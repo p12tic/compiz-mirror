@@ -32,8 +32,14 @@
 
 #include <string.h>
 
+class AbstractCompScreen;
+#if defined(ARG_ABSTRACT_COMP_SCREEN)
+class AbstractCompScreen;
+extern AbstractCompScreen   *screen;
+#else
 class CompScreen;
-extern CompScreen *screen;
+extern CompScreen   *screen;
+#endif
 
 #include <map>
 

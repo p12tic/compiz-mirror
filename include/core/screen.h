@@ -51,7 +51,12 @@ extern bool       indirectRendering;
 extern bool       noDetection;
 extern bool       debugOutput;
 
+#if defined(ARG_ABSTRACT_COMP_SCREEN)
+extern AbstractCompScreen   *screen;
+#else
 extern CompScreen   *screen;
+#endif
+
 extern ModifierHandler *modHandler;
 
 extern int lastPointerX;
@@ -195,6 +200,20 @@ public:
     virtual void updateWorkarea () = 0;
     virtual bool addAction (CompAction *action) = 0;
     virtual CompWindow * findWindow (Window id) = 0;
+
+    virtual CompWindow * findTopLevelWindow (
+	    Window id, bool   override_redirect = false) = 0;
+    virtual void toolkitAction (
+	    Atom   toolkitAction,
+	    Time   eventTime,
+	    Window window,
+	    long   data0,
+	    long   data1,
+	    long   data2) = 0;
+    virtual unsigned int showingDesktopMask() const = 0;
+
+    virtual bool grabsEmpty() const = 0;
+    virtual void sizePluginClasses(unsigned int size) = 0;
 
 private:
     // The "wrapable" functions delegate to these (for mocking)
@@ -445,6 +464,12 @@ class CompScreen :
 
 	static unsigned int allocPluginClassIndex ();
 	static void freePluginClassIndex (unsigned int index);
+
+	unsigned int showingDesktopMask() const;
+
+	virtual bool grabsEmpty() const;
+
+	virtual void sizePluginClasses(unsigned int size);
 
 	friend class CompTimer;
 	friend class CompWindow;

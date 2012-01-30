@@ -5187,7 +5187,7 @@ PrivateWindow::readIconHint ()
 
     XDestroyImage (image);
 
-    icon = new CompIcon (screen, width, height);
+    icon = new CompIcon (width, height);
     if (!icon)
     {
 	delete [] colors;
@@ -5270,7 +5270,7 @@ CompWindow::getIcon (int width,
 		if (iw && ih)
 		{
 		    unsigned long j;
-		    icon = new CompIcon (screen, iw, ih);
+		    icon = new CompIcon (iw, ih);
 		    if (!icon)
 			continue;
 
