@@ -47,13 +47,14 @@
  */
 
 #include <core/output.h>
-#include "core/deg2rad.h"
 
 #include <opengl/matrix.h>
 
 #include <string.h>
 #include <math.h>
 #include <cassert>
+
+#define DEG2RAD (M_PI / 180.0f)
 
 /**
  * Identity matrix.
