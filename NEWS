@@ -36,7 +36,7 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
     845719 - compiz and X can disagree on the stacking order
     847967 - A minimized window 'remains' behind on the desktop if
              /apps/compiz-1/plugins/unityshell/screen0/options/
-	     show_minimized_windows is set to true
+             show_minimized_windows is set to true
     853734 - maximized windows fail to update their input extents when
              undecorated
     854725 - resizing bugs with xterm
@@ -64,7 +64,7 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
     862719 - closing a window gives focus to last minimized window
     863328 - Launcher - If a spread contains minimised windows, when the
              spread exits, the minimised windows momentarily appear on the
-	     desktop before disappearing
+             desktop before disappearing
     864478 - Window shading is broken
     865696 - Windows from other workspaces missing decorations in window
              spread
@@ -92,7 +92,7 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
              "Resize Info" plugin activates.
     880707 - [regression] Compiz: Visible tearing is worse in 11.10 than
              11.04, even when "Sync To VBlank" is enabled, but only when Unity
-	     is active.
+             is active.
     886935 - Invalid read on GLWindow::glDrawGeometry
     890947 - Unity sends initial GDK_CONFIGURE event with position as (0,0)
     891744 - Dragging windows stutter during and after grid animation
@@ -123,10 +123,10 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
              require 2.31)
     921451 - compiz::X11::PendingConfigureEvent::dump(): Conditional jump or
              move depends on uninitialised value(s) / Use of uninitialised
-	     value of size 8
+             value of size 8
     922450 - 'make install' installs unwanted files
              libcompiz_place_constrain_to_workarea.a,
-	     libcompiz_place_screen_size_change.a
+             libcompiz_place_screen_size_change.a
     923583 - lp:compiz-core r2968 fails to build
     
 Added Unit Tests
