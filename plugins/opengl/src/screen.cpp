@@ -95,7 +95,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     const char           *glRenderer;
     CompOption::Vector o (0);
 
-    priv->ctx = glXCreateContext (dpy, visinfo, NULL, false);
+    priv->ctx = glXCreateContext (dpy, visinfo, NULL, True);
     if (!priv->ctx)
     {
 	compLogMessage ("opengl", CompLogLevelWarn,
