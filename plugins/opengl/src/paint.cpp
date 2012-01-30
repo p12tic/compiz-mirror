@@ -23,9 +23,6 @@
  * Author: David Reveman <davidr@novell.com>
  */
 
-
-#include <core/deg2rad.h>
-
 #include "privates.h"
 
 #include <stdlib.h>
@@ -38,6 +35,7 @@
 
 #include <opengl/opengl.h>
 
+#define DEG2RAD (M_PI / 180.0f)
 
 GLScreenPaintAttrib defaultScreenPaintAttrib = {
     0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, -DEFAULT_Z_CAMERA

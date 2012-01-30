@@ -21,7 +21,6 @@ set (_headers
     window.h
     wrapsystem.h
     abiversion.h
-    deg2rad.h
 )
 
 install (FILES ${_headers} DESTINATION ${COMPIZ_CORE_INCLUDE_DIR})
