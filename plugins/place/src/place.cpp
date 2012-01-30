@@ -65,7 +65,6 @@ compiz::place::collectStrutWindows (const CompWindowList &all)
     return l;
 }
 
-
 void
 PlaceScreen::doHandleScreenSizeChange (int  newWidth,
 				       int  newHeight)
@@ -101,10 +100,29 @@ PlaceWindow::getWorkarea (const compiz::window::Geometry &g) const
     return screen->getWorkareaForOutput (screen->outputDeviceForGeometry (g));
 }
 
+const CompRect &
+PlaceWindow::getWorkarea () const
+{
+    return getWorkarea (window->serverGeometry ());
+}
+
 const compiz::window::extents::Extents &
 PlaceWindow::getExtents () const
 {
     return window->border ();
+}
+
+unsigned int
+PlaceWindow::getState () const
+{
+    unsigned int state = 0;
+
+    if (window->state () & CompWindowStateAboveMask)
+	state |= compiz::place::WindowAbove;
+    if (window->state () & CompWindowStateBelowMask)
+	state |= compiz::place::WindowBelow;
+
+    return state;
 }
 
 void
@@ -224,42 +242,42 @@ PlaceScreen::handleEvent (XEvent *event)
 /* sort functions */
 
 static bool
-compareLeftmost (CompWindow *a,
-		 CompWindow *b)
+compareLeftmost (compiz::place::Placeable *a,
+		 compiz::place::Placeable *b)
 {
     int ax, bx;
 
-    ax = a->serverX () - a->border ().left;
-    bx = b->serverX () - b->border ().left;
+    ax = a->geometry ().x () - a->extents ().left;
+    bx = b->geometry ().x () - a->extents ().left;
 
     return (ax <= bx);
 }
 
 static bool
-compareTopmost (CompWindow *a,
-		CompWindow *b)
+compareTopmost (compiz::place::Placeable *a,
+		compiz::place::Placeable *b)
 {
     int ay, by;
 
-    ay = a->serverY () - a->border ().top;
-    by = b->serverY () - b->border ().top;
+    ay = a->geometry ().y () - a->extents ().top;
+    by = b->geometry ().y () - a->extents ().top;
 
     return (ay <= by);
 }
 
 static bool
-compareNorthWestCorner (CompWindow *a,
-			CompWindow *b)
+compareNorthWestCorner (compiz::place::Placeable *a,
+			compiz::place::Placeable *b)
 {
     int fromOriginA;
     int fromOriginB;
     int ax, ay, bx, by;
 
-    ax = a->serverX () - a->border ().left;
-    ay = a->serverY () - a->border ().top;
+    ax = a->geometry ().x () - a->extents ().left;
+    bx = b->geometry ().x () - a->extents ().left;
 
-    bx = b->serverX () - b->border ().left;
-    by = b->serverY () - b->border ().top;
+    ay = a->geometry ().y () - a->extents ().top;
+    by = b->geometry ().y () - a->extents ().top;
 
     /* probably there's a fast good-enough-guess we could use here. */
     fromOriginA = sqrt (ax * ax + ay * ay);
@@ -585,6 +603,17 @@ PlaceWindow::doPlacement (CompPoint &pos)
 
     if (strategy == PlaceOnly || strategy == PlaceAndConstrain)
     {
+	/* Construct list of placeables */
+	compiz::place::Placeable::Vector placeables;
+
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    PLACE_WINDOW (w);
+
+	    if (windowIsPlaceRelevant (w))
+		placeables.push_back (static_cast <compiz::place::Placeable *> (pw));
+	}
+
 	switch (mode) {
 	    case PlaceOptions::ModeCascade:
 	    placeCascade (workArea, pos);
@@ -602,7 +631,7 @@ PlaceWindow::doPlacement (CompPoint &pos)
 	    sendMaximizationRequest ();
 	    break;
 	case PlaceOptions::ModeSmart:
-	    placeSmart (workArea, pos);
+	    placeSmart (pos, placeables);
 	    break;
 	}
 
@@ -650,7 +679,7 @@ void
 PlaceWindow::placeCascade (const CompRect &workArea,
 			   CompPoint      &pos)
 {
-    CompWindowList windows;
+    Placeable::Vector placeables;
 
     /* Find windows that matter (not minimized, on same workspace
      * as placed window, may be shaded - if shaded we pretend it isn't
@@ -671,15 +700,15 @@ PlaceWindow::placeCascade (const CompRect &workArea,
 	    w->serverY () + w->serverGeometry ().height () <= workArea.y ())
 	    continue;
 
-	windows.push_back (w);
+	placeables.push_back (static_cast <Placeable *> (PlaceWindow::get (w)));
     }
 
-    if (!cascadeFindFirstFit (windows, workArea, pos))
+    if (!cascadeFindFirstFit (placeables, workArea, pos))
     {
 	/* if the window wasn't placed at the origin of screen,
 	 * cascade it onto the current screen
 	 */
-	cascadeFindNext (windows, workArea, pos);
+	cascadeFindNext (placeables, workArea, pos);
     }
 }
 
@@ -727,201 +756,13 @@ PlaceWindow::placePointer (const CompRect &workArea,
 	placeCentered (workArea, pos);
 }
 
-
-/* overlap types */
-#define NONE    0
-#define H_WRONG -1
-#define W_WRONG -2
+using namespace compiz::place;
 
 void
-PlaceWindow::placeSmart (const CompRect &workArea,
-			 CompPoint      &pos)
+PlaceWindow::placeSmart (CompPoint			&pos,
+			 const compiz::place::Placeable::Vector &placeables)
 {
-    /*
-     * SmartPlacement by Cristian Tibirna (tibirna@kde.org)
-     * adapted for kwm (16-19jan98) and for kwin (16Nov1999) using (with
-     * permission) ideas from fvwm, authored by
-     * Anthony Martin (amartin@engr.csulb.edu).
-     * Xinerama supported added by Balaji Ramani (balaji@yablibli.com)
-     * with ideas from xfce.
-     * adapted for Compiz by Bellegarde Cedric (gnumdk(at)gmail.com)
-     */
-    int overlap, minOverlap = 0;
-    int xOptimal, yOptimal;
-    int possible;
-
-    /* temp coords */
-    int cxl, cxr, cyt, cyb;
-    /* temp coords */
-    int xl,  xr,  yt,  yb;
-    /* temp holder */
-    int basket;
-    /* CT lame flag. Don't like it. What else would do? */
-    bool firstPass = true;
-
-    /* get the maximum allowed windows space */
-    int xTmp = workArea.x ();
-    int yTmp = workArea.y ();
-
-    /* client gabarit */
-    int cw = window->serverWidth () - 1;
-    int ch = window->serverHeight () - 1;
-
-    xOptimal = xTmp;
-    yOptimal = yTmp;
-
-    /* loop over possible positions */
-    do
-    {
-	/* test if enough room in x and y directions */
-	if (yTmp + ch > workArea.bottom () && ch < workArea.height ())
-	    overlap = H_WRONG; /* this throws the algorithm to an exit */
-	else if (xTmp + cw > workArea.right ())
-	    overlap = W_WRONG;
-	else
-	{
-	    overlap = NONE; /* initialize */
-
-	    cxl = xTmp;
-	    cxr = xTmp + cw;
-	    cyt = yTmp;
-	    cyb = yTmp + ch;
-
-	    foreach (CompWindow *w, screen->windows ())
-	    {
-		if (!windowIsPlaceRelevant (w))
-		    continue;
-
-		xl = w->serverX () - w->border ().left;
-		yt = w->serverY () - w->border ().top;
-		xr = w->serverX () + w->serverWidth () +
-		     w->border ().right +
-		     w->serverGeometry ().border () * 2;
-		yb = w->serverY () + w->serverHeight () +
-		     w->border ().bottom +
-		     w->serverGeometry ().border () * 2;
-
-		/* if windows overlap, calc the overall overlapping */
-		if (cxl < xr && cxr > xl && cyt < yb && cyb > yt)
-		{
-		    xl = MAX (cxl, xl);
-		    xr = MIN (cxr, xr);
-		    yt = MAX (cyt, yt);
-		    yb = MIN (cyb, yb);
-
-		    if (w->state () & CompWindowStateAboveMask)
-			overlap += 16 * (xr - xl) * (yb - yt);
-		    else if (w->state () & CompWindowStateBelowMask)
-			overlap += 0;
-		    else
-			overlap += (xr - xl) * (yb - yt);
-		}
-	    }
-	}
-
-	/* CT first time we get no overlap we stop */
-	if (overlap == NONE)
-	{
-	    xOptimal = xTmp;
-	    yOptimal = yTmp;
-	    break;
-	}
-
-	if (firstPass)
-	{
-	    firstPass  = false;
-	    minOverlap = overlap;
-	}
-	/* CT save the best position and the minimum overlap up to now */
-	else if (overlap >= NONE && overlap < minOverlap)
-	{
-	    minOverlap = overlap;
-	    xOptimal = xTmp;
-	    yOptimal = yTmp;
-	}
-
-	/* really need to loop? test if there's any overlap */
-	if (overlap > NONE)
-	{
-	    possible = workArea.right ();
-
-	    if (possible - cw > xTmp)
-		possible -= cw;
-
-	    /* compare to the position of each client on the same desk */
-	    foreach (CompWindow *w, screen->windows ())
-	    {
-		if (!windowIsPlaceRelevant (w))
-		    continue;
-
-		xl = w->serverX () - w->border ().left;
-		yt = w->serverY () - w->border ().top;
-		xr = w->serverX () + w->serverWidth () +
-		     w->border ().right +
-		     w->serverGeometry ().border () * 2;
-		yb = w->serverY () + w->serverHeight () +
-		     w->border ().bottom +
-		     w->serverGeometry ().border () * 2;
-
-		/* if not enough room above or under the current
-		 * client determine the first non-overlapped x position
-		 */
-		if (yTmp < yb && yt < ch + yTmp)
-		{
-		    if (xr > xTmp && possible > xr)
-			possible = xr;
-
-		    basket = xl - cw;
-		    if (basket > xTmp && possible > basket)
-			possible = basket;
-		}
-	    }
-	    xTmp = possible;
-	}
-	/* else ==> not enough x dimension (overlap was wrong on horizontal) */
-	else if (overlap == W_WRONG)
-	{
-	    xTmp     = workArea.x ();
-	    possible = workArea.bottom ();
-
-	    if (possible - ch > yTmp)
-		possible -= ch;
-
-	    /* test the position of each window on the desk */
-	    foreach (CompWindow *w, screen->windows ())
-	    {
-		if (!windowIsPlaceRelevant (w))
-		    continue;
-
-		xl = w->serverX () - w->border ().left;
-		yt = w->serverY () - w->border ().top;
-		xr = w->serverX () + w->serverWidth () +
-		     w->border ().right +
-		     w->serverGeometry ().border () * 2;
-		yb = w->serverY () + w->serverHeight () +
-		     w->border ().bottom +
-		     w->serverGeometry ().border () * 2;
-
-		/* if not enough room to the left or right of the current
-		 * client determine the first non-overlapped y position
-		 */
-		if (yb > yTmp && possible > yb)
-		    possible = yb;
-
-		basket = yt - ch;
-		if (basket > yTmp && possible > basket)
-		    possible = basket;
-	    }
-	    yTmp = possible;
-	}
-    }
-    while (overlap != NONE && overlap != H_WRONG && yTmp < workArea.bottom ());
-
-    if (ch >= workArea.height ())
-	yOptimal = workArea.y ();
-
-    pos.setX (xOptimal + window->border ().left);
-    pos.setY (yOptimal + window->border ().top);
+    compiz::place::smart (this, pos, placeables);
 }
 
 static void
@@ -945,32 +786,22 @@ centerTileRectInArea (CompRect       &rect,
 
 static bool
 rectOverlapsWindow (const CompRect       &rect,
-		    const CompWindowList &windows)
+		    const compiz::place::Placeable::Vector &placeables)
 {
     CompRect dest;
 
-    foreach (CompWindow *other, windows)
+    foreach (compiz::place::Placeable *other, placeables)
     {
 	CompRect intersect;
+	CompRect sbr = other->geometry ();
+	sbr.setLeft (sbr.left () - other->extents ().left);
+	sbr.setRight (sbr.right () + other->extents ().right);
+	sbr.setTop (sbr.top () - other->extents ().top);
+	sbr.setBottom (sbr.bottom () - other->extents ().bottom);
 
-	switch (other->type ()) {
-	case CompWindowTypeDockMask:
-	case CompWindowTypeSplashMask:
-	case CompWindowTypeDesktopMask:
-	case CompWindowTypeDialogMask:
-	case CompWindowTypeModalDialogMask:
-	case CompWindowTypeFullscreenMask:
-	case CompWindowTypeUnknownMask:
-	    break;
-	case CompWindowTypeNormalMask:
-	case CompWindowTypeUtilMask:
-	case CompWindowTypeToolbarMask:
-	case CompWindowTypeMenuMask:
-	    intersect = rect & other->serverBorderRect ();
-	    if (!intersect.isEmpty ())
-		return true;
-	    break;
-	}
+	intersect = rect & sbr;
+	if (!intersect.isEmpty ())
+	    return true;
     }
 
     return false;
@@ -985,7 +816,7 @@ rectOverlapsWindow (const CompRect       &rect,
  * don't want to create a 1x1 Emacs.
  */
 bool
-PlaceWindow::cascadeFindFirstFit (const CompWindowList &windows,
+PlaceWindow::cascadeFindFirstFit (const Placeable::Vector &placeables,
 				  const CompRect       &workArea,
 				  CompPoint            &pos)
 {
@@ -997,49 +828,59 @@ PlaceWindow::cascadeFindFirstFit (const CompWindowList &windows,
      * existing window in each of those cases.
      */
     bool           retval = false;
-    CompWindowList belowSorted, rightSorted;
-    CompRect       rect;
+    Placeable::Vector belowSorted, rightSorted;
 
     /* Below each window */
-    belowSorted = windows;
-    belowSorted.sort (compareLeftmost);
-    belowSorted.sort (compareTopmost);
+    belowSorted = placeables;
+    std::sort (belowSorted.begin (), belowSorted.end (), compareLeftmost);
+    std::sort (belowSorted.begin (), belowSorted.end (), compareTopmost);
 
     /* To the right of each window */
-    rightSorted = windows;
-    rightSorted.sort (compareTopmost);
-    rightSorted.sort (compareLeftmost);
+    rightSorted = placeables;
+    std::sort (belowSorted.begin (), belowSorted.end (), compareTopmost);
+    std::sort (belowSorted.begin (), belowSorted.end (), compareLeftmost);
 
-    rect = window->serverBorderRect ();
+    CompRect rect = this->geometry ();
+
+    rect.setLeft (rect.left () - this->extents ().left);
+    rect.setRight (rect.right () + this->extents ().right);
+    rect.setTop (rect.top () - this->extents ().top);
+    rect.setBottom (rect.bottom () - this->extents ().bottom);
+
     centerTileRectInArea (rect, workArea);
 
-    if (workArea.contains (rect) && !rectOverlapsWindow (rect, windows))
+    if (workArea.contains (rect) && !rectOverlapsWindow (rect, placeables))
     {
-	pos.setX (rect.x () + window->border ().left);
-	pos.setY (rect.y () + window->border ().top);
+	pos.setX (rect.x () + this->extents ().left);
+	pos.setY (rect.y () + this->extents ().top);
 	retval = true;
     }
 
     if (!retval)
     {
 	/* try below each window */
-	foreach (CompWindow *w, belowSorted)
+	foreach (Placeable *p, belowSorted)
 	{
 	    CompRect outerRect;
 
 	    if (retval)
 		break;
 
-	    outerRect = w->serverBorderRect ();
+	    outerRect = p->geometry ();
 
-	    rect.setX (outerRect.x ());
-	    rect.setY (outerRect.bottom ());
+	    outerRect.setLeft (rect.left () - this->extents ().left);
+	    outerRect.setRight (rect.right () + this->extents ().right);
+	    outerRect.setTop (rect.top () - this->extents ().top);
+	    outerRect.setBottom (rect.bottom () - this->extents ().bottom);
+
+	    outerRect.setX (outerRect.x ());
+	    outerRect.setY (outerRect.bottom ());
 
 	    if (workArea.contains (rect) &&
 		!rectOverlapsWindow (rect, belowSorted))
 	    {
-		pos.setX (rect.x () + window->border ().left);
-		pos.setY (rect.y () + window->border ().top);
+		pos.setX (rect.x () + this->extents ().left);
+		pos.setY (rect.y () + this->extents ().top);
 		retval = true;
 	    }
 	}
@@ -1048,23 +889,28 @@ PlaceWindow::cascadeFindFirstFit (const CompWindowList &windows,
     if (!retval)
     {
 	/* try to the right of each window */
-	foreach (CompWindow *w, rightSorted)
+	foreach (Placeable *p, rightSorted)
 	{
 	    CompRect outerRect;
 
 	    if (retval)
 		break;
 
-	    outerRect = w->serverBorderRect ();
+	    outerRect = p->geometry ();
 
-	    rect.setX (outerRect.right ());
-	    rect.setY (outerRect.y ());
+	    outerRect.setLeft (rect.left () - this->extents ().left);
+	    outerRect.setRight (rect.right () + this->extents ().right);
+	    outerRect.setTop (rect.top () - this->extents ().top);
+	    outerRect.setBottom (rect.bottom () - this->extents ().bottom);
+
+	    outerRect.setX (outerRect.right ());
+	    outerRect.setY (outerRect.y ());
 
 	    if (workArea.contains (rect) &&
 		!rectOverlapsWindow (rect, rightSorted))
 	    {
-		pos.setX (rect.x () + w->border ().left);
-		pos.setY (rect.y () + w->border ().top);
+		pos.setX (rect.x () + this->extents ().left);
+		pos.setY (rect.y () + this->extents ().top);
 		retval = true;
 	    }
 	}
@@ -1074,19 +920,19 @@ PlaceWindow::cascadeFindFirstFit (const CompWindowList &windows,
 }
 
 void
-PlaceWindow::cascadeFindNext (const CompWindowList &windows,
-			      const CompRect       &workArea,
-			      CompPoint            &pos)
+PlaceWindow::cascadeFindNext (const Placeable::Vector &placeables,
+			      const CompRect	      &workArea,
+			      CompPoint		      &pos)
 {
-    CompWindowList           sorted;
-    CompWindowList::iterator iter;
-    int                      cascadeX, cascadeY;
-    int                      xThreshold, yThreshold;
-    int                      winWidth, winHeight;
-    int                      cascadeStage;
+    Placeable::Vector           sorted;
+    Placeable::Vector::iterator iter;
+    int                         cascadeX, cascadeY;
+    int                         xThreshold, yThreshold;
+    int                         winWidth, winHeight;
+    int                         cascadeStage;
 
-    sorted = windows;
-    sorted.sort (compareNorthWestCorner);
+    sorted = placeables;
+    std::sort (sorted.begin (), sorted.end (), compareNorthWestCorner);
 
     /* This is a "fuzzy" cascade algorithm.
      * For each window in the list, we find where we'd cascade a
@@ -1099,8 +945,8 @@ PlaceWindow::cascadeFindNext (const CompWindowList &windows,
      */
 #define CASCADE_FUZZ 15
 
-    xThreshold = MAX (window->border ().left, CASCADE_FUZZ);
-    yThreshold = MAX (window->border ().top, CASCADE_FUZZ);
+    xThreshold = MAX (this->extents ().left, CASCADE_FUZZ);
+    yThreshold = MAX (this->extents ().top, CASCADE_FUZZ);
 
     /* Find furthest-SE origin of all workspaces.
      * cascade_x, cascade_y are the target position
@@ -1118,12 +964,12 @@ PlaceWindow::cascadeFindNext (const CompWindowList &windows,
     cascadeStage = 0;
     for (iter = sorted.begin (); iter != sorted.end (); iter++)
     {
-	CompWindow *w = *iter;
+	Placeable  *p = *iter;
 	int        wx, wy;
 
 	/* we want frame position, not window position */
-	wx = w->serverX () - w->border ().left;
-	wy = w->serverY () - w->border ().top;
+	wx = p->geometry ().x () - p->extents ().left;
+	wy = p->geometry ().y () - p->extents ().top;
 
 	if (abs (wx - cascadeX) < xThreshold &&
 	    abs (wy - cascadeY) < yThreshold)
@@ -1132,8 +978,8 @@ PlaceWindow::cascadeFindNext (const CompWindowList &windows,
 	     * point. The new window frame should go at the origin
 	     * of the client window we're stacking above.
 	     */
-	    wx = cascadeX = w->serverX ();
-	    wy = cascadeY = w->serverY ();
+	    wx = cascadeX = p->geometry ().x ();
+	    wy = cascadeY = p->geometry ().y ();
 
 	    /* If we go off the screen, start over with a new cascade */
 	    if ((cascadeX + winWidth > workArea.right ()) ||
@@ -1174,8 +1020,8 @@ PlaceWindow::cascadeFindNext (const CompWindowList &windows,
      */
 
     /* Convert coords to position of window, not position of frame. */
-    pos.setX (cascadeX + window->border ().left);
-    pos.setY (cascadeY + window->border ().top);
+    pos.setX (cascadeX + this->extents ().left);
+    pos.setY (cascadeY + this->extents ().top);
 }
 
 bool
