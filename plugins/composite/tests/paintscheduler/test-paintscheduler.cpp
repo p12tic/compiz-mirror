@@ -166,8 +166,13 @@ class DRMVBlankWaiter :
 	int             drmFD;
 	DRMInfo         *info;
 	GThread    	*eventThread;
+#if GLIB_CHECK_VERSION(2, 31, 0)
 	GMutex		eventMutex;
 	GCond		eventCondition;
+#else
+	GMutex		*eventMutex;
+	GCond		*eventCondition;
+#endif
 	bool            pendingVBlank;
 };
 
@@ -456,13 +461,22 @@ DRMVBlankWaiter::vblankHandler (int fd, unsigned int frame, unsigned int sec, un
 
     drmWaitVBlank (fd, &vbl);
 
+#if GLIB_CHECK_VERSION(2, 31, 0)
     g_mutex_lock (&info->self->eventMutex);
+#else
+    g_mutex_lock (info->self->eventMutex);
+#endif
 
     if (info->self->timingCount != info->self->periods.size ())
 	info->self->pendingVBlank = true;
 
+#if GLIB_CHECK_VERSION(2, 31, 0)
     g_cond_signal (&info->self->eventCondition);
     g_mutex_unlock (&info->self->eventMutex);
+#else
+    g_cond_signal (info->self->eventCondition);
+    g_mutex_unlock (info->self->eventMutex);
+#endif
 }
 
 gpointer
@@ -506,8 +520,13 @@ DRMVBlankWaiter::DRMVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
 {
     const char  *modules[] = { "i915", "radeon", "nouveau", "vmwgfx" };
 
+#if GLIB_CHECK_VERSION(2, 31, 0)
     g_mutex_init (&eventMutex);
     g_cond_init  (&eventCondition);
+#else
+    eventMutex = g_mutex_new ();
+    eventCondition = g_cond_new ();
+#endif
 
     for (unsigned int i = 0; i < ARRAY_SIZE (modules); i++)
     {
@@ -555,7 +574,12 @@ DRMVBlankWaiter::DRMVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
     evctx.vblank_handler = DRMVBlankWaiter::vblankHandler;
     evctx.page_flip_handler = NULL;
 
+#if GLIB_CHECK_VERSION(2, 31, 0)
     eventThread = g_thread_try_new ("drm_wait_t", &DRMVBlankWaiter::drmEventHandlerThread, (void *) this, NULL);
+#else
+    eventThread = g_thread_create (&DRMVBlankWaiter::drmEventHandlerThread,
+                                   (void *) this, TRUE, NULL);
+#endif
 
     if (!eventThread)
     {
@@ -571,6 +595,15 @@ DRMVBlankWaiter::~DRMVBlankWaiter ()
     delete info;
 
     drmClose (drmFD);
+
+#if GLIB_CHECK_VERSION(2, 31, 0)
+    g_mutex_clear (&eventMutex);
+    g_cond_clear (&eventCondition);
+#else
+    g_mutex_free (eventMutex);
+    g_cond_free (eventCondition);
+#endif
+
 }
 
 NilVBlankWaiter::NilVBlankWaiter (DummyPaintDispatch *o, unsigned int n) :
@@ -606,12 +639,21 @@ DRMVBlankWaiter::waitVBlank ()
 {
     VBlankWaiter::time_value tv;
 
+#if GLIB_CHECK_VERSION(2, 31, 0)
     g_mutex_lock (&eventMutex);
     if (!pendingVBlank && !owner->isDone ())
 	g_cond_wait (&eventCondition, &eventMutex);
 
     pendingVBlank = false;
     g_mutex_unlock (&eventMutex);
+#else
+    g_mutex_lock (eventMutex);
+    if (!pendingVBlank && !owner->isDone ())
+	g_cond_wait (eventCondition, eventMutex);
+
+    pendingVBlank = false;
+    g_mutex_unlock (eventMutex);
+#endif
 
     gettimeofday (&tv, NULL);
 
@@ -679,6 +721,10 @@ bool doTest (const std::string &testName, int refreshRate, float workFactor, boo
    
 int main (void)
 {
+#if !GLIB_CHECK_VERSION(2, 31, 0)
+    g_thread_init (NULL);
+#endif
+
     gettimeofday (&SleepVBlankWaiter::start_time, NULL);
 
     TimeoutHandler     *th = new TimeoutHandler ();

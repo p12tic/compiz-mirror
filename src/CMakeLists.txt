@@ -12,6 +12,7 @@ add_subdirectory( privatescreen )
 
 IF (COMPIZ_BUILD_TESTING)
 add_subdirectory( wrapsystem/tests )
+add_subdirectory( plugin )
 add_subdirectory( option/tests )
 ENDIF (COMPIZ_BUILD_TESTING)
 
@@ -156,6 +157,14 @@ target_link_libraries (
     compiz_window_constrainment
     -Wl,-no-whole-archive
 #    ${CORE_MOD_LIBRARIES}
+)
+
+#
+# Tell CMake that targets using compiz_core should NOT re-import the
+# libraries that compiz_core depends on (contains).
+#
+set_target_properties (compiz_core PROPERTIES
+    LINK_INTERFACE_LIBRARIES ""
 )
 
 target_link_libraries (

@@ -55,22 +55,9 @@ SET_TARGET_PROPERTIES(
   PUBLIC_HEADER "${PUBLIC_HEADERS}"
 )
 
-INSTALL(
-  TARGETS                                 compiz_place_constrain_to_workarea
-  RUNTIME             DESTINATION         bin
-  LIBRARY             DESTINATION         lib
-  ARCHIVE             DESTINATION         lib
-  PUBLIC_HEADER       DESTINATION         include/compiz/core
-)
-
-
-
 TARGET_LINK_LIBRARIES(
   compiz_place_constrain_to_workarea
-  compiz_rect
-  compiz_point
-  compiz_window_geometry
-  compiz_window_geometry_saver
 
+  compiz_core
   ${GLIBMM_LIBRARIES}
 )

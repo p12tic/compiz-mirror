@@ -33,16 +33,11 @@ char *programName;
 char **programArgv;
 int  programArgc;
 
-char *backgroundImage = NULL;
-
-bool shutDown = false;
 bool restartSignal = false;
 
 CompWindow *lastFoundWindow = 0;
 
 bool replaceCurrentWm = false;
-bool indirectRendering = false;
-bool noDetection = false;
 bool useDesktopHints = false;
 bool debugOutput = false;
 

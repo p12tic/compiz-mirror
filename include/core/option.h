@@ -42,6 +42,7 @@ class CompAction;
 class CompMatch;
 class CompScreen;
 
+
 /**
  * A configuration option with boolean, int, float, String, Color, Key, Button,
  * Edge, Bell, or List.
@@ -74,16 +75,18 @@ class CompOption {
 	class Value {
 	    public:
 
-	  typedef boost::variant<
-	      bool,
-	      int,
-	      float,
-	      CompString,
-	      unsigned short*,
-	      boost::recursive_wrapper<CompAction>,
-	      boost::recursive_wrapper<CompMatch>,
-	      boost::recursive_wrapper<std::vector<Value> >
-	    > variant_type;
+		typedef std::vector <unsigned short> ColorVector;
+
+		typedef boost::variant<
+		      bool,
+		      int,
+		      float,
+		      CompString,
+		      boost::recursive_wrapper<ColorVector>,
+		      boost::recursive_wrapper<CompAction>,
+		      boost::recursive_wrapper<CompMatch>,
+		      boost::recursive_wrapper<std::vector<Value> >
+		    > variant_type;
 
 		typedef std::vector<Value> Vector;
 
@@ -93,8 +96,15 @@ class CompOption {
 		}
 
 		template<typename T>
-		Value( const T & t ) : mListType(TypeUnset),
-		mValue(t)
+		Value( const T & t );
+
+		Value( unsigned short const (&color)[4] ) : mListType(TypeUnset),
+		    mValue (ColorVector (color, color + 4))
+		{
+		}
+
+		Value( const char *c ) : mListType (TypeUnset),
+		    mValue (CompString (c))
 		{
 		}
 
@@ -113,27 +123,20 @@ class CompOption {
 		}
 
 		template<typename T>
-		void set (const T & t)
+		void set (const T & t);
+
+		void set( unsigned short const (&color)[4] )
 		{
-		    mValue = t;
+		    mValue = ColorVector (color, color + 4);
 		}
 
-		/* In order to be exception safe, this MUST
-		 * return a copy. Prefer to use a specific
-		 * member instead */
-		template<typename T>
-		const T & get (const T & defaultValue = T ()) const
+		void set (const char *c)
 		{
-		    try
-		    {
-			return boost::get<T> (mValue);
-		    }
-		    catch (...)
-		    {
-			static T inst;
-			return inst;
-		    }
+		    mValue = CompString (c);
 		}
+
+		template<typename T>
+		const T & get () const;
 
 		void
 		set (Type t, const Vector & v);
@@ -218,7 +221,7 @@ class CompOption {
 	 */
 	class Class {
 	    public:
-		virtual ~Class() {};
+		virtual ~Class() {}
 		virtual Vector & getOptions () = 0;
 
 		virtual CompOption * getOption (const CompString &name);
@@ -295,6 +298,83 @@ class CompOption {
     private:
 	PrivateOption *priv;
 };
+
+namespace compiz {
+namespace detail {
+
+template<typename Type>
+inline
+Type const& CompOption_Value_get(CompOption::Value::variant_type const& mValue)
+{
+    try
+    {
+	return boost::get<Type> (mValue);
+    }
+    catch (...)
+    {
+	static Type inst;
+	return inst;
+    }
+}
+
+template<>
+inline
+short unsigned int * const& CompOption_Value_get<short unsigned int *>(CompOption::Value::variant_type const& mValue)
+{
+    try
+    {
+	 static short unsigned int * some = 0;
+         CompOption::Value::ColorVector const& tmp(boost::get<CompOption::Value::ColorVector>(mValue));
+
+	 some = const_cast<unsigned short *> (&(tmp[0]));
+	 return some;
+    }
+    catch (...)
+    {
+         static short unsigned int * none = 0;
+         return none;
+    }
+}
+
+template<typename Type>
+inline
+void CompOption_Value_set (CompOption::Value::variant_type & mValue, Type &t)
+{
+    mValue = t;
+}
+
+template <>
+inline
+void CompOption_Value_set<unsigned short *> (CompOption::Value::variant_type & mValue, unsigned short * &t)
+{
+    mValue = CompOption::Value::ColorVector (t, t + 4);
+}
+
+}
+}
+
+template<typename T>
+inline
+const T & CompOption::Value::get () const
+{
+     return compiz::detail::CompOption_Value_get<T>(mValue);
+}
+
+template<typename T>
+inline
+void CompOption::Value::set (const T & t)
+{
+    return compiz::detail::CompOption_Value_set<T>(mValue, const_cast <T &> (t));
+}
+
+template<typename T>
+inline
+CompOption::Value::Value (const T & t) :
+    mListType (CompOption::TypeUnset)
+{
+    set (t);
+}
+
 
 extern CompOption::Vector noOptions;
 

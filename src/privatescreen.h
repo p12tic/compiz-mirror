@@ -55,11 +55,6 @@ extern bool restartSignal;
 extern CompWindow *lastFoundWindow;
 extern bool	  useDesktopHints;
 
-extern bool inHandleEvent;
-
-extern CompScreen *targetScreen;
-extern CompOutput *targetOutput;
-
 extern std::list <CompString> initialPlugins;
 
 

@@ -36,6 +36,8 @@
 
 COMPIZ_PLUGIN_20090315 (resize, ResizePluginVTable)
 
+#define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
+
 void
 ResizeScreen::getPaintRectangle (BoxPtr pBox)
 {
@@ -571,7 +573,7 @@ resizeTerminate (CompAction         *action,
     if (rs->w)
     {
 	CompWindow     *w = rs->w;
-	XWindowChanges xwc;
+	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 	unsigned int   mask = 0;
 
 	if (rs->mode == ResizeOptions::ModeNormal)
@@ -671,7 +673,7 @@ ResizeScreen::updateWindowSize ()
     if (w->serverGeometry ().width ()  != geometry.width ||
 	w->serverGeometry ().height () != geometry.height)
     {
-	XWindowChanges xwc;
+	XWindowChanges xwc = XWINDOWCHANGES_INIT;
 
 	xwc.x	   = geometry.x;
 	xwc.y	   = geometry.y;

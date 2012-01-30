@@ -249,12 +249,8 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
 
 CompositeScreen::~CompositeScreen ()
 {
-#ifdef USE_COW
-    if (useCow)
-	XCompositeReleaseOverlayWindow (screen->dpy (),
-					screen->root ());
-#endif
-
+    XCompositeReleaseOverlayWindow (screen->dpy (),
+				    screen->root ());
     delete priv;
 }
 
@@ -485,8 +481,7 @@ CompositeScreen::damageMask ()
 void
 CompositeScreen::showOutputWindow ()
 {
-#ifdef USE_COW
-    if (useCow && priv->pHnd)
+    if (priv->pHnd)
     {
 	Display       *dpy = screen->dpy ();
 	XserverRegion region;
@@ -506,37 +501,28 @@ CompositeScreen::showOutputWindow ()
 
 	damageScreen ();
     }
-#endif
-
 }
 
 void
 CompositeScreen::hideOutputWindow ()
 {
-#ifdef USE_COW
-    if (useCow)
-    {
-	Display       *dpy = screen->dpy ();
-	XserverRegion region;
+    Display       *dpy = screen->dpy ();
+    XserverRegion region;
 
-	region = XFixesCreateRegion (dpy, NULL, 0);
+    region = XFixesCreateRegion (dpy, NULL, 0);
 
-	XFixesSetWindowShapeRegion (dpy,
-				    priv->output,
-				    ShapeBounding,
-				    0, 0, region);
+    XFixesSetWindowShapeRegion (dpy,
+				priv->output,
+				ShapeBounding,
+				0, 0, region);
 
-	XFixesDestroyRegion (dpy, region);
-    }
-#endif
-
+    XFixesDestroyRegion (dpy, region);
 }
 
 void
 CompositeScreen::updateOutputWindow ()
 {
-#ifdef USE_COW
-    if (useCow && priv->pHnd)
+    if (priv->pHnd)
     {
 	Display       *dpy = screen->dpy ();
 	XserverRegion region;
@@ -563,24 +549,16 @@ CompositeScreen::updateOutputWindow ()
 
 	XFixesDestroyRegion (dpy, region);
     }
-#endif
 
 }
 
 void
 PrivateCompositeScreen::makeOutputWindow ()
 {
-#ifdef USE_COW
-    if (useCow)
-    {
-	overlay = XCompositeGetOverlayWindow (screen->dpy (), screen->root ());
-	output  = overlay;
+    overlay = XCompositeGetOverlayWindow (screen->dpy (), screen->root ());
+    output  = overlay;
 
-	XSelectInput (screen->dpy (), output, ExposureMask);
-    }
-    else
-#endif
-	output = overlay = screen->root ();
+    XSelectInput (screen->dpy (), output, ExposureMask);
 
     cScreen->hideOutputWindow ();
 }
@@ -843,11 +821,8 @@ void
 PrivateCompositeScreen::outputChangeNotify ()
 {
     screen->outputChangeNotify ();
-#ifdef USE_COW
-    if (useCow)
-	XMoveResizeWindow (screen->dpy (), overlay, 0, 0,
-			   screen->width (), screen->height ());
-#endif
+    XMoveResizeWindow (screen->dpy (), overlay, 0, 0,
+		       screen->width (), screen->height ());
     cScreen->damageScreen ();
 }
 

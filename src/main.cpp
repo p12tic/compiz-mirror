@@ -51,13 +51,9 @@ CompManager::usage ()
     printf ("Usage: %s "
 	    "[--replace] "
 	    "[--display DISPLAY]\n       "
-	    "[--indirect-rendering] "
 	    "[--sm-disable] "
 	    "[--sm-client-id ID]\n       "
-	    "[--bg-image PNG] "
-	    "[--no-detection] "
 	    "[--keep-desktop-hints]\n       "
-	    "[--use-root-window] "
 	    "[--debug] "
 	    "[--version] "
 	    "[--help] "
@@ -101,17 +97,9 @@ CompManager::parseArguments (int argc, char **argv)
 	    if (i + 1 < argc)
 		displayName = argv[++i];
 	}
-	else if (!strcmp (argv[i], "--indirect-rendering"))
-	{
-	    indirectRendering = true;
-	}
 	else if (!strcmp (argv[i], "--keep-desktop-hints"))
 	{
 	    useDesktopHints = true;
-	}
-	else if (!strcmp (argv[i], "--use-root-window"))
-	{
-	    useCow = false;
 	}
 	else if (!strcmp (argv[i], "--replace"))
 	{
@@ -125,15 +113,6 @@ CompManager::parseArguments (int argc, char **argv)
 	{
 	    if (i + 1 < argc)
 		clientId = argv[++i];
-	}
-	else if (!strcmp (argv[i], "--no-detection"))
-	{
-	    noDetection = true;
-	}
-	else if (!strcmp (argv[i], "--bg-image"))
-	{
-	    if (i + 1 < argc)
-		backgroundImage = argv[++i];
 	}
 	else if (*argv[i] == '-')
 	{
