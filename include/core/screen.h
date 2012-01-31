@@ -38,9 +38,10 @@
 #include <core/modifierhandler.h>
 #include <core/valueholder.h>
 
-class CompScreen;
+class CompScreenImpl;
 class PrivateScreen;
 class CompManager;
+class CoreWindow;
 
 typedef std::list<CompWindow *> CompWindowList;
 typedef std::vector<CompWindow *> CompWindowVector;
@@ -51,10 +52,12 @@ extern bool       indirectRendering;
 extern bool       noDetection;
 extern bool       debugOutput;
 
+//#define ARG_ABSTRACT_COMP_SCREEN
+
 #if defined(ARG_ABSTRACT_COMP_SCREEN)
-extern AbstractCompScreen   *screen;
-#else
 extern CompScreen   *screen;
+#else
+extern CompScreenImpl   *screen;
 #endif
 
 extern ModifierHandler *modHandler;
@@ -145,9 +148,11 @@ class ScreenInterface : public WrapableInterface<CompScreen, ScreenInterface> {
 
 };
 
-class AbstractCompScreen :
+class CompScreen :
     public WrapableHandler<ScreenInterface, 18>,
-    public CompSize
+    public PluginClassStorage,
+    public CompSize,
+    public CompOption::Class
 {
 public:
     WRAPABLE_HND (0, ScreenInterface, void, fileWatchAdded, CompFileWatch *)
@@ -188,6 +193,9 @@ public:
     WRAPABLE_HND (17, ScreenInterface, void, addSupportedAtoms,
 		  std::vector<Atom>& atoms);
 
+    static unsigned int allocPluginClassIndex ();
+    static void freePluginClassIndex (unsigned int index);
+
     // Interface hoisted from CompScreen
     virtual bool updateDefaultIcon () = 0;
     virtual Display * dpy () = 0;
@@ -214,6 +222,68 @@ public:
 
     virtual bool grabsEmpty() const = 0;
     virtual void sizePluginClasses(unsigned int size) = 0;
+    virtual CompOutput::vector & outputDevs () = 0;
+    virtual void setWindowState (unsigned int state, Window id) = 0;
+    virtual bool XShape () = 0;
+    virtual std::vector<XineramaScreenInfo> & screenInfo () = 0;
+    virtual CompWindowList & serverWindows () = 0;
+    virtual void setWindowProp (Window       id,
+			    Atom         property,
+			    unsigned int value) = 0;
+    virtual Window activeWindow () = 0;
+    virtual unsigned int currentDesktop () = 0;
+    virtual CompActiveWindowHistory *currentHistory () = 0;
+    virtual void focusDefaultWindow () = 0;
+    virtual Time getCurrentTime () = 0;
+    virtual unsigned int getWindowProp (Window       id,
+				    Atom         property,
+				    unsigned int defaultValue) = 0;
+    virtual void insertServerWindow (CompWindow *w, Window aboveId) = 0;
+    virtual void insertWindow (CompWindow *w, Window aboveId) = 0;
+    virtual unsigned int nDesktop () = 0;
+    virtual int outputDeviceForGeometry (const CompWindow::Geometry& gm) = 0;
+    virtual int screenNum () = 0;
+    virtual void unhookServerWindow (CompWindow *w) = 0;
+    virtual void unhookWindow (CompWindow *w) = 0;
+    virtual void viewportForGeometry (const CompWindow::Geometry &gm,
+				  CompPoint                   &viewport) = 0;
+
+    virtual void removeFromCreatedWindows(CoreWindow *cw) = 0;
+    virtual void addToDestroyedWindows(CompWindow * cw) = 0;
+    virtual const CompRect & workArea () const = 0;
+    virtual void removeAction (CompAction *action) = 0;
+    virtual CompOption::Vector & getOptions () = 0;
+    virtual bool setOption (const CompString &name, CompOption::Value &value) = 0;
+    virtual void storeValue (CompString key, CompPrivate value) = 0;
+    virtual bool hasValue (CompString key) = 0;
+    virtual CompPrivate getValue (CompString key) = 0;
+    virtual void eraseValue (CompString key) = 0;
+    virtual CompWatchFdHandle addWatchFd (int             fd,
+				      short int       events,
+				      FdWatchCallBack callBack) = 0;
+    virtual void removeWatchFd (CompWatchFdHandle handle) = 0;
+    virtual void eventLoop () = 0;
+
+    virtual CompFileWatchHandle addFileWatch (const char        *path,
+					  int               mask,
+					  FileWatchCallBack callBack) = 0;
+    virtual void removeFileWatch (CompFileWatchHandle handle) = 0;
+    virtual const CompFileWatchList& getFileWatches () const = 0;
+    virtual void updateSupportedWmHints () = 0;
+
+	friend class CompTimer;
+	friend class CompWindow;
+	friend class PrivateWindow;
+	friend class CoreWindow;
+	friend class ModifierHandler;
+	friend class CompEventSource;
+	friend class CompTimeoutSource;
+	friend class CompManager;
+	friend class CompWatchFd;
+
+protected:
+	CompScreen();
+	PrivateScreen *priv;
 
 private:
     // The "wrapable" functions delegate to these (for mocking)
@@ -242,18 +312,15 @@ private:
  * A wrapping of the X display screen. This takes care of communication to the
  * X server.
  */
-class CompScreen :
-    public AbstractCompScreen,
-    public PluginClassStorage,
-    public CompOption::Class
+class CompScreenImpl : public CompScreen
 {
 
     public:
 	typedef void* GrabHandle;
 
     public:
-	CompScreen ();
-	~CompScreen ();
+	CompScreenImpl ();
+	~CompScreenImpl ();
 
 	bool init (const char *name);
 
@@ -462,27 +529,13 @@ class CompScreen :
 
 	void updateSupportedWmHints ();
 
-	static unsigned int allocPluginClassIndex ();
-	static void freePluginClassIndex (unsigned int index);
-
 	unsigned int showingDesktopMask() const;
-
 	virtual bool grabsEmpty() const;
-
 	virtual void sizePluginClasses(unsigned int size);
+	virtual void setWindowState (unsigned int state, Window id);
+	virtual void removeFromCreatedWindows(CoreWindow *cw);
+	virtual void addToDestroyedWindows(CompWindow * cw);
 
-	friend class CompTimer;
-	friend class CompWindow;
-	friend class PrivateWindow;
-	friend class CoreWindow;
-	friend class ModifierHandler;
-	friend class CompEventSource;
-	friend class CompTimeoutSource;
-	friend class CompManager;
-	friend class CompWatchFd;
-
-    private:
-	PrivateScreen *priv;
 
     public :
 

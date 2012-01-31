@@ -342,7 +342,7 @@ public:
 
     friend class PrivateWindow;
     friend class PrivateScreen;
-    friend class CompScreen;
+    friend class CompScreenImpl;
 
 private:
 

@@ -99,7 +99,7 @@ class BaseSwitchScreen
 	CompWindow   *selectedWindow;
 	unsigned int lastActiveNum;
 
-	CompScreen::GrabHandle grabIndex;
+	CompScreenImpl::GrabHandle grabIndex;
 
 	bool moreAdjust;
 

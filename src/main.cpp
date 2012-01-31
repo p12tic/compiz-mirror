@@ -140,7 +140,8 @@ CompManager::CompManager () :
 bool
 CompManager::init ()
 {
-    screen = new CompScreen ();
+    CompScreenImpl* ss = new CompScreenImpl ();
+    screen = ss;
 
     if (!screen || !screen->priv)
 	return false;
@@ -177,7 +178,7 @@ CompManager::init ()
     screen->priv->dirtyPluginList = true;
     screen->priv->updatePlugins ();
 
-    if (!screen->init (displayName))
+    if (!ss->init (displayName))
 	return false;
 
     if (debugOutput)

@@ -61,7 +61,7 @@ class CloneScreen :
 	CompositeScreen *cScreen;
 	GLScreen	*gScreen;
 
-	CompScreen::GrabHandle grabHandle;
+	CompScreenImpl::GrabHandle grabHandle;
 	bool		       grab;
 
 	float offset;

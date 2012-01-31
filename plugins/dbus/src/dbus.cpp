@@ -271,7 +271,7 @@ DbusScreen::dbusHandlePluginIntrospectMessage (DBusConnection *connection,
 				   	       DBusMessage    *message,
 				   	       char           **path)
 {
-    CompScreen *s;
+    CompScreenImpl *s;
     char screenName[256];
 
     xmlTextWriterPtr writer;

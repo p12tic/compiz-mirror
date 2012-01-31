@@ -11,7 +11,7 @@
 
 namespace {
 
-class MockCompScreen : public AbstractCompScreen
+class MockCompScreen : public CompScreen
 {
 public:
     // Interface hoisted from CompScreen
@@ -59,6 +59,56 @@ public:
     MOCK_METHOD0(_matchExpHandlerChanged, void ());
     MOCK_METHOD1(_matchPropertyChanged, void (CompWindow *));
     MOCK_METHOD0(_outputChangeNotify, void ());
+
+    MOCK_METHOD0(outputDevs, CompOutput::vector & ());
+    MOCK_METHOD2(setWindowState, void (unsigned int state, Window id));
+    MOCK_METHOD0(XShape, bool ());
+    MOCK_METHOD0(screenInfo, std::vector<XineramaScreenInfo> & ());
+    MOCK_METHOD0(serverWindows, CompWindowList & ());
+    MOCK_METHOD3(setWindowProp, void (Window       id,
+			    Atom         property,
+			    unsigned int value));
+    MOCK_METHOD0(activeWindow, Window ());
+    MOCK_METHOD0(currentDesktop, unsigned int ());
+    MOCK_METHOD0(currentHistory, CompActiveWindowHistory *());
+    MOCK_METHOD0(focusDefaultWindow, void ());
+    MOCK_METHOD0(getCurrentTime, Time ());
+    MOCK_METHOD3(getWindowProp, unsigned int (Window       id,
+				    Atom         property,
+				    unsigned int defaultValue));
+    MOCK_METHOD2(insertServerWindow, void (CompWindow *w, Window aboveId));
+    MOCK_METHOD2(insertWindow, void (CompWindow *w, Window aboveId));
+    MOCK_METHOD0(nDesktop, unsigned int ());
+    MOCK_METHOD1(outputDeviceForGeometry, int (const CompWindow::Geometry& gm));
+    MOCK_METHOD0(screenNum, int ());
+    MOCK_METHOD1(unhookServerWindow, void (CompWindow *w));
+    MOCK_METHOD1(unhookWindow, void (CompWindow *w));
+    MOCK_METHOD2(viewportForGeometry, void (const CompWindow::Geometry &gm,
+				  CompPoint                   &viewport));
+
+    MOCK_METHOD1(removeFromCreatedWindows, void (CoreWindow *cw));
+    MOCK_METHOD1(addToDestroyedWindows, void (CompWindow * cw));
+
+    MOCK_CONST_METHOD0(workArea, CompRect const& ());
+    MOCK_METHOD1(removeAction, void (CompAction *action));
+    MOCK_METHOD0(getOptions, CompOption::Vector & ());
+    MOCK_METHOD2(setOption, bool (const CompString &name, CompOption::Value &value));
+    MOCK_METHOD2(storeValue, void (CompString key, CompPrivate value));
+    MOCK_METHOD1(hasValue, bool (CompString key));
+    MOCK_METHOD1(getValue, CompPrivate (CompString key));
+    MOCK_METHOD1(eraseValue, void (CompString key));
+    MOCK_METHOD3(addWatchFd, CompWatchFdHandle (int             fd,
+				      short int       events,
+				      FdWatchCallBack callBack));
+    MOCK_METHOD1(removeWatchFd, void (CompWatchFdHandle handle));
+    MOCK_METHOD0(eventLoop, void ());
+    MOCK_METHOD3(addFileWatch, CompFileWatchHandle (const char        *path,
+					  int               mask,
+					  FileWatchCallBack callBack));
+    MOCK_METHOD1(removeFileWatch, void (CompFileWatchHandle handle));
+    MOCK_CONST_METHOD0(getFileWatches, const CompFileWatchList& ());
+    MOCK_METHOD0(updateSupportedWmHints, void ());
+
 };
 
 

@@ -82,7 +82,7 @@ class MoveScreen :
 
 	GLushort moveOpacity;
 
-	CompScreen::GrabHandle grab;
+	CompScreenImpl::GrabHandle grab;
 
 	Cursor moveCursor;
 

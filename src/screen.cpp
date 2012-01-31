@@ -87,23 +87,38 @@ typedef struct {
 } MwmHints;
 
 
-
 #if defined(ARG_ABSTRACT_COMP_SCREEN)
-class AbstractCompScreen;
-AbstractCompScreen   *screen;
-#else
 class CompScreen;
 CompScreen   *screen;
+#else
+class CompScreenImpl;
+CompScreenImpl   *screen;
 #endif
 
 ModifierHandler *modHandler;
 
 PluginClassStorage::Indices screenPluginClassIndices (0);
 
-void CompScreen::sizePluginClasses(unsigned int size)
+void CompScreenImpl::sizePluginClasses(unsigned int size)
 {
     if(size != pluginClasses.size ())
  	pluginClasses.resize (size);
+}
+
+void CompScreenImpl::setWindowState (unsigned int state, Window id)
+{
+    priv->setWindowState (state, id);
+}
+
+void
+CompScreenImpl::removeFromCreatedWindows(CoreWindow *cw)
+{
+    priv->createdWindows.remove (cw);
+}
+
+void CompScreenImpl::addToDestroyedWindows(CompWindow * cw)
+{
+    priv->destroyedWindows.push_back (cw);
 }
 
 
@@ -146,7 +161,7 @@ PrivateScreen::handleSignal (int signum)
 }
 
 void
-CompScreen::eventLoop ()
+CompScreenImpl::eventLoop ()
 {
     priv->source = CompEventSource::create ();
     priv->timeout = CompTimeoutSource::create (priv->ctx);
@@ -159,7 +174,7 @@ CompScreen::eventLoop ()
 }
 
 CompFileWatchHandle
-CompScreen::addFileWatch (const char        *path,
+CompScreenImpl::addFileWatch (const char        *path,
 			  int               mask,
 			  FileWatchCallBack callBack)
 {
@@ -183,7 +198,7 @@ CompScreen::addFileWatch (const char        *path,
 }
 
 void
-CompScreen::removeFileWatch (CompFileWatchHandle handle)
+CompScreenImpl::removeFileWatch (CompFileWatchHandle handle)
 {
     std::list<CompFileWatch *>::iterator it;
     CompFileWatch                        *w;
@@ -204,7 +219,7 @@ CompScreen::removeFileWatch (CompFileWatchHandle handle)
 }
 
 const CompFileWatchList &
-CompScreen::getFileWatches () const
+CompScreenImpl::getFileWatches () const
 {
     return priv->fileWatch;
 }
@@ -235,7 +250,7 @@ CompWatchFd::create (int               fd,
 }
 
 CompWatchFdHandle
-CompScreen::addWatchFd (int             fd,
+CompScreenImpl::addWatchFd (int             fd,
 			short int       events,
 			FdWatchCallBack callBack)
 {
@@ -271,7 +286,7 @@ CompScreen::addWatchFd (int             fd,
 }
 
 void
-CompScreen::removeWatchFd (CompWatchFdHandle handle)
+CompScreenImpl::removeWatchFd (CompWatchFdHandle handle)
 {
     std::list<CompWatchFd * >::iterator it;
     CompWatchFd *			w;
@@ -299,19 +314,19 @@ CompScreen::removeWatchFd (CompWatchFdHandle handle)
 }
 
 void
-CompScreen::storeValue (CompString key, CompPrivate value)
+CompScreenImpl::storeValue (CompString key, CompPrivate value)
 {
     ValueHolder::Default ()->storeValue (key, value);
 }
 
 bool
-CompScreen::hasValue (CompString key)
+CompScreenImpl::hasValue (CompString key)
 {
     return ValueHolder::Default ()->hasValue (key);
 }
 
 CompPrivate
-CompScreen::getValue (CompString key)
+CompScreenImpl::getValue (CompString key)
 {
     return ValueHolder::Default ()->getValue (key);
 }
@@ -350,37 +365,37 @@ CompWatchFd::internalCallback (Glib::IOCondition events)
 }    
 
 void
-CompScreen::eraseValue (CompString key)
+CompScreenImpl::eraseValue (CompString key)
 {
     ValueHolder::Default ()->eraseValue (key);
 }
 
 void
-AbstractCompScreen::fileWatchAdded (CompFileWatch *watch)
+CompScreen::fileWatchAdded (CompFileWatch *watch)
 {
     WRAPABLE_HND_FUNCTN (fileWatchAdded, watch);
     _fileWatchAdded (watch);
 }
 
 void
-CompScreen::_fileWatchAdded (CompFileWatch *watch)
+CompScreenImpl::_fileWatchAdded (CompFileWatch *watch)
 {
 }
 
 void
-AbstractCompScreen::fileWatchRemoved (CompFileWatch *watch)
+CompScreen::fileWatchRemoved (CompFileWatch *watch)
 {
     WRAPABLE_HND_FUNCTN (fileWatchRemoved, watch);
     _fileWatchRemoved (watch);
 }
 
 void
-CompScreen::_fileWatchRemoved (CompFileWatch *watch)
+CompScreenImpl::_fileWatchRemoved (CompFileWatch *watch)
 {
 }
 
 bool
-AbstractCompScreen::setOptionForPlugin (const char        *plugin,
+CompScreen::setOptionForPlugin (const char        *plugin,
 				const char        *name,
 				CompOption::Value &value)
 {
@@ -391,7 +406,7 @@ AbstractCompScreen::setOptionForPlugin (const char        *plugin,
 }
 
 bool
-CompScreen::_setOptionForPlugin (const char        *plugin,
+CompScreenImpl::_setOptionForPlugin (const char        *plugin,
 				const char        *name,
 				CompOption::Value &value)
 {
@@ -403,7 +418,7 @@ CompScreen::_setOptionForPlugin (const char        *plugin,
 }
 
 void
-AbstractCompScreen::sessionEvent (CompSession::Event event,
+CompScreen::sessionEvent (CompSession::Event event,
 			  CompOption::Vector &arguments)
 {
     WRAPABLE_HND_FUNCTN (sessionEvent, event, arguments);
@@ -411,7 +426,7 @@ AbstractCompScreen::sessionEvent (CompSession::Event event,
 }
 
 void
-CompScreen::_sessionEvent (CompSession::Event event,
+CompScreenImpl::_sessionEvent (CompSession::Event event,
 			  CompOption::Vector &arguments)
 {
 }
@@ -488,7 +503,7 @@ errorHandler (Display     *dpy,
 }
 
 int
-CompScreen::checkForError (Display *dpy)
+CompScreenImpl::checkForError (Display *dpy)
 {
     int e;
 
@@ -501,61 +516,61 @@ CompScreen::checkForError (Display *dpy)
 }
 
 Display *
-CompScreen::dpy ()
+CompScreenImpl::dpy ()
 {
     return priv->dpy;
 }
 
 bool
-CompScreen::XRandr ()
+CompScreenImpl::XRandr ()
 {
     return priv->randrExtension;
 }
 
 int
-CompScreen::randrEvent ()
+CompScreenImpl::randrEvent ()
 {
     return priv->randrEvent;
 }
 
 bool
-CompScreen::XShape ()
+CompScreenImpl::XShape ()
 {
     return priv->shapeExtension;
 }
 
 int
-CompScreen::shapeEvent ()
+CompScreenImpl::shapeEvent ()
 {
     return priv->shapeEvent;
 }
 
 int
-CompScreen::syncEvent ()
+CompScreenImpl::syncEvent ()
 {
     return priv->syncEvent;
 }
 
 SnDisplay *
-CompScreen::snDisplay ()
+CompScreenImpl::snDisplay ()
 {
     return priv->snDisplay;
 }
 
 Window
-CompScreen::activeWindow ()
+CompScreenImpl::activeWindow ()
 {
     return priv->activeWindow;
 }
 
 Window
-CompScreen::autoRaiseWindow ()
+CompScreenImpl::autoRaiseWindow ()
 {
     return priv->autoRaiseWindow;
 }
 
 const char *
-CompScreen::displayString ()
+CompScreenImpl::displayString ()
 {
     return priv->displayString;
 }
@@ -618,13 +633,13 @@ PrivateScreen::handlePingTimeout ()
 }
 
 CompOption::Vector &
-CompScreen::getOptions ()
+CompScreenImpl::getOptions ()
 {
     return priv->getOptions ();
 }
 
 bool
-CompScreen::setOption (const CompString  &name,
+CompScreenImpl::setOption (const CompString  &name,
 		       CompOption::Value &value)
 {
     return priv->setOption (name, value);
@@ -1164,7 +1179,7 @@ PrivateScreen::handleSelectionClear (XEvent *event)
 #define HOMECOMPIZDIR ".compiz-1"
 
 bool
-CompScreen::readImageFromFile (CompString &name,
+CompScreenImpl::readImageFromFile (CompString &name,
 			       CompString &pname,
 			       CompSize   &size,
 			       void       *&data)
@@ -1209,7 +1224,7 @@ CompScreen::readImageFromFile (CompString &name,
 }
 
 bool
-CompScreen::writeImageToFile (CompString &path,
+CompScreenImpl::writeImageToFile (CompString &path,
 			      const char *format,
 			      CompSize   &size,
 			      void       *data)
@@ -1243,7 +1258,7 @@ PrivateScreen::getActiveWindow (Window root)
 }
 
 bool
-AbstractCompScreen::fileToImage (CompString &name,
+CompScreen::fileToImage (CompString &name,
 			 CompSize   &size,
 			 int        &stride,
 			 void       *&data)
@@ -1253,7 +1268,7 @@ AbstractCompScreen::fileToImage (CompString &name,
 }
 
 bool
-CompScreen::_fileToImage (CompString &name,
+CompScreenImpl::_fileToImage (CompString &name,
 			 CompSize   &size,
 			 int        &stride,
 			 void       *&data)
@@ -1262,7 +1277,7 @@ CompScreen::_fileToImage (CompString &name,
 }
 
 bool
-AbstractCompScreen::imageToFile (CompString &path,
+CompScreen::imageToFile (CompString &path,
 			 CompString &format,
 			 CompSize   &size,
 			 int        stride,
@@ -1274,7 +1289,7 @@ AbstractCompScreen::imageToFile (CompString &path,
 }
 
 bool
-CompScreen::_imageToFile (CompString &path,
+CompScreenImpl::_imageToFile (CompString &path,
 			 CompString &format,
 			 CompSize   &size,
 			 int        stride,
@@ -1284,7 +1299,7 @@ CompScreen::_imageToFile (CompString &path,
 }
 
 void
-AbstractCompScreen::logMessage (const char   *componentName,
+CompScreen::logMessage (const char   *componentName,
 			CompLogLevel level,
 			const char   *message)
 {
@@ -1293,7 +1308,7 @@ AbstractCompScreen::logMessage (const char   *componentName,
 }
 
 void
-CompScreen::_logMessage (const char   *componentName,
+CompScreenImpl::_logMessage (const char   *componentName,
 			CompLogLevel level,
 			const char   *message)
 {
@@ -1588,7 +1603,7 @@ PrivateScreen::getProtocols (Window id)
 }
 
 unsigned int
-CompScreen::getWindowProp (Window       id,
+CompScreenImpl::getWindowProp (Window       id,
 			   Atom         property,
 			   unsigned int defaultValue)
 {
@@ -1618,7 +1633,7 @@ CompScreen::getWindowProp (Window       id,
 }
 
 void
-CompScreen::setWindowProp (Window       id,
+CompScreenImpl::setWindowProp (Window       id,
 			   Atom         property,
 			   unsigned int value)
 {
@@ -1662,7 +1677,7 @@ PrivateScreen::readWindowProp32 (Window         id,
 }
 
 unsigned short
-CompScreen::getWindowProp32 (Window         id,
+CompScreenImpl::getWindowProp32 (Window         id,
 			     Atom           property,
 			     unsigned short defaultValue)
 {
@@ -1675,7 +1690,7 @@ CompScreen::getWindowProp32 (Window         id,
 }
 
 void
-CompScreen::setWindowProp32 (Window         id,
+CompScreenImpl::setWindowProp32 (Window         id,
 			     Atom           property,
 			     unsigned short value)
 {
@@ -2143,10 +2158,10 @@ PrivateScreen::removeAllSequences ()
 }
 
 void
-CompScreen::compScreenSnEvent (SnMonitorEvent *event,
+CompScreenImpl::compScreenSnEvent (SnMonitorEvent *event,
 			       void           *userData)
 {
-    CompScreen	      *screen = (CompScreen *) userData;
+    CompScreenImpl	      *screen = (CompScreenImpl *) userData;
     SnStartupSequence *sequence;
 
     sequence = sn_monitor_event_get_startup_sequence (event);
@@ -2269,7 +2284,7 @@ PrivateScreen::setSupportingWmCheck ()
 }
 
 void
-CompScreen::updateSupportedWmHints ()
+CompScreenImpl::updateSupportedWmHints ()
 {
     std::vector<Atom> atoms;
 
@@ -2281,14 +2296,14 @@ CompScreen::updateSupportedWmHints ()
 }
 
 void
-AbstractCompScreen::addSupportedAtoms (std::vector<Atom> &atoms)
+CompScreen::addSupportedAtoms (std::vector<Atom> &atoms)
 {
     WRAPABLE_HND_FUNCTN (addSupportedAtoms, atoms);
     _addSupportedAtoms (atoms);
 }
 
 void
-CompScreen::_addSupportedAtoms (std::vector<Atom> &atoms)
+CompScreenImpl::_addSupportedAtoms (std::vector<Atom> &atoms)
 {
     atoms.push_back (Atoms::supported);
     atoms.push_back (Atoms::supportingWmCheck);
@@ -2486,24 +2501,24 @@ PrivateScreen::getDesktopHints ()
 }
 
 void
-AbstractCompScreen::enterShowDesktopMode ()
+CompScreen::enterShowDesktopMode ()
 {
     WRAPABLE_HND_FUNCTN (enterShowDesktopMode)
     _enterShowDesktopMode ();
 }
 
-unsigned int CompScreen::showingDesktopMask() const
+unsigned int CompScreenImpl::showingDesktopMask() const
 {
     return priv->showingDesktopMask;
 }
 
-bool CompScreen::grabsEmpty() const
+bool CompScreenImpl::grabsEmpty() const
 {
     return priv->grabs.empty();
 }
 
 void
-CompScreen::_enterShowDesktopMode ()
+CompScreenImpl::_enterShowDesktopMode ()
 {
     unsigned long data = 1;
     int		  count = 0;
@@ -2543,14 +2558,14 @@ CompScreen::_enterShowDesktopMode ()
 }
 
 void
-AbstractCompScreen::leaveShowDesktopMode (CompWindow *window)
+CompScreen::leaveShowDesktopMode (CompWindow *window)
 {
     WRAPABLE_HND_FUNCTN (leaveShowDesktopMode, window)
     _leaveShowDesktopMode (window);
 }
 
 void
-CompScreen::_leaveShowDesktopMode (CompWindow *window)
+CompScreenImpl::_leaveShowDesktopMode (CompWindow *window)
 {
     unsigned long data = 0;
 
@@ -2596,14 +2611,14 @@ CompScreen::_leaveShowDesktopMode (CompWindow *window)
 }
 
 void
-CompScreen::forEachWindow (CompWindow::ForEach proc)
+CompScreenImpl::forEachWindow (CompWindow::ForEach proc)
 {
     foreach (CompWindow *w, priv->windows)
 	proc (w);
 }
 
 void
-CompScreen::focusDefaultWindow ()
+CompScreenImpl::focusDefaultWindow ()
 {
     CompWindow  *w;
     CompWindow  *focus = NULL;
@@ -2687,7 +2702,7 @@ CompScreen::focusDefaultWindow ()
 }
 
 CompWindow *
-CompScreen::findWindow (Window id)
+CompScreenImpl::findWindow (Window id)
 {
     if (lastFoundWindow && lastFoundWindow->id () == id)
     {
@@ -2705,7 +2720,7 @@ CompScreen::findWindow (Window id)
 }
 
 CompWindow *
-CompScreen::findTopLevelWindow (Window id, bool override_redirect)
+CompScreenImpl::findTopLevelWindow (Window id, bool override_redirect)
 {
     CompWindow *w;
 
@@ -2732,7 +2747,7 @@ CompScreen::findTopLevelWindow (Window id, bool override_redirect)
 }
 
 void
-CompScreen::insertWindow (CompWindow *w, Window	aboveId)
+CompScreenImpl::insertWindow (CompWindow *w, Window	aboveId)
 {
     StackDebugger *dbg = StackDebugger::Default ();
 
@@ -2795,7 +2810,7 @@ CompScreen::insertWindow (CompWindow *w, Window	aboveId)
 }
 
 void
-CompScreen::insertServerWindow (CompWindow *w, Window	aboveId)
+CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 {
     StackDebugger *dbg = StackDebugger::Default ();
 
@@ -2859,7 +2874,7 @@ PrivateScreen::eraseWindowFromMap (Window id)
 }
 
 void
-CompScreen::unhookWindow (CompWindow *w)
+CompScreenImpl::unhookWindow (CompWindow *w)
 {
     StackDebugger *dbg = StackDebugger::Default ();
 
@@ -2892,7 +2907,7 @@ CompScreen::unhookWindow (CompWindow *w)
 }
 
 void
-CompScreen::unhookServerWindow (CompWindow *w)
+CompScreenImpl::unhookServerWindow (CompWindow *w)
 {
     StackDebugger *dbg = StackDebugger::Default ();
 
@@ -2921,13 +2936,13 @@ CompScreen::unhookServerWindow (CompWindow *w)
 }
 
 Cursor
-CompScreen::normalCursor ()
+CompScreenImpl::normalCursor ()
 {
     return priv->normalCursor;
 }
 
 Cursor
-CompScreen::invisibleCursor ()
+CompScreenImpl::invisibleCursor ()
 {
     return priv->invisibleCursor;
 }
@@ -2935,8 +2950,8 @@ CompScreen::invisibleCursor ()
 #define POINTER_GRAB_MASK (ButtonReleaseMask | \
 			   ButtonPressMask   | \
 			   PointerMotionMask)
-CompScreen::GrabHandle
-CompScreen::pushGrab (Cursor cursor, const char *name)
+CompScreenImpl::GrabHandle
+CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 {
     if (priv->grabs.empty ())
     {
@@ -2979,7 +2994,7 @@ CompScreen::pushGrab (Cursor cursor, const char *name)
 }
 
 void
-CompScreen::updateGrab (CompScreen::GrabHandle handle, Cursor cursor)
+CompScreenImpl::updateGrab (CompScreenImpl::GrabHandle handle, Cursor cursor)
 {
     if (!handle)
 	return;
@@ -2991,7 +3006,7 @@ CompScreen::updateGrab (CompScreen::GrabHandle handle, Cursor cursor)
 }
 
 void
-CompScreen::removeGrab (CompScreen::GrabHandle handle,
+CompScreenImpl::removeGrab (CompScreenImpl::GrabHandle handle,
 			CompPoint *restorePointer)
 {
     if (!handle)
@@ -3029,7 +3044,7 @@ CompScreen::removeGrab (CompScreen::GrabHandle handle,
    plugins listed, returns false otherwise. */
 
 bool
-CompScreen::otherGrabExist (const char *first, ...)
+CompScreenImpl::otherGrabExist (const char *first, ...)
 {
     va_list    ap;
     const char *name;
@@ -3059,7 +3074,7 @@ CompScreen::otherGrabExist (const char *first, ...)
 }
 
 bool
-CompScreen::grabExist (const char *grab)
+CompScreenImpl::grabExist (const char *grab)
 {
     foreach (PrivateScreen::Grab* g, priv->grabs)
     {
@@ -3070,7 +3085,7 @@ CompScreen::grabExist (const char *grab)
 }
 
 bool
-CompScreen::grabbed ()
+CompScreenImpl::grabbed ()
 {
     return priv->grabbed;
 }
@@ -3107,7 +3122,7 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
     int             mod, k;
     unsigned int    ignore;
 
-    CompScreen::checkForError (dpy);
+    CompScreenImpl::checkForError (dpy);
 
     for (ignore = 0; ignore <= modHandler->ignoredModMask (); ignore++)
     {
@@ -3140,7 +3155,7 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
 	    }
 	}
 
-	if (CompScreen::checkForError (dpy))
+	if (CompScreenImpl::checkForError (dpy))
 	    return false;
     }
 
@@ -3291,7 +3306,7 @@ PrivateScreen::addScreenActions ()
 }
 
 bool
-CompScreen::addAction (CompAction *action)
+CompScreenImpl::addAction (CompAction *action)
 {
     if (!screenInitalized || !priv->initialized)
 	return false;
@@ -3331,7 +3346,7 @@ CompScreen::addAction (CompAction *action)
 }
 
 void
-CompScreen::removeAction (CompAction *action)
+CompScreenImpl::removeAction (CompAction *action)
 {
     if (!priv->initialized)
 	return;
@@ -3417,7 +3432,7 @@ PrivateScreen::computeWorkareaForBox (const CompRect& box)
 }
 
 void
-CompScreen::updateWorkarea ()
+CompScreenImpl::updateWorkarea ()
 {
     CompRect workArea;
     CompRegion allWorkArea = CompRegion ();
@@ -3584,13 +3599,13 @@ PrivateScreen::updateClientList ()
 }
 
 const CompWindowVector &
-CompScreen::clientList (bool stackingOrder)
+CompScreenImpl::clientList (bool stackingOrder)
 {
    return stackingOrder ? priv->clientListStacking : priv->clientList;
 }
 
 void
-CompScreen::toolkitAction (Atom   toolkitAction,
+CompScreenImpl::toolkitAction (Atom   toolkitAction,
 			   Time   eventTime,
 			   Window window,
 			   long   data0,
@@ -3617,7 +3632,7 @@ CompScreen::toolkitAction (Atom   toolkitAction,
 }
 
 void
-CompScreen::runCommand (CompString command)
+CompScreenImpl::runCommand (CompString command)
 {
     if (command.size () == 0)
 	return;
@@ -3655,7 +3670,7 @@ CompScreen::runCommand (CompString command)
 }
 
 void
-CompScreen::moveViewport (int tx, int ty, bool sync)
+CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 {
     CompPoint pnt;
 
@@ -3797,7 +3812,7 @@ PrivateScreen::applyStartupProperties (CompWindow *window)
 }
 
 void
-CompScreen::sendWindowActivationRequest (Window id)
+CompScreenImpl::sendWindowActivationRequest (Window id)
 {
     XEvent xev;
 
@@ -3845,13 +3860,13 @@ PrivateScreen::getTopWindow ()
 }
 
 int
-CompScreen::outputDeviceForPoint (const CompPoint &point)
+CompScreenImpl::outputDeviceForPoint (const CompPoint &point)
 {
     return outputDeviceForPoint (point.x (), point.y ());
 }
 
 int
-CompScreen::outputDeviceForPoint (int x, int y)
+CompScreenImpl::outputDeviceForPoint (int x, int y)
 {
     CompWindow::Geometry geom (x, y, 1, 1, 0);
 
@@ -3859,7 +3874,7 @@ CompScreen::outputDeviceForPoint (int x, int y)
 }
 
 CompRect
-CompScreen::getCurrentOutputExtents ()
+CompScreenImpl::getCurrentOutputExtents ()
 {
     return priv->outputDevs[priv->currentOutputDev];
 }
@@ -3922,20 +3937,20 @@ PrivateScreen::setCurrentDesktop (unsigned int desktop)
 }
 
 const CompRect&
-CompScreen::getWorkareaForOutput (unsigned int outputNum) const
+CompScreenImpl::getWorkareaForOutput (unsigned int outputNum) const
 {
     return priv->outputDevs[outputNum].workArea ();
 }
 
 void
-AbstractCompScreen::outputChangeNotify ()
+CompScreen::outputChangeNotify ()
 {
     WRAPABLE_HND_FUNCTN (outputChangeNotify);
     _outputChangeNotify ();
 }
 
 void
-CompScreen::_outputChangeNotify ()
+CompScreenImpl::_outputChangeNotify ()
 {
 }
 
@@ -3945,7 +3960,7 @@ CompScreen::_outputChangeNotify ()
    is currently computed as the viewport where the center of the window is
    located. */
 void
-CompScreen::viewportForGeometry (const CompWindow::Geometry& gm,
+CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
 				 CompPoint&                  viewport)
 {
     CompRect rect (gm);
@@ -3964,7 +3979,7 @@ CompScreen::viewportForGeometry (const CompWindow::Geometry& gm,
 }
 
 int
-CompScreen::outputDeviceForGeometry (const CompWindow::Geometry& gm)
+CompScreenImpl::outputDeviceForGeometry (const CompWindow::Geometry& gm)
 {
     int          overlapAreas[priv->outputDevs.size ()];
     int          highest, seen, highestScore;
@@ -4078,13 +4093,13 @@ CompScreen::outputDeviceForGeometry (const CompWindow::Geometry& gm)
 }
 
 CompIcon *
-CompScreen::defaultIcon () const
+CompScreenImpl::defaultIcon () const
 {
     return priv->defaultIcon;
 }
 
 bool
-CompScreen::updateDefaultIcon ()
+CompScreenImpl::updateDefaultIcon ()
 {
     CompString file = priv->optionGetDefaultIcon ();
     CompString pname = "core/";
@@ -4177,19 +4192,19 @@ ScreenInterface::addSupportedAtoms (std::vector<Atom>& atoms)
 
 
 Window
-CompScreen::root ()
+CompScreenImpl::root ()
 {
     return priv->root;
 }
 
 int
-CompScreen::xkbEvent ()
+CompScreenImpl::xkbEvent ()
 {
     return priv->xkbEvent;
 }
 
 void
-CompScreen::warpPointer (int dx,
+CompScreenImpl::warpPointer (int dx,
 			 int dy)
 {
     XEvent      event;
@@ -4261,26 +4276,26 @@ CompScreen::warpPointer (int dx,
 }
 
 CompWindowList &
-CompScreen::windows ()
+CompScreenImpl::windows ()
 {
     return priv->windows;
 }
 
 CompWindowList &
-CompScreen::serverWindows ()
+CompScreenImpl::serverWindows ()
 {
     return priv->serverWindows;
 }
 
 CompWindowList &
-CompScreen::destroyedWindows ()
+CompScreenImpl::destroyedWindows ()
 {
     return priv->destroyedWindows;
 }
 
 
 Time
-CompScreen::getCurrentTime ()
+CompScreenImpl::getCurrentTime ()
 {
     XEvent event;
 
@@ -4295,79 +4310,79 @@ CompScreen::getCurrentTime ()
 }
 
 Window
-CompScreen::selectionWindow ()
+CompScreenImpl::selectionWindow ()
 {
     return priv->wmSnSelectionWindow;
 }
 
 int
-CompScreen::screenNum ()
+CompScreenImpl::screenNum ()
 {
     return priv->screenNum;
 }
 
 const CompPoint &
-CompScreen::vp () const
+CompScreenImpl::vp () const
 {
     return priv->vp;
 }
 
 const CompSize &
-CompScreen::vpSize () const
+CompScreenImpl::vpSize () const
 {
     return priv->vpSize;
 }
 
 int
-CompScreen::desktopWindowCount ()
+CompScreenImpl::desktopWindowCount ()
 {
     return priv->desktopWindowCount;
 }
 
 unsigned int
-CompScreen::activeNum () const
+CompScreenImpl::activeNum () const
 {
     return priv->activeNum;
 }
 
 CompOutput::vector &
-CompScreen::outputDevs ()
+CompScreenImpl::outputDevs ()
 {
     return priv->outputDevs;
 }
 
 CompOutput &
-CompScreen::currentOutputDev () const
+CompScreenImpl::currentOutputDev () const
 {
     return priv->outputDevs [priv->currentOutputDev];
 }
 
 const CompRect &
-CompScreen::workArea () const
+CompScreenImpl::workArea () const
 {
     return priv->workArea;
 }
 
 unsigned int
-CompScreen::currentDesktop ()
+CompScreenImpl::currentDesktop ()
 {
     return priv->currentDesktop;
 }
 
 unsigned int
-CompScreen::nDesktop ()
+CompScreenImpl::nDesktop ()
 {
     return priv->nDesktop;
 }
 
 CompActiveWindowHistory *
-CompScreen::currentHistory ()
+CompScreenImpl::currentHistory ()
 {
     return &priv->history[priv->currentHistory];
 }
 
 bool
-CompScreen::shouldSerializePlugins ()
+CompScreenImpl::shouldSerializePlugins ()
 {
     return priv->optionGetDoSerialize ();
 }
@@ -4391,32 +4406,32 @@ PrivateScreen::removeDestroyed ()
 }
 
 const CompRegion &
-CompScreen::region () const
+CompScreenImpl::region () const
 {
     return priv->region;
 }
 
 bool
-CompScreen::hasOverlappingOutputs ()
+CompScreenImpl::hasOverlappingOutputs ()
 {
     return priv->hasOverlappingOutputs;
 }
 
 CompOutput &
-CompScreen::fullscreenOutput ()
+CompScreenImpl::fullscreenOutput ()
 {
     return priv->fullscreenOutput;
 }
 
 
 XWindowAttributes
-CompScreen::attrib ()
+CompScreenImpl::attrib ()
 {
     return priv->attrib;
 }
 
 std::vector<XineramaScreenInfo> &
-CompScreen::screenInfo ()
+CompScreenImpl::screenInfo ()
 {
     return priv->screenInfo;
 }
@@ -4429,14 +4444,15 @@ PrivateScreen::createFailed ()
 
 CompScreen::CompScreen ():
     PluginClassStorage (screenPluginClassIndices),
-    priv (NULL)
+    priv (new PrivateScreen (this))
+{
+}
+
+CompScreenImpl::CompScreenImpl ()
 {
     CompPrivate p;
     CompOption::Value::Vector vList;
     CompPlugin  *corePlugin;
-
-    priv = new PrivateScreen (this);
-    assert (priv);
 
     screenInitalized = true;
 
@@ -4464,7 +4480,7 @@ CompScreen::CompScreen ():
 }
 
 bool
-CompScreen::init (const char *name)
+CompScreenImpl::init (const char *name)
 {
     Window               focus;
     int                  revertTo, i;
@@ -4642,7 +4658,7 @@ CompScreen::init (const char *name)
 
     modHandler->updateModifierMappings ();
 
-    CompScreen::checkForError (dpy);
+    CompScreenImpl::checkForError (dpy);
 
     XGrabServer (dpy);
 
@@ -4683,7 +4699,7 @@ CompScreen::init (const char *name)
 		      SubstructureNotifyMask);
     }
 
-    if (CompScreen::checkForError (dpy))
+    if (CompScreenImpl::checkForError (dpy))
     {
 	compLogMessage ("core", CompLogLevelError,
 			"Another window manager is "
@@ -4846,7 +4862,7 @@ CompScreen::init (const char *name)
 	CoreWindow *cw = new CoreWindow (children[i]);
 	cw->manage (i ? children[i - 1] : 0, attrib);
 	delete cw;
-	priv->createdWindows.remove (cw);
+	removeFromCreatedWindows (cw);
     }
 
     /* enforce restack on all windows
@@ -4923,7 +4939,7 @@ CompScreen::init (const char *name)
     return true;
 }
 
-CompScreen::~CompScreen ()
+CompScreenImpl::~CompScreenImpl ()
 {
     CompPlugin  *p;
 
@@ -4966,7 +4982,7 @@ CompScreen::~CompScreen ()
     screen = NULL;
 }
 
-PrivateScreen::PrivateScreen (AbstractCompScreen *screen) :
+PrivateScreen::PrivateScreen (CompScreen *screen) :
     priv (this),
     fileWatch (0),
     lastFileWatchHandle (1),
@@ -5028,38 +5044,38 @@ PrivateScreen::PrivateScreen (AbstractCompScreen *screen) :
 
     memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
 
-    optionSetCloseWindowKeyInitiate (CompScreen::closeWin);
-    optionSetCloseWindowButtonInitiate (CompScreen::closeWin);
-    optionSetRaiseWindowKeyInitiate (CompScreen::raiseWin);
-    optionSetRaiseWindowButtonInitiate (CompScreen::raiseWin);
-    optionSetLowerWindowKeyInitiate (CompScreen::lowerWin);
-    optionSetLowerWindowButtonInitiate (CompScreen::lowerWin);
+    optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
+    optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
+    optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
+    optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
+    optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
+    optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
 
-    optionSetUnmaximizeWindowKeyInitiate (CompScreen::unmaximizeWin);
+    optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
 
-    optionSetMinimizeWindowKeyInitiate (CompScreen::minimizeWin);
-    optionSetMinimizeWindowButtonInitiate (CompScreen::minimizeWin);
-    optionSetMaximizeWindowKeyInitiate (CompScreen::maximizeWin);
+    optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
+    optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
+    optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
     optionSetMaximizeWindowHorizontallyKeyInitiate (
-	CompScreen::maximizeWinHorizontally);
+	CompScreenImpl::maximizeWinHorizontally);
     optionSetMaximizeWindowVerticallyKeyInitiate (
-	CompScreen::maximizeWinVertically);
+	CompScreenImpl::maximizeWinVertically);
 
-    optionSetWindowMenuKeyInitiate (CompScreen::windowMenu);
-    optionSetWindowMenuButtonInitiate (CompScreen::windowMenu);
+    optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
+    optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
 
-    optionSetShowDesktopKeyInitiate (CompScreen::showDesktop);
-    optionSetShowDesktopEdgeInitiate (CompScreen::showDesktop);
+    optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
+    optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
 
-    optionSetToggleWindowMaximizedKeyInitiate (CompScreen::toggleWinMaximized);
-    optionSetToggleWindowMaximizedButtonInitiate (CompScreen::toggleWinMaximized);
+    optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
+    optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
 
     optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
-	CompScreen::toggleWinMaximizedHorizontally);
+	CompScreenImpl::toggleWinMaximizedHorizontally);
     optionSetToggleWindowMaximizedVerticallyKeyInitiate (
-	CompScreen::toggleWinMaximizedVertically);
+	CompScreenImpl::toggleWinMaximizedVertically);
 
-    optionSetToggleWindowShadedKeyInitiate (CompScreen::shadeWin);
+    optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
 
     TimeoutHandler::SetDefault (dTimeoutHandler);
 }

@@ -320,14 +320,14 @@ CompManager::finiPlugin (CompPlugin *p)
 }
 
 bool
-AbstractCompScreen::initPluginForScreen (CompPlugin *p)
+CompScreen::initPluginForScreen (CompPlugin *p)
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, initPluginForScreen, p)
     return _initPluginForScreen (p);
 }
 
 bool
-CompScreen::_initPluginForScreen (CompPlugin *p)
+CompScreenImpl::_initPluginForScreen (CompPlugin *p)
 {
     bool status               = true;
     CompWindowList::iterator it, fail;
@@ -357,21 +357,21 @@ CompScreen::_initPluginForScreen (CompPlugin *p)
 }
 
 void
-AbstractCompScreen::finiPluginForScreen (CompPlugin *p)
+CompScreen::finiPluginForScreen (CompPlugin *p)
 {
     WRAPABLE_HND_FUNCTN (finiPluginForScreen, p)
     _finiPluginForScreen (p);
 }
 
 void
-CompScreen::_finiPluginForScreen (CompPlugin *p)
+CompScreenImpl::_finiPluginForScreen (CompPlugin *p)
 {
     foreach (CompWindow *w, priv->windows)
 	p->vTable->finiWindow (w);
 }
 
 bool
-CompPlugin::screenInitPlugins (CompScreen *s)
+CompPlugin::screenInitPlugins (CompScreenImpl *s)
 {
     CompPlugin::List::reverse_iterator it = plugins.rbegin ();
 
@@ -392,7 +392,7 @@ CompPlugin::screenInitPlugins (CompScreen *s)
 }
 
 void
-CompPlugin::screenFiniPlugins (CompScreen *s)
+CompPlugin::screenFiniPlugins (CompScreenImpl *s)
 {
     foreach (CompPlugin *p, plugins)
     {

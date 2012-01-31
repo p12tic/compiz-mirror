@@ -102,7 +102,7 @@ class WaterScreen :
 
 	float offsetScale;
 
-	CompScreen::GrabHandle grabIndex;
+	CompScreenImpl::GrabHandle grabIndex;
 
 	int width, height;
 

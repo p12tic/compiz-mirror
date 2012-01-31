@@ -128,7 +128,7 @@ class ResizeScreen :
 	int          pointerDy;
 	KeyCode      key[NUM_KEYS];
 
-	CompScreen::GrabHandle grabIndex;
+	CompScreenImpl::GrabHandle grabIndex;
 
 	Cursor leftCursor;
 	Cursor rightCursor;

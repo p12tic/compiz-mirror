@@ -70,7 +70,7 @@ class AnnoScreen :
 	CompositeScreen *cScreen;
 	GLScreen *gScreen;
 
-	CompScreen::GrabHandle grabIndex;
+	CompScreenImpl::GrabHandle grabIndex;
 
 	Pixmap pixmap;
 	GLTexture::List texture;

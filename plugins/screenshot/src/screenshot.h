@@ -63,7 +63,7 @@ class ShotScreen :
 	CompositeScreen *cScreen;
 	GLScreen        *gScreen;
 
-	CompScreen::GrabHandle mGrabIndex;
+	CompScreenImpl::GrabHandle mGrabIndex;
 	Bool                   mGrab;
 
 	int  mX1, mY1, mX2, mY2;

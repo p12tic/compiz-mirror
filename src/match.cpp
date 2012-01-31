@@ -112,14 +112,14 @@ class CoreExp : public CompMatch::Expression {
 };
 
 CompMatch::Expression *
-AbstractCompScreen::matchInitExp (const CompString& str)
+CompScreen::matchInitExp (const CompString& str)
 {
     WRAPABLE_HND_FUNCTN_RETURN (CompMatch::Expression *, matchInitExp, str);
     return _matchInitExp (str);
 }
 
 CompMatch::Expression *
-CompScreen::_matchInitExp (const CompString& str)
+CompScreenImpl::_matchInitExp (const CompString& str)
 {
     return new CoreExp (str);
 }
@@ -146,14 +146,14 @@ matchUpdateMatchOptions (CompOption::Vector& options)
 }
 
 void
-AbstractCompScreen::matchExpHandlerChanged ()
+CompScreen::matchExpHandlerChanged ()
 {
     WRAPABLE_HND_FUNCTN (matchExpHandlerChanged);
     _matchExpHandlerChanged ();
 }
 
 void
-CompScreen::_matchExpHandlerChanged ()
+CompScreenImpl::_matchExpHandlerChanged ()
 {
     foreach (CompPlugin *p, CompPlugin::getPlugins ())
     {
@@ -163,14 +163,14 @@ CompScreen::_matchExpHandlerChanged ()
 }
 
 void
-AbstractCompScreen::matchPropertyChanged (CompWindow *w)
+CompScreen::matchPropertyChanged (CompWindow *w)
 {
     WRAPABLE_HND_FUNCTN (matchPropertyChanged, w);
     _matchPropertyChanged (w);
 }
 
 void
-CompScreen::_matchPropertyChanged (CompWindow *w)
+CompScreenImpl::_matchPropertyChanged (CompWindow *w)
 {
 }
 

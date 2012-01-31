@@ -504,7 +504,7 @@ CompWindow::changeState (unsigned int newState)
     recalcActions ();
 
     if (priv->managed)
-	screen->priv->setWindowState (priv->state, priv->id);
+	screen->setWindowState (priv->state, priv->id);
 
     stateChangeNotify (oldState);
     screen->matchPropertyChanged (this);
@@ -1464,7 +1464,7 @@ CompWindow::destroy ()
 	     * in the stack */
 	    CoreWindow *cw = new CoreWindow (priv->serverFrame);
 	    cw->manage (priv->id, attrib);
-	    screen->priv->createdWindows.remove (cw);
+	    screen->removeFromCreatedWindows (cw);
 	    delete cw;
 	}
 
@@ -1494,7 +1494,7 @@ CompWindow::destroy ()
 	serverNext = oldServerNext;
 	serverPrev = oldServerPrev;
 
-	screen->priv->destroyedWindows.push_back (this);
+	screen->addToDestroyedWindows (this);
 
 	/* We must set the xid of this window
 	 * to zero as it no longer references
@@ -1925,7 +1925,7 @@ PrivateWindow::initializeSyncCounter ()
 
 	values.events = true;
 
-	CompScreen::checkForError (screen->dpy ());
+	CompScreenImpl::checkForError (screen->dpy ());
 
 	/* Note that by default, the alarm increments the trigger value
 	 * when it fires until the condition (counter.value < trigger.value)
@@ -1940,7 +1940,7 @@ PrivateWindow::initializeSyncCounter ()
 				      XSyncCAEvents,
 				      &values);
 
-	if (CompScreen::checkForError (screen->dpy ()))
+	if (CompScreenImpl::checkForError (screen->dpy ()))
 	    return true;
 
 	XSyncDestroyAlarm (screen->dpy (), syncAlarm);
@@ -7220,7 +7220,7 @@ PrivateWindow::unreparent ()
 	 * in the stack */
 	CoreWindow *cw = new CoreWindow (serverFrame);
 	CompWindow *fw = cw->manage (id, attrib);
-	screen->priv->createdWindows.remove (cw);
+	screen->removeFromCreatedWindows (cw);
 	delete cw;
 
 	/* Put this window in the list of "detached frame windows"

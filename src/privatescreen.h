@@ -203,14 +203,14 @@ class PrivateScreen :
 	class Grab {
 	    public:
 
-		friend class CompScreen;
+		friend class CompScreenImpl;
 	    private:
 		Cursor     cursor;
 		const char *name;
 	};
 
     public:
-	PrivateScreen (AbstractCompScreen *screen);
+	PrivateScreen (CompScreen *screen);
 	~PrivateScreen ();
 
 	bool setOption (const CompString &name, CompOption::Value &value);
@@ -447,7 +447,7 @@ class PrivateScreen :
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
 
-	AbstractCompScreen  *screen;
+	CompScreen  *screen;
 
 	std::list <CoreWindow *> createdWindows;
 	CompWindowList serverWindows;

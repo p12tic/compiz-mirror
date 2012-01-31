@@ -32,13 +32,15 @@
 
 #include <string.h>
 
-class AbstractCompScreen;
+//#define ARG_ABSTRACT_COMP_SCREEN
+
 #if defined(ARG_ABSTRACT_COMP_SCREEN)
-class AbstractCompScreen;
-extern AbstractCompScreen   *screen;
-#else
 class CompScreen;
 extern CompScreen   *screen;
+#else
+class CompScreen;
+class CompScreenImpl;
+extern CompScreenImpl   *screen;
 #endif
 
 #include <map>
@@ -170,9 +172,9 @@ class CompPlugin {
 
     public:
 
-	static bool screenInitPlugins (CompScreen *s);
+	static bool screenInitPlugins (CompScreenImpl *s);
 
-	static void screenFiniPlugins (CompScreen *s);
+	static void screenFiniPlugins (CompScreenImpl *s);
 
 	static bool windowInitPlugins (CompWindow *w);
 

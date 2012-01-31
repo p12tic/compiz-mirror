@@ -65,7 +65,7 @@ PrivateWindow::handleSyncAlarm ()
 
 
 static bool
-autoRaiseTimeout (CompScreen *screen)
+autoRaiseTimeout (CompScreenImpl *screen)
 {
     CompWindow  *w = screen->findWindow (screen->activeWindow ());
 
@@ -975,7 +975,7 @@ PrivateScreen::setDefaultWindowAttributes (XWindowAttributes *wa)
 }
 
 void
-AbstractCompScreen::handleCompizEvent (const char         *plugin,
+CompScreen::handleCompizEvent (const char         *plugin,
 			       const char         *event,
 			       CompOption::Vector &options)
 {
@@ -984,21 +984,21 @@ AbstractCompScreen::handleCompizEvent (const char         *plugin,
 }
 
 void
-CompScreen::_handleCompizEvent (const char         *plugin,
+CompScreenImpl::_handleCompizEvent (const char         *plugin,
 			       const char         *event,
 			       CompOption::Vector &options)
 {
 }
 
 void
-AbstractCompScreen::handleEvent (XEvent *event)
+CompScreen::handleEvent (XEvent *event)
 {
     WRAPABLE_HND_FUNCTN (handleEvent, event)
     _handleEvent (event);
 }
 
 void
-CompScreen::_handleEvent (XEvent *event)
+CompScreenImpl::_handleEvent (XEvent *event)
 {
     CompWindow *w = NULL;
     XWindowAttributes wa;
@@ -1098,7 +1098,7 @@ CompScreen::_handleEvent (XEvent *event)
 	    }
 	}
 
-	foreach (CompWindow *w, screen->priv->destroyedWindows)
+	foreach (CompWindow *w, priv->destroyedWindows)
 	{
 	    if (w->priv->serverId == event->xcreatewindow.window)
 	    {
@@ -1134,7 +1134,7 @@ CompScreen::_handleEvent (XEvent *event)
 		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
 		cw->manage (priv->getTopWindow (), wa);
 
-		priv->createdWindows.remove (cw);
+		removeFromCreatedWindows (cw);
 		delete cw;
             }
 	    else
@@ -1157,7 +1157,7 @@ CompScreen::_handleEvent (XEvent *event)
 
 	if (!w)
 	{
-	    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+	    foreach (CompWindow *dw, priv->destroyedWindows)
 	    {
 		if (dw->priv->serverId == event->xdestroywindow.window)
 		{
@@ -1274,7 +1274,7 @@ CompScreen::_handleEvent (XEvent *event)
 		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
 		cw->manage (priv->getTopWindow (), wa);
 
-		priv->createdWindows.remove (cw);
+		removeFromCreatedWindows (cw);
 		delete cw;
 		break;
 	    }
@@ -1286,7 +1286,7 @@ CompScreen::_handleEvent (XEvent *event)
 		 * that it is already in the list of destroyed
 		 * windows, so check that list too */
 
-		foreach (CompWindow *dw, screen->priv->destroyedWindows)
+		foreach (CompWindow *dw, priv->destroyedWindows)
 		{
 		    if (dw->priv->serverId == event->xreparent.window)
 		    {

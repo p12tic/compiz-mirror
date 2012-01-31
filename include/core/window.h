@@ -539,7 +539,7 @@ class CompWindow :
 	WRAPABLE_HND (19, WindowInterface, bool, focused);
 
 	friend class PrivateWindow;
-	friend class CompScreen;
+	friend class CompScreenImpl;
 	friend class PrivateScreen;
 	friend class ModifierHandler;
 	friend class CoreWindow;

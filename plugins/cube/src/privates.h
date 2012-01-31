@@ -119,7 +119,7 @@ class PrivateCubeScreen :
 	GLfloat  mDistance;
 	GLfloat  mTc[12];
 
-	CompScreen::GrabHandle mGrabIndex;
+	CompScreenImpl::GrabHandle mGrabIndex;
 
 	int mSrcOutput;
 
