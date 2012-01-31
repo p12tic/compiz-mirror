@@ -326,8 +326,6 @@ CompositeWindow::addDamageRect (const CompRect &rect)
 	x += geom.x () + geom.border ();
 	y += geom.y () + geom.border ();
 
-	printf ("0x%x damage region: %i %i %i %i\n", priv->window->id (), x, y, rect.width (), rect.height ());
-
 	priv->cScreen->damageRegion (CompRegion (CompRect (x, y,
 							   rect.width (),
 							   rect.height ())));

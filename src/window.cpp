@@ -1972,22 +1972,6 @@ compiz::X11::PendingEventQueue::pending ()
     return !mEvents.empty ();
 }
 
-bool
-PrivateWindow::checkClear ()
-{
-    if (pendingConfigures.pending ())
-    {
-	/* FIXME: This is a hack to avoid performance regressions
-	 * and must be removed in 0.9.6 */
-	compLogMessage ("core", CompLogLevelWarn, "failed to receive ConfigureNotify event on 0x%x\n",
-			id);
-	pendingConfigures.dump ();
-	pendingConfigures.clear ();
-    }
-
-    return false;
-}
-
 void
 compiz::X11::PendingEventQueue::add (PendingEvent::Ptr p)
 {
@@ -3199,10 +3183,6 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 										  screen->dpy (), priv->serverFrame, frameValueMask, &wc)));
 
 	    pendingConfigures.add (pc);
-	    if (priv->mClearCheckTimeout.active ())
-		priv->mClearCheckTimeout.stop ();
-	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-					    2000, 2500);
 
 	    XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
 	}
@@ -3272,10 +3252,6 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 										  screen->dpy (), serverFrame, valueMask, &wc)));
 
 	    pendingConfigures.add (pc);
-	    if (priv->mClearCheckTimeout.active ())
-		priv->mClearCheckTimeout.stop ();
-	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-					    2000, 2500);
 
 	    XSendEvent (screen->dpy (), screen->root (), false,
 			SubstructureNotifyMask, (XEvent *) &xev);
@@ -4092,10 +4068,6 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 											  screen->dpy (), serverFrame, valueMask, &lxwc)));
 
 		    pendingConfigures.add (pc);
-		    if (priv->mClearCheckTimeout.active ())
-			priv->mClearCheckTimeout.stop ();
-		    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-						    2000, 2500);
 		}
 
 		/* Below with no sibling puts the window at the bottom
@@ -6394,7 +6366,6 @@ PrivateWindow::PrivateWindow () :
     pendingUnmaps (0),
     pendingMaps (0),
     pendingConfigures (screen->dpy ()),
-    pendingPositionUpdates (false),
 
     startupId (0),
     resName (0),

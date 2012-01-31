@@ -216,8 +216,6 @@ class PrivateWindow {
 
 	void readIconHint ();
 
-	bool checkClear ();
-
     public:
 
 	PrivateWindow *priv;
@@ -248,9 +246,6 @@ class PrivateWindow {
 	Window               clientLeader;
 	XSizeHints	     sizeHints;
 	XWMHints             *hints;
-
-	struct timeval       lastGeometryUpdate;
-	struct timeval       lastConfigureRequest;
 
 	bool       inputHint;
 	bool       alpha;;
@@ -296,8 +291,6 @@ class PrivateWindow {
 	typedef std::pair <XWindowChanges, unsigned int> XWCValueMask;
 
 	compiz::X11::PendingEventQueue pendingConfigures;
-	CompTimer                     mClearCheckTimeout;
-	bool pendingPositionUpdates;
 
 	char *startupId;
 	char *resName;
