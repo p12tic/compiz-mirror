@@ -2148,21 +2148,6 @@ compiz::X11::PendingConfigureEvent::PendingConfigureEvent (Display *d,
     mValueMask (valueMask),
     mXwc (*xwc)
 {
-    CompOption::Vector options;
-    CompOption::Value  v;
-
-    options.push_back (CompOption ("window", CompOption::TypeInt));
-    v.set ((int) w);
-    options.back ().set (v);
-    options.push_back (CompOption ("active", CompOption::TypeInt));
-    v.set ((int) 1);
-    options.back ().set (v);
-
-    /* Notify other plugins that it is unsafe to change geometry or serverGeometry
-     * FIXME: That API should not be accessible to plugins, this is a hack to avoid
-     * breaking ABI */
-
-    screen->handleCompizEvent ("core", "lock_position", options);
 }
 
 compiz::X11::PendingConfigureEvent::~PendingConfigureEvent ()
