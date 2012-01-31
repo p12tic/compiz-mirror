@@ -54,7 +54,7 @@ moveInitiate (CompAction      *action,
 	int          x, y, button;
 	bool         sourceExternalApp;
 
-	CompScreenImpl *s = screen;
+	CompScreen *s = screen;
 
 	mods = CompOption::getIntOptionNamed (options, "modifiers", 0);
 
@@ -210,7 +210,7 @@ moveTerminate (CompAction      *action,
 /* creates a region containing top and bottom struts. only struts that are
    outside the screen workarea are considered. */
 static Region
-moveGetYConstrainRegion (CompScreenImpl *s)
+moveGetYConstrainRegion (CompScreen *s)
 {
     CompWindow   *w;
     Region       region;
@@ -299,7 +299,7 @@ moveGetYConstrainRegion (CompScreenImpl *s)
 }
 
 static void
-moveHandleMotionEvent (CompScreenImpl *s,
+moveHandleMotionEvent (CompScreen *s,
 		       int	  xRoot,
 		       int	  yRoot)
 {

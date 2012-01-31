@@ -87,13 +87,7 @@ typedef struct {
 } MwmHints;
 
 
-#if defined(ARG_ABSTRACT_COMP_SCREEN)
-class CompScreen;
 CompScreen   *screen;
-#else
-class CompScreenImpl;
-CompScreenImpl   *screen;
-#endif
 
 ModifierHandler *modHandler;
 
@@ -503,7 +497,7 @@ errorHandler (Display     *dpy,
 }
 
 int
-CompScreenImpl::checkForError (Display *dpy)
+CompScreen::checkForError (Display *dpy)
 {
     int e;
 

@@ -371,7 +371,7 @@ CompScreenImpl::_finiPluginForScreen (CompPlugin *p)
 }
 
 bool
-CompPlugin::screenInitPlugins (CompScreenImpl *s)
+CompPlugin::screenInitPlugins (CompScreen *s)
 {
     CompPlugin::List::reverse_iterator it = plugins.rbegin ();
 
@@ -392,7 +392,7 @@ CompPlugin::screenInitPlugins (CompScreenImpl *s)
 }
 
 void
-CompPlugin::screenFiniPlugins (CompScreenImpl *s)
+CompPlugin::screenFiniPlugins (CompScreen *s)
 {
     foreach (CompPlugin *p, plugins)
     {

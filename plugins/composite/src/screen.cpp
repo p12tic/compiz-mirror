@@ -372,14 +372,14 @@ CompositeScreen::registerPaintHandler (compiz::composite::PaintHandler *pHnd)
     if (priv->pHnd)
 	return false;
 
-    CompScreenImpl::checkForError (dpy);
+    CompScreen::checkForError (dpy);
 
     XCompositeRedirectSubwindows (dpy, screen->root (),
 				  CompositeRedirectManual);
 
     priv->overlayWindowCount = 0;
 
-    if (CompScreenImpl::checkForError (dpy))
+    if (CompScreen::checkForError (dpy))
     {
 	compLogMessage ("composite", CompLogLevelError,
 			"Another composite manager is already "

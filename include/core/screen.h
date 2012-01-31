@@ -52,13 +52,7 @@ extern bool       indirectRendering;
 extern bool       noDetection;
 extern bool       debugOutput;
 
-//#define ARG_ABSTRACT_COMP_SCREEN
-
-#if defined(ARG_ABSTRACT_COMP_SCREEN)
 extern CompScreen   *screen;
-#else
-extern CompScreenImpl   *screen;
-#endif
 
 extern ModifierHandler *modHandler;
 
@@ -155,6 +149,8 @@ class CompScreen :
     public CompOption::Class
 {
 public:
+    typedef void* GrabHandle;
+
     WRAPABLE_HND (0, ScreenInterface, void, fileWatchAdded, CompFileWatch *)
     WRAPABLE_HND (1, ScreenInterface, void, fileWatchRemoved, CompFileWatch *)
 
@@ -195,6 +191,8 @@ public:
 
     static unsigned int allocPluginClassIndex ();
     static void freePluginClassIndex (unsigned int index);
+    static int checkForError (Display *dpy);
+
 
     // Interface hoisted from CompScreen
     virtual bool updateDefaultIcon () = 0;
@@ -271,6 +269,49 @@ public:
     virtual const CompFileWatchList& getFileWatches () const = 0;
     virtual void updateSupportedWmHints () = 0;
 
+    virtual CompWindowList & destroyedWindows () = 0;
+    virtual const CompRegion & region () const = 0;
+    virtual bool hasOverlappingOutputs () = 0;
+    virtual CompOutput & fullscreenOutput () = 0;
+    virtual void setWindowProp32 (Window         id,
+			      Atom           property,
+			      unsigned short value) = 0;
+    virtual unsigned short getWindowProp32 (Window         id,
+					Atom           property,
+					unsigned short defaultValue) = 0;
+    virtual bool readImageFromFile (CompString &name,
+				CompString &pname,
+				CompSize   &size,
+				void       *&data) = 0;
+    virtual int desktopWindowCount () = 0;
+    virtual XWindowAttributes attrib () = 0;
+    virtual CompIcon *defaultIcon () const = 0;
+    virtual bool otherGrabExist (const char *, ...) = 0;
+    virtual GrabHandle pushGrab (Cursor cursor, const char *name) = 0;
+    virtual void removeGrab (GrabHandle handle, CompPoint *restorePointer) = 0;
+    virtual bool writeImageToFile (CompString &path,
+			       const char *format,
+			       CompSize   &size,
+			       void       *data) = 0;
+    virtual void runCommand (CompString command) = 0;
+    virtual bool shouldSerializePlugins () = 0;
+    virtual const CompRect & getWorkareaForOutput (unsigned int outputNum) const = 0;
+    virtual CompOutput & currentOutputDev () const = 0;
+    virtual bool grabExist (const char *) = 0;
+    virtual Cursor invisibleCursor () = 0;
+    virtual unsigned int activeNum () const = 0;
+    virtual void sendWindowActivationRequest (Window id) = 0;
+    virtual const CompWindowVector & clientList (bool stackingOrder = true) = 0;
+    virtual int outputDeviceForPoint (const CompPoint &point) = 0;
+    virtual int outputDeviceForPoint (int x, int y) = 0;
+    virtual int xkbEvent () = 0;
+    virtual void warpPointer (int dx, int dy) = 0;
+    virtual void updateGrab (GrabHandle handle, Cursor cursor) = 0;
+    virtual int shapeEvent () = 0;
+
+    virtual int syncEvent () = 0;
+
+
 	friend class CompTimer;
 	friend class CompWindow;
 	friend class PrivateWindow;
@@ -314,10 +355,6 @@ private:
  */
 class CompScreenImpl : public CompScreen
 {
-
-    public:
-	typedef void* GrabHandle;
-
     public:
 	CompScreenImpl ();
 	~CompScreenImpl ();
@@ -598,8 +635,6 @@ class CompScreenImpl : public CompScreen
 	static void
 	compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
-
-	static int checkForError (Display *dpy);
 
     private:
         virtual bool _setOptionForPlugin(const char *, const char *, CompOption::Value &);

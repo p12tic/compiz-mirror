@@ -108,7 +108,46 @@ public:
     MOCK_METHOD1(removeFileWatch, void (CompFileWatchHandle handle));
     MOCK_CONST_METHOD0(getFileWatches, const CompFileWatchList& ());
     MOCK_METHOD0(updateSupportedWmHints, void ());
-
+    MOCK_METHOD0(destroyedWindows, CompWindowList & ());
+    MOCK_CONST_METHOD0(region, const CompRegion & ());
+    MOCK_METHOD0(hasOverlappingOutputs, bool ());
+    MOCK_METHOD0(fullscreenOutput, CompOutput & ());
+    MOCK_METHOD3(setWindowProp32, void (Window         id,
+			      Atom           property,
+			      unsigned short value));
+    MOCK_METHOD3(getWindowProp32, unsigned short (Window         id,
+    					Atom           property,
+    					unsigned short defaultValue));
+    MOCK_METHOD4(readImageFromFile, bool (CompString &name,
+				CompString &pname,
+				CompSize   &size,
+				void       *&data));
+    MOCK_METHOD0(desktopWindowCount, int ());
+    MOCK_METHOD0(attrib, XWindowAttributes ());
+    MOCK_CONST_METHOD0(defaultIcon, CompIcon *());
+    virtual bool otherGrabExist (const char *, ...) { return false; }  // TODO How to mock?
+    MOCK_METHOD2(pushGrab, GrabHandle (Cursor cursor, const char *name));
+    MOCK_METHOD2(removeGrab, void (GrabHandle handle, CompPoint *restorePointer));
+    MOCK_METHOD4(writeImageToFile, bool (CompString &path,
+			       const char *format,
+			       CompSize   &size,
+			       void       *data));
+    MOCK_METHOD1(runCommand, void (CompString command));
+    MOCK_METHOD0(shouldSerializePlugins, bool ());
+    MOCK_CONST_METHOD1(getWorkareaForOutput, const CompRect & (unsigned int outputNum));
+    MOCK_CONST_METHOD0(currentOutputDev, CompOutput & ());
+    MOCK_METHOD1(grabExist, bool (const char *));
+    MOCK_METHOD0(invisibleCursor, Cursor ());
+    MOCK_CONST_METHOD0(activeNum, unsigned int ());
+    MOCK_METHOD1(sendWindowActivationRequest, void (Window id));
+    MOCK_METHOD1(clientList, const CompWindowVector & (bool stackingOrder));
+    MOCK_METHOD1(outputDeviceForPoint, int (const CompPoint &point));
+    MOCK_METHOD2(outputDeviceForPoint, int (int x, int y));
+    MOCK_METHOD0(xkbEvent, int ());
+    MOCK_METHOD2(warpPointer, void (int dx, int dy));
+    MOCK_METHOD2(updateGrab, void (GrabHandle handle, Cursor cursor));
+    MOCK_METHOD0(shapeEvent, int ());
+    MOCK_METHOD0(syncEvent, int ());
 };
 
 
@@ -121,6 +160,8 @@ TEST(PrivateScreenTest, dummy)
     using namespace testing;
 
     MockCompScreen comp_screen;
+
+    screen = &comp_screen;
 
     PrivateScreen ps(&comp_screen);
 }
