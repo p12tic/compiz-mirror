@@ -1921,51 +1921,6 @@ PrivateWindow::move (int dx,
     }
 }
 
-#if 0
-    if (dx || dy)
-    {
-	gettimeofday (&priv->lastGeometryUpdate, NULL);
-
-	/* Don't allow window movement to overwrite working geometries
-	 * last received from the server if we know there are pending
-	 * ConfigureNotify events on this window. That's a clunky workaround
-	 * and a FIXME in any case, however, until we can break the API
-	 * and remove CompWindow::move, this will need to be the case */
-
-	if (!priv->pendingConfigures.pending ())
-	{
-	    priv->geometry.setX (priv->geometry.x () + dx);
-	    priv->geometry.setY (priv->geometry.y () + dy);
-	    priv->frameGeometry.setX (priv->frameGeometry.x () + dx);
-	    priv->frameGeometry.setY (priv->frameGeometry.y () + dy);
-
-	    priv->pendingPositionUpdates = true;
-
-	    priv->region.translate (dx, dy);
-	    priv->inputRegion.translate (dx, dy);
-	    if (!priv->frameRegion.isEmpty ())
-		priv->frameRegion.translate (dx, dy);
-
-	    priv->invisible = WINDOW_INVISIBLE (priv);
-
-	    moveNotify (dx, dy, immediate);
-	}
-	else
-	{
-	    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-	    unsigned int   valueMask = CWX | CWY;
-	    compLogMessage ("core", CompLogLevelDebug, "pending configure notifies on 0x%x, "\
-			    "moving window asyncrhonously!", (unsigned int) priv->serverId);
-
-	    xwc.x = priv->serverGeometry.x () + dx;
-	    xwc.y = priv->serverGeometry.y () + dy;
-
-	    configureXWindow (valueMask, &xwc);
-	}
-    }
-}
-#endif
-
 bool
 compiz::X11::PendingEventQueue::pending ()
 {
