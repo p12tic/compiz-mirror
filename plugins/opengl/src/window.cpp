@@ -76,7 +76,7 @@ PrivateGLWindow::~PrivateGLWindow ()
 void
 PrivateGLWindow::setWindowMatrix ()
 {
-    CompRect input (window->inputRect ());
+    CompRect input (window->serverInputRect ());
 
     if (textures.size () != matrices.size ())
 	matrices.resize (textures.size ());
@@ -344,7 +344,7 @@ PrivateGLWindow::updateFrameRegion (CompRegion &region)
 void
 PrivateGLWindow::updateWindowRegions ()
 {
-    CompRect input (window->inputRect ());
+    CompRect input (window->serverInputRect ());
 
     if (regions.size () != textures.size ())
 	regions.resize (textures.size ());

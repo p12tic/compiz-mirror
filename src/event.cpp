@@ -1179,12 +1179,12 @@ CompScreen::handleEvent (XEvent *event)
 		w->priv->managed = true;
 	    }
 
-	    /* been shaded */
+	    /* been shaded
 	    if (w->priv->height == 0)
 	    {
 		if (w->id () == priv->activeWindow)
 		    w->moveInputFocusTo ();
-	    }
+	    }*/
 
 	    w->map ();
 	}

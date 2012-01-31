@@ -36,8 +36,8 @@
 
 #define WINDOW_INVISIBLE(w)				          \
     ((w)->attrib.map_state != IsViewable		       || \
-     (w)->attrib.x + (w)->width  + (w)->output.right  <= 0     || \
-     (w)->attrib.y + (w)->height + (w)->output.bottom <= 0     || \
+     (w)->attrib.x + (w)->geometry.width ()  + (w)->output.right  <= 0     || \
+     (w)->attrib.y + (w)->geometry.height () + (w)->output.bottom <= 0     || \
      (w)->attrib.x - (w)->output.left >= (int) screen->width () || \
      (w)->attrib.y - (w)->output.top >= (int) screen->height () )
 
@@ -171,6 +171,11 @@ class PrivateWindow {
 
 	bool handleSyncAlarm ();
 
+	void move (int dx, int dy, bool sync);
+	bool resize (int dx, int dy, int dwidth, int dheight, int dborder);
+	bool resize (const CompWindow::Geometry &g);
+	bool resize (const XWindowAttributes &attrib);
+
 	void configure (XConfigureEvent *ce);
 
 	void configureFrame (XConfigureEvent *ce);
@@ -248,9 +253,7 @@ class PrivateWindow {
 	struct timeval       lastConfigureRequest;
 
 	bool       inputHint;
-	bool       alpha;
-	int        width;
-	int        height;
+	bool       alpha;;
 	CompRegion region;
 	CompRegion inputRegion;
 	CompRegion frameRegion;
@@ -330,6 +333,8 @@ class PrivateWindow {
 
 	bool closeRequests;
 	Time lastCloseRequestTime;
+
+	bool nextMoveImmediate;
 };
 
 class CoreWindow

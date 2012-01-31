@@ -91,7 +91,7 @@ isAncestorTo (CompWindow *window,
 void
 DecorWindow::computeShadowRegion ()
 {
-    shadowRegion = CompRegion (window->outputRect ());
+    shadowRegion = CompRegion (window->serverOutputRect ());
 
     if (window->type () == CompWindowTypeDropdownMenuMask ||
         window->type () == CompWindowTypePopupMenuMask)
@@ -142,11 +142,11 @@ DecorWindow::computeShadowRegion ()
         if (window->type () == CompWindowTypeDropdownMenuMask &&
 	    shadowRegion == CompRegion (window->outputRect ()))
         {
-            CompRect area (window->outputRect ().x1 (),
-                           window->outputRect ().y1 (),
-                           window->outputRect ().width (),
-			   window->inputRect ().y1 () -
-                           window->outputRect ().y1 ());
+	    CompRect area (window->serverOutputRect ().x1 (),
+			   window->serverOutputRect ().y1 (),
+			   window->serverOutputRect ().width (),
+			   window->serverInputRect ().y1 () -
+			   window->serverOutputRect ().y1 ());
 
 	    shadowRegion = shadowRegion.subtracted (area);
         }
@@ -1020,8 +1020,8 @@ DecorWindow::updateDecorationScale ()
     for (i = 0; i < wd->nQuad; i++)
     {
 	int x, y;
-	unsigned int width = window->size ().width ();
-	unsigned int height = window->size ().height ();
+	unsigned int width = window->geometry ().width ();
+	unsigned int height = window->geometry ().height ();
 
 	if (window->shaded ())
 	    height = 0;
@@ -1030,8 +1030,8 @@ DecorWindow::updateDecorationScale ()
 			&x1, &y1, &x2, &y2, &sx, &sy);
 
 	/* Translate by x and y points of this window */
-	x = window->geometry ().x ();
-	y = window->geometry ().y ();
+	x = window->serverGeometry ().x ();
+	y = window->serverGeometry ().y ();
 
 	wd->quad[i].box.x1 = x1 + x;
 	wd->quad[i].box.y1 = y1 + y;
@@ -1059,8 +1059,8 @@ DecorWindow::updateDecorationScale ()
 bool
 DecorWindow::checkSize (Decoration *decoration)
 {
-    return (decoration->minWidth <= (int) window->size ().width () &&
-            decoration->minHeight <= (int) window->size ().height ());
+    return (decoration->minWidth <= (int) window->geometry ().width () &&
+	    decoration->minHeight <= (int) window->geometry ().height ());
 }
 
 /*
@@ -2054,8 +2054,8 @@ DecorWindow::updateFrameRegion (CompRegion &region)
 	{
 	    int x, y;
 
-	    x = window->geometry (). x ();
-	    y = window->geometry (). y ();
+	    x = window->serverGeometry (). x ();
+	    y = window->serverGeometry (). y ();
 
 	    region += frameRegion.translated (x - wd->decor->input.left,
 					      y - wd->decor->input.top);
@@ -2076,7 +2076,7 @@ DecorWindow::updateFrameRegion (CompRegion &region)
 void
 DecorWindow::updateWindowRegions ()
 {
-    const CompRect &input (window->inputRect ());
+    const CompRect &input (window->serverInputRect ());
 
     if (regions.size () != gWindow->textures ().size ())
 	regions.resize (gWindow->textures ().size ());

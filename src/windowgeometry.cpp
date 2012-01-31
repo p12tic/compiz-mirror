@@ -61,22 +61,22 @@ CompWindow::pos () const
 int
 CompWindow::width () const
 {
-    return priv->width +
+    return priv->geometry.width () +
 	    priv->geometry.border ()  * 2;
 }
 
 int
 CompWindow::height () const
 {
-    return priv->height +
+    return priv->geometry.height () +
 	    priv->geometry.border ()  * 2;;
 }
 
 CompSize
 CompWindow::size () const
 {
-    return CompSize (priv->width + priv->geometry.border ()  * 2,
-		     priv->height + priv->geometry.border ()  * 2);
+    return CompSize (priv->geometry.width () + priv->geometry.border ()  * 2,
+		     priv->geometry.height () + priv->geometry.border ()  * 2);
 }
 
 int
