@@ -1,29 +1,137 @@
-Release 0.9.7.0 ( 2012-01-24 smspillaz <sam.spilsbury@canonical.com> ) 
+Release 0.9.7.0 ( 2012-XX-YY smspillaz <sam.spilsbury@canonical.com> ) 
 =======================================================================
 Release version 0.9.7.0
 
-Bugs Fixed:
- LP 874004 - When a window is minimized on another workspace it doesn't appear in the spread
+Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
+
+     92599 - Incorrect (low/stuttering) refresh rate with NVIDIA driver
+    254561 - Benchmark window slows the system and degrades graphics resources 
+    684731 - Windows that hide themselves when closed don't appear in any
+             "this workspace" switcher
+    690239 - hang in g_spawn_sync and select()
+    694169 - word misspelled - bunding
+    716521 - sometimes, restored window placed too high.
     720679 - Compiz clears the root window in the installer session
-    873389 - Compiz should read DESKTOP_AUTOSTART_ID when being started by the session manager
-    873384 - Use smart placement by default
-    873344 - compiz.desktop is not installed where GNOME2 libraries are not available
+    724093 - unity-window-decorator: When switching between windows, Orca does
+             not speak the title of the focused window.
+    732997 - Cannot open a window that starts iconified
+    737125 - Minimize animation flickr when for maximized apps
+    740258 - Pixmap memory leak in gtk-window-decorator
+    748840 - Windows should not automatically be focused when opened if the
+             focus is on another application
+    755841 - [sandybridge] Graphics tearing when playing video
+    763005 - Compiz's "Sync to Vblank" makes display stutter/slow with fglrx
+    764330 - [regression] Moving windows lags behind the mouse by 1-2 seconds;
+             appear to freeze when dragging.
+    764673 - Launcher - Spread should not affect the state of window
+    790565 - Clicking on a tweet/message link sometimes does not work
+    795065 - scrolling on top of a close animation switches viewports
+    798868 - unity video tearing when moving windows in oneiric with
+             nvidia-current
+    812711 - dialogs really slow to be displayed since the compiz update
+    837252 - It is possible to stack windows relative to windows that are
+             destroyed
+    841727 - Should keep list of windows last sent to server and last recv
+             from server
+    845719 - compiz and X can disagree on the stacking order
+    847967 - A minimized window 'remains' behind on the desktop if
+             /apps/compiz-1/plugins/unityshell/screen0/options/
+             show_minimized_windows is set to true
+    853734 - maximized windows fail to update their input extents when
+             undecorated
+    854725 - resizing bugs with xterm
+    856015 - crash on closing a window
+    857201 - Java application windows cut-off/truncated/not displayed properly
+    857487 - compiz crashed with SIGSEGV in CompScreen::insertServerWindow()
+    857738 - compiz crashed with SIGABRT in raise()
+    858625 - Applications which create multiple windows that are transients of
+             each other can be given invalid stack positions
+    858629 - Windows move to 0,0 on compiz restarts
+    859431 - Crash when selecting Evolution in alt-tab
+    860286 - invisible window when a window is mapped but not yet drawn on by
+             the process mapping it
+    860304 - race condition in configureXWindow causes unpredicatable window
+             geometry changes
+    860306 - windows that are decorated while resizing can cause incorrect
+             resize results
+    860309 - Moving a window while it is being resized by core caused
+             unpredictable movement
+    860397 - Windows which are marked transients of docks should be treated
+             like docks
+    861341 - can't maximize windows on second monitor and Qt windows displayed
+             in wrong place
+    861909 - compiz crashed with SIGSEGV in PrivateWindow::configureFrame()
+    862719 - closing a window gives focus to last minimized window
+    863328 - Launcher - If a spread contains minimised windows, when the
+             spread exits, the minimised windows momentarily appear on the
+             desktop before disappearing
+    864478 - Window shading is broken
+    865696 - Windows from other workspaces missing decorations in window
+             spread
+    865863 - Opening mumble can cause it to be stacked above the dash if you
+             open the dash at the same time
+    866752 - Sometimes configure events are missed and windows move slow as a
+             result
+    869759 - screen edge trigger does not work until manually restarting unity
+    869919 - Click-dragging a window that's stacked above a fullscreen window
+             will cause it to go underneath the fullscreen window
+    873344 - compiz.desktop is not installed where GNOME2 libraries are not
+             available
     873364 - Drop GNOME2 Support
-    879253 - latest patch for -proposed crashes compiz
-    877920 - Some windows and all decorations become translucent when the "Resize Info" plugin activates.
-    886978 - compiz crashes with SIGSEGV in PrivateWindow::configure
-    886935 - Some windows and all decorations become translucent when the "Resize Info" plugin activates.
-    878934 - Menu selection is wrong in Java apps
-    890947 - Unity sends initial GDK_CONFIGURE event with position as (0,0) 
+    873379 - Disable lighting by default
+    873384 - Use smart placement by default
+    873389 - Compiz should read DESKTOP_AUTOSTART_ID when being started by the
+             session manager
+    874004 - When a window is minimized on another workspace it doesn't appear
+             in the spread
+    874854 - Add hooks for the workarounds plugin to change variables prior to
+             and after GLXContext init to work around bugs in broken drivers
+    876575 - Moving windows between workspaces causes them to "jitter" /
+             jump around
+    877920 - Some windows and all decorations become translucent when the
+             "Resize Info" plugin activates.
+    880707 - [regression] Compiz: Visible tearing is worse in 11.10 than
+             11.04, even when "Sync To VBlank" is enabled, but only when Unity
+             is active.
+    886935 - Invalid read on GLWindow::glDrawGeometry
+    890947 - Unity sends initial GDK_CONFIGURE event with position as (0,0)
+    891744 - Dragging windows stutter during and after grid animation
+    893998 - Fix warnings in CompTimer
+    896591 - Plugins that get initialized before screen initialization is done
+             can not have their actions added
+    896762 - Switching viewports with ctrl-alt-(left/right/up/down) does not
+             give the highest window on the target viewport focus
+    897045 - compiz spins in CompTimeoutSource::callback, stops responding and
+             starves other timers if CompTimer::setTimes(0).
     908042 - Test timer-callbacks suffers from a race condition
-    915186 - make install: Files missing from include/compiz/core
-    904806 - Support _NET_WM_STATE_FOCUSED
     911530 - Fix uninitialized read in paintBackground
-
-
-    Added Unit Tests
-    Switched to Google Test for Unit Tests
-    Added Xig Integration Tests
+    913823 - Remove unecessary hacks from core in order to work around broken
+             drivers on startup
+    915186 - make install: Files missing from include/compiz/core
+    917210 - compiz+unity3d generates > 50 wakeups a second on idle system
+    917571 - compiz-core (currently version 0.9.5) is actually newer than the
+             existing releases versioned 0.9.6
+    918762 - Compiz crashes with SIGSEGV in PrivateWindow::configure
+    919920 - lp:compiz-core (r2930) does not build
+    919922 - compiz-core ABI is broken / out of sync
+    919940 - 'make install' no longer installs 'bin/compiz' (seriously)
+    919948 - 'make install' installs redundant static libraries (now part of
+             core)
+    919970 - compiz-core contains duplicate conflicting class definitions
+    920847 - point.h and rect.h being installed to the wrong place
+    921406 - lp:compiz-core r2961 fails to build with glib 2.30 (seems to
+             require 2.31)
+    921451 - compiz::X11::PendingConfigureEvent::dump(): Conditional jump or
+             move depends on uninitialised value(s) / Use of uninitialised
+             value of size 8
+    922450 - 'make install' installs unwanted files
+             libcompiz_place_constrain_to_workarea.a,
+             libcompiz_place_screen_size_change.a
+    923583 - lp:compiz-core r2968 fails to build
+    
+Added Unit Tests
+Switched to Google Test for Unit Tests
+Added Xig Integration Tests
 
 
 Release 0.9.5.92.1 ( 2011-08-20 Sam Spilsbury <sam.spilsbury@canonical.com> ) 
