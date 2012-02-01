@@ -3198,7 +3198,7 @@ PrivateScreen::addScreenActions ()
 bool
 CompScreen::addAction (CompAction *action)
 {
-    if (!screenInitalized || !priv->initialized)
+    if (!priv->initialized)
 	return false;
 
     if (action->active ())
@@ -4335,7 +4335,6 @@ CompScreen::CompScreen ():
     CompPlugin  *corePlugin;
 
     priv = new PrivateScreen (this);
-    assert (priv);
 
     screenInitalized = true;
 
