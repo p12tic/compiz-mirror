@@ -146,9 +146,9 @@ class ScreenInterface : public WrapableInterface<CompScreen, ScreenInterface> {
 
 class CompScreen :
     public WrapableHandler<ScreenInterface, 18>,
-    public PluginClassStorage,
+    public PluginClassStorage, // TODO should be an interface here
     public CompSize,
-    public CompOption::Class
+    public CompOption::Class   // TODO should be an interface here
 {
 public:
     typedef void* GrabHandle;
@@ -314,19 +314,19 @@ public:
     virtual int syncEvent () = 0;
 
 
-	friend class CompTimer;
-	friend class CompWindow;
-	friend class PrivateWindow;
-	friend class CoreWindow;
-	friend class ModifierHandler;
-	friend class CompEventSource;
-	friend class CompTimeoutSource;
-	friend class CompManager;
-	friend class CompWatchFd;
+    friend class CompTimer; // TODO get rid of friends
+    friend class CompWindow; // TODO get rid of friends
+    friend class PrivateWindow; // TODO get rid of friends
+    friend class CoreWindow; // TODO get rid of friends
+    friend class ModifierHandler; // TODO get rid of friends
+    friend class CompEventSource; // TODO get rid of friends
+    friend class CompTimeoutSource; // TODO get rid of friends
+    friend class CompManager; // TODO get rid of friends
+    friend class CompWatchFd; // TODO get rid of friends
 
 protected:
 	CompScreen();
-	boost::scoped_ptr<PrivateScreen> priv;
+	boost::scoped_ptr<PrivateScreen> priv; // TODO should not be par of interface
 
 private:
     // The "wrapable" functions delegate to these (for mocking)
@@ -400,8 +400,6 @@ class CompScreenImpl : public CompScreen
 	int shapeEvent ();
 
 	int syncEvent ();
-
-	SnDisplay * snDisplay ();
 
 	Window activeWindow ();
 
