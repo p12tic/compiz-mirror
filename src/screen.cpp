@@ -769,6 +769,8 @@ PrivateScreen::processEvents ()
 	screen->handleEvent (&event);
 	inHandleEvent = false;
 
+	XFlush (dpy);
+
 	lastPointerX = pointerX;
 	lastPointerY = pointerY;
 	lastPointerMods = pointerMods;
@@ -4400,16 +4402,10 @@ CompScreen::init (const char *name)
 	return false;
     }
 
-    XSynchronize (dpy, TRUE);
-
-//    priv->connection = XGetXCBConnection (priv->dpy);
+    XSynchronize (dpy, synchronousX ? True : False);
 
     snprintf (priv->displayString, 255, "DISPLAY=%s",
 	      DisplayString (dpy));
-
-#ifdef DEBUG
-    XSynchronize (priv->dpy, true);
-#endif
 
     Atoms::init (priv->dpy);
 

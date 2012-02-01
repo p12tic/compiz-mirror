@@ -40,6 +40,7 @@ CompWindow *lastFoundWindow = 0;
 bool replaceCurrentWm = false;
 bool useDesktopHints = false;
 bool debugOutput = false;
+bool synchronousX = false;
 
 std::list <CompString> initialPlugins;
 

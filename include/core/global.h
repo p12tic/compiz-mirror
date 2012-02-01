@@ -30,6 +30,8 @@
 */
 extern bool debugOutput;
 
+extern bool synchronousX;
+
 extern char       *programName;
 extern char       **programArgv;
 extern int        programArgc;

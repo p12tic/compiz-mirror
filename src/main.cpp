@@ -37,28 +37,21 @@
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
 
-/*
- * The extern declaration of useCow
- * is in plugins/composite/src/privates.h.
- * It needs to be defined here to
- * make it visible to the command line parser.
- */
-bool useCow = true;
-
 void
 CompManager::usage ()
 {
-    printf ("Usage: %s "
-	    "[--replace] "
-	    "[--display DISPLAY]\n       "
-	    "[--sm-disable] "
-	    "[--sm-client-id ID]\n       "
-	    "[--keep-desktop-hints]\n       "
-	    "[--debug] "
-	    "[--version] "
-	    "[--help] "
-	    "[PLUGIN]...\n",
-	    programName);
+    printf ("Usage: %s [OPTIONS] [PLUGINS ...]\n"
+            "Options:\n"
+            "  --replace             Replace any existing window managers\n"
+            "  --display DISPLAY     Connect to X display DISPLAY (instead of $DISPLAY)\n"
+            "  --sm-disable          Disable session management\n"
+            "  --sm-client-id ID     Session management client ID\n"
+            "  --keep-desktop-hints  Retain existing desktop hints\n"
+            "  --sync                Make all X calls synchronous\n"
+            "  --debug               Enable debug mode\n"
+            "  --version             Show the program version\n"
+            "  --help                Show this summary\n"
+            , programName);
 }
 
 static void
@@ -91,6 +84,10 @@ CompManager::parseArguments (int argc, char **argv)
 	else if (!strcmp (argv[i], "--debug"))
 	{
 	    debugOutput = true;
+	}
+	else if (!strcmp (argv[i], "--sync"))
+	{
+	    synchronousX = true;
 	}
 	else if (!strcmp (argv[i], "--display"))
 	{
