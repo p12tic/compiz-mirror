@@ -33,7 +33,7 @@
 #include <string.h>
 
 class CompScreen;
-extern CompScreen   *screen;
+extern CompScreen *screen;
 
 #include <map>
 

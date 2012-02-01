@@ -87,8 +87,8 @@ typedef struct {
 } MwmHints;
 
 
-CompScreen   *screen;
 
+CompScreen *screen;
 ModifierHandler *modHandler;
 
 PluginClassStorage::Indices screenPluginClassIndices (0);
@@ -817,8 +817,6 @@ PrivateScreen::processEvents ()
 	inHandleEvent = true;
 	screen->handleEvent (&event);
 	inHandleEvent = false;
-
-	XFlush (dpy);
 
 	lastPointerX = pointerX;
 	lastPointerY = pointerY;
@@ -2985,7 +2983,7 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 }
 
 void
-CompScreenImpl::updateGrab (CompScreenImpl::GrabHandle handle, Cursor cursor)
+CompScreenImpl::updateGrab (CompScreen::GrabHandle handle, Cursor cursor)
 {
     if (!handle)
 	return;
@@ -2997,7 +2995,7 @@ CompScreenImpl::updateGrab (CompScreenImpl::GrabHandle handle, Cursor cursor)
 }
 
 void
-CompScreenImpl::removeGrab (CompScreenImpl::GrabHandle handle,
+CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
 			CompPoint *restorePointer)
 {
     if (!handle)
@@ -3113,7 +3111,7 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
     int             mod, k;
     unsigned int    ignore;
 
-    CompScreenImpl::checkForError (dpy);
+    CompScreen::checkForError (dpy);
 
     for (ignore = 0; ignore <= modHandler->ignoredModMask (); ignore++)
     {
@@ -3146,7 +3144,7 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
 	    }
 	}
 
-	if (CompScreenImpl::checkForError (dpy))
+	if (CompScreen::checkForError (dpy))
 	    return false;
     }
 
@@ -4512,7 +4510,7 @@ CompScreenImpl::init (const char *name)
 	return false;
     }
 
-    XSynchronize (dpy, synchronousX ? True : False);
+    XSynchronize (dpy, TRUE);
 
     snprintf (priv->displayString, 255, "DISPLAY=%s",
 	      DisplayString (dpy));

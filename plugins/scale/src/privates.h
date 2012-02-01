@@ -115,7 +115,7 @@ class PrivateScaleScreen :
 	KeyCode	 leftKeyCode, rightKeyCode, upKeyCode, downKeyCode;
 
 	bool grab;
-	CompScreenImpl::GrabHandle grabIndex;
+	CompScreen::GrabHandle grabIndex;
 
 	Window dndTarget;
 

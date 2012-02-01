@@ -1963,11 +1963,11 @@ DecorScreen::checkForDm (bool updateWindows)
 	memcpy (&dmWin, data, sizeof (Window));
 	XFree (data);
 
-	CompScreenImpl::checkForError (screen->dpy ());
+	CompScreen::checkForError (screen->dpy ());
 
 	XGetWindowAttributes (screen->dpy (), dmWin, &attr);
 
-	if (CompScreenImpl::checkForError (screen->dpy ()))
+	if (CompScreen::checkForError (screen->dpy ()))
 	    dmWin = None;
 	else
 	{

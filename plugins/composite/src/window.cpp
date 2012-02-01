@@ -31,7 +31,7 @@ CompositeWindow::CompositeWindow (CompWindow *w) :
     PluginClassHandler<CompositeWindow, CompWindow, COMPIZ_COMPOSITE_ABI> (w),
     priv (new PrivateCompositeWindow (w, this))
 {
-    CompScreen* s = screen;
+    CompScreen *s = screen;
 
     if (w->windowClass () != InputOnly)
     {

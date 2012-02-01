@@ -116,7 +116,7 @@ class RotateScreen :
 	bool                   mSnapTop;
 	bool                   mSnapBottom;
 
-	CompScreenImpl::GrabHandle mGrabIndex;
+	CompScreen::GrabHandle mGrabIndex;
 
 	GLfloat                mXrot, mXVelocity;
 	GLfloat                mYrot, mYVelocity;
