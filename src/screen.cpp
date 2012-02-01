@@ -818,6 +818,8 @@ PrivateScreen::processEvents ()
 	screen->handleEvent (&event);
 	inHandleEvent = false;
 
+	XFlush (dpy);
+
 	lastPointerX = pointerX;
 	lastPointerY = pointerY;
 	lastPointerMods = pointerMods;
@@ -4510,7 +4512,7 @@ CompScreenImpl::init (const char *name)
 	return false;
     }
 
-    XSynchronize (dpy, TRUE);
+    XSynchronize (dpy, synchronousX ? True : False);
 
     snprintf (priv->displayString, 255, "DISPLAY=%s",
 	      DisplayString (dpy));
