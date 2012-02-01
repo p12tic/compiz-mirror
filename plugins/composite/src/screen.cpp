@@ -441,14 +441,27 @@ CompositeScreen::compositingActive ()
 void
 CompositeScreen::damageScreen ()
 {
+    bool alreadyDamaged = priv->damageMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK;
+
     priv->damageMask |= COMPOSITE_SCREEN_DAMAGE_ALL_MASK;
     priv->damageMask &= ~COMPOSITE_SCREEN_DAMAGE_REGION_MASK;
+
     priv->scheduler.schedule ();
+
+    /*
+     * Call through damageRegion since plugins listening for incoming damage
+     * may need to know that the whole screen was redrawn
+     */
+
+    if (!alreadyDamaged)
+	damageRegion (CompRegion (0, 0, screen->width (), screen->height ()));
 }
 
 void
 CompositeScreen::damageRegion (const CompRegion &region)
 {
+    WRAPABLE_HND_FUNCTN (damageRegion, region);
+
     if (priv->damageMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
 	return;
 
@@ -863,6 +876,10 @@ CompositeScreenInterface::registerPaintHandler (compiz::composite::PaintHandler 
 void
 CompositeScreenInterface::unregisterPaintHandler ()
     WRAPABLE_DEF (unregisterPaintHandler);
+
+void
+CompositeScreenInterface::damageRegion (const CompRegion &r)
+    WRAPABLE_DEF (damageRegion, r);
 
 const CompRegion &
 CompositeScreen::currentDamage () const

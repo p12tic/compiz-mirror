@@ -487,18 +487,8 @@ moveHandleMotionEvent (CompScreen *s,
 	    w->move (wX + dx - w->geometry ().x (),
 		     wY + dy - w->geometry ().y (), false);
 
-	    if (ms->optionGetLazyPositioning () && ms->hasCompositing)
-	    {
-		/* FIXME: This form of lazy positioning is broken and should
-		   be replaced asap. Current code exists just to avoid a
-		   major performance regression in the 0.5.2 release. */
-		w->serverGeometry ().setX (w->geometry ().x ());
-		w->serverGeometry ().setY (w->geometry ().y ());
-	    }
-	    else
-	    {
+	    if (!ms->optionGetLazyPositioning ())
 		w->syncPosition ();
-	    }
 
 	    ms->x -= dx;
 	    ms->y -= dy;
