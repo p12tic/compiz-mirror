@@ -161,8 +161,15 @@ TEST(PrivateScreenTest, dummy)
 
     MockCompScreen comp_screen;
 
+    Display* display = XOpenDisplay (0);  // Do we really want this dependency?
+
+    EXPECT_CALL(comp_screen, dpy()).
+	WillRepeatedly(Return(display));
+
     screen = &comp_screen;
 
     PrivateScreen ps(&comp_screen);
+
+    XCloseDisplay(display);
 }
 
