@@ -47,11 +47,11 @@ CompManager::usage ()
             "  --sm-disable          Disable session management\n"
             "  --sm-client-id ID     Session management client ID\n"
             "  --keep-desktop-hints  Retain existing desktop hints\n"
-            "  --sync                Make all X call synchronous\n"
+            "  --sync                Make all X calls synchronous\n"
             "  --debug               Enable debug mode\n"
             "  --version             Show the program version\n"
             "  --help                Show this summary\n"
-	    , programName);
+            , programName);
 }
 
 static void
