@@ -38,6 +38,8 @@
 #include <core/modifierhandler.h>
 #include <core/valueholder.h>
 
+#include <boost/scoped_ptr.hpp>
+
 class CompScreenImpl;
 class PrivateScreen;
 class CompManager;
@@ -324,7 +326,7 @@ public:
 
 protected:
 	CompScreen();
-	PrivateScreen *priv;
+	boost::scoped_ptr<PrivateScreen> priv;
 
 private:
     // The "wrapable" functions delegate to these (for mocking)

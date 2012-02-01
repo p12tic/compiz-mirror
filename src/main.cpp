@@ -140,22 +140,16 @@ CompManager::CompManager () :
 bool
 CompManager::init ()
 {
-    CompScreenImpl* ss = new CompScreenImpl ();
-    screen = ss;
-
-    if (!screen || !screen->priv)
-	return false;
+    std::auto_ptr<CompScreenImpl> screen(new CompScreenImpl ());
 
     if (screen->priv->createFailed ())
     {
-	delete screen;
 	return false;
     }
 
-    modHandler = new ModifierHandler ();
+    ::screen = screen.get();
 
-    if (!modHandler)
-	return false;
+    modHandler = new ModifierHandler ();
 
     if (!plugins.empty ())
     {
@@ -178,7 +172,7 @@ CompManager::init ()
     screen->priv->dirtyPluginList = true;
     screen->priv->updatePlugins ();
 
-    if (!ss->init (displayName))
+    if (!screen->init (displayName))
 	return false;
 
     if (debugOutput)
@@ -186,7 +180,7 @@ CompManager::init ()
 	StackDebugger::SetDefault (new StackDebugger (screen->dpy (),
 						      screen->root (),
 						      boost::bind (&PrivateScreen::queueEvents,
-								   screen->priv)));
+								   screen->priv.get())));
     }
 
      if (!disableSm)
@@ -200,6 +194,8 @@ CompManager::init ()
  	}
  	CompSession::init (clientId);
      }
+
+    screen.release ();
 
     return true;
 }

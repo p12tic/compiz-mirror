@@ -3302,7 +3302,7 @@ PrivateScreen::addScreenActions ()
 bool
 CompScreenImpl::addAction (CompAction *action)
 {
-    if (!screenInitalized || !priv->initialized)
+    if (!priv->initialized)
 	return false;
 
     if (action->active ())
@@ -4438,7 +4438,7 @@ PrivateScreen::createFailed ()
 
 CompScreen::CompScreen ():
     PluginClassStorage (screenPluginClassIndices),
-    priv (new PrivateScreen (this))
+    priv ()
 {
 }
 
@@ -4447,6 +4447,8 @@ CompScreenImpl::CompScreenImpl ()
     CompPrivate p;
     CompOption::Value::Vector vList;
     CompPlugin  *corePlugin;
+
+    priv.reset (new PrivateScreen (this));
 
     screenInitalized = true;
 
@@ -4501,9 +4503,9 @@ CompScreenImpl::init (const char *name)
 
     priv->ctx = Glib::MainContext::get_default ();
     priv->mainloop = Glib::MainLoop::create (priv->ctx, false);
-    priv->sighupSource = CompSignalSource::create (SIGHUP, boost::bind (&PrivateScreen::handleSignal, priv, _1));
-    priv->sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, priv, _1));
-    priv->sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, priv, _1));
+    priv->sighupSource = CompSignalSource::create (SIGHUP, boost::bind (&PrivateScreen::handleSignal, priv.get(), _1));
+    priv->sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, priv.get(), _1));
+    priv->sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, priv.get(), _1));
 
     dpy = priv->dpy = XOpenDisplay (name);
     if (!priv->dpy)
@@ -4970,8 +4972,6 @@ CompScreenImpl::~CompScreenImpl ()
 
     XSync (priv->dpy, False);
     XCloseDisplay (priv->dpy);
-
-    delete priv;
 
     screen = NULL;
 }
