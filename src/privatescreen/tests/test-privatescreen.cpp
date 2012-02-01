@@ -150,26 +150,45 @@ public:
     MOCK_METHOD0(syncEvent, int ());
 };
 
+// Utility class to help satisfy dependencies
+class xdisplay : boost::noncopyable
+{
+    Display* display;
+public:
+    xdisplay() : display(XOpenDisplay (0)) {}
+    ~xdisplay() { XCloseDisplay(display); }
 
-} // (abstract) namespace
+    Display* get() const { return display; }
+};
+
+} // (anon) namespace
 
 
 
-TEST(PrivateScreenTest, dummy)
+TEST(PrivateScreenTest, calling_updatePlugins_does_not_error)
 {
     using namespace testing;
 
     MockCompScreen comp_screen;
 
-    Display* display = XOpenDisplay (0);  // Do we really want this dependency?
+    // The PrivateScreen ctor indirectly calls screen->dpy().
+    // We should kill this dependency
+    xdisplay display;
+    EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
 
-    EXPECT_CALL(comp_screen, dpy()).
-	WillRepeatedly(Return(display));
-
+    // The PrivateScreen ctor uses screen->... (indirectly)
+    // We should kill this dependency
     screen = &comp_screen;
 
     PrivateScreen ps(&comp_screen);
 
-    XCloseDisplay(display);
+    // Stuff that has to be done before calling updatePlugins()
+    CompOption::Value::Vector values;
+    values.push_back ("core");
+    ps.plugin.set (CompOption::TypeString, values);
+    ps.dirtyPluginList = true;
+
+    // Now we can call updatePlugins() without a segfault.  Hoorah!
+    ps.updatePlugins();
 }
 
