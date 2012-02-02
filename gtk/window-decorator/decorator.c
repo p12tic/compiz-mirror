@@ -230,11 +230,32 @@ update_titlebar_font ()
 void
 update_event_windows (WnckWindow *win)
 {
+#define GWD_SHOW_LOCAL_MENU (WNCK_WINDOW_ACTION_BELOW << 1) 
     Display *xdisplay;
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
     gint    x0, y0, width, height, x, y, w, h;
     gint    i, j, k, l;
     gint    actions = d->actions;
+
+#ifdef META_HAS_LOCAL_MENUS
+    const gchar * const *schemas = g_settings_list_schemas ();
+    static GSettings *lim_settings = NULL;
+    while (*schemas != NULL && !lim_settings)
+    {
+	if (g_str_equal (*schemas, "com.canonical.Unity.Menus"))
+	{
+	    lim_settings = g_settings_new ("com.canonical.Unity.Menus");
+	    break;
+	}
+	++schemas;
+    }
+
+    if (lim_settings)
+    {
+	if (g_settings_get_boolean (lim_settings, "force-local-menus"))
+	    actions |= GWD_SHOW_LOCAL_MENU;
+    }
+#endif
 
     xdisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
 
@@ -298,11 +319,19 @@ update_event_windows (WnckWindow *win)
 		XMapWindow (xdisplay, d->event_windows[i][j].window);
 		XMoveResizeWindow (xdisplay, d->event_windows[i][j].window,
 				   x, y, w, h);
+
+		BoxPtr box = &d->event_windows[i][j].pos;
+		box->x1  = x;
+		box->x2 = x + w;
+		box->y1 = y;
+		box->y2 = y + h;
 	    }
 	    /* No parent and no geometry - unmap all event windows */
 	    else if (!d->frame_window)
 	    {
 		XUnmapWindow (xdisplay, d->event_windows[i][j].window);
+
+		memset (&d->event_windows[i][j].pos, 0, sizeof (Box));
 	    }
 	}
     }
@@ -326,12 +355,18 @@ update_event_windows (WnckWindow *win)
 	    WNCK_WINDOW_ACTION_STICK,
 	    WNCK_WINDOW_ACTION_UNSHADE,
 	    WNCK_WINDOW_ACTION_ABOVE,
-	    WNCK_WINDOW_ACTION_UNSTICK
+	    WNCK_WINDOW_ACTION_UNSTICK,
 #else
 	    0,
 	    0,
 	    0,
 	    0,
+	    0,
+#endif
+
+#ifdef META_HAS_LOCAL_MENUS
+	    GWD_SHOW_LOCAL_MENU
+#else
 	    0
 #endif
 
@@ -371,10 +406,17 @@ update_event_windows (WnckWindow *win)
 	    Window win = d->button_windows[i].window;
 	    XMapWindow (xdisplay, win);
 	    XMoveResizeWindow (xdisplay, win, x, y, w, h);
+
+	    BoxPtr box = &d->button_windows[i].pos;
+	    box->x1  = x;
+	    box->x2 = x + w;
+	    box->y1 = y;
+	    box->y2 = y + h;
 	}
 	else if (!d->frame_window)
 	{
 	    XUnmapWindow (xdisplay, d->button_windows[i].window);
+	    memset (&d->button_windows[i].pos, 0, sizeof (Box));
 	}
     }
 

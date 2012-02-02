@@ -484,9 +484,57 @@ meta_get_decoration_geometry (decor_t		*d,
 	button_layout->right_buttons[1] = META_BUTTON_FUNCTION_MAXIMIZE;
 	button_layout->right_buttons[2] = META_BUTTON_FUNCTION_CLOSE;
 
-	for (i = 3; i < MAX_BUTTONS_PER_CORNER; i++)
+	for (i = 4; i < MAX_BUTTONS_PER_CORNER; i++)
 	    button_layout->right_buttons[i] = META_BUTTON_FUNCTION_LAST;
     }
+
+#ifdef META_HAS_LOCAL_MENUS
+    const gchar * const *schemas = g_settings_list_schemas ();
+    static GSettings *lim_settings = NULL;
+    while (*schemas != NULL && !lim_settings)
+    {
+	if (g_str_equal (*schemas, "com.canonical.Unity.Menus"))
+	{
+	    lim_settings = g_settings_new ("com.canonical.Unity.Menus");
+	    break;
+	}
+	++schemas;
+    }
+
+    if (lim_settings)
+    {
+	if (g_settings_get_boolean (lim_settings, "force-local-menus"))
+	{
+	    unsigned int i = 0;
+	    for (; i < MAX_BUTTONS_PER_CORNER; i++)
+	    {
+		if (button_layout->left_buttons[i] == META_BUTTON_FUNCTION_WINDOW_MENU)
+		    break;
+		else if (button_layout->left_buttons[i] == META_BUTTON_FUNCTION_LAST)
+		{
+		    if ((i + 1) < MAX_BUTTONS_PER_CORNER)
+		    {
+			button_layout->left_buttons[i + 1] = META_BUTTON_FUNCTION_LAST;
+			button_layout->left_buttons[i] = META_BUTTON_FUNCTION_WINDOW_MENU;
+		    }
+		}
+	    }
+	    for (; i < MAX_BUTTONS_PER_CORNER; i++)
+	    {
+		if (button_layout->right_buttons[i] == META_BUTTON_FUNCTION_WINDOW_MENU)
+		    break;
+		else if (button_layout->right_buttons[i] == META_BUTTON_FUNCTION_LAST)
+		{
+		    if ((i + 1) < MAX_BUTTONS_PER_CORNER)
+		    {
+			button_layout->right_buttons[i + 1] = META_BUTTON_FUNCTION_LAST;
+			button_layout->right_buttons[i] = META_BUTTON_FUNCTION_WINDOW_MENU;
+		    }
+		}
+	    }
+	}
+    }
+#endif
 
     *flags = 0;
 
@@ -600,6 +648,11 @@ meta_draw_window_decoration (decor_t *d)
     GtkWidget	      *style_window;
     GdkColor	      bg_color;
     double	      bg_alpha;
+
+    memset (&button_layout, 0, sizeof (MetaButtonLayout));
+
+    for (i = 0; i < MAX_BUTTONS_PER_CORNER; i++)
+	button_layout.left_buttons[i] = button_layout.right_buttons[i] = META_BUTTON_FUNCTION_LAST;
 
     if (!d->pixmap || !d->picture)
 	return;
@@ -1078,6 +1131,15 @@ meta_get_button_position (decor_t	 *d,
 	break;
 #endif
 
+#ifdef META_HAS_LOCAL_MENUS
+    case BUTTON_WINDOW_MENU:
+	if (!meta_button_present (&button_layout, META_BUTTON_FUNCTION_WINDOW_MENU))
+	    return FALSE;
+
+	space = &fgeom.window_menu_rect;
+	break;
+#endif
+
     default:
 	return FALSE;
     }
@@ -1488,6 +1550,11 @@ meta_button_function_from_string (const char *str)
 	return META_BUTTON_FUNCTION_UNABOVE;
     else if (strcmp (str, "unstick") == 0)
 	return META_BUTTON_FUNCTION_UNSTICK;
+#endif
+
+#ifdef META_HAS_LOCAL_MENUS
+    else if (strcmp (str, "window_menu") == 0)
+	return META_BUTTON_FUNCTION_WINDOW_MENU;
 #endif
 
     else

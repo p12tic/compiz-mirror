@@ -328,7 +328,8 @@ extern struct _cursor cursor[3][3];
 #define BUTTON_UNSHADE 7
 #define BUTTON_UNABOVE 8
 #define BUTTON_UNSTICK 9
-#define BUTTON_NUM     10
+#define BUTTON_WINDOW_MENU 10
+#define BUTTON_NUM     11
 
 struct _pos {
     int x, y, w, h;
@@ -1011,6 +1012,11 @@ void
 unstick_button_event (WnckWindow *win,
 		      decor_event *gtkwd_event,
 		      decor_event_type gtkwd_type);
+
+void
+window_menu_button_event (WnckWindow *win,
+			  decor_event *gtkwd_event,
+			  decor_event_type gtkwd_type);
 
 void
 handle_title_button_event (WnckWindow   *win,

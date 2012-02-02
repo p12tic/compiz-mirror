@@ -727,7 +727,8 @@ window_opened (WnckScreen *screen,
 	stick_button_event,
 	unshade_button_event,
 	unabove_button_event,
-	unstick_button_event
+	unstick_button_event,
+	window_menu_button_event
     };
 
     d = calloc (1, sizeof (decor_t));
