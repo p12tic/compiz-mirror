@@ -24,6 +24,7 @@
  */
 
 #include "gtk-window-decorator.h" 
+#include "local-menus.h"
 
 void
 move_resize_window (WnckWindow *win,
@@ -379,8 +380,6 @@ unstick_button_event (WnckWindow *win,
     }
 }
 
-typedef void (*show_window_menu_hidden_cb) (gpointer);
-
 void
 on_local_menu_hidden (gpointer user_data)
 {
@@ -389,109 +388,6 @@ on_local_menu_hidden (gpointer user_data)
     d->button_states[BUTTON_WINDOW_MENU] &= ~PRESSED_EVENT_WINDOW;
 
     queue_decor_draw (d);
-}
-
-typedef struct _show_local_menu_data
-{
-    GDBusConnection *conn;
-    GDBusProxy      *proxy;
-    gchar           *entry_id;
-    show_window_menu_hidden_cb cb;
-    gpointer        user_data;
-} show_local_menu_data;
-
-void
-on_local_menu_activated (GDBusProxy *proxy,
-			 gchar      *sender_name,
-			 gchar      *signal_name,
-			 GVariant   *parameters,
-			 gpointer   user_data)
-{
-    if (g_strcmp0 (signal_name, "EntryActivated") == 0)
-    {
-	gchar *entry_id = NULL;
-
-	g_variant_get (parameters, "(s)", &entry_id, NULL);
-
-	gboolean empty = g_strcmp0 (entry_id, "")  == 0;
-
-	if (empty)
-	{
-	    show_local_menu_data *d = (show_local_menu_data *) user_data;
-
-	    (*d->cb) (d->user_data);
-
-	    g_signal_handlers_disconnect_by_func (d->proxy, on_local_menu_activated, d);
-
-	    g_object_unref (d->proxy);
-	    g_object_unref (d->conn);
-	    g_free (d->entry_id);
-	}
-
-    }
-}
-
-static void
-show_local_menu (Display *xdisplay,
-		 Window  frame_xwindow,
-		 int      x,
-		 int      y,
-		 int      button,
-		 guint32  timestamp,
-		 show_window_menu_hidden_cb cb,
-		 pointer user_data)
-{
-    GError          *error = NULL;
-    GDBusConnection *conn = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
-
-    XUngrabPointer (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), CurrentTime);
-    XUngrabKeyboard (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), CurrentTime);
-    XSync (GDK_DISPLAY_XDISPLAY (gdk_display_get_default ()), FALSE);
-
-    if (!conn)
-    {
-	g_print ("error getting connection: %s\n", error->message);
-	return;
-    }
-
-    GDBusProxy      *proxy = g_dbus_proxy_new_sync (conn, 0, NULL, "com.canonical.Unity.Panel.Service",
-					   "/com/canonical/Unity/Panel/Service",
-					   "com.canonical.Unity.Panel.Service",
-					   NULL, &error);
-
-    if (proxy)
-    {
-	GVariant *message = g_variant_new ("(uiiu)", frame_xwindow, x, y, time);
-	GVariant *reply = g_dbus_proxy_call_sync (proxy, "ShowAppMenu", message, 0, 500, NULL, &error);
-	if (error)
-	{
-	    g_print ("error calling ShowAppMenu: %s\n", error->message);
-	    g_object_unref (proxy);
-	    g_object_unref (conn);
-	    return;
-	}
-
-	show_local_menu_data *data = g_new0 (show_local_menu_data, 1);
-	g_variant_get (reply, "(s)", data->entry_id, NULL);
-
-	data->conn = g_object_ref (conn);
-	data->proxy = g_object_ref (proxy);
-	data->cb = cb;
-	data->user_data = user_data;
-
-	g_signal_connect (proxy, "g-signal", G_CALLBACK (on_local_menu_activated), data);
-
-	g_object_unref (conn);
-	g_object_unref (proxy);
-
-	return;
-    }
-    else
-    {
-	g_print ("error getting proxy: %s\n", error->message);
-    }
-
-    g_object_unref (conn);
 }
 
 void
@@ -517,13 +413,13 @@ window_menu_button_event (WnckWindow *win,
 		int x = win_x + box_x;
 		int y = win_y + d->context->extents.top;
 
-		show_local_menu (gdk_x11_display_get_xdisplay (gdk_display_get_default ()),
-				 wnck_window_get_xid (win),
-				 x, y,
-				 gtkwd_event->button,
-				 gtkwd_event->time,
-				 (show_window_menu_hidden_cb) on_local_menu_hidden,
-				 (gpointer) d);
+		gwd_show_local_menu (gdk_x11_display_get_xdisplay (gdk_display_get_default ()),
+				     wnck_window_get_xid (win),
+				     x, y,
+				     gtkwd_event->button,
+				     gtkwd_event->time,
+				     (show_window_menu_hidden_cb) on_local_menu_hidden,
+				     (gpointer) d);
 	    }
 	break;
     default:

@@ -24,6 +24,7 @@
  */
 
 #include "gtk-window-decorator.h"
+#include "local-menus.h"
 
 #ifdef USE_METACITY
 
@@ -488,53 +489,7 @@ meta_get_decoration_geometry (decor_t		*d,
 	    button_layout->right_buttons[i] = META_BUTTON_FUNCTION_LAST;
     }
 
-#ifdef META_HAS_LOCAL_MENUS
-    const gchar * const *schemas = g_settings_list_schemas ();
-    static GSettings *lim_settings = NULL;
-    while (*schemas != NULL && !lim_settings)
-    {
-	if (g_str_equal (*schemas, "com.canonical.Unity.Menus"))
-	{
-	    lim_settings = g_settings_new ("com.canonical.Unity.Menus");
-	    break;
-	}
-	++schemas;
-    }
-
-    if (lim_settings)
-    {
-	if (g_settings_get_boolean (lim_settings, "force-local-menus"))
-	{
-	    unsigned int i = 0;
-	    for (; i < MAX_BUTTONS_PER_CORNER; i++)
-	    {
-		if (button_layout->left_buttons[i] == META_BUTTON_FUNCTION_WINDOW_MENU)
-		    break;
-		else if (button_layout->left_buttons[i] == META_BUTTON_FUNCTION_LAST)
-		{
-		    if ((i + 1) < MAX_BUTTONS_PER_CORNER)
-		    {
-			button_layout->left_buttons[i + 1] = META_BUTTON_FUNCTION_LAST;
-			button_layout->left_buttons[i] = META_BUTTON_FUNCTION_WINDOW_MENU;
-		    }
-		}
-	    }
-	    for (; i < MAX_BUTTONS_PER_CORNER; i++)
-	    {
-		if (button_layout->right_buttons[i] == META_BUTTON_FUNCTION_WINDOW_MENU)
-		    break;
-		else if (button_layout->right_buttons[i] == META_BUTTON_FUNCTION_LAST)
-		{
-		    if ((i + 1) < MAX_BUTTONS_PER_CORNER)
-		    {
-			button_layout->right_buttons[i + 1] = META_BUTTON_FUNCTION_LAST;
-			button_layout->right_buttons[i] = META_BUTTON_FUNCTION_WINDOW_MENU;
-		    }
-		}
-	    }
-	}
-    }
-#endif
+    force_local_menus_on (d->win, button_layout);
 
     *flags = 0;
 

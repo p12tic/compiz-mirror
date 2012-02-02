@@ -50,6 +50,7 @@ if (USE_GTK)
 	style.c
 	wnck.c
 	decorator.c
+        local-menus.c
 	${gwd_schema}
     )
 

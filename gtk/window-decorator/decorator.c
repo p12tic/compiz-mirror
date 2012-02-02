@@ -24,6 +24,7 @@
  */
 
 #include "gtk-window-decorator.h"
+#include "local-menus.h"
 
 decor_frame_t *
 create_normal_frame (const gchar *type)
@@ -237,25 +238,8 @@ update_event_windows (WnckWindow *win)
     gint    i, j, k, l;
     gint    actions = d->actions;
 
-#ifdef META_HAS_LOCAL_MENUS
-    const gchar * const *schemas = g_settings_list_schemas ();
-    static GSettings *lim_settings = NULL;
-    while (*schemas != NULL && !lim_settings)
-    {
-	if (g_str_equal (*schemas, "com.canonical.Unity.Menus"))
-	{
-	    lim_settings = g_settings_new ("com.canonical.Unity.Menus");
-	    break;
-	}
-	++schemas;
-    }
-
-    if (lim_settings)
-    {
-	if (g_settings_get_boolean (lim_settings, "force-local-menus"))
-	    actions |= GWD_SHOW_LOCAL_MENU;
-    }
-#endif
+    if (gwd_window_should_have_local_menu (win))
+	d->actions |= GWD_SHOW_LOCAL_MENU;
 
     xdisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
 
