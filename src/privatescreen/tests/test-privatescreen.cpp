@@ -171,6 +171,10 @@ TEST(PrivateScreenTest, calling_updatePlugins_does_not_error)
 
     MockCompScreen comp_screen;
 
+    EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
+    EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
+    EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
+
     // The PrivateScreen ctor indirectly calls screen->dpy().
     // We should kill this dependency
     xdisplay display;
@@ -189,6 +193,167 @@ TEST(PrivateScreenTest, calling_updatePlugins_does_not_error)
     ps.dirtyPluginList = true;
 
     // Now we can call updatePlugins() without a segfault.  Hoorah!
+    EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
+	    WillOnce(Return(false));
     ps.updatePlugins();
 }
 
+namespace {
+
+class MockVTable: public CompPlugin::VTable {
+public:
+    MockVTable (CompString const& name) { initVTable (name); }
+
+    MOCK_METHOD0(init, bool ());
+    MOCK_METHOD0(fini, void ());
+
+    MOCK_METHOD1(initScreen, bool (CompScreen *s));
+
+    MOCK_METHOD1(finiScreen, void (CompScreen *s));
+
+    MOCK_METHOD1(initWindow, bool (CompWindow *w));
+
+    MOCK_METHOD1(finiWindow, void (CompWindow *w));
+
+    MOCK_METHOD0(getOptions, CompOption::Vector & ());
+
+    MOCK_METHOD2(setOption, bool (const CompString  &name, CompOption::Value &value));
+};
+
+class PluginFilesystem
+{
+public:
+    virtual bool
+    LoadPlugin(CompPlugin *p, const char *path, const char *name) const = 0;
+
+    virtual void
+    UnloadPlugin(CompPlugin *p) const = 0;
+
+    virtual CompStringList
+    ListPlugins(const char *path) const = 0;
+
+    static PluginFilesystem const* instance;
+
+protected:
+    PluginFilesystem();
+    virtual ~PluginFilesystem() {}
+};
+
+class MockPluginFilesystem : public PluginFilesystem
+{
+public:
+    MOCK_CONST_METHOD3(LoadPlugin, bool (CompPlugin *, const char *, const char *));
+
+    MOCK_CONST_METHOD1(UnloadPlugin, void (CompPlugin *p));
+
+    MOCK_CONST_METHOD1(ListPlugins, CompStringList (const char *path));
+
+    bool DummyLoader(CompPlugin *p, const char * path, const char * name)
+    {
+	using namespace testing;
+	if (strcmp(name, "one") == 0)
+	{
+	    static MockVTable mockVtable("one");
+	    // TODO If init returns "true" then we'll try to dereference screen->priv
+	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(false));
+	    p->vTable = &mockVtable;
+	}
+	else if (strcmp(name, "two") == 0)
+	{
+	    static MockVTable mockVtable("two");
+	    // TODO If init returns "true" then we'll try to dereference screen->priv
+	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(false));
+	    p->vTable = &mockVtable;
+	}
+	else
+	{
+	    static MockVTable mockVtable("three");
+	    // TODO If init returns "true" then we'll try to dereference screen->priv
+	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(false));
+	    p->vTable = &mockVtable;
+	}
+	return true;
+    }
+};
+
+
+bool
+ThunkLoadPluginProc(CompPlugin *p, const char *path_, const char *name)
+{
+    return PluginFilesystem::instance->LoadPlugin(p, path_, name);
+}
+
+void
+ThunkUnloadPluginProc(CompPlugin *p)
+{
+    PluginFilesystem::instance->UnloadPlugin(p);
+}
+
+
+CompStringList
+ThunkListPluginsProc(const char *path)
+{
+    return PluginFilesystem::instance->ListPlugins(path);
+}
+
+PluginFilesystem::PluginFilesystem()
+{
+	::loaderLoadPlugin = ::ThunkLoadPluginProc;
+	::loaderUnloadPlugin = ::ThunkUnloadPluginProc;
+	::loaderListPlugins = ::ThunkListPluginsProc;
+
+	instance = this;
+}
+
+PluginFilesystem const* PluginFilesystem::instance = 0;
+
+} // (abstract) namespace
+
+
+TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
+{
+    using namespace testing;
+
+    MockCompScreen comp_screen;
+
+    EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
+    EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
+    EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
+
+    // The PrivateScreen ctor indirectly calls screen->dpy().
+    // We should kill this dependency
+    xdisplay display;
+    EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
+
+    // The PrivateScreen ctor uses screen->... (indirectly)
+    // We should kill this dependency
+    screen = &comp_screen;
+
+    PrivateScreen ps(&comp_screen);
+
+    // Stuff that has to be done before calling updatePlugins()
+    CompOption::Value::Vector values;
+    values.push_back ("core");
+    ps.plugin.set (CompOption::TypeString, values);
+    ps.dirtyPluginList = true;
+
+    initialPlugins.push_back ("one");
+    initialPlugins.push_back ("two");
+    initialPlugins.push_back ("three");
+
+    MockPluginFilesystem mockfs;
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("one"))).
+	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("two"))).
+	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
+	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
+
+    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(3);
+
+    EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
+	    WillOnce(Return(false));
+
+    ps.updatePlugins();
+}
