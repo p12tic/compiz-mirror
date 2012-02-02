@@ -31,6 +31,7 @@
 
 #include "place_options.h"
 #include "screen-size-change.h"
+#include "smart.h"
 
 namespace compiz
 {
@@ -39,7 +40,6 @@ namespace compiz
     {
 
 	CompWindowList collectStrutWindows (const CompWindowList &allWindows);
-
     }
 
 }
@@ -74,6 +74,7 @@ class PlaceScreen :
 class PlaceWindow :
     public PluginClassHandler<PlaceWindow, CompWindow>,
     public compiz::place::ScreenSizeChangeObject,
+    public compiz::place::Placeable,
     public WindowInterface
 {
     public:
@@ -101,7 +102,10 @@ class PlaceWindow :
 	const compiz::window::Geometry & getGeometry () const;
 	const CompPoint & getViewport () const;
 	const CompRect & getWorkarea (const compiz::window::Geometry &g) const;
+	const CompRect & getWorkarea () const;
 	const compiz::window::extents::Extents & getExtents () const;
+
+	unsigned int getState () const;
 
     private:
 	typedef enum {
@@ -129,12 +133,12 @@ class PlaceWindow :
 	void placeCentered (const CompRect& workArea, CompPoint& pos);
 	void placeRandom (const CompRect& workArea, CompPoint& pos);
 	void placePointer (const CompRect& workArea, CompPoint& pos);
-	void placeSmart (const CompRect& workArea, CompPoint& pos);
+	void placeSmart (CompPoint& pos, const compiz::place::Placeable::Vector &);
 
-	bool cascadeFindFirstFit (const CompWindowList& windows,
+	bool cascadeFindFirstFit (const Placeable::Vector &placeabless,
 				  const CompRect& workArea,
 				  CompPoint &pos);
-	void cascadeFindNext (const CompWindowList& windows,
+	void cascadeFindNext (const Placeable::Vector &placeables,
 			      const CompRect& workArea,
 			      CompPoint &pos);
 
