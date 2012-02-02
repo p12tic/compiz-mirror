@@ -485,7 +485,7 @@ meta_get_decoration_geometry (decor_t		*d,
 	button_layout->right_buttons[1] = META_BUTTON_FUNCTION_MAXIMIZE;
 	button_layout->right_buttons[2] = META_BUTTON_FUNCTION_CLOSE;
 
-	for (i = 4; i < MAX_BUTTONS_PER_CORNER; i++)
+	for (i = 3; i < MAX_BUTTONS_PER_CORNER; i++)
 	    button_layout->right_buttons[i] = META_BUTTON_FUNCTION_LAST;
     }
 
