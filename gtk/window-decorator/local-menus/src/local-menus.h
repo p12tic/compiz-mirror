@@ -23,6 +23,11 @@
  *        Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 #include <glib.h>
 #include <gio/gio.h>
 #ifndef WNCK_I_KNOW_THIS_IS_UNSTABLE
@@ -59,3 +64,6 @@ gwd_show_local_menu (Display *xdisplay,
 		     guint32  timestamp,
 		     show_window_menu_hidden_cb cb,
 		     gpointer user_data);
+#ifdef __cplusplus
+}
+#endif
