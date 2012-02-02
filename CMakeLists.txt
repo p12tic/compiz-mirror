@@ -103,7 +103,7 @@ include (CompizDefaults)
 set (COMPIZ_CFLAGS "${COMPIZ_CFLAGS} -I${Boost_INCLUDE_DIR}")
 
 set (_compiz_package_string "Compiz ${VERSION}")
-set (_compiz_package "  ")
+set (_compiz_package "Compiz")
 
 compiz_configure_file (${compiz_SOURCE_DIR}/config.h.core.in ${compiz_BINARY_DIR}/generated/config.h)
 
