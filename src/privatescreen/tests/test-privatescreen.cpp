@@ -14,6 +14,20 @@ namespace {
 class MockCompScreen : public CompScreen
 {
 public:
+    MockCompScreen()
+    {
+	// The PrivateScreen ctor uses screen->... (indirectly)
+	// We should kill this dependency
+	screen = this;
+    }
+
+    ~MockCompScreen()
+    {
+	// Because of another indirect use of screen in PrivateScreen dtor
+	// via option.cpp:finiOptionValue()
+	screen = 0;
+    }
+
     using CompScreen::priv;
 
     // Interface hoisted from CompScreen
@@ -182,10 +196,6 @@ TEST(PrivateScreenTest, calling_updatePlugins_does_not_error)
     xdisplay display;
     EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
 
-    // The PrivateScreen ctor uses screen->... (indirectly)
-    // We should kill this dependency
-    screen = &comp_screen;
-
     PrivateScreen ps(&comp_screen);
 
     // Stuff that has to be done before calling updatePlugins()
@@ -256,21 +266,18 @@ public:
 	if (strcmp(name, "one") == 0)
 	{
 	    static MockVTable mockVtable("one");
-	    // TODO If init returns "true" then we'll try to dereference screen->priv
 	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));
 	    p->vTable = &mockVtable;
 	}
 	else if (strcmp(name, "two") == 0)
 	{
 	    static MockVTable mockVtable("two");
-	    // TODO If init returns "true" then we'll try to dereference screen->priv
 	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));
 	    p->vTable = &mockVtable;
 	}
 	else
 	{
 	    static MockVTable mockVtable("three");
-	    // TODO If init returns "true" then we'll try to dereference screen->priv
 	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(false));
 	    p->vTable = &mockVtable;
 	}
@@ -327,10 +334,6 @@ TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
     xdisplay display;
     EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
 
-    // The PrivateScreen ctor uses screen->... (indirectly)
-    // We should kill this dependency
-    screen = &comp_screen;
-
     comp_screen.priv.reset(new PrivateScreen(&comp_screen));
     PrivateScreen& ps(*comp_screen.priv.get());
 
@@ -363,8 +366,4 @@ TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
     // TODO these need to be initialised - else we delete uninitialised memory
     ps.source = 0;
     ps.timeout = 0;
-
-    // Must tear down the PrivateScreen before destroying CompScreen
-    // (Because of another indirect use of screen in option.cpp:finiOptionValue())
-    comp_screen.priv.reset(0);
 }
