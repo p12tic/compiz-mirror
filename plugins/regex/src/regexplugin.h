@@ -26,8 +26,9 @@
 #ifndef COMPIZ_REGEXPLUGIN_H
 #define COMPIZ_REGEXPLUGIN_H
 
-#include <core/screen.h>
-#include <core/pluginclasshandler.h>
+#include "core/screen.h"
+#include "core/timer.h"
+#include "core/pluginclasshandler.h"
 
 #include <X11/Xatom.h>
 

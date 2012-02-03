@@ -727,8 +727,7 @@ int main (void)
 
     gettimeofday (&SleepVBlankWaiter::start_time, NULL);
 
-    TimeoutHandler     *th = new TimeoutHandler ();
-    TimeoutHandler::SetDefault (th);
+    TimeoutHandler::SetDefault (new TimeoutHandler ());
 
     Glib::RefPtr <Glib::MainContext> ctx = Glib::MainContext::get_default ();
     Glib::RefPtr <Glib::MainLoop> mainloop = Glib::MainLoop::create (ctx, false);
@@ -749,7 +748,6 @@ int main (void)
     doTest ("vsync 100 Hz refresh rate", 100, 2.8f, true, mainloop);
 
     delete timeout;
-    delete th;
 
     return 0;
 }
