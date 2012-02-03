@@ -208,6 +208,10 @@ TEST(PrivateScreenTest, calling_updatePlugins_does_not_error)
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Return(false));
     ps.updatePlugins();
+
+    // TODO these need to be initialised - else we delete uninitialised memory
+    ps.source = 0;
+    ps.timeout = 0;
 }
 
 namespace {

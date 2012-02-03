@@ -43,6 +43,11 @@ ValueHolder::ValueHolder () :
 {
 }
 
+ValueHolder::~ValueHolder ()
+{
+    delete priv;
+}
+
 ValueHolder *
 ValueHolder::Default ()
 {

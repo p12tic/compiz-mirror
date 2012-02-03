@@ -26,9 +26,11 @@
 
 #include "privatetimeouthandler.h"
 
+#include <boost/scoped_ptr.hpp>
+
 namespace
 {
-  static TimeoutHandler *gDefault;
+  static boost::scoped_ptr<TimeoutHandler> gDefault;
 }
 
 TimeoutHandler::TimeoutHandler () :
@@ -84,11 +86,11 @@ TimeoutHandler::timers ()
 TimeoutHandler *
 TimeoutHandler::Default ()
 {
-    return gDefault;
+    return gDefault.get();
 }
 
 void
 TimeoutHandler::SetDefault (TimeoutHandler *instance)
 {
-    gDefault = instance;
+    gDefault.reset(instance);
 }
