@@ -14,6 +14,8 @@ namespace {
 class MockCompScreen : public CompScreen
 {
 public:
+    using CompScreen::priv;
+
     // Interface hoisted from CompScreen
     MOCK_METHOD0(updateDefaultIcon, bool ());
     MOCK_METHOD0(dpy, Display * ());
@@ -255,14 +257,14 @@ public:
 	{
 	    static MockVTable mockVtable("one");
 	    // TODO If init returns "true" then we'll try to dereference screen->priv
-	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(false));
+	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));
 	    p->vTable = &mockVtable;
 	}
 	else if (strcmp(name, "two") == 0)
 	{
 	    static MockVTable mockVtable("two");
 	    // TODO If init returns "true" then we'll try to dereference screen->priv
-	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(false));
+	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));
 	    p->vTable = &mockVtable;
 	}
 	else
@@ -329,7 +331,8 @@ TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
     // We should kill this dependency
     screen = &comp_screen;
 
-    PrivateScreen ps(&comp_screen);
+    comp_screen.priv.reset(new PrivateScreen(&comp_screen));
+    PrivateScreen& ps(*comp_screen.priv.get());
 
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
@@ -350,10 +353,18 @@ TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
     EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
 	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
 
-    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(3);
+    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);  // Once for "three" which doesn't load
 
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Return(false));
 
     ps.updatePlugins();
+
+    // TODO these need to be initialised - else we delete uninitialised memory
+    ps.source = 0;
+    ps.timeout = 0;
+
+    // Must tear down the PrivateScreen before destroying CompScreen
+    // (Because of another indirect use of screen in option.cpp:finiOptionValue())
+    comp_screen.priv.reset(0);
 }
