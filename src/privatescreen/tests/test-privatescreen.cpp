@@ -271,12 +271,16 @@ public:
 	{
 	    static MockVTable mockVtable("one");
 	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));
+	    EXPECT_CALL(mockVtable, finiScreen(Ne((void*)0))).Times(1);
+	    EXPECT_CALL(mockVtable, fini()).Times(1);
 	    p->vTable = &mockVtable;
 	}
 	else if (strcmp(name, "two") == 0)
 	{
 	    static MockVTable mockVtable("two");
 	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));
+	    EXPECT_CALL(mockVtable, finiScreen(Ne((void*)0))).Times(1);
+	    EXPECT_CALL(mockVtable, fini()).Times(1);
 	    p->vTable = &mockVtable;
 	}
 	else
@@ -341,6 +345,10 @@ TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
     comp_screen.priv.reset(new PrivateScreen(&comp_screen));
     PrivateScreen& ps(*comp_screen.priv.get());
 
+    // TODO these need to be initialised - else we delete uninitialised memory
+    ps.source = 0;
+    ps.timeout = 0;
+
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
     values.push_back ("core");
@@ -367,7 +375,8 @@ TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
 
     ps.updatePlugins();
 
-    // TODO these need to be initialised - else we delete uninitialised memory
-    ps.source = 0;
-    ps.timeout = 0;
+    // TODO Some cleanup that probably ought to be automatic.
+    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(2);
+    EXPECT_CALL(comp_screen, _finiPluginForScreen(Ne((void*)0))).Times(2);
+    for (CompPlugin* p; (p = CompPlugin::pop ()) != 0; CompPlugin::unload (p));
 }

@@ -25,8 +25,10 @@
  */
 
 #include "privatetimeouthandler.h"
+#include "core/timer.h"
 
 #include <boost/scoped_ptr.hpp>
+#include <algorithm>
 
 namespace
 {

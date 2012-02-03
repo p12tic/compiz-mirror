@@ -26,12 +26,13 @@
 #ifndef _COMPIZ_TIMEOUTHANDLER_H
 #define _COMPIZ_TIMEOUTHANDLER_H
 
-#include <core/timer.h>
+#include <boost/noncopyable.hpp>
+#include <list>
 
 class PrivateTimeoutHandler;
 class CompTimer;
 
-class TimeoutHandler
+class TimeoutHandler : boost::noncopyable
 {
     public:
 
