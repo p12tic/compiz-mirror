@@ -561,6 +561,15 @@ meta_get_decoration_geometry (decor_t		*d,
     else
 	clip->height = d->border_layout.left.y2 - d->border_layout.left.y1;
 
+    memset (fgeom, 0, sizeof (MetaFrameGeometry));
+
+#ifdef META_HAS_LOCAL_MENUS
+
+    if (d->layout)
+	fgeom->text_layout = g_object_ref (d->layout);
+
+#endif
+
     meta_theme_calc_geometry (theme,
 			      frame_type,
 			      d->frame->text_height,
@@ -569,6 +578,15 @@ meta_get_decoration_geometry (decor_t		*d,
 			      clip->height,
 			      button_layout,
 			      fgeom);
+
+#ifdef META_HAS_LOCAL_MENUS
+
+    if (d->layout)
+	g_object_unref (fgeom->text_layout);
+
+    fgeom->text_layout = NULL;
+
+#endif
 
     clip->width  += left_width + right_width;
     clip->height += top_height + bottom_height;
@@ -1282,6 +1300,8 @@ meta_get_event_window_position (decor_t *d,
     MetaFrameFlags    flags;
     MetaTheme	      *theme;
     GdkRectangle      clip;
+
+    memset (&fgeom, 0, sizeof (MetaFrameGeometry));
 
     theme = meta_theme_get_current ();
 

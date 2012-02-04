@@ -43,7 +43,6 @@ typedef struct _show_local_menu_data
 {
     GDBusConnection *conn;
     GDBusProxy      *proxy;
-    gchar           *entry_id;
     show_window_menu_hidden_cb cb;
     gpointer        user_data;
 } show_local_menu_data;

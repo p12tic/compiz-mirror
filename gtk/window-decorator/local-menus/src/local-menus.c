@@ -81,7 +81,6 @@ on_local_menu_activated (GDBusProxy *proxy,
 
 	    g_object_unref (d->proxy);
 	    g_object_unref (d->conn);
-	    g_free (d->entry_id);
 	}
     }
 #endif
@@ -100,6 +99,8 @@ gwd_show_local_menu (Display *xdisplay,
 #ifdef META_HAS_LOCAL_MENUS
     GError          *error = NULL;
     GDBusConnection *conn = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
+    gint            x_out, y_out;
+    guint           width, height;
 
     XUngrabPointer (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), CurrentTime);
     XUngrabKeyboard (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), CurrentTime);
@@ -129,7 +130,7 @@ gwd_show_local_menu (Display *xdisplay,
 	}
 
 	show_local_menu_data *data = g_new0 (show_local_menu_data, 1);
-	g_variant_get (reply, "(s)", data->entry_id, NULL);
+	g_variant_get (reply, "(iiuu)", &x_out, &y_out, &width, &height, NULL);
 
 	data->conn = g_object_ref (conn);
 	data->proxy = g_object_ref (proxy);
