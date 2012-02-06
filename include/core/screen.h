@@ -312,6 +312,7 @@ public:
     virtual int shapeEvent () = 0;
 
     virtual int syncEvent () = 0;
+    virtual Window autoRaiseWindow () = 0;
 
 
     friend class CompTimer; // TODO get rid of friends

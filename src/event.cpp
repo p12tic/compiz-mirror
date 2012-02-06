@@ -65,7 +65,7 @@ PrivateWindow::handleSyncAlarm ()
 
 
 static bool
-autoRaiseTimeout (CompScreenImpl *screen)
+autoRaiseTimeout (CompScreen *screen)
 {
     CompWindow  *w = screen->findWindow (screen->activeWindow ());
 

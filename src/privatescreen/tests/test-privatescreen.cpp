@@ -164,6 +164,7 @@ public:
     MOCK_METHOD2(updateGrab, void (GrabHandle handle, Cursor cursor));
     MOCK_METHOD0(shapeEvent, int ());
     MOCK_METHOD0(syncEvent, int ());
+    MOCK_METHOD0(autoRaiseWindow, Window  ());
 };
 
 // Utility class to help satisfy dependencies
