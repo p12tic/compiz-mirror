@@ -115,6 +115,7 @@ void CompScreenImpl::addToDestroyedWindows(CompWindow * cw)
     priv->destroyedWindows.push_back (cw);
 }
 
+void CompScreenImpl::processEvents () { priv->processEvents (); }
 
 unsigned int
 CompScreen::allocPluginClassIndex ()

@@ -165,6 +165,7 @@ public:
     MOCK_METHOD0(shapeEvent, int ());
     MOCK_METHOD0(syncEvent, int ());
     MOCK_METHOD0(autoRaiseWindow, Window  ());
+    MOCK_METHOD0(processEvents, void ());
 };
 
 // Utility class to help satisfy dependencies

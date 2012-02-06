@@ -317,8 +317,9 @@ public:
     friend class CompWindow; // TODO get rid of friends
     friend class PrivateWindow; // TODO get rid of friends
     friend class ModifierHandler; // TODO get rid of friends
-    friend class CompEventSource; // TODO get rid of friends
     friend class CompManager; // TODO get rid of friends
+
+    virtual void processEvents () = 0;
 
 protected:
 	CompScreen();
@@ -360,7 +361,6 @@ class CompScreenImpl : public CompScreen
 	bool init (const char *name);
 
 	void eventLoop ();
-	bool processEvents ();
 
 	CompFileWatchHandle addFileWatch (const char        *path,
 					  int               mask,
@@ -568,6 +568,7 @@ class CompScreenImpl : public CompScreen
 	virtual void setWindowState (unsigned int state, Window id);
 	virtual void removeFromCreatedWindows(CoreWindow *cw);
 	virtual void addToDestroyedWindows(CompWindow * cw);
+	virtual void processEvents ();
 
 
     public :
