@@ -701,6 +701,9 @@ meta_draw_window_decoration (decor_t *d)
 
     size = MAX (fgeom.top_height, fgeom.bottom_height);
 
+    if (active_menu)
+	g_object_set_data (G_OBJECT (style_window), "local_menu_rect", &active_menu->rect);
+
     if (rect.width && size)
     {
 	XRenderPictFormat *format;
@@ -924,6 +927,9 @@ meta_draw_window_decoration (decor_t *d)
 
 	XRenderFreePicture (xdisplay, src);
     }
+
+    if (active_menu)
+	g_object_set_data (G_OBJECT (style_window), "local_menu_rect", NULL);
 
     copy_to_front_buffer (d);
 
