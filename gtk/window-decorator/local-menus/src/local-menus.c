@@ -128,6 +128,8 @@ gwd_show_local_menu (Display *xdisplay,
 		     Window  frame_xwindow,
 		     int      x,
 		     int      y,
+		     int      x_win,
+		     int      y_win,
 		     int      button,
 		     guint32  timestamp,
 		     show_window_menu_hidden_cb cb,
@@ -182,8 +184,8 @@ gwd_show_local_menu (Display *xdisplay,
 
 	active_menu = g_new0 (active_local_menu, 1);
 
-	active_menu->rect.x = x_out;
-	active_menu->rect.y = y_out;
+	active_menu->rect.x = x_out - (x - x_win);
+	active_menu->rect.y = y_out - (x - y_win);
 	active_menu->rect.width = width;
 	active_menu->rect.height = height;
 
