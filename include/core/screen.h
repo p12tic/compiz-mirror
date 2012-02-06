@@ -316,7 +316,6 @@ public:
 
     friend class CompWindow; // TODO get rid of friends
     friend class PrivateWindow; // TODO get rid of friends
-    friend class CoreWindow; // TODO get rid of friends
     friend class ModifierHandler; // TODO get rid of friends
     friend class CompEventSource; // TODO get rid of friends
     friend class CompTimeoutSource; // TODO get rid of friends
