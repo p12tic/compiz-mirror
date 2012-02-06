@@ -314,8 +314,6 @@ public:
     virtual int syncEvent () = 0;
     virtual Window autoRaiseWindow () = 0;
 
-
-    friend class CompTimer; // TODO get rid of friends
     friend class CompWindow; // TODO get rid of friends
     friend class PrivateWindow; // TODO get rid of friends
     friend class CoreWindow; // TODO get rid of friends
