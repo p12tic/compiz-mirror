@@ -146,14 +146,14 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
     unsigned int      bindMods;
     unsigned int      edge = 0;
 
-    if (priv->edgeWindow)
+    if (edgeWindow)
     {
 	unsigned int i;
 
 	if (event->root != root)
 	    return false;
 
-	if (event->window != priv->edgeWindow)
+	if (event->window != edgeWindow)
 	{
 	    if (grabs.empty () || event->window != root)
 		return false;
@@ -161,7 +161,7 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 
 	for (i = 0; i < SCREEN_EDGE_NUM; i++)
 	{
-	    if (priv->edgeWindow == screenEdge[i].id)
+	    if (edgeWindow == screenEdge[i].id)
 	    {
 		edge = 1 << i;
 		arguments[1].value ().set ((int) activeWindow);
@@ -737,21 +737,21 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    if (edgeDelayTimer.active ())
 		edgeDelayTimer.stop ();
 
-	    if (priv->edgeWindow && priv->edgeWindow != event->xcrossing.window)
+	    if (edgeWindow && edgeWindow != event->xcrossing.window)
 	    {
 		state = CompAction::StateTermEdge;
 		edge  = 0;
 
 		for (i = 0; i < SCREEN_EDGE_NUM; i++)
 		{
-		    if (priv->edgeWindow == screenEdge[i].id)
+		    if (edgeWindow == screenEdge[i].id)
 		    {
 			edge = 1 << i;
 			break;
 		    }
 		}
 
-		priv->edgeWindow = None;
+		priv_DELETEME->edgeWindow = None;
 
 		o[0].value ().set ((int) event->xcrossing.window);
 		o[1].value ().set ((int) activeWindow);
@@ -786,7 +786,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    {
 		state = CompAction::StateInitEdge;
 
-		priv->edgeWindow = event->xcrossing.window;
+		edgeWindow = event->xcrossing.window;
 
 		o[0].value ().set ((int) event->xcrossing.window);
 		o[1].value ().set ((int) activeWindow);
@@ -806,14 +806,14 @@ PrivateScreen::handleActionEvent (XEvent *event)
     case ClientMessage:
 	if (event->xclient.message_type == Atoms::xdndEnter)
 	{
-	    priv->xdndWindow = event->xclient.window;
+	    xdndWindow = event->xclient.window;
 	}
 	else if (event->xclient.message_type == Atoms::xdndLeave)
 	{
 	    unsigned int      edge = 0;
 	    CompAction::State state;
 
-	    if (!priv->xdndWindow)
+	    if (!xdndWindow)
 	    {
 		CompWindow *w;
 
@@ -857,7 +857,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    unsigned int      edge = 0;
 	    CompAction::State state;
 
-	    if (priv->xdndWindow == event->xclient.window)
+	    if (priv_DELETEME->xdndWindow == event->xclient.window)
 	    {
 		CompWindow *w;
 
@@ -868,7 +868,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 
 		    for (i = 0; i < SCREEN_EDGE_NUM; i++)
 		    {
-			if (priv->xdndWindow == screenEdge[i].id)
+			if (xdndWindow == screenEdge[i].id)
 			{
 			    edge = 1 << i;
 			    break;
@@ -892,7 +892,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		    return true;
 	    }
 
-	    priv->xdndWindow = None;
+	    xdndWindow = None;
 	}
 	break;
     default:
@@ -956,7 +956,7 @@ PrivateScreen::setDefaultWindowAttributes (XWindowAttributes *wa)
     wa->border_width	      = 0;
     wa->depth		      = 0;
     wa->visual		      = NULL;
-    wa->root		      = priv->root;
+    wa->root		      = root;
     wa->c_class		      = InputOnly;
     wa->bit_gravity	      = NorthWestGravity;
     wa->win_gravity	      = NorthWestGravity;
@@ -971,7 +971,7 @@ PrivateScreen::setDefaultWindowAttributes (XWindowAttributes *wa)
     wa->your_event_mask	      = 0;
     wa->do_not_propagate_mask = 0;
     wa->override_redirect     = true;
-    wa->screen		      = ScreenOfDisplay (priv->dpy, priv->screenNum);
+    wa->screen		      = ScreenOfDisplay (dpy, screenNum);
 }
 
 void

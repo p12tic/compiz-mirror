@@ -737,13 +737,13 @@ PrivateScreen::processEvents ()
      * the server */
     if (stackIsFresh)
     {
-	priv->serverWindows.clear ();
+	serverWindows.clear ();
 
-	foreach (CompWindow *sw, priv->windows)
+	foreach (CompWindow *sw, windows)
 	{
 	    sw->serverPrev = sw->prev;
 	    sw->serverNext = sw->next;
-	    priv->serverWindows.push_back (sw);
+	    serverWindows.push_back (sw);
 	}
     }
 
@@ -751,7 +751,7 @@ PrivateScreen::processEvents ()
     {
 	dbg->windowsChanged (false);
 	dbg->serverWindowsChanged (false);
-	events = dbg->loadStack (priv->serverWindows);
+	events = dbg->loadStack (serverWindows);
     }
     else
 	events = queueEvents ();
@@ -831,14 +831,14 @@ PrivateScreen::processEvents ()
 
     if (dbg)
     {
-	if (dbg->windowsChanged () && dbg->cmpStack (priv->windows, priv->serverWindows))
+	if (dbg->windowsChanged () && dbg->cmpStack (windows, serverWindows))
 	{
 	    compLogMessage ("core", CompLogLevelDebug, "stacks are out of sync");
 	    if (dbg->timedOut ())
 		compLogMessage ("core", CompLogLevelDebug, "however, this may be a false positive");
 	}
 
-	if (dbg->serverWindowsChanged () && dbg->checkSanity (priv->windows))
+	if (dbg->serverWindowsChanged () && dbg->checkSanity (windows))
 	    compLogMessage ("core", CompLogLevelDebug, "windows are stacked incorrectly");
     }
 }
@@ -1001,7 +1001,7 @@ PrivateScreen::updatePlugins ()
     foreach (CompPlugin *pp, pop)
 	CompPlugin::unload (pp);
 
-    if (!priv->dirtyPluginList)
+    if (!dirtyPluginList)
 	screen->setOptionForPlugin ("core", "active_plugins", plugin);
 }
 
@@ -1203,7 +1203,7 @@ PrivateScreen::getActiveWindow (Window root)
     unsigned char *data;
     Window	  w = None;
 
-    result = XGetWindowProperty (priv->dpy, root,
+    result = XGetWindowProperty (dpy, root,
 				 Atoms::winActive, 0L, 1L, false,
 				 XA_WINDOW, &actual, &format,
 				 &n, &left, &data);
@@ -1285,7 +1285,7 @@ PrivateScreen::getWmState (Window id)
     unsigned char *data;
     unsigned long state = NormalState;
 
-    result = XGetWindowProperty (priv->dpy, id,
+    result = XGetWindowProperty (dpy, id,
 				 Atoms::wmState, 0L, 2L, false,
 				 Atoms::wmState, &actual, &format,
 				 &n, &left, &data);
@@ -1308,7 +1308,7 @@ PrivateScreen::setWmState (int state, Window id)
     data[0] = state;
     data[1] = None;
 
-    XChangeProperty (priv->dpy, id,
+    XChangeProperty (dpy, id,
 		     Atoms::wmState, Atoms::wmState,
 		     32, PropModeReplace, (unsigned char *) data, 2);
 }
@@ -1386,7 +1386,7 @@ PrivateScreen::getWindowState (Window id)
     unsigned char *data;
     unsigned int  state = 0;
 
-    result = XGetWindowProperty (priv->dpy, id,
+    result = XGetWindowProperty (dpy, id,
 				 Atoms::winState,
 				 0L, 1024L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1439,7 +1439,7 @@ PrivateScreen::setWindowState (unsigned int state, Window id)
     if (state & CompWindowStateFocusedMask)
         data[i++] = Atoms::winStateFocused;
 
-    XChangeProperty (priv->dpy, id, Atoms::winState,
+    XChangeProperty (dpy, id, Atoms::winState,
 		     XA_ATOM, 32, PropModeReplace,
 		     (unsigned char *) data, i);
 }
@@ -1452,7 +1452,7 @@ PrivateScreen::getWindowType (Window id)
     unsigned long n, left;
     unsigned char *data;
 
-    result = XGetWindowProperty (priv->dpy , id,
+    result = XGetWindowProperty (dpy , id,
 				 Atoms::winType,
 				 0L, 1L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1512,7 +1512,7 @@ PrivateScreen::getMwmHints (Window       id,
     *func  = MwmFuncAll;
     *decor = MwmDecorAll;
 
-    result = XGetWindowProperty (priv->dpy, id,
+    result = XGetWindowProperty (dpy, id,
 				 Atoms::mwmHints,
 				 0L, 20L, false, Atoms::mwmHints,
 				 &actual, &format, &n, &left, &data);
@@ -1541,7 +1541,7 @@ PrivateScreen::getProtocols (Window id)
     int          count;
     unsigned int protocols = 0;
 
-    if (XGetWMProtocols (priv->dpy, id, &protocol, &count))
+    if (XGetWMProtocols (dpy, id, &protocol, &count))
     {
 	int  i;
 
@@ -1616,7 +1616,7 @@ PrivateScreen::readWindowProp32 (Window         id,
     unsigned char *data;
     bool          retval = false;
 
-    result = XGetWindowProperty (priv->dpy, id, property,
+    result = XGetWindowProperty (dpy, id, property,
 				 0L, 1L, false, XA_CARDINAL, &actual, &format,
 				 &n, &left, &data);
 
@@ -2178,10 +2178,10 @@ PrivateScreen::updateScreenEdges ()
 void
 PrivateScreen::setCurrentOutput (unsigned int outputNum)
 {
-    if (outputNum >= priv->outputDevs.size ())
+    if (outputNum >= outputDevs.size ())
 	outputNum = 0;
 
-    priv->currentOutputDev = outputNum;
+    currentOutputDev = outputNum;
 }
 
 void
@@ -2203,18 +2203,18 @@ PrivateScreen::reshape (int w, int h)
 void
 PrivateScreen::configure (XConfigureEvent *ce)
 {
-    if (priv->attrib.width  != ce->width ||
-	priv->attrib.height != ce->height)
+    if (attrib.width  != ce->width ||
+	attrib.height != ce->height)
     {
-	priv->attrib.width  = ce->width;
-	priv->attrib.height = ce->height;
+	attrib.width  = ce->width;
+	attrib.height = ce->height;
     }
 
-	priv->reshape (ce->width, ce->height);
+	reshape (ce->width, ce->height);
 
-	priv->detectOutputDevices ();
+	detectOutputDevices ();
 
-	priv->updateOutputDevices ();
+	updateOutputDevices ();
 }
 
 void
@@ -2831,7 +2831,7 @@ void
 PrivateScreen::eraseWindowFromMap (Window id)
 {
     if (id != 1)
-        priv->windowsMap.erase (id);
+        windowsMap.erase (id);
 }
 
 void
@@ -3482,80 +3482,80 @@ PrivateScreen::updateClientList ()
 
     if (n == 0)
     {
-	if ((unsigned int) n != priv->clientList.size ())
+	if ((unsigned int) n != clientList.size ())
 	{
-	    priv->clientList.clear ();
-	    priv->clientListStacking.clear ();
-	    priv->clientIdList.clear ();
-	    priv->clientIdListStacking.clear ();
+	    clientList.clear ();
+	    clientListStacking.clear ();
+	    clientIdList.clear ();
+	    clientIdListStacking.clear ();
 
-	    XChangeProperty (priv->dpy, priv->root,
+	    XChangeProperty (dpy, root,
 			     Atoms::clientList,
 			     XA_WINDOW, 32, PropModeReplace,
-			     (unsigned char *) &priv->grabWindow, 1);
-	    XChangeProperty (priv->dpy, priv->root,
+			     (unsigned char *) &grabWindow, 1);
+	    XChangeProperty (dpy, root,
 			     Atoms::clientListStacking,
 			     XA_WINDOW, 32, PropModeReplace,
-			     (unsigned char *) &priv->grabWindow, 1);
+			     (unsigned char *) &grabWindow, 1);
 	}
 
 	return;
     }
 
-    if ((unsigned int) n != priv->clientList.size ())
+    if ((unsigned int) n != clientList.size ())
     {
-	priv->clientIdList.resize (n);
-	priv->clientIdListStacking.resize (n);
+	clientIdList.resize (n);
+	clientIdListStacking.resize (n);
 
 	updateClientList = updateClientListStacking = true;
     }
 
-    priv->clientListStacking.clear ();
+    clientListStacking.clear ();
 
-    foreach (CompWindow *w, priv->windows)
+    foreach (CompWindow *w, windows)
 	if (isClientListWindow (w))
-	    priv->clientListStacking.push_back (w);
+	    clientListStacking.push_back (w);
 
     /* clear clientList and copy clientListStacking into clientList */
-    priv->clientList = priv->clientListStacking;
+    clientList = clientListStacking;
 
     /* sort clientList in mapping order */
-    sort (priv->clientList.begin (), priv->clientList.end (),
+    sort (clientList.begin (), clientList.end (),
 	  compareMappingOrder);
 
     /* make sure client id lists are up-to-date */
     for (int i = 0; i < n; i++)
     {
 	if (!updateClientList &&
-	    priv->clientIdList[i] != priv->clientList[i]->id ())
+	    clientIdList[i] != clientList[i]->id ())
 	{
 	    updateClientList = true;
 	}
 
-	priv->clientIdList[i] = priv->clientList[i]->id ();
+	clientIdList[i] = clientList[i]->id ();
     }
     for (int i = 0; i < n; i++)
     {
 	if (!updateClientListStacking &&
-	    priv->clientIdListStacking[i] != priv->clientListStacking[i]->id ())
+	    clientIdListStacking[i] != clientListStacking[i]->id ())
 	{
 	    updateClientListStacking = true;
 	}
 
-	priv->clientIdListStacking[i] = priv->clientListStacking[i]->id ();
+	clientIdListStacking[i] = clientListStacking[i]->id ();
     }
 
     if (updateClientList)
-	XChangeProperty (priv->dpy, priv->root,
+	XChangeProperty (dpy, root,
 			 Atoms::clientList,
 			 XA_WINDOW, 32, PropModeReplace,
-			 (unsigned char *) &priv->clientIdList.at (0), n);
+			 (unsigned char *) &clientIdList.at (0), n);
 
     if (updateClientListStacking)
-	XChangeProperty (priv->dpy, priv->root,
+	XChangeProperty (dpy, root,
 			 Atoms::clientListStacking,
 			 XA_WINDOW, 32, PropModeReplace,
-			 (unsigned char *) &priv->clientIdListStacking.at (0),
+			 (unsigned char *) &clientIdListStacking.at (0),
 			 n);
 }
 
@@ -3705,7 +3705,7 @@ PrivateScreen::addGroup (Window id)
     group->refCnt = 1;
     group->id     = id;
 
-    priv->groups.push_back (group);
+    groups.push_back (group);
 
     return group;
 }
@@ -3718,11 +3718,11 @@ PrivateScreen::removeGroup (CompGroup *group)
 	return;
 
     std::list<CompGroup *>::iterator it =
-	std::find (priv->groups.begin (), priv->groups.end (), group);
+	std::find (groups.begin (), groups.end (), group);
 
-    if (it != priv->groups.end ())
+    if (it != groups.end ())
     {
-	priv->groups.erase (it);
+	groups.erase (it);
     }
 
     delete group;
@@ -3731,7 +3731,7 @@ PrivateScreen::removeGroup (CompGroup *group)
 CompGroup *
 PrivateScreen::findGroup (Window id)
 {
-    foreach (CompGroup *g, priv->groups)
+    foreach (CompGroup *g, groups)
 	if (g->id == id)
 	    return g;
 
@@ -3756,7 +3756,7 @@ PrivateScreen::applyStartupProperties (CompWindow *window)
 	    return;
     }
 
-    foreach (CompStartupSequence *ss, priv->startupSequences)
+    foreach (CompStartupSequence *ss, startupSequences)
     {
 	const char *id;
 
@@ -3797,25 +3797,25 @@ CompScreenImpl::sendWindowActivationRequest (Window id)
 void
 PrivateScreen::enableEdge (int edge)
 {
-    priv->screenEdge[edge].count++;
-    if (priv->screenEdge[edge].count == 1)
-	XMapRaised (priv->dpy, priv->screenEdge[edge].id);
+    screenEdge[edge].count++;
+    if (screenEdge[edge].count == 1)
+	XMapRaised (dpy, screenEdge[edge].id);
 }
 
 void
 PrivateScreen::disableEdge (int edge)
 {
-    priv->screenEdge[edge].count--;
-    if (priv->screenEdge[edge].count == 0)
-	XUnmapWindow (priv->dpy, priv->screenEdge[edge].id);
+    screenEdge[edge].count--;
+    if (screenEdge[edge].count == 0)
+	XUnmapWindow (dpy, screenEdge[edge].id);
 }
 
 Window
 PrivateScreen::getTopWindow ()
 {
     /* return first window that has not been destroyed */
-    if (priv->windows.size ())
-	return priv->windows.back ()->id ();
+    if (windows.size ())
+	return windows.back ()->id ();
 
     return None;
 }
@@ -3846,13 +3846,13 @@ PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
     if (nDesktop < 1 || nDesktop >= 0xffffffff)
 	return;
 
-    if (nDesktop == priv->nDesktop)
+    if (nDesktop == this->nDesktop)
 	return;
 
-    if (priv->currentDesktop >= nDesktop)
-	priv->currentDesktop = nDesktop - 1;
+    if (currentDesktop >= nDesktop)
+	currentDesktop = nDesktop - 1;
 
-    foreach (CompWindow *w, priv->windows)
+    foreach (CompWindow *w, windows)
     {
 	if (w->desktop () == 0xffffffff)
 	    continue;
@@ -3861,9 +3861,9 @@ PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
 	    w->setDesktop (nDesktop - 1);
     }
 
-    priv->nDesktop = nDesktop;
+    this->nDesktop = nDesktop;
 
-    priv->setDesktopHints ();
+    setDesktopHints ();
 }
 
 void
@@ -3871,15 +3871,15 @@ PrivateScreen::setCurrentDesktop (unsigned int desktop)
 {
     unsigned long data;
 
-    if (desktop >= priv->nDesktop)
+    if (desktop >= nDesktop)
 	return;
 
-    if (desktop == priv->currentDesktop)
+    if (desktop == currentDesktop)
 	return;
 
-    priv->currentDesktop = desktop;
+    currentDesktop = desktop;
 
-    foreach (CompWindow *w, priv->windows)
+    foreach (CompWindow *w, windows)
     {
 	if (w->desktop () == 0xffffffff)
 	    continue;
@@ -3892,7 +3892,7 @@ PrivateScreen::setCurrentDesktop (unsigned int desktop)
 
     data = desktop;
 
-    XChangeProperty (priv->dpy, priv->root, Atoms::currentDesktop,
+    XChangeProperty (dpy, root, Atoms::currentDesktop,
 		     XA_CARDINAL, 32, PropModeReplace,
 		     (unsigned char *) &data, 1);
 }
@@ -4093,30 +4093,30 @@ PrivateScreen::setCurrentActiveWindowHistory (int x, int y)
 
     for (i = 0; i < ACTIVE_WINDOW_HISTORY_NUM; i++)
     {
-	if (priv->history[i].x == x && priv->history[i].y == y)
+	if (history[i].x == x && history[i].y == y)
 	{
-	    priv->currentHistory = i;
+	    currentHistory = i;
 	    return;
 	}
     }
 
     for (i = 1; i < ACTIVE_WINDOW_HISTORY_NUM; i++)
-	if (priv->history[i].activeNum < priv->history[min].activeNum)
+	if (history[i].activeNum < history[min].activeNum)
 	    min = i;
 
-    priv->currentHistory = min;
+    currentHistory = min;
 
-    priv->history[min].activeNum = priv->activeNum;
-    priv->history[min].x         = x;
-    priv->history[min].y         = y;
+    history[min].activeNum = activeNum;
+    history[min].x         = x;
+    history[min].y         = y;
 
-    memset (priv->history[min].id, 0, sizeof (priv->history[min].id));
+    memset (history[min].id, 0, sizeof (history[min].id));
 }
 
 void
 PrivateScreen::addToCurrentActiveWindowHistory (Window id)
 {
-    CompActiveWindowHistory *history = &priv->history[priv->currentHistory];
+    CompActiveWindowHistory *history = &this->history[currentHistory];
     Window		    tmp, next = id;
     int			    i;
 
@@ -4132,7 +4132,7 @@ PrivateScreen::addToCurrentActiveWindowHistory (Window id)
 	    break;
     }
 
-    history->activeNum = priv->activeNum;
+    history->activeNum = activeNum;
 }
 
 void
@@ -4938,7 +4938,8 @@ CompScreenImpl::~CompScreenImpl ()
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
-    priv (this),
+    source(0),
+    timeout(0),
     fileWatch (0),
     lastFileWatchHandle (1),
     watchFds (0),
