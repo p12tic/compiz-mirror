@@ -319,7 +319,6 @@ public:
     friend class ModifierHandler; // TODO get rid of friends
     friend class CompEventSource; // TODO get rid of friends
     friend class CompManager; // TODO get rid of friends
-    friend class CompWatchFd; // TODO get rid of friends
 
 protected:
 	CompScreen();
