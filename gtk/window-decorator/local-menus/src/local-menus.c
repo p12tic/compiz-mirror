@@ -27,6 +27,9 @@
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 
+active_local_menu *active_menu;
+pending_local_menu *pending_menu;
+
 gboolean
 gwd_window_should_have_local_menu (WnckWindow *win)
 {
@@ -81,9 +84,43 @@ on_local_menu_activated (GDBusProxy *proxy,
 
 	    g_object_unref (d->proxy);
 	    g_object_unref (d->conn);
+
+	    if (active_menu)
+	    {
+		g_free (active_menu);
+		active_menu = NULL;
+	    }
 	}
     }
 #endif
+}
+
+gboolean
+gwd_move_window_instead (gpointer user_data)
+{
+    (*pending_menu->cb) (pending_menu->user_data);
+    g_free (pending_menu->user_data);
+    g_free (pending_menu);
+    pending_menu = NULL;
+    return FALSE;
+}
+
+void
+gwd_prepare_show_local_menu (start_move_window_cb start_move_window,
+			     gpointer user_data_start_move_window)
+{
+    if (pending_menu)
+    {
+	g_source_remove (pending_menu->move_timeout_id);
+	g_free (pending_menu->user_data);
+	g_free (pending_menu);
+	pending_menu = NULL;
+    }
+
+    pending_menu = g_new0 (pending_local_menu, 1);
+    pending_menu->cb = start_move_window;
+    pending_menu->user_data = user_data_start_move_window;
+    pending_menu->move_timeout_id = g_timeout_add (150, gwd_move_window_instead, pending_menu);
 }
 
 void
@@ -94,8 +131,16 @@ gwd_show_local_menu (Display *xdisplay,
 		     int      button,
 		     guint32  timestamp,
 		     show_window_menu_hidden_cb cb,
-		     gpointer user_data)
+		     gpointer user_data_show_window_menu)
 {
+    if (pending_menu)
+    {
+	g_source_remove (pending_menu->move_timeout_id);
+	g_free (pending_menu->user_data);
+	g_free (pending_menu);
+	pending_menu = NULL;
+    }
+
 #ifdef META_HAS_LOCAL_MENUS
     GError          *error = NULL;
     GDBusConnection *conn = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
@@ -132,10 +177,20 @@ gwd_show_local_menu (Display *xdisplay,
 	show_local_menu_data *data = g_new0 (show_local_menu_data, 1);
 	g_variant_get (reply, "(iiuu)", &x_out, &y_out, &width, &height, NULL);
 
+	if (active_menu)
+	    g_free (active_menu);
+
+	active_menu = g_new0 (active_local_menu, 1);
+
+	active_menu->rect.x = x_out;
+	active_menu->rect.y = y_out;
+	active_menu->rect.width = width;
+	active_menu->rect.height = height;
+
 	data->conn = g_object_ref (conn);
 	data->proxy = g_object_ref (proxy);
 	data->cb = cb;
-	data->user_data = user_data;
+	data->user_data = user_data_show_window_menu;
 
 	g_signal_connect (proxy, "g-signal", G_CALLBACK (on_local_menu_activated), data);
 

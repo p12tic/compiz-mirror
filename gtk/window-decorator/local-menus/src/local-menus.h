@@ -38,6 +38,21 @@ extern "C"
 #include <metacity-private/theme.h>
 
 typedef void (*show_window_menu_hidden_cb) (gpointer);
+typedef void (*start_move_window_cb) (gpointer);
+
+typedef struct _pending_local_menu
+{
+    gint         move_timeout_id;
+    gpointer     user_data;
+    start_move_window_cb cb;
+} pending_local_menu;
+
+typedef struct _active_local_menu
+{
+    GdkRectangle rect;
+} active_local_menu;
+
+extern active_local_menu *active_menu;
 
 typedef struct _show_local_menu_data
 {
@@ -54,6 +69,12 @@ void
 force_local_menus_on (WnckWindow       *win,
 		      MetaButtonLayout *layout);
 
+/* Button Down */
+void
+gwd_prepare_show_local_menu (start_move_window_cb start_move_window,
+			     gpointer user_data_start_move_window);
+
+/* Button Up */
 void
 gwd_show_local_menu (Display *xdisplay,
 		     Window  frame_xwindow,
@@ -62,7 +83,7 @@ gwd_show_local_menu (Display *xdisplay,
 		     int      button,
 		     guint32  timestamp,
 		     show_window_menu_hidden_cb cb,
-		     gpointer user_data);
+		     gpointer user_data_show_window_menu);
 #ifdef __cplusplus
 }
 #endif
