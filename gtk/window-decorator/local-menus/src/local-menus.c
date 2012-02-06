@@ -27,6 +27,9 @@
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
 
+#define GLOBAL 0
+#define LOCAL 1
+
 active_local_menu *active_menu;
 pending_local_menu *pending_menu;
 
@@ -38,9 +41,9 @@ gwd_window_should_have_local_menu (WnckWindow *win)
     static GSettings *lim_settings = NULL;
     while (*schemas != NULL && !lim_settings)
     {
-	if (g_str_equal (*schemas, "com.canonical.Unity.Menus"))
+	if (g_str_equal (*schemas, "com.canonical.indicator.appmenu"))
 	{
-	    lim_settings = g_settings_new ("com.canonical.Unity.Menus");
+	    lim_settings = g_settings_new ("com.canonical.indicator.appmenu");
 	    break;
 	}
 	++schemas;
@@ -48,7 +51,7 @@ gwd_window_should_have_local_menu (WnckWindow *win)
 
     if (lim_settings)
     {
-	if (g_settings_get_boolean (lim_settings, "force-local-menus"))
+	if (g_settings_get_enum (lim_settings, "menu-mode") == LOCAL)
 	{
 	    return TRUE;
 	}
