@@ -866,14 +866,7 @@ PrivateScreen::updatePlugins ()
     {
 	bool skip = false;
 	
-	try 
-	{
-	    lpName = lp.s();
-	} catch(const boost::bad_get&)
-	{
-	    lpName.clear();
-	}
-	
+	lpName = lp.s();
 	
 	if (lpName == "core")
 	    continue;
@@ -921,37 +914,21 @@ PrivateScreen::updatePlugins ()
 	std::list <CompString>::iterator it = initialPlugins.begin ();
 	bool				 skip = false;
 	
-	try 
-	{
-	    if (opt.s () == "core")
-	       continue;
-	} catch(const boost::bad_get&)
-	{
-	}
+	if (opt.s () == "core")
+	   continue;
 
 	for (; it != initialPlugins.end (); it++)
 	{
-	    try
+	    if ((*it) == opt.s())
 	    {
-		if ((*it) == opt.s())
-		{
-		    skip = true;
-		    break;
-		}
-	     } catch (...)
-	     {
-	     }
+		skip = true;
+		break;
+	    }
 	}
 
 	if (!skip)
 	{
-	    try
-	    {
-		pList.at (j++).set (opt.s ());
-	    } catch(const boost::bad_get&)
-	    {
-		j++;
-	    }
+	    pList.at (j++).set (opt.s ());
 	}
     }
 
@@ -1004,12 +981,7 @@ PrivateScreen::updatePlugins ()
 
 	if (p == 0 && !failedPush)
 	{
-	    try
-	    {
-		p = CompPlugin::load (pList[i].s ().c_str ());
-	    } catch (...)
-	    {
-	    }
+	    p = CompPlugin::load (pList[i].s ().c_str ());
 	    
 	    if (p)
 	    {
