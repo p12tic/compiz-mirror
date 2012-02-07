@@ -4815,8 +4815,8 @@ PrivateScreen::init (const char *name)
 
 	CoreWindow *cw = new CoreWindow (children[i]);
 	cw->manage (i ? children[i - 1] : 0, attrib);
+	createdWindows.remove (cw);
 	delete cw;
-	screen->removeFromCreatedWindows (cw);
     }
 
     /* enforce restack on all windows
