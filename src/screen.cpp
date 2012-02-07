@@ -4451,38 +4451,14 @@ CompScreenImpl::init (const char *name)
 bool
 PrivateScreen::init (const char *name)
 {
-    PrivateScreen* priv = this;  // TODO remove
-    Window               focus;
-    int                  revertTo, i;
-    int                  xkbOpcode;
-    Display              *dpy;
-    Window               root;
-    Window               newWmSnOwner = None;
-    Atom                 wmSnAtom = 0;
-    Time                 wmSnTimestamp = 0;
-    XEvent               event;
-    XSetWindowAttributes attr;
-    Window               currentWmSnOwner;
-    char                 buf[128];
-    static char          data = 0;
-    XColor               black;
-    Pixmap               bitmap;
-    XVisualInfo          templ;
-    XVisualInfo          *visinfo;
-    Window               rootReturn, parentReturn;
-    Window               *children;
-    unsigned int         nchildren;
-    int                  nvisinfo;
-    XSetWindowAttributes attrib;
+    this->ctx = Glib::MainContext::get_default ();
+    this->mainloop = Glib::MainLoop::create (this->ctx, false);
+    this->sighupSource = CompSignalSource::create (SIGHUP, boost::bind (&PrivateScreen::handleSignal, this, _1));
+    this->sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, this, _1));
+    this->sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, this, _1));
 
-    priv->ctx = Glib::MainContext::get_default ();
-    priv->mainloop = Glib::MainLoop::create (priv->ctx, false);
-    priv->sighupSource = CompSignalSource::create (SIGHUP, boost::bind (&PrivateScreen::handleSignal, this, _1));
-    priv->sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, this, _1));
-    priv->sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, this, _1));
-
-    dpy = priv->dpy = XOpenDisplay (name);
-    if (!priv->dpy)
+    this->dpy = XOpenDisplay (name);
+    if (!this->dpy)
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't open display %s", XDisplayName (name));
@@ -4491,36 +4467,37 @@ PrivateScreen::init (const char *name)
 
     XSynchronize (dpy, synchronousX ? True : False);
 
-    snprintf (priv->displayString, 255, "DISPLAY=%s",
+    snprintf (this->displayString, 255, "DISPLAY=%s",
 	      DisplayString (dpy));
 
-    Atoms::init (priv->dpy);
+    Atoms::init (this->dpy);
 
     XSetErrorHandler (errorHandler);
 
-    priv->snDisplay = sn_display_new (dpy, NULL, NULL);
-    if (!priv->snDisplay)
+    this->snDisplay = sn_display_new (dpy, NULL, NULL);
+    if (!this->snDisplay)
 	return true;
 
-    priv->lastPing = 1;
+    this->lastPing = 1;
 
-    if (!XSyncQueryExtension (dpy, &priv->syncEvent, &priv->syncError))
+    if (!XSyncQueryExtension (dpy, &this->syncEvent, &this->syncError))
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"No sync extension");
 	return false;
     }
 
-    priv->randrExtension = XRRQueryExtension (dpy, &priv->randrEvent,
-					      &priv->randrError);
+    this->randrExtension = XRRQueryExtension (dpy, &this->randrEvent,
+					      &this->randrError);
 
-    priv->shapeExtension = XShapeQueryExtension (dpy, &priv->shapeEvent,
-						 &priv->shapeError);
+    this->shapeExtension = XShapeQueryExtension (dpy, &this->shapeEvent,
+						 &this->shapeError);
 
-    priv->xkbExtension = XkbQueryExtension (dpy, &xkbOpcode,
-					    &priv->xkbEvent, &priv->xkbError,
+    int                  xkbOpcode;
+    this->xkbExtension = XkbQueryExtension (dpy, &xkbOpcode,
+					    &this->xkbEvent, &this->xkbError,
 					    NULL, NULL);
-    if (priv->xkbExtension)
+    if (this->xkbExtension)
     {
 	XkbSelectEvents (dpy, XkbUseCoreKbd,
 			 XkbBellNotifyMask | XkbStateNotifyMask,
@@ -4531,22 +4508,23 @@ PrivateScreen::init (const char *name)
 	compLogMessage ("core", CompLogLevelFatal,
 			"No XKB extension");
 
-	priv->xkbEvent = priv->xkbError = -1;
+	this->xkbEvent = this->xkbError = -1;
     }
 
-    priv->xineramaExtension = XineramaQueryExtension (dpy,
-						      &priv->xineramaEvent,
-						      &priv->xineramaError);
+    this->xineramaExtension = XineramaQueryExtension (dpy,
+						      &this->xineramaEvent,
+						      &this->xineramaError);
 
-    priv->updateScreenInfo ();
+    this->updateScreenInfo ();
 
-    priv->escapeKeyCode = XKeysymToKeycode (dpy, XStringToKeysym ("Escape"));
-    priv->returnKeyCode = XKeysymToKeycode (dpy, XStringToKeysym ("Return"));
+    this->escapeKeyCode = XKeysymToKeycode (dpy, XStringToKeysym ("Escape"));
+    this->returnKeyCode = XKeysymToKeycode (dpy, XStringToKeysym ("Return"));
 
+    char                 buf[128];
     sprintf (buf, "WM_S%d", DefaultScreen (dpy));
-    wmSnAtom = XInternAtom (dpy, buf, 0);
+    Atom wmSnAtom = XInternAtom (dpy, buf, 0);
 
-    currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
+    Window currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
 
     if (currentWmSnOwner != None)
     {
@@ -4565,12 +4543,13 @@ PrivateScreen::init (const char *name)
 	XSelectInput (dpy, currentWmSnOwner, StructureNotifyMask);
     }
 
-    root = XRootWindow (dpy, DefaultScreen (dpy));
+    Window root = XRootWindow (dpy, DefaultScreen (dpy));
 
+    XSetWindowAttributes attr;
     attr.override_redirect = true;
     attr.event_mask        = PropertyChangeMask;
 
-    newWmSnOwner =
+    Window newWmSnOwner =
 	XCreateWindow (dpy, root, -100, -100, 1, 1, 0,
 		       CopyFromParent, CopyFromParent,
 		       CopyFromParent,
@@ -4581,9 +4560,10 @@ PrivateScreen::init (const char *name)
 		     PropModeReplace, (unsigned char *) PACKAGE,
 		     strlen (PACKAGE));
 
+    XEvent event;
     XWindowEvent (dpy, newWmSnOwner, PropertyChangeMask, &event);
 
-    wmSnTimestamp = event.xproperty.time;
+    Time wmSnTimestamp = event.xproperty.time;
 
     XSetSelectionOwner (dpy, wmSnAtom, newWmSnOwner, wmSnTimestamp);
 
@@ -4674,34 +4654,36 @@ PrivateScreen::init (const char *name)
 	return false;
     }
 
-    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
     {
-	priv->screenEdge[i].id    = None;
-	priv->screenEdge[i].count = 0;
+	this->screenEdge[i].id    = None;
+	this->screenEdge[i].count = 0;
     }
 
-    priv->screenNum = DefaultScreen (dpy);
-    priv->colormap  = DefaultColormap (dpy, priv->screenNum);
-    priv->root	    = root;
+    this->screenNum = DefaultScreen (dpy);
+    this->colormap  = DefaultColormap (dpy, this->screenNum);
+    this->root	    = root;
 
-    priv->snContext = sn_monitor_context_new (priv->snDisplay, priv->screenNum,
+    this->snContext = sn_monitor_context_new (this->snDisplay, this->screenNum,
 					      compScreenSnEvent, this, NULL);
 
-    priv->wmSnSelectionWindow = newWmSnOwner;
-    priv->wmSnAtom            = wmSnAtom;
-    priv->wmSnTimestamp       = wmSnTimestamp;
+    this->wmSnSelectionWindow = newWmSnOwner;
+    this->wmSnAtom            = wmSnAtom;
+    this->wmSnTimestamp       = wmSnTimestamp;
 
-    if (!XGetWindowAttributes (dpy, priv->root, &priv->attrib))
+    if (!XGetWindowAttributes (dpy, this->root, &this->attrib))
 	return false;
 
-    priv->workArea.setWidth (priv->attrib.width);
-    priv->workArea.setHeight (priv->attrib.height);
+    this->workArea.setWidth (this->attrib.width);
+    this->workArea.setHeight (this->attrib.height);
 
-    priv->grabWindow = None;
+    this->grabWindow = None;
 
-    templ.visualid = XVisualIDFromVisual (priv->attrib.visual);
+    XVisualInfo          templ;
+    templ.visualid = XVisualIDFromVisual (this->attrib.visual);
 
-    visinfo = XGetVisualInfo (dpy, VisualIDMask, &templ, &nvisinfo);
+    int                  nvisinfo;
+    XVisualInfo* visinfo = XGetVisualInfo (dpy, VisualIDMask, &templ, &nvisinfo);
     if (!nvisinfo)
     {
 	compLogMessage ("core", CompLogLevelFatal,
@@ -4709,9 +4691,10 @@ PrivateScreen::init (const char *name)
 	return false;
     }
 
+    XColor               black;
     black.red = black.green = black.blue = 0;
 
-    if (!XAllocColor (dpy, priv->colormap, &black))
+    if (!XAllocColor (dpy, this->colormap, &black))
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't allocate color");
@@ -4719,7 +4702,8 @@ PrivateScreen::init (const char *name)
 	return false;
     }
 
-    bitmap = XCreateBitmapFromData (dpy, priv->root, &data, 1, 1);
+    static char          data = 0;
+    Pixmap bitmap = XCreateBitmapFromData (dpy, this->root, &data, 1, 1);
     if (!bitmap)
     {
 	compLogMessage ("core", CompLogLevelFatal,
@@ -4728,9 +4712,9 @@ PrivateScreen::init (const char *name)
 	return false;
     }
 
-    priv->invisibleCursor = XCreatePixmapCursor (dpy, bitmap, bitmap,
+    this->invisibleCursor = XCreatePixmapCursor (dpy, bitmap, bitmap,
 						 &black, &black, 0, 0);
-    if (!priv->invisibleCursor)
+    if (!this->invisibleCursor)
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"Couldn't create invisible cursor");
@@ -4739,38 +4723,39 @@ PrivateScreen::init (const char *name)
     }
 
     XFreePixmap (dpy, bitmap);
-    XFreeColors (dpy, priv->colormap, &black.pixel, 1, 0);
+    XFreeColors (dpy, this->colormap, &black.pixel, 1, 0);
 
     XFree (visinfo);
 
-    priv->reshape (priv->attrib.width, priv->attrib.height);
+    this->reshape (this->attrib.width, this->attrib.height);
 
-    priv->detectOutputDevices ();
-    priv->updateOutputDevices ();
+    this->detectOutputDevices ();
+    this->updateOutputDevices ();
 
-    priv->getDesktopHints ();
+    this->getDesktopHints ();
 
+    XSetWindowAttributes attrib;
     attrib.override_redirect = 1;
     attrib.event_mask	     = PropertyChangeMask;
 
-    priv->grabWindow = XCreateWindow (dpy, priv->root, -100, -100, 1, 1, 0,
+    this->grabWindow = XCreateWindow (dpy, this->root, -100, -100, 1, 1, 0,
 				      CopyFromParent, InputOnly, CopyFromParent,
 				      CWOverrideRedirect | CWEventMask,
 				      &attrib);
-    XMapWindow (dpy, priv->grabWindow);
+    XMapWindow (dpy, this->grabWindow);
 
-    for (i = 0; i < SCREEN_EDGE_NUM; i++)
+    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
     {
 	long xdndVersion = 3;
 
-	priv->screenEdge[i].id = XCreateWindow (dpy, priv->root,
+	this->screenEdge[i].id = XCreateWindow (dpy, this->root,
 						-100, -100, 1, 1, 0,
 						CopyFromParent, InputOnly,
 						CopyFromParent,
 						CWOverrideRedirect,
 						&attrib);
 
-	XChangeProperty (dpy, priv->screenEdge[i].id, Atoms::xdndAware,
+	XChangeProperty (dpy, this->screenEdge[i].id, Atoms::xdndAware,
 			 XA_ATOM, 32, PropModeReplace,
 			 (unsigned char *) &xdndVersion, 1);
 
@@ -4778,29 +4763,32 @@ PrivateScreen::init (const char *name)
 	 * crossing events when it gets called on
 	 * CreateNotify of this window, so no need
 	 * to select for them here */
-	XSelectInput (dpy, priv->screenEdge[i].id,
+	XSelectInput (dpy, this->screenEdge[i].id,
 		      StructureNotifyMask |
 		      ButtonPressMask   |
 		      ButtonReleaseMask |
 		      PointerMotionMask);
     }
 
-    priv->updateScreenEdges ();
+    this->updateScreenEdges ();
 
-    priv->setDesktopHints ();
-    priv->setSupportingWmCheck ();
+    this->setDesktopHints ();
+    this->setSupportingWmCheck ();
     screen->updateSupportedWmHints ();
 
-    priv->normalCursor = XCreateFontCursor (dpy, XC_left_ptr);
-    priv->busyCursor   = XCreateFontCursor (dpy, XC_watch);
+    this->normalCursor = XCreateFontCursor (dpy, XC_left_ptr);
+    this->busyCursor   = XCreateFontCursor (dpy, XC_watch);
 
-    XDefineCursor (dpy, priv->root, priv->normalCursor);
+    XDefineCursor (dpy, this->root, this->normalCursor);
 
     /* We should get DestroyNotify events for any windows that were
      * destroyed while initializing windows here now */
-    XSelectInput (dpy, root, priv->attrib.your_event_mask |
+    XSelectInput (dpy, root, this->attrib.your_event_mask |
 		  SubstructureRedirectMask | SubstructureNotifyMask);
 
+    Window rootReturn, parentReturn;
+    Window               *children;
+    unsigned int         nchildren;
     XQueryTree (dpy, root,
 		&rootReturn, &parentReturn,
 		&children, &nchildren);
@@ -4809,7 +4797,7 @@ PrivateScreen::init (const char *name)
     XSync (dpy, FALSE);
 
     /* Start initializing windows here */
-    priv->initialized = true;
+    this->initialized = true;
 
     for (unsigned int i = 0; i < nchildren; i++)
     {
@@ -4821,7 +4809,7 @@ PrivateScreen::init (const char *name)
 	 */
 
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
-	    priv->setDefaultWindowAttributes(&attrib);
+	    this->setDefaultWindowAttributes(&attrib);
 
 	CoreWindow *cw = new CoreWindow (children[i]);
 	cw->manage (i ? children[i - 1] : 0, attrib);
@@ -4832,25 +4820,27 @@ PrivateScreen::init (const char *name)
     /* enforce restack on all windows
      * using list last sent to server
     i = 0;
-    for (CompWindowList::reverse_iterator rit = priv->serverWindows.rbegin ();
-	 rit != priv->serverWindows.rend (); rit++)
+    for (CompWindowList::reverse_iterator rit = this->serverWindows.rbegin ();
+	 rit != this->serverWindows.rend (); rit++)
 	children[i++] = ROOTPARENT ((*rit));
 
     XRestackWindows (dpy, children, i);
     */
     XFree (children);
 
-    foreach (CompWindow *w, priv->windows)
+    foreach (CompWindow *w, this->windows)
     {
 	if (w->isViewable ())
-	    w->priv->activeNum = priv->activeNum++;
+	    w->priv->activeNum = this->activeNum++;
     }
 
+    Window               focus;
+    int                  revertTo;
     XGetInputFocus (dpy, &focus, &revertTo);
 
     /* move input focus to root window so that we get a FocusIn event when
        moving it to the default window */
-    XSetInputFocus (dpy, priv->root, RevertToPointerRoot, CurrentTime);
+    XSetInputFocus (dpy, this->root, RevertToPointerRoot, CurrentTime);
 
     if (focus == None || focus == PointerRoot)
     {
@@ -4871,8 +4861,8 @@ PrivateScreen::init (const char *name)
      * when loading plugins FIXME: Should find a way to initialize options
      * first and then set this value, or better yet, tie this value directly
      * to the option */
-    priv->vpSize.setWidth (priv->optionGetHsize ());
-    priv->vpSize.setHeight (priv->optionGetVsize ());
+    this->vpSize.setWidth (this->optionGetHsize ());
+    this->vpSize.setHeight (this->optionGetVsize ());
 
     /* TODO: Bailout properly when screenInitPlugins fails
      * TODO: It would be nicer if this line could mean
@@ -4885,20 +4875,20 @@ PrivateScreen::init (const char *name)
     /* The active plugins list might have been changed - load any
      * new plugins */
 
-    priv->vpSize.setWidth (priv->optionGetHsize ());
-    priv->vpSize.setHeight (priv->optionGetVsize ());
+    this->vpSize.setWidth (this->optionGetHsize ());
+    this->vpSize.setHeight (this->optionGetVsize ());
 
-    priv->setAudibleBell (priv->optionGetAudibleBell ());
+    this->setAudibleBell (this->optionGetAudibleBell ());
 
-    priv->pingTimer.setTimes (priv->optionGetPingDelay (),
-			      priv->optionGetPingDelay () + 500);
+    this->pingTimer.setTimes (this->optionGetPingDelay (),
+			      this->optionGetPingDelay () + 500);
 
-    priv->pingTimer.start ();
+    this->pingTimer.start ();
 
-    priv->addScreenActions ();
+    this->addScreenActions ();
 
-    if (priv->dirtyPluginList)
-	priv->updatePlugins ();
+    if (this->dirtyPluginList)
+	this->updatePlugins ();
 
     return true;
 }
