@@ -210,10 +210,6 @@ TEST(PrivateScreenTest, calling_updatePlugins_does_not_error)
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Return(false));
     ps.updatePlugins();
-
-    // TODO these need to be initialised - else we delete uninitialised memory
-    ps.source = 0;
-    ps.timeout = 0;
 }
 
 namespace {
@@ -346,10 +342,6 @@ TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
 
     comp_screen.priv.reset(new PrivateScreen(&comp_screen));
     PrivateScreen& ps(*comp_screen.priv.get());
-
-    // TODO these need to be initialised - else we delete uninitialised memory
-    ps.source = 0;
-    ps.timeout = 0;
 
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
