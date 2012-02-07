@@ -5003,39 +5003,39 @@ PrivateScreen::~PrivateScreen ()
 {
     CompPlugin  *p;
 
-    this->removeAllSequences ();
+    removeAllSequences ();
 
-    while (!this->windows.empty ())
-	delete this->windows.front ();
+    while (!windows.empty ())
+	delete windows.front ();
 
     while ((p = CompPlugin::pop ()))
 	CompPlugin::unload (p);
 
-    XUngrabKey (this->dpy, AnyKey, AnyModifier, this->root);
+    XUngrabKey (dpy, AnyKey, AnyModifier, root);
 
-    this->initialized = false;
+    initialized = false;
 
     for (int i = 0; i < SCREEN_EDGE_NUM; i++)
-	XDestroyWindow (this->dpy, this->screenEdge[i].id);
+	XDestroyWindow (dpy, screenEdge[i].id);
 
-    XDestroyWindow (this->dpy, this->grabWindow);
+    XDestroyWindow (dpy, grabWindow);
 
-    if (this->defaultIcon)
-	delete this->defaultIcon;
+    if (defaultIcon)
+	delete defaultIcon;
 
-    XFreeCursor (this->dpy, this->invisibleCursor);
+    XFreeCursor (dpy, invisibleCursor);
 
-    if (this->desktopHintData)
-	free (this->desktopHintData);
+    if (desktopHintData)
+	free (desktopHintData);
 
-    if (this->snContext)
-	sn_monitor_context_unref (this->snContext);
+    if (snContext)
+	sn_monitor_context_unref (snContext);
 
-    if (this->snDisplay)
-	sn_display_unref (this->snDisplay);
+    if (snDisplay)
+	sn_display_unref (snDisplay);
 
-    XSync (this->dpy, False);
-    XCloseDisplay (this->dpy);
+    XSync (dpy, False);
+    XCloseDisplay (dpy);
 
     delete timeout;
     delete source;
