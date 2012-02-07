@@ -399,3 +399,21 @@ TEST(PrivateScreenTest, calling_init)
 
     ps.init(0);
 }
+
+TEST(PrivateScreenTest, create_and_destroy)
+{
+    using namespace testing;
+
+    MockCompScreen comp_screen;
+
+    EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
+    EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
+    EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
+
+    // The PrivateScreen ctor indirectly calls screen->dpy().
+    // We should kill this dependency
+    xdisplay display;
+    EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
+
+    comp_screen.priv.reset(new PrivateScreen(&comp_screen));
+}

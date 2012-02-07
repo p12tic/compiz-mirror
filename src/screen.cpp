@@ -4909,6 +4909,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     lastWatchFdHandle (1),
     valueMap (),
     screenInfo (0),
+    snDisplay(0),
     activeWindow (0),
     below (None),
     autoRaiseTimer (),
@@ -5001,29 +5002,32 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 
 PrivateScreen::~PrivateScreen ()
 {
-    CompPlugin  *p;
+    if (initialized)
+    {
+	removeAllSequences ();
 
-    removeAllSequences ();
+	while (!windows.empty ())
+	    delete windows.front ();
 
-    while (!windows.empty ())
-	delete windows.front ();
+	XUngrabKey (dpy, AnyKey, AnyModifier, root);
 
-    while ((p = CompPlugin::pop ()))
+	initialized = false;
+
+	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
+	    XDestroyWindow (dpy, screenEdge[i].id);
+
+	XDestroyWindow (dpy, grabWindow);
+
+	if (defaultIcon)
+	    delete defaultIcon;
+
+	XFreeCursor (dpy, invisibleCursor);
+	XSync (dpy, False);
+	XCloseDisplay (dpy);
+    }
+
+    while (CompPlugin* p = CompPlugin::pop ())
 	CompPlugin::unload (p);
-
-    XUngrabKey (dpy, AnyKey, AnyModifier, root);
-
-    initialized = false;
-
-    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
-	XDestroyWindow (dpy, screenEdge[i].id);
-
-    XDestroyWindow (dpy, grabWindow);
-
-    if (defaultIcon)
-	delete defaultIcon;
-
-    XFreeCursor (dpy, invisibleCursor);
 
     if (desktopHintData)
 	free (desktopHintData);
@@ -5033,9 +5037,6 @@ PrivateScreen::~PrivateScreen ()
 
     if (snDisplay)
 	sn_display_unref (snDisplay);
-
-    XSync (dpy, False);
-    XCloseDisplay (dpy);
 
     delete timeout;
     delete source;
