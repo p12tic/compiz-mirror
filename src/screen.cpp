@@ -4400,8 +4400,6 @@ CompScreen::init (const char *name)
 	return false;
     }
 
-    XSynchronize (dpy, TRUE);
-
 //    priv->connection = XGetXCBConnection (priv->dpy);
 
     snprintf (priv->displayString, 255, "DISPLAY=%s",
