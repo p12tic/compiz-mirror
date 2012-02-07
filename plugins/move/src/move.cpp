@@ -138,8 +138,8 @@ moveInitiate (CompAction      *action,
 	    {
 		int xRoot, yRoot;
 
-		xRoot = w->geometry ().x () + (w->size ().width () / 2);
-		yRoot = w->geometry ().y () + (w->size ().height () / 2);
+		xRoot = w->serverGeometry ().x () + (w->size ().width () / 2);
+		yRoot = w->serverGeometry ().y () + (w->size ().height () / 2);
 
 		s->warpPointer (xRoot - pointerX, yRoot - pointerY);
 	    }
@@ -169,8 +169,8 @@ moveTerminate (CompAction      *action,
     if (ms->w)
     {
 	if (state & CompAction::StateCancel)
-	    ms->w->move (ms->savedX - ms->w->geometry ().x (),
-			 ms->savedY - ms->w->geometry ().y (), false);
+	    ms->w->move (ms->savedX - ms->w->serverGeometry ().x (),
+			 ms->savedY - ms->w->serverGeometry ().y (), false);
 
 	ms->w->syncPosition ();
 
@@ -314,12 +314,12 @@ moveHandleMotionEvent (CompScreen *s,
 
 	w = ms->w;
 
-	wX      = w->geometry ().x ();
-	wY      = w->geometry ().y ();
-	wWidth  = w->geometry ().width () +
-		  w->geometry ().border () * 2;
-	wHeight = w->geometry ().height () +
-		  w->geometry ().border () * 2;
+	wX      = w->serverGeometry ().x ();
+	wY      = w->serverGeometry ().y ();
+	wWidth  = w->serverGeometry ().width () +
+		  w->serverGeometry ().border () * 2;
+	wHeight = w->serverGeometry ().height () +
+		  w->serverGeometry ().border () * 2;
 
 	ms->x += xRoot - lastPointerX;
 	ms->y += yRoot - lastPointerY;
@@ -484,8 +484,8 @@ moveHandleMotionEvent (CompScreen *s,
 
 	if (dx || dy)
 	{
-	    w->move (wX + dx - w->geometry ().x (),
-		     wY + dy - w->geometry ().y (), false);
+	    w->move (wX + dx - w->serverGeometry ().x (),
+		     wY + dy - w->serverGeometry ().y (), false);
 
 	    if (!ms->optionGetLazyPositioning ())
 		w->syncPosition ();

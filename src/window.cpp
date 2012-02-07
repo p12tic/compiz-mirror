@@ -906,8 +906,8 @@ PrivateWindow::updateRegion ()
 
     r.x      = -priv->serverGeometry.border ();
     r.y      = -priv->serverGeometry.border ();
-    r.width  = priv->serverGeometry.width () + priv->geometry.border ();
-    r.height = priv->serverGeometry.height () + priv->geometry.border ();
+    r.width  = priv->serverGeometry.width () + priv->serverGeometry.border ();
+    r.height = priv->serverGeometry.height () + priv->serverGeometry.border ();
 
     if (nBounding < 1)
     {
@@ -1440,7 +1440,7 @@ CompWindow::unmap ()
     priv->attrib.map_state = IsUnmapped;
     priv->invisible = true;
 
-    if (priv->shaded && priv->geometry.height ())
+    if (priv->shaded)
     {
 	priv->updateFrameWindow ();
     }
@@ -6429,8 +6429,8 @@ CompWindow::updateFrameRegion ()
 	    priv->frameRegion &= CompRegion (r);
 	}
 
-	x = priv->geometry.x () - priv->input.left;
-	y = priv->geometry.y () - priv->input.top;
+	x = priv->serverGeometry.x () - priv->input.left;
+	y = priv->serverGeometry.y () - priv->input.top;
 
 	XShapeCombineRegion (screen->dpy (), priv->serverFrame,
 			     ShapeBounding, -x, -y,
