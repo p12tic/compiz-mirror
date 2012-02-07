@@ -848,8 +848,8 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 
     for (unsigned int i = 0; i < n; i++)
     {
-	x1 = rects[i].x + priv->geometry.border ();
-	y1 = rects[i].y + priv->geometry.border ();
+	x1 = rects[i].x + priv->serverGeometry.border ();
+	y1 = rects[i].y + priv->serverGeometry.border ();
 	x2 = x1 + rects[i].width;
 	y2 = y1 + rects[i].height;
 
@@ -857,17 +857,17 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 	    x1 = 0;
 	if (y1 < 0)
 	    y1 = 0;
-	if (x2 > priv->geometry.width ())
-	    x2 = priv->geometry.height ();
-	if (y2 > priv->geometry.width ())
-	    y2 = priv->geometry.height ();
+	if (x2 > priv->serverGeometry.width ())
+	    x2 = priv->serverGeometry.height ();
+	if (y2 > priv->serverGeometry.width ())
+	    y2 = priv->serverGeometry.height ();
 
 	if (y1 < y2 && x1 < x2)
 	{
-	    x1 += priv->geometry.x ();
-	    y1 += priv->geometry.y ();
-	    x2 += priv->geometry.x ();
-	    y2 += priv->geometry.y ();
+	    x1 += priv->serverGeometry.x ();
+	    y1 += priv->serverGeometry.y ();
+	    x2 += priv->serverGeometry.x ();
+	    y2 += priv->serverGeometry.y ();
 
 	    ret += CompRect (x1, y1, x2 - x1, y2 - y1);
 	}
@@ -895,17 +895,19 @@ PrivateWindow::updateRegion ()
     {
 	int order;
 
+	/* We should update the server here */
+	XSync (screen->dpy (), false);
+
 	boundingShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
 					 	  ShapeBounding, &nBounding, &order);
 	inputShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
 					       ShapeInput, &nInput, &order);
-
     }
 
-    r.x      = -priv->geometry.border ();
-    r.y      = -priv->geometry.border ();
-    r.width  = priv->geometry.width () + priv->geometry.border ();
-    r.height = priv->geometry.height () + priv->geometry.border ();
+    r.x      = -priv->serverGeometry.border ();
+    r.y      = -priv->serverGeometry.border ();
+    r.width  = priv->serverGeometry.width () + priv->geometry.border ();
+    r.height = priv->serverGeometry.height () + priv->geometry.border ();
 
     if (nBounding < 1)
     {
@@ -2970,12 +2972,6 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 {
     unsigned int frameValueMask = 0;
 
-    /* Immediately sync window position
-     * if plugins were updating w->geometry () directly
-     * in order to avoid a race condition */
-
-    window->syncPosition ();
-
     /* Remove redundant bits */
 
     xwc->x = valueMask & CWX ? xwc->x : serverGeometry.x ();
@@ -3125,79 +3121,6 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    pendingConfigures.add (pc);
 
 	    XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
-	}
-	else
-	{
-	    /* Craft an XConfigureWindow event to send to the frame window */
-	    XConfigureEvent xev;
-	    XWindowAttributes attrib;
-	    unsigned int      nchildren = 0;
-	    Window            rootRet = 0, parentRet = 0;
-	    Window            *children = NULL;
-
-	    XWindowChanges wc = *xwc;
-
-	    wc.x      = serverFrameGeometry.x ();
-	    wc.y      = serverFrameGeometry.y ();
-	    wc.width  = serverFrameGeometry.width ();
-	    wc.height = serverFrameGeometry.height ();
-
-	    xev.type   = ConfigureNotify;
-	    xev.event  = screen->root ();
-	    xev.window = priv->serverFrame;
-
-	    XGrabServer (screen->dpy ());
-
-	    if (XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib))
-	    {
-		xev.x	     = attrib.x;
-		xev.y	     = attrib.y;
-		xev.width	     = attrib.width;
-		xev.height	     = attrib.height;
-		xev.border_width = attrib.border_width;
-		xev.above = None;
-
-		/* We need to ensure that the stacking order is
-		 * based on the current server stacking order so
-		 * find the sibling to this window's frame in the
-		 * server side stack and stack above that */
-		XQueryTree (screen->dpy (), screen->root (), &rootRet, &parentRet, &children, &nchildren);
-
-		if (nchildren)
-		{
-		    for (unsigned int i = 0; i < nchildren; i++)
-		    {
-			if (i + 1 == nchildren ||
-				children[i + 1] == ROOTPARENT (window))
-			{
-			    xev.above = children[i];
-			    break;
-			}
-		    }
-		}
-
-		if (children)
-		    XFree (children);
-
-		if (!xev.above)
-		    xev.above = (window->serverPrev) ? ROOTPARENT (window->serverPrev) : None;
-
-		xev.override_redirect = priv->attrib.override_redirect;
-
-	    }
-
-	    compiz::X11::PendingEvent::Ptr pc =
-		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-									      new compiz::X11::PendingConfigureEvent (
-										  screen->dpy (), serverFrame, valueMask, &wc)));
-
-	    pendingConfigures.add (pc);
-
-	    XSendEvent (screen->dpy (), screen->root (), false,
-			SubstructureNotifyMask, (XEvent *) &xev);
-
-	    XUngrabServer (screen->dpy ());
-	    XSync (screen->dpy (), false);
 	}
 
 	valueMask &= ~(CWSibling | CWStackMode);
@@ -3454,7 +3377,6 @@ CompWindow::configureXWindow (unsigned int valueMask,
 	if (!priv->frameRegion.isEmpty ())
 	    priv->frameRegion.translate (dx, dy);
 	moveNotify (dx, dy, priv->nextMoveImmediate);
-
 	priv->nextMoveImmediate = true;
     }
 }
@@ -6549,6 +6471,11 @@ CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 
 	priv->updateSize ();
 	priv->updateFrameWindow ();
+
+	/* Always send a moveNotify
+	 * whenever the frame extents update
+	 * so that plugins can re-position appropriately */
+	moveNotify (0, 0, true);
     }
 
     /* Use b for _NET_WM_FRAME_EXTENTS here because
