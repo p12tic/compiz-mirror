@@ -213,6 +213,8 @@ class PrivateScreen :
 	PrivateScreen (CompScreen *screen);
 	~PrivateScreen ();
 
+	bool init (const char *name);
+
 	bool setOption (const CompString &name, CompOption::Value &value);
 
 	std::list <XEvent> queueEvents ();
@@ -379,6 +381,9 @@ class PrivateScreen :
 	void setDefaultWindowAttributes (XWindowAttributes *);
 
 	void handleSignal (int signum);
+
+	static void compScreenSnEvent (SnMonitorEvent *event,
+			   void           *userData);
 
     public:
 

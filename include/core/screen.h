@@ -629,10 +629,6 @@ class CompScreenImpl : public CompScreen
 			      CompAction::State  state,
 			      CompOption::Vector &options);
 
-	static void
-	compScreenSnEvent (SnMonitorEvent *event,
-			   void           *userData);
-
     private:
         virtual bool _setOptionForPlugin(const char *, const char *, CompOption::Value &);
         virtual bool _initPluginForScreen(CompPlugin *);

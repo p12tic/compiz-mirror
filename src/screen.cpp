@@ -2119,20 +2119,20 @@ PrivateScreen::removeAllSequences ()
 }
 
 void
-CompScreenImpl::compScreenSnEvent (SnMonitorEvent *event,
+PrivateScreen::compScreenSnEvent (SnMonitorEvent *event,
 			       void           *userData)
 {
-    CompScreenImpl	      *screen = (CompScreenImpl *) userData;
+    PrivateScreen	      *self = (PrivateScreen *) userData;
     SnStartupSequence *sequence;
 
     sequence = sn_monitor_event_get_startup_sequence (event);
 
     switch (sn_monitor_event_get_type (event)) {
     case SN_MONITOR_EVENT_INITIATED:
-	screen->priv->addSequence (sequence);
+	self->addSequence (sequence);
 	break;
     case SN_MONITOR_EVENT_COMPLETED:
-	screen->priv->removeSequence (sequence);
+	self->removeSequence (sequence);
 	break;
     case SN_MONITOR_EVENT_CHANGED:
     case SN_MONITOR_EVENT_CANCELED:
@@ -4445,6 +4445,13 @@ CompScreenImpl::CompScreenImpl ()
 bool
 CompScreenImpl::init (const char *name)
 {
+    return priv->init(name);
+}
+
+bool
+PrivateScreen::init (const char *name)
+{
+    PrivateScreen* priv = this;  // TODO remove
     Window               focus;
     int                  revertTo, i;
     int                  xkbOpcode;
@@ -4470,9 +4477,9 @@ CompScreenImpl::init (const char *name)
 
     priv->ctx = Glib::MainContext::get_default ();
     priv->mainloop = Glib::MainLoop::create (priv->ctx, false);
-    priv->sighupSource = CompSignalSource::create (SIGHUP, boost::bind (&PrivateScreen::handleSignal, priv.get(), _1));
-    priv->sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, priv.get(), _1));
-    priv->sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, priv.get(), _1));
+    priv->sighupSource = CompSignalSource::create (SIGHUP, boost::bind (&PrivateScreen::handleSignal, this, _1));
+    priv->sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, this, _1));
+    priv->sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, this, _1));
 
     dpy = priv->dpy = XOpenDisplay (name);
     if (!priv->dpy)
@@ -4782,7 +4789,7 @@ CompScreenImpl::init (const char *name)
 
     priv->setDesktopHints ();
     priv->setSupportingWmCheck ();
-    updateSupportedWmHints ();
+    screen->updateSupportedWmHints ();
 
     priv->normalCursor = XCreateFontCursor (dpy, XC_left_ptr);
     priv->busyCursor   = XCreateFontCursor (dpy, XC_watch);
@@ -4819,7 +4826,7 @@ CompScreenImpl::init (const char *name)
 	CoreWindow *cw = new CoreWindow (children[i]);
 	cw->manage (i ? children[i - 1] : 0, attrib);
 	delete cw;
-	removeFromCreatedWindows (cw);
+	screen->removeFromCreatedWindows (cw);
     }
 
     /* enforce restack on all windows
@@ -4847,17 +4854,17 @@ CompScreenImpl::init (const char *name)
 
     if (focus == None || focus == PointerRoot)
     {
-	focusDefaultWindow ();
+	screen->focusDefaultWindow ();
     }
     else
     {
 	CompWindow *w;
 
-	w = findWindow (focus);
+	w = screen->findWindow (focus);
 	if (w)
 	    w->moveInputFocusTo ();
 	else
-	    focusDefaultWindow ();
+	    screen->focusDefaultWindow ();
     }
 
     /* Need to set a default here so that the value isn't uninitialized
@@ -4873,7 +4880,7 @@ CompScreenImpl::init (const char *name)
      * plugins loaded on the command line screen's and then
      * we need to call updatePlugins () to init the remaining
      * screens from option changes */
-    assert (CompPlugin::screenInitPlugins (this));
+    assert (CompPlugin::screenInitPlugins (screen));
 
     /* The active plugins list might have been changed - load any
      * new plugins */
