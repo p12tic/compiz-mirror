@@ -4897,42 +4897,6 @@ PrivateScreen::init (const char *name)
 
 CompScreenImpl::~CompScreenImpl ()
 {
-    CompPlugin  *p;
-
-    priv->removeAllSequences ();
-
-    while (!priv->windows.empty ())
-	delete priv->windows.front ();
-
-    while ((p = CompPlugin::pop ()))
-	CompPlugin::unload (p);
-
-    XUngrabKey (priv->dpy, AnyKey, AnyModifier, priv->root);
-
-    priv->initialized = false;
-
-    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
-	XDestroyWindow (priv->dpy, priv->screenEdge[i].id);
-
-    XDestroyWindow (priv->dpy, priv->grabWindow);
-
-    if (priv->defaultIcon)
-	delete priv->defaultIcon;
-
-    XFreeCursor (priv->dpy, priv->invisibleCursor);
-
-    if (priv->desktopHintData)
-	free (priv->desktopHintData);
-
-    if (priv->snContext)
-	sn_monitor_context_unref (priv->snContext);
-
-    if (priv->snDisplay)
-	sn_display_unref (priv->snDisplay);
-
-    XSync (priv->dpy, False);
-    XCloseDisplay (priv->dpy);
-
     screen = NULL;
 }
 
@@ -5037,6 +5001,42 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 
 PrivateScreen::~PrivateScreen ()
 {
+    CompPlugin  *p;
+
+    this->removeAllSequences ();
+
+    while (!this->windows.empty ())
+	delete this->windows.front ();
+
+    while ((p = CompPlugin::pop ()))
+	CompPlugin::unload (p);
+
+    XUngrabKey (this->dpy, AnyKey, AnyModifier, this->root);
+
+    this->initialized = false;
+
+    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
+	XDestroyWindow (this->dpy, this->screenEdge[i].id);
+
+    XDestroyWindow (this->dpy, this->grabWindow);
+
+    if (this->defaultIcon)
+	delete this->defaultIcon;
+
+    XFreeCursor (this->dpy, this->invisibleCursor);
+
+    if (this->desktopHintData)
+	free (this->desktopHintData);
+
+    if (this->snContext)
+	sn_monitor_context_unref (this->snContext);
+
+    if (this->snDisplay)
+	sn_display_unref (this->snDisplay);
+
+    XSync (this->dpy, False);
+    XCloseDisplay (this->dpy);
+
     delete timeout;
     delete source;
 

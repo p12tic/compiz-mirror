@@ -201,6 +201,7 @@ TEST(PrivateScreenTest, calling_updatePlugins_does_not_error)
     PrivateScreen ps(&comp_screen);
 
     // Stuff that has to be done before calling updatePlugins()
+    ps.init(0);
     CompOption::Value::Vector values;
     values.push_back ("core");
     ps.plugin.set (CompOption::TypeString, values);
@@ -344,6 +345,7 @@ TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
     PrivateScreen& ps(*comp_screen.priv.get());
 
     // Stuff that has to be done before calling updatePlugins()
+    ps.init(0);
     CompOption::Value::Vector values;
     values.push_back ("core");
     ps.plugin.set (CompOption::TypeString, values);
@@ -373,4 +375,27 @@ TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(2);
     EXPECT_CALL(comp_screen, _finiPluginForScreen(Ne((void*)0))).Times(2);
     for (CompPlugin* p; (p = CompPlugin::pop ()) != 0; CompPlugin::unload (p));
+}
+
+TEST(PrivateScreenTest, calling_init)
+{
+    using namespace testing;
+
+    MockCompScreen comp_screen;
+
+    EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
+    EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
+    EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
+
+    // The PrivateScreen ctor indirectly calls screen->dpy().
+    // We should kill this dependency
+    xdisplay display;
+    EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
+
+    comp_screen.priv.reset(new PrivateScreen(&comp_screen));
+    PrivateScreen& ps(*comp_screen.priv.get());
+
+    MockPluginFilesystem mockfs;
+
+    ps.init(0);
 }
