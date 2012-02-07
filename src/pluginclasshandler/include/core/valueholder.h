@@ -30,13 +30,16 @@
 #include <core/logmessage.h>
 #include <core/privateunion.h>
 
+#include <boost/noncopyable.hpp>
+
 class PrivateValueHolder;
 
-class ValueHolder
+class ValueHolder : boost::noncopyable
 {
     public:
 
 	ValueHolder ();
+	~ValueHolder ();
 
 	void eraseValue (CompString key);
 	bool hasValue (CompString key);

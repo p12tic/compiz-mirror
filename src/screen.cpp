@@ -769,6 +769,8 @@ PrivateScreen::processEvents ()
 	screen->handleEvent (&event);
 	inHandleEvent = false;
 
+	XFlush (dpy);
+
 	lastPointerX = pointerX;
 	lastPointerY = pointerY;
 	lastPointerMods = pointerMods;
@@ -3196,7 +3198,7 @@ PrivateScreen::addScreenActions ()
 bool
 CompScreen::addAction (CompAction *action)
 {
-    if (!screenInitalized || !priv->initialized)
+    if (!priv->initialized)
 	return false;
 
     if (action->active ())
@@ -4333,7 +4335,6 @@ CompScreen::CompScreen ():
     CompPlugin  *corePlugin;
 
     priv = new PrivateScreen (this);
-    assert (priv);
 
     screenInitalized = true;
 
@@ -4404,10 +4405,6 @@ CompScreen::init (const char *name)
 
     snprintf (priv->displayString, 255, "DISPLAY=%s",
 	      DisplayString (dpy));
-
-#ifdef DEBUG
-    XSynchronize (priv->dpy, true);
-#endif
 
     Atoms::init (priv->dpy);
 

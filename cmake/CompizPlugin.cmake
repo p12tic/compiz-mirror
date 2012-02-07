@@ -363,9 +363,8 @@ macro (_build_compiz_plugin plugin)
             ${COMPIZ_LINK_DIRS}
             ${${_PLUGIN}_PKG_LIBDIRS}
             ${${_PLUGIN}_LIBDIRS}
+            ${COMPIZ_LIBDIR}
             ${PLUGIN_LIBDIR}
-	    ${libdir}
-            ${COMPIZ_LIBDIR}/compiz
 	    ${${_PLUGIN}_MOD_LIBRARY_DIRS}
             ${SYSTEM_LINK_DIRS}
 	)
