@@ -28,7 +28,7 @@ class GtkWindowDecoratorTestLocalMenu :
 	    mWindow = wnck_window_get (mXWindow);
 
 	    g_setenv("GSETTINGS_BACKEND", "memory", true);
-	    mSettings = g_settings_new ("com.canonical.Unity.Menus");
+	    mSettings = g_settings_new ("com.canonical.indicator.appmenu");
 	}
 
 	virtual void TearDown ()

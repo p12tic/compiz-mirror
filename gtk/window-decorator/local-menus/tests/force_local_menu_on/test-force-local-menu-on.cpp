@@ -1,6 +1,9 @@
 #include "test-local-menu.h"
 #include <cstring>
 
+#define GLOBAL 0
+#define LOCAL 1
+
 namespace
 {
     void initializeMetaButtonLayout (MetaButtonLayout *layout)
@@ -28,7 +31,7 @@ class GtkWindowDecoratorTestLocalMenuLayout :
 	{
 	    GtkWindowDecoratorTestLocalMenu::SetUp ();
 	    ::initializeMetaButtonLayout (&mLayout);
-	    g_settings_set_boolean (getSettings (), "force-local-menus", TRUE);
+	    g_settings_set_enum (getSettings (), "menu-mode", LOCAL);
 	}
 
     private:

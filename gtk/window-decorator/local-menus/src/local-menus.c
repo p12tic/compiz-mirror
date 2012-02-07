@@ -30,6 +30,16 @@
 #define GLOBAL 0
 #define LOCAL 1
 
+gint menu_mode = GLOBAL;
+
+static void
+gwd_menu_mode_changed (GSettings *settings,
+		       gchar     *key,
+		       gpointer  user_data)
+{
+    menu_mode = g_settings_get_enum (settings, "menu-mode");
+}
+
 active_local_menu *active_menu;
 pending_local_menu *pending_menu;
 
@@ -44,18 +54,15 @@ gwd_window_should_have_local_menu (WnckWindow *win)
 	if (g_str_equal (*schemas, "com.canonical.indicator.appmenu"))
 	{
 	    lim_settings = g_settings_new ("com.canonical.indicator.appmenu");
+	    menu_mode = g_settings_get_enum (lim_settings, "menu-mode");
+	    g_signal_connect (lim_settings, "changed::menu-mode", G_CALLBACK (gwd_menu_mode_changed), NULL);
 	    break;
 	}
 	++schemas;
     }
 
     if (lim_settings)
-    {
-	if (g_settings_get_enum (lim_settings, "menu-mode") == LOCAL)
-	{
-	    return TRUE;
-	}
-    }
+	return menu_mode;
 #endif
 
     return FALSE;
@@ -233,6 +240,7 @@ force_local_menus_on (WnckWindow       *win,
 		    {
 			button_layout->left_buttons[i + 1] = META_BUTTON_FUNCTION_LAST;
 			button_layout->left_buttons[i] = META_BUTTON_FUNCTION_WINDOW_MENU;
+			break;
 		    }
 		}
 	    }
@@ -250,6 +258,7 @@ force_local_menus_on (WnckWindow       *win,
 		    {
 			button_layout->right_buttons[i + 1] = META_BUTTON_FUNCTION_LAST;
 			button_layout->right_buttons[i] = META_BUTTON_FUNCTION_WINDOW_MENU;
+			break;
 		    }
 		}
 	    }
