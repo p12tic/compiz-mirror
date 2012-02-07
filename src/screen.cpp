@@ -4543,14 +4543,14 @@ PrivateScreen::init (const char *name)
 	XSelectInput (dpy, currentWmSnOwner, StructureNotifyMask);
     }
 
-    Window root = XRootWindow (dpy, DefaultScreen (dpy));
+    Window root_tmp = XRootWindow (dpy, DefaultScreen (dpy));
 
     XSetWindowAttributes attr;
     attr.override_redirect = true;
     attr.event_mask        = PropertyChangeMask;
 
     Window newWmSnOwner =
-	XCreateWindow (dpy, root, -100, -100, 1, 1, 0,
+	XCreateWindow (dpy, root_tmp, -100, -100, 1, 1, 0,
 		       CopyFromParent, CopyFromParent,
 		       CopyFromParent,
 		       CWOverrideRedirect | CWEventMask,
@@ -4581,7 +4581,7 @@ PrivateScreen::init (const char *name)
 
     /* Send client message indicating that we are now the window manager */
     event.xclient.type         = ClientMessage;
-    event.xclient.window       = root;
+    event.xclient.window       = root_tmp;
     event.xclient.message_type = Atoms::manager;
     event.xclient.format       = 32;
     event.xclient.data.l[0]    = wmSnTimestamp;
@@ -4590,7 +4590,7 @@ PrivateScreen::init (const char *name)
     event.xclient.data.l[3]    = 0;
     event.xclient.data.l[4]    = 0;
 
-    XSendEvent (dpy, root, FALSE, StructureNotifyMask, &event);
+    XSendEvent (dpy, root_tmp, FALSE, StructureNotifyMask, &event);
 
     /* Wait for old window manager to go away */
     if (currentWmSnOwner != None)
@@ -4613,7 +4613,7 @@ PrivateScreen::init (const char *name)
      * that windows don't receive invalid stack positions
      * but we don't want to receive an invalid CreateNotify
      * when we create windows like edge windows here either */
-    XSelectInput (dpy, root,
+    XSelectInput (dpy, root_tmp,
 		  StructureNotifyMask      |
 		  PropertyChangeMask       |
 		  LeaveWindowMask          |
@@ -4635,7 +4635,7 @@ PrivateScreen::init (const char *name)
     {
 	Window rt = XRootWindow (dpy, i);
 
-	if (rt == root)
+	if (rt == root_tmp)
 	    continue;
 
 	XSelectInput (dpy, rt,
@@ -4662,7 +4662,7 @@ PrivateScreen::init (const char *name)
 
     screenNum = DefaultScreen (dpy);
     colormap  = DefaultColormap (dpy, screenNum);
-    root	    = root;
+    root = root_tmp;
 
     snContext = sn_monitor_context_new (snDisplay, screenNum,
 					      compScreenSnEvent, this, NULL);
