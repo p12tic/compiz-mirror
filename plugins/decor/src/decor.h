@@ -124,7 +124,7 @@ class DecorationList
 
         DecorationList ();
 
-	std::vector <Decoration::Ptr> mList;
+	std::list <Decoration::Ptr> mList;
 };
 
 struct ScaledQuad {
@@ -196,10 +196,10 @@ class DecorScreen :
 	Window dmWin;
 	int    dmSupports;
 
+	bool cmActive;
+
 	DecorationList decor[DECOR_NUM];
 	Decoration::Ptr     windowDefault;
-
-	bool cmActive;
 
 	std::map<Window, DecorWindow *> frames;
 

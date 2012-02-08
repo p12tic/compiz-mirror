@@ -722,11 +722,6 @@ DecorationList::updateDecoration (Window   id,
     int		    result, format;
     unsigned int    type;
 
-    /* FIXME: Should really check the property to see
-     * if the decoration changed, and /then/ release
-     * and re-update it, but for now just releasing all */
-    mList.clear ();
-
     result = XGetWindowProperty (screen->dpy (), id,
                                  decorAtom, 0L,
                                  PROP_HEADER_SIZE + 6 * (BASE_PROP_SIZE +
@@ -768,21 +763,120 @@ DecorationList::updateDecoration (Window   id,
 
     type = decor_property_get_type (prop);
 
+    std::list <Decoration::Ptr> remove;
+    std::list <int> skip;
+
+    /* only recreate decorations if they need to be updated */
+    foreach (const Decoration::Ptr &d, mList)
+    {
+	decor_extents_t input, border, maxInput, maxBorder;
+
+	input.left = d->input.left;
+	input.right = d->input.right;
+	input.top = d->input.top;
+	input.bottom = d->input.bottom;
+
+	border.left = d->border.left;
+	border.right = d->border.right;
+	border.top = d->border.top;
+	border.bottom = d->border.bottom;
+
+	maxInput.left = d->maxInput.left;
+	maxInput.right = d->maxInput.right;
+	maxInput.top = d->maxInput.top;
+	maxInput.bottom = d->maxInput.bottom;
+
+	maxBorder.left = d->maxBorder.left;
+	maxBorder.right = d->maxBorder.right;
+	maxBorder.top = d->maxBorder.top;
+	maxBorder.bottom = d->maxBorder.bottom;
+
+	int num = decor_match_pixmap (prop, n, &d->texture->pixmap, &input, &border, &maxInput, &maxBorder,
+				     d->minWidth, d->minHeight, d->frameType, d->frameState, d->frameActions,
+				    d->quad.get (), d->nQuad);
+	if (num != -1)
+	    skip.push_back (num);
+	else
+	    remove.push_back (d);
+    }
+
     /* Create a new decoration for each individual item on the property */
     for (int i = 0; i < decor_property_get_num (prop); i++)
     {
+	if (std::find (skip.begin (), skip.end (), i) != skip.end ())
+	    continue;
+
 	try
 	{
+	    std::list <Decoration::Ptr>::iterator it = mList.begin ();
 	    Decoration::Ptr d = Decoration::create (id, prop, n, type, i);
-	    mList.push_back (d);
+
+	    /* Try to replace an existing decoration */
+	    for (; it != mList.end (); it++)
+	    {
+		if ((*it)->frameType == d->frameType &&
+		    (*it)->frameState == d->frameState &&
+		    (*it)->frameActions == d->frameActions)
+		{
+		    remove.remove ((*it));
+		    (*it) = d;
+		    break;
+		}
+	    }
+
+	    if (it == mList.end ())
+		mList.push_back (d);
 	}
 	catch (...)
 	{
-            XFree (data);
-            mList.clear ();
-            return false;
+	    /* Creating a new decoration failed ... see if we can use
+	     * the old one */
+
+	    unsigned int    frameType, frameState, frameActions;
+	    Pixmap	    pixmap = None;
+	    decor_extents_t border;
+	    decor_extents_t input;
+	    decor_extents_t maxBorder;
+	    decor_extents_t maxInput;
+	    int		    minWidth;
+	    int		    minHeight;
+	    int             ok = 0;
+	    boost::shared_array <decor_quad_t> quad (new decor_quad_t[N_QUADS_MAX]);
+
+	    if (type == WINDOW_DECORATION_TYPE_PIXMAP)
+	    {
+		ok = decor_pixmap_property_to_quads (prop, i, n, &pixmap, &input,
+							&border, &maxInput,
+							&maxBorder, &minWidth, &minHeight,
+							&frameType, &frameState, &frameActions, quad.get ());
+	    }
+	    else if (type == WINDOW_DECORATION_TYPE_WINDOW)
+	    {
+		ok = decor_window_property (prop, i, n, &input, &maxInput,
+					    &minWidth, &minHeight, &frameType, &frameState, &frameActions);
+	    }
+
+	    if (ok)
+	    {
+		std::list <Decoration::Ptr>::iterator it = mList.begin ();
+
+		/* Use an existing decoration */
+		for (; it != mList.end (); it++)
+		{
+		    if ((*it)->frameType == frameType &&
+			(*it)->frameState == frameState &&
+			(*it)->frameActions == frameActions)
+		    {
+			remove.remove ((*it));
+			break;
+		    }
+		}
+	    }
 	}
     }
+
+    foreach (const Decoration::Ptr &d, remove)
+	mList.remove (d);
 
     XFree (data);
 
@@ -1179,7 +1273,7 @@ const Decoration::Ptr &
 DecorationList::findMatchingDecoration (CompWindow *w,
                                         bool       sizeCheck)
 {
-    std::vector <Decoration::Ptr>::iterator cit = mList.end ();
+    std::list <Decoration::Ptr>::iterator cit = mList.end ();
     DECOR_WINDOW (w);
 
     if (mList.size ())
@@ -1194,7 +1288,7 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 	    if (dw->checkSize (mList.front ()))
 		cit = mList.begin ();
 
-	for (std::vector <Decoration::Ptr>::iterator it = mList.begin ();
+	for (std::list <Decoration::Ptr>::iterator it = mList.begin ();
 	     it != mList.end (); it++)
 	{
 	    const Decoration::Ptr &d = *it;
@@ -2853,6 +2947,7 @@ DecorScreen::DecorScreen (CompScreen *s) :
     textures (),
     dmWin (None),
     dmSupports (0),
+    cmActive (false),
     windowDefault (new Decoration (WINDOW_DECORATION_TYPE_WINDOW,
 				   decor_extents_t (),
 				   decor_extents_t (),
@@ -2865,8 +2960,7 @@ DecorScreen::DecorScreen (CompScreen *s) :
 				   0,
 				   None,
 				   boost::shared_array <decor_quad_t> (NULL),
-				   0)),
-    cmActive (false)
+				   0))
 {
     supportingDmCheckAtom =
 	XInternAtom (s->dpy (), DECOR_SUPPORTING_DM_CHECK_ATOM_NAME, 0);
