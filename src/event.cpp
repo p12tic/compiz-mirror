@@ -751,7 +751,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		    }
 		}
 
-		priv_DELETEME->edgeWindow = None;
+		edgeWindow = None;
 
 		o[0].value ().set ((int) event->xcrossing.window);
 		o[1].value ().set ((int) activeWindow);
@@ -857,7 +857,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    unsigned int      edge = 0;
 	    CompAction::State state;
 
-	    if (priv_DELETEME->xdndWindow == event->xclient.window)
+	    if (xdndWindow == event->xclient.window)
 	    {
 		CompWindow *w;
 

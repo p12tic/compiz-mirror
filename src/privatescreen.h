@@ -387,8 +387,6 @@ class PrivateScreen :
 
     public:
 
-	PrivateScreen *priv_DELETEME;
-
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
 	/* We cannot use RefPtrs. See
