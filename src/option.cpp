@@ -417,7 +417,7 @@ CompOption::CompOption (CompString name, CompOption::Type type) :
 }
 
 static void
-finiScreenOptionValue (CompScreenImpl        *s,
+finiScreenOptionValue (CompScreen        *s,
 		       CompOption::Value &v)
 {
     switch (v.type()) {
