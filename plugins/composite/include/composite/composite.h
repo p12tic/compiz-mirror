@@ -37,7 +37,6 @@
 #include "core/output.h"
 #include "core/screen.h"
 #include "core/wrapsystem.h"
-#include "composite/fpslimiter.h"
 
 #define COMPOSITE_SCREEN_DAMAGE_PENDING_MASK (1 << 0)
 #define COMPOSITE_SCREEN_DAMAGE_REGION_MASK  (1 << 1)
@@ -81,6 +80,14 @@
  */
 #define PAINT_SCREEN_NO_BACKGROUND_MASK            (1 << 6)
 
+
+typedef enum
+{
+    CompositeFPSLimiterModeDisabled = 0,
+    CompositeFPSLimiterModeDefault,
+    CompositeFPSLimiterModeVSyncLike
+} CompositeFPSLimiterMode;
+
 class PrivateCompositeScreen;
 class PrivateCompositeWindow;
 class CompositeScreen;
@@ -99,10 +106,6 @@ public:
 			       const CompRegion    &region) = 0;
 
     virtual bool hasVSync () { return false; };
-    /* Return true if we are allowed to wait some more
-     * for framerate throttling */
-    virtual bool waitVSync (unsigned int mask) { return false; }
-    virtual void syncBuffers (unsigned int        mask) = 0;
 
     virtual void prepareDrawing () {};
     virtual bool compositingActive () { return false; };
