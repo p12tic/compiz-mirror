@@ -24,6 +24,7 @@
  */
 
 #include <boost/shared_ptr.hpp>
+#include <boost/shared_array.hpp>
 #include <core/window.h>
 #include <core/pluginclasshandler.h>
 
@@ -68,12 +69,30 @@ class DecorWindow;
 class Decoration {
 
     public:
-        static Decoration * create (Window        id,
-                                    long          *prop,
-                                    unsigned int  size,
-                                    unsigned int  type,
-                                    unsigned int  nOffset);
-	static void release (Decoration *);
+
+	typedef boost::shared_ptr <Decoration> Ptr;
+
+	static Decoration::Ptr create (Window        id,
+				       long          *prop,
+				       unsigned int  size,
+				       unsigned int  type,
+				       unsigned int  nOffset);
+
+	Decoration (int   type,
+		    const decor_extents_t &border,
+		    const decor_extents_t &input,
+		    const decor_extents_t &maxBorder,
+		    const decor_extents_t &maxInput,
+		    unsigned int frameType,
+		    unsigned int frameState,
+		    unsigned int frameActions,
+		    unsigned int minWidth,
+		    unsigned int minHeight,
+		    Pixmap       pixmap,
+		    const boost::shared_array <decor_quad_t> &quad,
+		    unsigned int nQuad);
+
+	~Decoration ();
 
     public:
 	int                       refCount;
@@ -88,7 +107,7 @@ class Decoration {
 	unsigned int		  frameType;
 	unsigned int		  frameState;
 	unsigned int		  frameActions;
-	decor_quad_t              *quad;
+	boost::shared_array <decor_quad_t> quad;
 	int                       nQuad;
 	int                       type;
 };
@@ -97,16 +116,15 @@ class DecorationList
 {
     public:
         bool updateDecoration  (Window id, Atom decorAtom);
-        Decoration *findMatchingDecoration (CompWindow *w, bool sizeCheck);
+	const Decoration::Ptr & findMatchingDecoration (CompWindow *w, bool sizeCheck);
         void clear ()
         {
-            foreach (Decoration *d, mList)
-                Decoration::release (d);
+	    mList.clear ();
         };
 
         DecorationList ();
 
-        std::vector <Decoration *> mList;
+	std::vector <Decoration::Ptr> mList;
 };
 
 struct ScaledQuad {
@@ -118,11 +136,11 @@ struct ScaledQuad {
 
 class WindowDecoration {
     public:
-	static WindowDecoration * create (Decoration *);
+	static WindowDecoration * create (const Decoration::Ptr &);
 	static void destroy (WindowDecoration *);
 
     public:
-        Decoration *decor;
+	Decoration::Ptr decor;
 	ScaledQuad *quad;
 	int	   nQuad;
 };
@@ -179,7 +197,7 @@ class DecorScreen :
 	int    dmSupports;
 
 	DecorationList decor[DECOR_NUM];
-	Decoration     windowDefault;
+	Decoration::Ptr     windowDefault;
 
 	bool cmActive;
 
@@ -226,7 +244,7 @@ class DecorWindow :
 	void updateOutputFrame ();
 	void updateWindowRegions ();
 
-	bool checkSize (Decoration *decor);
+	bool checkSize (const Decoration::Ptr &decor);
 
 	int shiftX ();
 	int shiftY ();

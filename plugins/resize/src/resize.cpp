@@ -510,10 +510,7 @@ resizeInitiate (CompAction         *action,
 		int top = screen->outputDevs ().at (tco).workArea ().top ();
 		int bottom = screen->outputDevs ().at (bco).workArea ().bottom ();
 
-		if (rs->grabWindowWorkArea)
-		    delete rs->grabWindowWorkArea;
-
-		rs->grabWindowWorkArea = new CompRect (0, 0, 0, 0);
+		rs->grabWindowWorkArea.reset (new CompRect (0, 0, 0, 0));
 		rs->grabWindowWorkArea->setLeft (left);
 		rs->grabWindowWorkArea->setRight (right);
 		rs->grabWindowWorkArea->setTop (top);
@@ -1767,7 +1764,7 @@ ResizeScreen::ResizeScreen (CompScreen *s) :
     releaseButton (0),
     isConstrained (false),
     offWorkAreaConstrained (true),
-    grabWindowWorkArea (NULL)
+    grabWindowWorkArea ()
 {
     CompOption::Vector atomTemplate;
     Display *dpy = s->dpy ();

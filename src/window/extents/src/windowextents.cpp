@@ -65,6 +65,16 @@ compiz::window::extents::shift (const CompWindowExtents &extents,
     return rv;
 }
 
+compiz::window::extents::Extents::Extents () {}
+
+compiz::window::extents::Extents::Extents (int left, int right, int top, int bottom) :
+    left (left),
+    right (right),
+    top (top),
+    bottom (bottom)
+{
+}
+
 bool
 compiz::window::extents::Extents::operator== (const Extents &other)
 {
