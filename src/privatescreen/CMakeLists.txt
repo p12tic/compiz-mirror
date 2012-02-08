@@ -36,18 +36,14 @@ SET( SRCS
   ${compiz_SOURCE_DIR}/src/size.cpp 
 )
 
-ADD_LIBRARY( 
-  compiz_privatescreen STATIC
- 		  
+add_library (compiz_privatescreen STATIC
   ${SRCS}
-  
   ${PUBLIC_HEADERS}
   ${PRIVATE_HEADERS}
 )
 
 ADD_SUBDIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/tests )
 
-SET_TARGET_PROPERTIES(
-  compiz_privatescreen PROPERTIES
+set_target_properties (compiz_privatescreen PROPERTIES
   PUBLIC_HEADER "${PUBLIC_HEADERS}"
 )
