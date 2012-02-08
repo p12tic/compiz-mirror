@@ -2,7 +2,7 @@ include (CompizDefaults)
 include (CompizCommon)
 
 INCLUDE_DIRECTORIES(
-  ${compiz_SOURCE_DIR}/build/generated
+  ${compiz_BINARY_DIR}/generated
   ${compiz_SOURCE_DIR}/include
 
   ${compiz_SOURCE_DIR}/src/timer/include
