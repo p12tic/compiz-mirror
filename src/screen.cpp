@@ -547,6 +547,12 @@ CompScreenImpl::syncEvent ()
 }
 
 
+SnDisplay *
+CompScreenImpl::snDisplay ()
+{
+    return priv->snDisplay;
+}
+
 Window
 CompScreenImpl::activeWindow ()
 {

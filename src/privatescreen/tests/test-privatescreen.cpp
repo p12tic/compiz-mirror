@@ -170,7 +170,7 @@ public:
     MOCK_METHOD0(getCurrentOutputExtents, CompRect ());
     MOCK_METHOD0(normalCursor, Cursor ());
     MOCK_METHOD0(grabbed, bool ());
-
+    MOCK_METHOD0(snDisplay, SnDisplay * ());
 };
 
 // Utility class to help satisfy dependencies
