@@ -318,6 +318,7 @@ public:
     virtual CompRect getCurrentOutputExtents () = 0;
     virtual Cursor normalCursor () = 0;
     virtual bool grabbed () = 0;
+    virtual SnDisplay * snDisplay () = 0;
 
     friend class CompWindow; // TODO get rid of friends
     friend class PrivateWindow; // TODO get rid of friends
@@ -401,6 +402,8 @@ class CompScreenImpl : public CompScreen
 	int shapeEvent ();
 
 	int syncEvent ();
+
+	SnDisplay * snDisplay ();
 
 	Window activeWindow ();
 
