@@ -169,6 +169,8 @@ public:
     MOCK_METHOD0(displayString, const char * ());
     MOCK_METHOD0(getCurrentOutputExtents, CompRect ());
     MOCK_METHOD0(normalCursor, Cursor ());
+    MOCK_METHOD0(grabbed, bool ());
+
 };
 
 // Utility class to help satisfy dependencies
