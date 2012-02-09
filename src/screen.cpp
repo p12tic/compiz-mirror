@@ -796,12 +796,7 @@ PrivateScreen::processEvents ()
 void
 PrivateScreen::updatePlugins ()
 {
-    CompPlugin                *p;
-    unsigned int              nPop, i, j, pListCount = 1;
-    CompOption::Value::Vector pList;
-    CompPlugin::List          pop;
-    bool                      failedPush;
-
+    unsigned int pListCount = 1;
 
     dirtyPluginList = false;
 
@@ -816,20 +811,13 @@ PrivateScreen::updatePlugins ()
 	    pListCount++;
     }
 
-	CompString lpName;
+    CompString lpName;
 	
     foreach (CompOption::Value &lp, list)
     {
 	bool skip = false;
 	
-	try 
-	{
-		lpName = lp.s();
-	} catch(const boost::bad_get&)
-	{
-		lpName.clear();		
-	}
-	
+	lpName = lp.s();
 	
 	if (lpName == "core")
 	    continue;
@@ -848,9 +836,9 @@ PrivateScreen::updatePlugins ()
 	    pListCount++;
     }
 
-    /* dupPluginCount is now the number of plugisn contained in both the
+    /* pListCount is now the number of plugisn contained in both the
      * initial and new plugins list */
-    pList.resize (pListCount);
+    CompOption::Value::Vector pList(pListCount);
 
     if (pList.empty ())
     {
@@ -860,7 +848,7 @@ PrivateScreen::updatePlugins ()
 
     /* Must have core as first plugin */
     pList.at (0) = "core";
-    j = 1;
+    unsigned int j = 1;
 
     /* Add initial plugins */
     foreach (CompString &p, initialPlugins)
@@ -877,52 +865,37 @@ PrivateScreen::updatePlugins ()
 	std::list <CompString>::iterator it = initialPlugins.begin ();
 	bool				 skip = false;
 	
-	try 
-	{
-		if (opt.s () == "core")
-	 	   continue;
-	} catch(const boost::bad_get&)
-	{
-	}
+	if (opt.s () == "core")
+	   continue;
 
 	for (; it != initialPlugins.end (); it++)
 	{
-	        try
-		{
-			if ((*it) == opt.s())
-			{
-			    skip = true;
-			    break;
-			}
-		 } catch (...)
-		 {
-		 }
+	    if ((*it) == opt.s())
+	    {
+		skip = true;
+		break;
+	    }
 	}
 
 	if (!skip)
 	{
-		try
-		{
-		    pList.at (j++).set (opt.s ());
-		} catch(const boost::bad_get&)
-		{
-		    j++;
-		}
+	    pList.at (j++).set (opt.s ());
 	}
     }
 
     assert (j == pList.size ());
 
     /* j is initialized to 1 to make sure we never pop the core plugin */
+    unsigned int              i;
     for (i = j = 1; j < plugin.list ().size () && i < pList.size (); i++, j++)
     {
 	if (plugin.list ().at (j).s () != pList.at (i).s ())
 	    break;
     }
 
-    nPop = plugin.list ().size () - j;
+    CompPlugin::List pop;
 
-    if (nPop)
+    if (unsigned int const nPop = plugin.list ().size () - j)
     {
 	for (j = 0; j < nPop; j++)
 	{
@@ -933,8 +906,9 @@ PrivateScreen::updatePlugins ()
 
     for (; i < pList.size (); i++)
     {
-	p = NULL;
-	failedPush = false;
+	CompPlugin *p = NULL;
+	bool failedPush = false;
+
 	foreach (CompPlugin *pp, pop)
 	{
 	    if (pList[i]. s () == pp->vTable->name ())
@@ -958,12 +932,7 @@ PrivateScreen::updatePlugins ()
 
 	if (p == 0 && !failedPush)
 	{
-	    try
-	    {
-		p = CompPlugin::load (pList[i].s ().c_str ());
-	    } catch (...)
-	    {
-	    }
+	    p = CompPlugin::load (pList[i].s ().c_str ());
 	    
 	    if (p)
 	    {
