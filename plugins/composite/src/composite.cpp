@@ -57,6 +57,35 @@ CompositeScreen::setOption (const CompString  &name,
 }
 
 bool
+PrivateCompositeScreen::setOption (const CompString  &name,
+				   CompOption::Value &value)
+{
+    unsigned int index;
+
+    bool rv = CompositeOptions::setOption (name, value);
+
+    if (!rv || !CompOption::findOption (getOptions (), name, &index))
+	return false;
+
+    switch (index) {
+	case CompositeOptions::DetectRefreshRate:
+	    if (optionGetDetectRefreshRate ())
+		detectRefreshRate ();
+	    break;
+	case CompositeOptions::RefreshRate:
+	    if (optionGetDetectRefreshRate ())
+		return false;
+	    redrawTime = 1000 / optionGetRefreshRate ();
+	    optimalRedrawTime = redrawTime;
+	    break;
+	default:
+	    break;
+    }
+
+    return rv;
+}
+
+bool
 CompositePluginVTable::init ()
 {
     if (!CompPlugin::checkPluginABI ("core", CORE_ABIVERSION))

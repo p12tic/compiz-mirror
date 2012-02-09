@@ -175,6 +175,16 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		    }
 		}
 	    }
+	    else if (randrExtension &&
+		     event->type == randrEvent + RRScreenChangeNotify)
+	    {
+		XRRScreenChangeNotifyEvent *rre;
+
+		rre = (XRRScreenChangeNotifyEvent *) event;
+
+		if (screen->root () == rre->root)
+		    detectRefreshRate ();
+	    }
 	    break;
     }
 }
@@ -249,6 +259,7 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
 
 CompositeScreen::~CompositeScreen ()
 {
+    priv->paintTimer.stop ();
     XCompositeReleaseOverlayWindow (screen->dpy (),
 				    screen->root ());
     delete priv;
@@ -263,17 +274,21 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     exposeRects (),
     windowPaintOffset (0, 0),
     overlayWindowCount (0),
+    redrawTime (1000 / 50),
+    optimalRedrawTime (1000 / 50),
+    scheduled (false),
+    painting (false),
+    reschedule (false),
     slowAnimations (false),
     pHnd (NULL),
-    scheduler (this),
+    FPSLimiterMode (CompositeFPSLimiterModeDefault),
     withDestroyedWindows ()
 {
+    gettimeofday (&lastRedraw, 0);
     // wrap outputChangeNotify
     ScreenInterface::setHandler (screen);
 
     optionSetSlowAnimationsKeyInitiate (CompositeScreen::toggleSlowAnimations);
-    optionSetRefreshRateCapNotify (boost::bind (&PrivateCompositeScreen::detectRefreshRate,
-						this));
 }
 
 PrivateCompositeScreen::~PrivateCompositeScreen ()
@@ -425,6 +440,7 @@ CompositeScreen::unregisterPaintHandler ()
 				    CompositeRedirectManual);
 
     priv->pHnd = NULL;
+    priv->paintTimer.stop ();
 
     hideOutputWindow ();
 }
@@ -446,7 +462,7 @@ CompositeScreen::damageScreen ()
     priv->damageMask |= COMPOSITE_SCREEN_DAMAGE_ALL_MASK;
     priv->damageMask &= ~COMPOSITE_SCREEN_DAMAGE_REGION_MASK;
 
-    priv->scheduler.schedule ();
+    priv->scheduleRepaint ();
 
     /*
      * Call through damageRegion since plugins listening for incoming damage
@@ -475,14 +491,14 @@ CompositeScreen::damageRegion (const CompRegion &region)
 
     if (priv->damage.numRects () > 100)
        damageScreen ();
-    priv->scheduler.schedule ();
+    priv->scheduleRepaint ();
 }
 
 void
 CompositeScreen::damagePending ()
 {
     priv->damageMask |= COMPOSITE_SCREEN_DAMAGE_PENDING_MASK;
-    priv->scheduler.schedule ();
+    priv->scheduleRepaint ();
 }
 
 unsigned int
@@ -609,145 +625,203 @@ CompositeScreen::windowPaintOffset ()
 void
 PrivateCompositeScreen::detectRefreshRate ()
 {
-    unsigned int rate = optionGetRefreshRateCap ();
+    if (optionGetDetectRefreshRate ())
+    {
+	CompString        name;
+	CompOption::Value value;
 
-    if (rate)
-        scheduler.setRefreshRate (rate);
+	value.set ((int) 0);
+
+	if (screen->XRandr ())
+	{
+	    XRRScreenConfiguration *config;
+
+	    config  = XRRGetScreenInfo (screen->dpy (),
+					screen->root ());
+	    value.set ((int) XRRConfigCurrentRate (config));
+
+	    XRRFreeScreenConfigInfo (config);
+	}
+
+	if (value.i () == 0)
+	    value.set ((int) 50);
+
+	mOptions[CompositeOptions::DetectRefreshRate].value ().set (false);
+	screen->setOptionForPlugin ("composite", "refresh_rate", value);
+	mOptions[CompositeOptions::DetectRefreshRate].value ().set (true);
+	optimalRedrawTime = redrawTime = 1000 / value.i ();
+    }
     else
-	scheduler.setFPSLimiterMode (CompositeFPSLimiterModeVSyncLike);
+    {
+	redrawTime = 1000 / optionGetRefreshRate ();
+	optimalRedrawTime = redrawTime;
+    }
 }
 
 CompositeFPSLimiterMode
 CompositeScreen::FPSLimiterMode ()
 {
-    return priv->scheduler.getFPSLimiterMode ();
+    return priv->FPSLimiterMode;
 }
 
 void
 CompositeScreen::setFPSLimiterMode (CompositeFPSLimiterMode newMode)
 {
-    priv->scheduler.setFPSLimiterMode (newMode);
+    priv->FPSLimiterMode = newMode;
 }
 
 void
-PrivateCompositeScreen::prepareScheduledPaint (unsigned int timeDiff)
+PrivateCompositeScreen::scheduleRepaint ()
 {
-    if (pHnd)
-	pHnd->prepareDrawing ();
-
-    cScreen->preparePaint (slowAnimations ? 1 : timeDiff);
-}
-
-bool
-PrivateCompositeScreen::schedulerCompositingActive ()
-{
-    return pHnd ? pHnd->compositingActive () : false;
-}
-
-bool
-PrivateCompositeScreen::schedulerHasVsync ()
-{
-    return pHnd ? pHnd->hasVSync () : false;
-}
-
-void
-PrivateCompositeScreen::paintScheduledPaint ()
-{
-    int mask;
-
-    /* substract top most overlay window region */
-    if (overlayWindowCount)
+    if (painting)
     {
-	for (CompWindowList::reverse_iterator rit =
-	     screen->windows ().rbegin ();
-	     rit != screen->windows ().rend (); rit++)
-        {
-	    CompWindow *w = (*rit);
-
-	    if (w->destroyed () || w->invisible ())
-		continue;
-
-	    if (!CompositeWindow::get (w)->redirected ())
-		damage -= w->region ();
-
-	    break;
-	}
-
-	if (damageMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
-	{
-	    damageMask &= ~COMPOSITE_SCREEN_DAMAGE_ALL_MASK;
-	    damageMask |= COMPOSITE_SCREEN_DAMAGE_REGION_MASK;
-	}
+	reschedule = true;
+	return;
     }
 
-    tmpRegion = damage & screen->region ();
+    if (scheduled)
+	return;
 
-    if (damageMask & COMPOSITE_SCREEN_DAMAGE_REGION_MASK)
+    scheduled = true;
+
+    int delay;
+    if (FPSLimiterMode == CompositeFPSLimiterModeVSyncLike ||
+	(pHnd && pHnd->hasVSync ()))
     {
-	if (tmpRegion == screen->region ())
-	    cScreen->damageScreen ();
-    }
-
-    mask = damageMask;
-
-    damage = CompRegion ();
-    damageMask = 0;
-
-    CompOutput::ptrList outputs (0);
-
-    if (optionGetForceIndependentOutputPainting () ||
-	!screen->hasOverlappingOutputs ())
-    {
-	foreach (CompOutput &o, screen->outputDevs ())
-	    outputs.push_back (&o);
+	delay = 1;
     }
     else
-	outputs.push_back (&screen->fullscreenOutput ());
-
-    cScreen->paint (outputs, mask);
-
-    damageMask = mask;
-}
-
-bool
-PrivateCompositeScreen::syncScheduledPaint ()
-{
-    if (pHnd)
-	return pHnd->waitVSync (damageMask);
-
-    return false;
-}
-
-void
-PrivateCompositeScreen::doneScheduledPaint ()
-{
-    if (pHnd)
-	pHnd->syncBuffers (damageMask);
-
-    damageMask = 0;
-
-    cScreen->donePaint ();
-
-    foreach (CompWindow *w, screen->windows ())
     {
-	if (w->destroyed ())
-	{
-	    CompositeWindow::get (w)->addDamage ();
-	    break;
-	}
+	struct timeval now;
+	gettimeofday (&now, 0);
+	int elapsed = compiz::core::timer::timeval_diff (&now, &lastRedraw);
+	if (elapsed < 0)
+	    elapsed = 0;
+ 	delay = elapsed < optimalRedrawTime ? optimalRedrawTime - elapsed : 1;
     }
+
+    paintTimer.start
+	(boost::bind (&CompositeScreen::handlePaintTimeout, cScreen),
+	delay);
 }
 
 int
 CompositeScreen::redrawTime ()
 {
-    return priv->scheduler.getRedrawTime ();
+    return priv->redrawTime;
 }
 
 int
 CompositeScreen::optimalRedrawTime ()
 {
-    return priv->scheduler.getOptimalRedrawTime ();
+    return priv->optimalRedrawTime;
+}
+
+bool
+CompositeScreen::handlePaintTimeout ()
+{
+    struct      timeval tv;
+
+    priv->painting = true;
+    priv->reschedule = false;
+    gettimeofday (&tv, 0);
+
+    if (priv->damageMask)
+    {
+	int         timeDiff;
+
+	if (priv->pHnd)
+	    priv->pHnd->prepareDrawing ();
+
+	timeDiff = compiz::core::timer::timeval_diff (&tv, &priv->lastRedraw);
+
+	/* handle clock rollback */
+	if (timeDiff < 0)
+	    timeDiff = 0;
+	/*
+	 * Now that we use a "tickless" timing algorithm, timeDiff could be
+	 * very large if the screen is truely idle.
+	 * However plugins expect the old behaviour where timeDiff is rarely
+	 * larger than the frame rate (optimalRedrawTime).
+	 * So enforce this to keep animations timed correctly and smooth...
+	 */
+	if (timeDiff > 100)
+	    timeDiff = priv->optimalRedrawTime;
+
+	priv->redrawTime = timeDiff;
+	preparePaint (priv->slowAnimations ? 1 : timeDiff);
+
+	/* substract top most overlay window region */
+	if (priv->overlayWindowCount)
+	{
+	    for (CompWindowList::reverse_iterator rit =
+		 screen->windows ().rbegin ();
+	         rit != screen->windows ().rend (); rit++)
+	    {
+		CompWindow *w = (*rit);
+
+		if (w->destroyed () || w->invisible ())
+		    continue;
+
+		if (!CompositeWindow::get (w)->redirected ())
+		    priv->damage -= w->region ();
+
+		break;
+	    }
+
+	    if (priv->damageMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+	    {
+		priv->damageMask &= ~COMPOSITE_SCREEN_DAMAGE_ALL_MASK;
+		priv->damageMask |= COMPOSITE_SCREEN_DAMAGE_REGION_MASK;
+	    }
+	}
+
+	priv->tmpRegion = priv->damage & screen->region ();
+
+	if (priv->damageMask & COMPOSITE_SCREEN_DAMAGE_REGION_MASK)
+	{
+	    if (priv->tmpRegion == screen->region ())
+		damageScreen ();
+	}
+
+	priv->damage = CompRegion ();
+
+	int mask = priv->damageMask;
+	priv->damageMask = 0;
+
+	CompOutput::ptrList outputs (0);
+
+	if (priv->optionGetForceIndependentOutputPainting ()
+	    || !screen->hasOverlappingOutputs ())
+	{
+	    foreach (CompOutput &o, screen->outputDevs ())
+		outputs.push_back (&o);
+	}
+	else
+	    outputs.push_back (&screen->fullscreenOutput ());
+
+	paint (outputs, mask);
+
+
+	donePaint ();
+
+	foreach (CompWindow *w, screen->windows ())
+	{
+	    if (w->destroyed ())
+	    {
+		CompositeWindow::get (w)->addDamage ();
+		break;
+	    }
+	}
+    }
+
+    priv->lastRedraw = tv;
+    priv->painting = false;
+    priv->scheduled = false;
+    if (priv->reschedule)
+	priv->scheduleRepaint ();
+
+    return false;
 }
 
 void
