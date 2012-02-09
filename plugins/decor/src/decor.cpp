@@ -536,63 +536,48 @@ computeQuadBox (decor_quad_t *q,
  *
  */
 
-Decoration *
+Decoration::Ptr
 Decoration::create (Window        id,
 		    long          *prop,
 		    unsigned int  size,
 		    unsigned int  type,
 		    unsigned int  nOffset)
 {
-    Decoration	    *decoration;
     unsigned int    frameType, frameState, frameActions;
     Pixmap	    pixmap = None;
     decor_extents_t border;
     decor_extents_t input;
     decor_extents_t maxBorder;
     decor_extents_t maxInput;
-    decor_quad_t    *quad = NULL;
-    int		    nQuad = 0;
     int		    minWidth;
     int		    minHeight;
-    int		    left, right, top, bottom;
-    int		    x1, y1, x2, y2;
+    int             nQuad = N_QUADS_MAX;
+    boost::shared_array <decor_quad_t> quad (new decor_quad_t[nQuad]);
 
     if (type ==  WINDOW_DECORATION_TYPE_PIXMAP &&
 	!DecorScreen::get (screen)->cmActive)
     {
-        compLogMessage ("decor", CompLogLevelWarn, "requested a pixmap type decoration when compositing isn't available");
-	return NULL;
+	compLogMessage ("decor", CompLogLevelWarn, "requested a pixmap type decoration when compositing isn't available");
+	throw std::exception ();
     }
 
     if (type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
-        nQuad = N_QUADS_MAX;
-
-	quad = new decor_quad_t [nQuad];
-	if (!quad)
-	{
-	    compLogMessage ("decor", CompLogLevelWarn, "failed to allocate %i quads\n", nQuad);
-	    return NULL;
-	}
-
 	nQuad = decor_pixmap_property_to_quads (prop, nOffset, size, &pixmap, &input,
 						&border, &maxInput,
 						&maxBorder, &minWidth, &minHeight,
-						&frameType, &frameState, &frameActions, quad);
+						&frameType, &frameState, &frameActions, quad.get ());
 
 	if (!nQuad)
-	{
-	    delete [] quad;
-	    return NULL;
-	}
+	    throw std::exception ();
     }
     else if (type == WINDOW_DECORATION_TYPE_WINDOW)
     {
-        if (!decor_window_property (prop, nOffset, size, &input, &maxInput,
-                                    &minWidth, &minHeight, &frameType, &frameState, &frameActions))
+	if (!decor_window_property (prop, nOffset, size, &input, &maxInput,
+				    &minWidth, &minHeight, &frameType, &frameState, &frameActions))
 	{
 	    compLogMessage ("decor", CompLogLevelWarn, "malformed decoration - not a window");
-	    return NULL;
+	    throw std::exception ();
 	}
 
 	border = input;
@@ -600,34 +585,48 @@ Decoration::create (Window        id,
     }
     else
     {
-        compLogMessage ("decor", CompLogLevelWarn, "malformed decoration - undetermined type");
-	return NULL;
+	compLogMessage ("decor", CompLogLevelWarn, "malformed decoration - undetermined type");
+	throw std::exception ();
     }
 
-    decoration = new Decoration ();
-    if (!decoration)
-    {
-	delete [] quad;
-	return NULL;
-    }
+    return Decoration::Ptr (new Decoration (type, border, input, maxBorder, maxInput, frameType, frameState, frameActions, minWidth, minHeight, pixmap, quad, nQuad));
+}
 
-    if (pixmap)
-	decoration->texture = DecorScreen::get (screen)->getTexture (pixmap);
-    else
-	decoration->texture = NULL;
+Decoration::Decoration (int   type,
+			const decor_extents_t &border,
+			const decor_extents_t &input,
+			const decor_extents_t &maxBorder,
+			const decor_extents_t &maxInput,
+			unsigned int frameType,
+			unsigned int frameState,
+			unsigned int frameActions,
+			unsigned int minWidth,
+			unsigned int minHeight,
+			Pixmap       pixmap,
+			const boost::shared_array <decor_quad_t> &quad,
+			unsigned int nQuad) :
+    texture (DecorScreen::get (screen)->getTexture (pixmap)),
+    border (border.left, border.right, border.top, border.bottom),
+    input (input.left, input.right, input.top, input.bottom),
+    maxBorder (maxBorder.left, maxBorder.right, maxBorder.top, maxBorder.bottom),
+    maxInput (maxInput.left, maxInput.right, maxInput.top, maxInput.bottom),
+    minWidth (minWidth),
+    minHeight (minHeight),
+    frameType (frameType),
+    frameState (frameState),
+    frameActions (frameActions),
+    quad (quad),
+    nQuad (nQuad),
+    type (type)
+{
+    int		    left, right, top, bottom;
+    int		    x1, y1, x2, y2;
 
-    if (!decoration->texture && type == WINDOW_DECORATION_TYPE_PIXMAP)
+    if (!texture && type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
         compLogMessage ("decor", CompLogLevelWarn, "failed to bind pixmap to texture");
-	delete decoration;
-	delete [] quad;
-	return NULL;
+	throw std::exception ();
     }
-
-    decoration->minWidth  = minWidth;
-    decoration->minHeight = minHeight;
-    decoration->quad	  = quad;
-    decoration->nQuad	  = nQuad;
 
     if (type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
@@ -636,9 +635,9 @@ Decoration::create (Window        id,
 	top    = 0;
 	bottom = minHeight;
 
-	while (nQuad--)
+	for (unsigned int i = 0; i  < nQuad; i++)
 	{
-	    computeQuadBox (quad, minWidth, minHeight, &x1, &y1, &x2, &y2,
+	    computeQuadBox (&(quad[i]), minWidth, minHeight, &x1, &y1, &x2, &y2,
 			    NULL, NULL);
 
 	    if (x1 < left)
@@ -649,83 +648,34 @@ Decoration::create (Window        id,
 		right = x2;
 	    if (y2 > bottom)
 		bottom = y2;
-
-	    quad++;
 	}
 
-	decoration->output.left   = -left;
-	decoration->output.right  = right - minWidth;
-	decoration->output.top    = -top;
-	decoration->output.bottom = bottom - minHeight;
+	this->output.left   = -left;
+	this->output.right  = right - minWidth;
+	this->output.top    = -top;
+	this->output.bottom = bottom - minHeight;
     }
     else
     {
-	decoration->output.left   = MAX (input.left, maxInput.left);
-	decoration->output.right  = MAX (input.right, maxInput.right);
-	decoration->output.top    = MAX (input.top, maxInput.top);
-	decoration->output.bottom = MAX (input.bottom, maxInput.bottom);
+	this->output.left   = MAX (input.left, maxInput.left);
+	this->output.right  = MAX (input.right, maxInput.right);
+	this->output.top    = MAX (input.top, maxInput.top);
+	this->output.bottom = MAX (input.bottom, maxInput.bottom);
     }
-
-    /* Extents of actual frame window */
-
-    decoration->input.left   = input.left;
-    decoration->input.right  = input.right;
-    decoration->input.top    = input.top;
-    decoration->input.bottom = input.bottom;
-
-    /* Border extents */
-
-    decoration->border.left   = border.left;
-    decoration->border.right  = border.right;
-    decoration->border.top    = border.top;
-    decoration->border.bottom = border.bottom;
-
-    /* Extents of actual frame window */
-
-    decoration->maxInput.left   = maxInput.left;
-    decoration->maxInput.right  = maxInput.right;
-    decoration->maxInput.top    = maxInput.top;
-    decoration->maxInput.bottom = maxInput.bottom;
-
-    /* Border extents */
-
-    decoration->maxBorder.left   = maxBorder.left;
-    decoration->maxBorder.right  = maxBorder.right;
-    decoration->maxBorder.top    = maxBorder.top;
-    decoration->maxBorder.bottom = maxBorder.bottom;
-
-    /* Decoration info */
-
-    decoration->frameType = frameType;
-    decoration->frameState = frameState;
-    decoration->frameActions = frameActions;
-
-    decoration->refCount = 1;
-    decoration->type = type;
-
-    return decoration;
 }
 
 /*
- * Decoration::release
+ * Decoration::~Decoration
  *
  * Unreferences the decoration, also unreferences the texture
  * if this decoration is about to be destroyed
  *
  */
 
-void
-Decoration::release (Decoration *decoration)
+Decoration::~Decoration ()
 {
-    decoration->refCount--;
-    if (decoration->refCount)
-	return;
-
-    if (decoration->texture)
-	DecorScreen::get (screen)->releaseTexture (decoration->texture);
-
-    delete [] decoration->quad;
-    delete decoration;
+    if (texture)
+	DecorScreen::get (screen)->releaseTexture (texture);
 }
 
 /*
@@ -772,11 +722,6 @@ DecorationList::updateDecoration (Window   id,
     int		    result, format;
     unsigned int    type;
 
-    /* FIXME: Should really check the property to see
-     * if the decoration changed, and /then/ release
-     * and re-update it, but for now just releasing all */
-    mList.clear ();
-
     result = XGetWindowProperty (screen->dpy (), id,
                                  decorAtom, 0L,
                                  PROP_HEADER_SIZE + 6 * (BASE_PROP_SIZE +
@@ -818,20 +763,120 @@ DecorationList::updateDecoration (Window   id,
 
     type = decor_property_get_type (prop);
 
+    std::list <Decoration::Ptr> remove;
+    std::list <int> skip;
+
+    /* only recreate decorations if they need to be updated */
+    foreach (const Decoration::Ptr &d, mList)
+    {
+	decor_extents_t input, border, maxInput, maxBorder;
+
+	input.left = d->input.left;
+	input.right = d->input.right;
+	input.top = d->input.top;
+	input.bottom = d->input.bottom;
+
+	border.left = d->border.left;
+	border.right = d->border.right;
+	border.top = d->border.top;
+	border.bottom = d->border.bottom;
+
+	maxInput.left = d->maxInput.left;
+	maxInput.right = d->maxInput.right;
+	maxInput.top = d->maxInput.top;
+	maxInput.bottom = d->maxInput.bottom;
+
+	maxBorder.left = d->maxBorder.left;
+	maxBorder.right = d->maxBorder.right;
+	maxBorder.top = d->maxBorder.top;
+	maxBorder.bottom = d->maxBorder.bottom;
+
+	int num = decor_match_pixmap (prop, n, &d->texture->pixmap, &input, &border, &maxInput, &maxBorder,
+				     d->minWidth, d->minHeight, d->frameType, d->frameState, d->frameActions,
+				    d->quad.get (), d->nQuad);
+	if (num != -1)
+	    skip.push_back (num);
+	else
+	    remove.push_back (d);
+    }
+
     /* Create a new decoration for each individual item on the property */
     for (int i = 0; i < decor_property_get_num (prop); i++)
     {
-        Decoration *d = Decoration::create (id, prop, n, type, i);
+	if (std::find (skip.begin (), skip.end (), i) != skip.end ())
+	    continue;
 
-	if (!d)
-        {
-            XFree (data);
-            mList.clear ();
-            return false;
-        }
-        else
-            mList.push_back (d);
+	try
+	{
+	    std::list <Decoration::Ptr>::iterator it = mList.begin ();
+	    Decoration::Ptr d = Decoration::create (id, prop, n, type, i);
+
+	    /* Try to replace an existing decoration */
+	    for (; it != mList.end (); it++)
+	    {
+		if ((*it)->frameType == d->frameType &&
+		    (*it)->frameState == d->frameState &&
+		    (*it)->frameActions == d->frameActions)
+		{
+		    remove.remove ((*it));
+		    (*it) = d;
+		    break;
+		}
+	    }
+
+	    if (it == mList.end ())
+		mList.push_back (d);
+	}
+	catch (...)
+	{
+	    /* Creating a new decoration failed ... see if we can use
+	     * the old one */
+
+	    unsigned int    frameType, frameState, frameActions;
+	    Pixmap	    pixmap = None;
+	    decor_extents_t border;
+	    decor_extents_t input;
+	    decor_extents_t maxBorder;
+	    decor_extents_t maxInput;
+	    int		    minWidth;
+	    int		    minHeight;
+	    int             ok = 0;
+	    boost::shared_array <decor_quad_t> quad (new decor_quad_t[N_QUADS_MAX]);
+
+	    if (type == WINDOW_DECORATION_TYPE_PIXMAP)
+	    {
+		ok = decor_pixmap_property_to_quads (prop, i, n, &pixmap, &input,
+							&border, &maxInput,
+							&maxBorder, &minWidth, &minHeight,
+							&frameType, &frameState, &frameActions, quad.get ());
+	    }
+	    else if (type == WINDOW_DECORATION_TYPE_WINDOW)
+	    {
+		ok = decor_window_property (prop, i, n, &input, &maxInput,
+					    &minWidth, &minHeight, &frameType, &frameState, &frameActions);
+	    }
+
+	    if (ok)
+	    {
+		std::list <Decoration::Ptr>::iterator it = mList.begin ();
+
+		/* Use an existing decoration */
+		for (; it != mList.end (); it++)
+		{
+		    if ((*it)->frameType == frameType &&
+			(*it)->frameState == frameState &&
+			(*it)->frameActions == frameActions)
+		    {
+			remove.remove ((*it));
+			break;
+		    }
+		}
+	    }
+	}
     }
+
+    foreach (const Decoration::Ptr &d, remove)
+	mList.remove (d);
 
     XFree (data);
 
@@ -869,7 +914,7 @@ DecorWindow::updateDecoration ()
  *
  */
 WindowDecoration *
-WindowDecoration::create (Decoration *d)
+WindowDecoration::create (const Decoration::Ptr &d)
 {
     WindowDecoration *wd;
 
@@ -907,7 +952,6 @@ WindowDecoration::create (Decoration *d)
 void
 WindowDecoration::destroy (WindowDecoration *wd)
 {
-    Decoration::release (wd->decor);
     delete [] wd->quad;
     delete wd;
 }
@@ -1057,7 +1101,7 @@ DecorWindow::updateDecorationScale ()
  *
  */
 bool
-DecorWindow::checkSize (Decoration *decoration)
+DecorWindow::checkSize (const Decoration::Ptr &decoration)
 {
     return (decoration->minWidth <= (int) window->size ().width () &&
             decoration->minHeight <= (int) window->size ().height ());
@@ -1225,11 +1269,11 @@ DecorWindow::matchActions (CompWindow   *w,
  * match the locked property, then it is not matched
  *
  */
-Decoration *
+const Decoration::Ptr &
 DecorationList::findMatchingDecoration (CompWindow *w,
                                         bool       sizeCheck)
 {
-    Decoration *decoration = NULL;
+    std::list <Decoration::Ptr>::iterator cit = mList.end ();
     DECOR_WINDOW (w);
 
     if (mList.size ())
@@ -1240,17 +1284,22 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 
         unsigned int currentDecorState = 0;
 
-        decoration = (sizeCheck ? dw->checkSize (mList.front ()) : true) ? mList.front () : NULL;
+	if (sizeCheck)
+	    if (dw->checkSize (mList.front ()))
+		cit = mList.begin ();
 
-	foreach (Decoration *d, mList)
+	for (std::list <Decoration::Ptr>::iterator it = mList.begin ();
+	     it != mList.end (); it++)
 	{
+	    const Decoration::Ptr &d = *it;
+
 	    /* Must always match type */
 	    if (DecorWindow::matchType (w, d->frameType))
 	    {
 		/* Use this decoration if the type matched */
 		if (!(typeMatch & currentDecorState) && (!sizeCheck || dw->checkSize (d)))
 		{
-		    decoration = d;
+		    cit = it;
 		    currentDecorState |= typeMatch;
 		}
 
@@ -1260,7 +1309,7 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 		    /* Use this decoration if the type and state match */
 		    if (!(stateMatch & currentDecorState))
 		    {
-			decoration = d;
+			cit = it;
 			currentDecorState |= stateMatch;
 		    }
 
@@ -1270,7 +1319,7 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 			/* Use this decoration if the requested actions match */
 			if (!(actionsMatch & currentDecorState))
 			{
-			    decoration = d;
+			    cit = it;
 			    currentDecorState |= actionsMatch;
 
 			    /* Perfect match, no need to continue searching */
@@ -1282,7 +1331,10 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 	}
     }
 
-    return decoration;
+    if (cit == mList.end ())
+	throw std::exception ();
+
+    return *cit;
 }
 
 /*
@@ -1324,12 +1376,15 @@ DecorationList::findMatchingDecoration (CompWindow *w,
 bool
 DecorWindow::update (bool allowDecoration)
 {
-    Decoration	     *old, *decoration = NULL;
+    Decoration::Ptr  old, decoration;
     bool	     decorate = false;
     bool	     shadowOnly = true;
     CompPoint        oldShift, movement;
 
-    old = (wd) ? wd->decor : NULL;
+    if (wd)
+	old = wd->decor;
+    else
+	old.reset ();
 
     /* Only want to decorate windows which have a frame or are in the process
      * of waiting for an animation to be unmapped (in which case we can give
@@ -1377,9 +1432,11 @@ DecorWindow::update (bool allowDecoration)
     if (decorate || frameExtentsRequested)
     {
         /* Attempt to find a matching decoration */
-        decoration = decor.findMatchingDecoration (window, true);
-
-	if (!decoration)
+	try
+	{
+	    decoration = decor.findMatchingDecoration (window, true);
+	}
+	catch (...)
 	{
 	    /* Find an appropriate default decoration to use */
 	    if (dScreen->dmSupports & WINDOW_DECORATION_TYPE_PIXMAP &&
@@ -1387,13 +1444,18 @@ DecorWindow::update (bool allowDecoration)
 		!(dScreen->dmSupports & WINDOW_DECORATION_TYPE_WINDOW &&
 		  pixmapFailed))
 	    {
-		decoration = dScreen->decor[DECOR_ACTIVE].findMatchingDecoration (window, false);
-
-		if (!decoration)
+		try
+		{
+		    decoration = dScreen->decor[DECOR_ACTIVE].findMatchingDecoration (window, false);
+		}
+		catch (...)
+		{
 		    compLogMessage ("decor", CompLogLevelWarn, "No default decoration found, placement will not be correct");
+		    decoration.reset ();
+		}
 	    }
 	    else if (dScreen->dmSupports & WINDOW_DECORATION_TYPE_WINDOW)
-		decoration = &dScreen->windowDefault;
+		decoration = dScreen->windowDefault;
 	}
 
 	/* Do not allow windows which are later undecorated
@@ -1413,7 +1475,7 @@ DecorWindow::update (bool allowDecoration)
 	    if (decoration)
 	    {
 		if (!checkSize (decoration))
-		    decoration = NULL;
+		    decoration.reset ();
 	    }
 	}
     }
@@ -1423,7 +1485,7 @@ DecorWindow::update (bool allowDecoration)
      * (nobody owns the selection window) 
      */
     if (!dScreen->dmWin || !allowDecoration)
-	decoration = NULL;
+	decoration.reset ();
 
     /* Don't bother going any further if
      * this window is going to get the same
@@ -2885,7 +2947,20 @@ DecorScreen::DecorScreen (CompScreen *s) :
     textures (),
     dmWin (None),
     dmSupports (0),
-    cmActive (false)
+    cmActive (false),
+    windowDefault (new Decoration (WINDOW_DECORATION_TYPE_WINDOW,
+				   decor_extents_t (),
+				   decor_extents_t (),
+				   decor_extents_t (),
+				   decor_extents_t (),
+				   0,
+				   0,
+				   0,
+				   0,
+				   0,
+				   None,
+				   boost::shared_array <decor_quad_t> (NULL),
+				   0))
 {
     supportingDmCheckAtom =
 	XInternAtom (s->dpy (), DECOR_SUPPORTING_DM_CHECK_ATOM_NAME, 0);
@@ -2913,24 +2988,6 @@ DecorScreen::DecorScreen (CompScreen *s) :
 	XInternAtom (s->dpy (), "_COMPIZ_NET_CM_SHADOW_COLOR", 0);
     shadowInfoAtom =
 	XInternAtom (s->dpy (), "_COMPIZ_NET_CM_SHADOW_PROPERTIES", 0);
-
-    windowDefault.texture   = NULL;
-    windowDefault.minWidth  = 0;
-    windowDefault.minHeight = 0;
-    windowDefault.quad      = NULL;
-    windowDefault.nQuad     = 0;
-    windowDefault.type      = WINDOW_DECORATION_TYPE_WINDOW;
-
-    windowDefault.input.left   = 0;
-    windowDefault.input.right  = 0;
-    windowDefault.input.top    = 1;
-    windowDefault.input.bottom = 0;
-
-    windowDefault.border = windowDefault.maxBorder =
-	windowDefault.maxInput = windowDefault.output =
-	    windowDefault.input;
-
-    windowDefault.refCount = 1;
 
     cmActive = (cScreen) ? cScreen->compositingActive () &&
                GLScreen::get (s) != NULL : false;

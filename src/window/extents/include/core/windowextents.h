@@ -41,8 +41,13 @@ namespace extents
  * Specifies the left, right, top and bottom positions of a window's
  * geometry
  */
-struct Extents {
+class Extents
+{
     public:
+
+	Extents ();
+	Extents (int left, int right, int top, int bottom);
+
 	int left;
 	int right;
 	int top;
