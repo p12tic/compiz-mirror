@@ -8,6 +8,7 @@ add_subdirectory( pluginclasshandler )
 add_subdirectory( point )
 add_subdirectory( rect )
 add_subdirectory( window )
+add_subdirectory( privatescreen )
 
 IF (COMPIZ_BUILD_TESTING)
 add_subdirectory( wrapsystem/tests )

@@ -170,7 +170,7 @@ class CompAction {
 
 	bool active ();
 
-	friend class CompScreen;
+	friend class CompScreenImpl;
 
     private:
 	PrivateAction *priv;

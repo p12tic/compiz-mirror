@@ -203,7 +203,7 @@ class PrivateScreen :
 	class Grab {
 	    public:
 
-		friend class CompScreen;
+		friend class CompScreenImpl;
 	    private:
 		Cursor     cursor;
 		const char *name;
@@ -212,6 +212,8 @@ class PrivateScreen :
     public:
 	PrivateScreen (CompScreen *screen);
 	~PrivateScreen ();
+
+	bool init (const char *name);
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
@@ -380,9 +382,10 @@ class PrivateScreen :
 
 	void handleSignal (int signum);
 
-    public:
+	static void compScreenSnEvent (SnMonitorEvent *event,
+			   void           *userData);
 
-	PrivateScreen *priv;
+    public:
 
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 

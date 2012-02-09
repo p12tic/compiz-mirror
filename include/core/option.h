@@ -40,7 +40,7 @@ class PrivateRestriction;
 
 class CompAction;
 class CompMatch;
-class CompScreen;
+class CompScreenImpl;
 
 
 /**
