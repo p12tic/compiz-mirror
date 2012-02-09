@@ -632,7 +632,7 @@ PrivateCompositeScreen::detectRefreshRate ()
 
 	value.set ((int) 0);
 
-	if (screen->XRandr ())
+	if (randrExtension)
 	{
 	    XRRScreenConfiguration *config;
 
