@@ -314,6 +314,10 @@ public:
     virtual int syncEvent () = 0;
     virtual Window autoRaiseWindow () = 0;
 
+    virtual const char * displayString () = 0;
+    virtual CompRect getCurrentOutputExtents () = 0;
+    virtual Cursor normalCursor () = 0;
+
     friend class CompWindow; // TODO get rid of friends
     friend class PrivateWindow; // TODO get rid of friends
     friend class ModifierHandler; // TODO get rid of friends
