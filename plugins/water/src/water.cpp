@@ -1098,6 +1098,8 @@ waterToggleRain (CompAction         *action,
 {
     WATER_SCREEN (screen);
 
+    g_print("vv: Toggle Rain\n");
+
     if (!ws->rainTimer.active ())
     {
 	int delay;
@@ -1119,6 +1121,8 @@ waterToggleWiper (CompAction         *action,
 		  CompOption::Vector &options)
 {
     WATER_SCREEN (screen);
+
+    g_print("vv: Toggle Wiper\n");
 
     if (!ws->wiperTimer.active ())
     {
@@ -1313,8 +1317,8 @@ WaterScreen::WaterScreen (CompScreen *screen) :
 
     optionSetInitiateKeyInitiate (waterInitiate);
     optionSetInitiateKeyTerminate (waterTerminate);
-    optionSetToggleRainKeyInitiate (waterToggleRain);
-    optionSetToggleWiperKeyInitiate (waterToggleWiper);
+    optionSetToggleRainKeyTap (waterToggleRain);
+    optionSetToggleWiperKeyTap (waterToggleWiper);
     optionSetTitleWaveInitiate (waterTitleWave);
     optionSetPointInitiate (waterPoint);
     optionSetLineInitiate (waterLine);

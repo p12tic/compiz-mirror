@@ -2932,6 +2932,7 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 
 	if (status == GrabSuccess)
 	{
+	    g_print("vv: CompScreen::pushGrab XGrabKeyboard\n");
 	    status = XGrabKeyboard (priv->dpy,
 				    priv->grabWindow, true,
 				    GrabModeAsync, GrabModeAsync,
@@ -3003,6 +3004,7 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
 
 	XUngrabPointer (priv->dpy, CurrentTime);
 	XUngrabKeyboard (priv->dpy, CurrentTime);
+	g_print("vv: CompScreen::removeGrab XUngrabKeyboard\n");
     }
 }
 
@@ -3062,6 +3064,8 @@ PrivateScreen::grabUngrabOneKey (unsigned int modifiers,
 				 int          keycode,
 				 bool         grab)
 {
+    g_print("vv: PrivateScreen::grabUngrabOneKey %d 0x%x mod 0x%x %s\n",
+        keycode, keycode, (int)modifiers, grab?"ON":"OFF");
     if (grab)
     {
 	XGrabKey (dpy,
@@ -3197,10 +3201,13 @@ PrivateScreen::updatePassiveKeyGrabs ()
 
     XUngrabKey (dpy, AnyKey, AnyModifier, root);
 
+    g_print("vv: PrivateScreen::updatePassiveKeyGrabs\n");
     for (it = keyGrabs.begin (); it != keyGrabs.end (); it++)
     {
 	if (!((*it).modifiers & CompNoMask))
 	{
+	    g_print("vv: \tGrab key %d (0x%x) with mods 0x%x\n",
+	        (int)(*it).keycode, (int)(*it).keycode, (int)(*it).modifiers);
 	    grabUngrabKeys ((*it).modifiers,
 			    (*it).keycode, true);
 	}
@@ -4956,6 +4963,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     desktopHintSize (0),
     edgeWindow (None),
     xdndWindow (None),
+    possibleTap (NULL),
     initialized (false)
 {
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();

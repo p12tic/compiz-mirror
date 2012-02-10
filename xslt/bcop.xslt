@@ -259,6 +259,18 @@ inline void
                     <xsl:text>].value ().action ().setTerminate (term);
 }
 
+inline void
+</xsl:text>
+		    <xsl:value-of select="$Plugin"/>
+		    <xsl:text>Options::optionSet</xsl:text>
+		    <xsl:call-template name="printOptionName"/>
+		    <xsl:text>Tap (CompAction::CallBack tap)
+{
+    mOptions[</xsl:text>
+                    <xsl:call-template name="printOptionsEnumName"/>
+                    <xsl:text>].value ().action ().setTap (tap);
+}
+
 </xsl:text>
                 </xsl:when>
                 <xsl:when test="@type='list'">
@@ -1012,6 +1024,10 @@ inline void
 		    <xsl:text>optionSet</xsl:text>
 		    <xsl:call-template name="printOptionName"/>
 		    <xsl:text>Terminate (CompAction::CallBack term);
+        void </xsl:text>
+		    <xsl:text>optionSet</xsl:text>
+		    <xsl:call-template name="printOptionName"/>
+		    <xsl:text>Tap (CompAction::CallBack tap);
 </xsl:text>
                 </xsl:when>
                  <xsl:when test="@type='list'">

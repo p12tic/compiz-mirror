@@ -35,6 +35,7 @@ class PrivateAction {
 
 	CompAction::CallBack initiate;
 	CompAction::CallBack terminate;
+	CompAction::CallBack tap;
 
 	CompAction::State state;
 

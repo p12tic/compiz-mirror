@@ -132,9 +132,11 @@ class CompAction {
 
 	CallBack initiate ();
 	CallBack terminate ();
+	CallBack tap ();
 
 	void setInitiate (const CallBack &initiate);
 	void setTerminate (const CallBack &terminate);
+	void setTap (const CallBack &tap);
 
 	State state ();
 	BindingType type ();
