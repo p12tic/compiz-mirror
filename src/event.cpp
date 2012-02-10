@@ -177,6 +177,14 @@ PrivateScreen::triggerPress (CompAction         *action,
                              CompAction::State   state,
                              CompOption::Vector &arguments)
 {
+#if 0
+    if (state == CompAction::StateInitKey &&
+        action->key ().modifiers () &&
+	action->key ().keycode () == 0)
+    {
+    }
+#endif
+
     if (!action->tap ().empty ())
     {
         possibleTap = action;
@@ -368,6 +376,9 @@ PrivateScreen::triggerKeyPressBindings (CompOption::Vector &options,
 	    else if (!xkbEvent && action->key ().keycode () == 0)
 		match = (bindMods == (event->state & modMask));
 
+            if (match)
+                g_print("vv: key match %d / 0x%x\n",
+		    event->keycode, (unsigned)(bindMods & modMask));
 	    if (match && triggerPress (action, state, arguments))
 		return true;
 	}
@@ -441,6 +452,9 @@ PrivateScreen::triggerStateNotifyBindings (CompOption::Vector  &options,
 
 		    if ((event->mods & modMask & bindMods) == bindMods)
 		    {
+                        g_print("vv: key match2 %d / 0x%x\n",
+		             action->key ().keycode (),
+			     (unsigned)(bindMods & modMask));
 		        if (triggerPress (action, state, arguments))
 			    return true;
 		    }
@@ -1134,13 +1148,22 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
     if (priv->grabs.empty ())
     {
-	switch (event->type)
+        if (priv->possibleTap)
 	{
-	    case KeyPress:
-		XUngrabKeyboard (priv->dpy, event->xkey.time);
-		break;
-	    default:
-		break;
+            g_print("vv: XGrabKeyboard on possibleTap...\n");
+            XGrabKeyboard (priv->dpy, priv->grabWindow, True,
+	                   GrabModeAsync, GrabModeAsync, event->xkey.time);
+	}
+	else if (event->type == KeyPress)
+	{
+	    g_print("vv: XUngrabKeyboard to force event through to app\n");
+	    XUngrabKeyboard (priv->dpy, event->xkey.time);
+	    //
+	    // FIXME: Need to put event back on the queue without causing an
+	    //        infinite loop (as XPutBackEvent seems to).
+	    //
+	    //XAllowEvents (priv->dpy, ReplayKeyboard, event->xkey.time);
+	    //XPutBackEvent (priv->dpy, event);
 	}
     }
 

@@ -3106,6 +3106,13 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
 	}
 	else
 	{
+	    /*
+	     * Grab only modifiers keys!?
+	     * It's possible, but we need to be careful...
+	     * First, look up the modifiers mask to figure out which actual
+	     * keycodes represent that modifier, and bind to all different
+	     * copies of the key (there are usually 2 of each on a keyboard).
+	     */
 	    for (mod = 0; mod < 8; mod++)
 	    {
 		if (modifiers & (1 << mod))
@@ -3124,6 +3131,17 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
 		    }
 		}
 	    }
+
+	    /*
+	     * Second, also bind to <modifiers>+AnyKey
+	     * This allows us to detect when the modifier is being used to
+	     * modify some other keystroke and not just being tapped by itself.
+	     * Obviously, if you have bound to <Alt> for example, then you
+	     * also want to receive <Alt>+AnyKey so you can distinguish
+	     * between <Alt> being tapped, or being used to open a menu like
+	     * <Alt>+F
+	    grabUngrabOneKey (modifiers | ignore, AnyKey, grab);
+	     */
 	}
 
 	if (CompScreen::checkForError (dpy))
@@ -3139,6 +3157,9 @@ PrivateScreen::addPassiveKeyGrab (CompAction::KeyBinding &key)
     KeyGrab                      newKeyGrab;
     unsigned int                 mask;
     std::list<KeyGrab>::iterator it;
+
+    g_print("vv: PrivateScreen::addPassiveKeyGrab %d (mod 0x%x)\n",
+        key.keycode(), (int)key.modifiers());
 
     mask = modHandler->virtualToRealModMask (key.modifiers ());
 
@@ -3174,6 +3195,9 @@ PrivateScreen::removePassiveKeyGrab (CompAction::KeyBinding &key)
 {
     unsigned int                 mask;
     std::list<KeyGrab>::iterator it;
+
+    g_print("vv: PrivateScreen::removePassiveKeyGrab %d (mod 0x%x)\n",
+        key.keycode(), (int)key.modifiers());
 
     mask = modHandler->virtualToRealModMask (key.modifiers ());
 
