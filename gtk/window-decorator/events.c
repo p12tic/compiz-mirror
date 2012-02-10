@@ -885,14 +885,12 @@ event_filter_func (GdkXEvent *gdkxevent,
 		   GdkEvent  *event,
 		   gpointer  data)
 {
-    Display    *xdisplay;
     GdkDisplay *gdkdisplay;
     XEvent     *xevent = gdkxevent;
     gulong     xid = 0;
     Window     select = 0;
 
     gdkdisplay = gdk_display_get_default ();
-    xdisplay   = GDK_DISPLAY_XDISPLAY (gdkdisplay);
 
     switch (xevent->type) {
     case CreateNotify:
@@ -1018,13 +1016,7 @@ event_filter_func (GdkXEvent *gdkxevent,
 		    }
 		    else
 		    {
-			gwd_decor_frame_unref (d->frame);
-			d->frame = NULL;
-
-			gdk_error_trap_push ();
-			XDeleteProperty (xdisplay, xid, win_decor_atom);
-			gdk_display_sync (gdk_display_get_default ());
-			gdk_error_trap_pop ();
+			remove_frame_window (win);
 		    }
 		}
 	    }
