@@ -4660,8 +4660,8 @@ PrivateScreen::init (const char *name)
 					      compScreenSnEvent, this, NULL);
 
     wmSnSelectionWindow = newWmSnOwner;
-    wmSnAtom            = wmSnAtom;
-    wmSnTimestamp       = wmSnTimestamp;
+    this->wmSnAtom            = wmSnAtom;
+    this->wmSnTimestamp       = wmSnTimestamp;
 
     if (!XGetWindowAttributes (dpy, root, &attrib))
 	return false;
@@ -4921,6 +4921,14 @@ PrivateScreen::init (const char *name)
 
 CompScreenImpl::~CompScreenImpl ()
 {
+    priv->removeAllSequences ();
+
+    while (!priv->windows.empty ())
+        delete priv->windows.front ();
+
+    while (CompPlugin* p = CompPlugin::pop ())
+	CompPlugin::unload (p);
+
     screen = NULL;
 }
 
@@ -4996,11 +5004,6 @@ PrivateScreen::~PrivateScreen ()
 {
     if (initialized)
     {
-	removeAllSequences ();
-
-	while (!windows.empty ())
-	    delete windows.front ();
-
 	XUngrabKey (dpy, AnyKey, AnyModifier, root);
 
 	initialized = false;
@@ -5015,17 +5018,15 @@ PrivateScreen::~PrivateScreen ()
 
 	XFreeCursor (dpy, invisibleCursor);
 	XSync (dpy, False);
+
+	if (snContext)
+	    sn_monitor_context_unref (snContext);
+
 	XCloseDisplay (dpy);
     }
 
-    while (CompPlugin* p = CompPlugin::pop ())
-	CompPlugin::unload (p);
-
     if (desktopHintData)
 	free (desktopHintData);
-
-    if (snContext)
-	sn_monitor_context_unref (snContext);
 
     if (snDisplay)
 	sn_display_unref (snDisplay);
