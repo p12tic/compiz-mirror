@@ -4660,8 +4660,8 @@ PrivateScreen::init (const char *name)
 					      compScreenSnEvent, this, NULL);
 
     wmSnSelectionWindow = newWmSnOwner;
-    wmSnAtom            = wmSnAtom;
-    wmSnTimestamp       = wmSnTimestamp;
+    this->wmSnAtom            = wmSnAtom;
+    this->wmSnTimestamp       = wmSnTimestamp;
 
     if (!XGetWindowAttributes (dpy, root, &attrib))
 	return false;
@@ -4921,6 +4921,11 @@ PrivateScreen::init (const char *name)
 
 CompScreenImpl::~CompScreenImpl ()
 {
+    priv->removeAllSequences ();
+
+    while (!priv->windows.empty ())
+        delete priv->windows.front ();
+
     screen = NULL;
 }
 
@@ -4996,11 +5001,6 @@ PrivateScreen::~PrivateScreen ()
 {
     if (initialized)
     {
-	removeAllSequences ();
-
-	while (!windows.empty ())
-	    delete windows.front ();
-
 	XUngrabKey (dpy, AnyKey, AnyModifier, root);
 
 	initialized = false;
