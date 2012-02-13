@@ -3257,24 +3257,10 @@ PrivateScreen::removePassiveButtonGrab (CompAction::ButtonBinding &button)
     }
 }
 
-/* add actions that should be automatically added as no screens
-   existed when they were initialized. */
-void
-PrivateScreen::addScreenActions ()
-{
-    foreach (CompOption &o, mOptions)
-    {
-	if (!o.isAction ())
-	    continue;
-
-	if (o.value ().action ().state () & CompAction::StateAutoGrab)
-	    screen->addAction (&o.value ().action ());
-    }
-}
-
 bool
 CompScreenImpl::addAction (CompAction *action)
 {
+    assert (priv->initialized);
     if (!priv->initialized)
 	return false;
 
@@ -4735,6 +4721,8 @@ PrivateScreen::init (const char *name)
 
     reshape (attrib.width, attrib.height);
 
+    initialized = true;
+    initOptions ();
     detectOutputDevices ();
     updateOutputDevices ();
 
@@ -4805,7 +4793,6 @@ PrivateScreen::init (const char *name)
     XSync (dpy, FALSE);
 
     /* Start initializing windows here */
-    initialized = true;
 
     for (unsigned int i = 0; i < nchildren; i++)
     {
@@ -4893,7 +4880,38 @@ PrivateScreen::init (const char *name)
 
     pingTimer.start ();
 
-    addScreenActions ();
+    optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
+    optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
+    optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
+    optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
+    optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
+    optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
+
+    optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
+
+    optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
+    optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
+    optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
+    optionSetMaximizeWindowHorizontallyKeyInitiate (
+	CompScreenImpl::maximizeWinHorizontally);
+    optionSetMaximizeWindowVerticallyKeyInitiate (
+	CompScreenImpl::maximizeWinVertically);
+
+    optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
+    optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
+
+    optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
+    optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
+
+    optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
+    optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
+
+    optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
+	CompScreenImpl::toggleWinMaximizedHorizontally);
+    optionSetToggleWindowMaximizedVerticallyKeyInitiate (
+	CompScreenImpl::toggleWinMaximizedVertically);
+
+    optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
 
     if (dirtyPluginList)
 	updatePlugins ();
@@ -4907,6 +4925,7 @@ CompScreenImpl::~CompScreenImpl ()
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
+    CoreOptions (false),
     source(0),
     timeout(0),
     fileWatch (0),
@@ -4969,39 +4988,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     startupSequenceTimer.setTimes (1000, 1500);
 
     memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
-
-    optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
-    optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
-    optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
-    optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
-    optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
-    optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
-
-    optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
-
-    optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
-    optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
-    optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
-    optionSetMaximizeWindowHorizontallyKeyInitiate (
-	CompScreenImpl::maximizeWinHorizontally);
-    optionSetMaximizeWindowVerticallyKeyInitiate (
-	CompScreenImpl::maximizeWinVertically);
-
-    optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
-    optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
-
-    optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
-    optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
-
-    optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
-    optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
-
-    optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
-	CompScreenImpl::toggleWinMaximizedHorizontally);
-    optionSetToggleWindowMaximizedVerticallyKeyInitiate (
-	CompScreenImpl::toggleWinMaximizedVertically);
-
-    optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
 
     TimeoutHandler::SetDefault (dTimeoutHandler);
 }

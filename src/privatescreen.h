@@ -370,8 +370,6 @@ class PrivateScreen :
 
 	void disableEdge (int edge);
 
-	void addScreenActions ();
-
 	CompWindow *
 	focusTopMostWindow ();
 
