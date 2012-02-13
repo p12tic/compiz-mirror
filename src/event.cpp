@@ -1152,18 +1152,14 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	{
             g_print("vv: XGrabKeyboard on possibleTap...\n");
             XGrabKeyboard (priv->dpy, priv->grabWindow, True,
-	                   GrabModeAsync, GrabModeAsync, event->xkey.time);
+	                   GrabModeAsync, GrabModeSync, event->xkey.time);
+	    XAllowEvents (priv->dpy, SyncKeyboard, event->xkey.time);
 	}
 	else if (event->type == KeyPress)
 	{
 	    g_print("vv: XUngrabKeyboard to force event through to app\n");
+	    XAllowEvents (priv->dpy, ReplayKeyboard, event->xkey.time);
 	    XUngrabKeyboard (priv->dpy, event->xkey.time);
-	    //
-	    // FIXME: Need to put event back on the queue without causing an
-	    //        infinite loop (as XPutBackEvent seems to).
-	    //
-	    //XAllowEvents (priv->dpy, ReplayKeyboard, event->xkey.time);
-	    //XPutBackEvent (priv->dpy, event);
 	}
     }
 
