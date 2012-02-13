@@ -3,14 +3,17 @@ include (CompizCommon)
 
 INCLUDE_DIRECTORIES(
   ${compiz_BINARY_DIR}/generated
+  ${compiz_SOURCE_DIR}/build/generated
   ${compiz_SOURCE_DIR}/include
 
   ${compiz_SOURCE_DIR}/src/timer/include
   ${compiz_SOURCE_DIR}/src/timer/src
 
   ${compiz_SOURCE_DIR}/src/rect/include
+  ${compiz_SOURCE_DIR}/src/screen/geometry/include
   ${compiz_SOURCE_DIR}/src/window/geometry/include
   ${compiz_SOURCE_DIR}/src/window/extents/include
+  ${compiz_SOURCE_DIR}/src/screen/extents/include
 
   ${compiz_SOURCE_DIR}/src/pluginclasshandler/include
 
@@ -29,20 +32,19 @@ add_definitions (
     -DMETADATADIR=\\\"${compiz_metadatadir}\\\"
 )
 
-SET( SRCS ${compiz_SOURCE_DIR}/src/plugin.cpp )
+SET( SRCS 
+  ${compiz_SOURCE_DIR}/src/screen.cpp 
+  ${compiz_SOURCE_DIR}/src/size.cpp 
+)
 
-ADD_LIBRARY( 
-  compiz_plugin STATIC
- 		  
+add_library (compiz_privatescreen STATIC
   ${SRCS}
-  
   ${PUBLIC_HEADERS}
   ${PRIVATE_HEADERS}
 )
 
 ADD_SUBDIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/tests )
 
-SET_TARGET_PROPERTIES(
-  compiz_plugin PROPERTIES
+set_target_properties (compiz_privatescreen PROPERTIES
   PUBLIC_HEADER "${PUBLIC_HEADERS}"
 )

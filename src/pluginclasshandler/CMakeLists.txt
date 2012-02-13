@@ -17,7 +17,6 @@ SET(
 
 SET( 
   PRIVATE_HEADERS 
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/valueholder.h
 )
 
 SET( 

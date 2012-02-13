@@ -369,6 +369,66 @@ decor_pixmap_property_to_quads (long		 *data,
     return n;
 }
 
+/* Returns n for a match, returns -1 for no match */
+
+int
+decor_match_pixmap (long		 *data,
+		    int		 size,
+		    Pixmap		 *pixmap,
+		    decor_extents_t  *frame,
+		    decor_extents_t  *border,
+		    decor_extents_t  *max_frame,
+		    decor_extents_t  *max_border,
+		    int		 min_width,
+		    int		 min_height,
+		    unsigned int     frame_type,
+		    unsigned int     frame_state,
+		    unsigned int     frame_actions,
+		    decor_quad_t     *quad,
+		    unsigned int     n_quad)
+{
+    int n = decor_property_get_num (data);
+    unsigned int i = 0;
+
+    for (; i < n; i++)
+    {
+	Pixmap cPixmap;
+	decor_extents_t cFrame, cBorder, cMax_frame, cMax_border;
+	int cMin_width, cMin_height;
+	unsigned int cFrame_type, cFrame_state, cFrame_actions, cNQuad;
+	decor_quad_t cQuad[N_QUADS_MAX];
+	cNQuad = decor_pixmap_property_to_quads (data, i, size, &cPixmap, &cFrame, &cBorder, &cMax_frame,
+						 &cMax_border, &cMin_width, &cMin_height, &cFrame_type,
+						 &cFrame_state, &cFrame_actions, cQuad);
+
+	if (cPixmap != *pixmap)
+	    continue;
+
+	if (memcmp (&cFrame, frame, sizeof (decor_extents_t)) ||
+	    memcmp (&cBorder, border, sizeof (decor_extents_t)) ||
+	    memcmp (&cMax_frame, max_frame, sizeof (decor_extents_t)) ||
+	    memcmp (&cMax_border, max_border, sizeof (decor_extents_t)))
+	    continue;
+
+	if (cFrame_type != frame_type ||
+	    cFrame_state != frame_state ||
+	    cFrame_actions != frame_actions ||
+	    cMin_width != min_width ||
+	    cMin_height != min_height)
+	    continue;
+
+	if (cNQuad != n_quad)
+	    continue;
+
+	if (memcmp (cQuad, quad, sizeof (decor_quad_t) * n_quad))
+	    continue;
+
+	return n;
+    }
+
+    return -1;
+}
+
 int
 decor_window_property (long	       *data,
 		       unsigned int    n,

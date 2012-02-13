@@ -146,14 +146,14 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
     unsigned int      bindMods;
     unsigned int      edge = 0;
 
-    if (priv->edgeWindow)
+    if (edgeWindow)
     {
 	unsigned int i;
 
 	if (event->root != root)
 	    return false;
 
-	if (event->window != priv->edgeWindow)
+	if (event->window != edgeWindow)
 	{
 	    if (grabs.empty () || event->window != root)
 		return false;
@@ -161,7 +161,7 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 
 	for (i = 0; i < SCREEN_EDGE_NUM; i++)
 	{
-	    if (priv->edgeWindow == screenEdge[i].id)
+	    if (edgeWindow == screenEdge[i].id)
 	    {
 		edge = 1 << i;
 		arguments[1].value ().set ((int) activeWindow);
@@ -737,21 +737,21 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    if (edgeDelayTimer.active ())
 		edgeDelayTimer.stop ();
 
-	    if (priv->edgeWindow && priv->edgeWindow != event->xcrossing.window)
+	    if (edgeWindow && edgeWindow != event->xcrossing.window)
 	    {
 		state = CompAction::StateTermEdge;
 		edge  = 0;
 
 		for (i = 0; i < SCREEN_EDGE_NUM; i++)
 		{
-		    if (priv->edgeWindow == screenEdge[i].id)
+		    if (edgeWindow == screenEdge[i].id)
 		    {
 			edge = 1 << i;
 			break;
 		    }
 		}
 
-		priv->edgeWindow = None;
+		edgeWindow = None;
 
 		o[0].value ().set ((int) event->xcrossing.window);
 		o[1].value ().set ((int) activeWindow);
@@ -786,7 +786,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    {
 		state = CompAction::StateInitEdge;
 
-		priv->edgeWindow = event->xcrossing.window;
+		edgeWindow = event->xcrossing.window;
 
 		o[0].value ().set ((int) event->xcrossing.window);
 		o[1].value ().set ((int) activeWindow);
@@ -806,14 +806,14 @@ PrivateScreen::handleActionEvent (XEvent *event)
     case ClientMessage:
 	if (event->xclient.message_type == Atoms::xdndEnter)
 	{
-	    priv->xdndWindow = event->xclient.window;
+	    xdndWindow = event->xclient.window;
 	}
 	else if (event->xclient.message_type == Atoms::xdndLeave)
 	{
 	    unsigned int      edge = 0;
 	    CompAction::State state;
 
-	    if (!priv->xdndWindow)
+	    if (!xdndWindow)
 	    {
 		CompWindow *w;
 
@@ -857,7 +857,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    unsigned int      edge = 0;
 	    CompAction::State state;
 
-	    if (priv->xdndWindow == event->xclient.window)
+	    if (xdndWindow == event->xclient.window)
 	    {
 		CompWindow *w;
 
@@ -868,7 +868,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 
 		    for (i = 0; i < SCREEN_EDGE_NUM; i++)
 		    {
-			if (priv->xdndWindow == screenEdge[i].id)
+			if (xdndWindow == screenEdge[i].id)
 			{
 			    edge = 1 << i;
 			    break;
@@ -892,7 +892,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		    return true;
 	    }
 
-	    priv->xdndWindow = None;
+	    xdndWindow = None;
 	}
 	break;
     default:
@@ -956,7 +956,7 @@ PrivateScreen::setDefaultWindowAttributes (XWindowAttributes *wa)
     wa->border_width	      = 0;
     wa->depth		      = 0;
     wa->visual		      = NULL;
-    wa->root		      = priv->root;
+    wa->root		      = root;
     wa->c_class		      = InputOnly;
     wa->bit_gravity	      = NorthWestGravity;
     wa->win_gravity	      = NorthWestGravity;
@@ -971,20 +971,35 @@ PrivateScreen::setDefaultWindowAttributes (XWindowAttributes *wa)
     wa->your_event_mask	      = 0;
     wa->do_not_propagate_mask = 0;
     wa->override_redirect     = true;
-    wa->screen		      = ScreenOfDisplay (priv->dpy, priv->screenNum);
+    wa->screen		      = ScreenOfDisplay (dpy, screenNum);
 }
 
 void
 CompScreen::handleCompizEvent (const char         *plugin,
 			       const char         *event,
 			       CompOption::Vector &options)
-    WRAPABLE_HND_FUNCTN (handleCompizEvent, plugin, event, options)
+{
+    WRAPABLE_HND_FUNCTN (handleCompizEvent, plugin, event, options);
+    _handleCompizEvent (plugin, event, options);
+}
+
+void
+CompScreenImpl::_handleCompizEvent (const char         *plugin,
+			       const char         *event,
+			       CompOption::Vector &options)
+{
+}
 
 void
 CompScreen::handleEvent (XEvent *event)
 {
     WRAPABLE_HND_FUNCTN (handleEvent, event)
+    _handleEvent (event);
+}
 
+void
+CompScreenImpl::_handleEvent (XEvent *event)
+{
     CompWindow *w = NULL;
     XWindowAttributes wa;
     bool	      actionEventHandled = false;
@@ -1024,9 +1039,8 @@ CompScreen::handleEvent (XEvent *event)
 	switch (event->type)
 	{
 	    case KeyPress:
-	      if (event->xkey.state)
 		XUngrabKeyboard (priv->dpy, event->xkey.time);
-	      break;
+		break;
 	    default:
 		break;
 	}
@@ -1083,7 +1097,7 @@ CompScreen::handleEvent (XEvent *event)
 	    }
 	}
 
-	foreach (CompWindow *w, screen->priv->destroyedWindows)
+	foreach (CompWindow *w, priv->destroyedWindows)
 	{
 	    if (w->priv->serverId == event->xcreatewindow.window)
 	    {
@@ -1119,7 +1133,7 @@ CompScreen::handleEvent (XEvent *event)
 		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
 		cw->manage (priv->getTopWindow (), wa);
 
-		priv->createdWindows.remove (cw);
+		removeFromCreatedWindows (cw);
 		delete cw;
             }
 	    else
@@ -1142,7 +1156,7 @@ CompScreen::handleEvent (XEvent *event)
 
 	if (!w)
 	{
-	    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+	    foreach (CompWindow *dw, priv->destroyedWindows)
 	    {
 		if (dw->priv->serverId == event->xdestroywindow.window)
 		{
@@ -1259,7 +1273,7 @@ CompScreen::handleEvent (XEvent *event)
 		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
 		cw->manage (priv->getTopWindow (), wa);
 
-		priv->createdWindows.remove (cw);
+		removeFromCreatedWindows (cw);
 		delete cw;
 		break;
 	    }
@@ -1271,7 +1285,7 @@ CompScreen::handleEvent (XEvent *event)
 		 * that it is already in the list of destroyed
 		 * windows, so check that list too */
 
-		foreach (CompWindow *dw, screen->priv->destroyedWindows)
+		foreach (CompWindow *dw, priv->destroyedWindows)
 		{
 		    if (dw->priv->serverId == event->xreparent.window)
 		    {

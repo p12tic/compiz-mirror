@@ -10,6 +10,7 @@ add_subdirectory( rect )
 add_subdirectory( window )
 
 IF (COMPIZ_BUILD_TESTING)
+add_subdirectory( privatescreen )
 add_subdirectory( wrapsystem/tests )
 add_subdirectory( plugin )
 add_subdirectory( option/tests )

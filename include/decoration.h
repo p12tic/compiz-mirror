@@ -267,6 +267,22 @@ decor_pixmap_property_to_quads (long		 *data,
 				decor_quad_t    *quad);
 
 int
+decor_match_pixmap (long		 *data,
+		    int		 size,
+		    Pixmap		 *pixmap,
+		    decor_extents_t  *frame,
+		    decor_extents_t  *border,
+		    decor_extents_t  *max_frame,
+		    decor_extents_t  *max_border,
+		    int min_width,
+		    int min_height,
+		    unsigned int frame_type,
+		    unsigned int frame_state,
+		    unsigned int frame_actions,
+		    decor_quad_t     *quad,
+		    unsigned int     n_quad);
+
+int
 decor_window_property (long	       *data,
 		       unsigned int    n,
 		       int	       size,

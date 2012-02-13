@@ -51,7 +51,7 @@ class CompWatchFd :
 	bool		  mForceFail;
 	bool		  mExecuting;
 
-    friend class CompScreen;
+    friend class CompScreenImpl;
 };
 
 #endif

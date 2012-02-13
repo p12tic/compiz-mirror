@@ -60,7 +60,7 @@ CompEventSource::~CompEventSource ()
 bool
 CompEventSource::callback ()
 {
-    screen->priv->processEvents ();
+    screen->processEvents ();
     return true;
 }
 
