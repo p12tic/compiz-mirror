@@ -117,25 +117,6 @@ isInitiateBinding (CompOption	           &option,
     return true;
 }
 
-#if 0
-static bool
-isTerminateBinding (CompOption	            &option,
-		    CompAction::BindingType type,
-		    CompAction::State       state,
-		    CompAction              **action)
-{
-    if (!isCallBackBinding (option, type, state))
-	return false;
-
-    if (option.value ().action ().terminate ().empty ())
-	return false;
-
-    *action = &option.value ().action ();
-
-    return true;
-}
-#endif
-
 static bool
 isInitiateOrTapBinding (CompOption              &option,
 			CompAction::BindingType type,
@@ -179,20 +160,26 @@ PrivateScreen::triggerPress (CompAction         *action,
 {
     if (!action->tap ().empty ())
     {
-        possibleTap = action;
+	possibleTap = action;
 	modTapGrab = false;
-	g_print("vv: possibleTap = %p\n", (void*)possibleTap);
 
-        if (state == CompAction::StateInitKey &&
-            action->key ().modifiers () &&
+	if (state == CompAction::StateInitKey &&
+	    action->key ().modifiers () &&
 	    action->key ().keycode () == 0)
         {
-	    g_print("vv: XGrabKeyboard on possibleTap...\n");
+	    /*
+	     * So you're trying to detect taps on a modifier key?
+	     * You will need to grab the keyboard SYNCHRONOUSLY.
+	     * This is so that later if the user presses another key with
+	     * this modifier, we will be able to ReplayKeyboard with
+	     * XAllowEvents. Otherwise that modifier+other_key event would
+	     * be absorbed and lost.
+	     */
 	    XGrabKeyboard (dpy, grabWindow, True,
 	                   GrabModeAsync, GrabModeSync, CurrentTime);
 	    XAllowEvents (dpy, SyncKeyboard, CurrentTime);
 	    modTapGrab = true;
-        }
+	}
     }
 
     if (!action->initiate ().empty () &&
@@ -222,10 +209,9 @@ PrivateScreen::triggerTap (CompAction::State   state,
 
     if (possibleTap)
     {
-        g_print("vv: triggerTap %p\n", (void*)possibleTap);
-    	if (!possibleTap->tap ().empty())
+	if (!possibleTap->tap ().empty())
 	    ret = possibleTap->tap () (possibleTap, state, arguments);
-        possibleTap = NULL;
+	possibleTap = NULL;
 	if (modTapGrab)
 	    XUngrabKeyboard (dpy, CurrentTime);
     }
@@ -382,9 +368,6 @@ PrivateScreen::triggerKeyPressBindings (CompOption::Vector &options,
 	    else if (!xkbEvent && action->key ().keycode () == 0)
 		match = (bindMods == (event->state & modMask));
 
-            if (match)
-                g_print("vv: key match %d / 0x%x\n",
-		    event->keycode, (unsigned)(bindMods & modMask));
 	    if (match && triggerPress (action, state, arguments))
 		return true;
 	}
@@ -458,9 +441,6 @@ PrivateScreen::triggerStateNotifyBindings (CompOption::Vector  &options,
 
 		    if ((event->mods & modMask & bindMods) == bindMods)
 		    {
-                        g_print("vv: key match2 %d / 0x%x\n",
-		             action->key ().keycode (),
-			     (unsigned)(bindMods & modMask));
 		        if (triggerPress (action, state, arguments))
 			    return true;
 		    }
@@ -795,14 +775,12 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	o[7].value ().set ((int) event->xkey.time);
 
 	possibleTap = NULL;
-	g_print("vv: keypress %d\n", (int)event->xkey.keycode);
 	foreach (CompPlugin *p, CompPlugin::getPlugins ())
 	{
 	    CompOption::Vector &options = p->vTable->getOptions ();
 	    if (triggerKeyPressBindings (options, &event->xkey, o))
 		return true;
 	}
-	g_print("vv: unhandled keypress %d\n", (int)event->xkey.keycode);
 	break;
     case KeyRelease:
 	o[0].value ().set ((int) event->xkey.window);
@@ -1018,10 +996,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		o[5].reset ();
 
 		if (stateEvent->event_type == KeyPress)
-		{
 		    possibleTap = NULL;
-		    g_print("vv: KeyPress2 %d\n", (int)event->xkey.keycode);
-		}
 
 		foreach (CompPlugin *p, CompPlugin::getPlugins ())
 		{
@@ -1034,9 +1009,6 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		    possibleTap &&
 		    triggerTap (CompAction::StateTermKey, o))
 		    return true;
-
-		if (stateEvent->event_type == KeyPress)
-		    g_print("vv: KeyPress2 %d was unhandled\n", (int)event->xkey.keycode);
 	    }
 	    else if (xkbEvent->xkb_type == XkbBellNotify)
 	    {
@@ -1152,14 +1124,14 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	actionEventHandled = true;
     }
 
-    if (priv->grabs.empty ())
+    if (priv->grabs.empty () && event->type == KeyPress)
     {
-	if (event->type == KeyPress)
+	if (priv->modTapGrab)
 	{
-	    g_print("vv: XUngrabKeyboard to force event through to app\n");
 	    XAllowEvents (priv->dpy, ReplayKeyboard, event->xkey.time);
-	    XUngrabKeyboard (priv->dpy, event->xkey.time);
+	    priv->modTapGrab = false;
 	}
+	XUngrabKeyboard (priv->dpy, event->xkey.time);
     }
 
     if (actionEventHandled)

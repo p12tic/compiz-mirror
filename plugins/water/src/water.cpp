@@ -1098,8 +1098,6 @@ waterToggleRain (CompAction         *action,
 {
     WATER_SCREEN (screen);
 
-    g_print("vv: Toggle Rain\n");
-
     if (!ws->rainTimer.active ())
     {
 	int delay;
@@ -1121,8 +1119,6 @@ waterToggleWiper (CompAction         *action,
 		  CompOption::Vector &options)
 {
     WATER_SCREEN (screen);
-
-    g_print("vv: Toggle Wiper\n");
 
     if (!ws->wiperTimer.active ())
     {
