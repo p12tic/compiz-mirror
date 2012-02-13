@@ -26,6 +26,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <cassert>
 
 #include <core/option.h>
 #include <core/action.h>
@@ -158,6 +159,8 @@ CompAction::KeyBinding::fromString (const CompString &str)
     size_t       pos, start = 0;
     KeySym	 keysym;
 
+    /* This assertion is a regression test for LP: #930412 */
+    assert (screen);
     if (!screen)
 	return false;
 
