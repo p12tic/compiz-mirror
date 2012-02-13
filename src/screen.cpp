@@ -5018,14 +5018,15 @@ PrivateScreen::~PrivateScreen ()
 
 	XFreeCursor (dpy, invisibleCursor);
 	XSync (dpy, False);
+
+	if (snContext)
+	    sn_monitor_context_unref (snContext);
+
 	XCloseDisplay (dpy);
     }
 
     if (desktopHintData)
 	free (desktopHintData);
-
-    if (snContext)
-	sn_monitor_context_unref (snContext);
 
     if (snDisplay)
 	sn_display_unref (snDisplay);
