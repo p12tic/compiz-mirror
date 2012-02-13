@@ -588,25 +588,28 @@ active_window_changed (WnckScreen *screen)
 	if (d && d->pixmap)
 	{
 	    d->active = wnck_window_is_active (win);
+
+            decor_frame_t *frame = d->decorated ? d->frame : gwd_get_decor_frame (get_frame_type (win));
+
 	    if ((d->state & META_MAXIMIZED) == META_MAXIMIZED)
 	    {
 		if (!d->frame_window)
 		{
 		   if (d->active)
 		   {
-		       d->context = &d->frame->max_window_context_active;
-		       d->shadow  = d->frame->max_border_shadow_active;
+		       d->context = &frame->max_window_context_active;
+		       d->shadow  = frame->max_border_shadow_active;
 		   }
 		   else
 		   {
-		       d->context = &d->frame->max_window_context_inactive;
-		       d->shadow  = d->frame->max_border_shadow_inactive;
+		       d->context = &frame->max_window_context_inactive;
+		       d->shadow  = frame->max_border_shadow_inactive;
 		   }
-		 }
-		else
-	       {
+                }
+                else
+                {
 		   d->shadow  = d->frame->max_border_no_shadow;
-	       }
+                }
 	    }
 	    else
 	    {
@@ -614,13 +617,13 @@ active_window_changed (WnckScreen *screen)
 	       {
 		   if (d->active)
 		   {
-		       d->context = &d->frame->window_context_active;
-		       d->shadow  = d->frame->border_shadow_active;
+		       d->context = &frame->window_context_active;
+		       d->shadow  = frame->border_shadow_active;
 		   }
 		   else
 		   {
-		       d->context = &d->frame->window_context_inactive;
-		       d->shadow  = d->frame->border_shadow_inactive;
+		       d->context = &frame->window_context_inactive;
+		       d->shadow  = frame->border_shadow_inactive;
 		   }
 	       }
 	       else
@@ -629,13 +632,16 @@ active_window_changed (WnckScreen *screen)
 	       }
 	    }
 
+            if (!d->decorated)
+                gwd_decor_frame_unref (frame);
+
 	    /* We need to update the decoration size here
 	    * since the shadow size might have changed and
 	    * in that case the decoration will be redrawn,
 	    * however if the shadow size doesn't change
 	    * then we need to redraw the decoration anyways
 	    * since the image would have changed */
-	    if (!update_window_decoration_size (d->win))
+	    if (!update_window_decoration_size (d->win) && d->decorated)
 	       queue_decor_draw (d);
 
 	}
@@ -649,24 +655,26 @@ active_window_changed (WnckScreen *screen)
 	{
 	    d->active = wnck_window_is_active (win);
 
+            decor_frame_t *frame = d->decorated ? d->frame : gwd_get_decor_frame (get_frame_type (win));
+
 	    if ((d->state & META_MAXIMIZED) == META_MAXIMIZED)
 	    {
 		if (!d->frame_window)
 		{
 		   if (d->active)
 		   {
-		       d->context = &d->frame->max_window_context_active;
-		       d->shadow  = d->frame->max_border_shadow_active;
+		       d->context = &frame->max_window_context_active;
+		       d->shadow  = frame->max_border_shadow_active;
 		   }
 		   else
 		   {
-		       d->context = &d->frame->max_window_context_inactive;
-		       d->shadow  = d->frame->max_border_shadow_inactive;
+		       d->context = &frame->max_window_context_inactive;
+		       d->shadow  = frame->max_border_shadow_inactive;
 		   }
 		}
 		else
 		{
-		   d->shadow  = d->frame->max_border_no_shadow;
+		   d->shadow  = frame->max_border_no_shadow;
 		}
 	    }
 	    else
@@ -675,20 +683,23 @@ active_window_changed (WnckScreen *screen)
 		{
 		   if (d->active)
 		   {
-		       d->context = &d->frame->window_context_active;
-		       d->shadow  = d->frame->border_shadow_active;
+		       d->context = &frame->window_context_active;
+		       d->shadow  = frame->border_shadow_active;
 		   }
 		   else
 		   {
-		       d->context = &d->frame->window_context_inactive;
-		       d->shadow  = d->frame->border_shadow_inactive;
+		       d->context = &frame->window_context_inactive;
+		       d->shadow  = frame->border_shadow_inactive;
 		   }
 		}
 		else
 		{
-		   d->shadow =  d->frame->border_no_shadow;
+		   d->shadow =  frame->border_no_shadow;
 		}
 	    }
+
+            if (!d->decorated)
+                gwd_decor_frame_unref (frame);
 
 	    /* We need to update the decoration size here
 	    * since the shadow size might have changed and
@@ -696,7 +707,7 @@ active_window_changed (WnckScreen *screen)
 	    * however if the shadow size doesn't change
 	    * then we need to redraw the decoration anyways
 	    * since the image would have changed */
-	    if (!update_window_decoration_size (d->win))
+	    if (!update_window_decoration_size (d->win) && d->decorated)
 	       queue_decor_draw (d);
 
 	}
