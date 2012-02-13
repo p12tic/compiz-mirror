@@ -4926,6 +4926,9 @@ CompScreenImpl::~CompScreenImpl ()
     while (!priv->windows.empty ())
         delete priv->windows.front ();
 
+    while (CompPlugin* p = CompPlugin::pop ())
+	CompPlugin::unload (p);
+
     screen = NULL;
 }
 
@@ -5017,9 +5020,6 @@ PrivateScreen::~PrivateScreen ()
 	XSync (dpy, False);
 	XCloseDisplay (dpy);
     }
-
-    while (CompPlugin* p = CompPlugin::pop ())
-	CompPlugin::unload (p);
 
     if (desktopHintData)
 	free (desktopHintData);
