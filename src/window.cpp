@@ -71,6 +71,16 @@ CompWindow::freePluginClassIndex (unsigned int index)
 	    w->pluginClasses.resize (windowPluginClassIndices.size ());
 }
 
+inline bool
+PrivateWindow::isInvisible() const
+{
+    return attrib.map_state != IsViewable ||
+     attrib.x + width  + output.right  <= 0 ||
+     attrib.y + height + output.bottom <= 0 ||
+     attrib.x - output.left >= (int) screen->width () ||
+     attrib.y - output.top >= (int) screen->height ();
+}
+
 bool
 PrivateWindow::isAncestorTo (CompWindow *transient,
 			     CompWindow *ancestor)
@@ -2712,16 +2722,6 @@ PrivateWindow::isGroupTransient (Window clientLeader)
     }
 
     return false;
-}
-
-bool
-PrivateWindow::isInvisible() const
-{
-	return attrib.map_state != IsViewable		       ||
-     attrib.x + width  + output.right  <= 0     ||
-     attrib.y + height + output.bottom <= 0     ||
-     attrib.x - output.left >= (int) screen->width () ||
-     attrib.y - output.top >= (int) screen->height ();
 }
 
 CompWindow *
