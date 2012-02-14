@@ -1096,6 +1096,14 @@ waterToggleRain (CompAction         *action,
 		 CompAction::State  state,
 		 CompOption::Vector &options)
 {
+    /* Remember StateCancel and StateCommit will be broadcast to all actions
+       so we need to verify that we are actually being toggled... */
+    if (!(state & CompAction::StateTermKey))
+        return false;
+    /* And only respond to key taps */
+    if (!(state & CompAction::StateTermTapped))
+        return false;
+
     WATER_SCREEN (screen);
 
     if (!ws->rainTimer.active ())
@@ -1313,8 +1321,8 @@ WaterScreen::WaterScreen (CompScreen *screen) :
 
     optionSetInitiateKeyInitiate (waterInitiate);
     optionSetInitiateKeyTerminate (waterTerminate);
-    optionSetToggleRainKeyTap (waterToggleRain);
-    optionSetToggleWiperKeyTap (waterToggleWiper);
+    optionSetToggleRainKeyTerminate (waterToggleRain);
+    optionSetToggleWiperKeyInitiate (waterToggleWiper);
     optionSetTitleWaveInitiate (waterTitleWave);
     optionSetPointInitiate (waterPoint);
     optionSetLineInitiate (waterLine);

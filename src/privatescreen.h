@@ -232,8 +232,6 @@ class PrivateScreen :
 	bool triggerRelease (CompAction         *action,
 	                     CompAction::State   state,
 	                     CompOption::Vector &arguments);
-	bool triggerTap     (CompAction::State   state,
-                             CompOption::Vector &arguments);
 
 	bool triggerButtonPressBindings (CompOption::Vector &options,
 					 XButtonEvent       *event,

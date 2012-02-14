@@ -340,12 +340,6 @@ CompAction::terminate ()
     return priv->terminate;
 }
 
-CompAction::CallBack
-CompAction::tap ()
-{
-    return priv->tap;
-}
-
 void
 CompAction::setInitiate (const CompAction::CallBack &initiate)
 {
@@ -356,12 +350,6 @@ void
 CompAction::setTerminate (const CompAction::CallBack &terminate)
 {
     priv->terminate = terminate;
-}
-
-void
-CompAction::setTap (const CompAction::CallBack &tap)
-{
-    priv->tap = tap;
 }
 
 CompAction::State
@@ -461,7 +449,6 @@ CompAction::copyState (const CompAction &action)
 {
     priv->initiate  = action.priv->initiate;
     priv->terminate = action.priv->terminate;
-    priv->tap       = action.priv->tap;
     priv->state     = action.priv->state;
 
     memcpy (&priv->priv, &action.priv->priv, sizeof (CompPrivate));
@@ -640,7 +627,6 @@ CompAction::active ()
 PrivateAction::PrivateAction () :
     initiate (),
     terminate (),
-    tap (),
     state (0),
     type (0),
     key (),
@@ -655,7 +641,6 @@ PrivateAction::PrivateAction () :
 PrivateAction::PrivateAction (const PrivateAction& a) :
     initiate (a.initiate),
     terminate (a.terminate),
-    tap (a.tap),
     state (a.state),
     type (a.type),
     key (a.key),
