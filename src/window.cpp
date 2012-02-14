@@ -1841,7 +1841,7 @@ CompWindow::resize (CompWindow::Geometry gm)
 
 	resizeNotify (dx, dy, dwidth, dheight);
 
-	priv->invisible = WINDOW_INVISIBLE (priv);
+	priv->invisible = priv->isInvisible ();
     }
     else if (priv->geometry.x () != gm.x () || priv->geometry.y () != gm.y ())
     {
@@ -1858,7 +1858,7 @@ CompWindow::resize (CompWindow::Geometry gm)
 	if (!priv->frameRegion.isEmpty ())
 	    priv->frameRegion.translate (dx, dy);
 
-	priv->invisible = WINDOW_INVISIBLE (priv);
+	priv->invisible = priv->isInvisible ();
 
 	moveNotify (dx, dy, true);
     }
@@ -2192,7 +2192,7 @@ CompWindow::move (int  dx,
 	    if (!priv->frameRegion.isEmpty ())
 		priv->frameRegion.translate (dx, dy);
 
-	    priv->invisible = WINDOW_INVISIBLE (priv);
+	    priv->invisible = priv->isInvisible ();
 
 	    moveNotify (dx, dy, immediate);
 	}
@@ -2712,6 +2712,16 @@ PrivateWindow::isGroupTransient (Window clientLeader)
     }
 
     return false;
+}
+
+bool
+PrivateWindow::isInvisible() const
+{
+	return attrib.map_state != IsViewable		       ||
+     attrib.x + width  + output.right  <= 0     ||
+     attrib.y + height + output.bottom <= 0     ||
+     attrib.x - output.left >= (int) screen->width () ||
+     attrib.y - output.top >= (int) screen->height ();
 }
 
 CompWindow *
@@ -6459,7 +6469,7 @@ CompWindow::CompWindow (Window aboveId,
 
     if (priv->attrib.map_state == IsViewable)
     {
-	priv->invisible = WINDOW_INVISIBLE (priv);
+	priv->invisible = priv->isInvisible ();
     }
 }
 
