@@ -4651,8 +4651,6 @@ PrivateWindow::reveal ()
 {
     if (window->minimized ())
 	window->unminimize ();
-
-    screen->leaveShowDesktopMode (window);
 }
 
 void
@@ -4676,6 +4674,8 @@ CompWindow::activate ()
     screen->forEachWindow (
 	boost::bind (PrivateWindow::revealAncestors, _1, this));
     priv->reveal ();
+
+    screen->leaveShowDesktopMode (window);
 
     if (priv->state & CompWindowStateHiddenMask)
     {
