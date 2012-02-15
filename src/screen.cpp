@@ -854,6 +854,7 @@ PrivateScreen::updatePlugins ()
 {
     unsigned int pListCount = 1;
 
+    possibleTap = NULL;
     dirtyPluginList = false;
 
     CompOption::Value::Vector &list = optionGetActivePlugins ();

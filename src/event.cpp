@@ -140,6 +140,7 @@ PrivateScreen::triggerPress (CompAction         *action,
     modTapGrab = false;
 
     if (state == CompAction::StateInitKey &&
+        grabs.empty () &&
         action->key ().modifiers () &&
         action->key ().keycode () == 0)
     {
