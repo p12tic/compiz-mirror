@@ -51,7 +51,6 @@ class CompRegion {
 	CompRegion (const CompRegion &);
 	CompRegion (int x, int y, int w, int h);
         CompRegion (const CompRect &);
-	CompRegion (const CompPoint::vector &); // Abstract Shape
 	~CompRegion ();
 
 	/**
