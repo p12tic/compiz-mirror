@@ -39,7 +39,7 @@ namespace
 {
     CompOption::Value::Vector & emptyList ()
     {
-	static CompOption::Value::Vector v (0);
+	static CompOption::Value::Vector v;
 	return v;
     }
 
