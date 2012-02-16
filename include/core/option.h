@@ -31,7 +31,6 @@
 #include <core/string.h>
 
 #include <boost/variant.hpp>
-#include <boost/noncopyable.hpp>
 
 #include <vector>
 
