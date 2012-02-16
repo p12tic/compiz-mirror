@@ -176,7 +176,7 @@ ExpoScreen::exitExpo (CompAction          *action,
     if (!expoMode)
 	return false;
 
-    termExpo (action, 0, noOptions);
+    termExpo (action, 0, noOptions ());
     anyClick = true;
     cScreen->damageScreen ();
 
@@ -373,7 +373,7 @@ ExpoScreen::handleEvent (XEvent *event)
 		clickTime   = 0;
 		doubleClick = false;
 
-		termExpo (&action, 0, noOptions);
+		termExpo (&action, 0, noOptions ());
 		anyClick = true;
 	    }
 	}
