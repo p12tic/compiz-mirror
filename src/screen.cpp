@@ -1412,7 +1412,7 @@ PrivateScreen::getWindowState (Window id)
 }
 
 unsigned int
-compiz::window::fillStateData (unsigned int state, boost::scoped_array <Atom> &data)
+compiz::window::fillStateData (unsigned int state, Atom *data)
 {
     int	 i = 0;
 
@@ -1452,12 +1452,12 @@ void
 PrivateScreen::setWindowState (unsigned int state, Window id)
 {
     int i = 0;
-    boost::scoped_array <Atom> data (new Atom[32]);
+    Atom data[32];
 
     if ((i = compiz::window::fillStateData (state, data)))
         XChangeProperty (dpy, id, Atoms::winState,
 	                 XA_ATOM, 32, PropModeReplace,
-	                 (unsigned char *) data.get (), i);
+	                 (unsigned char *) data, i);
 }
 
 unsigned int

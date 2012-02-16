@@ -29,7 +29,6 @@
 #define _COMPWINDOW_H
 
 #include <boost/function.hpp>
-#include <boost/scoped_array.hpp>
 
 #include <X11/Xlib-xcb.h>
 #include <X11/Xutil.h>
@@ -209,7 +208,7 @@ namespace compiz
 {
     namespace window
     {
-        unsigned int fillStateData (unsigned int state, boost::scoped_array <Atom> &data);
+        unsigned int fillStateData (unsigned int state, Atom *data);
     }
 }
 
