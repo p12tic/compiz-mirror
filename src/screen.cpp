@@ -1411,10 +1411,9 @@ PrivateScreen::getWindowState (Window id)
     return state;
 }
 
-void
-PrivateScreen::setWindowState (unsigned int state, Window id)
+unsigned int
+compiz::window::fillStateData (unsigned int state, boost::scoped_array <Atom> &data)
 {
-    Atom data[32];
     int	 i = 0;
 
     if (state & CompWindowStateModalMask)
@@ -1444,11 +1443,21 @@ PrivateScreen::setWindowState (unsigned int state, Window id)
     if (state & CompWindowStateDisplayModalMask)
 	data[i++] = Atoms::winStateDisplayModal;
     if (state & CompWindowStateFocusedMask)
-        data[i++] = Atoms::winStateFocused;
+	data[i++] = Atoms::winStateFocused;
 
-    XChangeProperty (dpy, id, Atoms::winState,
-		     XA_ATOM, 32, PropModeReplace,
-		     (unsigned char *) data, i);
+    return i;
+}
+
+void
+PrivateScreen::setWindowState (unsigned int state, Window id)
+{
+    int i = 0;
+    boost::scoped_array <Atom> data (new Atom[32]);
+
+    if ((i = compiz::window::fillStateData (state, data)))
+        XChangeProperty (dpy, id, Atoms::winState,
+	                 XA_ATOM, 32, PropModeReplace,
+	                 (unsigned char *) data.get (), i);
 }
 
 unsigned int

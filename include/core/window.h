@@ -29,6 +29,7 @@
 #define _COMPWINDOW_H
 
 #include <boost/function.hpp>
+#include <boost/scoped_array.hpp>
 
 #include <X11/Xlib-xcb.h>
 #include <X11/Xutil.h>
@@ -203,6 +204,14 @@ enum CompWindowNotify {
  * geometry
  */
 typedef compiz::window::extents::Extents CompWindowExtents;
+
+namespace compiz
+{
+    namespace window
+    {
+        unsigned int fillStateData (unsigned int state, boost::scoped_array <Atom> &data);
+    }
+}
 
 /**
  * Specifies the area of the screen taken up by strut windows
