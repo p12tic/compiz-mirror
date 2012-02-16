@@ -35,12 +35,47 @@
 #include <core/option.h>
 #include "privateoption.h"
 
-CompOption::Vector noOptions (0);
-CompOption::Value::Vector emptyList;
-CompString         emptyString;
-CompMatch          emptyMatch;
-CompAction         emptyAction;
-unsigned short     emptyColor[4];
+namespace
+{
+    CompOption::Value::Vector & emptyList ()
+    {
+	static CompOption::Value::Vector v (0);
+	return v;
+    }
+
+    CompString & emptyString ()
+    {
+	static CompString v;
+	return v;
+    }
+
+    CompMatch & emptyMatch ()
+    {
+	static CompMatch v;
+	return v;
+    }
+
+    CompAction & emptyAction ()
+    {
+	static CompAction v;
+	return v;
+    }
+
+    unsigned short * emptyColor ()
+    {
+	static unsigned short v[4];
+	return v;
+    }
+}
+
+CompOption::Vector &
+noOptions ()
+{
+    static CompOption::Vector v (0);
+    return v;
+}
+
+
 
 static bool
 checkIsAction (CompOption::Type type)
@@ -61,19 +96,6 @@ checkIsAction (CompOption::Type type)
 
 CompOption::Value::~Value()
 {
-    switch (type ()) {
-	case CompOption::TypeAction:
-	case CompOption::TypeKey:
-	case CompOption::TypeButton:
-	case CompOption::TypeEdge:
-	case CompOption::TypeBell:
-	    if (action ().state () & CompAction::StateAutoGrab && screen)
-		screen->removeAction (&action ());
-	    break;
-
-	default:
-	    break;
-    }
 }
 
 void
@@ -131,7 +153,7 @@ CompOption::Value::c () const
     }
     catch (...)
     {
-	return emptyColor;
+	return emptyColor ();
     }
 }
 
@@ -144,7 +166,7 @@ CompOption::Value::s () const
     }
     catch (...)
     {
-	return emptyString;
+	return emptyString ();
     }
 }
 
@@ -157,7 +179,7 @@ CompOption::Value::s ()
     }
     catch (...)
     {
-	return emptyString;
+	return emptyString ();
     }
 }
 
@@ -170,7 +192,7 @@ CompOption::Value::match () const
     }
     catch (...)
     {
-	return emptyMatch;
+	return emptyMatch ();
     }
 }
 
@@ -183,7 +205,7 @@ CompOption::Value::match ()
     }
     catch (...)
     {
-	return emptyMatch;
+	return emptyMatch ();
     }
 }
 
@@ -196,7 +218,7 @@ CompOption::Value::action () const
     }
     catch (...)
     {
-	return emptyAction;
+	return emptyAction ();
     }
 }
 
@@ -209,7 +231,7 @@ CompOption::Value::action ()
     }
     catch (...)
     {
-	return emptyAction;
+	return emptyAction ();
     }
 }
 
@@ -224,7 +246,7 @@ CompOption::Value::list () const
     }
     catch (...)
     {
-	return emptyList;
+	return emptyList ();
     }
 }
 
@@ -237,7 +259,7 @@ CompOption::Value::list ()
     }
     catch (...)
     {
-	return emptyList;
+	return emptyList ();
     }
 }
 
@@ -407,6 +429,18 @@ CompOption::CompOption (CompString name, CompOption::Type type) :
 
 CompOption::~CompOption ()
 {
+    /* Remove any added actions */
+    try
+    {
+	CompAction &action = value ().action ();
+
+	if (action.active ())
+	    screen->removeAction (&action);
+    }
+    catch (...)
+    {
+    }
+
     delete priv;
 }
 

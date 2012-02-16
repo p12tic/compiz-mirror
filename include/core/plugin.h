@@ -268,7 +268,7 @@ CompOption::Vector & CompPlugin::VTableForScreenAndWindow<T,T2>::getOptions ()
 {
     CompOption::Class *oc = dynamic_cast<CompOption::Class *> (T::get (screen));
     if (!oc)
-	return noOptions;
+	return noOptions ();
     return oc->getOptions ();
 }
 
@@ -306,7 +306,7 @@ CompOption::Vector & CompPlugin::VTableForScreen<T>::getOptions ()
 {
     CompOption::Class *oc = dynamic_cast<CompOption::Class *> (T::get (screen));
     if (!oc)
-	return noOptions;
+	return noOptions ();
     return oc->getOptions ();
 }
 

@@ -316,7 +316,7 @@ PrivateScreen::triggerKeyPressBindings (CompOption::Vector &options,
 	    {
 		if (!o.value ().action ().terminate ().empty ())
 		    o.value ().action ().terminate () (&o.value ().action (),
-						       state, noOptions);
+						       state, noOptions ());
 	    }
 	}
 
