@@ -63,7 +63,7 @@ namespace
 
     unsigned short * emptyColor ()
     {
-	static unsigned short v[4];
+	static unsigned short v[4] = { 0, 0, 0, 0 };
 	return v;
     }
 }
