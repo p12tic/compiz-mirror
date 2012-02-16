@@ -4693,7 +4693,7 @@ CompWindow::activate ()
 	boost::bind (PrivateWindow::revealAncestors, _1, this));
     priv->reveal ();
 
-    screen->leaveShowDesktopMode (window);
+    screen->leaveShowDesktopMode (this);
 
     if (priv->state & CompWindowStateHiddenMask)
     {
