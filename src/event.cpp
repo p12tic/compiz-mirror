@@ -118,20 +118,77 @@ isInitiateBinding (CompOption	           &option,
 }
 
 static bool
-isTerminateBinding (CompOption	            &option,
-		    CompAction::BindingType type,
-		    CompAction::State       state,
-		    CompAction              **action)
+isBound (CompOption             &option,
+         CompAction::BindingType type,
+         CompAction::State       state,
+         CompAction            **action)
 {
     if (!isCallBackBinding (option, type, state))
-	return false;
-
-    if (option.value ().action ().terminate ().empty ())
 	return false;
 
     *action = &option.value ().action ();
 
     return true;
+}
+
+bool
+PrivateScreen::triggerPress (CompAction         *action,
+                             CompAction::State   state,
+                             CompOption::Vector &arguments)
+{
+    possibleTap = action;
+    modTapGrab = false;
+
+    if (state == CompAction::StateInitKey &&
+        grabs.empty () &&
+        action->key ().modifiers () &&
+        action->key ().keycode () == 0)
+    {
+        /*
+         * So you're trying to detect taps on a modifier key?
+         * You will need to grab the keyboard SYNCHRONOUSLY.
+         * This is so that later if the user presses another key with
+         * this modifier, we will be able to ReplayKeyboard with
+         * XAllowEvents. Otherwise that modifier+other_key event would
+         * be absorbed and lost.
+         */
+        XGrabKeyboard (dpy, grabWindow, True,
+                       GrabModeAsync, GrabModeSync, CurrentTime);
+        XAllowEvents (dpy, SyncKeyboard, CurrentTime);
+        modTapGrab = true;
+    }
+
+    if (action->initiate ().empty ())
+    {
+        /* Default Initiate implementation for plugins that only provide
+           a Terminate callback (as you might want if responding to taps) */
+        if (state & CompAction::StateInitKey)
+            action->setState (action->state () | CompAction::StateTermKey);
+    }
+    else if (action->initiate () (action, state, arguments))
+        return true;
+
+    return false;
+}
+
+bool
+PrivateScreen::triggerRelease (CompAction         *action,
+                               CompAction::State   state,
+                               CompOption::Vector &arguments)
+{
+    if (action == possibleTap)
+    {
+        state |= CompAction::StateTermTapped;
+        possibleTap = NULL;
+        if (modTapGrab)
+            XUngrabKeyboard (dpy, CurrentTime);
+    }
+
+    if (!action->terminate ().empty () &&
+        action->terminate () (action, state, arguments))
+        return true;
+
+    return false;
 }
 
 bool
@@ -172,8 +229,7 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 
     foreach (CompOption &option, options)
     {
-	if (isInitiateBinding (option, CompAction::BindingTypeButton, state,
-			       &action))
+	if (isBound (option, CompAction::BindingTypeButton, state, &action))
 	{
 	    if (action->button ().button () == (int) event->button)
 	    {
@@ -182,7 +238,7 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 
 		if ((bindMods & modMask) == (event->state & modMask))
 		{
-		    if (action->initiate () (action, state, arguments))
+		    if (triggerPress (action, state, arguments))
 			return true;
 		}
 	    }
@@ -224,11 +280,11 @@ PrivateScreen::triggerButtonReleaseBindings (CompOption::Vector &options,
 
     foreach (CompOption &option, options)
     {
-	if (isTerminateBinding (option, type, state, &action))
+	if (isBound (option, type, state, &action))
 	{
 	    if (action->button ().button () == (int) event->button)
 	    {
-		if (action->terminate () (action, state, arguments))
+	        if (triggerRelease (action, state, arguments))
 		    return true;
 	    }
 	}
@@ -271,24 +327,19 @@ PrivateScreen::triggerKeyPressBindings (CompOption::Vector &options,
     state = CompAction::StateInitKey;
     foreach (CompOption &option, options)
     {
-	if (isInitiateBinding (option, CompAction::BindingTypeKey,
-			       state, &action))
+	if (isBound (option, CompAction::BindingTypeKey, state, &action))
 	{
 	    bindMods = modHandler->virtualToRealModMask (
 		action->key ().modifiers ());
 
+	    bool match = false;
 	    if (action->key ().keycode () == (int) event->keycode)
-	    {
-		if ((bindMods & modMask) == (event->state & modMask))
-		    if (action->initiate () (action, state, arguments))
-			return true;
-	    }
+		match = ((bindMods & modMask) == (event->state & modMask));
 	    else if (!xkbEvent && action->key ().keycode () == 0)
-	    {
-		if (bindMods == (event->state & modMask))
-		    if (action->initiate () (action, state, arguments))
-			return true;
-	    }
+		match = (bindMods == (event->state & modMask));
+
+	    if (match && triggerPress (action, state, arguments))
+		return true;
 	}
     }
 
@@ -313,25 +364,19 @@ PrivateScreen::triggerKeyReleaseBindings (CompOption::Vector &options,
 
     foreach (CompOption &option, options)
     {
-	if (isTerminateBinding (option, CompAction::BindingTypeKey,
-				state, &action))
+	if (isBound (option, CompAction::BindingTypeKey, state, &action))
 	{
 	    bindMods = modHandler->virtualToRealModMask (action->key ().modifiers ());
 
+	    bool match = false;
 	    if ((bindMods & modMask) == 0)
-	    {
-		if ((unsigned int) action->key ().keycode () ==
-						  (unsigned int) event->keycode)
-		{
-		    if (action->terminate () (action, state, arguments))
-			return true;
-		}
-	    }
+		match = ((unsigned int) action->key ().keycode () ==
+		         (unsigned int) event->keycode);
 	    else if (!xkbEvent && ((mods & modMask & bindMods) != bindMods))
-	    {
-		if (action->terminate () (action, state, arguments))
-		    return true;
-	    }
+	        match = true;
+
+	    if (match && triggerRelease (action, state, arguments))
+		return true;
 	}
     }
 
@@ -355,37 +400,39 @@ PrivateScreen::triggerStateNotifyBindings (CompOption::Vector  &options,
 
 	foreach (CompOption &option, options)
 	{
-	    if (isInitiateBinding (option, CompAction::BindingTypeKey,
-				   state, &action))
+	    if (isBound (option, CompAction::BindingTypeKey, state, &action))
 	    {
 		if (action->key ().keycode () == 0)
 		{
 		    bindMods =
 			modHandler->virtualToRealModMask (action->key ().modifiers ());
 
-		    if ((event->mods & modMask & bindMods) == bindMods)
+		    if ((event->mods & modMask) == bindMods)
 		    {
-			if (action->initiate () (action, state, arguments))
+		        if (triggerPress (action, state, arguments))
 			    return true;
 		    }
 		}
 	    }
 	}
     }
-    else
+    else if (event->event_type == KeyRelease)
     {
 	state = CompAction::StateTermKey;
 
 	foreach (CompOption &option, options)
 	{
-	    if (isTerminateBinding (option, CompAction::BindingTypeKey,
-				    state, &action))
+	    if (isBound (option, CompAction::BindingTypeKey, state, &action))
 	    {
-		bindMods = modHandler->virtualToRealModMask (action->key ().modifiers ());
+		bindMods = modHandler->virtualToRealModMask (
+		    action->key ().modifiers ());
+		unsigned int modKey =
+		    modHandler->keycodeToModifiers (event->keycode);
 
-		if ((event->mods & modMask & bindMods) != bindMods)
+		if ((event->mods && ((event->mods & modMask) != bindMods)) ||
+		    (!event->mods && (modKey == bindMods)))
 		{
-		    if (action->terminate () (action, state, arguments))
+		    if (triggerRelease (action, state, arguments))
 			return true;
 		}
 	    }
@@ -653,6 +700,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	o[6].value ().set ((int) event->xbutton.button);
 	o[7].value ().set ((int) event->xbutton.time);
 
+	possibleTap = NULL;
 	foreach (CompPlugin *p, CompPlugin::getPlugins ())
 	{
 	    CompOption::Vector &options = p->vTable->getOptions ();
@@ -695,6 +743,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	o[6].value ().set ((int) event->xkey.keycode);
 	o[7].value ().set ((int) event->xkey.time);
 
+	possibleTap = NULL;
 	foreach (CompPlugin *p, CompPlugin::getPlugins ())
 	{
 	    CompOption::Vector &options = p->vTable->getOptions ();
@@ -913,6 +962,9 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		o[4].reset ();
 		o[5].reset ();
 
+		if (stateEvent->event_type == KeyPress)
+		    possibleTap = NULL;
+
 		foreach (CompPlugin *p, CompPlugin::getPlugins ())
 		{
 		    CompOption::Vector &options = p->vTable->getOptions ();
@@ -1034,16 +1086,14 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	actionEventHandled = true;
     }
 
-    if (priv->grabs.empty ())
+    if (priv->grabs.empty () && event->type == KeyPress)
     {
-	switch (event->type)
+	if (priv->modTapGrab)
 	{
-	    case KeyPress:
-		XUngrabKeyboard (priv->dpy, event->xkey.time);
-		break;
-	    default:
-		break;
+	    XAllowEvents (priv->dpy, ReplayKeyboard, event->xkey.time);
+	    priv->modTapGrab = false;
 	}
+	XUngrabKeyboard (priv->dpy, event->xkey.time);
     }
 
     if (actionEventHandled)

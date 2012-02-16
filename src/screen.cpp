@@ -854,6 +854,7 @@ PrivateScreen::updatePlugins ()
 {
     unsigned int pListCount = 1;
 
+    possibleTap = NULL;
     dirtyPluginList = false;
 
     CompOption::Value::Vector &list = optionGetActivePlugins ();
@@ -4983,6 +4984,8 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     desktopHintSize (0),
     edgeWindow (None),
     xdndWindow (None),
+    possibleTap (NULL),
+    modTapGrab (false),
     initialized (false)
 {
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
