@@ -2865,9 +2865,17 @@ CompWindow::moveInputFocusToOtherWindow ()
 	priv->id == screen->priv->nextActiveWindow)
     {
 	CompWindow *ancestor;
+	CompWindow *nextActive = screen->findWindow (screen->priv->nextActiveWindow);
 	Window     lastNextActiveWindow = screen->priv->nextActiveWindow;
 
-	if (priv->transientFor && priv->transientFor != screen->root ())
+        /* Window pending focus */
+	if (priv->id != screen->priv->nextActiveWindow &&
+	    nextActive &&
+	    nextActive->focus ())
+	{
+	    nextActive->moveInputFocusTo ();
+	}
+	else if (priv->transientFor && priv->transientFor != screen->root ())
 	{
 	    ancestor = screen->findWindow (priv->transientFor);
 	    if (ancestor &&
