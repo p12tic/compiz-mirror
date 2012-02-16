@@ -59,32 +59,21 @@ checkIsAction (CompOption::Type type)
     return false;
 }
 
-static void
-finiOptionValue (CompOption::Value &v)
+CompOption::Value::~Value()
 {
-    switch (v.type()) {
+    switch (type ()) {
 	case CompOption::TypeAction:
 	case CompOption::TypeKey:
 	case CompOption::TypeButton:
 	case CompOption::TypeEdge:
 	case CompOption::TypeBell:
-	    if (v.action ().state () & CompAction::StateAutoGrab && screen)
-		screen->removeAction (&v.action ());
-	    break;
-
-	case CompOption::TypeList:
-	    foreach (CompOption::Value &val, v.list ())
-		finiOptionValue (val);
+	    if (action ().state () & CompAction::StateAutoGrab && screen)
+		screen->removeAction (&action ());
 	    break;
 
 	default:
 	    break;
     }
-}
-
-CompOption::Value::~Value()
-{
-    finiOptionValue(*this);
 }
 
 void
@@ -416,33 +405,8 @@ CompOption::CompOption (CompString name, CompOption::Type type) :
     setName (name, type);
 }
 
-static void
-finiScreenOptionValue (CompScreen        *s,
-		       CompOption::Value &v)
-{
-    switch (v.type()) {
-	case CompOption::TypeAction:
-	case CompOption::TypeKey:
-	case CompOption::TypeButton:
-	case CompOption::TypeEdge:
-	case CompOption::TypeBell:
-	    if (v.action ().state () & CompAction::StateAutoGrab)
-		s->removeAction (&v.action ());
-	    break;
-
-	case CompOption::TypeList:
-	    foreach (CompOption::Value &val, v.list ())
-		finiScreenOptionValue (s, val);
-	    break;
-
-	default:
-	    break;
-    }
-}
-
 CompOption::~CompOption ()
 {
-    finiOptionValue (priv->value);
     delete priv;
 }
 
