@@ -521,7 +521,7 @@ meta_get_decoration_geometry (decor_t		*d,
     if (d->active)
 	*flags |= (MetaFrameFlags ) META_FRAME_HAS_FOCUS;
 
-    if ((d->state & META_MAXIMIZED))
+    if ((d->state & META_MAXIMIZED) == META_MAXIMIZED)
 	*flags |= (MetaFrameFlags ) META_FRAME_MAXIMIZED;
 
     if (d->state & WNCK_WINDOW_STATE_STICKY)
@@ -1142,7 +1142,7 @@ meta_calc_decoration_size (decor_t *d,
     decor_context_t *context;
     decor_shadow_t  *shadow;
 
-    if ((d->state & META_MAXIMIZED))
+    if ((d->state & META_MAXIMIZED) == META_MAXIMIZED)
     {
 	if (!d->frame_window)
 	{
@@ -1206,7 +1206,7 @@ meta_calc_decoration_size (decor_t *d,
     }
     else
     {
-	if ((d->state & META_MAXIMIZED))
+	if ((d->state & META_MAXIMIZED) == META_MAXIMIZED)
 	    decor_get_default_layout (context, d->client_width,
 				      d->client_height - d->frame->titlebar_height,
 				      &layout);
