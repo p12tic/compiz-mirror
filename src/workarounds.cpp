@@ -548,39 +548,13 @@ WorkaroundsWindow::updateUrgencyState ()
 void
 WorkaroundsScreen::setWindowState (unsigned int state, Window id)
 {
-    Atom data[32];
-    int  i = 0;
+    int i = 0;
+    boost::scoped_array <Atom> data (new Atom[32]);
 
-    if (state & CompWindowStateModalMask)
-        data[i++] = Atoms::winStateModal;
-    if (state & CompWindowStateStickyMask)
-        data[i++] = Atoms::winStateSticky;
-    if (state & CompWindowStateMaximizedVertMask)
-        data[i++] = Atoms::winStateMaximizedVert;
-    if (state & CompWindowStateMaximizedHorzMask)
-        data[i++] = Atoms::winStateMaximizedHorz;
-    if (state & CompWindowStateShadedMask)
-        data[i++] = Atoms::winStateShaded;
-    if (state & CompWindowStateSkipTaskbarMask)
-        data[i++] = Atoms::winStateSkipTaskbar;
-    if (state & CompWindowStateSkipPagerMask)
-        data[i++] = Atoms::winStateSkipPager;
-    if (state & CompWindowStateHiddenMask)
-        data[i++] = Atoms::winStateHidden;
-    if (state & CompWindowStateFullscreenMask)
-        data[i++] = Atoms::winStateFullscreen;
-    if (state & CompWindowStateAboveMask)
-        data[i++] = Atoms::winStateAbove;
-    if (state & CompWindowStateBelowMask)
-        data[i++] = Atoms::winStateBelow;
-    if (state & CompWindowStateDemandsAttentionMask)
-        data[i++] = Atoms::winStateDemandsAttention;
-    if (state & CompWindowStateDisplayModalMask)
-        data[i++] = Atoms::winStateDisplayModal;
-
-    XChangeProperty (screen->dpy (), id, Atoms::winState,
-                     XA_ATOM, 32, PropModeReplace,
-                     (unsigned char *) data, i);
+    if ((i = compiz::window::fillStateData (state, data)))
+        XChangeProperty (screen->dpy (), id, Atoms::winState,
+	                 XA_ATOM, 32, PropModeReplace,
+	                 (unsigned char *) data.get (), i);
 }
 
 void
