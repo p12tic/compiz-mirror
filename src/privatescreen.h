@@ -541,7 +541,7 @@ class PrivateScreen :
 	Window	      xdndWindow;
 
 	void *possibleTap;
-	bool  modTapGrab;
+	bool  tapGrab;
 
 	bool initialized;
 };
