@@ -4985,7 +4985,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     edgeWindow (None),
     xdndWindow (None),
     possibleTap (NULL),
-    modTapGrab (false),
+    tapGrab (false),
     initialized (false)
 {
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();

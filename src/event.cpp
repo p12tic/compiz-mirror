@@ -136,32 +136,24 @@ PrivateScreen::triggerPress (CompAction         *action,
                              CompAction::State   state,
                              CompOption::Vector &arguments)
 {
-    possibleTap = action;
-    modTapGrab = false;
-
     if (state == CompAction::StateInitKey &&
         grabs.empty () &&
-        action->key ().modifiers () &&
-        action->key ().keycode () == 0)
+        !action->terminate ().empty ())
     {
-        /*
-         * So you're trying to detect taps on a modifier key?
-         * You will need to grab the keyboard SYNCHRONOUSLY.
-         * This is so that later if the user presses another key with
-         * this modifier, we will be able to ReplayKeyboard with
-         * XAllowEvents. Otherwise that modifier+other_key event would
-         * be absorbed and lost.
-         */
-        XGrabKeyboard (dpy, grabWindow, True,
-                       GrabModeAsync, GrabModeSync, CurrentTime);
-        XAllowEvents (dpy, SyncKeyboard, CurrentTime);
-        modTapGrab = true;
+        possibleTap = action;
+        int err = XGrabKeyboard (dpy, grabWindow, True,
+                                 GrabModeAsync, GrabModeSync, CurrentTime);
+        if (err == GrabSuccess)
+        {
+            XAllowEvents (dpy, SyncKeyboard, CurrentTime);
+            tapGrab = true;
+        }
     }
 
-    if (action->initiate ().empty ())
+    if (action->initiate ().empty () && !action->terminate ().empty ())
     {
-        /* Default Initiate implementation for plugins that only provide
-           a Terminate callback (as you might want if responding to taps) */
+        /* Default Initiate implementation for plugins that only
+           provide a Terminate callback */
         if (state & CompAction::StateInitKey)
             action->setState (action->state () | CompAction::StateTermKey);
     }
@@ -180,8 +172,6 @@ PrivateScreen::triggerRelease (CompAction         *action,
     {
         state |= CompAction::StateTermTapped;
         possibleTap = NULL;
-        if (modTapGrab)
-            XUngrabKeyboard (dpy, CurrentTime);
     }
 
     if (!action->terminate ().empty () &&
@@ -1086,14 +1076,16 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	actionEventHandled = true;
     }
 
-    if (priv->grabs.empty () && event->type == KeyPress)
+    if (priv->tapGrab &&
+        (event->type == KeyPress || event->type == KeyRelease))
     {
-	if (priv->modTapGrab)
-	{
-	    XAllowEvents (priv->dpy, ReplayKeyboard, event->xkey.time);
-	    priv->modTapGrab = false;
-	}
+	XAllowEvents (priv->dpy, ReplayKeyboard, event->xkey.time);
+    }
+
+    if (priv->grabs.empty () && event->type == KeyRelease)
+    {
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
+	priv->tapGrab = false;
     }
 
     if (actionEventHandled)
