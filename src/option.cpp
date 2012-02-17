@@ -434,7 +434,7 @@ CompOption::~CompOption ()
     {
 	CompAction &action = value ().action ();
 
-	if (action.active ())
+	if (action.active () && screen)
 	    screen->removeAction (&action);
     }
     catch (...)
