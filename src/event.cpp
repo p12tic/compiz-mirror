@@ -1079,7 +1079,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
     if (priv->tapGrab &&
         (event->type == KeyPress || event->type == KeyRelease))
     {
-	XAllowEvents (priv->dpy, ReplayKeyboard, event->xkey.time);
+	int mode = actionEventHandled ? AsyncKeyboard : ReplayKeyboard;
+	XAllowEvents (priv->dpy, mode, event->xkey.time);
     }
 
     if (priv->grabs.empty () && event->type == KeyRelease)
