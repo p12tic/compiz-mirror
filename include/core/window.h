@@ -204,6 +204,14 @@ enum CompWindowNotify {
  */
 typedef compiz::window::extents::Extents CompWindowExtents;
 
+namespace compiz
+{
+    namespace window
+    {
+        unsigned int fillStateData (unsigned int state, Atom *data);
+    }
+}
+
 /**
  * Specifies the area of the screen taken up by strut windows
  */
