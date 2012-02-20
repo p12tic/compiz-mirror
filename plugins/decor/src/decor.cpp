@@ -107,8 +107,6 @@ DecorWindow::computeShadowRegion ()
 
         for (it--; it != screen->windows ().end (); it--)
         {
-            CompRegion inter;
-
             if (!(*it)->isViewable ())
                 continue;
 
@@ -121,7 +119,7 @@ DecorWindow::computeShadowRegion ()
             if (!isAncestorTo (window, (*it)))
                 continue;
 
-	    inter = shadowRegion.intersected ((*it)->borderRect ());
+	    CompRegion inter = shadowRegion.intersected ((*it)->borderRect ());
 
             if (!inter.isEmpty ())
 		shadowRegion = shadowRegion.subtracted (inter);
@@ -150,6 +148,32 @@ DecorWindow::computeShadowRegion ()
 
 	    shadowRegion = shadowRegion.subtracted (area);
         }
+    }
+    else if (window->state () & MAXIMIZE_STATE)
+    {
+	shadowRegion = shadowRegion.intersected (screen->region ());
+
+	CompWindowVector::const_iterator it = std::find (screen->clientList ().begin (),
+							 screen->clientList ().end (),
+							 window);
+	CompWindowVector::const_reverse_iterator rit (it);
+
+	for (; rit != screen->clientList ().rend (); rit++)
+	{
+	    if (!((*rit)->state () & MAXIMIZE_STATE))
+		continue;
+
+	    /* Only care about windows that logically overlap
+	     * the shadow, but aren't actually obscured by this window */
+	    if (window->borderRect ().intersects ((*rit)->borderRect ()))
+		continue;
+
+	    CompRegion clippable = shadowRegion - CompRegion (window->borderRect ());
+	    CompRegion inter = clippable.intersected ((*rit)->borderRect ());
+
+	    if (!inter.isEmpty ())
+		shadowRegion = shadowRegion.subtracted (inter);
+	}
     }
 }
 
