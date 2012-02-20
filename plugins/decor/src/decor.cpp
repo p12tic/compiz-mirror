@@ -151,7 +151,12 @@ DecorWindow::computeShadowRegion ()
     }
     else if (window->state () & MAXIMIZE_STATE)
     {
+	CompRegion outputRegion = CompRegion (static_cast <CompRect &> (screen->outputDevs ()[window->outputDevice ()]));
+	CompRegion borderRegion = CompRegion (window->borderRect ());
 	shadowRegion = shadowRegion.intersected (screen->region ());
+
+	if (borderRegion.intersected (outputRegion) == outputRegion)
+	    shadowRegion = shadowRegion.intersected (outputRegion);
 
 	CompWindowVector::const_iterator it = std::find (screen->clientList ().begin (),
 							 screen->clientList ().end (),
@@ -168,7 +173,7 @@ DecorWindow::computeShadowRegion ()
 	    if (window->borderRect ().intersects ((*rit)->borderRect ()))
 		continue;
 
-	    CompRegion clippable = shadowRegion - CompRegion (window->borderRect ());
+	    CompRegion clippable = shadowRegion - borderRegion;
 	    CompRegion inter = clippable.intersected ((*rit)->borderRect ());
 
 	    if (!inter.isEmpty ())
