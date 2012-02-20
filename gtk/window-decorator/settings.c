@@ -21,10 +21,6 @@
 
 #include "gtk-window-decorator.h"
 
-/* TODO: Trash all of this and use a window property
- * instead - much much cleaner!
- */
-
 gboolean
 shadow_property_changed (WnckScreen *s)
 {
