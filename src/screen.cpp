@@ -1454,10 +1454,10 @@ PrivateScreen::setWindowState (unsigned int state, Window id)
     int i = 0;
     Atom data[32];
 
-    if ((i = compiz::window::fillStateData (state, data)))
-        XChangeProperty (dpy, id, Atoms::winState,
-	                 XA_ATOM, 32, PropModeReplace,
-	                 (unsigned char *) data, i);
+    i = compiz::window::fillStateData (state, data);
+    XChangeProperty (dpy, id, Atoms::winState,
+                     XA_ATOM, 32, PropModeReplace,
+                     (unsigned char *) data, i);
 }
 
 unsigned int
