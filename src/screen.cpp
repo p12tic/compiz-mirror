@@ -136,7 +136,7 @@ CompScreen::freePluginClassIndex (unsigned int index)
 }
 
 void
-PrivateScreen::handleSignal (int signum)
+PrivateScreenWithoutDisplay::handleSignal (int signum)
 {
     switch (signum)
     {
@@ -850,7 +850,7 @@ PrivateScreen::processEvents ()
 }
 
 void
-PrivateScreen::updatePlugins ()
+PrivateScreenWithoutDisplay::updatePlugins ()
 {
     unsigned int pListCount = 1;
 
@@ -1354,7 +1354,7 @@ PrivateScreen::windowStateMask (Atom state)
 }
 
 unsigned int
-PrivateScreen::windowStateFromString (const char *str)
+PrivateScreenWithoutDisplay::windowStateFromString (const char *str)
 {
     if (strcasecmp (str, "modal") == 0)
 	return CompWindowStateModalMask;
@@ -2844,7 +2844,7 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 }
 
 void
-PrivateScreen::eraseWindowFromMap (Window id)
+PrivateScreenWithoutDisplay::eraseWindowFromMap (Window id)
 {
     if (id != 1)
         windowsMap.erase (id);
@@ -3704,7 +3704,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 }
 
 CompGroup *
-PrivateScreen::addGroup (Window id)
+PrivateScreenWithoutDisplay::addGroup (Window id)
 {
     CompGroup *group = new CompGroup ();
 
@@ -3717,7 +3717,7 @@ PrivateScreen::addGroup (Window id)
 }
 
 void
-PrivateScreen::removeGroup (CompGroup *group)
+PrivateScreenWithoutDisplay::removeGroup (CompGroup *group)
 {
     group->refCnt--;
     if (group->refCnt)
@@ -3735,7 +3735,7 @@ PrivateScreen::removeGroup (CompGroup *group)
 }
 
 CompGroup *
-PrivateScreen::findGroup (Window id)
+PrivateScreenWithoutDisplay::findGroup (Window id)
 {
     foreach (CompGroup *g, groups)
 	if (g->id == id)
@@ -4355,7 +4355,7 @@ CompScreenImpl::shouldSerializePlugins ()
 }
 
 void
-PrivateScreen::removeDestroyed ()
+PrivateScreenWithoutDisplay::removeDestroyed ()
 {
     while (pendingDestroys)
     {
@@ -4455,7 +4455,7 @@ CompScreenImpl::init (const char *name)
 }
 
 bool
-PrivateScreen::init (const char *name)
+PrivateScreenWithoutDisplay::init (const char *name)
 {
     ctx = Glib::MainContext::get_default ();
     mainloop = Glib::MainLoop::create (ctx, false);
@@ -4463,6 +4463,61 @@ PrivateScreen::init (const char *name)
     sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, this, _1));
     sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, this, _1));
 
+    if (!initDisplay(name)) return false;
+
+    pingTimer.setTimes (optionGetPingDelay (),
+			      optionGetPingDelay () + 500);
+
+    pingTimer.start ();
+
+    optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
+    optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
+    optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
+    optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
+    optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
+    optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
+
+    optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
+
+    optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
+    optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
+    optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
+    optionSetMaximizeWindowHorizontallyKeyInitiate (
+	CompScreenImpl::maximizeWinHorizontally);
+    optionSetMaximizeWindowVerticallyKeyInitiate (
+	CompScreenImpl::maximizeWinVertically);
+
+    optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
+    optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
+
+    optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
+    optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
+
+    optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
+    optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
+
+    optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
+	CompScreenImpl::toggleWinMaximizedHorizontally);
+    optionSetToggleWindowMaximizedVerticallyKeyInitiate (
+	CompScreenImpl::toggleWinMaximizedVertically);
+
+    optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
+
+    if (dirtyPluginList)
+	updatePlugins ();
+
+    return true;
+}
+
+bool
+PrivateScreenWithoutDisplay::initDisplay (const char *name)
+{
+    return true;
+}
+
+bool
+PrivateScreen::initDisplay (const char *name)
+{
     dpy = XOpenDisplay (name);
     if (!dpy)
     {
@@ -4889,47 +4944,6 @@ PrivateScreen::init (const char *name)
 
     setAudibleBell (optionGetAudibleBell ());
 
-    pingTimer.setTimes (optionGetPingDelay (),
-			      optionGetPingDelay () + 500);
-
-    pingTimer.start ();
-
-    optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
-    optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
-    optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
-    optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
-    optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
-    optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
-
-    optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
-
-    optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
-    optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
-    optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
-    optionSetMaximizeWindowHorizontallyKeyInitiate (
-	CompScreenImpl::maximizeWinHorizontally);
-    optionSetMaximizeWindowVerticallyKeyInitiate (
-	CompScreenImpl::maximizeWinVertically);
-
-    optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
-    optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
-
-    optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
-    optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
-
-    optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
-    optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
-
-    optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
-	CompScreenImpl::toggleWinMaximizedHorizontally);
-    optionSetToggleWindowMaximizedVerticallyKeyInitiate (
-	CompScreenImpl::toggleWinMaximizedVertically);
-
-    optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
-
-    if (dirtyPluginList)
-	updatePlugins ();
-
     return true;
 }
 
@@ -4947,6 +4961,45 @@ CompScreenImpl::~CompScreenImpl ()
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
+    PrivateScreenWithoutDisplay (screen),
+    valueMap (),
+    screenInfo (0),
+    snDisplay(0),
+    windows (),
+    vp (0, 0),
+    vpSize (1, 1),
+    nDesktop (1),
+    currentDesktop (0),
+    root (None),
+    grabWindow (None),
+    activeNum (1),
+    outputDevs (0),
+    currentOutputDev (0),
+    hasOverlappingOutputs (false),
+    currentHistory (0),
+    snContext (0),
+    startupSequences (0),
+    startupSequenceTimer (),
+    buttonGrabs (0),
+    keyGrabs (0),
+    grabs (0),
+    grabbed (false),
+    showingDesktopMask (0),
+    desktopHintData (0),
+    desktopHintSize (0),
+    initialized (false)
+{
+    pingTimer.setCallback (
+	boost::bind (&PrivateScreen::handlePingTimeout, this));
+
+    startupSequenceTimer.setCallback (
+	boost::bind (&PrivateScreen::handleStartupSequenceTimeout, this));
+    startupSequenceTimer.setTimes (1000, 1500);
+
+    memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
+}
+
+PrivateScreenWithoutDisplay::PrivateScreenWithoutDisplay (CompScreen *screen) :
     CoreOptions (false),
     source(0),
     timeout(0),
@@ -4954,9 +5007,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     lastFileWatchHandle (1),
     watchFds (0),
     lastWatchFdHandle (1),
-    valueMap (),
-    screenInfo (0),
-    snDisplay(0),
     activeWindow (0),
     below (None),
     autoRaiseTimer (),
@@ -4966,54 +5016,35 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     dirtyPluginList (true),
     screen (screen),
     serverWindows (),
-    windows (),
     destroyedWindows (),
     stackIsFresh (false),
-    vp (0, 0),
-    vpSize (1, 1),
-    nDesktop (1),
-    currentDesktop (0),
-    root (None),
-    grabWindow (None),
     desktopWindowCount (0),
     mapNum (1),
-    activeNum (1),
-    outputDevs (0),
-    currentOutputDev (0),
-    hasOverlappingOutputs (false),
-    currentHistory (0),
-    snContext (0),
-    startupSequences (0),
-    startupSequenceTimer (),
     groups (0),
     defaultIcon (0),
-    buttonGrabs (0),
-    keyGrabs (0),
-    grabs (0),
-    grabbed (false),
     pendingDestroys (0),
-    showingDesktopMask (0),
-    desktopHintData (0),
-    desktopHintSize (0),
     edgeWindow (None),
     xdndWindow (None),
     possibleTap (NULL),
-    tapGrab (false),
-    initialized (false)
+    tapGrab (false)
 {
-    TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
     ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
-
-    pingTimer.setCallback (
-	boost::bind (&PrivateScreen::handlePingTimeout, this));
-
-    startupSequenceTimer.setCallback (
-	boost::bind (&PrivateScreen::handleStartupSequenceTimeout, this));
-    startupSequenceTimer.setTimes (1000, 1500);
-
-    memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
-
+    TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
     TimeoutHandler::SetDefault (dTimeoutHandler);
+}
+
+PrivateScreenWithoutDisplay::~PrivateScreenWithoutDisplay ()
+{
+    delete timeout;
+    delete source;
+
+    if (defaultIcon)
+	delete defaultIcon;
+
+    foreach (CompWatchFd *fd, watchFds)
+	delete fd;
+
+    watchFds.clear ();
 }
 
 PrivateScreen::~PrivateScreen ()
@@ -5029,9 +5060,6 @@ PrivateScreen::~PrivateScreen ()
 
 	XDestroyWindow (dpy, grabWindow);
 
-	if (defaultIcon)
-	    delete defaultIcon;
-
 	XFreeCursor (dpy, invisibleCursor);
 	XSync (dpy, False);
 
@@ -5046,12 +5074,4 @@ PrivateScreen::~PrivateScreen ()
 
     if (snDisplay)
 	sn_display_unref (snDisplay);
-
-    delete timeout;
-    delete source;
-
-    foreach (CompWatchFd *fd, watchFds)
-	delete fd;
-
-    watchFds.clear ();
 }

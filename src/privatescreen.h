@@ -180,9 +180,105 @@ private:
 }
 }
 
-class PrivateScreen :
+class PrivateScreenWithoutDisplay :
     public ValueHolder,
     public CoreOptions
+{
+public:
+	PrivateScreenWithoutDisplay (CompScreen *screen);
+	~PrivateScreenWithoutDisplay ();
+
+	bool init (const char *name);
+
+	void removeDestroyed ();
+
+	void updatePlugins ();
+
+	static unsigned int windowStateFromString (const char *str);
+
+	void eraseWindowFromMap (Window id);
+
+	void handleSignal (int signum);
+
+	// TODO - are these three actually used?
+	CompGroup * addGroup (Window id);
+	void removeGroup (CompGroup *group);
+	CompGroup * findGroup (Window id);
+
+public:
+
+	Glib::RefPtr <Glib::MainLoop>  mainloop;
+
+	/* We cannot use RefPtrs. See
+	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
+	 */
+	CompEventSource * source;
+	CompTimeoutSource * timeout;
+	CompSignalSource * sighupSource;
+	CompSignalSource * sigtermSource;
+	CompSignalSource * sigintSource;
+	Glib::RefPtr <Glib::MainContext> ctx;
+
+	CompFileWatchList   fileWatch;
+	CompFileWatchHandle lastFileWatchHandle;
+
+	std::list< CompWatchFd * > watchFds;
+	CompWatchFdHandle        lastWatchFdHandle;
+
+	CompTimer    pingTimer;
+
+	Window activeWindow;
+	Window nextActiveWindow;
+
+	Window below;
+
+	CompTimer autoRaiseTimer;
+	Window    autoRaiseWindow;
+
+	CompTimer               edgeDelayTimer;
+	CompDelayedEdgeSettings edgeDelaySettings;
+
+	CompOption::Value plugin;
+	bool	          dirtyPluginList;
+
+	CompScreen  *screen;
+
+	CompWindowList serverWindows;
+	CompWindowList destroyedWindows;
+	bool           stackIsFresh;
+
+	CompWindow::Map windowsMap;
+
+	std::map <CompWindow *, CompWindow *> detachedFrameWindows;
+
+	int          desktopWindowCount;
+	unsigned int mapNum;
+
+
+	std::list<CompGroup *> groups;
+
+	CompIcon *defaultIcon;
+
+	CompWindowVector clientList;            /* clients in mapping order */
+	CompWindowVector clientListStacking;    /* clients in stacking order */
+
+	std::vector<Window> clientIdList;        /* client ids in mapping order */
+	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
+
+	unsigned int pendingDestroys;
+
+	Window	      edgeWindow;
+	Window	      xdndWindow;
+
+	void *possibleTap;
+	bool  tapGrab;
+
+    private:
+	virtual bool initDisplay (const char *name);
+};
+
+class PrivateScreen :
+    public PrivateScreenWithoutDisplay
 {
 
     public:
@@ -213,18 +309,12 @@ class PrivateScreen :
 	PrivateScreen (CompScreen *screen);
 	~PrivateScreen ();
 
-	bool init (const char *name);
-
 	bool setOption (const CompString &name, CompOption::Value &value);
 
 	std::list <XEvent> queueEvents ();
 	void processEvents ();
 
-	void removeDestroyed ();
-
 	void updatePassiveGrabs ();
-
-	void updatePlugins ();
 
 	bool triggerPress   (CompAction         *action,
 	                     CompAction::State   state,
@@ -329,8 +419,6 @@ class PrivateScreen :
 
 	unsigned int windowStateMask (Atom state);
 
-	static unsigned int windowStateFromString (const char *str);
-
 	unsigned int getWindowState (Window id);
 
 	void setWindowState (unsigned int state, Window id);
@@ -351,15 +439,7 @@ class PrivateScreen :
 
 	void configure (XConfigureEvent *ce);
 
-	void eraseWindowFromMap (Window id);
-
 	void updateClientList ();
-
-	CompGroup * addGroup (Window id);
-
-	void removeGroup (CompGroup *group);
-
-	CompGroup * findGroup (Window id);
 
 	void applyStartupProperties (CompWindow *window);
 
@@ -385,30 +465,10 @@ class PrivateScreen :
 	
 	void setDefaultWindowAttributes (XWindowAttributes *);
 
-	void handleSignal (int signum);
-
 	static void compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
 
     public:
-
-	Glib::RefPtr <Glib::MainLoop>  mainloop;
-
-	/* We cannot use RefPtrs. See
-	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
-	 */
-	CompEventSource * source;
-	CompTimeoutSource * timeout;
-	CompSignalSource * sighupSource;
-	CompSignalSource * sigtermSource;
-	CompSignalSource * sigintSource;
-	Glib::RefPtr <Glib::MainContext> ctx;
-
-	CompFileWatchList   fileWatch;
-	CompFileWatchHandle lastFileWatchHandle;
-
-	std::list< CompWatchFd * > watchFds;
-	CompWatchFdHandle        lastWatchFdHandle;
 
 	std::map<CompString, CompPrivate> valueMap;
 
@@ -435,37 +495,13 @@ class PrivateScreen :
 	SnDisplay *snDisplay;
 
 	unsigned int lastPing;
-	CompTimer    pingTimer;
-
-	Window activeWindow;
-	Window nextActiveWindow;
-
-	Window below;
 	char   displayString[256];
 
 	KeyCode escapeKeyCode;
 	KeyCode returnKeyCode;
 
-	CompTimer autoRaiseTimer;
-	Window    autoRaiseWindow;
-
-	CompTimer               edgeDelayTimer;
-	CompDelayedEdgeSettings edgeDelaySettings;
-
-	CompOption::Value plugin;
-	bool	          dirtyPluginList;
-
-	CompScreen  *screen;
-
 	std::list <CoreWindow *> createdWindows;
-	CompWindowList serverWindows;
 	CompWindowList windows;
-	CompWindowList destroyedWindows;
-	bool           stackIsFresh;
-
-	CompWindow::Map windowsMap;
-
-	std::map <CompWindow *, CompWindow *> detachedFrameWindows;
 
 	Colormap colormap;
 	int      screenNum;
@@ -481,8 +517,6 @@ class PrivateScreen :
 	XWindowAttributes attrib;
 	Window            grabWindow;
 
-	int          desktopWindowCount;
-	unsigned int mapNum;
 	unsigned int activeNum;
 
 	CompOutput::vector outputDevs;
@@ -501,10 +535,6 @@ class PrivateScreen :
 	std::list<CompStartupSequence *> startupSequences;
 	CompTimer                        startupSequenceTimer;
 
-	std::list<CompGroup *> groups;
-
-	CompIcon *defaultIcon;
-
 	Window wmSnSelectionWindow;
 	Atom   wmSnAtom;
 	Time   wmSnTimestamp;
@@ -512,12 +542,6 @@ class PrivateScreen :
 	Cursor normalCursor;
 	Cursor busyCursor;
 	Cursor invisibleCursor;
-
-	CompWindowVector clientList;            /* clients in mapping order */
-	CompWindowVector clientListStacking;    /* clients in stacking order */
-
-	std::vector<Window> clientIdList;        /* client ids in mapping order */
-	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
 
 	std::list<ButtonGrab> buttonGrabs;
 	std::list<KeyGrab>    keyGrabs;
@@ -528,8 +552,6 @@ class PrivateScreen :
 					  on FocusOut and false on
 					  UngrabNotify from FocusIn */
 
-	unsigned int pendingDestroys;
-
 	CompRect workArea;
 
 	unsigned int showingDesktopMask;
@@ -537,13 +559,10 @@ class PrivateScreen :
 	unsigned long *desktopHintData;
 	int           desktopHintSize;
 
-	Window	      edgeWindow;
-	Window	      xdndWindow;
-
-	void *possibleTap;
-	bool  tapGrab;
-
 	bool initialized;
+
+    private:
+	virtual bool initDisplay (const char *name);
 };
 
 class CompManager
