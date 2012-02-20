@@ -4604,10 +4604,9 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	    }
 	}
 
-	if (sibling)
-	{
-	    mask |= priv->addWindowStackChanges (&xwc, sibling);
-	}
+	/* If sibling is NULL, then this window will go on the bottom
+	 * of the stack */
+	mask |= priv->addWindowStackChanges (&xwc, sibling);
     }
 
     mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
