@@ -71,7 +71,7 @@ namespace
 CompOption::Vector &
 noOptions ()
 {
-    static CompOption::Vector v (0);
+    static CompOption::Vector v;
     return v;
 }
 
