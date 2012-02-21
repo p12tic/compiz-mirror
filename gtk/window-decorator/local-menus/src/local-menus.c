@@ -33,6 +33,7 @@
 
 gint menu_mode = GLOBAL;
 
+#ifdef META_HAS_LOCAL_MENUS
 static void
 gwd_menu_mode_changed (GSettings *settings,
 		       gchar     *key,
@@ -40,6 +41,7 @@ gwd_menu_mode_changed (GSettings *settings,
 {
     menu_mode = g_settings_get_enum (settings, "menu-mode");
 }
+#endif
 
 active_local_menu *active_menu;
 pending_local_menu *pending_menu;
@@ -109,7 +111,7 @@ gwd_get_entry_id_from_sync_variant (GVariant *args)
     g_assert_not_reached ();
     return NULL;
 }
-
+#ifdef META_HAS_LOCAL_MENUS
 static void
 on_local_menu_activated (GDBusProxy *proxy,
 			 gchar      *sender_name,
@@ -117,7 +119,7 @@ on_local_menu_activated (GDBusProxy *proxy,
 			 GVariant   *parameters,
 			 gpointer   user_data)
 {
-#ifdef META_HAS_LOCAL_MENUS
+
     if (g_strcmp0 (signal_name, "EntryActivated") == 0)
     {
 	show_local_menu_data *d = (show_local_menu_data *) user_data;
@@ -164,9 +166,9 @@ on_local_menu_activated (GDBusProxy *proxy,
 	    g_free (d);
 	}
     }
-#endif
-}
 
+}
+#endif
 gboolean
 gwd_move_window_instead (gpointer user_data)
 {
