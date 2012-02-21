@@ -63,7 +63,7 @@ gwd_window_should_have_local_menu (WnckWindow *win)
     }
 
     if (lim_settings)
-	return menu_mode;
+	return menu_mode == LOCAL;
 #endif
 
     return FALSE;
@@ -130,7 +130,7 @@ on_local_menu_activated (GDBusProxy *proxy,
 	if (!d->local_menu_entry_id)
 	{
 	    GError   *error = NULL;
-	    GVariant *params = g_variant_new ("s", "libappmenu.so", NULL);
+	    GVariant *params = g_variant_new ("(s)", "libappmenu.so", NULL);
 	    GVariant *args = g_dbus_proxy_call_sync (proxy, "SyncOne", params, 0, 500, NULL, &error);
 
 	    g_assert_no_error (error);

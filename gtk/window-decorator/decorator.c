@@ -239,7 +239,7 @@ update_event_windows (WnckWindow *win)
     gint    actions = d->actions;
 
     if (gwd_window_should_have_local_menu (win))
-	d->actions |= GWD_SHOW_LOCAL_MENU;
+	actions |= GWD_SHOW_LOCAL_MENU;
 
     xdisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
 
