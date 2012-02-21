@@ -854,6 +854,7 @@ PrivateScreen::updatePlugins ()
 {
     unsigned int pListCount = 1;
 
+    possibleTap = NULL;
     dirtyPluginList = false;
 
     CompOption::Value::Vector &list = optionGetActivePlugins ();
@@ -1410,10 +1411,9 @@ PrivateScreen::getWindowState (Window id)
     return state;
 }
 
-void
-PrivateScreen::setWindowState (unsigned int state, Window id)
+unsigned int
+compiz::window::fillStateData (unsigned int state, Atom *data)
 {
-    Atom data[32];
     int	 i = 0;
 
     if (state & CompWindowStateModalMask)
@@ -1443,11 +1443,21 @@ PrivateScreen::setWindowState (unsigned int state, Window id)
     if (state & CompWindowStateDisplayModalMask)
 	data[i++] = Atoms::winStateDisplayModal;
     if (state & CompWindowStateFocusedMask)
-        data[i++] = Atoms::winStateFocused;
+	data[i++] = Atoms::winStateFocused;
 
+    return i;
+}
+
+void
+PrivateScreen::setWindowState (unsigned int state, Window id)
+{
+    int i = 0;
+    Atom data[32];
+
+    i = compiz::window::fillStateData (state, data);
     XChangeProperty (dpy, id, Atoms::winState,
-		     XA_ATOM, 32, PropModeReplace,
-		     (unsigned char *) data, i);
+                     XA_ATOM, 32, PropModeReplace,
+                     (unsigned char *) data, i);
 }
 
 unsigned int
@@ -2941,6 +2951,8 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 		XUngrabPointer (priv->dpy, CurrentTime);
 		return NULL;
 	    }
+	    else
+	        priv->tapGrab = false;
 	}
 	else
 	    return NULL;
@@ -3003,6 +3015,7 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
 
 	XUngrabPointer (priv->dpy, CurrentTime);
 	XUngrabKeyboard (priv->dpy, CurrentTime);
+	priv->tapGrab = false;
     }
 }
 
@@ -3579,6 +3592,7 @@ CompScreenImpl::toolkitAction (Atom   toolkitAction,
 
     XUngrabPointer (priv->dpy, CurrentTime);
     XUngrabKeyboard (priv->dpy, CurrentTime);
+    priv->tapGrab = false;
 
     XSendEvent (priv->dpy, priv->root, false,
 		StructureNotifyMask, &ev);
@@ -4983,6 +4997,8 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     desktopHintSize (0),
     edgeWindow (None),
     xdndWindow (None),
+    possibleTap (NULL),
+    tapGrab (false),
     initialized (false)
 {
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();

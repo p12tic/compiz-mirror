@@ -226,6 +226,13 @@ class PrivateScreen :
 
 	void updatePlugins ();
 
+	bool triggerPress   (CompAction         *action,
+	                     CompAction::State   state,
+	                     CompOption::Vector &arguments);
+	bool triggerRelease (CompAction         *action,
+	                     CompAction::State   state,
+	                     CompOption::Vector &arguments);
+
 	bool triggerButtonPressBindings (CompOption::Vector &options,
 					 XButtonEvent       *event,
 					 CompOption::Vector &arguments);
@@ -533,7 +540,10 @@ class PrivateScreen :
 	Window	      edgeWindow;
 	Window	      xdndWindow;
 
-        bool initialized;
+	void *possibleTap;
+	bool  tapGrab;
+
+	bool initialized;
 };
 
 class CompManager

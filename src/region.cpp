@@ -81,25 +81,6 @@ CompRegion::CompRegion (const CompRect &r)
     XDestroyRegion (tmp);
 }
 
-CompRegion::CompRegion (const CompPoint::vector &points)
-{
-    XPoint pts[points.size ()];
-    int    count = 0;
-
-    foreach (CompPoint p, points)
-    {
-	pts[count].x = p.x ();
-	pts[count].y = p.y ();
-
-	count++;
-    }
-
-    priv = new PrivateRegion ();
-    
-    XDestroyRegion (priv->region);
-    priv->region = XPolygonRegion (pts, points.size (), WindingRule);
-}
-
 CompRegion::~CompRegion ()
 {
     delete priv;
@@ -275,7 +256,7 @@ CompRegion::shrink (int dx, int dy)
 void
 CompRegion::shrink (const CompPoint &p)
 {
-    translate (p.x (), p.y ());
+    shrink (p.x (), p.y ());
 }
 
 CompRegion

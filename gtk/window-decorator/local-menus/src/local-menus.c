@@ -23,6 +23,7 @@
  *        Authored By: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
+#include <string.h>
 #include "local-menus.h"
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
@@ -68,6 +69,47 @@ gwd_window_should_have_local_menu (WnckWindow *win)
     return FALSE;
 }
 
+gchar *
+gwd_get_entry_id_from_sync_variant (GVariant *args)
+{
+    /* We need to get the indicator data once we've called show */
+
+    GVariantIter* iter            = NULL;
+    gchar*        name_hint       = NULL;
+    gchar*        indicator_id    = NULL;
+    gchar*        entry_id        = NULL;
+    gchar*        label           = NULL;
+    gboolean      label_sensitive = FALSE;
+    gboolean      label_visible   = FALSE;
+    guint32       image_type      = 0;
+    gchar*        image_data      = NULL;
+    gboolean      image_sensitive = FALSE;
+    gboolean      image_visible   = FALSE;
+    gint32        priority        = -1;
+
+    g_variant_get (args, "(a(ssssbbusbbi))", &iter);
+    while (g_variant_iter_loop (iter, "(ssssbbusbbi)",
+			    &indicator_id,
+			    &entry_id,
+			    &name_hint,
+			    &label,
+			    &label_sensitive,
+			    &label_visible,
+			    &image_type,
+			    &image_data,
+			    &image_sensitive,
+			    &image_visible,
+			    &priority))
+    {
+	g_variant_unref (args);
+	return g_strdup (entry_id);
+    }
+
+    g_variant_unref (args);
+    g_assert_not_reached ();
+    return NULL;
+}
+
 static void
 on_local_menu_activated (GDBusProxy *proxy,
 			 gchar      *sender_name,
@@ -78,16 +120,33 @@ on_local_menu_activated (GDBusProxy *proxy,
 #ifdef META_HAS_LOCAL_MENUS
     if (g_strcmp0 (signal_name, "EntryActivated") == 0)
     {
+	show_local_menu_data *d = (show_local_menu_data *) user_data;
 	gchar *entry_id = NULL;
+	gint            x_out, y_out;
+	guint           width, height;
 
-	g_variant_get (parameters, "(s)", &entry_id, NULL);
+	g_variant_get (parameters, "(s(iiuu))", &entry_id, &x_out, &y_out, &width, &height, NULL);
 
-	gboolean empty = g_strcmp0 (entry_id, "")  == 0;
-
-	if (empty)
+	if (!d->local_menu_entry_id)
 	{
-	    show_local_menu_data *d = (show_local_menu_data *) user_data;
+	    GError   *error = NULL;
+	    GVariant *params = g_variant_new ("s", "libappmenu.so", NULL);
+	    GVariant *args = g_dbus_proxy_call_sync (proxy, "SyncOne", params, 0, 500, NULL, &error);
 
+	    g_assert_no_error (error);
+	    d->local_menu_entry_id = gwd_get_entry_id_from_sync_variant (args);
+	}
+
+	if (g_strcmp0 (entry_id, d->local_menu_entry_id) == 0)
+	{
+	    d->rect->x = x_out - d->dx;
+	    d->rect->y = y_out - d->dy;
+	    d->rect->width = width;
+	    d->rect->height = height;
+	}
+	else if (g_strcmp0 (entry_id, "") == 0)
+	{
+	    memset (d->rect, 0, sizeof (GdkRectangle));
 	    (*d->cb) (d->user_data);
 
 	    g_signal_handlers_disconnect_by_func (d->proxy, on_local_menu_activated, d);
@@ -100,6 +159,9 @@ on_local_menu_activated (GDBusProxy *proxy,
 		g_free (active_menu);
 		active_menu = NULL;
 	    }
+
+	    g_free (d->local_menu_entry_id);
+	    g_free (d);
 	}
     }
 #endif
@@ -130,7 +192,7 @@ gwd_prepare_show_local_menu (start_move_window_cb start_move_window,
     pending_menu = g_new0 (pending_local_menu, 1);
     pending_menu->cb = start_move_window;
     pending_menu->user_data = user_data_start_move_window;
-    pending_menu->move_timeout_id = g_timeout_add (150, gwd_move_window_instead, pending_menu);
+    pending_menu->move_timeout_id = g_timeout_add (120, gwd_move_window_instead, pending_menu);
 }
 
 void
@@ -156,8 +218,7 @@ gwd_show_local_menu (Display *xdisplay,
 #ifdef META_HAS_LOCAL_MENUS
     GError          *error = NULL;
     GDBusConnection *conn = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
-    gint            x_out, y_out;
-    guint           width, height;
+
 
     XUngrabPointer (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), CurrentTime);
     XUngrabKeyboard (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), CurrentTime);
@@ -177,7 +238,7 @@ gwd_show_local_menu (Display *xdisplay,
     if (proxy)
     {
 	GVariant *message = g_variant_new ("(uiiu)", frame_xwindow, x, y, time);
-	GVariant *reply = g_dbus_proxy_call_sync (proxy, "ShowAppMenu", message, 0, 500, NULL, &error);
+	g_dbus_proxy_call_sync (proxy, "ShowAppMenu", message, 0, 500, NULL, &error);
 	if (error)
 	{
 	    g_print ("error calling ShowAppMenu: %s\n", error->message);
@@ -187,22 +248,20 @@ gwd_show_local_menu (Display *xdisplay,
 	}
 
 	show_local_menu_data *data = g_new0 (show_local_menu_data, 1);
-	g_variant_get (reply, "(iiuu)", &x_out, &y_out, &width, &height, NULL);
 
 	if (active_menu)
 	    g_free (active_menu);
 
 	active_menu = g_new0 (active_local_menu, 1);
 
-	active_menu->rect.x = x_out - (x - x_win);
-	active_menu->rect.y = y_out - (x - y_win);
-	active_menu->rect.width = width;
-	active_menu->rect.height = height;
-
 	data->conn = g_object_ref (conn);
 	data->proxy = g_object_ref (proxy);
 	data->cb = cb;
 	data->user_data = user_data_show_window_menu;
+	data->rect = &active_menu->rect;
+	data->dx = x - x_win;
+	data->dy = y - y_win;
+	data->local_menu_entry_id = NULL;  
 
 	g_signal_connect (proxy, "g-signal", G_CALLBACK (on_local_menu_activated), data);
 

@@ -74,7 +74,8 @@ class CompAction {
 	    StateCommit      = 1 <<  9,
 	    StateCancel      = 1 << 10,
 	    StateAutoGrab    = 1 << 11,
-	    StateNoEdgeDelay = 1 << 12
+	    StateNoEdgeDelay = 1 << 12,
+	    StateTermTapped  = 1 << 13
 	} StateEnum;
 
 	/**

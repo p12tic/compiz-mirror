@@ -60,6 +60,10 @@ typedef struct _show_local_menu_data
     GDBusProxy      *proxy;
     show_window_menu_hidden_cb cb;
     gpointer        user_data;
+    GdkRectangle    *rect;
+    gint            dx;
+    gint            dy;
+    gchar           *local_menu_entry_id;
 } show_local_menu_data;
 
 gboolean
