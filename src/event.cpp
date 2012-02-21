@@ -1035,16 +1035,41 @@ CompScreenImpl::_handleCompizEvent (const char         *plugin,
 void
 CompScreen::handleEvent (XEvent *event)
 {
+    priv->eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
     WRAPABLE_HND_FUNCTN (handleEvent, event)
     _handleEvent (event);
 }
 
 void
+CompScreenImpl::alwaysHandleEvent (XEvent *event)
+{
+    /*
+     * Critical event handling that cannot be overridden by plugins
+     */
+
+    if (priv->tapGrab &&
+        (event->type == KeyPress || event->type == KeyRelease))
+    {
+	int mode = priv->eventHandled ? AsyncKeyboard : ReplayKeyboard;
+	XAllowEvents (priv->dpy, mode, event->xkey.time);
+    }
+
+    if (priv->grabs.empty () && event->type == KeyRelease)
+    {
+	XUngrabKeyboard (priv->dpy, event->xkey.time);
+	priv->tapGrab = false;
+    }
+}
+
+void
 CompScreenImpl::_handleEvent (XEvent *event)
 {
+    /*
+     * Non-critical event handling that might be overridden by plugins
+     */
+
     CompWindow *w = NULL;
     XWindowAttributes wa;
-    bool	      actionEventHandled = false;
 
     switch (event->type) {
     case ButtonPress:
@@ -1068,29 +1093,13 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     }
 
-    if (priv->handleActionEvent (event))
+    priv->eventHandled = priv->handleActionEvent (event);
+    if (priv->eventHandled)
     {
 	if (priv->grabs.empty ())
 	    XAllowEvents (priv->dpy, AsyncPointer, event->xbutton.time);
-
-	actionEventHandled = true;
-    }
-
-    if (priv->tapGrab &&
-        (event->type == KeyPress || event->type == KeyRelease))
-    {
-	int mode = actionEventHandled ? AsyncKeyboard : ReplayKeyboard;
-	XAllowEvents (priv->dpy, mode, event->xkey.time);
-    }
-
-    if (priv->grabs.empty () && event->type == KeyRelease)
-    {
-	XUngrabKeyboard (priv->dpy, event->xkey.time);
-	priv->tapGrab = false;
-    }
-
-    if (actionEventHandled)
 	return;
+    }
 
     switch (event->type) {
     case SelectionRequest:

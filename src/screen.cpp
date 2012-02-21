@@ -823,6 +823,7 @@ PrivateScreen::processEvents ()
 
 	inHandleEvent = true;
 	screen->handleEvent (&event);
+	screen->alwaysHandleEvent (&event);
 	inHandleEvent = false;
 
 	XFlush (dpy);
@@ -4999,6 +5000,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     xdndWindow (None),
     possibleTap (NULL),
     tapGrab (false),
+    eventHandled (false),
     initialized (false)
 {
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
