@@ -1117,6 +1117,9 @@ event_filter_func (GdkXEvent *gdkxevent,
 
 			d->frame = gwd_get_decor_frame (get_frame_type (win));
 
+			update_window_decoration_state (win);
+			update_window_decoration_actions (win);
+			update_window_decoration_icon (win);
 			update_window_decoration_size (win);
 			update_event_windows (win);
 		    }

@@ -962,7 +962,7 @@ frame_update_shadow (decor_frame_t	    *frame,
 			     gdk_x11_screen_get_xscreen (gdk_screen_get_default ()),
 			     frame, &frame->border_shadow_active,
 			     &frame->window_context_active,
-			     &frame->max_border_shadow_inactive,
+			     &frame->max_border_shadow_active,
 			     &frame->max_window_context_active,
 			     info, opt_active_shadow, opt_inactive_shadow);
 
