@@ -284,8 +284,12 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
     else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
 	reg = infiniteRegion;
 
-    /* In case some plugin needs to paint us with an offset region */
-    if (reg.isEmpty ())
+    /* Check if the requested redraw region does not intersect
+     * any part of the window with its shadow at all, if so, then
+     * some plugin is probably trying to draw us with another region,
+     * so allow the draw */
+    if (reg.isEmpty () &&
+	region.intersected (window->outputRect ()).isEmpty ())
 	reg = region;
 
     if (wd &&
