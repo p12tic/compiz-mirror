@@ -158,10 +158,7 @@ DecorWindow::computeShadowRegion ()
 	if (borderRegion.intersected (outputRegion) == outputRegion)
 	    shadowRegion = shadowRegion.intersected (outputRegion);
 
-	CompWindowVector::const_iterator it = std::find (screen->clientList ().begin (),
-							 screen->clientList ().end (),
-							 window);
-	CompWindowVector::const_reverse_iterator rit (it);
+	CompWindowVector::const_reverse_iterator rit (screen->clientList ().rbegin ());
 
 	for (; rit != screen->clientList ().rend (); rit++)
 	{
