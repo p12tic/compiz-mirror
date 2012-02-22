@@ -822,7 +822,6 @@ PrivateScreen::processEvents ()
 	sn_display_process_event (snDisplay, &event);
 
 	inHandleEvent = true;
-	screen->handleEvent (&event);
 	screen->alwaysHandleEvent (&event);
 	inHandleEvent = false;
 

@@ -1035,7 +1035,6 @@ CompScreenImpl::_handleCompizEvent (const char         *plugin,
 void
 CompScreen::handleEvent (XEvent *event)
 {
-    priv->eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
     WRAPABLE_HND_FUNCTN (handleEvent, event)
     _handleEvent (event);
 }
@@ -1043,6 +1042,10 @@ CompScreen::handleEvent (XEvent *event)
 void
 CompScreenImpl::alwaysHandleEvent (XEvent *event)
 {
+    priv->eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
+
+    handleEvent (event);
+
     /*
      * Critical event handling that cannot be overridden by plugins
      */
