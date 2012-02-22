@@ -1259,7 +1259,7 @@ ResizeScreen::handleEvent (XEvent *event)
 			CompAction *action = &optionGetInitiateButton ();
 
 			resizeTerminate (action, CompAction::StateTermButton,
-					 noOptions);
+					 noOptions ());
 		    }
 		}
 	    }
@@ -1356,9 +1356,9 @@ ResizeScreen::handleEvent (XEvent *event)
 		    if (rs->w->id () == event->xclient.window)
 		    {
 			resizeTerminate (&optionGetInitiateButton (),
-					 CompAction::StateCancel, noOptions);
+					 CompAction::StateCancel, noOptions ());
 			resizeTerminate (&optionGetInitiateKey (),
-					 CompAction::StateCancel, noOptions);
+					 CompAction::StateCancel, noOptions ());
 		    }
 		}
 	    }
@@ -1366,15 +1366,15 @@ ResizeScreen::handleEvent (XEvent *event)
 	case DestroyNotify:
 	    if (w && w->id () == event->xdestroywindow.window)
 	    {
-		resizeTerminate (&optionGetInitiateButton (), 0, noOptions);
-		resizeTerminate (&optionGetInitiateKey (), 0, noOptions);
+		resizeTerminate (&optionGetInitiateButton (), 0, noOptions ());
+		resizeTerminate (&optionGetInitiateKey (), 0, noOptions ());
 	    }
 	    break;
 	case UnmapNotify:
 	    if (w && w->id () == event->xunmap.window)
 	    {
-		resizeTerminate (&optionGetInitiateButton (), 0, noOptions);
-		resizeTerminate (&optionGetInitiateKey (), 0, noOptions);
+		resizeTerminate (&optionGetInitiateButton (), 0, noOptions ());
+		resizeTerminate (&optionGetInitiateKey (), 0, noOptions ());
 	    }
 	default:
 	    break;

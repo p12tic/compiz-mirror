@@ -4954,7 +4954,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     lastFileWatchHandle (1),
     watchFds (0),
     lastWatchFdHandle (1),
-    valueMap (),
     screenInfo (0),
     snDisplay(0),
     activeWindow (0),

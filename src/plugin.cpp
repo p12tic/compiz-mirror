@@ -661,7 +661,7 @@ CompPlugin::VTable::finiWindow (CompWindow *)
 CompOption::Vector &
 CompPlugin::VTable::getOptions ()
 {
-    return noOptions;
+    return noOptions ();
 }
 
 bool
