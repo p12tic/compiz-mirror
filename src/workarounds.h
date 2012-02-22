@@ -122,6 +122,7 @@ class WorkaroundsScreen :
 class WorkaroundsWindow :
     public PluginClassHandler <WorkaroundsWindow, CompWindow>,
     public WindowInterface,
+    public CompositeWindowInterface,
     public GLWindowInterface
 {
     public:
@@ -199,6 +200,9 @@ class WorkaroundsWindow :
 
 	unsigned int
 	getFixedWindowType ();
+
+	bool
+	damageRect (bool initial, const CompRect &rect);
 
 };
 
