@@ -3,6 +3,7 @@
 
 #define GLOBAL 0
 #define LOCAL 1
+#ifdef META_HAS_LOCAL_MENUS
 
 namespace
 {
@@ -68,3 +69,9 @@ TEST_F (GtkWindowDecoratorTestLocalMenuLayout, TestForceNoCloseMinimizeMaximizeB
     EXPECT_EQ (getLayout ()->right_buttons[0], META_BUTTON_FUNCTION_LAST);
     EXPECT_EQ (getLayout ()->left_buttons[3], META_BUTTON_FUNCTION_WINDOW_MENU);
 }
+#else
+TEST_F (GtkWindowDecoratorTestLocalMenu, NoMenus)
+{
+    ASSERT_TRUE (true) << "Local menus tests not enabled because META_HAS_LOCAL_MENUS is off";
+}
+#endif

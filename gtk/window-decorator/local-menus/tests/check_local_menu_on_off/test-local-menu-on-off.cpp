@@ -2,6 +2,7 @@
 
 #define GLOBAL 0
 #define LOCAL 1
+#ifdef META_HAS_LOCAL_MENUS
 
 TEST_F (GtkWindowDecoratorTestLocalMenu, TestOn)
 {
@@ -18,3 +19,9 @@ TEST_F (GtkWindowDecoratorTestLocalMenu, TestOff)
 
     EXPECT_FALSE (result);
 }
+#else
+TEST_F (GtkWindowDecoratorTestLocalMenu, NoMenus)
+{
+    ASSERT_TRUE (true) << "Local menus tests not enabled because META_HAS_LOCAL_MENUS is off";
+}
+#endif
