@@ -323,6 +323,7 @@ public:
     friend class CompManager; // TODO get rid of friends
 
     virtual void processEvents () = 0;
+    virtual void alwaysHandleEvent (XEvent *event) = 0;
 
 protected:
 	CompScreen();
@@ -574,7 +575,7 @@ class CompScreenImpl : public CompScreen
 	virtual void removeFromCreatedWindows(CoreWindow *cw);
 	virtual void addToDestroyedWindows(CompWindow * cw);
 	virtual void processEvents ();
-
+	virtual void alwaysHandleEvent (XEvent *event);
 
     public :
 

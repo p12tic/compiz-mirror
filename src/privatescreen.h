@@ -535,6 +535,8 @@ class PrivateScreen :
 	void *possibleTap;
 	bool  tapGrab;
 
+	bool eventHandled;
+
 	bool initialized;
 };
 
