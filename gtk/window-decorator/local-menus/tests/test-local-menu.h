@@ -9,9 +9,9 @@ class GtkWindowDecoratorTestLocalMenu :
 {
     public:
 
+#ifdef META_HAS_LOCAL_MENUS
 	WnckWindow * getWindow () { return mWindow; }
 	GSettings  * getSettings () { return mSettings; }
-
 	virtual void SetUp ()
 	{
 	    gtk_init (NULL, NULL);
@@ -38,6 +38,7 @@ class GtkWindowDecoratorTestLocalMenu :
 
 	    g_object_unref (mSettings);
 	}
+#endif
 
     private:
 
