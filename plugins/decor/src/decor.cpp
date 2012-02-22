@@ -155,7 +155,7 @@ DecorWindow::computeShadowRegion ()
 	CompRegion borderRegion = CompRegion (window->borderRect ());
 	shadowRegion = shadowRegion.intersected (screen->region ());
 
-	if (borderRegion.intersected (outputRegion) == outputRegion)
+	if (borderRegion.intersected (outputRegion) == borderRegion)
 	    shadowRegion = shadowRegion.intersected (outputRegion);
 
 	CompWindowVector::const_reverse_iterator rit (screen->clientList ().rbegin ());
