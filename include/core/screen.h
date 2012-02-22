@@ -48,10 +48,7 @@ class CoreWindow;
 typedef std::list<CompWindow *> CompWindowList;
 typedef std::vector<CompWindow *> CompWindowVector;
 
-extern char       *backgroundImage;
 extern bool       replaceCurrentWm;
-extern bool       indirectRendering;
-extern bool       noDetection;
 extern bool       debugOutput;
 
 extern CompScreen   *screen;
