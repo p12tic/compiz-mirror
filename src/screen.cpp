@@ -86,6 +86,8 @@ typedef struct {
     unsigned long decorations;
 } MwmHints;
 
+namespace cps = compiz::private_screen;
+
 
 
 CompScreen *screen;
@@ -136,7 +138,7 @@ CompScreen::freePluginClassIndex (unsigned int index)
 }
 
 void
-compiz::private_screen::PrivateScreenWithoutDisplay::handleSignal (int signum)
+cps::EventManager::handleSignal (int signum)
 {
     switch (signum)
     {
@@ -850,7 +852,7 @@ PrivateScreen::processEvents ()
 }
 
 void
-compiz::private_screen::PrivateScreenPlugins::updatePlugins ()
+cps::PluginManager::updatePlugins ()
 {
     unsigned int pListCount = 1;
 
@@ -1354,7 +1356,7 @@ PrivateScreen::windowStateMask (Atom state)
 }
 
 unsigned int
-compiz::private_screen::PrivateScreenStatic::windowStateFromString (const char *str)
+cps::PseudoNamespace::windowStateFromString (const char *str)
 {
     if (strcasecmp (str, "modal") == 0)
 	return CompWindowStateModalMask;
@@ -2844,7 +2846,7 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 }
 
 void
-compiz::private_screen::PrivateScreenWindowGroups::eraseWindowFromMap (Window id)
+cps::WindowManager::eraseWindowFromMap (Window id)
 {
     if (id != 1)
         windowsMap.erase (id);
@@ -3704,7 +3706,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 }
 
 CompGroup *
-compiz::private_screen::PrivateScreenWindowGroups::addGroup (Window id)
+cps::WindowManager::addGroup (Window id)
 {
     CompGroup *group = new CompGroup ();
 
@@ -3717,7 +3719,7 @@ compiz::private_screen::PrivateScreenWindowGroups::addGroup (Window id)
 }
 
 void
-compiz::private_screen::PrivateScreenWindowGroups::removeGroup (CompGroup *group)
+cps::WindowManager::removeGroup (CompGroup *group)
 {
     group->refCnt--;
     if (group->refCnt)
@@ -3735,7 +3737,7 @@ compiz::private_screen::PrivateScreenWindowGroups::removeGroup (CompGroup *group
 }
 
 CompGroup *
-compiz::private_screen::PrivateScreenWindowGroups::findGroup (Window id)
+cps::WindowManager::findGroup (Window id)
 {
     foreach (CompGroup *g, groups)
 	if (g->id == id)
@@ -4355,7 +4357,7 @@ CompScreenImpl::shouldSerializePlugins ()
 }
 
 void
-compiz::private_screen::PrivateScreenWindowGroups::removeDestroyed ()
+cps::WindowManager::removeDestroyed ()
 {
     while (pendingDestroys)
     {
@@ -4455,7 +4457,7 @@ CompScreenImpl::init (const char *name)
 }
 
 bool
-compiz::private_screen::PrivateScreenWithoutDisplay::init (const char *name)
+cps::EventManager::init (const char *name)
 {
     ctx = Glib::MainContext::get_default ();
     mainloop = Glib::MainLoop::create (ctx, false);
@@ -4510,7 +4512,7 @@ compiz::private_screen::PrivateScreenWithoutDisplay::init (const char *name)
 }
 
 bool
-compiz::private_screen::PrivateScreenWithoutDisplay::initDisplay (const char *name)
+cps::EventManager::initDisplay (const char *name)
 {
     return true;
 }
@@ -4961,7 +4963,7 @@ CompScreenImpl::~CompScreenImpl ()
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
-    PrivateScreenWithoutDisplay (screen),
+    EventManager (screen),
     valueMap (),
     screenInfo (0),
     snDisplay(0),
@@ -4999,7 +5001,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
 }
 
-compiz::private_screen::PrivateScreenWindowGroups::PrivateScreenWindowGroups() :
+cps::WindowManager::WindowManager() :
     activeWindow (0),
     below (None),
     autoRaiseTimer (),
@@ -5012,7 +5014,7 @@ compiz::private_screen::PrivateScreenWindowGroups::PrivateScreenWindowGroups() :
 {
 }
 
-compiz::private_screen::PrivateScreenPlugins::PrivateScreenPlugins() :
+cps::PluginManager::PluginManager() :
     CoreOptions (false),
     plugin (),
     dirtyPluginList (true),
@@ -5020,7 +5022,7 @@ compiz::private_screen::PrivateScreenPlugins::PrivateScreenPlugins() :
 {
 }
 
-compiz::private_screen::PrivateScreenWithoutDisplay::PrivateScreenWithoutDisplay (CompScreen *screen) :
+cps::EventManager::EventManager (CompScreen *screen) :
     source(0),
     timeout(0),
     fileWatch (0),
@@ -5039,13 +5041,13 @@ compiz::private_screen::PrivateScreenWithoutDisplay::PrivateScreenWithoutDisplay
     TimeoutHandler::SetDefault (dTimeoutHandler);
 }
 
-compiz::private_screen::PrivateScreenOrphanData::PrivateScreenOrphanData() :
+cps::OrphanData::OrphanData() :
     edgeWindow (None),
     xdndWindow (None)
 {
 }
 
-compiz::private_screen::PrivateScreenWithoutDisplay::~PrivateScreenWithoutDisplay ()
+cps::EventManager::~EventManager ()
 {
     delete timeout;
     delete source;

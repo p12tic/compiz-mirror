@@ -185,11 +185,11 @@ namespace compiz
 namespace private_screen
 {
 
-class PrivateScreenWindowGroups : boost::noncopyable
+class WindowManager : boost::noncopyable
 {
     public:
 
-	PrivateScreenWindowGroups();
+	WindowManager();
 
 	CompGroup * addGroup (Window id);
 	void removeGroup (CompGroup *group);
@@ -227,9 +227,9 @@ class PrivateScreenWindowGroups : boost::noncopyable
 
 // data members that don't belong (these probably belong
 // in CompScreenImpl as PrivateScreen doesn't use them)
-struct PrivateScreenOrphanData : boost::noncopyable
+struct OrphanData : boost::noncopyable
 {
-	PrivateScreenOrphanData();
+	OrphanData();
 
 	Window	      edgeWindow;
 	Window	      xdndWindow;
@@ -237,17 +237,17 @@ struct PrivateScreenOrphanData : boost::noncopyable
 
 // Static member functions that don't belong (use no data,
 // not invoked by PrivateScreen)
-struct PrivateScreenStatic
+struct PseudoNamespace
 {
     // AFAICS only used by CoreExp (in match.cpp)
     static unsigned int windowStateFromString (const char *str);
 };
 
-class PrivateScreenPlugins :
+class PluginManager :
     public CoreOptions
 {
     public:
-	PrivateScreenPlugins();
+	PluginManager();
 
 	void updatePlugins ();
 
@@ -257,13 +257,13 @@ class PrivateScreenPlugins :
 	void *possibleTap;
 };
 
-class PrivateScreenWithoutDisplay :
-    public PrivateScreenPlugins,
+class EventManager :
+    public PluginManager,
     public ValueHolder
 {
 public:
-	PrivateScreenWithoutDisplay (CompScreen *screen);
-	~PrivateScreenWithoutDisplay ();
+	EventManager (CompScreen *screen);
+	~EventManager ();
 
 	bool init (const char *name);
 
@@ -314,10 +314,10 @@ public:
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
-    public compiz::private_screen::PrivateScreenWithoutDisplay,
-    public compiz::private_screen::PrivateScreenWindowGroups,
-    public compiz::private_screen::PrivateScreenOrphanData,
-    public compiz::private_screen::PrivateScreenStatic
+    public compiz::private_screen::EventManager,
+    public compiz::private_screen::WindowManager,
+    public compiz::private_screen::OrphanData,
+    public compiz::private_screen::PseudoNamespace
 {
 
     public:
