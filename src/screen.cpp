@@ -2031,10 +2031,13 @@ PrivateScreen::detectOutputDevices ()
 void
 PrivateScreen::updateStartupFeedback ()
 {
-    if (!startupSequences.empty ())
-	XDefineCursor (dpy, root, busyCursor);
-    else
-	XDefineCursor (dpy, root, normalCursor);
+    if (initialized)
+    {
+	if (!startupSequences.empty ())
+	    XDefineCursor (dpy, root, busyCursor);
+	else
+	    XDefineCursor (dpy, root, normalCursor);
+    }
 }
 
 #define STARTUP_TIMEOUT_DELAY 15000
