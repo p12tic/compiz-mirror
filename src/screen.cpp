@@ -850,7 +850,7 @@ PrivateScreen::processEvents ()
 }
 
 void
-PrivateScreenWithoutDisplay::updatePlugins ()
+PrivateScreenPlugins::updatePlugins ()
 {
     unsigned int pListCount = 1;
 
@@ -1354,7 +1354,7 @@ PrivateScreen::windowStateMask (Atom state)
 }
 
 unsigned int
-PrivateScreenWithoutDisplay::windowStateFromString (const char *str)
+PrivateScreenStatic::windowStateFromString (const char *str)
 {
     if (strcasecmp (str, "modal") == 0)
 	return CompWindowStateModalMask;
@@ -2844,7 +2844,7 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 }
 
 void
-PrivateScreenWithoutDisplay::eraseWindowFromMap (Window id)
+PrivateScreenWindowGroups::eraseWindowFromMap (Window id)
 {
     if (id != 1)
         windowsMap.erase (id);
@@ -3704,7 +3704,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 }
 
 CompGroup *
-PrivateScreenWithoutDisplay::addGroup (Window id)
+PrivateScreenWindowGroups::addGroup (Window id)
 {
     CompGroup *group = new CompGroup ();
 
@@ -3717,7 +3717,7 @@ PrivateScreenWithoutDisplay::addGroup (Window id)
 }
 
 void
-PrivateScreenWithoutDisplay::removeGroup (CompGroup *group)
+PrivateScreenWindowGroups::removeGroup (CompGroup *group)
 {
     group->refCnt--;
     if (group->refCnt)
@@ -3735,7 +3735,7 @@ PrivateScreenWithoutDisplay::removeGroup (CompGroup *group)
 }
 
 CompGroup *
-PrivateScreenWithoutDisplay::findGroup (Window id)
+PrivateScreenWindowGroups::findGroup (Window id)
 {
     foreach (CompGroup *g, groups)
 	if (g->id == id)
@@ -4355,7 +4355,7 @@ CompScreenImpl::shouldSerializePlugins ()
 }
 
 void
-PrivateScreenWithoutDisplay::removeDestroyed ()
+PrivateScreenWindowGroups::removeDestroyed ()
 {
     while (pendingDestroys)
     {
@@ -4999,38 +4999,50 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
 }
 
-PrivateScreenWithoutDisplay::PrivateScreenWithoutDisplay (CompScreen *screen) :
+PrivateScreenWindowGroups::PrivateScreenWindowGroups() :
+    activeWindow (0),
+    below (None),
+    autoRaiseTimer (),
+    autoRaiseWindow (0),
+    serverWindows (),
+    destroyedWindows (),
+    stackIsFresh (false),
+    groups (0),
+    pendingDestroys (0)
+{
+}
+
+PrivateScreenPlugins::PrivateScreenPlugins() :
     CoreOptions (false),
+    plugin (),
+    dirtyPluginList (true),
+    possibleTap (NULL)
+{
+}
+
+PrivateScreenWithoutDisplay::PrivateScreenWithoutDisplay (CompScreen *screen) :
     source(0),
     timeout(0),
     fileWatch (0),
     lastFileWatchHandle (1),
     watchFds (0),
     lastWatchFdHandle (1),
-    activeWindow (0),
-    below (None),
-    autoRaiseTimer (),
-    autoRaiseWindow (0),
     edgeDelayTimer (),
-    plugin (),
-    dirtyPluginList (true),
     screen (screen),
-    serverWindows (),
-    destroyedWindows (),
-    stackIsFresh (false),
     desktopWindowCount (0),
     mapNum (1),
-    groups (0),
     defaultIcon (0),
-    pendingDestroys (0),
-    edgeWindow (None),
-    xdndWindow (None),
-    possibleTap (NULL),
     tapGrab (false)
 {
     ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
     TimeoutHandler::SetDefault (dTimeoutHandler);
+}
+
+PrivateScreenOrphanData::PrivateScreenOrphanData() :
+    edgeWindow (None),
+    xdndWindow (None)
+{
 }
 
 PrivateScreenWithoutDisplay::~PrivateScreenWithoutDisplay ()

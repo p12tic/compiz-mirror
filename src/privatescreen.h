@@ -180,9 +180,81 @@ private:
 }
 }
 
-class PrivateScreenWithoutDisplay :
-    public ValueHolder,
+class PrivateScreenWindowGroups : boost::noncopyable
+{
+    public:
+
+	PrivateScreenWindowGroups();
+
+	CompGroup * addGroup (Window id);
+	void removeGroup (CompGroup *group);
+	CompGroup * findGroup (Window id);
+
+	void eraseWindowFromMap (Window id);
+	void removeDestroyed ();
+
+    //private:
+	Window activeWindow;
+	Window nextActiveWindow;
+
+	Window below;
+
+	CompTimer autoRaiseTimer;
+	Window    autoRaiseWindow;
+
+	CompWindowList serverWindows;
+	CompWindowList destroyedWindows;
+	bool           stackIsFresh;
+
+	CompWindow::Map windowsMap;
+	std::list<CompGroup *> groups;
+
+	std::map <CompWindow *, CompWindow *> detachedFrameWindows;
+
+	CompWindowVector clientList;            /* clients in mapping order */
+	CompWindowVector clientListStacking;    /* clients in stacking order */
+
+	std::vector<Window> clientIdList;        /* client ids in mapping order */
+	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
+
+	unsigned int pendingDestroys;
+};
+
+// data members that don't belong (these probably belong
+// in CompScreenImpl as PrivateScreen doesn't use them)
+struct PrivateScreenOrphanData : boost::noncopyable
+{
+	PrivateScreenOrphanData();
+
+	Window	      edgeWindow;
+	Window	      xdndWindow;
+};
+
+// Static member functions that don't belong (use no data,
+// not invoked by PrivateScreen)
+struct PrivateScreenStatic
+{
+    // AFAICS only used by CoreExp (in match.cpp)
+    static unsigned int windowStateFromString (const char *str);
+};
+
+class PrivateScreenPlugins :
     public CoreOptions
+{
+    public:
+	PrivateScreenPlugins();
+
+	void updatePlugins ();
+
+    //private:
+	CompOption::Value plugin;
+	bool	          dirtyPluginList;
+	void *possibleTap;
+};
+
+class PrivateScreenWithoutDisplay :
+    public PrivateScreenPlugins,
+    public ValueHolder
 {
 public:
 	PrivateScreenWithoutDisplay (CompScreen *screen);
@@ -190,20 +262,7 @@ public:
 
 	bool init (const char *name);
 
-	void removeDestroyed ();
-
-	void updatePlugins ();
-
-	static unsigned int windowStateFromString (const char *str);
-
-	void eraseWindowFromMap (Window id);
-
 	void handleSignal (int signum);
-
-	// TODO - are these three actually used?
-	CompGroup * addGroup (Window id);
-	void removeGroup (CompGroup *group);
-	CompGroup * findGroup (Window id);
 
 public:
 
@@ -227,29 +286,11 @@ public:
 
 	CompTimer    pingTimer;
 
-	Window activeWindow;
-	Window nextActiveWindow;
-
-	Window below;
-
-	CompTimer autoRaiseTimer;
-	Window    autoRaiseWindow;
-
 	CompTimer               edgeDelayTimer;
 	CompDelayedEdgeSettings edgeDelaySettings;
 
-	CompOption::Value plugin;
-	bool	          dirtyPluginList;
 
 	CompScreen  *screen;
-
-	CompWindowList serverWindows;
-	CompWindowList destroyedWindows;
-	bool           stackIsFresh;
-
-	CompWindow::Map windowsMap;
-
-	std::map <CompWindow *, CompWindow *> detachedFrameWindows;
 
 	int          desktopWindowCount;
 	unsigned int mapNum;
@@ -259,18 +300,6 @@ public:
 
 	CompIcon *defaultIcon;
 
-	CompWindowVector clientList;            /* clients in mapping order */
-	CompWindowVector clientListStacking;    /* clients in stacking order */
-
-	std::vector<Window> clientIdList;        /* client ids in mapping order */
-	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
-
-	unsigned int pendingDestroys;
-
-	Window	      edgeWindow;
-	Window	      xdndWindow;
-
-	void *possibleTap;
 	bool  tapGrab;
 
     private:
@@ -278,7 +307,10 @@ public:
 };
 
 class PrivateScreen :
-    public PrivateScreenWithoutDisplay
+    public PrivateScreenWithoutDisplay,
+    public PrivateScreenWindowGroups,
+    public PrivateScreenOrphanData,
+    public PrivateScreenStatic
 {
 
     public:
