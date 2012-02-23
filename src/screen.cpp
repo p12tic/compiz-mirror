@@ -824,7 +824,7 @@ PrivateScreen::processEvents ()
 	sn_display_process_event (snDisplay, &event);
 
 	inHandleEvent = true;
-	screen->handleEvent (&event);
+	screen->alwaysHandleEvent (&event);
 	inHandleEvent = false;
 
 	XFlush (dpy);
@@ -4964,7 +4964,6 @@ CompScreenImpl::~CompScreenImpl ()
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
     EventManager (screen),
-    valueMap (),
     screenInfo (0),
     snDisplay(0),
     windows (),
@@ -4989,6 +4988,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     showingDesktopMask (0),
     desktopHintData (0),
     desktopHintSize (0),
+    eventHandled (false),
     initialized (false)
 {
     pingTimer.setCallback (

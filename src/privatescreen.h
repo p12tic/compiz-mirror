@@ -353,8 +353,6 @@ class PrivateScreen :
 	std::list <XEvent> queueEvents ();
 	void processEvents ();
 
-	void updatePassiveGrabs ();
-
 	bool triggerPress   (CompAction         *action,
 	                     CompAction::State   state,
 	                     CompOption::Vector &arguments);
@@ -509,10 +507,6 @@ class PrivateScreen :
 
     public:
 
-	std::map<CompString, CompPrivate> valueMap;
-
-	xcb_connection_t *connection;
-
 	Display    *dpy;
 
 	int syncEvent, syncError;
@@ -563,8 +557,6 @@ class PrivateScreen :
 	CompOutput         fullscreenOutput;
 	bool               hasOverlappingOutputs;
 
-	XRectangle lastViewport;
-
 	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
 	int                     currentHistory;
 
@@ -597,6 +589,8 @@ class PrivateScreen :
 
 	unsigned long *desktopHintData;
 	int           desktopHintSize;
+
+	bool eventHandled;
 
 	bool initialized;
 
