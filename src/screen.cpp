@@ -136,7 +136,7 @@ CompScreen::freePluginClassIndex (unsigned int index)
 }
 
 void
-PrivateScreenWithoutDisplay::handleSignal (int signum)
+compiz::private_screen::PrivateScreenWithoutDisplay::handleSignal (int signum)
 {
     switch (signum)
     {
@@ -850,7 +850,7 @@ PrivateScreen::processEvents ()
 }
 
 void
-PrivateScreenPlugins::updatePlugins ()
+compiz::private_screen::PrivateScreenPlugins::updatePlugins ()
 {
     unsigned int pListCount = 1;
 
@@ -1354,7 +1354,7 @@ PrivateScreen::windowStateMask (Atom state)
 }
 
 unsigned int
-PrivateScreenStatic::windowStateFromString (const char *str)
+compiz::private_screen::PrivateScreenStatic::windowStateFromString (const char *str)
 {
     if (strcasecmp (str, "modal") == 0)
 	return CompWindowStateModalMask;
@@ -2844,7 +2844,7 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 }
 
 void
-PrivateScreenWindowGroups::eraseWindowFromMap (Window id)
+compiz::private_screen::PrivateScreenWindowGroups::eraseWindowFromMap (Window id)
 {
     if (id != 1)
         windowsMap.erase (id);
@@ -3704,7 +3704,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 }
 
 CompGroup *
-PrivateScreenWindowGroups::addGroup (Window id)
+compiz::private_screen::PrivateScreenWindowGroups::addGroup (Window id)
 {
     CompGroup *group = new CompGroup ();
 
@@ -3717,7 +3717,7 @@ PrivateScreenWindowGroups::addGroup (Window id)
 }
 
 void
-PrivateScreenWindowGroups::removeGroup (CompGroup *group)
+compiz::private_screen::PrivateScreenWindowGroups::removeGroup (CompGroup *group)
 {
     group->refCnt--;
     if (group->refCnt)
@@ -3735,7 +3735,7 @@ PrivateScreenWindowGroups::removeGroup (CompGroup *group)
 }
 
 CompGroup *
-PrivateScreenWindowGroups::findGroup (Window id)
+compiz::private_screen::PrivateScreenWindowGroups::findGroup (Window id)
 {
     foreach (CompGroup *g, groups)
 	if (g->id == id)
@@ -4355,7 +4355,7 @@ CompScreenImpl::shouldSerializePlugins ()
 }
 
 void
-PrivateScreenWindowGroups::removeDestroyed ()
+compiz::private_screen::PrivateScreenWindowGroups::removeDestroyed ()
 {
     while (pendingDestroys)
     {
@@ -4455,7 +4455,7 @@ CompScreenImpl::init (const char *name)
 }
 
 bool
-PrivateScreenWithoutDisplay::init (const char *name)
+compiz::private_screen::PrivateScreenWithoutDisplay::init (const char *name)
 {
     ctx = Glib::MainContext::get_default ();
     mainloop = Glib::MainLoop::create (ctx, false);
@@ -4510,7 +4510,7 @@ PrivateScreenWithoutDisplay::init (const char *name)
 }
 
 bool
-PrivateScreenWithoutDisplay::initDisplay (const char *name)
+compiz::private_screen::PrivateScreenWithoutDisplay::initDisplay (const char *name)
 {
     return true;
 }
@@ -4999,7 +4999,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
 }
 
-PrivateScreenWindowGroups::PrivateScreenWindowGroups() :
+compiz::private_screen::PrivateScreenWindowGroups::PrivateScreenWindowGroups() :
     activeWindow (0),
     below (None),
     autoRaiseTimer (),
@@ -5012,7 +5012,7 @@ PrivateScreenWindowGroups::PrivateScreenWindowGroups() :
 {
 }
 
-PrivateScreenPlugins::PrivateScreenPlugins() :
+compiz::private_screen::PrivateScreenPlugins::PrivateScreenPlugins() :
     CoreOptions (false),
     plugin (),
     dirtyPluginList (true),
@@ -5020,7 +5020,7 @@ PrivateScreenPlugins::PrivateScreenPlugins() :
 {
 }
 
-PrivateScreenWithoutDisplay::PrivateScreenWithoutDisplay (CompScreen *screen) :
+compiz::private_screen::PrivateScreenWithoutDisplay::PrivateScreenWithoutDisplay (CompScreen *screen) :
     source(0),
     timeout(0),
     fileWatch (0),
@@ -5039,13 +5039,13 @@ PrivateScreenWithoutDisplay::PrivateScreenWithoutDisplay (CompScreen *screen) :
     TimeoutHandler::SetDefault (dTimeoutHandler);
 }
 
-PrivateScreenOrphanData::PrivateScreenOrphanData() :
+compiz::private_screen::PrivateScreenOrphanData::PrivateScreenOrphanData() :
     edgeWindow (None),
     xdndWindow (None)
 {
 }
 
-PrivateScreenWithoutDisplay::~PrivateScreenWithoutDisplay ()
+compiz::private_screen::PrivateScreenWithoutDisplay::~PrivateScreenWithoutDisplay ()
 {
     delete timeout;
     delete source;

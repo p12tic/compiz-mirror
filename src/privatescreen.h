@@ -180,6 +180,11 @@ private:
 }
 }
 
+namespace compiz
+{
+namespace private_screen
+{
+
 class PrivateScreenWindowGroups : boost::noncopyable
 {
     public:
@@ -306,11 +311,13 @@ public:
 	virtual bool initDisplay (const char *name);
 };
 
+}} // namespace compiz::private_screen
+
 class PrivateScreen :
-    public PrivateScreenWithoutDisplay,
-    public PrivateScreenWindowGroups,
-    public PrivateScreenOrphanData,
-    public PrivateScreenStatic
+    public compiz::private_screen::PrivateScreenWithoutDisplay,
+    public compiz::private_screen::PrivateScreenWindowGroups,
+    public compiz::private_screen::PrivateScreenOrphanData,
+    public compiz::private_screen::PrivateScreenStatic
 {
 
     public:
