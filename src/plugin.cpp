@@ -287,7 +287,7 @@ CompManager::initPlugin (CompPlugin *p)
 	return false;
     }
 
-    if (screen && screen->priv->initialized)
+    if (screen && screen->displayInitialised())
     {
 	if (!p->vTable->initScreen (screen))
 	{

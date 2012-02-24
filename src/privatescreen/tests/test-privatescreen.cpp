@@ -8,6 +8,7 @@
 #include <gtest/gtest.h>
 #include <gmock/gmock.h>
 
+#include <stdlib.h>
 
 namespace {
 
@@ -16,14 +17,14 @@ class MockCompScreen : public CompScreen
 public:
     MockCompScreen()
     {
-	// The PrivateScreen ctor uses screen->... (indirectly)
+	// The PluginManager ctor uses screen->... (indirectly via CoreOptions)
 	// We should kill this dependency
 	screen = this;
     }
 
     ~MockCompScreen()
     {
-	// Because of another indirect use of screen in PrivateScreen dtor
+	// Because of another indirect use of screen in PluginManager dtor
 	// via option.cpp:finiOptionValue()
 	screen = 0;
     }
@@ -172,17 +173,7 @@ public:
     MOCK_METHOD0(normalCursor, Cursor ());
     MOCK_METHOD0(grabbed, bool ());
     MOCK_METHOD0(snDisplay, SnDisplay * ());
-};
-
-// Utility class to help satisfy dependencies
-class xdisplay : boost::noncopyable
-{
-    Display* display;
-public:
-    xdisplay() : display(XOpenDisplay (0)) {}
-    ~xdisplay() { XCloseDisplay(display); }
-
-    Display* get() const { return display; }
+    MOCK_CONST_METHOD0(createFailed, bool ());
 };
 
 } // (anon) namespace
@@ -295,71 +286,35 @@ PluginFilesystem::PluginFilesystem()
 	instance = this;
 }
 
+// tell GLib not to use the slice-allocator implementation
+// and avoid spurious valgrind reporting
+void glib_nice_for_valgrind() { setenv("G_SLICE", "always-malloc", true); }
+int const init = (glib_nice_for_valgrind(), 0);
+
 PluginFilesystem const* PluginFilesystem::instance = 0;
 
 } // (abstract) namespace
 
+namespace cps = compiz::private_screen;
 
-TEST(PrivateScreenTest, create_and_destroy)
+TEST(privatescreen_PluginManagerTest, create_and_destroy)
 {
     using namespace testing;
 
     MockCompScreen comp_screen;
 
-    EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
-    EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
-    EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
-
-    // The PrivateScreen ctor indirectly calls screen->dpy().
-    // We should kill this dependency
-    xdisplay display;
-    EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
-
-    comp_screen.priv.reset(new PrivateScreen(&comp_screen));
+    cps::PluginManager ps;
 }
 
-TEST(PrivateScreenTest, calling_init)
+TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
 {
     using namespace testing;
 
     MockCompScreen comp_screen;
 
-    EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
-    EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
-    EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
-
-    // The PrivateScreen ctor indirectly calls screen->dpy().
-    // We should kill this dependency
-    xdisplay display;
-    EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
-
-    comp_screen.priv.reset(new PrivateScreen(&comp_screen));
-    PrivateScreen& ps(*comp_screen.priv.get());
-
-    MockPluginFilesystem mockfs;
-
-    ps.init(0);
-}
-
-TEST(PrivateScreenTest, calling_updatePlugins_does_not_error)
-{
-    using namespace testing;
-
-    MockCompScreen comp_screen;
-
-    EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
-    EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
-    EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
-
-    // The PrivateScreen ctor indirectly calls screen->dpy().
-    // We should kill this dependency
-    xdisplay display;
-    EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
-
-    PrivateScreen ps(&comp_screen);
+    cps::PluginManager ps;
 
     // Stuff that has to be done before calling updatePlugins()
-    ps.init(0);
     CompOption::Value::Vector values;
     values.push_back ("core");
     ps.plugin.set (CompOption::TypeString, values);
@@ -367,30 +322,19 @@ TEST(PrivateScreenTest, calling_updatePlugins_does_not_error)
 
     // Now we can call updatePlugins() without a segfault.  Hoorah!
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
-	    WillOnce(Return(false));
+	WillOnce(Return(false));
     ps.updatePlugins();
 }
 
-TEST(PrivateScreenTest, calling_updatePlugins_after_setting_initialPlugins)
+TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initialPlugins)
 {
     using namespace testing;
 
     MockCompScreen comp_screen;
 
-    EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
-    EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
-    EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
-
-    // The PrivateScreen ctor indirectly calls screen->dpy().
-    // We should kill this dependency
-    xdisplay display;
-    EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return(display.get()));
-
-    comp_screen.priv.reset(new PrivateScreen(&comp_screen));
-    PrivateScreen& ps(*comp_screen.priv.get());
+    cps::PluginManager ps;
 
     // Stuff that has to be done before calling updatePlugins()
-    ps.init(0);
     CompOption::Value::Vector values;
     values.push_back ("core");
     ps.plugin.set (CompOption::TypeString, values);
