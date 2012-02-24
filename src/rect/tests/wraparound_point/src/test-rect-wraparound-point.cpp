@@ -58,10 +58,10 @@ TEST_F (CompRectTestWraparound, TestWraparound)
 
     inside = compiz::rect::wraparoundPoint (mRect, outsider);
 
-    RecordProperty ("Outside point x: ", outsider.x ());
-    RecordProperty ("Outside point y: ", outsider.y ());
-    RecordProperty ("Inside point x: ", inside.x ());
-    RecordProperty ("Inside point y: ", inside.y ());
+    RecordProperty ("OutsidePointX", outsider.x ());
+    RecordProperty ("OutsidePointY", outsider.y ());
+    RecordProperty ("InsidePointX", inside.x ());
+    RecordProperty ("InsidePointY", inside.y ());
 
     EXPECT_EQ (inside, CompPoint (-499, -399));
 
