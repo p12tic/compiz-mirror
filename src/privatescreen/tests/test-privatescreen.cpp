@@ -394,7 +394,5 @@ TEST(privatescreen_EventManagerTest, init)
     comp_screen.priv.reset(new PrivateScreen(&comp_screen));
     cps::EventManager& em(*comp_screen.priv.get());
 
-    //MockPluginFilesystem mockfs;
-
     em.init(0);
 }
