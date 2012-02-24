@@ -53,10 +53,10 @@ protected:
 		it != TimeoutHandler::Default()->timers().end(); it++)
 	{
 	    CompTimer *t = (*it);
-	    RecordProperty("t->minLeft", t->minLeft());
-	    RecordProperty("t->maxLeft", t->maxLeft());
-	    RecordProperty("t->minTime", t->minTime());
-	    RecordProperty("t->maxTime", t->maxTime());
+	    RecordProperty("minLeft", t->minLeft());
+	    RecordProperty("maxLeft", t->maxLeft());
+	    RecordProperty("minTime", t->minTime());
+	    RecordProperty("maxTime", t->maxTime());
 	}
     }
 
