@@ -389,10 +389,12 @@ TEST(privatescreen_EventManagerTest, init)
     // We should kill this dependency
     EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return((Display*)(0)));
 
+    // TODO - we can't yet detach the EventManager from ::screen->priv
+    // vis: replace next two lines with cps::EventManager em(&comp_screen);
     comp_screen.priv.reset(new PrivateScreen(&comp_screen));
     cps::EventManager& em(*comp_screen.priv.get());
 
-    MockPluginFilesystem mockfs;
+    //MockPluginFilesystem mockfs;
 
     em.init(0);
 }
