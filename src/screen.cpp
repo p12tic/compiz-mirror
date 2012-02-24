@@ -822,7 +822,7 @@ PrivateScreen::processEvents ()
 	sn_display_process_event (snDisplay, &event);
 
 	inHandleEvent = true;
-	screen->handleEvent (&event);
+	screen->alwaysHandleEvent (&event);
 	inHandleEvent = false;
 
 	XFlush (dpy);
@@ -2031,10 +2031,13 @@ PrivateScreen::detectOutputDevices ()
 void
 PrivateScreen::updateStartupFeedback ()
 {
-    if (!startupSequences.empty ())
-	XDefineCursor (dpy, root, busyCursor);
-    else
-	XDefineCursor (dpy, root, normalCursor);
+    if (initialized)
+    {
+	if (!startupSequences.empty ())
+	    XDefineCursor (dpy, root, busyCursor);
+	else
+	    XDefineCursor (dpy, root, normalCursor);
+    }
 }
 
 #define STARTUP_TIMEOUT_DELAY 15000
@@ -4954,7 +4957,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     lastFileWatchHandle (1),
     watchFds (0),
     lastWatchFdHandle (1),
-    valueMap (),
     screenInfo (0),
     snDisplay(0),
     activeWindow (0),
@@ -4999,6 +5001,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     xdndWindow (None),
     possibleTap (NULL),
     tapGrab (false),
+    eventHandled (false),
     initialized (false)
 {
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();

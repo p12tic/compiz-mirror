@@ -24,6 +24,7 @@
  */
 
 #include "gtk-window-decorator.h"
+#include "local-menus.h"
 
 const gchar *
 get_frame_type (WnckWindow *win)
@@ -785,6 +786,8 @@ void
 window_closed (WnckScreen *screen,
 	       WnckWindow *win)
 {
+    local_menu_cache_notify_window_destroyed (wnck_window_get_xid (win));
+
     decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
 
     if (d)

@@ -306,6 +306,7 @@ extern Atom toolkit_action_window_menu_atom;
 extern Atom toolkit_action_force_quit_dialog_atom;
 extern Atom net_wm_state_atom;
 extern Atom net_wm_state_modal_atom;
+extern Atom ubuntu_appmenu_unique_name_atom;
 
 extern Time dm_sn_timestamp;
 

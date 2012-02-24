@@ -1137,6 +1137,10 @@ event_filter_func (GdkXEvent *gdkxevent,
 	    if (get_window_prop (xevent->xproperty.window, select_window_atom, &select))
 		update_switcher_window (xevent->xproperty.window, select);
 	}
+	else if (xevent->xproperty.atom == ubuntu_appmenu_unique_name_atom)
+	{
+	    local_menu_cache_reload_xwindow (gdk_x11_display_get_xdisplay (gdkdisplay), xevent->xproperty.window);
+	}
 	break;
     case DestroyNotify:
 	g_hash_table_remove (frame_table,

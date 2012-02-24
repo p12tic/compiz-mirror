@@ -166,6 +166,7 @@ public:
     MOCK_METHOD0(syncEvent, int ());
     MOCK_METHOD0(autoRaiseWindow, Window  ());
     MOCK_METHOD0(processEvents, void ());
+    MOCK_METHOD1(alwaysHandleEvent, void (XEvent *event));
     MOCK_METHOD0(displayString, const char * ());
     MOCK_METHOD0(getCurrentOutputExtents, CompRect ());
     MOCK_METHOD0(normalCursor, Cursor ());

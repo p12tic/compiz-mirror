@@ -31,7 +31,13 @@
 #define GLOBAL 0
 #define LOCAL 1
 
+#define ALLOWED 2
+#define NOT_ALLOWED 1
+
 gint menu_mode = GLOBAL;
+
+GDBusProxy *global_lim_listener;
+
 
 #ifdef META_HAS_LOCAL_MENUS
 static void
@@ -45,6 +51,59 @@ gwd_menu_mode_changed (GSettings *settings,
 
 active_local_menu *active_menu;
 pending_local_menu *pending_menu;
+
+GHashTable *get_windows_with_menus_table ()
+{
+   static GHashTable *windows_with_menus = NULL;
+
+   if (!windows_with_menus)
+     windows_with_menus = g_hash_table_new (NULL, NULL);
+
+   return windows_with_menus;
+}
+
+static gboolean read_xprop_for_window (Display *dpy, Window xid)
+{
+  Atom ubuntu_appmenu_unique_name = XInternAtom (dpy, "_UBUNTU_APPMENU_UNIQUE_NAME", FALSE);
+  Atom utf8_string = XInternAtom (dpy, "UTF8_STRING", FALSE);
+  Atom actual;
+  int  fmt;
+  unsigned long nitems, nleft;
+  unsigned char *prop;
+  XGetWindowProperty (dpy, xid, ubuntu_appmenu_unique_name,
+		      0L, 16L, FALSE, utf8_string, &actual, &fmt, &nitems, &nleft, &prop);
+
+  if (actual == utf8_string && fmt == 8 && nitems > 1)
+  {
+    printf ("0x%x chardata: %s\n", (unsigned int) xid, prop);
+    g_hash_table_replace (get_windows_with_menus_table (), GINT_TO_POINTER (xid), GINT_TO_POINTER (ALLOWED));
+    return TRUE;
+  }
+  else
+  {
+    printf ("failed to get prop for 0x%x\n", (unsigned int) xid);
+    g_hash_table_replace (get_windows_with_menus_table (), GINT_TO_POINTER (xid), GINT_TO_POINTER (NOT_ALLOWED));
+    return FALSE;
+  }
+}
+
+gboolean
+local_menu_allowed_on_window (Display *dpy, Window xid)
+{
+  gpointer local_menu_allowed_found = g_hash_table_lookup (get_windows_with_menus_table (), GINT_TO_POINTER (xid));
+
+  if (local_menu_allowed_found)
+    {
+      printf ("HT: %i\n", GPOINTER_TO_INT (local_menu_allowed_found) == ALLOWED);
+      return GPOINTER_TO_INT (local_menu_allowed_found) == ALLOWED;
+    }
+  else if (dpy && xid)
+    {
+      return read_xprop_for_window (dpy, xid);
+    }
+
+  return FALSE;
+}
 
 gboolean
 gwd_window_should_have_local_menu (WnckWindow *win)
@@ -65,7 +124,7 @@ gwd_window_should_have_local_menu (WnckWindow *win)
     }
 
     if (lim_settings)
-	return menu_mode == LOCAL;
+	return menu_mode == LOCAL && local_menu_allowed_on_window (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), wnck_window_get_xid (win));
 #endif
 
     return FALSE;
@@ -145,16 +204,15 @@ on_local_menu_activated (GDBusProxy *proxy,
 	    d->rect->y = y_out - d->dy;
 	    d->rect->width = width;
 	    d->rect->height = height;
+	    (*d->cb) (d->user_data);
 	}
 	else if (g_strcmp0 (entry_id, "") == 0)
 	{
 	    memset (d->rect, 0, sizeof (GdkRectangle));
 	    (*d->cb) (d->user_data);
+	    g_free (d->user_data);
 
-	    g_signal_handlers_disconnect_by_func (d->proxy, on_local_menu_activated, d);
-
-	    g_object_unref (d->proxy);
-	    g_object_unref (d->conn);
+	    g_signal_handlers_disconnect_by_func (proxy, on_local_menu_activated, d);
 
 	    if (active_menu)
 	    {
@@ -197,7 +255,56 @@ gwd_prepare_show_local_menu (start_move_window_cb start_move_window,
     pending_menu->move_timeout_id = g_timeout_add (120, gwd_move_window_instead, pending_menu);
 }
 
+#ifdef META_HAS_LOCAL_MENUS
 void
+local_menu_entry_activated_request (GDBusProxy *proxy,
+				    gchar      *sender_name,
+				    gchar      *signal_name,
+				    GVariant   *parameters,
+				    gpointer   user_data)
+{
+  if (g_strcmp0 (signal_name, "EntryActivateRequest") == 0)
+    {
+      gchar *activated_entry_id;
+      gchar *local_menu_entry_id;
+      local_menu_entry_activated_request_funcs *funcs = (local_menu_entry_activated_request_funcs *) user_data;
+
+      g_variant_get (parameters, "(s)", &activated_entry_id, NULL);
+
+      GError   *error = NULL;
+      GVariant *params = g_variant_new ("(s)", "libappmenu.so", NULL);
+      GVariant *args = g_dbus_proxy_call_sync (proxy, "SyncOne", params, 0, 500, NULL, &error);
+
+      g_assert_no_error (error);
+      local_menu_entry_id = gwd_get_entry_id_from_sync_variant (args);
+
+      if (g_strcmp0 (activated_entry_id, local_menu_entry_id) == 0)
+	{
+	  WnckScreen *screen = wnck_screen_get_for_root (gdk_x11_get_default_root_xwindow ());
+	  int dx, dy, top_height;
+	  Window xid;
+
+	  if (screen)
+	    {
+	      Box *rect = (*funcs->active_window_local_menu_rect_callback) ((gpointer) screen, &dx, &dy, &top_height, &xid);
+
+	      if (rect)
+		{
+		  int x = rect->x1 + dx;
+		  int y = top_height + dy;
+
+		  if (gwd_show_local_menu (gdk_x11_display_get_xdisplay (gdk_display_get_default ()),
+					   xid, dx, dy, x, y, 0, 0,
+					   funcs->show_window_menu_hidden_callback, GINT_TO_POINTER (xid)))
+		    g_print ("successfully showed local menu on EntryActivateRequest x: %i y: %i dx: %i dy: %i", x, y, dx, dy);
+		}
+	    }
+	}
+    }
+}
+#endif
+
+gboolean
 gwd_show_local_menu (Display *xdisplay,
 		     Window  frame_xwindow,
 		     int      x,
@@ -218,35 +325,23 @@ gwd_show_local_menu (Display *xdisplay,
     }
 
 #ifdef META_HAS_LOCAL_MENUS
-    GError          *error = NULL;
-    GDBusConnection *conn = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, &error);
 
 
     XUngrabPointer (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), CurrentTime);
     XUngrabKeyboard (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), CurrentTime);
     XSync (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), FALSE);
 
-    if (!conn)
-    {
-	g_print ("error getting connection: %s\n", error->message);
-	return;
-    }
-
-    GDBusProxy      *proxy = g_dbus_proxy_new_sync (conn, 0, NULL, "com.canonical.Unity.Panel.Service",
-					   "/com/canonical/Unity/Panel/Service",
-					   "com.canonical.Unity.Panel.Service",
-					   NULL, &error);
+    GDBusProxy *proxy = global_lim_listener;
 
     if (proxy)
     {
 	GVariant *message = g_variant_new ("(uiiu)", frame_xwindow, x, y, time);
+	GError   *error = NULL;
 	g_dbus_proxy_call_sync (proxy, "ShowAppMenu", message, 0, 500, NULL, &error);
 	if (error)
 	{
 	    g_print ("error calling ShowAppMenu: %s\n", error->message);
-	    g_object_unref (proxy);
-	    g_object_unref (conn);
-	    return;
+	    return FALSE;
 	}
 
 	show_local_menu_data *data = g_new0 (show_local_menu_data, 1);
@@ -256,8 +351,6 @@ gwd_show_local_menu (Display *xdisplay,
 
 	active_menu = g_new0 (active_local_menu, 1);
 
-	data->conn = g_object_ref (conn);
-	data->proxy = g_object_ref (proxy);
 	data->cb = cb;
 	data->user_data = user_data_show_window_menu;
 	data->rect = &active_menu->rect;
@@ -267,17 +360,10 @@ gwd_show_local_menu (Display *xdisplay,
 
 	g_signal_connect (proxy, "g-signal", G_CALLBACK (on_local_menu_activated), data);
 
-	g_object_unref (conn);
-	g_object_unref (proxy);
-
-	return;
-    }
-    else
-    {
-	g_print ("error getting proxy: %s\n", error->message);
+	return TRUE;
     }
 
-    g_object_unref (conn);
+    return FALSE;
 #endif
 }
 
@@ -326,6 +412,18 @@ force_local_menus_on (WnckWindow       *win,
 	}
     }
 #endif
+}
+
+void
+local_menu_cache_notify_window_destroyed (Window xid)
+{
+  g_hash_table_remove (get_windows_with_menus_table (), GINT_TO_POINTER (xid));
+}
+
+void
+local_menu_cache_reload_xwindow (Display *dpy, Window xid)
+{
+  read_xprop_for_window (dpy, xid);
 }
 
 

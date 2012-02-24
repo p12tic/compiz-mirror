@@ -222,8 +222,6 @@ class PrivateScreen :
 
 	void removeDestroyed ();
 
-	void updatePassiveGrabs ();
-
 	void updatePlugins ();
 
 	bool triggerPress   (CompAction         *action,
@@ -410,10 +408,6 @@ class PrivateScreen :
 	std::list< CompWatchFd * > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
-	std::map<CompString, CompPrivate> valueMap;
-
-	xcb_connection_t *connection;
-
 	Display    *dpy;
 
 	int syncEvent, syncError;
@@ -490,8 +484,6 @@ class PrivateScreen :
 	CompOutput         fullscreenOutput;
 	bool               hasOverlappingOutputs;
 
-	XRectangle lastViewport;
-
 	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
 	int                     currentHistory;
 
@@ -542,6 +534,8 @@ class PrivateScreen :
 
 	void *possibleTap;
 	bool  tapGrab;
+
+	bool eventHandled;
 
 	bool initialized;
 };

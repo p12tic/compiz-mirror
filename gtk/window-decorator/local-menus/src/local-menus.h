@@ -36,9 +36,12 @@ extern "C"
 #include <libwnck/libwnck.h>
 #include <libwnck/window-action-menu.h>
 #include <metacity-private/theme.h>
+#include <X11/Xregion.h>
+
 
 typedef void (*show_window_menu_hidden_cb) (gpointer);
 typedef void (*start_move_window_cb) (gpointer);
+typedef Box * (*get_active_window_local_menu_rect_cb) (gpointer, int *, int *, int *, Window *);
 
 typedef struct _pending_local_menu
 {
@@ -53,11 +56,10 @@ typedef struct _active_local_menu
 } active_local_menu;
 
 extern active_local_menu *active_menu;
+extern GDBusProxy        *global_lim_listener;
 
 typedef struct _show_local_menu_data
 {
-    GDBusConnection *conn;
-    GDBusProxy      *proxy;
     show_window_menu_hidden_cb cb;
     gpointer        user_data;
     GdkRectangle    *rect;
@@ -65,6 +67,12 @@ typedef struct _show_local_menu_data
     gint            dy;
     gchar           *local_menu_entry_id;
 } show_local_menu_data;
+
+typedef struct _local_menu_entry_activated_request_funcs
+{
+    get_active_window_local_menu_rect_cb active_window_local_menu_rect_callback;
+    show_window_menu_hidden_cb show_window_menu_hidden_callback;
+} local_menu_entry_activated_request_funcs;
 
 gboolean
 gwd_window_should_have_local_menu (WnckWindow *win);
@@ -79,7 +87,7 @@ gwd_prepare_show_local_menu (start_move_window_cb start_move_window,
 			     gpointer user_data_start_move_window);
 
 /* Button Up */
-void
+gboolean
 gwd_show_local_menu (Display *xdisplay,
 		     Window  frame_xwindow,
 		     int      x,
@@ -90,6 +98,23 @@ gwd_show_local_menu (Display *xdisplay,
 		     guint32  timestamp,
 		     show_window_menu_hidden_cb cb,
 		     gpointer user_data_show_window_menu);
+
+void
+local_menu_cache_notify_window_destroyed (Window xid);
+
+void
+local_menu_cache_reload_xwindow (Display *xdisplay, Window xid);
+
+gboolean
+local_menu_allowed_on_window (Display *dpy, Window xid);
+
+void
+local_menu_entry_activated_request (GDBusProxy *proxy,
+				    gchar      *sender_name,
+				    gchar      *signal_name,
+				    GVariant   *parameters,
+				    gpointer   user_data);
+
 #ifdef __cplusplus
 }
 #endif
