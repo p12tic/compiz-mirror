@@ -365,3 +365,34 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
     EXPECT_CALL(comp_screen, _finiPluginForScreen(Ne((void*)0))).Times(2);
     for (CompPlugin* p; (p = CompPlugin::pop ()) != 0; CompPlugin::unload (p));
 }
+
+TEST(privatescreen_EventManagerTest, create_and_destroy)
+{
+    using namespace testing;
+
+    MockCompScreen comp_screen;
+
+    cps::EventManager em(0);
+}
+
+TEST(privatescreen_EventManagerTest, init)
+{
+    using namespace testing;
+
+    MockCompScreen comp_screen;
+
+    EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
+    EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
+    EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
+
+    // The PrivateScreen ctor indirectly calls screen->dpy().
+    // We should kill this dependency
+    EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return((Display*)(0)));
+
+    comp_screen.priv.reset(new PrivateScreen(&comp_screen));
+    cps::EventManager& em(*comp_screen.priv.get());
+
+    MockPluginFilesystem mockfs;
+
+    em.init(0);
+}
