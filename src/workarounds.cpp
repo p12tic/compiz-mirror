@@ -305,6 +305,8 @@ WorkaroundsWindow::damageRect (bool initial, const CompRect &rect)
     if (initial)
 	cWindow->addDamage (true);
 
+    cWindow->damageRectSetEnabled (this, false);
+
     return cWindow->damageRect (initial, rect);
 }
 
