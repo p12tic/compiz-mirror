@@ -46,7 +46,7 @@ CompRegion::CompRegion ()
 CompRegion::CompRegion (const CompRegion &c)
 {
     priv = new PrivateRegion ();
-    XUnionRegion (CompRegion ().handle (), c.priv->region, priv->region);
+    XUnionRegion (handle (), c.priv->region, priv->region);
 }
 
 CompRegion::CompRegion ( int x, int y, int w, int h)
@@ -95,7 +95,7 @@ CompRegion::handle () const
 CompRegion &
 CompRegion::operator= (const CompRegion &c)
 {
-    XUnionRegion (CompRegion ().handle (), c.priv->region, priv->region);
+    XUnionRegion (handle (), c.priv->region, priv->region);
     return *this;
 }
 
@@ -147,6 +147,7 @@ CompRegion::contains (int x, int y, int width, int height) const
 CompRegion
 CompRegion::intersected (const CompRegion &r) const
 {
+    /* FIXME: optimize this (?) */
     CompRegion reg (r);
     XIntersectRegion (reg.handle (), handle (), reg.handle ());
     return reg;

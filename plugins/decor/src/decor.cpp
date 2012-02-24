@@ -91,6 +91,7 @@ isAncestorTo (CompWindow *window,
 void
 DecorWindow::computeShadowRegion ()
 {
+    /* FIXME: CompRegion needs a clear() and =CompRect operator */
     shadowRegion = CompRegion (window->outputRect ());
 
     if (window->type () == CompWindowTypeDropdownMenuMask ||
@@ -107,8 +108,6 @@ DecorWindow::computeShadowRegion ()
 
         for (it--; it != screen->windows ().end (); it--)
         {
-            CompRegion inter;
-
             if (!(*it)->isViewable ())
                 continue;
 
@@ -121,10 +120,10 @@ DecorWindow::computeShadowRegion ()
             if (!isAncestorTo (window, (*it)))
                 continue;
 
-	    inter = shadowRegion.intersected ((*it)->borderRect ());
+            CompRegion inter (shadowRegion.intersected ((*it)->borderRect ()));
 
             if (!inter.isEmpty ())
-		shadowRegion = shadowRegion.subtracted (inter);
+		shadowRegion -= inter;
         }
 
         /* If the region didn't change, then it is safe to
@@ -148,7 +147,7 @@ DecorWindow::computeShadowRegion ()
 			   window->inputRect ().y1 () -
                            window->outputRect ().y1 ());
 
-	    shadowRegion = shadowRegion.subtracted (area);
+	    shadowRegion -= area;
         }
     }
 }
@@ -247,17 +246,24 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
-    CompRegion reg = shadowRegion.intersected (region);
+    CompRegion *newreg = NULL;
+    const CompRegion *reg = NULL;
 
     if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
 		 PAINT_WINDOW_WITH_OFFSET_MASK)))
-	reg = region;
+	reg = &region;
     else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
-	reg = infiniteRegion;
+	reg = &infiniteRegion;
+    else
+    {
+        newreg = new CompRegion (shadowRegion);
+	*newreg &= region;
+	reg = newreg;
+    }
 
     /* In case some plugin needs to paint us with an offset region */
-    if (reg.isEmpty ())
-	reg = region;
+    if (reg->isEmpty ())
+	reg = &region;
 
     if (wd &&
 	wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP)
@@ -278,7 +284,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    if (box.width () > 0 && box.height () > 0)
 	    {
 		ml[0] = wd->quad[i].matrix;
-		gWindow->glAddGeometry (ml, CompRegion (box), reg);
+		gWindow->glAddGeometry (ml, CompRegion (box), *reg);
 	    }
 	}
 
@@ -286,7 +292,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    gWindow->glDrawTexture (wd->decor->texture->textures[0],
 				    attrib, mask);
     }
-    else if (wd && !reg.isEmpty () &&
+    else if (wd && !reg->isEmpty () &&
 	     wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW)
     {
 	GLTexture::MatrixList ml (1);
@@ -300,7 +306,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	{
 	    ml[0] = gWindow->matrices ()[0];
 	    gWindow->geometry ().reset ();
-	    gWindow->glAddGeometry (ml, window->frameRegion (), reg);
+	    gWindow->glAddGeometry (ml, window->frameRegion (), *reg);
 
 	    if (gWindow->geometry ().vCount)
 		gWindow->glDrawTexture (gWindow->textures ()[0], attrib, mask);
@@ -313,7 +319,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    {
 		ml[0] = gWindow->matrices ()[i];
 		gWindow->geometry ().reset ();
-		gWindow->glAddGeometry (ml, regions[i], reg);
+		gWindow->glAddGeometry (ml, regions[i], *reg);
 
 		if (gWindow->geometry ().vCount)
 		    gWindow->glDrawTexture (gWindow->textures ()[i], attrib,
@@ -321,6 +327,9 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    }
 	}
     }
+
+    if (newreg)
+        delete newreg;
 }
 
 static bool bindFailed;
