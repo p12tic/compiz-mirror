@@ -1081,9 +1081,11 @@ WorkaroundsWindow::WorkaroundsWindow (CompWindow *window) :
 {
     WindowInterface::setHandler (window, false);
     GLWindowInterface::setHandler (gWindow, false);
-    CompositeWindowInterface::setHandler (cWindow);
 
     WORKAROUNDS_SCREEN (screen);
+
+    if (ws->optionGetInitialDamageCompleteRedraw ())
+	CompositeWindowInterface::setHandler (cWindow);
 
     if (ws->optionGetLegacyFullscreen ())
     {
