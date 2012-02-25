@@ -3119,8 +3119,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    serverFrameGeometry.setHeight (xwc->height + serverGeometry.border () * 2
 					   + serverInput.top + serverInput.bottom);
     }
-
-
+ 
     if (serverFrame)
     {
 	if (frameValueMask)
@@ -3143,6 +3142,14 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	}
 
 	valueMask &= ~(CWSibling | CWStackMode);
+
+	/* If the frame has changed position (eg, serverInput.top
+	 * or serverInput.left have changed) then we also need to
+	 * update the client and wrapper position */
+	if (!(valueMask & CWX))
+	    valueMask |= frameValueMask & CWX;
+	if (!(valueMask & CWY))
+	    valueMask |= frameValueMask & CWY;
 
 	if (valueMask)
 	{
