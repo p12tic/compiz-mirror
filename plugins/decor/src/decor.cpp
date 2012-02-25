@@ -151,8 +151,8 @@ DecorWindow::computeShadowRegion ()
     }
     else if (window->state () & MAXIMIZE_STATE)
     {
-	CompRegion outputRegion = CompRegion (static_cast <CompRect &> (screen->outputDevs ()[window->outputDevice ()]));
-	CompRegion borderRegion = CompRegion (window->borderRect ());
+	CompRegion outputRegion (screen->outputDevs ()[window->outputDevice ()]);
+	CompRegion borderRegion (window->borderRect ());
 	shadowRegion = shadowRegion.intersected (screen->region ());
 
 	if (borderRegion.intersected (outputRegion) == borderRegion)
@@ -170,8 +170,8 @@ DecorWindow::computeShadowRegion ()
 	    if (window->borderRect ().intersects ((*rit)->borderRect ()))
 		continue;
 
-	    CompRegion clippable = shadowRegion - borderRegion;
-	    CompRegion inter = clippable.intersected ((*rit)->borderRect ());
+	    CompRegion clippable (shadowRegion - borderRegion);
+	    CompRegion inter (clippable.intersected ((*rit)->borderRect ()));
 
 	    if (!inter.isEmpty ())
 		shadowRegion = shadowRegion.subtracted (inter);
