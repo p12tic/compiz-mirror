@@ -2999,6 +2999,9 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     xwc->height = valueMask & CWHeight ? xwc->height : serverGeometry.height ();
     xwc->border_width = valueMask & CWBorderWidth ? xwc->border_width : serverGeometry.border ();
 
+    /* FIXME: This is a total fallacy for the reparenting case
+     * at least since the client doesn't actually move here, it only
+     * moves within the frame */
     if (valueMask & CWX && serverGeometry.x () == xwc->x)
 	valueMask &= ~(CWX);
 
