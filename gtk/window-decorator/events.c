@@ -411,7 +411,9 @@ unstick_button_event (WnckWindow *win,
 void
 on_local_menu_hidden (gpointer user_data)
 {
-    decor_t *d = (decor_t *) user_data;
+    Window xid = GPOINTER_TO_INT (user_data);
+    WnckWindow *win = wnck_window_get (xid);
+    decor_t *d = g_object_get_data (G_OBJECT (win), "decor");
 
     d->button_states[BUTTON_WINDOW_MENU] &= ~PRESSED_EVENT_WINDOW;
 
@@ -467,7 +469,7 @@ window_menu_button_event (WnckWindow *win,
 				     gtkwd_event->button,
 				     gtkwd_event->time,
 				     (show_window_menu_hidden_cb) on_local_menu_hidden,
-				     (gpointer) d);
+				     GINT_TO_POINTER (wnck_window_get_xid (d->win)));
 	    }
 	break;
     default:

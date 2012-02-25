@@ -541,6 +541,12 @@ meta_get_decoration_geometry (decor_t		*d,
 	*flags |= (MetaFrameFlags ) META_FRAME_ABOVE;
 #endif
 
+#ifdef META_HAS_LOCAL_MENUS
+    if (d->win &&
+	local_menu_allowed_on_window (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), wnck_window_get_xid (d->win)))
+	*flags |= (MetaFrameFlags ) META_FRAME_ALLOWS_WINDOW_MENU;
+#endif
+
     meta_theme_get_frame_borders (theme,
 				  frame_type,
 				  d->frame->text_height,

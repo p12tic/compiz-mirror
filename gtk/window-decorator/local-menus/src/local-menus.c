@@ -94,7 +94,6 @@ local_menu_allowed_on_window (Display *dpy, Window xid)
 
   if (local_menu_allowed_found)
     {
-      printf ("HT: %i\n", GPOINTER_TO_INT (local_menu_allowed_found) == ALLOWED);
       return GPOINTER_TO_INT (local_menu_allowed_found) == ALLOWED;
     }
   else if (dpy && xid)
@@ -123,7 +122,7 @@ gwd_window_should_have_local_menu (WnckWindow *win)
 	++schemas;
     }
 
-    if (lim_settings)
+    if (lim_settings && win)
 	return menu_mode == LOCAL && local_menu_allowed_on_window (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), wnck_window_get_xid (win));
 #endif
 
@@ -210,7 +209,6 @@ on_local_menu_activated (GDBusProxy *proxy,
 	{
 	    memset (d->rect, 0, sizeof (GdkRectangle));
 	    (*d->cb) (d->user_data);
-	    g_free (d->user_data);
 
 	    g_signal_handlers_disconnect_by_func (proxy, on_local_menu_activated, d);
 
