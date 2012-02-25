@@ -40,14 +40,15 @@ class PrivateRestriction;
 
 class CompAction;
 class CompMatch;
-class CompScreen;
+class CompScreenImpl;
 
 
 /**
  * A configuration option with boolean, int, float, String, Color, Key, Button,
  * Edge, Bell, or List.
  */
-class CompOption {
+class CompOption
+{
 	/**
 	 * Option data types
 	 */
@@ -375,7 +376,6 @@ CompOption::Value::Value (const T & t) :
     set (t);
 }
 
-
-extern CompOption::Vector noOptions;
+CompOption::Vector & noOptions ();
 
 #endif

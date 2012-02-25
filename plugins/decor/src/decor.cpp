@@ -2257,6 +2257,9 @@ DecorWindow::updateSwitcher ()
 		    	    false, XA_WINDOW, &actualType, &actualFmt,
 		    	    &nitems, &nleft, (unsigned char **) &data) == Success)
     {
+	if (data)
+	    XFree (data);
+
 	if (nitems == 1)
 	{
 	    isSwitcher = true;

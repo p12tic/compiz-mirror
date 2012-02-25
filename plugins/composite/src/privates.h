@@ -31,23 +31,21 @@
 #include <composite/composite.h>
 #include <core/atoms.h>
 
-#include "paintscheduler.h"
-
 #include "composite_options.h"
 
 extern CompPlugin::VTable *compositeVTable;
 
 extern CompWindow *lastDamagedWindow;
-	
 
 class PrivateCompositeScreen :
     ScreenInterface,
-    public compiz::composite::scheduler::PaintSchedulerDispatchBase,
     public CompositeOptions
 {
     public:
 	PrivateCompositeScreen (CompositeScreen *cs);
 	~PrivateCompositeScreen ();
+
+	bool setOption (const CompString &name, CompOption::Value &value);
 
 	void outputChangeNotify ();
 
@@ -61,19 +59,7 @@ class PrivateCompositeScreen :
 
 	void detectRefreshRate ();
 
-    protected:
-
-	void prepareScheduledPaint (unsigned int timeDiff);
-
-	void paintScheduledPaint ();
-
-	bool syncScheduledPaint ();
-
-	void doneScheduledPaint ();
-
-	bool schedulerCompositingActive ();
-
-	bool schedulerHasVsync ();
+	void scheduleRepaint ();
 
     public:
 
@@ -103,10 +89,18 @@ class PrivateCompositeScreen :
 
 	int overlayWindowCount;
 
+	struct timeval lastRedraw;
+	int            redrawTime;
+	int            optimalRedrawTime;
+	bool           scheduled, painting, reschedule;
+
 	bool slowAnimations;
 
-	compiz::composite::PaintHandler 	     *pHnd;
-	compiz::composite::scheduler::PaintScheduler scheduler;
+	CompTimer paintTimer;
+
+	compiz::composite::PaintHandler *pHnd;
+
+	CompositeFPSLimiterMode FPSLimiterMode;
 
 	CompWindowList withDestroyedWindows;
 };

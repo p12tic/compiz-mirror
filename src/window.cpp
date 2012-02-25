@@ -71,6 +71,16 @@ CompWindow::freePluginClassIndex (unsigned int index)
 	    w->pluginClasses.resize (windowPluginClassIndices.size ());
 }
 
+inline bool
+PrivateWindow::isInvisible() const
+{
+    return attrib.map_state != IsViewable ||
+     attrib.x + width  + output.right  <= 0 ||
+     attrib.y + height + output.bottom <= 0 ||
+     attrib.x - output.left >= (int) screen->width () ||
+     attrib.y - output.top >= (int) screen->height ();
+}
+
 bool
 PrivateWindow::isAncestorTo (CompWindow *transient,
 			     CompWindow *ancestor)
@@ -504,7 +514,7 @@ CompWindow::changeState (unsigned int newState)
     recalcActions ();
 
     if (priv->managed)
-	screen->priv->setWindowState (priv->state, priv->id);
+	screen->setWindowState (priv->state, priv->id);
 
     stateChangeNotify (oldState);
     screen->matchPropertyChanged (this);
@@ -1188,7 +1198,7 @@ CompWindow::destroy ()
 	     * in the stack */
 	    CoreWindow *cw = new CoreWindow (priv->serverFrame);
 	    cw->manage (priv->id, attrib);
-	    screen->priv->createdWindows.remove (cw);
+	    screen->removeFromCreatedWindows (cw);
 	    delete cw;
 	}
 
@@ -1218,7 +1228,7 @@ CompWindow::destroy ()
 	serverNext = oldServerNext;
 	serverPrev = oldServerPrev;
 
-	screen->priv->destroyedWindows.push_back (this);
+	screen->addToDestroyedWindows (this);
 
 	/* We must set the xid of this window
 	 * to zero as it no longer references
@@ -1564,7 +1574,7 @@ PrivateWindow::resize (const CompWindow::Geometry &gm)
 
 	window->resizeNotify (dx, dy, dwidth, dheight);
 
-	priv->invisible = WINDOW_INVISIBLE (priv);
+	priv->invisible = priv->isInvisible ();
     }
     else if (priv->geometry.x () != gm.x () || priv->geometry.y () != gm.y ())
     {
@@ -1668,7 +1678,7 @@ PrivateWindow::initializeSyncCounter ()
 
 	values.events = true;
 
-	CompScreen::checkForError (screen->dpy ());
+	CompScreenImpl::checkForError (screen->dpy ());
 
 	/* Note that by default, the alarm increments the trigger value
 	 * when it fires until the condition (counter.value < trigger.value)
@@ -1683,7 +1693,7 @@ PrivateWindow::initializeSyncCounter ()
 				      XSyncCAEvents,
 				      &values);
 
-	if (CompScreen::checkForError (screen->dpy ()))
+	if (CompScreenImpl::checkForError (screen->dpy ()))
 	    return true;
 
 	XSyncDestroyAlarm (screen->dpy (), syncAlarm);
@@ -1918,7 +1928,8 @@ PrivateWindow::move (int dx,
 	    priv->inputRegion.translate (dx, dy);
 	    if (!priv->frameRegion.isEmpty ())
 		priv->frameRegion.translate (dx, dy);
-	    priv->window->moveNotify (dx, dy, immediate);
+
+	    priv->invisible = priv->isInvisible ();
 	}
     }
 }
@@ -2485,9 +2496,17 @@ CompWindow::moveInputFocusToOtherWindow ()
 	priv->id == screen->priv->nextActiveWindow)
     {
 	CompWindow *ancestor;
+	CompWindow *nextActive = screen->findWindow (screen->priv->nextActiveWindow);
 	Window     lastNextActiveWindow = screen->priv->nextActiveWindow;
 
-	if (priv->transientFor && priv->transientFor != screen->root ())
+        /* Window pending focus */
+	if (priv->id != screen->priv->nextActiveWindow &&
+	    nextActive &&
+	    nextActive->focus ())
+	{
+	    nextActive->moveInputFocusTo ();
+	}
+	else if (priv->transientFor && priv->transientFor != screen->root ())
 	{
 	    ancestor = screen->findWindow (priv->transientFor);
 	    if (ancestor &&
@@ -4215,10 +4234,9 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	    }
 	}
 
-	if (sibling)
-	{
-	    mask |= priv->addWindowStackChanges (&xwc, sibling);
-	}
+	/* If sibling is NULL, then this window will go on the bottom
+	 * of the stack */
+	mask |= priv->addWindowStackChanges (&xwc, sibling);
     }
 
     mask |= priv->addWindowSizeChanges (&xwc, priv->serverGeometry);
@@ -4280,8 +4298,6 @@ PrivateWindow::reveal ()
 {
     if (window->minimized ())
 	window->unminimize ();
-
-    screen->leaveShowDesktopMode (window);
 }
 
 void
@@ -4305,6 +4321,8 @@ CompWindow::activate ()
     screen->forEachWindow (
 	boost::bind (PrivateWindow::revealAncestors, _1, this));
     priv->reveal ();
+
+    screen->leaveShowDesktopMode (this);
 
     if (priv->state & CompWindowStateHiddenMask)
     {
@@ -4816,7 +4834,7 @@ PrivateWindow::readIconHint ()
 
     XDestroyImage (image);
 
-    icon = new CompIcon (screen, width, height);
+    icon = new CompIcon (width, height);
     if (!icon)
     {
 	delete [] colors;
@@ -4899,7 +4917,7 @@ CompWindow::getIcon (int width,
 		if (iw && ih)
 		{
 		    unsigned long j;
-		    icon = new CompIcon (screen, iw, ih);
+		    icon = new CompIcon (iw, ih);
 		    if (!icon)
 			continue;
 
@@ -6084,7 +6102,7 @@ CompWindow::CompWindow (Window aboveId,
 
     if (priv->attrib.map_state == IsViewable)
     {
-	priv->invisible = WINDOW_INVISIBLE (priv);
+	priv->invisible = priv->isInvisible ();
     }
 }
 
@@ -6847,7 +6865,7 @@ PrivateWindow::unreparent ()
 	 * in the stack */
 	CoreWindow *cw = new CoreWindow (serverFrame);
 	CompWindow *fw = cw->manage (id, attrib);
-	screen->priv->createdWindows.remove (cw);
+	screen->removeFromCreatedWindows (cw);
 	delete cw;
 
 	/* Put this window in the list of "detached frame windows"

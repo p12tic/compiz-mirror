@@ -941,10 +941,12 @@ inline void
 
         </xsl:text>
 	<xsl:value-of select="$Plugin"/>
-        <xsl:text>Options ();
+        <xsl:text>Options (bool init = true);
         virtual ~</xsl:text>
 	<xsl:value-of select="$Plugin"/>
         <xsl:text>Options ();
+
+	void initOptions ();
 
         virtual CompOption::Vector &amp; getOptions ();
         virtual bool setOption (const CompString &amp;name, CompOption::Value &amp;value);
@@ -1090,13 +1092,21 @@ bool
         <xsl:value-of select="$Plugin"/>
         <xsl:text>Options::</xsl:text>
 	<xsl:value-of select="$Plugin"/>
-        <xsl:text>Options () :
+        <xsl:text>Options (bool init /* = true */) :
     mOptions (</xsl:text>
         <xsl:value-of select="$Plugin"/>
         <xsl:text>Options::OptionNum),
     mNotify (</xsl:text>
         <xsl:value-of select="$Plugin"/>
         <xsl:text>Options::OptionNum)
+{
+    if (init)
+        initOptions ();
+}
+
+void
+</xsl:text>
+<xsl:value-of select="$Plugin"/><xsl:text>Options::initOptions ()
 {
 </xsl:text>
     <xsl:if test="/compiz/plugin[@name=$pName]/descendant-or-self::option[@type = 'action'] or

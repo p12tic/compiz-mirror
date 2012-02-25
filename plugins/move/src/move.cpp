@@ -511,7 +511,7 @@ MoveScreen::handleEvent (XEvent *event)
 		    {
 			moveTerminate (&optionGetInitiateButton (),
 				       CompAction::StateTermButton,
-				       noOptions);
+				       noOptions ());
 		    }
 		}
 	    }
@@ -606,9 +606,9 @@ MoveScreen::handleEvent (XEvent *event)
 		    if (ms->w->id () == event->xclient.window)
 		    {
 			moveTerminate (&optionGetInitiateButton (),
-				       CompAction::StateCancel, noOptions);
+				       CompAction::StateCancel, noOptions ());
 			moveTerminate (&optionGetInitiateKey (),
-				       CompAction::StateCancel, noOptions);
+				       CompAction::StateCancel, noOptions ());
 
 		    }
 		}
@@ -617,15 +617,15 @@ MoveScreen::handleEvent (XEvent *event)
 	case DestroyNotify:
 	    if (w && w->id () == event->xdestroywindow.window)
 	    {
-		moveTerminate (&optionGetInitiateButton (), 0, noOptions);
-		moveTerminate (&optionGetInitiateKey (), 0, noOptions);
+		moveTerminate (&optionGetInitiateButton (), 0, noOptions ());
+		moveTerminate (&optionGetInitiateKey (), 0, noOptions ());
 	    }
 	    break;
 	case UnmapNotify:
 	    if (w && w->id () == event->xunmap.window)
 	    {
-		moveTerminate (&optionGetInitiateButton (), 0, noOptions);
-		moveTerminate (&optionGetInitiateKey (), 0, noOptions);
+		moveTerminate (&optionGetInitiateButton (), 0, noOptions ());
+		moveTerminate (&optionGetInitiateKey (), 0, noOptions ());
 	    }
 	default:
 	    break;

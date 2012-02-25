@@ -220,7 +220,7 @@ static void
 dieCallback (SmcConn   connection,
 	     SmPointer clientData)
 {
-    screen->sessionEvent (CompSession::EventDie, noOptions);
+    screen->sessionEvent (CompSession::EventDie, noOptions ());
 
     CompSession::close ();
     exit (0);
@@ -230,14 +230,14 @@ static void
 saveCompleteCallback (SmcConn	connection,
 		      SmPointer clientData)
 {
-    screen->sessionEvent (CompSession::EventSaveComplete, noOptions);
+    screen->sessionEvent (CompSession::EventSaveComplete, noOptions ());
 }
 
 static void
 shutdownCancelledCallback (SmcConn   connection,
 			   SmPointer clientData)
 {
-    screen->sessionEvent (CompSession::EventShutdownCancelled, noOptions);
+    screen->sessionEvent (CompSession::EventShutdownCancelled, noOptions ());
 }
 
 void

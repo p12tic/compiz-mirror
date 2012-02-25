@@ -180,9 +180,144 @@ private:
 }
 }
 
-class PrivateScreen :
-    public ValueHolder,
+namespace compiz
+{
+namespace private_screen
+{
+
+class WindowManager : boost::noncopyable
+{
+    public:
+
+	WindowManager();
+
+	CompGroup * addGroup (Window id);
+	void removeGroup (CompGroup *group);
+	CompGroup * findGroup (Window id);
+
+	void eraseWindowFromMap (Window id);
+	void removeDestroyed ();
+
+    //private:
+	Window activeWindow;
+	Window nextActiveWindow;
+
+	Window below;
+
+	CompTimer autoRaiseTimer;
+	Window    autoRaiseWindow;
+
+	CompWindowList serverWindows;
+	CompWindowList destroyedWindows;
+	bool           stackIsFresh;
+
+	CompWindow::Map windowsMap;
+	std::list<CompGroup *> groups;
+
+	std::map <CompWindow *, CompWindow *> detachedFrameWindows;
+
+	CompWindowVector clientList;            /* clients in mapping order */
+	CompWindowVector clientListStacking;    /* clients in stacking order */
+
+	std::vector<Window> clientIdList;        /* client ids in mapping order */
+	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
+
+	unsigned int pendingDestroys;
+};
+
+// data members that don't belong (these probably belong
+// in CompScreenImpl as PrivateScreen doesn't use them)
+struct OrphanData : boost::noncopyable
+{
+	OrphanData();
+
+	Window	      edgeWindow;
+	Window	      xdndWindow;
+};
+
+// Static member functions that don't belong (use no data,
+// not invoked by PrivateScreen)
+struct PseudoNamespace
+{
+    // AFAICS only used by CoreExp (in match.cpp)
+    static unsigned int windowStateFromString (const char *str);
+};
+
+class PluginManager :
     public CoreOptions
+{
+    public:
+	PluginManager();
+
+	void updatePlugins ();
+
+    //private:
+	CompOption::Value plugin;
+	bool	          dirtyPluginList;
+	void *possibleTap;
+};
+
+class EventManager :
+    public PluginManager,
+    public ValueHolder
+{
+public:
+	EventManager (CompScreen *screen);
+	~EventManager ();
+
+	bool init (const char *name);
+
+	void handleSignal (int signum);
+
+public:
+
+	Glib::RefPtr <Glib::MainLoop>  mainloop;
+
+	/* We cannot use RefPtrs. See
+	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
+	 */
+	CompEventSource * source;
+	CompTimeoutSource * timeout;
+	CompSignalSource * sighupSource;
+	CompSignalSource * sigtermSource;
+	CompSignalSource * sigintSource;
+	Glib::RefPtr <Glib::MainContext> ctx;
+
+	CompFileWatchList   fileWatch;
+	CompFileWatchHandle lastFileWatchHandle;
+
+	std::list< CompWatchFd * > watchFds;
+	CompWatchFdHandle        lastWatchFdHandle;
+
+	CompTimer    pingTimer;
+
+	CompTimer               edgeDelayTimer;
+	CompDelayedEdgeSettings edgeDelaySettings;
+
+
+	CompScreen  *screen;
+
+	int          desktopWindowCount;
+	unsigned int mapNum;
+
+
+	std::list<CompGroup *> groups;
+
+	CompIcon *defaultIcon;
+
+	bool  tapGrab;
+
+    private:
+	virtual bool initDisplay (const char *name);
+};
+
+}} // namespace compiz::private_screen
+
+class PrivateScreen :
+    public compiz::private_screen::EventManager,
+    public compiz::private_screen::WindowManager,
+    public compiz::private_screen::OrphanData,
+    public compiz::private_screen::PseudoNamespace
 {
 
     public:
@@ -203,7 +338,7 @@ class PrivateScreen :
 	class Grab {
 	    public:
 
-		friend class CompScreen;
+		friend class CompScreenImpl;
 	    private:
 		Cursor     cursor;
 		const char *name;
@@ -218,11 +353,12 @@ class PrivateScreen :
 	std::list <XEvent> queueEvents ();
 	void processEvents ();
 
-	void removeDestroyed ();
-
-	void updatePassiveGrabs ();
-
-	void updatePlugins ();
+	bool triggerPress   (CompAction         *action,
+	                     CompAction::State   state,
+	                     CompOption::Vector &arguments);
+	bool triggerRelease (CompAction         *action,
+	                     CompAction::State   state,
+	                     CompOption::Vector &arguments);
 
 	bool triggerButtonPressBindings (CompOption::Vector &options,
 					 XButtonEvent       *event,
@@ -320,8 +456,6 @@ class PrivateScreen :
 
 	unsigned int windowStateMask (Atom state);
 
-	static unsigned int windowStateFromString (const char *str);
-
 	unsigned int getWindowState (Window id);
 
 	void setWindowState (unsigned int state, Window id);
@@ -342,15 +476,7 @@ class PrivateScreen :
 
 	void configure (XConfigureEvent *ce);
 
-	void eraseWindowFromMap (Window id);
-
 	void updateClientList ();
-
-	CompGroup * addGroup (Window id);
-
-	void removeGroup (CompGroup *group);
-
-	CompGroup * findGroup (Window id);
 
 	void applyStartupProperties (CompWindow *window);
 
@@ -368,8 +494,6 @@ class PrivateScreen :
 
 	void disableEdge (int edge);
 
-	void addScreenActions ();
-
 	CompWindow *
 	focusTopMostWindow ();
 
@@ -378,33 +502,10 @@ class PrivateScreen :
 	
 	void setDefaultWindowAttributes (XWindowAttributes *);
 
-	void handleSignal (int signum);
+	static void compScreenSnEvent (SnMonitorEvent *event,
+			   void           *userData);
 
     public:
-
-	PrivateScreen *priv;
-
-	Glib::RefPtr <Glib::MainLoop>  mainloop;
-
-	/* We cannot use RefPtrs. See
-	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
-	 */
-	CompEventSource * source;
-	CompTimeoutSource * timeout;
-	CompSignalSource * sighupSource;
-	CompSignalSource * sigtermSource;
-	CompSignalSource * sigintSource;
-	Glib::RefPtr <Glib::MainContext> ctx;
-
-	CompFileWatchList   fileWatch;
-	CompFileWatchHandle lastFileWatchHandle;
-
-	std::list< CompWatchFd * > watchFds;
-	CompWatchFdHandle        lastWatchFdHandle;
-
-	std::map<CompString, CompPrivate> valueMap;
-
-	xcb_connection_t *connection;
 
 	Display    *dpy;
 
@@ -427,37 +528,13 @@ class PrivateScreen :
 	SnDisplay *snDisplay;
 
 	unsigned int lastPing;
-	CompTimer    pingTimer;
-
-	Window activeWindow;
-	Window nextActiveWindow;
-
-	Window below;
 	char   displayString[256];
 
 	KeyCode escapeKeyCode;
 	KeyCode returnKeyCode;
 
-	CompTimer autoRaiseTimer;
-	Window    autoRaiseWindow;
-
-	CompTimer               edgeDelayTimer;
-	CompDelayedEdgeSettings edgeDelaySettings;
-
-	CompOption::Value plugin;
-	bool	          dirtyPluginList;
-
-	CompScreen  *screen;
-
 	std::list <CoreWindow *> createdWindows;
-	CompWindowList serverWindows;
 	CompWindowList windows;
-	CompWindowList destroyedWindows;
-	bool           stackIsFresh;
-
-	CompWindow::Map windowsMap;
-
-	std::map <CompWindow *, CompWindow *> detachedFrameWindows;
 
 	Colormap colormap;
 	int      screenNum;
@@ -473,16 +550,12 @@ class PrivateScreen :
 	XWindowAttributes attrib;
 	Window            grabWindow;
 
-	int          desktopWindowCount;
-	unsigned int mapNum;
 	unsigned int activeNum;
 
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;
 	CompOutput         fullscreenOutput;
 	bool               hasOverlappingOutputs;
-
-	XRectangle lastViewport;
 
 	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
 	int                     currentHistory;
@@ -493,10 +566,6 @@ class PrivateScreen :
 	std::list<CompStartupSequence *> startupSequences;
 	CompTimer                        startupSequenceTimer;
 
-	std::list<CompGroup *> groups;
-
-	CompIcon *defaultIcon;
-
 	Window wmSnSelectionWindow;
 	Atom   wmSnAtom;
 	Time   wmSnTimestamp;
@@ -504,12 +573,6 @@ class PrivateScreen :
 	Cursor normalCursor;
 	Cursor busyCursor;
 	Cursor invisibleCursor;
-
-	CompWindowVector clientList;            /* clients in mapping order */
-	CompWindowVector clientListStacking;    /* clients in stacking order */
-
-	std::vector<Window> clientIdList;        /* client ids in mapping order */
-	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
 
 	std::list<ButtonGrab> buttonGrabs;
 	std::list<KeyGrab>    keyGrabs;
@@ -520,8 +583,6 @@ class PrivateScreen :
 					  on FocusOut and false on
 					  UngrabNotify from FocusIn */
 
-	unsigned int pendingDestroys;
-
 	CompRect workArea;
 
 	unsigned int showingDesktopMask;
@@ -529,10 +590,12 @@ class PrivateScreen :
 	unsigned long *desktopHintData;
 	int           desktopHintSize;
 
-	Window	      edgeWindow;
-	Window	      xdndWindow;
+	bool eventHandled;
 
-        bool initialized;
+	bool initialized;
+
+    private:
+	virtual bool initDisplay (const char *name);
 };
 
 class CompManager

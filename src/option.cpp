@@ -35,12 +35,47 @@
 #include <core/option.h>
 #include "privateoption.h"
 
-CompOption::Vector noOptions (0);
-CompOption::Value::Vector emptyList;
-CompString         emptyString;
-CompMatch          emptyMatch;
-CompAction         emptyAction;
-unsigned short     emptyColor[4];
+namespace
+{
+    CompOption::Value::Vector & emptyList ()
+    {
+	static CompOption::Value::Vector v;
+	return v;
+    }
+
+    CompString & emptyString ()
+    {
+	static CompString v;
+	return v;
+    }
+
+    CompMatch & emptyMatch ()
+    {
+	static CompMatch v;
+	return v;
+    }
+
+    CompAction & emptyAction ()
+    {
+	static CompAction v;
+	return v;
+    }
+
+    unsigned short * emptyColor ()
+    {
+	static unsigned short v[4] = { 0, 0, 0, 0 };
+	return v;
+    }
+}
+
+CompOption::Vector &
+noOptions ()
+{
+    static CompOption::Vector v;
+    return v;
+}
+
+
 
 static bool
 checkIsAction (CompOption::Type type)
@@ -59,32 +94,8 @@ checkIsAction (CompOption::Type type)
     return false;
 }
 
-static void
-finiOptionValue (CompOption::Value &v)
-{
-    switch (v.type()) {
-	case CompOption::TypeAction:
-	case CompOption::TypeKey:
-	case CompOption::TypeButton:
-	case CompOption::TypeEdge:
-	case CompOption::TypeBell:
-	    if (v.action ().state () & CompAction::StateAutoGrab && screen)
-		screen->removeAction (&v.action ());
-	    break;
-
-	case CompOption::TypeList:
-	    foreach (CompOption::Value &val, v.list ())
-		finiOptionValue (val);
-	    break;
-
-	default:
-	    break;
-    }
-}
-
 CompOption::Value::~Value()
 {
-    finiOptionValue(*this);
 }
 
 void
@@ -142,7 +153,7 @@ CompOption::Value::c () const
     }
     catch (...)
     {
-	return emptyColor;
+	return emptyColor ();
     }
 }
 
@@ -155,7 +166,7 @@ CompOption::Value::s () const
     }
     catch (...)
     {
-	return emptyString;
+	return emptyString ();
     }
 }
 
@@ -168,7 +179,7 @@ CompOption::Value::s ()
     }
     catch (...)
     {
-	return emptyString;
+	return emptyString ();
     }
 }
 
@@ -181,7 +192,7 @@ CompOption::Value::match () const
     }
     catch (...)
     {
-	return emptyMatch;
+	return emptyMatch ();
     }
 }
 
@@ -194,7 +205,7 @@ CompOption::Value::match ()
     }
     catch (...)
     {
-	return emptyMatch;
+	return emptyMatch ();
     }
 }
 
@@ -207,7 +218,7 @@ CompOption::Value::action () const
     }
     catch (...)
     {
-	return emptyAction;
+	return emptyAction ();
     }
 }
 
@@ -220,7 +231,7 @@ CompOption::Value::action ()
     }
     catch (...)
     {
-	return emptyAction;
+	return emptyAction ();
     }
 }
 
@@ -235,7 +246,7 @@ CompOption::Value::list () const
     }
     catch (...)
     {
-	return emptyList;
+	return emptyList ();
     }
 }
 
@@ -248,7 +259,7 @@ CompOption::Value::list ()
     }
     catch (...)
     {
-	return emptyList;
+	return emptyList ();
     }
 }
 
@@ -416,33 +427,20 @@ CompOption::CompOption (CompString name, CompOption::Type type) :
     setName (name, type);
 }
 
-static void
-finiScreenOptionValue (CompScreen        *s,
-		       CompOption::Value &v)
-{
-    switch (v.type()) {
-	case CompOption::TypeAction:
-	case CompOption::TypeKey:
-	case CompOption::TypeButton:
-	case CompOption::TypeEdge:
-	case CompOption::TypeBell:
-	    if (v.action ().state () & CompAction::StateAutoGrab)
-		s->removeAction (&v.action ());
-	    break;
-
-	case CompOption::TypeList:
-	    foreach (CompOption::Value &val, v.list ())
-		finiScreenOptionValue (s, val);
-	    break;
-
-	default:
-	    break;
-    }
-}
-
 CompOption::~CompOption ()
 {
-    finiOptionValue (priv->value);
+    /* Remove any added actions */
+    try
+    {
+	CompAction &action = value ().action ();
+
+	if (action.active () && screen)
+	    screen->removeAction (&action);
+    }
+    catch (...)
+    {
+    }
+
     delete priv;
 }
 
