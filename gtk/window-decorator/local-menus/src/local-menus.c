@@ -357,9 +357,8 @@ gwd_show_local_menu (Display *xdisplay,
 
 	return TRUE;
     }
-
-    return FALSE;
 #endif
+    return FALSE;
 }
 
 void

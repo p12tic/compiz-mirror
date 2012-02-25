@@ -480,6 +480,7 @@ main (int argc, char *argv[])
 
     update_default_decorations (gdkscreen);
 
+#ifdef META_HAS_LOCAL_MENUS
     GDBusConnection *conn = g_bus_get_sync (G_BUS_TYPE_SESSION, NULL, NULL);
     local_menu_entry_activated_request_funcs funcs =
     {
@@ -496,15 +497,15 @@ main (int argc, char *argv[])
 
 	g_signal_connect (G_OBJECT (global_lim_listener), "g-signal", G_CALLBACK (local_menu_entry_activated_request), (gpointer) &funcs);
     }
-
+#endif
     gtk_main ();
-
+#ifdef META_HAS_LOCAL_MENUS
     if (global_lim_listener)
 	g_object_unref (global_lim_listener);
 
     if (conn)
 	g_object_unref (conn);
-
+#endif
     win = windows = wnck_screen_get_windows (screen);
 
     while (win != NULL)
