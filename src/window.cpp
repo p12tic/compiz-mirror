@@ -1930,6 +1930,8 @@ PrivateWindow::move (int dx,
 		priv->frameRegion.translate (dx, dy);
 
 	    priv->invisible = priv->isInvisible ();
+
+	    window->moveNotify (dx, dy, true);
 	}
     }
 }
