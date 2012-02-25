@@ -75,13 +75,11 @@ static gboolean read_xprop_for_window (Display *dpy, Window xid)
 
   if (actual == utf8_string && fmt == 8 && nitems > 1)
   {
-    printf ("0x%x chardata: %s\n", (unsigned int) xid, prop);
     g_hash_table_replace (get_windows_with_menus_table (), GINT_TO_POINTER (xid), GINT_TO_POINTER (ALLOWED));
     return TRUE;
   }
   else
   {
-    printf ("failed to get prop for 0x%x\n", (unsigned int) xid);
     g_hash_table_replace (get_windows_with_menus_table (), GINT_TO_POINTER (xid), GINT_TO_POINTER (NOT_ALLOWED));
     return FALSE;
   }
@@ -288,13 +286,12 @@ local_menu_entry_activated_request (GDBusProxy *proxy,
 
 	      if (rect)
 		{
-		  int x = rect->x1 + dx;
-		  int y = top_height + dy;
+		  int x = rect->x1;
+		  int y = top_height;
 
-		  if (gwd_show_local_menu (gdk_x11_display_get_xdisplay (gdk_display_get_default ()),
-					   xid, dx, dy, x, y, 0, 0,
-					   funcs->show_window_menu_hidden_callback, GINT_TO_POINTER (xid)))
-		    g_print ("successfully showed local menu on EntryActivateRequest x: %i y: %i dx: %i dy: %i", x, y, dx, dy);
+		  gwd_show_local_menu (gdk_x11_display_get_xdisplay (gdk_display_get_default ()),
+					   xid, x + dx, y + dy, x, y, 0, 0,
+					   funcs->show_window_menu_hidden_callback, GINT_TO_POINTER (xid));
 		}
 	    }
 	}

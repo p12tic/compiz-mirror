@@ -140,7 +140,7 @@ get_active_window_local_menu_rectangle (gpointer user_data, int *dx, int *dy, in
 
     wnck_window_get_geometry (window, dx, dy, &width, &height);
 
-    *top_height = d->border_layout.top.y2 - d->border_layout.top.y2;
+    *top_height = d->context->extents.top;
 
     *xid = wnck_window_get_xid (window);
 
