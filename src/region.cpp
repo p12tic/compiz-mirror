@@ -30,28 +30,41 @@
 #include <X11/Xregion.h>
 
 #include <stdio.h>
+#include <cassert>
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
+
+#define REGION_IS_A_POINTER 1
+/* ^ This is a very reliable assumption. A lot of code already assumes it. */
 
 const CompRegion infiniteRegion (CompRect (MINSHORT, MINSHORT,
 				           MAXSHORT * 2, MAXSHORT * 2));
 const CompRegion emptyRegion;
 
+/* Alternate emptyRegion, mostly just required to construct infiniteRegion
+   when emptyRegion may still be uninitialized */
+static const CompRegion &
+_emptyRegion ()
+{
+    static CompRegion r;
+    return r;
+}
+
 CompRegion::CompRegion ()
 {
-    priv = new PrivateRegion ();
+    init ();
 }
 
 CompRegion::CompRegion (const CompRegion &c)
 {
-    priv = new PrivateRegion ();
-    XUnionRegion (handle (), c.priv->region, priv->region);
+    init ();
+    XUnionRegion (_emptyRegion ().handle (), c.handle (), handle ());
 }
 
 CompRegion::CompRegion ( int x, int y, int w, int h)
 {
-    priv = new PrivateRegion ();
+    init ();
     
     XRectangle rect;
     
@@ -60,14 +73,12 @@ CompRegion::CompRegion ( int x, int y, int w, int h)
     rect.width = w;
     rect.height = h;
     
-    Region tmp = XCreateRegion ();
-    XUnionRectWithRegion (&rect, tmp, priv->region);
-    XDestroyRegion (tmp);
+    XUnionRectWithRegion (&rect, _emptyRegion ().handle (), handle ());
 }
 
 CompRegion::CompRegion (const CompRect &r)
 {
-    priv = new PrivateRegion ();
+    init ();
     
     XRectangle rect;
     
@@ -76,26 +87,69 @@ CompRegion::CompRegion (const CompRect &r)
     rect.width = r.width ();
     rect.height = r.height ();
     
-    Region tmp = XCreateRegion ();
-    XUnionRectWithRegion (&rect, tmp, priv->region);
-    XDestroyRegion (tmp);
+    XUnionRectWithRegion (&rect, _emptyRegion ().handle (), handle ());
+}
+
+CompRegion::CompRegion (Region external)
+{
+#if REGION_IS_A_POINTER
+    priv = external;
+#else
+    assert (false);
+#endif
+}
+
+CompRegionRef::CompRegionRef (Region external) :
+    CompRegion (external)
+{
+}
+
+CompRegionRef::~CompRegionRef ()
+{
+#if REGION_IS_A_POINTER
+    /* Ensure CompRegion::~CompRegion does not destroy the region, because
+       it's external and we don't own it. */
+    priv = NULL;
+#else
+    assert (false);
+#endif
 }
 
 CompRegion::~CompRegion ()
 {
-    delete priv;
+#if REGION_IS_A_POINTER
+    if (priv)
+        XDestroyRegion (static_cast<Region> (priv));
+#else
+    delete static_cast<PrivateRegion*> (priv);
+#endif
+}
+
+void
+CompRegion::init ()
+{
+#if REGION_IS_A_POINTER
+    assert (sizeof (Region) == sizeof (void*));
+    priv = XCreateRegion ();
+#else
+    priv = new PrivateRegion ();
+#endif
 }
 
 Region
 CompRegion::handle () const
 {
-    return priv->region;
+#if REGION_IS_A_POINTER
+    return static_cast<Region> (priv);
+#else
+    return static_cast<PrivateRegion*> (priv)->region;
+#endif
 }
 
 CompRegion &
 CompRegion::operator= (const CompRegion &c)
 {
-    XUnionRegion (handle (), c.priv->region, priv->region);
+    XUnionRegion (emptyRegion.handle (), c.handle (), handle ());
     return *this;
 }
 
@@ -147,10 +201,16 @@ CompRegion::contains (int x, int y, int width, int height) const
 CompRegion
 CompRegion::intersected (const CompRegion &r) const
 {
-    /* FIXME: optimize this (?) */
     CompRegion reg (r);
     XIntersectRegion (reg.handle (), handle (), reg.handle ());
     return reg;
+}
+
+CompRegion &
+CompRegion::intersect (const CompRegion &r)
+{
+    XIntersectRegion (r.handle (), handle (), handle ());
+    return *this;
 }
 
 CompRegion
@@ -196,9 +256,9 @@ CompRegion::rects () const
 	return rv;
 
     BOX b;
-    for (int i = 0; i < priv->region->numRects; i++)
+    for (int i = 0; i < handle ()->numRects; i++)
     {
-	b = priv->region->rects[i];
+	b = handle ()->rects[i];
 	rv.push_back (CompRect (b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1));
     }
     return rv;
@@ -315,7 +375,7 @@ CompRegion::operator& (const CompRect &r) const
 CompRegion &
 CompRegion::operator&= (const CompRegion &r)
 {
-    return *this = *this & r;
+    return intersect (r);
 }
 
 CompRegion &

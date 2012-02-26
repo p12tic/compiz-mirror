@@ -272,6 +272,7 @@ class DecorWindow :
 
 	CompRegion frameRegion;
 	CompRegion shadowRegion;
+	CompRegion tmpRegion;
 
 	Window inputFrame;
 	Window outputFrame;

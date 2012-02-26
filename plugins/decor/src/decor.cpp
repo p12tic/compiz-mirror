@@ -91,7 +91,6 @@ isAncestorTo (CompWindow *window,
 void
 DecorWindow::computeShadowRegion ()
 {
-    /* FIXME: CompRegion needs a clear() and =CompRect operator */
     shadowRegion = CompRegion (window->outputRect ());
 
     if (window->type () == CompWindowTypeDropdownMenuMask ||
@@ -246,7 +245,6 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
-    CompRegion *newreg = NULL;
     const CompRegion *reg = NULL;
 
     if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
@@ -256,9 +254,9 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	reg = &infiniteRegion;
     else
     {
-        newreg = new CompRegion (shadowRegion);
-	*newreg &= region;
-	reg = newreg;
+	tmpRegion = shadowRegion;
+	tmpRegion &= region;
+	reg = &tmpRegion;
     }
 
     /* In case some plugin needs to paint us with an offset region */
@@ -284,7 +282,8 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    if (box.width () > 0 && box.height () > 0)
 	    {
 		ml[0] = wd->quad[i].matrix;
-		gWindow->glAddGeometry (ml, CompRegion (box), *reg);
+		const CompRegionRef boxRegion (box.region ());
+		gWindow->glAddGeometry (ml, boxRegion, *reg);
 	    }
 	}
 
@@ -327,9 +326,6 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    }
 	}
     }
-
-    if (newreg)
-        delete newreg;
 }
 
 static bool bindFailed;
