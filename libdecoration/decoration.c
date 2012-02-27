@@ -369,6 +369,49 @@ decor_pixmap_property_to_quads (long		 *data,
     return n;
 }
 
+static int
+decor_point_cmp (const decor_point_t *a, const decor_point_t *b)
+{
+    /* Use binary | to avoid branch prediction slow-downs */
+    return (a->x - b->x) | (a->y - b->y) | (a->gravity - b->gravity);
+}
+
+static int
+decor_matrix_cmp (const decor_matrix_t *a, const decor_matrix_t *b)
+{
+    return (a->xx != b->xx) ||
+           (a->yx != b->yx) ||
+           (a->xy != b->xy) ||
+           (a->yy != b->yy) ||
+           (a->x0 != b->x0) ||
+           (a->y0 != b->y0);
+}
+
+static int
+decor_quad_cmp (const decor_quad_t *a, const decor_quad_t *b)
+{
+    return decor_point_cmp (&a->p1, &b->p1) ||
+           decor_point_cmp (&a->p2, &b->p2) ||
+           decor_matrix_cmp (&a->m, &b->m)  ||
+           (
+               (a->max_width  - b->max_width)  |
+               (a->max_height - b->max_height) |
+               (a->align      - b->align)      |
+               (a->clamp      - b->clamp)      |
+               (a->stretch    - b->stretch)
+           );
+}
+
+static int
+decor_extents_cmp (const decor_extents_t *a, const decor_extents_t *b)
+{
+    /* Use binary | to avoid branch prediction slow-downs */
+    return (a->left   - b->left)  |
+           (a->right  - b->right) |
+           (a->top    - b->top)   |
+           (a->bottom - b->bottom);
+}
+
 /* Returns n for a match, returns -1 for no match */
 
 int
@@ -395,6 +438,7 @@ decor_match_pixmap (long		 *data,
 	Pixmap cPixmap;
 	decor_extents_t cFrame, cBorder, cMax_frame, cMax_border;
 	int cMin_width, cMin_height;
+	int q;
 	unsigned int cFrame_type, cFrame_state, cFrame_actions, cNQuad;
 	decor_quad_t cQuad[N_QUADS_MAX];
 	cNQuad = decor_pixmap_property_to_quads (data, i, size, &cPixmap, &cFrame, &cBorder, &cMax_frame,
@@ -404,10 +448,10 @@ decor_match_pixmap (long		 *data,
 	if (cPixmap != *pixmap)
 	    continue;
 
-	if (memcmp (&cFrame, frame, sizeof (decor_extents_t)) ||
-	    memcmp (&cBorder, border, sizeof (decor_extents_t)) ||
-	    memcmp (&cMax_frame, max_frame, sizeof (decor_extents_t)) ||
-	    memcmp (&cMax_border, max_border, sizeof (decor_extents_t)))
+	if (decor_extents_cmp (&cFrame, frame) ||
+	    decor_extents_cmp (&cBorder, border) ||
+	    decor_extents_cmp (&cMax_frame, max_frame) ||
+	    decor_extents_cmp (&cMax_border, max_border))
 	    continue;
 
 	if (cFrame_type != frame_type ||
@@ -420,7 +464,11 @@ decor_match_pixmap (long		 *data,
 	if (cNQuad != n_quad)
 	    continue;
 
-	if (memcmp (cQuad, quad, sizeof (decor_quad_t) * n_quad))
+	q = 0;
+	while (q < n_quad && !decor_quad_cmp (&cQuad[q], &quad[q]))
+	    q++;
+
+	if (q < n_quad)
 	    continue;
 
 	return n;
