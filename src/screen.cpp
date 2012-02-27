@@ -4520,6 +4520,11 @@ cps::EventManager::initDisplay (const char *name)
     return true;
 }
 
+bool CompScreen::displayInitialised() const
+{
+    return priv && priv->initialized;
+}
+
 bool
 PrivateScreen::initDisplay (const char *name)
 {

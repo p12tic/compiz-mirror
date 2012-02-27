@@ -325,6 +325,7 @@ public:
     virtual void processEvents () = 0;
     virtual void alwaysHandleEvent (XEvent *event) = 0;
 
+    bool displayInitialised() const;
 protected:
 	CompScreen();
 	boost::scoped_ptr<PrivateScreen> priv; // TODO should not be par of interface
