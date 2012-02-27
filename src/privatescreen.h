@@ -257,9 +257,18 @@ class PluginManager :
 	void *possibleTap;
 };
 
+// EventManager, GrabManager and PrivateScreen refer to the screen member.  So it
+// is stuck in a virtual base class until we complete the cleanup of PrivateScreen
+struct ScreenUser
+{
+    ScreenUser(CompScreen  *screen) : screen(screen) {}
+    CompScreen  *screen;
+};
+
 class EventManager :
     public PluginManager,
-    public ValueHolder
+    public ValueHolder,
+    public virtual ScreenUser
 {
 public:
 	EventManager (CompScreen *screen);
@@ -294,9 +303,6 @@ public:
 	CompTimer               edgeDelayTimer;
 	CompDelayedEdgeSettings edgeDelaySettings;
 
-
-	CompScreen  *screen;
-
 	int          desktopWindowCount;
 	unsigned int mapNum;
 
@@ -311,38 +317,69 @@ public:
 	virtual bool initDisplay (const char *name);
 };
 
+class GrabManager : boost::noncopyable,
+    public virtual ScreenUser
+{
+public:
+    class KeyGrab {
+	public:
+	    int          keycode;
+	    unsigned int modifiers;
+	    int          count;
+    };
+
+    class ButtonGrab {
+	public:
+	    int          button;
+	    unsigned int modifiers;
+	    int          count;
+    };
+
+    class Grab {
+	public:
+
+	    friend class ::CompScreenImpl;
+	private:
+	    Cursor     cursor;
+	    const char *name;
+    };
+
+    GrabManager(CompScreen *screen);
+
+    bool addPassiveKeyGrab (CompAction::KeyBinding &key);
+    void removePassiveKeyGrab (CompAction::KeyBinding &key);
+    bool addPassiveButtonGrab (CompAction::ButtonBinding &button);
+    void removePassiveButtonGrab (CompAction::ButtonBinding &button);
+
+    virtual void grabUngrabOneKey (unsigned int modifiers,
+			   int          keycode,
+			   bool         grab) = 0;
+    virtual bool grabUngrabKeys (unsigned int modifiers,
+			 int          keycode,
+			 bool         grab) = 0;
+    virtual void updatePassiveKeyGrabs () = 0;
+
+    //private:
+    std::list<ButtonGrab> buttonGrabs;
+    std::list<KeyGrab>    keyGrabs;
+
+    std::list<Grab *> grabs;
+
+    bool		      grabbed; /* true once we recieve a GrabNotify
+				      on FocusOut and false on
+				      UngrabNotify from FocusIn */
+};
+
+
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
     public compiz::private_screen::EventManager,
     public compiz::private_screen::WindowManager,
+    public compiz::private_screen::GrabManager,
     public compiz::private_screen::OrphanData,
     public compiz::private_screen::PseudoNamespace
 {
-
-    public:
-	class KeyGrab {
-	    public:
-		int          keycode;
-		unsigned int modifiers;
-		int          count;
-	};
-
-	class ButtonGrab {
-	    public:
-		int          button;
-		unsigned int modifiers;
-		int          count;
-	};
-
-	class Grab {
-	    public:
-
-		friend class CompScreenImpl;
-	    private:
-		Cursor     cursor;
-		const char *name;
-	};
 
     public:
 	PrivateScreen (CompScreen *screen);
@@ -434,15 +471,7 @@ class PrivateScreen :
 			     int          keycode,
 			     bool         grab);
 
-	bool addPassiveKeyGrab (CompAction::KeyBinding &key);
-
-	void removePassiveKeyGrab (CompAction::KeyBinding &key);
-
 	void updatePassiveKeyGrabs ();
-
-	bool addPassiveButtonGrab (CompAction::ButtonBinding &button);
-
-	void removePassiveButtonGrab (CompAction::ButtonBinding &button);
 
 	CompRect computeWorkareaForBox (const CompRect &box);
 
@@ -573,15 +602,6 @@ class PrivateScreen :
 	Cursor normalCursor;
 	Cursor busyCursor;
 	Cursor invisibleCursor;
-
-	std::list<ButtonGrab> buttonGrabs;
-	std::list<KeyGrab>    keyGrabs;
-
-	std::list<Grab *> grabs;
-
-	bool		      grabbed; /* true once we recieve a GrabNotify
-					  on FocusOut and false on
-					  UngrabNotify from FocusIn */
 
 	CompRect workArea;
 

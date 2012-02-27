@@ -3148,7 +3148,7 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
 }
 
 bool
-PrivateScreen::addPassiveKeyGrab (CompAction::KeyBinding &key)
+cps::GrabManager::addPassiveKeyGrab (CompAction::KeyBinding &key)
 {
     KeyGrab                      newKeyGrab;
     unsigned int                 mask;
@@ -3184,7 +3184,7 @@ PrivateScreen::addPassiveKeyGrab (CompAction::KeyBinding &key)
 }
 
 void
-PrivateScreen::removePassiveKeyGrab (CompAction::KeyBinding &key)
+cps::GrabManager::removePassiveKeyGrab (CompAction::KeyBinding &key)
 {
     unsigned int                 mask;
     std::list<KeyGrab>::iterator it;
@@ -3226,7 +3226,7 @@ PrivateScreen::updatePassiveKeyGrabs ()
 }
 
 bool
-PrivateScreen::addPassiveButtonGrab (CompAction::ButtonBinding &button)
+cps::GrabManager::addPassiveButtonGrab (CompAction::ButtonBinding &button)
 {
     ButtonGrab                      newButtonGrab;
     std::list<ButtonGrab>::iterator it;
@@ -3254,7 +3254,7 @@ PrivateScreen::addPassiveButtonGrab (CompAction::ButtonBinding &button)
 }
 
 void
-PrivateScreen::removePassiveButtonGrab (CompAction::ButtonBinding &button)
+cps::GrabManager::removePassiveButtonGrab (CompAction::ButtonBinding &button)
 {
     std::list<ButtonGrab>::iterator it;
 
@@ -4970,8 +4970,19 @@ CompScreenImpl::~CompScreenImpl ()
     screen = NULL;
 }
 
+cps::GrabManager::GrabManager (CompScreen *screen) :
+    ScreenUser(screen),
+    buttonGrabs (0),
+    keyGrabs (0),
+    grabs (0),
+    grabbed (false)
+{
+}
+
 PrivateScreen::PrivateScreen (CompScreen *screen) :
+    ScreenUser (screen),
     EventManager (screen),
+    GrabManager (screen),
     screenInfo (0),
     snDisplay(0),
     windows (),
@@ -4989,10 +5000,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     snContext (0),
     startupSequences (0),
     startupSequenceTimer (),
-    buttonGrabs (0),
-    keyGrabs (0),
-    grabs (0),
-    grabbed (false),
     showingDesktopMask (0),
     desktopHintData (0),
     desktopHintSize (0),
@@ -5031,6 +5038,7 @@ cps::PluginManager::PluginManager() :
 }
 
 cps::EventManager::EventManager (CompScreen *screen) :
+    ScreenUser (screen),
     source(0),
     timeout(0),
     fileWatch (0),
@@ -5038,7 +5046,6 @@ cps::EventManager::EventManager (CompScreen *screen) :
     watchFds (0),
     lastWatchFdHandle (1),
     edgeDelayTimer (),
-    screen (screen),
     desktopWindowCount (0),
     mapNum (1),
     defaultIcon (0),
