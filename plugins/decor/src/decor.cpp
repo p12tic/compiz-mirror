@@ -119,10 +119,11 @@ DecorWindow::computeShadowRegion ()
             if (!isAncestorTo (window, (*it)))
                 continue;
 
-            CompRegion inter (shadowRegion.intersected ((*it)->borderRect ()));
+            CompRegion inter (shadowRegion);
+            inter &= (*it)->borderRect ();
 
             if (!inter.isEmpty ())
-		shadowRegion -= inter;
+                shadowRegion -= inter;
         }
 
         /* If the region didn't change, then it is safe to
@@ -138,7 +139,7 @@ DecorWindow::computeShadowRegion ()
          * that will look a lot better.
          */
         if (window->type () == CompWindowTypeDropdownMenuMask &&
-	    shadowRegion == CompRegion (window->outputRect ()))
+	    shadowRegion == CompRegionRef (window->outputRect ().region ()))
         {
             CompRect area (window->outputRect ().x1 (),
                            window->outputRect ().y1 (),
