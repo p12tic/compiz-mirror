@@ -107,8 +107,6 @@ DecorWindow::computeShadowRegion ()
 
         for (it--; it != screen->windows ().end (); it--)
         {
-            CompRegion inter;
-
             if (!(*it)->isViewable ())
                 continue;
 
@@ -121,10 +119,11 @@ DecorWindow::computeShadowRegion ()
             if (!isAncestorTo (window, (*it)))
                 continue;
 
-	    inter = shadowRegion.intersected ((*it)->borderRect ());
+            CompRegion inter (shadowRegion);
+            inter &= (*it)->borderRect ();
 
             if (!inter.isEmpty ())
-		shadowRegion = shadowRegion.subtracted (inter);
+                shadowRegion -= inter;
         }
 
         /* If the region didn't change, then it is safe to
@@ -140,7 +139,7 @@ DecorWindow::computeShadowRegion ()
          * that will look a lot better.
          */
         if (window->type () == CompWindowTypeDropdownMenuMask &&
-	    shadowRegion == CompRegion (window->outputRect ()))
+	    shadowRegion == CompRegionRef (window->outputRect ().region ()))
         {
             CompRect area (window->outputRect ().x1 (),
                            window->outputRect ().y1 (),
@@ -148,7 +147,7 @@ DecorWindow::computeShadowRegion ()
 			   window->inputRect ().y1 () -
                            window->outputRect ().y1 ());
 
-	    shadowRegion = shadowRegion.subtracted (area);
+	    shadowRegion -= area;
         }
     }
 }
@@ -247,17 +246,25 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
-    CompRegion reg = shadowRegion.intersected (region);
+    const CompRegion *preg = NULL;
 
     if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
 		 PAINT_WINDOW_WITH_OFFSET_MASK)))
-	reg = region;
+	preg = &region;
     else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
-	reg = infiniteRegion;
+	preg = &infiniteRegion;
+    else
+    {
+	tmpRegion = shadowRegion;
+	tmpRegion &= region;
+	preg = &tmpRegion;
+    }
 
     /* In case some plugin needs to paint us with an offset region */
-    if (reg.isEmpty ())
-	reg = region;
+    if (preg->isEmpty ())
+	preg = &region;
+
+    const CompRegion &reg (*preg);
 
     if (wd &&
 	wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP)
@@ -278,7 +285,8 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    if (box.width () > 0 && box.height () > 0)
 	    {
 		ml[0] = wd->quad[i].matrix;
-		gWindow->glAddGeometry (ml, CompRegion (box), reg);
+		const CompRegionRef boxRegion (box.region ());
+		gWindow->glAddGeometry (ml, boxRegion, reg);
 	    }
 	}
 
