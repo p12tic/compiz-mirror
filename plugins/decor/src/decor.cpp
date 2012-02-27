@@ -107,6 +107,8 @@ DecorWindow::computeShadowRegion ()
 
         for (it--; it != screen->windows ().end (); it--)
         {
+	    CompRegion inter;
+
             if (!(*it)->isViewable ())
                 continue;
 
@@ -119,7 +121,7 @@ DecorWindow::computeShadowRegion ()
             if (!isAncestorTo (window, (*it)))
                 continue;
 
-	    CompRegion inter = shadowRegion.intersected ((*it)->borderRect ());
+	    inter = shadowRegion.intersected ((*it)->borderRect ());
 
             if (!inter.isEmpty ())
 		shadowRegion = shadowRegion.subtracted (inter);
@@ -153,10 +155,10 @@ DecorWindow::computeShadowRegion ()
     {
 	CompRegion outputRegion (screen->outputDevs ()[window->outputDevice ()]);
 	CompRegion borderRegion (window->borderRect ());
-	shadowRegion = shadowRegion.intersected (screen->region ());
+	shadowRegion &= screen->region ();
 
 	if (borderRegion.intersected (outputRegion) == borderRegion)
-	    shadowRegion = shadowRegion.intersected (outputRegion);
+	    shadowRegion &= outputRegion;
 
 	CompWindowVector::const_reverse_iterator rit (screen->clientList ().rbegin ());
 
@@ -174,7 +176,7 @@ DecorWindow::computeShadowRegion ()
 	    CompRegion inter (clippable.intersected ((*rit)->borderRect ()));
 
 	    if (!inter.isEmpty ())
-		shadowRegion = shadowRegion.subtracted (inter);
+		shadowRegion-= inter;
 	}
     }
 }
