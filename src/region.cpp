@@ -23,7 +23,8 @@
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  */
 
-#include "privateregion.h"
+#include "core/rect.h"
+#include "core/region.h"
 
 #include <X11/Xlib-xcb.h>
 #include <X11/Xutil.h>
@@ -34,9 +35,6 @@
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
-
-#define REGION_IS_A_POINTER 1
-/* ^ This is a very reliable assumption. A lot of code already assumes it. */
 
 const CompRegion infiniteRegion (CompRect (MINSHORT, MINSHORT,
 				           MAXSHORT * 2, MAXSHORT * 2));
@@ -92,11 +90,7 @@ CompRegion::CompRegion (const CompRect &r)
 
 CompRegion::CompRegion (Region external)
 {
-#if REGION_IS_A_POINTER
     priv = external;
-#else
-    assert (false);
-#endif
 }
 
 CompRegionRef::CompRegionRef (Region external) :
@@ -106,44 +100,28 @@ CompRegionRef::CompRegionRef (Region external) :
 
 CompRegionRef::~CompRegionRef ()
 {
-#if REGION_IS_A_POINTER
     /* Ensure CompRegion::~CompRegion does not destroy the region, because
        it's external and we don't own it. */
     priv = NULL;
-#else
-    assert (false);
-#endif
 }
 
 CompRegion::~CompRegion ()
 {
-#if REGION_IS_A_POINTER
     if (priv)
         XDestroyRegion (static_cast<Region> (priv));
-#else
-    delete static_cast<PrivateRegion*> (priv);
-#endif
 }
 
 void
 CompRegion::init ()
 {
-#if REGION_IS_A_POINTER
     assert (sizeof (Region) == sizeof (void*));
     priv = XCreateRegion ();
-#else
-    priv = new PrivateRegion ();
-#endif
 }
 
 Region
 CompRegion::handle () const
 {
-#if REGION_IS_A_POINTER
     return static_cast<Region> (priv);
-#else
-    return static_cast<PrivateRegion*> (priv)->region;
-#endif
 }
 
 CompRegion &
@@ -460,13 +438,3 @@ CompRegion::operator|= (const CompRegion &r)
     return *this;
 }
 
-
-PrivateRegion::PrivateRegion ()
-{
-    region = XCreateRegion ();
-}
-
-PrivateRegion::~PrivateRegion ()
-{
-   XDestroyRegion (region);
-}
