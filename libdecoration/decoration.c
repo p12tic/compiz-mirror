@@ -379,12 +379,12 @@ decor_point_cmp (const decor_point_t *a, const decor_point_t *b)
 static int
 decor_matrix_cmp (const decor_matrix_t *a, const decor_matrix_t *b)
 {
-    /*
-     * Structs are guaranteed to start at offset 0, and to be tightly packed
-     * so long as all the fields are the same type.
-     * Also, a binary comparison is usually faster than an FPU comparison.
-     */
-    return memcmp (a, b, sizeof (double) * 6);
+    return (a->xx != b->xx) ||
+           (a->yx != b->yx) ||
+           (a->xy != b->xy) ||
+           (a->yy != b->yy) ||
+           (a->x0 != b->x0) ||
+           (a->y0 != b->y0);
 }
 
 static int
