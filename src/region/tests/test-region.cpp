@@ -296,21 +296,6 @@ TEST(RegionTest, intersection)
     CompRegion r2_r1(r2.intersected(r1));
     EXPECT_EQ(r1_r2, r2_r1);
 
-    CompRegion r3(r1);
-    r3.intersect(r2);
-    EXPECT_EQ(r3, r1_r2);
-
-    CompRegion r4(r2);
-    r4.intersect(r1);
-    EXPECT_EQ(r4, r2_r1);
-
-    CompRegion r5(r1);
-    r5.intersect(r5);
-    EXPECT_EQ(r5, r1);
-
-    EXPECT_EQ(r1, r1.intersected(infiniteRegion));
-    EXPECT_EQ(emptyRegion, r1.intersected(emptyRegion));
-
     EXPECT_TRUE(r1_r2.intersects(rect1));
     EXPECT_TRUE(r1_r2.intersects(rect2));
     EXPECT_TRUE(r2_r1.intersects(rect1));

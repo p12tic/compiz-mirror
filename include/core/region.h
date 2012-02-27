@@ -94,12 +94,6 @@ class CompRegion {
 	 * the specified CompRegion and the region
 	 */
 	CompRegion intersected (const CompRegion &) const;
-
-	/**
-	 * Intersect this region with another. Store the result in this.
-	 */
-	CompRegion & intersect (const CompRegion &);
-
 	/**
 	 * Returns a CompRegion that is the result of an intersect with
 	 * the specified CompRect and the region

@@ -206,13 +206,6 @@ CompRegion::intersected (const CompRegion &r) const
     return reg;
 }
 
-CompRegion &
-CompRegion::intersect (const CompRegion &r)
-{
-    XIntersectRegion (r.handle (), handle (), handle ());
-    return *this;
-}
-
 CompRegion
 CompRegion::intersected (const CompRect &r) const
 {
@@ -375,13 +368,16 @@ CompRegion::operator& (const CompRect &r) const
 CompRegion &
 CompRegion::operator&= (const CompRegion &r)
 {
-    return intersect (r);
+    XIntersectRegion (r.handle (), handle (), handle ());
+    return *this;
 }
 
 CompRegion &
 CompRegion::operator&= (const CompRect &r)
 {
-    return *this = *this & r;
+    CompRegionRef ref (r.region ());
+    XIntersectRegion (ref.handle (), handle (), handle ());
+    return *this;
 }
 
 const CompRegion
@@ -399,13 +395,16 @@ CompRegion::operator+ (const CompRect &r) const
 CompRegion &
 CompRegion::operator+= (const CompRegion &r)
 {
-    return *this = *this + r;
+    XUnionRegion (handle (), r.handle (), handle ());
+    return *this;
 }
 
 CompRegion &
 CompRegion::operator+= (const CompRect &r)
 {
-    return *this = *this + r;
+    CompRegionRef ref (r.region ());
+    XUnionRegion (handle (), ref.handle (), handle ());
+    return *this;
 }
 
 const CompRegion
@@ -423,13 +422,16 @@ CompRegion::operator- (const CompRect &r) const
 CompRegion &
 CompRegion::operator-= (const CompRegion &r)
 {
-    return *this = *this - r;
+    XSubtractRegion (handle (), r.handle (), handle ());
+    return *this;
 }
 
 CompRegion &
 CompRegion::operator-= (const CompRect &r)
 {
-    return *this = *this - r;
+    CompRegionRef ref (r.region ());
+    XSubtractRegion (handle (), ref.handle (), handle ());
+    return *this;
 }
 
 const CompRegion
@@ -441,7 +443,8 @@ CompRegion::operator^ (const CompRegion &r) const
 CompRegion &
 CompRegion::operator^= (const CompRegion &r)
 {
-    return *this = *this ^ r;
+    XXorRegion (handle (), r.handle (), handle ());
+    return *this;
 }
 
 const CompRegion
@@ -453,7 +456,8 @@ CompRegion::operator| (const CompRegion &r) const
 CompRegion &
 CompRegion::operator|= (const CompRegion &r)
 {
-    return *this = *this | r;
+    XUnionRegion (handle (), r.handle (), handle ());
+    return *this;
 }
 
 
