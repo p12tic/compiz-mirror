@@ -47,7 +47,7 @@ const CompRegion emptyRegion;
 static const CompRegion &
 _emptyRegion ()
 {
-    static CompRegion r;
+    static const CompRegion r;
     return r;
 }
 
