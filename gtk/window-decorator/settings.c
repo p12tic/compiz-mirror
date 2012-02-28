@@ -21,10 +21,6 @@
 
 #include "gtk-window-decorator.h"
 
-/* TODO: Trash all of this and use a window property
- * instead - much much cleaner!
- */
-
 gboolean
 shadow_property_changed (WnckScreen *s)
 {
@@ -151,12 +147,19 @@ use_tooltips_changed (GConfClient *client)
 static gboolean
 mutter_draggable_border_width_changed (GConfClient *client)
 {
+    static const unsigned int default_draggable_border_width = 7;
     int      new_width;
     int      width = settings->mutter_draggable_border_width;
+    GError   *error = NULL;
 
     new_width = gconf_client_get_int (client,
-				      MUTTER_DRAGGABLE_BORDER_WIDTH_KEY,
-				      NULL);
+			              MUTTER_DRAGGABLE_BORDER_WIDTH_KEY,
+			              &error);
+    if (error)
+    {
+	new_width = default_draggable_border_width;
+	g_error_free (error);
+    }
 
     if (new_width != width)
     {

@@ -23,13 +23,15 @@
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  */
 
-#include "privateregion.h"
+#include "core/rect.h"
+#include "core/region.h"
 
 #include <X11/Xlib-xcb.h>
 #include <X11/Xutil.h>
 #include <X11/Xregion.h>
 
 #include <stdio.h>
+#include <cassert>
 
 #include <boost/foreach.hpp>
 #define foreach BOOST_FOREACH
@@ -38,20 +40,29 @@ const CompRegion infiniteRegion (CompRect (MINSHORT, MINSHORT,
 				           MAXSHORT * 2, MAXSHORT * 2));
 const CompRegion emptyRegion;
 
+/* Alternate emptyRegion, mostly just required to construct infiniteRegion
+   when emptyRegion may still be uninitialized */
+static const CompRegion &
+_emptyRegion ()
+{
+    static const CompRegion r;
+    return r;
+}
+
 CompRegion::CompRegion ()
 {
-    priv = new PrivateRegion ();
+    init ();
 }
 
 CompRegion::CompRegion (const CompRegion &c)
 {
-    priv = new PrivateRegion ();
-    XUnionRegion (CompRegion ().handle (), c.priv->region, priv->region);
+    init ();
+    XUnionRegion (_emptyRegion ().handle (), c.handle (), handle ());
 }
 
 CompRegion::CompRegion ( int x, int y, int w, int h)
 {
-    priv = new PrivateRegion ();
+    init ();
     
     XRectangle rect;
     
@@ -60,14 +71,12 @@ CompRegion::CompRegion ( int x, int y, int w, int h)
     rect.width = w;
     rect.height = h;
     
-    Region tmp = XCreateRegion ();
-    XUnionRectWithRegion (&rect, tmp, priv->region);
-    XDestroyRegion (tmp);
+    XUnionRectWithRegion (&rect, _emptyRegion ().handle (), handle ());
 }
 
 CompRegion::CompRegion (const CompRect &r)
 {
-    priv = new PrivateRegion ();
+    init ();
     
     XRectangle rect;
     
@@ -76,26 +85,49 @@ CompRegion::CompRegion (const CompRect &r)
     rect.width = r.width ();
     rect.height = r.height ();
     
-    Region tmp = XCreateRegion ();
-    XUnionRectWithRegion (&rect, tmp, priv->region);
-    XDestroyRegion (tmp);
+    XUnionRectWithRegion (&rect, _emptyRegion ().handle (), handle ());
+}
+
+CompRegion::CompRegion (Region external)
+{
+    priv = external;
+}
+
+CompRegionRef::CompRegionRef (Region external) :
+    CompRegion (external)
+{
+}
+
+CompRegionRef::~CompRegionRef ()
+{
+    /* Ensure CompRegion::~CompRegion does not destroy the region, because
+       it's external and we don't own it. */
+    priv = NULL;
 }
 
 CompRegion::~CompRegion ()
 {
-    delete priv;
+    if (priv)
+        XDestroyRegion (static_cast<Region> (priv));
+}
+
+void
+CompRegion::init ()
+{
+    assert (sizeof (Region) == sizeof (void*));
+    priv = XCreateRegion ();
 }
 
 Region
 CompRegion::handle () const
 {
-    return priv->region;
+    return static_cast<Region> (priv);
 }
 
 CompRegion &
 CompRegion::operator= (const CompRegion &c)
 {
-    XUnionRegion (CompRegion ().handle (), c.priv->region, priv->region);
+    XUnionRegion (emptyRegion.handle (), c.handle (), handle ());
     return *this;
 }
 
@@ -195,9 +227,9 @@ CompRegion::rects () const
 	return rv;
 
     BOX b;
-    for (int i = 0; i < priv->region->numRects; i++)
+    for (int i = 0; i < handle ()->numRects; i++)
     {
-	b = priv->region->rects[i];
+	b = handle ()->rects[i];
 	rv.push_back (CompRect (b.x1, b.y1, b.x2 - b.x1, b.y2 - b.y1));
     }
     return rv;
@@ -314,13 +346,16 @@ CompRegion::operator& (const CompRect &r) const
 CompRegion &
 CompRegion::operator&= (const CompRegion &r)
 {
-    return *this = *this & r;
+    XIntersectRegion (r.handle (), handle (), handle ());
+    return *this;
 }
 
 CompRegion &
 CompRegion::operator&= (const CompRect &r)
 {
-    return *this = *this & r;
+    CompRegionRef ref (r.region ());
+    XIntersectRegion (ref.handle (), handle (), handle ());
+    return *this;
 }
 
 const CompRegion
@@ -338,13 +373,16 @@ CompRegion::operator+ (const CompRect &r) const
 CompRegion &
 CompRegion::operator+= (const CompRegion &r)
 {
-    return *this = *this + r;
+    XUnionRegion (handle (), r.handle (), handle ());
+    return *this;
 }
 
 CompRegion &
 CompRegion::operator+= (const CompRect &r)
 {
-    return *this = *this + r;
+    CompRegionRef ref (r.region ());
+    XUnionRegion (handle (), ref.handle (), handle ());
+    return *this;
 }
 
 const CompRegion
@@ -362,13 +400,16 @@ CompRegion::operator- (const CompRect &r) const
 CompRegion &
 CompRegion::operator-= (const CompRegion &r)
 {
-    return *this = *this - r;
+    XSubtractRegion (handle (), r.handle (), handle ());
+    return *this;
 }
 
 CompRegion &
 CompRegion::operator-= (const CompRect &r)
 {
-    return *this = *this - r;
+    CompRegionRef ref (r.region ());
+    XSubtractRegion (handle (), ref.handle (), handle ());
+    return *this;
 }
 
 const CompRegion
@@ -380,7 +421,8 @@ CompRegion::operator^ (const CompRegion &r) const
 CompRegion &
 CompRegion::operator^= (const CompRegion &r)
 {
-    return *this = *this ^ r;
+    XXorRegion (handle (), r.handle (), handle ());
+    return *this;
 }
 
 const CompRegion
@@ -392,16 +434,7 @@ CompRegion::operator| (const CompRegion &r) const
 CompRegion &
 CompRegion::operator|= (const CompRegion &r)
 {
-    return *this = *this | r;
+    XUnionRegion (handle (), r.handle (), handle ());
+    return *this;
 }
 
-
-PrivateRegion::PrivateRegion ()
-{
-    region = XCreateRegion ();
-}
-
-PrivateRegion::~PrivateRegion ()
-{
-   XDestroyRegion (region);
-}

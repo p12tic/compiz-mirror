@@ -48,10 +48,7 @@ class CoreWindow;
 typedef std::list<CompWindow *> CompWindowList;
 typedef std::vector<CompWindow *> CompWindowVector;
 
-extern char       *backgroundImage;
 extern bool       replaceCurrentWm;
-extern bool       indirectRendering;
-extern bool       noDetection;
 extern bool       debugOutput;
 
 extern CompScreen   *screen;
@@ -326,7 +323,9 @@ public:
     friend class CompManager; // TODO get rid of friends
 
     virtual void processEvents () = 0;
+    virtual void alwaysHandleEvent (XEvent *event) = 0;
 
+    bool displayInitialised() const;
 protected:
 	CompScreen();
 	boost::scoped_ptr<PrivateScreen> priv; // TODO should not be par of interface
@@ -577,7 +576,7 @@ class CompScreenImpl : public CompScreen
 	virtual void removeFromCreatedWindows(CoreWindow *cw);
 	virtual void addToDestroyedWindows(CompWindow * cw);
 	virtual void processEvents ();
-
+	virtual void alwaysHandleEvent (XEvent *event);
 
     public :
 

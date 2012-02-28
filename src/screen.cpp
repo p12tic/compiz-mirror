@@ -86,6 +86,8 @@ typedef struct {
     unsigned long decorations;
 } MwmHints;
 
+namespace cps = compiz::private_screen;
+
 
 
 CompScreen *screen;
@@ -136,7 +138,7 @@ CompScreen::freePluginClassIndex (unsigned int index)
 }
 
 void
-PrivateScreen::handleSignal (int signum)
+cps::EventManager::handleSignal (int signum)
 {
     switch (signum)
     {
@@ -822,7 +824,7 @@ PrivateScreen::processEvents ()
 	sn_display_process_event (snDisplay, &event);
 
 	inHandleEvent = true;
-	screen->handleEvent (&event);
+	screen->alwaysHandleEvent (&event);
 	inHandleEvent = false;
 
 	XFlush (dpy);
@@ -850,7 +852,7 @@ PrivateScreen::processEvents ()
 }
 
 void
-PrivateScreen::updatePlugins ()
+cps::PluginManager::updatePlugins ()
 {
     unsigned int pListCount = 1;
 
@@ -1354,7 +1356,7 @@ PrivateScreen::windowStateMask (Atom state)
 }
 
 unsigned int
-PrivateScreen::windowStateFromString (const char *str)
+cps::PseudoNamespace::windowStateFromString (const char *str)
 {
     if (strcasecmp (str, "modal") == 0)
 	return CompWindowStateModalMask;
@@ -2031,10 +2033,13 @@ PrivateScreen::detectOutputDevices ()
 void
 PrivateScreen::updateStartupFeedback ()
 {
-    if (!startupSequences.empty ())
-	XDefineCursor (dpy, root, busyCursor);
-    else
-	XDefineCursor (dpy, root, normalCursor);
+    if (initialized)
+    {
+	if (!startupSequences.empty ())
+	    XDefineCursor (dpy, root, busyCursor);
+	else
+	    XDefineCursor (dpy, root, normalCursor);
+    }
 }
 
 #define STARTUP_TIMEOUT_DELAY 15000
@@ -2844,7 +2849,7 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 }
 
 void
-PrivateScreen::eraseWindowFromMap (Window id)
+cps::WindowManager::eraseWindowFromMap (Window id)
 {
     if (id != 1)
         windowsMap.erase (id);
@@ -3704,7 +3709,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 }
 
 CompGroup *
-PrivateScreen::addGroup (Window id)
+cps::WindowManager::addGroup (Window id)
 {
     CompGroup *group = new CompGroup ();
 
@@ -3717,7 +3722,7 @@ PrivateScreen::addGroup (Window id)
 }
 
 void
-PrivateScreen::removeGroup (CompGroup *group)
+cps::WindowManager::removeGroup (CompGroup *group)
 {
     group->refCnt--;
     if (group->refCnt)
@@ -3735,7 +3740,7 @@ PrivateScreen::removeGroup (CompGroup *group)
 }
 
 CompGroup *
-PrivateScreen::findGroup (Window id)
+cps::WindowManager::findGroup (Window id)
 {
     foreach (CompGroup *g, groups)
 	if (g->id == id)
@@ -4355,7 +4360,7 @@ CompScreenImpl::shouldSerializePlugins ()
 }
 
 void
-PrivateScreen::removeDestroyed ()
+cps::WindowManager::removeDestroyed ()
 {
     while (pendingDestroys)
     {
@@ -4455,7 +4460,7 @@ CompScreenImpl::init (const char *name)
 }
 
 bool
-PrivateScreen::init (const char *name)
+cps::EventManager::init (const char *name)
 {
     ctx = Glib::MainContext::get_default ();
     mainloop = Glib::MainLoop::create (ctx, false);
@@ -4463,6 +4468,66 @@ PrivateScreen::init (const char *name)
     sigintSource = CompSignalSource::create (SIGINT, boost::bind (&PrivateScreen::handleSignal, this, _1));
     sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, this, _1));
 
+    if (!initDisplay(name)) return false;
+
+    pingTimer.setTimes (optionGetPingDelay (),
+			      optionGetPingDelay () + 500);
+
+    pingTimer.start ();
+
+    optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
+    optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
+    optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
+    optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
+    optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
+    optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
+
+    optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
+
+    optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
+    optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
+    optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
+    optionSetMaximizeWindowHorizontallyKeyInitiate (
+	CompScreenImpl::maximizeWinHorizontally);
+    optionSetMaximizeWindowVerticallyKeyInitiate (
+	CompScreenImpl::maximizeWinVertically);
+
+    optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
+    optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
+
+    optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
+    optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
+
+    optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
+    optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
+
+    optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
+	CompScreenImpl::toggleWinMaximizedHorizontally);
+    optionSetToggleWindowMaximizedVerticallyKeyInitiate (
+	CompScreenImpl::toggleWinMaximizedVertically);
+
+    optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
+
+    if (dirtyPluginList)
+	updatePlugins ();
+
+    return true;
+}
+
+bool
+cps::EventManager::initDisplay (const char *name)
+{
+    return true;
+}
+
+bool CompScreen::displayInitialised() const
+{
+    return priv && priv->initialized;
+}
+
+bool
+PrivateScreen::initDisplay (const char *name)
+{
     dpy = XOpenDisplay (name);
     if (!dpy)
     {
@@ -4889,47 +4954,6 @@ PrivateScreen::init (const char *name)
 
     setAudibleBell (optionGetAudibleBell ());
 
-    pingTimer.setTimes (optionGetPingDelay (),
-			      optionGetPingDelay () + 500);
-
-    pingTimer.start ();
-
-    optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
-    optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
-    optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
-    optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
-    optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
-    optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
-
-    optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
-
-    optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
-    optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
-    optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
-    optionSetMaximizeWindowHorizontallyKeyInitiate (
-	CompScreenImpl::maximizeWinHorizontally);
-    optionSetMaximizeWindowVerticallyKeyInitiate (
-	CompScreenImpl::maximizeWinVertically);
-
-    optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
-    optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
-
-    optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
-    optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
-
-    optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
-    optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
-
-    optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
-	CompScreenImpl::toggleWinMaximizedHorizontally);
-    optionSetToggleWindowMaximizedVerticallyKeyInitiate (
-	CompScreenImpl::toggleWinMaximizedVertically);
-
-    optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
-
-    if (dirtyPluginList)
-	updatePlugins ();
-
     return true;
 }
 
@@ -4947,35 +4971,16 @@ CompScreenImpl::~CompScreenImpl ()
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
-    CoreOptions (false),
-    source(0),
-    timeout(0),
-    fileWatch (0),
-    lastFileWatchHandle (1),
-    watchFds (0),
-    lastWatchFdHandle (1),
+    EventManager (screen),
     screenInfo (0),
     snDisplay(0),
-    activeWindow (0),
-    below (None),
-    autoRaiseTimer (),
-    autoRaiseWindow (0),
-    edgeDelayTimer (),
-    plugin (),
-    dirtyPluginList (true),
-    screen (screen),
-    serverWindows (),
     windows (),
-    destroyedWindows (),
-    stackIsFresh (false),
     vp (0, 0),
     vpSize (1, 1),
     nDesktop (1),
     currentDesktop (0),
     root (None),
     grabWindow (None),
-    desktopWindowCount (0),
-    mapNum (1),
     activeNum (1),
     outputDevs (0),
     currentOutputDev (0),
@@ -4984,25 +4989,16 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     snContext (0),
     startupSequences (0),
     startupSequenceTimer (),
-    groups (0),
-    defaultIcon (0),
     buttonGrabs (0),
     keyGrabs (0),
     grabs (0),
     grabbed (false),
-    pendingDestroys (0),
     showingDesktopMask (0),
     desktopHintData (0),
     desktopHintSize (0),
-    edgeWindow (None),
-    xdndWindow (None),
-    possibleTap (NULL),
-    tapGrab (false),
+    eventHandled (false),
     initialized (false)
 {
-    TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
-    ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
-
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));
 
@@ -5011,8 +5007,66 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     startupSequenceTimer.setTimes (1000, 1500);
 
     memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
+}
 
+cps::WindowManager::WindowManager() :
+    activeWindow (0),
+    below (None),
+    autoRaiseTimer (),
+    autoRaiseWindow (0),
+    serverWindows (),
+    destroyedWindows (),
+    stackIsFresh (false),
+    groups (0),
+    pendingDestroys (0)
+{
+}
+
+cps::PluginManager::PluginManager() :
+    CoreOptions (false),
+    plugin (),
+    dirtyPluginList (true),
+    possibleTap (NULL)
+{
+}
+
+cps::EventManager::EventManager (CompScreen *screen) :
+    source(0),
+    timeout(0),
+    fileWatch (0),
+    lastFileWatchHandle (1),
+    watchFds (0),
+    lastWatchFdHandle (1),
+    edgeDelayTimer (),
+    screen (screen),
+    desktopWindowCount (0),
+    mapNum (1),
+    defaultIcon (0),
+    tapGrab (false)
+{
+    ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
+    TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
     TimeoutHandler::SetDefault (dTimeoutHandler);
+}
+
+cps::OrphanData::OrphanData() :
+    edgeWindow (None),
+    xdndWindow (None)
+{
+}
+
+cps::EventManager::~EventManager ()
+{
+    delete timeout;
+    delete source;
+
+    if (defaultIcon)
+	delete defaultIcon;
+
+    foreach (CompWatchFd *fd, watchFds)
+	delete fd;
+
+    watchFds.clear ();
 }
 
 PrivateScreen::~PrivateScreen ()
@@ -5028,9 +5082,6 @@ PrivateScreen::~PrivateScreen ()
 
 	XDestroyWindow (dpy, grabWindow);
 
-	if (defaultIcon)
-	    delete defaultIcon;
-
 	XFreeCursor (dpy, invisibleCursor);
 	XSync (dpy, False);
 
@@ -5045,12 +5096,4 @@ PrivateScreen::~PrivateScreen ()
 
     if (snDisplay)
 	sn_display_unref (snDisplay);
-
-    delete timeout;
-    delete source;
-
-    foreach (CompWatchFd *fd, watchFds)
-	delete fd;
-
-    watchFds.clear ();
 }

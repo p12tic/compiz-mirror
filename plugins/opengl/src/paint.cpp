@@ -1179,8 +1179,8 @@ GLWindow::glDraw (const GLMatrix     &transform,
     WRAPABLE_HND_FUNCTN_RETURN (bool, glDraw, transform,
 			      fragment, region, mask)
 
-    const CompRegion reg = (mask & PAINT_WINDOW_TRANSFORMED_MASK) ?
-	                   infiniteRegion : region;
+    const CompRegion &reg = (mask & PAINT_WINDOW_TRANSFORMED_MASK) ?
+                            infiniteRegion : region;
 
     if (reg.isEmpty ())
 	return true;
