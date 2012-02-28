@@ -550,11 +550,20 @@ struct PseudoNamespace
     static unsigned int windowStateFromString (const char *str);
 };
 
+// EventManager, GrabManager and PrivateScreen refer to the screen member.  So it
+// is stuck in a virtual base class until we complete the cleanup of PrivateScreen
+struct ScreenUser
+{
+    ScreenUser(CompScreen  *screen) : screen(screen) {}
+    CompScreen  *screen;
+};
+
 class PluginManager :
-    public CoreOptions
+    public CoreOptions,
+    public virtual ScreenUser
 {
     public:
-	PluginManager();
+	PluginManager(CompScreen *screen);
 
 	void updatePlugins ();
 
@@ -562,14 +571,6 @@ class PluginManager :
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
 	void *possibleTap;
-};
-
-// EventManager, GrabManager and PrivateScreen refer to the screen member.  So it
-// is stuck in a virtual base class until we complete the cleanup of PrivateScreen
-struct ScreenUser
-{
-    ScreenUser(CompScreen  *screen) : screen(screen) {}
-    CompScreen  *screen;
 };
 
 class EventManager :

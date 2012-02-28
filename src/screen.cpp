@@ -5039,7 +5039,8 @@ cps::WindowManager::WindowManager() :
 {
 }
 
-cps::PluginManager::PluginManager() :
+cps::PluginManager::PluginManager(CompScreen *screen) :
+    ScreenUser (screen),
     CoreOptions (false),
     plugin (),
     dirtyPluginList (true),
@@ -5049,6 +5050,7 @@ cps::PluginManager::PluginManager() :
 
 cps::EventManager::EventManager (CompScreen *screen) :
     ScreenUser (screen),
+    PluginManager (screen),
     source(0),
     timeout(0),
     fileWatch (0),
