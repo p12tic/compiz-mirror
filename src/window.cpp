@@ -868,8 +868,8 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 	if (y1 < 0)
 	    y1 = 0;
 	if (x2 > priv->serverGeometry.width ())
-	    x2 = priv->serverGeometry.height ();
-	if (y2 > priv->serverGeometry.width ())
+	    x2 = priv->serverGeometry.width ();
+	if (y2 > priv->serverGeometry.height ())
 	    y2 = priv->serverGeometry.height ();
 
 	if (y1 < y2 && x1 < x2)
