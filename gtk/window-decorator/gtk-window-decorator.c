@@ -138,6 +138,9 @@ get_active_window_local_menu_rectangle (gpointer user_data, int *dx, int *dy, in
     int width, height;
     decor_t    *d = g_object_get_data (G_OBJECT (window), "decor");
 
+    if (!d->decorated)
+	return NULL;
+
     wnck_window_get_geometry (window, dx, dy, &width, &height);
 
     *top_height = d->context->extents.top;
