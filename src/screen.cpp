@@ -5009,7 +5009,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     showingDesktopMask (0),
     desktopHintData (0),
     desktopHintSize (0),
-    eventHandled (false),
     initialized (false)
 {
     pingTimer.setCallback (
@@ -5069,7 +5068,8 @@ cps::EventManager::EventManager (CompScreen *screen) :
 
 cps::OrphanData::OrphanData() :
     edgeWindow (None),
-    xdndWindow (None)
+    xdndWindow (None),
+    eventHandled (false)
 {
 }
 

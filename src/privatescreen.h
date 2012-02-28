@@ -233,6 +233,7 @@ struct OrphanData : boost::noncopyable
 
 	Window	      edgeWindow;
 	Window	      xdndWindow;
+	bool eventHandled;
 };
 
 // Static member functions that don't belong (use no data,
@@ -385,6 +386,8 @@ class History : boost::noncopyable
 	unsigned int activeNum;
 };
 
+// Apart from a use by StartupSequence::addSequence this data
+// is only used by CompScreenImpl - like the OrphanData struct
 struct ViewPort
 {
     ViewPort();
@@ -628,8 +631,6 @@ class PrivateScreen :
 
 	unsigned long *desktopHintData;
 	int           desktopHintSize;
-
-	bool eventHandled;
 
 	bool initialized;
 
