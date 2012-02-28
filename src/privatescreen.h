@@ -370,6 +370,21 @@ public:
 				      UngrabNotify from FocusIn */
 };
 
+class History : boost::noncopyable
+{
+    public:
+	History();
+
+	void setCurrentActiveWindowHistory (int x, int y);
+
+	void addToCurrentActiveWindowHistory (Window id);
+
+    //private:
+	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
+	int                     currentHistory;
+	unsigned int activeNum;
+};
+
 
 }} // namespace compiz::private_screen
 
@@ -377,6 +392,7 @@ class PrivateScreen :
     public compiz::private_screen::EventManager,
     public compiz::private_screen::WindowManager,
     public compiz::private_screen::GrabManager,
+    public compiz::private_screen::History,
     public compiz::private_screen::OrphanData,
     public compiz::private_screen::PseudoNamespace
 {
@@ -515,10 +531,6 @@ class PrivateScreen :
 
 	void setCurrentDesktop (unsigned int desktop);
 
-	void setCurrentActiveWindowHistory (int x, int y);
-
-	void addToCurrentActiveWindowHistory (Window id);
-
 	void enableEdge (int edge);
 
 	void disableEdge (int edge);
@@ -579,15 +591,10 @@ class PrivateScreen :
 	XWindowAttributes attrib;
 	Window            grabWindow;
 
-	unsigned int activeNum;
-
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;
 	CompOutput         fullscreenOutput;
 	bool               hasOverlappingOutputs;
-
-	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
-	int                     currentHistory;
 
 	CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
 

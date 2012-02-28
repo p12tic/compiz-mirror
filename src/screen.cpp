@@ -4098,7 +4098,7 @@ CompScreenImpl::updateDefaultIcon ()
 }
 
 void
-PrivateScreen::setCurrentActiveWindowHistory (int x, int y)
+cps::History::setCurrentActiveWindowHistory (int x, int y)
 {
     int	i, min = 0;
 
@@ -4125,7 +4125,7 @@ PrivateScreen::setCurrentActiveWindowHistory (int x, int y)
 }
 
 void
-PrivateScreen::addToCurrentActiveWindowHistory (Window id)
+cps::History::addToCurrentActiveWindowHistory (Window id)
 {
     CompActiveWindowHistory *history = &this->history[currentHistory];
     Window		    tmp, next = id;
@@ -4992,11 +4992,9 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     currentDesktop (0),
     root (None),
     grabWindow (None),
-    activeNum (1),
     outputDevs (0),
     currentOutputDev (0),
     hasOverlappingOutputs (false),
-    currentHistory (0),
     snContext (0),
     startupSequences (0),
     startupSequenceTimer (),
@@ -5012,7 +5010,12 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     startupSequenceTimer.setCallback (
 	boost::bind (&PrivateScreen::handleStartupSequenceTimeout, this));
     startupSequenceTimer.setTimes (1000, 1500);
+}
 
+cps::History::History() :
+    currentHistory(0),
+    activeNum (1)
+{
     memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
 }
 
