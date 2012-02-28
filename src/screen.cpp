@@ -4531,7 +4531,9 @@ PrivateScreen::initDisplay (const char *name)
 	return false;
     }
 
-//    priv->connection = XGetXCBConnection (priv->dpy);
+    /* Use synchronous behaviour when running with --sync, useful
+     * for getting stacktraces when X Errors occurr */
+    XSynchronize (dpy, synchronousX ? True : False);
 
     snprintf (displayString, 255, "DISPLAY=%s",
 	      DisplayString (dpy));

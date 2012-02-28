@@ -243,7 +243,7 @@ class PrivateWindow {
 	XWMHints             *hints;
 
 	bool       inputHint;
-	bool       alpha;;
+	bool       alpha;
 	CompRegion region;
 	CompRegion inputRegion;
 	CompRegion frameRegion;

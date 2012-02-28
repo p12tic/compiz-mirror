@@ -2993,6 +2993,12 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 {
     unsigned int frameValueMask = 0;
 
+    if (id == screen->root ())
+    {
+	compLogMessage ("core", CompLogLevelWarn, "attempted to reconfigure root window");
+	return;
+    }
+
     /* Remove redundant bits */
 
     xwc->x = valueMask & CWX ? xwc->x : serverGeometry.x ();
@@ -3099,6 +3105,65 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    frameValueMask &= ~(CWHeight);
     }
 
+    /* Don't allow anything that might generate a BadValue */
+    if (valueMask & CWWidth && !xwc->width)
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Attempted to set < 1 width on a window");
+	xwc->width = 1;
+    }
+
+    if (valueMask & CWHeight && !xwc->height)
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Attempted to set < 1 height on a window");
+	xwc->height = 1;
+    }
+
+    if (valueMask & CWStackMode &&
+        ((xwc->stack_mode != TopIf) && (xwc->stack_mode != BottomIf) && (xwc->stack_mode != Opposite) &&
+	 (xwc->stack_mode != Above) && (xwc->stack_mode != Below)))
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Invalid stack mode %i", xwc->stack_mode);
+	valueMask &= ~(CWStackMode | CWSibling);
+    }
+
+    /* Don't allow anything that might cause a BadMatch error */
+
+    if (valueMask & CWSibling && !(valueMask & CWStackMode))
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Didn't specify a CWStackMode for CWSibling");
+	valueMask &= ~CWSibling;
+    }
+
+    if (valueMask & CWSibling && xwc->sibling == (serverFrame ? serverFrame : id))
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Can't restack a window relative to itself");
+	valueMask &= ~CWSibling;
+    }
+
+    if (valueMask & CWBorderWidth && attrib.c_class == InputOnly)
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Cannot set border_width of an input_only window");
+	valueMask &= ~CWBorderWidth;
+    }
+
+    if (valueMask & CWSibling)
+    {
+	CompWindow *sibling = screen->findTopLevelWindow (xwc->sibling);
+
+	if (!sibling)
+	{
+	    compLogMessage ("core", CompLogLevelWarn, "Attempted to restack relative to 0x%x which is "\
+			    "not a child of the root window or a window compiz owns", static_cast <unsigned int> (xwc->sibling));
+	    valueMask &= ~(CWSibling | CWStackMode);
+	}
+	else if (sibling->frame () && xwc->sibling != sibling->frame ())
+	{
+	    compLogMessage ("core", CompLogLevelWarn, "Attempted to restack relative to 0x%x which is "\
+			    "not a child of the root window", static_cast <unsigned int> (xwc->sibling));
+	    valueMask &= ~(CWSibling | CWStackMode);
+	}
+    }
+
     /* Can't set the border width of frame windows */
     frameValueMask &= ~(CWBorderWidth);
 
@@ -3124,7 +3189,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    serverFrameGeometry.setHeight (xwc->height + serverGeometry.border () * 2
 					   + serverInput.top + serverInput.bottom);
     }
- 
+
     if (serverFrame)
     {
 	if (frameValueMask)
@@ -5979,7 +6044,7 @@ CompWindow::CompWindow (Window aboveId,
 
     if (priv->attrib.c_class != InputOnly)
     {
-	priv->region = CompRegion (static_cast <CompRect> (priv->serverGeometry));
+	priv->region = CompRegion (priv->serverGeometry);
 	priv->inputRegion = priv->region;
 
 	/* need to check for DisplayModal state on all windows */
