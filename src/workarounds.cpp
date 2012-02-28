@@ -299,6 +299,17 @@ WorkaroundsWindow::glPaint (const GLWindowPaintAttrib &attrib,
     return gWindow->glPaint (attrib, transform, region, mask);
 }
 
+bool
+WorkaroundsWindow::damageRect (bool initial, const CompRect &rect)
+{
+    if (initial)
+	cWindow->addDamage (true);
+
+    cWindow->damageRectSetEnabled (this, false);
+
+    return cWindow->damageRect (initial, rect);
+}
+
 void
 WorkaroundsScreen::checkFunctions (bool checkWindow, bool checkScreen)
 {
@@ -1074,6 +1085,9 @@ WorkaroundsWindow::WorkaroundsWindow (CompWindow *window) :
     GLWindowInterface::setHandler (gWindow, false);
 
     WORKAROUNDS_SCREEN (screen);
+
+    if (ws->optionGetInitialDamageCompleteRedraw ())
+	CompositeWindowInterface::setHandler (cWindow);
 
     if (ws->optionGetLegacyFullscreen ())
     {

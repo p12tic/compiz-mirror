@@ -83,6 +83,11 @@
 		<_long>Don't wait for the next video sync time to redraw</_long>
 		<default>false</default>
 	    </option>
+	    <option type="bool" name="initial_damage_complete_redraw">
+		<_short>Force complete redraw on initial damage</_short>
+		<_long>Force complete redraw of the window on initial damage event</_long>
+		<default>true</default>
+	    </option>
 	    <option type="bool" name="force_swap_buffers">
 		<_short>Force full screen redraws (buffer swap) on repaint</_short>
 		<_long>Forces the entire screen to redraw every repaint. Use with care, this will cause a massive increase in GPU and CPU usage</_long>
