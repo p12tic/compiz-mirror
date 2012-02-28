@@ -288,7 +288,8 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
     {
 	static CompRegion tmpReg;
 
-	tmpReg = *shadowRegion & region;
+	tmpReg = *shadowRegion;
+	tmpRegion &= region;
 	preg = &tmpReg;
     }
     else
