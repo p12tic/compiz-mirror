@@ -159,7 +159,7 @@ dlloaderLoadPlugin (CompPlugin *p,
 	return false;
     }
 
-    int open_flags = RTLD_LAZY;
+    int open_flags = RTLD_NOW;
 #ifdef DEBUG
     // Do not unload the library during dlclose.
     open_flags |= RTLD_NODELETE;
@@ -287,7 +287,7 @@ CompManager::initPlugin (CompPlugin *p)
 	return false;
     }
 
-    if (screen && screen->priv->initialized)
+    if (screen && screen->displayInitialised())
     {
 	if (!p->vTable->initScreen (screen))
 	{
