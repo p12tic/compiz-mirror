@@ -5023,7 +5023,7 @@ cps::History::History() :
     currentHistory(0),
     activeNum (1)
 {
-    memset (&history, 0, sizeof (Window) * ACTIVE_WINDOW_HISTORY_NUM);
+    memset (history[0].id, 0, sizeof (history[0].id));
 }
 
 cps::WindowManager::WindowManager() :
