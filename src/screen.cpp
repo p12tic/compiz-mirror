@@ -2069,7 +2069,7 @@ cps::StartupSequence::handleStartupSequenceTimeout ()
 }
 
 void
-PrivateScreen::addSequence (SnStartupSequence *sequence)
+cps::StartupSequence::addSequence (SnStartupSequence *sequence)
 {
     CompStartupSequence *s;
 
@@ -4979,6 +4979,12 @@ cps::GrabManager::GrabManager (CompScreen *screen) :
 {
 }
 
+cps::ViewPort::ViewPort() :
+    vp (0, 0),
+    vpSize (1, 1)
+{
+}
+
 cps::StartupSequence::StartupSequence() :
     startupSequences (),
     startupSequenceTimer ()
@@ -4992,8 +4998,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     screenInfo (0),
     snDisplay(0),
     windows (),
-    vp (0, 0),
-    vpSize (1, 1),
     nDesktop (1),
     currentDesktop (0),
     root (None),

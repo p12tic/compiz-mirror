@@ -385,10 +385,19 @@ class History : boost::noncopyable
 	unsigned int activeNum;
 };
 
-class StartupSequence : boost::noncopyable
+struct ViewPort
+{
+    ViewPort();
+    CompPoint    vp;
+    CompSize     vpSize;
+};
+
+class StartupSequence : boost::noncopyable,
+    public ViewPort
 {
     public:
 	StartupSequence();
+	void addSequence (SnStartupSequence *sequence);
 	void removeSequence (SnStartupSequence *sequence);
 	void removeAllSequences ();
 	void applyStartupProperties (CompWindow *window);
@@ -480,8 +489,6 @@ class PrivateScreen :
 	void updateScreenEdges ();
 
 	void reshape (int w, int h);
-
-	void addSequence (SnStartupSequence *sequence);
 
 	void setSupportingWmCheck ();
 
@@ -589,8 +596,6 @@ class PrivateScreen :
 	Colormap colormap;
 	int      screenNum;
 
-	CompPoint    vp;
-	CompSize     vpSize;
 	unsigned int nDesktop;
 	unsigned int currentDesktop;
 	CompRegion   region;
