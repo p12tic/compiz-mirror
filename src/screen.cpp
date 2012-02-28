@@ -5006,7 +5006,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 	boost::bind (&PrivateScreen::handleStartupSequenceTimeout, this));
     startupSequenceTimer.setTimes (1000, 1500);
 
-    memset (history[currentHistory], 0, sizeof history[currentHistory]);
+    memset (&history[currentHistory], 0, sizeof history[currentHistory]);
 }
 
 cps::WindowManager::WindowManager() :
