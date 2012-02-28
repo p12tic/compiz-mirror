@@ -2045,7 +2045,7 @@ PrivateScreen::updateStartupFeedback ()
 #define STARTUP_TIMEOUT_DELAY 15000
 
 bool
-PrivateScreen::handleStartupSequenceTimeout ()
+cps::StartupSequence::handleStartupSequenceTimeout ()
 {
     struct timeval	now, active;
     double		elapsed;
@@ -2092,7 +2092,7 @@ PrivateScreen::addSequence (SnStartupSequence *sequence)
 }
 
 void
-PrivateScreen::removeSequence (SnStartupSequence *sequence)
+cps::StartupSequence::removeSequence (SnStartupSequence *sequence)
 {
     CompStartupSequence *s = NULL;
 
@@ -2123,7 +2123,7 @@ PrivateScreen::removeSequence (SnStartupSequence *sequence)
 }
 
 void
-PrivateScreen::removeAllSequences ()
+cps::StartupSequence::removeAllSequences ()
 {
     foreach (CompStartupSequence *s, startupSequences)
     {
@@ -4979,6 +4979,12 @@ cps::GrabManager::GrabManager (CompScreen *screen) :
 {
 }
 
+cps::StartupSequence::StartupSequence() :
+    startupSequences (),
+    startupSequenceTimer ()
+{
+}
+
 PrivateScreen::PrivateScreen (CompScreen *screen) :
     ScreenUser (screen),
     EventManager (screen),
@@ -4996,8 +5002,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     currentOutputDev (0),
     hasOverlappingOutputs (false),
     snContext (0),
-    startupSequences (0),
-    startupSequenceTimer (),
     showingDesktopMask (0),
     desktopHintData (0),
     desktopHintSize (0),

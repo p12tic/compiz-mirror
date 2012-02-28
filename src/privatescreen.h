@@ -385,6 +385,20 @@ class History : boost::noncopyable
 	unsigned int activeNum;
 };
 
+class StartupSequence : boost::noncopyable
+{
+    public:
+	StartupSequence();
+	void removeSequence (SnStartupSequence *sequence);
+	void removeAllSequences ();
+	void applyStartupProperties (CompWindow *window);
+	bool handleStartupSequenceTimeout ();
+	virtual void updateStartupFeedback () = 0;
+
+    //private:
+	std::list<CompStartupSequence *> startupSequences;
+	CompTimer                        startupSequenceTimer;
+};
 
 }} // namespace compiz::private_screen
 
@@ -393,6 +407,7 @@ class PrivateScreen :
     public compiz::private_screen::WindowManager,
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::History,
+    public compiz::private_screen::StartupSequence,
     public compiz::private_screen::OrphanData,
     public compiz::private_screen::PseudoNamespace
 {
@@ -466,13 +481,7 @@ class PrivateScreen :
 
 	void reshape (int w, int h);
 
-	bool handleStartupSequenceTimeout ();
-
 	void addSequence (SnStartupSequence *sequence);
-
-	void removeSequence (SnStartupSequence *sequence);
-
-	void removeAllSequences ();
 
 	void setSupportingWmCheck ();
 
@@ -599,8 +608,6 @@ class PrivateScreen :
 	CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
 
 	SnMonitorContext                 *snContext;
-	std::list<CompStartupSequence *> startupSequences;
-	CompTimer                        startupSequenceTimer;
 
 	Window wmSnSelectionWindow;
 	Atom   wmSnAtom;
