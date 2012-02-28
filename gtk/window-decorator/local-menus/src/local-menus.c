@@ -40,6 +40,7 @@ GDBusProxy *global_lim_listener;
 
 
 #ifdef META_HAS_LOCAL_MENUS
+#error local menus are enabled
 static void
 gwd_menu_mode_changed (GSettings *settings,
 		       gchar     *key,
