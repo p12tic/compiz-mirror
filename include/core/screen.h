@@ -188,8 +188,8 @@ public:
     WRAPABLE_HND (17, ScreenInterface, void, addSupportedAtoms,
 		  std::vector<Atom>& atoms);
 
-    static unsigned int allocPluginClassIndex ();
-    static void freePluginClassIndex (unsigned int index);
+    unsigned int allocPluginClassIndex ();
+    void freePluginClassIndex (unsigned int index);
     static int checkForError (Display *dpy);
 
 

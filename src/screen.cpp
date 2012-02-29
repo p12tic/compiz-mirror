@@ -124,7 +124,7 @@ CompScreen::allocPluginClassIndex ()
 {
     unsigned int i = PluginClassStorage::allocatePluginClassIndex (screenPluginClassIndices);
 
-    screen->sizePluginClasses(screenPluginClassIndices.size());
+    sizePluginClasses(screenPluginClassIndices.size());
 
     return i;
 }
@@ -134,7 +134,7 @@ CompScreen::freePluginClassIndex (unsigned int index)
 {
     PluginClassStorage::freePluginClassIndex (screenPluginClassIndices, index);
 
-    screen->sizePluginClasses(screenPluginClassIndices.size());
+    sizePluginClasses(screenPluginClassIndices.size());
 }
 
 void
