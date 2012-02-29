@@ -86,7 +86,7 @@ class PluginClassHandler {
 	 * on this base class if there wasn't one already and then
 	 * storing that index inside of ValueHolder
 	 */
-	static bool initializeIndex ();
+	static bool initializeIndex (Tb *base);
 	static inline Tp * getInstance (Tb *base);
 
     private:
@@ -120,7 +120,7 @@ PluginClassHandler<Tp,Tb,ABI>::PluginClassHandler (Tb *base) :
 	/* The index for this plugin class hasn't been initiated
 	 * so do that (done once per plugin) */
 	if (!mIndex.initiated)
-	    mFailed = !initializeIndex ();
+	    mFailed = !initializeIndex (base);
 
 	/* Increase the reference count of this plugin class index
 	 * for this plugin on this base object for each attached
@@ -135,11 +135,11 @@ PluginClassHandler<Tp,Tb,ABI>::PluginClassHandler (Tb *base) :
 
 template<class Tp, class Tb, int ABI>
 bool
-PluginClassHandler<Tp,Tb,ABI>::initializeIndex ()
+PluginClassHandler<Tp,Tb,ABI>::initializeIndex (Tb *base)
 {
     /* Allocate a new storage space index in the array of CompPrivate's
      * specified in the base class */
-    mIndex.index = Tb::allocPluginClassIndex ();
+    mIndex.index = base->allocPluginClassIndex ();
     if (mIndex.index != (unsigned)~0)
     {
 	/* Allocation was successful, this is the most recently allocated
@@ -196,7 +196,7 @@ PluginClassHandler<Tp,Tb,ABI>::~PluginClassHandler ()
 	 *  won't be fresh) */
 	if (mIndex.refCount == 0)
 	{
-	    Tb::freePluginClassIndex (mIndex.index);
+	    mBase->freePluginClassIndex (mIndex.index);
 	    mIndex.initiated = false;
 	    mIndex.failed = false;
 	    mIndex.pcIndex = pluginClassHandlerIndex;
@@ -248,7 +248,7 @@ PluginClassHandler<Tp,Tb,ABI>::get (Tb *base)
     /* Always ensure that the index is initialized before
      * calls to ::get */
     if (!mIndex.initiated)
-	initializeIndex ();
+	initializeIndex (base);
     /* If pluginClassHandlerIndex == mIndex.pcIndex it means that our
      * mIndex.index is fresh and can be used directly without needing
      * to fetch it from ValueHolder */
