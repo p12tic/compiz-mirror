@@ -250,7 +250,7 @@ CompositeWindow::damageTransformedRect (float          xScale,
 
     if (x2 > x1 && y2 > y1)
     {
-	CompWindow::Geometry geom = priv->window->serverGeometry ();
+	const CompWindow::Geometry &geom = priv->window->serverGeometry ();
 
 	x1 += geom.x () + geom.border ();
 	y1 += geom.y () + geom.border ();
@@ -278,14 +278,14 @@ CompositeWindow::damageOutputExtents ()
 	/* top */
 	x1 = -output.left - geom.border ();
 	y1 = -output.top - geom.border ();
-	x2 = priv->window->serverGeometry ().width () + geom.border () + output.right;
+	x2 = geom.width () + geom.border () + output.right;
 	y2 = -geom.border ();
 
 	if (x1 < x2 && y1 < y2)
 	    addDamageRect (CompRect (x1, y1, x2 - x1, y2 - y1));
 
 	/* bottom */
-	y1 = priv->window->serverGeometry ().height () + geom.border ();
+	y1 = geom.height () + geom.border ();
 	y2 = y1 + output.bottom - geom.border ();
 
 	if (x1 < x2 && y1 < y2)
@@ -295,13 +295,13 @@ CompositeWindow::damageOutputExtents ()
 	x1 = -output.left - geom.border ();
 	y1 = -geom.border ();
 	x2 = -geom.border ();
-	y2 = priv->window->serverGeometry ().height () - geom.border ();
+	y2 = geom.height () - geom.border ();
 
 	if (x1 < x2 && y1 < y2)
 	    addDamageRect (CompRect (x1, y1, x2 - x1, y2 - y1));
 
 	/* right */
-	x1 = priv->window->serverGeometry ().width () - geom.border ();
+	x1 = geom.width () - geom.border ();
 	x2 = x1 + output.right - geom.border ();
 
 	if (x1 < x2 && y1 < y2)
