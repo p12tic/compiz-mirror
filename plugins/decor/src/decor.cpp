@@ -91,11 +91,11 @@ isAncestorTo (CompWindow *window,
 void
 DecorWindow::computeShadowRegion ()
 {
-    shadowRegion = CompRegion (window->outputRect ());
-
     if (window->type () == CompWindowTypeDropdownMenuMask ||
         window->type () == CompWindowTypePopupMenuMask)
     {
+	shadowRegion.reset (new CompRegion (window->outputRect ()));
+
         /* Other transient menus should clip
          * this menu's shadows, also the panel
          * which is a transient parent should
@@ -119,11 +119,11 @@ DecorWindow::computeShadowRegion ()
             if (!isAncestorTo (window, (*it)))
                 continue;
 
-            CompRegion inter (shadowRegion);
-            inter &= (*it)->borderRect ();
+            CompRegion inter (*shadowRegion);
+            inter &= CompRegionRef ((*it)->borderRect ().region ());
 
             if (!inter.isEmpty ())
-                shadowRegion -= inter;
+                *shadowRegion -= inter;
         }
 
         /* If the region didn't change, then it is safe to
@@ -139,7 +139,7 @@ DecorWindow::computeShadowRegion ()
          * that will look a lot better.
          */
         if (window->type () == CompWindowTypeDropdownMenuMask &&
-	    shadowRegion == CompRegionRef (window->outputRect ().region ()))
+	    *shadowRegion == CompRegionRef (window->outputRect ().region ()))
         {
             CompRect area (window->outputRect ().x1 (),
                            window->outputRect ().y1 (),
@@ -147,9 +147,40 @@ DecorWindow::computeShadowRegion ()
 			   window->inputRect ().y1 () -
                            window->outputRect ().y1 ());
 
-	    shadowRegion -= area;
+	    *shadowRegion -= area;
         }
     }
+    else if (window->state () & MAXIMIZE_STATE)
+    {
+	shadowRegion.reset (new CompRegion (window->outputRect ()));
+	CompRegionRef outputRegion (screen->outputDevs ()[window->outputDevice ()].region ());
+	CompRegionRef borderRegion (window->borderRect ().region ());
+	*shadowRegion &= screen->region ();
+
+	if (borderRegion.intersected (outputRegion) == borderRegion)
+	    *shadowRegion &= outputRegion;
+
+	CompWindowVector::const_reverse_iterator rit (screen->clientList ().rbegin ());
+
+	for (; rit != screen->clientList ().rend (); rit++)
+	{
+	    if (!((*rit)->state () & MAXIMIZE_STATE))
+		continue;
+
+	    /* Only care about windows that logically overlap
+	     * the shadow, but aren't actually obscured by this window */
+	    if (borderRegion.intersects (CompRegionRef ((*rit)->borderRect ().region ())))
+		continue;
+
+	    CompRegion clippable (*shadowRegion - borderRegion);
+	    CompRegion inter (clippable.intersected (CompRegionRef ((*rit)->borderRect ().region ())));
+
+	    if (!inter.isEmpty ())
+		*shadowRegion-= inter;
+	}
+    }
+    else if (shadowRegion)
+	shadowRegion.reset ();
 }
 
 /*
@@ -253,15 +284,23 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	preg = &region;
     else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
 	preg = &infiniteRegion;
-    else
+    else if (shadowRegion)
     {
-	tmpRegion = shadowRegion;
-	tmpRegion &= region;
-	preg = &tmpRegion;
-    }
+	static CompRegion tmpReg;
 
-    /* In case some plugin needs to paint us with an offset region */
-    if (preg->isEmpty ())
+	tmpReg = *shadowRegion;
+	tmpRegion &= region;
+	preg = &tmpReg;
+    }
+    else
+	preg = &region;
+
+    /* Check if the requested redraw region does not intersect
+     * any part of the window with its shadow at all, if so, then
+     * some plugin is probably trying to draw us with another region,
+     * so allow the draw */
+    if (preg->isEmpty () &&
+	region.intersected (CompRegionRef (window->outputRect ().region ())).isEmpty ())
 	preg = &region;
 
     const CompRegion &reg (*preg);
