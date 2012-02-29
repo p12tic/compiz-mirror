@@ -271,7 +271,8 @@ class DecorWindow :
 	DecorationList	 decor;
 
 	CompRegion frameRegion;
-	boost::shared_ptr <CompRegion> shadowRegion;
+	CompRegion shadowRegion;
+	CompRegion tmpRegion;
 
 	Window inputFrame;
 	Window outputFrame;
