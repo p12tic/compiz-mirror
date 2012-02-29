@@ -189,7 +189,6 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
     936778 - Quickly demaximized windows can receive maximized window
              decorations if they were initially maximized
     936781 - No draggable border if mutter isn't installed
-    936784 - Tweak algorithm used to cast shadows on maximized windows
     938478 - Unresolved symbols in plugins cause compiz to exit (looks like a
              crash)
     940066 - decor_match_pixmap (decoration.c:423): Conditional jump or move
