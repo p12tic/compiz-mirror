@@ -625,33 +625,33 @@ public:
 	virtual bool initDisplay (const char *name);
 };
 
+class KeyGrab {
+    public:
+	int          keycode;
+	unsigned int modifiers;
+	int          count;
+};
+
+class ButtonGrab {
+    public:
+	int          button;
+	unsigned int modifiers;
+	int          count;
+};
+
+class Grab {
+    public:
+
+	friend class ::CompScreenImpl;
+    private:
+	Cursor     cursor;
+	const char *name;
+};
+
 class GrabManager : boost::noncopyable,
     public virtual ScreenUser
 {
 public:
-    class KeyGrab {
-	public:
-	    int          keycode;
-	    unsigned int modifiers;
-	    int          count;
-    };
-
-    class ButtonGrab {
-	public:
-	    int          button;
-	    unsigned int modifiers;
-	    int          count;
-    };
-
-    class Grab {
-	public:
-
-	    friend class ::CompScreenImpl;
-	private:
-	    Cursor     cursor;
-	    const char *name;
-    };
-
     GrabManager(CompScreen *screen);
 
     bool addPassiveKeyGrab (CompAction::KeyBinding &key);

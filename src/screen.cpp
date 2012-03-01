@@ -2968,7 +2968,7 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 				  cursor, CurrentTime);
     }
 
-    PrivateScreen::Grab *grab = new PrivateScreen::Grab ();
+    cps::Grab *grab = new cps::Grab ();
     grab->cursor = cursor;
     grab->name   = name;
 
@@ -2986,7 +2986,7 @@ CompScreenImpl::updateGrab (CompScreen::GrabHandle handle, Cursor cursor)
     XChangeActivePointerGrab (priv->dpy, POINTER_GRAB_MASK,
 			      cursor, CurrentTime);
 
-    ((PrivateScreen::Grab *) handle)->cursor = cursor;
+    ((cps::Grab *) handle)->cursor = cursor;
 }
 
 void
@@ -2996,14 +2996,14 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
     if (!handle)
 	return;
 
-    std::list<PrivateScreen::Grab *>::iterator it;
+    std::list<cps::Grab *>::iterator it;
 
     it = std::find (priv->grabs.begin (), priv->grabs.end (), handle);
 
     if (it != priv->grabs.end ())
     {
 	priv->grabs.erase (it);
-	delete (static_cast<PrivateScreen::Grab *> (handle));
+	delete (static_cast<cps::Grab *> (handle));
     }
     if (!priv->grabs.empty ())
     {
@@ -3034,7 +3034,7 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
     va_list    ap;
     const char *name;
 
-    std::list<PrivateScreen::Grab *>::iterator it;
+    std::list<cps::Grab *>::iterator it;
 
     for (it = priv->grabs.begin (); it != priv->grabs.end (); it++)
     {
@@ -3061,7 +3061,7 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
 bool
 CompScreenImpl::grabExist (const char *grab)
 {
-    foreach (PrivateScreen::Grab* g, priv->grabs)
+    foreach (cps::Grab* g, priv->grabs)
     {
 	if (strcmp (g->name, grab) == 0)
 	    return true;
@@ -3211,7 +3211,7 @@ cps::GrabManager::removePassiveKeyGrab (CompAction::KeyBinding &key)
 void
 PrivateScreen::updatePassiveKeyGrabs ()
 {
-    std::list<KeyGrab>::iterator it;
+    std::list<cps::KeyGrab>::iterator it;
 
     XUngrabKey (dpy, AnyKey, AnyModifier, root);
 
