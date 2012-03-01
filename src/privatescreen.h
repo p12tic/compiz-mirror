@@ -531,17 +531,6 @@ class WindowManager : boost::noncopyable
 	unsigned int pendingDestroys;
 };
 
-// data members that don't belong (these probably belong
-// in CompScreenImpl as PrivateScreen doesn't use them)
-struct OrphanData : boost::noncopyable
-{
-	OrphanData();
-
-	Window	      edgeWindow;
-	Window	      xdndWindow;
-	bool eventHandled;
-};
-
 // Static member functions that don't belong (use no data,
 // not invoked by PrivateScreen)
 struct PseudoNamespace
@@ -648,6 +637,21 @@ class Grab {
 	const char *name;
 };
 
+// data members that don't belong (these probably belong
+// in CompScreenImpl as PrivateScreen doesn't use them)
+struct OrphanData : boost::noncopyable
+{
+    OrphanData();
+
+    Window	edgeWindow;
+    Window	xdndWindow;
+    bool 	eventHandled;
+    std::list<Grab *> grabs;
+    bool	grabbed;   /* true once we recieve a GrabNotify
+			      on FocusOut and false on
+			      UngrabNotify from FocusIn */
+};
+
 class GrabManager : boost::noncopyable,
     public virtual ScreenUser
 {
@@ -670,12 +674,6 @@ public:
     //private:
     std::list<ButtonGrab> buttonGrabs;
     std::list<KeyGrab>    keyGrabs;
-
-    std::list<Grab *> grabs;
-
-    bool		      grabbed; /* true once we recieve a GrabNotify
-				      on FocusOut and false on
-				      UngrabNotify from FocusIn */
 };
 
 class History : boost::noncopyable

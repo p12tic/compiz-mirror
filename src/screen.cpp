@@ -4972,10 +4972,8 @@ CompScreenImpl::~CompScreenImpl ()
 
 cps::GrabManager::GrabManager (CompScreen *screen) :
     ScreenUser(screen),
-    buttonGrabs (0),
-    keyGrabs (0),
-    grabs (0),
-    grabbed (false)
+    buttonGrabs (),
+    keyGrabs ()
 {
 }
 
@@ -5071,7 +5069,9 @@ cps::EventManager::EventManager (CompScreen *screen) :
 cps::OrphanData::OrphanData() :
     edgeWindow (None),
     xdndWindow (None),
-    eventHandled (false)
+    eventHandled (false),
+    grabs (),
+    grabbed (false)
 {
 }
 
