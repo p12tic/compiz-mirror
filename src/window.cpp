@@ -48,7 +48,7 @@
 #define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
 PluginClassStorage::Indices windowPluginClassIndices (0);
-/*
+
 unsigned int
 CompWindow::allocPluginClassIndex ()
 {
@@ -70,7 +70,7 @@ CompWindow::freePluginClassIndex (unsigned int index)
 	if (windowPluginClassIndices.size () != w->pluginClasses.size ())
 	    w->pluginClasses.resize (windowPluginClassIndices.size ());
 }
-*/
+
 inline bool
 PrivateWindow::isInvisible() const
 {
