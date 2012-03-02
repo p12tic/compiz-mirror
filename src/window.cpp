@@ -6276,7 +6276,6 @@ CoreWindow::manage (Window aboveId, XWindowAttributes &wa, Window id)
 {
     CoreWindow cw (id);
     CompWindow *fw = cw.manage (aboveId, wa);
-    screen->removeFromCreatedWindows (&cw);
 
     return fw;
 }

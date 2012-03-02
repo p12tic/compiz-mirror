@@ -533,7 +533,6 @@ class PrivateScreen :
 	KeyCode escapeKeyCode;
 	KeyCode returnKeyCode;
 
-	std::list <CoreWindow *> createdWindows;
 	CompWindowList windows;
 
 	Colormap colormap;

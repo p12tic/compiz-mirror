@@ -245,7 +245,6 @@ public:
     virtual void viewportForGeometry (const CompWindow::Geometry &gm,
 				  CompPoint                   &viewport) = 0;
 
-    virtual void removeFromCreatedWindows(CoreWindow *cw) = 0;
     virtual void addToDestroyedWindows(CompWindow * cw) = 0;
     virtual const CompRect & workArea () const = 0;
     virtual void removeAction (CompAction *action) = 0;
@@ -573,7 +572,6 @@ class CompScreenImpl : public CompScreen
 	virtual bool grabsEmpty() const;
 	virtual void sizePluginClasses(unsigned int size);
 	virtual void setWindowState (unsigned int state, Window id);
-	virtual void removeFromCreatedWindows(CoreWindow *cw);
 	virtual void addToDestroyedWindows(CompWindow * cw);
 	virtual void processEvents ();
 	virtual void alwaysHandleEvent (XEvent *event);

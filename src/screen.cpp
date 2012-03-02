@@ -106,12 +106,6 @@ void CompScreenImpl::setWindowState (unsigned int state, Window id)
     priv->setWindowState (state, id);
 }
 
-void
-CompScreenImpl::removeFromCreatedWindows(CoreWindow *cw)
-{
-    priv->createdWindows.remove (cw);
-}
-
 void CompScreenImpl::addToDestroyedWindows(CompWindow * cw)
 {
     priv->destroyedWindows.push_back (cw);

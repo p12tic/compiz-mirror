@@ -103,7 +103,6 @@ public:
     MOCK_METHOD2(viewportForGeometry, void (const CompWindow::Geometry &gm,
 				  CompPoint                   &viewport));
 
-    MOCK_METHOD1(removeFromCreatedWindows, void (CoreWindow *cw));
     MOCK_METHOD1(addToDestroyedWindows, void (CompWindow * cw));
 
     MOCK_CONST_METHOD0(workArea, CompRect const& ());
