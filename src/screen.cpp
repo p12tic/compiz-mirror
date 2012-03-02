@@ -4885,9 +4885,7 @@ PrivateScreen::initDisplay (const char *name)
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
 	    setDefaultWindowAttributes(&attrib);
 
-	CoreWindow cw (children[i]);
-	cw.manage (i ? children[i - 1] : 0, attrib);
-	createdWindows.remove (&cw);
+	CoreWindow::manage (i ? children[i - 1] : 0, attrib, children[i]);
     }
 
     /* enforce restack on all windows

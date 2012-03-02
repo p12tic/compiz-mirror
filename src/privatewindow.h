@@ -331,16 +331,12 @@ class PrivateWindow {
 class CoreWindow
 {
 public:
+    static CompWindow * manage (Window aboveId, XWindowAttributes &wa, Window id);
 
+private:
     CoreWindow (Window id);
 
     CompWindow * manage (Window above, XWindowAttributes &wa);
-
-    friend class PrivateWindow;
-    friend class PrivateScreen;
-    friend class CompScreenImpl;
-
-private:
 
     PrivateWindow *priv;
 };
