@@ -6274,25 +6274,15 @@ CompWindow::syncAlarm ()
 CompWindow *
 CoreWindow::manage (Window aboveId, XWindowAttributes &wa, Window id)
 {
-    CoreWindow cw (id);
-    CompWindow *fw = cw.manage (aboveId, wa);
+    PrivateWindow* priv(new PrivateWindow ());
+    priv->id = id;
+    priv->serverId = id;
+
+    CompWindow *fw = new CompWindow (aboveId, wa, priv);
 
     return fw;
 }
 
-CompWindow *
-CoreWindow::manage (Window aboveId, XWindowAttributes &wa)
-{
-    return new CompWindow (aboveId, wa, priv);
-}
-
-CoreWindow::CoreWindow (Window id)
-{
-    priv = new PrivateWindow ();
-    assert (priv);
-    priv->id = id;
-    priv->serverId = id;
-}
 
 CompWindow::CompWindow (Window aboveId,
 			XWindowAttributes &wa,

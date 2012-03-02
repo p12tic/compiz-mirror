@@ -333,12 +333,6 @@ class CoreWindow
 public:
     static CompWindow * manage (Window aboveId, XWindowAttributes &wa, Window id);
 
-private:
-    CoreWindow (Window id);
-
-    CompWindow * manage (Window above, XWindowAttributes &wa);
-
-    PrivateWindow *priv;
 };
 
 #endif
