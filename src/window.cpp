@@ -45,6 +45,8 @@
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
 
+#include <boost/scoped_array.hpp>
+
 #define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
 PluginClassStorage::Indices windowPluginClassIndices (0);
@@ -1472,10 +1474,9 @@ CompWindow::destroy ()
 
 	    /* Put the frame window "above" the client window
 	     * in the stack */
-	    CoreWindow *cw = new CoreWindow (priv->serverFrame);
-	    cw->manage (priv->id, attrib);
-	    screen->removeFromCreatedWindows (cw);
-	    delete cw;
+	    CoreWindow cw (priv->serverFrame);
+	    cw.manage (priv->id, attrib);
+	    screen->removeFromCreatedWindows (&cw);
 	}
 
 	/* Immediately unhook the window once destroyed
@@ -5174,7 +5175,6 @@ PrivateWindow::readIconHint ()
     int		 iDummy;
     Window       wDummy;
     CompIcon     *icon;
-    XColor       *colors;
     CARD32       *p;
 
     if (!XGetGeometry (dpy, hints->icon_pixmap, &wDummy, &iDummy,
@@ -5186,7 +5186,7 @@ PrivateWindow::readIconHint ()
     if (!image)
 	return;
 
-    colors = new XColor[width * height];
+    boost::scoped_array<XColor> colors(new XColor[width * height]);
     if (!colors)
     {
 	XDestroyImage (image);
@@ -5207,7 +5207,6 @@ PrivateWindow::readIconHint ()
     icon = new CompIcon (width, height);
     if (!icon)
     {
-	delete [] colors;
 	return;
     }
 
@@ -5236,7 +5235,6 @@ PrivateWindow::readIconHint ()
 	}
     }
 
-    delete [] colors;
     if (maskImage)
 	XDestroyImage (maskImage);
 
@@ -7235,10 +7233,9 @@ PrivateWindow::unreparent ()
 
 	/* Put the frame window "above" the client window
 	 * in the stack */
-	CoreWindow *cw = new CoreWindow (serverFrame);
-	CompWindow *fw = cw->manage (id, attrib);
-	screen->removeFromCreatedWindows (cw);
-	delete cw;
+	CoreWindow cw (serverFrame);
+	CompWindow *fw = cw.manage (id, attrib);
+	screen->removeFromCreatedWindows (&cw);
 
 	/* Put this window in the list of "detached frame windows"
 	 * so that we can reattach it or destroy it when we are

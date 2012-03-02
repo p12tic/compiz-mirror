@@ -1185,11 +1185,10 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	     * that to wait until the map request */
 	    if ((wa.root == priv->root))
 	    {
-		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
-		cw->manage (priv->getTopWindow (), wa);
+		CoreWindow cw(event->xcreatewindow.window);
+		cw.manage (priv->getTopWindow (), wa);
 
-		removeFromCreatedWindows (cw);
-		delete cw;
+		removeFromCreatedWindows (&cw);
             }
 	    else
 		XSelectInput (priv->dpy, event->xcreatewindow.window,
@@ -1325,11 +1324,10 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		if (!XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa))
 		    priv->setDefaultWindowAttributes (&wa);
 
-		CoreWindow *cw = new CoreWindow (event->xcreatewindow.window);
-		cw->manage (priv->getTopWindow (), wa);
+		CoreWindow cw (event->xcreatewindow.window);
+		cw.manage (priv->getTopWindow (), wa);
 
-		removeFromCreatedWindows (cw);
-		delete cw;
+		removeFromCreatedWindows (&cw);
 		break;
 	    }
 	    else
