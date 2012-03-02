@@ -1474,7 +1474,7 @@ CompWindow::destroy ()
 
 	    /* Put the frame window "above" the client window
 	     * in the stack */
-	    CoreWindow::manage (priv->id, attrib, priv->serverFrame);
+	    PrivateWindow::createCompWindow (priv->id, attrib, priv->serverFrame);
 	}
 
 	/* Immediately unhook the window once destroyed
@@ -6272,7 +6272,7 @@ CompWindow::syncAlarm ()
 }
 
 CompWindow *
-CoreWindow::manage (Window aboveId, XWindowAttributes &wa, Window id)
+PrivateWindow::createCompWindow (Window aboveId, XWindowAttributes &wa, Window id)
 {
     PrivateWindow* priv(new PrivateWindow ());
     priv->id = id;
@@ -7230,7 +7230,7 @@ PrivateWindow::unreparent ()
 
 	/* Put the frame window "above" the client window
 	 * in the stack */
-	CompWindow *fw = CoreWindow::manage (id, attrib, serverFrame);
+	CompWindow *fw = PrivateWindow::createCompWindow (id, attrib, serverFrame);
 
 	/* Put this window in the list of "detached frame windows"
 	 * so that we can reattach it or destroy it when we are
