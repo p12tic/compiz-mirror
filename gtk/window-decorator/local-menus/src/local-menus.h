@@ -48,6 +48,8 @@ typedef struct _pending_local_menu
     gint         move_timeout_id;
     gpointer     user_data;
     start_move_window_cb cb;
+    gint         x_root;
+    gint         y_root;
 } pending_local_menu;
 
 typedef struct _active_local_menu
@@ -75,16 +77,16 @@ typedef struct _local_menu_entry_activated_request_funcs
 } local_menu_entry_activated_request_funcs;
 
 gboolean
-gwd_window_should_have_local_menu (WnckWindow *win);
+gwd_window_should_have_local_menu (Window win);
 
 void
-force_local_menus_on (WnckWindow       *win,
+force_local_menus_on (Window win,
 		      MetaButtonLayout *layout);
 
 /* Button Down */
 void
 gwd_prepare_show_local_menu (start_move_window_cb start_move_window,
-			     gpointer user_data_start_move_window);
+			     gpointer user_data_start_move_window, gint x_root, gint y_root);
 
 /* Button Up */
 gboolean
@@ -114,6 +116,9 @@ local_menu_entry_activated_request (GDBusProxy *proxy,
 				    gchar      *signal_name,
 				    GVariant   *parameters,
 				    gpointer   user_data);
+
+void
+local_menu_process_motion (gint x_root, gint y_root);
 
 #ifdef __cplusplus
 }

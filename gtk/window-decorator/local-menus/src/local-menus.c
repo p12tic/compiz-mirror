@@ -27,6 +27,7 @@
 #include "local-menus.h"
 #include <gdk/gdk.h>
 #include <gdk/gdkx.h>
+#include <stdlib.h>
 
 #define GLOBAL 0
 #define LOCAL 1
@@ -40,7 +41,6 @@ GDBusProxy *global_lim_listener;
 
 
 #ifdef META_HAS_LOCAL_MENUS
-#error local menus are enabled
 static void
 gwd_menu_mode_changed (GSettings *settings,
 		       gchar     *key,
@@ -104,7 +104,7 @@ local_menu_allowed_on_window (Display *dpy, Window xid)
 }
 
 gboolean
-gwd_window_should_have_local_menu (WnckWindow *win)
+gwd_window_should_have_local_menu (Window win)
 {
 #ifdef META_HAS_LOCAL_MENUS
     const gchar * const *schemas = g_settings_list_schemas ();
@@ -122,7 +122,7 @@ gwd_window_should_have_local_menu (WnckWindow *win)
     }
 
     if (lim_settings && win)
-	return menu_mode == LOCAL && local_menu_allowed_on_window (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), wnck_window_get_xid (win));
+	return menu_mode == LOCAL && local_menu_allowed_on_window (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), win);
 #endif
 
     return FALSE;
@@ -228,6 +228,7 @@ gboolean
 gwd_move_window_instead (gpointer user_data)
 {
     (*pending_menu->cb) (pending_menu->user_data);
+    g_source_remove (pending_menu->move_timeout_id);
     g_free (pending_menu->user_data);
     g_free (pending_menu);
     pending_menu = NULL;
@@ -235,8 +236,21 @@ gwd_move_window_instead (gpointer user_data)
 }
 
 void
+local_menu_process_motion(gint x_root, gint y_root)
+{
+    if (!pending_menu)
+	return;
+
+    if (abs (pending_menu->x_root - x_root) > 4 &&
+	abs (pending_menu->y_root - y_root) > 4)
+	gwd_move_window_instead (pending_menu);
+}
+
+void
 gwd_prepare_show_local_menu (start_move_window_cb start_move_window,
-			     gpointer user_data_start_move_window)
+			     gpointer user_data_start_move_window,
+			     gint     x_root,
+			     gint     y_root)
 {
     if (pending_menu)
     {
@@ -249,7 +263,7 @@ gwd_prepare_show_local_menu (start_move_window_cb start_move_window,
     pending_menu = g_new0 (pending_local_menu, 1);
     pending_menu->cb = start_move_window;
     pending_menu->user_data = user_data_start_move_window;
-    pending_menu->move_timeout_id = g_timeout_add (120, gwd_move_window_instead, pending_menu);
+    pending_menu->move_timeout_id = g_timeout_add (150, gwd_move_window_instead, pending_menu);
 }
 
 #ifdef META_HAS_LOCAL_MENUS
@@ -363,7 +377,7 @@ gwd_show_local_menu (Display *xdisplay,
 }
 
 void
-force_local_menus_on (WnckWindow       *win,
+force_local_menus_on (Window           win,
 		      MetaButtonLayout *button_layout)
 {
 #ifdef META_HAS_LOCAL_MENUS

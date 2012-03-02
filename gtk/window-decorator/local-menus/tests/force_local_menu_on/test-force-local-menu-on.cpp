@@ -1,5 +1,6 @@
 #include "test-local-menu.h"
 #include <cstring>
+#include <gdk/gdkx.h>
 
 #define GLOBAL 0
 #define LOCAL 1
@@ -33,6 +34,17 @@ class GtkWindowDecoratorTestLocalMenuLayout :
 	    GtkWindowDecoratorTestLocalMenu::SetUp ();
 	    ::initializeMetaButtonLayout (&mLayout);
 	    g_settings_set_enum (getSettings (), "menu-mode", LOCAL);
+
+	    Window xid = getWindow ();
+	    Atom   ubuntu_appmenu_unique_name = XInternAtom (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), "_UBUNTU_APPMENU_UNIQUE_NAME", FALSE);
+	    Atom   utf8_string = XInternAtom (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), "UTF8_STRING", FALSE);
+	    const char   data[] = ":abcd1234";
+
+	    XChangeProperty (gdk_x11_display_get_xdisplay (gdk_display_get_default ()), xid, ubuntu_appmenu_unique_name, utf8_string, 8, PropModeReplace, (const unsigned char *) data, strlen (data));
+
+	    gdk_display_sync (gdk_display_get_default ());
+
+	    ASSERT_TRUE (gwd_window_should_have_local_menu (getWindow ()));
 	}
 
     private:

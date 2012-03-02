@@ -489,7 +489,7 @@ meta_get_decoration_geometry (decor_t		*d,
 	    button_layout->right_buttons[i] = META_BUTTON_FUNCTION_LAST;
     }
 
-    force_local_menus_on (d->win, button_layout);
+    force_local_menus_on (d->win ? wnck_window_get_xid (d->win) : 0, button_layout);
 
     *flags = 0;
 

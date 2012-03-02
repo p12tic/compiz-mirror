@@ -445,7 +445,7 @@ window_menu_button_event (WnckWindow *win,
 		    info->x_root = gtkwd_event->x_root;
 		    info->y_root = gtkwd_event->y_root;
 
-		    gwd_prepare_show_local_menu ((start_move_window_cb) move_resize_window_on_timeout, (gpointer) info);
+		    gwd_prepare_show_local_menu ((start_move_window_cb) move_resize_window_on_timeout, (gpointer) info, info->x_root, info->y_root);
 		}
 	    }
 	    break;
@@ -1037,6 +1037,7 @@ event_filter_func (GdkXEvent *gdkxevent,
 	xid = (gulong)
 	    g_hash_table_lookup (frame_table,
 				 GINT_TO_POINTER (xevent->xmotion.window));
+	local_menu_process_motion (xevent->xmotion.x_root, xevent->xmotion.y_root);
 	break;
     case PropertyNotify:
 	if (xevent->xproperty.atom == frame_input_window_atom)
