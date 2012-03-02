@@ -1026,6 +1026,7 @@ event_filter_func (GdkXEvent *gdkxevent,
 	xid = (gulong)
 	    g_hash_table_lookup (frame_table,
 				 GINT_TO_POINTER (xevent->xbutton.window));
+	XAllowEvents (gdk_x11_display_get_xdisplay (gdkdisplay), AsyncPointer, CurrentTime);
 	break;
     case EnterNotify:
     case LeaveNotify:
