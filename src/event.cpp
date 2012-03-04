@@ -1057,7 +1057,7 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
 	XAllowEvents (priv->dpy, mode, event->xkey.time);
     }
 
-    if (priv->grabs.empty () && event->type == KeyRelease)
+    if (priv->grabs.empty () && event->type == KeyPress)
     {
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
 	priv->tapGrab = false;
