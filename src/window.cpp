@@ -5343,7 +5343,7 @@ CompWindow::getIcon (int width,
 
     for (i = 0; i < priv->icons.size (); i++)
     {
-	const CompSize iconSize (*priv->icons[i]);
+	const CompSize iconSize = *priv->icons[i];
 
 	if ((int) iconSize.width () > width ||
 	    (int) iconSize.height () > height)
