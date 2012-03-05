@@ -2980,7 +2980,7 @@ CompScreenImpl::updateGrab (CompScreen::GrabHandle handle, Cursor cursor)
     XChangeActivePointerGrab (priv->dpy, POINTER_GRAB_MASK,
 			      cursor, CurrentTime);
 
-    ((cps::Grab *) handle)->cursor = cursor;
+    handle->cursor = cursor;
 }
 
 void
@@ -2997,7 +2997,7 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
     if (it != priv->grabs.end ())
     {
 	priv->grabs.erase (it);
-	delete (static_cast<cps::Grab *> (handle));
+	delete (handle);
     }
     if (!priv->grabs.empty ())
     {
