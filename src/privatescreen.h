@@ -542,8 +542,9 @@ struct PseudoNamespace
 // is stuck in a virtual base class until we complete the cleanup of PrivateScreen
 struct ScreenUser
 {
+protected:
     ScreenUser(CompScreen  *screen) : screen(screen) {}
-    CompScreen  *screen;
+    CompScreen  * const screen;
 };
 
 class PluginManager :
@@ -566,7 +567,10 @@ class PluginManager :
     private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
-    public:
+
+    protected:
+	// Here because it is referenced in updatePlugins(),
+	// not clear that it really belongs.
 	void *possibleTap;
 };
 
