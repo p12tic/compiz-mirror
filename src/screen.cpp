@@ -4339,7 +4339,7 @@ CompScreenImpl::desktopWindowCount ()
 unsigned int
 CompScreenImpl::activeNum () const
 {
-    return priv->activeNum;
+    return priv->getActiveNum();
 }
 
 CompOutput::vector &
@@ -4375,7 +4375,7 @@ CompScreenImpl::nDesktop ()
 CompActiveWindowHistory *
 CompScreenImpl::currentHistory ()
 {
-    return &priv->history[priv->currentHistory];
+    return priv->getCurrentHistory ();
 }
 
 bool
@@ -4929,7 +4929,7 @@ PrivateScreen::initDisplay (const char *name)
     foreach (CompWindow *w, windows)
     {
 	if (w->isViewable ())
-	    w->priv->activeNum = activeNum++;
+	    w->priv->activeNum = nextActiveNum ();
     }
 
     Window               focus;
