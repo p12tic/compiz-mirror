@@ -3247,6 +3247,37 @@ cps::GrabManager::addPassiveButtonGrab (CompAction::ButtonBinding &button)
     return true;
 }
 
+void cps::GrabManager::updatePassiveButtonGrabs(Window serverFrame)
+{
+    /* Grab only we have bindings on */
+    foreach (ButtonGrab &bind, buttonGrabs)
+    {
+	unsigned int mods = modHandler->virtualToRealModMask (bind.modifiers);
+
+	if (mods & CompNoMask)
+	    continue;
+
+	for (unsigned int ignore = 0;
+		 ignore <= modHandler->ignoredModMask (); ignore++)
+	{
+	    if (ignore & ~modHandler->ignoredModMask ())
+		continue;
+
+	    XGrabButton (screen->dpy(),
+			 bind.button,
+			 mods | ignore,
+			 serverFrame,
+			 false,
+			 ButtonPressMask | ButtonReleaseMask |
+			    ButtonMotionMask,
+			 GrabModeSync,
+			 GrabModeAsync,
+			 None,
+			 None);
+	}
+    }
+}
+
 void
 cps::GrabManager::removePassiveButtonGrab (CompAction::ButtonBinding &button)
 {

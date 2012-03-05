@@ -662,16 +662,16 @@ public:
     bool addPassiveButtonGrab (CompAction::ButtonBinding &button);
     void removePassiveButtonGrab (CompAction::ButtonBinding &button);
 
-    virtual void grabUngrabOneKey (unsigned int modifiers,
+    void grabUngrabOneKey (unsigned int modifiers,
 			   int          keycode,
 			   bool         grab);
-    virtual bool grabUngrabKeys (unsigned int modifiers,
+    bool grabUngrabKeys (unsigned int modifiers,
 			 int          keycode,
 			 bool         grab);
-    virtual void updatePassiveKeyGrabs ();
+    void updatePassiveKeyGrabs ();
+    void updatePassiveButtonGrabs(Window serverFrame);
 
 private:
-    friend class ::PrivateWindow;  // accesses buttonGrabs
     std::list<ButtonGrab> buttonGrabs;
     std::list<KeyGrab>    keyGrabs;
 };
