@@ -555,9 +555,18 @@ class PluginManager :
 
 	void updatePlugins ();
 
-    //private:
+	void setPlugins(CompOption::Value::Vector const& vList)
+	{
+	    plugin.set (CompOption::TypeString, vList);
+	}
+
+	bool isDirtyPluginList () const { return dirtyPluginList; }
+	void setDirtyPluginList () { dirtyPluginList = true; }
+
+    private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
+    public:
 	void *possibleTap;
 };
 
