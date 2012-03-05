@@ -5885,8 +5885,9 @@ PrivateWindow::updatePassiveButtonGrabs ()
 
     if (onlyActions)
     {
+	using compiz::private_screen::ButtonGrab;
 	/* Grab only we have bindings on */
-	foreach (PrivateScreen::ButtonGrab &bind, screen->priv->buttonGrabs)
+	foreach (ButtonGrab &bind, screen->priv->buttonGrabs)
 	{
 	    unsigned int mods = modHandler->virtualToRealModMask (bind.modifiers);
 
