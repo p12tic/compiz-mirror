@@ -3066,7 +3066,7 @@ CompScreenImpl::grabExist (const char *grab)
 bool
 CompScreenImpl::grabbed ()
 {
-    return priv->grabbed;
+    return grabNotified;
 }
 
 void
@@ -4446,7 +4446,8 @@ CompScreen::CompScreen ():
 }
 
 CompScreenImpl::CompScreenImpl () :
-    eventHandled (false)
+    eventHandled (false),
+    grabNotified (false)
 {
     CompPrivate p;
     CompOption::Value::Vector vList;
@@ -5092,8 +5093,7 @@ cps::EventManager::EventManager (CompScreen *screen) :
 cps::OrphanData::OrphanData() :
     edgeWindow (None),
     xdndWindow (None),
-    grabs (),
-    grabbed (false)
+    grabs ()
 {
 }
 

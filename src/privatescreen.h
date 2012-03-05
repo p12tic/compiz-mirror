@@ -350,6 +350,9 @@ class CompScreenImpl : public CompScreen
         virtual void _outputChangeNotify();
 
         bool 	eventHandled;
+        bool	grabNotified;   /* true once we receive a GrabNotify
+    				  on FocusOut and false on
+    				  UngrabNotify from FocusIn */
 };
 
 CompPlugin::VTable * getCoreVTable ();
@@ -660,9 +663,6 @@ struct OrphanData : boost::noncopyable
     Window	edgeWindow;
     Window	xdndWindow;
     std::list<Grab *> grabs;
-    bool	grabbed;   /* true once we recieve a GrabNotify
-			      on FocusOut and false on
-			      UngrabNotify from FocusIn */
 };
 
 class GrabManager : boost::noncopyable,
