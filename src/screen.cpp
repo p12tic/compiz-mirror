@@ -3070,38 +3070,38 @@ CompScreenImpl::grabbed ()
 }
 
 void
-PrivateScreen::grabUngrabOneKey (unsigned int modifiers,
+cps::GrabManager::grabUngrabOneKey (unsigned int modifiers,
 				 int          keycode,
 				 bool         grab)
 {
     if (grab)
     {
-	XGrabKey (dpy,
+	XGrabKey (screen->dpy(),
 		  keycode,
 		  modifiers,
-		  root,
+		  screen->root(),
 		  true,
 		  GrabModeAsync,
 		  GrabModeAsync);
     }
     else
     {
-	XUngrabKey (dpy,
+	XUngrabKey (screen->dpy(),
 		    keycode,
 		    modifiers,
-		    root);
+		    screen->root());
     }
 }
 
 bool
-PrivateScreen::grabUngrabKeys (unsigned int modifiers,
+cps::GrabManager::grabUngrabKeys (unsigned int modifiers,
 			       int          keycode,
 			       bool         grab)
 {
     int             mod, k;
     unsigned int    ignore;
 
-    CompScreen::checkForError (dpy);
+    CompScreen::checkForError (screen->dpy());
 
     for (ignore = 0; ignore <= modHandler->ignoredModMask (); ignore++)
     {
@@ -3134,7 +3134,7 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
 	    }
 	}
 
-	if (CompScreen::checkForError (dpy))
+	if (CompScreen::checkForError (screen->dpy()))
 	    return false;
     }
 
@@ -3203,11 +3203,11 @@ cps::GrabManager::removePassiveKeyGrab (CompAction::KeyBinding &key)
 }
 
 void
-PrivateScreen::updatePassiveKeyGrabs ()
+cps::GrabManager::updatePassiveKeyGrabs ()
 {
     std::list<cps::KeyGrab>::iterator it;
 
-    XUngrabKey (dpy, AnyKey, AnyModifier, root);
+    XUngrabKey (screen->dpy(), AnyKey, AnyModifier, screen->root());
 
     for (it = keyGrabs.begin (); it != keyGrabs.end (); it++)
     {

@@ -664,13 +664,14 @@ public:
 
     virtual void grabUngrabOneKey (unsigned int modifiers,
 			   int          keycode,
-			   bool         grab) = 0;
+			   bool         grab);
     virtual bool grabUngrabKeys (unsigned int modifiers,
 			 int          keycode,
-			 bool         grab) = 0;
-    virtual void updatePassiveKeyGrabs () = 0;
+			 bool         grab);
+    virtual void updatePassiveKeyGrabs ();
 
-    //private:
+private:
+    friend class ::PrivateWindow;  // accesses buttonGrabs
     std::list<ButtonGrab> buttonGrabs;
     std::list<KeyGrab>    keyGrabs;
 };
@@ -800,17 +801,6 @@ class PrivateScreen :
 	void setSupportingWmCheck ();
 
 	void getDesktopHints ();
-
-	void grabUngrabOneKey (unsigned int modifiers,
-			       int          keycode,
-			       bool         grab);
-
-
-	bool grabUngrabKeys (unsigned int modifiers,
-			     int          keycode,
-			     bool         grab);
-
-	void updatePassiveKeyGrabs ();
 
 	CompRect computeWorkareaForBox (const CompRect &box);
 

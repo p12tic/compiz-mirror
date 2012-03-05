@@ -5859,7 +5859,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 	return;
 
     /* Ungrab everything */
-    XUngrabButton (screen->priv->dpy, AnyButton, AnyModifier, frame);
+    XUngrabButton (screen->dpy(), AnyButton, AnyModifier, frame);
 
     /* We don't need the full grab in the following cases:
      * - This window has the focus and either
@@ -5904,7 +5904,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 		if (ignore & ~modHandler->ignoredModMask ())
 		    continue;
 
-		XGrabButton (screen->priv->dpy,
+		XGrabButton (screen->dpy(),
 			     bind.button,
 			     mods | ignore,
 			     serverFrame,
