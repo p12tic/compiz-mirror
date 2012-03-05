@@ -302,7 +302,7 @@ TEST(privatescreen_PluginManagerTest, create_and_destroy)
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps;
+    cps::PluginManager ps(&comp_screen);
 }
 
 TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
@@ -311,7 +311,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps;
+    cps::PluginManager ps(&comp_screen);
 
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
@@ -331,7 +331,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps;
+    cps::PluginManager ps(&comp_screen);
 
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;

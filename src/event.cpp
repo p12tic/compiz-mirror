@@ -128,6 +128,9 @@ isBound (CompOption             &option,
 
     *action = &option.value ().action ();
 
+    if (action && !(*action)->active ())
+	return false;
+
     return true;
 }
 
@@ -136,16 +139,18 @@ PrivateScreen::triggerPress (CompAction         *action,
                              CompAction::State   state,
                              CompOption::Vector &arguments)
 {
+    bool actionEventHandled = false;
+
     if (state == CompAction::StateInitKey &&
         grabs.empty () &&
         !action->terminate ().empty ())
     {
         possibleTap = action;
         int err = XGrabKeyboard (dpy, grabWindow, True,
-                                 GrabModeAsync, GrabModeSync, CurrentTime);
+                                 GrabModeAsync, GrabModeSync, arguments[7].value ().i ());
         if (err == GrabSuccess)
         {
-            XAllowEvents (dpy, SyncKeyboard, CurrentTime);
+	    XAllowEvents (dpy, SyncKeyboard, CurrentTime);
             tapGrab = true;
         }
     }
@@ -158,9 +163,9 @@ PrivateScreen::triggerPress (CompAction         *action,
             action->setState (action->state () | CompAction::StateTermKey);
     }
     else if (action->initiate () (action, state, arguments))
-        return true;
+        actionEventHandled = true;
 
-    return false;
+    return actionEventHandled;
 }
 
 bool
@@ -1050,18 +1055,23 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
      * Critical event handling that cannot be overridden by plugins
      */
 
-    if (priv->tapGrab &&
-        (event->type == KeyPress || event->type == KeyRelease))
+    bool keyEvent = (event->type == KeyPress || event->type == KeyRelease);
+
+    /* Always either replay the keyboard or consume the key
+     * event on keypresses */
+    if (keyEvent)
     {
 	int mode = priv->eventHandled ? AsyncKeyboard : ReplayKeyboard;
 	XAllowEvents (priv->dpy, mode, event->xkey.time);
     }
 
-    if (priv->grabs.empty () && event->type == KeyRelease)
+    if (priv->grabs.empty () && event->type == KeyPress)
     {
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
 	priv->tapGrab = false;
     }
+
+    XFlush (priv->dpy);
 }
 
 void

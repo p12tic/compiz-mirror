@@ -3522,6 +3522,14 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	}
 	valueMask &= ~(CWSibling | CWStackMode);
 
+	/* If the frame has changed position (eg, serverInput.top
+	 * or serverInput.left have changed) then we also need to
+	 * update the client and wrapper position */
+	if (!(valueMask & CWX))
+	    valueMask |= frameValueMask & CWX;
+	if (!(valueMask & CWY))
+	    valueMask |= frameValueMask & CWY;
+
 	if (valueMask)
 	{
 	    xwc->x = serverInput.left;
@@ -5881,8 +5889,9 @@ PrivateWindow::updatePassiveButtonGrabs ()
 
     if (onlyActions)
     {
+	using compiz::private_screen::ButtonGrab;
 	/* Grab only we have bindings on */
-	foreach (PrivateScreen::ButtonGrab &bind, screen->priv->buttonGrabs)
+	foreach (ButtonGrab &bind, screen->priv->buttonGrabs)
 	{
 	    unsigned int mods = modHandler->virtualToRealModMask (bind.modifiers);
 

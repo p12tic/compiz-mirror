@@ -2039,7 +2039,7 @@ PrivateScreen::updateStartupFeedback ()
 #define STARTUP_TIMEOUT_DELAY 15000
 
 bool
-PrivateScreen::handleStartupSequenceTimeout ()
+cps::StartupSequence::handleStartupSequenceTimeout ()
 {
     struct timeval	now, active;
     double		elapsed;
@@ -2063,7 +2063,7 @@ PrivateScreen::handleStartupSequenceTimeout ()
 }
 
 void
-PrivateScreen::addSequence (SnStartupSequence *sequence)
+cps::StartupSequence::addSequence (SnStartupSequence *sequence)
 {
     CompStartupSequence *s;
 
@@ -2086,7 +2086,7 @@ PrivateScreen::addSequence (SnStartupSequence *sequence)
 }
 
 void
-PrivateScreen::removeSequence (SnStartupSequence *sequence)
+cps::StartupSequence::removeSequence (SnStartupSequence *sequence)
 {
     CompStartupSequence *s = NULL;
 
@@ -2117,7 +2117,7 @@ PrivateScreen::removeSequence (SnStartupSequence *sequence)
 }
 
 void
-PrivateScreen::removeAllSequences ()
+cps::StartupSequence::removeAllSequences ()
 {
     foreach (CompStartupSequence *s, startupSequences)
     {
@@ -2962,7 +2962,7 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 				  cursor, CurrentTime);
     }
 
-    PrivateScreen::Grab *grab = new PrivateScreen::Grab ();
+    cps::Grab *grab = new cps::Grab ();
     grab->cursor = cursor;
     grab->name   = name;
 
@@ -2980,7 +2980,7 @@ CompScreenImpl::updateGrab (CompScreen::GrabHandle handle, Cursor cursor)
     XChangeActivePointerGrab (priv->dpy, POINTER_GRAB_MASK,
 			      cursor, CurrentTime);
 
-    ((PrivateScreen::Grab *) handle)->cursor = cursor;
+    ((cps::Grab *) handle)->cursor = cursor;
 }
 
 void
@@ -2990,14 +2990,14 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
     if (!handle)
 	return;
 
-    std::list<PrivateScreen::Grab *>::iterator it;
+    std::list<cps::Grab *>::iterator it;
 
     it = std::find (priv->grabs.begin (), priv->grabs.end (), handle);
 
     if (it != priv->grabs.end ())
     {
 	priv->grabs.erase (it);
-	delete (static_cast<PrivateScreen::Grab *> (handle));
+	delete (static_cast<cps::Grab *> (handle));
     }
     if (!priv->grabs.empty ())
     {
@@ -3028,7 +3028,7 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
     va_list    ap;
     const char *name;
 
-    std::list<PrivateScreen::Grab *>::iterator it;
+    std::list<cps::Grab *>::iterator it;
 
     for (it = priv->grabs.begin (); it != priv->grabs.end (); it++)
     {
@@ -3055,7 +3055,7 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
 bool
 CompScreenImpl::grabExist (const char *grab)
 {
-    foreach (PrivateScreen::Grab* g, priv->grabs)
+    foreach (cps::Grab* g, priv->grabs)
     {
 	if (strcmp (g->name, grab) == 0)
 	    return true;
@@ -3142,7 +3142,7 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
 }
 
 bool
-PrivateScreen::addPassiveKeyGrab (CompAction::KeyBinding &key)
+cps::GrabManager::addPassiveKeyGrab (CompAction::KeyBinding &key)
 {
     KeyGrab                      newKeyGrab;
     unsigned int                 mask;
@@ -3178,7 +3178,7 @@ PrivateScreen::addPassiveKeyGrab (CompAction::KeyBinding &key)
 }
 
 void
-PrivateScreen::removePassiveKeyGrab (CompAction::KeyBinding &key)
+cps::GrabManager::removePassiveKeyGrab (CompAction::KeyBinding &key)
 {
     unsigned int                 mask;
     std::list<KeyGrab>::iterator it;
@@ -3205,7 +3205,7 @@ PrivateScreen::removePassiveKeyGrab (CompAction::KeyBinding &key)
 void
 PrivateScreen::updatePassiveKeyGrabs ()
 {
-    std::list<KeyGrab>::iterator it;
+    std::list<cps::KeyGrab>::iterator it;
 
     XUngrabKey (dpy, AnyKey, AnyModifier, root);
 
@@ -3220,7 +3220,7 @@ PrivateScreen::updatePassiveKeyGrabs ()
 }
 
 bool
-PrivateScreen::addPassiveButtonGrab (CompAction::ButtonBinding &button)
+cps::GrabManager::addPassiveButtonGrab (CompAction::ButtonBinding &button)
 {
     ButtonGrab                      newButtonGrab;
     std::list<ButtonGrab>::iterator it;
@@ -3248,7 +3248,7 @@ PrivateScreen::addPassiveButtonGrab (CompAction::ButtonBinding &button)
 }
 
 void
-PrivateScreen::removePassiveButtonGrab (CompAction::ButtonBinding &button)
+cps::GrabManager::removePassiveButtonGrab (CompAction::ButtonBinding &button)
 {
     std::list<ButtonGrab>::iterator it;
 
@@ -4092,7 +4092,7 @@ CompScreenImpl::updateDefaultIcon ()
 }
 
 void
-PrivateScreen::setCurrentActiveWindowHistory (int x, int y)
+cps::History::setCurrentActiveWindowHistory (int x, int y)
 {
     int	i, min = 0;
 
@@ -4119,7 +4119,7 @@ PrivateScreen::setCurrentActiveWindowHistory (int x, int y)
 }
 
 void
-PrivateScreen::addToCurrentActiveWindowHistory (Window id)
+cps::History::addToCurrentActiveWindowHistory (Window id)
 {
     CompActiveWindowHistory *history = &this->history[currentHistory];
     Window		    tmp, next = id;
@@ -4961,33 +4961,43 @@ CompScreenImpl::~CompScreenImpl ()
     screen = NULL;
 }
 
+cps::GrabManager::GrabManager (CompScreen *screen) :
+    ScreenUser(screen),
+    buttonGrabs (),
+    keyGrabs ()
+{
+}
+
+cps::ViewPort::ViewPort() :
+    vp (0, 0),
+    vpSize (1, 1)
+{
+}
+
+cps::StartupSequence::StartupSequence() :
+    startupSequences (),
+    startupSequenceTimer ()
+{
+}
+
 PrivateScreen::PrivateScreen (CompScreen *screen) :
+    ScreenUser (screen),
     EventManager (screen),
+    GrabManager (screen),
     screenInfo (0),
     snDisplay(0),
     windows (),
-    vp (0, 0),
-    vpSize (1, 1),
     nDesktop (1),
     currentDesktop (0),
     root (None),
     grabWindow (None),
-    activeNum (1),
     outputDevs (0),
     currentOutputDev (0),
     hasOverlappingOutputs (false),
-    currentHistory (0),
     snContext (0),
-    startupSequences (0),
-    startupSequenceTimer (),
-    buttonGrabs (0),
-    keyGrabs (0),
-    grabs (0),
-    grabbed (false),
     showingDesktopMask (0),
     desktopHintData (0),
     desktopHintSize (0),
-    eventHandled (false),
     initialized (false)
 {
     pingTimer.setCallback (
@@ -4996,7 +5006,12 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     startupSequenceTimer.setCallback (
 	boost::bind (&PrivateScreen::handleStartupSequenceTimeout, this));
     startupSequenceTimer.setTimes (1000, 1500);
+}
 
+cps::History::History() :
+    currentHistory(0),
+    activeNum (1)
+{
     memset (&history[currentHistory], 0, sizeof history[currentHistory]);
 }
 
@@ -5013,7 +5028,8 @@ cps::WindowManager::WindowManager() :
 {
 }
 
-cps::PluginManager::PluginManager() :
+cps::PluginManager::PluginManager(CompScreen *screen) :
+    ScreenUser (screen),
     CoreOptions (false),
     plugin (),
     dirtyPluginList (true),
@@ -5022,6 +5038,8 @@ cps::PluginManager::PluginManager() :
 }
 
 cps::EventManager::EventManager (CompScreen *screen) :
+    ScreenUser (screen),
+    PluginManager (screen),
     source(0),
     timeout(0),
     fileWatch (0),
@@ -5029,7 +5047,6 @@ cps::EventManager::EventManager (CompScreen *screen) :
     watchFds (0),
     lastWatchFdHandle (1),
     edgeDelayTimer (),
-    screen (screen),
     desktopWindowCount (0),
     mapNum (1),
     defaultIcon (0),
@@ -5042,7 +5059,10 @@ cps::EventManager::EventManager (CompScreen *screen) :
 
 cps::OrphanData::OrphanData() :
     edgeWindow (None),
-    xdndWindow (None)
+    xdndWindow (None),
+    eventHandled (false),
+    grabs (),
+    grabbed (false)
 {
 }
 
