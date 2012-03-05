@@ -245,7 +245,6 @@ public:
     virtual void viewportForGeometry (const CompWindow::Geometry &gm,
 				  CompPoint                   &viewport) = 0;
 
-    virtual void removeFromCreatedWindows(CoreWindow *cw) = 0;
     virtual void addToDestroyedWindows(CompWindow * cw) = 0;
     virtual const CompRect & workArea () const = 0;
     virtual void removeAction (CompAction *action) = 0;

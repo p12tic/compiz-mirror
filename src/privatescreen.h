@@ -265,7 +265,6 @@ class CompScreenImpl : public CompScreen
 	virtual bool grabsEmpty() const;
 	virtual void sizePluginClasses(unsigned int size);
 	virtual void setWindowState (unsigned int state, Window id);
-	virtual void removeFromCreatedWindows(CoreWindow *cw);
 	virtual void addToDestroyedWindows(CompWindow * cw);
 	virtual void processEvents ();
 	virtual void alwaysHandleEvent (XEvent *event);
@@ -898,7 +897,6 @@ class PrivateScreen :
 	KeyCode escapeKeyCode;
 	KeyCode returnKeyCode;
 
-	std::list <CoreWindow *> createdWindows;
 	CompWindowList windows;
 
 	Colormap colormap;

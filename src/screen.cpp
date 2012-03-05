@@ -106,12 +106,6 @@ void CompScreenImpl::setWindowState (unsigned int state, Window id)
     priv->setWindowState (state, id);
 }
 
-void
-CompScreenImpl::removeFromCreatedWindows(CoreWindow *cw)
-{
-    priv->createdWindows.remove (cw);
-}
-
 void CompScreenImpl::addToDestroyedWindows(CompWindow * cw)
 {
     priv->destroyedWindows.push_back (cw);
@@ -4885,10 +4879,7 @@ PrivateScreen::initDisplay (const char *name)
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
 	    setDefaultWindowAttributes(&attrib);
 
-	CoreWindow *cw = new CoreWindow (children[i]);
-	cw->manage (i ? children[i - 1] : 0, attrib);
-	createdWindows.remove (cw);
-	delete cw;
+	PrivateWindow::createCompWindow (i ? children[i - 1] : 0, attrib, children[i]);
     }
 
     /* enforce restack on all windows
