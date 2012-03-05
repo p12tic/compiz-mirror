@@ -604,13 +604,18 @@ update_window_decoration_icon (WnckWindow *win)
 gboolean
 update_window_decoration_size (WnckWindow *win)
 {
-    decor_t           *d = g_object_get_data (G_OBJECT (win), "decor");
+    decor_t           *d;
     GdkPixmap         *pixmap, *buffer_pixmap = NULL;
     Picture           picture;
     gint              width, height;
     gint              x, y, w, h, name_width;
     Display           *xdisplay;
     XRenderPictFormat *format;
+
+    if (win == NULL)
+	return FALSE;
+
+    d = g_object_get_data (G_OBJECT (win), "decor");
 
     xdisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
 
