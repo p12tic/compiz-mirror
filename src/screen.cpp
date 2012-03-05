@@ -4445,7 +4445,8 @@ CompScreen::CompScreen ():
 {
 }
 
-CompScreenImpl::CompScreenImpl ()
+CompScreenImpl::CompScreenImpl () :
+    eventHandled (false)
 {
     CompPrivate p;
     CompOption::Value::Vector vList;
@@ -5091,7 +5092,6 @@ cps::EventManager::EventManager (CompScreen *screen) :
 cps::OrphanData::OrphanData() :
     edgeWindow (None),
     xdndWindow (None),
-    eventHandled (false),
     grabs (),
     grabbed (false)
 {
