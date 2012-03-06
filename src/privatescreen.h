@@ -636,14 +636,6 @@ private:
 
 public:
 
-	int          desktopWindowCount;
-	unsigned int mapNum;
-
-
-	std::list<CompGroup *> groups;
-
-	CompIcon *defaultIcon;
-
 	bool  tapGrab;
 	std::list<Grab *> grabs;
 	Window            grabWindow;
@@ -675,6 +667,18 @@ class Grab {
     private:
 	Cursor     cursor;
 	const char *name;
+};
+
+// data members that don't belong (these probably belong
+// in CompScreenImpl as PrivateScreen doesn't use them)
+struct OrphanData : boost::noncopyable
+{
+    OrphanData();
+    ~OrphanData();
+
+    int          desktopWindowCount;
+    unsigned int mapNum;
+    CompIcon *defaultIcon;
 };
 
 class GrabManager : boost::noncopyable,
@@ -759,6 +763,7 @@ class PrivateScreen :
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
+    public compiz::private_screen::OrphanData,
     public compiz::private_screen::PseudoNamespace
 {
 
