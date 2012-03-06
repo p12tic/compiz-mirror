@@ -599,6 +599,11 @@ public:
 	void startEventLoop();
 	void quit() { mainloop->quit(); }
 
+	CompWatchFdHandle addWatchFd (int             fd,
+				short int       events,
+				FdWatchCallBack callBack);
+	void removeWatchFd (CompWatchFdHandle handle);
+
 private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
@@ -610,15 +615,14 @@ private:
 	CompSignalSource * sighupSource;
 	CompSignalSource * sigtermSource;
 	CompSignalSource * sigintSource;
+	Glib::RefPtr <Glib::MainContext> ctx;
+	std::list< CompWatchFd * > watchFds;
+	CompWatchFdHandle        lastWatchFdHandle;
 
 public:
-	Glib::RefPtr <Glib::MainContext> ctx;
 
 	CompFileWatchList   fileWatch;
 	CompFileWatchHandle lastFileWatchHandle;
-
-	std::list< CompWatchFd * > watchFds;
-	CompWatchFdHandle        lastWatchFdHandle;
 
 	CompTimer    pingTimer;
 

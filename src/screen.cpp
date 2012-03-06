@@ -250,6 +250,14 @@ CompScreenImpl::addWatchFd (int             fd,
 			short int       events,
 			FdWatchCallBack callBack)
 {
+    return priv->addWatchFd (fd, events, callBack);
+}
+
+CompWatchFdHandle
+cps::EventManager::addWatchFd (int             fd,
+			short int       events,
+			FdWatchCallBack callBack)
+{
     Glib::IOCondition gEvents;
     
     memset (&gEvents, 0, sizeof (Glib::IOCondition));
@@ -267,16 +275,16 @@ CompScreenImpl::addWatchFd (int             fd,
 
     CompWatchFd *watchFd = CompWatchFd::create (fd, gEvents, callBack);
 
-    watchFd->attach (priv->ctx);
+    watchFd->attach (ctx);
 
     if (!watchFd)
 	return 0;
-    watchFd->mHandle   = priv->lastWatchFdHandle++;
+    watchFd->mHandle   = lastWatchFdHandle++;
 
-    if (priv->lastWatchFdHandle == MAXSHORT)
-	priv->lastWatchFdHandle = 1;
+    if (lastWatchFdHandle == MAXSHORT)
+	lastWatchFdHandle = 1;
 
-    priv->watchFds.push_front (watchFd);
+    watchFds.push_front (watchFd);
 
     return watchFd->mHandle;
 }
@@ -284,17 +292,23 @@ CompScreenImpl::addWatchFd (int             fd,
 void
 CompScreenImpl::removeWatchFd (CompWatchFdHandle handle)
 {
+    priv->removeWatchFd (handle);
+}
+
+void
+cps::EventManager::removeWatchFd (CompWatchFdHandle handle)
+{
     std::list<CompWatchFd * >::iterator it;
     CompWatchFd *			w;
 
-    for (it = priv->watchFds.begin();
-	 it != priv->watchFds.end (); it++)
+    for (it = watchFds.begin();
+	 it != watchFds.end (); it++)
     {
 	if ((*it)->mHandle == handle)
 	    break;
     }
 
-    if (it == priv->watchFds.end ())
+    if (it == watchFds.end ())
 	return;
 
     w = (*it);
@@ -306,7 +320,7 @@ CompScreenImpl::removeWatchFd (CompWatchFdHandle handle)
     }
 
     delete w;
-    priv->watchFds.erase (it);
+    watchFds.erase (it);
 }
 
 void
@@ -5078,10 +5092,10 @@ cps::EventManager::EventManager (CompScreen *screen) :
     PluginManager (screen),
     source(0),
     timeout(0),
-    fileWatch (0),
-    lastFileWatchHandle (1),
     watchFds (0),
     lastWatchFdHandle (1),
+    fileWatch (0),
+    lastFileWatchHandle (1),
     edgeDelayTimer (),
     desktopWindowCount (0),
     mapNum (1),
