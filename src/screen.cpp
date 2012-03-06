@@ -157,7 +157,8 @@ CompScreenImpl::eventLoop ()
     priv->startEventLoop ();
 }
 
-void cps::EventManager::startEventLoop()
+void
+cps::EventManager::startEventLoop()
 {
     source = CompEventSource::create ();
     timeout = CompTimeoutSource::create (ctx);
@@ -174,50 +175,78 @@ CompScreenImpl::addFileWatch (const char        *path,
 			  int               mask,
 			  FileWatchCallBack callBack)
 {
-    CompFileWatch *fileWatch = new CompFileWatch ();
+    CompFileWatch *fileWatch = priv->addFileWatch (path, mask, callBack);
+
     if (!fileWatch)
 	return 0;
-
-    fileWatch->path	= path;
-    fileWatch->mask	= mask;
-    fileWatch->callBack = callBack;
-    fileWatch->handle   = priv->lastFileWatchHandle++;
-
-    if (priv->lastFileWatchHandle == MAXSHORT)
-	priv->lastFileWatchHandle = 1;
-
-    priv->fileWatch.push_front (fileWatch);
 
     fileWatchAdded (fileWatch);
 
     return fileWatch->handle;
 }
 
+CompFileWatch*
+cps::EventManager::addFileWatch (
+    const char        *path,
+    int               mask,
+    FileWatchCallBack callBack)
+{
+    CompFileWatch *fw = new CompFileWatch ();
+    if (!fw)
+	return 0;
+
+    fw->path	= path;
+    fw->mask	= mask;
+    fw->callBack = callBack;
+    fw->handle   = lastFileWatchHandle++;
+
+    if (lastFileWatchHandle == MAXSHORT)
+	lastFileWatchHandle = 1;
+
+    fileWatch.push_front (fw);
+
+    return fw;
+}
+
 void
 CompScreenImpl::removeFileWatch (CompFileWatchHandle handle)
 {
-    std::list<CompFileWatch *>::iterator it;
-    CompFileWatch                        *w;
+    if (CompFileWatch* w = priv->removeFileWatch (handle))
+    {
+	fileWatchRemoved (w);
 
-    for (it = priv->fileWatch.begin (); it != priv->fileWatch.end (); it++)
+	delete w;
+    }
+}
+
+CompFileWatch*
+cps::EventManager::removeFileWatch (CompFileWatchHandle handle)
+{
+    std::list<CompFileWatch *>::iterator it;
+
+    for (it = fileWatch.begin (); it != fileWatch.end (); it++)
 	if ((*it)->handle == handle)
 	    break;
 
-    if (it == priv->fileWatch.end ())
-	return;
+    if (it == fileWatch.end ())
+	return 0;
 
-    w = (*it);
-    priv->fileWatch.erase (it);
+    CompFileWatch* w = (*it);
+    fileWatch.erase (it);
 
-    fileWatchRemoved (w);
-
-    delete w;
+    return w;
 }
 
 const CompFileWatchList &
 CompScreenImpl::getFileWatches () const
 {
-    return priv->fileWatch;
+    return priv->getFileWatches ();
+}
+
+const CompFileWatchList &
+cps::EventManager::getFileWatches () const
+{
+    return fileWatch;
 }
 
 CompWatchFd::CompWatchFd (int		    fd,
@@ -5092,10 +5121,10 @@ cps::EventManager::EventManager (CompScreen *screen) :
     PluginManager (screen),
     source(0),
     timeout(0),
-    watchFds (0),
-    lastWatchFdHandle (1),
     fileWatch (0),
     lastFileWatchHandle (1),
+    watchFds (0),
+    lastWatchFdHandle (1),
     edgeDelayTimer (),
     desktopWindowCount (0),
     mapNum (1),
