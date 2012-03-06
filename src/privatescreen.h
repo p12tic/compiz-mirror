@@ -596,9 +596,14 @@ public:
 	                     CompAction::State   state,
 	                     CompOption::Vector &arguments);
 
+	void run() { mainloop->run(); }
+	void quit() { mainloop->quit(); }
+
+private:
+	Glib::RefPtr <Glib::MainLoop>  mainloop;
+
 public:
 
-	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
 	/* We cannot use RefPtrs. See
 	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
