@@ -128,7 +128,7 @@ isBound (CompOption             &option,
 
     *action = &option.value ().action ();
 
-    if (action && !(*action)->active ())
+    if (*action && !(*action)->active ())
 	return false;
 
     return true;
@@ -141,9 +141,7 @@ PrivateScreen::triggerPress (CompAction         *action,
 {
     bool actionEventHandled = false;
 
-    if (state == CompAction::StateInitKey &&
-        grabs.empty () &&
-        !action->terminate ().empty ())
+    if (state == CompAction::StateInitKey && grabs.empty ())
     {
         possibleTap = action;
         int err = XGrabKeyboard (dpy, grabWindow, True,
@@ -152,6 +150,16 @@ PrivateScreen::triggerPress (CompAction         *action,
         {
 	    XAllowEvents (dpy, SyncKeyboard, CurrentTime);
             tapGrab = true;
+        }
+        else
+        {
+            possibleTap = NULL;
+            /*
+             * Don't trigger any compiz actions if some other app has the
+             * keyboard grabbed (like a VM or locked screensaver). LP: #806255
+             */
+            if (err == AlreadyGrabbed)
+                return false;
         }
     }
 
@@ -1070,8 +1078,6 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
 	priv->tapGrab = false;
     }
-
-    XFlush (priv->dpy);
 }
 
 void
