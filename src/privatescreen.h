@@ -636,9 +636,6 @@ private:
 
 public:
 
-	CompTimer               edgeDelayTimer;
-	CompDelayedEdgeSettings edgeDelaySettings;
-
 	int          desktopWindowCount;
 	unsigned int mapNum;
 
@@ -959,6 +956,8 @@ class PrivateScreen :
 	virtual bool initDisplay (const char *name);
 
 	CompTimer    pingTimer;
+	CompTimer               edgeDelayTimer;
+	CompDelayedEdgeSettings edgeDelaySettings;
 };
 
 class CompManager
