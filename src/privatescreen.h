@@ -548,8 +548,11 @@ struct PseudoNamespace
 struct ScreenUser
 {
 protected:
-    ScreenUser(CompScreen  *screen) : screen(screen) {}
+    ScreenUser(CompScreen  *screen) : screen(screen), possibleTap(0) {}
     CompScreen  * const screen;
+    // Here because it is referenced in PluginManager::updatePlugins(),
+    // and GrabManager::triggerPress not clear where it really belongs.
+    void *possibleTap;
 };
 
 class PluginManager :
@@ -572,11 +575,6 @@ class PluginManager :
     private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
-
-    protected:
-	// Here because it is referenced in updatePlugins(),
-	// not clear that it really belongs.
-	void *possibleTap;
 };
 
 class EventManager :
@@ -591,6 +589,12 @@ public:
 	bool init (const char *name);
 
 	void handleSignal (int signum);
+	bool triggerPress   (CompAction         *action,
+			     CompAction::State   state,
+			     CompOption::Vector &arguments);
+	bool triggerRelease (CompAction         *action,
+	                     CompAction::State   state,
+	                     CompOption::Vector &arguments);
 
 public:
 
@@ -626,6 +630,10 @@ public:
 	CompIcon *defaultIcon;
 
 	bool  tapGrab;
+	std::list<Grab *> grabs;
+	Window            grabWindow;
+	Window	edgeWindow;
+	Window	xdndWindow;
 
     private:
 	virtual bool initDisplay (const char *name);
@@ -652,17 +660,6 @@ class Grab {
     private:
 	Cursor     cursor;
 	const char *name;
-};
-
-// data members that don't belong (these probably belong
-// in CompScreenImpl as PrivateScreen doesn't use them)
-struct OrphanData : boost::noncopyable
-{
-    OrphanData();
-
-    Window	edgeWindow;
-    Window	xdndWindow;
-    std::list<Grab *> grabs;
 };
 
 class GrabManager : boost::noncopyable,
@@ -747,7 +744,6 @@ class PrivateScreen :
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
-    public compiz::private_screen::OrphanData,
     public compiz::private_screen::PseudoNamespace
 {
 
@@ -759,13 +755,6 @@ class PrivateScreen :
 
 	std::list <XEvent> queueEvents ();
 	void processEvents ();
-
-	bool triggerPress   (CompAction         *action,
-	                     CompAction::State   state,
-	                     CompOption::Vector &arguments);
-	bool triggerRelease (CompAction         *action,
-	                     CompAction::State   state,
-	                     CompOption::Vector &arguments);
 
 	bool triggerButtonPressBindings (CompOption::Vector &options,
 					 XButtonEvent       *event,
@@ -921,7 +910,6 @@ class PrivateScreen :
 	Window	      root;
 
 	XWindowAttributes attrib;
-	Window            grabWindow;
 
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;

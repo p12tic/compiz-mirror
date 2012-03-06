@@ -5023,7 +5023,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     nDesktop (1),
     currentDesktop (0),
     root (None),
-    grabWindow (None),
     outputDevs (0),
     currentOutputDev (0),
     hasOverlappingOutputs (false),
@@ -5065,8 +5064,7 @@ cps::PluginManager::PluginManager(CompScreen *screen) :
     ScreenUser (screen),
     CoreOptions (false),
     plugin (),
-    dirtyPluginList (true),
-    possibleTap (NULL)
+    dirtyPluginList (true)
 {
 }
 
@@ -5083,18 +5081,15 @@ cps::EventManager::EventManager (CompScreen *screen) :
     desktopWindowCount (0),
     mapNum (1),
     defaultIcon (0),
-    tapGrab (false)
+    tapGrab (false),
+    grabs (),
+    grabWindow (None),
+    edgeWindow (None),
+    xdndWindow (None)
 {
     ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
     TimeoutHandler::SetDefault (dTimeoutHandler);
-}
-
-cps::OrphanData::OrphanData() :
-    edgeWindow (None),
-    xdndWindow (None),
-    grabs ()
-{
 }
 
 cps::EventManager::~EventManager ()

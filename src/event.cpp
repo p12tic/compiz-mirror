@@ -41,6 +41,9 @@
 #include "privatewindow.h"
 #include "privatestackdebugger.h"
 
+namespace cps = compiz::private_screen;
+
+
 bool
 PrivateWindow::handleSyncAlarm ()
 {
@@ -135,7 +138,7 @@ isBound (CompOption             &option,
 }
 
 bool
-PrivateScreen::triggerPress (CompAction         *action,
+cps::EventManager::triggerPress (CompAction         *action,
                              CompAction::State   state,
                              CompOption::Vector &arguments)
 {
@@ -146,11 +149,11 @@ PrivateScreen::triggerPress (CompAction         *action,
         !action->terminate ().empty ())
     {
         possibleTap = action;
-        int err = XGrabKeyboard (dpy, grabWindow, True,
+        int err = XGrabKeyboard (screen->dpy(), grabWindow, True,
                                  GrabModeAsync, GrabModeSync, arguments[7].value ().i ());
         if (err == GrabSuccess)
         {
-	    XAllowEvents (dpy, SyncKeyboard, CurrentTime);
+	    XAllowEvents (screen->dpy(), SyncKeyboard, CurrentTime);
             tapGrab = true;
         }
     }
@@ -169,7 +172,7 @@ PrivateScreen::triggerPress (CompAction         *action,
 }
 
 bool
-PrivateScreen::triggerRelease (CompAction         *action,
+cps::EventManager::triggerRelease (CompAction         *action,
                                CompAction::State   state,
                                CompOption::Vector &arguments)
 {
@@ -202,12 +205,12 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
     {
 	unsigned int i;
 
-	if (event->root != root)
+	if (event->root != screen->root())
 	    return false;
 
 	if (event->window != edgeWindow)
 	{
-	    if (grabs.empty () || event->window != root)
+	    if (grabs.empty () || event->window != screen->root())
 		return false;
 	}
 
