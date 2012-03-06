@@ -582,7 +582,7 @@ class EventManager :
     public ValueHolder,
     public virtual ScreenUser
 {
-public:
+    public:
 	EventManager (CompScreen *screen);
 	~EventManager ();
 
@@ -617,7 +617,7 @@ public:
 
 	void clearTapGrab () { tapGrab = false; }
 
-private:
+    private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
 	/* We cannot use RefPtrs. See
@@ -638,10 +638,11 @@ private:
 
 	bool  tapGrab;
 
-public:
+    public:
 	std::list<Grab *> grabs;
 	Window            grabWindow;
 	Window	edgeWindow;
+    protected:
 	Window	xdndWindow;
 
     private:
