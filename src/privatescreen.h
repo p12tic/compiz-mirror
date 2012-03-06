@@ -607,11 +607,11 @@ private:
 	 */
 	CompEventSource * source;
 	CompTimeoutSource * timeout;
-
-public:
 	CompSignalSource * sighupSource;
 	CompSignalSource * sigtermSource;
 	CompSignalSource * sigintSource;
+
+public:
 	Glib::RefPtr <Glib::MainContext> ctx;
 
 	CompFileWatchList   fileWatch;
