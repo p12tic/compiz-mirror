@@ -636,8 +636,6 @@ private:
 
 public:
 
-	CompTimer    pingTimer;
-
 	CompTimer               edgeDelayTimer;
 	CompDelayedEdgeSettings edgeDelaySettings;
 
@@ -959,6 +957,8 @@ class PrivateScreen :
 
     private:
 	virtual bool initDisplay (const char *name);
+
+	CompTimer    pingTimer;
 };
 
 class CompManager

@@ -4545,11 +4545,6 @@ cps::EventManager::init (const char *name)
 
     if (!initDisplay(name)) return false;
 
-    pingTimer.setTimes (optionGetPingDelay (),
-			      optionGetPingDelay () + 500);
-
-    pingTimer.start ();
-
     optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
     optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
     optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
@@ -5025,6 +5020,12 @@ PrivateScreen::initDisplay (const char *name)
     vpSize.setHeight (optionGetVsize ());
 
     setAudibleBell (optionGetAudibleBell ());
+
+
+    pingTimer.setTimes (optionGetPingDelay (),
+			      optionGetPingDelay () + 500);
+
+    pingTimer.start ();
 
     return true;
 }
