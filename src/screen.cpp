@@ -2999,7 +2999,7 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 		return NULL;
 	    }
 	    else
-	        priv->tapGrab = false;
+	        priv->clearTapGrab ();
 	}
 	else
 	    return NULL;
@@ -3062,7 +3062,7 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
 
 	XUngrabPointer (priv->dpy, CurrentTime);
 	XUngrabKeyboard (priv->dpy, CurrentTime);
-	priv->tapGrab = false;
+	priv->clearTapGrab ();
     }
 }
 
@@ -3670,7 +3670,7 @@ CompScreenImpl::toolkitAction (Atom   toolkitAction,
 
     XUngrabPointer (priv->dpy, CurrentTime);
     XUngrabKeyboard (priv->dpy, CurrentTime);
-    priv->tapGrab = false;
+    priv->clearTapGrab ();
 
     XSendEvent (priv->dpy, priv->root, false,
 		StructureNotifyMask, &ev);

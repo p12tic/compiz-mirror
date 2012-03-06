@@ -615,6 +615,8 @@ public:
 
 	const CompFileWatchList& getFileWatches () const;
 
+	void clearTapGrab () { tapGrab = false; }
+
 private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
@@ -634,9 +636,9 @@ private:
 	std::list< CompWatchFd * > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
-public:
-
 	bool  tapGrab;
+
+public:
 	std::list<Grab *> grabs;
 	Window            grabWindow;
 	Window	edgeWindow;

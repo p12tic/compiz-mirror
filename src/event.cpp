@@ -1071,7 +1071,7 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
     if (priv->grabs.empty () && event->type == KeyPress)
     {
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
-	priv->tapGrab = false;
+	priv->clearTapGrab ();
     }
 
     XFlush (priv->dpy);
