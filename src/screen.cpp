@@ -154,14 +154,19 @@ cps::EventManager::handleSignal (int signum)
 void
 CompScreenImpl::eventLoop ()
 {
-    priv->source = CompEventSource::create ();
-    priv->timeout = CompTimeoutSource::create (priv->ctx);
+    priv->startEventLoop ();
+}
 
-    priv->source->attach (priv->ctx);
+void cps::EventManager::startEventLoop()
+{
+    source = CompEventSource::create ();
+    timeout = CompTimeoutSource::create (ctx);
 
-    XFlush (priv->dpy);
+    source->attach (ctx);
 
-    priv->run ();
+    XFlush (screen->dpy());
+
+    mainloop->run();
 }
 
 CompFileWatchHandle

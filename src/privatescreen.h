@@ -596,7 +596,7 @@ public:
 	                     CompAction::State   state,
 	                     CompOption::Vector &arguments);
 
-	void run() { mainloop->run(); }
+	void startEventLoop();
 	void quit() { mainloop->quit(); }
 
 private:
