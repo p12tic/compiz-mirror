@@ -161,7 +161,7 @@ CompScreenImpl::eventLoop ()
 
     XFlush (priv->dpy);
 
-    priv->mainloop->run ();
+    priv->run ();
 }
 
 CompFileWatchHandle
@@ -1136,7 +1136,7 @@ PrivateScreen::handleSelectionClear (XEvent *event)
 	wmSnAtom != event->xselectionclear.selection)
 	return;
 
-    mainloop->quit ();
+    quit ();
 }
 
 #define IMAGEDIR "images"
