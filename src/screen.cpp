@@ -157,7 +157,8 @@ CompScreenImpl::eventLoop ()
     priv->startEventLoop ();
 }
 
-void cps::EventManager::startEventLoop()
+void
+cps::EventManager::startEventLoop()
 {
     source = CompEventSource::create ();
     timeout = CompTimeoutSource::create (ctx);
@@ -174,50 +175,78 @@ CompScreenImpl::addFileWatch (const char        *path,
 			  int               mask,
 			  FileWatchCallBack callBack)
 {
-    CompFileWatch *fileWatch = new CompFileWatch ();
+    CompFileWatch *fileWatch = priv->addFileWatch (path, mask, callBack);
+
     if (!fileWatch)
 	return 0;
-
-    fileWatch->path	= path;
-    fileWatch->mask	= mask;
-    fileWatch->callBack = callBack;
-    fileWatch->handle   = priv->lastFileWatchHandle++;
-
-    if (priv->lastFileWatchHandle == MAXSHORT)
-	priv->lastFileWatchHandle = 1;
-
-    priv->fileWatch.push_front (fileWatch);
 
     fileWatchAdded (fileWatch);
 
     return fileWatch->handle;
 }
 
+CompFileWatch*
+cps::EventManager::addFileWatch (
+    const char        *path,
+    int               mask,
+    FileWatchCallBack callBack)
+{
+    CompFileWatch *fw = new CompFileWatch ();
+    if (!fw)
+	return 0;
+
+    fw->path	= path;
+    fw->mask	= mask;
+    fw->callBack = callBack;
+    fw->handle   = lastFileWatchHandle++;
+
+    if (lastFileWatchHandle == MAXSHORT)
+	lastFileWatchHandle = 1;
+
+    fileWatch.push_front (fw);
+
+    return fw;
+}
+
 void
 CompScreenImpl::removeFileWatch (CompFileWatchHandle handle)
 {
-    std::list<CompFileWatch *>::iterator it;
-    CompFileWatch                        *w;
+    if (CompFileWatch* w = priv->removeFileWatch (handle))
+    {
+	fileWatchRemoved (w);
 
-    for (it = priv->fileWatch.begin (); it != priv->fileWatch.end (); it++)
+	delete w;
+    }
+}
+
+CompFileWatch*
+cps::EventManager::removeFileWatch (CompFileWatchHandle handle)
+{
+    std::list<CompFileWatch *>::iterator it;
+
+    for (it = fileWatch.begin (); it != fileWatch.end (); it++)
 	if ((*it)->handle == handle)
 	    break;
 
-    if (it == priv->fileWatch.end ())
-	return;
+    if (it == fileWatch.end ())
+	return 0;
 
-    w = (*it);
-    priv->fileWatch.erase (it);
+    CompFileWatch* w = (*it);
+    fileWatch.erase (it);
 
-    fileWatchRemoved (w);
-
-    delete w;
+    return w;
 }
 
 const CompFileWatchList &
 CompScreenImpl::getFileWatches () const
 {
-    return priv->fileWatch;
+    return priv->getFileWatches ();
+}
+
+const CompFileWatchList &
+cps::EventManager::getFileWatches () const
+{
+    return fileWatch;
 }
 
 CompWatchFd::CompWatchFd (int		    fd,
@@ -250,6 +279,14 @@ CompScreenImpl::addWatchFd (int             fd,
 			short int       events,
 			FdWatchCallBack callBack)
 {
+    return priv->addWatchFd (fd, events, callBack);
+}
+
+CompWatchFdHandle
+cps::EventManager::addWatchFd (int             fd,
+			short int       events,
+			FdWatchCallBack callBack)
+{
     Glib::IOCondition gEvents;
     
     memset (&gEvents, 0, sizeof (Glib::IOCondition));
@@ -267,16 +304,16 @@ CompScreenImpl::addWatchFd (int             fd,
 
     CompWatchFd *watchFd = CompWatchFd::create (fd, gEvents, callBack);
 
-    watchFd->attach (priv->ctx);
+    watchFd->attach (ctx);
 
     if (!watchFd)
 	return 0;
-    watchFd->mHandle   = priv->lastWatchFdHandle++;
+    watchFd->mHandle   = lastWatchFdHandle++;
 
-    if (priv->lastWatchFdHandle == MAXSHORT)
-	priv->lastWatchFdHandle = 1;
+    if (lastWatchFdHandle == MAXSHORT)
+	lastWatchFdHandle = 1;
 
-    priv->watchFds.push_front (watchFd);
+    watchFds.push_front (watchFd);
 
     return watchFd->mHandle;
 }
@@ -284,17 +321,23 @@ CompScreenImpl::addWatchFd (int             fd,
 void
 CompScreenImpl::removeWatchFd (CompWatchFdHandle handle)
 {
+    priv->removeWatchFd (handle);
+}
+
+void
+cps::EventManager::removeWatchFd (CompWatchFdHandle handle)
+{
     std::list<CompWatchFd * >::iterator it;
     CompWatchFd *			w;
 
-    for (it = priv->watchFds.begin();
-	 it != priv->watchFds.end (); it++)
+    for (it = watchFds.begin();
+	 it != watchFds.end (); it++)
     {
 	if ((*it)->mHandle == handle)
 	    break;
     }
 
-    if (it == priv->watchFds.end ())
+    if (it == watchFds.end ())
 	return;
 
     w = (*it);
@@ -306,7 +349,7 @@ CompScreenImpl::removeWatchFd (CompWatchFdHandle handle)
     }
 
     delete w;
-    priv->watchFds.erase (it);
+    watchFds.erase (it);
 }
 
 void
