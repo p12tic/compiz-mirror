@@ -594,14 +594,13 @@ public:
 private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
-public:
-
-
 	/* We cannot use RefPtrs. See
 	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
 	 */
 	CompEventSource * source;
 	CompTimeoutSource * timeout;
+
+public:
 	CompSignalSource * sighupSource;
 	CompSignalSource * sigtermSource;
 	CompSignalSource * sigintSource;
