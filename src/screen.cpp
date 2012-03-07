@@ -4508,11 +4508,6 @@ cps::EventManager::init (const char *name)
 
     if (!initDisplay(name)) return false;
 
-    pingTimer.setTimes (optionGetPingDelay (),
-			      optionGetPingDelay () + 500);
-
-    pingTimer.start ();
-
     optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
     optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
     optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
@@ -4989,6 +4984,12 @@ PrivateScreen::initDisplay (const char *name)
 
     setAudibleBell (optionGetAudibleBell ());
 
+
+    pingTimer.setTimes (optionGetPingDelay (),
+			      optionGetPingDelay () + 500);
+
+    pingTimer.start ();
+
     return true;
 }
 
@@ -5041,7 +5042,8 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     showingDesktopMask (0),
     desktopHintData (0),
     desktopHintSize (0),
-    initialized (false)
+    initialized (false),
+    edgeDelayTimer ()
 {
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));
@@ -5088,7 +5090,6 @@ cps::EventManager::EventManager (CompScreen *screen) :
     lastFileWatchHandle (1),
     watchFds (0),
     lastWatchFdHandle (1),
-    edgeDelayTimer (),
     desktopWindowCount (0),
     mapNum (1),
     defaultIcon (0),
