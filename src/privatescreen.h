@@ -348,6 +348,11 @@ class CompScreenImpl : public CompScreen
         virtual void _matchExpHandlerChanged();
         virtual void _matchPropertyChanged(CompWindow *);
         virtual void _outputChangeNotify();
+
+        bool 	eventHandled;
+        bool	grabNotified;   /* true once we receive a GrabNotify
+    				  on FocusOut and false on
+    				  UngrabNotify from FocusIn */
 };
 
 CompPlugin::VTable * getCoreVTable ();
@@ -643,11 +648,7 @@ struct OrphanData : boost::noncopyable
 
     Window	edgeWindow;
     Window	xdndWindow;
-    bool 	eventHandled;
     std::list<Grab *> grabs;
-    bool	grabbed;   /* true once we recieve a GrabNotify
-			      on FocusOut and false on
-			      UngrabNotify from FocusIn */
 };
 
 class GrabManager : boost::noncopyable,
@@ -683,7 +684,15 @@ class History : boost::noncopyable
 
 	void addToCurrentActiveWindowHistory (Window id);
 
-    //private:
+	CompActiveWindowHistory* getCurrentHistory ()
+	{
+	    return history+currentHistory;
+	}
+
+	unsigned int nextActiveNum () { return activeNum++; }
+	unsigned int getActiveNum () const { return activeNum; }
+
+    private:
 	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
 	int                     currentHistory;
 	unsigned int activeNum;

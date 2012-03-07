@@ -3063,7 +3063,7 @@ CompScreenImpl::grabExist (const char *grab)
 bool
 CompScreenImpl::grabbed ()
 {
-    return priv->grabbed;
+    return grabNotified;
 }
 
 void
@@ -4304,7 +4304,7 @@ CompScreenImpl::desktopWindowCount ()
 unsigned int
 CompScreenImpl::activeNum () const
 {
-    return priv->activeNum;
+    return priv->getActiveNum();
 }
 
 CompOutput::vector &
@@ -4340,7 +4340,7 @@ CompScreenImpl::nDesktop ()
 CompActiveWindowHistory *
 CompScreenImpl::currentHistory ()
 {
-    return &priv->history[priv->currentHistory];
+    return priv->getCurrentHistory ();
 }
 
 bool
@@ -4410,7 +4410,9 @@ CompScreen::CompScreen ():
 {
 }
 
-CompScreenImpl::CompScreenImpl ()
+CompScreenImpl::CompScreenImpl () :
+    eventHandled (false),
+    grabNotified (false)
 {
     CompPrivate p;
     CompOption::Value::Vector vList;
@@ -4892,7 +4894,7 @@ PrivateScreen::initDisplay (const char *name)
     foreach (CompWindow *w, windows)
     {
 	if (w->isViewable ())
-	    w->priv->activeNum = activeNum++;
+	    w->priv->activeNum = nextActiveNum ();
     }
 
     Window               focus;
@@ -5056,9 +5058,7 @@ cps::EventManager::EventManager (CompScreen *screen) :
 cps::OrphanData::OrphanData() :
     edgeWindow (None),
     xdndWindow (None),
-    eventHandled (false),
-    grabs (),
-    grabbed (false)
+    grabs ()
 {
 }
 
