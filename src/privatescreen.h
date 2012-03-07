@@ -628,14 +628,6 @@ private:
 
 public:
 
-	int          desktopWindowCount;
-	unsigned int mapNum;
-
-
-	std::list<CompGroup *> groups;
-
-	CompIcon *defaultIcon;
-
 	std::list<Grab *> grabs;
 	Window            grabWindow;
 	Window	edgeWindow;
@@ -672,7 +664,10 @@ class Grab {
 struct OrphanData : boost::noncopyable
 {
     OrphanData();
-
+    ~OrphanData();
+    int          desktopWindowCount;
+    unsigned int mapNum;
+    CompIcon *defaultIcon;
 };
 
 class GrabManager : boost::noncopyable,

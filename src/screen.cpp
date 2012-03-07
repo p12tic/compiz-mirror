@@ -5090,9 +5090,6 @@ cps::EventManager::EventManager (CompScreen *screen) :
     lastFileWatchHandle (1),
     watchFds (0),
     lastWatchFdHandle (1),
-    desktopWindowCount (0),
-    mapNum (1),
-    defaultIcon (0),
     grabs (),
     grabWindow (None),
     edgeWindow (None),
@@ -5103,17 +5100,23 @@ cps::EventManager::EventManager (CompScreen *screen) :
     TimeoutHandler::SetDefault (dTimeoutHandler);
 }
 
-cps::OrphanData::OrphanData() 
+cps::OrphanData::OrphanData() :
+    desktopWindowCount (0),
+    mapNum (1),
+    defaultIcon (0)
 {
+}
+
+cps::OrphanData::~OrphanData()
+{
+    if (defaultIcon)
+	delete defaultIcon;
 }
 
 cps::EventManager::~EventManager ()
 {
     delete timeout;
     delete source;
-
-    if (defaultIcon)
-	delete defaultIcon;
 
     foreach (CompWatchFd *fd, watchFds)
 	delete fd;
