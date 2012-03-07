@@ -542,8 +542,14 @@ struct PseudoNamespace
 // is stuck in a virtual base class until we complete the cleanup of PrivateScreen
 struct ScreenUser
 {
-    ScreenUser(CompScreen  *screen) : screen(screen) {}
-    CompScreen  *screen;
+protected:
+    ScreenUser(CompScreen  *screen) : screen(screen) , possibleTap(NULL) {}
+    CompScreen  * const screen;
+
+public:
+    // Here because it is referenced in PluginManager::updatePlugins(),
+    // and GrabManager::triggerPress not clear where it really belongs.
+    void *possibleTap;
 };
 
 class PluginManager :
@@ -555,10 +561,19 @@ class PluginManager :
 
 	void updatePlugins ();
 
-    //private:
+	void setPlugins(CompOption::Value::Vector const& vList)
+	{
+	    plugin.set (CompOption::TypeString, vList);
+	}
+
+	bool isDirtyPluginList () const { return dirtyPluginList; }
+	void setDirtyPluginList () { dirtyPluginList = true; }
+
+    private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
-	void *possibleTap;
+
+    protected:
 	Time  tapStart;
 };
 

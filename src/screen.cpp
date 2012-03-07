@@ -653,7 +653,7 @@ PrivateScreen::setOption (const CompString  &name,
 
     switch (index) {
 	case CoreOptions::ActivePlugins:
-	    dirtyPluginList = true;
+	    setDirtyPluginList ();
 	    break;
 	case CoreOptions::PingDelay:
 	    pingTimer.setTimes (optionGetPingDelay (),
@@ -731,7 +731,7 @@ PrivateScreen::processEvents ()
     std::list <XEvent> events;
     StackDebugger *dbg = StackDebugger::Default ();
 
-    if (dirtyPluginList)
+    if (isDirtyPluginList ())
 	updatePlugins ();
 
     /* Restacks recently processed, ensure that
@@ -4440,7 +4440,7 @@ CompScreenImpl::CompScreenImpl ()
 
     vList.push_back ("core");
 
-    priv->plugin.set (CompOption::TypeString, vList);
+    priv->setPlugins (vList);
 }
 
 bool
@@ -4498,7 +4498,7 @@ cps::EventManager::init (const char *name)
 
     optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
 
-    if (dirtyPluginList)
+    if (isDirtyPluginList ())
 	updatePlugins ();
 
     return true;
@@ -5029,7 +5029,6 @@ cps::PluginManager::PluginManager(CompScreen *screen) :
     CoreOptions (false),
     plugin (),
     dirtyPluginList (true),
-    possibleTap (NULL),
     tapStart (0)
 {
 }

@@ -316,8 +316,8 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
     values.push_back ("core");
-    ps.plugin.set (CompOption::TypeString, values);
-    ps.dirtyPluginList = true;
+    ps.setPlugins (values);
+    ps.setDirtyPluginList ();
 
     // Now we can call updatePlugins() without a segfault.  Hoorah!
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
@@ -336,8 +336,8 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
     values.push_back ("core");
-    ps.plugin.set (CompOption::TypeString, values);
-    ps.dirtyPluginList = true;
+    ps.setPlugins (values);
+    ps.setDirtyPluginList ();
 
     initialPlugins.push_back ("one");
     initialPlugins.push_back ("two");
