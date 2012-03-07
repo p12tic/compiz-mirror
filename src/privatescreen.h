@@ -348,6 +348,11 @@ class CompScreenImpl : public CompScreen
         virtual void _matchExpHandlerChanged();
         virtual void _matchPropertyChanged(CompWindow *);
         virtual void _outputChangeNotify();
+
+        bool 	eventHandled;
+        bool	grabNotified;   /* true once we receive a GrabNotify
+    				  on FocusOut and false on
+    				  UngrabNotify from FocusIn */
 };
 
 CompPlugin::VTable * getCoreVTable ();
@@ -542,8 +547,11 @@ struct PseudoNamespace
 // is stuck in a virtual base class until we complete the cleanup of PrivateScreen
 struct ScreenUser
 {
-    ScreenUser(CompScreen  *screen) : screen(screen) {}
+    ScreenUser(CompScreen  *screen) : screen(screen), possibleTap(0) {}
     CompScreen  *screen;
+    // Here because it is referenced in PluginManager::updatePlugins(),
+    // and GrabManager::triggerPress not clear where it really belongs.
+    void *possibleTap;
 };
 
 class PluginManager :
@@ -558,7 +566,6 @@ class PluginManager :
     //private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
-	void *possibleTap;
 	Time  tapStart;
 };
 
@@ -574,6 +581,12 @@ public:
 	bool init (const char *name);
 
 	void handleSignal (int signum);
+	bool triggerPress   (CompAction         *action,
+			     CompAction::State   state,
+			     CompOption::Vector &arguments);
+	bool triggerRelease (CompAction         *action,
+	                     CompAction::State   state,
+	                     CompOption::Vector &arguments);
 
 public:
 
@@ -608,6 +621,10 @@ public:
 
 	CompIcon *defaultIcon;
 
+	std::list<Grab *> grabs;
+	Window            grabWindow;
+	Window	edgeWindow;
+	Window	xdndWindow;
     private:
 	virtual bool initDisplay (const char *name);
 };
@@ -641,13 +658,6 @@ struct OrphanData : boost::noncopyable
 {
     OrphanData();
 
-    Window	edgeWindow;
-    Window	xdndWindow;
-    bool 	eventHandled;
-    std::list<Grab *> grabs;
-    bool	grabbed;   /* true once we recieve a GrabNotify
-			      on FocusOut and false on
-			      UngrabNotify from FocusIn */
 };
 
 class GrabManager : boost::noncopyable,
@@ -735,13 +745,6 @@ class PrivateScreen :
 
 	std::list <XEvent> queueEvents ();
 	void processEvents ();
-
-	bool triggerPress   (CompAction         *action,
-	                     CompAction::State   state,
-	                     CompOption::Vector &arguments);
-	bool triggerRelease (CompAction         *action,
-	                     CompAction::State   state,
-	                     CompOption::Vector &arguments);
 
 	bool triggerButtonPressBindings (CompOption::Vector &options,
 					 XButtonEvent       *event,
@@ -908,7 +911,6 @@ class PrivateScreen :
 	Window	      root;
 
 	XWindowAttributes attrib;
-	Window            grabWindow;
 
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;

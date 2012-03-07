@@ -3063,7 +3063,7 @@ CompScreenImpl::grabExist (const char *grab)
 bool
 CompScreenImpl::grabbed ()
 {
-    return priv->grabbed;
+    return grabNotified;
 }
 
 void
@@ -4986,7 +4986,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     nDesktop (1),
     currentDesktop (0),
     root (None),
-    grabWindow (None),
     outputDevs (0),
     currentOutputDev (0),
     hasOverlappingOutputs (false),
@@ -5028,9 +5027,7 @@ cps::PluginManager::PluginManager(CompScreen *screen) :
     ScreenUser (screen),
     CoreOptions (false),
     plugin (),
-    dirtyPluginList (true),
-    possibleTap (NULL),
-    tapStart (0)
+    dirtyPluginList (true)
 {
 }
 
@@ -5046,19 +5043,18 @@ cps::EventManager::EventManager (CompScreen *screen) :
     edgeDelayTimer (),
     desktopWindowCount (0),
     mapNum (1),
-    defaultIcon (0)
+    defaultIcon (0),
+    grabs (),
+    grabWindow (None),
+    edgeWindow (None),
+    xdndWindow (None)
 {
     ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
     TimeoutHandler::SetDefault (dTimeoutHandler);
 }
 
-cps::OrphanData::OrphanData() :
-    edgeWindow (None),
-    xdndWindow (None),
-    eventHandled (false),
-    grabs (),
-    grabbed (false)
+cps::OrphanData::OrphanData() 
 {
 }
 
