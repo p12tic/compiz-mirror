@@ -143,13 +143,20 @@ PrivateScreen::triggerPress (CompAction         *action,
 
     if (state == CompAction::StateInitKey && grabs.empty ())
     {
-        possibleTap = action;
+        int pressTime = arguments[7].value ().i ();
         int err = XGrabKeyboard (dpy, grabWindow, True,
-                                 GrabModeAsync, GrabModeSync, arguments[7].value ().i ());
+                                 GrabModeAsync, GrabModeAsync, pressTime);
+        /*
+         * We don't actually need this active grab for anything other than
+         * to test if it fails (AlreadyGrabbed). So we know if some other
+         * app has an active grab like a virtual machine or lock screen.
+         * (LP: #806255)
+         */
         if (err == GrabSuccess)
         {
-	    XAllowEvents (dpy, SyncKeyboard, CurrentTime);
-            tapGrab = true;
+            XUngrabKeyboard (dpy, pressTime);
+            possibleTap = action;
+            tapStart = pressTime;
         }
         else
         {
@@ -183,7 +190,10 @@ PrivateScreen::triggerRelease (CompAction         *action,
 {
     if (action == possibleTap)
     {
-        state |= CompAction::StateTermTapped;
+        int releaseTime = arguments[7].value ().i ();
+        int tapDuration = releaseTime - tapStart;
+        if (tapDuration < optionGetTapTime ())
+            state |= CompAction::StateTermTapped;
         possibleTap = NULL;
     }
 
@@ -964,6 +974,8 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		o[3].value ().set ((int) xkbEvent->time);
 		o[4].reset ();
 		o[5].reset ();
+		o[6].reset ();
+		o[7].value ().set ((int) xkbEvent->time);
 
 		if (stateEvent->event_type == KeyPress)
 		    possibleTap = NULL;
@@ -1076,7 +1088,6 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
     if (priv->grabs.empty () && event->type == KeyPress)
     {
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
-	priv->tapGrab = false;
     }
 }
 
@@ -1905,6 +1916,14 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     case FocusIn:
     {
+	/* When a menu etc gets a grab, it's safe to say we're not tapping
+	   any key right now. e.g. Detecting taps of "Alt" and cancelling
+	   when a menu is opened */
+	if (event->xfocus.mode == NotifyGrab &&
+	    event->xfocus.window != priv->root &&
+	    event->xfocus.window != priv->grabWindow)
+	    priv->possibleTap = NULL;
+
 	if (!XGetWindowAttributes (priv->dpy, event->xfocus.window, &wa))
 	    priv->setDefaultWindowAttributes (&wa);
 

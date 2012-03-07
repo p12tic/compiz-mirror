@@ -559,6 +559,7 @@ class PluginManager :
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
 	void *possibleTap;
+	Time  tapStart;
 };
 
 class EventManager :
@@ -606,8 +607,6 @@ public:
 	std::list<CompGroup *> groups;
 
 	CompIcon *defaultIcon;
-
-	bool  tapGrab;
 
     private:
 	virtual bool initDisplay (const char *name);
