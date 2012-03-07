@@ -574,7 +574,7 @@ class EventManager :
     public ValueHolder,
     public virtual ScreenUser
 {
-public:
+    public:
 	EventManager (CompScreen *screen);
 	~EventManager ();
 
@@ -607,7 +607,7 @@ public:
 
 	const CompFileWatchList& getFileWatches () const;
 
-private:
+    private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
 	/* We cannot use RefPtrs. See
@@ -626,11 +626,11 @@ private:
 	std::list< CompWatchFd * > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
-public:
-
+    public:
 	std::list<Grab *> grabs;
 	Window            grabWindow;
 	Window	edgeWindow;
+    protected:
 	Window	xdndWindow;
     private:
 	virtual bool initDisplay (const char *name);
