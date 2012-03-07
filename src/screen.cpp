@@ -2950,8 +2950,6 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 		XUngrabPointer (priv->dpy, CurrentTime);
 		return NULL;
 	    }
-	    else
-	        priv->tapGrab = false;
 	}
 	else
 	    return NULL;
@@ -3014,7 +3012,6 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
 
 	XUngrabPointer (priv->dpy, CurrentTime);
 	XUngrabKeyboard (priv->dpy, CurrentTime);
-	priv->tapGrab = false;
     }
 }
 
@@ -3591,7 +3588,6 @@ CompScreenImpl::toolkitAction (Atom   toolkitAction,
 
     XUngrabPointer (priv->dpy, CurrentTime);
     XUngrabKeyboard (priv->dpy, CurrentTime);
-    priv->tapGrab = false;
 
     XSendEvent (priv->dpy, priv->root, false,
 		StructureNotifyMask, &ev);
@@ -5033,7 +5029,8 @@ cps::PluginManager::PluginManager(CompScreen *screen) :
     CoreOptions (false),
     plugin (),
     dirtyPluginList (true),
-    possibleTap (NULL)
+    possibleTap (NULL),
+    tapStart (0)
 {
 }
 
@@ -5049,8 +5046,7 @@ cps::EventManager::EventManager (CompScreen *screen) :
     edgeDelayTimer (),
     desktopWindowCount (0),
     mapNum (1),
-    defaultIcon (0),
-    tapGrab (false)
+    defaultIcon (0)
 {
     ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
