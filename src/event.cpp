@@ -41,6 +41,9 @@
 #include "privatewindow.h"
 #include "privatestackdebugger.h"
 
+namespace cps = compiz::private_screen;
+
+
 bool
 PrivateWindow::handleSyncAlarm ()
 {
@@ -135,7 +138,7 @@ isBound (CompOption             &option,
 }
 
 bool
-PrivateScreen::triggerPress (CompAction         *action,
+cps::EventManager::triggerPress (CompAction         *action,
                              CompAction::State   state,
                              CompOption::Vector &arguments)
 {
@@ -178,7 +181,7 @@ PrivateScreen::triggerPress (CompAction         *action,
 }
 
 bool
-PrivateScreen::triggerRelease (CompAction         *action,
+cps::EventManager::triggerRelease (CompAction         *action,
                                CompAction::State   state,
                                CompOption::Vector &arguments)
 {
@@ -214,12 +217,12 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
     {
 	unsigned int i;
 
-	if (event->root != root)
+	if (event->root != screen->root())
 	    return false;
 
 	if (event->window != edgeWindow)
 	{
-	    if (grabs.empty () || event->window != root)
+	    if (grabs.empty () || event->window != screen->root())
 		return false;
 	}
 
@@ -1061,7 +1064,7 @@ CompScreen::handleEvent (XEvent *event)
 void
 CompScreenImpl::alwaysHandleEvent (XEvent *event)
 {
-    priv->eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
+    eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
 
     handleEvent (event);
 
@@ -1075,7 +1078,7 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
      * event on keypresses */
     if (keyEvent)
     {
-	int mode = priv->eventHandled ? AsyncKeyboard : ReplayKeyboard;
+	int mode = eventHandled ? AsyncKeyboard : ReplayKeyboard;
 	XAllowEvents (priv->dpy, mode, event->xkey.time);
     }
 
@@ -1117,8 +1120,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     }
 
-    priv->eventHandled = priv->handleActionEvent (event);
-    if (priv->eventHandled)
+    eventHandled = priv->handleActionEvent (event);
+    if (eventHandled)
     {
 	if (priv->grabs.empty ())
 	    XAllowEvents (priv->dpy, AsyncPointer, event->xbutton.time);
