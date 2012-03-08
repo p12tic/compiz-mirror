@@ -2490,7 +2490,7 @@ unsigned int CompScreenImpl::showingDesktopMask() const
 
 bool CompScreenImpl::grabsEmpty() const
 {
-    return priv->grabs.empty();
+    return priv->grabsEmpty();
 }
 
 void
@@ -2929,7 +2929,7 @@ CompScreenImpl::invisibleCursor ()
 CompScreenImpl::GrabHandle
 CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 {
-    if (priv->grabs.empty ())
+    if (priv->grabsEmpty ())
     {
 	int status;
 
@@ -2960,11 +2960,8 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 				  cursor, CurrentTime);
     }
 
-    cps::Grab *grab = new cps::Grab ();
-    grab->cursor = cursor;
-    grab->name   = name;
-
-    priv->grabs.push_back (grab);
+    cps::Grab *grab = new cps::Grab (cursor, name);
+    priv->grabsPush (grab);
 
     return grab;
 }
@@ -2988,20 +2985,13 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
     if (!handle)
 	return;
 
-    std::list<cps::Grab *>::iterator it;
+    priv-> grabsRemove(handle);
 
-    it = std::find (priv->grabs.begin (), priv->grabs.end (), handle);
-
-    if (it != priv->grabs.end ())
-    {
-	priv->grabs.erase (it);
-	delete (static_cast<cps::Grab *> (handle));
-    }
-    if (!priv->grabs.empty ())
+    if (!priv->grabsEmpty ())
     {
 	XChangeActivePointerGrab (priv->dpy,
 				  POINTER_GRAB_MASK,
-				  priv->grabs.back ()->cursor,
+				  priv->grabsBack ()->cursor,
 				  CurrentTime);
     }
     else
@@ -3012,6 +3002,20 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
 
 	XUngrabPointer (priv->dpy, CurrentTime);
 	XUngrabKeyboard (priv->dpy, CurrentTime);
+    }
+}
+
+void
+cps::GrabList::grabsRemove(Grab* handle)
+{
+    PrivateScreen::GrabIterator it;
+
+    it = std::find (grabsBegin (), grabsEnd (), handle);
+
+    if (it != grabsEnd ())
+    {
+	grabs.erase (it);
+	delete (handle);
     }
 }
 
@@ -3027,7 +3031,7 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
 
     std::list<cps::Grab *>::iterator it;
 
-    for (it = priv->grabs.begin (); it != priv->grabs.end (); it++)
+    for (it = priv->grabsBegin (); it != priv->grabsEnd (); it++)
     {
 	va_start (ap, first);
 
@@ -3052,7 +3056,13 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
 bool
 CompScreenImpl::grabExist (const char *grab)
 {
-    foreach (cps::Grab* g, priv->grabs)
+    return priv->grabExist (grab);
+}
+
+bool
+cps::GrabList::grabExist (const char *grab)
+{
+    foreach (cps::Grab* g, grabs)
     {
 	if (strcmp (g->name, grab) == 0)
 	    return true;
@@ -5060,7 +5070,6 @@ cps::OrphanData::OrphanData() :
     edgeWindow (None),
     xdndWindow (None),
     eventHandled (false),
-    grabs (),
     grabbed (false)
 {
 }
