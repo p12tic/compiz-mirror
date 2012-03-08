@@ -3073,6 +3073,10 @@ cps::GrabManager::grabUngrabOneKey (unsigned int modifiers,
 {
     if (grab)
     {
+        /*
+         * Always grab the keyboard Sync-ronously. This is so that we can
+         * choose to ReplayKeyboard in alwaysHandleEvent if need be.
+         */
 	XGrabKey (screen->dpy(),
 		  keycode,
 		  modifiers,
