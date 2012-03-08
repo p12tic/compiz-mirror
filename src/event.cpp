@@ -1061,7 +1061,7 @@ CompScreen::handleEvent (XEvent *event)
 void
 CompScreenImpl::alwaysHandleEvent (XEvent *event)
 {
-    priv->eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
+    eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
 
     handleEvent (event);
 
@@ -1075,7 +1075,7 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
      * event on keypresses */
     if (keyEvent)
     {
-	int mode = priv->eventHandled ? AsyncKeyboard : ReplayKeyboard;
+	int mode = eventHandled ? AsyncKeyboard : ReplayKeyboard;
 	XAllowEvents (priv->dpy, mode, event->xkey.time);
     }
 
@@ -1117,8 +1117,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     }
 
-    priv->eventHandled = priv->handleActionEvent (event);
-    if (priv->eventHandled)
+    eventHandled = priv->handleActionEvent (event);
+    if (eventHandled)
     {
 	if (priv->grabs.empty ())
 	    XAllowEvents (priv->dpy, AsyncPointer, event->xbutton.time);
@@ -1954,7 +1954,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 			CompWindow     *active = screen->findWindow (priv->activeWindow);
 
 			priv->activeWindow = w->id ();
-			w->priv->activeNum = priv->activeNum++;
+			w->priv->activeNum = priv->nextActiveNum();
 
 			if (active)
 			{
