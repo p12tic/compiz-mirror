@@ -131,7 +131,7 @@ isBound (CompOption             &option,
 
     *action = &option.value ().action ();
 
-    if (*action && !(*action)->active ())
+    if (action && !(*action)->active ())
 	return false;
 
     return true;
@@ -144,32 +144,17 @@ cps::EventManager::triggerPress (CompAction         *action,
 {
     bool actionEventHandled = false;
 
-    if (state == CompAction::StateInitKey && grabs.empty ())
+    if (state == CompAction::StateInitKey &&
+        grabs.empty () &&
+        !action->terminate ().empty ())
     {
-        int pressTime = arguments[7].value ().i ();
+        possibleTap = action;
         int err = XGrabKeyboard (screen->dpy(), grabWindow, True,
-                                 GrabModeAsync, GrabModeAsync, pressTime);
-        /*
-         * We don't actually need this active grab for anything other than
-         * to test if it fails (AlreadyGrabbed). So we know if some other
-         * app has an active grab like a virtual machine or lock screen.
-         * (LP: #806255)
-         */
+                                 GrabModeAsync, GrabModeSync, arguments[7].value ().i ());
         if (err == GrabSuccess)
         {
-            XUngrabKeyboard (screen->dpy(), pressTime);
-            possibleTap = action;
-            tapStart = pressTime;
-        }
-        else
-        {
-            possibleTap = NULL;
-            /*
-             * Don't trigger any compiz actions if some other app has the
-             * keyboard grabbed (like a VM or locked screensaver). LP: #806255
-             */
-            if (err == AlreadyGrabbed)
-                return false;
+	    XAllowEvents (screen->dpy(), SyncKeyboard, CurrentTime);
+            tapGrab = true;
         }
     }
 
@@ -193,10 +178,7 @@ cps::EventManager::triggerRelease (CompAction         *action,
 {
     if (action == possibleTap)
     {
-        int releaseTime = arguments[7].value ().i ();
-        int tapDuration = releaseTime - tapStart;
-        if (tapDuration < optionGetTapTime ())
-            state |= CompAction::StateTermTapped;
+        state |= CompAction::StateTermTapped;
         possibleTap = NULL;
     }
 
@@ -977,8 +959,6 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		o[3].value ().set ((int) xkbEvent->time);
 		o[4].reset ();
 		o[5].reset ();
-		o[6].reset ();
-		o[7].value ().set ((int) xkbEvent->time);
 
 		if (stateEvent->event_type == KeyPress)
 		    possibleTap = NULL;
@@ -1091,7 +1071,10 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
     if (priv->grabs.empty () && event->type == KeyPress)
     {
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
+	priv->clearTapGrab ();
     }
+
+    XFlush (priv->dpy);
 }
 
 void
@@ -1919,14 +1902,6 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     case FocusIn:
     {
-	/* When a menu etc gets a grab, it's safe to say we're not tapping
-	   any key right now. e.g. Detecting taps of "Alt" and cancelling
-	   when a menu is opened */
-	if (event->xfocus.mode == NotifyGrab &&
-	    event->xfocus.window != priv->root &&
-	    event->xfocus.window != priv->grabWindow)
-	    priv->possibleTap = NULL;
-
 	if (!XGetWindowAttributes (priv->dpy, event->xfocus.window, &wa))
 	    priv->setDefaultWindowAttributes (&wa);
 

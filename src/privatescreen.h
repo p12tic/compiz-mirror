@@ -550,7 +550,6 @@ struct ScreenUser
 protected:
     ScreenUser(CompScreen  *screen) : screen(screen), possibleTap(0) {}
     CompScreen  * const screen;
-public:
     // Here because it is referenced in PluginManager::updatePlugins(),
     // and GrabManager::triggerPress not clear where it really belongs.
     void *possibleTap;
@@ -616,6 +615,8 @@ class EventManager :
 
 	const CompFileWatchList& getFileWatches () const;
 
+	void clearTapGrab () { tapGrab = false; }
+
     private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
@@ -635,13 +636,12 @@ class EventManager :
 	std::list< CompWatchFd * > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
-	Time  tapStart;
+	bool  tapGrab;
 
     public:
 	std::list<Grab *> grabs;
 	Window            grabWindow;
 	Window	edgeWindow;
-
     protected:
 	Window	xdndWindow;
 
