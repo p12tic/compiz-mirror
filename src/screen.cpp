@@ -4462,7 +4462,8 @@ CompScreen::CompScreen ():
 {
 }
 
-CompScreenImpl::CompScreenImpl ()
+CompScreenImpl::CompScreenImpl () :
+    eventHandled(false)
 {
     CompPrivate p;
     CompOption::Value::Vector vList;
