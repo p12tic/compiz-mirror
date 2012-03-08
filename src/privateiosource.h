@@ -26,10 +26,6 @@
 #ifndef _COMPIZ_PRIVATEIOSOURCE_H
 #define _COMPIZ_PRIVATEIOSOURCE_H
 
-namespace compiz { namespace private_screen {
-    class EventManager;
-}}
-
 class CompWatchFd :
     public Glib::IOSource
 {
@@ -56,7 +52,6 @@ class CompWatchFd :
 	bool		  mExecuting;
 
     friend class CompScreenImpl;
-    friend class ::compiz::private_screen::EventManager;
 };
 
 #endif

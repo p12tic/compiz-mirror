@@ -41,9 +41,6 @@
 #include "privatewindow.h"
 #include "privatestackdebugger.h"
 
-namespace cps = compiz::private_screen;
-
-
 bool
 PrivateWindow::handleSyncAlarm ()
 {
@@ -131,30 +128,39 @@ isBound (CompOption             &option,
 
     *action = &option.value ().action ();
 
-    if (action && !(*action)->active ())
+    if (*action && !(*action)->active ())
 	return false;
 
     return true;
 }
 
 bool
-cps::EventManager::triggerPress (CompAction         *action,
+PrivateScreen::triggerPress (CompAction         *action,
                              CompAction::State   state,
                              CompOption::Vector &arguments)
 {
     bool actionEventHandled = false;
 
-    if (state == CompAction::StateInitKey &&
-        grabs.empty () &&
-        !action->terminate ().empty ())
+    if (state == CompAction::StateInitKey && grabs.empty ())
     {
-        possibleTap = action;
-        int err = XGrabKeyboard (screen->dpy(), grabWindow, True,
-                                 GrabModeAsync, GrabModeSync, arguments[7].value ().i ());
-        if (err == GrabSuccess)
+        if (grabbed)
         {
-	    XAllowEvents (screen->dpy(), SyncKeyboard, CurrentTime);
-            tapGrab = true;
+            possibleTap = action;
+            tapStart = arguments[7].value ().i ();
+        }
+        else
+        {
+            /*
+             * If we received this keypress event and weren't grabbed then
+             * the event doesn't belong to us. More likely belongs to
+             * a different client's grab so ignore it. (LP: #806255)
+             * The reason why we might receive such keypress events while
+             * other clients have grabs is because of the XKB extension that
+             * we're using. It sends you events even if they're not yours...
+             * http://www.x.org/releases/current/doc/libX11/specs/XKB/xkblib.html
+             */
+            possibleTap = NULL;
+            return false;
         }
     }
 
@@ -172,13 +178,16 @@ cps::EventManager::triggerPress (CompAction         *action,
 }
 
 bool
-cps::EventManager::triggerRelease (CompAction         *action,
+PrivateScreen::triggerRelease (CompAction         *action,
                                CompAction::State   state,
                                CompOption::Vector &arguments)
 {
     if (action == possibleTap)
     {
-        state |= CompAction::StateTermTapped;
+        int releaseTime = arguments[7].value ().i ();
+        int tapDuration = releaseTime - tapStart;
+        if (tapDuration < optionGetTapTime ())
+            state |= CompAction::StateTermTapped;
         possibleTap = NULL;
     }
 
@@ -205,12 +214,12 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
     {
 	unsigned int i;
 
-	if (event->root != screen->root())
+	if (event->root != root)
 	    return false;
 
 	if (event->window != edgeWindow)
 	{
-	    if (grabs.empty () || event->window != screen->root())
+	    if (grabs.empty () || event->window != root)
 		return false;
 	}
 
@@ -959,6 +968,8 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		o[3].value ().set ((int) xkbEvent->time);
 		o[4].reset ();
 		o[5].reset ();
+		o[6].reset ();
+		o[7].value ().set ((int) xkbEvent->time);
 
 		if (stateEvent->event_type == KeyPress)
 		    possibleTap = NULL;
@@ -1050,7 +1061,7 @@ CompScreen::handleEvent (XEvent *event)
 void
 CompScreenImpl::alwaysHandleEvent (XEvent *event)
 {
-    eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
+    priv->eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
 
     handleEvent (event);
 
@@ -1064,17 +1075,14 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
      * event on keypresses */
     if (keyEvent)
     {
-	int mode = eventHandled ? AsyncKeyboard : ReplayKeyboard;
+	int mode = priv->eventHandled ? AsyncKeyboard : ReplayKeyboard;
 	XAllowEvents (priv->dpy, mode, event->xkey.time);
     }
 
     if (priv->grabs.empty () && event->type == KeyPress)
     {
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
-	priv->clearTapGrab ();
     }
-
-    XFlush (priv->dpy);
 }
 
 void
@@ -1109,8 +1117,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     }
 
-    eventHandled = priv->handleActionEvent (event);
-    if (eventHandled)
+    priv->eventHandled = priv->handleActionEvent (event);
+    if (priv->eventHandled)
     {
 	if (priv->grabs.empty ())
 	    XAllowEvents (priv->dpy, AsyncPointer, event->xbutton.time);
@@ -1902,6 +1910,14 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     case FocusIn:
     {
+	/* When a menu etc gets a grab, it's safe to say we're not tapping
+	   any key right now. e.g. Detecting taps of "Alt" and cancelling
+	   when a menu is opened */
+	if (event->xfocus.mode == NotifyGrab &&
+	    event->xfocus.window != priv->root &&
+	    event->xfocus.window != priv->grabWindow)
+	    priv->possibleTap = NULL;
+
 	if (!XGetWindowAttributes (priv->dpy, event->xfocus.window, &wa))
 	    priv->setDefaultWindowAttributes (&wa);
 
@@ -1916,9 +1932,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	if (wa.root == priv->root)
 	{
 	    if (event->xfocus.mode == NotifyGrab)
-		grabNotified = true;
+		priv->grabbed = true;
 	    else if (event->xfocus.mode == NotifyUngrab)
-		grabNotified = false;
+		priv->grabbed = false;
 	    else
 	    {
 		CompWindowList dockWindows;
@@ -1938,7 +1954,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 			CompWindow     *active = screen->findWindow (priv->activeWindow);
 
 			priv->activeWindow = w->id ();
-			w->priv->activeNum = priv->nextActiveNum();
+			w->priv->activeNum = priv->activeNum++;
 
 			if (active)
 			{
@@ -2073,7 +2089,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
     break;
     case FocusOut:
 	if (event->xfocus.mode == NotifyUngrab)
-	    grabNotified = false;
+	    priv->grabbed = false;
 	break;
     case EnterNotify:
 	if (event->xcrossing.root == priv->root)
