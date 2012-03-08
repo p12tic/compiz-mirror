@@ -41,6 +41,9 @@
 #include "privatewindow.h"
 #include "privatestackdebugger.h"
 
+namespace cps = compiz::private_screen;
+
+
 bool
 PrivateWindow::handleSyncAlarm ()
 {
@@ -135,7 +138,7 @@ isBound (CompOption             &option,
 }
 
 bool
-PrivateScreen::triggerPress (CompAction         *action,
+cps::EventManager::triggerPress (CompAction         *action,
                              CompAction::State   state,
                              CompOption::Vector &arguments)
 {
@@ -144,7 +147,7 @@ PrivateScreen::triggerPress (CompAction         *action,
     if (state == CompAction::StateInitKey && grabs.empty ())
     {
         int pressTime = arguments[7].value ().i ();
-        int err = XGrabKeyboard (dpy, grabWindow, True,
+        int err = XGrabKeyboard (screen->dpy(), grabWindow, True,
                                  GrabModeAsync, GrabModeAsync, pressTime);
         /*
          * We don't actually need this active grab for anything other than
@@ -154,7 +157,7 @@ PrivateScreen::triggerPress (CompAction         *action,
          */
         if (err == GrabSuccess)
         {
-            XUngrabKeyboard (dpy, pressTime);
+            XUngrabKeyboard (screen->dpy(), pressTime);
             possibleTap = action;
             tapStart = pressTime;
         }
@@ -184,7 +187,7 @@ PrivateScreen::triggerPress (CompAction         *action,
 }
 
 bool
-PrivateScreen::triggerRelease (CompAction         *action,
+cps::EventManager::triggerRelease (CompAction         *action,
                                CompAction::State   state,
                                CompOption::Vector &arguments)
 {
@@ -220,12 +223,12 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
     {
 	unsigned int i;
 
-	if (event->root != root)
+	if (event->root != screen->root())
 	    return false;
 
 	if (event->window != edgeWindow)
 	{
-	    if (grabs.empty () || event->window != root)
+	    if (grabs.empty () || event->window != screen->root())
 		return false;
 	}
 
@@ -1067,7 +1070,7 @@ CompScreen::handleEvent (XEvent *event)
 void
 CompScreenImpl::alwaysHandleEvent (XEvent *event)
 {
-    priv->eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
+    eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
 
     handleEvent (event);
 
@@ -1081,7 +1084,7 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
      * event on keypresses */
     if (keyEvent)
     {
-	int mode = priv->eventHandled ? AsyncKeyboard : ReplayKeyboard;
+	int mode = eventHandled ? AsyncKeyboard : ReplayKeyboard;
 	XAllowEvents (priv->dpy, mode, event->xkey.time);
     }
 
@@ -1123,8 +1126,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     }
 
-    priv->eventHandled = priv->handleActionEvent (event);
-    if (priv->eventHandled)
+    eventHandled = priv->handleActionEvent (event);
+    if (eventHandled)
     {
 	if (priv->grabs.empty ())
 	    XAllowEvents (priv->dpy, AsyncPointer, event->xbutton.time);
@@ -1938,9 +1941,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	if (wa.root == priv->root)
 	{
 	    if (event->xfocus.mode == NotifyGrab)
-		priv->grabbed = true;
+		grabNotified = true;
 	    else if (event->xfocus.mode == NotifyUngrab)
-		priv->grabbed = false;
+		grabNotified = false;
 	    else
 	    {
 		CompWindowList dockWindows;
@@ -1960,7 +1963,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 			CompWindow     *active = screen->findWindow (priv->activeWindow);
 
 			priv->activeWindow = w->id ();
-			w->priv->activeNum = priv->activeNum++;
+			w->priv->activeNum = priv->nextActiveNum();
 
 			if (active)
 			{
@@ -2095,7 +2098,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
     break;
     case FocusOut:
 	if (event->xfocus.mode == NotifyUngrab)
-	    priv->grabbed = false;
+	    grabNotified = false;
 	break;
     case EnterNotify:
 	if (event->xcrossing.root == priv->root)

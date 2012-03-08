@@ -348,6 +348,11 @@ class CompScreenImpl : public CompScreen
         virtual void _matchExpHandlerChanged();
         virtual void _matchPropertyChanged(CompWindow *);
         virtual void _outputChangeNotify();
+
+        bool 	eventHandled;
+        bool	grabNotified;   /* true once we receive a GrabNotify
+    				  on FocusOut and false on
+    				  UngrabNotify from FocusIn */
 };
 
 CompPlugin::VTable * getCoreVTable ();
@@ -542,8 +547,13 @@ struct PseudoNamespace
 // is stuck in a virtual base class until we complete the cleanup of PrivateScreen
 struct ScreenUser
 {
-    ScreenUser(CompScreen  *screen) : screen(screen) {}
-    CompScreen  *screen;
+protected:
+    ScreenUser(CompScreen  *screen) : screen(screen), possibleTap(0) {}
+    CompScreen  * const screen;
+public:
+    // Here because it is referenced in PluginManager::updatePlugins(),
+    // and GrabManager::triggerPress not clear where it really belongs.
+    void *possibleTap;
 };
 
 class PluginManager :
@@ -555,11 +565,17 @@ class PluginManager :
 
 	void updatePlugins ();
 
-    //private:
+	void setPlugins(CompOption::Value::Vector const& vList)
+	{
+	    plugin.set (CompOption::TypeString, vList);
+	}
+
+	bool isDirtyPluginList () const { return dirtyPluginList; }
+	void setDirtyPluginList () { dirtyPluginList = true; }
+
+    private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
-	void *possibleTap;
-	Time  tapStart;
 };
 
 class EventManager :
@@ -567,16 +583,40 @@ class EventManager :
     public ValueHolder,
     public virtual ScreenUser
 {
-public:
+    public:
 	EventManager (CompScreen *screen);
 	~EventManager ();
 
 	bool init (const char *name);
 
 	void handleSignal (int signum);
+	bool triggerPress   (CompAction         *action,
+			     CompAction::State   state,
+			     CompOption::Vector &arguments);
+	bool triggerRelease (CompAction         *action,
+	                     CompAction::State   state,
+	                     CompOption::Vector &arguments);
 
-public:
+	void startEventLoop();
+	void quit() { mainloop->quit(); }
 
+	CompWatchFdHandle addWatchFd (
+	    int             fd,
+	    short int       events,
+	    FdWatchCallBack callBack);
+
+	void removeWatchFd (CompWatchFdHandle handle);
+
+	CompFileWatch* addFileWatch (
+	    const char        *path,
+	    int               mask,
+	    FileWatchCallBack callBack);
+
+	CompFileWatch* removeFileWatch (CompFileWatchHandle handle);
+
+	const CompFileWatchList& getFileWatches () const;
+
+    private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
 	/* We cannot use RefPtrs. See
@@ -595,18 +635,15 @@ public:
 	std::list< CompWatchFd * > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
-	CompTimer    pingTimer;
+	Time  tapStart;
 
-	CompTimer               edgeDelayTimer;
-	CompDelayedEdgeSettings edgeDelaySettings;
+    public:
+	std::list<Grab *> grabs;
+	Window            grabWindow;
+	Window	edgeWindow;
 
-	int          desktopWindowCount;
-	unsigned int mapNum;
-
-
-	std::list<CompGroup *> groups;
-
-	CompIcon *defaultIcon;
+    protected:
+	Window	xdndWindow;
 
     private:
 	virtual bool initDisplay (const char *name);
@@ -640,14 +677,11 @@ class Grab {
 struct OrphanData : boost::noncopyable
 {
     OrphanData();
+    ~OrphanData();
 
-    Window	edgeWindow;
-    Window	xdndWindow;
-    bool 	eventHandled;
-    std::list<Grab *> grabs;
-    bool	grabbed;   /* true once we recieve a GrabNotify
-			      on FocusOut and false on
-			      UngrabNotify from FocusIn */
+    int          desktopWindowCount;
+    unsigned int mapNum;
+    CompIcon *defaultIcon;
 };
 
 class GrabManager : boost::noncopyable,
@@ -684,7 +718,15 @@ class History : boost::noncopyable
 
 	void addToCurrentActiveWindowHistory (Window id);
 
-    //private:
+	CompActiveWindowHistory* getCurrentHistory ()
+	{
+	    return history+currentHistory;
+	}
+
+	unsigned int nextActiveNum () { return activeNum++; }
+	unsigned int getActiveNum () const { return activeNum; }
+
+    private:
 	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
 	int                     currentHistory;
 	unsigned int activeNum;
@@ -736,13 +778,6 @@ class PrivateScreen :
 
 	std::list <XEvent> queueEvents ();
 	void processEvents ();
-
-	bool triggerPress   (CompAction         *action,
-	                     CompAction::State   state,
-	                     CompOption::Vector &arguments);
-	bool triggerRelease (CompAction         *action,
-	                     CompAction::State   state,
-	                     CompOption::Vector &arguments);
 
 	bool triggerButtonPressBindings (CompOption::Vector &options,
 					 XButtonEvent       *event,
@@ -898,7 +933,6 @@ class PrivateScreen :
 	Window	      root;
 
 	XWindowAttributes attrib;
-	Window            grabWindow;
 
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;
@@ -928,6 +962,10 @@ class PrivateScreen :
 
     private:
 	virtual bool initDisplay (const char *name);
+
+	CompTimer    pingTimer;
+	CompTimer               edgeDelayTimer;
+	CompDelayedEdgeSettings edgeDelaySettings;
 };
 
 class CompManager

@@ -169,7 +169,7 @@ CompManager::init ()
     if (!screen->init (displayName))
 	return false;
 
-    screen->priv->dirtyPluginList = true;
+    screen->priv->setDirtyPluginList ();
     screen->priv->updatePlugins ();
 
     if (debugOutput)

@@ -154,14 +154,20 @@ cps::EventManager::handleSignal (int signum)
 void
 CompScreenImpl::eventLoop ()
 {
-    priv->source = CompEventSource::create ();
-    priv->timeout = CompTimeoutSource::create (priv->ctx);
+    priv->startEventLoop ();
+}
 
-    priv->source->attach (priv->ctx);
+void
+cps::EventManager::startEventLoop()
+{
+    source = CompEventSource::create ();
+    timeout = CompTimeoutSource::create (ctx);
 
-    XFlush (priv->dpy);
+    source->attach (ctx);
 
-    priv->mainloop->run ();
+    XFlush (screen->dpy());
+
+    mainloop->run();
 }
 
 CompFileWatchHandle
@@ -169,50 +175,78 @@ CompScreenImpl::addFileWatch (const char        *path,
 			  int               mask,
 			  FileWatchCallBack callBack)
 {
-    CompFileWatch *fileWatch = new CompFileWatch ();
+    CompFileWatch *fileWatch = priv->addFileWatch (path, mask, callBack);
+
     if (!fileWatch)
 	return 0;
-
-    fileWatch->path	= path;
-    fileWatch->mask	= mask;
-    fileWatch->callBack = callBack;
-    fileWatch->handle   = priv->lastFileWatchHandle++;
-
-    if (priv->lastFileWatchHandle == MAXSHORT)
-	priv->lastFileWatchHandle = 1;
-
-    priv->fileWatch.push_front (fileWatch);
 
     fileWatchAdded (fileWatch);
 
     return fileWatch->handle;
 }
 
+CompFileWatch*
+cps::EventManager::addFileWatch (
+    const char        *path,
+    int               mask,
+    FileWatchCallBack callBack)
+{
+    CompFileWatch *fw = new CompFileWatch ();
+    if (!fw)
+	return 0;
+
+    fw->path	= path;
+    fw->mask	= mask;
+    fw->callBack = callBack;
+    fw->handle   = lastFileWatchHandle++;
+
+    if (lastFileWatchHandle == MAXSHORT)
+	lastFileWatchHandle = 1;
+
+    fileWatch.push_front (fw);
+
+    return fw;
+}
+
 void
 CompScreenImpl::removeFileWatch (CompFileWatchHandle handle)
 {
-    std::list<CompFileWatch *>::iterator it;
-    CompFileWatch                        *w;
+    if (CompFileWatch* w = priv->removeFileWatch (handle))
+    {
+	fileWatchRemoved (w);
 
-    for (it = priv->fileWatch.begin (); it != priv->fileWatch.end (); it++)
+	delete w;
+    }
+}
+
+CompFileWatch*
+cps::EventManager::removeFileWatch (CompFileWatchHandle handle)
+{
+    std::list<CompFileWatch *>::iterator it;
+
+    for (it = fileWatch.begin (); it != fileWatch.end (); it++)
 	if ((*it)->handle == handle)
 	    break;
 
-    if (it == priv->fileWatch.end ())
-	return;
+    if (it == fileWatch.end ())
+	return 0;
 
-    w = (*it);
-    priv->fileWatch.erase (it);
+    CompFileWatch* w = (*it);
+    fileWatch.erase (it);
 
-    fileWatchRemoved (w);
-
-    delete w;
+    return w;
 }
 
 const CompFileWatchList &
 CompScreenImpl::getFileWatches () const
 {
-    return priv->fileWatch;
+    return priv->getFileWatches ();
+}
+
+const CompFileWatchList &
+cps::EventManager::getFileWatches () const
+{
+    return fileWatch;
 }
 
 CompWatchFd::CompWatchFd (int		    fd,
@@ -245,6 +279,14 @@ CompScreenImpl::addWatchFd (int             fd,
 			short int       events,
 			FdWatchCallBack callBack)
 {
+    return priv->addWatchFd (fd, events, callBack);
+}
+
+CompWatchFdHandle
+cps::EventManager::addWatchFd (int             fd,
+			short int       events,
+			FdWatchCallBack callBack)
+{
     Glib::IOCondition gEvents;
     
     memset (&gEvents, 0, sizeof (Glib::IOCondition));
@@ -262,16 +304,16 @@ CompScreenImpl::addWatchFd (int             fd,
 
     CompWatchFd *watchFd = CompWatchFd::create (fd, gEvents, callBack);
 
-    watchFd->attach (priv->ctx);
+    watchFd->attach (ctx);
 
     if (!watchFd)
 	return 0;
-    watchFd->mHandle   = priv->lastWatchFdHandle++;
+    watchFd->mHandle   = lastWatchFdHandle++;
 
-    if (priv->lastWatchFdHandle == MAXSHORT)
-	priv->lastWatchFdHandle = 1;
+    if (lastWatchFdHandle == MAXSHORT)
+	lastWatchFdHandle = 1;
 
-    priv->watchFds.push_front (watchFd);
+    watchFds.push_front (watchFd);
 
     return watchFd->mHandle;
 }
@@ -279,17 +321,23 @@ CompScreenImpl::addWatchFd (int             fd,
 void
 CompScreenImpl::removeWatchFd (CompWatchFdHandle handle)
 {
+    priv->removeWatchFd (handle);
+}
+
+void
+cps::EventManager::removeWatchFd (CompWatchFdHandle handle)
+{
     std::list<CompWatchFd * >::iterator it;
     CompWatchFd *			w;
 
-    for (it = priv->watchFds.begin();
-	 it != priv->watchFds.end (); it++)
+    for (it = watchFds.begin();
+	 it != watchFds.end (); it++)
     {
 	if ((*it)->mHandle == handle)
 	    break;
     }
 
-    if (it == priv->watchFds.end ())
+    if (it == watchFds.end ())
 	return;
 
     w = (*it);
@@ -301,7 +349,7 @@ CompScreenImpl::removeWatchFd (CompWatchFdHandle handle)
     }
 
     delete w;
-    priv->watchFds.erase (it);
+    watchFds.erase (it);
 }
 
 void
@@ -653,7 +701,7 @@ PrivateScreen::setOption (const CompString  &name,
 
     switch (index) {
 	case CoreOptions::ActivePlugins:
-	    dirtyPluginList = true;
+	    setDirtyPluginList ();
 	    break;
 	case CoreOptions::PingDelay:
 	    pingTimer.setTimes (optionGetPingDelay (),
@@ -731,7 +779,7 @@ PrivateScreen::processEvents ()
     std::list <XEvent> events;
     StackDebugger *dbg = StackDebugger::Default ();
 
-    if (dirtyPluginList)
+    if (isDirtyPluginList ())
 	updatePlugins ();
 
     /* Restacks recently processed, ensure that
@@ -1136,7 +1184,7 @@ PrivateScreen::handleSelectionClear (XEvent *event)
 	wmSnAtom != event->xselectionclear.selection)
 	return;
 
-    mainloop->quit ();
+    quit ();
 }
 
 #define IMAGEDIR "images"
@@ -3063,7 +3111,7 @@ CompScreenImpl::grabExist (const char *grab)
 bool
 CompScreenImpl::grabbed ()
 {
-    return priv->grabbed;
+    return grabNotified;
 }
 
 void
@@ -4335,7 +4383,7 @@ CompScreenImpl::desktopWindowCount ()
 unsigned int
 CompScreenImpl::activeNum () const
 {
-    return priv->activeNum;
+    return priv->getActiveNum();
 }
 
 CompOutput::vector &
@@ -4371,7 +4419,7 @@ CompScreenImpl::nDesktop ()
 CompActiveWindowHistory *
 CompScreenImpl::currentHistory ()
 {
-    return &priv->history[priv->currentHistory];
+    return priv->getCurrentHistory ();
 }
 
 bool
@@ -4441,7 +4489,9 @@ CompScreen::CompScreen ():
 {
 }
 
-CompScreenImpl::CompScreenImpl ()
+CompScreenImpl::CompScreenImpl () :
+    eventHandled (false),
+    grabNotified (false)
 {
     CompPrivate p;
     CompOption::Value::Vector vList;
@@ -4471,7 +4521,7 @@ CompScreenImpl::CompScreenImpl ()
 
     vList.push_back ("core");
 
-    priv->plugin.set (CompOption::TypeString, vList);
+    priv->setPlugins (vList);
 }
 
 bool
@@ -4490,11 +4540,6 @@ cps::EventManager::init (const char *name)
     sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&PrivateScreen::handleSignal, this, _1));
 
     if (!initDisplay(name)) return false;
-
-    pingTimer.setTimes (optionGetPingDelay (),
-			      optionGetPingDelay () + 500);
-
-    pingTimer.start ();
 
     optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
     optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
@@ -4529,7 +4574,7 @@ cps::EventManager::init (const char *name)
 
     optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
 
-    if (dirtyPluginList)
+    if (isDirtyPluginList ())
 	updatePlugins ();
 
     return true;
@@ -4923,7 +4968,7 @@ PrivateScreen::initDisplay (const char *name)
     foreach (CompWindow *w, windows)
     {
 	if (w->isViewable ())
-	    w->priv->activeNum = activeNum++;
+	    w->priv->activeNum = nextActiveNum ();
     }
 
     Window               focus;
@@ -4972,6 +5017,12 @@ PrivateScreen::initDisplay (const char *name)
 
     setAudibleBell (optionGetAudibleBell ());
 
+
+    pingTimer.setTimes (optionGetPingDelay (),
+			      optionGetPingDelay () + 500);
+
+    pingTimer.start ();
+
     return true;
 }
 
@@ -5017,7 +5068,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     nDesktop (1),
     currentDesktop (0),
     root (None),
-    grabWindow (None),
     outputDevs (0),
     currentOutputDev (0),
     hasOverlappingOutputs (false),
@@ -5025,7 +5075,8 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     showingDesktopMask (0),
     desktopHintData (0),
     desktopHintSize (0),
-    initialized (false)
+    initialized (false),
+    edgeDelayTimer ()
 {
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));
@@ -5059,9 +5110,7 @@ cps::PluginManager::PluginManager(CompScreen *screen) :
     ScreenUser (screen),
     CoreOptions (false),
     plugin (),
-    dirtyPluginList (true),
-    possibleTap (NULL),
-    tapStart (0)
+    dirtyPluginList (true)
 {
 }
 
@@ -5074,10 +5123,11 @@ cps::EventManager::EventManager (CompScreen *screen) :
     lastFileWatchHandle (1),
     watchFds (0),
     lastWatchFdHandle (1),
-    edgeDelayTimer (),
-    desktopWindowCount (0),
-    mapNum (1),
-    defaultIcon (0)
+    tapStart(0),
+    grabs (),
+    grabWindow (None),
+    edgeWindow (None),
+    xdndWindow (None)
 {
     ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
@@ -5085,21 +5135,22 @@ cps::EventManager::EventManager (CompScreen *screen) :
 }
 
 cps::OrphanData::OrphanData() :
-    edgeWindow (None),
-    xdndWindow (None),
-    eventHandled (false),
-    grabs (),
-    grabbed (false)
+    desktopWindowCount (0),
+    mapNum (1),
+    defaultIcon (0)
 {
+}
+
+cps::OrphanData::~OrphanData()
+{
+    if (defaultIcon)
+	delete defaultIcon;
 }
 
 cps::EventManager::~EventManager ()
 {
     delete timeout;
     delete source;
-
-    if (defaultIcon)
-	delete defaultIcon;
 
     foreach (CompWatchFd *fd, watchFds)
 	delete fd;
