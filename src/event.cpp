@@ -1935,9 +1935,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	if (wa.root == priv->root)
 	{
 	    if (event->xfocus.mode == NotifyGrab)
-		priv->grabbed = true;
+		priv->grabNotified ();
 	    else if (event->xfocus.mode == NotifyUngrab)
-		priv->grabbed = false;
+		priv->ungrabNotified ();
 	    else
 	    {
 		CompWindowList dockWindows;
@@ -2092,7 +2092,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
     break;
     case FocusOut:
 	if (event->xfocus.mode == NotifyUngrab)
-	    priv->grabbed = false;
+	    priv->ungrabNotified ();
 	break;
     case EnterNotify:
 	if (event->xcrossing.root == priv->root)

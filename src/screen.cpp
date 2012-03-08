@@ -3111,7 +3111,7 @@ CompScreenImpl::grabExist (const char *grab)
 bool
 CompScreenImpl::grabbed ()
 {
-    return priv->grabbed;
+    return priv->isGrabbed();
 }
 
 void

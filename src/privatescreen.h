@@ -617,6 +617,10 @@ class EventManager :
 
 	const CompFileWatchList& getFileWatches () const;
 
+	void grabNotified() { grabbed = true; }
+	void ungrabNotified() { grabbed = false; }
+	bool isGrabbed() const { return grabbed; }
+
     private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
@@ -636,10 +640,10 @@ class EventManager :
 	std::list< CompWatchFd * > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
-    public:
-        bool	grabbed;   /* true once we recieve a GrabNotify
+        bool	grabbed;   /* true once we receive a GrabNotify
 			      on FocusOut and false on
 			      UngrabNotify from FocusIn */
+    public:
 	std::list<Grab *> grabs;
 	Window            grabWindow;
 	Window	edgeWindow;
