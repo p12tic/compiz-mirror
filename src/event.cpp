@@ -143,30 +143,24 @@ PrivateScreen::triggerPress (CompAction         *action,
 
     if (state == CompAction::StateInitKey && grabs.empty ())
     {
-        int pressTime = arguments[7].value ().i ();
-        int err = XGrabKeyboard (dpy, grabWindow, True,
-                                 GrabModeAsync, GrabModeAsync, pressTime);
-        /*
-         * We don't actually need this active grab for anything other than
-         * to test if it fails (AlreadyGrabbed). So we know if some other
-         * app has an active grab like a virtual machine or lock screen.
-         * (LP: #806255)
-         */
-        if (err == GrabSuccess)
+        if (grabbed)
         {
-            XUngrabKeyboard (dpy, pressTime);
             possibleTap = action;
-            tapStart = pressTime;
+            tapStart = arguments[7].value ().i ();
         }
         else
         {
-            possibleTap = NULL;
             /*
-             * Don't trigger any compiz actions if some other app has the
-             * keyboard grabbed (like a VM or locked screensaver). LP: #806255
+             * If we received this keypress event and weren't grabbed then
+             * the event doesn't belong to us. More likely belongs to
+             * a different client's grab so ignore it. (LP: #806255)
+             * The reason why we might receive such keypress events while
+             * other clients have grabs is because of the XKB extension that
+             * we're using. It sends you events even if they're not yours...
+             * http://www.x.org/releases/current/doc/libX11/specs/XKB/xkblib.html
              */
-            if (err == AlreadyGrabbed)
-                return false;
+            possibleTap = NULL;
+            return false;
         }
     }
 
