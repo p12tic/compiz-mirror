@@ -144,7 +144,7 @@ cps::EventManager::triggerPress (CompAction         *action,
 {
     bool actionEventHandled = false;
 
-    if (state == CompAction::StateInitKey && grabs.empty ())
+    if (state == CompAction::StateInitKey && grabsEmpty ())
     {
         if (grabbed)
         {
@@ -222,7 +222,7 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 
 	if (event->window != edgeWindow)
 	{
-	    if (grabs.empty () || event->window != screen->root())
+	    if (grabsEmpty () || event->window != screen->root())
 		return false;
 	}
 
@@ -1082,7 +1082,7 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
 	XAllowEvents (priv->dpy, mode, event->xkey.time);
     }
 
-    if (priv->grabs.empty () && event->type == KeyPress)
+    if (priv->grabsEmpty () && event->type == KeyPress)
     {
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
     }
@@ -1123,7 +1123,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
     eventHandled = priv->handleActionEvent (event);
     if (eventHandled)
     {
-	if (priv->grabs.empty ())
+	if (priv->grabsEmpty ())
 	    XAllowEvents (priv->dpy, AsyncPointer, event->xbutton.time);
 	return;
     }
@@ -1410,7 +1410,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    }
 	}
 
-	if (priv->grabs.empty ())
+	if (priv->grabsEmpty ())
 	    XAllowEvents (priv->dpy, ReplayPointer, event->xbutton.time);
 
 	break;
@@ -2105,7 +2105,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    priv->below = w->id ();
 
 	    if (!priv->optionGetClickToFocus () &&
-		priv->grabs.empty ()                                 &&
+		priv->grabsEmpty ()                                 &&
 		event->xcrossing.mode   != NotifyGrab                &&
 		event->xcrossing.detail != NotifyInferior)
 	    {
