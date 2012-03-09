@@ -3191,6 +3191,20 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
 		    }
 		}
 	    }
+
+	    /*
+	     * keycode == 0, so this is a modifier-only keybinding.
+	     * Until now I have been trying to:
+	     *     grabUngrabOneKey (modifiers | ignore, AnyKey, grab);
+	     * which does not seem to work at all.
+	     * However, binding to each keycode individually does work.
+	     * This is so that we can detect taps on individual modifier
+	     * keys, and know to cancel the tap if <modifier>+k is pressed.
+	     */
+	    int minCode, maxCode;
+	    XDisplayKeycodes (dpy, &minCode, &maxCode);
+	    for (k = minCode; k <= maxCode; k++)
+	        grabUngrabOneKey (modifiers | ignore, k, grab);
 	}
 
 	if (CompScreen::checkForError (dpy))

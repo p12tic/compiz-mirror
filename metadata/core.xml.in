@@ -31,13 +31,6 @@
 		<min>0</min>
 		<max>10000</max>
 	    </option>
-	    <option name="tap_time" type="int">
-		<_short>Key Tap Time</_short>
-		<_long>Maximim amount of time (milliseconds) a key may be held down and still be reported as a "tap".</_long>
-		<default>150</default>
-		<min>0</min>
-		<max>10000</max>
-	    </option>
 	    <option name="ping_delay" type="int">
 		<_short>Ping Delay</_short>
 		<_long>Interval between ping messages</_long>

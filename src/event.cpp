@@ -131,9 +131,6 @@ isBound (CompOption             &option,
 
     *action = &option.value ().action ();
 
-    if (*action && !(*action)->active ())
-	return false;
-
     return true;
 }
 
@@ -149,7 +146,6 @@ cps::EventManager::triggerPress (CompAction         *action,
         if (grabbed)
         {
             possibleTap = action;
-            tapStart = arguments[7].value ().i ();
         }
         else
         {
@@ -187,10 +183,7 @@ cps::EventManager::triggerRelease (CompAction         *action,
 {
     if (action == possibleTap)
     {
-        int releaseTime = arguments[7].value ().i ();
-        int tapDuration = releaseTime - tapStart;
-        if (tapDuration < optionGetTapTime ())
-            state |= CompAction::StateTermTapped;
+        state |= CompAction::StateTermTapped;
         possibleTap = NULL;
     }
 
