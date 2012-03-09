@@ -141,6 +141,10 @@ class ScreenInterface : public WrapableInterface<CompScreen, ScreenInterface> {
 
 };
 
+namespace compiz { namespace private_screen {
+    class Grab;
+}}
+
 class CompScreen :
     public WrapableHandler<ScreenInterface, 18>,
     public PluginClassStorage, // TODO should be an interface here
@@ -148,7 +152,7 @@ class CompScreen :
     public CompOption::Class   // TODO should be an interface here
 {
 public:
-    typedef void* GrabHandle;
+    typedef compiz::private_screen::Grab* GrabHandle;
 
     WRAPABLE_HND (0, ScreenInterface, void, fileWatchAdded, CompFileWatch *)
     WRAPABLE_HND (1, ScreenInterface, void, fileWatchRemoved, CompFileWatch *)
