@@ -572,9 +572,6 @@ class PluginManager :
     private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
-
-    protected:
-	Time  tapStart;
 };
 
 class GrabList
