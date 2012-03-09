@@ -1911,7 +1911,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	   when a menu is opened */
 	if (event->xfocus.mode == NotifyGrab &&
 	    event->xfocus.window != priv->root &&
-	    event->xfocus.window != priv->grabWindow)
+	    priv->notGrabWindow (event->xfocus.window))
 	    priv->possibleTap = NULL;
 
 	if (!XGetWindowAttributes (priv->dpy, event->xfocus.window, &wa))

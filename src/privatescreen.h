@@ -641,6 +641,9 @@ class EventManager :
 	void ungrabNotified() { grabbed = false; }
 	bool isGrabbed() const { return grabbed; }
 
+	void setSupportingWmCheck (Display* dpy, Window root);
+	bool notGrabWindow(Window w) const { return w != grabWindow; }
+
     private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
@@ -841,8 +844,6 @@ class PrivateScreen :
 	void updateScreenEdges ();
 
 	void reshape (int w, int h);
-
-	void setSupportingWmCheck ();
 
 	void getDesktopHints ();
 

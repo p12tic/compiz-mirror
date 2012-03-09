@@ -2281,7 +2281,7 @@ PrivateScreen::configure (XConfigureEvent *ce)
 }
 
 void
-PrivateScreen::setSupportingWmCheck ()
+cps::EventManager::setSupportingWmCheck (Display* dpy, Window root)
 {
     XChangeProperty (dpy, grabWindow,
 		     Atoms::supportingWmCheck,
@@ -2302,7 +2302,7 @@ PrivateScreen::setSupportingWmCheck ()
 		     XA_ATOM, 32, PropModeAppend,
 		     (unsigned char *) &Atoms::winStateHidden, 1);
 
-    XChangeProperty (dpy, root, Atoms::supportingWmCheck,
+    XChangeProperty (dpy, screen->root(), Atoms::supportingWmCheck,
 		     XA_WINDOW, 32, PropModeReplace,
 		     (unsigned char *) &grabWindow, 1);
 }
@@ -4910,7 +4910,7 @@ PrivateScreen::initDisplay (const char *name)
     updateScreenEdges ();
 
     setDesktopHints ();
-    setSupportingWmCheck ();
+    setSupportingWmCheck (dpy, root);
     screen->updateSupportedWmHints ();
 
     normalCursor = XCreateFontCursor (dpy, XC_left_ptr);
