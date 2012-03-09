@@ -574,14 +574,34 @@ class PluginManager :
     private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
+};
 
-    protected:
-	Time  tapStart;
+class GrabList
+{
+    // TODO: std::list<Grab *> is almost certainly the wrong data
+    // structure. Probably better as std::vector<Grab> - many fewer
+    // memory allocations and releases.
+    typedef std::list<Grab *> GrabPtrList;
+
+public:
+    typedef GrabPtrList::iterator GrabIterator;
+
+    bool grabsEmpty() const { return grabs.empty(); }
+    void grabsPush(Grab* grab) { grabs.push_back (grab); }
+    GrabIterator grabsBegin() { return grabs.begin(); }
+    GrabIterator grabsEnd() { return grabs.end(); }
+    void grabsRemove(Grab* grab);
+    bool grabExist (const char *grab);
+    Grab* grabsBack() { return grabs.back (); }
+
+private:
+    GrabPtrList grabs;
 };
 
 class EventManager :
     public PluginManager,
     public ValueHolder,
+    public GrabList,
     public virtual ScreenUser
 {
 public:
@@ -643,11 +663,8 @@ class ButtonGrab {
 	int          count;
 };
 
-class Grab {
-    public:
-
-	friend class ::CompScreenImpl;
-    private:
+struct Grab {
+	Grab(Cursor cursor, const char *name) : cursor(cursor), name(name) {}
 	Cursor     cursor;
 	const char *name;
 };
@@ -660,10 +677,10 @@ struct OrphanData : boost::noncopyable
 
     Window	edgeWindow;
     Window	xdndWindow;
-    std::list<Grab *> grabs;
-        bool	grabbed;   /* true once we receive a GrabNotify
-    				  on FocusOut and false on
-    				  UngrabNotify from FocusIn */
+    bool 	eventHandled;
+    bool	grabbed;   /* true once we recieve a GrabNotify
+			      on FocusOut and false on
+			      UngrabNotify from FocusIn */
 };
 
 class GrabManager : boost::noncopyable,
