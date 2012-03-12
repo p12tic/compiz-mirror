@@ -664,6 +664,8 @@ class EventManager :
 	CompFileWatchList   fileWatch;
 	CompFileWatchHandle lastFileWatchHandle;
 
+	// TODO - almost certainly the wrong data structure
+	// Why not a std::map<CompWatchFdHandle, CompWatchFd>?
 	std::list< CompWatchFd * > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
