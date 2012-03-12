@@ -4609,6 +4609,7 @@ PrivateScreen::initDisplay (const char *name)
 	return false;
     }
 
+    int  randrError;
     randrExtension = XRRQueryExtension (dpy, &randrEvent,
 					      &randrError);
 

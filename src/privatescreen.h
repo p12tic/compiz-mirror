@@ -910,7 +910,7 @@ class PrivateScreen :
 
     public:
 	bool randrExtension;
-	int  randrEvent, randrError;
+	int  randrEvent;
 
 	bool shapeExtension;
 	int  shapeEvent, shapeError;
