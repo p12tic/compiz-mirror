@@ -2145,8 +2145,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	}
 	break;
     default:
-	if (priv->shapeExtension &&
-		 event->type == priv->shapeEvent + ShapeNotify)
+	if (priv->xShape.hasExtension () &&
+		 event->type == priv->xShape.getExtension () + ShapeNotify)
 	{
 	    w = findWindow (((XShapeEvent *) event)->window);
 	    if (w)
@@ -2155,7 +2155,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    w->priv->updateRegion ();
 	    }
 	}
-	else if (event->type == priv->getSyncEvent() + XSyncAlarmNotify)
+	else if (event->type == priv->xSync.getExtension () + XSyncAlarmNotify)
 	{
 	    XSyncAlarmNotifyEvent *sa;
 

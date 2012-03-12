@@ -515,31 +515,31 @@ CompScreenImpl::dpy ()
 bool
 CompScreenImpl::XRandr ()
 {
-    return priv->hasRandrExtension ();
+    return priv->xRandr.hasExtension ();
 }
 
 int
 CompScreenImpl::randrEvent ()
 {
-    return priv->getRandrEvent ();
+    return priv->xRandr.getExtension ();
 }
 
 bool
 CompScreenImpl::XShape ()
 {
-    return priv->shapeExtension;
+    return priv->xShape.hasExtension ();
 }
 
 int
 CompScreenImpl::shapeEvent ()
 {
-    return priv->shapeEvent;
+    return priv->xShape.getExtension ();
 }
 
 int
 CompScreenImpl::syncEvent ()
 {
-    return priv->getSyncEvent ();
+    return priv->xSync.getExtension ();
 }
 
 
@@ -4575,24 +4575,6 @@ bool CompScreen::displayInitialised() const
     return priv && priv->initialized;
 }
 
-bool PrivateScreen::initSyncEvent(Display* dpy)
-{
-    bool result = true;
-    int syncError;
-    if (!XSyncQueryExtension(dpy, &syncEvent, &syncError))
-    {
-	compLogMessage("core", CompLogLevelFatal, "No sync extension");
-	result = false;
-    }
-    return result;
-}
-
-void PrivateScreen::initRandrExtension()
-{
-    int randrError;
-    randrExtension = XRRQueryExtension(dpy, &randrEvent, &randrError);
-}
-
 bool
 PrivateScreen::initDisplay (const char *name)
 {
@@ -4619,12 +4601,14 @@ PrivateScreen::initDisplay (const char *name)
 
     lastPing = 1;
 
-    if (!initSyncEvent(dpy)) return false;
+    if (!xSync.init (dpy))
+    {
+	compLogMessage("core", CompLogLevelFatal, "No sync extension");
+	return false;
+    }
 
-    initRandrExtension();
-
-    shapeExtension = XShapeQueryExtension (dpy, &shapeEvent,
-						 &shapeError);
+    xRandr.init (dpy);
+    xShape.init (dpy);
 
     int                  xkbOpcode;
     xkbExtension = XkbQueryExtension (dpy, &xkbOpcode,

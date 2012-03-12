@@ -45,6 +45,9 @@
 
 #include "core_options.h"
 
+#include <X11/extensions/Xrandr.h>
+#include <X11/extensions/shape.h>
+
 /**
  * A wrapping of the X display screen. This takes care of communication to the
  * X server.
@@ -757,6 +760,27 @@ class StartupSequence : boost::noncopyable,
 	CompTimer                        startupSequenceTimer;
 };
 
+template<Bool ExtensionQuery (Display*, int*, int*)>
+class Extension
+{
+public:
+    Extension() : enabled(), extension() {}
+
+    bool init(Display * dpy)
+    {
+	int error;
+	enabled = ExtensionQuery(dpy, &extension, &error);
+	return enabled;
+    }
+
+    int hasExtension () const { return enabled; }
+    int getExtension () const { return extension; }
+
+private:
+    bool enabled;
+    int extension;
+};
+
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
@@ -899,35 +923,15 @@ class PrivateScreen :
 	static void compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
 
-	bool initSyncEvent(Display* dpy);
-	int getSyncEvent () const { return syncEvent; }
-
-	bool hasRandrExtension () const { return randrExtension; }
-	int  getRandrEvent () const { return randrEvent; }
-
     public:
 
 	Display    *dpy;
 
-	bool initSyncEvent(Display* dpy);
-	int getSyncEvent () const { return syncEvent; }
-
-    private:
-	int syncEvent;
+	::compiz::private_screen::Extension<XSyncQueryExtension> xSync;
+	::compiz::private_screen::Extension<XRRQueryExtension> xRandr;
+	::compiz::private_screen::Extension<XShapeQueryExtension> xShape;
 
     public:
-	bool hasRandrExtension () const { return randrExtension; }
-	int  getRandrEvent () const { return randrEvent; }
-
-    private:
-	bool randrExtension;
-	int  randrEvent;
-    void initRandrExtension();
-
-    public:
-	bool shapeExtension;
-	int  shapeEvent, shapeError;
-
 	bool xkbExtension;
 	int  xkbEvent, xkbError;
 
