@@ -3023,7 +3023,7 @@ CompScreenImpl::updateGrab (CompScreen::GrabHandle handle, Cursor cursor)
     XChangeActivePointerGrab (priv->dpy, POINTER_GRAB_MASK,
 			      cursor, CurrentTime);
 
-    ((cps::Grab *) handle)->cursor = cursor;
+    handle->cursor = cursor;
 }
 
 void
@@ -3125,7 +3125,7 @@ CompScreenImpl::grabbed ()
 }
 
 void
-PrivateScreen::grabUngrabOneKey (unsigned int modifiers,
+cps::GrabManager::grabUngrabOneKey (unsigned int modifiers,
 				 int          keycode,
 				 bool         grab)
 {
@@ -3135,32 +3135,32 @@ PrivateScreen::grabUngrabOneKey (unsigned int modifiers,
 	 * Always grab the keyboard Sync-ronously. This is so that we can
 	 * choose to ReplayKeyboard in alwaysHandleEvent if need be.
 	 */
-	XGrabKey (dpy,
+	XGrabKey (screen->dpy(),
 		  keycode,
 		  modifiers,
-		  root,
+		  screen->root(),
 		  true,
 		  GrabModeAsync,
 		  GrabModeSync);
     }
     else
     {
-	XUngrabKey (dpy,
+	XUngrabKey (screen->dpy(),
 		    keycode,
 		    modifiers,
-		    root);
+		    screen->root());
     }
 }
 
 bool
-PrivateScreen::grabUngrabKeys (unsigned int modifiers,
+cps::GrabManager::grabUngrabKeys (unsigned int modifiers,
 			       int          keycode,
 			       bool         grab)
 {
     int             mod, k;
     unsigned int    ignore;
 
-    CompScreen::checkForError (dpy);
+    CompScreen::checkForError (screen->dpy());
 
     for (ignore = 0; ignore <= modHandler->ignoredModMask (); ignore++)
     {
@@ -3202,12 +3202,12 @@ PrivateScreen::grabUngrabKeys (unsigned int modifiers,
 	     * keys, and know to cancel the tap if <modifier>+k is pressed.
 	     */
 	    int minCode, maxCode;
-	    XDisplayKeycodes (dpy, &minCode, &maxCode);
+	    XDisplayKeycodes (screen->dpy(), &minCode, &maxCode);
 	    for (k = minCode; k <= maxCode; k++)
 	        grabUngrabOneKey (modifiers | ignore, k, grab);
 	}
 
-	if (CompScreen::checkForError (dpy))
+	if (CompScreen::checkForError (screen->dpy()))
 	    return false;
     }
 
@@ -3276,11 +3276,11 @@ cps::GrabManager::removePassiveKeyGrab (CompAction::KeyBinding &key)
 }
 
 void
-PrivateScreen::updatePassiveKeyGrabs ()
+cps::GrabManager::updatePassiveKeyGrabs ()
 {
     std::list<cps::KeyGrab>::iterator it;
 
-    XUngrabKey (dpy, AnyKey, AnyModifier, root);
+    XUngrabKey (screen->dpy(), AnyKey, AnyModifier, screen->root());
 
     for (it = keyGrabs.begin (); it != keyGrabs.end (); it++)
     {
@@ -3318,6 +3318,37 @@ cps::GrabManager::addPassiveButtonGrab (CompAction::ButtonBinding &button)
 	w->priv->updatePassiveButtonGrabs ();
 
     return true;
+}
+
+void cps::GrabManager::updatePassiveButtonGrabs(Window serverFrame)
+{
+    /* Grab only we have bindings on */
+    foreach (ButtonGrab &bind, buttonGrabs)
+    {
+	unsigned int mods = modHandler->virtualToRealModMask (bind.modifiers);
+
+	if (mods & CompNoMask)
+	    continue;
+
+	for (unsigned int ignore = 0;
+		 ignore <= modHandler->ignoredModMask (); ignore++)
+	{
+	    if (ignore & ~modHandler->ignoredModMask ())
+		continue;
+
+	    XGrabButton (screen->dpy(),
+			 bind.button,
+			 mods | ignore,
+			 serverFrame,
+			 false,
+			 ButtonPressMask | ButtonReleaseMask |
+			    ButtonMotionMask,
+			 GrabModeSync,
+			 GrabModeAsync,
+			 None,
+			 None);
+	}
+    }
 }
 
 void
@@ -4380,7 +4411,7 @@ CompScreenImpl::desktopWindowCount ()
 unsigned int
 CompScreenImpl::activeNum () const
 {
-    return priv->activeNum;
+    return priv->getActiveNum();
 }
 
 CompOutput::vector &
@@ -4416,7 +4447,7 @@ CompScreenImpl::nDesktop ()
 CompActiveWindowHistory *
 CompScreenImpl::currentHistory ()
 {
-    return &priv->history[priv->currentHistory];
+    return priv->getCurrentHistory ();
 }
 
 bool
@@ -4487,7 +4518,7 @@ CompScreen::CompScreen ():
 }
 
 CompScreenImpl::CompScreenImpl () :
-    eventHandled(false)
+    eventHandled (false)
 {
     CompPrivate p;
     CompOption::Value::Vector vList;
@@ -4964,7 +4995,7 @@ PrivateScreen::initDisplay (const char *name)
     foreach (CompWindow *w, windows)
     {
 	if (w->isViewable ())
-	    w->priv->activeNum = activeNum++;
+	    w->priv->activeNum = nextActiveNum ();
     }
 
     Window               focus;

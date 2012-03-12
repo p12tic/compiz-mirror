@@ -1950,7 +1950,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 			CompWindow     *active = screen->findWindow (priv->activeWindow);
 
 			priv->activeWindow = w->id ();
-			w->priv->activeNum = priv->activeNum++;
+			w->priv->activeNum = priv->nextActiveNum();
 
 			if (active)
 			{

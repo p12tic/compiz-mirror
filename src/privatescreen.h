@@ -717,15 +717,16 @@ public:
     bool addPassiveButtonGrab (CompAction::ButtonBinding &button);
     void removePassiveButtonGrab (CompAction::ButtonBinding &button);
 
-    virtual void grabUngrabOneKey (unsigned int modifiers,
+    void grabUngrabOneKey (unsigned int modifiers,
 			   int          keycode,
-			   bool         grab) = 0;
-    virtual bool grabUngrabKeys (unsigned int modifiers,
+			   bool         grab);
+    bool grabUngrabKeys (unsigned int modifiers,
 			 int          keycode,
-			 bool         grab) = 0;
-    virtual void updatePassiveKeyGrabs () = 0;
+			 bool         grab);
+    void updatePassiveKeyGrabs ();
+    void updatePassiveButtonGrabs(Window serverFrame);
 
-    //private:
+private:
     std::list<ButtonGrab> buttonGrabs;
     std::list<KeyGrab>    keyGrabs;
 };
@@ -739,7 +740,15 @@ class History : boost::noncopyable
 
 	void addToCurrentActiveWindowHistory (Window id);
 
-    //private:
+	CompActiveWindowHistory* getCurrentHistory ()
+	{
+	    return history+currentHistory;
+	}
+
+	unsigned int nextActiveNum () { return activeNum++; }
+	unsigned int getActiveNum () const { return activeNum; }
+
+    private:
 	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
 	int                     currentHistory;
 	unsigned int activeNum;
@@ -846,17 +855,6 @@ class PrivateScreen :
 	void reshape (int w, int h);
 
 	void getDesktopHints ();
-
-	void grabUngrabOneKey (unsigned int modifiers,
-			       int          keycode,
-			       bool         grab);
-
-
-	bool grabUngrabKeys (unsigned int modifiers,
-			     int          keycode,
-			     bool         grab);
-
-	void updatePassiveKeyGrabs ();
 
 	CompRect computeWorkareaForBox (const CompRect &box);
 
