@@ -2308,6 +2308,17 @@ cps::EventManager::setSupportingWmCheck (Display* dpy, Window root)
 }
 
 void
+cps::EventManager::createGrabWindow (Display* dpy, Window root, XSetWindowAttributes* attrib)
+{
+    grabWindow = XCreateWindow (dpy, root, -100, -100, 1, 1, 0,
+				  CopyFromParent, InputOnly, CopyFromParent,
+				  CWOverrideRedirect | CWEventMask,
+				  attrib);
+    XMapWindow (dpy, grabWindow);
+}
+
+
+void
 CompScreenImpl::updateSupportedWmHints ()
 {
     std::vector<Atom> atoms;
@@ -2981,7 +2992,7 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
     {
 	int status;
 
-	status = XGrabPointer (priv->dpy, priv->grabWindow, true,
+	status = XGrabPointer (priv->dpy, priv->getGrabWindow(), true,
 			       POINTER_GRAB_MASK,
 			       GrabModeAsync, GrabModeAsync,
 			       priv->root, cursor,
@@ -2990,7 +3001,7 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 	if (status == GrabSuccess)
 	{
 	    status = XGrabKeyboard (priv->dpy,
-				    priv->grabWindow, true,
+				    priv->getGrabWindow(), true,
 				    GrabModeAsync, GrabModeAsync,
 				    CurrentTime);
 	    if (status != GrabSuccess)
@@ -3600,11 +3611,11 @@ PrivateScreen::updateClientList ()
 	    XChangeProperty (dpy, root,
 			     Atoms::clientList,
 			     XA_WINDOW, 32, PropModeReplace,
-			     (unsigned char *) &grabWindow, 1);
+			     (unsigned char *) &getGrabWindow(), 1);
 	    XChangeProperty (dpy, root,
 			     Atoms::clientListStacking,
 			     XA_WINDOW, 32, PropModeReplace,
-			     (unsigned char *) &grabWindow, 1);
+			     (unsigned char *) &getGrabWindow(), 1);
 	}
 
 	return;
@@ -4366,12 +4377,18 @@ CompScreenImpl::destroyedWindows ()
 Time
 CompScreenImpl::getCurrentTime ()
 {
+    return priv->getCurrentTime (priv->dpy);
+}
+
+Time
+cps::EventManager::getCurrentTime (Display* dpy) const
+{
     XEvent event;
 
-    XChangeProperty (priv->dpy, priv->grabWindow,
+    XChangeProperty (dpy, grabWindow,
 		     XA_PRIMARY, XA_STRING, 8,
 		     PropModeAppend, NULL, 0);
-    XWindowEvent (priv->dpy, priv->grabWindow,
+    XWindowEvent (dpy, grabWindow,
 		  PropertyChangeMask,
 		  &event);
 
@@ -4841,8 +4858,6 @@ PrivateScreen::initDisplay (const char *name)
     workArea.setWidth (attrib.width);
     workArea.setHeight (attrib.height);
 
-    grabWindow = None;
-
     XVisualInfo          templ;
     templ.visualid = XVisualIDFromVisual (attrib.visual);
 
@@ -4905,11 +4920,7 @@ PrivateScreen::initDisplay (const char *name)
 	attrib.override_redirect = 1;
 	attrib.event_mask = PropertyChangeMask;
 
-	grabWindow = XCreateWindow (dpy, root, -100, -100, 1, 1, 0,
-					  CopyFromParent, InputOnly, CopyFromParent,
-					  CWOverrideRedirect | CWEventMask,
-					  &attrib);
-	XMapWindow (dpy, grabWindow);
+	createGrabWindow(dpy, root, &attrib);
 
 	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
 	{
@@ -5194,7 +5205,7 @@ PrivateScreen::~PrivateScreen ()
 	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
 	    XDestroyWindow (dpy, screenEdge[i].id);
 
-	XDestroyWindow (dpy, grabWindow);
+	destroyGrabWindow (dpy);
 
 	XFreeCursor (dpy, invisibleCursor);
 	XSync (dpy, False);

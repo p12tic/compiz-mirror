@@ -643,6 +643,10 @@ class EventManager :
 
 	void setSupportingWmCheck (Display* dpy, Window root);
 	bool notGrabWindow(Window w) const { return w != grabWindow; }
+	void createGrabWindow (Display* dpy, Window root, XSetWindowAttributes* attrib);
+	void destroyGrabWindow (Display* dpy) { XDestroyWindow (dpy, grabWindow); }
+	Time getCurrentTime (Display* dpy) const;
+	Window const& getGrabWindow() const { return grabWindow; }
 
     private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
@@ -666,8 +670,8 @@ class EventManager :
         bool	grabbed;   /* true once we receive a GrabNotify
 			      on FocusOut and false on
 			      UngrabNotify from FocusIn */
-    public:
 	Window  grabWindow;
+    public:
 	Window	edgeWindow;
     protected:
 	Window	xdndWindow;
