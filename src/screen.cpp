@@ -539,7 +539,7 @@ CompScreenImpl::shapeEvent ()
 int
 CompScreenImpl::syncEvent ()
 {
-    return priv->syncEvent;
+    return priv->getSyncEvent ();
 }
 
 
@@ -4601,6 +4601,7 @@ PrivateScreen::initDisplay (const char *name)
 
     lastPing = 1;
 
+    int syncError;
     if (!XSyncQueryExtension (dpy, &syncEvent, &syncError))
     {
 	compLogMessage ("core", CompLogLevelFatal,

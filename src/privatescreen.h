@@ -899,12 +899,16 @@ class PrivateScreen :
 	static void compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
 
+	int getSyncEvent () const { return syncEvent; }
+
     public:
 
 	Display    *dpy;
 
-	int syncEvent, syncError;
+    private:
+	int syncEvent;
 
+    public:
 	bool randrExtension;
 	int  randrEvent, randrError;
 

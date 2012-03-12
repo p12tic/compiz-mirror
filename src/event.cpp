@@ -2155,7 +2155,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    w->priv->updateRegion ();
 	    }
 	}
-	else if (event->type == priv->syncEvent + XSyncAlarmNotify)
+	else if (event->type == priv->getSyncEvent() + XSyncAlarmNotify)
 	{
 	    XSyncAlarmNotifyEvent *sa;
 
