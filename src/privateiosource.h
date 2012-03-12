@@ -51,7 +51,6 @@ class CompWatchFd :
 	bool		  mForceFail;
 	bool		  mExecuting;
 
-    friend class CompScreenImpl;
     friend class ::compiz::private_screen::EventManager;
 };
 
