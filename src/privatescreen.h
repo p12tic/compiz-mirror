@@ -671,10 +671,6 @@ class EventManager :
 			      on FocusOut and false on
 			      UngrabNotify from FocusIn */
 	Window  grabWindow;
-    public:
-	Window	edgeWindow;
-    protected:
-	Window	xdndWindow;
     private:
 	virtual bool initDisplay (const char *name);
 };
@@ -983,13 +979,14 @@ class PrivateScreen :
 	int           desktopHintSize;
 
 	bool initialized;
-
+	Window	edgeWindow;
     private:
 	virtual bool initDisplay (const char *name);
 
 	CompTimer    pingTimer;
 	CompTimer               edgeDelayTimer;
 	CompDelayedEdgeSettings edgeDelaySettings;
+	Window	xdndWindow;
 };
 
 class CompManager

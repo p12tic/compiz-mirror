@@ -5114,7 +5114,9 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     desktopHintData (0),
     desktopHintSize (0),
     initialized (false),
-    edgeDelayTimer ()
+    edgeWindow (None),
+    edgeDelayTimer (),
+    xdndWindow (None)
 {
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));
@@ -5161,9 +5163,7 @@ cps::EventManager::EventManager (CompScreen *screen) :
     lastFileWatchHandle (1),
     watchFds (0),
     lastWatchFdHandle (1),
-    grabWindow (None),
-    edgeWindow (None),
-    xdndWindow (None)
+    grabWindow (None)
 {
     ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
