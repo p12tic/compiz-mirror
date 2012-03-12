@@ -348,6 +348,8 @@ class CompScreenImpl : public CompScreen
         virtual void _matchExpHandlerChanged();
         virtual void _matchPropertyChanged(CompWindow *);
         virtual void _outputChangeNotify();
+
+        bool 	eventHandled;
 };
 
 CompPlugin::VTable * getCoreVTable ();
@@ -715,7 +717,15 @@ class History : boost::noncopyable
 
 	void addToCurrentActiveWindowHistory (Window id);
 
-    //private:
+	CompActiveWindowHistory* getCurrentHistory ()
+	{
+	    return history+currentHistory;
+	}
+
+	unsigned int nextActiveNum () { return activeNum++; }
+	unsigned int getActiveNum () const { return activeNum; }
+
+    private:
 	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
 	int                     currentHistory;
 	unsigned int activeNum;
