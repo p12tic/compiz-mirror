@@ -899,19 +899,32 @@ class PrivateScreen :
 	static void compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
 
+	bool initSyncEvent(Display* dpy);
 	int getSyncEvent () const { return syncEvent; }
+
+	bool hasRandrExtension () const { return randrExtension; }
+	int  getRandrEvent () const { return randrEvent; }
 
     public:
 
 	Display    *dpy;
 
+	bool initSyncEvent(Display* dpy);
+	int getSyncEvent () const { return syncEvent; }
+
     private:
 	int syncEvent;
 
     public:
+	bool hasRandrExtension () const { return randrExtension; }
+	int  getRandrEvent () const { return randrEvent; }
+
+    private:
 	bool randrExtension;
 	int  randrEvent;
+    void initRandrExtension();
 
+    public:
 	bool shapeExtension;
 	int  shapeEvent, shapeError;
 

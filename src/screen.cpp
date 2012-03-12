@@ -515,13 +515,13 @@ CompScreenImpl::dpy ()
 bool
 CompScreenImpl::XRandr ()
 {
-    return priv->randrExtension;
+    return priv->hasRandrExtension ();
 }
 
 int
 CompScreenImpl::randrEvent ()
 {
-    return priv->randrEvent;
+    return priv->getRandrEvent ();
 }
 
 bool
@@ -4575,6 +4575,24 @@ bool CompScreen::displayInitialised() const
     return priv && priv->initialized;
 }
 
+bool PrivateScreen::initSyncEvent(Display* dpy)
+{
+    bool result = true;
+    int syncError;
+    if (!XSyncQueryExtension(dpy, &syncEvent, &syncError))
+    {
+	compLogMessage("core", CompLogLevelFatal, "No sync extension");
+	result = false;
+    }
+    return result;
+}
+
+void PrivateScreen::initRandrExtension()
+{
+    int randrError;
+    randrExtension = XRRQueryExtension(dpy, &randrEvent, &randrError);
+}
+
 bool
 PrivateScreen::initDisplay (const char *name)
 {
@@ -4601,17 +4619,9 @@ PrivateScreen::initDisplay (const char *name)
 
     lastPing = 1;
 
-    int syncError;
-    if (!XSyncQueryExtension (dpy, &syncEvent, &syncError))
-    {
-	compLogMessage ("core", CompLogLevelFatal,
-			"No sync extension");
-	return false;
-    }
+    if (!initSyncEvent(dpy)) return false;
 
-    int  randrError;
-    randrExtension = XRRQueryExtension (dpy, &randrEvent,
-					      &randrError);
+    initRandrExtension();
 
     shapeExtension = XShapeQueryExtension (dpy, &shapeEvent,
 						 &shapeError);
