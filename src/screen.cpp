@@ -4603,7 +4603,8 @@ PrivateScreen::initDisplay (const char *name)
 
     if (!xSync.init (dpy))
     {
-	compLogMessage("core", CompLogLevelFatal, "No sync extension");
+	compLogMessage("core", CompLogLevelFatal,
+		       "No sync extension");
 	return false;
     }
 
