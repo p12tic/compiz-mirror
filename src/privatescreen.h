@@ -604,16 +604,51 @@ class EventManager :
     public GrabList,
     public virtual ScreenUser
 {
-public:
+    public:
 	EventManager (CompScreen *screen);
 	~EventManager ();
 
 	bool init (const char *name);
 
 	void handleSignal (int signum);
+	bool triggerPress   (CompAction         *action,
+			     CompAction::State   state,
+			     CompOption::Vector &arguments);
+	bool triggerRelease (CompAction         *action,
+	                     CompAction::State   state,
+	                     CompOption::Vector &arguments);
 
-public:
+	void startEventLoop();
+	void quit() { mainloop->quit(); }
 
+	CompWatchFdHandle addWatchFd (
+	    int             fd,
+	    short int       events,
+	    FdWatchCallBack callBack);
+
+	void removeWatchFd (CompWatchFdHandle handle);
+
+	CompFileWatch* addFileWatch (
+	    const char        *path,
+	    int               mask,
+	    FileWatchCallBack callBack);
+
+	CompFileWatch* removeFileWatch (CompFileWatchHandle handle);
+
+	const CompFileWatchList& getFileWatches () const;
+
+	void grabNotified() { grabbed = true; }
+	void ungrabNotified() { grabbed = false; }
+	bool isGrabbed() const { return grabbed; }
+
+	void setSupportingWmCheck (Display* dpy, Window root);
+	bool notGrabWindow(Window w) const { return w != grabWindow; }
+	void createGrabWindow (Display* dpy, Window root, XSetWindowAttributes* attrib);
+	void destroyGrabWindow (Display* dpy) { XDestroyWindow (dpy, grabWindow); }
+	Time getCurrentTime (Display* dpy) const;
+	Window const& getGrabWindow() const { return grabWindow; }
+
+    private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
 	/* We cannot use RefPtrs. See
@@ -629,22 +664,15 @@ public:
 	CompFileWatchList   fileWatch;
 	CompFileWatchHandle lastFileWatchHandle;
 
+	// TODO - almost certainly the wrong data structure
+	// Why not a std::map<CompWatchFdHandle, CompWatchFd>?
 	std::list< CompWatchFd * > watchFds;
 	CompWatchFdHandle        lastWatchFdHandle;
 
-	CompTimer    pingTimer;
-
-	CompTimer               edgeDelayTimer;
-	CompDelayedEdgeSettings edgeDelaySettings;
-
-	int          desktopWindowCount;
-	unsigned int mapNum;
-
-
-	std::list<CompGroup *> groups;
-
-	CompIcon *defaultIcon;
-
+        bool	grabbed;   /* true once we receive a GrabNotify
+			      on FocusOut and false on
+			      UngrabNotify from FocusIn */
+	Window  grabWindow;
     private:
 	virtual bool initDisplay (const char *name);
 };
@@ -674,13 +702,10 @@ struct Grab {
 struct OrphanData : boost::noncopyable
 {
     OrphanData();
-
-    Window	edgeWindow;
-    Window	xdndWindow;
-    bool 	eventHandled;
-    bool	grabbed;   /* true once we recieve a GrabNotify
-			      on FocusOut and false on
-			      UngrabNotify from FocusIn */
+    ~OrphanData();
+    int          desktopWindowCount;
+    unsigned int mapNum;
+    CompIcon *defaultIcon;
 };
 
 class GrabManager : boost::noncopyable,
@@ -778,13 +803,6 @@ class PrivateScreen :
 	std::list <XEvent> queueEvents ();
 	void processEvents ();
 
-	bool triggerPress   (CompAction         *action,
-	                     CompAction::State   state,
-	                     CompOption::Vector &arguments);
-	bool triggerRelease (CompAction         *action,
-	                     CompAction::State   state,
-	                     CompOption::Vector &arguments);
-
 	bool triggerButtonPressBindings (CompOption::Vector &options,
 					 XButtonEvent       *event,
 					 CompOption::Vector &arguments);
@@ -837,8 +855,6 @@ class PrivateScreen :
 	void updateScreenEdges ();
 
 	void reshape (int w, int h);
-
-	void setSupportingWmCheck ();
 
 	void getDesktopHints ();
 
@@ -939,7 +955,6 @@ class PrivateScreen :
 	Window	      root;
 
 	XWindowAttributes attrib;
-	Window            grabWindow;
 
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;
@@ -966,9 +981,14 @@ class PrivateScreen :
 	int           desktopHintSize;
 
 	bool initialized;
-
+	Window	edgeWindow;
     private:
 	virtual bool initDisplay (const char *name);
+
+	CompTimer    pingTimer;
+	CompTimer               edgeDelayTimer;
+	CompDelayedEdgeSettings edgeDelaySettings;
+	Window	xdndWindow;
 };
 
 class CompManager

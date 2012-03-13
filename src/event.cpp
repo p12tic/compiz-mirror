@@ -41,6 +41,9 @@
 #include "privatewindow.h"
 #include "privatestackdebugger.h"
 
+namespace cps = compiz::private_screen;
+
+
 bool
 PrivateWindow::handleSyncAlarm ()
 {
@@ -132,7 +135,7 @@ isBound (CompOption             &option,
 }
 
 bool
-PrivateScreen::triggerPress (CompAction         *action,
+cps::EventManager::triggerPress (CompAction         *action,
                              CompAction::State   state,
                              CompOption::Vector &arguments)
 {
@@ -174,7 +177,7 @@ PrivateScreen::triggerPress (CompAction         *action,
 }
 
 bool
-PrivateScreen::triggerRelease (CompAction         *action,
+cps::EventManager::triggerRelease (CompAction         *action,
                                CompAction::State   state,
                                CompOption::Vector &arguments)
 {
@@ -207,12 +210,12 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
     {
 	unsigned int i;
 
-	if (event->root != root)
+	if (event->root != screen->root())
 	    return false;
 
 	if (event->window != edgeWindow)
 	{
-	    if (grabsEmpty () || event->window != root)
+	    if (grabsEmpty () || event->window != screen->root())
 		return false;
 	}
 
@@ -1908,7 +1911,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	   when a menu is opened */
 	if (event->xfocus.mode == NotifyGrab &&
 	    event->xfocus.window != priv->root &&
-	    event->xfocus.window != priv->grabWindow)
+	    priv->notGrabWindow (event->xfocus.window))
 	    priv->possibleTap = NULL;
 
 	if (!XGetWindowAttributes (priv->dpy, event->xfocus.window, &wa))
@@ -1925,9 +1928,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	if (wa.root == priv->root)
 	{
 	    if (event->xfocus.mode == NotifyGrab)
-		priv->grabbed = true;
+		priv->grabNotified ();
 	    else if (event->xfocus.mode == NotifyUngrab)
-		priv->grabbed = false;
+		priv->ungrabNotified ();
 	    else
 	    {
 		CompWindowList dockWindows;
@@ -2082,7 +2085,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
     break;
     case FocusOut:
 	if (event->xfocus.mode == NotifyUngrab)
-	    priv->grabbed = false;
+	    priv->ungrabNotified ();
 	break;
     case EnterNotify:
 	if (event->xcrossing.root == priv->root)
