@@ -3284,6 +3284,14 @@ cps::GrabManager::removePassiveKeyGrab (CompAction::KeyBinding &key)
 		grabUngrabKeys (mask, key.keycode (), false);
 	}
     }
+
+    /*
+     * Removing modifier-only grabs is tricky. Because it also removes grabs
+     * for modifier+all_other_keys. See XDisplayKeycodes above to find out why.
+     * So we need to refresh all grabs...
+     */
+    if (!(mask & CompNoMask) && key.keycode () == 0)
+	updatePassiveKeyGrabs ();
 }
 
 void
