@@ -939,21 +939,22 @@ class PrivateScreen :
 	static void compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
 
-    public:
+	int  getXkbEvent() const { return xkbEvent; }
 
+    public:
 	Display    *dpy;
 
 	::compiz::private_screen::Extension<XSyncQueryExtension> xSync;
 	::compiz::private_screen::Extension<XRRQueryExtension> xRandr;
 	::compiz::private_screen::Extension<XShapeQueryExtension> xShape;
 
-    public:
+    private:
 	bool xkbExtension;
-	int  xkbEvent, xkbError;
+	int  xkbEvent;
 
 	bool xineramaExtension;
-	int  xineramaEvent, xineramaError;
 
+    public:
 	std::vector<XineramaScreenInfo> screenInfo;
 
 	SnDisplay *snDisplay;

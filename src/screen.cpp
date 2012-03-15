@@ -4280,7 +4280,7 @@ CompScreenImpl::root ()
 int
 CompScreenImpl::xkbEvent ()
 {
-    return priv->xkbEvent;
+    return priv->getXkbEvent ();
 }
 
 void
@@ -4671,7 +4671,8 @@ PrivateScreen::initDisplay (const char *name)
     xRandr.init (dpy);
     xShape.init (dpy);
 
-    int                  xkbOpcode;
+    int xkbOpcode;
+    int xkbError;
     xkbExtension = XkbQueryExtension (dpy, &xkbOpcode,
 					    &xkbEvent, &xkbError,
 					    NULL, NULL);
@@ -4689,6 +4690,8 @@ PrivateScreen::initDisplay (const char *name)
 	xkbEvent = xkbError = -1;
     }
 
+    int  xineramaError;
+    int  xineramaEvent;
     xineramaExtension = XineramaQueryExtension (dpy,
 						      &xineramaEvent,
 						      &xineramaError);
