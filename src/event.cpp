@@ -163,12 +163,15 @@ cps::EventManager::triggerPress (CompAction         *action,
         }
     }
 
-    if (action->initiate ().empty () && !action->terminate ().empty ())
+    if (action->initiate ().empty ())
     {
-        /* Default Initiate implementation for plugins that only
-           provide a Terminate callback */
-        if (state & CompAction::StateInitKey)
-            action->setState (action->state () | CompAction::StateTermKey);
+	 if (!action->terminate ().empty ())
+	 {
+	    /* Default Initiate implementation for plugins that only
+	       provide a Terminate callback */
+	    if (state & CompAction::StateInitKey)
+		action->setState (action->state () | CompAction::StateTermKey);
+	 }
     }
     else if (action->initiate () (action, state, arguments))
         actionEventHandled = true;
