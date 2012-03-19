@@ -1958,12 +1958,6 @@ initBackend (CCSContext * context)
 static Bool
 finiBackend (CCSContext * context)
 {
-
-    if (g_main_loop_is_running(NULL))
-    {
-	processEvents (0);
-    }
-
     gconf_client_clear_cache (client);
     finiClient ();
 
@@ -1976,10 +1970,6 @@ finiBackend (CCSContext * context)
     gconf_engine_unref (conf);
     conf = NULL;
 
-    if (g_main_loop_is_running(NULL))
-    {
-	processEvents (0);
-    }
     return TRUE;
 }
 
