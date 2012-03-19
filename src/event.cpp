@@ -163,15 +163,18 @@ cps::EventManager::triggerPress (CompAction         *action,
         }
     }
 
-    if (action->initiate ().empty () && !action->terminate ().empty ())
+    if (!action->initiate ().empty ())
     {
-        /* Default Initiate implementation for plugins that only
-           provide a Terminate callback */
-        if (state & CompAction::StateInitKey)
-            action->setState (action->state () | CompAction::StateTermKey);
+	if (action->initiate () (action, state, arguments))
+	    actionEventHandled = true;
     }
-    else if (action->initiate () (action, state, arguments))
-        actionEventHandled = true;
+    else if (!action->terminate ().empty ())
+    {
+	/* Default Initiate implementation for plugins that only
+	   provide a Terminate callback */
+	if (state & CompAction::StateInitKey)
+	    action->setState (action->state () | CompAction::StateTermKey);
+    }
 
     return actionEventHandled;
 }
@@ -1906,14 +1909,6 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     case FocusIn:
     {
-	/* When a menu etc gets a grab, it's safe to say we're not tapping
-	   any key right now. e.g. Detecting taps of "Alt" and cancelling
-	   when a menu is opened */
-	if (event->xfocus.mode == NotifyGrab &&
-	    event->xfocus.window != priv->root &&
-	    priv->notGrabWindow (event->xfocus.window))
-	    priv->possibleTap = NULL;
-
 	if (!XGetWindowAttributes (priv->dpy, event->xfocus.window, &wa))
 	    priv->setDefaultWindowAttributes (&wa);
 
