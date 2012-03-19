@@ -948,7 +948,8 @@ class PrivateScreen :
 	static void compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
 
-	int  getXkbEvent() const { return xKb.get(); }
+	int  getXkbEvent() const { return xkbEvent.get(); }
+	std::vector<XineramaScreenInfo>& getScreenInfo () { return screenInfo; }
 
     public:
 	Display    *dpy;
@@ -958,12 +959,12 @@ class PrivateScreen :
 	::compiz::private_screen::Extension xShape;
 
     private:
-	::compiz::private_screen::Extension xKb;
+	::compiz::private_screen::Extension xkbEvent;
 
 	bool xineramaExtension;
+	std::vector<XineramaScreenInfo> screenInfo;
 
     public:
-	std::vector<XineramaScreenInfo> screenInfo;
 
 	SnDisplay *snDisplay;
 

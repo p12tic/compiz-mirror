@@ -633,7 +633,7 @@ PrivateScreen::updateScreenInfo ()
 void
 PrivateScreen::setAudibleBell (bool audible)
 {
-    if (xKb.isEnabled())
+    if (xkbEvent.isEnabled())
 	XkbChangeEnabledControls (dpy,
 				  XkbUseCoreKbd,
 				  XkbAudibleBellMask,
@@ -4527,7 +4527,7 @@ CompScreenImpl::attrib ()
 std::vector<XineramaScreenInfo> &
 CompScreenImpl::screenInfo ()
 {
-    return priv->screenInfo;
+    return priv->getScreenInfo ();
 }
 
 bool
@@ -4679,8 +4679,8 @@ PrivateScreen::initDisplay (const char *name)
     xRandr.init<XRRQueryExtension> (dpy);
     xShape.init<XShapeQueryExtension> (dpy);
 
-    xKb.init<XkbQueryExtension> (dpy);
-    if (xKb.isEnabled ())
+    xkbEvent.init<XkbQueryExtension> (dpy);
+    if (xkbEvent.isEnabled ())
     {
 	XkbSelectEvents (dpy, XkbUseCoreKbd,
 			 XkbBellNotifyMask | XkbStateNotifyMask,
@@ -5102,7 +5102,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     ScreenUser (screen),
     EventManager (screen),
     GrabManager (screen),
-    screenInfo (0),
+    screenInfo (),
     snDisplay(0),
     windows (),
     nDesktop (1),
