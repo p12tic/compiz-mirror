@@ -341,7 +341,7 @@ PrivateScreen::triggerKeyPressBindings (CompOption::Vector &options,
 	    bool match = false;
 	    if (action->key ().keycode () == (int) event->keycode)
 		match = ((bindMods & modMask) == (event->state & modMask));
-	    else if (!xkbEvent && action->key ().keycode () == 0)
+	    else if (!xKb.get() && action->key ().keycode () == 0)
 		match = (bindMods == (event->state & modMask));
 
 	    if (match && triggerPress (action, state, arguments))
@@ -365,7 +365,7 @@ PrivateScreen::triggerKeyReleaseBindings (CompOption::Vector &options,
     unsigned int      mods;
 
     mods = modHandler->keycodeToModifiers (event->keycode);
-    if (!xkbEvent && !mods)
+    if (!xKb.get() && !mods)
 	return false;
 
     foreach (CompOption &option, options)
@@ -378,7 +378,7 @@ PrivateScreen::triggerKeyReleaseBindings (CompOption::Vector &options,
 	    if ((bindMods & modMask) == 0)
 		match = ((unsigned int) action->key ().keycode () ==
 		         (unsigned int) event->keycode);
-	    else if (!xkbEvent && ((mods & modMask & bindMods) != bindMods))
+	    else if (!xKb.get() && ((mods & modMask & bindMods) != bindMods))
 	        match = true;
 
 	    if (match && triggerRelease (action, state, arguments))
@@ -951,7 +951,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	}
 	break;
     default:
-	if (event->type == xkbEvent)
+	if (event->type == xKb.get())
 	{
 	    XkbAnyEvent *xkbEvent = (XkbAnyEvent *) event;
 
@@ -2143,8 +2143,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	}
 	break;
     default:
-	if (priv->xShape.hasExtension () &&
-		 event->type == priv->xShape.getExtension () + ShapeNotify)
+	if (priv->xShape.isEnabled () &&
+		 event->type == priv->xShape.get () + ShapeNotify)
 	{
 	    w = findWindow (((XShapeEvent *) event)->window);
 	    if (w)
@@ -2153,7 +2153,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    w->priv->updateRegion ();
 	    }
 	}
-	else if (event->type == priv->xSync.getExtension () + XSyncAlarmNotify)
+	else if (event->type == priv->xSync.get () + XSyncAlarmNotify)
 	{
 	    XSyncAlarmNotifyEvent *sa;
 

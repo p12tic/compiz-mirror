@@ -45,9 +45,6 @@
 
 #include "core_options.h"
 
-#include <X11/extensions/Xrandr.h>
-#include <X11/extensions/shape.h>
-
 /**
  * A wrapping of the X display screen. This takes care of communication to the
  * X server.
@@ -785,24 +782,36 @@ class StartupSequence : boost::noncopyable,
 	CompTimer                        startupSequenceTimer;
 };
 
-template<Bool ExtensionQuery (Display*, int*, int*)>
 class Extension
 {
 public:
-    Extension() : enabled(), extension() {}
+    Extension() : is_enabled(), extension() {}
 
+    template<Bool ExtensionQuery (Display*, int*, int*)>
     bool init(Display * dpy)
     {
 	int error;
-	enabled = ExtensionQuery(dpy, &extension, &error);
-	return enabled;
+	is_enabled = ExtensionQuery(dpy, &extension, &error);
+	return is_enabled;
     }
 
-    int hasExtension () const { return enabled; }
-    int getExtension () const { return extension; }
+    template<Bool ExtensionQuery(Display*, int*, int*, int*, int*, int*)>
+    bool init(Display * dpy)
+    {
+	int opcode;
+	int error;
+	is_enabled = ExtensionQuery(dpy, &opcode, &extension, &error, NULL, NULL);
+
+	if (!is_enabled) extension = -1;
+
+	return is_enabled;
+    }
+
+    int isEnabled () const { return is_enabled; }
+    int get () const { return extension; }
 
 private:
-    bool enabled;
+    bool is_enabled;
     int extension;
 };
 
@@ -939,18 +948,17 @@ class PrivateScreen :
 	static void compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
 
-	int  getXkbEvent() const { return xkbEvent; }
+	int  getXkbEvent() const { return xKb.get(); }
 
     public:
 	Display    *dpy;
 
-	::compiz::private_screen::Extension<XSyncQueryExtension> xSync;
-	::compiz::private_screen::Extension<XRRQueryExtension> xRandr;
-	::compiz::private_screen::Extension<XShapeQueryExtension> xShape;
+	::compiz::private_screen::Extension xSync;
+	::compiz::private_screen::Extension xRandr;
+	::compiz::private_screen::Extension xShape;
 
     private:
-	bool xkbExtension;
-	int  xkbEvent;
+	::compiz::private_screen::Extension xKb;
 
 	bool xineramaExtension;
 

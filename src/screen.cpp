@@ -563,31 +563,31 @@ CompScreenImpl::dpy ()
 bool
 CompScreenImpl::XRandr ()
 {
-    return priv->xRandr.hasExtension ();
+    return priv->xRandr.isEnabled ();
 }
 
 int
 CompScreenImpl::randrEvent ()
 {
-    return priv->xRandr.getExtension ();
+    return priv->xRandr.get ();
 }
 
 bool
 CompScreenImpl::XShape ()
 {
-    return priv->xShape.hasExtension ();
+    return priv->xShape.isEnabled ();
 }
 
 int
 CompScreenImpl::shapeEvent ()
 {
-    return priv->xShape.getExtension ();
+    return priv->xShape.get ();
 }
 
 int
 CompScreenImpl::syncEvent ()
 {
-    return priv->xSync.getExtension ();
+    return priv->xSync.get ();
 }
 
 
@@ -633,7 +633,7 @@ PrivateScreen::updateScreenInfo ()
 void
 PrivateScreen::setAudibleBell (bool audible)
 {
-    if (xkbExtension)
+    if (xKb.isEnabled())
 	XkbChangeEnabledControls (dpy,
 				  XkbUseCoreKbd,
 				  XkbAudibleBellMask,
@@ -4669,22 +4669,18 @@ PrivateScreen::initDisplay (const char *name)
 
     lastPing = 1;
 
-    if (!xSync.init (dpy))
+    if (!xSync.init<XSyncQueryExtension> (dpy))
     {
 	compLogMessage("core", CompLogLevelFatal,
 		       "No sync extension");
 	return false;
     }
 
-    xRandr.init (dpy);
-    xShape.init (dpy);
+    xRandr.init<XRRQueryExtension> (dpy);
+    xShape.init<XShapeQueryExtension> (dpy);
 
-    int xkbOpcode;
-    int xkbError;
-    xkbExtension = XkbQueryExtension (dpy, &xkbOpcode,
-					    &xkbEvent, &xkbError,
-					    NULL, NULL);
-    if (xkbExtension)
+    xKb.init<XkbQueryExtension> (dpy);
+    if (xKb.isEnabled ())
     {
 	XkbSelectEvents (dpy, XkbUseCoreKbd,
 			 XkbBellNotifyMask | XkbStateNotifyMask,
@@ -4694,8 +4690,6 @@ PrivateScreen::initDisplay (const char *name)
     {
 	compLogMessage ("core", CompLogLevelFatal,
 			"No XKB extension");
-
-	xkbEvent = xkbError = -1;
     }
 
     int  xineramaError;
