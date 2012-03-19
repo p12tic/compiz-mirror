@@ -285,7 +285,7 @@ VPSwitchScreen::terminateNumbered (CompAction         *action,
 
     gotovp (nx, ny);
 
-    return false;
+    return true;
 }
 
 /* switch-to-specific viewport stuff */
