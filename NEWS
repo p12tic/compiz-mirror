@@ -20,8 +20,6 @@ Bugs fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.2)
     946118 - screen.cpp:3281: virtual bool
              CompScreenImpl::addAction(CompAction*): Assertion
 	     `priv->initialized' failed.
-    946887 - Compiz spends >8% of its time in
-             std::list<CompWindow*>::operator=(std::list<CompWindow*>)
 
 
 Release 0.9.7.0 ( 2012-03-02 smspillaz <sam.spilsbury@canonical.com> ) 
