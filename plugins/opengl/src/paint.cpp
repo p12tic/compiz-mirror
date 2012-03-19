@@ -217,6 +217,9 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
     GLMatrix      vTransform;
     CompPoint     offXY;
 
+    CompWindowList                   pl;
+    CompWindowList::reverse_iterator rit;
+
     unredirectFS = CompositeScreen::get (screen)->
 	getOption ("unredirect_fullscreen_windows")->value ().b ();
 
@@ -231,8 +234,7 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	count	       = 0;
     }
 
-    const CompWindowList &pl = cScreen->getWindowPaintList ();
-    CompWindowList::const_reverse_iterator rit;
+    pl = cScreen->getWindowPaintList ();
 
     if (!(mask & PAINT_SCREEN_NO_OCCLUSION_DETECTION_MASK))
     {
