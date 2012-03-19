@@ -815,6 +815,17 @@ private:
     int extension;
 };
 
+class Ping
+{
+public:
+    Ping() : lastPing_(1) {}
+    bool handlePingTimeout (Display* dpy, CompWindowList& windows);
+    unsigned int lastPing () const { return lastPing_; }
+
+private:
+    unsigned int lastPing_;
+};
+
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
@@ -824,6 +835,7 @@ class PrivateScreen :
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
     public compiz::private_screen::OrphanData,
+    public compiz::private_screen::Ping,
     public compiz::private_screen::PseudoNamespace
 {
 
@@ -861,8 +873,6 @@ class PrivateScreen :
 			       CompOption::Vector &arguments);
 
 	void setAudibleBell (bool audible);
-
-	bool handlePingTimeout ();
 
 	bool handleActionEvent (XEvent *event);
 
@@ -950,6 +960,8 @@ class PrivateScreen :
 
 	int  getXkbEvent() const { return xkbEvent.get(); }
 	std::vector<XineramaScreenInfo>& getScreenInfo () { return screenInfo; }
+	SnDisplay* getSnDisplay () const { return snDisplay; }
+	const char* displayString () const { return displayString_; }
 
     public:
 	Display    *dpy;
@@ -961,19 +973,18 @@ class PrivateScreen :
     private:
 	::compiz::private_screen::Extension xkbEvent;
 
+	//TODO? Pull these two out as a class?
 	bool xineramaExtension;
 	std::vector<XineramaScreenInfo> screenInfo;
 
-    public:
-
 	SnDisplay *snDisplay;
 
-	unsigned int lastPing;
-	char   displayString[256];
+	char   displayString_[256];
 
 	KeyCode escapeKeyCode;
 	KeyCode returnKeyCode;
 
+    public:
 	CompWindowList windows;
 
 	Colormap colormap;
@@ -1015,6 +1026,7 @@ class PrivateScreen :
 	Window	edgeWindow;
     private:
 	virtual bool initDisplay (const char *name);
+	bool handlePingTimeout ();
 
 	CompTimer    pingTimer;
 	CompTimer               edgeDelayTimer;

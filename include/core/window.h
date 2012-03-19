@@ -55,6 +55,7 @@ struct CompStartupSequence;
 
 namespace compiz { namespace private_screen {
     class GrabManager;
+    class Ping;
 }}
 
 #define ROOTPARENT(x) (((x)->frame ()) ? (x)->frame () : (x)->id ())
@@ -554,6 +555,7 @@ class CompWindow :
 	friend class CompScreenImpl;
 	friend class PrivateScreen;
 	friend class compiz::private_screen::GrabManager;
+	friend class compiz::private_screen::Ping;
 	friend class ModifierHandler;
 	friend class CoreWindow;
 	friend class StackDebugger;

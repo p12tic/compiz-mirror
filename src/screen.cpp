@@ -594,7 +594,7 @@ CompScreenImpl::syncEvent ()
 SnDisplay *
 CompScreenImpl::snDisplay ()
 {
-    return priv->snDisplay;
+    return priv->getSnDisplay ();
 }
 
 Window
@@ -612,7 +612,7 @@ CompScreenImpl::autoRaiseWindow ()
 const char *
 CompScreenImpl::displayString ()
 {
-    return priv->displayString;
+    return priv->displayString ();
 }
 
 void
@@ -643,8 +643,14 @@ PrivateScreen::setAudibleBell (bool audible)
 bool
 PrivateScreen::handlePingTimeout ()
 {
+    return Ping::handlePingTimeout (dpy, windows);
+}
+
+bool
+cps::Ping::handlePingTimeout (Display* dpy, CompWindowList& windows)
+{
     XEvent      ev;
-    int		ping = lastPing + 1;
+    int		ping = lastPing_ + 1;
 
     ev.type		    = ClientMessage;
     ev.xclient.window	    = 0;
@@ -658,7 +664,7 @@ PrivateScreen::handlePingTimeout ()
 
     foreach (CompWindow *w, windows)
     {
-	if (w->priv->handlePingTimeout (lastPing))
+	if (w->priv->handlePingTimeout (lastPing_))
 	{
 	    ev.xclient.window    = w->id ();
 	    ev.xclient.data.l[2] = w->id ();
@@ -667,7 +673,7 @@ PrivateScreen::handlePingTimeout ()
 	}
     }
 
-    lastPing = ping;
+    lastPing_ = ping;
 
     return true;
 }
@@ -3728,7 +3734,7 @@ CompScreenImpl::runCommand (CompString command)
     if (fork () == 0)
     {
 	size_t       pos;
-	CompString   env (priv->displayString);
+	CompString   env (priv->displayString ());
 
 	setsid ();
 
@@ -4656,7 +4662,7 @@ PrivateScreen::initDisplay (const char *name)
 
     XSynchronize (dpy, synchronousX ? True : False);
 
-    snprintf (displayString, 255, "DISPLAY=%s",
+    snprintf (displayString_, 255, "DISPLAY=%s",
 	      DisplayString (dpy));
 
     Atoms::init (dpy);
@@ -4666,8 +4672,6 @@ PrivateScreen::initDisplay (const char *name)
     snDisplay = sn_display_new (dpy, NULL, NULL);
     if (!snDisplay)
 	return true;
-
-    lastPing = 1;
 
     if (!xSync.init<XSyncQueryExtension> (dpy))
     {
