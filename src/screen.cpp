@@ -5116,7 +5116,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     windows (),
     nDesktop (1),
     currentDesktop (0),
-    root(None),
+    root (None),
     outputDevs (0),
     currentOutputDev (0),
     hasOverlappingOutputs (false),
