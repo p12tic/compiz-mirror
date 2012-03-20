@@ -964,6 +964,7 @@ class PrivateScreen :
 	char const* displayString () const { return displayString_; }
 	CompRegion const& getRegion () const { return region; }
 	XWindowAttributes const& getAttrib () const { return attrib; }
+	Window root() const { return root_; }
 
     public:
 	Display    *dpy;
@@ -999,9 +1000,9 @@ class PrivateScreen :
 	CompRegion   region;
 	XWindowAttributes attrib;
 
-    public:
-	Window	      root;
+	Window	      root_;
 
+    public:
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;
 	CompOutput         fullscreenOutput;

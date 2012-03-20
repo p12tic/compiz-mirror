@@ -4424,7 +4424,7 @@ PrivateScreen::focusTopMostWindow ()
 	    focus->moveInputFocusTo ();
     }
     else
-	XSetInputFocus (dpy, root, RevertToPointerRoot,
+	XSetInputFocus (dpy, root(), RevertToPointerRoot,
 			CurrentTime);
     return focus;
 }
