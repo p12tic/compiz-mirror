@@ -4508,7 +4508,7 @@ cps::WindowManager::removeDestroyed ()
 const CompRegion &
 CompScreenImpl::region () const
 {
-    return priv->region;
+    return priv->getRegion ();
 }
 
 bool
@@ -4527,7 +4527,7 @@ CompScreenImpl::fullscreenOutput ()
 XWindowAttributes
 CompScreenImpl::attrib ()
 {
-    return priv->attrib;
+    return priv->getAttrib ();
 }
 
 std::vector<XineramaScreenInfo> &
@@ -5112,7 +5112,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     nDesktop (1),
     currentDesktop (0),
     root (None),
-    outputDevs (0),
+    outputDevs (),
     currentOutputDev (0),
     hasOverlappingOutputs (false),
     snContext (0),

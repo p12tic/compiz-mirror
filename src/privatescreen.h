@@ -961,7 +961,9 @@ class PrivateScreen :
 	int  getXkbEvent() const { return xkbEvent.get(); }
 	std::vector<XineramaScreenInfo>& getScreenInfo () { return screenInfo; }
 	SnDisplay* getSnDisplay () const { return snDisplay; }
-	const char* displayString () const { return displayString_; }
+	char const* displayString () const { return displayString_; }
+	CompRegion const& getRegion () const { return region; }
+	XWindowAttributes const& getAttrib () const { return attrib; }
 
     public:
 	Display    *dpy;
@@ -992,11 +994,13 @@ class PrivateScreen :
 
 	unsigned int nDesktop;
 	unsigned int currentDesktop;
+
+    private:
 	CompRegion   region;
-
-	Window	      root;
-
 	XWindowAttributes attrib;
+
+    public:
+	Window	      root;
 
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;
