@@ -4298,6 +4298,20 @@ CompScreenImpl::xkbEvent ()
 }
 
 void
+PrivateScreen::identifyEdgeWindow(Window id)
+{
+    edgeWindow = 0;
+    for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
+    {
+	if (id == screenEdge[i].id)
+	{
+	    edgeWindow = 1 << i;
+	    break;
+	}
+    }
+}
+
+void
 CompScreenImpl::warpPointer (int dx,
 			 int dy)
 {
@@ -4348,16 +4362,7 @@ CompScreenImpl::warpPointer (int dx,
 		event.xcrossing.mode != NotifyUngrab ||
 		event.xcrossing.mode != NotifyInferior)
 	    {
-		priv->edgeWindow = 0;
-
-		for (unsigned int i = 0; i < SCREEN_EDGE_NUM; i++)
-		{
-		    if (event.xcrossing.window == priv->screenEdge[i].id)
-		    {
-			priv->edgeWindow = 1 << i;
-			break;
-		    }
-		}
+		priv->identifyEdgeWindow(event.xcrossing.window);
 	    }
 	}
     }

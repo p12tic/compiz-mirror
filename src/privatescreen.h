@@ -965,6 +965,7 @@ class PrivateScreen :
 	CompRegion const& getRegion () const { return region; }
 	XWindowAttributes const& getAttrib () const { return attrib; }
 	Window root() const { return root_; }
+	void identifyEdgeWindow(Window id);
 
     public:
 	Display    *dpy;
@@ -1010,12 +1011,16 @@ class PrivateScreen :
 
 	CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
 
+    private:
 	SnMonitorContext                 *snContext;
 
+    public:
 	Window wmSnSelectionWindow;
+    private:
 	Atom   wmSnAtom;
 	Time   wmSnTimestamp;
 
+    public:
 	Cursor normalCursor;
 	Cursor busyCursor;
 	Cursor invisibleCursor;
@@ -1024,14 +1029,18 @@ class PrivateScreen :
 
 	unsigned int showingDesktopMask;
 
+    private:
 	unsigned long *desktopHintData;
 	int           desktopHintSize;
 
+    public:
 	bool initialized;
-	Window	edgeWindow;
+
     private:
 	virtual bool initDisplay (const char *name);
 	bool handlePingTimeout ();
+
+	Window	edgeWindow;
 
 	CompTimer    pingTimer;
 	CompTimer               edgeDelayTimer;
