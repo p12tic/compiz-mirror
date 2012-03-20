@@ -1003,8 +1003,8 @@ class PrivateScreen :
 	Window	      root;
 
 	XWindowAttributes attrib;
-
     public:
+
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;
 	CompOutput         fullscreenOutput;
