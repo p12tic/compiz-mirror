@@ -834,8 +834,8 @@ class PrivateScreen :
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
-    public compiz::private_screen::OrphanData,
     public compiz::private_screen::Ping,
+    public compiz::private_screen::OrphanData,
     public compiz::private_screen::PseudoNamespace
 {
 
@@ -964,7 +964,7 @@ class PrivateScreen :
 	char const* displayString () const { return displayString_; }
 	CompRegion const& getRegion () const { return region; }
 	XWindowAttributes const& getAttrib () const { return attrib; }
-	Window root() const { return root_; }
+	Window rootWindow() const { return root; }
 	void identifyEdgeWindow(Window id);
 
     public:
@@ -1001,7 +1001,7 @@ class PrivateScreen :
 	CompRegion   region;
 	XWindowAttributes attrib;
 
-	Window	      root_;
+	Window	      root;
 
     public:
 	CompOutput::vector outputDevs;

@@ -54,8 +54,8 @@ class PrivateWindow;
 struct CompStartupSequence;
 
 namespace compiz { namespace private_screen {
-    class GrabManager;
     class Ping;
+    class GrabManager;
 }}
 
 #define ROOTPARENT(x) (((x)->frame ()) ? (x)->frame () : (x)->id ())
