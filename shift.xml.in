@@ -47,11 +47,6 @@
 					<_short>Initiate (All Workspaces)</_short>
 					<_long>Initiate switcher (All Workspaces).</_long>
 				</option>
-				<option name="terminate_button" type="button">
-					<_short>Terminate</_short>
-					<_long>Terminate switcher.</_long>
-					<default>Button3</default>
-				</option>
 				<option name="next_key" type="key">
 					<_short>Next Window</_short>
 					<_long>Show switcher if not visible and select next window.</_long>
