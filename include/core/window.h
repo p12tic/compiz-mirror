@@ -554,8 +554,8 @@ class CompWindow :
 	friend class PrivateWindow;
 	friend class CompScreenImpl;
 	friend class PrivateScreen;
-	friend class compiz::private_screen::GrabManager;
 	friend class compiz::private_screen::Ping;
+	friend class compiz::private_screen::GrabManager;
 	friend class ModifierHandler;
 	friend class CoreWindow;
 	friend class StackDebugger;
