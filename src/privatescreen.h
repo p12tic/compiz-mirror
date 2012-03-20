@@ -999,9 +999,10 @@ class PrivateScreen :
 
     private:
 	CompRegion   region;
-	XWindowAttributes attrib;
 
 	Window	      root;
+
+	XWindowAttributes attrib;
 
     public:
 	CompOutput::vector outputDevs;
