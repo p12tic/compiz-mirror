@@ -1060,13 +1060,16 @@ CompScreen::handleEvent (XEvent *event)
 void
 CompScreenImpl::alwaysHandleEvent (XEvent *event)
 {
-    eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
-
-    handleEvent (event);
-
     /*
      * Critical event handling that cannot be overridden by plugins
      */
+    
+    if (event->type == ButtonPress || event->type == KeyPress)
+	priv->possibleTap = NULL;
+
+    eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
+
+    handleEvent (event);
 
     bool keyEvent = (event->type == KeyPress || event->type == KeyRelease);
 
