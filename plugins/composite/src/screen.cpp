@@ -45,6 +45,9 @@
 
 #include <core/timer.h>
 
+#include <cstdlib>
+#include <cstdio>
+
 CompWindow *lastDamagedWindow = 0;
 
 void
@@ -195,6 +198,13 @@ CompositeScreen::damageEvent ()
     return priv->damageEvent;
 }
 
+#define ARG_STRINGIZE(x) ARG_STRINGIZE_(x)
+#define ARG_STRINGIZE_(x) #x
+#define setFailed()\
+do { \
+    std::fputs("error CompositeScreen::CompositeScreen - line " ARG_STRINGIZE(__LINE__) "\n", stderr);\
+    std::exit(EXIT_FAILURE);\
+} while (false)
 
 CompositeScreen::CompositeScreen (CompScreen *s) :
     PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI> (s),
@@ -256,6 +266,11 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
     }
 
 }
+
+#undef ARG_STRINGIZE
+#undef ARG_STRINGIZE_
+#undef setFailed
+
 
 CompositeScreen::~CompositeScreen ()
 {
