@@ -3074,8 +3074,6 @@ DecorWindow::DecorWindow (CompWindow *w) :
     }
 
     window->resizeNotifySetEnabled (this, true);
-
-    if (!gWindow || !cWindow) setFailed ();
 }
 
 /* 

@@ -33,12 +33,6 @@ GLWindow::GLWindow (CompWindow *w) :
 {
     CompositeWindow *cw = CompositeWindow::get (w);
 
-    if (!cw)
-    {
-	setFailed();
-	return;
-    }
-
     priv->paint.opacity    = cw->opacity ();
     priv->paint.brightness = cw->brightness ();
     priv->paint.saturation = cw->saturation ();
