@@ -198,6 +198,19 @@ CompositeScreen::damageEvent ()
     return priv->damageEvent;
 }
 
+/* TODO - remove these macros, also <cstdio> and <cstdlib> above.
+ *
+ * We're seeing errors in code that tries to use composite after
+ * it fails to initialise.
+ *
+ * I agree in advance that this macro subverting setFailed() is a
+ * horrible hack.  But making the client code either handle errors,
+ * or exception neutral, is a LOT of work.
+ *
+ * This could give us some more immediate feedback on the causes
+ * of failure and a better solution.
+ *                                             Alan Griffiths
+ */
 #define ARG_STRINGIZE(x) ARG_STRINGIZE_(x)
 #define ARG_STRINGIZE_(x) #x
 #define setFailed()\
