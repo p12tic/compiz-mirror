@@ -510,8 +510,8 @@ class CompWindow :
 	static unsigned int constrainWindowState (unsigned int state,
 						  unsigned int actions);
 
-	static unsigned int allocPluginClassIndex ();
-	static void freePluginClassIndex (unsigned int index);
+	unsigned int allocPluginClassIndex ();
+	void freePluginClassIndex (unsigned int index);
 
 	bool updateStruts ();
 	CompStruts *struts ();

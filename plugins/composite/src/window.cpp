@@ -31,6 +31,12 @@ CompositeWindow::CompositeWindow (CompWindow *w) :
     PluginClassHandler<CompositeWindow, CompWindow, COMPIZ_COMPOSITE_ABI> (w),
     priv (new PrivateCompositeWindow (w, this))
 {
+    if (!priv->cScreen)
+    {
+	setFailed();
+	return;
+    }
+
     CompScreen *s = screen;
 
     if (w->windowClass () != InputOnly)
@@ -60,24 +66,26 @@ CompositeWindow::CompositeWindow (CompWindow *w) :
 
 CompositeWindow::~CompositeWindow ()
 {
-
-    if (priv->damage)
-	XDamageDestroy (screen->dpy (), priv->damage);
-
-     if (!priv->redirected)
+    if (!priv->cScreen)
     {
-	priv->cScreen->overlayWindowCount ()--;
+	if (priv->damage)
+	    XDamageDestroy (screen->dpy (), priv->damage);
 
-	if (priv->cScreen->overlayWindowCount () < 1)
-	    priv->cScreen->showOutputWindow ();
+	if (!priv->redirected)
+	{
+	    priv->cScreen->overlayWindowCount ()--;
+
+	    if (priv->cScreen->overlayWindowCount () < 1)
+		priv->cScreen->showOutputWindow ();
+	}
+
+	release ();
+
+	addDamage ();
+
+	if (lastDamagedWindow == priv->window)
+	    lastDamagedWindow = NULL;
     }
-
-    release ();
-
-    addDamage ();
-
-    if (lastDamagedWindow == priv->window)
-	lastDamagedWindow = NULL;
 
     delete priv;
 }
@@ -90,7 +98,7 @@ PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
     pixmap (None),
     damage (None),
     damaged (false),
-    redirected (cScreen->compositingActive ()),
+    redirected (cScreen && cScreen->compositingActive ()),
     overlayWindow (false),
     bindFailed (false),
     opacity (OPAQUE),
