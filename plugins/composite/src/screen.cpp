@@ -344,12 +344,12 @@ PrivateCompositeScreen::init ()
     {
 	if (!replaceCurrentWm)
 	{
-	    compLogMessage ("composite", CompLogLevelError,
-			    "Screen %d on display \"%s\" already "
-			    "has a compositing manager; try using the "
-			    "--replace option to replace the current "
-			    "compositing manager.",
-			    screen->screenNum (), DisplayString (dpy));
+	    compLogMessage (
+		"composite", CompLogLevelError,
+		"Screen %d on display \"%s\" already has a compositing "
+		"manager (%x); try using the --replace option to replace "
+		"the current compositing manager.",
+		screen->screenNum (), DisplayString (dpy), currentCmSnOwner);
 
 	    return false;
 	}
