@@ -45,6 +45,9 @@
 
 #include <core/timer.h>
 
+#include <cstdlib>
+#include <cstdio>
+
 CompWindow *lastDamagedWindow = 0;
 
 void
@@ -195,6 +198,26 @@ CompositeScreen::damageEvent ()
     return priv->damageEvent;
 }
 
+/* TODO - remove these macros, also <cstdio> and <cstdlib> above.
+ *
+ * We're seeing errors in code that tries to use composite after
+ * it fails to initialise.
+ *
+ * I agree in advance that this macro subverting setFailed() is a
+ * horrible hack.  But making the client code either handle errors,
+ * or exception neutral, is a LOT of work.
+ *
+ * This could give us some more immediate feedback on the causes
+ * of failure and a better solution.
+ *                                             Alan Griffiths
+ */
+#define ARG_STRINGIZE(x) ARG_STRINGIZE_(x)
+#define ARG_STRINGIZE_(x) #x
+#define setFailed()\
+do { \
+    std::fputs("error CompositeScreen::CompositeScreen - line " ARG_STRINGIZE(__LINE__) "\n", stderr);\
+    std::exit(EXIT_FAILURE);\
+} while (false)
 
 CompositeScreen::CompositeScreen (CompScreen *s) :
     PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI> (s),
@@ -257,6 +280,11 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
 
 }
 
+#undef ARG_STRINGIZE
+#undef ARG_STRINGIZE_
+#undef setFailed
+
+
 CompositeScreen::~CompositeScreen ()
 {
     priv->paintTimer.stop ();
@@ -316,12 +344,12 @@ PrivateCompositeScreen::init ()
     {
 	if (!replaceCurrentWm)
 	{
-	    compLogMessage ("composite", CompLogLevelError,
-			    "Screen %d on display \"%s\" already "
-			    "has a compositing manager; try using the "
-			    "--replace option to replace the current "
-			    "compositing manager.",
-			    screen->screenNum (), DisplayString (dpy));
+	    compLogMessage (
+		"composite", CompLogLevelError,
+		"Screen %d on display \"%s\" already has a compositing "
+		"manager (%x); try using the --replace option to replace "
+		"the current compositing manager.",
+		screen->screenNum (), DisplayString (dpy), currentCmSnOwner);
 
 	    return false;
 	}
