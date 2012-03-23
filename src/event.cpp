@@ -143,24 +143,7 @@ cps::EventManager::triggerPress (CompAction         *action,
 
     if (state == CompAction::StateInitKey && grabsEmpty ())
     {
-        if (grabbed)
-        {
-            possibleTap = action;
-        }
-        else
-        {
-            /*
-             * If we received this keypress event and weren't grabbed then
-             * the event doesn't belong to us. More likely belongs to
-             * a different client's grab so ignore it. (LP: #806255)
-             * The reason why we might receive such keypress events while
-             * other clients have grabs is because of the XKB extension that
-             * we're using. It sends you events even if they're not yours...
-             * http://www.x.org/releases/current/doc/libX11/specs/XKB/xkblib.html
-             */
-            possibleTap = NULL;
-            return false;
-        }
+        possibleTap = action;
     }
 
     if (!action->initiate ().empty ())
@@ -680,6 +663,8 @@ PrivateScreen::handleActionEvent (XEvent *event)
 
     switch (event->type) {
     case ButtonPress:
+	lastKeyCode = 0;
+
 	/* We need to determine if we clicked on a parent frame
 	 * window, if so, pass the appropriate child window as
 	 * "window" and the frame as "event_window"
@@ -715,6 +700,8 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	}
 	break;
     case ButtonRelease:
+	lastKeyCode = 0;
+
 	o[0].value ().set ((int) event->xbutton.window);
 	o[1].value ().set ((int) event->xbutton.window);
 	o[2].value ().set ((int) event->xbutton.state);
@@ -736,6 +723,8 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	}
 	break;
     case KeyPress:
+	lastKeyCode = event->xkey.keycode;
+
 	o[0].value ().set ((int) event->xkey.window);
 	o[1].value ().set ((int) activeWindow);
 	o[2].value ().set ((int) event->xkey.state);
@@ -758,6 +747,8 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	}
 	break;
     case KeyRelease:
+	lastKeyCode = event->xkey.keycode;
+
 	o[0].value ().set ((int) event->xkey.window);
 	o[1].value ().set ((int) activeWindow);
 	o[2].value ().set ((int) event->xkey.state);
@@ -959,6 +950,28 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    {
 		XkbStateNotifyEvent *stateEvent = (XkbStateNotifyEvent *) event;
 
+		/*
+		 * You will reach this point when modifier keys or mouse
+		 * buttons change state (are pressed or released). However the
+		 * XKB extension does not honour active grabs held by other
+		 * clients and will send us these XkbStateNotify events even
+		 * when we shouldn't receive them at all (LP: #806255).
+		 * [http://www.x.org/releases/current/doc/libX11/specs/XKB/xkblib.html]
+		 *
+		 * So we need a sanity check. The sanity check is to only
+		 * accept XkbStateNotify's which were preceded by a matching
+		 * KeyPress or KeyRelease event, or which occurred during a
+		 * compiz active grab. Then we can be sure the keyboard is not
+		 * actively grabbed by another client and that compiz can
+		 * safely respond to this event.
+		 *
+		 * The only cleaner fix for LP: #806255 I can think of would
+		 * be to remove XkbStateNotify support completely from compiz.
+		 * But that would be a huge change, in core and some plugins.
+		 */
+		if (grabsEmpty() && stateEvent->keycode != lastKeyCode)
+		    break;
+
 		o[0].value ().set ((int) activeWindow);
 		o[1].value ().set ((int) activeWindow);
 		o[2].value ().set ((int) stateEvent->mods);
@@ -1060,13 +1073,16 @@ CompScreen::handleEvent (XEvent *event)
 void
 CompScreenImpl::alwaysHandleEvent (XEvent *event)
 {
-    eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
-
-    handleEvent (event);
-
     /*
      * Critical event handling that cannot be overridden by plugins
      */
+    
+    if (event->type == ButtonPress || event->type == KeyPress)
+	priv->possibleTap = NULL;
+
+    eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
+
+    handleEvent (event);
 
     bool keyEvent = (event->type == KeyPress || event->type == KeyRelease);
 
