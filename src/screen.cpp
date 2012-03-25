@@ -5124,8 +5124,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     initialized (false),
     edgeWindow (None),
     edgeDelayTimer (),
-    xdndWindow (None),
-    lastKeyCode (0)
+    xdndWindow (None)
 {
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));
