@@ -1047,8 +1047,6 @@ class PrivateScreen :
 	CompTimer               edgeDelayTimer;
 	CompDelayedEdgeSettings edgeDelaySettings;
 	Window	xdndWindow;
-
-	int lastKeyCode;
 };
 
 class CompManager
