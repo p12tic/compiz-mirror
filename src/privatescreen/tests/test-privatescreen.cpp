@@ -383,7 +383,6 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
 
     cps::PluginManager ps(&comp_screen);
 
-    // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
     values.push_back ("core");
     ps.setPlugins (values);
@@ -411,6 +410,14 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
 
     ps.updatePlugins();
 
+    // a second call to updatePlugins notice that "three" isn't active
+    // hence it pops & finalizes "four" before trying to load "three"
+    // after which it pushes & (re)initializes "four".
+    //
+    // That is all sensible - to allow for dependencies, and works in
+    // the code under test.
+    //
+    // However, a few plugins break when this happens.
     EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
 	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
 
