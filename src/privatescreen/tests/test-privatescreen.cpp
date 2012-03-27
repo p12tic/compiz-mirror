@@ -246,10 +246,18 @@ public:
 	    EXPECT_CALL(mockVtable, fini()).Times(1);
 	    p->vTable = &mockVtable;
 	}
-	else
+	else if (strcmp(name, "three") == 0)
 	{
 	    static MockVTable mockVtable("three");
 	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(false));
+	    p->vTable = &mockVtable;
+	}
+	else
+	{
+	    static MockVTable mockVtable("four");
+	    EXPECT_CALL(mockVtable, init()).Times(2).WillRepeatedly(Return(true));
+	    EXPECT_CALL(mockVtable, finiScreen(Ne((void*)0))).Times(2);
+	    EXPECT_CALL(mockVtable, fini()).Times(2);
 	    p->vTable = &mockVtable;
 	}
 	return true;
@@ -339,9 +347,11 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
     ps.setPlugins (values);
     ps.setDirtyPluginList ();
 
-    initialPlugins.push_back ("one");
-    initialPlugins.push_back ("two");
-    initialPlugins.push_back ("three");
+    std::list <CompString> plugins;
+    plugins.push_back ("one");
+    plugins.push_back ("two");
+    plugins.push_back ("three");
+    initialPlugins = plugins;
 
     MockPluginFilesystem mockfs;
 
@@ -356,6 +366,60 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
 
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Return(false));
+
+    ps.updatePlugins();
+
+    // TODO Some cleanup that probably ought to be automatic.
+    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(2);
+    EXPECT_CALL(comp_screen, _finiPluginForScreen(Ne((void*)0))).Times(2);
+    for (CompPlugin* p; (p = CompPlugin::pop ()) != 0; CompPlugin::unload (p));
+}
+
+TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_middle_of_list)
+{
+    using namespace testing;
+
+    MockCompScreen comp_screen;
+
+    cps::PluginManager ps(&comp_screen);
+
+    // Stuff that has to be done before calling updatePlugins()
+    CompOption::Value::Vector values;
+    values.push_back ("core");
+    ps.setPlugins (values);
+    ps.setDirtyPluginList ();
+
+    std::list <CompString> plugins;
+    plugins.push_back ("one");
+    plugins.push_back ("three");
+    plugins.push_back ("four");
+    initialPlugins = plugins;
+
+    MockPluginFilesystem mockfs;
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("one"))).
+	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
+	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("four"))).
+	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
+
+    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);  // Once for "three" which doesn't load
+
+    EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
+	    WillOnce(Return(true));
+
+    ps.updatePlugins();
+
+    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
+	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
+
+    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);  // Once for "three" which doesn't load
+
+    EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
+	    WillOnce(Return(false));
+
+    EXPECT_CALL(comp_screen, _finiPluginForScreen(Ne((void*)0))).Times(1);
 
     ps.updatePlugins();
 
