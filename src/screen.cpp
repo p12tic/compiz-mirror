@@ -1031,23 +1031,11 @@ cps::PluginManager::updatePlugins ()
     }
     else
     {
-	plugin.list().resize(pluginIndex);
 	CompPlugin::List& pluginList = CompPlugin::getPlugins ();
 
 	while (requestIndex != activePluginsRequested.size ())
 	{
 	    std::string name(activePluginsRequested[requestIndex].s ());
-
-	    std::cerr << "DEBUG{ARG} plugin.list().size()=" << plugin.list().size()
-		    << ", pluginIndex=" << pluginIndex
-		    << ", requestIndex=" << requestIndex
-		    << ", name =\"" << name << "\"\n";
-
-	    if (pluginIndex < plugin.list().size())
-	    {
-		std::cerr << "DEBUG{ARG} plugin[x]=" << plugin.list ().at (pluginIndex).s () << '\n';
-		std::cerr << "DEBUG{ARG} Requested[x]=" << activePluginsRequested.at (requestIndex).s () << '\n';
-	    }
 
 	    if (pluginIndex >= plugin.list().size())
 	    {
