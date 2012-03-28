@@ -899,7 +899,10 @@ cps::PluginManager::updatePlugins ()
     possibleTap = NULL;
     dirtyPluginList = false;
 
+    // TODO the code below breaks if activePluginsBefore doesn't have the
+    // TODO same content as this->plugin.list().  So one is redundant.
     CompOption::Value::Vector &activePluginsBefore = optionGetActivePlugins ();
+
     CompOption::Value::Vector activePluginsRequested;
 
     /* Must have core as first plugin */
@@ -937,6 +940,19 @@ cps::PluginManager::updatePlugins ()
 	}
     }
 
+    // Can we avoid unnecessary finalize/init sequences?
+    bool anythingToUnload = false;
+    for (CompOption::Value::Vector::const_iterator i = activePluginsBefore.begin();
+	i != activePluginsBefore.end();
+	++i)
+    {
+	if (std::find(activePluginsRequested.begin(), activePluginsRequested.end(), *i) == activePluginsRequested.end())
+	{
+	    anythingToUnload = true;
+	    break;
+	}
+    }
+
     /* j is initialized to 1 to make sure we never pop the core plugin */
     unsigned int pluginIndex = 1;
     unsigned int requestIndex;
@@ -948,68 +964,150 @@ cps::PluginManager::updatePlugins ()
 	    break;
     }
 
-    // We now have both pluginIndex pointing at first difference (or end).
-    // Now pop plugins off stack to this point, but keep track that they are loaded
-    CompPlugin::List alreadyLoaded;
-    if (unsigned int const nPop = plugin.list ().size () - pluginIndex)
+    if (anythingToUnload)  // Have to do it the hard way
     {
-	for (pluginIndex = 0; pluginIndex < nPop; pluginIndex++)
+	// We have pluginIndex pointing at first difference (or end).
+	// Now pop plugins off stack to this point, but keep track that they are loaded
+	CompPlugin::List alreadyLoaded;
+	if (unsigned int const nPop = plugin.list ().size () - pluginIndex)
 	{
-	    alreadyLoaded.push_back (CompPlugin::pop ());
-	    plugin.list ().pop_back ();
-	}
-    }
-
-    // Now work forward through requested plugins
-    for (; requestIndex < activePluginsRequested.size (); requestIndex++)
-    {
-	CompPlugin *p = NULL;
-	bool failedPush = false;
-
-	// If already loaded, just try to push it...
-	foreach (CompPlugin *pp, alreadyLoaded)
-	{
-	    if (activePluginsRequested[requestIndex]. s () == pp->vTable->name ())
+	    for (pluginIndex = 0; pluginIndex < nPop; pluginIndex++)
 	    {
-		if (CompPlugin::push (pp))
+		alreadyLoaded.push_back (CompPlugin::pop ());
+		plugin.list ().pop_back ();
+	    }
+	}
+
+	// Now work forward through requested plugins
+	for (; requestIndex < activePluginsRequested.size (); requestIndex++)
+	{
+	    CompPlugin *p = NULL;
+	    bool failedPush = false;
+
+	    // If already loaded, just try to push it...
+	    foreach (CompPlugin *pp, alreadyLoaded)
+	    {
+		if (activePluginsRequested[requestIndex]. s () == pp->vTable->name ())
 		{
-		    p = pp;
-		    alreadyLoaded.erase (std::find (alreadyLoaded.begin (), alreadyLoaded.end (), pp));
-		    break;
+		    if (CompPlugin::push (pp))
+		    {
+			p = pp;
+			alreadyLoaded.erase (std::find (alreadyLoaded.begin (), alreadyLoaded.end (), pp));
+			break;
+		    }
+		    else
+		    {
+			alreadyLoaded.erase (std::find (alreadyLoaded.begin (), alreadyLoaded.end (), pp));
+			CompPlugin::unload (pp);
+			p = NULL;
+			failedPush = true;
+			break;
+		    }
+		}
+	    }
+
+	    // ...otherwise, try to load and push
+	    if (p == 0 && !failedPush)
+	    {
+		p = CompPlugin::load (activePluginsRequested[requestIndex].s ().c_str ());
+
+		if (p)
+		{
+		    if (!CompPlugin::push (p))
+		    {
+			CompPlugin::unload (p);
+			p = 0;
+		    }
+		}
+	    }
+
+	    if (p)
+		plugin.list ().push_back (p->vTable->name ());
+	}
+
+	// Any plugins that are loaded, but were not re-initialized can be unloaded.
+	foreach (CompPlugin *pp, alreadyLoaded)
+	    CompPlugin::unload (pp);
+    }
+    else
+    {
+	plugin.list().resize(pluginIndex);
+	CompPlugin::List& pluginList = CompPlugin::getPlugins ();
+
+	while (requestIndex != activePluginsRequested.size ())
+	{
+	    std::string name(activePluginsRequested[requestIndex].s ());
+
+	    std::cerr << "DEBUG{ARG} plugin.list().size()=" << plugin.list().size()
+		    << ", pluginIndex=" << pluginIndex
+		    << ", requestIndex=" << requestIndex
+		    << ", name =\"" << name << "\"\n";
+
+	    if (pluginIndex < plugin.list().size())
+	    {
+		std::cerr << "DEBUG{ARG} plugin[x]=" << plugin.list ().at (pluginIndex).s () << '\n';
+		std::cerr << "DEBUG{ARG} Requested[x]=" << activePluginsRequested.at (requestIndex).s () << '\n';
+	    }
+
+	    if (pluginIndex >= plugin.list().size())
+	    {
+		if (CompPlugin* p = CompPlugin::load (activePluginsRequested[requestIndex].s ().c_str ()))
+		{
+		    if (CompPlugin::push (p))
+		    {
+			plugin.list().push_back (activePluginsRequested[requestIndex].s());
+			++pluginIndex;
+		    }
+		    else
+		    {
+			CompPlugin::unload (p);
+		    }
+		}
+	    }
+	    else if (plugin.list ().at (pluginIndex).s () != activePluginsRequested.at (requestIndex).s ())
+	    {
+		// Just needs moving in list?
+		if (CompPlugin* req = CompPlugin::find(activePluginsRequested[requestIndex].s().c_str()))
+		{
+		    CompPlugin* cur = CompPlugin::find(plugin.list ().at (pluginIndex).s ().c_str());
+
+		    CompPlugin::List::iterator r = std::find(pluginList.begin(), pluginList.end(), req);
+		    CompPlugin::List::iterator c = std::find(pluginList.begin(), pluginList.end(), cur);
+
+		    pluginList.splice(c, pluginList, r, ++r);
+		    plugin.list ().erase (std::find(plugin.list ().begin(), plugin.list ().end(), activePluginsRequested[requestIndex].s()));
+		    plugin.list ().insert (plugin.list ().begin()+pluginIndex, activePluginsRequested[requestIndex].s());
+		    ++pluginIndex;
 		}
 		else
 		{
-		    alreadyLoaded.erase (std::find (alreadyLoaded.begin (), alreadyLoaded.end (), pp));
-		    CompPlugin::unload (pp);
-		    p = NULL;
-		    failedPush = true;
-		    break;
+		    if (CompPlugin* p = CompPlugin::load (activePluginsRequested[requestIndex].s ().c_str ()))
+		    {
+			if (CompPlugin::push (p))
+			{
+			    CompPlugin* cur = CompPlugin::find(plugin.list ().at (pluginIndex).s ().c_str());
+			    CompPlugin::List::iterator r = std::find(pluginList.begin(), pluginList.end(), p);
+			    CompPlugin::List::iterator c = std::find(pluginList.begin(), pluginList.end(), cur);
+
+			    pluginList.splice(c, pluginList, r, ++r);
+			    plugin.list ().insert (plugin.list ().begin()+pluginIndex, activePluginsRequested[requestIndex].s());
+			    ++pluginIndex;
+			}
+			else
+			{
+			    CompPlugin::unload (p);
+			}
+		    }
 		}
 	    }
-	}
-
-	// ...otherwise, try to load and push
-	if (p == 0 && !failedPush)
-	{
-	    p = CompPlugin::load (activePluginsRequested[requestIndex].s ().c_str ());
-	    
-	    if (p)
+	    else
 	    {
-		if (!CompPlugin::push (p))
-		{
-		    CompPlugin::unload (p);
-		    p = 0;
-		}
+		++pluginIndex;
 	    }
+
+	    ++requestIndex;
 	}
-
-	if (p)
-	    plugin.list ().push_back (p->vTable->name ());
     }
-
-    // Any plugins that are loaded, but were not re-initialized can be unloaded.
-    foreach (CompPlugin *pp, alreadyLoaded)
-	CompPlugin::unload (pp);
 
     if (!dirtyPluginList)
 	screen->setOptionForPlugin ("core", "active_plugins", plugin);

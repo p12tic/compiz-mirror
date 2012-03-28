@@ -443,16 +443,10 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
     // the code under test.
     //
     // However, a few plugins break when this happens.
-    EXPECT_CALL(mockfs.mockVtableFour, finiScreen(Ne((void*)0))).Times(1);
-    EXPECT_CALL(mockfs.mockVtableFour, fini()).Times(1);
-    EXPECT_CALL(comp_screen, _finiPluginForScreen(Ne((void*)0))).Times(1);
-
     EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
 	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
     EXPECT_CALL(mockfs.mockVtableThree, init()).WillOnce(Return(false));
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);  // Once for "three" which doesn't load
-
-    EXPECT_CALL(mockfs.mockVtableFour, init()).Times(1).WillRepeatedly(Return(true));
 
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Return(false));
