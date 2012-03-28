@@ -940,41 +940,46 @@ cps::PluginManager::updatePlugins ()
     /* j is initialized to 1 to make sure we never pop the core plugin */
     unsigned int pluginIndex = 1;
     unsigned int requestIndex;
-    for (requestIndex = pluginIndex = 1; pluginIndex < plugin.list ().size () && requestIndex < activePluginsRequested.size (); requestIndex++, pluginIndex++)
+    for (requestIndex = pluginIndex = 1;
+	pluginIndex < plugin.list ().size () && requestIndex < activePluginsRequested.size ();
+	requestIndex++, pluginIndex++)
     {
 	if (plugin.list ().at (pluginIndex).s () != activePluginsRequested.at (requestIndex).s ())
 	    break;
     }
 
-    CompPlugin::List pop;
-
+    // We now have both pluginIndex pointing at first difference (or end).
+    // Now pop plugins off stack to this point, but keep track that they are loaded
+    CompPlugin::List alreadyLoaded;
     if (unsigned int const nPop = plugin.list ().size () - pluginIndex)
     {
 	for (pluginIndex = 0; pluginIndex < nPop; pluginIndex++)
 	{
-	    pop.push_back (CompPlugin::pop ());
+	    alreadyLoaded.push_back (CompPlugin::pop ());
 	    plugin.list ().pop_back ();
 	}
     }
 
+    // Now work forward through requested plugins
     for (; requestIndex < activePluginsRequested.size (); requestIndex++)
     {
 	CompPlugin *p = NULL;
 	bool failedPush = false;
 
-	foreach (CompPlugin *pp, pop)
+	// If already loaded, just try to push it...
+	foreach (CompPlugin *pp, alreadyLoaded)
 	{
 	    if (activePluginsRequested[requestIndex]. s () == pp->vTable->name ())
 	    {
 		if (CompPlugin::push (pp))
 		{
 		    p = pp;
-		    pop.erase (std::find (pop.begin (), pop.end (), pp));
+		    alreadyLoaded.erase (std::find (alreadyLoaded.begin (), alreadyLoaded.end (), pp));
 		    break;
 		}
 		else
 		{
-		    pop.erase (std::find (pop.begin (), pop.end (), pp));
+		    alreadyLoaded.erase (std::find (alreadyLoaded.begin (), alreadyLoaded.end (), pp));
 		    CompPlugin::unload (pp);
 		    p = NULL;
 		    failedPush = true;
@@ -983,6 +988,7 @@ cps::PluginManager::updatePlugins ()
 	    }
 	}
 
+	// ...otherwise, try to load and push
 	if (p == 0 && !failedPush)
 	{
 	    p = CompPlugin::load (activePluginsRequested[requestIndex].s ().c_str ());
@@ -1001,7 +1007,8 @@ cps::PluginManager::updatePlugins ()
 	    plugin.list ().push_back (p->vTable->name ());
     }
 
-    foreach (CompPlugin *pp, pop)
+    // Any plugins that are loaded, but were not re-initialized can be unloaded.
+    foreach (CompPlugin *pp, alreadyLoaded)
 	CompPlugin::unload (pp);
 
     if (!dirtyPluginList)
