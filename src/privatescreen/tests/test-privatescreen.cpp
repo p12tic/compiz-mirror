@@ -490,6 +490,9 @@ TEST(privatescreen_EventManagerTest, init)
 
     MockCompScreen comp_screen;
 
+    CompOption::Value::Vector values;
+    values.push_back ("core");
+
     EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
     EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
     EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
@@ -498,10 +501,10 @@ TEST(privatescreen_EventManagerTest, init)
     // We should kill this dependency
     EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return((Display*)(0)));
 
-    // TODO - we can't yet detach the EventManager from ::screen->priv
-    // vis: replace next two lines with cps::EventManager em(&comp_screen);
-    comp_screen.priv.reset(new PrivateScreen(&comp_screen));
-    cps::EventManager& em(*comp_screen.priv.get());
+    cps::EventManager em(&comp_screen);
 
+    EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
+	    WillOnce(Return(false));
+    em.setPlugins (values);
     em.init(0);
 }
