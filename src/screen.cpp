@@ -896,80 +896,33 @@ PrivateScreen::processEvents ()
 void
 cps::PluginManager::updatePlugins ()
 {
-    unsigned int pListCount = 1;
-
     possibleTap = NULL;
     dirtyPluginList = false;
 
-    CompOption::Value::Vector &list = optionGetActivePlugins ();
-
-    /* Determine the number of plugins, which is core +
-     * initial plugins + plugins in option list in addition
-     * to initial plugins */
-    foreach (CompString &pn, initialPlugins)
-    {
-	if (pn != "core")
-	    pListCount++;
-    }
-
-    CompString lpName;
-	
-    foreach (CompOption::Value &lp, list)
-    {
-	bool skip = false;
-	
-	lpName = lp.s();
-	
-	if (lpName == "core")
-	    continue;
-
-	foreach (CompString &p, initialPlugins)
-	{
-	    if (p == lpName)
-	    {
-		skip = true;
-		break;
-	    }
-	}
-
-	/* plugin not in initial list */
-	if (!skip)
-	    pListCount++;
-    }
-
-    /* pListCount is now the number of plugisn contained in both the
-     * initial and new plugins list */
-    CompOption::Value::Vector pList(pListCount);
-
-    if (pList.empty ())
-    {
-	screen->setOptionForPlugin ("core", "active_plugins", plugin);
-	return;
-    }
+    CompOption::Value::Vector &activePluginsBefore = optionGetActivePlugins ();
+    CompOption::Value::Vector activePluginsRequested;
 
     /* Must have core as first plugin */
-    pList.at (0) = "core";
-    unsigned int j = 1;
+    activePluginsRequested.push_back("core");
 
     /* Add initial plugins */
     foreach (CompString &p, initialPlugins)
     {
 	if (p == "core")
 	    continue;
-	pList.at (j).set (p);
-	j++;
+	activePluginsRequested.push_back(p);
     }
 
     /* Add plugins not in the initial list */
-    foreach (CompOption::Value &opt, list)
+    foreach (CompOption::Value &opt, activePluginsBefore)
     {
-	std::list <CompString>::iterator it = initialPlugins.begin ();
-	bool				 skip = false;
-	
 	if (opt.s () == "core")
 	   continue;
 
-	for (; it != initialPlugins.end (); it++)
+	typedef std::list <CompString>::iterator iterator;
+	bool				 skip = false;
+
+	for (iterator it = initialPlugins.begin (); it != initialPlugins.end (); it++)
 	{
 	    if ((*it) == opt.s())
 	    {
@@ -980,39 +933,38 @@ cps::PluginManager::updatePlugins ()
 
 	if (!skip)
 	{
-	    pList.at (j++).set (opt.s ());
+	    activePluginsRequested.push_back(opt.s ());
 	}
     }
 
-    assert (j == pList.size ());
-
     /* j is initialized to 1 to make sure we never pop the core plugin */
-    unsigned int              i;
-    for (i = j = 1; j < plugin.list ().size () && i < pList.size (); i++, j++)
+    unsigned int pluginIndex = 1;
+    unsigned int requestIndex;
+    for (requestIndex = pluginIndex = 1; pluginIndex < plugin.list ().size () && requestIndex < activePluginsRequested.size (); requestIndex++, pluginIndex++)
     {
-	if (plugin.list ().at (j).s () != pList.at (i).s ())
+	if (plugin.list ().at (pluginIndex).s () != activePluginsRequested.at (requestIndex).s ())
 	    break;
     }
 
     CompPlugin::List pop;
 
-    if (unsigned int const nPop = plugin.list ().size () - j)
+    if (unsigned int const nPop = plugin.list ().size () - pluginIndex)
     {
-	for (j = 0; j < nPop; j++)
+	for (pluginIndex = 0; pluginIndex < nPop; pluginIndex++)
 	{
 	    pop.push_back (CompPlugin::pop ());
 	    plugin.list ().pop_back ();
 	}
     }
 
-    for (; i < pList.size (); i++)
+    for (; requestIndex < activePluginsRequested.size (); requestIndex++)
     {
 	CompPlugin *p = NULL;
 	bool failedPush = false;
 
 	foreach (CompPlugin *pp, pop)
 	{
-	    if (pList[i]. s () == pp->vTable->name ())
+	    if (activePluginsRequested[requestIndex]. s () == pp->vTable->name ())
 	    {
 		if (CompPlugin::push (pp))
 		{
@@ -1033,7 +985,7 @@ cps::PluginManager::updatePlugins ()
 
 	if (p == 0 && !failedPush)
 	{
-	    p = CompPlugin::load (pList[i].s ().c_str ());
+	    p = CompPlugin::load (activePluginsRequested[requestIndex].s ().c_str ());
 	    
 	    if (p)
 	    {
