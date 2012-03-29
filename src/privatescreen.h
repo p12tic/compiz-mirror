@@ -579,11 +579,6 @@ class PluginManager :
 	typedef std::set<CompString> CompStringSet;
 	CompStringSet blacklist;
 
-	void updatePluginsWithUnloads(unsigned int& pluginIndex,
-		const CompOption::Value::Vector& desiredPlugins);
-	void updatePluginsWithoutUnloading(unsigned int pluginIndex,
-		const CompOption::Value::Vector desiredPlugins);
-	bool anyPluginsToUnload(CompOption::Value::Vector const& desiredPlugins);
 	CompOption::Value::Vector mergedPluginList();
 };
 

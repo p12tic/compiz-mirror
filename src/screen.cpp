@@ -949,41 +949,24 @@ cps::PluginManager::mergedPluginList ()
     return result;
 }
 
-bool
-cps::PluginManager::anyPluginsToUnload(
-    CompOption::Value::Vector const& desiredPlugins)
-{
-    // Can we avoid unnecessary finalize/init sequences?
-    bool anythingToUnload = false;
-    for (CompOption::Value::Vector::const_iterator i = plugin.list().begin();
-	    i != plugin.list().end(); ++i)
-    {
-	bool found = false;
-	for (CompOption::Value::Vector::const_iterator j =
-		desiredPlugins.begin(); j != desiredPlugins.end(); ++j)
-	{
-	    if (i->s() == j->s())
-	    {
-		found = true;
-		break;
-	    }
-	}
-
-	if (!found)
-	{
-	    anythingToUnload = true;
-	    break;
-	}
-    }
-
-    return anythingToUnload;
-}
 
 void
-cps::PluginManager::updatePluginsWithUnloads(
-    unsigned int& pluginIndex,
-    const CompOption::Value::Vector& desiredPlugins)
+cps::PluginManager::updatePlugins ()
 {
+    possibleTap = NULL;
+    dirtyPluginList = false;
+
+    CompOption::Value::Vector const desiredPlugins(mergedPluginList());
+
+    unsigned int pluginIndex;
+    for (pluginIndex = 1;
+	pluginIndex < plugin.list ().size () && pluginIndex < desiredPlugins.size ();
+	pluginIndex++)
+    {
+	if (plugin.list ().at (pluginIndex).s () != desiredPlugins.at (pluginIndex).s ())
+	    break;
+    }
+
     unsigned int desireIndex = pluginIndex;
 
     // We have pluginIndex pointing at first difference (or end).
@@ -1054,105 +1037,10 @@ cps::PluginManager::updatePluginsWithUnloads(
 	if (p)
 	    plugin.list().push_back(p->vTable->name());
     }
+
     // Any plugins that are loaded, but were not re-initialized can be unloaded.
     foreach(CompPlugin * pp, alreadyLoaded)
-    CompPlugin::unload (pp);
-}
-
-void
-cps::PluginManager::updatePluginsWithoutUnloading(
-	unsigned int pluginIndex,
-	const CompOption::Value::Vector desiredPlugins)
-{
-    unsigned int desireIndex = pluginIndex;
-
-    CompOption::Value::Vector& pluginList = plugin.list();
-
-    while (desireIndex != desiredPlugins.size())
-    {
-	const std::string& desireName(desiredPlugins[desireIndex].s());
-
-	if (pluginIndex >= pluginList.size ())
-	{
-	    if (CompPlugin* p = CompPlugin::load (desireName.c_str ()))
-	    {
-		if (CompPlugin::push (p))
-		{
-		    pluginList.push_back (desireName);
-		    ++pluginIndex;
-		}
-		else
-		{
-		    blacklist.insert (desireName);
-		    CompPlugin::unload (p);
-		}
-	    }
-	    else
-	    {
-		blacklist.insert (desireName);
-	    }
-	}
-	else if (pluginList.at (pluginIndex).s () != desireName)
-	{
-	    // Just needs moving in list?
-	    if (CompPlugin* p = CompPlugin::find (desireName.c_str ()))
-	    {
-		CompPlugin::putBefore (p, pluginList.at (pluginIndex).s ());
-
-		pluginList.erase(
-		    std::find(pluginList.begin (), pluginList.end (), desireName));
-		pluginList.insert (pluginList.begin () + pluginIndex, desireName);
-		++pluginIndex;
-	    }
-	    else if (CompPlugin* p = CompPlugin::load(desireName.c_str()))
-	    {
-		if (CompPlugin::push (p))
-		{
-		    CompPlugin::putBefore (p, pluginList.at (pluginIndex).s ());
-
-		    pluginList.insert (pluginList.begin () + pluginIndex, desireName);
-		    ++pluginIndex;
-		}
-		else
-		{
-		    CompPlugin::unload (p);
-		}
-	    }
-	}
-	else
-	{
-	    ++pluginIndex;
-	}
-
-	++desireIndex;
-    }
-}
-
-void
-cps::PluginManager::updatePlugins ()
-{
-    possibleTap = NULL;
-    dirtyPluginList = false;
-
-    CompOption::Value::Vector const desiredPlugins(mergedPluginList());
-
-    unsigned int firstDiffIndex;
-    for (firstDiffIndex = 1;
-	firstDiffIndex < plugin.list ().size () && firstDiffIndex < desiredPlugins.size ();
-	firstDiffIndex++)
-    {
-	if (plugin.list ().at (firstDiffIndex).s () != desiredPlugins.at (firstDiffIndex).s ())
-	    break;
-    }
-
-    if (anyPluginsToUnload(desiredPlugins))  // Do it the hard old way
-    {
-	updatePluginsWithUnloads(firstDiffIndex, desiredPlugins);
-    }
-    else
-    {
-	updatePluginsWithoutUnloading(firstDiffIndex, desiredPlugins);
-    }
+	CompPlugin::unload (pp);
 
     if (!dirtyPluginList)
 	screen->setOptionForPlugin ("core", "active_plugins", plugin);
