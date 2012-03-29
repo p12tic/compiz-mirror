@@ -489,6 +489,7 @@ TEST(privatescreen_EventManagerTest, init)
     using namespace testing;
 
     MockCompScreen comp_screen;
+    MockPluginFilesystem mockfs;
 
     CompOption::Value::Vector values;
     values.push_back ("core");
