@@ -208,6 +208,10 @@ class CompPlugin {
 	 */
 	static List & getPlugins ();
 	
+	/**
+	 * Puts the plugin "p" before the plugin called "q".
+	 * Precondition: both plugins are loaded.
+	 */
 	static void putBefore(CompPlugin* p, CompString const& q);
 
 	/**

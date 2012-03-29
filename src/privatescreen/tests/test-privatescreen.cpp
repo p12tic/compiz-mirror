@@ -283,6 +283,17 @@ public:
 	}
 	return true;
     }
+
+    CompStringList mockListPlugins (const char *path)
+    {
+	CompStringList list;
+	list.push_back("one");
+	list.push_back("two");
+	list.push_back("three");
+	list.push_back("four");
+
+	return list;
+    }
 };
 
 
@@ -393,6 +404,9 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Return(false));
 
+    EXPECT_CALL(mockfs, ListPlugins(_)).
+	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
+
     ps.updatePlugins();
 
     Mock::VerifyAndClearExpectations(&mockfs);
@@ -451,6 +465,9 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Return(true));
 
+    EXPECT_CALL(mockfs, ListPlugins(_)).
+	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
+
     ps.updatePlugins();
 
     Mock::VerifyAndClearExpectations(&mockfs);
@@ -474,6 +491,9 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
 
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Invoke(&sapo, &StubActivePluginsOption::setActivePlugins));
+
+    EXPECT_CALL(mockfs, ListPlugins(_)).
+	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
     ps.updatePlugins();
 
@@ -536,6 +556,9 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Invoke(&sapo, &StubActivePluginsOption::setActivePlugins));
 
+    EXPECT_CALL(mockfs, ListPlugins(_)).
+	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
+
     ps.updatePlugins();
 
     Mock::VerifyAndClearExpectations(&mockfs);
@@ -561,6 +584,9 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
 	CompOption::Value v(plugins);
 	sapo.setActivePlugins("core", "active_plugins", v);
     }
+
+    EXPECT_CALL(mockfs, ListPlugins(_)).
+	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
     ps.updatePlugins();
 
@@ -596,6 +622,8 @@ TEST(privatescreen_EventManagerTest, init)
 
     MockCompScreen comp_screen;
     MockPluginFilesystem mockfs;
+    EXPECT_CALL(mockfs, ListPlugins(_)).
+	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
     CompOption::Value::Vector values;
     values.push_back ("core");

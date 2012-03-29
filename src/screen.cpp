@@ -896,6 +896,8 @@ PrivateScreen::processEvents ()
 CompOption::Value::Vector
 cps::PluginManager::mergedPluginList ()
 {
+    std::list<CompString> availablePlugins(CompPlugin::availablePlugins ());
+
     CompOption::Value::Vector result;
 
     CompOption::Value::Vector const& extraPluginsRequested = optionGetActivePlugins();
@@ -908,7 +910,9 @@ cps::PluginManager::mergedPluginList ()
     {
 	if (p == "core")
 	    continue;
-	result.push_back(p);
+
+	if (availablePlugins.end() != std::find(availablePlugins.begin(), availablePlugins.end(), p))
+	    result.push_back(p);
     }
 
     /* Add plugins not in the initial list */
@@ -932,7 +936,8 @@ cps::PluginManager::mergedPluginList ()
 
 	if (!skip)
 	{
-	    result.push_back(opt.s());
+	    if (availablePlugins.end() != std::find(availablePlugins.begin(), availablePlugins.end(), opt.s()))
+		result.push_back(opt.s());
 	}
     }
     return result;
