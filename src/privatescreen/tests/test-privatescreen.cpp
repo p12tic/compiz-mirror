@@ -493,6 +493,7 @@ TEST(privatescreen_EventManagerTest, init)
 
     CompOption::Value::Vector values;
     values.push_back ("core");
+    initialPlugins = std::list <CompString>();
 
     EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
     EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
