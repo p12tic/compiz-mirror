@@ -911,6 +911,9 @@ cps::PluginManager::mergedPluginList ()
 	if (p == "core")
 	    continue;
 
+	if (blacklist.find (p) != blacklist.end ())
+	    continue;
+
 	if (availablePlugins.end() != std::find(availablePlugins.begin(), availablePlugins.end(), p))
 	    result.push_back(p);
     }
@@ -919,6 +922,9 @@ cps::PluginManager::mergedPluginList ()
     foreach(CompOption::Value const& opt, extraPluginsRequested)
     {
 	if (opt.s() == "core")
+	    continue;
+
+	if (blacklist.find (opt.s()) != blacklist.end ())
 	    continue;
 
 	typedef std::list<CompString>::iterator iterator;
@@ -1016,6 +1022,7 @@ cps::PluginManager::updatePluginsWithUnloads(
 		    alreadyLoaded.erase(
 			    std::find(alreadyLoaded.begin(),
 				    alreadyLoaded.end(), pp));
+		    blacklist.insert (desiredPlugins[desireIndex].s ());
 		    CompPlugin::unload(pp);
 		    p = NULL;
 		    failedPush = true;
@@ -1027,15 +1034,20 @@ cps::PluginManager::updatePluginsWithUnloads(
 	// ...otherwise, try to load and push
 	if (p == 0 && !failedPush)
 	{
-	    p = CompPlugin::load(desiredPlugins[desireIndex].s().c_str());
+	    p = CompPlugin::load(desiredPlugins[desireIndex].s ().c_str ());
 
 	    if (p)
 	    {
 		if (!CompPlugin::push(p))
 		{
+		    blacklist.insert (desiredPlugins[desireIndex].s ());
 		    CompPlugin::unload(p);
 		    p = 0;
 		}
+	    }
+	    else
+	    {
+		blacklist.insert (desiredPlugins[desireIndex].s ());
 	    }
 	}
 
@@ -1071,8 +1083,13 @@ cps::PluginManager::updatePluginsWithoutUnloading(
 		}
 		else
 		{
+		    blacklist.insert (desireName);
 		    CompPlugin::unload (p);
 		}
+	    }
+	    else
+	    {
+		blacklist.insert (desireName);
 	    }
 	}
 	else if (pluginList.at (pluginIndex).s () != desireName)

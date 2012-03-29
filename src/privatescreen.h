@@ -45,6 +45,8 @@
 
 #include "core_options.h"
 
+#include <set>
+
 /**
  * A wrapping of the X display screen. This takes care of communication to the
  * X server.
@@ -574,6 +576,9 @@ class PluginManager :
     private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
+	typedef std::set<CompString> CompStringSet;
+	CompStringSet blacklist;
+
 	void updatePluginsWithUnloads(unsigned int& pluginIndex,
 		const CompOption::Value::Vector& desiredPlugins);
 	void updatePluginsWithoutUnloading(unsigned int pluginIndex,

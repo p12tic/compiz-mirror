@@ -476,19 +476,6 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableThree);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableFour);
 
-    // a second call to updatePlugins notice that "three" isn't active
-    // hence it pops & finalizes "four" before trying to load "three"
-    // after which it pushes & (re)initializes "four".
-    //
-    // That is all sensible - to allow for dependencies, and works in
-    // the code under test.
-    //
-    // However, a few plugins break when this happens.
-    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
-	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
-    EXPECT_CALL(mockfs.mockVtableThree, init()).WillOnce(Return(false));
-    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);  // Once for "three" which doesn't load
-
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	    WillOnce(Invoke(&sapo, &StubActivePluginsOption::setActivePlugins));
 
