@@ -4728,9 +4728,6 @@ cps::EventManager::init (const char *name)
 
     optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
 
-    if (isDirtyPluginList ())
-	updatePlugins ();
-
     return true;
 }
 

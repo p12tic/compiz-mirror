@@ -608,9 +608,6 @@ TEST(privatescreen_EventManagerTest, init)
     using namespace testing;
 
     MockCompScreen comp_screen;
-    MockPluginFilesystem mockfs;
-    EXPECT_CALL(mockfs, ListPlugins(_)).
-	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
     CompOption::Value::Vector values;
     values.push_back ("core");
@@ -626,8 +623,6 @@ TEST(privatescreen_EventManagerTest, init)
 
     cps::EventManager em(&comp_screen);
 
-    EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
-	    WillOnce(Return(false));
     em.setPlugins (values);
     em.init(0);
 }
