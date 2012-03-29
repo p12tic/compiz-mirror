@@ -1049,75 +1049,53 @@ cps::PluginManager::updatePluginsWithoutUnloading(
 {
     unsigned int desireIndex = pluginIndex;
 
-    CompPlugin::List& pluginList = CompPlugin::getPlugins();
+    CompOption::Value::Vector& pluginList = plugin.list();
+
     while (desireIndex != desiredPlugins.size())
     {
-	std::string name(desiredPlugins[desireIndex].s());
-	if (pluginIndex >= plugin.list().size())
+	const std::string& desireName(desiredPlugins[desireIndex].s());
+
+	if (pluginIndex >= pluginList.size ())
 	{
-	    if (CompPlugin* p = CompPlugin::load(
-		    desiredPlugins[desireIndex].s().c_str()))
+	    if (CompPlugin* p = CompPlugin::load (desireName.c_str ()))
 	    {
-		if (CompPlugin::push(p))
+		if (CompPlugin::push (p))
 		{
-		    plugin.list().push_back(desiredPlugins[desireIndex].s());
+		    pluginList.push_back (desireName);
 		    ++pluginIndex;
 		}
 		else
 		{
-		    CompPlugin::unload(p);
+		    CompPlugin::unload (p);
 		}
 	    }
-
 	}
-	else if (plugin.list().at(pluginIndex).s()
-		!= desiredPlugins.at(desireIndex).s())
+	else if (pluginList.at (pluginIndex).s () != desireName)
 	{
 	    // Just needs moving in list?
-	    if (CompPlugin* req = CompPlugin::find(
-		    desiredPlugins[desireIndex].s().c_str()))
+	    if (CompPlugin* p = CompPlugin::find (desireName.c_str ()))
 	    {
-		CompPlugin* cur = CompPlugin::find(
-			plugin.list().at(pluginIndex).s().c_str());
-		CompPlugin::List::iterator r = std::find(pluginList.begin(),
-			pluginList.end(), req);
-		CompPlugin::List::iterator c = std::find(pluginList.begin(),
-			pluginList.end(), cur);
-		pluginList.splice(c, pluginList, r, ++r);
-		plugin.list().erase(
-			std::find(plugin.list().begin(), plugin.list().end(),
-				desiredPlugins[desireIndex].s()));
-		plugin.list().insert(plugin.list().begin() + pluginIndex,
-			desiredPlugins[desireIndex].s());
+		CompPlugin::putBefore (p, pluginList.at (pluginIndex).s ());
+
+		pluginList.erase(
+		    std::find(pluginList.begin (), pluginList.end (), desireName));
+		pluginList.insert (pluginList.begin () + pluginIndex, desireName);
 		++pluginIndex;
 	    }
-	    else
+	    else if (CompPlugin* p = CompPlugin::load(desireName.c_str()))
 	    {
-		if (CompPlugin* p = CompPlugin::load(
-			desiredPlugins[desireIndex].s().c_str()))
+		if (CompPlugin::push (p))
 		{
-		    if (CompPlugin::push(p))
-		    {
-			CompPlugin* cur = CompPlugin::find(
-				plugin.list().at(pluginIndex).s().c_str());
-			CompPlugin::List::iterator r = std::find(
-				pluginList.begin(), pluginList.end(), p);
-			CompPlugin::List::iterator c = std::find(
-				pluginList.begin(), pluginList.end(), cur);
-			pluginList.splice(c, pluginList, r, ++r);
-			plugin.list().insert(
-				plugin.list().begin() + pluginIndex,
-				desiredPlugins[desireIndex].s());
-			++pluginIndex;
-		    }
-		    else
-		    {
-			CompPlugin::unload(p);
-		    }
+		    CompPlugin::putBefore (p, pluginList.at (pluginIndex).s ());
+
+		    pluginList.insert (pluginList.begin () + pluginIndex, desireName);
+		    ++pluginIndex;
 		}
-
+		else
+		{
+		    CompPlugin::unload (p);
+		}
 	    }
-
 	}
 	else
 	{
@@ -1126,7 +1104,6 @@ cps::PluginManager::updatePluginsWithoutUnloading(
 
 	++desireIndex;
     }
-
 }
 
 void

@@ -208,6 +208,8 @@ class CompPlugin {
 	 */
 	static List & getPlugins ();
 	
+	static void putBefore(CompPlugin* p, CompString const& q);
+
 	/**
 	 * Gets a list of the names of all the known plugins, including plugins that may
 	 * have already been loaded.
