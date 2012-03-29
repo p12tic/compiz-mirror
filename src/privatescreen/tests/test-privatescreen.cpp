@@ -221,18 +221,6 @@ protected:
 class MockPluginFilesystem : public PluginFilesystem
 {
 public:
-    MockVTable mockVtableOne;
-    MockVTable mockVtableTwo;
-    MockVTable mockVtableThree;
-    MockVTable mockVtableFour;
-
-    MockPluginFilesystem() :
-	mockVtableOne("one"),
-    	mockVtableTwo("two"),
-    	mockVtableThree("three"),
-    	mockVtableFour("four")
-    {}
-
     MOCK_CONST_METHOD3(LoadPlugin, bool (CompPlugin *, const char *, const char *));
 
     MOCK_CONST_METHOD1(UnloadPlugin, void (CompPlugin *p));
@@ -244,19 +232,25 @@ public:
 	using namespace testing;
 	if (strcmp(name, "one") == 0)
 	{
-	    p->vTable = &mockVtableOne;
+	    static MockVTable mockVtable("one");
+	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));
+	    EXPECT_CALL(mockVtable, finiScreen(Ne((void*)0))).Times(1);
+	    EXPECT_CALL(mockVtable, fini()).Times(1);
+	    p->vTable = &mockVtable;
 	}
 	else if (strcmp(name, "two") == 0)
 	{
-	    p->vTable = &mockVtableTwo;
-	}
-	else if (strcmp(name, "three") == 0)
-	{
-	    p->vTable = &mockVtableThree;
+	    static MockVTable mockVtable("two");
+	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(true));
+	    EXPECT_CALL(mockVtable, finiScreen(Ne((void*)0))).Times(1);
+	    EXPECT_CALL(mockVtable, fini()).Times(1);
+	    p->vTable = &mockVtable;
 	}
 	else
 	{
-	    p->vTable = &mockVtableFour;
+	    static MockVTable mockVtable("three");
+	    EXPECT_CALL(mockVtable, init()).WillOnce(Return(false));
+	    p->vTable = &mockVtable;
 	}
 	return true;
     }
@@ -345,25 +339,18 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
     ps.setPlugins (values);
     ps.setDirtyPluginList ();
 
-    std::list <CompString> plugins;
-    plugins.push_back ("one");
-    plugins.push_back ("two");
-    plugins.push_back ("three");
-    initialPlugins = plugins;
+    initialPlugins.push_back ("one");
+    initialPlugins.push_back ("two");
+    initialPlugins.push_back ("three");
 
     MockPluginFilesystem mockfs;
 
     EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("one"))).
 	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
-    EXPECT_CALL(mockfs.mockVtableOne, init()).WillOnce(Return(true));
-
     EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("two"))).
 	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
-    EXPECT_CALL(mockfs.mockVtableTwo, init()).WillOnce(Return(true));
-
     EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
 	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
-    EXPECT_CALL(mockfs.mockVtableThree, init()).WillOnce(Return(false));
 
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);  // Once for "three" which doesn't load
 
@@ -372,106 +359,9 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
 
     ps.updatePlugins();
 
-    Mock::VerifyAndClearExpectations(&mockfs);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableTwo);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableThree);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableFour);
-
     // TODO Some cleanup that probably ought to be automatic.
     EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(2);
     EXPECT_CALL(comp_screen, _finiPluginForScreen(Ne((void*)0))).Times(2);
-    EXPECT_CALL(mockfs.mockVtableOne, finiScreen(Ne((void*)0))).Times(1);
-    EXPECT_CALL(mockfs.mockVtableOne, fini()).Times(1);
-    EXPECT_CALL(mockfs.mockVtableTwo, finiScreen(Ne((void*)0))).Times(1);
-    EXPECT_CALL(mockfs.mockVtableTwo, fini()).Times(1);
-
-    for (CompPlugin* p; (p = CompPlugin::pop ()) != 0; CompPlugin::unload (p));
-}
-
-TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_middle_of_list)
-{
-    using namespace testing;
-
-    MockCompScreen comp_screen;
-
-    cps::PluginManager ps(&comp_screen);
-
-    CompOption::Value::Vector values;
-    values.push_back ("core");
-    ps.setPlugins (values);
-    ps.setDirtyPluginList ();
-
-    std::list <CompString> plugins;
-    plugins.push_back ("one");
-    plugins.push_back ("three");
-    plugins.push_back ("four");
-    initialPlugins = plugins;
-
-    MockPluginFilesystem mockfs;
-
-    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("one"))).
-	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
-    EXPECT_CALL(mockfs.mockVtableOne, init()).WillOnce(Return(true));
-
-    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
-	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
-    EXPECT_CALL(mockfs.mockVtableThree, init()).WillOnce(Return(false));
-
-    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("four"))).
-	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
-    EXPECT_CALL(mockfs.mockVtableFour, init()).Times(1).WillRepeatedly(Return(true));
-
-    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);  // Once for "three" which doesn't load
-
-    EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
-	    WillOnce(Return(true));
-
-    ps.updatePlugins();
-
-    Mock::VerifyAndClearExpectations(&mockfs);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableTwo);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableThree);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableFour);
-
-    // a second call to updatePlugins notice that "three" isn't active
-    // hence it pops & finalizes "four" before trying to load "three"
-    // after which it pushes & (re)initializes "four".
-    //
-    // That is all sensible - to allow for dependencies, and works in
-    // the code under test.
-    //
-    // However, a few plugins break when this happens.
-    EXPECT_CALL(mockfs.mockVtableFour, finiScreen(Ne((void*)0))).Times(1);
-    EXPECT_CALL(mockfs.mockVtableFour, fini()).Times(1);
-    EXPECT_CALL(comp_screen, _finiPluginForScreen(Ne((void*)0))).Times(1);
-
-    EXPECT_CALL(mockfs, LoadPlugin(Ne((void*)0), EndsWith(HOME_PLUGINDIR), StrEq("three"))).
-	WillOnce(Invoke(&mockfs, &MockPluginFilesystem::DummyLoader));
-    EXPECT_CALL(mockfs.mockVtableThree, init()).WillOnce(Return(false));
-    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(1);  // Once for "three" which doesn't load
-
-    EXPECT_CALL(mockfs.mockVtableFour, init()).Times(1).WillRepeatedly(Return(true));
-
-    EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
-	    WillOnce(Return(false));
-
-    ps.updatePlugins();
-
-    Mock::VerifyAndClearExpectations(&mockfs);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableTwo);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableThree);
-    Mock::VerifyAndClearExpectations(&mockfs.mockVtableFour);
-
-    // TODO Some cleanup that probably ought to be automatic.
-    EXPECT_CALL(mockfs, UnloadPlugin(_)).Times(2);
-    EXPECT_CALL(comp_screen, _finiPluginForScreen(Ne((void*)0))).Times(2);
-    EXPECT_CALL(mockfs.mockVtableOne, finiScreen(Ne((void*)0))).Times(1);
-    EXPECT_CALL(mockfs.mockVtableOne, fini()).Times(1);
-    EXPECT_CALL(mockfs.mockVtableFour, finiScreen(Ne((void*)0))).Times(1);
-    EXPECT_CALL(mockfs.mockVtableFour, fini()).Times(1);
     for (CompPlugin* p; (p = CompPlugin::pop ()) != 0; CompPlugin::unload (p));
 }
 
@@ -490,9 +380,6 @@ TEST(privatescreen_EventManagerTest, init)
 
     MockCompScreen comp_screen;
 
-    CompOption::Value::Vector values;
-    values.push_back ("core");
-
     EXPECT_CALL(comp_screen, addAction(_)).WillRepeatedly(Return(false));
     EXPECT_CALL(comp_screen, removeAction(_)).WillRepeatedly(Return());
     EXPECT_CALL(comp_screen, _matchInitExp(StrEq("any"))).WillRepeatedly(Return((CompMatch::Expression*)0));
@@ -501,10 +388,10 @@ TEST(privatescreen_EventManagerTest, init)
     // We should kill this dependency
     EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return((Display*)(0)));
 
-    cps::EventManager em(&comp_screen);
+    // TODO - we can't yet detach the EventManager from ::screen->priv
+    // vis: replace next two lines with cps::EventManager em(&comp_screen);
+    comp_screen.priv.reset(new PrivateScreen(&comp_screen));
+    cps::EventManager& em(*comp_screen.priv.get());
 
-    EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
-	    WillOnce(Return(false));
-    em.setPlugins (values);
     em.init(0);
 }
