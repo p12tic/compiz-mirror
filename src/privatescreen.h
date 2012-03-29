@@ -574,6 +574,14 @@ class PluginManager :
     private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
+	void updatePluginsWithUnloads(unsigned int& pluginIndex,
+		unsigned int& desireIndex,
+		const CompOption::Value::Vector& desiredPlugins);
+	void updatePluginsWithoutUnloading(unsigned int pluginIndex,
+		unsigned int desireIndex,
+		const CompOption::Value::Vector desiredPlugins);
+	bool anyPluginsToUnload(CompOption::Value::Vector const& desiredPlugins);
+	CompOption::Value::Vector mergedPluginList();
 };
 
 class GrabList

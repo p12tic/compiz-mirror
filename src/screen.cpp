@@ -893,37 +893,35 @@ PrivateScreen::processEvents ()
     }
 }
 
-void
-cps::PluginManager::updatePlugins ()
+CompOption::Value::Vector
+cps::PluginManager::mergedPluginList ()
 {
-    possibleTap = NULL;
-    dirtyPluginList = false;
+    CompOption::Value::Vector result;
 
-    CompOption::Value::Vector &extraPluginsRequested = optionGetActivePlugins ();
-
-    CompOption::Value::Vector allPluginsRequested;
+    CompOption::Value::Vector const& extraPluginsRequested = optionGetActivePlugins();
 
     /* Must have core as first plugin */
-    allPluginsRequested.push_back("core");
+    result.push_back("core");
 
     /* Add initial plugins */
-    foreach (CompString &p, initialPlugins)
+    foreach(CompString & p, initialPlugins)
     {
 	if (p == "core")
 	    continue;
-	allPluginsRequested.push_back(p);
+	result.push_back(p);
     }
 
     /* Add plugins not in the initial list */
-    foreach (CompOption::Value &opt, extraPluginsRequested)
+    foreach(CompOption::Value const& opt, extraPluginsRequested)
     {
-	if (opt.s () == "core")
-	   continue;
+	if (opt.s() == "core")
+	    continue;
 
-	typedef std::list <CompString>::iterator iterator;
-	bool				 skip = false;
+	typedef std::list<CompString>::iterator iterator;
+	bool skip = false;
 
-	for (iterator it = initialPlugins.begin (); it != initialPlugins.end (); it++)
+	for (iterator it = initialPlugins.begin(); it != initialPlugins.end();
+		it++)
 	{
 	    if ((*it) == opt.s())
 	    {
@@ -934,21 +932,24 @@ cps::PluginManager::updatePlugins ()
 
 	if (!skip)
 	{
-	    allPluginsRequested.push_back(opt.s ());
+	    result.push_back(opt.s());
 	}
     }
+    return result;
+}
 
+bool
+cps::PluginManager::anyPluginsToUnload(
+    CompOption::Value::Vector const& desiredPlugins)
+{
     // Can we avoid unnecessary finalize/init sequences?
     bool anythingToUnload = false;
-    for (CompOption::Value::Vector::const_iterator i = plugin.list ().begin();
-	i != plugin.list ().end();
-	++i)
+    for (CompOption::Value::Vector::const_iterator i = plugin.list().begin();
+	    i != plugin.list().end(); ++i)
     {
 	bool found = false;
-
-	for (CompOption::Value::Vector::const_iterator j = allPluginsRequested.begin();
-		j != allPluginsRequested.end();
-		++j)
+	for (CompOption::Value::Vector::const_iterator j =
+		desiredPlugins.begin(); j != desiredPlugins.end(); ++j)
 	{
 	    if (i->s() == j->s())
 	    {
@@ -964,147 +965,193 @@ cps::PluginManager::updatePlugins ()
 	}
     }
 
-    unsigned int pluginIndex = 1;
-    unsigned int requestIndex;
-    for (requestIndex = pluginIndex = 1;
-	pluginIndex < plugin.list ().size () && requestIndex < allPluginsRequested.size ();
-	requestIndex++, pluginIndex++)
+    return anythingToUnload;
+}
+
+void
+cps::PluginManager::updatePluginsWithUnloads(
+    unsigned int& pluginIndex,
+    unsigned int& desireIndex,
+    const CompOption::Value::Vector& desiredPlugins)
+{
+    // We have pluginIndex pointing at first difference (or end).
+    // Now pop plugins off stack to this point, but keep track that they are loaded
+    CompPlugin::List alreadyLoaded;
+    if (const unsigned int nPop = plugin.list().size() - pluginIndex)
     {
-	if (plugin.list ().at (pluginIndex).s () != allPluginsRequested.at (requestIndex).s ())
-	    break;
+	for (pluginIndex = 0; pluginIndex < nPop; pluginIndex++)
+	{
+	    alreadyLoaded.push_back(CompPlugin::pop());
+	    plugin.list().pop_back();
+	}
     }
 
-    if (anythingToUnload)  // Have to do it the hard way
+    // Now work forward through requested plugins
+    for (; desireIndex < desiredPlugins.size(); desireIndex++)
     {
-	// We have pluginIndex pointing at first difference (or end).
-	// Now pop plugins off stack to this point, but keep track that they are loaded
-	CompPlugin::List alreadyLoaded;
-	if (unsigned int const nPop = plugin.list ().size () - pluginIndex)
+	CompPlugin *p = NULL;
+	bool failedPush = false;
+
+	// If already loaded, just try to push it...
+	foreach(CompPlugin * pp, alreadyLoaded)
 	{
-	    for (pluginIndex = 0; pluginIndex < nPop; pluginIndex++)
+	    if (desiredPlugins[desireIndex].s() == pp->vTable->name())
 	    {
-		alreadyLoaded.push_back (CompPlugin::pop ());
-		plugin.list ().pop_back ();
+		if (CompPlugin::push (pp))
+		{
+		    p = pp;
+		    alreadyLoaded.erase(
+			    std::find(alreadyLoaded.begin(),
+				    alreadyLoaded.end(), pp));
+		    break;
+		}
+		else
+		{
+		    alreadyLoaded.erase(
+			    std::find(alreadyLoaded.begin(),
+				    alreadyLoaded.end(), pp));
+		    CompPlugin::unload(pp);
+		    p = NULL;
+		    failedPush = true;
+		    break;
+		}
 	    }
 	}
 
-	// Now work forward through requested plugins
-	for (; requestIndex < allPluginsRequested.size (); requestIndex++)
+	// ...otherwise, try to load and push
+	if (p == 0 && !failedPush)
 	{
-	    CompPlugin *p = NULL;
-	    bool failedPush = false;
-
-	    // If already loaded, just try to push it...
-	    foreach (CompPlugin *pp, alreadyLoaded)
-	    {
-		if (allPluginsRequested[requestIndex]. s () == pp->vTable->name ())
-		{
-		    if (CompPlugin::push (pp))
-		    {
-			p = pp;
-			alreadyLoaded.erase (std::find (alreadyLoaded.begin (), alreadyLoaded.end (), pp));
-			break;
-		    }
-		    else
-		    {
-			alreadyLoaded.erase (std::find (alreadyLoaded.begin (), alreadyLoaded.end (), pp));
-			CompPlugin::unload (pp);
-			p = NULL;
-			failedPush = true;
-			break;
-		    }
-		}
-	    }
-
-	    // ...otherwise, try to load and push
-	    if (p == 0 && !failedPush)
-	    {
-		p = CompPlugin::load (allPluginsRequested[requestIndex].s ().c_str ());
-
-		if (p)
-		{
-		    if (!CompPlugin::push (p))
-		    {
-			CompPlugin::unload (p);
-			p = 0;
-		    }
-		}
-	    }
+	    p = CompPlugin::load(desiredPlugins[desireIndex].s().c_str());
 
 	    if (p)
-		plugin.list ().push_back (p->vTable->name ());
-	}
-
-	// Any plugins that are loaded, but were not re-initialized can be unloaded.
-	foreach (CompPlugin *pp, alreadyLoaded)
-	    CompPlugin::unload (pp);
-    }
-    else
-    {
-	CompPlugin::List& pluginList = CompPlugin::getPlugins ();
-
-	while (requestIndex != allPluginsRequested.size ())
-	{
-	    std::string name(allPluginsRequested[requestIndex].s ());
-
-	    if (pluginIndex >= plugin.list().size())
 	    {
-		if (CompPlugin* p = CompPlugin::load (allPluginsRequested[requestIndex].s ().c_str ()))
+		if (!CompPlugin::push(p))
 		{
-		    if (CompPlugin::push (p))
-		    {
-			plugin.list().push_back (allPluginsRequested[requestIndex].s());
-			++pluginIndex;
-		    }
-		    else
-		    {
-			CompPlugin::unload (p);
-		    }
+		    CompPlugin::unload(p);
+		    p = 0;
 		}
 	    }
-	    else if (plugin.list ().at (pluginIndex).s () != allPluginsRequested.at (requestIndex).s ())
+	}
+
+	if (p)
+	    plugin.list().push_back(p->vTable->name());
+    }
+    // Any plugins that are loaded, but were not re-initialized can be unloaded.
+    foreach(CompPlugin * pp, alreadyLoaded)
+    CompPlugin::unload (pp);
+}
+
+void
+cps::PluginManager::updatePluginsWithoutUnloading(
+	unsigned int pluginIndex,
+	unsigned int desireIndex,
+	const CompOption::Value::Vector desiredPlugins)
+{
+    CompPlugin::List& pluginList = CompPlugin::getPlugins();
+    while (desireIndex != desiredPlugins.size())
+    {
+	std::string name(desiredPlugins[desireIndex].s());
+	if (pluginIndex >= plugin.list().size())
+	{
+	    if (CompPlugin* p = CompPlugin::load(
+		    desiredPlugins[desireIndex].s().c_str()))
 	    {
-		// Just needs moving in list?
-		if (CompPlugin* req = CompPlugin::find(allPluginsRequested[requestIndex].s().c_str()))
+		if (CompPlugin::push(p))
 		{
-		    CompPlugin* cur = CompPlugin::find(plugin.list ().at (pluginIndex).s ().c_str());
-
-		    CompPlugin::List::iterator r = std::find(pluginList.begin(), pluginList.end(), req);
-		    CompPlugin::List::iterator c = std::find(pluginList.begin(), pluginList.end(), cur);
-
-		    pluginList.splice(c, pluginList, r, ++r);
-		    plugin.list ().erase (std::find(plugin.list ().begin(), plugin.list ().end(), allPluginsRequested[requestIndex].s()));
-		    plugin.list ().insert (plugin.list ().begin()+pluginIndex, allPluginsRequested[requestIndex].s());
+		    plugin.list().push_back(desiredPlugins[desireIndex].s());
 		    ++pluginIndex;
 		}
 		else
 		{
-		    if (CompPlugin* p = CompPlugin::load (allPluginsRequested[requestIndex].s ().c_str ()))
-		    {
-			if (CompPlugin::push (p))
-			{
-			    CompPlugin* cur = CompPlugin::find(plugin.list ().at (pluginIndex).s ().c_str());
-			    CompPlugin::List::iterator r = std::find(pluginList.begin(), pluginList.end(), p);
-			    CompPlugin::List::iterator c = std::find(pluginList.begin(), pluginList.end(), cur);
-
-			    pluginList.splice(c, pluginList, r, ++r);
-			    plugin.list ().insert (plugin.list ().begin()+pluginIndex, allPluginsRequested[requestIndex].s());
-			    ++pluginIndex;
-			}
-			else
-			{
-			    CompPlugin::unload (p);
-			}
-		    }
+		    CompPlugin::unload(p);
 		}
+	    }
+
+	}
+	else if (plugin.list().at(pluginIndex).s()
+		!= desiredPlugins.at(desireIndex).s())
+	{
+	    // Just needs moving in list?
+	    if (CompPlugin* req = CompPlugin::find(
+		    desiredPlugins[desireIndex].s().c_str()))
+	    {
+		CompPlugin* cur = CompPlugin::find(
+			plugin.list().at(pluginIndex).s().c_str());
+		CompPlugin::List::iterator r = std::find(pluginList.begin(),
+			pluginList.end(), req);
+		CompPlugin::List::iterator c = std::find(pluginList.begin(),
+			pluginList.end(), cur);
+		pluginList.splice(c, pluginList, r, ++r);
+		plugin.list().erase(
+			std::find(plugin.list().begin(), plugin.list().end(),
+				desiredPlugins[desireIndex].s()));
+		plugin.list().insert(plugin.list().begin() + pluginIndex,
+			desiredPlugins[desireIndex].s());
+		++pluginIndex;
 	    }
 	    else
 	    {
-		++pluginIndex;
+		if (CompPlugin* p = CompPlugin::load(
+			desiredPlugins[desireIndex].s().c_str()))
+		{
+		    if (CompPlugin::push(p))
+		    {
+			CompPlugin* cur = CompPlugin::find(
+				plugin.list().at(pluginIndex).s().c_str());
+			CompPlugin::List::iterator r = std::find(
+				pluginList.begin(), pluginList.end(), p);
+			CompPlugin::List::iterator c = std::find(
+				pluginList.begin(), pluginList.end(), cur);
+			pluginList.splice(c, pluginList, r, ++r);
+			plugin.list().insert(
+				plugin.list().begin() + pluginIndex,
+				desiredPlugins[desireIndex].s());
+			++pluginIndex;
+		    }
+		    else
+		    {
+			CompPlugin::unload(p);
+		    }
+		}
+
 	    }
 
-	    ++requestIndex;
 	}
+	else
+	{
+	    ++pluginIndex;
+	}
+
+	++desireIndex;
+    }
+
+}
+
+void
+cps::PluginManager::updatePlugins ()
+{
+    possibleTap = NULL;
+    dirtyPluginList = false;
+
+    CompOption::Value::Vector const desiredPlugins(mergedPluginList());
+
+    unsigned int pluginIndex = 1;
+    unsigned int desireIndex;
+    for (desireIndex = pluginIndex = 1;
+	pluginIndex < plugin.list ().size () && desireIndex < desiredPlugins.size ();
+	desireIndex++, pluginIndex++)
+    {
+	if (plugin.list ().at (pluginIndex).s () != desiredPlugins.at (desireIndex).s ())
+	    break;
+    }
+
+    if (anyPluginsToUnload(desiredPlugins))  // Do it the hard old way
+    {
+	updatePluginsWithUnloads(pluginIndex, desireIndex, desiredPlugins);
+    }
+    else
+    {
+	updatePluginsWithoutUnloading(pluginIndex, desireIndex, desiredPlugins);
     }
 
     if (!dirtyPluginList)
