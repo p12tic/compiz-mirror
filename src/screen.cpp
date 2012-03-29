@@ -971,9 +971,10 @@ cps::PluginManager::anyPluginsToUnload(
 void
 cps::PluginManager::updatePluginsWithUnloads(
     unsigned int& pluginIndex,
-    unsigned int& desireIndex,
     const CompOption::Value::Vector& desiredPlugins)
 {
+    unsigned int desireIndex = pluginIndex;
+
     // We have pluginIndex pointing at first difference (or end).
     // Now pop plugins off stack to this point, but keep track that they are loaded
     CompPlugin::List alreadyLoaded;
@@ -1044,9 +1045,10 @@ cps::PluginManager::updatePluginsWithUnloads(
 void
 cps::PluginManager::updatePluginsWithoutUnloading(
 	unsigned int pluginIndex,
-	unsigned int desireIndex,
 	const CompOption::Value::Vector desiredPlugins)
 {
+    unsigned int desireIndex = pluginIndex;
+
     CompPlugin::List& pluginList = CompPlugin::getPlugins();
     while (desireIndex != desiredPlugins.size())
     {
@@ -1135,23 +1137,22 @@ cps::PluginManager::updatePlugins ()
 
     CompOption::Value::Vector const desiredPlugins(mergedPluginList());
 
-    unsigned int pluginIndex = 1;
-    unsigned int desireIndex;
-    for (desireIndex = pluginIndex = 1;
-	pluginIndex < plugin.list ().size () && desireIndex < desiredPlugins.size ();
-	desireIndex++, pluginIndex++)
+    unsigned int firstDiffIndex;
+    for (firstDiffIndex = 1;
+	firstDiffIndex < plugin.list ().size () && firstDiffIndex < desiredPlugins.size ();
+	firstDiffIndex++)
     {
-	if (plugin.list ().at (pluginIndex).s () != desiredPlugins.at (desireIndex).s ())
+	if (plugin.list ().at (firstDiffIndex).s () != desiredPlugins.at (firstDiffIndex).s ())
 	    break;
     }
 
     if (anyPluginsToUnload(desiredPlugins))  // Do it the hard old way
     {
-	updatePluginsWithUnloads(pluginIndex, desireIndex, desiredPlugins);
+	updatePluginsWithUnloads(firstDiffIndex, desiredPlugins);
     }
     else
     {
-	updatePluginsWithoutUnloading(pluginIndex, desireIndex, desiredPlugins);
+	updatePluginsWithoutUnloading(firstDiffIndex, desiredPlugins);
     }
 
     if (!dirtyPluginList)
