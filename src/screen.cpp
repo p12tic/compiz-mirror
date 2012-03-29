@@ -899,8 +899,6 @@ cps::PluginManager::updatePlugins ()
     possibleTap = NULL;
     dirtyPluginList = false;
 
-    // TODO the code below breaks if activePluginsBefore doesn't have the
-    // TODO same content as this->plugin.list().  So one is redundant.
     CompOption::Value::Vector &activePluginsBefore = optionGetActivePlugins ();
 
     CompOption::Value::Vector activePluginsRequested;
@@ -942,11 +940,24 @@ cps::PluginManager::updatePlugins ()
 
     // Can we avoid unnecessary finalize/init sequences?
     bool anythingToUnload = false;
-    for (CompOption::Value::Vector::const_iterator i = activePluginsBefore.begin();
-	i != activePluginsBefore.end();
+    for (CompOption::Value::Vector::const_iterator i = plugin.list ().begin();
+	i != plugin.list ().end();
 	++i)
     {
-	if (std::find(activePluginsRequested.begin(), activePluginsRequested.end(), *i) == activePluginsRequested.end())
+	bool found = false;
+
+	for (CompOption::Value::Vector::const_iterator j = activePluginsRequested.begin();
+		j != activePluginsRequested.end();
+		++j)
+	{
+	    if (i->s() == j->s())
+	    {
+		found = true;
+		break;
+	    }
+	}
+
+	if (!found)
 	{
 	    anythingToUnload = true;
 	    break;
