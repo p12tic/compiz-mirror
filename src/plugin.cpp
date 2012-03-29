@@ -534,18 +534,6 @@ CompPlugin::getPlugins (void)
     return plugins;
 }
 
-void
-CompPlugin::putBefore(CompPlugin* p, CompString const& qn)
-{
-    typedef CompPlugin::List::iterator cpl_iter;
-
-    CompPlugin* q = CompPlugin::find(qn.c_str());
-    cpl_iter r = std::find(plugins.begin(), plugins.end(), p);
-    cpl_iter c = std::find(plugins.begin(), plugins.end(), q);
-    plugins.splice(c, plugins, r, ++cpl_iter(r));
-}
-
-
 CompStringList
 CompPlugin::availablePlugins ()
 {
