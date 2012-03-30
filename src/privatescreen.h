@@ -44,6 +44,7 @@
 #include "privatesignalsource.h"
 
 #include "core_options.h"
+#include <set>
 
 namespace compiz { namespace private_screen
 {
@@ -610,6 +611,10 @@ class PluginManager :
     private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
+	typedef std::set<CompString> CompStringSet;
+	CompStringSet blacklist;
+
+	CompOption::Value::Vector mergedPluginList();
 };
 
 class GrabList
