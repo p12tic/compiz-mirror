@@ -485,16 +485,14 @@ PrivateScaleScreen::getSlotAreas ()
     foreach (CompOutput &o, screen->outputDevs ())
     {
 	slotAreas[i].nWindows = 0;
-        for (auto window : windows)
-        {
-          CompWindow* cw = window->priv->window;
-          if (cw->outputDevice() == o.id())
-            slotAreas[i].nWindows++;
-        }
+	for (auto window : windows)
+	{
+	    CompWindow *cw = window->priv->window;
+	    if (cw->outputDevice () == o.id ())
+		slotAreas[i].nWindows++;
+	}
 
-	slotAreas[i].workArea = o.workArea ();
-
-	i++;
+	slotAreas[i++].workArea = o.workArea ();
     }
 
     return slotAreas;
