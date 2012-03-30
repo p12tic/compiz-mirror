@@ -1606,6 +1606,7 @@ CompWindow::map ()
 {
     windowNotify (CompWindowNotifyBeforeMap);
 
+    /* Previously not viewable */
     if (!isViewable ())
     {
 	if (priv->pendingMaps > 0)
@@ -1626,7 +1627,7 @@ CompWindow::map ()
 	if (!overrideRedirect ())
 	    screen->priv->setWmState (NormalState, priv->id);
 
-	priv->invisible  = true;
+	priv->invisible  = priv->isInvisible ();
 	priv->alive      = true;
 
 	priv->lastPong = screen->priv->lastPing;
