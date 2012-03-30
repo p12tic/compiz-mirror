@@ -44,6 +44,7 @@
 #include "privatesignalsource.h"
 
 #include "core_options.h"
+
 #include <set>
 
 namespace compiz { namespace private_screen
@@ -56,7 +57,7 @@ public:
 
     void detectOutputDevices (
 	    std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
-    void updateOutputDevices (CompOption::Value::Vector& list, CompWindowList const& windows);
+    void updateOutputDevices (CompWindowList const& windows);
     void setCurrentOutput (unsigned int outputNum);
     CompOutput& getCurrentOutputDev () { return outputDevs[currentOutputDev]; }
     bool hasOverlappingOutputs () const { return overlappingOutputs; }

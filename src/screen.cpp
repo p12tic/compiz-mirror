@@ -733,7 +733,7 @@ PrivateScreen::setOption (const CompString  &name,
 	case CoreOptions::Outputs:
 	    if (optionGetDetectOutputs ())
 		return false;
-	    updateOutputDevices (optionGetOutputs (), windows);
+	    updateOutputDevices (windows);
 	    break;
 	default:
 	    break;
@@ -1932,8 +1932,9 @@ PrivateScreen::setVirtualScreenSize (int newh, int newv)
 }
 
 void
-cps::OutputDevices::updateOutputDevices (CompOption::Value::Vector& list, CompWindowList const& windows)
+cps::OutputDevices::updateOutputDevices (CompWindowList const& windows)
 {
+    CompOption::Value::Vector &list = optionGetOutputs ();
     unsigned int              nOutput = 0;
     int		              x, y, bits;
     unsigned int              uWidth, uHeight;
@@ -2058,7 +2059,7 @@ cps::OutputDevices::detectOutputDevices (
     }
     else
     {
-	updateOutputDevices (optionGetOutputs (), windows);
+	updateOutputDevices (windows);
     }
 }
 
@@ -2268,7 +2269,7 @@ PrivateScreen::configure (XConfigureEvent *ce)
 
 	detectOutputDevices (screenInfo, windows);
 
-	updateOutputDevices (optionGetOutputs (), windows);
+	updateOutputDevices (windows);
 }
 
 void
@@ -4934,7 +4935,7 @@ PrivateScreen::initDisplay (const char *name)
     initialized = true;
     initOptions ();
     detectOutputDevices (screenInfo, windows);
-    updateOutputDevices (optionGetOutputs (), windows);
+    updateOutputDevices (windows);
 
     getDesktopHints ();
 
