@@ -254,7 +254,7 @@ dlloaderListPlugins (const char *path)
 	path = ".";
 
     nFile = scandir (path, &nameList, dlloaderFilter, alphasort);
-    if (!nFile)
+    if (nFile <= 0)
 	return rv;
 
     for (i = 0; i < nFile; i++)
