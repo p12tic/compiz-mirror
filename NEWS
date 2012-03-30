@@ -3,6 +3,7 @@ Release 0.9.7.4 (2012-04-02 Daniel van Vugt <daniel.van.vugt@canonical.com>)
 
 Bugs fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.4)
 
+    968985 - Memory leak in dlloaderListPlugins
     833729 - compiz crashed with SIGSEGV in
              CompositeScreen::compositingActive()
     888704 - Window management - Closing one window sends others to the
