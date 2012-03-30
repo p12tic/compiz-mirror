@@ -261,7 +261,7 @@ dlloaderListPlugins (const char *path)
     {
 	length = strlen (nameList[i]->d_name);
 
-	rv.push_back (CompString (nameList[i]->d_name + 3, nameList[i]->d_name + length - 6));
+	rv.push_back (CompString (nameList[i]->d_name + 3, nameList[i]->d_name + length - 3));
 	free(nameList[i]);
     }
 
