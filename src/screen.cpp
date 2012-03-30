@@ -2688,6 +2688,7 @@ CompScreenImpl::focusDefaultWindow ()
 
     if (!focus)
     {
+	/* Traverse down the stack */
 	for (CompWindowList::reverse_iterator rit = priv->windows.rbegin ();
 	     rit != priv->windows.rend (); rit++)
 	{
@@ -2704,12 +2705,27 @@ CompScreenImpl::focusDefaultWindow ()
 				      CompWindowTypeDialogMask |
 				      CompWindowTypeModalDialogMask))
 		    {
-			if (PrivateWindow::compareWindowActiveness (focus, w) < 0)
+			if (!priv->optionGetClickToFocus ())
+			{
+			    /* We should favor the more active window in the mouse focus
+			     * case since the user does not care if the focused window is on top */
+			    if (PrivateWindow::compareWindowActiveness (focus, w) < 0)
+				focus = w;
+			}
+			else
+			{
 			    focus = w;
+			    break;
+			}
 		    }
 		}
 		else
+		{
 		    focus = w;
+
+		    if (priv->optionGetClickToFocus ())
+			break;
+		}
 	    }
 	}
     }
