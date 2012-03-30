@@ -485,7 +485,7 @@ PrivateScaleScreen::getSlotAreas ()
     foreach (CompOutput &o, screen->outputDevs ())
     {
 	slotAreas[i].nWindows = 0;
-	for (auto window : windows)
+	foreach (ScaleWindow *window, windows)
 	{
 	    CompWindow *cw = window->priv->window;
 	    if (cw->outputDevice () == o.id ())
