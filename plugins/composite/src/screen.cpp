@@ -45,9 +45,6 @@
 
 #include <core/timer.h>
 
-#include <cstdlib>
-#include <cstdio>
-
 CompWindow *lastDamagedWindow = 0;
 
 void
@@ -198,26 +195,6 @@ CompositeScreen::damageEvent ()
     return priv->damageEvent;
 }
 
-/* TODO - remove these macros, also <cstdio> and <cstdlib> above.
- *
- * We're seeing errors in code that tries to use composite after
- * it fails to initialise.
- *
- * I agree in advance that this macro subverting setFailed() is a
- * horrible hack.  But making the client code either handle errors,
- * or exception neutral, is a LOT of work.
- *
- * This could give us some more immediate feedback on the causes
- * of failure and a better solution.
- *                                             Alan Griffiths
- */
-#define ARG_STRINGIZE(x) ARG_STRINGIZE_(x)
-#define ARG_STRINGIZE_(x) #x
-#define setFailed()\
-do { \
-    std::fputs("error CompositeScreen::CompositeScreen - line " ARG_STRINGIZE(__LINE__) "\n", stderr);\
-    std::exit(EXIT_FAILURE);\
-} while (false)
 
 CompositeScreen::CompositeScreen (CompScreen *s) :
     PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI> (s),
@@ -280,11 +257,6 @@ CompositeScreen::CompositeScreen (CompScreen *s) :
 
 }
 
-#undef ARG_STRINGIZE
-#undef ARG_STRINGIZE_
-#undef setFailed
-
-
 CompositeScreen::~CompositeScreen ()
 {
     priv->paintTimer.stop ();
@@ -310,7 +282,9 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     slowAnimations (false),
     pHnd (NULL),
     FPSLimiterMode (CompositeFPSLimiterModeDefault),
-    withDestroyedWindows ()
+    withDestroyedWindows (),
+    cmSnAtom (0),
+    newCmSnOwner (None)
 {
     gettimeofday (&lastRedraw, 0);
     // wrap outputChangeNotify
@@ -321,14 +295,19 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
 
 PrivateCompositeScreen::~PrivateCompositeScreen ()
 {
+    Display *dpy = screen->dpy ();
+
+    if (cmSnAtom)
+	XSetSelectionOwner (dpy, cmSnAtom, None, CurrentTime);
+
+    if (newCmSnOwner != None)
+	XDestroyWindow (dpy, newCmSnOwner);
 }
 
 bool
 PrivateCompositeScreen::init ()
 {
     Display              *dpy = screen->dpy ();
-    Window               newCmSnOwner = None;
-    Atom                 cmSnAtom = 0;
     Time                 cmSnTimestamp = 0;
     XEvent               event;
     XSetWindowAttributes attr;
