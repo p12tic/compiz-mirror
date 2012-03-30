@@ -49,14 +49,13 @@
 namespace compiz { namespace private_screen
 {
 
-class OutputDevices
+class OutputDevices : public virtual CoreOptions
 {
 public:
-    OutputDevices() :
-	    outputDevs (),
-	    overlappingOutputs (false),
-	    currentOutputDev (0) {}
+    OutputDevices();
 
+    void detectOutputDevices (
+	    std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
     void updateOutputDevices (CompOption::Value::Vector& list, CompWindowList const& windows);
     void setCurrentOutput (unsigned int outputNum);
     CompOutput& getCurrentOutputDev () { return outputDevs[currentOutputDev]; }
@@ -592,7 +591,7 @@ public:
 };
 
 class PluginManager :
-    public CoreOptions,
+    public virtual CoreOptions,
     public virtual ScreenUser
 {
     public:
@@ -887,8 +886,6 @@ class PrivateScreen :
 	void setDesktopHints ();
 
 	void setVirtualScreenSize (int hsize, int vsize);
-
-	void detectOutputDevices ();
 
 	void updateStartupFeedback ();
 

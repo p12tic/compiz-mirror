@@ -712,7 +712,7 @@ PrivateScreen::setOption (const CompString  &name,
 	    break;
 	case CoreOptions::DetectOutputs:
 	    if (optionGetDetectOutputs ())
-		detectOutputDevices ();
+		detectOutputDevices (screenInfo, windows);
 	    break;
 	case CoreOptions::Hsize:
 	case CoreOptions::Vsize:
@@ -2023,7 +2023,9 @@ cps::OutputDevices::updateOutputDevices (CompOption::Value::Vector& list, CompWi
 }
 
 void
-PrivateScreen::detectOutputDevices ()
+cps::OutputDevices::detectOutputDevices (
+	std::vector<XineramaScreenInfo>& screenInfo,
+	CompWindowList& windows)
 {
     if (optionGetDetectOutputs ())
     {
@@ -2264,7 +2266,7 @@ PrivateScreen::configure (XConfigureEvent *ce)
 
 	reshape (ce->width, ce->height);
 
-	detectOutputDevices ();
+	detectOutputDevices (screenInfo, windows);
 
 	updateOutputDevices (optionGetOutputs (), windows);
 }
@@ -4931,7 +4933,7 @@ PrivateScreen::initDisplay (const char *name)
 
     initialized = true;
     initOptions ();
-    detectOutputDevices ();
+    detectOutputDevices (screenInfo, windows);
     updateOutputDevices (optionGetOutputs (), windows);
 
     getDesktopHints ();
@@ -5118,6 +5120,7 @@ cps::StartupSequence::StartupSequence() :
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
+    CoreOptions (false),
     ScreenUser (screen),
     EventManager (screen),
     GrabManager (screen),
@@ -5164,19 +5167,31 @@ cps::WindowManager::WindowManager() :
 {
 }
 
-cps::PluginManager::PluginManager(CompScreen *screen) :
-    ScreenUser (screen),
+cps::OutputDevices::OutputDevices() :
     CoreOptions (false),
+    outputDevs (),
+    overlappingOutputs (false),
+    currentOutputDev (0)
+{
+}
+
+cps::PluginManager::PluginManager(CompScreen *screen) :
+    CoreOptions (false),
+    ScreenUser (screen),
     plugin (),
     dirtyPluginList (true)
 {
 }
 
 cps::EventManager::EventManager (CompScreen *screen) :
+    CoreOptions (false),
     ScreenUser (screen),
     PluginManager (screen),
     source(0),
     timeout(0),
+    sighupSource(0),
+    sigtermSource(0),
+    sigintSource(0),
     fileWatch (0),
     lastFileWatchHandle (1),
     watchFds (0),
@@ -5204,6 +5219,9 @@ cps::OrphanData::~OrphanData()
 cps::EventManager::~EventManager ()
 {
     delete timeout;
+    delete sigintSource;
+    delete sigtermSource;
+    delete sighupSource;
     delete source;
 
     foreach (CompWatchFd *fd, watchFds)
