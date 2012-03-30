@@ -243,7 +243,7 @@ dlloaderFilter (const struct dirent *name)
 static CompStringList
 dlloaderListPlugins (const char *path)
 {
-    CompStringList rv = cloaderListPlugins (path);
+    CompStringList rv (cloaderListPlugins (path));
 
     if (!path)
 	path = ".";
