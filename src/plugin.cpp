@@ -246,7 +246,6 @@ static CompStringList
 dlloaderListPlugins (const char *path)
 {
     struct dirent **nameList;
-    char	  name[1024];
     int		  length, nFile, i;
 
     CompStringList rv = cloaderListPlugins (path);
@@ -262,12 +261,11 @@ dlloaderListPlugins (const char *path)
     {
 	length = strlen (nameList[i]->d_name);
 
-	strncpy (name, nameList[i]->d_name + 3, length - 6);
-	name[length - 6] = '\0';
-
-	rv.push_back (CompString (name));
+	rv.push_back (CompString (nameList[i]->d_name + 3, nameList[i]->d_name + length - 6));
+	free(nameList[i]);
     }
 
+    free(nameList);
     return rv;
 }
 
