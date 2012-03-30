@@ -46,7 +46,7 @@ namespace compiz
 		const CompRegion & inputRegion () { return getInputRegion (); }
 		void updateGroupShadows () { doUpdateGroupShadows (); }
 
-	    protected:
+	    private:
 
 		virtual void doUpdateShadow (const CompRegion &) = 0;
 		virtual void doSetOwner (DecorClipGroupInterface *i) = 0;
@@ -68,7 +68,7 @@ namespace compiz
 		const CompRegion & clipRegion () { return getClipRegion (); }
 		void updateAllShadows () { return doUpdateAllShadows (); }
 
-	    protected:
+	    private:
 
 		virtual bool doPushClippable (DecorClippableInterface *dc) = 0;
 		virtual bool doPopClippable (DecorClippableInterface *dc) = 0;
