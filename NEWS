@@ -3,7 +3,6 @@ Release 0.9.7.4 (2012-04-02 Daniel van Vugt <daniel.van.vugt@canonical.com>)
 
 Bugs fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.4)
 
-    968985 - Memory leak in dlloaderListPlugins
     833729 - compiz crashed with SIGSEGV in
              CompositeScreen::compositingActive()
     888704 - Window management - Closing one window sends others to the
@@ -23,6 +22,7 @@ Bugs fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.4)
     963633 - Unity 5.8: Login to blank screen (all black or just wallpaper)
     964248 - Tests do not build when libgtest-dev is installed but libgtest
              isn't 
+    968985 - Memory leak in dlloaderListPlugins
 
 
 Fixes REMOVED for stability reasons:
