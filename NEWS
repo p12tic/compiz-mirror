@@ -1,9 +1,11 @@
-Release 0.9.7.6 (2012-04-02 Sam Spilsbury <sam.spilsbury@canonical.com>)
+Release 0.9.7.6 (2012-XX-YY Sam Spilsbury <sam.spilsbury@canonical.com>)
 ========================================================================
 
 Bugs fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.6)
 
+    968985 - Memory leak in dlloaderListPlugins
     969102 - priv->invisible is not updated when the window is mapped
+
 
 Release 0.9.7.4 (2012-04-02 Daniel van Vugt <daniel.van.vugt@canonical.com>)
 ============================================================================
