@@ -538,3 +538,47 @@ TEST(RegionTest, operators)
 	EXPECT_EQ(expect, CompRegion(r1) ^= rect2);
     }
 }
+
+TEST(RegionTest, external_refs)
+{
+    CompRegion r1(rect1);
+    CompRegion r2(rect2);
+    CompRegionRef rr1(r1.handle());
+    CompRegionRef rr2(r2.handle());
+
+    {
+	// Verify that the refs don't free the underlying Region. If they
+	// do then the following EXPECT_EQ's should crash.
+	CompRegionRef tmp1(r1.handle());
+	CompRegionRef tmp2(r2.handle());
+    }
+
+    EXPECT_EQ(r1, rr1);
+    EXPECT_EQ(r1.handle(), rr1.handle());
+
+    EXPECT_EQ(r2, rr2);
+    EXPECT_EQ(r2.handle(), rr2.handle());
+
+    EXPECT_EQ(r1 & r2, rr1 & rr2);
+    EXPECT_EQ(r1 & r2, rr1 & r2);
+    EXPECT_EQ(r1 & rr2, rr1 & r2);
+
+    EXPECT_EQ(r1 | r2, rr1 | rr2);
+    EXPECT_EQ(r1 | r2, rr1 | r2);
+    EXPECT_EQ(r1 | rr2, rr1 | r2);
+
+    EXPECT_EQ(r1 - r2, rr1 - rr2);
+    EXPECT_EQ(r1 - r2, rr1 - r2);
+    EXPECT_EQ(r1 - rr2, rr1 - r2);
+
+    EXPECT_EQ(r1 ^ r2, rr1 ^ rr2);
+    EXPECT_EQ(r1 ^ r2, rr1 ^ r2);
+    EXPECT_EQ(r1 ^ rr2, rr1 ^ r2);
+
+    CompRegion *p = new CompRegion(r1);
+    CompRegionRef *rp = new CompRegionRef(p->handle());
+    ASSERT_EQ(*rp, r1);
+    delete rp;
+    ASSERT_EQ(*p, r1);
+    delete p;
+}

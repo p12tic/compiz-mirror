@@ -211,6 +211,9 @@ class PrivateWindow {
 
 	void readIconHint ();
 
+	bool checkClear ();
+
+	static CompWindow* createCompWindow (Window aboveId, XWindowAttributes &wa, Window id);
     public:
 
 	PrivateWindow *priv;
@@ -323,23 +326,6 @@ class PrivateWindow {
 	Time lastCloseRequestTime;
 
 	bool nextMoveImmediate;
-};
-
-class CoreWindow
-{
-public:
-
-    CoreWindow (Window id);
-
-    CompWindow * manage (Window above, XWindowAttributes &wa);
-
-    friend class PrivateWindow;
-    friend class PrivateScreen;
-    friend class CompScreenImpl;
-
-private:
-
-    PrivateWindow *priv;
 };
 
 #endif

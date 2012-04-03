@@ -45,6 +45,8 @@
 #include "privatescreen.h"
 #include "privatestackdebugger.h"
 
+#include <boost/scoped_array.hpp>
+
 #define XWINDOWCHANGES_INIT {0, 0, 0, 0, 0, None, 0}
 
 PluginClassStorage::Indices windowPluginClassIndices (0);
@@ -1196,10 +1198,7 @@ CompWindow::destroy ()
 
 	    /* Put the frame window "above" the client window
 	     * in the stack */
-	    CoreWindow *cw = new CoreWindow (priv->serverFrame);
-	    cw->manage (priv->id, attrib);
-	    screen->removeFromCreatedWindows (cw);
-	    delete cw;
+	    PrivateWindow::createCompWindow (priv->id, attrib, priv->serverFrame);
 	}
 
 	/* Immediately unhook the window once destroyed
@@ -1331,6 +1330,7 @@ CompWindow::map ()
 {
     windowNotify (CompWindowNotifyBeforeMap);
 
+    /* Previously not viewable */
     if (!isViewable ())
     {
 	if (priv->pendingMaps > 0)
@@ -1351,7 +1351,7 @@ CompWindow::map ()
 	if (!overrideRedirect ())
 	    screen->priv->setWmState (NormalState, priv->id);
 
-	priv->invisible  = true;
+	priv->invisible  = priv->isInvisible ();
 	priv->alive      = true;
 
 	priv->lastPong = screen->priv->lastPing;
@@ -2499,7 +2499,6 @@ CompWindow::moveInputFocusToOtherWindow ()
     {
 	CompWindow *ancestor;
 	CompWindow *nextActive = screen->findWindow (screen->priv->nextActiveWindow);
-	Window     lastNextActiveWindow = screen->priv->nextActiveWindow;
 
         /* Window pending focus */
 	if (priv->id != screen->priv->nextActiveWindow &&
@@ -2558,26 +2557,6 @@ CompWindow::moveInputFocusToOtherWindow ()
 	}
 	else
 	    screen->focusDefaultWindow ();
-
-	/* FIXME:
-	 * moveInputFocusTo and focusDefaultWindow should really
-	 * return booleans */
-	if (lastNextActiveWindow != screen->priv->nextActiveWindow &&
-	    screen->priv->optionGetRaiseOnClick ())
-	{
-	    /* If this window just got the focus because another window
-	     * was unmanaged then we should also raise it if click raise
-	     * is on, since another plugin might have raised another window
-	     * without wanting to focus it and this window will be beneath
-	     * it in the stack but above it in the active window history
-	     * so when the focus moves here this window should be raised
-	     * That's the tradeoff for maintaining a predictable focus order
-	     * as compared to eg a predictable stacking order */
-
-	    CompWindow *nextActive = screen->findWindow (screen->priv->nextActiveWindow);
-	    if (nextActive)
-		nextActive->raise ();
-	}
     }
 }
 
@@ -4881,7 +4860,6 @@ PrivateWindow::readIconHint ()
     int		 iDummy;
     Window       wDummy;
     CompIcon     *icon;
-    XColor       *colors;
     CARD32       *p;
 
     if (!XGetGeometry (dpy, hints->icon_pixmap, &wDummy, &iDummy,
@@ -4893,7 +4871,7 @@ PrivateWindow::readIconHint ()
     if (!image)
 	return;
 
-    colors = new XColor[width * height];
+    boost::scoped_array<XColor> colors(new XColor[width * height]);
     if (!colors)
     {
 	XDestroyImage (image);
@@ -4914,7 +4892,6 @@ PrivateWindow::readIconHint ()
     icon = new CompIcon (width, height);
     if (!icon)
     {
-	delete [] colors;
 	return;
     }
 
@@ -4943,7 +4920,6 @@ PrivateWindow::readIconHint ()
 	}
     }
 
-    delete [] colors;
     if (maskImage)
 	XDestroyImage (maskImage);
 
@@ -5562,7 +5538,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 	return;
 
     /* Ungrab everything */
-    XUngrabButton (screen->priv->dpy, AnyButton, AnyModifier, frame);
+    XUngrabButton (screen->dpy(), AnyButton, AnyModifier, frame);
 
     /* We don't need the full grab in the following cases:
      * - This window has the focus and either
@@ -5592,38 +5568,12 @@ PrivateWindow::updatePassiveButtonGrabs ()
 
     if (onlyActions)
     {
-	/* Grab only we have bindings on */
-	foreach (PrivateScreen::ButtonGrab &bind, screen->priv->buttonGrabs)
-	{
-	    unsigned int mods = modHandler->virtualToRealModMask (bind.modifiers);
-
-	    if (mods & CompNoMask)
-		continue;
-
-	    for (unsigned int ignore = 0;
-		     ignore <= modHandler->ignoredModMask (); ignore++)
-	    {
-		if (ignore & ~modHandler->ignoredModMask ())
-		    continue;
-
-		XGrabButton (screen->priv->dpy,
-			     bind.button,
-			     mods | ignore,
-			     serverFrame,
-			     false,
-			     ButtonPressMask | ButtonReleaseMask |
-				ButtonMotionMask,
-			     GrabModeSync,
-			     GrabModeAsync,
-			     None,
-			     None);
-	    }
-	}
+        screen->priv->updatePassiveButtonGrabs(serverFrame);
     }
     else
     {
 	/* Grab everything */
-	XGrabButton (screen->priv->dpy,
+	XGrabButton (screen->dpy(),
 		     AnyButton,
 		     AnyModifier,
 		     serverFrame, false,
@@ -5983,18 +5933,17 @@ CompWindow::syncAlarm ()
 }
 
 CompWindow *
-CoreWindow::manage (Window aboveId, XWindowAttributes &wa)
+PrivateWindow::createCompWindow (Window aboveId, XWindowAttributes &wa, Window id)
 {
-    return new CompWindow (aboveId, wa, priv);
-}
-
-CoreWindow::CoreWindow (Window id)
-{
-    priv = new PrivateWindow ();
-    assert (priv);
+    PrivateWindow* priv(new PrivateWindow ());
     priv->id = id;
     priv->serverId = id;
+
+    CompWindow *fw = new CompWindow (aboveId, wa, priv);
+
+    return fw;
 }
+
 
 CompWindow::CompWindow (Window aboveId,
 			XWindowAttributes &wa,
@@ -6251,7 +6200,7 @@ CompWindow::~CompWindow ()
 	if (screen->XShape ())
 	    XShapeSelectInput (screen->dpy (), priv->id, NoEventMask);
 
-	if (priv->id != screen->priv->grabWindow)
+	if (screen->priv->notGrabWindow (priv->id))
 	    XSelectInput (screen->dpy (), priv->id, NoEventMask);
 
 	XUngrabButton (screen->dpy (), AnyButton, AnyModifier, priv->id);
@@ -6940,10 +6889,7 @@ PrivateWindow::unreparent ()
 
 	/* Put the frame window "above" the client window
 	 * in the stack */
-	CoreWindow *cw = new CoreWindow (serverFrame);
-	CompWindow *fw = cw->manage (id, attrib);
-	screen->removeFromCreatedWindows (cw);
-	delete cw;
+	CompWindow *fw = PrivateWindow::createCompWindow (id, attrib, serverFrame);
 
 	/* Put this window in the list of "detached frame windows"
 	 * so that we can reattach it or destroy it when we are

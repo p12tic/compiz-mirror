@@ -641,8 +641,10 @@ active_window_changed (WnckScreen *screen)
 	    * however if the shadow size doesn't change
 	    * then we need to redraw the decoration anyways
 	    * since the image would have changed */
-	    if (!update_window_decoration_size (d->win) && d->decorated)
-	       queue_decor_draw (d);
+	    if (d->win != NULL &&
+		!update_window_decoration_size (d->win) &&
+		d->decorated)
+		queue_decor_draw (d);
 
 	}
     }
@@ -707,8 +709,10 @@ active_window_changed (WnckScreen *screen)
 	    * however if the shadow size doesn't change
 	    * then we need to redraw the decoration anyways
 	    * since the image would have changed */
-	    if (!update_window_decoration_size (d->win) && d->decorated)
-	       queue_decor_draw (d);
+	    if (d->win != NULL &&
+		!update_window_decoration_size (d->win) &&
+		d->decorated)
+		queue_decor_draw (d);
 
 	}
     }

@@ -1,11 +1,81 @@
-Release 0.9.7.0 ( 2012-XX-YY smspillaz <sam.spilsbury@canonical.com> ) 
+Release 0.9.7.6 (2012-XX-YY Sam Spilsbury <sam.spilsbury@canonical.com>)
+========================================================================
+
+Bugs fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.6)
+
+    968985 - Memory leak in dlloaderListPlugins
+    969102 - priv->invisible is not updated when the window is mapped
+
+
+Release 0.9.7.4 (2012-04-02 Daniel van Vugt <daniel.van.vugt@canonical.com>)
+============================================================================
+
+Bugs fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.4)
+
+    833729 - compiz crashed with SIGSEGV in
+             CompositeScreen::compositingActive()
+    888704 - Window management - Closing one window sends others to the
+             background
+    953089 - Unity 5.6: key bindings (such as Super) don't work on empty
+             workspace or on slow/loaded systems
+    953839 - [regression] Invisible resize border is now only 1px wide
+    957572 - Coverity REVERSE_INULL - CID 10888
+    960831 - Unity dash opens and immediately closes if you tap Super+A quickly
+    962085 - [0.9.7.2] gtk-window-decorator receives BadWindow errors 
+    963093 - Unity 5.8: Flickering and corruption on Unity UI elements
+    963264 - We are using 1 bad hack for compiz hanging on startup
+    963465 - Unity 5.8: Can't login to Unity since upgrade to 5.8
+    963470 - [regression] Unity 5.8+Compiz 0.9.7.2: Pressing Super+Tab or
+             Super+W works, but unity does not respond to when Super is
+             released.
+    963633 - Unity 5.8: Login to blank screen (all black or just wallpaper)
+    964248 - Tests do not build when libgtest-dev is installed but libgtest
+             isn't 
+
+
+Fixes REMOVED for stability reasons:
+
+    682788 - Global menu is not ergonomical on large screens 
+    806255 - Unity/compiz intercepts Super and Alt keypresses from grabbed
+             windows like VMs. 
+    931245 - Finish the implementation of the locally integrated menubars
+
+
+Release 0.9.7.2 (2012-03-19 Daniel van Vugt <daniel.van.vugt@canonical.com>)
+============================================================================
+
+Bugs fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.2)
+
+    806255 - Unity/compiz intercepts keystrokes from grabbed windows.
+    808007 - compiz crashed with signal 5 in Glib::exception_handlers_invoke()
+    682788 - Global menu is not ergonomical on large screens
+    931245 - Finish the implementation of the locally integrated menubars
+    938417 - lp:compiz-core fails parallel builds (make -jN)
+    943194 - [regression] Pressing alt doesn't show the menu title bar in top
+             panel
+    943612 - Alt+Right arrow key trigger a kind of Alt + Tab
+    943851 - [unity 5.6] Pressing Alts steals focus from current widget,
+             cannot compose characters with AltGr
+    944979 - Quicklist are not showing if right-clicking a launcher icon in
+             Expo mode if triggered by Super + S
+    945373 - Regression: ALT + Drag doesn't behave how it should
+    945816 - [regression] Changing the HUD shortcut disables all Alt-based
+             combinations
+    946118 - screen.cpp:3281: virtual bool
+             CompScreenImpl::addAction(CompAction*): Assertion
+             `priv->initialized' failed.
+    953089 - Unity 5.6: key bindings (such as Super) don't work on empty
+             workspace or on slow/loaded systems
+
+
+Release 0.9.7.0 ( 2012-03-02 smspillaz <sam.spilsbury@canonical.com> ) 
 =======================================================================
 Release version 0.9.7.0
 
 Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
 
      92599 - Incorrect (low/stuttering) refresh rate with NVIDIA driver
-    254561 - Benchmark window slows the system and degrades graphics resources 
+    254561 - Benchmark window slows the system and degrades graphics resources
     684731 - Windows that hide themselves when closed don't appear in any
              "this workspace" switcher
     690239 - hang in g_spawn_sync and select()
@@ -20,12 +90,16 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
     748840 - Windows should not automatically be focused when opened if the
              focus is on another application
     755841 - [sandybridge] Graphics tearing when playing video
+    758398 - Bitcoin top-level window unmapped
     763005 - Compiz's "Sync to Vblank" makes display stutter/slow with fglrx
     764330 - [regression] Moving windows lags behind the mouse by 1-2 seconds;
              appear to freeze when dragging.
     764673 - Launcher - Spread should not affect the state of window
+    780505 - Untranslated strings in gtk-window-decorator
     790565 - Clicking on a tweet/message link sometimes does not work
     795065 - scrolling on top of a close animation switches viewports
+    796594 - Window behaviour - pressing the 'restore' window indicator on a
+             semi-maximised window should return it to the restored state
     798868 - unity video tearing when moving windows in oneiric with
              nvidia-current
     812711 - dialogs really slow to be displayed since the compiz update
@@ -75,6 +149,9 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
     869759 - screen edge trigger does not work until manually restarting unity
     869919 - Click-dragging a window that's stacked above a fullscreen window
              will cause it to go underneath the fullscreen window
+    871801 - window management, alt-tab - After using 'show desktop' to
+             minimise all windows, opening any new window also incorrectly
+             restores all the minimised windows
     873344 - compiz.desktop is not installed where GNOME2 libraries are not
              available
     873364 - Drop GNOME2 Support
@@ -90,13 +167,20 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
              jump around
     877920 - Some windows and all decorations become translucent when the
              "Resize Info" plugin activates.
+    878934 - Menu selection is wrong in Java apps
     880707 - [regression] Compiz: Visible tearing is worse in 11.10 than
              11.04, even when "Sync To VBlank" is enabled, but only when Unity
              is active.
+    882527 - Allow the scale plugin to be triggered over all viewports
+    882531 - Allow plugins to selectively track damage in real time
+    885440 - Add unit tests for CompOption
     886935 - Invalid read on GLWindow::glDrawGeometry
+    886978 - compiz crashes with SIGSEGV in PrivateWindow::configure
     890947 - Unity sends initial GDK_CONFIGURE event with position as (0,0)
     891744 - Dragging windows stutter during and after grid animation
+    893995 - POTFILES is breaking the build
     893998 - Fix warnings in CompTimer
+    894639 - Hook up Xig tests to compiz' CTest system
     896591 - Plugins that get initialized before screen initialization is done
              can not have their actions added
     896762 - Switching viewports with ctrl-alt-(left/right/up/down) does not
@@ -108,9 +192,11 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
     913823 - Remove unecessary hacks from core in order to work around broken
              drivers on startup
     915186 - make install: Files missing from include/compiz/core
+    915950 - Tests required for window placement in dead areas for multimonitor
     917210 - compiz+unity3d generates > 50 wakeups a second on idle system
     917571 - compiz-core (currently version 0.9.5) is actually newer than the
              existing releases versioned 0.9.6
+    918554 - Some plugins no longer build due to undefined DEG2RAD
     918762 - Compiz crashes with SIGSEGV in PrivateWindow::configure
     919920 - lp:compiz-core (r2930) does not build
     919922 - compiz-core ABI is broken / out of sync
@@ -127,7 +213,60 @@ Bugs Fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.0)
     922450 - 'make install' installs unwanted files
              libcompiz_place_constrain_to_workarea.a,
              libcompiz_place_screen_size_change.a
+    923572 - Merge (overwrite?) lp:compiz-*-plugin back into
+             lp:compiz-plugins-{main,extra}
     923583 - lp:compiz-core r2968 fails to build
+    923662 - [regression] lp:compiz-core r2968 broke direct rendering
+    923683 - [regression] window movement is erratic and buggy (briefly on
+             startup)
+    924691 - [regression] XSynchronize is always enabled (shouldn't be, and
+             wasn't in oneiric)
+    924736 - [gtk-window-decorator] Semi-maximized windows have no shadow or
+             frame
+    925293 - Plugins can't tell the difference between a modifier key-tap, and
+             a modifier key-release (after being used to modify other keys)
+    925979 - [regression] compiz fails to pass through <modifier>+<key> events
+             to apps if a plugin is bound to just <modifier>
+    928044 - [regression] lp:compiz-plugins-main r16 fails to build with
+             lp:compiz-core r2982
+    928173 - [regression] Window resizing jitters/flashing is worse in
+             lp:compiz-core than oneiric
+    928655 - [regression] Vsync is lost (constant graphics tearing) after
+             plugins render effects
+    929443 - lp:ubuntu/libcompizconfig (r59) fails to build with the latest
+             lp:compiz-core (r2990)
+    929446 - lp:compiz-plugins-main (r18) fails to build with the latest
+             lp:compiz-core (r2990)
+    929449 - lp:compiz-plugins-extra (r9) fails to build with the latest
+             lp:compiz-core (r2990)
+    930071 - gtk-window-decorator can crash in active_window_changed upon
+             demaximizing a window
+    930412 - [regression] no core keybindings work any more
+    931283 - compiz crashed with SIGSEGV on shutdown
+    931473 - Menus don't fully appear
+    931500 - post 0.9.7 snapshot: FTBFS on armel
+    931927 - [regression] Customized shortcuts don't work in compiz
+             1:0.9.7.0~bzr2995-0ubuntu1
+    931958 - 0.9.7: impossible to click on keyring dialog since the upgrade
+    932087 - Initialize the _NET_WM_STATE_FOCUSED
+    933226 - compiz-core r3001 (and 3002) ftbfs
+    934058 - [regression] Launcher, top panel and keyboard un-responsive after
+             using any Super-x shortcut
+    936487 - compiz crashed with SIGSEGV in XDefineCursor()
+    936675 - Windows can end up stacked at the very top of the stack if no
+             other windows and nautilus on the desktop are not open
+    936774 - Maximized windows do not get shadows at all
+    936778 - Quickly demaximized windows can receive maximized window
+             decorations if they were initially maximized
+    936781 - No draggable border if mutter isn't installed
+    938478 - Unresolved symbols in plugins cause compiz to exit (looks like a
+             crash)
+    940066 - decor_match_pixmap (decoration.c:423): Conditional jump or move
+             depends on uninitialised value(s)
+    940115 - Memory leak at DecorWindow::updateSwitcher() (decor.cpp:2258)
+    940139 - [callgrind] compiz spends about 51% of its CPU time in CompRegion
+             construction/destruction
+    942890 - "Svg" and "Png" should be "SVG and "PNG"
     
 Added Unit Tests
 Switched to Google Test for Unit Tests
