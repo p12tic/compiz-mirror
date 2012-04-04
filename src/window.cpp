@@ -918,8 +918,8 @@ PrivateWindow::updateRegion ()
 
     r.x      = -priv->serverGeometry.border ();
     r.y      = -priv->serverGeometry.border ();
-    r.width  = priv->serverGeometry.width () + priv->serverGeometry.border ();
-    r.height = priv->serverGeometry.height () + priv->serverGeometry.border ();
+    r.width  = priv->serverGeometry.widthIncBorders ();
+    r.height = priv->serverGeometry.heightIncBorders ();
 
     if (nBounding < 1)
     {
@@ -1854,9 +1854,9 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
      * windows since we didn't resize them
      * on configureXWindow */
     if (priv->shaded)
-	height = priv->serverGeometry.height () - priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
+	height = priv->serverGeometry.heightIncBorders () - priv->serverInput.top - priv->serverInput.bottom;
     else
-	height = ce->height - priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
+	height = ce->height + priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
 
     /* set the frame geometry */
     priv->frameGeometry.set (ce->x, ce->y, ce->width, ce->height, ce->border_width);
@@ -4308,8 +4308,8 @@ void
 PrivateWindow::ensureWindowVisibility ()
 {
     int x1, y1, x2, y2;
-    int	width = serverGeometry.width () + serverGeometry.border () * 2;
-    int	height = serverGeometry.height () + serverGeometry.border () * 2;
+    int	width = serverGeometry.widthIncBorders ();
+    int	height = serverGeometry.heightIncBorders ();
     int dx = 0;
     int dy = 0;
 
@@ -6819,10 +6819,10 @@ PrivateWindow::unreparent ()
 	/* Wait for the reparent to finish */
 	XSync (dpy, false);
 
-	xwc.x = serverGeometry.x () - serverGeometry.border ();
-	xwc.y = serverGeometry.y () - serverGeometry.border ();
-	xwc.width = serverGeometry.width () + serverGeometry.border () * 2;
-	xwc.height = serverGeometry.height () + serverGeometry.border () * 2;
+	xwc.x = serverGeometry.xMinusBorder ();
+	xwc.y = serverGeometry.yMinusBorder ();
+	xwc.width = serverGeometry.widthIncBorders ();
+	xwc.height = serverGeometry.heightIncBorders ();
 
 	XConfigureWindow (dpy, serverFrame, CWX | CWY | CWWidth | CWHeight, &xwc);
 

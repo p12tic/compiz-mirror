@@ -1714,7 +1714,6 @@ DecorWindow::updateInputFrame ()
     XRectangle           rects[4];
     int                  x, y, width, height;
     CompWindow::Geometry server = window->serverGeometry ();
-    int                  bw = server.border () * 2;
     CompWindowExtents	 input;
     CompWindowExtents    border;
     Window		 parent;
@@ -1741,8 +1740,8 @@ DecorWindow::updateInputFrame ()
 
     x      = window->border ().left - border.left;
     y      = window->border ().top - border.top;
-    width  = server.width () + input.left + input.right + bw;
-    height = server.height ()+ input.top  + input.bottom + bw;
+    width  = server.widthIncBorders () + input.left + input.right;
+    height = server.heightIncBorders ()+ input.top  + input.bottom ;
 
     /* Non switcher windows are rooted relative to the frame window of the client
      * and switchers need to be offset by the window geometry of the client */
@@ -1881,7 +1880,6 @@ DecorWindow::updateOutputFrame ()
     XRectangle           rects[4];
     int                  x, y, width, height;
     CompWindow::Geometry server = window->serverGeometry ();
-    int                  bw = server.border () * 2;
     CompWindowExtents	 input;
 
     /* Determine frame extents */
@@ -1892,8 +1890,8 @@ DecorWindow::updateOutputFrame ()
 
     x      = window->input ().left - input.left;
     y      = window->input ().top - input.top;
-    width  = server.width () + input.left + input.right + bw;
-    height = server.height ()+ input.top  + input.bottom + bw;
+    width  = server.widthIncBorders () + input.left + input.right;
+    height = server.heightIncBorders ()+ input.top  + input.bottom;
 
     if (window->shaded ())
 	height = input.top + input.bottom;
