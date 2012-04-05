@@ -56,7 +56,7 @@ ResizeScreen::getPaintRectangle (BoxPtr pBox)
 void
 ResizeWindow::getStretchScale (BoxPtr pBox, float *xScale, float *yScale)
 {
-    CompRect rect (window->borderRect ());
+    CompRect rect (window->serverBorderRect ());
 
     *xScale = (rect.width ())  ? (pBox->x2 - pBox->x1) /
 				 (float) rect.width () : 1.0f;
@@ -1467,10 +1467,10 @@ ResizeScreen::handleEvent (XEvent *event)
 		getPaintRectangle (&box);
 		damageRectangle (&box);
 
-		box.x1 = w->outputRect ().x ();
-		box.y1 = w->outputRect ().y ();
-		box.x2 = box.x1 + w->outputRect ().width ();
-		box.y2 = box.y1 + w->outputRect ().height ();
+		box.x1 = w->serverOutputRect ().x ();
+		box.y1 = w->serverOutputRect ().y ();
+		box.x2 = box.x1 + w->serverOutputRect ().width ();
+		box.y2 = box.y1 + w->serverOutputRect ().height ();
 
 		damageRectangle (&box);
 	    }

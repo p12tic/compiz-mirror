@@ -201,9 +201,9 @@ CompScreenImpl::windowMenu (CompAction         *action,
 	time   = CompOption::getIntOptionNamed (options, "time", CurrentTime);
 	button = CompOption::getIntOptionNamed (options, "button", 0);
 	x      = CompOption::getIntOptionNamed (options, "x",
-						w->geometry ().x ());
+						w->serverGeometry ().x ());
 	y      = CompOption::getIntOptionNamed (options, "y",
-						w->geometry ().y ());
+						w->serverGeometry ().y ());
 
 	screen->toolkitAction (Atoms::toolkitActionWindowMenu,
 			       time, w->id (), button, x, y);

@@ -5178,10 +5178,10 @@ CompWindow::getMovementForOffset (CompPoint offset)
     }
     else
     {
-	m = priv->geometry.x () + offX;
-	if (m - priv->input.left < (int) s->width () - vWidth)
+	m = priv->serverGeometry.x () + offX;
+	if (m - priv->serverInput.left < (int) s->width () - vWidth)
 	    rv.setX (offX + vWidth);
-	else if (m + priv->geometry.width () + priv->input.right > vWidth)
+	else if (m + priv->serverGeometry.width () + priv->serverInput.right > vWidth)
 	    rv.setX (offX - vWidth);
 	else
 	    rv.setX (offX);
@@ -5193,10 +5193,10 @@ CompWindow::getMovementForOffset (CompPoint offset)
     }
     else
     {
-	m = priv->geometry.y () + offY;
-	if (m - priv->input.top < (int) s->height () - vHeight)
+	m = priv->serverGeometry.y () + offY;
+	if (m - priv->serverInput.top < (int) s->height () - vHeight)
 	    rv.setY (offY + vHeight);
-	else if (m + priv->geometry.height () + priv->input.bottom > vHeight)
+	else if (m + priv->serverGeometry.height () + priv->serverInput.bottom > vHeight)
 	    rv.setY (offY - vHeight);
 	else
 	    rv.setY (offY);
@@ -5719,8 +5719,8 @@ CompWindow::moveToViewportPosition (int  x,
 	y -= screen->vp ().y () * screen->height ();
     }
 
-    tx = x - priv->geometry.x ();
-    ty = y - priv->geometry.y ();
+    tx = x - priv->serverGeometry.x ();
+    ty = y - priv->serverGeometry.y ();
 
     if (tx || ty)
     {
@@ -5742,21 +5742,21 @@ CompWindow::moveToViewportPosition (int  x,
 
 	if (screen->vpSize ().width ()!= 1)
 	{
-	    m = priv->geometry.x () + tx;
+	    m = priv->serverGeometry.x () + tx;
 
 	    if (m - priv->output.left < (int) screen->width () - vWidth)
 		wx = tx + vWidth;
-	    else if (m + priv->geometry.width () + priv->output.right > vWidth)
+	    else if (m + priv->serverGeometry.width () + priv->output.right > vWidth)
 		wx = tx - vWidth;
 	}
 
 	if (screen->vpSize ().height () != 1)
 	{
-	    m = priv->geometry.y () + ty;
+	    m = priv->serverGeometry.y () + ty;
 
 	    if (m - priv->output.top < (int) screen->height () - vHeight)
 		wy = ty + vHeight;
-	    else if (m + priv->geometry.height () + priv->output.bottom > vHeight)
+	    else if (m + priv->serverGeometry.height () + priv->output.bottom > vHeight)
 		wy = ty - vHeight;
 	}
 
@@ -5911,8 +5911,8 @@ PrivateWindow::updateStartupId ()
 	svp  = screen->vp ();
 	size = *screen;
 
-	x = window->geometry ().x () + (svp.x () - vp.x ()) * size.width ();
-	y = window->geometry ().y () + (svp.y () - vp.y ()) * size.height ();
+	x = window->serverGeometry ().x () + (svp.x () - vp.x ()) * size.width ();
+	y = window->serverGeometry ().y () + (svp.y () - vp.y ()) * size.height ();
 	window->moveToViewportPosition (x, y, true);
 
 	if (allowWindowFocus (0, timestamp))

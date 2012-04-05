@@ -1251,7 +1251,7 @@ WobblyWindow::ensureModel ()
     if (!model)
     {
 	unsigned int edgeMask = 0;
-	CompRect outRect (window->outputRect ());
+	CompRect outRect (window->serverOutputRect ());
 
 	if (window->type () & CompWindowTypeNormalMask)
 	    edgeMask = WestEdgeMask | EastEdgeMask | NorthEdgeMask |
@@ -1578,7 +1578,7 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	}
     }
 
-    CompRect outRect (window->outputRect ());
+    CompRect outRect (window->serverOutputRect ());
     wx     = outRect.x ();
     wy     = outRect.y ();
     width  = outRect.width ();
@@ -1772,7 +1772,7 @@ WobblyScreen::shiver (CompOption::Vector &options)
 
 	if (ww->isWobblyWin () && ww->ensureModel ())
 	{
-	    CompRect outRect (w->outputRect ());
+	    CompRect outRect (w->serverOutputRect ());
 
 	    ww->model->setMiddleAnchor (outRect.x (), outRect.y (),
 					outRect.width (), outRect.height ());
@@ -1901,7 +1901,7 @@ WobblyScreen::handleEvent (XEvent *event)
 		switch (focusEffect) {
 		case WobblyOptions::FocusEffectShiver:
 		    {
-			CompRect outRect (w->outputRect ());
+			CompRect outRect (w->serverOutputRect ());
 
 			ww->model->adjustObjectsForShiver (outRect.x (),
 							   outRect.y (),
@@ -1977,7 +1977,7 @@ WobblyWindow::initiateMapEffect ()
 	wScreen->optionGetMapWindowMatch ().evaluate (window) &&
 	ensureModel ())
     {
-	CompRect outRect (window->outputRect ());
+	CompRect outRect (window->serverOutputRect ());
 
 	model->initObjects (outRect.x (), outRect.y (),
 			    outRect.width (), outRect.height ());
@@ -2006,7 +2006,7 @@ WobblyWindow::resizeNotify (int dx,
 			    int dwidth,
 			    int dheight)
 {
-    CompRect outRect (window->outputRect ());
+    CompRect outRect (window->serverOutputRect ());
 
     if (wScreen->optionGetMaximizeEffect () &&
 	isWobblyWin () &&
@@ -2144,7 +2144,7 @@ WobblyWindow::grabNotify (int          x,
 
 	    if (wScreen->optionGetMaximizeEffect ())
 	    {
-		CompRect outRect (window->outputRect ());
+		CompRect outRect (window->serverOutputRect ());
 
 		if (window->state () & MAXIMIZE_STATE)
 		{
@@ -2252,7 +2252,7 @@ WobblyWindow::ungrabNotify ()
 	    if (wScreen->optionGetMaximizeEffect () &&
 		(state & MAXIMIZE_STATE))
 	    {
-		CompRect outRect (window->outputRect ());
+		CompRect outRect (window->serverOutputRect ());
 
 		model->addEdgeAnchors (outRect.x (), outRect.y (),
 				       outRect.width (), outRect.height ());
