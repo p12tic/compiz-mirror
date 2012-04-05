@@ -558,8 +558,6 @@ class WindowManager : boost::noncopyable
 	CompWindow::Map windowsMap;
 	std::list<CompGroup *> groups;
 
-	std::map <CompWindow *, CompWindow *> detachedFrameWindows;
-
 	CompWindowVector clientList;            /* clients in mapping order */
 	CompWindowVector clientListStacking;    /* clients in stacking order */
 
