@@ -900,8 +900,8 @@ PrivateWindow::updateRegion ()
     XRectangle *inputShapeRects = NULL;
     int	       nBounding = 0, nInput = 0;
 
-    priv->region = CompRegion ();
-    priv->inputRegion = CompRegion ();
+    priv->region -= infiniteRegion;
+    priv->inputRegion -= infiniteRegion;
 
     if (screen->XShape ())
     {
@@ -1569,7 +1569,7 @@ PrivateWindow::resize (const CompWindow::Geometry &gm)
 	    priv->serverFrameGeometry = priv->frameGeometry;
 	}
 
-	if (priv->mapNum)
+	if (priv->mapNum && attrib.override_redirect)
 	    priv->updateRegion ();
 
 	window->resizeNotify (dx, dy, dwidth, dheight);
@@ -1581,8 +1581,6 @@ PrivateWindow::resize (const CompWindow::Geometry &gm)
 	move (gm.x () - priv->geometry.x (),
 	      gm.y () - priv->geometry.y (), true);
     }
-
-    window->updateFrameRegion ();
 
     return true;
 }
@@ -2970,6 +2968,9 @@ void
 PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				   XWindowChanges *xwc)
 {
+    int dx = valueMask & CWX ? xwc->x - serverGeometry.x () : 0;
+    int dy = valueMask & CWY ? xwc->y - serverGeometry.y () : 0;
+
     unsigned int frameValueMask = 0;
 
     if (id == screen->root ())
@@ -3215,6 +3216,27 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 
     if (valueMask)
 	XConfigureWindow (screen->dpy (), id, valueMask, xwc);
+
+    if (!attrib.override_redirect)
+    {
+	if (valueMask & (CWWidth | CWHeight))
+	{
+	    updateRegion ();
+	}
+	else if (valueMask & (CWX | CWY))
+	{
+	    region.translate (dx, dy);
+	    inputRegion.translate (dx, dy);
+	    if (!frameRegion.isEmpty ())
+		frameRegion.translate (dx, dy);
+	}
+
+	if (dx || dy)
+	{
+	    window->moveNotify (dx, dy, priv->nextMoveImmediate);
+	    priv->nextMoveImmediate = true;
+	}
+    }
 }
 
 bool
@@ -3387,9 +3409,6 @@ void
 CompWindow::configureXWindow (unsigned int valueMask,
 			      XWindowChanges *xwc)
 {
-    int dx = valueMask & CWX ? xwc->x - priv->serverGeometry.x () : 0;
-    int dy = valueMask & CWY ? xwc->y - priv->serverGeometry.y () : 0;
-
     if (priv->managed && (valueMask & (CWSibling | CWStackMode)))
     {
 	CompWindowList transients;
@@ -3443,16 +3462,6 @@ CompWindow::configureXWindow (unsigned int valueMask,
     else if (priv->id)
     {
 	priv->reconfigureXWindow (valueMask, xwc);
-    }
-
-    if (!overrideRedirect () && (dx || dy))
-    {
-	priv->region.translate (dx, dy);
-	priv->inputRegion.translate (dx, dy);
-	if (!priv->frameRegion.isEmpty ())
-	    priv->frameRegion.translate (dx, dy);
-	moveNotify (dx, dy, priv->nextMoveImmediate);
-	priv->nextMoveImmediate = true;
     }
 }
 
@@ -6449,14 +6458,12 @@ CompWindow::mwmFunc ()
 void
 CompWindow::updateFrameRegion ()
 {
-    if (priv->serverFrame &&
-	priv->serverGeometry.width () == priv->geometry.width () &&
-	priv->serverGeometry.height () == priv->geometry.height ())
+    if (priv->serverFrame)
     {
 	CompRect   r;
 	int        x, y;
 
-	priv->frameRegion = CompRegion ();
+	priv->frameRegion -= infiniteRegion;
 
 	updateFrameRegion (priv->frameRegion);
 
@@ -6465,16 +6472,16 @@ CompWindow::updateFrameRegion ()
 	    r = priv->region.boundingRect ();
 	    priv->frameRegion -= r;
 
-	    r.setGeometry (r.x1 () - priv->input.left,
-			r.y1 () - priv->input.top,
-			r.width  () + priv->input.right + priv->input.left,
-			r.height () + priv->input.bottom + priv->input.top);
+	    r.setGeometry (r.x1 () - priv->serverInput.left,
+			r.y1 () - priv->serverInput.top,
+			r.width  () + priv->serverInput.right + priv->serverInput.left,
+			r.height () + priv->serverInput.bottom + priv->serverInput.top);
 
 	    priv->frameRegion &= CompRegion (r);
 	}
 
-	x = priv->serverGeometry.x () - priv->input.left;
-	y = priv->serverGeometry.y () - priv->input.top;
+	x = priv->serverGeometry.x () - priv->serverInput.left;
+	y = priv->serverGeometry.y () - priv->serverInput.top;
 
 	XShapeCombineRegion (screen->dpy (), priv->serverFrame,
 			     ShapeBounding, -x, -y,
