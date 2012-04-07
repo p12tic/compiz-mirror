@@ -61,22 +61,19 @@ CompWindow::pos () const
 int
 CompWindow::width () const
 {
-    return priv->geometry.width () +
-	    priv->geometry.border ()  * 2;
+    return priv->geometry.widthIncBorders ();
 }
 
 int
 CompWindow::height () const
 {
-    return priv->geometry.height () +
-	    priv->geometry.border ()  * 2;;
+    return priv->geometry.heightIncBorders ();
 }
 
 CompSize
 CompWindow::size () const
 {
-    return CompSize (priv->geometry.width () + priv->geometry.border ()  * 2,
-		     priv->geometry.height () + priv->geometry.border ()  * 2);
+    return CompSize (width (), height ());
 }
 
 int
@@ -136,7 +133,7 @@ CompWindow::serverBorderRect () const
 		     priv->serverGeometry.yMinusBorder () - priv->border.top,
 		     priv->serverGeometry.widthIncBorders () +
 		     priv->border.left + priv->border.right,
-		     priv->serverGeometry.heightIncBorders() * 2 +
+		     priv->serverGeometry.heightIncBorders() +
 		     priv->border.top + priv->border.bottom);
 }
 
