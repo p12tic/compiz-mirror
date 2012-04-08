@@ -172,6 +172,8 @@ public:
 	return gWindow->glPaint (attrib, transform, region, mask);
     }
 
+    virtual bool requiresTransformedWindow () { return true; }
+
     /// Gets info about the (extension) plugin that implements this animation.
     /// Should be overriden by a base animation class in every extension plugin.
     virtual ExtensionPluginInfo *getExtensionPluginInfo ();

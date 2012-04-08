@@ -1598,7 +1598,8 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
     //w->indexCount = 0; // TODO check if this is still necessary
 
     // TODO: should only happen for distorting effects
-    mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+    if (mCurAnimation->requiresTransformedWindow ())
+	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 
     wAttrib.xScale = 1.0f;
     wAttrib.yScale = 1.0f;

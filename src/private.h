@@ -502,6 +502,7 @@ protected:
     inline bool hasExtraTransform () { return true; }
     void applyExtraTransform (float progress);
     inline bool shouldAvoidParallelogramLook () { return true; }
+    bool requiresTransformedWindow () { return true; }
 };
 
 class WaveAnim :
@@ -518,6 +519,7 @@ protected:
     void initGrid ();
     inline bool using3D () { return true; }
     void step ();
+    bool requiresTransformedWindow () { return true; }
 
     static const float kMinDuration;
 };
@@ -540,6 +542,7 @@ protected:
     bool zoomToIcon ();
     void applyTransform ();
     float getFadeProgress ();
+    bool requiresTransformedWindow () { return true; }
 
     float getProgress ();
     virtual void getParams (float *finalDistFac,
@@ -759,6 +762,7 @@ protected:
     void adjustDuration ();
     float getFadeProgress ();
     bool zoomToIcon ();
+    bool requiresTransformedWindow () { return true; }
 
     static const float kDurationFactor;
 };
@@ -776,6 +780,7 @@ protected:
     inline bool using3D () { return true; }
     float getFadeProgress ();
     void updateWindowAttrib (GLWindowPaintAttrib &attrib);
+    bool requiresTransformedWindow () { return true; }
 };
 
 class CurvedFoldAnim :
@@ -797,6 +802,7 @@ protected:
 		      float sinForProg,
 		      float relDistToCenter,
 		      float curveMaxAmp);
+    bool requiresTransformedWindow () { return true; }
 };
 
 class HorizontalFoldsAnim :
@@ -817,4 +823,5 @@ protected:
 		      float sinForProg,
 		      float relDistToFoldCenter,
 		      float foldMaxAmp);
+    bool requiresTransformedWindow () { return true; }
 };
