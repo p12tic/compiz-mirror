@@ -1626,7 +1626,8 @@ PrivateAnimScreen::pushLockedPaintList ()
 {
     if (!mLockedPaintListCnt)
     {
-	mLockedPaintList = &cScreen->getWindowPaintList ();
+    	const CompWindowList &pl = cScreen->getWindowPaintList ();
+	mLockedPaintList = &pl;
 
 	if (!mGetWindowPaintListEnableCnt)
 	{
@@ -2771,10 +2772,9 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 		if (mPAScreen->shouldIgnoreWindowForAnim (mWindow, true))
 		    break;
 
-		if (AnimEffectNone ==
-		    mPAScreen->getMatchingAnimSelection (mWindow,
-							 AnimEventClose,
-							 &duration))
+		/* Don't increment the destroy reference count unless
+		 * the window is already animated */
+		if (!mCurAnimation)
 		    break;
 
 		mDestroyCnt++;
