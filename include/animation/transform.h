@@ -29,7 +29,7 @@ protected:
     virtual void adjustDuration () {}
     virtual void applyTransform () {}
     virtual Point getCenter ();
-    virtual bool requiresTransformedWindow () { return true; }
+    virtual bool requiresTransformedWindow () const { return true; }
     
 };
 #endif

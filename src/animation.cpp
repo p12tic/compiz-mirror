@@ -1265,8 +1265,6 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 	mLastRedrawTime = curTime; // Store current time for next time
 	mLastRedrawTimeFresh = true;
 
-	bool animStillInProgress = false;
-
 	/* Paint list includes destroyed windows */
 	for (CompWindowList::const_reverse_iterator rit = pl.rbegin ();
 	     rit != pl.rend (); rit++)
@@ -1281,8 +1279,7 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 		if (!curAnim->initialized ())
 		    curAnim->init ();
 
-		if (curAnim->prePreparePaint (msSinceLastPaint))
-		    animStillInProgress = true;
+		curAnim->prePreparePaint (msSinceLastPaint);
 
 		/* TODO optimize grid model by reusing one GridModel
 		if (aw->com.mModel &&
@@ -1345,8 +1342,6 @@ PrivateAnimScreen::preparePaint (int msSinceLastPaint)
 		bool finished = (curAnim->remainingTime () <= 0);
 		if (finished) // Animation is done
 		    windowsFinishedAnimations.push_back (w);
-		else
-		    animStillInProgress = true;
 	    }
 	}
 
@@ -1597,7 +1592,6 @@ PrivateAnimWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
     //w->indexCount = 0; // TODO check if this is still necessary
 
-    // TODO: should only happen for distorting effects
     if (mCurAnimation->requiresTransformedWindow ())
 	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
 

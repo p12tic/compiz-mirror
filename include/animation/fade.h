@@ -14,7 +14,7 @@ public:
      void updateBB (CompOutput &output);
      bool updateBBUsed () { return true; }
      void updateAttrib (GLWindowPaintAttrib &wAttrib);
-     virtual bool requiresTransformedWindow () { return false; }
+     virtual bool requiresTransformedWindow () const { return false; }
      virtual float getFadeProgress () { return progressLinear (); }
 };
 #endif

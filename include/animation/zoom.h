@@ -34,7 +34,7 @@ protected:
      void getZoomProgress (float *moveProgress,
 			   float *scaleProgress,
 			   bool neverSpringy);
-     bool requiresTransformedWindow () { return true; }
+     bool requiresTransformedWindow () const { return true; }
 
      static const float kDurationFactor;
      static const float kSpringyDurationFactor;
@@ -67,6 +67,6 @@ public:
     float getSpringiness () { return 0; }
     bool scaleAroundIcon () { return false; }
     void adjustDuration ();
-    bool requiresTransformedWindow () { return true; }
+    bool requiresTransformedWindow () const { return true; }
 };
 #endif

@@ -15,7 +15,7 @@ public:
     void updateTransform (GLMatrix &wTransform);
     void updateBB (CompOutput &output);
     bool updateBBUsed () { return true; }
-    bool requiresTransformedWindow () { return true; }
+    bool requiresTransformedWindow () const { return true; }
     
 protected:
     bool mUsingTransform; ///< whether transform matrix is used (default: true)
