@@ -82,6 +82,8 @@ protected:
 
     virtual bool using3D () { return false; }
 
+    virtual bool requiresTransformedWindow () const { return true; }
+
     virtual void initGrid ();	///< Initializes grid width/height.
     				///< Default grid size is 2x2.
 				///< Override for custom grid size.
