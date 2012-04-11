@@ -1520,7 +1520,7 @@ DecorWindow::update (bool allowDecoration)
 	if (decorate)
 	    updateFrame ();
 	window->updateWindowOutputExtents ();
-	mOutputRegion = CompRegion (window->outputRect ());
+	mOutputRegion = CompRegion (window->serverOutputRect ());
 	updateGroupShadows ();
 	if (dScreen->cmActive)
 	    cWindow->damageOutputExtents ();
@@ -2760,8 +2760,8 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     updateDecorationScale ();
     updateReg = true;
 
-    mInputRegion = CompRegion (window->inputRect ());
-    mOutputRegion = CompRegion (window->outputRect ());
+    mInputRegion = CompRegion (window->serverInputRect ());
+    mOutputRegion = CompRegion (window->serverOutputRect ());
     if (dScreen->cmActive && mClipGroup)
 	updateGroupShadows ();
 
@@ -3008,8 +3008,8 @@ DecorWindow::DecorWindow (CompWindow *w) :
     isSwitcher (false),
     frameExtentsRequested (false),
     mClipGroup (NULL),
-    mOutputRegion (window->outputRect ()),
-    mInputRegion (window->inputRect ())
+    mOutputRegion (window->serverOutputRect ()),
+    mInputRegion (window->serverInputRect ())
 {
     WindowInterface::setHandler (window);
 
