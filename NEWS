@@ -1,10 +1,17 @@
-Release 0.9.7.6 (2012-XX-YY Sam Spilsbury <sam.spilsbury@canonical.com>)
+Release 0.9.7.6 (2012-04-06 Sam Spilsbury <sam.spilsbury@canonical.com>)
 ========================================================================
 
 Bugs fixed (https://launchpad.net/compiz-core/+milestone/0.9.7.6)
 
     968985 - Memory leak in dlloaderListPlugins
     969102 - priv->invisible is not updated when the window is mapped
+    919139 - window management, multi-monitor - In multi-monitor
+             environment, windows should spread on the
+             monitor in which they reside
+    931883 - Improve performace of the shadow clipping code
+    969101 - DecorWindow::computeShadowRegion called way too much
+
+Use gtest_add_tests for more detailed testing output
 
 
 Release 0.9.7.4 (2012-04-02 Daniel van Vugt <daniel.van.vugt@canonical.com>)
