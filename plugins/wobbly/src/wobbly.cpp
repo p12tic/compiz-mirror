@@ -1448,9 +1448,9 @@ WobblyScreen::preparePaint (int msSinceLastPaint)
 			else
 			    cw->addDamage ();
 
-			int wx = w->geometry ().x ();
-			int wy = w->geometry ().y ();
-			int borderWidth = w->geometry ().border ();
+			int wx = w->serverGeometry ().x ();
+			int wy = w->serverGeometry ().y ();
+			int borderWidth = w->serverGeometry ().border ();
 
 			// Damage a box that's 1-pixel larger on each side
 			// to prevent artifacts
@@ -2192,7 +2192,7 @@ WobblyWindow::grabNotify (int          x,
 	    if (wScreen->yConstrained)
 	    {
 		int output =
-		    ::screen->outputDeviceForGeometry (window->geometry ());
+		    ::screen->outputDeviceForGeometry (window->serverGeometry ());
 		wScreen->constraintBox =
 		    &::screen->outputDevs ()[output].workArea ();
 	    }
