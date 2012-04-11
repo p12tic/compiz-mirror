@@ -1521,7 +1521,7 @@ PrivateWindow::restack (Window aboveId)
 }
 
 bool
-CompWindow::resize (const XWindowAttributes &attr)
+CompWindow::resize (XWindowAttributes attr)
 {
     return resize (Geometry (attr.x, attr.y, attr.width, attr.height,
 			     attr.border_width));
@@ -1606,7 +1606,7 @@ PrivateWindow::resize (int          x,
 }
 
 bool
-CompWindow::resize (const CompWindow::Geometry &gm)
+CompWindow::resize (CompWindow::Geometry gm)
 {
     XWindowChanges xwc = XWINDOWCHANGES_INIT;
     unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
