@@ -1520,6 +1520,8 @@ DecorWindow::update (bool allowDecoration)
 	if (decorate)
 	    updateFrame ();
 	window->updateWindowOutputExtents ();
+	mOutputRegion = CompRegion (window->outputRect ());
+	updateGroupShadows ();
 	if (dScreen->cmActive)
 	    cWindow->damageOutputExtents ();
 	updateDecorationScale ();
@@ -2930,7 +2932,7 @@ DecorScreen::DecorScreen (CompScreen *s) :
 				   None,
 				   boost::shared_array <decor_quad_t> (NULL),
 				   0)),
-    mMenusClipGroup (CompMatch ("type=Dock | type=DropdownMenu | type=Menu | type=PopupMenu"))
+    mMenusClipGroup (CompMatch ("type=Dock | type=DropdownMenu | type=PopupMenu"))
 {
     supportingDmCheckAtom =
 	XInternAtom (s->dpy (), DECOR_SUPPORTING_DM_CHECK_ATOM_NAME, 0);
