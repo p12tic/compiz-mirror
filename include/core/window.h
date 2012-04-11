@@ -410,9 +410,9 @@ class CompWindow :
 
 	bool hasUnmapReference ();
 
-	bool resize (const XWindowAttributes &);
+	bool resize (XWindowAttributes);
 
-	bool resize (const Geometry &);
+	bool resize (Geometry);
 
 	bool resize (int x, int y, int width, int height,
 		     int border = 0);
