@@ -1649,8 +1649,8 @@ ResizeWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	rScreen->getPaintRectangle (&box);
 	getStretchScale (&box, &xScale, &yScale);
 
-	x = window->geometry (). x ();
-	y = window->geometry (). y ();
+	x = window->serverGeometry (). x ();
+	y = window->serverGeometry (). y ();
 
 	xOrigin = x - window->border ().left;
 	yOrigin = y - window->border ().top;
