@@ -2766,6 +2766,9 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	updateGroupShadows ();
 
     window->resizeNotify (dx, dy, dwidth, dheight);
+
+    /* FIXME: remove */
+    CompositeScreen::get (screen)->damageScreen ();
 }
 
 
