@@ -6451,7 +6451,7 @@ CompWindow::updateFrameRegion ()
 	CompRect   r;
 	int        x, y;
 
-	priv->frameRegion -= infiniteRegion;
+	priv->frameRegion = emptyRegion;
 
 	updateFrameRegion (priv->frameRegion);
 
