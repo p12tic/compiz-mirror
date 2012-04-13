@@ -1876,7 +1876,7 @@ getCurrentProfileName (void)
 	return ret;
     }
 
-    return strdup (DEFAULTPROF);
+    return NULL;
 }
 
 static Bool
@@ -1927,7 +1927,8 @@ checkProfile (CCSContext *context)
 	updateCurrentProfileName (currentProfile);
     }
 
-    free (lastProfile);
+    if (lastProfile)
+	free (lastProfile);
 
     return TRUE;
 }
@@ -2069,13 +2070,13 @@ getExistingProfiles (CCSContext *context)
     g_slist_free (data);
 
     name = getCurrentProfileName ();
-    if (strcmp (name, DEFAULTPROF) != 0)
+    if (name && strcmp (name, DEFAULTPROF) != 0)
     {
 	CCSString *str = calloc (1, sizeof (CCSString));
 	str->value = name;
 	ret = ccsStringListAppend (ret, str);
     }
-    else
+    else if (name)
 	free (name);
 
     return ret;
