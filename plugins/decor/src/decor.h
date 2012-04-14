@@ -95,6 +95,9 @@ class Decoration {
 
 	typedef boost::shared_ptr <Decoration> Ptr;
 
+	static const unsigned int UpdateRequested = 1 << 0;
+	static const unsigned int UpdatesPending = 1 << 1;
+
 	static Decoration::Ptr create (Window        id,
 				       long          *prop,
 				       unsigned int  size,
@@ -133,6 +136,8 @@ class Decoration {
 	boost::shared_array <decor_quad_t> quad;
 	int                       nQuad;
 	int                       type;
+
+	unsigned int              updateState;
 };
 
 class DecorationList
@@ -215,6 +220,8 @@ class DecorScreen :
 	Atom shadowColorAtom;
 	Atom shadowInfoAtom;
 	Atom decorSwitchWindowAtom;
+	Atom decorPendingAtom;
+	Atom decorRequestAtom;
 
 	Window dmWin;
 	int    dmSupports;

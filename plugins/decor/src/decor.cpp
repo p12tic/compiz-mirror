@@ -362,6 +362,8 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
 
 DecorTexture::~DecorTexture ()
 {
+    decor_post_delete_pixmap (screen->dpy (), pixmap);
+
     if (damage)
 	XDamageDestroy (screen->dpy (), damage);
 }
@@ -602,7 +604,8 @@ Decoration::Decoration (int   type,
     frameActions (frameActions),
     quad (quad),
     nQuad (nQuad),
-    type (type)
+    type (type),
+    updateState (0)
 {
     int		    left, right, top, bottom;
     int		    x1, y1, x2, y2;
@@ -706,6 +709,19 @@ DecorationList::updateDecoration (Window   id,
     Atom	    actual;
     int		    result, format;
     unsigned int    type;
+
+    /* Dispatch any new updates */
+    foreach (const Decoration::Ptr &d, mList)
+    {
+	if (d->updateState & Decoration::UpdatesPending)
+	    decor_post_generate_request (screen->dpy (),
+					 id,
+					 d->frameType,
+					 d->frameState,
+					 d->frameActions);
+
+	d->updateState = 0;
+    }
 
     result = XGetWindowProperty (screen->dpy (), id,
                                  decorAtom, 0L,
@@ -2304,6 +2320,48 @@ DecorScreen::handleEvent (XEvent *event)
 		if (w)
 		    DecorWindow::get (w)->update (true);
 	    }
+	    /* A decoration is pending creation, allow it to be created */
+	    if (event->xclient.message_type == decorPendingAtom)
+	    {
+		CompWindow *w = screen->findWindow (event->xclient.window);
+
+		if (w)
+		{
+		    DecorWindow *dw = DecorWindow::get (w);
+		    bool found = false;
+		    
+		    foreach (const Decoration::Ptr &d, dw->decor.mList)
+		    {
+			if (d->frameType == static_cast <unsigned int> (event->xclient.data.l[0]) &&
+			    d->frameState == static_cast <unsigned int> (event->xclient.data.l[1]) &&
+			    d->frameActions == static_cast <unsigned int> (event->xclient.data.l[2]))
+			{
+			    if (d->updateState & Decoration::UpdateRequested)
+				d->updateState |= Decoration::UpdatesPending;
+			    else
+			    {
+				d->updateState |= Decoration::UpdateRequested;
+
+				decor_post_generate_request (screen->dpy (),
+							     event->xclient.window,
+							     event->xclient.data.l[0],
+							     event->xclient.data.l[1],
+							     event->xclient.data.l[2]);
+			    }
+
+			    found = true;
+			    break;
+			}
+		    }
+
+		    if (!found)
+		        decor_post_generate_request (screen->dpy (),
+						     event->xclient.window,
+						     event->xclient.data.l[0],
+						     event->xclient.data.l[1],
+						     event->xclient.data.l[2]);
+		}
+	    }
 	default:
 	    /* Check for damage events. If the output or input window
 	     * or a texture is updated then damage output extents.
@@ -2377,11 +2435,10 @@ DecorScreen::handleEvent (XEvent *event)
 		{
 		    DECOR_WINDOW (w);
 
-		    if (dw->wd &&
-			dw->mGrabMask & CompWindowGrabResizeMask)
+		    if (dw->wd)
 		    {
-			if ((dw->wd->decor->minWidth > w->serverGeometry ().width () ||
-			     dw->wd->decor->minHeight > w->serverGeometry ().height ()))
+			if ((dw->wd->decor->minWidth < w->serverGeometry ().width () ||
+			     dw->wd->decor->minHeight < w->serverGeometry ().height ()))
 			    dw->updateDecoration ();
 		    }
 		    else
@@ -2736,19 +2793,14 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 void
 DecorWindow::grabNotify (int x, int y, unsigned int state, unsigned int mask)
 {
-    mGrabMask = mask;
-
     window->grabNotify (x, y, state, mask);
 }
 
 void
 DecorWindow::ungrabNotify ()
 {
-    if (mGrabMask & CompWindowGrabResizeMask)
-    {
-	updateDecoration ();
-	update (true);
-    }
+    updateDecoration ();
+    update (true);
 
     window->ungrabNotify ();
 }
@@ -2978,6 +3030,10 @@ DecorScreen::DecorScreen (CompScreen *s) :
 	XInternAtom (s->dpy (), DECOR_TYPE_WINDOW_ATOM_NAME, 0);
     decorSwitchWindowAtom =
 	XInternAtom (s->dpy (), DECOR_SWITCH_WINDOW_ATOM_NAME, 0);
+    decorPendingAtom =
+	XInternAtom (s->dpy (), "_COMPIZ_DECOR_PENDING", 0);
+    decorRequestAtom =
+	XInternAtom (s->dpy (), "_COMPIZ_DECOR_REQUEST", 0);
     requestFrameExtentsAtom =
         XInternAtom (s->dpy (), "_NET_REQUEST_FRAME_EXTENTS", 0);
     shadowColorAtom =
@@ -3033,8 +3089,7 @@ DecorWindow::DecorWindow (CompWindow *w) :
     frameExtentsRequested (false),
     mClipGroup (NULL),
     mOutputRegion (window->serverOutputRect ()),
-    mInputRegion (window->serverInputRect ()),
-    mGrabMask (0)
+    mInputRegion (window->serverInputRect ())
 {
     WindowInterface::setHandler (window);
 
