@@ -2435,14 +2435,12 @@ DecorScreen::handleEvent (XEvent *event)
 		{
 		    DECOR_WINDOW (w);
 
-		    if (dw->wd)
+		    if (dw->wd && dw->wd->decor)
 		    {
 			if ((dw->wd->decor->minWidth < w->serverGeometry ().width () ||
 			     dw->wd->decor->minHeight < w->serverGeometry ().height ()))
 			    dw->updateDecoration ();
 		    }
-		    else
-			dw->updateDecoration ();
 
 		    dw->update (true);
 		}
