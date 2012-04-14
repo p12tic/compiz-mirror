@@ -342,8 +342,6 @@ class DecorWindow :
 	DecorClipGroupInterface *mClipGroup;
 	CompRegion		mOutputRegion;
 	CompRegion              mInputRegion;
-
-	unsigned int mGrabMask;
 };
 
 class DecorPluginVTable :

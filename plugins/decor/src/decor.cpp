@@ -2799,7 +2799,6 @@ DecorWindow::grabNotify (int x, int y, unsigned int state, unsigned int mask)
 void
 DecorWindow::ungrabNotify ()
 {
-    updateDecoration ();
     update (true);
 
     window->ungrabNotify ();
