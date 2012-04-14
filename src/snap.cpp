@@ -60,7 +60,7 @@ SnapWindow::move (int dx, int dy, bool sync)
 void
 SnapWindow::resize (int dx, int dy, int dwidth, int dheight)
 {
-    CompWindow::Geometry geometry = window->geometry ();
+    const CompWindow::Geometry &geometry = window->serverGeometry ();
     skipNotify = true;
     window->resize (geometry.x () + dx, geometry.y () + dy,
 		    geometry.width () + dwidth, geometry.height () + dheight,
@@ -192,7 +192,7 @@ SnapWindow::updateWindowsEdges ()
 	    continue;
 	}
 
-	input = w->borderRect ();
+	input = w->serverBorderRect ();
 	addEdge (w->id (), input.top (), input.left (),
 		 input.right (), TopEdge, false);
 	addEdge (w->id (), input.bottom (), input.left (),
@@ -456,7 +456,7 @@ SnapWindow::moveCheckNearestEdge (int position,
 void
 SnapWindow::moveCheckEdges (int snapDirection)
 {
-    CompRect input (window->borderRect ());
+    CompRect input (window->serverBorderRect ());
     moveCheckNearestEdge (input.left (), input.top (), input.bottom (),
 			  true, RightEdge, HorizontalSnap & snapDirection);
     moveCheckNearestEdge (input.right (), input.top (), input.bottom (),
@@ -548,7 +548,7 @@ SnapWindow::resizeCheckNearestEdge (int position,
 void
 SnapWindow::resizeCheckEdges (int dx, int dy, int dwidth, int dheight)
 {
-    CompRect input (window->borderRect ());
+    CompRect input (window->serverBorderRect ());
 
     resizeCheckNearestEdge (input.left (), input.top (), input.bottom (),
 			    true, RightEdge, HorizontalSnap);
