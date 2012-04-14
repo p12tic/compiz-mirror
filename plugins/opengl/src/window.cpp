@@ -55,6 +55,7 @@ PrivateGLWindow::PrivateGLWindow (CompWindow *w,
     textures (),
     regions (),
     updateState (UpdateRegion | UpdateMatrix),
+    needsRebind (true),
     clip (),
     bindFailed (false),
     geometry (),
@@ -95,18 +96,30 @@ bool
 GLWindow::bind ()
 {
     if ((!priv->cWindow->pixmap () && !priv->cWindow->bind ()))
-	return false;
+    {
+	if (!priv->textures.empty ())
+	{
+	    /* Getting a new pixmap failed, recycle the old texture */
+	    priv->needsRebind = false;
+	    return true;
+	}
+    }
 
-    priv->textures =
+    GLTexture::List textures =
 	GLTexture::bindPixmapToTexture (priv->cWindow->pixmap (),
 					priv->cWindow->size ().width (),
 					priv->cWindow->size ().height (),
 					priv->window->depth ());
-    if (priv->textures.empty ())
+    if (textures.empty ())
     {
 	compLogMessage ("opengl", CompLogLevelInfo,
 			"Couldn't bind redirected window 0x%x to "
 			"texture\n", (int) priv->window->id ());
+    }
+    else
+    {
+	priv->textures = textures;
+	priv->needsRebind = false;
     }
 
     priv->updateState = PrivateGLWindow::UpdateRegion | PrivateGLWindow::UpdateMatrix;
@@ -117,12 +130,12 @@ GLWindow::bind ()
 void
 GLWindow::release ()
 {
-    priv->textures.clear ();
-
+    /* Release the pixmap but don't release
+     * the texture (yet) */
     if (priv->cWindow->pixmap ())
-    {
 	priv->cWindow->release ();
-    }
+
+    priv->needsRebind = true;
 }
 
 bool
@@ -300,6 +313,13 @@ GLWindow::Geometry::moreIndices (int newSize)
 const GLTexture::List &
 GLWindow::textures () const
 {
+    static const GLTexture::List emptyList;
+
+    /* No pixmap backs this window, let
+     * users know that the window needs rebinding */
+    if (priv->needsRebind)
+	return emptyList;
+
     return priv->textures;
 }
 

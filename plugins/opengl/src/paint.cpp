@@ -1194,7 +1194,7 @@ GLWindow::glDraw (const GLMatrix     &transform,
 	!priv->cWindow->damaged ())
 	return true;
 
-    if (priv->textures.empty () && !bind ())
+    if (textures ().empty () && !bind ())
 	return false;
 
     if (mask & PAINT_WINDOW_TRANSLUCENT_MASK)
@@ -1216,13 +1216,13 @@ GLWindow::glDraw (const GLMatrix     &transform,
     if (priv->updateState & PrivateGLWindow::UpdateRegion)
 	priv->updateWindowRegions ();
 
-    for (unsigned int i = 0; i < priv->textures.size (); i++)
+    for (unsigned int i = 0; i < textures ().size (); i++)
     {
 	ml[0] = priv->matrices[i];
 	priv->geometry.reset ();
 	glAddGeometry (ml, priv->regions[i], reg);
 	if (priv->geometry.vCount)
-	    glDrawTexture (priv->textures[i], fragment, mask);
+	    glDrawTexture (textures ()[i], fragment, mask);
     }
 
     return true;

@@ -128,6 +128,9 @@ CompositeWindow::bind ()
 	/* We have to grab the server here to make sure that window
 	   is mapped when getting the window pixmap */
 	XGrabServer (screen->dpy ());
+
+	/* Flush changes to the server and wait for it to process them */
+	XSync (screen->dpy (), false);
 	XGetWindowAttributes (screen->dpy (),
 			      ROOTPARENT (priv->window), &attr);
 	if (attr.map_state != IsViewable)
@@ -557,10 +560,6 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 {
     window->resizeNotify (dx, dy, dwidth, dheight);
 
-    Pixmap pixmap = None;
-    CompSize size = CompSize ();
-
-
     if (window->shaded () || (window->isViewable ()))
     {
 	int x, y, x1, x2, y1, y2;
@@ -576,31 +575,6 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	     window->output ().bottom - dy - dheight;
 
 	cScreen->damageRegion (CompRegion (CompRect (x1, y1, x2 - x1, y2 - y1)));
-    }
-
-    if (window->mapNum () && redirected)
-    {
-	unsigned int actualWidth, actualHeight, ui;
-	unsigned int requiredWidth = window->overrideRedirect () ? window->geometry ().widthIncBorders () : window->serverGeometry ().widthIncBorders ();
-	unsigned int requiredHeight = window->overrideRedirect () ? window->geometry ().heightIncBorders () : window->serverGeometry ().heightIncBorders ();
-	Window	     root;
-	Status	     result;
-	int	     i;
-
-	/* Flush changes to the server and wait for it to process them */
-	XSync (screen->dpy (), false);
-
-	pixmap = XCompositeNameWindowPixmap (screen->dpy (), ROOTPARENT (window));
-	result = XGetGeometry (screen->dpy (), pixmap, &root, &i, &i,
-			       &actualWidth, &actualHeight, &ui, &ui);
-	size = CompSize (actualWidth, actualHeight);
-	if (!result ||
-	    actualWidth != requiredWidth ||
-	    actualHeight != requiredHeight)
-	{
-	    XFreePixmap (screen->dpy (), pixmap);
-	    return;
-	}
     }
 
     if (((!window->mapNum () && window->isViewable ()) ||

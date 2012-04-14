@@ -159,6 +159,7 @@ class PrivateGLWindow :
 	GLTexture::MatrixList matrices;
 	CompRegion::Vector    regions;
 	unsigned int          updateState;
+	bool		      needsRebind;
 
 	CompRegion    clip;
 
