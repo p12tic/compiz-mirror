@@ -1977,9 +1977,9 @@ compiz::X11::PendingConfigureEvent::dump ()
 {
     compiz::X11::PendingEvent::dump ();
 
-    compLogMessage ("core", CompLogLevelDebug,  "- x: %i y: %i width: %i height: %i "\
+    compLogMessage ("core", CompLogLevelDebug,  "- x: %i y: %i width: %i height: %i x2: %i y2 %i"\
 						 "border: %i, sibling: 0x%x",
-						 mXwc.x, mXwc.y, mXwc.width, mXwc.height, mXwc.border_width, mXwc.sibling);
+						 mXwc.x, mXwc.y, mXwc.width, mXwc.height, mXwc.x + mXwc.width, mXwc.y + mXwc.height, mXwc.border_width, mXwc.sibling);
 }
 
 bool
@@ -6875,7 +6875,6 @@ PrivateWindow::unreparent ()
     XDestroyWindow (screen->dpy (), serverFrame);
     XDestroyWindow (screen->dpy (), wrapper);
 
-    window->windowNotify (CompWindowNotifyUnreparent);
     /* This window is no longer "managed" in the
      * reparenting sense so clear its pending event
      * queue ... though maybe in future it would
@@ -6886,4 +6885,6 @@ PrivateWindow::unreparent ()
     frame = None;
     wrapper = None;
     serverFrame = None;
+
+    window->windowNotify (CompWindowNotifyUnreparent);
 }

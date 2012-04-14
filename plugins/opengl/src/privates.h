@@ -134,6 +134,11 @@ class PrivateGLWindow :
     public CompositeWindowInterface
 {
     public:
+
+	static const unsigned int UpdateRegion = 1 << 0;
+	static const unsigned int UpdateMatrix = 1 << 1;
+
+    public:
 	PrivateGLWindow (CompWindow *w, GLWindow *gw);
 	~PrivateGLWindow ();
 
@@ -153,7 +158,7 @@ class PrivateGLWindow :
 	GLTexture::List       textures;
 	GLTexture::MatrixList matrices;
 	CompRegion::Vector    regions;
-	bool                  updateReg;
+	unsigned int          updateState;
 
 	CompRegion    clip;
 

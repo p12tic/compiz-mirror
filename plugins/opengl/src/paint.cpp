@@ -1210,26 +1210,19 @@ GLWindow::glDraw (const GLMatrix     &transform,
     //
     priv->gScreen->setTexEnvMode (GL_REPLACE);
 
-    if (priv->textures.size () == 1)
+    if (priv->updateState & PrivateGLWindow::UpdateMatrix)
+	priv->setWindowMatrix ();
+
+    if (priv->updateState & PrivateGLWindow::UpdateRegion)
+	priv->updateWindowRegions ();
+
+    for (unsigned int i = 0; i < priv->textures.size (); i++)
     {
-	ml[0] = priv->matrices[0];
+	ml[0] = priv->matrices[i];
 	priv->geometry.reset ();
-	glAddGeometry (ml, priv->window->region (), reg);
+	glAddGeometry (ml, priv->regions[i], reg);
 	if (priv->geometry.vCount)
-	    glDrawTexture (priv->textures[0], fragment, mask);
-    }
-    else
-    {
-	if (priv->updateReg)
-	    priv->updateWindowRegions ();
-	for (unsigned int i = 0; i < priv->textures.size (); i++)
-	{
-	    ml[0] = priv->matrices[i];
-	    priv->geometry.reset ();
-	    glAddGeometry (ml, priv->regions[i], reg);
-	    if (priv->geometry.vCount)
-		glDrawTexture (priv->textures[i], fragment, mask);
-	}
+	    glDrawTexture (priv->textures[i], fragment, mask);
     }
 
     return true;

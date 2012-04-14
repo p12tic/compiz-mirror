@@ -214,26 +214,6 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 		         const CompRegion   &region,
 		         unsigned int       mask)
 {
-    const CompRegion *preg = NULL;
-
-    if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
-		 PAINT_WINDOW_WITH_OFFSET_MASK)))
-	preg = &region;
-    else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
-	preg = &infiniteRegion;
-    else
-    {
-	tmpRegion = shadowRegion;
-	tmpRegion &= region;
-	preg = &tmpRegion;
-    }
-
-    /* In case some plugin needs to paint us with an offset region */
-    if (preg->isEmpty ())
-	preg = &region;
-
-    const CompRegion &reg (*preg);
-
     if (wd &&
 	wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP)
     {
@@ -241,7 +221,34 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	GLTexture::MatrixList ml (1);
 	mask |= PAINT_WINDOW_BLEND_MASK;
 
+	const CompRegion *preg = NULL;
+
+	if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
+		     PAINT_WINDOW_WITH_OFFSET_MASK)))
+	    preg = &region;
+	else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
+	    preg = &infiniteRegion;
+	else
+	{
+	    tmpRegion = mOutputRegion;
+	    tmpRegion &= region;
+
+	    if (tmpRegion.isEmpty ())
+		preg = &region;
+	    else
+		preg = &shadowRegion;
+	}
+
+	/* In case some plugin needs to paint us with an offset region */
+	if (preg->isEmpty ())
+	    preg = &region;
+
+	const CompRegion &reg (*preg);
+
 	gWindow->geometry ().reset ();
+
+	if (updateReg)
+	    updateDecorationScale ();
 
 	for (int i = 0; i < wd->nQuad; i++)
 	{
@@ -262,8 +269,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    gWindow->glDrawTexture (wd->decor->texture->textures[0],
 				    attrib, mask);
     }
-    else if (wd && !reg.isEmpty () &&
-	     wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW)
+    else if (wd && wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW)
     {
 	GLTexture::MatrixList ml (1);
 
@@ -272,11 +278,14 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	if (gWindow->textures ().empty ())
 	    return;
 
+	if (updateReg)
+	    setDecorationMatrices ();
+
 	if (gWindow->textures ().size () == 1)
 	{
 	    ml[0] = gWindow->matrices ()[0];
 	    gWindow->geometry ().reset ();
-	    gWindow->glAddGeometry (ml, window->frameRegion (), reg);
+	    gWindow->glAddGeometry (ml, window->frameRegion (), region);
 
 	    if (gWindow->geometry ().vCount)
 		gWindow->glDrawTexture (gWindow->textures ()[0], attrib, mask);
@@ -289,7 +298,7 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    {
 		ml[0] = gWindow->matrices ()[i];
 		gWindow->geometry ().reset ();
-		gWindow->glAddGeometry (ml, regions[i], reg);
+		gWindow->glAddGeometry (ml, regions[i], region);
 
 		if (gWindow->geometry ().vCount)
 		    gWindow->glDrawTexture (gWindow->textures ()[i], attrib,
@@ -1040,8 +1049,8 @@ DecorWindow::updateDecorationScale ()
     for (i = 0; i < wd->nQuad; i++)
     {
 	int x, y;
-	unsigned int width = window->geometry ().width ();
-	unsigned int height = window->geometry ().height ();
+	unsigned int width = window->serverGeometry ().width ();
+	unsigned int height = window->serverGeometry ().height ();
 
 	if (window->shaded ())
 	    height = 0;
@@ -1079,8 +1088,8 @@ DecorWindow::updateDecorationScale ()
 bool
 DecorWindow::checkSize (const Decoration::Ptr &decoration)
 {
-    return (decoration->minWidth <= (int) window->geometry ().width () &&
-	    decoration->minHeight <= (int) window->geometry ().height ());
+    return (decoration->minWidth <= (int) window->serverGeometry ().width () &&
+	    decoration->minHeight <= (int) window->serverGeometry ().height ());
 }
 
 /*
@@ -1499,7 +1508,7 @@ DecorWindow::update (bool allowDecoration)
      */
     if (decoration)
     {
-	wd = WindowDecoration::create (decoration);
+	wd = WindowDecoration::create ( decoration);
 	if (!wd)
 	    return false;
 
@@ -1520,6 +1529,8 @@ DecorWindow::update (bool allowDecoration)
 	if (decorate)
 	    updateFrame ();
 	window->updateWindowOutputExtents ();
+
+	updateReg = true;
 	mOutputRegion = CompRegion (window->serverOutputRect ());
 	updateGroupShadows ();
 	if (dScreen->cmActive)
@@ -2103,6 +2114,7 @@ DecorWindow::updateFrameRegion (CompRegion &region)
 	    region += infiniteRegion;
 	}
     }
+
     updateReg = true;
 }
 
@@ -2125,6 +2137,7 @@ DecorWindow::updateWindowRegions ()
 	regions[i].translate (input.x (), input.y ());
 	regions[i] &= window->frameRegion ();
     }
+
     updateReg = false;
 }
 
@@ -2363,7 +2376,16 @@ DecorScreen::handleEvent (XEvent *event)
 		if (w)
 		{
 		    DECOR_WINDOW (w);
-		    dw->updateDecoration ();
+
+		    if (dw->wd &&
+			dw->mGrabMask & CompWindowGrabResizeMask)
+		    {
+			if ((dw->wd->decor->minWidth > w->serverGeometry ().width () ||
+			     dw->wd->decor->minHeight > w->serverGeometry ().height ()))
+			    dw->updateDecoration ();
+		    }
+		    else
+			dw->updateDecoration ();
 
 		    dw->update (true);
 		}
@@ -2698,9 +2720,8 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 	    wd->quad[i].box.x2 += dx;
 	    wd->quad[i].box.y2 += dy;
 	}
-
-	setDecorationMatrices ();
     }
+
     updateReg = true;
 
     mInputRegion.translate (dx, dy);
@@ -2712,30 +2733,24 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
     window->moveNotify (dx, dy, immediate);
 }
 
-/*
- * DecorWindow::resizeTimeout
- *
- * Called from the timeout on ::resizeNotify,
- * set the shading and unshading bits and also
- * updates the decoration. See the comment
- * in ::resizeNotify as to why the timeout
- * is necessary here
- *
- */
-bool
-DecorWindow::resizeTimeout ()
+void
+DecorWindow::grabNotify (int x, int y, unsigned int state, unsigned int mask)
 {
-    if (shading || unshading)
-    {
-	shading = false;
-	unshading = false;
+    mGrabMask = mask;
 
+    window->grabNotify (x, y, state, mask);
+}
+
+void
+DecorWindow::ungrabNotify ()
+{
+    if (mGrabMask & CompWindowGrabResizeMask)
+    {
 	updateDecoration ();
+	update (true);
     }
 
-    if (!window->hasUnmapReference ())
-	update (true);
-    return false;
+    window->ungrabNotify ();
 }
 
 /*
@@ -2749,6 +2764,11 @@ DecorWindow::resizeTimeout ()
 void
 DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 {
+    if (shading || unshading)
+    {
+	shading = false;
+	unshading = false;
+    }
     /* FIXME: we should not need a timer for calling decorWindowUpdate,
        and only call updateWindowDecorationScale if decorWindowUpdate
        returns false. Unfortunately, decorWindowUpdate may call
@@ -2756,7 +2776,6 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
        we never should call a wrapped function that's currently
        processed, we need the timer for the moment. updateWindowOutputExtents
        should be fixed so that it does not emit a resize notification. */
-    resizeUpdate.start (boost::bind (&DecorWindow::resizeTimeout, this), 0);
     updateDecorationScale ();
     updateReg = true;
 
@@ -2764,6 +2783,8 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     mOutputRegion = CompRegion (window->serverOutputRect ());
     if (dScreen->cmActive && mClipGroup)
 	updateGroupShadows ();
+
+    updateReg = true;
 
     window->resizeNotify (dx, dy, dwidth, dheight);
 
@@ -3012,7 +3033,8 @@ DecorWindow::DecorWindow (CompWindow *w) :
     frameExtentsRequested (false),
     mClipGroup (NULL),
     mOutputRegion (window->serverOutputRect ()),
-    mInputRegion (window->serverInputRect ())
+    mInputRegion (window->serverInputRect ()),
+    mGrabMask (0)
 {
     WindowInterface::setHandler (window);
 

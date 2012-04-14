@@ -581,16 +581,22 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     if (window->mapNum () && redirected)
     {
 	unsigned int actualWidth, actualHeight, ui;
+	unsigned int requiredWidth = window->overrideRedirect () ? window->geometry ().widthIncBorders () : window->serverGeometry ().widthIncBorders ();
+	unsigned int requiredHeight = window->overrideRedirect () ? window->geometry ().heightIncBorders () : window->serverGeometry ().heightIncBorders ();
 	Window	     root;
 	Status	     result;
 	int	     i;
+
+	/* Flush changes to the server and wait for it to process them */
+	XSync (screen->dpy (), false);
 
 	pixmap = XCompositeNameWindowPixmap (screen->dpy (), ROOTPARENT (window));
 	result = XGetGeometry (screen->dpy (), pixmap, &root, &i, &i,
 			       &actualWidth, &actualHeight, &ui, &ui);
 	size = CompSize (actualWidth, actualHeight);
-	if (!result || actualWidth != (unsigned int) window->size ().width () ||
-	    actualHeight != (unsigned int) window->size ().height ())
+	if (!result ||
+	    actualWidth != requiredWidth ||
+	    actualHeight != requiredHeight)
 	{
 	    XFreePixmap (screen->dpy (), pixmap);
 	    return;

@@ -54,7 +54,7 @@ PrivateGLWindow::PrivateGLWindow (CompWindow *w,
     gScreen (GLScreen::get (screen)),
     textures (),
     regions (),
-    updateReg (true),
+    updateState (UpdateRegion | UpdateMatrix),
     clip (),
     bindFailed (false),
     geometry (),
@@ -87,6 +87,8 @@ PrivateGLWindow::setWindowMatrix ()
 	matrices[i].x0 -= (input.x () * matrices[i].xx);
 	matrices[i].y0 -= (input.y () * matrices[i].yy);
     }
+
+    updateState &= ~(UpdateMatrix);
 }
 
 bool
@@ -107,8 +109,7 @@ GLWindow::bind ()
 			"texture\n", (int) priv->window->id ());
     }
 
-    priv->setWindowMatrix ();
-    priv->updateReg = true;
+    priv->updateState = PrivateGLWindow::UpdateRegion | PrivateGLWindow::UpdateMatrix;
 
     return true;
 }
@@ -180,8 +181,7 @@ void
 PrivateGLWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 {
     window->resizeNotify (dx, dy, dwidth, dheight);
-    setWindowMatrix ();
-    updateReg = true;
+    updateState = PrivateGLWindow::UpdateMatrix | PrivateGLWindow::UpdateRegion;
     if (!window->hasUnmapReference ())
 	gWindow->release ();
 }
@@ -190,8 +190,10 @@ void
 PrivateGLWindow::moveNotify (int dx, int dy, bool now)
 {
     window->moveNotify (dx, dy, now);
-    updateReg = true;
-    setWindowMatrix ();
+    updateState = PrivateGLWindow::UpdateMatrix;
+
+    foreach (CompRegion &r, regions)
+	r.translate (dx, dy);
 }
 
 void
@@ -338,7 +340,7 @@ void
 PrivateGLWindow::updateFrameRegion (CompRegion &region)
 {
     window->updateFrameRegion (region);
-    updateReg = true;
+    updateState = PrivateGLWindow::UpdateRegion;
 }
 
 void
@@ -354,7 +356,7 @@ PrivateGLWindow::updateWindowRegions ()
 	regions[i].translate (input.x (), input.y ());
 	regions[i] &= window->region ();
     }
-    updateReg = false;
+    updateState &= ~(UpdateRegion);
 }
 
 unsigned int

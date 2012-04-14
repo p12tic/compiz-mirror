@@ -159,7 +159,7 @@ struct ScaledQuad {
 
 class WindowDecoration {
     public:
-	static WindowDecoration * create (const Decoration::Ptr &);
+	static WindowDecoration * create (const Decoration::Ptr &d);
 	static void destroy (WindowDecoration *);
 
     public:
@@ -245,12 +245,12 @@ class DecorWindow :
 	void getOutputExtents (CompWindowExtents&);
 	void resizeNotify (int, int, int, int);
 	void moveNotify (int, int, bool);
+	void grabNotify (int x, int y, unsigned int state, unsigned int mask);
+	void ungrabNotify ();
 	void stateChangeNotify (unsigned int);
 	void updateFrameRegion (CompRegion &region);
 
 	bool damageRect (bool, const CompRect &);
-
-	void computeShadowRegion ();
 
 	bool glDraw (const GLMatrix &, GLFragment::Attrib &,
 		     const CompRegion &, unsigned int);
@@ -335,6 +335,8 @@ class DecorWindow :
 	DecorClipGroupInterface *mClipGroup;
 	CompRegion		mOutputRegion;
 	CompRegion              mInputRegion;
+
+	unsigned int mGrabMask;
 };
 
 class DecorPluginVTable :
