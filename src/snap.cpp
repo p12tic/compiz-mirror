@@ -728,6 +728,9 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	return;
     }
 
+    dx = window->serverGeometry ().x () - snapGeometry.x ();
+    dy = window->serverGeometry ().y () - snapGeometry.y ();
+
     // don't snap maximized windows
     if (window->state () & CompWindowStateMaximizedHorzMask)
     {
@@ -745,9 +748,6 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
     if (!ss->snapping)
 	return;
 
-    dx = snapGeometry.x () - window->serverGeometry ().x ();
-    dy = snapGeometry.y () - window->serverGeometry ().y ();
-
     // apply edge resistance
     if (ss->optionGetSnapTypeMask () & SnapTypeEdgeResistanceMask)
     {
@@ -756,11 +756,11 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	// by buffered dx - dx
 	if (!snapGeometry.isEmpty () && snapDirection & HorizontalSnap)
 	{
-	    m_dx += -dx;
+	    m_dx += dx;
 	    if (m_dx < ss->optionGetResistanceDistance ()
 		&& m_dx > -ss->optionGetResistanceDistance ())
 	    {
-		move (dx, 0, false);
+		move (-dx, 0, false);
 	    }
 	    else
 	    {
@@ -772,11 +772,11 @@ SnapWindow::moveNotify (int dx, int dy, bool immediate)
 	// Same for vertical snapping and dy
 	if (!snapGeometry.isEmpty () && snapDirection & VerticalSnap)
 	{
-	    m_dy += -dy;
+	    m_dy += dy;
 	    if (m_dy < ss->optionGetResistanceDistance ()
 		&& m_dy > -ss->optionGetResistanceDistance ())
 	    {
-		move (0, dy, false);
+		move (0, -dy, false);
 	    }
 	    else
 	    {
