@@ -1566,18 +1566,17 @@ PrivateWindow::resize (const CompWindow::Geometry &gm)
 			    gm.width (), gm.height (),
 			    gm.border ());
 
+	priv->invisible = priv->isInvisible ();
+
 	if (priv->attrib.override_redirect)
 	{
+	    if (priv->mapNum)
+		priv->updateRegion ();
+
 	    priv->serverGeometry = priv->geometry;
 	    priv->serverFrameGeometry = priv->frameGeometry;
+	    window->resizeNotify (dx, dy, dwidth, dheight);
 	}
-
-	if (priv->mapNum && attrib.override_redirect)
-	    priv->updateRegion ();
-
-	window->resizeNotify (dx, dy, dwidth, dheight);
-
-	priv->invisible = priv->isInvisible ();
     }
     else if (priv->geometry.x () != gm.x () || priv->geometry.y () != gm.y ())
     {
@@ -2971,9 +2970,6 @@ void
 PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 				   XWindowChanges *xwc)
 {
-    int dx = valueMask & CWX ? xwc->x - serverGeometry.x () : 0;
-    int dy = valueMask & CWY ? xwc->y - serverGeometry.y () : 0;
-
     unsigned int frameValueMask = 0;
 
     if (id == screen->root ())
@@ -2989,6 +2985,24 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     xwc->width = valueMask & CWWidth ? xwc->width : serverGeometry.width ();
     xwc->height = valueMask & CWHeight ? xwc->height : serverGeometry.height ();
     xwc->border_width = valueMask & CWBorderWidth ? xwc->border_width : serverGeometry.border ();
+
+    /* Don't allow anything that might generate a BadValue */
+    if (valueMask & CWWidth && !xwc->width)
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Attempted to set < 1 width on a window");
+	xwc->width = 1;
+    }
+
+    if (valueMask & CWHeight && !xwc->height)
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Attempted to set < 1 height on a window");
+	xwc->height = 1;
+    }
+
+    int dx = valueMask & CWX ? xwc->x - serverGeometry.x () : 0;
+    int dy = valueMask & CWY ? xwc->y - serverGeometry.y () : 0;
+    int dwidth = valueMask & CWWidth ? xwc->width - serverGeometry.width () : 0;
+    int dheight = valueMask & CWHeight ? xwc->height - serverGeometry.height () : 0;
 
     /* FIXME: This is a total fallacy for the reparenting case
      * at least since the client doesn't actually move here, it only
@@ -3088,18 +3102,6 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    frameValueMask &= ~(CWHeight);
     }
 
-    /* Don't allow anything that might generate a BadValue */
-    if (valueMask & CWWidth && !xwc->width)
-    {
-	compLogMessage ("core", CompLogLevelWarn, "Attempted to set < 1 width on a window");
-	xwc->width = 1;
-    }
-
-    if (valueMask & CWHeight && !xwc->height)
-    {
-	compLogMessage ("core", CompLogLevelWarn, "Attempted to set < 1 height on a window");
-	xwc->height = 1;
-    }
 
     if (valueMask & CWStackMode &&
         ((xwc->stack_mode != TopIf) && (xwc->stack_mode != BottomIf) && (xwc->stack_mode != Opposite) &&
@@ -3225,6 +3227,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	if (valueMask & (CWWidth | CWHeight))
 	{
 	    updateRegion ();
+	    window->resizeNotify (dx, dy, dwidth, dheight);
 	}
 	else if (valueMask & (CWX | CWY))
 	{
