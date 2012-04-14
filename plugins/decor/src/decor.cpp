@@ -2377,14 +2377,8 @@ DecorScreen::handleEvent (XEvent *event)
 		{
 		    DECOR_WINDOW (w);
 
-		    if (dw->wd &&
-			dw->mGrabMask & CompWindowGrabResizeMask)
-		    {
-			if ((dw->wd->decor->minWidth > w->serverGeometry ().width () ||
-			     dw->wd->decor->minHeight > w->serverGeometry ().height ()))
-			    dw->updateDecoration ();
-		    }
-		    else
+		    if ((dw->wd->decor->minWidth < w->serverGeometry ().width () ||
+		         dw->wd->decor->minHeight < w->serverGeometry ().height ()))
 			dw->updateDecoration ();
 
 		    dw->update (true);
@@ -2736,19 +2730,13 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 void
 DecorWindow::grabNotify (int x, int y, unsigned int state, unsigned int mask)
 {
-    mGrabMask = mask;
-
     window->grabNotify (x, y, state, mask);
 }
 
 void
 DecorWindow::ungrabNotify ()
 {
-    if (mGrabMask & CompWindowGrabResizeMask)
-    {
-	updateDecoration ();
-	update (true);
-    }
+    update (true);
 
     window->ungrabNotify ();
 }
@@ -3033,8 +3021,7 @@ DecorWindow::DecorWindow (CompWindow *w) :
     frameExtentsRequested (false),
     mClipGroup (NULL),
     mOutputRegion (window->serverOutputRect ()),
-    mInputRegion (window->serverInputRect ()),
-    mGrabMask (0)
+    mInputRegion (window->serverInputRect ())
 {
     WindowInterface::setHandler (window);
 
