@@ -642,8 +642,7 @@ resizeTerminate (CompAction         *action,
 	    w->configureXWindow (mask, &xwc);
 	}
 
-	if (!(mask & (CWWidth | CWHeight)))
-	    rs->finishResizing ();
+	rs->finishResizing ();
 
 	if (rs->grabIndex)
 	{
@@ -1507,15 +1506,6 @@ ResizeScreen::handleEvent (XEvent *event)
 		updateWindowSize ();
 	}
     }
-}
-
-void
-ResizeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
-{
-    window->resizeNotify (dx, dy, dwidth, dheight);
-
-    if (rScreen->w == window && !rScreen->grabIndex)
-	rScreen->finishResizing ();
 }
 
 void
