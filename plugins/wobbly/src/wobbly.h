@@ -300,6 +300,8 @@ public:
     bool	 grabbed;
     bool	 velocity;
     unsigned int state;
+
+    CompWindow::Geometry dropGeometry;
 };
 
 class WobblyPluginVTable :

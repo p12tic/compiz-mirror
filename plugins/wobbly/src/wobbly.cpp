@@ -71,9 +71,9 @@ WobblyWindow::findNextWestEdge (Object *object)
 	    }
 	    else if (!p->invisible () && (p->type () & SNAP_WINDOW_TYPE))
 	    {
-		s = p->geometry ().y () - p->border ().top -
+		s = p->serverGeometry ().y () - p->border ().top -
 		    window->output ().top;
-		e = p->geometry ().y () + p->height () + p->border ().bottom +
+		e = p->serverGeometry ().y () + p->height () + p->border ().bottom +
 		    window->output ().bottom;
 	    }
 	    else
@@ -102,7 +102,7 @@ WobblyWindow::findNextWestEdge (Object *object)
 		if (p->mapNum () && p->struts ())
 		    v = p->struts ()->left.x + p->struts ()->left.width;
 		else
-		    v = p->geometry ().x () + p->width () +
+		    v = p->serverGeometry ().x () + p->width () +
 			p->border ().right;
 
 		if (v <= x)
@@ -179,9 +179,9 @@ WobblyWindow::findNextEastEdge (Object *object)
 	    }
 	    else if (!p->invisible () && (p->type () & SNAP_WINDOW_TYPE))
 	    {
-		s = p->geometry ().y () - p->border ().top -
+		s = p->serverGeometry ().y () - p->border ().top -
 		    window->output ().top;
-		e = p->geometry ().y () + p->height () + p->border ().bottom +
+		e = p->serverGeometry ().y () + p->height () + p->border ().bottom +
 		    window->output ().bottom;
 	    }
 	    else
@@ -210,7 +210,7 @@ WobblyWindow::findNextEastEdge (Object *object)
 		if (p->mapNum () && p->struts ())
 		    v = p->struts ()->right.x;
 		else
-		    v = p->geometry ().x () - p->border ().left;
+		    v = p->serverGeometry ().x () - p->border ().left;
 
 		if (v >= x)
 		{
@@ -286,9 +286,9 @@ WobblyWindow::findNextNorthEdge (Object *object)
 	    }
 	    else if (!p->invisible () && (p->type () & SNAP_WINDOW_TYPE))
 	    {
-		s = p->geometry ().x () - p->border ().left -
+		s = p->serverGeometry ().x () - p->border ().left -
 		    window->output ().left;
-		e = p->geometry ().x () + p->width () + p->border ().right +
+		e = p->serverGeometry ().x () + p->width () + p->border ().right +
 		    window->output ().right;
 	    }
 	    else
@@ -317,7 +317,7 @@ WobblyWindow::findNextNorthEdge (Object *object)
 		if (p->mapNum () && p->struts ())
 		    v = p->struts ()->top.y + p->struts ()->top.height;
 		else
-		    v = p->geometry ().y () + p->height () + p->border ().bottom;
+		    v = p->serverGeometry ().y () + p->height () + p->border ().bottom;
 
 		if (v <= y)
 		{
@@ -393,9 +393,9 @@ WobblyWindow::findNextSouthEdge (Object *object)
 	    }
 	    else if (!p->invisible () && (p->type () & SNAP_WINDOW_TYPE))
 	    {
-		s = p->geometry ().x () - p->border ().left -
+		s = p->serverGeometry ().x () - p->border ().left -
 		    window->output ().left;
-		e = p->geometry ().x () + p->width () + p->border ().right +
+		e = p->serverGeometry ().x () + p->width () + p->border ().right +
 		    window->output ().right;
 	    }
 	    else
@@ -424,7 +424,7 @@ WobblyWindow::findNextSouthEdge (Object *object)
 		if (p->mapNum () && p->struts ())
 		    v = p->struts ()->bottom.y;
 		else
-		    v = p->geometry ().y () - p->border ().top;
+		    v = p->serverGeometry ().y () - p->border ().top;
 
 		if (v >= y)
 		{
@@ -1311,7 +1311,7 @@ WobblyWindow::isWobblyWin ()
     if (window->width () == 1 && window->height () == 1)
 	return false;
 
-    CompWindow::Geometry &geom = window->geometry ();
+    CompWindow::Geometry &geom = window->serverGeometry ();
 
     /* avoid fullscreen windows */
     if (geom.x () <= 0 &&
@@ -1406,23 +1406,16 @@ WobblyScreen::preparePaint (int msSinceLastPaint)
 			    }
 			}
 		    }
-		    else
+		    else if (ww->dropGeometry == w->serverGeometry ())
 		    {
 			ww->model = 0;
 
-			if (w->geometry ().x () == w->serverX () &&
-			    w->geometry ().y () == w->serverY ())
-			{
-			    w->move (model->topLeft.x +
-				     w->output ().left -
-				     w->geometry ().x (),
-				     model->topLeft.y +
-				     w->output ().top -
-				     w->geometry ().y (),
-				     true);
-			    w->syncPosition ();
-			}
+			XWindowChanges xwc;
 
+			xwc.x = model->topLeft.x + w->output ().left;
+			xwc.y = model->topLeft.y + w->output ().top;
+
+			w->configureXWindow (CWX | CWY, &xwc);
 			ww->model = model;
 		    }
 
@@ -2128,10 +2121,12 @@ WobblyWindow::grabNotify (int          x,
     {
 	wScreen->grabMask   = mask;
 	wScreen->grabWindow = window;
+	dropGeometry = CompWindow::Geometry (0, 0, 0, 0, 0);
     }
     wScreen->moveWindow = false;
 
-    if ((mask & CompWindowGrabButtonMask) &&
+    if (mask & (CompWindowGrabButtonMask) &&
+	mask & (CompWindowGrabMoveMask) &&
 	wScreen->optionGetMoveWindowMatch ().evaluate (window) &&
 	isWobblyWin ())
     {
@@ -2262,6 +2257,8 @@ WobblyWindow::ungrabNotify ()
 	}
 
 	grabbed = false;
+
+	dropGeometry = window->serverGeometry ();
     }
 
     window->ungrabNotify ();
