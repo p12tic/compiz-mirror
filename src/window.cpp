@@ -6889,5 +6889,6 @@ PrivateWindow::unreparent ()
     wrapper = None;
     serverFrame = None;
 
+    // Finally, (i.e. after updating state) notify the change
     window->windowNotify (CompWindowNotifyUnreparent);
 }
