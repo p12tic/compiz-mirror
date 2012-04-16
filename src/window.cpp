@@ -3235,12 +3235,12 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    inputRegion.translate (dx, dy);
 	    if (!frameRegion.isEmpty ())
 		frameRegion.translate (dx, dy);
-	}
 
-	if (dx || dy)
-	{
-	    window->moveNotify (dx, dy, priv->nextMoveImmediate);
-	    priv->nextMoveImmediate = true;
+	    if (dx || dy)
+	    {
+		window->moveNotify (dx, dy, priv->nextMoveImmediate);
+		priv->nextMoveImmediate = true;
+	    }
 	}
     }
 }
