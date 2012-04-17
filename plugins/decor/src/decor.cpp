@@ -1534,11 +1534,9 @@ DecorWindow::update (bool allowDecoration)
 	CompWindowExtents emptyExtents;
 	wd = NULL;
 
-	/* Undecorated windows need to have the
-	 * input and output frame removed and the
-	 * frame window geometry reset */
-	if (decorate)
-	    updateFrame ();
+	/* updateFrame will destroy any existing frames, and WON'T create
+	 * a new one because wd == NULL */
+	updateFrame ();
 
 	memset (&emptyExtents, 0, sizeof (CompWindowExtents));
 
@@ -1614,8 +1612,8 @@ DecorWindow::updateFrame ()
      * actually be decorated */
     if (!wd || !(window->border ().left || window->border ().right ||
 		 window->border ().top || window->border ().bottom) ||
-        (wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP && inputFrame) ||
-        (wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW && outputFrame))
+        (wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP && outputFrame) ||
+        (wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW && inputFrame))
     {
 	if (inputFrame)
 	{
@@ -2172,7 +2170,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	     * so the frame window for it needs to unmapped manually */
 	    if (isSwitcher)
 	    {
-		update (true);
+		update (false);
 		XUnmapWindow (screen->dpy (), inputFrame);
 		break;
 	    }
@@ -2180,7 +2178,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	    /* For non-switcher windows we need to update the decoration
 	     * anyways, since the window is unmapped. Also need to
 	     * update the shadow clip regions for panels and other windows */
-	    update (true);
+	    update (false);
 
 	    /* Preserve the group shadow update ptr */
 	    DecorClipGroupInterface *clipGroup = mClipGroup;
