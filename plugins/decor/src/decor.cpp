@@ -1614,8 +1614,8 @@ DecorWindow::updateFrame ()
      * actually be decorated */
     if (!wd || !(window->border ().left || window->border ().right ||
 		 window->border ().top || window->border ().bottom) ||
-        (wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP && outputFrame) ||
-        (wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW && inputFrame))
+        (wd->decor->type == WINDOW_DECORATION_TYPE_PIXMAP && inputFrame) ||
+        (wd->decor->type == WINDOW_DECORATION_TYPE_WINDOW && outputFrame))
     {
 	if (inputFrame)
 	{
