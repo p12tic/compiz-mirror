@@ -2368,6 +2368,8 @@ DecorScreen::handleEvent (XEvent *event)
 		    DECOR_WINDOW (w);
 		    dw->updateDecoration ();
 
+                    /* FIXME: This is where the switcher frame is being
+		       recreated */
 		    dw->update (true);
 		}
 	    }
