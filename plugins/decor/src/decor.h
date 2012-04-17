@@ -322,6 +322,7 @@ class DecorWindow :
 
 	CompRegion::Vector regions;
 	bool               updateReg;
+	bool		   updateMatrix;
 
 	CompTimer resizeUpdate;
 	CompTimer moveUpdate;

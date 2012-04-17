@@ -857,11 +857,12 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 {
     CompRegion ret;
     int        x1, x2, y1, y2;
+    const CompWindow::Geometry &geom = attrib.override_redirect ? priv->geometry : priv->serverGeometry;
 
     for (unsigned int i = 0; i < n; i++)
     {
-	x1 = rects[i].x + priv->serverGeometry.border ();
-	y1 = rects[i].y + priv->serverGeometry.border ();
+	x1 = rects[i].x + geom.border ();
+	y1 = rects[i].y + geom.border ();
 	x2 = x1 + rects[i].width;
 	y2 = y1 + rects[i].height;
 
@@ -869,17 +870,17 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 	    x1 = 0;
 	if (y1 < 0)
 	    y1 = 0;
-	if (x2 > priv->serverGeometry.width ())
-	    x2 = priv->serverGeometry.width ();
-	if (y2 > priv->serverGeometry.height ())
-	    y2 = priv->serverGeometry.height ();
+	if (x2 > geom.width ())
+	    x2 = geom.width ();
+	if (y2 > geom.height ())
+	    y2 = geom.height ();
 
 	if (y1 < y2 && x1 < x2)
 	{
-	    x1 += priv->serverGeometry.x ();
-	    y1 += priv->serverGeometry.y ();
-	    x2 += priv->serverGeometry.x ();
-	    y2 += priv->serverGeometry.y ();
+	    x1 += geom.x ();
+	    y1 += geom.y ();
+	    x2 += geom.x ();
+	    y2 += geom.y ();
 
 	    ret += CompRect (x1, y1, x2 - x1, y2 - y1);
 	}
@@ -899,6 +900,7 @@ PrivateWindow::updateRegion ()
     XRectangle r, *boundingShapeRects = NULL;
     XRectangle *inputShapeRects = NULL;
     int	       nBounding = 0, nInput = 0;
+    const CompWindow::Geometry &geom = attrib.override_redirect ? priv->geometry : priv->serverGeometry;
 
     priv->region -= infiniteRegion;
     priv->inputRegion -= infiniteRegion;
@@ -916,10 +918,10 @@ PrivateWindow::updateRegion ()
 					       ShapeInput, &nInput, &order);
     }
 
-    r.x      = -priv->serverGeometry.border ();
-    r.y      = -priv->serverGeometry.border ();
-    r.width  = priv->serverGeometry.widthIncBorders ();
-    r.height = priv->serverGeometry.heightIncBorders ();
+    r.x      = -geom.border ();
+    r.y      = -geom.border ();
+    r.width  = geom.widthIncBorders ();
+    r.height = geom.heightIncBorders ();
 
     if (nBounding < 1)
     {
@@ -1570,11 +1572,12 @@ PrivateWindow::resize (const CompWindow::Geometry &gm)
 
 	if (priv->attrib.override_redirect)
 	{
+	    priv->serverGeometry = priv->geometry;
+	    priv->serverFrameGeometry = priv->frameGeometry;
+
 	    if (priv->mapNum)
 		priv->updateRegion ();
 
-	    priv->serverGeometry = priv->geometry;
-	    priv->serverFrameGeometry = priv->frameGeometry;
 	    window->resizeNotify (dx, dy, dwidth, dheight);
 	}
     }
@@ -6490,6 +6493,10 @@ void
 CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 				   CompWindowExtents *i)
 {
+    /* override redirect windows can't have frame extents */
+    if (priv->attrib.override_redirect)
+	return;
+
     /* Input extents are used for frame size,
      * Border extents used for placement.
      */

@@ -77,7 +77,7 @@ PrivateGLWindow::~PrivateGLWindow ()
 void
 PrivateGLWindow::setWindowMatrix ()
 {
-    CompRect input (window->serverInputRect ());
+    CompRect input (window->overrideRedirect () ? window->inputRect () : window->serverInputRect ());
 
     if (textures.size () != matrices.size ())
 	matrices.resize (textures.size ());
