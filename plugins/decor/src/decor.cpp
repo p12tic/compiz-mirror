@@ -1056,8 +1056,8 @@ DecorWindow::updateDecorationScale ()
     for (i = 0; i < wd->nQuad; i++)
     {
 	int x, y;
-	unsigned int width = window->overrideRedirect () ? window->geometry ().width () : window->serverGeometry ().width ();
-	unsigned int height = window->overrideRedirect () ? window->geometry ().height () : window->serverGeometry ().height ();
+	unsigned int width = window->geometry ().width ();
+	unsigned int height = window->geometry ().height ();
 
 	if (window->shaded ())
 	    height = 0;
@@ -1066,8 +1066,8 @@ DecorWindow::updateDecorationScale ()
 			&x1, &y1, &x2, &y2, &sx, &sy);
 
 	/* Translate by x and y points of this window */
-	x = window->overrideRedirect () ? window->geometry ().x () : window->serverGeometry ().x ();
-	y = window->overrideRedirect () ? window->geometry ().y () : window->serverGeometry ().y ();
+	x = window->geometry ().x ();
+	y = window->geometry ().y ();
 
 	wd->quad[i].box.x1 = x1 + x;
 	wd->quad[i].box.y1 = y1 + y;
@@ -2780,8 +2780,8 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     updateMatrix = true;
     updateReg = true;
 
-    mInputRegion = CompRegion (window->overrideRedirect () ? window->inputRect () : window->serverInputRect ());
-    mOutputRegion = CompRegion (window->overrideRedirect () ? window->outputRect () : window->serverOutputRect ());
+    mInputRegion = CompRegion (window->inputRect ());
+    mOutputRegion = CompRegion (window->outputRect ());
     if (dScreen->cmActive && mClipGroup)
 	updateGroupShadows ();
 
@@ -3034,8 +3034,8 @@ DecorWindow::DecorWindow (CompWindow *w) :
     isSwitcher (false),
     frameExtentsRequested (false),
     mClipGroup (NULL),
-    mOutputRegion (window->overrideRedirect () ? window->outputRect () : window->serverOutputRect ()),
-    mInputRegion (window->overrideRedirect () ? window->inputRect () : window->serverInputRect ())
+    mOutputRegion (window->outputRect ()),
+    mInputRegion (window->inputRect ())
 {
     WindowInterface::setHandler (window);
 
