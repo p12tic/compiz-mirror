@@ -161,3 +161,20 @@ TEST(CompOption,Color)
     ASSERT_NE((void*)0, color);
     for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor2[i], color[i]);
 }
+
+TEST(CompPotion, Const)
+{
+    CompString const expectOne("one");
+    CompString const expectTwo("two");
+
+    CompOption::Value non_const;
+    CompOption::Value const& as_const(non_const);
+
+    non_const = expectOne;
+    ASSERT_EQ(expectOne, non_const.s());
+    ASSERT_EQ(expectOne, as_const.s());
+
+    non_const = expectTwo;
+    ASSERT_EQ(expectTwo, non_const.s());
+    ASSERT_EQ(expectTwo, as_const.s());
+}
