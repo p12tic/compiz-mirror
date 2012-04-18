@@ -1540,7 +1540,7 @@ DecorWindow::update (bool allowDecoration)
 
 	updateReg = true;
 	updateMatrix = true;
-	mOutputRegion = CompRegion (window->serverOutputRect ());
+	mOutputRegion = CompRegion (window->outputRect ());
 	updateGroupShadows ();
 	if (dScreen->cmActive)
 	    cWindow->damageOutputExtents ();
