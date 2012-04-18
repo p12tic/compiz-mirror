@@ -641,26 +641,29 @@ CompWindow::recalcActions ()
      * the screen */
     bool foundVert = false;
     bool foundHorz = false;
+    bool foundFull = false;
 
     foreach (CompOutput &o, screen->outputDevs ())
     {
-	if (o.width () > (priv->sizeHints.min_width + priv->border.left + priv->border.right))
+	if (o.width () >= (priv->sizeHints.min_width + priv->border.left + priv->border.right))
 	    foundHorz = true;
-	if (o.height () > (priv->sizeHints.min_height + priv->border.top + priv->border.bottom))
+	if (o.height () >= (priv->sizeHints.min_height + priv->border.top + priv->border.bottom))
 	    foundVert = true;
+
+	/* Fullscreen windows don't need to fit borders... */
+	if (o.width () >= priv->sizeHints.min_width &&
+	    o.height () >= priv->sizeHints.min_height)
+	    foundFull = true;
     }
 
     if (!foundHorz)
-    {
-	actions &= ~(CompWindowActionMaximizeHorzMask |
-		     CompWindowActionFullscreenMask);
-    }
+	actions &= ~CompWindowActionMaximizeHorzMask;
 
     if (!foundVert)
-    {
-	actions &= ~(CompWindowActionMaximizeVertMask |
-		     CompWindowActionFullscreenMask);
-    }
+	actions &= ~CompWindowActionMaximizeVertMask;
+
+    if (!foundFull)
+	actions &= ~CompWindowActionFullscreenMask;
 
     if (!(priv->mwmFunc & MwmFuncAll))
     {
