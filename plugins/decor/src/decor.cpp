@@ -1554,8 +1554,7 @@ DecorWindow::update (bool allowDecoration)
 	/* Undecorated windows need to have the
 	 * input and output frame removed and the
 	 * frame window geometry reset */
-	if (decorate)
-	    updateFrame ();
+	updateFrame ();
 
 	memset (&emptyExtents, 0, sizeof (CompWindowExtents));
 
