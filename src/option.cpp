@@ -34,6 +34,8 @@
 
 #include <core/option.h>
 #include "privateoption.h"
+#include <boost/variant/apply_visitor.hpp>
+#include <boost/variant/static_visitor.hpp>
 
 namespace
 {
@@ -66,6 +68,37 @@ namespace
 	static unsigned short v[4] = { 0, 0, 0, 0 };
 	return v;
     }
+
+
+    template<typename TargetType, TargetType& (*get_default)()>
+    struct get_or_default_call : public boost::static_visitor<TargetType &>
+    {
+	TargetType& operator()(TargetType & a)
+	{
+	    return a;
+	}
+
+	template<typename T>
+	TargetType& operator()(T&)
+	{
+	    return get_default();
+	}
+    };
+
+    template<typename TargetType, TargetType Default>
+    struct get_or_default_val : public boost::static_visitor<TargetType>
+    {
+	TargetType operator()(TargetType& a)
+	{
+	    return a;
+	}
+
+	template<typename T>
+	TargetType operator()(T&)
+	{
+	    return Default;
+	}
+    };
 }
 
 CompOption::Vector &
@@ -108,27 +141,15 @@ CompOption::Value::set (Type t, const CompOption::Value::Vector & v)
 bool
 CompOption::Value::b () const
 {
-    try
-    {
-	return boost::get<bool>(mValue);
-    }
-    catch (...)
-    {
-	return false;
-    }
+    get_or_default_val<bool, false> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 int
 CompOption::Value::i () const
 {
-    try
-    {
-	return boost::get<int>(mValue);
-    }
-    catch (...)
-    {
-	return 0;
-    }
+    get_or_default_val<int, 0> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 float
@@ -160,79 +181,43 @@ CompOption::Value::c () const
 const CompString &
 CompOption::Value::s () const
 {
-    try
-    {
-	return boost::get<CompString>(mValue);
-    }
-    catch (...)
-    {
-	return emptyString ();
-    }
+    get_or_default_call<CompString, emptyString> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 CompString &
 CompOption::Value::s ()
 {
-    try
-    {
-	return boost::get < CompString > (mValue);
-    }
-    catch (...)
-    {
-	return emptyString ();
-    }
+    get_or_default_call<CompString, emptyString> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 const CompMatch &
 CompOption::Value::match () const
 {
-    try
-    {
-	return boost::get<CompMatch>(mValue);
-    }
-    catch (...)
-    {
-	return emptyMatch ();
-    }
+    get_or_default_call<CompMatch, emptyMatch> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 CompMatch &
 CompOption::Value::match ()
 {
-    try
-    {
-	return boost::get<CompMatch>(mValue);
-    }
-    catch (...)
-    {
-	return emptyMatch ();
-    }
+    get_or_default_call<CompMatch, emptyMatch> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 const CompAction &
 CompOption::Value::action () const
 {
-    try
-    {
-	return boost::get<CompAction>(mValue);
-    }
-    catch (...)
-    {
-	return emptyAction ();
-    }
+    get_or_default_call<CompAction, emptyAction> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 CompAction &
 CompOption::Value::action ()
 {
-    try
-    {
-	return boost::get<CompAction>(mValue);
-    }
-    catch (...)
-    {
-	return emptyAction ();
-    }
+    get_or_default_call<CompAction, emptyAction> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 // Type listType () const;
@@ -240,27 +225,15 @@ CompOption::Value::action ()
 const CompOption::Value::Vector &
 CompOption::Value::list () const
 {
-    try
-    {
-	return boost::get< std::vector<Value> >(mValue);
-    }
-    catch (...)
-    {
-	return emptyList ();
-    }
+    get_or_default_call<CompOption::Value::Vector, emptyList> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 CompOption::Value::Vector &
 CompOption::Value::list ()
 {
-    try
-    {
-	return boost::get< std::vector<Value> >(mValue);
-    }
-    catch (...)
-    {
-	return emptyList ();
-    }
+    get_or_default_call<CompOption::Value::Vector, emptyList> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 bool
