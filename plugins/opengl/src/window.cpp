@@ -122,7 +122,7 @@ GLWindow::bind ()
 	priv->needsRebind = false;
     }
 
-    priv->updateState = PrivateGLWindow::UpdateRegion | PrivateGLWindow::UpdateMatrix;
+    priv->updateState |= PrivateGLWindow::UpdateRegion | PrivateGLWindow::UpdateMatrix;
 
     return true;
 }
@@ -194,7 +194,7 @@ void
 PrivateGLWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 {
     window->resizeNotify (dx, dy, dwidth, dheight);
-    updateState = PrivateGLWindow::UpdateMatrix | PrivateGLWindow::UpdateRegion;
+    updateState |= PrivateGLWindow::UpdateMatrix | PrivateGLWindow::UpdateRegion;
     if (!window->hasUnmapReference ())
 	gWindow->release ();
 }
@@ -203,7 +203,7 @@ void
 PrivateGLWindow::moveNotify (int dx, int dy, bool now)
 {
     window->moveNotify (dx, dy, now);
-    updateState = PrivateGLWindow::UpdateMatrix;
+    updateState |= PrivateGLWindow::UpdateMatrix;
 
     foreach (CompRegion &r, regions)
 	r.translate (dx, dy);
@@ -360,7 +360,7 @@ void
 PrivateGLWindow::updateFrameRegion (CompRegion &region)
 {
     window->updateFrameRegion (region);
-    updateState = PrivateGLWindow::UpdateRegion;
+    updateState |= PrivateGLWindow::UpdateRegion;
 }
 
 void
