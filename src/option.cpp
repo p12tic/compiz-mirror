@@ -36,6 +36,7 @@
 #include "privateoption.h"
 #include <boost/variant/apply_visitor.hpp>
 #include <boost/variant/static_visitor.hpp>
+#include <boost/type_traits/remove_const.hpp>
 
 namespace
 {
@@ -70,10 +71,10 @@ namespace
     }
 
 
-    template<typename TargetType, TargetType& (*get_default)()>
+    template<typename TargetType, typename boost::remove_const<TargetType>::type & (*get_default)()>
     struct get_or_default_call : public boost::static_visitor<TargetType &>
     {
-	TargetType& operator()(TargetType & a)
+	TargetType& operator()(TargetType& a)
 	{
 	    return a;
 	}
@@ -181,7 +182,7 @@ CompOption::Value::c () const
 const CompString &
 CompOption::Value::s () const
 {
-    get_or_default_call<CompString, emptyString> tmp;
+    get_or_default_call<CompString const, emptyString> tmp;
     return boost::apply_visitor(tmp, mValue);
 }
 
@@ -195,7 +196,7 @@ CompOption::Value::s ()
 const CompMatch &
 CompOption::Value::match () const
 {
-    get_or_default_call<CompMatch, emptyMatch> tmp;
+    get_or_default_call<CompMatch const, emptyMatch> tmp;
     return boost::apply_visitor(tmp, mValue);
 }
 
@@ -209,7 +210,7 @@ CompOption::Value::match ()
 const CompAction &
 CompOption::Value::action () const
 {
-    get_or_default_call<CompAction, emptyAction> tmp;
+    get_or_default_call<CompAction const, emptyAction> tmp;
     return boost::apply_visitor(tmp, mValue);
 }
 
@@ -225,7 +226,7 @@ CompOption::Value::action ()
 const CompOption::Value::Vector &
 CompOption::Value::list () const
 {
-    get_or_default_call<CompOption::Value::Vector, emptyList> tmp;
+    get_or_default_call<CompOption::Value::Vector const, emptyList> tmp;
     return boost::apply_visitor(tmp, mValue);
 }
 
