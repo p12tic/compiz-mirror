@@ -2125,6 +2125,7 @@ DecorWindow::updateFrameRegion (CompRegion &region)
     }
 
     updateReg = true;
+    updateMatrix = true;
 }
 
 /*
