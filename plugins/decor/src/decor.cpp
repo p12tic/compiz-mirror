@@ -320,28 +320,8 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
     pixmap (pixmap),
     damage (None)
 {
-    unsigned int width, height, depth, ui;
-    Window	 root;
-    int		 i;
-
-    if (!XGetGeometry (screen->dpy (), pixmap, &root,
-		       &i, &i, &width, &height, &ui, &depth))
-    {
-        status = false;
+    if (!bindTexture (pixmap))
 	return;
-    }
-
-    bindFailed = false;
-    textures = GLTexture::bindPixmapToTexture (pixmap, width, height, depth);
-    if (textures.size () != 1)
-    {
-	bindFailed = true;
-        status = false;
-	return;
-    }
-
-    if (!DecorScreen::get (screen)->optionGetMipmap ())
-	textures[0]->setMipmap (false);
 
     damage = XDamageCreate (screen->dpy (), pixmap,
 			     XDamageReportRawRectangles);
@@ -358,6 +338,48 @@ DecorTexture::~DecorTexture ()
 {
     if (damage)
 	XDamageDestroy (screen->dpy (), damage);
+}
+
+/*
+ * DecorTexture::indTexture
+ *
+ * This function actually takes and binds/rebinds the given Pixmap
+ * to a texture (i.e. calls GLTexture::bindPixmapToTexture)
+ *
+ */
+
+bool
+DecorTexture::bindTexture (Pixmap src)
+{
+    unsigned int width, height, depth, ui;
+    Window	 root;
+    int		 i;
+
+    pixmap = src;
+
+    if (!XGetGeometry (screen->dpy (), pixmap, &root,
+		       &i, &i, &width, &height, &ui, &depth))
+    {
+	status = false;
+	return false;
+    }
+
+    // Explicitly clear the texture list before binding/rebinding
+    textures.clear ();
+
+    bindFailed = false;
+    textures = GLTexture::bindPixmapToTexture (pixmap, width, height, depth);
+    if (textures.size () != 1)
+    {
+	bindFailed = true;
+	status = false;
+	return false;
+    }
+
+    if (!DecorScreen::get (screen)->optionGetMipmap ())
+	textures[0]->setMipmap (false);
+
+    return true;
 }
 
 /*
