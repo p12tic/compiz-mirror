@@ -1534,8 +1534,9 @@ DecorWindow::update (bool allowDecoration)
 	CompWindowExtents emptyExtents;
 	wd = NULL;
 
-	/* updateFrame will destroy any existing frames, and WON'T create
-	 * a new one because wd == NULL */
+	/* Undecorated windows need to have the
+	 * input and output frame removed and the
+	 * frame window geometry reset */
 	updateFrame ();
 
 	memset (&emptyExtents, 0, sizeof (CompWindowExtents));
@@ -2170,7 +2171,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	     * so the frame window for it needs to unmapped manually */
 	    if (isSwitcher)
 	    {
-		update (false);
+		update (true);
 		XUnmapWindow (screen->dpy (), inputFrame);
 		break;
 	    }
@@ -2178,7 +2179,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	    /* For non-switcher windows we need to update the decoration
 	     * anyways, since the window is unmapped. Also need to
 	     * update the shadow clip regions for panels and other windows */
-	    update (false);
+	    update (true);
 
 	    /* Preserve the group shadow update ptr */
 	    DecorClipGroupInterface *clipGroup = mClipGroup;
@@ -2368,8 +2369,6 @@ DecorScreen::handleEvent (XEvent *event)
 		    DECOR_WINDOW (w);
 		    dw->updateDecoration ();
 
-                    /* FIXME: This is where the switcher frame is being
-		       recreated */
 		    dw->update (true);
 		}
 	    }
