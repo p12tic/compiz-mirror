@@ -1387,6 +1387,9 @@ CompWindow::map ()
     }
 
     windowNotify (CompWindowNotifyMap);
+    /* Send a resizeNotify to plugins to indicate
+     * that the map is complete */
+    resizeNotify (0, 0, 0, 0);
 }
 
 void
