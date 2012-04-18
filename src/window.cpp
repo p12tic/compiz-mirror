@@ -902,8 +902,7 @@ PrivateWindow::updateRegion ()
     int	       nBounding = 0, nInput = 0;
     const CompWindow::Geometry &geom = attrib.override_redirect ? priv->geometry : priv->serverGeometry;
 
-    priv->region -= infiniteRegion;
-    priv->inputRegion -= infiniteRegion;
+    priv->region = priv->inputRegion = CompRegion ();
 
     if (screen->XShape ())
     {
@@ -3228,6 +3227,17 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (valueMask)
 	XConfigureWindow (screen->dpy (), id, valueMask, xwc);
 
+    /* When updating plugins we care about
+     * the absolute position */
+    if (abs (dx))
+	valueMask |= CWX;
+    if (abs (dy))
+	valueMask |= CWY;
+    if (abs (dwidth))
+	valueMask |= CWWidth;
+    if (abs (dheight))
+	valueMask |= CWHeight;
+
     if (!attrib.override_redirect)
     {
 	if (valueMask & (CWWidth | CWHeight))
@@ -3242,7 +3252,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    if (!frameRegion.isEmpty ())
 		frameRegion.translate (dx, dy);
 
-	    if (dx || dy)
+	    if (abs (dx) || abs (dy))
 	    {
 		window->moveNotify (dx, dy, priv->nextMoveImmediate);
 		priv->nextMoveImmediate = true;
