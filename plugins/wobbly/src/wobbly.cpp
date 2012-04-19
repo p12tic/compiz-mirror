@@ -1406,16 +1406,23 @@ WobblyScreen::preparePaint (int msSinceLastPaint)
 			    }
 			}
 		    }
-		    else if (ww->dropGeometry == w->serverGeometry ())
+		    else
 		    {
 			ww->model = 0;
 
-			XWindowChanges xwc;
+			if (w->geometry ().x () == w->serverX () &&
+			    w->geometry ().y () == w->serverY ())
+			{
+			    w->move (model->topLeft.x +
+				     w->output ().left -
+				     w->geometry ().x (),
+				     model->topLeft.y +
+				     w->output ().top -
+				     w->geometry ().y (),
+				     true);
+			    w->syncPosition ();
+			}
 
-			xwc.x = model->topLeft.x + w->output ().left;
-			xwc.y = model->topLeft.y + w->output ().top;
-
-			w->configureXWindow (CWX | CWY, &xwc);
 			ww->model = model;
 		    }
 
@@ -2121,7 +2128,6 @@ WobblyWindow::grabNotify (int          x,
     {
 	wScreen->grabMask   = mask;
 	wScreen->grabWindow = window;
-	dropGeometry = CompWindow::Geometry (0, 0, 0, 0, 0);
     }
     wScreen->moveWindow = false;
 
@@ -2257,8 +2263,6 @@ WobblyWindow::ungrabNotify ()
 	}
 
 	grabbed = false;
-
-	dropGeometry = window->serverGeometry ();
     }
 
     window->ungrabNotify ();
