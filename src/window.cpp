@@ -7174,7 +7174,6 @@ PrivateWindow::unreparent ()
     XDestroyWindow (screen->dpy (), serverFrame);
     XDestroyWindow (screen->dpy (), wrapper);
 
-    window->windowNotify (CompWindowNotifyUnreparent);
     /* This window is no longer "managed" in the
      * reparenting sense so clear its pending event
      * queue ... though maybe in future it would
@@ -7185,4 +7184,7 @@ PrivateWindow::unreparent ()
     frame = None;
     wrapper = None;
     serverFrame = None;
+
+    // Finally, (i.e. after updating state) notify the change
+    window->windowNotify (CompWindowNotifyUnreparent);
 }
