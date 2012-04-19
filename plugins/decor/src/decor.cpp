@@ -1060,7 +1060,16 @@ DecorWindow::updateDecorationScale ()
 	unsigned int height = window->geometry ().height ();
 
 	if (window->shaded ())
-	    height = 0;
+	{
+	    if (dScreen->cScreen &&
+		dScreen->cScreen->compositingActive ())
+	    {
+		if (!cWindow->pixmap ())
+		    height = 0;
+	    }
+	    else
+		height = 0;
+	}
 
 	computeQuadBox (&wd->decor->quad[i], width, height,
 			&x1, &y1, &x2, &y2, &sx, &sy);
@@ -2177,6 +2186,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	     * anyways, since the window is unmapped. Also need to
 	     * update the shadow clip regions for panels and other windows */
 	    update (true);
+	    updateDecorationScale ();
 	    if (dScreen->mMenusClipGroup.pushClippable (this))
 		updateGroupShadows ();
 
@@ -2198,7 +2208,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	     * anyways, since the window is unmapped. Also need to
 	     * update the shadow clip regions for panels and other windows */
 	    update (true);
-
+	    updateDecorationScale ();
 	    /* Preserve the group shadow update ptr */
 	    DecorClipGroupInterface *clipGroup = mClipGroup;
 
