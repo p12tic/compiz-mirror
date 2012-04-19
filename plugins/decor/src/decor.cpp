@@ -1078,8 +1078,8 @@ DecorWindow::updateDecorationScale ()
     for (i = 0; i < wd->nQuad; i++)
     {
 	int x, y;
-	unsigned int width = window->geometry ().width ();
-	unsigned int height = window->geometry ().height ();
+	unsigned int width = window->size ().width ();
+	unsigned int height = window->size ().height ();
 
 	if (window->shaded ())
 	{
@@ -1127,8 +1127,8 @@ DecorWindow::updateDecorationScale ()
 bool
 DecorWindow::checkSize (const Decoration::Ptr &decoration)
 {
-    return (decoration->minWidth <= (int) window->serverGeometry ().width () &&
-	    decoration->minHeight <= (int) window->serverGeometry ().height ());
+    return (decoration->minWidth <= (int) window->size ().width () &&
+	    decoration->minHeight <= (int) window->size ().height ());
 }
 
 /*
@@ -1547,7 +1547,7 @@ DecorWindow::update (bool allowDecoration)
      */
     if (decoration)
     {
-	wd = WindowDecoration::create ( decoration);
+	wd = WindowDecoration::create (decoration);
 	if (!wd)
 	    return false;
 
@@ -2142,8 +2142,8 @@ DecorWindow::updateFrameRegion (CompRegion &region)
 	{
 	    int x, y;
 
-	    x = window->serverGeometry (). x ();
-	    y = window->serverGeometry (). y ();
+	    x = window->geometry (). x ();
+	    y = window->geometry (). y ();
 
 	    region += frameRegion.translated (x - wd->decor->input.left,
 					      y - wd->decor->input.top);
@@ -2166,7 +2166,7 @@ DecorWindow::updateFrameRegion (CompRegion &region)
 void
 DecorWindow::updateWindowRegions ()
 {
-    const CompRect &input (window->serverInputRect ());
+    const CompRect &input (window->inputRect ());
 
     if (regions.size () != gWindow->textures ().size ())
 	regions.resize (gWindow->textures ().size ());
@@ -2418,12 +2418,7 @@ DecorScreen::handleEvent (XEvent *event)
 		{
 		    DECOR_WINDOW (w);
 
-		    if (dw->wd && dw->wd->decor)
-		    {
-			if ((dw->wd->decor->minWidth < w->serverGeometry ().width () ||
-			 dw->wd->decor->minHeight < w->serverGeometry ().height ()))
-			    dw->updateDecoration ();
-		    }
+		    dw->updateDecoration ();
 
 		    dw->update (true);
 		}
@@ -2770,20 +2765,6 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 	updateGroupShadows ();
 
     window->moveNotify (dx, dy, immediate);
-}
-
-void
-DecorWindow::grabNotify (int x, int y, unsigned int state, unsigned int mask)
-{
-    window->grabNotify (x, y, state, mask);
-}
-
-void
-DecorWindow::ungrabNotify ()
-{
-    update (true);
-
-    window->ungrabNotify ();
 }
 
 /*

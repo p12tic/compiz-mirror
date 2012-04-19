@@ -247,8 +247,6 @@ class DecorWindow :
 	void getOutputExtents (CompWindowExtents&);
 	void resizeNotify (int, int, int, int);
 	void moveNotify (int, int, bool);
-	void grabNotify (int x, int y, unsigned int state, unsigned int mask);
-	void ungrabNotify ();
 	void stateChangeNotify (unsigned int);
 	void updateFrameRegion (CompRegion &region);
 

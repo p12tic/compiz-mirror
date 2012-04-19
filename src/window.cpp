@@ -1984,9 +1984,9 @@ compiz::X11::PendingConfigureEvent::dump ()
 {
     compiz::X11::PendingEvent::dump ();
 
-    compLogMessage ("core", CompLogLevelDebug,  "- x: %i y: %i width: %i height: %i x2: %i y2 %i"\
+    compLogMessage ("core", CompLogLevelDebug,  "- x: %i y: %i width: %i height: %i "\
 						 "border: %i, sibling: 0x%x",
-						 mXwc.x, mXwc.y, mXwc.width, mXwc.height, mXwc.x + mXwc.width, mXwc.y + mXwc.height, mXwc.border_width, mXwc.sibling);
+						 mXwc.x, mXwc.y, mXwc.width, mXwc.height, mXwc.border_width, mXwc.sibling);
 }
 
 bool

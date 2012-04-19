@@ -71,9 +71,9 @@ WobblyWindow::findNextWestEdge (Object *object)
 	    }
 	    else if (!p->invisible () && (p->type () & SNAP_WINDOW_TYPE))
 	    {
-		s = p->serverGeometry ().y () - p->border ().top -
+		s = p->geometry ().y () - p->border ().top -
 		    window->output ().top;
-		e = p->serverGeometry ().y () + p->height () + p->border ().bottom +
+		e = p->geometry ().y () + p->height () + p->border ().bottom +
 		    window->output ().bottom;
 	    }
 	    else
@@ -102,7 +102,7 @@ WobblyWindow::findNextWestEdge (Object *object)
 		if (p->mapNum () && p->struts ())
 		    v = p->struts ()->left.x + p->struts ()->left.width;
 		else
-		    v = p->serverGeometry ().x () + p->width () +
+		    v = p->geometry ().x () + p->width () +
 			p->border ().right;
 
 		if (v <= x)
@@ -179,9 +179,9 @@ WobblyWindow::findNextEastEdge (Object *object)
 	    }
 	    else if (!p->invisible () && (p->type () & SNAP_WINDOW_TYPE))
 	    {
-		s = p->serverGeometry ().y () - p->border ().top -
+		s = p->geometry ().y () - p->border ().top -
 		    window->output ().top;
-		e = p->serverGeometry ().y () + p->height () + p->border ().bottom +
+		e = p->geometry ().y () + p->height () + p->border ().bottom +
 		    window->output ().bottom;
 	    }
 	    else
@@ -210,7 +210,7 @@ WobblyWindow::findNextEastEdge (Object *object)
 		if (p->mapNum () && p->struts ())
 		    v = p->struts ()->right.x;
 		else
-		    v = p->serverGeometry ().x () - p->border ().left;
+		    v = p->geometry ().x () - p->border ().left;
 
 		if (v >= x)
 		{
@@ -286,9 +286,9 @@ WobblyWindow::findNextNorthEdge (Object *object)
 	    }
 	    else if (!p->invisible () && (p->type () & SNAP_WINDOW_TYPE))
 	    {
-		s = p->serverGeometry ().x () - p->border ().left -
+		s = p->geometry ().x () - p->border ().left -
 		    window->output ().left;
-		e = p->serverGeometry ().x () + p->width () + p->border ().right +
+		e = p->geometry ().x () + p->width () + p->border ().right +
 		    window->output ().right;
 	    }
 	    else
@@ -317,7 +317,7 @@ WobblyWindow::findNextNorthEdge (Object *object)
 		if (p->mapNum () && p->struts ())
 		    v = p->struts ()->top.y + p->struts ()->top.height;
 		else
-		    v = p->serverGeometry ().y () + p->height () + p->border ().bottom;
+		    v = p->geometry ().y () + p->height () + p->border ().bottom;
 
 		if (v <= y)
 		{
@@ -393,9 +393,9 @@ WobblyWindow::findNextSouthEdge (Object *object)
 	    }
 	    else if (!p->invisible () && (p->type () & SNAP_WINDOW_TYPE))
 	    {
-		s = p->serverGeometry ().x () - p->border ().left -
+		s = p->geometry ().x () - p->border ().left -
 		    window->output ().left;
-		e = p->serverGeometry ().x () + p->width () + p->border ().right +
+		e = p->geometry ().x () + p->width () + p->border ().right +
 		    window->output ().right;
 	    }
 	    else
@@ -424,7 +424,7 @@ WobblyWindow::findNextSouthEdge (Object *object)
 		if (p->mapNum () && p->struts ())
 		    v = p->struts ()->bottom.y;
 		else
-		    v = p->serverGeometry ().y () - p->border ().top;
+		    v = p->geometry ().y () - p->border ().top;
 
 		if (v >= y)
 		{
@@ -1251,7 +1251,7 @@ WobblyWindow::ensureModel ()
     if (!model)
     {
 	unsigned int edgeMask = 0;
-	CompRect outRect (window->serverOutputRect ());
+	CompRect outRect (window->outputRect ());
 
 	if (window->type () & CompWindowTypeNormalMask)
 	    edgeMask = WestEdgeMask | EastEdgeMask | NorthEdgeMask |
@@ -1311,7 +1311,7 @@ WobblyWindow::isWobblyWin ()
     if (window->width () == 1 && window->height () == 1)
 	return false;
 
-    CompWindow::Geometry &geom = window->serverGeometry ();
+    CompWindow::Geometry &geom = window->geometry ();
 
     /* avoid fullscreen windows */
     if (geom.x () <= 0 &&
@@ -1448,9 +1448,9 @@ WobblyScreen::preparePaint (int msSinceLastPaint)
 			else
 			    cw->addDamage ();
 
-			int wx = w->serverGeometry ().x ();
-			int wy = w->serverGeometry ().y ();
-			int borderWidth = w->serverGeometry ().border ();
+			int wx = w->geometry ().x ();
+			int wy = w->geometry ().y ();
+			int borderWidth = w->geometry ().border ();
 
 			// Damage a box that's 1-pixel larger on each side
 			// to prevent artifacts
@@ -1578,7 +1578,7 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	}
     }
 
-    CompRect outRect (window->serverOutputRect ());
+    CompRect outRect (window->outputRect ());
     wx     = outRect.x ();
     wy     = outRect.y ();
     width  = outRect.width ();
@@ -1977,7 +1977,7 @@ WobblyWindow::initiateMapEffect ()
 	wScreen->optionGetMapWindowMatch ().evaluate (window) &&
 	ensureModel ())
     {
-	CompRect outRect (window->serverOutputRect ());
+	CompRect outRect (window->outputRect ());
 
 	model->initObjects (outRect.x (), outRect.y (),
 			    outRect.width (), outRect.height ());
@@ -2006,7 +2006,7 @@ WobblyWindow::resizeNotify (int dx,
 			    int dwidth,
 			    int dheight)
 {
-    CompRect outRect (window->serverOutputRect ());
+    CompRect outRect (window->outputRect ());
 
     if (wScreen->optionGetMaximizeEffect () &&
 	isWobblyWin () &&
@@ -2145,7 +2145,7 @@ WobblyWindow::grabNotify (int          x,
 
 	    if (wScreen->optionGetMaximizeEffect ())
 	    {
-		CompRect outRect (window->serverOutputRect ());
+		CompRect outRect (window->outputRect ());
 
 		if (window->state () & MAXIMIZE_STATE)
 		{
@@ -2253,7 +2253,7 @@ WobblyWindow::ungrabNotify ()
 	    if (wScreen->optionGetMaximizeEffect () &&
 		(state & MAXIMIZE_STATE))
 	    {
-		CompRect outRect (window->serverOutputRect ());
+		CompRect outRect (window->outputRect ());
 
 		model->addEdgeAnchors (outRect.x (), outRect.y (),
 				       outRect.width (), outRect.height ());
