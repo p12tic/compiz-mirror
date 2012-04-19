@@ -192,4 +192,17 @@ TEST(CompPotion, Const)
 	ASSERT_EQ(expectTwo, non_const.b());
 	ASSERT_EQ(expectTwo, as_const.b());
     }
+
+    {
+	float const expectOne = 0.0;
+	float const expectTwo = 42.0;
+
+	non_const = expectOne;
+	ASSERT_EQ(expectOne, non_const.f());
+	ASSERT_EQ(expectOne, as_const.f());
+
+	non_const = expectTwo;
+	ASSERT_EQ(expectTwo, non_const.f());
+	ASSERT_EQ(expectTwo, as_const.f());
+    }
 }

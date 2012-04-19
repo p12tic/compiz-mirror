@@ -100,6 +100,20 @@ namespace
 	    return Default;
 	}
     };
+
+    struct get_float : public boost::static_visitor<float const>
+    {
+	float operator()(float const& a)
+	{
+	    return a;
+	}
+
+	template<typename T>
+	float operator()(T&)
+	{
+	    return 0.0;
+	}
+    };
 }
 
 CompOption::Vector &
@@ -156,14 +170,8 @@ CompOption::Value::i () const
 float
 CompOption::Value::f () const
 {
-    try
-    {
-	return boost::get<float>(mValue);
-    }
-    catch (...)
-    {
-	return 0.0;
-    }
+    get_float tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 unsigned short*
