@@ -86,7 +86,7 @@ namespace
 	}
     };
 
-    template<typename TargetType, TargetType Default>
+    template<typename TargetType, typename boost::remove_const<TargetType>::type Default>
     struct get_or_default_val : public boost::static_visitor<TargetType>
     {
 	TargetType operator()(TargetType& a)
@@ -142,14 +142,14 @@ CompOption::Value::set (Type t, const CompOption::Value::Vector & v)
 bool
 CompOption::Value::b () const
 {
-    get_or_default_val<bool, false> tmp;
+    get_or_default_val<bool const, false> tmp;
     return boost::apply_visitor(tmp, mValue);
 }
 
 int
 CompOption::Value::i () const
 {
-    get_or_default_val<int, 0> tmp;
+    get_or_default_val<int const, 0> tmp;
     return boost::apply_visitor(tmp, mValue);
 }
 

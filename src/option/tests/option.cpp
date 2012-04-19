@@ -164,17 +164,32 @@ TEST(CompOption,Color)
 
 TEST(CompPotion, Const)
 {
-    CompString const expectOne("one");
-    CompString const expectTwo("two");
-
     CompOption::Value non_const;
     CompOption::Value const& as_const(non_const);
 
-    non_const = expectOne;
-    ASSERT_EQ(expectOne, non_const.s());
-    ASSERT_EQ(expectOne, as_const.s());
+    {
+	CompString const expectOne("one");
+	CompString const expectTwo("two");
 
-    non_const = expectTwo;
-    ASSERT_EQ(expectTwo, non_const.s());
-    ASSERT_EQ(expectTwo, as_const.s());
+	non_const = expectOne;
+	ASSERT_EQ(expectOne, non_const.s());
+	ASSERT_EQ(expectOne, as_const.s());
+
+	non_const = expectTwo;
+	ASSERT_EQ(expectTwo, non_const.s());
+	ASSERT_EQ(expectTwo, as_const.s());
+    }
+
+    {
+	bool const expectOne = true;
+	bool const expectTwo = false;
+
+	non_const = expectOne;
+	ASSERT_EQ(expectOne, non_const.b());
+	ASSERT_EQ(expectOne, as_const.b());
+
+	non_const = expectTwo;
+	ASSERT_EQ(expectTwo, non_const.b());
+	ASSERT_EQ(expectTwo, as_const.b());
+    }
 }
