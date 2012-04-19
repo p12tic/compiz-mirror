@@ -641,26 +641,29 @@ CompWindow::recalcActions ()
      * the screen */
     bool foundVert = false;
     bool foundHorz = false;
+    bool foundFull = false;
 
     foreach (CompOutput &o, screen->outputDevs ())
     {
-	if (o.width () > (priv->sizeHints.min_width + priv->border.left + priv->border.right))
+	if (o.width () >= (priv->sizeHints.min_width + priv->border.left + priv->border.right))
 	    foundHorz = true;
-	if (o.height () > (priv->sizeHints.min_height + priv->border.top + priv->border.bottom))
+	if (o.height () >= (priv->sizeHints.min_height + priv->border.top + priv->border.bottom))
 	    foundVert = true;
+
+	/* Fullscreen windows don't need to fit borders... */
+	if (o.width () >= priv->sizeHints.min_width &&
+	    o.height () >= priv->sizeHints.min_height)
+	    foundFull = true;
     }
 
     if (!foundHorz)
-    {
-	actions &= ~(CompWindowActionMaximizeHorzMask |
-		     CompWindowActionFullscreenMask);
-    }
+	actions &= ~CompWindowActionMaximizeHorzMask;
 
     if (!foundVert)
-    {
-	actions &= ~(CompWindowActionMaximizeVertMask |
-		     CompWindowActionFullscreenMask);
-    }
+	actions &= ~CompWindowActionMaximizeVertMask;
+
+    if (!foundFull)
+	actions &= ~CompWindowActionFullscreenMask;
 
     if (!(priv->mwmFunc & MwmFuncAll))
     {
@@ -857,11 +860,12 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 {
     CompRegion ret;
     int        x1, x2, y1, y2;
+    const CompWindow::Geometry &geom = attrib.override_redirect ? priv->geometry : priv->serverGeometry;
 
     for (unsigned int i = 0; i < n; i++)
     {
-	x1 = rects[i].x + priv->serverGeometry.border ();
-	y1 = rects[i].y + priv->serverGeometry.border ();
+	x1 = rects[i].x + geom.border ();
+	y1 = rects[i].y + geom.border ();
 	x2 = x1 + rects[i].width;
 	y2 = y1 + rects[i].height;
 
@@ -869,17 +873,17 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 	    x1 = 0;
 	if (y1 < 0)
 	    y1 = 0;
-	if (x2 > priv->serverGeometry.width ())
-	    x2 = priv->serverGeometry.width ();
-	if (y2 > priv->serverGeometry.height ())
-	    y2 = priv->serverGeometry.height ();
+	if (x2 > geom.width ())
+	    x2 = geom.width ();
+	if (y2 > geom.height ())
+	    y2 = geom.height ();
 
 	if (y1 < y2 && x1 < x2)
 	{
-	    x1 += priv->serverGeometry.x ();
-	    y1 += priv->serverGeometry.y ();
-	    x2 += priv->serverGeometry.x ();
-	    y2 += priv->serverGeometry.y ();
+	    x1 += geom.x ();
+	    y1 += geom.y ();
+	    x2 += geom.x ();
+	    y2 += geom.y ();
 
 	    ret += CompRect (x1, y1, x2 - x1, y2 - y1);
 	}
@@ -899,9 +903,9 @@ PrivateWindow::updateRegion ()
     XRectangle r, *boundingShapeRects = NULL;
     XRectangle *inputShapeRects = NULL;
     int	       nBounding = 0, nInput = 0;
+    const CompWindow::Geometry &geom = attrib.override_redirect ? priv->geometry : priv->serverGeometry;
 
-    priv->region -= infiniteRegion;
-    priv->inputRegion -= infiniteRegion;
+    priv->region = priv->inputRegion = CompRegion ();
 
     if (screen->XShape ())
     {
@@ -916,10 +920,10 @@ PrivateWindow::updateRegion ()
 					       ShapeInput, &nInput, &order);
     }
 
-    r.x      = -priv->serverGeometry.border ();
-    r.y      = -priv->serverGeometry.border ();
-    r.width  = priv->serverGeometry.widthIncBorders ();
-    r.height = priv->serverGeometry.heightIncBorders ();
+    r.x      = -geom.border ();
+    r.y      = -geom.border ();
+    r.width  = geom.widthIncBorders ();
+    r.height = geom.heightIncBorders ();
 
     if (nBounding < 1)
     {
@@ -1385,6 +1389,9 @@ CompWindow::map ()
     }
 
     windowNotify (CompWindowNotifyMap);
+    /* Send a resizeNotify to plugins to indicate
+     * that the map is complete */
+    resizeNotify (0, 0, 0, 0);
 }
 
 void
@@ -1570,11 +1577,12 @@ PrivateWindow::resize (const CompWindow::Geometry &gm)
 
 	if (priv->attrib.override_redirect)
 	{
+	    priv->serverGeometry = priv->geometry;
+	    priv->serverFrameGeometry = priv->frameGeometry;
+
 	    if (priv->mapNum)
 		priv->updateRegion ();
 
-	    priv->serverGeometry = priv->geometry;
-	    priv->serverFrameGeometry = priv->frameGeometry;
 	    window->resizeNotify (dx, dy, dwidth, dheight);
 	}
     }
@@ -1976,9 +1984,9 @@ compiz::X11::PendingConfigureEvent::dump ()
 {
     compiz::X11::PendingEvent::dump ();
 
-    compLogMessage ("core", CompLogLevelDebug,  "- x: %i y: %i width: %i height: %i x2: %i y2 %i"\
+    compLogMessage ("core", CompLogLevelDebug,  "- x: %i y: %i width: %i height: %i "\
 						 "border: %i, sibling: 0x%x",
-						 mXwc.x, mXwc.y, mXwc.width, mXwc.height, mXwc.x + mXwc.width, mXwc.y + mXwc.height, mXwc.border_width, mXwc.sibling);
+						 mXwc.x, mXwc.y, mXwc.width, mXwc.height, mXwc.border_width, mXwc.sibling);
 }
 
 bool
@@ -3222,6 +3230,17 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
     if (valueMask)
 	XConfigureWindow (screen->dpy (), id, valueMask, xwc);
 
+    /* When updating plugins we care about
+     * the absolute position */
+    if (abs (dx))
+	valueMask |= CWX;
+    if (abs (dy))
+	valueMask |= CWY;
+    if (abs (dwidth))
+	valueMask |= CWWidth;
+    if (abs (dheight))
+	valueMask |= CWHeight;
+
     if (!attrib.override_redirect)
     {
 	if (valueMask & (CWWidth | CWHeight))
@@ -3235,12 +3254,12 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    inputRegion.translate (dx, dy);
 	    if (!frameRegion.isEmpty ())
 		frameRegion.translate (dx, dy);
-	}
 
-	if (dx || dy)
-	{
-	    window->moveNotify (dx, dy, priv->nextMoveImmediate);
-	    priv->nextMoveImmediate = true;
+	    if (abs (dx) || abs (dy))
+	    {
+		window->moveNotify (dx, dy, priv->nextMoveImmediate);
+		priv->nextMoveImmediate = true;
+	    }
 	}
     }
 }
@@ -6490,6 +6509,10 @@ void
 CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 				   CompWindowExtents *i)
 {
+    /* override redirect windows can't have frame extents */
+    if (priv->attrib.override_redirect)
+	return;
+
     /* Input extents are used for frame size,
      * Border extents used for placement.
      */
@@ -6889,5 +6912,6 @@ PrivateWindow::unreparent ()
     wrapper = None;
     serverFrame = None;
 
+    // Finally, (i.e. after updating state) notify the change
     window->windowNotify (CompWindowNotifyUnreparent);
 }

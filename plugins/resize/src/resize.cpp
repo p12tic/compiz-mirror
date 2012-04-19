@@ -56,7 +56,7 @@ ResizeScreen::getPaintRectangle (BoxPtr pBox)
 void
 ResizeWindow::getStretchScale (BoxPtr pBox, float *xScale, float *yScale)
 {
-    CompRect rect (window->serverBorderRect ());
+    CompRect rect (window->borderRect ());
 
     *xScale = (rect.width ())  ? (pBox->x2 - pBox->x1) /
 				 (float) rect.width () : 1.0f;
@@ -642,8 +642,7 @@ resizeTerminate (CompAction         *action,
 	    w->configureXWindow (mask, &xwc);
 	}
 
-	if (!(mask & (CWWidth | CWHeight)))
-	    rs->finishResizing ();
+	rs->finishResizing ();
 
 	if (rs->grabIndex)
 	{
@@ -1467,10 +1466,10 @@ ResizeScreen::handleEvent (XEvent *event)
 		getPaintRectangle (&box);
 		damageRectangle (&box);
 
-		box.x1 = w->serverOutputRect ().x ();
-		box.y1 = w->serverOutputRect ().y ();
-		box.x2 = box.x1 + w->serverOutputRect ().width ();
-		box.y2 = box.y1 + w->serverOutputRect ().height ();
+		box.x1 = w->outputRect ().x ();
+		box.y1 = w->outputRect ().y ();
+		box.x2 = box.x1 + w->outputRect ().width ();
+		box.y2 = box.y1 + w->outputRect ().height ();
 
 		damageRectangle (&box);
 	    }
@@ -1507,15 +1506,6 @@ ResizeScreen::handleEvent (XEvent *event)
 		updateWindowSize ();
 	}
     }
-}
-
-void
-ResizeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
-{
-    window->resizeNotify (dx, dy, dwidth, dheight);
-
-    if (rScreen->w == window && !rScreen->grabIndex)
-	rScreen->finishResizing ();
 }
 
 void
@@ -1649,8 +1639,8 @@ ResizeWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	rScreen->getPaintRectangle (&box);
 	getStretchScale (&box, &xScale, &yScale);
 
-	x = window->serverGeometry (). x ();
-	y = window->serverGeometry (). y ();
+	x = window->geometry (). x ();
+	y = window->geometry (). y ();
 
 	xOrigin = x - window->border ().left;
 	yOrigin = y - window->border ().top;

@@ -223,31 +223,36 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 
 	const CompRegion *preg = NULL;
 
-	if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
-		     PAINT_WINDOW_WITH_OFFSET_MASK)))
-	    preg = &region;
-	else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
-	    preg = &infiniteRegion;
-	else
+	if (mClipGroup)
 	{
-	    tmpRegion = mOutputRegion;
-	    tmpRegion &= region;
-
-	    if (tmpRegion.isEmpty ())
+	    if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
+			 PAINT_WINDOW_WITH_OFFSET_MASK)))
 		preg = &region;
+	    else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
+		preg = &infiniteRegion;
 	    else
-		preg = &shadowRegion;
-	}
+	    {
+		tmpRegion = mOutputRegion;
+		tmpRegion &= region;
 
-	/* In case some plugin needs to paint us with an offset region */
-	if (preg->isEmpty ())
+		if (tmpRegion.isEmpty ())
+		    preg = &region;
+		else
+		    preg = &shadowRegion;
+	    }
+
+	    /* In case some plugin needs to paint us with an offset region */
+	    if (preg->isEmpty ())
+		preg = &region;
+	}
+	else
 	    preg = &region;
 
 	const CompRegion &reg (*preg);
 
 	gWindow->geometry ().reset ();
 
-	if (updateReg)
+	if (updateMatrix)
 	    updateDecorationScale ();
 
 	for (int i = 0; i < wd->nQuad; i++)
@@ -278,8 +283,8 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	if (gWindow->textures ().empty ())
 	    return;
 
-	if (updateReg)
-	    setDecorationMatrices ();
+	if (updateMatrix)
+	    updateDecorationScale ();
 
 	if (gWindow->textures ().size () == 1)
 	{
@@ -326,28 +331,8 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
     pixmap (pixmap),
     damage (None)
 {
-    unsigned int width, height, depth, ui;
-    Window	 root;
-    int		 i;
-
-    if (!XGetGeometry (screen->dpy (), pixmap, &root,
-		       &i, &i, &width, &height, &ui, &depth))
-    {
-        status = false;
+    if (!bindTexture (pixmap))
 	return;
-    }
-
-    bindFailed = false;
-    textures = GLTexture::bindPixmapToTexture (pixmap, width, height, depth);
-    if (textures.size () != 1)
-    {
-	bindFailed = true;
-        status = false;
-	return;
-    }
-
-    if (!DecorScreen::get (screen)->optionGetMipmap ())
-	textures[0]->setMipmap (false);
 
     damage = XDamageCreate (screen->dpy (), pixmap,
 			     XDamageReportRawRectangles);
@@ -362,10 +347,61 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
 
 DecorTexture::~DecorTexture ()
 {
-    decor_post_delete_pixmap (screen->dpy (), pixmap);
+     decor_post_delete_pixmap (screen->dpy (), pixmap);
 
     if (damage)
 	XDamageDestroy (screen->dpy (), damage);
+}
+
+/*
+ * DecorTexture::indTexture
+ *
+ * This function actually takes and binds/rebinds the given Pixmap
+ * to a texture (i.e. calls GLTexture::bindPixmapToTexture)
+ *
+ */
+
+bool
+DecorTexture::bindTexture (Pixmap src)
+{
+    unsigned int width, height, depth, ui;
+    Window	 root;
+    int		 i;
+
+    if (pixmap)
+	decor_post_delete_pixmap (screen->dpy (), pixmap);
+
+    pixmap = src;
+
+    if (!XGetGeometry (screen->dpy (), pixmap, &root,
+		       &i, &i, &width, &height, &ui, &depth))
+    {
+	status = false;
+	return false;
+    }
+
+    // Explicitly clear the texture list before binding/rebinding
+    textures.clear ();
+
+    bindFailed = false;
+    textures = GLTexture::bindPixmapToTexture (pixmap, width, height, depth);
+    if (textures.size () != 1)
+    {
+	bindFailed = true;
+	status = false;
+	return false;
+    }
+
+    if (!DecorScreen::get (screen)->optionGetMipmap ())
+	textures[0]->setMipmap (false);
+
+    if (damage)
+	XDamageDestroy (screen->dpy (), damage);
+
+    damage = XDamageCreate (screen->dpy (), pixmap,
+			     XDamageReportRawRectangles);
+
+    return true;
 }
 
 /*
@@ -1039,6 +1075,8 @@ DecorWindow::setDecorationMatrices ()
 	    wd->quad[i].box.y1 * wd->quad[i].matrix.yy +
 	    wd->quad[i].box.x1 * wd->quad[i].matrix.yx;
     }
+
+    updateMatrix = false;
 }
 
 /*
@@ -1065,23 +1103,33 @@ DecorWindow::updateDecorationScale ()
     for (i = 0; i < wd->nQuad; i++)
     {
 	int x, y;
-	unsigned int width = window->serverGeometry ().width ();
-	unsigned int height = window->serverGeometry ().height ();
+	unsigned int width = window->size ().width ();
+	unsigned int height = window->size ().height ();
 
 	if (window->shaded ())
-	    height = 0;
+	{
+	    if (dScreen->cScreen &&
+		dScreen->cScreen->compositingActive ())
+	    {
+		if (!cWindow->pixmap ())
+		    height = 0;
+	    }
+	    else
+		height = 0;
+	}
 
 	computeQuadBox (&wd->decor->quad[i], width, height,
 			&x1, &y1, &x2, &y2, &sx, &sy);
 
 	/* Translate by x and y points of this window */
-	x = window->serverGeometry ().x ();
-	y = window->serverGeometry ().y ();
+	x = window->geometry ().x ();
+	y = window->geometry ().y ();
 
 	wd->quad[i].box.x1 = x1 + x;
 	wd->quad[i].box.y1 = y1 + y;
 	wd->quad[i].box.x2 = x2 + x;
 	wd->quad[i].box.y2 = y2 + y;
+
 	wd->quad[i].sx     = sx;
 	wd->quad[i].sy     = sy;
     }
@@ -1104,8 +1152,8 @@ DecorWindow::updateDecorationScale ()
 bool
 DecorWindow::checkSize (const Decoration::Ptr &decoration)
 {
-    return (decoration->minWidth <= (int) window->serverGeometry ().width () &&
-	    decoration->minHeight <= (int) window->serverGeometry ().height ());
+    return (decoration->minWidth <= (int) window->size ().width () &&
+	    decoration->minHeight <= (int) window->size ().height ());
 }
 
 /*
@@ -1524,7 +1572,7 @@ DecorWindow::update (bool allowDecoration)
      */
     if (decoration)
     {
-	wd = WindowDecoration::create ( decoration);
+	wd = WindowDecoration::create (decoration);
 	if (!wd)
 	    return false;
 
@@ -1547,7 +1595,8 @@ DecorWindow::update (bool allowDecoration)
 	window->updateWindowOutputExtents ();
 
 	updateReg = true;
-	mOutputRegion = CompRegion (window->serverOutputRect ());
+	updateMatrix = true;
+	mOutputRegion = CompRegion (window->outputRect ());
 	updateGroupShadows ();
 	if (dScreen->cmActive)
 	    cWindow->damageOutputExtents ();
@@ -1561,8 +1610,7 @@ DecorWindow::update (bool allowDecoration)
 	/* Undecorated windows need to have the
 	 * input and output frame removed and the
 	 * frame window geometry reset */
-	if (decorate)
-	    updateFrame ();
+	updateFrame ();
 
 	memset (&emptyExtents, 0, sizeof (CompWindowExtents));
 
@@ -2119,8 +2167,8 @@ DecorWindow::updateFrameRegion (CompRegion &region)
 	{
 	    int x, y;
 
-	    x = window->serverGeometry (). x ();
-	    y = window->serverGeometry (). y ();
+	    x = window->geometry (). x ();
+	    y = window->geometry (). y ();
 
 	    region += frameRegion.translated (x - wd->decor->input.left,
 					      y - wd->decor->input.top);
@@ -2132,6 +2180,7 @@ DecorWindow::updateFrameRegion (CompRegion &region)
     }
 
     updateReg = true;
+    updateMatrix = true;
 }
 
 /*
@@ -2142,7 +2191,7 @@ DecorWindow::updateFrameRegion (CompRegion &region)
 void
 DecorWindow::updateWindowRegions ()
 {
-    const CompRect &input (window->serverInputRect ());
+    const CompRect &input (window->inputRect ());
 
     if (regions.size () != gWindow->textures ().size ())
 	regions.resize (gWindow->textures ().size ());
@@ -2184,6 +2233,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	     * anyways, since the window is unmapped. Also need to
 	     * update the shadow clip regions for panels and other windows */
 	    update (true);
+	    updateDecorationScale ();
 	    if (dScreen->mMenusClipGroup.pushClippable (this))
 		updateGroupShadows ();
 
@@ -2205,7 +2255,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	     * anyways, since the window is unmapped. Also need to
 	     * update the shadow clip regions for panels and other windows */
 	    update (true);
-
+	    updateDecorationScale ();
 	    /* Preserve the group shadow update ptr */
 	    DecorClipGroupInterface *clipGroup = mClipGroup;
 
@@ -2435,13 +2485,7 @@ DecorScreen::handleEvent (XEvent *event)
 		{
 		    DECOR_WINDOW (w);
 
-		    if (dw->wd && dw->wd->decor)
-		    {
-			if ((dw->wd->decor->minWidth < w->serverGeometry ().width () ||
-			     dw->wd->decor->minHeight < w->serverGeometry ().height ()))
-			    dw->updateDecoration ();
-		    }
-
+		    dw->updateDecoration ();
 		    dw->update (true);
 		}
 	    }
@@ -2778,6 +2822,7 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
     }
 
     updateReg = true;
+    updateMatrix = true;
 
     mInputRegion.translate (dx, dy);
     mOutputRegion.translate (dx, dy);
@@ -2786,20 +2831,6 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 	updateGroupShadows ();
 
     window->moveNotify (dx, dy, immediate);
-}
-
-void
-DecorWindow::grabNotify (int x, int y, unsigned int state, unsigned int mask)
-{
-    window->grabNotify (x, y, state, mask);
-}
-
-void
-DecorWindow::ungrabNotify ()
-{
-    update (true);
-
-    window->ungrabNotify ();
 }
 
 /*
@@ -2825,11 +2856,11 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
        we never should call a wrapped function that's currently
        processed, we need the timer for the moment. updateWindowOutputExtents
        should be fixed so that it does not emit a resize notification. */
-    updateDecorationScale ();
+    updateMatrix = true;
     updateReg = true;
 
-    mInputRegion = CompRegion (window->serverInputRect ());
-    mOutputRegion = CompRegion (window->serverOutputRect ());
+    mInputRegion = CompRegion (window->inputRect ());
+    mOutputRegion = CompRegion (window->outputRect ());
     if (dScreen->cmActive && mClipGroup)
 	updateGroupShadows ();
 
@@ -3080,13 +3111,14 @@ DecorWindow::DecorWindow (CompWindow *w) :
     pixmapFailed (false),
     regions (),
     updateReg (true),
+    updateMatrix (true),
     unshading (false),
     shading (false),
     isSwitcher (false),
     frameExtentsRequested (false),
     mClipGroup (NULL),
-    mOutputRegion (window->serverOutputRect ()),
-    mInputRegion (window->serverInputRect ())
+    mOutputRegion (window->outputRect ()),
+    mInputRegion (window->inputRect ())
 {
     WindowInterface::setHandler (window);
 

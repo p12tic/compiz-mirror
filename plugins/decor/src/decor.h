@@ -79,6 +79,8 @@ class DecorTexture {
 	DecorTexture (Pixmap pixmap);
 	~DecorTexture ();
 
+	bool bindTexture (Pixmap src);
+
     public:
 	bool            status;
 	int             refCount;
@@ -252,8 +254,6 @@ class DecorWindow :
 	void getOutputExtents (CompWindowExtents&);
 	void resizeNotify (int, int, int, int);
 	void moveNotify (int, int, bool);
-	void grabNotify (int x, int y, unsigned int state, unsigned int mask);
-	void ungrabNotify ();
 	void stateChangeNotify (unsigned int);
 	void updateFrameRegion (CompRegion &region);
 
@@ -329,6 +329,7 @@ class DecorWindow :
 
 	CompRegion::Vector regions;
 	bool               updateReg;
+	bool		   updateMatrix;
 
 	CompTimer resizeUpdate;
 	CompTimer moveUpdate;
