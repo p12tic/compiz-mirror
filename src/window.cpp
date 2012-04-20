@@ -3232,13 +3232,13 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 
     /* When updating plugins we care about
      * the absolute position */
-    if (dx != 0)
+    if (dx)
 	valueMask |= CWX;
-    if (dy != 0)
+    if (dy)
 	valueMask |= CWY;
-    if (dwidth != 0)
+    if (dwidth)
 	valueMask |= CWWidth;
-    if (dheight != 0)
+    if (dheight)
 	valueMask |= CWHeight;
 
     if (!attrib.override_redirect)
@@ -3255,7 +3255,7 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    if (!frameRegion.isEmpty ())
 		frameRegion.translate (dx, dy);
 
-	    if (dx != 0 || dy != 0)
+	    if (dx || dy)
 	    {
 		window->moveNotify (dx, dy, priv->nextMoveImmediate);
 		priv->nextMoveImmediate = true;
