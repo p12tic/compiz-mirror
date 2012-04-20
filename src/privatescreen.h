@@ -1013,7 +1013,6 @@ class CompManager
 
     private:
 
-	std::list <CompString> plugins;
 	bool		       disableSm;
 	char		       *clientId;
 	char		       *displayName;
