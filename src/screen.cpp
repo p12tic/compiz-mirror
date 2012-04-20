@@ -4857,7 +4857,6 @@ PrivateScreen::initDisplay (const char *name)
 					      compScreenSnEvent, this, NULL);
 
     wmSnSelectionWindow = newWmSnOwner;
-    this->wmSnAtom            = wmSnAtom;
     this->wmSnTimestamp       = wmSnTimestamp;
 
     if (!XGetWindowAttributes (dpy, root, &attrib))
