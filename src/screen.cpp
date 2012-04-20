@@ -4730,7 +4730,7 @@ PrivateScreen::initDisplay (const char *name)
 
     char                 buf[128];
     sprintf (buf, "WM_S%d", DefaultScreen (dpy));
-    Atom wmSnAtom = XInternAtom (dpy, buf, 0);
+    wmSnAtom = XInternAtom (dpy, buf, 0);
 
     Window currentWmSnOwner = XGetSelectionOwner (dpy, wmSnAtom);
 
@@ -4876,7 +4876,6 @@ PrivateScreen::initDisplay (const char *name)
 					      compScreenSnEvent, this, NULL);
 
     wmSnSelectionWindow = newWmSnOwner;
-    this->wmSnAtom            = wmSnAtom;
     this->wmSnTimestamp       = wmSnTimestamp;
 
     if (!XGetWindowAttributes (dpy, rootWindow(), &attrib))
@@ -5128,6 +5127,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     ScreenUser (screen),
     EventManager (screen),
     GrabManager (screen),
+    dpy (NULL),
     screenInfo (),
     snDisplay(0),
     windows (),
@@ -5135,6 +5135,11 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     currentDesktop (0),
     root(None),
     snContext (0),
+    wmSnSelectionWindow (None),
+    wmSnAtom (None),
+    normalCursor (None),
+    busyCursor (None),
+    invisibleCursor (None),
     showingDesktopMask (0),
     desktopHintData (0),
     desktopHintSize (0),
@@ -5143,6 +5148,12 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     edgeDelayTimer (),
     xdndWindow (None)
 {
+    for (int i = 0; i < SCREEN_EDGE_NUM; i++)
+    {
+	screenEdge[i].id    = None;
+	screenEdge[i].count = 0;
+    }
+
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));
 
@@ -5236,23 +5247,40 @@ cps::EventManager::~EventManager ()
 
 PrivateScreen::~PrivateScreen ()
 {
-    if (initialized)
+    initialized = false;
+
+    if (snContext)
+	sn_monitor_context_unref (snContext);
+
+    if (dpy != NULL)
     {
 	XUngrabKey (dpy, AnyKey, AnyModifier, rootWindow());
 
-	initialized = false;
-
 	for (int i = 0; i < SCREEN_EDGE_NUM; i++)
-	    XDestroyWindow (dpy, screenEdge[i].id);
+	{
+	    Window id = screenEdge[i].id;
+	    if (id != None)
+		XDestroyWindow (dpy, id);
+	}
 
 	destroyGrabWindow (dpy);
 
-	XFreeCursor (dpy, invisibleCursor);
-	XSync (dpy, False);
+	if (normalCursor != None)
+	    XFreeCursor (dpy, normalCursor);
 
-	if (snContext)
-	    sn_monitor_context_unref (snContext);
+	if (busyCursor != None)
+	    XFreeCursor (dpy, busyCursor);
 
+	if (invisibleCursor != None)
+	    XFreeCursor (dpy, invisibleCursor);
+
+	if (wmSnAtom != None)
+	    XSetSelectionOwner (dpy, wmSnAtom, None, CurrentTime);
+
+	if (wmSnSelectionWindow != None)
+	    XDestroyWindow (dpy, wmSnSelectionWindow);
+
+	XSync (dpy, False);  // Redundant?
 	XCloseDisplay (dpy);
     }
 
