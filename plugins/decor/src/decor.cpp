@@ -324,8 +324,6 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
     Window	 root;
     int		 i;
 
-    pixmap = src;
-
     if (!XGetGeometry (screen->dpy (), pixmap, &root,
 		       &i, &i, &width, &height, &ui, &depth))
     {
