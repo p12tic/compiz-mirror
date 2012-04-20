@@ -1636,7 +1636,7 @@ CompWindow::map ()
 	priv->invisible  = priv->isInvisible ();
 	priv->alive      = true;
 
-	priv->lastPong = screen->priv->lastPing;
+	priv->lastPong = screen->priv->lastPing ();
 
 	priv->updateRegion ();
 	priv->updateSize ();
@@ -4410,7 +4410,7 @@ PrivateScreen::focusTopMostWindow ()
 	    focus->moveInputFocusTo ();
     }
     else
-	XSetInputFocus (dpy, root, RevertToPointerRoot,
+	XSetInputFocus (dpy, rootWindow(), RevertToPointerRoot,
 			CurrentTime);
     return focus;
 }
@@ -6296,7 +6296,7 @@ CompWindow::CompWindow (Window aboveId,
 		  FocusChangeMask);
 
     priv->alpha     = (priv->attrib.depth == 32);
-    priv->lastPong  = screen->priv->lastPing;
+    priv->lastPong  = screen->priv->lastPing ();
 
     if (screen->XShape ())
 	XShapeSelectInput (screen->dpy (), priv->id, ShapeNotifyMask);

@@ -786,6 +786,50 @@ class StartupSequence : boost::noncopyable,
 	CompTimer                        startupSequenceTimer;
 };
 
+class Extension
+{
+public:
+    Extension() : is_enabled(), extension() {}
+
+    template<Bool ExtensionQuery (Display*, int*, int*)>
+    bool init(Display * dpy)
+    {
+	int error;
+	is_enabled = ExtensionQuery(dpy, &extension, &error);
+	return is_enabled;
+    }
+
+    template<Bool ExtensionQuery(Display*, int*, int*, int*, int*, int*)>
+    bool init(Display * dpy)
+    {
+	int opcode;
+	int error;
+	is_enabled = ExtensionQuery(dpy, &opcode, &extension, &error, NULL, NULL);
+
+	if (!is_enabled) extension = -1;
+
+	return is_enabled;
+    }
+
+    int isEnabled () const { return is_enabled; }
+    int get () const { return extension; }
+
+private:
+    bool is_enabled;
+    int extension;
+};
+
+class Ping
+{
+public:
+    Ping() : lastPing_(1) {}
+    bool handlePingTimeout (Display* dpy, CompWindowList& windows);
+    unsigned int lastPing () const { return lastPing_; }
+
+private:
+    unsigned int lastPing_;
+};
+
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
@@ -794,6 +838,7 @@ class PrivateScreen :
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
+    public compiz::private_screen::Ping,
     public compiz::private_screen::OrphanData,
     public compiz::private_screen::PseudoNamespace
 {
@@ -832,8 +877,6 @@ class PrivateScreen :
 			       CompOption::Vector &arguments);
 
 	void setAudibleBell (bool audible);
-
-	bool handlePingTimeout ();
 
 	bool handleActionEvent (XEvent *event);
 
@@ -919,34 +962,37 @@ class PrivateScreen :
 	static void compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
 
-    public:
+	int  getXkbEvent() const { return xkbEvent.get(); }
+	std::vector<XineramaScreenInfo>& getScreenInfo () { return screenInfo; }
+	SnDisplay* getSnDisplay () const { return snDisplay; }
+	char const* displayString () const { return displayString_; }
+	CompRegion const& getRegion () const { return region; }
+	XWindowAttributes const& getAttrib () const { return attrib; }
+	Window rootWindow() const { return root; }
+	void identifyEdgeWindow(Window id);
 
+    public:
 	Display    *dpy;
 
-	int syncEvent, syncError;
+	::compiz::private_screen::Extension xSync;
+	::compiz::private_screen::Extension xRandr;
+	::compiz::private_screen::Extension xShape;
 
-	bool randrExtension;
-	int  randrEvent, randrError;
+    private:
+	::compiz::private_screen::Extension xkbEvent;
 
-	bool shapeExtension;
-	int  shapeEvent, shapeError;
-
-	bool xkbExtension;
-	int  xkbEvent, xkbError;
-
+	//TODO? Pull these two out as a class?
 	bool xineramaExtension;
-	int  xineramaEvent, xineramaError;
-
 	std::vector<XineramaScreenInfo> screenInfo;
 
 	SnDisplay *snDisplay;
 
-	unsigned int lastPing;
-	char   displayString[256];
+	char   displayString_[256];
 
 	KeyCode escapeKeyCode;
 	KeyCode returnKeyCode;
 
+    public:
 	CompWindowList windows;
 
 	Colormap colormap;
@@ -954,11 +1000,14 @@ class PrivateScreen :
 
 	unsigned int nDesktop;
 	unsigned int currentDesktop;
+
+    private:
 	CompRegion   region;
 
 	Window	      root;
 
 	XWindowAttributes attrib;
+    public:
 
 	CompOutput::vector outputDevs;
 	int	           currentOutputDev;
@@ -967,12 +1016,16 @@ class PrivateScreen :
 
 	CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
 
+    private:
 	SnMonitorContext                 *snContext;
 
+    public:
 	Window wmSnSelectionWindow;
+    private:
 	Atom   wmSnAtom;
 	Time   wmSnTimestamp;
 
+    public:
 	Cursor normalCursor;
 	Cursor busyCursor;
 	Cursor invisibleCursor;
@@ -981,13 +1034,18 @@ class PrivateScreen :
 
 	unsigned int showingDesktopMask;
 
+    private:
 	unsigned long *desktopHintData;
 	int           desktopHintSize;
 
+    public:
 	bool initialized;
-	Window	edgeWindow;
+
     private:
 	virtual bool initDisplay (const char *name);
+	bool handlePingTimeout ();
+
+	Window	edgeWindow;
 
 	CompTimer    pingTimer;
 	CompTimer               edgeDelayTimer;
