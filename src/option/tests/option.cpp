@@ -162,7 +162,7 @@ TEST(CompOption,Color)
     for (int i = 0; i != 4; ++i) ASSERT_EQ(testColor2[i], color[i]);
 }
 
-TEST(CompPotion, Const)
+TEST(CompOption, Const)
 {
     CompOption::Value non_const;
     CompOption::Value const& as_const(non_const);
