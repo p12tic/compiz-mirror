@@ -718,7 +718,7 @@ PrivateScreen::setOption (const CompString  &name,
 	    break;
 	case CoreOptions::DetectOutputs:
 	    if (optionGetDetectOutputs ())
-		detectOutputDevices ();
+		detectOutputDevices (screenInfo, windows);
 	    break;
 	case CoreOptions::Hsize:
 	case CoreOptions::Vsize:
@@ -739,7 +739,7 @@ PrivateScreen::setOption (const CompString  &name,
 	case CoreOptions::Outputs:
 	    if (optionGetDetectOutputs ())
 		return false;
-	    updateOutputDevices ();
+	    updateOutputDevices (windows);
 	    break;
 	default:
 	    break;
@@ -1938,7 +1938,7 @@ PrivateScreen::setVirtualScreenSize (int newh, int newv)
 }
 
 void
-PrivateScreen::updateOutputDevices ()
+cps::OutputDevices::updateOutputDevices (CompWindowList const& windows)
 {
     CompOption::Value::Vector &list = optionGetOutputs ();
     unsigned int              nOutput = 0;
@@ -2009,7 +2009,7 @@ PrivateScreen::updateOutputDevices ()
 	outputDevs[i].setId (str, i);
     }
 
-    hasOverlappingOutputs = false;
+    overlappingOutputs = false;
 
     setCurrentOutput (currentOutputDev);
 
@@ -2022,7 +2022,7 @@ PrivateScreen::updateOutputDevices ()
     for (unsigned int i = 0; i < nOutput - 1; i++)
 	for (unsigned int j = i + 1; j < nOutput; j++)
 	    if (outputDevs[i].intersects (outputDevs[j]))
-		hasOverlappingOutputs = true;
+		overlappingOutputs = true;
 
     screen->updateWorkarea ();
 
@@ -2030,7 +2030,9 @@ PrivateScreen::updateOutputDevices ()
 }
 
 void
-PrivateScreen::detectOutputDevices ()
+cps::OutputDevices::detectOutputDevices (
+	std::vector<XineramaScreenInfo>& screenInfo,
+	CompWindowList& windows)
 {
     if (optionGetDetectOutputs ())
     {
@@ -2063,7 +2065,7 @@ PrivateScreen::detectOutputDevices ()
     }
     else
     {
-	updateOutputDevices ();
+	updateOutputDevices (windows);
     }
 }
 
@@ -2235,7 +2237,7 @@ PrivateScreen::updateScreenEdges ()
 }
 
 void
-PrivateScreen::setCurrentOutput (unsigned int outputNum)
+cps::OutputDevices::setCurrentOutput (unsigned int outputNum)
 {
     if (outputNum >= outputDevs.size ())
 	outputNum = 0;
@@ -2271,9 +2273,9 @@ PrivateScreen::configure (XConfigureEvent *ce)
 
 	reshape (ce->width, ce->height);
 
-	detectOutputDevices ();
+	detectOutputDevices (screenInfo, windows);
 
-	updateOutputDevices ();
+	updateOutputDevices (windows);
 }
 
 void
@@ -3473,7 +3475,7 @@ CompScreenImpl::removeAction (CompAction *action)
 }
 
 CompRect
-PrivateScreen::computeWorkareaForBox (const CompRect& box)
+cps::OutputDevices::computeWorkareaForBox (const CompRect& box, CompWindowList const& windows)
 {
     CompRegion region;
     int        x1, y1, x2, y2;
@@ -3532,26 +3534,29 @@ PrivateScreen::computeWorkareaForBox (const CompRect& box)
 }
 
 void
+cps::OutputDevices::computeWorkAreas(CompRect& workArea, bool& workAreaChanged,
+	CompRegion& allWorkArea, CompWindowList const& windows)
+{
+    for (unsigned int i = 0; i < outputDevs.size(); i++)
+    {
+	CompRect oldWorkArea = outputDevs[i].workArea();
+	workArea = computeWorkareaForBox(outputDevs[i], windows);
+	if (workArea != oldWorkArea)
+	{
+	    workAreaChanged = true;
+	    outputDevs[i].setWorkArea(workArea);
+	}
+	allWorkArea += workArea;
+    }
+}
+
+void
 CompScreenImpl::updateWorkarea ()
 {
     CompRect workArea;
     CompRegion allWorkArea = CompRegion ();
     bool     workAreaChanged = false;
-
-    for (unsigned int i = 0; i < priv->outputDevs.size (); i++)
-    {
-	CompRect oldWorkArea = priv->outputDevs[i].workArea ();
-
-	workArea = priv->computeWorkareaForBox (priv->outputDevs[i]);
-
-	if (workArea != oldWorkArea)
-	{
-	    workAreaChanged = true;
-	    priv->outputDevs[i].setWorkArea (workArea);
-	}
-
-	allWorkArea += workArea;
-    }
+    priv->computeWorkAreas(workArea, workAreaChanged, allWorkArea, priv->windows);
 
     workArea = allWorkArea.boundingRect ();
 
@@ -3976,7 +3981,7 @@ CompScreenImpl::outputDeviceForPoint (int x, int y)
 CompRect
 CompScreenImpl::getCurrentOutputExtents ()
 {
-    return priv->outputDevs[priv->currentOutputDev];
+    return priv->getCurrentOutputDev ();
 }
 
 void
@@ -4039,7 +4044,7 @@ PrivateScreen::setCurrentDesktop (unsigned int desktop)
 const CompRect&
 CompScreenImpl::getWorkareaForOutput (unsigned int outputNum) const
 {
-    return priv->outputDevs[outputNum].workArea ();
+    return priv->getOutputDev (outputNum).workArea ();
 }
 
 void
@@ -4081,16 +4086,24 @@ CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
 int
 CompScreenImpl::outputDeviceForGeometry (const CompWindow::Geometry& gm)
 {
-    int          overlapAreas[priv->outputDevs.size ()];
+    return priv->outputDeviceForGeometry (gm, priv->optionGetOverlappingOutputs (), this);
+}
+
+int
+cps::OutputDevices::outputDeviceForGeometry (
+	const CompWindow::Geometry& gm,
+	int strategy,
+	CompScreen* screen) const
+{
+    int          overlapAreas[outputDevs.size ()];
     int          highest, seen, highestScore;
-    int          x, y, strategy;
+    int          x, y;
     unsigned int i;
     CompRect     geomRect;
 
-    if (priv->outputDevs.size () == 1)
+    if (outputDevs.size () == 1)
 	return 0;
 
-    strategy = priv->optionGetOverlappingOutputs ();
 
     if (strategy == CoreOptions::OverlappingOutputsSmartMode)
     {
@@ -4101,46 +4114,46 @@ CompScreenImpl::outputDeviceForGeometry (const CompWindow::Geometry& gm)
 	geomRect.setWidth (gm.width () + 2 * gm.border ());
 	geomRect.setHeight (gm.height () + 2 * gm.border ());
 
-	x = gm.x () % width ();
+	x = gm.x () % screen->width ();
 	centerX = (x + (geomRect.width () / 2));
 	if (centerX < 0)
-	    x += width ();
-	else if (centerX > width ())
-	    x -= width ();
+	    x += screen->width ();
+	else if (centerX > screen->width ())
+	    x -= screen->width ();
 	geomRect.setX (x);
 
-	y = gm.y () % height ();
+	y = gm.y () % screen->height ();
 	centerY = (y + (geomRect.height () / 2));
 	if (centerY < 0)
-	    y += height ();
-	else if (centerY > height ())
-	    y -= height ();
+	    y += screen->height ();
+	else if (centerY > screen->height ())
+	    y -= screen->height ();
 	geomRect.setY (y);
     }
     else
     {
 	/* for biggest/smallest modes, only use the window center to determine
 	   the correct output device */
-	x = (gm.x () + (gm.width () / 2) + gm.border ()) % width ();
+	x = (gm.x () + (gm.width () / 2) + gm.border ()) % screen->width ();
 	if (x < 0)
-	    x += width ();
-	y = (gm.y () + (gm.height () / 2) + gm.border ()) % height ();
+	    x += screen->width ();
+	y = (gm.y () + (gm.height () / 2) + gm.border ()) % screen->height ();
 	if (y < 0)
-	    y += height ();
+	    y += screen->height ();
 
 	geomRect.setGeometry (x, y, 1, 1);
     }
 
     /* get amount of overlap on all output devices */
-    for (i = 0; i < priv->outputDevs.size (); i++)
+    for (i = 0; i < outputDevs.size (); i++)
     {
-	CompRect overlap = priv->outputDevs[i] & geomRect;
+	CompRect overlap = outputDevs[i] & geomRect;
 	overlapAreas[i] = overlap.area ();
     }
 
     /* find output with largest overlap */
     for (i = 0, highest = 0, highestScore = 0;
-	 i < priv->outputDevs.size (); i++)
+	 i < outputDevs.size (); i++)
     {
 	if (overlapAreas[i] > highestScore)
 	{
@@ -4150,7 +4163,7 @@ CompScreenImpl::outputDeviceForGeometry (const CompWindow::Geometry& gm)
     }
 
     /* look if the highest score is unique */
-    for (i = 0, seen = 0; i < priv->outputDevs.size (); i++)
+    for (i = 0, seen = 0; i < outputDevs.size (); i++)
 	if (overlapAreas[i] == highestScore)
 	    seen++;
 
@@ -4169,12 +4182,12 @@ CompScreenImpl::outputDeviceForGeometry (const CompWindow::Geometry& gm)
 	else
 	    bestOutputSize = UINT_MAX;
 
-	for (i = 0, highest = 0; i < priv->outputDevs.size (); i++)
+	for (i = 0, highest = 0; i < outputDevs.size (); i++)
 	    if (overlapAreas[i] == highestScore)
 	    {
 		bool bestFit;
 
-		currentSize = priv->outputDevs[i].area ();
+		currentSize = outputDevs[i].area ();
 
 		if (searchLargest)
 		    bestFit = (currentSize > bestOutputSize);
@@ -4459,13 +4472,13 @@ CompScreenImpl::activeNum () const
 CompOutput::vector &
 CompScreenImpl::outputDevs ()
 {
-    return priv->outputDevs;
+    return priv->getOutputDevs ();
 }
 
 CompOutput &
 CompScreenImpl::currentOutputDev () const
 {
-    return priv->outputDevs [priv->currentOutputDev];
+    return priv->getCurrentOutputDev ();
 }
 
 const CompRect &
@@ -4525,7 +4538,7 @@ CompScreenImpl::region () const
 bool
 CompScreenImpl::hasOverlappingOutputs ()
 {
-    return priv->hasOverlappingOutputs;
+    return priv->hasOverlappingOutputs ();
 }
 
 CompOutput &
@@ -4924,8 +4937,8 @@ PrivateScreen::initDisplay (const char *name)
 
     initialized = true;
     initOptions ();
-    detectOutputDevices ();
-    updateOutputDevices ();
+    detectOutputDevices (screenInfo, windows);
+    updateOutputDevices (windows);
 
     getDesktopHints ();
 
@@ -5111,6 +5124,7 @@ cps::StartupSequence::StartupSequence() :
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
+    CoreOptions (false),
     ScreenUser (screen),
     EventManager (screen),
     GrabManager (screen),
@@ -5119,10 +5133,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     windows (),
     nDesktop (1),
     currentDesktop (0),
-    root (None),
-    outputDevs (0),
-    currentOutputDev (0),
-    hasOverlappingOutputs (false),
+    root(None),
     snContext (0),
     showingDesktopMask (0),
     desktopHintData (0),
@@ -5160,19 +5171,31 @@ cps::WindowManager::WindowManager() :
 {
 }
 
-cps::PluginManager::PluginManager(CompScreen *screen) :
-    ScreenUser (screen),
+cps::OutputDevices::OutputDevices() :
     CoreOptions (false),
+    outputDevs (),
+    overlappingOutputs (false),
+    currentOutputDev (0)
+{
+}
+
+cps::PluginManager::PluginManager(CompScreen *screen) :
+    CoreOptions (false),
+    ScreenUser (screen),
     plugin (),
     dirtyPluginList (true)
 {
 }
 
 cps::EventManager::EventManager (CompScreen *screen) :
+    CoreOptions (false),
     ScreenUser (screen),
     PluginManager (screen),
     source(0),
     timeout(0),
+    sighupSource(0),
+    sigtermSource(0),
+    sigintSource(0),
     fileWatch (0),
     lastFileWatchHandle (1),
     watchFds (0),
@@ -5200,6 +5223,9 @@ cps::OrphanData::~OrphanData()
 cps::EventManager::~EventManager ()
 {
     delete timeout;
+    delete sigintSource;
+    delete sigtermSource;
+    delete sighupSource;
     delete source;
 
     foreach (CompWatchFd *fd, watchFds)

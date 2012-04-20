@@ -47,6 +47,41 @@
 
 #include <set>
 
+namespace compiz { namespace private_screen
+{
+
+class OutputDevices : public virtual CoreOptions
+{
+public:
+    OutputDevices();
+
+    void detectOutputDevices (
+	    std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
+    void updateOutputDevices (CompWindowList const& windows);
+    void setCurrentOutput (unsigned int outputNum);
+    CompOutput& getCurrentOutputDev () { return outputDevs[currentOutputDev]; }
+    bool hasOverlappingOutputs () const { return overlappingOutputs; }
+    void computeWorkAreas(CompRect& workArea, bool& workAreaChanged,
+	    CompRegion& allWorkArea, CompWindowList const& windows);
+    CompOutput const& getOutputDev (unsigned int outputNum) const
+    { return outputDevs[outputNum]; }
+
+    // TODO breaks encapsulation horribly ought to be const at least
+    // Even better, use begin() and end() return const_iterators
+    CompOutput::vector& getOutputDevs() { return outputDevs; }
+
+    int outputDeviceForGeometry (const CompWindow::Geometry& gm, int strategy, CompScreen* screen) const;
+
+private:
+    static CompRect computeWorkareaForBox (const CompRect &box, CompWindowList const& windows);
+
+    CompOutput::vector outputDevs;
+    bool               overlappingOutputs;
+    int	           currentOutputDev;
+};
+
+}} //::compiz::private_screen
+
 /**
  * A wrapping of the X display screen. This takes care of communication to the
  * X server.
@@ -555,7 +590,7 @@ public:
 };
 
 class PluginManager :
-    public CoreOptions,
+    public virtual CoreOptions,
     public virtual ScreenUser
 {
     public:
@@ -840,6 +875,7 @@ class PrivateScreen :
     public compiz::private_screen::StartupSequence,
     public compiz::private_screen::Ping,
     public compiz::private_screen::OrphanData,
+    public compiz::private_screen::OutputDevices,
     public compiz::private_screen::PseudoNamespace
 {
 
@@ -893,10 +929,6 @@ class PrivateScreen :
 
 	void setVirtualScreenSize (int hsize, int vsize);
 
-	void updateOutputDevices ();
-
-	void detectOutputDevices ();
-
 	void updateStartupFeedback ();
 
 	void updateScreenEdges ();
@@ -904,8 +936,6 @@ class PrivateScreen :
 	void reshape (int w, int h);
 
 	void getDesktopHints ();
-
-	CompRect computeWorkareaForBox (const CompRect &box);
 
 	void updateScreenInfo ();
 
@@ -932,8 +962,6 @@ class PrivateScreen :
 	bool readWindowProp32 (Window         id,
 			       Atom           property,
 			       unsigned short *returnValue);
-
-	void setCurrentOutput (unsigned int outputNum);
 
 	void configure (XConfigureEvent *ce);
 
@@ -1009,10 +1037,7 @@ class PrivateScreen :
 	XWindowAttributes attrib;
     public:
 
-	CompOutput::vector outputDevs;
-	int	           currentOutputDev;
 	CompOutput         fullscreenOutput;
-	bool               hasOverlappingOutputs;
 
 	CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
 
