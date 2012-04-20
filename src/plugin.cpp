@@ -43,7 +43,6 @@
 
 #define foreach BOOST_FOREACH
 
-static const char here[] = "core";
 
 CompPlugin::Map pluginsMap;
 CompPlugin::List plugins;
@@ -134,6 +133,7 @@ dlloaderLoadPlugin (CompPlugin *p,
     CompString  file;
     void        *dlhand;
     bool        loaded = false;
+    struct stat fileInfo;
 
     if (cloaderLoadPlugin (p, path, name))
 	return true;
@@ -148,9 +148,15 @@ dlloaderLoadPlugin (CompPlugin *p,
     file += name;
     file += ".so";
 
-    compLogMessage (here, CompLogLevelDebug,
-                    "Trying to load %s from: %s", name, file.c_str ());
-    
+    if (stat (file.c_str (), &fileInfo) != 0)
+    {
+	/* file likely not present */
+	compLogMessage ("core", CompLogLevelDebug,
+			"Could not stat() file %s : %s",
+			file.c_str (), strerror (errno));
+	return false;
+    }
+
     int open_flags = RTLD_NOW;
 #ifdef DEBUG
     // Do not unload the library during dlclose.
@@ -165,8 +171,6 @@ dlloaderLoadPlugin (CompPlugin *p,
 	char		  *error;
 	char              sym[1024];
 
-	compLogMessage (here, CompLogLevelDebug,
-	                "Opened library: %s", file.c_str ());
 	dlerror ();
 
 	snprintf (sym, 1024, "getCompPluginVTable20090315_%s", name);
@@ -175,7 +179,7 @@ dlloaderLoadPlugin (CompPlugin *p,
 	error = dlerror ();
 	if (error)
 	{
-	    compLogMessage (here, CompLogLevelError, "dlsym: %s", error);
+	    compLogMessage ("core", CompLogLevelError, "dlsym: %s", error);
 	    getInfo = 0;
 	}
 
@@ -184,7 +188,7 @@ dlloaderLoadPlugin (CompPlugin *p,
 	    p->vTable = (*getInfo) ();
 	    if (!p->vTable)
 	    {
-		compLogMessage (here, CompLogLevelError,
+		compLogMessage ("core", CompLogLevelError,
 				"Couldn't get vtable from '%s' plugin",
 				file.c_str ());
 	    }
@@ -193,16 +197,14 @@ dlloaderLoadPlugin (CompPlugin *p,
 		p->devPrivate.ptr = dlhand;
 		p->devType	  = "dlloader";
 		loaded            = true;
-		compLogMessage (here, CompLogLevelDebug,
-		                "Loaded plugin %s from: %s",
-		                name, file.c_str ());
 	    }
 	}
     }
     else
     {
-	compLogMessage (here, CompLogLevelDebug,
-			"dlopen failed: %s", dlerror ());
+	compLogMessage ("core", CompLogLevelError,
+			"Couldn't load plugin '%s' : %s",
+			file.c_str (), dlerror ());
     }
 
     if (!loaded && dlhand)
@@ -216,8 +218,6 @@ dlloaderUnloadPlugin (CompPlugin *p)
 {
     if (p->devType == "dlloader")
     {
-	const char *name = p->vTable->name ().c_str ();
-	compLogMessage (here, CompLogLevelDebug, "Closing library: %s", name);
 	delete p->vTable;
 	dlclose (p->devPrivate.ptr);
     }
@@ -273,11 +273,11 @@ ListPluginsProc  loaderListPlugins  = dlloaderListPlugins;
 bool
 CompManager::initPlugin (CompPlugin *p)
 {
-    const char *name = p->vTable->name ().c_str ();
+
     if (!p->vTable->init ())
     {
-	compLogMessage (here, CompLogLevelError,
-	                "Plugin init failed: %s", name);
+	compLogMessage ("core", CompLogLevelError,
+			"InitPlugin '%s' failed", p->vTable->name ().c_str ());
 	return false;
     }
 
@@ -285,15 +285,13 @@ CompManager::initPlugin (CompPlugin *p)
     {
 	if (!p->vTable->initScreen (screen))
 	{
-	    compLogMessage (here, CompLogLevelError,
-	                    "Plugin initScreen failed: %s", name);
+	    compLogMessage (p->vTable->name ().c_str (), CompLogLevelError,
+                            "initScreen failed");
 	    p->vTable->fini ();
 	    return false;
 	}
 	if (!screen->initPluginForScreen (p))
 	{
-	    compLogMessage (here, CompLogLevelError,
-	                    "initPluginForScreen failed: %s", name);
 	    p->vTable->fini ();
 	    return false;
 	}
@@ -335,9 +333,8 @@ CompScreenImpl::_initPluginForScreen (CompPlugin *p)
 	w = *it;
 	if (!p->vTable->initWindow (w))
 	{
-	    const char *name = p->vTable->name ().c_str ();
-	    compLogMessage (here, CompLogLevelError,
-	                    "initWindow failed for %s", name);
+	    compLogMessage (p->vTable->name ().c_str (), CompLogLevelError,
+                            "initWindow failed");
             fail   = it;
             status = false;
 	}
@@ -437,8 +434,6 @@ CompPlugin::find (const char *name)
 void
 CompPlugin::unload (CompPlugin *p)
 {
-    const char *name = p->vTable->name ().c_str ();
-    compLogMessage (here, CompLogLevelInfo, "Unloading plugin: %s", name);
     loaderUnloadPlugin (p);
     delete p;
 }
@@ -452,7 +447,6 @@ CompPlugin::load (const char *name)
     p->devType	       = "";
     p->vTable	       = 0;
 
-    compLogMessage (here, CompLogLevelInfo, "Loading plugin: %s", name);
 
     if (char* home = getenv ("HOME"))
     {
@@ -469,7 +463,8 @@ CompPlugin::load (const char *name)
     if (loaderLoadPlugin (p.get(), NULL, name))
         return p.release();
 
-    compLogMessage (here, CompLogLevelError, "Failed to load plugin: %s", name);
+    compLogMessage ("core", CompLogLevelError,
+		    "Couldn't load plugin '%s'", name);
 
     return 0;
 }
@@ -484,7 +479,7 @@ CompPlugin::push (CompPlugin *p)
 
     if (!insertRet.second)
     {
-	compLogMessage (here, CompLogLevelWarn,
+	compLogMessage ("core", CompLogLevelWarn,
 			"Plugin '%s' already active",
 			p->vTable->name ().c_str ());
 
@@ -493,15 +488,10 @@ CompPlugin::push (CompPlugin *p)
 
     plugins.push_front (p);
 
-    compLogMessage (here, CompLogLevelInfo, "Starting plugin: %s", name);
-    if (CompManager::initPlugin (p))
+    if (!CompManager::initPlugin (p))
     {
-	compLogMessage (here, CompLogLevelDebug, "Started plugin: %s", name);
-    }
-    else
-    {
-	compLogMessage (here, CompLogLevelError,
-	    "Failed to start plugin: %s", name);
+	compLogMessage ("core", CompLogLevelError,
+			"Couldn't activate plugin '%s'", name);
 
         pluginsMap.erase (name);
 	plugins.pop_front ();
@@ -523,12 +513,9 @@ CompPlugin::pop (void)
     if (!p)
 	return 0;
 
-    const char *name = p->vTable->name ().c_str ();
-    pluginsMap.erase (name);
+    pluginsMap.erase (p->vTable->name ().c_str ());
 
-    compLogMessage (here, CompLogLevelInfo, "Stopping plugin: %s", name);
     CompManager::finiPlugin (p);
-    compLogMessage (here, CompLogLevelDebug, "Stopped plugin: %s", name);
 
     plugins.pop_front ();
 
@@ -592,13 +579,13 @@ CompPlugin::checkPluginABI (const char *name,
     pluginABI = getPluginABI (name);
     if (!pluginABI)
     {
-	compLogMessage (here, CompLogLevelError,
+	compLogMessage ("core", CompLogLevelError,
 			"Plugin '%s' not loaded.\n", name);
 	return false;
     }
     else if (pluginABI != abi)
     {
-	compLogMessage (here, CompLogLevelError,
+	compLogMessage ("core", CompLogLevelError,
 			"Plugin '%s' has ABI version '%d', expected "
 			"ABI version '%d'.\n",
 			name, pluginABI, abi);
