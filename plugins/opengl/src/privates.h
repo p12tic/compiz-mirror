@@ -116,8 +116,6 @@ class PrivateGLScreen :
 
 	CompRegion outputRegion;
 
-	bool pendingCommands;
-
 	XRectangle lastViewport;
 
 	std::vector<GLTexture::BindPixmapProc> bindPixmap;
