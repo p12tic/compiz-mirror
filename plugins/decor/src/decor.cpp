@@ -2323,7 +2323,6 @@ DecorScreen::handleEvent (XEvent *event)
 				    dw->cWindow->damageOutputExtents ();
 			    }
 			}
-			return;
 		    }
 		}
 	    }
