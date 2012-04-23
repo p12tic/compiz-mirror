@@ -118,11 +118,9 @@ CompManager::parseArguments (int argc, char **argv)
 	}
 	else
 	{
-	    plugins.push_back (argv[i]);
+	    initialPlugins.push_back (argv[i]);
 	}
     }
-
-    initialPlugins = plugins;
 
     return true;
 }
@@ -148,13 +146,13 @@ CompManager::init ()
 
     modHandler = new ModifierHandler ();
 
-    if (!plugins.empty ())
+    if (!initialPlugins.empty ())
     {
 	CompOption::Value::Vector list;
         CompOption::Value         value;
 	CompOption                *o = screen->getOption ("active_plugins");
 
-	foreach (CompString &str, plugins)
+	foreach (CompString &str, initialPlugins)
 	{
 	    value.set (str);
 	    list.push_back (value);

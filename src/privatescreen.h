@@ -47,6 +47,41 @@
 
 #include <set>
 
+namespace compiz { namespace private_screen
+{
+
+class OutputDevices : public virtual CoreOptions
+{
+public:
+    OutputDevices();
+
+    void detectOutputDevices (
+	    std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
+    void updateOutputDevices (CompWindowList const& windows);
+    void setCurrentOutput (unsigned int outputNum);
+    CompOutput& getCurrentOutputDev () { return outputDevs[currentOutputDev]; }
+    bool hasOverlappingOutputs () const { return overlappingOutputs; }
+    void computeWorkAreas(CompRect& workArea, bool& workAreaChanged,
+	    CompRegion& allWorkArea, CompWindowList const& windows);
+    CompOutput const& getOutputDev (unsigned int outputNum) const
+    { return outputDevs[outputNum]; }
+
+    // TODO breaks encapsulation horribly ought to be const at least
+    // Even better, use begin() and end() return const_iterators
+    CompOutput::vector& getOutputDevs() { return outputDevs; }
+
+    int outputDeviceForGeometry (const CompWindow::Geometry& gm, int strategy, CompScreen* screen) const;
+
+private:
+    static CompRect computeWorkareaForBox (const CompRect &box, CompWindowList const& windows);
+
+    CompOutput::vector outputDevs;
+    bool               overlappingOutputs;
+    int	           currentOutputDev;
+};
+
+}} //::compiz::private_screen
+
 /**
  * A wrapping of the X display screen. This takes care of communication to the
  * X server.
@@ -555,7 +590,7 @@ public:
 };
 
 class PluginManager :
-    public CoreOptions,
+    public virtual CoreOptions,
     public virtual ScreenUser
 {
     public:
@@ -786,6 +821,50 @@ class StartupSequence : boost::noncopyable,
 	CompTimer                        startupSequenceTimer;
 };
 
+class Extension
+{
+public:
+    Extension() : is_enabled(), extension() {}
+
+    template<Bool ExtensionQuery (Display*, int*, int*)>
+    bool init(Display * dpy)
+    {
+	int error;
+	is_enabled = ExtensionQuery(dpy, &extension, &error);
+	return is_enabled;
+    }
+
+    template<Bool ExtensionQuery(Display*, int*, int*, int*, int*, int*)>
+    bool init(Display * dpy)
+    {
+	int opcode;
+	int error;
+	is_enabled = ExtensionQuery(dpy, &opcode, &extension, &error, NULL, NULL);
+
+	if (!is_enabled) extension = -1;
+
+	return is_enabled;
+    }
+
+    int isEnabled () const { return is_enabled; }
+    int get () const { return extension; }
+
+private:
+    bool is_enabled;
+    int extension;
+};
+
+class Ping
+{
+public:
+    Ping() : lastPing_(1) {}
+    bool handlePingTimeout (Display* dpy, CompWindowList& windows);
+    unsigned int lastPing () const { return lastPing_; }
+
+private:
+    unsigned int lastPing_;
+};
+
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
@@ -794,7 +873,9 @@ class PrivateScreen :
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
+    public compiz::private_screen::Ping,
     public compiz::private_screen::OrphanData,
+    public compiz::private_screen::OutputDevices,
     public compiz::private_screen::PseudoNamespace
 {
 
@@ -833,8 +914,6 @@ class PrivateScreen :
 
 	void setAudibleBell (bool audible);
 
-	bool handlePingTimeout ();
-
 	bool handleActionEvent (XEvent *event);
 
 	void handleSelectionRequest (XEvent *event);
@@ -850,10 +929,6 @@ class PrivateScreen :
 
 	void setVirtualScreenSize (int hsize, int vsize);
 
-	void updateOutputDevices ();
-
-	void detectOutputDevices ();
-
 	void updateStartupFeedback ();
 
 	void updateScreenEdges ();
@@ -861,8 +936,6 @@ class PrivateScreen :
 	void reshape (int w, int h);
 
 	void getDesktopHints ();
-
-	CompRect computeWorkareaForBox (const CompRect &box);
 
 	void updateScreenInfo ();
 
@@ -889,8 +962,6 @@ class PrivateScreen :
 	bool readWindowProp32 (Window         id,
 			       Atom           property,
 			       unsigned short *returnValue);
-
-	void setCurrentOutput (unsigned int outputNum);
 
 	void configure (XConfigureEvent *ce);
 
@@ -919,34 +990,37 @@ class PrivateScreen :
 	static void compScreenSnEvent (SnMonitorEvent *event,
 			   void           *userData);
 
-    public:
+	int  getXkbEvent() const { return xkbEvent.get(); }
+	std::vector<XineramaScreenInfo>& getScreenInfo () { return screenInfo; }
+	SnDisplay* getSnDisplay () const { return snDisplay; }
+	char const* displayString () const { return displayString_; }
+	CompRegion const& getRegion () const { return region; }
+	XWindowAttributes const& getAttrib () const { return attrib; }
+	Window rootWindow() const { return root; }
+	void identifyEdgeWindow(Window id);
 
+    public:
 	Display    *dpy;
 
-	int syncEvent, syncError;
+	::compiz::private_screen::Extension xSync;
+	::compiz::private_screen::Extension xRandr;
+	::compiz::private_screen::Extension xShape;
 
-	bool randrExtension;
-	int  randrEvent, randrError;
+    private:
+	::compiz::private_screen::Extension xkbEvent;
 
-	bool shapeExtension;
-	int  shapeEvent, shapeError;
-
-	bool xkbExtension;
-	int  xkbEvent, xkbError;
-
+	//TODO? Pull these two out as a class?
 	bool xineramaExtension;
-	int  xineramaEvent, xineramaError;
-
 	std::vector<XineramaScreenInfo> screenInfo;
 
 	SnDisplay *snDisplay;
 
-	unsigned int lastPing;
-	char   displayString[256];
+	char   displayString_[256];
 
 	KeyCode escapeKeyCode;
 	KeyCode returnKeyCode;
 
+    public:
 	CompWindowList windows;
 
 	Colormap colormap;
@@ -954,25 +1028,29 @@ class PrivateScreen :
 
 	unsigned int nDesktop;
 	unsigned int currentDesktop;
+
+    private:
 	CompRegion   region;
 
 	Window	      root;
 
 	XWindowAttributes attrib;
+    public:
 
-	CompOutput::vector outputDevs;
-	int	           currentOutputDev;
 	CompOutput         fullscreenOutput;
-	bool               hasOverlappingOutputs;
 
 	CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
 
+    private:
 	SnMonitorContext                 *snContext;
 
+    public:
 	Window wmSnSelectionWindow;
+    private:
 	Atom   wmSnAtom;
 	Time   wmSnTimestamp;
 
+    public:
 	Cursor normalCursor;
 	Cursor busyCursor;
 	Cursor invisibleCursor;
@@ -981,13 +1059,18 @@ class PrivateScreen :
 
 	unsigned int showingDesktopMask;
 
+    private:
 	unsigned long *desktopHintData;
 	int           desktopHintSize;
 
+    public:
 	bool initialized;
-	Window	edgeWindow;
+
     private:
 	virtual bool initDisplay (const char *name);
+	bool handlePingTimeout ();
+
+	Window	edgeWindow;
 
 	CompTimer    pingTimer;
 	CompTimer               edgeDelayTimer;
@@ -1013,7 +1096,6 @@ class CompManager
 
     private:
 
-	std::list <CompString> plugins;
 	bool		       disableSm;
 	char		       *clientId;
 	char		       *displayName;
