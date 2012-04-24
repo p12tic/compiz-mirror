@@ -4065,22 +4065,32 @@ CompScreenImpl::_outputChangeNotify ()
    is currently computed as the viewport where the center of the window is
    located. */
 void
-CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
-				 CompPoint&                  viewport)
+compiz::private_screen::viewports::viewportForGeometry (const CompWindow::Geometry &gm,
+							CompPoint                  &viewport,
+							ViewportRetrievalInterface *viewports,
+							const CompSize &           screenSize)
 {
     CompRect rect (gm);
     int      offset;
+
+    const CompPoint &vp = viewports->getCurrentViewport ();
+    const CompSize &vpSize = viewports->viewportDimentions ();
 
     rect.setWidth  (gm.widthIncBorders ());
     rect.setHeight (gm.heightIncBorders ());
 
     offset = rect.centerX () < 0 ? -1 : 0;
-    viewport.setX (priv->vp.x () + ((rect.centerX () / width ()) + offset) %
-		   priv->vpSize.width ());
+    viewport.setX (compiz::core::screen::wraparound_mod (vp.x () + ((rect.centerX () / screenSize.width ()) + offset), vpSize.width ()));
 
     offset = rect.centerY () < 0 ? -1 : 0;
-    viewport.setY (priv->vp.y () + ((rect.centerY () / height ()) + offset ) %
-		   priv->vpSize.height ());
+    viewport.setY (compiz::core::screen::wraparound_mod (vp.y () + ((rect.centerY () / screenSize.height ()) + offset), vpSize.height ()));
+}
+
+void
+CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
+				     CompPoint&                  viewport)
+{
+    compiz::private_screen::viewports::viewportForGeometry (gm, viewport, priv.get (), *this);
 }
 
 int
