@@ -139,7 +139,7 @@ class WallScreen :
 
 	int          boxTimeout;
 	unsigned int boxOutputDevice;
-	void         *grabIndex;
+	CompScreen::GrabHandle grabIndex;
 	int          timer;
 
 	Window moveWindow;
