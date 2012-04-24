@@ -786,7 +786,7 @@ PrivateScreen::processEvents ()
     StackDebugger *dbg = StackDebugger::Default ();
 
     if (isDirtyPluginList ())
-	updatePlugins ();
+	updatePlugins (optionGetActivePlugins());
 
     /* Restacks recently processed, ensure that
      * plugins use the stack last received from
@@ -900,13 +900,11 @@ PrivateScreen::processEvents ()
 }
 
 CompOption::Value::Vector
-cps::PluginManager::mergedPluginList ()
+cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPluginsRequested)
 {
     std::list<CompString> availablePlugins(CompPlugin::availablePlugins ());
 
     CompOption::Value::Vector result;
-
-    CompOption::Value::Vector const& extraPluginsRequested = optionGetActivePlugins();
 
     /* Must have core as first plugin */
     result.push_back("core");
@@ -957,12 +955,12 @@ cps::PluginManager::mergedPluginList ()
 
 
 void
-cps::PluginManager::updatePlugins ()
+cps::PluginManager::updatePlugins (CompOption::Value::Vector const& extraPluginsRequested)
 {
     possibleTap = NULL;
     dirtyPluginList = false;
 
-    CompOption::Value::Vector const desiredPlugins(mergedPluginList());
+    CompOption::Value::Vector const desiredPlugins(mergedPluginList(extraPluginsRequested));
 
     unsigned int pluginIndex;
     for (pluginIndex = 1;
@@ -5193,7 +5191,6 @@ cps::OutputDevices::OutputDevices() :
 }
 
 cps::PluginManager::PluginManager(CompScreen *screen) :
-    CoreOptions (false),
     ScreenUser (screen),
     plugin (),
     dirtyPluginList (true)

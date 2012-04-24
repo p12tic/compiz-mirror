@@ -283,13 +283,12 @@ public:
 };
 
 class PluginManager :
-    public virtual CoreOptions,
     public virtual ScreenUser
 {
     public:
 	PluginManager(CompScreen *screen);
 
-	void updatePlugins ();
+	void updatePlugins (CompOption::Value::Vector const& extraPluginsRequested);
 
 	void setPlugins(CompOption::Value::Vector const& vList)
 	{
@@ -305,7 +304,7 @@ class PluginManager :
 	typedef std::set<CompString> CompStringSet;
 	CompStringSet blacklist;
 
-	CompOption::Value::Vector mergedPluginList();
+	CompOption::Value::Vector mergedPluginList(CompOption::Value::Vector const& extraPluginsRequested);
 };
 
 class GrabList
@@ -331,6 +330,7 @@ private:
 };
 
 class EventManager :
+    public virtual CoreOptions,
     public PluginManager,
     public ValueHolder,
     public GrabList,
