@@ -137,7 +137,7 @@ CompManager::init ()
 {
     std::auto_ptr<CompScreenImpl> screen(new CompScreenImpl ());
 
-    if (screen->priv->createFailed ())
+    if (screen->createFailed ())
     {
 	return false;
     }
@@ -166,16 +166,6 @@ CompManager::init ()
 
     if (!screen->init (displayName))
 	return false;
-
-    screen->priv->initPlugins();
-
-    if (debugOutput)
-    {
-	StackDebugger::SetDefault (new StackDebugger (screen->dpy (),
-						      screen->root (),
-						      boost::bind (&PrivateScreen::queueEvents,
-								   screen->priv.get())));
-    }
 
      if (!disableSm)
      {

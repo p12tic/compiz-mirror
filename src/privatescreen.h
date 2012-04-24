@@ -671,8 +671,7 @@ class PrivateScreen :
 	CompWindow *
 	focusTopMostWindow ();
 
-	bool
-	createFailed ();
+	bool createFailed () const;
 	
 	void setDefaultWindowAttributes (XWindowAttributes *);
 
@@ -1080,6 +1079,9 @@ class CompScreenImpl : public CompScreen
 	static bool shadeWin (CompAction         *action,
 			      CompAction::State  state,
 			      CompOption::Vector &options);
+
+	bool createFailed () const { return priv->createFailed (); }
+
 
     private:
         virtual bool _setOptionForPlugin(const char *, const char *, CompOption::Value &);

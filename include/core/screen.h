@@ -325,7 +325,6 @@ public:
     friend class CompWindow; // TODO get rid of friends
     friend class PrivateWindow; // TODO get rid of friends
     friend class ModifierHandler; // TODO get rid of friends
-    friend class CompManager; // TODO get rid of friends
 
     virtual void processEvents () = 0;
     virtual void alwaysHandleEvent (XEvent *event) = 0;

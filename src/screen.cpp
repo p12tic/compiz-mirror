@@ -4561,7 +4561,7 @@ CompScreenImpl::screenInfo ()
 }
 
 bool
-PrivateScreen::createFailed ()
+PrivateScreen::createFailed () const
 {
     return !screenInitalized;
 }
@@ -4609,7 +4609,22 @@ CompScreenImpl::CompScreenImpl () :
 bool
 CompScreenImpl::init (const char *name)
 {
-    return priv->init(name);
+    if (priv->init(name))
+    {
+	priv->initPlugins();
+
+	if (debugOutput)
+	{
+	    StackDebugger::SetDefault (
+		new StackDebugger (
+		    dpy (),
+		    root (),
+		    boost::bind (&PrivateScreen::queueEvents, priv.get())));
+	}
+
+	return true;
+    }
+    return false;
 }
 
 bool
