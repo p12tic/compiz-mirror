@@ -721,6 +721,5 @@ TEST(privatescreen_EventManagerTest, init)
 
     cps::EventManager em(&comp_screen);
 
-    em.setPlugins (values);
     em.init(0);
 }

@@ -5129,6 +5129,7 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     ScreenUser (screen),
     EventManager (screen),
     GrabManager (screen),
+    PluginManager (),
     dpy (NULL),
     screenInfo (),
     snDisplay(0),
@@ -5201,7 +5202,6 @@ cps::PluginManager::PluginManager() :
 cps::EventManager::EventManager (CompScreen *screen) :
     CoreOptions (false),
     ScreenUser (screen),
-    PluginManager (),
     possibleTap(NULL),
     source(0),
     timeout(0),

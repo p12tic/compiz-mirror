@@ -325,7 +325,6 @@ private:
 
 class EventManager :
     public virtual CoreOptions,
-    public PluginManager,
     public ValueHolder,
     public GrabList,
     public virtual ScreenUser
@@ -561,6 +560,7 @@ class PrivateScreen :
     public compiz::private_screen::EventManager,
     public compiz::private_screen::WindowManager,
     public compiz::private_screen::GrabManager,
+    public compiz::private_screen::PluginManager,
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
     public compiz::private_screen::Ping,
