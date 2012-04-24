@@ -167,8 +167,7 @@ CompManager::init ()
     if (!screen->init (displayName))
 	return false;
 
-    screen->priv->setDirtyPluginList ();
-    screen->priv->updatePlugins (screen->priv->optionGetActivePlugins());
+    screen->priv->initPlugins();
 
     if (debugOutput)
     {

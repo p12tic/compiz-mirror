@@ -707,7 +707,7 @@ PrivateScreen::setOption (const CompString  &name,
 
     switch (index) {
 	case CoreOptions::ActivePlugins:
-	    setDirtyPluginList ();
+	    pluginManager.setDirtyPluginList ();
 	    break;
 	case CoreOptions::PingDelay:
 	    pingTimer.setTimes (optionGetPingDelay (),
@@ -785,10 +785,10 @@ PrivateScreen::processEvents ()
     std::list <XEvent> events;
     StackDebugger *dbg = StackDebugger::Default ();
 
-    if (isDirtyPluginList ())
+    if (pluginManager.isDirtyPluginList ())
     {
 	possibleTap = 0;
-	updatePlugins (optionGetActivePlugins());
+	pluginManager.updatePlugins (optionGetActivePlugins());
     }
 
     /* Restacks recently processed, ensure that
@@ -5129,7 +5129,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     ScreenUser (screen),
     EventManager (screen),
     GrabManager (screen),
-    PluginManager (),
     dpy (NULL),
     screenInfo (),
     snDisplay(0),

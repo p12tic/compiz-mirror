@@ -560,7 +560,6 @@ class PrivateScreen :
     public compiz::private_screen::EventManager,
     public compiz::private_screen::WindowManager,
     public compiz::private_screen::GrabManager,
-    public compiz::private_screen::PluginManager,
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
     public compiz::private_screen::Ping,
@@ -688,6 +687,14 @@ class PrivateScreen :
 	XWindowAttributes const& getAttrib () const { return attrib; }
 	Window rootWindow() const { return root; }
 	void identifyEdgeWindow(Window id);
+	void setPlugins(CompOption::Value::Vector const& vList)
+	    { pluginManager.setPlugins(vList); }
+
+	void initPlugins()
+	{
+	    pluginManager.setDirtyPluginList ();
+	    pluginManager.updatePlugins (optionGetActivePlugins());
+	}
 
     public:
 	Display    *dpy;
@@ -766,6 +773,7 @@ class PrivateScreen :
 	CompTimer               edgeDelayTimer;
 	CompDelayedEdgeSettings edgeDelaySettings;
 	Window	xdndWindow;
+	::compiz::private_screen::PluginManager pluginManager;
 };
 
 class CompManager
