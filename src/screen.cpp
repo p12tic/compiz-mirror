@@ -982,17 +982,7 @@ cps::PluginManager::updatePlugins ()
     {
 	for (pluginIndex = 0; pluginIndex < nPop; pluginIndex++)
 	{
-	    CompPlugin* current = CompPlugin::pop();
-
-            if ("unityshell" == current->vTable->name())
-	    {
-		CompPlugin::unload(current);
-	    }
-	    else
-	    {
-		alreadyLoaded.push_back(current);
-	    }
-
+	    alreadyLoaded.push_back(CompPlugin::pop());
 	    plugin.list().pop_back();
 	}
     }
