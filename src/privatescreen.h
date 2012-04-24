@@ -807,7 +807,7 @@ class ViewportRetrievalInterface
 
 // Apart from a use by StartupSequence::addSequence this data
 // is only used by CompScreenImpl - like the OrphanData struct
-class ViewPort :
+struct ViewPort :
     public ViewportRetrievalInterface
 {
     public:
