@@ -1772,7 +1772,7 @@ WobblyScreen::shiver (CompOption::Vector &options)
 
 	if (ww->isWobblyWin () && ww->ensureModel ())
 	{
-	    CompRect outRect (w->outputRect ());
+	    CompRect outRect (w->serverOutputRect ());
 
 	    ww->model->setMiddleAnchor (outRect.x (), outRect.y (),
 					outRect.width (), outRect.height ());
@@ -1901,7 +1901,7 @@ WobblyScreen::handleEvent (XEvent *event)
 		switch (focusEffect) {
 		case WobblyOptions::FocusEffectShiver:
 		    {
-			CompRect outRect (w->outputRect ());
+			CompRect outRect (w->serverOutputRect ());
 
 			ww->model->adjustObjectsForShiver (outRect.x (),
 							   outRect.y (),
@@ -2131,7 +2131,8 @@ WobblyWindow::grabNotify (int          x,
     }
     wScreen->moveWindow = false;
 
-    if ((mask & CompWindowGrabButtonMask) &&
+    if (mask & (CompWindowGrabButtonMask) &&
+	mask & (CompWindowGrabMoveMask) &&
 	wScreen->optionGetMoveWindowMatch ().evaluate (window) &&
 	isWobblyWin ())
     {
@@ -2192,7 +2193,7 @@ WobblyWindow::grabNotify (int          x,
 	    if (wScreen->yConstrained)
 	    {
 		int output =
-		    ::screen->outputDeviceForGeometry (window->geometry ());
+		    ::screen->outputDeviceForGeometry (window->serverGeometry ());
 		wScreen->constraintBox =
 		    &::screen->outputDevs ()[output].workArea ();
 	    }

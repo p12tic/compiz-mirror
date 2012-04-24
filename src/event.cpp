@@ -1251,7 +1251,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    }
 
 	    /* been shaded */
-	    if (w->priv->height == 0)
+	    if (w->shaded ())
 	    {
 		if (w->id () == priv->activeWindow)
 		    w->moveInputFocusTo ();

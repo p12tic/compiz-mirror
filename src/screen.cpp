@@ -4071,8 +4071,8 @@ CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
     CompRect rect (gm);
     int      offset;
 
-    rect.setWidth  (rect.width () + (gm.border () * 2));
-    rect.setHeight (rect.height () + (gm.border () * 2));
+    rect.setWidth  (gm.widthIncBorders ());
+    rect.setHeight (gm.heightIncBorders ());
 
     offset = rect.centerX () < 0 ? -1 : 0;
     viewport.setX (priv->vp.x () + ((rect.centerX () / width ()) + offset) %
@@ -4681,6 +4681,8 @@ PrivateScreen::initDisplay (const char *name)
 	return false;
     }
 
+    /* Use synchronous behaviour when running with --sync, useful
+     * for getting stacktraces when X Errors occurr */
     XSynchronize (dpy, synchronousX ? True : False);
 
     snprintf (displayString_, 255, "DISPLAY=%s",

@@ -162,8 +162,6 @@ class ResizeWindow :
 	ResizeWindow (CompWindow *w);
 	~ResizeWindow ();
 
-	void resizeNotify (int, int, int, int);
-
 	bool damageRect (bool, const CompRect &);
 
 	bool glPaint (const GLWindowPaintAttrib &, const GLMatrix &,

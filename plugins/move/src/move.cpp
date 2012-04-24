@@ -316,10 +316,8 @@ moveHandleMotionEvent (CompScreen *s,
 
 	wX      = w->geometry ().x ();
 	wY      = w->geometry ().y ();
-	wWidth  = w->geometry ().width () +
-		  w->geometry ().border () * 2;
-	wHeight = w->geometry ().height () +
-		  w->geometry ().border () * 2;
+	wWidth  = w->geometry ().widthIncBorders ();
+	wHeight = w->geometry ().heightIncBorders ();
 
 	ms->x += xRoot - lastPointerX;
 	ms->y += yRoot - lastPointerY;

@@ -34,7 +34,6 @@
 #include <core/timer.h>
 #include "privatescreen.h"
 
-
 typedef CompWindowExtents CompFullscreenMonitorSet;
 
 class PrivateWindow {
@@ -167,6 +166,11 @@ class PrivateWindow {
 
 	bool handleSyncAlarm ();
 
+	void move (int dx, int dy, bool sync);
+	bool resize (int dx, int dy, int dwidth, int dheight, int dborder);
+	bool resize (const CompWindow::Geometry &g);
+	bool resize (const XWindowAttributes &attrib);
+
 	void configure (XConfigureEvent *ce);
 
 	void configureFrame (XConfigureEvent *ce);
@@ -241,13 +245,8 @@ class PrivateWindow {
 	XSizeHints	     sizeHints;
 	XWMHints             *hints;
 
-	struct timeval       lastGeometryUpdate;
-	struct timeval       lastConfigureRequest;
-
 	bool       inputHint;
 	bool       alpha;
-	int        width;
-	int        height;
 	CompRegion region;
 	CompRegion inputRegion;
 	CompRegion frameRegion;
@@ -290,8 +289,6 @@ class PrivateWindow {
 	typedef std::pair <XWindowChanges, unsigned int> XWCValueMask;
 
 	compiz::X11::PendingEventQueue pendingConfigures;
-	CompTimer                     mClearCheckTimeout;
-	bool pendingPositionUpdates;
 
 	char *startupId;
 	char *resName;
@@ -327,6 +324,8 @@ class PrivateWindow {
 
 	bool closeRequests;
 	Time lastCloseRequestTime;
+
+	bool nextMoveImmediate;
 };
 
 #endif
