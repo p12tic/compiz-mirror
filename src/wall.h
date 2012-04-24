@@ -31,6 +31,8 @@
 #include <cairo-xlib-xrender.h>
 #include <cairo.h>
 
+#include "offset-movement.h"
+
 #include "wall_options.h"
 
 
@@ -171,15 +173,6 @@ class WallScreen :
 	CompRegion	 edgeRegion;
 	CompRegion	 noEdgeRegion;
 };
-
-namespace compiz
-{
-    namespace wall
-    {
-	CompPoint movementWindowOnScreen (const CompRect &serverBorderRect,
-					  const CompRegion &screenRegion);
-    }
-}
 
 class WallWindow :
 	public WindowInterface,
