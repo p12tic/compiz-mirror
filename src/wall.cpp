@@ -598,6 +598,39 @@ WallScreen::positionUpdate (const CompPoint &pos)
     }
 }
 
+CompPoint
+compiz::wall::movementWindowOnScreen (const CompRect &serverBorderRect,
+				      const CompRegion &screenRegion)
+{
+    CompRegion sbrRegion (static_cast <const CompRect &> (serverBorderRect));
+
+    /* If the window would be partially offscreen
+     * after it was moved then we should move it back
+     * so that it is completely onscreen, since we moved
+     * from mostly offscreen on B to mostly onscreen on A,
+     * the user should be able to see their selected window */
+    CompRegion inter = sbrRegion.intersected (screenRegion);
+    CompRegion rem = sbrRegion - screenRegion;
+
+    int dx = 0;
+    int dy = 0;
+
+    foreach (const CompRect &r, rem.rects ())
+    {
+	if (r.x1 () >= inter.boundingRect ().x2 ())
+	    dx -= r.width ();
+	else if (r.x2 () <= inter.boundingRect ().x1 ())
+	    dx += r.width ();
+
+	if (r.y1 () >= inter.boundingRect ().y2 ())
+	    dy -= r.height ();
+	else if (r.y2 () <= inter.boundingRect ().y1 ())
+	    dy += r.height ();
+    }
+
+    return CompPoint (dx, dy);
+}
+
 void
 WallWindow::activate ()
 {
@@ -630,52 +663,16 @@ WallWindow::activate ()
 
 	    ws->focusDefault = false;
 
-	    CompWindow::Geometry sbr (window->serverBorderRect ().x (),
-				      window->serverBorderRect ().y (),
-				      window->serverBorderRect ().width (),
-				      window->serverBorderRect ().height (),
-				      0);
-	    CompRegion sbrRegion (sbr);
 	    CompRegion screenRegion;
 
 	    foreach (const CompOutput &o, screen->outputDevs ())
 		screenRegion += o.workArea ();
 
-	    /* If the window would be partially offscreen
-	     * after it was moved then we should move it back
-	     * so that it is completely onscreen, since we moved
-	     * from mostly offscreen on B to mostly onscreen on A,
-	     * the user should be able to see their selected window */
-	    CompRegion inter = sbrRegion.intersected (screenRegion);
-	    CompRegion rem = sbrRegion - screenRegion;
+	    CompPoint d = compiz::wall::movementWindowOnScreen (window->serverBorderRect (),
+								screenRegion);
 
-	    int dx = 0;
-	    int dy = 0;
-
-	    foreach (const CompRect &r, rem.rects ())
-	    {
-		if (r.x1 () >= inter.boundingRect ().x2 ())
-		{
-		    dx -= r.width ();
-		    mask |= CWX;
-		}
-		else if (r.x2 () <= inter.boundingRect ().x1 ())
-		{
-		    dx += r.width ();
-		    mask |= CWX;
-		}
-
-		if (r.y1 () >= inter.boundingRect ().y2 ())
-		{
-		    dy -= r.height ();
-		    mask |= CWY;
-		}
-		else if (r.y2 () <= inter.boundingRect ().y1 ())
-		{
-		    dy += r.height ();
-		    mask |= CWY;
-		}
-	    }
+	    mask |= d.x () !=0 ? CWX : 0;
+	    mask |= d.y () !=0 ? CWY : 0;
 
 	    xwc.x = window->serverGeometry ().x () + dx;
 	    xwc.y = window->serverGeometry ().y () + dy;

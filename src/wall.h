@@ -172,6 +172,15 @@ class WallScreen :
 	CompRegion	 noEdgeRegion;
 };
 
+namespace compiz
+{
+    namespace wall
+    {
+	CompPoint movementWindowOnScreen (const CompRect &serverBorderRect,
+					  const CompRegion &screenRegion);
+    }
+}
+
 class WallWindow :
 	public WindowInterface,
 	public GLWindowInterface,
