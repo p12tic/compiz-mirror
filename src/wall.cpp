@@ -620,7 +620,14 @@ WallWindow::activate ()
 	    XWindowChanges xwc;
 	    unsigned int   mask = 0;
 
-	    ws->moveViewport (-dx, -dy, false);
+	    /* If changing viewports fails we should not
+	     * move the client window */
+	    if (!ws->moveViewport (-dx, -dy, false))
+	    {
+		window->activate ();
+		return;
+	    }
+
 	    ws->focusDefault = false;
 
 	    CompWindow::Geometry sbr (window->serverBorderRect ().x (),
