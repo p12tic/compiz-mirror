@@ -273,20 +273,14 @@ struct PseudoNamespace
 struct ScreenUser
 {
 protected:
-    ScreenUser(CompScreen  *screen) : screen(screen) , possibleTap(NULL) {}
+    ScreenUser(CompScreen  *screen) : screen(screen) {}
     CompScreen  * const screen;
-
-public:
-    // Here because it is referenced in PluginManager::updatePlugins(),
-    // and GrabManager::triggerPress not clear where it really belongs.
-    void *possibleTap;
 };
 
-class PluginManager :
-    public virtual ScreenUser
+class PluginManager
 {
     public:
-	PluginManager(CompScreen *screen);
+	PluginManager();
 
 	void updatePlugins (CompOption::Value::Vector const& extraPluginsRequested);
 
@@ -379,6 +373,9 @@ class EventManager :
 	void destroyGrabWindow (Display* dpy) { XDestroyWindow (dpy, grabWindow); }
 	Time getCurrentTime (Display* dpy) const;
 	Window const& getGrabWindow() const { return grabWindow; }
+
+    public:
+        void *possibleTap;
 
     private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;

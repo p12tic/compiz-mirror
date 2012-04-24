@@ -340,7 +340,7 @@ TEST(privatescreen_PluginManagerTest, create_and_destroy)
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 }
 
 TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
@@ -349,7 +349,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
@@ -369,7 +369,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
@@ -430,7 +430,7 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
     StubActivePluginsOption sapo;
 
     CompOption::Value::Vector values;
@@ -504,7 +504,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 
     StubActivePluginsOption sapo;
 
@@ -598,7 +598,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plug
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 
     StubActivePluginsOption sapo;
 

@@ -786,7 +786,10 @@ PrivateScreen::processEvents ()
     StackDebugger *dbg = StackDebugger::Default ();
 
     if (isDirtyPluginList ())
+    {
+	possibleTap = 0;
 	updatePlugins (optionGetActivePlugins());
+    }
 
     /* Restacks recently processed, ensure that
      * plugins use the stack last received from
@@ -957,7 +960,6 @@ cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPlug
 void
 cps::PluginManager::updatePlugins (CompOption::Value::Vector const& extraPluginsRequested)
 {
-    possibleTap = NULL;
     dirtyPluginList = false;
 
     CompOption::Value::Vector const desiredPlugins(mergedPluginList(extraPluginsRequested));
@@ -5190,8 +5192,7 @@ cps::OutputDevices::OutputDevices() :
 {
 }
 
-cps::PluginManager::PluginManager(CompScreen *screen) :
-    ScreenUser (screen),
+cps::PluginManager::PluginManager() :
     plugin (),
     dirtyPluginList (true)
 {
@@ -5200,7 +5201,8 @@ cps::PluginManager::PluginManager(CompScreen *screen) :
 cps::EventManager::EventManager (CompScreen *screen) :
     CoreOptions (false),
     ScreenUser (screen),
-    PluginManager (screen),
+    PluginManager (),
+    possibleTap(NULL),
     source(0),
     timeout(0),
     sighupSource(0),
