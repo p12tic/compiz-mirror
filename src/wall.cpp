@@ -629,41 +629,49 @@ WallWindow::activate ()
 				      window->serverBorderRect ().height (),
 				      0);
 	    CompRegion sbrRegion (sbr);
-	    int        output = screen->outputDeviceForGeometry (sbr);
-	    CompRegion outputRegion (screen->outputDevs ()[output].workArea ());
+	    CompRegion screenRegion;
+
+	    foreach (const CompOutput &o, screen->outputDevs ())
+		screenRegion += o.workArea ();
 
 	    /* If the window would be partially offscreen
 	     * after it was moved then we should move it back
 	     * so that it is completely onscreen, since we moved
 	     * from mostly offscreen on B to mostly onscreen on A,
 	     * the user should be able to see their selected window */
-	    CompRegion inter = sbrRegion.intersected (outputRegion);
-	    CompRegion rem = sbrRegion - outputRegion;
+	    CompRegion inter = sbrRegion.intersected (screenRegion);
+	    CompRegion rem = sbrRegion - screenRegion;
+
+	    int dx = 0;
+	    int dy = 0;
 
 	    foreach (const CompRect &r, rem.rects ())
 	    {
 		if (r.x1 () >= inter.boundingRect ().x2 ())
 		{
-		    xwc.x = window->serverGeometry ().x () - r.width ();
+		    dx -= r.width ();
 		    mask |= CWX;
 		}
 		else if (r.x2 () <= inter.boundingRect ().x1 ())
 		{
-		    xwc.x = window->serverGeometry ().x () + r.width ();
+		    dx += r.width ();
 		    mask |= CWX;
 		}
 
 		if (r.y1 () >= inter.boundingRect ().y2 ())
 		{
-		    xwc.y = window->serverGeometry ().y () - r.height ();
+		    dy -= r.height ();
 		    mask |= CWY;
 		}
 		else if (r.y2 () <= inter.boundingRect ().y1 ())
 		{
-		    xwc.y = window->serverGeometry ().y () + r.height ();
+		    dy += r.height ();
 		    mask |= CWY;
 		}
 	    }
+
+	    xwc.x = window->serverGeometry ().x () + dx;
+	    xwc.y = window->serverGeometry ().y () + dy;
 
 	    window->configureXWindow (mask, &xwc);
 	}
@@ -1515,7 +1523,7 @@ WallScreen::donePaint ()
 
     if (!moving && !showPreview && grabIndex)
     {
-	screen->removeGrab (grabIndex, NULL);
+	screen->removeGrab (static_cast <CompScreen::GrabHandle> (grabIndex), NULL);
 	grabIndex = 0;
     }
 
