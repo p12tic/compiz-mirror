@@ -128,6 +128,9 @@ CompositeWindow::bind ()
 	/* We have to grab the server here to make sure that window
 	   is mapped when getting the window pixmap */
 	XGrabServer (screen->dpy ());
+
+	/* Flush changes to the server and wait for it to process them */
+	XSync (screen->dpy (), false);
 	XGetWindowAttributes (screen->dpy (),
 			      ROOTPARENT (priv->window), &attr);
 	if (attr.map_state != IsViewable)
@@ -250,7 +253,7 @@ CompositeWindow::damageTransformedRect (float          xScale,
 
     if (x2 > x1 && y2 > y1)
     {
-	CompWindow::Geometry geom = priv->window->geometry ();
+	const CompWindow::Geometry &geom = priv->window->serverGeometry ();
 
 	x1 += geom.x () + geom.border ();
 	y1 += geom.y () + geom.border ();
@@ -272,20 +275,20 @@ CompositeWindow::damageOutputExtents ()
     {
 	int x1, x2, y1, y2;
 
-	CompWindow::Geometry geom = priv->window->geometry ();
-	CompWindowExtents output  = priv->window->output ();
+	const CompWindow::Geometry &geom = priv->window->geometry ();
+	const CompWindowExtents &output  = priv->window->output ();
 
 	/* top */
 	x1 = -output.left - geom.border ();
 	y1 = -output.top - geom.border ();
-	x2 = priv->window->size ().width () + output.right - geom.border ();
+	x2 = priv->window->size ().width () + output.right;
 	y2 = -geom.border ();
 
 	if (x1 < x2 && y1 < y2)
 	    addDamageRect (CompRect (x1, y1, x2 - x1, y2 - y1));
 
 	/* bottom */
-	y1 = priv->window->size ().height () - geom.border ();
+	y1 = priv->window->size ().height ();
 	y2 = y1 + output.bottom - geom.border ();
 
 	if (x1 < x2 && y1 < y2)
@@ -295,13 +298,13 @@ CompositeWindow::damageOutputExtents ()
 	x1 = -output.left - geom.border ();
 	y1 = -geom.border ();
 	x2 = -geom.border ();
-	y2 = priv->window->size ().height () - geom.border ();
+	y2 = priv->window->size ().height ();
 
 	if (x1 < x2 && y1 < y2)
 	    addDamageRect (CompRect (x1, y1, x2 - x1, y2 - y1));
 
 	/* right */
-	x1 = priv->window->size ().width () - geom.border ();
+	x1 = priv->window->size ().width ();
 	x2 = x1 + output.right - geom.border ();
 
 	if (x1 < x2 && y1 < y2)
@@ -322,7 +325,7 @@ CompositeWindow::addDamageRect (const CompRect &rect)
 	x = rect.x ();
 	y = rect.y ();
 
-	CompWindow::Geometry geom = priv->window->geometry ();
+	const CompWindow::Geometry &geom = priv->window->geometry ();
 	x += geom.x () + geom.border ();
 	y += geom.y () + geom.border ();
 
@@ -341,7 +344,7 @@ CompositeWindow::addDamage (bool force)
     if (priv->window->shaded () || force ||
 	(priv->window->isViewable ()))
     {
-	int    border = priv->window->geometry ().border ();
+	int    border = priv->window->serverGeometry ().border ();
 
 	int x1 = -MAX (priv->window->output ().left,
 		       priv->window->input ().left) - border;
@@ -410,7 +413,7 @@ PrivateCompositeWindow::handleDamageRect (CompositeWindow *w,
 
     if (!w->damageRect (initial, CompRect (x, y, width, height)))
     {
-	CompWindow::Geometry geom = w->priv->window->geometry ();
+	const CompWindow::Geometry &geom = w->priv->window->geometry ();
 
 	x += geom.x () + geom.border ();
 	y += geom.y () + geom.border ();
@@ -557,10 +560,6 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 {
     window->resizeNotify (dx, dy, dwidth, dheight);
 
-    Pixmap pixmap = None;
-    CompSize size = CompSize ();
-
-
     if (window->shaded () || (window->isViewable ()))
     {
 	int x, y, x1, x2, y1, y2;
@@ -576,25 +575,6 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 	     window->output ().bottom - dy - dheight;
 
 	cScreen->damageRegion (CompRegion (CompRect (x1, y1, x2 - x1, y2 - y1)));
-    }
-
-    if (window->mapNum () && redirected)
-    {
-	unsigned int actualWidth, actualHeight, ui;
-	Window	     root;
-	Status	     result;
-	int	     i;
-
-	pixmap = XCompositeNameWindowPixmap (screen->dpy (), ROOTPARENT (window));
-	result = XGetGeometry (screen->dpy (), pixmap, &root, &i, &i,
-			       &actualWidth, &actualHeight, &ui, &ui);
-	size = CompSize (actualWidth, actualHeight);
-	if (!result || actualWidth != (unsigned int) window->size ().width () ||
-	    actualHeight != (unsigned int) window->size ().height ())
-	{
-	    XFreePixmap (screen->dpy (), pixmap);
-	    return;
-	}
     }
 
     if (((!window->mapNum () && window->isViewable ()) ||
@@ -627,9 +607,9 @@ PrivateCompositeWindow::moveNotify (int dx, int dy, bool now)
 
 	x1 = x - window->output ().left - dx;
 	y1 = y - window->output ().top - dy;
-	x2 = x + window->size ().width () +
+	x2 = x + window->geometry ().width () +
 	     window->output ().right - dx;
-	y2 = y + window->size ().height () +
+	y2 = y + window->geometry ().height () +
 	     window->output ().bottom - dy;
 
 	cScreen->damageRegion (CompRegion (CompRect (x1, y1, x2 - x1, y2 - y1)));

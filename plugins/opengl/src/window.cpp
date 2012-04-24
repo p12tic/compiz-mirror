@@ -54,7 +54,8 @@ PrivateGLWindow::PrivateGLWindow (CompWindow *w,
     gScreen (GLScreen::get (screen)),
     textures (),
     regions (),
-    updateReg (true),
+    updateState (UpdateRegion | UpdateMatrix),
+    needsRebind (true),
     clip (),
     bindFailed (false),
     geometry (),
@@ -87,28 +88,41 @@ PrivateGLWindow::setWindowMatrix ()
 	matrices[i].x0 -= (input.x () * matrices[i].xx);
 	matrices[i].y0 -= (input.y () * matrices[i].yy);
     }
+
+    updateState &= ~(UpdateMatrix);
 }
 
 bool
 GLWindow::bind ()
 {
     if ((!priv->cWindow->pixmap () && !priv->cWindow->bind ()))
-	return false;
+    {
+	if (!priv->textures.empty ())
+	{
+	    /* Getting a new pixmap failed, recycle the old texture */
+	    priv->needsRebind = false;
+	    return true;
+	}
+    }
 
-    priv->textures =
+    GLTexture::List textures =
 	GLTexture::bindPixmapToTexture (priv->cWindow->pixmap (),
 					priv->cWindow->size ().width (),
 					priv->cWindow->size ().height (),
 					priv->window->depth ());
-    if (priv->textures.empty ())
+    if (textures.empty ())
     {
 	compLogMessage ("opengl", CompLogLevelInfo,
 			"Couldn't bind redirected window 0x%x to "
 			"texture\n", (int) priv->window->id ());
     }
+    else
+    {
+	priv->textures = textures;
+	priv->needsRebind = false;
+    }
 
-    priv->setWindowMatrix ();
-    priv->updateReg = true;
+    priv->updateState |= PrivateGLWindow::UpdateRegion | PrivateGLWindow::UpdateMatrix;
 
     return true;
 }
@@ -116,12 +130,12 @@ GLWindow::bind ()
 void
 GLWindow::release ()
 {
-    priv->textures.clear ();
-
+    /* Release the pixmap but don't release
+     * the texture (yet) */
     if (priv->cWindow->pixmap ())
-    {
 	priv->cWindow->release ();
-    }
+
+    priv->needsRebind = true;
 }
 
 bool
@@ -180,8 +194,7 @@ void
 PrivateGLWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 {
     window->resizeNotify (dx, dy, dwidth, dheight);
-    setWindowMatrix ();
-    updateReg = true;
+    updateState |= PrivateGLWindow::UpdateMatrix | PrivateGLWindow::UpdateRegion;
     if (!window->hasUnmapReference ())
 	gWindow->release ();
 }
@@ -190,8 +203,10 @@ void
 PrivateGLWindow::moveNotify (int dx, int dy, bool now)
 {
     window->moveNotify (dx, dy, now);
-    updateReg = true;
-    setWindowMatrix ();
+    updateState |= PrivateGLWindow::UpdateMatrix;
+
+    foreach (CompRegion &r, regions)
+	r.translate (dx, dy);
 }
 
 void
@@ -298,6 +313,13 @@ GLWindow::Geometry::moreIndices (int newSize)
 const GLTexture::List &
 GLWindow::textures () const
 {
+    static const GLTexture::List emptyList;
+
+    /* No pixmap backs this window, let
+     * users know that the window needs rebinding */
+    if (priv->needsRebind)
+	return emptyList;
+
     return priv->textures;
 }
 
@@ -338,13 +360,13 @@ void
 PrivateGLWindow::updateFrameRegion (CompRegion &region)
 {
     window->updateFrameRegion (region);
-    updateReg = true;
+    updateState |= PrivateGLWindow::UpdateRegion;
 }
 
 void
 PrivateGLWindow::updateWindowRegions ()
 {
-    CompRect input (window->inputRect ());
+    CompRect input (window->serverInputRect ());
 
     if (regions.size () != textures.size ())
 	regions.resize (textures.size ());
@@ -354,7 +376,7 @@ PrivateGLWindow::updateWindowRegions ()
 	regions[i].translate (input.x (), input.y ());
 	regions[i] &= window->region ();
     }
-    updateReg = false;
+    updateState &= ~(UpdateRegion);
 }
 
 unsigned int

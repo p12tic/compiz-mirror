@@ -223,29 +223,37 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 
 	const CompRegion *preg = NULL;
 
-	if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
-		 PAINT_WINDOW_WITH_OFFSET_MASK)))
-	    preg = &region;
-	else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
-	    preg = &infiniteRegion;
-	else
+	if (mClipGroup)
 	{
-	    tmpRegion = mOutputRegion;
-	    tmpRegion &= region;
-
-	    if (tmpRegion.isEmpty ())
+	    if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
+			 PAINT_WINDOW_WITH_OFFSET_MASK)))
 		preg = &region;
+	    else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
+		preg = &infiniteRegion;
 	    else
-		preg = &shadowRegion;
-	}
+	    {
+		tmpRegion = mOutputRegion;
+		tmpRegion &= region;
 
-	/* In case some plugin needs to paint us with an offset region */
-	if (preg->isEmpty ())
+		if (tmpRegion.isEmpty ())
+		    preg = &region;
+		else
+		    preg = &shadowRegion;
+	    }
+
+	    /* In case some plugin needs to paint us with an offset region */
+	    if (preg->isEmpty ())
+		preg = &region;
+	}
+	else
 	    preg = &region;
 
 	const CompRegion &reg (*preg);
 
 	gWindow->geometry ().reset ();
+
+	if (updateMatrix)
+	    updateDecorationScale ();
 
 	for (int i = 0; i < wd->nQuad; i++)
 	{
@@ -274,6 +282,9 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 	    gWindow->bind ();
 	if (gWindow->textures ().empty ())
 	    return;
+
+	if (updateMatrix)
+	    updateDecorationScale ();
 
 	if (gWindow->textures ().size () == 1)
 	{
@@ -1017,6 +1028,8 @@ DecorWindow::setDecorationMatrices ()
 	    wd->quad[i].box.y1 * wd->quad[i].matrix.yy +
 	    wd->quad[i].box.x1 * wd->quad[i].matrix.yx;
     }
+
+    updateMatrix = false;
 }
 
 /*
@@ -1047,7 +1060,16 @@ DecorWindow::updateDecorationScale ()
 	unsigned int height = window->size ().height ();
 
 	if (window->shaded ())
-	    height = 0;
+	{
+	    if (dScreen->cScreen &&
+		dScreen->cScreen->compositingActive ())
+	    {
+		if (!cWindow->pixmap ())
+		    height = 0;
+	    }
+	    else
+		height = 0;
+	}
 
 	computeQuadBox (&wd->decor->quad[i], width, height,
 			&x1, &y1, &x2, &y2, &sx, &sy);
@@ -1060,6 +1082,7 @@ DecorWindow::updateDecorationScale ()
 	wd->quad[i].box.y1 = y1 + y;
 	wd->quad[i].box.x2 = x2 + x;
 	wd->quad[i].box.y2 = y2 + y;
+
 	wd->quad[i].sx     = sx;
 	wd->quad[i].sy     = sy;
     }
@@ -1083,7 +1106,7 @@ bool
 DecorWindow::checkSize (const Decoration::Ptr &decoration)
 {
     return (decoration->minWidth <= (int) window->size ().width () &&
-            decoration->minHeight <= (int) window->size ().height ());
+	    decoration->minHeight <= (int) window->size ().height ());
 }
 
 /*
@@ -1523,6 +1546,9 @@ DecorWindow::update (bool allowDecoration)
 	if (decorate)
 	    updateFrame ();
 	window->updateWindowOutputExtents ();
+
+	updateReg = true;
+	updateMatrix = true;
 	mOutputRegion = CompRegion (window->outputRect ());
 	updateGroupShadows ();
 	if (dScreen->cmActive)
@@ -1686,7 +1712,6 @@ DecorWindow::updateInputFrame ()
     XRectangle           rects[4];
     int                  x, y, width, height;
     CompWindow::Geometry server = window->serverGeometry ();
-    int                  bw = server.border () * 2;
     CompWindowExtents	 input;
     CompWindowExtents    border;
     Window		 parent;
@@ -1713,8 +1738,8 @@ DecorWindow::updateInputFrame ()
 
     x      = window->border ().left - border.left;
     y      = window->border ().top - border.top;
-    width  = server.width () + input.left + input.right + bw;
-    height = server.height ()+ input.top  + input.bottom + bw;
+    width  = server.widthIncBorders () + input.left + input.right;
+    height = server.heightIncBorders ()+ input.top  + input.bottom ;
 
     /* Non switcher windows are rooted relative to the frame window of the client
      * and switchers need to be offset by the window geometry of the client */
@@ -1853,7 +1878,6 @@ DecorWindow::updateOutputFrame ()
     XRectangle           rects[4];
     int                  x, y, width, height;
     CompWindow::Geometry server = window->serverGeometry ();
-    int                  bw = server.border () * 2;
     CompWindowExtents	 input;
 
     /* Determine frame extents */
@@ -1864,8 +1888,8 @@ DecorWindow::updateOutputFrame ()
 
     x      = window->input ().left - input.left;
     y      = window->input ().top - input.top;
-    width  = server.width () + input.left + input.right + bw;
-    height = server.height ()+ input.top  + input.bottom + bw;
+    width  = server.widthIncBorders () + input.left + input.right;
+    height = server.heightIncBorders ()+ input.top  + input.bottom;
 
     if (window->shaded ())
 	height = input.top + input.bottom;
@@ -2107,7 +2131,9 @@ DecorWindow::updateFrameRegion (CompRegion &region)
 	    region += infiniteRegion;
 	}
     }
+
     updateReg = true;
+    updateMatrix = true;
 }
 
 /*
@@ -2129,6 +2155,7 @@ DecorWindow::updateWindowRegions ()
 	regions[i].translate (input.x (), input.y ());
 	regions[i] &= window->frameRegion ();
     }
+
     updateReg = false;
 }
 
@@ -2159,6 +2186,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	     * anyways, since the window is unmapped. Also need to
 	     * update the shadow clip regions for panels and other windows */
 	    update (true);
+	    updateDecorationScale ();
 	    if (dScreen->mMenusClipGroup.pushClippable (this))
 		updateGroupShadows ();
 
@@ -2180,7 +2208,7 @@ DecorWindow::windowNotify (CompWindowNotify n)
 	     * anyways, since the window is unmapped. Also need to
 	     * update the shadow clip regions for panels and other windows */
 	    update (true);
-
+	    updateDecorationScale ();
 	    /* Preserve the group shadow update ptr */
 	    DecorClipGroupInterface *clipGroup = mClipGroup;
 
@@ -2367,6 +2395,7 @@ DecorScreen::handleEvent (XEvent *event)
 		if (w)
 		{
 		    DECOR_WINDOW (w);
+
 		    dw->updateDecoration ();
 
 		    dw->update (true);
@@ -2702,10 +2731,10 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 	    wd->quad[i].box.x2 += dx;
 	    wd->quad[i].box.y2 += dy;
 	}
-
-	setDecorationMatrices ();
     }
+
     updateReg = true;
+    updateMatrix = true;
 
     mInputRegion.translate (dx, dy);
     mOutputRegion.translate (dx, dy);
@@ -2714,32 +2743,6 @@ DecorWindow::moveNotify (int dx, int dy, bool immediate)
 	updateGroupShadows ();
 
     window->moveNotify (dx, dy, immediate);
-}
-
-/*
- * DecorWindow::resizeTimeout
- *
- * Called from the timeout on ::resizeNotify,
- * set the shading and unshading bits and also
- * updates the decoration. See the comment
- * in ::resizeNotify as to why the timeout
- * is necessary here
- *
- */
-bool
-DecorWindow::resizeTimeout ()
-{
-    if (shading || unshading)
-    {
-	shading = false;
-	unshading = false;
-
-	updateDecoration ();
-    }
-
-    if (!window->hasUnmapReference ())
-	update (true);
-    return false;
 }
 
 /*
@@ -2753,6 +2756,11 @@ DecorWindow::resizeTimeout ()
 void
 DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
 {
+    if (shading || unshading)
+    {
+	shading = false;
+	unshading = false;
+    }
     /* FIXME: we should not need a timer for calling decorWindowUpdate,
        and only call updateWindowDecorationScale if decorWindowUpdate
        returns false. Unfortunately, decorWindowUpdate may call
@@ -2760,8 +2768,7 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
        we never should call a wrapped function that's currently
        processed, we need the timer for the moment. updateWindowOutputExtents
        should be fixed so that it does not emit a resize notification. */
-    resizeUpdate.start (boost::bind (&DecorWindow::resizeTimeout, this), 0);
-    updateDecorationScale ();
+    updateMatrix = true;
     updateReg = true;
 
     mInputRegion = CompRegion (window->inputRect ());
@@ -2769,7 +2776,12 @@ DecorWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     if (dScreen->cmActive && mClipGroup)
 	updateGroupShadows ();
 
+    updateReg = true;
+
     window->resizeNotify (dx, dy, dwidth, dheight);
+
+    /* FIXME: remove */
+    CompositeScreen::get (screen)->damageScreen ();
 }
 
 
@@ -3007,6 +3019,7 @@ DecorWindow::DecorWindow (CompWindow *w) :
     pixmapFailed (false),
     regions (),
     updateReg (true),
+    updateMatrix (true),
     unshading (false),
     shading (false),
     isSwitcher (false),

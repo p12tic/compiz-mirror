@@ -159,7 +159,7 @@ struct ScaledQuad {
 
 class WindowDecoration {
     public:
-	static WindowDecoration * create (const Decoration::Ptr &);
+	static WindowDecoration * create (const Decoration::Ptr &d);
 	static void destroy (WindowDecoration *);
 
     public:
@@ -250,8 +250,6 @@ class DecorWindow :
 
 	bool damageRect (bool, const CompRect &);
 
-	void computeShadowRegion ();
-
 	bool glDraw (const GLMatrix &, GLFragment::Attrib &,
 		     const CompRegion &, unsigned int);
 	void glDecorate (const GLMatrix &, GLFragment::Attrib &,
@@ -322,6 +320,7 @@ class DecorWindow :
 
 	CompRegion::Vector regions;
 	bool               updateReg;
+	bool		   updateMatrix;
 
 	CompTimer resizeUpdate;
 	CompTimer moveUpdate;

@@ -77,8 +77,8 @@ inline bool
 PrivateWindow::isInvisible() const
 {
     return attrib.map_state != IsViewable ||
-     attrib.x + width  + output.right  <= 0 ||
-     attrib.y + height + output.bottom <= 0 ||
+     attrib.x + geometry.width ()  + output.right  <= 0 ||
+     attrib.y + geometry.height () + output.bottom <= 0 ||
      attrib.x - output.left >= (int) screen->width () ||
      attrib.y - output.top >= (int) screen->height ();
 }
@@ -813,292 +813,14 @@ PrivateWindow::updateFrameWindow ()
     if (!serverFrame)
 	return;
 
+    xwc.x = serverGeometry.x ();
+    xwc.y = serverGeometry.y ();
+    xwc.width = serverGeometry.width ();
+    xwc.height = serverGeometry.height ();
+    xwc.border_width = serverGeometry.border ();
 
-    gettimeofday (&lastConfigureRequest, NULL);
-    /* Flush any changes made to serverFrameGeometry or serverGeometry to the server
-     * since there is a race condition where geometries will go out-of-sync with
-     * window movement */
-
-    window->syncPosition ();
-
-    if (serverInput.left || serverInput.right || serverInput.top || serverInput.bottom)
-    {
-	int	   bw = serverGeometry.border () * 2;
-
-	xwc.x      = serverGeometry.x () - serverInput.left;
-	xwc.y      = serverGeometry.y () - serverInput.top;
-	xwc.width  = serverGeometry.width () + serverInput.left + serverInput.right + bw;
-	if (shaded)
-	    xwc.height = serverInput.top  + serverInput.bottom + bw;
-	else
-	    xwc.height = serverGeometry.height () + serverInput.top  + serverInput.bottom + bw;
-
-	if (shaded)
-	    height = serverInput.top + serverInput.bottom;
-
-	if (serverFrameGeometry.x () == xwc.x)
-	    valueMask &= ~(CWX);
-	else
-	    serverFrameGeometry.setX (xwc.x);
-
-	if (serverFrameGeometry.y ()  == xwc.y)
-	    valueMask &= ~(CWY);
-	else
-	    serverFrameGeometry.setY (xwc.y);
-
-	if (serverFrameGeometry.width () == xwc.width)
-	    valueMask &= ~(CWWidth);
-	else
-	    serverFrameGeometry.setWidth (xwc.width);
-
-	if (serverFrameGeometry.height () == xwc.height)
-	    valueMask &= ~(CWHeight);
-	else
-	    serverFrameGeometry.setHeight (xwc.height);
-
-	/* Geometry is the same, so we're not going to get a ConfigureNotify
-	 * event when the window is configured, which means that other plugins
-	 * won't know that the client, frame and wrapper windows got shifted
-	 * around (and might result in display corruption, eg in OpenGL */
-	if (valueMask == 0)
-	{
-	    XConfigureEvent xev;
-	    XWindowAttributes attrib;
-	    unsigned int      nchildren = 0;
-	    Window            rootRet = 0, parentRet = 0;
-	    Window            *children = NULL;
-
-	    xev.type   = ConfigureNotify;
-	    xev.event  = screen->root ();
-	    xev.window = priv->serverFrame;
-
-	    XGrabServer (screen->dpy ());
-
-	    if (XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib))
-	    {
-		xev.x	     = attrib.x;
-		xev.y	     = attrib.y;
-		xev.width	     = attrib.width;
-		xev.height	     = attrib.height;
-		xev.border_width = attrib.border_width;
-		xev.above = None;
-
-		/* We need to ensure that the stacking order is
-		 * based on the current server stacking order so
-		 * find the sibling to this window's frame in the
-		 * server side stack and stack above that */
-		XQueryTree (screen->dpy (), screen->root (), &rootRet, &parentRet, &children, &nchildren);
-
-		if (nchildren)
-		{
-		    for (unsigned int i = 0; i < nchildren; i++)
-		    {
-			if (i + 1 == nchildren ||
-				children[i + 1] == ROOTPARENT (window))
-			{
-			    xev.above = children[i];
-			    break;
-			}
-		    }
-		}
-
-		if (children)
-		    XFree (children);
-
-		if (!xev.above)
-		    xev.above = (window->serverPrev) ? ROOTPARENT (window->serverPrev) : None;
-
-		xev.override_redirect = priv->attrib.override_redirect;
-
-	    }
-
-	    compiz::X11::PendingEvent::Ptr pc =
-		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-									      new compiz::X11::PendingConfigureEvent (
-										  screen->dpy (), serverFrame, valueMask, &xwc)));
-
-	    pendingConfigures.add (pc);
-	    if (priv->mClearCheckTimeout.active ())
-		priv->mClearCheckTimeout.stop ();
-	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-					    2000, 2500);
-
-	    XSendEvent (screen->dpy (), screen->root (), false,
-			SubstructureNotifyMask, (XEvent *) &xev);
-
-	    XUngrabServer (screen->dpy ());
-	    XSync (screen->dpy (), false);
-	}
-	else
-	{
-	    compiz::X11::PendingEvent::Ptr pc =
-		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-									      new compiz::X11::PendingConfigureEvent (
-										  screen->dpy (), serverFrame, valueMask, &xwc)));
-
-	    pendingConfigures.add (pc);
-	    if (priv->mClearCheckTimeout.active ())
-		priv->mClearCheckTimeout.stop ();
-	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-					    2000, 2500);
-	    XConfigureWindow (screen->dpy (), serverFrame, valueMask, &xwc);
-	}
-
-	if (shaded)
-	{
-	    XUnmapWindow (screen->dpy (), wrapper);
-	}
-	else
-	{
-	    XMapWindow (screen->dpy (), wrapper);
-	    XMoveResizeWindow (screen->dpy (), wrapper, serverInput.left, serverInput.top,
-			       serverGeometry.width (), serverGeometry.height ());
-	}
-	XMoveResizeWindow (screen->dpy (), id, 0, 0,
-			   serverGeometry.width (), serverGeometry.height ());
-	window->sendConfigureNotify ();
-	window->windowNotify (CompWindowNotifyFrameUpdate);
-    }
-    else
-    {
-	int	   bw = serverGeometry.border () * 2;
-
-	xwc.x      = serverGeometry.x ();
-	xwc.y      = serverGeometry.y ();
-	xwc.width  = serverGeometry.width () + bw;
-
-	/* FIXME: It doesn't make much sense to allow undecorated windows to be
-	 * shaded */
-	if (shaded)
-	    xwc.height = bw;
-	else
-	    xwc.height = serverGeometry.height () + bw;
-
-	if (serverFrameGeometry.x () == xwc.x)
-	    valueMask &= ~(CWX);
-	else
-	    serverFrameGeometry.setX (xwc.x);
-
-	if (serverFrameGeometry.y ()  == xwc.y)
-	    valueMask &= ~(CWY);
-	else
-	    serverFrameGeometry.setY (xwc.y);
-
-	if (serverFrameGeometry.width () == xwc.width)
-	    valueMask &= ~(CWWidth);
-	else
-	    serverFrameGeometry.setWidth (xwc.width);
-
-	if (serverFrameGeometry.height () == xwc.height)
-	    valueMask &= ~(CWHeight);
-	else
-	    serverFrameGeometry.setHeight (xwc.height);
-
-	/* Geometry is the same, so we're not going to get a ConfigureNotify
-	 * event when the window is configured, which means that other plugins
-	 * won't know that the client, frame and wrapper windows got shifted
-	 * around (and might result in display corruption, eg in OpenGL */
-	if (valueMask == 0)
-	{
-	    XConfigureEvent xev;
-	    XWindowAttributes attrib;
-	    unsigned int      nchildren = 0;
-	    Window            rootRet = 0, parentRet = 0;
-	    Window            *children = NULL;
-
-	    xev.type   = ConfigureNotify;
-	    xev.event  = screen->root ();
-	    xev.window = priv->serverFrame;
-
-	    XGrabServer (screen->dpy ());
-
-	    if (XGetWindowAttributes (screen->dpy (), priv->serverFrame, &attrib))
-	    {
-		xev.x	     = attrib.x;
-		xev.y	     = attrib.y;
-		xev.width	     = attrib.width;
-		xev.height	     = attrib.height;
-		xev.border_width = attrib.border_width;
-		xev.above = None;
-
-		/* We need to ensure that the stacking order is
-		 * based on the current server stacking order so
-		 * find the sibling to this window's frame in the
-		 * server side stack and stack above that */
-		XQueryTree (screen->dpy (), screen->root (), &rootRet, &parentRet, &children, &nchildren);
-
-		if (nchildren)
-		{
-		    for (unsigned int i = 0; i < nchildren; i++)
-		    {
-			if (i + 1 == nchildren ||
-				children[i + 1] == ROOTPARENT (window))
-			{
-			    xev.above = children[i];
-			    break;
-			}
-		    }
-		}
-
-		if (children)
-		    XFree (children);
-
-		if (!xev.above)
-		    xev.above = (window->serverPrev) ? ROOTPARENT (window->serverPrev) : None;
-
-		xev.override_redirect = priv->attrib.override_redirect;
-
-	    }
-
-	    compiz::X11::PendingEvent::Ptr pc =
-		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-									      new compiz::X11::PendingConfigureEvent (
-										  screen->dpy (), serverFrame, valueMask, &xwc)));
-
-	    pendingConfigures.add (pc);
-	    if (priv->mClearCheckTimeout.active ())
-		priv->mClearCheckTimeout.stop ();
-	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-					    2000, 2500);
-
-	    XSendEvent (screen->dpy (), screen->root (), false,
-			SubstructureNotifyMask, (XEvent *) &xev);
-
-	    XUngrabServer (screen->dpy ());
-	    XSync (screen->dpy (), false);
-	}
-	else
-	{
-	    compiz::X11::PendingEvent::Ptr pc =
-		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-									      new compiz::X11::PendingConfigureEvent (
-										  screen->dpy (), serverFrame, valueMask, &xwc)));
-
-	    pendingConfigures.add (pc);
-	    if (priv->mClearCheckTimeout.active ())
-		priv->mClearCheckTimeout.stop ();
-	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-					    2000, 2500);
-
-	    XConfigureWindow (screen->dpy (), serverFrame, valueMask, &xwc);
-	}
-
-	if (shaded)
-	{
-	    XUnmapWindow (screen->dpy (), wrapper);
-	}
-	else
-	{
-	    XMapWindow (screen->dpy (), wrapper);
-	    XMoveResizeWindow (screen->dpy (), wrapper, 0, 0,
-			       serverGeometry.width (), serverGeometry.height ());
-	}
-
-	XMoveResizeWindow (screen->dpy (), id, 0, 0,
-			   serverGeometry.width (), serverGeometry.height ());
-	window->sendConfigureNotify ();
-	window->windowNotify (CompWindowNotifyFrameUpdate);
-    }
+    window->configureXWindow (valueMask, &xwc);
+    window->windowNotify (CompWindowNotifyFrameUpdate);
     window->recalcActions ();
 }
 
@@ -1138,11 +860,12 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 {
     CompRegion ret;
     int        x1, x2, y1, y2;
+    const CompWindow::Geometry &geom = attrib.override_redirect ? priv->geometry : priv->serverGeometry;
 
     for (unsigned int i = 0; i < n; i++)
     {
-	x1 = rects[i].x + priv->geometry.border ();
-	y1 = rects[i].y + priv->geometry.border ();
+	x1 = rects[i].x + geom.border ();
+	y1 = rects[i].y + geom.border ();
 	x2 = x1 + rects[i].width;
 	y2 = y1 + rects[i].height;
 
@@ -1150,17 +873,17 @@ PrivateWindow::rectsToRegion (unsigned int n, XRectangle *rects)
 	    x1 = 0;
 	if (y1 < 0)
 	    y1 = 0;
-	if (x2 > priv->width)
-	    x2 = priv->width;
-	if (y2 > priv->height)
-	    y2 = priv->height;
+	if (x2 > geom.width ())
+	    x2 = geom.width ();
+	if (y2 > geom.height ())
+	    y2 = geom.height ();
 
 	if (y1 < y2 && x1 < x2)
 	{
-	    x1 += priv->geometry.x ();
-	    y1 += priv->geometry.y ();
-	    x2 += priv->geometry.x ();
-	    y2 += priv->geometry.y ();
+	    x1 += geom.x ();
+	    y1 += geom.y ();
+	    x2 += geom.x ();
+	    y2 += geom.y ();
 
 	    ret += CompRect (x1, y1, x2 - x1, y2 - y1);
 	}
@@ -1180,25 +903,27 @@ PrivateWindow::updateRegion ()
     XRectangle r, *boundingShapeRects = NULL;
     XRectangle *inputShapeRects = NULL;
     int	       nBounding = 0, nInput = 0;
+    const CompWindow::Geometry &geom = attrib.override_redirect ? priv->geometry : priv->serverGeometry;
 
-    priv->region = CompRegion ();
-    priv->inputRegion = CompRegion ();
+    priv->region = priv->inputRegion = emptyRegion;
 
     if (screen->XShape ())
     {
 	int order;
 
+	/* We should update the server here */
+	XSync (screen->dpy (), false);
+
 	boundingShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
 					 	  ShapeBounding, &nBounding, &order);
 	inputShapeRects = XShapeGetRectangles (screen->dpy (), priv->id,
 					       ShapeInput, &nInput, &order);
-
     }
 
-    r.x      = -priv->geometry.border ();
-    r.y      = -priv->geometry.border ();
-    r.width  = priv->width + priv->geometry.border ();
-    r.height = priv->height + priv->geometry.border ();
+    r.x      = -geom.border ();
+    r.y      = -geom.border ();
+    r.width  = geom.widthIncBorders ();
+    r.height = geom.heightIncBorders ();
 
     if (nBounding < 1)
     {
@@ -1664,6 +1389,9 @@ CompWindow::map ()
     }
 
     windowNotify (CompWindowNotifyMap);
+    /* Send a resizeNotify to plugins to indicate
+     * that the map is complete */
+    resizeNotify (0, 0, 0, 0);
 }
 
 void
@@ -1732,7 +1460,7 @@ CompWindow::unmap ()
     priv->attrib.map_state = IsUnmapped;
     priv->invisible = true;
 
-    if (priv->shaded && priv->height)
+    if (priv->shaded)
     {
 	priv->updateFrameWindow ();
     }
@@ -1817,7 +1545,7 @@ CompWindow::resize (int          x,
 }
 
 bool
-CompWindow::resize (CompWindow::Geometry gm)
+PrivateWindow::resize (const CompWindow::Geometry &gm)
 {
     /* Input extents are now the last thing sent
      * from the server. This might not work in some
@@ -1834,11 +1562,7 @@ CompWindow::resize (CompWindow::Geometry gm)
 	priv->geometry.height ()  != gm.height () ||
 	priv->geometry.border ()  != gm.border ())
     {
-	int pw, ph;
 	int dx, dy, dwidth, dheight;
-
-	pw = gm.width () + gm.border () * 2;
-	ph = gm.height () + gm.border () * 2;
 
 	dx      = gm.x () - priv->geometry.x ();
 	dy      = gm.y () - priv->geometry.y ();
@@ -1849,37 +1573,58 @@ CompWindow::resize (CompWindow::Geometry gm)
 			    gm.width (), gm.height (),
 			    gm.border ());
 
-	priv->width = pw;
-	priv->height = ph;
-
-	if (priv->mapNum)
-	    priv->updateRegion ();
-
-	resizeNotify (dx, dy, dwidth, dheight);
-
 	priv->invisible = priv->isInvisible ();
+
+	if (priv->attrib.override_redirect)
+	{
+	    priv->serverGeometry = priv->geometry;
+	    priv->serverFrameGeometry = priv->frameGeometry;
+
+	    if (priv->mapNum)
+		priv->updateRegion ();
+
+	    window->resizeNotify (dx, dy, dwidth, dheight);
+	}
     }
     else if (priv->geometry.x () != gm.x () || priv->geometry.y () != gm.y ())
     {
-	int dx, dy;
-
-	dx = gm.x () - priv->geometry.x ();
-	dy = gm.y () - priv->geometry.y ();
-
-	priv->geometry.setX (gm.x ());
-	priv->geometry.setY (gm.y ());
-
-	priv->region.translate (dx, dy);
-	priv->inputRegion.translate (dx, dy);
-	if (!priv->frameRegion.isEmpty ())
-	    priv->frameRegion.translate (dx, dy);
-
-	priv->invisible = priv->isInvisible ();
-
-	moveNotify (dx, dy, true);
+	move (gm.x () - priv->geometry.x (),
+	      gm.y () - priv->geometry.y (), true);
     }
 
-    updateFrameRegion ();
+    return true;
+}
+
+bool
+PrivateWindow::resize (const XWindowAttributes &attr)
+{
+    return resize (CompWindow::Geometry (attr.x, attr.y, attr.width, attr.height,
+					 attr.border_width));
+}
+
+bool
+PrivateWindow::resize (int          x,
+		       int          y,
+		       int          width,
+		       int          height,
+		       int          border)
+{
+    return resize (CompWindow::Geometry (x, y, width, height, border));
+}
+
+bool
+CompWindow::resize (CompWindow::Geometry gm)
+{
+    XWindowChanges xwc = XWINDOWCHANGES_INIT;
+    unsigned int   valueMask = CWX | CWY | CWWidth | CWHeight | CWBorderWidth;
+
+    xwc.x = gm.x ();
+    xwc.y = gm.y ();
+    xwc.width = gm.width ();
+    xwc.height = gm.height ();
+    xwc.border_width = gm.border ();
+
+    configureXWindow (valueMask, &xwc);
 
     return true;
 }
@@ -2047,13 +1792,7 @@ PrivateWindow::configure (XConfigureEvent *ce)
 				ce->border_width);
     else
     {
-	if (ce->override_redirect)
-	{
-	    priv->serverGeometry.set (ce->x, ce->y, ce->width, ce->height,
-				      ce->border_width);
-	}
-
-	window->resize (ce->x, ce->y, ce->width, ce->height, ce->border_width);
+	resize (ce->x, ce->y, ce->width, ce->height, ce->border_width);
     }
 
     if (ce->event == screen->root ())
@@ -2123,9 +1862,9 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
      * windows since we didn't resize them
      * on configureXWindow */
     if (priv->shaded)
-	height = priv->serverGeometry.height () - priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
+	height = priv->serverGeometry.heightIncBorders () - priv->serverInput.top - priv->serverInput.bottom;
     else
-	height = ce->height - priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
+	height = ce->height + priv->serverGeometry.border () * 2 - priv->serverInput.top - priv->serverInput.bottom;
 
     /* set the frame geometry */
     priv->frameGeometry.set (ce->x, ce->y, ce->width, ce->height, ce->border_width);
@@ -2134,7 +1873,7 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
     if (priv->syncWait)
 	priv->syncGeometry.set (x, y, width, height, ce->border_width);
     else
-	window->resize (x, y, width, height, ce->border_width);
+	resize (x, y, width, height, ce->border_width);
 
     if (priv->restack (ce->above))
 	priv->updatePassiveButtonGrabs ();
@@ -2143,27 +1882,6 @@ PrivateWindow::configureFrame (XConfigureEvent *ce)
 
     if (above)
 	above->priv->updatePassiveButtonGrabs ();
-
-    if (!pendingConfigures.pending ())
-    {
-	/* Tell plugins its ok to start doing stupid things again but
-	 * obviously FIXME */
-	CompOption::Vector options;
-	CompOption::Value  v;
-
-	options.push_back (CompOption ("window", CompOption::TypeInt));
-	v.set ((int) id);
-	options.back ().set (v);
-	options.push_back (CompOption ("active", CompOption::TypeInt));
-	v.set ((int) 0);
-	options.back ().set (v);
-
-	/* Notify other plugins that it is unsafe to change geometry or serverGeometry
-	 * FIXME: That API should not be accessible to plugins, this is a hack to avoid
-	 * breaking ABI */
-
-	screen->handleCompizEvent ("core", "lock_position", options);
-    }
 }
 
 void
@@ -2186,23 +1904,34 @@ CompWindow::move (int  dx,
 {
     if (dx || dy)
     {
-	gettimeofday (&priv->lastGeometryUpdate, NULL);
+	XWindowChanges xwc = XWINDOWCHANGES_INIT;
+	unsigned int   valueMask = CWX | CWY;
 
-	/* Don't allow window movement to overwrite working geometries
-	 * last received from the server if we know there are pending
-	 * ConfigureNotify events on this window. That's a clunky workaround
-	 * and a FIXME in any case, however, until we can break the API
-	 * and remove CompWindow::move, this will need to be the case */
+	xwc.x = priv->serverGeometry.x () + dx;
+	xwc.y = priv->serverGeometry.y () + dy;
 
-	if (!priv->pendingConfigures.pending ())
+	priv->nextMoveImmediate = immediate;
+
+	configureXWindow (valueMask, &xwc);
+    }
+}
+
+void
+PrivateWindow::move (int dx,
+		     int dy,
+		     bool immediate)
+{
+    if (dx || dy)
+    {
+	priv->geometry.setX (priv->geometry.x () + dx);
+	priv->geometry.setY (priv->geometry.y () + dy);
+	priv->frameGeometry.setX (priv->frameGeometry.x () + dx);
+	priv->frameGeometry.setY (priv->frameGeometry.y () + dy);
+
+	if (priv->attrib.override_redirect)
 	{
-	    priv->geometry.setX (priv->geometry.x () + dx);
-	    priv->geometry.setY (priv->geometry.y () + dy);
-	    priv->frameGeometry.setX (priv->frameGeometry.x () + dx);
-	    priv->frameGeometry.setY (priv->frameGeometry.y () + dy);
-
-	    priv->pendingPositionUpdates = true;
-
+	    priv->serverGeometry = priv->geometry;
+	    priv->serverFrameGeometry = priv->frameGeometry;
 	    priv->region.translate (dx, dy);
 	    priv->inputRegion.translate (dx, dy);
 	    if (!priv->frameRegion.isEmpty ())
@@ -2210,19 +1939,7 @@ CompWindow::move (int  dx,
 
 	    priv->invisible = priv->isInvisible ();
 
-	    moveNotify (dx, dy, immediate);
-	}
-	else
-	{
-	    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-	    unsigned int   valueMask = CWX | CWY;
-	    compLogMessage ("core", CompLogLevelDebug, "pending configure notifies on 0x%x, "\
-			    "moving window asyncrhonously!", (unsigned int) priv->serverId);
-
-	    xwc.x = priv->serverGeometry.x () + dx;
-	    xwc.y = priv->serverGeometry.y () + dy;
-
-	    configureXWindow (valueMask, &xwc);
+	    window->moveNotify (dx, dy, true);
 	}
     }
 }
@@ -2231,22 +1948,6 @@ bool
 compiz::X11::PendingEventQueue::pending ()
 {
     return !mEvents.empty ();
-}
-
-bool
-PrivateWindow::checkClear ()
-{
-    if (pendingConfigures.pending ())
-    {
-	/* FIXME: This is a hack to avoid performance regressions
-	 * and must be removed in 0.9.6 */
-	compLogMessage ("core", CompLogLevelWarn, "failed to receive ConfigureNotify event on 0x%x\n",
-			id);
-	pendingConfigures.dump ();
-	pendingConfigures.clear ();
-    }
-
-    return false;
 }
 
 void
@@ -2470,21 +2171,6 @@ compiz::X11::PendingConfigureEvent::PendingConfigureEvent (Display *d,
     mValueMask (valueMask),
     mXwc (*xwc)
 {
-    CompOption::Vector options;
-    CompOption::Value  v;
-
-    options.push_back (CompOption ("window", CompOption::TypeInt));
-    v.set ((int) w);
-    options.back ().set (v);
-    options.push_back (CompOption ("active", CompOption::TypeInt));
-    v.set ((int) 1);
-    options.back ().set (v);
-
-    /* Notify other plugins that it is unsafe to change geometry or serverGeometry
-     * FIXME: That API should not be accessible to plugins, this is a hack to avoid
-     * breaking ABI */
-
-    screen->handleCompizEvent ("core", "lock_position", options);
 }
 
 compiz::X11::PendingConfigureEvent::~PendingConfigureEvent ()
@@ -2494,57 +2180,6 @@ compiz::X11::PendingConfigureEvent::~PendingConfigureEvent ()
 void
 CompWindow::syncPosition ()
 {
-    gettimeofday (&priv->lastConfigureRequest, NULL);
-
-    unsigned int   valueMask = CWX | CWY;
-    XWindowChanges xwc = XWINDOWCHANGES_INIT;
-
-    if (priv->pendingPositionUpdates && !priv->pendingConfigures.pending ())
-    {
-	if (priv->serverFrameGeometry.x () == priv->frameGeometry.x ())
-	    valueMask &= ~(CWX);
-	if (priv->serverFrameGeometry.y () == priv->frameGeometry.y ())
-	    valueMask &= ~(CWY);
-
-	/* Because CompWindow::move can update the geometry last
-	 * received from the server, we must indicate that no values
-	 * changed, because when the ConfigureNotify comes around
-	 * the values are going to be the same. That's obviously
-	 * broken behaviour and worthy of a FIXME, but requires
-	 * larger changes to the window movement system. */
-	if (valueMask)
-	{
-	    priv->serverGeometry.setX (priv->geometry.x ());
-	    priv->serverGeometry.setY (priv->geometry.y ());
-	    priv->serverFrameGeometry.setX (priv->frameGeometry.x ());
-	    priv->serverFrameGeometry.setY (priv->frameGeometry.y ());
-
-	    xwc.x = priv->serverFrameGeometry.x ();
-	    xwc.y = priv->serverFrameGeometry.y ();
-
-	    compiz::X11::PendingEvent::Ptr pc =
-		    boost::shared_static_cast<compiz::X11::PendingEvent> (compiz::X11::PendingConfigureEvent::Ptr (
-									      new compiz::X11::PendingConfigureEvent (
-										  screen->dpy (), priv->serverFrame, 0, &xwc)));
-
-	    priv->pendingConfigures.add (pc);
-
-	    /* Got 3 seconds to get its stuff together */
-	    if (priv->mClearCheckTimeout.active ())
-		priv->mClearCheckTimeout.stop ();
-	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-					    2000, 2500);
-	    XConfigureWindow (screen->dpy (), ROOTPARENT (this), valueMask, &xwc);
-
-	    if (priv->serverFrame)
-	    {
-		XMoveWindow (screen->dpy (), priv->wrapper,
-			     priv->serverInput.left, priv->serverInput.top);
-		sendConfigureNotify ();
-	    }
-	}
-	priv->pendingPositionUpdates = false;
-    }
 }
 
 bool
@@ -3345,14 +2980,41 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 {
     unsigned int frameValueMask = 0;
 
-    /* Immediately sync window position
-     * if plugins were updating w->geometry () directly
-     * in order to avoid a race condition */
-
-    window->syncPosition ();
+    if (id == screen->root ())
+    {
+	compLogMessage ("core", CompLogLevelWarn, "attempted to reconfigure root window");
+	return;
+    }
 
     /* Remove redundant bits */
 
+    xwc->x = valueMask & CWX ? xwc->x : serverGeometry.x ();
+    xwc->y = valueMask & CWY ? xwc->y : serverGeometry.y ();
+    xwc->width = valueMask & CWWidth ? xwc->width : serverGeometry.width ();
+    xwc->height = valueMask & CWHeight ? xwc->height : serverGeometry.height ();
+    xwc->border_width = valueMask & CWBorderWidth ? xwc->border_width : serverGeometry.border ();
+
+    /* Don't allow anything that might generate a BadValue */
+    if (valueMask & CWWidth && !xwc->width)
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Attempted to set < 1 width on a window");
+	xwc->width = 1;
+    }
+
+    if (valueMask & CWHeight && !xwc->height)
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Attempted to set < 1 height on a window");
+	xwc->height = 1;
+    }
+
+    int dx = valueMask & CWX ? xwc->x - serverGeometry.x () : 0;
+    int dy = valueMask & CWY ? xwc->y - serverGeometry.y () : 0;
+    int dwidth = valueMask & CWWidth ? xwc->width - serverGeometry.width () : 0;
+    int dheight = valueMask & CWHeight ? xwc->height - serverGeometry.height () : 0;
+
+    /* FIXME: This is a total fallacy for the reparenting case
+     * at least since the client doesn't actually move here, it only
+     * moves within the frame */
     if (valueMask & CWX && serverGeometry.x () == xwc->x)
 	valueMask &= ~(CWX);
 
@@ -3419,18 +3081,15 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 	    compLogMessage ("core", CompLogLevelWarn, "restack_mode not Above");
     }
 
-    frameValueMask = valueMask;
+    frameValueMask = CWX | CWY | CWWidth | CWHeight | (valueMask & (CWStackMode | CWSibling));
 
-    if (frameValueMask & CWX &&
-	serverFrameGeometry.x () == xwc->x - serverGeometry.border () - serverInput.left)
+    if (serverFrameGeometry.x () == xwc->x - serverGeometry.border () - serverInput.left)
 	frameValueMask &= ~(CWX);
 
-    if (frameValueMask & CWY &&
-	serverFrameGeometry.y () == xwc->y - serverGeometry.border () - serverInput.top)
+    if (serverFrameGeometry.y () == xwc->y - serverGeometry.border () - serverInput.top)
 	frameValueMask &= ~(CWY);
 
-   if (frameValueMask & CWWidth &&
-	serverFrameGeometry.width () == xwc->width + serverGeometry.border () * 2
+   if (serverFrameGeometry.width () == xwc->width + serverGeometry.border () * 2
 				      + serverInput.left + serverInput.right)
 	frameValueMask &= ~(CWWidth);
 
@@ -3440,17 +3099,62 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 
     if (shaded)
     {
-	if (frameValueMask & CWHeight &&
-	    serverFrameGeometry.height () == serverGeometry.border () * 2
+	if (serverFrameGeometry.height () == serverGeometry.border () * 2
 	    + serverInput.top + serverInput.bottom)
 	    frameValueMask &= ~(CWHeight);
     }
     else
     {
-	if (frameValueMask & CWHeight &&
-	    serverFrameGeometry.height () == xwc->height + serverGeometry.border () * 2
+	if (serverFrameGeometry.height () == xwc->height + serverGeometry.border () * 2
 	    + serverInput.top + serverInput.bottom)
 	    frameValueMask &= ~(CWHeight);
+    }
+
+
+    if (valueMask & CWStackMode &&
+        ((xwc->stack_mode != TopIf) && (xwc->stack_mode != BottomIf) && (xwc->stack_mode != Opposite) &&
+	 (xwc->stack_mode != Above) && (xwc->stack_mode != Below)))
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Invalid stack mode %i", xwc->stack_mode);
+	valueMask &= ~(CWStackMode | CWSibling);
+    }
+
+    /* Don't allow anything that might cause a BadMatch error */
+
+    if (valueMask & CWSibling && !(valueMask & CWStackMode))
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Didn't specify a CWStackMode for CWSibling");
+	valueMask &= ~CWSibling;
+    }
+
+    if (valueMask & CWSibling && xwc->sibling == (serverFrame ? serverFrame : id))
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Can't restack a window relative to itself");
+	valueMask &= ~CWSibling;
+    }
+
+    if (valueMask & CWBorderWidth && attrib.c_class == InputOnly)
+    {
+	compLogMessage ("core", CompLogLevelWarn, "Cannot set border_width of an input_only window");
+	valueMask &= ~CWBorderWidth;
+    }
+
+    if (valueMask & CWSibling)
+    {
+	CompWindow *sibling = screen->findTopLevelWindow (xwc->sibling);
+
+	if (!sibling)
+	{
+	    compLogMessage ("core", CompLogLevelWarn, "Attempted to restack relative to 0x%x which is "\
+			    "not a child of the root window or a window compiz owns", static_cast <unsigned int> (xwc->sibling));
+	    valueMask &= ~(CWSibling | CWStackMode);
+	}
+	else if (sibling->frame () && xwc->sibling != sibling->frame ())
+	{
+	    compLogMessage ("core", CompLogLevelWarn, "Attempted to restack relative to 0x%x which is "\
+			    "not a child of the root window", static_cast <unsigned int> (xwc->sibling));
+	    valueMask &= ~(CWSibling | CWStackMode);
+	}
     }
 
     /* Can't set the border width of frame windows */
@@ -3479,11 +3183,8 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 					   + serverInput.top + serverInput.bottom);
     }
 
-
     if (serverFrame)
     {
-	gettimeofday (&lastConfigureRequest, NULL);
-
 	if (frameValueMask)
 	{
 	    XWindowChanges wc = *xwc;
@@ -3499,13 +3200,10 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 										  screen->dpy (), priv->serverFrame, frameValueMask, &wc)));
 
 	    pendingConfigures.add (pc);
-	    if (priv->mClearCheckTimeout.active ())
-		priv->mClearCheckTimeout.stop ();
-	    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-					    2000, 2500);
 
 	    XConfigureWindow (screen->dpy (), serverFrame, frameValueMask, &wc);
 	}
+
 	valueMask &= ~(CWSibling | CWStackMode);
 
 	/* If the frame has changed position (eg, serverInput.top
@@ -3531,6 +3229,39 @@ PrivateWindow::reconfigureXWindow (unsigned int   valueMask,
 
     if (valueMask)
 	XConfigureWindow (screen->dpy (), id, valueMask, xwc);
+
+    /* When updating plugins we care about
+     * the absolute position */
+    if (dx)
+	valueMask |= CWX;
+    if (dy)
+	valueMask |= CWY;
+    if (dwidth)
+	valueMask |= CWWidth;
+    if (dheight)
+	valueMask |= CWHeight;
+
+    if (!attrib.override_redirect)
+    {
+	if (valueMask & (CWWidth | CWHeight))
+	{
+	    updateRegion ();
+	    window->resizeNotify (dx, dy, dwidth, dheight);
+	}
+	else if (valueMask & (CWX | CWY))
+	{
+	    region.translate (dx, dy);
+	    inputRegion.translate (dx, dy);
+	    if (!frameRegion.isEmpty ())
+		frameRegion.translate (dx, dy);
+
+	    if (dx || dy)
+	    {
+		window->moveNotify (dx, dy, priv->nextMoveImmediate);
+		priv->nextMoveImmediate = true;
+	    }
+	}
+    }
 }
 
 bool
@@ -4308,10 +4039,6 @@ PrivateWindow::addWindowStackChanges (XWindowChanges *xwc,
 											  screen->dpy (), serverFrame, valueMask, &lxwc)));
 
 		    pendingConfigures.add (pc);
-		    if (priv->mClearCheckTimeout.active ())
-			priv->mClearCheckTimeout.stop ();
-		    priv->mClearCheckTimeout.start (boost::bind (&PrivateWindow::checkClear, priv),
-						    2000, 2500);
 		}
 
 		/* Below with no sibling puts the window at the bottom
@@ -4615,8 +4342,8 @@ void
 PrivateWindow::ensureWindowVisibility ()
 {
     int x1, y1, x2, y2;
-    int	width = serverGeometry.width () + serverGeometry.border () * 2;
-    int	height = serverGeometry.height () + serverGeometry.border () * 2;
+    int	width = serverGeometry.widthIncBorders ();
+    int	height = serverGeometry.heightIncBorders ();
     int dx = 0;
     int dy = 0;
 
@@ -5476,10 +5203,10 @@ CompWindow::getMovementForOffset (CompPoint offset)
     }
     else
     {
-	m = priv->geometry.x () + offX;
-	if (m - priv->input.left < (int) s->width () - vWidth)
+	m = priv->serverGeometry.x () + offX;
+	if (m - priv->serverInput.left < (int) s->width () - vWidth)
 	    rv.setX (offX + vWidth);
-	else if (m + priv->width + priv->input.right > vWidth)
+	else if (m + priv->serverGeometry.width () + priv->serverInput.right > vWidth)
 	    rv.setX (offX - vWidth);
 	else
 	    rv.setX (offX);
@@ -5491,10 +5218,10 @@ CompWindow::getMovementForOffset (CompPoint offset)
     }
     else
     {
-	m = priv->geometry.y () + offY;
-	if (m - priv->input.top < (int) s->height () - vHeight)
+	m = priv->serverGeometry.y () + offY;
+	if (m - priv->serverInput.top < (int) s->height () - vHeight)
 	    rv.setY (offY + vHeight);
-	else if (m + priv->height + priv->input.bottom > vHeight)
+	else if (m + priv->serverGeometry.height () + priv->serverInput.bottom > vHeight)
 	    rv.setY (offY - vHeight);
 	else
 	    rv.setY (offY);
@@ -6017,8 +5744,8 @@ CompWindow::moveToViewportPosition (int  x,
 	y -= screen->vp ().y () * screen->height ();
     }
 
-    tx = x - priv->geometry.x ();
-    ty = y - priv->geometry.y ();
+    tx = x - priv->serverGeometry.x ();
+    ty = y - priv->serverGeometry.y ();
 
     if (tx || ty)
     {
@@ -6040,21 +5767,21 @@ CompWindow::moveToViewportPosition (int  x,
 
 	if (screen->vpSize ().width ()!= 1)
 	{
-	    m = priv->geometry.x () + tx;
+	    m = priv->serverGeometry.x () + tx;
 
 	    if (m - priv->output.left < (int) screen->width () - vWidth)
 		wx = tx + vWidth;
-	    else if (m + priv->width + priv->output.right > vWidth)
+	    else if (m + priv->serverGeometry.width () + priv->output.right > vWidth)
 		wx = tx - vWidth;
 	}
 
 	if (screen->vpSize ().height () != 1)
 	{
-	    m = priv->geometry.y () + ty;
+	    m = priv->serverGeometry.y () + ty;
 
 	    if (m - priv->output.top < (int) screen->height () - vHeight)
 		wy = ty + vHeight;
-	    else if (m + priv->height + priv->output.bottom > vHeight)
+	    else if (m + priv->serverGeometry.height () + priv->output.bottom > vHeight)
 		wy = ty - vHeight;
 	}
 
@@ -6209,8 +5936,8 @@ PrivateWindow::updateStartupId ()
 	svp  = screen->vp ();
 	size = *screen;
 
-	x = window->geometry ().x () + (svp.x () - vp.x ()) * size.width ();
-	y = window->geometry ().y () + (svp.y () - vp.y ()) * size.height ();
+	x = window->serverGeometry ().x () + (svp.x () - vp.x ()) * size.width ();
+	y = window->serverGeometry ().y () + (svp.y () - vp.y ()) * size.height ();
 	window->moveToViewportPosition (x, y, true);
 
 	if (allowWindowFocus (0, timestamp))
@@ -6279,9 +6006,6 @@ CompWindow::CompWindow (Window aboveId,
     priv->serverFrameGeometry = priv->frameGeometry = priv->syncGeometry
 	    = priv->geometry = priv->serverGeometry;
 
-    priv->width  = priv->attrib.width  + priv->attrib.border_width * 2;
-    priv->height = priv->attrib.height + priv->attrib.border_width * 2;
-
     priv->sizeHints.flags = 0;
 
     priv->recalcNormalHints ();
@@ -6303,8 +6027,7 @@ CompWindow::CompWindow (Window aboveId,
 
     if (priv->attrib.c_class != InputOnly)
     {
-	priv->region = CompRegion (priv->attrib.x, priv->attrib.y,
-				   priv->width, priv->height);
+	priv->region = CompRegion (priv->serverGeometry);
 	priv->inputRegion = priv->region;
 
 	/* need to check for DisplayModal state on all windows */
@@ -6534,8 +6257,6 @@ PrivateWindow::PrivateWindow () :
     hints (NULL),
     inputHint (true),
     alpha (false),
-    width (0),
-    height (0),
     region (),
     wmType (0),
     type (CompWindowTypeUnknownMask),
@@ -6570,7 +6291,6 @@ PrivateWindow::PrivateWindow () :
     pendingUnmaps (0),
     pendingMaps (0),
     pendingConfigures (screen->dpy ()),
-    pendingPositionUpdates (false),
 
     startupId (0),
     resName (0),
@@ -6748,14 +6468,12 @@ CompWindow::mwmFunc ()
 void
 CompWindow::updateFrameRegion ()
 {
-    if (priv->serverFrame &&
-	priv->serverGeometry.width () == priv->geometry.width () &&
-	priv->serverGeometry.height () == priv->geometry.height ())
+    if (priv->serverFrame)
     {
 	CompRect   r;
 	int        x, y;
 
-	priv->frameRegion = CompRegion ();
+	priv->frameRegion = emptyRegion;
 
 	updateFrameRegion (priv->frameRegion);
 
@@ -6764,16 +6482,16 @@ CompWindow::updateFrameRegion ()
 	    r = priv->region.boundingRect ();
 	    priv->frameRegion -= r;
 
-	    r.setGeometry (r.x1 () - priv->input.left,
-			r.y1 () - priv->input.top,
-			r.width  () + priv->input.right + priv->input.left,
-			r.height () + priv->input.bottom + priv->input.top);
+	    r.setGeometry (r.x1 () - priv->serverInput.left,
+			r.y1 () - priv->serverInput.top,
+			r.width  () + priv->serverInput.right + priv->serverInput.left,
+			r.height () + priv->serverInput.bottom + priv->serverInput.top);
 
 	    priv->frameRegion &= CompRegion (r);
 	}
 
-	x = priv->geometry.x () - priv->input.left;
-	y = priv->geometry.y () - priv->input.top;
+	x = priv->serverGeometry.x () - priv->serverInput.left;
+	y = priv->serverGeometry.y () - priv->serverInput.top;
 
 	XShapeCombineRegion (screen->dpy (), priv->serverFrame,
 			     ShapeBounding, -x, -y,
@@ -6791,6 +6509,10 @@ void
 CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 				   CompWindowExtents *i)
 {
+    /* override redirect windows can't have frame extents */
+    if (priv->attrib.override_redirect)
+	return;
+
     /* Input extents are used for frame size,
      * Border extents used for placement.
      */
@@ -6814,6 +6536,11 @@ CompWindow::setWindowFrameExtents (CompWindowExtents *b,
 
 	priv->updateSize ();
 	priv->updateFrameWindow ();
+
+	/* Always send a moveNotify
+	 * whenever the frame extents update
+	 * so that plugins can re-position appropriately */
+	moveNotify (0, 0, true);
     }
 
     /* Use b for _NET_WM_FRAME_EXTENTS here because
@@ -7097,10 +6824,10 @@ PrivateWindow::unreparent ()
 	/* Wait for the reparent to finish */
 	XSync (dpy, false);
 
-	xwc.x = serverGeometry.x () - serverGeometry.border ();
-	xwc.y = serverGeometry.y () - serverGeometry.border ();
-	xwc.width = serverGeometry.width () + serverGeometry.border () * 2;
-	xwc.height = serverGeometry.height () + serverGeometry.border () * 2;
+	xwc.x = serverGeometry.xMinusBorder ();
+	xwc.y = serverGeometry.yMinusBorder ();
+	xwc.width = serverGeometry.widthIncBorders ();
+	xwc.height = serverGeometry.heightIncBorders ();
 
 	XConfigureWindow (dpy, serverFrame, CWX | CWY | CWWidth | CWHeight, &xwc);
 

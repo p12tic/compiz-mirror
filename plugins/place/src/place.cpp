@@ -343,37 +343,36 @@ PlaceWindow::doValidateResizeRequest (unsigned int &mask,
     CompWindow::Geometry geom;
     int      output;
 
+    geom.set (xwc->x, xwc->y, xwc->width, xwc->height,
+	      window->serverGeometry ().border ());
+
     if (clampToViewport)
     {
 	/* left, right, top, bottom target coordinates, clamed to viewport
 	 * sizes as we don't need to validate movements to other viewports;
 	 * we are only interested in inner-viewport movements */
 
-	x = xwc->x % screen->width ();
-	if ((x + xwc->width) < 0)
+	x = geom.x () % screen->width ();
+	if ((geom.x2 ()) < 0)
 	    x += screen->width ();
 
-	y = xwc->y % screen->height ();
-	if ((y + xwc->height) < 0)
+	y = geom.y () % screen->height ();
+	if ((geom.y2 ()) < 0)
 	    y += screen->height ();
     }
     else
     {
-	x = xwc->x;
-	y = xwc->y;
+	x = geom.x ();
+	y = geom.y ();
     }
 
     left   = x - window->border ().left;
-    right  = left + xwc->width +  (window->border ().left +
-				   window->border ().right +
-				   2 * window->serverGeometry ().border ());
+    right  = left + geom.widthIncBorders () +  (window->border ().left +
+						window->border ().right);
     top    = y - window->border ().top;
-    bottom = top + xwc->height + (window->border ().top +
-				  window->border ().bottom +
-				  2 * window->serverGeometry ().border ());
+    bottom = top + geom.heightIncBorders () + (window->border ().top +
+					       window->border ().bottom);
 
-    geom.set (xwc->x, xwc->y, xwc->width, xwc->height,
-	      window->serverGeometry ().border ());
     output   = screen->outputDeviceForGeometry (geom);
     workArea = screen->getWorkareaForOutput (output);
 
@@ -746,10 +745,8 @@ PlaceWindow::placePointer (const CompRect &workArea,
 {
     if (PlaceScreen::get (screen)->getPointerPosition (pos))
     {
-	unsigned int dx = (window->serverGeometry ().width () / 2) -
-			   window->serverGeometry ().border ();
-	unsigned int dy = (window->serverGeometry ().height () / 2) -
-			   window->serverGeometry ().border ();
+	unsigned int dx = (window->serverGeometry ().widthIncBorders () / 2);
+	unsigned int dy = (window->serverGeometry ().heightIncBorders () / 2);
 	pos -= CompPoint (dx, dy);
     }
     else
@@ -1200,14 +1197,12 @@ PlaceWindow::constrainToWorkarea (const CompRect &workArea,
 
     extents.left   = pos.x () - window->border ().left;
     extents.top    = pos.y () - window->border ().top;
-    extents.right  = extents.left + window->serverWidth () +
+    extents.right  = extents.left + window->serverGeometry ().heightIncBorders () +
 		     (window->border ().left +
-		      window->border ().right +
-		      2 * window->serverGeometry ().border ());
-    extents.bottom = extents.top + window->serverHeight () +
+		      window->border ().right);
+    extents.bottom = extents.top + window->serverGeometry ().widthIncBorders () +
 		     (window->border ().top +
-		      window->border ().bottom +
-		      2 * window->serverGeometry ().border ());
+		      window->border ().bottom);
 
     delta = workArea.right () - extents.right;
     if (delta < 0)

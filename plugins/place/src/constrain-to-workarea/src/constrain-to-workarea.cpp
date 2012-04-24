@@ -61,13 +61,11 @@ compiz::place::clampGeometryToWorkArea (compiz::window::Geometry &g,
     }
 
     left   = x - border.left;
-    right  = left + g.width () +  (border.left +
-				   border.right +
-				   2 * g.border ());
+    right  = left + g.widthIncBorders () +  (border.left +
+					     border.right);
     top    = y - border.top;
-    bottom = top + g.height () + (border.top +
-				  border.bottom +
-				  2 * g.border ());
+    bottom = top + g.heightIncBorders () + (border.top +
+					    border.bottom);
 
     if ((right - left) > workArea.width ())
     {
