@@ -360,7 +360,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
     // Now we can call updatePlugins() without a segfault.  Hoorah!
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	WillOnce(Return(false));
-    ps.updatePlugins(StubActivePluginsOption().optionGetActivePlugins());
+    ps.updatePlugins(&comp_screen, StubActivePluginsOption().optionGetActivePlugins());
 }
 
 TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initialPlugins)
@@ -405,7 +405,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins(StubActivePluginsOption().optionGetActivePlugins());
+    ps.updatePlugins(&comp_screen, StubActivePluginsOption().optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -466,7 +466,7 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins(sapo.optionGetActivePlugins());
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -480,7 +480,7 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins(sapo.optionGetActivePlugins());
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -544,7 +544,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins(sapo.optionGetActivePlugins());
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -573,7 +573,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins(sapo.optionGetActivePlugins());
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -638,7 +638,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plug
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins(sapo.optionGetActivePlugins());
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -669,7 +669,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plug
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins(sapo.optionGetActivePlugins());
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);

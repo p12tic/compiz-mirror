@@ -282,7 +282,7 @@ class PluginManager
     public:
 	PluginManager();
 
-	void updatePlugins (CompOption::Value::Vector const& extraPluginsRequested);
+	void updatePlugins (CompScreen* screen, CompOption::Value::Vector const& extraPluginsRequested);
 
 	void setPlugins(CompOption::Value::Vector const& vList)
 	{
@@ -686,14 +686,9 @@ class PrivateScreen :
 	XWindowAttributes const& getAttrib () const { return attrib; }
 	Window rootWindow() const { return root; }
 	void identifyEdgeWindow(Window id);
-	void setPlugins(CompOption::Value::Vector const& vList)
-	    { pluginManager.setPlugins(vList); }
 
-	void initPlugins()
-	{
-	    pluginManager.setDirtyPluginList ();
-	    pluginManager.updatePlugins (optionGetActivePlugins());
-	}
+	void setPlugins(CompOption::Value::Vector const& vList);
+	void initPlugins();
 
     public:
 	Display    *dpy;

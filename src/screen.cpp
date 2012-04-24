@@ -788,7 +788,7 @@ PrivateScreen::processEvents ()
     if (pluginManager.isDirtyPluginList ())
     {
 	possibleTap = 0;
-	pluginManager.updatePlugins (optionGetActivePlugins());
+	pluginManager.updatePlugins (screen, optionGetActivePlugins());
     }
 
     /* Restacks recently processed, ensure that
@@ -958,7 +958,7 @@ cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPlug
 
 
 void
-cps::PluginManager::updatePlugins (CompOption::Value::Vector const& extraPluginsRequested)
+cps::PluginManager::updatePlugins (CompScreen* screen, CompOption::Value::Vector const& extraPluginsRequested)
 {
     dirtyPluginList = false;
 
@@ -4604,6 +4604,19 @@ CompScreenImpl::CompScreenImpl () :
     vList.push_back ("core");
 
     priv->setPlugins (vList);
+}
+
+void
+PrivateScreen::setPlugins(CompOption::Value::Vector const& vList)
+{
+    pluginManager.setPlugins(vList);
+}
+
+void
+PrivateScreen::initPlugins()
+{
+    pluginManager.setDirtyPluginList ();
+    pluginManager.updatePlugins (screen, optionGetActivePlugins());
 }
 
 bool
