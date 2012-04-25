@@ -273,23 +273,16 @@ struct PseudoNamespace
 struct ScreenUser
 {
 protected:
-    ScreenUser(CompScreen  *screen) : screen(screen) , possibleTap(NULL) {}
+    ScreenUser(CompScreen  *screen) : screen(screen) {}
     CompScreen  * const screen;
-
-public:
-    // Here because it is referenced in PluginManager::updatePlugins(),
-    // and GrabManager::triggerPress not clear where it really belongs.
-    void *possibleTap;
 };
 
-class PluginManager :
-    public virtual CoreOptions,
-    public virtual ScreenUser
+class PluginManager
 {
     public:
-	PluginManager(CompScreen *screen);
+	PluginManager();
 
-	void updatePlugins ();
+	void updatePlugins (CompScreen* screen, CompOption::Value::Vector const& extraPluginsRequested);
 
 	void setPlugins(CompOption::Value::Vector const& vList)
 	{
@@ -305,7 +298,7 @@ class PluginManager :
 	typedef std::set<CompString> CompStringSet;
 	CompStringSet blacklist;
 
-	CompOption::Value::Vector mergedPluginList();
+	CompOption::Value::Vector mergedPluginList(CompOption::Value::Vector const& extraPluginsRequested);
 };
 
 class GrabList
@@ -331,7 +324,7 @@ private:
 };
 
 class EventManager :
-    public PluginManager,
+    public virtual CoreOptions,
     public ValueHolder,
     public GrabList,
     public virtual ScreenUser
@@ -379,6 +372,9 @@ class EventManager :
 	void destroyGrabWindow (Display* dpy) { XDestroyWindow (dpy, grabWindow); }
 	Time getCurrentTime (Display* dpy) const;
 	Window const& getGrabWindow() const { return grabWindow; }
+
+    public:
+        void *possibleTap;
 
     private:
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
@@ -675,8 +671,7 @@ class PrivateScreen :
 	CompWindow *
 	focusTopMostWindow ();
 
-	bool
-	createFailed ();
+	bool createFailed () const;
 	
 	void setDefaultWindowAttributes (XWindowAttributes *);
 
@@ -691,6 +686,9 @@ class PrivateScreen :
 	XWindowAttributes const& getAttrib () const { return attrib; }
 	Window rootWindow() const { return root; }
 	void identifyEdgeWindow(Window id);
+
+	void setPlugins(CompOption::Value::Vector const& vList);
+	void initPlugins();
 
     public:
 	Display    *dpy;
@@ -769,6 +767,7 @@ class PrivateScreen :
 	CompTimer               edgeDelayTimer;
 	CompDelayedEdgeSettings edgeDelaySettings;
 	Window	xdndWindow;
+	::compiz::private_screen::PluginManager pluginManager;
 };
 
 class CompManager
@@ -1075,6 +1074,9 @@ class CompScreenImpl : public CompScreen
 	static bool shadeWin (CompAction         *action,
 			      CompAction::State  state,
 			      CompOption::Vector &options);
+
+	bool createFailed () const { return priv->createFailed (); }
+
 
     private:
         virtual bool _setOptionForPlugin(const char *, const char *, CompOption::Value &);

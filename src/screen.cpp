@@ -707,7 +707,7 @@ PrivateScreen::setOption (const CompString  &name,
 
     switch (index) {
 	case CoreOptions::ActivePlugins:
-	    setDirtyPluginList ();
+	    pluginManager.setDirtyPluginList ();
 	    break;
 	case CoreOptions::PingDelay:
 	    pingTimer.setTimes (optionGetPingDelay (),
@@ -785,8 +785,11 @@ PrivateScreen::processEvents ()
     std::list <XEvent> events;
     StackDebugger *dbg = StackDebugger::Default ();
 
-    if (isDirtyPluginList ())
-	updatePlugins ();
+    if (pluginManager.isDirtyPluginList ())
+    {
+	possibleTap = 0;
+	pluginManager.updatePlugins (screen, optionGetActivePlugins());
+    }
 
     /* Restacks recently processed, ensure that
      * plugins use the stack last received from
@@ -900,13 +903,11 @@ PrivateScreen::processEvents ()
 }
 
 CompOption::Value::Vector
-cps::PluginManager::mergedPluginList ()
+cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPluginsRequested)
 {
     std::list<CompString> availablePlugins(CompPlugin::availablePlugins ());
 
     CompOption::Value::Vector result;
-
-    CompOption::Value::Vector const& extraPluginsRequested = optionGetActivePlugins();
 
     /* Must have core as first plugin */
     result.push_back("core");
@@ -957,12 +958,11 @@ cps::PluginManager::mergedPluginList ()
 
 
 void
-cps::PluginManager::updatePlugins ()
+cps::PluginManager::updatePlugins (CompScreen* screen, CompOption::Value::Vector const& extraPluginsRequested)
 {
-    possibleTap = NULL;
     dirtyPluginList = false;
 
-    CompOption::Value::Vector const desiredPlugins(mergedPluginList());
+    CompOption::Value::Vector const desiredPlugins(mergedPluginList(extraPluginsRequested));
 
     unsigned int pluginIndex;
     for (pluginIndex = 1;
@@ -4561,7 +4561,7 @@ CompScreenImpl::screenInfo ()
 }
 
 bool
-PrivateScreen::createFailed ()
+PrivateScreen::createFailed () const
 {
     return !screenInitalized;
 }
@@ -4606,10 +4606,38 @@ CompScreenImpl::CompScreenImpl () :
     priv->setPlugins (vList);
 }
 
+void
+PrivateScreen::setPlugins(CompOption::Value::Vector const& vList)
+{
+    pluginManager.setPlugins(vList);
+}
+
+void
+PrivateScreen::initPlugins()
+{
+    pluginManager.setDirtyPluginList ();
+    pluginManager.updatePlugins (screen, optionGetActivePlugins());
+}
+
 bool
 CompScreenImpl::init (const char *name)
 {
-    return priv->init(name);
+    if (priv->init(name))
+    {
+	priv->initPlugins();
+
+	if (debugOutput)
+	{
+	    StackDebugger::SetDefault (
+		new StackDebugger (
+		    dpy (),
+		    root (),
+		    boost::bind (&PrivateScreen::queueEvents, priv.get())));
+	}
+
+	return true;
+    }
+    return false;
 }
 
 bool
@@ -5192,9 +5220,7 @@ cps::OutputDevices::OutputDevices() :
 {
 }
 
-cps::PluginManager::PluginManager(CompScreen *screen) :
-    CoreOptions (false),
-    ScreenUser (screen),
+cps::PluginManager::PluginManager() :
     plugin (),
     dirtyPluginList (true)
 {
@@ -5203,7 +5229,7 @@ cps::PluginManager::PluginManager(CompScreen *screen) :
 cps::EventManager::EventManager (CompScreen *screen) :
     CoreOptions (false),
     ScreenUser (screen),
-    PluginManager (screen),
+    possibleTap(NULL),
     source(0),
     timeout(0),
     sighupSource(0),

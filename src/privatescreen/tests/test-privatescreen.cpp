@@ -175,12 +175,12 @@ public:
     MOCK_CONST_METHOD0(createFailed, bool ());
 };
 
-class StubActivePluginsOption
+class StubActivePluginsOption : public CoreOptions
 {
 public:
-    StubActivePluginsOption(CoreOptions& co) : co(co)
+    StubActivePluginsOption() : CoreOptions(false)
     {
-	CompOption::Vector& mOptions = co.getOptions ();
+	CompOption::Vector& mOptions = getOptions ();
 	CompOption::Value::Vector list;
 	CompOption::Value value;
 
@@ -193,10 +193,8 @@ public:
 
     bool setActivePlugins(const char*, const char* key, CompOption::Value & value)
     {
-	return co.setOption(key, value);
+	return setOption(key, value);
     }
-private:
-    CoreOptions& co;
 };
 } // (anon) namespace
 
@@ -342,7 +340,7 @@ TEST(privatescreen_PluginManagerTest, create_and_destroy)
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 }
 
 TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
@@ -351,7 +349,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
@@ -362,7 +360,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_does_not_error)
     // Now we can call updatePlugins() without a segfault.  Hoorah!
     EXPECT_CALL(comp_screen, _setOptionForPlugin(StrEq("core"), StrEq("active_plugins"), _)).
 	WillOnce(Return(false));
-    ps.updatePlugins();
+    ps.updatePlugins(&comp_screen, StubActivePluginsOption().optionGetActivePlugins());
 }
 
 TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initialPlugins)
@@ -371,7 +369,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 
     // Stuff that has to be done before calling updatePlugins()
     CompOption::Value::Vector values;
@@ -407,7 +405,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_after_setting_initia
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins();
+    ps.updatePlugins(&comp_screen, StubActivePluginsOption().optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -432,8 +430,8 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
-    StubActivePluginsOption sapo(ps);
+    cps::PluginManager ps;
+    StubActivePluginsOption sapo;
 
     CompOption::Value::Vector values;
     values.push_back ("core");
@@ -468,7 +466,7 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins();
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -482,7 +480,7 @@ TEST(privatescreen_PluginManagerTest, updating_when_failing_to_load_plugin_in_mi
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins();
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -506,9 +504,9 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 
-    StubActivePluginsOption sapo(ps);
+    StubActivePluginsOption sapo;
 
     // Stuff that has to be done before calling updatePlugins()
     initialPlugins = std::list <CompString>();
@@ -546,7 +544,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins();
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -575,7 +573,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins();
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -600,9 +598,9 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plug
 
     MockCompScreen comp_screen;
 
-    cps::PluginManager ps(&comp_screen);
+    cps::PluginManager ps;
 
-    StubActivePluginsOption sapo(ps);
+    StubActivePluginsOption sapo;
 
     // Stuff that has to be done before calling updatePlugins()
     initialPlugins = std::list <CompString>();
@@ -640,7 +638,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plug
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins();
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -671,7 +669,7 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plug
     EXPECT_CALL(mockfs, ListPlugins(_)).
 	WillRepeatedly(Invoke(&mockfs, &MockPluginFilesystem::mockListPlugins));
 
-    ps.updatePlugins();
+    ps.updatePlugins(&comp_screen, sapo.optionGetActivePlugins());
 
     Mock::VerifyAndClearExpectations(&mockfs);
     Mock::VerifyAndClearExpectations(&mockfs.mockVtableOne);
@@ -723,6 +721,5 @@ TEST(privatescreen_EventManagerTest, init)
 
     cps::EventManager em(&comp_screen);
 
-    em.setPlugins (values);
     em.init(0);
 }
