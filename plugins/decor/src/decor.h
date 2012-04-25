@@ -35,6 +35,7 @@
 #include <core/windowextents.h>
 
 #include <clip-groups.h>
+#include <pixmap-requests.h>
 
 #include "decor_options.h"
 
@@ -74,17 +75,6 @@ class MatchedDecorClipGroup :
 	CompMatch                               mMatch;
 };
 
-class DecorPixmapInterface
-{
-    public:
-
-	typedef boost::shared_ptr <DecorPixmapInterface> Ptr;
-
-	virtual ~DecorPixmapInterface () {};
-
-	virtual Pixmap getPixmap () = 0;
-};
-
 class DecorTexture {
 
     public:
@@ -100,147 +90,6 @@ class DecorTexture {
 };
 
 class DecorWindow;
-
-class DecorPixmapReceiverInterface
-{
-    public:
-
-	virtual ~DecorPixmapReceiverInterface () {}
-
-	virtual void pending () = 0;
-	virtual void update () = 0;
-};
-
-/* So far, nothing particularly interesting here
- * we just need a way to pass around pointers for
- * testing */
-class DecorationInterface
-{
-    public:
-
-	typedef boost::shared_ptr <DecorationInterface> Ptr;
-
-	virtual ~DecorationInterface () {}
-
-	virtual DecorPixmapReceiverInterface & receiverInterface () = 0;
-	virtual unsigned int getFrameType () const = 0;
-	virtual unsigned int getFrameState () const = 0;
-	virtual unsigned int getFrameActions () const = 0;
-};
-
-class DecorPixmapDeletionInterface
-{
-    public:
-
-	typedef boost::shared_ptr <DecorPixmapDeletionInterface> Ptr;
-
-	virtual ~DecorPixmapDeletionInterface () {}
-
-	virtual int postDeletePixmap (Pixmap pixmap) = 0;
-};
-
-class X11PixmapDeletor :
-    public DecorPixmapDeletionInterface
-{
-    public:
-
-	typedef boost::shared_ptr <X11PixmapDeletor> Ptr;
-
-	X11PixmapDeletor (Display *dpy) :
-	    mDisplay (dpy)
-	{
-	}
-
-	int postDeletePixmap (Pixmap pixmap) { return decor_post_delete_pixmap (mDisplay, pixmap); }
-
-    private:
-
-	Display *mDisplay;
-};
-
-class DecorPixmap :
-    public DecorPixmapInterface
-{
-    public:
-
-	typedef boost::shared_ptr <DecorPixmap> Ptr;
-
-	DecorPixmap (Pixmap p, DecorPixmapDeletionInterface::Ptr deletor);
-	~DecorPixmap ();
-
-	Pixmap getPixmap ();
-
-    private:
-
-	Pixmap mPixmap;
-	DecorPixmapDeletionInterface::Ptr mDeletor;
-};
-
-class DecorPixmapRequestorInterface
-{
-    public:
-
-	virtual ~DecorPixmapRequestorInterface () {}
-
-	virtual int postGenerateRequest (unsigned int frameType,
-					 unsigned int frameState,
-					 unsigned int frameActions) = 0;
-
-	virtual void handlePending (long *data) = 0;
-};
-
-class DecorationListFindMatchingInterface
-{
-    public:
-
-	virtual ~DecorationListFindMatchingInterface () {}
-
-	virtual DecorationInterface::Ptr findMatchingDecoration (unsigned int frameType,
-								 unsigned int frameState,
-								 unsigned int frameActions) = 0;
-};
-
-class X11DecorPixmapRequestor :
-    public DecorPixmapRequestorInterface
-{
-    public:
-
-	X11DecorPixmapRequestor (Display *dpy,
-				 Window  xid,
-				 DecorationListFindMatchingInterface *listFinder);
-
-	int postGenerateRequest (unsigned int frameType,
-				 unsigned int frameState,
-				 unsigned int frameActions);
-
-	void handlePending (long *data);
-
-    private:
-
-	Display *mDpy;
-	Window  mWindow;
-	DecorationListFindMatchingInterface *mListFinder;
-};
-
-class X11DecorPixmapReceiver :
-    public DecorPixmapReceiverInterface
-{
-    public:
-
-	static const unsigned int UpdateRequested = 1 << 0;
-	static const unsigned int UpdatesPending = 1 << 1;
-
-	X11DecorPixmapReceiver (DecorPixmapRequestorInterface *,
-				DecorationInterface *decor);
-
-	void pending ();
-	void update ();
-    private:
-
-	unsigned int mUpdateState;
-	DecorPixmapRequestorInterface *mDecorPixmapRequestor;
-	DecorationInterface *mDecoration;
-};
 
 class Decoration :
     public DecorationInterface
