@@ -43,6 +43,43 @@ class MockDecorPixmapDeletor :
 	MOCK_METHOD1 (postDeletePixmap, int (Pixmap p));
 };
 
+class MockDecorPixmapReceiver :
+    public DecorPixmapReceiverInterface
+{
+    public:
+
+	MOCK_METHOD0 (pending, void ());
+	MOCK_METHOD0 (update, void ());
+};
+
+class MockDecoration :
+    public DecorationInterface
+{
+    public:
+
+	MOCK_METHOD0 (receiverInterface, DecorPixmapReceiverInterface & ());
+	MOCK_CONST_METHOD0 (getFrameType, unsigned int ());
+	MOCK_CONST_METHOD0 (getFrameState, unsigned int ());
+	MOCK_CONST_METHOD0 (getFrameActions, unsigned int ());
+};
+
+class MockDecorationListFindMatching :
+    public DecorationListFindMatchingInterface
+{
+    public:
+
+	MOCK_METHOD3 (findMatchingDecoration, DecorationInterface::Ptr (unsigned int, unsigned int, unsigned int));
+};
+
+class MockDecorPixmapRequestor :
+    public DecorPixmapRequestorInterface
+{
+    public:
+
+	MOCK_METHOD3 (postGenerateRequest, int (unsigned int, unsigned int, unsigned int));
+	MOCK_METHOD1 (handlePending, void (long *));
+};
+
 TEST(DecorPixmapRequestsTest, TestDestroyPixmapDeletes)
 {
     boost::shared_ptr <MockDecorPixmapDeletor> mockDeletor = boost::make_shared <MockDecorPixmapDeletor> ();
