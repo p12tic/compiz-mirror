@@ -79,8 +79,6 @@ class DecorTexture {
 	DecorTexture (Pixmap pixmap);
 	~DecorTexture ();
 
-	bool bindTexture (Pixmap src);
-
     public:
 	bool            status;
 	int             refCount;

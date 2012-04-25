@@ -34,6 +34,9 @@
 
 #include <core/option.h>
 #include "privateoption.h"
+#include <boost/variant/apply_visitor.hpp>
+#include <boost/variant/static_visitor.hpp>
+#include <boost/type_traits/remove_const.hpp>
 
 namespace
 {
@@ -66,6 +69,51 @@ namespace
 	static unsigned short v[4] = { 0, 0, 0, 0 };
 	return v;
     }
+
+
+    template<typename TargetType, typename boost::remove_const<TargetType>::type & (*get_default)()>
+    struct get_or_default_call : public boost::static_visitor<TargetType &>
+    {
+	TargetType& operator()(TargetType& a)
+	{
+	    return a;
+	}
+
+	template<typename T>
+	TargetType& operator()(T&)
+	{
+	    return get_default();
+	}
+    };
+
+    template<typename TargetType, typename boost::remove_const<TargetType>::type Default>
+    struct get_or_default_val : public boost::static_visitor<TargetType>
+    {
+	TargetType operator()(TargetType& a)
+	{
+	    return a;
+	}
+
+	template<typename T>
+	TargetType operator()(T&)
+	{
+	    return Default;
+	}
+    };
+
+    struct get_float : public boost::static_visitor<float const>
+    {
+	float operator()(float const& a)
+	{
+	    return a;
+	}
+
+	template<typename T>
+	float operator()(T&)
+	{
+	    return 0.0;
+	}
+    };
 }
 
 CompOption::Vector &
@@ -108,40 +156,22 @@ CompOption::Value::set (Type t, const CompOption::Value::Vector & v)
 bool
 CompOption::Value::b () const
 {
-    try
-    {
-	return boost::get<bool>(mValue);
-    }
-    catch (...)
-    {
-	return false;
-    }
+    get_or_default_val<bool const, false> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 int
 CompOption::Value::i () const
 {
-    try
-    {
-	return boost::get<int>(mValue);
-    }
-    catch (...)
-    {
-	return 0;
-    }
+    get_or_default_val<int const, 0> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 float
 CompOption::Value::f () const
 {
-    try
-    {
-	return boost::get<float>(mValue);
-    }
-    catch (...)
-    {
-	return 0.0;
-    }
+    get_float tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 unsigned short*
@@ -160,79 +190,43 @@ CompOption::Value::c () const
 const CompString &
 CompOption::Value::s () const
 {
-    try
-    {
-	return boost::get<CompString>(mValue);
-    }
-    catch (...)
-    {
-	return emptyString ();
-    }
+    get_or_default_call<CompString const, emptyString> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 CompString &
 CompOption::Value::s ()
 {
-    try
-    {
-	return boost::get < CompString > (mValue);
-    }
-    catch (...)
-    {
-	return emptyString ();
-    }
+    get_or_default_call<CompString, emptyString> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 const CompMatch &
 CompOption::Value::match () const
 {
-    try
-    {
-	return boost::get<CompMatch>(mValue);
-    }
-    catch (...)
-    {
-	return emptyMatch ();
-    }
+    get_or_default_call<CompMatch const, emptyMatch> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 CompMatch &
 CompOption::Value::match ()
 {
-    try
-    {
-	return boost::get<CompMatch>(mValue);
-    }
-    catch (...)
-    {
-	return emptyMatch ();
-    }
+    get_or_default_call<CompMatch, emptyMatch> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 const CompAction &
 CompOption::Value::action () const
 {
-    try
-    {
-	return boost::get<CompAction>(mValue);
-    }
-    catch (...)
-    {
-	return emptyAction ();
-    }
+    get_or_default_call<CompAction const, emptyAction> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 CompAction &
 CompOption::Value::action ()
 {
-    try
-    {
-	return boost::get<CompAction>(mValue);
-    }
-    catch (...)
-    {
-	return emptyAction ();
-    }
+    get_or_default_call<CompAction, emptyAction> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 // Type listType () const;
@@ -240,27 +234,15 @@ CompOption::Value::action ()
 const CompOption::Value::Vector &
 CompOption::Value::list () const
 {
-    try
-    {
-	return boost::get< std::vector<Value> >(mValue);
-    }
-    catch (...)
-    {
-	return emptyList ();
-    }
+    get_or_default_call<CompOption::Value::Vector const, emptyList> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 CompOption::Value::Vector &
 CompOption::Value::list ()
 {
-    try
-    {
-	return boost::get< std::vector<Value> >(mValue);
-    }
-    catch (...)
-    {
-	return emptyList ();
-    }
+    get_or_default_call<CompOption::Value::Vector, emptyList> tmp;
+    return boost::apply_visitor(tmp, mValue);
 }
 
 bool

@@ -577,7 +577,6 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     lighting (false),
     getProcAddress (0),
     outputRegion (),
-    pendingCommands (false),
     bindPixmap (),
     hasCompositing (false),
     rootPixmapCopy (None),
@@ -1273,12 +1272,6 @@ PrivateGLScreen::compositingActive ()
 void
 PrivateGLScreen::prepareDrawing ()
 {
-    if (pendingCommands)
-    {
-	/* glFlush! glFinish would block the CPU, which is bad. */
-	glFlush ();
-	pendingCommands = false;
-    }
 }
 
 GLTexture::BindPixmapHandle
