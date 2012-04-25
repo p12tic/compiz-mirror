@@ -1394,7 +1394,7 @@ PrivateScreen::windowStateMask (Atom state)
 }
 
 unsigned int
-cps::PseudoNamespace::windowStateFromString (const char *str)
+cps::windowStateFromString (const char *str)
 {
     if (strcasecmp (str, "modal") == 0)
 	return CompWindowStateModalMask;

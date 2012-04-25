@@ -60,9 +60,10 @@ class CoreExp : public CompMatch::Expression {
 	    }
 	    else if (str.compare (0, 6, "state=") == 0)
 	    {
+		using ::compiz::private_screen::windowStateFromString;
+
 		mType = TypeState;
-		priv.uval = PrivateScreen::windowStateFromString
-				(str.substr (6).c_str ());
+		priv.uval = windowStateFromString(str.substr (6).c_str ());
 	    }
 	    else if (str.compare (0, 18, "override_redirect=") == 0)
 	    {

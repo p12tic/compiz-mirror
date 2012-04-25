@@ -260,13 +260,7 @@ class WindowManager : boost::noncopyable
 	unsigned int pendingDestroys;
 };
 
-// Static member functions that don't belong (use no data,
-// not invoked by PrivateScreen)
-struct PseudoNamespace
-{
-    // AFAICS only used by CoreExp (in match.cpp)
-    static unsigned int windowStateFromString (const char *str);
-};
+unsigned int windowStateFromString (const char *str);
 
 // EventManager, GrabManager and PrivateScreen refer to the screen member.  So it
 // is stuck in a virtual base class until we complete the cleanup of PrivateScreen
@@ -564,8 +558,7 @@ class PrivateScreen :
     public compiz::private_screen::StartupSequence,
     public compiz::private_screen::Ping,
     public compiz::private_screen::OrphanData,
-    public compiz::private_screen::OutputDevices,
-    public compiz::private_screen::PseudoNamespace
+    public compiz::private_screen::OutputDevices
 {
 
     public:
