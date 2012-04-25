@@ -313,6 +313,23 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
     }
 }
 
+DecorPixmap::DecorPixmap (Pixmap pixmap, DecorPixmapDeletionInterface::Ptr d) :
+    mPixmap (pixmap),
+    mDeletor (d)
+{
+}
+
+DecorPixmap::~DecorPixmap ()
+{
+    mDeletor->postDeletePixmap (mPixmap);
+}
+
+Pixmap
+DecorPixmap::getPixmap ()
+{
+    return mPixmap;
+}
+
 static bool bindFailed;
 /*
  * DecorTexture::DecorTexture
@@ -324,7 +341,7 @@ static bool bindFailed;
  * for this pixmap
  */
 
-DecorTexture::DecorTexture (Pixmap pixmap) :
+DecorTexture::DecorTexture (DecorPixmapInterface::Ptr pixmap) :
     status (true),
     refCount (1),
     pixmap (pixmap),
@@ -334,7 +351,7 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
     Window	 root;
     int		 i;
 
-    if (!XGetGeometry (screen->dpy (), pixmap, &root,
+    if (!XGetGeometry (screen->dpy (), pixmap->getPixmap (), &root,
 		       &i, &i, &width, &height, &ui, &depth))
     {
 	status = false;
@@ -342,7 +359,7 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
     }
 
     bindFailed = false;
-    textures = GLTexture::bindPixmapToTexture (pixmap, width, height, depth);
+    textures = GLTexture::bindPixmapToTexture (pixmap->getPixmap (), width, height, depth);
     if (textures.size () != 1)
     {
 	bindFailed = true;
@@ -353,7 +370,7 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
     if (!DecorScreen::get (screen)->optionGetMipmap ())
 	textures[0]->setMipmap (false);
 
-    damage = XDamageCreate (screen->dpy (), pixmap,
+    damage = XDamageCreate (screen->dpy (), pixmap->getPixmap (),
 			     XDamageReportRawRectangles);
 }
 
@@ -366,8 +383,6 @@ DecorTexture::DecorTexture (Pixmap pixmap) :
 
 DecorTexture::~DecorTexture ()
 {
-    decor_post_delete_pixmap (screen->dpy (), pixmap);
-
     if (damage)
 	XDamageDestroy (screen->dpy (), damage);
 }
@@ -390,13 +405,16 @@ DecorScreen::getTexture (Pixmap pixmap)
 	return NULL;
 
     foreach (DecorTexture *t, textures)
-	if (t->pixmap == pixmap)
+	if (t->pixmap->getPixmap () == pixmap)
 	{
 	    t->refCount++;
 	    return t;
 	}
 
-    DecorTexture *texture = new DecorTexture (pixmap);
+    X11PixmapDeletor::Ptr dl = boost::make_shared <X11PixmapDeletor> (screen->dpy ());
+    DecorPixmap::Ptr pm = boost::make_shared <DecorPixmap> (pixmap, dl);
+
+    DecorTexture *texture = new DecorTexture (boost::shared_static_cast <DecorPixmapInterface> (pm));
 
     if (!texture->status)
     {
@@ -532,7 +550,8 @@ Decoration::create (Window        id,
 		    long          *prop,
 		    unsigned int  size,
 		    unsigned int  type,
-		    unsigned int  nOffset)
+		    unsigned int  nOffset,
+		    DecorPixmapRequestorInterface *requestor)
 {
     unsigned int    frameType, frameState, frameActions;
     Pixmap	    pixmap = None;
@@ -580,7 +599,7 @@ Decoration::create (Window        id,
 	throw std::exception ();
     }
 
-    return Decoration::Ptr (new Decoration (type, border, input, maxBorder, maxInput, frameType, frameState, frameActions, minWidth, minHeight, pixmap, quad, nQuad));
+    return Decoration::Ptr (new Decoration (type, border, input, maxBorder, maxInput, frameType, frameState, frameActions, minWidth, minHeight, pixmap, quad, nQuad, id, requestor));
 }
 
 Decoration::Decoration (int   type,
@@ -595,7 +614,9 @@ Decoration::Decoration (int   type,
 			unsigned int minHeight,
 			Pixmap       pixmap,
 			const boost::shared_array <decor_quad_t> &quad,
-			unsigned int nQuad) :
+			unsigned int nQuad,
+			Window       owner,
+			DecorPixmapRequestorInterface *requestor) :
     texture (DecorScreen::get (screen)->getTexture (pixmap)),
     border (border.left, border.right, border.top, border.bottom),
     input (input.left, input.right, input.top, input.bottom),
@@ -609,7 +630,8 @@ Decoration::Decoration (int   type,
     quad (quad),
     nQuad (nQuad),
     type (type),
-    updateState (0)
+    updateState (0),
+    mPixmapReceiver (requestor, this)
 {
     int		    left, right, top, bottom;
     int		    x1, y1, x2, y2;
@@ -670,6 +692,30 @@ Decoration::~Decoration ()
 	DecorScreen::get (screen)->releaseTexture (texture);
 }
 
+DecorPixmapReceiverInterface &
+Decoration::receiverInterface ()
+{
+    return mPixmapReceiver;
+}
+
+unsigned int
+Decoration::getFrameType () const
+{
+    return frameType;
+}
+
+unsigned int
+Decoration::getFrameState () const
+{
+    return frameState;
+}
+
+unsigned int
+Decoration::getFrameActions () const
+{
+    return frameActions;
+}
+
 /*
  * DecorationList is a class which allows multiple decorations
  * to be stored in a list and read from a window property, which
@@ -705,7 +751,8 @@ DecorationList::DecorationList () :
 
 bool
 DecorationList::updateDecoration (Window   id,
-				  Atom     decorAtom)
+				  Atom     decorAtom,
+				  DecorPixmapRequestorInterface *requestor)
 {
     unsigned long   n, nleft;
     unsigned char   *data;
@@ -717,14 +764,7 @@ DecorationList::updateDecoration (Window   id,
     /* Dispatch any new updates */
     foreach (const Decoration::Ptr &d, mList)
     {
-	if (d->updateState & Decoration::UpdatesPending)
-	    decor_post_generate_request (screen->dpy (),
-					 id,
-					 d->frameType,
-					 d->frameState,
-					 d->frameActions);
-
-	d->updateState = 0;
+	d->mPixmapReceiver.update ();
     }
 
     result = XGetWindowProperty (screen->dpy (), id,
@@ -796,7 +836,9 @@ DecorationList::updateDecoration (Window   id,
 	maxBorder.top = d->maxBorder.top;
 	maxBorder.bottom = d->maxBorder.bottom;
 
-	int num = decor_match_pixmap (prop, n, &d->texture->pixmap, &input, &border, &maxInput, &maxBorder,
+	Pixmap pm = d->texture->pixmap->getPixmap ();
+
+	int num = decor_match_pixmap (prop, n, &pm, &input, &border, &maxInput, &maxBorder,
 				     d->minWidth, d->minHeight, d->frameType, d->frameState, d->frameActions,
 				    d->quad.get (), d->nQuad);
 	if (num != -1)
@@ -814,7 +856,7 @@ DecorationList::updateDecoration (Window   id,
 	try
 	{
 	    std::list <Decoration::Ptr>::iterator it = mList.begin ();
-	    Decoration::Ptr d = Decoration::create (id, prop, n, type, i);
+	    Decoration::Ptr d = Decoration::create (id, prop, n, type, i, requestor);
 
 	    /* Try to replace an existing decoration */
 	    for (; it != mList.end (); it++)
@@ -899,7 +941,7 @@ DecorWindow::updateDecoration ()
 {
     bindFailed = false;
 
-    decor.updateDecoration (window->id (), dScreen->winDecorAtom);
+    decor.updateDecoration (window->id (), dScreen->winDecorAtom, &mRequestor);
     if (bindFailed)
 	pixmapFailed = true;
     else
@@ -1266,6 +1308,22 @@ DecorWindow::matchActions (CompWindow   *w,
     }
 
     return (decorActions == 0);
+}
+
+DecorationInterface::Ptr
+DecorationList::findMatchingDecoration (unsigned int frameType,
+					unsigned int frameState,
+					unsigned int frameActions)
+{
+    foreach (const Decoration::Ptr &d, mList)
+    {
+	if (d->frameType == frameType &&
+	    d->frameState == frameState &&
+	    d->frameActions == frameActions)
+	    return boost::shared_static_cast <DecorationInterface> (d);
+    }
+
+    return DecorationInterface::Ptr ();
 }
 
 /*
@@ -2092,7 +2150,7 @@ DecorScreen::checkForDm (bool updateWindows)
 	{
 	    for (i = 0; i < DECOR_NUM; i++)
 	    {
-		decor[i].updateDecoration (screen->root (), decorAtom[i]);
+		decor[i].updateDecoration (screen->root (), decorAtom[i], &mRequestor);
 	    }
 	}
 	else
@@ -2304,6 +2362,75 @@ DecorWindow::updateSwitcher ()
     isSwitcher = false;
 }
 
+X11DecorPixmapReceiver::X11DecorPixmapReceiver (DecorPixmapRequestorInterface *requestor,
+						DecorationInterface *decor) :
+    mUpdateState (0),
+    mDecorPixmapRequestor (requestor),
+    mDecoration (decor)
+{
+}
+
+void
+X11DecorPixmapReceiver::pending ()
+{
+    if (mUpdateState & X11DecorPixmapReceiver::UpdateRequested)
+	mUpdateState |= X11DecorPixmapReceiver::UpdatesPending;
+    else
+    {
+	mUpdateState |= X11DecorPixmapReceiver::UpdateRequested;
+
+	mDecorPixmapRequestor->postGenerateRequest (mDecoration->getFrameType (),
+						    mDecoration->getFrameState (),
+						    mDecoration->getFrameActions ());
+    }
+}
+
+void X11DecorPixmapReceiver::update ()
+{
+    if (mUpdateState & X11DecorPixmapReceiver::UpdatesPending)
+	mDecorPixmapRequestor->postGenerateRequest (mDecoration->getFrameType (),
+						    mDecoration->getFrameState (),
+						    mDecoration->getFrameActions ());
+
+    mUpdateState = 0;
+}
+
+X11DecorPixmapRequestor::X11DecorPixmapRequestor (Display *dpy,
+						  Window  window,
+						  DecorationListFindMatchingInterface *listFinder) :
+    mDpy (dpy),
+    mWindow (window),
+    mListFinder (listFinder)
+{
+}
+
+int
+X11DecorPixmapRequestor::postGenerateRequest (unsigned int frameType,
+					      unsigned int frameState,
+					      unsigned int frameActions)
+{
+    return decor_post_generate_request (mDpy,
+					 mWindow,
+					 frameType,
+					 frameState,
+					 frameActions);
+}
+
+void
+X11DecorPixmapRequestor::handlePending (long *data)
+{
+    DecorationInterface::Ptr d = mListFinder->findMatchingDecoration (static_cast <unsigned int> (data[0]),
+								      static_cast <unsigned int> (data[1]),
+								      static_cast <unsigned int> (data[2]));
+
+    if (d)
+	d->receiverInterface ().pending ();
+    else
+	postGenerateRequest (static_cast <unsigned int> (data[0]),
+			     static_cast <unsigned int> (data[1]),
+			     static_cast <unsigned int> (data[2]));
+}
+
 /*
  * DecorScreen::handleEvent
  *
@@ -2346,38 +2473,8 @@ DecorScreen::handleEvent (XEvent *event)
 		if (w)
 		{
 		    DecorWindow *dw = DecorWindow::get (w);
-		    bool found = false;
-		    
-		    foreach (const Decoration::Ptr &d, dw->decor.mList)
-		    {
-			if (d->frameType == static_cast <unsigned int> (event->xclient.data.l[0]) &&
-			    d->frameState == static_cast <unsigned int> (event->xclient.data.l[1]) &&
-			    d->frameActions == static_cast <unsigned int> (event->xclient.data.l[2]))
-			{
-			    if (d->updateState & Decoration::UpdateRequested)
-				d->updateState |= Decoration::UpdatesPending;
-			    else
-			    {
-				d->updateState |= Decoration::UpdateRequested;
 
-				decor_post_generate_request (screen->dpy (),
-							     event->xclient.window,
-							     event->xclient.data.l[0],
-							     event->xclient.data.l[1],
-							     event->xclient.data.l[2]);
-			    }
-
-			    found = true;
-			    break;
-			}
-		    }
-
-		    if (!found)
-		        decor_post_generate_request (screen->dpy (),
-						     event->xclient.window,
-						     event->xclient.data.l[0],
-						     event->xclient.data.l[1],
-						     event->xclient.data.l[2]);
+		    dw->mRequestor.handlePending (event->xclient.data.l);
 		}
 	    }
 	default:
@@ -2394,7 +2491,7 @@ DecorScreen::handleEvent (XEvent *event)
 
 		foreach (DecorTexture *t, textures)
 		{
-		    if (t->pixmap == de->drawable)
+		    if (t->pixmap->getPixmap () == de->drawable)
 		    {
 			foreach (CompWindow *w, screen->windows ())
 			{
@@ -2486,7 +2583,8 @@ DecorScreen::handleEvent (XEvent *event)
 			    if (event->xproperty.atom == decorAtom[i])
 			    {
 				decor[i].updateDecoration (screen->root (),
-							   decorAtom[i]);
+							   decorAtom[i],
+							   &mRequestor);
 
 				foreach (CompWindow *w, screen->windows ())
 				    DecorWindow::get (w)->update (true);
@@ -3003,8 +3101,11 @@ DecorScreen::DecorScreen (CompScreen *s) :
 				   0,
 				   None,
 				   boost::shared_array <decor_quad_t> (NULL),
-				   0)),
-    mMenusClipGroup (CompMatch ("type=Dock | type=DropdownMenu | type=PopupMenu"))
+				   0,
+				   screen->root (),
+				   NULL)),
+    mMenusClipGroup (CompMatch ("type=Dock | type=DropdownMenu | type=PopupMenu")),
+    mRequestor (screen->dpy (), screen->root (), &(decor[DECOR_ACTIVE]))
 {
     supportingDmCheckAtom =
 	XInternAtom (s->dpy (), DECOR_SUPPORTING_DM_CHECK_ATOM_NAME, 0);
@@ -3086,7 +3187,8 @@ DecorWindow::DecorWindow (CompWindow *w) :
     frameExtentsRequested (false),
     mClipGroup (NULL),
     mOutputRegion (window->outputRect ()),
-    mInputRegion (window->inputRect ())
+    mInputRegion (window->inputRect ()),
+    mRequestor (screen->dpy (), w->id (), &decor)
 {
     WindowInterface::setHandler (window);
 
