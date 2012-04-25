@@ -28,11 +28,25 @@
 #include <iostream>
 #include "pixmap-requests.h"
 
+using ::testing::Return;
+
 class DecorPixmapRequestsTest :
     public ::testing::Test
 {
 };
 
-TEST(DecorPixmapRequestsTest, Hello)
+class MockDecorPixmapDeletor :
+    public DecorPixmapDeletionInterface
 {
+    public:
+
+	MOCK_METHOD1 (postDeletePixmap, int (Pixmap p));
+};
+
+TEST(DecorPixmapRequestsTest, TestDestroyPixmapDeletes)
+{
+    boost::shared_ptr <MockDecorPixmapDeletor> mockDeletor = boost::make_shared <MockDecorPixmapDeletor> ();
+    DecorPixmap pm (1, boost::shared_static_cast<DecorPixmapDeletionInterface> (mockDeletor));
+
+    EXPECT_CALL (*(mockDeletor.get ()), postDeletePixmap (1)).WillOnce (Return (1));
 }

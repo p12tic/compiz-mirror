@@ -5,6 +5,7 @@ add_executable (compiz_test_decor_pixmap_requests
 
 target_link_libraries (compiz_test_decor_pixmap_requests
 		       compiz_decor_pixmap_requests
+		       decoration
                        ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
