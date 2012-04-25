@@ -87,3 +87,74 @@ TEST(DecorPixmapRequestsTest, TestDestroyPixmapDeletes)
 
     EXPECT_CALL (*(mockDeletor.get ()), postDeletePixmap (1)).WillOnce (Return (1));
 }
+
+TEST(DecorPixmapRequestsTest, TestPendingGeneratesRequest)
+{
+    MockDecorPixmapRequestor mockRequestor;
+    MockDecoration           mockDecoration;
+    X11DecorPixmapReceiver   receiver (&mockRequestor, &mockDecoration);
+
+    EXPECT_CALL (mockDecoration, getFrameActions ()).WillOnce (Return (3));
+    EXPECT_CALL (mockDecoration, getFrameState ()).WillOnce (Return (2));
+    EXPECT_CALL (mockDecoration, getFrameType ()).WillOnce (Return (1));
+
+    EXPECT_CALL (mockRequestor, postGenerateRequest (1, 2, 3));
+
+    receiver.pending ();
+}
+
+TEST(DecorPixmapRequestsTest, TestPendingGeneratesOnlyOneRequest)
+{
+    MockDecorPixmapRequestor mockRequestor;
+    MockDecoration           mockDecoration;
+    X11DecorPixmapReceiver   receiver (&mockRequestor, &mockDecoration);
+
+    EXPECT_CALL (mockDecoration, getFrameActions ()).WillOnce (Return (3));
+    EXPECT_CALL (mockDecoration, getFrameState ()).WillOnce (Return (2));
+    EXPECT_CALL (mockDecoration, getFrameType ()).WillOnce (Return (1));
+
+    EXPECT_CALL (mockRequestor, postGenerateRequest (1, 2, 3));
+
+    receiver.pending ();
+    receiver.pending ();
+}
+
+TEST(DecorPixmapRequestsTest, TestUpdateGeneratesRequestIfNewOnePending)
+{
+    MockDecorPixmapRequestor mockRequestor;
+    MockDecoration           mockDecoration;
+    X11DecorPixmapReceiver   receiver (&mockRequestor, &mockDecoration);
+
+    EXPECT_CALL (mockDecoration, getFrameActions ()).WillOnce (Return (3));
+    EXPECT_CALL (mockDecoration, getFrameState ()).WillOnce (Return (2));
+    EXPECT_CALL (mockDecoration, getFrameType ()).WillOnce (Return (1));
+
+    EXPECT_CALL (mockRequestor, postGenerateRequest (1, 2, 3));
+
+    receiver.pending ();
+    receiver.pending ();
+
+    EXPECT_CALL (mockDecoration, getFrameActions ()).WillOnce (Return (3));
+    EXPECT_CALL (mockDecoration, getFrameState ()).WillOnce (Return (2));
+    EXPECT_CALL (mockDecoration, getFrameType ()).WillOnce (Return (1));
+
+    EXPECT_CALL (mockRequestor, postGenerateRequest (1, 2, 3));
+
+    receiver.update ();
+}
+
+TEST(DecorPixmapRequestsTest, TestUpdateGeneratesNoRequestIfNoNewOnePending)
+{
+    MockDecorPixmapRequestor mockRequestor;
+    MockDecoration           mockDecoration;
+    X11DecorPixmapReceiver   receiver (&mockRequestor, &mockDecoration);
+
+    EXPECT_CALL (mockDecoration, getFrameActions ()).WillOnce (Return (3));
+    EXPECT_CALL (mockDecoration, getFrameState ()).WillOnce (Return (2));
+    EXPECT_CALL (mockDecoration, getFrameType ()).WillOnce (Return (1));
+
+    EXPECT_CALL (mockRequestor, postGenerateRequest (1, 2, 3));
+
+    receiver.pending ();
+    receiver.update ();
+}
