@@ -585,7 +585,7 @@ active_window_changed (WnckScreen *screen)
     if (win)
     {
 	d = g_object_get_data (G_OBJECT (win), "decor");
-	if (d && d->pixmap)
+	if (d)
 	{
 	    d->active = wnck_window_is_active (win);
 
@@ -643,7 +643,8 @@ active_window_changed (WnckScreen *screen)
 	    * since the image would have changed */
 	    if (d->win != NULL &&
 		!request_update_window_decoration_size (d->win) &&
-		d->decorated)
+		d->decorated &&
+		d->pixmap)
 		queue_decor_draw (d);
 
 	}
@@ -653,7 +654,7 @@ active_window_changed (WnckScreen *screen)
     if (win)
     {
 	d = g_object_get_data (G_OBJECT (win), "decor");
-	if (d && d->pixmap)
+	if (d)
 	{
 	    d->active = wnck_window_is_active (win);
 
@@ -711,7 +712,8 @@ active_window_changed (WnckScreen *screen)
 	    * since the image would have changed */
 	    if (d->win != NULL &&
 		!request_update_window_decoration_size (d->win) &&
-		d->decorated)
+		d->decorated &&
+		d->pixmap)
 		queue_decor_draw (d);
 
 	}
