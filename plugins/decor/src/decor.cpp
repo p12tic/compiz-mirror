@@ -223,29 +223,26 @@ DecorWindow::glDecorate (const GLMatrix     &transform,
 
 	const CompRegion *preg = NULL;
 
-	if (mClipGroup)
+	if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
+		     PAINT_WINDOW_WITH_OFFSET_MASK)))
+	    preg = &region;
+	else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
+	    preg = &infiniteRegion;
+	else if (mClipGroup)
 	{
-	    if ((mask & (PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK |
-			 PAINT_WINDOW_WITH_OFFSET_MASK)))
+	    tmpRegion = mOutputRegion;
+	    tmpRegion &= region;
+
+	    if (tmpRegion.isEmpty ())
 		preg = &region;
-	    else if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
-		preg = &infiniteRegion;
 	    else
-	    {
-		tmpRegion = mOutputRegion;
-		tmpRegion &= region;
-
-		if (tmpRegion.isEmpty ())
-		    preg = &region;
-		else
-		    preg = &shadowRegion;
-	    }
-
-	    /* In case some plugin needs to paint us with an offset region */
-	    if (preg->isEmpty ())
-		preg = &region;
+		preg = &shadowRegion;
 	}
 	else
+	    preg = &region;
+
+	/* In case some plugin needs to paint us with an offset region */
+	if (preg->isEmpty ())
 	    preg = &region;
 
 	const CompRegion &reg (*preg);
