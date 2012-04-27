@@ -5303,18 +5303,7 @@ PrivateScreen::~PrivateScreen ()
 	    XFreeCursor (dpy, invisibleCursor);
 
 	if (wmSnSelectionWindow != None)
-	{
-	    /* Only clear the selection owner if it's this instance
-	     * (wmSnSelectionWindow != None).
-	     * If you try to set the selection owner to None when it's actually
-	     * owned by a different compiz instance then you'll cause that
-	     * other instance to shut down.
-	     */
-	    if (wmSnAtom != None)
-		XSetSelectionOwner (dpy, wmSnAtom, None, CurrentTime);
-
 	    XDestroyWindow (dpy, wmSnSelectionWindow);
-	}
 
 	XSync (dpy, False);  // Redundant?
 	XCloseDisplay (dpy);
