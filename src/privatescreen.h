@@ -82,6 +82,736 @@ private:
 
 }} //::compiz::private_screen
 
+CompPlugin::VTable * getCoreVTable ();
+
+class CoreWindow;
+
+extern bool shutDown;
+extern bool restartSignal;
+
+extern CompWindow *lastFoundWindow;
+extern bool	  useDesktopHints;
+
+extern std::list <CompString> initialPlugins;
+
+
+typedef struct _CompDelayedEdgeSettings
+{
+    CompAction::CallBack initiate;
+    CompAction::CallBack terminate;
+
+    unsigned int edge;
+    unsigned int state;
+
+    CompOption::Vector options;
+} CompDelayedEdgeSettings;
+
+
+#define SCREEN_EDGE_LEFT	0
+#define SCREEN_EDGE_RIGHT	1
+#define SCREEN_EDGE_TOP		2
+#define SCREEN_EDGE_BOTTOM	3
+#define SCREEN_EDGE_TOPLEFT	4
+#define SCREEN_EDGE_TOPRIGHT	5
+#define SCREEN_EDGE_BOTTOMLEFT	6
+#define SCREEN_EDGE_BOTTOMRIGHT 7
+#define SCREEN_EDGE_NUM		8
+
+struct CompScreenEdge {
+    Window	 id;
+    unsigned int count;
+};
+
+struct CompGroup {
+    unsigned int      refCnt;
+    Window	      id;
+};
+
+struct CompStartupSequence {
+    SnStartupSequence		*sequence;
+    unsigned int		viewportX;
+    unsigned int		viewportY;
+};
+
+namespace compiz
+{
+namespace core
+{
+namespace screen
+{
+    inline int wraparound_mod (int a, int b)
+    {
+	if (a < 0)
+	    return (b - ((-a - 1) % (b))) - 1;
+	else
+	    return a % b;
+    };
+}
+}
+
+namespace X11
+{
+class PendingEvent {
+public:
+    PendingEvent (Display *, Window);
+    virtual ~PendingEvent ();
+
+    virtual bool match (XEvent *);
+    unsigned int serial () { return mSerial; } // HACK: will be removed
+    virtual void dump ();
+
+    typedef boost::shared_ptr<PendingEvent> Ptr;
+
+protected:
+
+    virtual Window getEventWindow (XEvent *);
+
+    unsigned int mSerial;
+    Window       mWindow;
+};
+
+class PendingConfigureEvent :
+    public PendingEvent
+{
+public:
+    PendingConfigureEvent (Display *, Window, unsigned int, XWindowChanges *);
+    virtual ~PendingConfigureEvent ();
+
+    virtual bool match (XEvent *);
+    bool matchVM (unsigned int valueMask);
+    bool matchRequest (XWindowChanges &xwc, unsigned int);
+    virtual void dump ();
+
+    typedef boost::shared_ptr<PendingConfigureEvent> Ptr;
+
+protected:
+
+    virtual Window getEventWindow (XEvent *);
+
+private:
+    unsigned int mValueMask;
+    XWindowChanges mXwc;
+};
+
+class PendingEventQueue
+{
+public:
+
+    PendingEventQueue (Display *);
+    virtual ~PendingEventQueue ();
+
+    void add (PendingEvent::Ptr p);
+    bool match (XEvent *);
+    bool pending ();
+    bool forEachIf (boost::function <bool (compiz::X11::PendingEvent::Ptr)>);
+    void clear () { mEvents.clear (); } // HACK will be removed
+    void dump ();
+
+protected:
+    bool removeIfMatching (const PendingEvent::Ptr &p, XEvent *);
+
+private:
+    std::list <PendingEvent::Ptr> mEvents;
+};
+
+}
+}
+
+namespace compiz
+{
+namespace private_screen
+{
+
+class WindowManager : boost::noncopyable
+{
+    public:
+
+	WindowManager();
+
+	CompGroup * addGroup (Window id);
+	void removeGroup (CompGroup *group);
+	CompGroup * findGroup (Window id);
+
+	void eraseWindowFromMap (Window id);
+	void removeDestroyed ();
+
+    //private:
+	Window activeWindow;
+	Window nextActiveWindow;
+
+	Window below;
+
+	CompTimer autoRaiseTimer;
+	Window    autoRaiseWindow;
+
+	CompWindowList serverWindows;
+	CompWindowList destroyedWindows;
+	bool           stackIsFresh;
+
+	CompWindow::Map windowsMap;
+	std::list<CompGroup *> groups;
+
+	CompWindowVector clientList;            /* clients in mapping order */
+	CompWindowVector clientListStacking;    /* clients in stacking order */
+
+	std::vector<Window> clientIdList;        /* client ids in mapping order */
+	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
+
+	unsigned int pendingDestroys;
+};
+
+unsigned int windowStateFromString (const char *str);
+
+// EventManager, GrabManager and PrivateScreen refer to the screen member.  So it
+// is stuck in a virtual base class until we complete the cleanup of PrivateScreen
+struct ScreenUser
+{
+protected:
+    ScreenUser(CompScreen  *screen) : screen(screen) {}
+    CompScreen  * const screen;
+};
+
+class PluginManager
+{
+    public:
+	PluginManager();
+
+	void updatePlugins (CompScreen* screen, CompOption::Value::Vector const& extraPluginsRequested);
+
+	void setPlugins(CompOption::Value::Vector const& vList)
+	{
+	    plugin.set (CompOption::TypeString, vList);
+	}
+
+	bool isDirtyPluginList () const { return dirtyPluginList; }
+	void setDirtyPluginList () { dirtyPluginList = true; }
+
+    private:
+	CompOption::Value plugin;
+	bool	          dirtyPluginList;
+	typedef std::set<CompString> CompStringSet;
+	CompStringSet blacklist;
+
+	CompOption::Value::Vector mergedPluginList(CompOption::Value::Vector const& extraPluginsRequested);
+};
+
+class GrabList
+{
+    // TODO: std::list<Grab *> is almost certainly the wrong data
+    // structure. Probably better as std::vector<Grab> - many fewer
+    // memory allocations and releases.
+    typedef std::list<Grab *> GrabPtrList;
+
+public:
+    typedef GrabPtrList::iterator GrabIterator;
+
+    bool grabsEmpty() const { return grabs.empty(); }
+    void grabsPush(Grab* grab) { grabs.push_back (grab); }
+    GrabIterator grabsBegin() { return grabs.begin(); }
+    GrabIterator grabsEnd() { return grabs.end(); }
+    void grabsRemove(Grab* grab);
+    bool grabExist (const char *grab);
+    Grab* grabsBack() { return grabs.back (); }
+
+private:
+    GrabPtrList grabs;
+};
+
+class EventManager :
+    public virtual CoreOptions,
+    public ValueHolder,
+    public GrabList,
+    public virtual ScreenUser
+{
+    public:
+	EventManager (CompScreen *screen);
+	~EventManager ();
+
+	bool init (const char *name);
+
+	void handleSignal (int signum);
+	bool triggerPress   (CompAction         *action,
+			     CompAction::State   state,
+			     CompOption::Vector &arguments);
+	bool triggerRelease (CompAction         *action,
+	                     CompAction::State   state,
+	                     CompOption::Vector &arguments);
+
+	void startEventLoop();
+	void quit() { mainloop->quit(); }
+
+	CompWatchFdHandle addWatchFd (
+	    int             fd,
+	    short int       events,
+	    FdWatchCallBack callBack);
+
+	void removeWatchFd (CompWatchFdHandle handle);
+
+	CompFileWatch* addFileWatch (
+	    const char        *path,
+	    int               mask,
+	    FileWatchCallBack callBack);
+
+	CompFileWatch* removeFileWatch (CompFileWatchHandle handle);
+
+	const CompFileWatchList& getFileWatches () const;
+
+	void grabNotified() { grabbed = true; }
+	void ungrabNotified() { grabbed = false; }
+	bool isGrabbed() const { return grabbed; }
+
+	void setSupportingWmCheck (Display* dpy, Window root);
+	bool notGrabWindow(Window w) const { return w != grabWindow; }
+	void createGrabWindow (Display* dpy, Window root, XSetWindowAttributes* attrib);
+	void destroyGrabWindow (Display* dpy) { XDestroyWindow (dpy, grabWindow); }
+	Time getCurrentTime (Display* dpy) const;
+	Window const& getGrabWindow() const { return grabWindow; }
+
+    public:
+        void *possibleTap;
+
+    private:
+	Glib::RefPtr <Glib::MainLoop>  mainloop;
+
+	/* We cannot use RefPtrs. See
+	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
+	 */
+	CompEventSource * source;
+	CompTimeoutSource * timeout;
+	CompSignalSource * sighupSource;
+	CompSignalSource * sigtermSource;
+	CompSignalSource * sigintSource;
+	Glib::RefPtr <Glib::MainContext> ctx;
+
+	CompFileWatchList   fileWatch;
+	CompFileWatchHandle lastFileWatchHandle;
+
+	// TODO - almost certainly the wrong data structure
+	// Why not a std::map<CompWatchFdHandle, CompWatchFd>?
+	std::list< CompWatchFd * > watchFds;
+	CompWatchFdHandle        lastWatchFdHandle;
+
+        bool	grabbed;   /* true once we receive a GrabNotify
+			      on FocusOut and false on
+			      UngrabNotify from FocusIn */
+	Window  grabWindow;
+    private:
+	virtual bool initDisplay (const char *name);
+};
+
+class KeyGrab {
+    public:
+	int          keycode;
+	unsigned int modifiers;
+	int          count;
+};
+
+class ButtonGrab {
+    public:
+	int          button;
+	unsigned int modifiers;
+	int          count;
+};
+
+struct Grab {
+	Grab(Cursor cursor, const char *name) : cursor(cursor), name(name) {}
+	Cursor     cursor;
+	const char *name;
+};
+
+// data members that don't belong (these probably belong
+// in CompScreenImpl as PrivateScreen doesn't use them)
+struct OrphanData : boost::noncopyable
+{
+    OrphanData();
+    ~OrphanData();
+    int          desktopWindowCount;
+    unsigned int mapNum;
+    CompIcon *defaultIcon;
+};
+
+class GrabManager : boost::noncopyable,
+    public virtual ScreenUser
+{
+public:
+    GrabManager(CompScreen *screen);
+
+    bool addPassiveKeyGrab (CompAction::KeyBinding &key);
+    void removePassiveKeyGrab (CompAction::KeyBinding &key);
+    bool addPassiveButtonGrab (CompAction::ButtonBinding &button);
+    void removePassiveButtonGrab (CompAction::ButtonBinding &button);
+
+    void grabUngrabOneKey (unsigned int modifiers,
+			   int          keycode,
+			   bool         grab);
+    bool grabUngrabKeys (unsigned int modifiers,
+			 int          keycode,
+			 bool         grab);
+    void updatePassiveKeyGrabs ();
+    void updatePassiveButtonGrabs(Window serverFrame);
+
+private:
+    std::list<ButtonGrab> buttonGrabs;
+    std::list<KeyGrab>    keyGrabs;
+};
+
+class History : boost::noncopyable
+{
+    public:
+	History();
+
+	void setCurrentActiveWindowHistory (int x, int y);
+
+	void addToCurrentActiveWindowHistory (Window id);
+
+	CompActiveWindowHistory* getCurrentHistory ()
+	{
+	    return history+currentHistory;
+	}
+
+	unsigned int nextActiveNum () { return activeNum++; }
+	unsigned int getActiveNum () const { return activeNum; }
+
+    private:
+	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
+	int                     currentHistory;
+	unsigned int activeNum;
+};
+
+class ViewportRetrievalInterface
+{
+    public:
+
+	virtual ~ViewportRetrievalInterface () {}
+
+	virtual const CompPoint & getCurrentViewport () const = 0;
+	virtual const CompSize & viewportDimentions () const = 0;
+};
+
+// Apart from a use by StartupSequence::addSequence this data
+// is only used by CompScreenImpl - like the OrphanData struct
+struct ViewPort :
+    public ViewportRetrievalInterface
+{
+    public:
+
+	ViewPort();
+	CompPoint    vp;
+	CompSize     vpSize;
+
+    private:
+
+	const CompPoint & getCurrentViewport () const { return vp; }
+	const CompSize & viewportDimentions () const { return vpSize; }
+};
+
+namespace viewports
+{
+    void viewportForGeometry (const CompWindow::Geometry &gm,
+			      CompPoint                   &viewport,
+			      ViewportRetrievalInterface *viewports,
+			      const CompSize &screenSize);
+}
+
+class StartupSequence : boost::noncopyable,
+    public ViewPort
+{
+    public:
+	StartupSequence();
+	void addSequence (SnStartupSequence *sequence);
+	void removeSequence (SnStartupSequence *sequence);
+	void removeAllSequences ();
+	void applyStartupProperties (CompWindow *window);
+	bool handleStartupSequenceTimeout ();
+	virtual void updateStartupFeedback () = 0;
+
+    //private:
+	std::list<CompStartupSequence *> startupSequences;
+	CompTimer                        startupSequenceTimer;
+};
+
+class Extension
+{
+public:
+    Extension() : is_enabled(), extension() {}
+
+    template<Bool ExtensionQuery (Display*, int*, int*)>
+    bool init(Display * dpy)
+    {
+	int error;
+	is_enabled = ExtensionQuery(dpy, &extension, &error);
+	return is_enabled;
+    }
+
+    template<Bool ExtensionQuery(Display*, int*, int*, int*, int*, int*)>
+    bool init(Display * dpy)
+    {
+	int opcode;
+	int error;
+	is_enabled = ExtensionQuery(dpy, &opcode, &extension, &error, NULL, NULL);
+
+	if (!is_enabled) extension = -1;
+
+	return is_enabled;
+    }
+
+    int isEnabled () const { return is_enabled; }
+    int get () const { return extension; }
+
+private:
+    bool is_enabled;
+    int extension;
+};
+
+class Ping
+{
+public:
+    Ping() : lastPing_(1) {}
+    bool handlePingTimeout (Display* dpy, CompWindowList& windows);
+    unsigned int lastPing () const { return lastPing_; }
+
+private:
+    unsigned int lastPing_;
+};
+
+}} // namespace compiz::private_screen
+
+class PrivateScreen :
+    public compiz::private_screen::EventManager,
+    public compiz::private_screen::WindowManager,
+    public compiz::private_screen::GrabManager,
+    public compiz::private_screen::History,
+    public compiz::private_screen::StartupSequence,
+    public compiz::private_screen::Ping,
+    public compiz::private_screen::OrphanData,
+    public compiz::private_screen::OutputDevices
+{
+
+    public:
+	PrivateScreen (CompScreen *screen);
+	~PrivateScreen ();
+
+	bool setOption (const CompString &name, CompOption::Value &value);
+
+	std::list <XEvent> queueEvents ();
+	void processEvents ();
+
+	bool triggerButtonPressBindings (CompOption::Vector &options,
+					 XButtonEvent       *event,
+					 CompOption::Vector &arguments);
+
+	bool triggerButtonReleaseBindings (CompOption::Vector &options,
+					   XButtonEvent       *event,
+					   CompOption::Vector &arguments);
+
+	bool triggerKeyPressBindings (CompOption::Vector &options,
+				      XKeyEvent          *event,
+				      CompOption::Vector &arguments);
+
+	bool triggerKeyReleaseBindings (CompOption::Vector &options,
+					XKeyEvent          *event,
+					CompOption::Vector &arguments);
+
+	bool triggerStateNotifyBindings (CompOption::Vector  &options,
+					 XkbStateNotifyEvent *event,
+					 CompOption::Vector  &arguments);
+
+	bool triggerEdgeEnter (unsigned int       edge,
+			       CompAction::State  state,
+			       CompOption::Vector &arguments);
+
+	void setAudibleBell (bool audible);
+
+	bool handleActionEvent (XEvent *event);
+
+	void handleSelectionRequest (XEvent *event);
+
+	void handleSelectionClear (XEvent *event);
+
+	bool desktopHintEqual (unsigned long *data,
+			       int           size,
+			       int           offset,
+			       int           hintSize);
+
+	void setDesktopHints ();
+
+	void setVirtualScreenSize (int hsize, int vsize);
+
+	void updateStartupFeedback ();
+
+	void updateScreenEdges ();
+
+	void reshape (int w, int h);
+
+	void getDesktopHints ();
+
+	void updateScreenInfo ();
+
+	Window getActiveWindow (Window root);
+
+	int getWmState (Window id);
+
+	void setWmState (int state, Window id);
+
+	unsigned int windowStateMask (Atom state);
+
+	unsigned int getWindowState (Window id);
+
+	void setWindowState (unsigned int state, Window id);
+
+	unsigned int getWindowType (Window id);
+
+	void getMwmHints (Window       id,
+			  unsigned int *func,
+			  unsigned int *decor);
+
+	unsigned int getProtocols (Window id);
+
+	bool readWindowProp32 (Window         id,
+			       Atom           property,
+			       unsigned short *returnValue);
+
+	void configure (XConfigureEvent *ce);
+
+	void updateClientList ();
+
+	void applyStartupProperties (CompWindow *window);
+
+	Window getTopWindow ();
+
+	void setNumberOfDesktops (unsigned int nDesktop);
+
+	void setCurrentDesktop (unsigned int desktop);
+
+	void enableEdge (int edge);
+
+	void disableEdge (int edge);
+
+	CompWindow *
+	focusTopMostWindow ();
+
+	bool createFailed () const;
+	
+	void setDefaultWindowAttributes (XWindowAttributes *);
+
+	static void compScreenSnEvent (SnMonitorEvent *event,
+			   void           *userData);
+
+	int  getXkbEvent() const { return xkbEvent.get(); }
+	std::vector<XineramaScreenInfo>& getScreenInfo () { return screenInfo; }
+	SnDisplay* getSnDisplay () const { return snDisplay; }
+	char const* displayString () const { return displayString_; }
+	CompRegion const& getRegion () const { return region; }
+	XWindowAttributes const& getAttrib () const { return attrib; }
+	Window rootWindow() const { return root; }
+	void identifyEdgeWindow(Window id);
+
+	void setPlugins(CompOption::Value::Vector const& vList);
+	void initPlugins();
+
+    public:
+	Display    *dpy;
+
+	::compiz::private_screen::Extension xSync;
+	::compiz::private_screen::Extension xRandr;
+	::compiz::private_screen::Extension xShape;
+
+    private:
+	::compiz::private_screen::Extension xkbEvent;
+
+	//TODO? Pull these two out as a class?
+	bool xineramaExtension;
+	std::vector<XineramaScreenInfo> screenInfo;
+
+	SnDisplay *snDisplay;
+
+	char   displayString_[256];
+
+	KeyCode escapeKeyCode;
+	KeyCode returnKeyCode;
+
+    public:
+	CompWindowList windows;
+
+	Colormap colormap;
+	int      screenNum;
+
+	unsigned int nDesktop;
+	unsigned int currentDesktop;
+
+    private:
+	CompRegion   region;
+
+	Window	      root;
+
+	XWindowAttributes attrib;
+    public:
+
+	CompOutput         fullscreenOutput;
+
+	CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
+
+    private:
+	SnMonitorContext                 *snContext;
+
+    public:
+	Window wmSnSelectionWindow;
+    private:
+	Atom   wmSnAtom;
+	Time   wmSnTimestamp;
+
+    public:
+	Cursor normalCursor;
+	Cursor busyCursor;
+	Cursor invisibleCursor;
+
+	CompRect workArea;
+
+	unsigned int showingDesktopMask;
+
+    private:
+	unsigned long *desktopHintData;
+	int           desktopHintSize;
+
+    public:
+	bool initialized;
+
+    private:
+	virtual bool initDisplay (const char *name);
+	bool handlePingTimeout ();
+
+	Window	edgeWindow;
+
+	CompTimer    pingTimer;
+	CompTimer               edgeDelayTimer;
+	CompDelayedEdgeSettings edgeDelaySettings;
+	Window	xdndWindow;
+	::compiz::private_screen::PluginManager pluginManager;
+};
+
+class CompManager
+{
+    public:
+
+	CompManager ();
+
+	bool init ();
+	void run ();
+	void fini ();
+
+	bool parseArguments (int, char **);
+	void usage ();
+
+	static bool initPlugin (CompPlugin *p);
+	static void finiPlugin (CompPlugin *p);
+
+    private:
+
+	bool		       disableSm;
+	char		       *clientId;
+	char		       *displayName;
+};
+
 /**
  * A wrapping of the X display screen. This takes care of communication to the
  * X server.
@@ -364,6 +1094,9 @@ class CompScreenImpl : public CompScreen
 			      CompAction::State  state,
 			      CompOption::Vector &options);
 
+	bool createFailed () const { return priv->createFailed (); }
+
+
     private:
         virtual bool _setOptionForPlugin(const char *, const char *, CompOption::Value &);
         virtual bool _initPluginForScreen(CompPlugin *);
@@ -387,744 +1120,6 @@ class CompScreenImpl : public CompScreen
         virtual void _outputChangeNotify();
 
         bool 	eventHandled;
-};
-
-CompPlugin::VTable * getCoreVTable ();
-
-class CoreWindow;
-
-extern bool shutDown;
-extern bool restartSignal;
-
-extern CompWindow *lastFoundWindow;
-extern bool	  useDesktopHints;
-
-extern std::list <CompString> initialPlugins;
-
-
-typedef struct _CompDelayedEdgeSettings
-{
-    CompAction::CallBack initiate;
-    CompAction::CallBack terminate;
-
-    unsigned int edge;
-    unsigned int state;
-
-    CompOption::Vector options;
-} CompDelayedEdgeSettings;
-
-
-#define SCREEN_EDGE_LEFT	0
-#define SCREEN_EDGE_RIGHT	1
-#define SCREEN_EDGE_TOP		2
-#define SCREEN_EDGE_BOTTOM	3
-#define SCREEN_EDGE_TOPLEFT	4
-#define SCREEN_EDGE_TOPRIGHT	5
-#define SCREEN_EDGE_BOTTOMLEFT	6
-#define SCREEN_EDGE_BOTTOMRIGHT 7
-#define SCREEN_EDGE_NUM		8
-
-struct CompScreenEdge {
-    Window	 id;
-    unsigned int count;
-};
-
-struct CompGroup {
-    unsigned int      refCnt;
-    Window	      id;
-};
-
-struct CompStartupSequence {
-    SnStartupSequence		*sequence;
-    unsigned int		viewportX;
-    unsigned int		viewportY;
-};
-
-namespace compiz
-{
-namespace core
-{
-namespace screen
-{
-    inline int wraparound_mod (int a, int b)
-    {
-	if (a < 0)
-	    return (b - ((-a - 1) % (b))) - 1;
-	else
-	    return a % b;
-    };
-}
-}
-
-namespace X11
-{
-class PendingEvent {
-public:
-    PendingEvent (Display *, Window);
-    virtual ~PendingEvent ();
-
-    virtual bool match (XEvent *);
-    unsigned int serial () { return mSerial; } // HACK: will be removed
-    virtual void dump ();
-
-    typedef boost::shared_ptr<PendingEvent> Ptr;
-
-protected:
-
-    virtual Window getEventWindow (XEvent *);
-
-    unsigned int mSerial;
-    Window       mWindow;
-};
-
-class PendingConfigureEvent :
-    public PendingEvent
-{
-public:
-    PendingConfigureEvent (Display *, Window, unsigned int, XWindowChanges *);
-    virtual ~PendingConfigureEvent ();
-
-    virtual bool match (XEvent *);
-    bool matchVM (unsigned int valueMask);
-    bool matchRequest (XWindowChanges &xwc, unsigned int);
-    virtual void dump ();
-
-    typedef boost::shared_ptr<PendingConfigureEvent> Ptr;
-
-protected:
-
-    virtual Window getEventWindow (XEvent *);
-
-private:
-    unsigned int mValueMask;
-    XWindowChanges mXwc;
-};
-
-class PendingEventQueue
-{
-public:
-
-    PendingEventQueue (Display *);
-    virtual ~PendingEventQueue ();
-
-    void add (PendingEvent::Ptr p);
-    bool match (XEvent *);
-    bool pending ();
-    bool forEachIf (boost::function <bool (compiz::X11::PendingEvent::Ptr)>);
-    void clear () { mEvents.clear (); } // HACK will be removed
-    void dump ();
-
-protected:
-    bool removeIfMatching (const PendingEvent::Ptr &p, XEvent *);
-
-private:
-    std::list <PendingEvent::Ptr> mEvents;
-};
-
-}
-}
-
-namespace compiz
-{
-namespace private_screen
-{
-
-class WindowManager : boost::noncopyable
-{
-    public:
-
-	WindowManager();
-
-	CompGroup * addGroup (Window id);
-	void removeGroup (CompGroup *group);
-	CompGroup * findGroup (Window id);
-
-	void eraseWindowFromMap (Window id);
-	void removeDestroyed ();
-
-    //private:
-	Window activeWindow;
-	Window nextActiveWindow;
-
-	Window below;
-
-	CompTimer autoRaiseTimer;
-	Window    autoRaiseWindow;
-
-	CompWindowList serverWindows;
-	CompWindowList destroyedWindows;
-	bool           stackIsFresh;
-
-	CompWindow::Map windowsMap;
-	std::list<CompGroup *> groups;
-
-	CompWindowVector clientList;            /* clients in mapping order */
-	CompWindowVector clientListStacking;    /* clients in stacking order */
-
-	std::vector<Window> clientIdList;        /* client ids in mapping order */
-	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
-
-	unsigned int pendingDestroys;
-};
-
-// Static member functions that don't belong (use no data,
-// not invoked by PrivateScreen)
-struct PseudoNamespace
-{
-    // AFAICS only used by CoreExp (in match.cpp)
-    static unsigned int windowStateFromString (const char *str);
-};
-
-// EventManager, GrabManager and PrivateScreen refer to the screen member.  So it
-// is stuck in a virtual base class until we complete the cleanup of PrivateScreen
-struct ScreenUser
-{
-protected:
-    ScreenUser(CompScreen  *screen) : screen(screen) , possibleTap(NULL) {}
-    CompScreen  * const screen;
-
-public:
-    // Here because it is referenced in PluginManager::updatePlugins(),
-    // and GrabManager::triggerPress not clear where it really belongs.
-    void *possibleTap;
-};
-
-class PluginManager :
-    public virtual CoreOptions,
-    public virtual ScreenUser
-{
-    public:
-	PluginManager(CompScreen *screen);
-
-	void updatePlugins ();
-
-	void setPlugins(CompOption::Value::Vector const& vList)
-	{
-	    plugin.set (CompOption::TypeString, vList);
-	}
-
-	bool isDirtyPluginList () const { return dirtyPluginList; }
-	void setDirtyPluginList () { dirtyPluginList = true; }
-
-    private:
-	CompOption::Value plugin;
-	bool	          dirtyPluginList;
-	typedef std::set<CompString> CompStringSet;
-	CompStringSet blacklist;
-
-	CompOption::Value::Vector mergedPluginList();
-};
-
-class GrabList
-{
-    // TODO: std::list<Grab *> is almost certainly the wrong data
-    // structure. Probably better as std::vector<Grab> - many fewer
-    // memory allocations and releases.
-    typedef std::list<Grab *> GrabPtrList;
-
-public:
-    typedef GrabPtrList::iterator GrabIterator;
-
-    bool grabsEmpty() const { return grabs.empty(); }
-    void grabsPush(Grab* grab) { grabs.push_back (grab); }
-    GrabIterator grabsBegin() { return grabs.begin(); }
-    GrabIterator grabsEnd() { return grabs.end(); }
-    void grabsRemove(Grab* grab);
-    bool grabExist (const char *grab);
-    Grab* grabsBack() { return grabs.back (); }
-
-private:
-    GrabPtrList grabs;
-};
-
-class EventManager :
-    public PluginManager,
-    public ValueHolder,
-    public GrabList,
-    public virtual ScreenUser
-{
-    public:
-	EventManager (CompScreen *screen);
-	~EventManager ();
-
-	bool init (const char *name);
-
-	void handleSignal (int signum);
-	bool triggerPress   (CompAction         *action,
-			     CompAction::State   state,
-			     CompOption::Vector &arguments);
-	bool triggerRelease (CompAction         *action,
-	                     CompAction::State   state,
-	                     CompOption::Vector &arguments);
-
-	void startEventLoop();
-	void quit() { mainloop->quit(); }
-
-	CompWatchFdHandle addWatchFd (
-	    int             fd,
-	    short int       events,
-	    FdWatchCallBack callBack);
-
-	void removeWatchFd (CompWatchFdHandle handle);
-
-	CompFileWatch* addFileWatch (
-	    const char        *path,
-	    int               mask,
-	    FileWatchCallBack callBack);
-
-	CompFileWatch* removeFileWatch (CompFileWatchHandle handle);
-
-	const CompFileWatchList& getFileWatches () const;
-
-	void grabNotified() { grabbed = true; }
-	void ungrabNotified() { grabbed = false; }
-	bool isGrabbed() const { return grabbed; }
-
-	void setSupportingWmCheck (Display* dpy, Window root);
-	bool notGrabWindow(Window w) const { return w != grabWindow; }
-	void createGrabWindow (Display* dpy, Window root, XSetWindowAttributes* attrib);
-	void destroyGrabWindow (Display* dpy) { XDestroyWindow (dpy, grabWindow); }
-	Time getCurrentTime (Display* dpy) const;
-	Window const& getGrabWindow() const { return grabWindow; }
-
-    private:
-	Glib::RefPtr <Glib::MainLoop>  mainloop;
-
-	/* We cannot use RefPtrs. See
-	 * https://bugzilla.gnome.org/show_bug.cgi?id=561885
-	 */
-	CompEventSource * source;
-	CompTimeoutSource * timeout;
-	CompSignalSource * sighupSource;
-	CompSignalSource * sigtermSource;
-	CompSignalSource * sigintSource;
-	Glib::RefPtr <Glib::MainContext> ctx;
-
-	CompFileWatchList   fileWatch;
-	CompFileWatchHandle lastFileWatchHandle;
-
-	// TODO - almost certainly the wrong data structure
-	// Why not a std::map<CompWatchFdHandle, CompWatchFd>?
-	std::list< CompWatchFd * > watchFds;
-	CompWatchFdHandle        lastWatchFdHandle;
-
-        bool	grabbed;   /* true once we receive a GrabNotify
-			      on FocusOut and false on
-			      UngrabNotify from FocusIn */
-	Window  grabWindow;
-    private:
-	virtual bool initDisplay (const char *name);
-};
-
-class KeyGrab {
-    public:
-	int          keycode;
-	unsigned int modifiers;
-	int          count;
-};
-
-class ButtonGrab {
-    public:
-	int          button;
-	unsigned int modifiers;
-	int          count;
-};
-
-struct Grab {
-	Grab(Cursor cursor, const char *name) : cursor(cursor), name(name) {}
-	Cursor     cursor;
-	const char *name;
-};
-
-// data members that don't belong (these probably belong
-// in CompScreenImpl as PrivateScreen doesn't use them)
-struct OrphanData : boost::noncopyable
-{
-    OrphanData();
-    ~OrphanData();
-    int          desktopWindowCount;
-    unsigned int mapNum;
-    CompIcon *defaultIcon;
-};
-
-class GrabManager : boost::noncopyable,
-    public virtual ScreenUser
-{
-public:
-    GrabManager(CompScreen *screen);
-
-    bool addPassiveKeyGrab (CompAction::KeyBinding &key);
-    void removePassiveKeyGrab (CompAction::KeyBinding &key);
-    bool addPassiveButtonGrab (CompAction::ButtonBinding &button);
-    void removePassiveButtonGrab (CompAction::ButtonBinding &button);
-
-    void grabUngrabOneKey (unsigned int modifiers,
-			   int          keycode,
-			   bool         grab);
-    bool grabUngrabKeys (unsigned int modifiers,
-			 int          keycode,
-			 bool         grab);
-    void updatePassiveKeyGrabs ();
-    void updatePassiveButtonGrabs(Window serverFrame);
-
-private:
-    std::list<ButtonGrab> buttonGrabs;
-    std::list<KeyGrab>    keyGrabs;
-};
-
-class History : boost::noncopyable
-{
-    public:
-	History();
-
-	void setCurrentActiveWindowHistory (int x, int y);
-
-	void addToCurrentActiveWindowHistory (Window id);
-
-	CompActiveWindowHistory* getCurrentHistory ()
-	{
-	    return history+currentHistory;
-	}
-
-	unsigned int nextActiveNum () { return activeNum++; }
-	unsigned int getActiveNum () const { return activeNum; }
-
-    private:
-	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
-	int                     currentHistory;
-	unsigned int activeNum;
-};
-
-class ViewportRetrievalInterface
-{
-    public:
-
-	virtual ~ViewportRetrievalInterface () {}
-
-	virtual const CompPoint & getCurrentViewport () const = 0;
-	virtual const CompSize & viewportDimentions () const = 0;
-};
-
-// Apart from a use by StartupSequence::addSequence this data
-// is only used by CompScreenImpl - like the OrphanData struct
-struct ViewPort :
-    public ViewportRetrievalInterface
-{
-    public:
-
-	ViewPort();
-	CompPoint    vp;
-	CompSize     vpSize;
-
-    private:
-
-	const CompPoint & getCurrentViewport () const { return vp; }
-	const CompSize & viewportDimentions () const { return vpSize; }
-};
-
-namespace viewports
-{
-    void viewportForGeometry (const CompWindow::Geometry &gm,
-			      CompPoint                   &viewport,
-			      ViewportRetrievalInterface *viewports,
-			      const CompSize &screenSize);
-}
-
-class StartupSequence : boost::noncopyable,
-    public ViewPort
-{
-    public:
-	StartupSequence();
-	void addSequence (SnStartupSequence *sequence);
-	void removeSequence (SnStartupSequence *sequence);
-	void removeAllSequences ();
-	void applyStartupProperties (CompWindow *window);
-	bool handleStartupSequenceTimeout ();
-	virtual void updateStartupFeedback () = 0;
-
-    //private:
-	std::list<CompStartupSequence *> startupSequences;
-	CompTimer                        startupSequenceTimer;
-};
-
-class Extension
-{
-public:
-    Extension() : is_enabled(), extension() {}
-
-    template<Bool ExtensionQuery (Display*, int*, int*)>
-    bool init(Display * dpy)
-    {
-	int error;
-	is_enabled = ExtensionQuery(dpy, &extension, &error);
-	return is_enabled;
-    }
-
-    template<Bool ExtensionQuery(Display*, int*, int*, int*, int*, int*)>
-    bool init(Display * dpy)
-    {
-	int opcode;
-	int error;
-	is_enabled = ExtensionQuery(dpy, &opcode, &extension, &error, NULL, NULL);
-
-	if (!is_enabled) extension = -1;
-
-	return is_enabled;
-    }
-
-    int isEnabled () const { return is_enabled; }
-    int get () const { return extension; }
-
-private:
-    bool is_enabled;
-    int extension;
-};
-
-class Ping
-{
-public:
-    Ping() : lastPing_(1) {}
-    bool handlePingTimeout (Display* dpy, CompWindowList& windows);
-    unsigned int lastPing () const { return lastPing_; }
-
-private:
-    unsigned int lastPing_;
-};
-
-}} // namespace compiz::private_screen
-
-class PrivateScreen :
-    public compiz::private_screen::EventManager,
-    public compiz::private_screen::WindowManager,
-    public compiz::private_screen::GrabManager,
-    public compiz::private_screen::History,
-    public compiz::private_screen::StartupSequence,
-    public compiz::private_screen::Ping,
-    public compiz::private_screen::OrphanData,
-    public compiz::private_screen::OutputDevices,
-    public compiz::private_screen::PseudoNamespace
-{
-
-    public:
-	PrivateScreen (CompScreen *screen);
-	~PrivateScreen ();
-
-	bool setOption (const CompString &name, CompOption::Value &value);
-
-	std::list <XEvent> queueEvents ();
-	void processEvents ();
-
-	bool triggerButtonPressBindings (CompOption::Vector &options,
-					 XButtonEvent       *event,
-					 CompOption::Vector &arguments);
-
-	bool triggerButtonReleaseBindings (CompOption::Vector &options,
-					   XButtonEvent       *event,
-					   CompOption::Vector &arguments);
-
-	bool triggerKeyPressBindings (CompOption::Vector &options,
-				      XKeyEvent          *event,
-				      CompOption::Vector &arguments);
-
-	bool triggerKeyReleaseBindings (CompOption::Vector &options,
-					XKeyEvent          *event,
-					CompOption::Vector &arguments);
-
-	bool triggerStateNotifyBindings (CompOption::Vector  &options,
-					 XkbStateNotifyEvent *event,
-					 CompOption::Vector  &arguments);
-
-	bool triggerEdgeEnter (unsigned int       edge,
-			       CompAction::State  state,
-			       CompOption::Vector &arguments);
-
-	void setAudibleBell (bool audible);
-
-	bool handleActionEvent (XEvent *event);
-
-	void handleSelectionRequest (XEvent *event);
-
-	void handleSelectionClear (XEvent *event);
-
-	bool desktopHintEqual (unsigned long *data,
-			       int           size,
-			       int           offset,
-			       int           hintSize);
-
-	void setDesktopHints ();
-
-	void setVirtualScreenSize (int hsize, int vsize);
-
-	void updateStartupFeedback ();
-
-	void updateScreenEdges ();
-
-	void reshape (int w, int h);
-
-	void getDesktopHints ();
-
-	void updateScreenInfo ();
-
-	Window getActiveWindow (Window root);
-
-	int getWmState (Window id);
-
-	void setWmState (int state, Window id);
-
-	unsigned int windowStateMask (Atom state);
-
-	unsigned int getWindowState (Window id);
-
-	void setWindowState (unsigned int state, Window id);
-
-	unsigned int getWindowType (Window id);
-
-	void getMwmHints (Window       id,
-			  unsigned int *func,
-			  unsigned int *decor);
-
-	unsigned int getProtocols (Window id);
-
-	bool readWindowProp32 (Window         id,
-			       Atom           property,
-			       unsigned short *returnValue);
-
-	void configure (XConfigureEvent *ce);
-
-	void updateClientList ();
-
-	void applyStartupProperties (CompWindow *window);
-
-	Window getTopWindow ();
-
-	void setNumberOfDesktops (unsigned int nDesktop);
-
-	void setCurrentDesktop (unsigned int desktop);
-
-	void enableEdge (int edge);
-
-	void disableEdge (int edge);
-
-	CompWindow *
-	focusTopMostWindow ();
-
-	bool
-	createFailed ();
-	
-	void setDefaultWindowAttributes (XWindowAttributes *);
-
-	static void compScreenSnEvent (SnMonitorEvent *event,
-			   void           *userData);
-
-	int  getXkbEvent() const { return xkbEvent.get(); }
-	std::vector<XineramaScreenInfo>& getScreenInfo () { return screenInfo; }
-	SnDisplay* getSnDisplay () const { return snDisplay; }
-	char const* displayString () const { return displayString_; }
-	CompRegion const& getRegion () const { return region; }
-	XWindowAttributes const& getAttrib () const { return attrib; }
-	Window rootWindow() const { return root; }
-	void identifyEdgeWindow(Window id);
-
-    public:
-	Display    *dpy;
-
-	::compiz::private_screen::Extension xSync;
-	::compiz::private_screen::Extension xRandr;
-	::compiz::private_screen::Extension xShape;
-
-    private:
-	::compiz::private_screen::Extension xkbEvent;
-
-	//TODO? Pull these two out as a class?
-	bool xineramaExtension;
-	std::vector<XineramaScreenInfo> screenInfo;
-
-	SnDisplay *snDisplay;
-
-	char   displayString_[256];
-
-	KeyCode escapeKeyCode;
-	KeyCode returnKeyCode;
-
-    public:
-	CompWindowList windows;
-
-	Colormap colormap;
-	int      screenNum;
-
-	unsigned int nDesktop;
-	unsigned int currentDesktop;
-
-    private:
-	CompRegion   region;
-
-	Window	      root;
-
-	XWindowAttributes attrib;
-    public:
-
-	CompOutput         fullscreenOutput;
-
-	CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
-
-    private:
-	SnMonitorContext                 *snContext;
-
-    public:
-	Window wmSnSelectionWindow;
-    private:
-	Atom   wmSnAtom;
-	Time   wmSnTimestamp;
-
-    public:
-	Cursor normalCursor;
-	Cursor busyCursor;
-	Cursor invisibleCursor;
-
-	CompRect workArea;
-
-	unsigned int showingDesktopMask;
-
-    private:
-	unsigned long *desktopHintData;
-	int           desktopHintSize;
-
-    public:
-	bool initialized;
-
-    private:
-	virtual bool initDisplay (const char *name);
-	bool handlePingTimeout ();
-
-	Window	edgeWindow;
-
-	CompTimer    pingTimer;
-	CompTimer               edgeDelayTimer;
-	CompDelayedEdgeSettings edgeDelaySettings;
-	Window	xdndWindow;
-};
-
-class CompManager
-{
-    public:
-
-	CompManager ();
-
-	bool init ();
-	void run ();
-	void fini ();
-
-	bool parseArguments (int, char **);
-	void usage ();
-
-	static bool initPlugin (CompPlugin *p);
-	static void finiPlugin (CompPlugin *p);
-
-    private:
-
-	bool		       disableSm;
-	char		       *clientId;
-	char		       *displayName;
 };
 
 #endif
