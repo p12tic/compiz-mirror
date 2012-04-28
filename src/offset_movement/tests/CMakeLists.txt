@@ -24,6 +24,12 @@ if (NOT GTEST_FOUND)
 
 endif (NOT GTEST_FOUND)
 
+pkg_check_modules (
+  COMPIZ
+  REQUIRED
+  glibmm-2.4 glib-2.0 compiz
+)
+
 find_library (GMOCK_LIBRARY gmock)
 find_library (GMOCK_MAIN_LIBRARY gmock_main)
 
@@ -33,8 +39,10 @@ if (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
 endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
 
 include_directories (${GTEST_INCLUDE_DIRS})
-
 include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories (${COMPIZ_INCLUDE_DIRS})
+
+link_directories (${COMPIZ_LIBRARY_DIRS})
 
 add_executable (compiz_test_wall_offset_movement
                 ${CMAKE_CURRENT_SOURCE_DIR}/test-wall-offset-movement.cpp)
