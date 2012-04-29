@@ -5302,9 +5302,6 @@ PrivateScreen::~PrivateScreen ()
 	if (invisibleCursor != None)
 	    XFreeCursor (dpy, invisibleCursor);
 
-	if (wmSnAtom != None)
-	    XSetSelectionOwner (dpy, wmSnAtom, None, CurrentTime);
-
 	if (wmSnSelectionWindow != None)
 	    XDestroyWindow (dpy, wmSnSelectionWindow);
 
