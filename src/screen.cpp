@@ -718,7 +718,7 @@ PrivateScreen::setOption (const CompString  &name,
 	    break;
 	case CoreOptions::DetectOutputs:
 	    if (optionGetDetectOutputs ())
-		detectOutputDevices (screenInfo, windows);
+		detectOutputDevices (*this, screenInfo, windows);
 	    break;
 	case CoreOptions::Hsize:
 	case CoreOptions::Vsize:
@@ -739,7 +739,7 @@ PrivateScreen::setOption (const CompString  &name,
 	case CoreOptions::Outputs:
 	    if (optionGetDetectOutputs ())
 		return false;
-	    updateOutputDevices (windows);
+	    updateOutputDevices (*this, windows);
 	    break;
 	default:
 	    break;
@@ -1938,9 +1938,9 @@ PrivateScreen::setVirtualScreenSize (int newh, int newv)
 }
 
 void
-cps::OutputDevices::updateOutputDevices (CompWindowList const& windows)
+cps::OutputDevices::updateOutputDevices (CoreOptions& coreOptions, CompWindowList const& windows)
 {
-    CompOption::Value::Vector &list = optionGetOutputs ();
+    CompOption::Value::Vector &list = coreOptions.optionGetOutputs ();
     unsigned int              nOutput = 0;
     int		              x, y, bits;
     unsigned int              uWidth, uHeight;
@@ -2031,10 +2031,11 @@ cps::OutputDevices::updateOutputDevices (CompWindowList const& windows)
 
 void
 cps::OutputDevices::detectOutputDevices (
+	CoreOptions& coreOptions,
 	std::vector<XineramaScreenInfo>& screenInfo,
 	CompWindowList& windows)
 {
-    if (optionGetDetectOutputs ())
+    if (coreOptions.optionGetDetectOutputs ())
     {
 	CompString	  name;
 	CompOption::Value value;
@@ -2058,14 +2059,13 @@ cps::OutputDevices::detectOutputDevices (
 	    value.set (CompOption::TypeString, l);
 	}
 
-	mOptions[CoreOptions::DetectOutputs].value ().set (false);
+	coreOptions.getOptions()[CoreOptions::DetectOutputs].value ().set (false);
 	screen->setOptionForPlugin ("core", "outputs", value);
-	mOptions[CoreOptions::DetectOutputs].value ().set (true);
-
+	coreOptions.getOptions()[CoreOptions::DetectOutputs].value ().set (true);
     }
     else
     {
-	updateOutputDevices (windows);
+	updateOutputDevices (coreOptions, windows);
     }
 }
 
@@ -2273,9 +2273,9 @@ PrivateScreen::configure (XConfigureEvent *ce)
 
 	reshape (ce->width, ce->height);
 
-	detectOutputDevices (screenInfo, windows);
+	detectOutputDevices (*this, screenInfo, windows);
 
-	updateOutputDevices (windows);
+	updateOutputDevices (*this, windows);
 }
 
 void
@@ -4966,8 +4966,8 @@ PrivateScreen::initDisplay (const char *name)
 
     initialized = true;
     initOptions ();
-    detectOutputDevices (screenInfo, windows);
-    updateOutputDevices (windows);
+    detectOutputDevices (*this, screenInfo, windows);
+    updateOutputDevices (*this, windows);
 
     getDesktopHints ();
 
@@ -5213,7 +5213,6 @@ cps::WindowManager::WindowManager() :
 }
 
 cps::OutputDevices::OutputDevices() :
-    CoreOptions (false),
     outputDevs (),
     overlappingOutputs (false),
     currentOutputDev (0)

@@ -50,14 +50,14 @@
 namespace compiz { namespace private_screen
 {
 
-class OutputDevices : public virtual CoreOptions
+class OutputDevices
 {
 public:
     OutputDevices();
 
-    void detectOutputDevices (
+    void detectOutputDevices (CoreOptions& coreOptions,
 	    std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
-    void updateOutputDevices (CompWindowList const& windows);
+    void updateOutputDevices (CoreOptions& coreOptions, CompWindowList const& windows);
     void setCurrentOutput (unsigned int outputNum);
     CompOutput& getCurrentOutputDev () { return outputDevs[currentOutputDev]; }
     bool hasOverlappingOutputs () const { return overlappingOutputs; }
