@@ -318,7 +318,6 @@ private:
 };
 
 class EventManager :
-    public virtual CoreOptions,
     public ValueHolder,
     public GrabList,
     public virtual ScreenUser
@@ -327,7 +326,7 @@ class EventManager :
 	EventManager (CompScreen *screen);
 	~EventManager ();
 
-	bool init (const char *name);
+	bool init (CoreOptions& coreOptions, const char *name);
 
 	void handleSignal (int signum);
 	bool triggerPress   (CompAction         *action,
@@ -551,6 +550,7 @@ private:
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
+    public CoreOptions,
     public compiz::private_screen::EventManager,
     public compiz::private_screen::WindowManager,
     public compiz::private_screen::GrabManager,

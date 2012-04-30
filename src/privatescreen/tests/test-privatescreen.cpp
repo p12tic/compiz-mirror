@@ -721,5 +721,6 @@ TEST(privatescreen_EventManagerTest, init)
 
     cps::EventManager em(&comp_screen);
 
-    em.init(0);
+    CoreOptions coreOptions(false);
+    em.init(coreOptions, 0);
 }

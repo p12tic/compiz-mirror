@@ -4622,7 +4622,7 @@ PrivateScreen::initPlugins()
 bool
 CompScreenImpl::init (const char *name)
 {
-    if (priv->init(name))
+    if (priv->init(*priv, name))
     {
 	priv->initPlugins();
 
@@ -4641,7 +4641,7 @@ CompScreenImpl::init (const char *name)
 }
 
 bool
-cps::EventManager::init (const char *name)
+cps::EventManager::init (CoreOptions& coreOptions, const char *name)
 {
     ctx = Glib::MainContext::get_default ();
     mainloop = Glib::MainLoop::create (ctx, false);
@@ -4651,38 +4651,38 @@ cps::EventManager::init (const char *name)
 
     if (!initDisplay(name)) return false;
 
-    optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
-    optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
-    optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
-    optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
-    optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
-    optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
+    coreOptions.optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
+    coreOptions.optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
+    coreOptions.optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
+    coreOptions.optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
+    coreOptions.optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
+    coreOptions.optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
 
-    optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
+    coreOptions.optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
 
-    optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
-    optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
-    optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
-    optionSetMaximizeWindowHorizontallyKeyInitiate (
+    coreOptions.optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
+    coreOptions.optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
+    coreOptions.optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
+    coreOptions.optionSetMaximizeWindowHorizontallyKeyInitiate (
 	CompScreenImpl::maximizeWinHorizontally);
-    optionSetMaximizeWindowVerticallyKeyInitiate (
+    coreOptions.optionSetMaximizeWindowVerticallyKeyInitiate (
 	CompScreenImpl::maximizeWinVertically);
 
-    optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
-    optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
+    coreOptions.optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
+    coreOptions.optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
 
-    optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
-    optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
+    coreOptions.optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
+    coreOptions.optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
 
-    optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
-    optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
+    coreOptions.optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
+    coreOptions.optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
 
-    optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
+    coreOptions.optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
 	CompScreenImpl::toggleWinMaximizedHorizontally);
-    optionSetToggleWindowMaximizedVerticallyKeyInitiate (
+    coreOptions.optionSetToggleWindowMaximizedVerticallyKeyInitiate (
 	CompScreenImpl::toggleWinMaximizedVertically);
 
-    optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
+    coreOptions.optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
 
     return true;
 }
@@ -5153,8 +5153,8 @@ cps::StartupSequence::StartupSequence() :
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
-    CoreOptions (false),
     ScreenUser (screen),
+    CoreOptions(false),
     EventManager (screen),
     GrabManager (screen),
     dpy (NULL),
@@ -5226,7 +5226,6 @@ cps::PluginManager::PluginManager() :
 }
 
 cps::EventManager::EventManager (CompScreen *screen) :
-    CoreOptions (false),
     ScreenUser (screen),
     possibleTap(NULL),
     source(0),
