@@ -4115,9 +4115,9 @@ CompWindow *
 PrivateScreen::focusTopMostWindow ()
 {
     CompWindow  *focus = NULL;
-    CompWindowList::reverse_iterator it = serverWindows.rbegin ();
+    CompWindowList::reverse_iterator it = getServerWindows().rbegin ();
 
-    for (; it != serverWindows.rend (); it++)
+    for (; it != getServerWindows().rend (); it++)
     {
 	CompWindow *w = *it;
 

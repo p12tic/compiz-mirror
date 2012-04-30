@@ -266,21 +266,20 @@ class WindowManager : boost::noncopyable
 	void insertWindow (CompWindow* w, Window aboveId);
 
 	CompWindowList& getDestroyedWindows ()
-	{
-	    return destroyedWindows;
-	}
+	{ return destroyedWindows; }
+
+	void insertServerWindow(CompWindow* w, Window aboveId);
+	void unhookServerWindow(CompWindow *w);
+	CompWindowList& getServerWindows ()
+	{ return serverWindows; }
+
     //private:
 	CompWindowList windows;
 	Window activeWindow;
 	Window nextActiveWindow;
 
-	Window below;
-
-	CompTimer autoRaiseTimer;
-	Window    autoRaiseWindow;
-
-	CompWindowList serverWindows;
     private:
+	CompWindowList serverWindows;
 	CompWindowList destroyedWindows;
 	bool           stackIsFresh;
 
@@ -1129,6 +1128,9 @@ class CompScreenImpl : public CompScreen
         virtual void _matchPropertyChanged(CompWindow *);
         virtual void _outputChangeNotify();
 
+	Window below;
+	CompTimer autoRaiseTimer_;
+	Window    autoRaiseWindow_;
         bool 	eventHandled;
 };
 

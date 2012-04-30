@@ -606,7 +606,7 @@ CompScreenImpl::activeWindow ()
 Window
 CompScreenImpl::autoRaiseWindow ()
 {
-    return priv->autoRaiseWindow;
+    return autoRaiseWindow_;
 }
 
 const char *
@@ -797,7 +797,7 @@ PrivateScreen::processEvents ()
     {
 	dbg->windowsChanged (false);
 	dbg->serverWindowsChanged (false);
-	events = dbg->loadStack (serverWindows);
+	events = dbg->loadStack (getServerWindows());
     }
     else
 	events = queueEvents ();
@@ -877,7 +877,7 @@ PrivateScreen::processEvents ()
 
     if (dbg)
     {
-	if (dbg->windowsChanged () && dbg->cmpStack (windows, serverWindows))
+	if (dbg->windowsChanged () && dbg->cmpStack (windows, getServerWindows()))
 	{
 	    compLogMessage ("core", CompLogLevelDebug, "stacks are out of sync");
 	    if (dbg->timedOut ())
@@ -2671,7 +2671,7 @@ CompScreenImpl::focusDefaultWindow ()
 
     if (!priv->optionGetClickToFocus ())
     {
-	w = findTopLevelWindow (priv->below);
+	w = findTopLevelWindow (below);
 
 	if (w && w->focus ())
 	{
@@ -2884,6 +2884,12 @@ cps::WindowManager::insertWindow (CompWindow* w, Window aboveId)
 void
 CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 {
+    priv->insertServerWindow(w, aboveId);
+}
+
+void
+cps::WindowManager::insertServerWindow(CompWindow* w, Window aboveId)
+{
     StackDebugger *dbg = StackDebugger::Default ();
 
     if (dbg)
@@ -2892,21 +2898,21 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
     w->serverPrev = NULL;
     w->serverNext = NULL;
 
-    if (!aboveId || priv->serverWindows.empty ())
+    if (!aboveId || serverWindows.empty ())
     {
-	if (!priv->serverWindows.empty ())
+	if (!serverWindows.empty ())
 	{
-	    priv->serverWindows.front ()->serverPrev = w;
-	    w->serverNext = priv->serverWindows.front ();
+	    serverWindows.front ()->serverPrev = w;
+	    w->serverNext = serverWindows.front ();
 	}
-	priv->serverWindows.push_front (w);
+	serverWindows.push_front (w);
 
 	return;
     }
 
-    CompWindowList::iterator it = priv->serverWindows.begin ();
+    CompWindowList::iterator it = serverWindows.begin ();
 
-    while (it != priv->serverWindows.end ())
+    while (it != serverWindows.end ())
     {
 	if ((*it)->priv->serverId == aboveId ||
 	    ((*it)->priv->serverFrame && (*it)->priv->serverFrame == aboveId))
@@ -2916,7 +2922,7 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 	it++;
     }
 
-    if (it == priv->serverWindows.end ())
+    if (it == serverWindows.end ())
     {
 	compLogMessage ("core", CompLogLevelWarn, "could not insert 0x%x above 0x%x",
 			(unsigned int) w->priv->serverId, aboveId);
@@ -2935,7 +2941,7 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 	w->serverNext->serverPrev = w;
     }
 
-    priv->serverWindows.insert (++it, w);
+    serverWindows.insert (++it, w);
 }
 
 void
@@ -2980,21 +2986,27 @@ CompScreenImpl::unhookWindow (CompWindow *w)
 void
 CompScreenImpl::unhookServerWindow (CompWindow *w)
 {
+    priv->unhookServerWindow (w);
+}
+
+void
+cps::WindowManager::unhookServerWindow (CompWindow *w)
+{
     StackDebugger *dbg = StackDebugger::Default ();
 
     if (dbg)
 	dbg->serverWindowsChanged (true);
 
     CompWindowList::iterator it =
-	std::find (priv->serverWindows.begin (), priv->serverWindows.end (), w);
+	std::find (serverWindows.begin (), serverWindows.end (), w);
 
-    if (it == priv->serverWindows.end ())
+    if (it == serverWindows.end ())
     {
 	compLogMessage ("core", CompLogLevelWarn, "a broken plugin tried to remove a window twice, we won't allow that!");
 	return;
     }
 
-    priv->serverWindows.erase (it);
+    serverWindows.erase (it);
 
     if (w->serverNext)
 	w->serverNext->serverPrev = w->serverPrev;
@@ -4424,7 +4436,7 @@ CompScreenImpl::windows ()
 CompWindowList &
 CompScreenImpl::serverWindows ()
 {
-    return priv->serverWindows;
+    return priv->getServerWindows();
 }
 
 CompWindowList &
@@ -4595,6 +4607,9 @@ CompScreen::CompScreen ():
 }
 
 CompScreenImpl::CompScreenImpl () :
+    below(),
+    autoRaiseTimer_(),
+    autoRaiseWindow_(0),
     eventHandled (false)
 {
     CompPrivate p;
@@ -5223,9 +5238,6 @@ cps::History::History() :
 cps::WindowManager::WindowManager() :
     windows (),
     activeWindow (0),
-    below (None),
-    autoRaiseTimer (),
-    autoRaiseWindow (0),
     serverWindows (),
     destroyedWindows (),
     stackIsFresh (false),
