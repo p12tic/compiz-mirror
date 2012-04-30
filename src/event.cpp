@@ -1158,7 +1158,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    }
 	}
 
-	foreach (CompWindow *w, priv->destroyedWindows)
+	foreach (CompWindow *w, priv->getDestroyedWindows())
 	{
 	    if (w->priv->serverId == event->xcreatewindow.window)
 	    {
@@ -1213,7 +1213,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 	if (!w)
 	{
-	    foreach (CompWindow *dw, priv->destroyedWindows)
+	    foreach (CompWindow *dw, priv->getDestroyedWindows())
 	    {
 		if (dw->priv->serverId == event->xdestroywindow.window)
 		{
@@ -1338,7 +1338,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		 * that it is already in the list of destroyed
 		 * windows, so check that list too */
 
-		foreach (CompWindow *dw, priv->destroyedWindows)
+		foreach (CompWindow *dw, priv->getDestroyedWindows())
 		{
 		    if (dw->priv->serverId == event->xreparent.window)
 		    {

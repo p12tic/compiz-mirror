@@ -89,7 +89,6 @@ class CoreWindow;
 extern bool shutDown;
 extern bool restartSignal;
 
-extern CompWindow *lastFoundWindow;
 extern bool	  useDesktopHints;
 
 extern std::list <CompString> initialPlugins;
@@ -237,7 +236,41 @@ class WindowManager : boost::noncopyable
 
 	void updateClientList (PrivateScreen& ps);
 
+	void addToDestroyedWindows(CompWindow * cw)
+	    { destroyedWindows.push_back (cw); }
+
+	void incrementPendingDestroys() { pendingDestroys++; }
+	const CompWindowVector& getClientList () const
+	    { return clientList; }
+	const CompWindowVector& getClientListStacking () const
+	    { return clientListStacking; }
+
+	CompWindow * findWindow (Window id) const;
+
+	void removeFromFindWindowCache(CompWindow* w)
+	{
+	    if (w == lastFoundWindow)
+		lastFoundWindow = 0;
+	}
+
+	void addWindowToMap(CompWindow* w)
+	{
+	    if (w->id () != 1)
+		windowsMap[w->id ()] = w;
+	}
+
+	void validateServerWindows();
+
+	void invalidateServerWindows();
+
+	void insertWindow (CompWindow* w, Window aboveId);
+
+	CompWindowList& getDestroyedWindows ()
+	{
+	    return destroyedWindows;
+	}
     //private:
+	CompWindowList windows;
 	Window activeWindow;
 	Window nextActiveWindow;
 
@@ -247,6 +280,7 @@ class WindowManager : boost::noncopyable
 	Window    autoRaiseWindow;
 
 	CompWindowList serverWindows;
+    private:
 	CompWindowList destroyedWindows;
 	bool           stackIsFresh;
 
@@ -260,6 +294,8 @@ class WindowManager : boost::noncopyable
 	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
 
 	unsigned int pendingDestroys;
+
+	mutable CompWindow* lastFoundWindow;
 };
 
 unsigned int windowStateFromString (const char *str);
@@ -707,8 +743,6 @@ class PrivateScreen :
 	KeyCode returnKeyCode;
 
     public:
-	CompWindowList windows;
-
 	Colormap colormap;
 	int      screenNum;
 
@@ -937,7 +971,7 @@ class CompScreenImpl : public CompScreen
 	 * by anything (another application, pluigins etc) */
 	bool grabbed ();
 
-	const CompWindowVector & clientList (bool stackingOrder = true);
+	const CompWindowVector & clientList (bool stackingOrder);
 
 	bool addAction (CompAction *action);
 

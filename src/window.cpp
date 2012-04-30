@@ -1261,7 +1261,7 @@ CompWindow::destroy ()
 	}
 
 	priv->destroyed = true;
-	screen->priv->pendingDestroys++;
+	screen->priv->incrementPendingDestroys();
     }
 
 }
@@ -6175,9 +6175,9 @@ CompWindow::~CompWindow ()
      * pending destroy if this was a sibling
      * of one of those */
 
-    screen->priv->destroyedWindows.remove (this);
+    screen->priv->getDestroyedWindows().remove (this);
 
-    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+    foreach (CompWindow *dw, screen->priv->getDestroyedWindows())
     {
 	if (dw->next == this)
 	    dw->next = this->next;
