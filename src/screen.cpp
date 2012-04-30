@@ -5237,7 +5237,6 @@ cps::History::History() :
 
 cps::WindowManager::WindowManager() :
     windows (),
-    activeWindow (0),
     serverWindows (),
     destroyedWindows (),
     stackIsFresh (false),
@@ -5284,7 +5283,9 @@ cps::EventManager::EventManager (CompScreen *screen) :
 cps::OrphanData::OrphanData() :
     desktopWindowCount (0),
     mapNum (1),
-    defaultIcon (0)
+    defaultIcon (0),
+    activeWindow (0),
+    nextActiveWindow(0)
 {
 }
 

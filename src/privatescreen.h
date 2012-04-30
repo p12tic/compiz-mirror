@@ -265,18 +265,14 @@ class WindowManager : boost::noncopyable
 
 	void insertWindow (CompWindow* w, Window aboveId);
 
-	CompWindowList& getDestroyedWindows ()
-	{ return destroyedWindows; }
+	CompWindowList& getDestroyedWindows()	{ return destroyedWindows; }
 
 	void insertServerWindow(CompWindow* w, Window aboveId);
 	void unhookServerWindow(CompWindow *w);
-	CompWindowList& getServerWindows ()
-	{ return serverWindows; }
+	CompWindowList& getServerWindows()	{ return serverWindows; }
 
     //private:
 	CompWindowList windows;
-	Window activeWindow;
-	Window nextActiveWindow;
 
     private:
 	CompWindowList serverWindows;
@@ -465,6 +461,9 @@ struct OrphanData : boost::noncopyable
     int          desktopWindowCount;
     unsigned int mapNum;
     CompIcon *defaultIcon;
+
+    Window activeWindow;
+    Window nextActiveWindow;
 };
 
 class GrabManager : boost::noncopyable,
