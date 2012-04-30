@@ -154,18 +154,18 @@ cps::EventManager::handleSignal (int signum)
 void
 CompScreenImpl::eventLoop ()
 {
-    priv->startEventLoop ();
+    priv->startEventLoop (dpy());
 }
 
 void
-cps::EventManager::startEventLoop()
+cps::EventManager::startEventLoop(Display* dpy)
 {
     source = CompEventSource::create ();
     timeout = CompTimeoutSource::create (ctx);
 
     source->attach (ctx);
 
-    XFlush (screen->dpy());
+    XFlush (dpy);
 
     mainloop->run();
 }
@@ -2300,7 +2300,7 @@ cps::EventManager::setSupportingWmCheck (Display* dpy, Window root)
 		     XA_ATOM, 32, PropModeAppend,
 		     (unsigned char *) &Atoms::winStateHidden, 1);
 
-    XChangeProperty (dpy, screen->root(), Atoms::supportingWmCheck,
+    XChangeProperty (dpy, root, Atoms::supportingWmCheck,
 		     XA_WINDOW, 32, PropModeReplace,
 		     (unsigned char *) &grabWindow, 1);
 }
@@ -5134,7 +5134,7 @@ CompScreenImpl::~CompScreenImpl ()
 }
 
 cps::GrabManager::GrabManager (CompScreen *screen) :
-    ScreenUser(screen),
+    screen(screen),
     buttonGrabs (),
     keyGrabs ()
 {
@@ -5153,7 +5153,6 @@ cps::StartupSequence::StartupSequence() :
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
-    ScreenUser (screen),
     CoreOptions(false),
     EventManager (screen),
     GrabManager (screen),
@@ -5226,7 +5225,6 @@ cps::PluginManager::PluginManager() :
 }
 
 cps::EventManager::EventManager (CompScreen *screen) :
-    ScreenUser (screen),
     possibleTap(NULL),
     source(0),
     timeout(0),

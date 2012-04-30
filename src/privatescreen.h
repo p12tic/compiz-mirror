@@ -262,15 +262,6 @@ class WindowManager : boost::noncopyable
 
 unsigned int windowStateFromString (const char *str);
 
-// EventManager, GrabManager and PrivateScreen refer to the screen member.  So it
-// is stuck in a virtual base class until we complete the cleanup of PrivateScreen
-struct ScreenUser
-{
-protected:
-    ScreenUser(CompScreen  *screen) : screen(screen) {}
-    CompScreen  * const screen;
-};
-
 class PluginManager
 {
     public:
@@ -319,8 +310,7 @@ private:
 
 class EventManager :
     public ValueHolder,
-    public GrabList,
-    public virtual ScreenUser
+    public GrabList
 {
     public:
 	EventManager (CompScreen *screen);
@@ -336,7 +326,7 @@ class EventManager :
 	                     CompAction::State   state,
 	                     CompOption::Vector &arguments);
 
-	void startEventLoop();
+	void startEventLoop(Display* dpy);
 	void quit() { mainloop->quit(); }
 
 	CompWatchFdHandle addWatchFd (
@@ -429,8 +419,7 @@ struct OrphanData : boost::noncopyable
     CompIcon *defaultIcon;
 };
 
-class GrabManager : boost::noncopyable,
-    public virtual ScreenUser
+class GrabManager : boost::noncopyable
 {
 public:
     GrabManager(CompScreen *screen);
@@ -449,6 +438,8 @@ public:
     void updatePassiveKeyGrabs ();
     void updatePassiveButtonGrabs(Window serverFrame);
 
+protected:
+    CompScreen  * const screen;
 private:
     std::list<ButtonGrab> buttonGrabs;
     std::list<KeyGrab>    keyGrabs;
