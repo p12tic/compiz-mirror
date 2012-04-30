@@ -3616,7 +3616,7 @@ compareMappingOrder (const CompWindow *w1,
 }
 
 void
-PrivateScreen::updateClientList ()
+cps::WindowManager::updateClientList (PrivateScreen& ps)
 {
     bool   updateClientList = false;
     bool   updateClientListStacking = false;
@@ -3633,14 +3633,14 @@ PrivateScreen::updateClientList ()
 	    clientIdList.clear ();
 	    clientIdListStacking.clear ();
 
-	    XChangeProperty (dpy, rootWindow(),
+	    XChangeProperty (ps.dpy, ps.rootWindow(),
 			     Atoms::clientList,
 			     XA_WINDOW, 32, PropModeReplace,
-			     (unsigned char *) &getGrabWindow(), 1);
-	    XChangeProperty (dpy, rootWindow(),
+			     (unsigned char *) &ps.getGrabWindow(), 1);
+	    XChangeProperty (ps.dpy, ps.rootWindow(),
 			     Atoms::clientListStacking,
 			     XA_WINDOW, 32, PropModeReplace,
-			     (unsigned char *) &getGrabWindow(), 1);
+			     (unsigned char *) &ps.getGrabWindow(), 1);
 	}
 
 	return;
@@ -3656,7 +3656,7 @@ PrivateScreen::updateClientList ()
 
     clientListStacking.clear ();
 
-    foreach (CompWindow *w, windows)
+    foreach (CompWindow *w, ps.windows)
 	if (isClientListWindow (w))
 	    clientListStacking.push_back (w);
 
@@ -3690,13 +3690,13 @@ PrivateScreen::updateClientList ()
     }
 
     if (updateClientList)
-	XChangeProperty (dpy, rootWindow(),
+	XChangeProperty (ps.dpy, ps.rootWindow(),
 			 Atoms::clientList,
 			 XA_WINDOW, 32, PropModeReplace,
 			 (unsigned char *) &clientIdList.at (0), n);
 
     if (updateClientListStacking)
-	XChangeProperty (dpy, rootWindow(),
+	XChangeProperty (ps.dpy, ps.rootWindow(),
 			 Atoms::clientListStacking,
 			 XA_WINDOW, 32, PropModeReplace,
 			 (unsigned char *) &clientIdListStacking.at (0),

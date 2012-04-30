@@ -235,6 +235,8 @@ class WindowManager : boost::noncopyable
 	void eraseWindowFromMap (Window id);
 	void removeDestroyed ();
 
+	void updateClientList (PrivateScreen& ps);
+
     //private:
 	Window activeWindow;
 	Window nextActiveWindow;
@@ -647,8 +649,6 @@ class PrivateScreen :
 
 	void configure (XConfigureEvent *ce);
 
-	void updateClientList ();
-
 	void applyStartupProperties (CompWindow *window);
 
 	Window getTopWindow ();
@@ -682,6 +682,8 @@ class PrivateScreen :
 
 	void setPlugins(CompOption::Value::Vector const& vList);
 	void initPlugins();
+
+	void updateClientList () { WindowManager::updateClientList (*this); }
 
     public:
 	Display    *dpy;
