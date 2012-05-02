@@ -2043,7 +2043,7 @@ cps::OutputDevices::updateOutputDevices (CoreOptions& coreOptions, CompWindowLis
 }
 
 void
-cps::OutputDevices::detectOutputDevices (
+PrivateScreen::detectOutputDevices (
 	CoreOptions& coreOptions,
 	std::vector<XineramaScreenInfo>& screenInfo,
 	CompWindowList& windows)

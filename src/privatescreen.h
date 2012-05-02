@@ -55,8 +55,6 @@ class OutputDevices
 public:
     OutputDevices();
 
-    void detectOutputDevices (CoreOptions& coreOptions,
-	    std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
     void updateOutputDevices (CoreOptions& coreOptions, CompWindowList const& windows);
     void setCurrentOutput (unsigned int outputNum);
     CompOutput& getCurrentOutputDev () { return outputDevs[currentOutputDev]; }
@@ -710,6 +708,8 @@ class PrivateScreen :
 
 	void updateClientList () { WindowManager::updateClientList (*this); }
 
+	void detectOutputDevices (CoreOptions& coreOptions,
+		std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
     public:
 	Display    *dpy;
 
