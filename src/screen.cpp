@@ -2029,12 +2029,12 @@ PrivateScreen::updateOutputDevices (CoreOptions& coreOptions)
 
 	if (x1 < x2 && y1 < y2)
 	{
-	    setGeometryOnDevice(nOutput, x1, y1, x2 - x1, y2 - y1);
+	    outputDevices.setGeometryOnDevice(nOutput, x1, y1, x2 - x1, y2 - y1);
 	    nOutput++;
 	}
     }
 
-    adoptDevices(nOutput);
+    outputDevices.adoptDevices(nOutput);
 
     /* clear out fullscreen monitor hints of all windows as
        suggested on monitor layout changes in EWMH */
@@ -3592,7 +3592,7 @@ CompScreenImpl::updateWorkarea ()
     CompRect workArea;
     CompRegion allWorkArea = CompRegion ();
     bool     workAreaChanged = false;
-    priv->computeWorkAreas(workArea, workAreaChanged, allWorkArea, priv->windows);
+    priv->outputDevices.computeWorkAreas(workArea, workAreaChanged, allWorkArea, priv->windows);
 
     workArea = allWorkArea.boundingRect ();
 
@@ -4017,7 +4017,7 @@ CompScreenImpl::outputDeviceForPoint (int x, int y)
 CompRect
 CompScreenImpl::getCurrentOutputExtents ()
 {
-    return priv->getCurrentOutputDev ();
+    return priv->outputDevices.getCurrentOutputDev ();
 }
 
 void
@@ -4080,7 +4080,7 @@ PrivateScreen::setCurrentDesktop (unsigned int desktop)
 const CompRect&
 CompScreenImpl::getWorkareaForOutput (unsigned int outputNum) const
 {
-    return priv->getOutputDev (outputNum).workArea ();
+    return priv->outputDevices.getOutputDev (outputNum).workArea ();
 }
 
 void
@@ -4122,7 +4122,7 @@ CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
 int
 CompScreenImpl::outputDeviceForGeometry (const CompWindow::Geometry& gm)
 {
-    return priv->outputDeviceForGeometry (gm, priv->optionGetOverlappingOutputs (), this);
+    return priv->outputDevices.outputDeviceForGeometry (gm, priv->optionGetOverlappingOutputs (), this);
 }
 
 int
@@ -4508,13 +4508,13 @@ CompScreenImpl::activeNum () const
 CompOutput::vector &
 CompScreenImpl::outputDevs ()
 {
-    return priv->getOutputDevs ();
+    return priv->outputDevices.getOutputDevs ();
 }
 
 CompOutput &
 CompScreenImpl::currentOutputDev () const
 {
-    return priv->getCurrentOutputDev ();
+    return priv->outputDevices.getCurrentOutputDev ();
 }
 
 const CompRect &
@@ -4574,7 +4574,7 @@ CompScreenImpl::region () const
 bool
 CompScreenImpl::hasOverlappingOutputs ()
 {
-    return priv->hasOverlappingOutputs ();
+    return priv->outputDevices.hasOverlappingOutputs ();
 }
 
 CompOutput &

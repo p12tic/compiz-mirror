@@ -57,30 +57,21 @@ public:
 
     void setCurrentOutput(unsigned int outputNum);
 
-    CompOutput& getCurrentOutputDev()
-    {
-	return outputDevs[currentOutputDev];
-    }
+    CompOutput& getCurrentOutputDev() { return outputDevs[currentOutputDev]; }
 
-    bool hasOverlappingOutputs() const
-    {
-	return overlappingOutputs;
-    }
+    bool hasOverlappingOutputs() const { return overlappingOutputs; }
 
     void computeWorkAreas(CompRect& workArea, bool& workAreaChanged,
 	    CompRegion& allWorkArea, const CompWindowList& windows);
 
     const CompOutput& getOutputDev(unsigned int outputNum) const
-    {
-	return outputDevs[outputNum];
-    }
+    { return outputDevs[outputNum]; }
 
     // TODO breaks encapsulation horribly ought to be const at least
     // Even better, use begin() and end() return const_iterators
-    CompOutput::vector& getOutputDevs()
-    {
-	return outputDevs;
-    }
+    // BUT this is exported directly through API - which makes changing
+    // it a PITA.
+    CompOutput::vector& getOutputDevs() { return outputDevs; }
 
     int outputDeviceForGeometry(const CompWindow::Geometry& gm, int strategy,
 	    CompScreen* screen) const;
@@ -601,8 +592,7 @@ class PrivateScreen :
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
     public compiz::private_screen::Ping,
-    public compiz::private_screen::OrphanData,
-    public compiz::private_screen::OutputDevices
+    public compiz::private_screen::OrphanData
 {
 
     public:
@@ -736,7 +726,7 @@ class PrivateScreen :
 	::compiz::private_screen::Extension xSync;
 	::compiz::private_screen::Extension xRandr;
 	::compiz::private_screen::Extension xShape;
-
+	::compiz::private_screen::OutputDevices outputDevices;
     private:
 	::compiz::private_screen::Extension xkbEvent;
 
