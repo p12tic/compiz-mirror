@@ -708,8 +708,7 @@ class PrivateScreen :
 
 	void updateClientList () { WindowManager::updateClientList (*this); }
 
-	void detectOutputDevices (CoreOptions& coreOptions,
-		std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
+	void detectOutputDevices (CoreOptions& coreOptions);
     public:
 	Display    *dpy;
 

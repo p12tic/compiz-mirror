@@ -718,7 +718,7 @@ PrivateScreen::setOption (const CompString  &name,
 	    break;
 	case CoreOptions::DetectOutputs:
 	    if (optionGetDetectOutputs ())
-		detectOutputDevices (*this, screenInfo, windows);
+		detectOutputDevices (*this);
 	    break;
 	case CoreOptions::Hsize:
 	case CoreOptions::Vsize:
@@ -2043,10 +2043,7 @@ cps::OutputDevices::updateOutputDevices (CoreOptions& coreOptions, CompWindowLis
 }
 
 void
-PrivateScreen::detectOutputDevices (
-	CoreOptions& coreOptions,
-	std::vector<XineramaScreenInfo>& screenInfo,
-	CompWindowList& windows)
+PrivateScreen::detectOutputDevices (CoreOptions& coreOptions)
 {
     if (coreOptions.optionGetDetectOutputs ())
     {
@@ -2286,7 +2283,7 @@ PrivateScreen::configure (XConfigureEvent *ce)
 
 	reshape (ce->width, ce->height);
 
-	detectOutputDevices (*this, screenInfo, windows);
+	detectOutputDevices (*this);
 
 	updateOutputDevices (*this, windows);
 }
@@ -5003,7 +5000,7 @@ PrivateScreen::initDisplay (const char *name)
 
     initialized = true;
     initOptions ();
-    detectOutputDevices (*this, screenInfo, windows);
+    detectOutputDevices (*this);
     updateOutputDevices (*this, windows);
 
     getDesktopHints ();
