@@ -50,14 +50,14 @@
 namespace compiz { namespace private_screen
 {
 
-class OutputDevices : public virtual CoreOptions
+class OutputDevices
 {
 public:
     OutputDevices();
 
-    void detectOutputDevices (
+    void detectOutputDevices (CoreOptions& coreOptions,
 	    std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
-    void updateOutputDevices (CompWindowList const& windows);
+    void updateOutputDevices (CoreOptions& coreOptions, CompWindowList const& windows);
     void setCurrentOutput (unsigned int outputNum);
     CompOutput& getCurrentOutputDev () { return outputDevs[currentOutputDev]; }
     bool hasOverlappingOutputs () const { return overlappingOutputs; }
@@ -262,15 +262,6 @@ class WindowManager : boost::noncopyable
 
 unsigned int windowStateFromString (const char *str);
 
-// EventManager, GrabManager and PrivateScreen refer to the screen member.  So it
-// is stuck in a virtual base class until we complete the cleanup of PrivateScreen
-struct ScreenUser
-{
-protected:
-    ScreenUser(CompScreen  *screen) : screen(screen) {}
-    CompScreen  * const screen;
-};
-
 class PluginManager
 {
     public:
@@ -318,16 +309,14 @@ private:
 };
 
 class EventManager :
-    public virtual CoreOptions,
     public ValueHolder,
-    public GrabList,
-    public virtual ScreenUser
+    public GrabList
 {
     public:
 	EventManager (CompScreen *screen);
 	~EventManager ();
 
-	bool init (const char *name);
+	bool init (CoreOptions& coreOptions, const char *name);
 
 	void handleSignal (int signum);
 	bool triggerPress   (CompAction         *action,
@@ -337,7 +326,7 @@ class EventManager :
 	                     CompAction::State   state,
 	                     CompOption::Vector &arguments);
 
-	void startEventLoop();
+	void startEventLoop(Display* dpy);
 	void quit() { mainloop->quit(); }
 
 	CompWatchFdHandle addWatchFd (
@@ -430,8 +419,7 @@ struct OrphanData : boost::noncopyable
     CompIcon *defaultIcon;
 };
 
-class GrabManager : boost::noncopyable,
-    public virtual ScreenUser
+class GrabManager : boost::noncopyable
 {
 public:
     GrabManager(CompScreen *screen);
@@ -450,6 +438,8 @@ public:
     void updatePassiveKeyGrabs ();
     void updatePassiveButtonGrabs(Window serverFrame);
 
+protected:
+    CompScreen  * const screen;
 private:
     std::list<ButtonGrab> buttonGrabs;
     std::list<KeyGrab>    keyGrabs;
@@ -551,6 +541,7 @@ private:
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
+    public CoreOptions,
     public compiz::private_screen::EventManager,
     public compiz::private_screen::WindowManager,
     public compiz::private_screen::GrabManager,
