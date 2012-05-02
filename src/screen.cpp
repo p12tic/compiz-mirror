@@ -1951,6 +1951,42 @@ PrivateScreen::setVirtualScreenSize (int newh, int newv)
 }
 
 void
+cps::OutputDevices::setGeometryOnDevice(unsigned int const nOutput,
+    int x, int y,
+    const int width, const int height)
+{
+    if (outputDevs.size() < nOutput + 1)
+	outputDevs.resize(nOutput + 1);
+
+    outputDevs[nOutput].setGeometry(x, y, width, height);
+}
+
+void cps::OutputDevices::adoptDevices(unsigned int nOutput)
+{
+    /* make sure we have at least one output */
+    if (!nOutput)
+    {
+	setGeometryOnDevice(nOutput, 0, 0, screen->width(), screen->height());
+	nOutput++;
+    }
+    if (outputDevs.size() > nOutput)
+	outputDevs.resize(nOutput);
+
+    char str[10];
+    /* set name, width, height and update rect pointers in all regions */
+    for (unsigned int i = 0; i < nOutput; i++)
+    {
+	snprintf(str, 10, "Output %d", i);
+	outputDevs[i].setId(str, i);
+    }
+    overlappingOutputs = false;
+    setCurrentOutput (currentOutputDev);
+    for (unsigned int i = 0; i < nOutput - 1; i++)
+	for (unsigned int j = i + 1; j < nOutput; j++)
+	    if (outputDevs[i].intersects(outputDevs[j]))
+		overlappingOutputs = true;
+}
+void
 cps::OutputDevices::updateOutputDevices (CoreOptions& coreOptions, CompWindowList const& windows)
 {
     CompOption::Value::Vector &list = coreOptions.optionGetOutputs ();
@@ -1959,7 +1995,6 @@ cps::OutputDevices::updateOutputDevices (CoreOptions& coreOptions, CompWindowLis
     unsigned int              uWidth, uHeight;
     int                       width, height;
     int		              x1, y1, x2, y2;
-    char                      str[10];
 
     foreach (CompOption::Value &value, list)
     {
@@ -1994,48 +2029,18 @@ cps::OutputDevices::updateOutputDevices (CoreOptions& coreOptions, CompWindowLis
 
 	if (x1 < x2 && y1 < y2)
 	{
-	    if (outputDevs.size () < nOutput + 1)
-		outputDevs.resize (nOutput + 1);
-
-	    outputDevs[nOutput].setGeometry (x1, y1, x2 - x1, y2 - y1);
+	    setGeometryOnDevice(nOutput, x1, y1, x2 - x1, y2 - y1);
 	    nOutput++;
 	}
     }
 
-    /* make sure we have at least one output */
-    if (!nOutput)
-    {
-	if (outputDevs.size () < 1)
-	    outputDevs.resize (1);
-
-	outputDevs[0].setGeometry (0, 0, screen->width (), screen->height ());
-	nOutput = 1;
-    }
-
-    if (outputDevs.size () > nOutput)
-	outputDevs.resize (nOutput);
-
-    /* set name, width, height and update rect pointers in all regions */
-    for (unsigned int i = 0; i < nOutput; i++)
-    {
-	snprintf (str, 10, "Output %d", i);
-	outputDevs[i].setId (str, i);
-    }
-
-    overlappingOutputs = false;
-
-    setCurrentOutput (currentOutputDev);
+    adoptDevices(nOutput);
 
     /* clear out fullscreen monitor hints of all windows as
        suggested on monitor layout changes in EWMH */
     foreach (CompWindow *w, windows)
 	if (w->priv->fullscreenMonitorsSet)
 	    w->priv->setFullscreenMonitors (NULL);
-
-    for (unsigned int i = 0; i < nOutput - 1; i++)
-	for (unsigned int j = i + 1; j < nOutput; j++)
-	    if (outputDevs[i].intersects (outputDevs[j]))
-		overlappingOutputs = true;
 
     screen->updateWorkarea ();
 

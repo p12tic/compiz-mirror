@@ -55,23 +55,44 @@ class OutputDevices
 public:
     OutputDevices();
 
-    void updateOutputDevices (CoreOptions& coreOptions, CompWindowList const& windows);
-    void setCurrentOutput (unsigned int outputNum);
-    CompOutput& getCurrentOutputDev () { return outputDevs[currentOutputDev]; }
-    bool hasOverlappingOutputs () const { return overlappingOutputs; }
+    void updateOutputDevices (CoreOptions& coreOptions,
+	    const CompWindowList& windows);
+    void setCurrentOutput(unsigned int outputNum);
+
+    CompOutput& getCurrentOutputDev()
+    {
+	return outputDevs[currentOutputDev];
+    }
+
+    bool hasOverlappingOutputs() const
+    {
+	return overlappingOutputs;
+    }
+
     void computeWorkAreas(CompRect& workArea, bool& workAreaChanged,
-	    CompRegion& allWorkArea, CompWindowList const& windows);
-    CompOutput const& getOutputDev (unsigned int outputNum) const
-    { return outputDevs[outputNum]; }
+	    CompRegion& allWorkArea, const CompWindowList& windows);
+
+    const CompOutput& getOutputDev(unsigned int outputNum) const
+    {
+	return outputDevs[outputNum];
+    }
 
     // TODO breaks encapsulation horribly ought to be const at least
     // Even better, use begin() and end() return const_iterators
-    CompOutput::vector& getOutputDevs() { return outputDevs; }
+    CompOutput::vector& getOutputDevs()
+    {
+	return outputDevs;
+    }
 
-    int outputDeviceForGeometry (const CompWindow::Geometry& gm, int strategy, CompScreen* screen) const;
+    int outputDeviceForGeometry(const CompWindow::Geometry& gm, int strategy,
+	    CompScreen* screen) const;
+    void setGeometryOnDevice(unsigned int nOutput, int x, int y,
+	    const int width, const int height);
+    void adoptDevices(unsigned int nOutput);
 
 private:
-    static CompRect computeWorkareaForBox (const CompRect &box, CompWindowList const& windows);
+    static CompRect computeWorkareaForBox(const CompRect& box,
+	    const CompWindowList& windows);
 
     CompOutput::vector outputDevs;
     bool               overlappingOutputs;
