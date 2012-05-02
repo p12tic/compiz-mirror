@@ -584,7 +584,6 @@ class PrivateScreen :
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
     public compiz::private_screen::Ping,
-    public compiz::private_screen::OrphanData,
     public compiz::private_screen::OutputDevices
 {
 
@@ -717,6 +716,7 @@ class PrivateScreen :
 	::compiz::private_screen::Extension xRandr;
 	::compiz::private_screen::Extension xShape;
 
+	::compiz::private_screen::OrphanData orphanData;
     private:
 	::compiz::private_screen::Extension xkbEvent;
 
