@@ -89,7 +89,6 @@ class CoreWindow;
 extern bool shutDown;
 extern bool restartSignal;
 
-extern CompWindow *lastFoundWindow;
 extern bool	  useDesktopHints;
 
 extern std::list <CompString> initialPlugins;
@@ -235,15 +234,47 @@ class WindowManager : boost::noncopyable
 	void eraseWindowFromMap (Window id);
 	void removeDestroyed ();
 
+	void updateClientList (PrivateScreen& ps);
+
+	void addToDestroyedWindows(CompWindow * cw)
+	    { destroyedWindows.push_back (cw); }
+
+	void incrementPendingDestroys() { pendingDestroys++; }
+	const CompWindowVector& getClientList () const
+	    { return clientList; }
+	const CompWindowVector& getClientListStacking () const
+	    { return clientListStacking; }
+
+	CompWindow * findWindow (Window id) const;
+
+	void removeFromFindWindowCache(CompWindow* w)
+	{
+	    if (w == lastFoundWindow)
+		lastFoundWindow = 0;
+	}
+
+	void addWindowToMap(CompWindow* w)
+	{
+	    if (w->id () != 1)
+		windowsMap[w->id ()] = w;
+	}
+
+	void validateServerWindows();
+
+	void invalidateServerWindows();
+
+	void insertWindow (CompWindow* w, Window aboveId);
+
+	CompWindowList& getDestroyedWindows()	{ return destroyedWindows; }
+
+	void insertServerWindow(CompWindow* w, Window aboveId);
+	void unhookServerWindow(CompWindow *w);
+	CompWindowList& getServerWindows()	{ return serverWindows; }
+
     //private:
-	Window activeWindow;
-	Window nextActiveWindow;
+	CompWindowList windows;
 
-	Window below;
-
-	CompTimer autoRaiseTimer;
-	Window    autoRaiseWindow;
-
+    private:
 	CompWindowList serverWindows;
 	CompWindowList destroyedWindows;
 	bool           stackIsFresh;
@@ -258,6 +289,8 @@ class WindowManager : boost::noncopyable
 	std::vector<Window> clientIdListStacking;/* client ids in stacking order */
 
 	unsigned int pendingDestroys;
+
+	mutable CompWindow* lastFoundWindow;
 };
 
 unsigned int windowStateFromString (const char *str);
@@ -417,6 +450,9 @@ struct OrphanData : boost::noncopyable
     int          desktopWindowCount;
     unsigned int mapNum;
     CompIcon *defaultIcon;
+
+    Window activeWindow;
+    Window nextActiveWindow;
 };
 
 class GrabManager : boost::noncopyable
@@ -638,8 +674,6 @@ class PrivateScreen :
 
 	void configure (XConfigureEvent *ce);
 
-	void updateClientList ();
-
 	void applyStartupProperties (CompWindow *window);
 
 	Window getTopWindow ();
@@ -674,6 +708,8 @@ class PrivateScreen :
 	void setPlugins(CompOption::Value::Vector const& vList);
 	void initPlugins();
 
+	void updateClientList () { WindowManager::updateClientList (*this); }
+
     public:
 	Display    *dpy;
 
@@ -696,8 +732,6 @@ class PrivateScreen :
 	KeyCode returnKeyCode;
 
     public:
-	CompWindowList windows;
-
 	Colormap colormap;
 	int      screenNum;
 
@@ -926,7 +960,7 @@ class CompScreenImpl : public CompScreen
 	 * by anything (another application, pluigins etc) */
 	bool grabbed ();
 
-	const CompWindowVector & clientList (bool stackingOrder = true);
+	const CompWindowVector & clientList (bool stackingOrder);
 
 	bool addAction (CompAction *action);
 
@@ -1084,6 +1118,9 @@ class CompScreenImpl : public CompScreen
         virtual void _matchPropertyChanged(CompWindow *);
         virtual void _outputChangeNotify();
 
+	Window below;
+	CompTimer autoRaiseTimer_;
+	Window    autoRaiseWindow_;
         bool 	eventHandled;
 };
 

@@ -35,8 +35,6 @@ int  programArgc;
 
 bool restartSignal = false;
 
-CompWindow *lastFoundWindow = 0;
-
 bool replaceCurrentWm = false;
 bool useDesktopHints = false;
 bool debugOutput = false;

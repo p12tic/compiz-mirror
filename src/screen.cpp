@@ -108,7 +108,7 @@ void CompScreenImpl::setWindowState (unsigned int state, Window id)
 
 void CompScreenImpl::addToDestroyedWindows(CompWindow * cw)
 {
-    priv->destroyedWindows.push_back (cw);
+    priv->addToDestroyedWindows(cw);
 }
 
 void CompScreenImpl::processEvents () { priv->processEvents (); }
@@ -606,7 +606,7 @@ CompScreenImpl::activeWindow ()
 Window
 CompScreenImpl::autoRaiseWindow ()
 {
-    return priv->autoRaiseWindow;
+    return autoRaiseWindow_;
 }
 
 const char *
@@ -791,31 +791,18 @@ PrivateScreen::processEvents ()
 	pluginManager.updatePlugins (screen, optionGetActivePlugins());
     }
 
-    /* Restacks recently processed, ensure that
-     * plugins use the stack last received from
-     * the server */
-    if (stackIsFresh)
-    {
-	serverWindows.clear ();
-
-	foreach (CompWindow *sw, windows)
-	{
-	    sw->serverPrev = sw->prev;
-	    sw->serverNext = sw->next;
-	    serverWindows.push_back (sw);
-	}
-    }
+    validateServerWindows();
 
     if (dbg)
     {
 	dbg->windowsChanged (false);
 	dbg->serverWindowsChanged (false);
-	events = dbg->loadStack (serverWindows);
+	events = dbg->loadStack (getServerWindows());
     }
     else
 	events = queueEvents ();
 
-    stackIsFresh = false;
+    invalidateServerWindows();
 
     foreach (XEvent &event, events)
     {
@@ -890,7 +877,7 @@ PrivateScreen::processEvents ()
 
     if (dbg)
     {
-	if (dbg->windowsChanged () && dbg->cmpStack (windows, serverWindows))
+	if (dbg->windowsChanged () && dbg->cmpStack (windows, getServerWindows()))
 	{
 	    compLogMessage ("core", CompLogLevelDebug, "stacks are out of sync");
 	    if (dbg->timedOut ())
@@ -901,6 +888,32 @@ PrivateScreen::processEvents ()
 	    compLogMessage ("core", CompLogLevelDebug, "windows are stacked incorrectly");
     }
 }
+
+void
+cps::WindowManager::validateServerWindows()
+{
+    /* Restacks recently processed, ensure that
+     * plugins use the stack last received from
+     * the server */
+    if (stackIsFresh)
+    {
+	serverWindows.clear ();
+
+	foreach (CompWindow *sw, windows)
+	{
+	    sw->serverPrev = sw->prev;
+	    sw->serverNext = sw->next;
+	    serverWindows.push_back (sw);
+	}
+    }
+}
+
+void
+cps::WindowManager::invalidateServerWindows()
+{
+    stackIsFresh = false;
+}
+
 
 CompOption::Value::Vector
 cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPluginsRequested)
@@ -2658,7 +2671,7 @@ CompScreenImpl::focusDefaultWindow ()
 
     if (!priv->optionGetClickToFocus ())
     {
-	w = findTopLevelWindow (priv->below);
+	w = findTopLevelWindow (below);
 
 	if (w && w->focus ())
 	{
@@ -2753,15 +2766,21 @@ CompScreenImpl::focusDefaultWindow ()
 CompWindow *
 CompScreenImpl::findWindow (Window id)
 {
+    return priv->findWindow (id);
+}
+
+CompWindow*
+cps::WindowManager::findWindow (Window id) const
+{
     if (lastFoundWindow && lastFoundWindow->id () == id)
     {
 	return lastFoundWindow;
     }
     else
     {
-        CompWindow::Map::iterator it = priv->windowsMap.find (id);
+        CompWindow::Map::const_iterator it = windowsMap.find (id);
 
-        if (it != priv->windowsMap.end ())
+        if (it != windowsMap.end ())
             return (lastFoundWindow = it->second);
     }
 
@@ -2798,33 +2817,38 @@ CompScreenImpl::findTopLevelWindow (Window id, bool override_redirect)
 void
 CompScreenImpl::insertWindow (CompWindow *w, Window	aboveId)
 {
+    priv->insertWindow (w, aboveId);
+}
+void
+cps::WindowManager::insertWindow (CompWindow* w, Window aboveId)
+{
     StackDebugger *dbg = StackDebugger::Default ();
 
     if (dbg)
 	dbg->windowsChanged (true);
 
-    priv->stackIsFresh = true;
+    invalidateServerWindows();
 
     w->prev = NULL;
     w->next = NULL;
 
-    if (!aboveId || priv->windows.empty ())
+    if (!aboveId || windows.empty ())
     {
-	if (!priv->windows.empty ())
+	if (!windows.empty ())
 	{
-	    priv->windows.front ()->prev = w;
-	    w->next = priv->windows.front ();
+	    windows.front ()->prev = w;
+	    w->next = windows.front ();
 	}
-	priv->windows.push_front (w);
-        if (w->id () != 1)
-            priv->windowsMap[w->id ()] = w;
+	windows.push_front (w);
+
+	addWindowToMap(w);
 
 	return;
     }
 
-    CompWindowList::iterator it = priv->windows.begin ();
+    CompWindowList::iterator it = windows.begin ();
 
-    while (it != priv->windows.end ())
+    while (it != windows.end ())
     {
 	if ((*it)->id () == aboveId ||
 	    ((*it)->priv->frame && (*it)->priv->frame == aboveId))
@@ -2834,7 +2858,7 @@ CompScreenImpl::insertWindow (CompWindow *w, Window	aboveId)
 	it++;
     }
 
-    if (it == priv->windows.end ())
+    if (it == windows.end ())
     {
 	compLogMessage ("core", CompLogLevelDebug, "could not insert 0x%x above 0x%x",
 			(unsigned int) w->priv->serverId, aboveId);
@@ -2853,13 +2877,18 @@ CompScreenImpl::insertWindow (CompWindow *w, Window	aboveId)
 	w->next->prev = w;
     }
 
-    priv->windows.insert (++it, w);
-    if (w->id () != 1)
-        priv->windowsMap[w->id ()] = w;
+    windows.insert (++it, w);
+    addWindowToMap(w);
 }
 
 void
 CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
+{
+    priv->insertServerWindow(w, aboveId);
+}
+
+void
+cps::WindowManager::insertServerWindow(CompWindow* w, Window aboveId)
 {
     StackDebugger *dbg = StackDebugger::Default ();
 
@@ -2869,21 +2898,21 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
     w->serverPrev = NULL;
     w->serverNext = NULL;
 
-    if (!aboveId || priv->serverWindows.empty ())
+    if (!aboveId || serverWindows.empty ())
     {
-	if (!priv->serverWindows.empty ())
+	if (!serverWindows.empty ())
 	{
-	    priv->serverWindows.front ()->serverPrev = w;
-	    w->serverNext = priv->serverWindows.front ();
+	    serverWindows.front ()->serverPrev = w;
+	    w->serverNext = serverWindows.front ();
 	}
-	priv->serverWindows.push_front (w);
+	serverWindows.push_front (w);
 
 	return;
     }
 
-    CompWindowList::iterator it = priv->serverWindows.begin ();
+    CompWindowList::iterator it = serverWindows.begin ();
 
-    while (it != priv->serverWindows.end ())
+    while (it != serverWindows.end ())
     {
 	if ((*it)->priv->serverId == aboveId ||
 	    ((*it)->priv->serverFrame && (*it)->priv->serverFrame == aboveId))
@@ -2893,7 +2922,7 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 	it++;
     }
 
-    if (it == priv->serverWindows.end ())
+    if (it == serverWindows.end ())
     {
 	compLogMessage ("core", CompLogLevelWarn, "could not insert 0x%x above 0x%x",
 			(unsigned int) w->priv->serverId, aboveId);
@@ -2912,7 +2941,7 @@ CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 	w->serverNext->serverPrev = w;
     }
 
-    priv->serverWindows.insert (++it, w);
+    serverWindows.insert (++it, w);
 }
 
 void
@@ -2951,12 +2980,17 @@ CompScreenImpl::unhookWindow (CompWindow *w)
     w->next = NULL;
     w->prev = NULL;
 
-    if (w == lastFoundWindow)
-	lastFoundWindow = NULL;
+    priv->removeFromFindWindowCache(w);
 }
 
 void
 CompScreenImpl::unhookServerWindow (CompWindow *w)
+{
+    priv->unhookServerWindow (w);
+}
+
+void
+cps::WindowManager::unhookServerWindow (CompWindow *w)
 {
     StackDebugger *dbg = StackDebugger::Default ();
 
@@ -2964,15 +2998,15 @@ CompScreenImpl::unhookServerWindow (CompWindow *w)
 	dbg->serverWindowsChanged (true);
 
     CompWindowList::iterator it =
-	std::find (priv->serverWindows.begin (), priv->serverWindows.end (), w);
+	std::find (serverWindows.begin (), serverWindows.end (), w);
 
-    if (it == priv->serverWindows.end ())
+    if (it == serverWindows.end ())
     {
 	compLogMessage ("core", CompLogLevelWarn, "a broken plugin tried to remove a window twice, we won't allow that!");
 	return;
     }
 
-    priv->serverWindows.erase (it);
+    serverWindows.erase (it);
 
     if (w->serverNext)
 	w->serverNext->serverPrev = w->serverPrev;
@@ -3616,7 +3650,7 @@ compareMappingOrder (const CompWindow *w1,
 }
 
 void
-PrivateScreen::updateClientList ()
+cps::WindowManager::updateClientList (PrivateScreen& ps)
 {
     bool   updateClientList = false;
     bool   updateClientListStacking = false;
@@ -3633,14 +3667,14 @@ PrivateScreen::updateClientList ()
 	    clientIdList.clear ();
 	    clientIdListStacking.clear ();
 
-	    XChangeProperty (dpy, rootWindow(),
+	    XChangeProperty (ps.dpy, ps.rootWindow(),
 			     Atoms::clientList,
 			     XA_WINDOW, 32, PropModeReplace,
-			     (unsigned char *) &getGrabWindow(), 1);
-	    XChangeProperty (dpy, rootWindow(),
+			     (unsigned char *) &ps.getGrabWindow(), 1);
+	    XChangeProperty (ps.dpy, ps.rootWindow(),
 			     Atoms::clientListStacking,
 			     XA_WINDOW, 32, PropModeReplace,
-			     (unsigned char *) &getGrabWindow(), 1);
+			     (unsigned char *) &ps.getGrabWindow(), 1);
 	}
 
 	return;
@@ -3656,7 +3690,7 @@ PrivateScreen::updateClientList ()
 
     clientListStacking.clear ();
 
-    foreach (CompWindow *w, windows)
+    foreach (CompWindow *w, ps.windows)
 	if (isClientListWindow (w))
 	    clientListStacking.push_back (w);
 
@@ -3690,13 +3724,13 @@ PrivateScreen::updateClientList ()
     }
 
     if (updateClientList)
-	XChangeProperty (dpy, rootWindow(),
+	XChangeProperty (ps.dpy, ps.rootWindow(),
 			 Atoms::clientList,
 			 XA_WINDOW, 32, PropModeReplace,
 			 (unsigned char *) &clientIdList.at (0), n);
 
     if (updateClientListStacking)
-	XChangeProperty (dpy, rootWindow(),
+	XChangeProperty (ps.dpy, ps.rootWindow(),
 			 Atoms::clientListStacking,
 			 XA_WINDOW, 32, PropModeReplace,
 			 (unsigned char *) &clientIdListStacking.at (0),
@@ -3706,7 +3740,7 @@ PrivateScreen::updateClientList ()
 const CompWindowVector &
 CompScreenImpl::clientList (bool stackingOrder)
 {
-   return stackingOrder ? priv->clientListStacking : priv->clientList;
+   return stackingOrder ? priv->getClientListStacking() : priv->getClientList();
 }
 
 void
@@ -4402,13 +4436,13 @@ CompScreenImpl::windows ()
 CompWindowList &
 CompScreenImpl::serverWindows ()
 {
-    return priv->serverWindows;
+    return priv->getServerWindows();
 }
 
 CompWindowList &
 CompScreenImpl::destroyedWindows ()
 {
-    return priv->destroyedWindows;
+    return priv->getDestroyedWindows();
 }
 
 
@@ -4573,6 +4607,9 @@ CompScreen::CompScreen ():
 }
 
 CompScreenImpl::CompScreenImpl () :
+    below(),
+    autoRaiseTimer_(),
+    autoRaiseWindow_(0),
     eventHandled (false)
 {
     CompPrivate p;
@@ -5159,7 +5196,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     dpy (NULL),
     screenInfo (),
     snDisplay(0),
-    windows (),
     nDesktop (1),
     currentDesktop (0),
     root(None),
@@ -5199,15 +5235,13 @@ cps::History::History() :
 }
 
 cps::WindowManager::WindowManager() :
-    activeWindow (0),
-    below (None),
-    autoRaiseTimer (),
-    autoRaiseWindow (0),
+    windows (),
     serverWindows (),
     destroyedWindows (),
     stackIsFresh (false),
     groups (0),
-    pendingDestroys (0)
+    pendingDestroys (0),
+    lastFoundWindow(0)
 {
 }
 
@@ -5245,7 +5279,9 @@ cps::EventManager::EventManager (CompScreen *screen) :
 cps::OrphanData::OrphanData() :
     desktopWindowCount (0),
     mapNum (1),
-    defaultIcon (0)
+    defaultIcon (0),
+    activeWindow (0),
+    nextActiveWindow(0)
 {
 }
 

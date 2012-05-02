@@ -1158,7 +1158,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    }
 	}
 
-	foreach (CompWindow *w, priv->destroyedWindows)
+	foreach (CompWindow *w, priv->getDestroyedWindows())
 	{
 	    if (w->priv->serverId == event->xcreatewindow.window)
 	    {
@@ -1213,7 +1213,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 	if (!w)
 	{
-	    foreach (CompWindow *dw, priv->destroyedWindows)
+	    foreach (CompWindow *dw, priv->getDestroyedWindows())
 	    {
 		if (dw->priv->serverId == event->xdestroywindow.window)
 		{
@@ -1338,7 +1338,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		 * that it is already in the list of destroyed
 		 * windows, so check that list too */
 
-		foreach (CompWindow *dw, priv->destroyedWindows)
+		foreach (CompWindow *dw, priv->getDestroyedWindows())
 		{
 		    if (dw->priv->serverId == event->xreparent.window)
 		    {
@@ -2075,9 +2075,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	else
 	    w = NULL;
 
-	if (w && w->id () != priv->below)
+	if (w && w->id () != below)
 	{
-	    priv->below = w->id ();
+	    below = w->id ();
 
 	    if (!priv->optionGetClickToFocus () &&
 		priv->grabsEmpty ()                                 &&
@@ -2090,10 +2090,10 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		raise = priv->optionGetAutoraise ();
 		delay = priv->optionGetAutoraiseDelay ();
 
-		if (priv->autoRaiseTimer.active () &&
-		    priv->autoRaiseWindow != w->id ())
+		if (autoRaiseTimer_.active () &&
+		    autoRaiseWindow_ != w->id ())
 		{
-		    priv->autoRaiseTimer.stop ();
+		    autoRaiseTimer_.stop ();
 		}
 
 		if (w->type () & ~(CompWindowTypeDockMask |
@@ -2105,8 +2105,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    {
 			if (delay > 0)
 			{
-			    priv->autoRaiseWindow = w->id ();
-			    priv->autoRaiseTimer.start (
+			    autoRaiseWindow_ = w->id ();
+			    autoRaiseTimer_.start (
 				boost::bind (autoRaiseTimeout, this),
 				delay, (unsigned int) ((float) delay * 1.2));
 			}
@@ -2125,8 +2125,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
     case LeaveNotify:
 	if (event->xcrossing.detail != NotifyInferior)
 	{
-	    if (event->xcrossing.window == priv->below)
-		priv->below = None;
+	    if (event->xcrossing.window == below)
+		below = None;
 	}
 	break;
     default:
