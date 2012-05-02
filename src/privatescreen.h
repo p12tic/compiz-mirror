@@ -55,8 +55,6 @@ class OutputDevices
 public:
     OutputDevices();
 
-    void updateOutputDevices (CoreOptions& coreOptions,
-	    const CompWindowList& windows);
     void setCurrentOutput(unsigned int outputNum);
 
     CompOutput& getCurrentOutputDev()
@@ -730,6 +728,8 @@ class PrivateScreen :
 	void updateClientList () { WindowManager::updateClientList (*this); }
 
 	void detectOutputDevices (CoreOptions& coreOptions);
+	void updateOutputDevices (CoreOptions& coreOptions);
+
     public:
 	Display    *dpy;
 

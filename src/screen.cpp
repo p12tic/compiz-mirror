@@ -739,7 +739,7 @@ PrivateScreen::setOption (const CompString  &name,
 	case CoreOptions::Outputs:
 	    if (optionGetDetectOutputs ())
 		return false;
-	    updateOutputDevices (*this, windows);
+	    updateOutputDevices (*this);
 	    break;
 	default:
 	    break;
@@ -1987,7 +1987,7 @@ void cps::OutputDevices::adoptDevices(unsigned int nOutput)
 		overlappingOutputs = true;
 }
 void
-cps::OutputDevices::updateOutputDevices (CoreOptions& coreOptions, CompWindowList const& windows)
+PrivateScreen::updateOutputDevices (CoreOptions& coreOptions)
 {
     CompOption::Value::Vector &list = coreOptions.optionGetOutputs ();
     unsigned int              nOutput = 0;
@@ -2080,7 +2080,7 @@ PrivateScreen::detectOutputDevices (CoreOptions& coreOptions)
     }
     else
     {
-	updateOutputDevices (coreOptions, windows);
+	updateOutputDevices (coreOptions);
     }
 }
 
@@ -2290,7 +2290,7 @@ PrivateScreen::configure (XConfigureEvent *ce)
 
 	detectOutputDevices (*this);
 
-	updateOutputDevices (*this, windows);
+	updateOutputDevices (*this);
 }
 
 void
@@ -5006,7 +5006,7 @@ PrivateScreen::initDisplay (const char *name)
     initialized = true;
     initOptions ();
     detectOutputDevices (*this);
-    updateOutputDevices (*this, windows);
+    updateOutputDevices (*this);
 
     getDesktopHints ();
 
