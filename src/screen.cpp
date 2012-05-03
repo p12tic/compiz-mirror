@@ -3472,16 +3472,16 @@ CompScreenImpl::addAction (CompAction *action)
 
     if (action->type () & CompAction::BindingTypeKey)
     {
-	if (!priv->addPassiveKeyGrab (action->key ()))
+	if (!priv->grabManager.addPassiveKeyGrab (action->key ()))
 	    return false;
     }
 
     if (action->type () & CompAction::BindingTypeButton)
     {
-	if (!priv->addPassiveButtonGrab (action->button ()))
+	if (!priv->grabManager.addPassiveButtonGrab (action->button ()))
 	{
 	    if (action->type () & CompAction::BindingTypeKey)
-		priv->removePassiveKeyGrab (action->key ());
+		priv->grabManager.removePassiveKeyGrab (action->key ());
 
 	    return false;
 	}
@@ -3511,10 +3511,10 @@ CompScreenImpl::removeAction (CompAction *action)
 	return;
 
     if (action->type () & CompAction::BindingTypeKey)
-	priv->removePassiveKeyGrab (action->key ());
+	priv->grabManager.removePassiveKeyGrab (action->key ());
 
     if (action->type () & CompAction::BindingTypeButton)
-	priv->removePassiveButtonGrab (action->button ());
+	priv->grabManager.removePassiveButtonGrab (action->button ());
 
     if (action->edgeMask ())
     {
@@ -5217,9 +5217,10 @@ cps::StartupSequence::StartupSequence() :
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
     CoreOptions(false),
-    GrabManager (screen),
     dpy (NULL),
+    grabManager (screen),
     eventManager (),
+    screen(screen),
     screenInfo (),
     snDisplay(0),
     nDesktop (1),
