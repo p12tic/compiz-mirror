@@ -388,11 +388,11 @@ class EventManager :
 	void destroyGrabWindow (Display* dpy) { XDestroyWindow (dpy, grabWindow); }
 	Time getCurrentTime (Display* dpy) const;
 	Window const& getGrabWindow() const { return grabWindow; }
-
-    public:
-        void *possibleTap;
+	void resetPossibleTap() { possibleTap = 0; }
 
     private:
+        void *possibleTap;
+
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
 	/* We cannot use RefPtrs. See
@@ -578,7 +578,6 @@ private:
 
 class PrivateScreen :
     public CoreOptions,
-    public compiz::private_screen::EventManager,
     public compiz::private_screen::WindowManager,
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::History,
@@ -712,7 +711,7 @@ class PrivateScreen :
 
     public:
 	Display    *dpy;
-
+	::compiz::private_screen::EventManager eventManager;
 	::compiz::private_screen::Extension xSync;
 	::compiz::private_screen::Extension xRandr;
 	::compiz::private_screen::Extension xShape;

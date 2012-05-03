@@ -201,7 +201,7 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 
 	if (event->window != edgeWindow)
 	{
-	    if (grabsEmpty () || event->window != screen->root())
+	    if (eventManager.grabsEmpty () || event->window != screen->root())
 		return false;
 	}
 
@@ -227,7 +227,7 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 
 		if ((bindMods & modMask) == (event->state & modMask))
 		{
-		    if (triggerPress (action, state, arguments))
+		    if (eventManager.triggerPress (action, state, arguments))
 			return true;
 		}
 	    }
@@ -273,7 +273,7 @@ PrivateScreen::triggerButtonReleaseBindings (CompOption::Vector &options,
 	{
 	    if (action->button ().button () == (int) event->button)
 	    {
-	        if (triggerRelease (action, state, arguments))
+	        if (eventManager.triggerRelease (action, state, arguments))
 		    return true;
 	    }
 	}
@@ -327,7 +327,7 @@ PrivateScreen::triggerKeyPressBindings (CompOption::Vector &options,
 	    else if (!xkbEvent.get() && action->key ().keycode () == 0)
 		match = (bindMods == (event->state & modMask));
 
-	    if (match && triggerPress (action, state, arguments))
+	    if (match && eventManager.triggerPress (action, state, arguments))
 		return true;
 	}
     }
@@ -364,7 +364,7 @@ PrivateScreen::triggerKeyReleaseBindings (CompOption::Vector &options,
 	    else if (!xkbEvent.get() && ((mods & modMask & bindMods) != bindMods))
 	        match = true;
 
-	    if (match && triggerRelease (action, state, arguments))
+	    if (match && eventManager.triggerRelease (action, state, arguments))
 		return true;
 	}
     }
@@ -398,7 +398,7 @@ PrivateScreen::triggerStateNotifyBindings (CompOption::Vector  &options,
 
 		    if ((event->mods & modMask) == bindMods)
 		    {
-		        if (triggerPress (action, state, arguments))
+		        if (eventManager.triggerPress (action, state, arguments))
 			    return true;
 		    }
 		}
@@ -421,7 +421,7 @@ PrivateScreen::triggerStateNotifyBindings (CompOption::Vector  &options,
 		if ((event->mods && ((event->mods & modMask) != bindMods)) ||
 		    (!event->mods && (modKey == bindMods)))
 		{
-		    if (triggerRelease (action, state, arguments))
+		    if (eventManager.triggerRelease (action, state, arguments))
 			return true;
 		}
 	    }
@@ -689,7 +689,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	o[6].value ().set ((int) event->xbutton.button);
 	o[7].value ().set ((int) event->xbutton.time);
 
-	possibleTap = NULL;
+	eventManager.resetPossibleTap();
 	foreach (CompPlugin *p, CompPlugin::getPlugins ())
 	{
 	    CompOption::Vector &options = p->vTable->getOptions ();
@@ -732,7 +732,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	o[6].value ().set ((int) event->xkey.keycode);
 	o[7].value ().set ((int) event->xkey.time);
 
-	possibleTap = NULL;
+	eventManager.resetPossibleTap();
 	foreach (CompPlugin *p, CompPlugin::getPlugins ())
 	{
 	    CompOption::Vector &options = p->vTable->getOptions ();
@@ -954,7 +954,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		o[7].value ().set ((int) xkbEvent->time);
 
 		if (stateEvent->event_type == KeyPress)
-		    possibleTap = NULL;
+		    eventManager.resetPossibleTap();
 
 		foreach (CompPlugin *p, CompPlugin::getPlugins ())
 		{
@@ -1048,7 +1048,7 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
      */
     
     if (event->type == ButtonPress || event->type == KeyPress)
-	priv->possibleTap = NULL;
+	priv->eventManager.resetPossibleTap();
 
     eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
 
@@ -1064,7 +1064,7 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
 	XAllowEvents (priv->dpy, mode, event->xkey.time);
     }
 
-    if (priv->grabsEmpty () && event->type == KeyPress)
+    if (priv->eventManager.grabsEmpty () && event->type == KeyPress)
     {
 	XUngrabKeyboard (priv->dpy, event->xkey.time);
     }
@@ -1105,7 +1105,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
     eventHandled = priv->handleActionEvent (event);
     if (eventHandled)
     {
-	if (priv->grabsEmpty ())
+	if (priv->eventManager.grabsEmpty ())
 	    XAllowEvents (priv->dpy, AsyncPointer, event->xbutton.time);
 	return;
     }
@@ -1393,7 +1393,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    }
 	}
 
-	if (priv->grabsEmpty ())
+	if (priv->eventManager.grabsEmpty ())
 	    XAllowEvents (priv->dpy, ReplayPointer, event->xbutton.time);
 
 	break;
@@ -1910,9 +1910,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	if (wa.root == priv->rootWindow())
 	{
 	    if (event->xfocus.mode == NotifyGrab)
-		priv->grabNotified ();
+		priv->eventManager.grabNotified ();
 	    else if (event->xfocus.mode == NotifyUngrab)
-		priv->ungrabNotified ();
+		priv->eventManager.ungrabNotified ();
 	    else
 	    {
 		CompWindowList dockWindows;
@@ -2067,7 +2067,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
     break;
     case FocusOut:
 	if (event->xfocus.mode == NotifyUngrab)
-	    priv->ungrabNotified ();
+	    priv->eventManager.ungrabNotified ();
 	break;
     case EnterNotify:
 	if (event->xcrossing.root == priv->rootWindow())
@@ -2080,7 +2080,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    below = w->id ();
 
 	    if (!priv->optionGetClickToFocus () &&
-		priv->grabsEmpty ()                                 &&
+		priv->eventManager.grabsEmpty () &&
 		event->xcrossing.mode   != NotifyGrab                &&
 		event->xcrossing.detail != NotifyInferior)
 	    {
