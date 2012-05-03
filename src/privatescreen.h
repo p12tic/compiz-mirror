@@ -254,6 +254,8 @@ class WindowManager : boost::noncopyable
 	    { return clientListStacking; }
 
 	CompWindow * findWindow (Window id) const;
+	Window getTopWindow() const;
+
 
 	void removeFromFindWindowCache(CompWindow* w)
 	{
@@ -272,6 +274,8 @@ class WindowManager : boost::noncopyable
 	void invalidateServerWindows();
 
 	void insertWindow (CompWindow* w, Window aboveId);
+	void unhookWindow (CompWindow *w);
+	CompWindowList& getWindows()	{ return windows; }
 
 	CompWindowList& getDestroyedWindows()	{ return destroyedWindows; }
 
@@ -279,7 +283,15 @@ class WindowManager : boost::noncopyable
 	void unhookServerWindow(CompWindow *w);
 	CompWindowList& getServerWindows()	{ return serverWindows; }
 
-    //private:
+	typedef CompWindowList::const_iterator iterator;
+	typedef CompWindowList::const_reverse_iterator reverse_iterator;
+
+	iterator begin() const { return windows.begin(); }
+	iterator end() const { return windows.end(); }
+	reverse_iterator rbegin() const { return windows.rbegin(); }
+	reverse_iterator rend() const { return windows.rend(); }
+
+    private:
 	CompWindowList windows;
 
     private:
@@ -575,7 +587,7 @@ class Ping
 {
 public:
     Ping() : lastPing_(1) {}
-    bool handlePingTimeout (Display* dpy, CompWindowList& windows);
+    bool handlePingTimeout (WindowManager::iterator begin, WindowManager::iterator end, Display* dpy);
     unsigned int lastPing () const { return lastPing_; }
 
 private:
@@ -587,7 +599,6 @@ private:
 class PrivateScreen :
     public CoreOptions,
     public compiz::private_screen::EventManager,
-    public compiz::private_screen::WindowManager,
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence
@@ -681,8 +692,6 @@ class PrivateScreen :
 
 	void applyStartupProperties (CompWindow *window);
 
-	Window getTopWindow ();
-
 	void setNumberOfDesktops (unsigned int nDesktop);
 
 	void setCurrentDesktop (unsigned int desktop);
@@ -713,7 +722,7 @@ class PrivateScreen :
 	void setPlugins(CompOption::Value::Vector const& vList);
 	void initPlugins();
 
-	void updateClientList () { WindowManager::updateClientList (*this); }
+	void updateClientList () { windowManager.updateClientList (*this); }
 
 	void detectOutputDevices (CoreOptions& coreOptions);
 	void updateOutputDevices (CoreOptions& coreOptions);
@@ -728,6 +737,7 @@ class PrivateScreen :
 	::compiz::private_screen::Ping ping;
 	::compiz::private_screen::OrphanData orphanData;
 	::compiz::private_screen::OutputDevices outputDevices;
+	::compiz::private_screen::WindowManager windowManager;
     private:
 	::compiz::private_screen::Extension xkbEvent;
 
