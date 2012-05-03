@@ -600,7 +600,7 @@ CompScreenImpl::snDisplay ()
 Window
 CompScreenImpl::activeWindow ()
 {
-    return priv->activeWindow;
+    return priv->orphanData.activeWindow;
 }
 
 Window
@@ -2753,7 +2753,7 @@ CompScreenImpl::focusDefaultWindow ()
 
     if (focus)
     {
-	if (focus->id () != priv->activeWindow)
+	if (focus->id () != priv->orphanData.activeWindow)
 	    focus->moveInputFocusTo ();
     }
     else
@@ -3858,7 +3858,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 
 	priv->setCurrentActiveWindowHistory (priv->vp.x (), priv->vp.y ());
 
-	w = findWindow (priv->activeWindow);
+	w = findWindow (priv->orphanData.activeWindow);
 	if (w)
 	{
 	    CompPoint dvp;
@@ -4240,7 +4240,7 @@ cps::OutputDevices::outputDeviceForGeometry (
 CompIcon *
 CompScreenImpl::defaultIcon () const
 {
-    return priv->defaultIcon;
+    return priv->orphanData.defaultIcon;
 }
 
 bool
@@ -4251,18 +4251,18 @@ CompScreenImpl::updateDefaultIcon ()
     void       *data;
     CompSize   size;
 
-    if (priv->defaultIcon)
+    if (priv->orphanData.defaultIcon)
     {
-	delete priv->defaultIcon;
-	priv->defaultIcon = NULL;
+	delete priv->orphanData.defaultIcon;
+	priv->orphanData.defaultIcon = NULL;
     }
 
     if (!readImageFromFile (file, pname, size, data))
 	return false;
 
-    priv->defaultIcon = new CompIcon (size.width (), size.height ());
+    priv->orphanData.defaultIcon = new CompIcon (size.width (), size.height ());
 
-    memcpy (priv->defaultIcon->data (), data,
+    memcpy (priv->orphanData.defaultIcon->data (), data,
 	    size.width () * size.height () * sizeof (CARD32));
 
     free (data);
@@ -4492,7 +4492,7 @@ CompScreenImpl::vpSize () const
 int
 CompScreenImpl::desktopWindowCount ()
 {
-    return priv->desktopWindowCount;
+    return priv->orphanData.desktopWindowCount;
 }
 
 unsigned int

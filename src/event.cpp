@@ -210,7 +210,7 @@ PrivateScreen::triggerButtonPressBindings (CompOption::Vector &options,
 	    if (edgeWindow == screenEdge[i].id)
 	    {
 		edge = 1 << i;
-		arguments[1].value ().set ((int) activeWindow);
+		arguments[1].value ().set ((int) orphanData.activeWindow);
 		break;
 	    }
 	}
@@ -720,7 +720,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	break;
     case KeyPress:
 	o[0].value ().set ((int) event->xkey.window);
-	o[1].value ().set ((int) activeWindow);
+	o[1].value ().set ((int) orphanData.activeWindow);
 	o[2].value ().set ((int) event->xkey.state);
 	o[3].value ().set ((int) event->xkey.x_root);
 	o[4].value ().set ((int) event->xkey.y_root);
@@ -742,7 +742,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	break;
     case KeyRelease:
 	o[0].value ().set ((int) event->xkey.window);
-	o[1].value ().set ((int) activeWindow);
+	o[1].value ().set ((int) orphanData.activeWindow);
 	o[2].value ().set ((int) event->xkey.state);
 	o[3].value ().set ((int) event->xkey.x_root);
 	o[4].value ().set ((int) event->xkey.y_root);
@@ -792,7 +792,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		edgeWindow = None;
 
 		o[0].value ().set ((int) event->xcrossing.window);
-		o[1].value ().set ((int) activeWindow);
+		o[1].value ().set ((int) orphanData.activeWindow);
 		o[2].value ().set ((int) event->xcrossing.state);
 		o[3].value ().set ((int) event->xcrossing.x_root);
 		o[4].value ().set ((int) event->xcrossing.y_root);
@@ -827,7 +827,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		edgeWindow = event->xcrossing.window;
 
 		o[0].value ().set ((int) event->xcrossing.window);
-		o[1].value ().set ((int) activeWindow);
+		o[1].value ().set ((int) orphanData.activeWindow);
 		o[2].value ().set ((int) event->xcrossing.state);
 		o[3].value ().set ((int) event->xcrossing.x_root);
 		o[4].value ().set ((int) event->xcrossing.y_root);
@@ -876,7 +876,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		state = CompAction::StateTermEdgeDnd;
 
 		o[0].value ().set ((int) event->xclient.window);
-		o[1].value ().set ((int) activeWindow);
+		o[1].value ().set ((int) orphanData.activeWindow);
 		o[2].value ().set ((int) 0); /* fixme */
 		o[3].value ().set ((int) 0); /* fixme */
 		o[4].value ().set ((int) 0); /* fixme */
@@ -920,7 +920,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		state = CompAction::StateInitEdgeDnd;
 
 		o[0].value ().set ((int) event->xclient.window);
-		o[1].value ().set ((int) activeWindow);
+		o[1].value ().set ((int) orphanData.activeWindow);
 		o[2].value ().set ((int) 0); /* fixme */
 		o[3].value ().set ((int) event->xclient.data.l[2] >> 16);
 		o[4].value ().set ((int) event->xclient.data.l[2] & 0xffff);
@@ -942,8 +942,8 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    {
 		XkbStateNotifyEvent *stateEvent = (XkbStateNotifyEvent *) event;
 
-		o[0].value ().set ((int) activeWindow);
-		o[1].value ().set ((int) activeWindow);
+		o[0].value ().set ((int) orphanData.activeWindow);
+		o[1].value ().set ((int) orphanData.activeWindow);
 		o[2].value ().set ((int) stateEvent->mods);
 
 		o[3].setName ("time", CompOption::TypeInt);
@@ -965,8 +965,8 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	    }
 	    else if (xkbEvent->xkb_type == XkbBellNotify)
 	    {
-		o[0].value ().set ((int) activeWindow);
-		o[1].value ().set ((int) activeWindow);
+		o[0].value ().set ((int) orphanData.activeWindow);
+		o[1].value ().set ((int) orphanData.activeWindow);
 
 		o[2].setName ("time", CompOption::TypeInt);
 		o[2].value ().set ((int) xkbEvent->time);
@@ -1094,7 +1094,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 				      event->xmotion.y_root));
 	break;
     case KeyPress:
-	w = findWindow (priv->activeWindow);
+	w = findWindow (priv->orphanData.activeWindow);
 	if (w)
 	    priv->setCurrentOutput (w->outputDevice ());
 	break;
@@ -1253,7 +1253,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    /* been shaded */
 	    if (w->shaded ())
 	    {
-		if (w->id () == priv->activeWindow)
+		if (w->id () == priv->orphanData.activeWindow)
 		    w->moveInputFocusTo ();
 	    }
 
@@ -1386,7 +1386,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    w->updateAttributes (CompStackingUpdateModeAboveFullscreen);
 		}
 
-	        if (w->id () != priv->activeWindow)
+	        if (w->id () != priv->orphanData.activeWindow)
 		    if (!(w->type () & CompWindowTypeDockMask))
 			if (w->focus ())
 			    w->moveInputFocusTo ();
@@ -1412,9 +1412,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    if (w->isViewable ())
 		    {
 			if (w->type () == CompWindowTypeDesktopMask)
-			    priv->desktopWindowCount--;
+			    priv->orphanData.desktopWindowCount--;
 			else if (type == CompWindowTypeDesktopMask)
-			    priv->desktopWindowCount++;
+			    priv->orphanData.desktopWindowCount++;
 		    }
 
 		    w->wmType () = type;
@@ -1582,7 +1582,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 		wState = CompWindow::constrainWindowState (wState,
 							   w->actions ());
-		if (w->id () == priv->activeWindow)
+		if (w->id () == priv->orphanData.activeWindow)
 		    wState &= ~CompWindowStateDemandsAttentionMask;
 
 		if (wState != w->state ())
@@ -1924,14 +1924,14 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		{
 		    unsigned int state = w->state ();
 
-		    if (priv->nextActiveWindow == event->xfocus.window)
-			priv->nextActiveWindow = None;
+		    if (priv->orphanData.nextActiveWindow == event->xfocus.window)
+			priv->orphanData.nextActiveWindow = None;
 
-		    if (w->id () != priv->activeWindow)
+		    if (w->id () != priv->orphanData.activeWindow)
 		    {
-			CompWindow     *active = screen->findWindow (priv->activeWindow);
+			CompWindow     *active = screen->findWindow (priv->orphanData.activeWindow);
 
-			priv->activeWindow = w->id ();
+			priv->orphanData.activeWindow = w->id ();
 			w->priv->activeNum = priv->nextActiveNum();
 
 			if (active)
@@ -1993,7 +1993,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 			XChangeProperty (priv->dpy , priv->rootWindow(),
 					 Atoms::winActive,
 					 XA_WINDOW, 32, PropModeReplace,
-					 (unsigned char *) &priv->activeWindow, 1);
+					 (unsigned char *) &priv->orphanData.activeWindow, 1);
 
 			w->windowNotify (CompWindowNotifyFocusChange);
 		    }
@@ -2015,7 +2015,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 			(event->xfocus.mode == NotifyNormal &&
 			 event->xfocus.detail == NotifyInferior))
 		    {
-			priv->activeWindow = None;
+			priv->orphanData.activeWindow = None;
 
 			if (event->xfocus.detail == NotifyDetailNone ||
 			    (event->xfocus.mode == NotifyNormal &&
@@ -2055,10 +2055,10 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	{
 	    CompWindow *w;
 
-	    w = screen->findWindow (priv->activeWindow);
+	    w = screen->findWindow (priv->orphanData.activeWindow);
 
-	    priv->nextActiveWindow = None;
-	    priv->activeWindow = None;
+	    priv->orphanData.nextActiveWindow = None;
+	    priv->orphanData.activeWindow = None;
 
 	    if (w)
 		w->priv->updatePassiveButtonGrabs ();

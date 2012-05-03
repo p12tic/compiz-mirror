@@ -1343,7 +1343,7 @@ CompWindow::map ()
 	if (priv->pendingMaps > 0)
 	    priv->pendingMaps = 0;
 
-	priv->mapNum = screen->priv->mapNum++;
+	priv->mapNum = screen->priv->orphanData.mapNum++;
 
 	if (priv->struts)
 	    screen->updateWorkarea ();
@@ -1369,7 +1369,7 @@ CompWindow::map ()
 	screen->priv->updateClientList ();
 
 	if (priv->type & CompWindowTypeDesktopMask)
-	    screen->priv->desktopWindowCount++;
+	    screen->priv->orphanData.desktopWindowCount++;
 
 	if (priv->protocols & CompWindowProtocolSyncRequestMask)
 	{
@@ -1455,7 +1455,7 @@ CompWindow::unmap ()
 	return;
 
     if (priv->type == CompWindowTypeDesktopMask)
-	screen->priv->desktopWindowCount--;
+	screen->priv->orphanData.desktopWindowCount--;
 
     priv->attrib.map_state = IsUnmapped;
     priv->invisible = true;
@@ -2446,7 +2446,7 @@ CompWindow::moveInputFocusTo ()
 			 XA_WINDOW, 32, PropModeReplace,
 			 (unsigned char *) &priv->id, 1);
 
-	screen->priv->nextActiveWindow = priv->serverFrame;
+	screen->priv->orphanData.nextActiveWindow = priv->serverFrame;
     }
     else
     {
@@ -2479,7 +2479,7 @@ CompWindow::moveInputFocusTo ()
 	}
 
 	if (setFocus)
-	    screen->priv->nextActiveWindow = priv->id;
+	    screen->priv->orphanData.nextActiveWindow = priv->id;
 
 	if (!setFocus && !modalTransient)
 	{
@@ -2503,13 +2503,13 @@ void
 CompWindow::moveInputFocusToOtherWindow ()
 {
     if (priv->id == screen->activeWindow () ||
-	priv->id == screen->priv->nextActiveWindow)
+	priv->id == screen->priv->orphanData.nextActiveWindow)
     {
 	CompWindow *ancestor;
-	CompWindow *nextActive = screen->findWindow (screen->priv->nextActiveWindow);
+	CompWindow *nextActive = screen->findWindow (screen->priv->orphanData.nextActiveWindow);
 
         /* Window pending focus */
-	if (priv->id != screen->priv->nextActiveWindow &&
+	if (priv->id != screen->priv->orphanData.nextActiveWindow &&
 	    nextActive &&
 	    nextActive->focus ())
 	{
@@ -4133,7 +4133,7 @@ PrivateScreen::focusTopMostWindow ()
 
     if (focus)
     {
-	if (focus->id () != activeWindow)
+	if (focus->id () != orphanData.activeWindow)
 	    focus->moveInputFocusTo ();
     }
     else
@@ -4288,7 +4288,7 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	    /* put active or soon-to-be-active fullscreen windows over
 	       all others in their layer */
 	    if (priv->id == screen->activeWindow () ||
-		priv->id == screen->priv->nextActiveWindow)
+		priv->id == screen->priv->orphanData.nextActiveWindow)
 	    {
 		aboveFs = true;
 	    }
@@ -5565,7 +5565,7 @@ PrivateWindow::processMap ()
 void
 PrivateWindow::updatePassiveButtonGrabs ()
 {
-    bool onlyActions = (priv->id == screen->priv->activeWindow ||
+    bool onlyActions = (priv->id == screen->priv->orphanData.activeWindow ||
 			!screen->priv->optionGetClickToFocus ());
 
     if (!priv->frame)
@@ -6229,7 +6229,7 @@ CompWindow::~CompWindow ()
     if (priv->attrib.map_state == IsViewable)
     {
 	if (priv->type == CompWindowTypeDesktopMask)
-	    screen->priv->desktopWindowCount--;
+	    screen->priv->orphanData.desktopWindowCount--;
 
 	if (priv->destroyed && priv->struts)
 	    screen->updateWorkarea ();
