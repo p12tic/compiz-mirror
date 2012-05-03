@@ -108,7 +108,7 @@ void CompScreenImpl::setWindowState (unsigned int state, Window id)
 
 void CompScreenImpl::addToDestroyedWindows(CompWindow * cw)
 {
-    priv->addToDestroyedWindows(cw);
+    priv->windowManager.addToDestroyedWindows(cw);
 }
 
 void CompScreenImpl::processEvents () { priv->processEvents (); }
@@ -643,11 +643,11 @@ PrivateScreen::setAudibleBell (bool audible)
 bool
 PrivateScreen::handlePingTimeout ()
 {
-    return Ping::handlePingTimeout (dpy, windows);
+    return Ping::handlePingTimeout (windowManager.begin(), windowManager.end(), dpy);
 }
 
 bool
-cps::Ping::handlePingTimeout (Display* dpy, CompWindowList& windows)
+cps::Ping::handlePingTimeout (WindowManager::iterator begin, WindowManager::iterator end, Display* dpy)
 {
     XEvent      ev;
     int		ping = lastPing_ + 1;
@@ -662,8 +662,9 @@ cps::Ping::handlePingTimeout (Display* dpy, CompWindowList& windows)
     ev.xclient.data.l[3]    = 0;
     ev.xclient.data.l[4]    = 0;
 
-    foreach (CompWindow *w, windows)
+    for (WindowManager::iterator i = begin; i != end; ++i)
     {
+	CompWindow* const w(*i);
 	if (w->priv->handlePingTimeout (lastPing_))
 	{
 	    ev.xclient.window    = w->id ();
@@ -791,18 +792,18 @@ PrivateScreen::processEvents ()
 	pluginManager.updatePlugins (screen, optionGetActivePlugins());
     }
 
-    validateServerWindows();
+    windowManager.validateServerWindows();
 
     if (dbg)
     {
 	dbg->windowsChanged (false);
 	dbg->serverWindowsChanged (false);
-	events = dbg->loadStack (getServerWindows());
+	events = dbg->loadStack (windowManager.getServerWindows());
     }
     else
 	events = queueEvents ();
 
-    invalidateServerWindows();
+    windowManager.invalidateServerWindows();
 
     foreach (XEvent &event, events)
     {
@@ -873,18 +874,19 @@ PrivateScreen::processEvents ()
     }
 
     /* remove destroyed windows */
-    removeDestroyed ();
+    windowManager.removeDestroyed ();
 
     if (dbg)
     {
-	if (dbg->windowsChanged () && dbg->cmpStack (windows, getServerWindows()))
+	if (dbg->windowsChanged () &&
+	    dbg->cmpStack (windowManager.getWindows(), windowManager.getServerWindows()))
 	{
 	    compLogMessage ("core", CompLogLevelDebug, "stacks are out of sync");
 	    if (dbg->timedOut ())
 		compLogMessage ("core", CompLogLevelDebug, "however, this may be a false positive");
 	}
 
-	if (dbg->serverWindowsChanged () && dbg->checkSanity (windows))
+	if (dbg->serverWindowsChanged () && dbg->checkSanity (windowManager.getWindows()))
 	    compLogMessage ("core", CompLogLevelDebug, "windows are stacked incorrectly");
     }
 }
@@ -2038,10 +2040,12 @@ PrivateScreen::updateOutputDevices (CoreOptions& coreOptions)
 
     /* clear out fullscreen monitor hints of all windows as
        suggested on monitor layout changes in EWMH */
-    foreach (CompWindow *w, windows)
+    for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
+    {
+	CompWindow* const w(*i);
 	if (w->priv->fullscreenMonitorsSet)
 	    w->priv->setFullscreenMonitors (NULL);
-
+    }
     screen->updateWorkarea ();
 
     screen->outputChangeNotify ();
@@ -2575,8 +2579,9 @@ CompScreenImpl::_enterShowDesktopMode ()
     priv->showingDesktopMask = ~(CompWindowTypeDesktopMask |
 				 CompWindowTypeDockMask);
 
-    foreach (CompWindow *w, priv->windows)
+    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
     {
+	CompWindow* const w(*i);
 	if ((priv->showingDesktopMask & w->wmType ()) &&
 	    (!(w->state () & CompWindowStateSkipTaskbarMask) || st))
 	{
@@ -2627,18 +2632,21 @@ CompScreenImpl::_leaveShowDesktopMode (CompWindow *window)
 	window->priv->show ();
 
 	/* return if some other window is still in show desktop mode */
-	foreach (CompWindow *w, priv->windows)
+	for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+	{
+	    CompWindow* const w(*i);
 	    if (w->inShowDesktopMode ())
 		return;
-
+	}
 	priv->showingDesktopMask = 0;
     }
     else
     {
 	priv->showingDesktopMask = 0;
 
-	foreach (CompWindow *w, priv->windows)
+	for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
 	{
+	    CompWindow* const w(*i);
 	    if (!w->inShowDesktopMode ())
 		continue;
 
@@ -2661,8 +2669,11 @@ CompScreenImpl::_leaveShowDesktopMode (CompWindow *window)
 void
 CompScreenImpl::forEachWindow (CompWindow::ForEach proc)
 {
-    foreach (CompWindow *w, priv->windows)
+    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+    {
+	CompWindow* const w(*i);
 	proc (w);
+    }
 }
 
 void
@@ -2712,8 +2723,8 @@ CompScreenImpl::focusDefaultWindow ()
     if (!focus)
     {
 	/* Traverse down the stack */
-	for (CompWindowList::reverse_iterator rit = priv->windows.rbegin ();
-	     rit != priv->windows.rend (); rit++)
+	for (cps::WindowManager::reverse_iterator rit = priv->windowManager.rbegin();
+	     rit != priv->windowManager.rend(); rit++)
 	{
 	    w = (*rit);
 
@@ -2768,7 +2779,7 @@ CompScreenImpl::focusDefaultWindow ()
 CompWindow *
 CompScreenImpl::findWindow (Window id)
 {
-    return priv->findWindow (id);
+    return priv->windowManager.findWindow (id);
 }
 
 CompWindow*
@@ -2804,7 +2815,9 @@ CompScreenImpl::findTopLevelWindow (Window id, bool override_redirect)
 	    return w;
     }
 
-    foreach (CompWindow *w, priv->windows)
+    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+    {
+	CompWindow* const w(*i);
 	if (w->priv->frame == id)
 	{
 	    if (w->overrideRedirect () && !override_redirect)
@@ -2812,6 +2825,7 @@ CompScreenImpl::findTopLevelWindow (Window id, bool override_redirect)
 	    else
 		return w;
 	}
+    }
 
     return NULL;
 }
@@ -2819,7 +2833,7 @@ CompScreenImpl::findTopLevelWindow (Window id, bool override_redirect)
 void
 CompScreenImpl::insertWindow (CompWindow *w, Window	aboveId)
 {
-    priv->insertWindow (w, aboveId);
+    priv->windowManager.insertWindow (w, aboveId);
 }
 void
 cps::WindowManager::insertWindow (CompWindow* w, Window aboveId)
@@ -2886,7 +2900,7 @@ cps::WindowManager::insertWindow (CompWindow* w, Window aboveId)
 void
 CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 {
-    priv->insertServerWindow(w, aboveId);
+    priv->windowManager.insertServerWindow(w, aboveId);
 }
 
 void
@@ -2956,22 +2970,28 @@ cps::WindowManager::eraseWindowFromMap (Window id)
 void
 CompScreenImpl::unhookWindow (CompWindow *w)
 {
+    priv->windowManager.unhookWindow (w);
+}
+
+void
+cps::WindowManager::unhookWindow(CompWindow* w)
+{
     StackDebugger *dbg = StackDebugger::Default ();
 
     if (dbg)
 	dbg->windowsChanged (true);
 
     CompWindowList::iterator it =
-	std::find (priv->windows.begin (), priv->windows.end (), w);
+	std::find (windows.begin(), windows.end(), w);
 
-    if (it == priv->windows.end ())
+    if (it == windows.end())
     {
 	compLogMessage ("core", CompLogLevelWarn, "a broken plugin tried to remove a window twice, we won't allow that!");
 	return;
     }
 
-    priv->windows.erase (it);
-    priv->eraseWindowFromMap (w->id ());
+    windows.erase (it);
+    eraseWindowFromMap (w->id ());
 
     if (w->next)
 	w->next->prev = w->prev;
@@ -2982,13 +3002,13 @@ CompScreenImpl::unhookWindow (CompWindow *w)
     w->next = NULL;
     w->prev = NULL;
 
-    priv->removeFromFindWindowCache(w);
+    removeFromFindWindowCache(w);
 }
 
 void
 CompScreenImpl::unhookServerWindow (CompWindow *w)
 {
-    priv->unhookServerWindow (w);
+    priv->windowManager.unhookServerWindow (w);
 }
 
 void
@@ -3592,7 +3612,11 @@ CompScreenImpl::updateWorkarea ()
     CompRect workArea;
     CompRegion allWorkArea = CompRegion ();
     bool     workAreaChanged = false;
-    priv->outputDevices.computeWorkAreas(workArea, workAreaChanged, allWorkArea, priv->windows);
+    priv->outputDevices.computeWorkAreas(
+	    workArea,
+	    workAreaChanged,
+	    allWorkArea,
+	    priv->windowManager.getWindows());
 
     workArea = allWorkArea.boundingRect ();
 
@@ -3608,8 +3632,11 @@ CompScreenImpl::updateWorkarea ()
     {
 	/* as work area changed, update all maximized windows on this
 	   screen to snap to the new work area */
-	foreach (CompWindow *w, priv->windows)
+	for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+	{
+	    CompWindow* const w(*i);
 	    w->priv->updateSize ();
+	}
     }
 }
 
@@ -3692,9 +3719,12 @@ cps::WindowManager::updateClientList (PrivateScreen& ps)
 
     clientListStacking.clear ();
 
-    foreach (CompWindow *w, ps.windows)
+    for (cps::WindowManager::iterator i = ps.windowManager.begin(); i != ps.windowManager.end(); ++i)
+    {
+	CompWindow* const w(*i);
 	if (isClientListWindow (w))
 	    clientListStacking.push_back (w);
+    }
 
     /* clear clientList and copy clientListStacking into clientList */
     clientList = clientListStacking;
@@ -3742,7 +3772,7 @@ cps::WindowManager::updateClientList (PrivateScreen& ps)
 const CompWindowVector &
 CompScreenImpl::clientList (bool stackingOrder)
 {
-   return stackingOrder ? priv->getClientListStacking() : priv->getClientList();
+   return stackingOrder ? priv->windowManager.getClientListStacking() : priv->windowManager.getClientList();
 }
 
 void
@@ -3832,8 +3862,9 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
     tx *= -width ();
     ty *= -height ();
 
-    foreach (CompWindow *w, priv->windows)
+    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
     {
+	CompWindow* const w(*i);
 	unsigned int valueMask = CWX | CWY;
 	XWindowChanges xwc;
 
@@ -3991,7 +4022,7 @@ PrivateScreen::disableEdge (int edge)
 }
 
 Window
-PrivateScreen::getTopWindow ()
+cps::WindowManager::getTopWindow() const
 {
     /* return first window that has not been destroyed */
     if (windows.size ())
@@ -4032,8 +4063,9 @@ PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
     if (currentDesktop >= nDesktop)
 	currentDesktop = nDesktop - 1;
 
-    foreach (CompWindow *w, windows)
+    for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
     {
+	CompWindow* const w(*i);
 	if (w->desktop () == 0xffffffff)
 	    continue;
 
@@ -4059,8 +4091,9 @@ PrivateScreen::setCurrentDesktop (unsigned int desktop)
 
     currentDesktop = desktop;
 
-    foreach (CompWindow *w, windows)
+    for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
     {
+	CompWindow* const w(*i);
 	if (w->desktop () == 0xffffffff)
 	    continue;
 
@@ -4432,19 +4465,19 @@ CompScreenImpl::warpPointer (int dx,
 CompWindowList &
 CompScreenImpl::windows ()
 {
-    return priv->windows;
+    return priv->windowManager.getWindows();
 }
 
 CompWindowList &
 CompScreenImpl::serverWindows ()
 {
-    return priv->getServerWindows();
+    return priv->windowManager.getServerWindows();
 }
 
 CompWindowList &
 CompScreenImpl::destroyedWindows ()
 {
-    return priv->getDestroyedWindows();
+    return priv->windowManager.getDestroyedWindows();
 }
 
 
@@ -5098,8 +5131,9 @@ PrivateScreen::initDisplay (const char *name)
     */
     XFree (children);
 
-    foreach (CompWindow *w, windows)
+    for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
     {
+	CompWindow* const w(*i);
 	if (w->isViewable ())
 	    w->priv->activeNum = nextActiveNum ();
     }
@@ -5163,8 +5197,8 @@ CompScreenImpl::~CompScreenImpl ()
 {
     priv->removeAllSequences ();
 
-    while (!priv->windows.empty ())
-        delete priv->windows.front ();
+    while (!priv->windowManager.getWindows().empty ())
+        delete priv->windowManager.getWindows().front ();
 
     while (CompPlugin* p = CompPlugin::pop ())
 	CompPlugin::unload (p);

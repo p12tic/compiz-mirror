@@ -1158,7 +1158,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    }
 	}
 
-	foreach (CompWindow *w, priv->getDestroyedWindows())
+	foreach (CompWindow *w, priv->windowManager.getDestroyedWindows())
 	{
 	    if (w->priv->serverId == event->xcreatewindow.window)
 	    {
@@ -1191,7 +1191,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	     * that to wait until the map request */
 	    if ((wa.root == priv->rootWindow()))
 	    {
-		PrivateWindow::createCompWindow (priv->getTopWindow (), wa, event->xcreatewindow.window);
+		PrivateWindow::createCompWindow (priv->windowManager.getTopWindow (), wa, event->xcreatewindow.window);
             }
 	    else
 		XSelectInput (priv->dpy, event->xcreatewindow.window,
@@ -1213,7 +1213,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 	if (!w)
 	{
-	    foreach (CompWindow *dw, priv->getDestroyedWindows())
+	    foreach (CompWindow *dw, priv->windowManager.getDestroyedWindows())
 	    {
 		if (dw->priv->serverId == event->xdestroywindow.window)
 		{
@@ -1327,7 +1327,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		if (!XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa))
 		    priv->setDefaultWindowAttributes (&wa);
 
-		PrivateWindow::createCompWindow (priv->getTopWindow (), wa, event->xcreatewindow.window);
+		PrivateWindow::createCompWindow (priv->windowManager.getTopWindow (), wa, event->xcreatewindow.window);
 		break;
 	    }
 	    else
@@ -1338,7 +1338,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		 * that it is already in the list of destroyed
 		 * windows, so check that list too */
 
-		foreach (CompWindow *dw, priv->getDestroyedWindows())
+		foreach (CompWindow *dw, priv->windowManager.getDestroyedWindows())
 		{
 		    if (dw->priv->serverId == event->xreparent.window)
 		    {
@@ -2147,8 +2147,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    sa = (XSyncAlarmNotifyEvent *) event;
 
 
-	    foreach (w, priv->windows)
+	    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
 	    {
+		CompWindow* const w(*i);
 		if (w->priv->syncAlarm == sa->alarm)
 		{
 		    w->priv->handleSyncAlarm ();

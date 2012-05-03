@@ -1261,7 +1261,7 @@ CompWindow::destroy ()
 	}
 
 	priv->destroyed = true;
-	screen->priv->incrementPendingDestroys();
+	screen->priv->windowManager.incrementPendingDestroys();
     }
 
 }
@@ -1890,7 +1890,7 @@ PrivateWindow::circulate (XCirculateEvent *ce)
     Window newAboveId;
 
     if (ce->place == PlaceOnTop)
-	newAboveId = screen->priv->getTopWindow ();
+	newAboveId = screen->priv->windowManager.getTopWindow ();
     else
 	newAboveId = 0;
 
@@ -4114,10 +4114,12 @@ CompWindow::raise ()
 CompWindow *
 PrivateScreen::focusTopMostWindow ()
 {
-    CompWindow  *focus = NULL;
-    CompWindowList::reverse_iterator it = getServerWindows().rbegin ();
+    using ::compiz::private_screen::WindowManager;
 
-    for (; it != getServerWindows().rend (); it++)
+    CompWindow  *focus = NULL;
+    WindowManager::reverse_iterator it = windowManager.rbegin ();
+
+    for (; it != windowManager.rend (); it++)
     {
 	CompWindow *w = *it;
 
@@ -6175,9 +6177,9 @@ CompWindow::~CompWindow ()
      * pending destroy if this was a sibling
      * of one of those */
 
-    screen->priv->getDestroyedWindows().remove (this);
+    screen->priv->windowManager.getDestroyedWindows().remove (this);
 
-    foreach (CompWindow *dw, screen->priv->getDestroyedWindows())
+    foreach (CompWindow *dw, screen->priv->windowManager.getDestroyedWindows())
     {
 	if (dw->next == this)
 	    dw->next = this->next;
