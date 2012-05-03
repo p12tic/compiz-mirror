@@ -589,7 +589,6 @@ class PrivateScreen :
     public compiz::private_screen::EventManager,
     public compiz::private_screen::WindowManager,
     public compiz::private_screen::GrabManager,
-    public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
     public compiz::private_screen::Ping
 {
@@ -725,6 +724,7 @@ class PrivateScreen :
 	::compiz::private_screen::Extension xSync;
 	::compiz::private_screen::Extension xRandr;
 	::compiz::private_screen::Extension xShape;
+	::compiz::private_screen::History history;
 
 	::compiz::private_screen::OrphanData orphanData;
 	::compiz::private_screen::OutputDevices outputDevices;
