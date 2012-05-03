@@ -1361,7 +1361,7 @@ CompWindow::map ()
 	priv->invisible  = priv->isInvisible ();
 	priv->alive      = true;
 
-	priv->lastPong = screen->priv->lastPing ();
+	priv->lastPong = screen->priv->ping.lastPing ();
 
 	priv->updateRegion ();
 	priv->updateSize ();
@@ -6020,7 +6020,7 @@ CompWindow::CompWindow (Window aboveId,
 		  FocusChangeMask);
 
     priv->alpha     = (priv->attrib.depth == 32);
-    priv->lastPong  = screen->priv->lastPing ();
+    priv->lastPong  = screen->priv->ping.lastPing ();
 
     if (screen->XShape ())
 	XShapeSelectInput (screen->dpy (), priv->id, ShapeNotifyMask);

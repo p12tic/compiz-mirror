@@ -643,7 +643,7 @@ PrivateScreen::setAudibleBell (bool audible)
 bool
 PrivateScreen::handlePingTimeout ()
 {
-    return Ping::handlePingTimeout (dpy, windows);
+    return ping.handlePingTimeout (dpy, windows);
 }
 
 bool
