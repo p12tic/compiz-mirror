@@ -55,25 +55,33 @@ class OutputDevices
 public:
     OutputDevices();
 
-    void detectOutputDevices (CoreOptions& coreOptions,
-	    std::vector<XineramaScreenInfo>& screenInfo, CompWindowList& windows);
-    void updateOutputDevices (CoreOptions& coreOptions, CompWindowList const& windows);
-    void setCurrentOutput (unsigned int outputNum);
-    CompOutput& getCurrentOutputDev () { return outputDevs[currentOutputDev]; }
-    bool hasOverlappingOutputs () const { return overlappingOutputs; }
+    void setCurrentOutput(unsigned int outputNum);
+
+    CompOutput& getCurrentOutputDev() { return outputDevs[currentOutputDev]; }
+
+    bool hasOverlappingOutputs() const { return overlappingOutputs; }
+
     void computeWorkAreas(CompRect& workArea, bool& workAreaChanged,
-	    CompRegion& allWorkArea, CompWindowList const& windows);
-    CompOutput const& getOutputDev (unsigned int outputNum) const
+	    CompRegion& allWorkArea, const CompWindowList& windows);
+
+    const CompOutput& getOutputDev(unsigned int outputNum) const
     { return outputDevs[outputNum]; }
 
     // TODO breaks encapsulation horribly ought to be const at least
     // Even better, use begin() and end() return const_iterators
+    // BUT this is exported directly through API - which makes changing
+    // it a PITA.
     CompOutput::vector& getOutputDevs() { return outputDevs; }
 
-    int outputDeviceForGeometry (const CompWindow::Geometry& gm, int strategy, CompScreen* screen) const;
+    int outputDeviceForGeometry(const CompWindow::Geometry& gm, int strategy,
+	    CompScreen* screen) const;
+    void setGeometryOnDevice(unsigned int nOutput, int x, int y,
+	    const int width, const int height);
+    void adoptDevices(unsigned int nOutput);
 
 private:
-    static CompRect computeWorkareaForBox (const CompRect &box, CompWindowList const& windows);
+    static CompRect computeWorkareaForBox(const CompRect& box,
+	    const CompWindowList& windows);
 
     CompOutput::vector outputDevs;
     bool               overlappingOutputs;
@@ -582,8 +590,7 @@ class PrivateScreen :
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence,
-    public compiz::private_screen::Ping,
-    public compiz::private_screen::OutputDevices
+    public compiz::private_screen::Ping
 {
 
     public:
@@ -708,14 +715,18 @@ class PrivateScreen :
 
 	void updateClientList () { WindowManager::updateClientList (*this); }
 
+	void detectOutputDevices (CoreOptions& coreOptions);
+	void updateOutputDevices (CoreOptions& coreOptions);
+
     public:
 	Display    *dpy;
-	::compiz::private_screen::EventManager eventManager;
 	::compiz::private_screen::Extension xSync;
 	::compiz::private_screen::Extension xRandr;
 	::compiz::private_screen::Extension xShape;
 
+	::compiz::private_screen::EventManager eventManager;
 	::compiz::private_screen::OrphanData orphanData;
+	::compiz::private_screen::OutputDevices outputDevices;
     private:
 	::compiz::private_screen::Extension xkbEvent;
 

@@ -1083,20 +1083,20 @@ CompScreenImpl::_handleEvent (XEvent *event)
     switch (event->type) {
     case ButtonPress:
 	if (event->xbutton.root == priv->rootWindow())
-	    priv->setCurrentOutput (
+	    priv->outputDevices.setCurrentOutput (
 		outputDeviceForPoint (event->xbutton.x_root,
 						 event->xbutton.y_root));
 	break;
     case MotionNotify:
 	if (event->xmotion.root == priv->rootWindow())
-	    priv->setCurrentOutput (
+	    priv->outputDevices.setCurrentOutput (
 		outputDeviceForPoint (event->xmotion.x_root,
 				      event->xmotion.y_root));
 	break;
     case KeyPress:
 	w = findWindow (priv->orphanData.activeWindow);
 	if (w)
-	    priv->setCurrentOutput (w->outputDevice ());
+	    priv->outputDevices.setCurrentOutput (w->outputDevice ());
 	break;
     default:
 	break;
