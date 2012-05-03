@@ -366,10 +366,10 @@ class EventManager :
     public GrabList
 {
     public:
-	EventManager (CompScreen *screen);
+	EventManager ();
 	~EventManager ();
 
-	bool init (CoreOptions& coreOptions, const char *name);
+	void init ();
 
 	void handleSignal (int signum);
 	bool triggerPress   (CompAction         *action,
@@ -408,11 +408,11 @@ class EventManager :
 	void destroyGrabWindow (Display* dpy) { XDestroyWindow (dpy, grabWindow); }
 	Time getCurrentTime (Display* dpy) const;
 	Window const& getGrabWindow() const { return grabWindow; }
-
-    public:
-        void *possibleTap;
+	void resetPossibleTap() { possibleTap = 0; }
 
     private:
+        void *possibleTap;
+
 	Glib::RefPtr <Glib::MainLoop>  mainloop;
 
 	/* We cannot use RefPtrs. See
@@ -437,8 +437,6 @@ class EventManager :
 			      on FocusOut and false on
 			      UngrabNotify from FocusIn */
 	Window  grabWindow;
-    private:
-	virtual bool initDisplay (const char *name);
 };
 
 class KeyGrab {
@@ -598,7 +596,6 @@ private:
 
 class PrivateScreen :
     public CoreOptions,
-    public compiz::private_screen::EventManager,
     public compiz::private_screen::GrabManager,
     public compiz::private_screen::StartupSequence
 {
@@ -606,6 +603,8 @@ class PrivateScreen :
     public:
 	PrivateScreen (CompScreen *screen);
 	~PrivateScreen ();
+
+	bool initDisplay (const char *name);
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
@@ -728,7 +727,7 @@ class PrivateScreen :
 
     public:
 	Display    *dpy;
-
+	::compiz::private_screen::EventManager eventManager;
 	::compiz::private_screen::Extension xSync;
 	::compiz::private_screen::Extension xRandr;
 	::compiz::private_screen::Extension xShape;
@@ -797,7 +796,6 @@ class PrivateScreen :
 	bool initialized;
 
     private:
-	virtual bool initDisplay (const char *name);
 	bool handlePingTimeout ();
 
 	Window	edgeWindow;
