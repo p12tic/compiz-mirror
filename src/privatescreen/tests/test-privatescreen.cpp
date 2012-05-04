@@ -698,7 +698,7 @@ TEST(privatescreen_EventManagerTest, create_and_destroy)
 
     MockCompScreen comp_screen;
 
-    cps::EventManager em(0);
+    cps::EventManager em;
 }
 
 TEST(privatescreen_EventManagerTest, init)
@@ -719,8 +719,8 @@ TEST(privatescreen_EventManagerTest, init)
     // We should kill this dependency
     EXPECT_CALL(comp_screen, dpy()).WillRepeatedly(Return((Display*)(0)));
 
-    cps::EventManager em(&comp_screen);
+    cps::EventManager em;
 
     CoreOptions coreOptions(false);
-    em.init(coreOptions, 0);
+    em.init();
 }
