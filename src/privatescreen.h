@@ -686,8 +686,6 @@ class PrivateScreen :
 
 	void configure (XConfigureEvent *ce);
 
-	void applyStartupProperties (CompWindow *window);
-
 	void setNumberOfDesktops (unsigned int nDesktop);
 
 	void setCurrentDesktop (unsigned int desktop);

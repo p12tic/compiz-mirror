@@ -3948,7 +3948,7 @@ cps::WindowManager::findGroup (Window id)
 }
 
 void
-PrivateScreen::applyStartupProperties (CompWindow *window)
+cps::StartupSequence::applyStartupProperties (CompWindow *window)
 {
     CompStartupSequence *s = NULL;
     const char	        *startupId = window->startupId ();
