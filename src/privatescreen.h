@@ -293,8 +293,6 @@ class WindowManager : boost::noncopyable
 
     private:
 	CompWindowList windows;
-
-    private:
 	CompWindowList serverWindows;
 	CompWindowList destroyedWindows;
 	bool           stackIsFresh;
