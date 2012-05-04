@@ -541,13 +541,10 @@ class StartupSequence : boost::noncopyable,
 	void applyStartupProperties (CompScreen* screen, CompWindow *window);
 	bool handleStartupSequenceTimeout ();
 	virtual void updateStartupFeedback () = 0;
-    protected:
-	bool empty() const { return startupSequences.empty(); }
+	bool emptySequence() const { return startupSequences.empty(); }
     private:
 	std::list<CompStartupSequence *> startupSequences;
 	CompTimer                        startupSequenceTimer;
-	class ForceErrorIfGlobalUsed;
-	ForceErrorIfGlobalUsed* screen;
 };
 
 class Extension

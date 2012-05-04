@@ -2094,7 +2094,7 @@ PrivateScreen::updateStartupFeedback ()
 {
     if (initialized)
     {
-	if (!empty())
+	if (!emptySequence())
 	    XDefineCursor (dpy, rootWindow(), busyCursor);
 	else
 	    XDefineCursor (dpy, rootWindow(), normalCursor);
