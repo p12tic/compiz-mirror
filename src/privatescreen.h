@@ -538,7 +538,7 @@ class StartupSequence : boost::noncopyable,
 	void addSequence (SnStartupSequence *sequence);
 	void removeSequence (SnStartupSequence *sequence);
 	void removeAllSequences ();
-	void applyStartupProperties (CompWindow *window);
+	void applyStartupProperties (CompScreen* screen, CompWindow *window);
 	bool handleStartupSequenceTimeout ();
 	virtual void updateStartupFeedback () = 0;
     protected:
@@ -546,6 +546,8 @@ class StartupSequence : boost::noncopyable,
     private:
 	std::list<CompStartupSequence *> startupSequences;
 	CompTimer                        startupSequenceTimer;
+	class ForceErrorIfGlobalUsed;
+	ForceErrorIfGlobalUsed* screen;
 };
 
 class Extension
