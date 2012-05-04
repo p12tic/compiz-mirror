@@ -547,6 +547,16 @@ class StartupSequence : boost::noncopyable,
 	CompTimer                        startupSequenceTimer;
 };
 
+class StartupSequenceImpl : public StartupSequence
+{
+    public:
+	StartupSequenceImpl(PrivateScreen* priv) : priv(priv) {}
+
+	virtual void updateStartupFeedback ();
+    private:
+	PrivateScreen* priv;
+};
+
 class Extension
 {
 public:
@@ -595,7 +605,7 @@ private:
 
 class PrivateScreen :
     public CoreOptions,
-    public compiz::private_screen::StartupSequence
+    public compiz::private_screen::StartupSequenceImpl
 {
 
     public:
@@ -649,8 +659,6 @@ class PrivateScreen :
 	void setDesktopHints ();
 
 	void setVirtualScreenSize (int hsize, int vsize);
-
-	void updateStartupFeedback ();
 
 	void updateScreenEdges ();
 

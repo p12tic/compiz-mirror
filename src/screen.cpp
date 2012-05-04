@@ -2090,14 +2090,14 @@ PrivateScreen::detectOutputDevices (CoreOptions& coreOptions)
 
 
 void
-PrivateScreen::updateStartupFeedback ()
+cps::StartupSequenceImpl::updateStartupFeedback ()
 {
-    if (initialized)
+    if (priv->initialized)
     {
 	if (!emptySequence())
-	    XDefineCursor (dpy, rootWindow(), busyCursor);
+	    XDefineCursor (priv->dpy, priv->rootWindow(), priv->busyCursor);
 	else
-	    XDefineCursor (dpy, rootWindow(), normalCursor);
+	    XDefineCursor (priv->dpy, priv->rootWindow(), priv->normalCursor);
     }
 }
 
@@ -5220,6 +5220,7 @@ cps::StartupSequence::StartupSequence() :
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
     CoreOptions(false),
+    StartupSequenceImpl(this),
     dpy (NULL),
     grabManager (screen),
     eventManager (),
