@@ -2094,7 +2094,7 @@ PrivateScreen::updateStartupFeedback ()
 {
     if (initialized)
     {
-	if (!startupSequences.empty ())
+	if (!empty())
 	    XDefineCursor (dpy, rootWindow(), busyCursor);
 	else
 	    XDefineCursor (dpy, rootWindow(), normalCursor);
@@ -5213,6 +5213,9 @@ cps::StartupSequence::StartupSequence() :
     startupSequences (),
     startupSequenceTimer ()
 {
+    startupSequenceTimer.setCallback (
+	boost::bind (&cps::StartupSequence::handleStartupSequenceTimeout, this));
+    startupSequenceTimer.setTimes (1000, 1500);
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
@@ -5248,10 +5251,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));
-
-    startupSequenceTimer.setCallback (
-	boost::bind (&PrivateScreen::handleStartupSequenceTimeout, this));
-    startupSequenceTimer.setTimes (1000, 1500);
 }
 
 cps::History::History() :

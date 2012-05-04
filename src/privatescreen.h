@@ -541,8 +541,9 @@ class StartupSequence : boost::noncopyable,
 	void applyStartupProperties (CompWindow *window);
 	bool handleStartupSequenceTimeout ();
 	virtual void updateStartupFeedback () = 0;
-
-    //private:
+    protected:
+	bool empty() const { return startupSequences.empty(); }
+    private:
 	std::list<CompStartupSequence *> startupSequences;
 	CompTimer                        startupSequenceTimer;
 };
