@@ -1932,7 +1932,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 			CompWindow     *active = screen->findWindow (priv->orphanData.activeWindow);
 
 			priv->orphanData.activeWindow = w->id ();
-			w->priv->activeNum = priv->nextActiveNum();
+			w->priv->activeNum = priv->history.nextActiveNum();
 
 			if (active)
 			{
@@ -1988,7 +1988,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 			w->priv->updatePassiveButtonGrabs ();
 
-			priv->addToCurrentActiveWindowHistory (w->id ());
+			priv->history.addToCurrentActiveWindowHistory (w->id ());
 
 			XChangeProperty (priv->dpy , priv->rootWindow(),
 					 Atoms::winActive,

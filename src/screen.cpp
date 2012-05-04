@@ -3891,7 +3891,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 
 	priv->setDesktopHints ();
 
-	priv->setCurrentActiveWindowHistory (priv->vp.x (), priv->vp.y ());
+	priv->history.setCurrentActiveWindowHistory (priv->vp.x (), priv->vp.y ());
 
 	w = findWindow (priv->orphanData.activeWindow);
 	if (w)
@@ -3903,7 +3903,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 	    /* add window to current history if it's default viewport is
 	       still the current one. */
 	    if (priv->vp.x () == dvp.x () && priv->vp.y () == dvp.y ())
-		priv->addToCurrentActiveWindowHistory (w->id ());
+		priv->history.addToCurrentActiveWindowHistory (w->id ());
 	}
     }
 }
@@ -4535,7 +4535,7 @@ CompScreenImpl::desktopWindowCount ()
 unsigned int
 CompScreenImpl::activeNum () const
 {
-    return priv->getActiveNum();
+    return priv->history.getActiveNum();
 }
 
 CompOutput::vector &
@@ -4571,7 +4571,7 @@ CompScreenImpl::nDesktop ()
 CompActiveWindowHistory *
 CompScreenImpl::currentHistory ()
 {
-    return priv->getCurrentHistory ();
+    return priv->history.getCurrentHistory ();
 }
 
 bool
@@ -5135,7 +5135,7 @@ PrivateScreen::initDisplay (const char *name)
     {
 	CompWindow* const w(*i);
 	if (w->isViewable ())
-	    w->priv->activeNum = nextActiveNum ();
+	    w->priv->activeNum = history.nextActiveNum ();
     }
 
     Window               focus;

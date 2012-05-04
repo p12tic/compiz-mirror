@@ -600,7 +600,6 @@ class PrivateScreen :
     public CoreOptions,
     public compiz::private_screen::EventManager,
     public compiz::private_screen::GrabManager,
-    public compiz::private_screen::History,
     public compiz::private_screen::StartupSequence
 {
 
@@ -733,6 +732,7 @@ class PrivateScreen :
 	::compiz::private_screen::Extension xSync;
 	::compiz::private_screen::Extension xRandr;
 	::compiz::private_screen::Extension xShape;
+	::compiz::private_screen::History history;
 
 	::compiz::private_screen::Ping ping;
 	::compiz::private_screen::OrphanData orphanData;
