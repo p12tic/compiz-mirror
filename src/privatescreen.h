@@ -738,8 +738,8 @@ class PrivateScreen :
 	::compiz::private_screen::OutputDevices outputDevices;
 	::compiz::private_screen::WindowManager windowManager;
 
-	CompScreen* screen;
     private:
+	CompScreen* screen;
 	::compiz::private_screen::Extension xkbEvent;
 
 	//TODO? Pull these two out as a class?
