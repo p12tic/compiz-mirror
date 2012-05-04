@@ -602,8 +602,7 @@ private:
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
-    public CoreOptions,
-    public compiz::private_screen::ViewPort
+    public CoreOptions
 {
 
     public:
@@ -734,6 +733,7 @@ class PrivateScreen :
 	::compiz::private_screen::Extension xShape;
 	::compiz::private_screen::History history;
 
+	::compiz::private_screen::ViewPort viewPort;
 	::compiz::private_screen::StartupSequenceImpl startupSequence;
 	::compiz::private_screen::GrabManager grabManager;
 	::compiz::private_screen::EventManager eventManager;
