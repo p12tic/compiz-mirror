@@ -530,12 +530,11 @@ struct ViewPort
     CompSize     vpSize;
 };
 
-class StartupSequence : boost::noncopyable,
-    public ViewPort
+class StartupSequence : boost::noncopyable
 {
     public:
 	StartupSequence();
-	void addSequence (SnStartupSequence *sequence);
+	void addSequence (SnStartupSequence *sequence, CompPoint const& vp);
 	void removeSequence (SnStartupSequence *sequence);
 	void removeAllSequences ();
 	void applyStartupProperties (CompScreen* screen, CompWindow *window);
@@ -547,6 +546,7 @@ class StartupSequence : boost::noncopyable,
 	CompTimer                        startupSequenceTimer;
 };
 
+// Implemented as a separate class to break dependency on PrivateScreen & XWindows
 class StartupSequenceImpl : public StartupSequence
 {
     public:
@@ -554,7 +554,7 @@ class StartupSequenceImpl : public StartupSequence
 
 	virtual void updateStartupFeedback ();
     private:
-	PrivateScreen* priv;
+	PrivateScreen* const priv;
 };
 
 class Extension
@@ -605,7 +605,7 @@ private:
 
 class PrivateScreen :
     public CoreOptions,
-    public compiz::private_screen::StartupSequenceImpl
+    public compiz::private_screen::ViewPort
 {
 
     public:
@@ -736,7 +736,8 @@ class PrivateScreen :
 	::compiz::private_screen::Extension xShape;
 	::compiz::private_screen::History history;
 
-    	::compiz::private_screen::GrabManager grabManager;
+	::compiz::private_screen::StartupSequenceImpl startupSequence;
+	::compiz::private_screen::GrabManager grabManager;
 	::compiz::private_screen::EventManager eventManager;
 	::compiz::private_screen::Ping ping;
 	::compiz::private_screen::OrphanData orphanData;

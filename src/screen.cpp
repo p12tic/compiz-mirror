@@ -2128,7 +2128,7 @@ cps::StartupSequence::handleStartupSequenceTimeout ()
 }
 
 void
-cps::StartupSequence::addSequence (SnStartupSequence *sequence)
+cps::StartupSequence::addSequence (SnStartupSequence *sequence, CompPoint const& vp)
 {
     CompStartupSequence *s;
 
@@ -2209,10 +2209,10 @@ PrivateScreen::compScreenSnEvent (SnMonitorEvent *event,
 
     switch (sn_monitor_event_get_type (event)) {
     case SN_MONITOR_EVENT_INITIATED:
-	self->addSequence (sequence);
+	self->startupSequence.addSequence (sequence, self->vp);
 	break;
     case SN_MONITOR_EVENT_COMPLETED:
-	self->removeSequence (sequence);
+	self->startupSequence.removeSequence (sequence);
 	break;
     case SN_MONITOR_EVENT_CHANGED:
     case SN_MONITOR_EVENT_CANCELED:
@@ -5185,7 +5185,7 @@ PrivateScreen::initDisplay (const char *name)
 
 CompScreenImpl::~CompScreenImpl ()
 {
-    priv->removeAllSequences ();
+    priv->startupSequence.removeAllSequences ();
 
     while (!priv->windowManager.getWindows().empty ())
         delete priv->windowManager.getWindows().front ();
@@ -5220,8 +5220,8 @@ cps::StartupSequence::StartupSequence() :
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
     CoreOptions(false),
-    StartupSequenceImpl(this),
     dpy (NULL),
+    startupSequence(this),
     grabManager (screen),
     eventManager (),
     screen(screen),
