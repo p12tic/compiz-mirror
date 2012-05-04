@@ -492,9 +492,8 @@ public:
     void updatePassiveKeyGrabs ();
     void updatePassiveButtonGrabs(Window serverFrame);
 
-protected:
-    CompScreen  * const screen;
 private:
+    CompScreen  * const screen;
     std::list<ButtonGrab> buttonGrabs;
     std::list<KeyGrab>    keyGrabs;
 };
