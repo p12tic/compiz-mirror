@@ -761,7 +761,28 @@ public:
     compiz::private_screen::OutputDevices outputDevices;
     compiz::private_screen::WindowManager windowManager;
 
+public:
+    Colormap colormap;
+    int screenNum;
+    unsigned int nDesktop;
+    unsigned int currentDesktop;
+
+    CompOutput fullscreenOutput;
+    CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
+
+    Window wmSnSelectionWindow;
+
+    Cursor normalCursor;
+    Cursor busyCursor;
+    Cursor invisibleCursor;
+    CompRect workArea;
+    unsigned int showingDesktopMask;
+
+    bool initialized;
+
 private:
+    bool handlePingTimeout();
+
     CompScreen* screen;
     compiz::private_screen::Extension xkbEvent;
     //TODO? Pull these two out as a class?
@@ -772,47 +793,18 @@ private:
     KeyCode escapeKeyCode;
     KeyCode returnKeyCode;
 
-public:
-    Colormap colormap;
-    int screenNum;
-    unsigned int nDesktop;
-    unsigned int currentDesktop;
-
-private:
     CompRegion region;
     Window root;
     XWindowAttributes attrib;
 
-public:
-    CompOutput fullscreenOutput;
-    CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
-
-private:
     SnMonitorContext* snContext;
 
-public:
-    Window wmSnSelectionWindow;
-
-private:
     Atom wmSnAtom;
     Time wmSnTimestamp;
 
-public:
-    Cursor normalCursor;
-    Cursor busyCursor;
-    Cursor invisibleCursor;
-    CompRect workArea;
-    unsigned int showingDesktopMask;
-
-private:
     unsigned long *desktopHintData;
     int desktopHintSize;
 
-public:
-    bool initialized;
-
-private:
-    bool handlePingTimeout();
     Window edgeWindow;
     CompTimer pingTimer;
     CompTimer edgeDelayTimer;
