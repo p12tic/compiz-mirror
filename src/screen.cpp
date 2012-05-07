@@ -1814,8 +1814,8 @@ PrivateScreen::setDesktopHints ()
 
     for (i = 0; i < nDesktop; i++)
     {
-	data[offset + i * 2 + 0] = vp.x () * screen->width ();
-	data[offset + i * 2 + 1] = vp.y () * screen->height ();
+	data[offset + i * 2 + 0] = viewPort.vp.x () * screen->width ();
+	data[offset + i * 2 + 1] = viewPort.vp.y () * screen->height ();
     }
 
     if (!desktopHintEqual (data, dSize, offset, hintSize))
@@ -1828,8 +1828,8 @@ PrivateScreen::setDesktopHints ()
 
     for (i = 0; i < nDesktop; i++)
     {
-	data[offset + i * 2 + 0] = screen->width () * vpSize.width ();
-	data[offset + i * 2 + 1] = screen->height () * vpSize.height ();
+	data[offset + i * 2 + 0] = screen->width () * viewPort.vpSize.width ();
+	data[offset + i * 2 + 1] = screen->height () * viewPort.vpSize.height ();
     }
 
     if (!desktopHintEqual (data, dSize, offset, hintSize))
@@ -1946,8 +1946,8 @@ PrivateScreen::setVirtualScreenSize (int newh, int newv)
 	}
     }
 
-    vpSize.setWidth (newh);
-    vpSize.setHeight (newv);
+    viewPort.vpSize.setWidth (newh);
+    viewPort.vpSize.setHeight (newv);
 
     setDesktopHints ();
 }
@@ -2090,14 +2090,14 @@ PrivateScreen::detectOutputDevices (CoreOptions& coreOptions)
 
 
 void
-PrivateScreen::updateStartupFeedback ()
+cps::StartupSequenceImpl::updateStartupFeedback ()
 {
-    if (initialized)
+    if (priv->initialized)
     {
-	if (!startupSequences.empty ())
-	    XDefineCursor (dpy, rootWindow(), busyCursor);
+	if (!emptySequence())
+	    XDefineCursor (priv->dpy, priv->rootWindow(), priv->busyCursor);
 	else
-	    XDefineCursor (dpy, rootWindow(), normalCursor);
+	    XDefineCursor (priv->dpy, priv->rootWindow(), priv->normalCursor);
     }
 }
 
@@ -2128,7 +2128,7 @@ cps::StartupSequence::handleStartupSequenceTimeout ()
 }
 
 void
-cps::StartupSequence::addSequence (SnStartupSequence *sequence)
+cps::StartupSequence::addSequence (SnStartupSequence *sequence, CompPoint const& vp)
 {
     CompStartupSequence *s;
 
@@ -2209,10 +2209,10 @@ PrivateScreen::compScreenSnEvent (SnMonitorEvent *event,
 
     switch (sn_monitor_event_get_type (event)) {
     case SN_MONITOR_EVENT_INITIATED:
-	self->addSequence (sequence);
+	self->startupSequence.addSequence (sequence, self->viewPort.vp);
 	break;
     case SN_MONITOR_EVENT_COMPLETED:
-	self->removeSequence (sequence);
+	self->startupSequence.removeSequence (sequence);
 	break;
     case SN_MONITOR_EVENT_CHANGED:
     case SN_MONITOR_EVENT_CANCELED:
@@ -2493,12 +2493,12 @@ PrivateScreen::getDesktopHints ()
 		memcpy (data, propData, sizeof (unsigned long) * 2);
 
 		if (data[0] / (unsigned int) screen->width () <
-					     (unsigned int) vpSize.width () - 1)
-		    vp.setX (data[0] / screen->width ());
+					     (unsigned int) viewPort.vpSize.width () - 1)
+		    viewPort.vp.setX (data[0] / screen->width ());
 
 		if (data[1] / (unsigned int) screen->height () <
-					    (unsigned int) vpSize.height () - 1)
-		    vp.setY (data[1] / screen->height ());
+					    (unsigned int) viewPort.vpSize.height () - 1)
+		    viewPort.vp.setY (data[1] / screen->height ());
 	    }
 
 	    XFree (propData);
@@ -3843,19 +3843,19 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 {
     CompPoint pnt;
 
-    tx = priv->vp.x () - tx;
-    tx = compiz::core::screen::wraparound_mod (tx, priv->vpSize.width ());
-    tx -= priv->vp.x ();
+    tx = priv->viewPort.vp.x () - tx;
+    tx = compiz::core::screen::wraparound_mod (tx, priv->viewPort.vpSize.width ());
+    tx -= priv->viewPort.vp.x ();
 
-    ty = priv->vp.y () - ty;
-    ty = compiz::core::screen::wraparound_mod (ty, priv->vpSize.height ());
-    ty -= priv->vp.y ();
+    ty = priv->viewPort.vp.y () - ty;
+    ty = compiz::core::screen::wraparound_mod (ty, priv->viewPort.vpSize.height ());
+    ty -= priv->viewPort.vp.y ();
 
     if (!tx && !ty)
 	return;
 
-    priv->vp.setX (priv->vp.x () + tx);
-    priv->vp.setY (priv->vp.y () + ty);
+    priv->viewPort.vp.setX (priv->viewPort.vp.x () + tx);
+    priv->viewPort.vp.setY (priv->viewPort.vp.y () + ty);
 
     tx *= -width ();
     ty *= -height ();
@@ -3889,7 +3889,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 
 	priv->setDesktopHints ();
 
-	priv->history.setCurrentActiveWindowHistory (priv->vp.x (), priv->vp.y ());
+	priv->history.setCurrentActiveWindowHistory (priv->viewPort.vp.x (), priv->viewPort.vp.y ());
 
 	w = findWindow (priv->orphanData.activeWindow);
 	if (w)
@@ -3900,7 +3900,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 
 	    /* add window to current history if it's default viewport is
 	       still the current one. */
-	    if (priv->vp.x () == dvp.x () && priv->vp.y () == dvp.y ())
+	    if (priv->viewPort.vp.x () == dvp.x () && priv->viewPort.vp.y () == dvp.y ())
 		priv->history.addToCurrentActiveWindowHistory (w->id ());
 	}
     }
@@ -3948,7 +3948,7 @@ cps::WindowManager::findGroup (Window id)
 }
 
 void
-PrivateScreen::applyStartupProperties (CompWindow *window)
+cps::StartupSequence::applyStartupProperties (CompScreen* screen, CompWindow *window)
 {
     CompStartupSequence *s = NULL;
     const char	        *startupId = window->startupId ();
@@ -4142,12 +4142,12 @@ CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
     rect.setHeight (gm.heightIncBorders ());
 
     offset = rect.centerX () < 0 ? -1 : 0;
-    viewport.setX (priv->vp.x () + ((rect.centerX () / width ()) + offset) %
-		   priv->vpSize.width ());
+    viewport.setX (priv->viewPort.vp.x () + ((rect.centerX () / width ()) + offset) %
+		   priv->viewPort.vpSize.width ());
 
     offset = rect.centerY () < 0 ? -1 : 0;
-    viewport.setY (priv->vp.y () + ((rect.centerY () / height ()) + offset ) %
-		   priv->vpSize.height ());
+    viewport.setY (priv->viewPort.vp.y () + ((rect.centerY () / height ()) + offset ) %
+		   priv->viewPort.vpSize.height ());
 }
 
 int
@@ -4515,13 +4515,13 @@ CompScreenImpl::screenNum ()
 const CompPoint &
 CompScreenImpl::vp () const
 {
-    return priv->vp;
+    return priv->viewPort.vp;
 }
 
 const CompSize &
 CompScreenImpl::vpSize () const
 {
-    return priv->vpSize;
+    return priv->viewPort.vpSize;
 }
 
 int
@@ -5155,8 +5155,8 @@ PrivateScreen::initDisplay (const char *name)
      * when loading plugins FIXME: Should find a way to initialize options
      * first and then set this value, or better yet, tie this value directly
      * to the option */
-    vpSize.setWidth (optionGetHsize ());
-    vpSize.setHeight (optionGetVsize ());
+    viewPort.vpSize.setWidth (optionGetHsize ());
+    viewPort.vpSize.setHeight (optionGetVsize ());
 
     /* TODO: Bailout properly when screenInitPlugins fails
      * TODO: It would be nicer if this line could mean
@@ -5169,8 +5169,8 @@ PrivateScreen::initDisplay (const char *name)
     /* The active plugins list might have been changed - load any
      * new plugins */
 
-    vpSize.setWidth (optionGetHsize ());
-    vpSize.setHeight (optionGetVsize ());
+    viewPort.vpSize.setWidth (optionGetHsize ());
+    viewPort.vpSize.setHeight (optionGetVsize ());
 
     setAudibleBell (optionGetAudibleBell ());
 
@@ -5185,7 +5185,7 @@ PrivateScreen::initDisplay (const char *name)
 
 CompScreenImpl::~CompScreenImpl ()
 {
-    priv->removeAllSequences ();
+    priv->startupSequence.removeAllSequences ();
 
     while (!priv->windowManager.getWindows().empty ())
         delete priv->windowManager.getWindows().front ();
@@ -5213,11 +5213,15 @@ cps::StartupSequence::StartupSequence() :
     startupSequences (),
     startupSequenceTimer ()
 {
+    startupSequenceTimer.setCallback (
+	boost::bind (&cps::StartupSequence::handleStartupSequenceTimeout, this));
+    startupSequenceTimer.setTimes (1000, 1500);
 }
 
 PrivateScreen::PrivateScreen (CompScreen *screen) :
     CoreOptions(false),
     dpy (NULL),
+    startupSequence(this),
     grabManager (screen),
     eventManager (),
     screen(screen),
@@ -5248,10 +5252,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 
     pingTimer.setCallback (
 	boost::bind (&PrivateScreen::handlePingTimeout, this));
-
-    startupSequenceTimer.setCallback (
-	boost::bind (&PrivateScreen::handleStartupSequenceTimeout, this));
-    startupSequenceTimer.setTimes (1000, 1500);
 }
 
 cps::History::History() :

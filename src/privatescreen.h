@@ -293,8 +293,6 @@ class WindowManager : boost::noncopyable
 
     private:
 	CompWindowList windows;
-
-    private:
 	CompWindowList serverWindows;
 	CompWindowList destroyedWindows;
 	bool           stackIsFresh;
@@ -530,21 +528,31 @@ struct ViewPort
     CompSize     vpSize;
 };
 
-class StartupSequence : boost::noncopyable,
-    public ViewPort
+class StartupSequence : boost::noncopyable
 {
     public:
 	StartupSequence();
-	void addSequence (SnStartupSequence *sequence);
+	void addSequence (SnStartupSequence *sequence, CompPoint const& vp);
 	void removeSequence (SnStartupSequence *sequence);
 	void removeAllSequences ();
-	void applyStartupProperties (CompWindow *window);
+	void applyStartupProperties (CompScreen* screen, CompWindow *window);
 	bool handleStartupSequenceTimeout ();
 	virtual void updateStartupFeedback () = 0;
-
-    //private:
+	bool emptySequence() const { return startupSequences.empty(); }
+    private:
 	std::list<CompStartupSequence *> startupSequences;
 	CompTimer                        startupSequenceTimer;
+};
+
+// Implemented as a separate class to break dependency on PrivateScreen & XWindows
+class StartupSequenceImpl : public StartupSequence
+{
+    public:
+	StartupSequenceImpl(PrivateScreen* priv) : priv(priv) {}
+
+	virtual void updateStartupFeedback ();
+    private:
+	PrivateScreen* const priv;
 };
 
 class Extension
@@ -594,8 +602,7 @@ private:
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
-    public CoreOptions,
-    public compiz::private_screen::StartupSequence
+    public CoreOptions
 {
 
     public:
@@ -650,8 +657,6 @@ class PrivateScreen :
 
 	void setVirtualScreenSize (int hsize, int vsize);
 
-	void updateStartupFeedback ();
-
 	void updateScreenEdges ();
 
 	void reshape (int w, int h);
@@ -685,8 +690,6 @@ class PrivateScreen :
 			       unsigned short *returnValue);
 
 	void configure (XConfigureEvent *ce);
-
-	void applyStartupProperties (CompWindow *window);
 
 	void setNumberOfDesktops (unsigned int nDesktop);
 
@@ -730,7 +733,9 @@ class PrivateScreen :
 	::compiz::private_screen::Extension xShape;
 	::compiz::private_screen::History history;
 
-    	::compiz::private_screen::GrabManager grabManager;
+	::compiz::private_screen::ViewPort viewPort;
+	::compiz::private_screen::StartupSequenceImpl startupSequence;
+	::compiz::private_screen::GrabManager grabManager;
 	::compiz::private_screen::EventManager eventManager;
 	::compiz::private_screen::Ping ping;
 	::compiz::private_screen::OrphanData orphanData;
