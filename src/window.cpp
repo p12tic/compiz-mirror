@@ -5604,7 +5604,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 
     if (onlyActions)
     {
-        screen->priv->updatePassiveButtonGrabs(serverFrame);
+        screen->priv->grabManager.updatePassiveButtonGrabs(serverFrame);
     }
     else
     {

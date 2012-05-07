@@ -492,9 +492,8 @@ public:
     void updatePassiveKeyGrabs ();
     void updatePassiveButtonGrabs(Window serverFrame);
 
-protected:
-    CompScreen  * const screen;
 private:
+    CompScreen  * const screen;
     std::list<ButtonGrab> buttonGrabs;
     std::list<KeyGrab>    keyGrabs;
 };
@@ -596,7 +595,6 @@ private:
 
 class PrivateScreen :
     public CoreOptions,
-    public compiz::private_screen::GrabManager,
     public compiz::private_screen::StartupSequence
 {
 
@@ -727,17 +725,20 @@ class PrivateScreen :
 
     public:
 	Display    *dpy;
-	::compiz::private_screen::EventManager eventManager;
 	::compiz::private_screen::Extension xSync;
 	::compiz::private_screen::Extension xRandr;
 	::compiz::private_screen::Extension xShape;
 	::compiz::private_screen::History history;
 
+    	::compiz::private_screen::GrabManager grabManager;
+	::compiz::private_screen::EventManager eventManager;
 	::compiz::private_screen::Ping ping;
 	::compiz::private_screen::OrphanData orphanData;
 	::compiz::private_screen::OutputDevices outputDevices;
 	::compiz::private_screen::WindowManager windowManager;
+
     private:
+	CompScreen* screen;
 	::compiz::private_screen::Extension xkbEvent;
 
 	//TODO? Pull these two out as a class?

@@ -144,7 +144,7 @@ ModifierHandler::updateModifierMappings ()
 		(modMask[CompModNumLock]    & ~CompNoMask) |
 		(modMask[CompModScrollLock] & ~CompNoMask);
 
-	    screen->priv->updatePassiveKeyGrabs ();
+	    screen->priv->grabManager.updatePassiveKeyGrabs ();
 	    foreach (CompWindow *w, screen->windows ())
 		w->priv->updatePassiveButtonGrabs ();
 	}
