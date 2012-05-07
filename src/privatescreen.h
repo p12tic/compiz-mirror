@@ -761,7 +761,6 @@ public:
     compiz::private_screen::OutputDevices outputDevices;
     compiz::private_screen::WindowManager windowManager;
 
-public:
     Colormap colormap;
     int screenNum;
     unsigned int nDesktop;
