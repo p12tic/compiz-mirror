@@ -344,6 +344,7 @@ public:
     virtual void setCurrentDesktop (unsigned int desktop);
     virtual Window activeWindow() const;
     virtual void updatePassiveButtonGrabs(Window serverFrame);
+    virtual bool grabWindowIsNot(Window w) const;
 
 protected:
 	CompScreen();

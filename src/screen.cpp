@@ -4820,6 +4820,12 @@ CompScreen::updatePassiveButtonGrabs(Window serverFrame)
     priv->grabManager.updatePassiveButtonGrabs(serverFrame);
 }
 
+bool
+CompScreen::grabWindowIsNot(Window w) const
+{
+    return priv->eventManager.notGrabWindow(w);
+}
+
 
 bool
 PrivateScreen::initDisplay (const char *name)

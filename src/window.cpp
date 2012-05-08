@@ -6221,7 +6221,7 @@ CompWindow::~CompWindow ()
 	if (screen->XShape ())
 	    XShapeSelectInput (screen->dpy (), priv->id, NoEventMask);
 
-	if (screen->priv->eventManager.notGrabWindow (priv->id))
+	if (screen->grabWindowIsNot(priv->id))
 	    XSelectInput (screen->dpy (), priv->id, NoEventMask);
 
 	XUngrabButton (screen->dpy (), AnyButton, AnyModifier, priv->id);
