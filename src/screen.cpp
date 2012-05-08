@@ -4849,6 +4849,11 @@ CompScreen::nextMapNum()
     return priv->orphanData.mapNum++;
 }
 
+unsigned int
+CompScreen::lastPing () const
+{
+    return priv->ping.lastPing ();
+}
 
 bool
 PrivateScreen::initDisplay (const char *name)

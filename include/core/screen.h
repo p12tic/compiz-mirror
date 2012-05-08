@@ -350,6 +350,7 @@ public:
     virtual void incrementDesktopWindowCount();
     virtual void decrementDesktopWindowCount();
     virtual unsigned int nextMapNum();
+    virtual unsigned int lastPing () const;
 
 protected:
 	CompScreen();
