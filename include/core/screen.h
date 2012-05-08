@@ -349,6 +349,7 @@ public:
     virtual void incrementPendingDestroys();
     virtual void incrementDesktopWindowCount();
     virtual void decrementDesktopWindowCount();
+    virtual unsigned int nextMapNum();
 
 protected:
 	CompScreen();

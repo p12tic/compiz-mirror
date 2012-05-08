@@ -1343,7 +1343,7 @@ CompWindow::map ()
 	if (priv->pendingMaps > 0)
 	    priv->pendingMaps = 0;
 
-	priv->mapNum = screen->priv->orphanData.mapNum++;
+	priv->mapNum = screen->nextMapNum();
 
 	if (priv->struts)
 	    screen->updateWorkarea ();

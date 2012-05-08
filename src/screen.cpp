@@ -4843,6 +4843,12 @@ CompScreen::decrementDesktopWindowCount()
     priv->orphanData.desktopWindowCount--;
 }
 
+unsigned int
+CompScreen::nextMapNum()
+{
+    return priv->orphanData.mapNum++;
+}
+
 
 bool
 PrivateScreen::initDisplay (const char *name)
