@@ -354,7 +354,7 @@ public:
 			  unsigned int *decor) const;
     virtual unsigned int getProtocols (Window id);
     virtual unsigned int getWindowType (Window id);
-
+    virtual unsigned int getWindowState (Window id);
 
 protected:
 	CompScreen();

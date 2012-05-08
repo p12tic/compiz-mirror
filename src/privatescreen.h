@@ -601,6 +601,8 @@ private:
     unsigned int lastPing_;
 };
 
+unsigned int windowStateMask (Atom state);
+
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
@@ -668,10 +670,6 @@ class PrivateScreen :
 	void updateScreenInfo ();
 
 	Window getActiveWindow (Window root);
-
-	unsigned int windowStateMask (Atom state);
-
-	unsigned int getWindowState (Window id);
 
 	void setWindowState (unsigned int state, Window id);
 

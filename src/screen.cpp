@@ -1376,7 +1376,7 @@ CompScreen::setWmState (int state, Window id) const
 }
 
 unsigned int
-PrivateScreen::windowStateMask (Atom state)
+cps::windowStateMask (Atom state)
 {
     if (state == Atoms::winStateModal)
 	return CompWindowStateModalMask;
@@ -1440,7 +1440,7 @@ cps::windowStateFromString (const char *str)
 }
 
 unsigned int
-PrivateScreen::getWindowState (Window id)
+CompScreen::getWindowState (Window id)
 {
     Atom	  actual;
     int		  result, format;
@@ -1448,7 +1448,7 @@ PrivateScreen::getWindowState (Window id)
     unsigned char *data;
     unsigned int  state = 0;
 
-    result = XGetWindowProperty (dpy, id,
+    result = XGetWindowProperty (priv->dpy, id,
 				 Atoms::winState,
 				 0L, 1024L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1458,7 +1458,7 @@ PrivateScreen::getWindowState (Window id)
 	Atom *a = (Atom *) data;
 
 	while (n--)
-	    state |= windowStateMask (*a++);
+	    state |= cps::windowStateMask (*a++);
 
 	XFree ((void *) data);
     }

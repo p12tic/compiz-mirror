@@ -1439,7 +1439,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    {
 		unsigned int state;
 
-		state = priv->getWindowState (w->id ());
+		state = getWindowState (w->id ());
 		state = CompWindow::constrainWindowState (state, w->actions ());
 
 		/* EWMH suggests that we ignore changes
@@ -1558,7 +1558,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 		for (i = 1; i < 3; i++)
 		{
-		    state = priv->windowStateMask (event->xclient.data.l[i]);
+		    state = cps::windowStateMask (event->xclient.data.l[i]);
 		    if (state & ~CompWindowStateHiddenMask)
 		    {
 

@@ -4448,7 +4448,7 @@ CompWindow::constrainNewWindowSize (int        width,
     long	     ignoredHints = 0;
     long	     ignoredResizeHints = 0;
 
-    if (screen->priv->optionGetIgnoreHintsWhenMaximized ())
+    if (screen->getCoreOptions().optionGetIgnoreHintsWhenMaximized ())
     {
 	ignoredHints |= PAspect;
 
@@ -6033,7 +6033,7 @@ CompWindow::CompWindow (Window aboveId,
 	priv->inputRegion = priv->region;
 
 	/* need to check for DisplayModal state on all windows */
-	priv->state = screen->priv->getWindowState (priv->id);
+	priv->state = screen->getWindowState (priv->id);
 
 	priv->updateClassHints ();
     }
