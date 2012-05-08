@@ -1366,7 +1366,7 @@ CompWindow::map ()
 	priv->updateRegion ();
 	priv->updateSize ();
 
-	screen->priv->updateClientList ();
+	screen->updateClientList ();
 
 	if (priv->type & CompWindowTypeDesktopMask)
 	    screen->priv->orphanData.desktopWindowCount++;
@@ -1465,7 +1465,7 @@ CompWindow::unmap ()
 	priv->updateFrameWindow ();
     }
 
-    screen->priv->updateClientList ();
+    screen->updateClientList ();
 
     windowNotify (CompWindowNotifyUnmap);
 }
@@ -1520,7 +1520,7 @@ PrivateWindow::restack (Window aboveId)
 	    dbg->overrideRedirectRestack (window->id (), aboveId);
     }
 
-    screen->priv->updateClientList ();
+    screen->updateClientList ();
 
     window->windowNotify (CompWindowNotifyRestack);
 
@@ -5539,7 +5539,7 @@ PrivateWindow::processMap ()
 	window->changeState (window->state () | CompWindowStateHiddenMask);
     }
 
-    screen->priv->updateClientList ();
+    screen->updateClientList ();
 }
 
 /*
@@ -6238,7 +6238,7 @@ CompWindow::~CompWindow ()
     }
 
     if (priv->destroyed)
-	screen->priv->updateClientList ();
+	screen->updateClientList ();
 
     CompPlugin::windowFiniPlugins (this);
 

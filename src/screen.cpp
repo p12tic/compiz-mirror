@@ -4778,6 +4778,13 @@ CompScreen::applyStartupProperties (CompWindow *window)
     priv->startupSequence.applyStartupProperties (this, window);
 }
 
+void
+CompScreen::updateClientList()
+{
+    priv->updateClientList ();
+}
+
+
 bool
 PrivateScreen::initDisplay (const char *name)
 {

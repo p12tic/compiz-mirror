@@ -334,6 +334,8 @@ public:
     virtual void updatePassiveKeyGrabs () const;
     virtual void setWmState (int state, Window id) const;
     virtual void applyStartupProperties (CompWindow *window);
+    virtual void updateClientList();
+
 protected:
 	CompScreen();
 	boost::scoped_ptr<PrivateScreen> priv; // TODO should not be par of interface
