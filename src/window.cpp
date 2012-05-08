@@ -5463,7 +5463,7 @@ PrivateWindow::processMap ()
 
     priv->initialTimestampSet = false;
 
-    screen->priv->startupSequence.applyStartupProperties (screen, window);
+    screen->applyStartupProperties (window);
 
     initiallyMinimized = (priv->hints &&
 			  priv->hints->initial_state == IconicState &&
@@ -5925,7 +5925,7 @@ PrivateWindow::updateStartupId ()
 	int        x, y;
 
 	initialTimestampSet = false;
-	screen->priv->startupSequence.applyStartupProperties (screen, window);
+	screen->applyStartupProperties (window);
 
 	if (initialTimestampSet)
 	    timestamp = initialTimestamp;

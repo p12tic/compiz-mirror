@@ -4760,16 +4760,23 @@ cps::EventManager::init ()
     sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&EventManager::handleSignal, this, _1));
 }
 
-bool CompScreen::displayInitialised() const
+bool
+CompScreen::displayInitialised() const
 {
     return priv && priv->initialized;
 }
 
-void CompScreen::updatePassiveKeyGrabs () const
+void
+CompScreen::updatePassiveKeyGrabs () const
 {
     priv->grabManager.updatePassiveKeyGrabs ();
 }
 
+void
+CompScreen::applyStartupProperties (CompWindow *window)
+{
+    priv->startupSequence.applyStartupProperties (this, window);
+}
 
 bool
 PrivateScreen::initDisplay (const char *name)
