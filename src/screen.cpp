@@ -4826,6 +4826,23 @@ CompScreen::grabWindowIsNot(Window w) const
     return priv->eventManager.notGrabWindow(w);
 }
 
+void
+CompScreen::incrementPendingDestroys()
+{
+    priv->windowManager.incrementPendingDestroys();
+}
+
+void
+CompScreen::incrementDesktopWindowCount()
+{
+    priv->orphanData.desktopWindowCount++;
+}
+void
+CompScreen::decrementDesktopWindowCount()
+{
+    priv->orphanData.desktopWindowCount--;
+}
+
 
 bool
 PrivateScreen::initDisplay (const char *name)

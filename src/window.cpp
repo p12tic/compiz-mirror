@@ -1261,7 +1261,7 @@ CompWindow::destroy ()
 	}
 
 	priv->destroyed = true;
-	screen->priv->windowManager.incrementPendingDestroys();
+	screen->incrementPendingDestroys();
     }
 
 }
@@ -1369,7 +1369,7 @@ CompWindow::map ()
 	screen->updateClientList ();
 
 	if (priv->type & CompWindowTypeDesktopMask)
-	    screen->priv->orphanData.desktopWindowCount++;
+	    screen->incrementDesktopWindowCount();
 
 	if (priv->protocols & CompWindowProtocolSyncRequestMask)
 	{
@@ -1455,7 +1455,7 @@ CompWindow::unmap ()
 	return;
 
     if (priv->type == CompWindowTypeDesktopMask)
-	screen->priv->orphanData.desktopWindowCount--;
+	screen->decrementDesktopWindowCount();
 
     priv->attrib.map_state = IsUnmapped;
     priv->invisible = true;
@@ -6231,7 +6231,7 @@ CompWindow::~CompWindow ()
     if (priv->attrib.map_state == IsViewable)
     {
 	if (priv->type == CompWindowTypeDesktopMask)
-	    screen->priv->orphanData.desktopWindowCount--;
+	    screen->decrementDesktopWindowCount();
 
 	if (priv->destroyed && priv->struts)
 	    screen->updateWorkarea ();
