@@ -669,8 +669,6 @@ class PrivateScreen :
 
 	Window getActiveWindow (Window root);
 
-	int getWmState (Window id);
-
 	unsigned int windowStateMask (Atom state);
 
 	unsigned int getWindowState (Window id);

@@ -332,6 +332,7 @@ public:
     // ensure the ABI is stable if/when they are moved to CompScreenImpl.
     virtual bool displayInitialised() const;
     virtual void updatePassiveKeyGrabs () const;
+    virtual int getWmState (Window id);
     virtual void setWmState (int state, Window id) const;
     virtual void applyStartupProperties (CompWindow *window);
     virtual void updateClientList();

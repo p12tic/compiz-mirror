@@ -1339,7 +1339,7 @@ CompScreenImpl::_logMessage (const char   *componentName,
 }
 
 int
-PrivateScreen::getWmState (Window id)
+CompScreen::getWmState (Window id)
 {
     Atom	  actual;
     int		  result, format;
@@ -1347,7 +1347,7 @@ PrivateScreen::getWmState (Window id)
     unsigned char *data;
     unsigned long state = NormalState;
 
-    result = XGetWindowProperty (dpy, id,
+    result = XGetWindowProperty (priv->dpy, id,
 				 Atoms::wmState, 0L, 2L, false,
 				 Atoms::wmState, &actual, &format,
 				 &n, &left, &data);
