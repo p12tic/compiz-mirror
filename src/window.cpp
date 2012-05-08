@@ -4158,7 +4158,7 @@ CompWindow::lower ()
 
     /* when lowering a window, focus the topmost window if
        the click-to-focus option is on */
-    if ((screen->priv->optionGetClickToFocus ()))
+    if ((screen->getCoreOptions().optionGetClickToFocus ()))
     {
 	CompWindow *focusedWindow = screen->priv->focusTopMostWindow ();
 
