@@ -5899,7 +5899,7 @@ CompWindow::sizeHints () const
 void
 PrivateWindow::updateMwmHints ()
 {
-    screen->priv->getMwmHints (priv->id, &priv->mwmFunc, &priv->mwmDecor);
+    screen->getMwmHints (priv->id, &priv->mwmFunc, &priv->mwmDecor);
     window->recalcActions ();
 }
 
@@ -6057,7 +6057,7 @@ CompWindow::CompWindow (Window aboveId,
 
 	recalcType ();
 
-	screen->priv->getMwmHints (priv->id, &priv->mwmFunc, &priv->mwmDecor);
+	screen->getMwmHints (priv->id, &priv->mwmFunc, &priv->mwmDecor);
 
 	if (!(priv->type & (CompWindowTypeDesktopMask | CompWindowTypeDockMask)))
 	{

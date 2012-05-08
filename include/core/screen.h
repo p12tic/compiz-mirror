@@ -336,6 +336,9 @@ public:
     virtual void applyStartupProperties (CompWindow *window);
     virtual void updateClientList();
     virtual Window getTopWindow() const;
+    virtual void getMwmHints (Window id,
+			  unsigned int *func,
+			  unsigned int *decor) const;
 
 protected:
 	CompScreen();

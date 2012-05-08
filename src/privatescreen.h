@@ -679,10 +679,6 @@ class PrivateScreen :
 
 	unsigned int getWindowType (Window id);
 
-	void getMwmHints (Window       id,
-			  unsigned int *func,
-			  unsigned int *decor);
-
 	unsigned int getProtocols (Window id);
 
 	bool readWindowProp32 (Window         id,

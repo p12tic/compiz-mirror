@@ -1571,9 +1571,9 @@ PrivateScreen::getWindowType (Window id)
 }
 
 void
-PrivateScreen::getMwmHints (Window       id,
+CompScreen::getMwmHints (Window       id,
 			    unsigned int *func,
-			    unsigned int *decor)
+			    unsigned int *decor) const
 {
     Atom	  actual;
     int		  result, format;
@@ -1583,7 +1583,7 @@ PrivateScreen::getMwmHints (Window       id,
     *func  = MwmFuncAll;
     *decor = MwmDecorAll;
 
-    result = XGetWindowProperty (dpy, id,
+    result = XGetWindowProperty (priv->dpy, id,
 				 Atoms::mwmHints,
 				 0L, 20L, false, Atoms::mwmHints,
 				 &actual, &format, &n, &left, &data);
