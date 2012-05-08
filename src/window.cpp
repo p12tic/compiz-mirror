@@ -6086,7 +6086,7 @@ CompWindow::CompWindow (Window aboveId,
 		priv->reparent ();
 	    priv->managed = true;
 
-	    if (screen->priv->getWmState (priv->id) == IconicState)
+	    if (screen->getWmState (priv->id) == IconicState)
 	    {
 		if (priv->state & CompWindowStateShadedMask)
 		    priv->shaded = true;
@@ -6135,7 +6135,7 @@ CompWindow::CompWindow (Window aboveId,
     }
     else if (!overrideRedirect ())
     {
-	if (screen->priv->getWmState (priv->id) == IconicState)
+	if (screen->getWmState (priv->id) == IconicState)
 	{
 	    // before everything else in maprequest
 	    if (!priv->serverFrame)
