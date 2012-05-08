@@ -671,8 +671,6 @@ class PrivateScreen :
 
 	int getWmState (Window id);
 
-	void setWmState (int state, Window id);
-
 	unsigned int windowStateMask (Atom state);
 
 	unsigned int getWindowState (Window id);

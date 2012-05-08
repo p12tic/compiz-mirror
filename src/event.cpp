@@ -1268,7 +1268,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    /* Normal -> Iconic */
 	    if (w->pendingUnmaps ())
 	    {
-		priv->setWmState (IconicState, w->id ());
+		setWmState (IconicState, w->id ());
 		w->priv->pendingUnmaps--;
 	    }
 	    else /* X -> Withdrawn */

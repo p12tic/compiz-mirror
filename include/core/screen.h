@@ -332,6 +332,7 @@ public:
     // ensure the ABI is stable if/when they are moved to CompScreenImpl.
     virtual bool displayInitialised() const;
     virtual void updatePassiveKeyGrabs () const;
+    virtual void setWmState (int state, Window id) const;
 protected:
 	CompScreen();
 	boost::scoped_ptr<PrivateScreen> priv; // TODO should not be par of interface

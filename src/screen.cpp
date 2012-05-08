@@ -1363,14 +1363,14 @@ PrivateScreen::getWmState (Window id)
 }
 
 void
-PrivateScreen::setWmState (int state, Window id)
+CompScreen::setWmState (int state, Window id) const
 {
     unsigned long data[2];
 
     data[0] = state;
     data[1] = None;
 
-    XChangeProperty (dpy, id,
+    XChangeProperty (priv->dpy, id,
 		     Atoms::wmState, Atoms::wmState,
 		     32, PropModeReplace, (unsigned char *) data, 2);
 }

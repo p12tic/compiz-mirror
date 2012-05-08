@@ -1356,7 +1356,7 @@ CompWindow::map ()
 	priv->attrib.map_state = IsViewable;
 
 	if (!overrideRedirect ())
-	    screen->priv->setWmState (NormalState, priv->id);
+	    screen->setWmState (NormalState, priv->id);
 
 	priv->invisible  = priv->isInvisible ();
 	priv->alive      = true;
@@ -1474,7 +1474,7 @@ void
 PrivateWindow::withdraw ()
 {
     if (!attrib.override_redirect)
-	screen->priv->setWmState (WithdrawnState, id);
+	screen->setWmState (WithdrawnState, id);
 
     placed     = false;
     unmanaging = managed;
