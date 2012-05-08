@@ -6177,9 +6177,9 @@ CompWindow::~CompWindow ()
      * pending destroy if this was a sibling
      * of one of those */
 
-    screen->priv->windowManager.getDestroyedWindows().remove (this);
+    screen->destroyedWindows().remove (this);
 
-    foreach (CompWindow *dw, screen->priv->windowManager.getDestroyedWindows())
+    foreach (CompWindow *dw, screen->destroyedWindows())
     {
 	if (dw->next == this)
 	    dw->next = this->next;
