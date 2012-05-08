@@ -324,12 +324,14 @@ public:
 
     friend class CompWindow; // TODO get rid of friends
     friend class PrivateWindow; // TODO get rid of friends
-    friend class ModifierHandler; // TODO get rid of friends
 
     virtual void processEvents () = 0;
     virtual void alwaysHandleEvent (XEvent *event) = 0;
 
-    bool displayInitialised() const;
+    // Replacements for friends accessing priv.
+    // Declared virtual to ensure ABI stable if they are moved to Impl.
+    virtual bool displayInitialised() const;
+    virtual void updatePassiveKeyGrabs () const;
 protected:
 	CompScreen();
 	boost::scoped_ptr<PrivateScreen> priv; // TODO should not be par of interface

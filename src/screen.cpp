@@ -4765,6 +4765,12 @@ bool CompScreen::displayInitialised() const
     return priv && priv->initialized;
 }
 
+void CompScreen::updatePassiveKeyGrabs () const
+{
+    priv->grabManager.updatePassiveKeyGrabs ();
+}
+
+
 bool
 PrivateScreen::initDisplay (const char *name)
 {
