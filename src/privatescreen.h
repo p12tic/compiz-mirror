@@ -675,10 +675,6 @@ class PrivateScreen :
 
 	void setWindowState (unsigned int state, Window id);
 
-	unsigned int getWindowType (Window id);
-
-	unsigned int getProtocols (Window id);
-
 	bool readWindowProp32 (Window         id,
 			       Atom           property,
 			       unsigned short *returnValue);

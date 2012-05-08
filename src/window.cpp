@@ -6042,8 +6042,8 @@ CompWindow::CompWindow (Window aboveId,
 	priv->attrib.map_state = IsUnmapped;
     }
 
-    priv->wmType    = screen->priv->getWindowType (priv->id);
-    priv->protocols = screen->priv->getProtocols (priv->id);
+    priv->wmType    = screen->getWindowType (priv->id);
+    priv->protocols = screen->getProtocols (priv->id);
 
     if (!overrideRedirect ())
     {

@@ -1405,7 +1405,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    {
 		unsigned int type;
 
-		type = priv->getWindowType (w->id ());
+		type = getWindowType (w->id ());
 
 		if (type != w->wmType ())
 		{
@@ -1508,7 +1508,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	{
 	    w = findWindow (event->xproperty.window);
 	    if (w)
-		w->priv->protocols = priv->getProtocols (w->id ());
+		w->priv->protocols = getProtocols (w->id ());
 	}
 	else if (event->xproperty.atom == Atoms::wmIcon)
 	{

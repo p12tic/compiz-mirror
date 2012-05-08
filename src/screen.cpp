@@ -1516,14 +1516,14 @@ PrivateScreen::setWindowState (unsigned int state, Window id)
 }
 
 unsigned int
-PrivateScreen::getWindowType (Window id)
+CompScreen::getWindowType (Window id)
 {
     Atom	  actual, a = None;
     int		  result, format;
     unsigned long n, left;
     unsigned char *data;
 
-    result = XGetWindowProperty (dpy , id,
+    result = XGetWindowProperty (priv->dpy , id,
 				 Atoms::winType,
 				 0L, 1L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1606,13 +1606,13 @@ CompScreen::getMwmHints (Window       id,
 }
 
 unsigned int
-PrivateScreen::getProtocols (Window id)
+CompScreen::getProtocols (Window id)
 {
     Atom         *protocol;
     int          count;
     unsigned int protocols = 0;
 
-    if (XGetWMProtocols (dpy, id, &protocol, &count))
+    if (XGetWMProtocols (priv->dpy, id, &protocol, &count))
     {
 	int  i;
 

@@ -332,14 +332,9 @@ public:
     // ensure the ABI is stable if/when they are moved to CompScreenImpl.
     virtual bool displayInitialised() const;
     virtual void updatePassiveKeyGrabs () const;
-    virtual int getWmState (Window id);
-    virtual void setWmState (int state, Window id) const;
     virtual void applyStartupProperties (CompWindow *window);
     virtual void updateClientList();
     virtual Window getTopWindow() const;
-    virtual void getMwmHints (Window id,
-			  unsigned int *func,
-			  unsigned int *decor) const;
     virtual CoreOptions& getCoreOptions();
     virtual Colormap colormap() const;
     virtual void setCurrentDesktop (unsigned int desktop);
@@ -351,6 +346,15 @@ public:
     virtual void decrementDesktopWindowCount();
     virtual unsigned int nextMapNum();
     virtual unsigned int lastPing () const;
+
+    virtual int getWmState (Window id);
+    virtual void setWmState (int state, Window id) const;
+    virtual void getMwmHints (Window id,
+			  unsigned int *func,
+			  unsigned int *decor) const;
+    virtual unsigned int getProtocols (Window id);
+    virtual unsigned int getWindowType (Window id);
+
 
 protected:
 	CompScreen();
