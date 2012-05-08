@@ -328,8 +328,8 @@ public:
     virtual void processEvents () = 0;
     virtual void alwaysHandleEvent (XEvent *event) = 0;
 
-    // Replacements for friends accessing priv.
-    // Declared virtual to ensure ABI stable if they are moved to Impl.
+    // Replacements for friends accessing priv. They are declared virtual to
+    // ensure the ABI is stable if/when they are moved to CompScreenImpl.
     virtual bool displayInitialised() const;
     virtual void updatePassiveKeyGrabs () const;
 protected:
