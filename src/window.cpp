@@ -4749,7 +4749,7 @@ PrivateWindow::isWindowFocusAllowed (Time timestamp)
     int          level;
     CompPoint    dvp;
 
-    level = s->priv->optionGetFocusPreventionLevel ();
+    level = s->getCoreOptions().optionGetFocusPreventionLevel ();
 
     if (level == CoreOptions::FocusPreventionLevelOff)
 	return true;
@@ -4784,7 +4784,7 @@ PrivateWindow::isWindowFocusAllowed (Time timestamp)
     }
 
     /* allow focus for excluded windows */
-    CompMatch &match = s->priv->optionGetFocusPreventionMatch ();
+    CompMatch &match = s->getCoreOptions().optionGetFocusPreventionMatch ();
     if (!match.evaluate (window))
 	return true;
 
@@ -5568,7 +5568,7 @@ void
 PrivateWindow::updatePassiveButtonGrabs ()
 {
     bool onlyActions = (priv->id == screen->priv->orphanData.activeWindow ||
-			!screen->priv->optionGetClickToFocus ());
+			!screen->getCoreOptions().optionGetClickToFocus ());
 
     if (!priv->frame)
 	return;
@@ -5584,7 +5584,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 
     if (onlyActions)
     {
-	if (screen->priv->optionGetRaiseOnClick ())
+	if (screen->getCoreOptions().optionGetRaiseOnClick ())
 	{
 	    CompWindow *highestSibling =
 		    PrivateWindow::findSiblingBelow (window, true);

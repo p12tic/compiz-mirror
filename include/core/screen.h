@@ -44,6 +44,7 @@ class CompScreenImpl;
 class PrivateScreen;
 class CompManager;
 class CoreWindow;
+class CoreOptions;
 
 typedef std::list<CompWindow *> CompWindowList;
 typedef std::vector<CompWindow *> CompWindowVector;
@@ -339,6 +340,7 @@ public:
     virtual void getMwmHints (Window id,
 			  unsigned int *func,
 			  unsigned int *decor) const;
+    virtual CoreOptions& getCoreOptions();
 
 protected:
 	CompScreen();

@@ -4790,6 +4790,13 @@ CompScreen::getTopWindow() const
     return priv->windowManager.getTopWindow();
 }
 
+CoreOptions&
+CompScreen::getCoreOptions()
+{
+    return *priv;
+}
+
+
 bool
 PrivateScreen::initDisplay (const char *name)
 {
