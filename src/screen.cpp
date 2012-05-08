@@ -4784,6 +4784,11 @@ CompScreen::updateClientList()
     priv->updateClientList ();
 }
 
+Window
+CompScreen::getTopWindow() const
+{
+    return priv->windowManager.getTopWindow();
+}
 
 bool
 PrivateScreen::initDisplay (const char *name)

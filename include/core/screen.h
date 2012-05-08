@@ -335,6 +335,7 @@ public:
     virtual void setWmState (int state, Window id) const;
     virtual void applyStartupProperties (CompWindow *window);
     virtual void updateClientList();
+    virtual Window getTopWindow() const;
 
 protected:
 	CompScreen();
