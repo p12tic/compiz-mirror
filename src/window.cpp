@@ -6130,7 +6130,7 @@ CompWindow::CompWindow (Window aboveId,
 
 	    XUnmapWindow (screen->dpy (), priv->id);
 
-	    screen->priv->setWindowState (priv->state, priv->id);
+	    screen->setWindowState (priv->state, priv->id);
 	}
     }
     else if (!overrideRedirect ())
