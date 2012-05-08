@@ -4574,7 +4574,7 @@ PrivateWindow::show ()
     XMapWindow (screen->dpy (), id);
 
     window->changeState (state & ~CompWindowStateHiddenMask);
-    screen->priv->setWindowState (state, id);
+    screen->setWindowState (state, id);
 }
 
 void
