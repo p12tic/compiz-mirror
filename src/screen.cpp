@@ -3722,7 +3722,7 @@ cps::WindowManager::updateClientList (PrivateScreen& ps)
 
     clientListStacking.clear ();
 
-    for (cps::WindowManager::iterator i = ps.windowManager.begin(); i != ps.windowManager.end(); ++i)
+    for (iterator i = begin(); i != end(); ++i)
     {
 	CompWindow* const w(*i);
 	if (isClientListWindow (w))
