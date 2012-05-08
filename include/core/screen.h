@@ -324,7 +324,6 @@ public:
     virtual SnDisplay * snDisplay () = 0;
 
     friend class CompWindow; // TODO get rid of friends
-    friend class PrivateWindow; // TODO get rid of friends
 
     virtual void processEvents () = 0;
     virtual void alwaysHandleEvent (XEvent *event) = 0;
@@ -341,6 +340,10 @@ public:
 			  unsigned int *func,
 			  unsigned int *decor) const;
     virtual CoreOptions& getCoreOptions();
+    virtual Colormap colormap() const;
+    virtual void setCurrentDesktop (unsigned int desktop);
+    virtual Window activeWindow() const;
+    virtual void updatePassiveButtonGrabs(Window serverFrame);
 
 protected:
 	CompScreen();

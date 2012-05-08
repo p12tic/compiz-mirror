@@ -4408,7 +4408,7 @@ CompWindow::activate ()
 {
     WRAPABLE_HND_FUNCTN (activate)
 
-    screen->priv->setCurrentDesktop (priv->desktop);
+    screen->setCurrentDesktop (priv->desktop);
 
     screen->forEachWindow (
 	boost::bind (PrivateWindow::revealAncestors, _1, this));
@@ -4920,7 +4920,7 @@ PrivateWindow::readIconHint ()
 	    colors[k++].pixel = XGetPixel (image, i, j);
 
     for (i = 0; i < k; i += 256)
-	XQueryColors (dpy, screen->priv->colormap,
+	XQueryColors (dpy, screen->colormap(),
 		      &colors[i], MIN (k - i, 256));
 
     XDestroyImage (image);
@@ -5521,7 +5521,7 @@ PrivateWindow::processMap ()
     if (!initiallyMinimized)
     {
 	if (allowFocus && !window->onCurrentDesktop ());
-	    screen->priv->setCurrentDesktop (priv->desktop);
+	    screen->setCurrentDesktop (priv->desktop);
 
 	if (!(priv->state & CompWindowStateHiddenMask))
 	    show ();
@@ -5530,7 +5530,7 @@ PrivateWindow::processMap ()
 	{
 	    window->moveInputFocusTo ();
 	    if (!window->onCurrentDesktop ())
-		screen->priv->setCurrentDesktop (priv->desktop);
+		screen->setCurrentDesktop (priv->desktop);
 	}
     }
     else
@@ -5567,7 +5567,7 @@ PrivateWindow::processMap ()
 void
 PrivateWindow::updatePassiveButtonGrabs ()
 {
-    bool onlyActions = (priv->id == screen->priv->orphanData.activeWindow ||
+    bool onlyActions = (priv->id == screen->activeWindow() ||
 			!screen->getCoreOptions().optionGetClickToFocus ());
 
     if (!priv->frame)
@@ -5604,7 +5604,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 
     if (onlyActions)
     {
-        screen->priv->grabManager.updatePassiveButtonGrabs(serverFrame);
+        screen->updatePassiveButtonGrabs(serverFrame);
     }
     else
     {

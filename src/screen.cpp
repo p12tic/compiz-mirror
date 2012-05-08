@@ -4796,6 +4796,30 @@ CompScreen::getCoreOptions()
     return *priv;
 }
 
+Colormap
+CompScreen::colormap() const
+{
+    return priv->colormap;
+}
+
+void
+CompScreen::setCurrentDesktop (unsigned int desktop)
+{
+    priv->setCurrentDesktop(desktop);
+}
+
+Window
+CompScreen::activeWindow() const
+{
+    return priv->orphanData.activeWindow;
+}
+
+void
+CompScreen::updatePassiveButtonGrabs(Window serverFrame)
+{
+    priv->grabManager.updatePassiveButtonGrabs(serverFrame);
+}
+
 
 bool
 PrivateScreen::initDisplay (const char *name)
