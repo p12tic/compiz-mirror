@@ -75,11 +75,13 @@ public:
 
     int outputDeviceForGeometry(const CompWindow::Geometry& gm, int strategy,
 	    CompScreen* screen) const;
+    void updateOutputDevices(CoreOptions& coreOptions, CompScreen* screen);
+
+private:
     void setGeometryOnDevice(unsigned int nOutput, int x, int y,
 	    const int width, const int height);
     void adoptDevices(unsigned int nOutput);
 
-private:
     static CompRect computeWorkareaForBox(const CompRect& box,
 	    const CompWindowList& windows);
 
@@ -712,105 +714,101 @@ class PrivateScreen :
 	int  getXkbEvent() const { return xkbEvent.get(); }
 	std::vector<XineramaScreenInfo>& getScreenInfo () { return screenInfo; }
 	SnDisplay* getSnDisplay () const { return snDisplay; }
-	char const* displayString () const { return displayString_; }
-	CompRegion const& getRegion () const { return region; }
-	XWindowAttributes const& getAttrib () const { return attrib; }
-	Window rootWindow() const { return root; }
-	void identifyEdgeWindow(Window id);
+	const char* displayString() const
+    {
+	return displayString_;
+    }
 
-	void setPlugins(CompOption::Value::Vector const& vList);
-	void initPlugins();
+    const CompRegion& getRegion() const
+    {
+	return region;
+    }
 
-	void updateClientList () { windowManager.updateClientList (*this); }
+    const XWindowAttributes& getAttrib() const
+    {
+	return attrib;
+    }
 
-	void detectOutputDevices (CoreOptions& coreOptions);
-	void updateOutputDevices (CoreOptions& coreOptions);
+    Window rootWindow() const
+    {
+	return root;
+    }
 
-    public:
-	Display    *dpy;
-	::compiz::private_screen::Extension xSync;
-	::compiz::private_screen::Extension xRandr;
-	::compiz::private_screen::Extension xShape;
-	::compiz::private_screen::History history;
+    void identifyEdgeWindow(Window id);
+    void setPlugins(const CompOption::Value::Vector& vList);
+    void initPlugins();
 
-	::compiz::private_screen::ViewPort viewPort;
-	::compiz::private_screen::StartupSequenceImpl startupSequence;
-	::compiz::private_screen::GrabManager grabManager;
-	::compiz::private_screen::EventManager eventManager;
-	::compiz::private_screen::Ping ping;
-	::compiz::private_screen::OrphanData orphanData;
-	::compiz::private_screen::OutputDevices outputDevices;
-	::compiz::private_screen::WindowManager windowManager;
+    void updateClientList()
+    {
+	windowManager.updateClientList(*this);
+    }
 
-    private:
-	CompScreen* screen;
-	::compiz::private_screen::Extension xkbEvent;
+    void detectOutputDevices(CoreOptions& coreOptions);
+    void updateOutputDevices(CoreOptions& coreOptions);
 
-	//TODO? Pull these two out as a class?
-	bool xineramaExtension;
-	std::vector<XineramaScreenInfo> screenInfo;
+public:
+    Display* dpy;
+    compiz::private_screen::Extension xSync;
+    compiz::private_screen::Extension xRandr;
+    compiz::private_screen::Extension xShape;
+    compiz::private_screen::History history;
+    compiz::private_screen::ViewPort viewPort;
+    compiz::private_screen::StartupSequenceImpl startupSequence;
+    compiz::private_screen::GrabManager grabManager;
+    compiz::private_screen::EventManager eventManager;
+    compiz::private_screen::Ping ping;
+    compiz::private_screen::OrphanData orphanData;
+    compiz::private_screen::OutputDevices outputDevices;
+    compiz::private_screen::WindowManager windowManager;
 
-	SnDisplay *snDisplay;
+    Colormap colormap;
+    int screenNum;
+    unsigned int nDesktop;
+    unsigned int currentDesktop;
 
-	char   displayString_[256];
+    CompOutput fullscreenOutput;
+    CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
 
-	KeyCode escapeKeyCode;
-	KeyCode returnKeyCode;
+    Window wmSnSelectionWindow;
 
-    public:
-	Colormap colormap;
-	int      screenNum;
+    Cursor normalCursor;
+    Cursor busyCursor;
+    Cursor invisibleCursor;
+    CompRect workArea;
+    unsigned int showingDesktopMask;
 
-	unsigned int nDesktop;
-	unsigned int currentDesktop;
+    bool initialized;
 
-    private:
-	CompRegion   region;
+private:
+    bool handlePingTimeout();
 
-	Window	      root;
+    CompScreen* screen;
+    compiz::private_screen::Extension xkbEvent;
+    //TODO? Pull these two out as a class?
+    bool xineramaExtension;
+    std::vector<XineramaScreenInfo> screenInfo;
+    SnDisplay* snDisplay;
+    char displayString_[256];
+    KeyCode escapeKeyCode;
+    KeyCode returnKeyCode;
 
-	XWindowAttributes attrib;
-    public:
+    CompRegion region;
+    Window root;
+    XWindowAttributes attrib;
 
-	CompOutput         fullscreenOutput;
+    SnMonitorContext* snContext;
 
-	CompScreenEdge screenEdge[SCREEN_EDGE_NUM];
+    Atom wmSnAtom;
+    Time wmSnTimestamp;
 
-    private:
-	SnMonitorContext                 *snContext;
+    unsigned long *desktopHintData;
+    int desktopHintSize;
 
-    public:
-	Window wmSnSelectionWindow;
-    private:
-	Atom   wmSnAtom;
-	Time   wmSnTimestamp;
-
-    public:
-	Cursor normalCursor;
-	Cursor busyCursor;
-	Cursor invisibleCursor;
-
-	CompRect workArea;
-
-	unsigned int showingDesktopMask;
-
-    private:
-	unsigned long *desktopHintData;
-	int           desktopHintSize;
-
-    public:
-	bool initialized;
-
-    private:
-	bool handlePingTimeout ();
-
-	Window	edgeWindow;
-
-	CompTimer    pingTimer;
-	CompTimer               edgeDelayTimer;
-	CompDelayedEdgeSettings edgeDelaySettings;
-	Window	xdndWindow;
-	::compiz::private_screen::PluginManager pluginManager;
+    Window edgeWindow;
+    CompTimer pingTimer;
+    CompTimer edgeDelayTimer;
+    CompDelayedEdgeSettings edgeDelaySettings;
+    Window xdndWindow;compiz::private_screen::PluginManager pluginManager;
 };
 
 class CompManager

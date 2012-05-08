@@ -1988,32 +1988,32 @@ void cps::OutputDevices::adoptDevices(unsigned int nOutput)
 	    if (outputDevs[i].intersects(outputDevs[j]))
 		overlappingOutputs = true;
 }
+
 void
-PrivateScreen::updateOutputDevices (CoreOptions& coreOptions)
+cps::OutputDevices::updateOutputDevices(CoreOptions& coreOptions, CompScreen* screen)
 {
-    CompOption::Value::Vector &list = coreOptions.optionGetOutputs ();
-    unsigned int              nOutput = 0;
-    int		              x, y, bits;
-    unsigned int              uWidth, uHeight;
-    int                       width, height;
-    int		              x1, y1, x2, y2;
-
-    foreach (CompOption::Value &value, list)
+    CompOption::Value::Vector& list = coreOptions.optionGetOutputs();
+    unsigned int nOutput = 0;
+    int x, y, bits;
+    unsigned int uWidth, uHeight;
+    int width, height;
+    int x1, y1, x2, y2;
+    foreach(CompOption::Value & value, list)
     {
-	x      = 0;
-	y      = 0;
-	uWidth  = (unsigned) screen->width ();
-	uHeight = (unsigned) screen->height ();
+	x = 0;
+	y = 0;
+	uWidth = (unsigned) screen->width();
+	uHeight = (unsigned) screen->height();
 
-	bits = XParseGeometry (value.s ().c_str (), &x, &y, &uWidth, &uHeight);
-	width  = (int) uWidth;
+	bits = XParseGeometry(value.s().c_str(), &x, &y, &uWidth, &uHeight);
+	width = (int) uWidth;
 	height = (int) uHeight;
 
 	if (bits & XNegative)
-	    x = screen->width () + x - width;
+	    x = screen->width() + x - width;
 
 	if (bits & YNegative)
-	    y = screen->height () + y - height;
+	    y = screen->height() + y - height;
 
 	x1 = x;
 	y1 = y;
@@ -2024,19 +2024,24 @@ PrivateScreen::updateOutputDevices (CoreOptions& coreOptions)
 	    x1 = 0;
 	if (y1 < 0)
 	    y1 = 0;
-	if (x2 > screen->width ())
-	    x2 = screen->width ();
-	if (y2 > screen->height ())
-	    y2 = screen->height ();
+	if (x2 > screen->width())
+	    x2 = screen->width();
+	if (y2 > screen->height())
+	    y2 = screen->height();
 
 	if (x1 < x2 && y1 < y2)
 	{
-	    outputDevices.setGeometryOnDevice(nOutput, x1, y1, x2 - x1, y2 - y1);
+	    setGeometryOnDevice(nOutput, x1, y1, x2 - x1, y2 - y1);
 	    nOutput++;
 	}
     }
+    adoptDevices(nOutput);
+}
 
-    outputDevices.adoptDevices(nOutput);
+void
+PrivateScreen::updateOutputDevices (CoreOptions& coreOptions)
+{
+    outputDevices.updateOutputDevices(coreOptions, screen);
 
     /* clear out fullscreen monitor hints of all windows as
        suggested on monitor layout changes in EWMH */
@@ -5224,22 +5229,22 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     startupSequence(this),
     grabManager (screen),
     eventManager (),
-    screen(screen),
-    screenInfo (),
-    snDisplay(0),
     nDesktop (1),
     currentDesktop (0),
-    root(None),
-    snContext (0),
     wmSnSelectionWindow (None),
-    wmSnAtom (None),
     normalCursor (None),
     busyCursor (None),
     invisibleCursor (None),
     showingDesktopMask (0),
+    initialized (false),
+    screen(screen),
+    screenInfo (),
+    snDisplay(0),
+    root(None),
+    snContext (0),
+    wmSnAtom (None),
     desktopHintData (0),
     desktopHintSize (0),
-    initialized (false),
     edgeWindow (None),
     edgeDelayTimer (),
     xdndWindow (None)
