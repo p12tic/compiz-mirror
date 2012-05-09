@@ -762,9 +762,11 @@ public:
 private:
     CompScreen* screen;
     compiz::private_screen::Extension xkbEvent;
+
     //TODO? Pull these two out as a class?
     bool xineramaExtension;
     std::vector<XineramaScreenInfo> screenInfo;
+
     SnDisplay* snDisplay;
     char displayString_[256];
     KeyCode escapeKeyCode;
@@ -786,7 +788,8 @@ private:
     CompTimer pingTimer;
     CompTimer edgeDelayTimer;
     CompDelayedEdgeSettings edgeDelaySettings;
-    Window xdndWindow;compiz::private_screen::PluginManager pluginManager;
+    Window xdndWindow;
+    compiz::private_screen::PluginManager pluginManager;
 };
 
 class CompManager
