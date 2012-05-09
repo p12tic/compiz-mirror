@@ -4280,7 +4280,7 @@ cps::OutputDevices::outputDeviceForGeometry (
 CompIcon *
 CompScreenImpl::defaultIcon () const
 {
-    return priv->orphanData.defaultIcon;
+    return defaultIcon_;
 }
 
 bool
@@ -4291,18 +4291,18 @@ CompScreenImpl::updateDefaultIcon ()
     void       *data;
     CompSize   size;
 
-    if (priv->orphanData.defaultIcon)
+    if (defaultIcon_)
     {
-	delete priv->orphanData.defaultIcon;
-	priv->orphanData.defaultIcon = NULL;
+	delete defaultIcon_;
+	defaultIcon_ = NULL;
     }
 
     if (!readImageFromFile (file, pname, size, data))
 	return false;
 
-    priv->orphanData.defaultIcon = new CompIcon (size.width (), size.height ());
+    defaultIcon_ = new CompIcon (size.width (), size.height ());
 
-    memcpy (priv->orphanData.defaultIcon->data (), data,
+    memcpy (defaultIcon_->data (), data,
 	    size.width () * size.height () * sizeof (CARD32));
 
     free (data);
@@ -4650,6 +4650,7 @@ CompScreenImpl::CompScreenImpl () :
     autoRaiseWindow_(0),
     desktopWindowCount_(0),
     mapNum (1),
+    defaultIcon_(0),
     eventHandled (false)
 {
     CompPrivate p;
@@ -5303,6 +5304,9 @@ CompScreenImpl::~CompScreenImpl ()
 	CompPlugin::unload (p);
 
     screen = NULL;
+
+    if (defaultIcon_)
+	delete defaultIcon_;
 }
 
 cps::GrabManager::GrabManager (CompScreen *screen) :
@@ -5413,7 +5417,6 @@ cps::EventManager::EventManager () :
 }
 
 cps::OrphanData::OrphanData() :
-    defaultIcon (0),
     activeWindow (0),
     nextActiveWindow(0)
 {
@@ -5421,8 +5424,6 @@ cps::OrphanData::OrphanData() :
 
 cps::OrphanData::~OrphanData()
 {
-    if (defaultIcon)
-	delete defaultIcon;
 }
 
 cps::EventManager::~EventManager ()
