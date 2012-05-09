@@ -4657,6 +4657,8 @@ CompScreenImpl::CompScreenImpl () :
     grabManager (this),
     eventHandled (false)
 {
+    ValueHolder::SetDefault (&valueHolder);
+
     CompPrivate p;
     CompOption::Value::Vector vList;
     CompPlugin  *corePlugin;
@@ -5414,7 +5416,6 @@ cps::EventManager::EventManager () :
     lastWatchFdHandle (1),
     grabWindow (None)
 {
-    ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
     TimeoutHandler::SetDefault (dTimeoutHandler);
 }

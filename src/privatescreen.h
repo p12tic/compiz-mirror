@@ -362,7 +362,6 @@ private:
 };
 
 class EventManager :
-    public ValueHolder,
     public GrabList
 {
     public:
@@ -1140,6 +1139,7 @@ class CompScreenImpl : public CompScreen
 	compiz::private_screen::GrabManager mutable grabManager;
 	compiz::private_screen::Ping ping;
 	compiz::private_screen::History history;
+    	ValueHolder valueHolder;
         bool 	eventHandled;
 };
 
