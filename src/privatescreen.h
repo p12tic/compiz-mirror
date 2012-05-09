@@ -465,7 +465,6 @@ struct OrphanData : boost::noncopyable
 {
     OrphanData();
     ~OrphanData();
-    unsigned int mapNum;
     CompIcon *defaultIcon;
 
     Window activeWindow;
@@ -1042,6 +1041,7 @@ class CompScreenImpl : public CompScreen
 
 	virtual void incrementDesktopWindowCount();
 	virtual void decrementDesktopWindowCount();
+	virtual unsigned int nextMapNum();
     public :
 
 	static bool showDesktop (CompAction         *action,
@@ -1129,6 +1129,7 @@ class CompScreenImpl : public CompScreen
 	CompTimer autoRaiseTimer_;
 	Window    autoRaiseWindow_;
         int       desktopWindowCount_;
+	unsigned int mapNum;
         bool 	eventHandled;
 };
 

@@ -175,6 +175,7 @@ public:
     MOCK_CONST_METHOD0(createFailed, bool ());
     MOCK_METHOD0(incrementDesktopWindowCount, void ());
     MOCK_METHOD0(decrementDesktopWindowCount, void ());
+    MOCK_METHOD0(nextMapNum, unsigned int ());
 };
 
 class StubActivePluginsOption : public CoreOptions

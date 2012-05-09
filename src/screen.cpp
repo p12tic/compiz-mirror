@@ -4649,6 +4649,7 @@ CompScreenImpl::CompScreenImpl () :
     autoRaiseTimer_(),
     autoRaiseWindow_(0),
     desktopWindowCount_(0),
+    mapNum (1),
     eventHandled (false)
 {
     CompPrivate p;
@@ -4845,9 +4846,9 @@ CompScreenImpl::decrementDesktopWindowCount()
 }
 
 unsigned int
-CompScreen::nextMapNum()
+CompScreenImpl::nextMapNum()
 {
-    return priv->orphanData.mapNum++;
+    return mapNum++;
 }
 
 unsigned int
@@ -5412,7 +5413,6 @@ cps::EventManager::EventManager () :
 }
 
 cps::OrphanData::OrphanData() :
-    mapNum (1),
     defaultIcon (0),
     activeWindow (0),
     nextActiveWindow(0)

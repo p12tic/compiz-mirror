@@ -343,7 +343,7 @@ public:
     virtual void incrementPendingDestroys();
     virtual void incrementDesktopWindowCount() = 0;
     virtual void decrementDesktopWindowCount() = 0;
-    virtual unsigned int nextMapNum();
+    virtual unsigned int nextMapNum() = 0;
     virtual unsigned int lastPing () const;
     virtual void setNextActiveWindow(Window id);
     virtual Window getNextActiveWindow() const;
