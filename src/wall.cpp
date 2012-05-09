@@ -620,50 +620,29 @@ WallWindow::activate ()
 	    XWindowChanges xwc;
 	    unsigned int   mask = 0;
 
-	    ws->moveViewport (-dx, -dy, false);
+	    /* If changing viewports fails we should not
+	     * move the client window */
+	    if (!ws->moveViewport (-dx, -dy, false))
+	    {
+		window->activate ();
+		return;
+	    }
+
 	    ws->focusDefault = false;
 
-	    CompWindow::Geometry sbr (window->serverBorderRect ().x (),
-				      window->serverBorderRect ().y (),
-				      window->serverBorderRect ().width (),
-				      window->serverBorderRect ().height (),
-				      0);
-	    CompRegion sbrRegion (sbr);
-	    int        output = screen->outputDeviceForGeometry (sbr);
-	    CompRegion outputRegion (screen->outputDevs ()[output].workArea ());
+	    CompRegion screenRegion;
 
-	    /* If the window would be partially offscreen
-	     * after it was moved then we should move it back
-	     * so that it is completely onscreen, since we moved
-	     * from mostly offscreen on B to mostly onscreen on A,
-	     * the user should be able to see their selected window */
-	    CompRegion inter = sbrRegion.intersected (outputRegion);
-	    CompRegion rem = sbrRegion - outputRegion;
+	    foreach (const CompOutput &o, screen->outputDevs ())
+		screenRegion += o.workArea ();
 
-	    foreach (const CompRect &r, rem.rects ())
-	    {
-		if (r.x1 () >= inter.boundingRect ().x2 ())
-		{
-		    xwc.x = window->serverGeometry ().x () - r.width ();
-		    mask |= CWX;
-		}
-		else if (r.x2 () <= inter.boundingRect ().x1 ())
-		{
-		    xwc.x = window->serverGeometry ().x () + r.width ();
-		    mask |= CWX;
-		}
+	    CompPoint d = compiz::wall::movementWindowOnScreen (window->serverBorderRect (),
+								screenRegion);
 
-		if (r.y1 () >= inter.boundingRect ().y2 ())
-		{
-		    xwc.y = window->serverGeometry ().y () - r.height ();
-		    mask |= CWY;
-		}
-		else if (r.y2 () <= inter.boundingRect ().y1 ())
-		{
-		    xwc.y = window->serverGeometry ().y () + r.height ();
-		    mask |= CWY;
-		}
-	    }
+	    mask |= d.x () !=0 ? CWX : 0;
+	    mask |= d.y () !=0 ? CWY : 0;
+
+	    xwc.x = window->serverGeometry ().x () + dx;
+	    xwc.y = window->serverGeometry ().y () + dy;
 
 	    window->configureXWindow (mask, &xwc);
 	}
@@ -1515,7 +1494,7 @@ WallScreen::donePaint ()
 
     if (!moving && !showPreview && grabIndex)
     {
-	screen->removeGrab (grabIndex, NULL);
+	screen->removeGrab (static_cast <CompScreen::GrabHandle> (grabIndex), NULL);
 	grabIndex = 0;
     }
 

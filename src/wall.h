@@ -31,6 +31,8 @@
 #include <cairo-xlib-xrender.h>
 #include <cairo.h>
 
+#include "offset-movement.h"
+
 #include "wall_options.h"
 
 
