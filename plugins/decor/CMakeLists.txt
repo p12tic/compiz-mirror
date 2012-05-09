@@ -4,12 +4,10 @@ include (CompizPlugin)
 include (CompizCommon)
 
 include_directories (${CMAKE_CURRENT_SOURCE_DIR}/src/clip-groups/include/)
-include_directories (${CMAKE_CURRENT_SOURCE_DIR}/src/pixmap-requests/include/)
 
-compiz_plugin(decor PLUGINDEPS composite opengl LIBRARIES decoration compiz_decor_clip_groups compiz_decor_pixmap_requests)
+compiz_plugin(decor PLUGINDEPS composite opengl LIBRARIES decoration compiz_decor_clip_groups)
 
 add_subdirectory (src/clip-groups)
-add_subdirectory (src/pixmap-requests)
 
 if (COMPIZ_BUILD_WITH_RPATH AND NOT COMPIZ_DISABLE_PLUGIN_DECOR)
 

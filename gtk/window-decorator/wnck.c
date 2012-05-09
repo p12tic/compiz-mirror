@@ -80,7 +80,7 @@ window_name_changed (WnckWindow *win)
 
     if (d->decorated)
     {
-	if (!request_update_window_decoration_size (win))
+	if (!update_window_decoration_size (win))
 	    queue_decor_draw (d);
     }
 }
@@ -102,7 +102,7 @@ window_geometry_changed (WnckWindow *win)
 	    d->client_width  = width;
 	    d->client_height = height;
 
-	    request_update_window_decoration_size (win);
+	    update_window_decoration_size (win);
 	    update_event_windows (win);
 	}
     }
@@ -128,7 +128,7 @@ window_state_changed (WnckWindow *win)
     if (d->decorated)
     {
 	update_window_decoration_state (win);
-	if (!request_update_window_decoration_size (win))
+	if (!update_window_decoration_size (win))
 	    queue_decor_draw (d);
 
 	update_event_windows (win);
@@ -143,7 +143,7 @@ window_actions_changed (WnckWindow *win)
     if (d->decorated)
     {
 	update_window_decoration_actions (win);
-	if (!request_update_window_decoration_size (win))
+	if (!update_window_decoration_size (win))
 	    queue_decor_draw (d);
 
 	update_event_windows (win);
@@ -422,7 +422,7 @@ add_frame_window (WnckWindow *win,
 	update_window_decoration_state (win);
 	update_window_decoration_actions (win);
 	update_window_decoration_icon (win);
-	request_update_window_decoration_size (win);
+	update_window_decoration_size (win);
 
 	update_event_windows (win);
     }
@@ -585,7 +585,7 @@ active_window_changed (WnckScreen *screen)
     if (win)
     {
 	d = g_object_get_data (G_OBJECT (win), "decor");
-	if (d)
+	if (d && d->pixmap)
 	{
 	    d->active = wnck_window_is_active (win);
 
@@ -642,9 +642,8 @@ active_window_changed (WnckScreen *screen)
 	    * then we need to redraw the decoration anyways
 	    * since the image would have changed */
 	    if (d->win != NULL &&
-		!request_update_window_decoration_size (d->win) &&
-		d->decorated &&
-		d->pixmap)
+		!update_window_decoration_size (d->win) &&
+		d->decorated)
 		queue_decor_draw (d);
 
 	}
@@ -654,7 +653,7 @@ active_window_changed (WnckScreen *screen)
     if (win)
     {
 	d = g_object_get_data (G_OBJECT (win), "decor");
-	if (d)
+	if (d && d->pixmap)
 	{
 	    d->active = wnck_window_is_active (win);
 
@@ -711,9 +710,8 @@ active_window_changed (WnckScreen *screen)
 	    * then we need to redraw the decoration anyways
 	    * since the image would have changed */
 	    if (d->win != NULL &&
-		!request_update_window_decoration_size (d->win) &&
-		d->decorated &&
-		d->pixmap)
+		!update_window_decoration_size (d->win) &&
+		d->decorated)
 		queue_decor_draw (d);
 
 	}
