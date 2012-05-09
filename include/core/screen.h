@@ -328,6 +328,7 @@ public:
 
     // Replacements for friends accessing priv. They are declared virtual to
     // ensure the ABI is stable if/when they are moved to CompScreenImpl.
+    // They are only intended for use within compiz-core
     virtual bool displayInitialised() const;
     virtual void updatePassiveKeyGrabs () const;
     virtual void applyStartupProperties (CompWindow *window);
@@ -356,10 +357,11 @@ public:
     virtual unsigned int getProtocols (Window id);
     virtual unsigned int getWindowType (Window id);
     virtual unsigned int getWindowState (Window id);
+    // End of "internal use only" functions
 
 protected:
 	CompScreen();
-	boost::scoped_ptr<PrivateScreen> priv; // TODO should not be par of interface
+	boost::scoped_ptr<PrivateScreen> priv;
 
 private:
     // The "wrapable" functions delegate to these (for mocking)
