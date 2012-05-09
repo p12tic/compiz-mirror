@@ -4662,7 +4662,7 @@ CompScreenImpl::CompScreenImpl () :
     CompPlugin  *corePlugin;
 
     priv.reset (new PrivateScreen (this));
-    priv->pingTimer.setCallback (
+    priv->setPingTimerCallback(
 	boost::bind (&CompScreenImpl::handlePingTimeout, this));
 
     screenInitalized = true;

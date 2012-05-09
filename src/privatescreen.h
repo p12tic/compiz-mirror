@@ -726,6 +726,9 @@ class PrivateScreen :
     void detectOutputDevices(CoreOptions& coreOptions);
     void updateOutputDevices(CoreOptions& coreOptions);
 
+    void setPingTimerCallback(CompTimer::CallBack const& callback)
+    { pingTimer.setCallback(callback); }
+
 public:
     Display* dpy;
     compiz::private_screen::Extension xSync;
@@ -781,9 +784,7 @@ private:
     int desktopHintSize;
 
     Window edgeWindow;
-public:
     CompTimer pingTimer;
-private:
     CompTimer edgeDelayTimer;
     CompDelayedEdgeSettings edgeDelaySettings;
     Window xdndWindow;compiz::private_screen::PluginManager pluginManager;
