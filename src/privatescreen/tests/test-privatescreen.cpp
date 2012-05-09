@@ -173,6 +173,8 @@ public:
     MOCK_METHOD0(grabbed, bool ());
     MOCK_METHOD0(snDisplay, SnDisplay * ());
     MOCK_CONST_METHOD0(createFailed, bool ());
+    MOCK_METHOD0(incrementDesktopWindowCount, void ());
+    MOCK_METHOD0(decrementDesktopWindowCount, void ());
 };
 
 class StubActivePluginsOption : public CoreOptions

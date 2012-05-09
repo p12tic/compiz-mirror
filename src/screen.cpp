@@ -4532,7 +4532,7 @@ CompScreenImpl::vpSize () const
 int
 CompScreenImpl::desktopWindowCount ()
 {
-    return priv->orphanData.desktopWindowCount;
+    return desktopWindowCount_;
 }
 
 unsigned int
@@ -4648,6 +4648,7 @@ CompScreenImpl::CompScreenImpl () :
     below(),
     autoRaiseTimer_(),
     autoRaiseWindow_(0),
+    desktopWindowCount_(0),
     eventHandled (false)
 {
     CompPrivate p;
@@ -4833,14 +4834,14 @@ CompScreen::incrementPendingDestroys()
 }
 
 void
-CompScreen::incrementDesktopWindowCount()
+CompScreenImpl::incrementDesktopWindowCount()
 {
-    priv->orphanData.desktopWindowCount++;
+    desktopWindowCount_++;
 }
 void
-CompScreen::decrementDesktopWindowCount()
+CompScreenImpl::decrementDesktopWindowCount()
 {
-    priv->orphanData.desktopWindowCount--;
+    desktopWindowCount_--;
 }
 
 unsigned int
@@ -5411,7 +5412,6 @@ cps::EventManager::EventManager () :
 }
 
 cps::OrphanData::OrphanData() :
-    desktopWindowCount (0),
     mapNum (1),
     defaultIcon (0),
     activeWindow (0),

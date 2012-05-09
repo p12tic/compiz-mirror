@@ -341,8 +341,8 @@ public:
     virtual void updatePassiveButtonGrabs(Window serverFrame);
     virtual bool grabWindowIsNot(Window w) const;
     virtual void incrementPendingDestroys();
-    virtual void incrementDesktopWindowCount();
-    virtual void decrementDesktopWindowCount();
+    virtual void incrementDesktopWindowCount() = 0;
+    virtual void decrementDesktopWindowCount() = 0;
     virtual unsigned int nextMapNum();
     virtual unsigned int lastPing () const;
     virtual void setNextActiveWindow(Window id);
