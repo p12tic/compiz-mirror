@@ -4855,6 +4855,18 @@ CompScreen::lastPing () const
     return priv->ping.lastPing ();
 }
 
+void
+CompScreen::setNextActiveWindow(Window id)
+{
+    priv->orphanData.nextActiveWindow = id;
+}
+Window
+CompScreen::getNextActiveWindow() const
+{
+    return priv->orphanData.nextActiveWindow;
+}
+
+
 bool
 PrivateScreen::initDisplay (const char *name)
 {

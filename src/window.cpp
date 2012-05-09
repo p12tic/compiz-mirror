@@ -2446,7 +2446,7 @@ CompWindow::moveInputFocusTo ()
 			 XA_WINDOW, 32, PropModeReplace,
 			 (unsigned char *) &priv->id, 1);
 
-	screen->priv->orphanData.nextActiveWindow = priv->serverFrame;
+	screen->setNextActiveWindow(priv->serverFrame);
     }
     else
     {
@@ -2479,7 +2479,7 @@ CompWindow::moveInputFocusTo ()
 	}
 
 	if (setFocus)
-	    screen->priv->orphanData.nextActiveWindow = priv->id;
+	    screen->setNextActiveWindow(priv->id);
 
 	if (!setFocus && !modalTransient)
 	{
@@ -2503,13 +2503,13 @@ void
 CompWindow::moveInputFocusToOtherWindow ()
 {
     if (priv->id == screen->activeWindow () ||
-	priv->id == screen->priv->orphanData.nextActiveWindow)
+	priv->id == screen->getNextActiveWindow())
     {
 	CompWindow *ancestor;
-	CompWindow *nextActive = screen->findWindow (screen->priv->orphanData.nextActiveWindow);
+	CompWindow *nextActive = screen->findWindow (screen->getNextActiveWindow());
 
         /* Window pending focus */
-	if (priv->id != screen->priv->orphanData.nextActiveWindow &&
+	if (priv->id != screen->getNextActiveWindow() &&
 	    nextActive &&
 	    nextActive->focus ())
 	{
@@ -4112,14 +4112,14 @@ CompWindow::raise ()
 }
 
 CompWindow *
-PrivateScreen::focusTopMostWindow ()
+CompScreen::focusTopMostWindow ()
 {
     using ::compiz::private_screen::WindowManager;
 
     CompWindow  *focus = NULL;
-    WindowManager::reverse_iterator it = windowManager.rbegin ();
+    WindowManager::reverse_iterator it = priv->windowManager.rbegin ();
 
-    for (; it != windowManager.rend (); it++)
+    for (; it != priv->windowManager.rend (); it++)
     {
 	CompWindow *w = *it;
 
@@ -4135,11 +4135,11 @@ PrivateScreen::focusTopMostWindow ()
 
     if (focus)
     {
-	if (focus->id () != orphanData.activeWindow)
+	if (focus->id () != priv->orphanData.activeWindow)
 	    focus->moveInputFocusTo ();
     }
     else
-	XSetInputFocus (dpy, rootWindow(), RevertToPointerRoot,
+	XSetInputFocus (priv->dpy, priv->rootWindow(), RevertToPointerRoot,
 			CurrentTime);
     return focus;
 }
@@ -4160,7 +4160,7 @@ CompWindow::lower ()
        the click-to-focus option is on */
     if ((screen->getCoreOptions().optionGetClickToFocus ()))
     {
-	CompWindow *focusedWindow = screen->priv->focusTopMostWindow ();
+	CompWindow *focusedWindow = screen->focusTopMostWindow ();
 
 	/* if the newly focused window is a desktop window,
 	   give the focus back to w */
@@ -4290,7 +4290,7 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	    /* put active or soon-to-be-active fullscreen windows over
 	       all others in their layer */
 	    if (priv->id == screen->activeWindow () ||
-		priv->id == screen->priv->orphanData.nextActiveWindow)
+		priv->id == screen->getNextActiveWindow())
 	    {
 		aboveFs = true;
 	    }

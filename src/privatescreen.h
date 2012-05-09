@@ -687,9 +687,6 @@ class PrivateScreen :
 
 	void disableEdge (int edge);
 
-	CompWindow *
-	focusTopMostWindow ();
-
 	bool createFailed () const;
 	
 	void setDefaultWindowAttributes (XWindowAttributes *);

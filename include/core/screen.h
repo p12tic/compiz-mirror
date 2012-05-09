@@ -323,8 +323,6 @@ public:
     virtual bool grabbed () = 0;
     virtual SnDisplay * snDisplay () = 0;
 
-    friend class CompWindow; // TODO get rid of friends
-
     virtual void processEvents () = 0;
     virtual void alwaysHandleEvent (XEvent *event) = 0;
 
@@ -346,6 +344,9 @@ public:
     virtual void decrementDesktopWindowCount();
     virtual unsigned int nextMapNum();
     virtual unsigned int lastPing () const;
+    virtual void setNextActiveWindow(Window id);
+    virtual Window getNextActiveWindow() const;
+    virtual CompWindow * focusTopMostWindow ();
 
     virtual int getWmState (Window id);
     virtual void setWmState (int state, Window id) const;

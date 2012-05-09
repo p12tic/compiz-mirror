@@ -1924,8 +1924,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		{
 		    unsigned int state = w->state ();
 
-		    if (priv->orphanData.nextActiveWindow == event->xfocus.window)
-			priv->orphanData.nextActiveWindow = None;
+		    if (getNextActiveWindow() == event->xfocus.window)
+			setNextActiveWindow(None);
 
 		    if (w->id () != priv->orphanData.activeWindow)
 		    {
@@ -2057,7 +2057,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 	    w = screen->findWindow (priv->orphanData.activeWindow);
 
-	    priv->orphanData.nextActiveWindow = None;
+	    setNextActiveWindow(None);
 	    priv->orphanData.activeWindow = None;
 
 	    if (w)
