@@ -734,7 +734,6 @@ public:
     compiz::private_screen::History history;
     compiz::private_screen::ViewPort viewPort;
     compiz::private_screen::StartupSequenceImpl startupSequence;
-    compiz::private_screen::GrabManager grabManager;
     compiz::private_screen::EventManager eventManager;
     compiz::private_screen::Ping ping;
     compiz::private_screen::OrphanData orphanData;
@@ -1041,6 +1040,9 @@ class CompScreenImpl : public CompScreen
 	virtual void incrementDesktopWindowCount();
 	virtual void decrementDesktopWindowCount();
 	virtual unsigned int nextMapNum();
+	virtual void updatePassiveKeyGrabs () const;
+	virtual void updatePassiveButtonGrabs(Window serverFrame);
+
     public :
 
 	static bool showDesktop (CompAction         *action,
@@ -1130,6 +1132,7 @@ class CompScreenImpl : public CompScreen
         int       desktopWindowCount_;
 	unsigned int mapNum;
 	CompIcon *defaultIcon_;
+	compiz::private_screen::GrabManager mutable grabManager;
         bool 	eventHandled;
 };
 

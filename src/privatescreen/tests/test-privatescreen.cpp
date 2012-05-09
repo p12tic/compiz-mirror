@@ -176,6 +176,8 @@ public:
     MOCK_METHOD0(incrementDesktopWindowCount, void ());
     MOCK_METHOD0(decrementDesktopWindowCount, void ());
     MOCK_METHOD0(nextMapNum, unsigned int ());
+    MOCK_CONST_METHOD0(updatePassiveKeyGrabs, void ());
+    MOCK_METHOD1(updatePassiveButtonGrabs, void (Window serverFrame));
 };
 
 class StubActivePluginsOption : public CoreOptions

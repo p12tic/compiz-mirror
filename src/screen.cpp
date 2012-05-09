@@ -3477,16 +3477,16 @@ CompScreenImpl::addAction (CompAction *action)
 
     if (action->type () & CompAction::BindingTypeKey)
     {
-	if (!priv->grabManager.addPassiveKeyGrab (action->key ()))
+	if (!grabManager.addPassiveKeyGrab (action->key ()))
 	    return false;
     }
 
     if (action->type () & CompAction::BindingTypeButton)
     {
-	if (!priv->grabManager.addPassiveButtonGrab (action->button ()))
+	if (!grabManager.addPassiveButtonGrab (action->button ()))
 	{
 	    if (action->type () & CompAction::BindingTypeKey)
-		priv->grabManager.removePassiveKeyGrab (action->key ());
+		grabManager.removePassiveKeyGrab (action->key ());
 
 	    return false;
 	}
@@ -3516,10 +3516,10 @@ CompScreenImpl::removeAction (CompAction *action)
 	return;
 
     if (action->type () & CompAction::BindingTypeKey)
-	priv->grabManager.removePassiveKeyGrab (action->key ());
+	grabManager.removePassiveKeyGrab (action->key ());
 
     if (action->type () & CompAction::BindingTypeButton)
-	priv->grabManager.removePassiveButtonGrab (action->button ());
+	grabManager.removePassiveButtonGrab (action->button ());
 
     if (action->edgeMask ())
     {
@@ -4651,6 +4651,7 @@ CompScreenImpl::CompScreenImpl () :
     desktopWindowCount_(0),
     mapNum (1),
     defaultIcon_(0),
+    grabManager (this),
     eventHandled (false)
 {
     CompPrivate p;
@@ -4770,9 +4771,9 @@ CompScreen::displayInitialised() const
 }
 
 void
-CompScreen::updatePassiveKeyGrabs () const
+CompScreenImpl::updatePassiveKeyGrabs () const
 {
-    priv->grabManager.updatePassiveKeyGrabs ();
+    grabManager.updatePassiveKeyGrabs ();
 }
 
 void
@@ -4818,9 +4819,9 @@ CompScreen::activeWindow() const
 }
 
 void
-CompScreen::updatePassiveButtonGrabs(Window serverFrame)
+CompScreenImpl::updatePassiveButtonGrabs(Window serverFrame)
 {
-    priv->grabManager.updatePassiveButtonGrabs(serverFrame);
+    grabManager.updatePassiveButtonGrabs(serverFrame);
 }
 
 bool
@@ -5335,7 +5336,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     CoreOptions(false),
     dpy (NULL),
     startupSequence(this),
-    grabManager (screen),
     eventManager (),
     nDesktop (1),
     currentDesktop (0),
