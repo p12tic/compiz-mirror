@@ -1158,7 +1158,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    }
 	}
 
-	foreach (CompWindow *w, priv->windowManager.getDestroyedWindows())
+	foreach (CompWindow *w, destroyedWindows())
 	{
 	    if (w->priv->serverId == event->xcreatewindow.window)
 	    {
@@ -1191,7 +1191,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	     * that to wait until the map request */
 	    if ((wa.root == priv->rootWindow()))
 	    {
-		PrivateWindow::createCompWindow (priv->windowManager.getTopWindow (), wa, event->xcreatewindow.window);
+		PrivateWindow::createCompWindow (getTopWindow (), wa, event->xcreatewindow.window);
             }
 	    else
 		XSelectInput (priv->dpy, event->xcreatewindow.window,
@@ -1213,7 +1213,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 	if (!w)
 	{
-	    foreach (CompWindow *dw, priv->windowManager.getDestroyedWindows())
+	    foreach (CompWindow *dw, destroyedWindows())
 	    {
 		if (dw->priv->serverId == event->xdestroywindow.window)
 		{
@@ -1268,7 +1268,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    /* Normal -> Iconic */
 	    if (w->pendingUnmaps ())
 	    {
-		priv->setWmState (IconicState, w->id ());
+		setWmState (IconicState, w->id ());
 		w->priv->pendingUnmaps--;
 	    }
 	    else /* X -> Withdrawn */
@@ -1327,7 +1327,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		if (!XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa))
 		    priv->setDefaultWindowAttributes (&wa);
 
-		PrivateWindow::createCompWindow (priv->windowManager.getTopWindow (), wa, event->xcreatewindow.window);
+		PrivateWindow::createCompWindow (getTopWindow (), wa, event->xcreatewindow.window);
 		break;
 	    }
 	    else
@@ -1338,7 +1338,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		 * that it is already in the list of destroyed
 		 * windows, so check that list too */
 
-		foreach (CompWindow *dw, priv->windowManager.getDestroyedWindows())
+		foreach (CompWindow *dw, destroyedWindows())
 		{
 		    if (dw->priv->serverId == event->xreparent.window)
 		    {
@@ -1405,7 +1405,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    {
 		unsigned int type;
 
-		type = priv->getWindowType (w->id ());
+		type = getWindowType (w->id ());
 
 		if (type != w->wmType ())
 		{
@@ -1439,7 +1439,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    {
 		unsigned int state;
 
-		state = priv->getWindowState (w->id ());
+		state = getWindowState (w->id ());
 		state = CompWindow::constrainWindowState (state, w->actions ());
 
 		/* EWMH suggests that we ignore changes
@@ -1508,7 +1508,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	{
 	    w = findWindow (event->xproperty.window);
 	    if (w)
-		w->priv->protocols = priv->getProtocols (w->id ());
+		w->priv->protocols = getProtocols (w->id ());
 	}
 	else if (event->xproperty.atom == Atoms::wmIcon)
 	{
@@ -1558,7 +1558,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 		for (i = 1; i < 3; i++)
 		{
-		    state = priv->windowStateMask (event->xclient.data.l[i]);
+		    state = cps::windowStateMask (event->xclient.data.l[i]);
 		    if (state & ~CompWindowStateHiddenMask)
 		    {
 
@@ -1924,8 +1924,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		{
 		    unsigned int state = w->state ();
 
-		    if (priv->orphanData.nextActiveWindow == event->xfocus.window)
-			priv->orphanData.nextActiveWindow = None;
+		    if (getNextActiveWindow() == event->xfocus.window)
+			setNextActiveWindow(None);
 
 		    if (w->id () != priv->orphanData.activeWindow)
 		    {
@@ -2057,7 +2057,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 	    w = screen->findWindow (priv->orphanData.activeWindow);
 
-	    priv->orphanData.nextActiveWindow = None;
+	    setNextActiveWindow(None);
 	    priv->orphanData.activeWindow = None;
 
 	    if (w)
