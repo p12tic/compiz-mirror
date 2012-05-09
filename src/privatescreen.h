@@ -610,7 +610,7 @@ class PrivateScreen :
 	PrivateScreen (CompScreen *screen);
 	~PrivateScreen ();
 
-	bool initDisplay (const char *name);
+	bool initDisplay (const char *name, compiz::private_screen::History& history);
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
@@ -734,7 +734,6 @@ public:
     compiz::private_screen::Extension xSync;
     compiz::private_screen::Extension xRandr;
     compiz::private_screen::Extension xShape;
-    compiz::private_screen::History history;
     compiz::private_screen::ViewPort viewPort;
     compiz::private_screen::StartupSequenceImpl startupSequence;
     compiz::private_screen::EventManager eventManager;
@@ -1137,6 +1136,7 @@ class CompScreenImpl : public CompScreen
 	CompIcon *defaultIcon_;
 	compiz::private_screen::GrabManager mutable grabManager;
 	compiz::private_screen::Ping ping;
+	compiz::private_screen::History history;
         bool 	eventHandled;
 };
 

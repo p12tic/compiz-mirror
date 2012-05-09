@@ -3897,7 +3897,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 
 	priv->setDesktopHints ();
 
-	priv->history.setCurrentActiveWindowHistory (priv->viewPort.vp.x (), priv->viewPort.vp.y ());
+	history.setCurrentActiveWindowHistory (priv->viewPort.vp.x (), priv->viewPort.vp.y ());
 
 	w = findWindow (priv->orphanData.activeWindow);
 	if (w)
@@ -3909,7 +3909,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 	    /* add window to current history if it's default viewport is
 	       still the current one. */
 	    if (priv->viewPort.vp.x () == dvp.x () && priv->viewPort.vp.y () == dvp.y ())
-		priv->history.addToCurrentActiveWindowHistory (w->id ());
+		history.addToCurrentActiveWindowHistory (w->id ());
 	}
     }
 }
@@ -4541,7 +4541,7 @@ CompScreenImpl::desktopWindowCount ()
 unsigned int
 CompScreenImpl::activeNum () const
 {
-    return priv->history.getActiveNum();
+    return history.getActiveNum();
 }
 
 CompOutput::vector &
@@ -4577,7 +4577,7 @@ CompScreenImpl::nDesktop ()
 CompActiveWindowHistory *
 CompScreenImpl::currentHistory ()
 {
-    return priv->history.getCurrentHistory ();
+    return history.getCurrentHistory ();
 }
 
 bool
@@ -4708,7 +4708,7 @@ CompScreenImpl::init (const char *name)
 {
     priv->eventManager.init();
 
-    if (priv->initDisplay(name))
+    if (priv->initDisplay(name, history))
     {
 	priv->optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
 	priv->optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
@@ -4877,7 +4877,7 @@ CompScreen::getNextActiveWindow() const
 
 
 bool
-PrivateScreen::initDisplay (const char *name)
+PrivateScreen::initDisplay (const char *name, cps::History& history)
 {
     dpy = XOpenDisplay (name);
     if (!dpy)
