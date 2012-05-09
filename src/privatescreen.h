@@ -735,7 +735,6 @@ public:
     compiz::private_screen::ViewPort viewPort;
     compiz::private_screen::StartupSequenceImpl startupSequence;
     compiz::private_screen::EventManager eventManager;
-    compiz::private_screen::Ping ping;
     compiz::private_screen::OrphanData orphanData;
     compiz::private_screen::OutputDevices outputDevices;
     compiz::private_screen::WindowManager windowManager;
@@ -759,8 +758,6 @@ public:
     bool initialized;
 
 private:
-    bool handlePingTimeout();
-
     CompScreen* screen;
     compiz::private_screen::Extension xkbEvent;
     //TODO? Pull these two out as a class?
@@ -784,7 +781,9 @@ private:
     int desktopHintSize;
 
     Window edgeWindow;
+public:
     CompTimer pingTimer;
+private:
     CompTimer edgeDelayTimer;
     CompDelayedEdgeSettings edgeDelaySettings;
     Window xdndWindow;compiz::private_screen::PluginManager pluginManager;
@@ -1042,6 +1041,7 @@ class CompScreenImpl : public CompScreen
 	virtual unsigned int nextMapNum();
 	virtual void updatePassiveKeyGrabs () const;
 	virtual void updatePassiveButtonGrabs(Window serverFrame);
+	virtual unsigned int lastPing () const;
 
     public :
 
@@ -1126,13 +1126,16 @@ class CompScreenImpl : public CompScreen
         virtual void _matchPropertyChanged(CompWindow *);
         virtual void _outputChangeNotify();
 
-	Window below;
+        bool handlePingTimeout();
+
+        Window below;
 	CompTimer autoRaiseTimer_;
 	Window    autoRaiseWindow_;
         int       desktopWindowCount_;
 	unsigned int mapNum;
 	CompIcon *defaultIcon_;
 	compiz::private_screen::GrabManager mutable grabManager;
+	compiz::private_screen::Ping ping;
         bool 	eventHandled;
 };
 

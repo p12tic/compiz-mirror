@@ -641,9 +641,12 @@ PrivateScreen::setAudibleBell (bool audible)
 }
 
 bool
-PrivateScreen::handlePingTimeout ()
+CompScreenImpl::handlePingTimeout ()
 {
-    return ping.handlePingTimeout(windowManager.begin(), windowManager.end(), dpy);
+    return ping.handlePingTimeout(
+	    priv->windowManager.begin(),
+	    priv->windowManager.end(),
+	    priv->dpy);
 }
 
 bool
@@ -4659,6 +4662,8 @@ CompScreenImpl::CompScreenImpl () :
     CompPlugin  *corePlugin;
 
     priv.reset (new PrivateScreen (this));
+    priv->pingTimer.setCallback (
+	boost::bind (&CompScreenImpl::handlePingTimeout, this));
 
     screenInitalized = true;
 
@@ -4854,9 +4859,9 @@ CompScreenImpl::nextMapNum()
 }
 
 unsigned int
-CompScreen::lastPing () const
+CompScreenImpl::lastPing () const
 {
-    return priv->ping.lastPing ();
+    return ping.lastPing ();
 }
 
 void
@@ -5363,8 +5368,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 	screenEdge[i].count = 0;
     }
 
-    pingTimer.setCallback (
-	boost::bind (&PrivateScreen::handlePingTimeout, this));
 }
 
 cps::History::History() :

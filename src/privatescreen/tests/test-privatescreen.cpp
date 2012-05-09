@@ -178,6 +178,7 @@ public:
     MOCK_METHOD0(nextMapNum, unsigned int ());
     MOCK_CONST_METHOD0(updatePassiveKeyGrabs, void ());
     MOCK_METHOD1(updatePassiveButtonGrabs, void (Window serverFrame));
+    MOCK_CONST_METHOD0(lastPing, unsigned int  ());
 };
 
 class StubActivePluginsOption : public CoreOptions

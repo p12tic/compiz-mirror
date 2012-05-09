@@ -1613,7 +1613,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    {
 		w = findWindow (event->xclient.data.l[2]);
 		if (w)
-		    w->priv->handlePing (priv->ping.lastPing ());
+		    w->priv->handlePing (ping.lastPing ());
 	    }
 	}
 	else if (event->xclient.message_type == Atoms::closeWindow)

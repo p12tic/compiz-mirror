@@ -344,7 +344,7 @@ public:
     virtual void incrementDesktopWindowCount() = 0;
     virtual void decrementDesktopWindowCount() = 0;
     virtual unsigned int nextMapNum() = 0;
-    virtual unsigned int lastPing () const;
+    virtual unsigned int lastPing () const = 0;
     virtual void setNextActiveWindow(Window id);
     virtual Window getNextActiveWindow() const;
     virtual CompWindow * focusTopMostWindow ();
