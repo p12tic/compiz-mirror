@@ -1141,6 +1141,7 @@ class CompScreenImpl : public CompScreen
 	compiz::private_screen::History history;
     	ValueHolder valueHolder;
         bool 	eventHandled;
+        PrivateScreen privateScreen;
 };
 
 #endif

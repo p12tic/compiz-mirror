@@ -4655,7 +4655,8 @@ CompScreenImpl::CompScreenImpl () :
     mapNum (1),
     defaultIcon_(0),
     grabManager (this),
-    eventHandled (false)
+    eventHandled (false),
+    privateScreen(this)
 {
     ValueHolder::SetDefault (&valueHolder);
 
@@ -4663,7 +4664,7 @@ CompScreenImpl::CompScreenImpl () :
     CompOption::Value::Vector vList;
     CompPlugin  *corePlugin;
 
-    priv.reset (new PrivateScreen (this));
+    priv = &privateScreen;
     priv->setPingTimerCallback(
 	boost::bind (&CompScreenImpl::handlePingTimeout, this));
 
@@ -4753,7 +4754,7 @@ CompScreenImpl::init (const char *name)
 		new StackDebugger (
 		    dpy (),
 		    root (),
-		    boost::bind (&PrivateScreen::queueEvents, priv.get())));
+		    boost::bind (&PrivateScreen::queueEvents, priv)));
 	}
 
 	return true;

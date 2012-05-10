@@ -361,7 +361,7 @@ public:
 
 protected:
 	CompScreen();
-	boost::scoped_ptr<PrivateScreen> priv;
+	PrivateScreen* priv;
 
 private:
     // The "wrapable" functions delegate to these (for mocking)
