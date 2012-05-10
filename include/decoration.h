@@ -492,24 +492,6 @@ decor_handle_selection_request (Display *xdisplay,
 				XEvent  *event,
 				Time    dm_sn_timestamp);
 
-int
-decor_post_pending (Display *xdisplay,
-		    Window  client,
-		    unsigned int frame_state,
-		    unsigned int frame_type,
-		    unsigned int frame_actions);
-
-int
-decor_post_delete_pixmap (Display *xdisplay,
-			  Pixmap  pixmap);
-
-int
-decor_post_generate_request (Display *xdisplay,
-			     Window  client,
-			     unsigned int frame_type,
-			     unsigned int frame_state,
-			     unsigned int frame_actions);
-
 #ifdef  __cplusplus
 }
 #endif

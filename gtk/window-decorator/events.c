@@ -1014,7 +1014,7 @@ event_filter_func (GdkXEvent *gdkxevent,
 			update_window_decoration_state (win);
 			update_window_decoration_actions (win);
 			update_window_decoration_icon (win);
-			request_update_window_decoration_size (win);
+			update_window_decoration_size (win);
 			update_event_windows (win);
 		    }
 		    else
@@ -1068,17 +1068,6 @@ event_filter_func (GdkXEvent *gdkxevent,
 			hide_force_quit_dialog (win);
 		}
 	    }
-	}
-	else if (xevent->xclient.message_type == decor_request_atom)
-	{
-	    WnckWindow *win = wnck_window_get (xevent->xclient.window);
-
-	    if (win)
-		update_window_decoration_size (win);
-	}
-	else if (xevent->xclient.message_type == decor_delete_pixmap_atom)
-	{
-	    g_hash_table_remove (destroyed_pixmaps_table, GINT_TO_POINTER (xevent->xclient.data.l[0]));
 	}
     default:
 	break;
