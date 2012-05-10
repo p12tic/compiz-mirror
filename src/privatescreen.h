@@ -601,6 +601,8 @@ private:
     unsigned int lastPing_;
 };
 
+unsigned int windowStateMask (Atom state);
+
 }} // namespace compiz::private_screen
 
 class PrivateScreen :
@@ -669,23 +671,7 @@ class PrivateScreen :
 
 	Window getActiveWindow (Window root);
 
-	int getWmState (Window id);
-
-	void setWmState (int state, Window id);
-
-	unsigned int windowStateMask (Atom state);
-
-	unsigned int getWindowState (Window id);
-
 	void setWindowState (unsigned int state, Window id);
-
-	unsigned int getWindowType (Window id);
-
-	void getMwmHints (Window       id,
-			  unsigned int *func,
-			  unsigned int *decor);
-
-	unsigned int getProtocols (Window id);
 
 	bool readWindowProp32 (Window         id,
 			       Atom           property,
@@ -700,9 +686,6 @@ class PrivateScreen :
 	void enableEdge (int edge);
 
 	void disableEdge (int edge);
-
-	CompWindow *
-	focusTopMostWindow ();
 
 	bool createFailed () const;
 	

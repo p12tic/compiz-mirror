@@ -1339,7 +1339,7 @@ CompScreenImpl::_logMessage (const char   *componentName,
 }
 
 int
-PrivateScreen::getWmState (Window id)
+CompScreen::getWmState (Window id)
 {
     Atom	  actual;
     int		  result, format;
@@ -1347,7 +1347,7 @@ PrivateScreen::getWmState (Window id)
     unsigned char *data;
     unsigned long state = NormalState;
 
-    result = XGetWindowProperty (dpy, id,
+    result = XGetWindowProperty (priv->dpy, id,
 				 Atoms::wmState, 0L, 2L, false,
 				 Atoms::wmState, &actual, &format,
 				 &n, &left, &data);
@@ -1363,20 +1363,20 @@ PrivateScreen::getWmState (Window id)
 }
 
 void
-PrivateScreen::setWmState (int state, Window id)
+CompScreen::setWmState (int state, Window id) const
 {
     unsigned long data[2];
 
     data[0] = state;
     data[1] = None;
 
-    XChangeProperty (dpy, id,
+    XChangeProperty (priv->dpy, id,
 		     Atoms::wmState, Atoms::wmState,
 		     32, PropModeReplace, (unsigned char *) data, 2);
 }
 
 unsigned int
-PrivateScreen::windowStateMask (Atom state)
+cps::windowStateMask (Atom state)
 {
     if (state == Atoms::winStateModal)
 	return CompWindowStateModalMask;
@@ -1440,7 +1440,7 @@ cps::windowStateFromString (const char *str)
 }
 
 unsigned int
-PrivateScreen::getWindowState (Window id)
+CompScreen::getWindowState (Window id)
 {
     Atom	  actual;
     int		  result, format;
@@ -1448,7 +1448,7 @@ PrivateScreen::getWindowState (Window id)
     unsigned char *data;
     unsigned int  state = 0;
 
-    result = XGetWindowProperty (dpy, id,
+    result = XGetWindowProperty (priv->dpy, id,
 				 Atoms::winState,
 				 0L, 1024L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1458,7 +1458,7 @@ PrivateScreen::getWindowState (Window id)
 	Atom *a = (Atom *) data;
 
 	while (n--)
-	    state |= windowStateMask (*a++);
+	    state |= cps::windowStateMask (*a++);
 
 	XFree ((void *) data);
     }
@@ -1516,14 +1516,14 @@ PrivateScreen::setWindowState (unsigned int state, Window id)
 }
 
 unsigned int
-PrivateScreen::getWindowType (Window id)
+CompScreen::getWindowType (Window id)
 {
     Atom	  actual, a = None;
     int		  result, format;
     unsigned long n, left;
     unsigned char *data;
 
-    result = XGetWindowProperty (dpy , id,
+    result = XGetWindowProperty (priv->dpy , id,
 				 Atoms::winType,
 				 0L, 1L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1571,9 +1571,9 @@ PrivateScreen::getWindowType (Window id)
 }
 
 void
-PrivateScreen::getMwmHints (Window       id,
+CompScreen::getMwmHints (Window       id,
 			    unsigned int *func,
-			    unsigned int *decor)
+			    unsigned int *decor) const
 {
     Atom	  actual;
     int		  result, format;
@@ -1583,7 +1583,7 @@ PrivateScreen::getMwmHints (Window       id,
     *func  = MwmFuncAll;
     *decor = MwmDecorAll;
 
-    result = XGetWindowProperty (dpy, id,
+    result = XGetWindowProperty (priv->dpy, id,
 				 Atoms::mwmHints,
 				 0L, 20L, false, Atoms::mwmHints,
 				 &actual, &format, &n, &left, &data);
@@ -1606,13 +1606,13 @@ PrivateScreen::getMwmHints (Window       id,
 }
 
 unsigned int
-PrivateScreen::getProtocols (Window id)
+CompScreen::getProtocols (Window id)
 {
     Atom         *protocol;
     int          count;
     unsigned int protocols = 0;
 
-    if (XGetWMProtocols (dpy, id, &protocol, &count))
+    if (XGetWMProtocols (priv->dpy, id, &protocol, &count))
     {
 	int  i;
 
@@ -3722,7 +3722,7 @@ cps::WindowManager::updateClientList (PrivateScreen& ps)
 
     clientListStacking.clear ();
 
-    for (cps::WindowManager::iterator i = ps.windowManager.begin(); i != ps.windowManager.end(); ++i)
+    for (iterator i = begin(); i != end(); ++i)
     {
 	CompWindow* const w(*i);
 	if (isClientListWindow (w))
@@ -4760,10 +4760,112 @@ cps::EventManager::init ()
     sigtermSource = CompSignalSource::create (SIGTERM, boost::bind (&EventManager::handleSignal, this, _1));
 }
 
-bool CompScreen::displayInitialised() const
+bool
+CompScreen::displayInitialised() const
 {
     return priv && priv->initialized;
 }
+
+void
+CompScreen::updatePassiveKeyGrabs () const
+{
+    priv->grabManager.updatePassiveKeyGrabs ();
+}
+
+void
+CompScreen::applyStartupProperties (CompWindow *window)
+{
+    priv->startupSequence.applyStartupProperties (this, window);
+}
+
+void
+CompScreen::updateClientList()
+{
+    priv->updateClientList ();
+}
+
+Window
+CompScreen::getTopWindow() const
+{
+    return priv->windowManager.getTopWindow();
+}
+
+CoreOptions&
+CompScreen::getCoreOptions()
+{
+    return *priv;
+}
+
+Colormap
+CompScreen::colormap() const
+{
+    return priv->colormap;
+}
+
+void
+CompScreen::setCurrentDesktop (unsigned int desktop)
+{
+    priv->setCurrentDesktop(desktop);
+}
+
+Window
+CompScreen::activeWindow() const
+{
+    return priv->orphanData.activeWindow;
+}
+
+void
+CompScreen::updatePassiveButtonGrabs(Window serverFrame)
+{
+    priv->grabManager.updatePassiveButtonGrabs(serverFrame);
+}
+
+bool
+CompScreen::grabWindowIsNot(Window w) const
+{
+    return priv->eventManager.notGrabWindow(w);
+}
+
+void
+CompScreen::incrementPendingDestroys()
+{
+    priv->windowManager.incrementPendingDestroys();
+}
+
+void
+CompScreen::incrementDesktopWindowCount()
+{
+    priv->orphanData.desktopWindowCount++;
+}
+void
+CompScreen::decrementDesktopWindowCount()
+{
+    priv->orphanData.desktopWindowCount--;
+}
+
+unsigned int
+CompScreen::nextMapNum()
+{
+    return priv->orphanData.mapNum++;
+}
+
+unsigned int
+CompScreen::lastPing () const
+{
+    return priv->ping.lastPing ();
+}
+
+void
+CompScreen::setNextActiveWindow(Window id)
+{
+    priv->orphanData.nextActiveWindow = id;
+}
+Window
+CompScreen::getNextActiveWindow() const
+{
+    return priv->orphanData.nextActiveWindow;
+}
+
 
 bool
 PrivateScreen::initDisplay (const char *name)
