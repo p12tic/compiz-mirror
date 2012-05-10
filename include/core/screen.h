@@ -330,7 +330,7 @@ public:
     // ensure the ABI is stable if/when they are moved to CompScreenImpl.
     // They are only intended for use within compiz-core
     virtual bool displayInitialised() const;
-    virtual void updatePassiveKeyGrabs () const;
+    virtual void updatePassiveKeyGrabs () const = 0;
     virtual void applyStartupProperties (CompWindow *window);
     virtual void updateClientList();
     virtual Window getTopWindow() const;
@@ -338,13 +338,13 @@ public:
     virtual Colormap colormap() const;
     virtual void setCurrentDesktop (unsigned int desktop);
     virtual Window activeWindow() const;
-    virtual void updatePassiveButtonGrabs(Window serverFrame);
+    virtual void updatePassiveButtonGrabs(Window serverFrame) = 0;
     virtual bool grabWindowIsNot(Window w) const;
     virtual void incrementPendingDestroys();
-    virtual void incrementDesktopWindowCount();
-    virtual void decrementDesktopWindowCount();
-    virtual unsigned int nextMapNum();
-    virtual unsigned int lastPing () const;
+    virtual void incrementDesktopWindowCount() = 0;
+    virtual void decrementDesktopWindowCount() = 0;
+    virtual unsigned int nextMapNum() = 0;
+    virtual unsigned int lastPing () const = 0;
     virtual void setNextActiveWindow(Window id);
     virtual Window getNextActiveWindow() const;
     virtual CompWindow * focusTopMostWindow ();

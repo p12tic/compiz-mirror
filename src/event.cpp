@@ -1412,9 +1412,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    if (w->isViewable ())
 		    {
 			if (w->type () == CompWindowTypeDesktopMask)
-			    priv->orphanData.desktopWindowCount--;
+			    desktopWindowCount_--;
 			else if (type == CompWindowTypeDesktopMask)
-			    priv->orphanData.desktopWindowCount++;
+			    desktopWindowCount_++;
 		    }
 
 		    w->wmType () = type;
@@ -1613,7 +1613,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    {
 		w = findWindow (event->xclient.data.l[2]);
 		if (w)
-		    w->priv->handlePing (priv->ping.lastPing ());
+		    w->priv->handlePing (ping.lastPing ());
 	    }
 	}
 	else if (event->xclient.message_type == Atoms::closeWindow)
@@ -1932,7 +1932,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 			CompWindow     *active = screen->findWindow (priv->orphanData.activeWindow);
 
 			priv->orphanData.activeWindow = w->id ();
-			w->priv->activeNum = priv->history.nextActiveNum();
+			w->priv->activeNum = history.nextActiveNum();
 
 			if (active)
 			{
@@ -1988,7 +1988,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 			w->priv->updatePassiveButtonGrabs ();
 
-			priv->history.addToCurrentActiveWindowHistory (w->id ());
+			history.addToCurrentActiveWindowHistory (w->id ());
 
 			XChangeProperty (priv->dpy , priv->rootWindow(),
 					 Atoms::winActive,

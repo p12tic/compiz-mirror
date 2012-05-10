@@ -641,9 +641,12 @@ PrivateScreen::setAudibleBell (bool audible)
 }
 
 bool
-PrivateScreen::handlePingTimeout ()
+CompScreenImpl::handlePingTimeout ()
 {
-    return ping.handlePingTimeout(windowManager.begin(), windowManager.end(), dpy);
+    return ping.handlePingTimeout(
+	    priv->windowManager.begin(),
+	    priv->windowManager.end(),
+	    priv->dpy);
 }
 
 bool
@@ -3477,16 +3480,16 @@ CompScreenImpl::addAction (CompAction *action)
 
     if (action->type () & CompAction::BindingTypeKey)
     {
-	if (!priv->grabManager.addPassiveKeyGrab (action->key ()))
+	if (!grabManager.addPassiveKeyGrab (action->key ()))
 	    return false;
     }
 
     if (action->type () & CompAction::BindingTypeButton)
     {
-	if (!priv->grabManager.addPassiveButtonGrab (action->button ()))
+	if (!grabManager.addPassiveButtonGrab (action->button ()))
 	{
 	    if (action->type () & CompAction::BindingTypeKey)
-		priv->grabManager.removePassiveKeyGrab (action->key ());
+		grabManager.removePassiveKeyGrab (action->key ());
 
 	    return false;
 	}
@@ -3516,10 +3519,10 @@ CompScreenImpl::removeAction (CompAction *action)
 	return;
 
     if (action->type () & CompAction::BindingTypeKey)
-	priv->grabManager.removePassiveKeyGrab (action->key ());
+	grabManager.removePassiveKeyGrab (action->key ());
 
     if (action->type () & CompAction::BindingTypeButton)
-	priv->grabManager.removePassiveButtonGrab (action->button ());
+	grabManager.removePassiveButtonGrab (action->button ());
 
     if (action->edgeMask ())
     {
@@ -3894,7 +3897,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 
 	priv->setDesktopHints ();
 
-	priv->history.setCurrentActiveWindowHistory (priv->viewPort.vp.x (), priv->viewPort.vp.y ());
+	history.setCurrentActiveWindowHistory (priv->viewPort.vp.x (), priv->viewPort.vp.y ());
 
 	w = findWindow (priv->orphanData.activeWindow);
 	if (w)
@@ -3906,7 +3909,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 	    /* add window to current history if it's default viewport is
 	       still the current one. */
 	    if (priv->viewPort.vp.x () == dvp.x () && priv->viewPort.vp.y () == dvp.y ())
-		priv->history.addToCurrentActiveWindowHistory (w->id ());
+		history.addToCurrentActiveWindowHistory (w->id ());
 	}
     }
 }
@@ -4280,7 +4283,7 @@ cps::OutputDevices::outputDeviceForGeometry (
 CompIcon *
 CompScreenImpl::defaultIcon () const
 {
-    return priv->orphanData.defaultIcon;
+    return defaultIcon_;
 }
 
 bool
@@ -4291,18 +4294,18 @@ CompScreenImpl::updateDefaultIcon ()
     void       *data;
     CompSize   size;
 
-    if (priv->orphanData.defaultIcon)
+    if (defaultIcon_)
     {
-	delete priv->orphanData.defaultIcon;
-	priv->orphanData.defaultIcon = NULL;
+	delete defaultIcon_;
+	defaultIcon_ = NULL;
     }
 
     if (!readImageFromFile (file, pname, size, data))
 	return false;
 
-    priv->orphanData.defaultIcon = new CompIcon (size.width (), size.height ());
+    defaultIcon_ = new CompIcon (size.width (), size.height ());
 
-    memcpy (priv->orphanData.defaultIcon->data (), data,
+    memcpy (defaultIcon_->data (), data,
 	    size.width () * size.height () * sizeof (CARD32));
 
     free (data);
@@ -4532,13 +4535,13 @@ CompScreenImpl::vpSize () const
 int
 CompScreenImpl::desktopWindowCount ()
 {
-    return priv->orphanData.desktopWindowCount;
+    return desktopWindowCount_;
 }
 
 unsigned int
 CompScreenImpl::activeNum () const
 {
-    return priv->history.getActiveNum();
+    return history.getActiveNum();
 }
 
 CompOutput::vector &
@@ -4574,7 +4577,7 @@ CompScreenImpl::nDesktop ()
 CompActiveWindowHistory *
 CompScreenImpl::currentHistory ()
 {
-    return priv->history.getCurrentHistory ();
+    return history.getCurrentHistory ();
 }
 
 bool
@@ -4648,13 +4651,21 @@ CompScreenImpl::CompScreenImpl () :
     below(),
     autoRaiseTimer_(),
     autoRaiseWindow_(0),
+    desktopWindowCount_(0),
+    mapNum (1),
+    defaultIcon_(0),
+    grabManager (this),
     eventHandled (false)
 {
+    ValueHolder::SetDefault (&valueHolder);
+
     CompPrivate p;
     CompOption::Value::Vector vList;
     CompPlugin  *corePlugin;
 
     priv.reset (new PrivateScreen (this));
+    priv->setPingTimerCallback(
+	boost::bind (&CompScreenImpl::handlePingTimeout, this));
 
     screenInitalized = true;
 
@@ -4699,7 +4710,7 @@ CompScreenImpl::init (const char *name)
 {
     priv->eventManager.init();
 
-    if (priv->initDisplay(name))
+    if (priv->initDisplay(name, history))
     {
 	priv->optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
 	priv->optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
@@ -4767,9 +4778,9 @@ CompScreen::displayInitialised() const
 }
 
 void
-CompScreen::updatePassiveKeyGrabs () const
+CompScreenImpl::updatePassiveKeyGrabs () const
 {
-    priv->grabManager.updatePassiveKeyGrabs ();
+    grabManager.updatePassiveKeyGrabs ();
 }
 
 void
@@ -4815,9 +4826,9 @@ CompScreen::activeWindow() const
 }
 
 void
-CompScreen::updatePassiveButtonGrabs(Window serverFrame)
+CompScreenImpl::updatePassiveButtonGrabs(Window serverFrame)
 {
-    priv->grabManager.updatePassiveButtonGrabs(serverFrame);
+    grabManager.updatePassiveButtonGrabs(serverFrame);
 }
 
 bool
@@ -4833,26 +4844,26 @@ CompScreen::incrementPendingDestroys()
 }
 
 void
-CompScreen::incrementDesktopWindowCount()
+CompScreenImpl::incrementDesktopWindowCount()
 {
-    priv->orphanData.desktopWindowCount++;
+    desktopWindowCount_++;
 }
 void
-CompScreen::decrementDesktopWindowCount()
+CompScreenImpl::decrementDesktopWindowCount()
 {
-    priv->orphanData.desktopWindowCount--;
+    desktopWindowCount_--;
 }
 
 unsigned int
-CompScreen::nextMapNum()
+CompScreenImpl::nextMapNum()
 {
-    return priv->orphanData.mapNum++;
+    return mapNum++;
 }
 
 unsigned int
-CompScreen::lastPing () const
+CompScreenImpl::lastPing () const
 {
-    return priv->ping.lastPing ();
+    return ping.lastPing ();
 }
 
 void
@@ -4868,7 +4879,7 @@ CompScreen::getNextActiveWindow() const
 
 
 bool
-PrivateScreen::initDisplay (const char *name)
+PrivateScreen::initDisplay (const char *name, cps::History& history)
 {
     dpy = XOpenDisplay (name);
     if (!dpy)
@@ -5301,6 +5312,9 @@ CompScreenImpl::~CompScreenImpl ()
 	CompPlugin::unload (p);
 
     screen = NULL;
+
+    if (defaultIcon_)
+	delete defaultIcon_;
 }
 
 cps::GrabManager::GrabManager (CompScreen *screen) :
@@ -5329,7 +5343,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
     CoreOptions(false),
     dpy (NULL),
     startupSequence(this),
-    grabManager (screen),
     eventManager (),
     nDesktop (1),
     currentDesktop (0),
@@ -5357,8 +5370,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 	screenEdge[i].count = 0;
     }
 
-    pingTimer.setCallback (
-	boost::bind (&PrivateScreen::handlePingTimeout, this));
 }
 
 cps::History::History() :
@@ -5405,15 +5416,11 @@ cps::EventManager::EventManager () :
     lastWatchFdHandle (1),
     grabWindow (None)
 {
-    ValueHolder::SetDefault (static_cast<ValueHolder *> (this));
     TimeoutHandler *dTimeoutHandler = new TimeoutHandler ();
     TimeoutHandler::SetDefault (dTimeoutHandler);
 }
 
 cps::OrphanData::OrphanData() :
-    desktopWindowCount (0),
-    mapNum (1),
-    defaultIcon (0),
     activeWindow (0),
     nextActiveWindow(0)
 {
@@ -5421,8 +5428,6 @@ cps::OrphanData::OrphanData() :
 
 cps::OrphanData::~OrphanData()
 {
-    if (defaultIcon)
-	delete defaultIcon;
 }
 
 cps::EventManager::~EventManager ()

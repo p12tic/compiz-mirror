@@ -362,7 +362,6 @@ private:
 };
 
 class EventManager :
-    public ValueHolder,
     public GrabList
 {
     public:
@@ -465,9 +464,6 @@ struct OrphanData : boost::noncopyable
 {
     OrphanData();
     ~OrphanData();
-    int          desktopWindowCount;
-    unsigned int mapNum;
-    CompIcon *defaultIcon;
 
     Window activeWindow;
     Window nextActiveWindow;
@@ -613,7 +609,7 @@ class PrivateScreen :
 	PrivateScreen (CompScreen *screen);
 	~PrivateScreen ();
 
-	bool initDisplay (const char *name);
+	bool initDisplay (const char *name, compiz::private_screen::History& history);
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
@@ -729,17 +725,17 @@ class PrivateScreen :
     void detectOutputDevices(CoreOptions& coreOptions);
     void updateOutputDevices(CoreOptions& coreOptions);
 
+    void setPingTimerCallback(CompTimer::CallBack const& callback)
+    { pingTimer.setCallback(callback); }
+
 public:
     Display* dpy;
     compiz::private_screen::Extension xSync;
     compiz::private_screen::Extension xRandr;
     compiz::private_screen::Extension xShape;
-    compiz::private_screen::History history;
     compiz::private_screen::ViewPort viewPort;
     compiz::private_screen::StartupSequenceImpl startupSequence;
-    compiz::private_screen::GrabManager grabManager;
     compiz::private_screen::EventManager eventManager;
-    compiz::private_screen::Ping ping;
     compiz::private_screen::OrphanData orphanData;
     compiz::private_screen::OutputDevices outputDevices;
     compiz::private_screen::WindowManager windowManager;
@@ -763,13 +759,13 @@ public:
     bool initialized;
 
 private:
-    bool handlePingTimeout();
-
     CompScreen* screen;
     compiz::private_screen::Extension xkbEvent;
+
     //TODO? Pull these two out as a class?
     bool xineramaExtension;
     std::vector<XineramaScreenInfo> screenInfo;
+
     SnDisplay* snDisplay;
     char displayString_[256];
     KeyCode escapeKeyCode;
@@ -791,7 +787,8 @@ private:
     CompTimer pingTimer;
     CompTimer edgeDelayTimer;
     CompDelayedEdgeSettings edgeDelaySettings;
-    Window xdndWindow;compiz::private_screen::PluginManager pluginManager;
+    Window xdndWindow;
+    compiz::private_screen::PluginManager pluginManager;
 };
 
 class CompManager
@@ -1041,6 +1038,13 @@ class CompScreenImpl : public CompScreen
 	virtual void processEvents ();
 	virtual void alwaysHandleEvent (XEvent *event);
 
+	virtual void incrementDesktopWindowCount();
+	virtual void decrementDesktopWindowCount();
+	virtual unsigned int nextMapNum();
+	virtual void updatePassiveKeyGrabs () const;
+	virtual void updatePassiveButtonGrabs(Window serverFrame);
+	virtual unsigned int lastPing () const;
+
     public :
 
 	static bool showDesktop (CompAction         *action,
@@ -1124,9 +1128,18 @@ class CompScreenImpl : public CompScreen
         virtual void _matchPropertyChanged(CompWindow *);
         virtual void _outputChangeNotify();
 
-	Window below;
+        bool handlePingTimeout();
+
+        Window below;
 	CompTimer autoRaiseTimer_;
 	Window    autoRaiseWindow_;
+        int       desktopWindowCount_;
+	unsigned int mapNum;
+	CompIcon *defaultIcon_;
+	compiz::private_screen::GrabManager mutable grabManager;
+	compiz::private_screen::Ping ping;
+	compiz::private_screen::History history;
+    	ValueHolder valueHolder;
         bool 	eventHandled;
 };
 
