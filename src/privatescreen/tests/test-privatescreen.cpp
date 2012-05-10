@@ -173,6 +173,12 @@ public:
     MOCK_METHOD0(grabbed, bool ());
     MOCK_METHOD0(snDisplay, SnDisplay * ());
     MOCK_CONST_METHOD0(createFailed, bool ());
+    MOCK_METHOD0(incrementDesktopWindowCount, void ());
+    MOCK_METHOD0(decrementDesktopWindowCount, void ());
+    MOCK_METHOD0(nextMapNum, unsigned int ());
+    MOCK_CONST_METHOD0(updatePassiveKeyGrabs, void ());
+    MOCK_METHOD1(updatePassiveButtonGrabs, void (Window serverFrame));
+    MOCK_CONST_METHOD0(lastPing, unsigned int  ());
 };
 
 class StubActivePluginsOption : public CoreOptions
