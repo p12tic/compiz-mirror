@@ -48,6 +48,9 @@ Atom compiz_shadow_color_atom;
 Atom toolkit_action_atom;
 Atom toolkit_action_window_menu_atom;
 Atom toolkit_action_force_quit_dialog_atom;
+Atom decor_request_atom;
+Atom decor_pending_atom;
+Atom decor_delete_pixmap_atom;
 
 Atom net_wm_state_atom;
 Atom net_wm_state_modal_atom;
@@ -103,6 +106,7 @@ char *program_name;
 GtkWidget     *switcher_label;
 
 GHashTable    *frame_table;
+GHashTable    *destroyed_pixmaps_table;
 GtkWidget     *action_menu = NULL;
 gboolean      action_menu_mapped = FALSE;
 decor_color_t _title_color[2];
@@ -305,6 +309,10 @@ main (int argc, char *argv[])
     net_wm_state_atom = XInternAtom (xdisplay,"_NET_WM_STATE", 0);
     net_wm_state_modal_atom = XInternAtom (xdisplay, "_NET_WM_STATE_MODAL", 0);
 
+    decor_request_atom = XInternAtom (xdisplay, "_COMPIZ_DECOR_REQUEST", 0);
+    decor_pending_atom = XInternAtom (xdisplay, "_COMPIZ_DECOR_PENDING", 0);
+    decor_delete_pixmap_atom = XInternAtom (xdisplay, "_COMPIZ_DECOR_DELETE_PIXMAP", 0);
+
     status = decor_acquire_dm_session (xdisplay,
 				       gdk_screen_get_number (gdkscreen),
 				       "gwd", replace, &dm_sn_timestamp);
@@ -390,6 +398,7 @@ main (int argc, char *argv[])
     xformat_rgb  = XRenderFindStandardFormat (xdisplay, PictStandardRGB24);
 
     frame_table = g_hash_table_new (NULL, NULL);
+    destroyed_pixmaps_table = g_hash_table_new_full (NULL, NULL, NULL, g_object_unref);
 
     if (!create_tooltip_window ())
     {
