@@ -27,7 +27,6 @@
  */
 
 #include <core/screen.h>
-#include "privatescreen.h"
 #include "privatewindow.h"
 
 const unsigned int ModifierHandler::virtualModMask[7] = {
