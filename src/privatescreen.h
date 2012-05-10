@@ -1103,7 +1103,7 @@ class CompScreenImpl : public CompScreen
 			      CompAction::State  state,
 			      CompOption::Vector &options);
 
-	bool createFailed () const { return priv->createFailed (); }
+	bool createFailed () const { return privateScreen.createFailed (); }
 
 
     private:

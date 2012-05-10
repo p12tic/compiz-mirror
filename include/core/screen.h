@@ -361,9 +361,11 @@ public:
 
 protected:
 	CompScreen();
-	PrivateScreen* priv;
+
+	void setPriv(PrivateScreen* p) { priv = p; }
 
 private:
+	PrivateScreen* priv;
     // The "wrapable" functions delegate to these (for mocking)
     virtual bool _initPluginForScreen(CompPlugin *) = 0;
     virtual void _finiPluginForScreen(CompPlugin *) = 0;

@@ -29,8 +29,6 @@ public:
 	screen = 0;
     }
 
-    using CompScreen::priv;
-
     // Interface hoisted from CompScreen
     MOCK_METHOD0(updateDefaultIcon, bool ());
     MOCK_METHOD0(dpy, Display * ());
