@@ -4661,14 +4661,13 @@ CompScreenImpl::CompScreenImpl () :
 
     CompPrivate p;
     CompOption::Value::Vector vList;
-    CompPlugin  *corePlugin;
 
     privateScreen.setPingTimerCallback(
 	boost::bind (&CompScreenImpl::handlePingTimeout, this));
 
     screenInitalized = true;
 
-    corePlugin = CompPlugin::load ("core");
+    CompPlugin* corePlugin = CompPlugin::load ("core");
     if (!corePlugin)
     {
 	compLogMessage ("core", CompLogLevelFatal,
