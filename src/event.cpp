@@ -1048,7 +1048,7 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
      */
     
     if (event->type == ButtonPress || event->type == KeyPress)
-	priv->eventManager.resetPossibleTap();
+	privateScreen.eventManager.resetPossibleTap();
 
     eventHandled = true;  // if we return inside WRAPABLE_HND_FUNCTN
 
@@ -1061,12 +1061,12 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
     if (keyEvent)
     {
 	int mode = eventHandled ? AsyncKeyboard : ReplayKeyboard;
-	XAllowEvents (priv->dpy, mode, event->xkey.time);
+	XAllowEvents (privateScreen.dpy, mode, event->xkey.time);
     }
 
-    if (priv->eventManager.grabsEmpty () && event->type == KeyPress)
+    if (privateScreen.eventManager.grabsEmpty () && event->type == KeyPress)
     {
-	XUngrabKeyboard (priv->dpy, event->xkey.time);
+	XUngrabKeyboard (privateScreen.dpy, event->xkey.time);
     }
 }
 
@@ -1082,40 +1082,40 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
     switch (event->type) {
     case ButtonPress:
-	if (event->xbutton.root == priv->rootWindow())
-	    priv->outputDevices.setCurrentOutput (
+	if (event->xbutton.root == privateScreen.rootWindow())
+	    privateScreen.outputDevices.setCurrentOutput (
 		outputDeviceForPoint (event->xbutton.x_root,
 						 event->xbutton.y_root));
 	break;
     case MotionNotify:
-	if (event->xmotion.root == priv->rootWindow())
-	    priv->outputDevices.setCurrentOutput (
+	if (event->xmotion.root == privateScreen.rootWindow())
+	    privateScreen.outputDevices.setCurrentOutput (
 		outputDeviceForPoint (event->xmotion.x_root,
 				      event->xmotion.y_root));
 	break;
     case KeyPress:
-	w = findWindow (priv->orphanData.activeWindow);
+	w = findWindow (privateScreen.orphanData.activeWindow);
 	if (w)
-	    priv->outputDevices.setCurrentOutput (w->outputDevice ());
+	    privateScreen.outputDevices.setCurrentOutput (w->outputDevice ());
 	break;
     default:
 	break;
     }
 
-    eventHandled = priv->handleActionEvent (event);
+    eventHandled = privateScreen.handleActionEvent (event);
     if (eventHandled)
     {
-	if (priv->eventManager.grabsEmpty ())
-	    XAllowEvents (priv->dpy, AsyncPointer, event->xbutton.time);
+	if (privateScreen.eventManager.grabsEmpty ())
+	    XAllowEvents (privateScreen.dpy, AsyncPointer, event->xbutton.time);
 	return;
     }
 
     switch (event->type) {
     case SelectionRequest:
-	priv->handleSelectionRequest (event);
+	privateScreen.handleSelectionRequest (event);
 	break;
     case SelectionClear:
-	priv->handleSelectionClear (event);
+	privateScreen.handleSelectionClear (event);
 	break;
     case ConfigureNotify:
 	w = findWindow (event->xconfigure.window);
@@ -1132,8 +1132,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		w->priv->configureFrame (&event->xconfigure);
 	    else
 	    {
-		if (event->xconfigure.window == priv->rootWindow())
-		    priv->configure (&event->xconfigure);
+		if (event->xconfigure.window == privateScreen.rootWindow())
+		    privateScreen.configure (&event->xconfigure);
 	    }
 	}
 	break;
@@ -1145,8 +1145,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	 * the window to the window list as we might get configure requests
 	 * which require us to stack other windows relative to it. Setting
 	 * some default values if this is the case. */
-	if (!XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa))
-	    priv->setDefaultWindowAttributes (&wa);
+	if (!XGetWindowAttributes (privateScreen.dpy, event->xcreatewindow.window, &wa))
+	    privateScreen.setDefaultWindowAttributes (&wa);
 
 	foreach (CompWindow *w, screen->windows ())
 	{
@@ -1189,12 +1189,12 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	     * for FocusChangeMask. Also, we don't want to
 	     * manage it straight away - in reality we want
 	     * that to wait until the map request */
-	    if ((wa.root == priv->rootWindow()))
+	    if ((wa.root == privateScreen.rootWindow()))
 	    {
 		PrivateWindow::createCompWindow (getTopWindow (), wa, event->xcreatewindow.window);
             }
 	    else
-		XSelectInput (priv->dpy, event->xcreatewindow.window,
+		XSelectInput (privateScreen.dpy, event->xcreatewindow.window,
 			      FocusChangeMask);
 	}
 	else
@@ -1253,7 +1253,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    /* been shaded */
 	    if (w->shaded ())
 	    {
-		if (w->id () == priv->orphanData.activeWindow)
+		if (w->id () == privateScreen.orphanData.activeWindow)
 		    w->moveInputFocusTo ();
 	    }
 
@@ -1282,7 +1282,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    w->priv->minimized = false;
 		    w->changeState (w->state () & ~CompWindowStateHiddenMask);
 
-		    priv->updateClientList ();
+		    privateScreen.updateClientList ();
 		    w->priv->withdraw ();
 		}
 		/* Closing:
@@ -1318,14 +1318,14 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	 * we need to track it */
 	if (!w)
 	{
-	    if (event->xreparent.parent == priv->rootWindow())
+	    if (event->xreparent.parent == privateScreen.rootWindow())
 	    {
 		/* Failure means that window has been destroyed. We still have to add 
 		 * the window to the window list as we might get configure requests
 		 * which require us to stack other windows relative to it. Setting
 		 * some default values if this is the case. */
-		if (!XGetWindowAttributes (priv->dpy, event->xcreatewindow.window, &wa))
-		    priv->setDefaultWindowAttributes (&wa);
+		if (!XGetWindowAttributes (privateScreen.dpy, event->xcreatewindow.window, &wa))
+		    privateScreen.setDefaultWindowAttributes (&wa);
 
 		PrivateWindow::createCompWindow (getTopWindow (), wa, event->xcreatewindow.window);
 		break;
@@ -1356,14 +1356,14 @@ CompScreenImpl::_handleEvent (XEvent *event)
         if (w)
 	{
 	    if ((w->priv->wrapper && event->xreparent.parent != w->priv->wrapper) ||
-		(!w->priv->wrapper && event->xreparent.parent != priv->rootWindow ()))
+		(!w->priv->wrapper && event->xreparent.parent != privateScreen.rootWindow ()))
 	    {
 		w->moveInputFocusToOtherWindow ();
 		w->destroy ();
 
-		XSelectInput (priv->dpy, w->id (), NoEventMask);
-		XShapeSelectInput (priv->dpy, w->id (), NoEventMask);
-		XUngrabButton (priv->dpy, AnyButton, AnyModifier, w->id ());
+		XSelectInput (privateScreen.dpy, w->id (), NoEventMask);
+		XShapeSelectInput (privateScreen.dpy, w->id (), NoEventMask);
+		XUngrabButton (privateScreen.dpy, AnyButton, AnyModifier, w->id ());
 	    }
         }
 
@@ -1381,20 +1381,20 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    w = findTopLevelWindow (event->xbutton.window);
 	    if (w)
 	    {
-		if (priv->optionGetRaiseOnClick ())
+		if (privateScreen.optionGetRaiseOnClick ())
 		{
 		    w->updateAttributes (CompStackingUpdateModeAboveFullscreen);
 		}
 
-	        if (w->id () != priv->orphanData.activeWindow)
+	        if (w->id () != privateScreen.orphanData.activeWindow)
 		    if (!(w->type () & CompWindowTypeDockMask))
 			if (w->focus ())
 			    w->moveInputFocusTo ();
 	    }
 	}
 
-	if (priv->eventManager.grabsEmpty ())
-	    XAllowEvents (priv->dpy, ReplayPointer, event->xbutton.time);
+	if (privateScreen.eventManager.grabsEmpty ())
+	    XAllowEvents (privateScreen.dpy, ReplayPointer, event->xbutton.time);
 
 	break;
     case PropertyNotify:
@@ -1426,7 +1426,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 				CompWindowTypeDesktopMask))
 			w->setDesktop (0xffffffff);
 
-		    priv->updateClientList ();
+		    privateScreen.updateClientList ();
 
 		    matchPropertyChanged (w);
 		}
@@ -1582,7 +1582,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 		wState = CompWindow::constrainWindowState (wState,
 							   w->actions ());
-		if (w->id () == priv->orphanData.activeWindow)
+		if (w->id () == privateScreen.orphanData.activeWindow)
 		    wState &= ~CompWindowStateDemandsAttentionMask;
 
 		if (wState != w->state ())
@@ -1624,7 +1624,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	}
 	else if (event->xclient.message_type == Atoms::desktopGeometry)
 	{
-	    if (event->xclient.window == priv->rootWindow())
+	    if (event->xclient.window == privateScreen.rootWindow())
 	    {
 		CompOption::Value value;
 
@@ -1729,7 +1729,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	}
 	else if (event->xclient.message_type == Atoms::showingDesktop)
 	{
-	    if (event->xclient.window == priv->rootWindow() ||
+	    if (event->xclient.window == privateScreen.rootWindow() ||
 		event->xclient.window == None)
 	    {
 		if (event->xclient.data.l[0])
@@ -1740,7 +1740,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	}
 	else if (event->xclient.message_type == Atoms::numberOfDesktops)
 	{
-	    if (event->xclient.window == priv->rootWindow())
+	    if (event->xclient.window == privateScreen.rootWindow())
 	    {
 		CompOption::Value value;
 
@@ -1751,8 +1751,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	}
 	else if (event->xclient.message_type == Atoms::currentDesktop)
 	{
-	    if (event->xclient.window == priv->rootWindow())
-		priv->setCurrentDesktop (event->xclient.data.l[0]);
+	    if (event->xclient.window == privateScreen.rootWindow())
+		privateScreen.setCurrentDesktop (event->xclient.data.l[0]);
 	}
 	else if (event->xclient.message_type == Atoms::winDesktop)
 	{
@@ -1789,7 +1789,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 	    /* We should check the override_redirect flag here, because the
 	       client might have changed it while being unmapped. */
-	    if (XGetWindowAttributes (priv->dpy, w->id (), &attr))
+	    if (XGetWindowAttributes (privateScreen.dpy, w->id (), &attr))
 		w->priv->setOverrideRedirect (attr.override_redirect != 0);
 
 	    if (w->state () & CompWindowStateHiddenMask)
@@ -1805,7 +1805,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	}
 	else
 	{
-	    XMapWindow (priv->dpy, event->xmaprequest.window);
+	    XMapWindow (privateScreen.dpy, event->xmaprequest.window);
 	}
 	break;
     case ConfigureRequest:
@@ -1888,7 +1888,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		w->configureXWindow (xwcm, &xwc);
 	    }
 	    else
-		XConfigureWindow (priv->dpy, event->xconfigurerequest.window,
+		XConfigureWindow (privateScreen.dpy, event->xconfigurerequest.window,
 				  xwcm, &xwc);
 	}
 	break;
@@ -1896,8 +1896,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	break;
     case FocusIn:
     {
-	if (!XGetWindowAttributes (priv->dpy, event->xfocus.window, &wa))
-	    priv->setDefaultWindowAttributes (&wa);
+	if (!XGetWindowAttributes (privateScreen.dpy, event->xfocus.window, &wa))
+	    privateScreen.setDefaultWindowAttributes (&wa);
 
         /* If the call to XGetWindowAttributes failed it means
          * the window was destroyed, so track the focus change
@@ -1907,12 +1907,12 @@ CompScreenImpl::_handleEvent (XEvent *event)
          * there
 	 */
 
-	if (wa.root == priv->rootWindow())
+	if (wa.root == privateScreen.rootWindow())
 	{
 	    if (event->xfocus.mode == NotifyGrab)
-		priv->eventManager.grabNotified ();
+		privateScreen.eventManager.grabNotified ();
 	    else if (event->xfocus.mode == NotifyUngrab)
-		priv->eventManager.ungrabNotified ();
+		privateScreen.eventManager.ungrabNotified ();
 	    else
 	    {
 		CompWindowList dockWindows;
@@ -1927,11 +1927,11 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    if (getNextActiveWindow() == event->xfocus.window)
 			setNextActiveWindow(None);
 
-		    if (w->id () != priv->orphanData.activeWindow)
+		    if (w->id () != privateScreen.orphanData.activeWindow)
 		    {
-			CompWindow     *active = screen->findWindow (priv->orphanData.activeWindow);
+			CompWindow     *active = screen->findWindow (privateScreen.orphanData.activeWindow);
 
-			priv->orphanData.activeWindow = w->id ();
+			privateScreen.orphanData.activeWindow = w->id ();
 			w->priv->activeNum = history.nextActiveNum();
 
 			if (active)
@@ -1990,10 +1990,10 @@ CompScreenImpl::_handleEvent (XEvent *event)
 
 			history.addToCurrentActiveWindowHistory (w->id ());
 
-			XChangeProperty (priv->dpy , priv->rootWindow(),
+			XChangeProperty (privateScreen.dpy , privateScreen.rootWindow(),
 					 Atoms::winActive,
 					 XA_WINDOW, 32, PropModeReplace,
-					 (unsigned char *) &priv->orphanData.activeWindow, 1);
+					 (unsigned char *) &privateScreen.orphanData.activeWindow, 1);
 
 			w->windowNotify (CompWindowNotifyFocusChange);
 		    }
@@ -2001,7 +2001,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    state &= ~CompWindowStateDemandsAttentionMask;
 		    w->changeState (state);
 	        }
-		else if (event->xfocus.window == priv->rootWindow())
+		else if (event->xfocus.window == privateScreen.rootWindow())
 		{
 		    /* Don't ever let the focus go to the root
 		     * window except in grab cases
@@ -2015,7 +2015,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 			(event->xfocus.mode == NotifyNormal &&
 			 event->xfocus.detail == NotifyInferior))
 		    {
-			priv->orphanData.activeWindow = None;
+			privateScreen.orphanData.activeWindow = None;
 
 			if (event->xfocus.detail == NotifyDetailNone ||
 			    (event->xfocus.mode == NotifyNormal &&
@@ -2055,10 +2055,10 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	{
 	    CompWindow *w;
 
-	    w = screen->findWindow (priv->orphanData.activeWindow);
+	    w = screen->findWindow (privateScreen.orphanData.activeWindow);
 
 	    setNextActiveWindow(None);
-	    priv->orphanData.activeWindow = None;
+	    privateScreen.orphanData.activeWindow = None;
 
 	    if (w)
 		w->priv->updatePassiveButtonGrabs ();
@@ -2067,10 +2067,10 @@ CompScreenImpl::_handleEvent (XEvent *event)
     break;
     case FocusOut:
 	if (event->xfocus.mode == NotifyUngrab)
-	    priv->eventManager.ungrabNotified ();
+	    privateScreen.eventManager.ungrabNotified ();
 	break;
     case EnterNotify:
-	if (event->xcrossing.root == priv->rootWindow())
+	if (event->xcrossing.root == privateScreen.rootWindow())
 	    w = findTopLevelWindow (event->xcrossing.window);
 	else
 	    w = NULL;
@@ -2079,16 +2079,16 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	{
 	    below = w->id ();
 
-	    if (!priv->optionGetClickToFocus () &&
-		priv->eventManager.grabsEmpty () &&
+	    if (!privateScreen.optionGetClickToFocus () &&
+		privateScreen.eventManager.grabsEmpty () &&
 		event->xcrossing.mode   != NotifyGrab                &&
 		event->xcrossing.detail != NotifyInferior)
 	    {
 		bool raise;
 		int  delay;
 
-		raise = priv->optionGetAutoraise ();
-		delay = priv->optionGetAutoraiseDelay ();
+		raise = privateScreen.optionGetAutoraise ();
+		delay = privateScreen.optionGetAutoraiseDelay ();
 
 		if (autoRaiseTimer_.active () &&
 		    autoRaiseWindow_ != w->id ())
@@ -2130,8 +2130,8 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	}
 	break;
     default:
-	if (priv->xShape.isEnabled () &&
-		 event->type == priv->xShape.get () + ShapeNotify)
+	if (privateScreen.xShape.isEnabled () &&
+		 event->type == privateScreen.xShape.get () + ShapeNotify)
 	{
 	    w = findWindow (((XShapeEvent *) event)->window);
 	    if (w)
@@ -2140,14 +2140,14 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    w->priv->updateRegion ();
 	    }
 	}
-	else if (event->type == priv->xSync.get () + XSyncAlarmNotify)
+	else if (event->type == privateScreen.xSync.get () + XSyncAlarmNotify)
 	{
 	    XSyncAlarmNotifyEvent *sa;
 
 	    sa = (XSyncAlarmNotifyEvent *) event;
 
 
-	    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+	    for (cps::WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
 	    {
 		CompWindow* const w(*i);
 		if (w->priv->syncAlarm == sa->alarm)

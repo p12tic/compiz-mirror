@@ -32,7 +32,6 @@
 #include <core/action.h>
 #include <core/screen.h>
 #include "privateaction.h"
-#include "privatescreen.h"
 
 struct _Modifier {
     const char *name;

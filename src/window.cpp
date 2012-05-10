@@ -4112,14 +4112,14 @@ CompWindow::raise ()
 }
 
 CompWindow *
-CompScreen::focusTopMostWindow ()
+CompScreenImpl::focusTopMostWindow ()
 {
     using ::compiz::private_screen::WindowManager;
 
     CompWindow  *focus = NULL;
-    WindowManager::reverse_iterator it = priv->windowManager.rbegin ();
+    WindowManager::reverse_iterator it = privateScreen.windowManager.rbegin ();
 
-    for (; it != priv->windowManager.rend (); it++)
+    for (; it != privateScreen.windowManager.rend (); it++)
     {
 	CompWindow *w = *it;
 
@@ -4135,11 +4135,11 @@ CompScreen::focusTopMostWindow ()
 
     if (focus)
     {
-	if (focus->id () != priv->orphanData.activeWindow)
+	if (focus->id () != privateScreen.orphanData.activeWindow)
 	    focus->moveInputFocusTo ();
     }
     else
-	XSetInputFocus (priv->dpy, priv->rootWindow(), RevertToPointerRoot,
+	XSetInputFocus (privateScreen.dpy, privateScreen.rootWindow(), RevertToPointerRoot,
 			CurrentTime);
     return focus;
 }

@@ -103,15 +103,15 @@ void CompScreenImpl::sizePluginClasses(unsigned int size)
 
 void CompScreenImpl::setWindowState (unsigned int state, Window id)
 {
-    priv->setWindowState (state, id);
+    privateScreen.setWindowState (state, id);
 }
 
 void CompScreenImpl::addToDestroyedWindows(CompWindow * cw)
 {
-    priv->windowManager.addToDestroyedWindows(cw);
+    privateScreen.windowManager.addToDestroyedWindows(cw);
 }
 
-void CompScreenImpl::processEvents () { priv->processEvents (); }
+void CompScreenImpl::processEvents () { privateScreen.processEvents (); }
 
 unsigned int
 CompScreen::allocPluginClassIndex ()
@@ -154,7 +154,7 @@ cps::EventManager::handleSignal (int signum)
 void
 CompScreenImpl::eventLoop ()
 {
-    priv->eventManager.startEventLoop (dpy());
+    privateScreen.eventManager.startEventLoop (dpy());
 }
 
 void
@@ -175,7 +175,7 @@ CompScreenImpl::addFileWatch (const char        *path,
 			  int               mask,
 			  FileWatchCallBack callBack)
 {
-    CompFileWatch *fileWatch = priv->eventManager.addFileWatch (path, mask, callBack);
+    CompFileWatch *fileWatch = privateScreen.eventManager.addFileWatch (path, mask, callBack);
 
     if (!fileWatch)
 	return 0;
@@ -211,7 +211,7 @@ cps::EventManager::addFileWatch (
 void
 CompScreenImpl::removeFileWatch (CompFileWatchHandle handle)
 {
-    if (CompFileWatch* w = priv->eventManager.removeFileWatch (handle))
+    if (CompFileWatch* w = privateScreen.eventManager.removeFileWatch (handle))
     {
 	fileWatchRemoved (w);
 
@@ -240,7 +240,7 @@ cps::EventManager::removeFileWatch (CompFileWatchHandle handle)
 const CompFileWatchList &
 CompScreenImpl::getFileWatches () const
 {
-    return priv->eventManager.getFileWatches ();
+    return privateScreen.eventManager.getFileWatches ();
 }
 
 const CompFileWatchList &
@@ -279,7 +279,7 @@ CompScreenImpl::addWatchFd (int             fd,
 			short int       events,
 			FdWatchCallBack callBack)
 {
-    return priv->eventManager.addWatchFd (fd, events, callBack);
+    return privateScreen.eventManager.addWatchFd (fd, events, callBack);
 }
 
 CompWatchFdHandle
@@ -321,7 +321,7 @@ cps::EventManager::addWatchFd (int             fd,
 void
 CompScreenImpl::removeWatchFd (CompWatchFdHandle handle)
 {
-    priv->eventManager.removeWatchFd (handle);
+    privateScreen.eventManager.removeWatchFd (handle);
 }
 
 void
@@ -557,50 +557,50 @@ CompScreen::checkForError (Display *dpy)
 Display *
 CompScreenImpl::dpy ()
 {
-    return priv->dpy;
+    return privateScreen.dpy;
 }
 
 bool
 CompScreenImpl::XRandr ()
 {
-    return priv->xRandr.isEnabled ();
+    return privateScreen.xRandr.isEnabled ();
 }
 
 int
 CompScreenImpl::randrEvent ()
 {
-    return priv->xRandr.get ();
+    return privateScreen.xRandr.get ();
 }
 
 bool
 CompScreenImpl::XShape ()
 {
-    return priv->xShape.isEnabled ();
+    return privateScreen.xShape.isEnabled ();
 }
 
 int
 CompScreenImpl::shapeEvent ()
 {
-    return priv->xShape.get ();
+    return privateScreen.xShape.get ();
 }
 
 int
 CompScreenImpl::syncEvent ()
 {
-    return priv->xSync.get ();
+    return privateScreen.xSync.get ();
 }
 
 
 SnDisplay *
 CompScreenImpl::snDisplay ()
 {
-    return priv->getSnDisplay ();
+    return privateScreen.getSnDisplay ();
 }
 
 Window
 CompScreenImpl::activeWindow ()
 {
-    return priv->orphanData.activeWindow;
+    return privateScreen.orphanData.activeWindow;
 }
 
 Window
@@ -612,7 +612,7 @@ CompScreenImpl::autoRaiseWindow ()
 const char *
 CompScreenImpl::displayString ()
 {
-    return priv->displayString ();
+    return privateScreen.displayString ();
 }
 
 void
@@ -644,9 +644,9 @@ bool
 CompScreenImpl::handlePingTimeout ()
 {
     return ping.handlePingTimeout(
-	    priv->windowManager.begin(),
-	    priv->windowManager.end(),
-	    priv->dpy);
+	    privateScreen.windowManager.begin(),
+	    privateScreen.windowManager.end(),
+	    privateScreen.dpy);
 }
 
 bool
@@ -685,14 +685,14 @@ cps::Ping::handlePingTimeout (WindowManager::iterator begin, WindowManager::iter
 CompOption::Vector &
 CompScreenImpl::getOptions ()
 {
-    return priv->getOptions ();
+    return privateScreen.getOptions ();
 }
 
 bool
 CompScreenImpl::setOption (const CompString  &name,
 		       CompOption::Value &value)
 {
-    return priv->setOption (name, value);
+    return privateScreen.setOption (name, value);
 }
 
 bool
@@ -1342,7 +1342,7 @@ CompScreenImpl::_logMessage (const char   *componentName,
 }
 
 int
-CompScreen::getWmState (Window id)
+CompScreenImpl::getWmState (Window id)
 {
     Atom	  actual;
     int		  result, format;
@@ -1350,7 +1350,7 @@ CompScreen::getWmState (Window id)
     unsigned char *data;
     unsigned long state = NormalState;
 
-    result = XGetWindowProperty (priv->dpy, id,
+    result = XGetWindowProperty (privateScreen.dpy, id,
 				 Atoms::wmState, 0L, 2L, false,
 				 Atoms::wmState, &actual, &format,
 				 &n, &left, &data);
@@ -1366,14 +1366,14 @@ CompScreen::getWmState (Window id)
 }
 
 void
-CompScreen::setWmState (int state, Window id) const
+CompScreenImpl::setWmState (int state, Window id) const
 {
     unsigned long data[2];
 
     data[0] = state;
     data[1] = None;
 
-    XChangeProperty (priv->dpy, id,
+    XChangeProperty (privateScreen.dpy, id,
 		     Atoms::wmState, Atoms::wmState,
 		     32, PropModeReplace, (unsigned char *) data, 2);
 }
@@ -1443,7 +1443,7 @@ cps::windowStateFromString (const char *str)
 }
 
 unsigned int
-CompScreen::getWindowState (Window id)
+CompScreenImpl::getWindowState (Window id)
 {
     Atom	  actual;
     int		  result, format;
@@ -1451,7 +1451,7 @@ CompScreen::getWindowState (Window id)
     unsigned char *data;
     unsigned int  state = 0;
 
-    result = XGetWindowProperty (priv->dpy, id,
+    result = XGetWindowProperty (privateScreen.dpy, id,
 				 Atoms::winState,
 				 0L, 1024L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1519,14 +1519,14 @@ PrivateScreen::setWindowState (unsigned int state, Window id)
 }
 
 unsigned int
-CompScreen::getWindowType (Window id)
+CompScreenImpl::getWindowType (Window id)
 {
     Atom	  actual, a = None;
     int		  result, format;
     unsigned long n, left;
     unsigned char *data;
 
-    result = XGetWindowProperty (priv->dpy , id,
+    result = XGetWindowProperty (privateScreen.dpy , id,
 				 Atoms::winType,
 				 0L, 1L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1574,7 +1574,7 @@ CompScreen::getWindowType (Window id)
 }
 
 void
-CompScreen::getMwmHints (Window       id,
+CompScreenImpl::getMwmHints (Window       id,
 			    unsigned int *func,
 			    unsigned int *decor) const
 {
@@ -1586,7 +1586,7 @@ CompScreen::getMwmHints (Window       id,
     *func  = MwmFuncAll;
     *decor = MwmDecorAll;
 
-    result = XGetWindowProperty (priv->dpy, id,
+    result = XGetWindowProperty (privateScreen.dpy, id,
 				 Atoms::mwmHints,
 				 0L, 20L, false, Atoms::mwmHints,
 				 &actual, &format, &n, &left, &data);
@@ -1609,13 +1609,13 @@ CompScreen::getMwmHints (Window       id,
 }
 
 unsigned int
-CompScreen::getProtocols (Window id)
+CompScreenImpl::getProtocols (Window id)
 {
     Atom         *protocol;
     int          count;
     unsigned int protocols = 0;
 
-    if (XGetWMProtocols (priv->dpy, id, &protocol, &count))
+    if (XGetWMProtocols (privateScreen.dpy, id, &protocol, &count))
     {
 	int  i;
 
@@ -1648,7 +1648,7 @@ CompScreenImpl::getWindowProp (Window       id,
     unsigned char *data;
     unsigned int  retval = defaultValue;
 
-    result = XGetWindowProperty (priv->dpy, id, property,
+    result = XGetWindowProperty (privateScreen.dpy, id, property,
 				 0L, 1L, false, XA_CARDINAL, &actual, &format,
 				 &n, &left, &data);
 
@@ -1674,7 +1674,7 @@ CompScreenImpl::setWindowProp (Window       id,
 {
     unsigned long data = value;
 
-    XChangeProperty (priv->dpy, id, property,
+    XChangeProperty (privateScreen.dpy, id, property,
 		     XA_CARDINAL, 32, PropModeReplace,
 		     (unsigned char *) &data, 1);
 }
@@ -1718,7 +1718,7 @@ CompScreenImpl::getWindowProp32 (Window         id,
 {
     unsigned short result;
 
-    if (priv->readWindowProp32 (id, property, &result))
+    if (privateScreen.readWindowProp32 (id, property, &result))
 	return result;
 
     return defaultValue;
@@ -1733,7 +1733,7 @@ CompScreenImpl::setWindowProp32 (Window         id,
 
     value32 = value << 16 | value;
 
-    XChangeProperty (priv->dpy, id, property,
+    XChangeProperty (privateScreen.dpy, id, property,
 		     XA_CARDINAL, 32, PropModeReplace,
 		     (unsigned char *) &value32, 1);
 }
@@ -2569,12 +2569,12 @@ CompScreen::enterShowDesktopMode ()
 
 unsigned int CompScreenImpl::showingDesktopMask() const
 {
-    return priv->showingDesktopMask;
+    return privateScreen.showingDesktopMask;
 }
 
 bool CompScreenImpl::grabsEmpty() const
 {
-    return priv->eventManager.grabsEmpty();
+    return privateScreen.eventManager.grabsEmpty();
 }
 
 void
@@ -2582,15 +2582,15 @@ CompScreenImpl::_enterShowDesktopMode ()
 {
     unsigned long data = 1;
     int		  count = 0;
-    bool          st = priv->optionGetHideSkipTaskbarWindows ();
+    bool          st = privateScreen.optionGetHideSkipTaskbarWindows ();
 
-    priv->showingDesktopMask = ~(CompWindowTypeDesktopMask |
+    privateScreen.showingDesktopMask = ~(CompWindowTypeDesktopMask |
 				 CompWindowTypeDockMask);
 
-    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+    for (cps::WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
     {
 	CompWindow* const w(*i);
-	if ((priv->showingDesktopMask & w->wmType ()) &&
+	if ((privateScreen.showingDesktopMask & w->wmType ()) &&
 	    (!(w->state () & CompWindowStateSkipTaskbarMask) || st))
 	{
 	    if (!w->inShowDesktopMode () && !w->grabbed () &&
@@ -2608,11 +2608,11 @@ CompScreenImpl::_enterShowDesktopMode ()
 
     if (!count)
     {
-	priv->showingDesktopMask = 0;
+	privateScreen.showingDesktopMask = 0;
 	data = 0;
     }
 
-    XChangeProperty (priv->dpy, priv->rootWindow(),
+    XChangeProperty (privateScreen.dpy, privateScreen.rootWindow(),
 		     Atoms::showingDesktop,
 		     XA_CARDINAL, 32, PropModeReplace,
 		     (unsigned char *) &data, 1);
@@ -2640,19 +2640,19 @@ CompScreenImpl::_leaveShowDesktopMode (CompWindow *window)
 	window->priv->show ();
 
 	/* return if some other window is still in show desktop mode */
-	for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+	for (cps::WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
 	{
 	    CompWindow* const w(*i);
 	    if (w->inShowDesktopMode ())
 		return;
 	}
-	priv->showingDesktopMask = 0;
+	privateScreen.showingDesktopMask = 0;
     }
     else
     {
-	priv->showingDesktopMask = 0;
+	privateScreen.showingDesktopMask = 0;
 
-	for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+	for (cps::WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
 	{
 	    CompWindow* const w(*i);
 	    if (!w->inShowDesktopMode ())
@@ -2668,7 +2668,7 @@ CompScreenImpl::_leaveShowDesktopMode (CompWindow *window)
 	focusDefaultWindow ();
     }
 
-    XChangeProperty (priv->dpy, priv->rootWindow(),
+    XChangeProperty (privateScreen.dpy, privateScreen.rootWindow(),
 		     Atoms::showingDesktop,
 		     XA_CARDINAL, 32, PropModeReplace,
 		     (unsigned char *) &data, 1);
@@ -2677,7 +2677,7 @@ CompScreenImpl::_leaveShowDesktopMode (CompWindow *window)
 void
 CompScreenImpl::forEachWindow (CompWindow::ForEach proc)
 {
-    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+    for (cps::WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
     {
 	CompWindow* const w(*i);
 	proc (w);
@@ -2690,7 +2690,7 @@ CompScreenImpl::focusDefaultWindow ()
     CompWindow  *w;
     CompWindow  *focus = NULL;
 
-    if (!priv->optionGetClickToFocus ())
+    if (!privateScreen.optionGetClickToFocus ())
     {
 	w = findTopLevelWindow (below);
 
@@ -2710,11 +2710,11 @@ CompScreenImpl::focusDefaultWindow ()
 	    /* huh, we didn't find d->below ... perhaps it's out of date;
 	       try grabbing it through the server */
 
-	    status = XQueryPointer (dpy (), priv->rootWindow(), &rootReturn,
+	    status = XQueryPointer (dpy (), privateScreen.rootWindow(), &rootReturn,
 				    &childReturn, &dummyInt, &dummyInt,
 				    &dummyInt, &dummyInt, &dummyUInt);
 
-	    if (status && rootReturn == priv->rootWindow())
+	    if (status && rootReturn == privateScreen.rootWindow())
 	    {
 		w = findTopLevelWindow (childReturn);
 
@@ -2731,8 +2731,8 @@ CompScreenImpl::focusDefaultWindow ()
     if (!focus)
     {
 	/* Traverse down the stack */
-	for (cps::WindowManager::reverse_iterator rit = priv->windowManager.rbegin();
-	     rit != priv->windowManager.rend(); rit++)
+	for (cps::WindowManager::reverse_iterator rit = privateScreen.windowManager.rbegin();
+	     rit != privateScreen.windowManager.rend(); rit++)
 	{
 	    w = (*rit);
 
@@ -2747,7 +2747,7 @@ CompScreenImpl::focusDefaultWindow ()
 				      CompWindowTypeDialogMask |
 				      CompWindowTypeModalDialogMask))
 		    {
-			if (!priv->optionGetClickToFocus ())
+			if (!privateScreen.optionGetClickToFocus ())
 			{
 			    /* We should favor the more active window in the mouse focus
 			     * case since the user does not care if the focused window is on top */
@@ -2765,7 +2765,7 @@ CompScreenImpl::focusDefaultWindow ()
 		{
 		    focus = w;
 
-		    if (priv->optionGetClickToFocus ())
+		    if (privateScreen.optionGetClickToFocus ())
 			break;
 		}
 	    }
@@ -2774,12 +2774,12 @@ CompScreenImpl::focusDefaultWindow ()
 
     if (focus)
     {
-	if (focus->id () != priv->orphanData.activeWindow)
+	if (focus->id () != privateScreen.orphanData.activeWindow)
 	    focus->moveInputFocusTo ();
     }
     else
     {
-	XSetInputFocus (priv->dpy, priv->rootWindow(), RevertToPointerRoot,
+	XSetInputFocus (privateScreen.dpy, privateScreen.rootWindow(), RevertToPointerRoot,
 			CurrentTime);
     }
 }
@@ -2787,7 +2787,7 @@ CompScreenImpl::focusDefaultWindow ()
 CompWindow *
 CompScreenImpl::findWindow (Window id)
 {
-    return priv->windowManager.findWindow (id);
+    return privateScreen.windowManager.findWindow (id);
 }
 
 CompWindow*
@@ -2823,7 +2823,7 @@ CompScreenImpl::findTopLevelWindow (Window id, bool override_redirect)
 	    return w;
     }
 
-    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+    for (cps::WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
     {
 	CompWindow* const w(*i);
 	if (w->priv->frame == id)
@@ -2841,7 +2841,7 @@ CompScreenImpl::findTopLevelWindow (Window id, bool override_redirect)
 void
 CompScreenImpl::insertWindow (CompWindow *w, Window	aboveId)
 {
-    priv->windowManager.insertWindow (w, aboveId);
+    privateScreen.windowManager.insertWindow (w, aboveId);
 }
 void
 cps::WindowManager::insertWindow (CompWindow* w, Window aboveId)
@@ -2908,7 +2908,7 @@ cps::WindowManager::insertWindow (CompWindow* w, Window aboveId)
 void
 CompScreenImpl::insertServerWindow (CompWindow *w, Window	aboveId)
 {
-    priv->windowManager.insertServerWindow(w, aboveId);
+    privateScreen.windowManager.insertServerWindow(w, aboveId);
 }
 
 void
@@ -2978,7 +2978,7 @@ cps::WindowManager::eraseWindowFromMap (Window id)
 void
 CompScreenImpl::unhookWindow (CompWindow *w)
 {
-    priv->windowManager.unhookWindow (w);
+    privateScreen.windowManager.unhookWindow (w);
 }
 
 void
@@ -3016,7 +3016,7 @@ cps::WindowManager::unhookWindow(CompWindow* w)
 void
 CompScreenImpl::unhookServerWindow (CompWindow *w)
 {
-    priv->windowManager.unhookServerWindow (w);
+    privateScreen.windowManager.unhookServerWindow (w);
 }
 
 void
@@ -3051,13 +3051,13 @@ cps::WindowManager::unhookServerWindow (CompWindow *w)
 Cursor
 CompScreenImpl::normalCursor ()
 {
-    return priv->normalCursor;
+    return privateScreen.normalCursor;
 }
 
 Cursor
 CompScreenImpl::invisibleCursor ()
 {
-    return priv->invisibleCursor;
+    return privateScreen.invisibleCursor;
 }
 
 #define POINTER_GRAB_MASK (ButtonReleaseMask | \
@@ -3066,25 +3066,25 @@ CompScreenImpl::invisibleCursor ()
 CompScreenImpl::GrabHandle
 CompScreenImpl::pushGrab (Cursor cursor, const char *name)
 {
-    if (priv->eventManager.grabsEmpty ())
+    if (privateScreen.eventManager.grabsEmpty ())
     {
 	int status;
 
-	status = XGrabPointer (priv->dpy, priv->eventManager.getGrabWindow(), true,
+	status = XGrabPointer (privateScreen.dpy, privateScreen.eventManager.getGrabWindow(), true,
 			       POINTER_GRAB_MASK,
 			       GrabModeAsync, GrabModeAsync,
-			       priv->rootWindow(), cursor,
+			       privateScreen.rootWindow(), cursor,
 			       CurrentTime);
 
 	if (status == GrabSuccess)
 	{
-	    status = XGrabKeyboard (priv->dpy,
-				    priv->eventManager.getGrabWindow(), true,
+	    status = XGrabKeyboard (privateScreen.dpy,
+				    privateScreen.eventManager.getGrabWindow(), true,
 				    GrabModeAsync, GrabModeAsync,
 				    CurrentTime);
 	    if (status != GrabSuccess)
 	    {
-		XUngrabPointer (priv->dpy, CurrentTime);
+		XUngrabPointer (privateScreen.dpy, CurrentTime);
 		return NULL;
 	    }
 	}
@@ -3093,12 +3093,12 @@ CompScreenImpl::pushGrab (Cursor cursor, const char *name)
     }
     else
     {
-	XChangeActivePointerGrab (priv->dpy, POINTER_GRAB_MASK,
+	XChangeActivePointerGrab (privateScreen.dpy, POINTER_GRAB_MASK,
 				  cursor, CurrentTime);
     }
 
     cps::Grab *grab = new cps::Grab (cursor, name);
-    priv->eventManager.grabsPush (grab);
+    privateScreen.eventManager.grabsPush (grab);
 
     return grab;
 }
@@ -3109,7 +3109,7 @@ CompScreenImpl::updateGrab (CompScreen::GrabHandle handle, Cursor cursor)
     if (!handle)
 	return;
 
-    XChangeActivePointerGrab (priv->dpy, POINTER_GRAB_MASK,
+    XChangeActivePointerGrab (privateScreen.dpy, POINTER_GRAB_MASK,
 			      cursor, CurrentTime);
 
     handle->cursor = cursor;
@@ -3122,13 +3122,13 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
     if (!handle)
 	return;
 
-    priv->eventManager.grabsRemove(handle);
+    privateScreen.eventManager.grabsRemove(handle);
 
-    if (!priv->eventManager.grabsEmpty ())
+    if (!privateScreen.eventManager.grabsEmpty ())
     {
-	XChangeActivePointerGrab (priv->dpy,
+	XChangeActivePointerGrab (privateScreen.dpy,
 				  POINTER_GRAB_MASK,
-				  priv->eventManager.grabsBack ()->cursor,
+				  privateScreen.eventManager.grabsBack ()->cursor,
 				  CurrentTime);
     }
     else
@@ -3137,8 +3137,8 @@ CompScreenImpl::removeGrab (CompScreen::GrabHandle handle,
 	    warpPointer (restorePointer->x () - pointerX,
 			 restorePointer->y () - pointerY);
 
-	XUngrabPointer (priv->dpy, CurrentTime);
-	XUngrabKeyboard (priv->dpy, CurrentTime);
+	XUngrabPointer (privateScreen.dpy, CurrentTime);
+	XUngrabKeyboard (privateScreen.dpy, CurrentTime);
     }
 }
 
@@ -3166,7 +3166,7 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
 
     std::list<cps::Grab *>::iterator it;
 
-    for (it = priv->eventManager.grabsBegin (); it != priv->eventManager.grabsEnd (); it++)
+    for (it = privateScreen.eventManager.grabsBegin (); it != privateScreen.eventManager.grabsEnd (); it++)
     {
 	va_start (ap, first);
 
@@ -3191,7 +3191,7 @@ CompScreenImpl::otherGrabExist (const char *first, ...)
 bool
 CompScreenImpl::grabExist (const char *grab)
 {
-    return priv->eventManager.grabExist (grab);
+    return privateScreen.eventManager.grabExist (grab);
 }
 
 bool
@@ -3208,7 +3208,7 @@ cps::GrabList::grabExist (const char *grab)
 bool
 CompScreenImpl::grabbed ()
 {
-    return priv->eventManager.isGrabbed();
+    return privateScreen.eventManager.isGrabbed();
 }
 
 void
@@ -3471,8 +3471,8 @@ cps::GrabManager::removePassiveButtonGrab (CompAction::ButtonBinding &button)
 bool
 CompScreenImpl::addAction (CompAction *action)
 {
-    assert (priv->initialized);
-    if (!priv->initialized)
+    assert (privateScreen.initialized);
+    if (!privateScreen.initialized)
 	return false;
 
     if (action->active ())
@@ -3501,7 +3501,7 @@ CompScreenImpl::addAction (CompAction *action)
 
 	for (i = 0; i < SCREEN_EDGE_NUM; i++)
 	    if (action->edgeMask () & (1 << i))
-		priv->enableEdge (i);
+		privateScreen.enableEdge (i);
     }
 
     action->priv->active = true;
@@ -3512,7 +3512,7 @@ CompScreenImpl::addAction (CompAction *action)
 void
 CompScreenImpl::removeAction (CompAction *action)
 {
-    if (!priv->initialized)
+    if (!privateScreen.initialized)
 	return;
 
     if (!action->active ())
@@ -3530,7 +3530,7 @@ CompScreenImpl::removeAction (CompAction *action)
 
 	for (i = 0; i < SCREEN_EDGE_NUM; i++)
 	    if (action->edgeMask () & (1 << i))
-		priv->disableEdge (i);
+		privateScreen.disableEdge (i);
     }
 
     action->priv->active = false;
@@ -3618,27 +3618,27 @@ CompScreenImpl::updateWorkarea ()
     CompRect workArea;
     CompRegion allWorkArea = CompRegion ();
     bool     workAreaChanged = false;
-    priv->outputDevices.computeWorkAreas(
+    privateScreen.outputDevices.computeWorkAreas(
 	    workArea,
 	    workAreaChanged,
 	    allWorkArea,
-	    priv->windowManager.getWindows());
+	    privateScreen.windowManager.getWindows());
 
     workArea = allWorkArea.boundingRect ();
 
-    if (priv->workArea != workArea)
+    if (privateScreen.workArea != workArea)
     {
 	workAreaChanged = true;
-	priv->workArea = workArea;
+	privateScreen.workArea = workArea;
 
-	priv->setDesktopHints ();
+	privateScreen.setDesktopHints ();
     }
 
     if (workAreaChanged)
     {
 	/* as work area changed, update all maximized windows on this
 	   screen to snap to the new work area */
-	for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+	for (cps::WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
 	{
 	    CompWindow* const w(*i);
 	    w->priv->updateSize ();
@@ -3778,7 +3778,7 @@ cps::WindowManager::updateClientList (PrivateScreen& ps)
 const CompWindowVector &
 CompScreenImpl::clientList (bool stackingOrder)
 {
-   return stackingOrder ? priv->windowManager.getClientListStacking() : priv->windowManager.getClientList();
+   return stackingOrder ? privateScreen.windowManager.getClientListStacking() : privateScreen.windowManager.getClientList();
 }
 
 void
@@ -3801,10 +3801,10 @@ CompScreenImpl::toolkitAction (Atom   toolkitAction,
     ev.xclient.data.l[3]    = data1;
     ev.xclient.data.l[4]    = data2;
 
-    XUngrabPointer (priv->dpy, CurrentTime);
-    XUngrabKeyboard (priv->dpy, CurrentTime);
+    XUngrabPointer (privateScreen.dpy, CurrentTime);
+    XUngrabKeyboard (privateScreen.dpy, CurrentTime);
 
-    XSendEvent (priv->dpy, priv->rootWindow(), false,
+    XSendEvent (privateScreen.dpy, privateScreen.rootWindow(), false,
 		StructureNotifyMask, &ev);
 }
 
@@ -3817,7 +3817,7 @@ CompScreenImpl::runCommand (CompString command)
     if (fork () == 0)
     {
 	size_t       pos;
-	CompString   env (priv->displayString ());
+	CompString   env (privateScreen.displayString ());
 
 	setsid ();
 
@@ -3838,7 +3838,7 @@ CompScreenImpl::runCommand (CompString command)
 	    }
 	}
 
-	env.append (compPrintf (".%d", priv->screenNum));
+	env.append (compPrintf (".%d", privateScreen.screenNum));
 
 	putenv (const_cast<char *> (env.c_str ()));
 
@@ -3851,24 +3851,24 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 {
     CompPoint pnt;
 
-    tx = priv->viewPort.vp.x () - tx;
-    tx = compiz::core::screen::wraparound_mod (tx, priv->viewPort.vpSize.width ());
-    tx -= priv->viewPort.vp.x ();
+    tx = privateScreen.viewPort.vp.x () - tx;
+    tx = compiz::core::screen::wraparound_mod (tx, privateScreen.viewPort.vpSize.width ());
+    tx -= privateScreen.viewPort.vp.x ();
 
-    ty = priv->viewPort.vp.y () - ty;
-    ty = compiz::core::screen::wraparound_mod (ty, priv->viewPort.vpSize.height ());
-    ty -= priv->viewPort.vp.y ();
+    ty = privateScreen.viewPort.vp.y () - ty;
+    ty = compiz::core::screen::wraparound_mod (ty, privateScreen.viewPort.vpSize.height ());
+    ty -= privateScreen.viewPort.vp.y ();
 
     if (!tx && !ty)
 	return;
 
-    priv->viewPort.vp.setX (priv->viewPort.vp.x () + tx);
-    priv->viewPort.vp.setY (priv->viewPort.vp.y () + ty);
+    privateScreen.viewPort.vp.setX (privateScreen.viewPort.vp.x () + tx);
+    privateScreen.viewPort.vp.setY (privateScreen.viewPort.vp.y () + ty);
 
     tx *= -width ();
     ty *= -height ();
 
-    for (cps::WindowManager::iterator i = priv->windowManager.begin(); i != priv->windowManager.end(); ++i)
+    for (cps::WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
     {
 	CompWindow* const w(*i);
 	unsigned int valueMask = CWX | CWY;
@@ -3895,11 +3895,11 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
     {
 	CompWindow *w;
 
-	priv->setDesktopHints ();
+	privateScreen.setDesktopHints ();
 
-	history.setCurrentActiveWindowHistory (priv->viewPort.vp.x (), priv->viewPort.vp.y ());
+	history.setCurrentActiveWindowHistory (privateScreen.viewPort.vp.x (), privateScreen.viewPort.vp.y ());
 
-	w = findWindow (priv->orphanData.activeWindow);
+	w = findWindow (privateScreen.orphanData.activeWindow);
 	if (w)
 	{
 	    CompPoint dvp;
@@ -3908,7 +3908,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 
 	    /* add window to current history if it's default viewport is
 	       still the current one. */
-	    if (priv->viewPort.vp.x () == dvp.x () && priv->viewPort.vp.y () == dvp.y ())
+	    if (privateScreen.viewPort.vp.x () == dvp.x () && privateScreen.viewPort.vp.y () == dvp.y ())
 		history.addToCurrentActiveWindowHistory (w->id ());
 	}
     }
@@ -3995,7 +3995,7 @@ CompScreenImpl::sendWindowActivationRequest (Window id)
     XEvent xev;
 
     xev.xclient.type    = ClientMessage;
-    xev.xclient.display = priv->dpy;
+    xev.xclient.display = privateScreen.dpy;
     xev.xclient.format  = 32;
 
     xev.xclient.message_type = Atoms::winActive;
@@ -4007,7 +4007,7 @@ CompScreenImpl::sendWindowActivationRequest (Window id)
     xev.xclient.data.l[3] = 0;
     xev.xclient.data.l[4] = 0;
 
-    XSendEvent (priv->dpy, priv->rootWindow(), false,
+    XSendEvent (privateScreen.dpy, privateScreen.rootWindow(), false,
 		SubstructureRedirectMask | SubstructureNotifyMask, &xev);
 }
 
@@ -4054,7 +4054,7 @@ CompScreenImpl::outputDeviceForPoint (int x, int y)
 CompRect
 CompScreenImpl::getCurrentOutputExtents ()
 {
-    return priv->outputDevices.getCurrentOutputDev ();
+    return privateScreen.outputDevices.getCurrentOutputDev ();
 }
 
 void
@@ -4119,7 +4119,7 @@ PrivateScreen::setCurrentDesktop (unsigned int desktop)
 const CompRect&
 CompScreenImpl::getWorkareaForOutput (unsigned int outputNum) const
 {
-    return priv->outputDevices.getOutputDev (outputNum).workArea ();
+    return privateScreen.outputDevices.getOutputDev (outputNum).workArea ();
 }
 
 void
@@ -4150,18 +4150,18 @@ CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
     rect.setHeight (gm.heightIncBorders ());
 
     offset = rect.centerX () < 0 ? -1 : 0;
-    viewport.setX (priv->viewPort.vp.x () + ((rect.centerX () / width ()) + offset) %
-		   priv->viewPort.vpSize.width ());
+    viewport.setX (privateScreen.viewPort.vp.x () + ((rect.centerX () / width ()) + offset) %
+		   privateScreen.viewPort.vpSize.width ());
 
     offset = rect.centerY () < 0 ? -1 : 0;
-    viewport.setY (priv->viewPort.vp.y () + ((rect.centerY () / height ()) + offset ) %
-		   priv->viewPort.vpSize.height ());
+    viewport.setY (privateScreen.viewPort.vp.y () + ((rect.centerY () / height ()) + offset ) %
+		   privateScreen.viewPort.vpSize.height ());
 }
 
 int
 CompScreenImpl::outputDeviceForGeometry (const CompWindow::Geometry& gm)
 {
-    return priv->outputDevices.outputDeviceForGeometry (gm, priv->optionGetOverlappingOutputs (), this);
+    return privateScreen.outputDevices.outputDeviceForGeometry (gm, privateScreen.optionGetOverlappingOutputs (), this);
 }
 
 int
@@ -4289,7 +4289,7 @@ CompScreenImpl::defaultIcon () const
 bool
 CompScreenImpl::updateDefaultIcon ()
 {
-    CompString file = priv->optionGetDefaultIcon ();
+    CompString file = privateScreen.optionGetDefaultIcon ();
     CompString pname = "core/";
     void       *data;
     CompSize   size;
@@ -4382,13 +4382,13 @@ ScreenInterface::addSupportedAtoms (std::vector<Atom>& atoms)
 Window
 CompScreenImpl::root ()
 {
-    return priv->rootWindow();
+    return privateScreen.rootWindow();
 }
 
 int
 CompScreenImpl::xkbEvent ()
 {
-    return priv->getXkbEvent ();
+    return privateScreen.getXkbEvent ();
 }
 
 void
@@ -4424,12 +4424,12 @@ CompScreenImpl::warpPointer (int dx,
     else if (pointerY < 0)
 	pointerY = 0;
 
-    XWarpPointer (priv->dpy,
-		  None, priv->rootWindow(),
+    XWarpPointer (privateScreen.dpy,
+		  None, privateScreen.rootWindow(),
 		  0, 0, 0, 0,
 		  pointerX, pointerY);
 
-    XSync (priv->dpy, false);
+    XSync (privateScreen.dpy, false);
 
     /* XWarpPointer will generate Leave, Enter and PointerMotion
      * events as if the user had instantaneously moved the cursor
@@ -4444,7 +4444,7 @@ CompScreenImpl::warpPointer (int dx,
      * FIXME: Probably don't need to process *all* the crossing
      * events here ... maybe there is a way to check only the last
      * event in the output buffer without roundtripping a lot */
-    while (XCheckMaskEvent (priv->dpy,
+    while (XCheckMaskEvent (privateScreen.dpy,
 			    LeaveWindowMask |
 			    EnterWindowMask |
 			    PointerMotionMask,
@@ -4456,7 +4456,7 @@ CompScreenImpl::warpPointer (int dx,
 		event.xcrossing.mode != NotifyUngrab ||
 		event.xcrossing.mode != NotifyInferior)
 	    {
-		priv->identifyEdgeWindow(event.xcrossing.window);
+		privateScreen.identifyEdgeWindow(event.xcrossing.window);
 	    }
 	}
     }
@@ -4471,26 +4471,26 @@ CompScreenImpl::warpPointer (int dx,
 CompWindowList &
 CompScreenImpl::windows ()
 {
-    return priv->windowManager.getWindows();
+    return privateScreen.windowManager.getWindows();
 }
 
 CompWindowList &
 CompScreenImpl::serverWindows ()
 {
-    return priv->windowManager.getServerWindows();
+    return privateScreen.windowManager.getServerWindows();
 }
 
 CompWindowList &
 CompScreenImpl::destroyedWindows ()
 {
-    return priv->windowManager.getDestroyedWindows();
+    return privateScreen.windowManager.getDestroyedWindows();
 }
 
 
 Time
 CompScreenImpl::getCurrentTime ()
 {
-    return priv->eventManager.getCurrentTime (priv->dpy);
+    return privateScreen.eventManager.getCurrentTime (privateScreen.dpy);
 }
 
 Time
@@ -4511,25 +4511,25 @@ cps::EventManager::getCurrentTime (Display* dpy) const
 Window
 CompScreenImpl::selectionWindow ()
 {
-    return priv->wmSnSelectionWindow;
+    return privateScreen.wmSnSelectionWindow;
 }
 
 int
 CompScreenImpl::screenNum ()
 {
-    return priv->screenNum;
+    return privateScreen.screenNum;
 }
 
 const CompPoint &
 CompScreenImpl::vp () const
 {
-    return priv->viewPort.vp;
+    return privateScreen.viewPort.vp;
 }
 
 const CompSize &
 CompScreenImpl::vpSize () const
 {
-    return priv->viewPort.vpSize;
+    return privateScreen.viewPort.vpSize;
 }
 
 int
@@ -4547,31 +4547,31 @@ CompScreenImpl::activeNum () const
 CompOutput::vector &
 CompScreenImpl::outputDevs ()
 {
-    return priv->outputDevices.getOutputDevs ();
+    return privateScreen.outputDevices.getOutputDevs ();
 }
 
 CompOutput &
 CompScreenImpl::currentOutputDev () const
 {
-    return priv->outputDevices.getCurrentOutputDev ();
+    return const_cast<PrivateScreen&>(privateScreen).outputDevices.getCurrentOutputDev ();
 }
 
 const CompRect &
 CompScreenImpl::workArea () const
 {
-    return priv->workArea;
+    return privateScreen.workArea;
 }
 
 unsigned int
 CompScreenImpl::currentDesktop ()
 {
-    return priv->currentDesktop;
+    return privateScreen.currentDesktop;
 }
 
 unsigned int
 CompScreenImpl::nDesktop ()
 {
-    return priv->nDesktop;
+    return privateScreen.nDesktop;
 }
 
 CompActiveWindowHistory *
@@ -4583,7 +4583,7 @@ CompScreenImpl::currentHistory ()
 bool
 CompScreenImpl::shouldSerializePlugins ()
 {
-    return priv->optionGetDoSerialize ();
+    return privateScreen.optionGetDoSerialize ();
 }
 
 void
@@ -4607,43 +4607,42 @@ cps::WindowManager::removeDestroyed ()
 const CompRegion &
 CompScreenImpl::region () const
 {
-    return priv->getRegion ();
+    return privateScreen.getRegion ();
 }
 
 bool
 CompScreenImpl::hasOverlappingOutputs ()
 {
-    return priv->outputDevices.hasOverlappingOutputs ();
+    return privateScreen.outputDevices.hasOverlappingOutputs ();
 }
 
 CompOutput &
 CompScreenImpl::fullscreenOutput ()
 {
-    return priv->fullscreenOutput;
+    return privateScreen.fullscreenOutput;
 }
 
 
 XWindowAttributes
 CompScreenImpl::attrib ()
 {
-    return priv->getAttrib ();
+    return privateScreen.getAttrib ();
 }
 
 std::vector<XineramaScreenInfo> &
 CompScreenImpl::screenInfo ()
 {
-    return priv->getScreenInfo ();
+    return privateScreen.getScreenInfo ();
 }
 
 bool
-PrivateScreen::createFailed () const
+CompScreenImpl::createFailed () const
 {
     return !screenInitalized;
 }
 
 CompScreen::CompScreen ():
-    PluginClassStorage (screenPluginClassIndices),
-    priv ()
+    PluginClassStorage (screenPluginClassIndices)
 {
 }
 
@@ -4655,21 +4654,20 @@ CompScreenImpl::CompScreenImpl () :
     mapNum (1),
     defaultIcon_(0),
     grabManager (this),
-    eventHandled (false)
+    eventHandled (false),
+    privateScreen(this)
 {
     ValueHolder::SetDefault (&valueHolder);
 
     CompPrivate p;
     CompOption::Value::Vector vList;
-    CompPlugin  *corePlugin;
 
-    priv.reset (new PrivateScreen (this));
-    priv->setPingTimerCallback(
+    privateScreen.setPingTimerCallback(
 	boost::bind (&CompScreenImpl::handlePingTimeout, this));
 
     screenInitalized = true;
 
-    corePlugin = CompPlugin::load ("core");
+    CompPlugin* corePlugin = CompPlugin::load ("core");
     if (!corePlugin)
     {
 	compLogMessage ("core", CompLogLevelFatal,
@@ -4689,7 +4687,7 @@ CompScreenImpl::CompScreenImpl () :
 
     vList.push_back ("core");
 
-    priv->setPlugins (vList);
+    privateScreen.setPlugins (vList);
 }
 
 void
@@ -4708,44 +4706,44 @@ PrivateScreen::initPlugins()
 bool
 CompScreenImpl::init (const char *name)
 {
-    priv->eventManager.init();
+    privateScreen.eventManager.init();
 
-    if (priv->initDisplay(name, history))
+    if (privateScreen.initDisplay(name, history))
     {
-	priv->optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
-	priv->optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
-	priv->optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
-	priv->optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
-	priv->optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
-	priv->optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
+	privateScreen.optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
+	privateScreen.optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
+	privateScreen.optionSetRaiseWindowKeyInitiate (CompScreenImpl::raiseWin);
+	privateScreen.optionSetRaiseWindowButtonInitiate (CompScreenImpl::raiseWin);
+	privateScreen.optionSetLowerWindowKeyInitiate (CompScreenImpl::lowerWin);
+	privateScreen.optionSetLowerWindowButtonInitiate (CompScreenImpl::lowerWin);
 
-	priv->optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
+	privateScreen.optionSetUnmaximizeWindowKeyInitiate (CompScreenImpl::unmaximizeWin);
 
-	priv->optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
-	priv->optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
-	priv->optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
-	priv->optionSetMaximizeWindowHorizontallyKeyInitiate (
+	privateScreen.optionSetMinimizeWindowKeyInitiate (CompScreenImpl::minimizeWin);
+	privateScreen.optionSetMinimizeWindowButtonInitiate (CompScreenImpl::minimizeWin);
+	privateScreen.optionSetMaximizeWindowKeyInitiate (CompScreenImpl::maximizeWin);
+	privateScreen.optionSetMaximizeWindowHorizontallyKeyInitiate (
 	    CompScreenImpl::maximizeWinHorizontally);
-	priv->optionSetMaximizeWindowVerticallyKeyInitiate (
+	privateScreen.optionSetMaximizeWindowVerticallyKeyInitiate (
 	    CompScreenImpl::maximizeWinVertically);
 
-	priv->optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
-	priv->optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
+	privateScreen.optionSetWindowMenuKeyInitiate (CompScreenImpl::windowMenu);
+	privateScreen.optionSetWindowMenuButtonInitiate (CompScreenImpl::windowMenu);
 
-	priv->optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
-	priv->optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
+	privateScreen.optionSetShowDesktopKeyInitiate (CompScreenImpl::showDesktop);
+	privateScreen.optionSetShowDesktopEdgeInitiate (CompScreenImpl::showDesktop);
 
-	priv->optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
-	priv->optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
+	privateScreen.optionSetToggleWindowMaximizedKeyInitiate (CompScreenImpl::toggleWinMaximized);
+	privateScreen.optionSetToggleWindowMaximizedButtonInitiate (CompScreenImpl::toggleWinMaximized);
 
-	priv->optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
+	privateScreen.optionSetToggleWindowMaximizedHorizontallyKeyInitiate (
 	    CompScreenImpl::toggleWinMaximizedHorizontally);
-	priv->optionSetToggleWindowMaximizedVerticallyKeyInitiate (
+	privateScreen.optionSetToggleWindowMaximizedVerticallyKeyInitiate (
 	    CompScreenImpl::toggleWinMaximizedVertically);
 
-	priv->optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
+	privateScreen.optionSetToggleWindowShadedKeyInitiate (CompScreenImpl::shadeWin);
 
-	priv->initPlugins();
+	privateScreen.initPlugins();
 
 	if (debugOutput)
 	{
@@ -4753,7 +4751,7 @@ CompScreenImpl::init (const char *name)
 		new StackDebugger (
 		    dpy (),
 		    root (),
-		    boost::bind (&PrivateScreen::queueEvents, priv.get())));
+		    boost::bind (&PrivateScreen::queueEvents, &privateScreen)));
 	}
 
 	return true;
@@ -4772,9 +4770,9 @@ cps::EventManager::init ()
 }
 
 bool
-CompScreen::displayInitialised() const
+CompScreenImpl::displayInitialised() const
 {
-    return priv && priv->initialized;
+    return privateScreen.initialized;
 }
 
 void
@@ -4784,45 +4782,45 @@ CompScreenImpl::updatePassiveKeyGrabs () const
 }
 
 void
-CompScreen::applyStartupProperties (CompWindow *window)
+CompScreenImpl::applyStartupProperties (CompWindow *window)
 {
-    priv->startupSequence.applyStartupProperties (this, window);
+    privateScreen.startupSequence.applyStartupProperties (this, window);
 }
 
 void
-CompScreen::updateClientList()
+CompScreenImpl::updateClientList()
 {
-    priv->updateClientList ();
+    privateScreen.updateClientList ();
 }
 
 Window
-CompScreen::getTopWindow() const
+CompScreenImpl::getTopWindow() const
 {
-    return priv->windowManager.getTopWindow();
+    return privateScreen.windowManager.getTopWindow();
 }
 
 CoreOptions&
-CompScreen::getCoreOptions()
+CompScreenImpl::getCoreOptions()
 {
-    return *priv;
+    return privateScreen;
 }
 
 Colormap
-CompScreen::colormap() const
+CompScreenImpl::colormap() const
 {
-    return priv->colormap;
+    return privateScreen.colormap;
 }
 
 void
-CompScreen::setCurrentDesktop (unsigned int desktop)
+CompScreenImpl::setCurrentDesktop (unsigned int desktop)
 {
-    priv->setCurrentDesktop(desktop);
+    privateScreen.setCurrentDesktop(desktop);
 }
 
 Window
-CompScreen::activeWindow() const
+CompScreenImpl::activeWindow() const
 {
-    return priv->orphanData.activeWindow;
+    return privateScreen.orphanData.activeWindow;
 }
 
 void
@@ -4832,15 +4830,15 @@ CompScreenImpl::updatePassiveButtonGrabs(Window serverFrame)
 }
 
 bool
-CompScreen::grabWindowIsNot(Window w) const
+CompScreenImpl::grabWindowIsNot(Window w) const
 {
-    return priv->eventManager.notGrabWindow(w);
+    return privateScreen.eventManager.notGrabWindow(w);
 }
 
 void
-CompScreen::incrementPendingDestroys()
+CompScreenImpl::incrementPendingDestroys()
 {
-    priv->windowManager.incrementPendingDestroys();
+    privateScreen.windowManager.incrementPendingDestroys();
 }
 
 void
@@ -4867,14 +4865,14 @@ CompScreenImpl::lastPing () const
 }
 
 void
-CompScreen::setNextActiveWindow(Window id)
+CompScreenImpl::setNextActiveWindow(Window id)
 {
-    priv->orphanData.nextActiveWindow = id;
+    privateScreen.orphanData.nextActiveWindow = id;
 }
 Window
-CompScreen::getNextActiveWindow() const
+CompScreenImpl::getNextActiveWindow() const
 {
-    return priv->orphanData.nextActiveWindow;
+    return privateScreen.orphanData.nextActiveWindow;
 }
 
 
@@ -5303,10 +5301,10 @@ PrivateScreen::initDisplay (const char *name, cps::History& history)
 
 CompScreenImpl::~CompScreenImpl ()
 {
-    priv->startupSequence.removeAllSequences ();
+    privateScreen.startupSequence.removeAllSequences ();
 
-    while (!priv->windowManager.getWindows().empty ())
-        delete priv->windowManager.getWindows().front ();
+    while (!privateScreen.windowManager.getWindows().empty ())
+        delete privateScreen.windowManager.getWindows().front ();
 
     while (CompPlugin* p = CompPlugin::pop ())
 	CompPlugin::unload (p);

@@ -116,16 +116,6 @@ typedef struct _CompDelayedEdgeSettings
 } CompDelayedEdgeSettings;
 
 
-#define SCREEN_EDGE_LEFT	0
-#define SCREEN_EDGE_RIGHT	1
-#define SCREEN_EDGE_TOP		2
-#define SCREEN_EDGE_BOTTOM	3
-#define SCREEN_EDGE_TOPLEFT	4
-#define SCREEN_EDGE_TOPRIGHT	5
-#define SCREEN_EDGE_BOTTOMLEFT	6
-#define SCREEN_EDGE_BOTTOMRIGHT 7
-#define SCREEN_EDGE_NUM		8
-
 struct CompScreenEdge {
     Window	 id;
     unsigned int count;
@@ -156,73 +146,6 @@ namespace screen
 	    return a % b;
     };
 }
-}
-
-namespace X11
-{
-class PendingEvent {
-public:
-    PendingEvent (Display *, Window);
-    virtual ~PendingEvent ();
-
-    virtual bool match (XEvent *);
-    unsigned int serial () { return mSerial; } // HACK: will be removed
-    virtual void dump ();
-
-    typedef boost::shared_ptr<PendingEvent> Ptr;
-
-protected:
-
-    virtual Window getEventWindow (XEvent *);
-
-    unsigned int mSerial;
-    Window       mWindow;
-};
-
-class PendingConfigureEvent :
-    public PendingEvent
-{
-public:
-    PendingConfigureEvent (Display *, Window, unsigned int, XWindowChanges *);
-    virtual ~PendingConfigureEvent ();
-
-    virtual bool match (XEvent *);
-    bool matchVM (unsigned int valueMask);
-    bool matchRequest (XWindowChanges &xwc, unsigned int);
-    virtual void dump ();
-
-    typedef boost::shared_ptr<PendingConfigureEvent> Ptr;
-
-protected:
-
-    virtual Window getEventWindow (XEvent *);
-
-private:
-    unsigned int mValueMask;
-    XWindowChanges mXwc;
-};
-
-class PendingEventQueue
-{
-public:
-
-    PendingEventQueue (Display *);
-    virtual ~PendingEventQueue ();
-
-    void add (PendingEvent::Ptr p);
-    bool match (XEvent *);
-    bool pending ();
-    bool forEachIf (boost::function <bool (compiz::X11::PendingEvent::Ptr)>);
-    void clear () { mEvents.clear (); } // HACK will be removed
-    void dump ();
-
-protected:
-    bool removeIfMatching (const PendingEvent::Ptr &p, XEvent *);
-
-private:
-    std::list <PendingEvent::Ptr> mEvents;
-};
-
 }
 }
 
@@ -683,8 +606,6 @@ class PrivateScreen :
 
 	void disableEdge (int edge);
 
-	bool createFailed () const;
-	
 	void setDefaultWindowAttributes (XWindowAttributes *);
 
 	static void compScreenSnEvent (SnMonitorEvent *event,
@@ -1045,6 +966,28 @@ class CompScreenImpl : public CompScreen
 	virtual void updatePassiveButtonGrabs(Window serverFrame);
 	virtual unsigned int lastPing () const;
 
+	virtual bool displayInitialised() const;
+	virtual void applyStartupProperties (CompWindow *window);
+	virtual void updateClientList();
+	virtual Window getTopWindow() const;
+	virtual CoreOptions& getCoreOptions();
+	virtual Colormap colormap() const;
+	virtual void setCurrentDesktop (unsigned int desktop);
+	virtual Window activeWindow() const;
+	virtual bool grabWindowIsNot(Window w) const;
+	virtual void incrementPendingDestroys();
+	virtual void setNextActiveWindow(Window id);
+	virtual Window getNextActiveWindow() const;
+	virtual CompWindow * focusTopMostWindow ();
+	virtual int getWmState (Window id);
+	virtual void setWmState (int state, Window id) const;
+	virtual void getMwmHints (Window id,
+			      unsigned int *func,
+			      unsigned int *decor) const;
+	virtual unsigned int getProtocols (Window id);
+	virtual unsigned int getWindowType (Window id);
+	virtual unsigned int getWindowState (Window id);
+
     public :
 
 	static bool showDesktop (CompAction         *action,
@@ -1103,7 +1046,7 @@ class CompScreenImpl : public CompScreen
 			      CompAction::State  state,
 			      CompOption::Vector &options);
 
-	bool createFailed () const { return priv->createFailed (); }
+	bool createFailed () const;
 
 
     private:
@@ -1141,6 +1084,7 @@ class CompScreenImpl : public CompScreen
 	compiz::private_screen::History history;
     	ValueHolder valueHolder;
         bool 	eventHandled;
+        PrivateScreen privateScreen;
 };
 
 #endif
