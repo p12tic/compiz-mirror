@@ -26,6 +26,10 @@
 #ifndef _COMPIZ_PRIVATEEVENTSOURCE_H
 #define _COMPIZ_PRIVATEEVENTSOURCE_H
 
+#include <X11/Xlib.h>
+#include <glibmm/main.h>
+
+
 class CompEventSource:
     public Glib::Source
 {
