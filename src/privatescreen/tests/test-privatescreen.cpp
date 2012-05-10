@@ -177,6 +177,29 @@ public:
     MOCK_CONST_METHOD0(updatePassiveKeyGrabs, void ());
     MOCK_METHOD1(updatePassiveButtonGrabs, void (Window serverFrame));
     MOCK_CONST_METHOD0(lastPing, unsigned int  ());
+
+    MOCK_CONST_METHOD0(displayInitialised, bool ());
+    MOCK_METHOD1(applyStartupProperties, void (CompWindow *window));
+    MOCK_METHOD0(updateClientList, void ());
+    MOCK_CONST_METHOD0(getTopWindow, Window ());
+    MOCK_METHOD0(getCoreOptions, CoreOptions& ());
+    MOCK_CONST_METHOD0(colormap, Colormap ());
+    MOCK_METHOD1(setCurrentDesktop, void (unsigned int desktop));
+    MOCK_CONST_METHOD0(activeWindow, Window ());
+    MOCK_CONST_METHOD1(grabWindowIsNot, bool (Window w));
+    MOCK_METHOD0(incrementPendingDestroys, void ());
+    MOCK_METHOD1(setNextActiveWindow, void (Window id));
+    MOCK_CONST_METHOD0(getNextActiveWindow, Window ());
+    MOCK_METHOD0(focusTopMostWindow, CompWindow* ());
+
+    MOCK_METHOD1(getWmState, int (Window id));
+    MOCK_CONST_METHOD2(setWmState, void (int state, Window id));
+    MOCK_CONST_METHOD3(getMwmHints, void (Window id,
+			  unsigned int *func,
+			  unsigned int *decor));
+    MOCK_METHOD1(getProtocols, unsigned int (Window id));
+    MOCK_METHOD1(getWindowType, unsigned int (Window id));
+    MOCK_METHOD1(getWindowState, unsigned int (Window id));
 };
 
 class StubActivePluginsOption : public CoreOptions

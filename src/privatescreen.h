@@ -1045,6 +1045,28 @@ class CompScreenImpl : public CompScreen
 	virtual void updatePassiveButtonGrabs(Window serverFrame);
 	virtual unsigned int lastPing () const;
 
+	virtual bool displayInitialised() const;
+	virtual void applyStartupProperties (CompWindow *window);
+	virtual void updateClientList();
+	virtual Window getTopWindow() const;
+	virtual CoreOptions& getCoreOptions();
+	virtual Colormap colormap() const;
+	virtual void setCurrentDesktop (unsigned int desktop);
+	virtual Window activeWindow() const;
+	virtual bool grabWindowIsNot(Window w) const;
+	virtual void incrementPendingDestroys();
+	virtual void setNextActiveWindow(Window id);
+	virtual Window getNextActiveWindow() const;
+	virtual CompWindow * focusTopMostWindow ();
+	virtual int getWmState (Window id);
+	virtual void setWmState (int state, Window id) const;
+	virtual void getMwmHints (Window id,
+			      unsigned int *func,
+			      unsigned int *decor) const;
+	virtual unsigned int getProtocols (Window id);
+	virtual unsigned int getWindowType (Window id);
+	virtual unsigned int getWindowState (Window id);
+
     public :
 
 	static bool showDesktop (CompAction         *action,

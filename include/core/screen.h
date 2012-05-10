@@ -329,43 +329,40 @@ public:
     // Replacements for friends accessing priv. They are declared virtual to
     // ensure the ABI is stable if/when they are moved to CompScreenImpl.
     // They are only intended for use within compiz-core
-    virtual bool displayInitialised() const;
+    virtual bool displayInitialised() const = 0;
     virtual void updatePassiveKeyGrabs () const = 0;
-    virtual void applyStartupProperties (CompWindow *window);
-    virtual void updateClientList();
-    virtual Window getTopWindow() const;
-    virtual CoreOptions& getCoreOptions();
-    virtual Colormap colormap() const;
-    virtual void setCurrentDesktop (unsigned int desktop);
-    virtual Window activeWindow() const;
+    virtual void applyStartupProperties (CompWindow *window) = 0;
+    virtual void updateClientList() = 0;
+    virtual Window getTopWindow() const = 0;
+    virtual CoreOptions& getCoreOptions() = 0;
+    virtual Colormap colormap() const = 0;
+    virtual void setCurrentDesktop (unsigned int desktop) = 0;
+    virtual Window activeWindow() const = 0;
     virtual void updatePassiveButtonGrabs(Window serverFrame) = 0;
-    virtual bool grabWindowIsNot(Window w) const;
-    virtual void incrementPendingDestroys();
+    virtual bool grabWindowIsNot(Window w) const = 0;
+    virtual void incrementPendingDestroys() = 0;
     virtual void incrementDesktopWindowCount() = 0;
     virtual void decrementDesktopWindowCount() = 0;
     virtual unsigned int nextMapNum() = 0;
     virtual unsigned int lastPing () const = 0;
-    virtual void setNextActiveWindow(Window id);
-    virtual Window getNextActiveWindow() const;
-    virtual CompWindow * focusTopMostWindow ();
+    virtual void setNextActiveWindow(Window id) = 0;
+    virtual Window getNextActiveWindow() const = 0;
+    virtual CompWindow * focusTopMostWindow () = 0;
 
-    virtual int getWmState (Window id);
-    virtual void setWmState (int state, Window id) const;
+    virtual int getWmState (Window id) = 0;
+    virtual void setWmState (int state, Window id) const = 0;
     virtual void getMwmHints (Window id,
 			  unsigned int *func,
-			  unsigned int *decor) const;
-    virtual unsigned int getProtocols (Window id);
-    virtual unsigned int getWindowType (Window id);
-    virtual unsigned int getWindowState (Window id);
+			  unsigned int *decor) const = 0;
+    virtual unsigned int getProtocols (Window id) = 0;
+    virtual unsigned int getWindowType (Window id) = 0;
+    virtual unsigned int getWindowState (Window id) = 0;
     // End of "internal use only" functions
 
 protected:
 	CompScreen();
 
-	void setPriv(PrivateScreen* p) { priv = p; }
-
 private:
-	PrivateScreen* priv;
     // The "wrapable" functions delegate to these (for mocking)
     virtual bool _initPluginForScreen(CompPlugin *) = 0;
     virtual void _finiPluginForScreen(CompPlugin *) = 0;
