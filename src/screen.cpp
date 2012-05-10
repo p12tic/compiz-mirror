@@ -4636,7 +4636,7 @@ CompScreenImpl::screenInfo ()
 }
 
 bool
-PrivateScreen::createFailed () const
+CompScreenImpl::createFailed () const
 {
     return !screenInitalized;
 }

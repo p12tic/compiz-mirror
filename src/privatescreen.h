@@ -683,8 +683,6 @@ class PrivateScreen :
 
 	void disableEdge (int edge);
 
-	bool createFailed () const;
-	
 	void setDefaultWindowAttributes (XWindowAttributes *);
 
 	static void compScreenSnEvent (SnMonitorEvent *event,
@@ -1125,7 +1123,7 @@ class CompScreenImpl : public CompScreen
 			      CompAction::State  state,
 			      CompOption::Vector &options);
 
-	bool createFailed () const { return privateScreen.createFailed (); }
+	bool createFailed () const;
 
 
     private:
