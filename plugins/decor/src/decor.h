@@ -25,7 +25,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/shared_array.hpp>
-#include <boost/make_shared.hpp>
 #include <core/window.h>
 #include <core/pluginclasshandler.h>
 
@@ -35,7 +34,6 @@
 #include <core/windowextents.h>
 
 #include <clip-groups.h>
-#include <pixmap-requests.h>
 
 #include "decor_options.h"
 
@@ -78,36 +76,30 @@ class MatchedDecorClipGroup :
 class DecorTexture {
 
     public:
-	DecorTexture (DecorPixmapInterface::Ptr pixmap);
+	DecorTexture (Pixmap pixmap);
 	~DecorTexture ();
 
     public:
 	bool            status;
 	int             refCount;
-	DecorPixmapInterface::Ptr pixmap;
+        Pixmap          pixmap;
 	Damage          damage;
 	GLTexture::List textures;
 };
 
 class DecorWindow;
 
-class Decoration :
-    public DecorationInterface
-{
+class Decoration {
 
     public:
 
 	typedef boost::shared_ptr <Decoration> Ptr;
 
-	static const unsigned int UpdateRequested = 1 << 0;
-	static const unsigned int UpdatesPending = 1 << 1;
-
 	static Decoration::Ptr create (Window        id,
 				       long          *prop,
 				       unsigned int  size,
 				       unsigned int  type,
-				       unsigned int  nOffset,
-				       DecorPixmapRequestorInterface *requestor);
+				       unsigned int  nOffset);
 
 	Decoration (int   type,
 		    const decor_extents_t &border,
@@ -121,17 +113,9 @@ class Decoration :
 		    unsigned int minHeight,
 		    Pixmap       pixmap,
 		    const boost::shared_array <decor_quad_t> &quad,
-		    unsigned int nQuad,
-		    Window owner,
-		    DecorPixmapRequestorInterface *);
+		    unsigned int nQuad);
 
 	~Decoration ();
-
-	DecorPixmapReceiverInterface & receiverInterface ();
-
-	unsigned int getFrameType () const;
-	unsigned int getFrameState () const;
-	unsigned int getFrameActions () const;
 
     public:
 	int                       refCount;
@@ -149,19 +133,12 @@ class Decoration :
 	boost::shared_array <decor_quad_t> quad;
 	int                       nQuad;
 	int                       type;
-
-	unsigned int              updateState;
-	X11DecorPixmapReceiver    mPixmapReceiver;
 };
 
-class DecorationList :
-    public DecorationListFindMatchingInterface
+class DecorationList
 {
     public:
-	bool updateDecoration  (Window id, Atom decorAtom, DecorPixmapRequestorInterface *requestor);
-	DecorationInterface::Ptr findMatchingDecoration(unsigned int frameType,
-								 unsigned int frameState,
-								 unsigned int frameActions);
+        bool updateDecoration  (Window id, Atom decorAtom);
 	const Decoration::Ptr & findMatchingDecoration (CompWindow *w, bool sizeCheck);
         void clear ()
         {
@@ -238,8 +215,6 @@ class DecorScreen :
 	Atom shadowColorAtom;
 	Atom shadowInfoAtom;
 	Atom decorSwitchWindowAtom;
-	Atom decorPendingAtom;
-	Atom decorRequestAtom;
 
 	Window dmWin;
 	int    dmSupports;
@@ -254,7 +229,6 @@ class DecorScreen :
 	CompTimer decoratorStart;
 
 	MatchedDecorClipGroup mMenusClipGroup;
-	X11DecorPixmapRequestor   mRequestor;
 };
 
 class DecorWindow :
@@ -360,8 +334,6 @@ class DecorWindow :
 	DecorClipGroupInterface *mClipGroup;
 	CompRegion		mOutputRegion;
 	CompRegion              mInputRegion;
-
-	X11DecorPixmapRequestor   mRequestor;
 };
 
 class DecorPluginVTable :
