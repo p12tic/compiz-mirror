@@ -4650,7 +4650,6 @@ CompScreenImpl::CompScreenImpl () :
     below(),
     autoRaiseTimer_(),
     autoRaiseWindow_(0),
-    mapNum (1),
     defaultIcon_(0),
     grabManager (this),
     eventHandled (false),
@@ -4856,8 +4855,13 @@ cps::DesktopWindowCount::decrementDesktopWindowCount()
     count--;
 }
 
+cps::MapNum::MapNum() :
+mapNum (1)
+{
+}
+
 unsigned int
-CompScreenImpl::nextMapNum()
+cps::MapNum::nextMapNum()
 {
     return mapNum++;
 }

@@ -159,13 +159,22 @@ namespace compiz { namespace private_screen {
 }}
 
 namespace compiz {
-class DesktopWindowCount {
+class DesktopWindowCount
+{
 public:
     virtual void incrementDesktopWindowCount() = 0;
     virtual void decrementDesktopWindowCount() = 0;
     virtual int desktopWindowCount() = 0;
 protected:
     ~DesktopWindowCount() {}
+};
+
+class MapNum
+{
+public:
+    virtual unsigned int nextMapNum() = 0;
+protected:
+    ~MapNum() {}
 };
 }
 
@@ -174,6 +183,7 @@ class CompScreen :
     public PluginClassStorage, // TODO should be an interface here
     public CompSize,
     public virtual ::compiz::DesktopWindowCount,
+    public virtual ::compiz::MapNum,
     public CompOption::Class   // TODO should be an interface here
 {
 public:
@@ -362,7 +372,6 @@ public:
     virtual void updatePassiveButtonGrabs(Window serverFrame) = 0;
     virtual bool grabWindowIsNot(Window w) const = 0;
     virtual void incrementPendingDestroys() = 0;
-    virtual unsigned int nextMapNum() = 0;
     virtual unsigned int lastPing () const = 0;
     virtual void setNextActiveWindow(Window id) = 0;
     virtual Window getNextActiveWindow() const = 0;
