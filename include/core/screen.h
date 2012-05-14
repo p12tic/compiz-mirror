@@ -176,6 +176,14 @@ public:
 protected:
     ~MapNum() {}
 };
+
+class Ping
+{
+public:
+    virtual unsigned int lastPing () const = 0;
+protected:
+    ~Ping() {}
+};
 }
 
 class CompScreen :
@@ -184,6 +192,7 @@ class CompScreen :
     public CompSize,
     public virtual ::compiz::DesktopWindowCount,
     public virtual ::compiz::MapNum,
+    public virtual ::compiz::Ping,
     public CompOption::Class   // TODO should be an interface here
 {
 public:
@@ -372,7 +381,6 @@ public:
     virtual void updatePassiveButtonGrabs(Window serverFrame) = 0;
     virtual bool grabWindowIsNot(Window w) const = 0;
     virtual void incrementPendingDestroys() = 0;
-    virtual unsigned int lastPing () const = 0;
     virtual void setNextActiveWindow(Window id) = 0;
     virtual Window getNextActiveWindow() const = 0;
     virtual CompWindow * focusTopMostWindow () = 0;

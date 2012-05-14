@@ -643,7 +643,7 @@ PrivateScreen::setAudibleBell (bool audible)
 bool
 CompScreenImpl::handlePingTimeout ()
 {
-    return ping.handlePingTimeout(
+    return Ping::handlePingTimeout(
 	    privateScreen.windowManager.begin(),
 	    privateScreen.windowManager.end(),
 	    privateScreen.dpy);
@@ -4864,12 +4864,6 @@ unsigned int
 cps::MapNum::nextMapNum()
 {
     return mapNum++;
-}
-
-unsigned int
-CompScreenImpl::lastPing () const
-{
-    return ping.lastPing ();
 }
 
 void

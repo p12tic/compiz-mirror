@@ -509,7 +509,8 @@ private:
     int extension;
 };
 
-class Ping
+class Ping :
+public virtual ::compiz::Ping
 {
 public:
     Ping() : lastPing_(1) {}
@@ -764,7 +765,8 @@ class CompManager
  */
 class CompScreenImpl : public CompScreen,
     ::compiz::private_screen::DesktopWindowCount,
-    ::compiz::private_screen::MapNum
+    ::compiz::private_screen::MapNum,
+    ::compiz::private_screen::Ping
 {
     public:
 	CompScreenImpl ();
@@ -985,7 +987,6 @@ class CompScreenImpl : public CompScreen,
 
 	virtual void updatePassiveKeyGrabs () const;
 	virtual void updatePassiveButtonGrabs(Window serverFrame);
-	virtual unsigned int lastPing () const;
 
 	virtual bool displayInitialised() const;
 	virtual void applyStartupProperties (CompWindow *window);
@@ -1099,7 +1100,6 @@ class CompScreenImpl : public CompScreen,
 	Window    autoRaiseWindow_;
 	CompIcon *defaultIcon_;
 	compiz::private_screen::GrabManager mutable grabManager;
-	compiz::private_screen::Ping ping;
 	compiz::private_screen::History history;
     	ValueHolder valueHolder;
         bool 	eventHandled;
