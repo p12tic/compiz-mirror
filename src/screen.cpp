@@ -1342,7 +1342,7 @@ CompScreenImpl::_logMessage (const char   *componentName,
 }
 
 int
-CompScreenImpl::getWmState (Window id)
+cps::XWindowInfo::getWmState (Window id)
 {
     Atom	  actual;
     int		  result, format;
@@ -1350,7 +1350,7 @@ CompScreenImpl::getWmState (Window id)
     unsigned char *data;
     unsigned long state = NormalState;
 
-    result = XGetWindowProperty (privateScreen.dpy, id,
+    result = XGetWindowProperty (dpy, id,
 				 Atoms::wmState, 0L, 2L, false,
 				 Atoms::wmState, &actual, &format,
 				 &n, &left, &data);
@@ -1366,14 +1366,14 @@ CompScreenImpl::getWmState (Window id)
 }
 
 void
-CompScreenImpl::setWmState (int state, Window id) const
+cps::XWindowInfo::setWmState (int state, Window id) const
 {
     unsigned long data[2];
 
     data[0] = state;
     data[1] = None;
 
-    XChangeProperty (privateScreen.dpy, id,
+    XChangeProperty (dpy, id,
 		     Atoms::wmState, Atoms::wmState,
 		     32, PropModeReplace, (unsigned char *) data, 2);
 }
@@ -1443,7 +1443,7 @@ cps::windowStateFromString (const char *str)
 }
 
 unsigned int
-CompScreenImpl::getWindowState (Window id)
+cps::XWindowInfo::getWindowState (Window id)
 {
     Atom	  actual;
     int		  result, format;
@@ -1451,7 +1451,7 @@ CompScreenImpl::getWindowState (Window id)
     unsigned char *data;
     unsigned int  state = 0;
 
-    result = XGetWindowProperty (privateScreen.dpy, id,
+    result = XGetWindowProperty (dpy, id,
 				 Atoms::winState,
 				 0L, 1024L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1519,14 +1519,14 @@ PrivateScreen::setWindowState (unsigned int state, Window id)
 }
 
 unsigned int
-CompScreenImpl::getWindowType (Window id)
+cps::XWindowInfo::getWindowType (Window id)
 {
     Atom	  actual, a = None;
     int		  result, format;
     unsigned long n, left;
     unsigned char *data;
 
-    result = XGetWindowProperty (privateScreen.dpy , id,
+    result = XGetWindowProperty (dpy , id,
 				 Atoms::winType,
 				 0L, 1L, false, XA_ATOM, &actual, &format,
 				 &n, &left, &data);
@@ -1574,7 +1574,7 @@ CompScreenImpl::getWindowType (Window id)
 }
 
 void
-CompScreenImpl::getMwmHints (Window       id,
+cps::XWindowInfo::getMwmHints (Window       id,
 			    unsigned int *func,
 			    unsigned int *decor) const
 {
@@ -1586,7 +1586,7 @@ CompScreenImpl::getMwmHints (Window       id,
     *func  = MwmFuncAll;
     *decor = MwmDecorAll;
 
-    result = XGetWindowProperty (privateScreen.dpy, id,
+    result = XGetWindowProperty (dpy, id,
 				 Atoms::mwmHints,
 				 0L, 20L, false, Atoms::mwmHints,
 				 &actual, &format, &n, &left, &data);
@@ -1609,13 +1609,13 @@ CompScreenImpl::getMwmHints (Window       id,
 }
 
 unsigned int
-CompScreenImpl::getProtocols (Window id)
+cps::XWindowInfo::getProtocols (Window id)
 {
     Atom         *protocol;
     int          count;
     unsigned int protocols = 0;
 
-    if (XGetWMProtocols (privateScreen.dpy, id, &protocol, &count))
+    if (XGetWMProtocols (dpy, id, &protocol, &count))
     {
 	int  i;
 
@@ -4647,6 +4647,7 @@ CompScreen::CompScreen ():
 }
 
 CompScreenImpl::CompScreenImpl () :
+    cps::XWindowInfo(privateScreen.dpy),
     below(),
     autoRaiseTimer_(),
     autoRaiseWindow_(0),

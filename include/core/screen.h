@@ -184,6 +184,21 @@ public:
 protected:
     ~Ping() {}
 };
+
+class XWindowInfo
+{
+public:
+    virtual int getWmState (Window id) = 0;
+    virtual void setWmState (int state, Window id) const = 0;
+    virtual void getMwmHints (Window id,
+			  unsigned int *func,
+			  unsigned int *decor) const = 0;
+    virtual unsigned int getProtocols (Window id) = 0;
+    virtual unsigned int getWindowType (Window id) = 0;
+    virtual unsigned int getWindowState (Window id) = 0;
+protected:
+    ~XWindowInfo() {}
+};
 }
 
 class CompScreen :
@@ -193,6 +208,7 @@ class CompScreen :
     public virtual ::compiz::DesktopWindowCount,
     public virtual ::compiz::MapNum,
     public virtual ::compiz::Ping,
+    public virtual ::compiz::XWindowInfo,
     public CompOption::Class   // TODO should be an interface here
 {
 public:
@@ -384,15 +400,6 @@ public:
     virtual void setNextActiveWindow(Window id) = 0;
     virtual Window getNextActiveWindow() const = 0;
     virtual CompWindow * focusTopMostWindow () = 0;
-
-    virtual int getWmState (Window id) = 0;
-    virtual void setWmState (int state, Window id) const = 0;
-    virtual void getMwmHints (Window id,
-			  unsigned int *func,
-			  unsigned int *decor) const = 0;
-    virtual unsigned int getProtocols (Window id) = 0;
-    virtual unsigned int getWindowType (Window id) = 0;
-    virtual unsigned int getWindowState (Window id) = 0;
     // End of "internal use only" functions
 
 protected:

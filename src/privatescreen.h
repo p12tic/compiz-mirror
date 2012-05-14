@@ -544,6 +544,28 @@ private:
     unsigned int mapNum;
 };
 
+class XWindowInfo :
+    public virtual ::compiz::XWindowInfo
+{
+public:
+    XWindowInfo(Display* const& dpy) :
+	dpy(dpy) {}
+
+    virtual int getWmState (Window id);
+    virtual void setWmState (int state, Window id) const;
+    virtual void getMwmHints (Window id,
+		      unsigned int *func,
+		      unsigned int *decor) const;
+    virtual unsigned int getProtocols (Window id);
+    virtual unsigned int getWindowType (Window id);
+    virtual unsigned int getWindowState (Window id);
+private:
+    Display* const& dpy;
+};
+
+
+
+
 unsigned int windowStateMask (Atom state);
 
 }} // namespace compiz::private_screen
@@ -766,7 +788,8 @@ class CompManager
 class CompScreenImpl : public CompScreen,
     ::compiz::private_screen::DesktopWindowCount,
     ::compiz::private_screen::MapNum,
-    ::compiz::private_screen::Ping
+    ::compiz::private_screen::Ping,
+    ::compiz::private_screen::XWindowInfo
 {
     public:
 	CompScreenImpl ();
@@ -1001,14 +1024,6 @@ class CompScreenImpl : public CompScreen,
 	virtual void setNextActiveWindow(Window id);
 	virtual Window getNextActiveWindow() const;
 	virtual CompWindow * focusTopMostWindow ();
-	virtual int getWmState (Window id);
-	virtual void setWmState (int state, Window id) const;
-	virtual void getMwmHints (Window id,
-			      unsigned int *func,
-			      unsigned int *decor) const;
-	virtual unsigned int getProtocols (Window id);
-	virtual unsigned int getWindowType (Window id);
-	virtual unsigned int getWindowState (Window id);
 
     public :
 
