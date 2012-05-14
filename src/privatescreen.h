@@ -417,7 +417,8 @@ private:
     std::list<KeyGrab>    keyGrabs;
 };
 
-class History : boost::noncopyable
+class History : public virtual ::compiz::History,
+    boost::noncopyable
 {
     public:
 	History();
@@ -426,18 +427,15 @@ class History : boost::noncopyable
 
 	void addToCurrentActiveWindowHistory (Window id);
 
-	CompActiveWindowHistory* getCurrentHistory ()
-	{
-	    return history+currentHistory;
-	}
+	CompActiveWindowHistory* currentHistory ();
 
-	unsigned int nextActiveNum () { return activeNum++; }
-	unsigned int getActiveNum () const { return activeNum; }
+	unsigned int nextActiveNum () { return activeNum_++; }
+	unsigned int activeNum () const;
 
     private:
 	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
-	int                     currentHistory;
-	unsigned int activeNum;
+	int                     currentHistory_;
+	unsigned int activeNum_;
 };
 
 // Apart from a use by StartupSequence::addSequence this data
@@ -789,7 +787,8 @@ class CompScreenImpl : public CompScreen,
     ::compiz::private_screen::DesktopWindowCount,
     ::compiz::private_screen::MapNum,
     ::compiz::private_screen::Ping,
-    ::compiz::private_screen::XWindowInfo
+    ::compiz::private_screen::XWindowInfo,
+    ::compiz::private_screen::History
 {
     public:
 	CompScreenImpl ();
@@ -971,8 +970,6 @@ class CompScreenImpl : public CompScreen,
 
 	const CompSize  & vpSize () const;
 
-	unsigned int activeNum () const;
-
 	CompOutput::vector & outputDevs ();
 	CompOutput & currentOutputDev () const;
 
@@ -981,8 +978,6 @@ class CompScreenImpl : public CompScreen,
 	unsigned int currentDesktop ();
 
 	unsigned int nDesktop ();
-
-	CompActiveWindowHistory *currentHistory ();
 
 	bool shouldSerializePlugins () ;
 
@@ -1115,7 +1110,6 @@ class CompScreenImpl : public CompScreen,
 	Window    autoRaiseWindow_;
 	CompIcon *defaultIcon_;
 	compiz::private_screen::GrabManager mutable grabManager;
-	compiz::private_screen::History history;
     	ValueHolder valueHolder;
         bool 	eventHandled;
         PrivateScreen privateScreen;

@@ -199,6 +199,16 @@ public:
 protected:
     ~XWindowInfo() {}
 };
+
+class History
+{
+public:
+    virtual unsigned int activeNum () const = 0;
+    virtual CompActiveWindowHistory *currentHistory () = 0;
+protected:
+    ~History() {}
+};
+
 }
 
 class CompScreen :
@@ -209,6 +219,7 @@ class CompScreen :
     public virtual ::compiz::MapNum,
     public virtual ::compiz::Ping,
     public virtual ::compiz::XWindowInfo,
+    public virtual ::compiz::History,
     public CompOption::Class   // TODO should be an interface here
 {
 public:
@@ -293,7 +304,6 @@ public:
 			    unsigned int value) = 0;
     virtual Window activeWindow () = 0;
     virtual unsigned int currentDesktop () = 0;
-    virtual CompActiveWindowHistory *currentHistory () = 0;
     virtual void focusDefaultWindow () = 0;
     virtual Time getCurrentTime () = 0;
     virtual unsigned int getWindowProp (Window       id,
@@ -360,7 +370,6 @@ public:
     virtual CompOutput & currentOutputDev () const = 0;
     virtual bool grabExist (const char *) = 0;
     virtual Cursor invisibleCursor () = 0;
-    virtual unsigned int activeNum () const = 0;
     virtual void sendWindowActivationRequest (Window id) = 0;
     virtual const CompWindowVector & clientList (bool stackingOrder = true) = 0;
     virtual int outputDeviceForPoint (const CompPoint &point) = 0;

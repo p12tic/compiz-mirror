@@ -3897,7 +3897,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 
 	privateScreen.setDesktopHints ();
 
-	history.setCurrentActiveWindowHistory (privateScreen.viewPort.vp.x (), privateScreen.viewPort.vp.y ());
+	setCurrentActiveWindowHistory (privateScreen.viewPort.vp.x (), privateScreen.viewPort.vp.y ());
 
 	w = findWindow (privateScreen.orphanData.activeWindow);
 	if (w)
@@ -3909,7 +3909,7 @@ CompScreenImpl::moveViewport (int tx, int ty, bool sync)
 	    /* add window to current history if it's default viewport is
 	       still the current one. */
 	    if (privateScreen.viewPort.vp.x () == dvp.x () && privateScreen.viewPort.vp.y () == dvp.y ())
-		history.addToCurrentActiveWindowHistory (w->id ());
+		addToCurrentActiveWindowHistory (w->id ());
 	}
     }
 }
@@ -4322,7 +4322,7 @@ cps::History::setCurrentActiveWindowHistory (int x, int y)
     {
 	if (history[i].x == x && history[i].y == y)
 	{
-	    currentHistory = i;
+	    currentHistory_ = i;
 	    return;
 	}
     }
@@ -4331,9 +4331,9 @@ cps::History::setCurrentActiveWindowHistory (int x, int y)
 	if (history[i].activeNum < history[min].activeNum)
 	    min = i;
 
-    currentHistory = min;
+    currentHistory_ = min;
 
-    history[min].activeNum = activeNum;
+    history[min].activeNum = activeNum_;
     history[min].x         = x;
     history[min].y         = y;
 
@@ -4343,7 +4343,7 @@ cps::History::setCurrentActiveWindowHistory (int x, int y)
 void
 cps::History::addToCurrentActiveWindowHistory (Window id)
 {
-    CompActiveWindowHistory *history = &this->history[currentHistory];
+    CompActiveWindowHistory *history = &this->history[currentHistory_];
     Window		    tmp, next = id;
     int			    i;
 
@@ -4359,7 +4359,7 @@ cps::History::addToCurrentActiveWindowHistory (Window id)
 	    break;
     }
 
-    history->activeNum = activeNum;
+    history->activeNum = activeNum_;
 }
 
 void
@@ -4539,9 +4539,9 @@ cps::DesktopWindowCount::desktopWindowCount ()
 }
 
 unsigned int
-CompScreenImpl::activeNum () const
+cps::History::activeNum () const
 {
-    return history.getActiveNum();
+    return activeNum_;
 }
 
 CompOutput::vector &
@@ -4574,10 +4574,10 @@ CompScreenImpl::nDesktop ()
     return privateScreen.nDesktop;
 }
 
-CompActiveWindowHistory *
-CompScreenImpl::currentHistory ()
+CompActiveWindowHistory*
+cps::History::currentHistory ()
 {
-    return history.getCurrentHistory ();
+    return history+currentHistory_;
 }
 
 bool
@@ -4707,7 +4707,7 @@ CompScreenImpl::init (const char *name)
 {
     privateScreen.eventManager.init();
 
-    if (privateScreen.initDisplay(name, history))
+    if (privateScreen.initDisplay(name, *this))
     {
 	privateScreen.optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
 	privateScreen.optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
@@ -5374,10 +5374,10 @@ PrivateScreen::PrivateScreen (CompScreen *screen) :
 }
 
 cps::History::History() :
-    currentHistory(0),
-    activeNum (1)
+    currentHistory_(0),
+    activeNum_ (1)
 {
-    memset (&history[currentHistory], 0, sizeof history[currentHistory]);
+    memset (&history[currentHistory_], 0, sizeof history[currentHistory_]);
 }
 
 cps::WindowManager::WindowManager() :
