@@ -520,6 +520,16 @@ private:
     unsigned int lastPing_;
 };
 
+class DesktopWindowCount : public virtual ::compiz::DesktopWindowCount {
+public:
+    DesktopWindowCount();
+    virtual void incrementDesktopWindowCount();
+    virtual void decrementDesktopWindowCount();
+    virtual int desktopWindowCount();
+private:
+    int       count;
+};
+
 unsigned int windowStateMask (Atom state);
 
 }} // namespace compiz::private_screen
@@ -739,7 +749,8 @@ class CompManager
  * A wrapping of the X display screen. This takes care of communication to the
  * X server.
  */
-class CompScreenImpl : public CompScreen
+class CompScreenImpl : public CompScreen,
+    ::compiz::private_screen::DesktopWindowCount
 {
     public:
 	CompScreenImpl ();
@@ -921,7 +932,6 @@ class CompScreenImpl : public CompScreen
 
 	const CompSize  & vpSize () const;
 
-	int desktopWindowCount ();
 	unsigned int activeNum () const;
 
 	CompOutput::vector & outputDevs ();
@@ -959,8 +969,6 @@ class CompScreenImpl : public CompScreen
 	virtual void processEvents ();
 	virtual void alwaysHandleEvent (XEvent *event);
 
-	virtual void incrementDesktopWindowCount();
-	virtual void decrementDesktopWindowCount();
 	virtual unsigned int nextMapNum();
 	virtual void updatePassiveKeyGrabs () const;
 	virtual void updatePassiveButtonGrabs(Window serverFrame);
@@ -1076,7 +1084,6 @@ class CompScreenImpl : public CompScreen
         Window below;
 	CompTimer autoRaiseTimer_;
 	Window    autoRaiseWindow_;
-        int       desktopWindowCount_;
 	unsigned int mapNum;
 	CompIcon *defaultIcon_;
 	compiz::private_screen::GrabManager mutable grabManager;

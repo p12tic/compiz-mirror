@@ -1412,9 +1412,9 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		    if (w->isViewable ())
 		    {
 			if (w->type () == CompWindowTypeDesktopMask)
-			    desktopWindowCount_--;
+			    decrementDesktopWindowCount();
 			else if (type == CompWindowTypeDesktopMask)
-			    desktopWindowCount_++;
+			    incrementDesktopWindowCount();
 		    }
 
 		    w->wmType () = type;

@@ -158,10 +158,22 @@ namespace compiz { namespace private_screen {
     class Ping;
 }}
 
+namespace compiz {
+class DesktopWindowCount {
+public:
+    virtual void incrementDesktopWindowCount() = 0;
+    virtual void decrementDesktopWindowCount() = 0;
+    virtual int desktopWindowCount() = 0;
+protected:
+    ~DesktopWindowCount() {}
+};
+}
+
 class CompScreen :
     public WrapableHandler<ScreenInterface, 18>,
     public PluginClassStorage, // TODO should be an interface here
     public CompSize,
+    public virtual ::compiz::DesktopWindowCount,
     public CompOption::Class   // TODO should be an interface here
 {
 public:
@@ -298,7 +310,6 @@ public:
 				CompString &pname,
 				CompSize   &size,
 				void       *&data) = 0;
-    virtual int desktopWindowCount () = 0;
     virtual XWindowAttributes attrib () = 0;
     virtual CompIcon *defaultIcon () const = 0;
     virtual bool otherGrabExist (const char *, ...) = 0;
@@ -351,8 +362,6 @@ public:
     virtual void updatePassiveButtonGrabs(Window serverFrame) = 0;
     virtual bool grabWindowIsNot(Window w) const = 0;
     virtual void incrementPendingDestroys() = 0;
-    virtual void incrementDesktopWindowCount() = 0;
-    virtual void decrementDesktopWindowCount() = 0;
     virtual unsigned int nextMapNum() = 0;
     virtual unsigned int lastPing () const = 0;
     virtual void setNextActiveWindow(Window id) = 0;

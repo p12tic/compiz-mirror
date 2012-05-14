@@ -4533,9 +4533,9 @@ CompScreenImpl::vpSize () const
 }
 
 int
-CompScreenImpl::desktopWindowCount ()
+cps::DesktopWindowCount::desktopWindowCount ()
 {
-    return desktopWindowCount_;
+    return count;
 }
 
 unsigned int
@@ -4650,7 +4650,6 @@ CompScreenImpl::CompScreenImpl () :
     below(),
     autoRaiseTimer_(),
     autoRaiseWindow_(0),
-    desktopWindowCount_(0),
     mapNum (1),
     defaultIcon_(0),
     grabManager (this),
@@ -4841,15 +4840,20 @@ CompScreenImpl::incrementPendingDestroys()
     privateScreen.windowManager.incrementPendingDestroys();
 }
 
-void
-CompScreenImpl::incrementDesktopWindowCount()
+cps::DesktopWindowCount::DesktopWindowCount() :
+count(0)
 {
-    desktopWindowCount_++;
+}
+
+void
+cps::DesktopWindowCount::incrementDesktopWindowCount()
+{
+    count++;
 }
 void
-CompScreenImpl::decrementDesktopWindowCount()
+cps::DesktopWindowCount::decrementDesktopWindowCount()
 {
-    desktopWindowCount_--;
+    count--;
 }
 
 unsigned int
