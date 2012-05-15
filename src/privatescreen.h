@@ -153,10 +153,13 @@ namespace compiz
 {
 namespace private_screen
 {
+class History;
 
 class WindowManager : boost::noncopyable
 {
     public:
+
+	typedef CompWindow::ForEach Functor;
 
 	WindowManager();
 
@@ -216,7 +219,14 @@ class WindowManager : boost::noncopyable
 	reverse_iterator rbegin() const { return windows.rbegin(); }
 	reverse_iterator rend() const { return windows.rend(); }
 
-	void clearFullscreenHints();
+	void clearFullscreenHints() const;
+	void showOrHideForDesktop(unsigned int desktop) const;
+	void setWindowActiveness(::compiz::private_screen::History& history) const;
+
+	void forEachWindow(Functor const& f) const
+	{
+	    std::for_each(windows.begin(), windows.end(), f);
+	}
 
     private:
 	CompWindowList windows;

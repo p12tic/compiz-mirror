@@ -920,7 +920,7 @@ cps::WindowManager::invalidateServerWindows()
 }
 
 void
-cps::WindowManager::clearFullscreenHints()
+cps::WindowManager::clearFullscreenHints() const
 {
     /* clear out fullscreen monitor hints of all windows as
        suggested on monitor layout changes in EWMH */
@@ -932,6 +932,32 @@ cps::WindowManager::clearFullscreenHints()
     }
 }
 
+void
+cps::WindowManager::showOrHideForDesktop(unsigned int desktop) const
+{
+    for (iterator i = windows.begin(); i != windows.end(); ++i)
+    {
+	CompWindow* const w(*i);
+	if (w->desktop () == 0xffffffff)
+	    continue;
+
+	if (w->desktop () == desktop)
+	    w->priv->show ();
+	else
+	    w->priv->hide ();
+    }
+}
+
+void
+cps::WindowManager::setWindowActiveness(cps::History& history) const
+{
+    for (iterator i = windows.begin(); i != windows.end(); ++i)
+    {
+	CompWindow* const w(*i);
+	if (w->isViewable ())
+	    w->priv->activeNum = history.nextActiveNum ();
+    }
+}
 
 CompOption::Value::Vector
 cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPluginsRequested)
@@ -2684,11 +2710,7 @@ CompScreenImpl::_leaveShowDesktopMode (CompWindow *window)
 void
 CompScreenImpl::forEachWindow (CompWindow::ForEach proc)
 {
-    for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
-    {
-	CompWindow* const w(*i);
-	proc (w);
-    }
+    windowManager.forEachWindow(proc);
 }
 
 void
@@ -4094,8 +4116,6 @@ PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
 void
 PrivateScreen::setCurrentDesktop (unsigned int desktop)
 {
-    unsigned long data;
-
     if (desktop >= nDesktop)
 	return;
 
@@ -4104,19 +4124,9 @@ PrivateScreen::setCurrentDesktop (unsigned int desktop)
 
     currentDesktop = desktop;
 
-    for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
-    {
-	CompWindow* const w(*i);
-	if (w->desktop () == 0xffffffff)
-	    continue;
+    windowManager.showOrHideForDesktop(desktop);
 
-	if (w->desktop () == desktop)
-	    w->priv->show ();
-	else
-	    w->priv->hide ();
-    }
-
-    data = desktop;
+    unsigned long data = desktop;
 
     XChangeProperty (dpy, rootWindow(), Atoms::currentDesktop,
 		     XA_CARDINAL, 32, PropModeReplace,
@@ -5248,12 +5258,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
     */
     XFree (children);
 
-    for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
-    {
-	CompWindow* const w(*i);
-	if (w->isViewable ())
-	    w->priv->activeNum = history.nextActiveNum ();
-    }
+    windowManager.setWindowActiveness(history);
 
     Window               focus;
     int                  revertTo;

@@ -365,13 +365,7 @@ CompScreen::finiPluginForScreen (CompPlugin *p)
 void
 CompScreenImpl::_finiPluginForScreen (CompPlugin *p)
 {
-    using compiz::private_screen::WindowManager;
-
-    for (WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
-    {
-	CompWindow* const w(*i);
-	p->vTable->finiWindow (w);
-    }
+    windowManager.forEachWindow(boost::bind(&CompPlugin::VTable::finiWindow, p->vTable, _1));
 }
 
 bool
