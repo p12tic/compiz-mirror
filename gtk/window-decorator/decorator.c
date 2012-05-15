@@ -564,6 +564,52 @@ update_window_decoration_icon (WnckWindow *win)
     }
 }
 
+/*
+ * request_update_window_decoration_size
+ * Description: asks the rendering process to allow a size update
+ * for pixmap synchronization */
+
+
+gboolean
+request_update_window_decoration_size (WnckWindow *win)
+{
+    decor_t           *d;
+    gint              width, height;
+    gint              x, y, w, h, name_width;
+
+    if (win == NULL)
+	return FALSE;
+
+    d = g_object_get_data (G_OBJECT (win), "decor");
+
+    if (!d->decorated)
+	return FALSE;
+
+    /* Get the geometry of the window, we'll need it later */
+    wnck_window_get_client_window_geometry (win, &x, &y, &w, &h);
+
+    /* Get the width of the name */
+    name_width = max_window_name_width (win);
+
+    /* Ask the theme to tell us how much space it needs. If this is not successful
+     * update the decoration name and return false */
+    if (!(*theme_calc_decoration_size) (d, w, h, name_width, &width, &height))
+    {
+	update_window_decoration_name (win);
+	return FALSE;
+    }
+
+    d->width  = width;
+    d->height = height;
+
+    decor_post_pending (gdk_x11_display_get_xdisplay (gdk_display_get_default ()),
+			wnck_window_get_xid (win),
+			populate_frame_type (d),
+			populate_frame_state (d),
+			populate_frame_actions (d));
+
+    return TRUE;
+}
 
 /*
  * update_window_decoration_size
@@ -581,8 +627,6 @@ update_window_decoration_size (WnckWindow *win)
     decor_t           *d;
     GdkPixmap         *pixmap, *buffer_pixmap = NULL;
     Picture           picture;
-    gint              width, height;
-    gint              x, y, w, h, name_width;
     Display           *xdisplay;
     XRenderPictFormat *format;
 
@@ -591,30 +635,19 @@ update_window_decoration_size (WnckWindow *win)
 
     d = g_object_get_data (G_OBJECT (win), "decor");
 
-    xdisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
-
-    /* Get the geometry of the window, we'll need it later */
-    wnck_window_get_client_window_geometry (win, &x, &y, &w, &h);
-
-    /* Get the width of the name */
-    name_width = max_window_name_width (win);
-
-    /* Ask the theme to tell us how much space it needs. If this is not successful
-     * update the decoration name and return false */
-    if (!(*theme_calc_decoration_size) (d, w, h, name_width, &width, &height))
-    {
-	update_window_decoration_name (win);
+    if (!d->decorated)
 	return FALSE;
-    }
+
+    xdisplay = GDK_DISPLAY_XDISPLAY (gdk_display_get_default ());
 
     gdk_error_trap_push ();
 
     /* Get the correct depth for the frame window in reparenting mode, otherwise
      * enforce 32 */
     if (d->frame_window)
-	pixmap = create_pixmap (width, height, d->frame->style_window_rgb);
+	pixmap = create_pixmap (d->width, d->height, d->frame->style_window_rgb);
     else
-	pixmap = create_pixmap (width, height, d->frame->style_window_rgba);
+	pixmap = create_pixmap (d->width, d->height, d->frame->style_window_rgba);
 
     gdk_flush ();
 
@@ -628,9 +661,9 @@ update_window_decoration_size (WnckWindow *win)
     gdk_error_trap_push ();
 
     if (d->frame_window)
-	buffer_pixmap = create_pixmap (width, height, d->frame->style_window_rgb);
+	buffer_pixmap = create_pixmap (d->width, d->height, d->frame->style_window_rgb);
     else
-	buffer_pixmap = create_pixmap (width, height, d->frame->style_window_rgba);
+	buffer_pixmap = create_pixmap (d->width, d->height, d->frame->style_window_rgba);
 
     gdk_flush ();
 
@@ -649,7 +682,7 @@ update_window_decoration_size (WnckWindow *win)
 
     /* Destroy the old pixmaps and pictures */
     if (d->pixmap)
-	g_object_unref (G_OBJECT (d->pixmap));
+	g_hash_table_insert (destroyed_pixmaps_table, GINT_TO_POINTER (GDK_PIXMAP_XID (d->pixmap)), d->pixmap);
 
     if (d->buffer_pixmap)
 	g_object_unref (G_OBJECT (d->buffer_pixmap));
@@ -666,9 +699,6 @@ update_window_decoration_size (WnckWindow *win)
     d->cr	     = gdk_cairo_create (pixmap);
 
     d->picture = picture;
-
-    d->width  = width;
-    d->height = height;
 
     d->prop_xid = wnck_window_get_xid (win);
 
@@ -1205,7 +1235,7 @@ update_window_decoration (WnckWindow *win)
 	d->context = NULL;
 	d->width = d->height = 0;
 
-	update_window_decoration_size (win);
+	request_update_window_decoration_size (win);
 	update_event_windows (win);
     }
 }
