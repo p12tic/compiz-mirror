@@ -2469,7 +2469,7 @@ CompScreenImpl::_addSupportedAtoms (std::vector<Atom> &atoms)
 }
 
 void
-PrivateScreen::getDesktopHints ()
+PrivateScreen::getDesktopHints (unsigned int showingDesktopMask)
 {
     unsigned long data[2];
     Atom	  actual;
@@ -2576,7 +2576,7 @@ CompScreen::enterShowDesktopMode ()
 
 unsigned int CompScreenImpl::showingDesktopMask() const
 {
-    return privateScreen.showingDesktopMask;
+    return showingDesktopMask_;
 }
 
 bool CompScreenImpl::grabsEmpty() const
@@ -2591,13 +2591,13 @@ CompScreenImpl::_enterShowDesktopMode ()
     int		  count = 0;
     bool          st = privateScreen.optionGetHideSkipTaskbarWindows ();
 
-    privateScreen.showingDesktopMask = ~(CompWindowTypeDesktopMask |
+    showingDesktopMask_ = ~(CompWindowTypeDesktopMask |
 				 CompWindowTypeDockMask);
 
     for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
     {
 	CompWindow* const w(*i);
-	if ((privateScreen.showingDesktopMask & w->wmType ()) &&
+	if ((showingDesktopMask_ & w->wmType ()) &&
 	    (!(w->state () & CompWindowStateSkipTaskbarMask) || st))
 	{
 	    if (!w->inShowDesktopMode () && !w->grabbed () &&
@@ -2615,7 +2615,7 @@ CompScreenImpl::_enterShowDesktopMode ()
 
     if (!count)
     {
-	privateScreen.showingDesktopMask = 0;
+	showingDesktopMask_ = 0;
 	data = 0;
     }
 
@@ -2653,11 +2653,11 @@ CompScreenImpl::_leaveShowDesktopMode (CompWindow *window)
 	    if (w->inShowDesktopMode ())
 		return;
 	}
-	privateScreen.showingDesktopMask = 0;
+	showingDesktopMask_ = 0;
     }
     else
     {
-	privateScreen.showingDesktopMask = 0;
+	showingDesktopMask_ = 0;
 
 	for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
 	{
@@ -4661,7 +4661,8 @@ CompScreenImpl::CompScreenImpl () :
     defaultIcon_(0),
     grabManager (this),
     eventHandled (false),
-    privateScreen(this, windowManager)
+    privateScreen(this, windowManager),
+    showingDesktopMask_(0)
 {
     ValueHolder::SetDefault (&valueHolder);
 
@@ -4714,7 +4715,7 @@ CompScreenImpl::init (const char *name)
 {
     privateScreen.eventManager.init();
 
-    if (privateScreen.initDisplay(name, *this))
+    if (privateScreen.initDisplay(name, *this, showingDesktopMask_))
     {
 	privateScreen.optionSetCloseWindowKeyInitiate (CompScreenImpl::closeWin);
 	privateScreen.optionSetCloseWindowButtonInitiate (CompScreenImpl::closeWin);
@@ -4887,7 +4888,7 @@ CompScreenImpl::getNextActiveWindow() const
 
 
 bool
-PrivateScreen::initDisplay (const char *name, cps::History& history)
+PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned int showingDesktopMask)
 {
     dpy = XOpenDisplay (name);
     if (!dpy)
@@ -5157,7 +5158,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history)
     detectOutputDevices (*this);
     updateOutputDevices (*this);
 
-    getDesktopHints ();
+    getDesktopHints (showingDesktopMask);
 
     {
 	XSetWindowAttributes attrib;
@@ -5358,7 +5359,6 @@ PrivateScreen::PrivateScreen (CompScreen *screen, cps::WindowManager& windowMana
     normalCursor (None),
     busyCursor (None),
     invisibleCursor (None),
-    showingDesktopMask (0),
     initialized (false),
     screen(screen),
     screenInfo (),

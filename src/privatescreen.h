@@ -578,7 +578,10 @@ class PrivateScreen :
 	PrivateScreen (CompScreen *screen, compiz::private_screen::WindowManager& windowManager);
 	~PrivateScreen ();
 
-	bool initDisplay (const char *name, compiz::private_screen::History& history);
+	bool initDisplay (
+		const char *name,
+		compiz::private_screen::History& history,
+		unsigned int showingDesktopMask);
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
@@ -630,7 +633,7 @@ class PrivateScreen :
 
 	void reshape (int w, int h);
 
-	void getDesktopHints ();
+	void getDesktopHints (unsigned int showingDesktopMask);
 
 	void updateScreenInfo ();
 
@@ -720,7 +723,6 @@ public:
     Cursor busyCursor;
     Cursor invisibleCursor;
     CompRect workArea;
-    unsigned int showingDesktopMask;
 
     bool initialized;
 
@@ -1116,6 +1118,7 @@ class CompScreenImpl : public CompScreen,
         bool 	eventHandled;
         PrivateScreen privateScreen;
         compiz::private_screen::WindowManager windowManager;
+        unsigned int showingDesktopMask_;
 };
 
 #endif
