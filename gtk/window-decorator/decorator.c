@@ -582,6 +582,9 @@ request_update_window_decoration_size (WnckWindow *win)
 
     d = g_object_get_data (G_OBJECT (win), "decor");
 
+    if (!d->decorated)
+	return FALSE;
+
     /* Get the geometry of the window, we'll need it later */
     wnck_window_get_client_window_geometry (win, &x, &y, &w, &h);
 
