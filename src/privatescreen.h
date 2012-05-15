@@ -222,6 +222,8 @@ class WindowManager : boost::noncopyable
 	void clearFullscreenHints() const;
 	void showOrHideForDesktop(unsigned int desktop) const;
 	void setWindowActiveness(::compiz::private_screen::History& history) const;
+	void setNumberOfDesktops (unsigned int nDesktop) const;
+	void updateWindowSizes() const;
 
 	void forEachWindow(Functor const& f) const
 	{

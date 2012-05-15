@@ -959,6 +959,31 @@ cps::WindowManager::setWindowActiveness(cps::History& history) const
     }
 }
 
+void
+cps::WindowManager::setNumberOfDesktops(unsigned int desktops) const
+{
+    for (iterator i = windows.begin(); i != windows.end(); ++i)
+    {
+	CompWindow* const w(*i);
+	if (w->desktop () == 0xffffffff)
+	    continue;
+
+	if (w->desktop () >= desktops)
+	    w->setDesktop (desktops - 1);
+    }
+}
+
+void
+cps::WindowManager::updateWindowSizes() const
+{
+    for (iterator i = windows.begin(); i != windows.end(); ++i)
+    {
+	CompWindow* const w(*i);
+	w->priv->updateSize ();
+    }
+}
+
+
 CompOption::Value::Vector
 cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPluginsRequested)
 {
@@ -3667,11 +3692,7 @@ CompScreenImpl::updateWorkarea ()
     {
 	/* as work area changed, update all maximized windows on this
 	   screen to snap to the new work area */
-	for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
-	{
-	    CompWindow* const w(*i);
-	    w->priv->updateSize ();
-	}
+	windowManager.updateWindowSizes();
     }
 }
 
@@ -4098,15 +4119,7 @@ PrivateScreen::setNumberOfDesktops (unsigned int nDesktop)
     if (currentDesktop >= nDesktop)
 	currentDesktop = nDesktop - 1;
 
-    for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
-    {
-	CompWindow* const w(*i);
-	if (w->desktop () == 0xffffffff)
-	    continue;
-
-	if (w->desktop () >= nDesktop)
-	    w->setDesktop (nDesktop - 1);
-    }
+    windowManager.setNumberOfDesktops(nDesktop);
 
     this->nDesktop = nDesktop;
 
