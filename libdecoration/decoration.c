@@ -2877,6 +2877,92 @@ decor_blend_border_picture (Display	    *xdisplay,
 }
 
 int
+decor_post_pending (Display *xdisplay,
+		    Window  client,
+		    unsigned int frame_state,
+		    unsigned int frame_type,
+		    unsigned int frame_actions)
+{
+    XEvent event;
+
+    Atom   decor_pending  = XInternAtom (xdisplay, "_COMPIZ_DECOR_PENDING", FALSE);
+
+    /* Send a client message indicating that a new
+     * decoration can be generated for this window
+     */
+    event.xclient.type	       = ClientMessage;
+    event.xclient.window       = client;
+    event.xclient.message_type = decor_pending;
+    event.xclient.format       = 32;
+    event.xclient.data.l[0]    = frame_type;
+    event.xclient.data.l[1]    = frame_state;
+    event.xclient.data.l[2]    = frame_actions;
+    event.xclient.data.l[3]    = 0;
+    event.xclient.data.l[4]    = 0;
+
+    XSendEvent (xdisplay, DefaultRootWindow (xdisplay), 0,
+		StructureNotifyMask, &event);
+
+    return 1;
+}
+
+int
+decor_post_generate_request (Display *xdisplay,
+			     Window  client,
+			     unsigned int frame_type,
+			     unsigned int frame_state,
+			     unsigned int frame_actions)
+{
+    XEvent event;
+
+    Atom   decor_request  = XInternAtom (xdisplay, "_COMPIZ_DECOR_REQUEST", FALSE);
+
+    /* Send a client message indicating that a new
+     * decoration can be generated for this window
+     */
+    event.xclient.type	       = ClientMessage;
+    event.xclient.window       = client;
+    event.xclient.message_type = decor_request;
+    event.xclient.format       = 32;
+    event.xclient.data.l[0]    = frame_type;
+    event.xclient.data.l[1]    = frame_state;
+    event.xclient.data.l[2]    = frame_actions;
+    event.xclient.data.l[3]    = 0;
+    event.xclient.data.l[4]    = 0;
+
+    XSendEvent (xdisplay, DefaultRootWindow (xdisplay), 0,
+		StructureNotifyMask, &event);
+
+    return 1;
+}
+
+int
+decor_post_delete_pixmap (Display *xdisplay,
+			  Pixmap  pixmap)
+{
+    XEvent event;
+
+    Atom   decor_delete_pixmap  = XInternAtom (xdisplay, "_COMPIZ_DECOR_DELETE_PIXMAP", FALSE);
+
+    /* Send a client message indicating that a new
+     * decoration can be generated for this window
+     */
+    event.xclient.type	       = ClientMessage;
+    event.xclient.window       = DefaultRootWindow (xdisplay);
+    event.xclient.message_type = decor_delete_pixmap;
+    event.xclient.format       = 32;
+    event.xclient.data.l[0]    = pixmap;
+    event.xclient.data.l[1]    = 0;
+    event.xclient.data.l[2]    = 0;
+    event.xclient.data.l[3]    = 0;
+    event.xclient.data.l[4]    = 0;
+
+    XSendEvent (xdisplay, DefaultRootWindow (xdisplay), 0,
+		StructureNotifyMask, &event);
+
+    return 1;
+}
+int
 decor_acquire_dm_session (Display    *xdisplay,
 			  int	     screen,
 			  const char *name,

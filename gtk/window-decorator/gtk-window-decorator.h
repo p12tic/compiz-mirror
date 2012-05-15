@@ -306,6 +306,9 @@ extern Atom toolkit_action_window_menu_atom;
 extern Atom toolkit_action_force_quit_dialog_atom;
 extern Atom net_wm_state_atom;
 extern Atom net_wm_state_modal_atom;
+extern Atom decor_request_atom;
+extern Atom decor_pending_atom;
+extern Atom decor_delete_pixmap_atom;
 
 extern Time dm_sn_timestamp;
 
@@ -511,6 +514,7 @@ extern char *program_name;
 
 /* list of all decorations */
 extern GHashTable    *frame_table;
+extern GHashTable    *destroyed_pixmaps_table;
 
 /* action menu */
 extern GtkWidget     *action_menu;
@@ -628,8 +632,12 @@ create_bare_frame (const gchar *type);
 void
 destroy_bare_frame ();
 
+/* Don't use directly */
 gboolean
 update_window_decoration_size (WnckWindow *win);
+
+gboolean
+request_update_window_decoration_size (WnckWindow *win);
 
 void
 update_window_decoration_name (WnckWindow *win);
