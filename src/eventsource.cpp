@@ -24,7 +24,8 @@
  * 	      : Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
-#include "privatescreen.h"
+#include "privateeventsource.h"
+#include "core/screen.h"
 
 CompEventSource *
 CompEventSource::create ()

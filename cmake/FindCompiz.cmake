@@ -74,6 +74,13 @@ if (NOT _COMPIZ_INTERNAL)
 	# look for compiz
 	pkg_check_modules (COMPIZ ${_req} "compiz${_comp_ver}")
 
+	# COMPIZ_PREFIX is not set by default on all machines. The CMake docs
+	# seem to vagely suggest this is normal in some cases for
+	# pkg_check_modules.
+	if (NOT COMPIZ_PREFIX)
+	    set (COMPIZ_PREFIX ${CMAKE_INSTALL_PREFIX})
+	endif ()
+
 	# is the CompizDefaults module installed?
 	find_path(_compiz_def_macro CompizDefaults.cmake ${COMPIZ_PREFIX}/share/compiz/cmake)
 

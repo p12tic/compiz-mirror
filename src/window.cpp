@@ -1261,7 +1261,7 @@ CompWindow::destroy ()
 	}
 
 	priv->destroyed = true;
-	screen->priv->pendingDestroys++;
+	screen->incrementPendingDestroys();
     }
 
 }
@@ -1343,7 +1343,7 @@ CompWindow::map ()
 	if (priv->pendingMaps > 0)
 	    priv->pendingMaps = 0;
 
-	priv->mapNum = screen->priv->mapNum++;
+	priv->mapNum = screen->nextMapNum();
 
 	if (priv->struts)
 	    screen->updateWorkarea ();
@@ -1356,20 +1356,20 @@ CompWindow::map ()
 	priv->attrib.map_state = IsViewable;
 
 	if (!overrideRedirect ())
-	    screen->priv->setWmState (NormalState, priv->id);
+	    screen->setWmState (NormalState, priv->id);
 
 	priv->invisible  = priv->isInvisible ();
 	priv->alive      = true;
 
-	priv->lastPong = screen->priv->lastPing ();
+	priv->lastPong = screen->lastPing ();
 
 	priv->updateRegion ();
 	priv->updateSize ();
 
-	screen->priv->updateClientList ();
+	screen->updateClientList ();
 
 	if (priv->type & CompWindowTypeDesktopMask)
-	    screen->priv->desktopWindowCount++;
+	    screen->incrementDesktopWindowCount();
 
 	if (priv->protocols & CompWindowProtocolSyncRequestMask)
 	{
@@ -1455,7 +1455,7 @@ CompWindow::unmap ()
 	return;
 
     if (priv->type == CompWindowTypeDesktopMask)
-	screen->priv->desktopWindowCount--;
+	screen->decrementDesktopWindowCount();
 
     priv->attrib.map_state = IsUnmapped;
     priv->invisible = true;
@@ -1465,7 +1465,7 @@ CompWindow::unmap ()
 	priv->updateFrameWindow ();
     }
 
-    screen->priv->updateClientList ();
+    screen->updateClientList ();
 
     windowNotify (CompWindowNotifyUnmap);
 }
@@ -1474,7 +1474,7 @@ void
 PrivateWindow::withdraw ()
 {
     if (!attrib.override_redirect)
-	screen->priv->setWmState (WithdrawnState, id);
+	screen->setWmState (WithdrawnState, id);
 
     placed     = false;
     unmanaging = managed;
@@ -1520,7 +1520,7 @@ PrivateWindow::restack (Window aboveId)
 	    dbg->overrideRedirectRestack (window->id (), aboveId);
     }
 
-    screen->priv->updateClientList ();
+    screen->updateClientList ();
 
     window->windowNotify (CompWindowNotifyRestack);
 
@@ -1890,7 +1890,7 @@ PrivateWindow::circulate (XCirculateEvent *ce)
     Window newAboveId;
 
     if (ce->place == PlaceOnTop)
-	newAboveId = screen->priv->getTopWindow ();
+	newAboveId = screen->getTopWindow ();
     else
 	newAboveId = 0;
 
@@ -2446,7 +2446,7 @@ CompWindow::moveInputFocusTo ()
 			 XA_WINDOW, 32, PropModeReplace,
 			 (unsigned char *) &priv->id, 1);
 
-	screen->priv->nextActiveWindow = priv->serverFrame;
+	screen->setNextActiveWindow(priv->serverFrame);
     }
     else
     {
@@ -2479,7 +2479,7 @@ CompWindow::moveInputFocusTo ()
 	}
 
 	if (setFocus)
-	    screen->priv->nextActiveWindow = priv->id;
+	    screen->setNextActiveWindow(priv->id);
 
 	if (!setFocus && !modalTransient)
 	{
@@ -2503,13 +2503,13 @@ void
 CompWindow::moveInputFocusToOtherWindow ()
 {
     if (priv->id == screen->activeWindow () ||
-	priv->id == screen->priv->nextActiveWindow)
+	priv->id == screen->getNextActiveWindow())
     {
 	CompWindow *ancestor;
-	CompWindow *nextActive = screen->findWindow (screen->priv->nextActiveWindow);
+	CompWindow *nextActive = screen->findWindow (screen->getNextActiveWindow());
 
         /* Window pending focus */
-	if (priv->id != screen->priv->nextActiveWindow &&
+	if (priv->id != screen->getNextActiveWindow() &&
 	    nextActive &&
 	    nextActive->focus ())
 	{
@@ -4112,12 +4112,14 @@ CompWindow::raise ()
 }
 
 CompWindow *
-PrivateScreen::focusTopMostWindow ()
+CompScreenImpl::focusTopMostWindow ()
 {
-    CompWindow  *focus = NULL;
-    CompWindowList::reverse_iterator it = serverWindows.rbegin ();
+    using ::compiz::private_screen::WindowManager;
 
-    for (; it != serverWindows.rend (); it++)
+    CompWindow  *focus = NULL;
+    WindowManager::reverse_iterator it = privateScreen.windowManager.rbegin ();
+
+    for (; it != privateScreen.windowManager.rend (); it++)
     {
 	CompWindow *w = *it;
 
@@ -4133,11 +4135,11 @@ PrivateScreen::focusTopMostWindow ()
 
     if (focus)
     {
-	if (focus->id () != activeWindow)
+	if (focus->id () != privateScreen.orphanData.activeWindow)
 	    focus->moveInputFocusTo ();
     }
     else
-	XSetInputFocus (dpy, rootWindow(), RevertToPointerRoot,
+	XSetInputFocus (privateScreen.dpy, privateScreen.rootWindow(), RevertToPointerRoot,
 			CurrentTime);
     return focus;
 }
@@ -4156,9 +4158,9 @@ CompWindow::lower ()
 
     /* when lowering a window, focus the topmost window if
        the click-to-focus option is on */
-    if ((screen->priv->optionGetClickToFocus ()))
+    if ((screen->getCoreOptions().optionGetClickToFocus ()))
     {
-	CompWindow *focusedWindow = screen->priv->focusTopMostWindow ();
+	CompWindow *focusedWindow = screen->focusTopMostWindow ();
 
 	/* if the newly focused window is a desktop window,
 	   give the focus back to w */
@@ -4288,7 +4290,7 @@ CompWindow::updateAttributes (CompStackingUpdateMode stackingMode)
 	    /* put active or soon-to-be-active fullscreen windows over
 	       all others in their layer */
 	    if (priv->id == screen->activeWindow () ||
-		priv->id == screen->priv->nextActiveWindow)
+		priv->id == screen->getNextActiveWindow())
 	    {
 		aboveFs = true;
 	    }
@@ -4406,7 +4408,7 @@ CompWindow::activate ()
 {
     WRAPABLE_HND_FUNCTN (activate)
 
-    screen->priv->setCurrentDesktop (priv->desktop);
+    screen->setCurrentDesktop (priv->desktop);
 
     screen->forEachWindow (
 	boost::bind (PrivateWindow::revealAncestors, _1, this));
@@ -4446,7 +4448,7 @@ CompWindow::constrainNewWindowSize (int        width,
     long	     ignoredHints = 0;
     long	     ignoredResizeHints = 0;
 
-    if (screen->priv->optionGetIgnoreHintsWhenMaximized ())
+    if (screen->getCoreOptions().optionGetIgnoreHintsWhenMaximized ())
     {
 	ignoredHints |= PAspect;
 
@@ -4572,7 +4574,7 @@ PrivateWindow::show ()
     XMapWindow (screen->dpy (), id);
 
     window->changeState (state & ~CompWindowStateHiddenMask);
-    screen->priv->setWindowState (state, id);
+    screen->setWindowState (state, id);
 }
 
 void
@@ -4747,7 +4749,7 @@ PrivateWindow::isWindowFocusAllowed (Time timestamp)
     int          level;
     CompPoint    dvp;
 
-    level = s->priv->optionGetFocusPreventionLevel ();
+    level = s->getCoreOptions().optionGetFocusPreventionLevel ();
 
     if (level == CoreOptions::FocusPreventionLevelOff)
 	return true;
@@ -4782,7 +4784,7 @@ PrivateWindow::isWindowFocusAllowed (Time timestamp)
     }
 
     /* allow focus for excluded windows */
-    CompMatch &match = s->priv->optionGetFocusPreventionMatch ();
+    CompMatch &match = s->getCoreOptions().optionGetFocusPreventionMatch ();
     if (!match.evaluate (window))
 	return true;
 
@@ -4918,7 +4920,7 @@ PrivateWindow::readIconHint ()
 	    colors[k++].pixel = XGetPixel (image, i, j);
 
     for (i = 0; i < k; i += 256)
-	XQueryColors (dpy, screen->priv->colormap,
+	XQueryColors (dpy, screen->colormap(),
 		      &colors[i], MIN (k - i, 256));
 
     XDestroyImage (image);
@@ -5461,7 +5463,7 @@ PrivateWindow::processMap ()
 
     priv->initialTimestampSet = false;
 
-    screen->priv->applyStartupProperties (window);
+    screen->applyStartupProperties (window);
 
     initiallyMinimized = (priv->hints &&
 			  priv->hints->initial_state == IconicState &&
@@ -5519,7 +5521,7 @@ PrivateWindow::processMap ()
     if (!initiallyMinimized)
     {
 	if (allowFocus && !window->onCurrentDesktop ());
-	    screen->priv->setCurrentDesktop (priv->desktop);
+	    screen->setCurrentDesktop (priv->desktop);
 
 	if (!(priv->state & CompWindowStateHiddenMask))
 	    show ();
@@ -5528,7 +5530,7 @@ PrivateWindow::processMap ()
 	{
 	    window->moveInputFocusTo ();
 	    if (!window->onCurrentDesktop ())
-		screen->priv->setCurrentDesktop (priv->desktop);
+		screen->setCurrentDesktop (priv->desktop);
 	}
     }
     else
@@ -5537,7 +5539,7 @@ PrivateWindow::processMap ()
 	window->changeState (window->state () | CompWindowStateHiddenMask);
     }
 
-    screen->priv->updateClientList ();
+    screen->updateClientList ();
 }
 
 /*
@@ -5565,8 +5567,8 @@ PrivateWindow::processMap ()
 void
 PrivateWindow::updatePassiveButtonGrabs ()
 {
-    bool onlyActions = (priv->id == screen->priv->activeWindow ||
-			!screen->priv->optionGetClickToFocus ());
+    bool onlyActions = (priv->id == screen->activeWindow() ||
+			!screen->getCoreOptions().optionGetClickToFocus ());
 
     if (!priv->frame)
 	return;
@@ -5582,7 +5584,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 
     if (onlyActions)
     {
-	if (screen->priv->optionGetRaiseOnClick ())
+	if (screen->getCoreOptions().optionGetRaiseOnClick ())
 	{
 	    CompWindow *highestSibling =
 		    PrivateWindow::findSiblingBelow (window, true);
@@ -5602,7 +5604,7 @@ PrivateWindow::updatePassiveButtonGrabs ()
 
     if (onlyActions)
     {
-        screen->priv->updatePassiveButtonGrabs(serverFrame);
+        screen->updatePassiveButtonGrabs(serverFrame);
     }
     else
     {
@@ -5897,7 +5899,7 @@ CompWindow::sizeHints () const
 void
 PrivateWindow::updateMwmHints ()
 {
-    screen->priv->getMwmHints (priv->id, &priv->mwmFunc, &priv->mwmDecor);
+    screen->getMwmHints (priv->id, &priv->mwmFunc, &priv->mwmDecor);
     window->recalcActions ();
 }
 
@@ -5923,7 +5925,7 @@ PrivateWindow::updateStartupId ()
 	int        x, y;
 
 	initialTimestampSet = false;
-	screen->priv->applyStartupProperties (window);
+	screen->applyStartupProperties (window);
 
 	if (initialTimestampSet)
 	    timestamp = initialTimestamp;
@@ -6020,7 +6022,7 @@ CompWindow::CompWindow (Window aboveId,
 		  FocusChangeMask);
 
     priv->alpha     = (priv->attrib.depth == 32);
-    priv->lastPong  = screen->priv->lastPing ();
+    priv->lastPong  = screen->lastPing ();
 
     if (screen->XShape ())
 	XShapeSelectInput (screen->dpy (), priv->id, ShapeNotifyMask);
@@ -6031,7 +6033,7 @@ CompWindow::CompWindow (Window aboveId,
 	priv->inputRegion = priv->region;
 
 	/* need to check for DisplayModal state on all windows */
-	priv->state = screen->priv->getWindowState (priv->id);
+	priv->state = screen->getWindowState (priv->id);
 
 	priv->updateClassHints ();
     }
@@ -6040,8 +6042,8 @@ CompWindow::CompWindow (Window aboveId,
 	priv->attrib.map_state = IsUnmapped;
     }
 
-    priv->wmType    = screen->priv->getWindowType (priv->id);
-    priv->protocols = screen->priv->getProtocols (priv->id);
+    priv->wmType    = screen->getWindowType (priv->id);
+    priv->protocols = screen->getProtocols (priv->id);
 
     if (!overrideRedirect ())
     {
@@ -6055,7 +6057,7 @@ CompWindow::CompWindow (Window aboveId,
 
 	recalcType ();
 
-	screen->priv->getMwmHints (priv->id, &priv->mwmFunc, &priv->mwmDecor);
+	screen->getMwmHints (priv->id, &priv->mwmFunc, &priv->mwmDecor);
 
 	if (!(priv->type & (CompWindowTypeDesktopMask | CompWindowTypeDockMask)))
 	{
@@ -6084,7 +6086,7 @@ CompWindow::CompWindow (Window aboveId,
 		priv->reparent ();
 	    priv->managed = true;
 
-	    if (screen->priv->getWmState (priv->id) == IconicState)
+	    if (screen->getWmState (priv->id) == IconicState)
 	    {
 		if (priv->state & CompWindowStateShadedMask)
 		    priv->shaded = true;
@@ -6128,12 +6130,12 @@ CompWindow::CompWindow (Window aboveId,
 
 	    XUnmapWindow (screen->dpy (), priv->id);
 
-	    screen->priv->setWindowState (priv->state, priv->id);
+	    screen->setWindowState (priv->state, priv->id);
 	}
     }
     else if (!overrideRedirect ())
     {
-	if (screen->priv->getWmState (priv->id) == IconicState)
+	if (screen->getWmState (priv->id) == IconicState)
 	{
 	    // before everything else in maprequest
 	    if (!priv->serverFrame)
@@ -6175,9 +6177,9 @@ CompWindow::~CompWindow ()
      * pending destroy if this was a sibling
      * of one of those */
 
-    screen->priv->destroyedWindows.remove (this);
+    screen->destroyedWindows().remove (this);
 
-    foreach (CompWindow *dw, screen->priv->destroyedWindows)
+    foreach (CompWindow *dw, screen->destroyedWindows())
     {
 	if (dw->next == this)
 	    dw->next = this->next;
@@ -6219,7 +6221,7 @@ CompWindow::~CompWindow ()
 	if (screen->XShape ())
 	    XShapeSelectInput (screen->dpy (), priv->id, NoEventMask);
 
-	if (screen->priv->notGrabWindow (priv->id))
+	if (screen->grabWindowIsNot(priv->id))
 	    XSelectInput (screen->dpy (), priv->id, NoEventMask);
 
 	XUngrabButton (screen->dpy (), AnyButton, AnyModifier, priv->id);
@@ -6229,14 +6231,14 @@ CompWindow::~CompWindow ()
     if (priv->attrib.map_state == IsViewable)
     {
 	if (priv->type == CompWindowTypeDesktopMask)
-	    screen->priv->desktopWindowCount--;
+	    screen->decrementDesktopWindowCount();
 
 	if (priv->destroyed && priv->struts)
 	    screen->updateWorkarea ();
     }
 
     if (priv->destroyed)
-	screen->priv->updateClientList ();
+	screen->updateClientList ();
 
     CompPlugin::windowFiniPlugins (this);
 

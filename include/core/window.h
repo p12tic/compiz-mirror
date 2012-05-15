@@ -57,6 +57,8 @@ namespace compiz { namespace private_screen {
     class Ping;
     class GrabManager;
     class OutputDevices;
+    class WindowManager;
+    class StartupSequence;
 }}
 
 #define ROOTPARENT(x) (((x)->frame ()) ? (x)->frame () : (x)->id ())
@@ -558,6 +560,8 @@ class CompWindow :
 	friend class compiz::private_screen::Ping;
 	friend class compiz::private_screen::GrabManager;
 	friend class compiz::private_screen::OutputDevices;
+	friend class compiz::private_screen::WindowManager;
+	friend class compiz::private_screen::StartupSequence;
 	friend class ModifierHandler;
 	friend class CoreWindow;
 	friend class StackDebugger;
