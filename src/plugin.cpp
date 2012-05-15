@@ -341,6 +341,7 @@ CompScreenImpl::_initPluginForScreen (CompPlugin *p)
 	                    "initWindow failed for %s", name);
             fail   = it;
             status = false;
+            break;
 	}
     }
 
