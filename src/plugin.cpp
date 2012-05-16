@@ -330,8 +330,8 @@ CompScreenImpl::_initPluginForScreen (CompPlugin *p)
     WindowManager::iterator it, fail;
     CompWindow               *w;
 
-    it = fail = privateScreen.windowManager.begin ();
-    for (;it != privateScreen.windowManager.end (); it++)
+    it = fail = windowManager.begin ();
+    for (;it != windowManager.end (); it++)
     {
 	w = *it;
 	if (!p->vTable->initWindow (w))
@@ -341,10 +341,11 @@ CompScreenImpl::_initPluginForScreen (CompPlugin *p)
 	                    "initWindow failed for %s", name);
             fail   = it;
             status = false;
+            break;
 	}
     }
 
-    it = privateScreen.windowManager.begin ();
+    it = windowManager.begin ();
     for (;it != fail; it++)
     {
 	w = *it;
@@ -364,13 +365,7 @@ CompScreen::finiPluginForScreen (CompPlugin *p)
 void
 CompScreenImpl::_finiPluginForScreen (CompPlugin *p)
 {
-    using compiz::private_screen::WindowManager;
-
-    for (WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
-    {
-	CompWindow* const w(*i);
-	p->vTable->finiWindow (w);
-    }
+    windowManager.forEachWindow(boost::bind(&CompPlugin::VTable::finiWindow, p->vTable, _1));
 }
 
 bool
