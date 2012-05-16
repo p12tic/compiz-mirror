@@ -29,11 +29,12 @@ add_definitions (
 )
 
 if (HAVE_PROTOBUF)
-    exec_program (${HAVE_PROTOC} ${CMAKE_SOURCE_DIR}/src
-		  ARGS "--cpp_out='.' compizconfig.proto")
+    add_custom_command (OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/compizconfig.pb.cc
+			COMMAND ${HAVE_PROTOC} ARGS --cpp_out=${CMAKE_CURRENT_BINARY_DIR} compizconfig.proto
+			WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     set (LIBCOMPIZCONFIG_FILES
 	 ${LIBCOMPIZCONFIG_FILES}
-	 compizconfig.pb.cc
+	 ${CMAKE_CURRENT_BINARY_DIR}/compizconfig.pb.cc
 	)
     add_definitions (
 	    -DUSE_PROTOBUF

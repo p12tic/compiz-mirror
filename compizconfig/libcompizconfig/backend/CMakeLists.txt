@@ -1,10 +1,8 @@
 set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
-set (LIBCOMPIZCONFIG_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+set (LIBCOMPIZCONFIG_CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/../cmake)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LIBCOMPIZCONFIGZ_CMAKE_MODULE_PATH})
 
 # Sorry for the kittens
-include (${CMAKE_SOURCE_DIR}/cmake/LibCompizConfigCommon.cmake)
-
-set (_COMPIZCONFIG_INTERNAL true)
+include (${CMAKE_CURRENT_SOURCE_DIR}/../cmake/LibCompizConfigCommon.cmake)
 
 compizconfig_backend (ini)

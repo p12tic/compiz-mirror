@@ -3,7 +3,7 @@ project (libcompizconfig)
 find_package (Compiz REQUIRED)
 
 set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
-set (LIBCOMPIZCONFIG_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+set (LIBCOMPIZCONFIG_CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LIBCOMPIZCONFIGZ_CMAKE_MODULE_PATH})
 
 include (CompizCommon)
@@ -11,12 +11,12 @@ include (CompizPackage)
 include (CheckLibraryExists)
 include (CheckIncludeFile)
 
-set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake)
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
 # libcompizconfig package version number
 # An odd micro number indicates in-progress development.
 # An even micro number indicates a released version.
-file (READ ${CMAKE_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
+file (READ ${CMAKE_CURRENT_SOURCE_DIR}/VERSION COMPIZ_RELEASE_VERSION LIMIT 12 OFFSET 0)
 string (STRIP ${COMPIZ_RELEASE_VERSION} COMPIZ_RELEASE_VERSION)
 
 set (VERSION ${COMPIZ_RELEASE_VERSION})
@@ -28,8 +28,8 @@ set (ALL_LINGUAS af ar bg bn bn_IN bs ca cs cy da de el en_GB en_US es eu et fi 
 set (GETTEXT_PACKAGE libcompizconfig)
 
 configure_file (
-    "${CMAKE_SOURCE_DIR}/config.h.in"
-    "${CMAKE_BINARY_DIR}/config.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/config.h.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/config.h"
     )
 
 include_directories (
@@ -147,7 +147,7 @@ compiz_color_message ("\n${_escape}[4mOptional features:${_escape}[0m\n")
 
 compiz_print_result_message ("protocol buffers" HAVE_PROTOBUF)
 compiz_print_result_message ("file system change notifications" HAVE_INOTIFY)
-compiz_print_plugin_stats ("${CMAKE_SOURCE_DIR}/plugin")
+compiz_print_plugin_stats ("${CMAKE_CURRENT_SOURCE_DIR}/plugin")
 compiz_print_configure_footer ()
 
 find_file (_find_compizconfig FindCompizConfig.cmake PATHS ${CMAKE_ROOT}/Modules ${ARGN})
@@ -161,18 +161,18 @@ endif (NOT _find_compizconfig)
     add_custom_target (
         findcompizconfig_install
 	${CMAKE_COMMAND} -E make_directory ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules &&
-	${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/FindCompizConfig.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules
+	${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCompizConfig.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules
     )
 
 macro (add_uninstall)
 	compiz_set(_compiz_uninstall_rule_created TRUE)
 
-	set (_file "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake")
+	set (_file "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 
-	file (WRITE  ${_file} "if (NOT EXISTS \"${CMAKE_BINARY_DIR}/install_manifest.txt\")\n")
-	file (APPEND ${_file} "  message (FATAL_ERROR \"Cannot find install manifest: \\\"${CMAKE_BINARY_DIR}/install_manifest.txt\\\"\")\n")
-	file (APPEND ${_file} "endif (NOT EXISTS \"${CMAKE_BINARY_DIR}/install_manifest.txt\")\n\n")
-	file (APPEND ${_file} "file (READ \"${CMAKE_BINARY_DIR}/install_manifest.txt\" files)\n")
+	file (WRITE  ${_file} "if (NOT EXISTS \"${CMAKE_CURRENT_BINARY_DIR}/install_manifest.txt\")\n")
+	file (APPEND ${_file} "  message (FATAL_ERROR \"Cannot find install manifest: \\\"${CMAKE_CURRENT_BINARY_DIR}/install_manifest.txt\\\"\")\n")
+	file (APPEND ${_file} "endif (NOT EXISTS \"${CMAKE_CURRENT_BINARY_DIR}/install_manifest.txt\")\n\n")
+	file (APPEND ${_file} "file (READ \"${CMAKE_CURRENT_BINARY_DIR}/install_manifest.txt\" files)\n")
 	file (APPEND ${_file} "string (REGEX REPLACE \"\\n\" \";\" files \"\${files}\")\n")
 	file (APPEND ${_file} "foreach (file \${files})\n")
 	file (APPEND ${_file} "  message (STATUS \"Uninstalling \\\"\${file}\\\"\")\n")
@@ -191,7 +191,7 @@ macro (add_uninstall)
 	file (APPEND ${_file} "  endif (EXISTS \"\${file}\")\n")
 	file (APPEND ${_file} "endforeach (file)\n")
 
-	add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/cmake_uninstall.cmake")
+	add_custom_target(uninstall "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake")
 endmacro ()
 
 compiz_ensure_linkage ()

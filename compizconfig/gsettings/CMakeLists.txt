@@ -18,7 +18,7 @@ endif (USE_GCONF)
 
 compizconfig_backend (gsettings PKGDEPS ${_deps})
 
-compiz_install_gsettings_schema (${CMAKE_SOURCE_DIR}/org.freedesktop.compizconfig.gschema.xml
+compiz_install_gsettings_schema (${CMAKE_CURRENT_SOURCE_DIR}/org.freedesktop.compizconfig.gschema.xml
 				 ${CMAKE_INSTALL_PREFIX}/share/glib-2.0/schemas)
 
 compiz_print_configure_header ("CompizConfig GSettings Storage Backend")
