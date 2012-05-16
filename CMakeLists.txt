@@ -157,6 +157,12 @@ include_directories (${GTEST_INCLUDE_DIRS})
 
 find_package (Threads REQUIRED)
 
+# Disabled until we can sort dependency issues
+set (COMPIZ_DISABLE_PLUGIN_ANIMATIONADDON ON)
+
+# Disabled until feasible to enable again
+set (COMPIZ_WERROR OFF)
+
 # Add the rest of compiz
 add_subdirectory (cmake)
 add_subdirectory (include)
