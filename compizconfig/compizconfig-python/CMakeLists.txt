@@ -29,6 +29,8 @@ add_custom_target (uninstall
 		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		   COMMENT "Uninstalling Python Files")
 
+add_dependencies (python compizconfig)
+
 find_program (PYTHON_EXECUTABLE python)
 mark_as_advanced (FORCE PYTHON_EXECUTABLE)
 
