@@ -1,5 +1,9 @@
 project (libcompizconfig)
 
+set (COMPIZ_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COMPIZ_CMAKE_MODULE_PATH})
+include (CompizDefaults)
+
 find_package (Compiz REQUIRED)
 
 set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
@@ -111,7 +115,6 @@ set (COMPIZCONFIG_LIBDIR ${libdir})
 
 set (LIBCOMPIZCONFIG_REQUIRES
     x11
-    compiz
     libxml-2.0
     libxslt
     )
@@ -123,6 +126,10 @@ if (HAVE_PROTOBUF)
 endif ()
 
 compiz_pkg_check_modules (LIBCOMPIZCONFIG REQUIRED ${LIBCOMPIZCONFIG_REQUIRES})
+
+list (APPEND LIBCOMPIZCONFIG_LIBRARIES ${COMPIZ_LIBRARIES})
+list (APPEND LIBCOMPIZCONFIG_LIBRARY_DIRS ${COMPIZ_LIBRARY_DIRS})
+list (APPEND LIBCOMPIZCONFIG_INCLUDE_DIRS ${COMPIZ_INCLUDE_DIRS})
 
 compiz_configure_file (
     ${CMAKE_CURRENT_SOURCE_DIR}/libcompizconfig.pc.in
