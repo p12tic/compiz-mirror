@@ -12,3 +12,7 @@ add_subdirectory (compizconfig-python)
 add_subdirectory (ccsm)
 add_subdirectory (gconf)
 add_subdirectory (gsettings)
+
+add_custom_target (pyclean)
+
+add_dependencies (pyclean pyclean_ccsm pyclean_compizconfig)
