@@ -1,7 +1,7 @@
 pkg_check_modules (
   COMPIZ
   REQUIRED
-  glibmm-2.4 glib-2.0 compiz
+  glibmm-2.4 glib-2.0
 )
 
 find_library (GMOCK_LIBRARY gmock)
@@ -27,6 +27,7 @@ target_link_libraries (compiz_test_wall_offset_movement
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread. 
+		       compiz_core
                        )
 
 gtest_add_tests (compiz_test_wall_offset_movement "" ${CMAKE_CURRENT_SOURCE_DIR}/test-wall-offset-movement.cpp)
