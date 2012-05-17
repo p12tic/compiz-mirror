@@ -119,6 +119,9 @@ install (
     DESTINATION ${COMPIZ_DESTDIR}${libdir}/pkgconfig
 )
 
+# temporarily disable plugins that aren't ported yed
+set (COMPIZ_DISABLE_PLUGIN_BLUR ON)
+
 # Build Google Test and make its headers known
 find_package (GTest)
 

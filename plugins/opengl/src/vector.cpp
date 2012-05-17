@@ -66,26 +66,26 @@ GLVector::GLVector (float x,
     v[3] = w;
 }
 
-float&
+float &
 GLVector::operator[] (int item)
 {
     return v[item];
 }
 
-float&
+float &
 GLVector::operator[] (VectorCoordsEnum coord)
 {
     int item = (int) coord;
     return v[item];
 }
 
-const float
+const float &
 GLVector::operator[] (int item) const
 {
     return v[item];
 }
 
-const float
+const float &
 GLVector::operator[] (VectorCoordsEnum coord) const
 {
     int item = (int) coord;

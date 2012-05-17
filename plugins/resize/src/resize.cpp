@@ -1515,60 +1515,114 @@ ResizeScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 				unsigned short            *borderColor,
 				unsigned short            *fillColor)
 {
-    BoxRec   	   box;
-    GLMatrix 	   sTransform (transform);
-    GLint    	   origSrc, origDst;
-    float_t	   fc[4], bc[4];
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
+    BoxRec   	    box;
+    GLMatrix 	    sTransform (transform);
+    GLfloat         vertexData [12];
+    GLfloat         vertexData2[24];
+    GLint    	    origSrc, origDst;
+    GLushort	    fc[4], bc[4];
+
+#ifdef USE_GLES
+    GLint           origSrcAlpha, origDstAlpha;
+    glGetIntegerv (GL_BLEND_SRC_RGB, &origSrc);
+    glGetIntegerv (GL_BLEND_DST_RGB, &origDst);
+    glGetIntegerv (GL_BLEND_SRC_ALPHA, &origSrcAlpha);
+    glGetIntegerv (GL_BLEND_DST_ALPHA, &origDstAlpha);
+#else
     glGetIntegerv (GL_BLEND_SRC, &origSrc);
     glGetIntegerv (GL_BLEND_DST, &origDst);
+#endif
 
     /* Premultiply the alpha values */
-    
-    bc[3] = (float) borderColor[3] / (float) 65535.0f;
+    bc[3] =  (float) borderColor[3] / (float) 65535.0f;
     bc[0] = ((float) borderColor[0] / 65535.0f) * bc[3];
     bc[1] = ((float) borderColor[1] / 65535.0f) * bc[3];
     bc[2] = ((float) borderColor[2] / 65535.0f) * bc[3];
 
     getPaintRectangle (&box);
 
-    glPushMatrix ();
+    vertexData[0]  = box.x1;
+    vertexData[1]  = box.y1;
+    vertexData[2]  = 0.0f;
+    vertexData[3]  = box.x1;
+    vertexData[4]  = box.y2;
+    vertexData[5]  = 0.0f;
+    vertexData[6]  = box.x2;
+    vertexData[7]  = box.y1;
+    vertexData[8]  = 0.0f;
+    vertexData[9]  = box.x2;
+    vertexData[10] = box.y2;
+    vertexData[11] = 0.0f;
+
+    // FIXME: this is a quick work-around.
+    // GL_LINE_LOOP and GL_LINE_STRIP primitive types in the SGX Pvr X11 driver
+    // take special number of vertices (and reorder them). Thus, usage of
+    // those line primitive is currently not supported by our GLVertexBuffer
+    // implementation. This is a quick workaround to make it all work until
+    // we come up with a better GLVertexBuffer::render(...) function.
+
+    vertexData2[0]  = box.x1;
+    vertexData2[1]  = box.y1;
+    vertexData2[2]  = 0.0f;
+    vertexData2[3]  = box.x1;
+    vertexData2[4]  = box.y2;
+    vertexData2[5]  = 0.0f;
+    vertexData2[6]  = box.x1;
+    vertexData2[7]  = box.y2;
+    vertexData2[8]  = 0.0f;
+    vertexData2[9]  = box.x2;
+    vertexData2[10] = box.y2;
+    vertexData2[11] = 0.0f;
+    vertexData2[12] = box.x2;
+    vertexData2[13] = box.y2;
+    vertexData2[14] = 0.0f;
+    vertexData2[15] = box.x2;
+    vertexData2[16] = box.y1;
+    vertexData2[17] = 0.0f;
+    vertexData2[18] = box.x2;
+    vertexData2[19] = box.y1;
+    vertexData2[20] = 0.0f;
+    vertexData2[21] = box.x1;
+    vertexData2[22] = box.y1;
+    vertexData2[23] = 0.0f;
 
     sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-    glLoadMatrixf (sTransform.getMatrix ());
-
-    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-    glEnable (GL_BLEND);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
     /* fill rectangle */
     if (fillColor)
     {
-	fc[3] = (float) fillColor[3] / (float) 65535.0f;
-	fc[0] = ((float) fillColor[0] / 65535.0f) * fc[3];
-	fc[1] = ((float) fillColor[1] / 65535.0f) * fc[3];
-	fc[2] = ((float) fillColor[2] / 65535.0f) * fc[3];
+	fc[3] = fillColor[3];
+	fc[0] = fillColor[0] * fc[3];
+	fc[1] = fillColor[1] * fc[3];
+	fc[2] = fillColor[2] * fc[3];
 
-	glColor4f (fc[0], fc[1], fc[2], fc[3]);
-	glRecti (box.x1, box.y2, box.x2, box.y1);
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+	streamingBuffer->addColors (1, fc);
+	streamingBuffer->addVertices (4, &vertexData[0]);
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
     }
 
     /* draw outline */
-    glColor4f (bc[0], bc[1], bc[2], bc[3]);
     glLineWidth (2.0);
-    glBegin (GL_LINE_LOOP);
-    glVertex2i (box.x1, box.y1);
-    glVertex2i (box.x2, box.y1);
-    glVertex2i (box.x2, box.y2);
-    glVertex2i (box.x1, box.y2);
-    glEnd ();
+    streamingBuffer->begin (GL_LINES);
+    streamingBuffer->addColors (1, borderColor);
+    streamingBuffer->addVertices (8, &vertexData2[0]);
+    streamingBuffer->end ();
+    streamingBuffer->render (sTransform);
 
-    /* clean up */
-    glColor4usv (defaultColor);
-    glDisable (GL_BLEND);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-    glPopMatrix ();
+    cScreen->damageScreen ();
+
+#ifdef USE_GLES
+    glBlendFuncSeparate (origSrc, origDst,
+                         origSrcAlpha, origDstAlpha);
+#else
+    glBlendFunc (origSrc, origDst);
+#endif
 }
 
 bool
@@ -1579,6 +1633,7 @@ ResizeScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 			     unsigned int              mask)
 {
     bool status;
+    GLboolean isBlendingEnabled;
 
     if (w)
     {
@@ -1595,6 +1650,9 @@ ResizeScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	border = optionGetBorderColor ();
 	fill   = optionGetFillColor ();
 
+	glGetBooleanv (GL_BLEND, &isBlendingEnabled);
+	glEnable (GL_BLEND);
+
 	switch (mode) {
 	    case ResizeOptions::ModeOutline:
 		glPaintRectangle (sAttrib, transform, output, border, NULL);
@@ -1604,6 +1662,9 @@ ResizeScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 	    default:
 		break;
 	}
+
+	if (!isBlendingEnabled)
+	    glDisable (GL_BLEND);
     }
 
     return status;
@@ -1631,9 +1692,9 @@ ResizeWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	status = gWindow->glPaint (attrib, transform, region,
 				   mask | PAINT_WINDOW_NO_CORE_INSTANCE_MASK);
 
-	GLFragment::Attrib fragment (gWindow->lastPaintAttrib ());
+	GLWindowPaintAttrib lastAttrib (gWindow->lastPaintAttrib ());
 
-	if (window->alpha () || fragment.getOpacity () != OPAQUE)
+	if (window->alpha () || lastAttrib.opacity != OPAQUE)
 	    mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
 	rScreen->getPaintRectangle (&box);
@@ -1651,13 +1712,8 @@ ResizeWindow::glPaint (const GLWindowPaintAttrib &attrib,
 			      (rScreen->geometry.y - y) / yScale - yOrigin,
 			      0.0f);
 
-	glPushMatrix ();
-	glLoadMatrixf (wTransform.getMatrix ());
-
-	gWindow->glDraw (wTransform, fragment, region,
+	gWindow->glDraw (wTransform, lastAttrib, region,
 			 mask | PAINT_WINDOW_TRANSFORMED_MASK);
-
-	glPopMatrix ();
     }
     else
     {

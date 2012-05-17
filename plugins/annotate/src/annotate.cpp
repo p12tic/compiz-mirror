@@ -629,11 +629,14 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
     if (status)
     {
+	GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+	GLfloat         vertexData[18];
+	GLfloat         textureData[12];
 	CompRect	rect;
 	GLMatrix	sTransform = transform;
 	int		numRect;
 	int		pos = 0;
-	float		vectorX, vectorY, offset;
+	float		offset;
 	int		angle;
 
 	offset = optionGetStrokeWidth () / 2;
@@ -641,10 +644,6 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	/* This replaced prepareXCoords (s, output, -DEFAULT_Z_CAMERA) */
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
-	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 	glEnable (GL_BLEND);
 
 	if (content && !region.isEmpty ())
@@ -656,34 +655,66 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	        tex->enable (GLTexture::Fast);
 
-	        glBegin (GL_QUADS);
+	        streamingBuffer->begin (GL_TRIANGLES);
 
 	        while (numRect--)
 	        {
-	            glTexCoord2f (
-		        COMP_TEX_COORD_X (tex->matrix (), rect.at (pos).x1 ()),
-		        COMP_TEX_COORD_Y (tex->matrix (), rect.at (pos).y2 ()));
-	            glVertex2i (rect.at (pos).x1 (), rect.at (pos).y2 ());
+		    GLfloat tx1 = COMP_TEX_COORD_X (tex->matrix (),
+		                                       rect.at (pos).x1 ());
+		    GLfloat tx2 = COMP_TEX_COORD_X (tex->matrix (),
+		                                       rect.at (pos).x2 ());
+		    GLfloat ty1 = COMP_TEX_COORD_Y (tex->matrix (),
+		                                       rect.at (pos).y1 ());
+		    GLfloat ty2 = COMP_TEX_COORD_Y (tex->matrix (),
+		                                       rect.at (pos).y2 ());
 
-	            glTexCoord2f (
-		        COMP_TEX_COORD_X (tex->matrix (), rect.at (pos).x2 ()),
-		        COMP_TEX_COORD_Y (tex->matrix (), rect.at (pos).y2 ()));
-	            glVertex2i (rect.at (pos).x2 (), rect.at (pos).y2 ());
+		    vertexData[0]  = rect.at (pos).x1 ();
+		    vertexData[1]  = rect.at (pos).y1 ();
+		    vertexData[2]  = 0.0f;
+		    vertexData[3]  = rect.at (pos).x1 ();
+		    vertexData[4]  = rect.at (pos).y2 ();
+		    vertexData[5]  = 0.0f;
+		    vertexData[6]  = rect.at (pos).x2 ();
+		    vertexData[7]  = rect.at (pos).y1 ();
+		    vertexData[8]  = 0.0f;
+		    vertexData[9]  = rect.at (pos).x1 ();
+		    vertexData[10] = rect.at (pos).y2 ();
+		    vertexData[11] = 0.0f;
 
-	            glTexCoord2f (
-		        COMP_TEX_COORD_X (tex->matrix (), rect.at (pos).x2 ()),
-		        COMP_TEX_COORD_Y (tex->matrix (), rect.at (pos).y1 ()));
-	            glVertex2i (rect.at (pos).x2 (), rect.at (pos).y1 ());
+		    vertexData[12] = rect.at (pos).x2 ();
+		    vertexData[13] = rect.at (pos).y2 ();
+		    vertexData[14] = 0.0f;
 
-	            glTexCoord2f (
-		        COMP_TEX_COORD_X (tex->matrix (), rect.at (pos).x1 ()),
-		        COMP_TEX_COORD_Y (tex->matrix (), rect.at (pos).y1 ()));
-	            glVertex2i (rect.at (pos).x1 (), rect.at (pos).y1 ());
+		    vertexData[15] = rect.at (pos).x2 ();
+		    vertexData[16] = rect.at (pos).y1 ();
+		    vertexData[17] = 0.0f;
 
+		    textureData[0]  = tx1;
+		    textureData[1]  = ty1;
+
+		    textureData[2]  = tx1;
+		    textureData[3]  = ty2;
+
+		    textureData[4]  = tx2;
+		    textureData[5]  = ty1;
+
+		    textureData[6]  = tx1;
+		    textureData[7]  = ty2;
+
+		    textureData[8]  = tx2;
+		    textureData[9]  = ty2;
+
+		    textureData[10] = tx2;
+		    textureData[11] = ty1;
+
+		    streamingBuffer->addVertices (6, vertexData);
+		    streamingBuffer->addTexCoords (0, 6, textureData);
 	            pos++;
 	        }
 
-	        glEnd ();
+		streamingBuffer->end ();
+		streamingBuffer->render (sTransform);
+
 	        tex->disable ();
 	    }
 	}
@@ -691,85 +722,132 @@ AnnoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	switch (drawMode)
 	{
 	case LineMode:
-	    glColor4usv (optionGetStrokeColor ());
 	    glLineWidth (optionGetStrokeWidth ());
-	    glBegin (GL_LINES);
-	    glVertex2i (initialPointerX, initialPointerY);
-	    glVertex2i (lineVector.x (), lineVector.y ());
-	    glEnd ();
+
+	    streamingBuffer->begin (GL_LINES);
+
+	    streamingBuffer->addColors (1, optionGetStrokeColor ());
+
+	    vertexData[0] = initialPointerX;
+	    vertexData[1] = initialPointerY;
+	    vertexData[2] = 0.0f;
+	    vertexData[3] = lineVector.x ();
+	    vertexData[4] = lineVector.y ();
+	    vertexData[5] = 0.0f;
+	    streamingBuffer->addVertices (2, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (sTransform);
 	    break;
 
 	case RectangleMode:
+	    vertexData[0]  = rectangle.x1 ();
+	    vertexData[1]  = rectangle.y1 ();
+	    vertexData[2]  = 0.0f;
+	    vertexData[3]  = rectangle.x1 ();
+	    vertexData[4]  = rectangle.y2 ();
+	    vertexData[5]  = 0.0f;
+	    vertexData[6]  = rectangle.x2 ();
+	    vertexData[7]  = rectangle.y1 ();
+	    vertexData[8]  = 0.0f;
+	    vertexData[9]  = rectangle.x2 ();
+	    vertexData[10] = rectangle.y2 ();
+	    vertexData[11] = 0.0f;
+
 	    /* fill rectangle */
-	    glColor4usv (optionGetFillColor ());
-	    glRecti (rectangle.x1 (), rectangle.y2 (),
-		     rectangle.x2 (), rectangle.y1 ());
+	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	    streamingBuffer->addColors (1, optionGetFillColor ());
+	    streamingBuffer->addVertices (4, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (sTransform);
 
 	    /* draw rectangle outline */
-	    glColor4usv (optionGetStrokeColor ());
-	    glRecti (rectangle.x1 () - offset, rectangle.y2 (),
-		     rectangle.x1 () + offset, rectangle.y1 ());
+/*	    streamingBuffer->begin ();
+
+	    streamingBuffer->addColors (1, optionGetStrokeColor ());
+
+	    vertexData[0] = rectangle.x1 () - offset;
+	    vertexData[3] = rectangle.x1 () - offset;
+	    streamingBuffer->addVertices (4, vertexData);
+
 	    glRecti (rectangle.x2 () - offset, rectangle.y2 (),
 		     rectangle.x2 () + offset, rectangle.y1 ());
 	    glRecti (rectangle.x1 () - offset, rectangle.y1 () + offset,
 		     rectangle.x2 () + offset, rectangle.y1 () - offset);
 	    glRecti (rectangle.x1 () - offset, rectangle.y2 () + offset,
-		     rectangle.x2 () + offset, rectangle.y2 () - offset);
+		     rectangle.x2 () + offset, rectangle.y2 () - offset);*/
 	    break;
 
 	case EllipseMode:
 	    /* fill ellipse */
-	    glColor4usv (optionGetFillColor ());
+	    streamingBuffer->begin (GL_TRIANGLE_FAN);
 
-	    glBegin (GL_TRIANGLE_FAN);
-	    glVertex2d (ellipse.center.x (), ellipse.center.y ());
+	    streamingBuffer->addColors (1, optionGetFillColor ());
+
+	    vertexData[0] = ellipse.center.x ();
+	    vertexData[1] = ellipse.center.y ();
+	    vertexData[2] = 0.0f;
+	    streamingBuffer->addVertices (1, vertexData);
+
 	    for (angle = 0; angle <= 360; angle += 1)
 	    {
-		vectorX = ellipse.center.x () +
-			 (ellipse.radiusX * sinf (angle * DEG2RAD));
-		vectorY = ellipse.center.y () +
-			 (ellipse.radiusY * cosf (angle * DEG2RAD));
-		glVertex2d (vectorX, vectorY);
+		vertexData[0] = ellipse.center.x () +
+		                (ellipse.radiusX * sinf (angle * DEG2RAD));
+		vertexData[1] = ellipse.center.y () +
+		                (ellipse.radiusY * cosf (angle * DEG2RAD));
+		streamingBuffer->addVertices (1, vertexData);
 	    }
-	    glVertex2d (ellipse.center.x (), ellipse.center.y () +
-			ellipse.radiusY);
-	    glEnd();
+
+	    vertexData[0] = ellipse.center.x ();
+	    vertexData[1] = ellipse.center.y () + ellipse.radiusY;
+	    streamingBuffer->addVertices (1, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (sTransform);
 
 	    /* draw ellipse outline */
-	    glColor4usv (optionGetStrokeColor ());
 	    glLineWidth (optionGetStrokeWidth ());
 
-	    glBegin (GL_TRIANGLE_STRIP);
-	    glVertex2d (ellipse.center.x (), ellipse.center.y () +
-			ellipse.radiusY - offset);
+	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	    streamingBuffer->addColors (1, optionGetStrokeColor ());
+
+
+	    vertexData[0] = ellipse.center.x ();
+	    vertexData[1] = ellipse.center.y () + ellipse.radiusY - offset;
+	    vertexData[2] = 0.0f;
+	    streamingBuffer->addVertices (1, vertexData);
+
 	    for (angle = 360; angle >= 0; angle -= 1)
 	    {
-		vectorX = ellipse.center.x () + ((ellipse.radiusX -
-			  offset) * sinf (angle * DEG2RAD));
-		vectorY = ellipse.center.y () + ((ellipse.radiusY -
-			  offset) * cosf (angle * DEG2RAD));
-		glVertex2d (vectorX, vectorY);
-		vectorX = ellipse.center.x () + ((ellipse.radiusX +
-			  offset) * sinf (angle * DEG2RAD));
-		vectorY = ellipse.center.y () + ((ellipse.radiusY +
-			  offset) * cosf (angle * DEG2RAD));
-		glVertex2d (vectorX, vectorY);
+		vertexData[0] = ellipse.center.x () + ((ellipse.radiusX -
+		                offset) * sinf (angle * DEG2RAD));
+		vertexData[1] = ellipse.center.y () + ((ellipse.radiusY -
+				offset) * cosf (angle * DEG2RAD));
+		vertexData[2] = 0.0f;
+		vertexData[3] = ellipse.center.x () + ((ellipse.radiusX +
+		                offset) * sinf (angle * DEG2RAD));
+		vertexData[4] = ellipse.center.y () + ((ellipse.radiusY +
+		                offset) * cosf (angle * DEG2RAD));
+		vertexData[5] = 0.0f;
+		streamingBuffer->addVertices (2, vertexData);
 	    }
-	    glVertex2d (ellipse.center.x (), ellipse.center.y () +
-			ellipse.radiusY + offset);
-	    glEnd();
+
+	    vertexData[0] = ellipse.center.x ();
+	    vertexData[1] = ellipse.center.y () + ellipse.radiusY + offset;
+	    streamingBuffer->addVertices (1, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (sTransform);
 	    break;
 
 	default:
 	    break;
 	}
 
-	/* clean up */
-	glColor4usv (defaultColor);
 	glDisable (GL_BLEND);
-	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-
-	glPopMatrix ();
     }
 
     return status;

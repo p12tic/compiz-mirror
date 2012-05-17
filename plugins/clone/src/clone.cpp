@@ -295,9 +295,6 @@ CloneScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 			 0.0f);
 	sTransform.scale (zoomX, zoomY, 1.0f);
 
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
 	filter = gScreen->textureFilter ();
 
 	if (offset == 0.0f)
@@ -325,8 +322,6 @@ CloneScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	}
 
 	gScreen->setTextureFilter (filter);
-
-	glPopMatrix ();
     }
 
     return status;

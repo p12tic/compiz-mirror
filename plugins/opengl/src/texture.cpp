@@ -35,7 +35,11 @@
 #include <privatetexture.h>
 #include "privates.h"
 
+#ifdef USE_GLES
+std::map<Damage, EglTexture*> boundPixmapTex;
+#else
 std::map<Damage, TfpTexture*> boundPixmapTex;
+#endif
 
 static GLTexture::Matrix _identity_matrix = {
     1.0f, 0.0f,
@@ -150,7 +154,7 @@ GLTexture::matrix () const
 bool
 GLTexture::mipmap () const
 {
-    return priv->mipmap & priv->mipmapSupport;
+    return priv->mipmap && priv->mipmapSupport;
 }
 
 GLenum
@@ -163,7 +167,9 @@ void
 GLTexture::enable (GLTexture::Filter filter)
 {
     GLScreen *gs = GLScreen::get (screen);
+#ifndef USE_GLES
     glEnable (priv->target);
+#endif
     glBindTexture (priv->target, priv->name);
 
     if (filter == Fast)
@@ -184,7 +190,7 @@ GLTexture::enable (GLTexture::Filter filter)
     {
 	if (gs->textureFilter () == GL_LINEAR_MIPMAP_LINEAR)
 	{
-	    if (GL::textureNonPowerOfTwo && GL::fbo && priv->mipmap)
+	    if (mipmap ())
 	    {
 		glTexParameteri (priv->target,
 				 GL_TEXTURE_MIN_FILTER,
@@ -226,7 +232,7 @@ GLTexture::enable (GLTexture::Filter filter)
     {
 	if (priv->initial)
 	{
-	    (*GL::generateMipmap) (priv->target);
+	    GL::generateMipmap (priv->target);
 	    priv->initial = false;
 	}
     }
@@ -236,7 +242,9 @@ void
 GLTexture::disable ()
 {
     glBindTexture (priv->target, 0);
+#ifndef USE_GLES
     glDisable (priv->target);
+#endif
 }
 
 void
@@ -295,20 +303,26 @@ PrivateTexture::loadImageData (const char   *image,
     rv[0] = t;
 
     GLTexture::Matrix matrix = _identity_matrix;
-    CompOption        *opt;
     GLint             internalFormat;
     GLenum            target;
     bool              mipmap;
+    bool              pot = POWER_OF_TWO (width) && POWER_OF_TWO (height);
 
+    #ifdef USE_GLES
+    target = GL_TEXTURE_2D;
+    matrix.xx = 1.0f / width;
+    matrix.yy = 1.0f / height;
+    matrix.y0 = 0.0f;
+    mipmap = GL::textureNonPowerOfTwoMipmap || pot;
+    #else
 
-    if (GL::textureNonPowerOfTwo ||
-	(POWER_OF_TWO (width) && POWER_OF_TWO (height)))
+    if (GL::textureNonPowerOfTwo || pot)
     {
 	target = GL_TEXTURE_2D;
 	matrix.xx = 1.0f / width;
 	matrix.yy = 1.0f / height;
 	matrix.y0 = 0.0f;
-	mipmap = true;
+	mipmap = GL::fbo && (GL::textureNonPowerOfTwoMipmap || pot);
     }
     else
     {
@@ -318,17 +332,26 @@ PrivateTexture::loadImageData (const char   *image,
 	matrix.y0 = 0.0f;
 	mipmap = false;
     }
+    #endif
 
     t->setData (target, matrix, mipmap);
     t->setGeometry (0, 0, width, height);
 
     glBindTexture (target, t->name ());
 
+    #ifdef USE_GLES
+    // For GLES2 no format conversion is allowed, i.e., format must equal internalFormat
+    internalFormat = format;
+    #else
+    internalFormat = GL_RGBA;
+    #endif
+
+    #ifndef USE_GLES
+    CompOption *opt;
     opt = GLScreen::get (screen)->getOption ("texture_compression");
     if (opt->value ().b () && GL::textureCompression)
 	internalFormat = GL_COMPRESSED_RGBA_ARB;
-    else
-	internalFormat =  GL_RGBA;
+    #endif
 
     glTexImage2D (target, 0, internalFormat, width, height, 0,
 		  format, type, image);
@@ -412,6 +435,106 @@ GLTexture::bindPixmapToTexture (Pixmap pixmap,
     }
     return GLTexture::List ();
 }
+
+#ifdef USE_GLES
+EglTexture::EglTexture () :
+    damaged (true),
+    damage (None),
+    updateMipMap (true)
+{
+}
+
+EglTexture::~EglTexture ()
+{
+    GLuint temp = name ();
+    glBindTexture (target (), name ());
+
+    glDeleteTextures (1, &temp);
+
+    glBindTexture (target (), 0);
+
+    boundPixmapTex.erase (damage);
+    XDamageDestroy (screen->dpy (), damage);
+}
+
+GLTexture::List
+EglTexture::bindPixmapToTexture (Pixmap pixmap,
+				 int    width,
+				 int    height,
+				 int    depth)
+{
+    if ((int) width > GL::maxTextureSize || (int) height > GL::maxTextureSize ||
+        !GL::textureFromPixmap)
+	return GLTexture::List ();
+
+    GLTexture::List   rv (1);
+    EglTexture        *tex = NULL;
+    EGLImageKHR       eglImage = NULL;
+    GLTexture::Matrix matrix = _identity_matrix;
+
+    const EGLint img_attribs[] = {
+	EGL_IMAGE_PRESERVED_KHR, EGL_TRUE,
+	EGL_NONE
+    };
+
+    eglImage = GL::createImage (eglGetDisplay (screen->dpy ()),
+                                EGL_NO_CONTEXT, EGL_NATIVE_PIXMAP_KHR,
+                                (EGLClientBuffer)pixmap, img_attribs);
+
+    if (eglImage == EGL_NO_IMAGE_KHR)
+    {
+	compLogMessage ("core", CompLogLevelWarn,
+			"eglCreateImageKHR failed");
+
+	return GLTexture::List ();
+    }
+
+    matrix.xx = 1.0f / width;
+    matrix.yy = 1.0f / height;
+    matrix.y0 = 0.0f;
+
+    tex = new EglTexture ();
+    tex->setData (GL_TEXTURE_2D, matrix,
+	GL::textureNonPowerOfTwoMipmap ||
+	(POWER_OF_TWO (width) && POWER_OF_TWO (height)));
+    tex->setGeometry (0, 0, width, height);
+
+    rv[0] = tex;
+
+    glBindTexture (GL_TEXTURE_2D, tex->name ());
+
+    GL::eglImageTargetTexture (GL_TEXTURE_2D, (GLeglImageOES)eglImage);
+    GL::destroyImage (eglGetDisplay (screen->dpy ()), eglImage);
+
+    tex->setFilter (GL_NEAREST);
+    tex->setWrap (GL_CLAMP_TO_EDGE);
+
+    glBindTexture (GL_TEXTURE_2D, 0);
+
+    tex->damage = XDamageCreate (screen->dpy (), pixmap,
+			         XDamageReportRawRectangles);
+    boundPixmapTex[tex->damage] = tex;
+
+    return rv;
+}
+
+void
+EglTexture::enable (GLTexture::Filter filter)
+{
+    glBindTexture (target (), name ());
+    GLTexture::enable (filter);
+    
+    if (damaged)
+	updateMipMap = true;
+
+    if (this->filter () == GL_LINEAR_MIPMAP_LINEAR && updateMipMap)
+    {
+	GL::generateMipmap (target ());
+	updateMipMap = false;
+    }
+    damaged = false;
+}
+#else
 
 TfpTexture::TfpTexture () :
     pixmap (0),
@@ -611,3 +734,5 @@ TfpTexture::enable (GLTexture::Filter filter)
     }
     damaged = false;
 }
+#endif
+

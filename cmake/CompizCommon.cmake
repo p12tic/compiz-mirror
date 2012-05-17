@@ -18,6 +18,7 @@ cmake_policy (SET CMP0011 OLD)
 
 set (CMAKE_SKIP_RPATH FALSE)
 
+option (BUILD_GLES "Build against GLESv2 instead of GL" OFF)
 option (COMPIZ_BUILD_WITH_RPATH "Leave as ON unless building packages" ON)
 option (COMPIZ_RUN_LDCONFIG "Leave OFF unless you need to run ldconfig after install")
 option (COMPIZ_PACKAGING_ENABLED "Enable to manually set prefix, exec_prefix, libdir, includedir, datadir" OFF)
@@ -74,6 +75,17 @@ if (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
 elseif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
     set(IS_BZR_REPO 0)
 endif (IS_DIRECTORY ${CMAKE_SOURCE_DIR}/.bzr)
+
+set (USE_GLES ${BUILD_GLES})
+
+if (USE_GLES)
+    find_package(OpenGLES2)
+
+    if (NOT OPENGLES2_FOUND)
+	set (USE_GLES 0)
+	message (SEND_ERROR "OpenGLESv2 not found")
+    endif (NOT OPENGLES2_FOUND)
+endif (USE_GLES)
 
 function (compiz_ensure_linkage)
     find_program (LDCONFIG_EXECUTABLE ldconfig)

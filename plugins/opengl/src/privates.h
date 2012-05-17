@@ -32,8 +32,12 @@
 #include <opengl/opengl.h>
 #include <core/atoms.h>
 
-#include "privatefragment.h"
+#ifdef USE_GLES
+#include <opengl/framebufferobject.h>
+#endif
+
 #include "privatetexture.h"
+#include "privatevertexbuffer.h"
 #include "opengl_options.h"
 
 extern CompOutput *targetOutput;
@@ -75,8 +79,9 @@ class PrivateGLScreen :
 	void controlSwapVideoSync ();
 	void waitForVideoSync ();
 
-	void paintBackground (const CompRegion &region,
-			      bool             transformed);
+	void paintBackground (const GLMatrix   &transform,
+	                      const CompRegion &region,
+                              bool             transformed);
 
 	void paintOutputRegion (const GLMatrix   &transform,
 			        const CompRegion &region,
@@ -94,7 +99,9 @@ class PrivateGLScreen :
 
 	GLenum textureFilter;
 
+	#ifndef USE_GLES
 	GLFBConfig      glxPixmapFBConfigs[MAX_DEPTH + 1];
+	#endif
 
 	GLTexture::List backgroundTextures;
 	bool            backgroundLoaded;
@@ -103,25 +110,38 @@ class PrivateGLScreen :
 
 	CompPoint rasterPos;
 
-	GLFragment::Storage fragmentStorage;
-
-	GLfloat projection[16];
+	GLMatrix *projection;
 
 	bool clearBuffers;
 	bool lighting;
 
-	GL::GLXGetProcAddressProc getProcAddress;
-
+	#ifdef USE_GLES
+	EGLContext ctx;
+	EGLSurface surface;
+	#else
 	GLXContext ctx;
 
+	GL::GLXGetProcAddressProc getProcAddress;
+	#endif
+
+	GLFramebufferObject *scratchFbo;
 	CompRegion outputRegion;
 
 	XRectangle lastViewport;
+	bool refreshSubBuffer;
+	unsigned int lastMask;
 
 	std::vector<GLTexture::BindPixmapProc> bindPixmap;
 	bool hasCompositing;
 
 	GLIcon defaultIcon;
+
+	Window saveWindow; // hack for broken applications, see:
+			   // https://bugs.launchpad.net/ubuntu/+source/compiz/+bug/807487
+
+	GLProgramCache *programCache;
+	GLShaderCache   shaderCache;
+	GLVertexBuffer::AutoProgram *autoProgram;
 
 	Pixmap rootPixmapCopy;
 	CompSize rootPixmapSize;
@@ -173,10 +193,15 @@ class PrivateGLWindow :
 
 	unsigned int lastMask;
 
-	GLWindow::Geometry geometry;
+	GLVertexBuffer *vertexBuffer;
+
+	// map of shaders, plugin name is key, pair of vertex and fragment
+	// shader source code is value
+	std::list<const GLShaderData*> shaders;
+	GLVertexBuffer::AutoProgram *autoProgram;
 
 	std::list<GLIcon> icons;
 };
 
-
 #endif
+

@@ -1,0 +1,567 @@
+/*
+ * Copyright © 2011 Linaro Ltd.
+ *
+ * Permission to use, copy, modify, distribute, and sell this software
+ * and its documentation for any purpose is hereby granted without
+ * fee, provided that the above copyright notice appear in all copies
+ * and that both that copyright notice and this permission notice
+ * appear in supporting documentation, and that the name of
+ * Linaro Ltd. not be used in advertising or publicity pertaining to
+ * distribution of the software without specific, written prior permission.
+ * Linaro Ltd. makes no representations about the suitability of this
+ * software for any purpose. It is provided "as is" without express or
+ * implied warranty.
+ *
+ * LINARO LTD. DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
+ * INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS, IN
+ * NO EVENT SHALL LINARO LTD. BE LIABLE FOR ANY SPECIAL, INDIRECT OR
+ * CONSEQUENTIAL DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS
+ * OF USE, DATA OR PROFITS, WHETHER IN AN ACTION OF CONTRACT,
+ * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
+ * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ *
+ * Authors: Travis Watkins <travis.watkins@linaro.org>
+ *          Frederic Plourde <frederic.plourde@collabora.co.uk>
+ *          Alexandros Frantzis <alexandros.frantzis@linaro.org>
+ */
+
+#include <vector>
+#include <iostream>
+
+#ifdef USE_GLES
+#include <GLES2/gl2.h>
+#else
+#include <GL/gl.h>
+#include <GL/glext.h>
+#endif
+
+#include <opengl/vertexbuffer.h>
+
+#include "privates.h"
+
+GLVertexBuffer *PrivateVertexBuffer::streamingBuffer = NULL;
+
+GLVertexBuffer::GLVertexBuffer () :
+    priv (new PrivateVertexBuffer ())
+{
+    priv->usage = GL_STATIC_DRAW;
+}
+
+GLVertexBuffer::GLVertexBuffer (GLenum usage) :
+    priv (new PrivateVertexBuffer ())
+{
+    priv->usage = usage;
+}
+
+GLVertexBuffer::~GLVertexBuffer ()
+{
+    delete priv;
+}
+
+GLVertexBuffer *GLVertexBuffer::streamingBuffer ()
+{
+    if (PrivateVertexBuffer::streamingBuffer == NULL)
+	PrivateVertexBuffer::streamingBuffer = new GLVertexBuffer
+	                                                      (GL_STREAM_DRAW);
+    return PrivateVertexBuffer::streamingBuffer;
+}
+
+void GLVertexBuffer::begin (GLenum primitiveType)
+{
+    priv->primitiveType = primitiveType;
+
+    priv->vertexData.clear ();
+    priv->vertexOffset = 0;
+    priv->maxVertices = -1;
+    priv->normalData.clear ();
+    priv->colorData.clear ();
+    priv->textureData.clear ();
+    priv->uniforms.clear ();
+}
+
+void GLVertexBuffer::begin ()
+{
+    begin (GL_TRIANGLES);
+}
+
+int GLVertexBuffer::end ()
+{
+    if (!GL::vbo)
+	return 0;
+
+    if (!priv->vertexData.size ())
+	return -1;
+
+    GL::bindBuffer (GL_ARRAY_BUFFER, priv->vertexBuffer);
+    GL::bufferData (GL_ARRAY_BUFFER,
+                    sizeof(GLfloat) * priv->vertexData.size (),
+                    &priv->vertexData[0], priv->usage);
+
+    if (priv->normalData.size ())
+    {
+	GL::bindBuffer (GL_ARRAY_BUFFER, priv->normalBuffer);
+	GL::bufferData (GL_ARRAY_BUFFER,
+	                sizeof(GLfloat) * priv->normalData.size (),
+	                &priv->normalData[0], priv->usage);
+    }
+
+    if (priv->colorData.size ())
+    {
+	GL::bindBuffer (GL_ARRAY_BUFFER, priv->colorBuffer);
+	GL::bufferData (GL_ARRAY_BUFFER,
+	                sizeof(GLfloat) * priv->colorData.size (),
+	                &priv->colorData[0], priv->usage);
+    }
+
+    if (priv->textureData.size ())
+    {
+	for (unsigned int i = 0; i < priv->textureData.size (); i++)
+	{
+	    GL::bindBuffer (GL_ARRAY_BUFFER, priv->textureBuffers[i]);
+	    GL::bufferData (GL_ARRAY_BUFFER,
+	                    sizeof(GLfloat) * priv->textureData[i].size (),
+	                    &priv->textureData[i][0], priv->usage);
+	}
+    }
+
+    GL::bindBuffer (GL_ARRAY_BUFFER, 0);
+
+    return 0;
+}
+
+void GLVertexBuffer::addVertices (GLuint nVertices, GLfloat *vertices)
+{
+    priv->vertexData.reserve (priv->vertexData.size () + (nVertices * 3));
+
+    for (GLuint i = 0; i < nVertices * 3; i++)
+    {
+	priv->vertexData.push_back (vertices[i]);
+    }
+}
+
+void GLVertexBuffer::setVertexOffset (GLuint vOffset)
+{
+    priv->vertexOffset = vOffset;
+}
+
+void GLVertexBuffer::setMaxVertices (GLint vMax)
+{
+    priv->maxVertices = vMax;
+}
+
+void GLVertexBuffer::addNormals (GLuint nNormals, GLfloat *normals)
+{
+    priv->normalData.reserve (priv->normalData.size () + (nNormals * 3));
+
+    for (GLuint i = 0; i < nNormals * 3; i++)
+    {
+	priv->normalData.push_back (normals[i]);
+    }
+}
+
+void GLVertexBuffer::addColors (GLuint nColors, GLushort *colors)
+{
+    priv->colorData.reserve (priv->colorData.size () + (nColors * 4));
+
+    for (GLuint i = 0; i < nColors * 4; i++)
+    {
+	priv->colorData.push_back (colors[i] / 65535.0f);
+    }
+}
+
+void GLVertexBuffer::addTexCoords (GLuint texture,
+                                   GLuint nTexcoords,
+                                   GLfloat *texcoords)
+{
+    //four textures max (zero indexed)
+    if (texture > 3)
+	return;
+
+    while (texture >= priv->textureData.size ())
+    {
+	std::vector<GLfloat> temp;
+	priv->textureData.push_back (temp);
+    }
+
+    priv->textureData[texture].reserve (priv->textureData[texture].size () +
+                                        (nTexcoords * 2));
+
+    for (GLuint i = 0; i < nTexcoords * 2; i++)
+    {
+	priv->textureData[texture].push_back (texcoords[i]);
+    }
+}
+
+void GLVertexBuffer::addUniform (const char *name, GLfloat value)
+{
+    // we're casting to double here to make our template va_arg happy
+    Uniform<double, 1>* uniform = new Uniform<double, 1>(name, (double)value);
+    priv->uniforms.push_back (uniform);
+}
+
+void GLVertexBuffer::addUniform (const char *name, GLint value)
+{
+    Uniform<GLint, 1>* uniform = new Uniform<GLint, 1>(name, value);
+    priv->uniforms.push_back (uniform);
+}
+
+bool GLVertexBuffer::addUniform (const char *name, const GLMatrix &value)
+{
+    //#warning Add 'addUniform' support to GLMatrix type !
+    return true;
+}
+
+void GLVertexBuffer::addUniform2f (const char *name,
+                                   GLfloat x,
+                                   GLfloat y)
+{
+    // we're casting to double here to make our template va_arg happy
+    Uniform<double, 2>* uniform = new Uniform<double, 2>(name,
+							 (double)x,
+							 (double)y);
+    priv->uniforms.push_back (uniform);
+}
+
+void GLVertexBuffer::addUniform3f (const char *name,
+                                   GLfloat x,
+                                   GLfloat y,
+                                   GLfloat z)
+{
+     // we're casting to double here to make our template va_arg happy
+    Uniform<double, 3>* uniform = new Uniform<double, 3>(name,
+							 (double)x,
+							 (double)y,
+							 (double)z);
+    priv->uniforms.push_back (uniform);
+}
+
+void GLVertexBuffer::addUniform4f (const char *name,
+                                   GLfloat x,
+                                   GLfloat y,
+                                   GLfloat z,
+                                   GLfloat w)
+{
+    // we're casting to double here to make our template va_arg happy
+    Uniform<double, 4>* uniform = new Uniform<double, 4>(name,
+							 (double)x,
+							 (double)y,
+							 (double)z,
+							 (double)w);
+    priv->uniforms.push_back (uniform);
+}
+
+void GLVertexBuffer::addUniform2i (const char *name,
+                                   GLint x,
+                                   GLint y)
+{
+    Uniform<GLint, 2>* uniform = new Uniform<GLint, 2>(name, x, y);
+    priv->uniforms.push_back (uniform);
+}
+
+void GLVertexBuffer::addUniform3i (const char *name,
+                                   GLint x,
+                                   GLint y,
+                                   GLint z)
+{
+    Uniform<GLint, 3>* uniform = new Uniform<GLint, 3>(name, x, y, z);
+    priv->uniforms.push_back (uniform);
+}
+
+void GLVertexBuffer::addUniform4i (const char *name,
+                                   GLint x,
+                                   GLint y,
+                                   GLint z,
+                                   GLint w)
+{
+    Uniform<GLint, 4>* uniform = new Uniform<GLint, 4>(name, x, y, z, w);
+    priv->uniforms.push_back (uniform);
+}
+
+void GLVertexBuffer::setProgram (GLProgram *program)
+{
+    priv->program = program;
+}
+
+void GLVertexBuffer::setAutoProgram (AutoProgram *autoProgram)
+{
+    priv->autoProgram = autoProgram;
+}
+
+int GLVertexBuffer::render ()
+{
+    if (GL::vbo && GL::shaders)
+	return priv->render (NULL, NULL, NULL);
+    else
+	return -1;
+}
+
+int GLVertexBuffer::render (const GLMatrix &modelview)
+{
+    const GLWindowPaintAttrib attrib = { OPAQUE, BRIGHT, COLOR, 0, 0, 0, 0 };
+
+    return render (modelview, attrib);
+}
+
+int GLVertexBuffer::render (const GLMatrix            &modelview,
+                            const GLWindowPaintAttrib &attrib)
+{
+    GLScreen *gScreen = GLScreen::get (screen);
+    GLMatrix *projection = gScreen->projectionMatrix ();
+
+    return render (*projection, modelview, attrib);
+}
+
+int GLVertexBuffer::render (const GLMatrix            &projection,
+                            const GLMatrix            &modelview,
+                            const GLWindowPaintAttrib &attrib)
+{
+    if (!priv->vertexData.size ())
+	return -1;
+
+    if (GL::vbo && GL::shaders)
+	return priv->render (&projection, &modelview, &attrib);
+    else
+	return priv->legacyRender (projection, modelview, attrib);
+}
+
+PrivateVertexBuffer::PrivateVertexBuffer () :
+    vertexOffset (0),
+    maxVertices (-1),
+    program (NULL)
+{
+    if (!GL::vbo)
+	return;
+
+    GL::genBuffers (1, &vertexBuffer);
+    GL::genBuffers (1, &normalBuffer);
+    GL::genBuffers (1, &colorBuffer);
+    GL::genBuffers (4, &textureBuffers[0]);
+}
+
+PrivateVertexBuffer::~PrivateVertexBuffer ()
+{
+    if (!GL::vbo)
+	return;
+
+    GL::deleteBuffers (1, &vertexBuffer);
+    GL::deleteBuffers (1, &normalBuffer);
+    GL::deleteBuffers (1, &colorBuffer);
+    GL::deleteBuffers (4, &textureBuffers[0]);
+}
+
+int PrivateVertexBuffer::render (const GLMatrix            *projection,
+                                 const GLMatrix            *modelview,
+                                 const GLWindowPaintAttrib *attrib)
+{
+    GLfloat attribs[3] = {1, 1, 1};
+    GLint positionIndex = -1;
+    GLint normalIndex = -1;
+    GLint colorIndex = -1;
+    GLint texCoordIndex[4] = {-1, -1, -1, -1};
+    GLProgram *tmpProgram = program;
+
+    // If we don't have an explicitly set program, try to get one
+    // using the AutoProgram callback object.
+    if (tmpProgram == NULL && autoProgram) {
+	// Convert attrib to shader parameters
+	GLShaderParameters params;
+
+	params.opacity = attrib->opacity != OPAQUE;
+	params.brightness = attrib->brightness != BRIGHT;
+	params.saturation = attrib->saturation != COLOR;
+	params.color = colorData.size () == 4 ? GLShaderVariableUniform :
+	               colorData.size () >  4 ? GLShaderVariableVarying :
+	                                        GLShaderVariableNone;
+	params.normal = normalData.size () <= 4 ? GLShaderVariableUniform :
+	                                          GLShaderVariableVarying;
+	params.numTextures = textureData.size ();
+
+	// Get a program matching the parameters
+	tmpProgram = autoProgram->getProgram(params);
+    }
+
+    if (tmpProgram == NULL)
+    {
+	std::cerr << "no program defined!" << std::endl;
+	return -1;
+    }
+
+    tmpProgram->bind ();
+    if (!tmpProgram->valid ())
+    {
+	return -1;
+    }
+
+    if (projection)
+	tmpProgram->setUniform ("projection", *projection);
+
+    if (modelview)
+	tmpProgram->setUniform ("modelview", *modelview);
+
+    positionIndex = tmpProgram->attributeLocation ("position");
+    (*GL::enableVertexAttribArray) (positionIndex);
+    (*GL::bindBuffer) (GL_ARRAY_BUFFER, vertexBuffer);
+    (*GL::vertexAttribPointer) (positionIndex, 3, GL_FLOAT, GL_FALSE, 0, 0);
+
+    //use default normal
+    if (normalData.size () == 0)
+    {
+	tmpProgram->setUniform3f ("singleNormal", 0.0f, 0.0f, -1.0f);
+    }
+    // special case a single normal and apply it to the entire operation
+    else if (normalData.size () == 3)
+    {
+	tmpProgram->setUniform3f ("singleNormal",
+	                       normalData[0], normalData[1], normalData[2]);
+    }
+    else if (normalData.size () > 3)
+    {
+	normalIndex = tmpProgram->attributeLocation ("normal");
+	(*GL::enableVertexAttribArray) (normalIndex);
+	(*GL::bindBuffer) (GL_ARRAY_BUFFER, normalBuffer);
+	(*GL::vertexAttribPointer) (normalIndex, 3, GL_FLOAT, GL_FALSE, 0, 0);
+    }
+
+    // special case a single color and apply it to the entire operation
+    if (colorData.size () == 4)
+    {
+	tmpProgram->setUniform4f ("singleColor", colorData[0],
+	                       colorData[1], colorData[2], colorData[3]);
+    }
+    else if (colorData.size () > 4)
+    {
+	colorIndex = tmpProgram->attributeLocation ("color");
+	(*GL::enableVertexAttribArray) (colorIndex);
+	(*GL::bindBuffer) (GL_ARRAY_BUFFER, colorBuffer);
+	(*GL::vertexAttribPointer) (colorIndex, 4, GL_FLOAT, GL_FALSE, 0, 0);
+    }
+
+    for (int i = textureData.size () - 1; i >= 0; i--)
+    {
+	char name[10];
+
+	snprintf (name, 10, "texCoord%d", i);
+	texCoordIndex[i] = tmpProgram->attributeLocation (name);
+
+	(*GL::enableVertexAttribArray) (texCoordIndex[i]);
+	(*GL::bindBuffer) (GL_ARRAY_BUFFER, textureBuffers[i]);
+	(*GL::vertexAttribPointer) (texCoordIndex[i], 2, GL_FLOAT, GL_FALSE, 0, 0);
+
+	snprintf (name, 9, "texture%d", i);
+	tmpProgram->setUniform (name, i);
+    }
+
+    // set per-plugin uniforms
+    for (unsigned int i = 0; i < uniforms.size (); i++)
+    {
+	uniforms[i]->set (program);
+    }
+
+    //convert paint attribs to 0-1 range
+    if (attrib)
+    {
+	attribs[0] = attrib->opacity  / 65535.0f;
+	attribs[1] = attrib->brightness / 65535.0f;
+	attribs[2] = attrib->saturation / 65535.0f;
+	tmpProgram->setUniform3f ("paintAttrib", attribs[0], attribs[1], attribs[2]);
+    }
+
+    glDrawArrays (primitiveType, vertexOffset, maxVertices > 0 ?
+					       std::min (static_cast <int> (vertexData.size () / 3),
+							 maxVertices) :
+					       vertexData.size () / 3);
+
+    for (int i = 0; i < 4; ++i)
+    {
+	if (texCoordIndex[i] != -1)
+	    (*GL::disableVertexAttribArray) (texCoordIndex[i]);
+    }
+
+    if (colorIndex != -1)
+	(*GL::disableVertexAttribArray) (colorIndex);
+
+    if (normalIndex != -1)
+	(*GL::disableVertexAttribArray) (normalIndex);
+
+    (*GL::disableVertexAttribArray) (positionIndex);
+
+    GL::bindBuffer (GL_ARRAY_BUFFER, 0);
+    tmpProgram->unbind ();
+
+    return 0;
+}
+
+int PrivateVertexBuffer::legacyRender (const GLMatrix            &projection,
+                                       const GLMatrix            &modelview,
+                                       const GLWindowPaintAttrib &attrib)
+{
+    #ifndef USE_GLES
+    glMatrixMode (GL_PROJECTION);
+    glPushMatrix ();
+    glLoadMatrixf (projection.getMatrix ());
+
+    glMatrixMode (GL_MODELVIEW);
+    glPushMatrix ();
+    glLoadMatrixf (modelview.getMatrix ());
+
+    glEnableClientState (GL_VERTEX_ARRAY);
+    glVertexPointer (3, GL_FLOAT, 0, &vertexData[0]);
+
+    //use default normal
+    if (normalData.size () == 0)
+    {
+	glNormal3f (0.0f, 0.0f, -1.0f);
+    }
+    // special case a single normal and apply it to the entire operation
+    else if (normalData.size () == 3)
+    {
+	glNormal3fv (&normalData[0]);
+    }
+    else if (normalData.size () > 3)
+    {
+	glEnableClientState (GL_NORMAL_ARRAY);
+	glNormalPointer (GL_FLOAT, 0, &normalData[0]);
+    }
+
+    // special case a single color and apply it to the entire operation
+    if (colorData.size () == 4)
+    {
+	glColor4fv (&colorData[0]);
+    }
+    else if (colorData.size () > 4)
+    {
+	glEnableClientState (GL_COLOR_ARRAY);
+	glColorPointer (4, GL_FLOAT, 0, &colorData[0]);
+    }
+
+    for (int i = textureData.size () - 1; i >= 0; i--)
+    {
+	GL::clientActiveTexture (GL_TEXTURE0_ARB + i);
+	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+	glTexCoordPointer (2, GL_FLOAT, 0, &textureData[i][0]);
+    }
+
+    glDrawArrays (primitiveType, 0, vertexData.size () / 3);
+
+    glDisableClientState (GL_VERTEX_ARRAY);
+    glDisableClientState (GL_NORMAL_ARRAY);
+    glDisableClientState (GL_COLOR_ARRAY);
+
+    for (int i = textureData.size (); i > 0; i--)
+    {
+	GL::clientActiveTexture (GL_TEXTURE0_ARB + i);
+	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+    }
+
+    GL::clientActiveTexture (GL_TEXTURE0_ARB);
+
+    glMatrixMode (GL_PROJECTION);
+    glPopMatrix ();
+
+    glMatrixMode (GL_MODELVIEW);
+    glPopMatrix ();
+    #endif
+
+    return 0;
+}
+

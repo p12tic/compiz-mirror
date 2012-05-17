@@ -249,6 +249,10 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 			   CompOutput                *output,
 			   unsigned int               mask)
 {
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    GLMatrix        transform (matrix);
+    GLfloat         vertexData[12];
+    GLushort        colorData[4];
     bool status;
 
     status = gScreen->glPaintOutput (attrib, matrix, region, output, mask);
@@ -264,31 +268,54 @@ ShotScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	if (mGrabIndex)
 	{
-	    glPushMatrix ();
+	    vertexData[0]  = x1;
+	    vertexData[1]  = y1;
+	    vertexData[2]  = 0.0f;
+	    vertexData[3]  = x1;
+	    vertexData[4]  = y2;
+	    vertexData[5]  = 0.0f;
+	    vertexData[6]  = x2;
+	    vertexData[7]  = y1;
+	    vertexData[8]  = 0.0f;
+	    vertexData[9]  = x2;
+	    vertexData[10] = y2;
+	    vertexData[11] = 0.0f;
 
-	    glTranslatef (-0.5f, -0.5f, -DEFAULT_Z_CAMERA);
-	    glScalef (1.0f  / output->width (),
-	    	      -1.0f / output->height (),
-	    	      1.0f);
-	    glTranslatef (-output->region ()->extents.x1,
-	    		  -output->region ()->extents.y2,
-	    		  0.0f);
+	    colorData[0] = 0x2fff;
+	    colorData[1] = 0x2fff;
+	    colorData[2] = 0x4fff;
+	    colorData[3] = 0x4fff;
 
-	    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-	    glEnable (GL_BLEND);
-	    glColor4us (0x2fff, 0x2fff, 0x4fff, 0x4fff);
-	    glRecti (x1, y2, x2, y1);
-	    glColor4us (0x2fff, 0x2fff, 0x4fff, 0x9fff);
-	    glBegin (GL_LINE_LOOP);
-	    glVertex2i (x1, y1);
-	    glVertex2i (x2, y1);
-	    glVertex2i (x2, y2);
-	    glVertex2i (x1, y2);
-	    glEnd ();
-	    glColor4usv (defaultColor);
-	    glDisable (GL_BLEND);
-	    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-	    glPopMatrix ();
+
+	    transform.translate (-0.5f, -0.5f, -DEFAULT_Z_CAMERA);
+	    transform.scale (1.0f / output->width (),
+	                     -1.0f / output->height (),
+	                     1.0f);
+	    transform.translate (-output->region ()->extents.x1,
+	                         -output->region ()->extents.y2,
+	                         0.0f);
+
+	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	    streamingBuffer->addColors (1, colorData);
+	    streamingBuffer->addVertices (4, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (transform);
+
+	    streamingBuffer->begin (GL_LINE_LOOP);
+
+	    vertexData[6]  = x2;
+	    vertexData[7]  = y2;
+	    vertexData[9]  = x2;
+	    vertexData[10] = y1;
+	    colorData [3]  = 0x9fff;
+
+	    streamingBuffer->addColors (1, colorData);
+	    streamingBuffer->addVertices (4, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (transform);
 	}
     }
 

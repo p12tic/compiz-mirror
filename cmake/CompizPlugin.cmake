@@ -257,6 +257,16 @@ macro (_build_compiz_plugin plugin)
 	    NO_DEFAULT_PATH
 	)
 
+	set (COMPIZ_CURRENT_PLUGIN ${plugin})
+	set (COMPIZ_CURRENT_XML_FILE ${_translated_xml})
+
+	# find extension files
+	file (GLOB _extension_files "${COMPIZ_CMAKE_MODULE_PATH}/plugin_extensions/*.cmake")
+
+	foreach (_file ${_extension_files})
+	    include (${_file})
+	endforeach ()
+
 	# generate pkgconfig file and install it and the plugin header file
 	if (_${plugin}_pkg AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/${plugin})
 	    if ("${PLUGIN_BUILDTYPE}" STREQUAL "local")
@@ -269,11 +279,15 @@ macro (_build_compiz_plugin plugin)
 		    set (VERSION 0.0.1-git)
 		endif (NOT VERSION)
 
+		#add CFLAGSADD so pkg-config file has correct flags
+		set (COMPIZ_CFLAGS ${COMPIZ_CFLAGS} ${${_PLUGIN}_CFLAGSADD})
+
 		compiz_configure_file (
 		    ${_${plugin}_pkg}
 		    ${CMAKE_BINARY_DIR}/generated/compiz-${plugin}.pc
 		    COMPIZ_REQUIRES
 		    COMPIZ_CFLAGS
+		    PKGCONFIG_LIBS
 		)
 
 		install (
@@ -286,16 +300,6 @@ macro (_build_compiz_plugin plugin)
 		)
 	    endif ()
 	endif ()
-
-	set (COMPIZ_CURRENT_PLUGIN ${plugin})
-	set (COMPIZ_CURRENT_XML_FILE ${_translated_xml})
-
-	# find extension files
-	file (GLOB _extension_files "${COMPIZ_CMAKE_MODULE_PATH}/plugin_extensions/*.cmake")
-
-	foreach (_file ${_extension_files})
-	    include (${_file})
-	endforeach ()
 
 	# find files for build
 	file (GLOB _h_files "${CMAKE_CURRENT_SOURCE_DIR}/src/*.h")

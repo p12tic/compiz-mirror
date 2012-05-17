@@ -76,7 +76,8 @@ class SvgWindow :
 	SvgWindow (CompWindow *window);
 	~SvgWindow ();
 
-	bool glDraw (const GLMatrix &transform, GLFragment::Attrib &fragment,
+	bool glDraw (const GLMatrix &transform,
+		     const GLWindowPaintAttrib &attrib,
 		     const CompRegion &region, unsigned int mask);
 	void moveNotify (int dx, int dy, bool immediate);
 	void resizeNotify (int dx, int dy, int dwidth, int dheight);

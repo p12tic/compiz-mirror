@@ -32,7 +32,12 @@
 #include "core/string.h"
 
 #include <X11/Xlib-xcb.h>
+
+#ifdef USE_GLES
+#include <GLES2/gl2.h>
+#else
 #include <GL/gl.h>
+#endif
 
 #include <boost/function.hpp>
 

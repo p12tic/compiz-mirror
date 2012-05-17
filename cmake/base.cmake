@@ -24,6 +24,7 @@ function (_print_configure_results)
     compiz_print_configure_header ("Compiz")
     compiz_color_message ("\n${_escape}[4mOptional features:${_escape}[0m\n")
 
+    compiz_print_result_message ("GLESv2" USE_GLES)
     compiz_print_result_message ("gtk window decorator" USE_GTK)
     compiz_print_result_message ("metacity theme support" USE_METACITY)
     compiz_print_result_message ("gconf schemas" USE_GCONF)
@@ -46,7 +47,8 @@ function (_check_compiz_cmake_macro)
     endif ()
     add_custom_target (findcompiz_install
 	${CMAKE_COMMAND} -E make_directory ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules &&
-	${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/FindCompiz.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules
+	${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/FindCompiz.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules &&
+	${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/FindOpenGLES2.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules
     )
 endfunction ()
 

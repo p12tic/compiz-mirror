@@ -465,9 +465,7 @@ BaseSwitchWindow::paintThumb (const GLWindowPaintAttrib &attrib,
 	sAttrib.yTranslate = wy - g.y () +
 			     window->border ().top  * sAttrib.yScale;
 
-	GLFragment::Attrib fragment (sAttrib);
-
-	if (window->alpha () || fragment.getOpacity () != OPAQUE)
+	if (window->alpha () || sAttrib.opacity != OPAQUE)
 	    mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
 	wTransform.translate (g.x (), g.y (), 0.0f);
@@ -475,9 +473,6 @@ BaseSwitchWindow::paintThumb (const GLWindowPaintAttrib &attrib,
 	wTransform.translate (sAttrib.xTranslate / sAttrib.xScale - g.x (),
 			      sAttrib.yTranslate / sAttrib.yScale - g.y (),
 			      0.0f);
-
-	glPushMatrix ();
-	glLoadMatrixf (wTransform.getMatrix ());
 
 	filter = gScreen->textureFilter ();
 
@@ -488,12 +483,10 @@ BaseSwitchWindow::paintThumb (const GLWindowPaintAttrib &attrib,
 	   very ugly but necessary until the vertex stage has been made
 	   fully pluggable. */
 	gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
-	gWindow->glDraw (wTransform, fragment, infiniteRegion, mask);
+	gWindow->glDraw (wTransform, sAttrib, infiniteRegion, mask);
 	gWindow->glAddGeometrySetCurrentIndex (addWindowGeometryIndex);
 
 	gScreen->setTextureFilter (filter);
-
-	glPopMatrix ();
 
 	if (iconMode != HideIcon)
 	{
@@ -535,30 +528,23 @@ BaseSwitchWindow::paintThumb (const GLWindowPaintAttrib &attrib,
 	sAttrib.xTranslate = wx - g.x ();
 	sAttrib.yTranslate = wy - g.y ();
 
-	gWindow->geometry ().reset ();
+	gWindow->vertexBuffer ()->begin ();
 
 	gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
 	gWindow->glAddGeometry (matrix, iconReg, infiniteRegion);
 	gWindow->glAddGeometrySetCurrentIndex (addWindowGeometryIndex);
 
-	if (gWindow->geometry ().vCount)
-	{
-	    GLFragment::Attrib fragment (sAttrib);
-	    GLMatrix           wTransform (transform);
+	gWindow->vertexBuffer ()->end ();
 
-	    wTransform.translate (g.x (), g.y (), 0.0f);
-	    wTransform.scale (sAttrib.xScale, sAttrib.yScale, 1.0f);
-	    wTransform.translate (sAttrib.xTranslate / sAttrib.xScale - g.x (),
-				  sAttrib.yTranslate / sAttrib.yScale - g.y (),
-				  0.0f);
+	GLMatrix           wTransform (transform);
 
-	    glPushMatrix ();
-	    glLoadMatrixf (wTransform.getMatrix ());
+	wTransform.translate (g.x (), g.y (), 0.0f);
+	wTransform.scale (sAttrib.xScale, sAttrib.yScale, 1.0f);
+	wTransform.translate (sAttrib.xTranslate / sAttrib.xScale - g.x (),
+	                      sAttrib.yTranslate / sAttrib.yScale - g.y (),
+	                      0.0f);
 
-	    gWindow->glDrawTexture (icon, fragment, mask);
-
-	    glPopMatrix ();
-	}
+	gWindow->glDrawTexture (icon, wTransform, sAttrib, mask);
     }
 }
 

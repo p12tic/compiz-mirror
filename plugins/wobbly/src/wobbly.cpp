@@ -21,6 +21,7 @@
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
  * Author: David Reveman <davidr@novell.com>
+ *	   Frederic Plourde <frederic.plourde@collabora.co.uk>
  */
 
 /*
@@ -30,6 +31,183 @@
 #include "wobbly.h"
 
 COMPIZ_PLUGIN_20090315 (wobbly, WobblyPluginVTable)
+
+/*
+ * We're not drawing orthogonal quads here so we can't use opengl plugin's
+ * original ADD_RECT/ADD_QUAD functions, which only ask for two vertex
+ * coords (x1,y1) and (x2,y2). Here, we have to know all four quad vertices.
+ *
+ * FIXME: Copy and paste from opengl is probably not so great
+ * Here's the new vertex numbering :
+ *
+ *     (x1,y1) ----------- (x4,y4)
+ *            |          |
+ *           |          |
+ *          |          |
+ * (x3,y3)  ----------- (x2,y2)
+ *
+ */
+
+#define ADD_RECT(vertexBuffer, m, n, x1, y1, x2, y2, x3, y3, x4, y4, \
+				      s1, t1, s2, t2, s3, t3, s4, t4) \
+    GLfloat vertexData[18] = {                                        \
+	x1, y1, 0.0,                                                  \
+	x3, y3, 0.0,                                                  \
+	x4, y4, 0.0,                                                  \
+	x4, y4, 0.0,                                                  \
+	x3, y3, 0.0,                                                  \
+	x2, y2, 0.0                                                   \
+    };                                                                \
+    vertexBuffer->addVertices (6, vertexData);                        \
+                                                                      \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_X (mat, s1);                         \
+	data[1] = COMP_TEX_COORD_Y (mat, t1);                         \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_X (mat, s3);                         \
+	data[1] = COMP_TEX_COORD_Y (mat, t3);                         \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_X (mat, s4);                         \
+	data[1] = COMP_TEX_COORD_Y (mat, t4);                         \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_X (mat, s4);                         \
+	data[1] = COMP_TEX_COORD_Y (mat, t4);                         \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_X (mat, s3);                         \
+	data[1] = COMP_TEX_COORD_Y (mat, t3);                         \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_X (mat, s2);                         \
+	data[1] = COMP_TEX_COORD_Y (mat, t2);                         \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }
+
+#define ADD_QUAD(vertexBuffer, m, n, x1, y1, x2, y2, x3, y3, x4, y4, \
+				      s1, t1, s2, t2, s3, t3, s4, t4) \
+    GLfloat vertexData[18] = {                                        \
+	x1, y1, 0.0,                                                  \
+	x3, y3, 0.0,                                                  \
+	x4, y4, 0.0,                                                  \
+	x4, y4, 0.0,                                                  \
+	x3, y3, 0.0,                                                  \
+	x2, y2, 0.0                                                   \
+    };                                                                \
+    vertexBuffer->addVertices (6, vertexData);                        \
+                                                                      \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_XY (mat, s1, t1);                    \
+	data[1] = COMP_TEX_COORD_YX (mat, s1, t1);                    \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_XY (mat, s3, t3);                    \
+	data[1] = COMP_TEX_COORD_YX (mat, s3, t3);                    \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_XY (mat, s4, t4);                    \
+	data[1] = COMP_TEX_COORD_YX (mat, s4, t4);                    \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_XY (mat, s4, t4);                    \
+	data[1] = COMP_TEX_COORD_YX (mat, s4, t4);                    \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_XY (mat, s3, t3);                    \
+	data[1] = COMP_TEX_COORD_YX (mat, s3, t3);                    \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }                                                                 \
+    for (it = 0; it < n; it++)                                        \
+    {                                                                 \
+	GLfloat data[2];                                              \
+	const GLTexture::Matrix &mat = m[it];                         \
+	data[0] = COMP_TEX_COORD_XY (mat, s2, t2);                    \
+	data[1] = COMP_TEX_COORD_YX (mat, s2, t2);                    \
+	vertexBuffer->addTexCoords (it, 1, data);                     \
+    }
+
+
+static inline void
+addSingleQuad (GLVertexBuffer *vertexBuffer,
+               const GLTexture::MatrixList &matrix,
+               unsigned int nMatrix,
+               float        x1,
+               float        y1,
+               float        x2,
+               float        y2,
+	       float        x3,
+               float        y3,
+               float        x4,
+               float        y4,
+	       float        s1,
+               float        t1,
+               float        s2,
+               float        t2,
+	       float        s3,
+               float        t3,
+               float        s4,
+               float        t4,
+               int          &n,
+               bool         rect)
+{
+    unsigned int it;
+
+    if (rect)
+    {
+	ADD_RECT (vertexBuffer, matrix, nMatrix, x1, y1, x2, y2, x3, y3, x4, y4,
+						  s1, t1, s2, t2, s3, t3, s4, t4);
+    }
+    else
+    {
+	ADD_QUAD (vertexBuffer, matrix, nMatrix, x1, y1, x2, y2, x3, y3, x4, y4,
+						  s1, t1, s2, t2, s3, t3, s4, t4);
+    }
+    n++;
+}
 
 void
 WobblyWindow::findNextWestEdge (Object *object)
@@ -1504,80 +1682,29 @@ WobblyScreen::donePaint ()
 }
 
 void
-WobblyWindow::glDrawGeometry ()
-{
-    GLWindow::Geometry &geom = gWindow->geometry ();
-    int     texUnit = geom.texUnits;
-    int     currentTexUnit = 0;
-    int     stride = geom.vertexStride;
-    GLfloat *vertices = geom.vertices + (stride - 3);
-
-    stride *= (int) sizeof (GLfloat);
-
-    glVertexPointer (3, GL_FLOAT, stride, vertices);
-
-    while (texUnit--)
-    {
-	if (texUnit != currentTexUnit)
-	{
-	    (*GL::clientActiveTexture) ((GLenum) (GL_TEXTURE0_ARB + texUnit));
-	    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-	    currentTexUnit = texUnit;
-	}
-	vertices -= geom.texCoordSize;
-	glTexCoordPointer (geom.texCoordSize, GL_FLOAT, stride,
-			   vertices);
-    }
-
-    glDrawElements (GL_QUADS, geom.indexCount,
-		    GL_UNSIGNED_SHORT, geom.indices);
-
-    /* disable all texture coordinate arrays except 0 */
-    texUnit = geom.texUnits;
-    if (texUnit > 1)
-    {
-	while (--texUnit)
-	{
-	    (*GL::clientActiveTexture) ((GLenum) (GL_TEXTURE0_ARB + texUnit));
-	    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-	}
-
-	(*GL::clientActiveTexture) (GL_TEXTURE0_ARB);
-    }
-}
-
-void
 WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 			     const CompRegion            &region,
 			     const CompRegion            &clip,
 			     unsigned int                maxGridWidth,
 			     unsigned int                maxGridHeight)
 {
-    GLWindow::Geometry &geom = gWindow->geometry ();
-
-    int      nVertices, nIndices;
-    GLushort *i;
-    GLfloat  *v;
-    int      x1, y1, x2, y2;
     float    width, height;
     float    deformedX, deformedY;
     int      x, y, iw, ih, wx, wy;
-    int      vSize;
     int      gridW, gridH;
-    bool     rect = true;
-
-    unsigned int nMatrix = matrix.size ();
-
-    for (unsigned int it = 0; it < nMatrix; it++)
-    {
-	if (matrix[it].xy != 0.0f ||
-	    matrix[it].yx != 0.0f)
-	{
-	    rect = false;
-	    break;
-	}
-    }
-
+    int      nMatrix = matrix.size ();
+    BoxRec full;
+ 
+    full = clip.handle ()->extents;
+    if (region.handle ()->extents.x1 > full.x1)
+	full.x1 = region.handle ()->extents.x1;
+    if (region.handle ()->extents.y1 > full.y1)
+	full.y1 = region.handle ()->extents.y1;
+    if (region.handle ()->extents.x2 < full.x2)
+	full.x2 = region.handle ()->extents.x2;
+    if (region.handle ()->extents.y2 < full.y2)
+	full.y2 = region.handle ()->extents.y2;
+ 
     CompRect outRect (window->outputRect ());
     wx     = outRect.x ();
     wy     = outRect.y ();
@@ -1598,113 +1725,152 @@ WobblyWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
     if (gridH > (int) maxGridHeight)
 	gridH = (int) maxGridHeight;
 
-    geom.texUnits = (int) nMatrix;
-
-    vSize = 3 + (int) nMatrix * 2;
-
-    nVertices = geom.vCount;
-    nIndices  = geom.indexCount;
-
-    v = geom.vertices + (nVertices * vSize);
-    i = geom.indices  + nIndices;
-
-    foreach (const CompRect &pClip, region.rects ())
+    if (full.x1 < full.x2 && full.y1 < full.y2)
     {
-	x1 = pClip.x1 ();
-	y1 = pClip.y1 ();
-	x2 = pClip.x2 ();
-	y2 = pClip.y2 ();
+	BoxPtr     pBox;
+	int        nBox;
+	BoxPtr     pClip;
+	int        nClip;
+	BoxRec     cbox;
+	int        n, x1, y1, x2, y2;
+	bool       rect = true;
 
-	iw = ((x2 - x1 - 1) / gridW) + 1;
-	ih = ((y2 - y1 - 1) / gridH) + 1;
-
-	// Allocate indices
-	int newIndexSize = nIndices + (iw * ih * 4);
-	if (newIndexSize > geom.indexSize)
-	{
-	    if (!geom.moreIndices (newIndexSize))
-		return;
-
-	    i = geom.indices + nIndices;
-	}
-
-	iw++;
-	ih++;
-
-	for (y = 0; y < ih - 1; y++)
-	{
-	    for (x = 0; x < iw - 1; x++)
-	    {
-		*i++ = nVertices + iw * (y + 1) + x;
-		*i++ = nVertices + iw * (y + 1) + x + 1;
-		*i++ = nVertices + iw * y + x + 1;
-		*i++ = nVertices + iw * y + x;
-
-		nIndices += 4;
-	    }
-	}
-
-	// Allocate vertices
-	int newVertexSize = (nVertices + iw * ih) * vSize;
-	if (newVertexSize > geom.vertexSize)
-	{
-	    if (!geom.moreVertices (newVertexSize))
-		return;
-
-	    v = geom.vertices + (nVertices * vSize);
-	}
-
-	for (y = y1;; y += gridH)
-	{
-	    if (y > y2)
-		y = y2;
-
-	    for (x = x1;; x += gridW)
-	    {
-		if (x > x2)
-		    x = x2;
-
-		model->bezierPatchEvaluate ((x - wx) / width,
-						(y - wy) / height,
-						&deformedX,
-						&deformedY);
-
-		if (rect)
-		{
-		    for (unsigned int it = 0; it < nMatrix; it++)
-		    {
-			*v++ = COMP_TEX_COORD_X (matrix[it], x);
-			*v++ = COMP_TEX_COORD_Y (matrix[it], y);
-		    }
-		}
-		else
-		{
-		    for (unsigned int it = 0; it < nMatrix; it++)
-		    {
-			*v++ = COMP_TEX_COORD_XY (matrix[it], x, y);
-			*v++ = COMP_TEX_COORD_YX (matrix[it], x, y);
-		    }
-		}
-
-		*v++ = deformedX;
-		*v++ = deformedY;
-		*v++ = 0.0;
-
-		nVertices++;
-
-		if (x == x2)
-		    break;
-	    }
-
-	    if (y == y2)
+	for (int it = 0; it < nMatrix; it++)
+ 	{
+	    if (matrix[it].xy != 0.0f ||
+		matrix[it].yx != 0.0f)
+ 	    {
+		rect = false;
 		break;
-	}
-    }
+ 	    }
+ 	}
 
-    geom.vCount	  = nVertices;
-    geom.vertexStride = vSize;
-    geom.texCoordSize = 2;
-    geom.indexCount   = nIndices;
+	pBox = const_cast <Region> (region.handle ())->rects;
+	nBox = const_cast <Region> (region.handle ())->numRects;
+
+	while (nBox--)
+ 	{
+	    x1 = pBox->x1;
+	    y1 = pBox->y1;
+	    x2 = pBox->x2;
+	    y2 = pBox->y2;
+
+	    pBox++;
+
+	    if (x1 < full.x1)
+		x1 = full.x1;
+	    if (y1 < full.y1)
+		y1 = full.y1;
+	    if (x2 > full.x2)
+		x2 = full.x2;
+	    if (y2 > full.y2)
+		y2 = full.y2;
+
+	    if (x1 < x2 && y1 < y2)
+ 	    {
+		nClip = const_cast <Region> (clip.handle ())->numRects;
+		pClip = const_cast <Region> (clip.handle ())->rects;
+
+		while (nClip--)
+ 		{
+		    cbox = *pClip;
+		    GLVector*** grid;
+		    int i = 0;
+		    int j = 0;
+
+		    pClip++;
+
+		    if (nClip > 1)
+ 		    {
+			if (cbox.x1 < x1)
+			    x1 = cbox.x1;
+			if (cbox.y1 < y1)
+			    y1 = cbox.y1;
+			if (cbox.x2 > x2)
+			    x2 = cbox.x2;
+			if (cbox.y2 > y2)
+			    y2 = cbox.y2;
+ 		    }
+
+		    if (x1 < x2 && y1 < y2)
+ 		    {
+			// compute how many quads we'll get in both directions
+			iw = ((x2 - x1 - 1) / gridW) + 1;
+			ih = ((y2 - y1 - 1) / gridH) + 1;
+
+			// allocate our vertice grid
+			grid = new GLVector**[iw + 1];
+
+			// evaluate deformed coords.
+			for (x = x1, i = 0;; x += gridW)
+			{
+			    if (x > x2)
+				x = x2;
+
+			    grid [i] = new GLVector*[ih + 1];
+			    for (y = y1, j = 0;; y += gridH)
+			    {
+				if (y > y2)
+				    y = y2;
+ 
+				model->bezierPatchEvaluate (float(x - wx) / width,
+							    float(y - wy) / height,
+							    &deformedX,
+							    &deformedY);
+
+				grid[i][j] = new GLVector [2];
+				grid[i][j][0] = GLVector (deformedX,
+							  deformedY,
+							  0.0f);
+				grid[i][j][1] = GLVector ((float)x,
+							  (float)y,
+							  0.0f);
+
+				if (y == y2)
+				    break;
+
+				j++;
+			    }
+
+			    if (x == x2)
+				break;
+
+			    i++;
+			}
+
+// 			// render
+			for (j = 0; j < ih; j++)
+			{
+			    for (i = 0; i < iw; i++)
+			    {
+				addSingleQuad (gWindow->vertexBuffer (), matrix, nMatrix,
+						grid[i][j][0][0], grid[i][j][0][1],
+						grid[i+1][j+1][0][0], grid[i+1][j+1][0][1],
+						grid[i][j+1][0][0], grid[i][j+1][0][1],
+						grid[i+1][j][0][0], grid[i+1][j][0][1],
+						grid[i][j][1][0], grid[i][j][1][1],
+						grid[i+1][j+1][1][0], grid[i+1][j+1][1][1],
+						grid[i][j+1][1][0], grid[i][j+1][1][1],
+						grid[i+1][j][1][0], grid[i+1][j][1][1],
+						n, rect);
+			    }
+			}
+
+// 			// free our grid
+			for (i = 0; i < iw + 1; i++)
+			{       
+			    {
+				delete [] grid[i][j];
+			    }
+
+			    delete [] grid[i];
+			}
+			delete [] grid;
+		    }
+		}
+	    }
+ 	}
+    }
 }
 
 bool
@@ -1923,7 +2089,6 @@ WobblyWindow::enableWobbling (bool enabling)
 {
     gWindow->glPaintSetEnabled (this, enabling);
     gWindow->glAddGeometrySetEnabled (this, enabling);
-    gWindow->glDrawGeometrySetEnabled (this, enabling);
     cWindow->damageRectSetEnabled (this, enabling);
 }
 

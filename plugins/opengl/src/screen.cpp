@@ -1,4 +1,5 @@
 /*
+ * Copyright © 2011 Linaro Ltd.
  * Copyright © 2008 Dennis Kasprzyk
  * Copyright © 2007 Novell, Inc.
  *
@@ -23,7 +24,13 @@
  *
  * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
  *          David Reveman <davidr@novell.com>
+ *          Travis Watkins <travis.watkins@linaro.org>
  */
+
+#ifndef _GNU_SOURCE
+#define _GNU_SOURCE
+#endif
+#include <errno.h>
 
 #include "privates.h"
 
@@ -31,6 +38,17 @@
 #include <math.h>
 
 namespace GL {
+    #ifdef USE_GLES
+    EGLCreateImageKHRProc  createImage;
+    EGLDestroyImageKHRProc destroyImage;
+
+    GLEGLImageTargetTexture2DOESProc eglImageTargetTexture;
+
+    EGLPostSubBufferNVProc postSubBuffer = NULL;
+    #else
+
+    typedef int (*GLXSwapIntervalProc) (int interval);
+
     GLXBindTexImageProc      bindTexImage = NULL;
     GLXReleaseTexImageProc   releaseTexImage = NULL;
     GLXQueryDrawableProc     queryDrawable = NULL;
@@ -42,18 +60,17 @@ namespace GL {
     GLXGetFBConfigAttribProc getFBConfigAttrib = NULL;
     GLXCreatePixmapProc      createPixmap = NULL;
     GLXDestroyPixmapProc     destroyPixmap = NULL;
-
-    GLActiveTextureProc       activeTexture = NULL;
-    GLClientActiveTextureProc clientActiveTexture = NULL;
-    GLMultiTexCoord2fProc     multiTexCoord2f = NULL;
-
     GLGenProgramsProc	     genPrograms = NULL;
     GLDeleteProgramsProc     deletePrograms = NULL;
     GLBindProgramProc	     bindProgram = NULL;
     GLProgramStringProc	     programString = NULL;
     GLProgramParameter4fProc programEnvParameter4f = NULL;
     GLProgramParameter4fProc programLocalParameter4f = NULL;
-    GLGetProgramivProc       getProgramiv = NULL;
+    #endif
+
+    GLActiveTextureProc       activeTexture = NULL;
+    GLClientActiveTextureProc clientActiveTexture = NULL;
+    GLMultiTexCoord2fProc     multiTexCoord2f = NULL;
 
     GLGenFramebuffersProc        genFramebuffers = NULL;
     GLDeleteFramebuffersProc     deleteFramebuffers = NULL;
@@ -62,16 +79,54 @@ namespace GL {
     GLFramebufferTexture2DProc   framebufferTexture2D = NULL;
     GLGenerateMipmapProc         generateMipmap = NULL;
 
+    GLBindBufferProc    bindBuffer = NULL;
+    GLDeleteBuffersProc deleteBuffers = NULL;
+    GLGenBuffersProc    genBuffers = NULL;
+    GLBufferDataProc    bufferData = NULL;
+    GLBufferSubDataProc bufferSubData = NULL;
+
+    GLGetShaderivProc        getShaderiv = NULL;
+    GLGetShaderInfoLogProc   getShaderInfoLog = NULL;
+    GLGetProgramivProc       getProgramiv = NULL;
+    GLGetProgramInfoLogProc  getProgramInfoLog = NULL;
+    GLCreateShaderProc       createShader = NULL;
+    GLShaderSourceProc       shaderSource = NULL;
+    GLCompileShaderProc      compileShader = NULL;
+    GLCreateProgramProc      createProgram = NULL;
+    GLAttachShaderProc       attachShader = NULL;
+    GLLinkProgramProc        linkProgram = NULL;
+    GLValidateProgramProc    validateProgram = NULL;
+    GLDeleteShaderProc       deleteShader = NULL;
+    GLDeleteProgramProc      deleteProgram = NULL;
+    GLUseProgramProc         useProgram = NULL;
+    GLGetUniformLocationProc getUniformLocation = NULL;
+    GLUniform1fProc          uniform1f = NULL;
+    GLUniform1iProc          uniform1i = NULL;
+    GLUniform2fProc          uniform2f = NULL;
+    GLUniform2iProc          uniform2i = NULL;
+    GLUniform3fProc          uniform3f = NULL;
+    GLUniform3iProc          uniform3i = NULL;
+    GLUniform4fProc          uniform4f = NULL;
+    GLUniform4iProc          uniform4i = NULL;
+    GLUniformMatrix4fvProc   uniformMatrix4fv = NULL;
+    GLGetAttribLocationProc  getAttribLocation = NULL;
+
+    GLEnableVertexAttribArrayProc  enableVertexAttribArray = NULL;
+    GLDisableVertexAttribArrayProc disableVertexAttribArray = NULL;
+    GLVertexAttribPointerProc      vertexAttribPointer = NULL;
+
     bool  textureFromPixmap = true;
     bool  textureRectangle = false;
     bool  textureNonPowerOfTwo = false;
+    bool  textureNonPowerOfTwoMipmap = false;
     bool  textureEnvCombine = false;
     bool  textureEnvCrossbar = false;
     bool  textureBorderClamp = false;
     bool  textureCompression = false;
     GLint maxTextureSize = 0;
     bool  fbo = false;
-    bool  fragmentProgram = false;
+    bool  vbo = false;
+    bool  shaders = false;
     GLint maxTextureUnits = 1;
 
     bool canDoSaturated = false;
@@ -83,9 +138,234 @@ namespace GL {
 
 CompOutput *targetOutput = NULL;
 
+/**
+ * Callback object to create GLPrograms automatically when using GLVertexBuffer.
+ */
+class GLScreenAutoProgram : public GLVertexBuffer::AutoProgram
+{
+public:
+    GLScreenAutoProgram (GLScreen *gScreen) : gScreen(gScreen) {}
+
+    GLProgram *getProgram (GLShaderParameters &params)
+    {
+        const GLShaderData *shaderData = gScreen->getShaderData (params);
+        std::list<const GLShaderData *> tempShaders;
+        tempShaders.push_back (shaderData);
+        return gScreen->getProgram (tempShaders);
+    }
+
+    GLScreen *gScreen;
+};
+
 bool
 GLScreen::glInitContext (XVisualInfo *visinfo)
 {
+    #ifdef USE_GLES
+    Display             *xdpy;
+    Window               overlay;
+    EGLDisplay           dpy;
+    EGLConfig            config;
+    EGLint               major, minor;
+    const char		*eglExtensions, *glExtensions;
+    XWindowAttributes    attr;
+    EGLint               count, visualid;
+    EGLConfig            configs[1024];
+    CompOption::Vector   o (0);
+
+    const EGLint config_attribs[] = {
+	EGL_SURFACE_TYPE,         EGL_WINDOW_BIT,
+	EGL_RED_SIZE,             1,
+	EGL_GREEN_SIZE,           1,
+	EGL_BLUE_SIZE,            1,
+	EGL_ALPHA_SIZE,           0,
+	EGL_RENDERABLE_TYPE,      EGL_OPENGL_ES2_BIT,
+	EGL_CONFIG_CAVEAT,        EGL_NONE,
+	EGL_NONE,
+    };
+
+    const EGLint context_attribs[] = {
+        EGL_CONTEXT_CLIENT_VERSION, 2,
+        EGL_NONE
+    };
+
+    xdpy = screen->dpy ();
+    dpy = eglGetDisplay ((EGLNativeDisplayType)xdpy);
+    if (!eglInitialize (dpy, &major, &minor))
+    {
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    eglBindAPI (EGL_OPENGL_ES_API);
+
+    if (!eglChooseConfig (dpy, config_attribs, configs, 1024, &count))
+    {
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    if (!XGetWindowAttributes (xdpy, screen->root (), &attr))
+    {
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    visualid = XVisualIDFromVisual (attr.visual);
+    config = configs[0];
+    for (int i = 0; i < count; i++) {
+        EGLint val;
+        eglGetConfigAttrib (dpy, configs[i], EGL_NATIVE_VISUAL_ID, &val);
+        if (visualid == val) {
+            config = configs[i];
+            break;
+        }
+    }
+
+    overlay = CompositeScreen::get (screen)->overlay ();
+    priv->surface = eglCreateWindowSurface (dpy, config, overlay, 0);
+    if (priv->surface == EGL_NO_SURFACE)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+	                "eglCreateWindowSurface failed");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    // Currently we rely unconditionally on preserving the buffer contents.
+    eglSurfaceAttrib (dpy, priv->surface, EGL_SWAP_BEHAVIOR, EGL_BUFFER_PRESERVED);
+
+    priv->ctx = eglCreateContext (dpy, config, EGL_NO_CONTEXT, context_attribs);
+    if (priv->ctx == EGL_NO_CONTEXT)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal, "eglCreateContext failed");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    if (!eglMakeCurrent (dpy, priv->surface, priv->surface, priv->ctx))
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+	                "eglMakeCurrent failed");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    eglExtensions = (const char *) eglQueryString (dpy, EGL_EXTENSIONS);
+    glExtensions = (const char *) glGetString (GL_EXTENSIONS);
+
+    if (!glExtensions || !eglExtensions)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"No valid GL extensions string found.");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+    GL::textureFromPixmap = true;
+    GL::textureNonPowerOfTwo = true;
+    GL::fbo = true;
+    GL::vbo = true;
+    GL::shaders = true;
+    GL::maxTextureUnits = 4;
+    glGetIntegerv (GL_MAX_TEXTURE_SIZE, &GL::maxTextureSize);
+
+    GL::createImage = (GL::EGLCreateImageKHRProc)
+	eglGetProcAddress ("eglCreateImageKHR");
+    GL::destroyImage = (GL::EGLDestroyImageKHRProc)
+	eglGetProcAddress ("eglDestroyImageKHR");
+    GL::eglImageTargetTexture = (GL::GLEGLImageTargetTexture2DOESProc)
+	eglGetProcAddress ("glEGLImageTargetTexture2DOES");
+
+    if (!strstr (eglExtensions, "EGL_KHR_image_pixmap") ||
+        !strstr (glExtensions, "GL_OES_EGL_image") ||
+	!GL::createImage || !GL::destroyImage || !GL::eglImageTargetTexture)
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"GL_OES_EGL_image is missing");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+
+// work around efika supporting GL_BGRA directly instead of via this extension
+#ifndef GL_BGRA
+    if (!strstr (glExtensions, "GL_EXT_texture_format_BGRA8888"))
+    {
+	compLogMessage ("opengl", CompLogLevelFatal,
+			"GL_EXT_texture_format_BGRA8888 is missing");
+	screen->handleCompizEvent ("opengl", "fatal_fallback", o);
+	return false;
+    }
+#endif
+
+    if (strstr (glExtensions, "GL_OES_texture_npot"))
+	GL::textureNonPowerOfTwoMipmap = true;
+
+    if (strstr (eglExtensions, "EGL_NV_post_sub_buffer"))
+	GL::postSubBuffer = (GL::EGLPostSubBufferNVProc)
+	    eglGetProcAddress ("eglPostSubBufferNV");
+
+    GL::activeTexture = glActiveTexture;
+    GL::genFramebuffers = glGenFramebuffers;
+    GL::deleteFramebuffers = glDeleteFramebuffers;
+    GL::bindFramebuffer = glBindFramebuffer;
+    GL::checkFramebufferStatus = glCheckFramebufferStatus;
+    GL::framebufferTexture2D = glFramebufferTexture2D;
+    GL::generateMipmap = glGenerateMipmap;
+
+    GL::bindBuffer = glBindBuffer;
+    GL::deleteBuffers = glDeleteBuffers;
+    GL::genBuffers = glGenBuffers;
+    GL::bufferData = glBufferData;
+    GL::bufferSubData = glBufferSubData;
+
+    GL::getShaderiv = glGetShaderiv;
+    GL::getShaderInfoLog = glGetShaderInfoLog;
+    GL::getProgramiv = glGetProgramiv;
+    GL::getProgramInfoLog = glGetProgramInfoLog;
+    GL::createShader = glCreateShader;
+    GL::shaderSource = glShaderSource;
+    GL::compileShader = glCompileShader;
+    GL::createProgram = glCreateProgram;
+    GL::attachShader = glAttachShader;
+    GL::linkProgram = glLinkProgram;
+    GL::validateProgram = glValidateProgram;
+    GL::deleteShader = glDeleteShader;
+    GL::deleteProgram = glDeleteProgram;
+    GL::useProgram = glUseProgram;
+    GL::getUniformLocation = glGetUniformLocation;
+    GL::uniform1f = glUniform1f;
+    GL::uniform1i = glUniform1i;
+    GL::uniform2f = glUniform2f;
+    GL::uniform2i = glUniform2i;
+    GL::uniform3f = glUniform3f;
+    GL::uniform3i = glUniform3i;
+    GL::uniform4f = glUniform4f;
+    GL::uniform4i = glUniform4i;
+    GL::uniformMatrix4fv = glUniformMatrix4fv;
+    GL::getAttribLocation = glGetAttribLocation;
+
+    GL::enableVertexAttribArray = glEnableVertexAttribArray;
+    GL::disableVertexAttribArray = glDisableVertexAttribArray;
+    GL::vertexAttribPointer = glVertexAttribPointer;
+
+    glClearColor (0.0, 0.0, 0.0, 1.0);
+    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+    glEnable (GL_BLEND);
+    glEnable (GL_CULL_FACE);
+
+    priv->updateView ();
+
+    priv->lighting = false;
+
+    priv->filter[NOTHING_TRANS_FILTER] = GLTexture::Fast;
+    priv->filter[SCREEN_TRANS_FILTER]  = GLTexture::Good;
+    priv->filter[WINDOW_TRANS_FILTER]  = GLTexture::Good;
+
+    if (GL::textureFromPixmap)
+	registerBindPixmap (EglTexture::bindPixmapToTexture);
+
+    #else
+
     Display		 *dpy = screen->dpy ();
     const char		 *glExtensions;
     GLfloat		 globalAmbient[]  = { 0.1f, 0.1f,  0.1f, 0.1f };
@@ -145,6 +425,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     if (strstr (glExtensions, "GL_ARB_texture_non_power_of_two"))
 	GL::textureNonPowerOfTwo = true;
+    GL::textureNonPowerOfTwoMipmap = GL::textureNonPowerOfTwo;
 
     glGetIntegerv (GL_MAX_TEXTURE_SIZE, &GL::maxTextureSize);
 
@@ -201,33 +482,6 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    glGetIntegerv (GL_MAX_TEXTURE_UNITS_ARB, &GL::maxTextureUnits);
     }
 
-    if (strstr (glExtensions, "GL_ARB_fragment_program"))
-    {
-	GL::genPrograms = (GL::GLGenProgramsProc)
-	    getProcAddress ("glGenProgramsARB");
-	GL::deletePrograms = (GL::GLDeleteProgramsProc)
-	    getProcAddress ("glDeleteProgramsARB");
-	GL::bindProgram = (GL::GLBindProgramProc)
-	    getProcAddress ("glBindProgramARB");
-	GL::programString = (GL::GLProgramStringProc)
-	    getProcAddress ("glProgramStringARB");
-	GL::programEnvParameter4f = (GL::GLProgramParameter4fProc)
-	    getProcAddress ("glProgramEnvParameter4fARB");
-	GL::programLocalParameter4f = (GL::GLProgramParameter4fProc)
-	    getProcAddress ("glProgramLocalParameter4fARB");
-	GL::getProgramiv = (GL::GLGetProgramivProc)
-	    getProcAddress ("glGetProgramivARB");
-
-	if (GL::genPrograms             &&
-	    GL::deletePrograms          &&
-	    GL::bindProgram             &&
-	    GL::programString           &&
-	    GL::programEnvParameter4f   &&
-	    GL::programLocalParameter4f &&
-	    GL::getProgramiv)
-	    GL::fragmentProgram = true;
-    }
-
     if (strstr (glExtensions, "GL_EXT_framebuffer_object"))
     {
 	GL::genFramebuffers = (GL::GLGenFramebuffersProc)
@@ -250,6 +504,63 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	    GL::framebufferTexture2D   &&
 	    GL::generateMipmap)
 	    GL::fbo = true;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_vertex_buffer_object"))
+    {
+	GL::bindBuffer = (GL::GLBindBufferProc)
+	    getProcAddress ("glBindBufferARB");
+	GL::deleteBuffers = (GL::GLDeleteBuffersProc)
+	    getProcAddress ("glDeleteBuffersARB");
+	GL::genBuffers = (GL::GLGenBuffersProc)
+	    getProcAddress ("glGenBuffersARB");
+	GL::bufferData = (GL::GLBufferDataProc)
+	    getProcAddress ("glBufferDataARB");
+	GL::bufferSubData = (GL::GLBufferSubDataProc)
+	    getProcAddress ("glBufferSubDataARB");
+
+	if (GL::bindBuffer    &&
+	    GL::deleteBuffers &&
+	    GL::genBuffers    &&
+	    GL::bufferData    &&
+	    GL::bufferSubData)
+	    GL::vbo = true;
+    }
+
+    if (strstr (glExtensions, "GL_ARB_fragment_shader") &&
+        strstr (glExtensions, "GL_ARB_vertex_shader"))
+    {
+	GL::getShaderiv = (GL::GLGetShaderivProc) getProcAddress ("glGetShaderiv");
+	GL::getShaderInfoLog = (GL::GLGetShaderInfoLogProc) getProcAddress ("glGetShaderInfoLog");
+	GL::getProgramiv = (GL::GLGetProgramivProc) getProcAddress ("glGetProgramiv");
+	GL::getProgramInfoLog = (GL::GLGetProgramInfoLogProc) getProcAddress ("glGetProgramInfoLog");
+	GL::createShader = (GL::GLCreateShaderProc) getProcAddress ("glCreateShader");
+	GL::shaderSource = (GL::GLShaderSourceProc) getProcAddress ("glShaderSource");
+	GL::compileShader = (GL::GLCompileShaderProc) getProcAddress ("glCompileShader");
+	GL::createProgram = (GL::GLCreateProgramProc) getProcAddress ("glCreateProgram");
+	GL::attachShader = (GL::GLAttachShaderProc) getProcAddress ("glAttachShader");
+	GL::linkProgram = (GL::GLLinkProgramProc) getProcAddress ("glLinkProgram");
+	GL::validateProgram = (GL::GLValidateProgramProc) getProcAddress ("glValidateProgram");
+	GL::deleteShader = (GL::GLDeleteShaderProc) getProcAddress ("glDeleteShader");
+	GL::deleteProgram = (GL::GLDeleteProgramProc) getProcAddress ("glDeleteProgram");
+	GL::useProgram = (GL::GLUseProgramProc) getProcAddress ("glUseProgram");
+	GL::getUniformLocation = (GL::GLGetUniformLocationProc) getProcAddress ("glGetUniformLocation");
+	GL::uniform1f = (GL::GLUniform1fProc) getProcAddress ("glUniform1f");
+	GL::uniform1i = (GL::GLUniform1iProc) getProcAddress ("glUniform1i");
+	GL::uniform2f = (GL::GLUniform2fProc) getProcAddress ("glUniform2f");
+	GL::uniform2i = (GL::GLUniform2iProc) getProcAddress ("glUniform2i");
+	GL::uniform3f = (GL::GLUniform3fProc) getProcAddress ("glUniform3f");
+	GL::uniform3i = (GL::GLUniform3iProc) getProcAddress ("glUniform3i");
+	GL::uniform4f = (GL::GLUniform4fProc) getProcAddress ("glUniform4f");
+	GL::uniform4i = (GL::GLUniform4iProc) getProcAddress ("glUniform4i");
+	GL::uniformMatrix4fv = (GL::GLUniformMatrix4fvProc) getProcAddress ("glUniformMatrix4fv");
+	GL::getAttribLocation = (GL::GLGetAttribLocationProc) getProcAddress ("glGetAttribLocation");
+
+	GL::enableVertexAttribArray = (GL::GLEnableVertexAttribArrayProc) getProcAddress ("glEnableVertexAttribArray");
+	GL::disableVertexAttribArray = (GL::GLDisableVertexAttribArrayProc) getProcAddress ("glDisableVertexAttribArray");
+	GL::vertexAttribPointer = (GL::GLVertexAttribPointerProc) getProcAddress ("glVertexAttribPointer");
+
+	GL::shaders = true;
     }
 
     if (strstr (glExtensions, "GL_ARB_texture_compression"))
@@ -293,6 +604,12 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 
     if (GL::textureFromPixmap)
 	registerBindPixmap (TfpTexture::bindPixmapToTexture);
+#endif
+
+    priv->scratchFbo = new GLFramebufferObject;
+    priv->scratchFbo->allocate (*screen, NULL, GL_BGRA);
+
+    GLVertexBuffer::streamingBuffer ()->setAutoProgram (priv->autoProgram);
 
     return true;
 }
@@ -302,9 +619,10 @@ GLScreen::GLScreen (CompScreen *s) :
     PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI> (s),
     priv (new PrivateGLScreen (this))
 {
+    XVisualInfo		 *visinfo = NULL;
+#ifndef USE_GLES
     Display		 *dpy = s->dpy ();
     XVisualInfo		 templ;
-    XVisualInfo		 *visinfo;
     GLXFBConfig		 *fbConfigs;
     int			 defaultDepth, nvisinfo, nElements, value, i;
     const char		 *glxExtensions;
@@ -553,6 +871,7 @@ GLScreen::GLScreen (CompScreen *s) :
 	setFailed ();
     }
 
+#endif
     if (!glInitContext (visinfo))
 	setFailed ();
 }
@@ -561,7 +880,22 @@ GLScreen::~GLScreen ()
 {
     if (priv->hasCompositing)
 	CompositeScreen::get (screen)->unregisterPaintHandler ();
+
+    #ifdef USE_GLES
+    Display *xdpy = screen->dpy ();
+    EGLDisplay dpy = eglGetDisplay (xdpy);
+
+    eglMakeCurrent (dpy, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+    eglDestroyContext (dpy, priv->ctx);
+    eglDestroySurface (dpy, priv->surface);
+    eglTerminate (dpy);
+    eglReleaseThread ();
+    #else
+
     glXDestroyContext (screen->dpy (), priv->ctx);
+    #endif
+
+    delete priv->scratchFbo;
     delete priv;
 }
 
@@ -572,13 +906,20 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     backgroundTextures (),
     backgroundLoaded (false),
     rasterPos (0, 0),
-    fragmentStorage (),
+    projection (NULL),
     clearBuffers (true),
     lighting (false),
+    #ifndef USE_GLES
     getProcAddress (0),
+    #endif
+    scratchFbo (NULL),
     outputRegion (),
+    lastMask (0),
     bindPixmap (),
     hasCompositing (false),
+    programCache (new GLProgramCache (30)),
+    shaderCache (),
+    autoProgram (new GLScreenAutoProgram(gs)),
     rootPixmapCopy (None),
     rootPixmapSize ()
 {
@@ -587,6 +928,8 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
 
 PrivateGLScreen::~PrivateGLScreen ()
 {
+    delete programCache;
+    delete autoProgram;
     if (rootPixmapCopy)
 	XFreePixmap (screen->dpy (), rootPixmapCopy);
 
@@ -648,8 +991,13 @@ PrivateGLScreen::handleEvent (XEvent *event)
 	    {
 		XDamageNotifyEvent *de = (XDamageNotifyEvent *) event;
 
+		#ifdef USE_GLES
+		std::map<Damage, EglTexture*>::iterator it =
+		    boundPixmapTex.find (de->damage);
+		#else
 		std::map<Damage, TfpTexture*>::iterator it =
 		    boundPixmapTex.find (de->damage);
+		#endif
 		if (it != boundPixmapTex.end ())
 		{
 		    it->second->damaged = true;
@@ -721,22 +1069,32 @@ perspective (GLfloat *m,
 void
 PrivateGLScreen::updateView ()
 {
+    GLfloat projection_array[16];
+
+    #ifndef USE_GLES
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
     glMatrixMode (GL_MODELVIEW);
     glLoadIdentity ();
     glDepthRange (0, 1);
-    glViewport (-1, -1, 2, 2);
     glRasterPos2f (0, 0);
+    #endif
+    glViewport (-1, -1, 2, 2);
 
     rasterPos = CompPoint (0, 0);
 
-    perspective (projection, 60.0f, 1.0f, 0.1f, 100.0f);
+    perspective (projection_array, 60.0f, 1.0f, 0.1f, 100.0f);
 
+    if (projection != NULL)
+	delete projection;
+    projection = new GLMatrix (projection_array);
+
+    #ifndef USE_GLES
     glMatrixMode (GL_PROJECTION);
     glLoadIdentity ();
-    glMultMatrixf (projection);
+    glMultMatrixf (projection_array);
     glMatrixMode (GL_MODELVIEW);
+    #endif
 
     CompRegion region (screen->region ());
     /* remove all output regions from visible screen region */
@@ -755,9 +1113,11 @@ PrivateGLScreen::outputChangeNotify ()
 {
     screen->outputChangeNotify ();
 
+    scratchFbo->allocate (*screen, NULL, GL_BGRA);
     updateView ();
 }
 
+#ifndef USE_GLES
 GL::FuncPtr
 GLScreen::getProcAddress (const char *name)
 {
@@ -783,6 +1143,7 @@ GLScreen::getProcAddress (const char *name)
 
     return funcPtr;
 }
+#endif
 
 void
 PrivateGLScreen::updateScreenBackground ()
@@ -900,32 +1261,23 @@ PrivateGLScreen::updateScreenBackground ()
 
 	XFreeGC(dpy, gc);
     }
-
-    if (!backgroundTextures.empty ())
-    {
-	foreach (GLTexture *t, backgroundTextures)
-	    if (t->target () == GL_TEXTURE_2D)
-	    {
-		glBindTexture (t->target (), t->name ());
-		glTexParameteri (t->target (), GL_TEXTURE_WRAP_S, GL_REPEAT);
-		glTexParameteri (t->target (), GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glBindTexture (t->target (), 0);
-	    }
-    }
 }
 
 void
 GLScreen::setTexEnvMode (GLenum mode)
 {
+    #ifndef USE_GLES
     if (priv->lighting)
 	glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     else
 	glTexEnvi (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, mode);
+    #endif
 }
 
 void
 GLScreen::setLighting (bool lighting)
 {
+    #ifndef USE_GLES
     if (priv->lighting != lighting)
     {
 	if (!priv->optionGetLighting ())
@@ -946,6 +1298,7 @@ GLScreen::setLighting (bool lighting)
 
 	setTexEnvMode (GL_REPLACE);
     }
+    #endif
 }
 
 bool
@@ -981,6 +1334,25 @@ void
 GLScreenInterface::glDisableOutputClipping ()
     WRAPABLE_DEF (glDisableOutputClipping)
 
+GLMatrix *
+GLScreenInterface::projectionMatrix ()
+    WRAPABLE_DEF (projectionMatrix)
+
+void
+GLScreenInterface::glPaintCompositedOutput (const CompRegion    &region,
+					    GLFramebufferObject *fbo,
+					    unsigned int         mask)
+    WRAPABLE_DEF (glPaintCompositedOutput, region, fbo, mask)
+
+
+GLMatrix *
+GLScreen::projectionMatrix ()
+{
+    WRAPABLE_HND_FUNCTN_RETURN (GLMatrix *, projectionMatrix)
+
+    return priv->projection;
+}
+
 void
 GLScreen::updateBackground ()
 {
@@ -1011,17 +1383,13 @@ GLScreen::setFilter (int num, GLTexture::Filter filter)
     priv->filter[num] = filter;
 }
 
-GLFragment::Storage *
-GLScreen::fragmentStorage ()
-{
-    return &priv->fragmentStorage;
-}
-
+#ifndef USE_GLES
 GLFBConfig*
 GLScreen::glxPixmapFBConfig (unsigned int depth)
 {
     return &priv->glxPixmapFBConfigs[depth];
 }
+#endif
 
 void
 GLScreen::clearOutput (CompOutput   *output,
@@ -1034,16 +1402,13 @@ GLScreen::clearOutput (CompOutput   *output,
 	pBox->x2 != (int) screen->width () ||
 	pBox->y2 != (int) screen->height ())
     {
-	glPushAttrib (GL_SCISSOR_BIT);
-
 	glEnable (GL_SCISSOR_TEST);
 	glScissor (pBox->x1,
 		   screen->height () - pBox->y2,
 		   pBox->x2 - pBox->x1,
 		   pBox->y2 - pBox->y1);
 	glClear (mask);
-
-	glPopAttrib ();
+	glDisable (GL_SCISSOR_TEST);
     }
     else
     {
@@ -1066,12 +1431,33 @@ GLScreen::setDefaultViewport ()
 		priv->lastViewport.height);
 }
 
+#ifdef USE_GLES
+EGLContext
+GLScreen::getEGLContext ()
+{
+    return priv->ctx;
+}
+#endif
+
+GLProgram *
+GLScreen::getProgram (std::list<const GLShaderData*> shaders)
+{
+    return (*priv->programCache)(shaders);
+}
+
+const GLShaderData *
+GLScreen::getShaderData (GLShaderParameters &params)
+{
+    return &priv->shaderCache.getShaderData(params);
+}
+
 namespace GL
 {
 
 void
 waitForVideoSync ()
 {
+#ifndef USE_GLES
     GL::unthrottledFrames++;
     if (GL::waitVideoSync)
     {
@@ -1096,11 +1482,13 @@ waitForVideoSync ()
 	if (GL::vsyncCount != oldCount)
 	    GL::unthrottledFrames = 0;
     }
+#endif
 }
 
 void
 controlSwapVideoSync (bool sync)
 {
+#ifndef USE_GLES
     // Docs: http://www.opengl.org/registry/specs/SGI/swap_control.txt
     if (GL::swapInterval)
     {
@@ -1109,6 +1497,10 @@ controlSwapVideoSync (bool sync)
     }
     else if (sync)
 	waitForVideoSync ();
+#else
+    eglSwapInterval (eglGetDisplay (screen->dpy ()), sync ? 1 : 0);
+    GL::unthrottledFrames++;
+#endif
 }
 
 } // namespace GL
@@ -1126,6 +1518,35 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 			       const CompRegion    &region)
 {
     XRectangle r;
+
+    // Blending is disabled by default. Each operation/plugin
+    // should enable it (and reset it) as needed.
+    glDisable(GL_BLEND);
+
+    GLFramebufferObject *oldFbo = NULL;
+    bool useFbo = false;
+
+    oldFbo = scratchFbo->bind ();
+    useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
+    if (!useFbo) {
+printf ("bailing!");
+	GLFramebufferObject::rebind (oldFbo);
+    }
+
+    refreshSubBuffer = ((lastMask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
+                        !(mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
+                        (mask & COMPOSITE_SCREEN_DAMAGE_REGION_MASK));
+
+    if (refreshSubBuffer)
+    {
+	// FIXME: We shouldn't have to substract a 1X1 pixel region here !!
+	// This is an ugly workaround for what appears to be a bug in the SGX
+	// X11 driver (e.g. on Pandaboard OMAP4 platform).
+	// Posting a fullscreen damage region to the SGX seems to reset the
+	// framebuffer, causing the screen to blackout.
+	cScreen->damageRegion (CompRegion (screen->fullscreenOutput ()) -
+                               CompRegion (CompRect(0, 0, 1, 1)));
+    }
 
     if (clearBuffers)
     {
@@ -1153,7 +1574,11 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    lastViewport = r;
 	}
 
+#ifdef USE_GLES
+	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK || !GL::postSubBuffer)
+#else
 	if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+#endif
 	{
 	    GLMatrix identity;
 
@@ -1166,6 +1591,9 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	else if (mask & COMPOSITE_SCREEN_DAMAGE_REGION_MASK)
 	{
 	    GLMatrix identity;
+
+	    if (refreshSubBuffer)
+		tmpRegion = CompRegion (*output);
 
 	    outputRegion = tmpRegion & CompRegion (*output);
 
@@ -1182,22 +1610,43 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 					PAINT_SCREEN_FULL_MASK);
 
 		tmpRegion += *output;
-
 	    }
 	}
     }
 
     targetOutput = &screen->outputDevs ()[0];
 
-    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+    if (useFbo)
     {
+	GLFramebufferObject::rebind (oldFbo);
+
+	// FIXME: does not work if screen dimensions exceed max texture size
+	gScreen->glPaintCompositedOutput (tmpRegion, scratchFbo, mask);
+    }
+
+    glFlush ();
+
+#ifdef USE_GLES
+    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK || !GL::postSubBuffer)
+#else
+    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
+#endif
+     {
 	/*
 	 * controlSwapVideoSync is much faster than waitForVideoSync because
 	 * it won't block the CPU. The waiting is offloaded to the GPU.
 	 * Unfortunately it only works with glXSwapBuffers in most drivers.
 	 */
+	#ifdef USE_GLES
+	Display *xdpy = screen->dpy ();
+	GL::controlSwapVideoSync (optionGetSyncToVblank ());
+	eglSwapBuffers (eglGetDisplay (xdpy), surface);
+	eglWaitGL ();
+	XFlush (xdpy);
+	#else
 	GL::controlSwapVideoSync (optionGetSyncToVblank ());
 	glXSwapBuffers (screen->dpy (), cScreen->output ());
+	#endif
     }
     else
     {
@@ -1207,6 +1656,26 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 
 	waitForVideoSync ();
 
+	#ifdef USE_GLES
+	Display *xdpy = screen->dpy ();
+
+	GL::controlSwapVideoSync (optionGetSyncToVblank ());
+
+	while (nBox--)
+	{
+	    y = screen->height () - pBox->y2;
+
+	    (*GL::postSubBuffer) (eglGetDisplay (xdpy), surface,
+				  pBox->x1, y,
+				  pBox->x2 - pBox->x1,
+				  pBox->y2 - pBox->y1);
+	    pBox++;
+	}
+
+	eglWaitGL ();
+	XFlush (xdpy);
+
+	#else
 	if (GL::copySubBuffer)
 	{
 	    while (nBox--)
@@ -1253,14 +1722,21 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
 	    glDisable (GL_SCISSOR_TEST);
 	    glFlush ();
 	}
+	#endif
     }
+
+    lastMask = mask;
 }
 
 bool
 PrivateGLScreen::hasVSync ()
 {
+   #ifdef USE_GLES
+   return false;
+   #else
     return GL::waitVideoSync && optionGetSyncToVblank () && 
            GL::unthrottledFrames < 5;
+   #endif
 }
 
 bool
@@ -1299,6 +1775,12 @@ GLScreen::unregisterBindPixmap (GLTexture::BindPixmapHandle hnd)
     }
 }
 
+GLFramebufferObject *
+GLScreen::fbo ()
+{
+    return priv->scratchFbo;
+}
+
 GLTexture *
 GLScreen::defaultIcon ()
 {
@@ -1331,13 +1813,10 @@ GLScreen::defaultIcon ()
 void
 GLScreen::resetRasterPos ()
 {
+    #ifndef USE_GLES
     glRasterPos2f (0, 0);
+    #endif
     priv->rasterPos.setX (0);
     priv->rasterPos.setY (0);
 }
 
-const float *
-GLScreen::projectionMatrix ()
-{
-    return priv->projection;
-}

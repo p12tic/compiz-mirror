@@ -151,29 +151,30 @@ ObsWindow::glPaint (const GLWindowPaintAttrib& attrib,
 	 we wrap into glDrawWindow here */
 
 bool
-ObsWindow::glDraw (const GLMatrix&     transform,
-		   GLFragment::Attrib& attrib,
-		   const CompRegion&   region,
-		   unsigned int        mask)
+ObsWindow::glDraw (const GLMatrix            &transform,
+		   const GLWindowPaintAttrib &attrib,
+		   const CompRegion          &region,
+		   unsigned int              mask)
 {
+    GLWindowPaintAttrib wAttrib (attrib);
     int factor;
 
     factor = customFactor[MODIFIER_OPACITY];
     if (factor != 100)
     {
-	attrib.setOpacity (factor * attrib.getOpacity () / 100);
+	wAttrib.opacity = factor * wAttrib.opacity / 100;
 	mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
     }
 
     factor = customFactor[MODIFIER_BRIGHTNESS];
     if (factor != 100)
-	attrib.setBrightness (factor * attrib.getBrightness () / 100);
+	wAttrib.brightness = factor * wAttrib.brightness / 100;
 
     factor = customFactor[MODIFIER_SATURATION];
     if (factor != 100)
-	attrib.setSaturation (factor * attrib.getSaturation () / 100);
+	wAttrib.saturation = factor * wAttrib.saturation / 100;
 
-    return gWindow->glDraw (transform, attrib, region, mask);
+    return gWindow->glDraw (transform, wAttrib, region, mask);
 }
 
 void

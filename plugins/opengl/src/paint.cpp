@@ -1,5 +1,6 @@
 /*
  * Copyright © 2005 Novell, Inc.
+ * Copyright © 2011 Linaro, Ltd.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without
@@ -20,7 +21,8 @@
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Author: David Reveman <davidr@novell.com>
+ * Authors: David Reveman <davidr@novell.com>
+ *          Travis Watkins <travis.watkins@linaro.org>
  */
 
 #include "privates.h"
@@ -34,6 +36,8 @@
 #define foreach BOOST_FOREACH
 
 #include <opengl/opengl.h>
+
+#include "privates.h"
 
 #define DEG2RAD (M_PI / 180.0f)
 
@@ -64,14 +68,16 @@ GLScreen::glApplyTransform (const GLScreenPaintAttrib &sAttrib,
 }
 
 void
-PrivateGLScreen::paintBackground (const CompRegion &region,
-				  bool             transformed)
+PrivateGLScreen::paintBackground (const GLMatrix   &transform,
+                                  const CompRegion &region,
+                                  bool             transformed)
 {
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    GLfloat         vertexData[18];
+    GLushort        colorData[4];
+
     BoxPtr    pBox = const_cast <Region> (region.handle ())->rects;
     int	      n, nBox = const_cast <Region> (region.handle ())->numRects;
-    GLfloat   *d;
-
-    boost::scoped_array <GLfloat> data;
 
     if (!nBox)
 	return;
@@ -97,86 +103,111 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 
     if (backgroundTextures.empty ())
     {
-	data.reset (new GLfloat [nBox * 8]);
-
-	d = data.get ();
+	streamingBuffer->begin (GL_TRIANGLES);
 	n = nBox;
 
 	while (n--)
 	{
-	    *d++ = pBox->x1;
-	    *d++ = pBox->y2;
+	    vertexData[0]  = pBox->x1;
+	    vertexData[1]  = pBox->y1;
+	    vertexData[2]  = 0.0f;
+	    vertexData[3]  = pBox->x1;
+	    vertexData[4]  = pBox->y2;
+	    vertexData[5]  = 0.0f;
+	    vertexData[6]  = pBox->x2;
+	    vertexData[7]  = pBox->y1;
+	    vertexData[8]  = 0.0f;
+	    vertexData[9]  = pBox->x1;
+	    vertexData[10] = pBox->y2;
+	    vertexData[11] = 0.0f;
+	    vertexData[12] = pBox->x2;
+	    vertexData[13] = pBox->y2;
+	    vertexData[14] = 0.0f;
 
-	    *d++ = pBox->x2;
-	    *d++ = pBox->y2;
+	    vertexData[15] = pBox->x2;
+	    vertexData[16] = pBox->y1;
+	    vertexData[17] = 0.0f;
 
-	    *d++ = pBox->x2;
-	    *d++ = pBox->y1;
-
-	    *d++ = pBox->x1;
-	    *d++ = pBox->y1;
+	    streamingBuffer->addVertices (6, vertexData);
 
 	    pBox++;
 	}
 
-	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
+	colorData[0] = colorData[1] = colorData[2] = 0;
+	colorData[3] = std::numeric_limits <unsigned short>::max ();
+	streamingBuffer->addColors (1, colorData);
 
-	glVertexPointer (2, GL_FLOAT, sizeof (GLfloat) * 2, &data[0]);
-
-	glColor4us (0, 0, 0, std::numeric_limits<unsigned short>::max ());
-	glDrawArrays (GL_QUADS, 0, nBox * 4);
-	glColor4usv (defaultColor);
-
-	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
+	streamingBuffer->end ();
+	streamingBuffer->render (transform);
     }
     else
     {
-	data.reset (new GLfloat [nBox * 16]);
-
-	d = data.get ();
 	n = nBox;
 
 	for (unsigned int i = 0; i < backgroundTextures.size (); i++)
 	{
+	    GLfloat textureData[12];
 	    GLTexture *bg = backgroundTextures[i];
 	    CompRegion r = region & *bg;
 
 	    pBox = const_cast <Region> (r.handle ())->rects;
 	    nBox = const_cast <Region> (r.handle ())->numRects;
-	    d = data.get ();
 	    n = nBox;
+
+	    streamingBuffer->begin (GL_TRIANGLES);
 
 	    while (n--)
 	    {
-		*d++ = COMP_TEX_COORD_X (bg->matrix (), pBox->x1);
-		*d++ = COMP_TEX_COORD_Y (bg->matrix (), pBox->y2);
+		GLfloat tx1 = COMP_TEX_COORD_X (bg->matrix (), pBox->x1);
+		GLfloat tx2 = COMP_TEX_COORD_X (bg->matrix (), pBox->x2);
+		GLfloat ty1 = COMP_TEX_COORD_Y (bg->matrix (), pBox->y1);
+		GLfloat ty2 = COMP_TEX_COORD_Y (bg->matrix (), pBox->y2);
 
-		*d++ = pBox->x1;
-		*d++ = pBox->y2;
+		vertexData[0]  = pBox->x1;
+		vertexData[1]  = pBox->y1;
+		vertexData[2]  = 0.0f;
+		vertexData[3]  = pBox->x1;
+		vertexData[4]  = pBox->y2;
+		vertexData[5]  = 0.0f;
+		vertexData[6]  = pBox->x2;
+		vertexData[7]  = pBox->y1;
+		vertexData[8]  = 0.0f;
+		vertexData[9]  = pBox->x1;
+		vertexData[10] = pBox->y2;
+		vertexData[11] = 0.0f;
+		vertexData[12] = pBox->x2;
+		vertexData[13] = pBox->y2;
+		vertexData[14] = 0.0f;
 
-		*d++ = COMP_TEX_COORD_X (bg->matrix (), pBox->x2);
-		*d++ = COMP_TEX_COORD_Y (bg->matrix (), pBox->y2);
+		vertexData[15] = pBox->x2;
+		vertexData[16] = pBox->y1;
+		vertexData[17] = 0.0f;
 
-		*d++ = pBox->x2;
-		*d++ = pBox->y2;
+		textureData[0]  = tx1;
+		textureData[1]  = ty1;
 
-		*d++ = COMP_TEX_COORD_X (bg->matrix (), pBox->x2);
-		*d++ = COMP_TEX_COORD_Y (bg->matrix (), pBox->y1);
+		textureData[2]  = tx1;
+		textureData[3]  = ty2;
 
-		*d++ = pBox->x2;
-		*d++ = pBox->y1;
+		textureData[4]  = tx2;
+		textureData[5]  = ty1;
 
-		*d++ = COMP_TEX_COORD_X (bg->matrix (), pBox->x1);
-		*d++ = COMP_TEX_COORD_Y (bg->matrix (), pBox->y1);
+		textureData[6]  = tx1;
+		textureData[7]  = ty2;
 
-		*d++ = pBox->x1;
-		*d++ = pBox->y1;
+		textureData[8]  = tx2;
+		textureData[9]  = ty2;
+
+		textureData[10] = tx2;
+		textureData[11] = ty1;
+
+		streamingBuffer->addVertices (6, vertexData);
+		streamingBuffer->addTexCoords (0, 6, textureData);
 
 		pBox++;
 	    }
 
-	    glTexCoordPointer (2, GL_FLOAT, sizeof (GLfloat) * 4, &data[0]);
-	    glVertexPointer (2, GL_FLOAT, sizeof (GLfloat) * 4, &data[2]);
+	    streamingBuffer->end ();
 
 	    if (bg->name ())
 	    {
@@ -185,7 +216,7 @@ PrivateGLScreen::paintBackground (const CompRegion &region,
 		else
 		    bg->enable (GLTexture::Fast);
 
-		glDrawArrays (GL_QUADS, 0, nBox * 4);
+		streamingBuffer->render (transform);
 
 		bg->disable ();
 	    }
@@ -329,7 +360,9 @@ PrivateGLScreen::paintOutputRegion (const GLMatrix   &transform,
 	CompositeWindow::get (fullscreenWindow)->unredirect ();
 
     if (!(mask & PAINT_SCREEN_NO_BACKGROUND_MASK))
-	paintBackground (tmpRegion, (mask & PAINT_SCREEN_TRANSFORMED_MASK));
+	paintBackground (transform,
+	                 tmpRegion,
+	                 (mask & PAINT_SCREEN_TRANSFORMED_MASK));
 
     /* paint all windows from bottom to top */
     foreach (w, pl)
@@ -377,6 +410,7 @@ GLScreen::glEnableOutputClipping (const GLMatrix   &transform,
 {
     WRAPABLE_HND_FUNCTN (glEnableOutputClipping, transform, region, output)
 
+    #ifndef USE_GLES
     GLdouble h = screen->height ();
 
     GLdouble p1[2] = { static_cast<GLdouble> (region.handle ()->extents.x1),
@@ -409,6 +443,7 @@ GLScreen::glEnableOutputClipping (const GLMatrix   &transform,
     glEnable (GL_CLIP_PLANE3);
 
     glPopMatrix ();
+    #endif
 }
 
 void
@@ -416,10 +451,12 @@ GLScreen::glDisableOutputClipping ()
 {
     WRAPABLE_HND_FUNCTN (glDisableOutputClipping)
 
+    #ifndef USE_GLES
     glDisable (GL_CLIP_PLANE0);
     glDisable (GL_CLIP_PLANE1);
     glDisable (GL_CLIP_PLANE2);
     glDisable (GL_CLIP_PLANE3);
+    #endif
 }
 
 #define CLIP_PLANE_MASK (PAINT_SCREEN_TRANSFORMED_MASK | \
@@ -449,26 +486,14 @@ GLScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	glEnableOutputClipping (sTransform, region, output);
 
 	sTransform.toScreenSpace (output, -sAttrib.zTranslate);
-
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
 	priv->paintOutputRegion (sTransform, region, output, mask);
-
-	glPopMatrix ();
 
 	glDisableOutputClipping ();
     }
     else
     {
 	sTransform.toScreenSpace (output, -sAttrib.zTranslate);
-
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
 	priv->paintOutputRegion (sTransform, region, output, mask);
-
-	glPopMatrix ();
     }
 }
 
@@ -503,12 +528,7 @@ GLScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
 	priv->paintOutputRegion (sTransform, region, output, mask);
-
-	glPopMatrix ();
 
 	return true;
     }
@@ -525,182 +545,260 @@ GLScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
     }
 }
 
-#define ADD_RECT(data, m, n, x1, y1, x2, y2)	   \
-    for (it = 0; it < n; it++)			   \
-    {						   \
-        const GLTexture::Matrix &mat = m[it];	   \
-	*(data)++ = COMP_TEX_COORD_X (mat, x1);    \
-	*(data)++ = COMP_TEX_COORD_Y (mat, y1);    \
-    }						   \
-    *(data)++ = (x1);				   \
-    *(data)++ = (y1);				   \
-    *(data)++ = 0.0;				   \
-    for (it = 0; it < n; it++)			   \
-    {						   \
-        const GLTexture::Matrix &mat = m[it];	   \
-	*(data)++ = COMP_TEX_COORD_X (mat, x1);    \
-	*(data)++ = COMP_TEX_COORD_Y (mat, y2);    \
-    }						   \
-    *(data)++ = (x1);				   \
-    *(data)++ = (y2);				   \
-    *(data)++ = 0.0;				   \
-    for (it = 0; it < n; it++)			   \
-    {						   \
-        const GLTexture::Matrix &mat = m[it];	   \
-	*(data)++ = COMP_TEX_COORD_X (mat, x2);    \
-	*(data)++ = COMP_TEX_COORD_Y (mat, y2);    \
-    }						   \
-    *(data)++ = (x2);				   \
-    *(data)++ = (y2);				   \
-    *(data)++ = 0.0;				   \
-    for (it = 0; it < n; it++)			   \
-    {						   \
-        const GLTexture::Matrix &mat = m[it];	   \
-	*(data)++ = COMP_TEX_COORD_X (mat, x2);    \
-	*(data)++ = COMP_TEX_COORD_Y (mat, y1);    \
-    }						   \
-    *(data)++ = (x2);				   \
-    *(data)++ = (y1);				   \
-    *(data)++ = 0.0
-
-#define ADD_QUAD(data, m, n, x1, y1, x2, y2)		\
-    for (it = 0; it < n; it++)				\
-    {							\
-        const GLTexture::Matrix &mat = m[it];		\
-	*(data)++ = COMP_TEX_COORD_XY (mat, x1, y1);	\
-	*(data)++ = COMP_TEX_COORD_YX (mat, x1, y1);	\
-    }							\
-    *(data)++ = (x1);					\
-    *(data)++ = (y1);					\
-    *(data)++ = 0.0;					\
-    for (it = 0; it < n; it++)				\
-    {							\
-        const GLTexture::Matrix &mat = m[it];		\
-	*(data)++ = COMP_TEX_COORD_XY (mat, x1, y2);	\
-	*(data)++ = COMP_TEX_COORD_YX (mat, x1, y2);	\
-    }							\
-    *(data)++ = (x1);					\
-    *(data)++ = (y2);					\
-    *(data)++ = 0.0;					\
-    for (it = 0; it < n; it++)				\
-    {							\
-        const GLTexture::Matrix &mat = m[it];	        \
-	*(data)++ = COMP_TEX_COORD_XY (mat, x2, y2);	\
-	*(data)++ = COMP_TEX_COORD_YX (mat, x2, y2);	\
-    }							\
-    *(data)++ = (x2);					\
-    *(data)++ = (y2);					\
-    *(data)++ = 0.0;					\
-    for (it = 0; it < n; it++)				\
-    {							\
-        const GLTexture::Matrix &mat = m[it];	        \
-	*(data)++ = COMP_TEX_COORD_XY (mat, x2, y1);	\
-	*(data)++ = COMP_TEX_COORD_YX (mat, x2, y1);	\
-    }							\
-    *(data)++ = (x2);					\
-    *(data)++ = (y1);					\
-    *(data)++ = 0.0;
-
 void
-GLWindow::glDrawGeometry ()
+GLScreen::glPaintCompositedOutput (const CompRegion    &region,
+				   GLFramebufferObject *fbo,
+				   unsigned int         mask)
 {
-    WRAPABLE_HND_FUNCTN (glDrawGeometry)
+    WRAPABLE_HND_FUNCTN (glPaintCompositedOutput, region, fbo, mask)
 
-    int     texUnit = priv->geometry.texUnits;
-    int     currentTexUnit = 0;
-    int     stride = priv->geometry.vertexStride;
-    GLfloat *vertices = priv->geometry.vertices + (stride - 3);
+    GLMatrix sTransform;
+    std::vector<GLfloat> vertexData;
+    std::vector<GLfloat> textureData;
+    const GLTexture::Matrix & texmatrix = fbo->tex ()->matrix ();
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
-    stride *= sizeof (GLfloat);
+    streamingBuffer->begin (GL_TRIANGLES);
 
-    glVertexPointer (3, GL_FLOAT, stride, vertices);
-
-    while (texUnit--)
+    if (mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK)
     {
-	if (texUnit != currentTexUnit)
+	GLfloat tx1 = COMP_TEX_COORD_X (texmatrix, 0.0f);
+	GLfloat tx2 = COMP_TEX_COORD_X (texmatrix, screen->width ());
+	GLfloat ty1 = 1.0 - COMP_TEX_COORD_Y (texmatrix, 0.0f);
+	GLfloat ty2 = 1.0 - COMP_TEX_COORD_Y (texmatrix, screen->height ());
+
+	vertexData = {
+	    0.0f,                    0.0f,                     0.0f,
+	    0.0f,                    (float)screen->height (), 0.0f,
+	    (float)screen->width (), 0.0f,                     0.0f,
+
+	    0.0f,                    (float)screen->height (), 0.0f,
+	    (float)screen->width (), (float)screen->height (), 0.0f,
+	    (float)screen->width (), 0.0f,                     0.0f,
+	};
+
+	textureData = {
+	    tx1, ty1,
+	    tx1, ty2,
+	    tx2, ty1,
+	    tx1, ty2,
+	    tx2, ty2,
+	    tx2, ty1,
+	};
+
+	streamingBuffer->addVertices (6, &vertexData[0]);
+	streamingBuffer->addTexCoords (0, 6, &textureData[0]);
+    }
+    else
+    {
+	BoxPtr pBox = const_cast <Region> (region.handle ())->rects;
+	int nBox = const_cast <Region> (region.handle ())->numRects;
+
+	while (nBox--)
 	{
-	    (*GL::clientActiveTexture) (GL_TEXTURE0_ARB + texUnit);
-	    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-	    currentTexUnit = texUnit;
+	    GLfloat tx1 = COMP_TEX_COORD_X (texmatrix, pBox->x1);
+	    GLfloat tx2 = COMP_TEX_COORD_X (texmatrix, pBox->x2);
+	    GLfloat ty1 = 1.0 - COMP_TEX_COORD_Y (texmatrix, pBox->y1);
+	    GLfloat ty2 = 1.0 - COMP_TEX_COORD_Y (texmatrix, pBox->y2);
+
+	    vertexData = {
+		(float)pBox->x1, (float)pBox->y1, 0.0f,
+		(float)pBox->x1, (float)pBox->y2, 0.0f,
+		(float)pBox->x2, (float)pBox->y1, 0.0f,
+
+		(float)pBox->x1, (float)pBox->y2, 0.0f,
+		(float)pBox->x2, (float)pBox->y2, 0.0f,
+		(float)pBox->x2, (float)pBox->y1, 0.0f,
+	    };
+
+	    textureData = {
+		tx1, ty1,
+		tx1, ty2,
+		tx2, ty1,
+		tx1, ty2,
+		tx2, ty2,
+		tx2, ty1,
+	    };
+
+	    streamingBuffer->addVertices (6, &vertexData[0]);
+	    streamingBuffer->addTexCoords (0, 6, &textureData[0]);
+	    pBox++;
 	}
-	vertices -= priv->geometry.texCoordSize;
-	glTexCoordPointer (priv->geometry.texCoordSize,
-			   GL_FLOAT, stride, vertices);
     }
 
-    glDrawArrays (GL_QUADS, 0, priv->geometry.vCount);
-
-    /* disable all texture coordinate arrays except 0 */
-    texUnit = priv->geometry.texUnits;
-    if (texUnit > 1)
-    {
-	while (--texUnit)
-	{
-	    (*GL::clientActiveTexture) (GL_TEXTURE0_ARB + texUnit);
-	    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-	}
-
-	(*GL::clientActiveTexture) (GL_TEXTURE0_ARB);
-    }
+    streamingBuffer->end ();
+    fbo->tex ()-> enable (GLTexture::Fast);
+    sTransform.toScreenSpace (&screen->fullscreenOutput (), -DEFAULT_Z_CAMERA);
+    streamingBuffer->render (sTransform);
+    fbo->tex ()-> disable ();
 }
 
+#define ADD_RECT(vertexBuffer, m, n, x1, y1, x2, y2) \
+    GLfloat vertexData[18] = {                       \
+	(float)x1, (float)y1, 0.0,                   \
+	(float)x1, (float)y2, 0.0,                   \
+	(float)x2, (float)y1, 0.0,                   \
+	(float)x2, (float)y1, 0.0,                   \
+	(float)x1, (float)y2, 0.0,                   \
+	(float)x2, (float)y2, 0.0                    \
+    };                                               \
+    vertexBuffer->addVertices (6, vertexData);       \
+                                                     \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_X (mat, x1);        \
+	data[1] = COMP_TEX_COORD_Y (mat, y1);        \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_X (mat, x1);        \
+	data[1] = COMP_TEX_COORD_Y (mat, y2);        \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_X (mat, x2);        \
+	data[1] = COMP_TEX_COORD_Y (mat, y1);        \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_X (mat, x2);        \
+	data[1] = COMP_TEX_COORD_Y (mat, y1);        \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_X (mat, x1);        \
+	data[1] = COMP_TEX_COORD_Y (mat, y2);        \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_X (mat, x2);        \
+	data[1] = COMP_TEX_COORD_Y (mat, y2);        \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }
+
+#define ADD_QUAD(vertexBuffer, m, n, x1, y1, x2, y2) \
+    GLfloat vertexData[18] = {                       \
+	(float)x1, (float)y1, 0.0,                   \
+	(float)x1, (float)y2, 0.0,                   \
+	(float)x2, (float)y1, 0.0,                   \
+	(float)x2, (float)y1, 0.0,                   \
+	(float)x1, (float)y2, 0.0,                   \
+	(float)x2, (float)y2, 0.0                    \
+    };                                               \
+    vertexBuffer->addVertices (6, vertexData);       \
+                                                     \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_XY (mat, x1, y1);   \
+	data[1] = COMP_TEX_COORD_YX (mat, x1, y1);   \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_XY (mat, x1, y2);   \
+	data[1] = COMP_TEX_COORD_YX (mat, x1, y2);   \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_XY (mat, x2, y1);   \
+	data[1] = COMP_TEX_COORD_YX (mat, x2, y1);   \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_XY (mat, x2, y1);   \
+	data[1] = COMP_TEX_COORD_YX (mat, x2, y1);   \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_XY (mat, x1, y2);   \
+	data[1] = COMP_TEX_COORD_YX (mat, x1, y2);   \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }                                                \
+    for (it = 0; it < n; it++)                       \
+    {                                                \
+	GLfloat data[2];                             \
+	const GLTexture::Matrix &mat = m[it];        \
+	data[0] = COMP_TEX_COORD_XY (mat, x2, y2);   \
+	data[1] = COMP_TEX_COORD_YX (mat, x2, y2);   \
+	vertexBuffer->addTexCoords (it, 1, data);    \
+    }
+
+
 static inline void
-addSingleQuad (GLfloat      *&d,
-	       const        GLTexture::MatrixList &matrix,
-	       unsigned int nMatrix,
-	       int          x1,
-	       int          y1,
-	       int          x2,
-	       int          y2,
-	       int          &n,
-	       bool         rect)
+addSingleQuad (GLVertexBuffer *vertexBuffer,
+               const GLTexture::MatrixList &matrix,
+               unsigned int nMatrix,
+               int          x1,
+               int          y1,
+               int          x2,
+               int          y2,
+               int          &n,
+               bool         rect)
 {
     unsigned int it;
 
     if (rect)
     {
-	ADD_RECT (d, matrix, nMatrix, x1, y1, x2, y2);
+	ADD_RECT (vertexBuffer, matrix, nMatrix, x1, y1, x2, y2);
     }
     else
     {
-	ADD_QUAD (d, matrix, nMatrix, x1, y1, x2, y2);
+	ADD_QUAD (vertexBuffer, matrix, nMatrix, x1, y1, x2, y2);
     }
     n++;
 }
 
 static inline void
-addQuads (GLfloat      *&d,
-	  const        GLTexture::MatrixList &matrix,
-	  unsigned int nMatrix,
-	  int          x1,
-	  int          y1,
-	  int          x2,
-	  int          y2,
-	  int          &n,
-	  int          vSize,
-	  bool         rect,
-	  GLWindow::Geometry &geometry,
-	  unsigned int maxGridWidth,
-	  unsigned int maxGridHeight)
+addQuads (GLVertexBuffer *vertexBuffer,
+          const GLTexture::MatrixList &matrix,
+          unsigned int nMatrix,
+          int          x1,
+          int          y1,
+          int          x2,
+          int          y2,
+          int          &n,
+          bool         rect,
+          unsigned int maxGridWidth,
+          unsigned int maxGridHeight)
 {
     int nQuadsX = (maxGridWidth == MAXSHORT) ? 1 :
 	1 + (x2 - x1 - 1) / (int) maxGridWidth;  // ceil. division
     int nQuadsY = (maxGridHeight == MAXSHORT) ? 1 :
 	1 + (y2 - y1 - 1) / (int) maxGridHeight;
-    int newVertexSize = (n + nQuadsX * nQuadsY) * vSize * 4;
-
-    // Make sure enough vertices are allocated for nQuadsX * nQuadsY more quads
-    if (newVertexSize > geometry.vertexSize)
-    {
-	if (!geometry.moreVertices (newVertexSize))
-	    return;
-
-	d = geometry.vertices + (n * vSize * 4);
-    }
 
     if (nQuadsX == 1 && nQuadsY == 1)
     {
-	addSingleQuad (d, matrix, nMatrix, x1, y1, x2, y2, n, rect);
+	addSingleQuad (vertexBuffer, matrix, nMatrix, x1, y1, x2, y2, n, rect);
     }
     else
     {
@@ -716,7 +814,8 @@ addQuads (GLfloat      *&d,
 	    {
 		nx2 = MIN (nx1 + (int) quadWidth, x2);
 
-		addSingleQuad (d, matrix, nMatrix, nx1, ny1, nx2, ny2, n, rect);
+		addSingleQuad (vertexBuffer, matrix, nMatrix,
+		               nx1, ny1, nx2, ny2, n, rect);
 	    }
 	}
     }
@@ -733,8 +832,6 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
     BoxRec full;
     int    nMatrix = matrix.size ();
-
-    priv->geometry.texUnits = nMatrix;
 
     full = clip.handle ()->extents;
     if (region.handle ()->extents.x1 > full.x1)
@@ -753,9 +850,7 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 	BoxPtr  pClip;
 	int     nClip;
 	BoxRec  cbox;
-	int     vSize;
 	int     n, it, x1, y1, x2, y2;
-	GLfloat *d;
 	bool    rect = true;
 
 	for (it = 0; it < nMatrix; it++)
@@ -769,18 +864,6 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 	pBox = const_cast <Region> (region.handle ())->rects;
 	nBox = const_cast <Region> (region.handle ())->numRects;
-
-	vSize = 3 + nMatrix * 2;
-
-	n = priv->geometry.vCount / 4;
-
-	if ((n + nBox) * vSize * 4 > priv->geometry.vertexSize)
-	{
-	    if (!priv->geometry.moreVertices ((n + nBox) * vSize * 4))
-		return;
-	}
-
-	d = priv->geometry.vertices + (priv->geometry.vCount * vSize);
 
 	while (nBox--)
 	{
@@ -806,23 +889,14 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 		if (nClip == 1)
 		{
-		    addQuads (d, matrix, nMatrix,
+		    addQuads (priv->vertexBuffer, matrix, nMatrix,
 			      x1, y1, x2, y2,
-			      n, vSize, rect, priv->geometry,
+			      n, rect,
 			      maxGridWidth, maxGridHeight);
 		}
 		else
 		{
 		    pClip = const_cast <Region> (clip.handle ())->rects;
-
-		    if (((n + nClip) * vSize * 4) > priv->geometry.vertexSize)
-		    {
-			if (!priv->geometry.moreVertices ((n + nClip) *
-							  vSize * 4))
-			    return;
-
-			d = priv->geometry.vertices + (n * vSize * 4);
-		    }
 
 		    while (nClip--)
 		    {
@@ -841,119 +915,31 @@ GLWindow::glAddGeometry (const GLTexture::MatrixList &matrix,
 
 			if (cbox.x1 < cbox.x2 && cbox.y1 < cbox.y2)
 			{
-			    addQuads (d, matrix, nMatrix,
+			    addQuads (priv->vertexBuffer, matrix, nMatrix,
 				      cbox.x1, cbox.y1, cbox.x2, cbox.y2,
-				      n, vSize, rect, priv->geometry,
+				      n, rect,
 				      maxGridWidth, maxGridHeight);
 			}
 		    }
 		}
 	    }
 	}
-
-	priv->geometry.vCount       = n * 4;
-	priv->geometry.vertexStride = vSize;
-	priv->geometry.texCoordSize = 2;
     }
 }
 
-static bool
-enableFragmentProgramAndDrawGeometry (GLScreen	         *gs,
-				      GLWindow           *w,
-				      GLTexture          *texture,
-				      GLFragment::Attrib &attrib,
-				      GLTexture::Filter  filter,
-				      unsigned int       mask)
-{
-    GLFragment::Attrib fa (attrib);
-    bool               blending;
-
-    if (GL::canDoSaturated && attrib.getSaturation () != COLOR)
-    {
-	int param, function;
-
-	param    = fa.allocParameters (1);
-	function =
-	    GLFragment::getSaturateFragmentFunction (texture, param);
-
-	fa.addFunction (function);
-
-	(*GL::programEnvParameter4f) (GL_FRAGMENT_PROGRAM_ARB, param,
-				      RED_SATURATION_WEIGHT,
-				      GREEN_SATURATION_WEIGHT,
-				      BLUE_SATURATION_WEIGHT,
-				      attrib.getSaturation () / 65535.0f);
-    }
-
-    if (!fa.enable (&blending))
-	return false;
-
-    texture->enable (filter);
-
-    if (mask & PAINT_WINDOW_BLEND_MASK)
-    {
-	if (blending)
-	    glEnable (GL_BLEND);
-
-	if (attrib.getOpacity () != OPAQUE || attrib.getBrightness () != BRIGHT)
-	{
-	    GLushort color;
-
-	    color = (attrib.getOpacity () * attrib.getBrightness ()) >> 16;
-
-	    gs->setTexEnvMode (GL_MODULATE);
-	    glColor4us (color, color, color, attrib.getOpacity ());
-
-	    w->glDrawGeometry ();
-
-	    glColor4usv (defaultColor);
-	    gs->setTexEnvMode (GL_REPLACE);
-	}
-	else
-	{
-	    w->glDrawGeometry ();
-	}
-
-	if (blending)
-	    glDisable (GL_BLEND);
-    }
-    else if (attrib.getBrightness () != BRIGHT)
-    {
-	gs->setTexEnvMode (GL_MODULATE);
-	glColor4us (attrib.getBrightness (), attrib.getBrightness (),
-		    attrib.getBrightness (), BRIGHT);
-
-	w->glDrawGeometry ();
-
-	glColor4usv (defaultColor);
-	gs->setTexEnvMode (GL_REPLACE);
-    }
-    else
-    {
-	w->glDrawGeometry ();
-    }
-
-    texture->disable ();
-
-    fa.disable ();
-
-    return true;
-}
-
+#ifndef USE_GLES
 static void
-enableFragmentOperationsAndDrawGeometry (GLScreen	    *gs,
-					 GLWindow	    *w,
-					 GLTexture	    *texture,
-					 GLFragment::Attrib &attrib,
-					 GLTexture::Filter  filter,
-					 unsigned int	    mask)
+enableLegacyOBSAndRender (GLScreen                  *gs,
+                          GLWindow                  *w,
+                          GLTexture                 *texture,
+                          const GLMatrix            &transform,
+                          const GLWindowPaintAttrib &attrib,
+                          GLTexture::Filter         filter,
+                          unsigned int              mask)
 {
-    if (GL::canDoSaturated && attrib.getSaturation () != COLOR)
+    if (GL::canDoSaturated && attrib.saturation != COLOR)
     {
 	GLfloat constant[4];
-
-	if (mask & PAINT_WINDOW_BLEND_MASK)
-	    glEnable (GL_BLEND);
 
 	texture->enable (filter);
 
@@ -985,7 +971,7 @@ enableFragmentOperationsAndDrawGeometry (GLScreen	    *gs,
 	glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
 	glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
 
-	if (GL::canDoSlightlySaturated && attrib.getSaturation () > 0)
+	if (GL::canDoSlightlySaturated && attrib.saturation > 0)
 	{
 	    glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
 	    glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
@@ -1016,20 +1002,20 @@ enableFragmentOperationsAndDrawGeometry (GLScreen	    *gs,
 	    glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
 	    glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 
-	    constant[3] = attrib.getSaturation () / 65535.0f;
+	    constant[3] = attrib.saturation / 65535.0f;
 
 	    glTexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constant);
 
-	    if (attrib.getOpacity () < OPAQUE ||
-		attrib.getBrightness () != BRIGHT)
+	    if (attrib.opacity < OPAQUE ||
+		attrib.brightness != BRIGHT)
 	    {
 		GL::activeTexture (GL_TEXTURE3_ARB);
 
 		texture->enable (filter);
 
-		constant[3] = attrib.getOpacity () / 65535.0f;
+		constant[3] = attrib.opacity / 65535.0f;
 		constant[0] = constant[1] = constant[2] = constant[3] *
-		    attrib.getBrightness () / 65535.0f;
+		    attrib.brightness / 65535.0f;
 
 		glTexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constant);
 
@@ -1047,7 +1033,7 @@ enableFragmentOperationsAndDrawGeometry (GLScreen	    *gs,
 		glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 		glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 
-		w->glDrawGeometry ();
+		w->vertexBuffer ()->render (transform, attrib);
 
 		texture->disable ();
 
@@ -1057,7 +1043,7 @@ enableFragmentOperationsAndDrawGeometry (GLScreen	    *gs,
 	    }
 	    else
 	    {
-		w->glDrawGeometry ();
+		w->vertexBuffer ()->render (transform, attrib);
 	    }
 
 	    texture->disable ();
@@ -1074,9 +1060,9 @@ enableFragmentOperationsAndDrawGeometry (GLScreen	    *gs,
 	    glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 	    glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 
-	    constant[3] = attrib.getOpacity () / 65535.0f;
+	    constant[3] = attrib.opacity / 65535.0f;
 	    constant[0] = constant[1] = constant[2] = constant[3] *
-			  attrib.getBrightness ()/ 65535.0f;
+			  attrib.brightness / 65535.0f;
 
 	    constant[0] = 0.5f + 0.5f * RED_SATURATION_WEIGHT   * constant[0];
 	    constant[1] = 0.5f + 0.5f * GREEN_SATURATION_WEIGHT * constant[1];
@@ -1084,7 +1070,7 @@ enableFragmentOperationsAndDrawGeometry (GLScreen	    *gs,
 
 	    glTexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constant);
 
-	    w->glDrawGeometry ();
+	    w->vertexBuffer ()->render (transform, attrib);
 	}
 
 	texture->disable ();
@@ -1097,9 +1083,6 @@ enableFragmentOperationsAndDrawGeometry (GLScreen	    *gs,
 
 	glColor4usv (defaultColor);
 	gs->setTexEnvMode (GL_REPLACE);
-
-	if (mask & PAINT_WINDOW_BLEND_MASK)
-	    glDisable (GL_BLEND);
     }
     else
     {
@@ -1107,57 +1090,64 @@ enableFragmentOperationsAndDrawGeometry (GLScreen	    *gs,
 
 	if (mask & PAINT_WINDOW_BLEND_MASK)
 	{
-	    glEnable (GL_BLEND);
-	    if (attrib.getOpacity ()!= OPAQUE ||
-		attrib.getBrightness () != BRIGHT)
+	    if (attrib.opacity != OPAQUE ||
+		attrib.brightness != BRIGHT)
 	    {
 		GLushort color;
 
-		color = (attrib.getOpacity () * attrib.getBrightness ()) >> 16;
+		color = (attrib.opacity * attrib.brightness) >> 16;
 
 		gs->setTexEnvMode (GL_MODULATE);
-		glColor4us (color, color, color, attrib.getOpacity ());
+		glColor4us (color, color, color, attrib.opacity);
 
-		w->glDrawGeometry ();
+		w->vertexBuffer ()->render (transform, attrib);
 
 		glColor4usv (defaultColor);
 		gs->setTexEnvMode (GL_REPLACE);
 	    }
 	    else
 	    {
-		w->glDrawGeometry ();
+		w->vertexBuffer ()->render (transform, attrib);
 	    }
-
-	    glDisable (GL_BLEND);
 	}
-	else if (attrib.getBrightness () != BRIGHT)
+	else if (attrib.brightness != BRIGHT)
 	{
 	    gs->setTexEnvMode (GL_MODULATE);
-	    glColor4us (attrib.getBrightness (), attrib.getBrightness (),
-			attrib.getBrightness (), BRIGHT);
+	    glColor4us (attrib.brightness, attrib.brightness,
+			attrib.brightness, BRIGHT);
 
-	    w->glDrawGeometry ();
+	    w->vertexBuffer ()->render (transform, attrib);
 
 	    glColor4usv (defaultColor);
 	    gs->setTexEnvMode (GL_REPLACE);
 	}
 	else
 	{
-	    w->glDrawGeometry ();
+	    w->vertexBuffer ()->render (transform, attrib);
 	}
 
 	texture->disable ();
     }
 }
+#endif
 
 void
-GLWindow::glDrawTexture (GLTexture          *texture,
-			 GLFragment::Attrib &attrib,
-			 unsigned int       mask)
+GLWindow::glDrawTexture (GLTexture                 *texture,
+                         const GLMatrix            &transform,
+			 const GLWindowPaintAttrib &attrib,
+			 unsigned int              mask)
 {
-    WRAPABLE_HND_FUNCTN (glDrawTexture, texture, attrib, mask)
+    WRAPABLE_HND_FUNCTN (glDrawTexture, texture, transform, attrib, mask)
 
     GLTexture::Filter filter;
+    GLboolean isBlendingEnabled = GL_FALSE;
+
+    // Enable blending if needed
+    if (mask & PAINT_WINDOW_BLEND_MASK) {
+	glGetBooleanv (GL_BLEND, &isBlendingEnabled);
+	if (!isBlendingEnabled)
+	    glEnable(GL_BLEND);
+    }
 
     if (mask & (PAINT_WINDOW_TRANSFORMED_MASK |
 		PAINT_WINDOW_ON_TRANSFORMED_SCREEN_MASK))
@@ -1165,24 +1155,36 @@ GLWindow::glDrawTexture (GLTexture          *texture,
     else
 	filter = priv->gScreen->filter (NOTHING_TRANS_FILTER);
 
-    if ((!attrib.hasFunctions () && (!priv->gScreen->lighting () ||
-	 attrib.getSaturation () == COLOR || attrib.getSaturation () == 0)) ||
-	!enableFragmentProgramAndDrawGeometry (priv->gScreen, this, texture,
-					       attrib, filter, mask))
-    {
-	enableFragmentOperationsAndDrawGeometry (priv->gScreen, this, texture,
-						 attrib, filter, mask);
-    }
+    glActiveTexture(GL_TEXTURE0);
+    texture->enable (filter);
+
+    #ifdef USE_GLES
+    priv->vertexBuffer->render (transform, attrib);
+    #else
+
+    if (!GL::vbo && !GL::shaders)
+	enableLegacyOBSAndRender (priv->gScreen, this, texture, transform,
+                                  attrib, filter, mask);
+    else
+	priv->vertexBuffer->render (transform, attrib);
+    #endif
+
+    priv->shaders.clear ();
+    texture->disable ();
+
+    // Reset blending to old value
+    if ((mask & PAINT_WINDOW_BLEND_MASK) && !isBlendingEnabled)
+	glDisable(GL_BLEND);
 }
 
 bool
-GLWindow::glDraw (const GLMatrix     &transform,
-		  GLFragment::Attrib &fragment,
-		  const CompRegion   &region,
-		  unsigned int       mask)
+GLWindow::glDraw (const GLMatrix            &transform,
+		  const GLWindowPaintAttrib &attrib,
+		  const CompRegion          &region,
+		  unsigned int              mask)
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, glDraw, transform,
-			      fragment, region, mask)
+			      attrib, region, mask)
 
     const CompRegion &reg = (mask & PAINT_WINDOW_TRANSFORMED_MASK) ?
                             infiniteRegion : region;
@@ -1216,13 +1218,14 @@ GLWindow::glDraw (const GLMatrix     &transform,
     if (priv->updateState & PrivateGLWindow::UpdateRegion)
 	priv->updateWindowRegions ();
 
-    for (unsigned int i = 0; i < textures ().size (); i++)
+    for (unsigned int i = 0; i < priv->textures.size (); i++)
     {
 	ml[0] = priv->matrices[i];
-	priv->geometry.reset ();
+	priv->vertexBuffer->begin ();
 	glAddGeometry (ml, priv->regions[i], reg);
-	if (priv->geometry.vCount)
-	    glDrawTexture (textures ()[i], fragment, mask);
+	priv->vertexBuffer->end ();
+
+	glDrawTexture (priv->textures[i], transform, attrib, mask);
     }
 
     return true;
@@ -1236,7 +1239,6 @@ GLWindow::glPaint (const GLWindowPaintAttrib &attrib,
 {
     WRAPABLE_HND_FUNCTN_RETURN (bool, glPaint, attrib, transform, region, mask)
 
-    GLFragment::Attrib fragment (attrib);
     bool               status;
 
     priv->lastPaint = attrib;
@@ -1266,18 +1268,7 @@ GLWindow::glPaint (const GLWindowPaintAttrib &attrib,
     if (mask & PAINT_WINDOW_NO_CORE_INSTANCE_MASK)
 	return true;
 
-    if (mask & PAINT_WINDOW_TRANSFORMED_MASK ||
-        mask & PAINT_WINDOW_WITH_OFFSET_MASK)
-    {
-	glPushMatrix ();
-	glLoadMatrixf (transform.getMatrix ());
-    }
-
-    status = glDraw (transform, fragment, region, mask);
-
-    if (mask & PAINT_WINDOW_TRANSFORMED_MASK ||
-        mask & PAINT_WINDOW_WITH_OFFSET_MASK)
-	glPopMatrix ();
+    status = glDraw (transform, attrib, region, mask);
 
     return status;
 }
