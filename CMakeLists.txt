@@ -170,7 +170,9 @@ add_subdirectory (kde)
 add_subdirectory (po)
 add_subdirectory (metadata)
 add_subdirectory (src)
-add_subdirectory (compizconfig)
+# compizconfig's CMake files confuse the compiz project quite a lot and
+# cause multiple build failures. Don't include it till it's fixed.
+#add_subdirectory (compizconfig)
 add_subdirectory (xslt)
 add_subdirectory (plugins)
 add_subdirectory (tests)
