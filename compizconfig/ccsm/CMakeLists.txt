@@ -19,7 +19,7 @@ add_custom_target (install
 		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		   COMMENT "Installing Python Files")
 
-add_custom_target (clean
+add_custom_target (pyclean_ccsm
 		   COMMAND python setup.py clean
 		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		   COMMENT "Cleaning Python Files")
@@ -28,6 +28,8 @@ add_custom_target (uninstall
 		   COMMAND python setup.py uninstall
 		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		   COMMENT "Uninstalling Python Files")
+
+#add_dependencies (clean pyclean)
 
 compiz_print_configure_header ("CompizConfig Settings Manager")
 compiz_print_configure_footer ()
