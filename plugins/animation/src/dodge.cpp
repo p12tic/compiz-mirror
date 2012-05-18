@@ -213,8 +213,8 @@ DodgeAnim::postPreparePaint ()
     // reached 50% progress yet. The subject window should be
     // painted right behind that one (or right in front of it
     // if subject is being lowered).
-    RestackPersistentData *restackDataDodger;
-    DodgePersistentData *dodgeDataDodger;
+    RestackPersistentData *restackDataDodger = NULL;
+    DodgePersistentData *dodgeDataDodger = NULL;
     CompWindow *dw;
     for (dw = mDodgeData->dodgeChainStart; dw;
 	 dw = dodgeDataDodger->dodgeChainNext)

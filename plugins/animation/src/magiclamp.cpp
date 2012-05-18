@@ -285,7 +285,7 @@ MagicLampAnim::step ()
     int bottommostMovingObjectIdx = -1;
 
     unsigned int n = mModel->numObjects ();
-    float fx;
+    float fx = 0.0f;
     GridModel::GridObject *object = mModel->objects ();
     for (unsigned int i = 0; i < n; i++, object++)
     {

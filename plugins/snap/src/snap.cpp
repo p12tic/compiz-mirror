@@ -152,34 +152,12 @@ isSnapWindow (CompWindow *w)
  * Detect visible windows edges
  */
 
-bool
-SnapWindow::bottomScreenEdgesAllowed ()
-{
-    if (grabbed & CompWindowGrabExternalAppMask)
-    {
-	CompPlugin *pMove;
-
-	pMove = CompPlugin::find ("move");
-	if (pMove)
-	{
-	    CompOption::Vector &moveOptions =
-		pMove->vTable->getOptions ();
-
-	    return !(CompOption::getBoolOptionNamed (moveOptions,
-						     "constrain_y", true));
-	}
-    }
-
-    return true;
-}
-
 void
 SnapWindow::updateWindowsEdges ()
 {
     CompRegion edgeRegion, resultRegion;
     CompRect   input;
     bool       remove = false;
-    bool       bottomScreenEdges = bottomScreenEdgesAllowed ();
 
     // First add all the windows
     foreach (CompWindow *w, screen->windows ())

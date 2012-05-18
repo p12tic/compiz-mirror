@@ -222,7 +222,7 @@ ReflexWindow::glDrawTexture (GLTexture		      *texture,
 	int function;
 	int unit = 0;
 	int param;
-	float tx, ty, dx, mx;
+	float tx = 0.0f, ty = 0.0f, dx = 0.0f, mx = 0.0f;
 
 	if (rs->optionGetMoving ())
 	{

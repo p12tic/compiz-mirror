@@ -580,7 +580,7 @@ ShelfScreen::findRealWindowID (Window wid)
 void
 ShelfScreen::handleEvent (XEvent *event)
 {
-    CompWindow *w, *oldPrev, *oldNext;
+    CompWindow *w = NULL, *oldPrev = NULL, *oldNext = NULL;
 
     switch (event->type)
     {
