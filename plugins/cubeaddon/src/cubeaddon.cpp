@@ -388,7 +388,7 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
     bool                wasCulled = glIsEnabled (GL_CULL_FACE);
     float               cInv = (top) ? 1.0: -1.0;
     CubeCap             *cap;
-    bool                cScale, cAspect;
+    bool                cAspect;
     unsigned short	*color;
 
     glGetIntegerv (GL_CULL_FACE_MODE, &cullNorm);
@@ -406,13 +406,11 @@ CubeaddonScreen::paintCap (const GLScreenPaintAttrib &sAttrib,
     if (top)
     {
 	cap     = &mTopCap;
-	cScale  = optionGetTopScale ();
 	cAspect = optionGetTopAspect ();
     }
     else
     {
 	cap     = &mBottomCap;
-	cScale  = optionGetBottomScale ();
 	cAspect = optionGetBottomAspect ();
     }
 
@@ -1111,7 +1109,7 @@ CubeaddonScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &sAttrib,
 	    float         rYTrans;
 	    GLVector      point (-0.5, -0.5, cDist, 1.0);
 	    GLVector      point2 (-0.5,  0.5, cDist, 1.0);
-	    float         deform;
+	    float         deform = 0.0f;
 
 	    cubeScreen->cubeGetRotation (xRot, vRot, p);
 

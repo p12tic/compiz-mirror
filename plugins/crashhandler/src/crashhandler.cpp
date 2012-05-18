@@ -64,7 +64,7 @@ crash_handler (int sig)
 		 programName, getpid (), cs->optionGetDirectory ().c_str (),
 		 getpid (), cs->optionGetDirectory ().c_str (), getpid () );
 
-	system (cmd);
+	int ret = system (cmd);
 
 	if (cs->optionGetStartWm ())
 	{
@@ -77,7 +77,7 @@ crash_handler (int sig)
 		exit (0);
 	    }
 	}
-	exit (1);
+	exit (ret ? ret : 1);
     }
 }
 

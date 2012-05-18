@@ -2427,7 +2427,7 @@ void
 GroupTabBar::unhookTabBarSlot (GroupTabBarSlot *slot,
 			       bool            temporary)
 {
-    GroupTabBarSlot *tempSlot;
+    GroupTabBarSlot *tempSlot = NULL;
     /* query for next and previous in linked list */
     GroupTabBarSlot *prev = slot->mPrev;
     GroupTabBarSlot *next = slot->mNext;

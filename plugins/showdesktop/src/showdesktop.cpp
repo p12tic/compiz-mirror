@@ -78,7 +78,7 @@ ShowdesktopWindow::setHints (bool enterSDMode)
 
 	window->changeState (state);
 
-#warning need to make window->managed wrappable
+	//#warning need to make window->managed wrappable
 	//window->setManaged (false)
     }
     else

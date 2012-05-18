@@ -2767,8 +2767,6 @@ PrivateAnimWindow::windowNotify (CompWindowNotify n)
 	case CompWindowNotifyBeforeDestroy:
 	    if (!mFinishingAnim)
 	    {
-		int duration;
-
 		if (mPAScreen->shouldIgnoreWindowForAnim (mWindow, true))
 		    break;
 
