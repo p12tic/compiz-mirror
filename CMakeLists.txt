@@ -119,9 +119,6 @@ install (
     DESTINATION ${COMPIZ_DESTDIR}${libdir}/pkgconfig
 )
 
-# temporarily disable plugins that aren't ported yed
-set (COMPIZ_DISABLE_PLUGIN_BLUR ON)
-
 # Build Google Test and make its headers known
 find_package (GTest)
 
@@ -159,9 +156,6 @@ endif (NOT GMOCK_LIBRARY OR NOT GMOCK_MAIN_LIBRARY OR NOT GTEST_FOUND)
 include_directories (${GTEST_INCLUDE_DIRS})
 
 find_package (Threads REQUIRED)
-
-# Disabled until we can sort dependency issues
-set (COMPIZ_DISABLE_PLUGIN_ANIMATIONADDON ON)
 
 # Add the rest of compiz
 add_subdirectory (cmake)
