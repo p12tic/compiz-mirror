@@ -1537,6 +1537,7 @@ printf ("bailing!");
                         !(mask & COMPOSITE_SCREEN_DAMAGE_ALL_MASK) &&
                         (mask & COMPOSITE_SCREEN_DAMAGE_REGION_MASK));
 
+#ifdef USE_GLES
     if (refreshSubBuffer)
     {
 	// FIXME: We shouldn't have to substract a 1X1 pixel region here !!
@@ -1547,6 +1548,7 @@ printf ("bailing!");
 	cScreen->damageRegion (CompRegion (screen->fullscreenOutput ()) -
                                CompRegion (CompRect(0, 0, 1, 1)));
     }
+#endif
 
     if (clearBuffers)
     {
