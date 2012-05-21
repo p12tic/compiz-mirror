@@ -449,10 +449,15 @@ endmacro ()
 macro (compiz_plugin plugin)
     string (TOUPPER ${plugin} _PLUGIN)
 
+    # If already defined, use the existing value...
+    if (NOT DEFINED COMPIZ_DISABLE_PLUGIN_${_PLUGIN})
+       set (COMPIZ_DISABLE_PLUGIN_${_PLUGIN} OFF)
+    endif ()
+
     option (
 	COMPIZ_DISABLE_PLUGIN_${_PLUGIN}
 	"Disable building of plugin \"${plugin}\""
-	OFF
+	${COMPIZ_DISABLE_PLUGIN_${_PLUGIN}}
     )
 
     if (NOT COMPIZ_DISABLE_PLUGIN_${_PLUGIN})
