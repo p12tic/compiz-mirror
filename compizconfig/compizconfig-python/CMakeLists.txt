@@ -49,7 +49,7 @@ add_library (compizconfig_wrapper
 	     ${PY_COMPIZCONFIG_LIB})
 
 add_custom_target (uninstall
-		   COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py uninstall
+		   COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py uninstall --prefix=${CMAKE_INSTALL_PREFIX}
 		   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
 		   COMMENT "Uninstalling Python Files")
 
@@ -57,7 +57,7 @@ add_custom_target (uninstall
 install (CODE
 	 "message (\"Installing python files\")
 	  execute_process (COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py install --prefix=${CMAKE_INSTALL_PREFIX}
-	 		   WORKING_DIRECTORY ${CMAKE_BINARY_DIR})")
+	 		   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})")
 
 add_dependencies (compizconfig_wrapper compizconfig)
 
