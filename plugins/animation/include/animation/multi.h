@@ -293,7 +293,7 @@ public:
 	bool moveUpdate (int dx, int dy)
 	{
 	    int count = 0;
-	    bool update;
+	    bool update = false;
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
@@ -308,7 +308,7 @@ public:
 			   int dwidth, int dheight)
 	{
 	    int count = 0;
-	    bool update;
+	    bool update = false;
 	    foreach (SingleAnim *a, animList)
 	    {
 		setCurrAnimNumber (mAWindow, count);
