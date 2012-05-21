@@ -48,6 +48,19 @@ function (_check_compiz_cmake_macro)
 	${CMAKE_COMMAND} -E make_directory ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules &&
 	${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/FindCompiz.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules
     )
+    find_file (_find_compizconfig FindCompizConfig.cmake PATHS ${CMAKE_ROOT}/Modules ${ARGN})
+    if (NOT _find_compizconfig)
+	compiz_color_message ("${_escape}[1;31mWARNING:${_escape}[0m")
+	message ("\"FindCompizConfig.cmake\" file not found in cmake module directories.")
+	message ("It should be installed to allow building of external compiz packages.")
+	message ("Call \"sudo make findcompiz_install\" to install it.\n")
+	compiz_print_configure_footer ()
+    endif (NOT _find_compizconfig)
+	add_custom_target (
+	findcompizconfig_install
+	${CMAKE_COMMAND} -E make_directory ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules &&
+	${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCompizConfig.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules
+	)
 endfunction ()
 
 # add install prefix to pkgconfig search path if needed

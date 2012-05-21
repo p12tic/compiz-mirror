@@ -158,20 +158,6 @@ compiz_print_result_message ("file system change notifications" HAVE_INOTIFY)
 compiz_print_plugin_stats ("${CMAKE_CURRENT_SOURCE_DIR}/plugin")
 compiz_print_configure_footer ()
 
-find_file (_find_compizconfig FindCompizConfig.cmake PATHS ${CMAKE_ROOT}/Modules ${ARGN})
-if (NOT _find_compizconfig)
-    compiz_color_message ("${_escape}[1;31mWARNING:${_escape}[0m")
-    message ("\"FindCompiz.cmake\" file not found in cmake module directories.")
-    message ("It should be installed to allow building of external compiz packages.")
-    message ("Call \"sudo make findcompiz_install\" to install it.\n")
-    compiz_print_configure_footer ()
-endif (NOT _find_compizconfig)
-    add_custom_target (
-        findcompizconfig_install
-	${CMAKE_COMMAND} -E make_directory ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules &&
-	${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCompizConfig.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules
-    )
-
 compiz_ensure_linkage ()
 compiz_package_generation ("CompizConfig Library")
 compiz_add_git_dist ()
