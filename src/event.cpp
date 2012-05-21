@@ -2147,7 +2147,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	    sa = (XSyncAlarmNotifyEvent *) event;
 
 
-	    for (cps::WindowManager::iterator i = privateScreen.windowManager.begin(); i != privateScreen.windowManager.end(); ++i)
+	    for (cps::WindowManager::iterator i = windowManager.begin(); i != windowManager.end(); ++i)
 	    {
 		CompWindow* const w(*i);
 		if (w->priv->syncAlarm == sa->alarm)

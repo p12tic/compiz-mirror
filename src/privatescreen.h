@@ -153,10 +153,13 @@ namespace compiz
 {
 namespace private_screen
 {
+class History;
 
 class WindowManager : boost::noncopyable
 {
     public:
+
+	typedef CompWindow::ForEach Functor;
 
 	WindowManager();
 
@@ -215,6 +218,17 @@ class WindowManager : boost::noncopyable
 	iterator end() const { return windows.end(); }
 	reverse_iterator rbegin() const { return windows.rbegin(); }
 	reverse_iterator rend() const { return windows.rend(); }
+
+	void clearFullscreenHints() const;
+	void showOrHideForDesktop(unsigned int desktop) const;
+	void setWindowActiveness(::compiz::private_screen::History& history) const;
+	void setNumberOfDesktops (unsigned int nDesktop) const;
+	void updateWindowSizes() const;
+
+	void forEachWindow(Functor const& f) const
+	{
+	    std::for_each(windows.begin(), windows.end(), f);
+	}
 
     private:
 	CompWindowList windows;
@@ -573,10 +587,13 @@ class PrivateScreen :
 {
 
     public:
-	PrivateScreen (CompScreen *screen);
+	PrivateScreen (CompScreen *screen, compiz::private_screen::WindowManager& windowManager);
 	~PrivateScreen ();
 
-	bool initDisplay (const char *name, compiz::private_screen::History& history);
+	bool initDisplay (
+		const char *name,
+		compiz::private_screen::History& history,
+		unsigned int showingDesktopMask);
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
@@ -628,7 +645,7 @@ class PrivateScreen :
 
 	void reshape (int w, int h);
 
-	void getDesktopHints ();
+	void getDesktopHints (unsigned int showingDesktopMask);
 
 	void updateScreenInfo ();
 
@@ -703,7 +720,6 @@ public:
     compiz::private_screen::EventManager eventManager;
     compiz::private_screen::OrphanData orphanData;
     compiz::private_screen::OutputDevices outputDevices;
-    compiz::private_screen::WindowManager windowManager;
 
     Colormap colormap;
     int screenNum;
@@ -719,7 +735,6 @@ public:
     Cursor busyCursor;
     Cursor invisibleCursor;
     CompRect workArea;
-    unsigned int showingDesktopMask;
 
     bool initialized;
 
@@ -754,6 +769,7 @@ private:
     CompDelayedEdgeSettings edgeDelaySettings;
     Window xdndWindow;
     compiz::private_screen::PluginManager pluginManager;
+    compiz::private_screen::WindowManager& windowManager;
 };
 
 class CompManager
@@ -1113,6 +1129,8 @@ class CompScreenImpl : public CompScreen,
     	ValueHolder valueHolder;
         bool 	eventHandled;
         PrivateScreen privateScreen;
+        compiz::private_screen::WindowManager windowManager;
+        unsigned int showingDesktopMask_;
 };
 
 #endif
