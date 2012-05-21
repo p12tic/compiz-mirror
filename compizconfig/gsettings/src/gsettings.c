@@ -38,15 +38,9 @@ valueChanged (GSettings   *settings,
 	      gchar	  *keyname,
 	      gpointer    user_data);
 
-static void
-gnomeValueChanged (GSettings   *settings,
-		   gchar       *keyname,
-		   gpointer    user_data);
-
 static GList	   *settingsList = NULL;
 static GSettings   *compizconfigSettings = NULL;
 static GSettings   *currentProfileSettings = NULL;
-static GList	   *watchedGnomeSettings = NULL;
 
 char *currentProfile = NULL;
 
@@ -211,13 +205,6 @@ isIntegratedOption (CCSSetting *setting,
 #else
     return FALSE;
 #endif
-}
-
-static void
-gnomeValueChanged (GSettings *settings,
-		   gchar     *keyName,
-		   gpointer  user_data)
-{
 }
 
 static void
