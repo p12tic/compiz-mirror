@@ -4170,7 +4170,7 @@ void
 CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
 				     CompPoint&                  viewport)
 {
-    compiz::private_screen::viewports::viewportForGeometry (gm, privateScreen.viewPort.vp, &privateScreen.viewPort, *this);
+    compiz::private_screen::viewports::viewportForGeometry (gm, viewport, &privateScreen.viewPort, *this);
 }
 
 int
