@@ -7,12 +7,12 @@ add_subdirectory( timer )
 add_subdirectory( pluginclasshandler )
 add_subdirectory( point )
 add_subdirectory( rect )
+add_subdirectory( region )
 add_subdirectory( window )
 
 IF (COMPIZ_BUILD_TESTING)
 add_subdirectory( privatescreen/tests )
 add_subdirectory( wrapsystem/tests )
-add_subdirectory( region/tests )
 add_subdirectory( plugin )
 add_subdirectory( option/tests )
 ENDIF (COMPIZ_BUILD_TESTING)
@@ -57,6 +57,9 @@ include_directories (
     ${CMAKE_CURRENT_SOURCE_DIR}/rect/include
     ${CMAKE_CURRENT_SOURCE_DIR}/rect/src
 
+    ${CMAKE_CURRENT_SOURCE_DIR}/region/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/region/src
+
     ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry/include
     ${CMAKE_CURRENT_SOURCE_DIR}/window/geometry/src
 
@@ -89,7 +92,6 @@ link_directories (
 
 add_library (compiz_core SHARED
     ${CMAKE_CURRENT_SOURCE_DIR}/global.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/region.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/atoms.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/actions.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/screen.cpp
@@ -155,6 +157,7 @@ target_link_libraries (
     compiz_pluginclasshandler
     compiz_point
     compiz_rect
+    compiz_region
     compiz_window_geometry
     compiz_window_geometry_saver
     compiz_window_extents

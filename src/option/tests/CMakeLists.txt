@@ -6,6 +6,7 @@ include_directories(
   ${compiz_SOURCE_DIR}/src/logmessage/include
   ${compiz_SOURCE_DIR}/src/string/include
   ${compiz_SOURCE_DIR}/src/rect/include
+  ${compiz_SOURCE_DIR}/src/region/include
   ${compiz_SOURCE_DIR}/src/point/include
   ${compiz_SOURCE_DIR}/src/window/geometry/include
   ${compiz_SOURCE_DIR}/src/window/extents/include
