@@ -1,6 +1,3 @@
-import os
-print os.getcwd ()
-
 import compiz_config_test
 import unittest
 
