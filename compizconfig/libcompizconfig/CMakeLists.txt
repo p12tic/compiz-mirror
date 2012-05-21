@@ -133,6 +133,11 @@ compiz_configure_file (
     ${CMAKE_CURRENT_BINARY_DIR}/libcompizconfig.pc
 )
 
+compiz_configure_file (
+    ${CMAKE_CURRENT_SOURCE_DIR}/libcompizconfig_internal.pc.in
+    ${CMAKE_CURRENT_BINARY_DIR}/libcompizconfig_internal.pc
+)
+
 install (
     FILES ${CMAKE_CURRENT_BINARY_DIR}/libcompizconfig.pc
     DESTINATION ${COMPIZ_DESTDIR}${libdir}/pkgconfig
