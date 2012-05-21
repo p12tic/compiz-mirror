@@ -73,13 +73,3 @@ if (PYTHON_EXECUTABLE)
 		add_test (NAME CompizConfigPython.${PYTHON_TEST} WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" COMMAND ${PYTHON_EXECUTABLE} ${PYTHON_TEST_FILE})
 	endforeach (PYTHON_TEST_FILE)
 endif (PYTHON_EXECUTABLE)
-
-compiz_print_configure_header ("CompizConfig Python")
-compiz_print_configure_footer ()
-
-compiz_add_git_dist ()
-compiz_add_distcheck ()
-compiz_add_release ()
-compiz_add_release_signoff ()
-
-
