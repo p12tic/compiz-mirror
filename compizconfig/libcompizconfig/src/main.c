@@ -602,8 +602,10 @@ openBackend (char *backend)
 
     if (home && strlen (home))
     {
-	asprintf (&dlname, "%s/.compizconfig/backends/lib%s.so", 
-		  home, backend);
+	if (asprintf (&dlname, "%s/.compizconfig/backends/lib%s.so",
+		      home, backend) == -1)
+	    dlname = NULL;
+
 	dlerror ();
 	dlhand = dlopen (dlname, RTLD_NOW | RTLD_NODELETE | RTLD_LOCAL);
 	err = dlerror ();
@@ -614,8 +616,9 @@ openBackend (char *backend)
         if (dlname) {
 	        free (dlname);
         }
-	asprintf (&dlname, "%s/compizconfig/backends/lib%s.so", 
-		  LIBDIR, backend);
+	if (asprintf (&dlname, "%s/compizconfig/backends/lib%s.so",
+		      LIBDIR, backend) == -1)
+	    dlname = NULL;
 	dlhand = dlopen (dlname, RTLD_NOW | RTLD_NODELETE | RTLD_LOCAL);
 	err = dlerror ();
     }
@@ -2696,15 +2699,24 @@ ccsGetExistingBackends ()
 
     if (home && strlen (home))
     {
-	asprintf (&backenddir, "%s/.compizconfig/backends", home);
+	if (asprintf (&backenddir, "%s/.compizconfig/backends", home) == -1)
+	    backenddir = NULL;
+
+	if (backenddir)
+	{
+	    getBackendInfoFromDir (&rv, backenddir);
+	    free (backenddir);
+	}
+    }
+
+    if (asprintf (&backenddir, "%s/compizconfig/backends", LIBDIR) == -1)
+	backenddir = NULL;
+
+    if (backenddir)
+    {
 	getBackendInfoFromDir (&rv, backenddir);
 	free (backenddir);
     }
-
-    asprintf (&backenddir, "%s/compizconfig/backends", LIBDIR);
-
-    getBackendInfoFromDir (&rv, backenddir);
-    free (backenddir);
     return rv;
 }
 
@@ -2739,8 +2751,9 @@ ccsExportToFile (CCSContext *context,
 	    if (skipDefaults && setting->isDefault)
 		continue;
 
-	    asprintf (&keyName, "s%d_%s", 
-		      context->screenNum, setting->name);
+	    if (asprintf (&keyName, "s%d_%s",
+			  context->screenNum, setting->name) == -1)
+		return FALSE;
 
 	    switch (setting->type)
 	    {
@@ -2819,7 +2832,9 @@ ccsProcessSettingPlus (IniDictionary	   *dict,
     char         *sectionName = strdup (setting->parent->name);
     char         *iniValue = NULL;
 
-    asprintf (&keyName, "+s%d_%s", context->screenNum, setting->name);
+    if (asprintf (&keyName, "+s%d_%s", context->screenNum, setting->name) == -1)
+	return FALSE;
+
     if (ccsIniGetString (dict, sectionName, keyName, &iniValue))
     {
 	CCSSetting *newSetting = malloc (sizeof (CCSSetting));
@@ -2971,7 +2986,9 @@ ccsProcessSettingMinus (IniDictionary      *dict,
     char         *sectionName = strdup (setting->parent->name);
     char         *iniValue = NULL;
 
-    asprintf (&keyName, "-s%d_%s", context->screenNum, setting->name);
+    if (asprintf (&keyName, "-s%d_%s", context->screenNum, setting->name) == -1)
+	return FALSE;
+
     if (ccsIniGetString (dict, sectionName, keyName, &iniValue))
     {
 	CCSSetting *newSetting = malloc (sizeof (CCSSetting));
@@ -3438,7 +3455,8 @@ ccsCheckForSettingsUpgrade (CCSContext *context)
     if (!home)
 	return FALSE;
 
-    asprintf (&dupath, "%s/.config/compiz-1/compizconfig/done_upgrades", home);
+    if (asprintf (&dupath, "%s/.config/compiz-1/compizconfig/done_upgrades", home) == -1)
+	return FALSE;
 
     completedUpgrades = fopen (dupath, "a+");
 
@@ -3539,8 +3557,9 @@ ccsImportFromFile (CCSContext *context,
 	    if (!setting->isDefault && !overwriteNonDefault)
 		continue;
 
-	    asprintf (&keyName, "s%d_%s", 
-		      context->screenNum, setting->name);
+	    if (asprintf (&keyName, "s%d_%s",
+			  context->screenNum, setting->name) == -1)
+		return FALSE;
 
 	    switch (setting->type)
 	    {
