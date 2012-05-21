@@ -3,17 +3,14 @@ project (libcompizconfig)
 set (COMPIZ_CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake)
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${COMPIZ_CMAKE_MODULE_PATH})
 include (CompizDefaults)
-
-find_package (Compiz REQUIRED)
-
-set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
-set (LIBCOMPIZCONFIG_CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
-set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LIBCOMPIZCONFIGZ_CMAKE_MODULE_PATH})
-
 include (CompizCommon)
 include (CompizPackage)
 include (CheckLibraryExists)
 include (CheckIncludeFile)
+
+set (CMAKE_MODULE_PATH_ORIG ${CMAKE_MODULE_PATH})
+set (LIBCOMPIZCONFIG_CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${LIBCOMPIZCONFIG_CMAKE_MODULE_PATH})
 
 set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 
@@ -144,7 +141,6 @@ install (
 
 add_subdirectory (config)
 add_subdirectory (backend)
-add_subdirectory (plugin)
 add_subdirectory (src)
 add_subdirectory (include)
 add_subdirectory (cmake)

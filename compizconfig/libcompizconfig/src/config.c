@@ -38,14 +38,18 @@ getConfigFileName (void)
     configDir = getenv ("XDG_CONFIG_HOME");
     if (configDir && strlen (configDir))
     {
-	asprintf (&fileName, "%s/%s/config", configDir, SETTINGPATH);
+	if (asprintf (&fileName, "%s/%s/config", configDir, SETTINGPATH) == -1)
+	    fileName = NULL;
+
 	return fileName;
     }
 
     configDir = getenv ("HOME");
     if (configDir && strlen (configDir))
     {
-	asprintf (&fileName, "%s/.config/%s/config", configDir, SETTINGPATH);
+	if (asprintf (&fileName, "%s/.config/%s/config", configDir, SETTINGPATH) == -1)
+	    fileName = NULL;
+
 	return fileName;
     }
 
@@ -61,7 +65,9 @@ getSectionName (void)
     profile = getenv ("COMPIZ_CONFIG_PROFILE");
     if (profile && strlen (profile))
     {
-	asprintf (&section, "general_%s", profile);
+	if (asprintf (&section, "general_%s", profile) == -1)
+	    section = NULL;
+
 	return section;
     }
 
