@@ -1,6 +1,7 @@
 find_package (Compiz REQUIRED)
 
 include (CompizPlugin)
+include (CompizDefaults)
 
 add_subdirectory (src/offset_movement)
 include_directories (src/offset_movement/include)
