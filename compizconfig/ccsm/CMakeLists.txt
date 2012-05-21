@@ -45,22 +45,14 @@ add_library (ccsm_wrapper
 	     ${CMAKE_CURRENT_BINARY_DIR}/compizconfig_wrapper.c
 	     ${PY_CCSM_LIB})
 
-add_custom_target (py_ccsm_uninstall
-		   COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py uninstall
-		   WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+add_custom_target (uninstall
+		   COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py uninstall --prefix=${CMAKE_INSTALL_PREFIX}
+		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		   COMMENT "Uninstalling Python Files")
 
 install (CODE
 	 "message (\"Installing python files\")
 	  execute_process (COMMAND python setup.py install --prefix=${CMAKE_INSTALL_PREFIX}
 	 		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})")
-
-compiz_print_configure_header ("CompizConfig Settings Manager")
-compiz_print_configure_footer ()
-
-compiz_add_git_dist ()
-compiz_add_distcheck ()
-compiz_add_release ()
-compiz_add_release_signoff ()
 
 
