@@ -149,18 +149,3 @@ add_subdirectory (backend)
 add_subdirectory (src)
 add_subdirectory (include)
 add_subdirectory (cmake)
-
-compiz_print_configure_header ("CompizConfig Library")
-compiz_color_message ("\n${_escape}[4mOptional features:${_escape}[0m\n")
-
-compiz_print_result_message ("protocol buffers" HAVE_PROTOBUF)
-compiz_print_result_message ("file system change notifications" HAVE_INOTIFY)
-compiz_print_plugin_stats ("${CMAKE_CURRENT_SOURCE_DIR}/plugin")
-compiz_print_configure_footer ()
-
-compiz_ensure_linkage ()
-compiz_package_generation ("CompizConfig Library")
-compiz_add_git_dist ()
-compiz_add_distcheck ()
-compiz_add_release ()
-compiz_add_release_signoff ()
