@@ -11,13 +11,17 @@ import subprocess
 import unittest
 import os
 
+pkg_config_environ = os.environ
+pkg_config_environ["PKG_CONFIG_PATH"] = os.getcwd () + "/../libcompizconfig:" + os.environ.get ("PKG_CONFIG_PATH", '')
+
 # If src/compizconfig.pyx exists, build using Cython
-if os.path.exists ("src/compizconfig.pyx"):
+if os.path.exists (os.getcwd () + "/src/compizconfig.pyx"):
     from Cython.Distutils import build_ext
-    ext_module_src = "src/compizconfig.pyx"
+    print "using pyx"
+    ext_module_src = os.getcwd () + "/src/compizconfig.pyx"
 else: # Otherwise build directly from C source
     from distutils.command.build_ext import build_ext
-    ext_module_src = "src/compizconfig.c"
+    ext_module_src = os.getcwd () + "/compizconfig.c"
 
 version_file = open ("VERSION", "r")
 version = version_file.read ().strip ()
@@ -28,7 +32,7 @@ def pkgconfig(*packages, **kw):
     flag_map = {'-I': 'include_dirs', '-L': 'library_dirs', '-l': 'libraries', '-R': 'runtime_library_dirs'}
     cmd = ['pkg-config', '--libs', '--cflags']
 
-    tokens = subprocess.Popen (cmd + list(packages), stdout=subprocess.PIPE).communicate()[0].split ()
+    tokens = subprocess.Popen (cmd + list(packages), stdout=subprocess.PIPE, env=pkg_config_environ).communicate()[0].split ()
 
     for t in tokens:
         if '-L' in t[:2]:
@@ -44,10 +48,10 @@ def pkgconfig(*packages, **kw):
 
 VERSION_FILE = os.path.join (os.path.dirname (__file__), "VERSION")
 
-pkgconfig_libs = subprocess.Popen (["pkg-config", "--libs", "libcompizconfig"], stdout=subprocess.PIPE, stderr=open(os.devnull, 'w')).communicate ()[0]
+pkgconfig_libs = subprocess.Popen (["pkg-config", "--libs", "libcompizconfig_internal"], stdout=subprocess.PIPE, env=pkg_config_environ, stderr=open(os.devnull, 'w')).communicate ()[0]
 
 if len (pkgconfig_libs) is 0:
-  print ("CompizConfig Python [ERROR]: No libcompizconfig.pc found in the pkg-config search path")
+  print ("CompizConfig Python [ERROR]: No libcompizconfig_internal.pc found in the pkg-config search path")
   print ("Ensure that libcompizonfig is installed or libcompizconfig.pc is in your $PKG_CONFIG_PATH")
   exit (1);
 libs = pkgconfig_libs[2:].split (" ")[0]
@@ -120,7 +124,7 @@ class sdist (_sdist):
         # Build C file
         if os.path.exists ("src/compizconfig.pyx"):
             from Cython.Compiler.Main import compile as cython_compile
-            cython_compile ("src/compizconfig.pyx")
+            cython_compile ("src/compizconfig.pyx", output_file=os.getcwd () + "/compizconfig.c")
         # Run regular sdist
         _sdist.run (self)
 
@@ -129,7 +133,7 @@ class sdist (_sdist):
         # Remove pyx source and add c source
         if os.path.exists ("src/compizconfig.pyx"):
             self.filelist.exclude_pattern ("src/compizconfig.pyx")
-            self.filelist.append ("src/compizconfig.c")
+            self.filelist.append ("compizconfig.c")
 
 class test (Command):
     description = "run tests"
@@ -167,7 +171,7 @@ setup (
 		      "test"  : test},
   ext_modules=[ 
     Extension ("compizconfig", [ext_module_src],
-	       **pkgconfig("libcompizconfig"))
+	       **pkgconfig("libcompizconfig_internal"))
     ]
 )
 
