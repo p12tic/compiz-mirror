@@ -407,9 +407,8 @@ private:
     void glAddGeometry (const GLTexture::MatrixList &,
 			const CompRegion &, const CompRegion &,
 			unsigned int = MAXSHORT, unsigned int = MAXSHORT);
-    void glDrawTexture (GLTexture *texture, GLFragment::Attrib &,
-			unsigned int);
-    void glDrawGeometry ();
+    void glDrawTexture (GLTexture *texture, const GLMatrix &,
+                        const GLWindowPaintAttrib &, unsigned int);
 };
 
 class RollUpAnim :

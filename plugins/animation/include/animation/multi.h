@@ -340,12 +340,6 @@ public:
 		    (matrix, region, clip, maxGridWidth, maxGridHeight);
 	}
 
-	void drawGeometry ()
-	{
-	    setCurrAnimNumber (mAWindow, currentAnim);
-	    animList.at (currentAnim)->drawGeometry ();
-	}
-
 	bool paintWindowUsed ()
 	{
 	    int count = 0;

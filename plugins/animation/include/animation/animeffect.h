@@ -72,7 +72,7 @@ protected:
     
     int mOverrideProgressDir;	///< 0: default dir, 1: forward, 2: backward
     
-    GLFragment::Attrib mCurPaintAttrib;
+    GLWindowPaintAttrib mCurPaintAttrib;
     GLushort mStoredOpacity;
     WindowEvent mCurWindowEvent;
     bool mInitialized; ///< whether the animation is initialized (in preparePaint)
@@ -160,7 +160,6 @@ public:
 			    const CompRegion            &clip,
 			    unsigned int                maxGridWidth,
 			    unsigned int                maxGridHeight);
-    virtual void drawGeometry ();
 
     virtual bool paintWindowUsed () { return false; }
     virtual bool paintWindow (GLWindow			*gWindow,
@@ -178,9 +177,10 @@ public:
     /// Should be overriden by a base animation class in every extension plugin.
     virtual ExtensionPluginInfo *getExtensionPluginInfo ();
 
-    void drawTexture (GLTexture          *texture,
-		      GLFragment::Attrib &attrib,
-		      unsigned int       mask);
+    void drawTexture (GLTexture                 *texture,
+                      const GLMatrix            &transform,
+                      const GLWindowPaintAttrib &attrib,
+                      unsigned int               mask);
 
     // Utility methods
 
@@ -205,7 +205,7 @@ public:
 				  GLMatrix &transform);
     void setInitialized () { mInitialized = true; }
     inline bool initialized () { return mInitialized; }
-    inline void setCurPaintAttrib (GLFragment::Attrib &newAttrib)
+    inline void setCurPaintAttrib (const GLWindowPaintAttrib &newAttrib)
     { mCurPaintAttrib = newAttrib; }
 };
 #endif

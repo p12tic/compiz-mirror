@@ -25,7 +25,6 @@ include_directories(
 )
 
 # temporarily disable plugins that aren't ported yed
-set (COMPIZ_DISABLE_PLUGIN_ANIMATION ON)
 set (COMPIZ_DISABLE_PLUGIN_ANIMATIONADDON ON)
 set (COMPIZ_DISABLE_PLUGIN_BICUBIC ON)
 set (COMPIZ_DISABLE_PLUGIN_BLUR ON)

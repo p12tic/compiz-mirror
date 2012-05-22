@@ -78,8 +78,6 @@ protected:
     /// ( http://www.r3.nu/~cass/qcoord/ )
     bool mUseQTexCoord;
 
-    GLWindow::Geometry mGeometry; ///< geometry for grid mesh
-
     virtual bool using3D () { return false; }
 
     virtual bool requiresTransformedWindow () const { return true; }
@@ -103,6 +101,5 @@ public:
 		      const CompRegion            &clip,
 		      unsigned int                maxGridWidth,
 		      unsigned int                maxGridHeight);
-    void drawGeometry ();
 };
 #endif

@@ -3,8 +3,8 @@
 
 #define ANIMATION_ABI 20091205
 
+#include <core/core.h>
 #include <core/pluginclasshandler.h>
-#include <opengl/fragment.h>
 
 typedef enum
 {
