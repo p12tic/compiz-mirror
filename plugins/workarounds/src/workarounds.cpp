@@ -384,6 +384,7 @@ WorkaroundsScreen::removeFromFullscreenList (CompWindow *w)
     mfwList.remove (w->id ());
 }
 
+#ifndef USE_GLES
 static void
 workaroundsProgramEnvParameter4f (GLenum  target,
 				  GLuint  index,
@@ -404,21 +405,25 @@ workaroundsProgramEnvParameter4f (GLenum  target,
 
     (*ws->programEnvParameter4dv) (target, index, data);
 }
+#endif
 
 void
 WorkaroundsScreen::updateParameterFix ()
 {
+#ifndef USE_GLES
     if (!GL::programEnvParameter4f || !programEnvParameter4dv)
 	return;
     if (optionGetAiglxFragmentFix ())
 	GL::programEnvParameter4f = workaroundsProgramEnvParameter4f;
     else
 	GL::programEnvParameter4f = origProgramEnvParameter4f;
+#endif
 }
 
 void
 WorkaroundsScreen::updateVideoSyncFix ()
 {
+#ifndef USE_GLES
     if ((!GL::getVideoSync || origGetVideoSync) ||
 	(!GL::waitVideoSync || origWaitVideoSync))
 	return;
@@ -432,6 +437,7 @@ WorkaroundsScreen::updateVideoSyncFix ()
 	GL::getVideoSync = origGetVideoSync;
 	GL::waitVideoSync = origWaitVideoSync;
     }
+#endif
 }
 
 void
@@ -450,8 +456,10 @@ WorkaroundsScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 				  CompOutput		    *output,
 				  unsigned int		    mask)
 {
+#ifndef USE_GLES
     if (optionGetForceGlxSync ())
 	glXWaitX ();
+#endif
 
     return gScreen->glPaintOutput (attrib, transform, region, output, mask);
 }
@@ -704,11 +712,6 @@ WorkaroundsWindow::getFixedWindowType ()
 	resName = CompString (classHint.res_name);
 	XFree (classHint.res_name);
     }
-    
-    if (classHint.res_class)
-    {
-	XFree (classHint.res_class);
-    }
 
     /* FIXME: Is this the best way to detect a notification type window? */
     if (ws->optionGetNotificationDaemonFix ())
@@ -807,6 +810,7 @@ WorkaroundsScreen::optionChanged (CompOption		      *opt,
     foreach (CompWindow *w, screen->windows ())
 	WorkaroundsWindow::get (w)->updateSticky ();
 
+#ifndef USE_GLES
     if (haveOpenGL)
     {
 	updateParameterFix ();
@@ -817,6 +821,7 @@ WorkaroundsScreen::optionChanged (CompOption		      *opt,
 	else
 	    GL::copySubBuffer = origCopySubBuffer;
     }
+#endif
 
     if (optionGetKeepMinimizedWindows ())
     {
@@ -1037,6 +1042,7 @@ WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
 					 &WorkaroundsScreen::optionChanged, this,
 					 _1, _2));
 
+#ifndef USE_GLES
     if (haveOpenGL)
     {
 	origProgramEnvParameter4f = GL::programEnvParameter4f;
@@ -1053,18 +1059,21 @@ WorkaroundsScreen::WorkaroundsScreen (CompScreen *screen) :
 
     if (optionGetFglrxXglFix () && haveOpenGL)
 	GL::copySubBuffer = NULL;
+#endif
 
     checkFunctions (false, true);
 }
 
 WorkaroundsScreen::~WorkaroundsScreen ()
 {
+#ifndef USE_GLES
     if (haveOpenGL)
     {
 	GL::copySubBuffer = origCopySubBuffer;
 	GL::getVideoSync = origGetVideoSync;
 	GL::waitVideoSync = origWaitVideoSync;
     }
+#endif
 }
 
 WorkaroundsWindow::WorkaroundsWindow (CompWindow *window) :
