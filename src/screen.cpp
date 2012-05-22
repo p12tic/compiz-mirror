@@ -985,10 +985,8 @@ cps::WindowManager::updateWindowSizes() const
 
 
 CompOption::Value::Vector
-cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPluginsRequested)
+cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPluginsRequested) const
 {
-    std::list<CompString> availablePlugins(CompPlugin::availablePlugins ());
-
     CompOption::Value::Vector result;
 
     /* Must have core as first plugin */
@@ -1003,8 +1001,7 @@ cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPlug
 	if (blacklist.find (p) != blacklist.end ())
 	    continue;
 
-	if (availablePlugins.end() != std::find(availablePlugins.begin(), availablePlugins.end(), p))
-	    result.push_back(p);
+	result.push_back(p);
     }
 
     /* Add plugins not in the initial list */
@@ -1031,8 +1028,7 @@ cps::PluginManager::mergedPluginList (CompOption::Value::Vector const& extraPlug
 
 	if (!skip)
 	{
-	    if (availablePlugins.end() != std::find(availablePlugins.begin(), availablePlugins.end(), opt.s()))
-		result.push_back(opt.s());
+	    result.push_back(opt.s());
 	}
     }
     return result;
