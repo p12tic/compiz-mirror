@@ -3035,7 +3035,6 @@ ccsLoadPlugins (CCSContext * context)
 #endif
 
     char *home = getenv ("HOME");
-
     if (home && strlen (home))
     {
 	char *homeplugins = NULL;
