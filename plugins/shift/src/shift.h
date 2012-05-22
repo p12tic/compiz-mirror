@@ -188,7 +188,7 @@ class ShiftScreen :
 	renderWindowTitle ();
 
 	void
-	drawWindowTitle ();
+	drawWindowTitle (const GLMatrix &transform);
 
 	bool
 	layoutThumbsCover ();

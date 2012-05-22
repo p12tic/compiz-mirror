@@ -183,7 +183,7 @@ ShiftScreen::renderWindowTitle ()
 }
 
 void
-ShiftScreen::drawWindowTitle ()
+ShiftScreen::drawWindowTitle (const GLMatrix &transform)
 {
     float width, height, border = 10.0f;
     CompRect oe;
@@ -225,16 +225,16 @@ ShiftScreen::drawWindowTitle ()
         return;
     }
 
-    text.draw (floor (x), floor (y), 1.0f);
+    text.draw (transform, floor (x), floor (y), 1.0f);
 }
 
 bool
 ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
-		      const GLMatrix		&transform,
-		      const CompRegion		&region,
-		      unsigned int		mask)
+                      const GLMatrix            &transform,
+                      const CompRegion          &region,
+                      unsigned int               mask)
 {
-    bool       status;
+    bool status;
 
     SHIFT_SCREEN (screen);
     if (ss->mState != ShiftStateNone && !ss->mPaintingAbove &&
@@ -272,9 +272,9 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 
 	if (scaled && !gWindow->textures ().empty ())
 	{
-	    GLFragment::Attrib fragment (attrib);
-	    GLMatrix wTransform = transform;
-	    ShiftSlot      *slot = ss->mActiveSlot->slot;
+	    GLWindowPaintAttrib wAttrib (attrib);
+	    GLMatrix            wTransform = transform;
+	    ShiftSlot          *slot = ss->mActiveSlot->slot;
 
 	    float sx     = ss->mAnim * slot->tx;
 	    float sy     = ss->mAnim * slot->ty;
@@ -302,11 +302,11 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 	    /*if (mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
 		return false;*/
 
-	    fragment.setOpacity ((float)fragment.getOpacity () * sopacity);
-	    fragment.setBrightness ((float)fragment.getBrightness () *
-				    ss->mReflectBrightness);
+	    wAttrib.opacity = (float)wAttrib.opacity * sopacity;
+	    wAttrib.brightness = (float)wAttrib.brightness *
+				    ss->mReflectBrightness;
 
-	    if (window->alpha () || fragment.getOpacity () != OPAQUE)
+	    if (window->alpha () || wAttrib.opacity != OPAQUE)
 		mask |= PAINT_WINDOW_TRANSLUCENT_MASK;
 
 	    wTransform.translate (sx, sy, sz);
@@ -327,13 +327,8 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 	    wTransform.translate (-window->x () - (window->width () / 2),
 				  -window->y () - (window->height () / 2), 0.0f);
 
-	    glPushMatrix ();
-	    glLoadMatrixf (wTransform.getMatrix ());
-
-	    gWindow->glDraw (wTransform, fragment, region,
+	    gWindow->glDraw (wTransform, wAttrib, region,
 			      mask | PAINT_WINDOW_TRANSFORMED_MASK);
-
-	    glPopMatrix ();
 	}
 
 	if (scaled && ((ss->optionGetOverlayIcon () != ShiftOptions::OverlayIconNone) ||
@@ -418,56 +413,52 @@ ShiftWindow::glPaint (const GLWindowPaintAttrib	&attrib,
 
 		iconReg = CompRegion (0, 0, icon->width (), icon->height ());
 
-		gWindow->geometry ().reset ();
+		gWindow->vertexBuffer ()->begin ();
 
 		matl.push_back (icon->matrix ());
 
 		gWindow->glAddGeometry (matl, iconReg, iconReg);
 
-		if (gWindow->geometry ().vCount)
-		{
-		    GLFragment::Attrib	fragment (sAttrib);
-		    GLMatrix		wTransform (transform);
+		gWindow->vertexBuffer ()->end ();
 
-		    if (gWindow->textures ().empty ())
-			sAttrib.opacity = gWindow->paintAttrib ().opacity;
+		GLWindowPaintAttrib wAttrib (sAttrib);
+		GLMatrix            wTransform (transform);
 
-		    fragment = GLFragment::Attrib (sAttrib);
+		if (gWindow->textures ().empty ())
+		    sAttrib.opacity = gWindow->paintAttrib ().opacity;
 
-		    fragment.setOpacity  ((float)fragment.getOpacity () * sopacity);
-		    fragment.setBrightness ((float)fragment.getBrightness () *
-					    ss->mReflectBrightness);
+		wAttrib = GLWindowPaintAttrib (sAttrib);
 
-		    wTransform.translate (sx, sy, sz);
+		wAttrib.opacity = (float)wAttrib.opacity * sopacity;
+		wAttrib.brightness = (float)wAttrib.brightness *
+		                                        ss->mReflectBrightness;
 
-		    wTransform.translate (window->x () +
-				     (window->width ()  * sscale / 2),
-				     window->y () +
-				     (window->height ()  * sscale / 2.0), 0.0f);
+		wTransform.translate (sx, sy, sz);
 
-		    wTransform.scale (ss->mOutput->width (),
-				      -ss->mOutput->height (), 1.0f);
+		wTransform.translate (window->x () +
+		                              (window->width ()  * sscale / 2),
+		                      window->y () +
+		                           (window->height ()  * sscale / 2.0),
+		                      0.0f);
 
-		    wTransform.rotate (srot, 0.0, 1.0, 0.0);
+		wTransform.scale (ss->mOutput->width (),
+		                  -ss->mOutput->height (),
+		                  1.0f);
 
-		    wTransform.scale (1.0f  / ss->mOutput->width (),
-                		 -1.0f / ss->mOutput->height (), 1.0f);
+		wTransform.rotate (srot, 0.0, 1.0, 0.0);
 
-		    wTransform.translate (x -
-					  (window->width () * sscale / 2), y -
-					  (window->height () * sscale / 2.0), 0.0f);
-		    wTransform.scale (scale, scale, 1.0f);
+		wTransform.scale (1.0f  / ss->mOutput->width (),
+		                  -1.0f / ss->mOutput->height (),
+		                  1.0f);
 
-		    glPushMatrix ();
-		    glLoadMatrixf (wTransform.getMatrix ());
+		wTransform.translate (x - (window->width () * sscale / 2),
+		                      y - (window->height () * sscale / 2.0),
+		                      0.0f);
+		wTransform.scale (scale, scale, 1.0f);
 
-		    gWindow->glDrawTexture (icon, fragment, mask);
-
-		    glPopMatrix ();
-		}
+		gWindow->glDrawTexture (icon, wTransform, wAttrib, mask);
 	    }
 	}
-
     }
     else
     {
@@ -1153,38 +1144,27 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-	GLdouble clip[4] = { 0.0, -1.0, 0.0, 0.0};
-
-	clip[3] = ((oy1 + (oy2 - oy1) / 2)) + (maxThumbHeight / 2.0);
-
 	/* Reflection drawing */
 
 	if (optionGetReflection ())
 	{
-	    GLMatrix	   rTransform = sTransform;
-	    unsigned short color[4];
-	    int            cull, cullInv;
+	    GLMatrix        rTransform = sTransform;
+	    GLMatrix        r2Transform;
+	    GLushort        colorData[4];
+	    GLfloat         vertexData[12];
+	    int             cull, cullInv;
+	    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+
 	    glGetIntegerv (GL_CULL_FACE_MODE, &cull);
 	    cullInv = (cull == GL_BACK)? GL_FRONT : GL_BACK;
 
-	    rTransform.translate (0.0, oy1 + oy2 + maxThumbHeight,
-			     0.0);
+	    rTransform.translate (0.0, oy1 + oy2 + maxThumbHeight, 0.0);
 	    rTransform.scale (1.0, -1.0, 1.0);
-
-	    glPushMatrix ();
-	    glLoadMatrixf (rTransform.getMatrix ());
 
 	    glCullFace (cullInv);
 
 	    if (optionGetMipmaps ())
 		gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
-
-
-	    if (mAnim == 1.0)
-	    {
-		glClipPlane (GL_CLIP_PLANE0, clip);
-		glEnable (GL_CLIP_PLANE0);
-	    }
 
 	    mReflectActive = true;
 	    mReflectBrightness = optionGetIntensity ();
@@ -1201,62 +1181,80 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 		}
 	    }
 
-	    glDisable (GL_CLIP_PLANE0);
 	    glCullFace (cull);
-
-	    glLoadIdentity();
-	    glTranslatef (0.0, 0.0, -DEFAULT_Z_CAMERA);
-
-	    glEnable(GL_BLEND);
 	    glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+	    r2Transform.translate (0.0, 0.0, -DEFAULT_Z_CAMERA);
 
-	    glBegin (GL_QUADS);
-	    glColor4f (0.0, 0.0, 0.0, 0.0);
-	    glVertex2f (0.5, 0.0);
-	    glVertex2f (-0.5, 0.0);
-	    glColor4f (0.0, 0.0, 0.0,
-		       MIN (1.0, 1.0 - optionGetIntensity ()) * 2.0 *
-		       mAnim);
-	    glVertex2f (-0.5, -0.5);
-	    glVertex2f (0.5, -0.5);
-	    glEnd();
+	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	    colorData[0] = 0;
+	    colorData[1] = 0;
+	    colorData[2] = 0;
+	    colorData[3] = 0;
+	    streamingBuffer->addColors (1, colorData);
+	    streamingBuffer->addColors (1, colorData);
+
+	    colorData[3] = MIN (1.0,
+	                        1.0 - optionGetIntensity ()) * 2.0 * mAnim;
+	    streamingBuffer->addColors (1, colorData);
+	    streamingBuffer->addColors (1, colorData);
+
+	    vertexData[0]  = 0.5;
+	    vertexData[1]  = 0;
+	    vertexData[2]  = 0;
+	    vertexData[3]  = -0.5;
+	    vertexData[4]  = 0;
+	    vertexData[5]  = 0;
+	    vertexData[6]  = 0.5;
+	    vertexData[7]  = -0.5;
+	    vertexData[8]  = 0;
+	    vertexData[9]  = -0.5;
+	    vertexData[10] = -0.5;
+	    vertexData[11] = 0;
+
+	    streamingBuffer->addVertices (4, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (r2Transform);
 
 	    if (optionGetGroundSize () > 0.0)
 	    {
-		glBegin (GL_QUADS);
-		color[0] = optionGetGroundColor1 ()[0];
-		color[1] = optionGetGroundColor1 ()[1];
-		color[2] = optionGetGroundColor1 ()[2];
-		color[3] = (float)optionGetGroundColor1 ()[3] * mAnim;
-		glColor4usv (color);
-		glVertex2f (-0.5, -0.5);
-		glVertex2f (0.5, -0.5);
-		color[0] = optionGetGroundColor2 ()[0];
-		color[1] = optionGetGroundColor2 ()[1];
-		color[2] = optionGetGroundColor2 ()[2];
-		color[3] = (float)optionGetGroundColor2 ()[3] * mAnim;
-		glColor4usv (color);
-		glVertex2f (0.5, -0.5 + optionGetGroundSize ());
-		glVertex2f (-0.5, -0.5 + optionGetGroundSize ());
-		glEnd();
+		streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+		colorData[0] = optionGetGroundColor1 ()[0];
+		colorData[1] = optionGetGroundColor1 ()[1];
+		colorData[2] = optionGetGroundColor1 ()[2];
+		colorData[3] = (float)optionGetGroundColor1 ()[3] * mAnim;
+		streamingBuffer->addColors (1, colorData);
+		streamingBuffer->addColors (1, colorData);
+
+		colorData[3] = (float)optionGetGroundColor2 ()[3] * mAnim;
+		streamingBuffer->addColors (1, colorData);
+		streamingBuffer->addColors (1, colorData);
+
+		vertexData[0]  = -0.5;
+		vertexData[1]  = -0.5;
+		vertexData[2]  = 0;
+		vertexData[3]  = 0.5;
+		vertexData[4]  = -0.5;
+		vertexData[5]  = 0;
+		vertexData[6]  = -0.5;
+		vertexData[7]  = -0.5 + optionGetGroundSize ();
+		vertexData[8]  = 0;
+		vertexData[9]  = 0.5;
+		vertexData[10] = -0.5 + optionGetGroundSize ();
+		vertexData[11] = 0;
+
+		streamingBuffer->addVertices (4, vertexData);
+
+		streamingBuffer->end ();
+		streamingBuffer->render (r2Transform);
 	    }
 
 	    glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	    glDisable(GL_BLEND);
-	    glColor4f (1.0, 1.0, 1.0, 1.0);
-	    glPopMatrix ();
 	}
 
 	/* Drawing normal windows */
-
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
-	if (optionGetReflection () && mAnim == 1.0)
-	{
-	    glClipPlane (GL_CLIP_PLANE0, clip);
-	    glEnable (GL_CLIP_PLANE0);
-	}
 
 	mReflectBrightness = 1.0;
 	mReflectActive     = false;
@@ -1274,14 +1272,12 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    }
 	}
 
-	glDisable (GL_CLIP_PLANE0);
-
 	mActiveSlot = NULL;
 
 	gScreen->setTextureFilter (oldFilter);
 
 	if (textAvailable && (mState != ShiftStateIn))
-	    drawWindowTitle ();
+	    drawWindowTitle (sTransform);
 
 	if (mState == ShiftStateIn || mState == ShiftStateOut)
 	{
@@ -1316,8 +1312,6 @@ ShiftScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	    mPaintingAbove = false;
 	}
-
-	glPopMatrix ();
     }
 
     return status;
