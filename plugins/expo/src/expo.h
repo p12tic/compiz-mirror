@@ -48,18 +48,18 @@ class ExpoScreen :
 	void donePaint ();
 
 	bool glPaintOutput (const GLScreenPaintAttrib&, const GLMatrix&,
-			    const CompRegion&, CompOutput *, unsigned int);
+	                    const CompRegion&, CompOutput *, unsigned int);
 	void glPaintTransformedOutput (const GLScreenPaintAttrib&,
-				       const GLMatrix&, const CompRegion&,
-				       CompOutput *, unsigned int);
+	                               const GLMatrix&, const CompRegion&,
+	                               CompOutput*, unsigned int);
 
-	bool dndInit (CompAction *, CompAction::State, CompOption::Vector&);
-	bool dndFini (CompAction *, CompAction::State, CompOption::Vector&);
-	bool doExpo (CompAction *, CompAction::State, CompOption::Vector&);
-	bool exitExpo (CompAction *, CompAction::State, CompOption::Vector&);
-	bool termExpo (CompAction *, CompAction::State, CompOption::Vector&);
-	bool nextVp (CompAction *, CompAction::State, CompOption::Vector&);
-	bool prevVp (CompAction *, CompAction::State, CompOption::Vector&);
+	bool dndInit (CompAction*, CompAction::State, CompOption::Vector&);
+	bool dndFini (CompAction*, CompAction::State, CompOption::Vector&);
+	bool doExpo (CompAction*, CompAction::State, CompOption::Vector&);
+	bool exitExpo (CompAction*, CompAction::State, CompOption::Vector&);
+	bool termExpo (CompAction*, CompAction::State, CompOption::Vector&);
+	bool nextVp (CompAction*, CompAction::State, CompOption::Vector&);
+	bool prevVp (CompAction*, CompAction::State, CompOption::Vector&);
 
 	typedef enum {
 	    DnDNone,
@@ -80,7 +80,7 @@ class ExpoScreen :
 	bool  expoActive;
 	bool  expoMode;
 
-	DnDState   dndState;
+	DnDState    dndState;
 	CompWindow *dndWindow;
 
 	CompPoint prevCursor;
@@ -118,9 +118,9 @@ class ExpoScreen :
 	void updateWraps (bool);
 
 	void invertTransformedVertex (const GLScreenPaintAttrib&,
-				      const GLMatrix&, CompOutput *, int[2]);
+	                              const GLMatrix&, CompOutput *, int[2]);
 	void paintWall (const GLScreenPaintAttrib&, const GLMatrix&,
-			const CompRegion&, CompOutput *, unsigned int, bool);
+	                const CompRegion&, CompOutput *, unsigned int, bool);
 
 	KeyCode leftKey;
 	KeyCode rightKey;
@@ -138,15 +138,15 @@ class ExpoWindow :
 
 	bool damageRect (bool, const CompRect&);
 
-	bool glDraw (const GLMatrix&, GLFragment::Attrib&,
-		     const CompRegion&, unsigned int);
+	bool glDraw (const GLMatrix&, const GLWindowPaintAttrib&,
+	             const CompRegion&, unsigned int);
 	bool glPaint (const GLWindowPaintAttrib&, const GLMatrix&,
-		      const CompRegion&, unsigned int);
+	              const CompRegion&, unsigned int);
 	void glAddGeometry (const GLTexture::MatrixList&,
-			    const CompRegion&, const CompRegion&,
-			    unsigned int, unsigned int);
-	void glDrawTexture (GLTexture *, GLFragment::Attrib& attrib,
-			    unsigned int);
+	                    const CompRegion&, const CompRegion&,
+	                    unsigned int, unsigned int);
+	void glDrawTexture (GLTexture*, const GLMatrix&,
+	                    const GLWindowPaintAttrib&, unsigned int);
 
 	CompWindow      *window;
 	CompositeWindow *cWindow;

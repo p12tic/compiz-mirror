@@ -4,12 +4,14 @@
  *
  * expo.c
  *
+ * Copyright (c) 2011 Linaro Limited
  * Copyright (c) 2008 Dennis Kasprzyk <racarr@opencompositing.org>
  * Copyright (c) 2006 Robert Carr <racarr@beryl-project.org>
  *
  * Authors:
  * Robert Carr <racarr@beryl-project.org>
  * Dennis Kasprzyk <onestone@opencompositing.org>
+ * Travis Watkins <travis.watkins@linaro.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -25,7 +27,7 @@
 
 #include "expo.h"
 #include <math.h>
-#include <GL/glu.h>
+#include <opengl/opengl.h>
 
 COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 
@@ -37,8 +39,8 @@ COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 
 bool
 ExpoScreen::dndInit (CompAction          *action,
-		     CompAction::State   state,
-		     CompOption::Vector& options)
+                     CompAction::State    state,
+                     CompOption::Vector  &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
     if (xid != screen->root ())
@@ -57,9 +59,9 @@ ExpoScreen::dndInit (CompAction          *action,
 }
 
 bool
-ExpoScreen::dndFini (CompAction          *action,
-		     CompAction::State   state,
-		     CompOption::Vector& options)
+ExpoScreen::dndFini (CompAction         *action,
+                     CompAction::State   state,
+                     CompOption::Vector &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
     if (xid != screen->root ())
@@ -83,9 +85,9 @@ ExpoScreen::dndFini (CompAction          *action,
 }
 
 bool
-ExpoScreen::doExpo (CompAction          *action,
-		    CompAction::State   state,
-		    CompOption::Vector& options)
+ExpoScreen::doExpo (CompAction         *action,
+                    CompAction::State   state,
+                    CompOption::Vector &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
     if (xid != screen->root ())
@@ -129,9 +131,9 @@ ExpoScreen::doExpo (CompAction          *action,
 }
 
 bool
-ExpoScreen::termExpo (CompAction          *action,
-		      CompAction::State   state,
-		      CompOption::Vector& options)
+ExpoScreen::termExpo (CompAction         *action,
+                      CompAction::State   state,
+                      CompOption::Vector &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
     if (xid && xid != screen->root ())
@@ -165,9 +167,9 @@ ExpoScreen::termExpo (CompAction          *action,
 }
 
 bool
-ExpoScreen::exitExpo (CompAction          *action,
-		      CompAction::State   state,
-		      CompOption::Vector& options)
+ExpoScreen::exitExpo (CompAction         *action,
+                      CompAction::State   state,
+                      CompOption::Vector &options)
 {
     Window xid = CompOption::getIntOptionNamed (options, "root", 0);
     if (xid != screen->root ())
@@ -184,9 +186,9 @@ ExpoScreen::exitExpo (CompAction          *action,
 }
 
 bool
-ExpoScreen::nextVp (CompAction          *action,
-		    CompAction::State   state,
-		    CompOption::Vector& options)
+ExpoScreen::nextVp (CompAction         *action,
+                    CompAction::State   state,
+                    CompOption::Vector &options)
 {
     unsigned int newX, newY;
     Window       xid = CompOption::getIntOptionNamed (options, "root", 0);
@@ -215,9 +217,9 @@ ExpoScreen::nextVp (CompAction          *action,
 }
 
 bool
-ExpoScreen::prevVp (CompAction          *action,
-		    CompAction::State   state,
-		    CompOption::Vector& options)
+ExpoScreen::prevVp (CompAction         *action,
+                    CompAction::State   state,
+                    CompOption::Vector &options)
 {
     unsigned int newX, newY;
     Window       xid = CompOption::getIntOptionNamed (options, "root", 0);
@@ -457,8 +459,8 @@ ExpoScreen::updateWraps (bool enable)
 }
 
 void
-ExpoScreen::paint (CompOutput::ptrList& outputs,
-		   unsigned int         mask)
+ExpoScreen::paint (CompOutput::ptrList &outputs,
+                   unsigned int         mask)
 {
     int width = outputs.front ()->width ();
     int height = outputs.front ()->height ();
@@ -621,15 +623,63 @@ ExpoScreen::donePaint ()
     }
 }
 
+static bool
+unproject (float winx, float winy, float winz,
+           const GLMatrix &modelview,
+           const GLMatrix &projection,
+           const GLint viewport[4],
+           float *objx, float *objy, float *objz)
+{
+    GLMatrix finalMatrix = modelview * projection;
+    float in[4], out[4];
+
+    if (!finalMatrix.invert ())
+	return false;
+
+    in[0] = winx;
+    in[1] = winy;
+    in[2] = winz;
+    in[3] = 1.0;
+
+    /* Map x and y from window coordinates */
+    in[0] = (in[0] - viewport[0]) / viewport[2];
+    in[1] = (in[1] - viewport[1]) / viewport[3];
+
+    /* Map to range -1 to 1 */
+    in[0] = in[0] * 2 - 1;
+    in[1] = in[1] * 2 - 1;
+    in[2] = in[2] * 2 - 1;
+
+    for (int i = 0; i < 4; i++)
+    {
+	out[i] = in[0] * finalMatrix[i] +
+	         in[1] * finalMatrix[4  + i] +
+	         in[2] * finalMatrix[8  + i] +
+	         in[3] * finalMatrix[12 + i];
+    }
+
+    if (out[3] == 0.0)
+	return false;
+
+    out[0] /= out[3];
+    out[1] /= out[3];
+    out[2] /= out[3];
+
+    *objx = out[0];
+    *objy = out[1];
+    *objz = out[2];
+
+    return true;
+}
+
 void
-ExpoScreen::invertTransformedVertex (const GLScreenPaintAttrib& attrib,
-				     const GLMatrix&            transform,
-				     CompOutput                 *output,
-				     int                        vertex[2])
+ExpoScreen::invertTransformedVertex (const GLScreenPaintAttrib &attrib,
+                                     const GLMatrix            &transform,
+                                     CompOutput                *output,
+                                     int                        vertex[2])
 {
     GLMatrix sTransform (transform);
-    GLdouble p1[3], p2[3], v[3], alpha;
-    GLdouble mvm[16], pm[16];
+    float    p1[3], p2[3], v[3], alpha;
     GLint    viewport[4];
     int      i;
 
@@ -637,16 +687,13 @@ ExpoScreen::invertTransformedVertex (const GLScreenPaintAttrib& attrib,
     sTransform.toScreenSpace (output, -attrib.zTranslate);
 
     glGetIntegerv (GL_VIEWPORT, viewport);
-    for (i = 0; i < 16; i++)
-    {
-	mvm[i] = sTransform[i];
-	pm[i]  = gScreen->projectionMatrix ()[i];
-    }
 
-    gluUnProject (vertex[0], screen->height () - vertex[1], 0, mvm, pm,
-		  viewport, &p1[0], &p1[1], &p1[2]);
-    gluUnProject (vertex[0], screen->height () - vertex[1], -1.0, mvm, pm,
-		  viewport, &p2[0], &p2[1], &p2[2]);
+    unproject (vertex[0], screen->height () - vertex[1], 0,
+               sTransform, *gScreen->projectionMatrix (), viewport,
+               &p1[0], &p1[1], &p1[2]);
+    unproject (vertex[0], screen->height () - vertex[1], -1.0,
+               sTransform, *gScreen->projectionMatrix (), viewport,
+               &p2[0], &p2[1], &p2[2]);
 
     for (i = 0; i < 3; i++)
 	v[i] = p1[i] - p2[i];
@@ -693,13 +740,15 @@ ExpoScreen::invertTransformedVertex (const GLScreenPaintAttrib& attrib,
 }
 
 void
-ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
-		       const GLMatrix&            transform,
-		       const CompRegion&          region,
-		       CompOutput                 *output,
-		       unsigned int               mask,
-		       bool                       reflection)
+ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
+                       const GLMatrix            &transform,
+                       const CompRegion          &region,
+                       CompOutput                *output,
+                       unsigned int               mask,
+                       bool                       reflection)
 {
+    GLfloat vertexData[12];
+    GLushort colorData[16];
     GLMatrix sTransformW, sTransform (transform);
     int      i, j, vp;
     GLenum   oldFilter = gScreen->textureFilter ();
@@ -719,6 +768,8 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 
     int      glPaintTransformedOutputIndex =
 	gScreen->glPaintTransformedOutputGetCurrentIndex ();
+
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
     // Make sure that the base glPaintTransformedOutput function is called
     gScreen->glPaintTransformedOutputSetCurrentIndex (MAXSHORT);
@@ -812,7 +863,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
     /* zoom out */
     oScale = DEFAULT_Z_CAMERA / (cam[GLVector::z] + DEFAULT_Z_CAMERA);
     sTransform.scale (oScale, oScale, oScale);
-    glNormal3f (0.0, 0.0, -oScale);
+//    glNormal3f (0.0, 0.0, -oScale);
     sTransform.translate (-cam[GLVector::x], -cam[GLVector::y],
 			  -cam[GLVector::z] - DEFAULT_Z_CAMERA);
 
@@ -947,73 +998,167 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 	sTransform.translate (0.0, -(sy + gapY), 0.0f);
     }
 
-    glNormal3f (0.0, 0.0, -1.0);
+//    glNormal3f (0.0, 0.0, -1.0);
 
     if (reflection)
     {
-	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-	glPushMatrix ();
 
 	if (optionGetDeform () != DeformCurve)
 	{
-	    glLoadMatrixf (sTransformW.getMatrix ());
+	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
-	    glBegin (GL_QUADS);
-	    glColor4f (0.0, 0.0, 0.0, 1.0);
-	    glVertex2f (0.0, 0.0);
-	    glColor4f (0.0, 0.0, 0.0, 0.5);
-	    glVertex2f (0.0, -vpSize.y () * (sy + gapY));
-	    glVertex2f (vpSize.x () * sx * (1.0 + gapX),
-			-vpSize.y () * sy * (1.0 + gapY));
-	    glColor4f (0.0, 0.0, 0.0, 1.0);
-	    glVertex2f (vpSize.x () * sx * (1.0 + gapX), 0.0);
-	    glEnd ();
+	    colorData[0]  = 0;
+	    colorData[1]  = 0;
+	    colorData[2]  = 0;
+	    colorData[3]  = 65535;
+	    colorData[4]  = 0;
+	    colorData[5]  = 0;
+	    colorData[6]  = 0;
+	    colorData[7]  = 32768;
+	    colorData[8]  = 0;
+	    colorData[9]  = 0;
+	    colorData[10] = 0;
+	    colorData[11] = 65535;
+	    colorData[12] = 0;
+	    colorData[13] = 0;
+	    colorData[14] = 0;
+	    colorData[15] = 32768;
+
+	    vertexData[0]  = 0;
+	    vertexData[1]  = 0;
+	    vertexData[2]  = 0;
+	    vertexData[3]  = 0;
+	    vertexData[4]  = -vpSize.y () * (sy + gapY);
+	    vertexData[5]  = 0;
+	    vertexData[6]  = vpSize.x () * sx * (1.0 + gapX);
+	    vertexData[7]  = 0;
+	    vertexData[8]  = 0;
+	    vertexData[9]  = vpSize.x () * sx * (1.0 + gapX);
+	    vertexData[10] = -vpSize.y () * sy * (1.0 + gapY);
+	    vertexData[11] = 0;
+
+	    streamingBuffer->addColors (4, colorData);
+	    streamingBuffer->addVertices (4, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (sTransformW);
 	}
 	else
 	{
-	    glCullFace (GL_BACK);
-	    glLoadIdentity ();
-	    glTranslatef (0.0, 0.0, -DEFAULT_Z_CAMERA);
+	    GLMatrix cTransform;
+	    cTransform.translate (0.0, 0.0, -DEFAULT_Z_CAMERA);
 
-	    glBegin (GL_QUADS);
-	    glColor4f (0.0, 0.0, 0.0, 1.0 * expoCam);
-	    glVertex2f (-0.5, -0.5);
-	    glVertex2f (0.5, -0.5);
-	    glColor4f (0.0, 0.0, 0.0, 0.5 * expoCam);
-	    glVertex2f (0.5, 0.0);
-	    glVertex2f (-0.5, 0.0);
-	    glColor4f (0.0, 0.0, 0.0, 0.5 * expoCam);
-	    glVertex2f (-0.5, 0.0);
-	    glVertex2f (0.5, 0.0);
-	    glColor4f (0.0, 0.0, 0.0, 0.0);
-	    glVertex2f (0.5, 0.5);
-	    glVertex2f (-0.5, 0.5);
-	    glEnd ();
+	    glCullFace (GL_BACK);
+
+	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	    colorData[0]  = 0;
+	    colorData[1]  = 0;
+	    colorData[2]  = 0;
+	    colorData[3]  = (1.0 * expoCam) * 65536;
+	    colorData[4]  = 0;
+	    colorData[5]  = 0;
+	    colorData[6]  = 0;
+	    colorData[7]  = (1.0 * expoCam) * 65536;
+	    colorData[8]  = 0;
+	    colorData[9]  = 0;
+	    colorData[10] = 0;
+	    colorData[11] = (0.5 * expoCam) * 65536;
+	    colorData[12] = 0;
+	    colorData[13] = 0;
+	    colorData[14] = 0;
+	    colorData[15] = (0.5 * expoCam) * 65536;
+
+	    vertexData[0]  = -0.5;
+	    vertexData[1]  = -0.5;
+	    vertexData[2]  = 0;
+	    vertexData[3]  = 0.5;
+	    vertexData[4]  = -0.5;
+	    vertexData[5]  = 0;
+	    vertexData[6]  = -0.5;
+	    vertexData[7]  = 0;
+	    vertexData[8]  = 0;
+	    vertexData[9]  = 0.5;
+	    vertexData[10] = 0;
+	    vertexData[11] = 0;
+
+	    streamingBuffer->addColors (4, colorData);
+	    streamingBuffer->addVertices (4, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (cTransform);
+
+	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	    colorData[0]  = 0;
+	    colorData[1]  = 0;
+	    colorData[2]  = 0;
+	    colorData[3]  = (0.5 * expoCam) * 65536;
+	    colorData[4]  = 0;
+	    colorData[5]  = 0;
+	    colorData[6]  = 0;
+	    colorData[7]  = (0.5 * expoCam) * 65536;
+	    colorData[8]  = 0;
+	    colorData[9]  = 0;
+	    colorData[10] = 0;
+	    colorData[11] = 0;
+	    colorData[12] = 0;
+	    colorData[13] = 0;
+	    colorData[14] = 0;
+	    colorData[15] = 0;
+
+	    vertexData[0]  = -0.5;
+	    vertexData[1]  = 0;
+	    vertexData[2]  = 0;
+	    vertexData[3]  = 0.5;
+	    vertexData[4]  = 0;
+	    vertexData[5]  = 0;
+	    vertexData[6]  = -0.5;
+	    vertexData[7]  = 0.5;
+	    vertexData[8]  = 0;
+	    vertexData[9]  = 0.5;
+	    vertexData[10] = 0.5;
+	    vertexData[11] = 0;
+
+	    streamingBuffer->addColors (4, colorData);
+	    streamingBuffer->addVertices (4, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (cTransform);
 	}
 	glCullFace (GL_BACK);
 
-	glLoadIdentity ();
-	glTranslatef (0.0, 0.0, -DEFAULT_Z_CAMERA);
-
 	if (optionGetGroundSize () > 0.0)
 	{
-	    glBegin (GL_QUADS);
-	    glColor4usv (optionGetGroundColor1 ());
-	    glVertex2f (-0.5, -0.5);
-	    glVertex2f (0.5, -0.5);
-	    glColor4usv (optionGetGroundColor2 ());
-	    glVertex2f (0.5, -0.5 + optionGetGroundSize ());
-	    glVertex2f (-0.5, -0.5 + optionGetGroundSize ());
-	    glEnd ();
+	    GLMatrix gTransform;
+	    gTransform.translate (0.0, 0.0, -DEFAULT_Z_CAMERA);
+
+	    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	    vertexData[0]  = -0.5;
+	    vertexData[1]  = -0.5;
+	    vertexData[2]  = 0;
+	    vertexData[3]  = 0.5;
+	    vertexData[4]  = -0.5;
+	    vertexData[5]  = 0;
+	    vertexData[6]  = -0.5;
+	    vertexData[7]  = -0.5 + optionGetGroundSize ();
+	    vertexData[8]  = 0;
+	    vertexData[9]  = 0.5;
+	    vertexData[10] = -0.5 + optionGetGroundSize ();
+	    vertexData[11] = 0;
+
+	    streamingBuffer->addColors (1, optionGetGroundColor1 ());
+	    streamingBuffer->addColors (1, optionGetGroundColor1 ());
+	    streamingBuffer->addColors (1, optionGetGroundColor2 ());
+	    streamingBuffer->addColors (1, optionGetGroundColor2 ());
+	    streamingBuffer->addVertices (4, vertexData);
+
+	    streamingBuffer->end ();
+	    streamingBuffer->render (gTransform);
 	}
-
-	glColor4usv (defaultColor);
-
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
-	glDisable (GL_BLEND);
-	glPopMatrix ();
     }
 
     expoActive = false;
@@ -1025,11 +1170,11 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib& attrib,
 }
 
 bool
-ExpoScreen::glPaintOutput (const GLScreenPaintAttrib& attrib,
-			   const GLMatrix&            transform,
-			   const CompRegion&          region,
-			   CompOutput                 *output,
-			   unsigned int               mask)
+ExpoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
+                           const GLMatrix            &transform,
+                           const CompRegion          &region,
+                           CompOutput                *output,
+                           unsigned int               mask)
 {
     if (expoCam > 0.0)
 	mask |= PAINT_SCREEN_TRANSFORMED_MASK | PAINT_SCREEN_CLEAR_MASK;
@@ -1038,11 +1183,11 @@ ExpoScreen::glPaintOutput (const GLScreenPaintAttrib& attrib,
 }
 
 void
-ExpoScreen::glPaintTransformedOutput (const GLScreenPaintAttrib& attrib,
-				      const GLMatrix&            transform,
-				      const CompRegion&          region,
-				      CompOutput                 *output,
-				      unsigned int               mask)
+ExpoScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
+                                      const GLMatrix            &transform,
+                                      const CompRegion          &region,
+                                      CompOutput                *output,
+                                      unsigned int               mask)
 {
     expoActive = false;
 
@@ -1073,23 +1218,23 @@ ExpoScreen::glPaintTransformedOutput (const GLScreenPaintAttrib& attrib,
 }
 
 bool
-ExpoWindow::glDraw (const GLMatrix&     transform,
-		    GLFragment::Attrib& fragment,
-		    const CompRegion&   region,
-		    unsigned int        mask)
+ExpoWindow::glDraw (const GLMatrix            &transform,
+                    const GLWindowPaintAttrib &attrib,
+                    const CompRegion          &region,
+                    unsigned int               mask)
 {
     if (eScreen->expoCam == 0.0f)
-	return gWindow->glDraw (transform, fragment, region, mask);
+	return gWindow->glDraw (transform, attrib, region, mask);
 
-    GLFragment::Attrib fA (fragment);
-    int                expoAnimation;
+    GLWindowPaintAttrib eAttrib (attrib);
+    int                 expoAnimation;
 
     expoAnimation = eScreen->optionGetExpoAnimation ();
 
     if (eScreen->expoActive)
     {
 	if (expoAnimation != ExpoScreen::ExpoAnimationZoom)
-	    fA.setOpacity (fragment.getOpacity () * eScreen->expoCam);
+	    eAttrib.opacity = attrib.opacity * eScreen->expoCam;
 
 	if (window->wmType () & CompWindowTypeDockMask &&
 	    eScreen->optionGetHideDocks ())
@@ -1097,44 +1242,45 @@ ExpoWindow::glDraw (const GLMatrix&     transform,
 	    if (expoAnimation == ExpoScreen::ExpoAnimationZoom &&
 		eScreen->paintingVp == eScreen->selectedVp)
 	    {
-		fA.setOpacity (fragment.getOpacity () *
-			       (1 - sigmoidProgress (eScreen->expoCam)));
+		eAttrib.opacity = attrib.opacity *
+		                      (1 - sigmoidProgress (eScreen->expoCam));
 	    }
 	    else
 	    {
-		fA.setOpacity (0);
+		eAttrib.opacity = 0;
 	    }
 	}
 
-	fA.setBrightness (fragment.getBrightness () * eScreen->vpBrightness);
-	fA.setSaturation (fragment.getSaturation () * eScreen->vpSaturation);
+	eAttrib.brightness = attrib.brightness * eScreen->vpBrightness;
+	eAttrib.saturation = attrib.saturation * eScreen->vpSaturation;
     }
     else
     {
 	if (expoAnimation == ExpoScreen::ExpoAnimationZoom)
-	    fA.setBrightness (0);
+	    eAttrib.brightness = 0;
 	else
-	    fA.setBrightness (fragment.getBrightness () *
-			      (1 - sigmoidProgress (eScreen->expoCam)));
+	    eAttrib.brightness = attrib.brightness *
+	                              (1 - sigmoidProgress (eScreen->expoCam));
     }
 
-    return gWindow->glDraw (transform, fA, region, mask);
+    return gWindow->glDraw (transform, eAttrib, region, mask);
 }
 
 #define EXPO_GRID_SIZE 100
 
 void
-ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
-			   const CompRegion&            region,
-			   const CompRegion&            clip,
-			   unsigned int                 maxGridWidth,
-			   unsigned int                 maxGridHeight)
+ExpoWindow::glAddGeometry (const GLTexture::MatrixList &matrices,
+                           const CompRegion            &region,
+                           const CompRegion            &clip,
+                           unsigned int                 maxGridWidth,
+                           unsigned int                 maxGridHeight)
 {
     if (eScreen->expoCam > 0.0        &&
 	screen->desktopWindowCount () &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve)
     {
-	int         i, oldVCount = gWindow->geometry ().vCount;
+/* XXX: Curve mode not ported right now */
+/*	int         i, oldVCount = gWindow->geometry ().vCount;
 	GLfloat     *v;
 	CompPoint   offset;
 	float       lastX, lastZ = 0.0;
@@ -1179,7 +1325,7 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
 	    lastZ = v[2];
 
 	    v += gWindow->geometry ().vertexStride;
-	}
+	} */
     }
     else
     {
@@ -1188,16 +1334,18 @@ ExpoWindow::glAddGeometry (const GLTexture::MatrixList& matrices,
 }
 
 void
-ExpoWindow::glDrawTexture (GLTexture           *texture,
-			   GLFragment::Attrib& attrib,
-			   unsigned int        mask)
+ExpoWindow::glDrawTexture (GLTexture                 *texture,
+                           const GLMatrix            &transform,
+                           const GLWindowPaintAttrib &attrib,
+                           unsigned int               mask)
 {
     if (eScreen->expoCam > 0.0                                 &&
 	eScreen->optionGetDeform () == ExpoScreen::DeformCurve &&
 	eScreen->gScreen->lighting ()                          &&
 	screen->desktopWindowCount ())
     {
-	unsigned int i, idx, vCount;
+/* XXX: Curve mode not ported right now */
+/*	unsigned int i, idx, vCount;
 	CompPoint    offset;
 	float        x;
 	GLfloat      *v;
@@ -1244,21 +1392,21 @@ ExpoWindow::glDrawTexture (GLTexture           *texture,
 
 	glDisable (GL_NORMALIZE);
 	glDisableClientState (GL_NORMAL_ARRAY);
-	glNormal3f (0.0, 0.0, -1.0);
+	glNormal3f (0.0, 0.0, -1.0); */
     }
     else
     {
-	glEnable (GL_NORMALIZE);
-	gWindow->glDrawTexture (texture, attrib, mask);
-	glDisable (GL_NORMALIZE);
+//	glEnable (GL_NORMALIZE);
+	gWindow->glDrawTexture (texture, transform, attrib, mask);
+//	glDisable (GL_NORMALIZE);
     }
 }
 
 bool
-ExpoWindow::glPaint (const GLWindowPaintAttrib& attrib,
-		     const GLMatrix&            transform,
-		     const CompRegion&          region,
-		     unsigned int               mask)
+ExpoWindow::glPaint (const GLWindowPaintAttrib &attrib,
+                     const GLMatrix            &transform,
+                     const CompRegion          &region,
+                     unsigned int               mask)
 {
     if (eScreen->expoActive)
     {
@@ -1286,7 +1434,7 @@ ExpoWindow::glPaint (const GLWindowPaintAttrib& attrib,
 	{
 	    if (zoomAnim && eScreen->paintingVp == eScreen->selectedVp)
 		opacity = attrib.opacity *
-			  (1 - sigmoidProgress (eScreen->expoCam));
+		                      (1 - sigmoidProgress (eScreen->expoCam));
 	    else
 		opacity = 0;
 	}
@@ -1300,7 +1448,7 @@ ExpoWindow::glPaint (const GLWindowPaintAttrib& attrib,
 
 bool
 ExpoWindow::damageRect (bool            initial,
-			const CompRect& rect)
+                        const CompRect &rect)
 {
     if (eScreen->expoCam > 0.0f)
 	eScreen->cScreen->damageScreen ();
