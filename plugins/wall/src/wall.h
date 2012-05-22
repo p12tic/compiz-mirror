@@ -105,7 +105,7 @@ class WallScreen :
 	void drawThumb ();
 	void drawHighlight ();
 	void drawArrow ();
-	void drawCairoTextureOnScreen();
+	void drawCairoTextureOnScreen (const GLMatrix &transform);
 
 	void releaseMoveWindow ();
 	void computeTranslation (float &, float &);

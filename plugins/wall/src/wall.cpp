@@ -5,10 +5,12 @@
  * wall.cpp
  *
  * Copyright (c) 2006 Robert Carr <racarr@beryl-project.org>
+ *               2011 Linaro Limited
  *
  * Authors:
  * Robert Carr <racarr@beryl-project.org>
  * Dennis Kasprzyk <onestone@opencompositing.org>
+ * Travis Watkins <travis.watkins@linaro.org>
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -27,10 +29,11 @@
 #include <string.h>
 #include <math.h>
 #include <sys/time.h>
-#include <GL/glu.h>
 #include <dlfcn.h>
 
+#include <core/core.h>
 #include <core/atoms.h>
+#include <opengl/opengl.h>
 
 #include "wall.h"
 
@@ -906,25 +909,47 @@ WallScreen::initiateFlip (Direction         direction,
 }
 
 inline void
-wallDrawQuad (GLTexture::Matrix *matrix,
-	      BOX               *box)
+wallDrawQuad (const GLMatrix    &transform,
+              GLTexture::Matrix *matrix,
+              BOX               *box)
 {
-    glTexCoord2f (COMP_TEX_COORD_X (*matrix, box->x1),
-		  COMP_TEX_COORD_Y (*matrix, box->y2));
-    glVertex2i (box->x1, box->y2);
-    glTexCoord2f (COMP_TEX_COORD_X (*matrix, box->x2),
-		  COMP_TEX_COORD_Y (*matrix, box->y2));
-    glVertex2i (box->x2, box->y2);
-    glTexCoord2f (COMP_TEX_COORD_X (*matrix, box->x2),
-		  COMP_TEX_COORD_Y (*matrix, box->y1));
-    glVertex2i (box->x2, box->y1);
-    glTexCoord2f (COMP_TEX_COORD_X (*matrix, box->x1),
-		  COMP_TEX_COORD_Y (*matrix, box->y1));
-    glVertex2i (box->x1, box->y1);
+    GLfloat textureData[8];
+    GLfloat vertexData[12];
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    textureData[0] = COMP_TEX_COORD_X (*matrix, box->x1);
+    textureData[1] = COMP_TEX_COORD_Y (*matrix, box->y2);
+    textureData[2] = COMP_TEX_COORD_X (*matrix, box->x2);
+    textureData[3] = COMP_TEX_COORD_Y (*matrix, box->y2);
+    textureData[4] = COMP_TEX_COORD_X (*matrix, box->x1);
+    textureData[5] = COMP_TEX_COORD_Y (*matrix, box->y1);
+    textureData[6] = COMP_TEX_COORD_X (*matrix, box->x2);
+    textureData[7] = COMP_TEX_COORD_Y (*matrix, box->y1);
+
+    vertexData[0]  = box->x1;
+    vertexData[1]  = box->y2;
+    vertexData[2]  = 0;
+    vertexData[3]  = box->x2;
+    vertexData[4]  = box->y2;
+    vertexData[5]  = 0;
+    vertexData[6]  = box->x1;
+    vertexData[7]  = box->y1;
+    vertexData[8]  = 0;
+    vertexData[9]  = box->x2;
+    vertexData[10] = box->y1;
+    vertexData[11] = 0;
+
+    streamingBuffer->addTexCoords (0, 4, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
 }
 
 void
-WallScreen::drawCairoTextureOnScreen ()
+WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
 {
     float             centerX, centerY;
     float             width, height;
@@ -933,12 +958,10 @@ WallScreen::drawCairoTextureOnScreen ()
     unsigned int      i, j;
     GLTexture::Matrix matrix;
     BOX               box;
+    GLMatrix          wTransform (transform);
 
     CompOutput::vector &outputDevs = screen->outputDevs ();
     CompOutput         output = outputDevs[boxOutputDevice];
-
-    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-    glEnable (GL_BLEND);
 
     centerX = output.x1 () + (output.width () / 2.0f);
     centerY = output.y1 () + (output.height () / 2.0f);
@@ -967,10 +990,8 @@ WallScreen::drawCairoTextureOnScreen ()
 	else
 	    left = 2 * left;
 
-	glScreen->setTexEnvMode (GL_MODULATE);
-
-	glColor4f (left, left, left, left);
-	glTranslatef (0.0f, 0.0f, -(1 - left));
+//	glColor4f (left, left, left, left);
+	wTransform.translate (0.0f, 0.0f, -(1 - left));
 
 	mSzCamera = -(1 - left);
     }
@@ -991,9 +1012,7 @@ WallScreen::drawCairoTextureOnScreen ()
     box.y2 = box.y1 + height;
 
     switcherContext.texture[0]->enable (GLTexture::Fast);
-    glBegin (GL_QUADS);
-    wallDrawQuad (&matrix, &box);
-    glEnd ();
+    wallDrawQuad (wTransform, &matrix, &box);
     switcherContext.texture[0]->disable ();
 
     /* draw thumb */
@@ -1001,7 +1020,6 @@ WallScreen::drawCairoTextureOnScreen ()
     height = (float) thumbContext.height;
 
     thumbContext.texture[0]->enable (GLTexture::Fast);
-    glBegin (GL_QUADS);
     for (i = 0; i < (unsigned int) screen->vpSize ().width (); i++)
     {
 	for (j = 0; j < (unsigned int) screen->vpSize ().height (); j++)
@@ -1020,10 +1038,9 @@ WallScreen::drawCairoTextureOnScreen ()
 	    matrix.x0 -= box.x1 * matrix.xx;
 	    matrix.y0 -= box.y1 * matrix.yy;
 
-	    wallDrawQuad (&matrix, &box);
+	    wallDrawQuad (wTransform, &matrix, &box);
 	}
     }
-    glEnd ();
     thumbContext.texture[0]->disable ();
 
     if (moving || showPreview)
@@ -1040,9 +1057,7 @@ WallScreen::drawCairoTextureOnScreen ()
 	matrix.y0 -= box.y1 * matrix.yy;
 
 	highlightContext.texture[0]->enable (GLTexture::Fast);
-	glBegin (GL_QUADS);
-	wallDrawQuad (&matrix, &box);
-	glEnd ();
+	wallDrawQuad (wTransform, &matrix, &box);
 	highlightContext.texture[0]->disable ();
 
 	/* draw arrow */
@@ -1119,26 +1134,20 @@ WallScreen::drawCairoTextureOnScreen ()
 	    box.x2 = box.x1 + aW;
 	    box.y2 = box.y1 + aH;
 
-	    glTranslatef (box.x1 + aW / 2, box.y1 + aH / 2, 0.0f);
-	    glRotatef (direction, 0.0f, 0.0f, 1.0f);
-	    glTranslatef (-box.x1 - aW / 2, -box.y1 - aH / 2, 0.0f);
+	    wTransform.translate (box.x1 + aW / 2, box.y1 + aH / 2, 0.0f);
+	    wTransform.rotate (direction, 0.0f, 0.0f, 1.0f);
+	    wTransform.translate (-box.x1 - aW / 2, -box.y1 - aH / 2, 0.0f);
 
 	    matrix = arrowContext.texture[0]->matrix ();
 	    matrix.x0 -= box.x1 * matrix.xx;
 	    matrix.y0 -= box.y1 * matrix.yy;
 
-	    glBegin (GL_QUADS);
-	    wallDrawQuad (&matrix, &box);
-	    glEnd ();
-
+	    wallDrawQuad (wTransform, &matrix, &box);
 	    arrowContext.texture[0]->disable ();
 	}
     }
 
-    glDisable (GL_BLEND);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
     glScreen->setTexEnvMode (GL_REPLACE);
-    glColor4usv (defaultColor);
 }
 
 void
@@ -1180,12 +1189,7 @@ WallScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	sMatrix.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-	glPushMatrix ();
-	glLoadMatrixf (sMatrix.getMatrix ());
-
-	drawCairoTextureOnScreen ();
-
-	glPopMatrix ();
+	drawCairoTextureOnScreen (sMatrix);
 
 	if (optionGetMiniscreen ())
         {
