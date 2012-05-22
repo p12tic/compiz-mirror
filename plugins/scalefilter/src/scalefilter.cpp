@@ -462,12 +462,7 @@ FilterInfo::drawText (const CompOutput *output,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
-	text.draw (x, y, 1.0f);
-
-	glPopMatrix ();
+	text.draw (sTransform, x, y, 1.0f);
     }
 }
 

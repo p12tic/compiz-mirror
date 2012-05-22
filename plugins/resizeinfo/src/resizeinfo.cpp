@@ -447,21 +447,17 @@ InfoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
       
-	glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-
 	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 	glEnable (GL_BLEND);
 	gScreen->setTexEnvMode (GL_MODULATE);
   
-	backgroundLayer.draw (x, y);
-	textLayer.draw (x, y);
+	backgroundLayer.draw (sTransform, x, y);
+	textLayer.draw (sTransform, x, y);
   
 	gScreen->setTexEnvMode (GL_REPLACE);
 	glDisable (GL_BLEND);
 	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
-	glPopMatrix ();
     }
 
     return status;
