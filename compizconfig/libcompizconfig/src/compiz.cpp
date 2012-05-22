@@ -37,6 +37,7 @@ extern "C"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <glib.h>
 
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
@@ -2845,7 +2846,9 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 
     // Load from .xml
     FILE *fp = fopen (xmlFilePath, "r");
+#ifdef USE_PROTOBUF
     Bool xmlLoaded = FALSE;
+#endif
 
     if (fp)
     {
@@ -2853,7 +2856,10 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 	xmlDoc *doc = xmlReadFile (xmlFilePath, NULL, 0);
 	if (doc)
 	{
-	    xmlLoaded = loadPluginFromXML (context, doc, xmlFilePath,
+#ifdef USE_PROTOBUF
+	    xmlLoaded =
+#endif
+	    loadPluginFromXML (context, doc, xmlFilePath,
 					   pluginInfoPBv);
 	    xmlFreeDoc (doc);
 	}
