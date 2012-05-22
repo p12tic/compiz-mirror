@@ -57,8 +57,9 @@ class InfoLayer
 	GLTexture::List   texture;
 	cairo_t           *cr;
 
-	void draw (int x,
-	 	   int y);
+	void draw (const GLMatrix &transform,
+	           int             x,
+	           int             y);
 
 	void renderBackground ();
 	void renderText ();

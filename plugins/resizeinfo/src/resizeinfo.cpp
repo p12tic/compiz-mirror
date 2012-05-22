@@ -349,8 +349,9 @@ InfoWindow::ungrabNotify ()
 /* Draw a texture at x/y on a quad of RESIZE_POPUP_WIDTH /
    RESIZE_POPUP_HEIGHT with the opacity in InfoScreen. */
 void
-InfoLayer::draw (int x,
-	   	 int y)
+InfoLayer::draw (const GLMatrix &transform,
+                 int             x,
+                 int             y)
 {
     BOX   box;
     float opacity;
@@ -362,9 +363,12 @@ InfoLayer::draw (int x,
 
     for (unsigned int i = 0; i < texture.size (); i++)
     {
-
+	GLushort           colorData[4];
+	GLfloat            textureData[8];
+	GLfloat            vertexData[12];
 	GLTexture         *tex = texture[i];
-	GLTexture::Matrix matrix = tex->matrix ();
+	GLTexture::Matrix  matrix = tex->matrix ();
+	GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
 	tex->enable (GLTexture::Good);
 
@@ -380,22 +384,41 @@ InfoLayer::draw (int x,
 	if (is->drawing)
 	    opacity = 1.0f - opacity;
 
-	glColor4f (opacity, opacity, opacity, opacity); 
-	glBegin (GL_QUADS);
-	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x1), 
-		      COMP_TEX_COORD_Y (matrix, box.y2));
-	glVertex2i (box.x1, box.y2);
-	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x2), 
-		      COMP_TEX_COORD_Y (matrix, box.y2));
-	glVertex2i (box.x2, box.y2);
-	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x2), 
-		      COMP_TEX_COORD_Y (matrix, box.y1));
-	glVertex2i (box.x2, box.y1);
-	glTexCoord2f (COMP_TEX_COORD_X (matrix, box.x1), 
-		      COMP_TEX_COORD_Y (matrix, box.y1));
-	glVertex2i (box.x1, box.y1);	
-	glEnd ();
-	glColor4usv (defaultColor);
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	colorData[0] = opacity * 65536;
+	colorData[1] = opacity * 65536;
+	colorData[2] = opacity * 65536;
+	colorData[3] = opacity * 65536;
+
+	textureData[0] = COMP_TEX_COORD_X (matrix, box.x1);
+	textureData[1] = COMP_TEX_COORD_Y (matrix, box.y2);
+	textureData[2] = COMP_TEX_COORD_X (matrix, box.x2);
+	textureData[3] = COMP_TEX_COORD_Y (matrix, box.y2);
+	textureData[4] = COMP_TEX_COORD_X (matrix, box.x1);
+	textureData[5] = COMP_TEX_COORD_Y (matrix, box.y1);
+	textureData[6] = COMP_TEX_COORD_X (matrix, box.x2);
+	textureData[7] = COMP_TEX_COORD_Y (matrix, box.y1);
+
+	vertexData[0]  = box.x1;
+	vertexData[1]  = box.y2;
+	vertexData[2]  = 0;
+	vertexData[3]  = box.x2;
+	vertexData[4]  = box.y2;
+	vertexData[5]  = 0;
+	vertexData[6]  = box.x1;
+	vertexData[7]  = box.y1;
+	vertexData[8]  = 0;
+	vertexData[9]  = box.x2;
+	vertexData[10] = box.y1;
+	vertexData[11] = 0;
+
+	streamingBuffer->addColors (1, colorData);
+	streamingBuffer->addTexCoords (0, 4, textureData);
+	streamingBuffer->addVertices (4, vertexData);
+
+	streamingBuffer->end ();
+	streamingBuffer->render (transform);
 
 	tex->disable ();
     }
