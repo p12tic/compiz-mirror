@@ -487,27 +487,37 @@ CompText::getHeight () const
 }
 
 void
-CompText::draw (float x,
-	        float y,
-	        float alpha) const
+CompText::draw (const GLMatrix &transform,
+                float           x,
+                float           y,
+                float           alpha) const
 {
-    GLboolean  wasBlend;
-    GLint      oldBlendSrc, oldBlendDst;
+    GLint           oldBlendSrc, oldBlendDst;
+    GLushort        colorData[4];
+    GLfloat         textureData[8];
+    GLfloat         vertexData[12];
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
     if (texture.empty ())
 	return;
 
+#ifdef USE_GLES
+    GLint           oldBlendSrcAlpha, oldBlendDstAlpha;
+    glGetIntegerv (GL_BLEND_SRC_RGB, &oldBlendSrc);
+    glGetIntegerv (GL_BLEND_DST_RGB, &oldBlendDst);
+    glGetIntegerv (GL_BLEND_SRC_ALPHA, &oldBlendSrcAlpha);
+    glGetIntegerv (GL_BLEND_DST_ALPHA, &oldBlendDstAlpha);
+#else
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
-
-    wasBlend = glIsEnabled (GL_BLEND);
-    if (!wasBlend)
-	glEnable (GL_BLEND);
+#endif
 
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
-    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-    glColor4f (alpha, alpha, alpha, alpha);
+    colorData[0] = alpha * 65536;
+    colorData[1] = alpha * 65536;
+    colorData[2] = alpha * 65536;
+    colorData[3] = alpha * 65536;
 
     for (unsigned int i = 0; i < texture.size (); i++)
     {
@@ -516,27 +526,46 @@ CompText::draw (float x,
 
 	tex->enable (GLTexture::Good);
 
-	glBegin (GL_QUADS);
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
-	glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m, 0));
-	glVertex2f (x, y - height);
-	glTexCoord2f (COMP_TEX_COORD_X (m, 0), COMP_TEX_COORD_Y (m, height));
-	glVertex2f (x, y);
-	glTexCoord2f (COMP_TEX_COORD_X (m, width), COMP_TEX_COORD_Y (m, height));
-	glVertex2f (x + width, y);
-	glTexCoord2f (COMP_TEX_COORD_X (m, width), COMP_TEX_COORD_Y (m, 0));
-	glVertex2f (x + width, y - height);
+	vertexData[0]  = x;
+	vertexData[1]  = y - height;
+	vertexData[2]  = 0;
+	vertexData[3]  = x;
+	vertexData[4]  = y;
+	vertexData[5]  = 0;
+	vertexData[6]  = x + width;
+	vertexData[7]  = y - height;
+	vertexData[8]  = 0;
+	vertexData[9]  = x + width;
+	vertexData[10] = y;
+	vertexData[11] = 0;
 
-	glEnd ();
+	textureData[0] = COMP_TEX_COORD_X (m, 0);
+	textureData[1] = COMP_TEX_COORD_Y (m, 0);
+	textureData[2] = COMP_TEX_COORD_X (m, 0);
+	textureData[3] = COMP_TEX_COORD_Y (m, height);
+	textureData[4] = COMP_TEX_COORD_X (m, width);
+	textureData[5] = COMP_TEX_COORD_Y (m, 0);
+	textureData[6] = COMP_TEX_COORD_X (m, width);
+	textureData[7] = COMP_TEX_COORD_Y (m, height);
+
+	streamingBuffer->addColors (1, colorData);
+	streamingBuffer->addVertices (4, vertexData);
+	streamingBuffer->addTexCoords (0, 4, textureData);
+ 
+	streamingBuffer->end ();
+	streamingBuffer->render (transform);
 
 	tex->disable ();
     }
 
-    glColor4usv (defaultColor);
-
-    if (!wasBlend)
-	glDisable (GL_BLEND);
+#ifdef USE_GLES
+    glBlendFuncSeparate (oldBlendSrc, oldBlendDst,
+                         oldBlendSrcAlpha, oldBlendDstAlpha);
+#else
     glBlendFunc (oldBlendSrc, oldBlendDst);
+#endif
 }
 
 CompText::CompText () :
