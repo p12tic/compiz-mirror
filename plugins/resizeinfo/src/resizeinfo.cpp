@@ -447,16 +447,15 @@ InfoScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
       
-	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 	glEnable (GL_BLEND);
+#ifndef USE_GLES
 	gScreen->setTexEnvMode (GL_MODULATE);
-  
+#endif
 	backgroundLayer.draw (sTransform, x, y);
 	textLayer.draw (sTransform, x, y);
   
 	gScreen->setTexEnvMode (GL_REPLACE);
 	glDisable (GL_BLEND);
-	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
 
     }
 
