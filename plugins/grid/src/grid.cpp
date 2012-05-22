@@ -431,100 +431,128 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 {
     CompRect rect;
     GLMatrix sTransform (transform);
-	std::vector<Animation>::iterator iter;
+    std::vector<Animation>::iterator iter;
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    GLfloat         vertexData[12];
+    GLushort        colorData[4];
 
     getPaintRectangle (rect);
 
-	for (unsigned int i = 0; i < animations.size (); i++)
-		setCurrentRect (animations.at (i));
-
-    glPushMatrix ();
+    for (unsigned int i = 0; i < animations.size (); i++)
+	setCurrentRect (animations.at (i));
 
     sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-    glLoadMatrixf (sTransform.getMatrix ());
+    for (iter = animations.begin (); iter != animations.end () && animating; iter++)
+    {
+	GLushort *color;
+	Animation& anim = *iter;
 
-    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-    glEnable (GL_BLEND);
+	color = optionGetFillColor ();
+	colorData[0] = anim.opacity * color[0];
+	colorData[1] = anim.opacity * color[1];
+	colorData[2] = anim.opacity * color[2];
+	colorData[3] = anim.opacity * color[3];
 
-	for (iter = animations.begin (); iter != animations.end () && animating; iter++)
-	{
-		Animation& anim = *iter;
-		float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
+	vertexData[0]  = anim.currentRect.x1 ();
+	vertexData[1]  = anim.currentRect.y1 ();
+	vertexData[2]  = 0.0f;
+	vertexData[3]  = anim.currentRect.x1 ();
+	vertexData[4]  = anim.currentRect.y2 ();
+	vertexData[5]  = 0.0f;
+	vertexData[6]  = anim.currentRect.x2 ();
+	vertexData[7]  = anim.currentRect.y1 ();
+	vertexData[8]  = 0.0f;
+	vertexData[9]  = anim.currentRect.x2 ();
+	vertexData[10] = anim.currentRect.y2 ();
+	vertexData[11] = 0.0f;
 
-		/* fill rectangle */
-		glColor4f (((float) optionGetFillColorRed () / 65535.0f) * alpha,
-			   ((float) optionGetFillColorGreen () / 65535.0f) * alpha,
-			   ((float) optionGetFillColorBlue () / 65535.0f) * alpha,
-			   alpha);
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+	streamingBuffer->addColors (1, colorData);
+	streamingBuffer->addVertices (4, vertexData);
 
-		/* fill rectangle */
-		glRecti (anim.currentRect.x1 (), anim.currentRect.y2 (),
-				 anim.currentRect.x2 (), anim.currentRect.y1 ());
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
 
-		/* Set outline rect smaller to avoid damage issues */
-		anim.currentRect.setGeometry (anim.currentRect.x () + 1,
-					      anim.currentRect.y () + 1,
-					      anim.currentRect.width () - 2,
-					      anim.currentRect.height () - 2);
+	/* Set outline rect smaller to avoid damage issues */
+	anim.currentRect.setGeometry (anim.currentRect.x () + 1,
+				      anim.currentRect.y () + 1,
+				      anim.currentRect.width () - 2,
+				      anim.currentRect.height () - 2);
 
-		alpha = (float) (optionGetOutlineColorAlpha () / 65535.0f) * anim.opacity;
+	/* draw outline */
+	color = optionGetOutlineColor ();
+	colorData[0] = anim.opacity * color[0];
+	colorData[1] = anim.opacity * color[1];
+	colorData[2] = anim.opacity * color[2];
+	colorData[3] = anim.opacity * color[3];
 
-		/* draw outline */
-		glColor4f (((float) optionGetOutlineColorRed () / 65535.0f) * alpha,
-			   ((float) optionGetOutlineColorGreen () / 65535.0f) * alpha,
-			   ((float) optionGetOutlineColorBlue () / 65535.0f) * alpha,
-			   alpha);
+	vertexData[0]  = anim.currentRect.x1 ();
+	vertexData[1]  = anim.currentRect.y1 ();
+	vertexData[3]  = anim.currentRect.x1 ();
+	vertexData[4]  = anim.currentRect.y2 ();
+	vertexData[6]  = anim.currentRect.x2 ();
+	vertexData[7]  = anim.currentRect.y2 ();
+	vertexData[9]  = anim.currentRect.x2 ();
+	vertexData[10] = anim.currentRect.y1 ();
 
-		glLineWidth (2.0);
+	glLineWidth (2.0);
 
-		glBegin (GL_LINE_LOOP);
-		glVertex2i (anim.currentRect.x1 (),	anim.currentRect.y1 ());
-		glVertex2i (anim.currentRect.x2 (),	anim.currentRect.y1 ());
-		glVertex2i (anim.currentRect.x2 (),	anim.currentRect.y2 ());
-		glVertex2i (anim.currentRect.x1 (),	anim.currentRect.y2 ());
-		glEnd ();
-	}
+	streamingBuffer->begin (GL_LINE_LOOP);
+	streamingBuffer->addColors (1, colorData);
+	streamingBuffer->addVertices (4, vertexData);
 
-	if (!animating)
-	{
-		/* fill rectangle */
-		float alpha = (float) optionGetFillColorAlpha () / 65535.0f;
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
+    }
 
-		/* fill rectangle */
-		glColor4f (((float) optionGetFillColorRed () / 65535.0f) * alpha,
-			   ((float) optionGetFillColorGreen () / 65535.0f) * alpha,
-			   ((float) optionGetFillColorBlue () / 65535.0f) * alpha,
-			   alpha);
-		glRecti (rect.x1 (), rect.y2 (), rect.x2 (), rect.y1 ());
+    if (!animating)
+    {
+	vertexData[0]  = rect.x1 ();
+	vertexData[1]  = rect.y1 ();
+	vertexData[2]  = 0.0f;
+	vertexData[3]  = rect.x1 ();
+	vertexData[4]  = rect.y2 ();
+	vertexData[5]  = 0.0f;
+	vertexData[6]  = rect.x2 ();
+	vertexData[7]  = rect.y1 ();
+	vertexData[8]  = 0.0f;
+	vertexData[9]  = rect.x2 ();
+	vertexData[10] = rect.y2 ();
+	vertexData[11] = 0.0f;
 
-		/* Set outline rect smaller to avoid damage issues */
-		rect.setGeometry (rect.x () + 1, rect.y () + 1,
-				  rect.width () - 2, rect.height () - 2);
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+	streamingBuffer->addColors (1, optionGetFillColor ());
+	streamingBuffer->addVertices (4, vertexData);
 
-		/* draw outline */
-		alpha = (float) optionGetOutlineColorAlpha () / 65535.0f;
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
 
-		/* draw outline */
-		glColor4f (((float) optionGetOutlineColorRed () / 65535.0f) * alpha,
-			   ((float) optionGetOutlineColorGreen () / 65535.0f) * alpha,
-			   ((float) optionGetOutlineColorBlue () / 65535.0f) * alpha,
-			   alpha);
+	/* Set outline rect smaller to avoid damage issues */
+	rect.setGeometry (rect.x () + 1,
+			  rect.y () + 1,
+			  rect.width () - 2,
+			  rect.height () - 2);
 
-		glLineWidth (2.0);
-		glBegin (GL_LINE_LOOP);
-		glVertex2i (rect.x1 (), rect.y1 ());
-		glVertex2i (rect.x2 (), rect.y1 ());
-		glVertex2i (rect.x2 (), rect.y2 ());
-		glVertex2i (rect.x1 (), rect.y2 ());
-		glEnd ();
-	}
+	/* draw outline */
+	vertexData[0]  = rect.x1 ();
+	vertexData[1]  = rect.y1 ();
+	vertexData[3]  = rect.x1 ();
+	vertexData[4]  = rect.y2 ();
+	vertexData[6]  = rect.x2 ();
+	vertexData[7]  = rect.y2 ();
+	vertexData[9]  = rect.x2 ();
+	vertexData[10] = rect.y1 ();
 
-    /* clean up */
-    glColor4usv (defaultColor);
-    glDisable (GL_BLEND);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-    glPopMatrix ();
+	glLineWidth (2.0);
+
+	streamingBuffer->begin (GL_LINE_LOOP);
+	streamingBuffer->addColors (1, optionGetOutlineColor ());
+	streamingBuffer->addVertices (4, vertexData);
+
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
+    }
 }
 
 bool
