@@ -91,7 +91,7 @@ ScaleAddonWindow::renderTitle ()
 }
 
 void
-ScaleAddonWindow::drawTitle ()
+ScaleAddonWindow::drawTitle (const GLMatrix &transform)
 {
     float         x, y, width, height;
     ScalePosition pos = sWindow->getCurrentPosition ();
@@ -103,19 +103,25 @@ ScaleAddonWindow::drawTitle ()
     x = pos.x () + window->x () + geom.width () * pos.scale / 2 - width / 2;
     y = pos.y () + window->y () + geom.height () * pos.scale / 2 - height / 2;
 
-    text.draw (floor (x), floor (y), 1.0f);
+    text.draw (transform, floor (x), floor (y), 1.0f);
 }
 
 void
-ScaleAddonWindow::drawHighlight ()
+ScaleAddonWindow::drawHighlight (const GLMatrix &transform)
 {
-    GLboolean     wasBlend;
-    GLint         oldBlendSrc, oldBlendDst;
+    GLint oldBlendSrc, oldBlendDst;
+    GLushort colorData[4];
+    GLfloat  vertexData[12];
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
     float         x, y, width, height;
     ScalePosition pos = sWindow->getCurrentPosition ();
     CompRect      geom = window->borderRect ();
 
     ADDON_SCREEN (screen);
+
+#ifdef USE_GLES
+    GLint oldBlendSrcAlpha, oldBlendDstAlpha;
+#endif
 
     if (rescaled)
 	return;
@@ -130,27 +136,51 @@ ScaleAddonWindow::drawHighlight ()
     x = floor (x + 0.5f);
     y = floor (y + 0.5f);
 
-    wasBlend = glIsEnabled (GL_BLEND);
+#ifdef USE_GLES
+    glGetIntegerv (GL_BLEND_SRC_RGB, &oldBlendSrc);
+    glGetIntegerv (GL_BLEND_DST_RGB, &oldBlendDst);
+    glGetIntegerv (GL_BLEND_SRC_ALPHA, &oldBlendSrcAlpha);
+    glGetIntegerv (GL_BLEND_DST_ALPHA, &oldBlendDstAlpha);
+#else
     glGetIntegerv (GL_BLEND_SRC, &oldBlendSrc);
     glGetIntegerv (GL_BLEND_DST, &oldBlendDst);
-
-    if (!wasBlend)
-	glEnable (GL_BLEND);
+#endif
 
     glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-    glColor4us (as->optionGetHighlightColorRed (),
-		as->optionGetHighlightColorGreen (),
-		as->optionGetHighlightColorBlue (),
-		as->optionGetHighlightColorAlpha ());
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
-    glRectf (x, y + height, x + width, y);
+    colorData[0] = as->optionGetHighlightColorRed ();
+    colorData[1] = as->optionGetHighlightColorGreen ();
+    colorData[2] = as->optionGetHighlightColorBlue ();
+    colorData[3] = as->optionGetHighlightColorAlpha ();
 
-    glColor4usv (defaultColor);
+    streamingBuffer->addColors (1, colorData);
 
-    if (!wasBlend)
-	glDisable (GL_BLEND);
+    vertexData[0]  = x;
+    vertexData[1]  = y;
+    vertexData[2]  = 0.0f;
+    vertexData[3]  = x;
+    vertexData[4]  = y + height;
+    vertexData[5]  = 0.0f;
+    vertexData[6]  = x + width;
+    vertexData[7]  = y;
+    vertexData[8]  = 0.0f;
+    vertexData[9]  = x + width;
+    vertexData[10] = y + height;
+    vertexData[11] = 0.0f;
+
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
+
+#ifdef USE_GLES
+    glBlendFuncSeparate (oldBlendSrc, oldBlendDst,
+                         oldBlendSrcAlpha, oldBlendDstAlpha);
+#else
     glBlendFunc (oldBlendSrc, oldBlendDst);
+#endif
 }
 
 void
@@ -415,11 +445,11 @@ ScaleAddonWindow::scalePaintDecoration (const GLWindowPaintAttrib &attrib,
 	if (as->optionGetWindowHighlight ())
 	{
 	    if (window->id () == as->highlightedWindow)
-		drawHighlight ();
+		drawHighlight (transform);
 	}
 
 	if (textAvailable)
-	    drawTitle ();
+	    drawTitle (transform);
     }
 }
 
