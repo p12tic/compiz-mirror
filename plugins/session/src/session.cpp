@@ -690,8 +690,8 @@ SessionScreen::loadState (const CompString& previousId)
 void
 SessionScreen::handleEvent (XEvent *event)
 {
-    CompWindow   *w;
-    unsigned int state;
+    CompWindow   *w = NULL;
+    unsigned int state = 0;
 
     if (event->type == MapRequest)
     {

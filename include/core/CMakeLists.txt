@@ -12,7 +12,6 @@ set (_headers
     plugin.h
     propertywriter.h
     privateunion.h
-    region.h
     screen.h
     serialization.h
     session.h

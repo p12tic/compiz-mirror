@@ -1655,7 +1655,7 @@ void
 GroupWindow::windowNotify (CompWindowNotify n)
 {
     GROUP_SCREEN (screen);
-    bool 	 visible;
+    bool 	 visible = false;
 
     if (!mGroup)
 	return window->windowNotify (n);

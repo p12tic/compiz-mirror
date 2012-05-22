@@ -1,4 +1,4 @@
-include_directories (${compiz_INCLUDE_DIRS} ${CMAKE_SOURCE_DIR}/src)
+include_directories (${compiz_INCLUDE_DIRS} ${CMAKE_CURENT_SOURCE_DIR}/../../src)
 
 add_executable (test-grid-grab-handler
 		test-grid-grab-handler.cpp

@@ -134,7 +134,6 @@ class SnapWindow :
 	// internal, avoids infinite notify loops
 	bool skipNotify;
 
-	bool bottomScreenEdgesAllowed ();
 	void move (int dx, int dy, bool sync);
 	void resize (int dx, int dy, int dwidth, int dheight);
 

@@ -2,6 +2,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR} 
 
   ${compiz_SOURCE_DIR}/src/rect/include
+  ${compiz_SOURCE_DIR}/src/region/include
   ${compiz_SOURCE_DIR}/include
   ${compiz_SOURCE_DIR}/src
 )
@@ -23,9 +24,9 @@ add_executable(
 target_link_libraries( 
   compiz_region_test 
   
-  compiz_core
-  compiz_window_constrainment
-  compiz_logmessage
+  compiz_region
+  compiz_rect
+  compiz_point
   
   ${GTEST_BOTH_LIBRARIES}
   ${GMOCK_LIBRARY}

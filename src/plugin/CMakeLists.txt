@@ -9,6 +9,7 @@ INCLUDE_DIRECTORIES(
   ${compiz_SOURCE_DIR}/src/timer/src
 
   ${compiz_SOURCE_DIR}/src/rect/include
+  ${compiz_SOURCE_DIR}/src/region/include
   ${compiz_SOURCE_DIR}/src/window/geometry/include
   ${compiz_SOURCE_DIR}/src/window/extents/include
 

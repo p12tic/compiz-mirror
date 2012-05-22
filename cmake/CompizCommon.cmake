@@ -58,7 +58,7 @@ if (NOT COMPIZ_SIGN_WARNINGS)
 endif ()
 
 if (${CMAKE_PROJECT_NAME} STREQUAL "compiz")
-    set (COMPIZ_WERROR_DEFAULT OFF)
+    set (COMPIZ_WERROR_DEFAULT ON)
 else ()
     set (COMPIZ_WERROR_DEFAULT OFF)
 endif ()

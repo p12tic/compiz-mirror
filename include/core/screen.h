@@ -158,10 +158,68 @@ namespace compiz { namespace private_screen {
     class Ping;
 }}
 
+namespace compiz {
+class DesktopWindowCount
+{
+public:
+    virtual void incrementDesktopWindowCount() = 0;
+    virtual void decrementDesktopWindowCount() = 0;
+    virtual int desktopWindowCount() = 0;
+protected:
+    ~DesktopWindowCount() {}
+};
+
+class MapNum
+{
+public:
+    virtual unsigned int nextMapNum() = 0;
+protected:
+    ~MapNum() {}
+};
+
+class Ping
+{
+public:
+    virtual unsigned int lastPing () const = 0;
+protected:
+    ~Ping() {}
+};
+
+class XWindowInfo
+{
+public:
+    virtual int getWmState (Window id) = 0;
+    virtual void setWmState (int state, Window id) const = 0;
+    virtual void getMwmHints (Window id,
+			  unsigned int *func,
+			  unsigned int *decor) const = 0;
+    virtual unsigned int getProtocols (Window id) = 0;
+    virtual unsigned int getWindowType (Window id) = 0;
+    virtual unsigned int getWindowState (Window id) = 0;
+protected:
+    ~XWindowInfo() {}
+};
+
+class History
+{
+public:
+    virtual unsigned int activeNum () const = 0;
+    virtual CompActiveWindowHistory *currentHistory () = 0;
+protected:
+    ~History() {}
+};
+
+}
+
 class CompScreen :
     public WrapableHandler<ScreenInterface, 18>,
     public PluginClassStorage, // TODO should be an interface here
     public CompSize,
+    public virtual ::compiz::DesktopWindowCount,
+    public virtual ::compiz::MapNum,
+    public virtual ::compiz::Ping,
+    public virtual ::compiz::XWindowInfo,
+    public virtual ::compiz::History,
     public CompOption::Class   // TODO should be an interface here
 {
 public:
@@ -246,7 +304,6 @@ public:
 			    unsigned int value) = 0;
     virtual Window activeWindow () = 0;
     virtual unsigned int currentDesktop () = 0;
-    virtual CompActiveWindowHistory *currentHistory () = 0;
     virtual void focusDefaultWindow () = 0;
     virtual Time getCurrentTime () = 0;
     virtual unsigned int getWindowProp (Window       id,
@@ -298,7 +355,6 @@ public:
 				CompString &pname,
 				CompSize   &size,
 				void       *&data) = 0;
-    virtual int desktopWindowCount () = 0;
     virtual XWindowAttributes attrib () = 0;
     virtual CompIcon *defaultIcon () const = 0;
     virtual bool otherGrabExist (const char *, ...) = 0;
@@ -314,7 +370,6 @@ public:
     virtual CompOutput & currentOutputDev () const = 0;
     virtual bool grabExist (const char *) = 0;
     virtual Cursor invisibleCursor () = 0;
-    virtual unsigned int activeNum () const = 0;
     virtual void sendWindowActivationRequest (Window id) = 0;
     virtual const CompWindowVector & clientList (bool stackingOrder = true) = 0;
     virtual int outputDeviceForPoint (const CompPoint &point) = 0;
@@ -351,22 +406,9 @@ public:
     virtual void updatePassiveButtonGrabs(Window serverFrame) = 0;
     virtual bool grabWindowIsNot(Window w) const = 0;
     virtual void incrementPendingDestroys() = 0;
-    virtual void incrementDesktopWindowCount() = 0;
-    virtual void decrementDesktopWindowCount() = 0;
-    virtual unsigned int nextMapNum() = 0;
-    virtual unsigned int lastPing () const = 0;
     virtual void setNextActiveWindow(Window id) = 0;
     virtual Window getNextActiveWindow() const = 0;
     virtual CompWindow * focusTopMostWindow () = 0;
-
-    virtual int getWmState (Window id) = 0;
-    virtual void setWmState (int state, Window id) const = 0;
-    virtual void getMwmHints (Window id,
-			  unsigned int *func,
-			  unsigned int *decor) const = 0;
-    virtual unsigned int getProtocols (Window id) = 0;
-    virtual unsigned int getWindowType (Window id) = 0;
-    virtual unsigned int getWindowState (Window id) = 0;
     // End of "internal use only" functions
 
 protected:

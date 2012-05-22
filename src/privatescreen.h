@@ -153,10 +153,13 @@ namespace compiz
 {
 namespace private_screen
 {
+class History;
 
 class WindowManager : boost::noncopyable
 {
     public:
+
+	typedef CompWindow::ForEach Functor;
 
 	WindowManager();
 
@@ -215,6 +218,17 @@ class WindowManager : boost::noncopyable
 	iterator end() const { return windows.end(); }
 	reverse_iterator rbegin() const { return windows.rbegin(); }
 	reverse_iterator rend() const { return windows.rend(); }
+
+	void clearFullscreenHints() const;
+	void showOrHideForDesktop(unsigned int desktop) const;
+	void setWindowActiveness(::compiz::private_screen::History& history) const;
+	void setNumberOfDesktops (unsigned int nDesktop) const;
+	void updateWindowSizes() const;
+
+	void forEachWindow(Functor const& f) const
+	{
+	    std::for_each(windows.begin(), windows.end(), f);
+	}
 
     private:
 	CompWindowList windows;
@@ -417,7 +431,8 @@ private:
     std::list<KeyGrab>    keyGrabs;
 };
 
-class History : boost::noncopyable
+class History : public virtual ::compiz::History,
+    boost::noncopyable
 {
     public:
 	History();
@@ -426,18 +441,15 @@ class History : boost::noncopyable
 
 	void addToCurrentActiveWindowHistory (Window id);
 
-	CompActiveWindowHistory* getCurrentHistory ()
-	{
-	    return history+currentHistory;
-	}
+	CompActiveWindowHistory* currentHistory ();
 
-	unsigned int nextActiveNum () { return activeNum++; }
-	unsigned int getActiveNum () const { return activeNum; }
+	unsigned int nextActiveNum () { return activeNum_++; }
+	unsigned int activeNum () const;
 
     private:
 	CompActiveWindowHistory history[ACTIVE_WINDOW_HISTORY_NUM];
-	int                     currentHistory;
-	unsigned int activeNum;
+	int                     currentHistory_;
+	unsigned int activeNum_;
 };
 
 // Apart from a use by StartupSequence::addSequence this data
@@ -509,7 +521,8 @@ private:
     int extension;
 };
 
-class Ping
+class Ping :
+public virtual ::compiz::Ping
 {
 public:
     Ping() : lastPing_(1) {}
@@ -520,6 +533,51 @@ private:
     unsigned int lastPing_;
 };
 
+class DesktopWindowCount :
+    public virtual ::compiz::DesktopWindowCount
+{
+public:
+    DesktopWindowCount();
+    virtual void incrementDesktopWindowCount();
+    virtual void decrementDesktopWindowCount();
+    virtual int desktopWindowCount();
+private:
+    int       count;
+};
+
+class MapNum :
+    public virtual ::compiz::MapNum
+{
+public:
+    MapNum();
+    virtual unsigned int nextMapNum();
+
+private:
+    unsigned int mapNum;
+};
+
+class XWindowInfo :
+    public virtual ::compiz::XWindowInfo
+{
+public:
+    XWindowInfo(Display* const& dpy) :
+	dpy(dpy) {}
+
+    virtual int getWmState (Window id);
+    virtual void setWmState (int state, Window id) const;
+    virtual void getMwmHints (Window id,
+		      unsigned int *func,
+		      unsigned int *decor) const;
+    virtual unsigned int getProtocols (Window id);
+    virtual unsigned int getWindowType (Window id);
+    virtual unsigned int getWindowState (Window id);
+private:
+    Display* const& dpy;
+};
+
+
+
+
 unsigned int windowStateMask (Atom state);
 
 }} // namespace compiz::private_screen
@@ -529,10 +587,13 @@ class PrivateScreen :
 {
 
     public:
-	PrivateScreen (CompScreen *screen);
+	PrivateScreen (CompScreen *screen, compiz::private_screen::WindowManager& windowManager);
 	~PrivateScreen ();
 
-	bool initDisplay (const char *name, compiz::private_screen::History& history);
+	bool initDisplay (
+		const char *name,
+		compiz::private_screen::History& history,
+		unsigned int showingDesktopMask);
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
@@ -584,7 +645,7 @@ class PrivateScreen :
 
 	void reshape (int w, int h);
 
-	void getDesktopHints ();
+	void getDesktopHints (unsigned int showingDesktopMask);
 
 	void updateScreenInfo ();
 
@@ -659,7 +720,6 @@ public:
     compiz::private_screen::EventManager eventManager;
     compiz::private_screen::OrphanData orphanData;
     compiz::private_screen::OutputDevices outputDevices;
-    compiz::private_screen::WindowManager windowManager;
 
     Colormap colormap;
     int screenNum;
@@ -675,7 +735,6 @@ public:
     Cursor busyCursor;
     Cursor invisibleCursor;
     CompRect workArea;
-    unsigned int showingDesktopMask;
 
     bool initialized;
 
@@ -710,6 +769,7 @@ private:
     CompDelayedEdgeSettings edgeDelaySettings;
     Window xdndWindow;
     compiz::private_screen::PluginManager pluginManager;
+    compiz::private_screen::WindowManager& windowManager;
 };
 
 class CompManager
@@ -739,7 +799,12 @@ class CompManager
  * A wrapping of the X display screen. This takes care of communication to the
  * X server.
  */
-class CompScreenImpl : public CompScreen
+class CompScreenImpl : public CompScreen,
+    ::compiz::private_screen::DesktopWindowCount,
+    ::compiz::private_screen::MapNum,
+    ::compiz::private_screen::Ping,
+    ::compiz::private_screen::XWindowInfo,
+    ::compiz::private_screen::History
 {
     public:
 	CompScreenImpl ();
@@ -921,9 +986,6 @@ class CompScreenImpl : public CompScreen
 
 	const CompSize  & vpSize () const;
 
-	int desktopWindowCount ();
-	unsigned int activeNum () const;
-
 	CompOutput::vector & outputDevs ();
 	CompOutput & currentOutputDev () const;
 
@@ -932,8 +994,6 @@ class CompScreenImpl : public CompScreen
 	unsigned int currentDesktop ();
 
 	unsigned int nDesktop ();
-
-	CompActiveWindowHistory *currentHistory ();
 
 	bool shouldSerializePlugins () ;
 
@@ -959,12 +1019,8 @@ class CompScreenImpl : public CompScreen
 	virtual void processEvents ();
 	virtual void alwaysHandleEvent (XEvent *event);
 
-	virtual void incrementDesktopWindowCount();
-	virtual void decrementDesktopWindowCount();
-	virtual unsigned int nextMapNum();
 	virtual void updatePassiveKeyGrabs () const;
 	virtual void updatePassiveButtonGrabs(Window serverFrame);
-	virtual unsigned int lastPing () const;
 
 	virtual bool displayInitialised() const;
 	virtual void applyStartupProperties (CompWindow *window);
@@ -979,14 +1035,6 @@ class CompScreenImpl : public CompScreen
 	virtual void setNextActiveWindow(Window id);
 	virtual Window getNextActiveWindow() const;
 	virtual CompWindow * focusTopMostWindow ();
-	virtual int getWmState (Window id);
-	virtual void setWmState (int state, Window id) const;
-	virtual void getMwmHints (Window id,
-			      unsigned int *func,
-			      unsigned int *decor) const;
-	virtual unsigned int getProtocols (Window id);
-	virtual unsigned int getWindowType (Window id);
-	virtual unsigned int getWindowState (Window id);
 
     public :
 
@@ -1076,15 +1124,13 @@ class CompScreenImpl : public CompScreen
         Window below;
 	CompTimer autoRaiseTimer_;
 	Window    autoRaiseWindow_;
-        int       desktopWindowCount_;
-	unsigned int mapNum;
 	CompIcon *defaultIcon_;
 	compiz::private_screen::GrabManager mutable grabManager;
-	compiz::private_screen::Ping ping;
-	compiz::private_screen::History history;
     	ValueHolder valueHolder;
         bool 	eventHandled;
         PrivateScreen privateScreen;
+        compiz::private_screen::WindowManager windowManager;
+        unsigned int showingDesktopMask_;
 };
 
 #endif

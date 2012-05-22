@@ -1720,6 +1720,7 @@ PolygonAnim::drawGeometry ()
 	mGScreen->setTexEnvMode (GL_REPLACE);
 
     glPopMatrix ();
+    (GL::activeTexture) (prevActiveTexture);
 
     if (mDoLighting)
     {

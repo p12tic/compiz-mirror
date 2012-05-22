@@ -1128,8 +1128,7 @@ void
         <xsl:text>    unsigned int edge;
 </xsl:text>
     </xsl:if>
-<xsl:if test="/compiz/plugin[@name=$pName]/descendant-or-self::option[@type = 'color'] or
-                  /compiz/plugin[@name=$pName]/descendant-or-self::option[@type = 'list']/type/text() = 'color'">
+<xsl:if test="/compiz/plugin[@name=$pName]/descendant-or-self::option[@type = 'color']">
         <xsl:text>    unsigned short color[4];
 </xsl:text>
     </xsl:if>
