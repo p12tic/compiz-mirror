@@ -57,10 +57,6 @@ class NegScreen :
 		CompOption::Vector opt,
 		bool		   all);
 
-	int
-	getFragmentFunction (GLTexture *texture,
-			     bool      alpha);
-
 	GLScreen *gScreen;
 };
 
@@ -89,9 +85,10 @@ class NegWindow :
 	bool isNeg;
 
 	void
-	glDrawTexture(GLTexture          *texture,
-		      GLFragment::Attrib &attrib,
-		      unsigned int       mask);
+	glDrawTexture (GLTexture                 *texture,
+	               const GLMatrix            &transform,
+	               const GLWindowPaintAttrib &attrib,
+	               unsigned int              mask);
 
 	void toggle ();
 };

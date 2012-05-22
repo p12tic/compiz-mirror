@@ -22,7 +22,12 @@
 
 #include "neg.h"
 
-using namespace GLFragment;
+static std::string fragment_function = "                 \n\
+void neg_fragment () {                                   \n\
+    vec3 color = vec3(1.0, 1.0, 1.0) - gl_FragColor.rgb; \n\
+    gl_FragColor = vec4(color, gl_FragColor.a);          \n\
+}                                                        \n\
+";
 
 COMPIZ_PLUGIN_20090315 (neg, NegPluginVTable);
 
@@ -74,63 +79,11 @@ NegScreen::toggle (CompAction         *action,
     return true;
 }
 
-int
-NegScreen::getFragmentFunction (GLTexture *texture,
-				bool      alpha)
-{
-    int handle = 0;
-
-    if (alpha && negAlphaFunction)
-	handle = negAlphaFunction;
-    else if (!alpha && negFunction)
-	handle = negFunction;
-
-    if (!handle)
-    {
-	FunctionData data;
-	int          target;
-
-	if (alpha)
-	    data.addTempHeaderOp ("neg");
-
-	if (texture->target () == GL_TEXTURE_2D)
-	    target = COMP_FETCH_TARGET_2D;
-	else
-	    target = COMP_FETCH_TARGET_RECT;
-
-	data.addFetchOp ("output", NULL, target);
-
-	if (alpha)
-	{
-	    data.addDataOp ("RCP neg.a, output.a;");
-	    data.addDataOp ("MAD output.rgb, -neg.a, output, 1.0;");
-	}
-	else
-	    data.addDataOp ("SUB output.rgb, 1.0, output;");
-
-	if (alpha)
-	    data.addDataOp ("MUL output.rgb, output.a, output;");
-
-	data.addColorOp ("output", "output");
-
-	if (!data.status ())
-	    return 0;
-
-	handle = data.createFragmentFunction ("neg");
-
-	if (alpha)
-	    negAlphaFunction = handle;
-	else
-	    negFunction = handle;
-    }
-
-    return handle;
-}
-
 void
-NegWindow::glDrawTexture (GLTexture          *texture,
-			  GLFragment::Attrib &attrib,
-			  unsigned int       mask)
+NegWindow::glDrawTexture (GLTexture                 *texture,
+                          const GLMatrix            &transform,
+                          const GLWindowPaintAttrib &attrib,
+                          unsigned int              mask)
 {
     GLTexture::Filter filter;
     bool              doNeg = false;
@@ -160,24 +113,15 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 
     if (doNeg && tex)
     {
-	/* Fragment program negation */
-	if (GL::fragmentProgram)
+	/* shader program negation */
+	if (true)
 	{
-	    GLFragment::Attrib fa = attrib;
-	    int                function;
-	    bool               alpha = true;
-
-	    if (texture->name () == tex->name ()) /* Not a decoration */
-		alpha = window->alpha ();
-
-	    function = ns->getFragmentFunction (texture, alpha);
-	    if (function)
-		fa.addFunction (function);
-
-	    gWindow->glDrawTexture (texture, fa, mask);
+	    gWindow->addShaders ("neg", "", fragment_function);
+	    gWindow->glDrawTexture (texture, transform, attrib, mask);
 	}
 	else /* Texture manipulation negation */
 	{
+#ifndef USE_GLES
 	    /* this is for the most part taken from paint.c */
 
 	    if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
@@ -188,13 +132,9 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		filter = ns->gScreen->filter (NOTHING_TRANS_FILTER);
 
 	    /* if we can adjust saturation, even if it's just on and off */
-	    if (GL::canDoSaturated && attrib.getSaturation () != COLOR)
+	    if (GL::canDoSaturated && attrib.saturation != COLOR)
 	    {
 		GLfloat constant[4];
-
-		/* if the paint mask has this set we want to blend */
-		if (mask & PAINT_WINDOW_TRANSLUCENT_MASK)
-		    glEnable (GL_BLEND);
 
 		/* enable the texture */
 		texture->enable (filter);
@@ -233,7 +173,7 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
 
 		/* if we can do saturation that is in between min and max */
-		if (GL::canDoSlightlySaturated && attrib.getSaturation () > 0)
+		if (GL::canDoSlightlySaturated && attrib.saturation > 0)
 		{
 		    glTexEnvf (GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
 		    glTexEnvf (GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
@@ -270,13 +210,13 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		    glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 
     		    /* color constant */
-		    constant[3] = attrib.getSaturation () / 65535.0f;
+		    constant[3] = attrib.saturation / 65535.0f;
 
 		    glTexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constant);
 
     		    /* if we are not opaque or not fully bright */
-		    if (attrib.getOpacity () < OPAQUE ||
-			attrib.getBrightness () != BRIGHT)
+		    if (attrib.opacity < OPAQUE ||
+			attrib.brightness != BRIGHT)
 		    {
 			/* make another texture active */
 			GL::activeTexture (GL_TEXTURE3_ARB);
@@ -285,9 +225,9 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 			texture->enable (filter);
 
 			/* color constant */
-			constant[3] = attrib.getOpacity () / 65535.0f;
+			constant[3] = attrib.opacity / 65535.0f;
 			constant[0] = constant[1] = constant[2] =
-			    constant[3] * attrib.getBrightness () / 65535.0f;
+			    constant[3] * attrib.brightness / 65535.0f;
 
 			glTexEnvfv(GL_TEXTURE_ENV,
 				   GL_TEXTURE_ENV_COLOR, constant);
@@ -314,8 +254,7 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 			glTexEnvf(GL_TEXTURE_ENV,
 				  GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 
-			/* draw the window geometry */
-			gWindow->glDrawGeometry ();
+			gWindow->glDrawTexture (texture, transform, attrib, mask);
 
 			/* disable the current texture */
 			texture->disable ();
@@ -331,8 +270,7 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		    {
 			/* fully opaque and bright */
 
-			/* draw the window geometry */
-			gWindow->glDrawGeometry ();
+			gWindow->glDrawTexture (texture, transform, attrib, mask);
 		    }
 
 		    /* disable the current texture */
@@ -355,9 +293,9 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		    glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 
     		    /* color constant */
-		    constant[3] = attrib.getOpacity () / 65535.0f;
+		    constant[3] = attrib.opacity / 65535.0f;
 		    constant[0] = constant[1] = constant[2] =
-			constant[3] * attrib.getBrightness () / 65535.0f;
+			constant[3] * attrib.brightness / 65535.0f;
 
 		    constant[0] =
 			0.5f + 0.5f * RED_SATURATION_WEIGHT * constant[0];
@@ -368,8 +306,7 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 
 		    glTexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constant);
 
-    		    /* draw the window geometry */
-		    gWindow->glDrawGeometry ();
+		    gWindow->glDrawTexture (texture, transform, attrib, mask);
 		}
 
 		/* disable the current texture */
@@ -390,9 +327,6 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		/* set screens texture mode back to replace */
 		ns->gScreen->setTexEnvMode (GL_REPLACE);
 
-		/* if it's a translucent window, disable blending */
-		if (mask & PAINT_WINDOW_TRANSLUCENT_MASK)
-		    glDisable (GL_BLEND);
 	    }
 	    else
 	    {
@@ -411,17 +345,14 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 
 		/* we are not opaque or fully bright */
 		if ((mask & PAINT_WINDOW_TRANSLUCENT_MASK) ||
-		    attrib.getBrightness () != BRIGHT)
+		    attrib.brightness != BRIGHT)
 		{
 		    GLfloat constant[4];
 
-		    /* enable blending */
-		    glEnable (GL_BLEND);
-
 		    /* color constant */
-		    constant[3] = attrib.getOpacity () / 65535.0f;
+		    constant[3] = attrib.opacity / 65535.0f;
 		    constant[0] = constant[1] = constant[2] =
-			constant[3] * attrib.getBrightness () / 65535.0f;
+			constant[3] * attrib.brightness / 65535.0f;
 
 		    glTexEnvfv (GL_TEXTURE_ENV, GL_TEXTURE_ENV_COLOR, constant);
 		    glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
@@ -441,18 +372,13 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		    glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 		    glTexEnvf (GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
 
-    		    /* draw the window geometry */
-		    gWindow->glDrawGeometry ();
-
-		    /* disable blending */
-		    glDisable (GL_BLEND);
+		    gWindow->glDrawTexture (texture, transform, attrib, mask);
 		}
 		else
 		{
 		    /* no adjustments to saturation, brightness or opacity */
 
-		    /* draw the window geometry */
-		    gWindow->glDrawGeometry ();
+		    gWindow->glDrawTexture (texture, transform, attrib, mask);
 		}
 
 		/* disable the current texture */
@@ -461,12 +387,13 @@ NegWindow::glDrawTexture (GLTexture          *texture,
 		/* set the screens texture mode back to replace */
 		ns->gScreen->setTexEnvMode (GL_REPLACE);
 	    }
+#endif
 	}
     }
     else
     {
 	/* not negative */
-	gWindow->glDrawTexture (texture, attrib, mask);
+	gWindow->glDrawTexture (texture, transform, attrib, mask);
     }
 }
 
@@ -524,7 +451,7 @@ NegScreen::NegScreen (CompScreen *screen) :
 					  _1, _2));
     optionSetExcludeMatchNotify (boost::bind (&NegScreen::optionChanged, this,
 					      _1, _2));
-	optionSetNegDecorationsNotify (boost::bind (&NegScreen::optionChanged, this,
+    optionSetNegDecorationsNotify (boost::bind (&NegScreen::optionChanged, this,
 					  _1, _2));
 
 }
