@@ -793,18 +793,34 @@ StaticSwitchScreen::preparePaint (int msSinceLastPaint)
 }
 
 void
-StaticSwitchScreen::paintRect (CompRect &box,
-			       int offset,
-			       unsigned short *color,
-			       int opacity)
+StaticSwitchScreen::paintRect (const GLMatrix &transform,
+                               CompRect       &box,
+                               int             offset,
+                               unsigned short *color,
+                               int             opacity)
 {
-    glColor4us (color[0], color[1], color[2], color[3] * opacity / 100);
-    glBegin (GL_LINE_LOOP);
-    glVertex2i (box.x1 () + offset, box.y1 () + offset);
-    glVertex2i (box.x2 () - offset, box.y1 () + offset);
-    glVertex2i (box.x2 () - offset, box.y2 () - offset);
-    glVertex2i (box.x1 () + offset, box.y2 () - offset);
-    glEnd ();
+    GLushort colorData[4] = {
+	color[0],
+	color[1],
+	color[2],
+	color[3] * opacity / 100
+    };
+
+    GLfloat vertexData[12] = {
+	box.x1 () + offset, box.y1 () + offset, 0,
+	box.x2 () - offset, box.y1 () + offset, 0,
+	box.x2 () - offset, box.y2 () - offset, 0,
+	box.x1 () + offset, box.y2 () - offset, 0
+    };
+
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    streamingBuffer->begin (GL_LINE_LOOP);
+
+    streamingBuffer->addColors (1, colorData);
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
 }
 
 bool
@@ -874,9 +890,6 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 
 	    sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 
-	    glPushMatrix ();
-	    glLoadMatrixf (sTransform.getMatrix ());
-
 	    if (mode == HighlightModeShowRectangle)
 	    {
 		CompWindow *w;
@@ -891,33 +904,44 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 		    if (getPaintRectangle (w, box, &opacity))
 		    {
 			unsigned short *color;
-			GLushort       r, g, b, a;
-
-			glEnable (GL_BLEND);
+			GLushort        colorData[4];
+			GLfloat         vertexData[12];
+			GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
 			/* fill rectangle */
-			r = optionGetHighlightColorRed ();
-			g = optionGetHighlightColorGreen ();
-			b = optionGetHighlightColorBlue ();
-			a = optionGetHighlightColorAlpha ();
-			a = a * opacity / 100;
+			colorData[0] = optionGetHighlightColorRed ();
+			colorData[1] = optionGetHighlightColorGreen ();
+			colorData[2] = optionGetHighlightColorBlue ();
+			colorData[3] = optionGetHighlightColorAlpha ();
+			colorData[3] = colorData[3] * opacity / 100;
 
-			glColor4us (r, g, b, a);
-			glRecti (box.x1 (), box.y2 (), box.x2 (), box.y1 ());
+			vertexData[0]  = box.x1 ();
+			vertexData[1]  = box.y2 ();
+			vertexData[2]  = 0.0f;
+			vertexData[3]  = box.x1 ();
+			vertexData[4]  = box.y1 ();
+			vertexData[5]  = 0.0f;
+			vertexData[6]  = box.x2 ();
+			vertexData[7]  = box.y2 ();
+			vertexData[8]  = 0.0f;
+			vertexData[9]  = box.x2 ();
+			vertexData[10] = box.y1 ();
+			vertexData[11] = 0.0f;
+
+			streamingBuffer->begin (GL_TRIANGLE_STRIP);
+			streamingBuffer->addColors (1, colorData);
+			streamingBuffer->addVertices (4, vertexData);
+			streamingBuffer->end ();
+			streamingBuffer->render (sTransform);
 
 			/* draw outline */
 			glLineWidth (1.0);
-			glDisable (GL_LINE_SMOOTH);
 
 			color = optionGetHighlightBorderColor ();
-			paintRect (box, 0, color, opacity);
-			paintRect (box, 2, color, opacity);
+			paintRect (sTransform, box, 0, color, opacity);
+			paintRect (sTransform, box, 2, color, opacity);
 			color = optionGetHighlightBorderInlayColor ();
-			paintRect (box, 1, color, opacity);
-
-			/* clean up */
-			glColor4usv (defaultColor);
-			glDisable (GL_BLEND);
+			paintRect (sTransform, box, 1, color, opacity);
 		    }
 		}
 	    }
@@ -934,8 +958,6 @@ StaticSwitchScreen::glPaintOutput (const GLScreenPaintAttrib &sAttrib,
 					  sTransform, infiniteRegion, 0);
 		}
 	    }
-
-	    glPopMatrix ();
 	}
     }
     else
@@ -978,20 +1000,23 @@ StaticSwitchScreen::donePaint ()
 }
 
 void
-StaticSwitchScreen::paintSelectionRect (int          x,
-					int          y,
-					float        dx,
-					float        dy,
-					unsigned int opacity)
+StaticSwitchScreen::paintSelectionRect (const GLMatrix &transform,
+                                        int             x,
+                                        int             y,
+                                        float           dx,
+                                        float           dy,
+                                        unsigned int    opacity)
 {
-    float color[4], op;
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
+    GLushort        colorData[4];
+    GLfloat         vertexData[18];
+    GLMatrix        sTransform (transform);
+    float op;
     int   w, h;
     int   count = windows.size ();
 
     w = previewWidth + previewBorder;
     h = previewHeight + previewBorder;
-
-    glEnable (GL_BLEND);
 
     if (dx > xCount - 1)
 	op = 1.0 - MIN (1.0, dx - (xCount - 1));
@@ -1003,35 +1028,97 @@ StaticSwitchScreen::paintSelectionRect (int          x,
 	op = 1.0;
 
     for (unsigned int i = 0; i < 4; i++)
-	color[i] = (float)fgColor[i] * opacity * op / 0xffffffff;
+	colorData[i] = (float)fgColor[i] * opacity * op / 0xffffffff;
 
-    glColor4fv (color);
-    glPushMatrix ();
-    glTranslatef (x + previewBorder / 2 + (dx * w),
-		  y + previewBorder / 2 + (dy * h), 0.0f);
+    sTransform.translate (x + previewBorder / 2 + (dx * w),
+                                       y + previewBorder / 2 + (dy * h), 0.0f);
 
-    glBegin (GL_QUADS);
-    glVertex2i (-1, -1);
-    glVertex2i (-1, 1);
-    glVertex2i (w + 1, 1);
-    glVertex2i (w + 1, -1);
-    glVertex2i (-1, h - 1);
-    glVertex2i (-1, h + 1);
-    glVertex2i (w + 1, h + 1);
-    glVertex2i (w + 1, h - 1);
-    glVertex2i (-1, 1);
-    glVertex2i (-1, h - 1);
-    glVertex2i (1, h - 1);
-    glVertex2i (1, 1);
-    glVertex2i (w - 1, 1);
-    glVertex2i (w - 1, h - 1);
-    glVertex2i (w + 1, h - 1);
-    glVertex2i (w + 1, 1);
-    glEnd ();
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
-    glPopMatrix ();
-    glColor4usv (defaultColor);
-    glDisable (GL_BLEND);
+    vertexData[0]  = -1;
+    vertexData[1]  = -1;
+    vertexData[2]  = 0;
+    vertexData[3]  = -1;
+    vertexData[4]  = 1;
+    vertexData[5]  = 0;
+    vertexData[6]  = w + 1;
+    vertexData[7]  = -1;
+    vertexData[8]  = 0;
+    vertexData[9]  = w + 1;
+    vertexData[10] = 1;
+    vertexData[11] = 0;
+
+    streamingBuffer->addColors (1, colorData);
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (sTransform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    vertexData[0]  = -1;
+    vertexData[1]  = h - 1;
+    vertexData[2]  = 0;
+    vertexData[3]  = -1;
+    vertexData[4]  = h + 1;
+    vertexData[5]  = 0;
+    vertexData[6]  = w + 1;
+    vertexData[7]  = h - 1;
+    vertexData[8]  = 0;
+    vertexData[9]  = w + 1;
+    vertexData[10] = h + 1;
+    vertexData[11] = 0;
+
+    streamingBuffer->addColors (1, colorData);
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (sTransform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    vertexData[0]  = -1;
+    vertexData[1]  = 1;
+    vertexData[2]  = 0;
+    vertexData[3]  = -1;
+    vertexData[4]  = h - 1;
+    vertexData[5]  = 0;
+    vertexData[6]  = 1;
+    vertexData[7]  = 1;
+    vertexData[8]  = 0;
+    vertexData[9]  = 1;
+    vertexData[10] = h - 1;
+    vertexData[11] = 0;
+
+    streamingBuffer->addColors (1, colorData);
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (sTransform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    vertexData[0]  = w - 1;
+    vertexData[1]  = 1;
+    vertexData[2]  = 0;
+    vertexData[3]  = w - 1;
+    vertexData[4]  = h - 1;
+    vertexData[5]  = 0;
+    vertexData[6]  = w + 1;
+    vertexData[7]  = 1;
+    vertexData[8]  = 0;
+    vertexData[9]  = w + 1;
+    vertexData[10] = h - 1;
+    vertexData[11] = 0;
+
+    streamingBuffer->addColors (1, colorData);
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (sTransform);
 }
 
 bool
@@ -1157,8 +1244,6 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	if (!(mask & PAINT_WINDOW_TRANSFORMED_MASK) && region.isEmpty ())
 	    return true;
 
-	glPushAttrib (GL_SCISSOR_BIT);
-
 	glEnable (GL_SCISSOR_TEST);
 	glScissor (g.x (), 0, g.width (), ::screen->height ());
 
@@ -1181,34 +1266,33 @@ StaticSwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	if (pos > count - 1)
 	{
 	    px = fmod (pos - count, sScreen->xCount);
-	    sScreen->paintSelectionRect (g.x (), g.y (), px, 0.0,
+	    sScreen->paintSelectionRect (transform, g.x (), g.y (), px, 0.0,
 	    				 gWindow->lastPaintAttrib ().opacity);
 
 	    px = fmod (pos, sScreen->xCount);
-	    sScreen->paintSelectionRect (g.x () + offX, g.y (),
+	    sScreen->paintSelectionRect (transform, g.x () + offX, g.y (),
 	    				 px, py,
 	    				 gWindow->lastPaintAttrib ().opacity);
 	}
 	if (px > sScreen->xCount - 1)
 	{
-	    sScreen->paintSelectionRect (g.x (), g.y (), px, py,
+	    sScreen->paintSelectionRect (transform, g.x (), g.y (), px, py,
 	    				 gWindow->lastPaintAttrib ().opacity);
 
 	    py = fmod (py + 1, ceil ((double) count / sScreen->xCount));
 	    offX = sScreen->getRowXOffset (py);
 
-	    sScreen->paintSelectionRect (g.x () + offX, g.y (),
+	    sScreen->paintSelectionRect (transform, g.x () + offX, g.y (),
 	    				 px - sScreen->xCount, py,
 	    				 gWindow->lastPaintAttrib ().opacity);
 	}
 	else
 	{
-	    sScreen->paintSelectionRect (g.x () + offX, g.y (),
+	    sScreen->paintSelectionRect (transform, g.x () + offX, g.y (),
 	    				 px, py,
 	    				 gWindow->lastPaintAttrib ().opacity);
 	}
 	glDisable (GL_SCISSOR_TEST);
-	glPopAttrib ();
     }
     /* Adjust opacity/brightness/saturation of windows that are
      * not selected

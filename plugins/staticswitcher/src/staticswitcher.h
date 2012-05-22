@@ -78,15 +78,17 @@ class StaticSwitchScreen :
 				  int y);
 	void handleEvent (XEvent *event);
 	bool adjustVelocity ();
-	void paintRect (CompRect &box,
-			int offset,
-			unsigned short *color,
-			int opacity);
-	void paintSelectionRect (int          x,
-				 int          y,
-				 float        dx,
-				 float        dy,
-				 unsigned int opacity);
+	void paintRect (const GLMatrix &transform,
+	                CompRect &box,
+	                int offset,
+	                unsigned short *color,
+	                int opacity);
+	void paintSelectionRect (const GLMatrix &transform,
+	                         int             x,
+	                         int             y,
+	                         float           dx,
+	                         float           dy,
+	                         unsigned int    opacity);
 	void getMinimizedAndMatch (bool &minimizedOption,
 				   CompMatch *&match);
 	bool getMipmap ();
