@@ -378,13 +378,16 @@ EZoomScreen::donePaint ()
 /* Draws a box from the screen coordinates inx1,iny1 to inx2,iny2 */
 void
 EZoomScreen::drawBox (const GLMatrix &transform,
-		     CompOutput          *output,
-		     CompRect             box)
+                      CompOutput     *output,
+                      CompRect        box)
 {
-    GLMatrix zTransform = transform;
-    int           x1,x2,y1,y2;
-    int		  inx1, inx2, iny1, iny2;
-    int	          out = output->id ();
+    GLMatrix zTransform (transform);
+    int      x1, x2, y1, y2;
+    int      inx1, inx2, iny1, iny2;
+    int      out = output->id ();
+    GLushort colorData[4];
+    GLfloat  vertexData[12];
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
     zTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
     convertToZoomed (out, box.x1 (), box.y1 (), &inx1, &iny1);
@@ -394,23 +397,61 @@ EZoomScreen::drawBox (const GLMatrix &transform,
     y1 = MIN (iny1, iny2);
     x2 = MAX (inx1, inx2);
     y2 = MAX (iny1, iny2);
-    glPushMatrix ();
-    glLoadMatrixf (zTransform.getMatrix ());
-    glDisableClientState (GL_TEXTURE_COORD_ARRAY);
-    glEnable (GL_BLEND);
-    glColor4us (0x2fff, 0x2fff, 0x4fff, 0x4fff);
-    glRecti (x1,y2,x2,y1);
-    glColor4us (0x2fff, 0x2fff, 0x4fff, 0x9fff);
-    glBegin (GL_LINE_LOOP);
-    glVertex2i (x1, y1);
-    glVertex2i (x2, y1);
-    glVertex2i (x2, y2);
-    glVertex2i (x1, y2);
-    glEnd ();
-    glColor4usv (defaultColor);
-    glDisable (GL_BLEND);
-    glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-    glPopMatrix ();
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    colorData[0] = 0x2fff;
+    colorData[1] = 0x2fff;
+    colorData[2] = 0x2fff;
+    colorData[3] = 0x4fff;
+
+    streamingBuffer->addColors (1, colorData);
+
+    vertexData[0]  = x1;
+    vertexData[1]  = y1;
+    vertexData[2]  = 0.0f;
+    vertexData[3]  = x1;
+    vertexData[4]  = y2;
+    vertexData[5]  = 0.0f;
+    vertexData[6]  = x2;
+    vertexData[7]  = y1;
+    vertexData[8]  = 0.0f;
+    vertexData[9]  = x2;
+    vertexData[10] = y2;
+    vertexData[11] = 0.0f;
+
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (zTransform);
+
+
+    streamingBuffer->begin (GL_LINE_LOOP);
+
+    colorData[0] = 0x2fff;
+    colorData[1] = 0x2fff;
+    colorData[2] = 0x4fff;
+    colorData[3] = 0x9fff;
+
+    streamingBuffer->addColors (1, colorData);
+
+    vertexData[0]  = x1;
+    vertexData[1]  = y1;
+    vertexData[2]  = 0.0f;
+    vertexData[3]  = x2;
+    vertexData[4]  = y1;
+    vertexData[5]  = 0.0f;
+    vertexData[6]  = x2;
+    vertexData[7]  = y2;
+    vertexData[8]  = 0.0f;
+    vertexData[9]  = x1;
+    vertexData[10] = y2;
+    vertexData[11] = 0.0f;
+
+    streamingBuffer->addVertices (4, vertexData);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (zTransform);
 }
 /* Apply the zoom if we are grabbed.
  * Make sure to use the correct filter.
@@ -1050,22 +1091,25 @@ EZoomScreen::freeCursor (CursorTexture * cursor)
 
 /* Translate into place and draw the scaled cursor.  */
 void
-EZoomScreen::drawCursor (CompOutput          *output,
-	    		const GLMatrix      &transform)
+EZoomScreen::drawCursor (CompOutput     *output,
+                         const GLMatrix &transform)
 {
-    int         out = output->id ();
+    int out = output->id ();
 
     if (cursor.isSet)
     {
-	GLMatrix      sTransform = transform;
-	float	      scaleFactor;
-	int           ax, ay, x, y;
+	GLMatrix        sTransform (transform);
+	float           scaleFactor;
+	int             ax, ay, x, y;
+	GLfloat         textureData[8];
+	GLfloat         vertexData[12];
+	GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
 	/*
 	 * XXX: expo knows how to handle mouse when zoomed, so we back off
 	 * when expo is active.
 	 */
-	if (screen->grabExist ( "expo"))
+	if (screen->grabExist ("expo"))
 	{
 	    cursorZoomInactive ();
 	    return;
@@ -1073,63 +1117,77 @@ EZoomScreen::drawCursor (CompOutput          *output,
 
 	sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
 	convertToZoomed (out, mouse.x (), mouse.y (), &ax, &ay);
-        glPushMatrix ();
-	glLoadMatrixf (sTransform.getMatrix ());
-	glTranslatef ((float) ax, (float) ay, 0.0f);
+	sTransform.translate ((float) ax, (float) ay, 0.0f);
+
 	if (optionGetScaleMouseDynamic ())
 	    scaleFactor = 1.0f / zooms.at (out).currentZoom;
 	else
 	    scaleFactor = 1.0f / optionGetScaleMouseStatic ();
-	glScalef (scaleFactor,
-		  scaleFactor,
-		  1.0f);
+
+	sTransform.scale (scaleFactor, scaleFactor, 1.0f);
 	x = -cursor.hotX;
 	y = -cursor.hotY;
 
-	glEnable (GL_BLEND);
-	glBindTexture (GL_TEXTURE_RECTANGLE_ARB, cursor.texture);
-	glEnable (GL_TEXTURE_RECTANGLE_ARB);
+	glBindTexture (GL_TEXTURE_2D, cursor.texture);
 
-	glBegin (GL_QUADS);
-	glTexCoord2d (0, 0);
-	glVertex2f (x, y);
-	glTexCoord2d (0, cursor.height);
-	glVertex2f (x, y + cursor.height);
-	glTexCoord2d (cursor.width, cursor.height);
-	glVertex2f (x + cursor.width, y + cursor.height);
-	glTexCoord2d (cursor.width, 0);
-	glVertex2f (x + cursor.width, y);
-	glEnd ();
-	glDisable (GL_BLEND);
-	glBindTexture (GL_TEXTURE_RECTANGLE_ARB, 0);
-	glDisable (GL_TEXTURE_RECTANGLE_ARB);
-	glPopMatrix ();
+	streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+	vertexData[0]  = x;
+	vertexData[1]  = y;
+	vertexData[2]  = 0.0f;
+	vertexData[3]  = x;
+	vertexData[4]  = y + cursor.height;
+	vertexData[5]  = 0.0f;
+	vertexData[6]  = x + cursor.width;
+	vertexData[7]  = y;
+	vertexData[8]  = 0.0f;
+	vertexData[9]  = x + cursor.width;
+	vertexData[10] = y + cursor.height;
+	vertexData[11] = 0.0f;
+
+	streamingBuffer->addVertices (4, vertexData);
+
+	textureData[0] = 0;
+	textureData[1] = 0;
+	textureData[2] = 0;
+	textureData[3] = cursor.height;
+	textureData[4] = cursor.width;
+	textureData[5] = 0;
+	textureData[6] = cursor.width;
+	textureData[7] = cursor.height;
+
+	streamingBuffer->addTexCoords (1, 4, textureData);
+
+	streamingBuffer->end ();
+	streamingBuffer->render (sTransform);
+
+	glBindTexture (GL_TEXTURE_2D, 0);
     }
 }
 
 /* Create (if necessary) a texture to store the cursor,
  * fetch the cursor with XFixes. Store it.  */
 void
-EZoomScreen::updateCursor (CursorTexture * cursor)
+EZoomScreen::updateCursor (CursorTexture *cursor)
 {
     unsigned char *pixels;
-    int           i;
+    int            i;
     Display       *dpy = screen->dpy ();
 
     if (!cursor->isSet)
     {
 	cursor->isSet = true;
 	cursor->screen = screen;
-	glEnable (GL_TEXTURE_RECTANGLE_ARB);
-	glGenTextures (1, &cursor->texture);
-	glBindTexture (GL_TEXTURE_RECTANGLE_ARB, cursor->texture);
 
-	glTexParameteri (GL_TEXTURE_RECTANGLE_ARB,
-			 GL_TEXTURE_WRAP_S, GL_CLAMP);
-	glTexParameteri (GL_TEXTURE_RECTANGLE_ARB,
-			 GL_TEXTURE_WRAP_T, GL_CLAMP);
-    } else {
-	glEnable (GL_TEXTURE_RECTANGLE_ARB);
+	glEnable (GL_TEXTURE_2D);
+	glGenTextures (1, &cursor->texture);
+	glBindTexture (GL_TEXTURE_2D, cursor->texture);
+
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    }
+    else {
+	glEnable (GL_TEXTURE_2D);
     }
 
     XFixesCursorImage *ci = XFixesGetCursorImage (dpy);
@@ -1185,11 +1243,11 @@ EZoomScreen::updateCursor (CursorTexture * cursor)
 	compLogMessage ("ezoom", CompLogLevelWarn, "unable to get system cursor image!");
     }
 
-    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, cursor->texture);
-    glTexImage2D (GL_TEXTURE_RECTANGLE_ARB, 0, GL_RGBA, cursor->width,
+    glBindTexture (GL_TEXTURE_2D, cursor->texture);
+    glTexImage2D (GL_TEXTURE_2D, 0, GL_RGBA, cursor->width,
 		  cursor->height, 0, GL_BGRA, GL_UNSIGNED_BYTE, pixels);
-    glBindTexture (GL_TEXTURE_RECTANGLE_ARB, 0);
-    glDisable (GL_TEXTURE_RECTANGLE_ARB);
+    glBindTexture (GL_TEXTURE_2D, 0);
+    glDisable (GL_TEXTURE_2D);
 	
     free (pixels);
 }
