@@ -121,6 +121,8 @@ class PrivateVertexBuffer
 	std::vector<GLfloat> colorData;
 	std::vector<std::vector<GLfloat> > textureData;
 
+	GLfloat color[4];
+
 	GLuint vertexOffset;
 	GLint  maxVertices;
 

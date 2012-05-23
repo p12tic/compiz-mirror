@@ -959,6 +959,7 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
     GLTexture::Matrix matrix;
     BOX               box;
     GLMatrix          wTransform (transform);
+    GLVertexBuffer    *gl = GLVertexBuffer::streamingBuffer ();
 
     CompOutput::vector &outputDevs = screen->outputDevs ();
     CompOutput         output = outputDevs[boxOutputDevice];
@@ -992,7 +993,8 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
 	else
 	    left = 2 * left;
 
-//	glColor4f (left, left, left, left);
+	glScreen->setTexEnvMode (GL_MODULATE);
+	gl->color4f (left, left, left, left);
 	wTransform.translate (0.0f, 0.0f, -(1 - left));
 
 	mSzCamera = -(1 - left);
@@ -1151,6 +1153,7 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
 
     glDisable (GL_BLEND);
     glScreen->setTexEnvMode (GL_REPLACE);
+    gl->colorDefault ();
 }
 
 void
