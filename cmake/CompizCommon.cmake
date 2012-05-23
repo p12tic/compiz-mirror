@@ -738,7 +738,7 @@ function (compiz_opt_install_file _src _dst)
     install (CODE
         "message (\"-- Installing: ${_dst}\")
          execute_process (
-	    COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${_src}\" \"${COMPIZ_DESTDIR}${_dst}\"
+	    COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${_src}\" \"$ENV{DESTDIR}${_dst}\"
 	    RESULT_VARIABLE _result
 	    OUTPUT_QUIET ERROR_QUIET
 	 )
