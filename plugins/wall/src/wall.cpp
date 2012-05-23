@@ -963,6 +963,8 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
     CompOutput::vector &outputDevs = screen->outputDevs ();
     CompOutput         output = outputDevs[boxOutputDevice];
 
+    glEnable (GL_BLEND);
+
     centerX = output.x1 () + (output.width () / 2.0f);
     centerY = output.y1 () + (output.height () / 2.0f);
 
@@ -1147,6 +1149,7 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
 	}
     }
 
+    glDisable (GL_BLEND);
     glScreen->setTexEnvMode (GL_REPLACE);
 }
 
