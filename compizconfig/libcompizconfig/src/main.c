@@ -600,7 +600,7 @@ openBackend (char *backend)
     char *dlname = NULL;
     char *err = NULL;
 
-    if (home && strlen (home))
+    if (!dlhand && home && strlen (home))
     {
 	if (asprintf (&dlname, "%s/.compizconfig/backends/lib%s.so",
 		      home, backend) == -1)
