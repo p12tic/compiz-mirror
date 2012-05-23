@@ -267,13 +267,13 @@ class PluginManager
 	bool isDirtyPluginList () const { return dirtyPluginList; }
 	void setDirtyPluginList () { dirtyPluginList = true; }
 
+	CompOption::Value::Vector mergedPluginList(CompOption::Value::Vector const& extraPluginsRequested) const;
+
     private:
 	CompOption::Value plugin;
 	bool	          dirtyPluginList;
 	typedef std::set<CompString> CompStringSet;
 	CompStringSet blacklist;
-
-	CompOption::Value::Vector mergedPluginList(CompOption::Value::Vector const& extraPluginsRequested);
 };
 
 class GrabList

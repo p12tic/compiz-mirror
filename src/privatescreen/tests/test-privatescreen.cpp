@@ -619,6 +619,37 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
     for (CompPlugin* p; (p = CompPlugin::pop ()) != 0; CompPlugin::unload (p));
 }
 
+// Verify plugin ordering, and verify that plugins not in availablePlugins
+// don't get dropped. Because availablePlugins is NOT a definitive list
+// of what the dynamic loader might be able to find in its path.
+TEST(privatescreen_PluginManagerTest, verify_plugin_ordering)
+{
+    using namespace testing;
+
+    cps::PluginManager ps;
+
+    initialPlugins.clear();
+    initialPlugins.push_back("alice");
+    initialPlugins.push_back("bob");
+    initialPlugins.push_back("charlie");
+
+    CompOption::Value::Vector extra;
+    extra.push_back("charlie");
+    extra.push_back("david");
+    extra.push_back("alice");
+    extra.push_back("eric");
+    
+    CompOption::Value::Vector merged = ps.mergedPluginList(extra);
+
+    ASSERT_EQ(merged.size(), 6);
+    ASSERT_EQ(merged[0].s(), "core");
+    ASSERT_EQ(merged[1].s(), "alice");
+    ASSERT_EQ(merged[2].s(), "bob");
+    ASSERT_EQ(merged[3].s(), "charlie");
+    ASSERT_EQ(merged[4].s(), "david");
+    ASSERT_EQ(merged[5].s(), "eric");
+}
+
 TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plugins)
 {
     using namespace testing;
