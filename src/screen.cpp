@@ -4161,27 +4161,42 @@ CompScreenImpl::_outputChangeNotify ()
 }
 
 /* Returns default viewport for some window geometry. If the window spans
-   more than one viewport the most appropriate viewport is returned. How the
-   most appropriate viewport is computed can be made optional if necessary. It
-   is currently computed as the viewport where the center of the window is
-   located. */
+ * more than one viewport the most appropriate viewport is returned. How the
+ * most appropriate viewport is computed can be made optional if necessary. It
+ * is currently computed as the viewport where the center of the window is
+ * located.
+ *
+ * XXX: It is possible for this function to return a negative viewport, which
+ * definitely feels wrong, however it seems that some plugins depend on this behaviour
+ * so they need to be fixed first
+ */
 void
-CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
-				 CompPoint&                  viewport)
+compiz::private_screen::viewports::viewportForGeometry (const CompWindow::Geometry &gm,
+							CompPoint                  &viewport,
+							ViewportRetrievalInterface *viewports,
+							const CompSize &           screenSize)
 {
     CompRect rect (gm);
     int      offset;
+
+    const CompPoint &vp = viewports->getCurrentViewport ();
+    const CompSize &vpSize = viewports->viewportDimentions ();
 
     rect.setWidth  (gm.widthIncBorders ());
     rect.setHeight (gm.heightIncBorders ());
 
     offset = rect.centerX () < 0 ? -1 : 0;
-    viewport.setX (privateScreen.viewPort.vp.x () + ((rect.centerX () / width ()) + offset) %
-		   privateScreen.viewPort.vpSize.width ());
+    viewport.setX (vp.x () + ((rect.centerX () / screenSize.width ()) + offset) % vpSize.width ());
 
     offset = rect.centerY () < 0 ? -1 : 0;
-    viewport.setY (privateScreen.viewPort.vp.y () + ((rect.centerY () / height ()) + offset ) %
-		   privateScreen.viewPort.vpSize.height ());
+    viewport.setY (vp.y () + ((rect.centerY () / screenSize.height ()) + offset ) % vpSize.height ());
+}
+
+void
+CompScreenImpl::viewportForGeometry (const CompWindow::Geometry& gm,
+				     CompPoint&                  viewport)
+{
+    compiz::private_screen::viewports::viewportForGeometry (gm, viewport, &privateScreen.viewPort, *this);
 }
 
 int

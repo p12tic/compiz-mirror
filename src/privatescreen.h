@@ -452,14 +452,40 @@ class History : public virtual ::compiz::History,
 	unsigned int activeNum_;
 };
 
+class ViewportRetrievalInterface
+{
+    public:
+
+	virtual ~ViewportRetrievalInterface () {}
+
+	virtual const CompPoint & getCurrentViewport () const = 0;
+	virtual const CompSize & viewportDimentions () const = 0;
+};
+
 // Apart from a use by StartupSequence::addSequence this data
 // is only used by CompScreenImpl - like the OrphanData struct
-struct ViewPort
+struct ViewPort :
+    public ViewportRetrievalInterface
 {
-    ViewPort();
-    CompPoint    vp;
-    CompSize     vpSize;
+    public:
+
+	ViewPort();
+	CompPoint    vp;
+	CompSize     vpSize;
+
+    private:
+
+	const CompPoint & getCurrentViewport () const { return vp; }
+	const CompSize & viewportDimentions () const { return vpSize; }
 };
+
+namespace viewports
+{
+    void viewportForGeometry (const CompWindow::Geometry &gm,
+			      CompPoint                   &viewport,
+			      ViewportRetrievalInterface *viewports,
+			      const CompSize &screenSize);
+}
 
 class StartupSequence : boost::noncopyable
 {
