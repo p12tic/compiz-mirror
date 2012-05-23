@@ -993,7 +993,9 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
 	else
 	    left = 2 * left;
 
+#ifndef USE_GLES
 	glScreen->setTexEnvMode (GL_MODULATE);
+#endif
 	gl->color4f (left, left, left, left);
 	wTransform.translate (0.0f, 0.0f, -(1 - left));
 
@@ -1152,7 +1154,9 @@ WallScreen::drawCairoTextureOnScreen (const GLMatrix &transform)
     }
 
     glDisable (GL_BLEND);
+#ifndef USE_GLES
     glScreen->setTexEnvMode (GL_REPLACE);
+#endif
     gl->colorDefault ();
 }
 

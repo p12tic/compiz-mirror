@@ -85,7 +85,6 @@ NegWindow::glDrawTexture (GLTexture                 *texture,
                           const GLWindowPaintAttrib &attrib,
                           unsigned int              mask)
 {
-    GLTexture::Filter filter;
     bool              doNeg = false;
     GLTexture         *tex = NULL;
 
@@ -122,6 +121,7 @@ NegWindow::glDrawTexture (GLTexture                 *texture,
 	else /* Texture manipulation negation */
 	{
 #ifndef USE_GLES
+	    GLTexture::Filter filter;
 	    /* this is for the most part taken from paint.c */
 
 	    if (mask & PAINT_WINDOW_TRANSFORMED_MASK)
