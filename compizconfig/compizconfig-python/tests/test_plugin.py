@@ -1,4 +1,5 @@
 import compiz_config_test
+import unittest
 
 class CompizConfigTestPlugin (compiz_config_test.CompizConfigTest):
 
@@ -15,3 +16,6 @@ class CompizConfigTestPlugin (compiz_config_test.CompizConfigTest):
 	self.assertTrue (plugin.Category is not None)
 	self.assertTrue (plugin.Features is not None)
 	self.assertTrue (plugin.Initialized is True)
+
+if __name__ == '__main__':
+    unittest.main()

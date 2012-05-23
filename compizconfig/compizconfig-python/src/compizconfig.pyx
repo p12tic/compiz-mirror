@@ -379,7 +379,9 @@ cdef CCSStringList * ListToStringList (object list):
     cdef CCSStringList * listStart
     cdef CCSStringList * stringList
     cdef CCSStringList * prev
-    cdef CCSString     * stringStart = <CCSString *> malloc (sizeof (CCSString))
+    cdef CCSString     * stringStart
+
+    stringStart = <CCSString *> malloc (sizeof (CCSString))
     
     stringStart.value = strdup (list[0])
     listStart = <CCSStringList *> malloc (sizeof (CCSStringList))
