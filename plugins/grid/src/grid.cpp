@@ -435,6 +435,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
     GLfloat         vertexData[12];
     GLushort        colorData[4];
+    GLushort       *color;
 
     getPaintRectangle (rect);
 
@@ -445,14 +446,14 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 
     for (iter = animations.begin (); iter != animations.end () && animating; iter++)
     {
-	GLushort *color;
 	Animation& anim = *iter;
-
+	float alpha = ((float) optionGetFillColorAlpha () / 65535.0f) * anim.opacity;
 	color = optionGetFillColor ();
-	colorData[0] = anim.opacity * color[0];
-	colorData[1] = anim.opacity * color[1];
-	colorData[2] = anim.opacity * color[2];
-	colorData[3] = anim.opacity * color[3];
+
+	colorData[0] = alpha * color[0];
+	colorData[1] = alpha * color[1];
+	colorData[2] = alpha * color[2];
+	colorData[3] = alpha * 65535.0f;
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
@@ -481,11 +482,13 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 				      anim.currentRect.height () - 2);
 
 	/* draw outline */
+	alpha = ((float) optionGetOutlineColorAlpha () / 65535.0f) * anim.opacity;
 	color = optionGetOutlineColor ();
-	colorData[0] = anim.opacity * color[0];
-	colorData[1] = anim.opacity * color[1];
-	colorData[2] = anim.opacity * color[2];
-	colorData[3] = anim.opacity * color[3];
+
+	colorData[0] = alpha * color[0];
+	colorData[1] = alpha * color[1];
+	colorData[2] = alpha * color[2];
+	colorData[3] = alpha * 65535.0f;
 
 	vertexData[0]  = anim.currentRect.x1 ();
 	vertexData[1]  = anim.currentRect.y1 ();
@@ -508,6 +511,15 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 
     if (!animating)
     {
+	/* draw filled rectangle */
+	float alpha = (float) optionGetFillColorAlpha () / 65535.0f;
+	color = optionGetFillColor ();
+
+	colorData[0] = alpha * color[0];
+	colorData[1] = alpha * color[1];
+	colorData[2] = alpha * color[2];
+	colorData[3] = alpha * 65535.0f;
+
 	vertexData[0]  = rect.x1 ();
 	vertexData[1]  = rect.y1 ();
 	vertexData[2]  = 0.0f;
@@ -522,7 +534,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	vertexData[11] = 0.0f;
 
 	streamingBuffer->begin (GL_TRIANGLE_STRIP);
-	streamingBuffer->addColors (1, optionGetFillColor ());
+	streamingBuffer->addColors (1, colorData);
 	streamingBuffer->addVertices (4, vertexData);
 
 	streamingBuffer->end ();
@@ -535,6 +547,14 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 			  rect.height () - 2);
 
 	/* draw outline */
+	alpha = (float) optionGetOutlineColorAlpha () / 65535.0f;
+	color = optionGetOutlineColor ();
+
+	colorData[0] = alpha * color[0];
+	colorData[1] = alpha * color[1];
+	colorData[2] = alpha * color[2];
+	colorData[3] = alpha * 65535.0f;
+
 	vertexData[0]  = rect.x1 ();
 	vertexData[1]  = rect.y1 ();
 	vertexData[3]  = rect.x1 ();
@@ -547,7 +567,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	glLineWidth (2.0);
 
 	streamingBuffer->begin (GL_LINE_LOOP);
-	streamingBuffer->addColors (1, optionGetOutlineColor ());
+	streamingBuffer->addColors (1, colorData);
 	streamingBuffer->addVertices (4, vertexData);
 
 	streamingBuffer->end ();
