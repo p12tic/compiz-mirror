@@ -630,7 +630,7 @@ unproject (float winx, float winy, float winz,
            const GLint viewport[4],
            float *objx, float *objy, float *objz)
 {
-    GLMatrix finalMatrix = modelview * projection;
+    GLMatrix finalMatrix = projection * modelview;
     float in[4], out[4];
 
     if (!finalMatrix.invert ())
