@@ -436,6 +436,7 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
     GLfloat         vertexData[12];
     GLushort        colorData[4];
     GLushort       *color;
+    GLboolean       isBlendingEnabled;
 
     getPaintRectangle (rect);
 
@@ -443,6 +444,9 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	setCurrentRect (animations.at (i));
 
     sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
+
+    glGetBooleanv (GL_BLEND, &isBlendingEnabled);
+    glEnable (GL_BLEND);
 
     for (iter = animations.begin (); iter != animations.end () && animating; iter++)
     {
@@ -573,6 +577,9 @@ GridScreen::glPaintRectangle (const GLScreenPaintAttrib &sAttrib,
 	streamingBuffer->end ();
 	streamingBuffer->render (sTransform);
     }
+
+    if (!isBlendingEnabled)
+	glDisable (GL_BLEND);
 }
 
 bool
