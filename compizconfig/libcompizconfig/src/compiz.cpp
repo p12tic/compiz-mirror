@@ -3041,6 +3041,20 @@ ccsLoadPlugins (CCSContext * context)
 #endif
 
     char *home = getenv ("HOME");
+    char *overload_metadata = getenv ("COMPIZ_METADATA_PATH");
+
+    if (overload_metadata && strlen (overload_metadata))
+    {
+	char *overloadmetaplugins = NULL;
+	if (asprintf (&overloadmetaplugins, "%s", overload_metadata) == -1)
+	    overloadmetaplugins = NULL;
+
+	if (overloadmetaplugins)
+	{
+	    loadPluginsFromXMLFiles (context, overloadmetaplugins);
+	    free (overloadmetaplugins);
+	}
+    }
 
     if (home && strlen (home))
     {

@@ -596,9 +596,21 @@ static void *
 openBackend (char *backend)
 {
     char *home = getenv ("HOME");
+    char *override_backend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
     void *dlhand = NULL;
     char *dlname = NULL;
     char *err = NULL;
+
+    if (override_backend && strlen (override_backend))
+    {
+	if (asprintf (&dlname, "%s/lib%s.so",
+		      override_backend, backend) == -1)
+	    dlname = NULL;
+
+	dlerror ();
+	dlhand = dlopen (dlname, RTLD_NOW | RTLD_NODELETE | RTLD_LOCAL);
+	err = dlerror ();
+    }
 
     if (!dlhand && home && strlen (home))
     {
@@ -2695,7 +2707,21 @@ ccsGetExistingBackends ()
 {
     CCSBackendInfoList rv = NULL;
     char *home = getenv ("HOME");
+    char *override_backend = getenv ("LIBCOMPIZCONFIG_BACKEND_PATH");
     char *backenddir;
+
+    if (override_backend && strlen (override_backend))
+    {
+	if (asprintf (&backenddir, "%s",
+		      override_backend) == -1)
+	    backenddir = NULL;
+
+	if (backenddir)
+	{
+	    getBackendInfoFromDir (&rv, backenddir);
+	    free (backenddir);
+	}
+    }
 
     if (home && strlen (home))
     {
