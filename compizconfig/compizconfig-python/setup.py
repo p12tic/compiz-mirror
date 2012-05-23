@@ -14,14 +14,8 @@ import os
 pkg_config_environ = os.environ
 pkg_config_environ["PKG_CONFIG_PATH"] = os.getcwd () + "/../libcompizconfig:" + os.environ.get ("PKG_CONFIG_PATH", '')
 
-# If src/compizconfig.pyx exists, build using Cython
-if os.path.exists (os.getcwd () + "/src/compizconfig.pyx"):
-    from Cython.Distutils import build_ext
-    print "using pyx"
-    ext_module_src = os.getcwd () + "/src/compizconfig.pyx"
-else: # Otherwise build directly from C source
-    from distutils.command.build_ext import build_ext
-    ext_module_src = os.getcwd () + "/compizconfig.c"
+from distutils.command.build_ext import build_ext
+ext_module_src = os.getcwd () + "/compizconfig.c"
 
 version_file = open ("VERSION", "r")
 version = version_file.read ().strip ()
@@ -118,23 +112,6 @@ class uninstall (_install):
             except:
                 self.warn ("Could not remove file %s" % file)
 
-class sdist (_sdist):
-
-    def run (self):
-        # Build C file
-        if os.path.exists ("src/compizconfig.pyx"):
-            from Cython.Compiler.Main import compile as cython_compile
-            cython_compile ("src/compizconfig.pyx", output_file=os.getcwd () + "/compizconfig.c")
-        # Run regular sdist
-        _sdist.run (self)
-
-    def add_defaults (self):
-        _sdist.add_defaults (self)
-        # Remove pyx source and add c source
-        if os.path.exists ("src/compizconfig.pyx"):
-            self.filelist.exclude_pattern ("src/compizconfig.pyx")
-            self.filelist.append ("compizconfig.c")
-
 class test (Command):
     description = "run tests"
     user_options = []
@@ -167,7 +144,6 @@ setup (
                       "install" : install,
                       "install_data" : install_data,
                       "build_ext" : build_ext,
-                      "sdist" : sdist,
 		      "test"  : test},
   ext_modules=[ 
     Extension ("compizconfig", [ext_module_src],
