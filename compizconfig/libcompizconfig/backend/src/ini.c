@@ -82,15 +82,19 @@ getIniFileName (char *profile)
     configDir = getenv ("XDG_CONFIG_HOME");
     if (configDir && strlen (configDir))
     {
-	asprintf (&fileName, "%s/%s/%s.ini", configDir, SETTINGPATH, profile);
+	if (asprintf (&fileName, "%s/%s/%s.ini", configDir, SETTINGPATH, profile) == -1)
+	    return NULL;
+
 	return fileName;
     }
 
     configDir = getenv ("HOME");
     if (configDir && strlen (configDir))
     {
-	asprintf (&fileName, "%s/.config/%s/%s.ini", configDir, SETTINGPATH,
-		  profile);
+	if (asprintf (&fileName, "%s/.config/%s/%s.ini", configDir, SETTINGPATH,
+		      profile) == -1)
+	    return NULL;
+
 	return fileName;
     }
 
@@ -265,7 +269,8 @@ readSetting (CCSContext *context,
     if (!data)
 	return;
 
-    asprintf (&keyName, "s%d_%s", context->screenNum, setting->name);
+    if (asprintf (&keyName, "s%d_%s", context->screenNum, setting->name) == -1)
+	return;
 
     switch (setting->type)
     {
@@ -455,7 +460,8 @@ writeSetting (CCSContext *context,
     if (!data)
 	return;
 
-    asprintf (&keyName, "s%d_%s", context->screenNum, setting->name);
+    if (asprintf (&keyName, "s%d_%s", context->screenNum, setting->name) == -1)
+	return;
 
     if (setting->isDefault)
     {
@@ -656,7 +662,8 @@ getExistingProfiles (CCSContext * context)
     configDir = getenv ("XDG_CONFIG_HOME");
     if (configDir && strlen (configDir))
     {
-	asprintf (&filePath, "%s/%s", configDir, SETTINGPATH);
+	if (asprintf (&filePath, "%s/%s", configDir, SETTINGPATH) == -1)
+	    return NULL;
 	
 	ret = scanConfigDir(filePath);
 	free(filePath);
@@ -669,7 +676,9 @@ getExistingProfiles (CCSContext * context)
     if (!homeDir)
 	return NULL;
 
-    asprintf (&filePath, "%s/.config/%s", homeDir, SETTINGPATH);
+    if (asprintf (&filePath, "%s/.config/%s", homeDir, SETTINGPATH) == -1)
+	filePath = NULL;
+
     if (!filePath)
 	return NULL;
 
