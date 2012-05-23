@@ -135,14 +135,16 @@ class ThumbScreen:
 	positionUpdate (const CompPoint &pos);
 
 	void
-	paintTexture (int wx,
-		      int wy,
-		      int width,
-		      int height,
-		      int off);
+	paintTexture (const GLMatrix &transform,
+	              GLushort       *color,
+	              int             wx,
+	              int             wy,
+	              int             width,
+	              int             height,
+	              int             off);
 
 	void
-	thumbPaintThumb (Thumbnail           *t,
+	thumbPaintThumb (Thumbnail      *t,
 		 	 const GLMatrix *transform);
 
 
