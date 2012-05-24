@@ -16,5 +16,5 @@ endif ()
 
 install (
     FILES ${_files}
-    DESTINATION ${COMPIZ_DESTDIR}${CMAKE_INSTALL_PREFIX}/share/compiz/xslt
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/compiz/xslt
 )

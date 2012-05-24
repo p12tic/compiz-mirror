@@ -122,7 +122,7 @@ function (compizconfig_backend bname)
 
     install (
 	TARGETS ${bname}
-	DESTINATION ${COMPIZ_DESTDIR}${CMAKE_INSTALL_PREFIX}/lib/compizconfig/backends
+	DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/compizconfig/backends
     )
 
     if (NOT _COMPIZCONFIG_INTERNAL)
