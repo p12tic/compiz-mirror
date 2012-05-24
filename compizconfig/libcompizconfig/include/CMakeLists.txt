@@ -5,5 +5,5 @@ set (_headers
 
 install (
 	FILES ${_headers}
-	DESTINATION ${COMPIZ_DESTDIR}${includedir}
+	DESTINATION ${COMPIZ_DESTDIR}${libcompizconfig_includedir}
 	)
