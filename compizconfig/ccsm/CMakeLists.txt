@@ -52,7 +52,7 @@ add_custom_target (uninstall
 
 install (CODE
 	 "message (\"Installing python files\")
-	  execute_process (COMMAND python setup.py install --prefix=${CMAKE_INSTALL_PREFIX}
+	  execute_process (COMMAND python setup.py install --prefix=$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}
 	 		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})")
 
 
