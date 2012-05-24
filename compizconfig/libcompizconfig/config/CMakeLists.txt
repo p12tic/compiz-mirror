@@ -6,5 +6,5 @@ compiz_opt_install_file (${CMAKE_CURRENT_SOURCE_DIR}/${_config_file} ${COMPIZ_SY
 add_custom_target (
     config_install
     ${CMAKE_COMMAND} -E make_directory ${CMAKE_ROOT}/Modules &&
-    ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/config/${_config_file} $ENV{DESTDIR}${COMPIZ_SYSCONFDIR}/compizconfig/${_config_file}
+    ${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/config/${_config_file} ${COMPIZ_SYSCONFDIR}/compizconfig/${_config_file}
     )
