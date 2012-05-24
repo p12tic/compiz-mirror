@@ -46,13 +46,13 @@ add_library (ccsm_wrapper
 	     ${PY_CCSM_LIB})
 
 add_custom_target (uninstall
-		   COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py uninstall --prefix=$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}
+		   COMMAND python ${CMAKE_CURRENT_SOURCE_DIR}/setup.py uninstall --prefix=${CMAKE_INSTALL_PREFIX}
 		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 		   COMMENT "Uninstalling Python Files")
 
 install (CODE
 	 "message (\"Installing python files\")
-	  execute_process (COMMAND python setup.py install --prefix=${CMAKE_INSTALL_PREFIX}
+	  execute_process (COMMAND python setup.py install --prefix=$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}
 	 		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})")
 
 
