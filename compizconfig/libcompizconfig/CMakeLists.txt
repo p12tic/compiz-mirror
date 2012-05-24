@@ -140,7 +140,7 @@ compiz_configure_file (
 
 install (
     FILES ${CMAKE_CURRENT_BINARY_DIR}/libcompizconfig.pc
-    DESTINATION ${COMPIZ_DESTDIR}${libdir}/pkgconfig
+    DESTINATION ${libdir}/pkgconfig
 )
 
 

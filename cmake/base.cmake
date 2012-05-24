@@ -48,9 +48,13 @@ function (_check_compiz_cmake_macro)
         message ("Call \"sudo make findcompiz_install\" to install it.\n")
         compiz_print_configure_footer ()
     endif ()
+    install (FILES
+	     ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCompiz.cmake
+	     DESTINATION
+	     ${CMAKE_INSTALL_PREFIX}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/)
     add_custom_target (findcompiz_install
-	${CMAKE_COMMAND} -E make_directory ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules &&
-	${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/FindCompiz.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules
+	${CMAKE_COMMAND} -E make_directory ${CMAKE_ROOT}/Modules &&
+	${CMAKE_COMMAND} -E copy ${CMAKE_SOURCE_DIR}/cmake/FindCompiz.cmake ${CMAKE_ROOT}/Modules
     )
     find_file (_find_compizconfig FindCompizConfig.cmake PATHS ${CMAKE_ROOT}/Modules ${ARGN})
     if (NOT _find_compizconfig)
@@ -60,11 +64,15 @@ function (_check_compiz_cmake_macro)
 	message ("Call \"sudo make findcompiz_install\" to install it.\n")
 	compiz_print_configure_footer ()
     endif (NOT _find_compizconfig)
-	add_custom_target (
+    install (FILES
+	     ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig/libcompizconfig/cmake/FindCompizConfig.cmake
+	     DESTINATION
+	     ${CMAKE_INSTALL_PREFIX}/share/cmake-${CMAKE_MAJOR_VERSION}.${CMAKE_MINOR_VERSION}/)
+    add_custom_target (
 	findcompizconfig_install
-	${CMAKE_COMMAND} -E make_directory ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules &&
-	${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/cmake/FindCompizConfig.cmake ${COMPIZ_DESTDIR}${CMAKE_ROOT}/Modules
-	)
+	${CMAKE_COMMAND} -E make_directory ${CMAKE_ROOT}/Modules &&
+	${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/compizconfig/libcompizconfig/cmake/FindCompizConfig.cmake ${CMAKE_ROOT}/Modules
+    )
 endfunction ()
 
 # add install prefix to pkgconfig search path if needed

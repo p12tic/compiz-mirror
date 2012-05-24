@@ -69,16 +69,16 @@ function (compiz_install_gsettings_schema _src _dst)
 		else (\"$ENV{USER}\"\ STREQUAL \"root\"\)
 		    # It seems like this is only available in CMake > 2.8.5
 		    # but hardly anybody has that, so comment out this warning for now
-		    # string (FIND $ENV{XDG_DATA_DIRS} \"${COMPIZ_DESTDIR}${_dst}\" XDG_INSTALL_PATH)
+		    # string (FIND $ENV{XDG_DATA_DIRS} \"{_dst}\" XDG_INSTALL_PATH)
 		    # if (NOT XDG_INSTALL_PATH)
-		    message (\"[WARNING]: Installing GSettings schemas to a custom location that might not be in XDG_DATA_DIRS, you need to add ${COMPIZ_DESTDIR}${_dst} to your XDG_DATA_DIRS in order for GSettings schemas to be found!\"\)
+		    message (\"[WARNING]: Installing GSettings schemas to a custom location that might not be in XDG_DATA_DIRS, you need to add ${_dst} to your XDG_DATA_DIRS in order for GSettings schemas to be found!\"\)
 		    # endif (NOT XDG_INSTALL_PATH)
-		    message (\"-- Installing GSettings schemas to ${COMPIZ_DESTDIR}${_dst}\"\)
-		    file (INSTALL DESTINATION \"${COMPIZ_DESTDIR}${_dst}\"
+		    message (\"-- Installing GSettings schemas to $ENV{DESTDIR}${_dst}\"\)
+		    file (INSTALL DESTINATION \"$ENV{DESTDIR}${_dst}\"
 			  TYPE FILE
 			  FILES \"${_src}\")
-		    message (\"-- Recompiling GSettings schemas in ${COMPIZ_DESTDIR}${_dst}\"\)
-		    execute_process (COMMAND ${GLIB_COMPILE_SCHEMAS} ${COMPIZ_DESTDIR}${_dst})
+		    message (\"-- Recompiling GSettings schemas in $ENV{DESTDIR}${_dst}\"\)
+		    execute_process (COMMAND ${GLIB_COMPILE_SCHEMAS} $ENV{DESTDIR}${_dst})
 		endif (\"$ENV{USER}\" STREQUAL \"root\"\)
 		")
     endif ()

@@ -71,7 +71,7 @@ if (USE_GTK)
 
     install (
 	TARGETS gtk-window-decorator
-	DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
+	DESTINATION ${exec_prefix}
     )
 
 

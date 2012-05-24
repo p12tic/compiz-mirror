@@ -116,7 +116,7 @@ compiz_configure_file (
 
 install (
     FILES ${CMAKE_BINARY_DIR}/compiz.pc
-    DESTINATION ${COMPIZ_DESTDIR}${libdir}/pkgconfig
+    DESTINATION ${libdir}/pkgconfig
 )
 
 # Build Google Test and make its headers known

@@ -6,7 +6,7 @@ if (BUILD_GNOME)
     )
     install (
 	FILES ${desktop_file}
-	DESTINATION ${COMPIZ_DESTDIR}${datadir}/applications
+	DESTINATION ${datadir}/applications
     )
 
     add_custom_target (compiz.desktop ALL SOURCES ${desktop_file})

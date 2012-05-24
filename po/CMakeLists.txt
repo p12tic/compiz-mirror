@@ -45,7 +45,7 @@ foreach(catalog ${compiz_catalogs})
 
     install (
 	FILES ${po_BINARY_DIR}/${catalog}/LC_MESSAGES/compiz.mo
-	DESTINATION ${COMPIZ_DESTDIR}${datadir}/locale/${catalog}/LC_MESSAGES
+	DESTINATION ${datadir}/locale/${catalog}/LC_MESSAGES
     )
 
     set (compiz_catalog_targets ${compiz_catalog_targets} ${po_BINARY_DIR}/${catalog}/LC_MESSAGES/compiz.mo)
