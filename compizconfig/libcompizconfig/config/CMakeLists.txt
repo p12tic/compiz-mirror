@@ -1,7 +1,7 @@
 set (_config_file
      config)
 
-compiz_opt_install_file (${_config_file} ${COMPIZ_SYSCONFDIR}/compizconfig/${_config_file})
+compiz_opt_install_file (${CMAKE_CURRENT_SOURCE_DIR}/${_config_file} ${COMPIZ_SYSCONFDIR}/compizconfig/${_config_file})
 
 add_custom_target (
     config_install
