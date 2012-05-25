@@ -5414,7 +5414,7 @@ cps::History::History() :
     currentHistory_(0),
     activeNum_ (1)
 {
-    memset (&history[currentHistory_], 0, sizeof history[currentHistory_]);
+    memset (history, 0, sizeof history);
 }
 
 cps::WindowManager::WindowManager() :
