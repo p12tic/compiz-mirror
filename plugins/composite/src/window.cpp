@@ -133,12 +133,9 @@ PrivateCompositeWindow::bind ()
 	   is mapped when getting the window pixmap */
 	ServerLock mLock (CompositeScreen::get (screen)->serverGrabInterface ());
 
-	XGetWindowAttributes (screen->dpy (),
-			      ROOTPARENT (window), &attr);
+	getAttributes (attr);
 	if (attr.map_state != IsViewable)
 	{
-	    XUngrabServer (screen->dpy ());
-	    XSync (screen->dpy (), false);
 	    bindFailed = true;
 	    return false;
 	}
