@@ -46,7 +46,7 @@ class Layer :
 	    mGroup (g),
 	    mState (PaintOff),
 	    mAnimationTime (0) {};
-    virtual ~Layer () {}
+	virtual ~Layer () {}
 	virtual void damage () {};
 
 	GroupSelection  *mGroup;
@@ -63,7 +63,7 @@ class GLLayer :
 
     public:
 
-    virtual ~GLLayer () {}
+	virtual ~GLLayer () {}
 
 	virtual void paint (const GLWindowPaintAttrib &attrib,
 			    const GLMatrix	      &transform,
@@ -102,7 +102,7 @@ class CairoLayer :
 {
     public:
 
-	~CairoLayer ();
+	virtual ~CairoLayer ();
 
     public:
 
@@ -139,7 +139,7 @@ class BackgroundLayer :
 
     public:
 
-    virtual ~BackgroundLayer () {}
+	virtual ~BackgroundLayer () {}
 
 	static BackgroundLayer * create (CompSize, GroupSelection *);
 	static BackgroundLayer * rebuild (BackgroundLayer *,
@@ -169,7 +169,7 @@ class SelectionLayer :
 {
     public:
 
-    virtual ~SelectionLayer () {}
+	virtual ~SelectionLayer () {}
 
 	static SelectionLayer * create (CompSize, GroupSelection *);
 	static SelectionLayer * rebuild (SelectionLayer *,
@@ -192,7 +192,7 @@ class TextLayer :
 {
     public:
 
-    virtual ~TextLayer () {}
+	virtual ~TextLayer () {}
 
 	static TextLayer *
 	create (CompSize &, GroupSelection *);

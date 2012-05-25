@@ -861,8 +861,8 @@ AnimWindow::expandBBWithWindow ()
 		      savedOutRect () :
 		      mWindow->outputRect ());
     Box windowBox = {
-    static_cast <short int> (outRect.x ()), static_cast <short int> (outRect.x () + outRect.width ()),
-    static_cast <short int> (outRect.y ()), static_cast <short int> (outRect.y () + outRect.height ())
+	static_cast <short int> (outRect.x ()), static_cast <short int> (outRect.x () + outRect.width ()),
+	static_cast <short int> (outRect.y ()), static_cast <short int> (outRect.y () + outRect.height ())
     };
     expandBBWithBox (windowBox);
 }
@@ -871,7 +871,7 @@ void
 AnimWindow::expandBBWithScreen ()
 {
     Box screenBox = {0, static_cast <short int> (::screen->width ()),
-             0, static_cast <short int> (::screen->height ())};
+		     0, static_cast <short int> (::screen->height ())};
     expandBBWithBox (screenBox);
 }
 
