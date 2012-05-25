@@ -108,7 +108,22 @@ class PrivateCompositeScreen :
 	Window newCmSnOwner;
 };
 
-class PrivateCompositeWindow : WindowInterface
+class CompositePixmapRebindInterface
+{
+    public:
+
+	virtual ~CompositePixmapRebindInterface () {}
+
+	virtual Pixmap pixmap () const = 0;
+	virtual bool bind () = 0;
+	virtual const CompSize & size () const = 0;
+	virtual void release () = 0;
+};
+
+
+class PrivateCompositeWindow :
+    public WindowInterface,
+    public CompositePixmapRebindInterface
 {
     public:
 	PrivateCompositeWindow (CompWindow *w, CompositeWindow *cw);
@@ -117,6 +132,11 @@ class PrivateCompositeWindow : WindowInterface
 	void windowNotify (CompWindowNotify n);
 	void resizeNotify (int dx, int dy, int dwidth, int dheight);
 	void moveNotify (int dx, int dy, bool now);
+
+	Pixmap pixmap () const;
+	bool   bind ();
+	const CompSize & size () const;
+	virtual void release ();
 
 	static void handleDamageRect (CompositeWindow *w,
 				      int             x,
@@ -129,8 +149,8 @@ class PrivateCompositeWindow : WindowInterface
 	CompositeWindow *cWindow;
 	CompositeScreen *cScreen;
 
-	Pixmap	      pixmap;
-	CompSize      size;
+	Pixmap	      mPixmap;
+	CompSize      mSize;
 	bool	      needsRebind;
 	CompositeWindow::NewPixmapReadyCallback newPixmapReadyCallback;
 

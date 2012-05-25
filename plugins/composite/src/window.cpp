@@ -93,7 +93,7 @@ PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
     window (w),
     cWindow (cw),
     cScreen (CompositeScreen::get (screen)),
-    pixmap (None),
+    mPixmap (None),
     needsRebind (true),
     newPixmapReadyCallback (),
     damage (None),
@@ -119,18 +119,14 @@ PrivateCompositeWindow::~PrivateCompositeWindow ()
 }
 
 bool
-CompositeWindow::bind ()
+PrivateCompositeWindow::bind ()
 {
-    if (!priv->cScreen->compositingActive ())
-	return false;
-
-    redirect ();
-    if (priv->needsRebind)
+    if (needsRebind)
     {
 	XWindowAttributes attr;
 
 	/* don't try to bind window again if it failed previously */
-	if (priv->bindFailed)
+	if (bindFailed)
 	    return false;
 
 	/* We have to grab the server here to make sure that window
@@ -140,19 +136,19 @@ CompositeWindow::bind ()
 	/* Flush changes to the server and wait for it to process them */
 	XSync (screen->dpy (), false);
 	XGetWindowAttributes (screen->dpy (),
-			      ROOTPARENT (priv->window), &attr);
+			      ROOTPARENT (window), &attr);
 	if (attr.map_state != IsViewable)
 	{
 	    XUngrabServer (screen->dpy ());
 	    XSync (screen->dpy (), false);
-	    priv->bindFailed = true;
+	    bindFailed = true;
 	    return false;
 	}
 
 	Pixmap newPixmap = XCompositeNameWindowPixmap
-	    (screen->dpy (), ROOTPARENT (priv->window));
+	    (screen->dpy (), ROOTPARENT (window));
 	CompSize newSize = CompSize (attr.border_width * 2 + attr.width,
-			             attr.border_width * 2 + attr.height);
+				     attr.border_width * 2 + attr.height);
 	XUngrabServer (screen->dpy ());
 	XSync (screen->dpy (), false);
 
@@ -160,50 +156,79 @@ CompositeWindow::bind ()
 	{
 	    /* Notify renderer that a new pixmap is about to
 	     * be bound */
-	    if (priv->newPixmapReadyCallback)
-		priv->newPixmapReadyCallback ();
+	    if (newPixmapReadyCallback)
+		newPixmapReadyCallback ();
 
 	    /* Release old pixmap */
-	    if (priv->pixmap)
-		XFreePixmap (screen->dpy (), priv->pixmap);
+	    if (mPixmap)
+		XFreePixmap (screen->dpy (), mPixmap);
 
 	    /* Assign new pixmap */
-	    priv->pixmap = newPixmap;
-	    priv->size = newSize;
+	    mPixmap = newPixmap;
+	    mSize = newSize;
 
-	    priv->needsRebind = false;
+	    needsRebind = false;
 	}
 	else
 	{
-	    priv->bindFailed = true;
-	    priv->needsRebind = false;
+	    bindFailed = true;
+	    needsRebind = false;
 	    return false;
 	}
     }
     return true;
 }
 
+bool
+CompositeWindow::bind ()
+{
+    if (!priv->cScreen->compositingActive ())
+	return false;
+
+    redirect ();
+    return priv->bind ();
+}
+
+void
+PrivateCompositeWindow::release ()
+{
+    needsRebind = true;
+}
+
 void
 CompositeWindow::release ()
 {
-    priv->needsRebind = true;
+    return priv->release ();
+}
+
+Pixmap
+PrivateCompositeWindow::pixmap () const
+{
+    static Pixmap nPixmap = None;
+
+    if (needsRebind)
+	return nPixmap;
+
+    return mPixmap;
 }
 
 Pixmap
 CompositeWindow::pixmap ()
 {
-    static Pixmap nPixmap = None;
+    return priv->pixmap ();
+}
 
-    if (priv->needsRebind)
-	return nPixmap;
+const CompSize &
+PrivateCompositeWindow::size () const
+{
+    return mSize;
 
-    return priv->pixmap;
 }
 
 const CompSize &
 CompositeWindow::size ()
 {
-    return priv->size;
+    return priv->size ();
 }
 
 void
