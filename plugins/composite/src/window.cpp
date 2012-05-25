@@ -131,10 +131,8 @@ PrivateCompositeWindow::bind ()
 
 	/* We have to grab the server here to make sure that window
 	   is mapped when getting the window pixmap */
-	XGrabServer (screen->dpy ());
+	ServerLock mLock (CompositeScreen::get (screen)->serverGrabInterface ());
 
-	/* Flush changes to the server and wait for it to process them */
-	XSync (screen->dpy (), false);
 	XGetWindowAttributes (screen->dpy (),
 			      ROOTPARENT (window), &attr);
 	if (attr.map_state != IsViewable)
@@ -148,8 +146,6 @@ PrivateCompositeWindow::bind ()
 	WindowPixmapInterface::Ptr newPixmap = getPixmap ();
 	CompSize newSize = CompSize (attr.border_width * 2 + attr.width,
 				     attr.border_width * 2 + attr.height);
-	XUngrabServer (screen->dpy ());
-	XSync (screen->dpy (), false);
 
 	if (newPixmap->pixmap () && newSize.width () && newSize.height ())
 	{

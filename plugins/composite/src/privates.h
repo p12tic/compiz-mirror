@@ -40,17 +40,6 @@ extern CompPlugin::VTable *compositeVTable;
 
 extern CompWindow *lastDamagedWindow;
 
-class ServerGrabInterface
-{
-    public:
-
-	virtual ~ServerGrabInterface () {}
-
-	virtual void grabServer () = 0;
-	virtual void ungrabServer () = 0;
-	virtual void syncServer () = 0;
-};
-
 class ServerLock
 {
     public:

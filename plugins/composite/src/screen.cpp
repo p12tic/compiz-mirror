@@ -849,6 +849,12 @@ CompositeScreen::handlePaintTimeout ()
     return false;
 }
 
+ServerGrabInterface *
+CompositeScreen::serverGrabInterface ()
+{
+    return static_cast <ServerGrabInterface *> (priv);
+}
+
 void
 CompositeScreen::preparePaint (int msSinceLastPaint)
     WRAPABLE_HND_FUNCTN (preparePaint, msSinceLastPaint)
