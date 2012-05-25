@@ -131,6 +131,8 @@ class PrivateCompositeWindow : WindowInterface
 
 	Pixmap	      pixmap;
 	CompSize      size;
+	bool	      needsRebind;
+	CompositeWindow::NewPixmapReadyCallback newPixmapReadyCallback;
 
 	Damage	      damage;
 
