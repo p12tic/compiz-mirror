@@ -279,7 +279,7 @@ ParticleAnim::updateBB (CompOutput &output)
 	    {
 		static_cast <short int> (part.x - w), static_cast <short int> (part.x + w),
 		static_cast <short int> (part.y - h), static_cast <short int> (part.y + h)
-	    }
+	    };
 
 	    mAWindow->expandBBWithBox (particleBox);
 	}
