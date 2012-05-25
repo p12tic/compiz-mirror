@@ -28,6 +28,9 @@
 #ifndef _COMPOSITE_PRIVATES_H
 #define _COMPOSITE_PRIVATES_H
 
+#include <memory>
+#include <boost/shared_ptr.hpp>
+
 #include <composite/composite.h>
 #include <core/atoms.h>
 
@@ -37,8 +40,42 @@ extern CompPlugin::VTable *compositeVTable;
 
 extern CompWindow *lastDamagedWindow;
 
+class ServerGrabInterface
+{
+    public:
+
+	virtual ~ServerGrabInterface () {}
+
+	virtual void grabServer () = 0;
+	virtual void ungrabServer () = 0;
+	virtual void syncServer () = 0;
+};
+
+class ServerLock
+{
+    public:
+
+	ServerLock (ServerGrabInterface *grab) :
+	    mGrab (grab)
+	{
+	    mGrab->grabServer ();
+	    mGrab->syncServer ();
+	}
+
+	~ServerLock ()
+	{
+	    mGrab->ungrabServer ();
+	    mGrab->syncServer ();
+	}
+
+    private:
+
+	ServerGrabInterface *mGrab;
+};
+
 class PrivateCompositeScreen :
     ScreenInterface,
+    public ServerGrabInterface,
     public CompositeOptions
 {
     public:
@@ -106,6 +143,11 @@ class PrivateCompositeScreen :
 
 	Atom cmSnAtom;
 	Window newCmSnOwner;
+    private:
+
+	void grabServer ();
+	void ungrabServer ();
+	void syncServer ();
 };
 
 class CompositePixmapRebindInterface
@@ -120,10 +162,106 @@ class CompositePixmapRebindInterface
 	virtual void release () = 0;
 };
 
+class WindowAttributesGetInterface
+{
+    public:
+
+	virtual ~WindowAttributesGetInterface () {}
+
+	virtual bool getAttributes (XWindowAttributes &) = 0;
+};
+
+class WindowPixmapInterface
+{
+    public:
+
+	virtual ~WindowPixmapInterface () {}
+
+	typedef boost::shared_ptr <WindowPixmapInterface> Ptr;
+
+	virtual Pixmap pixmap () const = 0;
+	virtual void releasePixmap ()  = 0;
+};
+
+class X11WindowPixmap :
+    public WindowPixmapInterface
+{
+    public:
+
+	X11WindowPixmap (Display *d, Pixmap p) :
+	    mDisplay (d),
+	    mPixmap (p)
+	{
+	    printf ("create for : 0x%x\n", (unsigned int) p);
+	}
+
+	Pixmap pixmap () const
+	{
+	    return mPixmap;
+	}
+
+	void releasePixmap ()
+	{
+	    printf ("release for : 0x%x\n", (unsigned int) mPixmap);
+	    if (mPixmap)
+		XFreePixmap (mDisplay, mPixmap);
+
+	    mPixmap = None;
+	}
+
+    private:
+
+	Display *mDisplay;
+	Pixmap  mPixmap;
+};
+
+class WindowPixmap
+{
+    public:
+
+	WindowPixmap () :
+	    mPixmap ()
+	{
+	}
+
+	WindowPixmap (WindowPixmapInterface::Ptr &pm) :
+	    mPixmap (pm)
+	{
+	}
+
+	Pixmap pixmap () const
+	{
+	    if (mPixmap)
+		return mPixmap->pixmap ();
+
+	    return None;
+	}
+
+	~WindowPixmap ()
+	{
+	    if (mPixmap)
+		mPixmap->releasePixmap ();
+	}
+    private:
+
+	WindowPixmapInterface::Ptr mPixmap;
+};
+
+class WindowPixmapGetInterface
+{
+    public:
+
+	virtual ~WindowPixmapGetInterface () {}
+
+	virtual WindowPixmapInterface::Ptr getPixmap () = 0;
+};
+
 
 class PrivateCompositeWindow :
     public WindowInterface,
-    public CompositePixmapRebindInterface
+    public CompositePixmapRebindInterface,
+    public WindowPixmapGetInterface,
+    public WindowAttributesGetInterface
 {
     public:
 	PrivateCompositeWindow (CompWindow *w, CompositeWindow *cw);
@@ -149,7 +287,7 @@ class PrivateCompositeWindow :
 	CompositeWindow *cWindow;
 	CompositeScreen *cScreen;
 
-	Pixmap	      mPixmap;
+	std::auto_ptr <WindowPixmap>  mPixmap;
 	CompSize      mSize;
 	bool	      needsRebind;
 	CompositeWindow::NewPixmapReadyCallback newPixmapReadyCallback;
@@ -168,6 +306,10 @@ class PrivateCompositeWindow :
 	XRectangle *damageRects;
 	int        sizeDamage;
 	int        nDamage;
+    private:
+
+	bool getAttributes (XWindowAttributes &);
+	WindowPixmapInterface::Ptr getPixmap ();
 };
 
 #endif

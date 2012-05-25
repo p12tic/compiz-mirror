@@ -93,7 +93,7 @@ PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
     window (w),
     cWindow (cw),
     cScreen (CompositeScreen::get (screen)),
-    mPixmap (None),
+    mPixmap (),
     needsRebind (true),
     newPixmapReadyCallback (),
     damage (None),
@@ -145,26 +145,22 @@ PrivateCompositeWindow::bind ()
 	    return false;
 	}
 
-	Pixmap newPixmap = XCompositeNameWindowPixmap
-	    (screen->dpy (), ROOTPARENT (window));
+	WindowPixmapInterface::Ptr newPixmap = getPixmap ();
 	CompSize newSize = CompSize (attr.border_width * 2 + attr.width,
 				     attr.border_width * 2 + attr.height);
 	XUngrabServer (screen->dpy ());
 	XSync (screen->dpy (), false);
 
-	if (newPixmap && newSize.width () && newSize.height ())
+	if (newPixmap->pixmap () && newSize.width () && newSize.height ())
 	{
 	    /* Notify renderer that a new pixmap is about to
 	     * be bound */
 	    if (newPixmapReadyCallback)
 		newPixmapReadyCallback ();
 
-	    /* Release old pixmap */
-	    if (mPixmap)
-		XFreePixmap (screen->dpy (), mPixmap);
-
 	    /* Assign new pixmap */
-	    mPixmap = newPixmap;
+	    std::auto_ptr <WindowPixmap> newPixmapWrapper (new WindowPixmap (newPixmap));
+	    mPixmap = newPixmapWrapper;
 	    mSize = newSize;
 
 	    needsRebind = false;
@@ -209,7 +205,24 @@ PrivateCompositeWindow::pixmap () const
     if (needsRebind)
 	return nPixmap;
 
-    return mPixmap;
+    return mPixmap->pixmap ();
+}
+
+WindowPixmapInterface::Ptr PrivateCompositeWindow::getPixmap()
+{
+    Pixmap pixmap = XCompositeNameWindowPixmap (screen->dpy (), ROOTPARENT (window));
+    WindowPixmapInterface::Ptr p (new X11WindowPixmap (screen->dpy (), pixmap));
+    return p;
+}
+
+bool
+PrivateCompositeWindow::getAttributes (XWindowAttributes &attr)
+{
+    if (XGetWindowAttributes (screen->dpy (),
+			      ROOTPARENT (window), &attr))
+	return true;
+
+    return false;
 }
 
 Pixmap
