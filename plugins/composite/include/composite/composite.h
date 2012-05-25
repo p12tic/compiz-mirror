@@ -327,6 +327,8 @@ class CompositeWindow :
 {
     public:
 
+	typedef boost::function <void ()> NewPixmapReadyCallback;
+
 	CompositeWindow (CompWindow *w);
 	~CompositeWindow ();
 
@@ -423,6 +425,12 @@ class CompositeWindow :
 	 * Returns the window saturation
 	 */
 	unsigned short saturation ();
+
+	/**
+	 * A function to call when a new pixmap is ready to
+	 * be bound just before the old one is released
+	 */
+	void setNewPixmapReadyCallback (const NewPixmapReadyCallback &cb);
 
 	WRAPABLE_HND (0, CompositeWindowInterface, bool, damageRect,
 		      bool, const CompRect &);
