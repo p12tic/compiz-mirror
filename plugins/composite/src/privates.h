@@ -192,7 +192,6 @@ class X11WindowPixmap :
 	    mDisplay (d),
 	    mPixmap (p)
 	{
-	    printf ("create for : 0x%x\n", (unsigned int) p);
 	}
 
 	Pixmap pixmap () const
@@ -202,7 +201,6 @@ class X11WindowPixmap :
 
 	void releasePixmap ()
 	{
-	    printf ("release for : 0x%x\n", (unsigned int) mPixmap);
 	    if (mPixmap)
 		XFreePixmap (mDisplay, mPixmap);
 
