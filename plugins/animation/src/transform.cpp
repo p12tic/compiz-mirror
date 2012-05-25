@@ -64,10 +64,10 @@ TransformAnim::updateBB (CompOutput &output)
 		      mAWindow->savedOutRect () :
 		      mWindow->outputRect ());
     float corners[4*3] = {
-	outRect.x (), outRect.y (), 0,
-	outRect.x () + outRect.width (), outRect.y (), 0,
-	outRect.x (), outRect.y () + outRect.height (), 0,
-	outRect.x () + outRect.width (), outRect.y () + outRect.height (), 0
+    static_cast <float> (outRect.x ()), static_cast <float> (outRect.y ()), 0,
+    static_cast <float> (outRect.x () + outRect.width ()), static_cast <float> (outRect.y ()), 0,
+    static_cast <float> (outRect.x ()), static_cast <float> (outRect.y () + outRect.height ()), 0,
+    static_cast <float> (outRect.x () + outRect.width ()), static_cast <float> (outRect.y () + outRect.height ()), 0
     };
     mAWindow->expandBBWithPoints3DTransform (output,
 					     wTransform,

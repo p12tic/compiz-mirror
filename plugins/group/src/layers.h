@@ -46,6 +46,7 @@ class Layer :
 	    mGroup (g),
 	    mState (PaintOff),
 	    mAnimationTime (0) {};
+    virtual ~Layer () {}
 	virtual void damage () {};
 
 	GroupSelection  *mGroup;
@@ -61,6 +62,8 @@ class GLLayer :
 	    Layer::Layer (size, g) {}
 
     public:
+
+    virtual ~GLLayer () {}
 
 	virtual void paint (const GLWindowPaintAttrib &attrib,
 			    const GLMatrix	      &transform,
@@ -136,6 +139,8 @@ class BackgroundLayer :
 
     public:
 
+    virtual ~BackgroundLayer () {}
+
 	static BackgroundLayer * create (CompSize, GroupSelection *);
 	static BackgroundLayer * rebuild (BackgroundLayer *,
 				     CompSize);
@@ -164,6 +169,8 @@ class SelectionLayer :
 {
     public:
 
+    virtual ~SelectionLayer () {}
+
 	static SelectionLayer * create (CompSize, GroupSelection *);
 	static SelectionLayer * rebuild (SelectionLayer *,
 					 CompSize);
@@ -184,6 +191,8 @@ class TextLayer :
     public TextureLayer
 {
     public:
+
+    virtual ~TextLayer () {}
 
 	static TextLayer *
 	create (CompSize &, GroupSelection *);
