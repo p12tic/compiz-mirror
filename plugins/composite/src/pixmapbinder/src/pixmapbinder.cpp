@@ -28,7 +28,7 @@
  */
 
 #include <core/servergrab.h>
-#include "pixmap-rebind.h"
+#include "pixmapbinder.h"
 
 PixmapRebinder::PixmapRebinder (const NewPixmapReadyCallback &cb,
 				WindowPixmapGetInterface *pmg,
@@ -116,6 +116,12 @@ PixmapRebinder::bind ()
 	}
     }
     return true;
+}
+
+void
+PixmapRebinder::release ()
+{
+    needsRebind = true;
 }
 
 void

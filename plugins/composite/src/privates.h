@@ -34,7 +34,7 @@
 #include <composite/composite.h>
 #include <core/atoms.h>
 
-#include "pixmap-rebind.h"
+#include "pixmapbinder.h"
 #include "composite_options.h"
 
 extern CompPlugin::VTable *compositeVTable;

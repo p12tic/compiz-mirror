@@ -149,12 +149,6 @@ CompositeWindow::bind ()
 }
 
 void
-PixmapRebinder::release ()
-{
-    needsRebind = true;
-}
-
-void
 PrivateCompositeWindow::release ()
 {
     mPixmapRebinder.release ();
