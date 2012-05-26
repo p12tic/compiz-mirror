@@ -630,7 +630,7 @@ unproject (float winx, float winy, float winz,
            const GLint viewport[4],
            float *objx, float *objy, float *objz)
 {
-    GLMatrix finalMatrix = modelview * projection;
+    GLMatrix finalMatrix = projection * modelview;
     float in[4], out[4];
 
     if (!finalMatrix.invert ())
@@ -1002,6 +1002,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 
     if (reflection)
     {
+	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 	if (optionGetDeform () != DeformCurve)
@@ -1159,6 +1160,7 @@ ExpoScreen::paintWall (const GLScreenPaintAttrib &attrib,
 	    streamingBuffer->render (gTransform);
 	}
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
+	glDisable (GL_BLEND);
     }
 
     expoActive = false;

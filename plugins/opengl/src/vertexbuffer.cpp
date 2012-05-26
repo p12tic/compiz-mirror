@@ -45,12 +45,14 @@ GLVertexBuffer::GLVertexBuffer () :
     priv (new PrivateVertexBuffer ())
 {
     priv->usage = GL_STATIC_DRAW;
+    colorDefault ();
 }
 
 GLVertexBuffer::GLVertexBuffer (GLenum usage) :
     priv (new PrivateVertexBuffer ())
 {
     priv->usage = usage;
+    colorDefault ();
 }
 
 GLVertexBuffer::~GLVertexBuffer ()
@@ -103,6 +105,15 @@ int GLVertexBuffer::end ()
 	GL::bufferData (GL_ARRAY_BUFFER,
 	                sizeof(GLfloat) * priv->normalData.size (),
 	                &priv->normalData[0], priv->usage);
+    }
+
+    if (!priv->colorData.size ())
+    {
+	priv->colorData.resize (4);
+	priv->colorData[0] = priv->color[0];
+	priv->colorData[1] = priv->color[1];
+	priv->colorData[2] = priv->color[2];
+	priv->colorData[3] = priv->color[3];
     }
 
     if (priv->colorData.size ())
@@ -167,6 +178,22 @@ void GLVertexBuffer::addColors (GLuint nColors, GLushort *colors)
     {
 	priv->colorData.push_back (colors[i] / 65535.0f);
     }
+}
+
+void GLVertexBuffer::color4f (GLfloat r, GLfloat g, GLfloat b, GLfloat a)
+{
+    priv->color[0] = r;
+    priv->color[1] = g;
+    priv->color[2] = b;
+    priv->color[3] = a;
+}
+
+void GLVertexBuffer::colorDefault ()
+{
+    priv->color[0] = defaultColor[0] / 65536.0;
+    priv->color[1] = defaultColor[1] / 65536.0;
+    priv->color[2] = defaultColor[2] / 65536.0;
+    priv->color[3] = defaultColor[3] / 65536.0;
 }
 
 void GLVertexBuffer::addTexCoords (GLuint texture,

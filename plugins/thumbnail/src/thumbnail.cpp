@@ -529,99 +529,305 @@ ThumbScreen::handleEvent (XEvent * event)
 
 
 void
-ThumbScreen::paintTexture (int wx,
-			  int wy,
-			  int width,
-			  int height,
-			  int off)
+ThumbScreen::paintTexture (const GLMatrix &transform,
+                           GLushort       *color,
+                           int             wx,
+                           int             wy,
+                           int             width,
+                           int             height,
+                           int             off)
 {
-    glBegin (GL_QUADS);
+    GLfloat         textureData[8];
+    GLfloat         vertexData[12];
+    GLVertexBuffer *streamingBuffer = GLVertexBuffer::streamingBuffer ();
 
-    glTexCoord2f (1, 1);
-    glVertex2f (wx, wy);
-    glVertex2f (wx, wy + height);
-    glVertex2f (wx + width, wy + height);
-    glVertex2f (wx + width, wy);
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
-    glTexCoord2f (0, 0);
-    glVertex2f (wx - off, wy - off);
-    glTexCoord2f (0, 1);
-    glVertex2f (wx - off, wy);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx, wy);
-    glTexCoord2f (1, 0);
-    glVertex2f (wx, wy - off);
+    textureData[0] = 1;
+    textureData[1] = 1;
 
-    glTexCoord2f (1, 0);
-    glVertex2f (wx + width, wy - off);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx + width, wy);
-    glTexCoord2f (0, 1);
-    glVertex2f (wx + width + off, wy);
-    glTexCoord2f (0, 0);
-    glVertex2f (wx + width + off, wy - off);
+    vertexData[0]  = wx;
+    vertexData[1]  = wy;
+    vertexData[2]  = 0;
+    vertexData[3]  = wx;
+    vertexData[4]  = wy + height;
+    vertexData[5]  = 0;
+    vertexData[6]  = wx + width;
+    vertexData[7]  = wy;
+    vertexData[8]  = 0;
+    vertexData[9]  = wx + width;
+    vertexData[10] = wy + height;
+    vertexData[11] = 0;
 
-    glTexCoord2f (0, 1);
-    glVertex2f (wx - off, wy + height);
-    glTexCoord2f (0, 0);
-    glVertex2f (wx - off, wy + height + off);
-    glTexCoord2f (1, 0);
-    glVertex2f (wx, wy + height + off);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx, wy + height);
+    streamingBuffer->addTexCoords (0, 1, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+    streamingBuffer->addColors (1, color);
 
-    glTexCoord2f (1, 1);
-    glVertex2f (wx + width, wy + height);
-    glTexCoord2f (1, 0);
-    glVertex2f (wx + width, wy + height + off);
-    glTexCoord2f (0, 0);
-    glVertex2f (wx + width + off, wy + height + off);
-    glTexCoord2f (0, 1);
-    glVertex2f (wx + width + off, wy + height);
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
 
-    glTexCoord2f (1, 0);
-    glVertex2f (wx, wy - off);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx, wy);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx + width, wy);
-    glTexCoord2f (1, 0);
-    glVertex2f (wx + width, wy - off);
 
-    glTexCoord2f (1, 1);
-    glVertex2f (wx, wy + height);
-    glTexCoord2f (1, 0);
-    glVertex2f (wx, wy + height + off);
-    glTexCoord2f (1, 0);
-    glVertex2f (wx + width, wy + height + off);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx + width, wy + height);
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
 
-    glTexCoord2f (0, 1);
-    glVertex2f (wx - off, wy);
-    glTexCoord2f (0, 1);
-    glVertex2f (wx - off, wy + height);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx, wy + height);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx, wy);
+    textureData[0] = 0;
+    textureData[1] = 0;
+    textureData[2] = 0;
+    textureData[3] = 1;
+    textureData[4] = 1;
+    textureData[5] = 0;
+    textureData[6] = 1;
+    textureData[7] = 1;
 
-    glTexCoord2f (1, 1);
-    glVertex2f (wx + width, wy);
-    glTexCoord2f (1, 1);
-    glVertex2f (wx + width, wy + height);
-    glTexCoord2f (0, 1);
-    glVertex2f (wx + width + off, wy + height);
-    glTexCoord2f (0, 1);
-    glVertex2f (wx + width + off, wy);
+    vertexData[0] = wx - off;
+    vertexData[1] = wy - off;
+    vertexData[2] = 0;
+    vertexData[3] = wx - off;
+    vertexData[4] = wy;
+    vertexData[5] = 0;
+    vertexData[6] = wx;
+    vertexData[7] = wy - off;
+    vertexData[8] = 0;
+    vertexData[9] = wx;
+    vertexData[10] = wy;
+    vertexData[11] = 0;
 
-    glEnd ();
+    streamingBuffer->addTexCoords (0, 4, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+    streamingBuffer->addColors (1, color);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    textureData[0] = 1;
+    textureData[1] = 0;
+    textureData[2] = 1;
+    textureData[3] = 1;
+    textureData[4] = 0;
+    textureData[5] = 0;
+    textureData[6] = 0;
+    textureData[7] = 1;
+
+    vertexData[0] = wx + width;
+    vertexData[1] = wy - off;
+    vertexData[2] = 0;
+    vertexData[3] = wx + width;
+    vertexData[4] = wy;
+    vertexData[5] = 0;
+    vertexData[6] = wx + width + off;
+    vertexData[7] = wy - off;
+    vertexData[8] = 0;
+    vertexData[9] = wx + width + off;
+    vertexData[10] = wy;
+    vertexData[11] = 0;
+
+    streamingBuffer->addTexCoords (0, 4, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+    streamingBuffer->addColors (1, color);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    textureData[0] = 0;
+    textureData[1] = 1;
+    textureData[2] = 0;
+    textureData[3] = 0;
+    textureData[4] = 1;
+    textureData[5] = 1;
+    textureData[6] = 1;
+    textureData[7] = 0;
+
+    vertexData[0] = wx - off;
+    vertexData[1] = wy + height;
+    vertexData[2] = 0;
+    vertexData[3] = wx - off;
+    vertexData[4] = wy + height + off;
+    vertexData[5] = 0;
+    vertexData[6] = wx;
+    vertexData[7] = wy + height;
+    vertexData[8] = 0;
+    vertexData[9] = wx;
+    vertexData[10] = wy + height + off;
+    vertexData[11] = 0;
+
+    streamingBuffer->addTexCoords (0, 4, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+    streamingBuffer->addColors (1, color);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    textureData[0] = 1;
+    textureData[1] = 1;
+    textureData[2] = 1;
+    textureData[3] = 0;
+    textureData[4] = 0;
+    textureData[5] = 1;
+    textureData[6] = 0;
+    textureData[7] = 0;
+
+    vertexData[0] = wx + width;
+    vertexData[1] = wy + height;
+    vertexData[2] = 0;
+    vertexData[3] = wx + width;
+    vertexData[4] = wy + height + off;
+    vertexData[5] = 0;
+    vertexData[6] = wx + width + off;
+    vertexData[7] = wy + height;
+    vertexData[8] = 0;
+    vertexData[9] = wx + width + off;
+    vertexData[10] = wy + height + off;
+    vertexData[11] = 0;
+
+    streamingBuffer->addTexCoords (0, 4, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+    streamingBuffer->addColors (1, color);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    textureData[0] = 1;
+    textureData[1] = 0;
+    textureData[2] = 1;
+    textureData[3] = 1;
+    textureData[4] = 1;
+    textureData[5] = 0;
+    textureData[6] = 1;
+    textureData[7] = 1;
+
+    vertexData[0] = wx;
+    vertexData[1] = wy - off;
+    vertexData[2] = 0;
+    vertexData[3] = wx;
+    vertexData[4] = wy;
+    vertexData[5] = 0;
+    vertexData[6] = wx + width;
+    vertexData[7] = wy - off;
+    vertexData[8] = 0;
+    vertexData[9] = wx + width;
+    vertexData[10] = wy;
+    vertexData[11] = 0;
+
+    streamingBuffer->addTexCoords (0, 4, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+    streamingBuffer->addColors (1, color);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    textureData[0] = 1;
+    textureData[1] = 1;
+    textureData[2] = 1;
+    textureData[3] = 0;
+    textureData[4] = 1;
+    textureData[5] = 1;
+    textureData[6] = 1;
+    textureData[7] = 0;
+
+    vertexData[0] = wx;
+    vertexData[1] = wy + height;
+    vertexData[2] = 0;
+    vertexData[3] = wx;
+    vertexData[4] = wy + height + off;
+    vertexData[5] = 0;
+    vertexData[6] = wx + width;
+    vertexData[7] = wy + height;
+    vertexData[8] = 0;
+    vertexData[9] = wx + width;
+    vertexData[10] = wy + height + off;
+    vertexData[11] = 0;
+
+    streamingBuffer->addTexCoords (0, 4, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+    streamingBuffer->addColors (1, color);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    textureData[0] = 0;
+    textureData[1] = 1;
+    textureData[2] = 0;
+    textureData[3] = 1;
+    textureData[4] = 1;
+    textureData[5] = 1;
+    textureData[6] = 1;
+    textureData[7] = 1;
+
+    vertexData[0] = wx - off;
+    vertexData[1] = wy;
+    vertexData[2] = 0;
+    vertexData[3] = wx - off;
+    vertexData[4] = wy + height;
+    vertexData[5] = 0;
+    vertexData[6] = wx;
+    vertexData[7] = wy;
+    vertexData[8] = 0;
+    vertexData[9] = wx;
+    vertexData[10] = wy + height;
+    vertexData[11] = 0;
+
+    streamingBuffer->addTexCoords (0, 4, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+    streamingBuffer->addColors (1, color);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
+
+
+    streamingBuffer->begin (GL_TRIANGLE_STRIP);
+
+    textureData[0] = 1;
+    textureData[1] = 1;
+    textureData[2] = 1;
+    textureData[3] = 1;
+    textureData[4] = 0;
+    textureData[5] = 1;
+    textureData[6] = 0;
+    textureData[7] = 1;
+
+    vertexData[0] = wx + width;
+    vertexData[1] = wy;
+    vertexData[2] = 0;
+    vertexData[3] = wx + width;
+    vertexData[4] = wy + height;
+    vertexData[5] = 0;
+    vertexData[6] = wx + width + off;
+    vertexData[7] = wy;
+    vertexData[8] = 0;
+    vertexData[9] = wx + width + off;
+    vertexData[10] = wy + height;
+    vertexData[11] = 0;
+
+    streamingBuffer->addTexCoords (0, 4, textureData);
+    streamingBuffer->addVertices (4, vertexData);
+    streamingBuffer->addColors (1, color);
+
+    streamingBuffer->end ();
+    streamingBuffer->render (transform);
 }
 
 void
 ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 		 	      const GLMatrix *transform)
 {
+    GLushort              color[4];
     int			  addWindowGeometryIndex;
     CompWindow            *w = t->win;
     int                   wx = t->x;
@@ -652,37 +858,36 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	GLenum         filter = gScreen->textureFilter ();
 	GLMatrix       wTransform (*transform);
 
-	glEnable (GL_BLEND);
 	glBlendFunc (GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-	glTexEnvf (GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-	glDisableClientState (GL_TEXTURE_COORD_ARRAY);
 
 	if (optionGetWindowLike ())
 	{
-	    glColor4f (1.0, 1.0, 1.0, t->opacity);
+	    color[0] = 1;
+	    color[1] = 1;
+	    color[2] = 1;
+	    color[3] = t->opacity * 65536;
+
 	    foreach (GLTexture *tex, windowTexture)
 	    {
 		tex->enable (GLTexture::Good);
-		paintTexture (wx, wy, width, height, off);
+		paintTexture (*transform, color, wx, wy, width, height, off);
 		tex->disable ();
 	    }
 	}
 	else
 	{
-	    glColor4us (optionGetThumbColorRed (),
-			optionGetThumbColorGreen (),
-			optionGetThumbColorBlue (),
-			optionGetThumbColorAlpha () * t->opacity);
+	    color[0] = optionGetThumbColorRed ();
+	    color[1] = optionGetThumbColorGreen ();
+	    color[2] = optionGetThumbColorBlue ();
+	    color[3] = optionGetThumbColorAlpha () * t->opacity;
 
 	    foreach (GLTexture *tex, glowTexture)
 	    {
 		tex->enable (GLTexture::Good);
-		paintTexture (wx, wy, width, height, off);
+		paintTexture (*transform, color, wx, wy, width, height, off);
 		tex->disable ();
 	    }
 	}
-
-	glColor4usv (defaultColor);
 
 	glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -693,15 +898,10 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	    if (t->text->getWidth () < width)
 		ox = (width - t->text->getWidth ()) / 2.0;
 
-	    t->text->draw (wx + ox, wy + height, t->opacity);
+	    t->text->draw (*transform, wx + ox, wy + height, t->opacity);
 	}
 
-	glEnableClientState (GL_TEXTURE_COORD_ARRAY);
-	glDisable (GL_BLEND);
-
 	gScreen->setTexEnvMode (GL_REPLACE);
-
-	glColor4usv (defaultColor);
 
 	sAttrib.opacity *= t->opacity;
 	sAttrib.yScale = t->scale;
@@ -713,22 +913,17 @@ ThumbScreen::thumbPaintThumb (Thumbnail           *t,
 	if (optionGetMipmap ())
 	    gScreen->setTextureFilter (GL_LINEAR_MIPMAP_LINEAR);
 
-	GLFragment::Attrib fragment (sAttrib);
-
 	wTransform.translate (w->x (), w->y (), 0.0f);
 	wTransform.scale (sAttrib.xScale, sAttrib.yScale, 1.0f);
 	wTransform.translate (sAttrib.xTranslate / sAttrib.xScale - w->x (),
 			      sAttrib.yTranslate / sAttrib.yScale - w->y (),
 			      0.0f);
 
-	glPushMatrix ();
-	glLoadMatrixf (wTransform.getMatrix ());
 	/* XXX: replacing the addWindowGeometry function like this is
 	   very ugly but necessary until the vertex stage has been made
 	   fully pluggable. */
 	gWindow->glAddGeometrySetCurrentIndex (MAXSHORT);
-	gWindow->glDraw (wTransform, fragment, infiniteRegion, mask);
-	glPopMatrix ();
+	gWindow->glDraw (wTransform, sAttrib, infiniteRegion, mask);
 
 	gScreen->setTextureFilter (filter);
     }
@@ -847,10 +1042,7 @@ ThumbScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    GLMatrix sTransform = transform;
 
 	    sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
-	    glPushMatrix ();
-	    glLoadMatrixf (sTransform.getMatrix ());
 	    thumbPaintThumb (&oldThumb, &sTransform);
-	    glPopMatrix ();
 	}
 
 	if (thumb.opacity > 0.0 && thumb.win)
@@ -858,10 +1050,7 @@ ThumbScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
 	    GLMatrix sTransform = transform;
 
 	    sTransform.toScreenSpace (output, -DEFAULT_Z_CAMERA);
-	    glPushMatrix ();
-	    glLoadMatrixf (sTransform.getMatrix ());
 	    thumbPaintThumb (&thumb, &sTransform);
-	    glPopMatrix ();
 	}
     }
 
@@ -889,10 +1078,7 @@ ThumbScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 
 	    gScreen->glApplyTransform (attrib, output, &sTransform);
 	    sTransform.toScreenSpace(output, -attrib.zTranslate);
-	    glPushMatrix ();
-	    glLoadMatrixf (sTransform.getMatrix ());
 	    thumbPaintThumb (&oldThumb, &sTransform);
-	    glPopMatrix ();
 	}
 
 	if (thumb.opacity > 0.0 && thumb.win)
@@ -901,10 +1087,7 @@ ThumbScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 
 	    gScreen->glApplyTransform (attrib, output, &sTransform);
 	    sTransform.toScreenSpace(output, -attrib.zTranslate);
-	    glPushMatrix ();
-	    glLoadMatrixf (sTransform.getMatrix ());
 	    thumbPaintThumb (&thumb, &sTransform);
-	    glPopMatrix ();
 	}
     }
 }

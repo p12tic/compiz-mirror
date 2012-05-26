@@ -78,6 +78,9 @@ class GLVertexBuffer
 	// color is always RGBA (4 parts), count is number of rgba groups
 	void addColors (GLuint nColors, GLushort *colors);
 
+	void color4f (GLfloat r, GLfloat g, GLfloat b, GLfloat a);
+	void colorDefault ();
+
 	// texture is index, texcoords are 2 parts, count is number of pairs
 	void addTexCoords (GLuint texture,
 	                   GLuint nTexcoords,
