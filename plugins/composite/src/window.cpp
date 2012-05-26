@@ -83,9 +83,33 @@ CompositeWindow::~CompositeWindow ()
 }
 
 void
-CompositeWindow::setNewPixmapReadyCallback (const NewPixmapReadyCallback &cb)
+PixmapRebinder::setNewPixmapReadyCallback (const NewPixmapReadyCallback &cb)
 {
-    priv->newPixmapReadyCallback = cb;
+    newPixmapReadyCallback = cb;
+}
+
+void
+PrivateCompositeWindow::setNewPixmapReadyCallback (const PixmapRebinder::NewPixmapReadyCallback &cb)
+{
+    mPixmapRebinder.setNewPixmapReadyCallback (cb);
+}
+
+void
+CompositeWindow::setNewPixmapReadyCallback (const PixmapRebinder::NewPixmapReadyCallback &cb)
+{
+    priv->setNewPixmapReadyCallback (cb);
+}
+
+void
+PixmapRebinder::allowFurtherRebindAttempts ()
+{
+    bindFailed = false;
+}
+
+void
+PrivateCompositeWindow::allowFurtherRebindAttempts ()
+{
+    mPixmapRebinder.allowFurtherRebindAttempts ();
 }
 
 PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
@@ -93,14 +117,14 @@ PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
     window (w),
     cWindow (cw),
     cScreen (CompositeScreen::get (screen)),
-    mPixmap (),
-    needsRebind (true),
-    newPixmapReadyCallback (),
+    mPixmapRebinder (boost::function <void ()> (),
+		     this,
+		     this,
+		     CompositeScreen::get (screen)->serverGrabInterface ()),
     damage (None),
     damaged (false),
     redirected (cScreen->compositingActive ()),
     overlayWindow (false),
-    bindFailed (false),
     opacity (OPAQUE),
     brightness (BRIGHT),
     saturation (COLOR),
@@ -119,7 +143,7 @@ PrivateCompositeWindow::~PrivateCompositeWindow ()
 }
 
 bool
-PrivateCompositeWindow::bind ()
+PixmapRebinder::bind ()
 {
     if (needsRebind)
     {
@@ -131,16 +155,16 @@ PrivateCompositeWindow::bind ()
 
 	/* We have to grab the server here to make sure that window
 	   is mapped when getting the window pixmap */
-	ServerLock mLock (CompositeScreen::get (screen)->serverGrabInterface ());
+	ServerLock mLock (serverGrab);
 
-	getAttributes (attr);
+	windowAttributesRetreiver->getAttributes (attr);
 	if (attr.map_state != IsViewable)
 	{
 	    bindFailed = true;
 	    return false;
 	}
 
-	WindowPixmapInterface::Ptr newPixmap = getPixmap ();
+	WindowPixmapInterface::Ptr newPixmap = windowPixmapRetreiver->getPixmap ();
 	CompSize newSize = CompSize (attr.border_width * 2 + attr.width,
 				     attr.border_width * 2 + attr.height);
 
@@ -169,6 +193,12 @@ PrivateCompositeWindow::bind ()
 }
 
 bool
+PrivateCompositeWindow::bind ()
+{
+    return mPixmapRebinder.bind ();
+}
+
+bool
 CompositeWindow::bind ()
 {
     if (!priv->cScreen->compositingActive ())
@@ -179,9 +209,15 @@ CompositeWindow::bind ()
 }
 
 void
-PrivateCompositeWindow::release ()
+PixmapRebinder::release ()
 {
     needsRebind = true;
+}
+
+void
+PrivateCompositeWindow::release ()
+{
+    mPixmapRebinder.release ();
 }
 
 void
@@ -190,8 +226,28 @@ CompositeWindow::release ()
     return priv->release ();
 }
 
+PixmapRebinder::PixmapRebinder (const NewPixmapReadyCallback &cb,
+				WindowPixmapGetInterface *pmg,
+				WindowAttributesGetInterface *wag,
+				ServerGrabInterface *sg) :
+    mPixmap (),
+    mSize (),
+    needsRebind (false),
+    bindFailed (false),
+    newPixmapReadyCallback (cb),
+    windowPixmapRetreiver (pmg),
+    windowAttributesRetreiver (wag),
+    serverGrab (sg)
+{
+}
+
+PixmapRebinder::~PixmapRebinder ()
+{
+    needsRebind = false;
+}
+
 Pixmap
-PrivateCompositeWindow::pixmap () const
+PixmapRebinder::pixmap () const
 {
     static Pixmap nPixmap = None;
 
@@ -201,7 +257,14 @@ PrivateCompositeWindow::pixmap () const
     return mPixmap->pixmap ();
 }
 
-WindowPixmapInterface::Ptr PrivateCompositeWindow::getPixmap()
+Pixmap
+PrivateCompositeWindow::pixmap () const
+{
+    return mPixmapRebinder.pixmap ();
+}
+
+WindowPixmapInterface::Ptr
+PrivateCompositeWindow::getPixmap ()
 {
     Pixmap pixmap = XCompositeNameWindowPixmap (screen->dpy (), ROOTPARENT (window));
     WindowPixmapInterface::Ptr p (new X11WindowPixmap (screen->dpy (), pixmap));
@@ -225,10 +288,15 @@ CompositeWindow::pixmap ()
 }
 
 const CompSize &
-PrivateCompositeWindow::size () const
+PixmapRebinder::size () const
 {
     return mSize;
+}
 
+const CompSize &
+PrivateCompositeWindow::size () const
+{
+    return mPixmapRebinder.size ();
 }
 
 const CompSize &
@@ -568,7 +636,7 @@ PrivateCompositeWindow::windowNotify (CompWindowNotify n)
     switch (n)
     {
 	case CompWindowNotifyMap:
-	    bindFailed = false;
+	    allowFurtherRebindAttempts ();
 	    damaged = false;
 	    break;
 	case CompWindowNotifyUnmap:

@@ -149,6 +149,14 @@ class CompositePixmapRebindInterface
 	virtual bool bind () = 0;
 	virtual const CompSize & size () const = 0;
 	virtual void release () = 0;
+
+	/* This isn't great API, but probably necessary
+	 * unless we make it a requirement that the
+	 * renderer sets the strategy for the rebinder */
+	virtual void setNewPixmapReadyCallback (const boost::function <void ()> &) = 0;
+
+	/* Also don't like this either */
+	virtual void allowFurtherRebindAttempts () = 0;
 };
 
 class WindowAttributesGetInterface
@@ -243,6 +251,41 @@ class WindowPixmapGetInterface
 	virtual WindowPixmapInterface::Ptr getPixmap () = 0;
 };
 
+class PixmapRebinder :
+    public CompositePixmapRebindInterface
+{
+    public:
+
+	typedef boost::function <void ()> NewPixmapReadyCallback;
+
+	PixmapRebinder (const NewPixmapReadyCallback &,
+			WindowPixmapGetInterface *,
+			WindowAttributesGetInterface *,
+			ServerGrabInterface *);
+
+	~PixmapRebinder ();
+
+	Pixmap pixmap () const;
+	bool bind ();
+	const CompSize & size () const;
+	void release ();
+	void setNewPixmapReadyCallback (const boost::function <void ()> &);
+	void allowFurtherRebindAttempts ();
+
+    private:
+
+	std::auto_ptr <WindowPixmap>  mPixmap;
+	CompSize      mSize;
+	bool	      needsRebind;
+	bool          bindFailed;
+	NewPixmapReadyCallback newPixmapReadyCallback;
+
+	WindowPixmapGetInterface *windowPixmapRetreiver;
+	WindowAttributesGetInterface *windowAttributesRetreiver;
+	ServerGrabInterface *serverGrab;
+
+};
+
 
 class PrivateCompositeWindow :
     public WindowInterface,
@@ -261,7 +304,9 @@ class PrivateCompositeWindow :
 	Pixmap pixmap () const;
 	bool   bind ();
 	const CompSize & size () const;
-	virtual void release ();
+	void release ();
+	void setNewPixmapReadyCallback (const boost::function <void ()> &);
+	void allowFurtherRebindAttempts ();
 
 	static void handleDamageRect (CompositeWindow *w,
 				      int             x,
@@ -274,17 +319,13 @@ class PrivateCompositeWindow :
 	CompositeWindow *cWindow;
 	CompositeScreen *cScreen;
 
-	std::auto_ptr <WindowPixmap>  mPixmap;
-	CompSize      mSize;
-	bool	      needsRebind;
-	CompositeWindow::NewPixmapReadyCallback newPixmapReadyCallback;
+	PixmapRebinder mPixmapRebinder;
 
 	Damage	      damage;
 
 	bool	      damaged;
 	bool	      redirected;
 	bool          overlayWindow;
-	bool          bindFailed;
 
 	unsigned short opacity;
 	unsigned short brightness;
