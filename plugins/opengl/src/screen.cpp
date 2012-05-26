@@ -913,6 +913,7 @@ PrivateGLScreen::PrivateGLScreen (GLScreen   *gs) :
     getProcAddress (0),
     #endif
     scratchFbo (NULL),
+    scratchFboBindFailed (false),
     outputRegion (),
     lastMask (0),
     bindPixmap (),
@@ -1113,6 +1114,7 @@ PrivateGLScreen::outputChangeNotify ()
 {
     screen->outputChangeNotify ();
 
+    scratchFboBindFailed = false;
     scratchFbo->allocate (*screen, NULL, GL_BGRA);
     updateView ();
 }
@@ -1526,10 +1528,16 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     GLFramebufferObject *oldFbo = NULL;
     bool useFbo = false;
 
-    oldFbo = scratchFbo->bind ();
-    useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
-    if (!useFbo) {
-	printf ("bailing!");
+    if (!scratchFboBindFailed)
+    {
+	oldFbo = scratchFbo->bind ();
+	useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
+    }
+
+    if (!useFbo && !scratchFboBindFailed)
+    {
+	scratchFboBindFailed = true;
+	compLogMessage ("opengl", CompLogLevelError, "framebuffer object bind failed. Postprocessing disabled");
 	GLFramebufferObject::rebind (oldFbo);
     }
 
