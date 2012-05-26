@@ -1,12 +1,6 @@
 find_package (Compiz REQUIRED)
 
-include (CompizPlugin)
-include (CompizCommon)
-
-set (COMPIZ_PLUGIN_INSTALL_TYPE
-     "compiz")
-
-compiz_plugin (ccp LIBRARIES compizconfig)
+compiz_plugin (ccp LIBRARIES compizconfig CFLAGSADD -I${CMAKE_SOURCE_DIR}/compizconfig/libcompizconfig/include)
 
 if (COMPIZ_BUILD_WITH_RPATH)
     set_target_properties (

@@ -181,12 +181,12 @@ target_link_libraries (
 
 install (
     TARGETS compiz_core
-  	LIBRARY DESTINATION ${COMPIZ_DESTDIR}${libdir}
+  	LIBRARY DESTINATION ${libdir}
 )
 
 install (
     TARGETS compiz
-    RUNTIME DESTINATION ${COMPIZ_DESTDIR}${exec_prefix}
+    RUNTIME DESTINATION ${exec_prefix}
 )
 
 enable_coverage_report( TARGETS compiz )

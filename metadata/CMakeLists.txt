@@ -33,7 +33,7 @@ compiz_translate_xml (
 
 install (
     FILES ${_core_xml_file}
-    DESTINATION ${COMPIZ_DESTDIR}${compiz_metadatadir}
+    DESTINATION ${compiz_metadatadir}
 )
 
 add_custom_target (core-xml-file ALL

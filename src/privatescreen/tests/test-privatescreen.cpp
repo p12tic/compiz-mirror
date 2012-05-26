@@ -10,6 +10,10 @@
 
 #include <stdlib.h>
 
+using ::testing::Return;
+using ::testing::ReturnRef;
+using ::testing::_;
+
 namespace {
 
 class MockCompScreen : public CompScreen
@@ -200,6 +204,15 @@ public:
     MOCK_METHOD1(getProtocols, unsigned int (Window id));
     MOCK_METHOD1(getWindowType, unsigned int (Window id));
     MOCK_METHOD1(getWindowState, unsigned int (Window id));
+};
+
+class MockViewportRetreival :
+    public compiz::private_screen::ViewportRetrievalInterface
+{
+    public:
+
+	MOCK_CONST_METHOD0(getCurrentViewport, const CompPoint & ());
+	MOCK_CONST_METHOD0(viewportDimentions, const CompSize & ());
 };
 
 class StubActivePluginsOption : public CoreOptions
@@ -619,6 +632,37 @@ TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_fewer_plugins)
     for (CompPlugin* p; (p = CompPlugin::pop ()) != 0; CompPlugin::unload (p));
 }
 
+// Verify plugin ordering, and verify that plugins not in availablePlugins
+// don't get dropped. Because availablePlugins is NOT a definitive list
+// of what the dynamic loader might be able to find in its path.
+TEST(privatescreen_PluginManagerTest, verify_plugin_ordering)
+{
+    using namespace testing;
+
+    cps::PluginManager ps;
+
+    initialPlugins.clear();
+    initialPlugins.push_back("alice");
+    initialPlugins.push_back("bob");
+    initialPlugins.push_back("charlie");
+
+    CompOption::Value::Vector extra;
+    extra.push_back("charlie");
+    extra.push_back("david");
+    extra.push_back("alice");
+    extra.push_back("eric");
+    
+    CompOption::Value::Vector merged = ps.mergedPluginList(extra);
+
+    ASSERT_EQ(merged.size(), 6);
+    ASSERT_EQ(merged[0].s(), "core");
+    ASSERT_EQ(merged[1].s(), "alice");
+    ASSERT_EQ(merged[2].s(), "bob");
+    ASSERT_EQ(merged[3].s(), "charlie");
+    ASSERT_EQ(merged[4].s(), "david");
+    ASSERT_EQ(merged[5].s(), "eric");
+}
+
 TEST(privatescreen_PluginManagerTest, calling_updatePlugins_with_additional_plugins)
 {
     using namespace testing;
@@ -750,4 +794,157 @@ TEST(privatescreen_EventManagerTest, init)
 
     CoreOptions coreOptions(false);
     em.init();
+}
+
+TEST(privatescreen_ViewportGeometryTest, PickCurrent)
+{
+    CompPoint vp;
+    compiz::window::Geometry g (250, 250, 500, 500, 0);
+    MockViewportRetreival mvp;
+
+    CompPoint current (0, 0);
+    CompSize  dimentions (1, 1);
+
+    EXPECT_CALL (mvp, getCurrentViewport ()).WillOnce (ReturnRef (current));
+    EXPECT_CALL (mvp, viewportDimentions ()).WillOnce (ReturnRef (dimentions));
+
+    compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
+
+    EXPECT_EQ (vp, CompPoint (0, 0));
+}
+
+TEST(privatescreen_ViewportGeometryTest, PickRight)
+{
+    CompPoint vp;
+    compiz::window::Geometry g (1250, 0, 500, 500, 0);
+    MockViewportRetreival mvp;
+
+    CompPoint current (0, 0);
+    CompSize  dimentions (2, 1);
+
+    EXPECT_CALL (mvp, getCurrentViewport ()).WillOnce (ReturnRef (current));
+    EXPECT_CALL (mvp, viewportDimentions ()).WillOnce (ReturnRef (dimentions));
+
+    compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
+
+    EXPECT_EQ (vp, CompPoint (1, 0));
+}
+
+TEST(privatescreen_ViewportGeometryTest, PickLeft)
+{
+    CompPoint vp;
+    compiz::window::Geometry g (-750, 0, 500, 500, 0);
+    MockViewportRetreival mvp;
+
+    CompPoint current (1, 0);
+    CompSize  dimentions (2, 1);
+
+    EXPECT_CALL (mvp, getCurrentViewport ()).WillOnce (ReturnRef (current));
+    EXPECT_CALL (mvp, viewportDimentions ()).WillOnce (ReturnRef (dimentions));
+
+    compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
+
+    EXPECT_EQ (vp, CompPoint (0, 0));
+}
+
+TEST(privatescreen_ViewportGeometryTest, PickBottom)
+{
+    CompPoint vp;
+    compiz::window::Geometry g (0, 1250, 500, 500, 0);
+    MockViewportRetreival mvp;
+
+    CompPoint current (0, 0);
+    CompSize  dimentions (1, 2);
+
+    EXPECT_CALL (mvp, getCurrentViewport ()).WillOnce (ReturnRef (current));
+    EXPECT_CALL (mvp, viewportDimentions ()).WillOnce (ReturnRef (dimentions));
+
+    compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
+
+    EXPECT_EQ (vp, CompPoint (0, 1));
+}
+
+TEST(privatescreen_ViewportGeometryTest, PickTop)
+{
+    CompPoint vp;
+    compiz::window::Geometry g (0, -750, 500, 500, 0);
+    MockViewportRetreival mvp;
+
+    CompPoint current (0, 1);
+    CompSize  dimentions (1, 2);
+
+    EXPECT_CALL (mvp, getCurrentViewport ()).WillOnce (ReturnRef (current));
+    EXPECT_CALL (mvp, viewportDimentions ()).WillOnce (ReturnRef (dimentions));
+
+    compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
+
+    EXPECT_EQ (vp, CompPoint (0, 0));
+}
+
+TEST(privatescreen_ViewportGeometryTest, PickTopWhenJustAbove)
+{
+    CompPoint vp;
+    compiz::window::Geometry g (0, -251, 500, 500, 0);
+    MockViewportRetreival mvp;
+
+    CompPoint current (0, 1);
+    CompSize  dimentions (1, 2);
+
+    EXPECT_CALL (mvp, getCurrentViewport ()).WillOnce (ReturnRef (current));
+    EXPECT_CALL (mvp, viewportDimentions ()).WillOnce (ReturnRef (dimentions));
+
+    compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
+
+    EXPECT_EQ (vp, CompPoint (0, 0));
+}
+
+TEST(privatescreen_ViewportGeometryTest, PickRightWhenJustRight)
+{
+    CompPoint vp;
+    compiz::window::Geometry g (751, 0, 500, 500, 0);
+    MockViewportRetreival mvp;
+
+    CompPoint current (0, 0);
+    CompSize  dimentions (2, 1);
+
+    EXPECT_CALL (mvp, getCurrentViewport ()).WillOnce (ReturnRef (current));
+    EXPECT_CALL (mvp, viewportDimentions ()).WillOnce (ReturnRef (dimentions));
+
+    compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
+
+    EXPECT_EQ (vp, CompPoint (1, 0));
+}
+
+TEST(privatescreen_ViewportGeometryTest, PickLeftWhenJustLeft)
+{
+    CompPoint vp;
+    compiz::window::Geometry g (-251, 0, 500, 500, 0);
+    MockViewportRetreival mvp;
+
+    CompPoint current (1, 0);
+    CompSize  dimentions (2, 1);
+
+    EXPECT_CALL (mvp, getCurrentViewport ()).WillOnce (ReturnRef (current));
+    EXPECT_CALL (mvp, viewportDimentions ()).WillOnce (ReturnRef (dimentions));
+
+    compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
+
+    EXPECT_EQ (vp, CompPoint (0, 0));
+}
+
+TEST(privatescreen_ViewportGeometryTest, PickBottomWhenJustBelow)
+{
+    CompPoint vp;
+    compiz::window::Geometry g (0, 751, 500, 500, 0);
+    MockViewportRetreival mvp;
+
+    CompPoint current (0, 0);
+    CompSize  dimentions (1, 2);
+
+    EXPECT_CALL (mvp, getCurrentViewport ()).WillOnce (ReturnRef (current));
+    EXPECT_CALL (mvp, viewportDimentions ()).WillOnce (ReturnRef (dimentions));
+
+    compiz::private_screen::viewports::viewportForGeometry (g, vp, &mvp, CompSize (1000, 1000));
+
+    EXPECT_EQ (vp, CompPoint (0, 1));
 }

@@ -27,10 +27,10 @@ endif (USE_GCONF)
 
 install (
     FILES ${_files}
-    DESTINATION ${COMPIZ_DESTDIR}${CMAKE_INSTALL_PREFIX}/share/compiz/cmake
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/compiz/cmake
 )
 
 install (
     FILES ${_PluginExtensionFiles}
-    DESTINATION ${COMPIZ_DESTDIR}${CMAKE_INSTALL_PREFIX}/share/compiz/cmake/plugin_extensions
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/compiz/cmake/plugin_extensions
 )

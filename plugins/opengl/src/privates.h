@@ -168,6 +168,8 @@ class PrivateGLWindow :
 	void setWindowMatrix ();
 	void updateWindowRegions ();
 
+	void clearTextures ();
+
 	CompWindow      *window;
 	GLWindow        *gWindow;
 	CompositeWindow *cWindow;

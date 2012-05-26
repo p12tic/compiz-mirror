@@ -247,7 +247,7 @@ macro (_build_compiz_plugin plugin)
 	    # install xml
 	    install (
 		FILES ${_translated_xml}
-		DESTINATION ${COMPIZ_DESTDIR}${PLUGIN_XMLDIR}
+		DESTINATION $ENV{DESTDIR}${PLUGIN_XMLDIR}
 	    )
 	endif (_translated_xml)
 
@@ -292,11 +292,11 @@ macro (_build_compiz_plugin plugin)
 
 		install (
 		    FILES ${CMAKE_BINARY_DIR}/generated/compiz-${plugin}.pc
-		    DESTINATION ${COMPIZ_DESTDIR}${PLUGIN_PKGDIR}
+		    DESTINATION ${PLUGIN_PKGDIR}
 		)
 		install (
 		    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/include/${plugin}
-		    DESTINATION ${COMPIZ_DESTDIR}${PLUGIN_INCDIR}/compiz
+		    DESTINATION ${PLUGIN_INCDIR}/compiz
 		)
 	    endif ()
 	endif ()
@@ -417,7 +417,7 @@ macro (_build_compiz_plugin plugin)
 
 	install (
 	    TARGETS ${plugin}
-	    LIBRARY DESTINATION ${COMPIZ_DESTDIR}${PLUGIN_LIBDIR}
+	    LIBRARY DESTINATION ${PLUGIN_LIBDIR}
 	)
 
 	compiz_add_uninstall ()

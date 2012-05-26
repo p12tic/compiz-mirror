@@ -110,7 +110,8 @@ getIniString (IniDictionary *dictionary,
     char *sectionName;
     char *retValue;
 
-    asprintf (&sectionName, "%s:%s", section, entry);
+    if (asprintf (&sectionName, "%s:%s", section, entry) == -1)
+	return NULL;
 
     retValue = iniparser_getstring (dictionary, sectionName, NULL);
     free (sectionName);
@@ -126,7 +127,8 @@ setIniString (IniDictionary *dictionary,
 {
     char *sectionName;
 
-    asprintf (&sectionName, "%s:%s", section, entry);
+    if (asprintf (&sectionName, "%s:%s", section, entry) == -1)
+	return;
 
     if (!iniparser_find_entry (dictionary, (char*) section))
 	iniparser_add_entry (dictionary, (char*) section, NULL, NULL);
@@ -605,7 +607,9 @@ ccsIniSetInt (IniDictionary *dictionary,
 {
     char *string = NULL;
 
-    asprintf (&string, "%i", value);
+    if (asprintf (&string, "%i", value) == -1)
+	string = NULL;
+
     if (string)
     {
 	setIniString (dictionary, section, entry, string);
@@ -621,7 +625,9 @@ ccsIniSetFloat (IniDictionary *dictionary,
 {
     char *string = NULL;
 
-    asprintf (&string, "%f", value);
+    if (asprintf (&string, "%f", value) == -1)
+	string = NULL;
+
     if (string)
     {
 	setIniString (dictionary, section, entry, string);
@@ -815,7 +821,9 @@ void ccsIniRemoveEntry (IniDictionary * dictionary,
 {
     char *sectionName;
 
-    asprintf (&sectionName, "%s:%s", section, entry);
+    if (asprintf (&sectionName, "%s:%s", section, entry) == -1)
+	return;
+
     iniparser_unset (dictionary, sectionName);
     free (sectionName);
 }

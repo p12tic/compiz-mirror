@@ -18,6 +18,8 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301  USA
  */
 
+#include <limits>
+
 #ifdef USE_PROTOBUF
 #include "compizconfig.pb.h"
 #include <google/protobuf/io/zero_copy_stream_impl.h>
@@ -35,6 +37,7 @@ extern "C"
 #include <dirent.h>
 #include <sys/stat.h>
 #include <errno.h>
+#include <glib.h>
 
 #include <libxslt/transform.h>
 #include <libxslt/xsltutils.h>
@@ -47,7 +50,7 @@ extern "C"
 
 #include <string>
 
-#include <core/core.h>
+
 
 namespace {
 
@@ -407,8 +410,8 @@ static void
 initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 {
     int num, j;
-    i->forInt.min = MINSHORT;
-    i->forInt.max = MAXSHORT;
+    i->forInt.min = std::numeric_limits <short>::min ();
+    i->forInt.max = std::numeric_limits <short>::max ();
     i->forInt.desc = NULL;
 
     if (option.has_int_min ())
@@ -448,8 +451,8 @@ initIntInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 static void
 initFloatInfoPB (CCSSettingInfo * i, const OptionMetadata & option)
 {
-    i->forFloat.min = MINSHORT;
-    i->forFloat.max = MAXSHORT;
+    i->forFloat.min = std::numeric_limits <short>::min ();
+    i->forFloat.max = std::numeric_limits <short>::max ();
     i->forFloat.precision = 0.1f;
 
     if (option.has_float_min ())
@@ -879,7 +882,8 @@ addPluginFromPB (CCSContext * context,
     if (xmlFile)
     {
 	pPrivate->xmlFile = strdup (xmlFile);
-	asprintf (&pPrivate->xmlPath, "/compiz/plugin[@name = '%s']", name);
+	if (asprintf (&pPrivate->xmlPath, "/compiz/plugin[@name = '%s']", name) == -1)
+	    pPrivate->xmlPath = NULL;
     }
 
     plugin->context = context;
@@ -1585,8 +1589,8 @@ initIntInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
     char *name;
     char *value;
     int num, j;
-    i->forInt.min = MINSHORT;
-    i->forInt.max = MAXSHORT;
+    i->forInt.min = std::numeric_limits <short>::min ();
+    i->forInt.max = std::numeric_limits <short>::max ();
     i->forInt.desc = NULL;
 
     value = getStringFromXPath (node->doc, node, "min/child::text()");
@@ -1672,8 +1676,8 @@ initFloatInfo (CCSSettingInfo * i, xmlNode * node, void * optionPBv)
     char *value;
     SetNumericLocale numeric_locale;
 
-    i->forFloat.min = MINSHORT;
-    i->forFloat.max = MAXSHORT;
+    i->forFloat.min = std::numeric_limits <short>::min ();
+    i->forFloat.max = std::numeric_limits <short>::max ();
     i->forFloat.precision = 0.1f;
 
     value = getStringFromXPath (node->doc, node, "min/child::text()");
@@ -1924,14 +1928,16 @@ createProtoBufCacheDir ()
 
     if (cacheHome && strlen (cacheHome))
     {
-	asprintf (&cacheBaseDir, "%s", cacheHome);
+	if (asprintf (&cacheBaseDir, "%s", cacheHome) == -1)
+	    cacheBaseDir = NULL;
     }
     else
     {
 	char *home = getenv ("HOME");
 	if (home && strlen (home))
 	{
-	    asprintf (&cacheBaseDir, "%s/.cache", home);
+	    if (asprintf (&cacheBaseDir, "%s/.cache", home) == -1)
+		cacheBaseDir = NULL;
 	}
     }
 
@@ -2514,7 +2520,9 @@ addPluginFromXMLNode (CCSContext * context,
     if (file)
 	pPrivate->xmlFile = strdup (file);
 
-    asprintf (&pPrivate->xmlPath, "/compiz/plugin[@name = '%s']", name);
+    if (asprintf (&pPrivate->xmlPath, "/compiz/plugin[@name = '%s']", name) == -1)
+	pPrivate->xmlPath = NULL;
+
     plugin->context = context;
     plugin->name = strdup (name);
 
@@ -2753,7 +2761,9 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
     char *xmlFilePath = NULL;
     void *pluginInfoPBv = NULL;
 
-    asprintf (&xmlFilePath, "%s/%s", xmlDirPath, xmlName);
+    if (asprintf (&xmlFilePath, "%s/%s", xmlDirPath, xmlName) == -1)
+	xmlFilePath = NULL;
+
     if (!xmlFilePath)
     {
 	fprintf (stderr, "[ERROR]: Can't allocate memory\n");
@@ -2789,7 +2799,9 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 	if (createProtoBufCacheDir () &&
 	    metadataCacheDir.length () > 0)
 	{
-	    asprintf (&pbFilePath, "%s/%s.pb", metadataCacheDir.c_str (), name);
+	    if (asprintf (&pbFilePath, "%s/%s.pb", metadataCacheDir.c_str (), name) == -1)
+		pbFilePath = NULL;
+
 	    if (!pbFilePath)
 	    {
 		fprintf (stderr, "[ERROR]: Can't allocate memory\n");
@@ -2834,7 +2846,9 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 
     // Load from .xml
     FILE *fp = fopen (xmlFilePath, "r");
+#ifdef USE_PROTOBUF
     Bool xmlLoaded = FALSE;
+#endif
 
     if (fp)
     {
@@ -2842,7 +2856,10 @@ loadPluginFromXMLFile (CCSContext * context, char *xmlName, char *xmlDirPath)
 	xmlDoc *doc = xmlReadFile (xmlFilePath, NULL, 0);
 	if (doc)
 	{
-	    xmlLoaded = loadPluginFromXML (context, doc, xmlFilePath,
+#ifdef USE_PROTOBUF
+	    xmlLoaded =
+#endif
+	    loadPluginFromXML (context, doc, xmlFilePath,
 					   pluginInfoPBv);
 	    xmlFreeDoc (doc);
 	}
@@ -2989,14 +3006,17 @@ ccsLoadPlugin (CCSContext * context, char *name)
 
     char *xmlDirPath = NULL;
     char *xmlName = NULL;
-    asprintf (&xmlName, "%s.xml", name);
+    if (asprintf (&xmlName, "%s.xml", name) == -1)
+	xmlName = NULL;
 
     if (xmlName)
     {
 	char *home = getenv ("HOME");
 	if (home && strlen (home))
 	{
-	    asprintf (&xmlDirPath, "%s/.compiz-1/metadata", home);
+	    if (asprintf (&xmlDirPath, "%s/.compiz-1/metadata", home) == -1)
+		xmlDirPath = NULL;
+
 	    if (xmlDirPath)
 	    {
 		loadPluginFromXMLFile (context, xmlName, xmlDirPath);
@@ -3021,10 +3041,27 @@ ccsLoadPlugins (CCSContext * context)
 #endif
 
     char *home = getenv ("HOME");
+    char *overload_metadata = getenv ("COMPIZ_METADATA_PATH");
+
+    if (overload_metadata && strlen (overload_metadata))
+    {
+	char *overloadmetaplugins = NULL;
+	if (asprintf (&overloadmetaplugins, "%s", overload_metadata) == -1)
+	    overloadmetaplugins = NULL;
+
+	if (overloadmetaplugins)
+	{
+	    loadPluginsFromXMLFiles (context, overloadmetaplugins);
+	    free (overloadmetaplugins);
+	}
+    }
+
     if (home && strlen (home))
     {
 	char *homeplugins = NULL;
-	asprintf (&homeplugins, "%s/.compiz-1/metadata", home);
+	if (asprintf (&homeplugins, "%s/.compiz-1/metadata", home) == -1)
+	    homeplugins = NULL;
+
 	if (homeplugins)
 	{
 	    loadPluginsFromXMLFiles (context, homeplugins);
@@ -3036,7 +3073,9 @@ ccsLoadPlugins (CCSContext * context)
     if (home && strlen (home))
     {
 	char *homeplugins = NULL;
-	asprintf (&homeplugins, "%s/.compiz-1/plugins", home);
+	if (asprintf (&homeplugins, "%s/.compiz-1/plugins", home) == -1)
+	    homeplugins = NULL;
+
 	if (homeplugins)
 	{
 	    loadPluginsFromName (context, homeplugins);

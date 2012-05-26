@@ -1673,7 +1673,8 @@ WallScreen::WallScreen (CompScreen *screen) :
     timer (0),
     moveWindow (None),
     focusDefault (true),
-    transform (NoTransformation)
+    transform (NoTransformation),
+    edgeDrag (false)
 {
     ScreenInterface::setHandler (screen);
     CompositeScreenInterface::setHandler (cScreen);

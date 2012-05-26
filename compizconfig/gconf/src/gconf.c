@@ -667,10 +667,12 @@ copyGconfValues (GConfEngine *conf,
 
 	if (to)
 	{
-	    asprintf (&newKey, "%s/%s", to, name + 1);
+	    if (asprintf (&newKey, "%s/%s", to, name + 1) == -1)
+		newKey = NULL;
 
 	    if (associate && schemaPath)
-		asprintf (&newSchema, "%s/%s", schemaPath, name + 1);
+		if (asprintf (&newSchema, "%s/%s", schemaPath, name + 1) == -1)
+		    newSchema = NULL;
 
 	    if (newKey && newSchema)
 		gconf_engine_associate_schema (conf, newKey, newSchema, NULL);
@@ -724,13 +726,12 @@ copyGconfRecursively (GConfEngine *conf,
 	name = strrchr (path, '/');
 	if (name)
 	{
-  	    if (to)
-		asprintf (&newKey, "%s/%s", to, name + 1);
-	    else
+	    if (!(to && asprintf (&newKey, "%s/%s", to, name + 1) != -1))
 		newKey = NULL;
 
 	    if (associate && schemaPath)
-		asprintf (&newSchema, "%s/%s", schemaPath, name + 1);
+		if (asprintf (&newSchema, "%s/%s", schemaPath, name + 1) == -1)
+		    newSchema = NULL;
 
 	    copyGconfValues (conf, path, newKey, associate, newSchema);
 	    copyGconfRecursively (conf,
@@ -1899,7 +1900,9 @@ checkProfile (CCSContext *context)
 	if (lastProfile)
 	{
 	    /* copy /apps/compiz-1 tree to profile path */
-	    asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile);
+	    if (asprintf (&pathName, "%s/%s", PROFILEPATH, lastProfile) == -1)
+		pathName = NULL;
+
 	    if (pathName)
 	    {
 		copyGconfTree (context, COMPIZ, pathName,
@@ -1912,7 +1915,9 @@ checkProfile (CCSContext *context)
 	gconf_client_recursive_unset (client, COMPIZ, 0, NULL);
 
 	/* copy new profile tree to /apps/compiz-1 */
-	asprintf (&pathName, "%s/%s", PROFILEPATH, currentProfile);
+	if (asprintf (&pathName, "%s/%s", PROFILEPATH, currentProfile) == -1)
+	    pathName = NULL;
+
 	if (pathName)
 	{
     	    copyGconfTree (context, pathName, COMPIZ, FALSE, NULL);

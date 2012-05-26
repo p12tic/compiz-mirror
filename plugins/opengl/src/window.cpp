@@ -91,13 +91,17 @@ PrivateGLWindow::PrivateGLWindow (CompWindow *w,
 
     WindowInterface::setHandler (w);
     CompositeWindowInterface::setHandler (cWindow);
+
     vertexBuffer->setAutoProgram(autoProgram);
+
+    cWindow->setNewPixmapReadyCallback (boost::bind (&PrivateGLWindow::clearTextures, this));
 }
 
 PrivateGLWindow::~PrivateGLWindow ()
 {
     delete vertexBuffer;
     delete autoProgram;
+    cWindow->setNewPixmapReadyCallback (boost::function <void ()> ());
 }
 
 void
@@ -118,10 +122,16 @@ PrivateGLWindow::setWindowMatrix ()
     updateState &= ~(UpdateMatrix);
 }
 
+void
+PrivateGLWindow::clearTextures ()
+{
+    textures.clear ();
+}
+
 bool
 GLWindow::bind ()
 {
-    if ((!priv->cWindow->pixmap () && !priv->cWindow->bind ()))
+    if ((priv->needsRebind && !priv->cWindow->bind ()))
     {
 	if (!priv->textures.empty ())
 	{
@@ -156,6 +166,7 @@ GLWindow::bind ()
 
 	    XReparentWindow (screen->dpy (), priv->window->id (), GLScreen::get (screen)->priv->saveWindow, 0, 0);
 	}
+	return false;
     }
     else
     {
@@ -171,11 +182,6 @@ GLWindow::bind ()
 void
 GLWindow::release ()
 {
-    /* Release the pixmap but don't release
-     * the texture (yet) */
-    if (priv->cWindow->pixmap ())
-	priv->cWindow->release ();
-
     priv->needsRebind = true;
 }
 

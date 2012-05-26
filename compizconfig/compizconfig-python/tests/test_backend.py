@@ -1,4 +1,5 @@
 import compiz_config_test
+import unittest
 
 class CompizConfigTestBackend (compiz_config_test.CompizConfigTest):
 
@@ -13,3 +14,6 @@ class CompizConfigTestBackend (compiz_config_test.CompizConfigTest):
 	self.assertEqual (backend.LongDesc, "Flat File Backend")
 	self.assertEqual (backend.IntegrationSupport, False)
 	self.assertEqual (backend.ProfileSupport, True)
+
+if __name__ == '__main__':
+    unittest.main()

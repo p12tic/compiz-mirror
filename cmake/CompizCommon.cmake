@@ -23,11 +23,6 @@ option (COMPIZ_BUILD_WITH_RPATH "Leave as ON unless building packages" ON)
 option (COMPIZ_RUN_LDCONFIG "Leave OFF unless you need to run ldconfig after install")
 option (COMPIZ_PACKAGING_ENABLED "Enable to manually set prefix, exec_prefix, libdir, includedir, datadir" OFF)
 option (COMPIZ_BUILD_TESTING "Build Unit Tests" ON)
-set (COMPIZ_DESTDIR "${DESTDIR}" CACHE STRING "Leave blank unless building packages")
-
-if (NOT COMPIZ_DESTDIR)
-    set (COMPIZ_DESTDIR $ENV{DESTDIR})
-endif ()
 
 set (COMPIZ_DATADIR ${CMAKE_INSTALL_PREFIX}/share)
 set (COMPIZ_METADATADIR ${CMAKE_INSTALL_PREFIX}/share/compiz)
@@ -504,7 +499,7 @@ function (_build_compiz_module _prefix _name _full_prefix)
 
 	install (
 	    FILES ${_file}
-	    DESTINATION ${COMPIZ_DESTDIR}${includedir}/compiz/${_prefix}
+	    DESTINATION ${includedir}/compiz/${_prefix}
 	)
 
     endforeach (_file)
@@ -750,7 +745,7 @@ function (compiz_opt_install_file _src _dst)
     install (CODE
         "message (\"-- Installing: ${_dst}\")
          execute_process (
-	    COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${_src}\" \"${COMPIZ_DESTDIR}${_dst}\"
+	    COMMAND ${CMAKE_COMMAND} -E copy_if_different \"${_src}\" \"$ENV{DESTDIR}${_dst}\"
 	    RESULT_VARIABLE _result
 	    OUTPUT_QUIET ERROR_QUIET
 	 )

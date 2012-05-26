@@ -734,7 +734,7 @@ AirplaneAnim::transformPolygon (const PolygonObject *pol)
 void
 AirplaneAnim::updateBB (CompOutput &)
 {
-    Box screenBox = {0, screen->width (), 0, screen->height () };
+    Box screenBox = {0, static_cast <short int> (screen->width ()), 0, static_cast <short int> (screen->height ()) };
     
     mAWindow->expandBBWithBox (screenBox);
 }

@@ -82,12 +82,20 @@ CompositeWindow::~CompositeWindow ()
     delete priv;
 }
 
+void
+CompositeWindow::setNewPixmapReadyCallback (const NewPixmapReadyCallback &cb)
+{
+    priv->newPixmapReadyCallback = cb;
+}
+
 PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
 						CompositeWindow *cw) :
     window (w),
     cWindow (cw),
     cScreen (CompositeScreen::get (screen)),
     pixmap (None),
+    needsRebind (true),
+    newPixmapReadyCallback (),
     damage (None),
     damaged (false),
     redirected (cScreen->compositingActive ()),
@@ -117,7 +125,7 @@ CompositeWindow::bind ()
 	return false;
 
     redirect ();
-    if (!priv->pixmap)
+    if (priv->needsRebind)
     {
 	XWindowAttributes attr;
 
@@ -141,12 +149,36 @@ CompositeWindow::bind ()
 	    return false;
 	}
 
-	priv->pixmap = XCompositeNameWindowPixmap
+	Pixmap newPixmap = XCompositeNameWindowPixmap
 	    (screen->dpy (), ROOTPARENT (priv->window));
-	priv->size = CompSize (attr.border_width * 2 + attr.width,
-			       attr.border_width * 2 + attr.height);
+	CompSize newSize = CompSize (attr.border_width * 2 + attr.width,
+			             attr.border_width * 2 + attr.height);
 	XUngrabServer (screen->dpy ());
 	XSync (screen->dpy (), false);
+
+	if (newPixmap && newSize.width () && newSize.height ())
+	{
+	    /* Notify renderer that a new pixmap is about to
+	     * be bound */
+	    if (priv->newPixmapReadyCallback)
+		priv->newPixmapReadyCallback ();
+
+	    /* Release old pixmap */
+	    if (priv->pixmap)
+		XFreePixmap (screen->dpy (), priv->pixmap);
+
+	    /* Assign new pixmap */
+	    priv->pixmap = newPixmap;
+	    priv->size = newSize;
+
+	    priv->needsRebind = false;
+	}
+	else
+	{
+	    priv->bindFailed = true;
+	    priv->needsRebind = false;
+	    return false;
+	}
     }
     return true;
 }
@@ -154,17 +186,17 @@ CompositeWindow::bind ()
 void
 CompositeWindow::release ()
 {
-    if (priv->pixmap)
-    {
-	XFreePixmap (screen->dpy (), priv->pixmap);
-	priv->pixmap = None;
-	priv->size = CompSize ();
-    }
+    priv->needsRebind = true;
 }
 
 Pixmap
 CompositeWindow::pixmap ()
 {
+    static Pixmap nPixmap = None;
+
+    if (priv->needsRebind)
+	return nPixmap;
+
     return priv->pixmap;
 }
 
@@ -588,8 +620,6 @@ PrivateCompositeWindow::resizeNotify (int dx, int dy, int dwidth, int dheight)
     else
     {
 	cWindow->release ();
-	this->pixmap = pixmap;
-	this->size = size;
     }
 
     cWindow->addDamage ();

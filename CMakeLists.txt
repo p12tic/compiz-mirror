@@ -116,7 +116,7 @@ compiz_configure_file (
 
 install (
     FILES ${CMAKE_BINARY_DIR}/compiz.pc
-    DESTINATION ${COMPIZ_DESTDIR}${libdir}/pkgconfig
+    DESTINATION ${libdir}/pkgconfig
 )
 
 # Build Google Test and make its headers known
@@ -167,9 +167,7 @@ add_subdirectory (kde)
 add_subdirectory (po)
 add_subdirectory (metadata)
 add_subdirectory (src)
-# compizconfig's CMake files confuse the compiz project quite a lot and
-# cause multiple build failures. Don't include it till it's fixed.
-#add_subdirectory (compizconfig)
+add_subdirectory (compizconfig)
 add_subdirectory (xslt)
 add_subdirectory (plugins)
 add_subdirectory (tests)

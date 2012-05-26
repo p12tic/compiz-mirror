@@ -1,4 +1,5 @@
 import compiz_config_test
+import unittest
 
 class CompizConfigTestSetting (compiz_config_test.CompizConfigTest):
 
@@ -19,3 +20,6 @@ class CompizConfigTestSetting (compiz_config_test.CompizConfigTest):
 	self.assertTrue (setting.Value is not None)
 	self.assertEqual (setting.Integrated, False)
 	self.assertEqual (setting.ReadOnly, False)
+
+if __name__ == '__main__':
+    unittest.main()

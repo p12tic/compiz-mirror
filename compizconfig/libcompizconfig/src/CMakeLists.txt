@@ -1,5 +1,4 @@
 include_directories (
-    ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_CURRENT_BINARY_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}
     ${LIBCOMPIZCONFIG_INCLUDE_DIRS}
@@ -77,5 +76,5 @@ endforeach (_val ${LIBCOMPIZCONFIG_CFLAGS})
 
 install (
     TARGETS compizconfig
-    DESTINATION ${COMPIZ_DESTDIR}${libdir}
+    DESTINATION ${libdir}
 )

@@ -4,5 +4,5 @@ set (_files
 
 install (
     FILES ${_files}
-    DESTINATION ${COMPIZ_DESTDIR}${CMAKE_INSTALL_PREFIX}/share/compiz/cmake
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/share/compiz/cmake
 )
