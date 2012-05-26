@@ -21,6 +21,7 @@ SET (
 SET( 
   SRCS 
   ${CMAKE_CURRENT_SOURCE_DIR}/src/pixmapbinder.cpp
+  ${compiz_SOURCE_DIR}/src/size.cpp # XXX: Remove once we've merged this into a general geometry lib
 )
 
 ADD_LIBRARY( 

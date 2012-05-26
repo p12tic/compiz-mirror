@@ -40,33 +40,6 @@ using ::testing::Invoke;
 using ::testing::Return;
 using ::testing::_;
 
-
-/* !!! */
-CompSize::CompSize () :
-   mWidth (0),
-   mHeight (0)
-{
-}
-
-CompSize::CompSize (int width, int height) :
-   mWidth (width),
-   mHeight (height)
-{
-}
-
-void
-CompSize::setWidth (int width)
-{
-    mWidth = width;
-}
-
-void
-CompSize::setHeight (int height)
-{
-    mHeight = height;
-}
-
-
 class CompositePixmapBinderTest :
     public ::testing::Test
 {
