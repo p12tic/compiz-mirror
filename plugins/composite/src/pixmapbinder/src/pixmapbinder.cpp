@@ -71,22 +71,25 @@ PixmapRebinder::pixmap () const
 bool
 PixmapRebinder::bind ()
 {
+    /* don't try to bind window again if it failed previously */
+    if (bindFailed)
+	return false;
+
     if (needsRebind)
     {
 	XWindowAttributes attr;
-
-	/* don't try to bind window again if it failed previously */
-	if (bindFailed)
-	    return false;
 
 	/* We have to grab the server here to make sure that window
 	   is mapped when getting the window pixmap */
 	ServerLock mLock (serverGrab);
 
 	windowAttributesRetreiver->getAttributes (attr);
-	if (attr.map_state != IsViewable)
+	if (attr.map_state != IsViewable ||
+	    (attr.width == 0 && attr.border_width == 0) ||
+	    (attr.height == 0 && attr.border_width == 0))
 	{
 	    bindFailed = true;
+	    needsRebind = false;
 	    return false;
 	}
 
@@ -134,4 +137,5 @@ void
 PixmapRebinder::allowFurtherRebindAttempts ()
 {
     bindFailed = false;
+    needsRebind = true;
 }
