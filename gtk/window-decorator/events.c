@@ -998,7 +998,10 @@ event_filter_func (GdkXEvent *gdkxevent,
 		decor_t  *d = g_object_get_data (G_OBJECT (win), "decor");
 		gboolean decorated = FALSE;
 
-		if (get_mwm_prop (xid) & (MWM_DECOR_ALL | MWM_DECOR_TITLE))
+		/* Only decorations that are actually bound to windows can be decorated
+		 * ignore cases where a broken application which shouldn't be decorated
+		 * sets the decoration hint */
+		if (get_mwm_prop (xid) & (MWM_DECOR_ALL | MWM_DECOR_TITLE) && d->win)
 		    decorated = TRUE;
 
 		if (decorated != d->decorated)
