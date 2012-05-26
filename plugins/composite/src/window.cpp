@@ -83,12 +83,6 @@ CompositeWindow::~CompositeWindow ()
 }
 
 void
-PixmapRebinder::setNewPixmapReadyCallback (const NewPixmapReadyCallback &cb)
-{
-    newPixmapReadyCallback = cb;
-}
-
-void
 PrivateCompositeWindow::setNewPixmapReadyCallback (const PixmapRebinder::NewPixmapReadyCallback &cb)
 {
     mPixmapRebinder.setNewPixmapReadyCallback (cb);
@@ -98,12 +92,6 @@ void
 CompositeWindow::setNewPixmapReadyCallback (const PixmapRebinder::NewPixmapReadyCallback &cb)
 {
     priv->setNewPixmapReadyCallback (cb);
-}
-
-void
-PixmapRebinder::allowFurtherRebindAttempts ()
-{
-    bindFailed = false;
 }
 
 void
@@ -142,55 +130,7 @@ PrivateCompositeWindow::~PrivateCompositeWindow ()
 	free (damageRects);
 }
 
-bool
-PixmapRebinder::bind ()
-{
-    if (needsRebind)
-    {
-	XWindowAttributes attr;
 
-	/* don't try to bind window again if it failed previously */
-	if (bindFailed)
-	    return false;
-
-	/* We have to grab the server here to make sure that window
-	   is mapped when getting the window pixmap */
-	ServerLock mLock (serverGrab);
-
-	windowAttributesRetreiver->getAttributes (attr);
-	if (attr.map_state != IsViewable)
-	{
-	    bindFailed = true;
-	    return false;
-	}
-
-	WindowPixmapInterface::Ptr newPixmap = windowPixmapRetreiver->getPixmap ();
-	CompSize newSize = CompSize (attr.border_width * 2 + attr.width,
-				     attr.border_width * 2 + attr.height);
-
-	if (newPixmap->pixmap () && newSize.width () && newSize.height ())
-	{
-	    /* Notify renderer that a new pixmap is about to
-	     * be bound */
-	    if (newPixmapReadyCallback)
-		newPixmapReadyCallback ();
-
-	    /* Assign new pixmap */
-	    std::auto_ptr <WindowPixmap> newPixmapWrapper (new WindowPixmap (newPixmap));
-	    mPixmap = newPixmapWrapper;
-	    mSize = newSize;
-
-	    needsRebind = false;
-	}
-	else
-	{
-	    bindFailed = true;
-	    needsRebind = false;
-	    return false;
-	}
-    }
-    return true;
-}
 
 bool
 PrivateCompositeWindow::bind ()
@@ -226,37 +166,6 @@ CompositeWindow::release ()
     return priv->release ();
 }
 
-PixmapRebinder::PixmapRebinder (const NewPixmapReadyCallback &cb,
-				WindowPixmapGetInterface *pmg,
-				WindowAttributesGetInterface *wag,
-				ServerGrabInterface *sg) :
-    mPixmap (),
-    mSize (),
-    needsRebind (false),
-    bindFailed (false),
-    newPixmapReadyCallback (cb),
-    windowPixmapRetreiver (pmg),
-    windowAttributesRetreiver (wag),
-    serverGrab (sg)
-{
-}
-
-PixmapRebinder::~PixmapRebinder ()
-{
-    needsRebind = false;
-}
-
-Pixmap
-PixmapRebinder::pixmap () const
-{
-    static Pixmap nPixmap = None;
-
-    if (needsRebind)
-	return nPixmap;
-
-    return mPixmap->pixmap ();
-}
-
 Pixmap
 PrivateCompositeWindow::pixmap () const
 {
@@ -285,12 +194,6 @@ Pixmap
 CompositeWindow::pixmap ()
 {
     return priv->pixmap ();
-}
-
-const CompSize &
-PixmapRebinder::size () const
-{
-    return mSize;
 }
 
 const CompSize &

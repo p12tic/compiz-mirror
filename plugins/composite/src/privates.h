@@ -34,33 +34,12 @@
 #include <composite/composite.h>
 #include <core/atoms.h>
 
+#include "pixmap-rebind.h"
 #include "composite_options.h"
 
 extern CompPlugin::VTable *compositeVTable;
 
 extern CompWindow *lastDamagedWindow;
-
-class ServerLock
-{
-    public:
-
-	ServerLock (ServerGrabInterface *grab) :
-	    mGrab (grab)
-	{
-	    mGrab->grabServer ();
-	    mGrab->syncServer ();
-	}
-
-	~ServerLock ()
-	{
-	    mGrab->ungrabServer ();
-	    mGrab->syncServer ();
-	}
-
-    private:
-
-	ServerGrabInterface *mGrab;
-};
 
 class PrivateCompositeScreen :
     ScreenInterface,
@@ -138,154 +117,6 @@ class PrivateCompositeScreen :
 	void ungrabServer ();
 	void syncServer ();
 };
-
-class CompositePixmapRebindInterface
-{
-    public:
-
-	virtual ~CompositePixmapRebindInterface () {}
-
-	virtual Pixmap pixmap () const = 0;
-	virtual bool bind () = 0;
-	virtual const CompSize & size () const = 0;
-	virtual void release () = 0;
-
-	/* This isn't great API, but probably necessary
-	 * unless we make it a requirement that the
-	 * renderer sets the strategy for the rebinder */
-	virtual void setNewPixmapReadyCallback (const boost::function <void ()> &) = 0;
-
-	/* Also don't like this either */
-	virtual void allowFurtherRebindAttempts () = 0;
-};
-
-class WindowAttributesGetInterface
-{
-    public:
-
-	virtual ~WindowAttributesGetInterface () {}
-
-	virtual bool getAttributes (XWindowAttributes &) = 0;
-};
-
-class WindowPixmapInterface
-{
-    public:
-
-	virtual ~WindowPixmapInterface () {}
-
-	typedef boost::shared_ptr <WindowPixmapInterface> Ptr;
-
-	virtual Pixmap pixmap () const = 0;
-	virtual void releasePixmap ()  = 0;
-};
-
-class X11WindowPixmap :
-    public WindowPixmapInterface
-{
-    public:
-
-	X11WindowPixmap (Display *d, Pixmap p) :
-	    mDisplay (d),
-	    mPixmap (p)
-	{
-	}
-
-	Pixmap pixmap () const
-	{
-	    return mPixmap;
-	}
-
-	void releasePixmap ()
-	{
-	    if (mPixmap)
-		XFreePixmap (mDisplay, mPixmap);
-
-	    mPixmap = None;
-	}
-
-    private:
-
-	Display *mDisplay;
-	Pixmap  mPixmap;
-};
-
-class WindowPixmap
-{
-    public:
-
-	WindowPixmap () :
-	    mPixmap ()
-	{
-	}
-
-	WindowPixmap (WindowPixmapInterface::Ptr &pm) :
-	    mPixmap (pm)
-	{
-	}
-
-	Pixmap pixmap () const
-	{
-	    if (mPixmap)
-		return mPixmap->pixmap ();
-
-	    return None;
-	}
-
-	~WindowPixmap ()
-	{
-	    if (mPixmap)
-		mPixmap->releasePixmap ();
-	}
-    private:
-
-	WindowPixmapInterface::Ptr mPixmap;
-};
-
-class WindowPixmapGetInterface
-{
-    public:
-
-	virtual ~WindowPixmapGetInterface () {}
-
-	virtual WindowPixmapInterface::Ptr getPixmap () = 0;
-};
-
-class PixmapRebinder :
-    public CompositePixmapRebindInterface
-{
-    public:
-
-	typedef boost::function <void ()> NewPixmapReadyCallback;
-
-	PixmapRebinder (const NewPixmapReadyCallback &,
-			WindowPixmapGetInterface *,
-			WindowAttributesGetInterface *,
-			ServerGrabInterface *);
-
-	~PixmapRebinder ();
-
-	Pixmap pixmap () const;
-	bool bind ();
-	const CompSize & size () const;
-	void release ();
-	void setNewPixmapReadyCallback (const boost::function <void ()> &);
-	void allowFurtherRebindAttempts ();
-
-    private:
-
-	std::auto_ptr <WindowPixmap>  mPixmap;
-	CompSize      mSize;
-	bool	      needsRebind;
-	bool          bindFailed;
-	NewPixmapReadyCallback newPixmapReadyCallback;
-
-	WindowPixmapGetInterface *windowPixmapRetreiver;
-	WindowAttributesGetInterface *windowAttributesRetreiver;
-	ServerGrabInterface *serverGrab;
-
-};
-
 
 class PrivateCompositeWindow :
     public WindowInterface,
