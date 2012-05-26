@@ -627,10 +627,10 @@ GLScreen::glPaintCompositedOutput (const CompRegion    &region,
     }
 
     streamingBuffer->end ();
-    fbo->tex ()-> enable (GLTexture::Fast);
+    fbo->tex ()->enable (GLTexture::Fast);
     sTransform.toScreenSpace (&screen->fullscreenOutput (), -DEFAULT_Z_CAMERA);
     streamingBuffer->render (sTransform);
-    fbo->tex ()-> disable ();
+    fbo->tex ()->disable ();
 }
 
 #define ADD_RECT(vertexBuffer, m, n, x1, y1, x2, y2) \

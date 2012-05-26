@@ -1529,7 +1529,7 @@ PrivateGLScreen::paintOutputs (CompOutput::ptrList &outputs,
     oldFbo = scratchFbo->bind ();
     useFbo = scratchFbo->checkStatus () && scratchFbo->tex ();
     if (!useFbo) {
-printf ("bailing!");
+	printf ("bailing!");
 	GLFramebufferObject::rebind (oldFbo);
     }
 
@@ -1617,6 +1617,8 @@ printf ("bailing!");
     }
 
     targetOutput = &screen->outputDevs ()[0];
+
+    glViewport (0, 0, screen->width (), screen->height ());
 
     if (useFbo)
     {
