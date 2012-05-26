@@ -171,17 +171,6 @@ class CompositeScreenInterface :
 	virtual void damageRegion (const CompRegion &r);
 };
 
-class ServerGrabInterface
-{
-    public:
-
-	virtual ~ServerGrabInterface () {}
-
-	virtual void grabServer () = 0;
-	virtual void ungrabServer () = 0;
-	virtual void syncServer () = 0;
-};
-
 class CompositeScreen :
     public WrapableHandler<CompositeScreenInterface, 7>,
     public PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>,
@@ -235,8 +224,6 @@ class CompositeScreen :
 	int optimalRedrawTime ();
 
 	bool handlePaintTimeout ();
-
-	ServerGrabInterface * serverGrabInterface ();
 
 	WRAPABLE_HND (0, CompositeScreenInterface, void, preparePaint, int);
 	WRAPABLE_HND (1, CompositeScreenInterface, void, donePaint);

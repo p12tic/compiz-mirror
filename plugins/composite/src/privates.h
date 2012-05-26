@@ -43,7 +43,6 @@ extern CompWindow *lastDamagedWindow;
 
 class PrivateCompositeScreen :
     ScreenInterface,
-    public ServerGrabInterface,
     public CompositeOptions
 {
     public:
@@ -112,10 +111,6 @@ class PrivateCompositeScreen :
 	Atom cmSnAtom;
 	Window newCmSnOwner;
     private:
-
-	void grabServer ();
-	void ungrabServer ();
-	void syncServer ();
 };
 
 class PrivateCompositeWindow :

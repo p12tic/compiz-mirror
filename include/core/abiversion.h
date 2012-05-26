@@ -5,6 +5,6 @@
 #  error Conflicting definitions of CORE_ABIVERSION
 #endif
 
-#define CORE_ABIVERSION 20120514
+#define CORE_ABIVERSION 20120526
 
 #endif // COMPIZ_ABIVERSION_H

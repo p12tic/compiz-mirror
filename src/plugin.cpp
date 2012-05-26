@@ -24,6 +24,8 @@
  */
 
 #include "core/plugin.h"
+
+/* XXX: This dependency needs to go away */
 #include "privatescreen.h"
 
 #include <boost/scoped_array.hpp>

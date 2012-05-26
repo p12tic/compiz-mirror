@@ -27,21 +27,8 @@
  *          Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
+#include <core/servergrab.h>
 #include "pixmap-rebind.h"
-#include <composite/composite.h>
-
-ServerLock::ServerLock (ServerGrabInterface *grab)  :
-    mGrab (grab)
-{
-    mGrab->grabServer ();
-    mGrab->syncServer ();
-}
-
-ServerLock::~ServerLock ()
-{
-    mGrab->ungrabServer ();
-    mGrab->syncServer ();
-}
 
 PixmapRebinder::PixmapRebinder (const NewPixmapReadyCallback &cb,
 				WindowPixmapGetInterface *pmg,

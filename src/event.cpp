@@ -37,6 +37,7 @@
 #include <X11/extensions/Xfixes.h>
 
 #include <core/atoms.h>
+#include <core/servergrab.h>
 #include "privatescreen.h"
 #include "privatewindow.h"
 #include "privatestackdebugger.h"
@@ -1068,6 +1069,30 @@ CompScreenImpl::alwaysHandleEvent (XEvent *event)
     {
 	XUngrabKeyboard (privateScreen.dpy, event->xkey.time);
     }
+}
+
+ServerGrabInterface *
+CompScreenImpl::serverGrabInterface ()
+{
+    return static_cast <ServerGrabInterface *> (this);
+}
+
+void
+CompScreenImpl::grabServer ()
+{
+    XGrabServer (privateScreen.dpy);
+}
+
+void
+CompScreenImpl::syncServer ()
+{
+    XSync (privateScreen.dpy, false);
+}
+
+void
+CompScreenImpl::ungrabServer ()
+{
+    XUngrabServer (privateScreen.dpy);
 }
 
 void

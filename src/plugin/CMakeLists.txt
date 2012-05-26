@@ -14,6 +14,7 @@ INCLUDE_DIRECTORIES(
   ${compiz_SOURCE_DIR}/src/window/extents/include
 
   ${compiz_SOURCE_DIR}/src/pluginclasshandler/include
+  ${compiz_SOURCE_DIR}/src/servergrab/include
 
   ${COMPIZ_INCLUDE_DIRS}
 

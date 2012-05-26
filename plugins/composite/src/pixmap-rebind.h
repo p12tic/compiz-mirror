@@ -41,19 +41,6 @@
 
 class ServerGrabInterface;
 
-class ServerLock
-{
-    public:
-
-	ServerLock (ServerGrabInterface *grab);
-
-	~ServerLock ();
-
-    private:
-
-	ServerGrabInterface *mGrab;
-};
-
 class CompositePixmapRebindInterface
 {
     public:

@@ -712,24 +712,6 @@ PrivateCompositeScreen::scheduleRepaint ()
 	delay);
 }
 
-void
-PrivateCompositeScreen::grabServer ()
-{
-    XGrabServer (screen->dpy ());
-}
-
-void
-PrivateCompositeScreen::syncServer ()
-{
-    XSync (screen->dpy (), false);
-}
-
-void
-PrivateCompositeScreen::ungrabServer ()
-{
-    XUngrabServer (screen->dpy ());
-}
-
 int
 CompositeScreen::redrawTime ()
 {
@@ -849,11 +831,7 @@ CompositeScreen::handlePaintTimeout ()
     return false;
 }
 
-ServerGrabInterface *
-CompositeScreen::serverGrabInterface ()
-{
-    return static_cast <ServerGrabInterface *> (priv);
-}
+
 
 void
 CompositeScreen::preparePaint (int msSinceLastPaint)

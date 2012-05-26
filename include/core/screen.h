@@ -45,6 +45,7 @@ class PrivateScreen;
 class CompManager;
 class CoreWindow;
 class CoreOptions;
+class ServerGrabInterface;
 
 typedef std::list<CompWindow *> CompWindowList;
 typedef std::vector<CompWindow *> CompWindowVector;
@@ -390,6 +391,8 @@ public:
 
     virtual void processEvents () = 0;
     virtual void alwaysHandleEvent (XEvent *event) = 0;
+
+    virtual ServerGrabInterface * serverGrabInterface () = 0;
 
     // Replacements for friends accessing priv. They are declared virtual to
     // ensure the ABI is stable if/when they are moved to CompScreenImpl.
