@@ -654,7 +654,7 @@ update_window_decoration_size (WnckWindow *win)
     /* Handle failure */
     if (!pixmap || gdk_error_trap_pop ())
     {
-	memset (pixmap, 0, sizeof (GdkPixmap));
+	memset (pixmap, 0, sizeof (*pixmap));
 	return FALSE;
     }
 
@@ -670,7 +670,7 @@ update_window_decoration_size (WnckWindow *win)
     /* Handle failure */
     if (!buffer_pixmap || gdk_error_trap_pop ())
     {
-	memset (buffer_pixmap, 0, sizeof (GdkPixmap));
+	memset (buffer_pixmap, 0, sizeof (*buffer_pixmap));
 	g_object_unref (G_OBJECT (pixmap));
 	return FALSE;
     }
