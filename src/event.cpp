@@ -1189,7 +1189,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	     * for FocusChangeMask. Also, we don't want to
 	     * manage it straight away - in reality we want
 	     * that to wait until the map request */
-	    if ((wa.root == privateScreen.rootWindow()))
+	    if (wa.root == privateScreen.rootWindow())
 	    {
 		PrivateWindow::createCompWindow (getTopWindow (), wa, event->xcreatewindow.window);
             }

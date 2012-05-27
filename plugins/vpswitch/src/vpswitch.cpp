@@ -186,16 +186,10 @@ VPSwitchScreen::movevp (CompAction	   *action,
 
     /* Check bounds */
 
-    if (dx < 0 && vp.x () + dx < 0)
+    if (vp.x () + dx > (unsigned int) vpsize.width ())
 	return false;
 
-    if (dx > 0 && vp.x () + dx > (unsigned int) vpsize.width ())
-	return false;
-
-    if (dy < 0 && vp.y () + dy < 0)
-	return false;
-
-    if (dy > 0 && vp.y () + dy > (unsigned int) vpsize.height ())
+    if (vp.y () + dy > (unsigned int) vpsize.height ())
 	return false;
 
     gotovp (vp.x () + dx, vp.y () + dy);

@@ -219,7 +219,7 @@ ExpoScreen::prevVp (CompAction          *action,
 		    CompAction::State   state,
 		    CompOption::Vector& options)
 {
-    unsigned int newX, newY;
+    int newX, newY;
     Window       xid = CompOption::getIntOptionNamed (options, "root", 0);
     if (xid != screen->root ())
 	return false;

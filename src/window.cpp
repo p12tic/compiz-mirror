@@ -5520,7 +5520,7 @@ PrivateWindow::processMap ()
 
     if (!initiallyMinimized)
     {
-	if (allowFocus && !window->onCurrentDesktop ());
+	if (allowFocus && !window->onCurrentDesktop ())
 	    screen->setCurrentDesktop (priv->desktop);
 
 	if (!(priv->state & CompWindowStateHiddenMask))

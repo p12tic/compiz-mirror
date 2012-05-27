@@ -912,7 +912,7 @@ ThumbScreen::glPaintTransformedOutput (const GLScreenPaintAttrib &attrib,
 bool
 ThumbWindow::glPaint (const GLWindowPaintAttrib &attrib,
 		      const GLMatrix		&transform,
-		      CompRegion 		&region,
+		      const CompRegion          &region,
 		      unsigned int		mask)
 {
     bool status;
