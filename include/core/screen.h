@@ -153,7 +153,7 @@ class ScreenInterface : public WrapableInterface<CompScreen, ScreenInterface> {
 };
 
 namespace compiz { namespace private_screen {
-    class Grab;
+    struct Grab;
     class EventManager;
     class Ping;
 }}

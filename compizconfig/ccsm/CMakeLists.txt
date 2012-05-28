@@ -52,7 +52,6 @@ add_custom_target (uninstall
 
 install (CODE
 	 "message (\"Installing python files\")
-	  execute_process (COMMAND python setup.py install --prefix=$ENV{DESTDIR}${CMAKE_INSTALL_PREFIX}
-	 		   WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})")
+	  execute_process (COMMAND cmake -DSETUP=${CMAKE_CURRENT_SOURCE_DIR}/setup.py -DPREFIX=${CMAKE_INSTALL_PREFIX} -DWDIR=${CMAKE_CURRENT_SOURCE_DIR} -P ${compiz_SOURCE_DIR}/compizconfig/cmake/exec_setup_py_with_destdir.cmake)")
 
 

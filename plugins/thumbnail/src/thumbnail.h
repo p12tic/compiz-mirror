@@ -188,7 +188,7 @@ class ThumbWindow :
 	bool
 	glPaint (const GLWindowPaintAttrib &attrib,
 		const GLMatrix		&transform,
-		CompRegion 		&region,
+		const CompRegion 		&region,
 		unsigned int		mask);
 
 	void

@@ -392,7 +392,7 @@ class PrivateWindow {
 	bool                 syncWait;
 	CompWindow::Geometry syncGeometry;
 
-	bool closeRequests;
+	int closeRequests;
 	Time lastCloseRequestTime;
 
 	bool nextMoveImmediate;

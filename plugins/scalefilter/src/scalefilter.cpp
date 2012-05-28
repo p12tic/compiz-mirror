@@ -543,9 +543,9 @@ ScalefilterScreen::ScalefilterScreen (CompScreen *s) :
     sScreen (ScaleScreen::get (s))
 {
     xim = XOpenIM (s->dpy (), NULL, NULL, NULL);
-    if (xim)
-	xic = XCreateIC (xim, XNClientWindow, s->root (), XNInputStyle,
-			 XIMPreeditNothing  | XIMStatusNothing, NULL);
+    //if (xim)
+	//xic = XCreateIC (xim, XNClientWindow, s->root (), XNInputStyle,
+	//		 XIMPreeditNothing  | XIMStatusNothing, NULL);
 
     if (xic)
 	setlocale (LC_CTYPE, "");

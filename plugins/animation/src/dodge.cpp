@@ -57,7 +57,7 @@ DodgeAnim::applyDodgeTransform ()
 }
 
 bool
-DodgeAnim::moveUpdate ()
+DodgeAnim::moveUpdate (int dx, int dy)
 {
     if (mDodgeData->isDodgeSubject &&
     	mDodgeDirection == DodgeDirectionXY)

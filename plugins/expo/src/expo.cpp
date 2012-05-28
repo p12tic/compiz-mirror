@@ -27,7 +27,8 @@
 
 #include "expo.h"
 #include <math.h>
-#include <opengl/opengl.h>
+#include <GL/glu.h>
+#include <X11/cursorfont.h>
 
 COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
 
@@ -221,7 +222,7 @@ ExpoScreen::prevVp (CompAction         *action,
                     CompAction::State   state,
                     CompOption::Vector &options)
 {
-    unsigned int newX, newY;
+    int newX, newY;
     Window       xid = CompOption::getIntOptionNamed (options, "root", 0);
     if (xid != screen->root ())
 	return false;
@@ -610,6 +611,8 @@ ExpoScreen::donePaint ()
 			       CompWindowGrabMoveMask |
 			       CompWindowGrabButtonMask);
 
+		screen->updateGrab (grabIndex, dragCursor);
+
 		w->raise ();
 		w->moveInputFocusTo ();
 		break;
@@ -617,6 +620,9 @@ ExpoScreen::donePaint ()
 
 	    prevCursor = newCursor;
 	}
+	break;
+    case DnDNone:
+	screen->updateGrab (grabIndex, screen->normalCursor ());
 	break;
     default:
 	break;
@@ -1489,6 +1495,8 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
     upKey    = XKeysymToKeycode (s->dpy (), XStringToKeysym ("Up"));
     downKey  = XKeysymToKeycode (s->dpy (), XStringToKeysym ("Down"));
 
+    dragCursor = XCreateFontCursor (screen->dpy (), XC_fleur);
+
     EXPOINITBIND (ExpoKey, doExpo);
     EXPOTERMBIND (ExpoKey, termExpo);
     EXPOINITBIND (ExpoButton, doExpo);
@@ -1505,6 +1513,12 @@ ExpoScreen::ExpoScreen (CompScreen *s) :
     ScreenInterface::setHandler (screen, false);
     CompositeScreenInterface::setHandler (cScreen, false);
     GLScreenInterface::setHandler (gScreen, false);
+}
+
+ExpoScreen::~ExpoScreen ()
+{
+    if (dragCursor != None)
+	XFreeCursor (screen->dpy (), dragCursor);
 }
 
 ExpoWindow::ExpoWindow (CompWindow *w) :

@@ -638,7 +638,7 @@ KDECompatWindow::presentGroup ()
 void
 KDECompatScreen::handleCompizEvent (const char  *pluginName,
 				    const char  *eventName,
-				    CompOption::Vector  options)
+				    CompOption::Vector &options)
 {
 
     screen->handleCompizEvent (pluginName, eventName, options);

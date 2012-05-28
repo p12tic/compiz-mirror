@@ -91,7 +91,7 @@ CopyPixmap::CopyPixmap (Pixmap pixmap,
 			int height,
 			int depth) :
     pixmap (pixmap),
-    damage (damage),
+    damage (None),
     depth (depth)
 {
 }

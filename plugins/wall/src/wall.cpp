@@ -341,16 +341,10 @@ WallScreen::checkDestination (unsigned int destX,
     point = screen->vp ();
     size = screen->vpSize ();
 
-    if (point.x () - destX < 0)
-	return false;
-
     if (point.x () - destX >= (unsigned int) size.width ())
 	return false;
 
     if (point.y () - destY >= (unsigned int) size.height ())
-	return false;
-
-    if (point.y () - destY < 0)
 	return false;
 
     return true;

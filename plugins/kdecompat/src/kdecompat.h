@@ -77,7 +77,7 @@ class KDECompatScreen :
 	void
 	handleCompizEvent (const char         *pluginName,
 			   const char         *eventName,
-			   CompOption::Vector options);
+			   CompOption::Vector &options);
 	
 	CompAction *
 	getScaleAction (const char *name);

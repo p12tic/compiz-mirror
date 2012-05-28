@@ -115,7 +115,7 @@ class MagScreen :
 			   	  MagOptions::Options num);
 
 	void
-	damageRegion ();
+	doDamageRegion ();
 
 	void
 	positionUpdate (const CompPoint &pos);

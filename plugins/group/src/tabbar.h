@@ -66,6 +66,8 @@ public:
     };
 public:
 
+    virtual ~GroupTabBarSlot ();
+
     void getDrawOffset (int &hoffset,
 			int &voffset);
 

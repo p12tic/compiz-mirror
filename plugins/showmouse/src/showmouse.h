@@ -198,7 +198,7 @@ class ShowmouseScreen :
 	genNewParticles (int);
 
 	void
-	damageRegion ();
+	doDamageRegion ();
 
 	void
 	positionUpdate (const CompPoint &p);

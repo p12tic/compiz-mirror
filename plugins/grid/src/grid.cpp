@@ -598,28 +598,40 @@ GridScreen::glPaintOutput (const GLScreenPaintAttrib &attrib,
     return status;
 }
 
+namespace
+{
+    class GridTypeMask
+    {
+	public:
+
+	    GridTypeMask (unsigned int m, int t):
+		mask (m),
+		type (t)
+	    {
+	    }
+
+	unsigned int mask;
+	int type;
+    };
+}
+
 unsigned int
 GridScreen::typeToMask (int t)
 {
-    typedef struct {
-	unsigned int mask;
-	int type;
-    } GridTypeMask;
 
-    std::vector <GridTypeMask> type =
-    {
-	{ GridWindowType::GridUnknown, 0 },
-	{ GridWindowType::GridBottomLeft, 1 },
-	{ GridWindowType::GridBottom, 2 },
-	{ GridWindowType::GridBottomRight, 3 },
-	{ GridWindowType::GridLeft, 4 },
-	{ GridWindowType::GridCenter, 5 },
-	{ GridWindowType::GridRight, 6 },
-	{ GridWindowType::GridTopLeft, 7 },
-	{ GridWindowType::GridTop, 8 },
-	{ GridWindowType::GridTopRight, 9 },
-	{ GridWindowType::GridMaximize, 10 }
-    };
+    std::vector <GridTypeMask> type;
+    type.push_back (GridTypeMask (GridWindowType::GridUnknown, 0));
+    type.push_back (GridTypeMask (GridWindowType::GridBottomLeft, 1));
+    type.push_back (GridTypeMask (GridWindowType::GridBottom, 2));
+    type.push_back (GridTypeMask (GridWindowType::GridBottomRight, 3));
+    type.push_back (GridTypeMask (GridWindowType::GridLeft, 4));
+    type.push_back (GridTypeMask (GridWindowType::GridCenter, 5));
+    type.push_back (GridTypeMask (GridWindowType::GridRight, 6));
+    type.push_back (GridTypeMask (GridWindowType::GridTopLeft, 7));
+    type.push_back (GridTypeMask (GridWindowType::GridTop, 8));
+    type.push_back (GridTypeMask (GridWindowType::GridTopRight, 9));
+    type.push_back (GridTypeMask (GridWindowType::GridMaximize, 10));
+
 
     for (unsigned int i = 0; i < type.size (); i++)
     {
@@ -1051,6 +1063,7 @@ GridScreen::GridScreen (CompScreen *screen) :
     PluginClassHandler<GridScreen, CompScreen> (screen),
     cScreen (CompositeScreen::get (screen)),
     glScreen (GLScreen::get (screen)),
+    props (),
     centerCheck (false),
     mGrabWindow (NULL),
     animating (false),
@@ -1066,17 +1079,17 @@ GridScreen::GridScreen (CompScreen *screen) :
     edge = lastEdge = lastResizeEdge = NoEdge;
     currentWorkarea = lastWorkarea = screen->getWorkareaForOutput
 			    (screen->outputDeviceForPoint (pointerX, pointerY));
-    gridProps[GridUnknown] = GridProps {0,1, 1,1};
-    gridProps[GridBottomLeft]  = GridProps {0,1, 2,2};
-    gridProps[GridBottom]  = GridProps {0,1, 1,2};
-    gridProps[GridBottomRight] = GridProps {1,1, 2,2};
-    gridProps[GridLeft]  = GridProps {0,0, 2,1};
-    gridProps[GridCenter]  = GridProps{0,0, 1,1};
-    gridProps[GridRight]  = GridProps {1,0, 2,1};
-    gridProps[GridTopLeft]  = GridProps{0,0, 2,2};
-    gridProps[GridTop]  = GridProps {0,0, 1,2};
-    gridProps[GridTopRight]  = GridProps {1,0, 2,2};
-    gridProps[GridMaximize]  = GridProps {0,0, 1,1};
+    gridProps[GridUnknown] = GridProps (0,1, 1,1);
+    gridProps[GridBottomLeft]  = GridProps (0,1, 2,2);
+    gridProps[GridBottom]  = GridProps (0,1, 1,2);
+    gridProps[GridBottomRight] = GridProps (1,1, 2,2);
+    gridProps[GridLeft]  = GridProps (0,0, 2,1);
+    gridProps[GridCenter]  = GridProps (0,0, 1,1);
+    gridProps[GridRight]  = GridProps (1,0, 2,1);
+    gridProps[GridTopLeft]  = GridProps (0,0, 2,2);
+    gridProps[GridTop]  = GridProps (0,0, 1,2);
+    gridProps[GridTopRight]  = GridProps (1,0, 2,2);
+    gridProps[GridMaximize]  = GridProps (0,0, 1,1);
 
 	animations.clear ();
 
