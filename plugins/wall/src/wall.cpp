@@ -1303,6 +1303,10 @@ WallScreen::preparePaint (int msSinceLastPaint)
 	screen->handleCompizEvent ("wall", "end_viewport_switch", o);
     }
 
+    foreach (CompWindow *w, screen->windows ())
+	if (!WallWindow::get (w)->isSliding)
+	    WallWindow::get (w)->painted = false;
+
     cScreen->preparePaint (msSinceLastPaint);
 }
 
@@ -1478,9 +1482,14 @@ WallWindow::glPaint (const GLWindowPaintAttrib &attrib,
     {
 	GLMatrix wMatrix;
 
-	wMatrix.toScreenSpace (ws->currOutput, -DEFAULT_Z_CAMERA);
-	mask |= PAINT_WINDOW_TRANSFORMED_MASK;
+	/* Don't paint nonsliding windows multiple times */
+	if (painted)
+	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
+	if (!(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
+	    painted = true;
+
+	wMatrix.toScreenSpace (ws->currOutput, -DEFAULT_Z_CAMERA);
 	status = glWindow->glPaint (attrib, wMatrix, region, mask);
     }
     else
@@ -1763,7 +1772,8 @@ WallScreen::~WallScreen ()
 WallWindow::WallWindow (CompWindow *window) :
     PluginClassHandler <WallWindow, CompWindow> (window),
     window (window),
-    glWindow (GLWindow::get (window))
+    glWindow (GLWindow::get (window)),
+    painted (false)
 {
     WALL_SCREEN (screen);
 
