@@ -11,7 +11,7 @@ include_directories (${GTEST_INCLUDE_DIRS})
 link_directories (${COMPIZ_LIBRARY_DIRS})
 
 add_executable (compiz_test_grid_grabhandler
-                ${CMAKE_CURRENT_SOURCE_DIR}/test-grid-grabhandler.cpp)
+                ${CMAKE_CURRENT_SOURCE_DIR}/test-grid-grab-handler.cpp)
 
 target_link_libraries (compiz_test_grid_grabhandler
                        compiz_grid_grabhandler
@@ -21,4 +21,4 @@ target_link_libraries (compiz_test_grid_grabhandler
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
                        )
 
-gtest_add_tests (compiz_test_grid_grabhandler "" ${CMAKE_CURRENT_SOURCE_DIR}/test-grid-grabhandler.cpp)
+gtest_add_tests (compiz_test_grid_grabhandler "" ${CMAKE_CURRENT_SOURCE_DIR}/test-grid-grab-handler.cpp)
