@@ -190,10 +190,10 @@ void GLVertexBuffer::color4f (GLfloat r, GLfloat g, GLfloat b, GLfloat a)
 
 void GLVertexBuffer::colorDefault ()
 {
-    priv->color[0] = defaultColor[0] / 65536.0;
-    priv->color[1] = defaultColor[1] / 65536.0;
-    priv->color[2] = defaultColor[2] / 65536.0;
-    priv->color[3] = defaultColor[3] / 65536.0;
+    priv->color[0] = defaultColor[0] / 65535.0;
+    priv->color[1] = defaultColor[1] / 65535.0;
+    priv->color[2] = defaultColor[2] / 65535.0;
+    priv->color[3] = defaultColor[3] / 65535.0;
 }
 
 void GLVertexBuffer::addTexCoords (GLuint texture,
