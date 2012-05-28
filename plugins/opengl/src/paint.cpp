@@ -424,10 +424,10 @@ GLScreen::glEnableOutputClipping (const GLMatrix   &transform,
     GLdouble cx = output->x1 () + halfW;
     GLdouble cy = (h - output->y2 ()) + halfH;
 
-    GLdouble top[4]    = { 0.0, halfH / (cy - p1[1]), 0.0, 0.5 };
-    GLdouble bottom[4] = { 0.0, halfH / (cy - p2[1]), 0.0, 0.5 };
-    GLdouble left[4]   = { halfW / (cx - p1[0]), 0.0, 0.0, 0.5 };
-    GLdouble right[4]  = { halfW / (cx - p2[0]), 0.0, 0.0, 0.5 };
+    GLdouble top[4]    = { 0.0, halfH / (cy - p1[1]), 0.0, 1.0 };
+    GLdouble bottom[4] = { 0.0, halfH / (cy - p2[1]), 0.0, 1.0 };
+    GLdouble left[4]   = { halfW / (cx - p1[0]), 0.0, 0.0, 1.0 };
+    GLdouble right[4]  = { halfW / (cx - p2[0]), 0.0, 0.0, 1.0 };
 
     glPushMatrix ();
     glLoadMatrixf (transform.getMatrix ());

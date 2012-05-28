@@ -1486,7 +1486,7 @@ WallWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	if (painted)
 	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
 
-	if (!(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK)
+	if (!(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
 	    painted = true;
 
 	wMatrix.toScreenSpace (ws->currOutput, -DEFAULT_Z_CAMERA);
