@@ -96,31 +96,6 @@ DecorWindow::doUpdateGroupShadows ()
 /* From core */
 
 /*
- * isAncestorTo
- *
- * Checks if a window is a transient for a candidate
- * or if one of its transient parents is a transient
- * for the candidate
- */
-
-static bool
-isAncestorTo (CompWindow *window,
-              CompWindow *candidate)
-{
-    if (window->transientFor ())
-    {
-        if (window->transientFor () == candidate->id ())
-            return true;
-
-	window = screen->findWindow (window->transientFor ());
-	if (window)
-	    return isAncestorTo (window, candidate);
-    }
-
-    return false;
-}
-
-/*
  * DecorWindow::glDraw
  *
  * Handles the drawing of the actual decoration texture

@@ -569,7 +569,7 @@ GroupWindow::checkFunctions ()
      * -> Window must have glow quads
      */
 
-    if (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads);
+    if (mGroup && (mGroup->mWindows.size () > 1) && mGlowQuads)
 	functionsMask |= (GL_DRAW | GET_OUTPUT_EXTENTS);
 
     /* For damageRect, the window must be:

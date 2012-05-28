@@ -161,11 +161,11 @@ MagScreen::optionChanged (CompOption	      *opt,
 }
 
 void
-MagScreen::damageRegion ()
+MagScreen::doDamageRegion ()
 {
-    CompRegion region;
-
     int  w, h, x, y;
+
+    CompRegion region;
 
     switch (mode)
     {
@@ -224,12 +224,12 @@ MagScreen::damageRegion ()
 void
 MagScreen::positionUpdate (const CompPoint &pos)
 {
-    damageRegion ();
+    doDamageRegion ();
 
     posX = pos.x ();
     posY = pos.y ();
 
-    damageRegion ();
+    doDamageRegion ();
 }
 
 int
@@ -302,7 +302,7 @@ MagScreen::preparePaint (int        time)
 	    posY = pos.y ();
 	    poller.start ();
 	}
-	damageRegion ();
+	doDamageRegion ();
     }
 
     cScreen->preparePaint (time);
@@ -313,7 +313,7 @@ MagScreen::donePaint ()
 {
 
     if (adjust)
-	damageRegion ();
+	doDamageRegion ();
 
     if (!adjust && zoom == 1.0 && (width || height))
     {

@@ -467,7 +467,7 @@ ShowmouseScreen::genNewParticles (int f_time)
 
 
 void
-ShowmouseScreen::damageRegion ()
+ShowmouseScreen::doDamageRegion ()
 {
     float        w, h, x1, x2, y1, y2;
 
@@ -537,7 +537,7 @@ ShowmouseScreen::preparePaint (int f_time)
     if (ps.active)
     {
 	ps.updateParticles (f_time);
-	damageRegion ();
+	doDamageRegion ();
     }
 
     if (active)
@@ -550,7 +550,7 @@ void
 ShowmouseScreen::donePaint ()
 {
     if (active || (ps.active))
-	damageRegion ();
+	doDamageRegion ();
 
     if (!active && pollHandle.active ())
     {
@@ -605,7 +605,7 @@ ShowmouseScreen::terminate (CompAction         *action,
 {
     active = false;
 
-    damageRegion ();
+    doDamageRegion ();
 
     gScreen->glPaintOutputSetEnabled (gScreen, false);
 

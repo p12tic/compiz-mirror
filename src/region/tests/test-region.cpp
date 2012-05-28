@@ -9,21 +9,6 @@
 #include <iostream>
 
 namespace { // DEBUG stuff
-void dump_rects(CompRegion const& region)
-{
-    typedef std::vector<CompRect> vcr;
-    vcr const& rects = region.rects();
-
-    for(vcr::const_iterator i = rects.begin(); i !=rects.end(); ++i)
-    {
-	std::cout << "Rect " << std::distance(rects.begin(), i) << ": ";
-
-	std::cout << "x=" << i->left() << ", ";
-	std::cout << "y=" << i->top() << ", ";
-	std::cout << "w=" << i->width() << ", ";
-	std::cout << "h=" << i->height() << "\n";
-    }
-}
 }
 
 namespace {

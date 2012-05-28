@@ -105,7 +105,7 @@ KWD::Decorator::Decorator () :
 
     Atoms::init ();
 
-    (void *) new KWinAdaptor (this);
+    new KWinAdaptor (this);
 
     mConfig = new KConfig ("kwinrc");
 

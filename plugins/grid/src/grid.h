@@ -49,13 +49,25 @@ namespace GridWindowType
 
 typedef unsigned int GridType;
 
-typedef struct _GridProps
+class GridProps
 {
+public:
+
+    GridProps () {}
+
+    GridProps (int r, int d, int x, int y):
+	gravityRight (r),
+	gravityDown (d),
+	numCellsX (x),
+	numCellsY (y)
+    {
+    }
+
     int gravityRight;
     int gravityDown;
     int numCellsX;
     int numCellsY;
-} GridProps;
+};
 
 enum Edges
 {

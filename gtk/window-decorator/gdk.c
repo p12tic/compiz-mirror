@@ -57,7 +57,7 @@ gdk_cairo_set_source_color_alpha (cairo_t  *cr,
 			   alpha);
 }
 
-inline GdkWindow *
+GdkWindow *
 create_gdk_window (Window xframe)
 {
     GdkDisplay  *display = gdk_display_get_default ();

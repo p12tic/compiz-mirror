@@ -582,7 +582,7 @@ public:
     void cleanUp (bool closing,
 		  bool destructing);
     bool initiateRestackAnim (int duration);
-    inline bool moveUpdate () { return false; }
+    inline bool moveUpdate (int dx, int dy) { return false; }
     static bool onSameRestackChain (CompWindow *wSubject, CompWindow *wOther);
 
     /// Find union of restack chain (group)
@@ -698,7 +698,7 @@ public:
     void updateBB (CompOutput &output);
     void postPreparePaint ();
     void calculateDodgeAmounts ();
-    bool moveUpdate ();
+    bool moveUpdate (int dx, int dy);
 
 protected:
     void processCandidate (CompWindow *candidateWin,

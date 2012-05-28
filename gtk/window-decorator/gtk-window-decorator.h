@@ -837,7 +837,7 @@ gdk_cairo_set_source_color_alpha (cairo_t  *cr,
 				  GdkColor *color,
 				  double   alpha);
 
-inline GdkWindow *
+GdkWindow *
 create_gdk_window (Window xframe);
 
 GdkColormap *
