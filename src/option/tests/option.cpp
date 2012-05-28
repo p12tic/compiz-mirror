@@ -189,8 +189,8 @@ TEST(CompOption, Const)
 	ASSERT_EQ(expectOne, as_const.b());
 
 	non_const = expectTwo;
-	ASSERT_EQ(expectTwo, non_const.b());
-	ASSERT_EQ(expectTwo, as_const.b());
+	EXPECT_FALSE (non_const.b());
+	EXPECT_FALSE (as_const.b());
     }
 
     {
