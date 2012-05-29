@@ -1006,6 +1006,7 @@ SwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	cx = g.x () + (g.width () >> 1);
 	wTransform.translate (cx, y, 0.0f);
 
+	glEnable (GL_BLEND);
 	for (i = 0; i < 4; i++)
 	{
 	    color[i] = (unsigned int)sScreen->fgColor[i] *
@@ -1020,6 +1021,7 @@ SwitchWindow::glPaint (const GLWindowPaintAttrib &attrib,
 
 	streamingBuffer->end ();
 	streamingBuffer->render (wTransform, attrib);
+	glDisable (GL_BLEND);
     }
     else if (window == sScreen->selectedWindow)
     {
