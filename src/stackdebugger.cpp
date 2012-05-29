@@ -47,7 +47,7 @@ StackDebugger::SetDefault (StackDebugger *dbg)
     gStackDebugger = dbg;
 }
 
-StackDebugger::StackDebugger (Display *dpy, Window root, boost::function <eventList ()> evProc) :
+StackDebugger::StackDebugger (Display *dpy, Window root, boost::function <void (eventList &)> evProc) :
     mServerNChildren (0),
     mServerChildren (NULL),
     mWindowsChanged (false),
@@ -132,7 +132,7 @@ StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
     XQueryTree (mDpy, mRoot, &rootRet, &parentRet,
 		&mServerChildren, &mServerNChildren);
 
-    events = getEventsProc ();
+    getEventsProc (events);
 
     XSync (mDpy, FALSE);
 
@@ -154,7 +154,7 @@ StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
 
 	poll (&pfd, 1, 300);
 
-	moreEvents = getEventsProc ();
+	getEventsProc (moreEvents);
 
 	foreach (XEvent e, moreEvents)
 	    events.push_back (e);

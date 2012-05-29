@@ -623,7 +623,7 @@ class PrivateScreen :
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
-	std::list <XEvent> queueEvents ();
+	void queueEvents (std::vector <XEvent> &);
 	void processEvents ();
 
 	bool triggerButtonPressBindings (CompOption::Vector &options,

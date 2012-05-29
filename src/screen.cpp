@@ -752,20 +752,23 @@ PrivateScreen::setOption (const CompString  &name,
     return rv;
 }
 
-std::list <XEvent>
-PrivateScreen::queueEvents ()
+void
+PrivateScreen::queueEvents (std::vector <XEvent> &events)
 {
-    std::list <XEvent> events;
+    unsigned int n = XEventsQueued (dpy, QueuedAfterFlush);
+    events.clear ();
+    events.resize (n);
+    std::vector <XEvent>::iterator it = events.begin ();
 
-    while (XPending (dpy))
+    while (it != events.end ())
     {
-	XEvent event, peekEvent;
-	XNextEvent (dpy, &event);
+	XNextEvent (dpy, &(*it));
 
 	/* Skip to the last MotionNotify
 	 * event in this sequence */
-	if (event.type == MotionNotify)
+	if ((*it).type == MotionNotify)
 	{
+	    XEvent peekEvent;
 	    while (XPending (dpy))
 	    {
 		XPeekEvent (dpy, &peekEvent);
@@ -773,20 +776,18 @@ PrivateScreen::queueEvents ()
 		if (peekEvent.type != MotionNotify)
 		    break;
 
-		XNextEvent (dpy, &event);
+		XNextEvent (dpy, &peekEvent);
 	    }
 	}
 
-	events.push_back (event);
+	it++;
     }
-
-    return events;
 }
 
 void
 PrivateScreen::processEvents ()
 {
-    std::list <XEvent> events;
+    std::vector <XEvent> events;
     StackDebugger *dbg = StackDebugger::Default ();
 
     if (pluginManager.isDirtyPluginList ())
@@ -804,7 +805,7 @@ PrivateScreen::processEvents ()
 	events = dbg->loadStack (windowManager.getServerWindows());
     }
     else
-	events = queueEvents ();
+	queueEvents (events);
 
     windowManager.invalidateServerWindows();
 
@@ -4792,7 +4793,7 @@ CompScreenImpl::init (const char *name)
 		new StackDebugger (
 		    dpy (),
 		    root (),
-		    boost::bind (&PrivateScreen::queueEvents, &privateScreen)));
+		    boost::bind (&PrivateScreen::queueEvents, &privateScreen, _1)));
 	}
 
 	return true;

@@ -35,9 +35,9 @@ class StackDebugger
 {
     public:
 
-	typedef std::list<XEvent> eventList;
+	typedef std::vector<XEvent> eventList;
 
-	StackDebugger (Display *, Window, boost::function<eventList ()> evProc);
+	StackDebugger (Display *, Window, boost::function<void (eventList &)> evProc);
 	~StackDebugger ();
 
 	eventList loadStack (CompWindowList &serverWindows, bool wait = false);
@@ -70,7 +70,7 @@ class StackDebugger
 	bool         mServerWindowsChanged;
 	Window       mRoot;
 	Display      *mDpy;
-	boost::function<eventList ()> getEventsProc;
+	boost::function<void (eventList &)> getEventsProc;
 	bool         mTimeoutRequired;
 	CompWindowList mLastServerWindows;
 };
