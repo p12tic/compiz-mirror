@@ -83,13 +83,13 @@ CompositeWindow::~CompositeWindow ()
 }
 
 void
-PrivateCompositeWindow::setNewPixmapReadyCallback (const PixmapRebinder::NewPixmapReadyCallback &cb)
+PrivateCompositeWindow::setNewPixmapReadyCallback (const PixmapBinding::NewPixmapReadyCallback &cb)
 {
     mPixmapRebinder.setNewPixmapReadyCallback (cb);
 }
 
 void
-CompositeWindow::setNewPixmapReadyCallback (const PixmapRebinder::NewPixmapReadyCallback &cb)
+CompositeWindow::setNewPixmapReadyCallback (const PixmapBinding::NewPixmapReadyCallback &cb)
 {
     priv->setNewPixmapReadyCallback (cb);
 }

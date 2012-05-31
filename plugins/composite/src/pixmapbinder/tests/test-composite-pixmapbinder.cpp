@@ -153,7 +153,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindSuccess)
 
     boost::function <void ()> readyCb (boost::bind (&PixmapReadyInterface::ready, &ready));
 
-    PixmapRebinder pr (readyCb,
+    PixmapBinding pr (readyCb,
 			&mwpg,
 			&mwag,
 			&msg);
@@ -198,7 +198,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindSuccessNoRebind)
 
     boost::function <void ()> readyCb (boost::bind (&PixmapReadyInterface::ready, &ready));
 
-    PixmapRebinder pr (readyCb,
+    PixmapBinding pr (readyCb,
 			&mwpg,
 			&mwag,
 			&msg);
@@ -244,7 +244,7 @@ TEST(CompositePixmapBinderTest, TestRebindAfterRelease)
 
     boost::function <void ()> readyCb (boost::bind (&PixmapReadyInterface::ready, &ready));
 
-    PixmapRebinder pr (readyCb,
+    PixmapBinding pr (readyCb,
 			&mwpg,
 			&mwag,
 			&msg);
@@ -304,7 +304,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureWindowUnmapped)
 
     FakeWindowAttributesGet fwag (xwa);
 
-    PixmapRebinder pr (boost::function <void ()> (),
+    PixmapBinding pr (boost::function <void ()> (),
 			&mwpg,
 			&mwag,
 			&msg);
@@ -335,7 +335,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureWindowZeroSize)
 
     FakeWindowAttributesGet fwag (xwa);
 
-    PixmapRebinder pr (boost::function <void ()> (),
+    PixmapBinding pr (boost::function <void ()> (),
 			&mwpg,
 			&mwag,
 			&msg);
@@ -368,7 +368,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureNilPixmapReturned)
 
     FakeWindowAttributesGet fwag (xwa);
 
-    PixmapRebinder pr (boost::function <void ()> (),
+    PixmapBinding pr (boost::function <void ()> (),
 			&mwpg,
 			&mwag,
 			&msg);
@@ -404,7 +404,7 @@ TEST(CompositePixmapBinderTest, TestInitialBindFailureWindowUnmappedSuccessOnRem
 
     FakeWindowAttributesGet fwag (xwa);
 
-    PixmapRebinder pr (boost::function <void ()> (),
+    PixmapBinding pr (boost::function <void ()> (),
 			&mwpg,
 			&mwag,
 			&msg);

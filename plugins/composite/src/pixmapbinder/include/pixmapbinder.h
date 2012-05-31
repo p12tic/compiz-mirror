@@ -153,19 +153,19 @@ class WindowPixmapGetInterface
 	virtual WindowPixmapInterface::Ptr getPixmap () = 0;
 };
 
-class PixmapRebinder :
+class PixmapBinding :
     public CompositePixmapRebindInterface
 {
     public:
 
 	typedef boost::function <void ()> NewPixmapReadyCallback;
 
-	PixmapRebinder (const NewPixmapReadyCallback &,
+	PixmapBinding (const NewPixmapReadyCallback &,
 			WindowPixmapGetInterface *,
 			WindowAttributesGetInterface *,
 			ServerGrabInterface *);
 
-	~PixmapRebinder ();
+	~PixmapBinding ();
 
 	Pixmap pixmap () const;
 	bool bind ();

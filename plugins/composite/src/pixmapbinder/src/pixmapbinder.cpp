@@ -30,7 +30,7 @@
 #include <core/servergrab.h>
 #include "pixmapbinder.h"
 
-PixmapRebinder::PixmapRebinder (const NewPixmapReadyCallback &cb,
+PixmapBinding::PixmapBinding (const NewPixmapReadyCallback &cb,
 				WindowPixmapGetInterface *pmg,
 				WindowAttributesGetInterface *wag,
 				ServerGrabInterface *sg) :
@@ -45,19 +45,19 @@ PixmapRebinder::PixmapRebinder (const NewPixmapReadyCallback &cb,
 {
 }
 
-PixmapRebinder::~PixmapRebinder ()
+PixmapBinding::~PixmapBinding ()
 {
     needsRebind = false;
 }
 
 const CompSize &
-PixmapRebinder::size () const
+PixmapBinding::size () const
 {
     return mSize;
 }
 
 Pixmap
-PixmapRebinder::pixmap () const
+PixmapBinding::pixmap () const
 {
     static Pixmap nPixmap = None;
 
@@ -69,7 +69,7 @@ PixmapRebinder::pixmap () const
 }
 
 bool
-PixmapRebinder::bind ()
+PixmapBinding::bind ()
 {
     /* don't try to bind window again if it failed previously */
     if (bindFailed)
@@ -122,19 +122,19 @@ PixmapRebinder::bind ()
 }
 
 void
-PixmapRebinder::release ()
+PixmapBinding::release ()
 {
     needsRebind = true;
 }
 
 void
-PixmapRebinder::setNewPixmapReadyCallback (const NewPixmapReadyCallback &cb)
+PixmapBinding::setNewPixmapReadyCallback (const NewPixmapReadyCallback &cb)
 {
     newPixmapReadyCallback = cb;
 }
 
 void
-PixmapRebinder::allowFurtherRebindAttempts ()
+PixmapBinding::allowFurtherRebindAttempts ()
 {
     bindFailed = false;
     needsRebind = true;
