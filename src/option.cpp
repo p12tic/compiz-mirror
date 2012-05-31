@@ -440,6 +440,14 @@ CompOption::setName (CompString name, CompOption::Type type)
     priv->type = type;
 }
 
+void
+CompOption::setName (const char *name, CompOption::Type type)
+{
+    if (priv->name != name)
+	priv->name = name;
+    priv->type = type;
+}
+
 CompString
 CompOption::name ()
 {
