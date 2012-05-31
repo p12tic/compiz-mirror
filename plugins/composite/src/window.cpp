@@ -36,7 +36,7 @@ CompositeWindow::CompositeWindow (CompWindow *w) :
     if (w->windowClass () != InputOnly)
     {
 	priv->damage = XDamageCreate (s->dpy (), w->id (),
-				      XDamageReportRawRectangles);
+				      XDamageReportDeltaRectangles);
     }
     else
     {

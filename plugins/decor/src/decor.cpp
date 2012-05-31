@@ -326,7 +326,7 @@ DecorTexture::DecorTexture (DecorPixmapInterface::Ptr pixmap) :
 	textures[0]->setMipmap (false);
 
     damage = XDamageCreate (screen->dpy (), pixmap->getPixmap (),
-			     XDamageReportRawRectangles);
+			     XDamageReportDeltaRectangles);
 }
 
 /*

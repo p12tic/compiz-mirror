@@ -147,7 +147,24 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 	default:
 	    if (event->type == damageEvent + XDamageNotify)
 	    {
+		static time_t lastPrintTime = 0;
+		static long lastPrintCount = 0;
+		static long count = 0;
+		count++;
+		time_t now = time(NULL);
+		time_t interval = now - lastPrintTime;
+		if (interval >= 1)
+		{
+		    long delta = count - lastPrintCount;
+		    g_print("vv: %ld damages in %d sec\n",
+			delta, (int)interval);
+		    lastPrintCount = count;
+		    lastPrintTime = now;
+		}
+		
 		XDamageNotifyEvent *de = (XDamageNotifyEvent *) event;
+
+		damages.insert (de->damage);
 
 		if (lastDamagedWindow && de->drawable == lastDamagedWindow->id ())
 		{
@@ -808,9 +825,11 @@ CompositeScreen::handlePaintTimeout ()
 	    outputs.push_back (&screen->fullscreenOutput ());
 
 	paint (outputs, mask);
-
-
 	donePaint ();
+
+	foreach (Damage d, priv->damages)
+		XDamageSubtract (screen->dpy(), d, None, None);
+	priv->damages.clear ();
 
 	foreach (CompWindow *w, screen->windows ())
 	{

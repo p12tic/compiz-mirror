@@ -581,7 +581,7 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
     glBindTexture (texTarget, 0);
 
     tex->damage = XDamageCreate (screen->dpy (), pixmap,
-			         XDamageReportRawRectangles);
+			         XDamageReportDeltaRectangles);
     boundPixmapTex[tex->damage] = tex;
 
     return rv;
