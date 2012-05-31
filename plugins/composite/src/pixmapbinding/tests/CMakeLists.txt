@@ -10,15 +10,15 @@ include_directories (${GTEST_INCLUDE_DIRS})
 
 link_directories (${COMPIZ_LIBRARY_DIRS})
 
-add_executable (compiz_test_composite_pixmapbinder
-                ${CMAKE_CURRENT_SOURCE_DIR}/test-composite-pixmapbinder.cpp)
+add_executable (compiz_test_composite_pixmapbinding
+                ${CMAKE_CURRENT_SOURCE_DIR}/test-composite-pixmapbinding.cpp)
 
-target_link_libraries (compiz_test_composite_pixmapbinder
-                       compiz_composite_pixmapbinder
+target_link_libraries (compiz_test_composite_pixmapbinding
+                       compiz_composite_pixmapbinding
                        ${GTEST_BOTH_LIBRARIES}
 		       ${GMOCK_LIBRARY}
 		       ${GMOCK_MAIN_LIBRARY}
 		       ${CMAKE_THREAD_LIBS_INIT} # Link in pthread.
                        )
 
-gtest_add_tests (compiz_test_composite_pixmapbinder "" ${CMAKE_CURRENT_SOURCE_DIR}/test-composite-pixmapbinder.cpp)
+gtest_add_tests (compiz_test_composite_pixmapbinding "" ${CMAKE_CURRENT_SOURCE_DIR}/test-composite-pixmapbinding.cpp)

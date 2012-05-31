@@ -34,7 +34,7 @@
 #include <gmock/gmock.h>
 
 #include <core/servergrab.h>
-#include "pixmapbinder.h"
+#include "pixmapbinding.h"
 
 using ::testing::Invoke;
 using ::testing::Return;

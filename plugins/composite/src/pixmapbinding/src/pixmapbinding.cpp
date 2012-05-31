@@ -28,7 +28,7 @@
  */
 
 #include <core/servergrab.h>
-#include "pixmapbinder.h"
+#include "pixmapbinding.h"
 
 PixmapBinding::PixmapBinding (const NewPixmapReadyCallback &cb,
 				WindowPixmapGetInterface *pmg,

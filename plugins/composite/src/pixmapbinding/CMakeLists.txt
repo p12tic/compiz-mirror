@@ -15,17 +15,17 @@ LINK_DIRECTORIES (${GLIBMM_LIBRARY_DIRS} ${COMPIZ_LIBRARY_DIRS})
 
 SET ( 
   PRIVATE_HEADERS
-  ${CMAKE_CURRENT_SOURCE_DIR}/include/pixmapbinder.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/include/pixmapbinding.h
 )
 
 SET( 
   SRCS 
-  ${CMAKE_CURRENT_SOURCE_DIR}/src/pixmapbinder.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/src/pixmapbinding.cpp
   ${compiz_SOURCE_DIR}/src/size.cpp # XXX: Remove once we've merged this into a general geometry lib
 )
 
 ADD_LIBRARY( 
-  compiz_composite_pixmapbinder STATIC
+  compiz_composite_pixmapbinding STATIC
   
   ${SRCS}
   
@@ -37,7 +37,7 @@ ADD_SUBDIRECTORY( ${CMAKE_CURRENT_SOURCE_DIR}/tests )
 endif (COMPIZ_BUILD_TESTING)
 
 TARGET_LINK_LIBRARIES(
-  compiz_composite_pixmapbinder
+  compiz_composite_pixmapbinding
   compiz_servergrab
   ${X11_LIBRARIES}
 )
