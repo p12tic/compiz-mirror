@@ -752,42 +752,48 @@ PrivateScreen::setOption (const CompString  &name,
     return rv;
 }
 
-void
-PrivateScreen::queueEvents (std::vector <XEvent> &events)
+bool
+PrivateScreen::getNextXEvent (XEvent &ev)
 {
-    unsigned int n = XEventsQueued (dpy, QueuedAfterFlush);
-    events.clear ();
-    events.resize (n);
-    std::vector <XEvent>::iterator it = events.begin ();
+    if (!XEventsQueued (dpy, QueuedAlready))
+	return false;
+    XNextEvent (dpy, &ev);
 
-    while (it != events.end ())
+    /* Skip to the last MotionNotify
+     * event in this sequence */
+    if (ev.type == MotionNotify)
     {
-	XNextEvent (dpy, &(*it));
-
-	/* Skip to the last MotionNotify
-	 * event in this sequence */
-	if ((*it).type == MotionNotify)
+	XEvent peekEvent;
+	while (XPending (dpy))
 	{
-	    XEvent peekEvent;
-	    while (XPending (dpy))
-	    {
-		XPeekEvent (dpy, &peekEvent);
+	    XPeekEvent (dpy, &peekEvent);
 
-		if (peekEvent.type != MotionNotify)
-		    break;
+	    if (peekEvent.type != MotionNotify)
+		break;
 
-		XNextEvent (dpy, &peekEvent);
-	    }
+	    XNextEvent (dpy, &peekEvent);
 	}
-
-	it++;
     }
+
+    return true;
+}
+
+bool
+PrivateScreen::getNextEvent (XEvent &ev)
+{
+    StackDebugger *dbg = StackDebugger::Default ();
+
+    if (StackDebugger::Default ())
+    {
+	return dbg->getNextEvent (ev);
+    }
+    else
+	return getNextXEvent (ev);
 }
 
 void
 PrivateScreen::processEvents ()
 {
-    std::vector <XEvent> events;
     StackDebugger *dbg = StackDebugger::Default ();
 
     if (pluginManager.isDirtyPluginList ())
@@ -802,14 +808,14 @@ PrivateScreen::processEvents ()
     {
 	dbg->windowsChanged (false);
 	dbg->serverWindowsChanged (false);
-	events = dbg->loadStack (windowManager.getServerWindows());
+	dbg->loadStack (windowManager.getServerWindows());
     }
-    else
-	queueEvents (events);
 
     windowManager.invalidateServerWindows();
 
-    foreach (XEvent &event, events)
+    XEvent event;
+
+    while (getNextEvent (event))
     {
 	switch (event.type) {
 	case ButtonPress:
@@ -875,10 +881,10 @@ PrivateScreen::processEvents ()
 	lastPointerX = pointerX;
 	lastPointerY = pointerY;
 	lastPointerMods = pointerMods;
-    }
 
-    /* remove destroyed windows */
-    windowManager.removeDestroyed ();
+	/* remove destroyed windows */
+	windowManager.removeDestroyed ();
+    }
 
     if (dbg)
     {
@@ -4793,7 +4799,7 @@ CompScreenImpl::init (const char *name)
 		new StackDebugger (
 		    dpy (),
 		    root (),
-		    boost::bind (&PrivateScreen::queueEvents, &privateScreen, _1)));
+		    &privateScreen));
 	}
 
 	return true;

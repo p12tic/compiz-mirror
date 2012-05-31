@@ -27,9 +27,12 @@
  * so that this can be come a truly standalone
  * object */
 #include <core/core.h>
+#include <deque>
 
 #ifndef _COMPIZ_PRIVATESTACKDEBUGGER_H
 #define _COMPIZ_PRIVATESTACKDEBUGGER_H
+
+class FetchXEventInterface;
 
 class StackDebugger
 {
@@ -37,10 +40,10 @@ class StackDebugger
 
 	typedef std::vector<XEvent> eventList;
 
-	StackDebugger (Display *, Window, boost::function<void (eventList &)> evProc);
+	StackDebugger (Display *, Window, FetchXEventInterface *fetchXEvent);
 	~StackDebugger ();
 
-	eventList loadStack (CompWindowList &serverWindows, bool wait = false);
+	void loadStack (CompWindowList &serverWindows, bool wait = false);
 	void windowsChanged (bool change) { mWindowsChanged = change; };
 	void serverWindowsChanged (bool change) { mServerWindowsChanged = change; };
 	bool windowsChanged () { return mWindowsChanged; }
@@ -54,6 +57,7 @@ class StackDebugger
 		       CompWindowList &serverWindows,
 		       bool verbose = false);
 	bool timedOut ();
+	bool getNextEvent (XEvent &);
 
 	bool checkSanity (CompWindowList &serverWindows, bool verbose = false);
 
@@ -70,9 +74,10 @@ class StackDebugger
 	bool         mServerWindowsChanged;
 	Window       mRoot;
 	Display      *mDpy;
-	boost::function<void (eventList &)> getEventsProc;
+	FetchXEventInterface *mFetchXEvent;
 	bool         mTimeoutRequired;
 	CompWindowList mLastServerWindows;
+	std::deque <XEvent> mEvents;
 };
 
 #endif

@@ -24,6 +24,7 @@
  */
 
 #include "privatestackdebugger.h"
+#include "privatescreen.h"
 #include "privatewindow.h"
 #include <poll.h>
 
@@ -47,14 +48,14 @@ StackDebugger::SetDefault (StackDebugger *dbg)
     gStackDebugger = dbg;
 }
 
-StackDebugger::StackDebugger (Display *dpy, Window root, boost::function <void (eventList &)> evProc) :
+StackDebugger::StackDebugger (Display *dpy, Window root, FetchXEventInterface *fetchXEvent) :
     mServerNChildren (0),
     mServerChildren (NULL),
     mWindowsChanged (false),
     mServerWindowsChanged (false),
     mRoot (root),
     mDpy (dpy),
-    getEventsProc (evProc)
+    mFetchXEvent (fetchXEvent)
 {
 }
 
@@ -118,11 +119,23 @@ StackDebugger::overrideRedirectRestack (Window toplevel, Window sibling)
 	mLastServerWindows.push_front (tl);
 }
 
-StackDebugger::eventList
+bool
+StackDebugger::getNextEvent (XEvent &ev)
+{
+    if (mEvents.empty ())
+	return false;
+
+    ev = mEvents.front ();
+
+    mEvents.pop_front ();
+
+    return true;
+}
+
+void
 StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
 {
     Window rootRet, parentRet;
-    eventList events;
 
     if (mServerChildren)
 	XFree (mServerChildren);
@@ -132,7 +145,16 @@ StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
     XQueryTree (mDpy, mRoot, &rootRet, &parentRet,
 		&mServerChildren, &mServerNChildren);
 
-    getEventsProc (events);
+    unsigned int n = XEventsQueued (mDpy, QueuedAfterFlush);
+    mEvents.clear ();
+    mEvents.resize (n);
+    std::deque <XEvent>::iterator it = mEvents.begin ();
+
+    while (it != mEvents.end ())
+    {
+	mFetchXEvent->getNextXEvent ((*it));
+	it++;
+    }
 
     XSync (mDpy, FALSE);
 
@@ -145,7 +167,6 @@ StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
 
     if (mServerNChildren != serverWindows.size () && wait)
     {
-	eventList moreEvents;
 	struct pollfd pfd;
 
 	pfd.events = POLLIN;
@@ -154,10 +175,10 @@ StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
 
 	poll (&pfd, 1, 300);
 
-	getEventsProc (moreEvents);
+	XEvent e;
 
-	foreach (XEvent e, moreEvents)
-	    events.push_back (e);
+	while (mFetchXEvent->getNextXEvent (e))
+	    mEvents.push_back (e);
 
 	mTimeoutRequired = true;
     }
@@ -166,8 +187,6 @@ StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
 
     XUngrabServer (mDpy);
     XSync (mDpy, FALSE);
-
-    return events;
 }
 
 void
