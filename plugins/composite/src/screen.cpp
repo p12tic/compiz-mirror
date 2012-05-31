@@ -301,13 +301,16 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     FPSLimiterMode (CompositeFPSLimiterModeDefault),
     withDestroyedWindows (),
     cmSnAtom (0),
-    newCmSnOwner (None)
+    newCmSnOwner (None),
+    damageLevel (XDamageReportRawRectangles)
 {
     gettimeofday (&lastRedraw, 0);
     // wrap outputChangeNotify
     ScreenInterface::setHandler (screen);
 
     optionSetSlowAnimationsKeyInitiate (CompositeScreen::toggleSlowAnimations);
+
+    updateDamageLevel ();
 }
 
 PrivateCompositeScreen::~PrivateCompositeScreen ()
@@ -319,6 +322,20 @@ PrivateCompositeScreen::~PrivateCompositeScreen ()
 
     if (newCmSnOwner != None)
 	XDestroyWindow (dpy, newCmSnOwner);
+}
+
+void
+PrivateCompositeScreen::updateDamageLevel ()
+{
+    static const int damageLevels[] =
+    {
+	XDamageReportRawRectangles,
+	XDamageReportDeltaRectangles,
+	XDamageReportBoundingBox
+    };
+    int method = optionGetDamageMethod ();
+    if (method >= 0 && method < 3)
+        damageLevel = damageLevels[method];
 }
 
 bool
@@ -523,6 +540,12 @@ CompositeScreen::damagePending ()
 {
     priv->damageMask |= COMPOSITE_SCREEN_DAMAGE_PENDING_MASK;
     priv->scheduleRepaint ();
+}
+
+int
+CompositeScreen::damageLevel () const
+{
+    return priv->damageLevel;
 }
 
 unsigned int

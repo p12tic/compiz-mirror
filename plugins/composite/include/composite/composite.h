@@ -198,7 +198,11 @@ class CompositeScreen :
 	void damageScreen ();
 
 	void damagePending ();
-	
+
+	/**
+	 * Damage reporting level, to pass to XDamageCreate.
+	 */
+	int damageLevel () const;
 
 	unsigned int damageMask ();
 	const CompRegion & currentDamage () const;

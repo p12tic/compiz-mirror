@@ -109,6 +109,9 @@ class PrivateCompositeScreen :
 	Window newCmSnOwner;
 
 	std::set<Damage> damages;
+	int              damageLevel;
+
+	void             updateDamageLevel ();
 };
 
 class PrivateCompositeWindow : WindowInterface
