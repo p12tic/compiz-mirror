@@ -98,6 +98,11 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		    }
 		}
 	    }
+	    else if (event->type == damageEvent + XDamageNotify)
+	    {
+		XDamageNotifyEvent *de = (XDamageNotifyEvent*)event;
+		damages.insert (de->damage);
+	    }
 	    break;
     }
 
@@ -163,8 +168,6 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		}
 		
 		XDamageNotifyEvent *de = (XDamageNotifyEvent *) event;
-
-		damages.insert (de->damage);
 
 		if (lastDamagedWindow && de->drawable == lastDamagedWindow->id ())
 		{
@@ -831,6 +834,10 @@ CompositeScreen::handlePaintTimeout ()
 		damageScreen ();
 	}
 
+	foreach (Damage d, priv->damages)
+		XDamageSubtract (screen->dpy(), d, None, None);
+	priv->damages.clear ();
+
 	priv->damage = CompRegion ();
 
 	int mask = priv->damageMask;
@@ -849,10 +856,6 @@ CompositeScreen::handlePaintTimeout ()
 
 	paint (outputs, mask);
 	donePaint ();
-
-	foreach (Damage d, priv->damages)
-		XDamageSubtract (screen->dpy(), d, None, None);
-	priv->damages.clear ();
 
 	foreach (CompWindow *w, screen->windows ())
 	{
