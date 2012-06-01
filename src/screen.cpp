@@ -881,10 +881,10 @@ PrivateScreen::processEvents ()
 	lastPointerX = pointerX;
 	lastPointerY = pointerY;
 	lastPointerMods = pointerMods;
-
-	/* remove destroyed windows */
-	windowManager.removeDestroyed ();
     }
+
+    /* remove destroyed windows */
+    windowManager.removeDestroyed ();
 
     if (dbg)
     {
