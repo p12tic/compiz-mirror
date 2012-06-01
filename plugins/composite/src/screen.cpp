@@ -152,21 +152,6 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 	default:
 	    if (event->type == damageEvent + XDamageNotify)
 	    {
-		static time_t lastPrintTime = 0;
-		static long lastPrintCount = 0;
-		static long count = 0;
-		count++;
-		time_t now = time(NULL);
-		time_t interval = now - lastPrintTime;
-		if (interval >= 1)
-		{
-		    long delta = count - lastPrintCount;
-		    g_print("vv: %ld damages in %d sec\n",
-			delta, (int)interval);
-		    lastPrintCount = count;
-		    lastPrintTime = now;
-		}
-		
 		XDamageNotifyEvent *de = (XDamageNotifyEvent *) event;
 
 		if (lastDamagedWindow && de->drawable == lastDamagedWindow->id ())
@@ -325,20 +310,6 @@ PrivateCompositeScreen::~PrivateCompositeScreen ()
 
     if (newCmSnOwner != None)
 	XDestroyWindow (dpy, newCmSnOwner);
-}
-
-void
-PrivateCompositeScreen::updateDamageLevel ()
-{
-    static const int damageLevels[] =
-    {
-	XDamageReportRawRectangles,
-	XDamageReportDeltaRectangles,
-	XDamageReportBoundingBox
-    };
-    int method = optionGetDamageMethod ();
-    if (method >= 0 && method < 3)
-        damageLevel = damageLevels[method];
 }
 
 bool
@@ -543,6 +514,20 @@ CompositeScreen::damagePending ()
 {
     priv->damageMask |= COMPOSITE_SCREEN_DAMAGE_PENDING_MASK;
     priv->scheduleRepaint ();
+}
+
+void
+PrivateCompositeScreen::updateDamageLevel ()
+{
+    static const int damageLevels[] =
+    {
+	XDamageReportRawRectangles,
+	XDamageReportDeltaRectangles,
+	XDamageReportBoundingBox
+    };
+    int method = optionGetDamageMethod ();
+    if (method >= 0 && method < 3)
+        damageLevel = damageLevels[method];
 }
 
 int
@@ -855,6 +840,8 @@ CompositeScreen::handlePaintTimeout ()
 	    outputs.push_back (&screen->fullscreenOutput ());
 
 	paint (outputs, mask);
+
+
 	donePaint ();
 
 	foreach (CompWindow *w, screen->windows ())
