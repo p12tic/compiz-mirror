@@ -944,26 +944,26 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	if (event->type == xkbEvent.get())
 	{
 	    XkbAnyEvent *xkbEvent = (XkbAnyEvent *) event;
-	    static CompOption::Vector o;
+	    static CompOption::Vector arg;
 
-	    if (o.empty ())
+	    if (arg.empty ())
 	    {
-		o.resize (8);
-		o[0].setName ("event_window", CompOption::TypeInt);
-		o[1].setName ("window", CompOption::TypeInt);
+		arg.resize (8);
+		arg[0].setName ("event_window", CompOption::TypeInt);
+		arg[1].setName ("window", CompOption::TypeInt);
 	    }
 
 	    if (xkbEvent->xkb_type == XkbStateNotify)
 	    {
 		XkbStateNotifyEvent *stateEvent = (XkbStateNotifyEvent *) event;
 
-		o[0].value ().set ((int) orphanData.activeWindow);
-		o[1].value ().set ((int) orphanData.activeWindow);
-		o[2].setName ("modifiers", CompOption::TypeInt);
-		o[2].value ().set ((int) stateEvent->mods);
-		o[3].setName ("time", CompOption::TypeInt);
-		o[3].value ().set ((int) xkbEvent->time);
-		o[7].value ().set ((int) xkbEvent->time);
+		arg[0].value ().set ((int) orphanData.activeWindow);
+		arg[1].value ().set ((int) orphanData.activeWindow);
+		arg[2].setName ("modifiers", CompOption::TypeInt);
+		arg[2].value ().set ((int) stateEvent->mods);
+		arg[3].setName ("time", CompOption::TypeInt);
+		arg[3].value ().set ((int) xkbEvent->time);
+		arg[7].value ().set ((int) xkbEvent->time);
 
 		if (stateEvent->event_type == KeyPress)
 		    eventManager.resetPossibleTap();
@@ -971,23 +971,23 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		foreach (CompPlugin *p, CompPlugin::getPlugins ())
 		{
 		    CompOption::Vector &options = p->vTable->getOptions ();
-		    if (triggerStateNotifyBindings (options, stateEvent, o))
+		    if (triggerStateNotifyBindings (options, stateEvent, arg))
 			return true;
 		}
 	    }
 	    else if (xkbEvent->xkb_type == XkbBellNotify)
 	    {
-		o[0].value ().set ((int) orphanData.activeWindow);
-		o[1].value ().set ((int) orphanData.activeWindow);
-		o[2].setName ("time", CompOption::TypeInt);
-		o[2].value ().set ((int) xkbEvent->time);
-		o[3].reset ();
-		o[7].reset ();
+		arg[0].value ().set ((int) orphanData.activeWindow);
+		arg[1].value ().set ((int) orphanData.activeWindow);
+		arg[2].setName ("time", CompOption::TypeInt);
+		arg[2].value ().set ((int) xkbEvent->time);
+		arg[3].reset ();
+		arg[7].reset ();
 
 		foreach (CompPlugin *p, CompPlugin::getPlugins ())
 		{
 		    CompOption::Vector &options = p->vTable->getOptions ();
-		    if (triggerBellNotifyBindings (options, o))
+		    if (triggerBellNotifyBindings (options, arg))
 			return true;
 		}
 	    }
