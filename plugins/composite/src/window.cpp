@@ -85,7 +85,7 @@ CompositeWindow::~CompositeWindow ()
 void
 PrivateCompositeWindow::setNewPixmapReadyCallback (const PixmapBinding::NewPixmapReadyCallback &cb)
 {
-    mPixmapRebinder.setNewPixmapReadyCallback (cb);
+    mPixmapBinding.setNewPixmapReadyCallback (cb);
 }
 
 void
@@ -97,7 +97,7 @@ CompositeWindow::setNewPixmapReadyCallback (const PixmapBinding::NewPixmapReadyC
 void
 PrivateCompositeWindow::allowFurtherRebindAttempts ()
 {
-    mPixmapRebinder.allowFurtherRebindAttempts ();
+    mPixmapBinding.allowFurtherRebindAttempts ();
 }
 
 PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
@@ -105,7 +105,7 @@ PrivateCompositeWindow::PrivateCompositeWindow (CompWindow      *w,
     window (w),
     cWindow (cw),
     cScreen (CompositeScreen::get (screen)),
-    mPixmapRebinder (boost::function <void ()> (),
+    mPixmapBinding (boost::function <void ()> (),
 		     this,
 		     this,
 		     screen->serverGrabInterface ()),
@@ -135,7 +135,7 @@ PrivateCompositeWindow::~PrivateCompositeWindow ()
 bool
 PrivateCompositeWindow::bind ()
 {
-    return mPixmapRebinder.bind ();
+    return mPixmapBinding.bind ();
 }
 
 bool
@@ -151,7 +151,7 @@ CompositeWindow::bind ()
 void
 PrivateCompositeWindow::release ()
 {
-    mPixmapRebinder.release ();
+    mPixmapBinding.release ();
 }
 
 void
@@ -163,7 +163,7 @@ CompositeWindow::release ()
 Pixmap
 PrivateCompositeWindow::pixmap () const
 {
-    return mPixmapRebinder.pixmap ();
+    return mPixmapBinding.pixmap ();
 }
 
 WindowPixmapInterface::Ptr
@@ -193,7 +193,7 @@ CompositeWindow::pixmap ()
 const CompSize &
 PrivateCompositeWindow::size () const
 {
-    return mPixmapRebinder.size ();
+    return mPixmapBinding.size ();
 }
 
 const CompSize &

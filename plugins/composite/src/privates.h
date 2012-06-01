@@ -145,7 +145,7 @@ class PrivateCompositeWindow :
 	CompositeWindow *cWindow;
 	CompositeScreen *cScreen;
 
-	PixmapBinding mPixmapRebinder;
+	PixmapBinding mPixmapBinding;
 
 	Damage	      damage;
 

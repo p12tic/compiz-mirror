@@ -1,7 +1,5 @@
 /*
  * Copyright © 2012 Canonical Ltd.
- * Copyright © 2008 Dennis Kasprzyk
- * Copyright © 2007 Novell, Inc.
  *
  * Permission to use, copy, modify, distribute, and sell this software
  * and its documentation for any purpose is hereby granted without
@@ -22,9 +20,7 @@
  * NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION
  * WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *
- * Authors: Dennis Kasprzyk <onestone@compiz-fusion.org>
- *          David Reveman <davidr@novell.com>
- *          Sam Spilsbury <sam.spilsbury@canonical.com>
+ * Authors: Sam Spilsbury <sam.spilsbury@canonical.com>
  */
 
 #include <boost/shared_ptr.hpp>
