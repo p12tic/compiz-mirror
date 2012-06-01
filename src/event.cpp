@@ -662,8 +662,11 @@ PrivateScreen::handleActionEvent (XEvent *event)
 	o[4].setName ("y", CompOption::TypeInt);
 	o[5].setName ("root", CompOption::TypeInt);
     }
-    o[6].reset ();
-    o[7].reset ();
+    else
+    {
+	o[6].reset ();
+	o[7].reset ();
+    }
 
     switch (event->type) {
     case ButtonPress:
@@ -979,6 +982,7 @@ PrivateScreen::handleActionEvent (XEvent *event)
 		o[2].setName ("time", CompOption::TypeInt);
 		o[2].value ().set ((int) xkbEvent->time);
 		o[3].reset ();
+		o[7].reset ();
 
 		foreach (CompPlugin *p, CompPlugin::getPlugins ())
 		{
