@@ -33,7 +33,7 @@
 	    <option name="damage_method" type="int">
 		<_short>Damage Method</_short>
 		<_long>Tells the X server what and how much information about damage events to send Compiz. Raw Rectangles = slow but sure (applications can flood and overwhelm Compiz, causing high CPU usage). Delta Rectangles = fast (only report/redraw changes to each window once per frame, low CPU usage). Bounding Box = fast (only report when the bounding box of each damage region grows).</_long>
-		<default>1</default>
+		<default>2</default>
 		<min>0</min>
 		<max>2</max>
 		<desc>
