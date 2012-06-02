@@ -217,6 +217,19 @@ bool GLMatrix::invert ()
     return true;
 }
 
+/* Transpose a matrix in place */
+void
+GLMatrix::transpose ()
+{
+#define M(row, col)  m[col * 4 + row]
+
+    for (unsigned int i = 0; i < 4; i++)
+	for (unsigned int j = 0; j < 4; j++)
+	    std::swap (M(i, j), M(j, i));
+
+#undef M
+}
+
 /**
  * Generate a 4x4 transformation matrix from glRotate parameters, and
  * post-multiply the input matrix by it.
