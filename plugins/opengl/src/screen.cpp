@@ -115,6 +115,22 @@ namespace GL {
     GLDisableVertexAttribArrayProc disableVertexAttribArray = NULL;
     GLVertexAttribPointerProc      vertexAttribPointer = NULL;
 
+    GLClearStencilProc clearStencil = NULL;
+    GLStencilFuncProc stencilFunc = NULL;
+    GLStencilOpProc stencilOp = NULL;
+
+    GLGenRenderbuffers genRenderbuffers = NULL;
+    GLDeleteRenderbuffers deleteRenderbuffers = NULL;
+    GLFramebufferRenderbuffer framebufferRenderbuffer = NULL;
+    GLBindRenderbuffer bindRenderbuffer = NULL;
+    GLRenderbufferStorage renderbufferStorage = NULL;
+
+    unsigned int RENDERBUFFER;
+    unsigned int DEPTH24_STENCIL8;
+    unsigned int FRAMEBUFFER;
+    unsigned int DEPTH_ATTACHMENT;
+    unsigned int STENCIL_ATTACHMENT;
+
     bool  textureFromPixmap = true;
     bool  textureRectangle = false;
     bool  textureNonPowerOfTwo = false;
@@ -134,6 +150,8 @@ namespace GL {
 
     unsigned int vsyncCount = 0;
     unsigned int unthrottledFrames = 0;
+
+    bool stencilBuffer = false;
 }
 
 CompOutput *targetOutput = NULL;
@@ -180,7 +198,8 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
 	EGL_ALPHA_SIZE,           0,
 	EGL_RENDERABLE_TYPE,      EGL_OPENGL_ES2_BIT,
 	EGL_CONFIG_CAVEAT,        EGL_NONE,
-	EGL_NONE,
+	EGL_STENCIL_SIZE,	  1,
+	EGL_NONE
     };
 
     const EGLint context_attribs[] = {
@@ -266,6 +285,7 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GL::fbo = true;
     GL::vbo = true;
     GL::shaders = true;
+    GL::stencilBuffer = true;
     GL::maxTextureUnits = 4;
     glGetIntegerv (GL_MAX_TEXTURE_SIZE, &GL::maxTextureSize);
 
@@ -347,6 +367,34 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     GL::enableVertexAttribArray = glEnableVertexAttribArray;
     GL::disableVertexAttribArray = glDisableVertexAttribArray;
     GL::vertexAttribPointer = glVertexAttribPointer;
+
+    GL::stencilFunc = glStencilFunc;
+    GL::stencilOp = glStencilOp;
+    GL::clearStencil = glClearStencil;
+
+    GL::RENDERBUFFER = GL_RENDERBUFFER;
+    GL::FRAMEBUFFER = GL_FRAMEBUFFER;
+    GL::DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8_OES;
+    GL::DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT;
+    GL::STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT;
+
+    if (GL::stencilBuffer)
+    {
+	GL::stencilFunc = glStencilFunc;
+	GL::stencilOp = glStencilOp;
+	GL::clearStencil = glClearStencil;
+
+	if (strstr (glExtensions, "GL_OES_packed_depth_stencil"))
+	{
+	    GL::genRenderbuffers = glGenRenderbuffers;
+	    GL::deleteRenderbuffers = glDeleteRenderbuffers;
+	    GL::bindRenderbuffer = glBindRenderbuffer;
+	    GL::framebufferRenderbuffer = glFramebufferRenderbuffer;
+	    GL::renderbufferStorage = glRenderbufferStorage;
+	}
+	else
+	    GL::stencilBuffer = false;
+    }
 
     glClearColor (0.0, 0.0, 0.0, 1.0);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
@@ -566,6 +614,30 @@ GLScreen::glInitContext (XVisualInfo *visinfo)
     if (strstr (glExtensions, "GL_ARB_texture_compression"))
 	GL::textureCompression = true;
 
+    GL::RENDERBUFFER = GL_RENDERBUFFER_EXT;
+    GL::FRAMEBUFFER = GL_FRAMEBUFFER_EXT;
+    GL::DEPTH24_STENCIL8 = GL_DEPTH24_STENCIL8_EXT;
+    GL::DEPTH_ATTACHMENT = GL_DEPTH_ATTACHMENT_EXT;
+    GL::STENCIL_ATTACHMENT = GL_STENCIL_ATTACHMENT_EXT;
+
+    if (GL::stencilBuffer)
+    {
+	GL::stencilFunc = (GL::GLStencilFuncProc) getProcAddress ("glStencilFunc");
+	GL::stencilOp = (GL::GLStencilOpProc) getProcAddress ("glStencilOp");
+	GL::clearStencil = (GL::GLClearStencilProc) getProcAddress ("glClearStencil");
+
+	if (strstr (glExtensions, "GL_EXT_packed_depth_stencil"))
+	{
+	    GL::genRenderbuffers = (GL::GLGenRenderbuffers) getProcAddress ("glGenRenderbuffers");
+	    GL::deleteRenderbuffers = (GL::GLDeleteRenderbuffers) getProcAddress ("glDeleteRenderbuffers");
+	    GL::bindRenderbuffer = (GL::GLBindRenderbuffer) getProcAddress ("glBindRenderbuffer");
+	    GL::framebufferRenderbuffer = (GL::GLFramebufferRenderbuffer) getProcAddress ("glFramebufferRenderbuffer");
+	    GL::renderbufferStorage = (GL::GLRenderbufferStorage) getProcAddress ("glRenderbufferStorage");
+	}
+	else
+	    GL::stencilBuffer = false;
+    }
+
     glClearColor (0.0, 0.0, 0.0, 1.0);
     glBlendFunc (GL_ONE, GL_ONE_MINUS_SRC_ALPHA);
     glEnable (GL_CULL_FACE);
@@ -744,6 +816,8 @@ GLScreen::GLScreen (CompScreen *s) :
 
     fbConfigs = (*GL::getFBConfigs) (dpy, s->screenNum (), &nElements);
 
+    GL::stencilBuffer = false;
+
     for (i = 0; i <= MAX_DEPTH; i++)
     {
 	int j, db, stencil, depth, alpha, mipmap, rgba;
@@ -857,6 +931,10 @@ GLScreen::GLScreen (CompScreen *s) :
 	    priv->glxPixmapFBConfigs[i].fbConfig = fbConfigs[j];
 	    priv->glxPixmapFBConfigs[i].mipmap   = mipmap;
 	}
+
+	if (i == defaultDepth)
+	    if (stencil != MAXSHORT)
+		GL::stencilBuffer = true;
     }
 
     if (nElements)
@@ -1346,6 +1424,11 @@ GLScreenInterface::glPaintCompositedOutput (const CompRegion    &region,
 					    unsigned int         mask)
     WRAPABLE_DEF (glPaintCompositedOutput, region, fbo, mask)
 
+void
+GLScreenInterface::glBufferStencil(const GLMatrix &matrix,
+				   GLVertexBuffer &vertexBuffer,
+				   CompOutput *output)
+    WRAPABLE_DEF (glBufferStencil, matrix, vertexBuffer, output)
 
 GLMatrix *
 GLScreen::projectionMatrix ()

@@ -291,6 +291,35 @@ namespace GL {
                                                GLsizei stride,
                                                const GLvoid *ptr);
 
+    typedef void (*GLStencilFuncProc) (GLenum func,
+				   GLint  ref,
+				   GLuint mask);
+    typedef void (*GLStencilOpProc) (GLenum sfail,
+				 GLenum dpfail,
+				 GLenum dppass);
+    typedef void (*GLClearStencilProc) (GLint s);
+
+    typedef void (*GLGenRenderbuffers) (GLsizei n,
+					GLuint  *rb);
+    typedef void (*GLDeleteRenderbuffers) (GLsizei n,
+					   const GLuint  *rb);
+    typedef void (*GLBindRenderbuffer) (GLenum target,
+					GLuint renderbuffer);
+    typedef void (*GLFramebufferRenderbuffer) (GLenum target,
+					       GLenum attachment,
+					       GLenum renderbuffertarget,
+					       GLuint renderbuffer);
+    typedef void (*GLRenderbufferStorage) (GLenum target,
+					   GLenum internalformat,
+					   GLsizei width,
+					   GLsizei height);
+
+    extern unsigned int RENDERBUFFER;
+    extern unsigned int FRAMEBUFFER;
+    extern unsigned int DEPTH24_STENCIL8;
+    extern unsigned int DEPTH_ATTACHMENT;
+    extern unsigned int STENCIL_ATTACHMENT;
+
     #ifdef USE_GLES
     extern EGLCreateImageKHRProc  createImage;
     extern EGLDestroyImageKHRProc destroyImage;
@@ -366,6 +395,15 @@ namespace GL {
     extern GLDisableVertexAttribArrayProc disableVertexAttribArray;
     extern GLVertexAttribPointerProc      vertexAttribPointer;
 
+    extern GLClearStencilProc clearStencil;
+    extern GLStencilFuncProc stencilFunc;
+    extern GLStencilOpProc   stencilOp;
+
+    extern GLGenRenderbuffers genRenderbuffers;
+    extern GLDeleteRenderbuffers deleteRenderbuffers;
+    extern GLBindRenderbuffer    bindRenderbuffer;
+    extern GLFramebufferRenderbuffer framebufferRenderbuffer;
+    extern GLRenderbufferStorage renderbufferStorage;
 
     extern bool  textureFromPixmap;
     extern bool  textureRectangle;
@@ -379,6 +417,7 @@ namespace GL {
     extern bool  fbo;
     extern bool  vbo;
     extern bool  shaders;
+    extern bool  stencilBuffer;
     extern GLint maxTextureUnits;
 
     extern bool canDoSaturated;
@@ -495,11 +534,18 @@ class GLScreenInterface :
 	virtual void glPaintCompositedOutput (const CompRegion    &region,
 					      GLFramebufferObject *fbo,
 					      unsigned int         mask);
+
+	/**
+	 * Hookable function used by plugins to determine stenciling mask
+	 */
+	virtual void glBufferStencil (const GLMatrix       &matrix,
+				      GLVertexBuffer       &vertexBuffer,
+				      CompOutput           *output);
 };
 
 
 class GLScreen :
-    public WrapableHandler<GLScreenInterface, 7>,
+    public WrapableHandler<GLScreenInterface, 8>,
     public PluginClassHandler<GLScreen, CompScreen, COMPIZ_OPENGL_ABI>,
     public CompOption::Class
 {
@@ -612,6 +658,10 @@ class GLScreen :
 	WRAPABLE_HND (5, GLScreenInterface, GLMatrix *, projectionMatrix);
 	WRAPABLE_HND (6, GLScreenInterface, void, glPaintCompositedOutput,
 		      const CompRegion &, GLFramebufferObject *, unsigned int);
+
+	WRAPABLE_HND (7, GLScreenInterface, void, glBufferStencil, const GLMatrix &,
+		      GLVertexBuffer &,
+		      CompOutput *);
 
 	friend class GLTexture;
 	friend class GLWindow;
