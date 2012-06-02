@@ -27,7 +27,9 @@
 
 #include "expo.h"
 #include <math.h>
+#ifndef USE_GLES
 #include <GL/glu.h>
+#endif
 #include <X11/cursorfont.h>
 
 COMPIZ_PLUGIN_20090315 (expo, ExpoPluginVTable);
