@@ -468,10 +468,10 @@ GLScreen::glBufferStencil (const GLMatrix       &matrix,
 
     GLfloat vertices[] =
     {
-	0, 0, 0,
-	0, static_cast <GLfloat> (output->height ()), 0,
-	static_cast <GLfloat> (output->width ()), 0, 0,
-	static_cast <GLfloat> (output->width ()), static_cast <GLfloat> (output->height ()), 0
+	static_cast <GLfloat> (output->x ()), static_cast <GLfloat> (screen->height () - output->y2 ()), 0,
+	static_cast <GLfloat> (output->x ()), static_cast <GLfloat> (screen->height () - output->y2 ()) + static_cast <GLfloat> (output->height ()), 0,
+	static_cast <GLfloat> (output->x ()) + static_cast <GLfloat> (output->width ()), static_cast <GLfloat> (screen->height () - output->y2 ()), 0,
+	static_cast <GLfloat> (output->x ()) + static_cast <GLfloat> (output->width ()), static_cast <GLfloat> (screen->height () - output->y2 ()) + static_cast <GLfloat> (output->height ()), 0
     };
 
     GLushort colorData[] = { 0xffff, 0xffff, 0xffff, 0xffff };
