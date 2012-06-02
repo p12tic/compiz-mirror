@@ -1483,14 +1483,9 @@ WallWindow::glPaint (const GLWindowPaintAttrib &attrib,
 	GLMatrix wMatrix;
 
 	/* Don't paint nonsliding windows multiple times */
-	if (painted)
-	    mask |= PAINT_WINDOW_NO_CORE_INSTANCE_MASK;
-
-	if (!(mask & PAINT_WINDOW_OCCLUSION_DETECTION_MASK))
-	    painted = true;
 
 	wMatrix.toScreenSpace (ws->currOutput, -DEFAULT_Z_CAMERA);
-	status = glWindow->glPaint (attrib, wMatrix, region, mask);
+	status = glWindow->glPaint (attrib, wMatrix, region, mask | PAINT_WINDOW_TRANSFORMED_MASK);
     }
     else
     {
