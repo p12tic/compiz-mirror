@@ -399,6 +399,7 @@ public:
     virtual void applyStartupProperties (CompWindow *window) = 0;
     virtual void updateClientList() = 0;
     virtual Window getTopWindow() const = 0;
+    virtual Window getTopServerWindow() const = 0;
     virtual CoreOptions& getCoreOptions() = 0;
     virtual Colormap colormap() const = 0;
     virtual void setCurrentDesktop (unsigned int desktop) = 0;

@@ -186,6 +186,7 @@ public:
     MOCK_METHOD1(applyStartupProperties, void (CompWindow *window));
     MOCK_METHOD0(updateClientList, void ());
     MOCK_CONST_METHOD0(getTopWindow, Window ());
+    MOCK_CONST_METHOD0(getTopServerWindow, Window ());
     MOCK_METHOD0(getCoreOptions, CoreOptions& ());
     MOCK_CONST_METHOD0(colormap, Colormap ());
     MOCK_METHOD1(setCurrentDesktop, void (unsigned int desktop));

@@ -1196,7 +1196,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 	     * that to wait until the map request */
 	    if (wa.root == privateScreen.rootWindow())
 	    {
-		PrivateWindow::createCompWindow (getTopWindow (), wa, event->xcreatewindow.window);
+		PrivateWindow::createCompWindow (getTopWindow (), getTopServerWindow (), wa, event->xcreatewindow.window);
             }
 	    else
 		XSelectInput (privateScreen.dpy, event->xcreatewindow.window,
@@ -1332,7 +1332,7 @@ CompScreenImpl::_handleEvent (XEvent *event)
 		if (!XGetWindowAttributes (privateScreen.dpy, event->xcreatewindow.window, &wa))
 		    privateScreen.setDefaultWindowAttributes (&wa);
 
-		PrivateWindow::createCompWindow (getTopWindow (), wa, event->xcreatewindow.window);
+		PrivateWindow::createCompWindow (getTopWindow (), getTopServerWindow (), wa, event->xcreatewindow.window);
 		break;
 	    }
 	    else

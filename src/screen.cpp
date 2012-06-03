@@ -4083,6 +4083,15 @@ cps::WindowManager::getTopWindow() const
     return None;
 }
 
+Window
+cps::WindowManager::getTopServerWindow() const
+{
+    if (serverWindows.size ())
+	return serverWindows.back ()->id ();
+
+    return None;
+}
+
 int
 CompScreenImpl::outputDeviceForPoint (const CompPoint &point)
 {
@@ -4840,6 +4849,12 @@ CompScreenImpl::getTopWindow() const
     return windowManager.getTopWindow();
 }
 
+Window
+CompScreenImpl::getTopServerWindow () const
+{
+    return windowManager.getTopServerWindow();
+}
+
 CoreOptions&
 CompScreenImpl::getCoreOptions()
 {
@@ -5268,7 +5283,7 @@ PrivateScreen::initDisplay (const char *name, cps::History& history, unsigned in
 	if (!XGetWindowAttributes (screen->dpy (), children[i], &attrib))
 	    setDefaultWindowAttributes(&attrib);
 
-	PrivateWindow::createCompWindow (i ? children[i - 1] : 0, attrib, children[i]);
+	PrivateWindow::createCompWindow (i ? children[i - 1] : 0, i ? children[i - 1] : 0, attrib, children[i]);
     }
 
     /* enforce restack on all windows

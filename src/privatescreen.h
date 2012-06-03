@@ -183,6 +183,7 @@ class WindowManager : boost::noncopyable
 
 	CompWindow * findWindow (Window id) const;
 	Window getTopWindow() const;
+	Window getTopServerWindow() const;
 
 
 	void removeFromFindWindowCache(CompWindow* w)
@@ -1052,6 +1053,7 @@ class CompScreenImpl : public CompScreen,
 	virtual void applyStartupProperties (CompWindow *window);
 	virtual void updateClientList();
 	virtual Window getTopWindow() const;
+	virtual Window getTopServerWindow() const;
 	virtual CoreOptions& getCoreOptions();
 	virtual Colormap colormap() const;
 	virtual void setCurrentDesktop (unsigned int desktop);
