@@ -110,7 +110,6 @@ class PrivateCompositeScreen :
 
 	Atom cmSnAtom;
 	Window newCmSnOwner;
-    private:
 };
 
 class PrivateCompositeWindow :
