@@ -98,6 +98,11 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 		    }
 		}
 	    }
+	    else if (event->type == damageEvent + XDamageNotify)
+	    {
+		XDamageNotifyEvent *de = (XDamageNotifyEvent*)event;
+		damages.insert (de->damage);
+	    }
 	    break;
     }
 
@@ -790,6 +795,10 @@ CompositeScreen::handlePaintTimeout ()
 	    if (priv->tmpRegion == screen->region ())
 		damageScreen ();
 	}
+
+	foreach (Damage d, priv->damages)
+	    XDamageSubtract (screen->dpy(), d, None, None);
+	priv->damages.clear ();
 
 	priv->damage = CompRegion ();
 
