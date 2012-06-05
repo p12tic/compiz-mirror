@@ -101,7 +101,7 @@ PrivateCompositeScreen::handleEvent (XEvent *event)
 	    else if (event->type == damageEvent + XDamageNotify)
 	    {
 		XDamageNotifyEvent *de = (XDamageNotifyEvent*)event;
-		damages.insert (de->damage);
+		damages[de->damage] = de->area;
 	    }
 	    break;
     }
@@ -796,8 +796,17 @@ CompositeScreen::handlePaintTimeout ()
 		damageScreen ();
 	}
 
-	foreach (Damage d, priv->damages)
-	    XDamageSubtract (screen->dpy(), d, None, None);
+	Display *dpy = screen->dpy ();
+	std::map<Damage, XRectangle>::iterator d = priv->damages.begin ();
+	for (; d != priv->damages.end (); d++)
+	{
+	    XserverRegion sub = XFixesCreateRegion (dpy, &d->second, 1);
+	    if (sub != None)
+	    {
+		XDamageSubtract (dpy, d->first, sub, None);
+		XFixesDestroyRegion (dpy, sub);
+	    }
+	}
 	priv->damages.clear ();
 
 	priv->damage = CompRegion ();

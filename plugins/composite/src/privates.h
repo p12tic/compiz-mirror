@@ -30,7 +30,7 @@
 
 #include <composite/composite.h>
 #include <core/atoms.h>
-#include <set>
+#include <map>
 
 #include "composite_options.h"
 
@@ -108,7 +108,8 @@ class PrivateCompositeScreen :
 	Atom cmSnAtom;
 	Window newCmSnOwner;
 
-	std::set<Damage> damages;
+	/* Map Damage handle to its bounding box */
+	std::map<Damage, XRectangle> damages;
 };
 
 class PrivateCompositeWindow : WindowInterface
