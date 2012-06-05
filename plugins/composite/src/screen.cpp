@@ -289,16 +289,13 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     FPSLimiterMode (CompositeFPSLimiterModeDefault),
     withDestroyedWindows (),
     cmSnAtom (0),
-    newCmSnOwner (None),
-    damageLevel (XDamageReportRawRectangles)
+    newCmSnOwner (None)
 {
     gettimeofday (&lastRedraw, 0);
     // wrap outputChangeNotify
     ScreenInterface::setHandler (screen);
 
     optionSetSlowAnimationsKeyInitiate (CompositeScreen::toggleSlowAnimations);
-
-    updateDamageLevel ();
 }
 
 PrivateCompositeScreen::~PrivateCompositeScreen ()
@@ -514,26 +511,6 @@ CompositeScreen::damagePending ()
 {
     priv->damageMask |= COMPOSITE_SCREEN_DAMAGE_PENDING_MASK;
     priv->scheduleRepaint ();
-}
-
-void
-PrivateCompositeScreen::updateDamageLevel ()
-{
-    static const int damageLevels[] =
-    {
-	XDamageReportRawRectangles,
-	XDamageReportDeltaRectangles,
-	XDamageReportBoundingBox
-    };
-    int method = optionGetDamageMethod ();
-    if (method >= 0 && method < 3)
-        damageLevel = damageLevels[method];
-}
-
-int
-CompositeScreen::damageLevel () const
-{
-    return priv->damageLevel;
 }
 
 unsigned int
@@ -820,7 +797,7 @@ CompositeScreen::handlePaintTimeout ()
 	}
 
 	foreach (Damage d, priv->damages)
-		XDamageSubtract (screen->dpy(), d, None, None);
+	    XDamageSubtract (screen->dpy(), d, None, None);
 	priv->damages.clear ();
 
 	priv->damage = CompRegion ();

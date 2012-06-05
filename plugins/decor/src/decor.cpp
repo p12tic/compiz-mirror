@@ -325,9 +325,8 @@ DecorTexture::DecorTexture (DecorPixmapInterface::Ptr pixmap) :
     if (!DecorScreen::get (screen)->optionGetMipmap ())
 	textures[0]->setMipmap (false);
 
-    CompositeScreen *cScreen = CompositeScreen::get (screen);
-    int level = cScreen ? cScreen->damageLevel () : XDamageReportRawRectangles;
-    damage = XDamageCreate (screen->dpy (), pixmap->getPixmap (), level);
+    damage = XDamageCreate (screen->dpy (), pixmap->getPixmap (),
+                            XDamageReportBoundingBox);
 }
 
 /*

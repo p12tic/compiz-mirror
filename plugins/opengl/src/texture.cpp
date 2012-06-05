@@ -580,9 +580,8 @@ TfpTexture::bindPixmapToTexture (Pixmap pixmap,
 
     glBindTexture (texTarget, 0);
 
-    CompositeScreen *cScreen = CompositeScreen::get (screen);
-    int level = cScreen ? cScreen->damageLevel () : XDamageReportRawRectangles;
-    tex->damage = XDamageCreate (screen->dpy (), pixmap, level);
+    tex->damage = XDamageCreate (screen->dpy (), pixmap,
+                                 XDamageReportBoundingBox);
     boundPixmapTex[tex->damage] = tex;
 
     return rv;
