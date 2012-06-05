@@ -27,7 +27,7 @@
  * so that this can be come a truly standalone
  * object */
 #include <core/core.h>
-#include <deque>
+#include <list>
 
 #ifndef _COMPIZ_PRIVATESTACKDEBUGGER_H
 #define _COMPIZ_PRIVATESTACKDEBUGGER_H
@@ -77,7 +77,7 @@ class StackDebugger
 	FetchXEventInterface *mFetchXEvent;
 	bool         mTimeoutRequired;
 	CompWindowList mLastServerWindows;
-	std::deque <XEvent> mEvents;
+	std::list <XEvent> mEvents;
 };
 
 #endif

@@ -148,7 +148,7 @@ StackDebugger::loadStack (CompWindowList &serverWindows, bool wait)
     unsigned int n = XEventsQueued (mDpy, QueuedAfterFlush);
     mEvents.clear ();
     mEvents.resize (n);
-    std::deque <XEvent>::iterator it = mEvents.begin ();
+    std::list <XEvent>::iterator it = mEvents.begin ();
 
     while (it != mEvents.end ())
     {
