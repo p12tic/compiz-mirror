@@ -608,8 +608,27 @@ unsigned int windowStateMask (Atom state);
 
 }} // namespace compiz::private_screen
 
+class FetchXEventInterface
+{
+    public:
+
+	virtual ~FetchXEventInterface () {}
+
+	virtual bool getNextXEvent (XEvent &) = 0;
+};
+
+class FetchEventInterface
+{
+    public:
+
+	virtual ~FetchEventInterface () {}
+	virtual bool getNextEvent (XEvent &) = 0;
+};
+
 class PrivateScreen :
-    public CoreOptions
+    public CoreOptions,
+    public FetchXEventInterface,
+    public FetchEventInterface
 {
 
     public:
@@ -623,7 +642,8 @@ class PrivateScreen :
 
 	bool setOption (const CompString &name, CompOption::Value &value);
 
-	std::list <XEvent> queueEvents ();
+	bool getNextEvent (XEvent &);
+	bool getNextXEvent (XEvent &);
 	void processEvents ();
 
 	bool triggerButtonPressBindings (CompOption::Vector &options,
