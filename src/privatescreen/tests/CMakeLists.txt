@@ -17,6 +17,7 @@ include_directories(
   ${compiz_SOURCE_DIR}/src/window/geometry/include
   ${compiz_SOURCE_DIR}/src/window/extents/include
   ${compiz_SOURCE_DIR}/src/screen/extents/include
+  ${compiz_SOURCE_DIR}/src/servergrab/include
 
   ${compiz_SOURCE_DIR}/src/pluginclasshandler/include
 

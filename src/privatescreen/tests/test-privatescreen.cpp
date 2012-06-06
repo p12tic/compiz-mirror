@@ -204,6 +204,11 @@ public:
     MOCK_METHOD1(getProtocols, unsigned int (Window id));
     MOCK_METHOD1(getWindowType, unsigned int (Window id));
     MOCK_METHOD1(getWindowState, unsigned int (Window id));
+
+    MOCK_METHOD0(grabServer, void ());
+    MOCK_METHOD0(ungrabServer, void ());
+    MOCK_METHOD0(syncServer, void ());
+    MOCK_METHOD0(serverGrabInterface, ServerGrabInterface * ());
 };
 
 class MockViewportRetreival :
