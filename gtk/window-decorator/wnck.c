@@ -419,12 +419,16 @@ add_frame_window (WnckWindow *win,
 				 GINT_TO_POINTER (frame),
 				 GINT_TO_POINTER (xid));
 	}
-	update_window_decoration_state (win);
-	update_window_decoration_actions (win);
-	update_window_decoration_icon (win);
-	request_update_window_decoration_size (win);
 
-	update_event_windows (win);
+	if (d->decorated)
+	{
+	    update_window_decoration_state (win);
+	    update_window_decoration_actions (win);
+	    update_window_decoration_icon (win);
+	    request_update_window_decoration_size (win);
+
+	    update_event_windows (win);
+	}
     }
     else
     {
