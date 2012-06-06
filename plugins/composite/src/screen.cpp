@@ -45,7 +45,7 @@
 
 #include <core/timer.h>
 
-#define FALLBACK_REFRESH_RATE 60   /* if all else fails */
+static const int FALLBACK_REFRESH_RATE = 60;   /* if all else fails */
 
 CompWindow *lastDamagedWindow = 0;
 
