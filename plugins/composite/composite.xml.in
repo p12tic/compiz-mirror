@@ -16,7 +16,7 @@
 	    <option name="refresh_rate" type="int">
 		<_short>Refresh Rate</_short>
 		<_long>The rate at which the screen is redrawn (times/second)</_long>
-		<default>50</default>
+		<default>60</default>
 		<min>1</min>
 		<max>200</max>
 	    </option>

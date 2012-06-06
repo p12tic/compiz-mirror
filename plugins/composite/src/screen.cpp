@@ -45,6 +45,8 @@
 
 #include <core/timer.h>
 
+#define FALLBACK_REFRESH_RATE 60   /* if all else fails */
+
 CompWindow *lastDamagedWindow = 0;
 
 void
@@ -274,8 +276,8 @@ PrivateCompositeScreen::PrivateCompositeScreen (CompositeScreen *cs) :
     exposeRects (),
     windowPaintOffset (0, 0),
     overlayWindowCount (0),
-    redrawTime (1000 / 50),
-    optimalRedrawTime (1000 / 50),
+    redrawTime (1000 / FALLBACK_REFRESH_RATE),
+    optimalRedrawTime (1000 / FALLBACK_REFRESH_RATE),
     scheduled (false),
     painting (false),
     reschedule (false),
@@ -651,7 +653,7 @@ PrivateCompositeScreen::detectRefreshRate ()
 	}
 
 	if (value.i () == 0)
-	    value.set ((int) 50);
+	    value.set ((int) FALLBACK_REFRESH_RATE);
 
 	mOptions[CompositeOptions::DetectRefreshRate].value ().set (false);
 	screen->setOptionForPlugin ("composite", "refresh_rate", value);
