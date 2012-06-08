@@ -1197,10 +1197,10 @@ PlaceWindow::constrainToWorkarea (const CompRect &workArea,
 
     extents.left   = pos.x () - window->border ().left;
     extents.top    = pos.y () - window->border ().top;
-    extents.right  = extents.left + window->serverGeometry ().heightIncBorders () +
+    extents.right  = extents.left + window->serverGeometry ().widthIncBorders () +
 		     (window->border ().left +
 		      window->border ().right);
-    extents.bottom = extents.top + window->serverGeometry ().widthIncBorders () +
+    extents.bottom = extents.top + window->serverGeometry ().heightIncBorders () +
 		     (window->border ().top +
 		      window->border ().bottom);
 

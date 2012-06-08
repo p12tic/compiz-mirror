@@ -171,7 +171,6 @@ class CompositeScreenInterface :
 	virtual void damageRegion (const CompRegion &r);
 };
 
-
 class CompositeScreen :
     public WrapableHandler<CompositeScreenInterface, 7>,
     public PluginClassHandler<CompositeScreen, CompScreen, COMPIZ_COMPOSITE_ABI>,
@@ -327,8 +326,6 @@ class CompositeWindow :
 {
     public:
 
-	typedef boost::function <void ()> NewPixmapReadyCallback;
-
 	CompositeWindow (CompWindow *w);
 	~CompositeWindow ();
 
@@ -430,7 +427,7 @@ class CompositeWindow :
 	 * A function to call when a new pixmap is ready to
 	 * be bound just before the old one is released
 	 */
-	void setNewPixmapReadyCallback (const NewPixmapReadyCallback &cb);
+	void setNewPixmapReadyCallback (const boost::function <void ()> &cb);
 
 	WRAPABLE_HND (0, CompositeWindowInterface, bool, damageRect,
 		      bool, const CompRect &);
