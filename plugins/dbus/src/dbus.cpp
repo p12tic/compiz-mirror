@@ -210,7 +210,11 @@ dbusHandleRootIntrospectMessage (DBusConnection *connection,
 
     dbusIntrospectEndInterface (writer);
 
-    plugins = availablePlugins (&nPlugins);
+    //plugins = availablePlugins (&nPlugins);
+    // XXX availablePlugins is deprecated because it made no practical sense.
+    // If you want this code to work, it should be ported to query
+    // the actual list of plugins loaded. Perhaps try CompPlugin::getPlugins.
+    plugins = NULL;
     if (plugins)
     {
 	pluginName = plugins;
@@ -1395,42 +1399,6 @@ DbusScreen::handleGetMetadataMessage (DBusConnection                 *connection
 #endif
 
 /*
- * 'GetPlugins' can be used to retrieve a list of available plugins. There's
- * no guarantee that a plugin in this list can actually be loaded.
- *
- * Example:
- *
- * dbus-send --print-reply --type=method_call \
- * --dest=org.freedesktop.compiz	      \
- * /org/freedesktop/compiz		      \
- * org.freedesktop.compiz.getPlugins
- */
-bool
-DbusScreen::handleGetPluginsMessage (DBusConnection *connection,
-			     	     DBusMessage    *message)
-{
-    DBusMessage *reply;
-    std::list <CompString> plugins = CompPlugin::availablePlugins ();
-
-    reply = dbus_message_new_method_return (message);
-
-    foreach (CompString& p, plugins)
-    {
-	const char *plugin = p.c_str ();
-	dbus_message_append_args (reply,
-				  DBUS_TYPE_STRING, &plugin,
-				  DBUS_TYPE_INVALID);
-    }
-
-    dbus_connection_send (connection, reply, NULL);
-    dbus_connection_flush (connection);
-
-    dbus_message_unref (reply);
-
-    return true;
-}
-
-/*
  * 'GetPluginMetadata' can be used to retrieve metadata for a plugin.
  *
  * Example:
@@ -1584,12 +1552,6 @@ DbusScreen::handleMessage (DBusConnection *connection,
 		return DBUS_HANDLER_RESULT_HANDLED;
 	}
 #endif
-	if (dbus_message_is_method_call (message, COMPIZ_DBUS_INTERFACE,
-					  COMPIZ_DBUS_GET_PLUGINS_MEMBER_NAME))
-	{
-	    if (handleGetPluginsMessage (connection, message))
-		return DBUS_HANDLER_RESULT_HANDLED;
-	}
 
 	return DBUS_HANDLER_RESULT_NOT_YET_HANDLED;
     }

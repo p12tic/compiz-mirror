@@ -547,31 +547,6 @@ CompPlugin::getPlugins (void)
     return plugins;
 }
 
-CompStringList
-CompPlugin::availablePlugins ()
-{
-    CompStringList homeList;
-
-    if (char* home = getenv ("HOME"))
-    {
-        boost::scoped_array<char> plugindir(new char [strlen (home) + strlen (HOME_PLUGINDIR) + 3]);
-        sprintf (plugindir.get(), "%s/%s", home, HOME_PLUGINDIR);
-
-	homeList = loaderListPlugins (plugindir.get());
-    }
-
-    std::set<CompString> set;
-
-    CompStringList pluginList  = loaderListPlugins (PLUGINDIR);
-    CompStringList currentList = loaderListPlugins (0);
-
-    std::copy(homeList.begin(), homeList.end(), std::inserter(set, set.end()));
-    std::copy(pluginList.begin(), pluginList.end(), std::inserter(set, set.end()));
-    std::copy(currentList.begin(), currentList.end(), std::inserter(set, set.end()));
-
-    return CompStringList(set.begin(), set.end());
-}
-
 int
 CompPlugin::getPluginABI (const char *name)
 {
